@@ -22,6 +22,16 @@
 Исходники `c3937a1`, установленный на этапе аудита UI/API `c1a6e79a`; исходный аудит — только анализ.
 Каталог API и элементов управления не заменяет живую проверку Android и 500–1000 устройств.
 
+**6 октября, 17:43 UTC+5 — APK text-clear fix, кандидат без установки:**
+**1.2.46-dev / 10246**, source `6a9f570f`; по 855 passed / 1 assumption-skipped
+Dev/Enterprise, signer/ZIP/DEX и четыре source CI прошли. Реальный SDK28 helper
+очистил всю строку с курсором внутри; пустой повтор и следующий ввод прошли.
+Это helper proof из временной копии, не полный canary обновлённого агента.
+APK не установлен/не опубликован OTA, API/UI/туннели сохранены, 9 / 41 остаётся.
+[Доставка, native PNG и ограничения](audits/2026-10-06/ANDROID-FOCUSED-TEXT-CLEAR.md) ·
+[Pinned evidence](audits/2026-10-06/ANDROID-FOCUSED-TEXT-CLEAR-EVIDENCE.json) ·
+[Новый generated-class incident](audits/2026-10-06/HOST-FILESYSTEM-INCIDENT.md#повреждённый-generated-class-в-android-сборке).
+
 **6 октября, 16:50 UTC+5 — запись текста и Android-кнопок установлена:** UI
 **`1c26ffc7`**, API **`eb7a7c26`** на [3015/scripts/builder](http://127.0.0.1:3015/scripts/builder).
 Recorder сохраняет отправку и отдельное подтверждение APK, защищает pending/unknown

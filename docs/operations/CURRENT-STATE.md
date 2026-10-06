@@ -6,6 +6,28 @@
 
 [Главная](../../README.md) · [Каталог документации](../README.md) · [Readiness](READINESS.md) · [Fleet32 gates](../audits/2026-09-20/FLEET32-PREFLIGHT.md) · [PR #19](https://github.com/RootOne1337/sphere-platform/pull/19)
 
+**6 октября, 17:43 UTC+5 — исправление APK очистки текста собрано, не установлено:**
+Source **`6a9f570f`**, candidate **1.2.46-dev / 10246**. Вместо ошибочного CUT 277
+используется root Ctrl+A/Delete с отпусканием клавиш и отдельным ограниченным ACK
+в прежней FIFO root-сессии. Unknown outcome не повторяет очистку и не вводит замену;
+`field_verified=false` отделяет dispatch ACK от результата произвольного editor.
+По **855 passed / 1 assumption-skipped** в Dev/Enterprise (одинаковые cases),
+45 focused входят в эти наборы. Подпись pilot совпала с baseline; ZIP/DEX checks прошли.
+Все четыре source CI `6a9f570f` success; Android signed release smoke использовал
+одноразовый CI key, Preview deploy skipped. Это не CI последующего docs head.
+Реальный локальный SDK28 helper из временного candidate APK полностью очистил
+тестовую строку с курсором внутри, выдержал пустой повтор и обычный follow-up input.
+Сохранены два original PNG и receipts. Установленный локальный Agent **1.2.44-dev**
+не заменён; remote PH025 **1.2.45-dev** также остаётся старым. Полный canary нового
+AdbActionExecutor через установленный APK, другие SDK/editors и rollout ещё нужны.
+UI **`1c26ffc7`** / API **`eb7a7c26`**, OTA/туннели этим этапом не обновлялись.
+Первый Enterprise run остановился на одном повреждённом generated `.class`;
+пересоздан только этот 1753-byte output и повторён полный suite. Причина неизвестна,
+это не ремонт NTFS или установление disk-growth writer. Счёт **9 / 41** сохраняется.
+[Результат и границы](../audits/2026-10-06/ANDROID-FOCUSED-TEXT-CLEAR.md) ·
+[Pinned evidence](../audits/2026-10-06/ANDROID-FOCUSED-TEXT-CLEAR-EVIDENCE.json) ·
+[Host incident](../audits/2026-10-06/HOST-FILESYSTEM-INCIDENT.md).
+
 **6 октября, 12:15 UTC+5 — отдельный инцидент файловой системы рабочего ПК:**
 Windows System/Ntfs55 подтвердил повреждение структуры C: и индекса старого
 исключённого контекста сборки. Текущий `git fsck --no-dangling` прошёл; это не
@@ -31,8 +53,9 @@ production build прошли. Четыре source CI `1c26ffc7` success, Previe
 viewport восстановлен. В header остаётся MISMATCH из-за разных Git UI/API revisions;
 это не самостоятельная проверка совместимости. Не закрыты selector/prerequisites,
 Unicode/IME, frame-correlated replay, load/soak и storage writer. Найден отдельный
-P1 APK: `input_clear`/`clear_first` путают CUT 277 с SELECT_ALL; recorder вводит
-`clear_first:false`, но старый APK handler ещё требует исправления.
+P1 APK на момент этого recorder этапа: `input_clear`/`clear_first` путают CUT 277
+с SELECT_ALL; recorder вводит `clear_first:false`. Source fix/candidate 1.2.46
+зафиксирован выше; установленный старый APK ещё не получил handler.
 Общий счёт **9 / 41** сохраняется.
 [Доставка и native проверка](../audits/2026-10-06/STUDIO-COMMAND-RECORDING.md) ·
 [Pinned evidence](../audits/2026-10-06/STUDIO-COMMAND-RECORDING-EVIDENCE.json) ·

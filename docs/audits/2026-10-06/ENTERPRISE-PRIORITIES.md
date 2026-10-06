@@ -91,8 +91,15 @@ Settings prerequisites сохранена одна v1 и выполнено од
 version/hash/task, native JPEG и отдельные source/runtime результаты.
 EP-018 не закрыт: automatic selector candidates и prerequisites остаются впереди.
 Дополнительно найден P1 в APK: `input_clear`/`clear_first` путают CUT 277 с CTRL_A;
-нужен корректный input adapter с проверкой Android. Новый recorder не вызывает
-неявную очистку. Общий счёт 9 / 41 сохранён.
+[source fix и candidate 1.2.46](ANDROID-FOCUSED-TEXT-CLEAR.md) используют root chord
+и ограниченный ACK прежней FIFO-сессии. По 855 passed / 1 assumption-skipped в
+двух debug flavors, четыре source CI, signer/ZIP/DEX и native SDK28 helper прошли.
+Исходное поле очистилось с курсором внутри; пустой повтор и follow-up input прошли.
+APK **не установлен/не опубликован OTA**: полный installed-agent canary, другие
+SDK/editors и rollout остаются впереди. Recorder по-прежнему не вызывает неявную
+очистку. [Pinned evidence](ANDROID-FOCUSED-TEXT-CLEAR-EVIDENCE.json).
+Пересоздание одного повреждённого generated class зафиксировано отдельно;
+причина host corruption и writer неизвестны. Общий счёт 9 / 41 сохранён.
 
 Ограничения ресурсов, доставка обновлений и управляемость выбранного устройства
 влияют на возможность обслуживать парк. Дополнительные графики не заменят эти

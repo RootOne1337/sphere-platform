@@ -149,13 +149,18 @@ Native QA проверил тёмную и светлую темы и ширин
 ## Дополнительная находка APK: очистка поля
 
 В [DagRunner](../../../android/app/src/main/kotlin/com/sphereplatform/agent/commands/DagRunner.kt)
-ветки `input_clear` и `type_text.clear_first:true` используют keycode 277 с
+в закреплённом source `1c26ffc7` ветки `input_clear` и `type_text.clear_first:true` используют keycode 277 с
 комментарием CTRL_A. По [официальному Android KeyEvent](https://developer.android.com/reference/android/view/KeyEvent#KEYCODE_CUT)
 277 — CUT, а не SELECT_ALL. Такая последовательность может удалить только
 выделение/символ, затронуть буфер и не очистить поле полностью. Это отдельный
 подтверждённый кодовый дефект; исправление требует корректного input adapter и
 Android runtime проверки. Новый recorder не вызывает эти ветки неявно:
 записанный ввод сохраняет `clear_first:false`, CUT записывается именно как CUT.
+
+**Последующий Android этап:** [source fix/candidate 1.2.46 и native helper proof](ANDROID-FOCUSED-TEXT-CLEAR.md)
+закреплён отдельно на `6a9f570f`, с двумя full debug suites и четырьмя source CI.
+Установка/OTA пока не выполнена. Исходные recording receipts `1c26ffc7` и canary
+на PH025 / 1.2.45-dev сохраняются; они не заменяются результатами новой версии.
 
 ## Оставшиеся ворота
 

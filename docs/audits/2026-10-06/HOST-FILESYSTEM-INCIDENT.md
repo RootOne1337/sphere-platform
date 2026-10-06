@@ -39,6 +39,37 @@ System, а не выведено из размера папки.
 - Новые тесты и сборки ограничиваются ресурсными воротами. Успешная сборка не
   закрывает файловый инцидент и не заменяет системную проверку в отдельном окне.
 
+## Повреждённый generated class в Android-сборке
+
+Отдельное наблюдение **6 октября, 12:30:32 UTC**, source `6a9f570f` / APK 1.2.46.
+Первый полный EnterpriseDebug test run получил 19 `ClassFormatError` в
+`WebSocketAuthenticationTest`: Java прочитала magic 4294967295 (`ffffffff`).
+Это не assertion failures нового input adapter. Проверка четырёх соответствующих
+файлов, а не предположение об ошибке кода, показала:
+
+| Результат | Bytes | Magic | SHA256 |
+| --- | --- | --- | --- |
+| Raw Kotlin output Dev и Enterprise, transformed Dev | 1753 каждый | `cafebabe` | `bbc2ba76e9fafc358ce811c78a5c694cf4f3a47df7a3d8e31dbdeb6d02196840` |
+| Единственный transformed Enterprise output | 1753 | `ffffffff` | `3d212e4aa7b626516a5554ca3ae6805da897d54578258a99e5a95456cddc1670` |
+
+Повреждённый файл относительно проекта:
+`android/app/build/intermediates/classes/enterpriseDebugUnitTest/transformEnterpriseDebugUnitTestClassesWithAsm/dirs/com/sphereplatform/agent/ws/WebSocketAuthenticationTest$http$1$1.class`.
+Исходники не менялись. Перед удалением проверены resolved absolute path внутри
+этого generated root и точный bad SHA256; исходные байты и failed build log
+сохранены privately. Удалён **только один 1753-byte восстанавливаемый файл**, без
+рекурсивного удаления дерева. Gradle повторил transform из корректного raw output.
+Новый файл имеет `cafebabe` и исходный good SHA256; полный Enterprise suite затем
+дал **855 passed / 1 assumption-skipped / 0 failed**. Dev suite имеет тот же итог.
+
+[Сокращённый before/after receipt](evidence/android-focused-text-clear/generated-class-corruption.json)
+сохраняет наблюдение повреждения и пересоздания; raw binary/log не публикуются.
+[APK delivery](ANDROID-FOCUSED-TEXT-CLEAR.md) отдельно проверяет ZIP/DEX и signer.
+Один повреждённый generated output **не устанавливает** причину: NTFS, storage
+driver, RAM, внешнее изменение файла и compiler/toolchain требуют независимых
+проверок. Наличие ранее записанных Ntfs55 не доказывает причинную связь.
+Пересоздание файла не закрывает host incident и не устанавливает writer,
+заполняющий C:. Offline filesystem repair или перезагрузка не выполнялись.
+
 ## Дальнейшая проверка
 
 Перед автономным ремонтом нужен проверенный backup важных пользовательских данных

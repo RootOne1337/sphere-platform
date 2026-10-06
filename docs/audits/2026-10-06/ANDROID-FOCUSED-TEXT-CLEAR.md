@@ -1,7 +1,7 @@
 # Android: корректная очистка сфокусированного поля
 
 Дата: **6 октября 2026**. Область: P1 из [аудита recorder](STUDIO-COMMAND-RECORDING.md#дополнительная-находка-apk-очистка-поля).
-Версия исходников APK: **1.2.46 / 10246**. Это отдельный Android этап; установленный
+Версия исходников APK: **1.2.46 / 10246**, source **`6a9f570f`**. Это отдельный Android этап; установленный
 UI `1c26ffc7`, API `eb7a7c26` и ранее принятые receipts не переписываются.
 
 ## Доказанный дефект
@@ -57,8 +57,86 @@ marker 5 и editor model 3. Проверены очистка всего мод�
 FIFO root-session ownership, unknown result без retry/typing/failure route, cancellation,
 partial/stale/malformed marker, exited process и bounded drain.
 
-Это source проверки, не Android instrumented proof. Сборка обеих debug flavors,
-full unit suites, signer/bootstrap verification и реальное поле Android фиксируются
-следующими receipts кандидата. **Установка/OTA публикация 1.2.46 ещё не выполнена.**
-Текущая fleet APK 1.2.45-dev не приобретает новый handler от обновления веба.
-Общий backlog **9 принято / 41 открыто** не изменён.
+Полные локальные DevDebug и EnterpriseDebug suites: **по 855 passed / 1 assumption-skipped**,
+71 suite, 0 failures/errors. Повторение тех же cases в двух flavors не даёт 1710
+уникальных проверок. Пропущенный существующий `ConfigRecoveryTest` требует
+непустых baked DEFAULT_SERVER_URL/API_KEY; manifest-driven candidate не выполняет
+это условие. Focused 45 входят в общий набор, их также нельзя складывать с ним.
+
+Обе debug flavors собраны offline из закреплённого Android tree. Pilot candidate:
+
+| Поле | Проверенное значение |
+| --- | --- |
+| Source commit | `6a9f570f2c0a4dc54a90b0be57a289dadc85d534` |
+| APK | `SphereAgent-pilot-candidate-1.2.46-dev-6a9f570.apk`, 8477355 bytes |
+| SHA256 | `87db8510a091de310481c39804899ac6255a243df8f8de630db65d428d3dafc4` |
+| Package/version | `com.sphereplatform.agent.pilot.debug`, `1.2.46-dev / 10246` |
+| Certificate SHA256 | `3ab40797d26e4f52f9e440afc6fe69f197caef71a5a27c63c86735bb1801871f` |
+| Built at | 6 октября, 12:34:28 UTC |
+| Delivery | **Не установлен, не опубликован в OTA** |
+
+Подпись соответствует прежнему локальному pilot baseline; apksigner, package/version,
+private bootstrap/manifest source checks прошли. Отдельно проверены ZIP CRC и
+SHA-1/Adler32 каждого DEX. Артефакт хранится локально в `.local-pilot/apk/`; APK,
+секреты, BuildConfig и raw build logs в репозиторий не опубликованы. В нём сохранён
+прежний debug video probe: planar input включён, GPU bridge выключен. Это не
+приёмка production stream strategy или подписанного производственного release.
+
+**Source CI `6a9f570f`**: backend/frontend/Android/Preview success, snapshot
+12:43 UTC. Android job построил и проверил signed release smoke с **одноразовым
+CI-only key**; это другой signer и не runtime proof на устройстве. Preview guard
+прошёл, deploy skipped. Последующий документационный head имеет собственный CI.
+
+## Реальное поле Android: helper без переустановки агента
+
+6 октября, **12:41:02 UTC**, один локальный `emulator-5554`, Android 9 / SDK 28,
+960×540, подтверждённый UID 0. На нём остался установленный Agent **1.2.44-dev / 10244**.
+Из кандидата загружен только root helper через временный CLASSPATH в
+`/data/local/tmp`; установка package, service restart или OTA не выполнялись.
+Тест использовал пустой поиск Android Settings Intelligence, не рабочие данные.
+
+1. Визуально подтверждён пустой поиск. XML возвращает его placeholder «Поиск…»
+   как text; сравнивался исходный placeholder, а не предположение `text == ""`.
+2. Введено тестовое `sphere-clear-original`, курсор перемещён с конца в начало
+   строки и на один символ вправо. Снимок ниже показывает это положение.
+3. Helper удалил **всю строку**, поле снова показало исходный placeholder.
+4. Повторный вызов на пустом поле сохранил пустое поле. Последующий `after-clear`
+   появился корректно: модификатор не оставил обычный ввод в Ctrl-состоянии.
+5. После теста выполнен Home; временные APK/XML удалены, отсутствие проверено.
+
+Один helper round-trip составил **1734 ms**, включая ADB/root/app_process startup.
+Это не frame latency, FPS или fleet p95. Начальная попытка fixture не смогла снять
+XML сразу после открытия поиска; затем установлены настоящий package
+`com.android.settings.intelligence` и ID `android:id/search_src_text`. Только чтение
+иерархии допускает до трёх ограниченных попыток; helper input не переотправляется.
+
+![Тестовая строка и курсор внутри поля](assets/android-focused-text-clear/before.png)
+
+![После helper: исходный placeholder пустого поля](assets/android-focused-text-clear/after.png)
+
+Это **native helper proof**, не полный canary нового установленного AdbActionExecutor:
+FIFO/marker/unknown/cancel contract проверен source unit tests, а установленный
+агент пока старый. Реальный clipboard не читался; неизменность его содержимого
+проверена моделью, отсутствие CUT — исходниками. Unicode/multiline проверены моделью,
+но не введены в реальное поле. SDK 26/34+, vendor root/SELinux/hidden APIs, password,
+IME/custom editors, focus races и полный `type_text.clear_first:true` canary после
+адресной установки остаются открытыми воротами.
+
+Первый Enterprise full run имел 19 ClassFormatError из-за одного повреждённого
+сгенерированного `.class`. Raw compiler output был корректен; подтверждённо неверный
+1753-byte transformed output сохранён privately и адресно пересоздан. Повторный
+полный Enterprise suite прошёл. Причина повреждения **не установлена**, это не
+исправление NTFS и не доказательство disk-growth writer:
+[отдельный host incident](HOST-FILESYSTEM-INCIDENT.md#повреждённый-generated-class-в-android-сборке).
+
+[Frozen receipts/source hashes/PNG](ANDROID-FOCUSED-TEXT-CLEAR-EVIDENCE.json) и
+[offline validator](../../../scripts/audit/validate_android_focused_text_clear.py)
+проверяют целостность документов без API/Android команд:
+
+```powershell
+& '.venv-audit/Scripts/python.exe' -m scripts.audit.validate_android_focused_text_clear
+```
+
+**Установка/OTA публикация 1.2.46 ещё не выполнена.** Remote PH025 с APK 1.2.45-dev
+не приобретает handler от обновления веба. Общий backlog **9 принято / 41 открыто**
+не изменён; source fix и два debug suites не закрывают весь Enterprise release gate.
