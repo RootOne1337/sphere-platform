@@ -10,6 +10,10 @@ depends_on = None
 
 
 def upgrade():
+    # Abort a contested deployment instead of waiting behind live transactions.
+    # LOCAL settings disappear with the migration transaction.
+    op.execute("SET LOCAL lock_timeout = '3s'")
+    op.execute("SET LOCAL statement_timeout = '15s'")
     # No source rewrite/backfill: older writers may still insert a NULL pair.
     op.add_column("script_versions", sa.Column("dag_hash", sa.String(64), nullable=True))
     op.add_column("script_versions", sa.Column("node_count", sa.Integer(), nullable=True))
