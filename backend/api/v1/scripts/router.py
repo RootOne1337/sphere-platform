@@ -6,7 +6,7 @@ from __future__ import annotations
 import uuid
 from typing import Literal
 
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, Response
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.core.dependencies import require_permission
@@ -16,6 +16,7 @@ from backend.models.user import User
 from backend.schemas.script import (
     CreateScriptRequest,
     RollbackScriptRequest,
+    ScriptCatalogResponse,
     ScriptDetailResponse,
     ScriptListResponse,
     ScriptResponse,
@@ -88,6 +89,29 @@ async def list_scripts(
 
 
 # ── Create ────────────────────────────────────────────────────────────────────
+
+@router.get(
+    "/catalog", response_model=ScriptCatalogResponse,
+    summary="Каталог скриптов без загрузки DAG",
+    responses={503: {"description": "Script catalog metadata unavailable"}},
+)
+async def list_script_catalog(
+    response: Response,
+    query: str | None = None,
+    page: int = Query(1, ge=1),
+    per_page: int = Query(50, ge=1, le=200),
+    state: Literal["active", "archived", "all"] = "active",
+    current_user: User = require_permission("script:read"),
+    svc: ScriptService = Depends(get_script_service),
+) -> ScriptCatalogResponse:
+    response.headers["Cache-Control"] = "no-store"
+    items, total = await svc.list_script_catalog(
+        org_id=current_user.org_id, query=query, page=page, per_page=per_page, state=state,
+    )
+    return ScriptCatalogResponse(
+        items=items, total=total, page=page, per_page=per_page,
+        pages=(total + per_page - 1) // per_page if total else 0,
+    )
 
 @router.post(
     "",

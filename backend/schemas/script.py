@@ -6,7 +6,7 @@ import uuid
 from datetime import datetime
 from typing import Literal
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 # ── Запросы ──────────────────────────────────────────────────────────────────
 
@@ -89,3 +89,54 @@ class ScriptListResponse(BaseModel):
     page: int
     per_page: int
     pages: int
+
+
+class ScriptCatalogVersionMetadata(BaseModel):
+    """A version identity and persisted summary, never a source response."""
+    model_config = ConfigDict(extra="forbid")
+
+    id: uuid.UUID
+    script_id: uuid.UUID
+    version: int = Field(ge=1, strict=True)
+    dag_hash: str = Field(pattern=r"^[0-9a-f]{64}$")
+    created_at: datetime
+
+
+class ScriptCatalogItem(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    id: uuid.UUID
+    org_id: uuid.UUID
+    name: str
+    description: str | None
+    is_archived: bool
+    created_at: datetime
+    updated_at: datetime
+    current_version_id: uuid.UUID | None
+    node_count: int | None = Field(ge=0, strict=True)
+    current_version: ScriptCatalogVersionMetadata | None
+
+    @model_validator(mode="after")
+    def validate_current_version(self) -> "ScriptCatalogItem":
+        if self.current_version_id is None:
+            if self.current_version is not None or self.node_count is not None:
+                raise ValueError("An unpublished script has no version metadata")
+        elif (
+            self.current_version is None
+            or self.node_count is None
+            or self.current_version.id != self.current_version_id
+            or self.current_version.script_id != self.id
+        ):
+            raise ValueError("Current version metadata must belong to the selected script")
+        return self
+
+
+class ScriptCatalogResponse(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    catalog_schema: Literal[1] = 1
+    items: list[ScriptCatalogItem]
+    total: int = Field(ge=0)
+    page: int = Field(ge=1)
+    per_page: int = Field(ge=1, le=200)
+    pages: int = Field(ge=0)

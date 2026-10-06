@@ -49,6 +49,18 @@ class BackendBootstrapImageTests(unittest.TestCase):
         heads = re.findall(r"^([a-zA-Z0-9_]+) (?:\([^)]+\) )*\(head\)$", result.stdout, flags=re.M)
         self.assertEqual(len(heads), 1, result.stdout)
 
+    def test_packaged_catalog_maintenance_requires_explicit_identity_before_sql(self):
+        for module in ["scripts.backfill_script_metadata", "scripts.publish_script_source"]:
+            with self.subTest(module=module):
+                help_result = self.command("-m", module, "--help")
+                self.assertEqual(help_result.returncode, 0, help_result.stdout + help_result.stderr)
+                self.assertIn("--org-id", help_result.stdout)
+                self.assertIn("--apply", help_result.stdout)
+                refused = self.command("-m", module)
+                self.assertEqual(refused.returncode, 2, refused.stdout + refused.stderr)
+                self.assertIn("--org-id", refused.stderr)
+                self.assertNotIn("ConnectionRefusedError", refused.stderr)
+
     def test_runtime_user_cannot_write_the_application_directory(self):
         self.assertNotEqual(os.geteuid(), 0)
         with self.assertRaises(OSError):

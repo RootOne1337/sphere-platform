@@ -237,7 +237,12 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/StartSessionRequest"
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/StartSessionRequest"
+                  }
+                ],
+                "title": "Body"
               }
             }
           }
@@ -345,7 +350,12 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/EndSessionRequest"
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/EndSessionRequest"
+                  }
+                ],
+                "title": "Body"
               }
             }
           }
@@ -758,7 +768,12 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/LoginRequest"
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/LoginRequest"
+                  }
+                ],
+                "title": "Body"
               }
             }
           },
@@ -808,7 +823,12 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/MFALoginRequest"
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/MFALoginRequest"
+                  }
+                ],
+                "title": "Body"
               }
             }
           },
@@ -1029,7 +1049,12 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/MFAVerifySetupRequest"
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/MFAVerifySetupRequest"
+                  }
+                ],
+                "title": "Body"
               }
             }
           },
@@ -1128,7 +1153,12 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/CreateAPIKeyRequest"
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/CreateAPIKeyRequest"
+                  }
+                ],
+                "title": "Body"
               }
             }
           },
@@ -1222,7 +1252,12 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/BatchExecutionRequest"
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/BatchExecutionRequest"
+                  }
+                ],
+                "title": "Body"
               }
             }
           },
@@ -1269,7 +1304,12 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/BroadcastBatchRequest"
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/BroadcastBatchRequest"
+                  }
+                ],
+                "title": "Body"
               }
             }
           },
@@ -1403,7 +1443,12 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/BulkActionRequest"
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/BulkActionRequest"
+                  }
+                ],
+                "title": "Body"
               }
             }
           },
@@ -1450,7 +1495,12 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/BulkDeleteRequest"
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/BulkDeleteRequest"
+                  }
+                ],
+                "title": "Body"
               }
             }
           },
@@ -1804,7 +1854,12 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/CreateDeviceEventRequest"
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/CreateDeviceEventRequest"
+                  }
+                ],
+                "title": "Body"
               }
             }
           }
@@ -2198,7 +2253,12 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/CreateDeviceRequest"
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/CreateDeviceRequest"
+                  }
+                ],
+                "title": "Body"
               }
             }
           }
@@ -2239,7 +2299,12 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/BulkStatusRequest"
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/BulkStatusRequest"
+                  }
+                ],
+                "title": "Body"
               }
             }
           },
@@ -2393,7 +2458,12 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/DeviceRegisterRequest"
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/DeviceRegisterRequest"
+                  }
+                ],
+                "title": "Body"
               }
             }
           }
@@ -2497,7 +2567,12 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/UpdateDeviceRequest"
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/UpdateDeviceRequest"
+                  }
+                ],
+                "title": "Body"
               }
             }
           }
@@ -2873,7 +2948,12 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/ExecuteShellRequest"
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/ExecuteShellRequest"
+                  }
+                ],
+                "title": "Body"
               }
             }
           }
@@ -2932,7 +3012,12 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/RequestLogcatRequest"
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/RequestLogcatRequest"
+                  }
+                ],
+                "title": "Body"
               }
             }
           }
@@ -3023,7 +3108,12 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/DiscoverRequest"
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/DiscoverRequest"
+                  }
+                ],
+                "title": "Body"
               }
             }
           },
@@ -3183,7 +3273,12 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/CreateEventTriggerRequest"
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/CreateEventTriggerRequest"
+                  }
+                ],
+                "title": "Body"
               }
             }
           }
@@ -3287,7 +3382,12 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/UpdateEventTriggerRequest"
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/UpdateEventTriggerRequest"
+                  }
+                ],
+                "title": "Body"
               }
             }
           }
@@ -3659,7 +3759,12 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/CreateGameAccountRequest"
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/CreateGameAccountRequest"
+                  }
+                ],
+                "title": "Body"
               }
             }
           }
@@ -3699,7 +3804,12 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/ImportAccountsRequest"
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/ImportAccountsRequest"
+                  }
+                ],
+                "title": "Body"
               }
             }
           },
@@ -3829,7 +3939,12 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/UpdateGameAccountRequest"
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/UpdateGameAccountRequest"
+                  }
+                ],
+                "title": "Body"
               }
             }
           }
@@ -3931,7 +4046,12 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/AssignAccountRequest"
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/AssignAccountRequest"
+                  }
+                ],
+                "title": "Body"
               }
             }
           }
@@ -3989,7 +4109,12 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/ReleaseAccountRequest"
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/ReleaseAccountRequest"
+                  }
+                ],
+                "title": "Body"
               }
             }
           }
@@ -4057,7 +4182,12 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/CreateGroupRequest"
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/CreateGroupRequest"
+                  }
+                ],
+                "title": "Body"
               }
             }
           },
@@ -4121,7 +4251,12 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/UpdateGroupRequest"
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/UpdateGroupRequest"
+                  }
+                ],
+                "title": "Body"
               }
             }
           }
@@ -4218,7 +4353,12 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/MoveDevicesRequest"
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/MoveDevicesRequest"
+                  }
+                ],
+                "title": "Body"
               }
             }
           }
@@ -4306,7 +4446,12 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/SetTagsRequest"
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/SetTagsRequest"
+                  }
+                ],
+                "title": "Body"
               }
             }
           }
@@ -4451,7 +4596,12 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/CreateLocationRequest"
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/CreateLocationRequest"
+                  }
+                ],
+                "title": "Body"
               }
             }
           },
@@ -4561,7 +4711,12 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/UpdateLocationRequest"
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/UpdateLocationRequest"
+                  }
+                ],
+                "title": "Body"
               }
             }
           }
@@ -4677,7 +4832,12 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/MoveDevicesToLocationRequest"
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/MoveDevicesToLocationRequest"
+                  }
+                ],
+                "title": "Body"
               }
             }
           }
@@ -4734,7 +4894,12 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/MoveDevicesToLocationRequest"
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/MoveDevicesToLocationRequest"
+                  }
+                ],
+                "title": "Body"
               }
             }
           }
@@ -5040,7 +5205,12 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/AlertmanagerPayload"
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/AlertmanagerPayload"
+                  }
+                ],
+                "title": "Payload"
               }
             }
           },
@@ -5166,7 +5336,12 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/WebhookCreate"
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/WebhookCreate"
+                  }
+                ],
+                "title": "Body"
               }
             }
           },
@@ -5276,7 +5451,12 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/WebhookUpdate"
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/WebhookUpdate"
+                  }
+                ],
+                "title": "Body"
               }
             }
           }
@@ -5361,7 +5541,12 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/N8nTaskCreate"
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/N8nTaskCreate"
+                  }
+                ],
+                "title": "Body"
               }
             }
           },
@@ -5482,7 +5667,12 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/UpdatePipelineSettingsRequest"
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/UpdatePipelineSettingsRequest"
+                  }
+                ],
+                "title": "Body"
               }
             }
           },
@@ -5529,7 +5719,12 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/ToggleRequest"
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/ToggleRequest"
+                  }
+                ],
+                "title": "Body"
               }
             }
           },
@@ -5576,7 +5771,12 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/ToggleRequest"
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/ToggleRequest"
+                  }
+                ],
+                "title": "Body"
               }
             }
           },
@@ -5623,7 +5823,12 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/ToggleRequest"
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/ToggleRequest"
+                  }
+                ],
+                "title": "Body"
               }
             }
           },
@@ -5670,7 +5875,12 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/ToggleRequest"
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/ToggleRequest"
+                  }
+                ],
+                "title": "Body"
               }
             }
           },
@@ -5775,7 +5985,12 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/NickGenerateRequest"
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/NickGenerateRequest"
+                  }
+                ],
+                "title": "Body"
               }
             }
           },
@@ -5822,7 +6037,12 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/NickCheckRequest"
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/NickCheckRequest"
+                  }
+                ],
+                "title": "Body"
               }
             }
           },
@@ -5965,7 +6185,12 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/CreatePipelineRequest"
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/CreatePipelineRequest"
+                  }
+                ],
+                "title": "Body"
               }
             }
           }
@@ -6382,7 +6607,12 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/UpdatePipelineRequest"
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/UpdatePipelineRequest"
+                  }
+                ],
+                "title": "Body"
               }
             }
           }
@@ -6573,7 +6803,12 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/RunPipelineRequest"
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/RunPipelineRequest"
+                  }
+                ],
+                "title": "Body"
               }
             }
           }
@@ -6631,7 +6866,12 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/RunPipelineBatchRequest"
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/RunPipelineBatchRequest"
+                  }
+                ],
+                "title": "Body"
               }
             }
           }
@@ -6768,7 +7008,12 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/CreateScheduleRequest"
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/CreateScheduleRequest"
+                  }
+                ],
+                "title": "Body"
               }
             }
           }
@@ -6872,7 +7117,12 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/UpdateScheduleRequest"
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/UpdateScheduleRequest"
+                  }
+                ],
+                "title": "Body"
               }
             }
           }
@@ -7225,7 +7475,12 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/CreateScriptRequest"
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/CreateScriptRequest"
+                  }
+                ],
+                "title": "Body"
               }
             }
           }
@@ -7254,6 +7509,101 @@
         }
       }
     },
+    "/api/v1/scripts/catalog": {
+      "get": {
+        "tags": [
+          "scripts"
+        ],
+        "summary": "Каталог скриптов без загрузки DAG",
+        "operationId": "list_script_catalog_api_v1_scripts_catalog_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "query",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Query"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "default": 1,
+              "title": "Page"
+            }
+          },
+          {
+            "name": "per_page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 200,
+              "minimum": 1,
+              "default": 50,
+              "title": "Per Page"
+            }
+          },
+          {
+            "name": "state",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "enum": [
+                "active",
+                "archived",
+                "all"
+              ],
+              "type": "string",
+              "default": "active",
+              "title": "State"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ScriptCatalogResponse"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Script catalog metadata unavailable"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/scripts/validate": {
       "post": {
         "tags": [
@@ -7265,7 +7615,12 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/ValidateScriptRequest"
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/ValidateScriptRequest"
+                  }
+                ],
+                "title": "Body"
               }
             }
           },
@@ -7380,7 +7735,12 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/UpdateScriptRequest"
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/UpdateScriptRequest"
+                  }
+                ],
+                "title": "Body"
               }
             }
           }
@@ -8061,7 +8421,12 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/CreateTaskRequest"
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/CreateTaskRequest"
+                  }
+                ],
+                "title": "Body"
               }
             }
           }
@@ -8555,7 +8920,12 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/CreateRecoveryRequest"
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/CreateRecoveryRequest"
+                  }
+                ],
+                "title": "Payload"
               }
             }
           },
@@ -8621,7 +8991,12 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/DispatchRecoveryRequest"
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/DispatchRecoveryRequest"
+                  }
+                ],
+                "title": "Payload"
               }
             }
           }
@@ -8977,7 +9352,12 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/CreateReleaseRequest"
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/CreateReleaseRequest"
+                  }
+                ],
+                "title": "Payload"
               }
             }
           }
@@ -9126,7 +9506,12 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/CreateUserRequest"
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/CreateUserRequest"
+                  }
+                ],
+                "title": "Body"
               }
             }
           }
@@ -9234,7 +9619,12 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/UpdateRoleRequest"
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/UpdateRoleRequest"
+                  }
+                ],
+                "title": "Body"
               }
             }
           }
@@ -9342,7 +9732,12 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/AWGConfigPreviewRequest"
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/AWGConfigPreviewRequest"
+                  }
+                ],
+                "title": "Request"
               }
             }
           },
@@ -9383,7 +9778,12 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/VPNAssignRequest"
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/VPNAssignRequest"
+                  }
+                ],
+                "title": "Req"
               }
             }
           },
@@ -9471,7 +9871,12 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/VPNBulkRevokeRequest"
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/VPNBulkRevokeRequest"
+                  }
+                ],
+                "title": "Req"
               }
             }
           },
@@ -9646,7 +10051,12 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/VPNBulkRotateRequest"
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/VPNBulkRotateRequest"
+                  }
+                ],
+                "title": "Req"
               }
             }
           },
@@ -9692,7 +10102,12 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/KillSwitchRequest"
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/KillSwitchRequest"
+                  }
+                ],
+                "title": "Req"
               }
             }
           },
@@ -10492,10 +10907,6 @@
             "title": "Schema Version"
           },
           "active": {
-            "type": "boolean",
-            "enum": [
-              true
-            ],
             "const": true,
             "title": "Active"
           },
@@ -10718,7 +11129,11 @@
             "default": {}
           },
           "annotations": {
-            "$ref": "#/components/schemas/AlertAnnotations",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AlertAnnotations"
+              }
+            ],
             "default": {
               "summary": "",
               "description": "",
@@ -13412,18 +13827,10 @@
       "DeviceLogReadScope": {
         "properties": {
           "schema_version": {
-            "type": "integer",
-            "enum": [
-              1
-            ],
             "const": 1,
             "title": "Schema Version"
           },
           "scope": {
-            "type": "string",
-            "enum": [
-              "recent-file-tail"
-            ],
             "const": "recent-file-tail",
             "title": "Scope"
           },
@@ -13463,10 +13870,6 @@
             "title": "Bytes Scanned"
           },
           "scan_byte_limit": {
-            "type": "integer",
-            "enum": [
-              2097152
-            ],
             "const": 2097152,
             "title": "Scan Byte Limit"
           },
@@ -13477,18 +13880,10 @@
             "title": "Response Lines Bytes"
           },
           "response_byte_limit": {
-            "type": "integer",
-            "enum": [
-              524288
-            ],
             "const": 524288,
             "title": "Response Byte Limit"
           },
           "max_line_bytes": {
-            "type": "integer",
-            "enum": [
-              16384
-            ],
             "const": 16384,
             "title": "Max Line Bytes"
           },
@@ -13510,18 +13905,10 @@
             "title": "Files Available"
           },
           "max_files": {
-            "type": "integer",
-            "enum": [
-              3
-            ],
             "const": 3,
             "title": "Max Files"
           },
           "concurrent_reads_per_worker": {
-            "type": "integer",
-            "enum": [
-              4
-            ],
             "const": 4,
             "title": "Concurrent Reads Per Worker"
           }
@@ -14872,19 +15259,11 @@
       "FleetCoverageResponse": {
         "properties": {
           "schema_version": {
-            "type": "integer",
-            "enum": [
-              1
-            ],
             "const": 1,
             "title": "Schema Version",
             "default": 1
           },
           "scope": {
-            "type": "string",
-            "enum": [
-              "current-tenant-active-inventory"
-            ],
             "const": "current-tenant-active-inventory",
             "title": "Scope",
             "default": "current-tenant-active-inventory"
@@ -16022,10 +16401,6 @@
             "title": "Outcomes"
           },
           "execution_confirmed": {
-            "type": "boolean",
-            "enum": [
-              false
-            ],
             "const": false,
             "title": "Execution Confirmed",
             "default": false
@@ -17964,6 +18339,185 @@
         "title": "ScheduleResponse",
         "description": "Ответ расписания."
       },
+      "ScriptCatalogItem": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "org_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Org Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          },
+          "is_archived": {
+            "type": "boolean",
+            "title": "Is Archived"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Updated At"
+          },
+          "current_version_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Current Version Id"
+          },
+          "node_count": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Node Count"
+          },
+          "current_version": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ScriptCatalogVersionMetadata"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "id",
+          "org_id",
+          "name",
+          "description",
+          "is_archived",
+          "created_at",
+          "updated_at",
+          "current_version_id",
+          "node_count",
+          "current_version"
+        ],
+        "title": "ScriptCatalogItem"
+      },
+      "ScriptCatalogResponse": {
+        "properties": {
+          "catalog_schema": {
+            "const": 1,
+            "title": "Catalog Schema",
+            "default": 1
+          },
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/ScriptCatalogItem"
+            },
+            "type": "array",
+            "title": "Items"
+          },
+          "total": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Total"
+          },
+          "page": {
+            "type": "integer",
+            "minimum": 1.0,
+            "title": "Page"
+          },
+          "per_page": {
+            "type": "integer",
+            "maximum": 200.0,
+            "minimum": 1.0,
+            "title": "Per Page"
+          },
+          "pages": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Pages"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "items",
+          "total",
+          "page",
+          "per_page",
+          "pages"
+        ],
+        "title": "ScriptCatalogResponse"
+      },
+      "ScriptCatalogVersionMetadata": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "script_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Script Id"
+          },
+          "version": {
+            "type": "integer",
+            "minimum": 1.0,
+            "title": "Version"
+          },
+          "dag_hash": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$",
+            "title": "Dag Hash"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "id",
+          "script_id",
+          "version",
+          "dag_hash",
+          "created_at"
+        ],
+        "title": "ScriptCatalogVersionMetadata",
+        "description": "A version identity and persisted summary, never a source response."
+      },
       "ScriptDetailResponse": {
         "properties": {
           "id": {
@@ -18161,10 +18715,6 @@
       "ScriptValidationResponse": {
         "properties": {
           "schema_version": {
-            "type": "integer",
-            "enum": [
-              1
-            ],
             "const": 1,
             "title": "Schema Version",
             "default": 1
@@ -18189,19 +18739,11 @@
             "title": "Action Types"
           },
           "scope": {
-            "type": "string",
-            "enum": [
-              "structure-routes-lua-safety"
-            ],
             "const": "structure-routes-lua-safety",
             "title": "Scope",
             "default": "structure-routes-lua-safety"
           },
           "device_execution_verified": {
-            "type": "boolean",
-            "enum": [
-              false
-            ],
             "const": false,
             "title": "Device Execution Verified",
             "default": false
@@ -18317,10 +18859,6 @@
       "SessionCapabilities": {
         "properties": {
           "schema_version": {
-            "type": "integer",
-            "enum": [
-              1
-            ],
             "const": 1,
             "title": "Schema Version",
             "default": 1
@@ -19280,10 +19818,6 @@
             "title": "Completed At"
           },
           "source": {
-            "type": "string",
-            "enum": [
-              "android_uiautomator_root"
-            ],
             "const": "android_uiautomator_root",
             "title": "Source",
             "default": "android_uiautomator_root"
@@ -20857,10 +21391,6 @@
             "title": "Details"
           },
           "execution_confirmed": {
-            "type": "boolean",
-            "enum": [
-              false
-            ],
             "const": false,
             "title": "Execution Confirmed",
             "default": false
@@ -21041,13 +21571,6 @@
           "type": {
             "type": "string",
             "title": "Error Type"
-          },
-          "input": {
-            "title": "Input"
-          },
-          "ctx": {
-            "type": "object",
-            "title": "Context"
           }
         },
         "type": "object",

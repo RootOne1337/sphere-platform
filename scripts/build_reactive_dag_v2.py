@@ -23,16 +23,10 @@ FLOW (без изменений):
     tapped anything else  -> sleep -> loop (tap already done)
   watchdog: 28 cycles without password -> restart (stop + launch)
 """
-import asyncio
-import json
+
+
 import os
 
-import asyncpg
-
-DB_DSN = os.environ.get(
-    "DATABASE_URL",
-    os.environ.get("POSTGRES_URL", "postgresql://sphere:sphere@localhost:5432/sphereplatform"),
-).replace("+asyncpg", "")
 SCRIPT_VERSION_ID = "21e7f39a-f1ea-4b16-bbe0-c20f1f611e61"
 
 MAX_CYCLES_BEFORE_RESTART = 28
@@ -411,22 +405,9 @@ def build_dag():
     return dag
 
 
-async def deploy(dag):
-    conn = await asyncpg.connect(DB_DSN)
-    try:
-        row = await conn.fetchrow(
-            "UPDATE script_versions SET dag=$1 WHERE id=$2 RETURNING id",
-            json.dumps(dag), SCRIPT_VERSION_ID
-        )
-        if row:
-            print(f"✅ Deployed to script_versions.id={row['id']}")
-        else:
-            print("❌ No row updated — check SCRIPT_VERSION_ID")
-    finally:
-        await conn.close()
-
-
 if __name__ == "__main__":
-    dag = build_dag()
-    print(json.dumps(dag, indent=2, ensure_ascii=False)[:500], "...")
-    asyncio.run(deploy(dag))
+    import sys
+    from pathlib import Path
+    sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+    from scripts.publish_script_source import generated_main
+    raise SystemExit(generated_main(build_dag()))

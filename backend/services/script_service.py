@@ -16,14 +16,14 @@ from typing import Literal
 import structlog
 from fastapi import HTTPException
 from pydantic import ValidationError
-from sqlalchemy import func, or_, select
+from sqlalchemy import and_, func, or_, select, true
 from sqlalchemy.exc import DBAPIError
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from backend.models.script import Script, ScriptVersion
 from backend.schemas.dag import DAGScript
-from backend.schemas.script import CreateScriptRequest, UpdateScriptRequest
+from backend.schemas.script import CreateScriptRequest, ScriptCatalogItem, UpdateScriptRequest
 
 logger = structlog.get_logger()
 
@@ -33,6 +33,56 @@ def _compute_dag_hash(dag_dict: dict) -> str:
     return hashlib.sha256(
         json.dumps(dag_dict, sort_keys=True, ensure_ascii=False).encode()
     ).hexdigest()
+
+
+def _compute_dag_metadata(dag_dict: dict) -> tuple[str, int]:
+    """Derive metadata without normalizing historical source or inventing a count."""
+    if not isinstance(dag_dict, dict) or not isinstance(dag_dict.get("nodes"), list):
+        raise ValueError("Stored DAG nodes must be an array")
+    return _compute_dag_hash(dag_dict), len(dag_dict["nodes"])
+
+
+def _script_catalog_statement(
+    org_id: uuid.UUID,
+    query: str | None,
+    page: int,
+    per_page: int,
+    state: Literal["active", "archived", "all"],
+):
+    """Explicit scalar projection; the count survives an empty offset page."""
+    filtered = select(
+        Script.id, Script.org_id, Script.name, Script.description, Script.is_archived,
+        Script.created_at, Script.updated_at, Script.current_version_id,
+    ).where(Script.org_id == org_id)
+    if state != "all":
+        filtered = filtered.where(Script.is_archived.is_(state == "archived"))
+    if query:
+        filtered = filtered.where(or_(
+            Script.name.ilike(f"%{query}%"), Script.description.ilike(f"%{query}%"),
+        ))
+    candidates = filtered.cte("catalog_scripts")
+    count = select(func.count().label("total")).select_from(candidates).cte("catalog_count")
+    page_rows = (
+        select(*candidates.c).order_by(candidates.c.updated_at.desc(), candidates.c.id)
+        .offset((page - 1) * per_page).limit(per_page).cte("catalog_page")
+    )
+    versions = ScriptVersion.__table__
+    owned_page = page_rows.outerjoin(versions, and_(
+        page_rows.c.current_version_id == versions.c.id,
+        versions.c.script_id == page_rows.c.id,
+        versions.c.org_id == page_rows.c.org_id,
+        versions.c.org_id == org_id,
+    ))
+    return select(
+        count.c.total, *page_rows.c,
+        versions.c.id.label("version_id"),
+        versions.c.script_id.label("version_script_id"),
+        versions.c.version.label("version_number"),
+        versions.c.dag_hash, versions.c.node_count,
+        versions.c.created_at.label("version_created_at"),
+    ).select_from(count.outerjoin(owned_page, true())).order_by(
+        page_rows.c.updated_at.desc(), page_rows.c.id,
+    )
 
 
 class ScriptService:
@@ -109,6 +159,13 @@ class ScriptService:
         dag_hash = _compute_dag_hash(dag_dict)
         return dag_dict, dag_hash
 
+    async def populate_version_metadata(self, version: ScriptVersion) -> None:
+        # JSONB may change numeric representations. Hash exactly what a new
+        # PostgreSQL read sees, before either metadata or the pointer commits.
+        await self.db.flush()
+        await self.db.refresh(version, attribute_names=["dag"])
+        version.dag_hash, version.node_count = _compute_dag_metadata(version.dag)
+
     # ── CRUD ─────────────────────────────────────────────────────────────────
 
     async def create_script(
@@ -136,7 +193,7 @@ class ScriptService:
             created_by_id=user_id,
         )
         self.db.add(version)
-        await self.db.flush()
+        await self.populate_version_metadata(version)
 
         script.current_version_id = version.id
         logger.info("script.created", script_id=str(script.id), org_id=str(org_id))
@@ -183,7 +240,7 @@ class ScriptService:
                 created_by_id=user_id,
             )
             self.db.add(new_version)
-            await self.db.flush()
+            await self.populate_version_metadata(new_version)
             script.current_version_id = new_version.id
 
         logger.info("script.updated", script_id=str(script_id))
@@ -250,6 +307,45 @@ class ScriptService:
 
         return items, count
 
+    async def list_script_catalog(
+        self,
+        org_id: uuid.UUID,
+        query: str | None = None,
+        page: int = 1,
+        per_page: int = 50,
+        state: Literal["active", "archived", "all"] = "active",
+    ) -> tuple[list[ScriptCatalogItem], int]:
+        rows = (await self.db.execute(
+            _script_catalog_statement(org_id, query, page, per_page, state)
+        )).mappings().all()
+        total = rows[0]["total"]
+        items = []
+        for row in rows:
+            if row["id"] is None:  # count-only row for an empty page
+                continue
+            version = None
+            if row["version_id"] is not None:
+                version = {
+                    "id": row["version_id"], "script_id": row["version_script_id"],
+                    "version": row["version_number"], "dag_hash": row["dag_hash"],
+                    "created_at": row["version_created_at"],
+                }
+            try:
+                items.append(ScriptCatalogItem.model_validate({
+                    "id": row["id"], "org_id": row["org_id"], "name": row["name"],
+                    "description": row["description"], "is_archived": row["is_archived"],
+                    "created_at": row["created_at"], "updated_at": row["updated_at"],
+                    "current_version_id": row["current_version_id"],
+                    "node_count": row["node_count"], "current_version": version,
+                }))
+            except ValidationError as exc:
+                raise HTTPException(
+                    status_code=503,
+                    detail={"code": "script_catalog_metadata_unavailable"},
+                    headers={"Cache-Control": "no-store"},
+                ) from exc
+        return items, total
+
     async def archive_script(
         self, script_id: uuid.UUID, org_id: uuid.UUID,
         expected_current_version_id: uuid.UUID | None = None,
@@ -313,7 +409,7 @@ class ScriptService:
             created_by_id=user_id,
         )
         self.db.add(rollback_version)
-        await self.db.flush()
+        await self.populate_version_metadata(rollback_version)
         script.current_version_id = rollback_version.id
 
         logger.info(

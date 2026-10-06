@@ -4,7 +4,7 @@ Generated from `backend.main.app.openapi()` by `scripts/export_api_docs.py`.
 Regenerate with `python -m scripts.export_api_docs`; verify with `--check`.
 The exporter does not run startup hooks or send HTTP requests.
 
-**180 HTTP operations across 142 paths.**
+**181 HTTP operations across 143 paths.**
 
 Full parameters, request bodies, response schemas and declared security schemes:
 [OpenAPI JSON](openapi.json). Manual explanations:
@@ -152,6 +152,7 @@ for tested behavior and remaining limits.
 | `POST` | `/api/v1/schedules/{schedule_id}/toggle` | schedules | 200, 422 | Включить / выключить расписание |
 | `GET` | `/api/v1/scripts` | scripts | 200, 422 | Список скриптов с пагинацией |
 | `POST` | `/api/v1/scripts` | scripts | 201, 422 | Создать скрипт с DAG |
+| `GET` | `/api/v1/scripts/catalog` | scripts | 200, 422, 503 | Каталог скриптов без загрузки DAG |
 | `POST` | `/api/v1/scripts/validate` | scripts | 200, 422 | Проверить черновик без сохранения и выполнения |
 | `DELETE` | `/api/v1/scripts/{script_id}` | scripts | 204, 422 | Архивировать скрипт (soft delete, не удаляет версии) |
 | `GET` | `/api/v1/scripts/{script_id}` | scripts | 200, 422 | Получить скрипт с историей версий |

@@ -3,11 +3,8 @@ Build NEW reactive DAG: scan screen → see element → tap it → loop.
 Uses tap_first_visible (one dump, all candidates, auto-tap).
 Uses find_first_element + condition(Lua) for special routing (password, game-loaded).
 """
-import json
-import subprocess
 import sys
 
-DOCKER = r"C:\Program Files\Docker\Docker\resources\bin\docker.exe"
 SCRIPT_ID = "770bf806-6fb6-4e44-abc6-dc20b53c32ef"
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -352,19 +349,9 @@ for c in TAP_CANDIDATES:
         sel = sel[:50] + "..."
     print(f"  {c['label']:20s} {c['strategy']:6s} {sel}")
 
-# ── Write to DB ──
-dag_json = json.dumps(dag, ensure_ascii=False)
-dag_escaped = dag_json.replace("'", "''")
-sql = f"UPDATE script_versions SET dag = '{dag_escaped}' WHERE script_id = '{SCRIPT_ID}';"
-
-result = subprocess.run(
-    [DOCKER, "--context", "default", "exec", "-i", "sphere-platform-postgres-1",
-     "psql", "-U", "sphere", "-d", "sphereplatform", "-c", sql],
-    capture_output=True, text=True, encoding='utf-8'
-)
-if result.returncode != 0:
-    print("ERROR updating DAG:", result.stderr)
-    sys.exit(1)
-
-print(f"\nDB update: {result.stdout.strip()}")
-print("\n✓ REACTIVE DAG deployed!")
+# Publish a new immutable version only with explicit tenant/current-version flags.
+if __name__ == "__main__":
+    from pathlib import Path
+    sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+    from scripts.publish_script_source import generated_main
+    raise SystemExit(generated_main(dag))
