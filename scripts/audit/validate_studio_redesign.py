@@ -106,6 +106,30 @@ def main() -> None:
         assert repair["type"] == "tree" and repair["canonicalGitSha1Verified"] and repair["originalQuarantined"]
         assert repair["historyAndWorkingTreeChanged"] is False
 
+    ci = receipts["source-ci"]
+    assert ci["source"] == ci["installedUiSource"] == ui and ci["installedApiSource"] == api
+    assert ci["allFourCompletedSuccess"] and ci["documentationHeadChecksSeparate"]
+    assert {row["workflow"] for row in ci["workflows"]} == {"backend", "frontend", "preview", "android"}
+    for row in ci["workflows"]:
+        assert row["source"] == ui and row["status"] == "completed" and row["conclusion"] == "success"
+        assert row["url"] == f"https://github.com/RootOne1337/sphere-platform/actions/runs/{row['runId']}"
+        expected_jobs = {"guard": "success", "deploy": "skipped"} if row["workflow"] == "preview" else None
+        if expected_jobs is not None:
+            assert {job["name"]: job["conclusion"] for job in row["jobs"]} == expected_jobs
+        else:
+            assert row["jobs"] and all(job["conclusion"] == "success" for job in row["jobs"])
+    assert ci["previewDeploymentPerformed"] is False
+    assert ci["backendTestSummary"] == {"passed": 2844, "skipped": 30, "warnings": 1}
+    assert not any(ci[key] for key in ["fleetSlaProven", "allActionsProven", "storageWriterIdentified"])
+    sample = receipts["catalog-payload-sample"]
+    assert sample["apiSource"] == api and sample["uiSource"] == ui and sample["httpStatus"] == 200
+    assert sample["request"] == {"path": "/api/v1/scripts", "state": "active", "page": 1, "per_page": 25}
+    assert sample["scope"] == "one-real-current-page-read-no-load-or-heap-profile"
+    assert sample["rowsReturned"] == sample["rowsContainingFullCurrentDag"] == sample["total"] == 19
+    assert sample["decodedResponseBytes"] == sample["downloadedBodyBytes"] == 31368
+    assert sample["contentEncoding"] == "identity" and sample["aggregateNodesInReturnedDags"] == 106
+    assert 0 < sample["dagJsonContributionBytes"] < sample["decodedResponseBytes"]
+
     canaries = [receipts["remote-canary"], receipts["remote-canary-final"]]
     ids = set()
     for canary in canaries:

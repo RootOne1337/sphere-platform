@@ -239,6 +239,16 @@
       "name": "native-ui",
       "file": "evidence/studio-redesign/native-ui.json",
       "sha256": "0f9e98432816c9014431c6d861d5e906f554c3c8918314cfdc0a050d8facec89"
+    },
+    {
+      "name": "source-ci",
+      "file": "evidence/studio-redesign/source-ci.json",
+      "sha256": "72f2f73c6b1d5d330b78ad86c06e7d637ef7b70ef69acd323448eeb22786308b"
+    },
+    {
+      "name": "catalog-payload-sample",
+      "file": "evidence/studio-redesign/catalog-payload-sample.json",
+      "sha256": "510332e4f468b0e42897476fbb73be75baea81292d025ce4535f4575660d8a2c"
     }
   ],
   "screenshots": [
@@ -466,5 +476,7 @@
     "Screenshots with older revisions retain their original source; baseline and intermediate material is historical.",
     "A static screen with an old frame does not by itself measure stream FPS or prove loss of connectivity.",
     "Disk/RAM writer remains unknown; no cleanup or storage leak diagnosis is asserted."
-  ]
+  ],
+  "supplementRecordedAt": "2026-10-06T02:19:17.091961+00:00",
+  "supplementScope": "completed-source-ci-and-one-small-catalog-response-no-new-deployment-or-android-actions"
 }

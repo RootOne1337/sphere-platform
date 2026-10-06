@@ -30,12 +30,17 @@ API `c2b91e32` на [3015/scripts](http://127.0.0.1:3015/scripts). Сохран�
 итоговые счётчики; карточка результата обновлена для обеих тем и узких экранов.
 **1451 tests / 125 suites**, types/build прошли. Два canary одной remote PH025 v1
 получили по 3 успешных отчёта; это не все runtime actions или frame-exact replay.
+Все четыре source CI `a670a3df` завершились success; backend — 2844 passed /
+30 skipped / 1 warning. [CI receipt](audits/2026-10-06/evidence/studio-redesign/source-ci.json)
+отдельно от проверок документационного head. Preview deploy skipped по условию
+включения; success workflow не означает hosted deploy.
 Сохранены 45 соседних контейнеров; срезы 14 online / 5 offline из 19 не являются SLA.
 Общий счёт **9 / 41** сохраняется; metadata-only каталог, preflight и trace/replay
 остаются отдельными приоритетами.
 [Результат и native-скриншоты](audits/2026-10-06/STUDIO-REDESIGN.md) ·
 [Evidence](audits/2026-10-06/STUDIO-REDESIGN-EVIDENCE.json) ·
-[Инструкция](operations/SCRIPT-STUDIO.md) · [Приоритеты](audits/2026-10-06/ENTERPRISE-PRIORITIES.md).
+[Инструкция](operations/SCRIPT-STUDIO.md) · [Приоритеты](audits/2026-10-06/ENTERPRISE-PRIORITIES.md) ·
+[Следующий контракт каталога](audits/2026-10-06/SCRIPT-CATALOG-METADATA-CONTRACT.md).
 
 **Историческая установка 6 октября — Script Studio, этап A:** API `c2b91e32`, UI `952b5e2f` на
 [3015/scripts/builder](http://127.0.0.1:3015/scripts/builder). Граф ↔ JSON, 32 действия,

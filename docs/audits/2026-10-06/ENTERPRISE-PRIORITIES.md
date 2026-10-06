@@ -27,6 +27,14 @@ metadata-only контракт с закреплёнными version/hash/node_c
 затем измерение payload/query/cache на больших fixtures и установленном API.
 Это вывод из кода, а не установленная причина прежнего host memory/storage роста.
 
+[Контракт следующего этапа](SCRIPT-CATALOG-METADATA-CONTRACT.md): отдельный
+совместимый маршрут, persisted pair на версии, backfill и projection без DAG;
+предварительно перевести прямые Python/SQL writers, которые сейчас могут менять
+сохранённый источник. Один [живой GET](evidence/studio-redesign/catalog-payload-sample.json)
+подтвердил 19/19 полных DAG, 31,368 B ответа; это не нагрузочный тест или heap/leak
+профиль. Контракт ещё не реализован, P1 открыт. Все четыре source CI установленного
+UI завершились success: [receipt](evidence/studio-redesign/source-ci.json).
+
 Далее: EP-016 versioned schemas/capability preflight, EP-015 conflict diff и sidebar
 dirty route blocker, EP-018 text/navigation/selector recording, durable launch
 reconciliation, EP-019/020 agent-correlated trace/replay. Они не заменяют общие

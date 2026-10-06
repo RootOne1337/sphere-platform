@@ -181,9 +181,10 @@ presented as the cause of host disk/RAM growth.
 
 ## Source review: catalog payload retention remains open (P1)
 
-Reviewed on 2026-10-06. This is a code-derived finding, not a measured live
-response, browser heap profile or diagnosis of the earlier PC/Docker storage
-growth. The UI-only delivery does **not** close this P1.
+Reviewed on 2026-10-06. The finding originated in source review; the separate
+finite response observation below subsequently confirmed it for the present
+small catalog. Neither observation is a browser heap profile or diagnosis of
+the earlier PC/Docker storage growth. The UI-only delivery does **not** close P1.
 
 The current catalog GET `/scripts` does not offer an `include_dag` parameter.
 Its serializer calls `_to_script_response` for every returned row;
@@ -237,3 +238,40 @@ legacy compatibility and cancellation/session guards. Measure actual payload
 bytes, query work and cache/heap behavior using large 100-row fixtures and a
 deployed API before closing P1. The earlier 9 accepted / 41 open ledger is not
 advanced by this source review.
+
+### Finite response baseline and next implementation contract
+
+At **02:13:52 UTC**, one authenticated read through UI **a670a3df** and API
+**c2b91e32** returned 19 active rows and **19 full current DAGs**: 31,368 decoded
+body bytes, 31,368 downloaded body bytes with identity encoding, 106 aggregate
+nodes. Re-serializing only the DAG objects contributed 17,715 bytes; this is not
+exact per-field wire accounting. The local HTTP round trip was 8.591 ms, including
+the UI proxy and response. It is not WAN latency, SQL timing, a load result or
+evidence of heap growth. No task or version was written by this read.
+[Bounded sample](evidence/studio-redesign/catalog-payload-sample.json).
+
+The [next catalog contract](SCRIPT-CATALOG-METADATA-CONTRACT.md) specifies a
+separate compatible endpoint, version-owned persisted hash/count, explicit SQL
+projection, resumable backfill, tenant/concurrency/query regressions and measured
+rollout/rollback gates. Review found legacy Python/SQL writers that mutate an
+existing DAG or bypass the service: these must be migrated or retired before
+stored metadata is trusted. JSONB numeric round-trip/hash equivalence is a
+separate unmeasured implementation risk requiring a PostgreSQL fixture. The
+contract is a plan; the endpoint, columns, migration and backfill are not deployed.
+
+### Completed source CI, separate from deployment acceptance
+
+All four workflows for installed UI source **a670a3df** completed successfully:
+[backend](https://github.com/RootOne1337/sphere-platform/actions/runs/37401985029),
+[frontend](https://github.com/RootOne1337/sphere-platform/actions/runs/37401985124),
+[preview](https://github.com/RootOne1337/sphere-platform/actions/runs/37401985130),
+[Android](https://github.com/RootOne1337/sphere-platform/actions/runs/37401985298).
+The backend test job reported **2844 passed / 30 skipped / 1 warning**. Android
+tested variants and signed smoke APKs with a disposable CI-only key; this does
+not publish a production APK or change the installed fleet. The final backend
+job completed at **02:14:47 UTC**. Preview's guard passed and its deploy job was
+**skipped** because the enable condition was not true; no hosted preview was
+deployed by that workflow. Documentation-only commits have their own CI
+head and do not replace this source receipt. Workflow success is scoped to those
+jobs, not all actions, dependency advisories, fleet SLA or host storage attribution.
+[Pinned source CI](evidence/studio-redesign/source-ci.json).

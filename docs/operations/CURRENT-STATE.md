@@ -25,7 +25,10 @@ API **`c2b91e32`** на [3015/scripts](http://127.0.0.1:3015/scripts).
 45 соседних контейнеров сохранены; конечные срезы 02:00:12/02:00:20 UTC — 14 online /
 5 offline из 19, presence доступен. APK/OTA/туннели и API не заменялись.
 Это не SLA, проверка всех действий, frame-exact replay или load/soak 20–30/1000 машин.
-Source CI и документационный head учитываются отдельно от установленного образа.
+Все четыре source workflow `a670a3df` завершились success; backend job сообщил
+2844 passed / 30 skipped / 1 warning. [Pinned CI](../audits/2026-10-06/evidence/studio-redesign/source-ci.json)
+отдельно от установленного API и проверок последующих документационных head.
+У preview прошёл guard, deploy skipped по условию включения; это не hosted deploy.
 **9 принято / 41 открыто**. Следующие важные контракты — metadata-only каталог (P1:
 нынешний список загружает полные DAG), capability preflight, durable reconciliation,
 полный recorder/trace/replay и общие resource/release gates. Host writer неизвестен.
@@ -34,7 +37,8 @@ Source CI и документационный head учитываются отд
 не установлена и не связывается доказательно с расходом Windows-диска.
 [Результат и ограничения](../audits/2026-10-06/STUDIO-REDESIGN.md) ·
 [Pinned evidence](../audits/2026-10-06/STUDIO-REDESIGN-EVIDENCE.json) ·
-[Инструкция](SCRIPT-STUDIO.md) · [Приоритеты](../audits/2026-10-06/ENTERPRISE-PRIORITIES.md).
+[Инструкция](SCRIPT-STUDIO.md) · [Приоритеты](../audits/2026-10-06/ENTERPRISE-PRIORITIES.md) ·
+[Следующий контракт каталога](../audits/2026-10-06/SCRIPT-CATALOG-METADATA-CONTRACT.md).
 
 **Историческая установка 6 октября, 02:35 UTC+5 — Script Studio, этап A:**
 API **`c2b91e32`**, UI **`952b5e2f`** на [3015/scripts/builder](http://127.0.0.1:3015/scripts/builder).
