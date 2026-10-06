@@ -7,6 +7,8 @@ import { getApiErrorMessage } from '@/lib/apiError';
 import { useAuthStore } from '@/lib/store';
 import { DEVICE_COMMAND_TIMEOUT, interactiveResult } from '@/src/features/devices/interactiveResult';
 import { Button } from '@/src/shared/ui/button';
+import { androidTextCommand as textCommand, type AndroidControlCommand, type AcknowledgedControl, type StreamInput } from './controlObservation';
+import type { StreamFrameDimensions } from './streamAspectRatio';
 
 const KEYS = [
   { code: 4, label: 'Назад', icon: ArrowLeft },
@@ -22,15 +24,6 @@ const EDIT_KEYS = [
   { code: 277, label: 'Вырезать в Android' },
   { code: 279, label: 'Вставить в Android' },
 ] as const;
-function textCommand(text: string): string | null {
-  // The installed root `input text` path cannot type arbitrary Unicode.
-  // APK shell() rejects these characters even inside POSIX quotes. An
-  // apostrophe would need a backslash escape, which that contract also rejects.
-  // Reject locally instead of treating a mocked HTTP response as compatibility.
-  if (!text || text.length > 1024 || /[^\x20-\x7e]/.test(text)
-    || /[;|&$`(){}\\<>!#~']/.test(text) || text.includes('%s')) return null;
-  return `input text '${text.replace(/ /g, '%s')}'`;
-}
 type Receipt = { state: 'idle' } | { state: 'sending'; label: string }
   | { state: 'confirmed'; label: string; elapsedMs: number }
   | { state: 'unknown'; label: string; message: string };
@@ -39,14 +32,17 @@ interface CommandSession {
   token: string | null;
   disposed: boolean;
   controller: AbortController | null;
+  observation: { requestId: string; input: StreamInput; notify: (event: AcknowledgedControl) => void } | null;
 }
 
-export function AndroidNavigationBar({ deviceId, available, isAvailable, extended = false }: {
+export function AndroidNavigationBar({ deviceId, available, isAvailable, extended = false, getFrameDimensions, onControlCommand }: {
   deviceId: string;
   available: boolean;
   /** Recheck transport at the action boundary, even before React rerenders. */
   isAvailable: () => boolean;
   extended?: boolean;
+  getFrameDimensions?: () => StreamFrameDimensions | null;
+  onControlCommand?: (event: AcknowledgedControl) => void;
 }) {
   const { accessToken } = useAuthStore();
   const sessionRef = useRef<CommandSession | null>(null);
@@ -54,11 +50,15 @@ export function AndroidNavigationBar({ deviceId, available, isAvailable, extende
   const [draft, setDraft] = useState('');
 
   useEffect(() => {
-    const session: CommandSession = { deviceId, token: accessToken, disposed: false, controller: null };
+    const session: CommandSession = { deviceId, token: accessToken, disposed: false, controller: null, observation: null };
     sessionRef.current = session;
     setReceipt({ state: 'idle' });
     setDraft('');
     return () => {
+      if (session.observation) {
+        session.observation.notify({ requestId: session.observation.requestId, input: session.observation.input, phase: 'unknown', completedAt: performance.now() });
+        session.observation = null;
+      }
       session.disposed = true;
       // Abort stops this HTTP wait; it cannot revoke an already delivered key.
       session.controller?.abort();
@@ -66,7 +66,7 @@ export function AndroidNavigationBar({ deviceId, available, isAvailable, extende
     };
   }, [deviceId, accessToken]);
 
-  const sendCommand = async (command: string, label: string, clearDraft = false) => {
+  const sendCommand = async (command: string, label: string, action: AndroidControlCommand, clearDraft = false) => {
     const session = sessionRef.current;
     if (!available || !isAvailable() || !session || session.disposed || session.controller
       || session.deviceId !== deviceId || session.token !== accessToken) return;
@@ -75,6 +75,17 @@ export function AndroidNavigationBar({ deviceId, available, isAvailable, extende
     session.controller = controller;
     setReceipt({ state: 'sending', label });
     const started = performance.now();
+    const dimensions = getFrameDimensions?.();
+    if (onControlCommand && dimensions) {
+      // Observers never control command execution or turn an APK success into
+      // an apparent failure. Pass copies so a consumer cannot rewrite a reply.
+      const observer = onControlCommand;
+      const notify = (event: AcknowledgedControl) => {
+        try { observer({ ...event, input: { ...event.input, dimensions: { ...event.input.dimensions }, command: { ...event.input.command } } }); } catch { /* Local recording cannot revoke Android input. */ }
+      };
+      session.observation = { requestId: crypto.randomUUID(), input: { deviceId, at: started, dimensions: { ...dimensions }, command: { ...action } }, notify };
+      notify({ requestId: session.observation.requestId, input: session.observation.input, phase: 'submitted' });
+    }
     try {
       // Installed agents already support the acknowledged interactive SHELL
       // contract. Their flat WebSocket `keyevent` message is not supported.
@@ -83,10 +94,18 @@ export function AndroidNavigationBar({ deviceId, available, isAvailable, extende
       }, { signal: controller.signal, timeout: DEVICE_COMMAND_TIMEOUT.shell });
       if (session.disposed || sessionRef.current !== session) return;
       interactiveResult(data, 'output'); // Empty stdout is a valid completion.
+      if (session.observation) {
+        session.observation.notify({ requestId: session.observation.requestId, input: session.observation.input, phase: 'confirmed', completedAt: performance.now() });
+        session.observation = null;
+      }
       if (clearDraft) setDraft('');
       setReceipt({ state: 'confirmed', label, elapsedMs: Math.round(performance.now() - started) });
     } catch (error) {
       if (session.disposed || sessionRef.current !== session) return;
+      if (session.observation) {
+        session.observation.notify({ requestId: session.observation.requestId, input: session.observation.input, phase: 'unknown', completedAt: performance.now() });
+        session.observation = null;
+      }
       setReceipt({ state: 'unknown', label, message: getApiErrorMessage(
         error, error instanceof Error ? error.message : 'Нет подтверждённого результата команды.',
       ).slice(0, 500) });
@@ -94,7 +113,7 @@ export function AndroidNavigationBar({ deviceId, available, isAvailable, extende
       if (!session.disposed && sessionRef.current === session) session.controller = null;
     }
   };
-  const sendKey = (key: Pick<AndroidKey, 'code' | 'label'> | (typeof EDIT_KEYS)[number]) => sendCommand(`input keyevent ${key.code}`, key.label);
+  const sendKey = (key: Pick<AndroidKey, 'code' | 'label'> | (typeof EDIT_KEYS)[number]) => sendCommand(`input keyevent ${key.code}`, key.label, { type: 'key_event', keycode: key.code });
 
   const pending = receipt.state === 'sending';
   return <section aria-label="Навигация Android" aria-busy={pending}
@@ -111,7 +130,7 @@ export function AndroidNavigationBar({ deviceId, available, isAvailable, extende
         <label className="block space-y-2 text-xs font-medium"><span>Текст для Android</span><textarea aria-label="Текст для Android" value={draft} disabled={!available || pending} maxLength={1024} onChange={event => setDraft(event.target.value)} rows={2} className="block w-full resize-y rounded-lg border border-input bg-background p-3 text-sm disabled:opacity-50" /></label>
         <p className="text-xs leading-relaxed text-muted-foreground">До 1024 символов ASCII в пределах ограничений установленного APK. Кириллица, emoji, переносы строк, апостроф, служебные символы shell и буквальная последовательность %s не отправляются. Для них требуется отдельный Android-канал ввода текста.</p>
         {draft && !textCommand(draft) && <p role="alert" className="text-xs text-destructive">Текст содержит символы, которые текущий Android-канал не поддерживает. Команда не отправлена.</p>}
-        <Button type="button" disabled={!available || pending || !textCommand(draft)} onClick={() => { const command = textCommand(draft); if (command) void sendCommand(command, 'Ввод текста', true); }}>Ввести текст</Button>
+        <Button type="button" disabled={!available || pending || !textCommand(draft)} onClick={() => { const command = textCommand(draft); if (command) void sendCommand(command, 'Ввод текста', { type: 'type_text', text: draft }, true); }}>Ввести текст</Button>
       </div>
     </details>}
     <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">

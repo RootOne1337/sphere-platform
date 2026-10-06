@@ -1,6 +1,7 @@
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { DeviceWorkbench } from '@/src/features/scripts/studio/DeviceWorkbench';
 import { api } from '@/lib/api';
+import type { AcknowledgedControl } from '@/src/features/stream/controlObservation';
 
 const deviceId = 'b410464a-5f26-4803-a756-7840cc17b128';
 const scriptId = 'fbffbc95-3c16-4f1e-8833-d77271ac1b28';
@@ -10,6 +11,9 @@ let mockTask: Record<string, unknown> | undefined;
 let mockProgress: Record<string, unknown> | undefined;
 let mockLogs: Record<string, unknown>[];
 let mockRetainProgressWhenDisabled = false;
+let mockObserve: (event: AcknowledgedControl) => void;
+let mockToken = 'fixture-token';
+jest.mock('@/lib/store', () => ({ useAuthStore: () => ({ accessToken: mockToken }) }));
 const mockDevice = { id: deviceId, name: 'PH025', model: 'LDPlayer', status: 'online', agent_version: '1.2.45', android_version: '9' };
 jest.mock('@/lib/hooks/useDevices', () => ({ useDevices: () => ({ data: { items: [mockDevice], total: 1, pages: 1 }, isLoading: false, isError: false, isFetching: false, refetch: jest.fn() }) }));
 jest.mock('@/lib/hooks/useDebounce', () => ({ useDebounce: (value: unknown) => value }));
@@ -22,14 +26,14 @@ jest.mock('@/lib/hooks/useTasks', () => ({
 jest.mock('@/src/features/access/Capabilities', () => ({ useCapabilities: () => ({ can: () => true }) }));
 jest.mock('@/lib/api', () => ({ api: { post: jest.fn() } }));
 jest.mock('next/link', () => function MockLink({ href, children }: { href: string; children: React.ReactNode }) { return <a href={href}>{children}</a>; });
-jest.mock('@/src/features/stream/SingleDeviceStream', () => ({ SingleDeviceStream: ({ deviceId: ownedId, controlDisabled, onControlSent }: {
-  deviceId: string; controlDisabled: boolean; onControlSent: (value: unknown) => void;
-}) => <section aria-label="Поток выбранного Android" data-device={ownedId}>
+jest.mock('@/src/features/stream/SingleDeviceStream', () => ({ SingleDeviceStream: ({ deviceId: ownedId, controlDisabled, onControlSent, onControlCommand }: {
+  deviceId: string; controlDisabled: boolean; onControlSent: (value: unknown) => void; onControlCommand: typeof mockObserve;
+}) => { mockObserve = onControlCommand; return <section aria-label="Поток выбранного Android" data-device={ownedId}>
   <button disabled={controlDisabled} onClick={() => onControlSent({ deviceId: ownedId, at: 1000, dimensions: { width: 960, height: 540 }, command: { type: 'click', x: 480, y: 270 } })}>Записать тестовый клик</button>
-</section> }));
+</section>; } }));
 
 beforeEach(() => {
-  jest.clearAllMocks(); mockTask = undefined; mockProgress = undefined; mockLogs = []; mockRetainProgressWhenDisabled = false;
+  jest.clearAllMocks(); mockTask = undefined; mockProgress = undefined; mockLogs = []; mockRetainProgressWhenDisabled = false; mockToken = 'fixture-token';
   Object.defineProperty(globalThis.crypto, 'randomUUID', { configurable: true, value: () => '00000000-0000-4000-8000-000000000001' });
 });
 const version = { id: versionId, version: 1, dag_hash: 'a'.repeat(64) };
@@ -126,7 +130,7 @@ it('summarizes a completed canary using received final reports instead of an out
 
 it('inserts reviewed recorded actions only when the user explicitly transfers the stopped recording to the graph', () => {
   const { onInsert } = openDevice();
-  fireEvent.click(screen.getByRole('button', { name: 'Записать жесты' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Записать действия' }));
   fireEvent.click(screen.getByRole('button', { name: 'Записать тестовый клик' }));
   expect(onInsert).not.toHaveBeenCalled();
   expect(screen.getByRole('button', { name: 'Вставить в граф' })).toBeDisabled();
@@ -166,7 +170,7 @@ it('cannot bypass an unknown creation outcome by switching and reselecting the s
   expect(screen.getByRole('region', { name: 'Поток выбранного Android' })).toBeInTheDocument();
   expect(screen.getByRole('alert')).toHaveTextContent('переключение устройства заблокировано');
   expect(screen.getByRole('button', { name: 'Проверить на PH025' })).toBeDisabled();
-  expect(screen.getByRole('button', { name: 'Записать жесты' })).toBeDisabled();
+  expect(screen.getByRole('button', { name: 'Записать действия' })).toBeDisabled();
   expect(screen.getByRole('button', { name: 'Записать тестовый клик' })).toBeDisabled();
   expect(confirm).not.toHaveBeenCalled(); // A confirmation must not erase uncertainty.
   expect(api.post).toHaveBeenCalledTimes(1);
@@ -196,7 +200,7 @@ it('exposes the same side-effect-free unload guard for a pending request and an 
   let guard: ((silent?: boolean) => boolean) | null = null;
   openDevice(next => { guard = next; });
   expect(guard!(true)).toBe(true);
-  fireEvent.click(screen.getByRole('button', { name: 'Записать жесты' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Записать действия' }));
   fireEvent.click(screen.getByRole('button', { name: 'Записать тестовый клик' }));
   fireEvent.click(screen.getByRole('button', { name: 'Остановить запись' }));
   expect(guard!(true)).toBe(false);
@@ -213,7 +217,7 @@ it('exposes the same side-effect-free unload guard for a pending request and an 
 it('requires confirmation before changing a device with an untransferred recording and respects cancellation', () => {
   const confirm = jest.spyOn(window, 'confirm').mockReturnValue(false);
   const { onInsert } = openDevice();
-  fireEvent.click(screen.getByRole('button', { name: 'Записать жесты' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Записать действия' }));
   fireEvent.click(screen.getByRole('button', { name: 'Записать тестовый клик' }));
   fireEvent.click(screen.getByRole('button', { name: 'Сменить устройство' }));
   expect(confirm).toHaveBeenCalledTimes(1);
@@ -221,4 +225,59 @@ it('requires confirmation before changing a device with an untransferred recordi
   expect(onInsert).not.toHaveBeenCalled();
   expect(api.post).not.toHaveBeenCalled();
   confirm.mockRestore();
+});
+
+const observedInput = { deviceId, at: 1000, dimensions: { width: 960, height: 540 }, command: { type: 'type_text' as const, text: 'private fixture' } };
+it('retains a pending text action after Stop, blocks launch/close/transfer and updates the original slot on receipt', () => {
+  const { onInsert } = openDevice();
+  fireEvent.click(screen.getByRole('button', { name: 'Записать действия' }));
+  act(() => mockObserve({ requestId: 'text-one', input: observedInput, phase: 'submitted' }));
+  expect(screen.getByText('Ожидает APK')).toBeInTheDocument();
+  expect(screen.getByRole('list', { name: 'Записанные действия' })).not.toHaveTextContent('private fixture');
+  fireEvent.click(screen.getByRole('button', { name: 'Остановить запись' }));
+  expect(screen.getByRole('button', { name: 'Вставить в граф' })).toBeDisabled();
+  expect(screen.getByRole('button', { name: 'Очистить запись' })).toBeDisabled();
+  expect(screen.getByRole('button', { name: 'Проверить на PH025' })).toBeDisabled();
+  fireEvent.click(screen.getByRole('button', { name: 'Сменить устройство' }));
+  expect(screen.getByRole('alert')).toHaveTextContent('Дождитесь ответа');
+  act(() => mockObserve({ requestId: 'text-one', input: observedInput, phase: 'confirmed', completedAt: 1800 }));
+  expect(screen.getByText('Подтверждено APK')).toBeInTheDocument();
+  fireEvent.click(screen.getByRole('button', { name: 'Вставить в граф' }));
+  expect(onInsert).toHaveBeenCalledWith([{ type: 'type_text', text: 'private fixture', clear_first: false }]);
+  expect(screen.queryByRole('list', { name: 'Записанные действия' })).not.toBeInTheDocument();
+});
+it('requires explicit removal of an unknown action before transferring the remaining gestures', () => {
+  const { onInsert } = openDevice();
+  fireEvent.click(screen.getByRole('button', { name: 'Записать действия' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Записать тестовый клик' }));
+  // Give entries distinct IDs, as crypto.randomUUID does in a browser.
+  Object.defineProperty(crypto, 'randomUUID', { configurable: true, value: () => 'second-entry' });
+  act(() => mockObserve({ requestId: 'text-two', input: observedInput, phase: 'submitted' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Остановить запись' }));
+  act(() => mockObserve({ requestId: 'text-two', input: observedInput, phase: 'unknown', completedAt: 1800 }));
+  expect(screen.getByText('Результат неизвестен')).toBeInTheDocument();
+  expect(screen.getByRole('button', { name: 'Вставить в граф' })).toBeDisabled();
+  fireEvent.click(screen.getByRole('button', { name: 'Удалить действие 2' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Вставить в граф' }));
+  expect(onInsert).toHaveBeenCalledWith([{ type: 'tap', x: 640, y: 360 }]);
+});
+it('also guards an unrecorded interactive command while its result is pending', () => {
+  openDevice();
+  act(() => mockObserve({ requestId: 'not-recorded', input: observedInput, phase: 'submitted' }));
+  expect(screen.queryByRole('list', { name: 'Записанные действия' })).not.toBeInTheDocument();
+  expect(screen.getByRole('button', { name: 'Проверить на PH025' })).toBeDisabled();
+  act(() => mockObserve({ requestId: 'not-recorded', input: observedInput, phase: 'confirmed', completedAt: 1800 }));
+  expect(screen.getByRole('button', { name: 'Проверить на PH025' })).toBeEnabled();
+});
+it('discards private recordings on an auth session change and ignores the previous observer', () => {
+  const { rerender, onInsert, onExecution } = openDevice();
+  fireEvent.click(screen.getByRole('button', { name: 'Записать действия' }));
+  act(() => mockObserve({ requestId: 'old-session', input: observedInput, phase: 'submitted' }));
+  const oldObserver = mockObserve;
+  mockToken = 'another-session';
+  rerender(<DeviceWorkbench scriptId={scriptId} version={version} name="Canary" canRun canEdit onInsert={onInsert} onExecution={onExecution} />);
+  act(() => oldObserver({ requestId: 'old-session', input: observedInput, phase: 'confirmed', completedAt: 1800 }));
+  expect(screen.queryByRole('list', { name: 'Записанные действия' })).not.toBeInTheDocument();
+  expect(screen.getByRole('button', { name: 'Записать действия' })).toBeEnabled();
+  expect(onInsert).not.toHaveBeenCalled();
 });

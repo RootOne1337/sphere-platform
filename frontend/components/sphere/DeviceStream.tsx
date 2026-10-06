@@ -7,13 +7,15 @@ import { api } from '@/lib/api';
 import type { StreamFrameDimensions } from '@/src/features/stream/streamAspectRatio';
 import { AndroidNavigationBar } from '@/src/features/stream/AndroidNavigationBar';
 import type { UiBounds } from '@/src/features/stream/uiHierarchy';
-import type { StreamInput } from '@/src/features/scripts/studio/recording';
+import type { AcknowledgedControl, StreamInput } from '@/src/features/stream/controlObservation';
 
 interface DeviceStreamProps {
   deviceId: string;
   onTap?: (x: number, y: number) => void;
   /** A successful WebSocket send is not an Android execution acknowledgement. */
   onControlSent?: (input: StreamInput) => void;
+  /** HTTP key/text submissions and the separate installed-APK result. */
+  onControlCommand?: (event: AcknowledgedControl) => void;
   enableDiagnostics?: boolean;
   enableScreenshot?: boolean;
   enableNavigation?: boolean;
@@ -79,6 +81,7 @@ export function DeviceStream({
   deviceId,
   onTap,
   onControlSent,
+  onControlCommand,
   enableDiagnostics = false,
   enableScreenshot = false,
   enableNavigation = false,
@@ -703,7 +706,13 @@ export function DeviceStream({
     </div>
     {enableNavigation && <AndroidNavigationBar key={deviceId} deviceId={deviceId} extended
       available={canNavigate && wsRef.current?.readyState === WebSocket.OPEN}
-      isAvailable={() => canNavigate && wsRef.current?.readyState === WebSocket.OPEN} />}
+      isAvailable={() => canNavigate && wsRef.current?.readyState === WebSocket.OPEN}
+      onControlCommand={onControlCommand}
+      getFrameDimensions={() => {
+        const canvas = canvasRef.current;
+        return canvas && canNavigate && renderedSocketRef.current === wsRef.current
+          ? { width: canvas.width, height: canvas.height } : null;
+      }} />}
     </div>
   );
 }

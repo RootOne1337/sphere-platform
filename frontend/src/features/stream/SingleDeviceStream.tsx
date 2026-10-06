@@ -12,12 +12,12 @@ import { Button } from '@/src/shared/ui/button';
 import { NativeScreenshotPanel } from '@/src/features/devices/NativeScreenshotPanel';
 import type { StreamFrameDimensions } from './streamAspectRatio';
 import { checkedHierarchy, frameBounds, hitTestHierarchy, matchesFrame, type UiHierarchyNode, type UiHierarchySnapshot } from './uiHierarchy';
-import type { StreamInput } from '@/src/features/scripts/studio/recording';
+import type { AcknowledgedControl, StreamInput } from './controlObservation';
 
 const SNAPSHOT_LIFETIME_MS = 30_000;
 
-export function SingleDeviceStream({ deviceId, captureEnabled = false, onControlSent, onInsertSelector, controlDisabled = false, compact = false }: { deviceId: string; captureEnabled?: boolean; controlDisabled?: boolean; compact?: boolean;
-  onControlSent?: (input: StreamInput) => void; onInsertSelector?: (node: UiHierarchyNode, snapshot: UiHierarchySnapshot) => void }) {
+export function SingleDeviceStream({ deviceId, captureEnabled = false, onControlSent, onControlCommand, onInsertSelector, controlDisabled = false, compact = false }: { deviceId: string; captureEnabled?: boolean; controlDisabled?: boolean; compact?: boolean;
+  onControlSent?: (input: StreamInput) => void; onControlCommand?: (event: AcknowledgedControl) => void; onInsertSelector?: (node: UiHierarchyNode, snapshot: UiHierarchySnapshot) => void }) {
   const access = useCapabilities();
   const { accessToken } = useAuthStore();
   const canInspect = access.can('device:write');
@@ -149,6 +149,7 @@ export function SingleDeviceStream({ deviceId, captureEnabled = false, onControl
       <div className="min-w-0 overflow-hidden rounded-xl border border-border bg-black">
         <DeviceStream deviceId={deviceId} enableDiagnostics enableScreenshot enableNavigation enableStaticInput
           onControlSent={onControlSent}
+          onControlCommand={onControlCommand}
           readOnly={controlDisabled || !access.can('stream:control')}
           readOnlyReason={controlDisabled ? 'Управление временно заблокировано на время проверки задания или при неподтверждённом результате.' : undefined}
           onFrameDimensions={onFrame} onInspectionInvalidated={invalidateFrame}

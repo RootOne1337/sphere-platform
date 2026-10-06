@@ -7,13 +7,15 @@ import { useDevices, type Device } from '@/lib/hooks/useDevices';
 import { useTask, useTaskLogs, useTaskProgress, useStopTask } from '@/lib/hooks/useTasks';
 import { useDebounce } from '@/lib/hooks/useDebounce';
 import { api } from '@/lib/api';
+import { useAuthStore } from '@/lib/store';
 import { getApiErrorMessage } from '@/lib/apiError';
 import { useCapabilities } from '@/src/features/access/Capabilities';
 import { SingleDeviceStream } from '@/src/features/stream/SingleDeviceStream';
 import { Button } from '@/src/shared/ui/button';
 import { Input } from '@/components/ui/input';
 import type { DagNode } from '@/lib/dag/export';
-import { appendRecording, recordingActions, type RecordedInput, type StreamInput } from './recording';
+import { appendRecording, observeAcknowledgedRecording, recordingActions, type RecordedInput, type StreamInput } from './recording';
+import type { AcknowledgedControl } from '@/src/features/stream/controlObservation';
 import { actionLabel } from './presentation';
 
 interface Version { id: string; version: number; dag_hash: string | null }
@@ -21,8 +23,19 @@ interface Props { scriptId: string | null; version: Version | null; name: string
   onInsert: (actions: DagNode['action'][]) => boolean; onExecution: (lastCompleted: string | null, logs: { node_id: string; success: boolean }[]) => void;
   registerCloseGuard?: (guard: ((silent?: boolean) => boolean) | null) => void }
 const terminal = new Set(['completed', 'failed', 'cancelled', 'timeout', 'timed_out']);
+const keyLabels: Record<number, string> = { 3: 'Домой', 4: 'Назад', 187: 'Недавние', 82: 'Меню', 67: 'Backspace', 112: 'Delete', 66: 'Enter', 61: 'Tab', 278: 'Копировать', 277: 'Вырезать', 279: 'Вставить' };
+function recordedLabel(entry: RecordedInput): string {
+  const command = entry.command;
+  if (command.type === 'key_event') return `Клавиша · ${keyLabels[command.keycode] ?? command.keycode}`;
+  if (command.type === 'type_text') return `Ввод текста · ${command.text.length} символов`;
+  return `${command.type === 'click' ? 'Нажатие' : 'Свайп'} · ${entry.dimensions.width}×${entry.dimensions.height}`;
+}
+const outcomeLabels = { 'transport-submitted': 'Отправлено WS', 'android-pending': 'Ожидает APK', 'android-confirmed': 'Подтверждено APK', 'android-unknown': 'Результат неизвестен' };
 
 export function DeviceWorkbench(props: Props) {
+  const { accessToken } = useAuthStore();
+  const session = useRef({ token: accessToken, epoch: 0 });
+  if (session.current.token !== accessToken) session.current = { token: accessToken, epoch: session.current.epoch + 1 };
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(1);
   const query = useDebounce(search.trim(), 300);
@@ -30,7 +43,7 @@ export function DeviceWorkbench(props: Props) {
   const [device, setDevice] = useState<Device | null>(null);
   const closeGuard = useRef<((silent?: boolean) => boolean) | null>(null);
   return <section aria-label="Рабочее устройство" className="flex h-full min-h-0 min-w-0 flex-col bg-card">
-    <header className="flex flex-wrap items-center justify-between gap-3 border-b px-4 py-3"><div><h2 className="flex items-center gap-2 text-sm font-semibold"><Monitor className="size-4 text-primary" />Лаборатория устройства</h2><p className="mt-1 text-xs text-muted-foreground">Живое видео · запись жестов · XPath · проверка версии</p></div>
+    <header className="flex flex-wrap items-center justify-between gap-3 border-b px-4 py-3"><div><h2 className="flex items-center gap-2 text-sm font-semibold"><Monitor className="size-4 text-primary" />Лаборатория устройства</h2><p className="mt-1 text-xs text-muted-foreground">Живое видео · запись действий · XPath · проверка версии</p></div>
       {device && <Button size="sm" variant="outline" onClick={() => { if (!closeGuard.current || closeGuard.current()) setDevice(null); }}>Сменить устройство</Button>}</header>
     <div className="min-h-0 flex-1 overflow-auto p-4">
       {!device ? <div className="space-y-4"><div className="rounded-xl border border-dashed bg-muted/30 p-5"><h3 className="font-semibold">Выберите тестовый Android</h3><p className="mt-2 text-xs leading-5 text-muted-foreground">Откроется один поток. Действия управления изменяют выбранный Android; добавление шагов и серверная проверка сценария его не запускают.</p></div>
@@ -41,7 +54,7 @@ export function DeviceWorkbench(props: Props) {
           {!data?.items.length && <p className="text-sm text-muted-foreground">Устройства не найдены.</p>}
           <div className="flex items-center justify-between gap-2 text-xs"><Button size="sm" variant="outline" disabled={page <= 1 || isFetching} onClick={() => setPage(page - 1)}>Назад</Button><span>{page} / {data?.pages || 1} · всего {data?.total ?? '—'}</span><Button size="sm" variant="outline" disabled={page >= (data?.pages ?? 1) || isFetching} onClick={() => setPage(page + 1)}>Далее</Button></div>
         </>}
-      </div> : <OwnedWorkbench key={device.id} {...props} registerCloseGuard={guard => { closeGuard.current = guard; props.registerCloseGuard?.(guard); }} device={device} />}
+      </div> : <OwnedWorkbench key={`${device.id}:${session.current.epoch}`} {...props} registerCloseGuard={guard => { closeGuard.current = guard; props.registerCloseGuard?.(guard); }} device={device} />}
     </div>
   </section>;
 }
@@ -51,6 +64,8 @@ function OwnedWorkbench({ device, scriptId, version, name, canRun, canEdit, onIn
   const [preservePauses, setPreservePauses] = useState(true);
   const [entries, setEntries] = useState<RecordedInput[]>([]);
   const entriesRef = useRef(entries); entriesRef.current = entries;
+  const controlRequests = useRef(new Set<string>());
+  const [controlPending, setControlPending] = useState(false);
   const [error, setError] = useState('');
   const [taskId, setTaskId] = useState('');
   const [runPending, setRunPending] = useState(false);
@@ -65,11 +80,11 @@ function OwnedWorkbench({ device, scriptId, version, name, canRun, canEdit, onIn
   const logs = useTaskLogs(taskId);
   const stop = useStopTask();
   useEffect(() => { registerCloseGuard?.((silent = false) => {
-    const pending = runPending || runningRequest.current;
-    const guarded = Boolean(entries.length || active || pending || uncertain);
+    const pending = runPending || runningRequest.current || controlRequests.current.size > 0;
+    const guarded = Boolean(entriesRef.current.length || active || pending || uncertain);
     if (silent) return !guarded;
     if (pending) {
-      setError('Создание задания ещё не подтверждено. Дождитесь ответа перед сменой или закрытием устройства; повторный запуск недоступен.');
+      setError('Задание или команда Android ещё не подтверждены. Дождитесь ответа перед сменой или закрытием устройства; повторный запуск недоступен.');
       return false;
     }
     if (uncertain) {
@@ -77,7 +92,7 @@ function OwnedWorkbench({ device, scriptId, version, name, canRun, canEdit, onIn
       return false;
     }
     return guarded ? window.confirm('Закрыть устройство? Невставленная запись будет потеряна. Созданное задание продолжит работу; его можно открыть в разделе заданий.') : true;
-  }); return () => registerCloseGuard?.(null); }, [entries.length, active, runPending, uncertain, registerCloseGuard]);
+  }); return () => registerCloseGuard?.(null); }, [entries, active, runPending, uncertain, registerCloseGuard]);
   useEffect(() => { live.current = true; return () => { live.current = false; onExecution(null, []); }; }, [onExecution]);
   useEffect(() => { if (!canEdit || !access.can('stream:control')) setRecording(false); }, [canEdit, access]);
   useEffect(() => {
@@ -89,8 +104,21 @@ function OwnedWorkbench({ device, scriptId, version, name, canRun, canEdit, onIn
     try { const next = appendRecording(entriesRef.current, input, device.id); entriesRef.current = next; setEntries(next); }
     catch (reason) { setRecording(false); setError(reason instanceof Error ? reason.message : 'Не удалось записать ввод.'); }
   };
+  const commandObserved = (event: AcknowledgedControl) => {
+    if (!live.current || event.input.deviceId !== device.id) return;
+    if (event.phase === 'submitted') controlRequests.current.add(event.requestId);
+    else controlRequests.current.delete(event.requestId);
+    setControlPending(controlRequests.current.size > 0);
+    if (event.phase !== 'submitted' && !controlRequests.current.size) setError(value => value.startsWith('Задание или команда Android ещё') ? '' : value);
+    try {
+      const next = observeAcknowledgedRecording(entriesRef.current, event, device.id,
+        recording && canEdit && accessRef.current.can('stream:control'));
+      if (next !== entriesRef.current) { entriesRef.current = next; setEntries(next); }
+    } catch (reason) { setRecording(false); setError(reason instanceof Error ? reason.message : 'Не удалось записать команду.'); }
+  };
+  const unresolved = entries.some(entry => entry.outcome === 'android-pending' || entry.outcome === 'android-unknown');
   async function run() {
-    if (runningRequest.current || uncertain || active || !canRun || !scriptId || !version?.dag_hash || !accessRef.current.can('script:execute')) return;
+    if (runningRequest.current || controlRequests.current.size || uncertain || active || !canRun || !scriptId || !version?.dag_hash || !accessRef.current.can('script:execute')) return;
     const pinned = version.id;
     runningRequest.current = true; setRunPending(true); setRecording(false); setError('');
     try {
@@ -103,19 +131,21 @@ function OwnedWorkbench({ device, scriptId, version, name, canRun, canEdit, onIn
   }
   return <div className="space-y-4">
     <div className="flex flex-wrap items-start justify-between gap-3 rounded-xl border bg-muted/30 p-3"><div className="min-w-0 flex-1 basis-48"><p className="break-words text-sm font-semibold [overflow-wrap:anywhere]">{device.name}</p><p className="mt-1 break-words text-xs text-muted-foreground [overflow-wrap:anywhere]">Android {device.android_version ?? '—'} · Agent {device.agent_version ?? '—'}</p></div><Link href={`/devices/${device.id}`} className="flex shrink-0 items-center gap-1 text-xs text-primary">Карточка <ExternalLink className="size-3" /></Link></div>
-    <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap"><Button size="sm" className="h-auto min-h-8 min-w-0 whitespace-normal" variant={recording ? 'destructive' : 'outline'} disabled={!canEdit || active || runPending || uncertain || !access.can('stream:control')} onClick={() => setRecording(!recording)}>{recording ? <Square className="mr-2 size-3 shrink-0" /> : <Circle className="mr-2 size-3 shrink-0 text-rose-500" />}{recording ? 'Остановить запись' : 'Записать жесты'}</Button>
-      <Button size="sm" className="h-auto min-h-8 min-w-0 whitespace-normal" disabled={!canRun || active || runPending || recording || uncertain} onClick={() => void run()}><Play className="mr-2 size-3 shrink-0" /><span className="min-w-0 break-words [overflow-wrap:anywhere]">{runPending ? 'Создаём задание…' : `Проверить на ${device.name}`}</span></Button>
+    <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap"><Button size="sm" className="h-auto min-h-8 min-w-0 whitespace-normal" variant={recording ? 'destructive' : 'outline'} disabled={!canEdit || active || runPending || uncertain || (!recording && controlPending) || !access.can('stream:control')} onClick={() => setRecording(!recording)}>{recording ? <Square className="mr-2 size-3 shrink-0" /> : <Circle className="mr-2 size-3 shrink-0 text-rose-500" />}{recording ? 'Остановить запись' : 'Записать действия'}</Button>
+      <Button size="sm" className="h-auto min-h-8 min-w-0 whitespace-normal" disabled={!canRun || active || runPending || recording || controlPending || uncertain} onClick={() => void run()}><Play className="mr-2 size-3 shrink-0" /><span className="min-w-0 break-words [overflow-wrap:anywhere]">{runPending ? 'Создаём задание…' : `Проверить на ${device.name}`}</span></Button>
       {active && <Button size="sm" variant="outline" disabled={stop.isPending || !access.can('script:execute')} onClick={() => stop.mutate(taskId, { onError: reason => setError(getApiErrorMessage(reason, 'Остановка не подтверждена.')) })}>Остановить задание</Button>}</div>
     {error && <p role="alert" className="rounded-lg border border-destructive/30 p-3 text-xs text-destructive">{error} {uncertain && <Link href="/tasks" className="underline">Открыть задания</Link>}</p>}
     {!canRun && <p className="text-xs text-muted-foreground">Для проверки сохраните сценарий и откройте его неизменённую версию. Запуск всегда создаёт одно реальное задание на выбранном Android.</p>}
-    <SingleDeviceStream deviceId={device.id} captureEnabled compact controlDisabled={active || runPending || uncertain} onControlSent={sent} onInsertSelector={canEdit && !active && !runPending && !uncertain ? (node, snapshot) => {
+    <SingleDeviceStream deviceId={device.id} captureEnabled compact controlDisabled={active || runPending || uncertain || controlPending} onControlSent={sent} onControlCommand={commandObserved} onInsertSelector={canEdit && !active && !runPending && !uncertain && !controlPending ? (node, snapshot) => {
       if (snapshot.device_id !== device.id) return;
       onInsert([{ type: 'tap_element', selector: node.xpath, strategy: 'xpath', timeout_ms: 5000 }]);
     } : undefined} />
-    <div className="rounded-xl border"><header className="flex flex-wrap items-center justify-between gap-2 border-b px-3 py-2"><h3 className="flex items-center gap-2 text-xs font-semibold"><Radio className={`size-3 ${recording ? 'text-rose-500' : 'text-muted-foreground'}`} />Запись · {entries.length}/200</h3><div className="flex gap-1"><Button size="sm" variant="ghost" disabled={!entries.length || recording} onClick={() => setEntries([])} aria-label="Очистить запись"><Trash2 className="size-3" /></Button><Button size="sm" variant="outline" disabled={!entries.length || recording || !canEdit} onClick={() => { try { if (onInsert(recordingActions(entries, preservePauses))) setEntries([]); } catch (reason) { setError(reason instanceof Error ? reason.message : 'Запись не перенесена.'); } }}>Вставить в граф</Button></div></header>
-      <label className="flex items-center gap-2 px-3 pt-3 text-xs"><input type="checkbox" checked={preservePauses} disabled={recording} onChange={event => setPreservePauses(event.target.checked)} />Сохранять паузы между жестами (до 60 с)</label>
-      <p className="px-3 py-2 text-[11px] leading-5 text-muted-foreground">Записываются клики, свайпы и колесо, отправленные по WebSocket. Это подтверждение отправки, не выполнения Android. Координаты привязаны к ориентации записи; для устойчивого сценария выбирайте XPath. Текст и системные кнопки этой записью не захватываются.</p>
-      {!!entries.length && <ol className="max-h-40 overflow-auto px-3 pb-3">{entries.map((entry, index) => <li key={entry.id} className="flex items-center justify-between border-t py-2 text-xs"><span>{index + 1}. {entry.command.type === 'click' ? 'Нажатие' : 'Свайп'} · {entry.dimensions.width}×{entry.dimensions.height}</span><span className="text-[10px] text-muted-foreground">Отправлено</span></li>)}</ol>}
+    <div className="rounded-xl border"><header className="flex flex-wrap items-center justify-between gap-2 border-b px-3 py-2"><h3 className="flex items-center gap-2 text-xs font-semibold"><Radio className={`size-3 ${recording ? 'text-rose-500' : 'text-muted-foreground'}`} />Запись · {entries.length}/200</h3><div className="flex flex-wrap gap-1"><Button size="sm" variant="ghost" disabled={!entries.length || recording || controlPending || !canEdit} onClick={() => { entriesRef.current = []; setEntries([]); }} aria-label="Очистить запись"><Trash2 className="size-3" /></Button><Button size="sm" variant="outline" disabled={!entries.length || recording || controlPending || unresolved || !canEdit} onClick={() => { try { if (onInsert(recordingActions(entriesRef.current, preservePauses))) { entriesRef.current = []; setEntries([]); setError(''); } } catch (reason) { setError(reason instanceof Error ? reason.message : 'Запись не перенесена.'); } }}>Вставить в граф</Button></div></header>
+      <label className="flex items-center gap-2 px-3 pt-3 text-xs"><input type="checkbox" checked={preservePauses} disabled={recording || controlPending} onChange={event => setPreservePauses(event.target.checked)} />Сохранять паузы между действиями (до 60 с)</label>
+      <p className="px-3 py-2 text-[11px] leading-5 text-muted-foreground">Клики, свайпы и колесо: отправка по WebSocket, без ACK выполнения. Текст и кнопки Android: отдельное подтверждение APK. XPath добавляется явно из инспектора. Буфер Android и выбранное поле зависят от приложения; запись не сохраняет содержимое буфера.</p>
+      <p className="px-3 pb-2 text-[11px] leading-5 text-muted-foreground">Текст скрыт в списке, но войдёт в исходник при вставке в граф. До вставки запись хранится только в памяти этой страницы; не записывайте пароли. Координаты зависят от ориентации; для устойчивого поиска выбирайте XPath.</p>
+      {unresolved && <p role="status" className="px-3 pb-3 text-xs text-amber-700 dark:text-amber-400">Перенос заблокирован: дождитесь ответа APK. Если результат неизвестен, проверьте экран и явно удалите сомнительное действие; автоматического повтора нет.</p>}
+      {!!entries.length && <ol aria-label="Записанные действия" className="max-h-56 overflow-auto px-3 pb-3">{entries.map((entry, index) => <li key={entry.id} className="flex flex-wrap items-center gap-2 border-t py-2 text-xs"><span className="min-w-0 flex-1 basis-40 break-words">{index + 1}. {recordedLabel(entry)}</span><span className={`rounded-full border px-2 py-1 text-[10px] ${entry.outcome === 'android-unknown' ? 'text-destructive' : entry.outcome === 'android-confirmed' ? 'text-emerald-700 dark:text-emerald-400' : 'text-muted-foreground'}`}>{outcomeLabels[entry.outcome]}</span><Button size="sm" variant="ghost" disabled={recording || controlPending || !canEdit} aria-label={`Удалить действие ${index + 1}`} onClick={() => { const next = entriesRef.current.filter(value => value.id !== entry.id); entriesRef.current = next; setEntries(next); }}><Trash2 className="size-3" /></Button></li>)}</ol>}
     </div>
     {taskId && <div className="rounded-xl border p-3"><h3 className="flex items-center gap-2 text-sm font-semibold"><CheckCheck className="size-4 text-primary" />Проверка {name}</h3><Link href={`/tasks/${taskId}`} className="mt-2 block break-all font-mono text-xs text-primary">{taskId}</Link>
       {task.isError || !ownsTask ? <p role="status" className="mt-2 text-xs">Ожидаем подтверждённое состояние выбранного задания…</p> : <><p className="mt-2 text-xs">{task.data!.status} · {terminal.has(task.data!.status)

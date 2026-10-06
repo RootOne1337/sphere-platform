@@ -36,8 +36,8 @@ beforeEach(() => {
 });
 afterEach(() => { jest.restoreAllMocks(); jest.useRealTimers(); });
 
-function openStream(enableNavigation = true) {
-  const view = render(<DeviceStream deviceId="remote" enableNavigation={enableNavigation} fit="contain" />);
+function openStream(enableNavigation = true, onControlCommand?: React.ComponentProps<typeof DeviceStream>['onControlCommand']) {
+  const view = render(<DeviceStream deviceId="remote" enableNavigation={enableNavigation} onControlCommand={onControlCommand} fit="contain" />);
   act(() => jest.advanceTimersByTime(0));
   const socket = MockSocket.instances[0];
   socket.readyState = MockSocket.OPEN;
@@ -138,4 +138,21 @@ it('reconnection cannot unlock navigation using an old session picture', () => {
   expect(screen.getByRole('button', { name: 'Назад' })).toBeDisabled();
   frame();
   expect(screen.getByRole('button', { name: 'Назад' })).toBeEnabled();
+});
+
+it('carries native frame geometry through the real navigation footer and freezes it before an HTTP reply', async () => {
+  Object.defineProperty(crypto, 'randomUUID', { configurable: true, value: () => 'footer-request' });
+  let finish!: (value: unknown) => void;
+  jest.mocked(api.post).mockReturnValue(new Promise(resolve => { finish = resolve; }) as never);
+  const observer = jest.fn(); openStream(true, observer); frame();
+  fireEvent.click(screen.getByRole('button', { name: 'Назад' }));
+  expect(observer.mock.calls[0][0]).toMatchObject({ phase: 'submitted', input: { dimensions: { width: 960, height: 540 }, command: { type: 'key_event', keycode: 4 } } });
+  act(() => mockRenderFrame?.({ displayWidth: 540, displayHeight: 960 } as VideoFrame));
+  await act(async () => finish({ data: { output: '' } }));
+  expect(observer.mock.calls[1][0]).toMatchObject({ phase: 'confirmed', input: { dimensions: { width: 960, height: 540 } } });
+});
+it('does not emit a recording event before an owned frame exists', () => {
+  const observer = jest.fn(); openStream(true, observer);
+  fireEvent.click(screen.getByRole('button', { name: 'Назад' }));
+  expect(observer).not.toHaveBeenCalled(); expect(api.post).not.toHaveBeenCalled();
 });

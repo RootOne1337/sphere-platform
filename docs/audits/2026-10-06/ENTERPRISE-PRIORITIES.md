@@ -79,6 +79,15 @@ Offline inventory подтвердил 32 API/UI types и 33 Android handlers (`
 
 ## Почему не продолжать только добавлять метрики
 
+Следующий этап EP-018: [запись key/text и подтверждения APK](STUDIO-COMMAND-RECORDING.md).
+Исходники теперь связывают AndroidNavigationBar с лабораторией: исходная отправка,
+отдельный результат APK, блокировка pending/unknown при переносе, review/delete
+и auth-session isolation. Live installation/native receipts проверяются отдельно.
+EP-018 не закрыт: automatic selector candidates и prerequisites остаются впереди.
+Дополнительно найден P1 в APK: `input_clear`/`clear_first` путают CUT 277 с CTRL_A;
+нужен корректный input adapter с проверкой Android. Новый recorder не вызывает
+неявную очистку. Общий счёт 9 / 41 сохранён.
+
 Ограничения ресурсов, доставка обновлений и управляемость выбранного устройства
 влияют на возможность обслуживать парк. Дополнительные графики не заменят эти
 проверки. Поэтому EP-033/047 идут перед самостоятельным metrics producer EP-010.
