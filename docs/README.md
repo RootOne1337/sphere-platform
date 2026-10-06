@@ -19,7 +19,10 @@
 [Доставка, installer plan и host gate](audits/2026-10-07/REVIEWED-WEB-DELIVERY.md) ·
 [Hosted image26pages/73assets, artifact и image ID](audits/2026-10-07/REVIEWED-WEB-IMAGE-EVIDENCE.json) ·
 [Полный CI baselinece6e377](audits/2026-10-07/STUDIO-CI-BASELINE.json).
-UI на3015 ещё не обновлён; queued NTFS repair требует postboot acceptance.
+UI99af20d установлен на3015 после завершённого NTFS repair; все45 остальных
+контейнеров сохранены. [Postboot recovery и фактические границы](audits/2026-10-07/POSTBOOT-RECOVERY.md).
+Exact sourcec6339b2 прошёл frontend/backend/Android CI. Новый responsive header
+проходит отдельную browser приёмку; continuous pointer и rich recorder остаются открытыми.
 
 **5 октября — комплексный аудит продукта:**
 [22 раздела в браузере, шесть подтверждённых дефектов, ограничение Grafana и 50 работ](audits/2026-10-05/ENTERPRISE-PRODUCT-AUDIT.md) ·
@@ -32,12 +35,13 @@ UI на3015 ещё не обновлён; queued NTFS repair требует post
 Предшествующий свободной сборке source срез:
 [Правила, API, форма узла, проверки и compatibility matrix](audits/2026-10-06/STUDIO-ACTION-PARAMETERS.md).
 141 Python/ASGI/schema tests и374 frontend tests /16 suites, TypeScript и scoped
-Ruff прошли; source ещё не установлен из-за host repair gate. APK capabilities,
+Ruff прошли; frontend включён в установленный99af20d, API остаётсяeb7a7c26. APK capabilities,
 runtime semantics и continuous gestures не объявляются подтверждёнными JSON-проверкой.
 
 **6 октября — свободная сборка графа Studio:**
 [Drag/drop, отдельные узлы, явная вставка, draft/publish split и приёмка](audits/2026-10-06/STUDIO-FREE-CANVAS.md).
-395 tests /17 scripts suites и TypeScript прошли; runtime/visual ещё не приняты.
+395 tests /17 scripts suites и TypeScript прошли; installed99af20d принят отдельно
+для добавления шага, переназначения/разрыва связи и Undo. Полная recorder приёмка открыта.
 Удаление, выбор входа и Undo/Redo сохраняют возможность продолжить сборку.
 [Полный hosted CI517d73b](audits/2026-10-06/STUDIO-SOURCE-CI-20261006.json):
 3015 backend passed/37 skipped,1686 frontend/133 suites +types/build,

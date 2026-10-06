@@ -422,12 +422,12 @@ function BuilderInner({ editId, storageKey }: { editId: string | null; storageKe
   }));
   return <section aria-label="Script Studio" className="studio-workspace flex min-h-[600px] min-w-0 flex-col bg-background lg:h-[calc(100dvh-4rem)] lg:min-h-0">
     <header className="shrink-0 border-b bg-card">
-      <div className="flex flex-wrap items-center justify-between gap-3 px-4 py-3">
-        <div className="flex min-w-0 flex-1 items-center gap-3"><Button variant="ghost" size="icon" aria-label="К каталогу сценариев" onClick={leave}><ArrowLeft className="size-4" /></Button>
-          <div className="min-w-0 flex-1"><div className="mb-1 flex items-center gap-2 text-[10px] font-medium uppercase tracking-[.14em] text-muted-foreground"><Workflow className="size-3 text-primary" />Script Studio <span className="rounded border px-1.5 py-0.5 tracking-normal">DAG 1.0</span></div>
+      <div className="flex flex-col gap-3 px-4 py-3 xl:flex-row xl:items-center xl:justify-between">
+        <div className="flex w-full min-w-0 items-center gap-3 xl:flex-1"><Button variant="ghost" size="icon" className="shrink-0" aria-label="К каталогу сценариев" onClick={leave}><ArrowLeft className="size-4" /></Button>
+          <div className="min-w-0 flex-1"><div className="mb-1 flex flex-wrap items-center gap-2 text-[10px] font-medium uppercase tracking-[.14em] text-muted-foreground"><Workflow className="size-3 shrink-0 text-primary" />Script Studio <span className="rounded border px-1.5 py-0.5 tracking-normal">DAG 1.0</span></div>
             <label className="sr-only" htmlFor="studio-name">Название сценария</label><Input id="studio-name" value={document.name} maxLength={255} readOnly={!writable} className="h-8 max-w-xl border-transparent bg-transparent px-0 text-lg font-semibold shadow-none hover:border-border focus:px-2" onChange={event => changeDocument({ ...document, name: event.target.value })} /></div>
         </div>
-        <div className="flex flex-wrap items-center gap-2"><span className={`rounded-full border px-2.5 py-1 text-[11px] ${dirty ? 'border-amber-500/30 bg-amber-500/5 text-amber-600 dark:text-amber-400' : 'text-muted-foreground'}`}>{dirty ? 'Есть изменения' : expectedVersion ? `Версия ${expectedVersion.version}` : 'Новый сценарий'}</span>
+        <div className="flex min-w-0 flex-wrap items-center gap-2 xl:justify-end"><span className={`rounded-full border px-2.5 py-1 text-[11px] ${dirty ? 'border-amber-500/30 bg-amber-500/5 text-amber-600 dark:text-amber-400' : 'text-muted-foreground'}`}>{dirty ? 'Есть изменения' : expectedVersion ? `Версия ${expectedVersion.version}` : 'Новый сценарий'}</span>
           <Button size="sm" variant="outline" disabled={Boolean(busy) || nodePending || Boolean(canvasError)} onClick={() => void checkOrSave('check')}><Check className="mr-2 size-3.5" />{busy === 'check' ? 'Проверяем…' : 'Проверить на сервере'}</Button>
           <Button size="sm" disabled={!writable || nodePending || Boolean(canvasError) || saveUncertain} onClick={() => void checkOrSave('save')}><Save className="mr-2 size-3.5" />{busy === 'save' ? 'Сохраняем…' : editId ? 'Сохранить версию' : 'Создать сценарий'}</Button>
         </div>

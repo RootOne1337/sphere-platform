@@ -4,6 +4,20 @@
 **Область:** исходники и документация ветки PR #19, записанные runtime-наблюдения, Android APK и готовность следующего прогона.<br />
 **Канонический документ текущего состояния:** этот файл. Исторические отчёты ниже сохраняют исходные даты и факты.
 
+**7 октября — разработка возобновлена после ремонта C:** завершённый Wininit
+repair, Healthy/OK и Git fsck подтверждены. UI **99af20d** установлен на3015;
+API **eb7a7c26**, остальные45 контейнеров и OTA сохранены.
+[Postboot evidence и открытый root cause](../audits/2026-10-07/POSTBOOT-RECOVERY.md).
+Exact source **c6339b2** прошёл frontend/backend/Android CI;22 archive/installer
+unit methods и395 Studio tests /17 suites прошли локально. В живом UI проверены
+отдельный шаг, переназначение/разрыв связи и Undo. Responsive header исправляется
+[отдельным кандидатом](../audits/2026-10-07/STUDIO-RESPONSIVE-HEADER.md).
+Ledger **9 accepted /41 open** сохраняется: continuous input/rich recording,
+корреляция кадров и проверка Android не закрываются приёмкой графа.
+
+Ниже — исторические срезы до postboot handoff; версии/runtime gates относятся
+к указанному моменту, не отменяют актуальное состояние выше.
+
 **7 октября — полный CI sourcece6e377 success:** backend3015passed/37skipped,
 frontend1686/133 с26pages/73assets, Android variants и signed smoke прошли.
 [Exact baseline](../audits/2026-10-07/STUDIO-CI-BASELINE.json). Это source admission,
@@ -18,9 +32,8 @@ Hosted image source99af20d принят: **26pages/73assets**,115MiB gzip,
 artifact11438406747, image/config/source admission success.
 [Exact image receipt](../audits/2026-10-07/REVIEWED-WEB-IMAGE-EVIDENCE.json) ·
 [Доставка и host gate](../audits/2026-10-07/REVIEWED-WEB-DELIVERY.md).
-Read-only native Compose preflight прошёл; apply/browser ещё не выполнены.
-C: остаётся Warning/Full Repair Needed, новый boot repair не подтверждён.
-Installed UI1c26ffc7/APIeb7a7c26/APK сохранены; ledger9/41 не изменён.
+Исторический read-only preflight до reboot не выполнял apply. После completed
+repair UI-only99af20d install подтверждён отдельным linked postboot receipt.
 
 **6 октября,18:54 UTC — frontend sourcee7f3ffb полностью проверен:**1686/133,
 18 HTTP contract tests, fresh types/build и **standalone26pages/73assets passed**.

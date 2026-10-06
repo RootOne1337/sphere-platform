@@ -1,10 +1,10 @@
 # Script Studio: доставка проверенного веба без локального rebuild
 
 **Дата:** 7 октября 2026, Asia/Yekaterinburg. **PR:** [#19](https://github.com/RootOne1337/sphere-platform/pull/19).
-**Статус:** первый hosted image admission получен для source99af20d;
-установка и новая browser приёмка ещё не выполнены.
-**Адрес рабочей витрины:** http://127.0.0.1:3015. Installed UI остаётся
-`1c26ffc7def8c1a16ac90d2f0607f857b21d28cb`, API — `eb7a7c26c2e644f24eb3f785b3da1c29a65929be`.
+**Статус:** source99af20d установлен после completed host repair;
+приёмка графа подтверждена, полная recorder matrix остаётся открытой.
+**Адрес рабочей витрины:** http://127.0.0.1:3015. Installed UI —
+`99af20d9933e4f4f5f227595e19d2f47d5be7e94`, API — `eb7a7c26c2e644f24eb3f785b3da1c29a65929be`.
 
 ## Проблема и изменение
 
@@ -44,8 +44,9 @@ permissions не добавлено. [Official upload-artifact options](https://
 успешен: actual image26pages/73assets, gzip120 839 622bytes (примерно115MiB).
 [Exact evidence/independent image ID](REVIEWED-WEB-IMAGE-EVIDENCE.json) содержит
 artifact ID и **ZIP digest GitHub**, который отличается от gzip digest в receipt.
-Архив на ПК пока не скачан/не загружен; backend/Android нового source на момент
-image receipt ещё выполнялись. Последний полный baselinece6e377 —
+Архив скачан, admitted и установлен7октября; runtime containerd identity
+связан с CI config digest. [Postboot installation evidence](POSTBOOT-RECOVERY.md).
+Exact baselinec6339b2 завершил frontend/backend/Android success; предыдущийce6e377 —
 [3015backend /1686frontend /Android success](STUDIO-CI-BASELINE.json).
 
 CI packaging base, проверенный remote manifest6октябряUTC:
@@ -81,7 +82,13 @@ JSON receipt внутри архива не является подписью и
 run ID/attempt, успешный conclusion и head SHA. Artifact ID/digest download
 проверяется отдельно; receipt не разрешает запуск неизвестного image.
 
-## Host gate и следующие действия
+## Host gate и последующая приёмка
+
+**Актуализация после reboot:** новый boot7октября00:42UTC+5, completed Wininit
+repair, Healthy/OK, source verification и Git fsck приняты. UI-only install
+99af20d выполнен7октября01:16UTC+5, остальные45 контейнеров/OTA сохранены.
+Ниже описан исторический preboot gate; он не блокирует дальнейшую разработку.
+[Полный handoff и ограничения](POSTBOOT-RECOVERY.md).
 
 Read-only срез7октября: C: **Warning / Full Repair Needed**, boot остаётся
 4октября21:39:32UTC+5, свободно60 146 794 496bytes. `git fsck --no-dangling`
@@ -126,7 +133,8 @@ login200, OTA catalog hash и ID/image/startedAt/status **всех осталь�
 контейнеров. Rollback ограничен прежним UI при соответствующей ownership;
 при foreign image или неизвестном результате успешная установка не заявляется.
 Перезагрузку, API migration/APK install, удаление volumes/images/cache он не делает.
-Apply/rollback against actual Docker ещё требуют отдельной runtime приёмки.
+Apply against actual Docker принят отдельно; rollback failure injection на
+живой ферме этим не проверялся. Containerd manifest/config binding описан в handoff.
 
 Доставка не включает blind image prune: до cleanup нужен список in-use images
 и сохраняемый rollback. Download retention/loaded image retention — разные
