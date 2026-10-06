@@ -31,8 +31,52 @@ def dag_fixture(label="source", number=1, count=2, padding=""):
         }}
         if index + 1 < count:
             node["on_success"] = f"n{index + 1}"
+        if node["action"]["type"] == "sleep":
+            node["action"]["ms"] = 1
         nodes.append(node)
     return {"version": "1.0", "name": label, "entry_node": "n0", "nodes": nodes}
+
+
+@pytest.mark.parametrize("count", [2, 5, 500])
+def test_catalog_fixture_actions_follow_publication_contract(count):
+    from backend.services.script_service import validate_publication_dag
+
+    # Numeric round-trip payloads remain unknown preserved fields. Executable
+    # sleep actions must independently provide their required duration.
+    source = dag_fixture(number=1e20, count=count)
+    validated = validate_publication_dag(source)
+    assert len(validated["nodes"]) == count
+    assert validated["nodes"][0]["action"]["unknown"]["numbers"][0] == 1e20
+
+
+async def test_historical_missing_action_parameters_remain_readable_and_rollback_preserves_source(catalog_ready):
+    w = catalog_ready
+    source = dag_fixture(count=5)
+    for node in source["nodes"]:
+        node["action"].pop("ms", None)
+    async with w.sessions() as db:
+        script = await add_catalog_script(db, w.org_a.id, name="historical incomplete actions", source=source)
+        await db.commit()
+        script_id, original_id = str(script.id), str(script.current_version_id)
+    headers = w.auth(w.users["org_admin"])
+    read = await w.client.get(f"/api/v1/scripts/{script_id}/versions/{original_id}", headers=headers)
+    assert read.status_code == 200 and read.json()["dag"] == source
+    rejected = await w.client.put(f"/api/v1/scripts/{script_id}", headers=headers,
+        json={"name": "must not be assigned", "dag": source, "expected_current_version_id": original_id})
+    assert rejected.status_code == 422
+    assert all(row["type"] == "action_parameter.required" for row in rejected.json()["detail"])
+    current = await w.client.get(f"/api/v1/scripts/{script_id}", headers=headers)
+    assert current.status_code == 200
+    assert current.json()["name"] == "historical incomplete actions"
+    assert current.json()["current_version_id"] == original_id
+    rolled = await w.client.post(f"/api/v1/scripts/{script_id}/versions/{original_id}/rollback", headers=headers,
+        json={"expected_current_version_id": original_id})
+    assert rolled.status_code == 200, rolled.text
+    rolled_id = rolled.json()["current_version_id"]
+    assert rolled_id != original_id
+    restored = await w.client.get(f"/api/v1/scripts/{script_id}/versions/{rolled_id}", headers=headers)
+    assert restored.status_code == 200 and restored.json()["dag"] == source
+    assert await assert_persisted_pair(w, script_id, rolled_id, 5) == _compute_dag_hash(source)
 
 
 @pytest_asyncio.fixture

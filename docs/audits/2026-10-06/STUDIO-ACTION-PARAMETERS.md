@@ -182,3 +182,23 @@ immutable build/deploy → обе темы и узкий workbench с контр
 APK здесь не менялся и Android commands не отправлялись. Затем capabilities
 конкретного APK, runtime condition/HTTP findings, continuous injector/channel,
 rich XPath/native evidence и correlated replay. EP-016 целиком не закрыт.
+
+## Полный hosted regression и корректировка фикстур
+
+Head **a9d8b85**, backend [run37508482270](https://github.com/RootOne1337/sphere-platform/actions/runs/37508482270):
+**5 failed /3006 passed /37 skipped**, coverage80.36%, 6 октября18:18 UTC.
+Все пять failures — публикация `dag_fixture(count=5)` в production catalog
+metadata tests: три промежуточных sleep не имели обязательного ms. Guard дал
+422 action_parameter.required. Lint/mypy/security/RLS/bootstrap и frontend/Android
+CI этого head прошли; полный backend CI не принят.
+
+Фикстура теперь задаёт sleep.ms=1. Неизвестные Unicode/numeric/private payloads,
+JSONB roundtrip, hash/dedup, CAS, archive и migration assertions сохранены.
+Добавлены три pure fixture checks для2/5/500 шагов (**локально3/3**) и отдельная
+реальная PostgreSQL регрессия: исторический source без ms остаётся читаемым;
+новое update отклоняется без изменения name/current version; rollback сохраняет
+исторический source и согласованную metadata pair. Эта регрессия требует hosted
+test database; локальная production DB не использовалась.
+Validator не ослабляется, tests/production budget historical fixtures не
+переписываются как новые executable scripts. [Изменённые проверки](../../../tests/production/test_script_catalog_metadata.py).
+Повторный full CI следующего head обязателен; prior green jobs не переносятся.
