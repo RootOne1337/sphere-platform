@@ -2,6 +2,7 @@ import { act, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import ScriptBuilderPage from '@/app/(dashboard)/scripts/builder/page';
 import { api } from '@/lib/api';
 import { TextEncoder } from 'node:util';
+import type { ReactFlowProps } from '@xyflow/react';
 Object.assign(globalThis, { TextEncoder });
 
 let mockEditId: string | null = 'script-a';
@@ -19,23 +20,32 @@ jest.mock('@/src/features/access/Capabilities', () => ({ useCapabilities: () => 
 jest.mock('@/lib/store', () => ({ useAuthStore: (select: (state: unknown) => unknown) => select({ user: { id: 'operator', org_id: 'org-a' }, sessionVersion: mockSessionVersion }) }));
 jest.mock('@/components/sphere/RunScriptModal', () => ({ RunScriptModal: () => null }));
 const mockWorkbenchGuard = jest.fn(() => true);
-jest.mock('@/src/features/scripts/studio/DeviceWorkbench', () => ({ DeviceWorkbench: ({ registerCloseGuard }: { registerCloseGuard: (guard: ((silent?: boolean) => boolean) | null) => void }) => {
+jest.mock('@/src/features/scripts/studio/DeviceWorkbench', () => ({ DeviceWorkbench: ({ registerCloseGuard, onExecution }: { registerCloseGuard: (guard: ((silent?: boolean) => boolean) | null) => void; onExecution: (last: string | null, logs: { node_id: string; success: boolean }[]) => void }) => {
   const React = jest.requireActual('react');
   React.useEffect(() => { registerCloseGuard(mockWorkbenchGuard); return () => registerCloseGuard(null); }, [registerCloseGuard]);
-  return <div>Owned workbench</div>;
+  return <div>Owned workbench<button onClick={() => onExecution('script-a-start', [{ node_id: 'script-a-start', success: true }])}>Report workbench execution</button></div>;
 } }));
 jest.mock('@/lib/dag/nodeTypes', () => ({ nodeTypes: {} }));
 jest.mock('@monaco-editor/react', () => ({ __esModule: true, default: () => null }));
 jest.mock('@xyflow/react/dist/style.css', () => ({}));
+const mockFitView = jest.fn().mockResolvedValue(true);
+let mockGraphProps: ReactFlowProps = {};
 jest.mock('@xyflow/react', () => {
   const React = jest.requireActual('react');
+  const { applyNodeChanges } = jest.requireActual('@xyflow/react');
   return {
-    useNodesState: (initial: unknown) => [...React.useState(initial), jest.fn()],
+    useNodesState: (initial: unknown) => {
+      const [nodes, setNodes] = React.useState(initial);
+      const onChange = React.useCallback((changes: unknown) => setNodes((current: unknown) => applyNodeChanges(changes, current)), []);
+      return [nodes, setNodes, onChange];
+    },
     useEdgesState: (initial: unknown) => [...React.useState(initial), jest.fn()],
     addEdge: jest.fn(),
-    ReactFlow: ({ nodes }: { nodes: { id: string }[] }) => (
-      <div data-testid="graph">{nodes.map((node) => <span key={node.id}>{node.id}</span>)}</div>
-    ),
+    ReactFlow: (props: ReactFlowProps) => {
+      mockGraphProps = props;
+      React.useEffect(() => { props.onInit?.({ fitView: mockFitView } as never); }, []);
+      return <div data-testid="graph">{props.nodes?.map((node) => <button key={node.id} onClick={event => props.onNodeClick?.(event, node)}>{node.id}</button>)}</div>;
+    },
     Background: () => null, Controls: () => null, MiniMap: () => null,
   };
 });
@@ -55,7 +65,19 @@ function deferred<T>() {
   return { promise, resolve };
 }
 
-beforeEach(() => { jest.clearAllMocks(); mockWorkbenchGuard.mockReturnValue(true); mockEditId = 'script-a'; mockCanWrite = true; mockSessionVersion = 0; localStorage.clear(); });
+beforeEach(() => { jest.clearAllMocks(); mockGraphProps = {}; mockWorkbenchGuard.mockReturnValue(true); mockEditId = 'script-a'; mockCanWrite = true; mockSessionVersion = 0; localStorage.clear(); });
+afterEach(() => jest.restoreAllMocks());
+
+function animationFrames() {
+  let nextId = 0;
+  const frames = new Map<number, FrameRequestCallback>();
+  jest.spyOn(window, 'requestAnimationFrame').mockImplementation(callback => { frames.set(++nextId, callback); return nextId; });
+  jest.spyOn(window, 'cancelAnimationFrame').mockImplementation(id => { frames.delete(id); });
+  return () => act(() => {
+    const callbacks = [...frames.values()]; frames.clear();
+    callbacks.forEach(callback => callback(performance.now()));
+  });
+}
 
 it('keeps a failed existing-script read out of the editor and only saves its original graph after explicit retry', async () => {
   jest.mocked(api.get).mockRejectedValueOnce(new Error('network timeout')).mockResolvedValueOnce(payload() as never);
@@ -244,4 +266,69 @@ it('honors owned-workbench guard on save, editor exit and native page unload', a
   window.dispatchEvent(unload);
   expect(unload.defaultPrevented).toBe(true);
   expect(mockWorkbenchGuard).toHaveBeenLastCalledWith(true);
+});
+
+it('refits changed panels after measurement while retaining moved nodes and the canonical DAG', async () => {
+  const frame = animationFrames();
+  jest.mocked(api.get).mockResolvedValue(payload() as never);
+  jest.mocked(api.put).mockResolvedValue({ data: {} } as never);
+  render(<ScriptBuilderPage />); await screen.findByText('script-a-start');
+  act(() => mockGraphProps.onNodesChange?.([{ id: 'script-a-start', type: 'position', position: { x: 73, y: 122 } }]));
+  fireEvent.click(screen.getByRole('button', { name: 'Устройство · запись · проверка' }));
+  expect(screen.getByText('Owned workbench')).toBeInTheDocument();
+  expect(mockFitView).not.toHaveBeenCalled();
+  frame(); expect(mockFitView).not.toHaveBeenCalled();
+  frame(); expect(mockFitView).toHaveBeenCalledTimes(1);
+  expect(mockFitView).toHaveBeenLastCalledWith(expect.objectContaining({ padding: expect.objectContaining({ top: '64px' }), maxZoom: 1 }));
+  for (let event = 0; event < 3; event++) fireEvent.click(screen.getByRole('button', { name: 'Report workbench execution' }));
+  fireEvent.change(screen.getByLabelText('Название сценария'), { target: { value: 'Renamed graph' } });
+  frame(); frame(); expect(mockFitView).toHaveBeenCalledTimes(1);
+  fireEvent.click(screen.getByRole('button', { name: 'Весь граф' }));
+  expect(mockFitView).toHaveBeenLastCalledWith({ padding: 0.25, maxZoom: 1 });
+  fireEvent.click(screen.getByRole('button', { name: 'Закрыть устройство' }));
+  frame(); frame(); expect(mockFitView).toHaveBeenCalledTimes(3);
+  fireEvent.click(screen.getByRole('button', { name: 'Скрыть библиотеку действий' }));
+  frame(); frame(); expect(mockFitView).toHaveBeenCalledTimes(4);
+  fireEvent.click(screen.getByRole('button', { name: 'Показать библиотеку действий' }));
+  frame(); frame(); expect(mockFitView).toHaveBeenCalledTimes(5);
+  expect(mockGraphProps.nodes?.find(node => node.id === 'script-a-start')?.position).toEqual({ x: 73, y: 122 });
+  fireEvent.click(screen.getByRole('button', { name: 'Сохранить версию' }));
+  await waitFor(() => expect(api.put).toHaveBeenCalledWith('/scripts/script-a', expect.objectContaining({ name: 'Renamed graph', dag: payload().data.current_version.dag }), expect.any(Object)));
+});
+
+it('preserves unapplied node edits and only refits an accepted workbench close', async () => {
+  const frame = animationFrames();
+  jest.mocked(api.get).mockResolvedValue(payload() as never);
+  render(<ScriptBuilderPage />); await screen.findByText('script-a-start');
+  fireEvent.click(screen.getByRole('button', { name: 'script-a-start' }));
+  fireEvent.click(screen.getByRole('button', { name: 'JSON шага' }));
+  const edited = JSON.stringify({ ...payload().data.current_version.dag.nodes[0], retry: 1 });
+  fireEvent.change(screen.getByLabelText('Шаг JSON: action, переходы, retry, timeout_ms'), { target: { value: edited } });
+  expect(mockGraphProps.nodesDraggable).toBe(false); expect(mockGraphProps.onNodesChange).toBeUndefined();
+  fireEvent.click(screen.getByRole('button', { name: 'Устройство · запись · проверка' }));
+  frame(); frame(); expect(mockFitView).toHaveBeenCalledTimes(1);
+  mockWorkbenchGuard.mockReturnValue(false);
+  fireEvent.click(screen.getByRole('button', { name: 'Закрыть устройство' }));
+  frame(); frame(); expect(mockFitView).toHaveBeenCalledTimes(1);
+  expect(screen.getByText('Owned workbench')).toBeInTheDocument();
+  mockWorkbenchGuard.mockReturnValue(true);
+  fireEvent.click(screen.getByRole('button', { name: 'Закрыть устройство' }));
+  frame(); frame(); expect(mockFitView).toHaveBeenCalledTimes(2);
+  expect(mockGraphProps.nodesDraggable).toBe(false); expect(mockGraphProps.onNodesChange).toBeUndefined();
+  expect(screen.getByRole('button', { name: 'Сохранить версию' })).toBeDisabled();
+  fireEvent.click(screen.getByRole('button', { name: 'JSON шага' }));
+  expect(screen.getByLabelText('Шаг JSON: action, переходы, retry, timeout_ms')).toHaveValue(edited);
+  expect(api.put).not.toHaveBeenCalled();
+});
+
+it('cancels a queued panel refit when leaving the graph before its canvas has settled', async () => {
+  const frame = animationFrames();
+  jest.mocked(api.get).mockResolvedValue(payload() as never);
+  render(<ScriptBuilderPage />); await screen.findByText('script-a-start');
+  fireEvent.click(screen.getByRole('button', { name: 'Устройство · запись · проверка' }));
+  frame();
+  fireEvent.click(screen.getByRole('button', { name: 'JSON' }));
+  frame(); frame();
+  expect(screen.queryByTestId('graph')).not.toBeInTheDocument();
+  expect(mockFitView).not.toHaveBeenCalled();
 });

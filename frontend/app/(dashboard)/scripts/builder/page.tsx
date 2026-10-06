@@ -1,6 +1,6 @@
 'use client';
 import { useState, useEffect, useRef, useCallback, Suspense } from 'react';
-import { ReactFlow, Background, Controls, MiniMap, useNodesState, useEdgesState, addEdge, type Node, type Edge, type Connection, type ReactFlowInstance } from '@xyflow/react';
+import { ReactFlow, Background, Controls, MiniMap, useNodesState, useEdgesState, addEdge, type Node, type Edge, type Connection, type ReactFlowInstance, type FitViewOptions } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useQueryClient } from '@tanstack/react-query';
@@ -23,6 +23,7 @@ import type { DagNode } from '@/lib/dag/export';
 
 interface ValidationReceipt { schema_version: 1; dag_hash: string; node_count: number; scope: 'structure-routes-lua-safety'; device_execution_verified: false }
 const importedInitial = importDag(initialDag);
+const overviewOptions: FitViewOptions = { padding: { top: '64px', right: '32px', bottom: '48px', left: '32px' }, minZoom: 0.65, maxZoom: 1 };
 function errorMessage(error: unknown): string {
   if (isAxiosError(error)) {
     if (error.response?.status === 409) return 'Версия сценария изменилась или он архивирован. Сохранение отклонено. Ваш исходник сохранён в редакторе; экспортируйте его и откройте актуальную версию из каталога.';
@@ -77,6 +78,7 @@ function BuilderInner({ editId, storageKey }: { editId: string | null; storageKe
   const request = useRef<AbortController | null>(null);
   const loaded = useRef(false);
   const canvas = useRef<ReactFlowInstance | null>(null);
+  const canvasLayout = useRef({ workspace, palette });
   const live = useRef(true);
   const inFlight = useRef(false);
   const fileInput = useRef<HTMLInputElement>(null);
@@ -97,6 +99,18 @@ function BuilderInner({ editId, storageKey }: { editId: string | null; storageKe
     window.addEventListener('beforeunload', before);
     return () => window.removeEventListener('beforeunload', before);
   }, [dirty]);
+  useEffect(() => {
+    const changed = canvasLayout.current.workspace !== workspace || canvasLayout.current.palette !== palette;
+    canvasLayout.current = { workspace, palette };
+    if (!changed || mode !== 'graph' || !canRead || loadState !== 'ready') return;
+    // Reframe only for an explicit panel change. Two frames let React Flow's
+    // ResizeObserver measure the new pane before fitting; edits and run events
+    // must preserve the operator's pan/zoom and node placement.
+    let frame = window.requestAnimationFrame(() => {
+      frame = window.requestAnimationFrame(() => { if (live.current) void canvas.current?.fitView(overviewOptions); });
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, [workspace, palette, mode, canRead, loadState]);
 
   function syncGraph(next: StudioDocument) {
     const imported = importDag(parseSource(next.source));
@@ -367,7 +381,7 @@ function BuilderInner({ editId, storageKey }: { editId: string | null; storageKe
       <div className={`relative h-[440px] min-w-0 flex-none lg:h-auto lg:min-h-0 lg:flex-1 ${workspace === 'device' ? 'lg:basis-[45%]' : ''}`}>
         <div className="absolute left-3 top-3 z-10 flex gap-1 rounded-lg border bg-card/95 p-1 shadow-sm">{workspace === 'design' && !palette && <Button variant="ghost" size="icon" className="size-7" aria-label="Показать библиотеку действий" onClick={() => setPalette(true)}><PanelLeftOpen className="size-3.5" /></Button>}<Button size="sm" variant="ghost" className="h-7 text-[11px]" onClick={() => void canvas.current?.fitView({ padding: 0.25, maxZoom: 1 })}><Maximize2 className="mr-1.5 size-3" />Весь граф</Button><span className="flex items-center px-2 text-[10px] text-muted-foreground">{nodes.length} шагов · {edges.length} связей</span></div>
         {mode === 'source' ? <div className="flex h-full min-h-[440px] flex-col bg-muted/20 p-4 pt-14 lg:min-h-0"><label htmlFor="studio-source" className="mb-2 text-xs font-medium">Исходник DAG 1.0 · {byteLength(document.source).toLocaleString('ru-RU')} байт / 512 KiB</label><textarea id="studio-source" spellCheck={false} className="min-h-[280px] flex-1 resize-none rounded-xl border bg-card p-4 font-mono text-xs leading-6 outline-none focus:ring-2 focus:ring-ring" value={document.source} readOnly={!writable} onChange={event => { try { changeDocument({ ...document, source: event.target.value }); } catch (error) { setErrors(errorMessage(error)); } }} /><p className="mt-2 text-[11px] text-muted-foreground">JSON и граф — один сценарий. Некорректный текст сохраняется для исправления, публикация блокируется.</p></div>
-          : <ReactFlow nodes={paintedNodes} edges={paintedEdges} onNodesChange={writable && !nodePending ? onNodesChange : undefined} onEdgesChange={writable && !nodePending ? onEdgesChange : undefined} onConnect={onConnect} onNodeClick={(_, node) => selectNode(node)} nodeTypes={nodeTypes} fitView fitViewOptions={{ padding: 0.1, minZoom: 0.65, maxZoom: 1 }} minZoom={0.15} maxZoom={1.8} nodesDraggable={writable && !nodePending} nodesConnectable={writable && !nodePending} deleteKeyCode={writable && !nodePending ? ['Backspace', 'Delete'] : null} onInit={instance => { canvas.current = instance; }} className="sphere-studio-flow"><Background gap={24} color="hsl(var(--border))" /><Controls /><MiniMap className="!hidden xl:!block" style={{ width: 130, height: 85 }} pannable zoomable nodeColor="hsl(var(--primary) / .5)" /></ReactFlow>}
+          : <ReactFlow nodes={paintedNodes} edges={paintedEdges} onNodesChange={writable && !nodePending ? onNodesChange : undefined} onEdgesChange={writable && !nodePending ? onEdgesChange : undefined} onConnect={onConnect} onNodeClick={(_, node) => selectNode(node)} nodeTypes={nodeTypes} fitView fitViewOptions={overviewOptions} minZoom={0.15} maxZoom={1.8} nodesDraggable={writable && !nodePending} nodesConnectable={writable && !nodePending} deleteKeyCode={writable && !nodePending ? ['Backspace', 'Delete'] : null} onInit={instance => { canvas.current = instance; }} className="sphere-studio-flow"><Background gap={24} color="hsl(var(--border))" /><Controls /><MiniMap className="!hidden xl:!block" style={{ width: 130, height: 85 }} pannable zoomable nodeColor="hsl(var(--primary) / .5)" /></ReactFlow>}
       </div>
       {workspace === 'device' ? <div className="min-h-0 min-w-0 border-t lg:flex-[1.2] lg:border-l lg:border-t-0"><DeviceWorkbench scriptId={editId} version={expectedVersion} name={document.name} canRun={Boolean(canRun)} canEdit={writable && !nodePending} onInsert={insertRecorded} onExecution={executionChanged} registerCloseGuard={registerWorkbenchGuard} /></div>
         : <aside aria-label="Параметры шага" className="flex min-h-0 shrink-0 flex-col border-t bg-card lg:w-[310px] lg:border-l lg:border-t-0 2xl:w-[350px]">
