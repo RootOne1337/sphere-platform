@@ -252,6 +252,82 @@ function animationFrames() {
   });
 }
 
+function canvasSizes() {
+  const previous = Object.getOwnPropertyDescriptor(globalThis, 'ResizeObserver');
+  const observers: { callback: ResizeObserverCallback; element: Element | null; disconnected: boolean }[] = [];
+  class Observer {
+    state: typeof observers[number];
+    constructor(callback: ResizeObserverCallback) { this.state = { callback, element: null, disconnected: false }; observers.push(this.state); }
+    observe(element: Element) { this.state.element = element; }
+    unobserve() {}
+    disconnect() { this.state.disconnected = true; }
+  }
+  Object.defineProperty(globalThis, 'ResizeObserver', { configurable: true, value: Observer });
+  return {
+    resize: (width: number, height: number, stale = false) => act(() => {
+      for (const observer of observers) if (observer.element && (stale || !observer.disconnected)) {
+        observer.callback([{ target: observer.element, contentRect: { width, height } } as ResizeObserverEntry], {} as ResizeObserver);
+      }
+    }),
+    disconnected: () => observers.every(observer => observer.disconnected),
+    restore: () => { if (previous) Object.defineProperty(globalThis, 'ResizeObserver', previous); else Reflect.deleteProperty(globalThis, 'ResizeObserver'); },
+  };
+}
+
+it('adapts an overview to pane resizing without stealing a manually chosen viewport or changing the DAG', () => {
+  const sizes = canvasSizes(); const frame = animationFrames();
+  try {
+    mockEditId = null;
+    render(<ScriptBuilderPage />);
+    const before = mockGraphProps.nodes!.map(node => ({ id: node.id, position: { ...node.position } }));
+    const routes = structuredClone(mockGraphProps.edges);
+    sizes.resize(1000, 700); frame(); frame();
+    expect(mockFitView).not.toHaveBeenCalled();
+    sizes.resize(500, 600); sizes.resize(510, 600); frame();
+    expect(mockFitView).not.toHaveBeenCalled();
+    frame(); expect(mockFitView).toHaveBeenCalledTimes(1);
+    expect(mockFitView).toHaveBeenLastCalledWith(expect.objectContaining({ minZoom: 0.15, maxZoom: 1 }));
+    act(() => mockGraphProps.onMoveStart?.(null, { x: 10, y: 20, zoom: 1 }));
+    sizes.resize(600, 600); frame(); frame();
+    expect(mockFitView).toHaveBeenCalledTimes(2); // Programmatic fit doesn't cancel overview following.
+    sizes.resize(620, 600); frame();
+    act(() => mockGraphProps.onMoveStart?.(new MouseEvent('mousedown'), { x: 30, y: 40, zoom: 1.5 }));
+    frame(); sizes.resize(630, 600); frame(); frame();
+    expect(mockFitView).toHaveBeenCalledTimes(2);
+    fireEvent.click(screen.getByRole('button', { name: 'Весь граф' }));
+    sizes.resize(640, 600); frame(); frame();
+    expect(mockFitView).toHaveBeenCalledTimes(4);
+    fireEvent.change(screen.getByLabelText('Название сценария'), { target: { value: 'Readable overview' } });
+    sizes.resize(640.2, 600.1); frame(); frame();
+    expect(mockFitView).toHaveBeenCalledTimes(4);
+    expect(mockGraphProps.nodes!.map(node => ({ id: node.id, position: node.position }))).toEqual(before);
+    expect(mockGraphProps.edges).toEqual(routes);
+    expect(api.post).not.toHaveBeenCalled(); expect(api.put).not.toHaveBeenCalled();
+  } finally { sizes.restore(); }
+});
+
+it('ignores hidden panes and cancels observer work on source mode, unmount and stale callbacks', () => {
+  const sizes = canvasSizes(); const frame = animationFrames();
+  try {
+    mockEditId = null;
+    const view = render(<ScriptBuilderPage />);
+    sizes.resize(1000, 700); sizes.resize(0, 0); frame(); frame();
+    expect(mockFitView).not.toHaveBeenCalled();
+    sizes.resize(400, 500); frame(); frame();
+    expect(mockFitView).toHaveBeenCalledTimes(1);
+    sizes.resize(450, 500); frame();
+    fireEvent.click(screen.getByRole('button', { name: 'JSON' }));
+    sizes.resize(460, 500, true); frame(); frame();
+    expect(sizes.disconnected()).toBe(true);
+    expect(mockFitView).toHaveBeenCalledTimes(1);
+    fireEvent.click(screen.getByRole('button', { name: 'Граф' }));
+    sizes.resize(600, 500); sizes.resize(650, 500); frame();
+    view.unmount(); sizes.resize(700, 500, true); frame(); frame();
+    expect(sizes.disconnected()).toBe(true);
+    expect(mockFitView).toHaveBeenCalledTimes(1);
+  } finally { sizes.restore(); }
+});
+
 it('keeps invalid imported parameters editable but blocks publication and validation before HTTP', async () => {
   const response = payload();
   response.data.current_version.dag.nodes[0].action = { type: 'set_variable', key: 'v', value: {} } as never;
@@ -581,7 +657,7 @@ it('refits changed panels after measurement while retaining moved nodes and the 
   fireEvent.change(screen.getByLabelText('Название сценария'), { target: { value: 'Renamed graph' } });
   frame(); frame(); expect(mockFitView).toHaveBeenCalledTimes(1);
   fireEvent.click(screen.getByRole('button', { name: 'Весь граф' }));
-  expect(mockFitView).toHaveBeenLastCalledWith({ padding: 0.25, maxZoom: 1 });
+  expect(mockFitView).toHaveBeenLastCalledWith(expect.objectContaining({ minZoom: 0.15, maxZoom: 1 }));
   fireEvent.click(screen.getByRole('button', { name: 'Закрыть устройство' }));
   frame(); frame(); expect(mockFitView).toHaveBeenCalledTimes(3);
   fireEvent.click(screen.getByRole('button', { name: 'Скрыть библиотеку действий' }));

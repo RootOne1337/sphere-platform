@@ -22,13 +22,14 @@ import { checkConnection, changeConnection } from '@/lib/dag/connections';
 import { DeviceWorkbench } from '@/src/features/scripts/studio/DeviceWorkbench';
 import { ACTION_GROUPS, ANDROID_KEY_PRESETS } from '@/src/features/scripts/studio/presentation';
 import { layoutWorkflow } from '@/src/features/scripts/studio/layout';
+import { useCanvasOverview } from '@/src/features/scripts/studio/useCanvasOverview';
 import type { DagNode } from '@/lib/dag/export';
 import { actionParameterErrors, ACTION_CONTRACT_VERSION } from '@/lib/dag/actionParameters';
 
 interface ValidationReceipt { schema_version: 1; dag_hash: string; node_count: number; scope: 'structure-routes-lua-safety'; device_execution_verified: false;
   action_contract_version?: string; action_parameters_verified?: boolean }
 const importedInitial = importDag(initialDag);
-const overviewOptions: FitViewOptions = { padding: { top: '64px', right: '32px', bottom: '48px', left: '32px' }, minZoom: 0.65, maxZoom: 1 };
+const overviewOptions: FitViewOptions = { padding: { top: '64px', right: '32px', bottom: '48px', left: '32px' }, minZoom: 0.15, maxZoom: 1 };
 function errorMessage(error: unknown): string {
   if (isAxiosError(error)) {
     if (error.response?.status === 409) return 'Версия сценария изменилась или он архивирован. Сохранение отклонено. Ваш исходник сохранён в редакторе; экспортируйте его и откройте актуальную версию из каталога.';
@@ -99,6 +100,9 @@ function BuilderInner({ editId, storageKey }: { editId: string | null; storageKe
   const writable = canWrite && !busy && loadState === 'ready';
   const selectedNode = nodes.find(node => node.id === selectedId);
   const selectedEdge = edges.find(edge => edge.id === selectedEdgeId);
+  const { overview: fitOverview, manual: retainViewport, follow: followOverview } = useCanvasOverview(
+    canvasPane, mode === 'graph' && canRead && loadState === 'ready', () => canvas.current?.fitView(overviewOptions),
+  );
 
   useEffect(() => { live.current = true; return () => { live.current = false; request.current?.abort(); layoutRequest.current?.abort(); }; }, []);
   useEffect(() => {
@@ -117,10 +121,10 @@ function BuilderInner({ editId, storageKey }: { editId: string | null; storageKe
     // ResizeObserver measure the new pane before fitting; edits and run events
     // must preserve the operator's pan/zoom and node placement.
     let frame = window.requestAnimationFrame(() => {
-      frame = window.requestAnimationFrame(() => { if (live.current) void canvas.current?.fitView(overviewOptions); });
+      frame = window.requestAnimationFrame(() => { if (live.current) fitOverview(); });
     });
     return () => window.cancelAnimationFrame(frame);
-  }, [workspace, palette, mode, canRead, loadState]);
+  }, [workspace, palette, mode, canRead, loadState, fitOverview]);
 
   function syncGraph(next: StudioDocument, placement?: { id: string; x: number; y: number }) {
     const imported = importDag(parseDraftSource(next.source), { editing: true });
@@ -264,6 +268,7 @@ function BuilderInner({ editId, storageKey }: { editId: string | null; storageKe
       }
       changeDocument({ ...documentRef.current, source: formatDag(graph) }, true, placement);
       setSelectedId(id); setInspectorTab('step'); setNodeSource(JSON.stringify(graph.nodes.find(node => node.id === id), null, 2));
+      retainViewport(); // A new/drop-focused step is no longer the whole-graph overview.
       // Dropping must preserve the current viewport and every existing position.
       if (!drop) window.requestAnimationFrame(() => { if (live.current) void canvas.current?.fitView({ nodes: [{ id }], padding: 0.15, minZoom: 0.85, maxZoom: 1 }); });
     } catch (error) { setErrors(errorMessage(error)); }
@@ -371,7 +376,7 @@ function BuilderInner({ editId, storageKey }: { editId: string | null; storageKe
     const original = documentRef.current.source;
     setLayoutBusy(true);
     try { const next = await layoutWorkflow(nodes, edges, controller.signal, direction);
-      if (live.current && documentRef.current.source === original) { setNodes(next); window.requestAnimationFrame(() => { if (live.current) void canvas.current?.fitView({ padding: 0.1, minZoom: 0.65, maxZoom: 1 }); }); }
+      if (live.current && documentRef.current.source === original) { setNodes(next); window.requestAnimationFrame(() => { if (live.current) fitOverview(); }); }
     } catch (reason) { if (live.current && !controller.signal.aborted) setErrors(errorMessage(reason)); }
     finally { if (live.current) setLayoutBusy(false); layoutRequest.current = null; }
   }
@@ -434,7 +439,7 @@ function BuilderInner({ editId, storageKey }: { editId: string | null; storageKe
           <Button variant="ghost" size="icon" aria-label="Отменить изменение" disabled={!writable || nodePending || !history.length} onClick={() => restoreHistory('undo')}><Undo2 className="size-4" /></Button><Button variant="ghost" size="icon" aria-label="Повторить изменение" disabled={!writable || nodePending || !future.length} onClick={() => restoreHistory('redo')}><Redo2 className="size-4" /></Button>
           <span className="mx-1 h-5 border-l" /><Button size="sm" variant="ghost" disabled={!writable || nodePending} onClick={() => fileInput.current?.click()}><Upload className="mr-1.5 size-3.5" />Импорт JSON</Button><input ref={fileInput} type="file" accept=".json,application/json" className="hidden" aria-label="Файл сценария" onChange={event => { void importFile(event.target.files?.[0]); event.target.value = ''; }} /><Button size="sm" variant="ghost" onClick={exportFile}><Download className="mr-1.5 size-3.5" />Экспорт</Button>
           {mode === 'graph' && <Button size="sm" variant="ghost" disabled={Boolean(busy) || nodePending || layoutBusy} onClick={() => void arrange()} title="Раскладка ELK в локальном worker"><LayoutGrid className="mr-1.5 size-3.5" />{layoutBusy ? 'Раскладываем…' : 'Упорядочить'}</Button>}
-          {mode === 'graph' && <select aria-label="Направление схемы" value={direction} disabled={layoutBusy || nodePending || Boolean(busy)} className="h-8 rounded-lg border bg-card px-2 text-xs" onChange={event => { const next = event.target.value === 'RIGHT' ? 'RIGHT' : 'DOWN'; setDirection(next); setNodes(arrangeNodes(nodes, edges, metadata.entry_node, next)); window.requestAnimationFrame(() => { if (live.current) void canvas.current?.fitView({ padding: 0.1, minZoom: 0.65, maxZoom: 1 }); }); }}><option value="DOWN">Сверху вниз</option><option value="RIGHT">Слева направо</option></select>}
+          {mode === 'graph' && <select aria-label="Направление схемы" value={direction} disabled={layoutBusy || nodePending || Boolean(busy)} className="h-8 rounded-lg border bg-card px-2 text-xs" onChange={event => { const next = event.target.value === 'RIGHT' ? 'RIGHT' : 'DOWN'; setDirection(next); setNodes(arrangeNodes(nodes, edges, metadata.entry_node, next)); window.requestAnimationFrame(() => { if (live.current) fitOverview(); }); }}><option value="DOWN">Сверху вниз</option><option value="RIGHT">Слева направо</option></select>}
         </div>
         <div className="flex flex-wrap gap-2"><Button size="sm" variant={workspace === 'device' ? 'secondary' : 'outline'} aria-pressed={workspace === 'device'} onClick={() => { if (workspace === 'device' && workbenchGuard.current && !workbenchGuard.current()) return; setWorkspace(workspace === 'device' ? 'design' : 'device'); }}><Monitor className="mr-2 size-3.5" />{workspace === 'device' ? 'Закрыть устройство' : 'Устройство · запись · проверка'}</Button><Button size="sm" variant="outline" disabled={!canRun || Boolean(busy)} onClick={() => setRunOpen(true)} title="Запуск сохранённой неизменённой версии на выбранных целях"><Play className="mr-2 size-3.5" />Запустить версию</Button></div>
       </div>
@@ -452,9 +457,9 @@ function BuilderInner({ editId, storageKey }: { editId: string | null; storageKe
       </aside>}
       <div ref={canvasPane} aria-label="Поле графа" onDrop={dropAction} onDragOver={event => { if (writable && !nodePending && mode === 'graph' && event.dataTransfer.types.includes(ACTION_DRAG_TYPE)) { event.preventDefault(); event.dataTransfer.dropEffect = 'copy'; setDropActive(true); } }} onDragLeave={event => { if (!event.relatedTarget || !event.currentTarget.contains(event.relatedTarget as globalThis.Node)) setDropActive(false); }} className={`relative h-[440px] min-w-0 flex-none lg:h-auto lg:min-h-0 lg:flex-1 ${workspace === 'device' ? 'lg:basis-[45%]' : ''}`}>
         {dropActive && writable && !nodePending && mode === 'graph' && <div className="pointer-events-none absolute inset-1 z-20 flex items-end justify-center rounded-xl border-2 border-dashed border-primary bg-primary/5 p-5"><span className="rounded-lg border bg-card px-3 py-2 text-xs shadow-sm">Отпустите, чтобы добавить отдельный узел</span></div>}
-        <div className="absolute left-3 top-3 z-10 flex gap-1 rounded-lg border bg-card/95 p-1 shadow-sm">{workspace === 'design' && !palette && <Button variant="ghost" size="icon" className="size-7" aria-label="Показать библиотеку действий" onClick={() => setPalette(true)}><PanelLeftOpen className="size-3.5" /></Button>}<Button size="sm" variant="ghost" className="h-7 text-[11px]" onClick={() => void canvas.current?.fitView({ padding: 0.25, maxZoom: 1 })}><Maximize2 className="mr-1.5 size-3" />Весь граф</Button><span className="flex items-center px-2 text-[10px] text-muted-foreground">{nodes.length} шагов · {edges.length} связей</span></div>
+        <div className="absolute left-3 top-3 z-10 flex gap-1 rounded-lg border bg-card/95 p-1 shadow-sm">{workspace === 'design' && !palette && <Button variant="ghost" size="icon" className="size-7" aria-label="Показать библиотеку действий" onClick={() => setPalette(true)}><PanelLeftOpen className="size-3.5" /></Button>}<Button size="sm" variant="ghost" className="h-7 text-[11px]" onClick={fitOverview}><Maximize2 className="mr-1.5 size-3" />Весь граф</Button><span className="flex items-center px-2 text-[10px] text-muted-foreground">{nodes.length} шагов · {edges.length} связей</span></div>
         {mode === 'source' ? <div className="flex h-full min-h-[440px] flex-col bg-muted/20 p-4 pt-14 lg:min-h-0"><label htmlFor="studio-source" className="mb-2 text-xs font-medium">Исходник DAG 1.0 · {byteLength(document.source).toLocaleString('ru-RU')} байт / 512 KiB</label><textarea id="studio-source" spellCheck={false} className="min-h-[280px] flex-1 resize-none rounded-xl border bg-card p-4 font-mono text-xs leading-6 outline-none focus:ring-2 focus:ring-ring" value={document.source} readOnly={!writable} onChange={event => { try { changeDocument({ ...document, source: event.target.value }); } catch (error) { setErrors(errorMessage(error)); } }} /><p className="mt-2 text-[11px] text-muted-foreground">JSON и граф — один сценарий. Некорректный текст сохраняется для исправления, публикация блокируется.</p></div>
-          : <ReactFlow nodes={paintedNodes} edges={paintedEdges} onNodesChange={writable && !nodePending ? onNodesChange : undefined} onEdgesChange={writable && !nodePending ? onEdgesChange : undefined} onConnect={onConnect} onReconnect={onReconnect} edgesReconnectable={writable && !nodePending} reconnectRadius={16} onEdgeClick={(_, edge) => selectEdge(edge)} onNodeClick={(_, node) => selectNode(node)} nodeTypes={nodeTypes} fitView fitViewOptions={overviewOptions} minZoom={0.15} maxZoom={1.8} nodesDraggable={writable && !nodePending} nodesConnectable={writable && !nodePending} onBeforeDelete={async deletion => { if (!writable || nodePending) return false; if (deletion.nodes.some(node => node.id === metadata.entry_node)) { setErrors('Начальный шаг нельзя удалить. Сначала выберите другой вход в настройках сценария.'); return false; } return true; }} deleteKeyCode={writable && !nodePending ? ['Backspace', 'Delete'] : null} onInit={instance => { canvas.current = instance; }} className="sphere-studio-flow"><Background gap={24} color="hsl(var(--border))" /><Controls /><MiniMap className="!hidden xl:!block" style={{ width: 130, height: 85 }} pannable zoomable nodeColor="hsl(var(--primary) / .5)" /></ReactFlow>}
+          : <ReactFlow nodes={paintedNodes} edges={paintedEdges} onNodesChange={writable && !nodePending ? onNodesChange : undefined} onEdgesChange={writable && !nodePending ? onEdgesChange : undefined} onConnect={onConnect} onReconnect={onReconnect} edgesReconnectable={writable && !nodePending} reconnectRadius={16} onEdgeClick={(_, edge) => selectEdge(edge)} onNodeClick={(_, node) => selectNode(node)} onMoveStart={event => { if (event) retainViewport(); }} onNodeDragStart={retainViewport} nodeTypes={nodeTypes} fitView fitViewOptions={overviewOptions} minZoom={0.15} maxZoom={1.8} nodesDraggable={writable && !nodePending} nodesConnectable={writable && !nodePending} onBeforeDelete={async deletion => { if (!writable || nodePending) return false; if (deletion.nodes.some(node => node.id === metadata.entry_node)) { setErrors('Начальный шаг нельзя удалить. Сначала выберите другой вход в настройках сценария.'); return false; } return true; }} deleteKeyCode={writable && !nodePending ? ['Backspace', 'Delete'] : null} onInit={instance => { canvas.current = instance; }} className="sphere-studio-flow"><Background gap={24} color="hsl(var(--border))" /><Controls fitViewOptions={overviewOptions} onFitView={followOverview} onZoomIn={retainViewport} onZoomOut={retainViewport} /><MiniMap className="!hidden xl:!block" style={{ width: 130, height: 85 }} pannable zoomable nodeColor="hsl(var(--primary) / .5)" /></ReactFlow>}
         {workspace === 'device' && mode === 'graph' && selectedEdge && <div className="absolute bottom-3 left-3 z-10 max-h-[calc(100%_-_4rem)] w-[280px] max-w-[calc(100%_-_1.5rem)] overflow-auto rounded-xl border bg-card p-4 shadow-lg"><Button size="sm" variant="ghost" className="mb-2 w-full" onClick={() => setSelectedEdgeId(null)}>Закрыть редактор связи</Button><ConnectionInspector edge={selectedEdge} nodes={nodes} writable={writable && !nodePending} reconnect={connection => onReconnect(selectedEdge, connection)} remove={removeEdge} /></div>}
       </div>
       {workspace === 'device' ? <div className="min-h-0 min-w-0 border-t lg:flex-[1.2] lg:border-l lg:border-t-0"><DeviceWorkbench scriptId={editId} version={expectedVersion} name={document.name} canRun={Boolean(canRun)} canEdit={writable && !nodePending} onInsert={insertRecorded} onExecution={executionChanged} registerCloseGuard={registerWorkbenchGuard} /></div>
