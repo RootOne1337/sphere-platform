@@ -1,10 +1,16 @@
 # Script Studio: инструкция по созданию и проверке сценариев
 
-Актуализировано: **6 октября 2026**. Инструкция относится к текущему каталогу
+Актуализировано: **7 октября 2026**. Инструкция относится к текущему каталогу
 `/scripts` и редактору `/scripts/builder`, формату **DAG 1.0**, React Flow и
 локальной раскладке **elkjs 0.12.0**. Установленная сборка интерфейса —
 **1c26ffc7** на порту **3015**, API — **eb7a7c26**.
 Она заменяет прежнюю инструкцию «Этап A».
+
+**7 октября — доставка нового UI подготовлена:**
+[hosted runtime image26pages/73assets и guarded installer](../audits/2026-10-07/REVIEWED-WEB-DELIVERY.md).
+Image source99af20d принят в CI; полный source baselinece6e377 прошёл backend/
+frontend/Android. Новый image **ещё не установлен**: после ремонта C: требуется
+host acceptance, затем UI-only update и browser matrix графа/записи.
 
 **Source candidate 6 октября, ещё не установлен:**
 [Свободная сборка и drag/drop узлов](../audits/2026-10-06/STUDIO-FREE-CANVAS.md),
@@ -12,8 +18,9 @@
 [Editor связей и Android key presets](../audits/2026-10-06/STUDIO-CONNECTION-EDITING.md),
 [ordered XPath review queue и follow-up](../audits/2026-10-06/STUDIO-INTERACTION-FOLLOWUP.md),
 [native1:1 PNG preview](../audits/2026-10-06/NATIVE-PNG-PIXEL-VERIFICATION.md).
-234/11 scoped tests и TypeScript passed; build/deploy удержан до postboot
-acceptance C:. Описания установленной сборки ниже сохраняются; новые кнопки
+234/11 scoped tests и TypeScript — исторический первый срез; последующий полный
+CI указан выше. Local build/deploy удержан до postboot acceptance C:.
+Описания установленной сборки ниже сохраняются; новые кнопки
 нельзя считать доступными на3015 до фактического обновления и browser приёмки.
 
 Следующий source срез: 32 опубликованных действия имеют общий контракт типов,

@@ -1,7 +1,8 @@
 # Script Studio: доставка проверенного веба без локального rebuild
 
 **Дата:** 7 октября 2026, Asia/Yekaterinburg. **PR:** [#19](https://github.com/RootOne1337/sphere-platform/pull/19).
-**Статус:** source implemented; первый hosted image admission ещё не получен.
+**Статус:** первый hosted image admission получен для source99af20d;
+установка и новая browser приёмка ещё не выполнены.
 **Адрес рабочей витрины:** http://127.0.0.1:3015. Installed UI остаётся
 `1c26ffc7def8c1a16ac90d2f0607f857b21d28cb`, API — `eb7a7c26c2e644f24eb3f785b3da1c29a65929be`.
 
@@ -38,6 +39,14 @@ Artifact загружается только после image probe и archive a
 локальные `.env`, database volumes, APK или host reports. Upload action pinned
 на `043fb46d1a93c77aae656e7c1c64a875d1fc6a0a` (v7); никаких package write/deploy
 permissions не добавлено. [Official upload-artifact options](https://github.com/actions/upload-artifact#inputs).
+
+Первый run [37517925456](https://github.com/RootOne1337/sphere-platform/actions/runs/37517925456)
+успешен: actual image26pages/73assets, gzip120 839 622bytes (примерно115MiB).
+[Exact evidence/independent image ID](REVIEWED-WEB-IMAGE-EVIDENCE.json) содержит
+artifact ID и **ZIP digest GitHub**, который отличается от gzip digest в receipt.
+Архив на ПК пока не скачан/не загружен; backend/Android нового source на момент
+image receipt ещё выполнялись. Последний полный baselinece6e377 —
+[3015backend /1686frontend /Android success](STUDIO-CI-BASELINE.json).
 
 CI packaging base, проверенный remote manifest6октябряUTC:
 `node:24-bookworm-slim@sha256:d6aa754f16b3197301076f047b5def2f02ea1dbbc2ca920407d46d7ec7f87b20`.
@@ -94,13 +103,47 @@ detached node/explicit insertion, connection delete/reconnect, branch errors,
 Undo/Redo, parameters, mobile layout и device recorder. Только этот результат
 может закрыть source→installed→visual gate.
 
+[`install_reviewed_web.py`](../../../scripts/pilot/install_reviewed_web.py)
+по умолчанию пишет bounded private plan, без Docker load/up/stop. Для `--apply`
+требуются resource guard, независимый expected image ID из authenticated CI log
+или linked evidence и успешный GitHub run с соответствующими SHA/attempt/path.
+Самоподписанный receipt из download не заменяет independent image identity.
+
+```powershell
+python scripts/pilot/install_reviewed_web.py --artifact '<private artifact directory>' --source '<40-character source SHA>' --expected-image-id '<sha256 image ID from authenticated CI>'
+# Только после postboot host acceptance к той же команде добавляется --apply.
+```
+
+Installer проверяет baseline labels/config/environment и exact delta: новый UI
+image и удаление **его прежнего build recipe**. Для удаления используется
+официальный [Compose !reset](https://docs.docker.com/reference/compose-file/merge/#reset-value).
+Иначе последующий `--build` мог бы собрать старый checkout под новым image tag.
+Native `compose config` на текущем Compose5.1.0 подтвердил reset; текущий container
+ID/image сохранены. Никакого `up` в этой проверке не было.
+
+Apply ограничен `up --no-deps --no-build review-ui`; проверяет image/health,
+login200, OTA catalog hash и ID/image/startedAt/status **всех остальных**
+контейнеров. Rollback ограничен прежним UI при соответствующей ownership;
+при foreign image или неизвестном результате успешная установка не заявляется.
+Перезагрузку, API migration/APK install, удаление volumes/images/cache он не делает.
+Apply/rollback against actual Docker ещё требуют отдельной runtime приёмки.
+
+Доставка не включает blind image prune: до cleanup нужен список in-use images
+и сохраняемый rollback. Download retention/loaded image retention — разные
+границы; три дня GitHub не очищают локальный Docker автоматически. Новый image
+не доказывает устранение исходного220GiB VHD/storage-growth incident.
+
 ## Проверки и ограничения
 
 Локально: **11unittest methods с41 отдельными positive/negative cases**,
 Python Ruff и Node syntax check прошли. Tests используют только временные tiny
 archives: tamper, wrong SHA/platform/CI/entry/User, missing route/layer, extra
 image/tag, traversal/links/duplicates и ложные runtime flags. Docker image
-build/probe/upload ещё должны пройти hosted workflow нового head.
+build/probe/upload source99af20d прошли hosted workflow. Дополнительные **7local
+installer methods** (18combined) проверяют Compose/environment/port/network
+boundaries, CI source/attempt/conclusion, independent image ID и отсутствие
+Docker load/up/stop/rollback при Warning/Full Repair Needed. Ruff/YAML/Node syntax
+прошли. Новый workflow head включает installer suite; это ещё не его hosted run.
 
 Это не тест500–1000устройств, не новый Android encoder/injector, не установка
 APK и не admission continuous DOWN/MOVE/UP. [Studio priorities](../2026-10-06/STUDIO-INTERACTION-FOLLOWUP.md)

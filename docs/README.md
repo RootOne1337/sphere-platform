@@ -9,11 +9,17 @@
 </div>
 
 > [!NOTE]
-> **Срез навигации: 6 октября 2026.** Канонические source/runtime факты,
+> **Срез навигации: 7 октября 2026.** Канонические source/runtime факты,
 > версии Android, ограничения диагностики и будущий этап 20–30 устройств собраны
 > в [актуальном состоянии](operations/CURRENT-STATE.md). Каталог не выполняет
 > автоматическую проверку runtime; старые аудиты сохраняют собственные даты и
 > версии и не должны читаться как текущий deploy. [Правила актуальности](DOCUMENTATION.md).
+
+**7 октября — проверенный переносимый веб без локального rebuild:**
+[Доставка, installer plan и host gate](audits/2026-10-07/REVIEWED-WEB-DELIVERY.md) ·
+[Hosted image26pages/73assets, artifact и image ID](audits/2026-10-07/REVIEWED-WEB-IMAGE-EVIDENCE.json) ·
+[Полный CI baselinece6e377](audits/2026-10-07/STUDIO-CI-BASELINE.json).
+UI на3015 ещё не обновлён; queued NTFS repair требует postboot acceptance.
 
 **5 октября — комплексный аудит продукта:**
 [22 раздела в браузере, шесть подтверждённых дефектов, ограничение Grafana и 50 работ](audits/2026-10-05/ENTERPRISE-PRODUCT-AUDIT.md) ·

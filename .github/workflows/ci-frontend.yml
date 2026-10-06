@@ -44,7 +44,7 @@ jobs:
       - name: Packaged HTTP probe rejects incomplete artifacts
         run: node --test ../tests/containers/test_frontend_standalone_probe.mjs
       - name: Reviewed image admission rejects mismatched archives
-        run: python -m unittest discover -s ../tests/containers -p test_reviewed_web_artifact.py
+        run: python -m unittest discover -s ../tests/containers -p 'test_*reviewed_web*.py'
       - run: npm run type-check
       - run: npm run build
       - name: Check standalone entry point

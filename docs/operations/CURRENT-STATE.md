@@ -13,8 +13,12 @@ frontend1686/133 с26pages/73assets, Android variants и signed smoke прошл
 проверенный standalone output в unprivileged Linux/amd64 image, проверяет actual
 image pages/assets и сохраняет bounded Docker-save archive с SHA/run/attempt
 receipt на3дня. Read-only admission проверяет archive/config/source/CI binding.
-**11local methods/41cases**, Ruff/Node syntax passed; новый hosted image run
-ещё не принят. [Доставка и host gate](../audits/2026-10-07/REVIEWED-WEB-DELIVERY.md).
+**18local archive/installer methods**, Ruff/Node/YAML checks passed.
+Hosted image source99af20d принят: **26pages/73assets**,115MiB gzip,
+artifact11438406747, image/config/source admission success.
+[Exact image receipt](../audits/2026-10-07/REVIEWED-WEB-IMAGE-EVIDENCE.json) ·
+[Доставка и host gate](../audits/2026-10-07/REVIEWED-WEB-DELIVERY.md).
+Read-only native Compose preflight прошёл; apply/browser ещё не выполнены.
 C: остаётся Warning/Full Repair Needed, новый boot repair не подтверждён.
 Installed UI1c26ffc7/APIeb7a7c26/APK сохранены; ledger9/41 не изменён.
 
