@@ -1,0 +1,470 @@
+{
+  "schemaVersion": 1,
+  "status": "PARTIAL_REDESIGN_INSTALLED",
+  "recordedAt": "2026-10-06T02:07:44.197931+00:00",
+  "uiSource": "a670a3df3c90ad10658b71ad1b639689d407cf97",
+  "uiImageId": "sha256:e803fc55dc05c1271762d3dca911d1f354e2a42665e8cb0cd917fff20e631c69",
+  "apiSource": "c2b91e3202948860e4d99b3f35cbe441d2842538",
+  "ledger": {
+    "accepted": 9,
+    "open": 41,
+    "immutableBaselineRetained": true
+  },
+  "openStudioItems": [
+    "EP-014",
+    "EP-015",
+    "EP-016",
+    "EP-017",
+    "EP-018",
+    "EP-019",
+    "EP-020"
+  ],
+  "previousEvidence": "SCRIPT-STUDIO-EVIDENCE.json",
+  "previousEvidenceSha256": "220858d7991b0a6f6dc1c2a8f686ccc039d7abea71b05f26c9526e1eff07bdaa",
+  "backlog": "../2026-10-05/ENTERPRISE-PRODUCT-BACKLOG.json",
+  "backlogSha256": "8ea6e56d57af1570baab08cb0d4aac4e52b0029f95067b19d8f6391eeac9f915",
+  "criterionClosed": false,
+  "frameExactReplayProven": false,
+  "fullRecorderImplemented": false,
+  "uia2InstrumentationAdded": false,
+  "apkChanged": false,
+  "tunnelsChanged": false,
+  "backendChanged": false,
+  "fleetSlaProven": false,
+  "storageWriterIdentified": false,
+  "fleetLoadOrSoakPerformed": false,
+  "captureScope": "submitted-click-swipe-wheel-memory-only",
+  "xpathScope": "owned-root-hierarchy-explicit-insertion-30s-lease",
+  "catalogMetadataOnly": false,
+  "tests": 1451,
+  "suites": 125,
+  "realTasksCreated": 2,
+  "canaryVersionId": "0242986d-cabf-4907-9e90-ba4b06eb4a66",
+  "canaryDeviceId": "b410464a-5f26-4803-a756-7840cc17b128",
+  "canaryDagHash": "96edea950a8a53f48698faf6dad90c3c35e23857d7626c0f54993eb87d81ca8e",
+  "canaryUiSources": [
+    "6a427df153ec2e7d45647b62534c20e2a8924c9f",
+    "4ab8cc1f899e2fc5c741cb20d3b6a8d939ca31fa"
+  ],
+  "libraries": {
+    "reactFlow": {
+      "versionRange": "^12.3.6",
+      "license": "MIT"
+    },
+    "elkjs": {
+      "version": "0.12.0",
+      "licenseChosen": "EPL-2.0",
+      "localWorker": true
+    }
+  },
+  "sourceHashes": [
+    {
+      "source": "a670a3df3c90ad10658b71ad1b639689d407cf97",
+      "file": "frontend/app/(dashboard)/scripts/page.tsx",
+      "sha256": "a05c17c6a8acba0fc216c5c7e436d2e2ef4b4c37cfee1e16dda984da26ae81b2"
+    },
+    {
+      "source": "a670a3df3c90ad10658b71ad1b639689d407cf97",
+      "file": "frontend/app/(dashboard)/scripts/builder/page.tsx",
+      "sha256": "c561509564a1ec7ccea80b68d493968a0711f643d9ba731e4d9bd145d6c4c0bc"
+    },
+    {
+      "source": "a670a3df3c90ad10658b71ad1b639689d407cf97",
+      "file": "frontend/app/(dashboard)/tasks/[id]/page.tsx",
+      "sha256": "db44ab13b9e0a6679cd6ba11f9abdba9e06d5a71647c8dfbaeb7d3b019e296e6"
+    },
+    {
+      "source": "a670a3df3c90ad10658b71ad1b639689d407cf97",
+      "file": "frontend/src/features/scripts/ScriptVersionsDialog.tsx",
+      "sha256": "d55e8cf375258d2bb7e664263f6cc7c76aac16d87aadadc836ae882da7fcacbb"
+    },
+    {
+      "source": "a670a3df3c90ad10658b71ad1b639689d407cf97",
+      "file": "frontend/components/sphere/RunScriptModal.tsx",
+      "sha256": "f85801d14eb7a657dc71b9ce35fd0a9b6f4c717bc2d8980b72a8ffa952be60bd"
+    },
+    {
+      "source": "a670a3df3c90ad10658b71ad1b639689d407cf97",
+      "file": "frontend/src/features/scripts/studio/DeviceWorkbench.tsx",
+      "sha256": "f4f517ebcc1c9e55bb19c28e3042783a2624ba22d5e6125255ef8ee52ea53cfe"
+    },
+    {
+      "source": "a670a3df3c90ad10658b71ad1b639689d407cf97",
+      "file": "frontend/src/features/scripts/studio/NodeInspector.tsx",
+      "sha256": "e246b4e5c9a72597f925b2f43daccdcbaf2c8e4d9f156fe0ec3a4dfb29d1bf46"
+    },
+    {
+      "source": "a670a3df3c90ad10658b71ad1b639689d407cf97",
+      "file": "frontend/src/features/scripts/studio/recording.ts",
+      "sha256": "ed1366c384e8d9de5b7766af1236b69797591c3658cdf99ae8990ef402ffbe72"
+    },
+    {
+      "source": "a670a3df3c90ad10658b71ad1b639689d407cf97",
+      "file": "frontend/src/features/scripts/studio/layout.ts",
+      "sha256": "2fc5d54ea0f1fe18ff2c236ba457b0b598c3ea7f072a1cb6b6b04c1574903abc"
+    },
+    {
+      "source": "a670a3df3c90ad10658b71ad1b639689d407cf97",
+      "file": "frontend/src/features/scripts/studio/presentation.ts",
+      "sha256": "9e3694db28de79621180c0f5c606e4de4a216cf9b04c388d58f31756f6517004"
+    },
+    {
+      "source": "a670a3df3c90ad10658b71ad1b639689d407cf97",
+      "file": "frontend/lib/dag/nodeTypes.ts",
+      "sha256": "ab2074e50ab9b7af4d8470b46caab8366210c0b1d6c331c7fa8a5d8b12902c99"
+    },
+    {
+      "source": "a670a3df3c90ad10658b71ad1b639689d407cf97",
+      "file": "frontend/components/sphere/dag/WorkflowNode.tsx",
+      "sha256": "3a434c3776e70f907e14fb7d99dee4f7f5f6f5586ddef1952323d7aad4a96a84"
+    },
+    {
+      "source": "a670a3df3c90ad10658b71ad1b639689d407cf97",
+      "file": "frontend/lib/dag/export.ts",
+      "sha256": "ae107131936663804dea0eb944ba11d4cdcf1eb9f614e734eb8007279553fcbd"
+    },
+    {
+      "source": "a670a3df3c90ad10658b71ad1b639689d407cf97",
+      "file": "frontend/lib/dag/studio.ts",
+      "sha256": "9f83a0830a108fe84698b498cf58c6bb0c9d4af8763a002bfea3cdfc39aa8d39"
+    },
+    {
+      "source": "a670a3df3c90ad10658b71ad1b639689d407cf97",
+      "file": "frontend/src/features/scripts/scriptPresentation.ts",
+      "sha256": "141feb4123a3fb30c9ce3227139c3ad6ae48d325a20f8f065e2adfa51c7939d2"
+    },
+    {
+      "source": "a670a3df3c90ad10658b71ad1b639689d407cf97",
+      "file": "frontend/src/features/stream/SingleDeviceStream.tsx",
+      "sha256": "28928f283aca151f104f6b65034589ee8c909ef7674b41b7fab87169811e3f5e"
+    },
+    {
+      "source": "a670a3df3c90ad10658b71ad1b639689d407cf97",
+      "file": "frontend/components/sphere/DeviceStream.tsx",
+      "sha256": "f1666443d61d6b6409c1e6525f0adcf9e251be5ecb98166ddd34d420d6193534"
+    },
+    {
+      "source": "a670a3df3c90ad10658b71ad1b639689d407cf97",
+      "file": "frontend/scripts/prepare-elk-worker.mjs",
+      "sha256": "15191f9c32000383783a2e2016e1efbc2f7cb00b90566af889bab6eb99e75736"
+    },
+    {
+      "source": "a670a3df3c90ad10658b71ad1b639689d407cf97",
+      "file": "frontend/package.json",
+      "sha256": "59479fb0778f240240a8e6bf754cba492fc9e0924879c5384f9f4c0a1ae89db3"
+    },
+    {
+      "source": "a670a3df3c90ad10658b71ad1b639689d407cf97",
+      "file": "frontend/package-lock.json",
+      "sha256": "091a324b1c005951fe16b33d681cfdd23d90919923840e314a63da0ad6aa6618"
+    },
+    {
+      "source": "a670a3df3c90ad10658b71ad1b639689d407cf97",
+      "file": "frontend/__tests__/scripts/builder-load.test.tsx",
+      "sha256": "fb62e96460a4de48e94d4034bdc5571ebb053909d9c662776a5be7b8f8a85481"
+    },
+    {
+      "source": "a670a3df3c90ad10658b71ad1b639689d407cf97",
+      "file": "frontend/__tests__/scripts/studio-workbench.test.tsx",
+      "sha256": "409aeb854214898aeac8d9b8597e0cc1db02a209ff4b3ce96409183ef70b3519"
+    },
+    {
+      "source": "a670a3df3c90ad10658b71ad1b639689d407cf97",
+      "file": "frontend/__tests__/scripts/studio-redesign-contract.test.tsx",
+      "sha256": "2467f7fa7a6731388b350d0fea81a3109b3aba45e2b8fcaaa71462989e6a5507"
+    },
+    {
+      "source": "a670a3df3c90ad10658b71ad1b639689d407cf97",
+      "file": "frontend/__tests__/scripts/run-script-modal.test.tsx",
+      "sha256": "fbf0a9431d70938cfec39f58099fbd43e998ffc5ef2210be07f8323169d43830"
+    },
+    {
+      "source": "a670a3df3c90ad10658b71ad1b639689d407cf97",
+      "file": "frontend/__tests__/tasks/detail-outcomes.test.tsx",
+      "sha256": "f0fb93b1125bab69ed32592edcae889353b950022aaf77c8afeb9ad88960e37b"
+    }
+  ],
+  "receipts": [
+    {
+      "name": "ui-build",
+      "file": "evidence/studio-redesign/ui-build.json",
+      "sha256": "68d553f264bf50dd1d1ed41e92d9c6f928d252253904f51c49247d03a3ec5ac0"
+    },
+    {
+      "name": "ui-installed",
+      "file": "evidence/studio-redesign/ui-installed.json",
+      "sha256": "770cc2432b105d2e1d2aeac3638bfac03d16f40f05ff17142f919211a183cc2d"
+    },
+    {
+      "name": "ui-preflight",
+      "file": "evidence/studio-redesign/ui-preflight.json",
+      "sha256": "cd1e4f01967eed06dbd4df72f86b39d9f204ce8149c37ba6bdcae2b564a304c8"
+    },
+    {
+      "name": "frontend-tests",
+      "file": "evidence/studio-redesign/frontend-tests.json",
+      "sha256": "fd698c593ce567a1e10786f817041de662d687639b8c99f1dcf74b87179c1b2f"
+    },
+    {
+      "name": "packaged-elk-assets",
+      "file": "evidence/studio-redesign/packaged-elk-assets.json",
+      "sha256": "e6f2799e4ac2fa963b3c0de4f743c76f0cbabd1333f008f1fc54c579264f95e8"
+    },
+    {
+      "name": "remote-canary",
+      "file": "evidence/studio-redesign/remote-canary.json",
+      "sha256": "a938e5e2a958969ec681abf4712e08bb2386f5639205cfb65eaf9684a7dd5700"
+    },
+    {
+      "name": "remote-canary-final",
+      "file": "evidence/studio-redesign/remote-canary-final.json",
+      "sha256": "dd2069d138b0c8951bd8344945fe571ae904f93a82ee66f61c8220f19c41b9c7"
+    },
+    {
+      "name": "git-integrity",
+      "file": "evidence/studio-redesign/git-integrity.json",
+      "sha256": "323b8f205fceedd2a11ad162103c8e51b9bf211618c154371ea24fcc04d115b9"
+    },
+    {
+      "name": "git-tree-repair",
+      "file": "evidence/studio-redesign/git-tree-repair.json",
+      "sha256": "f41d08bd68ae45daf4728a0bc9501cbb299e1b18ac3d8f7f6761e1ec70170c1e"
+    },
+    {
+      "name": "git-operations-tree-repair",
+      "file": "evidence/studio-redesign/git-operations-tree-repair.json",
+      "sha256": "1c7cb212c273f0adce7a83555e9b89dfed03a675c6d68184ece32ceb6d3e01e0"
+    },
+    {
+      "name": "native-ui",
+      "file": "evidence/studio-redesign/native-ui.json",
+      "sha256": "0f9e98432816c9014431c6d861d5e906f554c3c8918314cfdc0a050d8facec89"
+    }
+  ],
+  "screenshots": [
+    {
+      "name": "baseline",
+      "file": "assets/studio-redesign/before.jpg",
+      "source": "952b5e2f6ed6bde8a4bcbbbdff28be24f302b15c",
+      "capture": "native-codex-browser",
+      "dimensions": [
+        646,
+        884
+      ],
+      "sha256": "d809b3432f9254105f3ad8f5c8df70ec13f19900837be88180c707facd741222",
+      "fileRecordedAt": "2026-10-05T22:28:48.569145+00:00"
+    },
+    {
+      "name": "catalog-724",
+      "file": "assets/studio-redesign/catalog-724.jpg",
+      "source": "91d52586f9e9cbb68c295615822606cc003618ec",
+      "capture": "native-codex-browser",
+      "dimensions": [
+        724,
+        884
+      ],
+      "sha256": "011feb33b49a138091997c398aa153819c7144867359a1b44c5ed3c8c9cbb7e3",
+      "fileRecordedAt": "2026-10-05T23:00:26.131072+00:00"
+    },
+    {
+      "name": "catalog-mobile",
+      "file": "assets/studio-redesign/catalog-mobile.jpg",
+      "source": "91d52586f9e9cbb68c295615822606cc003618ec",
+      "capture": "native-codex-browser",
+      "dimensions": [
+        390,
+        844
+      ],
+      "sha256": "25602042a97e411c82dcdeef5ebf06bd261665d8d0e31597896c263a89790ec2",
+      "fileRecordedAt": "2026-10-05T23:01:02.131831+00:00"
+    },
+    {
+      "name": "version-mobile",
+      "file": "assets/studio-redesign/version-mobile-final.jpg",
+      "source": "6a427df153ec2e7d45647b62534c20e2a8924c9f",
+      "capture": "native-codex-browser",
+      "dimensions": [
+        390,
+        844
+      ],
+      "sha256": "cdfc583e95fc70dc7155b12f02daf6112ba73e7149524da14b510bf0da1ebd7b",
+      "fileRecordedAt": "2026-10-05T23:20:56.394941+00:00"
+    },
+    {
+      "name": "catalog-final",
+      "file": "assets/studio-redesign/catalog-dark-final.jpg",
+      "source": "4ab8cc1f899e2fc5c741cb20d3b6a8d939ca31fa",
+      "capture": "native-codex-browser",
+      "dimensions": [
+        1440,
+        1000
+      ],
+      "sha256": "2b8239dd9d9ce7d74430405420b0dc7c3b2f39a9c0560b491a683b1b592196b8",
+      "fileRecordedAt": "2026-10-05T23:21:39.368088+00:00"
+    },
+    {
+      "name": "catalog-settings",
+      "file": "assets/studio-redesign/catalog-settings-final.jpg",
+      "source": "4ab8cc1f899e2fc5c741cb20d3b6a8d939ca31fa",
+      "capture": "native-codex-browser",
+      "dimensions": [
+        1440,
+        1000
+      ],
+      "sha256": "bdbcf85e445a0dcbc716761cf21acf7866032c6f77d203d193632c157fa8bc8d",
+      "fileRecordedAt": "2026-10-05T23:21:57.759273+00:00"
+    },
+    {
+      "name": "editor-final",
+      "file": "assets/studio-redesign/editor-dark-final.jpg",
+      "source": "4ab8cc1f899e2fc5c741cb20d3b6a8d939ca31fa",
+      "capture": "native-codex-browser",
+      "dimensions": [
+        1440,
+        1000
+      ],
+      "sha256": "2cfcfdb8198e4fc024119ad71ff4603a327d1cd4486fb861ae4080d9e614b518",
+      "fileRecordedAt": "2026-10-05T23:26:25.649677+00:00"
+    },
+    {
+      "name": "editor-tablet",
+      "file": "assets/studio-redesign/editor-tablet-final.jpg",
+      "source": "4ab8cc1f899e2fc5c741cb20d3b6a8d939ca31fa",
+      "capture": "native-codex-browser",
+      "dimensions": [
+        724,
+        884
+      ],
+      "sha256": "573347c2d1073180222c3873d5cec67077ca1361814c7a37ef651789466f4079",
+      "fileRecordedAt": "2026-10-05T23:26:33.561535+00:00"
+    },
+    {
+      "name": "editor-mobile",
+      "file": "assets/studio-redesign/editor-mobile-final.jpg",
+      "source": "4ab8cc1f899e2fc5c741cb20d3b6a8d939ca31fa",
+      "capture": "native-codex-browser",
+      "dimensions": [
+        390,
+        844
+      ],
+      "sha256": "5c7a6588239d834054a5fc114bae87e671d2c5b5bb043b1985c6ec83ec10f5c5",
+      "fileRecordedAt": "2026-10-05T23:27:05.339511+00:00"
+    },
+    {
+      "name": "xpath-insertion",
+      "file": "assets/studio-redesign/xpath-insertion-final.jpg",
+      "source": "4ab8cc1f899e2fc5c741cb20d3b6a8d939ca31fa",
+      "capture": "native-codex-browser",
+      "dimensions": [
+        1440,
+        1000
+      ],
+      "sha256": "e95936abb20fb9d79773217167fb9304026213a748e686adf197fcdc5214145b",
+      "fileRecordedAt": "2026-10-05T23:29:34.566570+00:00"
+    },
+    {
+      "name": "workbench-final",
+      "file": "assets/studio-redesign/workbench-delivery.jpg",
+      "source": "a670a3df3c90ad10658b71ad1b639689d407cf97",
+      "capture": "native-codex-browser",
+      "dimensions": [
+        1440,
+        1000
+      ],
+      "sha256": "5a8129ea500f99ae53ec6acbd8329eaa50311380be97657dfec11fdd09c3e662",
+      "fileRecordedAt": "2026-10-06T02:01:19.825471+00:00"
+    },
+    {
+      "name": "task-final",
+      "file": "assets/studio-redesign/task-detail-final.jpg",
+      "source": "a670a3df3c90ad10658b71ad1b639689d407cf97",
+      "capture": "native-codex-browser",
+      "dimensions": [
+        1280,
+        720
+      ],
+      "sha256": "97659e95fcc210549704ec1787a78fe5dddcdc7e1187d0eb742c170d80cfb45c",
+      "fileRecordedAt": "2026-10-06T02:00:51.903348+00:00"
+    },
+    {
+      "name": "task-mobile",
+      "file": "assets/studio-redesign/task-detail-mobile.jpg",
+      "source": "a670a3df3c90ad10658b71ad1b639689d407cf97",
+      "capture": "native-codex-browser",
+      "dimensions": [
+        390,
+        844
+      ],
+      "sha256": "7a0048f85d3767c17ca94346538d59a44daab6217bb5bb3368e30d82ee23af7f",
+      "fileRecordedAt": "2026-10-06T02:01:52.067931+00:00"
+    },
+    {
+      "name": "task-light",
+      "file": "assets/studio-redesign/task-detail-light.jpg",
+      "source": "a670a3df3c90ad10658b71ad1b639689d407cf97",
+      "capture": "native-codex-browser",
+      "dimensions": [
+        1280,
+        720
+      ],
+      "sha256": "7dd513bdc7698d634291cfe7913a666b9264d2401eb79131cc98d2b4d4b17782",
+      "fileRecordedAt": "2026-10-06T02:01:19.853888+00:00"
+    },
+    {
+      "name": "task-reports",
+      "file": "assets/studio-redesign/task-reports-final.jpg",
+      "source": "a670a3df3c90ad10658b71ad1b639689d407cf97",
+      "capture": "native-codex-browser",
+      "dimensions": [
+        1440,
+        1000
+      ],
+      "sha256": "5ee8812e6083df9e88fce96954ac568b1e876132fca7f46965654ed9e78c3489",
+      "fileRecordedAt": "2026-10-06T02:02:38.006376+00:00"
+    },
+    {
+      "name": "editor-current",
+      "file": "assets/studio-redesign/editor-delivery.jpg",
+      "source": "a670a3df3c90ad10658b71ad1b639689d407cf97",
+      "capture": "native-codex-browser",
+      "dimensions": [
+        1440,
+        1000
+      ],
+      "sha256": "b29dab4e1eedcb0638874bc2fe88f0f0695b8dba6818f8a780f6583e5331bf00",
+      "fileRecordedAt": "2026-10-06T02:05:59.774611+00:00"
+    },
+    {
+      "name": "editor-mobile-current",
+      "file": "assets/studio-redesign/editor-mobile-delivery.jpg",
+      "source": "a670a3df3c90ad10658b71ad1b639689d407cf97",
+      "capture": "native-codex-browser",
+      "dimensions": [
+        390,
+        844
+      ],
+      "sha256": "70f2dabf5acf50f43c7ee8f1bb3386c1ebaea9795f9973a1219817cb72c4de25",
+      "fileRecordedAt": "2026-10-06T02:04:25.127275+00:00"
+    },
+    {
+      "name": "catalog-current",
+      "file": "assets/studio-redesign/catalog-delivery.jpg",
+      "source": "a670a3df3c90ad10658b71ad1b639689d407cf97",
+      "capture": "native-codex-browser",
+      "dimensions": [
+        1440,
+        1000
+      ],
+      "sha256": "2af7620613dbe582d05fcfa996d3f4a80e81ca1a98154f8695b05d380545085b",
+      "fileRecordedAt": "2026-10-06T02:07:20.431359+00:00"
+    }
+  ],
+  "proofBoundaries": [
+    "Final UI-only viewport/task presentation corrections have unit tests and native display proof; no third remote task was created.",
+    "Two remote canaries prove this one pinned sleep version, not all Android actions or fleet stability.",
+    "Native input capture and XPath insertion were undone and were not published or executed.",
+    "Screenshots with older revisions retain their original source; baseline and intermediate material is historical.",
+    "A static screen with an old frame does not by itself measure stream FPS or prove loss of connectivity.",
+    "Disk/RAM writer remains unknown; no cleanup or storage leak diagnosis is asserted."
+  ]
+}

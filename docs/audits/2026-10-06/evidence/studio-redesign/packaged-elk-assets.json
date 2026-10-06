@@ -1,0 +1,18 @@
+{
+  "source": "a670a3df3c90ad10658b71ad1b639689d407cf97",
+  "imageId": "sha256:e803fc55dc05c1271762d3dca911d1f354e2a42665e8cb0cd917fff20e631c69",
+  "observedAt": "2026-10-06T02:07:42.920809+00:00",
+  "worker": {
+    "url": "/vendor/elk/worker-0.12.0.js",
+    "httpStatus": 200,
+    "bytes": 1595334,
+    "sha256": "e4f5c51c6f2fd564bb64e52e81c4a85a316ef2f24f8b90e1db5eb886c765b030"
+  },
+  "license": {
+    "url": "/vendor/elk/LICENSE.md",
+    "httpStatus": 200,
+    "bytes": 14443,
+    "sha256": "637e81f4a1b6b4079535c499fca05e238cf7605c1ff5b76d60d7da7ce96700c9",
+    "epl2TextPresent": true
+  }
+}

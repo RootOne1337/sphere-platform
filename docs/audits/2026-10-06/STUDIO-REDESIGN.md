@@ -5,7 +5,7 @@ API: c2b91e32. User evidence: annotated `/scripts` at 724×884 and
 `/scripts/builder` with collapsed navigation. This document records a new
 correction; it does not alter the earlier immutable Stage A receipts.
 
-## Proven defects
+## Proven defects in the initial UI baseline
 
 - Catalog actions are `shrink-0` in the same horizontal row as the title;
   their combined width exceeds the content area at the `sm` breakpoint.
@@ -60,7 +60,124 @@ Zero WAN latency and frame-exact verification are not claimed by this UI change.
 The original backlog acceptance ledger remains 9 accepted / 41 open until
 the corresponding complete criteria have evidence.
 
-Status: implementation in progress. No new live result is asserted yet.
+## Installed result: 6 October, 07:00 UTC+5
+
+UI **a670a3df3c90ad10658b71ad1b639689d407cf97** is installed on
+[3015/scripts](http://127.0.0.1:3015/scripts). Image:
+`sha256:e803fc55dc05c1271762d3dca911d1f354e2a42665e8cb0cd917fff20e631c69`.
+API remains **c2b91e3202948860e4d99b3f35cbe441d2842538**. This is a frontend
+delivery; APK and tunnels were not replaced. The immutable backend tree matches
+the deployed API source. A revision-mismatch badge describes different source
+revisions, not an observed compatibility failure.
+
+The initial defects above were addressed in separate commits:
+
+- Catalog names and actions use separate, wrapping regions. Real version,
+  step, creation/update and hash metadata are available; list/card view, density,
+  page size and metadata visibility persist per organization/user in this browser.
+- The existing free React Flow canvas has original 256×133 px Sphere nodes,
+  action icons, readable summaries and explicit route handles. ELK layout runs
+  locally with a ten-second deadline, cancellation and worker termination.
+  DOWN and RIGHT layouts change presentation rather than executable routes.
+- Common action values, nested maps, checks, retry and timeout have structured
+  forms. Complex/unknown action data remains available in JSON. Invalid source
+  does not silently fall back to an earlier publishable graph.
+- The device laboratory selects one real Android, reuses the single-device
+  H.264 stream, records submitted click/swipe/wheel input in memory, inserts a
+  fresh owned XPath explicitly and observes a task pinned to the saved version.
+  Creation, active execution and uncertain outcomes have distinct input locks.
+- Version history, source inspection, launch dialogs and execution details retain
+  actual API data, permissions, version preconditions and explicit errors.
+  Narrow dialogs wrap titles/actions; final task details use common theme tokens,
+  Russian labels and fixed final duration instead of stale active telemetry.
+
+Second review found and corrected three additional concrete defects:
+
+1. Opening the device panel could preserve a previous small viewport and put
+   Start behind the toolbar. An accepted panel change now fits once after canvas
+   measurement with explicit toolbar clearance. Telemetry does not reset manual
+   pan or dragged coordinates. Native final measurement: each of the three
+   canary nodes is 256×133 px; document width equals viewport width, 1440 px.
+2. Undo/redo could silently discard unapplied node fields. Both controls and the
+   handler now wait for applying or explicitly cancelling those fields.
+3. Closing the laboratory while POST `/tasks` was pending could discard the
+   eventual ID and permit a later launch. The owned close/switch guard now keeps
+   that request in its original laboratory until its receipt is reconciled.
+   This is not durable exactly-once protection across reloads or other pages.
+
+### Validation and native evidence
+
+Final local frontend run: **1451 passed / 125 suites / 0 failed / 0 pending**, Jest
+in-band without cache. TypeScript and the actual immutable Next production image
+build passed. Existing unrelated lint warnings in the build are not described
+as a clean repository-wide lint result. Source CI is recorded separately from
+these local gates and runtime receipts.
+
+Only the review UI container was recreated. **45 neighboring containers** kept
+IDs, images, start times, mounts and log rotation; the UI retained read-only
+rootfs, dropped capabilities and stable network addresses. Authenticated finite
+fleet reads at 02:00:12 and 02:00:20 UTC reported **19 devices, 14 online,
+5 offline**, with presence available. These two samples do not establish an
+uptime SLA, zero downtime or the target load of 20–30/500/1000 devices.
+
+Two intentional native-browser canaries used one remote **auto-ph-025**, the
+same v1 (`0242986d-cabf-4907-9e90-ba4b06eb4a66`) and the same DAG hash:
+`96edea950a8a53f48698faf6dad90c3c35e23857d7626c0f54993eb87d81ca8e`.
+Both executed **start → sleep 4000 ms → end**, completed with three successful
+reports and a 4002 ms sleep report. Receipts retain their original UI revisions
+`6a427df` and `4ab8cc1`; final `a670a3d` adds viewport, history/launch guards and
+task presentation. No third canary was created for these UI corrections. Reading
+the completed task in the final UI confirmed three reports and a fixed four-second
+duration. This proves this particular saved version, not all 32 runtime actions.
+
+Native tests also exercised one captured transport gesture, insertion followed
+by Undo, a real hierarchy of 49 nodes, a fresh XPath insertion followed by Undo,
+lease expiry, catalog preference persistence across F5, both themes, 724/390 px
+layouts and narrow version/run dialogs. Capture/insertion edits were not published
+or executed. Some screenshots precede the final corrections; the manifest labels
+each original source revision instead of attributing every image to the latest UI.
+
+| Native image | What it establishes |
+| --- | --- |
+| [Original catalog/editor](assets/studio-redesign/before.jpg) | Historical baseline before the correction |
+| [Catalog](assets/studio-redesign/catalog-dark-final.jpg) | Separated actions and real version metadata |
+| [Narrow version dialog](assets/studio-redesign/version-mobile-final.jpg) | Wrapped dialog title/actions at 390 px |
+| [Structured editor](assets/studio-redesign/editor-dark-final.jpg) | Library, route handles and parameters |
+| [Live XPath insertion](assets/studio-redesign/xpath-insertion-final.jpg) | Real selector inserted into the graph source |
+| [Final device laboratory](assets/studio-redesign/workbench-delivery.jpg) | Readable graph beside one real Android frame |
+| [Final task detail](assets/studio-redesign/task-detail-final.jpg) | Rebuilt execution context and final values |
+| [Final narrow task detail](assets/studio-redesign/task-detail-mobile.jpg) | 390 px layout without document overflow |
+
+The presence of one screenshot does not prove video cadence or latency. A static
+Android frame may legitimately remain unchanged. Frame, tree and task clocks
+remain independent; frame-exact replay requires an agent/server trace contract.
+
+Pinned hashes, image/build/install/test receipts and canaries:
+[STUDIO-REDESIGN-EVIDENCE.json](STUDIO-REDESIGN-EVIDENCE.json).
+Run `python -m scripts.audit.validate_studio_redesign` for artifact integrity only;
+it makes no network request and does not repeat Android commands.
+The earlier Stage A manifest and validator remain immutable historical evidence.
+The operator guide is [SCRIPT-STUDIO.md](../../operations/SCRIPT-STUDIO.md).
+
+### Open acceptance boundaries
+
+The ledger remains **9 accepted / 41 open**; EP-014…020 are not marked accepted
+because this UI delivery implements only part of their requirements. Missing
+work includes versioned action/capability schemas and preflight, full selector/
+text/navigation recording, durable reconciliation/idempotency, sidebar route
+blocking, version-conflict diff, agent-correlated trace and frame-exact replay.
+Unknown `action` parameters survive unrelated graph edits, but extra top-level
+DAG/node properties are not promised to survive graph import/export. Review
+the exported JSON when importing an extended format. The metadata-only catalog
+P1 below and common resource/release/load gates remain open.
+
+Repository validation also found two corrupt loose Git tree objects (`docs` and
+`docs/operations`). Their exact tree bytes were reconstructed from GitHub's
+existing tree API, original corrupt files were quarantined locally and canonical
+Git SHA-1 was checked before replacing each object. No history rewrite or worktree
+reset occurred. Final `git fsck --full --no-dangling` passed. The receipts are
+included in the manifest; the cause of object corruption is unknown and is not
+presented as the cause of host disk/RAM growth.
 
 ## Source review: catalog payload retention remains open (P1)
 

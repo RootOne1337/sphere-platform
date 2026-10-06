@@ -6,7 +6,37 @@
 
 [Главная](../../README.md) · [Каталог документации](../README.md) · [Readiness](READINESS.md) · [Fleet32 gates](../audits/2026-09-20/FLEET32-PREFLIGHT.md) · [PR #19](https://github.com/RootOne1337/sphere-platform/pull/19)
 
-**6 октября, 02:35 UTC+5 — установлен Script Studio, этап A:**
+**6 октября, 07:00 UTC+5 — установлен редизайн сценариев и лаборатория устройства:**
+UI **`a670a3df`**, образ `sha256:e803fc55dc05c1271762d3dca911d1f354e2a42665e8cb0cd917fff20e631c69`,
+API **`c2b91e32`** на [3015/scripts](http://127.0.0.1:3015/scripts).
+Каталог с сохраняемым видом/плотностью/детализацией, группированная библиотека 32
+действий, прямоугольные узлы, явные переходы, формы параметров и локальный ELK worker.
+Один выбранный Android: H.264, запись отправленных click/swipe/wheel в памяти,
+явная вставка свежего XPath и наблюдение задания закреплённой версии.
+Исправлены потеря неприменённых полей через Undo, потеря pending-launch receipt при
+закрытии устройства, масштаб графа после смены панелей и устаревшие итоговые счётчики.
+Детали выполнения используют общие темы и фиксируют длительность по `finished_at`.
+**1451 frontend tests / 125 suites**, TypeScript и immutable production build прошли.
+Два native-browser canary на remote PH025 выполнили одну v1 start/sleep4000/end:
+по три успешных отчёта, sleep4002 ms, неизменный hash. Их source UI — `6a427df` и
+`4ab8cc1`; финальная UI-коррекция проверена тестами и показом этих результатов,
+третье задание для неё не создавалось. Native QA: обе темы, 1440/724/390 px, реальные
+версии/диалоги/поток/XPath и F5 preferences; каждый скриншот имеет свою ревизию.
+45 соседних контейнеров сохранены; конечные срезы 02:00:12/02:00:20 UTC — 14 online /
+5 offline из 19, presence доступен. APK/OTA/туннели и API не заменялись.
+Это не SLA, проверка всех действий, frame-exact replay или load/soak 20–30/1000 машин.
+Source CI и документационный head учитываются отдельно от установленного образа.
+**9 принято / 41 открыто**. Следующие важные контракты — metadata-only каталог (P1:
+нынешний список загружает полные DAG), capability preflight, durable reconciliation,
+полный recorder/trace/replay и общие resource/release gates. Host writer неизвестен.
+Два повреждённых Git tree объекта восстановлены с точными исходными SHA-1;
+`git fsck --full --no-dangling` прошёл, история не переписана. Причина повреждения
+не установлена и не связывается доказательно с расходом Windows-диска.
+[Результат и ограничения](../audits/2026-10-06/STUDIO-REDESIGN.md) ·
+[Pinned evidence](../audits/2026-10-06/STUDIO-REDESIGN-EVIDENCE.json) ·
+[Инструкция](SCRIPT-STUDIO.md) · [Приоритеты](../audits/2026-10-06/ENTERPRISE-PRIORITIES.md).
+
+**Историческая установка 6 октября, 02:35 UTC+5 — Script Studio, этап A:**
 API **`c2b91e32`**, UI **`952b5e2f`** на [3015/scripts/builder](http://127.0.0.1:3015/scripts/builder).
 Граф ↔ JSON, каталог 32 действий и все JSON-параметры узла, import/export,
 bounded undo/redo и явный local draft; серверная проверка draft без создания

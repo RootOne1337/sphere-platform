@@ -22,7 +22,22 @@
 Исходники `c3937a1`, установленный на этапе аудита UI/API `c1a6e79a`; исходный аудит — только анализ.
 Каталог API и элементов управления не заменяет живую проверку Android и 500–1000 устройств.
 
-**6 октября — рабочий Script Studio, этап A:** API `c2b91e32`, UI `952b5e2f` на
+**6 октября, 07:00 UTC+5 — сценарии и лаборатория устройства:** UI `a670a3df`,
+API `c2b91e32` на [3015/scripts](http://127.0.0.1:3015/scripts). Сохраняемый каталог,
+группы действий, формы и читаемый граф с локальным ELK, один живой Android,
+запись отправленных жестов, свежий XPath и задания сохранённой версии.
+Исправлены потеря неприменённых полей, закрытие pending запуска и устаревшие
+итоговые счётчики; карточка результата обновлена для обеих тем и узких экранов.
+**1451 tests / 125 suites**, types/build прошли. Два canary одной remote PH025 v1
+получили по 3 успешных отчёта; это не все runtime actions или frame-exact replay.
+Сохранены 45 соседних контейнеров; срезы 14 online / 5 offline из 19 не являются SLA.
+Общий счёт **9 / 41** сохраняется; metadata-only каталог, preflight и trace/replay
+остаются отдельными приоритетами.
+[Результат и native-скриншоты](audits/2026-10-06/STUDIO-REDESIGN.md) ·
+[Evidence](audits/2026-10-06/STUDIO-REDESIGN-EVIDENCE.json) ·
+[Инструкция](operations/SCRIPT-STUDIO.md) · [Приоритеты](audits/2026-10-06/ENTERPRISE-PRIORITIES.md).
+
+**Историческая установка 6 октября — Script Studio, этап A:** API `c2b91e32`, UI `952b5e2f` на
 [3015/scripts/builder](http://127.0.0.1:3015/scripts/builder). Граф ↔ JSON, 32 действия,
 bounded drafts/history, import/export, серверная проверка и адресный запуск версии.
 Remote PH025 canary завершил 3/3 шага; 631 exact-image backend и 1353 frontend tests

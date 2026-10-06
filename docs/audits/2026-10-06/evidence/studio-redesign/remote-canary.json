@@ -1,0 +1,80 @@
+{
+  "observedAt": "2026-10-05T23:14:13.097690+00:00",
+  "createdThrough": "native in-app browser /scripts/builder DeviceWorkbench",
+  "uiRevision": "6a427df153ec2e7d45647b62534c20e2a8924c9f",
+  "apiRevision": "c2b91e32",
+  "deviceId": "b410464a-5f26-4803-a756-7840cc17b128",
+  "deviceName": "auto-ph-025",
+  "scriptId": "eda41efc-8389-436d-ad54-45c7cebad13b",
+  "scriptVersionId": "0242986d-cabf-4907-9e90-ba4b06eb4a66",
+  "dagHash": "96edea950a8a53f48698faf6dad90c3c35e23857d7626c0f54993eb87d81ca8e",
+  "task": {
+    "id": "9ef51121-0770-4c5e-8192-002bc5baf1ae",
+    "status": "completed",
+    "created_at": "2026-10-05T23:12:42.570937Z",
+    "started_at": "2026-10-05T23:12:45.107570Z",
+    "finished_at": "2026-10-05T23:12:49.121028Z"
+  },
+  "scriptTaskCount": 1,
+  "logs": [
+    {
+      "node_id": "start-1",
+      "action_type": "start",
+      "success": true,
+      "duration_ms": 0
+    },
+    {
+      "node_id": "step_2d11f339894c",
+      "action_type": "sleep",
+      "success": true,
+      "duration_ms": 4002
+    },
+    {
+      "node_id": "end-1",
+      "action_type": "end",
+      "success": true,
+      "duration_ms": 0
+    }
+  ],
+  "dag": {
+    "name": null,
+    "nodes": [
+      {
+        "id": "start-1",
+        "retry": 0,
+        "action": {
+          "type": "start"
+        },
+        "on_failure": null,
+        "on_success": "step_2d11f339894c",
+        "timeout_ms": 30000
+      },
+      {
+        "id": "end-1",
+        "retry": 0,
+        "action": {
+          "type": "end"
+        },
+        "on_failure": null,
+        "on_success": null,
+        "timeout_ms": 30000
+      },
+      {
+        "id": "step_2d11f339894c",
+        "retry": 0,
+        "action": {
+          "ms": 4000,
+          "type": "sleep"
+        },
+        "on_failure": null,
+        "on_success": "end-1",
+        "timeout_ms": 30000
+      }
+    ],
+    "version": "1.0",
+    "entry_node": "start-1",
+    "timeout_ms": 1800000,
+    "description": null
+  },
+  "claim": "One real pinned remote sleep execution; no load, all-actions, frame-exact replay or latency claim."
+}

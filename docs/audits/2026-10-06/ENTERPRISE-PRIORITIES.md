@@ -1,6 +1,6 @@
 # Приоритеты оставшихся работ и следующий подтверждённый дефект
 
-**Дата:** 6 октября 2026, Asia/Yekaterinburg. **Baseline reader:** `32c97b8`; **установленные API/UI:** `c2b91e32` / `952b5e2f`.
+**Дата:** 6 октября 2026, Asia/Yekaterinburg. **Baseline reader:** `32c97b8`; **установленные API/UI:** `c2b91e32` / `a670a3df`.
 **Приёмка:** 9 принято / 41 с открытыми критериями из исходных 50 работ.
 Это пересортировка эксплуатационного порядка, а не изменение immutable baseline,
 первоначальных P1/P2 или критериев приёмки. Пункты имеют разный размер: 41 не означает
@@ -10,7 +10,30 @@
 [Исходные 50 требований](../2026-10-05/ENTERPRISE-PRODUCT-BACKLOG.json) ·
 [Последний установленный мониторинг](../2026-10-05/ENTERPRISE-FLEET-COVERAGE.md).
 
-## Конструктор по запросу пользователя: этап A установлен
+## Конструктор по запросу пользователя: редизайн и лаборатория установлены
+
+Поверх этапа A установлен [редизайн](STUDIO-REDESIGN.md) с каталогом, формами,
+локальным ELK, читаемыми узлами и одним выбранным Android. В лаборатории есть
+живая запись отправленных click/swipe/wheel, вставка свежего XPath и наблюдение
+задания закреплённой версии; это частичная реализация EP-017/018/019, не их приёмка.
+Исправлены pending-launch ownership, потеря полей через Undo и terminal telemetry.
+1451 frontend tests / 125 suites, types/build и native показ прошли. Два канареечных
+задания одной remote PH025 v1 start/sleep4000/end завершились с 3 успешными отчётами;
+финальные UI-коррекции не создавали третьего задания. Счёт **9 / 41** не изменён.
+
+Первый подтверждённый следующий P1 в этой области — [полные DAG в каталоге](STUDIO-REDESIGN.md#source-review-catalog-payload-retention-remains-open-p1):
+список читает, хеширует и кэширует исходники каждой текущей версии. Нужен отдельный
+metadata-only контракт с закреплёнными version/hash/node_count и lazy detail;
+затем измерение payload/query/cache на больших fixtures и установленном API.
+Это вывод из кода, а не установленная причина прежнего host memory/storage роста.
+
+Далее: EP-016 versioned schemas/capability preflight, EP-015 conflict diff и sidebar
+dirty route blocker, EP-018 text/navigation/selector recording, durable launch
+reconciliation, EP-019/020 agent-correlated trace/replay. Они не заменяют общие
+resource, release и fleet load/soak gates. VPN-протоколы и проектные базы данных
+остаются отдельными будущими этапами.
+
+### Исторические результаты этапа A
 
 Рабочий [Script Studio на 3015](http://127.0.0.1:3015/scripts/builder): граф ↔ JSON,
 32 action templates, полный JSON параметров узла, bounded undo/draft/import/export,
@@ -20,10 +43,10 @@
 frontend 1353 tests / 122 suites, production build/types и native themes/390px layout
 проверены. Счёт **9 / 41** сохраняется: EP-014…020 ещё имеют открытые критерии.
 
-Далее: EP-015 version-conflict diff и защита dirty navigation; EP-016 versioned
-action schemas/limits/effects и APK preflight; EP-017 live picker; затем recorder
-EP-018 и настоящий trace/replay/debug EP-019/020. Эти зависимости не заменяют
-resource/release gates ниже. Один sleep-canary не доказывает все runtime actions,
+На момент этапа A впереди были EP-015 version-conflict diff и защита dirty navigation,
+EP-016 versioned action schemas/limits/effects и APK preflight, EP-017 live picker,
+EP-018 recorder и trace/replay/debug EP-019/020. Текущая частичная реализация указана
+выше. Эти зависимости не заменяют resource/release gates ниже. Один sleep-canary не доказывает все runtime actions,
 автономную миссию, uptime, исправление утечки или нагрузку 20–30/500/1000 устройств.
 Offline inventory подтвердил 32 API/UI types и 33 Android handlers (`loop` не
 публикуется); четыре неверно параметризованных known actions проходят только
