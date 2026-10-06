@@ -78,6 +78,35 @@ repository/workflow/head/run/attempt и успешное завершение **
 
 ## Проверки и оставшиеся gates
 
+### Установщик без миграций
+
+[`install_reviewed_backend.py`](../../../scripts/pilot/install_reviewed_backend.py)
+по умолчанию создаёт только read-only план. Требует independent CI config ID,
+полный успешно завершённый backend workflow, ожидаемый installed SHA, live Compose
+owner/config/env, совпадающий SQL head и только шесть разрешённых action-contract
+source changes. Requirements, migrations и bootstrap changes этим путём запрещены.
+Единственный допустимый Compose delta — backend image и удаление build recipe;
+четыре существующих mount targets (включая отдельный OTA bind) сохраняются, source overlay/entry/user/ports override
+не допускаются. Полные environment/SQL URL не выводятся.
+
+Явный `--apply` после host guard загружает admitted archive и выполняет только
+`backend up --no-deps --no-build --pull never`: shutdown grace 35 s, readiness
+90 s. До и после проверяет identity/epoch/status всех остальных контейнеров,
+SQL head, OTA catalog hash и exact revision через gateway 3015. Краткая повторная
+проверка health выполняет только GET, до 8 попыток с timeout 2 s и паузой 2 s,
+чтобы пережить resolver valid=10s существующего gateway; команды управления/Android не повторяет.
+При сбое возвращает прежний image только при сохранённой ownership границе;
+чужой runtime не останавливает, database rollback не выполняет. После установки
+liveContractVerified и agentReconnectVerified остаются false до отдельного canary.
+
+**51 local unittest methods passed**: прежние 35 плюс 16 operational installer
+regressions. Проверены read-only plan, отказ до image load при volume warning или
+SQL mismatch, изменение зависимого сервиса/env/mount, CI partial/cancelled/foreign,
+canonical Git bytes, health revision/budget, успех с сохранением dependencies,
+owned rollback и запрет остановки чужого image. Scoped Ruff passed.
+Hosted run для commit `114775a` и live update ещё ожидаются; source tests не
+подменяют проверку настоящего runtime.
+
 **35 local unittest methods passed:** 22 существующих UI/archive/installer
 и 13 backend/archive/packager; внутри методов отдельные негативные subcases.
 Проверены неправильные source/CI/platform/entry, непроверенный live claim,
