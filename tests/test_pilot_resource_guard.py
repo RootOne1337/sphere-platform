@@ -9,7 +9,8 @@ from scripts.pilot import resource_guard as guard
 def healthy():
     return {"system": "Windows", "freeDiskBytes": 30 * guard.GIB,
             "totalRamBytes": 48 * guard.GIB, "availableRamBytes": 12 * guard.GIB,
-            "committedBytes": 45 * guard.GIB, "commitLimitBytes": 90 * guard.GIB}
+            "committedBytes": 45 * guard.GIB, "commitLimitBytes": 90 * guard.GIB,
+            "volumeHealthStatus": "Healthy", "volumeOperationalStatus": ["OK"]}
 
 
 def test_pre_incident_disk_and_commit_pressure_prevent_heavy_build():
@@ -71,3 +72,40 @@ def test_linux_memavailable_and_kib_units(monkeypatch, tmp_path):
     snapshot = guard.collect(tmp_path)
     assert snapshot["availableRamBytes"] == 6 * guard.GIB
     assert snapshot["totalRamBytes"] == 48 * guard.GIB
+
+
+def test_full_repair_needed_blocks_build_despite_good_disk_ram_and_commit():
+    snapshot = healthy() | {"volumeHealthStatus": "Warning", "volumeOperationalStatus": ["Full Repair Needed"]}
+    assert guard.evaluate(snapshot) == ["volume_not_ready"]
+
+
+@pytest.mark.parametrize("health,operations", [
+    (None, ["OK"]), ("Healthy", None), ("Healthy", []), ("Healthy", "OK"),
+    ("Healthy", [None]), ("", ["OK"]),
+])
+def test_unknown_volume_measurement_never_grants_build_permission(health, operations):
+    assert guard.evaluate(healthy() | {"volumeHealthStatus": health, "volumeOperationalStatus": operations}) == ["volume_health_unavailable"]
+
+
+@pytest.mark.parametrize("health,operations", [
+    ("Unhealthy", ["OK"]), ("Healthy", ["Unknown"]),
+    ("Healthy", ["OK", "Full Repair Needed"]), ("Warning", ["Spot Fix Needed"]),
+])
+def test_unready_volume_is_not_masked_by_one_healthy_signal(health, operations):
+    assert guard.evaluate(healthy() | {"volumeHealthStatus": health, "volumeOperationalStatus": operations}) == ["volume_not_ready"]
+
+
+def test_volume_path_uses_environment_instead_of_powershell_interpolation(monkeypatch, tmp_path):
+    import json
+    path = tmp_path / "path with 'quote and $variable"
+    path.mkdir()
+    monkeypatch.setattr(guard.platform, "system", lambda: "Windows")
+    def reply(command, **kwargs):
+        assert str(path) == kwargs["env"]["SPHERE_RESOURCE_GUARD_PATH"]
+        assert str(path) not in command[-1]
+        assert "Get-Volume -FilePath $env:SPHERE_RESOURCE_GUARD_PATH" in command[-1]
+        return subprocess.CompletedProcess(command, 0, json.dumps(healthy()), "")
+    monkeypatch.setattr(guard.subprocess, "run", reply)
+    snapshot = guard.collect(path)
+    assert guard.evaluate(snapshot) == []
+    assert not snapshot["deviceCommandsSent"] and not snapshot["mutationsPerformed"]

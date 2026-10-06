@@ -1,4 +1,4 @@
-"""Read-only build preflight: host disk, available RAM and Windows commit headroom.
+"""Read-only build preflight: volume health, disk, RAM and Windows commit headroom.
 
 Never deletes caches, changes page files, restarts Docker or sends device commands.
 Linux commit accounting differs from Windows; do not compare it to a Windows limit.
@@ -8,6 +8,7 @@ from __future__ import annotations
 import argparse
 import json
 import math
+import os
 import platform
 import shutil
 import subprocess
@@ -21,11 +22,15 @@ WINDOWS_MEMORY_COMMAND = """
 $ErrorActionPreference = 'Stop'
 $osInfo = Get-CimInstance Win32_OperatingSystem
 $memoryInfo = Get-CimInstance Win32_PerfFormattedData_PerfOS_Memory
+$volumeInfo = @(Get-Volume -FilePath $env:SPHERE_RESOURCE_GUARD_PATH -ErrorAction Stop)
+if ($volumeInfo.Count -ne 1) { throw 'Workspace must resolve to exactly one volume.' }
 [pscustomobject]@{
  availableRamBytes=[long]$osInfo.FreePhysicalMemory*1024
  totalRamBytes=[long]$osInfo.TotalVisibleMemorySize*1024
  committedBytes=[long]$memoryInfo.CommittedBytes
  commitLimitBytes=[long]$memoryInfo.CommitLimit
+ volumeHealthStatus=[string]$volumeInfo[0].HealthStatus
+ volumeOperationalStatus=@($volumeInfo[0].OperationalStatus | ForEach-Object { $_.ToString() })
 } | ConvertTo-Json -Compress
 """
 
@@ -59,6 +64,13 @@ def evaluate(snapshot: dict, *, min_disk_gib: float = 20, min_ram_gib: float = 4
             findings.append("commit_measurement_unavailable")
         elif used * 100 >= max_commit_percent * limit:
             findings.append("commit_headroom_low")
+        health, operations = snapshot.get("volumeHealthStatus"), snapshot.get("volumeOperationalStatus")
+        if (not isinstance(health, str) or not health
+                or not isinstance(operations, list) or not operations
+                or any(not isinstance(s, str) or not s for s in operations)):
+            findings.append("volume_health_unavailable")
+        elif health != "Healthy" or operations != ["OK"]:
+            findings.append("volume_not_ready")
     elif system != "Linux":
         findings.append("unsupported_host")
     return findings
@@ -72,14 +84,15 @@ def collect(path: Path) -> dict:
         if snapshot["system"] == "Windows":
             response = subprocess.run(["powershell.exe", "-NoProfile", "-NonInteractive",
                                        "-Command", WINDOWS_MEMORY_COMMAND], check=True,
-                                      capture_output=True, text=True, timeout=10)
+                                      capture_output=True, text=True, timeout=10,
+                                      env=os.environ | {"SPHERE_RESOURCE_GUARD_PATH": str(path)})
             if len(response.stdout) > 8192:
                 raise ValueError("Oversized memory response")
             data = json.loads(response.stdout.lstrip("\ufeff"))
             if not isinstance(data, dict):
                 raise ValueError("Invalid memory response")
             snapshot.update({key: data.get(key) for key in ["availableRamBytes", "totalRamBytes",
-                            "committedBytes", "commitLimitBytes"]})
+                            "committedBytes", "commitLimitBytes", "volumeHealthStatus", "volumeOperationalStatus"]})
         elif snapshot["system"] == "Linux":
             values = {}
             for line in Path("/proc/meminfo").read_text().splitlines():
