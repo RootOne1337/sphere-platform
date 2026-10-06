@@ -74,6 +74,35 @@ it('synchronously locks duplicate capture, aborts on target/auth change and igno
   expect(URL.createObjectURL).not.toHaveBeenCalled();
   expect(screen.queryByRole('link')).not.toBeInTheDocument();
 });
+it('switches to native pixel size without recapture or replacing the verified download', async () => {
+  render(<NativeScreenshotPanel deviceId="remote" enabled />);
+  fireEvent.click(screen.getByRole('button', { name: 'Получить снимок' }));
+  const link = await screen.findByRole('link', { name: 'Скачать исходный PNG' });
+  const image = screen.getByRole('img', { name: 'Исходный снимок выбранного Android-устройства' });
+  fireEvent.click(screen.getByRole('button', { name: '100% · 1:1' }));
+  expect(screen.getByRole('button', { name: '100% · 1:1' })).toHaveAttribute('aria-pressed', 'true');
+  expect(image).toHaveStyle({ width: '2px', height: '1px' });
+  expect(image).toHaveClass('max-w-none');
+  expect(link).toHaveAttribute('href', 'blob:verified-fixture');
+  expect(api.post).toHaveBeenCalledTimes(1);
+  expect(URL.createObjectURL).toHaveBeenCalledTimes(1);
+  fireEvent.click(screen.getByRole('button', { name: 'Вписать в панель' }));
+  expect(image).toHaveStyle({ width: '', height: '' });
+  expect(image).toHaveClass('max-w-full');
+});
+it('drops native preview mode and its old image when the target changes', async () => {
+  const view = render(<NativeScreenshotPanel deviceId="remote" enabled />);
+  fireEvent.click(screen.getByRole('button', { name: 'Получить снимок' }));
+  await screen.findByRole('link', { name: 'Скачать исходный PNG' });
+  fireEvent.click(screen.getByRole('button', { name: '100% · 1:1' }));
+  view.rerender(<NativeScreenshotPanel deviceId="other" enabled />);
+  expect(screen.queryByRole('img')).not.toBeInTheDocument();
+  expect(URL.revokeObjectURL).toHaveBeenCalledWith('blob:verified-fixture');
+  jest.mocked(api.post).mockResolvedValueOnce({ data: png(), headers: { ...headers, 'x-screenshot-device-id': 'other' } });
+  fireEvent.click(screen.getByRole('button', { name: 'Получить снимок' }));
+  await screen.findByRole('link', { name: 'Скачать исходный PNG' });
+  expect(screen.getByRole('button', { name: 'Вписать в панель' })).toHaveAttribute('aria-pressed', 'true');
+});
 it('cannot capture when device freshness/permission disables the panel', () => {
   render(<NativeScreenshotPanel deviceId="remote" enabled={false} />);
   fireEvent.click(screen.getByRole('button', { name: 'Получить снимок' }));

@@ -4,6 +4,20 @@
 **Область:** исходники и документация ветки PR #19, записанные runtime-наблюдения, Android APK и готовность следующего прогона.<br />
 **Канонический документ текущего состояния:** этот файл. Исторические отчёты ниже сохраняют исходные даты и факты.
 
+**6 октября, 21:58 UTC+5 — проверен конкретный PNG пользователя с PH011:** файл
+`sphere-414ce0e9-…-dc4f98b956364287bb5157d9bee5450f.png` — 960×540, 236 486B,
+RGBA8; pHYs/eXIf нет, DPI не записан. Native server trace подтвердил10/10 RPC
+и cleanup. Независимые native PNG/RAW совпали по всем518 400pixels;
+весь участок пользовательского PNG ниже status bar (495 360pixels) совпал
+побайтово с Android. Для этого файла деградация pixels не подтверждена.
+Source candidate отделяет video frame export от original PNG и добавляет
+native1:1 preview без изменения downloads. **49/3 scoped tests и TypeScript
+passed**; установка/визуальная приёмка этих кнопок ещё не выполнены из-за C:
+`Warning / Full Repair Needed`. UI/API/APK сохранены. Остальные PNG/устройства,
+rich recorder, task artifact delivery и долгосрочный storage writer не закрыты.
+[Проверка и границы](../audits/2026-10-06/NATIVE-PNG-PIXEL-VERIFICATION.md) ·
+[Pixel evidence](../audits/2026-10-06/NATIVE-PNG-PIXEL-EVIDENCE.json).
+
 **Критическое ограничение хоста — 6 октября, 20:23 UTC+5:** Git objects
 восстановлены, fsck exit0; **C: NTFS всё ещё `Warning / Full Repair Needed`**.
 Elevated Scan подтвердил offline defects в двух директориях. Verified local

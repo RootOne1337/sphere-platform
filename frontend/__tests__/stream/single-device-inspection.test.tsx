@@ -36,6 +36,9 @@ it('exposes original capture below a selected stream without issuing a capture o
   render(<SingleDeviceStream deviceId="remote" captureEnabled />);
   expect(screen.getByText('Исходный PNG для пиксельных эталонов')).toBeInTheDocument();
   expect(screen.getByRole('button', { name: 'Получить снимок', hidden: true })).toBeEnabled();
+  // Single-device pixels must come from the verified native endpoint, not
+  // from an H.264 frame wrapped in a lossless PNG container.
+  expect(mockStreamProps.enableScreenshot).toBeUndefined();
   expect(api.post).not.toHaveBeenCalled();
 });
 it('keeps native capture disabled without confirmed reachability, independently of a video frame', () => {
@@ -78,8 +81,8 @@ it('loads on inspection entry, reveals all attributes and scales highlight after
 });
 it('geometry mismatch prevents picking/highlighting and retains the explicit warning', async () => {
   await loaded();
-  act(() => mockStreamProps.onFrameDimensions({ width: 540, height: 960 }));
-  act(() => mockStreamProps.inspection.onPick(120, 120, { width: 540, height: 960 }));
+  await act(async () => mockStreamProps.onFrameDimensions({ width: 540, height: 960 }));
+  await act(async () => mockStreamProps.inspection.onPick(120, 120, { width: 540, height: 960 }));
   expect(screen.getByText(/Геометрия дерева не совпадает/)).toBeInTheDocument();
   expect(mockStreamProps.inspection.bounds).toBeNull();
   expect(screen.queryByText('/hierarchy/node[1]')).not.toBeInTheDocument();

@@ -147,7 +147,7 @@ export function SingleDeviceStream({ deviceId, captureEnabled = false, onControl
     {!canInspect && <PermissionNotice permission="device:write" action="чтение дерева Android через root-команды" />}
     <div className={inspect ? `grid min-w-0 items-start gap-4 ${compact ? '' : 'xl:grid-cols-[minmax(0,1fr)_minmax(280px,360px)]'}` : 'min-w-0'}>
       <div className="min-w-0 overflow-hidden rounded-xl border border-border bg-black">
-        <DeviceStream deviceId={deviceId} enableDiagnostics enableScreenshot enableNavigation enableStaticInput
+        <DeviceStream deviceId={deviceId} enableDiagnostics enableNavigation enableStaticInput
           onControlSent={onControlSent}
           onControlCommand={onControlCommand}
           readOnly={controlDisabled || !access.can('stream:control')}

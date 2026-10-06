@@ -22,6 +22,13 @@
 Исходники `c3937a1`, установленный на этапе аудита UI/API `c1a6e79a`; исходный аудит — только анализ.
 Каталог API и элементов управления не заменяет живую проверку Android и 500–1000 устройств.
 
+**6 октября, 21:58 UTC+5 — конкретный PNG пользователя проверен против Android RAW:**
+[Pixel comparison и отсутствие DPI metadata](audits/2026-10-06/NATIVE-PNG-PIXEL-VERIFICATION.md) ·
+[Pinned facts](audits/2026-10-06/NATIVE-PNG-PIXEL-EVIDENCE.json).
+PH011: native PNG/RAW518 400pixels совпали; пользовательский файл полностью совпал
+ниже строки состояния. Source1:1 preview и разделение native/video export:
+49/3 scoped tests и types passed; deploy ожидает исправления C:.
+
 **6 октября, 19:48 UTC+5 — PH011 на 1.2.47: screenshot ACK и bounded private PNG cache:**
 [Контракт и открытая доставка task artifacts](audits/2026-10-06/ANDROID-SCREENSHOT-CACHE.md).
 Одна saved v1 завершилась **14/14**, 10 снимков → последние 8 PNG / 1 880 304 B;

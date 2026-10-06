@@ -75,10 +75,11 @@ export function NativeScreenshotPanel({ deviceId, enabled }: { deviceId: string;
   const [image, setImage] = useState<Screenshot | null>(null);
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [previewScale, setPreviewScale] = useState<'fit' | 'native'>('fit');
   useEffect(() => {
     const session = { disposed: false, controller: null as AbortController | null, url: null as string | null };
     sessionRef.current = session;
-    setImage(null); setError(null); setPending(false);
+    setImage(null); setError(null); setPending(false); setPreviewScale('fit');
     return () => {
       session.disposed = true;
       session.controller?.abort();
@@ -113,7 +114,19 @@ export function NativeScreenshotPanel({ deviceId, enabled }: { deviceId: string;
     <p className="text-xs leading-relaxed text-muted-foreground">Разовый запрос через APK с root-доступом, до 5 MiB. PNG сохраняет пиксели без потерь. DPI в свойствах файла относится к физическому размеру изображения; плотность интерфейса Android — отдельная настройка. Автоматического опроса нет.</p>
     {pending && <p role="status" className="text-sm text-muted-foreground">Android делает снимок и передаёт файл. Ожидаем полный PNG и проверяем SHA-256…</p>}
     {error && <p role="alert" className="break-words rounded-lg border border-destructive/30 p-3 text-sm text-destructive">{error} Автоповтора нет.{image ? ' Ниже предыдущий успешно полученный снимок.' : ''}</p>}
-    {image && <><div className="overflow-hidden rounded-xl border border-border bg-muted/30"><img src={image.url} width={image.width} height={image.height} alt="Исходный снимок выбранного Android-устройства" className="mx-auto max-h-[72vh] max-w-full object-contain" /></div><dl className="grid grid-cols-1 gap-3 text-sm sm:grid-cols-2"><div><dt className="text-muted-foreground">Файл</dt><dd>{image.width} × {image.height} · {image.bytes.toLocaleString('ru-RU')} байт</dd></div><div><dt className="text-muted-foreground">Завершение запроса</dt><dd>{utcTime(image.capturedAt)}</dd></div><div className="min-w-0 sm:col-span-2"><dt className="text-muted-foreground">SHA-256 совпал: Android → сервер → браузер</dt><dd className="break-all font-mono text-xs">{image.sha256}</dd></div></dl>{!image.cleanupConfirmed && <p role="alert" className="text-sm text-amber-700 dark:text-amber-400">PNG получен, но удаление временных файлов на Android не подтверждено.</p>}<Button asChild variant="outline"><a href={image.url} download={image.filename}><Download className="mr-2 h-4 w-4" aria-hidden />Скачать исходный PNG</a></Button></>}
+    {image && <>
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <div role="group" aria-label="Масштаб просмотра снимка" className="flex flex-wrap gap-1">
+          <Button size="sm" variant={previewScale === 'fit' ? 'secondary' : 'outline'} aria-pressed={previewScale === 'fit'} onClick={() => setPreviewScale('fit')}>Вписать в панель</Button>
+          <Button size="sm" variant={previewScale === 'native' ? 'secondary' : 'outline'} aria-pressed={previewScale === 'native'} onClick={() => setPreviewScale('native')}>100% · 1:1</Button>
+        </div>
+        <p className="text-xs text-muted-foreground">{previewScale === 'native' ? 'Один пиксель PNG на один CSS-пиксель; браузерный масштаб влияет на отображение.' : 'Предпросмотр уменьшен по размеру панели. Скачиваемый PNG остаётся исходным.'}</p>
+      </div>
+      <div aria-label="Предпросмотр исходного PNG" className="max-h-[72vh] overflow-auto rounded-xl border border-border bg-muted/30">
+        <img src={image.url} width={image.width} height={image.height} alt="Исходный снимок выбранного Android-устройства" className={previewScale === 'native' ? 'mx-auto block max-w-none' : 'mx-auto block max-h-[72vh] max-w-full object-contain'} style={previewScale === 'native' ? { width: image.width, height: image.height } : undefined} />
+      </div>
+      <dl className="grid grid-cols-1 gap-3 text-sm sm:grid-cols-2"><div><dt className="text-muted-foreground">Файл</dt><dd>{image.width} × {image.height} · {image.bytes.toLocaleString('ru-RU')} байт</dd></div><div><dt className="text-muted-foreground">Завершение запроса</dt><dd>{utcTime(image.capturedAt)}</dd></div><div className="min-w-0 sm:col-span-2"><dt className="text-muted-foreground">SHA-256 совпал: Android → сервер → браузер</dt><dd className="break-all font-mono text-xs">{image.sha256}</dd></div></dl>{!image.cleanupConfirmed && <p role="alert" className="text-sm text-amber-700 dark:text-amber-400">PNG получен, но удаление временных файлов на Android не подтверждено.</p>}<Button asChild variant="outline"><a href={image.url} download={image.filename}><Download className="mr-2 h-4 w-4" aria-hidden />Скачать исходный PNG</a></Button>
+    </>}
   </section>;
 }
 

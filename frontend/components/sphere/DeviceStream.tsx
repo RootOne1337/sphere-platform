@@ -17,6 +17,7 @@ interface DeviceStreamProps {
   /** HTTP key/text submissions and the separate installed-APK result. */
   onControlCommand?: (event: AcknowledgedControl) => void;
   enableDiagnostics?: boolean;
+  /** Diagnostic export of a decoded, potentially lossy H.264 frame, never an Android screenshot. */
   enableScreenshot?: boolean;
   enableNavigation?: boolean;
   /** Single-device control only; frame age alone does not invalidate geometry. */
@@ -583,7 +584,7 @@ export function DeviceStream({
       <rect x={inspection.bounds.left} y={inspection.bounds.top} width={inspection.bounds.right - inspection.bounds.left} height={inspection.bounds.bottom - inspection.bounds.top} fill="rgba(20,184,166,0.15)" stroke="#14b8a6" strokeWidth="2" vectorEffect="non-scaling-stroke" />
     </svg>}
     {enableScreenshot && <div className="absolute bottom-2 left-2 z-20 max-w-[calc(100%-1rem)]">
-      <button type="button" disabled={!canSaveFrame} onClick={saveFrame} title="Декодированный кадр H.264. Для пиксельных эталонов откройте «Исходный PNG» под видео." className="rounded-lg border border-white/20 bg-black/80 px-3 py-2 text-xs text-white disabled:cursor-not-allowed disabled:opacity-50">Сохранить кадр видео (PNG)</button>
+      <button type="button" disabled={!canSaveFrame} onClick={saveFrame} title="Декодированный кадр H.264: PNG не восстанавливает потерянные при кодировании пиксели. Для эталонов используйте исходный PNG с Android." className="rounded-lg border border-white/20 bg-black/80 px-3 py-2 text-xs text-white disabled:cursor-not-allowed disabled:opacity-50">Кадр видео (PNG) · не оригинал</button>
       {screenshotError && <p role="alert" className="mt-1 rounded bg-black/90 p-2 text-xs text-red-200">{screenshotError}</p>}
     </div>}
     {(connection !== 'live' || streamError) && (
