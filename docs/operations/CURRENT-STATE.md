@@ -4,6 +4,20 @@
 **Область:** исходники и документация ветки PR #19, записанные runtime-наблюдения, Android APK и готовность следующего прогона.<br />
 **Канонический документ текущего состояния:** этот файл. Исторические отчёты ниже сохраняют исходные даты и факты.
 
+**6 октября, 23:16 UTC+5 — свободная сборка Studio в исходниках:** отдельный узел
+по умолчанию, palette drag/drop с pan/zoom, явная вставка в цепочку,
+редактируемые разорванные ветки, сохранение расположения при правке параметров.
+Удаление шага, выбор entry, защита входа и Undo/Redo в режиме графа;
+незавершённый документ блокируется перед check/save. **395 tests /17 suites**
+и TypeScript passed. [Контракт и визуальная приёмка](../audits/2026-10-06/STUDIO-FREE-CANVAS.md).
+Baseline **a9d8b85**: frontend/Android CI success, backend lint/mypy/security/bootstrap/RLS
+success; полный backend test job завершился5 failures /3006 passed /37 skipped:
+catalog publication fixtures содержали sleep без ms. Исправление fixture и
+отдельная historical-read/rollback регрессия готовятся; guard не ослабляется.
+Это не положительный CI free-canvas head.
+**Не установлено:** UI1c26ffc7/APIeb7a7c26/APK сохранены; C: repair gate закрыт.
+Общий реестр9/41 не меняется; новых browser screenshots нет.
+
 **6 октября, 22:52 UTC+5 — следующий source P1 Script Studio:** общий контракт
 параметров **1.0 / 32 опубликованных действия**, error paths без input values,
 check/create/update guard до записи версии, требования и optional fields в форме.

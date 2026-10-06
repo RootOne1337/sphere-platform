@@ -23,10 +23,16 @@
 Каталог API и элементов управления не заменяет живую проверку Android и 500–1000 устройств.
 
 **6 октября — общий контракт параметров 32 действий Script Studio:**
+Предшествующий свободной сборке source срез:
 [Правила, API, форма узла, проверки и compatibility matrix](audits/2026-10-06/STUDIO-ACTION-PARAMETERS.md).
 141 Python/ASGI/schema tests и374 frontend tests /16 suites, TypeScript и scoped
 Ruff прошли; source ещё не установлен из-за host repair gate. APK capabilities,
 runtime semantics и continuous gestures не объявляются подтверждёнными JSON-проверкой.
+
+**6 октября — свободная сборка графа Studio:**
+[Drag/drop, отдельные узлы, явная вставка, draft/publish split и приёмка](audits/2026-10-06/STUDIO-FREE-CANVAS.md).
+395 tests /17 scripts suites и TypeScript прошли; runtime/visual ещё не приняты.
+Удаление, выбор входа и Undo/Redo сохраняют возможность продолжить сборку.
 
 **6 октября — связи Studio, упорядоченная selector queue и следующий input protocol:**
 [Follow-up требований пользователя и план приёмки](audits/2026-10-06/STUDIO-INTERACTION-FOLLOWUP.md) ·

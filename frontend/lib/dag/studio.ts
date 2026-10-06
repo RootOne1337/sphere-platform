@@ -1,4 +1,4 @@
-import { ACTION_TYPES, importDag, validateDag, type DagExport } from './export';
+import { ACTION_TYPES, importDag, validateDag, type DagExport, type DagValidationOptions } from './export';
 import type { Node, Edge } from '@xyflow/react';
 
 export const SOURCE_LIMIT = 512 * 1024;
@@ -11,14 +11,17 @@ export function boundedSource(source: string): string {
   if (byteLength(source) > SOURCE_LIMIT) throw new Error('Исходник превышает 512 KiB. Текст не заменён.');
   return source;
 }
-export function parseSource(source: string): DagExport {
+export function parseSource(source: string, options: DagValidationOptions = {}): DagExport {
   boundedSource(source);
   let value: unknown;
   try { value = JSON.parse(source); } catch { throw new Error('Некорректный JSON. Исправьте исходник; прежний граф не будет сохранён вместо него.'); }
-  const errors = validateDag(value);
+  const errors = validateDag(value, options);
   if (errors.length) throw new Error(errors.slice(0, 20).join('\n'));
   return value as DagExport;
 }
+/** Editing alone permits disconnected steps and unfinished condition branches.
+ * Check/save retain the strict parseSource default and APK parameter contract. */
+export const parseDraftSource = (source: string) => parseSource(source, { editing: true });
 export const initialDag: DagExport = { version: '1.0', entry_node: 'start-1', timeout_ms: 1800000, nodes: [
   { id: 'start-1', action: { type: 'start' }, on_success: 'end-1', on_failure: null, retry: 0, timeout_ms: 30000 },
   { id: 'end-1', action: { type: 'end' }, on_success: null, on_failure: null, retry: 0, timeout_ms: 30000 },
@@ -119,6 +122,17 @@ export function insertAction(dag: DagExport, type: ActionType, id: string, selec
   next.nodes.push({ id, action, on_success: type === 'condition' ? null : target ?? null, on_failure: null, retry: 0, timeout_ms: 30000 });
   parent.on_success = id;
   // A newly inserted condition retains reachability of both existing branches.
-  importDag(next);
+  importDag(next, { editing: true });
+  return next;
+}
+
+/** Create a draft step without changing any route or executing an action. */
+export function addDetachedAction(dag: DagExport, type: ActionType, id: string): DagExport {
+  if (dag.nodes.length >= 500) throw new Error('Лимит графа: 500 шагов.');
+  if (!ACTION_TYPES.includes(type)) throw new Error('Неизвестное действие.');
+  if (dag.nodes.some(node => node.id === id)) throw new Error('ID шага уже существует.');
+  const next = JSON.parse(JSON.stringify(dag)) as DagExport;
+  next.nodes.push({ id, action: defaultAction(type), on_success: null, on_failure: null, retry: 0, timeout_ms: 30000 });
+  importDag(next, { editing: true });
   return next;
 }

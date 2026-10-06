@@ -28,6 +28,10 @@
 | SF26-09 | Подключить выбранную группу целиком / 128 thumbnails | EP-031 / P2 | Отдельный bounded thumbnail subscription; не128 full-video sessions |
 | SF26-10 | Синхронный клик/жест выбранной группы | EP-020,031 / P2 | Нужны target manifest, ownership, partial outcome и stop; не blind broadcast |
 | SF26-11 | AI узлы/страница/чат и наблюдаемое исполнение | EP-046 / P2 | Будущий provider adapter, typed tool contracts и scoped evidence; provider не подключён |
+| SF26-12 | Свободное добавление/drag-drop вместо обязательной вставки | EP-014,015 / P1 | Source free canvas: отдельный узел, явная вставка, draft/publish split;395 tests/17 suites, types passed; visual/runtime gate открыт |
+
+[Свободная сборка, удаление, восстановление и приёмка](STUDIO-FREE-CANVAS.md)
+добавлены по последнему уточнению пользователя. Installed UI не обновлён.
 
 ## Подтверждённые runtime наблюдения
 

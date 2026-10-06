@@ -37,13 +37,14 @@ const record = (value: unknown): value is Record<string, unknown> =>
   value !== null && typeof value === 'object' && !Array.isArray(value);
 
 /** Validate structure without pretending to replace APK parameter/Lua checks. */
-export function validateDag(value: unknown): string[] {
+export type DagValidationOptions = { editing?: boolean };
+export function validateDag(value: unknown, options: DagValidationOptions = {}): string[] {
   const errors: string[] = [];
   if (!record(value) || !Array.isArray(value.nodes)) {
     return ['Граф должен содержать массив nodes в формате DAG 1.0.'];
   }
   if (value.version !== undefined && value.version !== '1.0') errors.push('Неподдерживаемая версия графа.');
-  if (value.nodes.length < 2 || value.nodes.length > 500) errors.push('В графе должно быть от 2 до 500 шагов.');
+  if (value.nodes.length < (options.editing ? 1 : 2) || value.nodes.length > 500) errors.push(options.editing ? 'Черновик должен содержать от 1 до 500 шагов.' : 'В графе должно быть от 2 до 500 шагов.');
   if (value.name != null && (typeof value.name !== 'string' || value.name.length > 255)) errors.push('Имя графа: максимум 255 символов.');
   if (value.description != null && (typeof value.description !== 'string' || value.description.length > 2000)) errors.push('Описание графа: максимум 2000 символов.');
   const integerRange = (v: unknown, min: number, max: number) =>
@@ -69,6 +70,7 @@ export function validateDag(value: unknown): string[] {
       errors.push(`${raw.id}: неизвестный тип действия.`);
     } else if (raw.action.type === 'condition') {
       for (const key of ['on_true', 'on_false']) {
+        if (options.editing && raw.action[key] == null) continue;
         if (typeof raw.action[key] !== 'string' || !raw.action[key]) errors.push(`${raw.id}: требуется ${key}.`);
         else refs.push(raw.action[key]);
       }
@@ -100,12 +102,12 @@ export function validateDag(value: unknown): string[] {
     seen.add(id);
     pending.push(...(adjacency.get(id) ?? []));
   }
-  for (const id of ids) if (!seen.has(id)) errors.push(`Шаг ${id} недостижим от начального шага.`);
+  if (!options.editing) for (const id of ids) if (!seen.has(id)) errors.push(`Шаг ${id} недостижим от начального шага.`);
   return errors;
 }
 
-export function importDag(value: unknown): { nodes: Node[]; edges: Edge[]; metadata: DagMetadata } {
-  const errors = validateDag(value);
+export function importDag(value: unknown, options: DagValidationOptions = {}): { nodes: Node[]; edges: Edge[]; metadata: DagMetadata } {
+  const errors = validateDag(value, options);
   if (errors.length) throw new Error(`Сценарий не может быть открыт: ${errors.join(' ')} Запись заблокирована.`);
   const dag = value as DagExport;
   const nodes: Node[] = [];

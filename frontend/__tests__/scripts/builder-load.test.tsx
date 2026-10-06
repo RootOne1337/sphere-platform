@@ -1,9 +1,10 @@
-import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { act, createEvent, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import ScriptBuilderPage from '@/app/(dashboard)/scripts/builder/page';
 import { api } from '@/lib/api';
 import { TextEncoder } from 'node:util';
 import { deserialize, serialize } from 'node:v8';
 import type { ReactFlowProps } from '@xyflow/react';
+import { ACTION_DRAG_TYPE } from '@/lib/dag/canvasPlacement';
 Object.assign(globalThis, { TextEncoder });
 Object.defineProperty(globalThis, 'structuredClone', { configurable: true, value: (value: unknown) => deserialize(serialize(value)) });
 
@@ -31,6 +32,7 @@ jest.mock('@/lib/dag/nodeTypes', () => ({ nodeTypes: {} }));
 jest.mock('@monaco-editor/react', () => ({ __esModule: true, default: () => null }));
 jest.mock('@xyflow/react/dist/style.css', () => ({}));
 const mockFitView = jest.fn().mockResolvedValue(true);
+const mockScreenToFlowPosition = jest.fn(({ x, y }: { x: number; y: number }) => ({ x: (x - 100) / 2, y: (y - 50) / 2 }));
 let mockGraphProps: ReactFlowProps = {};
 jest.mock('@xyflow/react', () => {
   const React = jest.requireActual('react');
@@ -49,7 +51,7 @@ jest.mock('@xyflow/react', () => {
     addEdge,
     ReactFlow: (props: ReactFlowProps) => {
       mockGraphProps = props;
-      React.useEffect(() => { props.onInit?.({ fitView: mockFitView } as never); }, []);
+      React.useEffect(() => { props.onInit?.({ fitView: mockFitView, screenToFlowPosition: mockScreenToFlowPosition } as never); }, []);
       return <div data-testid="graph">{props.nodes?.map((node) => <button key={node.id} onClick={event => props.onNodeClick?.(event, node)}>{node.id}</button>)}{props.edges?.map(edge => <button key={edge.id} onClick={event => props.onEdgeClick?.(event, edge)}>Связь {edge.id}</button>)}</div>;
     },
     Background: () => null, Controls: () => null, MiniMap: () => null,
@@ -73,6 +75,152 @@ function deferred<T>() {
 
 beforeEach(() => { jest.clearAllMocks(); mockGraphProps = {}; mockWorkbenchGuard.mockReturnValue(true); mockEditId = 'script-a'; mockCanWrite = true; mockSessionVersion = 0; localStorage.clear(); });
 afterEach(() => jest.restoreAllMocks());
+
+function actionDrop(type: string, x = 800, y = 400, mime = ACTION_DRAG_TYPE) {
+  const pane = screen.getByLabelText('Поле графа');
+  const dataTransfer = { types: [mime], getData: jest.fn(() => type), setData: jest.fn(), effectAllowed: '', dropEffect: '' };
+  fireEvent.dragOver(pane, { dataTransfer });
+  const event = createEvent.drop(pane, { dataTransfer });
+  Object.defineProperties(event, { clientX: { value: x }, clientY: { value: y } });
+  fireEvent(pane, event);
+  return dataTransfer;
+}
+
+it('creates a separate node by default, keeps old routes and lets the operator connect it before publication', async () => {
+  mockEditId = null;
+  jest.mocked(api.post).mockResolvedValue({ data: { id: 'created' } } as never);
+  render(<ScriptBuilderPage />);
+  fireEvent.click(screen.getByRole('button', { name: 'Добавить узел: Ожидание' }));
+  const added = mockGraphProps.nodes!.find(node => node.data.action && (node.data.action as { type: string }).type === 'sleep')!;
+  expect(mockGraphProps.edges).toHaveLength(1);
+  expect(mockGraphProps.edges![0]).toMatchObject({ source: 'start-1', target: 'end-1' });
+  expect(screen.getByLabelText('Граф не готов к публикации')).toHaveTextContent(added.id);
+  fireEvent.click(screen.getByRole('button', { name: 'Создать сценарий' }));
+  expect(screen.getByRole('alert')).toHaveTextContent('недостижим'); expect(api.post).not.toHaveBeenCalled();
+  const old = mockGraphProps.edges![0];
+  act(() => mockGraphProps.onReconnect?.(old, { source: 'start-1', target: added.id, sourceHandle: null, targetHandle: null }));
+  act(() => mockGraphProps.onConnect?.({ source: added.id, target: 'end-1', sourceHandle: null, targetHandle: null }));
+  expect(screen.queryByLabelText('Граф не готов к публикации')).not.toBeInTheDocument();
+  fireEvent.click(screen.getByRole('button', { name: 'Создать сценарий' }));
+  await waitFor(() => expect(api.post).toHaveBeenCalledTimes(1));
+  const request = jest.mocked(api.post).mock.calls[0][1] as { dag: { nodes: { id: string; on_success: string }[] } };
+  expect(request.dag.nodes.find(node => node.id === 'start-1')!.on_success).toBe(added.id);
+});
+
+it('drops at the transformed pointer, preserves old positions and viewport, and ignores the insertion preference for dragging', () => {
+  mockEditId = null;
+  render(<ScriptBuilderPage />);
+  fireEvent.change(screen.getByRole('combobox', { name: 'Способ добавления действия' }), { target: { value: 'insert' } });
+  act(() => mockGraphProps.onNodesChange?.([{ id: 'start-1', type: 'position', position: { x: 345, y: 678 } }]));
+  const before = mockGraphProps.nodes!.map(node => ({ id: node.id, position: node.position }));
+  const palette = screen.getByRole('button', { name: 'Добавить узел: Нажатие' });
+  const dataTransfer = { setData: jest.fn(), effectAllowed: '' };
+  fireEvent.dragStart(palette, { dataTransfer });
+  expect(dataTransfer.setData).toHaveBeenCalledWith(ACTION_DRAG_TYPE, 'tap');
+  expect(dataTransfer.effectAllowed).toBe('copy');
+  actionDrop('tap');
+  expect(mockScreenToFlowPosition).toHaveBeenLastCalledWith({ x: 800, y: 400 });
+  const node = mockGraphProps.nodes!.find(node => !before.some(old => old.id === node.id))!;
+  expect(node.position).toEqual({ x: 222, y: 151 });
+  expect(mockGraphProps.nodes!.filter(item => item.id !== node.id).map(item => ({ id: item.id, position: item.position }))).toEqual(before);
+  expect(mockGraphProps.edges).toHaveLength(1);
+  expect(mockFitView).not.toHaveBeenCalled();
+  expect(screen.queryByText('Отпустите, чтобы добавить отдельный узел')).not.toBeInTheDocument();
+  expect(api.post).not.toHaveBeenCalled(); expect(api.put).not.toHaveBeenCalled();
+});
+
+it('lets an unfinished condition be edited and survive source/graph switches without inventing branch targets', () => {
+  mockEditId = null;
+  render(<ScriptBuilderPage />); actionDrop('condition');
+  const added = mockGraphProps.nodes!.find(node => (node.data.action as { type: string }).type === 'condition')!;
+  expect(screen.getByLabelText('Граф не готов к публикации')).toHaveTextContent('требуется on_true');
+  fireEvent.click(screen.getByRole('button', { name: 'JSON шага' }));
+  const source = screen.getByLabelText('Шаг JSON: action, переходы, retry, timeout_ms') as HTMLTextAreaElement;
+  const value = JSON.parse(source.value); value.action.params = { level: 30 };
+  fireEvent.change(source, { target: { value: JSON.stringify(value) } });
+  fireEvent.click(screen.getByRole('button', { name: 'Применить параметры' }));
+  expect(mockGraphProps.nodes!.find(node => node.id === added.id)!.position).toEqual(added.position);
+  fireEvent.click(screen.getByRole('button', { name: 'JSON' }));
+  const graph = JSON.parse((screen.getByLabelText(/Исходник DAG/) as HTMLTextAreaElement).value);
+  expect(graph.nodes.find((node: { id: string }) => node.id === added.id).action).toEqual({ type: 'condition', check: 'battery_above', params: { level: 30 } });
+  fireEvent.click(screen.getByRole('button', { name: 'Граф' }));
+  expect(mockGraphProps.nodes).toHaveLength(3);
+  expect(mockGraphProps.edges).toHaveLength(1);
+  fireEvent.click(screen.getByRole('button', { name: 'Проверить на сервере' }));
+  expect(screen.getByRole('alert')).toHaveTextContent('требуется on_true');
+  expect(api.post).not.toHaveBeenCalled();
+});
+
+it('does not accept unknown/foreign drag data or a stale drop after permissions change', () => {
+  mockEditId = null;
+  const view = render(<ScriptBuilderPage />);
+  actionDrop('loop'); expect(screen.getByRole('alert')).toHaveTextContent('Неизвестное действие');
+  actionDrop('tap', 800, 400, 'text/plain');
+  expect(mockGraphProps.nodes).toHaveLength(2);
+  mockCanWrite = false; view.rerender(<ScriptBuilderPage />);
+  expect(screen.getByRole('button', { name: 'Добавить узел: Нажатие' })).toBeDisabled();
+  expect(screen.getByRole('button', { name: 'Добавить узел: Нажатие' })).toHaveAttribute('draggable', 'false');
+  actionDrop('tap'); expect(mockGraphProps.nodes).toHaveLength(2);
+  expect(api.post).not.toHaveBeenCalled();
+});
+
+it('protects the entry, supports deleting other steps and rebuilding the one-step draft with undo', async () => {
+  mockEditId = null;
+  render(<ScriptBuilderPage />);
+  fireEvent.click(screen.getByRole('button', { name: 'start-1' }));
+  expect(screen.getByRole('button', { name: 'Удалить шаг' })).toBeDisabled();
+  let allowed: unknown;
+  await act(async () => { allowed = await mockGraphProps.onBeforeDelete?.({ nodes: [mockGraphProps.nodes![0]], edges: [] }); });
+  expect(allowed).toBe(false);
+  expect(screen.getByRole('alert')).toHaveTextContent('Начальный шаг нельзя удалить');
+  fireEvent.click(screen.getByRole('button', { name: 'end-1' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Удалить шаг' }));
+  expect(mockGraphProps.nodes).toHaveLength(1); expect(mockGraphProps.edges).toHaveLength(0);
+  actionDrop('end'); expect(mockGraphProps.nodes).toHaveLength(2);
+  fireEvent.click(screen.getByRole('button', { name: 'Отменить изменение' }));
+  expect(screen.getByTestId('graph')).toBeInTheDocument();
+  expect(mockGraphProps.nodes).toHaveLength(1);
+  fireEvent.click(screen.getByRole('button', { name: 'Отменить изменение' }));
+  expect(screen.getByTestId('graph')).toBeInTheDocument();
+  expect(mockGraphProps.nodes).toHaveLength(2); expect(mockGraphProps.edges).toHaveLength(1);
+  fireEvent.click(screen.getByRole('button', { name: 'Повторить изменение' }));
+  expect(screen.getByTestId('graph')).toBeInTheDocument();
+  expect(mockGraphProps.nodes).toHaveLength(1);
+  expect(api.post).not.toHaveBeenCalled();
+});
+
+it('can select a new entry before deleting the original start without changing node coordinates', () => {
+  mockEditId = null; render(<ScriptBuilderPage />);
+  actionDrop('tap');
+  const added = mockGraphProps.nodes!.find(node => (node.data.action as { type: string }).type === 'tap')!;
+  fireEvent.click(screen.getByRole('button', { name: 'Сценарий' }));
+  fireEvent.change(screen.getByRole('combobox', { name: 'Начальный шаг сценария' }), { target: { value: added.id } });
+  expect(mockGraphProps.nodes!.find(node => node.id === added.id)!.position).toEqual(added.position);
+  fireEvent.click(screen.getByRole('button', { name: 'start-1' }));
+  expect(screen.getByRole('button', { name: 'Удалить шаг' })).toBeEnabled();
+  fireEvent.click(screen.getByRole('button', { name: 'Удалить шаг' }));
+  expect(mockGraphProps.nodes?.some(node => node.id === 'start-1')).toBe(false);
+  act(() => mockGraphProps.onConnect?.({ source: added.id, target: 'end-1', sourceHandle: null, targetHandle: null }));
+  expect(screen.queryByLabelText('Граф не готов к публикации')).not.toBeInTheDocument();
+});
+
+it('keeps unfinished-node parameters protected from a drop and supports editing after removing a route', async () => {
+  jest.mocked(api.get).mockResolvedValue(payload() as never);
+  render(<ScriptBuilderPage />); await screen.findByText('script-a-start');
+  fireEvent.click(screen.getByRole('button', { name: 'Связь e-script-a-start-next-script-a-end' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Разорвать связь' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Добавить узел: Ожидание' }));
+  expect(mockGraphProps.nodes).toHaveLength(3);
+  expect(mockGraphProps.edges).toHaveLength(0);
+  fireEvent.click(screen.getByRole('button', { name: 'JSON шага' }));
+  const field = screen.getByLabelText('Шаг JSON: action, переходы, retry, timeout_ms');
+  fireEvent.change(field, { target: { value: '{not applied' } });
+  actionDrop('tap'); expect(mockGraphProps.nodes).toHaveLength(3);
+  expect(field).toHaveValue('{not applied');
+  expect(screen.getByRole('button', { name: 'Добавить узел: Нажатие' })).toHaveAttribute('draggable', 'false');
+  fireEvent.click(screen.getByRole('button', { name: 'Отменить параметры' }));
+  expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+});
 
 function animationFrames() {
   let nextId = 0;
@@ -124,6 +272,7 @@ it('adds an Android navigation preset to the graph without issuing live input', 
   mockEditId = null;
   Object.defineProperty(crypto, 'randomUUID', { configurable: true, value: () => '00000000-0000-4000-8000-000000000012' });
   render(<ScriptBuilderPage />);
+  fireEvent.change(screen.getByRole('combobox', { name: 'Способ добавления действия' }), { target: { value: 'insert' } });
   fireEvent.click(screen.getByRole('button', { name: 'Добавить действие Домой' }));
   expect(mockGraphProps.nodes).toHaveLength(3);
   fireEvent.click(screen.getByRole('button', { name: 'JSON' }));

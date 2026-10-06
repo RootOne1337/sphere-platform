@@ -7,6 +7,7 @@
 Она заменяет прежнюю инструкцию «Этап A».
 
 **Source candidate 6 октября, ещё не установлен:**
+[Свободная сборка и drag/drop узлов](../audits/2026-10-06/STUDIO-FREE-CANVAS.md),
 [Versioned action contract 1.0 и проверки параметров](../audits/2026-10-06/STUDIO-ACTION-PARAMETERS.md),
 [Editor связей и Android key presets](../audits/2026-10-06/STUDIO-CONNECTION-EDITING.md),
 [ordered XPath review queue и follow-up](../audits/2026-10-06/STUDIO-INTERACTION-FOLLOWUP.md),
@@ -25,6 +26,14 @@ rollback и privileged preserved-source maintenance этим не перепис
 не проверяет установленный APK. В receipt параметр `action_parameters_verified`
 отделён от `device_execution_verified:false`; старый API получает отдельную
 пометку, что сервер параметров ещё не проверял. [Контракт и rollout matrix](../audits/2026-10-06/STUDIO-ACTION-PARAMETERS.md).
+
+Следующий source срез добавляет **Отдельный узел / Вставить в цепочку**.
+Drag/drop всегда отдельный; затем соедините выходы вручную. Разорванные связи
+и условие без всех ветвей остаются редактируемыми, но check/save запрещены до
+исправления. Настройки позволяют выбрать entry; удалить текущий вход нельзя.
+**Удалить шаг** удаляет также связи, без скрытой склейки соседей. Undo/Redo
+сохраняют режим графа для представимого черновика. Раскладка остаётся явной;
+позиции не входят в wire DAG. Это ещё не установленный функционал3015.
 [Материалы этапа A](../audits/2026-10-06/SCRIPT-STUDIO-FOUNDATION.md) и
 [аудит редизайна](../audits/2026-10-06/STUDIO-REDESIGN.md) сохраняются как история
 решений и критериев; рабочий порядок приведён здесь.
