@@ -1,24 +1,36 @@
 # Каталог сценариев: контракт чтения без DAG
 
-Дата: **6 октября 2026**. Это проект следующего изменения, выведенный из
-исходников API **c2b91e32** и интерфейса **a670a3df**. Описание исходной точки
-ниже относится к этим историческим ревизиям, а не к новому коду. Контракт теперь
-реализован в исходниках и проверен на отдельной PostgreSQL; установка API/UI
-на момент этого source commit ещё не подтверждена. [Результат этапа](SCRIPT-CATALOG-DELIVERY.md)
-разделяет source tests, fixture budget и последующие runtime receipts. Общие
+Дата: **6 октября 2026**. Контракт реализован, проверен и установлен в API/UI
+**eb7a7c26** на **http://127.0.0.1:3015/scripts** в 07:35 UTC.
+[Результат этапа](SCRIPT-CATALOG-DELIVERY.md) и [реестр доказательств](SCRIPT-CATALOG-EVIDENCE.json)
+разделяют source tests, fixture budget, exact images и живые runtime receipts.
+Исходный проект контракта выведен из API **c2b91e32** и UI **a670a3df**;
+раздел «Подтверждённая исходная точка» и исходные line references ниже относятся
+к этим историческим ревизиям, а не к новому коду. Общие
 p95/RSS/browser heap/load gates остаются условиями проверки.
 Документ развивает [открытый P1 аудита Studio](STUDIO-REDESIGN.md).
 Причина прежнего роста памяти или диска здесь не устанавливается.
 
 ## Проверка реализации 6 октября
 
-148 проверок каталога/legacy API, 22 проверки maintenance и отдельный бюджетный
-тест прошли на disposable loopback PostgreSQL/Redis. Фикстура: 100 сценариев,
+Окончательный прогон с shipped dependencies: **171 passed, 0 failures/errors/skips**
+на disposable loopback PostgreSQL/Redis. Он включает catalogue/legacy API,
+maintenance и бюджет. Финальная migration regression дополнительно прошла после
+ограничения transaction-local lock/statement timeout; это повтор того же теста,
+а не новый уникальный кейс. Фикстура: 100 сценариев,
 500 узлов, 491520 B канонического исходника на версию. Фактический raw JSON
 legacy response — 48889157 B, catalog — 85176 B (снижение 99,8258%). Catalog
 остался 85176 B и при меньшем источнике. Projection делает один SELECT без DAG
 и вычисления хеша. Весь frontend: 1506 tests / 126 suites, TypeScript прошёл.
 Это конечные fixture checks, не замер развёрнутого p95, heap или WAN.
+Exact API image проверен offline: 596 agent/status/device/VPN, 37 catalog,
+35 resource и 5 bootstrap passed; catalog cases пересекаются с source набором.
+Полный runtime каталог после установки содержит 22 строки и 14037 raw B,
+без DAG; все 25 version metadata pair заполнены и сверены. Source digest,
+pointers, даты и 445 заданий сохранены. Конечное наблюдение 07:41:18 UTC:
+19 устройств, 14 online / 5 offline. Это finite presence snapshot, не fleet soak.
+Первая попытка откатилась на false mismatch Windows bind-path aliases;
+вторая установила ту же ревизию с сохранением 44 соседних контейнеров.
 Старые SQL patch-файлы теперь отказываются от in-place UPDATE; replacements
 публикуют новую версию с явными org/script/expected-version. Seed требует org/apply.
 

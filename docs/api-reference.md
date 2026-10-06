@@ -15,8 +15,9 @@ section and optional task/batch version admission condition were reconciled with
 source `d2846ef` on 2 October; other Batches details retain their 7 September review.
 Locations were reconciled with `db6be05` on 3 October. OTA publication was
 reconciled with `facba9a` on 3 October: [metadata/receipt and Android APK checks](operations/OTA-PUBLICATION-AND-APK-CHECKS.md).
-The generated snapshot includes draft validation for Script Studio (6 October 2026,
-source `c2b91e32`). See the [endpoint catalog](api-endpoints.md) for current operation/path
+The generated snapshot includes draft validation for Script Studio and the additive
+metadata-only catalog installed from `eb7a7c26` on 6 October 2026.
+See the [endpoint catalog](api-endpoints.md) for current operation/path
 counts. Earlier finite schema proofs retain their dated source revisions.
 Other manual sections
 still need component review; a listed contract does not establish runtime or
@@ -685,7 +686,8 @@ skip behavior for invalid/missing/foreign devices is retained.
 ## Scripts — `/scripts`
 
 Existing version workflows were reviewed against `d2846ef` on 2 October 2026;
-draft validation was added in `561d08a` and installed from `c2b91e32` on 6 October.
+draft validation was added in `561d08a`. The current API/UI installation is
+`eb7a7c26` (6 October 2026, 07:35 UTC), including the separate metadata catalog.
 All routes require an authenticated principal and enforce organization scope.
 Read operations require `script:read`, mutations `script:write`; task/batch submission
 checks `script:execute` separately.
@@ -704,6 +706,32 @@ Lua safety. Возвращает `schema_version=1`, `dag`, `dag_hash` (SHA256),
 Сохранение использует существующие create/update и optimistic guard
 `expected_current_version_id`; 409 требует разрешения конфликта оператором.
 [Аудит и этапы Studio](audits/2026-10-06/SCRIPT-STUDIO-FOUNDATION.md).
+
+### GET /scripts/catalog — metadata-only list
+
+`GET /api/v1/scripts/catalog`, permission `script:read`, tenant scope and
+`Cache-Control: no-store`. Query parameters: `query`, `state=active|archived|all`,
+`page>=1`, `per_page=1..200` (defaults: active, 1, 50). The response contains
+`catalog_schema: 1`, `items`, `total`, `page`, `per_page`, `pages`; zero total gives
+zero pages, and an empty offset page retains its total. Ordering is
+`updated_at DESC, id ASC`; page and count use one SQL snapshot.
+
+Each item contains script/organization IDs, name, description, archive state,
+creation/update timestamps, `current_version_id`, `node_count` and `current_version`.
+The version contains only ID, `script_id`, version number, lowercase 64-hex `dag_hash`
+and creation time. DAG bodies, notes, author and version history are excluded.
+An unpublished script has null pointer/version/count; unknown values do not become zero.
+Selected published versions with missing or invalid owned metadata return 503:
+`{"detail":{"code":"script_catalog_metadata_unavailable"}}`, also with no-store.
+Catalog reads neither repair metadata nor compute hashes from DAGs.
+
+The UI requests the pinned source separately using
+`GET /scripts/{script_id}/versions/{version_id}` and verifies the selected receipt.
+Legacy list/detail/history/CRUD responses remain compatible. Schema, tenant-specific
+backfill and clean reconciliation precede enabling the new UI; an application
+rollback leaves additive columns intact. See the [operator contract](operations/SCRIPT-CATALOG.md)
+and [installation evidence](audits/2026-10-06/SCRIPT-CATALOG-EVIDENCE.json).
+This delivery does not establish production p95, browser heap or WAN performance.
 
 ### GET /scripts
 

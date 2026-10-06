@@ -13,7 +13,48 @@ Windows System/Ntfs55 подтвердил повреждение структу
 перезагрузка и удаление повреждённой папки не выполнялись. Используются проверенные
 Git-архивы и ресурсные ворота. [Receipt и границы](../audits/2026-10-06/HOST-FILESYSTEM-INCIDENT.md).
 
-**6 октября, 07:00 UTC+5 — установлен редизайн сценариев и лаборатория устройства:**
+**6 октября, 12:35 UTC+5 — metadata-only каталог установлен в API и UI:**
+Обе рабочие сборки на [3015/scripts](http://127.0.0.1:3015/scripts) —
+**`eb7a7c26`**. API image
+`sha256:559b6bf58e39ed080244d2708a2189856b086dc3c89bf281f62cf42d5f2b28f3`,
+UI image `sha256:63159a43a6dde21edc4950b0dd33aa99e01e04ad06e6643d7bf572fba087b1b6`.
+Первый запрос каталога получает только persisted version/hash/node_count;
+исходник загружается после явного открытия DAG и проверяется по выбранному receipt.
+Tenant/session cache, отмена запроса и недоступность метаданных имеют отдельные
+контракты; legacy API и остальные consumers сохраняются.
+Additive migration и tenant backfill подготовили **25 версий / 22 сценария**,
+reconcile завершился без расхождений. Source aggregate SHA256 до/после совпал;
+версии, указатели, даты и **445 заданий** сохранились. Повторный проход не изменил
+ни одной строки. Живой all-каталог: **14037 bytes**, legacy: **34553 bytes**;
+это конечный ответ данного tenant, а не измерение fleet p95 или browser heap.
+В PostgreSQL fixture 100 сценариев × 500 узлов: **85176 вместо 48889157 bytes**,
+одна SQL-команда без передачи DAG. **171 source tests**, отдельный final migration
+test и **1506 frontend tests / 126 suites** прошли с shipped backend dependencies;
+exact API image: 596 agent/status, 37 catalog и 35 resource tests, mypy/Ruff/OpenAPI
+и packaged maintenance probes прошли. Наборы частично пересекаются, их нельзя
+складывать как число уникальных проверок. Native QA установленного source:
+реальные состояния 19/3/22, поиск, выбранный DAG и история, запуск без отправки,
+переход в редактор, темы/F5 preferences, 1280/724/390 px без расширения документа,
+9 JPEG и 0 captured console warnings/errors. Heap/network/frame timing не измерялись.
+Первая установка откатила приложения из-за сравнения двух записей одного Windows
+bind-path; подтверждено совпадение папок и прав, сравнение нормализовано, повторная
+установка завершилась. Additive schema не откатывалась. Сохранены **44 соседних
+контейнера**. Срезы UTC: до 07:34:38 — **14 online / 5 offline**; после API 07:34:49 —
+**9 / 10**; после UI 07:35:02 — **10 / 9**; контрольный GET 07:41:18 — **14 / 5**,
+presence доступен, API ready. Это конечные наблюдения во время reconnect,
+не zero downtime/SLA. APK/OTA/туннели сохранены, новых Android
+команд или заданий этот этап не создавал.
+Все четыре source workflow **`eb7a7c26`** — backend, frontend, Android и Preview —
+завершились success. Это source CI, не доказательство hosted deploy или результата
+последующего документационного head; receipts входят в pinned evidence.
+**9 принято / 41 открыто**: функциональный контракт metadata-only установлен,
+но p95/CPU/RSS/query-buffer/browser-heap и load/soak gates остаются открытыми.
+Host storage writer по-прежнему UNKNOWN; NTFS-инцидент рассматривается отдельно.
+[Доставка и ограничения](../audits/2026-10-06/SCRIPT-CATALOG-DELIVERY.md) ·
+[Pinned evidence](../audits/2026-10-06/SCRIPT-CATALOG-EVIDENCE.json) ·
+[Инструкция каталога](SCRIPT-CATALOG.md) · [Приоритеты](../audits/2026-10-06/ENTERPRISE-PRIORITIES.md).
+
+**Историческая установка 6 октября, 07:00 UTC+5 — редизайн сценариев и лаборатория устройства:**
 UI **`a670a3df`**, образ `sha256:e803fc55dc05c1271762d3dca911d1f354e2a42665e8cb0cd917fff20e631c69`,
 API **`c2b91e32`** на [3015/scripts](http://127.0.0.1:3015/scripts).
 Каталог с сохраняемым видом/плотностью/детализацией, группированная библиотека 32

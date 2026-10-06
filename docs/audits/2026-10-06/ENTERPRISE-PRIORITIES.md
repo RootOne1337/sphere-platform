@@ -1,6 +1,6 @@
 # Приоритеты оставшихся работ и следующий подтверждённый дефект
 
-**Дата:** 6 октября 2026, Asia/Yekaterinburg. **Baseline reader:** `32c97b8`; **установленные API/UI:** `c2b91e32` / `a670a3df`.
+**Дата:** 6 октября 2026, Asia/Yekaterinburg. **Baseline reader:** `32c97b8`; **установленные API/UI:** `eb7a7c26` / `eb7a7c26` (07:35 UTC).
 **Приёмка:** 9 принято / 41 с открытыми критериями из исходных 50 работ.
 Это пересортировка эксплуатационного порядка, а не изменение immutable baseline,
 первоначальных P1/P2 или критериев приёмки. Пункты имеют разный размер: 41 не означает
@@ -17,23 +17,38 @@
 живая запись отправленных click/swipe/wheel, вставка свежего XPath и наблюдение
 задания закреплённой версии; это частичная реализация EP-017/018/019, не их приёмка.
 Исправлены pending-launch ownership, потеря полей через Undo и terminal telemetry.
-1451 frontend tests / 125 suites, types/build и native показ прошли. Два канареечных
+Исторический редизайн: 1451 frontend tests / 125 suites, types/build и native показ прошли. Два канареечных
 задания одной remote PH025 v1 start/sleep4000/end завершились с 3 успешными отчётами;
 финальные UI-коррекции не создавали третьего задания. Счёт **9 / 41** не изменён.
 
-Первый подтверждённый следующий P1 в этой области — [полные DAG в каталоге](STUDIO-REDESIGN.md#source-review-catalog-payload-retention-remains-open-p1):
-список читает, хеширует и кэширует исходники каждой текущей версии. Нужен отдельный
-metadata-only контракт с закреплёнными version/hash/node_count и lazy detail;
-затем измерение payload/query/cache на больших fixtures и установленном API.
-Это вывод из кода, а не установленная причина прежнего host memory/storage роста.
+Подтверждённый P1 [полных DAG в каталоге](STUDIO-REDESIGN.md#source-review-catalog-payload-retention-remains-open-p1)
+получил установленный функциональный контракт: `GET /scripts/catalog`, persisted
+version/hash/node_count и lazy detail закреплённой версии. Прямые известные writers
+переведены на append-version publisher, старые in-place SQL-патчи прекращают работу.
+Tenant backfill/reconcile обработал 25 версий / 22 сценария без изменения исходников,
+указателей, дат или 445 заданий. Неизвестный внешний SQL writer пока не блокируется
+DB-trigger, поэтому готовность других организаций требует собственных receipts.
 
-[Контракт следующего этапа](SCRIPT-CATALOG-METADATA-CONTRACT.md): отдельный
-совместимый маршрут, persisted pair на версии, backfill и projection без DAG;
-предварительно перевести прямые Python/SQL writers, которые сейчас могут менять
-сохранённый источник. Один [живой GET](evidence/studio-redesign/catalog-payload-sample.json)
-подтвердил 19/19 полных DAG, 31,368 B ответа; это не нагрузочный тест или heap/leak
-профиль. Контракт ещё не реализован, P1 открыт. Все четыре source CI установленного
-UI завершились success: [receipt](evidence/studio-redesign/source-ci.json).
+[Доставка](SCRIPT-CATALOG-DELIVERY.md) · [Контракт](SCRIPT-CATALOG-METADATA-CONTRACT.md) ·
+[Pinned evidence](SCRIPT-CATALOG-EVIDENCE.json) · [Инструкция](../../operations/SCRIPT-CATALOG.md).
+Fixture 100 сценариев × 500 узлов: 85176 bytes catalog против 48889157 bytes legacy,
+одна SQL-команда без DAG/hash materialization. Живой all-каталог: 22 строки /
+14037 bytes против 34553 bytes. 171 source tests с shipped dependencies, final migration
+test и 1506 frontend tests / 126 suites прошли; exact images собраны и установлены.
+Native QA фиксируется в evidence отдельно от тестов. **P1 остаётся открытым по
+производительности:** нужны p95/CPU/RSS/query buffers/browser heap и load/soak,
+а не только payload. Это исправление не устанавливает причину host memory/storage роста.
+Первая установка автоматически откатилась из-за эквивалентных Windows bind-path;
+после проверки папок и прав повторная сохранила 44 соседа. Fleet-срезы 14/5 → 9/10 →
+10/9 → 14/5 (контрольный GET 07:41:18 UTC) записаны, они не обещают отсутствие reconnect. APK/OTA/туннели не менялись,
+новых Android команд не отправлялось. Счёт **9 / 41** остаётся прежним.
+
+Все четыре source CI исторического UI `a670a3df` завершились success:
+[receipt](evidence/studio-redesign/source-ci.json). Отдельный актуальный срез
+подтвердил четыре успешных source workflow `eb7a7c26`: backend, frontend,
+Android и Preview; он сохранён в [catalog evidence](SCRIPT-CATALOG-EVIDENCE.json).
+Результат не переносится автоматически на последующий документационный head
+и не доказывает hosted deployment.
 
 Далее: EP-016 versioned schemas/capability preflight, EP-015 conflict diff и sidebar
 dirty route blocker, EP-018 text/navigation/selector recording, durable launch
