@@ -4,16 +4,29 @@
 **Область:** исходники и документация ветки PR #19, записанные runtime-наблюдения, Android APK и готовность следующего прогона.<br />
 **Канонический документ текущего состояния:** этот файл. Исторические отчёты ниже сохраняют исходные даты и факты.
 
-**7 октября — разработка возобновлена после ремонта C:** завершённый Wininit
-repair, Healthy/OK и Git fsck подтверждены. UI **99af20d** установлен на3015;
-API **eb7a7c26**, остальные45 контейнеров и OTA сохранены.
-[Postboot evidence и открытый root cause](../audits/2026-10-07/POSTBOOT-RECOVERY.md).
-Exact source **c6339b2** прошёл frontend/backend/Android CI;22 archive/installer
-unit methods и395 Studio tests /17 suites прошли локально. В живом UI проверены
-отдельный шаг, переназначение/разрыв связи и Undo. Responsive header исправляется
-[отдельным кандидатом](../audits/2026-10-07/STUDIO-RESPONSIVE-HEADER.md).
-Ledger **9 accepted /41 open** сохраняется: continuous input/rich recording,
-корреляция кадров и проверка Android не закрываются приёмкой графа.
+**7 октября — установленный UI439f910 на3015:** title остаётся читаемым на390,
+637 и1280px; новый шаг больше не скрывает End. Проверены insertion/JSON route,
+вертикальная и горизонтальная ELK-раскладка, разрыв связи и Undo.
+[Exact installed/browser evidence](../audits/2026-10-07/STUDIO-INSTALLED-ACCEPTANCE.json) ·
+[Header](../audits/2026-10-07/STUDIO-RESPONSIVE-HEADER.md) ·
+[Node placement](../audits/2026-10-07/STUDIO-NODE-OCCLUSION.md).
+
+Frontend run37529847405: **1690 tests /133 suites**, fresh types/build,
+26pages/73assets image admission;22 archive/installer methods passed.
+Android run37529847402 success. Backend run37529847401 attempt1:3036passed/
+37skipped, один PowerShell preservation fixture timeout20s, coverage80.38%.
+Attempt2 запрошен; полный CI этого SHA пока не объявляется успешным.
+Новый resize candidateeb598a5 прошёл1692/133 full local frontend tests и source
+types, но ещё не установлен. [Обзор графа после resize](../audits/2026-10-07/STUDIO-CANVAS-RESIZE.md).
+
+Windows completed repair, Healthy/OK и Git fsck подтверждены. API**eb7a7c26**,
+остальные45 контейнеров и OTA сохранены; APK не обновлялся.
+[Postboot handoff](../audits/2026-10-07/POSTBOOT-RECOVERY.md).
+API validate подтверждает структуру/Lua safety, но этот installed API не
+подтверждает новый action-parameter contract или выполнение Android.
+Причины расхода диска/RAM и повреждений файлов не установлены. Ledger
+**9accepted/41open** сохраняется; continuous input, rich recorder и fleet
+acceptance не закрываются приёмкой графа.
 
 Ниже — исторические срезы до postboot handoff; версии/runtime gates относятся
 к указанному моменту, не отменяют актуальное состояние выше.

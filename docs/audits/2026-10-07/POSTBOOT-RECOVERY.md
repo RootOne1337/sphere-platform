@@ -68,3 +68,21 @@ Installer/archive suite: **22 unittest methods passed**, scoped Ruff passed.
 Исправление компоновки проходит отдельную сборку и responsive browser acceptance.
 Recorder/continuous input/frame correlation не объявляются принятыми этими
 операциями; общий product ledger **9 accepted / 41 open** пока сохранён.
+
+## Последующий UI-only install439f910
+
+7октября01:59:01UTC+5 установлен439f910b81aa8d909fe0baf8e84352a4b9f68322,
+Frontend run37529847405. Archive120836603B; независимый CI config ID
+sha256:6391b830faa99020e4df80a20057b2f60a36a3017668660ca4b0b91291bc7f58
+связан с actual runtime manifest
+sha256:98c08360e19e6e25470936f8b276103c9c7bcf8f86d2ee6a2951df4b95d37141.
+Healthy/login200, exact UI-only Compose delta,45 остальных контейнеров и
+OTA hash подтверждены. Backend/APK не обновлялись. Installer browserVerified
+остаётсяfalse: его флаг не подменяется отдельной браузерной приёмкой.
+[Фактическая отдельная приёмка и снимки](STUDIO-INSTALLED-ACCEPTANCE.json).
+
+Resource guard20:55UTC: C: Healthy/OK, free42058338304B, available RAM
+23542448128B, findings[]. Это точка во времени, не устранение утечки.
+Подтверждено исправление title и скрытых узлов; resize candidate описан
+[отдельно](STUDIO-CANVAS-RESIZE.md). Непрерывный ночной watcher после этого boot
+не объявляется запущенным. Исторический finite recorder не является новым soak.

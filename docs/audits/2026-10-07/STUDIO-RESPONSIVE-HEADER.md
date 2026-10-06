@@ -43,3 +43,29 @@ source и результаты добавляются после фактиче�
 Continuous DOWN/MOVE/UP, нативный crop/pixel evidence, correlated playback,
 APK capabilities и массовые действия не входят в приёмку этого исправления.
 Текущий ledger9/41 сохранён. [Зависимости и следующая работа](../2026-10-06/STUDIO-INTERACTION-FOLLOWUP.md).
+
+## Фактическая приёмка UI439f910
+
+Source439f910 установлен на3015 7октября01:59UTC+5. Full frontend CI:
+1690 tests /133 suites, fresh types/build,26pages/73assets,22 archive/installer
+methods и18 HTTP probe tests passed. APIeb7a7c26 сохранён. Данные ниже получены
+из видимого DOM и оригинальных снимков после установки, не из CSS-теста.
+
+| Viewport | Ширина поля названия | scrollWidth/clientWidth | Проверка/сохранение |
+| --- | --- | --- | --- |
+| 390×844 | 300px | 390/390 | Перенос на доступные строки |
+| 637×884 | 547px вместо68.39 | 637/637 | Оба действия видимы |
+| 1280×800 | 457.36px | 1280/1280 | Toolbar помещается |
+| 1920×1080 | Визуально проверено | Full desktop view | Обе primary actions доступны |
+
+[390](assets/studio-validation/header-390-after.png) ·
+[637](assets/studio-validation/header-637-after.png) ·
+[1280](assets/studio-validation/header-1280-after.png) ·
+[1920](assets/studio-validation/studio-1920-after.png) ·
+[Structured receipt](STUDIO-INSTALLED-ACCEPTANCE.json).
+
+При переходе1920→1280 найден отдельный дефект старого viewport графа:
+часть узлов до «Весь граф» оставалась за границей pane. Header принят,
+вся responsive страница этим не объявляется завершённой.
+[Отдельное исправление resize](STUDIO-CANVAS-RESIZE.md) sourceeb598a5:
+1692/133 full local tests и TypeScript passed; установка ещё не подтверждена.

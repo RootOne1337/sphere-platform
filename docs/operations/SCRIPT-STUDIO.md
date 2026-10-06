@@ -1,28 +1,36 @@
 # Script Studio: инструкция по созданию и проверке сценариев
 
-Актуализировано: **7 октября 2026**. Инструкция относится к текущему каталогу
-`/scripts` и редактору `/scripts/builder`, формату **DAG 1.0**, React Flow и
-локальной раскладке **elkjs 0.12.0**. Установленная сборка интерфейса —
-**99af20d** на порту **3015**, API — **eb7a7c26**.
-Она заменяет прежнюю инструкцию «Этап A».
+Актуализировано: **7 октября 2026**. Каталог `/scripts`, редактор
+`/scripts/builder`, формат **DAG1.0**, React Flow, локальная ELK0.12.0.
+На3015 установлен frontend **439f910**, API — **eb7a7c26**.
 
-**7 октября — новый UI установлен после ремонта C:**
-[hosted runtime image26pages/73assets и guarded installer](../audits/2026-10-07/REVIEWED-WEB-DELIVERY.md).
-Image source99af20d принят в CI и установлен: все45 остальных контейнеров
-сохранены. Exact sourcec6339b2 прошёл frontend/backend/Android CI.
-[Фактический postboot handoff](../audits/2026-10-07/POSTBOOT-RECOVERY.md).
-В браузере проверены отдельный шаг, переназначение/разрыв связи и Undo.
-Полная recorder/Android/frame приёмка остаётся открытой.
+**Фактическая приёмка:** отдельные узлы, palette drag/drop, явная вставка,
+переназначение/разрыв связи и Undo; header390/637/1280, сохранение End после
+вставки, JSON roundtrip и ELK в обоих направлениях.
+[Installed/browser receipt](../audits/2026-10-07/STUDIO-INSTALLED-ACCEPTANCE.json).
+НаPH010 baseline99af20d отдельно проверены Home→APK ACK482ms,45XPath nodes и
+упорядоченный перенос Home/пауза/planned XPath. Это не correlated frame playback.
 
-**Функционал frontend99af20d, установлен 7 октября:**
-[Свободная сборка и drag/drop узлов](../audits/2026-10-06/STUDIO-FREE-CANVAS.md),
-[Versioned action contract 1.0 и проверки параметров](../audits/2026-10-06/STUDIO-ACTION-PARAMETERS.md),
-[Editor связей и Android key presets](../audits/2026-10-06/STUDIO-CONNECTION-EDITING.md),
-[ordered XPath review queue и follow-up](../audits/2026-10-06/STUDIO-INTERACTION-FOLLOWUP.md),
-[native1:1 PNG preview](../audits/2026-10-06/NATIVE-PNG-PIXEL-VERIFICATION.md).
-234/11 scoped tests и TypeScript — исторический первый срез; последующий полный
-CI указан выше. Прежний local build/deploy gate снят после postboot acceptance.
-Новая responsive правка проверяется [отдельно](../audits/2026-10-07/STUDIO-RESPONSIVE-HEADER.md).
+Frontend CI439f910:1690/133 +types/build/image admission; Android success.
+Backend attempt1 завершился одним20s PowerShell fixture timeout,3036passed/
+37skipped; rerun ожидается. Полный CI этого SHA пока не заявляется принятым.
+Resize overview sourceeb598a5 с1692 local tests подготовлен отдельно:
+[следование pane и сохранение ручного ракурса](../audits/2026-10-07/STUDIO-CANVAS-RESIZE.md).
+Оператору до этой установки доступна «Весь граф» после изменения окна.
+
+[Доставка exact tested image без rebuild](../audits/2026-10-07/REVIEWED-WEB-DELIVERY.md) ·
+[Postboot recovery](../audits/2026-10-07/POSTBOOT-RECOVERY.md) ·
+[Свободная сборка](../audits/2026-10-06/STUDIO-FREE-CANVAS.md) ·
+[Action contract1.0](../audits/2026-10-06/STUDIO-ACTION-PARAMETERS.md) ·
+[Редактор связей](../audits/2026-10-06/STUDIO-CONNECTION-EDITING.md) ·
+[Recorder/XPath follow-up](../audits/2026-10-06/STUDIO-INTERACTION-FOLLOWUP.md) ·
+[Исходный PNG](../audits/2026-10-06/NATIVE-PNG-PIXEL-VERIFICATION.md).
+
+32 action forms и локальная проверка параметров доступны в установленном
+frontend. **Installed APIeb7a7c26 проверяет структуру, но не подтвердил
+action_parameters_verified:** новый server contract остаётся source-only до
+отдельного backend admission. Поведение APK проверяется отдельно. Новая сборка
+UI не делает frontend/API revisions одинаковыми и не заменяет fleet canary.
 
 Следующий source срез: 32 опубликованных действия имеют общий контракт типов,
 обязательных полей, ограничений и эффектов. В форме узла доступны **Контракт

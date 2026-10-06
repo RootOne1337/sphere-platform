@@ -1,10 +1,15 @@
 # Script Studio: доставка проверенного веба без локального rebuild
 
 **Дата:** 7 октября 2026, Asia/Yekaterinburg. **PR:** [#19](https://github.com/RootOne1337/sphere-platform/pull/19).
-**Статус:** source99af20d установлен после completed host repair;
-приёмка графа подтверждена, полная recorder matrix остаётся открытой.
-**Адрес рабочей витрины:** http://127.0.0.1:3015. Installed UI —
-`99af20d9933e4f4f5f227595e19d2f47d5be7e94`, API — `eb7a7c26c2e644f24eb3f785b3da1c29a65929be`.
+**Статус:** UI439f910 установлен после completed host repair.
+**Адрес:** http://127.0.0.1:3015. UI439f910b81aa8d909fe0baf8e84352a4b9f68322,
+APIeb7a7c26c2e644f24eb3f785b3da1c29a65929be. Остальные45 containers и OTA сохранены.
+[Exact installed/browser receipt](STUDIO-INSTALLED-ACCEPTANCE.json): title и
+node-occlusion fixes приняты; resize overview sourceeb598a5 ещё не установлен.
+Frontend run37529847405 прошёл1690/133, fresh types/build,26pages/73assets,
+22archive/installer methods и18HTTP tests. Android success. Backend attempt1
+того же source:3036passed/37skipped, один20s PowerShell fixture timeout;
+rerun запрошен. Это UI delivery, не all-stack production deploy.
 
 ## Проблема и изменение
 
@@ -82,7 +87,7 @@ JSON receipt внутри архива не является подписью и
 run ID/attempt, успешный conclusion и head SHA. Artifact ID/digest download
 проверяется отдельно; receipt не разрешает запуск неизвестного image.
 
-## Host gate и последующая приёмка
+## Исторический host gate и первоначальная приёмка
 
 **Актуализация после reboot:** новый boot7октября00:42UTC+5, completed Wininit
 repair, Healthy/OK, source verification и Git fsck приняты. UI-only install
@@ -94,7 +99,8 @@ Read-only срез7октября: C: **Warning / Full Repair Needed**, boot о�
 4октября21:39:32UTC+5, свободно60 146 794 496bytes. `git fsck --no-dangling`
 прошёл. Свободное место и исправный Git не доказывают исправность NTFS.
 Предыдущее чтение конкретного private build directory вернуло OS error1392.
-Сборка/установка на этом ПК пока не выполнены; текущий веб сохранён.
+На момент этого preboot среза сборка/установка не выполнялись. После
+repair выше подтверждены UI-only installs99af20d и439f910.
 
 Перед Docker load/deploy нужны [postboot host acceptance](../2026-10-06/HOST-FILESYSTEM-INCIDENT.md):
 новый boot, завершённый queued NTFS repair, Healthy/OK, отсутствие unresolved
@@ -157,3 +163,13 @@ Docker load/up/stop/rollback при Warning/Full Repair Needed. Ruff/YAML/Node s
 APK и не admission continuous DOWN/MOVE/UP. [Studio priorities](../2026-10-06/STUDIO-INTERACTION-FOLLOWUP.md)
 и [free canvas source](../2026-10-06/STUDIO-FREE-CANVAS.md) сохраняют эти границы.
 Общий ledger остаётся **9accepted/41open**; screenshots ранее приняты оператором.
+
+## Актуальный installed срез 7 октября
+
+Для439f910 admitted gzip120836603B, CI config6391b830… и runtime manifest98c08360…
+связаны exact archive descriptor. Native Docker acceptance и отдельная browser
+приёмка записаны в [postboot handoff](POSTBOOT-RECOVERY.md) и
+[structured installed receipt](STUDIO-INSTALLED-ACCEPTANCE.json).
+Локальные combined archive/installer suite теперь22 methods; hosted frontend
+проверил те же22, fresh types/build и image HTTP probe. Исторические18/11/7 выше
+не переписываются как будто новый suite существовал на исходную дату.

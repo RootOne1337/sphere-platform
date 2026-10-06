@@ -5,6 +5,13 @@
 **1c26ffc7**, API **eb7a7c26**. Live проверки ниже относятся к этим версиям.
 Новые связи и selector queue ещё не установлены; host build/deploy gate закрыт.
 
+**Датированное продолжение 7 октября:** repair завершён, UI439f910 установлен
+на3015; связи, свободные шаги и ordered recorder проверены отдельными canaries.
+[Exact browser/runtime receipt](../2026-10-07/STUDIO-INSTALLED-ACCEPTANCE.json).
+Утверждения installed1c26ffc7/закрытый host gate выше и в таблице ниже —
+исторический срез6 октября. Continuous/rich recorder остаются открытыми;
+[canvas resize candidate](../2026-10-07/STUDIO-CANVAS-RESIZE.md) проходит отдельную доставку.
+
 Этот документ дополняет [основной аудит](../2026-10-05/ENTERPRISE-PRODUCT-AUDIT.md),
 [исходный backlog](../2026-10-05/ENTERPRISE-PRODUCT-BACKLOG.json),
 [доставленную запись команд](STUDIO-COMMAND-RECORDING.md) и

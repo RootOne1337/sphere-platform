@@ -39,3 +39,25 @@ XPath MeshCentral Agent выбран без клика Android,45nodes; selector
 Home→sleep60000→tap_element. Пауза ограничена60s настройкой записи. Script/task
 не публиковались и не запускались. ACK не означает input-to-frame latency;
 XPath дерево и кадр не объявляются атомарным correlated evidence.
+
+## Фактическая повторная приёмка UI439f910
+
+На3015 установлен439f910; baseline99af20d сохранён выше как исходное
+доказательство. Explicit insertion снова даёт3nodes/2edges Start→sleep→End,
+но bounds всех трёх узлов больше не пересекаются: start1074/456, end1074/666,
+sleep728/456 при1920×1080 (каждый256×133). Позиции прежних узлов сохранены.
+[Снимок сразу после добавления](assets/studio-validation/chain-no-overlap-1920.png).
+
+Явная ELK-раскладка дала читаемую вертикальную цепочку и горизонтальную
+схему; JSON сохранил оба перехода. Реальный API validate подтвердил3 шага,
+hash1ace3b70037e…, без подтверждения action parameters/Android execution.
+Разрыв start→sleep дал3nodes/1edge; Undo восстановил3nodes/2edges.
+Сценарий не публиковался, task не запускался.
+[Финальный вертикальный вид](assets/studio-validation/studio-1920-after.png) ·
+[Exact installed/browser receipt](STUDIO-INSTALLED-ACCEPTANCE.json).
+
+Frontend full CI1690/133, types/build и image admission passed. Backend
+attempt1 того же source:3036 passed/37 skipped и один20s PowerShell startup
+timeout в preservation fixture; rerun запрошен. Это не all-CI success.
+Android CI этого source прошёл. Node occlusion исправлен; общий EP-014/015
+и product ledger9/41 остаются открытыми.

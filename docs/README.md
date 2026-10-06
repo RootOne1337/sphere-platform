@@ -15,14 +15,20 @@
 > автоматическую проверку runtime; старые аудиты сохраняют собственные даты и
 > версии и не должны читаться как текущий deploy. [Правила актуальности](DOCUMENTATION.md).
 
-**7 октября — проверенный переносимый веб без локального rebuild:**
-[Доставка, installer plan и host gate](audits/2026-10-07/REVIEWED-WEB-DELIVERY.md) ·
-[Hosted image26pages/73assets, artifact и image ID](audits/2026-10-07/REVIEWED-WEB-IMAGE-EVIDENCE.json) ·
-[Полный CI baselinece6e377](audits/2026-10-07/STUDIO-CI-BASELINE.json).
-UI99af20d установлен на3015 после завершённого NTFS repair; все45 остальных
-контейнеров сохранены. [Postboot recovery и фактические границы](audits/2026-10-07/POSTBOOT-RECOVERY.md).
-Exact sourcec6339b2 прошёл frontend/backend/Android CI. Новый responsive header
-проходит отдельную browser приёмку; continuous pointer и rich recorder остаются открытыми.
+**7 октября — веб439f910 установлен на3015:** title больше не сжимается,
+новые шаги не скрывают существующие; граф и JSON сохраняют переходы.
+[Exact image/runtime/browser receipt](audits/2026-10-07/STUDIO-INSTALLED-ACCEPTANCE.json) ·
+[Header matrix390/637/1280/1920](audits/2026-10-07/STUDIO-RESPONSIVE-HEADER.md) ·
+[Node placement и ELK](audits/2026-10-07/STUDIO-NODE-OCCLUSION.md) ·
+[Следующее исправление resize](audits/2026-10-07/STUDIO-CANVAS-RESIZE.md).
+Frontend1690/133, types/build/image admission и Android CI прошли; backend
+attempt1:3036passed/37skipped и один PowerShell20s timeout, rerun ожидается.
+Resize candidateeb598a5:1692 local frontend tests и types passed, ещё не installed.
+APIeb7a7c26, APK,45 остальных контейнеров и OTA сохранены.
+[Доставка](audits/2026-10-07/REVIEWED-WEB-DELIVERY.md) ·
+[Completed repair и открытая причина storage/corruption](audits/2026-10-07/POSTBOOT-RECOVERY.md).
+Полная Android/continuous/rich-recorder приёмка открыта. Исторические source
+и preboot receipts ниже относятся к их собственным датам и SHA.
 
 **5 октября — комплексный аудит продукта:**
 [22 раздела в браузере, шесть подтверждённых дефектов, ограничение Grafana и 50 работ](audits/2026-10-05/ENTERPRISE-PRODUCT-AUDIT.md) ·

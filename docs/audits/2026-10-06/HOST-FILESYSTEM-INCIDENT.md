@@ -261,3 +261,13 @@ SQLAlchemy2.0.28 выполнила140 scoped tests и API exporter без за�
 Её mypy сообщает Requests import-untyped; полный CI в чистой среде остаётся gate.
 Isolated mypy только нового pure parameter validator прошёл. Не выдавать эти
 результаты за ремонт тома, проверку всех Python packages или полный backend CI.
+
+## 7 октября: завершённый ремонт и возобновление
+
+Новый boot00:42UTC+5, completed Wininit repair, Healthy/OK и повторный Git fsck
+приняты. Source файлы не откатывались; queued repair gate снят.
+UI-only installs99af20d и439f910 завершены с сохранением остальных45 контейнеров.
+[Postboot handoff, Git recovery, runtime identities и ограничения](../2026-10-07/POSTBOOT-RECOVERY.md).
+Причина повреждений, global Python package integrity и storage/RAM growth
+остаются отдельными открытыми вопросами. Прежние Warning/NO-GO утверждения
+выше относятся к preboot измерениям и не описывают новый том.
