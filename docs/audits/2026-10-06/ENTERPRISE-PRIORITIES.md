@@ -1,6 +1,6 @@
 # Приоритеты оставшихся работ и следующий подтверждённый дефект
 
-**Дата:** 6 октября 2026, Asia/Yekaterinburg. **Baseline reader:** `32c97b8`; **установленные API/UI:** `eb7a7c26` / `eb7a7c26` (07:35 UTC).
+**Дата:** 6 октября 2026, Asia/Yekaterinburg. **Baseline reader:** `32c97b8`; **установленные API/UI:** `eb7a7c26` / `1c26ffc7` (UI 11:50 UTC).
 **Приёмка:** 9 принято / 41 с открытыми критериями из исходных 50 работ.
 Это пересортировка эксплуатационного порядка, а не изменение immutable baseline,
 первоначальных P1/P2 или критериев приёмки. Пункты имеют разный размер: 41 не означает
@@ -80,9 +80,15 @@ Offline inventory подтвердил 32 API/UI types и 33 Android handlers (`
 ## Почему не продолжать только добавлять метрики
 
 Следующий этап EP-018: [запись key/text и подтверждения APK](STUDIO-COMMAND-RECORDING.md).
-Исходники теперь связывают AndroidNavigationBar с лабораторией: исходная отправка,
+Установленный UI теперь связывает AndroidNavigationBar с лабораторией: исходная отправка,
 отдельный результат APK, блокировка pending/unknown при переносе, review/delete
-и auth-session isolation. Live installation/native receipts проверяются отдельно.
+и auth-session isolation. **1546 tests / 128 suites**, types/build и четыре source CI
+прошли; Preview deploy skipped. UI-only установка сохранила API/APK/туннели и 45
+соседних контейнеров. Через native browser записаны кнопки и текст, с явными
+Settings prerequisites сохранена одна v1 и выполнено одно remote PH025 задание:
+**10/10** успешных отчётов. Темы и 1280/390 px проверены; это не latency/FPS/soak.
+[Pinned evidence](STUDIO-COMMAND-RECORDING-EVIDENCE.json) сохраняет точные revisions,
+version/hash/task, native JPEG и отдельные source/runtime результаты.
 EP-018 не закрыт: automatic selector candidates и prerequisites остаются впереди.
 Дополнительно найден P1 в APK: `input_clear`/`clear_first` путают CUT 277 с CTRL_A;
 нужен корректный input adapter с проверкой Android. Новый recorder не вызывает

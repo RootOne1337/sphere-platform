@@ -22,7 +22,20 @@
 Исходники `c3937a1`, установленный на этапе аудита UI/API `c1a6e79a`; исходный аудит — только анализ.
 Каталог API и элементов управления не заменяет живую проверку Android и 500–1000 устройств.
 
-**6 октября, 12:35 UTC+5 — metadata-only каталог установлен:** API и UI
+**6 октября, 16:50 UTC+5 — запись текста и Android-кнопок установлена:** UI
+**`1c26ffc7`**, API **`eb7a7c26`** на [3015/scripts/builder](http://127.0.0.1:3015/scripts/builder).
+Recorder сохраняет отправку и отдельное подтверждение APK, защищает pending/unknown
+действия и переносит `key_event`/`type_text`. 1546 tests / 128 suites, types/build и
+четыре source CI прошли; Preview deploy skipped. Один записанный remote PH025
+сценарий с явными Settings prerequisites сохранён как v1 и выполнил **10/10** шагов.
+Темы, 1280/390 px и реальные подтверждения проверены; 45 соседних контейнеров,
+API/APK/туннели сохранены. Это не FPS/latency/fleet-soak или закрытие EP-018 целиком.
+**9 / 41** сохраняется; отдельно найден P1 APK с неверной очисткой текста.
+[Результат и ограничения](audits/2026-10-06/STUDIO-COMMAND-RECORDING.md) ·
+[Evidence](audits/2026-10-06/STUDIO-COMMAND-RECORDING-EVIDENCE.json) ·
+[Инструкция](operations/SCRIPT-STUDIO.md).
+
+**Историческая установка 6 октября, 12:35 UTC+5 — metadata-only каталог:** API и UI
 **`eb7a7c26`** на [3015/scripts](http://127.0.0.1:3015/scripts). Список получает
 только метаданные, исходник — после явного открытия закреплённой версии.
 Additive migration и reconcile подготовили 25 версий / 22 сценария; исходники,

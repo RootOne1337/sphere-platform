@@ -1,0 +1,24 @@
+{
+  "observedAt": "2026-10-06T12:05:49.867479+00:00",
+  "result": "passed",
+  "tests": {
+    "total": 1546,
+    "passed": 1546,
+    "failed": 0,
+    "pending": 0
+  },
+  "suites": {
+    "total": 128,
+    "passed": 128,
+    "failed": 0
+  },
+  "rawTestLogPublished": false,
+  "typeScriptPassed": true,
+  "finalBuilderCopyChecks": {
+    "tests": 67,
+    "suites": 2,
+    "passed": true
+  },
+  "existingReactActWarningsNotNativeConsole": true,
+  "sourceRevision": "1c26ffc7def8c1a16ac90d2f0607f857b21d28cb"
+}

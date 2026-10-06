@@ -13,7 +13,32 @@ Windows System/Ntfs55 подтвердил повреждение структу
 перезагрузка и удаление повреждённой папки не выполнялись. Используются проверенные
 Git-архивы и ресурсные ворота. [Receipt и границы](../audits/2026-10-06/HOST-FILESYSTEM-INCIDENT.md).
 
-**6 октября, 12:35 UTC+5 — metadata-only каталог установлен в API и UI:**
+**6 октября, 16:50 UTC+5 — запись текста и Android-кнопок установлена в Script Studio:**
+UI **`1c26ffc7`** на [3015/scripts/builder](http://127.0.0.1:3015/scripts/builder),
+image `sha256:9c408135c5bcee80814886361e4ec15934e94e407cb4509d9ada4b90209331ae`.
+API остаётся **`eb7a7c26`**. Изменён только UI; сохранены 45 соседних контейнеров,
+APK/OTA/туннели. Recorder различает WS submission и HTTP APK confirmation,
+фиксирует время отправки и блокирует перенос pending/unknown результатов.
+**1546 tests / 128 suites**, TypeScript, финальные builder checks 67/2 и immutable
+production build прошли. Четыре source CI `1c26ffc7` success, Preview deploy skipped.
+Это не CI последующего документационного head или hosted deployment.
+Через native browser на remote PH025 / APK 1.2.45-dev записаны Home, клик и текст;
+явно добавлена подготовка Settings, сохранена одна v1, выполнено одно задание:
+**completed, 10/10 успешных APK reports**, version/hash совпали. Операторский ACK
+2,2–3,7 s не является замером input-to-frame, FPS или p95. Конечные срезы — 14 online /
+5 offline из 19, presence доступен; SLA/zero downtime не заявляются.
+Обе темы и 1280/390 px проверены, 5 native JPEG, captured console warnings/errors 0;
+viewport восстановлен. В header остаётся MISMATCH из-за разных Git UI/API revisions;
+это не самостоятельная проверка совместимости. Не закрыты selector/prerequisites,
+Unicode/IME, frame-correlated replay, load/soak и storage writer. Найден отдельный
+P1 APK: `input_clear`/`clear_first` путают CUT 277 с SELECT_ALL; recorder вводит
+`clear_first:false`, но старый APK handler ещё требует исправления.
+Общий счёт **9 / 41** сохраняется.
+[Доставка и native проверка](../audits/2026-10-06/STUDIO-COMMAND-RECORDING.md) ·
+[Pinned evidence](../audits/2026-10-06/STUDIO-COMMAND-RECORDING-EVIDENCE.json) ·
+[Инструкция](SCRIPT-STUDIO.md) · [Приоритеты](../audits/2026-10-06/ENTERPRISE-PRIORITIES.md).
+
+**Историческая установка 6 октября, 12:35 UTC+5 — metadata-only каталог в API и UI:**
 Обе рабочие сборки на [3015/scripts](http://127.0.0.1:3015/scripts) —
 **`eb7a7c26`**. API image
 `sha256:559b6bf58e39ed080244d2708a2189856b086dc3c89bf281f62cf42d5f2b28f3`,
