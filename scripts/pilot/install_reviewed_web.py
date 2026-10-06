@@ -8,6 +8,7 @@ import json
 import re
 import subprocess
 import sys
+import tarfile
 import urllib.request
 from datetime import datetime, timezone
 from pathlib import Path
@@ -25,7 +26,7 @@ UI = f"{PROJECT}-review-ui-1"
 
 
 def command(args: list[str], *, timeout: int = 30) -> str:
-    result = subprocess.run(args, capture_output=True, text=True, timeout=timeout, check=False)
+    result = subprocess.run(args, capture_output=True, text=True, encoding="utf-8", timeout=timeout, check=False)
     # Never disclose config/environment/native stderr in operational output.
     require(result.returncode == 0 and len(result.stdout.encode()) <= 2 * 1024 * 1024,
             f"{args[0]} command failed or output exceeded budget")
@@ -96,6 +97,37 @@ def catalog_hash() -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
+def loaded_image_id(artifact: Path, image: dict[str, Any], config_id: str) -> str:
+    """Bind Docker's config or containerd manifest ID to the admitted config."""
+    actual = image.get("Id")
+    if actual == config_id:
+        return config_id
+    require(isinstance(actual, str) and bool(re.fullmatch(r"sha256:[a-f0-9]{64}", actual)),
+            "Invalid loaded image identity")
+    descriptor = image.get("Descriptor", {})
+    media_type = "application/vnd.oci.image.manifest.v1+json"
+    require(isinstance(descriptor, dict) and descriptor.get("digest") == actual and descriptor.get("mediaType") == media_type,
+            "Unexpected loaded image descriptor")
+    expected_member = "blobs/sha256/" + actual.removeprefix("sha256:")
+    with tarfile.open(artifact / "image.tar.gz", mode="r|gz") as bundle:
+        for member in bundle:
+            if member.name != expected_member:
+                continue
+            require(member.isfile() and 0 < member.size <= 256 * 1024, "Invalid image manifest member")
+            stream = bundle.extractfile(member)
+            require(stream is not None, "Unreadable image manifest")
+            payload = stream.read(256 * 1024 + 1)
+            require(len(payload) == member.size and "sha256:" + hashlib.sha256(payload).hexdigest() == actual,
+                    "Loaded manifest digest mismatch")
+            manifest = json.loads(payload)
+            require(isinstance(manifest, dict) and manifest.get("schemaVersion") == 2
+                    and manifest.get("mediaType") == media_type and isinstance(manifest.get("config"), dict)
+                    and manifest["config"].get("digest") == config_id,
+                    "Loaded manifest does not bind the admitted config")
+            return actual
+    raise ValueError("Loaded image manifest absent from admitted archive")
+
+
 def write(path: Path, data: dict[str, Any]) -> None:
     text = json.dumps(data, ensure_ascii=False, indent=2) + "\n"
     require(len(text.encode()) <= 256 * 1024, "Operational receipt budget exceeded")
@@ -157,7 +189,7 @@ def execute(artifact: Path, source: str, expected_image_id: str, apply: bool) ->
     preserved(before, snapshot())
     command(["docker", "image", "load", "--input", str(artifact / "image.tar.gz")], timeout=180)
     image = json.loads(command(["docker", "image", "inspect", admitted["imageTag"]]))[0]
-    require(image["Id"] == admitted["imageId"], "Loaded image ID mismatch")
+    runtime_id = loaded_image_id(artifact, image, admitted["imageId"])
     require(not evaluate(collect(ROOT)), "Host changed before UI replacement")
     preserved(before, snapshot())
     require(inspect(UI)["Id"] == before[UI]["id"], "UI changed before replacement")
@@ -168,12 +200,12 @@ def execute(artifact: Path, source: str, expected_image_id: str, apply: bool) ->
         after = snapshot()
         preserved(before, after)
         installed = inspect(UI)
-        require(installed["Image"] == admitted["imageId"]
+        require(installed["Image"] == runtime_id
                 and installed["State"]["Health"]["Status"] == "healthy", "UI identity/readiness mismatch")
         require(catalog_hash() == ota_hash, "OTA catalog changed")
         with urllib.request.urlopen("http://127.0.0.1:3015/login", timeout=10) as response:
             require(response.status == 200, "Gateway UI readiness failed")
-        result = plan | {"runtimeInstalled": True, "installedUi": after[UI],
+        result = plan | {"runtimeInstalled": True, "loadedImageId": runtime_id, "installedUi": after[UI],
                          "otherContainersPreserved": len(before) - 1, "browserVerified": False}
         write(output / "installed.json", result)
         return result
@@ -181,7 +213,7 @@ def execute(artifact: Path, source: str, expected_image_id: str, apply: bool) ->
         # Roll back only an image/container still attributable to this attempt.
         matches = command(["docker", "ps", "--all", "--filter", f"name=^/{UI}$", "--format", "{{.ID}}"])
         live = inspect(UI) if matches.strip() else None
-        owned = live is None or (live["Image"] in (admitted["imageId"], before[UI]["imageId"])
+        owned = live is None or (live["Image"] in (runtime_id, before[UI]["imageId"])
                                  and live["Config"]["Labels"].get("com.docker.compose.project") == PROJECT)
         if owned:
             command(cmd + up, timeout=100)

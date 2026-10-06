@@ -1,7 +1,10 @@
 """Installer planning boundaries; no real Docker, GitHub or device commands."""
 import copy
+import hashlib
+import io
 import json
 import sys
+import tarfile
 import tempfile
 import unittest
 from pathlib import Path
@@ -23,6 +26,63 @@ def config():
 
 
 class InstallTests(unittest.TestCase):
+    def test_classic_loaded_id_matches_admitted_config(self):
+        self.assertEqual(installer.loaded_image_id(Path("unused"), {"Id": IMAGE_ID}, IMAGE_ID), IMAGE_ID)
+
+    def test_containerd_loaded_manifest_must_bind_admitted_config(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            directory = Path(temporary)
+            manifest = {"schemaVersion": 2, "mediaType": "application/vnd.oci.image.manifest.v1+json",
+                        "config": {"digest": IMAGE_ID}}
+            payload = json.dumps(manifest).encode()
+            manifest_id = "sha256:" + hashlib.sha256(payload).hexdigest()
+            with tarfile.open(directory / "image.tar.gz", "w:gz") as bundle:
+                entry = tarfile.TarInfo("blobs/sha256/" + manifest_id.removeprefix("sha256:"))
+                entry.size = len(payload)
+                bundle.addfile(entry, io.BytesIO(payload))
+            image = {"Id": manifest_id, "Descriptor": {"digest": manifest_id, "mediaType": manifest["mediaType"]}}
+            self.assertEqual(installer.loaded_image_id(directory, image, IMAGE_ID), manifest_id)
+            with self.assertRaises(ValueError):
+                installer.loaded_image_id(directory, image, "sha256:" + "c" * 64)
+            with self.assertRaises(ValueError):
+                installer.loaded_image_id(directory, image | {"Descriptor": {"digest": IMAGE_ID}}, IMAGE_ID)
+            for descriptor in (None, [], "invalid"):
+                with self.subTest(descriptor=descriptor), self.assertRaises(ValueError):
+                    installer.loaded_image_id(directory, image | {"Descriptor": descriptor}, IMAGE_ID)
+            other_id = "sha256:" + "d" * 64
+            with self.assertRaises(ValueError):
+                installer.loaded_image_id(directory, {"Id": other_id, "Descriptor": {"digest": other_id,
+                    "mediaType": manifest["mediaType"]}}, IMAGE_ID)
+
+    def test_containerd_manifest_content_must_match_loaded_digest(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            directory = Path(temporary)
+            payload = json.dumps({"schemaVersion": 2, "config": {"digest": IMAGE_ID}}).encode()
+            with tarfile.open(directory / "image.tar.gz", "w:gz") as bundle:
+                entry = tarfile.TarInfo("blobs/sha256/" + "e" * 64)
+                entry.size = len(payload)
+                bundle.addfile(entry, io.BytesIO(payload))
+            actual = "sha256:" + "e" * 64
+            with self.assertRaises(ValueError):
+                installer.loaded_image_id(directory, {"Id": actual, "Descriptor": {"digest": actual,
+                    "mediaType": "application/vnd.oci.image.manifest.v1+json"}}, IMAGE_ID)
+
+    def test_containerd_manifest_rejects_invalid_json_shapes(self):
+        media_type = "application/vnd.oci.image.manifest.v1+json"
+        for manifest in ([], None, {"schemaVersion": 2, "mediaType": media_type, "config": []},
+                         {"schemaVersion": 2, "mediaType": media_type, "config": None}):
+            with self.subTest(manifest=manifest), tempfile.TemporaryDirectory() as temporary:
+                directory = Path(temporary)
+                payload = json.dumps(manifest).encode()
+                actual = "sha256:" + hashlib.sha256(payload).hexdigest()
+                with tarfile.open(directory / "image.tar.gz", "w:gz") as bundle:
+                    entry = tarfile.TarInfo("blobs/sha256/" + actual.removeprefix("sha256:"))
+                    entry.size = len(payload)
+                    bundle.addfile(entry, io.BytesIO(payload))
+                with self.assertRaises(ValueError):
+                    installer.loaded_image_id(directory, {"Id": actual, "Descriptor": {
+                        "digest": actual, "mediaType": media_type}}, IMAGE_ID)
+
     def test_accepts_only_the_ui_image_delta(self):
         old = config()
         old["services"]["review-ui"]["build"] = {"context": "old-checkout", "args": {"BUILD_SHA": "old"}}
