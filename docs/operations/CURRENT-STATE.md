@@ -4,28 +4,33 @@
 **Область:** исходники и документация ветки PR #19, записанные runtime-наблюдения, Android APK и готовность следующего прогона.<br />
 **Канонический документ текущего состояния:** этот файл. Исторические отчёты ниже сохраняют исходные даты и факты.
 
-**7 октября — установленный UI439f910 на3015:** title остаётся читаемым на390,
-637 и1280px; новый шаг больше не скрывает End. Проверены insertion/JSON route,
-вертикальная и горизонтальная ELK-раскладка, разрыв связи и Undo.
-[Exact installed/browser evidence](../audits/2026-10-07/STUDIO-INSTALLED-ACCEPTANCE.json) ·
+**7 октября — установленный UI b50d6ae на 3015:** обзор графа теперь
+следует за размером холста, а ручной pan/zoom сохраняется. Без дополнительного
+«Весь граф» проверены переходы 1920→1280 и 390 px, оба направления ELK,
+JSON roundtrip и реальные structural validate ответы старого API.
+Заголовок читаем; новые шаги не скрывают End.
+[Exact installed/browser/CI evidence](../audits/2026-10-07/STUDIO-RESIZE-INSTALLED-ACCEPTANCE.json) ·
+[Resize и границы](../audits/2026-10-07/STUDIO-CANVAS-RESIZE.md) ·
 [Header](../audits/2026-10-07/STUDIO-RESPONSIVE-HEADER.md) ·
 [Node placement](../audits/2026-10-07/STUDIO-NODE-OCCLUSION.md).
 
-Frontend run37529847405: **1690 tests /133 suites**, fresh types/build,
-26pages/73assets image admission;22 archive/installer methods passed.
-Android run37529847402 success. Backend run37529847401 attempt1:3036passed/
-37skipped, один PowerShell preservation fixture timeout20s, coverage80.38%.
-Attempt2 запрошен; полный CI этого SHA пока не объявляется успешным.
-Новый resize candidateeb598a5 прошёл1692/133 full local frontend tests и source
-types, но ещё не установлен. [Обзор графа после resize](../audits/2026-10-07/STUDIO-CANVAS-RESIZE.md).
+Все три CI exact source b50d6ae успешны: frontend **1692 tests / 133 suites**,
+fresh types/build, 26 pages / 73 assets image admission; 22 archive/installer
+methods и 18 HTTP cases. Backend **3037 passed / 37 skipped**, 55 subtests,
+coverage 80.36%; Android workflow success. Runs: frontend 37535540138,
+backend 37535540188, Android 37535540323, attempt 1.
+Это результаты установленного SHA; следующий documentation-only HEAD
+проверяется отдельно. Старый backend 439f910 attempt 1 имел один 20 s
+PowerShell fixture timeout; attempt 2 отменён новым push. Причина старого
+timeout не установлена, ограничения теста не ослаблялись.
 
-Windows completed repair, Healthy/OK и Git fsck подтверждены. API**eb7a7c26**,
-остальные45 контейнеров и OTA сохранены; APK не обновлялся.
+Windows completed repair, Healthy/OK и Git fsck подтверждены. API **eb7a7c26**,
+остальные 45 контейнеров и OTA сохранены; APK не обновлялся.
 [Postboot handoff](../audits/2026-10-07/POSTBOOT-RECOVERY.md).
 API validate подтверждает структуру/Lua safety, но этот installed API не
 подтверждает новый action-parameter contract или выполнение Android.
 Причины расхода диска/RAM и повреждений файлов не установлены. Ledger
-**9accepted/41open** сохраняется; continuous input, rich recorder и fleet
+**9 accepted / 41 open** сохраняется; continuous input, rich recorder и fleet
 acceptance не закрываются приёмкой графа.
 
 Ниже — исторические срезы до postboot handoff; версии/runtime gates относятся

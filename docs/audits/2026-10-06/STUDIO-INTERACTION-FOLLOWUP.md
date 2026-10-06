@@ -5,12 +5,15 @@
 **1c26ffc7**, API **eb7a7c26**. Live проверки ниже относятся к этим версиям.
 Новые связи и selector queue ещё не установлены; host build/deploy gate закрыт.
 
-**Датированное продолжение 7 октября:** repair завершён, UI439f910 установлен
-на3015; связи, свободные шаги и ordered recorder проверены отдельными canaries.
-[Exact browser/runtime receipt](../2026-10-07/STUDIO-INSTALLED-ACCEPTANCE.json).
-Утверждения installed1c26ffc7/закрытый host gate выше и в таблице ниже —
-исторический срез6 октября. Continuous/rich recorder остаются открытыми;
-[canvas resize candidate](../2026-10-07/STUDIO-CANVAS-RESIZE.md) проходит отдельную доставку.
+**Датированное продолжение 7 октября:** repair завершён; UI b50d6ae установлен
+на 3015. Свободная сборка/связи приняты на baseline 439f910, ordered recorder —
+на 99af20d; b50d6ae добавляет принятый resize overview и сохранение ручного zoom.
+[Latest runtime/browser/CI receipt](../2026-10-07/STUDIO-RESIZE-INSTALLED-ACCEPTANCE.json) ·
+[Resize](../2026-10-07/STUDIO-CANVAS-RESIZE.md).
+CI exact source: frontend 1692/133, backend 3037 passed / 37 skipped и Android success.
+Утверждения installed 1c26ffc7/закрытый host gate выше и в таблице ниже —
+исторический срез 6 октября. Continuous/rich recorder остаются открытыми;
+старые JSON receipts не переписываются как новые результаты.
 
 Этот документ дополняет [основной аудит](../2026-10-05/ENTERPRISE-PRODUCT-AUDIT.md),
 [исходный backlog](../2026-10-05/ENTERPRISE-PRODUCT-BACKLOG.json),

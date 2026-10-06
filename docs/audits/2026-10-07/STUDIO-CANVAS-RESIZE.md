@@ -55,6 +55,32 @@ passed, source-only TypeScript passed. Новые integration cases:
 JSON/unmount и stale callback. Node coordinates и routes неизменны,
 API publication не выполняется. Standard fresh types/build/image остаются CI gate.
 
-Это source-кандидат после фактической приёмки UI439f910. Hosted сборка и повторная
-browser проверка изменения окна должны быть записаны отдельно до заявления,
-что resize исправлен на3015. EP-014 целиком и ledger9/41 этим не закрываются.
+Предварительный source-кандидат eb598a5 включён в установленный b50d6ae;
+последующая CI/runtime/browser приёмка описана ниже. EP-014 целиком и
+ledger 9/41 этим не закрываются.
+
+## Установленная приёмка b50d6ae
+
+7 октября 02:50:47 UTC+5 на 3015 установлен exact CI image b50d6ae.
+Все три workflows прошли; frontend 1692/133, backend 3037/37 и Android success.
+[Полный receipt с digest, run/attempt и DOM measurements](STUDIO-RESIZE-INSTALLED-ACCEPTANCE.json).
+Установщик проверял только image/runtime; его browserVerified=false сохранён.
+Последующая браузерная приёмка записана отдельно, без изменения старого флага.
+
+| Действие без дополнительного Fit View | Результат |
+| --- | --- |
+| Overview 1920×1080 → 1280×800 | Все три узла внутри pane; zoom 0.684575 |
+| Native Zoom In, затем 1280 → 1920 | Transform сохранён точно: translate(125.991px,16.2421px), scale(0.82149) |
+| «Весь граф», ELK RIGHT, resize 1920 → 1280 | Все узлы внутри pane; zoom 0.440928 |
+| ELK DOWN, resize до 390×844 | Все узлы внутри pane; title 300 px; horizontal overflow нет |
+| JSON → граф → серверная проверка | 3 шага / 2 связи, оба on_success сохранены; hash 18d4f96c4c0d… |
+
+На телефоне pane идёт ниже toolbar/библиотеки; для снимка библиотека скрыта
+явной штатной кнопкой и страница прокручена. Это не заявление, что весь Studio
+или 500 узлов помещаются в один мобильный viewport. Temporary override сброшен.
+Наблюдаемых console warning/error нет. Сценарий не публиковался и не запускался.
+API подтвердил структуру/Lua safety, а не новый action contract/Android semantics.
+
+[Desktop 1920](assets/studio-validation/resize-desktop-1920.jpg) ·
+[Resize 1280](assets/studio-validation/resize-overview-1280.jpg) ·
+[Mobile 390](assets/studio-validation/resize-mobile-390.jpg).

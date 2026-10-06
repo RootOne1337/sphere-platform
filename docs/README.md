@@ -15,16 +15,16 @@
 > автоматическую проверку runtime; старые аудиты сохраняют собственные даты и
 > версии и не должны читаться как текущий deploy. [Правила актуальности](DOCUMENTATION.md).
 
-**7 октября — веб439f910 установлен на3015:** title больше не сжимается,
-новые шаги не скрывают существующие; граф и JSON сохраняют переходы.
-[Exact image/runtime/browser receipt](audits/2026-10-07/STUDIO-INSTALLED-ACCEPTANCE.json) ·
-[Header matrix390/637/1280/1920](audits/2026-10-07/STUDIO-RESPONSIVE-HEADER.md) ·
-[Node placement и ELK](audits/2026-10-07/STUDIO-NODE-OCCLUSION.md) ·
-[Следующее исправление resize](audits/2026-10-07/STUDIO-CANVAS-RESIZE.md).
-Frontend1690/133, types/build/image admission и Android CI прошли; backend
-attempt1:3036passed/37skipped и один PowerShell20s timeout, rerun ожидается.
-Resize candidateeb598a5:1692 local frontend tests и types passed, ещё не installed.
-APIeb7a7c26, APK,45 остальных контейнеров и OTA сохранены.
+**7 октября — веб b50d6ae установлен на 3015:** title читаем, новые шаги
+не скрывают End; overview подстраивается под размер холста и сохраняет ручной
+масштаб. Проверены desktop/mobile, ELK и JSON routes на реальном UI/API.
+[Exact image/runtime/browser/CI receipt](audits/2026-10-07/STUDIO-RESIZE-INSTALLED-ACCEPTANCE.json) ·
+[Header](audits/2026-10-07/STUDIO-RESPONSIVE-HEADER.md) ·
+[Node placement](audits/2026-10-07/STUDIO-NODE-OCCLUSION.md) ·
+[Resize](audits/2026-10-07/STUDIO-CANVAS-RESIZE.md).
+Все три exact-source CI успешны: frontend **1692/133**, types/build/image;
+backend **3037 passed / 37 skipped**, 55 subtests, coverage 80.36%; Android success.
+API eb7a7c26, APK, 45 остальных контейнеров и OTA сохранены.
 [Доставка](audits/2026-10-07/REVIEWED-WEB-DELIVERY.md) ·
 [Completed repair и открытая причина storage/corruption](audits/2026-10-07/POSTBOOT-RECOVERY.md).
 Полная Android/continuous/rich-recorder приёмка открыта. Исторические source

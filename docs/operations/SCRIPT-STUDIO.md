@@ -2,21 +2,27 @@
 
 Актуализировано: **7 октября 2026**. Каталог `/scripts`, редактор
 `/scripts/builder`, формат **DAG1.0**, React Flow, локальная ELK0.12.0.
-На3015 установлен frontend **439f910**, API — **eb7a7c26**.
+На 3015 установлен frontend **b50d6ae**, API — **eb7a7c26**.
 
 **Фактическая приёмка:** отдельные узлы, palette drag/drop, явная вставка,
-переназначение/разрыв связи и Undo; header390/637/1280, сохранение End после
-вставки, JSON roundtrip и ELK в обоих направлениях.
-[Installed/browser receipt](../audits/2026-10-07/STUDIO-INSTALLED-ACCEPTANCE.json).
-НаPH010 baseline99af20d отдельно проверены Home→APK ACK482ms,45XPath nodes и
-упорядоченный перенос Home/пауза/planned XPath. Это не correlated frame playback.
+переназначение/разрыв связи и Undo приняты на предыдущем 439f910; новая версия
+сохраняет этот код и добавляет resize overview. На b50d6ae повторно проверены
+3 шага / 2 связи, ELK в обоих направлениях, JSON roundtrip, resize до 1280/390,
+сохранение ручного zoom и настоящий structural validate.
+[Latest installed/browser receipt](../audits/2026-10-07/STUDIO-RESIZE-INSTALLED-ACCEPTANCE.json) ·
+[Историческая приёмка 439f910](../audits/2026-10-07/STUDIO-INSTALLED-ACCEPTANCE.json).
+На PH010 baseline 99af20d отдельно проверены Home→APK ACK 482 ms, 45 XPath nodes
+и упорядоченный перенос Home/пауза/planned XPath. Это не correlated frame playback.
 
-Frontend CI439f910:1690/133 +types/build/image admission; Android success.
-Backend attempt1 завершился одним20s PowerShell fixture timeout,3036passed/
-37skipped; rerun ожидается. Полный CI этого SHA пока не заявляется принятым.
-Resize overview sourceeb598a5 с1692 local tests подготовлен отдельно:
-[следование pane и сохранение ручного ракурса](../audits/2026-10-07/STUDIO-CANVAS-RESIZE.md).
-Оператору до этой установки доступна «Весь граф» после изменения окна.
+CI установленного b50d6ae: frontend **1692/133**, types/build/image admission,
+backend **3037 passed / 37 skipped**, 55 subtests, coverage 80.36%, Android success.
+Старый 439f910 backend attempt 1: один 20 s PowerShell fixture timeout;
+attempt 2 отменён новым push. Новая регрессия прошла без ослабления timeout;
+причина старого сбоя не установлена.
+
+Обзор следует за pane, пока оператор не меняет ракурс вручную. Pan/zoom,
+drag узла и фокус на добавленном шаге сохраняют его; «Весь граф», Fit View,
+раскладка и направление возвращают обзор. [Поведение и проверки](../audits/2026-10-07/STUDIO-CANVAS-RESIZE.md).
 
 [Доставка exact tested image без rebuild](../audits/2026-10-07/REVIEWED-WEB-DELIVERY.md) ·
 [Postboot recovery](../audits/2026-10-07/POSTBOOT-RECOVERY.md) ·

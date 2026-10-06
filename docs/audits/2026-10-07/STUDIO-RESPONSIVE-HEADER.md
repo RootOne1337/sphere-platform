@@ -69,3 +69,17 @@ methods и18 HTTP probe tests passed. APIeb7a7c26 сохранён. Данные
 вся responsive страница этим не объявляется завершённой.
 [Отдельное исправление resize](STUDIO-CANVAS-RESIZE.md) sourceeb598a5:
 1692/133 full local tests и TypeScript passed; установка ещё не подтверждена.
+
+## Установленная приёмка b50d6ae
+
+Следующий UI-only image установлен 7 октября 02:50:47 UTC+5. Title/node fixes
+сохранены; resize overview принят на 1920/1280/390, ручной zoom сохраняется,
+ELK directions и JSON routes проверены. API eb7a7c26, 45 других контейнеров,
+APK и OTA не изменены. Все три CI b50d6ae успешны: frontend 1692/133,
+backend 3037 passed / 37 skipped, 55 subtests, coverage 80.36%; Android success.
+Старый 439f910 backend rerun attempt 2 отменён следующим push, не объявляется
+успешным. Причина его attempt 1 PowerShell timeout не установлена.
+[Latest exact runtime/browser/CI receipt](STUDIO-RESIZE-INSTALLED-ACCEPTANCE.json) ·
+[Resize acceptance and limits](STUDIO-CANVAS-RESIZE.md).
+Эта приёмка не закрывает continuous input, rich recorder, fleet soak или
+причину роста диска/RAM и повторных повреждений файлов.

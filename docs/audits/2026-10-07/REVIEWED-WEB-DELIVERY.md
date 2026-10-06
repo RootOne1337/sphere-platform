@@ -1,15 +1,17 @@
 # Script Studio: доставка проверенного веба без локального rebuild
 
 **Дата:** 7 октября 2026, Asia/Yekaterinburg. **PR:** [#19](https://github.com/RootOne1337/sphere-platform/pull/19).
-**Статус:** UI439f910 установлен после completed host repair.
-**Адрес:** http://127.0.0.1:3015. UI439f910b81aa8d909fe0baf8e84352a4b9f68322,
-APIeb7a7c26c2e644f24eb3f785b3da1c29a65929be. Остальные45 containers и OTA сохранены.
-[Exact installed/browser receipt](STUDIO-INSTALLED-ACCEPTANCE.json): title и
-node-occlusion fixes приняты; resize overview sourceeb598a5 ещё не установлен.
-Frontend run37529847405 прошёл1690/133, fresh types/build,26pages/73assets,
-22archive/installer methods и18HTTP tests. Android success. Backend attempt1
-того же source:3036passed/37skipped, один20s PowerShell fixture timeout;
-rerun запрошен. Это UI delivery, не all-stack production deploy.
+**Статус:** UI b50d6ae установлен после completed host repair.
+**Адрес:** http://127.0.0.1:3015. UI b50d6ae2af537adb12a52503f0809ef565c0ba21,
+API eb7a7c26c2e644f24eb3f785b3da1c29a65929be. Остальные 45 containers и OTA сохранены.
+[Latest installed/browser receipt](STUDIO-RESIZE-INSTALLED-ACCEPTANCE.json): title,
+node placement и resize overview приняты. Все три exact-source workflows success:
+frontend 37535540138 — 1692/133, fresh types/build, 26 pages / 73 assets,
+22 archive/installer methods и 18 HTTP tests; backend 37535540188 — 3037 passed /
+37 skipped, 55 subtests, coverage 80.36%; Android 37535540323 success.
+Старый backend 439f910 attempt 1 имел один 20 s PowerShell fixture timeout;
+attempt 2 отменён новым push. Причина старого timeout не установлена.
+Это UI delivery, не all-stack production deploy.
 
 ## Проблема и изменение
 
