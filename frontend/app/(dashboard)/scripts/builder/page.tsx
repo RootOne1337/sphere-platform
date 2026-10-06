@@ -9,7 +9,7 @@ import { ArrowLeft, Save, Check, Code2, Workflow, Undo2, Redo2, Download, Upload
 import { nodeTypes } from '@/lib/dag/nodeTypes';
 import { exportDag, importDag, validateDag, ACTION_TYPES, type DagMetadata } from '@/lib/dag/export';
 import { ACTION_LABELS, addDetachedAction, arrangeNodes, boundedSource, byteLength, draftKey, formatDag, initialDag, insertAction, parseSource, parseDraftSource, pushHistory, readDraft, SOURCE_LIMIT, writeDraft, type StudioDocument } from '@/lib/dag/studio';
-import { ACTION_DRAG_TYPE, draggedAction, freeCanvasPosition } from '@/lib/dag/canvasPlacement';
+import { ACTION_DRAG_TYPE, draggedAction, freeCanvasPosition, mergeCanvasPositions } from '@/lib/dag/canvasPlacement';
 import { Button } from '@/src/shared/ui/button';
 import { Input } from '@/components/ui/input';
 import { api } from '@/lib/api';
@@ -125,10 +125,7 @@ function BuilderInner({ editId, storageKey }: { editId: string | null; storageKe
   function syncGraph(next: StudioDocument, placement?: { id: string; x: number; y: number }) {
     const imported = importDag(parseDraftSource(next.source), { editing: true });
     const arranged = arrangeNodes(imported.nodes, imported.edges, imported.metadata.entry_node, direction);
-    setNodes(previous => {
-      const positions = new Map(previous.map(node => [node.id, node.position]));
-      return arranged.map(node => ({ ...node, position: placement?.id === node.id ? { x: placement.x, y: placement.y } : positions.get(node.id) ?? node.position }));
-    });
+    setNodes(previous => mergeCanvasPositions(arranged, previous, placement));
     setEdges(imported.edges); setMetadata(imported.metadata); setSelectedEdgeId(null); setCanvasError('');
   }
   function remember() { const before = documentRef.current; setHistory(old => pushHistory(old, before)); setFuture([]); }

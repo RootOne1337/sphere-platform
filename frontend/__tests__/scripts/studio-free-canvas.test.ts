@@ -1,7 +1,7 @@
 import { TextEncoder } from 'node:util';
 import { addDetachedAction, formatDag, initialDag, insertAction, parseDraftSource, parseSource } from '@/lib/dag/studio';
 import { exportDag, importDag, validateDag } from '@/lib/dag/export';
-import { draggedAction, freeCanvasPosition } from '@/lib/dag/canvasPlacement';
+import { draggedAction, freeCanvasPosition, mergeCanvasPositions } from '@/lib/dag/canvasPlacement';
 import fixture from '../fixtures/builder-canonical-dag.json';
 Object.assign(globalThis, { TextEncoder });
 
@@ -72,4 +72,38 @@ it('finds a nearby vacant click position using measured node bounds without movi
   expect(freeCanvasPosition(nodes, { x: 1000, y: 1000 })).toEqual({ x: 1000, y: 1000 });
   expect(JSON.stringify(nodes)).toBe(before);
   expect(() => freeCanvasPosition(nodes, { x: NaN, y: 2 })).toThrow('позиция');
+});
+
+it('reserves retained positions before placing an inserted step, even when the existing end comes later', () => {
+  const previous = [{ id: 'start', data: {}, position: { x: 0, y: 0 } },
+    { id: 'end', data: {}, position: { x: 0, y: 210 }, measured: { width: 320, height: 160 } }];
+  const before = JSON.stringify(previous);
+  const arranged = [previous[0], { id: 'inserted', data: {}, position: { x: 0, y: 210 } },
+    { ...previous[1], position: { x: 0, y: 420 } }];
+  const result = mergeCanvasPositions(arranged, previous);
+  expect(result.find(node => node.id === 'start')?.position).toEqual({ x: 0, y: 0 });
+  expect(result.find(node => node.id === 'end')?.position).toEqual({ x: 0, y: 210 });
+  const inserted = result.find(node => node.id === 'inserted')!.position;
+  expect(inserted.x >= 344 || inserted.x + 280 <= 0 || inserted.y >= 394 || inserted.y + 156 <= 210).toBe(true);
+  expect(JSON.stringify(previous)).toBe(before);
+});
+
+it('places several recorded steps without covering retained nodes or each other', () => {
+  const previous = [{ id: 'end', data: {}, position: { x: 0, y: 210 } }];
+  const result = mergeCanvasPositions([
+    { id: 'recorded-key', data: {}, position: { x: 0, y: 210 } },
+    { id: 'recorded-selector', data: {}, position: { x: 0, y: 210 } }, previous[0],
+  ], previous);
+  for (let a = 0; a < result.length; a++) for (let b = a + 1; b < result.length; b++) {
+    const p = result[a].position; const q = result[b].position;
+    expect(p.x + 256 <= q.x || q.x + 256 <= p.x || p.y + 132 <= q.y || q.y + 132 <= p.y).toBe(true);
+  }
+});
+
+it('keeps deliberate drop and parameter edits in their exact positions; removed nodes reserve no space', () => {
+  const existing = { id: 'end', data: {}, position: { x: 0, y: 210 } };
+  const incoming = { id: 'drop', data: {}, position: { x: 0, y: 0 } };
+  expect(mergeCanvasPositions([existing, incoming], [existing], { id: 'drop', x: 0, y: 210 })[1].position).toEqual(existing.position);
+  expect(mergeCanvasPositions([{ ...existing, data: { changed: true } }], [existing])[0].position).toEqual(existing.position);
+  expect(mergeCanvasPositions([incoming], [existing])[0].position).toEqual(incoming.position);
 });

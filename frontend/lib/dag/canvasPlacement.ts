@@ -2,6 +2,27 @@ import type { Node, XYPosition } from '@xyflow/react';
 import { ACTION_TYPES } from './export';
 
 export const ACTION_DRAG_TYPE = 'application/x-sphere-studio-action';
+
+/** Retain manual positions, but reserve them before placing newly imported nodes.
+ * Explicit drop coordinates remain intentional, including deliberate overlap. */
+export function mergeCanvasPositions(arranged: Node[], previous: Node[], placement?: { id: string; x: number; y: number }): Node[] {
+  const ids = new Set(arranged.map(node => node.id));
+  const positions = new Map(previous.map(node => [node.id, node.position]));
+  const occupied = previous.filter(node => ids.has(node.id) && node.id !== placement?.id);
+  if (placement) {
+    const node = arranged.find(node => node.id === placement.id);
+    if (node) occupied.push({ ...node, position: { x: placement.x, y: placement.y } });
+  }
+  return arranged.map(node => {
+    if (node.id === placement?.id) return { ...node, position: { x: placement.x, y: placement.y } };
+    const retained = positions.get(node.id);
+    if (retained) return { ...node, position: retained };
+    const placed = { ...node, position: freeCanvasPosition(occupied, node.position) };
+    occupied.push(placed);
+    return placed;
+  });
+}
+
 export function draggedAction(value: string): typeof ACTION_TYPES[number] | null {
   return ACTION_TYPES.includes(value as typeof ACTION_TYPES[number]) ? value as typeof ACTION_TYPES[number] : null;
 }

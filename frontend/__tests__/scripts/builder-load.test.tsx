@@ -107,6 +107,25 @@ it('creates a separate node by default, keeps old routes and lets the operator c
   expect(request.dag.nodes.find(node => node.id === 'start-1')!.on_success).toBe(added.id);
 });
 
+it('inserts into a chain without obscuring the existing completion node and preserves the executable route', () => {
+  mockEditId = null;
+  render(<ScriptBuilderPage />);
+  const before = mockGraphProps.nodes!.map(node => ({ id: node.id, position: { ...node.position } }));
+  fireEvent.change(screen.getByRole('combobox', { name: 'Способ добавления действия' }), { target: { value: 'insert' } });
+  fireEvent.click(screen.getByRole('button', { name: 'Добавить узел: Ожидание' }));
+  const inserted = mockGraphProps.nodes!.find(node => !before.some(old => old.id === node.id))!;
+  for (const old of before) {
+    expect(mockGraphProps.nodes!.find(node => node.id === old.id)!.position).toEqual(old.position);
+    const p = inserted.position; const q = old.position;
+    expect(p.x + 256 <= q.x || q.x + 256 <= p.x || p.y + 132 <= q.y || q.y + 132 <= p.y).toBe(true);
+  }
+  fireEvent.click(screen.getByRole('button', { name: 'JSON' }));
+  const dag = JSON.parse((screen.getByLabelText(/Исходник DAG 1.0/) as HTMLTextAreaElement).value);
+  expect(dag.nodes.find((node: { id: string }) => node.id === 'start-1').on_success).toBe(inserted.id);
+  expect(dag.nodes.find((node: { id: string }) => node.id === inserted.id).on_success).toBe('end-1');
+  expect(api.post).not.toHaveBeenCalled();
+});
+
 it('drops at the transformed pointer, preserves old positions and viewport, and ignores the insertion preference for dragging', () => {
   mockEditId = null;
   render(<ScriptBuilderPage />);
