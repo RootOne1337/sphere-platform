@@ -70,6 +70,43 @@ driver, RAM, внешнее изменение файла и compiler/toolchain 
 Пересоздание файла не закрывает host incident и не устанавливает writer,
 заполняющий C:. Offline filesystem repair или перезагрузка не выполнялись.
 
+## Повторное повреждение loose Git объектов — 6 октября, 14:26–14:28 UTC
+
+Перед публикацией нового APK/evidence исторический validator обнаружил нечитаемый
+Git object; `git fsck` подтвердил **пять** повреждённых loose objects. Первые байты
+каждого — `ff`, три небольших файла целиком заполнены `ff`. Это наблюдение raw
+файлов, не предположение по сообщению валидатора.
+
+| Object SHA-1 | Type | Bad compressed bytes | Отношение к проекту |
+| --- | --- | --- | --- |
+| `22d9c8f825cad200bf6e796b1f847f2343fceb4a` | tree | 792 | Git tree |
+| `4ccd02c08142fd1373056698a6c98d8279270f90` | blob | 7901 | `DeviceWorkbench.tsx`, Git object; текущий working file не заменялся |
+| `527809ac5e77e54df79aa751312d0e590e30a998` | tree | 1014 | Git tree |
+| `619c2d887f32b856fc319d3b1becba47dbf30d20` | blob | 101070 | Исторический native JPEG `catalog-delivery.jpg` |
+| `c8e679239c663bc36e885502ffe8d25238566e28` | blob | 110403 | Исторический native JPEG `editor-delivery.jpg` |
+
+Повреждённые bytes и exact bad SHA256 сохранены privately. Из GitHub получены
+соответствующие blobs/trees, восстановлен canonical Git object payload; **SHA-1
+сверен до и после записи**. Перед atomic replacement проверены принадлежность
+пяти resolved paths `.git/objects` и неизменность bad hash. Восстановлены только
+эти объекты; reset исходников, удаление старых contexts или системный ремонт не
+выполнялись. `git fsck --no-dangling` после восстановления дал exit 0, validator
+immutable command-recording evidence снова прошёл.
+
+[Receipt пяти объектов, before/after hashes и read-only System срез](evidence/host-filesystem/git-object-recurrence.json).
+Raw corrupt binary и API credentials в Git не публикуются.
+
+Отдельное новое **Ntfs55 / record 220639**, **6 октября 11:15:49.334 UTC**, file
+reference `0x6800000002a628`, указывает на индекс `$I30:$INDEX_ALLOCATION` **вне
+проекта**: `Program Files/WindowsApps/Deleted/OpenAI.Codex_26.930.7945.0/.../app/locales`.
+Read-only physical disk API сообщает `ADATA LEGEND 970 PRO / Healthy / OK`;
+этот общий статус не является проверкой NTFS, SSD electronics или RAM.
+Причинная связь нового System события с повреждёнными Git объектами **не доказана**.
+Возможные storage/driver/RAM/external-writer причины требуют независимого
+расследования. Исправление пяти копий данных не закрывает повторяющийся инцидент.
+Writer, заполняющий C:, по-прежнему UNKNOWN; bounded Android screenshot cache
+не объявляется причиной расхода Windows/Docker.
+
 ## Дальнейшая проверка
 
 Перед автономным ремонтом нужен проверенный backup важных пользовательских данных
