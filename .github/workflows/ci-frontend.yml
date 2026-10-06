@@ -39,7 +39,14 @@ jobs:
         run: npx --no-install jest --ci --runInBand
       - name: Loopback preview relay survives WebSocket resets
         run: node --test ../tests/containers/test_preview_relay.cjs
+      - name: Packaged HTTP probe rejects incomplete artifacts
+        run: node --test ../tests/containers/test_frontend_standalone_probe.mjs
       - run: npm run type-check
       - run: npm run build
       - name: Check standalone entry point
         run: test -f .next/standalone/server.js
+      - name: Exercise packaged pages and client assets
+        run: |
+          cp -r public .next/standalone/public
+          cp -r .next/static .next/standalone/.next/static
+          node ../tests/containers/frontend_standalone_probe.mjs .next/standalone

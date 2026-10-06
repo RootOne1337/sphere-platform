@@ -1,4 +1,29 @@
-# Проверки поставляемого backend-образа
+# Проверки поставляемых backend/frontend artifacts
+
+## Next standalone HTTP admission
+
+`frontend_standalone_probe.mjs` исполняется в frontend CI после production build
+и копирования public/static в packaged artifact. Проверяет root redirect, все
+concrete page routes из packaged manifest и advertised JS/CSS/font assets через
+настоящий loopback HTTP listener standalone/server.js. Dynamic pages, API, browser
+hydration и Android execution этим probe не приняты. Локальный standalone build
+подчиняется host repair/resource gate; probe не запускает build самостоятельно.
+
+Из frontend после допустимого build и подготовки artifact:
+
+```sh
+node ../tests/containers/frontend_standalone_probe.mjs .next/standalone
+```
+
+Bounded negative HTTP tests без Next/Docker build:
+
+```sh
+node --test tests/containers/test_frontend_standalone_probe.mjs
+```
+
+[Основание и ограничения](../../docs/audits/2026-10-06/FRONTEND-STANDALONE-ADMISSION.md).
+
+## Backend image bootstrap
 
 Проверки запускаются в обязательном job `Production image bootstrap`.
 Они считаются отдельно от pytest suite и не требуют установленной APK.
