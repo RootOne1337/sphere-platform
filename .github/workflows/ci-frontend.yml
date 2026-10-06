@@ -23,10 +23,12 @@ jobs:
         working-directory: frontend
     env:
       NEXT_TELEMETRY_DISABLED: "1"
+      NEXT_PUBLIC_BUILD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version: "24"
@@ -41,6 +43,8 @@ jobs:
         run: node --test ../tests/containers/test_preview_relay.cjs
       - name: Packaged HTTP probe rejects incomplete artifacts
         run: node --test ../tests/containers/test_frontend_standalone_probe.mjs
+      - name: Reviewed image admission rejects mismatched archives
+        run: python -m unittest discover -s ../tests/containers -p test_reviewed_web_artifact.py
       - run: npm run type-check
       - run: npm run build
       - name: Check standalone entry point
@@ -51,3 +55,18 @@ jobs:
           cp -a public/. .next/standalone/public/
           cp -a .next/static/. .next/standalone/.next/static/
           node ../tests/containers/frontend_standalone_probe.mjs .next/standalone
+      - name: Package and test the reviewed runtime image
+        env:
+          SPHERE_CI_RUN_ID: ${{ github.run_id }}
+          SPHERE_CI_RUN_ATTEMPT: ${{ github.run_attempt }}
+        run: node ../tests/containers/package_reviewed_web.mjs
+      - name: Keep the admitted image for operator review
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: sphere-reviewed-web-${{ github.event.pull_request.head.sha || github.sha }}
+          path: |
+            frontend/reviewed-web/image.tar.gz
+            frontend/reviewed-web/receipt.json
+          if-no-files-found: error
+          retention-days: 3
+          compression-level: 0

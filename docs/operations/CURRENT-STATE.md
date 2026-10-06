@@ -1,8 +1,22 @@
 # Sphere: актуальное состояние и критерии приёмки
 
-**Обновлено:** 6 октября 2026, Asia/Yekaterinburg; даты отдельных runtime/CI срезов указаны ниже.<br />
+**Обновлено:** 7 октября 2026, Asia/Yekaterinburg; даты отдельных runtime/CI срезов указаны ниже.<br />
 **Область:** исходники и документация ветки PR #19, записанные runtime-наблюдения, Android APK и готовность следующего прогона.<br />
 **Канонический документ текущего состояния:** этот файл. Исторические отчёты ниже сохраняют исходные даты и факты.
+
+**7 октября — полный CI sourcece6e377 success:** backend3015passed/37skipped,
+frontend1686/133 с26pages/73assets, Android variants и signed smoke прошли.
+[Exact baseline](../audits/2026-10-07/STUDIO-CI-BASELINE.json). Это source admission,
+не установка на3015 и не результат следующего изменения упаковки.
+
+**7 октября — source delivery без локального rebuild:** frontend CI упаковывает
+проверенный standalone output в unprivileged Linux/amd64 image, проверяет actual
+image pages/assets и сохраняет bounded Docker-save archive с SHA/run/attempt
+receipt на3дня. Read-only admission проверяет archive/config/source/CI binding.
+**11local methods/41cases**, Ruff/Node syntax passed; новый hosted image run
+ещё не принят. [Доставка и host gate](../audits/2026-10-07/REVIEWED-WEB-DELIVERY.md).
+C: остаётся Warning/Full Repair Needed, новый boot repair не подтверждён.
+Installed UI1c26ffc7/APIeb7a7c26/APK сохранены; ledger9/41 не изменён.
 
 **6 октября,18:54 UTC — frontend sourcee7f3ffb полностью проверен:**1686/133,
 18 HTTP contract tests, fresh types/build и **standalone26pages/73assets passed**.
