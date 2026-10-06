@@ -40,7 +40,8 @@ Android smoke success. Preview deploy skipped; следующий head пров�
 **6 октября — admission упакованного веба и continuous input audit:**
 [Next standalone: реальные HTTP страницы/JS/CSS перед установкой](audits/2026-10-06/FRONTEND-STANDALONE-ADMISSION.md) ·
 [scrcpy5.0: pinned source, control-only adapter и безопасный held touch](audits/2026-10-06/CONTINUOUS-INPUT-INTEGRATION.md).
-10 bounded HTTP tests passed; новый hosted artifact probe ещё требует исполнения.
+18 bounded HTTP tests passed после уточнения streamed Next redirect;
+новый hosted artifact probe ещё требует исполнения.
 Continuous capability не включена; client/server/APK изменения и canary обязательны.
 
 **6 октября — связи Studio, упорядоченная selector queue и следующий input protocol:**

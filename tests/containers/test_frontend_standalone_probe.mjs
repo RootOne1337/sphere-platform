@@ -22,8 +22,8 @@ async function withPages(t, alteration = {}) {
   const server = createServer((request, response) => {
     seen.push(request.url);
     if (request.url === '/') {
-      response.writeHead(alteration.rootStatus ?? 307, { location: alteration.location ?? '/dashboard' });
-      response.end();
+      response.writeHead(alteration.rootStatus ?? 307, { location: alteration.location ?? '/dashboard', 'content-type': 'text/html' });
+      response.end(alteration.rootHtml ?? '');
     } else if (request.url.startsWith('/_next/static/')) {
       response.writeHead(alteration.assetStatus ?? 200, { 'content-type': alteration.assetType ?? 'text/javascript' });
       response.end(alteration.assetBody ?? 'window.packagedChunk = true;');
@@ -47,6 +47,18 @@ test('HTTP receipt requires rendered pages and advertised client assets', async 
   assert.equal(receipt.backendExecutionVerified, false);
 });
 
+const flight = digest => `<script>self.__next_f.push(${JSON.stringify([1, `7:E${JSON.stringify({ digest })}\n`])})</script>`;
+for (const [kind, rootHtml] of [
+  ['next-meta', '<meta id="__next-page-redirect" http-equiv="refresh" content="1;url=/dashboard"/>'],
+  ['next-flight', flight('NEXT_REDIRECT;replace;/dashboard;307;')],
+]) {
+  test(`prerendered root 200 requires verified ${kind} redirect payload`, async t => {
+    const { origin } = await withPages(t, { rootStatus: 200, rootHtml });
+    const receipt = await verifyPages(origin, pageRoutes(manifest));
+    assert.equal(receipt.pages.find(row => row.route === '/').redirect, kind);
+  });
+}
+
 for (const [name, alteration, expected] of [
   ['SSR failure', { pageStatus: 500 }, /Page failed/],
   ['missing client chunk', { assetStatus: 404 }, /Client asset missing/],
@@ -56,6 +68,12 @@ for (const [name, alteration, expected] of [
   ['error inside streamed HTML with status 200', { html: '<script src="/_next/static/a.js"></script>NEXT_HTTP_ERROR_FALLBACK;500' }, /SSR error/],
   ['no advertised client scripts', { html: '<html>empty shell</html>' }, /No client JS/],
   ['unbounded response', { html: 'x'.repeat(2 * 1024 * 1024 + 1) }, /budget/],
+  ['external HTTP redirect', { location: 'https://example.com/dashboard' }, /External root redirect/],
+  ['empty root 200', { rootStatus: 200 }, /no verified Next redirect/],
+  ['incorrect RSC destination', { rootStatus: 200, rootHtml: flight('NEXT_REDIRECT;replace;/missing;307;') }, /no verified Next redirect/],
+  ['plain fake redirect text', { rootStatus: 200, rootHtml: 'NEXT_REDIRECT;replace;/dashboard;307;' }, /no verified Next redirect/],
+  ['unsupported redirect status', { rootStatus: 200, rootHtml: flight('NEXT_REDIRECT;replace;/dashboard;302;') }, /no verified Next redirect/],
+  ['invalid meta destination', { rootStatus: 200, rootHtml: '<meta id="__next-page-redirect" http-equiv="refresh" content="1;url=https://example.com/dashboard"/>' }, /no verified Next redirect/],
 ]) {
   test(`packaged probe rejects ${name}`, async t => {
     const { origin } = await withPages(t, alteration);

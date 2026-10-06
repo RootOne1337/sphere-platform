@@ -17,7 +17,10 @@ Preview guard success, **deploy skipped**. [Dated receipt](../audits/2026-10-06/
 root redirect, добавлен standalone HTTP probe страниц и их client assets.
 **10 local HTTP tests passed**, source-only types passed; стандартные local types
 ссылаются на старый generated validator удалённой page и не приняты.
-Fresh hosted probe/build ещё необходим. [Основание и границы](../audits/2026-10-06/FRONTEND-STANDALONE-ADMISSION.md).
+Fresh head44af412 прошёл1686/133, types/build; первый HTTP probe потребовал
+только307/308 и отказал на штатном Next root200. Ожидание исправлено: exact
+meta/RSC redirect to/dashboard,18 local cases passed. Новый hosted probe ещё
+не принят. [Основание, failed run и границы](../audits/2026-10-06/FRONTEND-STANDALONE-ADMISSION.md).
 [Continuous input audit](../audits/2026-10-06/CONTINUOUS-INPUT-INTEGRATION.md):
 scrcpy5.0 исследован на pinned commit, direct binary protocol/version/reset
 constraints описаны; upstream не встроен, DOWN/MOVE/UP пока не включены.

@@ -42,19 +42,55 @@ export function pageRoutes(manifest) {
   return [...routes].sort();
 }
 
+/** Next may emit its redirect after a streamed/prerendered HTTP 200 shell.
+ * Inspect the framework redirect payload; a generic 200 or arbitrary token is
+ * not sufficient. JSON is parsed as data, never evaluated as JavaScript. */
+function rootRedirect(response, html, origin) {
+  if ([307, 308].includes(response.status)) {
+    const location = response.headers.get('location');
+    assert.ok(location, 'Root redirect has no Location');
+    const target = new URL(location, origin);
+    assert.equal(target.origin, origin, 'External root redirect');
+    assert.equal(target.pathname + target.search + target.hash, '/dashboard');
+    return 'http';
+  }
+  assert.equal(response.status, 200, `Root failed: ${response.status}`);
+  assert.match(response.headers.get('content-type') ?? '', /text\/html/, 'Root is not HTML');
+  for (const match of html.matchAll(/<meta\b[^>]*>/g)) {
+    const attributes = Object.fromEntries([...match[0].matchAll(/([\w-]+)=["']([^"']*)["']/g)].map(row => [row[1].toLowerCase(), row[2]]));
+    if (attributes.id === '__next-page-redirect' && attributes['http-equiv'] === 'refresh'
+      && /^[01];url=\/dashboard$/.test(attributes.content ?? '')) return 'next-meta';
+  }
+  for (const match of html.matchAll(/<script(?:\s[^>]*)?>([\s\S]*?)<\/script>/g)) {
+    const call = match[1].match(/^self\.__next_f\.push\(([\s\S]*)\);?$/);
+    if (!call) continue;
+    let payload;
+    try { payload = JSON.parse(call[1]); } catch { continue; }
+    if (!Array.isArray(payload) || payload[0] !== 1 || typeof payload[1] !== 'string') continue;
+    for (const line of payload[1].split('\n')) {
+      const error = line.match(/^[\da-f]+:E(\{.*\})$/);
+      if (!error) continue;
+      let data;
+      try { data = JSON.parse(error[1]); } catch { continue; }
+      if (data && /^NEXT_REDIRECT;(?:replace|push);\/dashboard;(?:307|308);$/.test(data.digest)) return 'next-flight';
+    }
+  }
+  throw new Error('Root 200 has no verified Next redirect to /dashboard');
+}
+
 export async function verifyPages(origin, routes) {
   const assets = new Set();
   const pages = [];
   for (const route of routes) {
     const response = await fetch(new URL(route, origin), { redirect: 'manual', signal: AbortSignal.timeout(10000) });
     const html = await boundedBody(response, MAX_HTML);
+    assert.ok(!html.includes('NEXT_HTTP_ERROR_FALLBACK;500'), `SSR error: ${route}`);
+    let redirect;
     if (route === '/') {
-      assert.ok([307, 308].includes(response.status), `Root did not redirect: ${response.status}`);
-      assert.equal(new URL(response.headers.get('location'), origin).pathname, '/dashboard');
+      redirect = rootRedirect(response, html, origin);
     } else {
       assert.equal(response.status, 200, `Page failed: ${route} (${response.status})`);
       assert.match(response.headers.get('content-type') ?? '', /text\/html/, `Not HTML: ${route}`);
-      assert.ok(!html.includes('NEXT_HTTP_ERROR_FALLBACK;500'), `SSR error: ${route}`);
       let scripts = 0;
       for (const match of html.matchAll(/\b(?:src|href)=["']([^"']+)["']/g)) {
         const value = match[1].replaceAll('&amp;', '&');
@@ -66,7 +102,7 @@ export async function verifyPages(origin, routes) {
       }
       assert.ok(scripts > 0, `No client JS advertised: ${route}`);
     }
-    pages.push({ route, status: response.status });
+    pages.push({ route, status: response.status, ...(redirect ? { redirect } : {}) });
   }
   assert.ok(assets.size <= 512, 'Client asset count exceeds probe budget');
   for (const path of assets) {

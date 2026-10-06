@@ -27,7 +27,9 @@ redirect сохранён. Связь этого изменения с устр�
   route groups удаляются, URL deduplicated. Dynamic templates, API handlers и
   internal not-found не выдаются за полноценно проверенные user routes.
 - Наличие root/login/scripts/builder/devices/monitoring обязательно. Root должен
-  вернуть307/308 на/dashboard; остальные страницы —200HTML с client JS.
+  подтвердить redirect на/dashboard:307/308 с same-origin Location либо200HTML
+  с точным Next meta/RSC redirect payload. Простого200 недостаточно; остальные
+  страницы —200HTML с client JS.
 - Все advertised `/_next/static/` assets загружаются без redirect.404, пустой
   ответ, HTML вместо chunk, неверный JS/CSS MIME или500 provokes failure.
 - Страницы ограничены2MiB, asset16MiB,512manifest entries/assets; запрос10s,
@@ -35,7 +37,8 @@ redirect сохранён. Связь этого изменения с устр�
   не ищутся и не останавливаются. Logs capped16KiB, response bodies не печатаются.
 - [10 HTTP regression cases](../../../tests/containers/test_frontend_standalone_probe.mjs)
   проверяют ошибочные packaged responses, missing JS, SSR error с status200,
-  root destination и byte budget. **Локально10/10 passed** без Next build.
+  root destination и byte budget. Первый набор10/10; после уточнения Next
+  redirect semantics **локально18/18 passed** без Next build.
 
 Локальная стандартная type-check после удаления duplicate root остановилась
 на **старом generated `.next/types/validator.ts`**, который импортирует удалённую
@@ -63,3 +66,23 @@ JSON явно содержит `browserHydrationVerified:false`, `backendExecuti
 и deploy этой ревизии не запускались. Installed UI1c26ffc7/APIeb7a7c26 сохранены.
 Реестр9/41 не изменён. Source517d73b full CI и следующий probe head фиксируются
 отдельно; прежний green workflow не переносится на новый код.
+
+## Первый hosted probe и корректировка его ожидания
+
+Head44af412, [run37513667851](https://github.com/RootOne1337/sphere-platform/actions/runs/37513667851):
+1686/133 tests, стандартные fresh types и production build success; прежний
+missing root manifest warning в этом build больше не появился. Packaged server
+запустился127.0.0.1 и Ready191ms. Probe упал: **Root did not redirect:200**.
+Это неверное требование самого probe, а не подтверждение сломанного root.
+
+Проверены [официальные redirect semantics](https://nextjs.org/docs/app/api-reference/functions/redirect)
+и установленный Next15.5.26 server-inserted-html source: streamed redirect может
+быть meta в200HTML. Исторический generated index.html также содержит типизированный
+Flight error digest `NEXT_REDIRECT;replace;/dashboard;307;`.
+Probe теперь распознаёт только framework meta с expected id/refresh/internal URL
+или JSON-parsed self.__next_f error payload с exact destination/status. JavaScript
+не исполняется. HTTP redirect на другой origin, пустой200, fake/plain token,
+неверный RSC destination/status и external meta rejected. Receipt пишет фактический
+redirect kind; это не browser hydration proof. Assets staged contents-to-contents,
+чтобы существующая target directory не превращала public/static в nested copy.
+18 local cases прошли; новый exact-head hosted probe должен подтвердить результат.
