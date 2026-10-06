@@ -4,6 +4,20 @@
 **Область:** исходники и документация ветки PR #19, записанные runtime-наблюдения, Android APK и готовность следующего прогона.<br />
 **Канонический документ текущего состояния:** этот файл. Исторические отчёты ниже сохраняют исходные даты и факты.
 
+**Критическое ограничение хоста — 6 октября, 20:23 UTC+5:** Git objects
+восстановлены, fsck exit0; **C: NTFS всё ещё `Warning / Full Repair Needed`**.
+Elevated Scan подтвердил offline defects в двух директориях. Verified local
+recovery copy11files/16 450 263B включает source/config/PostgreSQL, но лежит на
+том же SSD и не является backup личных файлов/всех volumes. Запрос **`chkdsk C: /f`
+при следующей загрузке** подтверждён BootExecute; перезагрузка и repair ещё не
+выполнены. Нездоровый/неизвестный volume теперь блокируется resource guard.
+37 scoped CLI tests passed; тяжёлые builds и runtime deployment не выполнялись.
+RAM около11,4GiB Windows Scan host освободилась после завершения проверки;
+это не закрывает долгосрочную утечку. VSS max current19,1ГБ расходится с прежним
+verified8GiB, причина неизвестна. **Разработку с heavy builds на C: не возобновлять
+до postboot acceptance.** Старые APK/UI/API версии ниже остаются установленными.
+[Incident, queue и acceptance](../audits/2026-10-06/HOST-FILESYSTEM-INCIDENT.md).
+
 [Главная](../../README.md) · [Каталог документации](../README.md) · [Readiness](READINESS.md) · [Fleet32 gates](../audits/2026-09-20/FLEET32-PREFLIGHT.md) · [PR #19](https://github.com/RootOne1337/sphere-platform/pull/19)
 
 **6 октября, 19:48 UTC+5 — APK 1.2.47 установлен только на локальный PH011:**

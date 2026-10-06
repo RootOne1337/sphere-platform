@@ -1,6 +1,6 @@
 # Ошибки файловой системы рабочего ПК
 
-Дата проверки: **6 октября 2026, 07:15 UTC**. Это отдельный инцидент Windows C:,
+Последнее дополнение: **6 октября 2026, 15:23 UTC**; исходные проверки ниже датированы отдельно. Это отдельный инцидент Windows C:,
 не заключение о причине расхода памяти, роста Docker VHD или сбоях Android.
 
 ## Подтверждено
@@ -111,7 +111,130 @@ Writer, заполняющий C:, по-прежнему UNKNOWN; bounded Androi
 
 Перед автономным ремонтом нужен проверенный backup важных пользовательских данных
 и проекта, согласованное окно остановки рабочих контейнеров и эмуляторов и
-системная проверка Windows. Настоящий документ не разрешает автоматическую
-перезагрузку или исправление файловой системы. После ремонта необходимы повторные
+системная проверка Windows. Перезагрузка требует согласованного окна. После ремонта необходимы повторные
 System events, проверка Git и hashes выпускаемых артефактов; отсутствие нового
 события в коротком интервале само по себе не является приёмкой.
+
+## Ремонт подготовлен: 6 октября, 15:06–15:23 UTC
+
+Оператор запросил ремонт («фикси») и сообщил, что отдельного физического диска
+для backup нет. Работа ниже не закрывает аппаратную причину, расход Docker VHD
+или весь host leak audit. Веб/API/APK в этом продолжении не обновлялись.
+[Сокращённое evidence](evidence/host-filesystem/repair-readiness.json).
+
+### Что сохранено
+
+Private recovery copy на том же C: проверена по SHA256 всех **11 файлов /
+16 450 263 байт**; `source-HEAD.zip` прошёл ZIP CRC, опубликованный source HEAD
+`d424e52cebacefed3d928be106d33e73293bbec3` совпал с remote. `git fsck
+--no-dangling` завершился exit0. В копии есть исходники HEAD, patches, настройки
+pilot, текущий Prometheus working file, Git config, debug signing key,
+consistent custom PostgreSQL dump и roles, container configuration inventory.
+Directory custom dump прочитан через `pg_restore -l`; полный restore не выполнен.
+Пустые patches не доказывают сохранение всех untracked файлов.
+
+**Это не независимый backup:** личные файлы, весь SSD, MinIO objects, Redis volume,
+прочие application volumes, все untracked development files и все signing keys
+в него не входят. Копия на C: не защищает от отказа самого SSD. Credentials,
+database contents, raw logs и corrupted binaries не публикуются в Git.
+
+### Проверка Windows и факты о повторении
+
+| Наблюдение | Подтверждение | Ограничение |
+| --- | --- | --- |
+| C: NTFS, `Warning / Full Repair Needed` | `Get-Volume`, до и после Scan | Общий physical disk `Healthy` не отменяет NTFS failure |
+| Dirty bit установлен | Elevated `fsutil dirty query C:`, exit0 | Это состояние тома, не диагноз SSD/RAM |
+| Scan 15:08:50–15:16:24 UTC | `Repair-Volume -DriveLetter C -Scan`: `ScanErrorsFoundNeedSpotFix` | Очередь offline defects, не ремонт C: |
+| Application Chkdsk event26226 /134448 | 15:16:23.712 UTC, длительность450586ms | Event содержит также проверку/моделирование на snapshot, её «исправление» не выдаётся за исправление рабочего тома |
+| Две повреждённые директории | Индексы `$I30` текущего старого build context и deleted WindowsApps package | Не новые assertions или изменения исходников |
+| Missing index entries | 15 в старом build context, 6 в WindowsApps directory | Содержимое файлов и аппаратная причина отдельно не проверены |
+| Более ранний boot repair | Wininit1001 /133794, 4 октября16:38:26.004 UTC: 3 records в Epic Games cache corrected | Последующие Ntfs55 доказывают новые наблюдения после ремонта; его успешность не исключила повторения |
+
+Это не новый запуск `chkdsk /r`, `/b`, `/perf`, `/x` или повторный full scan.
+Согласно [Microsoft Repair-Volume](https://learn.microsoft.com/en-us/powershell/module/storage/repair-volume),
+Scan сообщает дефекты и ставит их в `$corrupt` для offline repair. После Scan
+рабочий том остался `Full Repair Needed`. Успех Git fsck не закрывает это состояние.
+
+NVMe **ADATA LEGEND 970 PRO** возвращает generic Healthy/OK, temperature54°C,
+Wear0. PowerOnHours и четыре error counters **null / недоступны**, а не0.
+Проверенный SMBIOS RAM inventory: 2×24GiB, Speed4800 /ConfiguredClockSpeed6800.
+Это основание отдельно проверить профиль/стабильность памяти, **не доказательство**
+виновности RAM, SSD, драйвера, Ultra mode или агента. BIOS settings не менялись.
+
+### Расход RAM во время Scan
+
+COM surrogate PID300 создан15:08:51.175UTC; elevated registration AppID
+`{82D94FB3-7FE6-4797-BB72-9A886C66073B}` = `CFmIfsEngine host`.
+В измеренном срезе его private bytes **12 267 302 912**, working set
+**12 221 792 256**. Одновременный host commit приближался к limit; после завершения
+Scan этот PID исчез, available RAM выросла примерно до20GiB. Срез15:22:
+available19 296MiB, committed78 272 397 312 /limit95 153 381 376bytes.
+Это привязанный к проверке процесс/epoch, а не долгосрочный leak proof APK/backend.
+Рабочие Docker/эмуляторы не убивались для получения этого результата.
+
+### Что уже запланировано
+
+[`prepare_host_boot_repair.ps1`](../../../scripts/pilot/prepare_host_boot_repair.ps1)
+проверил hashes recovery copy и завершённый elevated Scan. Только с явным флагом
+`-ScheduleAtNextBoot` в elevated процессе вызвана точная команда **`chkdsk C: /f`**.
+Windows отказала в lock работающего system volume, приняла `Y` для next boot;
+native exit3 означает, что online repair не выполнен. Прочитанный **BootExecute**
+содержит новый `autocheck autochk /p \??\C:`, исходный `autocheck autochk *`
+сохранён. Поэтому очередь подтверждается отдельно от native exit и языка stdout.
+Raw native stdout сохранён privately с default process decoding; текст не служит
+единственным доказательством scheduling. Registry напрямую не переписывался.
+
+**Состояние: repair-pending-restart.** Скрипт не выключает/не перезагружает ПК,
+не останавливает службы/контейнеры, не принудительно dismount C:, не удаляет VSS,
+не запускает surface scan. [Microsoft chkdsk](https://learn.microsoft.com/en-us/windows-server/administration/windows-commands/chkdsk)
+описывает `/f` и scheduling system volume. При следующей загрузке проверку не
+пропускать. Окно graceful shutdown контейнеров, эмуляторов и личных приложений
+нужно согласовать с оператором; автоматического reboot без этого окна нет.
+
+### Guard, ограничение сборок и проверки
+
+[`resource_guard.py`](../../../scripts/pilot/resource_guard.py) теперь требует
+доступные Windows volume `Healthy` и operational statuses ровно `["OK"]`.
+Отсутствие API, пустые/неверные поля и contradictory Warning/OK блокируют
+сборку. Volume определяется через путь workspace в environment variable, без
+интерполяции произвольного пути в PowerShell command. Linux правила не менялись.
+Guard блокирует только процедуры, которые действительно его вызывают.
+
+**37 tests passed**, `pytest --noconftest` для двух CLI suites; Ruff и PowerShell
+AST parse прошли. Реальные tests подтверждают readonly readiness, hash/size
+failures, path escape и junction rejection. Tests никогда не schedule repair.
+Первый readiness test нашёл отсутствие Get-FileHash в child PowerShell environment;
+hash verification переведён на .NET SHA256, повторный test положительного пути
+успешен. Полные frontend/Android builds на повреждённом C: не выполнялись.
+
+[`collect_host_repair.ps1`](../../../scripts/pilot/collect_host_repair.ps1) хранит
+ограниченный private report: максимум256KiB, bounded native reads15s. Scan
+специально не прерывается по query deadline. Отдельный exact VSS WMI query в
+первом secondary snapshot не завершил report; финальный readback изолирует его
+в owned child с deadline и честно сохраняет unavailable вместо нуля. Native
+VSS query успешен; exact counters этого продолжения не получены.
+
+### VSS — актуальное расхождение, не новый cleanup
+
+До Scan native readback: used18,2 /allocated18,5 /max19,1ГБ; после:
+used16,8 /allocated17,2 /max19,1ГБ. Это округлённые display values, не exact deltas.
+Они **расходятся** с verified8GiB after resize4 октября22:58UTC в
+[VSS retention](../2026-10-05/VSS-RETENTION-REVIEW.md). Изменение лимита/причина
+не установлены; исторический receipt не переписывается. До ремонта рабочего C:
+копии повторно не удаляются. Размер Docker VHD и уменьшение свободного места
+не объявляются исправленными этим filesystem этапом.
+
+### Приёмка после перезагрузки
+
+1. Прочитать **новый** Wininit/Chkdsk report, boot epoch, dirty bit и `Get-Volume`.
+   Для продолжения сборок требуется `Healthy / OK`, completed repair, отсутствие
+   reported unresolved defects. Queue сама по себе не является приёмкой.
+2. Повторить `git fsck --no-dangling`, hashes source/artifacts и проверку исходного
+   backup. Не удалять bad raw evidence и не делать blind Git gc/prune.
+3. Штатно восстановить прежние runtime containers/UI/API/tunnel и подтвердить
+   image/identity, readiness и heartbeat; отсутствие рабочего stream не подменять
+   фактом доступности `/metrics`. APK автоматически не переустанавливать.
+4. Проверить свежие Ntfs/disk/WHEA events. При повторении — оставить NO-GO,
+   независимая проверка SSD/driver/RAM; успешная одна загрузка не аппаратный SLA.
+5. Повторно получить VSS retention, bounded disk/RAM recorder, pool/epoch и writer
+   measurements. Не склеивать прерванные окна в continuous soak.
