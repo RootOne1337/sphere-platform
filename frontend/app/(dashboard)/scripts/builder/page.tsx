@@ -16,8 +16,10 @@ import { useAuthStore } from '@/lib/store';
 import { useCapabilities } from '@/src/features/access/Capabilities';
 import { RunScriptModal } from '@/components/sphere/RunScriptModal';
 import { NodeInspector } from '@/src/features/scripts/studio/NodeInspector';
+import { ConnectionInspector } from '@/src/features/scripts/studio/ConnectionInspector';
+import { checkConnection, changeConnection } from '@/lib/dag/connections';
 import { DeviceWorkbench } from '@/src/features/scripts/studio/DeviceWorkbench';
-import { ACTION_GROUPS } from '@/src/features/scripts/studio/presentation';
+import { ACTION_GROUPS, ANDROID_KEY_PRESETS } from '@/src/features/scripts/studio/presentation';
 import { layoutWorkflow } from '@/src/features/scripts/studio/layout';
 import type { DagNode } from '@/lib/dag/export';
 
@@ -47,6 +49,7 @@ function BuilderInner({ editId, storageKey }: { editId: string | null; storageKe
   const documentRef = useRef(document); documentRef.current = document;
   const [mode, setMode] = useState<'graph' | 'source'>('graph');
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [selectedEdgeId, setSelectedEdgeId] = useState<string | null>(null);
   const [nodeSource, setNodeSource] = useState('');
   const [nodePending, setNodePending] = useState(false);
   const [canvasError, setCanvasError] = useState('');
@@ -89,6 +92,7 @@ function BuilderInner({ editId, storageKey }: { editId: string | null; storageKe
   const canWrite = access.can('script:write');
   const writable = canWrite && !busy && loadState === 'ready';
   const selectedNode = nodes.find(node => node.id === selectedId);
+  const selectedEdge = edges.find(edge => edge.id === selectedEdgeId);
 
   useEffect(() => { live.current = true; return () => { live.current = false; request.current?.abort(); layoutRequest.current?.abort(); }; }, []);
   useEffect(() => {
@@ -115,7 +119,7 @@ function BuilderInner({ editId, storageKey }: { editId: string | null; storageKe
   function syncGraph(next: StudioDocument) {
     const imported = importDag(parseSource(next.source));
     setNodes(arrangeNodes(imported.nodes, imported.edges, imported.metadata.entry_node, direction));
-    setEdges(imported.edges); setMetadata(imported.metadata); setCanvasError('');
+    setEdges(imported.edges); setMetadata(imported.metadata); setSelectedEdgeId(null); setCanvasError('');
   }
   function remember() { const before = documentRef.current; setHistory(old => pushHistory(old, before)); setFuture([]); }
   function changeDocument(next: StudioDocument, graph = false) {
@@ -126,6 +130,7 @@ function BuilderInner({ editId, storageKey }: { editId: string | null; storageKe
   function selectNode(node: Node) {
     if (nodePending) { setErrors('Примените или отмените параметры текущего шага перед выбором другого.'); return; }
     setSelectedId(node.id);
+    setSelectedEdgeId(null);
     setInspectorTab('step');
     try { setNodeSource(JSON.stringify(exportDag(nodes, edges, metadata).nodes.find(item => item.id === node.id), null, 2)); }
     catch (error) { setErrors(errorMessage(error)); }
@@ -136,7 +141,7 @@ function BuilderInner({ editId, storageKey }: { editId: string | null; storageKe
     const next = stack.at(-1); if (!next) return;
     if (direction === 'undo') { setHistory(stack.slice(0, -1)); setFuture(old => pushHistory(old, document)); }
     else { setFuture(stack.slice(0, -1)); setHistory(old => pushHistory(old, document)); }
-    setDocument(next); setMode('source'); setSelectedId(null); setNodePending(false); setReceipt(null); setErrors(''); setCanvasError('');
+    setDocument(next); setMode('source'); setSelectedId(null); setSelectedEdgeId(null); setNodePending(false); setReceipt(null); setErrors(''); setCanvasError('');
   }
   // Loading owns the resource and never substitutes an empty template after a failed read.
   useEffect(() => {
@@ -185,12 +190,23 @@ function BuilderInner({ editId, storageKey }: { editId: string | null; storageKe
   }
   const onConnect = (connection: Connection) => {
     if (!writable || nodePending) return;
-    const handle = connection.sourceHandle ?? null;
-    if (edges.some(edge => edge.source === connection.source && (edge.sourceHandle ?? null) === handle)) {
-      setErrors('Этот выход уже соединён. Сначала удалите существующую связь.'); return;
-    }
-    const nextEdges = addEdge(connection, edges); setEdges(nextEdges); publishCanvas(nodes, nextEdges);
+    try { checkConnection(nodes, edges, connection); const nextEdges = addEdge(connection, edges); setEdges(nextEdges); publishCanvas(nodes, nextEdges); }
+    catch (error) { setErrors(errorMessage(error)); }
   };
+  const onReconnect = (edge: Edge, connection: Connection) => {
+    if (!writable || nodePending) return;
+    try { const nextEdges = changeConnection(nodes, edges, edge.id, connection); setEdges(nextEdges); publishCanvas(nodes, nextEdges); }
+    catch (error) { setErrors(errorMessage(error)); }
+  };
+  function selectEdge(edge: Edge) {
+    if (nodePending) { setErrors('Примените или отмените параметры текущего шага перед выбором связи.'); return; }
+    setSelectedId(null); setSelectedEdgeId(edge.id); setInspectorTab('step');
+  }
+  function removeEdge() {
+    if (!writable || nodePending || !selectedEdge) return;
+    const nextEdges = edges.filter(edge => edge.id !== selectedEdge.id);
+    setEdges(nextEdges); setSelectedEdgeId(null); publishCanvas(nodes, nextEdges);
+  }
   // Selection and dragging are canvas-only; structural changes also invalidate validation.
   useEffect(() => {
     if (mode !== 'graph' || loadState !== 'ready') return;
@@ -281,7 +297,7 @@ function BuilderInner({ editId, storageKey }: { editId: string | null; storageKe
       const source = boundedSource(await file.text());
       if (!live.current || !accessRef.current.can('script:write')) return;
       // Invalid source is retained for repair; it cannot publish the old graph.
-      changeDocument({ ...documentRef.current, source }); setMode('source'); setSelectedId(null); setNodePending(false);
+      changeDocument({ ...documentRef.current, source }); setMode('source'); setSelectedId(null); setSelectedEdgeId(null); setNodePending(false);
     } catch (error) { if (live.current) setErrors(errorMessage(error)); }
   }
   function exportFile() {
@@ -293,7 +309,7 @@ function BuilderInner({ editId, storageKey }: { editId: string | null; storageKe
     try {
       if (nodePending) throw new Error('Примените или отмените параметры шага.');
       if (nextMode === 'graph') syncGraph(document);
-      setMode(nextMode); setErrors(''); setSelectedId(null);
+      setMode(nextMode); setErrors(''); setSelectedId(null); setSelectedEdgeId(null);
     } catch (error) { setErrors(errorMessage(error)); }
   }
   function leave() {
@@ -341,9 +357,9 @@ function BuilderInner({ editId, storageKey }: { editId: string | null; storageKe
     execution: execution.logs.findLast(log => log.node_id === node.id)?.success === true ? 'success'
       : execution.logs.findLast(log => log.node_id === node.id)?.success === false ? 'failed'
       : execution.last === node.id ? 'reported' : null } }));
-  const paintedEdges: Edge[] = edges.map(edge => ({ ...edge, type: 'smoothstep',
+  const paintedEdges: Edge[] = edges.map(edge => ({ ...edge, selected: edge.id === selectedEdgeId || edge.selected, type: 'smoothstep', interactionWidth: 28,
     markerEnd: { type: 'arrowclosed' as const, width: 16, height: 16 },
-    style: { strokeWidth: 1.7, stroke: edge.sourceHandle === 'failure' ? '#f43f5e' : edge.sourceHandle === 'false_branch' ? '#d97706' : edge.sourceHandle === 'true_branch' ? '#10b981' : 'hsl(var(--primary))' },
+    style: { strokeWidth: edge.id === selectedEdgeId ? 3 : 1.7, stroke: edge.sourceHandle === 'failure' ? '#f43f5e' : edge.sourceHandle === 'false_branch' ? '#d97706' : edge.sourceHandle === 'true_branch' ? '#10b981' : 'hsl(var(--primary))' },
     label: edge.sourceHandle === 'failure' ? 'Ошибка' : edge.sourceHandle === 'true_branch' ? 'Да' : edge.sourceHandle === 'false_branch' ? 'Нет' : undefined,
     labelStyle: { fontSize: 10, fill: 'hsl(var(--foreground))' }, labelBgStyle: { fill: 'hsl(var(--card))', fillOpacity: 1 }, labelBgPadding: [6, 4] as [number, number], labelBgBorderRadius: 5,
   }));
@@ -376,20 +392,22 @@ function BuilderInner({ editId, storageKey }: { editId: string | null; storageKe
     <div className={`flex min-h-0 min-w-0 flex-col lg:flex-1 ${workspace === 'device' ? 'studio-device-workspace lg:grid lg:grid-cols-[minmax(0,0.85fr)_minmax(0,1.15fr)]' : 'lg:flex-row'}`}>
       {workspace === 'design' && palette && <aside aria-label="Каталог действий" className="flex max-h-72 shrink-0 flex-col border-b bg-card lg:max-h-none lg:w-[224px] lg:border-b-0 lg:border-r">
         <div className="space-y-3 border-b p-3"><div className="flex items-center justify-between"><h2 className="text-xs font-semibold">Библиотека действий <span className="ml-1 rounded bg-muted px-1.5 py-0.5 text-[10px] text-muted-foreground">{ACTION_TYPES.length}</span></h2><Button size="icon" variant="ghost" aria-label="Скрыть библиотеку действий" className="size-7" onClick={() => setPalette(false)}><PanelLeftClose className="size-3.5" /></Button></div><div className="relative"><Search className="absolute left-2 top-2.5 size-3.5 text-muted-foreground" /><Input placeholder="Найти действие…" className="h-8 pl-7 text-xs" aria-label="Поиск действия" value={search} onChange={event => setSearch(event.target.value)} /></div></div>
+        {!search && <div className="shrink-0 border-b p-3"><h3 className="mb-2 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Готовые клавиши Android</h3><div className="grid grid-cols-2 gap-1.5">{ANDROID_KEY_PRESETS.map(key => <Button key={key.keycode} size="sm" variant="outline" className="h-8 text-[11px]" aria-label={`Добавить действие ${key.label}`} disabled={!writable || mode !== 'graph' || nodePending} onClick={() => insertRecorded([{ type: 'key_event', keycode: key.keycode }])}>{key.label}</Button>)}</div><p className="mt-2 text-[10px] leading-4 text-muted-foreground">Добавляют шаг в сценарий. Android сейчас не управляется.</p></div>}
         <div className="min-h-0 flex-1 overflow-auto px-2 pb-4">{ACTION_GROUPS.map((group, index) => { const types = available.filter(type => (group.types as readonly string[]).includes(type)); const Icon = [MousePointer2, ScanSearch, GitBranch, Smartphone][index]; return types.length ? <div key={group.name} className="mt-4"><h3 className="mb-2 flex items-center gap-2 px-2 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground"><Icon className="size-3" />{group.name}</h3>{types.map(type => <button key={type} type="button" disabled={!writable || mode !== 'graph' || nodePending} className="group flex w-full items-center gap-2 rounded-lg px-2 py-2 text-left transition-colors hover:bg-muted disabled:opacity-40" onClick={() => addAction(type)}><span className="min-w-0 flex-1"><span className="block text-xs font-medium">{ACTION_LABELS[type]}</span><span className="block font-mono text-[9px] text-muted-foreground">{type}</span></span><Plus className="size-3 shrink-0 text-muted-foreground group-hover:text-primary" /></button>)}</div> : null; })}{!available.length && <p className="p-3 text-xs text-muted-foreground">Действия не найдены.</p>}</div>
         <p className="border-t px-3 py-2 text-[10px] leading-4 text-muted-foreground">Новый шаг добавляется после выбранного линейного шага. Настройте параметры перед запуском.</p>
       </aside>}
       <div className={`relative h-[440px] min-w-0 flex-none lg:h-auto lg:min-h-0 lg:flex-1 ${workspace === 'device' ? 'lg:basis-[45%]' : ''}`}>
         <div className="absolute left-3 top-3 z-10 flex gap-1 rounded-lg border bg-card/95 p-1 shadow-sm">{workspace === 'design' && !palette && <Button variant="ghost" size="icon" className="size-7" aria-label="Показать библиотеку действий" onClick={() => setPalette(true)}><PanelLeftOpen className="size-3.5" /></Button>}<Button size="sm" variant="ghost" className="h-7 text-[11px]" onClick={() => void canvas.current?.fitView({ padding: 0.25, maxZoom: 1 })}><Maximize2 className="mr-1.5 size-3" />Весь граф</Button><span className="flex items-center px-2 text-[10px] text-muted-foreground">{nodes.length} шагов · {edges.length} связей</span></div>
         {mode === 'source' ? <div className="flex h-full min-h-[440px] flex-col bg-muted/20 p-4 pt-14 lg:min-h-0"><label htmlFor="studio-source" className="mb-2 text-xs font-medium">Исходник DAG 1.0 · {byteLength(document.source).toLocaleString('ru-RU')} байт / 512 KiB</label><textarea id="studio-source" spellCheck={false} className="min-h-[280px] flex-1 resize-none rounded-xl border bg-card p-4 font-mono text-xs leading-6 outline-none focus:ring-2 focus:ring-ring" value={document.source} readOnly={!writable} onChange={event => { try { changeDocument({ ...document, source: event.target.value }); } catch (error) { setErrors(errorMessage(error)); } }} /><p className="mt-2 text-[11px] text-muted-foreground">JSON и граф — один сценарий. Некорректный текст сохраняется для исправления, публикация блокируется.</p></div>
-          : <ReactFlow nodes={paintedNodes} edges={paintedEdges} onNodesChange={writable && !nodePending ? onNodesChange : undefined} onEdgesChange={writable && !nodePending ? onEdgesChange : undefined} onConnect={onConnect} onNodeClick={(_, node) => selectNode(node)} nodeTypes={nodeTypes} fitView fitViewOptions={overviewOptions} minZoom={0.15} maxZoom={1.8} nodesDraggable={writable && !nodePending} nodesConnectable={writable && !nodePending} deleteKeyCode={writable && !nodePending ? ['Backspace', 'Delete'] : null} onInit={instance => { canvas.current = instance; }} className="sphere-studio-flow"><Background gap={24} color="hsl(var(--border))" /><Controls /><MiniMap className="!hidden xl:!block" style={{ width: 130, height: 85 }} pannable zoomable nodeColor="hsl(var(--primary) / .5)" /></ReactFlow>}
+          : <ReactFlow nodes={paintedNodes} edges={paintedEdges} onNodesChange={writable && !nodePending ? onNodesChange : undefined} onEdgesChange={writable && !nodePending ? onEdgesChange : undefined} onConnect={onConnect} onReconnect={onReconnect} edgesReconnectable={writable && !nodePending} reconnectRadius={16} onEdgeClick={(_, edge) => selectEdge(edge)} onNodeClick={(_, node) => selectNode(node)} nodeTypes={nodeTypes} fitView fitViewOptions={overviewOptions} minZoom={0.15} maxZoom={1.8} nodesDraggable={writable && !nodePending} nodesConnectable={writable && !nodePending} deleteKeyCode={writable && !nodePending ? ['Backspace', 'Delete'] : null} onInit={instance => { canvas.current = instance; }} className="sphere-studio-flow"><Background gap={24} color="hsl(var(--border))" /><Controls /><MiniMap className="!hidden xl:!block" style={{ width: 130, height: 85 }} pannable zoomable nodeColor="hsl(var(--primary) / .5)" /></ReactFlow>}
+        {workspace === 'device' && mode === 'graph' && selectedEdge && <div className="absolute bottom-3 left-3 z-10 max-h-[calc(100%_-_4rem)] w-[280px] max-w-[calc(100%_-_1.5rem)] overflow-auto rounded-xl border bg-card p-4 shadow-lg"><Button size="sm" variant="ghost" className="mb-2 w-full" onClick={() => setSelectedEdgeId(null)}>Закрыть редактор связи</Button><ConnectionInspector edge={selectedEdge} nodes={nodes} writable={writable && !nodePending} reconnect={connection => onReconnect(selectedEdge, connection)} remove={removeEdge} /></div>}
       </div>
       {workspace === 'device' ? <div className="min-h-0 min-w-0 border-t lg:flex-[1.2] lg:border-l lg:border-t-0"><DeviceWorkbench scriptId={editId} version={expectedVersion} name={document.name} canRun={Boolean(canRun)} canEdit={writable && !nodePending} onInsert={insertRecorded} onExecution={executionChanged} registerCloseGuard={registerWorkbenchGuard} /></div>
         : <aside aria-label="Параметры шага" className="flex min-h-0 shrink-0 flex-col border-t bg-card lg:w-[310px] lg:border-l lg:border-t-0 2xl:w-[350px]">
           <div className="flex gap-1 border-b p-2" role="group" aria-label="Настройки Studio"><Button size="sm" variant={inspectorTab === 'step' ? 'secondary' : 'ghost'} className="flex-1" onClick={() => setInspectorTab('step')}>Шаг</Button><Button size="sm" variant={inspectorTab === 'scenario' ? 'secondary' : 'ghost'} className="flex-1" onClick={() => setInspectorTab('scenario')}><Settings2 className="mr-2 size-3.5" />Сценарий</Button></div>
           <div className="min-h-0 flex-1 space-y-4 overflow-auto p-4">
-            {inspectorTab === 'step' ? selectedNode && mode === 'graph' ? <><div><h2 className="text-sm font-semibold">{ACTION_LABELS[(selectedNode.data.action as { type: typeof ACTION_TYPES[number] }).type]}</h2><p className="mt-1 break-all font-mono text-[10px] text-muted-foreground">{selectedId}</p></div><NodeInspector key={selectedId} source={nodeSource} nodes={nodes} writable={writable} pending={nodePending} onChange={value => { try { setNodeSource(boundedSource(value)); setNodePending(true); setReceipt(null); } catch (reason) { setErrors(errorMessage(reason)); } }} apply={applyNode} cancel={() => { setNodePending(false); setNodeSource(JSON.stringify(parseSource(document.source).nodes.find(node => node.id === selectedId), null, 2)); setErrors(''); }} /></>
-              : <div className="space-y-5"><div className="rounded-xl border border-dashed bg-muted/20 px-4 py-6 text-center"><MousePointer2 className="mx-auto mb-3 size-6 text-muted-foreground" /><h2 className="text-sm font-semibold">Выберите шаг</h2><p className="mt-2 text-xs leading-5 text-muted-foreground">Параметры действия, переходы и ограничения появятся здесь.</p></div><ol className="space-y-4 text-xs"><li className="flex gap-3"><span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-primary/10 font-mono text-primary">1</span><div className="leading-5"><strong>Соберите сценарий</strong><p className="text-muted-foreground">Добавьте действия из библиотеки или импортируйте JSON.</p></div></li><li className="flex gap-3"><span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-primary/10 font-mono text-primary">2</span><div className="leading-5"><strong>Выберите Android</strong><p className="text-muted-foreground">Откройте живое устройство, запишите действия или добавьте XPath.</p></div></li><li className="flex gap-3"><span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-primary/10 font-mono text-primary">3</span><div className="leading-5"><strong>Проверьте и сохраните</strong><p className="text-muted-foreground">Структура проверяется сервером. Работу на Android подтвердит отдельное задание.</p></div></li></ol><Button size="sm" variant="outline" className="w-full" onClick={() => setWorkspace('device')}><Monitor className="mr-2 size-3.5" />Выбрать устройство</Button></div>
+            {inspectorTab === 'step' ? selectedEdge && mode === 'graph' ? <ConnectionInspector edge={selectedEdge} nodes={nodes} writable={writable && !nodePending} reconnect={connection => onReconnect(selectedEdge, connection)} remove={removeEdge} /> : selectedNode && mode === 'graph' ? <><div><h2 className="text-sm font-semibold">{ACTION_LABELS[(selectedNode.data.action as { type: typeof ACTION_TYPES[number] }).type]}</h2><p className="mt-1 break-all font-mono text-[10px] text-muted-foreground">{selectedId}</p></div><NodeInspector key={selectedId} source={nodeSource} nodes={nodes} writable={writable} pending={nodePending} onChange={value => { try { setNodeSource(boundedSource(value)); setNodePending(true); setReceipt(null); } catch (reason) { setErrors(errorMessage(reason)); } }} apply={applyNode} cancel={() => { setNodePending(false); setNodeSource(JSON.stringify(parseSource(document.source).nodes.find(node => node.id === selectedId), null, 2)); setErrors(''); }} /></>
+              : <div className="space-y-5"><div className="rounded-xl border border-dashed bg-muted/20 px-4 py-6 text-center"><MousePointer2 className="mx-auto mb-3 size-6 text-muted-foreground" /><h2 className="text-sm font-semibold">Выберите шаг или связь</h2><p className="mt-2 text-xs leading-5 text-muted-foreground">Нажмите на шаг для настройки действия или на линию для изменения и удаления перехода. Конец связи можно перетащить на другой шаг.</p></div><ol className="space-y-4 text-xs"><li className="flex gap-3"><span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-primary/10 font-mono text-primary">1</span><div className="leading-5"><strong>Соберите сценарий</strong><p className="text-muted-foreground">Добавьте действия из библиотеки или импортируйте JSON.</p></div></li><li className="flex gap-3"><span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-primary/10 font-mono text-primary">2</span><div className="leading-5"><strong>Выберите Android</strong><p className="text-muted-foreground">Откройте живое устройство, запишите действия или добавьте XPath.</p></div></li><li className="flex gap-3"><span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-primary/10 font-mono text-primary">3</span><div className="leading-5"><strong>Проверьте и сохраните</strong><p className="text-muted-foreground">Структура проверяется сервером. Работу на Android подтвердит отдельное задание.</p></div></li></ol><Button size="sm" variant="outline" className="w-full" onClick={() => setWorkspace('device')}><Monitor className="mr-2 size-3.5" />Выбрать устройство</Button></div>
               : <div className="space-y-5"><div><h2 className="text-sm font-semibold">Настройки сценария</h2><p className="mt-1 text-xs text-muted-foreground">Общие параметры и восстановление работы</p></div>
                 <label className="block space-y-2 text-xs font-medium">Таймаут всего сценария, мс<Input type="number" min={1000} max={86400000} value={metadata.timeout_ms ?? 1800000} readOnly={!writable || nodePending || mode !== 'graph'} onChange={event => { try { const dag = parseSource(document.source); dag.timeout_ms = Number(event.target.value); changeDocument({ ...document, source: formatDag(dag) }, true); } catch (reason) { setErrors(errorMessage(reason)); } }} /></label>
                 <label className="block space-y-2 text-xs font-medium">Описание<textarea className="min-h-24 w-full rounded-md border bg-background p-2 text-xs leading-5" maxLength={2000} value={metadata.description ?? ''} readOnly={!writable || nodePending || mode !== 'graph'} onChange={event => { try { const dag = parseSource(document.source); dag.description = event.target.value; changeDocument({ ...document, source: formatDag(dag) }, true); } catch (reason) { setErrors(errorMessage(reason)); } }} /></label>

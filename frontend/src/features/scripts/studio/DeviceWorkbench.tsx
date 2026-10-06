@@ -14,7 +14,7 @@ import { SingleDeviceStream } from '@/src/features/stream/SingleDeviceStream';
 import { Button } from '@/src/shared/ui/button';
 import { Input } from '@/components/ui/input';
 import type { DagNode } from '@/lib/dag/export';
-import { appendRecording, observeAcknowledgedRecording, recordingActions, type RecordedInput, type StreamInput } from './recording';
+import { appendRecording, appendSelectorRecording, observeAcknowledgedRecording, recordingActions, type RecordedInput, type StreamInput } from './recording';
 import type { AcknowledgedControl } from '@/src/features/stream/controlObservation';
 import { actionLabel } from './presentation';
 
@@ -28,9 +28,10 @@ function recordedLabel(entry: RecordedInput): string {
   const command = entry.command;
   if (command.type === 'key_event') return `Клавиша · ${keyLabels[command.keycode] ?? command.keycode}`;
   if (command.type === 'type_text') return `Ввод текста · ${command.text.length} символов`;
+  if (command.type === 'tap_element') return `XPath · ${command.selector}`;
   return `${command.type === 'click' ? 'Нажатие' : 'Свайп'} · ${entry.dimensions.width}×${entry.dimensions.height}`;
 }
-const outcomeLabels = { 'transport-submitted': 'Отправлено WS', 'android-pending': 'Ожидает APK', 'android-confirmed': 'Подтверждено APK', 'android-unknown': 'Результат неизвестен' };
+const outcomeLabels = { 'transport-submitted': 'Отправлено WS', 'android-pending': 'Ожидает APK', 'android-confirmed': 'Подтверждено APK', 'android-unknown': 'Результат неизвестен', 'selector-planned': 'В план · не выполнялся' };
 
 export function DeviceWorkbench(props: Props) {
   const { accessToken } = useAuthStore();
@@ -138,12 +139,15 @@ function OwnedWorkbench({ device, scriptId, version, name, canRun, canEdit, onIn
     {!canRun && <p className="text-xs text-muted-foreground">Для проверки сохраните сценарий и откройте его неизменённую версию. Запуск всегда создаёт одно реальное задание на выбранном Android.</p>}
     <SingleDeviceStream deviceId={device.id} captureEnabled compact controlDisabled={active || runPending || uncertain || controlPending} onControlSent={sent} onControlCommand={commandObserved} onInsertSelector={canEdit && !active && !runPending && !uncertain && !controlPending ? (node, snapshot) => {
       if (snapshot.device_id !== device.id) return;
-      onInsert([{ type: 'tap_element', selector: node.xpath, strategy: 'xpath', timeout_ms: 5000 }]);
+      try {
+        const next = appendSelectorRecording(entriesRef.current, node, snapshot, device.id, Date.now());
+        entriesRef.current = next; setEntries(next); setError('');
+      } catch (reason) { setRecording(false); setError(reason instanceof Error ? reason.message : 'XPath не добавлен в запись.'); }
     } : undefined} />
     <div className="rounded-xl border"><header className="flex flex-wrap items-center justify-between gap-2 border-b px-3 py-2"><h3 className="flex items-center gap-2 text-xs font-semibold"><Radio className={`size-3 ${recording ? 'text-rose-500' : 'text-muted-foreground'}`} />Запись · {entries.length}/200</h3><div className="flex flex-wrap gap-1"><Button size="sm" variant="ghost" disabled={!entries.length || recording || controlPending || !canEdit} onClick={() => { entriesRef.current = []; setEntries([]); }} aria-label="Очистить запись"><Trash2 className="size-3" /></Button><Button size="sm" variant="outline" disabled={!entries.length || recording || controlPending || unresolved || !canEdit} onClick={() => { try { if (onInsert(recordingActions(entriesRef.current, preservePauses))) { entriesRef.current = []; setEntries([]); setError(''); } } catch (reason) { setError(reason instanceof Error ? reason.message : 'Запись не перенесена.'); } }}>Вставить в граф</Button></div></header>
       <label className="flex items-center gap-2 px-3 pt-3 text-xs"><input type="checkbox" checked={preservePauses} disabled={recording || controlPending} onChange={event => setPreservePauses(event.target.checked)} />Сохранять паузы между действиями (до 60 с)</label>
       <p className="px-3 py-2 text-[11px] leading-5 text-muted-foreground">Клики, свайпы и колесо: отправка по WebSocket, без ACK выполнения. Текст и кнопки Android: отдельное подтверждение APK. XPath добавляется явно из инспектора. Буфер Android и выбранное поле зависят от приложения; запись не сохраняет содержимое буфера.</p>
-      <p className="px-3 pb-2 text-[11px] leading-5 text-muted-foreground">Текст скрыт в списке, но войдёт в исходник при вставке в граф. До вставки запись хранится только в памяти этой страницы; не записывайте пароли. Координаты зависят от ориентации; для устойчивого поиска выбирайте XPath.</p>
+      <p className="px-3 pb-2 text-[11px] leading-5 text-muted-foreground">Текст скрыт в списке, но войдёт в исходник при вставке в граф. До вставки запись хранится только в памяти этой страницы; не записывайте пароли. Выбранный XPath добавляется в ту же очередь как будущий шаг и сейчас не нажимает Android. Остановите запись и вставьте очередь в граф.</p>
       {unresolved && <p role="status" className="px-3 pb-3 text-xs text-amber-700 dark:text-amber-400">Перенос заблокирован: дождитесь ответа APK. Если результат неизвестен, проверьте экран и явно удалите сомнительное действие; автоматического повтора нет.</p>}
       {!!entries.length && <ol aria-label="Записанные действия" className="max-h-56 overflow-auto px-3 pb-3">{entries.map((entry, index) => <li key={entry.id} className="flex flex-wrap items-center gap-2 border-t py-2 text-xs"><span className="min-w-0 flex-1 basis-40 break-words">{index + 1}. {recordedLabel(entry)}</span><span className={`rounded-full border px-2 py-1 text-[10px] ${entry.outcome === 'android-unknown' ? 'text-destructive' : entry.outcome === 'android-confirmed' ? 'text-emerald-700 dark:text-emerald-400' : 'text-muted-foreground'}`}>{outcomeLabels[entry.outcome]}</span><Button size="sm" variant="ghost" disabled={recording || controlPending || !canEdit} aria-label={`Удалить действие ${index + 1}`} onClick={() => { const next = entriesRef.current.filter(value => value.id !== entry.id); entriesRef.current = next; setEntries(next); }}><Trash2 className="size-3" /></Button></li>)}</ol>}
     </div>

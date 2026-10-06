@@ -22,6 +22,13 @@
 Исходники `c3937a1`, установленный на этапе аудита UI/API `c1a6e79a`; исходный аудит — только анализ.
 Каталог API и элементов управления не заменяет живую проверку Android и 500–1000 устройств.
 
+**6 октября — связи Studio, упорядоченная selector queue и следующий input protocol:**
+[Follow-up требований пользователя и план приёмки](audits/2026-10-06/STUDIO-INTERACTION-FOLLOWUP.md) ·
+[Явное редактирование связей](audits/2026-10-06/STUDIO-CONNECTION-EDITING.md).
+234/11 scoped tests и types passed; source fixes ждут host repair/build/deploy.
+Continuous gestures, rich pixel/XPath evidence и group input остаются отдельными
+открытыми работами; Home recording проверен на installed PH010, PNG — PH011.
+
 **6 октября, 21:58 UTC+5 — конкретный PNG пользователя проверен против Android RAW:**
 [Pixel comparison и отсутствие DPI metadata](audits/2026-10-06/NATIVE-PNG-PIXEL-VERIFICATION.md) ·
 [Pinned facts](audits/2026-10-06/NATIVE-PNG-PIXEL-EVIDENCE.json).

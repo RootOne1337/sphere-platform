@@ -1,8 +1,12 @@
 import type { DagNode } from '@/lib/dag/export';
 import { ANDROID_EDIT_KEYCODES, androidTextCommand, type AcknowledgedControl, type StreamInput } from '@/src/features/stream/controlObservation';
+import type { UiHierarchyNode, UiHierarchySnapshot } from '@/src/features/stream/uiHierarchy';
 export type { StreamInput } from '@/src/features/stream/controlObservation';
-export type RecordedInput = StreamInput & { id: string; requestId?: string; completedAt?: number;
-  outcome: 'transport-submitted' | 'android-pending' | 'android-confirmed' | 'android-unknown' };
+type PlannedSelector = { deviceId: string; at: number; dimensions: { width: number; height: number };
+  command: { type: 'tap_element'; selector: string; strategy: 'xpath'; timeout_ms: number };
+  selectorSnapshot: { id: string; nodeId: number; rotation: number } };
+export type RecordedInput = (StreamInput | PlannedSelector) & { id: string; requestId?: string; completedAt?: number;
+  outcome: 'transport-submitted' | 'android-pending' | 'android-confirmed' | 'android-unknown' | 'selector-planned' };
 export const RECORDING_LIMIT = 200;
 export function appendRecording(entries: RecordedInput[], input: StreamInput, deviceId: string): RecordedInput[] {
   if (input.deviceId !== deviceId || !Number.isFinite(input.at) || ![input.dimensions.width, input.dimensions.height].every(value => Number.isInteger(value) && value >= 1 && value <= 16384)) throw new Error('Ввод относится к другому устройству или неверному кадру.');
@@ -15,6 +19,23 @@ export function appendRecording(entries: RecordedInput[], input: StreamInput, de
   if (input.command.type === 'key_event' && !ANDROID_EDIT_KEYCODES.has(input.command.keycode)) throw new Error('Клавиша не поддерживается записью.');
   if (input.command.type === 'type_text' && !androidTextCommand(input.command.text)) throw new Error('Текст не поддерживается установленным каналом Android.');
   return [...entries, { ...input, dimensions: { ...input.dimensions }, command: { ...input.command }, id: crypto.randomUUID(), outcome: 'transport-submitted' }];
+}
+/** Selecting a hierarchy node declares a future action; it never injects input.
+ * Keep it in the same ordered review buffer instead of mutating the DAG early. */
+export function appendSelectorRecording(entries: RecordedInput[], node: UiHierarchyNode, snapshot: UiHierarchySnapshot,
+                                        deviceId: string, at: number): RecordedInput[] {
+  if (entries.length >= RECORDING_LIMIT) throw new Error('Достигнут лимит записи: 200 действий. Остановите и перенесите запись.');
+  if (snapshot.device_id !== deviceId || snapshot.source !== 'android_uiautomator_root'
+    || !/^[a-f0-9]{32}$/.test(snapshot.snapshot_id) || !Number.isInteger(snapshot.rotation) || snapshot.rotation < 0 || snapshot.rotation > 3
+    || ![snapshot.width, snapshot.height].every(value => Number.isInteger(value) && value >= 1 && value <= 16384)
+    || !snapshot.nodes.some(value => value.id === node.id && value.xpath === node.xpath)
+    || typeof node.xpath !== 'string' || node.xpath.length > 2048 || !/^\/hierarchy(?:\/node\[\d+\])+$/.test(node.xpath)) {
+    throw new Error('XPath не принадлежит выбранному снимку Android или превышает лимит записи.');
+  }
+  if (!Number.isFinite(at) || entries.length && at < entries[entries.length - 1].at) throw new Error('Запись нарушает порядок времени.');
+  return [...entries, { deviceId, at, dimensions: { width: snapshot.width, height: snapshot.height }, id: crypto.randomUUID(),
+    command: { type: 'tap_element', selector: node.xpath, strategy: 'xpath', timeout_ms: 5000 },
+    selectorSnapshot: { id: snapshot.snapshot_id, nodeId: node.id, rotation: snapshot.rotation }, outcome: 'selector-planned' }];
 }
 /** Keep response updates in the original submission slot, including after Stop.
  * A late/foreign response cannot append an action or confirm another command. */
@@ -45,6 +66,10 @@ export function recordedAction(input: RecordedInput): DagNode['action'] {
   const y = (coord: number) => Math.min(height - 1, Math.floor(coord * height / input.dimensions.height));
   const command = input.command;
   if (input.outcome === 'android-pending' || input.outcome === 'android-unknown') throw new Error('У команды Android нет подтверждённого результата. Дождитесь ответа или удалите этот шаг после проверки экрана.');
+  if (command.type === 'tap_element') {
+    if (input.outcome !== 'selector-planned') throw new Error('XPath не подтверждён как явно выбранный будущий шаг.');
+    return { ...command };
+  }
   if (command.type === 'key_event' || command.type === 'type_text') {
     if (input.outcome !== 'android-confirmed') throw new Error('Команда Android не подтверждена.');
     return command.type === 'key_event' ? { type: 'key_event', keycode: command.keycode }

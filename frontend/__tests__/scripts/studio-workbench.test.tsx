@@ -2,6 +2,7 @@ import { act, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { DeviceWorkbench } from '@/src/features/scripts/studio/DeviceWorkbench';
 import { api } from '@/lib/api';
 import type { AcknowledgedControl } from '@/src/features/stream/controlObservation';
+import type { UiHierarchyNode, UiHierarchySnapshot } from '@/src/features/stream/uiHierarchy';
 
 const deviceId = 'b410464a-5f26-4803-a756-7840cc17b128';
 const scriptId = 'fbffbc95-3c16-4f1e-8833-d77271ac1b28';
@@ -12,6 +13,7 @@ let mockProgress: Record<string, unknown> | undefined;
 let mockLogs: Record<string, unknown>[];
 let mockRetainProgressWhenDisabled = false;
 let mockObserve: (event: AcknowledgedControl) => void;
+let mockSelectorInsert: ((node: UiHierarchyNode, snapshot: UiHierarchySnapshot) => void) | undefined;
 let mockToken = 'fixture-token';
 jest.mock('@/lib/store', () => ({ useAuthStore: () => ({ accessToken: mockToken }) }));
 const mockDevice = { id: deviceId, name: 'PH025', model: 'LDPlayer', status: 'online', agent_version: '1.2.45', android_version: '9' };
@@ -26,15 +28,16 @@ jest.mock('@/lib/hooks/useTasks', () => ({
 jest.mock('@/src/features/access/Capabilities', () => ({ useCapabilities: () => ({ can: () => true }) }));
 jest.mock('@/lib/api', () => ({ api: { post: jest.fn() } }));
 jest.mock('next/link', () => function MockLink({ href, children }: { href: string; children: React.ReactNode }) { return <a href={href}>{children}</a>; });
-jest.mock('@/src/features/stream/SingleDeviceStream', () => ({ SingleDeviceStream: ({ deviceId: ownedId, controlDisabled, onControlSent, onControlCommand }: {
-  deviceId: string; controlDisabled: boolean; onControlSent: (value: unknown) => void; onControlCommand: typeof mockObserve;
-}) => { mockObserve = onControlCommand; return <section aria-label="Поток выбранного Android" data-device={ownedId}>
+jest.mock('@/src/features/stream/SingleDeviceStream', () => ({ SingleDeviceStream: ({ deviceId: ownedId, controlDisabled, onControlSent, onControlCommand, onInsertSelector }: {
+  deviceId: string; controlDisabled: boolean; onControlSent: (value: unknown) => void; onControlCommand: typeof mockObserve; onInsertSelector: typeof mockSelectorInsert;
+}) => { mockObserve = onControlCommand; mockSelectorInsert = onInsertSelector; return <section aria-label="Поток выбранного Android" data-device={ownedId}>
   <button disabled={controlDisabled} onClick={() => onControlSent({ deviceId: ownedId, at: 1000, dimensions: { width: 960, height: 540 }, command: { type: 'click', x: 480, y: 270 } })}>Записать тестовый клик</button>
 </section>; } }));
 
 beforeEach(() => {
   jest.clearAllMocks(); mockTask = undefined; mockProgress = undefined; mockLogs = []; mockRetainProgressWhenDisabled = false; mockToken = 'fixture-token';
-  Object.defineProperty(globalThis.crypto, 'randomUUID', { configurable: true, value: () => '00000000-0000-4000-8000-000000000001' });
+  let sequence = 0;
+  Object.defineProperty(globalThis.crypto, 'randomUUID', { configurable: true, value: () => `00000000-0000-4000-8000-${String(++sequence).padStart(12, '0')}` });
 });
 const version = { id: versionId, version: 1, dag_hash: 'a'.repeat(64) };
 function openDevice(registerCloseGuard?: (guard: ((silent?: boolean) => boolean) | null) => void) {
@@ -138,6 +141,35 @@ it('inserts reviewed recorded actions only when the user explicitly transfers th
   fireEvent.click(screen.getByRole('button', { name: 'Вставить в граф' }));
   expect(onInsert).toHaveBeenCalledWith([{ type: 'tap', x: 640, y: 360 }]);
   expect(api.post).not.toHaveBeenCalled();
+});
+const selectorNode: UiHierarchyNode = { id: 0, parent_id: null, depth: 0, xpath: '/hierarchy/node[1]', bounds: null, attributes: {} };
+const selectorSnapshot: UiHierarchySnapshot = { device_id: deviceId, snapshot_id: 'a'.repeat(32), source: 'android_uiautomator_root', width: 960, height: 540, rotation: 0,
+  requested_at: '2026-10-06T00:00:00Z', completed_at: '2026-10-06T00:00:01Z', temporary_file_cleanup_confirmed: true, nodes: [selectorNode] };
+it('reviews XPath in order after recorded input, without injecting Android or mutating the graph before transfer', () => {
+  const { onInsert } = openDevice();
+  const now = jest.spyOn(Date, 'now').mockReturnValue(2000);
+  try {
+    fireEvent.click(screen.getByRole('button', { name: 'Записать действия' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Записать тестовый клик' }));
+    act(() => mockSelectorInsert!(selectorNode, selectorSnapshot));
+    expect(onInsert).not.toHaveBeenCalled();
+    expect(screen.getByText('В план · не выполнялся')).toBeInTheDocument();
+    expect(screen.getByRole('list', { name: 'Записанные действия' }).children).toHaveLength(2);
+    expect(screen.getByRole('button', { name: 'Вставить в граф' })).toBeDisabled();
+    fireEvent.click(screen.getByRole('button', { name: 'Остановить запись' }));
+    fireEvent.click(screen.getByLabelText('Сохранять паузы между действиями (до 60 с)'));
+    fireEvent.click(screen.getByRole('button', { name: 'Вставить в граф' }));
+    expect(onInsert).toHaveBeenCalledWith([{ type: 'tap', x: 640, y: 360 }, { type: 'tap_element', selector: selectorNode.xpath, strategy: 'xpath', timeout_ms: 5000 }]);
+    expect(api.post).not.toHaveBeenCalled();
+  } finally { now.mockRestore(); }
+});
+it('keeps a selector-only plan for explicit review even when recording is stopped', () => {
+  const { onInsert } = openDevice();
+  act(() => mockSelectorInsert!(selectorNode, selectorSnapshot));
+  expect(onInsert).not.toHaveBeenCalled();
+  expect(screen.getByText('В план · не выполнялся')).toBeInTheDocument();
+  fireEvent.click(screen.getByRole('button', { name: 'Вставить в граф' }));
+  expect(onInsert).toHaveBeenCalledWith([{ type: 'tap_element', selector: selectorNode.xpath, strategy: 'xpath', timeout_ms: 5000 }]);
 });
 
 it('permits an explicit corrected retry after a definitive API rejection, without automatically resubmitting', async () => {

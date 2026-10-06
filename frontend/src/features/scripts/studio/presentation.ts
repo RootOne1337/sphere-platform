@@ -1,6 +1,13 @@
 import type { DagNode } from '@/lib/dag/export';
 import { ACTION_LABELS } from '@/lib/dag/studio';
 
+/** Configured key_event actions, not new runtime action types or live commands. */
+export const ANDROID_KEY_PRESETS = [
+  { label: 'Домой', keycode: 3 }, { label: 'Назад', keycode: 4 },
+  { label: 'Недавние', keycode: 187 }, { label: 'Меню', keycode: 82 },
+  { label: 'Enter', keycode: 66 }, { label: 'Backspace', keycode: 67 },
+] as const;
+
 export const ACTION_GROUPS = [
   { name: 'Управление экраном', types: ['tap', 'swipe', 'long_press', 'double_tap', 'scroll', 'key_event', 'type_text', 'input_clear'] },
   { name: 'Элементы и проверки', types: ['find_element', 'tap_element', 'find_first_element', 'tap_first_visible', 'get_element_text', 'wait_for_element_gone', 'scroll_to', 'assert'] },

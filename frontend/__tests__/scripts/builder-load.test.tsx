@@ -2,8 +2,10 @@ import { act, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import ScriptBuilderPage from '@/app/(dashboard)/scripts/builder/page';
 import { api } from '@/lib/api';
 import { TextEncoder } from 'node:util';
+import { deserialize, serialize } from 'node:v8';
 import type { ReactFlowProps } from '@xyflow/react';
 Object.assign(globalThis, { TextEncoder });
+Object.defineProperty(globalThis, 'structuredClone', { configurable: true, value: (value: unknown) => deserialize(serialize(value)) });
 
 let mockEditId: string | null = 'script-a';
 const mockPush = jest.fn();
@@ -32,19 +34,23 @@ const mockFitView = jest.fn().mockResolvedValue(true);
 let mockGraphProps: ReactFlowProps = {};
 jest.mock('@xyflow/react', () => {
   const React = jest.requireActual('react');
-  const { applyNodeChanges } = jest.requireActual('@xyflow/react');
+  const { applyNodeChanges, applyEdgeChanges, addEdge } = jest.requireActual('@xyflow/react');
   return {
     useNodesState: (initial: unknown) => {
       const [nodes, setNodes] = React.useState(initial);
       const onChange = React.useCallback((changes: unknown) => setNodes((current: unknown) => applyNodeChanges(changes, current)), []);
       return [nodes, setNodes, onChange];
     },
-    useEdgesState: (initial: unknown) => [...React.useState(initial), jest.fn()],
-    addEdge: jest.fn(),
+    useEdgesState: (initial: unknown) => {
+      const [edges, setEdges] = React.useState(initial);
+      const onChange = React.useCallback((changes: unknown) => setEdges((current: unknown) => applyEdgeChanges(changes, current)), []);
+      return [edges, setEdges, onChange];
+    },
+    addEdge,
     ReactFlow: (props: ReactFlowProps) => {
       mockGraphProps = props;
       React.useEffect(() => { props.onInit?.({ fitView: mockFitView } as never); }, []);
-      return <div data-testid="graph">{props.nodes?.map((node) => <button key={node.id} onClick={event => props.onNodeClick?.(event, node)}>{node.id}</button>)}</div>;
+      return <div data-testid="graph">{props.nodes?.map((node) => <button key={node.id} onClick={event => props.onNodeClick?.(event, node)}>{node.id}</button>)}{props.edges?.map(edge => <button key={edge.id} onClick={event => props.onEdgeClick?.(event, edge)}>Связь {edge.id}</button>)}</div>;
     },
     Background: () => null, Controls: () => null, MiniMap: () => null,
   };
@@ -78,6 +84,90 @@ function animationFrames() {
     callbacks.forEach(callback => callback(performance.now()));
   });
 }
+
+it('adds an Android navigation preset to the graph without issuing live input', async () => {
+  mockEditId = null;
+  Object.defineProperty(crypto, 'randomUUID', { configurable: true, value: () => '00000000-0000-4000-8000-000000000012' });
+  render(<ScriptBuilderPage />);
+  fireEvent.click(screen.getByRole('button', { name: 'Добавить действие Домой' }));
+  expect(mockGraphProps.nodes).toHaveLength(3);
+  fireEvent.click(screen.getByRole('button', { name: 'JSON' }));
+  const graph = JSON.parse((screen.getByLabelText(/Исходник DAG/) as HTMLTextAreaElement).value);
+  const key = graph.nodes.find((node: { action: { type: string } }) => node.action.type === 'key_event');
+  expect(key.action).toEqual({ type: 'key_event', keycode: 3 });
+  expect(graph.nodes.find((node: { id: string }) => node.id === graph.entry_node).on_success).toBe(key.id);
+  expect(key.on_success).toBe('end-1');
+  expect(api.post).not.toHaveBeenCalled(); expect(api.put).not.toHaveBeenCalled();
+});
+
+it('exposes a connection inspector and removes the canonical transition without deleting either step', async () => {
+  jest.mocked(api.get).mockResolvedValue(payload() as never);
+  render(<ScriptBuilderPage />); await screen.findByText('script-a-start');
+  fireEvent.click(screen.getByRole('button', { name: 'Связь e-script-a-start-next-script-a-end' }));
+  expect(screen.getByRole('region', { name: 'Редактор связи' })).toBeInTheDocument();
+  fireEvent.click(screen.getByRole('button', { name: 'Разорвать связь' }));
+  expect(mockGraphProps.nodes).toHaveLength(2); expect(mockGraphProps.edges).toHaveLength(0);
+  fireEvent.click(screen.getByRole('button', { name: 'Сохранить версию' }));
+  expect(await screen.findByRole('alert')).toHaveTextContent('недостижим');
+  expect(api.put).not.toHaveBeenCalled();
+  fireEvent.click(screen.getByRole('button', { name: 'JSON' }));
+  const removed = JSON.parse((screen.getByLabelText(/Исходник DAG/) as HTMLTextAreaElement).value);
+  expect(removed.nodes[0].on_success).toBeNull(); expect(removed.nodes).toHaveLength(2);
+  fireEvent.click(screen.getByRole('button', { name: 'Отменить изменение' }));
+  const restored = JSON.parse((screen.getByLabelText(/Исходник DAG/) as HTMLTextAreaElement).value);
+  expect(restored.nodes[0].on_success).toBe('script-a-end');
+});
+
+it('serializes reconnection from the inspector and the canvas through the same route contract', async () => {
+  const response = payload();
+  response.data.current_version.dag.nodes.splice(1, 0, { id: 'pause', action: { type: 'sleep', ms: 10 } as never, on_success: 'script-a-end', on_failure: null, retry: 0, timeout_ms: 30000 });
+  response.data.current_version.dag.nodes[0].on_success = 'pause';
+  jest.mocked(api.get).mockResolvedValue(response as never);
+  jest.mocked(api.put).mockResolvedValue({ data: {} } as never);
+  render(<ScriptBuilderPage />); await screen.findByText('script-a-start');
+  fireEvent.click(screen.getByRole('button', { name: 'Связь e-script-a-start-next-pause' }));
+  fireEvent.change(screen.getByRole('combobox', { name: 'Выход связи' }), { target: { value: 'failure' } });
+  expect(mockGraphProps.edges?.find(edge => edge.source === 'script-a-start')).toMatchObject({ sourceHandle: 'failure', target: 'pause' });
+  const changed = mockGraphProps.edges!.find(edge => edge.source === 'script-a-start')!;
+  act(() => mockGraphProps.onReconnect?.(changed, { source: 'script-a-start', sourceHandle: null, target: 'pause', targetHandle: null }));
+  expect(mockGraphProps.edges?.find(edge => edge.id === changed.id)?.sourceHandle).toBeNull();
+  fireEvent.click(screen.getByRole('button', { name: 'Сохранить версию' }));
+  await waitFor(() => expect(api.put).toHaveBeenCalled());
+  expect(jest.mocked(api.put).mock.calls[0][1]).toMatchObject({ dag: response.data.current_version.dag });
+});
+
+it('blocks inspector and canvas connection edits while parameters are unapplied or permissions are read only', async () => {
+  jest.mocked(api.get).mockResolvedValue(payload() as never);
+  const view = render(<ScriptBuilderPage />); await screen.findByText('script-a-start');
+  mockCanWrite = false; view.rerender(<ScriptBuilderPage />);
+  fireEvent.click(screen.getByRole('button', { name: 'Связь e-script-a-start-next-script-a-end' }));
+  expect(screen.getByRole('button', { name: 'Разорвать связь' })).toBeDisabled();
+  expect(screen.getByRole('combobox', { name: 'Выход связи' })).toBeDisabled();
+  expect(mockGraphProps.edgesReconnectable).toBe(false);
+  const existing = mockGraphProps.edges![0];
+  act(() => mockGraphProps.onReconnect?.(existing, { source: existing.source, target: existing.target, sourceHandle: 'failure', targetHandle: null }));
+  expect(mockGraphProps.edges![0].sourceHandle).toBeNull();
+  mockCanWrite = true; view.rerender(<ScriptBuilderPage />);
+  fireEvent.click(screen.getByRole('button', { name: 'script-a-start' }));
+  fireEvent.click(screen.getByRole('button', { name: 'JSON шага' }));
+  fireEvent.change(screen.getByLabelText('Шаг JSON: action, переходы, retry, timeout_ms'), { target: { value: '{pending' } });
+  expect(mockGraphProps.edgesReconnectable).toBe(false);
+  act(() => mockGraphProps.onEdgeClick?.({} as never, existing));
+  expect(screen.getByRole('alert')).toHaveTextContent('параметры текущего шага');
+  act(() => mockGraphProps.onReconnect?.(existing, { source: existing.source, target: existing.target, sourceHandle: 'failure', targetHandle: null }));
+  expect(mockGraphProps.edges![0].sourceHandle).toBeNull();
+});
+
+it('lets an operator edit connections while keeping the device workbench mounted', async () => {
+  jest.mocked(api.get).mockResolvedValue(payload() as never);
+  render(<ScriptBuilderPage />); await screen.findByText('script-a-start');
+  fireEvent.click(screen.getByRole('button', { name: 'Устройство · запись · проверка' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Связь e-script-a-start-next-script-a-end' }));
+  expect(screen.getByText('Owned workbench')).toBeInTheDocument();
+  fireEvent.click(screen.getByRole('button', { name: 'Разорвать связь' }));
+  expect(screen.getByText('Owned workbench')).toBeInTheDocument();
+  expect(mockGraphProps.edges).toHaveLength(0);
+});
 
 it('keeps a failed existing-script read out of the editor and only saves its original graph after explicit retry', async () => {
   jest.mocked(api.get).mockRejectedValueOnce(new Error('network timeout')).mockResolvedValueOnce(payload() as never);

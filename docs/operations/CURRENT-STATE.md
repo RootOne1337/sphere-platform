@@ -4,6 +4,20 @@
 **Область:** исходники и документация ветки PR #19, записанные runtime-наблюдения, Android APK и готовность следующего прогона.<br />
 **Канонический документ текущего состояния:** этот файл. Исторические отчёты ниже сохраняют исходные даты и факты.
 
+**6 октября, 22:13 UTC+5 — Studio interaction source fixes:** явный editor
+связи, перенос её конца, delete-only transition и шесть Android key presets.
+Selector из XPath inspector теперь проходит ту же ordered review queue, что
+click/key/text, с меткой **В план · не выполнялся**: не выдаётся за APK ACK и
+не переставляет граф до переноса записи. **234 tests / 11 suites passed**,
+strengthened selector bounds10/10 и TypeScript passed. Home на installed PH010
+записан с реальным439ms ACK и экспортирован в key_event3; это не frame latency.
+Новые source fixes **не установлены**: C: repair gate закрыт. UI1c26ffc7/APIeb7a7c26,
+APK/OTA/туннели сохранены, общий9/41 не изменён. Continuous DOWN/MOVE/UP,
+rich XPath/native crop/pixel recorder, correlated replay, subgraphs, group input
+и AI workspace разложены по требованиям, зависимости и приёмке.
+[Follow-up и приоритеты](../audits/2026-10-06/STUDIO-INTERACTION-FOLLOWUP.md) ·
+[Связи](../audits/2026-10-06/STUDIO-CONNECTION-EDITING.md).
+
 **6 октября, 21:58 UTC+5 — проверен конкретный PNG пользователя с PH011:** файл
 `sphere-414ce0e9-…-dc4f98b956364287bb5157d9bee5450f.png` — 960×540, 236 486B,
 RGBA8; pHYs/eXIf нет, DPI не записан. Native server trace подтвердил10/10 RPC
