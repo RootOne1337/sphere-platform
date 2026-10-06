@@ -1,13 +1,60 @@
 # Backend: доставка того же проверенного production image
 
 Дата: **7 октября 2026, Asia/Yekaterinburg**. PR [#19](https://github.com/RootOne1337/sphere-platform/pull/19).
-Статус при записи: source implementation; hosted artifact/runtime admission ещё
-не подтверждены. Installed API **eb7a7c26**, UI **b50d6ae**, APK сохранены.
+Статус актуального продолжения: **API 114775a установлен 7 октября, 03:35 +05**
+из того же проверенного CI image. UI **b50d6ae**, APK и остальные 45 контейнеров
+сохранены. Предыдущие source-only gates ниже относятся к этапу подготовки.
 Общий product ledger **9 accepted / 41 open** не изменён.
 
 [Текущее состояние](../../operations/CURRENT-STATE.md) ·
 [Action contract](../2026-10-06/STUDIO-ACTION-PARAMETERS.md) ·
 [Проверенный UI и открытые границы](STUDIO-RESIZE-INSTALLED-ACCEPTANCE.json).
+
+## Приёмка live API, 7 октября
+
+[Exact image/CI/runtime/browser receipt](BACKEND-CONTRACT-INSTALLED-ACCEPTANCE.json).
+Backend workflow [37539920295](https://github.com/RootOne1337/sphere-platform/actions/runs/37539920295)
+для full SHA `114775a481f579e840ff63a154f1520b2f37dd0d` завершён success:
+**3050 passed / 37 skipped / 112 subtests**, coverage **80.41%**. Все шесть jobs,
+включая lint/security/RLS/production image/Alembic single head, прошли.
+Frontend [37539920276](https://github.com/RootOne1337/sphere-platform/actions/runs/37539920276)
+и Android [37539920262](https://github.com/RootOne1337/sphere-platform/actions/runs/37539920262)
+того же source также success, attempt 1.
+
+Artifact **11447958740**, Docker-save gzip **236 141 252 B**. Downloaded ZIP
+**236 142 884 B** прошёл independent GitHub SHA-256; архив — byte/config admission.
+CI config ID `sha256:228efeb59880d9a1ab8badbd96a61318b72f6014de6fbee4b73a14130769b2b9`
+связан с Docker Desktop loaded manifest в отдельном receipt. ZIP удалён после
+проверки; raw tar и повторный local build не создавались. Archive сохранён для
+воспроизводимости; прежний runtime image сохранён для возврата. Это не общая
+очистка Docker и не решение неизвестного storage-growth writer.
+
+Read-only plan подтвердил только шесть разрешённых source files, неизменные
+requirements, SQL head `20261006_script_catalog_metadata`, environment и четыре
+mount targets. Перед apply в текущем tenant было 0 running/assigned/queued tasks.
+Установщик заменил только backend, сохранил 45 остальных container identities/
+images/start epochs/status, OTA hash и SQL head; миграций и APK rollout не было.
+Gateway `/health/ready` подтвердил PostgreSQL/Redis, `/health/build` — exact source.
+Rollback не потребовался; его отказные границы приняты в local tests.
+
+Реальный authenticated canary на 3015:
+
+- Action contract **1.0 / 32 actions**, `Cache-Control: no-store`; без auth — **401**.
+- Корректный draft sleep→end — **200**, `action_parameters_verified=true`.
+- Структурно допустимый tap без x/y — **422**, даже при прямом REST-запросе.
+- Все 25 catalog rows и их fingerprint сохранены; исторический task detail — **200**.
+- **14/19 online** восстановлены; у всех 14 heartbeat и connected_since позже
+  старта нового API. Это finite reconnect evidence, не fleet execution/soak.
+- В native browser на UI b50d6ae сценарий Start→sleep→End, 3 шага / 2 связи,
+  получил server contract 1.0. ELK layout сохранил результат проверки и тот же
+  executable hash. В captured browser logs — 0 error/warning. Ничего не опубликовано.
+
+UI/API SHA различаются: banner `MISMATCH` показывает разницу сборок, а не
+результат APK capability admission. Новый server contract проверяет параметры;
+он не утверждает выполнение на Android. Pilot environment остаётся development
+с реальной авторизацией; VPS production-role rollout отдельно не принят.
+
+![Реальный серверный результат и упорядоченный граф](assets/backend-contract/arranged-validation-114775a.jpg)
 
 ## Подтверждённый разрыв доставки
 
@@ -104,8 +151,9 @@ regressions. Проверены read-only plan, отказ до image load пр�
 SQL mismatch, изменение зависимого сервиса/env/mount, CI partial/cancelled/foreign,
 canonical Git bytes, health revision/budget, успех с сохранением dependencies,
 owned rollback и запрет остановки чужого image. Scoped Ruff passed.
-Hosted run для commit `114775a` и live update ещё ожидаются; source tests не
-подменяют проверку настоящего runtime.
+На этапе написания установщика hosted run/live update ещё ожидались.
+Фактическая приёмка завершена отдельным датированным срезом выше; 51 local
+methods и exact-source CI относятся к разным проверкам.
 
 **35 local unittest methods passed:** 22 существующих UI/archive/installer
 и 13 backend/archive/packager; внутри методов отдельные негативные subcases.
@@ -115,7 +163,7 @@ byte budgets, short SHA, mismatch probe receipts, stream preservation,
 failed save cleanup и сохранность уже существующего файла при exclusive-open failure.
 Локальная тяжёлая сборка/установка не выполнялась.
 
-Следующий шаг: exact hosted CI → скачать admitted artifact → read-only plan
+Исторический план до установки: exact hosted CI → скачать admitted artifact → read-only plan
 по live Compose owner/config/env, версии SQL и source/dependency delta → bounded
 backend-only install/rollback → реальные authenticated contract/negative validate,
 catalog/task read и agent reconnect. UI, PostgreSQL, Redis, APK, OTA и gateway

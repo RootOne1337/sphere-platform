@@ -10,6 +10,10 @@
 на 99af20d; b50d6ae добавляет принятый resize overview и сохранение ручного zoom.
 [Latest runtime/browser/CI receipt](../2026-10-07/STUDIO-RESIZE-INSTALLED-ACCEPTANCE.json) ·
 [Resize](../2026-10-07/STUDIO-CANVAS-RESIZE.md).
+**Позднейший срез 7 октября, 03:35 +05:** API 114775a получил live contract 1.0
+для 32 действий: valid 200, missing coordinates 422, anonymous 401. 25 сценариев
+сохранены, 14 online agents переподключились; APK не менялся.
+[API delivery/acceptance](../2026-10-07/REVIEWED-BACKEND-DELIVERY.md).
 CI exact source: frontend 1692/133, backend 3037 passed / 37 skipped и Android success.
 Утверждения installed 1c26ffc7/закрытый host gate выше и в таблице ниже —
 исторический срез 6 октября. Continuous/rich recorder остаются открытыми;

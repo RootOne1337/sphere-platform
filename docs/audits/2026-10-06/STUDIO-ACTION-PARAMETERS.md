@@ -9,9 +9,12 @@ PR [#19](https://github.com/RootOne1337/sphere-platform/pull/19).
 **Датированное продолжение 7 октября:** UI b50d6ae установлен и получил
 [отдельную browser/CI приёмку](../2026-10-07/STUDIO-RESIZE-INSTALLED-ACCEPTANCE.json).
 Windows repair завершён; ниже сохранён исторический host gate 6 октября.
-Installed API eb7a7c26 ещё не подтверждает параметры. Следующий этап —
-[admitted backend image и packaged guard](../2026-10-07/REVIEWED-BACKEND-DELIVERY.md),
-source implementation без заявления об установленном server contract.
+**7 октября, 03:35 +05:** API **114775a** установлен из admitted CI image;
+реальный browser/REST подтвердил contract 1.0, valid 200 / missing tap x/y 422 /
+unauthenticated 401, 25 сохранённых сценариев и reconnect всех 14 online agents.
+[Доставка и packaged guard](../2026-10-07/REVIEWED-BACKEND-DELIVERY.md) ·
+[Installed receipt](../2026-10-07/BACKEND-CONTRACT-INSTALLED-ACCEPTANCE.json).
+Ни Android capability admission, ни execution/continuous input этим не закрываются.
 
 [Текущее состояние](../../operations/CURRENT-STATE.md) ·
 [Операторская инструкция](../../operations/SCRIPT-STUDIO.md) ·

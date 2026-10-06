@@ -2,7 +2,12 @@
 
 Актуализировано: **7 октября 2026**. Каталог `/scripts`, редактор
 `/scripts/builder`, формат **DAG1.0**, React Flow, локальная ELK0.12.0.
-На 3015 установлен frontend **b50d6ae**, API — **eb7a7c26**.
+На 3015 установлен frontend **b50d6ae**, API — **114775a**.
+**7 октября, 03:35 +05:** API обновлён из того же tested CI image без миграций;
+реальный editor/REST canary подтвердил server contract 1.0. Все 25 сценариев,
+task detail и 14 online agents сохранены/восстановлены.
+[Приёмка API и границы](../audits/2026-10-07/REVIEWED-BACKEND-DELIVERY.md) ·
+[Exact evidence](../audits/2026-10-07/BACKEND-CONTRACT-INSTALLED-ACCEPTANCE.json).
 
 **Фактическая приёмка:** отдельные узлы, palette drag/drop, явная вставка,
 переназначение/разрыв связи и Undo приняты на предыдущем 439f910; новая версия
@@ -33,17 +38,18 @@ drag узла и фокус на добавленном шаге сохраня�
 [Исходный PNG](../audits/2026-10-06/NATIVE-PNG-PIXEL-VERIFICATION.md).
 
 32 action forms и локальная проверка параметров доступны в установленном
-frontend. **Installed APIeb7a7c26 проверяет структуру, но не подтвердил
-action_parameters_verified:** новый server contract остаётся source-only до
-отдельного backend admission. Поведение APK проверяется отдельно. Новая сборка
-UI не делает frontend/API revisions одинаковыми и не заменяет fleet canary.
+frontend. **Installed API114775a подтверждает action_parameters_verified=true**
+для корректного draft и отклоняет неправильные типы/обязательные параметры.
+Результат проверки явно сообщает contract 1.0 и отсутствие Android execution
+verification. Поведение конкретного APK проверяется отдельно. UI/API SHA
+различаются; это не автоматически означает несовместимость контракта.
 
-Для установки server contract подготовлена [доставка того же CI backend image](../audits/2026-10-07/REVIEWED-BACKEND-DELIVERY.md).
+Server contract установлен через [доставку того же CI backend image](../audits/2026-10-07/REVIEWED-BACKEND-DELIVERY.md).
 Packaged auth/schema/valid/invalid guard проверяется после process restart;
 artifact retention/admission не заменяет live Compose/SQL/agent проверку.
-До записанной live приёмки API eb7a7c26 остаётся старым.
+Live приёмка API записана отдельно; ни один новый script/task этим canary не запускался.
 
-Следующий source срез: 32 опубликованных действия имеют общий контракт типов,
+Реализация contract: 32 опубликованных действия имеют общий контракт типов,
 обязательных полей, ограничений и эффектов. В форме узла доступны **Контракт
 параметров** и **Дополнительные параметры**. Frontend установлен; JSON
 черновика сохраняется для исправления; check/save блокируют неверные параметры.

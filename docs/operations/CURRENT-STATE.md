@@ -4,6 +4,20 @@
 **Область:** исходники и документация ветки PR #19, записанные runtime-наблюдения, Android APK и готовность следующего прогона.<br />
 **Канонический документ текущего состояния:** этот файл. Исторические отчёты ниже сохраняют исходные даты и факты.
 
+**7 октября, 03:35 +05 — обновлён API 114775a на 3015:** установлен тот же
+production image, который прошёл полный hosted CI. Live contract 1.0 содержит
+32 действия; корректный draft принят, tap без координат отклонён 422, без auth 401.
+В настоящем Script Studio UI b50d6ae виден server parameter verification.
+Все 25 сценариев сохранены; task detail отвечает; 14/19 устройств вернулись
+в online с новыми heartbeat/connected_since. Другие 45 контейнеров, SQL head,
+OTA и APK сохранены; миграций и новых запусков сценариев не было.
+Backend exact-source CI **3050 passed / 37 skipped / 112 subtests**, coverage
+**80.41%**, все 6 jobs success; frontend и Android того же source — success.
+**51 local delivery tests** проверяют archive/installer/rollback boundaries.
+[Доставка и подробная приёмка](../audits/2026-10-07/REVIEWED-BACKEND-DELIVERY.md) ·
+[Image/runtime/browser evidence](../audits/2026-10-07/BACKEND-CONTRACT-INSTALLED-ACCEPTANCE.json).
+Это pilot с реальной авторизацией, не VPS production-role/fleet soak admission.
+
 **7 октября — установленный UI b50d6ae на 3015:** обзор графа теперь
 следует за размером холста, а ручной pan/zoom сохраняется. Без дополнительного
 «Весь граф» проверены переходы 1920→1280 и 390 px, оба направления ELK,
@@ -19,25 +33,26 @@ fresh types/build, 26 pages / 73 assets image admission; 22 archive/installer
 methods и 18 HTTP cases. Backend **3037 passed / 37 skipped**, 55 subtests,
 coverage 80.36%; Android workflow success. Runs: frontend 37535540138,
 backend 37535540188, Android 37535540323, attempt 1.
-Это результаты установленного SHA; следующий documentation-only HEAD
+Это результаты установленного UI SHA; последующие delivery-tools/docs HEAD
 проверяется отдельно. Старый backend 439f910 attempt 1 имел один 20 s
 PowerShell fixture timeout; attempt 2 отменён новым push. Причина старого
 timeout не установлена, ограничения теста не ослаблялись.
 
-Windows completed repair, Healthy/OK и Git fsck подтверждены. API **eb7a7c26**,
-остальные 45 контейнеров и OTA сохранены; APK не обновлялся.
+Windows completed repair, Healthy/OK и Git fsck подтверждены. Предыдущая
+установка UI сохраняла API **eb7a7c26**; последующий API rollout **114775a**
+описан выше. APK не обновлялся.
 [Postboot handoff](../audits/2026-10-07/POSTBOOT-RECOVERY.md).
-API validate подтверждает структуру/Lua safety, но этот installed API не
-подтверждает новый action-parameter contract или выполнение Android.
+API validate теперь подтверждает структуру/Lua safety и action-parameter contract;
+выполнение Android и capabilities конкретного APK проверяются отдельно.
 Причины расхода диска/RAM и повреждений файлов не установлены. Ledger
 **9 accepted / 41 open** сохраняется; continuous input, rich recorder и fleet
 acceptance не закрываются приёмкой графа.
 
-**Следующий этап 7 октября — доставка backend:** реализовано сохранение того же
-production image из CI, source/run/attempt и bounded archive admission; 35 local
-unittest methods и scoped Ruff passed. Новый packaged probe проверяет auth,
-32 action rules и valid/invalid validate после process restart. Hosted artifact
-и live backend install пока не приняты; API eb7a7c26 продолжает работать.
+**Доставка backend завершена в пределах описанного canary:** bounded archive,
+source/run/attempt, independent CI config ID и full workflow success проверены;
+установщик сохраняет конфигурацию и SQL и допускает только backend image delta.
+Continuous DOWN/MOVE/UP остаётся следующим P1: нужен APK injector и lifecycle
+touch sequence, а не только pointermove в браузере.
 [Контракт доставки и оставшиеся gates](../audits/2026-10-07/REVIEWED-BACKEND-DELIVERY.md).
 
 Ниже — исторические срезы до postboot handoff; версии/runtime gates относятся

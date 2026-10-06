@@ -24,16 +24,21 @@
 [Resize](audits/2026-10-07/STUDIO-CANVAS-RESIZE.md).
 Все три exact-source CI успешны: frontend **1692/133**, types/build/image;
 backend **3037 passed / 37 skipped**, 55 subtests, coverage 80.36%; Android success.
-API eb7a7c26, APK, 45 остальных контейнеров и OTA сохранены.
+На этапе UI install сохранялись API eb7a7c26, APK, 45 остальных контейнеров и OTA;
+последующий API rollout 114775a приведён ниже.
 [Доставка](audits/2026-10-07/REVIEWED-WEB-DELIVERY.md) ·
 [Completed repair и открытая причина storage/corruption](audits/2026-10-07/POSTBOOT-RECOVERY.md).
 Полная Android/continuous/rich-recorder приёмка открыта. Исторические source
 и preboot receipts ниже относятся к их собственным датам и SHA.
 
-**Следующий этап — проверенный backend artifact:**
+**7 октября, 03:35 +05 — backend 114775a установлен:**
 [Exact CI image, bounded gzip/admission, packaged action guard и live gates](audits/2026-10-07/REVIEWED-BACKEND-DELIVERY.md).
-35 local archive/installer/packager methods и Ruff passed; новый source ещё
-не является установленным API. Runtime eb7a7c26 и приёмка 9/41 сохраняются.
+51 local delivery methods и Ruff passed. Exact backend CI: 3050 passed / 37
+skipped / 112 subtests, coverage 80.41%; frontend и Android того же SHA success.
+В реальном UI/API принят server contract 1.0: valid 200 / missing coordinates
+422 / anonymous 401. 25 сценариев и SQL сохранены, 14/19 устройств снова online.
+[Installed runtime/browser evidence](audits/2026-10-07/BACKEND-CONTRACT-INSTALLED-ACCEPTANCE.json).
+Общая приёмка 9/41 сохраняется; continuous input и fleet execution/soak открыты.
 
 **5 октября — комплексный аудит продукта:**
 [22 раздела в браузере, шесть подтверждённых дефектов, ограничение Grafana и 50 работ](audits/2026-10-05/ENTERPRISE-PRODUCT-AUDIT.md) ·
