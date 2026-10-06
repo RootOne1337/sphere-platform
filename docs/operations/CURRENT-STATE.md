@@ -6,7 +6,38 @@
 
 [Главная](../../README.md) · [Каталог документации](../README.md) · [Readiness](READINESS.md) · [Fleet32 gates](../audits/2026-09-20/FLEET32-PREFLIGHT.md) · [PR #19](https://github.com/RootOne1337/sphere-platform/pull/19)
 
-**6 октября, 18:48 UTC+5 — APK 1.2.46 установлен только на локальный PH011:**
+**6 октября, 19:48 UTC+5 — APK 1.2.47 установлен только на локальный PH011:**
+Source **3493eb6 / 10247** устранил blind screenshot wait и неограниченное
+накопление новых PNG в `/sdcard`: подтверждённый FIFO root ACK, проверка PNG и
+private cache **8 файлов / до 5 MiB каждый / 30 min при следующем capture**.
+Оригинальные пиксели не перекодируются. Одно обновление **1.2.46 → 1.2.47**
+сохранило UID, preferences и identity; только PH011. Один saved-version task
+**b1d67f65-f7b9-4859-906a-77513017acfc** завершился **14/14**, сделал 10 снимков;
+остались последние **8 / 1 880 304 B**, первые два удалены. Последний original
+**960×540 PNG** совпал с Android по SHA256; native browser проверил реальные reports.
+Локальные полные Dev/Enterprise suites: по **869 passed / 3 skipped** из 872;
+Ubuntu CI JUnit четырёх вариантов: по **871 passed / 1 skipped**, обе filesystem
+symlink ветки исполнены. Все четыре source workflow **3493eb6** success,
+Preview deploy skipped. Общий счёт **9 / 41** сохраняется.
+**Task artifact delivery остаётся открытой**: server manifest пуст; output честно
+указывает local cache и `server_artifact_available=false`. PNG evidence получен
+адресно через ADB, это не server upload. Remote APK/OTA, UI **1c26ffc7**, API
+**eb7a7c26** и туннели этим этапом не обновлялись. Далее — EP-016 action schemas /
+capability preflight и отдельный task artifact transport/lifecycle.
+[Контракт и установленная проверка](../audits/2026-10-06/ANDROID-SCREENSHOT-CACHE.md) ·
+[Pinned evidence](../audits/2026-10-06/ANDROID-SCREENSHOT-CACHE-EVIDENCE.json).
+
+**Повторный host incident 6 октября, 19:28 UTC+5:** пять loose Git объектов
+оказались повреждены, включая blobs текущего frontend и двух JPEG evidence.
+Сохранены raw backups, восстановлены только эти пять объектов из GitHub с проверкой
+исходного SHA-1; последующий Git fsck и pinned evidence validator прошли.
+Новое Ntfs55 **11:15:49 UTC / record 220639** относится к индексу вне проекта,
+в WindowsApps/Deleted. Это повторяемое повреждение данных с **неустановленной
+причиной**; source regeneration не является ремонтом C:, а успешные тесты не
+доказывают исправность SSD/RAM. Disk-growth writer также остаётся UNKNOWN.
+[Доказательства и границы восстановления](../audits/2026-10-06/HOST-FILESYSTEM-INCIDENT.md).
+
+**Историческая установка 6 октября, 18:48 UTC+5 — APK 1.2.46 только на локальном PH011:**
 Адресное обновление 1.2.44 → 1.2.46 / 10246 сохранило UID, четыре preference файла
 до старта и device ID. Backup private; остальные 18 версий, API/UI, OTA и туннели
 сохранены. Один сохранённый DAG v1, одно задание, **25/25 success**: standalone

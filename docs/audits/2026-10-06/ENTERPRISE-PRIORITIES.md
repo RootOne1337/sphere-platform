@@ -77,7 +77,26 @@ Offline inventory подтвердил 32 API/UI types и 33 Android handlers (`
 [Результат и все ограничения](SCRIPT-STUDIO-FOUNDATION.md) ·
 [Инструкция](../../operations/SCRIPT-STUDIO.md) · [Pinned evidence](SCRIPT-STUDIO-EVIDENCE.json).
 
-## Новый runtime дефект, выявленный установленным canary
+## Screenshot producer: исправлен локальный рост; task delivery остаётся открытой
+
+Следующий [source 3493eb6 / APK 1.2.47](ANDROID-SCREENSHOT-CACHE.md) установлен
+только PH011 с сохранением UID/preferences/identity. Вместо blind wait — FIFO root
+ACK и проверка original PNG; private cache до **8 committed files / 5 MiB каждый**,
+age 30 min проверяется при следующем capture. Реальное saved-version задание
+**14/14** выполнило 10 захватов; осталось ровно 8 PNG / **1 880 304 B**, первые два
+evicted. Последний PNG 960×540 hash-matched, native browser reports проверены.
+Все четыре source CI success; Linux JUnit доказал исполнение двух filesystem
+symlink fixtures, пропущенных Windows. [Pinned evidence](ANDROID-SCREENSHOT-CACHE-EVIDENCE.json).
+
+**P1 task-scoped artifact upload/lifecycle остаётся открытым**: server manifest
+пуст, output `server_artifact_available=false`; ручное ADB получение оригинала
+не закрывает серверную доставку, retries/reconciliation, download ACL/retention.
+Другие APK не получают этот fix через веб. Причина host disk growth не установлена.
+Перед продолжением EP-016 source/schema preflight сохранены эти результаты;
+счёт **9 / 41** не изменён. Host corruption повторился и требует отдельного
+системного расследования, [receipt](HOST-FILESYSTEM-INCIDENT.md).
+
+### Исторический runtime дефект, выявленный canary 1.2.46
 
 [PH011 получила APK 1.2.46](ANDROID-CLEAR-INSTALLED.md) с сохранением данных.
 Одно задание completed 25/25 подтвердило полную очистку и clear-first replacement
@@ -108,9 +127,10 @@ EP-018 не закрыт: automatic selector candidates и prerequisites ост�
 и ограниченный ACK прежней FIFO-сессии. По 855 passed / 1 assumption-skipped в
 двух debug flavors, четыре source CI, signer/ZIP/DEX и native SDK28 helper прошли.
 Исходное поле очистилось с курсором внутри; пустой повтор и follow-up input прошли.
-APK **не установлен/не опубликован OTA**: полный installed-agent canary, другие
-SDK/editors и rollout остаются впереди. Recorder по-прежнему не вызывает неявную
-очистку. [Pinned evidence](ANDROID-FOCUSED-TEXT-CLEAR-EVIDENCE.json).
+На момент этого source этапа APK **не был установлен/не публиковался OTA**.
+Последующий [installed-agent canary PH011](ANDROID-CLEAR-INSTALLED.md) подтвердил
+25/25; другие SDK/editors и remote rollout остаются впереди. Recorder по-прежнему
+не вызывает неявную очистку. [Исторический pinned build evidence](ANDROID-FOCUSED-TEXT-CLEAR-EVIDENCE.json).
 Пересоздание одного повреждённого generated class зафиксировано отдельно;
 причина host corruption и writer неизвестны. Общий счёт 9 / 41 сохранён.
 

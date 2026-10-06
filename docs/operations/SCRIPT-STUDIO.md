@@ -29,6 +29,16 @@
 переносится. Screenshot пока возвращает local Android path; серверный manifest пуст.
 [Установленный canary и ограничения](../audits/2026-10-06/ANDROID-CLEAR-INSTALLED.md).
 
+6 октября в **14:32 UTC** только PH011 обновлена далее до **1.2.47 / 10247**.
+Screenshot теперь подтверждает native capture через FIFO root ACK и возвращает
+проверенный original PNG из private cache: максимум **8 файлов / 5 MiB каждый**,
+age 30 min очищается при следующем capture. Одна saved v1 выполнила **14/14**
+шагов и 10 screenshot requests: остались последние 8 PNG, **1 880 304 B**.
+Серверный manifest пока пуст; receipt `server_artifact_available=false` означает,
+что local path не является скачиваемым task artifact. Не храните его как постоянный
+URL или долговечную ссылку в другом задании. UI/API, remote APK и OTA не менялись.
+[Контракт и delivery evidence](../audits/2026-10-06/ANDROID-SCREENSHOT-CACHE.md).
+
 ## Каталог сценариев
 
 Откройте **Сценарии**. Поиск выполняется на сервере по всему каталогу, а не только

@@ -22,9 +22,13 @@
 Исходники `c3937a1`, установленный на этапе аудита UI/API `c1a6e79a`; исходный аудит — только анализ.
 Каталог API и элементов управления не заменяет живую проверку Android и 500–1000 устройств.
 
-**6 октября — source 1.2.47: screenshot ACK и bounded private PNG cache:**
+**6 октября, 19:48 UTC+5 — PH011 на 1.2.47: screenshot ACK и bounded private PNG cache:**
 [Контракт и открытая доставка task artifacts](audits/2026-10-06/ANDROID-SCREENSHOT-CACHE.md).
-Source проверен focused tests; установка/полные suites фиксируются отдельно.
+Одна saved v1 завершилась **14/14**, 10 снимков → последние 8 PNG / 1 880 304 B;
+original 960×540 PNG hash-matched. По **869 passed / 3 skipped** в локальных
+Dev/Enterprise, Linux JUnit — по **871 / 1** в четырёх вариантах, включая symlink
+fixtures. Source CI success; task server upload остаётся открытым.
+[Pinned evidence](audits/2026-10-06/ANDROID-SCREENSHOT-CACHE-EVIDENCE.json).
 
 **6 октября, 18:48 UTC+5 — PH011 обновлена до 1.2.46; реальный canary 25/25:**
 [Доставка, XPath проверки и screenshot gap](audits/2026-10-06/ANDROID-CLEAR-INSTALLED.md) ·
