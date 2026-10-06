@@ -4,6 +4,7 @@ import android.content.Context
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -43,8 +44,8 @@ class RootCommandOutcomeUnknownException(
  *
  * ## БЕЗОПАСНОСТЬ
  * - `shell()` проверяет команду через SHELL_INJECTION_PATTERN перед su -c
- * - `typeText()` никогда не передаёт текст через sh напрямую; использует
- *   `am broadcast` для clipboard → paste, что полностью устраняет shell injection
+ * - `typeText()` кодирует пробелы и заключает текст в shell-кавычки;
+ *   clipboard/IME broadcast здесь не используется.
  */
 @Singleton
 class AdbActionExecutor @Inject constructor(
@@ -199,6 +200,39 @@ class AdbActionExecutor @Inject constructor(
 
     fun keyEvent(keyCode: Int) {
         executeRootCommand("input keyevent $keyCode")
+    }
+
+    /** Ctrl+A/Delete in the focused editor, ordered after prior root-session input. */
+    suspend fun clearFocusedText() = withContext(Dispatchers.IO) {
+        val owner = kotlin.coroutines.coroutineContext
+        val apk = context.applicationInfo.sourceDir
+        require(apk.startsWith("/") && apk.endsWith(".apk") && apk.none { it == '\n' || it == '\r' }) {
+            "input_clear_invalid_apk_path"
+        }
+        val quotedApk = "'" + apk.replace("'", "'\\''") + "'"
+        val marker = "sphere_clear_" + java.util.UUID.randomUUID().toString().replace("-", "")
+        val command = "CLASSPATH=$quotedApk /system/bin/app_process /system/bin " +
+            "com.sphereplatform.agent.commands.RootInputBridge clear-focused >/dev/null 2>&1; " +
+            "printf '\\n$marker:%s\\n' \"\$?\""
+        synchronized(rootLock) {
+            owner.ensureActive()
+            val stream = ensureRootAlive()
+            val process = checkNotNull(rootProcess)
+            try {
+                stream.writeBytes("$command\n")
+                stream.flush()
+                val status = RootCommandAcknowledgement.await(process, marker, owner)
+                if (status != 0) throw java.io.IOException("input_clear_adapter_failed")
+            } catch (failure: Exception) {
+                // Timeout/failed injection may follow an applied key. No replay or CUT fallback.
+                rootProcess = null
+                rootStream = null
+                runCatching { stream.close() }
+                runCatching { process.destroyForcibly() }
+                if (failure is kotlinx.coroutines.CancellationException) throw failure
+                throw RootCommandOutcomeUnknownException("input_clear_outcome_unknown")
+            }
+        }
     }
 
     /**

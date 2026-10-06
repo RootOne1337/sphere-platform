@@ -31,3 +31,8 @@
 
 # LuaJ — javax.script недоступен на Android, подавляем предупреждение R8
 -dontwarn javax.script.ScriptEngineFactory
+
+# Root input entry point is resolved by app_process, outside application reachability.
+-keep class com.sphereplatform.agent.commands.RootInputBridge {
+    public static void main(java.lang.String[]);
+}

@@ -106,6 +106,35 @@ class DagRunnerTest {
         assertTrue(result["success"]!!.jsonPrimitive.boolean)
     }
 
+    @Test
+    fun `clear_first awaits focused editor adapter before typing and never invokes CUT`() = runTest {
+        val dag = buildDag("n1", node("n1", "type_text") { put("text", "replacement"); put("clear_first", true) })
+        val result = runner.execute("clear-first", dag)
+        assertTrue(result["success"]!!.jsonPrimitive.boolean)
+        coVerifyOrder { adbActions.clearFocusedText(); adbActions.typeText("replacement") }
+        verify(exactly = 0) { adbActions.keyEvent(any()) }
+    }
+
+    @Test
+    fun `unknown clear outcome cannot type replacement retry or route to another action`() = runTest {
+        coEvery { adbActions.clearFocusedText() } throws RootCommandOutcomeUnknownException("input_clear_outcome_unknown")
+        val dag = buildDag("n1", node("n1", "type_text", onFailure = "next", retry = 3) { put("text", "private"); put("clear_first", true) }, node("next", "tap") { put("x", 1); put("y", 1) })
+        assertThrows(RootCommandOutcomeUnknownException::class.java) { kotlinx.coroutines.runBlocking { runner.execute("clear-unknown", dag) } }
+        coVerify(exactly = 1) { adbActions.clearFocusedText() }
+        coVerify(exactly = 0) { adbActions.typeText(any()) }
+        verify(exactly = 0) { adbActions.tap(any(), any()) }
+    }
+
+    @Test
+    fun `input_clear exposes injection acknowledgement without claiming field inspection`() = runTest {
+        val result = runner.execute("clear-only", buildDag("n1", node("n1", "input_clear")))
+        assertTrue(result["success"]!!.jsonPrimitive.boolean)
+        coVerify(exactly = 1) { adbActions.clearFocusedText() }
+        verify(exactly = 0) { adbActions.keyEvent(any()) }
+        val output = result["node_logs"]!!.jsonArray[0].jsonObject["output"]!!.jsonPrimitive.content
+        assertTrue(output.contains("field_verified=false"))
+    }
+
     // ── Различные типы нод ───────────────────────────────────────────────────
 
     @Test

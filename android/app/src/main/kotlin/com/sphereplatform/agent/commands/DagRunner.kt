@@ -422,10 +422,7 @@ class DagRunner @Inject constructor(
             val text = action["text"]!!.jsonPrimitive.content
             val clearFirst = action["clear_first"]?.jsonPrimitive?.content?.toBoolean() ?: false
             if (clearFirst) {
-                adbActions.keyEvent(277)  // KEYCODE_CTRL_A — select all
-                delay(80)
-                adbActions.keyEvent(67)   // KEYCODE_DEL — delete selection
-                delay(80)
+                adbActions.clearFocusedText()
             }
             adbActions.typeText(text)
             null
@@ -691,10 +688,8 @@ class DagRunner @Inject constructor(
         }
 
         "input_clear" -> {
-            adbActions.keyEvent(277)   // KEYCODE_CTRL_A — select all
-            delay(80)
-            adbActions.keyEvent(67)    // KEYCODE_DEL — delete selection
-            null
+            adbActions.clearFocusedText()
+            mapOf("adapter" to "root-key-chord", "field_verified" to false)
         }
 
         // ── Variables (server-driven context) ─────────────────────────────────
