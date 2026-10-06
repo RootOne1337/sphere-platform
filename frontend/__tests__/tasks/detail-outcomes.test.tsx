@@ -78,10 +78,10 @@ it.each([
   await openPage();
   expect(await screen.findByRole('alert')).toHaveTextContent(title);
   if (status !== 404) expect(screen.queryByText('API подтвердил отсутствие записи.')).not.toBeInTheDocument();
-  expect(screen.queryByRole('button', { name: 'Force Stop' })).not.toBeInTheDocument();
+  expect(screen.queryByRole('button', { name: 'Остановить задание' })).not.toBeInTheDocument();
   readTask = async () => ({ data: current });
   await userEvent.click(screen.getByRole('button', { name: 'Повторить загрузку задания' }));
-  expect(await screen.findByRole('button', { name: 'Force Stop' })).toBeEnabled();
+  expect(await screen.findByRole('button', { name: 'Остановить задание' })).toBeEnabled();
 });
 
 it('rejects a response owned by another task before enabling commands', async () => {
@@ -111,7 +111,7 @@ it('does not infer successful execution or completed cycles from an empty report
   current = task({ result: { nodes_executed: 50, total_nodes: 3 } });
   await openPage();
   expect(await screen.findByText('Нет отчётов')).toBeInTheDocument();
-  const cycles = screen.getByText('Cycles').parentElement!;
+  const cycles = screen.getByText('Циклы').parentElement!;
   expect(within(cycles).getByText('—')).toBeInTheDocument();
   expect(screen.queryByText('100%')).not.toBeInTheDocument();
   expect(await screen.findByText(/Не удалось обновить прогресс/)).toBeInTheDocument();
@@ -128,21 +128,21 @@ it('describes received terminal reports without labeling all executed nodes as p
 
 it('blocks stale task commands after a refresh failure and allows them again after explicit recovery', async () => {
   const { client } = await openPage();
-  await screen.findByRole('button', { name: 'Force Stop' });
+  await screen.findByRole('button', { name: 'Остановить задание' });
   readTask = async () => { throw { response: { status: 403 } }; };
   await act(async () => { await client.refetchQueries({ queryKey: ['tasks', 'task-a'], exact: true }); });
   expect(await screen.findByRole('alert')).toHaveTextContent('Нет доступа к заданию');
-  expect(screen.getByRole('button', { name: 'Force Stop' })).toBeDisabled();
+  expect(screen.getByRole('button', { name: 'Остановить задание' })).toBeDisabled();
   expect(screen.getByText('Remote Android')).toBeInTheDocument();
   readTask = async () => ({ data: current });
   await userEvent.click(screen.getByRole('button', { name: 'Повторить загрузку задания' }));
-  await waitFor(() => expect(screen.getByRole('button', { name: 'Force Stop' })).toBeEnabled());
+  await waitFor(() => expect(screen.getByRole('button', { name: 'Остановить задание' })).toBeEnabled());
 });
 
 it.each([
-  ['running', 'Force Stop', 'post'],
-  ['queued', 'Cancel Task', 'delete'],
-  ['failed', 'Restart Task', 'post'],
+  ['running', 'Остановить задание', 'post'],
+  ['queued', 'Отменить задание', 'delete'],
+  ['failed', 'Повторить выполнение', 'post'],
 ])('shows a failed %s command and permits a retry without pretending it succeeded', async (status, button, method) => {
   current = task({ status });
   jest.mocked(api[method as 'post' | 'delete']).mockRejectedValueOnce({ response: { data: { detail: 'Permission denied by API' } } });
@@ -159,7 +159,7 @@ it.each([
 it('links the server-created task receipt and does not claim execution completed', async () => {
   current = task({ status: 'completed' });
   await openPage();
-  await userEvent.click(await screen.findByRole('button', { name: 'Restart Task' }));
+  await userEvent.click(await screen.findByRole('button', { name: 'Повторить выполнение' }));
   expect(await screen.findByRole('status')).toHaveTextContent('Результат выполнения ещё не подтверждён');
   expect(screen.getByRole('link', { name: 'Открыть новое задание' })).toHaveAttribute('href', '/tasks/task-new');
   expect(api.post).toHaveBeenCalledWith('/tasks/task-a/rerun');
@@ -168,7 +168,7 @@ it('links the server-created task receipt and does not claim execution completed
 it('disables a legacy rerun when the original version is not recorded', async () => {
   current = task({ status: 'failed', script_version_id: null });
   await openPage();
-  expect(await screen.findByRole('button', { name: 'Restart Task' })).toBeDisabled();
+  expect(await screen.findByRole('button', { name: 'Повторить выполнение' })).toBeDisabled();
   expect(screen.getByText('неизвестна — повтор недоступен')).toBeInTheDocument();
   expect(api.post).not.toHaveBeenCalled();
 });
@@ -178,7 +178,7 @@ it('reports failed log reads without a fictional empty timeline and can recover'
   readLogs = async () => { throw new Error('Log store unavailable'); };
   await openPage();
   expect(await screen.findByRole('alert')).toHaveTextContent('Отсутствие отчётов не подтверждено');
-  expect(screen.queryByText('No node execution data available.')).not.toBeInTheDocument();
+  expect(screen.queryByText('Отчёты шагов не получены.')).not.toBeInTheDocument();
   readLogs = async () => ({ data: [report('recovered-step', false)] });
   await userEvent.click(screen.getByRole('button', { name: 'Повторить загрузку отчётов' }));
   expect(await screen.findByText('recovered-step')).toBeInTheDocument();
@@ -209,6 +209,61 @@ it('isolates command errors across task changes and cancels the old resource GET
   expect(await screen.findByText('task-b')).toBeInTheDocument();
   await waitFor(() => expect(signal?.aborted).toBe(true));
   await act(async () => old.resolve({ data: task() }));
-  expect(screen.queryByRole('button', { name: 'Force Stop' })).not.toBeInTheDocument();
-  expect(screen.getByRole('button', { name: 'Restart Task' })).toBeEnabled();
+  expect(screen.queryByRole('button', { name: 'Остановить задание' })).not.toBeInTheDocument();
+  expect(screen.getByRole('button', { name: 'Повторить выполнение' })).toBeEnabled();
+});
+
+it('uses final result counts after an active run completes and stops its elapsed time', async () => {
+  const { client } = await openPage();
+  await waitFor(() => expect(within(screen.getByText('Выполнено узлов').parentElement!).getByText('20')).toBeInTheDocument());
+  expect(screen.getByText('Текущий узел')).toBeInTheDocument();
+  expect(screen.getByRole('complementary', { name: 'Журнал выполнения' })).toBeInTheDocument();
+
+  current = task({ status: 'completed', finished_at: '2026-10-01T00:00:05Z', result: { nodes_executed: 2, total_nodes: 9, cycles: 4 } });
+  await act(async () => { await client.refetchQueries({ queryKey: ['tasks', 'task-a'], exact: true }); });
+
+  expect(await screen.findByRole('region', { name: 'Итог выполнения' })).toBeInTheDocument();
+  expect(within(screen.getByText('Выполнено узлов').parentElement!).getByText('2')).toBeInTheDocument();
+  expect(within(screen.getByText('Всего узлов').parentElement!).getByText('9')).toBeInTheDocument();
+  expect(within(screen.getByText('Циклы').parentElement!).getByText('4')).toBeInTheDocument();
+  expect(within(screen.getByText('Длительность').closest('dl')!).getByText('00:00:05')).toBeInTheDocument();
+  expect(within(screen.getByRole('region', { name: 'Итог выполнения' })).getByText('00:00:05')).toBeInTheDocument();
+  expect(screen.queryByText('Текущий узел')).not.toBeInTheDocument();
+  expect(screen.queryByRole('complementary')).not.toBeInTheDocument();
+  expect(screen.getByRole('link', { name: 'Все задания' })).toHaveAttribute('href', '/tasks');
+});
+
+it('does not use cached progress or an advancing duration when the terminal result is incomplete', async () => {
+  const client = createTestQueryClient();
+  client.setQueryData(['tasks', 'task-a', 'progress'], { nodes_done: 88, total_nodes: 99, cycles: 7, current_node: 'stale-node', started_at: 1 });
+  current = task({ status: 'failed' });
+  readLogs = async () => ({ data: [report('received-step', true)] });
+  await openPage(client);
+
+  for (const label of ['Выполнено узлов', 'Всего узлов', 'Циклы']) {
+    expect(within(screen.getByText(label).parentElement!).getByText('—')).toBeInTheDocument();
+  }
+  expect(within(screen.getByText('Длительность').closest('dl')!).getByText('—')).toBeInTheDocument();
+  expect(await screen.findByText('received-step')).toBeInTheDocument();
+  expect(screen.getByText('1 успешных · 0 ошибок · 1 получено')).toBeInTheDocument();
+  expect(screen.queryByText('stale-node')).not.toBeInTheDocument();
+  expect(api.get).not.toHaveBeenCalledWith('/tasks/task-a/progress', expect.anything());
+});
+
+it.each(['running', 'queued', 'assigned'])('keeps a pending %s cancellation separate from a confirmed outcome', async status => {
+  current = task({ status, cancel_requested_at: '2026-10-01T00:00:02Z' });
+  await openPage();
+  expect(await screen.findByText('Отмена: ожидается результат устройства')).toBeInTheDocument();
+  expect(screen.getByRole('button', { name: 'Ожидается результат' })).toBeDisabled();
+  expect(screen.queryByText('Отменено')).not.toBeInTheDocument();
+  expect(api.post).not.toHaveBeenCalled();
+  expect(api.delete).not.toHaveBeenCalled();
+});
+
+it('keeps a timeout cancellation request awaiting the device result', async () => {
+  current = task({ cancel_requested_at: '2026-10-01T00:00:02Z', timeout_requested_at: '2026-10-01T00:00:02Z' });
+  await openPage();
+  expect(await screen.findByText('Таймаут: ожидается результат устройства')).toBeInTheDocument();
+  expect(screen.getByRole('button', { name: 'Ожидается результат' })).toBeDisabled();
+  expect(screen.queryByRole('button', { name: 'Повторить выполнение' })).not.toBeInTheDocument();
 });
