@@ -4,6 +4,27 @@
 **Область:** исходники и документация ветки PR #19, записанные runtime-наблюдения, Android APK и готовность следующего прогона.<br />
 **Канонический документ текущего состояния:** этот файл. Исторические отчёты ниже сохраняют исходные даты и факты.
 
+**6 октября — полный hosted CI Studio source517d73b принят:** backend
+**3015 passed /37 skipped**, coverage80.35%; lint/mypy/security/bootstrap/RLS/
+Alembic success. Frontend **1686 tests /133 suites**, types/build/standalone
+entry check success; Android all-variant tests/signed smoke build success.
+Preview guard success, **deploy skipped**. [Dated receipt](../audits/2026-10-06/STUDIO-SOURCE-CI-20261006.json).
+Пять первоначальных backend failures устранены исправлением publication fixtures;
+новая PostgreSQL historical read/rejected update/rollback регрессия прошла.
+Это не installed/runtime acceptance и не CI следующего head.
+
+**Следующий source5000bc9 — admission упакованного frontend:** удалён второй
+root redirect, добавлен standalone HTTP probe страниц и их client assets.
+**10 local HTTP tests passed**, source-only types passed; стандартные local types
+ссылаются на старый generated validator удалённой page и не приняты.
+Fresh hosted probe/build ещё необходим. [Основание и границы](../audits/2026-10-06/FRONTEND-STANDALONE-ADMISSION.md).
+[Continuous input audit](../audits/2026-10-06/CONTINUOUS-INPUT-INTEGRATION.md):
+scrcpy5.0 исследован на pinned commit, direct binary protocol/version/reset
+constraints описаны; upstream не встроен, DOWN/MOVE/UP пока не включены.
+Последний host read: **Warning /Full Repair Needed**, свободно41 028 304 896B.
+UI1c26ffc7/APIeb7a7c26/APK сохранены; новый local Next/Android/Docker build и deploy
+не выполнялись. Общая приёмка **9 accepted /41 open** остаётся прежней.
+
 **6 октября, 23:16 UTC+5 — свободная сборка Studio в исходниках:** отдельный узел
 по умолчанию, palette drag/drop с pan/zoom, явная вставка в цепочку,
 редактируемые разорванные ветки, сохранение расположения при правке параметров.
@@ -13,7 +34,7 @@
 Baseline **a9d8b85**: frontend/Android CI success, backend lint/mypy/security/bootstrap/RLS
 success; полный backend test job завершился5 failures /3006 passed /37 skipped:
 catalog publication fixtures содержали sleep без ms. Исправление fixture и
-отдельная historical-read/rollback регрессия готовятся; guard не ослабляется.
+historical-read/rollback регрессия доставлены в6a61c03; guard не ослаблен.
 Это не положительный CI free-canvas head.
 **Не установлено:** UI1c26ffc7/APIeb7a7c26/APK сохранены; C: repair gate закрыт.
 Общий реестр9/41 не меняется; нового source browser acceptance нет. Повторно

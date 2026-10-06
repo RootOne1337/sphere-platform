@@ -202,3 +202,16 @@ test database; локальная production DB не использовалас�
 Validator не ослабляется, tests/production budget historical fixtures не
 переписываются как новые executable scripts. [Изменённые проверки](../../../tests/production/test_script_catalog_metadata.py).
 Повторный full CI следующего head обязателен; prior green jobs не переносятся.
+
+### Закрытие source CI на517d73b
+
+6 октября18:43Z backend [run37511486723](https://github.com/RootOne1337/sphere-platform/actions/runs/37511486723)
+завершился success: **3015 passed /37 skipped**, coverage80.35%, все шесть jobs
+успешны, включая full mypy и реальный PostgreSQL historical regression.
+Frontend **1686/133**, types/build; Android all-variant tests/signed smoke build
+прошли на том же exact head. Preview guard success, deployment skipped.
+[Pinned receipt](STUDIO-SOURCE-CI-20261006.json).
+Таким образом первоначальные5fixture failures исправлены без ослабления guard.
+Installed API/UI не обновлены; capability negotiation и Android runtime
+semantics всего EP-016 этим CI не закрываются. Следующий root/packaging source
+и последующие docs heads имеют собственные checks, не наследуют этот результат.

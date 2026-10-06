@@ -33,6 +33,15 @@ runtime semantics и continuous gestures не объявляются подтв�
 [Drag/drop, отдельные узлы, явная вставка, draft/publish split и приёмка](audits/2026-10-06/STUDIO-FREE-CANVAS.md).
 395 tests /17 scripts suites и TypeScript прошли; runtime/visual ещё не приняты.
 Удаление, выбор входа и Undo/Redo сохраняют возможность продолжить сборку.
+[Полный hosted CI517d73b](audits/2026-10-06/STUDIO-SOURCE-CI-20261006.json):
+3015 backend passed/37 skipped,1686 frontend/133 suites +types/build,
+Android smoke success. Preview deploy skipped; следующий head проверяется отдельно.
+
+**6 октября — admission упакованного веба и continuous input audit:**
+[Next standalone: реальные HTTP страницы/JS/CSS перед установкой](audits/2026-10-06/FRONTEND-STANDALONE-ADMISSION.md) ·
+[scrcpy5.0: pinned source, control-only adapter и безопасный held touch](audits/2026-10-06/CONTINUOUS-INPUT-INTEGRATION.md).
+10 bounded HTTP tests passed; новый hosted artifact probe ещё требует исполнения.
+Continuous capability не включена; client/server/APK изменения и canary обязательны.
 
 **6 октября — связи Studio, упорядоченная selector queue и следующий input protocol:**
 [Follow-up требований пользователя и план приёмки](audits/2026-10-06/STUDIO-INTERACTION-FOLLOWUP.md) ·

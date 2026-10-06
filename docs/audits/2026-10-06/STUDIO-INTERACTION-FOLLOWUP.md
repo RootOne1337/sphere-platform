@@ -97,6 +97,10 @@ Source fix использует общий bounded review buffer:
 
 ## Следующий P1: continuous pointer protocol
 
+6 октября pinned upstream исследован отдельно:
+[scrcpy5.0, точный commit, control-only adapter и отказные случаи](CONTINUOUS-INPUT-INTEGRATION.md).
+Это design/source audit, не поставленный continuous mode.
+
 До нового injector сделан отдельный source P1
 [общего контракта параметров 32 опубликованных действий](STUDIO-ACTION-PARAMETERS.md).
 Он блокирует malformed новые publications и раскрывает требования/optional fields

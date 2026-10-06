@@ -102,6 +102,12 @@ read-only, pending parameters и прежние structural DAG rules.
 React Flow замокан: реальные pointer events, SVG и размеры viewport этим
 прогоном не проверены.
 
+Полный hosted source **517d73b** принят6октября: frontend1686/133 +types/build,
+backend3015passed/37skipped +full mypy/bootstrap/security/RLS/Alembic, Android
+all-variant tests/signed smoke build success; Preview deployment skipped.
+[Точный CI receipt и ограничения](STUDIO-SOURCE-CI-20261006.json).
+Следующий packaging probe5000bc9 и новые docs heads проверяются отдельно.
+
 Используется уже установленный **React Flow**, без новой зависимости или
 коммерческого шаблона. Первичные источники:
 [drag-and-drop](https://reactflow.dev/examples/interaction/drag-and-drop),

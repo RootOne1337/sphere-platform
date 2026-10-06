@@ -42,6 +42,9 @@ redirect сохранён. Связь этого изменения с устр�
 group page. Generated output установленной сборки не изменялся. Fresh hosted
 type-check/build должен регенерировать свой manifest; этот локальный запуск
 не отмечается как успешный и не является причиной возвращать duplicate route.
+Отдельная source-only type-check с прежними options и explicit frontend @types,
+без generated `.next`/`.next-audit`, прошла. Она не подменяет стандартную
+fresh hosted type-check и проверку новых generated route types.
 
 Проверка использует официальное поведение
 [Next standalone output](https://nextjs.org/docs/app/api-reference/config/next-config-js/output):
