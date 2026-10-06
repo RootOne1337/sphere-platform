@@ -190,6 +190,10 @@ class DagRunnerTest {
         )
         val result = runner.execute("cmd-7", dag)
         assertTrue(result["success"]!!.jsonPrimitive.boolean)
+        val output = result["node_logs"]!!.jsonArray[0].jsonObject["output"]!!.jsonPrimitive.content
+        assertTrue(output.contains("storage=android-local-cache"))
+        assertTrue(output.contains("server_artifact_available=false"))
+        assertFalse(output.contains("screenshot_key"))
     }
 
     @Test

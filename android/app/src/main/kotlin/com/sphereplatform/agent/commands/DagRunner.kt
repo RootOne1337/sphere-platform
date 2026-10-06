@@ -441,7 +441,8 @@ class DagRunner @Inject constructor(
         "screenshot" -> {
             val path = adbActions.takeScreenshot()
             val key = action["save_to"]?.jsonPrimitive?.contentOrNull
-            val result = mapOf("path" to path)
+            val result = mapOf("path" to path, "format" to "png", "storage" to "android-local-cache",
+                "server_artifact_available" to "false")
             if (key != null) ctx[key] = result
             result
         }

@@ -454,7 +454,12 @@ class CommandDispatcher @Inject constructor(
 
         CommandType.SCREENSHOT -> {
             val path = adbActions.takeScreenshot()
-            buildJsonObject { put("path", path) }
+            buildJsonObject {
+                put("path", path)
+                put("format", "png")
+                put("storage", "android-local-cache")
+                put("server_artifact_available", false)
+            }
         }
 
         CommandType.EXECUTE_DAG -> {

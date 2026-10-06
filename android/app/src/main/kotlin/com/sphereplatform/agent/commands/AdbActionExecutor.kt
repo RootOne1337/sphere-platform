@@ -78,6 +78,9 @@ class AdbActionExecutor @Inject constructor(
     private val rootLock = Any()
     private val processRunner = BoundedProcessRunner()
     private val uiDumpOwnership = Mutex()
+    private val screenshots by lazy {
+        ScreenshotFileStore(java.io.File(context.cacheDir.canonicalFile, "dag-screenshots-v1"))
+    }
 
     private fun createRootProcess(): Process =
         Runtime.getRuntime().exec("su").also {
@@ -253,14 +256,33 @@ class AdbActionExecutor @Inject constructor(
         delay(150)
     }
 
-    /** Сделать скриншот, вернуть путь к файлу на устройстве. */
-    suspend fun takeScreenshot(): String {
-        val path = "/sdcard/sphere_screenshot_${System.currentTimeMillis()}.png"
-        withContext(Dispatchers.IO) {
-            executeRootCommand("screencap -p $path")
-            delay(300)  // Wait for screencap to finish writing
-        }
-        return path
+    /** Original PNG in a bounded private cache; this is not a server artifact upload. */
+    suspend fun takeScreenshot(): String = withContext(Dispatchers.IO) {
+        val owner = kotlin.coroutines.coroutineContext
+        screenshots.capture { file ->
+            val path = "'" + file.absolutePath.replace("'", "'\\''") + "'"
+            val marker = "sphere_capture_" + java.util.UUID.randomUUID().toString().replace("-", "")
+            val command = "screencap -p $path; printf '\\n$marker:%s\\n' \"\$?\""
+            synchronized(rootLock) {
+                owner.ensureActive()
+                val stream = ensureRootAlive()
+                val process = checkNotNull(rootProcess)
+                try {
+                    stream.writeBytes("$command\n")
+                    stream.flush()
+                    if (RootCommandAcknowledgement.await(process, marker, owner) != 0) {
+                        throw java.io.IOException("screenshot_capture_failed")
+                    }
+                } catch (failure: Exception) {
+                    rootProcess = null
+                    rootStream = null
+                    runCatching { stream.close() }
+                    runCatching { process.destroyForcibly() }
+                    if (failure is kotlinx.coroutines.CancellationException) throw failure
+                    throw RootCommandOutcomeUnknownException("screenshot_capture_outcome_unknown")
+                }
+            }
+        }.absolutePath
     }
 
     // ── Device control commands ───────────────────────────────────────────────
