@@ -4,6 +4,7 @@ import { api } from '@/lib/api';
 import { useAuthStore } from '@/lib/store';
 import { createWrapper } from '../helpers';
 import { useCapabilities } from '@/src/features/access/Capabilities';
+import { catalogActor, catalogEnvelope } from './catalog-fixtures';
 
 jest.mock('@/lib/api', () => ({ api: { get: jest.fn(), post: jest.fn(), delete: jest.fn() } }));
 jest.mock('@/components/sphere/RunScriptModal', () => ({ RunScriptModal: () => null }));
@@ -24,14 +25,20 @@ function initial() { return { id, org_id: org, name: 'Canary scenario', descript
   created_at: '2026-10-02T00:00:00Z', updated_at: '2026-10-02T00:00:00Z' }; }
 beforeEach(() => {
   jest.resetAllMocks(); script = initial();
-  useAuthStore.setState({ accessToken: 'test', sessionVersion: 0, user: { id: 'actor', org_id: org, email: 'a@example.org', role: 'org_admin' } });
+  useAuthStore.setState({ accessToken: 'test', sessionVersion: 0, user: { id: catalogActor.id, org_id: org, email: 'a@example.org', role: 'org_admin' } });
   jest.mocked(useCapabilities).mockImplementation(() => ({
     verified: true, pending: false, failed: false, role: useAuthStore.getState().user?.role ?? null,
     can: permission => permission !== 'script:write' || useAuthStore.getState().user?.role !== 'viewer',
     canAccessRoute: () => true, retry: jest.fn(),
   }));
-  jest.mocked(api.get).mockImplementation(async url => {
-    if (url === '/scripts') return { data: { items: [script], total: 1, page: 1, per_page: 50 } } as never;
+  jest.mocked(api.get).mockImplementation(async (url, config) => {
+    if (url === '/scripts/catalog') {
+      const { versions: _versions, current_version, ...metadata } = script;
+      const { dag: _dag, notes: _notes, created_by_id: _author, ...receipt } = current_version;
+      const state = (config?.params as { state?: string } | undefined)?.state;
+      const item = { ...metadata, is_archived: state === 'archived' ? true : script.is_archived, node_count: current_version.dag.nodes.length, current_version: receipt };
+      return { data: catalogEnvelope([item]) } as never;
+    }
     if (url === '/scripts/' + id) return { data: { ...script, versions: script.versions.map(v => ({ ...v, dag: null })) } } as never;
     return { data: url === `/scripts/${id}/versions/${oldId}` ? old : script.current_version } as never;
   });
@@ -54,7 +61,7 @@ it('keeps the archive reachable with server filtering and resets pagination', as
   render(<ScriptsPage />, { wrapper: createWrapper() });
   await screen.findByText('Canary scenario');
   fireEvent.click(screen.getByRole('button', { name: 'Архив' }));
-  await waitFor(() => expect(api.get).toHaveBeenCalledWith('/scripts', {
+  await waitFor(() => expect(api.get).toHaveBeenCalledWith('/scripts/catalog', {
     params: { query: undefined, page: 1, per_page: 50, state: 'archived' }, signal: expect.any(AbortSignal),
   }));
 });
@@ -149,9 +156,14 @@ it('does not allow a double click to publish a second mutation', async () => {
   expect(api.post).toHaveBeenCalledTimes(1);
 });
 it('rejects a foreign detail instead of exposing its DAG or controls', async () => {
-  jest.mocked(api.get).mockImplementation(async url => ({ data: url === '/scripts'
-    ? { items: [script], total: 1, page: 1, per_page: 50 }
-    : { ...script, org_id: 'foreign' } }) as never);
+  jest.mocked(api.get).mockImplementation(async url => {
+    if (url === '/scripts/catalog') {
+      const { versions: _history, current_version, ...metadata } = script;
+      const { dag: _dag, notes: _notes, created_by_id: _author, ...receipt } = current_version;
+      return { data: catalogEnvelope([{ ...metadata, node_count: current_version.dag.nodes.length, current_version: receipt }]) } as never;
+    }
+    return { data: { ...script, org_id: 'foreign' } } as never;
+  });
   render(<ScriptsPage />, { wrapper: createWrapper() });
   await screen.findByText('Canary scenario');
   fireEvent.click(screen.getByRole('button', { name: 'История и управление' }));

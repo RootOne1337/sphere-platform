@@ -2,18 +2,23 @@ import { act, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import ScriptsPage from '@/app/(dashboard)/scripts/page';
 import { api } from '@/lib/api';
 import { createWrapper } from '../helpers';
+import { useAuthStore } from '@/lib/store';
+import { catalogActor, catalogOrg, catalogEnvelope } from './catalog-fixtures';
 
 jest.mock('@/lib/api', () => ({ api: { get: jest.fn() } }));
 jest.mock('@/components/sphere/RunScriptModal', () => ({ RunScriptModal: () => null }));
 
 const scripts = Array.from({ length: 51 }, (_, index) => ({
-  id: `script-${index + 1}`, name: `Scenario ${index + 1}`, description: null,
+  id: `11111111-1111-4111-8111-${String(index + 1).padStart(12, '0')}`, org_id: catalogOrg, current_version_id: null, current_version: null, node_count: null, name: `Scenario ${index + 1}`, description: null,
   is_archived: false, created_at: '2026-10-01T00:00:00Z', updated_at: '2026-10-01T00:00:00Z',
 }));
-const envelope = (page: number, items = scripts.slice((page - 1) * 50, page * 50), total = 51) => ({ data: { items, total, page, per_page: 50 } });
+const envelope = (page: number, items = scripts.slice((page - 1) * 50, page * 50), total = 51) => ({ data: catalogEnvelope(items, total, page) });
 const requestParams = (config: { params?: unknown } | undefined) => (config?.params ?? {}) as { query?: string; page?: number };
 
-beforeEach(() => jest.resetAllMocks());
+beforeEach(() => {
+  jest.resetAllMocks(); localStorage.clear();
+  useAuthStore.setState({ user: catalogActor, sessionVersion: 0 });
+});
 
 it('reaches the 51st script through paging and keeps its original editor link', async () => {
   jest.mocked(api.get).mockImplementation(async (_url, config) => envelope(requestParams(config).page ?? 1) as never);
@@ -22,9 +27,9 @@ it('reaches the 51st script through paging and keeps its original editor link', 
   expect(screen.queryByText('Scenario 51')).not.toBeInTheDocument();
   fireEvent.click(screen.getByRole('button', { name: 'Следующая страница: сценарии' }));
   expect(await screen.findByText('Scenario 51')).toBeInTheDocument();
-  expect(screen.getByRole('link', { name: 'Открыть' })).toHaveAttribute('href', '/scripts/builder?id=script-51');
+  expect(screen.getByRole('link', { name: 'Открыть' })).toHaveAttribute('href', `/scripts/builder?id=${scripts[50].id}`);
   expect(screen.getByRole('button', { name: 'Следующая страница: сценарии' })).toBeDisabled();
-  expect(api.get).toHaveBeenLastCalledWith('/scripts', { params: { query: undefined, page: 2, per_page: 50 }, signal: expect.any(AbortSignal) });
+  expect(api.get).toHaveBeenLastCalledWith('/scripts/catalog', { params: { query: undefined, page: 2, per_page: 50 }, signal: expect.any(AbortSignal) });
   fireEvent.click(screen.getByRole('button', { name: 'Предыдущая страница: сценарии' }));
   expect(await screen.findByText('Scenario 1')).toBeInTheDocument();
 });
@@ -37,7 +42,7 @@ it('searches the full backend catalog and resets page two to page one', async ()
   await screen.findByText('Scenario 51');
   fireEvent.change(screen.getByRole('textbox', { name: 'Поиск сценариев во всём каталоге' }), { target: { value: 'Scenario 51' } });
   expect(screen.queryByRole('button', { name: 'Запустить' })).not.toBeInTheDocument();
-  await waitFor(() => expect(api.get).toHaveBeenCalledWith('/scripts', { params: { query: 'Scenario 51', page: 1, per_page: 50 }, signal: expect.any(AbortSignal) }));
+  await waitFor(() => expect(api.get).toHaveBeenCalledWith('/scripts/catalog', { params: { query: 'Scenario 51', page: 1, per_page: 50 }, signal: expect.any(AbortSignal) }));
   expect(await screen.findByText('Scenario 51')).toBeInTheDocument();
   expect(screen.getByText('Страница 1 из 1 · всего 1')).toBeInTheDocument();
 });
