@@ -22,6 +22,12 @@
 Исходники `c3937a1`, установленный на этапе аудита UI/API `c1a6e79a`; исходный аудит — только анализ.
 Каталог API и элементов управления не заменяет живую проверку Android и 500–1000 устройств.
 
+**6 октября — общий контракт параметров 32 действий Script Studio:**
+[Правила, API, форма узла, проверки и compatibility matrix](audits/2026-10-06/STUDIO-ACTION-PARAMETERS.md).
+141 Python/ASGI/schema tests и374 frontend tests /16 suites, TypeScript и scoped
+Ruff прошли; source ещё не установлен из-за host repair gate. APK capabilities,
+runtime semantics и continuous gestures не объявляются подтверждёнными JSON-проверкой.
+
 **6 октября — связи Studio, упорядоченная selector queue и следующий input protocol:**
 [Follow-up требований пользователя и план приёмки](audits/2026-10-06/STUDIO-INTERACTION-FOLLOWUP.md) ·
 [Явное редактирование связей](audits/2026-10-06/STUDIO-CONNECTION-EDITING.md).

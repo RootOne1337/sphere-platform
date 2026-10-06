@@ -7,12 +7,24 @@
 Она заменяет прежнюю инструкцию «Этап A».
 
 **Source candidate 6 октября, ещё не установлен:**
+[Versioned action contract 1.0 и проверки параметров](../audits/2026-10-06/STUDIO-ACTION-PARAMETERS.md),
 [Editor связей и Android key presets](../audits/2026-10-06/STUDIO-CONNECTION-EDITING.md),
 [ordered XPath review queue и follow-up](../audits/2026-10-06/STUDIO-INTERACTION-FOLLOWUP.md),
 [native1:1 PNG preview](../audits/2026-10-06/NATIVE-PNG-PIXEL-VERIFICATION.md).
 234/11 scoped tests и TypeScript passed; build/deploy удержан до postboot
 acceptance C:. Описания установленной сборки ниже сохраняются; новые кнопки
 нельзя считать доступными на3015 до фактического обновления и browser приёмки.
+
+Следующий source срез: 32 опубликованных действия имеют общий контракт типов,
+обязательных полей, ограничений и эффектов. В форме узла доступны **Контракт
+параметров** и **Дополнительные параметры**. Они ещё не установлены. JSON
+черновика сохраняется для исправления; check/save блокируют неверные параметры.
+Сервер проверяет то же правило в validate/create/update. Исторические версии,
+rollback и privileged preserved-source maintenance этим не переписываются.
+Новый read-only `GET /api/v1/scripts/action-contract` требует `script:read` и
+не проверяет установленный APK. В receipt параметр `action_parameters_verified`
+отделён от `device_execution_verified:false`; старый API получает отдельную
+пометку, что сервер параметров ещё не проверял. [Контракт и rollout matrix](../audits/2026-10-06/STUDIO-ACTION-PARAMETERS.md).
 [Материалы этапа A](../audits/2026-10-06/SCRIPT-STUDIO-FOUNDATION.md) и
 [аудит редизайна](../audits/2026-10-06/STUDIO-REDESIGN.md) сохраняются как история
 решений и критериев; рабочий порядок приведён здесь.

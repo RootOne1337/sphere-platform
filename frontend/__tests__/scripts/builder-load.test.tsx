@@ -85,6 +85,41 @@ function animationFrames() {
   });
 }
 
+it('keeps invalid imported parameters editable but blocks publication and validation before HTTP', async () => {
+  const response = payload();
+  response.data.current_version.dag.nodes[0].action = { type: 'set_variable', key: 'v', value: {} } as never;
+  jest.mocked(api.get).mockResolvedValue(response as never);
+  render(<ScriptBuilderPage />); await screen.findByText('script-a-start');
+  fireEvent.click(screen.getByRole('button', { name: 'script-a-start' }));
+  expect(screen.getByRole('region', { name: 'Контракт действия' })).toHaveTextContent('объект и массив не поддерживаются APK');
+  fireEvent.click(screen.getByRole('button', { name: 'Сохранить версию' }));
+  expect(await screen.findByRole('alert')).toHaveTextContent('nodes.0.action.value');
+  fireEvent.click(screen.getByRole('button', { name: 'Проверить на сервере' }));
+  expect(api.put).not.toHaveBeenCalled(); expect(api.post).not.toHaveBeenCalled();
+  fireEvent.click(screen.getByRole('button', { name: 'JSON шага' }));
+  const source = screen.getByLabelText('Шаг JSON: action, переходы, retry, timeout_ms');
+  fireEvent.change(source, { target: { value: JSON.stringify({ ...response.data.current_version.dag.nodes[0], action: { type: 'set_variable', key: 'v', value: 3 } }) } });
+  fireEvent.click(screen.getByRole('button', { name: 'Применить параметры' }));
+  jest.mocked(api.put).mockResolvedValue({ data: {} } as never);
+  fireEvent.click(screen.getByRole('button', { name: 'Сохранить версию' }));
+  await waitFor(() => expect(api.put).toHaveBeenCalledTimes(1));
+});
+
+it.each([undefined, '1.0', '2.0'])('labels server parameter coverage honestly for receipt %s', async contractVersion => {
+  jest.mocked(api.get).mockResolvedValue(payload() as never);
+  const receipt = { schema_version: 1, dag_hash: 'a'.repeat(64), node_count: 2, scope: 'structure-routes-lua-safety', device_execution_verified: false,
+    ...(contractVersion ? { action_contract_version: contractVersion, action_parameters_verified: true } : {}) };
+  jest.mocked(api.post).mockResolvedValue({ data: receipt } as never);
+  render(<ScriptBuilderPage />); await screen.findByText('script-a-start');
+  fireEvent.click(screen.getByRole('button', { name: 'Проверить на сервере' }));
+  if (contractVersion === '2.0') {
+    expect(await screen.findByRole('alert')).toHaveTextContent('контракта параметров не подтверждена');
+    expect(screen.queryByText(/Параметры действий проверены сервером/)).not.toBeInTheDocument();
+  } else if (contractVersion) expect(await screen.findByText(/Параметры действий проверены сервером/)).toBeInTheDocument();
+  else expect(await screen.findByText(/этот API не подтвердил проверку параметров/)).toBeInTheDocument();
+  expect(api.put).not.toHaveBeenCalled();
+});
+
 it('adds an Android navigation preset to the graph without issuing live input', async () => {
   mockEditId = null;
   Object.defineProperty(crypto, 'randomUUID', { configurable: true, value: () => '00000000-0000-4000-8000-000000000012' });

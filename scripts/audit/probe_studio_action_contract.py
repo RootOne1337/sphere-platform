@@ -15,12 +15,15 @@ from pathlib import Path
 
 from pydantic import ValidationError
 
+from backend.schemas.action_parameters import ACTION_CONTRACT_VERSION, action_parameter_errors
 from backend.schemas.dag import VALID_ACTION_TYPES, DAGScript
 
 ROOT = Path(__file__).resolve().parents[2]
 FILES = ["backend/schemas/dag.py", "frontend/lib/dag/export.ts",
          "android/app/src/main/kotlin/com/sphereplatform/agent/commands/DagRunner.kt",
-         "android/app/src/main/kotlin/com/sphereplatform/agent/commands/AdbActionExecutor.kt"]
+         "android/app/src/main/kotlin/com/sphereplatform/agent/commands/AdbActionExecutor.kt",
+         "backend/schemas/action_contract.v1.json", "backend/schemas/action_parameters.py",
+         "frontend/lib/dag/action-contract.v1.json", "frontend/lib/dag/actionParameters.ts"]
 
 
 def main() -> None:
@@ -32,7 +35,7 @@ def main() -> None:
         if not target.is_relative_to(ROOT) or target.suffix != ".json":
             parser.error("Output must be a JSON file within this repository.")
     texts = [(ROOT / name).read_text(encoding="utf-8") for name in FILES]
-    schema, frontend, android, _executor = texts
+    schema, frontend, android, _executor = texts[:4]
     del schema  # Parsed by Pydantic above, not reimplemented here.
     frontend_types = set(re.findall(r"'([a-z_]+)'", frontend.split("] as const;", 1)[0]))
     handler_block = android.split("private suspend fun executeNodeInternal(", 1)[1].split(
@@ -53,16 +56,21 @@ def main() -> None:
             {"id": "end", "action": {"type": "end"}},
         ]}
         try:
-            DAGScript.model_validate(dag)
-            rows.append({"name": name, "structuralValidationAccepted": True})
+            parsed = DAGScript.model_validate(dag)
+            parameters = action_parameter_errors(parsed.model_dump()["nodes"])
+            rows.append({"name": name, "structuralValidationAccepted": True,
+                         "publicationParametersAccepted": not parameters,
+                         "parameterErrors": parameters})
         except ValidationError as error:
             rows.append({"name": name, "structuralValidationAccepted": False,
+                         "publicationParametersAccepted": False,
                          "errors": [{"loc": list(e["loc"]), "type": e["type"]}
                                     for e in error.errors(include_input=False, include_context=False)]})
     result = {
         "observedAt": datetime.now(timezone.utc).isoformat(),
         "checkoutCommit": subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=ROOT, text=True).strip(),
         "scope": "offline-structural-validation-and-source-inventory",
+        "actionContractVersion": ACTION_CONTRACT_VERSION,
         "sourceHashes": {name: hashlib.sha256(text.encode()).hexdigest()
                          for name, text in zip(FILES, texts, strict=True)},
         "backendTypes": sorted(VALID_ACTION_TYPES), "frontendTypes": sorted(frontend_types),

@@ -66,6 +66,7 @@ jobs:
       # Installing only mypy hides boundary errors behind missing-import Any.
       - run: pip install -r backend/requirements.txt
       - run: pip check
+      - run: python scripts/sync_action_contract.py --check
       - run: ruff check backend/ tests/ scripts/export_api_docs.py scripts/discovery_manifest.py scripts/discovery_publisher.py scripts/ldplayer_network.py scripts/ldplayer_watchdog.py
       - run: mypy backend/ --ignore-missing-imports
 

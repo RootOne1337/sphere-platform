@@ -6,6 +6,8 @@ import { Input } from '@/components/ui/input';
 import { FIELD_LABELS } from './presentation';
 import { defaultAction } from '@/lib/dag/studio';
 import { ACTION_TYPES, type DagNode } from '@/lib/dag/export';
+import { ActionContractCard } from './ActionContractCard';
+import { actionContract, fieldRule } from '@/lib/dag/actionParameters';
 
 const choices: Record<string, string[]> = { strategy: ['xpath', 'id', 'text', 'desc', 'class'], direction: ['up', 'down', 'left', 'right'],
   method: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'HEAD'] };
@@ -22,6 +24,7 @@ export function NodeInspector({ source, onChange, nodes, writable, pending, appl
   source: string; onChange: (source: string) => void; nodes: { id: string }[]; writable: boolean; pending: boolean; apply: () => void; cancel: () => void;
 }) {
   const [tab, setTab] = useState<'fields' | 'json'>('fields');
+  const [extraField, setExtraField] = useState('');
   let node: DagNode | null = null;
   try { const parsed = JSON.parse(source); if (parsed?.action && typeof parsed.action === 'object') node = parsed; } catch { /* Source errors stay editable. */ }
   function update(path: string[], value: unknown) {
@@ -51,6 +54,18 @@ export function NodeInspector({ source, onChange, nodes, writable, pending, appl
   }
   const template = node && ACTION_TYPES.includes(node.action.type as typeof ACTION_TYPES[number]) ? defaultAction(node.action.type as typeof ACTION_TYPES[number]) : {};
   const fields: Record<string, unknown> = node ? { ...template, ...node.action } : {};
+  const spec = node && Object.hasOwn(actionContract.actions, node.action.type) ? actionContract.actions[node.action.type] : undefined;
+  const optionalFields = Object.entries(spec?.fields ?? {})
+    .filter(([key, rule]) => !fieldRule(rule).required && !Object.hasOwn(fields, key));
+  function addParameter() {
+    const raw = optionalFields.find(([name]) => name === extraField)?.[1];
+    if (!raw || !writable) return;
+    const rule = fieldRule(raw);
+    // Only the explicit Add action materializes a value. Missing/invalid values
+    // remain visible for repair; this does not manufacture execution defaults.
+    const value = rule.enum?.[0] ?? (rule.type === 'object' ? {} : rule.type === 'array' ? [] : rule.type === 'boolean' ? ['fail_on_error', 'fail_if_not_found'].includes(extraField) : rule.type === 'integer' || rule.type === 'number' ? rule.min ?? 0 : '');
+    update(['action', extraField], value); setExtraField('');
+  }
   if (node && ['assert', 'condition'].includes(node.action.type)) {
     const parameterTemplate = parametersFor(node.action.type, String(fields.check));
     const supplied = node.action.params;
@@ -61,10 +76,12 @@ export function NodeInspector({ source, onChange, nodes, writable, pending, appl
     }
   }
   return <div className="space-y-4">
+    {node && <ActionContractCard action={node.action} />}
     <div role="group" aria-label="Редактор параметров" className="flex gap-1 rounded-lg bg-muted p-1"><Button size="sm" variant={tab === 'fields' ? 'secondary' : 'ghost'} className="flex-1" onClick={() => setTab('fields')}><SlidersHorizontal className="mr-2 size-3" />Параметры</Button><Button size="sm" variant={tab === 'json' ? 'secondary' : 'ghost'} className="flex-1" onClick={() => setTab('json')}>JSON шага</Button></div>
     {tab === 'fields' && node ? <>
       <div className="space-y-3"><h3 className="flex items-center gap-2 text-xs font-semibold"><Settings2 className="size-3.5 text-primary" />Действие</h3>{Object.entries(fields).filter(([key]) => !['type', 'on_true', 'on_false'].includes(key)).map(([key, value]) => field(key, value, ['action', key]))}
         {Object.keys(fields).length === 1 && <p className="text-xs text-muted-foreground">У этого действия нет входных параметров.</p>}</div>
+      {!!optionalFields.length && <fieldset className="space-y-2 rounded-lg border border-dashed p-3"><legend className="px-1 text-xs font-medium">Дополнительные параметры</legend><div className="flex flex-wrap gap-2"><select aria-label="Дополнительный параметр действия" className={`${inputStyle} min-w-0 flex-1`} value={optionalFields.some(([name]) => name === extraField) ? extraField : ''} disabled={!writable} onChange={event => setExtraField(event.target.value)}><option value="">Выберите параметр</option>{optionalFields.map(([name]) => <option key={name} value={name}>{FIELD_LABELS[name] ?? name} · {name}</option>)}</select><Button size="sm" variant="outline" disabled={!writable || !optionalFields.some(([name]) => name === extraField)} onClick={addParameter}>Добавить параметр</Button></div><p className="text-[11px] leading-5 text-muted-foreground">Параметр появится в JSON шага после добавления. Настройте значение и примените изменения.</p></fieldset>}
       <fieldset className="space-y-3 border-t pt-4"><legend className="flex items-center gap-2 text-xs font-semibold"><GitBranch className="size-3.5 text-primary" />Переходы</legend>
         {(node.action.type === 'condition' ? [['Да', 'on_true', true], ['Нет', 'on_false', true], ['Ошибка', 'on_failure', false]] : [['Успех', 'on_success', false], ['Ошибка', 'on_failure', false]]).map(([label, key, inAction]) => <label key={String(key)} className="block space-y-1.5 text-xs"><span>{label}</span><select className={inputStyle} disabled={!writable} value={String((inAction ? node!.action : node as unknown as Record<string, unknown>)[String(key)] ?? '')} onChange={event => update(inAction ? ['action', String(key)] : [String(key)], event.target.value || null)}><option value="">Не задан</option>{nodes.map(item => <option key={item.id} value={item.id}>{item.id}</option>)}</select></label>)}
       </fieldset>

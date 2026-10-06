@@ -46,8 +46,9 @@ class DAGNode(BaseModel):
     Узел DAG-графа. id — строка, не int (MERGE-3 contract).
 
     action — произвольный dict с обязательным ключом 'type'.
-    Strict-валидация полей каждого action остаётся на стороне DagRunner —
-    backend валидирует только тип, ссылки графа и отсутствие циклов.
+    Это совместимый структурный parser для исторических версий. Новые source
+    publications и POST /scripts/validate дополнительно используют versioned
+    action_parameters.py; parser не переписывает старые hashes/параметры.
     """
     id: str = Field(pattern=r'^[a-zA-Z_][\w-]{0,63}$')
     action: dict = Field(description="Action object, обязательный ключ 'type'")

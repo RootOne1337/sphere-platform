@@ -6,7 +6,7 @@ from __future__ import annotations
 import uuid
 from typing import Literal
 
-from fastapi import APIRouter, Depends, HTTPException, Query, Response
+from fastapi import APIRouter, Depends, Query, Response
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.core.dependencies import require_permission
@@ -16,6 +16,7 @@ from backend.models.user import User
 from backend.schemas.script import (
     CreateScriptRequest,
     RollbackScriptRequest,
+    ScriptActionContractResponse,
     ScriptCatalogResponse,
     ScriptDetailResponse,
     ScriptListResponse,
@@ -25,7 +26,11 @@ from backend.schemas.script import (
     UpdateScriptRequest,
     ValidateScriptRequest,
 )
-from backend.services.script_service import ScriptService, _compute_dag_hash
+from backend.services.script_service import (
+    ScriptService,
+    _compute_dag_hash,
+    validate_publication_dag,
+)
 
 router = APIRouter(prefix="/scripts", tags=["scripts"])
 
@@ -132,9 +137,21 @@ async def create_script(
     return _to_script_response(script)
 
 
+@router.get("/action-contract", response_model=ScriptActionContractResponse,
+    summary="Контракт параметров опубликованных действий Android без проверки APK")
+async def get_action_contract(
+    response: Response,
+    current_user: User = require_permission("script:read"),
+) -> ScriptActionContractResponse:
+    from backend.schemas.action_parameters import CONTRACT
+
+    response.headers["Cache-Control"] = "no-store"
+    return ScriptActionContractResponse(contract=CONTRACT)
+
+
 @router.post("/validate", response_model=ScriptValidationResponse,
     summary="Проверить черновик без сохранения и выполнения",
-    responses={422: {"description": "Invalid DAG structure, references or Lua safety"}})
+    responses={422: {"description": "Invalid DAG structure, references, action parameters or Lua safety"}})
 async def validate_script_draft(
     body: ValidateScriptRequest,
     current_user: User = require_permission("script:read"),
@@ -143,16 +160,7 @@ async def validate_script_draft(
     # database mutation or task/device admission.
     # Reuse the same normalizer as create/update, but never reflect input payloads
     # in errors (a draft can contain private text, headers or code).
-    from pydantic import ValidationError
-
-    from backend.schemas.dag import DAGScript
-
-    try:
-        dag = DAGScript.model_validate(body.dag).model_dump()
-    except ValidationError as exc:
-        details = [{"loc": row["loc"], "type": row["type"], "msg": row["msg"][:512]}
-                   for row in exc.errors(include_input=False, include_context=False)]
-        raise HTTPException(status_code=422, detail=details) from exc
+    dag = validate_publication_dag(body.dag)
     return ScriptValidationResponse(dag=dag, dag_hash=_compute_dag_hash(dag),
         node_count=len(dag["nodes"]), action_types=sorted({node["action"]["type"] for node in dag["nodes"]}))
 

@@ -22,10 +22,25 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from backend.models.script import Script, ScriptVersion
+from backend.schemas.action_parameters import action_parameter_errors
 from backend.schemas.dag import DAGScript
 from backend.schemas.script import CreateScriptRequest, ScriptCatalogItem, UpdateScriptRequest
 
 logger = structlog.get_logger()
+
+
+def validate_publication_dag(dag_raw: dict) -> dict:
+    """Validate new source without DB/device effects or reflecting private inputs."""
+    try:
+        dag = DAGScript.model_validate(dag_raw).model_dump()
+    except ValidationError as exc:
+        details = [{"loc": row["loc"], "type": row["type"], "msg": row["msg"][:512]}
+                   for row in exc.errors(include_input=False, include_context=False)]
+        raise HTTPException(status_code=422, detail=details) from exc
+    errors = action_parameter_errors(dag["nodes"])
+    if errors:
+        raise HTTPException(status_code=422, detail=errors)
+    return dag
 
 
 def _compute_dag_hash(dag_dict: dict) -> str:
@@ -147,15 +162,7 @@ class ScriptService:
         Валидировать DAG через Pydantic, вернуть (serialized_dict, sha256_hash).
         Raises HTTPException 422 при невалидном DAG.
         """
-        try:
-            dag_obj = DAGScript.model_validate(dag_raw)
-        except ValidationError as e:
-            # Pydantic V2 errors() может содержать не-сериализуемые объекты в ctx
-            import json as _json
-            safe_errors = _json.loads(e.json())
-            raise HTTPException(status_code=422, detail=safe_errors)
-
-        dag_dict = dag_obj.model_dump()
+        dag_dict = validate_publication_dag(dag_raw)
         dag_hash = _compute_dag_hash(dag_dict)
         return dag_dict, dag_hash
 
@@ -210,13 +217,18 @@ class ScriptService:
         self._check_current(script, data.expected_current_version_id)
         self._check_active(script)
 
+        # Reject a bad source before assigning even metadata on the tracked ORM
+        # object. A service caller may catch 422 and keep using the same session.
+        validated = self._validate_dag(data.dag) if data.dag is not None else None
+
         if data.name is not None:
             script.name = data.name
         if data.description is not None:
             script.description = data.description
 
         if data.dag is not None:
-            dag_dict, dag_hash = self._validate_dag(data.dag)
+            assert validated is not None
+            dag_dict, dag_hash = validated
 
             # Дедупликация: не создавать версию если DAG не изменился
             if script.current_version_id:

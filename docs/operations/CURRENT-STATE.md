@@ -4,6 +4,20 @@
 **Область:** исходники и документация ветки PR #19, записанные runtime-наблюдения, Android APK и готовность следующего прогона.<br />
 **Канонический документ текущего состояния:** этот файл. Исторические отчёты ниже сохраняют исходные даты и факты.
 
+**6 октября, 22:52 UTC+5 — следующий source P1 Script Studio:** общий контракт
+параметров **1.0 / 32 опубликованных действия**, error paths без input values,
+check/create/update guard до записи версии, требования и optional fields в форме.
+141 Python/ASGI/schema tests прошли также с shipped FastAPI/Pydantic/SQLAlchemy;
+374 frontend tests /16 suites, TypeScript, scoped Ruff и mirror check прошли.
+Предыдущий head **de969f9** завершил backend/frontend/Android CI success,
+Preview success с deploy skipped; это не CI нового source кандидата.
+Локальный full backend mypy не принят: global Python содержит повреждённый
+SQLAlchemy source, отдельная pinned среда сообщает отсутствие Requests stubs.
+Сам pure validator прошёл isolated mypy; полный CI остаётся обязательным.
+**Не установлено:** UI1c26ffc7/APIeb7a7c26/APK сохранены; C: Warning/Full Repair
+Needed. Общая приёмка9/41 не меняется. Следующие gates — APK capabilities,
+continuous pointer и correlated recording/replay. [Результат и границы](../audits/2026-10-06/STUDIO-ACTION-PARAMETERS.md).
+
 **6 октября, 22:13 UTC+5 — Studio interaction source fixes:** явный editor
 связи, перенос её конца, delete-only transition и шесть Android key presets.
 Selector из XPath inspector теперь проходит ту же ordered review queue, что

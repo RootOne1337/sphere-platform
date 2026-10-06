@@ -42,7 +42,18 @@ class ScriptValidationResponse(BaseModel):
     node_count: int
     action_types: list[str]
     scope: Literal["structure-routes-lua-safety"] = "structure-routes-lua-safety"
+    # Additive receipt fields: old clients retain their narrower scope statement.
+    action_contract_version: Literal["1.0"] = "1.0"
+    action_parameters_verified: Literal[True] = True
     device_execution_verified: Literal[False] = False
+
+
+class ScriptActionContractResponse(BaseModel):
+    """Published parameter rules, independent of any installed APK capability."""
+    version: Literal["1.0"] = "1.0"
+    contract: dict
+    device_execution_verified: Literal[False] = False
+    installed_apk_capabilities_verified: Literal[False] = False
 
 
 # ── Ответы ───────────────────────────────────────────────────────────────────

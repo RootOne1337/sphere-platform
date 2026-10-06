@@ -114,6 +114,27 @@ function renderNode(action: DagNode['action'], extra: Partial<DagNode> = {}, wri
 }
 
 describe('structured Studio parameters match the APK action vocabulary', () => {
+  it('adds an optional runtime parameter only after an explicit choice and keeps the source unchanged before that', () => {
+    const { node, changed, latest } = renderNode({ type: 'tap_element', selector: 'OK', strategy: 'text' });
+    const optional = screen.getByRole('combobox', { name: 'Дополнительный параметр действия' });
+    expect(within(optional).getByRole('option', { name: /fail_if_not_found/ })).toBeInTheDocument();
+    expect(changed).not.toHaveBeenCalled();
+    fireEvent.change(optional, { target: { value: 'fail_if_not_found' } });
+    expect(changed).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole('button', { name: 'Добавить параметр' }));
+    expect(latest().action.fail_if_not_found).toBe(true);
+    expect(node.action).not.toHaveProperty('fail_if_not_found');
+  });
+  it('offers result storage only to actual save_to handlers and never materializes a default automatically', () => {
+    const first = renderNode({ type: 'screenshot' });
+    const optional = screen.getByRole('combobox', { name: 'Дополнительный параметр действия' });
+    expect(within(optional).getByRole('option', { name: /save_to/ })).toBeInTheDocument();
+    expect(first.changed).not.toHaveBeenCalled();
+  });
+  it('does not offer save_to for an input_clear handler that ignores it', () => {
+    renderNode({ type: 'input_clear' });
+    expect(screen.queryByRole('combobox', { name: 'Дополнительный параметр действия' })).not.toBeInTheDocument();
+  });
   it('offers content-desc through the installed desc strategy, not an unsupported description alias', () => {
     const { latest } = renderNode({ type: 'tap_element', selector: 'Settings', strategy: 'xpath' });
     const strategy = screen.getByLabelText(/Стратегия поиска/);
@@ -200,6 +221,7 @@ describe('structured Studio parameters match the APK action vocabulary', () => {
     expect(screen.getByLabelText(/Стратегия поиска/)).toBeDisabled();
     expect(screen.getByLabelText(/Селектор элемента/)).toHaveAttribute('readonly');
     expect(screen.getByRole('button', { name: 'Применить параметры' })).toBeDisabled();
+    expect(screen.getByRole('combobox', { name: 'Дополнительный параметр действия' })).toBeDisabled();
     expect(changed).not.toHaveBeenCalled();
   });
 });

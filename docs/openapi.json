@@ -7349,6 +7349,32 @@
         }
       }
     },
+    "/api/v1/scripts/action-contract": {
+      "get": {
+        "tags": [
+          "scripts"
+        ],
+        "summary": "Контракт параметров опубликованных действий Android без проверки APK",
+        "operationId": "get_action_contract_api_v1_scripts_action_contract_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ScriptActionContractResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
     "/api/v1/scripts/validate": {
       "post": {
         "tags": [
@@ -7378,7 +7404,7 @@
             }
           },
           "422": {
-            "description": "Invalid DAG structure, references or Lua safety"
+            "description": "Invalid DAG structure, references, action parameters or Lua safety"
           }
         },
         "security": [
@@ -18059,6 +18085,47 @@
         "title": "ScheduleResponse",
         "description": "Ответ расписания."
       },
+      "ScriptActionContractResponse": {
+        "properties": {
+          "version": {
+            "type": "string",
+            "enum": [
+              "1.0"
+            ],
+            "const": "1.0",
+            "title": "Version",
+            "default": "1.0"
+          },
+          "contract": {
+            "type": "object",
+            "title": "Contract"
+          },
+          "device_execution_verified": {
+            "type": "boolean",
+            "enum": [
+              false
+            ],
+            "const": false,
+            "title": "Device Execution Verified",
+            "default": false
+          },
+          "installed_apk_capabilities_verified": {
+            "type": "boolean",
+            "enum": [
+              false
+            ],
+            "const": false,
+            "title": "Installed Apk Capabilities Verified",
+            "default": false
+          }
+        },
+        "type": "object",
+        "required": [
+          "contract"
+        ],
+        "title": "ScriptActionContractResponse",
+        "description": "Published parameter rules, independent of any installed APK capability."
+      },
       "ScriptCatalogItem": {
         "properties": {
           "id": {
@@ -18474,6 +18541,24 @@
             "const": "structure-routes-lua-safety",
             "title": "Scope",
             "default": "structure-routes-lua-safety"
+          },
+          "action_contract_version": {
+            "type": "string",
+            "enum": [
+              "1.0"
+            ],
+            "const": "1.0",
+            "title": "Action Contract Version",
+            "default": "1.0"
+          },
+          "action_parameters_verified": {
+            "type": "boolean",
+            "enum": [
+              true
+            ],
+            "const": true,
+            "title": "Action Parameters Verified",
+            "default": true
           },
           "device_execution_verified": {
             "type": "boolean",

@@ -93,6 +93,12 @@ Source fix использует общий bounded review buffer:
 
 ## Следующий P1: continuous pointer protocol
 
+До нового injector сделан отдельный source P1
+[общего контракта параметров 32 опубликованных действий](STUDIO-ACTION-PARAMETERS.md).
+Он блокирует malformed новые publications и раскрывает требования/optional fields
+в NodeInspector; не меняет motion protocol, APK или installed runtime. Доставка и
+capability preflight остаются открытыми. У continuous pointer прежние критерии ниже.
+
 Текущий browser pointerdown лишь начинает локальный drag; pointerup отправляет
 один click/swipe. Backend принимает только `click/swipe/keyevent/text`; APK
 исполняет конечный `input swipe`. Непрерывного DOWN/MOVE/UP сейчас нет.

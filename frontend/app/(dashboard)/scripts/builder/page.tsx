@@ -22,8 +22,10 @@ import { DeviceWorkbench } from '@/src/features/scripts/studio/DeviceWorkbench';
 import { ACTION_GROUPS, ANDROID_KEY_PRESETS } from '@/src/features/scripts/studio/presentation';
 import { layoutWorkflow } from '@/src/features/scripts/studio/layout';
 import type { DagNode } from '@/lib/dag/export';
+import { actionParameterErrors, ACTION_CONTRACT_VERSION } from '@/lib/dag/actionParameters';
 
-interface ValidationReceipt { schema_version: 1; dag_hash: string; node_count: number; scope: 'structure-routes-lua-safety'; device_execution_verified: false }
+interface ValidationReceipt { schema_version: 1; dag_hash: string; node_count: number; scope: 'structure-routes-lua-safety'; device_execution_verified: false;
+  action_contract_version?: string; action_parameters_verified?: boolean }
 const importedInitial = importDag(initialDag);
 const overviewOptions: FitViewOptions = { padding: { top: '64px', right: '32px', bottom: '48px', left: '32px' }, minZoom: 0.65, maxZoom: 1 };
 function errorMessage(error: unknown): string {
@@ -249,6 +251,8 @@ function BuilderInner({ editId, storageKey }: { editId: string | null; storageKe
     if (nodePending) throw new Error('Параметры шага ещё не применены.');
     if (canvasError) throw new Error(canvasError);
     const dag = parseSource(documentRef.current.source);
+    const parameterErrors = actionParameterErrors(dag.nodes);
+    if (parameterErrors.length) throw new Error(parameterErrors.slice(0, 20).map(error => `${error.loc.join('.')}: ${error.msg}`).join('\n'));
     if (!documentRef.current.name.trim() || documentRef.current.name.length > 255) throw new Error('Название сценария: 1–255 символов.');
     return dag;
   }
@@ -268,6 +272,8 @@ function BuilderInner({ editId, storageKey }: { editId: string | null; storageKe
         if (!live.current || controller.signal.aborted || JSON.stringify(documentRef.current) !== sentFingerprint || !accessRef.current.can('script:read')) return;
         if (data.schema_version !== 1 || data.scope !== 'structure-routes-lua-safety' || data.device_execution_verified !== false
           || !/^[a-f0-9]{64}$/.test(data.dag_hash) || data.node_count !== dag.nodes.length) throw new Error('Ответ проверки не соответствует контракту.');
+        if ((data.action_contract_version !== undefined || data.action_parameters_verified !== undefined)
+          && (data.action_contract_version !== ACTION_CONTRACT_VERSION || data.action_parameters_verified !== true)) throw new Error('Версия серверного контракта параметров не подтверждена. Проверка не принята.');
         setReceipt({ fingerprint: sentFingerprint, result: data });
       } else {
         if (editId) {
@@ -387,7 +393,7 @@ function BuilderInner({ editId, storageKey }: { editId: string | null; storageKe
       {!canWrite && <p role="status" className="px-4 pb-2 text-xs text-muted-foreground">Исходник доступен для чтения и проверки. Права записи не подтверждены.</p>}
     </header>
     {(errors || canvasError) && <div role="alert" className="max-h-28 shrink-0 overflow-auto whitespace-pre-wrap border-b border-destructive/30 bg-destructive/5 p-3 text-xs text-destructive">{errors || canvasError}</div>}
-    {currentReceipt && <div role="status" className="shrink-0 border-b bg-emerald-500/10 px-4 py-2 text-xs">Структура, переходы и безопасность Lua проверены · {currentReceipt.node_count} шагов <span className="font-mono" title={currentReceipt.dag_hash}>· SHA256 {currentReceipt.dag_hash.slice(0, 12)}</span>. Выполнение на Android не проверялось.</div>}
+    {currentReceipt && <div role="status" className="shrink-0 border-b bg-emerald-500/10 px-4 py-2 text-xs">Структура, переходы и безопасность Lua проверены · {currentReceipt.node_count} шагов <span className="font-mono" title={currentReceipt.dag_hash}>· SHA256 {currentReceipt.dag_hash.slice(0, 12)}</span>. {currentReceipt.action_parameters_verified ? `Параметры действий проверены сервером · контракт ${currentReceipt.action_contract_version}.` : 'Параметры проверены локально; этот API не подтвердил проверку параметров.'} Выполнение на Android не проверялось.</div>}
     {draft && <div className="flex shrink-0 flex-wrap items-center gap-2 border-b bg-amber-500/10 px-4 py-2 text-xs"><span>Найден локальный черновик этого сценария.</span><Button size="sm" variant="outline" disabled={!writable} onClick={() => { try { changeDocument(draft); setMode('source'); setNodePending(false); setSelectedId(null); setDraft(null); } catch (error) { setErrors(errorMessage(error)); } }}>Восстановить черновик</Button><Button size="sm" variant="ghost" onClick={() => { try { if (storageKey) localStorage.removeItem(storageKey); setDraft(null); } catch (error) { setStorageStatus(errorMessage(error)); } }}>Удалить черновик</Button></div>}
     <div className={`flex min-h-0 min-w-0 flex-col lg:flex-1 ${workspace === 'device' ? 'studio-device-workspace lg:grid lg:grid-cols-[minmax(0,0.85fr)_minmax(0,1.15fr)]' : 'lg:flex-row'}`}>
       {workspace === 'design' && palette && <aside aria-label="Каталог действий" className="flex max-h-72 shrink-0 flex-col border-b bg-card lg:max-h-none lg:w-[224px] lg:border-b-0 lg:border-r">
