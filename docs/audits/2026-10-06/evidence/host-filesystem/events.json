@@ -1,0 +1,28 @@
+{
+  "schema": 1,
+  "observedAt": "2026-10-06T07:15:35Z",
+  "source": "Windows System / provider Ntfs / event 55 / bounded read-only query",
+  "events": [
+    {
+      "recordId": 219586,
+      "timeCreatedUtc": "2026-10-04T16:36:14.3570647Z",
+      "volume": "C:",
+      "finding": "filesystem_structure_corruption_nature_unknown",
+      "offlineCheckIndicatedByWindows": true
+    },
+    {
+      "recordId": 220528,
+      "timeCreatedUtc": "2026-10-05T23:25:59.3930723Z",
+      "volume": "C:",
+      "repositoryRelativePath": ".local-pilot/script-studio-20261006/layout/context/frontend/__tests__/devices",
+      "fileReference": "0x140000004e0a6e",
+      "attribute": ":$I30:$INDEX_ALLOCATION",
+      "finding": "filesystem_index_corruption"
+    }
+  ],
+  "gitFsck": { "observedAt": "2026-10-06T07:15:35Z", "command": "git fsck --no-dangling", "exit": 0 },
+  "filesystemRepairsPerformed": false,
+  "rebootsPerformed": false,
+  "diskGrowthCauseEstablished": false,
+  "physicalDriveFailureEstablished": false
+}
