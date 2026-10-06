@@ -298,6 +298,42 @@ async def test_browser_controls_route_to_owner_with_permissions(world, role, exp
                 await asyncio.wait_for(task, 3)
 
 
+@pytest.mark.parametrize("malformed,reason", [
+    ([], "invalid_message"), ({"type": []}, "invalid_message"),
+    ({"type": "click"}, "invalid_parameter"), ({"type": "click", "x": True, "y": 20}, "invalid_parameter"),
+    ({"type": "click", "x": "private-coordinate", "y": 20}, "invalid_parameter"),
+    ({"type": "swipe", "x1": 1, "y1": 2, "x2": 3, "y2": 4, "duration_ms": 60_001}, "invalid_parameter"),
+    ({"type": "text", "text": {"private": "value"}}, "invalid_parameter"),
+    ({"type": "touch_down", "x": 1, "y": 2}, "unsupported_message"),
+])
+async def test_malformed_input_never_dispatches_and_keeps_video_and_later_input_alive(world, malformed, reason):
+    module = importlib.import_module("backend.api.ws.stream.router")
+    device = str(world.dev_a.id)
+    viewer = Viewer(world.auth(world.users["org_admin"])["Authorization"].split()[1])
+    async with workers(world) as (bridges, commands):
+        with patch.object(module, "AsyncSessionLocal", world.sessions), patch.object(module, "get_stream_bridge", return_value=bridges[1]):
+            task = asyncio.create_task(module.stream_viewer_ws(viewer, device))
+            try:
+                await until(lambda: any(c["type"] == "viewer_connected" for c in commands))
+                viewer.incoming.put_nowait(malformed)
+                await until(lambda: bool(viewer.messages))
+                assert viewer.messages == [{"type": "error", "error": "stream_input_invalid",
+                                            "reason": reason}]
+                assert not any(c["type"] in {"touch_tap", "touch_swipe", "keyevent", "text"} for c in commands)
+                assert viewer.closed is None
+                await bridges[0].handle_agent_frame(device, FRAME)
+                assert await asyncio.wait_for(viewer.frames.get(), 2) == FRAME
+                viewer.incoming.put_nowait({"type": "click", "x": 123, "y": 456, "session_id": "spoofed"})
+                await until(lambda: any(c["type"] == "touch_tap" for c in commands))
+                tap = next(c for c in commands if c["type"] == "touch_tap")
+                owner = next(c for c in commands if c["type"] == "viewer_connected")
+                assert tap == {"type": "touch_tap", "x": 123, "y": 456, "session_id": owner["session_id"]}
+            finally:
+                viewer.incoming.put_nowait(None)
+                await asyncio.wait_for(task, 3)
+            assert device not in bridges[1]._viewers
+
+
 @pytest.mark.parametrize("message,command_type", [
     ({"type": "click", "x": 123, "y": 456}, "touch_tap"),
     ({"type": "swipe", "x1": 1, "y1": 2, "x2": 3, "y2": 4}, "touch_swipe"),

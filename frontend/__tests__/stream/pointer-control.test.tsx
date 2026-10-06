@@ -152,6 +152,30 @@ it('revoking control cancels a gesture already held over the picture', () => {
   expect(view.commands()).toEqual([]);
 });
 
+it.each(['invalid_parameter', 'unsupported_message'])('a rejected %s cancels the pending gesture but does not disable video or later explicit input', reason => {
+  const view = readyGestureFixture(true);
+  view.down(1);
+  act(() => view.socket.onmessage?.({ data: JSON.stringify({ type: 'error', error: 'stream_input_invalid', reason, private: 'must-not-be-shown' }) }));
+  view.up(1);
+  expect(view.commands()).toEqual([]);
+  expect(view.canvas).toHaveAttribute('aria-disabled', 'false');
+  expect(view.getByRole('status')).toHaveTextContent('Видеопоток продолжается');
+  expect(view.queryByText('must-not-be-shown')).not.toBeInTheDocument();
+  view.down(2); view.up(2);
+  expect(view.commands()).toEqual([{ type: 'click', x: 640, y: 360 }]);
+  expect(MockSocket.instances).toHaveLength(1);
+  fireEvent.click(view.getByRole('button', { name: 'Скрыть сообщение об отклонённой команде' }));
+  expect(view.queryByRole('status')).not.toBeInTheDocument();
+});
+
+it('changing the selected device clears a previous rejected-command notice', () => {
+  const view = readyGestureFixture(true);
+  act(() => view.socket.onmessage?.({ data: JSON.stringify({ type: 'error', error: 'stream_input_invalid' }) }));
+  expect(view.getByRole('status')).toHaveTextContent('Сервер отклонил некорректную команду');
+  view.rerender(<DeviceStream deviceId="other-device" fit="contain" enableStaticInput />);
+  expect(view.queryByText(/Сервер отклонил некорректную команду/)).not.toBeInTheDocument();
+});
+
 it('single-device static input accepts a new tap and swipe without inventing a fresh picture', () => {
   const { canvas, commands, down, up } = readyGestureFixture(true);
   act(() => jest.advanceTimersByTime(10_000));

@@ -31,6 +31,12 @@ backend **3037 passed / 37 skipped**, 55 subtests, coverage 80.36%; Android succ
 Полная Android/continuous/rich-recorder приёмка открыта. Исторические source
 и preboot receipts ниже относятся к их собственным датам и SHA.
 
+**7 октября — source follow-up управления:**
+[Отказ malformed input без потери видео, strict types, fixed errors и gates](audits/2026-10-07/VIEWER-INPUT-ADMISSION.md).
+66 isolated real-service/source tests и58 frontend passed; новая правка ещё
+не установлена. Baseline d112337 завершил полный CI success, backend3066/37,
+147subtests,coverage80.39%. Continuous/rich recorder остаются открытыми.
+
 **7 октября, 03:35 +05 — backend 114775a установлен:**
 [Exact CI image, bounded gzip/admission, packaged action guard и live gates](audits/2026-10-07/REVIEWED-BACKEND-DELIVERY.md).
 51 local delivery methods и Ruff passed. Exact backend CI: 3050 passed / 37

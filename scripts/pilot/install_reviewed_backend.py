@@ -1,4 +1,4 @@
-"""Plan or install one schema-free action-contract backend update from CI.
+"""Plan or install one reviewed schema-free contract/control update from CI.
 
 Never builds, migrates, seeds SQL, changes secrets or restarts dependencies.
 """
@@ -40,6 +40,7 @@ APPROVED_PATHS = {
     "backend/api/v1/scripts/router.py", "backend/schemas/action_contract.v1.json",
     "backend/schemas/action_parameters.py", "backend/schemas/dag.py",
     "backend/schemas/script.py", "backend/services/script_service.py",
+    "backend/api/ws/stream/router.py", "backend/websocket/viewer_input.py",
 }
 PACKAGED_PATHS = ["backend", "alembic", "agent-config", "scripts/create_admin.py",
     "scripts/seed_enrollment_key.py", "scripts/backfill_script_metadata.py", "scripts/publish_script_source.py"]

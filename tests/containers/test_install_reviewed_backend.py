@@ -98,12 +98,22 @@ class BackendInstallerTests(unittest.TestCase):
                     installer.check_ci(receipt)
 
     def test_schema_dependency_and_bootstrap_changes_are_outside_update_scope(self):
-        for name in ("alembic/versions/new.py", "backend/requirements.txt", "backend/main.py", "scripts/create_admin.py"):
+        for name in ("alembic/versions/new.py", "backend/requirements.txt", "backend/main.py", "scripts/create_admin.py",
+                     "backend/core/rbac.py", "backend/websocket/connection_manager.py"):
             with self.subTest(name=name), patch.object(installer, "command", return_value=name), \
                     patch.object(installer.subprocess, "run") as run:
                 with self.assertRaisesRegex(ValueError, "Unreviewed packaged"):
                     installer.source_boundary(CURRENT, SOURCE, {})
                 run.assert_not_called()
+
+    def test_discrete_input_update_admits_only_the_reviewed_router_and_parser(self):
+        payload = b"unchanged canonical source\n"
+        digest = hashlib.sha256(payload).hexdigest()
+        paths = ["backend/api/ws/stream/router.py", "backend/websocket/viewer_input.py"]
+        with patch.object(installer, "command", return_value="\n".join(paths)), \
+                patch.object(installer.subprocess, "run", return_value=subprocess.CompletedProcess([], 0, payload)):
+            self.assertEqual(installer.source_boundary(CURRENT, SOURCE,
+                {"requirementsSha256": digest, "actionContractSha256": digest}), paths)
 
     def test_source_hash_uses_canonical_git_bytes_and_checks_both_files(self):
         payload = b"canonical\nbytes\n"

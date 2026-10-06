@@ -12,6 +12,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from backend.core.dependencies import _is_dev_skip_auth
 from backend.database.engine import AsyncSessionLocal
 from backend.websocket.stream_bridge import get_stream_bridge
+from backend.websocket.viewer_input import InvalidViewerInput, viewer_command
 
 logger = structlog.get_logger()
 
@@ -103,6 +104,9 @@ async def stream_viewer_ws(
         await ws.close(code=4001, reason="receive_error")
         return
 
+    if not isinstance(first, dict) or not isinstance(first.get("token", ""), str):
+        await ws.close(code=4001, reason="invalid_auth_message")
+        return
     token = first.get("token", "")
     if not token and not _is_dev_skip_auth():
         await ws.close(code=4001, reason="no_token")
@@ -236,66 +240,34 @@ async def stream_viewer_ws(
                 done, _ = await asyncio.wait((receive_task, stop_task), return_when=asyncio.FIRST_COMPLETED)
                 if stop_task in done:
                     break
-                data = await receive_task
+                try:
+                    data = await receive_task
+                except (ValueError, RecursionError):
+                    # Includes JSON/UTF-8 decoding and Python's integer digit /
+                    # nesting limits. Do not echo decoder exception contents.
+                    await ws.send_json({"type": "error", "error": "stream_input_invalid", "reason": "invalid_message"})
+                    continue
             finally:
                 if not receive_task.done():
                     receive_task.cancel()
                 await asyncio.gather(receive_task, return_exceptions=True)
-            if data.get("type") in {"click", "swipe", "keyevent", "text"}:
+            try:
+                control = viewer_command(data)
+            except InvalidViewerInput as exc:
+                await ws.send_json({"type": "error", "error": "stream_input_invalid", "reason": exc.reason})
+                continue
+            if control is None:
+                continue
+            if control["type"] in {"touch_tap", "touch_swipe", "keyevent", "text"}:
                 can_control = await current_control_permission()
                 if can_control is None:
                     break
                 if not can_control:
                     await ws.send_json({"type": "error", "error": "stream_control_denied"})
                     continue
-            match data.get("type"):
-                case "click":
-                    # Forward tap coordinates to agent — coordinate mapping done client-side
-                    x = int(data.get("x", 0))
-                    y = int(data.get("y", 0))
-                    await send_control({
-                        "type": "touch_tap",
-                        "x": x,
-                        "y": y,
-                        "session_id": session_id,
-                    })
-                case "swipe":
-                    x1 = int(data.get("x1", 0))
-                    y1 = int(data.get("y1", 0))
-                    x2 = int(data.get("x2", 0))
-                    y2 = int(data.get("y2", 0))
-                    duration_ms = int(data.get("duration_ms", 300))
-                    await send_control({
-                        "type": "touch_swipe",
-                        "x1": x1, "y1": y1,
-                        "x2": x2, "y2": y2,
-                        "duration_ms": duration_ms,
-                        "session_id": session_id,
-                    })
-                case "request_keyframe":
-                    await send_control({
-                        "type": "request_keyframe",
-                    })
-                case "keyevent":
-                    await send_control({
-                        "type": "keyevent",
-                        "code": int(data.get("code", 0)),
-                        "session_id": session_id,
-                    })
-                case "text":
-                    await send_control({
-                        "type": "text",
-                        "text": str(data.get("text", "")),
-                        "session_id": session_id,
-                    })
-                case "pong":
-                    pass  # Ответ на наш keepalive ping — просто игнорируем
-                case _:
-                    logger.debug(
-                        "Unknown viewer message",
-                        type=data.get("type"),
-                        device_id=device_id,
-                    )
+                # The browser cannot supply or replace the authenticated viewer identity.
+                control["session_id"] = session_id
+            await send_control(control)
     except WebSocketDisconnect as exc:
         logger.info(
             "Stream viewer WS disconnect",
@@ -309,7 +281,7 @@ async def stream_viewer_ws(
             "Stream viewer WS error",
             device_id=device_id,
             session_id=session_id,
-            error=str(exc),
+            error_type=type(exc).__name__,
         )
     finally:
         ping_task.cancel()

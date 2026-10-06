@@ -108,6 +108,7 @@ export function DeviceStream({
   >('connecting');
   const [hasRenderedFrame, setHasRenderedFrame] = useState(false);
   const [streamError, setStreamError] = useState<string | null>(null);
+  const [inputError, setInputError] = useState<string | null>(null);
   const [screenshotError, setScreenshotError] = useState<string | null>(null);
   const [diagnosticsOpen, setDiagnosticsOpen] = useState(false);
   const [agentReport, setAgentReport] = useState<{
@@ -159,6 +160,7 @@ export function DeviceStream({
     setConnection('connecting');
     setHasRenderedFrame(false);
     setStreamError(null);
+    setInputError(null);
 
     const timer = setTimeout(() => {
       if (ignore) return;
@@ -231,6 +233,7 @@ export function DeviceStream({
         invalidateInspectionRef.current?.();
         lastFrameDimensionsRef.current = null;
         setStreamError(null);
+        setInputError(null);
         const newWs = new WebSocket(wsUrl);
         newWs.binaryType = 'arraybuffer';
         ws = newWs;
@@ -309,6 +312,14 @@ export function DeviceStream({
                 newWs.send(JSON.stringify({ type: 'pong' }));
               } else if (msg.type === 'error') {
                 dragRef.current = null;
+                if (msg.error === 'stream_input_invalid') {
+                  // Rejection before dispatch is separate from a broken stream
+                  // or an unknown applied action. Never replay the rejected input.
+                  setInputError(msg.reason === 'unsupported_message'
+                    ? 'Этот тип управления не поддерживается сервером. Видеопоток продолжается.'
+                    : 'Сервер отклонил некорректную команду до отправки на Android. Видеопоток продолжается.');
+                  return;
+                }
                 const messages: Record<string, string> = {
                   stream_control_unavailable: 'Сервер не смог передать запрос видеопотока Android-агенту.',
                   stream_control_denied: 'У этой учётной записи нет права управлять видеопотоком.',
@@ -561,6 +572,9 @@ export function DeviceStream({
   return (
     <div className={fit ? 'flex h-full w-full min-h-0 min-w-0 flex-col' : 'min-w-0'}>
     {readOnly && enableNavigation && <p role="status" className="border-b border-border bg-muted px-3 py-2 text-xs text-muted-foreground">Только просмотр · {readOnlyReason ?? 'роль не разрешает клики, жесты и навигацию Android.'}</p>}
+    {inputError && <div role="status" className="flex shrink-0 items-start justify-between gap-3 border-b border-amber-500/25 bg-amber-500/10 px-3 py-2 text-xs text-foreground">
+      <p>{inputError}</p><button type="button" onClick={() => setInputError(null)} aria-label="Скрыть сообщение об отклонённой команде" className="shrink-0 rounded px-2 py-1 text-muted-foreground hover:bg-muted focus-visible:outline focus-visible:outline-2 focus-visible:outline-ring">Скрыть</button>
+    </div>}
     <div className={fit ? `relative w-full min-h-0 min-w-0 flex-1${enableNavigation ? '' : ' h-full'}` : 'relative'}>
     <canvas
       ref={canvasRef}

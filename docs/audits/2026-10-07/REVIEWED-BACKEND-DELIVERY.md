@@ -6,6 +6,12 @@
 сохранены. Предыдущие source-only gates ниже относятся к этапу подготовки.
 Общий product ledger **9 accepted / 41 open** не изменён.
 
+**Source follow-up7октября:** installer дополнительно допускает только
+reviewed WS router и pure viewer_input.py для discrete input admission.
+Dependency/schema/bootstrap/RBAC/connection-manager delta запрещены.
+[Source defect, tests и ещё открытая доставка](VIEWER-INPUT-ADMISSION.md).
+Installed114775a receipt ниже сохраняет собственные версии и scope.
+
 [Текущее состояние](../../operations/CURRENT-STATE.md) ·
 [Action contract](../2026-10-06/STUDIO-ACTION-PARAMETERS.md) ·
 [Проверенный UI и открытые границы](STUDIO-RESIZE-INSTALLED-ACCEPTANCE.json).

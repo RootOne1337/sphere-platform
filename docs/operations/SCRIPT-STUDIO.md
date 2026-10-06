@@ -3,6 +3,9 @@
 Актуализировано: **7 октября 2026**. Каталог `/scripts`, редактор
 `/scripts/builder`, формат **DAG1.0**, React Flow, локальная ELK0.12.0.
 На 3015 установлен frontend **b50d6ae**, API — **114775a**.
+Source follow-up7октября: malformed WS input не подставляет координаты0/0,
+отказ отделён от video failure; **новые UI/API ещё не установлены**.
+[Проверки и admission](../audits/2026-10-07/VIEWER-INPUT-ADMISSION.md).
 **7 октября, 03:35 +05:** API обновлён из того же tested CI image без миграций;
 реальный editor/REST canary подтвердил server contract 1.0. Все 25 сценариев,
 task detail и 14 online agents сохранены/восстановлены.
