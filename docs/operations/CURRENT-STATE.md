@@ -33,6 +33,13 @@ API validate подтверждает структуру/Lua safety, но это
 **9 accepted / 41 open** сохраняется; continuous input, rich recorder и fleet
 acceptance не закрываются приёмкой графа.
 
+**Следующий этап 7 октября — доставка backend:** реализовано сохранение того же
+production image из CI, source/run/attempt и bounded archive admission; 35 local
+unittest methods и scoped Ruff passed. Новый packaged probe проверяет auth,
+32 action rules и valid/invalid validate после process restart. Hosted artifact
+и live backend install пока не приняты; API eb7a7c26 продолжает работать.
+[Контракт доставки и оставшиеся gates](../audits/2026-10-07/REVIEWED-BACKEND-DELIVERY.md).
+
 Ниже — исторические срезы до postboot handoff; версии/runtime gates относятся
 к указанному моменту, не отменяют актуальное состояние выше.
 

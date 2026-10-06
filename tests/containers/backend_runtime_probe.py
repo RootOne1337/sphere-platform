@@ -52,7 +52,29 @@ async def application_phase(phase, state_file):
                 visible = await client.get("/api/v1/devices/" + device_id, headers=headers)
                 assert visible.status_code == 200, f"Visibility status: {visible.status_code}"
                 assert visible.json()["id"] == device_id
+                # Probe the packaged guard, not an imported host source or mocked service.
+                contract = await client.get("/api/v1/scripts/action-contract", headers=headers)
+                assert contract.status_code == 200 and contract.headers["cache-control"] == "no-store"
+                rules = contract.json()
+                assert rules["version"] == "1.0" and len(rules["contract"]["actions"]) == 32
+                assert rules["device_execution_verified"] is False
+                assert rules["installed_apk_capabilities_verified"] is False
+                forbidden = await client.get("/api/v1/scripts/action-contract")
+                assert forbidden.status_code == 401
+                dag = {"entry_node": "work", "nodes": [
+                    {"id": "work", "action": {"type": "sleep", "ms": 0}, "on_success": "end"},
+                    {"id": "end", "action": {"type": "end"}},
+                ]}
+                valid = await client.post("/api/v1/scripts/validate", headers=headers, json={"dag": dag})
+                assert valid.status_code == 200
+                assert valid.json()["action_contract_version"] == "1.0"
+                assert valid.json()["action_parameters_verified"] is True
+                assert valid.json()["device_execution_verified"] is False
+                dag["nodes"][0]["action"] = {"type": "tap"}
+                invalid = await client.post("/api/v1/scripts/validate", headers=headers, json={"dag": dag})
+                assert invalid.status_code == 422, "Packaged API accepted tap without coordinates"
                 print(f"IMAGE_RUNTIME_PHASE={phase}: ready/login/device-visible", flush=True)
+                print(f"IMAGE_ACTION_CONTRACT_PHASE={phase}: schema/auth/valid/invalid", flush=True)
     finally:
         await engine.dispose()
 
@@ -94,6 +116,7 @@ class BackendRuntimeImageTests(unittest.TestCase):
             state = str(root / "state.json")
             first = self.command(__file__, "--phase", "first", state, **env)
             self.assertIn("IMAGE_RUNTIME_PHASE=first:", first)
+            self.assertIn("IMAGE_ACTION_CONTRACT_PHASE=first:", first)
             # New subprocesses re-import the real app and reinitialize the registry.
             env["ADMIN_PASSWORD"] = CANDIDATE
             self.command("-m", "alembic", "-c", "alembic/alembic.ini", "upgrade", "head", **env)
@@ -102,6 +125,7 @@ class BackendRuntimeImageTests(unittest.TestCase):
             self.command("-m", "scripts.seed_enrollment_key", **env)
             repeated = self.command(__file__, "--phase", "repeat", state, **env)
             self.assertIn("IMAGE_RUNTIME_PHASE=repeat:", repeated)
+            self.assertIn("IMAGE_ACTION_CONTRACT_PHASE=repeat:", repeated)
 
 
 if __name__ == "__main__":

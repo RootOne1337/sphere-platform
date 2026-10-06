@@ -18,29 +18,56 @@ jobs:
     name: Production image bootstrap
     runs-on: ubuntu-latest
     timeout-minutes: 20
+    env:
+      SPHERE_BUILD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+      SPHERE_REVIEW_IMAGE: sphere-reviewed-backend:${{ github.event.pull_request.head.sha || github.sha }}
+      SPHERE_CI_RUN_ID: ${{ github.run_id }}
+      SPHERE_CI_RUN_ATTEMPT: ${{ github.run_attempt }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+      - name: Reviewed archive admission regressions
+        run: python -m unittest discover -s tests/containers -p 'test_*reviewed*.py'
       - name: Verify private local pilot files are excluded from Docker context
         run: python tests/containers/dockerignore_probe.py
       - name: Build the shipped production image
-        run: docker build -f backend/Dockerfile -t sphere-backend-bootstrap-ci .
+        run: >-
+          docker build --platform linux/amd64 --build-arg BUILD_SHA="$SPHERE_BUILD_SHA"
+          --label "org.opencontainers.image.revision=$SPHERE_BUILD_SHA"
+          --label "io.sphere.ci.run=$SPHERE_CI_RUN_ID"
+          --label "io.sphere.ci.attempt=$SPHERE_CI_RUN_ATTEMPT"
+          -f backend/Dockerfile -t "$SPHERE_REVIEW_IMAGE" .
       - name: Run bootstrap entry points without network or source mounts
         run: |
           docker run --rm --network none --read-only --cap-drop ALL \
             --security-opt no-new-privileges --tmpfs /tmp:rw,nosuid,nodev,size=16m \
             --mount "type=bind,source=${{ github.workspace }}/tests/containers/backend_bootstrap_probe.py,target=/tmp/backend_bootstrap_probe.py,readonly" \
-            sphere-backend-bootstrap-ci python /tmp/backend_bootstrap_probe.py 2>&1 | tee image-bootstrap-probe.txt
+            "$SPHERE_REVIEW_IMAGE" python /tmp/backend_bootstrap_probe.py 2>&1 | tee image-bootstrap-probe.txt
       - name: Fresh packaged SQL bootstrap and application process restart
         run: >-
           python tests/containers/run_backend_runtime_probe.py
-          --image sphere-backend-bootstrap-ci --evidence-dir image-runtime-evidence
+          --image "$SPHERE_REVIEW_IMAGE" --evidence-dir image-runtime-evidence
       - name: Four HTTP workers, child replacement and fresh master metrics
         run: >-
           python tests/containers/run_multiprocess_metrics_probe.py
-          --image sphere-backend-bootstrap-ci --evidence-dir multiprocess-metrics-evidence
+          --image "$SPHERE_REVIEW_IMAGE" --evidence-dir multiprocess-metrics-evidence
       - name: PostgreSQL entrypoint initialization and persistent-volume restart
         run: |
           python tests/containers/postgres_init_probe.py --evidence-dir postgres-init-evidence 2>&1 | tee postgres-init-probe.txt
+      - name: Retain the same probed backend image without rebuilding
+        run: python tests/containers/package_reviewed_backend.py
+      - name: Keep the admitted backend for operator review
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: sphere-reviewed-backend-${{ github.event.pull_request.head.sha || github.sha }}
+          path: |
+            reviewed-backend/image.tar.gz
+            reviewed-backend/receipt.json
+          if-no-files-found: error
+          retention-days: 3
+          compression-level: 0
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -57,7 +84,10 @@ jobs:
     name: Lint (ruff + mypy)
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
@@ -74,7 +104,10 @@ jobs:
     name: Security (bandit + pip-audit)
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
@@ -87,7 +120,10 @@ jobs:
     name: RLS Policy Coverage
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
@@ -133,7 +169,10 @@ jobs:
       SPHERE_RUN_INTEGRATION: "1"
       PYTHONPATH: ".:pc-agent"
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
@@ -200,7 +239,10 @@ jobs:
       AWG_H4: 4444444444
       VPN_SERVER_HOSTNAME: localhost
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"

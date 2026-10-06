@@ -2,28 +2,20 @@
 from __future__ import annotations
 
 import argparse
-import hashlib
 import json
 import re
+import sys
 import tarfile
-from pathlib import Path, PurePosixPath
+from pathlib import Path
 from typing import Any
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
+from scripts.pilot.reviewed_image_archive import admit_archive, bounded_json, require  # noqa: E402
 
 COMPRESSED_LIMIT = 300 * 1024 * 1024
 EXPANDED_LIMIT = 1024 * 1024 * 1024
 JSON_LIMIT = 1024 * 1024
 REQUIRED_ROUTES = {"/", "/login", "/scripts", "/scripts/builder", "/devices", "/monitoring"}
-
-
-def require(condition: bool, reason: str) -> None:
-    if not condition:
-        raise ValueError(reason)
-
-
-def bounded_json(path: Path, limit: int) -> Any:
-    require(path.is_file() and not path.is_symlink(), "Expected regular JSON file")
-    require(0 < path.stat().st_size <= limit, "JSON byte budget exceeded")
-    return json.loads(path.read_text(encoding="utf-8"))
 
 
 def admit(directory: Path, source: str) -> dict[str, Any]:
@@ -64,54 +56,8 @@ def admit(directory: Path, source: str) -> dict[str, Any]:
         else:
             require(page.get("status") == 200, "Page not admitted")
     require(REQUIRED_ROUTES <= routes, "Core pages absent")
-    archive = receipt.get("archive", {})
-    require(isinstance(archive, dict) and archive.get("file") == "image.tar.gz", "Unexpected archive path")
-    require(archive.get("maxExpandedBytes") == EXPANDED_LIMIT, "Unexpected expansion budget")
-    path = directory / "image.tar.gz"
-    require(path.is_file() and not path.is_symlink(), "Expected regular image archive")
-    size = path.stat().st_size
-    require(type(archive.get("bytes")) is int and 0 < size <= COMPRESSED_LIMIT and size == archive["bytes"],
-            "Compressed image size mismatch/budget exceeded")
-    digest = hashlib.sha256()
-    with path.open("rb") as stream:
-        for chunk in iter(lambda: stream.read(1024 * 1024), b""):
-            digest.update(chunk)
-    require(digest.hexdigest() == archive.get("sha256"), "Archive SHA256 mismatch")
-    manifest = None
-    configs: dict[str, tuple[str, Any]] = {}
-    members: set[str] = set()
-    total = 0
-    with tarfile.open(path, mode="r|gz") as bundle:
-        for member in bundle:
-            name = member.name
-            parts = PurePosixPath(name).parts
-            require(name and not name.startswith("/") and ".." not in parts and "\\" not in name,
-                    "Unsafe archive member")
-            require(name not in members and len(members) < 2048, "Duplicate/oversized archive inventory")
-            members.add(name)
-            require(member.isdir() or member.isfile(), "Archive links/special files rejected")
-            if member.isdir():
-                continue
-            total += member.size + 512  # Include per-file tar header overhead in expansion budget.
-            require(member.size >= 0 and total <= EXPANDED_LIMIT, "Expanded image budget exceeded")
-            stream = bundle.extractfile(member)
-            require(stream is not None, "Unreadable archive member")
-            if member.size > JSON_LIMIT:
-                continue  # tarfile skips payload; no extraction or layer interpretation.
-            payload = stream.read(JSON_LIMIT + 1)
-            require(len(payload) == member.size, "Incomplete archive member")
-            if name == "manifest.json":
-                manifest = json.loads(payload)
-            elif hashlib.sha256(payload).hexdigest() == image_id.removeprefix("sha256:"):
-                configs[name] = (hashlib.sha256(payload).hexdigest(), json.loads(payload))
-    require(isinstance(manifest, list) and len(manifest) == 1 and isinstance(manifest[0], dict),
-            "Expected exactly one Docker image manifest")
-    record = manifest[0]
-    require(record.get("RepoTags") == [tag], "Archive tag mismatch/additional tags")
-    require(record.get("Config") in configs, "Image config digest mismatch")
-    config = configs[record["Config"]][1]
-    require(isinstance(config, dict) and config.get("os") == "linux" and config.get("architecture") == "amd64",
-            "Image config platform mismatch")
+    config, size = admit_archive(directory, receipt.get("archive"), image_id, tag,
+        compressed_limit=COMPRESSED_LIMIT, expanded_limit=EXPANDED_LIMIT, json_limit=JSON_LIMIT)
     runtime = config.get("config", {})
     require(isinstance(runtime, dict) and runtime.get("User") == "1001:1001", "Expected unprivileged runtime")
     require(runtime.get("Cmd") == ["node", "server.js"] and runtime.get("WorkingDir") == "/app"
@@ -121,9 +67,6 @@ def admit(directory: Path, source: str) -> dict[str, Any]:
     require(isinstance(labels, dict) and labels.get("org.opencontainers.image.revision") == source
             and labels.get("io.sphere.ci.run") == str(receipt["runId"])
             and labels.get("io.sphere.ci.attempt") == str(receipt["runAttempt"]), "Image CI/source binding mismatch")
-    layers = record.get("Layers")
-    require(isinstance(layers, list) and 1 <= len(layers) <= 64
-            and all(isinstance(layer, str) and layer in members for layer in layers), "Missing image layers")
     return {"sourceRevision": source, "imageId": image_id, "imageTag": tag, "archiveBytes": size,
             "runId": receipt["runId"], "runAttempt": receipt["runAttempt"], "pages": len(pages),
             "clientAssets": probe["clientAssetsVerified"], "archiveAdmitted": True, "runtimeInstalled": False}

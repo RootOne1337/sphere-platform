@@ -34,7 +34,7 @@ def main():
     summary = {"image_id": image_id, "network_internal": True, "host_ports": [],
         "api_listener": False, "source_mount": False, "environment": "development",
         "scenario": "fresh migrations, CLI bootstrap, real app lifespan/ASGI login/registration/visibility, repeat in new processes",
-        "apk_installed": False, "containers_removed": False}
+        "apk_installed": False, "containers_removed": False, "action_contract_verified": False}
     try:
         network_id = docker("network", "create", "--internal", "--label", label, run_id)
         for suffix, image, options in [
@@ -77,6 +77,7 @@ def main():
         print(output, flush=True)
         if result.returncode or summary["exit_code"]:
             raise RuntimeError("Packaged runtime probe failed; see recorded output")
+        summary["action_contract_verified"] = True
     finally:
         # Match both immutable Docker ID and unique ownership label before cleanup.
         for container in reversed(owned):

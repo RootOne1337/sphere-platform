@@ -98,6 +98,8 @@ docs/MERGE_LOG.md
 # Deployment artifacts (генерируются скриптами развёртывания)
 .admin-credentials
 .local-pilot/
+/reviewed-backend/
+/frontend/reviewed-web/
 .playwright-cli/
 output/playwright/
 .deploy.log

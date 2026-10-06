@@ -38,6 +38,11 @@ action_parameters_verified:** новый server contract остаётся source
 отдельного backend admission. Поведение APK проверяется отдельно. Новая сборка
 UI не делает frontend/API revisions одинаковыми и не заменяет fleet canary.
 
+Для установки server contract подготовлена [доставка того же CI backend image](../audits/2026-10-07/REVIEWED-BACKEND-DELIVERY.md).
+Packaged auth/schema/valid/invalid guard проверяется после process restart;
+artifact retention/admission не заменяет live Compose/SQL/agent проверку.
+До записанной live приёмки API eb7a7c26 остаётся старым.
+
 Следующий source срез: 32 опубликованных действия имеют общий контракт типов,
 обязательных полей, ограничений и эффектов. В форме узла доступны **Контракт
 параметров** и **Дополнительные параметры**. Frontend установлен; JSON

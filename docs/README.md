@@ -30,6 +30,11 @@ API eb7a7c26, APK, 45 остальных контейнеров и OTA сохр�
 Полная Android/continuous/rich-recorder приёмка открыта. Исторические source
 и preboot receipts ниже относятся к их собственным датам и SHA.
 
+**Следующий этап — проверенный backend artifact:**
+[Exact CI image, bounded gzip/admission, packaged action guard и live gates](audits/2026-10-07/REVIEWED-BACKEND-DELIVERY.md).
+35 local archive/installer/packager methods и Ruff passed; новый source ещё
+не является установленным API. Runtime eb7a7c26 и приёмка 9/41 сохраняются.
+
 **5 октября — комплексный аудит продукта:**
 [22 раздела в браузере, шесть подтверждённых дефектов, ограничение Grafana и 50 работ](audits/2026-10-05/ENTERPRISE-PRODUCT-AUDIT.md) ·
 [Evidence/источники](audits/2026-10-05/ENTERPRISE-PRODUCT-AUDIT-EVIDENCE.json) ·
