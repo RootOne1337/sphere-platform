@@ -77,6 +77,19 @@ Offline inventory подтвердил 32 API/UI types и 33 Android handlers (`
 [Результат и все ограничения](SCRIPT-STUDIO-FOUNDATION.md) ·
 [Инструкция](../../operations/SCRIPT-STUDIO.md) · [Pinned evidence](SCRIPT-STUDIO-EVIDENCE.json).
 
+## Новый runtime дефект, выявленный установленным canary
+
+[PH011 получила APK 1.2.46](ANDROID-CLEAR-INSTALLED.md) с сохранением данных.
+Одно задание completed 25/25 подтвердило полную очистку и clear-first replacement
+через последующие XPath asserts. Это следующий этап после исторического helper-only
+proof; старый build receipt сохранён. Общий счёт **9 / 41** не изменён.
+
+Screenshot action создаёт PNG в `/sdcard`, не ограничивает накопление и ждёт blind
+300 ms. Node success не сопровождается server artifact: manifest пуст. Подтверждены
+original PNG, hash match и адресный cleanup. Перед дальнейшим EP-016 делается
+ограниченный срез EP-047/019: capture ACK, валидация PNG и локальные count/byte/age
+budgets. Task upload/replay и причину host disk-growth этим не закрываем.
+
 ## Почему не продолжать только добавлять метрики
 
 Следующий этап EP-018: [запись key/text и подтверждения APK](STUDIO-COMMAND-RECORDING.md).

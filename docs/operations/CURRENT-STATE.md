@@ -6,7 +6,22 @@
 
 [Главная](../../README.md) · [Каталог документации](../README.md) · [Readiness](READINESS.md) · [Fleet32 gates](../audits/2026-09-20/FLEET32-PREFLIGHT.md) · [PR #19](https://github.com/RootOne1337/sphere-platform/pull/19)
 
-**6 октября, 17:43 UTC+5 — исправление APK очистки текста собрано, не установлено:**
+**6 октября, 18:48 UTC+5 — APK 1.2.46 установлен только на локальный PH011:**
+Адресное обновление 1.2.44 → 1.2.46 / 10246 сохранило UID, четыре preference файла
+до старта и device ID. Backup private; остальные 18 версий, API/UI, OTA и туннели
+сохранены. Один сохранённый DAG v1, одно задание, **25/25 success**: standalone
+`input_clear`, пустой повтор и `type_text.clear_first:true` проверены отдельными
+XPath asserts; итоговый текст точно `replacement-native`. Native browser подтвердил
+результат. Remote rollout и другие SDK/editors остаются открытыми.
+Выявлен следующий дефект: screenshot создал local PNG в `/sdcard`, но manifest
+задания пуст; автоматической доставки нет. Файл вручную сохранён без перекодирования
+и удалён адресно. Код имеет неограниченное накопление PNG и 300 ms blind wait;
+это не доказанная причина роста Windows C: или Docker VHD. Следующий срез — capture
+ACK/PNG validity и bounded local retention. Общий счёт **9 / 41** сохраняется.
+[Установка и новый дефект](../audits/2026-10-06/ANDROID-CLEAR-INSTALLED.md) ·
+[Pinned evidence](../audits/2026-10-06/ANDROID-CLEAR-INSTALLED-EVIDENCE.json).
+
+**Исторический срез сборки 6 октября, 17:43 UTC+5 — исправление APK очистки текста собрано, не установлено:**
 Source **`6a9f570f`**, candidate **1.2.46-dev / 10246**. Вместо ошибочного CUT 277
 используется root Ctrl+A/Delete с отпусканием клавиш и отдельным ограниченным ACK
 в прежней FIFO root-сессии. Unknown outcome не повторяет очистку и не вводит замену;

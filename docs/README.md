@@ -22,7 +22,11 @@
 Исходники `c3937a1`, установленный на этапе аудита UI/API `c1a6e79a`; исходный аудит — только анализ.
 Каталог API и элементов управления не заменяет живую проверку Android и 500–1000 устройств.
 
-**6 октября, 17:43 UTC+5 — APK text-clear fix, кандидат без установки:**
+**6 октября, 18:48 UTC+5 — PH011 обновлена до 1.2.46; реальный canary 25/25:**
+[Доставка, XPath проверки и screenshot gap](audits/2026-10-06/ANDROID-CLEAR-INSTALLED.md) ·
+[Pinned evidence](audits/2026-10-06/ANDROID-CLEAR-INSTALLED-EVIDENCE.json).
+
+**Историческая сборка 6 октября, 17:43 UTC+5 — APK text-clear fix, кандидат без установки:**
 **1.2.46-dev / 10246**, source `6a9f570f`; по 855 passed / 1 assumption-skipped
 Dev/Enterprise, signer/ZIP/DEX и четыре source CI прошли. Реальный SDK28 helper
 очистил всю строку с курсором внутри; пустой повтор и следующий ввод прошли.
