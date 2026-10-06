@@ -111,6 +111,29 @@ React Flow замокан: реальные pointer events, SVG и размер�
 
 ## Не закрытая визуальная приёмка
 
+### Повторный browser baseline на установленной версии
+
+В **23:27 UTC+5** открыт новый временный tab на3015/scripts/builder, новый
+непубликованный документ. Header подтверждает UI1c26ffc7/APIeb7a7c26; исходный
+пользовательский task tab не изменён. DOM показывает старое automatic insertion
+описание, отсутствуют новые mode selector, key presets и contract card.
+Снимок1280×720 подтверждает тесную библиотеку и занимающий часть End minimap.
+Это доказательство установленного baseline, **не screenshot нового source**.
+
+![Installed baseline1280×720](assets/studio-redesign/installed-builder-layout-baseline.jpg)
+
+По результату контроля source palette уточнена: select способа добавления
+находится в header; шесть быстрых клавиш по умолчанию свёрнуты внутри общего
+прокручиваемого каталога. Они не занимают неподвижные три ряда над библиотекой.
+Узкий catalog ограничен420px вместо288px, при этом тело остаётся прокручиваемым.
+Rendered test проверяет закрытое состояние, раскрытие и реальное добавление
+key_event;395 scripts tests и TypeScript повторно проверены. Новые размеры
+в настоящем browser ещё не проверены. Временный tab закрыт.
+
+Повторный host read: C: **Warning /Full Repair Needed**, свободно
+**41 089 921 024B**; last boot **4 октября21:39 UTC+5**. Postboot repair acceptance
+не появился, build/deploy gate не снимается этим browser чтением.
+
 [Host repair gate](HOST-FILESYSTEM-INCIDENT.md) остаётся закрытым; новый local
 Next/Android/Docker build и установка не выполнялись. После восстановления:
 

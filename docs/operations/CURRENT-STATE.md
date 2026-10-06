@@ -16,7 +16,9 @@ catalog publication fixtures содержали sleep без ms. Исправл�
 отдельная historical-read/rollback регрессия готовятся; guard не ослабляется.
 Это не положительный CI free-canvas head.
 **Не установлено:** UI1c26ffc7/APIeb7a7c26/APK сохранены; C: repair gate закрыт.
-Общий реестр9/41 не меняется; новых browser screenshots нет.
+Общий реестр9/41 не меняется; нового source browser acceptance нет. Повторно
+просмотрен installed baseline1280×720; source palette сделана компактнее по его
+результату. Снимок и точный scope находятся в linked free-canvas документе.
 
 **6 октября, 22:52 UTC+5 — следующий source P1 Script Studio:** общий контракт
 параметров **1.0 / 32 опубликованных действия**, error paths без input values,

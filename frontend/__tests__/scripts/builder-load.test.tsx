@@ -272,6 +272,10 @@ it('adds an Android navigation preset to the graph without issuing live input', 
   mockEditId = null;
   Object.defineProperty(crypto, 'randomUUID', { configurable: true, value: () => '00000000-0000-4000-8000-000000000012' });
   render(<ScriptBuilderPage />);
+  const presets = screen.getByLabelText('Готовые клавиши Android');
+  expect(presets).not.toHaveAttribute('open');
+  fireEvent.click(screen.getByText('Клавиши Android · 6'));
+  expect(presets).toHaveAttribute('open');
   fireEvent.change(screen.getByRole('combobox', { name: 'Способ добавления действия' }), { target: { value: 'insert' } });
   fireEvent.click(screen.getByRole('button', { name: 'Добавить действие Домой' }));
   expect(mockGraphProps.nodes).toHaveLength(3);
