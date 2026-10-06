@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { DeviceWorkbench } from '@/src/features/scripts/studio/DeviceWorkbench';
 import { api } from '@/lib/api';
 
@@ -52,6 +52,36 @@ it('creates one real task for the explicitly selected emulator and the exact sav
   resolve({ data: { id: taskId, script_id: scriptId, device_id: deviceId, script_version_id: versionId } });
   await waitFor(() => expect(screen.getByRole('link', { name: taskId })).toHaveAttribute('href', `/tasks/${taskId}`));
   expect(screen.getByRole('button', { name: 'Записать тестовый клик' })).toBeDisabled();
+});
+
+it('retains a pending launch through rejected close attempts until its owned receipt arrives', async () => {
+  const confirm = jest.spyOn(window, 'confirm').mockReturnValue(true);
+  let resolve!: (value: unknown) => void;
+  let guard: ((silent?: boolean) => boolean) | null = null;
+  jest.mocked(api.post).mockReturnValue(new Promise(fulfilled => { resolve = fulfilled; }));
+  try {
+    openDevice(next => { guard = next; });
+    fireEvent.click(screen.getByRole('button', { name: 'Проверить на PH025' }));
+    expect(guard!(true)).toBe(false);
+    fireEvent.click(screen.getByRole('button', { name: 'Сменить устройство' }));
+    let closed = true;
+    act(() => { closed = guard!(); }); // The same guard owns the builder's close button.
+    expect(closed).toBe(false);
+    expect(screen.getByRole('alert')).toHaveTextContent('Дождитесь ответа');
+    expect(screen.queryByRole('button', { name: /PH025.*LDPlayer/ })).not.toBeInTheDocument();
+    expect(screen.getByRole('region', { name: 'Поток выбранного Android' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Создаём задание…' })).toBeDisabled();
+    fireEvent.click(screen.getByRole('button', { name: 'Создаём задание…' }));
+    expect(confirm).not.toHaveBeenCalled();
+    expect(api.post).toHaveBeenCalledTimes(1);
+    await act(async () => resolve({ data: { id: taskId, script_id: scriptId, device_id: deviceId, script_version_id: versionId } }));
+    expect(screen.getByRole('link', { name: taskId })).toHaveAttribute('href', `/tasks/${taskId}`);
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+    expect(api.post).toHaveBeenCalledTimes(1);
+    fireEvent.click(screen.getByRole('button', { name: 'Сменить устройство' }));
+    expect(confirm).toHaveBeenCalledTimes(1);
+    expect(screen.getByRole('button', { name: /PH025.*LDPlayer/ })).toBeInTheDocument();
+  } finally { confirm.mockRestore(); }
 });
 
 it('keeps an unconfirmed foreign receipt uncertain and never silently retries the task', async () => {

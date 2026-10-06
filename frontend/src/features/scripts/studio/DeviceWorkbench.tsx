@@ -65,8 +65,13 @@ function OwnedWorkbench({ device, scriptId, version, name, canRun, canEdit, onIn
   const logs = useTaskLogs(taskId);
   const stop = useStopTask();
   useEffect(() => { registerCloseGuard?.((silent = false) => {
-    const guarded = Boolean(entries.length || active || runPending || uncertain);
+    const pending = runPending || runningRequest.current;
+    const guarded = Boolean(entries.length || active || pending || uncertain);
     if (silent) return !guarded;
+    if (pending) {
+      setError('Создание задания ещё не подтверждено. Дождитесь ответа перед сменой или закрытием устройства; повторный запуск недоступен.');
+      return false;
+    }
     if (uncertain) {
       setError('Результат запуска неизвестен. Проверьте журнал заданий: переключение устройства заблокировано, чтобы не создать повторное выполнение.');
       return false;
@@ -92,7 +97,7 @@ function OwnedWorkbench({ device, scriptId, version, name, canRun, canEdit, onIn
       const { data } = await api.post('/tasks', { script_id: scriptId, device_id: device.id, expected_current_version_id: pinned, priority: 5 }, { timeout: 30000 });
       if (!live.current) return;
       if (!data?.id || data.device_id !== device.id || data.script_id !== scriptId || data.script_version_id !== pinned) throw new Error('Ответ создания задания не подтверждает выбранную цель и версию.');
-      setOwnedVersion(pinned); setTaskId(data.id);
+      setError(''); setOwnedVersion(pinned); setTaskId(data.id);
     } catch (reason) { if (live.current) { setUncertain(!(isAxiosError(reason) && reason.response && reason.response.status >= 400 && reason.response.status < 500)); setError(getApiErrorMessage(reason, 'Запуск не подтверждён. Проверьте задания перед повтором: автоматического повтора нет.')); } }
     finally { runningRequest.current = false; if (live.current) setRunPending(false); }
   }
