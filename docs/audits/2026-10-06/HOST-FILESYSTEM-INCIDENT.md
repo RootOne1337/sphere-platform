@@ -238,3 +238,26 @@ used16,8 /allocated17,2 /max19,1ГБ. Это округлённые display valu
    независимая проверка SSD/driver/RAM; успешная одна загрузка не аппаратный SLA.
 5. Повторно получить VSS retention, bounded disk/RAM recorder, pool/epoch и writer
    measurements. Не склеивать прерванные окна в continuous soak.
+
+### Дополнительный source-файл Python вне репозитория
+
+**6 октября, 22:50:12 UTC+5:** scoped mypy остановился на global Python313,
+`Lib/site-packages/sqlalchemy/orm/sync.py`, SQLAlchemy2.0.32. Read-only проверка
+прочитала5779bytes: UTF-8 invalid byte `FF` на offset4096, следующие прочитанные
+bytes также `FF`. SHA256 не совпал с записью этого файла в установленном RECORD:
+
+- Expected base64url: `g7iZfSge1HgxMk9SKRgUgtHEbpbZ1kP_CBqOIdTOXqc`.
+- Observed base64url: `gfbbFlHuGNvUQSvzJRBAXy8hHs6XvCE3T8O4LwbF4_Y`.
+
+Private receipt: `.local-pilot/studio-followup-20261006/python-library-corruption.json`.
+Файл не изменялся и пакет не переустанавливался. Это обнаружение повреждённого
+файла за пределами проекта, а не установленная причина/момент его повреждения,
+диагноз SSD/RAM или доказательство причастности subagents. C: сохраняет Warning /
+Full Repair Needed; состояние свободного места отдельно:41 493 204 992bytes.
+`git fsck --no-dangling` прошёл; Windows boot repair не выполнен.
+
+Существующая pinned `.local-pilot/openapi-venv` с FastAPI0.136.3, Pydantic2.9.2,
+SQLAlchemy2.0.28 выполнила140 scoped tests и API exporter без запуска lifespan.
+Её mypy сообщает Requests import-untyped; полный CI в чистой среде остаётся gate.
+Isolated mypy только нового pure parameter validator прошёл. Не выдавать эти
+результаты за ремонт тома, проверку всех Python packages или полный backend CI.
