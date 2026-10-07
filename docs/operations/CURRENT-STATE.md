@@ -4,6 +4,18 @@
 **Область:** исходники и документация ветки PR #19, записанные runtime-наблюдения, Android APK и готовность следующего прогона.<br />
 **Канонический документ текущего состояния:** этот файл. Исторические отчёты ниже сохраняют исходные даты и факты.
 
+**8 октября, после 02:54 UTC+5 — PH025: причина чёрного экрана воспроизведена.**
+В настоящем браузере принудительный `prefer-hardware` отвергает AVC:
+`OperationError`, 0 outputs/drawn. Те же 16 packets при `no-preference`
+и software control дали 11 outputs/drawn без ошибок. Source теперь разрешает
+браузеру выбрать поддерживаемый decoder; диагностика показывает bounded
+причину отказа. Три red→green регрессии, leaf 42, полный frontend **1820 tests /
+137 suites**, fresh route typegen и полный TypeScript прошли. Установка на
+3015 и live приёмка ещё впереди; UI af9054e / API a41c4e6 / APK сохранены.
+Static capture без VCL и continuous input остаются независимыми открытыми
+условиями. [Причина, изменение и границы](../audits/2026-10-08/PH025-DECODER-RECOVERY.md) ·
+[Evidence](../audits/2026-10-08/PH025-DECODER-RECOVERY-EVIDENCE.json).
+
 **8 октября, после02:30 UTC+5 — scoped native receipt source:** добавлена
 адресная transient пересылка подтверждений между APK и viewer workers.
 Lua атомарно меняет readiness/known release и публикует exact scoped identity;

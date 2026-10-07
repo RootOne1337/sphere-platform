@@ -701,6 +701,7 @@ export function DeviceStream({
                       <span>Drawn to canvas: {browserStats.renderedFrames}</span>
                       <span>Invalid packets: {browserStats.invalidPackets}</span>
                       <span>Decode/render errors: {browserStats.decodeErrors}/{browserStats.renderErrors}</span>
+                      {browserStats.lastDecodeError && <span>Последняя ошибка декодера: {browserStats.lastDecodeError}</span>}
                       <span>WebCodecs queue: {browserStats.decoderQueueSize}</span>
                       <span>Pending outputs: {browserStats.pendingOutputCount}</span>
                       <span>Queue recoveries: {browserStats.queueRecoveries}</span>

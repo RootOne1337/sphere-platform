@@ -90,6 +90,39 @@ it('separates binary receipt, decode submission, decoded output and rendered out
   expect(decoder.stats.pendingOutputCount).toBe(0);
 });
 
+it('renders the first picture when only the hardware AVC configuration is unavailable', () => {
+  const codec = newest();
+  codec.configure.mockImplementation(((config: VideoDecoderConfig) => {
+    if (config.hardwareAcceleration === 'prefer-hardware') {
+      throw new DOMException('Hardware AVC is unavailable', 'NotSupportedError');
+    }
+    codec.state = 'configured';
+  }) as typeof codec.configure);
+  configure(decoder);
+  decoder.handleBinary(packet([0x65, 1]));
+  expect(codec.chunks).toHaveLength(1);
+  codec.output(codec.chunks[0].timestamp);
+  expect(rendered).toHaveBeenCalledTimes(1);
+  expect(decoder.stats).toMatchObject({ decodeErrors: 0, renderedFrames: 1, lastDecodeError: null });
+});
+
+it('reports one allowlisted decoder failure code without retaining its arbitrary message', () => {
+  const error = new DOMException('Private driver diagnostic should not reach UI', 'OperationError');
+  newest().callbacks.error(error);
+  expect(decoder.stats.lastDecodeError).toBe('OperationError');
+  expect(JSON.stringify(decoder.stats)).not.toContain('Private driver');
+});
+
+it('reduces unknown decoder errors to a bounded code and ignores retired callbacks', () => {
+  const old = newest();
+  old.callbacks.error(new DOMException('Unknown failure', 'UnboundedDriverSpecificName'));
+  expect(decoder.stats.lastDecodeError).toBe('OtherError');
+  const count = decoder.stats.decodeErrors;
+  old.callbacks.error(new DOMException('Late failure', 'OperationError'));
+  expect(decoder.stats.decodeErrors).toBe(count);
+  expect(decoder.stats.lastDecodeError).toBe('OtherError');
+});
+
 it('counts malformed binary packets instead of silently losing evidence', () => {
   decoder.handleBinary(new Uint8Array([1, 2, 3]).buffer);
   expect(decoder.stats.binaryMessagesReceived).toBe(1);

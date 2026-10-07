@@ -22,6 +22,7 @@ export interface StreamDecoderStats {
   decodedOutputs: number;
   renderedFrames: number;
   decodeErrors: number;
+  lastDecodeError: string | null;
   renderErrors: number;
   queueRecoveries: number;
   staleOutputDrops: number;
@@ -95,6 +96,7 @@ export class H264Decoder {
     decodedOutputs: 0,
     renderedFrames: 0,
     decodeErrors: 0,
+    lastDecodeError: null as string | null,
     renderErrors: 0,
     queueRecoveries: 0,
     staleOutputDrops: 0,
@@ -152,19 +154,27 @@ export class H264Decoder {
             frame.close(); // Includes stale callbacks, unmount and canvas exceptions.
           }
         },
-        error: () => {
+        error: error => {
           if (!this.destroyed && generation === this.generation) {
-            this.counters.decodeErrors++;
+            this.recordDecodeError(error);
             this.recover();
           }
         },
       });
       return true;
-    } catch {
-      this.counters.decodeErrors++;
+    } catch (error) {
+      this.recordDecodeError(error);
       this.recover();
       return false;
     }
+  }
+
+  private recordDecodeError(error: unknown) {
+    this.counters.decodeErrors++;
+    // Keep one bounded public code, never arbitrary decoder messages.
+    const name = error instanceof Error || error instanceof DOMException ? error.name : '';
+    this.counters.lastDecodeError = ['OperationError', 'NotSupportedError', 'EncodingError', 'InvalidStateError'].includes(name)
+      ? name : 'OtherError';
   }
 
   private retireDecoder() {
@@ -259,7 +269,9 @@ export class H264Decoder {
       if (!this.configured) {
         const [sps, pps] = [this.spsNal, this.ppsNal];
         const codecName = 'avc1.' + Array.from(sps.subarray(1, 4), n => n.toString(16).padStart(2, '0')).join('').toUpperCase();
-        codec.configure({ codec: codecName, hardwareAcceleration: 'prefer-hardware',
+        // A hardware-only preference may reject otherwise decodable AVC after
+        // a driver/resource change. Let the UA select a supported implementation.
+        codec.configure({ codec: codecName, hardwareAcceleration: 'no-preference',
           optimizeForLatency: true, description: buildAVCCExtradata(sps, pps) });
         this.configured = true;
       }
@@ -276,8 +288,8 @@ export class H264Decoder {
       this.counters.decodeSubmitted++;
       this.needsKeyFrame = false;
       this.lastTimestamp = timestamp;
-    } catch {
-      this.counters.decodeErrors++;
+    } catch (error) {
+      this.recordDecodeError(error);
       this.recover();
     }
   }
