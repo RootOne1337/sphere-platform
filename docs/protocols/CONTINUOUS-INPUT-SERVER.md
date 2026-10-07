@@ -167,3 +167,9 @@ controller и отдельный реальный Kotlin pipe теперь пр�
 frame acceptance. Далее обязательны live APK/frame приёмка, known reset, local/remote
 end-to-end и latency/resource soak. Наличие этих модулей не закрывает SF26-05
 и не меняет ledger9 accepted /41 open.
+
+**Followup8 октября:** [scoped receipt boundary](CONTINUOUS-INPUT-RECEIPTS.md)
+проверена34 новыми случаями; полный leaf130 прошёл fake/real Redis. Атомарный
+native state transition/PUBLISH, worker/local lease validation и integer
+precision теперь реализованы отдельно. Startup/subscriptions и routes всё ещё
+не подключены; этот followup не является подтверждением live deployment.

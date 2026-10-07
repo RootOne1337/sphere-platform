@@ -268,5 +268,56 @@
     "accepted": 9,
     "open": 41,
     "SF26-05": "OPEN"
+  },
+  "hostedCIFollowup": {
+    "verifiedUtc": "2026-10-07T21:32:06.083046+00:00",
+    "headSha": "a979bc9a5422e707320b0883b695134f86858d3e",
+    "runs": [
+      {
+        "conclusion": "success",
+        "databaseId": 37687781841,
+        "headSha": "a979bc9a5422e707320b0883b695134f86858d3e",
+        "name": "CI — Frontend",
+        "status": "completed",
+        "updatedAt": "2026-10-07T21:16:10Z",
+        "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/37687781841"
+      },
+      {
+        "conclusion": "success",
+        "databaseId": 37687781789,
+        "headSha": "a979bc9a5422e707320b0883b695134f86858d3e",
+        "name": "Preview — Deploy",
+        "status": "completed",
+        "updatedAt": "2026-10-07T21:12:57Z",
+        "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/37687781789"
+      },
+      {
+        "conclusion": "success",
+        "databaseId": 37687781811,
+        "headSha": "a979bc9a5422e707320b0883b695134f86858d3e",
+        "name": "CI — Android",
+        "status": "completed",
+        "updatedAt": "2026-10-07T21:25:58Z",
+        "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/37687781811"
+      },
+      {
+        "conclusion": "success",
+        "databaseId": 37687781983,
+        "headSha": "a979bc9a5422e707320b0883b695134f86858d3e",
+        "name": "CI — Backend",
+        "status": "completed",
+        "updatedAt": "2026-10-07T21:27:06Z",
+        "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/37687781983"
+      }
+    ],
+    "allFourRuns": "success",
+    "backendPassed": 3268,
+    "backendSkipped": 37,
+    "backendSubtestsPassed": 229,
+    "frontendTestsPassed": 1817,
+    "frontendSuitesPassed": 137,
+    "frontendTypesAndBuild": "success",
+    "receiptSourceIncluded": false,
+    "runtimeDeploy": false
   }
 }

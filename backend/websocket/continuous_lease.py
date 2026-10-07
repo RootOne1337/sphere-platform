@@ -124,6 +124,38 @@ if redis.call('HGET', key, 'identity') ~= identity or redis.call('PTTL', key) <=
     return 'stale'
 end
 local phase = redis.call('HGET', key, 'phase')
+if op == 'relay_receipt' then
+    local receipt = cjson.decode(ARGV[3]).receipt
+    if receipt.stage == 'input' and
+       (receipt.sequence > tonumber(redis.call('HGET', key, 'sequence')) or
+        (receipt.sequence == 0 and receipt.status ~= 5)) then
+        redis.call('HSET', key, 'phase', 'closing')
+        return 'invalid_order'
+    end
+    if receipt.stage == 'startup' and receipt.status == 0 then
+        if phase ~= 'opening_sent' then return 'not_opening' end
+        if now >= tonumber(redis.call('HGET', key, 'auth_until') or '0') then
+            redis.call('HSET', key, 'phase', 'closing')
+            return 'auth_expired'
+        end
+        redis.call('HSET', key, 'phase', 'ready')
+    elseif receipt.stage == 'release' and receipt.status == 3 then
+        redis.call('DEL', key)
+    elseif receipt.status >= 4 then
+        redis.call('HSET', key, 'phase', 'closing')
+    end
+    -- Preserve JSON integers (especially Android uptime) byte-for-byte rather
+    -- than rounding them through Lua cjson's default number precision.
+    local envelope = {type='_continuous_receipt_v1', identity=identity,
+                      expires_at_ms=now + age, receipt_json=ARGV[3]}
+    if redis.call('PUBLISH', ARGV[4], cjson.encode(envelope)) < 1 then
+        if redis.call('HGET', key, 'identity') == identity then
+            redis.call('HSET', key, 'phase', 'closing')
+        end
+        return 'no_subscriber'
+    end
+    return 'relayed'
+end
 if op == 'released' then redis.call('DEL', key); return 'released' end
 if op == 'fence' then redis.call('HSET', key, 'phase', 'closing'); return 'fenced' end
 if op == 'guard' then
@@ -233,16 +265,40 @@ class ContinuousLeaseStore:
         # Separate from offline/retrying legacy command routing.
         return f"{self.namespace}:agent:{binding.device}"
 
+    def receipt_channel(self, binding: LeaseBinding) -> str:
+        return f"{self.namespace}:viewer:{binding.viewer_worker}"
+
+    async def current_lease(self, *, device_id: str, org_id: str, agent_session: str) -> InputLease | None:
+        """Read one device key. Scope must come from its authenticated socket."""
+        identifier(device_id)
+        try:
+            async with asyncio.timeout(OPERATION_SECONDS):
+                identity = await self.redis.hget(f"{self.namespace}:{{{device_id}}}", "identity")
+        except (RedisError, TimeoutError, UnicodeError):
+            raise InputLeaseUnavailable() from None
+        if identity is None:
+            return None
+        try:
+            lease = InputLease.from_identity(identity)
+        except InvalidContinuousInput:
+            return None
+        binding = lease.binding
+        return lease if (binding.device == device_id and binding.org == org_id and binding.agent_session == agent_session) else None
+
     async def _operation(self, op: str, lease: InputLease, command: dict | None = None) -> str:
         payload = json.dumps(command or {}, separators=(",", ":"))
         max_envelope = {"type": "_continuous_input_v1", "identity": lease.identity,
                         "expires_at_ms": 9_007_199_254_740_991, "command": command or {}}
+        if op == "relay_receipt":
+            max_envelope = {"type": "_continuous_receipt_v1", "identity": lease.identity,
+                            "expires_at_ms": 9_007_199_254_740_991, "receipt_json": payload}
         if len(json.dumps(max_envelope, separators=(",", ":")).encode()) > MAX_WIRE_BYTES:
             raise ValueError("Continuous input envelope exceeds byte budget")
         try:
             async with asyncio.timeout(OPERATION_SECONDS):
+                channel = self.receipt_channel(lease.binding) if op == "relay_receipt" else self.channel(lease.binding)
                 result = await self.redis.eval(_LEASE_SCRIPT, 1, self.key(lease.binding),
-                                               op, lease.identity, payload, self.channel(lease.binding),
+                                               op, lease.identity, payload, channel,
                                                LEASE_MS, AUTH_MS, DELIVERY_MS)
         except (RedisError, TimeoutError):
             raise InputLeaseUnavailable() from None
@@ -254,7 +310,7 @@ class ContinuousLeaseStore:
         if not isinstance(result, str) or result not in {"acquired", "busy", "stale", "released", "closing", "authorized",
                           "auth_expired", "not_opening", "ready", "already_sent", "not_ready",
                           "invalid_order", "invalid_operation", "no_subscriber", "published",
-                          "admitted", "expired", "fenced"}:
+                          "admitted", "expired", "fenced", "relayed"}:
             raise InputLeaseUnavailable()
         return result
 
@@ -347,3 +403,11 @@ class ContinuousLeaseStore:
         if receipt.failed:
             await self.fence(lease)
         return False  # Execution/unknown receipts do not grant readiness or release.
+
+    async def relay_receipt(self, lease: InputLease, message: Any, *, agent_session: str) -> str:
+        """Atomic native state transition and transient publication to its viewer worker."""
+        receipt = InputReceipt.parse(message)
+        if (agent_session != lease.binding.agent_session or receipt.session != lease.binding.viewer_session
+                or receipt.owner != lease.owner or receipt.epoch != lease.binding.capture.epoch):
+            return "stale"
+        return await self._operation("relay_receipt", lease, {"receipt": dict(message)})

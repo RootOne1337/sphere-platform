@@ -4,6 +4,23 @@
 **Область:** исходники и документация ветки PR #19, записанные runtime-наблюдения, Android APK и готовность следующего прогона.<br />
 **Канонический документ текущего состояния:** этот файл. Исторические отчёты ниже сохраняют исходные даты и факты.
 
+**8 октября, после02:30 UTC+5 — scoped native receipt source:** добавлена
+адресная transient пересылка подтверждений между APK и viewer workers.
+Lua атомарно меняет readiness/known release и публикует exact scoped identity;
+foreign/старые sockets и неизвестный исход не создают takeover/replay.
+Raw receipt JSON сохраняет uptime9007199254740991 без округления Lua cjson.
+34 новых cases, полный leaf130 cases прошёл в fake Lua и реальном Redis с
+isolated audit keys; Ruff/mypy прошли. Socket metadata в этих тестах mock:
+startup/subscriber/routes, настоящий auth/topology lifecycle и installed
+browser→Android всё ещё открыты. UI/API/working APK не обновлялись; SF26-05 OPEN.
+[Контракт и обязательная интеграция](../protocols/CONTINUOUS-INPUT-RECEIPTS.md) ·
+[Evidence](../audits/2026-10-08/CONTINUOUS-INPUT-RECEIPTS-EVIDENCE.json).
+
+**Browser sourcea979bc9 — все четыре exact hosted CI accepted:** Android,
+frontend, backend и preview. Frontend1817passed/137suites плюс fresh types/build,
+backend3268passed/37skipped/229subtests. Receipt source выше является следующим
+изменением и требует нового exact-source CI; эти runs его не включают.
+
 **8 октября, после02:03 UTC+5 — непрерывные жесты: browser source и реальная
 Kotlin-проверка.** Доступность ADB восстановилась; на одном idle PH010 через
 debug classpath проверены10 настоящих случаев Controller/Ownership/Pipe →
