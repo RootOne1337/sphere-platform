@@ -184,6 +184,22 @@ rose to 12,750,786,560 B, and WSL working set fell about 4.75 GiB. WSL private
 bytes remained approximately 19 GB. That short window is not a heap-leak soak;
 large private/reserved memory is not interchangeable with resident RAM.
 
+Three WSL `/proc/meminfo` snapshots at11:27/11:43/11:59UTC reinforce that
+boundary: AnonPages2,222,432→2,241,192KiB, Cached5,598,060→5,601,500KiB,
+SReclaimable5,409,804→5,409,956KiB, MemAvailable20,804,272→20,790,240KiB.
+These are guest Linux counters, not an attribution of all host WSL private
+bytes. A19GB host private counter is not proof of19GB leaked anonymous guest RAM.
+Docker image/cache counts and reported sizes remained unchanged in those three
+snapshots; total volume size rose about3MB in rounded CLI output, not tens of GB.
+
+`git count-objects -v` measured553,599KiB loose objects and24,276KiB packed
+objects, with one12,420KiB temporary garbage object. This is roughly0.55GiB
+object storage, not the hundreds of GB in Docker. That orphan is reported,
+not deleted or treated as the root cause; Git history was not reset/repacked
+by this investigation. No Antigravity/Gemini/Amuse process-name matches were
+observed in the queried current process inventory; this does not rule out a
+differently named helper or historical growth in their storage directories.
+
 A second actual elevated **180-second** kernel recording ran at
 11:51:15–11:54:30 UTC, 18 volume snapshots. VSS stayed zero; measured free space
 between the first/last snapshots increased **532,480 B**. The final trace save
