@@ -36,3 +36,8 @@
 -keep class com.sphereplatform.agent.commands.RootInputBridge {
     public static void main(java.lang.String[]);
 }
+
+# Private continuous-touch helper is also entered through app_process.
+-keep class com.sphereplatform.agent.commands.RootTouchBridge {
+    public static void main(java.lang.String[]);
+}

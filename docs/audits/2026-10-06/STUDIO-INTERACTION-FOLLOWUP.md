@@ -19,6 +19,12 @@ desktop/mobile navigation matrix приняты. Export download transfer в IAB
 не подтверждён; route blocker не распространяется на SPA Back/Forward.
 [Контракт, screenshots и ограничения](../2026-10-07/STUDIO-NAVIGATION-PRESERVATION.md) ·
 [Exact acceptance](../2026-10-07/STUDIO-NAVIGATION-INSTALLED-ACCEPTANCE.json).
+
+**7 октября, после18:47 UTC+5 — continuous native foundation:** отдельный
+Android View подтвердил пять MOVE до UP; failure/heartbeat/geometry canaries
+прошли после исправления bounded framing root-канала. APK supervisor/server
+owner/browser move path ещё не подключены, SF26-05 остаётся OPEN.
+[Протокол, независимое доказательство и ограничения](../2026-10-07/CONTINUOUS-TOUCH-NATIVE-CANARY.md).
 **Позднейший срез 7 октября, 03:35 +05:** API 114775a получил live contract 1.0
 для 32 действий: valid 200, missing coordinates 422, anonymous 401. 25 сценариев
 сохранены, 14 online agents переподключились; APK не менялся.

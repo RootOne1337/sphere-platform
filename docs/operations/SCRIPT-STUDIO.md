@@ -2,12 +2,19 @@
 
 Актуализировано: **7 октября 2026**. Каталог `/scripts`, редактор
 `/scripts/builder`, формат **DAG1.0**, React Flow, локальная ELK0.12.0.
-На3015 установлены frontend и API **a41c4e6**, source
-`a41c4e64bf569a7518d34606da0facbba32f77e6`.
+На3015 установлены frontend **af9054e** и API **a41c4e6**; latest UI сохраняет
+API/input contract предыдущей поставки и добавляет диалог сохранности Studio.
+[Latest installed navigation](../audits/2026-10-07/STUDIO-NAVIGATION-PRESERVATION.md).
 Malformed WS input не подставляет координаты0/0, отказ отделён от video failure.
 Real transport canary, разрыв связи/Undo и server validate приняты отдельно;
 новое input notice React-tested, browser malformed-notice canary не выполнен.
 [Installed evidence и ограничения](../audits/2026-10-07/VIEWER-INPUT-DELIVERY.md).
+
+**Непрерывные свайпы:** установленный веб пока отправляет законченный click/swipe
+после отпускания.7октября отдельный Android-инжектор уже доказал MOVE до UP
+и локальный CANCEL, но browser→server→APK capability/owner/queue/recording
+ещё не подключены. Не считать обычный stream или root признаком continuous
+input. [Native canary и точные оставшиеся условия](../audits/2026-10-07/CONTINUOUS-TOUCH-NATIVE-CANARY.md).
 **7 октября, 03:35 +05:** API обновлён из того же tested CI image без миграций;
 реальный editor/REST canary подтвердил server contract 1.0. Все 25 сценариев,
 task detail и 14 online agents сохранены/восстановлены.

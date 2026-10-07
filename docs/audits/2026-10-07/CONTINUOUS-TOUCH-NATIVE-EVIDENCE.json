@@ -1,0 +1,319 @@
+{
+  "schemaVersion": 1,
+  "assembledAtUtc": "2026-10-07T13:53:56.456433+00:00",
+  "scope": "standalone privileged Android helper + independent View receiver; not delivered browser/server capability",
+  "runtime": {
+    "uiSource": "af9054ecd0a12d0bc40112298c06178472b59eae",
+    "apiSource": "a41c4e64bf569a7518d34606da0facbba32f77e6",
+    "agentVersionPreserved": "1.2.47-dev",
+    "agentVersionCodePreserved": 10247,
+    "serial": "emulator-5554",
+    "platform": "LDPlayer Android 9"
+  },
+  "helper": {
+    "bytes": 7310,
+    "sha256": "98336df819937e75b0f628c516b1d3bc06ad2edd20984c862e26b5eaf13c0c5b",
+    "sourceSha256": {
+      "android/app/src/main/java/com/sphereplatform/agent/commands/RootTouchSession.java": "12f0b9b0dd43a06cefcb15edc23f75787e88cb720b99e29c424a9528d59a707a",
+      "android/app/src/main/java/com/sphereplatform/agent/commands/RootTouchBridge.java": "9190c87c32b899e7bdd50c057666353abed50499f9ada527fbf18691bffbbab6",
+      "android/app/src/main/java/com/sphereplatform/agent/commands/RootTouchWire.java": "01a73b80a431ed71cd2584bd9d0a5dd25490d55f868b331b7a829c8e40c6d4c6"
+    },
+    "transport": "private stdio, fixed-size lower-case hex packets accepting LF/CRLF"
+  },
+  "nativeCanaries": {
+    "device": "local emulator-5554",
+    "transport": "ADB private pipe, not browser/server",
+    "scenarios": {
+      "move_before_up": {
+        "beforeUp": {
+          "down": 1,
+          "move": 5,
+          "up": 0,
+          "cancel": 0,
+          "firstDownUptimeMs": 63835269,
+          "lastMoveUptimeMs": 63835478,
+          "terminalUptimeMs": 0,
+          "x": 450,
+          "y": 188
+        },
+        "afterUp": {
+          "down": 1,
+          "move": 5,
+          "up": 1,
+          "cancel": 0,
+          "firstDownUptimeMs": 63835269,
+          "lastMoveUptimeMs": 63835478,
+          "terminalUptimeMs": 63835519,
+          "x": 450,
+          "y": 188
+        },
+        "acks": [
+          {
+            "sequence": 1,
+            "status": 1,
+            "deviceUptimeMs": 63835270,
+            "hostRoundTripMs": 43.485
+          },
+          {
+            "sequence": 2,
+            "status": 1,
+            "deviceUptimeMs": 63835311,
+            "hostRoundTripMs": 40.832
+          },
+          {
+            "sequence": 3,
+            "status": 1,
+            "deviceUptimeMs": 63835351,
+            "hostRoundTripMs": 19.771
+          },
+          {
+            "sequence": 4,
+            "status": 1,
+            "deviceUptimeMs": 63835391,
+            "hostRoundTripMs": 19.053
+          },
+          {
+            "sequence": 5,
+            "status": 1,
+            "deviceUptimeMs": 63835431,
+            "hostRoundTripMs": 19.915
+          },
+          {
+            "sequence": 6,
+            "status": 1,
+            "deviceUptimeMs": 63835471,
+            "hostRoundTripMs": 19.743
+          },
+          {
+            "sequence": 7,
+            "status": 1,
+            "deviceUptimeMs": 63835520,
+            "hostRoundTripMs": 1.576
+          }
+        ]
+      },
+      "pipe_eof_cancel": {
+        "state": {
+          "down": 1,
+          "move": 0,
+          "up": 0,
+          "cancel": 1,
+          "firstDownUptimeMs": 63836252,
+          "lastMoveUptimeMs": 0,
+          "terminalUptimeMs": 63836334,
+          "x": 100,
+          "y": 200
+        },
+        "ack": {
+          "sequence": 1,
+          "status": 1,
+          "deviceUptimeMs": 63836252,
+          "hostRoundTripMs": 41.674
+        }
+      },
+      "silent_owner_expiry": {
+        "state": {
+          "down": 1,
+          "move": 0,
+          "up": 0,
+          "cancel": 1,
+          "firstDownUptimeMs": 63837051,
+          "lastMoveUptimeMs": 0,
+          "terminalUptimeMs": 63838610,
+          "x": 100,
+          "y": 200
+        },
+        "ack": {
+          "sequence": 1,
+          "status": 1,
+          "deviceUptimeMs": 63837051,
+          "hostRoundTripMs": 41.692
+        },
+        "deviceCancelAfterAckMs": 1559
+      },
+      "duplicate_rejected": {
+        "state": {
+          "down": 1,
+          "move": 0,
+          "up": 0,
+          "cancel": 1,
+          "firstDownUptimeMs": 63839458,
+          "lastMoveUptimeMs": 0,
+          "terminalUptimeMs": 63839498,
+          "x": 100,
+          "y": 200
+        },
+        "ack": {
+          "sequence": 1,
+          "status": 5,
+          "deviceUptimeMs": 63839498,
+          "hostRoundTripMs": 39.78
+        }
+      },
+      "stationary_hold_heartbeat": {
+        "beforeCancel": {
+          "down": 1,
+          "move": 0,
+          "up": 0,
+          "cancel": 0,
+          "firstDownUptimeMs": 63840131,
+          "lastMoveUptimeMs": 0,
+          "terminalUptimeMs": 0,
+          "x": 100,
+          "y": 128
+        },
+        "afterCancel": {
+          "down": 1,
+          "move": 0,
+          "up": 0,
+          "cancel": 1,
+          "firstDownUptimeMs": 63840131,
+          "lastMoveUptimeMs": 0,
+          "terminalUptimeMs": 63842234,
+          "x": 100,
+          "y": 200
+        },
+        "ack": {
+          "sequence": 12,
+          "status": 3,
+          "deviceUptimeMs": 63842235,
+          "hostRoundTripMs": 38.625
+        }
+      },
+      "partial_packet_stall": {
+        "state": {
+          "down": 1,
+          "move": 0,
+          "up": 0,
+          "cancel": 1,
+          "firstDownUptimeMs": 63843035,
+          "lastMoveUptimeMs": 0,
+          "terminalUptimeMs": 63844596,
+          "x": 100,
+          "y": 200
+        },
+        "ack": [
+          1398030641,
+          0,
+          4,
+          63844596
+        ]
+      },
+      "bad_magic": {
+        "state": {
+          "down": 1,
+          "move": 0,
+          "up": 0,
+          "cancel": 1,
+          "firstDownUptimeMs": 63845218,
+          "lastMoveUptimeMs": 0,
+          "terminalUptimeMs": 63845220,
+          "x": 100,
+          "y": 200
+        },
+        "exitCode": 1
+      }
+    },
+    "accepted": true
+  },
+  "geometryCanary": {
+    "ack": [
+      1398030641,
+      0,
+      5,
+      63931961
+    ],
+    "display": "Physical size: 960x540\r\nOverride size: 950x530",
+    "state": {
+      "down": 1,
+      "move": 0,
+      "up": 0,
+      "cancel": 1,
+      "firstDownUptimeMs": 63931778,
+      "lastMoveUptimeMs": 0,
+      "terminalUptimeMs": 63931961,
+      "x": 100,
+      "y": 200
+    },
+    "accepted": true
+  },
+  "unitTests": {
+    "testDevDebugUnitTest": {
+      "tests": 895,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 3,
+      "suites": 74,
+      "touchTests": 23
+    },
+    "testEnterpriseDebugUnitTest": {
+      "tests": 895,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 3,
+      "suites": 74,
+      "touchTests": 23
+    }
+  },
+  "checks": {
+    "resourceGuardBefore": {
+      "observedAt": "2026-10-07T13:26:17.594995+00:00",
+      "system": "Windows",
+      "freeDiskBytes": 63587074048,
+      "deviceCommandsSent": false,
+      "mutationsPerformed": false,
+      "availableRamBytes": 16670920704,
+      "totalRamBytes": 50668236800,
+      "committedBytes": 66563309568,
+      "commitLimitBytes": 101336473600,
+      "volumeHealthStatus": "Healthy",
+      "volumeOperationalStatus": [
+        "OK"
+      ],
+      "findings": [],
+      "buildAllowed": true
+    },
+    "resourceGuardAfter": {
+      "observedAt": "2026-10-07T13:47:47.767434+00:00",
+      "system": "Windows",
+      "freeDiskBytes": 63562878976,
+      "deviceCommandsSent": false,
+      "mutationsPerformed": false,
+      "availableRamBytes": 11265945600,
+      "totalRamBytes": 50668236800,
+      "committedBytes": 72601116672,
+      "commitLimitBytes": 101336473600,
+      "volumeHealthStatus": "Healthy",
+      "volumeOperationalStatus": [
+        "OK"
+      ],
+      "findings": [],
+      "buildAllowed": true
+    },
+    "ruffBuilder": "passed",
+    "mypyBuilder": "passed"
+  },
+  "cleanup": {
+    "receiverUninstalled": true,
+    "helperRemovedAfterHashVerification": true,
+    "displayRestoredTo": "960x540, no override",
+    "originalLauncherRestored": true,
+    "productionApkReinstalled": false,
+    "apiUiReplaced": false
+  },
+  "notAccepted": [
+    "browser-to-server-to-agent continuous path",
+    "controller ownership and multiworker fencing",
+    "APK bounded queue and supervisor",
+    "process SIGKILL/kernel/Binder stall recovery",
+    "remote-device latency",
+    "correlated rendered-frame latency",
+    "API34+ or non-root compatibility",
+    "rich continuous recorder"
+  ],
+  "ledger": {
+    "accepted": 9,
+    "open": 41,
+    "SF26-05": "open"
+  }
+}

@@ -4,6 +4,17 @@
 **Область:** исходники и документация ветки PR #19, записанные runtime-наблюдения, Android APK и готовность следующего прогона.<br />
 **Канонический документ текущего состояния:** этот файл. Исторические отчёты ниже сохраняют исходные даты и факты.
 
+**7 октября, после18:47 UTC+5 — native continuous touch canary:** отдельный
+Android helper через встроенный MotionEvent/InputManager принял пять MOVE до UP
+в самом View. Проверены EOF, lease expiry, duplicate sequence, длительный
+heartbeat hold, частичный пакет, bad magic и смена display geometry. Выявлена
+и исправлена несовместимость бинарного stdio с LF→CRLF в root-канале; используется
+bounded hex framing. Диагностический receiver/JAR удалены, display/launcher
+восстановлены; рабочий APK1.2.47-dev/10247 на этом экземпляре не заменялся.
+**Непрерывный режим в вебе ещё не включён:** UI af9054e/API a41c4e6 сохраняются,
+browser→server→APK owner/queue/capability/recording остаются OPEN. Ledger9/41
+не меняется. [Реальная native приёмка и ограничения](../audits/2026-10-07/CONTINUOUS-TOUCH-NATIVE-CANARY.md).
+
 **7 октября, после18:14 UTC+5 — Studio navigation установлен на3015:** UI
 **af9054e**, API **a41c4e6** сохранён. Собственный диалог перечисляет несохранённую
 работу и защищает sidebar, общий поиск и explicit logout до начала их side effects.

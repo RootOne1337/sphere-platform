@@ -5,6 +5,14 @@
 Статус: **source audit / design**, не поставленная continuous capability.
 Установленные UI1c26ffc7/APIeb7a7c26/APK не менялись; команды Android не отправлялись.
 
+**Датированное продолжение7октября:** host repair gate снят, актуальный UI
+af9054e/APIa41c4e6 сохранён. Native single-finger helper на Android InputManager
+проверен отдельно: настоящий View получил MOVE до UP и CANCEL в failure
+canaries. Решение расширяет существующий root app_process подход Sphere;
+scrcpy binary/source пока не интегрированы. Это не включение continuous mode
+на3015 и не завершение требований ниже.
+[Новая приёмка, framing fix и следующие обязательные границы](../2026-10-07/CONTINUOUS-TOUCH-NATIVE-CANARY.md).
+
 ## Почему жест сейчас выполняется только после отпускания
 
 | Уровень | Наблюдение в source | Следствие |
