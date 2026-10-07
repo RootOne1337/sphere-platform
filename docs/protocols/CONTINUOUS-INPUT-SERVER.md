@@ -150,14 +150,20 @@ real проверка выявила неверное ожидание fixture, 
 в8 connections; исправление учитывает отказ overload и ждёт все попытки до cleanup.
 Лимит pool и отсутствие retry сохранены.
 
-Ruff/mypy прошли. Полный CI нового source требуется отдельно; предыдущий frame
-source3dc2456 прошёл Android push/PR, frontend, backend и preview:
+Ruff/mypy прошли. Exact server source0a8cd9 затем прошёл все четыре hosted
+runs: Android, frontend, backend и preview. Backend3268passed/37skipped/
+229subtests, frontend1753tests/136suites плюс types/build; точные run URLs
+сохранены в evidence followup. Предыдущий frame source3dc2456 прошёл Android
+push/PR, frontend, backend и preview:
 [точная приёмка предыдущего source](../audits/2026-10-08/VIDEO-CAPTURE-V2-CI.json).
 
 Следующая поставка должна подключить subscriptions и transient scoped receipts
 между workers; fresh authorization cadence/revocation; DAG/manual exclusion
 на сервере; failure/shutdown cleanup; browser pointermove/coalescing/backpressure
-и blur/visibility/lostpointercapture; recorder trajectory/uncertainty. Далее
-обязательна реальная Kotlin pipe/frame приёмка, known reset, local/remote
+и blur/visibility/lostpointercapture; recorder trajectory/uncertainty. Browser
+controller и отдельный реальный Kotlin pipe теперь проверены в
+[следующем этапе](../audits/2026-10-08/CONTINUOUS-INPUT-POINTER.md), но routes
+и установленный UI ещё их не вызывают. Fake capture этого canary не является
+frame acceptance. Далее обязательны live APK/frame приёмка, known reset, local/remote
 end-to-end и latency/resource soak. Наличие этих модулей не закрывает SF26-05
 и не меняет ledger9 accepted /41 open.

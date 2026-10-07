@@ -6,6 +6,14 @@
 **OPEN**. Документ описывает source и отдельный debug canary, а не установленное
 управление на 3015.
 
+**Followup8 октября:** после возвращения ADB Controller/Ownership/private
+Kotlin pipe проверены10 реальными случаями на одном Android View;
+[границы и evidence](../2026-10-08/CONTINUOUS-INPUT-POINTER.md). Это standalone
+driver с fake capture/generation, не Application/Service/WS/frame end-to-end.
+Server owner source и browser pointer source также реализованы и проверены
+отдельно. Фразы «ещё не реализованы» ниже сохраняют срез7 октября; runtime
+routes и установленный веб до сих пор не включают новый режим.
+
 ## Поставка и граница включения
 
 Обычная сборка не создаёт continuous controller и не регистрирует его callbacks.

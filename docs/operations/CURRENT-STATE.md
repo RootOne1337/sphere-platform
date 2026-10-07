@@ -4,6 +4,29 @@
 **Область:** исходники и документация ветки PR #19, записанные runtime-наблюдения, Android APK и готовность следующего прогона.<br />
 **Канонический документ текущего состояния:** этот файл. Исторические отчёты ниже сохраняют исходные даты и факты.
 
+**8 октября, после02:03 UTC+5 — непрерывные жесты: browser source и реальная
+Kotlin-проверка.** Доступность ADB восстановилась; на одном idle PH010 через
+debug classpath проверены10 настоящих случаев Controller/Ownership/Pipe →
+native → независимый View. Пять MOVE туда-сюда340→180→400→220→340 пришли
+до UP; explicit CANCEL3 и следующий gesture, heartbeat hold1816ms,
+EOF/generation/capture loss, duplicate/foreign owner и bounded burst прошли.
+Receiver/classpath удалены, launcher и версия рабочего APK10247 сохранены.
+Fake capture/generation этого driver не проверяют MediaProjection, реальный
+WS dispatcher, сервер или новый JS-клиент. Browser controller/DOM adapter
+проверены64 новыми cases; полный frontend **1817tests/137suites**, fresh route
+typegen и полный non-incremental TypeScript прошли. Одна MOVE-точка и32 scalar
+receipt records; loss/backpressure/unknown result не создают replay. Модуль ещё
+не подключён к DeviceStream/routes. На3015 continuous режим **не включён**;
+manual/DAG server exclusion, scoped transient receipts, actual frame/probe,
+Recorder и local/remote end-to-end/soak остаются OPEN. Ledger9/41 сохранён.
+[Полная граница приёмки](../audits/2026-10-08/CONTINUOUS-INPUT-POINTER.md) ·
+[Evidence](../audits/2026-10-08/CONTINUOUS-INPUT-POINTER-EVIDENCE.json).
+
+**Серверный source0a8cd9 принят всеми четырьмя exact-source CI:** Android,
+frontend, backend и preview. Backend3268passed/37skipped/229subtests;
+frontend1753tests/136suites плюс types/build. Эти runs не включают последующий
+browser controller source; CI следующего commit проверяется отдельно.
+
 **8 октября, после01:20 UTC+5 — continuous input server source:** отдельные
 strict contracts, один Redis owner device между workers и scoped socket send
 проверены96 новыми cases:44 protocol/52 lease-delivery. Те же96 прошли в
@@ -13,7 +36,7 @@ fakeredis Lua и настоящем Redis с isolated audit keys, без Android
 delivery age500ms и envelope2048B. DOWN/MOVE/UP публикуются отдельно;
 native STARTUP0 отличён от socket completion, known RELEASE3 — от uncertainty.
 Замена socket, cancellation/timeout и late receipts не дают replay/takeover.
-Ruff/mypy прошли. Full hosted CI нового source требуется отдельно.
+Ruff/mypy прошли; exact hosted CI source0a8cd9 принят, см. followup выше.
 Routes/subscriptions/receipt delivery, actual permission cadence и server DAG
 exclusion, browser pointermove/recorder и real APK acceptance ещё открыты.
 На3015 установленный continuous режим **не включён**, ledger9/41 сохранён.
