@@ -127,7 +127,8 @@
       "bytes": 8614236,
       "sha256": "1a34ddace94d0bcd9ae8be0f81a6ba3f69b7f6c06b4eb993854cceebfbc6223d",
       "canaryEnabled": false,
-      "installed": false
+      "installed": false,
+      "pathMeaning": "Historical build output location at observedUtc; later preserved as the default private snapshot recorded in VIDEO-CAPTURE-V2-CI.json. Current mutable Gradle output is the flagged debug canary."
     },
     "earlierRuns": "Full Android first run found a stopped-test fixture reading a now-null capture token. Fixture now captures the real token before stop; final full run passed. Initial TypeScript used stale generated routes from October 3; native next typegen refreshed them before successful full type-check."
   },
@@ -141,7 +142,12 @@
     },
     "scope": "APK lifecycle source plus collector documentation; not v2 change"
   },
-  "currentSourceCI": "Pending commit and exact-source hosted CI",
+  "currentSourceCI": {
+    "sha": "3dc2456b0b60a360db43a32f255034b274359e2a",
+    "status": "success",
+    "verifiedUtc": "2026-10-07T20:28:18.503162+00:00",
+    "evidence": "../2026-10-08/VIDEO-CAPTURE-V2-CI.json"
+  },
   "runtime": {
     "ui": "af9054ecd0a12d0bc40112298c06178472b59eae",
     "api": "a41c4e64bf569a7518d34606da0facbba32f77e6",

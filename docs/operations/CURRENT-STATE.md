@@ -1,8 +1,33 @@
 # Sphere: актуальное состояние и критерии приёмки
 
-**Обновлено:** 7 октября 2026, Asia/Yekaterinburg; даты отдельных runtime/CI срезов указаны ниже.<br />
+**Обновлено:** 8 октября 2026, Asia/Yekaterinburg; даты отдельных runtime/CI срезов указаны ниже.<br />
 **Область:** исходники и документация ветки PR #19, записанные runtime-наблюдения, Android APK и готовность следующего прогона.<br />
 **Канонический документ текущего состояния:** этот файл. Исторические отчёты ниже сохраняют исходные даты и факты.
+
+**8 октября, после01:20 UTC+5 — continuous input server source:** отдельные
+strict contracts, один Redis owner device между workers и scoped socket send
+проверены96 новыми cases:44 protocol/52 lease-delivery. Те же96 прошли в
+fakeredis Lua и настоящем Redis с isolated audit keys, без Android commands,
+изменения application image/files или live routes. Общий retrying Redis pool
+проверенно запрещён; dedicated pool8/250ms/Retry0, lease/auth1500ms,
+delivery age500ms и envelope2048B. DOWN/MOVE/UP публикуются отдельно;
+native STARTUP0 отличён от socket completion, known RELEASE3 — от uncertainty.
+Замена socket, cancellation/timeout и late receipts не дают replay/takeover.
+Ruff/mypy прошли. Full hosted CI нового source требуется отдельно.
+Routes/subscriptions/receipt delivery, actual permission cadence и server DAG
+exclusion, browser pointermove/recorder и real APK acceptance ещё открыты.
+На3015 установленный continuous режим **не включён**, ledger9/41 сохранён.
+[Контракт и открытые условия](../protocols/CONTINUOUS-INPUT-SERVER.md) ·
+[Evidence](../audits/2026-10-08/CONTINUOUS-INPUT-SERVER-EVIDENCE.json).
+
+**Capture frame source3dc2456 — CI принят полностью:** Android push/PR,
+frontend, backend и preview, пять exact-source successful runs. Backend:
+3172passed/37skipped/229subtests плюс image/bootstrap/RLS/migrations checks;
+frontend1753tests/136suites и fresh types/build. Дополнительно devDebug APK
+с CANARY=true собран успешно; default snapshot сохранён побайтово до сборки.
+Ни один новый APK не установлен, UI/API не обновлены. Mutable Gradle output
+теперь flagged debug; exact hashes обоих preserved private snapshots указаны
+в [отдельной CI/artifact приёмке](../audits/2026-10-08/VIDEO-CAPTURE-V2-CI.json).
 
 **8 октября, после 00:11 UTC+5 — capture identity в видеопакете:** debug canary
 получил фиксированный v2 header с UUID захвата. Сервер классифицирует H.264

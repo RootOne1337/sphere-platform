@@ -103,3 +103,15 @@ Real Kotlin pipe/encoder acceptance, scoped server receipts, non-retrying
 multiworker owner lease, browser pointermove/loss cleanup, recording semantics
 and latency/resource soak remain open. No live browser→server→APK→display
 acceptance is claimed; no runtime image or production agent is replaced.
+
+## Subsequent exact-source CI and server component
+
+Source3dc2456 passed all five hosted runs (Android push/PR, frontend, backend,
+preview). A separately flagged debug artifact also built, without installation;
+the earlier default APK was retained before overwriting Gradle's mutable output.
+See [exact CI and both artifact hashes](../audits/2026-10-08/VIDEO-CAPTURE-V2-CI.json).
+
+The subsequent [server lease/delivery component](CONTINUOUS-INPUT-SERVER.md)
+has independent real Redis and socket-fence unit acceptance. It has no public
+route/subscription integration yet. Neither addition enables pointermove on3015
+or substitutes for the remaining live Android/browser acceptance above.
