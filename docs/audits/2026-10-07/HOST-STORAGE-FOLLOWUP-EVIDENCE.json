@@ -1,0 +1,686 @@
+{
+  "observedAtUtc": "2026-10-07T11:03:00.624559+00:00",
+  "clientTimezone": "Asia/Yekaterinburg",
+  "diagnosticSource": "ecc82211ba6b19be2ef04f2ec7af987423db1dbf",
+  "installedUiApiSource": "a41c4e64bf569a7518d34606da0facbba32f77e6",
+  "scope": "finite local host volume/file-size observations; root cause remains open",
+  "completedDiskObserver": {
+    "summary": {
+      "schemaVersion": 1,
+      "sampleCount": 97,
+      "firstSample": 0,
+      "lastSample": 96,
+      "missingSequenceIntervals": 0,
+      "startedUtc": "2026-10-07T03:02:46.594151+00:00",
+      "lastObservedUtc": "2026-10-07T11:02:46.593164+00:00",
+      "elapsedSeconds": 28799.999013,
+      "minimumIntervalSeconds": 299.967782,
+      "maximumIntervalSeconds": 300.000998,
+      "freeStartBytes": 36431638528,
+      "freeEndBytes": 27286896640,
+      "freeDeltaBytes": -9144741888,
+      "largestObservedDrops": [
+        {
+          "fromSample": 21,
+          "toSample": 22,
+          "observedAtUtc": "2026-10-07T04:52:46.568820+00:00",
+          "freeDeltaBytes": -3039281152
+        },
+        {
+          "fromSample": 37,
+          "toSample": 38,
+          "observedAtUtc": "2026-10-07T06:12:46.574287+00:00",
+          "freeDeltaBytes": -2247753728
+        },
+        {
+          "fromSample": 93,
+          "toSample": 94,
+          "observedAtUtc": "2026-10-07T10:52:46.592292+00:00",
+          "freeDeltaBytes": -719405056
+        },
+        {
+          "fromSample": 19,
+          "toSample": 20,
+          "observedAtUtc": "2026-10-07T04:42:46.568612+00:00",
+          "freeDeltaBytes": -243683328
+        },
+        {
+          "fromSample": 16,
+          "toSample": 17,
+          "observedAtUtc": "2026-10-07T04:27:46.567367+00:00",
+          "freeDeltaBytes": -241688576
+        },
+        {
+          "fromSample": 61,
+          "toSample": 62,
+          "observedAtUtc": "2026-10-07T08:12:46.582683+00:00",
+          "freeDeltaBytes": -240463872
+        },
+        {
+          "fromSample": 74,
+          "toSample": 75,
+          "observedAtUtc": "2026-10-07T09:17:46.587161+00:00",
+          "freeDeltaBytes": -239976448
+        },
+        {
+          "fromSample": 3,
+          "toSample": 4,
+          "observedAtUtc": "2026-10-07T03:22:46.563384+00:00",
+          "freeDeltaBytes": -237531136
+        },
+        {
+          "fromSample": 49,
+          "toSample": 50,
+          "observedAtUtc": "2026-10-07T07:12:46.578373+00:00",
+          "freeDeltaBytes": -236412928
+        },
+        {
+          "fromSample": 82,
+          "toSample": 83,
+          "observedAtUtc": "2026-10-07T09:57:46.589105+00:00",
+          "freeDeltaBytes": -236306432
+        }
+      ],
+      "watchedFiles": [
+        {
+          "watchId": "f080322ed60cca3c12e6e13dd42bfef5c71f32d8f83f574836c962318e0c9fd0",
+          "measuredSamples": 97,
+          "sampleCount": 97,
+          "sameIdentityThroughout": true,
+          "observedLogicalConstant": true,
+          "logicalDeltaBytes": 0,
+          "logicalConstantThroughout": true,
+          "allocationComplete": true,
+          "allocatedDeltaBytes": 0,
+          "allocatedConstantThroughout": true
+        },
+        {
+          "watchId": "7bfd5fb7aef83ac760fce5c06dd5b792915e9c6b18b2783e4053e75511f0aede",
+          "measuredSamples": 97,
+          "sampleCount": 97,
+          "sameIdentityThroughout": false,
+          "observedLogicalConstant": true,
+          "logicalDeltaBytes": null,
+          "logicalConstantThroughout": null,
+          "allocationComplete": false,
+          "allocatedDeltaBytes": null,
+          "allocatedConstantThroughout": null
+        }
+      ],
+      "writerAttribution": "UNDETERMINED",
+      "limitations": [
+        "Endpoints and sample sizes do not identify a process or prove a leak.",
+        "Writes between samples and within fixed-size files remain possible.",
+        "Directory scans, VSS and RAM are outside this report's scope.",
+        "Sequence gaps and unavailable allocation are preserved, not replaced with zero."
+      ]
+    },
+    "status": {
+      "state": "complete",
+      "samplesWritten": 97,
+      "maximumSampleBytes": 1048576,
+      "maximumReportBytes": 8388608,
+      "fileContentsRead": false,
+      "targetMutationsPerformed": false,
+      "watcherOutputExcludedFromRootScan": true,
+      "reportBytes": 108435,
+      "lastSampleAt": "2026-10-07T11:02:46.593164+00:00",
+      "finishedAt": "2026-10-07T11:02:46.595071+00:00"
+    },
+    "inputBytesRead": 112218,
+    "watchedLabels": [
+      {
+        "label": "Docker VHDX",
+        "initialLogicalBytes": 234731077632,
+        "initialAllocatedBytes": 234731077632,
+        "watchId": "f080322ed60cca3c12e6e13dd42bfef5c71f32d8f83f574836c962318e0c9fd0",
+        "measuredSamples": 97,
+        "sampleCount": 97,
+        "sameIdentityThroughout": true,
+        "observedLogicalConstant": true,
+        "logicalDeltaBytes": 0,
+        "logicalConstantThroughout": true,
+        "allocationComplete": true,
+        "allocatedDeltaBytes": 0,
+        "allocatedConstantThroughout": true
+      },
+      {
+        "label": "Windows pagefile",
+        "initialLogicalBytes": 50668236800,
+        "initialAllocatedBytes": null,
+        "watchId": "7bfd5fb7aef83ac760fce5c06dd5b792915e9c6b18b2783e4053e75511f0aede",
+        "measuredSamples": 97,
+        "sampleCount": 97,
+        "sameIdentityThroughout": false,
+        "observedLogicalConstant": true,
+        "logicalDeltaBytes": null,
+        "logicalConstantThroughout": null,
+        "allocationComplete": false,
+        "allocatedDeltaBytes": null,
+        "allocatedConstantThroughout": null
+      }
+    ],
+    "sampleDigests": [
+      {
+        "index": 0,
+        "sha256": "a13181707a092b0f8960c85938b171243e305bbc83438667cf5c985300ee82d2"
+      },
+      {
+        "index": 1,
+        "sha256": "b029a7a8f7c8bc2946d914b44f2229b1cddda7b986dd01e0febafea671b7720b"
+      },
+      {
+        "index": 2,
+        "sha256": "7a5e585a1dd134b66f57ffbeb72730932e7e48683f10b19ec141923b2b5ed514"
+      },
+      {
+        "index": 3,
+        "sha256": "6423fbe4e89330fbaff6de292a39f608b23a2806f88ec9c43ed09d05779fbdde"
+      },
+      {
+        "index": 4,
+        "sha256": "571a9d68fb5536ff602ab6c80139a17004e9c8aad3ca6ff09d51020de4c0535d"
+      },
+      {
+        "index": 5,
+        "sha256": "26c27a7954b7d9d2b05d17c4cfed13f1a41c7605c9b55d05c824e7f4ba2bc129"
+      },
+      {
+        "index": 6,
+        "sha256": "77a052b672be5e0ff8cb627d4c7b2aa0a9a513fe6d59cf3ca9d9d496dfa8535a"
+      },
+      {
+        "index": 7,
+        "sha256": "812c9fc302f1278a5ea323fa426074f508950afc3f078a124b1fc80f0ba031fe"
+      },
+      {
+        "index": 8,
+        "sha256": "ed96618b5fc0ef2f8f927eee765362c304116c65399d9d7c31571590ea96b532"
+      },
+      {
+        "index": 9,
+        "sha256": "5bf5bcd5b3f24798d7d62516f6e0d12e8f55a731822bd4850b366b5c34ffe3dc"
+      },
+      {
+        "index": 10,
+        "sha256": "513c65def026087d4dc1a0cb362c03bd9d0a02238295875529b57c30a625adf7"
+      },
+      {
+        "index": 11,
+        "sha256": "662560ed22d0e4a0aa1eb6d2962d4c66c1abc082f0175601e9dfc01a8246a318"
+      },
+      {
+        "index": 12,
+        "sha256": "9a286abfa21c50afc48ada1e313eac46e10294e405aac6dd446df88f1d7d09eb"
+      },
+      {
+        "index": 13,
+        "sha256": "d23a4aff303bcd048c7c58f3a126726c5d09da7fcf211bd28729a7a8629bcd2d"
+      },
+      {
+        "index": 14,
+        "sha256": "9906282ec6fa8dc65e45ebcd821aee926440dd3d46bd02ee713890e1ad9c4ea4"
+      },
+      {
+        "index": 15,
+        "sha256": "fc94d9a030e24120681bf6bc068360a805ffdfea4540c121427960cc0b2831ce"
+      },
+      {
+        "index": 16,
+        "sha256": "9ef1310456e27bae525a40e60ca08d7b52d2f3140cee20cfb4bd291a1fc5df03"
+      },
+      {
+        "index": 17,
+        "sha256": "78c8563e914a43724cbcfbc3a22ca3f7f3d9e07790e7f2801e1fda6012306531"
+      },
+      {
+        "index": 18,
+        "sha256": "e46c6b74003692a7d144408834e54ae4e11aed8eb86e735b32620a863965a3f2"
+      },
+      {
+        "index": 19,
+        "sha256": "7b844ee4174d69ac7aaf4056ed7cb0ea640653c75b97bd81cab3555b65cde2db"
+      },
+      {
+        "index": 20,
+        "sha256": "a02c8bcb296bd14ae727478bd7d005be4524368531c5a38e2544e9cf2eea667d"
+      },
+      {
+        "index": 21,
+        "sha256": "81dccb5b725b08bbbf4fb9bb164342b128fc15cebf6a16b183aa19ff0be536d6"
+      },
+      {
+        "index": 22,
+        "sha256": "a35c1ddb9ae09501bd1c5eada2e4f07239c33c3895d1c7d1506b127ca2070e99"
+      },
+      {
+        "index": 23,
+        "sha256": "1e216f3afbaaa0b820bcc02b22a1896b3b9503e47bafed4b51f20b4b5ffd16e3"
+      },
+      {
+        "index": 24,
+        "sha256": "472e77fd28b5bff1e561d74e488b00c9369d3c9ff34d75a1954146544201ef97"
+      },
+      {
+        "index": 25,
+        "sha256": "155a949efb4a15ba72440664cb8bf44855d3aee2ece6659b7a42cc1fed8c2547"
+      },
+      {
+        "index": 26,
+        "sha256": "4d5d9d3e71c7c5b4a1f777582cad5ef0d91c66d4be16dff95718aeb3e8433b59"
+      },
+      {
+        "index": 27,
+        "sha256": "0775953ab8554239699cb61849f0fb9be2477eeebe3ae7706f05d91fb92ad28d"
+      },
+      {
+        "index": 28,
+        "sha256": "c75d3a0161c6d527ac64af27187e258cb5e842ba32f48d4b670766de0f75d4bf"
+      },
+      {
+        "index": 29,
+        "sha256": "8b51a46e5f29c9f089c0ee39e7e9b8dbe463cefeee47e1cc9538da8117579275"
+      },
+      {
+        "index": 30,
+        "sha256": "9b0ec5daa2d86d782a47b52b3b88b355dc7c79c5356a123eeb6180da273e308f"
+      },
+      {
+        "index": 31,
+        "sha256": "1e96c798179ff6e2be41f4891551f1353acc0a76f79434c74f8e2bdc5aa76fae"
+      },
+      {
+        "index": 32,
+        "sha256": "fcf424ba0032607f0ca7a2c7e9c7658c610f595ad53577fa3ba7e7819524918c"
+      },
+      {
+        "index": 33,
+        "sha256": "daeeb0f54b0ed3e6995347cc376ede8b1034582bda08a6dfae1077946b20f6dd"
+      },
+      {
+        "index": 34,
+        "sha256": "02099c50e9dec5d721693bc34ac118f1ff957d55842dd0c2a331201255bb49c8"
+      },
+      {
+        "index": 35,
+        "sha256": "b70cff75dd3991a9f4f9fa413409940be125b0322c12c5b2b846086baf66c8de"
+      },
+      {
+        "index": 36,
+        "sha256": "da4134377cfda36aedf7b0ec4e157f79f9f4f42f2211c0a4bd096453b6660c6e"
+      },
+      {
+        "index": 37,
+        "sha256": "074af87698cced3c05f905d4f72955d3fe1427f511b67b662b43e08ad786d0b4"
+      },
+      {
+        "index": 38,
+        "sha256": "4a803f737424d3a096de5fac71a9e74c3f0b8fc6be4638c0e7d3bbb3580419d1"
+      },
+      {
+        "index": 39,
+        "sha256": "02a55c7e250d7ee8762cb63af71f8c3f2acc299a9cc9ad1abbf4d1afbafa3cb3"
+      },
+      {
+        "index": 40,
+        "sha256": "7fd2a4a1be3d3225aa2d1a6e71d1fe52e4e68f94d7241d271645bfedf55c2d9e"
+      },
+      {
+        "index": 41,
+        "sha256": "9ceeac103b872c9487743e551d895cc4288d88a13bbc63fcdd040cd5c0048aec"
+      },
+      {
+        "index": 42,
+        "sha256": "0c00539cafdf20ac8422d48f013fd1dfef1f6485db38b3364d1468788f673e60"
+      },
+      {
+        "index": 43,
+        "sha256": "b53a56da5c082aebca77deb0c81ff57c18956cb2c5c2dd1f90c712934cf2cd1c"
+      },
+      {
+        "index": 44,
+        "sha256": "eab5939ac0f355b9ef38c4384934b9e6cf2486908cd17cd078d95251fb3331c1"
+      },
+      {
+        "index": 45,
+        "sha256": "76a4a79e54a41cd309477a1049c9bae3b4a52a324812b534ae8330346c9b426d"
+      },
+      {
+        "index": 46,
+        "sha256": "1d75d4c50f5b3d85ca39560bba8bc4eb755e376620db5718a7ca022e220042b0"
+      },
+      {
+        "index": 47,
+        "sha256": "ab156a861088ea08d9e37962d6aca0dd34524e467ba24d8d0b40113277ae13e5"
+      },
+      {
+        "index": 48,
+        "sha256": "8bff7e56b32dfa7722acee433606008d2bbaac37afcfe5f4762b34ae080ba7dd"
+      },
+      {
+        "index": 49,
+        "sha256": "c83b9ef7782083d44d3ee0450053ab2c45e0d97c622f2fff4e18532548c86bc9"
+      },
+      {
+        "index": 50,
+        "sha256": "28aea099bdd5383769805d912aa5ef2c5686aeeffdc10892f2f1dac408495195"
+      },
+      {
+        "index": 51,
+        "sha256": "0aab4c1165b16069e431a943b76acdef8298d035dcb10d64a8e6020657fc3d29"
+      },
+      {
+        "index": 52,
+        "sha256": "11c9b5062c99fe7c36b36c68f21af3e70160475d3754e5be5e12a680a6697b0d"
+      },
+      {
+        "index": 53,
+        "sha256": "80e06a2cd4fdba2b1d2460b379b29280f69b1f7b264f12cdeae70df03d08877e"
+      },
+      {
+        "index": 54,
+        "sha256": "3b46fc5f86443760ebc8e399c8951272fd99eb424f85821aff283e6cb82a3fb8"
+      },
+      {
+        "index": 55,
+        "sha256": "4b4894c37a9c3d99eaa10560e4d3aa2be3b85e5255dfcfedc0b0e17c48913794"
+      },
+      {
+        "index": 56,
+        "sha256": "e8641d98a21413dc233961e859db751a0587bbf5cb9d979cc281c29021c63fcc"
+      },
+      {
+        "index": 57,
+        "sha256": "f3b427217ff5294e214f44756164640a3eb7dbc22fcd01a3b59fd21528e33c59"
+      },
+      {
+        "index": 58,
+        "sha256": "91c0e1fed3fe3ad7800b5c27e1e3748b39a56107d3ebeb3cd086479d9db6e636"
+      },
+      {
+        "index": 59,
+        "sha256": "91532b5bfc8887a20c28aa80ac76ed2b17d9ac8ffc337a15504d73999c348a12"
+      },
+      {
+        "index": 60,
+        "sha256": "ba60d61353663be68b6b94f97a484380d862cc719af82d35b02231dc420ee2d5"
+      },
+      {
+        "index": 61,
+        "sha256": "1fbb797ad441b3d71be245c7abcbf0e03619ccbf59a852b95e246be720b3d472"
+      },
+      {
+        "index": 62,
+        "sha256": "d574e3bc5ddf52732a89e50e9a2d46f7fc6664485382f95b80f4d97a24333026"
+      },
+      {
+        "index": 63,
+        "sha256": "969804e505bf68fcec787fb55f26cc1412a2cefaa704dfbc968ca712fa200607"
+      },
+      {
+        "index": 64,
+        "sha256": "33a5d2fc708521453f013191d75bbbd6a85b0fb26ead68a40ee5bb3a419f2def"
+      },
+      {
+        "index": 65,
+        "sha256": "f2cac8fdd31877bc650c48a13757d0310cdd3e2b3ac985a8e026b247208559f6"
+      },
+      {
+        "index": 66,
+        "sha256": "53f71067ad3ffaaa5f204fdc249d0dd4e3528d6472e2554ee0a21a19a48d39d4"
+      },
+      {
+        "index": 67,
+        "sha256": "c1940c9f2a939b24fba3ad005fdad88461df1bfb88ffa24c853f7761c1d2f4f7"
+      },
+      {
+        "index": 68,
+        "sha256": "e7dd50bc4477918fabbba0fc2cc06d82f949fd3c9472ce5bbe3bb27fb7a97107"
+      },
+      {
+        "index": 69,
+        "sha256": "81af46fd754e6172ecee4f713c21f732080587be5ddd6a9523952ff419841150"
+      },
+      {
+        "index": 70,
+        "sha256": "290a6fc54d112d225e55e5982c80d5b00069ee8a70cbc0c96ff47e568793609b"
+      },
+      {
+        "index": 71,
+        "sha256": "259aa15a5cef113995bccb0afc45d6d17be8c03798ac24af0dbcccad520b142e"
+      },
+      {
+        "index": 72,
+        "sha256": "b62c2b8b1b47e1ee84259564f33bce730bc0c35b34a2160bc681035ae9c5b638"
+      },
+      {
+        "index": 73,
+        "sha256": "165babbddf2558273676a54957c50df0bce22f0de213b9fe7fbcbf55cf486e69"
+      },
+      {
+        "index": 74,
+        "sha256": "caf1c67db5e09156cfb3ef4eb9a14f5ba5ee7057928dd58dd5a0da8bd8f4d018"
+      },
+      {
+        "index": 75,
+        "sha256": "5074ee32a7e22943ef1a7702bec4fa092655cf092b9c79a121074395aaad0023"
+      },
+      {
+        "index": 76,
+        "sha256": "de3db8758f36e490a6be66296bc192925fa47a048bebd6b0349c7247c2554a6b"
+      },
+      {
+        "index": 77,
+        "sha256": "e514a4a3c96fee5ab7c925a3a23d3d09343f61694d89eb8bcad1682651495d75"
+      },
+      {
+        "index": 78,
+        "sha256": "11fc40ded937c844c0e922c10b331d188d9bea5a5cc7d11b9fcb3e05d4285335"
+      },
+      {
+        "index": 79,
+        "sha256": "253db8600e9ab40898064b6425670d9f5819977bf3299a8c7ca6d97779baa995"
+      },
+      {
+        "index": 80,
+        "sha256": "f6769243878c9384188076ddfd710399ad31985b52012c1251b3d4d026da5ec8"
+      },
+      {
+        "index": 81,
+        "sha256": "e0ae1a6bf680e5488662fe7e7803fc49e9a43e5a057a9eae2414ccfb537d5822"
+      },
+      {
+        "index": 82,
+        "sha256": "cf66152d8f907eed8e4848bf1810522c3702735a5352a0b3fdec63f2ed637e12"
+      },
+      {
+        "index": 83,
+        "sha256": "0ff0fc9c6a0dcc7b9f8e0dce28fe58379ae876c78dcd22f65e08e87404a3665f"
+      },
+      {
+        "index": 84,
+        "sha256": "2d024a9c749fd7d04bc0bc60d3ac8accb57fe8bbcf0bd60f9b3a6e11d0d050c0"
+      },
+      {
+        "index": 85,
+        "sha256": "bcc280131524c3f06c1aa29b43b02ec75f5a41aaf17926513055a9ac52ae5c38"
+      },
+      {
+        "index": 86,
+        "sha256": "9928e174b6ff4c503096589af53003a48a6f5399971c2f478e62fabf5c34572e"
+      },
+      {
+        "index": 87,
+        "sha256": "b86a2fd3c46cdade621d957b4efba0e64b20b7b24d6b530a1d49412306cf4d1f"
+      },
+      {
+        "index": 88,
+        "sha256": "0cec4195dbe37bcf2cc0e769403eecfa1dbe2c1d1108b5c30a0595ba3bf62ed3"
+      },
+      {
+        "index": 89,
+        "sha256": "fcea385ff035cf690ddf5172d6dc7ef5b938685a125ef259e11987c7ee46b402"
+      },
+      {
+        "index": 90,
+        "sha256": "e3c367898dd5732c2756f2587695e50fc54590d75e2cd983b776d2cfdc9ffdcd"
+      },
+      {
+        "index": 91,
+        "sha256": "fc870944fac1ec9a602bc3eb5434c9812d38bb6cddb534cf85e0c816f46d94f8"
+      },
+      {
+        "index": 92,
+        "sha256": "9efe466f96691a88a2ee7d2db88563d76f969f71258de21830f1c01db0265f0c"
+      },
+      {
+        "index": 93,
+        "sha256": "f0438316399950bc106e69dd9a120c024484e07458fa6655c94348bd2606f1fd"
+      },
+      {
+        "index": 94,
+        "sha256": "ea3ecbd8dd586e725c3752aeef7f882fcdcfa4534b4cf7c399dc2f8337c34869"
+      },
+      {
+        "index": 95,
+        "sha256": "6014437bde409bda073b5fd42f58979f23eede77c50a1179fa7a56a69ac259bd"
+      },
+      {
+        "index": 96,
+        "sha256": "78568facdda2d2283d46245180147bc21c302929086ef7ea4ff3083e4d804fc7"
+      }
+    ]
+  },
+  "limitedHostObserver": {
+    "status": {
+      "state": "running",
+      "administrator": false,
+      "launchMode": "limited-unprivileged",
+      "vssAccessGuaranteed": false,
+      "startedUtc": "2026-10-07T10:56:50.744979+00:00",
+      "dueUtc": "2026-10-07T18:56:50.744979+00:00",
+      "samplesLimit": 241,
+      "samplesWritten": 4,
+      "intervalSeconds": 120,
+      "dockerEverySamples": 8,
+      "reportBudgetBytes": 16777216,
+      "sampleLimitBytes": 131072,
+      "reportBytes": 41068,
+      "cleanupPerformed": false,
+      "deviceCommandsSent": false,
+      "autostartConfigured": false,
+      "fullDirectoryScans": false,
+      "processIoIsWriterAttribution": false,
+      "sourceSha256": "d71e5c7a9fa028f91098d47c224ce53ba11723d06f03f0ee1b248dc4ce5c4bc6",
+      "lastSampleUtc": "2026-10-07T11:02:50.745684+00:00",
+      "freeDiskBytes": 27286761472
+    },
+    "firstSnapshot": {
+      "bootUtc": "2026-10-06T19:42:12.5000000Z",
+      "availableRamBytes": 15579324416,
+      "totalRamBytes": 50668236800,
+      "committedBytes": 56068227072,
+      "commitLimitBytes": 101336473600,
+      "pagedPoolBytes": 2840391680,
+      "nonpagedPoolBytes": 2379288576,
+      "vss": {
+        "state": "unavailable",
+        "rows": [],
+        "errorType": "CimException"
+      }
+    },
+    "dockerAndLinuxFirstState": {
+      "dockerDf": "measured",
+      "containerStats": "measured",
+      "linuxMemoryKiB": "measured",
+      "dockerGuestDfKiB": "measured"
+    },
+    "latestEarlySnapshot": {
+      "bootUtc": "2026-10-06T19:42:12.5000000Z",
+      "availableRamBytes": 15642615808,
+      "totalRamBytes": 50668236800,
+      "committedBytes": 55764344832,
+      "commitLimitBytes": 101336473600,
+      "pagedPoolBytes": 2845241344,
+      "nonpagedPoolBytes": 2381983744,
+      "vss": {
+        "state": "unavailable",
+        "rows": [],
+        "errorType": "CimException"
+      }
+    },
+    "latestEarlyObservedAt": "2026-10-07T11:02:50.745684+00:00",
+    "finishedSoakAccepted": false
+  },
+  "scopedInventory": {
+    "workspace": {
+      "state": "complete",
+      "logicalBytesSeen": 20303654380,
+      "filesSeen": 278156,
+      "entriesSeen": 321742,
+      "errors": 0,
+      "skipped": 1992,
+      "scanSeconds": 27.601,
+      "hardLinksDeduplicated": false
+    },
+    "workspaceRecoveryFolderLogicalBytes": 10268212000,
+    "userLocalState": "partial_budget",
+    "programDataState": "partial_access",
+    "fileContentsRead": false,
+    "completeVolumeAllocationInventory": false
+  },
+  "dockerObservation": {
+    "observedAtUtc": "2026-10-07T10:48:00Z",
+    "runningContainers": 14,
+    "allContainers": 46,
+    "containerDirectoriesAllocatedKiB": 329088,
+    "images": {
+      "count": 222,
+      "reportedSizeGB": 186.7
+    },
+    "buildCache": {
+      "records": 767,
+      "reportedSizeGB": 84.42
+    },
+    "volumes": {
+      "count": 68,
+      "reportedSizeGB": 7.247
+    },
+    "reportedLayerCategoriesMustNotBeAdded": true,
+    "runningLegacyLogConfigWithoutBounds": [
+      "postgres",
+      "redis",
+      "minio",
+      "n8n"
+    ],
+    "repositoryComposeHasLogBounds": true,
+    "legacyServicesRecreated": false,
+    "sameSizedVhdCanStillReceiveWrites": true
+  },
+  "validation": {
+    "targetedTestsPassed": 67,
+    "subtestsPassed": 16,
+    "applicationConftestExcluded": true,
+    "ruff": "passed",
+    "mypyUtilities": 2,
+    "operatorLinksChecked": 24,
+    "missingOperatorLinks": 0,
+    "gitFsck": "passed"
+  },
+  "protectedLayer": {
+    "administrator": false,
+    "vss": "access_denied",
+    "fsutilDiskfree": "access_denied",
+    "elevatedEtwRequested": true,
+    "newElevatedEtwStartedConfirmed": false
+  },
+  "conclusions": {
+    "freeSpaceLossConfirmed": true,
+    "writerAttribution": "UNDETERMINED",
+    "diskLeakFixed": false,
+    "ramLeakFixed": false,
+    "cleanupPerformed": false,
+    "containerRestarts": false,
+    "deviceCommands": false
+  }
+}

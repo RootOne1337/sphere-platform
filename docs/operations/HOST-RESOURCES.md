@@ -1,5 +1,13 @@
 # Ресурсы хоста: диск, Windows commit, WSL и контейнеры
 
+**Позднейший срез 7 октября, 16:02 UTC+5:** исходный 8h observer завершён,
+97/97 samples. C: free **36 431 638 528 → 27 286 896 640 B**,
+потеря **8,517 GiB**; Docker VHDX logical/allocated постоянны во всех срезах.
+[Полный разбор](../audits/2026-10-07/HOST-STORAGE-FOLLOWUP.md) ·
+[Конечные evidence/hashes](../audits/2026-10-07/HOST-STORAGE-FOLLOWUP-EVIDENCE.json).
+Новый limited RAM/commit observer продолжает конечное окно до 23:56 UTC+5;
+elevated VSS/FileIO и причина расхода по-прежнему OPEN.
+
 **7 октября, 15:56 UTC+5 — повторный расход диска подтверждён, причина открыта.**
 Ремонт при загрузке уже выполнен; утверждение о preboot блокировке ниже —
 исторический срез 6 октября, а не текущий статус.

@@ -15,7 +15,14 @@
 > автоматическую проверку runtime; старые аудиты сохраняют собственные даты и
 > версии и не должны читаться как текущий deploy. [Правила актуальности](DOCUMENTATION.md).
 
-**7 октября — веб b50d6ae установлен на 3015:** title читаем, новые шаги
+**7 октября, 16:02 UTC+5 — повторная потеря места C: измерена за 8h:**
+[Конечный host/storage разбор и открытая атрибуция](audits/2026-10-07/HOST-STORAGE-FOLLOWUP.md) ·
+[97-sample evidence и новый ограниченный RAM observer](audits/2026-10-07/HOST-STORAGE-FOLLOWUP-EVIDENCE.json).
+Диагностический source ecc8221: 67 targeted tests / 16 subtests, Ruff/mypy passed.
+UI/API a41c4e6 остаются установленными; новая причина расхода не объявляется
+устранённой, privileged trace и RAM soak ожидаются.
+
+**Ранний срез 7 октября — веб b50d6ae установлен на 3015:** title читаем, новые шаги
 не скрывают End; overview подстраивается под размер холста и сохраняет ручной
 масштаб. Проверены desktop/mobile, ELK и JSON routes на реальном UI/API.
 [Exact image/runtime/browser/CI receipt](audits/2026-10-07/STUDIO-RESIZE-INSTALLED-ACCEPTANCE.json) ·

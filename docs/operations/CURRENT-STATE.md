@@ -4,6 +4,22 @@
 **Область:** исходники и документация ветки PR #19, записанные runtime-наблюдения, Android APK и готовность следующего прогона.<br />
 **Канонический документ текущего состояния:** этот файл. Исторические отчёты ниже сохраняют исходные даты и факты.
 
+**7 октября, 16:02 UTC+5 — повторная потеря места подтверждена конечным окном:**
+97/97 samples за 8h, C: free -9 144 741 888 B; Docker VHDX logical/allocated
+234 731 077 632 B постоянны во всех срезах. Pagefile logical постоянен, allocation
+и identity недостаточны для delta. Writer и storage/RAM leak остаются OPEN.
+Диагностический source ecc8221 добавляет bounded read-only report и явный limited
+host observer: RAM/commit/pools/process epochs/Docker/WSL без повышения прав,
+VSS при отказе UNKNOWN. 67 targeted tests / 16 subtests, Ruff/mypy passed;
+отдельный hosted CI ecc8221 ещё не выдаётся за завершённый.
+Новый 8h collector работает с 15:56 до 23:56 UTC+5, report cap 16 MiB;
+finite RAM soak и elevated FileIO/VSS trace ещё не приняты. Runtime UI/API a41c4e6,
+SQL/APK и другие services не заменялись. У legacy PG/Redis/MinIO/n8n отмечен
+logging drift: compose limits есть, работающие контейнеры старой конфигурации.
+[Конечные measurements, inventory и ограничения](../audits/2026-10-07/HOST-STORAGE-FOLLOWUP.md) ·
+[Evidence](../audits/2026-10-07/HOST-STORAGE-FOLLOWUP-EVIDENCE.json) ·
+[Operator commands](HOST-RESOURCES.md). Общий ledger 9/41 сохраняется.
+
 **7 октября, 07:59 +05 — UI/API a41c4e6 установлены на3015:** strict discrete
 input admission отклоняет missing coordinates/coercion/malformed JSON без
 остановки видео. Real PH010 canary получил пять отказов, затем video binary
