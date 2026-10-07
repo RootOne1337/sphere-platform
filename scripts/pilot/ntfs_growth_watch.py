@@ -8,12 +8,13 @@ from __future__ import annotations
 
 import argparse
 import ctypes
+import hashlib
 import json
 import os
 import shutil
 import struct
 import time
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 from scripts.pilot.atomic_json import write_json
@@ -88,13 +89,16 @@ class Journal:
         identity, first, next_usn, lowest, _max, _size, _delta = struct.unpack_from('<QqqqqQQ', data)
         return {'id': identity, 'first': first, 'next': next_usn, 'lowest': lowest}
 
-    def read(self, identity: int, cursor: int, end: int) -> tuple[int, list[dict], int]:
+    def read(self, identity: int, cursor: int, end: int) -> tuple[int, list[dict], int, dict]:
         result: dict[int, dict] = {}
         used = 0
+        evicted = 0
         timer = time.monotonic()
         while cursor < end:
-            if used >= 8 * MIB or time.monotonic() - timer > 10:
-                raise ValueError('Journal backlog exceeds bounded cycle; coverage gap')
+            if used + 64 * 1024 > 8 * MIB or time.monotonic() - timer > 10:
+                # Keep the last consumed cursor. The next cycle resumes the
+                # unread backlog; it must never jump to the query endpoint.
+                break
             payload = struct.pack('<qIIQQQ', cursor, DATA_REASONS, 0, 0, 0, identity)
             data = self.control(0x000900BB, payload, 64 * 1024)
             used += len(data)
@@ -104,11 +108,20 @@ class Journal:
             for row in changed:
                 # Keep records appended after the query too: read may advance
                 # past its earlier endpoint. Filtering them would lose writes.
+                result.pop(row['fileId'], None)
+                if len(result) >= 4096:
+                    result.pop(next(iter(result)))
+                    evicted += 1
                 result[row['fileId']] = row
-            if len(result) > 4096:
-                raise ValueError('Changed-ID budget exceeded; coverage gap')
             cursor = next_usn
-        return cursor, list(result.values()), used
+        return cursor, list(result.values()), used, {
+            'state': 'partial_backlog' if cursor < end else
+                     'partial_identity_budget' if evicted else 'complete',
+            'identityObservationsEvicted': evicted,
+            'evictionsAreUniqueFileCount': False,
+            'unreadUsnBytes': max(0, end - cursor),
+            'retainedChangedFileCountIsComplete': not evicted and cursor >= end,
+        }
 
     def resolve(self, file_id: int) -> dict:
         # FILE_ID_DESCRIPTOR: DWORD size, enum type=FileIdType, 16-byte union.
@@ -164,8 +177,12 @@ def main() -> int:
         output.mkdir(exist_ok=False)
     except (OSError, ValueError) as error:
         parser.error(str(error))
+    started = datetime.now(timezone.utc)
     status = {'state': 'running', 'pid': os.getpid(), 'administrator': True,
-              'startedUtc': datetime.now(timezone.utc).isoformat(), 'samplesLimit': args.samples,
+              'startedUtc': started.isoformat(), 'samplesLimit': args.samples,
+              'dueUtc': (started + timedelta(seconds=(args.samples - 1) * args.interval)).isoformat(),
+              'sourceSha256': hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),
+              'autostartConfigured': False, 'deviceCommandsSent': False,
               'intervalSeconds': args.interval, 'samplesWritten': 0, 'reportBytes': 0,
               'reportLimitBytes': 16 * MIB, 'journalCreatedOrChanged': False,
               'fileContentsRead': False, 'cleanupPerformed': False,
@@ -182,7 +199,7 @@ def main() -> int:
                 current = journal.query()
                 if current['id'] != initial['id'] or cursor < current['first']:
                     raise ValueError('Journal changed or wrapped; coverage gap')
-                cursor, changed, read_bytes = journal.read(initial['id'], cursor, current['next'])
+                cursor, changed, read_bytes, coverage = journal.read(initial['id'], cursor, current['next'])
                 files = []
                 selected = sorted(changed, key=lambda row: (bool(row['reason'] & 2), row['usn']), reverse=True)[:256]
                 for row in selected:
@@ -197,7 +214,9 @@ def main() -> int:
                     previous.pop(next(iter(previous)))
                 record = {'observedUtc': datetime.now(timezone.utc).isoformat(), 'index': index,
                           'journal': current, 'readBytes': read_bytes, 'files': files,
+                          'consumedCursor': cursor, 'readCoverage': coverage,
                           'changedFileCount': len(changed),
+                          'changedFileCountIsComplete': coverage['retainedChangedFileCountIsComplete'],
                           'resolutionState': 'complete' if len(changed) <= 256 else 'partial_budget',
                           'unresolvedByBudget': max(0, len(changed) - 256),
                           'writerAttribution': 'USN_HAS_NO_PID'}

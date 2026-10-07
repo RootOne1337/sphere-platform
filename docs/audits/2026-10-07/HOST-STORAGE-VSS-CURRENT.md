@@ -285,3 +285,34 @@ appends, bounded tail reads and unknown-child cancellation boundaries. USN
 tests cover real-layout Unicode/variable records, malformed length/alignment,
 unsupported versions, same-file growth/shrink, baseline vs creation and
 missing allocation vs identity replacement.
+
+## Collector follow-up at 13:03 UTC: NTFS burst handling
+
+Status inspection found that the first USN observer had stopped at12:18:52UTC
+on `Changed-ID budget exceeded`. Its last completed sample was12:16:52UTC.
+This was a collector limitation during a changed-file burst, not proof of a
+particular storage writer. Host/VSS, the event supervisor and the VMDK observer
+were still running; the supervisor had completed two named captures by13:00UTC,
+totalling63,210,101B of ETL. Their writer analysis is not claimed complete here.
+
+The reader now retains at most4096 recent identity observations and reports
+evictions explicitly. Evictions are observations, not a unique-file count.
+Byte/time limits keep the actual consumed cursor so the next cycle can resume
+unread records instead of discarding the rest of the queried interval. Each
+sample publishes read coverage, consumed cursor, backlog and whether its retained
+changed count is complete. Unsupported, wrapped and nonadvancing journals still
+stop with an error. Resolution/cache/report limits were not increased.
+
+The replacement is **actually running**, administrator PID9008, source SHA-256
+`a3a04e6e4f7f21946b2c52c07f40248f5255de165c1d4202941501c334f73145`.
+Report: `.local-pilot/ntfs-growth-20261007T1310`; timestamps, not the directory
+suffix, identify the actual window13:03:12→19:53:12UTC,206×120s,16MiB.
+The NTFS observation gap12:16:52→13:03:12 is **not reconstructed**. Restart uses
+a new baseline and does not extend the original observation deadline.
+No journal, task, Android, quota, database or autostart changes were performed.
+
+**14 pure tests**, Ruff and mypy passed. Regression cases include a5000-identity
+burst with exact904 reported evictions, latest metadata for repeated identities,
+resumption after the time limit, the8MiB byte limit and strict malformed/nonadvancing
+rejection. This improves collector continuity; the historical host incident and
+finite RAM soak remain open.

@@ -1,0 +1,33 @@
+{
+  "schemaVersion": 1,
+  "observedAtUtc": "2026-10-07T13:06:29.3817697+00:00",
+  "sourceSha256": "a3a04e6e4f7f21946b2c52c07f40248f5255de165c1d4202941501c334f73145",
+  "state": "running",
+  "administrator": true,
+  "startedUtc": "2026-10-07T18:03:12.056134+05:00",
+  "dueUtc": "2026-10-08T00:53:12.056134+05:00",
+  "samplesWritten": 2,
+  "samplesLimit": 206,
+  "intervalSeconds": 120,
+  "reportBytes": 77132,
+  "reportLimitBytes": 16777216,
+  "previousReaderStop": "2026-10-07T12:18:52.411282Z",
+  "lastPreviousSample": "2026-10-07T12:16:52.417785Z",
+  "observationGapReconstructed": false,
+  "lastReadCoverage": {
+    "state": "complete",
+    "identityObservationsEvicted": 0,
+    "evictionsAreUniqueFileCount": false,
+    "unreadUsnBytes": 0,
+    "retainedChangedFileCountIsComplete": true
+  },
+  "lastReadBytes": 318072,
+  "localTests": 14,
+  "ruff": "passed",
+  "mypy": "passed",
+  "autostartConfigured": false,
+  "journalCreatedOrChanged": false,
+  "deviceCommandsSent": false,
+  "historicalAttribution": "open",
+  "filePathsAndContentsIncluded": false
+}

@@ -1,7 +1,8 @@
 import struct
 import unittest
+from unittest.mock import patch
 
-from scripts.pilot.ntfs_growth_watch import growth, records
+from scripts.pilot.ntfs_growth_watch import Journal, growth, records
 
 
 def record(name='test.txt', major=2, usn=80, file_id=5, reason=2):
@@ -13,6 +14,75 @@ def record(name='test.txt', major=2, usn=80, file_id=5, reason=2):
 
 
 class NtfsGrowthTests(unittest.TestCase):
+    def reader(self, blocks):
+        journal = object.__new__(Journal)
+        journal.control = lambda _code, _payload, _capacity: next(blocks)
+        return journal
+
+    def test_identity_burst_keeps_bounded_recent_metadata_and_explicit_gap(self):
+        blocks = iter(struct.pack('<q', start + 500) + b''.join(
+            record(usn=i, file_id=i) for i in range(start, start + 500))
+            for start in range(0, 5000, 500))
+        with patch('scripts.pilot.ntfs_growth_watch.time.monotonic', return_value=0):
+            cursor, changed, used, coverage = self.reader(blocks).read(1, 0, 5000)
+        self.assertEqual(cursor, 5000)
+        self.assertEqual(len(changed), 4096)
+        self.assertEqual(changed[0]['fileId'], 904)
+        self.assertEqual(changed[-1]['fileId'], 4999)
+        self.assertLess(used, 8 * 1024 ** 2)
+        self.assertEqual(coverage['identityObservationsEvicted'], 904)
+        self.assertEqual(coverage['state'], 'partial_identity_budget')
+        self.assertFalse(coverage['retainedChangedFileCountIsComplete'])
+
+    def test_time_budget_resumes_actual_cursor_without_skipping_unread_records(self):
+        journal = self.reader(iter([struct.pack('<q', 100) + record(),
+                                    struct.pack('<q', 200) + record(file_id=6)]))
+        with patch('scripts.pilot.ntfs_growth_watch.time.monotonic', side_effect=[0, 0, 11]):
+            cursor, changed, _used, coverage = journal.read(1, 0, 200)
+        self.assertEqual(cursor, 100)
+        self.assertEqual(coverage['unreadUsnBytes'], 100)
+        self.assertEqual(coverage['state'], 'partial_backlog')
+        self.assertEqual(changed[0]['fileId'], 5)
+        with patch('scripts.pilot.ntfs_growth_watch.time.monotonic', return_value=0):
+            cursor, changed, _used, coverage = journal.read(1, cursor, 200)
+        self.assertEqual(cursor, 200)
+        self.assertEqual(changed[0]['fileId'], 6)
+        self.assertEqual(coverage['state'], 'complete')
+
+    def test_same_identity_updates_latest_record_without_false_eviction(self):
+        journal = self.reader(iter([struct.pack('<q', 200) + record(usn=80) + record(usn=100)]))
+        _cursor, changed, _used, coverage = journal.read(1, 0, 200)
+        self.assertEqual(len(changed), 1)
+        self.assertEqual(changed[0]['usn'], 100)
+        self.assertEqual(coverage['identityObservationsEvicted'], 0)
+        self.assertTrue(coverage['retainedChangedFileCountIsComplete'])
+
+    def test_byte_budget_retains_cursor_and_bounds_device_reads(self):
+        journal = object.__new__(Journal)
+        calls = []
+
+        def control(_code, payload, capacity):
+            calls.append(capacity)
+            cursor = struct.unpack_from('<q', payload)[0]
+            return struct.pack('<q', cursor + 1) + bytes(capacity - 8)
+
+        journal.control = control
+        with patch('scripts.pilot.ntfs_growth_watch.time.monotonic', return_value=0), \
+                patch('scripts.pilot.ntfs_growth_watch.records', side_effect=lambda data:
+                      (struct.unpack_from('<q', data)[0], [])):
+            cursor, changed, used, coverage = journal.read(1, 0, 200)
+        self.assertEqual(cursor, 128)
+        self.assertEqual(len(calls), 128)
+        self.assertEqual(used, 8 * 1024 ** 2)
+        self.assertEqual(changed, [])
+        self.assertEqual(coverage['state'], 'partial_backlog')
+        self.assertEqual(coverage['unreadUsnBytes'], 72)
+
+    def test_nonadvancing_and_unsupported_reads_still_stop_with_explicit_error(self):
+        for block in [struct.pack('<q', 0), struct.pack('<q', 100) + record(major=3)]:
+            with self.subTest(block=block[:8]), self.assertRaises(ValueError):
+                self.reader(iter([block])).read(1, 0, 100)
+
     def test_unicode_names_identity_reasons_and_multiple_records(self):
         next_usn, rows = records(struct.pack('<q', 200) + record('скрин.png') + record(usn=100, file_id=6))
         self.assertEqual(next_usn, 200)

@@ -28,7 +28,8 @@ Finite RAM soak, quota actor и атрибуция всей историческ
 | Elevated disk/RAM/VSS/Docker/WSL | `.local-pilot/host-storage-elevated-20261007T1127` | 241×120s, до19:27:02UTC,16MiB |
 | Event-triggered FileIO/DiskIO | `.local-pilot/disk-writer-watch-20261007T1142` | Общий deadline host observer, max4 attempts |
 | LDPlayer six VMDKs | `.local-pilot/ldplayer-files-20261007T1141` | 97×300s,11:40:26→19:40:26UTC,8MiB |
-| Whole C: USN changed-file sizes | `.local-pilot/ntfs-growth-20261007T1157` | 241×120s,11:54:52→19:54:52UTC,16MiB |
+| Whole C: USN changed-file sizes, replacement | `.local-pilot/ntfs-growth-20261007T1310` | 206×120s,13:03:12→19:53:12UTC,16MiB |
+| Previous USN reader, stopped | `.local-pilot/ntfs-growth-20261007T1157` | Last sample12:16:52UTC; stopped12:18:52UTC on changed-ID budget |
 | Completed initial kernel capture | `.local-pilot/disk-writer-20261007T112141-3acccbff585d4ae2a2683b3276b4ff4a` | Четыре volume samples /28,304MB ETL |
 
 При следующем разборе читать `status.json`, complete snapshots и только затем
@@ -51,10 +52,21 @@ Suite109 passed /34 subtests; Ruff и mypy проверены для трёх pr
 
 USN reader читает существующий журнал C:, не создаёт/не меняет его;8MiB journal
 read/10s в цикл,256 resolved IDs/4096 cache/256KiB sample/16MiB reports. Overflow
-resolution отмечается partial с count; wrap/unsupported/backlog прекращают
-сбор с явным coverage gap. First file sightings baseline, PID нет в USN;
+resolution отмечается partial с count. При byte/time backlog следующий цикл
+продолжает с фактически прочитанного cursor; endpoint не подставляется вместо
+него. Всплеск более4096 identities сохраняет последние bounded observations;
+eviction count не является количеством уникальных файлов и не выдаётся за полное
+покрытие. Wrap/unsupported/nonadvancing journal прекращают сбор с явной ошибкой.
+First file sightings baseline, PID нет в USN;
 сопоставлять same-identity allocation deltas с ETW, не считать bytes written
 байтами роста. [Reader](../../scripts/pilot/ntfs_growth_watch.py).
+
+**7 октября,18:03 UTC+5 — исправление reader burst:** старый reader остановился
+на обычном превышении4096 changed IDs. Последний sample12:16:52UTC, restart
+13:03:12UTC: этот промежуток не объявлен покрытым NTFS-наблюдением. Остальные
+host/VSS, ETW supervisor и VMDK observers продолжали работать. Replacement уже
+записал baseline; metadata source SHA-256 находится в status.json, autostart
+не включён, первоначальный deadline не продлён.14 pure tests, Ruff и mypy прошли.
 
 **Исторический первый срез7 октября, Docker retention:** подтверждён основной расход в образах/слоях,
 а не в сохранённых кадрах: containerd 185 725 952 KiB, Android logs 139 652 KiB,
