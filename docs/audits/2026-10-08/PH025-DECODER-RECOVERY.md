@@ -3,6 +3,10 @@
 Дата: 8 октября 2026, Asia/Yekaterinburg. Область: выделенный viewer на 3015,
 реальный поток PH025, WebCodecs AVC и диагностика браузера.
 
+**Последующая установка и live-приёмка:**
+[reviewed UI и APK10248](PH025-STATIC-RECONNECT-ACCEPTANCE.md).
+Ниже сохранён исходный decoder checkpoint.
+
 ## Подтверждённая причина
 
 После получения настоящих IDR/delta packets установленный viewer передавал

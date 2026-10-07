@@ -4,6 +4,25 @@
 **Область:** исходники и документация ветки PR #19, записанные runtime-наблюдения, Android APK и готовность следующего прогона.<br />
 **Канонический документ текущего состояния:** этот файл. Исторические отчёты ниже сохраняют исходные даты и факты.
 
+**8 октября, около04:10 UTC+5 — PH025: исправление static reconnect установлено и проверено.**
+На3015 reviewed UI `fcdc547`; API `a41c4e6` сохранён. APK **1.2.48-dev /10248**,
+source `c62ded6`, адресно установлен через recovery grants на **PH011 и PH025**:
+terminal completion, новый heartbeat, version readback, grants auto-cleared.
+Повторные входы дали локально6/12drawn, удалённо6/4drawn; второй одновременный
+viewer PH025 получил3IDR. Во всех пяти случаях decode/render errors0/0.
+При втором viewer physical captured88→88, encoded114→117: owned RAW refresh
+решает отсутствие IDR без движения экрана. «Недавние» и «Домой» проверены
+визуально; receipts600/480ms не являются input→picture latency.
+Candidate full tests979passed/3skipped в каждой Dev/Enterprise; все пять
+exact-source hosted CI source `c62ded6` successful. PH010 и остальной парк
+не обновлялись, normal OTA channel не продвигался. Continuous input на3015
+**выключен**, ledger9accepted/41open сохранён. Это конечная приёмка двух pilots,
+не fleet soak, не доказательство20–30FPS или frame-exact жестов.
+[Установка, доказательства и ограничения](../audits/2026-10-08/PH025-STATIC-RECONNECT-ACCEPTANCE.md) ·
+[Acceptance JSON](../audits/2026-10-08/PH025-STATIC-RECONNECT-ACCEPTANCE.json).
+
+### Исторические checkpoints до установленной приёмки
+
 **8 октября, после03:40 UTC+5 — PH025: второй путь чёрного экрана доказан.**
 Reviewed UI `fcdc547` установлен на3015;45 остальных контейнеров и OTA-каталог
 сохранены. Первый вход11drawn, Android Recent32/Home49,0decode errors.
