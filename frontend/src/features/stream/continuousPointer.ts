@@ -1,6 +1,6 @@
 import type { CaptureFrameBinding } from '@/lib/h264-decoder';
 
-/** Source-only single-pointer transport. The installed viewer does not activate it yet. */
+/** Single-pointer transport. Activation requires scoped capability and a rendered v2 capture. */
 export const CONTINUOUS_POINTER_LIMITS = Object.freeze({
   moveIntervalMs: 16, moveAgeMs: 100, heartbeatMs: 250, receiptMs: 500,
   startupMs: 6000, schedulingGapMs: 500, bufferedBytes: 1024, pendingReceipts: 32,

@@ -2,6 +2,9 @@ import { act, fireEvent, render } from '@testing-library/react';
 import { DeviceStream } from '@/components/sphere/DeviceStream';
 
 let mockRenderFrame: ((frame: VideoFrame) => void) | null = null;
+let mockCapture: { captureEpoch: string; frameWidth: number; frameHeight: number } | null = null;
+
+const TOUCH_EPOCH = '00112233-4455-6677-8899-aabbccddeeff';
 
 jest.mock('@/lib/store', () => ({ useAuthStore: () => ({ accessToken: 'fixture-token' }) }));
 jest.mock('@/lib/api', () => ({ api: { get: jest.fn() } }));
@@ -15,6 +18,7 @@ jest.mock('@/lib/h264-decoder', () => ({
     reset() {}
     handleBinary() {}
     get stats() { return null; }
+    get lastRenderedCapture() { return mockCapture; }
   },
 }));
 
@@ -26,6 +30,7 @@ class MockSocket {
   static instances: MockSocket[] = [];
 
   readyState = MockSocket.CONNECTING;
+  bufferedAmount = 0;
   binaryType = '';
   onopen: ((event: Event) => void) | null = null;
   onclose: ((event: { code: number }) => void) | null = null;
@@ -42,6 +47,7 @@ class MockSocket {
 beforeEach(() => {
   jest.useFakeTimers();
   mockRenderFrame = null;
+  mockCapture = null;
   MockSocket.instances = [];
   Object.defineProperty(global, 'WebSocket', { configurable: true, value: MockSocket });
   class TestPointerEvent extends MouseEvent {
@@ -85,6 +91,77 @@ function readyWheel() {
   const wheel = (deltaY = 80, options: Record<string, unknown> = {}) => fireEvent.wheel(view.canvas, { clientX: 50, clientY: 50, deltaY, ...options });
   return { ...view, wheel };
 }
+
+function readyContinuous() {
+  const view = readyWheel();
+  mockCapture = { captureEpoch: TOUCH_EPOCH, frameWidth: 1280, frameHeight: 720 };
+  const receive = (message: object) => act(() => view.socket.onmessage?.({ data: JSON.stringify(message) }));
+  const sent = () => view.socket.send.mock.calls.map(([raw]) => JSON.parse(raw as string));
+  const status = (sequence: number, status: number, stage = 'input') => receive({ type: 'continuous_input_status',
+    session_id: 'viewer_session_fixture', owner: 'owner_session_fixture', capture_epoch: TOUCH_EPOCH,
+    sequence, status, stage, origin: 'injector', device_uptime_ms: 100 });
+  fireEvent.click(view.getByRole('button', { name: 'Непрерывные жесты' }));
+  receive({ type: 'touch_capability', capture_epoch: TOUCH_EPOCH, frame_width: 1280, frame_height: 720 });
+  receive({ type: 'touch_session', session_id: 'viewer_session_fixture', owner: 'owner_session_fixture',
+    capture_epoch: TOUCH_EPOCH, frame_width: 1280, frame_height: 720 });
+  status(0, 0, 'startup');
+  return { ...view, receive, sent, status };
+}
+
+it('installed canvas integration sends MOVE before UP without a second legacy swipe', () => {
+  const view = readyContinuous();
+  expect(view.getByRole('button', { name: 'Отключить непрерывные жесты' })).toHaveAttribute('aria-pressed', 'true');
+  fireEvent.pointerDown(view.canvas, { clientX: 40, clientY: 50, pointerId: 1, button: 0, buttons: 1 });
+  view.status(1, 1);
+  fireEvent.pointerMove(view.canvas, { clientX: 60, clientY: 50, pointerId: 1, buttons: 1 });
+  act(() => jest.advanceTimersByTime(16));
+  view.status(2, 1);
+  expect(view.sent().filter(x => x.type === 'touch_event').map(x => x.action)).toEqual([0, 2]);
+  fireEvent.pointerUp(view.canvas, { clientX: 55, clientY: 50, pointerId: 1, button: 0 });
+  expect(view.sent().filter(x => x.type === 'touch_event').map(x => x.action)).toEqual([0, 2, 1]);
+  expect(view.commands()).toEqual([]);
+  expect(view.getByRole('button', { name: 'Домой' })).toBeDisabled();
+  view.unmount();
+});
+
+it('known native release restores discrete navigation and permits a new explicit session', () => {
+  const view = readyContinuous();
+  fireEvent.click(view.getByRole('button', { name: 'Отключить непрерывные жесты' }));
+  expect(view.sent().filter(x => x.type === 'touch_close')).toHaveLength(1);
+  view.status(0, 3, 'release');
+  expect(view.getByRole('button', { name: 'Домой' })).not.toBeDisabled();
+  fireEvent.click(view.getByRole('button', { name: 'Непрерывные жесты' }));
+  expect(view.sent().filter(x => x.type === 'touch_probe')).toHaveLength(2);
+  view.unmount();
+});
+
+it('blur cancels ownership and never falls back to replaying a legacy drag', () => {
+  const view = readyContinuous();
+  fireEvent.pointerDown(view.canvas, { clientX: 40, clientY: 50, pointerId: 1, button: 0, buttons: 1 });
+  fireEvent.blur(window);
+  fireEvent.pointerUp(view.canvas, { clientX: 65, clientY: 50, pointerId: 1, button: 0 });
+  expect(view.sent().filter(x => x.type === 'touch_close')).toHaveLength(1);
+  expect(view.commands()).toEqual([]);
+  expect(view.getByRole('button', { name: 'Домой' })).toBeDisabled();
+  view.unmount();
+});
+
+it('old APK probe timeout preserves video and does not invent readiness', () => {
+  const view = readyWheel();
+  fireEvent.click(view.getByRole('button', { name: 'Непрерывные жесты' }));
+  act(() => jest.advanceTimersByTime(6000));
+  expect(view.getByText(/APK не подтвердил поддержку/)).toBeInTheDocument();
+  expect(view.getByRole('button', { name: 'Непрерывные жесты' })).not.toBeDisabled();
+  expect(view.canvas.width).toBe(1280);
+  view.unmount();
+});
+
+it('recording does not silently turn live motion into a successful reusable swipe', () => {
+  const view = readyWheel();
+  view.rerender(<DeviceStream deviceId="gesture-remote" fit="contain" enableStaticInput enableNavigation onControlSent={jest.fn()} />);
+  expect(view.getByRole('button', { name: 'Непрерывные жесты' })).toBeDisabled();
+  view.unmount();
+});
 
 it('maps downward and upward wheel movements to bounded swipes at native video coordinates', () => {
   const view = readyWheel();

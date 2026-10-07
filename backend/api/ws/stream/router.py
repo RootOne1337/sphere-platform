@@ -11,6 +11,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.core.dependencies import _is_dev_skip_auth
 from backend.database.engine import AsyncSessionLocal
+from backend.websocket.continuous_lease import InputLeaseUnavailable
+from backend.websocket.continuous_runtime import TouchViewer, get_continuous_runtime
 from backend.websocket.stream_bridge import get_stream_bridge
 from backend.websocket.viewer_input import InvalidViewerInput, viewer_command
 
@@ -179,6 +181,9 @@ async def stream_viewer_ws(
             await ws.send_json({"type": "error", "error": "stream_control_unavailable"})
 
     auth_stopped = asyncio.Event()
+    touch_runtime = get_continuous_runtime()
+    touch_viewer = TouchViewer(device_id, org_id_str, user_id_str, session_id, ws)
+    touch_registered = bool(touch_runtime and touch_runtime.register(touch_viewer))
 
     async def current_control_permission() -> bool | None:
         """Fresh identity/ownership for input; no DB session is held while streaming."""
@@ -232,6 +237,42 @@ async def stream_viewer_ws(
     ping_task = asyncio.create_task(_viewer_ping_loop())
     stop_task = asyncio.create_task(auth_stopped.wait())
 
+    async def current_touch_permission() -> bool:
+        if not await current_control_permission():
+            return False
+        async with asyncio.timeout(0.5), AsyncSessionLocal() as db:
+            from sqlalchemy import select
+
+            from backend.database.tenant import bind_tenant_context
+            from backend.models.task import Task, TaskStatus
+            await bind_tenant_context(db, org_id_str)
+            running = await db.scalar(select(Task.id).where(
+                Task.device_id == device_uuid, Task.org_id == user.org_id,
+                Task.status.in_([TaskStatus.ASSIGNED, TaskStatus.RUNNING]),
+            ).limit(1))
+        return running is None
+
+    async def _touch_auth_loop() -> None:
+        # Separate from MOVE cadence and video. Fresh control authorization
+        # renews only auth, never the viewer/native owner lease.
+        while True:
+            await asyncio.sleep(0.75)
+            if not touch_viewer.lease or touch_viewer.closing or not touch_runtime:
+                continue
+            try:
+                # Native ownership independently excludes DAG/discrete actions.
+                # Server denies opening/continuing while a known task is running.
+                if not await current_touch_permission() or not await touch_runtime.authorize(touch_viewer):
+                    raise InputLeaseUnavailable()
+            except Exception:
+                await touch_runtime.retire(touch_viewer)
+                try:
+                    await touch_runtime.send(touch_viewer, {"type": "touch_error", "error": "control_revoked_or_unavailable"})
+                except Exception:
+                    pass
+
+    touch_auth_task = asyncio.create_task(_touch_auth_loop())
+
     try:
         await send_control({"type": "viewer_connected", "session_id": session_id})
         while True:
@@ -251,6 +292,20 @@ async def stream_viewer_ws(
                 if not receive_task.done():
                     receive_task.cancel()
                 await asyncio.gather(receive_task, return_exceptions=True)
+            if isinstance(data, dict) and data.get("type") in {"touch_probe", "touch_open", "touch_event", "touch_close"}:
+                try:
+                    if not touch_registered or not touch_runtime:
+                        raise InputLeaseUnavailable()
+                    if data["type"] in {"touch_probe", "touch_open"}:
+                        allowed = await current_touch_permission() if data["type"] == "touch_open" else await current_control_permission()
+                        if not allowed:
+                            raise InputLeaseUnavailable()
+                    await touch_runtime.handle(touch_viewer, data)
+                except Exception:
+                    if touch_runtime:
+                        await touch_runtime.retire(touch_viewer)
+                    await ws.send_json({"type": "touch_error", "error": "input_rejected_or_unavailable"})
+                continue
             try:
                 control = viewer_command(data)
             except InvalidViewerInput as exc:
@@ -259,6 +314,9 @@ async def stream_viewer_ws(
             if control is None:
                 continue
             if control["type"] in {"touch_tap", "touch_swipe", "keyevent", "text"}:
+                if touch_viewer.lease is not None:
+                    await ws.send_json({"type": "touch_error", "error": "close_gestures_before_discrete_input"})
+                    continue
                 can_control = await current_control_permission()
                 if can_control is None:
                     break
@@ -286,7 +344,10 @@ async def stream_viewer_ws(
     finally:
         ping_task.cancel()
         stop_task.cancel()
-        await asyncio.gather(ping_task, stop_task, return_exceptions=True)
+        touch_auth_task.cancel()
+        await asyncio.gather(ping_task, stop_task, touch_auth_task, return_exceptions=True)
+        if touch_registered and touch_runtime:
+            await touch_runtime.unregister(touch_viewer)
         await bridge.unregister_viewer(device_id, session_id)
         logger.info(
             "Stream viewer disconnected",

@@ -40,7 +40,7 @@ class InputLeaseUnavailable(RuntimeError):
         super().__init__("continuous_input_transport_unavailable")
 
 
-def no_replay_redis(url: str) -> Redis:
+def no_replay_redis(url: str, *, decode_responses: bool = True) -> Redis:
     """Owned small pool. Do not borrow the application's retrying Redis client.
 
     Query parameters cannot override critical transport options. Redis URL
@@ -50,7 +50,7 @@ def no_replay_redis(url: str) -> Redis:
 
     if urlsplit(url).query:
         raise ValueError("Continuous input Redis URL cannot contain query options")
-    return Redis.from_url(url, decode_responses=True, max_connections=8,
+    return Redis.from_url(url, decode_responses=decode_responses, max_connections=8,
                           socket_timeout=OPERATION_SECONDS,
                           socket_connect_timeout=OPERATION_SECONDS,
                           retry=Retry(NoBackoff(), 0), retry_on_timeout=False,
@@ -278,6 +278,11 @@ class ContinuousLeaseStore:
             raise InputLeaseUnavailable() from None
         if identity is None:
             return None
+        if isinstance(identity, bytes):
+            try:
+                identity = identity.decode("utf-8")
+            except UnicodeError:
+                return None
         try:
             lease = InputLease.from_identity(identity)
         except InvalidContinuousInput:

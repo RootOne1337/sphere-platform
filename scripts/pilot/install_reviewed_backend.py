@@ -41,6 +41,10 @@ APPROVED_PATHS = {
     "backend/schemas/action_parameters.py", "backend/schemas/dag.py",
     "backend/schemas/script.py", "backend/services/script_service.py",
     "backend/api/ws/stream/router.py", "backend/websocket/viewer_input.py",
+    "backend/api/ws/android/router.py", "backend/websocket/startup.py",
+    "backend/websocket/continuous_runtime.py", "backend/websocket/continuous_delivery.py",
+    "backend/websocket/continuous_lease.py", "backend/websocket/continuous_protocol.py",
+    "backend/websocket/continuous_receipts.py", "backend/websocket/frames.py",
 }
 PACKAGED_PATHS = ["backend", "alembic", "agent-config", "scripts/create_admin.py",
     "scripts/seed_enrollment_key.py", "scripts/backfill_script_metadata.py", "scripts/publish_script_source.py"]

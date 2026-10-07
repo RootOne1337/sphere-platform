@@ -24,14 +24,19 @@ async def _startup_ws_components() -> None:
     init_event_publisher(pubsub_publisher, events_manager)
 
     await _startup_offline_queue()
+    from backend.core.config import settings
+    from backend.websocket.continuous_runtime import start_continuous_runtime
+    await start_continuous_runtime(manager, settings.REDIS_URL)
 
 
 register_startup("ws_components", _startup_ws_components)
 
 
 async def _shutdown_ws_components() -> None:
+    from backend.websocket.continuous_runtime import stop_continuous_runtime
     from backend.websocket.stream_bridge import get_stream_bridge
 
+    await stop_continuous_runtime()
     bridge = get_stream_bridge()
     if bridge:
         await bridge.close()

@@ -884,6 +884,11 @@ async def android_agent_ws(
                             await handle_command_result(device_id, org_id_str, msg, manager)
                         case "event":
                             await handle_device_event(device_id, org_id_str, msg)
+                        case "continuous_input_offer" | "continuous_input_status":
+                            from backend.websocket.continuous_runtime import get_continuous_runtime
+                            runtime = get_continuous_runtime()
+                            if runtime:
+                                await runtime.agent_message(device_id, session_id, msg)
                         case _:
                             # CommandAck from APK has no "type" field — detect by command_id + status
                             if msg.get("command_id") and msg.get("status") in ("completed", "failed", "running", "received"):

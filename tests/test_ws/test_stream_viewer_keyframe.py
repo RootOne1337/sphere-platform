@@ -95,3 +95,48 @@ async def test_invalid_auth_shape_is_closed_before_database_or_registration(monk
     ws.close.assert_awaited_once_with(code=4001, reason="invalid_auth_message")
     database.assert_not_called()
     bridge.assert_not_called()
+
+
+@pytest.mark.asyncio
+async def test_touch_probe_requires_current_control_permission(authorized_viewer, monkeypatch):
+    ws, bridge = authorized_viewer
+    runtime = MagicMock(register=MagicMock(return_value=True), handle=AsyncMock(),
+        retire=AsyncMock(), unregister=AsyncMock())
+    monkeypatch.setattr(stream_router, 'get_continuous_runtime', lambda: runtime)
+    monkeypatch.setattr('backend.core.rbac.has_permission', lambda role, permission: permission == 'stream:read')
+    ws.receive_json = AsyncMock(side_effect=[{'token': 'fixture'}, {'type': 'touch_probe'}, WebSocketDisconnect()])
+    await stream_router.stream_viewer_ws(ws, str(uuid4()))
+    runtime.handle.assert_not_awaited()
+    runtime.unregister.assert_awaited_once()
+    assert ws.send_json.await_args.args[0]['type'] == 'touch_error'
+    assert len(bridge.send_control.await_args_list) == 1
+
+
+@pytest.mark.asyncio
+async def test_touch_close_is_allowed_after_control_revocation(authorized_viewer, monkeypatch):
+    ws, bridge = authorized_viewer
+    runtime = MagicMock(register=MagicMock(return_value=True), handle=AsyncMock(),
+        retire=AsyncMock(), unregister=AsyncMock())
+    monkeypatch.setattr(stream_router, 'get_continuous_runtime', lambda: runtime)
+    monkeypatch.setattr('backend.core.rbac.has_permission', lambda role, permission: permission == 'stream:read')
+    ws.receive_json = AsyncMock(side_effect=[{'token': 'fixture'}, {'type': 'touch_close'}, WebSocketDisconnect()])
+    await stream_router.stream_viewer_ws(ws, str(uuid4()))
+    runtime.handle.assert_awaited_once()
+    assert runtime.handle.await_args.args[1] == {'type': 'touch_close'}
+
+
+@pytest.mark.asyncio
+async def test_active_touch_lease_blocks_legacy_swipe_on_same_viewer(authorized_viewer, monkeypatch):
+    ws, bridge = authorized_viewer
+    runtime = MagicMock(handle=AsyncMock(), retire=AsyncMock(), unregister=AsyncMock())
+    def register(viewer):
+        viewer.lease = object()
+        viewer.closing = True  # No background auth needed for this admission case.
+        return True
+    runtime.register.side_effect = register
+    monkeypatch.setattr(stream_router, 'get_continuous_runtime', lambda: runtime)
+    ws.receive_json = AsyncMock(side_effect=[{'token': 'fixture'},
+        {'type': 'swipe', 'x1': 1, 'y1': 1, 'x2': 20, 'y2': 20, 'duration_ms': 200}, WebSocketDisconnect()])
+    await stream_router.stream_viewer_ws(ws, str(uuid4()))
+    assert len(bridge.send_control.await_args_list) == 1
+    assert ws.send_json.await_args.args[0] == {'type': 'touch_error', 'error': 'close_gestures_before_discrete_input'}
