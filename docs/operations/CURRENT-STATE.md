@@ -4,6 +4,16 @@
 **Область:** исходники и документация ветки PR #19, записанные runtime-наблюдения, Android APK и готовность следующего прогона.<br />
 **Канонический документ текущего состояния:** этот файл. Исторические отчёты ниже сохраняют исходные даты и факты.
 
+**7 октября, 23:34 UTC+5 — storage observation gap:** прежние четыре
+collector processes отсутствуют, последние complete samples около14:03UTC.
+Старые status files ошибочно выглядят `running`; причина остановки неизвестна.
+Восстановлен limited host/file observer PID29648 до8 октября07:13:38UTC+5,
+пять Docker/LDPlayer files, RAM/process/WSL metadata,16MiB общий предел.
+В текущем терминале нет administrator: новая VSS/USN/ETW attribution не
+восстановлена. Сохранённые три ETL и старые reports оставлены для анализа.
+Storage/RAM проблема не объявляется устранённой.
+[Проверенный разрыв и восстановленное покрытие](../audits/2026-10-07/STORAGE-COLLECTOR-INTERRUPTION.md).
+
 **7 октября, после 23:15 UTC+5 — continuous input APK source:** capture epoch,
 синхронный admission, WS generation и общий arbiter с DAG/discrete mutations
 подключены к dispatcher только при явном debug canary flag. FIFO handoff ждёт

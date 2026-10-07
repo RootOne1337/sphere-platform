@@ -1,5 +1,14 @@
 # Ресурсы хоста: диск, Windows commit, WSL и контейнеры
 
+**Актуальное дополнение 7 октября, 23:34 UTC+5:** прежние elevated host/ETW,
+NTFS и VMDK processes отсутствуют; последние complete samples около14:03UTC,
+их старое `running` не является текущим статусом. Причина остановки неизвестна.
+Восстановлен limited PID29648, пять Docker/LDPlayer files плюс RAM/process/WSL
+metadata,236×120s до8 октября07:13:38UTC+5,16MiB. VSS/USN/ETW в новом окне
+не восстановлены: терминал не administrator. Данные реально читаются из JSONL.
+[Разрыв, ограничения и порядок проверки](../audits/2026-10-07/STORAGE-COLLECTOR-INTERRUPTION.md).
+Абзацы ниже — исторические срезы; они не подтверждают живые collectors сейчас.
+
 **7 октября, текущий срез после16:40 UTC+5:** elevated kernel/VSS capture
 подтвердил отдельный free-drop235 745 280B с allocation VSS+234 881 024B /99,63%.
 Ранее одобренный лимит8GiB после drift19,06GiB возвращён; на C: освободилось
