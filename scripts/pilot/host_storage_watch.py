@@ -2,6 +2,8 @@
 
 Private reports include paths and process names. They are not publication artifacts.
 Process IO includes network traffic and is not evidence of persistent disk growth.
+The explicit limited mode collects permitted counters without elevating privileges;
+it preserves unavailable VSS as unknown. Administrator mode remains the default.
 """
 from __future__ import annotations
 
@@ -96,6 +98,16 @@ def validate_window(samples: int, interval: int, docker_every: int, budget_mib: 
         raise ValueError('Docker cadence 1..60 and report budget 1..32 MiB required')
 
 
+def privilege_mode(*, allow_unprivileged: bool) -> bool:
+    """Never elevate; limited metadata mode must be explicitly selected."""
+    if platform.system() != 'Windows':
+        raise ValueError('Windows collector required; nothing started')
+    administrator = bool(ctypes.windll.shell32.IsUserAnAdmin())
+    if not administrator and not allow_unprivileged:
+        raise ValueError('Dedicated elevated Windows collector required; nothing started')
+    return administrator
+
+
 def encode_sample(sample: dict, used: int, budget: int) -> bytes:
     encoded = (json.dumps(sample, ensure_ascii=False, separators=(',', ':')) + '\n').encode('utf-8')
     if len(encoded) > SAMPLE_LIMIT or used + len(encoded) + STATUS_ALLOWANCE > budget:
@@ -161,11 +173,12 @@ def main() -> int:
     parser.add_argument('--interval', type=int, default=120)
     parser.add_argument('--docker-every', type=int, default=8)
     parser.add_argument('--max-report-mib', type=int, default=16)
+    parser.add_argument('--allow-unprivileged', action='store_true',
+                        help='Explicit limited metadata mode; unavailable VSS remains unknown')
     args = parser.parse_args()
     try:
         validate_window(args.samples, args.interval, args.docker_every, args.max_report_mib)
-        if platform.system() != 'Windows' or not ctypes.windll.shell32.IsUserAnAdmin():
-            raise ValueError('Dedicated elevated Windows collector required; nothing started')
+        administrator = privilege_mode(allow_unprivileged=args.allow_unprivileged)
         if len(args.watch_file) > 100 or len(set(args.watch_file)) != len(args.watch_file):
             raise ValueError('At most 100 distinct absolute named files')
         if any(not path.is_absolute() for path in args.watch_file):
@@ -179,7 +192,9 @@ def main() -> int:
         parser.error(str(error))
     started = datetime.now(timezone.utc)
     duration = (args.samples - 1) * args.interval
-    status = {'state': 'running', 'pid': os.getpid(), 'administrator': True,
+    status = {'state': 'running', 'pid': os.getpid(), 'administrator': administrator,
+              'launchMode': 'administrator' if administrator else 'limited-unprivileged',
+              'vssAccessGuaranteed': False,
               'startedUtc': started.isoformat(), 'dueUtc': (started + timedelta(seconds=duration)).isoformat(),
               'samplesLimit': args.samples, 'samplesWritten': 0, 'intervalSeconds': args.interval,
               'dockerEverySamples': args.docker_every, 'reportBudgetBytes': args.max_report_mib * MIB,

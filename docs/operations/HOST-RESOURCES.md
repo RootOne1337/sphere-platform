@@ -1,5 +1,45 @@
 # Ресурсы хоста: диск, Windows commit, WSL и контейнеры
 
+**7 октября, 15:56 UTC+5 — повторный расход диска подтверждён, причина открыта.**
+Ремонт при загрузке уже выполнен; утверждение о preboot блокировке ниже —
+исторический срез 6 октября, а не текущий статус.
+В окне 08:02–15:52 накоплено 95 named-file samples: C: free уменьшился
+на 9 097 113 600 B, при неизменных logical/allocated Docker VHDX во всех срезах.
+Pagefile logical size неизменен, allocation недоступен и identity `[0,0]`
+не доказывает непрерывную идентичность файла. Это не установление writer.
+Текущая версия UI/API остаётся a41c4e6; backend/DB/APK не обновлялись этим этапом.
+
+Добавлен read-only [разбор конечных samples](../../scripts/pilot/disk_growth_report.py):
+лимиты 97 samples / 1 MiB на файл / 8 MiB суммарно; output не содержит исходных
+путей. Он различает нулевой endpoint delta и постоянство во всех срезах,
+пропуски, смену identity и отсутствие allocation; `writerAttribution` остаётся
+`UNDETERMINED`. Полный 8h исходный sampler ещё заканчивается в 16:02 UTC+5.
+
+[Host collector](../../scripts/pilot/host_storage_watch.py) теперь допускает
+явный `--allow-unprivileged`: Windows RAM/commit/pools/process epochs,
+Docker и WSL собираются с имеющимися правами. По умолчанию требование elevated
+сохранено. Ограниченный режим не повышает права; VSS при отказе остаётся
+`unavailable`, пустой список не означает нулевой размер. Process IO содержит
+сетевые операции и не считается файловой атрибуцией.
+
+Ограниченный observer начат 15:56:50, запланирован до 23:56:50 UTC+5:
+241 samples / 120 s, Docker каждые 16 min, report cap 16 MiB,
+sample cap 128 KiB, без contents/root scans/cleanup/restarts/autostart.
+Первый snapshot содержит реальные RAM/commit/pools/Docker/WSL counters;
+VSS недоступен, administrator=false. Конечный RAM soak ещё не принят.
+
+```powershell
+python -m scripts.pilot.disk_growth_report --input-dir .local-pilot\storage-followup-20261007T0303
+# Для НОВОГО конечного наблюдения; существующий collector повторно не запускать:
+python -m scripts.pilot.host_storage_watch --allow-unprivileged --output-dir .local-pilot\host-storage-unique-name --samples 241 --interval 120 --docker-every 8 --max-report-mib 16 --watch-file C:\pagefile.sys
+```
+
+Проверки: **67 passed / 16 subtests**, targeted `pytest --noconftest` для четырёх
+diagnostic modules; Ruff и mypy двух production utilities passed. Это проверки
+сборщика/reader, не всего backend или исправности SSD. Для VSS/kernel FileIO
+остаётся отдельный elevated [конечный ETW collector](../../scripts/pilot/collect_disk_writer.ps1).
+Он уже запрошен у оператора; запуск пока не подтверждён.
+
 **6 октября, 20:23 UTC+5 — допуск сборок закрыт из-за NTFS:** том workspace C:
 имеет `Warning / Full Repair Needed`; elevated Scan завершён с
 `ScanErrorsFoundNeedSpotFix`. Подтверждён запрос `chkdsk C: /f` на следующую
