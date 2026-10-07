@@ -1,5 +1,15 @@
 # Ресурсы хоста: диск, Windows commit, WSL и контейнеры
 
+**7 октября, Docker retention:** подтверждён основной расход в образах/слоях,
+а не в сохранённых кадрах: containerd 185 725 952 KiB, Android logs 139 652 KiB,
+MinIO 104 KiB. Удалены 34 старых owned images, внутри guest освобождено
+2,442 GiB; все 46 container epochs и обе rollback версии сохранены. Это не
+возврат места на C: и не устранение продолжающегося расхода. Исправлен read-only
+planner: exact whitelist тестовых образов, общий пул последних двух тестовых
+сборок; runtime rollback сохраняется отдельно для каждого repository.
+18 focused tests/Ruff/mypy прошли. Cache exact-ID cleanup вернул 0 B.
+[Подробный разбор и границы](../audits/2026-10-07/DOCKER-STORAGE-RETENTION.md).
+
 **Позднейший срез 7 октября, 16:02 UTC+5:** исходный 8h observer завершён,
 97/97 samples. C: free **36 431 638 528 → 27 286 896 640 B**,
 потеря **8,517 GiB**; Docker VHDX logical/allocated постоянны во всех срезах.

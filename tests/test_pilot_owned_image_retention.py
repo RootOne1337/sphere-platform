@@ -39,6 +39,49 @@ def test_current_reviewed_image_survives_even_when_older_than_rollbacks():
     assert [x["imageId"] for x in result["candidateImages"]] == [images[1]["Id"]]
 
 
+def test_one_off_web_test_names_share_a_pool_instead_of_retaining_every_old_test():
+    repos = sorted(retention.OWNED_WEB_TEST_REPOSITORIES)
+    images = [image(i, [f"{repo}:{i:040x}"]) for i, repo in enumerate(repos, 1)]
+    containers = [{"Id": "old-stopped-test", "Image": images[0]["Id"],
+                   "State": {"StartedAt": "original", "Status": "exited"}}]
+    result = plan_retention(images, containers, resolve, CURRENT)
+    assert {x["imageId"] for x in result["candidateImages"]} == {
+        x["Id"] for x in images[1:-2]}
+    assert result["webTestRetention"] == "one-explicitly-owned-pool"
+    assert result["runtimeRetention"] == "per-repository"
+    assert result["deletionPerformed"] is False
+
+
+def test_test_pool_keeps_reviewed_source_and_rejects_similar_unattested_names():
+    repo = "sphere-vpn-control-web-tests"
+    images = [image(1, [f"{repo}:{CURRENT}"]),
+              image(2, [f"{repo}:{2:040x}"]),
+              image(3, [f"sphere-unattested-web-tests:{3:040x}"]),
+              image(4, [f"{repo}:{4:040x}"]),
+              image(5, [f"{repo}:{5:040x}"])]
+    result = plan_retention(images, [], resolve, CURRENT)
+    assert [x["imageId"] for x in result["candidateImages"]] == [images[1]["Id"]]
+    assert result["excludedCounts"] == {"foreign-or-unattested-tag": 1}
+
+
+def test_runtime_rollbacks_remain_per_repository_when_test_pool_is_present():
+    repos = ["sphere-review-frontend", "sphere-reviewed-backend"]
+    images = [image(i, [f"{repo}:{i:040x}"])
+              for i, repo in enumerate(repos + repos + repos, 1)]
+    images += [image(7, ["sphere-vpn-control-web-tests:" + "7" * 40])]
+    result = plan_retention(images, [], resolve, CURRENT)
+    assert {x["imageId"] for x in result["candidateImages"]} == {
+        images[0]["Id"], images[1]["Id"]}
+
+
+def test_mixed_owned_and_foreign_test_alias_never_becomes_a_candidate():
+    repo = "sphere-vpn-control-web-tests"
+    images = [image(i, [f"{repo}:{i:040x}"]) for i in range(1, 5)]
+    images[0]["RepoTags"].append("foreign-test:latest")
+    result = plan_retention(images, [], resolve, CURRENT)
+    assert [x["imageId"] for x in result["candidateImages"]] == [images[1]["Id"]]
+
+
 @pytest.mark.parametrize("tags", [[], [f"{REPO}:latest"], ["sphere-foreign:" + "a" * 40],
                                  [f"{REPO}:" + "a" * 40, "other:stable"]])
 def test_unknown_or_partially_owned_tags_never_become_candidates(tags):

@@ -15,12 +15,22 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Callable
 
-OWNED_REPOSITORIES = frozenset({
+OWNED_WEB_TEST_REPOSITORIES = frozenset({
+    "sphere-ui-inspection-recovery-web-tests",
+    "sphere-ui-inspection-web-tests",
+    "sphere-organization-action-access-web-tests",
+    "sphere-device-action-access-web-tests",
+    "sphere-session-capabilities-web-tests",
+    "sphere-ota-publication-web-tests",
+    "sphere-vpn-control-web-tests",
+})
+OWNED_RUNTIME_REPOSITORIES = frozenset({
     "sphere-review-frontend",
+    "sphere-reviewed-backend",
     "sphere-pilot-20260911-backend",
     "sphere-pilot-20260911-frontend",
-    "sphere-ui-inspection-recovery-web-tests",
 })
+OWNED_REPOSITORIES = OWNED_RUNTIME_REPOSITORIES | OWNED_WEB_TEST_REPOSITORIES
 ROOT = Path(__file__).resolve().parents[2]
 COMMIT_TAG = re.compile(r"[0-9a-f]{7,40}\Z")
 IMAGE_ID = re.compile(r"sha256:[0-9a-f]{64}\Z")
@@ -76,15 +86,27 @@ def plan_retention(
                          "created": image["Created"], "logicalBytes": image["Size"],
                          "sourceCommits": commits, "repositories": sorted(repositories),
                          "sortTime": created})
-    for repository in OWNED_REPOSITORIES:
+    # Runtime repositories each retain rollback versions. Test images have
+    # operation-specific names but share one retention pool: keeping two of
+    # EACH one-off test name would retain every historical 2 GiB test forever.
+    # Existing running/stopped container dependencies and reviewed source are
+    # still protected independently, even outside the pool's newest versions.
+    for repository in OWNED_RUNTIME_REPOSITORIES:
         versions = sorted((x for x in eligible if repository in x["repositories"]),
                           key=lambda x: (x["sortTime"], x["imageId"]), reverse=True)
         protected.update(x["imageId"] for x in versions[:keep_latest])
+    test_versions = sorted((x for x in eligible
+                            if OWNED_WEB_TEST_REPOSITORIES.intersection(x["repositories"])),
+                           key=lambda x: (x["sortTime"], x["imageId"]), reverse=True)
+    protected.update(x["imageId"] for x in test_versions[:keep_latest])
     candidates = [{key: value for key, value in x.items() if key != "sortTime"}
                   for x in eligible if x["imageId"] not in protected]
     return {"schemaVersion": 1, "observedAt": datetime.now(timezone.utc).isoformat(),
             "mode": "read-only-plan", "currentCommit": current_commit,
             "ownedRepositories": sorted(OWNED_REPOSITORIES), "keepLatest": keep_latest,
+            "runtimeRetention": "per-repository",
+            "webTestRetention": "one-explicitly-owned-pool",
+            "ownedWebTestRepositories": sorted(OWNED_WEB_TEST_REPOSITORIES),
             "candidateImages": sorted(candidates, key=lambda x: (x["created"], x["imageId"])),
             "protectedImageIds": sorted(protected), "excludedCounts": excluded,
             "containerIdentities": [{"id": x["Id"], "image": x["Image"],
