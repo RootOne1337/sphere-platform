@@ -61,6 +61,9 @@ class CommandDeliveryTest {
         every { ws.onJsonMessage = captureNullable(callback) } just Runs
         every { ws.onConnected = captureNullable(connected) } just Runs
         every { ws.sendJson(capture(messages)) } returns true
+        // Canary startup installs/removes this lifecycle callback. Keep the
+        // individual mapping mocks strict for the legacy-input assertions.
+        every { streamingManager.setInputInvalidationListener(any()) } just Runs
         return CommandDispatcher(ws, adb, dag, cache,
             mockk(relaxed = true), mockk(relaxed = true), authStore,
             otaService, mockk(relaxed = true), mockk(relaxed = true),
