@@ -4,6 +4,25 @@
 **Область:** исходники и документация ветки PR #19, записанные runtime-наблюдения, Android APK и готовность следующего прогона.<br />
 **Канонический документ текущего состояния:** этот файл. Исторические отчёты ниже сохраняют исходные даты и факты.
 
+**7 октября, после16:40 UTC+5 — storage attribution и реальный сбор:**
+в отдельном30s elevated окне C:−235 745 280B / VSS allocation+234 881 024B
+(99,63%). Это механизм конкретного эпизода, не writer всего8h или всей истории.
+Проверен drift ранее одобренного VSS max8GiB→19,06GiB; повторное применение
+8GiB освободило16,305GiB на C: и удалило две inspected restore copies. Отдельные
+~20GiB до этого освободил сам оператор удалением постороннего файла.
+39 owned Docker images удалены с all46 epoch guards/rollback preservation,
+guest reclaimed11,890GiB; host VHD length/allocation234 731 077 632B сохраняются.
+Quota-changing actor неизвестен, offline compaction не выполнялась.
+
+Вместо limited сейчас actual elevated host observer16:27→00:27 следующего дня,
+VSS measured, RAM/commit/pools/процессы/Docker/WSL; отдельно bounded event-triggered
+kernel supervisor, whole-C: NTFS journal reader и six-VMDK LDPlayer observation.
+Пока running, RAM soak не принят.109 targeted tests /34 subtests, Ruff/mypy;
+runtimeUI/APIa41c4e6 не заменены,
+Android/SQL/сценарии не менялись. Ledger9/41 и host incident OPEN сохраняются.
+[Текущий отчёт, screenshots и evidence](../audits/2026-10-07/HOST-STORAGE-VSS-CURRENT.md) ·
+[Инструкция и private report locations](HOST-RESOURCES.md).
+
 **7 октября, 16:02 UTC+5 — повторная потеря места подтверждена конечным окном:**
 97/97 samples за 8h, C: free -9 144 741 888 B; Docker VHDX logical/allocated
 234 731 077 632 B постоянны во всех срезах. Pagefile logical постоянен, allocation
@@ -12,8 +31,8 @@
 host observer: RAM/commit/pools/process epochs/Docker/WSL без повышения прав,
 VSS при отказе UNKNOWN. 67 targeted tests / 16 subtests, Ruff/mypy passed;
 отдельный hosted CI ecc8221 ещё не выдаётся за завершённый.
-Новый 8h collector работает с 15:56 до 23:56 UTC+5, report cap 16 MiB;
-finite RAM soak и elevated FileIO/VSS trace ещё не приняты. Runtime UI/API a41c4e6,
+Тогдашний limited collector15:56→23:56 superseded после18 samples;
+текущее elevated наблюдение описано выше, finite RAM soak ещё не принят. Runtime UI/API a41c4e6,
 SQL/APK и другие services не заменялись. У legacy PG/Redis/MinIO/n8n отмечен
 logging drift: compose limits есть, работающие контейнеры старой конфигурации.
 [Конечные measurements, inventory и ограничения](../audits/2026-10-07/HOST-STORAGE-FOLLOWUP.md) ·

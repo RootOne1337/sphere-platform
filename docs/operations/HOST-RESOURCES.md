@@ -1,6 +1,62 @@
 # Ресурсы хоста: диск, Windows commit, WSL и контейнеры
 
-**7 октября, Docker retention:** подтверждён основной расход в образах/слоях,
+**7 октября, текущий срез после16:40 UTC+5:** elevated kernel/VSS capture
+подтвердил отдельный free-drop235 745 280B с allocation VSS+234 881 024B /99,63%.
+Ранее одобренный лимит8GiB после drift19,06GiB возвращён; на C: освободилось
+16,305GiB, обе проверенные restore copies удалены. Приблизительно20GiB перед
+этим освободил оператор удалением постороннего файла; это не наша очистка.
+Docker guest cleanup завершён в два этапа:39 owned images /11,890GiB внутри
+guest; host VHD не уменьшился, все46 epochs/rollback сохранены.
+[Новые измерения, screenshots и ограничения](../audits/2026-10-07/HOST-STORAGE-VSS-CURRENT.md).
+
+Вместо limited observer реально работает elevated `host_storage_watch`:
+16:27→00:27 следующего дня UTC+5,241×120s,16MiB budget; VSS уже measured.
+Дополнительно [event-triggered supervisor](../../scripts/pilot/disk_writer_watch.py)
+начат16:38:18, общий deadline00:27:02. Он читает последние complete samples,
+запускает не более4 named memory WPR captures при free-drop/VSS-growth128MiB,
+смене membership или max. Это post-trigger, не восстановление прошлых writes.
+Metadata1MiB; после учёта512MiB сохранённых ETL больше нет запусков; это не
+hard file cap при последнем save. Unknown capture останавливает supervisor;
+чужие trace sessions не отменяются, VSS policy автоматически не меняется.
+Всю систему покрывает kernel trace, а не только процессы Docker/Sphere.
+Finite RAM soak, quota actor и атрибуция всей исторической потери открыты.
+
+Приватные отчёты работающего наблюдения (не запускать второй экземпляр):
+
+| Сборщик | Private directory | Предел / назначение |
+| --- | --- | --- |
+| Elevated disk/RAM/VSS/Docker/WSL | `.local-pilot/host-storage-elevated-20261007T1127` | 241×120s, до19:27:02UTC,16MiB |
+| Event-triggered FileIO/DiskIO | `.local-pilot/disk-writer-watch-20261007T1142` | Общий deadline host observer, max4 attempts |
+| LDPlayer six VMDKs | `.local-pilot/ldplayer-files-20261007T1141` | 97×300s,11:40:26→19:40:26UTC,8MiB |
+| Whole C: USN changed-file sizes | `.local-pilot/ntfs-growth-20261007T1157` | 241×120s,11:54:52→19:54:52UTC,16MiB |
+| Completed initial kernel capture | `.local-pilot/disk-writer-20261007T112141-3acccbff585d4ae2a2683b3276b4ff4a` | Четыре volume samples /28,304MB ETL |
+
+При следующем разборе читать `status.json`, complete snapshots и только затем
+соответствующий named ETL. PID сам по себе не является identity: в этом запуске
+Windows переиспользовала PID старого завершённого WPR collector для нового
+observer. Перед остановкой своего helper нужны command line **и** creation epoch.
+При перезапуске Windows сбор не продолжится сам; данные до него сохраняются.
+
+Для нового отдельного наблюдения из elevated PowerShell, после проверки что
+существующее окно завершилось, использовать НОВЫЕ direct `.local-pilot` paths:
+
+```powershell
+python -m scripts.pilot.disk_writer_watch --input-dir .local-pilot\host-storage-NEW --output-dir .local-pilot\disk-writer-watch-NEW --hours 8 --max-captures 4 --drop-mib 128
+```
+
+Input должен быть running elevated observer текущего source hash. Stale/future,
+oversized/duplicate JSON и invalid counters отклоняются без новых captures.
+Сборщики не пишут автозапуск, не чистят данные и не отправляют команды Android.
+Suite109 passed /34 subtests; Ruff и mypy проверены для трёх production utilities.
+
+USN reader читает существующий журнал C:, не создаёт/не меняет его;8MiB journal
+read/10s в цикл,256 resolved IDs/4096 cache/256KiB sample/16MiB reports. Overflow
+resolution отмечается partial с count; wrap/unsupported/backlog прекращают
+сбор с явным coverage gap. First file sightings baseline, PID нет в USN;
+сопоставлять same-identity allocation deltas с ETW, не считать bytes written
+байтами роста. [Reader](../../scripts/pilot/ntfs_growth_watch.py).
+
+**Исторический первый срез7 октября, Docker retention:** подтверждён основной расход в образах/слоях,
 а не в сохранённых кадрах: containerd 185 725 952 KiB, Android logs 139 652 KiB,
 MinIO 104 KiB. Удалены 34 старых owned images, внутри guest освобождено
 2,442 GiB; все 46 container epochs и обе rollback версии сохранены. Это не
@@ -15,8 +71,9 @@ planner: exact whitelist тестовых образов, общий пул по
 потеря **8,517 GiB**; Docker VHDX logical/allocated постоянны во всех срезах.
 [Полный разбор](../audits/2026-10-07/HOST-STORAGE-FOLLOWUP.md) ·
 [Конечные evidence/hashes](../audits/2026-10-07/HOST-STORAGE-FOLLOWUP-EVIDENCE.json).
-Новый limited RAM/commit observer продолжает конечное окно до 23:56 UTC+5;
-elevated VSS/FileIO и причина расхода по-прежнему OPEN.
+На момент этого среза limited RAM/commit observer был запланирован до23:56 UTC+5.
+Этот observer затем остановлен после18 samples и заменён elevated окном,
+описанным выше; новое состояние не выдаётся за завершённый RAM soak.
 
 **7 октября, 15:56 UTC+5 — повторный расход диска подтверждён, причина открыта.**
 Ремонт при загрузке уже выполнен; утверждение о preboot блокировке ниже —
@@ -40,7 +97,7 @@ Docker и WSL собираются с имеющимися правами. По 
 `unavailable`, пустой список не означает нулевой размер. Process IO содержит
 сетевые операции и не считается файловой атрибуцией.
 
-Ограниченный observer начат 15:56:50, запланирован до 23:56:50 UTC+5:
+Исторический limited observer начат15:56:50, остановлен16:31:31 UTC+5:
 241 samples / 120 s, Docker каждые 16 min, report cap 16 MiB,
 sample cap 128 KiB, без contents/root scans/cleanup/restarts/autostart.
 Первый snapshot содержит реальные RAM/commit/pools/Docker/WSL counters;
@@ -56,7 +113,8 @@ python -m scripts.pilot.host_storage_watch --allow-unprivileged --output-dir .lo
 diagnostic modules; Ruff и mypy двух production utilities passed. Это проверки
 сборщика/reader, не всего backend или исправности SSD. Для VSS/kernel FileIO
 остаётся отдельный elevated [конечный ETW collector](../../scripts/pilot/collect_disk_writer.ps1).
-Он уже запрошен у оператора; запуск пока не подтверждён.
+На момент этого исторического среза запуск ещё не был подтверждён; последующее
+реальное elevated recording и его counters приведены в начале документа.
 
 **6 октября, 20:23 UTC+5 — допуск сборок закрыт из-за NTFS:** том workspace C:
 имеет `Warning / Full Repair Needed`; elevated Scan завершён с

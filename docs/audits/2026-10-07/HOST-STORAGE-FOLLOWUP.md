@@ -3,7 +3,16 @@
 Дата пользователя: **7 октября 2026, Asia/Yekaterinburg (UTC+5)**.
 Диагностический source: **ecc82211ba6b19be2ef04f2ec7af987423db1dbf**.
 Установленные UI/API: **a41c4e6**, APK не обновлялся.
-Статус: **потеря свободного места подтверждена; writer и причина не установлены**.
+Статус исходного 8h окна: **потеря подтверждена; writer всего окна не установлен**.
+
+**Последующий срез 7 октября:** elevated trace поймал отдельное падение C:
+235 745 280 B с ростом VSS allocation 234 881 024 B / 99,63%. Подтверждён
+drift ранее одобренного лимита; возвращён max8 GiB, освободилось16,305 GiB
+на C:, две проверенные restore copies удалены. Дополнительные~20 GiB до этой
+команды освободил сам оператор удалением постороннего файла. Actual elevated
+RAM/VSS observer и event-triggered FileIO supervisor работают; actor смены
+квоты, attribution всего 8h и RAM soak остаются OPEN.
+[Новые evidence и границы](HOST-STORAGE-VSS-CURRENT.md).
 
 [Проверяемые числа и hashes](HOST-STORAGE-FOLLOWUP-EVIDENCE.json) ·
 [Операционная инструкция](../../operations/HOST-RESOURCES.md) ·

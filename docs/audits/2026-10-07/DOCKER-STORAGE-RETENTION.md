@@ -4,6 +4,14 @@ Date: 2026-10-07. Operator timezone: UTC+5. Installed UI/API: `a41c4e6`.
 This extends [the completed host window](HOST-STORAGE-FOLLOWUP.md), not its
 writer attribution. The host disk incident remains OPEN.
 
+**Later measured attribution:** a finite elevated trace caught a 235,745,280 B
+free-space loss while VSS allocation grew 234,881,024 B (99.63%). The previously
+approved 8 GiB VSS policy was reapplied after measured drift, returning
+17,506,820,096 B to C: and removing the two inspected restore copies. A separate
+operator file deletion is not credited to this cleanup. Elevated host and
+event-triggered kernel observation now run; the quota-changing actor remains
+unknown. [Current evidence and exact boundaries](HOST-STORAGE-VSS-CURRENT.md).
+
 ## Measurements before cleanup
 
 At 11:09:53 UTC, C: free was 26,318,794,752 B. The Docker data VHDX was
@@ -105,6 +113,37 @@ and the explicit previous UI `b50d6ae` / API `114775a` rollback images were
 preserved. Private receipt: `.local-pilot/studio-followup-20261007/retention-1110-receipt.json`.
 This is NOT 2.442 GiB returned to C:; the VHDX length stayed unchanged.
 
+## Second finite cleanup: owned web-test pool, completed
+
+11:20:39–11:20:52 UTC: five additional unused test images were removed with the
+same immutable-ID/epoch guards. The two newest pool images were retained.
+Guest used bytes: **199,087,505,408 → 188,942,487,552**, reclaiming
+**10,145,017,856 B / 9.448 GiB**. Both rollback images and all 46 container
+epochs remained unchanged; no container/volume was removed.
+
+Across both applications: **39 images / 12,766,756,864 B / 11.890 GiB** reclaimed
+inside Docker. Final image count 183 / 173.3 GB; container/volume/cache counts
+remain 46 / 68 / 767. The main VHD host length/allocation remains unchanged.
+Private receipt: `.local-pilot/studio-followup-20261007/test-retention-1120-receipt.json`.
+Counters and hashes are in [the current evidence](HOST-STORAGE-VSS-CURRENT-EVIDENCE.json).
+
+### Why substantial image storage remains
+
+A fresh `system df -v` inventory after cleanup contains183 image rows. Its
+rounded per-image UNIQUE SIZE fields group approximately40.75decimalGB under
+57 untagged images,17.73GB under14 `sphere-mini-factory-race` images,
+11.15GB under8 `mini-factory-race-check` images,5.61GB under5
+`mini-factory-race` images, and3.95GB for the in-use `ruflo-mcp-bridge` image.
+These are different from Sphere's14 Android agents. No unknown/foreign image
+was removed because of its name or the operator's storage screenshot.
+
+The 57 untagged images need immutable-ID/container-reference/source provenance
+review; an untagged image can still be a stopped container dependency.
+These existing historical layers explain substantial stored volume, but their
+presence is not proof of an active append leak. The inventory's rounded size
+fields are not an exact physical host allocation or a reclamation promise.
+Private report: `.local-pilot/studio-followup-20261007/docker-large-layers-current.json`.
+
 ## Cache experiment: no reclaim, not counted as success
 
 Five exact cache IDs for unused immutable `npm ci --no-audit --no-fund`
@@ -144,9 +183,10 @@ budget metrics remain required before accepting a 500–1000-device deployment.
 
 The completed eight-hour host window lost 8.517 GiB while VHDX measurements
 stayed constant. Writes inside a constant-size VHD can still cause Windows
-VSS copy-on-write growth. VSS/FileIO attribution is unavailable to the current
-non-elevated collector; it is not zero. The already requested finite elevated
-collector has not produced a new report as of this audit.
+VSS copy-on-write growth. The later elevated collector now provides a
+[short measured VSS episode](HOST-STORAGE-VSS-CURRENT.md). It does not
+retroactively collect VSS counters for that entire earlier eight-hour window.
+The limited observer was superseded by an actually elevated host collector.
 
 Returning unused guest blocks to Windows may require offline compaction.
 Microsoft documents [compact vdisk](https://learn.microsoft.com/windows-server/administration/windows-commands/compact-vdisk)
@@ -161,4 +201,5 @@ it has not been performed in this incident stage.
 The planner's focused suite: **18 passed** with `--noconftest`; Ruff and mypy
 passed. Tests cover shared test-pool retention, stopped dependencies, current
 source, runtime rollback retention, unknown/mixed aliases and changed epochs.
-This does not claim a full backend test run or resolved disk writer attribution.
+The expanded diagnostic suite has 100 passed / 24 subtests; it does not claim
+a full backend test run or resolved whole-incident writer attribution.
