@@ -1,0 +1,168 @@
+{
+  "schemaVersion": 1,
+  "observedUtc": "2026-10-07T19:11:05Z",
+  "localDate": "2026-10-08",
+  "status": "SOURCE_CANARY_VALIDATED_NOT_INSTALLED",
+  "wire": {
+    "canaryVersion": 2,
+    "defaultReleaseVersion": 1,
+    "headerBytes": 30,
+    "epochBytes": 16,
+    "maxPayloadBytes": 1048576,
+    "payloadReencoded": false,
+    "goldenFixtureHex": "020100000000000030390000000600112233445566778899aabbccddeeff000000016542"
+  },
+  "sourceHashMeaning": "Raw workspace bytes before staging; Git may normalize CRLF/LF. No installed-source attestation.",
+  "sourceFiles": {
+    "android/app/src/main/kotlin/com/sphereplatform/agent/commands/ContinuousInputController.kt": {
+      "bytes": 9440,
+      "sha256": "796f0967ad99c735b24cc1ca222e2cf2d61ad75e7d54088bd86532c0aae322fe"
+    },
+    "android/app/src/main/kotlin/com/sphereplatform/agent/streaming/FramePackager.kt": {
+      "bytes": 2288,
+      "sha256": "2d3d89c9ce0576514ed342251db990d06c029cc3b48981648baa9d67c9d99216"
+    },
+    "android/app/src/main/kotlin/com/sphereplatform/agent/streaming/StreamingManagerImpl.kt": {
+      "bytes": 25085,
+      "sha256": "050ef9a62136fc5cc63cf2cb44c017e33c855cc6c711acb309cefc5ee9c47350"
+    },
+    "android/app/src/test/kotlin/com/sphereplatform/agent/streaming/FramePackagerTest.kt": {
+      "bytes": 2638,
+      "sha256": "ea348e1724c1bc714d56cb4e8863b5dfd7083d72035e108094256f9e03117ca0"
+    },
+    "android/app/src/test/kotlin/com/sphereplatform/agent/streaming/StreamingCaptureLifecycleTest.kt": {
+      "bytes": 19449,
+      "sha256": "1455847a883ec358f9d3efc033bd27525e238d57bc5f8ea3fbcc0347b54ee41c"
+    },
+    "backend/websocket/frames.py": {
+      "bytes": 4821,
+      "sha256": "d116ae205a868af6ff98e0180b5f2f7bc133b196611c3f7d4e4ad52b2856f8f4"
+    },
+    "tests/test_ws/test_capture_frame_envelope.py": {
+      "bytes": 3127,
+      "sha256": "a67e77133e4ebf6a03cceb9aab85c17e6915342118753a6906d14fb16decf9bd"
+    },
+    "frontend/lib/sphere-frame.ts": {
+      "bytes": 1443,
+      "sha256": "614092cf9869885a46da2aa1d86e233e876b8ff83dd4eefd51c941e8b8264f13"
+    },
+    "frontend/lib/h264-decoder.ts": {
+      "bytes": 13051,
+      "sha256": "f5f8afe14d2b2aea4cee92c075a0fe46998b56956d621eebbd8eded8ad2707b1"
+    },
+    "frontend/__tests__/stream/sphere-frame.test.ts": {
+      "bytes": 2054,
+      "sha256": "cdc81279190ff95472bc1abdbb986dbbe1b0709d26cac3f5cc20c99188d1303e"
+    },
+    "frontend/__tests__/stream/h264-decoder.test.ts": {
+      "bytes": 16878,
+      "sha256": "6560043cf30ef5b8b9b70b5feaa9c29d9aa30cbbbca4f6f8e7de058bb5920f0d"
+    }
+  },
+  "validation": {
+    "android": {
+      "testDevDebugUnitTest": {
+        "suites": 82,
+        "tests": 969,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 3,
+        "passed": 966
+      },
+      "testEnterpriseDebugUnitTest": {
+        "suites": 82,
+        "tests": 969,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 3,
+        "passed": 966
+      }
+    },
+    "frontend": {
+      "passed": 1753,
+      "suites": 136,
+      "routeTypesRegenerated": true,
+      "typeCheck": "passed --noEmit --incremental false"
+    },
+    "backend": {
+      "passed": 49,
+      "scope": "Leaf classifier/VideoStreamQueue unit tests; --confcutdir=tests/test_ws",
+      "globalConftestUnavailable": "Host Python lacks minio; global application suite not claimed locally",
+      "ruff": "passed",
+      "mypy": "passed"
+    },
+    "newDistinctCases": {
+      "android": 8,
+      "frontend": 20,
+      "backend": 17
+    },
+    "logHashes": {
+      "capture-frame-v2-android-final-20261007.log": {
+        "bytes": 6173,
+        "sha256": "8235d293b0637b73c262b0ca0f8dd2b73abc87aa05a88d38f85e3131099cf5e1"
+      },
+      "capture-frame-v2-frontend-full-20261007.log": {
+        "bytes": 105368,
+        "sha256": "4dbf29ca1c4785c733384da071b4f5ae22f7135d91e9def444cffda7f4016ac8"
+      },
+      "capture-frame-v2-backend-targeted-20261007.log": {
+        "bytes": 101,
+        "sha256": "a85d2e6a0755bad51c67e8e192a0bca26215f7ff62aee48b01a71d5d298d1a50"
+      },
+      "capture-frame-v2-types-fresh-20261007.log": {
+        "bytes": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "capture-frame-v2-typegen-20261007.log": {
+        "bytes": 67,
+        "sha256": "285ddc3cf0afdeab1d4968d2a6f056a3727585c9e973ddb1d943aa7c3f1fc784"
+      },
+      "capture-frame-v2-mypy-20261007.log": {
+        "bytes": 43,
+        "sha256": "8e63ae22e8213e327a5e9cbd584067681681bd8ef7f25c869877887ccdcfc4ff"
+      }
+    },
+    "artifact": {
+      "path": "android/app/build/outputs/apk/dev/debug/app-dev-debug.apk",
+      "bytes": 8614236,
+      "sha256": "1a34ddace94d0bcd9ae8be0f81a6ba3f69b7f6c06b4eb993854cceebfbc6223d",
+      "canaryEnabled": false,
+      "installed": false
+    },
+    "earlierRuns": "Full Android first run found a stopped-test fixture reading a now-null capture token. Fixture now captures the real token before stop; final full run passed. Initial TypeScript used stale generated routes from October 3; native next typegen refreshed them before successful full type-check."
+  },
+  "previousSourceCI": {
+    "sha": "0b96a3794e58bacc6a6c1dc072bbcdea938baffd",
+    "runs": {
+      "37668253415": "success",
+      "37668253408": "success",
+      "37668253427": "success",
+      "37668253407": "success"
+    },
+    "scope": "APK lifecycle source plus collector documentation; not v2 change"
+  },
+  "currentSourceCI": "Pending commit and exact-source hosted CI",
+  "runtime": {
+    "ui": "af9054ecd0a12d0bc40112298c06178472b59eae",
+    "api": "a41c4e64bf569a7518d34606da0facbba32f77e6",
+    "apkInstall": false,
+    "webDeploy": false,
+    "apiDeploy": false,
+    "ota": false,
+    "sqlMigration": false,
+    "continuousPointerEnabled": false
+  },
+  "remainingAcceptance": {
+    "ledger": {
+      "accepted": 9,
+      "open": 41,
+      "SF26-05": "OPEN"
+    },
+    "realAndroidKotlinPipe": "OPEN - ADB unavailable, loopback5555/5557 refused; no emulator reconfiguration",
+    "browserWebCodecsV2InstalledAcceptance": "OPEN - decoder tested using independent fake outputs, not live decoder",
+    "serverIssuedMultiworkerOwnerAndScopedReceipts": "OPEN",
+    "pointermoveAndLossCleanup": "OPEN",
+    "recorderOutcomeSemantics": "OPEN",
+    "latencyAndResourceSoak": "OPEN"
+  }
+}

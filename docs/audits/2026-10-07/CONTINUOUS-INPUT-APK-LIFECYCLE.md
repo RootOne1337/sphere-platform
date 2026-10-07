@@ -39,7 +39,7 @@ admission listener, затем освобождает поверхности/к�
 Точка за пределами frame, неправильный epoch или frame size отклоняются.
 Native helper повторно проверяет актуальную физическую геометрию перед вводом.
 
-**Оставшаяся граница:** текущий видеопакет v1 не содержит capture epoch. Нельзя
+**Граница этого APK lifecycle среза:** видеопакет v1 не содержит capture epoch. Нельзя
 включать продуктовый continuous режим, пока браузер не доказывает соответствие
 предлагаемой сессии именно своему показанному кадру. Совпадение разрешения и
 приход JSON offer не являются таким доказательством.
@@ -156,3 +156,12 @@ serial emulator-5554 не доступен через platform-tools и bundled 
 server-issued multiworker lease и scoped receipts; epoch показанного видеокадра;
 browser pointermove, pointer loss/blur/visibility cleanup; recorder trajectory,
 Android navigation и uncertain/coalesced outcomes; latency и bounded load soak.
+
+**Последующее дополнение 8 октября, 00:11 UTC+5:**
+[v2 capture envelope](../../protocols/VIDEO-CAPTURE-V2.md) добавлен в debug canary
+с parser/classifier и decoder binding. Default/release остаётся v1. Это source
+и независимые byte/unit checks; новое rendered binding ещё не используется
+browser pointer controller и не принято сквозным тестом на Android. Lifecycle
+source c88c51b прошёл Android CI; полный следующий docs head0b96a37 с тем же
+кодом прошёл frontend/backend/Android/preview CI. Новый frame source требует
+собственного CI и runtime acceptance; SF26-05 OPEN.

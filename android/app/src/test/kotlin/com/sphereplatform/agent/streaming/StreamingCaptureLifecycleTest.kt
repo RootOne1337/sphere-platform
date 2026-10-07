@@ -234,9 +234,10 @@ class StreamingCaptureLifecycleTest {
 
     @Test fun `stopped capture rejects late encoded output`() {
         manager.start(projection)
+        val stoppedCapture = captureToken()
         manager.stop()
         val bytes = byteArrayOf(0, 0, 0, 1, 0x41)
-        emitEncoded(bytes, H264Encoder.FrameMetadata(false, 33_333L, bytes.size))
+        emitEncoded(bytes, H264Encoder.FrameMetadata(false, 33_333L, bytes.size), stoppedCapture)
         verify(exactly = 0) { wsClient.sendBinary(any()) }
     }
 
@@ -352,13 +353,28 @@ class StreamingCaptureLifecycleTest {
         verify(exactly=0) { anyConstructed<H264Encoder>().submitPlanarFrame(any(),any(),any(),any()) }
     }
 
-    private fun emitEncoded(bytes: ByteArray, metadata: H264Encoder.FrameMetadata) {
+    @Test fun `obsolete encoded capture cannot publish under replacement identity`() {
+        manager.start(projection)
+        val oldCapture = captureToken()
+        manager.start(projection)
+        val bytes = byteArrayOf(0, 0, 0, 1, 0x65, 0x42)
+        emitEncoded(bytes, H264Encoder.FrameMetadata(true, 0, bytes.size), oldCapture,
+            java.util.UUID.fromString("00112233-4455-6677-8899-aabbccddeeff"))
+        verify(exactly = 0) { wsClient.sendBinary(any()) }
+    }
+
+    private fun captureToken(): Any = StreamingManagerImpl::class.java
+        .getDeclaredField("captureSession").apply { isAccessible = true }.get(manager)
+
+    private fun emitEncoded(bytes: ByteArray, metadata: H264Encoder.FrameMetadata,
+                            session: Any = captureToken(), epoch: java.util.UUID? = null) {
         // Exercise the manager's codec-output boundary without substituting a
         // decoder or claiming Robolectric can execute a device's native OMX codec.
         val callback = StreamingManagerImpl::class.java.getDeclaredMethod(
             "onFrameReady", ByteArray::class.java, H264Encoder.FrameMetadata::class.java,
+            Any::class.java, java.util.UUID::class.java, Long::class.javaPrimitiveType,
         )
         callback.isAccessible = true
-        callback.invoke(manager, bytes, metadata)
+        callback.invoke(manager, bytes, metadata, session, epoch, System.currentTimeMillis())
     }
 }

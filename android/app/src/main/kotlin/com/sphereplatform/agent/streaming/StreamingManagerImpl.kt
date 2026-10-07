@@ -14,6 +14,7 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import timber.log.Timber
 import javax.inject.Inject
 import javax.inject.Singleton
+import java.util.UUID
 
 /**
  * Production [StreamingManager] — coordinates encoder, VirtualDisplay and
@@ -49,6 +50,7 @@ class StreamingManagerImpl @Inject constructor(
     private var inputInvalidationListener: (() -> Unit)? = null
 
     private var streamStartMs: Long = 0L
+    private var encoderCaptureEpoch: UUID? = null
 
     @Volatile private var streaming = false
 
@@ -109,12 +111,15 @@ class StreamingManagerImpl @Inject constructor(
                 captureConfig.width, captureConfig.height, it)
         }
         inputSession = inputGeometry?.let(CaptureInputSession::create)
+        val packetEpoch = if (BuildConfig.CONTINUOUS_INPUT_CANARY) inputSession?.epoch?.let(UUID::fromString) else null
+        val packetStartMs = streamStartMs
+        encoderCaptureEpoch = packetEpoch
         val encoderConfig = H264Encoder.EncoderConfig(
             width = captureConfig.width,
             height = captureConfig.height
         )
         val enc = H264Encoder(encoderConfig) { nalData, metadata ->
-            if (captureSession === session) onFrameReady(nalData, metadata)
+            onFrameReady(nalData, metadata, session, packetEpoch, packetStartMs)
         }
         // FIX H3: Передаём фактический битрейт энкодера в ABR — без рассинхрона
         val abr = AdaptiveBitrateController(enc, initialBitrate = encoderConfig.bitrateBps)
@@ -324,8 +329,9 @@ class StreamingManagerImpl @Inject constructor(
     // Frame pipeline
     // -------------------------------------------------------------------------
 
-    private fun onFrameReady(nalData: ByteArray, metadata: H264Encoder.FrameMetadata) {
-        if (!streaming) return
+    private fun onFrameReady(nalData: ByteArray, metadata: H264Encoder.FrameMetadata,
+                             session: Any, captureEpoch: UUID?, startedMs: Long) {
+        if (!streaming || captureSession !== session) return
 
         // Once encoded, every access unit retains its position in the reference
         // chain. Callback scheduling/batching is not the source frame cadence.
@@ -335,7 +341,9 @@ class StreamingManagerImpl @Inject constructor(
             metadata.isCodecConfig,
         )
 
-        val packed = FramePackager.pack(nalData, metadata, streamStartMs)
+        // Capture these at encoder creation. A late callback must never stamp
+        // an old access unit with a replacement capture's identity or clock.
+        val packed = FramePackager.pack(nalData, metadata, startedMs, captureEpoch)
         val sent = sendFrameBinary(packed)
 
         if (!sent) {
@@ -376,10 +384,10 @@ class StreamingManagerImpl @Inject constructor(
             isCodecConfig = true,
         )
         enc.cachedSps?.let { sps ->
-            sendFrameBinary(FramePackager.pack(sps, fakeMeta.copy(sizeBytes = sps.size), streamStartMs))
+            sendFrameBinary(FramePackager.pack(sps, fakeMeta.copy(sizeBytes = sps.size), streamStartMs, encoderCaptureEpoch))
         }
         enc.cachedPps?.let { pps ->
-            sendFrameBinary(FramePackager.pack(pps, fakeMeta.copy(sizeBytes = pps.size), streamStartMs))
+            sendFrameBinary(FramePackager.pack(pps, fakeMeta.copy(sizeBytes = pps.size), streamStartMs, encoderCaptureEpoch))
         }
     }
 
@@ -423,6 +431,7 @@ class StreamingManagerImpl @Inject constructor(
         streaming = false
         inputGeometry = null
         inputSession = null
+        encoderCaptureEpoch = null
         // Fence input before releasing surfaces/codec, without awaiting a root worker under this lock.
         runCatching { inputInvalidationListener?.invoke() }
         // PERF: Индивидуальный try-catch на каждый ресурс.

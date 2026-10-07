@@ -15,7 +15,7 @@ class Codec {
   constructor(readonly callbacks: VideoDecoderInit) { Codec.instances.push(this); }
   output(timestamp: number, close = jest.fn()) {
     this.decodeQueueSize = Math.max(0, this.decodeQueueSize - 1);
-    this.callbacks.output({ timestamp, close } as unknown as VideoFrame);
+    this.callbacks.output({ timestamp, close, displayWidth: 960, displayHeight: 540 } as unknown as VideoFrame);
     return close;
   }
 }
@@ -32,6 +32,19 @@ function packet(nal: number[] | Uint8Array, ms = 12345): ArrayBuffer {
 }
 function configure(decoder: H264Decoder) {
   decoder.handleBinary(packet(SPS)); decoder.handleBinary(packet(PPS));
+}
+const CAPTURE_A = '00112233445566778899aabbccddeeff';
+const CAPTURE_B = 'aabbccddeeff00112233445566778899';
+function capturePacket(nal: number[], epoch = CAPTURE_A, ms = 12345): ArrayBuffer {
+  const legacy = new Uint8Array(packet(nal, ms));
+  const bytes = new Uint8Array(legacy.length + 16);
+  bytes.set(legacy.subarray(0, 14)); bytes[0] = 2;
+  bytes.set(Uint8Array.from(epoch.match(/../g)!, byte => parseInt(byte, 16)), 14);
+  bytes.set(legacy.subarray(14), 30);
+  return bytes.buffer;
+}
+function captureConfigure(epoch = CAPTURE_A) {
+  decoder.handleBinary(capturePacket(SPS, epoch)); decoder.handleBinary(capturePacket(PPS, epoch));
 }
 function newest() { return Codec.instances[Codec.instances.length - 1]; }
 let now: number;
@@ -274,4 +287,65 @@ it('drops stale decoded output instead of rendering an old image', () => {
   now = 501;
   expect(old.output(old.chunks[0].timestamp)).toHaveBeenCalledTimes(1);
   expect(rendered).not.toHaveBeenCalled(); expect(old.close).toHaveBeenCalledTimes(1);
+});
+
+it('binds capture identity only after its current-generation picture is drawn', () => {
+  captureConfigure(); decoder.handleBinary(capturePacket([0x65, 1]));
+  expect(decoder.lastRenderedCapture).toBeNull();
+  const codec = newest(); codec.output(codec.chunks[0].timestamp);
+  expect(decoder.lastRenderedCapture).toEqual({ captureEpoch: '00112233-4455-6677-8899-aabbccddeeff', frameWidth: 960, frameHeight: 540 });
+  expect(rendered.mock.calls[0][1]).toEqual(decoder.lastRenderedCapture);
+});
+
+it('does not promote a received or decoded picture when canvas drawing fails', () => {
+  captureConfigure(); rendered.mockImplementationOnce(() => { throw new Error('draw failed'); });
+  decoder.handleBinary(capturePacket([0x65, 1])); newest().output(newest().chunks[0].timestamp);
+  expect(decoder.lastRenderedCapture).toBeNull();
+});
+
+it('retires the previous capture before a same-size replacement is decoded', () => {
+  captureConfigure(); decoder.handleBinary(capturePacket([0x65, 1]));
+  const old = newest(); old.output(old.chunks[0].timestamp);
+  decoder.handleBinary(capturePacket(SPS, CAPTURE_B));
+  expect(decoder.lastRenderedCapture).toBeNull();
+  expect(old.close).toHaveBeenCalledTimes(1);
+  decoder.handleBinary(capturePacket([0x65, 2], CAPTURE_B));
+  expect(newest().chunks).toHaveLength(1); // The closed old codec; no new submission yet.
+  decoder.handleBinary(capturePacket(PPS, CAPTURE_B));
+  decoder.handleBinary(capturePacket([0x41, 3], CAPTURE_B));
+  decoder.handleBinary(capturePacket([0x65, 4], CAPTURE_B));
+  const current = newest(); expect(current).not.toBe(old); expect(current.chunks).toHaveLength(1);
+  current.output(current.chunks[0].timestamp);
+  expect(decoder.lastRenderedCapture?.captureEpoch).toBe('aabbccdd-eeff-0011-2233-445566778899');
+});
+
+it('cannot rebind late old output with the replacement capture identity', () => {
+  captureConfigure(); decoder.handleBinary(capturePacket([0x65, 1])); const old = newest();
+  captureConfigure(CAPTURE_B); decoder.handleBinary(capturePacket([0x65, 2], CAPTURE_B));
+  const current = newest();
+  expect(old.output(old.chunks[0].timestamp)).toHaveBeenCalledTimes(1);
+  expect(rendered).not.toHaveBeenCalled(); expect(decoder.lastRenderedCapture).toBeNull();
+  current.output(current.chunks[0].timestamp);
+  expect(decoder.lastRenderedCapture?.captureEpoch).toBe('aabbccdd-eeff-0011-2233-445566778899');
+});
+
+it.each(['reset', 'error', 'legacy'] as const)('invalidates capture binding on %s without promoting a header', reason => {
+  captureConfigure(); decoder.handleBinary(capturePacket([0x65, 1])); const codec = newest(); codec.output(codec.chunks[0].timestamp);
+  if (reason === 'reset') decoder.reset();
+  if (reason === 'error') codec.callbacks.error(new DOMException('closed'));
+  if (reason === 'legacy') decoder.handleBinary(packet(SPS));
+  expect(decoder.lastRenderedCapture).toBeNull();
+});
+
+it('protects the decoder binding from callback and getter mutation', () => {
+  rendered.mockImplementation((_frame, binding) => { binding.captureEpoch = 'changed'; });
+  captureConfigure(); decoder.handleBinary(capturePacket([0x65, 1])); newest().output(newest().chunks[0].timestamp);
+  const copy = decoder.lastRenderedCapture!; copy.captureEpoch = 'changed-again';
+  expect(decoder.lastRenderedCapture?.captureEpoch).toBe('00112233-4455-6677-8899-aabbccddeeff');
+});
+
+it('does not publish capture readiness when rendering itself resets the decoder', () => {
+  rendered.mockImplementationOnce(() => decoder.reset());
+  captureConfigure(); decoder.handleBinary(capturePacket([0x65, 1])); newest().output(newest().chunks[0].timestamp);
+  expect(decoder.lastRenderedCapture).toBeNull();
 });

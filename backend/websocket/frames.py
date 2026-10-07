@@ -17,8 +17,8 @@ class FrameType(IntEnum):
     PPS = 8          # PPS — критично для декодера
 
 
-_SPHERE_FRAME_HEADER_SIZE = 14
-_SPHERE_FRAME_VERSION = 0x01
+_SPHERE_FRAME_HEADERS = {0x01: 14, 0x02: 30}
+_MAX_CAPTURE_PAYLOAD = 1024 * 1024
 _ANNEX_B_START_CODE_3 = b"\x00\x00\x01"
 _ANNEX_B_START_CODE_4 = b"\x00\x00\x00\x01"
 _START_CODES = re.compile(b"\x00\x00\x00\x01|\x00\x00\x01")
@@ -26,14 +26,18 @@ _START_CODES = re.compile(b"\x00\x00\x00\x01|\x00\x00\x01")
 
 def _unwrap_sphere_frame(data: bytes) -> tuple[bytes, bool]:
     """Return the H.264 payload and keyframe flag for a complete Sphere frame."""
-    if len(data) < _SPHERE_FRAME_HEADER_SIZE or data[0] != _SPHERE_FRAME_VERSION:
+    if not data or data[0] not in _SPHERE_FRAME_HEADERS:
         return data, False
-
+    header_size = _SPHERE_FRAME_HEADERS[data[0]]
+    if len(data) <= header_size:
+        return b"", False
     payload_size = int.from_bytes(data[10:14], "big")
-    if payload_size != len(data) - _SPHERE_FRAME_HEADER_SIZE:
-        return data, False
-
-    return data[_SPHERE_FRAME_HEADER_SIZE:], bool(data[1] & 0x01)
+    if payload_size != len(data) - header_size:
+        return b"", False
+    if data[0] == 2 and (data[1] & ~1 or not any(data[14:30]) or payload_size > _MAX_CAPTURE_PAYLOAD):
+        return b"", False
+    # Never search a UUID/header for accidental Annex-B start codes.
+    return data[header_size:], bool(data[1] & 0x01)
 
 
 def _detect_nal_type(payload: bytes) -> FrameType:

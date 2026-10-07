@@ -4,6 +4,20 @@
 **Область:** исходники и документация ветки PR #19, записанные runtime-наблюдения, Android APK и готовность следующего прогона.<br />
 **Канонический документ текущего состояния:** этот файл. Исторические отчёты ниже сохраняют исходные даты и факты.
 
+**8 октября, после 00:11 UTC+5 — capture identity в видеопакете:** debug canary
+получил фиксированный v2 header с UUID захвата. Сервер классифицирует H.264
+после header, сохраняя исходные bytes; браузер связывает epoch с успешным
+выводом текущего кодека. Same-size restart, поздний output и ошибочная
+отрисовка не подтверждают текущую картинку. Default/release APK сохраняет v1.
+Полные локальные проверки: frontend **1753 tests /136 suites**, fresh Next route
+types и TypeScript; Android **966 passed /3 skipped,82 suites в каждой** из двух
+debug variants, devDebug APK собран. Backend classifier/queue: **49 passed**,
+Ruff/mypy; это leaf unit run, полный backend выполняется в hosted CI.
+Ни новый APK, ни UI/API не установлены; на3015 input пока discrete. Multiworker
+owner/scoped receipts и browser pointermove ещё обязательны, SF26-05 OPEN.
+[Wire format и ограничения](../protocols/VIDEO-CAPTURE-V2.md) ·
+[Точные результаты](../audits/2026-10-07/VIDEO-CAPTURE-V2-EVIDENCE.json).
+
 **7 октября, 23:34 UTC+5 — storage observation gap:** прежние четыре
 collector processes отсутствуют, последние complete samples около14:03UTC.
 Старые status files ошибочно выглядят `running`; причина остановки неизвестна.
@@ -26,6 +40,11 @@ receipts, epoch показанного кадра и browser pointermove ещё 
 На 3015 жест пока отправляется после отпускания. Ledger **9/41** сохраняется.
 [Контракт, тесты и оставшиеся условия](../audits/2026-10-07/CONTINUOUS-INPUT-APK-LIFECYCLE.md) ·
 [Evidence](../audits/2026-10-07/CONTINUOUS-INPUT-APK-EVIDENCE.json).
+
+APK lifecycle source c88c51b прошёл оба Android CI; frontend/backend runs были
+superseded следующим docs commit. Exact docs head **0b96a3794e58bacc6a6c1dc072bbcdea938baffd**
+с тем же Android/frontend/backend source затем прошёл Android, frontend,
+backend и preview CI. Это предыдущий source, не CI нового v2 frame change.
 
 **7 октября, continuous supervisor source:** добавлен один owner/worker,
 bounded очередь 4 samples с coalescing MOVE и reserved terminal slot, строгий

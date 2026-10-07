@@ -1,6 +1,9 @@
 // Active DeviceStream decoder. The legacy src/lib/streaming implementation is not used here.
-export type FrameCallback = (frame: VideoFrame) => void;
-type PendingDecode = { timestamp: number; receivedAt: number; bytes: number };
+import { parseSphereFrame } from './sphere-frame';
+
+export interface CaptureFrameBinding { captureEpoch: string; frameWidth: number; frameHeight: number }
+export type FrameCallback = (frame: VideoFrame, binding?: CaptureFrameBinding) => void;
+type PendingDecode = { timestamp: number; receivedAt: number; bytes: number; captureEpoch: string | null };
 
 export interface StreamDecoderStats {
   receivedPictureFps: number;
@@ -29,8 +32,6 @@ export interface StreamDecoderStats {
   lastRenderedAtMs: number | null;
 }
 
-const HEADER_BYTES = 14;
-const MAX_FRAME_BYTES = 1024 * 1024;
 const MAX_DECODE_FRAMES = 8;
 const MAX_DECODE_BYTES = 2 * 1024 * 1024;
 const MAX_DECODE_AGE_MS = 500;
@@ -77,6 +78,8 @@ export class H264Decoder {
   private spsNal: Uint8Array | null = null;
   private ppsNal: Uint8Array | null = null;
   private lastTimestamp: number | null = null;
+  private captureEpoch: string | null = null;
+  private renderedCapture: CaptureFrameBinding | null = null;
   private receivedPictures = new FrameRateWindow();
   private renderedPictures = new FrameRateWindow();
   private counters = {
@@ -128,7 +131,16 @@ export class H264Decoder {
               return;
             }
             try {
-              this.onFrame(frame);
+              const binding = entry.captureEpoch !== null &&
+                Number.isInteger(frame.displayWidth) && frame.displayWidth > 0 && frame.displayWidth <= 16384 &&
+                Number.isInteger(frame.displayHeight) && frame.displayHeight > 0 && frame.displayHeight <= 16384
+                ? { captureEpoch: entry.captureEpoch, frameWidth: frame.displayWidth, frameHeight: frame.displayHeight }
+                : null;
+              if (binding) this.onFrame(frame, { ...binding });
+              else this.onFrame(frame);
+              if (this.destroyed || generation !== this.generation) return;
+              // A queued packet or decoded output alone must not unlock input.
+              this.renderedCapture = binding;
               this.renderedPictures.record();
               this.counters.renderedFrames++;
               this.counters.lastRenderedAtMs = Date.now();
@@ -164,6 +176,7 @@ export class H264Decoder {
     this.pending = [];
     this.pendingBytes = 0;
     this.lastTimestamp = null;
+    this.renderedCapture = null;
     if (previous && previous.state !== 'closed') previous.close();
   }
 
@@ -179,6 +192,7 @@ export class H264Decoder {
     this.receivedPictures.reset();
     this.renderedPictures.reset();
     this.spsNal = this.ppsNal = null;
+    this.captureEpoch = null;
     this.retryAt = 0;
   }
 
@@ -187,26 +201,25 @@ export class H264Decoder {
     this.counters.binaryMessagesReceived++;
     this.counters.binaryBytesReceived += data.byteLength;
     this.counters.lastBinaryAtMs = Date.now();
-    if (data.byteLength <= HEADER_BYTES || data.byteLength > HEADER_BYTES + MAX_FRAME_BYTES) {
+    const envelope = parseSphereFrame(data);
+    if (!envelope) {
       this.counters.invalidPackets++;
       return;
     }
-    const view = new DataView(data);
-    if (view.getUint8(0) !== 1 || view.getUint32(10, false) !== data.byteLength - HEADER_BYTES) {
-      this.counters.invalidPackets++;
-      return;
-    }
-    const timestamp = Number(view.getBigInt64(2, false)) * 1000;
-    if (!Number.isSafeInteger(timestamp) || timestamp < 0) {
-      this.counters.invalidPackets++;
-      return;
-    }
-    const nals = splitAccessUnit(new Uint8Array(data, HEADER_BYTES));
+    const { timestampUs: timestamp, captureEpoch } = envelope;
+    const nals = splitAccessUnit(envelope.payload);
     if (!nals) {
       this.counters.invalidPackets++;
       return;
     }
     this.counters.validPackets++;
+    if (captureEpoch !== this.captureEpoch) {
+      this.reset();
+      this.captureEpoch = captureEpoch;
+      // Even a same-resolution capture boundary retires held UI gestures and
+      // codec references before any new picture can be shown.
+      this.onRecovery();
+    }
 
     for (const nal of nals) {
       const type = nal[0] & 0x1f;
@@ -257,7 +270,7 @@ export class H264Decoder {
         new DataView(avcc.buffer).setUint32(offset, nal.length, false);
         avcc.set(nal, offset + 4); offset += nal.length + 4;
       }
-      this.pending.push({ timestamp, receivedAt: now, bytes });
+      this.pending.push({ timestamp, receivedAt: now, bytes, captureEpoch });
       this.pendingBytes += bytes;
       codec.decode(new EncodedVideoChunk({ type: isKeyFrame ? 'key' : 'delta', timestamp, data: avcc }));
       this.counters.decodeSubmitted++;
@@ -288,6 +301,11 @@ export class H264Decoder {
     if (this.destroyed) return;
     this.destroyed = true;
     this.reset();
+  }
+
+  /** Only the last successful current-generation onFrame, never an offer/header. */
+  get lastRenderedCapture(): CaptureFrameBinding | null {
+    return this.renderedCapture ? { ...this.renderedCapture } : null;
   }
 
   get stats(): StreamDecoderStats {

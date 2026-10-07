@@ -89,6 +89,7 @@ internal class ContinuousInputController(
         runCatching { send(connection, buildJsonObject {
             put("type", "continuous_input_offer"); put("session_id", session)
             put("protocol_version", 1); put("injector_ready", false)
+            put("frame_protocol_version", 2)
             put("display_id", 0); put("max_pointers", 1)
             put("capture_epoch", capture.epoch)
             put("frame_width", capture.frameWidth); put("frame_height", capture.frameHeight)
