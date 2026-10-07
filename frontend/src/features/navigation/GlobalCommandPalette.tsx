@@ -9,6 +9,7 @@ import { ThemeSwitcherModal } from "@/src/features/settings/ThemeSwitcherModal";
 import * as DialogPrimitive from "@radix-ui/react-dialog";
 import { SPHERE_NAV_GROUPS } from "./navigationCatalog";
 import { useCapabilities } from '@/src/features/access/Capabilities';
+import { workspaceNavigationAllowed } from './workspaceNavigationGuard';
 
 const ITEM_CLASS = "mb-1 flex min-h-10 cursor-pointer items-center rounded-lg px-3 text-sm text-foreground transition-colors hover:bg-muted aria-selected:bg-primary/10 aria-selected:text-primary motion-reduce:transition-none";
 const GROUP_CLASS = "px-2 py-1 text-xs font-medium text-muted-foreground [&_[cmdk-group-heading]]:px-2 [&_[cmdk-group-heading]]:py-2 [&_[cmdk-group-heading]]:font-semibold";
@@ -22,6 +23,9 @@ export function GlobalCommandPalette() {
     const mainPanelRef = React.useRef<HTMLDivElement>(null);
     const themesPanelRef = React.useRef<HTMLDivElement>(null);
     const returnFocusRef = React.useRef<HTMLElement | null>(null);
+    const navigate = (href: string) => {
+        if (workspaceNavigationAllowed()) { router.push(href); close(); }
+    };
 
     React.useEffect(() => {
         if (!isOpen) return;
@@ -116,7 +120,7 @@ export function GlobalCommandPalette() {
                             {groups.map((group) => (
                                 <Command.Group key={group.label} heading={group.label} className={GROUP_CLASS}>
                                     {group.items.map(({ href, label, icon: Icon }) => (
-                                        <Command.Item key={href} value={href} keywords={[label, group.label, href, href === '/devices' ? 'Реестр устройств' : href === '/dashboard' ? 'Обзор парка' : '']} onSelect={() => { router.push(href); close(); }} className={ITEM_CLASS}>
+                                        <Command.Item key={href} value={href} keywords={[label, group.label, href, href === '/devices' ? 'Реестр устройств' : href === '/dashboard' ? 'Обзор парка' : '']} onSelect={() => navigate(href)} className={ITEM_CLASS}>
                                             <Icon className="mr-3 h-4 w-4" aria-hidden="true" />{href === '/devices' ? 'Реестр устройств' : href === '/dashboard' ? 'Обзор парка' : label}
                                         </Command.Item>
                                     ))}
@@ -130,10 +134,10 @@ export function GlobalCommandPalette() {
                             </Command.Group>
 
                             <Command.Group heading="Быстрые действия" className={`${GROUP_CLASS} mt-2`}>
-                                {access.canAccessRoute('/vpn') && <Command.Item onSelect={() => { router.push("/vpn"); close(); }} className={ITEM_CLASS}>
+                                {access.canAccessRoute('/vpn') && <Command.Item onSelect={() => navigate('/vpn')} className={ITEM_CLASS}>
                                     <Wifi className="mr-3 h-4 w-4" aria-hidden="true" />Открыть мониторинг VPN
                                 </Command.Item>}
-                                {access.canAccessRoute('/scripts/builder') && <Command.Item onSelect={() => { router.push("/scripts/builder"); close(); }} className={ITEM_CLASS}>
+                                {access.canAccessRoute('/scripts/builder') && <Command.Item onSelect={() => navigate('/scripts/builder')} className={ITEM_CLASS}>
                                     <Code2 className="mr-3 h-4 w-4" aria-hidden="true" />Открыть конструктор скриптов
                                 </Command.Item>}
                             </Command.Group>

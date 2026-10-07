@@ -25,6 +25,7 @@ import { layoutWorkflow } from '@/src/features/scripts/studio/layout';
 import { useCanvasOverview } from '@/src/features/scripts/studio/useCanvasOverview';
 import type { DagNode } from '@/lib/dag/export';
 import { actionParameterErrors, ACTION_CONTRACT_VERSION } from '@/lib/dag/actionParameters';
+import { useWorkspaceNavigationGuard } from '@/src/features/navigation/workspaceNavigationGuard';
 
 interface ValidationReceipt { schema_version: 1; dag_hash: string; node_count: number; scope: 'structure-routes-lua-safety'; device_execution_verified: false;
   action_contract_version?: string; action_parameters_verified?: boolean }
@@ -104,12 +105,23 @@ function BuilderInner({ editId, storageKey }: { editId: string | null; storageKe
     canvasPane, mode === 'graph' && canRead && loadState === 'ready', () => canvas.current?.fitView(overviewOptions),
   );
 
+  function mayLeave() {
+    if (inFlight.current) { setErrors('Дождитесь результата проверки или сохранения перед выходом из редактора.'); return false; }
+    if (workbenchGuard.current && !workbenchGuard.current()) return false;
+    return !dirty || window.confirm('Есть несохранённые изменения. Выйти из редактора?');
+  }
+  useWorkspaceNavigationGuard(mayLeave);
+
   useEffect(() => { live.current = true; return () => { live.current = false; request.current?.abort(); layoutRequest.current?.abort(); }; }, []);
   useEffect(() => {
     if (!canRead && busy) request.current?.abort();
   }, [canRead, busy]);
   useEffect(() => {
-    const before = (event: BeforeUnloadEvent) => { if (dirty || workbenchGuard.current?.(true) === false) event.preventDefault(); };
+    const before = (event: BeforeUnloadEvent) => {
+      if (dirty || inFlight.current || workbenchGuard.current?.(true) === false) {
+        event.preventDefault(); event.returnValue = '';
+      }
+    };
     window.addEventListener('beforeunload', before);
     return () => window.removeEventListener('beforeunload', before);
   }, [dirty]);
@@ -367,8 +379,7 @@ function BuilderInner({ editId, storageKey }: { editId: string | null; storageKe
     } catch (error) { setErrors(errorMessage(error)); }
   }
   function leave() {
-    if (workbenchGuard.current && !workbenchGuard.current()) return;
-    if (!dirty || window.confirm('Есть несохранённые изменения. Выйти из редактора?')) router.push('/scripts');
+    if (mayLeave()) router.push('/scripts');
   }
   async function arrange() {
     if (layoutBusy) return;

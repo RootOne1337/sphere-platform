@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { NOCSidebar } from '@/src/features/navigation/NOCSidebar';
 import { signOut } from '@/lib/store';
 import { useUIStore } from '@/src/shared/store/useUIStore';
+import { registerWorkspaceLeaveGuard } from '@/src/features/navigation/workspaceNavigationGuard';
 
 const mockReplace = jest.fn();
 let mockPathname = '/devices/device-123';
@@ -36,6 +37,16 @@ const EXPECTED_ROUTES = [
   '/events', '/event-triggers', '/sessions', '/vpn', '/webhooks',
   '/users', '/audit', '/logs', '/updates', '/settings',
 ];
+
+it('does not revoke authentication or redirect when an owned workspace refuses sign-out', () => {
+  const guard = jest.fn(() => false); const unregister = registerWorkspaceLeaveGuard(guard);
+  try {
+    render(<NOCSidebar />); fireEvent.click(screen.getByRole('button', { name: 'Выйти' }));
+    expect(signOut).not.toHaveBeenCalled(); expect(mockReplace).not.toHaveBeenCalled();
+    guard.mockReturnValue(true); fireEvent.click(screen.getByRole('button', { name: 'Выйти' }));
+    expect(signOut).toHaveBeenCalledTimes(1); expect(mockReplace).toHaveBeenCalledWith('/login');
+  } finally { unregister(); }
+});
 
 it('filters administrative links and empty groups using current server capabilities', () => {
   mockCanAccessRoute = path => path === '/devices' || path === '/settings';

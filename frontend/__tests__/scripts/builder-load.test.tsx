@@ -5,6 +5,7 @@ import { TextEncoder } from 'node:util';
 import { deserialize, serialize } from 'node:v8';
 import type { ReactFlowProps } from '@xyflow/react';
 import { ACTION_DRAG_TYPE } from '@/lib/dag/canvasPlacement';
+import { workspaceNavigationAllowed } from '@/src/features/navigation/workspaceNavigationGuard';
 Object.assign(globalThis, { TextEncoder });
 Object.defineProperty(globalThis, 'structuredClone', { configurable: true, value: (value: unknown) => deserialize(serialize(value)) });
 
@@ -75,6 +76,49 @@ function deferred<T>() {
 
 beforeEach(() => { jest.clearAllMocks(); mockGraphProps = {}; mockWorkbenchGuard.mockReturnValue(true); mockEditId = 'script-a'; mockCanWrite = true; mockSessionVersion = 0; localStorage.clear(); });
 afterEach(() => jest.restoreAllMocks());
+
+it('protects dirty graph/source through an outside navigation link and honors explicit cancellation', async () => {
+  jest.mocked(api.get).mockResolvedValue(payload() as never);
+  render(<ScriptBuilderPage />); await screen.findByText('script-a-start');
+  fireEvent.change(screen.getByLabelText('Название сценария'), { target: { value: 'Unpublished edit' } });
+  const confirm = jest.spyOn(window, 'confirm').mockReturnValue(false);
+  const anchor = document.createElement('a'); anchor.href = '/devices';
+  const follow = jest.fn((event: MouseEvent) => event.preventDefault()); anchor.addEventListener('click', follow); document.body.append(anchor);
+  try {
+    fireEvent.click(anchor);
+    expect(confirm).toHaveBeenCalledTimes(1); expect(follow).not.toHaveBeenCalled();
+    expect(screen.getByLabelText('Название сценария')).toHaveValue('Unpublished edit');
+    confirm.mockReturnValue(true); fireEvent.click(anchor);
+    expect(confirm).toHaveBeenCalledTimes(2); expect(follow).toHaveBeenCalledTimes(1);
+    expect(api.put).not.toHaveBeenCalled(); expect(api.post).not.toHaveBeenCalled();
+  } finally { anchor.remove(); }
+});
+
+it('checks the workbench before allowing a global programmatic transition', async () => {
+  jest.mocked(api.get).mockResolvedValue(payload() as never);
+  const view = render(<ScriptBuilderPage />); await screen.findByText('script-a-start');
+  fireEvent.click(screen.getByRole('button', { name: 'Устройство · запись · проверка' }));
+  mockWorkbenchGuard.mockReturnValue(false);
+  expect(workspaceNavigationAllowed()).toBe(false);
+  expect(mockWorkbenchGuard).toHaveBeenLastCalledWith();
+  expect(screen.getByText('Owned workbench')).toBeInTheDocument(); expect(mockPush).not.toHaveBeenCalled();
+  mockWorkbenchGuard.mockReturnValue(true); expect(workspaceNavigationAllowed()).toBe(true);
+  view.unmount(); expect(workspaceNavigationAllowed()).toBe(true);
+});
+
+it('blocks navigation and page unload while a save is pending, then keeps the successful save redirect', async () => {
+  const response = deferred<never>();
+  jest.mocked(api.get).mockResolvedValue(payload() as never); jest.mocked(api.put).mockReturnValue(response.promise);
+  render(<ScriptBuilderPage />); await screen.findByText('script-a-start');
+  fireEvent.click(screen.getByRole('button', { name: 'Сохранить версию' }));
+  await waitFor(() => expect(api.put).toHaveBeenCalledTimes(1));
+  act(() => { expect(workspaceNavigationAllowed()).toBe(false); });
+  expect(screen.getByRole('alert')).toHaveTextContent('Дождитесь результата'); expect(mockPush).not.toHaveBeenCalled();
+  const unload = new Event('beforeunload', { cancelable: true }); fireEvent(window, unload); expect(unload.defaultPrevented).toBe(true);
+  await act(async () => response.resolve({ data: {} } as never));
+  await waitFor(() => expect(mockPush).toHaveBeenCalledWith('/scripts'));
+  expect(workspaceNavigationAllowed()).toBe(true);
+});
 
 function actionDrop(type: string, x = 800, y = 400, mime = ACTION_DRAG_TYPE) {
   const pane = screen.getByLabelText('Поле графа');

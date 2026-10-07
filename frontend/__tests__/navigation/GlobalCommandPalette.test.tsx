@@ -3,6 +3,7 @@ import { GlobalCommandPalette } from '@/src/features/navigation/GlobalCommandPal
 import { useCommandPaletteStore } from '@/src/features/navigation/commandPaletteStore';
 import { SPHERE_NAV_GROUPS } from '@/src/features/navigation/navigationCatalog';
 import userEvent from '@testing-library/user-event';
+import { registerWorkspaceLeaveGuard } from '@/src/features/navigation/workspaceNavigationGuard';
 
 const mockPush = jest.fn();
 let mockCanAccessRoute = (_path: string) => true;
@@ -14,6 +15,17 @@ jest.mock('@/src/features/access/Capabilities', () => ({
 jest.mock('next/navigation', () => ({ useRouter: () => ({ push: mockPush }) }));
 
 describe('GlobalCommandPalette', () => {
+  it.each(['Реестр устройств', 'Открыть мониторинг VPN', 'Открыть конструктор скриптов'])('honors the active workspace guard for %s', async label => {
+    const guard = jest.fn(() => false); const unregister = registerWorkspaceLeaveGuard(guard);
+    try {
+      render(<GlobalCommandPalette />); await act(async () => useCommandPaletteStore.getState().open());
+      fireEvent.click(screen.getByRole('option', { name: label }));
+      expect(guard).toHaveBeenCalledTimes(1); expect(mockPush).not.toHaveBeenCalled();
+      expect(useCommandPaletteStore.getState().isOpen).toBe(true);
+      guard.mockReturnValue(true); fireEvent.click(screen.getByRole('option', { name: label }));
+      expect(mockPush).toHaveBeenCalledTimes(1); expect(useCommandPaletteStore.getState().isOpen).toBe(false);
+    } finally { unregister(); }
+  });
   beforeAll(() => {
     globalThis.ResizeObserver = class {
       observe() {}

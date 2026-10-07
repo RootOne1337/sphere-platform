@@ -27,7 +27,7 @@ jest.mock('@/lib/hooks/useTasks', () => ({
 }));
 jest.mock('@/src/features/access/Capabilities', () => ({ useCapabilities: () => ({ can: () => true }) }));
 jest.mock('@/lib/api', () => ({ api: { post: jest.fn() } }));
-jest.mock('next/link', () => function MockLink({ href, children }: { href: string; children: React.ReactNode }) { return <a href={href}>{children}</a>; });
+jest.mock('next/link', () => function MockLink({ href, children, ...props }: React.AnchorHTMLAttributes<HTMLAnchorElement> & { href: string }) { return <a href={href} {...props}>{children}</a>; });
 jest.mock('@/src/features/stream/SingleDeviceStream', () => ({ SingleDeviceStream: ({ deviceId: ownedId, controlDisabled, onControlSent, onControlCommand, onInsertSelector }: {
   deviceId: string; controlDisabled: boolean; onControlSent: (value: unknown) => void; onControlCommand: typeof mockObserve; onInsertSelector: typeof mockSelectorInsert;
 }) => { mockObserve = onControlCommand; mockSelectorInsert = onInsertSelector; return <section aria-label="Поток выбранного Android" data-device={ownedId}>
@@ -95,7 +95,8 @@ it('keeps an unconfirmed foreign receipt uncertain and never silently retries th
   jest.mocked(api.post).mockResolvedValue({ data: { id: taskId, script_id: scriptId, device_id: 'another-device', script_version_id: versionId } });
   const { onExecution } = openDevice();
   fireEvent.click(screen.getByRole('button', { name: 'Проверить на PH025' }));
-  await screen.findByRole('link', { name: 'Открыть задания' });
+  const recovery = await screen.findByRole('link', { name: 'Открыть задания в новой вкладке' });
+  expect(recovery).toHaveAttribute('target', '_blank'); expect(recovery).toHaveAttribute('rel', 'noopener noreferrer');
   expect(screen.queryByRole('link', { name: taskId })).not.toBeInTheDocument();
   expect(screen.getByRole('button', { name: 'Проверить на PH025' })).toBeDisabled();
   expect(api.post).toHaveBeenCalledTimes(1);
@@ -178,7 +179,7 @@ it('permits an explicit corrected retry after a definitive API rejection, withou
   fireEvent.click(screen.getByRole('button', { name: 'Проверить на PH025' }));
   await screen.findByRole('alert');
   await waitFor(() => expect(screen.getByRole('button', { name: 'Проверить на PH025' })).toBeEnabled());
-  expect(screen.queryByRole('link', { name: 'Открыть задания' })).not.toBeInTheDocument();
+  expect(screen.queryByRole('link', { name: 'Открыть задания в новой вкладке' })).not.toBeInTheDocument();
   expect(api.post).toHaveBeenCalledTimes(1);
 });
 
@@ -186,7 +187,7 @@ it('keeps a transport timeout uncertain rather than permitting a potentially dup
   jest.mocked(api.post).mockRejectedValue(new Error('Request timed out'));
   openDevice();
   fireEvent.click(screen.getByRole('button', { name: 'Проверить на PH025' }));
-  await screen.findByRole('link', { name: 'Открыть задания' });
+  await screen.findByRole('link', { name: 'Открыть задания в новой вкладке' });
   expect(screen.getByRole('button', { name: 'Проверить на PH025' })).toBeDisabled();
   expect(api.post).toHaveBeenCalledTimes(1);
 });
@@ -196,7 +197,7 @@ it('cannot bypass an unknown creation outcome by switching and reselecting the s
   jest.mocked(api.post).mockRejectedValue(new Error('Response lost after server commit'));
   openDevice();
   fireEvent.click(screen.getByRole('button', { name: 'Проверить на PH025' }));
-  await screen.findByRole('link', { name: 'Открыть задания' });
+  await screen.findByRole('link', { name: 'Открыть задания в новой вкладке' });
   fireEvent.click(screen.getByRole('button', { name: 'Сменить устройство' }));
   expect(screen.queryByRole('button', { name: /PH025.*LDPlayer/ })).not.toBeInTheDocument();
   expect(screen.getByRole('region', { name: 'Поток выбранного Android' })).toBeInTheDocument();
@@ -216,7 +217,7 @@ it('exposes a silent unload guard without dialogs or state changes for an unknow
   jest.mocked(api.post).mockRejectedValue(new Error('Transport timeout'));
   openDevice(registered);
   fireEvent.click(screen.getByRole('button', { name: 'Проверить на PH025' }));
-  await screen.findByRole('link', { name: 'Открыть задания' });
+  await screen.findByRole('link', { name: 'Открыть задания в новой вкладке' });
   const before = screen.getByRole('alert').textContent;
   expect(registered).toHaveBeenCalledWith(expect.any(Function));
   expect(guard!(true)).toBe(false);
