@@ -11,7 +11,7 @@ import { Button } from "@/src/shared/ui/button";
 import { LogOut, Settings, X } from "lucide-react";
 import { SPHERE_NAV_GROUPS } from "./navigationCatalog";
 import { useCapabilities } from '@/src/features/access/Capabilities';
-import { workspaceNavigationAllowed } from './workspaceNavigationGuard';
+import { navigateFromWorkspace } from './workspaceNavigationGuard';
 
 
 
@@ -136,7 +136,7 @@ export function NOCSidebar({ onOpenAppearance, isMobileOpen = false, onMobileClo
                         className={cn("w-full text-muted-foreground hover:bg-destructive/5 hover:text-destructive", showLabels ? "justify-start gap-3 px-3" : "mx-auto")}
                         title={showLabels ? undefined : "Выйти"}
                         aria-label="Выйти"
-                        onClick={() => { if (workspaceNavigationAllowed()) { void signOut(); router.replace('/login'); } }}
+                        onClick={() => navigateFromWorkspace(() => { void signOut(); router.replace('/login'); })}
                     >
                         <LogOut className="h-[18px] w-[18px] shrink-0" aria-hidden="true" />
                         {showLabels && <span>Выйти</span>}

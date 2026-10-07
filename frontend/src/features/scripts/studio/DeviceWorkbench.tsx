@@ -21,7 +21,7 @@ import { actionLabel } from './presentation';
 interface Version { id: string; version: number; dag_hash: string | null }
 interface Props { scriptId: string | null; version: Version | null; name: string; canRun: boolean; canEdit: boolean;
   onInsert: (actions: DagNode['action'][]) => boolean; onExecution: (lastCompleted: string | null, logs: { node_id: string; success: boolean }[]) => void;
-  registerCloseGuard?: (guard: ((silent?: boolean) => boolean) | null) => void }
+  registerCloseGuard?: (guard: ((silent?: boolean, confirmDiscard?: boolean) => boolean) | null) => void }
 const terminal = new Set(['completed', 'failed', 'cancelled', 'timeout', 'timed_out']);
 const keyLabels: Record<number, string> = { 3: 'Домой', 4: 'Назад', 187: 'Недавние', 82: 'Меню', 67: 'Backspace', 112: 'Delete', 66: 'Enter', 61: 'Tab', 278: 'Копировать', 277: 'Вырезать', 279: 'Вставить' };
 function recordedLabel(entry: RecordedInput): string {
@@ -80,7 +80,7 @@ function OwnedWorkbench({ device, scriptId, version, name, canRun, canEdit, onIn
   const progress = useTaskProgress(taskId, active && ownsTask);
   const logs = useTaskLogs(taskId);
   const stop = useStopTask();
-  useEffect(() => { registerCloseGuard?.((silent = false) => {
+  useEffect(() => { registerCloseGuard?.((silent = false, confirmDiscard = true) => {
     const pending = runPending || runningRequest.current || controlRequests.current.size > 0;
     const guarded = Boolean(entriesRef.current.length || active || pending || uncertain);
     if (silent) return !guarded;
@@ -92,7 +92,7 @@ function OwnedWorkbench({ device, scriptId, version, name, canRun, canEdit, onIn
       setError('Результат запуска неизвестен. Проверьте журнал заданий: переключение устройства заблокировано, чтобы не создать повторное выполнение.');
       return false;
     }
-    return guarded ? window.confirm('Закрыть устройство? Невставленная запись будет потеряна. Созданное задание продолжит работу; его можно открыть в разделе заданий.') : true;
+    return guarded && confirmDiscard ? window.confirm('Закрыть устройство? Невставленная запись будет потеряна. Созданное задание продолжит работу; его можно открыть в разделе заданий.') : true;
   }); return () => registerCloseGuard?.(null); }, [entries, active, runPending, uncertain, registerCloseGuard]);
   useEffect(() => { live.current = true; return () => { live.current = false; onExecution(null, []); }; }, [onExecution]);
   useEffect(() => { if (!canEdit || !access.can('stream:control')) setRecording(false); }, [canEdit, access]);

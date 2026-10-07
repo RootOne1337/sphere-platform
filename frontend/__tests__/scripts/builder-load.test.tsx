@@ -5,7 +5,7 @@ import { TextEncoder } from 'node:util';
 import { deserialize, serialize } from 'node:v8';
 import type { ReactFlowProps } from '@xyflow/react';
 import { ACTION_DRAG_TYPE } from '@/lib/dag/canvasPlacement';
-import { workspaceNavigationAllowed } from '@/src/features/navigation/workspaceNavigationGuard';
+import { navigateFromWorkspace, workspaceNavigationAllowed } from '@/src/features/navigation/workspaceNavigationGuard';
 Object.assign(globalThis, { TextEncoder });
 Object.defineProperty(globalThis, 'structuredClone', { configurable: true, value: (value: unknown) => deserialize(serialize(value)) });
 
@@ -23,7 +23,7 @@ let mockSessionVersion = 0;
 jest.mock('@/src/features/access/Capabilities', () => ({ useCapabilities: () => ({ pending: false, can: (permission: string) => permission === 'script:read' || mockCanWrite }) }));
 jest.mock('@/lib/store', () => ({ useAuthStore: (select: (state: unknown) => unknown) => select({ user: { id: 'operator', org_id: 'org-a' }, sessionVersion: mockSessionVersion }) }));
 jest.mock('@/components/sphere/RunScriptModal', () => ({ RunScriptModal: () => null }));
-const mockWorkbenchGuard = jest.fn(() => true);
+const mockWorkbenchGuard = jest.fn((_silent?: boolean, _confirmDiscard?: boolean) => true);
 jest.mock('@/src/features/scripts/studio/DeviceWorkbench', () => ({ DeviceWorkbench: ({ registerCloseGuard, onExecution }: { registerCloseGuard: (guard: ((silent?: boolean) => boolean) | null) => void; onExecution: (last: string | null, logs: { node_id: string; success: boolean }[]) => void }) => {
   const React = jest.requireActual('react');
   React.useEffect(() => { registerCloseGuard(mockWorkbenchGuard); return () => registerCloseGuard(null); }, [registerCloseGuard]);
@@ -81,15 +81,15 @@ it('protects dirty graph/source through an outside navigation link and honors ex
   jest.mocked(api.get).mockResolvedValue(payload() as never);
   render(<ScriptBuilderPage />); await screen.findByText('script-a-start');
   fireEvent.change(screen.getByLabelText('Название сценария'), { target: { value: 'Unpublished edit' } });
-  const confirm = jest.spyOn(window, 'confirm').mockReturnValue(false);
   const anchor = document.createElement('a'); anchor.href = '/devices';
   const follow = jest.fn((event: MouseEvent) => event.preventDefault()); anchor.addEventListener('click', follow); document.body.append(anchor);
   try {
     fireEvent.click(anchor);
-    expect(confirm).toHaveBeenCalledTimes(1); expect(follow).not.toHaveBeenCalled();
+    expect(screen.getByRole('dialog', { name: 'Сохранить работу перед выходом?' })).toBeInTheDocument(); expect(follow).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole('button', { name: 'Остаться в редакторе' }));
     expect(screen.getByLabelText('Название сценария')).toHaveValue('Unpublished edit');
-    confirm.mockReturnValue(true); fireEvent.click(anchor);
-    expect(confirm).toHaveBeenCalledTimes(2); expect(follow).toHaveBeenCalledTimes(1);
+    fireEvent.click(anchor); fireEvent.click(screen.getByRole('button', { name: 'Выйти без сохранения' }));
+    await waitFor(() => expect(follow).toHaveBeenCalledTimes(1));
     expect(api.put).not.toHaveBeenCalled(); expect(api.post).not.toHaveBeenCalled();
   } finally { anchor.remove(); }
 });
@@ -100,10 +100,53 @@ it('checks the workbench before allowing a global programmatic transition', asyn
   fireEvent.click(screen.getByRole('button', { name: 'Устройство · запись · проверка' }));
   mockWorkbenchGuard.mockReturnValue(false);
   expect(workspaceNavigationAllowed()).toBe(false);
-  expect(mockWorkbenchGuard).toHaveBeenLastCalledWith();
+  expect(mockWorkbenchGuard).toHaveBeenLastCalledWith(false, false);
   expect(screen.getByText('Owned workbench')).toBeInTheDocument(); expect(mockPush).not.toHaveBeenCalled();
   mockWorkbenchGuard.mockReturnValue(true); expect(workspaceNavigationAllowed()).toBe(true);
   view.unmount(); expect(workspaceNavigationAllowed()).toBe(true);
+});
+
+it('owns one navigation intent until cancellation and preserves the edited document', async () => {
+  jest.mocked(api.get).mockResolvedValue(payload() as never);
+  render(<ScriptBuilderPage />); await screen.findByText('script-a-start');
+  fireEvent.change(screen.getByLabelText('Название сценария'), { target: { value: 'Keep this draft' } });
+  const first = jest.fn(); const second = jest.fn();
+  act(() => { navigateFromWorkspace(first); navigateFromWorkspace(second); });
+  expect(screen.getAllByRole('dialog')).toHaveLength(1);
+  fireEvent.click(screen.getByRole('button', { name: 'Остаться в редакторе' }));
+  await act(async () => {});
+  expect(first).not.toHaveBeenCalled(); expect(second).not.toHaveBeenCalled();
+  expect(screen.getByLabelText('Название сценария')).toHaveValue('Keep this draft');
+  expect(api.put).not.toHaveBeenCalled(); expect(api.post).not.toHaveBeenCalled();
+});
+
+it('cancels a pending navigation when the owning auth session is replaced', async () => {
+  jest.mocked(api.get).mockResolvedValue(payload() as never);
+  const view = render(<ScriptBuilderPage />); await screen.findByText('script-a-start');
+  fireEvent.change(screen.getByLabelText('Название сценария'), { target: { value: 'Private old draft' } });
+  const follow = jest.fn(); act(() => navigateFromWorkspace(follow));
+  expect(screen.getByRole('dialog')).toBeInTheDocument();
+  mockSessionVersion += 1; view.rerender(<ScriptBuilderPage />);
+  await screen.findByDisplayValue('Original graph');
+  await act(async () => {});
+  expect(screen.queryByRole('dialog')).not.toBeInTheDocument(); expect(follow).not.toHaveBeenCalled();
+  expect(api.put).not.toHaveBeenCalled(); expect(api.post).not.toHaveBeenCalled();
+});
+
+it('rechecks a live workbench command before approving an already open leave dialog', async () => {
+  jest.mocked(api.get).mockResolvedValue(payload() as never);
+  render(<ScriptBuilderPage />); await screen.findByText('script-a-start');
+  fireEvent.click(screen.getByRole('button', { name: 'Устройство · запись · проверка' }));
+  // A retained recording can be discarded after approval, unlike a pending command.
+  mockWorkbenchGuard.mockImplementation((silent) => !silent);
+  const follow = jest.fn(); act(() => navigateFromWorkspace(follow));
+  expect(screen.getByRole('dialog')).toHaveTextContent('Лаборатория устройства');
+  mockWorkbenchGuard.mockReturnValue(false);
+  fireEvent.click(screen.getByRole('button', { name: 'Выйти без сохранения' }));
+  await act(async () => {});
+  expect(follow).not.toHaveBeenCalled(); expect(screen.getByText('Owned workbench')).toBeInTheDocument();
+  expect(mockWorkbenchGuard).toHaveBeenLastCalledWith(false, false);
+  expect(api.put).not.toHaveBeenCalled(); expect(api.post).not.toHaveBeenCalled();
 });
 
 it('blocks navigation and page unload while a save is pending, then keeps the successful save redirect', async () => {

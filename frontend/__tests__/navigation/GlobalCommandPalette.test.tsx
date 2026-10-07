@@ -15,6 +15,19 @@ jest.mock('@/src/features/access/Capabilities', () => ({
 jest.mock('next/navigation', () => ({ useRouter: () => ({ push: mockPush }) }));
 
 describe('GlobalCommandPalette', () => {
+  it('keeps search open while a workspace dialog awaits a decision and then navigates once', async () => {
+    let decide!: (allow: boolean) => void;
+    const pending = new Promise<boolean>(resolve => { decide = resolve; });
+    const unregister = registerWorkspaceLeaveGuard(() => pending);
+    try {
+      render(<GlobalCommandPalette />); await act(async () => useCommandPaletteStore.getState().open());
+      fireEvent.click(screen.getByRole('option', { name: 'Реестр устройств' }));
+      expect(mockPush).not.toHaveBeenCalled(); expect(useCommandPaletteStore.getState().isOpen).toBe(true);
+      await act(async () => decide(true));
+      expect(mockPush).toHaveBeenCalledTimes(1); expect(mockPush).toHaveBeenCalledWith('/devices');
+      expect(useCommandPaletteStore.getState().isOpen).toBe(false);
+    } finally { unregister(); }
+  });
   it.each(['Реестр устройств', 'Открыть мониторинг VPN', 'Открыть конструктор скриптов'])('honors the active workspace guard for %s', async label => {
     const guard = jest.fn(() => false); const unregister = registerWorkspaceLeaveGuard(guard);
     try {

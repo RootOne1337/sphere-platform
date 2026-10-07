@@ -9,7 +9,7 @@ import { ThemeSwitcherModal } from "@/src/features/settings/ThemeSwitcherModal";
 import * as DialogPrimitive from "@radix-ui/react-dialog";
 import { SPHERE_NAV_GROUPS } from "./navigationCatalog";
 import { useCapabilities } from '@/src/features/access/Capabilities';
-import { workspaceNavigationAllowed } from './workspaceNavigationGuard';
+import { navigateFromWorkspace } from './workspaceNavigationGuard';
 
 const ITEM_CLASS = "mb-1 flex min-h-10 cursor-pointer items-center rounded-lg px-3 text-sm text-foreground transition-colors hover:bg-muted aria-selected:bg-primary/10 aria-selected:text-primary motion-reduce:transition-none";
 const GROUP_CLASS = "px-2 py-1 text-xs font-medium text-muted-foreground [&_[cmdk-group-heading]]:px-2 [&_[cmdk-group-heading]]:py-2 [&_[cmdk-group-heading]]:font-semibold";
@@ -24,7 +24,7 @@ export function GlobalCommandPalette() {
     const themesPanelRef = React.useRef<HTMLDivElement>(null);
     const returnFocusRef = React.useRef<HTMLElement | null>(null);
     const navigate = (href: string) => {
-        if (workspaceNavigationAllowed()) { router.push(href); close(); }
+        navigateFromWorkspace(() => { router.push(href); close(); });
     };
 
     React.useEffect(() => {

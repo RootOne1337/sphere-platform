@@ -25,7 +25,8 @@ import { layoutWorkflow } from '@/src/features/scripts/studio/layout';
 import { useCanvasOverview } from '@/src/features/scripts/studio/useCanvasOverview';
 import type { DagNode } from '@/lib/dag/export';
 import { actionParameterErrors, ACTION_CONTRACT_VERSION } from '@/lib/dag/actionParameters';
-import { useWorkspaceNavigationGuard } from '@/src/features/navigation/workspaceNavigationGuard';
+import { navigateFromWorkspace, useWorkspaceNavigationGuard } from '@/src/features/navigation/workspaceNavigationGuard';
+import { StudioLeaveDialog, type StudioLeaveState } from '@/src/features/scripts/studio/StudioLeaveDialog';
 
 interface ValidationReceipt { schema_version: 1; dag_hash: string; node_count: number; scope: 'structure-routes-lua-safety'; device_execution_verified: false;
   action_contract_version?: string; action_parameters_verified?: boolean }
@@ -83,8 +84,10 @@ function BuilderInner({ editId, storageKey }: { editId: string | null; storageKe
   const [execution, setExecution] = useState<{ last: string | null; logs: { node_id: string; success: boolean }[] }>({ last: null, logs: [] });
   const executionChanged = useCallback((last: string | null, logs: { node_id: string; success: boolean }[]) => setExecution({ last, logs }), []);
   const layoutRequest = useRef<AbortController | null>(null);
-  const workbenchGuard = useRef<((silent?: boolean) => boolean) | null>(null);
-  const registerWorkbenchGuard = useCallback((guard: ((silent?: boolean) => boolean) | null) => { workbenchGuard.current = guard; }, []);
+  const workbenchGuard = useRef<((silent?: boolean, confirmDiscard?: boolean) => boolean) | null>(null);
+  const registerWorkbenchGuard = useCallback((guard: ((silent?: boolean, confirmDiscard?: boolean) => boolean) | null) => { workbenchGuard.current = guard; }, []);
+  const [leaveState, setLeaveState] = useState<StudioLeaveState | null>(null);
+  const leaveRequest = useRef<((allowed: boolean) => void) | null>(null);
   const request = useRef<AbortController | null>(null);
   const loaded = useRef(false);
   const canvas = useRef<ReactFlowInstance | null>(null);
@@ -107,12 +110,27 @@ function BuilderInner({ editId, storageKey }: { editId: string | null; storageKe
 
   function mayLeave() {
     if (inFlight.current) { setErrors('Дождитесь результата проверки или сохранения перед выходом из редактора.'); return false; }
-    if (workbenchGuard.current && !workbenchGuard.current()) return false;
-    return !dirty || window.confirm('Есть несохранённые изменения. Выйти из редактора?');
+    if (loadState !== 'ready' && !baseDocument) return true;
+    const workbenchState = workbenchGuard.current?.(true) === false;
+    if (workbenchState && !workbenchGuard.current?.(false, false)) return false;
+    if (!dirty && !workbenchState) return true;
+    if (leaveRequest.current) return false; // Only one pending navigation intent.
+    setLeaveState({ documentChanged: baseDocument?.name !== document.name || baseDocument?.source !== document.source || Boolean(canvasError), nodePending, workbenchState });
+    return new Promise<boolean>(resolve => { leaveRequest.current = resolve; });
+  }
+  function decideLeave(allowed: boolean) {
+    // Recheck live workbench state: an APK reply or task transition may have
+    // arrived while the operator was reading the dialog.
+    const decision = allowed && !inFlight.current && (!workbenchGuard.current || workbenchGuard.current(false, false));
+    const resolve = leaveRequest.current; leaveRequest.current = null; setLeaveState(null);
+    resolve?.(decision);
   }
   useWorkspaceNavigationGuard(mayLeave);
 
-  useEffect(() => { live.current = true; return () => { live.current = false; request.current?.abort(); layoutRequest.current?.abort(); }; }, []);
+  useEffect(() => { live.current = true; return () => {
+    live.current = false; request.current?.abort(); layoutRequest.current?.abort();
+    leaveRequest.current?.(false); leaveRequest.current = null;
+  }; }, []);
   useEffect(() => {
     if (!canRead && busy) request.current?.abort();
   }, [canRead, busy]);
@@ -379,7 +397,7 @@ function BuilderInner({ editId, storageKey }: { editId: string | null; storageKe
     } catch (error) { setErrors(errorMessage(error)); }
   }
   function leave() {
-    if (mayLeave()) router.push('/scripts');
+    navigateFromWorkspace(() => router.push('/scripts'));
   }
   async function arrange() {
     if (layoutBusy) return;
@@ -491,6 +509,7 @@ function BuilderInner({ editId, storageKey }: { editId: string | null; storageKe
         </aside>}
     </div>
     <footer className="flex shrink-0 flex-wrap items-center justify-between gap-x-4 gap-y-1 border-t bg-card px-4 py-2 text-[10px] text-muted-foreground"><span>DAG 1.0 · {nodes.length} шагов · {edges.length} связей {mode === 'source' ? '(последний применённый граф)' : ''}</span><span>Undo {history.length}/20 · {nodePending ? 'Параметры не применены' : currentReceipt ? 'Исходник проверен сервером' : 'Проверка структуры не выполнена'}</span></footer>
+    <StudioLeaveDialog state={leaveState} onDecision={decideLeave} onExport={() => { try { exportFile(); } catch (reason) { setErrors(errorMessage(reason)); } }} />
     {runOpen && editId && expectedVersion && <RunScriptModal open scriptId={editId} scriptName={document.name} expectedVersion={expectedVersion} requireVersion initialTargetMode="select" onClose={() => setRunOpen(false)} />}
   </section>;
 }

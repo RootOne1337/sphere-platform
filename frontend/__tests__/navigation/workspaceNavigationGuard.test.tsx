@@ -1,9 +1,9 @@
 import { StrictMode } from 'react';
-import { createEvent, fireEvent, render, screen } from '@testing-library/react';
-import { registerWorkspaceLeaveGuard, useWorkspaceNavigationGuard, workspaceNavigationAllowed } from '@/src/features/navigation/workspaceNavigationGuard';
+import { act, createEvent, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { navigateFromWorkspace, registerWorkspaceLeaveGuard, useWorkspaceNavigationGuard, workspaceNavigationAllowed } from '@/src/features/navigation/workspaceNavigationGuard';
 
 const navigate = jest.fn();
-function Harness({ guard }: { guard: () => boolean }) {
+function Harness({ guard }: { guard: () => boolean | Promise<boolean> }) {
   useWorkspaceNavigationGuard(guard);
   return <div><a href="/devices" onClick={event => { event.preventDefault(); navigate(); }}><svg data-testid="icon" /></a></div>;
 }
@@ -18,6 +18,47 @@ it('blocks an ordinary link before its Next/mobile handlers and uses the current
   fireEvent.click(screen.getByTestId('icon'));
   expect(old).toHaveBeenCalledTimes(1); expect(next).toHaveBeenCalledTimes(1); expect(navigate).toHaveBeenCalledTimes(1);
   view.unmount(); expect(workspaceNavigationAllowed()).toBe(true);
+});
+
+function pendingDecision() {
+  let resolve!: (allow: boolean) => void;
+  const promise = new Promise<boolean>(done => { resolve = done; });
+  return { promise, resolve };
+}
+
+it('defers an ordinary link and resumes its handler exactly once after approval', async () => {
+  const decision = pendingDecision(), guard = jest.fn(() => decision.promise);
+  const view = render(<Harness guard={guard} />);
+  fireEvent.click(screen.getByTestId('icon')); expect(navigate).not.toHaveBeenCalled();
+  await act(async () => decision.resolve(true));
+  await waitFor(() => expect(navigate).toHaveBeenCalledTimes(1)); expect(guard).toHaveBeenCalledTimes(1);
+  view.unmount();
+});
+
+it.each(['cancel', 'unmount', 'replace-link'])('never replays a canceled or retired navigation (%s)', async reason => {
+  const decision = pendingDecision(); const view = render(<Harness guard={() => decision.promise} />);
+  fireEvent.click(screen.getByTestId('icon'));
+  if (reason === 'unmount') view.unmount();
+  if (reason === 'replace-link') screen.getByTestId('icon').closest('a')!.href = '/users';
+  await act(async () => decision.resolve(reason !== 'cancel'));
+  expect(navigate).not.toHaveBeenCalled(); view.unmount();
+});
+
+it('cancels programmatic navigation if any owner changed while another decision was pending', async () => {
+  const decision = pendingDecision(), perform = jest.fn();
+  const first = registerWorkspaceLeaveGuard(() => true), second = registerWorkspaceLeaveGuard(() => decision.promise);
+  try {
+    navigateFromWorkspace(perform); first();
+    const replacement = registerWorkspaceLeaveGuard(() => true);
+    try { await act(async () => decision.resolve(true)); expect(perform).not.toHaveBeenCalled(); }
+    finally { replacement(); }
+  } finally { first(); second(); }
+});
+
+it('treats an asynchronously rejected decision as cancellation without running side effects', async () => {
+  const perform = jest.fn(); const remove = registerWorkspaceLeaveGuard(() => Promise.reject(new Error('failed dialog')));
+  try { navigateFromWorkspace(perform); await act(async () => undefined); expect(perform).not.toHaveBeenCalled(); }
+  finally { remove(); }
 });
 
 it('covers links outside the workspace, including a portaled menu', () => {

@@ -40,7 +40,7 @@ beforeEach(() => {
   Object.defineProperty(globalThis.crypto, 'randomUUID', { configurable: true, value: () => `00000000-0000-4000-8000-${String(++sequence).padStart(12, '0')}` });
 });
 const version = { id: versionId, version: 1, dag_hash: 'a'.repeat(64) };
-function openDevice(registerCloseGuard?: (guard: ((silent?: boolean) => boolean) | null) => void) {
+function openDevice(registerCloseGuard?: (guard: ((silent?: boolean, confirmDiscard?: boolean) => boolean) | null) => void) {
   const onInsert = jest.fn().mockReturnValue(true), onExecution = jest.fn();
   const view = render(<DeviceWorkbench scriptId={scriptId} version={version} name="Canary" canRun canEdit onInsert={onInsert} onExecution={onExecution} registerCloseGuard={registerCloseGuard} />);
   fireEvent.click(screen.getByRole('button', { name: /PH025.*LDPlayer/ }));
@@ -261,6 +261,26 @@ it('requires confirmation before changing a device with an untransferred recordi
 });
 
 const observedInput = { deviceId, at: 1000, dimensions: { width: 960, height: 540 }, command: { type: 'type_text' as const, text: 'private fixture' } };
+it('lets the Studio dialog own recording confirmation without bypassing pending or unknown launches', async () => {
+  const confirm = jest.spyOn(window, 'confirm').mockReturnValue(false);
+  let guard: ((silent?: boolean, confirmDiscard?: boolean) => boolean) | null = null;
+  openDevice(next => { guard = next; });
+  fireEvent.click(screen.getByRole('button', { name: 'Записать действия' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Записать тестовый клик' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Остановить запись' }));
+  expect(guard!(true)).toBe(false);
+  expect(guard!(false, false)).toBe(true); expect(confirm).not.toHaveBeenCalled();
+  fireEvent.click(screen.getByRole('button', { name: 'Очистить запись' }));
+  let reject!: (reason: Error) => void;
+  jest.mocked(api.post).mockReturnValue(new Promise((_resolve, fail) => { reject = fail; }));
+  fireEvent.click(screen.getByRole('button', { name: 'Проверить на PH025' }));
+  act(() => { expect(guard!(false, false)).toBe(false); });
+  await act(async () => reject(new Error('Unknown launch')));
+  await screen.findByRole('link', { name: 'Открыть задания в новой вкладке' });
+  act(() => { expect(guard!(false, false)).toBe(false); });
+  expect(confirm).not.toHaveBeenCalled(); expect(api.post).toHaveBeenCalledTimes(1);
+  confirm.mockRestore();
+});
 it('retains a pending text action after Stop, blocks launch/close/transfer and updates the original slot on receipt', () => {
   const { onInsert } = openDevice();
   fireEvent.click(screen.getByRole('button', { name: 'Записать действия' }));
