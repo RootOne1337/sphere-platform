@@ -27,6 +27,16 @@ CI exact source: frontend 1692/133, backend 3037 passed / 37 skipped и Android 
 Общая приёмка остаётся **9 accepted / 41 open**; прежние восемь release gates
 являются другим списком и не означают восемь оставшихся работ по всему продукту.
 
+**Следующая приёмка7октября,07:59 +05:** UI/API a41c4e6 установлены из exact CI
+images. Редактор связи/разрыв/Undo повторно проверены на реальном UI; malformed
+discrete WS input отклонён пять раз на одном transport без потери binary video
+и ping. Все14 online agents переподключились,25сценариев сохранены.
+[Installed scope, screenshot и ограничения](../2026-10-07/VIEWER-INPUT-DELIVERY.md).
+SF26-05continuous и SF26-06rich recorder этим не закрыты: владелец/epoch,
+privileged injection, local release и атомарная корреляция native pixels/tree
+остаются первыми P1. Последующий disk observer metadata-only, причина growth
+и corruption не установлена. Таблица ниже сохраняет исходный6октября срез.
+
 ## Новые требования и фактическое состояние
 
 | ID | Требование | EP / приоритет | Состояние этого среза |

@@ -2,8 +2,10 @@
 
 Дата: **7 октября 2026**, Asia/Yekaterinburg. PR [#19](https://github.com/RootOne1337/sphere-platform/pull/19).
 Область: existing discrete WS protocol; не continuous injector.
-Статус среза: **source regression passed, новая правка ещё не установлена**.
-Live UI **b50d6ae**, API **114775a**, APK сохранены.
+Статус исходного source среза: regression passed, тогда UI b50d6ae/API114775a.
+**Позднейшая доставка:** UI/API a41c4e6 установлены7октября; exact source CI и
+реальный transport/browser canary записаны [отдельно](VIEWER-INPUT-DELIVERY.md).
+Frozen source receipt ниже не переписывается как installed evidence.
 
 [Текущее состояние](../../operations/CURRENT-STATE.md) ·
 [Studio](../../operations/SCRIPT-STUDIO.md) ·
@@ -119,10 +121,11 @@ delivery tools/docs и не переустанавливался. Отдельн
 
 Installer допускает ровно два дополнительных packaged paths: WS router и
 pure viewer_input.py. RBAC/connection manager/dependency/migration/bootstrap
-changes сохраняют отказ. Нужны full exact-source CI, bounded artifact/config
-identity, backend-only plan и SQL/OTA/45container preservation, затем настоящий
-authenticated invalid-input canary. Source overlay в live3015 не устанавливается.
-Новое уведомление ещё не принято визуально в installed browser.
+changes сохраняют отказ. На исходном срезе требовались full exact-source CI,
+bounded artifact/config identity, backend-only plan, SQL/OTA/45container preservation
+и authenticated invalid-input canary. Они приняты позднее в
+[installed delivery](VIEWER-INPUT-DELIVERY.md). Source overlay не устанавливался.
+Browser malformed-notice canary остаётся открыт; notice React-tested.
 [Backend delivery](REVIEWED-BACKEND-DELIVERY.md).
 
 Continuous DOWN/MOVE/UP остаётся P1: root injector, single-owner lease,

@@ -1,10 +1,13 @@
 # Script Studio: доставка проверенного веба без локального rebuild
 
 **Дата:** 7 октября 2026, Asia/Yekaterinburg. **PR:** [#19](https://github.com/RootOne1337/sphere-platform/pull/19).
-**Статус:** UI b50d6ae установлен после completed host repair.
-**Адрес:** http://127.0.0.1:3015. UI b50d6ae2af537adb12a52503f0809ef565c0ba21,
-API eb7a7c26c2e644f24eb3f785b3da1c29a65929be. Остальные 45 containers и OTA сохранены.
-[Latest installed/browser receipt](STUDIO-RESIZE-INSTALLED-ACCEPTANCE.json): title,
+**Актуальная доставка:** UI/API a41c4e6 на3015,
+[installed acceptance и ограничения](VIEWER-INPUT-DELIVERY.md).
+**Историческая установка UI b50d6ae после host repair:** на том этапе UI
+b50d6ae2af537adb12a52503f0809ef565c0ba21 сохранял API
+eb7a7c26c2e644f24eb3f785b3da1c29a65929be, другие45containers и OTA.
+API114775a и затем a41c4e6 установлены позднее; это не текущая пара версий.
+[b50d6ae installed/browser receipt](STUDIO-RESIZE-INSTALLED-ACCEPTANCE.json): title,
 node placement и resize overview приняты. Все три exact-source workflows success:
 frontend 37535540138 — 1692/133, fresh types/build, 26 pages / 73 assets,
 22 archive/installer methods и 18 HTTP tests; backend 37535540188 — 3037 passed /

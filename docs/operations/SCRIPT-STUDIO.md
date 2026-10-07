@@ -2,10 +2,12 @@
 
 Актуализировано: **7 октября 2026**. Каталог `/scripts`, редактор
 `/scripts/builder`, формат **DAG1.0**, React Flow, локальная ELK0.12.0.
-На 3015 установлен frontend **b50d6ae**, API — **114775a**.
-Source follow-up7октября: malformed WS input не подставляет координаты0/0,
-отказ отделён от video failure; **новые UI/API ещё не установлены**.
-[Проверки и admission](../audits/2026-10-07/VIEWER-INPUT-ADMISSION.md).
+На3015 установлены frontend и API **a41c4e6**, source
+`a41c4e64bf569a7518d34606da0facbba32f77e6`.
+Malformed WS input не подставляет координаты0/0, отказ отделён от video failure.
+Real transport canary, разрыв связи/Undo и server validate приняты отдельно;
+новое input notice React-tested, browser malformed-notice canary не выполнен.
+[Installed evidence и ограничения](../audits/2026-10-07/VIEWER-INPUT-DELIVERY.md).
 **7 октября, 03:35 +05:** API обновлён из того же tested CI image без миграций;
 реальный editor/REST canary подтвердил server contract 1.0. Все 25 сценариев,
 task detail и 14 online agents сохранены/восстановлены.

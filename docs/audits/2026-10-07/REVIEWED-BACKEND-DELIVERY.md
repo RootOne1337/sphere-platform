@@ -1,15 +1,16 @@
 # Backend: доставка того же проверенного production image
 
 Дата: **7 октября 2026, Asia/Yekaterinburg**. PR [#19](https://github.com/RootOne1337/sphere-platform/pull/19).
-Статус актуального продолжения: **API 114775a установлен 7 октября, 03:35 +05**
-из того же проверенного CI image. UI **b50d6ae**, APK и остальные 45 контейнеров
-сохранены. Предыдущие source-only gates ниже относятся к этапу подготовки.
+Статус актуального продолжения: **UI/API a41c4e6 установлены7октября**,
+[exact CI, live transport и browser acceptance](VIEWER-INPUT-DELIVERY.md).
+Исторический contract rollout **114775a,03:35 +05** ниже сохранял UI b50d6ae,
+APK и остальные45containers. Source-only gates относятся к этапу подготовки.
 Общий product ledger **9 accepted / 41 open** не изменён.
 
 **Source follow-up7октября:** installer дополнительно допускает только
 reviewed WS router и pure viewer_input.py для discrete input admission.
 Dependency/schema/bootstrap/RBAC/connection-manager delta запрещены.
-[Source defect, tests и ещё открытая доставка](VIEWER-INPUT-ADMISSION.md).
+[Source defect и tests](VIEWER-INPUT-ADMISSION.md).
 Installed114775a receipt ниже сохраняет собственные версии и scope.
 
 [Текущее состояние](../../operations/CURRENT-STATE.md) ·

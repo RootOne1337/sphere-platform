@@ -4,14 +4,18 @@
 **Область:** исходники и документация ветки PR #19, записанные runtime-наблюдения, Android APK и готовность следующего прогона.<br />
 **Канонический документ текущего состояния:** этот файл. Исторические отчёты ниже сохраняют исходные даты и факты.
 
-**7 октября — следующий source fix для ввода:** strict discrete WS admission
-блокирует missing coordinates/coercion и malformed JSON без остановки видео;
-веб показывает отдельный dismissible отказ команды. **66 real-service/source
-tests /44 subtests**, **58 frontend /3 suites**, source types/mypy/Ruff passed.
-Новые UI/API ещё не установлены: live остаётся b50d6ae/114775a.
-Предыдущий d112337 завершил полный backend/frontend/Android CI success:
-3066 passed/37 skipped/147 subtests,coverage80.39%; это не CI новой правки.
-[Доказательство, проверки и границы](../audits/2026-10-07/VIEWER-INPUT-ADMISSION.md).
+**7 октября, 07:59 +05 — UI/API a41c4e6 установлены на3015:** strict discrete
+input admission отклоняет missing coordinates/coercion/malformed JSON без
+остановки видео. Real PH010 canary получил пять отказов, затем video binary
+messages и ping на том же WS; корректного Android input не отправлял.
+Все14 online agents переподключились,25 сценариев и другие45containers сохранены;
+SQL/OTA/APK не менялись. Browser подтвердил matched revisions, разрыв/Undo и
+server parameter verification. Exact source CI: **3097 passed /37 skipped /
+193 subtests**, coverage**80.43%**; frontend**1695/133**, types/build/26pages/73assets;
+Android success. [Доставка, границы и screenshot](../audits/2026-10-07/VIEWER-INPUT-DELIVERY.md) ·
+[Exact acceptance](../audits/2026-10-07/VIEWER-INPUT-INSTALLED-ACCEPTANCE.json).
+Notice React-tested; отдельный browser malformed-input notice canary открыт.
+8h bounded disk observer начат03:02Z; причина storage/RAM growth ещё не установлена.
 Continuous injector/rich recorder/ledger9/41 не закрываются этой регрессией.
 
 **7 октября, 03:35 +05 — обновлён API 114775a на 3015:** установлен тот же
