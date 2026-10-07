@@ -192,6 +192,21 @@ class StreamingCaptureLifecycleTest {
         verify(exactly = 2) { wsClient.sendBinary(any()) }
     }
 
+    @Test fun `viewer receives decoder config before an immediately produced sync picture`() {
+        val packets = mutableListOf<ByteArray>()
+        every { wsClient.sendBinary(capture(packets)) } returns true
+        every { anyConstructed<H264Encoder>().cachedSps } returns byteArrayOf(0, 0, 0, 1, 0x67)
+        every { anyConstructed<H264Encoder>().cachedPps } returns byteArrayOf(0, 0, 0, 1, 0x68)
+        manager.start(projection)
+        every { anyConstructed<H264Encoder>().requestKeyFrame() } answers {
+            val idr = byteArrayOf(0, 0, 0, 1, 0x65)
+            emitEncoded(idr, H264Encoder.FrameMetadata(true, 33_333L, idr.size))
+            true
+        }
+        manager.onViewerConnected()
+        assertEquals(listOf(0x67, 0x68, 0x65), packets.map { it[FramePackager.HEADER_SIZE + 4].toInt() })
+    }
+
     @Test fun `FPS budget cannot discard an already encoded reference picture`() {
         val packets = mutableListOf<ByteArray>()
         every { wsClient.sendBinary(capture(packets)) } returns true

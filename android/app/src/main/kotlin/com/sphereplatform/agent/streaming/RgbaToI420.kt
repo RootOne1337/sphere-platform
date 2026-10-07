@@ -13,6 +13,12 @@ internal class RgbaToI420(private val width: Int, private val height: Int) {
     private var rgba = ByteArray(0)
     private val i420 = ByteArray(outputSize)
 
+    /** Caller owns capture lifetime and proves a prior successful submission. */
+    fun copyLastConverted(destination: ByteBuffer) {
+        require(!destination.isReadOnly && destination.capacity() >= outputSize)
+        destination.clear(); destination.put(i420)
+    }
+
     fun convert(source: ByteBuffer, rowStride: Int, pixelStride: Int, destination: ByteBuffer) {
         require(pixelStride >= 4 && rowStride.toLong() >= width.toLong() * pixelStride)
         val required = (height - 1L) * rowStride + (width - 1L) * pixelStride + 4

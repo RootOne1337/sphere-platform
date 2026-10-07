@@ -17,8 +17,9 @@ def main() -> None:
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--platform", default="android-35")
     parser.add_argument("--build-tools", default="35.0.0")
+    parser.add_argument("--probe", choices=("MediaCodecProbe", "PlanarViewerRefreshProbe"), default="MediaCodecProbe")
     args = parser.parse_args()
-    source = Path(__file__).resolve().parent / "android/MediaCodecProbe.java"
+    source = Path(__file__).resolve().parent / "android" / (args.probe + ".java")
     android = args.sdk / "platforms" / args.platform / "android.jar"
     d8 = args.sdk / "build-tools" / args.build_tools / "lib/d8.jar"
     suffix = ".exe" if os.name == "nt" else ""
@@ -40,7 +41,7 @@ def main() -> None:
         subprocess.run([str(javac), "--release", "8", "-cp", str(android), "-d", str(classes), str(source)], **options)
         subprocess.run([str(java), "-cp", str(d8), "com.android.tools.r8.D8", "--min-api", "26",
             "--lib", str(android), "--output", str(destination),
-            *map(str, (classes / "com/sphereplatform/audit").glob("MediaCodecProbe*.class"))], **options)
+            *map(str, (classes / "com/sphereplatform/audit").glob(args.probe + "*.class"))], **options)
     print(json.dumps({"artifact": str(destination), "bytes": destination.stat().st_size,
         "sha256": hashlib.sha256(destination.read_bytes()).hexdigest(),
         "source_sha256": hashlib.sha256(source.read_bytes()).hexdigest()}))

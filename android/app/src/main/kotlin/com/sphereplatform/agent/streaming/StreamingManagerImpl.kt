@@ -372,11 +372,6 @@ class StreamingManagerImpl @Inject constructor(
     private fun requestKeyFrameNow() {
         val enc = encoder ?: return
         if (!streaming) return
-        if (enc.requestKeyFrame()) {
-            Timber.i("StreamingManagerImpl: encoder accepted viewer sync-frame request")
-        } else {
-            Timber.w("StreamingManagerImpl: encoder did not accept viewer key-frame request")
-        }
         val fakeMeta = H264Encoder.FrameMetadata(
             isKeyFrame = true,
             presentationTimeUs = 0L,
@@ -388,6 +383,13 @@ class StreamingManagerImpl @Inject constructor(
         }
         enc.cachedPps?.let { pps ->
             sendFrameBinary(FramePackager.pack(pps, fakeMeta.copy(sizeBytes = pps.size), streamStartMs, encoderCaptureEpoch))
+        }
+        // Planar refresh may produce output immediately. Queue decoder config
+        // before requesting that IDR so a fresh viewer cannot discard it.
+        if (enc.requestKeyFrame()) {
+            Timber.i("StreamingManagerImpl: encoder accepted viewer sync-frame request")
+        } else {
+            Timber.w("StreamingManagerImpl: encoder did not accept viewer key-frame request")
         }
     }
 

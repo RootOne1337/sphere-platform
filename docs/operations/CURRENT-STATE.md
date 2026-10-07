@@ -4,7 +4,20 @@
 **Область:** исходники и документация ветки PR #19, записанные runtime-наблюдения, Android APK и готовность следующего прогона.<br />
 **Канонический документ текущего состояния:** этот файл. Исторические отчёты ниже сохраняют исходные даты и факты.
 
-**8 октября, после 02:54 UTC+5 — PH025: причина чёрного экрана воспроизведена.**
+**8 октября, после03:40 UTC+5 — PH025: второй путь чёрного экрана доказан.**
+Reviewed UI `fcdc547` установлен на3015;45 остальных контейнеров и OTA-каталог
+сохранены. Первый вход11drawn, Android Recent32/Home49,0decode errors.
+Но повторный вход на статичном экране дал8packets/244B,SPS/PPS4/4 и0pictures:
+first-frame timeout снова воспроизведён. Реальный MediaCodec из рабочегоAPK10247
+после одного RAW принял два sync requests, но дал0/0 новых pictures. Sourcefix
+подаёт owned RAW на sync request с одним pending/4refresh/s и fences старых/
+неопределённых callbacks; cached SPS/PPS идут раньше IDR. APK10248 ещё не
+установлен; temporary scoped capture restart восстановил картинку, но вопрос
+не закрыт. Default полные tests до ordering followup:978passed/3skipped в
+каждой из двух variants. Continuous input на3015 всё ещё не включён.
+[Причина и обязательная приёмка](../audits/2026-10-08/PH025-STATIC-RECONNECT.md).
+
+**8 октября, после 02:54 UTC+5 — PH025: первая причина чёрного экрана воспроизведена.**
 В настоящем браузере принудительный `prefer-hardware` отвергает AVC:
 `OperationError`, 0 outputs/drawn. Те же 16 packets при `no-preference`
 и software control дали 11 outputs/drawn без ошибок. Source теперь разрешает
