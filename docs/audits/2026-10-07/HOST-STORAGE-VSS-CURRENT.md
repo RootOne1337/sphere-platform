@@ -249,6 +249,18 @@ It is separate from Docker's container stdout logs and the234GB data VHD.
 
 ## Incident acceptance remains open
 
+The first **automatic** trigger was exercised on the running host at
+12:17:02 UTC, without a manual WPR start. Its owned child recorded five volume
+samples, finished at12:17:59 UTC, stopped its named trace successfully, and
+saved25,111,189B ETL. SHA-256:
+`96822668278a1ae7f1cba0d0af28f713f679e4a9d34f6db204d7de0aa37b5330`.
+The child reported a186,048,512B free-space fall during capture. This proves
+automatic capture and owned stop/save, not the identity of the growth writer.
+The supervisor remains running with one of four attempts consumed. Saved
+traces are part of our diagnostic storage; their bytes must be accounted for.
+The eight-hour collectors stop by their recorded deadlines and do not restart
+after Windows reboot; preserved reports remain available for later analysis.
+
 1. Exact VSS growth explains the captured short free-space-loss episode.
 2. The full historical loss and the process changing the quota remain open.
 3. The new RAM/commit/WSL window is running; no completed RAM-leak soak is claimed.
