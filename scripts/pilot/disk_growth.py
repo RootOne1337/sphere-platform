@@ -86,7 +86,7 @@ def scan_root(root: Path, *, excluded: Path, max_entries: int = 500000,
     totals: dict[str, int] = defaultdict(int)
     candidates: list[tuple[int, str, int]] = []
     files = entries_seen = errors = skipped = logical = 0
-    error_samples = []
+    error_samples: list[dict[str, str]] = []
     status = "complete"
     try:
         info = os.stat(native_path(root), follow_symlinks=False)
@@ -222,7 +222,7 @@ def main() -> int:
     previous_files: dict = {}
     previous_roots: dict = {}
     previous_candidates: dict = {}
-    previous_free = None
+    previous_free: int | None = None
     used = 0
     status = {'state': 'running', 'samplesWritten': 0, 'pid': os.getpid(),
               'maximumSampleBytes': MAX_SAMPLE_BYTES, 'maximumReportBytes': args.max_total_mib * MIB,
@@ -267,7 +267,7 @@ def main() -> int:
             previous_files = watched
             if root_reports:
                 previous_roots, previous_candidates = root_reports, candidates
-            previous_free = report['freeDiskBytes']
+            previous_free = free_after
             if index < args.samples - 1:
                 time.sleep(max(0, args.interval - (time.monotonic() - started)))
         else:
