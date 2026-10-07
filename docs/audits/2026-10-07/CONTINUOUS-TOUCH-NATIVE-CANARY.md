@@ -10,6 +10,11 @@
 через `app_process`; это не доставка нового APK и не browser→server latency test.
 SF26-05 и общий ledger **9 accepted /41 open** остаются открытыми.
 
+**Следующий source этап:** [APK mailbox/supervisor/private pipe](CONTINUOUS-TOUCH-SUPERVISOR.md)
+реализован отдельно; runtime-интеграция ещё открыта. Native source1dccd05 прошёл
+exact CI37632496375/37632506124 (Android),37632506201 (frontend) и37632506071
+(backend). Это smoke/source validation, не установка continuous capability.
+
 ## Доказательство поведения до отпускания
 
 Приёмник — отдельное одноразовое Android-приложение с обычным `View.OnTouchListener`.

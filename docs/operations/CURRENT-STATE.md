@@ -4,6 +4,16 @@
 **Область:** исходники и документация ветки PR #19, записанные runtime-наблюдения, Android APK и готовность следующего прогона.<br />
 **Канонический документ текущего состояния:** этот файл. Исторические отчёты ниже сохраняют исходные даты и факты.
 
+**7 октября, continuous supervisor source:** добавлен один owner/worker,
+bounded очередь 4 samples с coalescing MOVE и reserved terminal slot, строгий
+private root pipe и отдельные STARTUP/INPUT/RELEASE receipts. Unknown cleanup
+блокирует последующее подключение; активный owner нельзя заменить duplicate
+open. Это ещё не подключено к CommandDispatcher/server/browser, installed
+runtime сохраняется. Локально обе debug variants: **925 passed / 3 skipped,
+77 suites в каждой**, включая 33 новых случая mailbox/supervisor/pipe.
+Native source 1dccd05 прошёл оба Android CI и frontend/backend CI; новый source
+требует собственного CI. [Контракт и оставшиеся условия](../audits/2026-10-07/CONTINUOUS-TOUCH-SUPERVISOR.md).
+
 **7 октября, после18:47 UTC+5 — native continuous touch canary:** отдельный
 Android helper через встроенный MotionEvent/InputManager принял пять MOVE до UP
 в самом View. Проверены EOF, lease expiry, duplicate sequence, длительный
