@@ -7,6 +7,7 @@ import android.media.Image
 import android.media.ImageReader
 import android.media.projection.MediaProjection
 import android.view.Surface
+import com.sphereplatform.agent.BuildConfig
 import com.sphereplatform.agent.ws.SphereWebSocketClientContract
 import io.mockk.*
 import org.junit.After
@@ -204,7 +205,10 @@ class StreamingCaptureLifecycleTest {
             true
         }
         manager.onViewerConnected()
-        assertEquals(listOf(0x67, 0x68, 0x65), packets.map { it[FramePackager.HEADER_SIZE + 4].toInt() })
+        val header = if (BuildConfig.CONTINUOUS_INPUT_CANARY) FramePackager.CAPTURE_HEADER_SIZE else FramePackager.HEADER_SIZE
+        val version = if (BuildConfig.CONTINUOUS_INPUT_CANARY) FramePackager.CAPTURE_VERSION else FramePackager.VERSION
+        packets.forEach { assertEquals(version, it[0]) }
+        assertEquals(listOf(0x67, 0x68, 0x65), packets.map { it[header + 4].toInt() })
     }
 
     @Test fun `FPS budget cannot discard an already encoded reference picture`() {
@@ -225,8 +229,11 @@ class StreamingCaptureLifecycleTest {
         }
 
         assertEquals("Every encoded NAL must reach the queue in original order", units.size, packets.size)
+        val header = if (BuildConfig.CONTINUOUS_INPUT_CANARY) FramePackager.CAPTURE_HEADER_SIZE else FramePackager.HEADER_SIZE
+        val version = if (BuildConfig.CONTINUOUS_INPUT_CANARY) FramePackager.CAPTURE_VERSION else FramePackager.VERSION
         units.zip(packets).forEach { (expected, packet) ->
-            assertArrayEquals(expected, packet.copyOfRange(FramePackager.HEADER_SIZE, packet.size))
+            assertEquals(version, packet[0])
+            assertArrayEquals(expected, packet.copyOfRange(header, packet.size))
         }
         assertEquals(3L, manager.getQualityStats().totalFrames)
         assertEquals(0L, manager.getQualityStats().frameThrottleDropsTotal)
@@ -381,8 +388,11 @@ class StreamingCaptureLifecycleTest {
     private fun captureToken(): Any = StreamingManagerImpl::class.java
         .getDeclaredField("captureSession").apply { isAccessible = true }.get(manager)
 
+    private fun packetEpoch(): java.util.UUID? = StreamingManagerImpl::class.java
+        .getDeclaredField("encoderCaptureEpoch").apply { isAccessible = true }.get(manager) as java.util.UUID?
+
     private fun emitEncoded(bytes: ByteArray, metadata: H264Encoder.FrameMetadata,
-                            session: Any = captureToken(), epoch: java.util.UUID? = null) {
+                            session: Any = captureToken(), epoch: java.util.UUID? = packetEpoch()) {
         // Exercise the manager's codec-output boundary without substituting a
         // decoder or claiming Robolectric can execute a device's native OMX codec.
         val callback = StreamingManagerImpl::class.java.getDeclaredMethod(
