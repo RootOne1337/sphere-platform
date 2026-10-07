@@ -94,6 +94,41 @@ workbench; stub исправлен передачей реальных anchor at
 backend idempotency или полный route blocker Next. При необходимости продолжить
 проверку после ухода экспортируйте граф и проверьте задания по ID.
 
-Установленный baseline до поставки: UI/API **a41c4e6**. Этот source change
-не обновляет APK, SQL, другие контейнеры или записи сценариев. Общий ledger
+Исторический baseline до первой поставки: UI/API **a41c4e6**. Общий ledger
 **9 accepted / 41 open** не закрывается одной регрессией.
+
+## Установленная приёмка продолжения
+
+На3015 установлен UI **af9054e**, API сохранён **a41c4e6**. Различие revisions
+показано в header: оно ожидаемо для этой поставки одного frontend и не выдаётся
+за matched deployment. Все остальные45 контейнеров сохранили identity/epoch,
+OTA catalog hash не изменился; APK, SQL и сценарии этим обновлением не менялись.
+[Exact acceptance](STUDIO-NAVIGATION-INSTALLED-ACCEPTANCE.json).
+
+Frontend CI [37624946579](https://github.com/RootOne1337/sphere-platform/actions/runs/37624946579)
+успешен для полного source `af9054ecd0a12d0bc40112298c06178472b59eae`:
+fresh types/build,26 packaged pages и73 client assets. Артефакт11483767743
+проверен по GitHub digest, независимому image log и reviewed archive admission.
+Использован UI installer с read-only plan перед apply; previous UI сохранён
+для rollback. Это не объявляет остальные workflow завершёнными или APK обновлённым.
+
+В установленном браузере приняты: отмена sidebar-перехода с сохранением названия,
+диалог поверх общего поиска и возвращение в открытый поиск после отмены,
+первичный focus на «Остаться», Escape с сохранением мобильного меню, явный
+переход из этого меню. Проверены1440×900 и390×844. На390×360 content ограничен
+top16/bottom344, scrollHeight542/clientHeight326, горизонтального overflow нет;
+кнопка выхода доступна через внутреннюю прокрутку и действительно открыла
+`/devices`. После проверки override снят, вкладка оставлена с чистым новым
+редактором. Captured browser errors:0. Новые сценарии/задания и Android input
+для этих UI-проверок не создавались.
+
+«Скачать JSON и остаться» сохранило черновик и закрыло leave dialog, но browser
+download event не пришёл за10s. Нового файла в проверенном Downloads не найдено;
+**передача файла не принята**, причина пока неизвестна. Наличие кнопки и её
+callback не подменяют эту проверку. Explicit logout, session replacement и
+native beforeunload покрыты unit tests; отдельный установленный canary этих
+действий здесь не выполнялся.
+
+![Диалог выхода,1440×900](assets/studio-navigation/leave-desktop.jpg)
+
+[Диалог поверх мобильного меню,390×844](assets/studio-navigation/leave-mobile.jpg).

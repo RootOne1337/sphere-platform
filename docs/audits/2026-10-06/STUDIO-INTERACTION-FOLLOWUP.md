@@ -10,6 +10,15 @@
 на 99af20d; b50d6ae добавляет принятый resize overview и сохранение ручного zoom.
 [Latest runtime/browser/CI receipt](../2026-10-07/STUDIO-RESIZE-INSTALLED-ACCEPTANCE.json) ·
 [Resize](../2026-10-07/STUDIO-CANVAS-RESIZE.md).
+
+**7 октября,18:14 UTC+5 — navigation follow-up установлен:** UI af9054e / API
+a41c4e6. Общие ссылки, поиск и explicit logout используют диалог сохранности
+Studio; pending/unknown workbench state проверяется до перехода и при его
+подтверждении.1733 frontend tests /135 suites, fresh frontend CI и установленная
+desktop/mobile navigation matrix приняты. Export download transfer в IAB
+не подтверждён; route blocker не распространяется на SPA Back/Forward.
+[Контракт, screenshots и ограничения](../2026-10-07/STUDIO-NAVIGATION-PRESERVATION.md) ·
+[Exact acceptance](../2026-10-07/STUDIO-NAVIGATION-INSTALLED-ACCEPTANCE.json).
 **Позднейший срез 7 октября, 03:35 +05:** API 114775a получил live contract 1.0
 для 32 действий: valid 200, missing coordinates 422, anonymous 401. 25 сценариев
 сохранены, 14 online agents переподключились; APK не менялся.

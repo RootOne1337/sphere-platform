@@ -4,6 +4,28 @@
 **Область:** исходники и документация ветки PR #19, записанные runtime-наблюдения, Android APK и готовность следующего прогона.<br />
 **Канонический документ текущего состояния:** этот файл. Исторические отчёты ниже сохраняют исходные даты и факты.
 
+**7 октября, после18:14 UTC+5 — Studio navigation установлен на3015:** UI
+**af9054e**, API **a41c4e6** сохранён. Собственный диалог перечисляет несохранённую
+работу и защищает sidebar, общий поиск и explicit logout до начала их side effects.
+Ожидающие/неизвестные команды лаборатории проверяются повторно перед выходом;
+устаревшее подтверждение при смене владельца/сессии отменяется. Локально1733 tests /
+135 suites и source types прошли; exact frontend CI37624946579 успешен, fresh
+types/build/26pages/73assets. В установленном браузере приняты отмена, поиск,
+mobile Escape и явный переход; desktop/mobile/short-height layout проверены.
+Получение файла экспортом в IAB не подтверждено, browser Back/Forward SPA остаётся
+вне полного route blocker. Другие45 containers, OTA/API/APK/SQL сохранены.
+[Контракт и реальные screenshots](../audits/2026-10-07/STUDIO-NAVIGATION-PRESERVATION.md) ·
+[Exact acceptance](../audits/2026-10-07/STUDIO-NAVIGATION-INSTALLED-ACCEPTANCE.json).
+
+NTFS observer исправлен после stopped-error на всплеске4096 identities:
+replacement реально работает с13:03:12 до19:53:12UTC,14 pure regressions/Ruff/mypy
+прошли. Новые поля coverage показывают evictions/backlog; старый observation gap
+не реконструирован. Host/VSS, ETW supervisor и VMDK observers продолжали работать;
+две автоматические traces сохранены, writer analysis остаётся OPEN. Это конечные
+окна без autostart. [Инструкция и текущие private reports](HOST-RESOURCES.md).
+Общий audit ledger **9 accepted / 41 open** сохраняется; continuous gestures,
+rich recording и correlated debugger остаются следующими работами Studio.
+
 **7 октября, после16:40 UTC+5 — storage attribution и реальный сбор:**
 в отдельном30s elevated окне C:−235 745 280B / VSS allocation+234 881 024B
 (99,63%). Это механизм конкретного эпизода, не writer всего8h или всей истории.
