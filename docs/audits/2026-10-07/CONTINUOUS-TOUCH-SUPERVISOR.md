@@ -104,3 +104,10 @@ WS generation, synchronous bounded dispatcher admission, DAG exclusion,
 server multiworker lease/auth renewal, scoped ACK delivery, browser pointermove
 и loss cleanup, recorder trajectory/uncertainty. Старые APK и установленный
 веб продолжают работать в discrete режиме; новая capability не рекламируется.
+
+**Последующий source-срез 7 октября, 23:15 UTC+5:** capture epoch, dispatcher,
+WS generation и shared DAG/discrete ownership подключены в debug canary;
+обычный runtime сохранён. Supervisor source 3cb9fe9 прошёл оба Android CI,
+frontend/backend и preview CI. Это не реальная приёмка нового Kotlin pipeline
+и не включение continuous в вебе.
+[Актуальная граница APK-подключения](CONTINUOUS-INPUT-APK-LIFECYCLE.md).

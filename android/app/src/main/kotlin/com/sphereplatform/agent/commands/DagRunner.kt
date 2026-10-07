@@ -169,21 +169,24 @@ class DagRunner @Inject constructor(
      *                     Без явного значения: берётся из dagJson["timeout_ms"] или 300_000ms (5 мин).
      */
     suspend fun execute(commandId: String, dagJson: JsonObject, timeoutMs: Long? = null): JsonObject {
-        synchronized(executionLock) {
-            check(activeCommandId == null) { "device_execution_busy" }
-            cancelRequested = false
-            pauseRequested = false
-            activeCommandId = commandId
-        }
+        val inputReservation = adbActions.claimInputForTask()
         try {
-            return executeActive(commandId, dagJson, timeoutMs)
-        } finally {
             synchronized(executionLock) {
-                activeCommandId = null
+                check(activeCommandId == null) { "device_execution_busy" }
                 cancelRequested = false
                 pauseRequested = false
+                activeCommandId = commandId
             }
-        }
+            try {
+                return executeActive(commandId, dagJson, timeoutMs)
+            } finally {
+                synchronized(executionLock) {
+                    activeCommandId = null
+                    cancelRequested = false
+                    pauseRequested = false
+                }
+            }
+        } finally { inputReservation.close() }
     }
 
     private suspend fun executeActive(commandId: String, dagJson: JsonObject, timeoutMs: Long?): JsonObject {

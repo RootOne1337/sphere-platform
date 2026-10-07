@@ -33,6 +33,13 @@ class RootCommandAcknowledgementTest {
         }
     }
 
+    @Test fun `one CR before LF is accepted but repeated CR is malformed`() {
+        assertEquals(0, RootCommandAcknowledgement.await(process("\r\nowned:0\r\n".toByteArray()), "owned", EmptyCoroutineContext))
+        assertThrows(IOException::class.java) {
+            RootCommandAcknowledgement.await(process("\nowned:0\r\r\n".toByteArray()), "owned", EmptyCoroutineContext)
+        }
+    }
+
     @Test fun `process death and missing marker are unknown instead of successful`() {
         assertThrows(IOException::class.java) {
             RootCommandAcknowledgement.await(process(byteArrayOf(), false), "owned", EmptyCoroutineContext)

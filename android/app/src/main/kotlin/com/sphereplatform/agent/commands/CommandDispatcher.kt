@@ -85,13 +85,23 @@ class CommandDispatcher @Inject constructor(
     /** FIX D1: Job heartbeat watchdog — отменяется в stop(). */
     private var heartbeatJob: kotlinx.coroutines.Job? = null
     private val updateCheckQueuedForService = AtomicBoolean(false)
+    private val continuousInput = if (BuildConfig.CONTINUOUS_INPUT_CANARY) {
+        ContinuousInputController(scope,
+            OwnedTouchPipeFactory(adbActions.inputOwnership, adbActions::prepareContinuousInput, RootTouchPipeFactory(appContext)),
+            streamingManager, wsClient::currentGeneration, wsClient::sendInputReceipt,
+            android.os.SystemClock::uptimeMillis, BuildConfig.CONTINUOUS_INPUT_CANARY,
+        )
+    } else null
 
     fun start() {
         updateCheckQueuedForService.set(false)
+        continuousInput?.let { streamingManager.setInputInvalidationListener(it::invalidate) }
         wsClient.onJsonMessage = { msg ->
             val type = msg["type"]?.jsonPrimitive?.contentOrNull
             if (type == "ping") {
                 handlePingImmediate(msg)
+            } else if (continuousInput?.handle(msg) == true) {
+                // Admission is synchronous and bounded; never launch one coroutine per MOVE.
             } else {
                 scope.launch { handleMessage(msg) }
             }
@@ -99,12 +109,14 @@ class CommandDispatcher @Inject constructor(
 
         // При reconnect — отправляем накопленные результаты DAG и сбрасываем heartbeat
         wsClient.onConnected = {
+            continuousInput?.invalidate()
             lastPingAt = System.currentTimeMillis()
             if (updateCheckQueuedForService.compareAndSet(false, true)) {
                 updateCheckScheduler.scheduleImmediate()
             }
             scope.launch { flushResults() }
         }
+        continuousInput?.let { controller -> wsClient.onDisconnected = { _, _ -> controller.invalidate() } }
 
         // FIX AUDIT-2.5: Heartbeat watchdog — если сервер не шлёт ping > 90с,
         // принудительный reconnect. Компенсирует кейс когда readTimeout
@@ -133,10 +145,15 @@ class CommandDispatcher @Inject constructor(
      * Вызывается из SphereAgentService.onDestroy() перед отменой serviceScope.
      */
     fun stop() {
+        continuousInput?.let {
+            it.invalidate()
+            streamingManager.setInputInvalidationListener(null)
+        }
         heartbeatJob?.cancel()
         heartbeatJob = null
         wsClient.onJsonMessage = null
         wsClient.onConnected = null
+        if (continuousInput != null) wsClient.onDisconnected = null
     }
 
     /**
@@ -273,6 +290,8 @@ class CommandDispatcher @Inject constructor(
                         adbActions.tapRaw(point.x, point.y)
                     } catch (_: RootCommandOutcomeUnknownException) {
                         Timber.w("Live tap outcome is unknown; command was not replayed")
+                    } catch (_: DeviceInputBusyException) {
+                        Timber.w("Live tap rejected: device input is owned by another controller")
                     }
                 }
                 return
@@ -292,6 +311,8 @@ class CommandDispatcher @Inject constructor(
                         adbActions.swipeRaw(points[0].x, points[0].y, points[1].x, points[1].y, duration)
                     } catch (_: RootCommandOutcomeUnknownException) {
                         Timber.w("Live swipe outcome is unknown; command was not replayed")
+                    } catch (_: DeviceInputBusyException) {
+                        Timber.w("Live swipe rejected: device input is owned by another controller")
                     }
                 }
                 return

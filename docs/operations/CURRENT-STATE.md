@@ -4,6 +4,19 @@
 **Область:** исходники и документация ветки PR #19, записанные runtime-наблюдения, Android APK и готовность следующего прогона.<br />
 **Канонический документ текущего состояния:** этот файл. Исторические отчёты ниже сохраняют исходные даты и факты.
 
+**7 октября, после 23:15 UTC+5 — continuous input APK source:** capture epoch,
+синхронный admission, WS generation и общий arbiter с DAG/discrete mutations
+подключены к dispatcher только при явном debug canary flag. FIFO handoff ждёт
+execution marker старой root-очереди; неизвестное завершение запрещает нового
+владельца. Обе Android debug variants: **958 passed / 3 skipped, 81 suites
+в каждой**; сборка devDebug успешна, release с canary flag проверенно запрещён.
+Новый APK не установлен; UI af9054e / API a41c4e6 сохранены. Реальная приёмка
+Kotlin pipeline открыта: сейчас оба ADB inventories пусты. Server lease/scoped
+receipts, epoch показанного кадра и browser pointermove ещё не подключены.
+На 3015 жест пока отправляется после отпускания. Ledger **9/41** сохраняется.
+[Контракт, тесты и оставшиеся условия](../audits/2026-10-07/CONTINUOUS-INPUT-APK-LIFECYCLE.md) ·
+[Evidence](../audits/2026-10-07/CONTINUOUS-INPUT-APK-EVIDENCE.json).
+
 **7 октября, continuous supervisor source:** добавлен один owner/worker,
 bounded очередь 4 samples с coalescing MOVE и reserved terminal slot, строгий
 private root pipe и отдельные STARTUP/INPUT/RELEASE receipts. Unknown cleanup
@@ -11,8 +24,10 @@ private root pipe и отдельные STARTUP/INPUT/RELEASE receipts. Unknown 
 open. Это ещё не подключено к CommandDispatcher/server/browser, installed
 runtime сохраняется. Локально обе debug variants: **925 passed / 3 skipped,
 77 suites в каждой**, включая 33 новых случая mailbox/supervisor/pipe.
-Native source 1dccd05 прошёл оба Android CI и frontend/backend CI; новый source
-требует собственного CI. [Контракт и оставшиеся условия](../audits/2026-10-07/CONTINUOUS-TOUCH-SUPERVISOR.md).
+Native source 1dccd05 и supervisor source 3cb9fe9 прошли оба Android CI и
+frontend/backend CI. Последующее подключение APK описано выше; этот абзац
+сохраняет границу предыдущего этапа.
+[Контракт и оставшиеся условия](../audits/2026-10-07/CONTINUOUS-TOUCH-SUPERVISOR.md).
 
 **7 октября, после18:47 UTC+5 — native continuous touch canary:** отдельный
 Android helper через встроенный MotionEvent/InputManager принял пять MOVE до UP

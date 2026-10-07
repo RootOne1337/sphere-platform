@@ -76,6 +76,9 @@ class AdbActionExecutor @Inject constructor(
     private var rootProcess: Process? = null
     private var rootStream: java.io.DataOutputStream? = null
     private val rootLock = Any()
+    internal val inputOwnership = DeviceInputOwnership()
+    private var rootInputOutcomeUnknown = false
+    private var rootInputPending = false
     private val processRunner = BoundedProcessRunner()
     private val uiDumpOwnership = Mutex()
     private val screenshots by lazy {
@@ -91,6 +94,7 @@ class AdbActionExecutor @Inject constructor(
     private fun ensureRootAlive(): java.io.DataOutputStream {
         val existing = rootProcess
         if (existing != null && existing.isAlive) return checkNotNull(rootStream)
+        if (existing != null && rootInputPending) rootInputOutcomeUnknown = true
         runCatching { rootStream?.close() }
         rootStream = null
         rootProcess = null
@@ -133,23 +137,61 @@ class AdbActionExecutor @Inject constructor(
      * synchronized — защита от конкурентного доступа.
      */
     private fun executeRootCommand(cmd: String) {
+        inputOwnership.claimDiscrete().use {
+            synchronized(rootLock) {
+                val stream = ensureRootAlive()
+                val process = checkNotNull(rootProcess)
+                try {
+                    rootInputPending = true
+                    stream.writeBytes("$cmd\n")
+                    stream.flush()
+                } catch (e: java.io.IOException) {
+                    // Invalidate independently of isAlive: a failed pipe can outlive
+                    // that OS observation. The failed command must never be replayed.
+                    rootProcess = null
+                    rootStream = null
+                    rootInputOutcomeUnknown = true
+                    Timber.w("Root input write failed; command outcome is unknown")
+                    runCatching { stream.close() }
+                    runCatching { process.destroyForcibly() }
+                    // Even a flush error may follow delivery of the full command.
+                    // Reopen only for a subsequent explicit command, never replay.
+                    throw RootCommandOutcomeUnknownException()
+                }
+            }
+        }
+    }
+
+    /** Whole-task reservation; nested primitive reservations remain valid for its duration. */
+    fun claimInputForTask(): AutoCloseable = inputOwnership.claimDiscrete()
+
+    /** A flush is not execution. Wait for a unique FIFO marker before opening another injector. */
+    internal suspend fun prepareContinuousInput(owner: String) = withContext(Dispatchers.IO) {
+        check(inputOwnership.owns(owner)) { "device_input_busy" }
+        val cancellation = kotlin.coroutines.coroutineContext
         synchronized(rootLock) {
-            val stream = ensureRootAlive()
-            val process = checkNotNull(rootProcess)
+            cancellation.ensureActive()
+            if (rootInputOutcomeUnknown) throw RootCommandOutcomeUnknownException("input_handoff_unknown")
+            val process = rootProcess ?: return@synchronized
+            if (!process.isAlive) {
+                if (rootInputPending) {
+                    rootInputOutcomeUnknown = true
+                    throw RootCommandOutcomeUnknownException("input_handoff_unknown")
+                }
+                return@synchronized
+            }
+            val marker = "sphere_handoff_" + java.util.UUID.randomUUID().toString().replace("-", "")
             try {
-                stream.writeBytes("$cmd\n")
-                stream.flush()
-            } catch (e: java.io.IOException) {
-                // Invalidate independently of isAlive: a failed pipe can outlive
-                // that OS observation. The failed command must never be replayed.
-                rootProcess = null
-                rootStream = null
-                Timber.w("Root input write failed; command outcome is unknown")
-                runCatching { stream.close() }
-                runCatching { process.destroyForcibly() }
-                // Even a flush error may follow delivery of the full command.
-                // Reopen only for a subsequent explicit command, never replay.
-                throw RootCommandOutcomeUnknownException()
+                checkNotNull(rootStream).writeBytes("printf '\\n$marker:0\\n'\n")
+                checkNotNull(rootStream).flush()
+                if (RootCommandAcknowledgement.await(process, marker, cancellation, 1_000) != 0) {
+                    throw java.io.IOException("input_handoff_failed")
+                }
+                rootInputPending = false
+            } catch (failure: Exception) {
+                rootInputOutcomeUnknown = true
+                if (failure is kotlinx.coroutines.CancellationException) throw failure
+                throw RootCommandOutcomeUnknownException("input_handoff_unknown")
             }
         }
     }
@@ -167,10 +209,14 @@ class AdbActionExecutor @Inject constructor(
                 stream?.writeBytes("exit\n")
                 stream?.flush()
                 if (!process.waitFor(250, TimeUnit.MILLISECONDS)) {
+                    if (rootInputPending) rootInputOutcomeUnknown = true
                     process.destroyForcibly()
+                } else {
+                    rootInputPending = false
                 }
                 Timber.i("Root session closed")
             } catch (e: Exception) {
+                if (rootInputPending) rootInputOutcomeUnknown = true
                 runCatching { process.destroyForcibly() }
                 Timber.w("Root session cleanup failed")
             } finally {
@@ -207,33 +253,37 @@ class AdbActionExecutor @Inject constructor(
 
     /** Ctrl+A/Delete in the focused editor, ordered after prior root-session input. */
     suspend fun clearFocusedText() = withContext(Dispatchers.IO) {
-        val owner = kotlin.coroutines.coroutineContext
-        val apk = context.applicationInfo.sourceDir
-        require(apk.startsWith("/") && apk.endsWith(".apk") && apk.none { it == '\n' || it == '\r' }) {
-            "input_clear_invalid_apk_path"
-        }
-        val quotedApk = "'" + apk.replace("'", "'\\''") + "'"
-        val marker = "sphere_clear_" + java.util.UUID.randomUUID().toString().replace("-", "")
-        val command = "CLASSPATH=$quotedApk /system/bin/app_process /system/bin " +
-            "com.sphereplatform.agent.commands.RootInputBridge clear-focused >/dev/null 2>&1; " +
-            "printf '\\n$marker:%s\\n' \"\$?\""
-        synchronized(rootLock) {
-            owner.ensureActive()
-            val stream = ensureRootAlive()
-            val process = checkNotNull(rootProcess)
-            try {
-                stream.writeBytes("$command\n")
-                stream.flush()
-                val status = RootCommandAcknowledgement.await(process, marker, owner)
-                if (status != 0) throw java.io.IOException("input_clear_adapter_failed")
-            } catch (failure: Exception) {
-                // Timeout/failed injection may follow an applied key. No replay or CUT fallback.
-                rootProcess = null
-                rootStream = null
-                runCatching { stream.close() }
-                runCatching { process.destroyForcibly() }
-                if (failure is kotlinx.coroutines.CancellationException) throw failure
-                throw RootCommandOutcomeUnknownException("input_clear_outcome_unknown")
+        inputOwnership.claimDiscrete().use {
+            val owner = kotlin.coroutines.coroutineContext
+            val apk = context.applicationInfo.sourceDir
+            require(apk.startsWith("/") && apk.endsWith(".apk") && apk.none { it == '\n' || it == '\r' }) {
+                "input_clear_invalid_apk_path"
+            }
+            val quotedApk = "'" + apk.replace("'", "'\\''") + "'"
+            val marker = "sphere_clear_" + java.util.UUID.randomUUID().toString().replace("-", "")
+            val command = "CLASSPATH=$quotedApk /system/bin/app_process /system/bin " +
+                "com.sphereplatform.agent.commands.RootInputBridge clear-focused >/dev/null 2>&1; " +
+                "printf '\\n$marker:%s\\n' \"\$?\""
+            synchronized(rootLock) {
+                owner.ensureActive()
+                val stream = ensureRootAlive()
+                val process = checkNotNull(rootProcess)
+                try {
+                    rootInputPending = true
+                    stream.writeBytes("$command\n")
+                    stream.flush()
+                    val status = RootCommandAcknowledgement.await(process, marker, owner)
+                    if (status != 0) throw java.io.IOException("input_clear_adapter_failed")
+                } catch (failure: Exception) {
+                    // Timeout/failed injection may follow an applied key. No replay or CUT fallback.
+                    rootProcess = null
+                    rootStream = null
+                    rootInputOutcomeUnknown = true
+                    runCatching { stream.close() }
+                    runCatching { process.destroyForcibly() }
+                    if (failure is kotlinx.coroutines.CancellationException) throw failure
+                    throw RootCommandOutcomeUnknownException("input_clear_outcome_unknown")
+                }
             }
         }
     }
@@ -560,7 +610,13 @@ class AdbActionExecutor @Inject constructor(
         require(command.all { it.code in 32..126 }) {
             "Non-printable characters in shell command"
         }
-        return shellExec(command)
+        return inputOwnership.claimDiscrete().use {
+            try { shellExec(command) }
+            catch (failure: RootCommandOutcomeUnknownException) {
+                synchronized(rootLock) { rootInputOutcomeUnknown = true }
+                throw failure
+            }
+        }
     }
 
     /**

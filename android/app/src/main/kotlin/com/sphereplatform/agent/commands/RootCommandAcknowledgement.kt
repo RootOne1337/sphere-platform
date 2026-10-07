@@ -29,7 +29,7 @@ internal object RootCommandAcknowledgement {
                 if (start >= 0) {
                     val end = tail.indexOf("\n", start + prefix.length)
                     if (end >= 0) {
-                        return tail.substring(start + prefix.length, end).toIntOrNull()
+                        return tail.substring(start + prefix.length, end).removeSuffix("\r").toIntOrNull()
                             ?: throw IOException("input_clear_ack_malformed")
                     }
                 }

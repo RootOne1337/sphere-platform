@@ -411,6 +411,10 @@ class SphereWebSocketClient(
             }
 
             override fun onClosing(ws: WebSocket, code: Int, reason: String) {
+                val current = synchronized(wsLock) {
+                    (attemptGeneration == generation).also { if (it) isConnected = false }
+                }
+                if (current) runCatching { onDisconnected?.invoke(code, "closing") }
                 ws.close(code, reason)
             }
 
@@ -505,6 +509,19 @@ class SphereWebSocketClient(
         return ws.send(message.toString())
     }
 
+    /** Small transient input receipts must never escape into a replacement authenticated socket. */
+    fun currentGeneration(): Long? = synchronized(wsLock) { generation.takeIf { isConnected && !shouldStop } }
+
+    fun sendInputReceipt(expectedGeneration: Long, message: JsonObject): Boolean = synchronized(wsLock) {
+        if (expectedGeneration != generation || !isConnected || shouldStop) return@synchronized false
+        val socket = webSocket ?: return@synchronized false
+        val payload = message.toString()
+        if (payload.length > 2048) return@synchronized false
+        val bytes = payload.toByteArray(Charsets.UTF_8).size
+        if (bytes > 2048 || socket.queueSize() + bytes > 1024 * 1024) return@synchronized false
+        socket.send(payload)
+    }
+
     fun sendBinary(data: ByteArray): Boolean {
         if (!isConnected) return false
         val ws = synchronized(wsLock) { webSocket } ?: return false
@@ -533,7 +550,12 @@ class SphereWebSocketClient(
         circuitOpenUntil = 0L
         consecutiveFailures = 0
         retryPreferredRoute.set(true)
-        synchronized(wsLock) { webSocket }?.cancel()
+        val retiring = synchronized(wsLock) {
+            isConnected = false
+            webSocket
+        }
+        runCatching { onDisconnected?.invoke(-1, "local_reconnect") }
+        retiring?.cancel()
         reconnectTrigger.trySend(Unit)
     }
 
@@ -545,6 +567,7 @@ class SphereWebSocketClient(
             webSocket = null
             isConnected = false
         }
+        runCatching { onDisconnected?.invoke(-1, "local_disconnect") }
         reconnectTrigger.trySend(Unit)
     }
 }

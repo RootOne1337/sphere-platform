@@ -25,4 +25,10 @@ interface StreamingManager {
 
     /** Map one whole live gesture; inactive/resized capture returns null. */
     fun mapStreamPoints(points: List<StreamPoint>): List<StreamPoint>? = null
+
+    /** Valid only while the same capture and physical display remain current. */
+    fun getInputSession(): CaptureInputSession? = null
+
+    /** One synchronous invalidation listener; must not perform IO or wait for cleanup. */
+    fun setInputInvalidationListener(listener: (() -> Unit)?) {}
 }

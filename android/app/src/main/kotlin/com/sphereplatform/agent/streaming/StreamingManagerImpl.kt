@@ -45,6 +45,8 @@ class StreamingManagerImpl @Inject constructor(
     private val frameLock = Any()
     @Volatile private var captureSession: Any? = null
     private var inputGeometry: CaptureInputGeometry? = null
+    private var inputSession: CaptureInputSession? = null
+    private var inputInvalidationListener: (() -> Unit)? = null
 
     private var streamStartMs: Long = 0L
 
@@ -106,6 +108,7 @@ class StreamingManagerImpl @Inject constructor(
             CaptureInputGeometry(sourceMetrics.widthPixels, sourceMetrics.heightPixels,
                 captureConfig.width, captureConfig.height, it)
         }
+        inputSession = inputGeometry?.let(CaptureInputSession::create)
         val encoderConfig = H264Encoder.EncoderConfig(
             width = captureConfig.width,
             height = captureConfig.height
@@ -392,6 +395,19 @@ class StreamingManagerImpl @Inject constructor(
         return inputGeometry?.map(points, metrics.widthPixels, metrics.heightPixels, rotation)
     }
 
+    @Synchronized
+    override fun getInputSession(): CaptureInputSession? {
+        if (!streaming) return null
+        val session = inputSession ?: return null
+        val metrics = android.content.res.Resources.getSystem().displayMetrics
+        val rotation = (context.getSystemService(Context.DISPLAY_SERVICE) as? android.hardware.display.DisplayManager)
+            ?.getDisplay(android.view.Display.DEFAULT_DISPLAY)?.rotation ?: return null
+        return session.takeIf { it.matchesDisplay(metrics.widthPixels, metrics.heightPixels, rotation) }
+    }
+
+    @Synchronized
+    override fun setInputInvalidationListener(listener: (() -> Unit)?) { inputInvalidationListener = listener }
+
     private fun sendFrameBinary(payload: ByteArray): Boolean {
         val acceptedByLocalQueue = wsClient.sendBinary(payload)
         qualityMonitor.recordWebSocketQueueResult(payload.size, acceptedByLocalQueue)
@@ -406,6 +422,9 @@ class StreamingManagerImpl @Inject constructor(
         viewerKeyFrameCoordinator.markEncoderStopped()
         streaming = false
         inputGeometry = null
+        inputSession = null
+        // Fence input before releasing surfaces/codec, without awaiting a root worker under this lock.
+        runCatching { inputInvalidationListener?.invoke() }
         // PERF: Индивидуальный try-catch на каждый ресурс.
         // До: один try-catch → если virtualDisplayManager.release() бросает,
         // imageReader, thread и encoder не освобождаются → утечка 5-10MB.

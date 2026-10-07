@@ -68,6 +68,51 @@ class WebSocketAuthenticationTest {
     private fun ack(device: String = deviceId, version: String = "1") =
         """{"type":"auth_ok","device_id":"$device","protocol_version":$version}"""
 
+    @Test fun inputReceiptRequiresCurrentAuthenticatedGenerationAndSmallBoundedQueue() = runTest {
+        val job = launch { client.connect() }
+        val receipt = buildJsonObject { put("type", "continuous_input_status") }
+        try {
+            runCurrent(); open()
+            assertNull(client.currentGeneration())
+            assertFalse(client.sendInputReceipt(1, receipt))
+            listeners.last().onMessage(socket, ack()); runCurrent()
+            val generation = client.currentGeneration()!!
+            assertTrue(client.sendInputReceipt(generation, receipt))
+            assertFalse(client.sendInputReceipt(generation + 1, receipt))
+            every { socket.queueSize() } returns 1024 * 1024L
+            assertFalse(client.sendInputReceipt(generation, receipt))
+            every { socket.queueSize() } returns 0L
+            assertFalse(client.sendInputReceipt(generation, buildJsonObject { put("oversized", "x".repeat(2048)) }))
+            assertFalse(client.sendInputReceipt(generation, buildJsonObject { put("oversized", "я".repeat(1500)) }))
+            verify(exactly = 1) { socket.send(receipt.toString()) }
+        } finally { job.cancelAndJoin() }
+    }
+
+    @Test fun localReconnectFencesInputBeforeOldSocketReportsFailure() = runTest {
+        val job = launch { client.connect() }
+        var retired = false
+        client.onDisconnected = { _, _ -> retired = true }
+        try {
+            runCurrent(); open(); listeners.last().onMessage(socket, ack()); runCurrent()
+            val generation = client.currentGeneration()!!
+            client.forceReconnectNow(bypassDebounce = true)
+            assertTrue(retired); assertNull(client.currentGeneration())
+            assertFalse(client.sendInputReceipt(generation, buildJsonObject { put("type", "continuous_input_status") }))
+            assertFalse(client.sendJson(buildJsonObject { put("type", "command_result") }))
+        } finally { job.cancelAndJoin() }
+    }
+
+    @Test fun peerClosingFencesInputWithoutWaitingForCloseAcknowledgement() = runTest {
+        val job = launch { client.connect() }
+        var retired = false
+        client.onDisconnected = { _, _ -> retired = true }
+        try {
+            runCurrent(); open(); listeners.last().onMessage(socket, ack()); runCurrent()
+            listeners.last().onClosing(socket, 1001, "maintenance")
+            assertTrue(retired); assertNull(client.currentGeneration()); assertFalse(client.isConnected)
+        } finally { job.cancelAndJoin() }
+    }
+
     @Test fun transportOpenDoesNotAnnounceOrSendApplicationTraffic() = runTest {
         val job = launch { client.connect() }
         try {
