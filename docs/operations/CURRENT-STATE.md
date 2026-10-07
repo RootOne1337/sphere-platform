@@ -8,7 +8,7 @@
 в отдельном30s elevated окне C:−235 745 280B / VSS allocation+234 881 024B
 (99,63%). Это механизм конкретного эпизода, не writer всего8h или всей истории.
 Проверен drift ранее одобренного VSS max8GiB→19,06GiB; повторное применение
-8GiB освободило16,305GiB на C: и удалило две inspected restore copies. Отдельные
+8GiB освободило16,304GiB на C: и удалило две inspected restore copies. Отдельные
 ~20GiB до этого освободил сам оператор удалением постороннего файла.
 39 owned Docker images удалены с all46 epoch guards/rollback preservation,
 guest reclaimed11,890GiB; host VHD length/allocation234 731 077 632B сохраняются.

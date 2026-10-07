@@ -67,7 +67,7 @@ the exact resulting maximum was verified as **8,589,934,592 bytes**.
 | VSS used bytes | 16,999,628,800 | 0 |
 | Restore copy count | 2 | 0 |
 
-Our measured free-space increase is **17,506,820,096 bytes / 16.305 GiB**.
+Our measured free-space increase is **17,506,820,096 bytes / 16.304 GiB**.
 **Both inspected restore copies were removed by the quota reduction.**
 System Restore was not disabled; there was no fallback global snapshot deletion,
 Docker restart, rollback of project data or deletion of ordinary user files.
