@@ -110,7 +110,7 @@ function DashboardShell({ children }: { children: React.ReactNode }) {
       />
 
       <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
-        <header className="z-30 flex h-16 shrink-0 items-center justify-between gap-1 border-b border-border bg-card/95 px-2 backdrop-blur sm:gap-4 sm:px-6 lg:px-8">
+        <header className="z-30 flex h-16 shrink-0 items-center justify-between gap-1 border-b border-border bg-card/95 px-2 backdrop-blur sm:gap-4 sm:px-6 lg:px-8 [@media(max-height:500px)]:h-12">
           <div className="flex min-w-0 items-center gap-1 sm:gap-3">
             <Button type="button" variant="ghost" size="icon" className="h-9 w-9 shrink-0" aria-label="Вернуться на предыдущую страницу"
               disabled={pathname === '/dashboard' && !hasPreviousRoute()}

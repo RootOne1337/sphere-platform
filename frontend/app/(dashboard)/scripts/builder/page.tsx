@@ -473,9 +473,9 @@ function BuilderInner({ editId, storageKey }: { editId: string | null; storageKe
     label: edge.sourceHandle === 'failure' ? 'Ошибка' : edge.sourceHandle === 'true_branch' ? 'Да' : edge.sourceHandle === 'false_branch' ? 'Нет' : undefined,
     labelStyle: { fontSize: 10, fill: 'hsl(var(--foreground))' }, labelBgStyle: { fill: 'hsl(var(--card))', fillOpacity: 1 }, labelBgPadding: [6, 4] as [number, number], labelBgBorderRadius: 5,
   }));
-  return <section aria-label="Script Studio" hidden={!canRead} inert={!canRead} aria-hidden={!canRead || undefined} className={`studio-workspace ${canRead ? 'flex' : 'hidden'} h-[calc(100dvh-4rem)] min-h-0 min-w-0 flex-col overflow-hidden bg-background`}>
+  return <section aria-label="Script Studio" hidden={!canRead} inert={!canRead} aria-hidden={!canRead || undefined} className={`studio-workspace ${canRead ? 'flex' : 'hidden'} h-[calc(100dvh-4rem)] min-h-0 min-w-0 flex-col overflow-hidden bg-background [@media(max-height:500px)]:h-[calc(100dvh-3rem)]`}>
     <header className="shrink-0 border-b bg-card">
-      <div className="flex items-center justify-between gap-2 px-3 py-2 sm:px-4 sm:py-3">
+      <div className="flex items-center justify-between gap-2 px-3 py-2 sm:px-4 sm:py-3 [@media(max-height:500px)]:py-1">
         <div className="flex min-w-0 flex-1 items-center gap-2 sm:gap-3"><Button variant="ghost" size="icon" className="shrink-0" aria-label="К каталогу сценариев" onClick={leave}><ArrowLeft className="size-4" /></Button>
           <div className="min-w-0 flex-1"><div className="mb-1 hidden flex-wrap items-center gap-2 sm:flex [@media(max-height:500px)]:hidden text-[10px] font-medium uppercase tracking-[.14em] text-muted-foreground"><Workflow className="size-3 shrink-0 text-primary" />Script Studio <span className="rounded border px-1.5 py-0.5 tracking-normal">DAG 1.0</span></div>
             <label className="sr-only" htmlFor="studio-name">Название сценария</label><Input id="studio-name" value={document.name} maxLength={255} readOnly={!writable} className="h-8 max-w-xl border-transparent bg-transparent px-0 text-lg font-semibold shadow-none hover:border-border focus:px-2" onChange={event => changeDocument({ ...document, name: event.target.value })} /></div>
@@ -502,9 +502,9 @@ function BuilderInner({ editId, storageKey }: { editId: string | null; storageKe
           <Button size="sm" variant="outline" aria-label={palette ? 'Скрыть библиотеку действий' : 'Показать библиотеку действий'} aria-pressed={palette} onClick={() => setPalette(value => !value)}>{palette ? <PanelLeftClose className="mr-2 size-3.5" /> : <PanelLeftOpen className="mr-2 size-3.5" />}Действия</Button>
           <Button size="sm" variant={workspace === 'device' ? 'secondary' : 'outline'} aria-pressed={workspace === 'device'} onClick={() => { if (workspace === 'device' && workbenchGuard.current && !workbenchGuard.current()) return; setWorkspace(workspace === 'device' ? 'design' : 'device'); setMobilePanel(workspace === 'device' ? 'canvas' : 'device'); }}><Monitor className="mr-2 size-3.5" />{workspace === 'device' ? 'Закрыть устройство' : 'Устройство · запись · проверка'}</Button>
         </div>
-      </div>
-      <div hidden={wide} style={{ display: wide ? 'none' : undefined }} role="group" aria-label="Панели редактора" className="grid grid-cols-4 gap-1 border-t px-2 py-1">
+        <div hidden={wide} style={{ display: wide ? 'none' : undefined }} role="group" aria-label="Панели редактора" className="grid min-w-[min(20rem,100%)] flex-1 grid-cols-4 gap-1">
         {([{ id: 'canvas', label: mode === 'graph' ? 'Схема' : 'JSON', Icon: Workflow }, { id: 'actions', label: 'Действия', Icon: Plus }, { id: 'inspector', label: 'Параметры', Icon: Settings2 }, { id: 'device', label: 'Устройство', Icon: Monitor }] as const).map(panel => <Button key={panel.id} size="sm" variant={mobilePanel === panel.id ? 'secondary' : 'ghost'} className="h-11 min-w-0 flex-col gap-1 px-1 text-[10px]" aria-label={`Панель: ${panel.label}`} aria-pressed={mobilePanel === panel.id} onClick={() => { setToolsOpen(false); if (panel.id === 'device') setWorkspace('device'); setMobilePanel(panel.id); }}><panel.Icon className="size-3.5" />{panel.label}</Button>)}
+        </div>
       </div>
       {!canWrite && <p role="status" className="px-4 pb-2 text-xs text-muted-foreground">Исходник доступен для чтения и проверки. Права записи не подтверждены.</p>}
     </header>
