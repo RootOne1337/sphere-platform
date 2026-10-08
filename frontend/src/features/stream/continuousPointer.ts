@@ -9,7 +9,7 @@ export const CONTINUOUS_POINTER_LIMITS = Object.freeze({
 export type ContinuousPointerState = 'idle' | 'opening' | 'ready' | 'closing' | 'fenced' | 'closed' | 'destroyed';
 type Point = { x: number; y: number };
 type Pointer = Point & { id: number; gesture: number };
-type Pending = { sequence: number; action: number; at: number };
+type Pending = { sequence: number; action: number; at: number; deadlineAt?: number };
 type Session = { session: string; owner: string };
 export interface PointerTransport {
   readonly readyState: number;
@@ -156,6 +156,9 @@ export class ContinuousPointer {
     if (message.stage === 'startup') {
       if (this.stateValue === 'ready' && message.origin === 'injector' && message.status === 0 && message.sequence === 0) return false;
       if (this.stateValue === 'opening' && message.origin === 'injector' && message.status === 0 && message.sequence === 0) {
+        // Only keepalives can be sent before STARTUP0. Cold root startup has its own
+        // deadline; their receipt deadline starts at READY, while RTT retains send time.
+        this.pending = this.pending.map(p => ({ ...p, deadlineAt: this.now() }));
         this.transition('ready'); return true;
       }
       this.retire('invalid_startup_receipt'); return false;
@@ -243,7 +246,7 @@ export class ContinuousPointer {
     }
     this.lastTickAt = now;
     if ((this.stateValue === 'opening' && now - this.openedAt >= CONTINUOUS_POINTER_LIMITS.startupMs)
-      || (this.pending.length > 0 && now - this.pending[0].at >= CONTINUOUS_POINTER_LIMITS.receiptMs)
+      || (this.stateValue === 'ready' && this.pending.length > 0 && now - (this.pending[0].deadlineAt ?? this.pending[0].at) >= CONTINUOUS_POINTER_LIMITS.receiptMs)
       || (this.terminal && now - this.terminal.at >= CONTINUOUS_POINTER_LIMITS.receiptMs)) {
       this.retire('native_receipt_timeout'); return;
     }

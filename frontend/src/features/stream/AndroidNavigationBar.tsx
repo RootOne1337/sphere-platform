@@ -26,6 +26,7 @@ const EDIT_KEYS = [
 ] as const;
 type Receipt = { state: 'idle' } | { state: 'sending'; label: string }
   | { state: 'confirmed'; label: string; elapsedMs: number }
+  | { state: 'not_sent'; label: string; message: string }
   | { state: 'unknown'; label: string; message: string };
 interface CommandSession {
   deviceId: string;
@@ -35,11 +36,13 @@ interface CommandSession {
   observation: { requestId: string; input: StreamInput; notify: (event: AcknowledgedControl) => void } | null;
 }
 
-export function AndroidNavigationBar({ deviceId, available, isAvailable, extended = false, getFrameDimensions, onControlCommand }: {
+export function AndroidNavigationBar({ deviceId, available, isAvailable, prepareCommand, extended = false, getFrameDimensions, onControlCommand }: {
   deviceId: string;
   available: boolean;
   /** Recheck transport at the action boundary, even before React rerenders. */
   isAvailable: () => boolean;
+  /** Pause continuous input and wait for native release before a discrete command. Never retry unknown input. */
+  prepareCommand?: () => ((confirmed: boolean) => void) | Promise<((confirmed: boolean) => void) | null> | null;
   extended?: boolean;
   getFrameDimensions?: () => StreamFrameDimensions | null;
   onControlCommand?: (event: AcknowledgedControl) => void;
@@ -48,6 +51,8 @@ export function AndroidNavigationBar({ deviceId, available, isAvailable, extende
   const sessionRef = useRef<CommandSession | null>(null);
   const [receipt, setReceipt] = useState<Receipt>({ state: 'idle' });
   const [draft, setDraft] = useState('');
+  const admissionRef = useRef({ available, isAvailable, prepareCommand });
+  admissionRef.current = { available, isAvailable, prepareCommand };
 
   useEffect(() => {
     const session: CommandSession = { deviceId, token: accessToken, disposed: false, controller: null, observation: null };
@@ -68,32 +73,45 @@ export function AndroidNavigationBar({ deviceId, available, isAvailable, extende
 
   const sendCommand = async (command: string, label: string, action: AndroidControlCommand, clearDraft = false) => {
     const session = sessionRef.current;
-    if (!available || !isAvailable() || !session || session.disposed || session.controller
+    if (!admissionRef.current.available || !admissionRef.current.isAvailable() || !session || session.disposed || session.controller
       || session.deviceId !== deviceId || session.token !== accessToken) return;
     const controller = new AbortController();
     // Lock synchronously: two clicks in one React batch must not send twice.
     session.controller = controller;
     setReceipt({ state: 'sending', label });
     const started = performance.now();
-    const dimensions = getFrameDimensions?.();
-    if (onControlCommand && dimensions) {
-      // Observers never control command execution or turn an APK success into
-      // an apparent failure. Pass copies so a consumer cannot rewrite a reply.
-      const observer = onControlCommand;
-      const notify = (event: AcknowledgedControl) => {
-        try { observer({ ...event, input: { ...event.input, dimensions: { ...event.input.dimensions }, command: { ...event.input.command } } }); } catch { /* Local recording cannot revoke Android input. */ }
-      };
-      session.observation = { requestId: crypto.randomUUID(), input: { deviceId, at: started, dimensions: { ...dimensions }, command: { ...action } }, notify };
-      notify({ requestId: session.observation.requestId, input: session.observation.input, phase: 'submitted' });
-    }
+    let prepared: ((confirmed: boolean) => void) | null = null;
+    let confirmed = false;
+    let submitted = false;
     try {
+      const prepare = admissionRef.current.prepareCommand;
+      const admission = prepare?.();
+      prepared = admission instanceof Promise ? await admission : admission ?? null;
+      if (prepare && !prepared) throw new Error('Касание Android не освобождено или связь изменилась.');
+      if (session.disposed || sessionRef.current !== session) return;
+      // `available` disables new clicks while the release render is pending.
+      // The already admitted command uses the latest transport/permission predicate.
+      if (!admissionRef.current.isAvailable()) throw new Error('Управление больше недоступно.');
+      const dimensions = getFrameDimensions?.();
+      if (onControlCommand && dimensions) {
+        // Observers never control command execution or turn an APK success into
+        // an apparent failure. Pass copies so a consumer cannot rewrite a reply.
+        const observer = onControlCommand;
+        const notify = (event: AcknowledgedControl) => {
+          try { observer({ ...event, input: { ...event.input, dimensions: { ...event.input.dimensions }, command: { ...event.input.command } } }); } catch { /* Local recording cannot revoke Android input. */ }
+        };
+        session.observation = { requestId: crypto.randomUUID(), input: { deviceId, at: started, dimensions: { ...dimensions }, command: { ...action } }, notify };
+        notify({ requestId: session.observation.requestId, input: session.observation.input, phase: 'submitted' });
+      }
       // Installed agents already support the acknowledged interactive SHELL
       // contract. Their flat WebSocket `keyevent` message is not supported.
+      submitted = true;
       const { data } = await api.post(`/devices/${encodeURIComponent(deviceId)}/shell`, {
         command,
       }, { signal: controller.signal, timeout: DEVICE_COMMAND_TIMEOUT.shell });
       if (session.disposed || sessionRef.current !== session) return;
       interactiveResult(data, 'output'); // Empty stdout is a valid completion.
+      confirmed = true;
       if (session.observation) {
         session.observation.notify({ requestId: session.observation.requestId, input: session.observation.input, phase: 'confirmed', completedAt: performance.now() });
         session.observation = null;
@@ -106,10 +124,11 @@ export function AndroidNavigationBar({ deviceId, available, isAvailable, extende
         session.observation.notify({ requestId: session.observation.requestId, input: session.observation.input, phase: 'unknown', completedAt: performance.now() });
         session.observation = null;
       }
-      setReceipt({ state: 'unknown', label, message: getApiErrorMessage(
+      setReceipt({ state: submitted ? 'unknown' : 'not_sent', label, message: getApiErrorMessage(
         error, error instanceof Error ? error.message : 'Нет подтверждённого результата команды.',
       ).slice(0, 500) });
     } finally {
+      prepared?.(confirmed || !submitted);
       if (!session.disposed && sessionRef.current === session) session.controller = null;
     }
   };
@@ -142,11 +161,12 @@ export function AndroidNavigationBar({ deviceId, available, isAvailable, extende
         {key.label}
       </Button>)}
     </div>
-    <p role={receipt.state === 'unknown' ? 'alert' : 'status'} aria-live="polite"
-      className={`break-words text-xs leading-5 ${receipt.state === 'unknown' ? 'text-destructive' : 'text-muted-foreground'}`}>
+    <p role={receipt.state === 'unknown' || receipt.state === 'not_sent' ? 'alert' : 'status'} aria-live="polite"
+      className={`break-words text-xs leading-5 ${receipt.state === 'unknown' || receipt.state === 'not_sent' ? 'text-destructive' : 'text-muted-foreground'}`}>
       {receipt.state === 'sending' ? `«${receipt.label}»: ожидаем ответ Android…`
         : receipt.state === 'confirmed' ? `«${receipt.label}»: выполнение подтверждено · ответ команды ${receipt.elapsedMs} мс. Это не задержка появления кадра.`
         : receipt.state === 'unknown' ? `«${receipt.label}»: результат не подтверждён. ${receipt.message} Автоповтора нет; проверьте экран перед новым нажатием.`
+        : receipt.state === 'not_sent' ? `«${receipt.label}»: команда не отправлена. ${receipt.message}`
         : available ? 'Клавиши работают и на неподвижном экране. Действие «Меню» зависит от приложения Android.'
         : 'Навигация доступна после первого видеокадра при активной связи без ошибки управления.'}
     </p>

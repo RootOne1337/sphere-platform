@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Copy, MousePointer2, RefreshCw, ScanSearch } from 'lucide-react';
+import { Copy, Eye, MousePointer2, RefreshCw, ScanSearch } from 'lucide-react';
 import { toast } from 'sonner';
 import { DeviceStream } from '@/components/sphere/DeviceStream';
 import { api } from '@/lib/api';
@@ -22,6 +22,7 @@ export function SingleDeviceStream({ deviceId, captureEnabled = false, onControl
   const { accessToken } = useAuthStore();
   const canInspect = access.can('device:write');
   const [inspect, setInspect] = useState(false);
+  const [viewOnly, setViewOnly] = useState(false);
   const [automatic, setAutomatic] = useState(true);
   const [visible, setVisible] = useState(() => typeof document === 'undefined' || document.visibilityState !== 'hidden');
   const [frameReport, setFrameReport] = useState<{ dimensions: StreamFrameDimensions; deviceId: string; token: string | null } | null>(null);
@@ -136,8 +137,9 @@ export function SingleDeviceStream({ deviceId, captureEnabled = false, onControl
   return <section className="min-w-0 space-y-3" aria-label="Видеопоток и инспектор Android">
     <div className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-border bg-card p-3">
       <div className="flex flex-wrap gap-2">
-        <Button variant={inspect ? 'outline' : 'default'} size="sm" aria-pressed={!inspect} onClick={() => { setInspect(false); invalidated(); }}><MousePointer2 className="mr-2 h-4 w-4" aria-hidden />Управление</Button>
-        <Button variant={inspect ? 'default' : 'outline'} size="sm" disabled={!canInspect} aria-pressed={inspect} onClick={() => { if (inspect) { void refresh(); return; } invalidated(); setInspect(true); setAutomatic(true); setError(null); }}><ScanSearch className="mr-2 h-4 w-4" aria-hidden />XPath-инспектор</Button>
+        <Button variant={!inspect && !viewOnly ? 'default' : 'outline'} size="sm" aria-pressed={!inspect && !viewOnly} onClick={() => { setInspect(false); setViewOnly(false); invalidated(); }}><MousePointer2 className="mr-2 h-4 w-4" aria-hidden />Управление</Button>
+        <Button variant={viewOnly ? 'default' : 'outline'} size="sm" aria-pressed={viewOnly} onClick={() => { setInspect(false); setViewOnly(true); invalidated(); }}><Eye className="mr-2 h-4 w-4" aria-hidden />Просмотр</Button>
+        <Button variant={inspect ? 'default' : 'outline'} size="sm" disabled={!canInspect} aria-pressed={inspect} onClick={() => { if (inspect) { void refresh(); return; } invalidated(); setViewOnly(false); setInspect(true); setAutomatic(true); setError(null); }}><ScanSearch className="mr-2 h-4 w-4" aria-hidden />XPath-инспектор</Button>
       </div>
       {inspect && <div className="flex flex-wrap items-center gap-2">
         <Button variant="outline" size="sm" aria-pressed={automatic} disabled={!canInspect} onClick={() => { setAutomatic(!automatic); if (!automatic) { void refresh(); } }}>Автообновление: {automatic ? 'включено' : 'пауза'}</Button>
@@ -150,8 +152,8 @@ export function SingleDeviceStream({ deviceId, captureEnabled = false, onControl
         <DeviceStream deviceId={deviceId} enableDiagnostics enableNavigation enableStaticInput
           onControlSent={onControlSent}
           onControlCommand={onControlCommand}
-          readOnly={controlDisabled || !access.can('stream:control')}
-          readOnlyReason={controlDisabled ? 'Управление временно заблокировано на время проверки задания или при неподтверждённом результате.' : undefined}
+          readOnly={viewOnly || controlDisabled || !access.can('stream:control')}
+          readOnlyReason={controlDisabled ? 'Управление временно заблокировано на время проверки задания или при неподтверждённом результате.' : viewOnly ? 'Выбран режим просмотра. Для нажатий выберите «Управление».' : undefined}
           onFrameDimensions={onFrame} onInspectionInvalidated={invalidateFrame}
           inspection={inspect ? { onPick: pick, bounds: highlight } : undefined} />
       </div>

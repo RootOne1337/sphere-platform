@@ -1,5 +1,9 @@
 # Непрерывный ввод: серверный контракт владения и доставки
 
+> Исторический checkpoint отдельного компонента до подключения routes.
+> Последующая [live integration](../audits/2026-10-08/CONTINUOUS-INPUT-LIVE-INTEGRATION.md)
+> и [текущее состояние](../operations/CURRENT-STATE.md) имеют отдельные результаты.
+
 Дата: **8 октября 2026**, Asia/Yekaterinburg. Статус: **проверенный отдельный
 source-компонент; не подключён к установленным WebSocket routes**. SF26-05
 остаётся OPEN; текущий веб3015 отправляет завершённый gesture после pointerup.

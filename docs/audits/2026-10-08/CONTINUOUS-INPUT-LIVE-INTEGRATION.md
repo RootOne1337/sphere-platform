@@ -1,7 +1,10 @@
 # Непрерывные жесты: подключение веба, сервера и APK
 
-Дата: 8 октября 2026, Asia/Yekaterinburg. Source checkpoint до установки;
-установленная приёмка будет записана отдельно. SF26-05 пока OPEN.
+Дата: 8 октября 2026, Asia/Yekaterinburg. Исторический source checkpoint.
+Runtime source `28104f8` и APK10249 уже установлены и проверены на PH011:
+[результаты живой приёмки](CONTINUOUS-INPUT-LIVE-ACCEPTANCE.md).
+Следующий UX этап убирает ручной переключатель: [автоматическое управление](CONTINUOUS-INPUT-AUTOMATIC-UX.md).
+SF26-05 пока OPEN. Ниже сохранено описание первоначального этапа.
 
 В выделенном viewer добавлен переключатель «Непрерывные жесты». После
 проверенного native offer, успешно показанного v2 кадра и injector STARTUP0
@@ -38,6 +41,19 @@ trajectory/native-pixel/XPath recording остаётся следующей от
 глобальная замена APK session, wrong tenant/epoch/dimensions/expiry/extra fields,
 second viewer exclusion и cleanup. Canvas regressions проверяют отсутствие
 двойного swipe, known release, blur, старый APK и границу recording.
+
+Финальные source проверки: 158 backend leaf cases, Ruff/mypy; 1825 frontend
+tests и full non-incremental TypeScript. Подписанный APK source `d8023bc` прошёл
+982 cases в каждом Dev/Enterprise variant: 979 passed, 3 skipped, failures/errors0.
+Canary flag включён именно в этих сборках. SHA-256 APK:
+`6b177bcbac3bb319597630f34f88956bc79a6e0e3261508c2fe09708b393b013`.
+Source backend `28104f8` дополнительно закрывает обнаруженный полным CI случай
+`type: []`, который раньше прерывал viewer: list/object/null/number теперь дают
+validation error, сохраняют сессию и последующую команду. Предыдущий полный CI
+source `cae8057`: 3314 passed, 1 failed, 37 skipped, 229 subtests; этот failed
+run не допускает установку API. Полный CI `28104f8` затем прошёл:
+3319 passed, 37 skipped, 229 subtests. Этот источник установлен;
+проверенный APK и независимый Android View подтвердили MOVE до UP.
 
 Не заявляются zero latency, frame-exact синхронизация, 20–30 physical FPS,
 overnight/fleet soak или recovery после Redis replacement. ACK в UI показывает

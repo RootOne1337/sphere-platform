@@ -4,6 +4,23 @@
 **Область:** исходники и документация ветки PR #19, записанные runtime-наблюдения, Android APK и готовность следующего прогона.<br />
 **Канонический документ текущего состояния:** этот файл. Исторические отчёты ниже сохраняют исходные даты и факты.
 
+**8 октября, 05:26–05:40 UTC+5 — непрерывные жесты PH011 установлены и проверены.**
+Reviewed API/UI `28104f8` на3015; pilotAPK **1.2.49-dev/10249**, source `d8023bc`,
+адресно установлен толькоPH011. Прямой live WebSocket и независимый Android View
+подтвердили пять MOVE приUP0; браузерный drag дал дельтуDOWN1/MOVE5/UP1/CANCEL0.
+Пользователь подтвердил работу. «Домой» подтверждено после known native release.
+Полный CI: backend3319passed/37skipped/229subtests; frontend1825/137suites;
+APK979passed/3skipped в каждом Dev/Enterprise. PH02510248, остальные APK сохранены;
+normalOTA не продвигался. SF26-05OPEN, ledger9accepted/41open.
+[Установленная приёмка и ограничения](../audits/2026-10-08/CONTINUOUS-INPUT-LIVE-ACCEPTANCE.md).
+
+**Следующий UX source:** отдельный переключатель убран, обычное «Управление»
+автоматически включает native gestures; Home/keyboard ждут RELEASE3, колесо
+использует тот же owner. На3015 этот UX ещё не установлен.
+[Поведение и регрессии](../audits/2026-10-08/CONTINUOUS-INPUT-AUTOMATIC-UX.md).
+
+### Историческая установленная приёмка до continuous canary
+
 **8 октября, около04:10 UTC+5 — PH025: исправление static reconnect установлено и проверено.**
 На3015 reviewed UI `fcdc547`; API `a41c4e6` сохранён. APK **1.2.48-dev /10248**,
 source `c62ded6`, адресно установлен через recovery grants на **PH011 и PH025**:

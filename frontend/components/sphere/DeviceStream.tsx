@@ -108,6 +108,16 @@ export function DeviceStream({
   const lastContinuousReceiptAt = useRef(-Infinity);
   const continuousAllowedRef = useRef(false);
   const continuousPointRef = useRef<(x: number, y: number, clamp: boolean) => { x: number; y: number } | null>(() => null);
+  const automaticProbeRef = useRef<WebSocket | null>(null);
+  const discreteBusyRef = useRef(false);
+  const releaseWaiterRef = useRef<{ controller: ContinuousPointer; finish: (known: boolean) => void } | null>(null);
+  const wheelUpTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [discreteBusy, setDiscreteBusy] = useState(false);
+  const [controlSession, setControlSession] = useState(0);
+  const continuousSupportedRef = useRef(false);
+  const continuousFaultRef = useRef(false);
+  const [continuousFault, setContinuousFault] = useState(false);
+  const [surfaceActive, setSurfaceActive] = useState(() => typeof document !== 'undefined' && !document.hidden);
   const [continuousState, setContinuousState] = useState<ContinuousPointerState | 'probing'>('idle');
   const [continuousReason, setContinuousReason] = useState<string | null>(null);
   const [continuousReceipt, setContinuousReceipt] = useState<{ action: number; sequence: number; ms: number } | null>(null);
@@ -137,17 +147,17 @@ export function DeviceStream({
   const currentFrameOwned = hasRenderedFrame && !streamError
     && wsRef.current?.readyState === WebSocket.OPEN
     && renderedSocketRef.current === wsRef.current;
-  const canInteract = !inspection && !readOnly && currentFrameOwned && (connection === 'live'
+  const canInteract = surfaceActive && !continuousFault && !discreteBusy && !inspection && !readOnly && currentFrameOwned && (connection === 'live'
     || (enableStaticInput && connection === 'stale'));
   const canSelectElement = !!inspection && currentFrameOwned && (connection === 'live'
     || (enableStaticInput && connection === 'stale'));
   const canSaveFrame = currentFrameOwned && connection === 'live';
-  const continuousBusy = !['idle', 'closed', 'destroyed'].includes(continuousState);
+  const continuousBusy = !['idle', 'probing', 'closed', 'destroyed'].includes(continuousState);
   const continuousRecording = !!onControlSent || !!onControlCommand;
   continuousAllowedRef.current = canInteract && !continuousRecording && continuousRequestedRef.current;
   // Age is not a disconnect: an idle ImageReader can retain its last picture.
   // A new socket/decoder still needs its own first frame before accepting input.
-  const canNavigate = !inspection && !readOnly && hasRenderedFrame && !streamError
+  const canNavigate = surfaceActive && !continuousFault && !inspection && !readOnly && hasRenderedFrame && !streamError
     && (connection === 'live' || connection === 'stale')
     && renderedSocketRef.current === wsRef.current;
   const onFrameDimensionsRef = useRef(onFrameDimensions);
@@ -160,6 +170,18 @@ export function DeviceStream({
     lastFrameDimensionsRef.current = null;
     dragRef.current = null;
   }, [deviceId]);
+  useEffect(() => {
+    const focus = () => setSurfaceActive(!document.hidden);
+    const blur = () => setSurfaceActive(false);
+    window.addEventListener('focus', focus);
+    window.addEventListener('blur', blur);
+    document.addEventListener('visibilitychange', focus);
+    return () => {
+      window.removeEventListener('focus', focus);
+      window.removeEventListener('blur', blur);
+      document.removeEventListener('visibilitychange', focus);
+    };
+  }, []);
 
   useEffect(() => {
     // Defer WS creation by one tick to avoid React StrictMode double-invoke.
@@ -181,6 +203,16 @@ export function DeviceStream({
     continuousDisposeRef.current = null;
     continuousRef.current = null;
     continuousRequestedRef.current = false;
+    automaticProbeRef.current = null;
+    continuousSupportedRef.current = false;
+    continuousFaultRef.current = false;
+    setContinuousFault(false);
+    discreteBusyRef.current = false;
+    setDiscreteBusy(false);
+    releaseWaiterRef.current?.finish(false);
+    releaseWaiterRef.current = null;
+    if (wheelUpTimerRef.current) clearTimeout(wheelUpTimerRef.current);
+    wheelUpTimerRef.current = null;
     setContinuousState('idle');
     setContinuousReason(null);
     setContinuousReceipt(null);
@@ -261,6 +293,11 @@ export function DeviceStream({
         newWs.binaryType = 'arraybuffer';
         ws = newWs;
         wsRef.current = newWs;
+        automaticProbeRef.current = null;
+        continuousSupportedRef.current = false;
+        continuousFaultRef.current = false;
+        setContinuousFault(false);
+        setContinuousReason(null);
         let ended = false;
         let lastReceived = Date.now();
         let opened = false;
@@ -285,6 +322,12 @@ export function DeviceStream({
         const finish = (retry: boolean, terminalMessage?: string) => {
           if (ended) return;
           ended = true;
+          releaseWaiterRef.current?.finish(false);
+          releaseWaiterRef.current = null;
+          discreteBusyRef.current = false;
+          setDiscreteBusy(false);
+          if (wheelUpTimerRef.current) clearTimeout(wheelUpTimerRef.current);
+          wheelUpTimerRef.current = null;
           continuousDisposeRef.current?.();
           continuousDisposeRef.current = null;
           continuousRef.current = null;
@@ -338,6 +381,13 @@ export function DeviceStream({
             try {
               const msg = JSON.parse(evt.data);
               if (msg.type === 'touch_capability' && continuousRequestedRef.current && !continuousRef.current) {
+                if (!continuousAllowedRef.current || discreteBusyRef.current || dragRef.current) {
+                  // A capability probe has no owner. Never change input paths midway through a legacy drag.
+                  continuousRequestedRef.current = false;
+                  setContinuousState('idle');
+                  setContinuousReason('Дискретное управление · текущий жест завершается без смены режима.');
+                  return;
+                }
                 const capture = decoder?.lastRenderedCapture;
                 if (!capture || msg.capture_epoch !== capture.captureEpoch || msg.frame_width !== capture.frameWidth
                   || msg.frame_height !== capture.frameHeight) {
@@ -351,8 +401,20 @@ export function DeviceStream({
                   onState: (state, reason) => {
                     if (ignore || ended || newWs !== wsRef.current) return;
                     setContinuousState(state);
-                    if (reason) setContinuousReason('Жесты остановлены: связь, фокус или подтверждение Android потеряны.');
-                    if (state === 'closed') continuousRequestedRef.current = false;
+                    if (reason && !['viewer_closed', 'surface_blur', 'surface_hidden', 'surface_control_lost', 'control_mode_changed', 'capture_or_socket_lost'].includes(reason)) {
+                      continuousFaultRef.current = true;
+                      setContinuousFault(true);
+                      setContinuousReason('Управление приостановлено: Android не подтвердил команду. Повтора нет. Проверьте экран перед восстановлением.');
+                    }
+                    if (state === 'closed') {
+                      continuousRequestedRef.current = false;
+                      if (!continuousFaultRef.current) {
+                        setContinuousReason(null);
+                        automaticProbeRef.current = null;
+                      }
+                      const waiting = releaseWaiterRef.current;
+                      if (waiting?.controller === controller) waiting.finish(true);
+                    }
                   },
                   onReceipt: receipt => {
                     if (ignore || ended || newWs !== wsRef.current) return;
@@ -363,6 +425,7 @@ export function DeviceStream({
                       ms: Math.round(receipt.receiptRoundTripMs) });
                   },
                 });
+                continuousSupportedRef.current = true;
                 continuousRef.current = controller;
                 continuousDisposeRef.current = attachContinuousPointer({ canvas, controller,
                   allowed: () => continuousAllowedRef.current,
@@ -382,7 +445,13 @@ export function DeviceStream({
                   continuousRequestedRef.current = false;
                   setContinuousState('idle');
                 }
-                setContinuousReason('Жесты недоступны или остановлены сервером. Видеопоток продолжается.');
+                if (continuousRef.current) {
+                  continuousFaultRef.current = true;
+                  setContinuousFault(true);
+                }
+                setContinuousReason(continuousRef.current
+                  ? 'Управление приостановлено сервером. Видеопоток продолжается; команды не повторяются.'
+                  : 'Дискретное управление · сервер не подтвердил непрерывные жесты.');
                 return;
               }
               if (msg.type === 'ping' && newWs.readyState === WebSocket.OPEN) {
@@ -424,7 +493,7 @@ export function DeviceStream({
             if (continuousRequestedRef.current && !continuousRef.current) {
               continuousRequestedRef.current = false;
               setContinuousState('idle');
-              setContinuousReason('APK не подтвердил поддержку жестов. Требуется обновлённый canary APK.');
+              setContinuousReason('Дискретное управление · APK не подтвердил непрерывные жесты.');
             }
           }, 6000);
         };
@@ -440,6 +509,10 @@ export function DeviceStream({
       continuousRef.current = null;
       continuousRequestedRef.current = false;
       continuousProbeArmRef.current = null;
+      releaseWaiterRef.current?.finish(false);
+      releaseWaiterRef.current = null;
+      if (wheelUpTimerRef.current) clearTimeout(wheelUpTimerRef.current);
+      wheelUpTimerRef.current = null;
       clearTimeout(probeTimer);
       dragRef.current = null;
       clearTimeout(timer);
@@ -453,7 +526,7 @@ export function DeviceStream({
       decoder?.destroy();
       decoderRef.current = null;
     };
-  }, [deviceId, accessToken]);
+  }, [deviceId, accessToken, controlSession]);
 
   useEffect(() => {
     if (!enableDiagnostics || !diagnosticsOpen) return;
@@ -540,10 +613,9 @@ export function DeviceStream({
 
   // ── pointer down — begin drag / tap ─────────────────────────────────────
   continuousPointRef.current = toCanvasCoords;
-  const toggleContinuous = () => {
+  const beginContinuous = () => {
     const controller = continuousRef.current;
     if (controller && !['closed', 'destroyed'].includes(controller.state)) {
-      controller.close();
       return;
     }
     if (!canInteract || continuousRecording || !wsRef.current || wsRef.current.readyState !== WebSocket.OPEN) return;
@@ -560,12 +632,73 @@ export function DeviceStream({
     continuousProbeArmRef.current?.();
   };
   useEffect(() => {
+    if (inspection || readOnly || continuousRecording) {
+      automaticProbeRef.current = null;
+      if (!continuousRef.current) {
+        continuousRequestedRef.current = false;
+        if (continuousState === 'probing') setContinuousState('idle');
+      }
+      return;
+    }
+    const socket = wsRef.current;
+    if (!enableNavigation || !canInteract || continuousFaultRef.current || discreteBusyRef.current || !socket
+      || automaticProbeRef.current === socket || !decoderRef.current?.lastRenderedCapture
+      || continuousRef.current && !['closed', 'destroyed'].includes(continuousRef.current.state)) return;
+    automaticProbeRef.current = socket;
+    beginContinuous();
+    // A single capability attempt per owned video/mode; never replay a failed gesture.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [canInteract, enableNavigation, inspection, readOnly, continuousRecording, discreteBusy, continuousState]);
+
+  const prepareDiscreteInput = (): ((confirmed: boolean) => void) | Promise<((confirmed: boolean) => void) | null> | null => {
+    const socket = wsRef.current;
+    const controller = continuousRef.current;
+    if (!canNavigate || discreteBusyRef.current || !socket || socket.readyState !== WebSocket.OPEN
+      || controller && !['ready', 'closed', 'destroyed'].includes(controller.state)) return null;
+    discreteBusyRef.current = true;
+    setDiscreteBusy(true);
+    continuousRequestedRef.current = false;
+    const finish = (confirmed: boolean) => {
+      if (wsRef.current !== socket) return;
+      discreteBusyRef.current = false;
+      setDiscreteBusy(false);
+      if (confirmed && controller) automaticProbeRef.current = null;
+      if (!confirmed) {
+        continuousFaultRef.current = true;
+        setContinuousFault(true);
+        setContinuousReason('Результат команды не подтверждён. Проверьте экран перед продолжением управления.');
+      }
+    };
+    if (!controller || ['closed', 'destroyed'].includes(controller.state)) {
+      if (continuousState === 'probing') setContinuousState('idle');
+      return finish;
+    }
+    return new Promise(resolve => {
+      let settled = false;
+      const timeout = setTimeout(() => waiting.finish(false), 3000);
+      const waiting = { controller, finish: (known: boolean) => {
+        if (settled) return;
+        settled = true;
+        clearTimeout(timeout);
+        if (releaseWaiterRef.current === waiting) releaseWaiterRef.current = null;
+        if (known && wsRef.current === socket) resolve(finish);
+        else { setContinuousState('fenced'); finish(false); resolve(null); }
+      } };
+      releaseWaiterRef.current = waiting;
+      controller.close(); // The HTTP command waits for native RELEASE3, never a timeout or Redis acceptance.
+    });
+  };
+  useEffect(() => {
     if (inspection || readOnly || continuousRecording) continuousRef.current?.retire('control_mode_changed');
   }, [inspection, readOnly, continuousRecording]);
 
   const handlePointerDown = useCallback(
     (e: React.PointerEvent<HTMLCanvasElement>) => {
-      if (continuousRequestedRef.current || continuousRef.current && !['closed', 'destroyed'].includes(continuousRef.current.state)) return;
+      // Inspection only selects a frame; it never injects Android input. Recording
+      // may use discrete input again after this controller's known native release.
+      if (!inspection && (discreteBusyRef.current || continuousFaultRef.current
+        || continuousSupportedRef.current && !continuousRecording
+        || continuousRef.current && !['closed', 'destroyed'].includes(continuousRef.current.state))) return;
       if (!(canInteract || canSelectElement) || wsRef.current?.readyState !== WebSocket.OPEN
         || renderedSocketRef.current !== wsRef.current) {
         dragRef.current = null;
@@ -581,7 +714,7 @@ export function DeviceStream({
       };
       e.currentTarget.setPointerCapture(e.pointerId);
     },
-    [canInteract, canSelectElement, inspection, toCanvasCoords],
+    [canInteract, canSelectElement, inspection, continuousRecording, toCanvasCoords],
   );
 
   // ── pointer up — tap or swipe ────────────────────────────────────────────
@@ -629,7 +762,9 @@ export function DeviceStream({
   }, []);
 
   const handleWheel = useCallback((e: WheelEvent) => {
-    if (continuousRequestedRef.current || continuousRef.current && !['closed', 'destroyed'].includes(continuousRef.current.state)) return;
+    const continuous = continuousRef.current;
+    if (discreteBusyRef.current || continuousFaultRef.current || continuousSupportedRef.current && !continuousRecording && continuous?.state !== 'ready'
+      || continuous && !['ready', 'closed', 'destroyed'].includes(continuous.state)) return;
     // Wheel control belongs to the selected-device view. Never intercept
     // browser zoom, inspection, a retained old socket frame or a held drag.
     const socket = wsRef.current;
@@ -642,6 +777,7 @@ export function DeviceStream({
     const delta = horizontal ? e.deltaX : e.deltaY;
     if (!delta) return;
     e.preventDefault();
+    if (continuous?.pointerHeld || wheelUpTimerRef.current) return;
     const at = performance.now();
     if (at - lastWheelAt.current < 250) return;
     lastWheelAt.current = at;
@@ -654,6 +790,18 @@ export function DeviceStream({
     const from = clamp(position + direction * distance / 2);
     const to = clamp(position - direction * distance / 2);
     if (from === to) return;
+    if (continuous?.state === 'ready') {
+      const start = { x: horizontal ? from : point.x, y: horizontal ? point.y : from };
+      const end = { x: horizontal ? to : point.x, y: horizontal ? point.y : to };
+      if (!continuous.down(0, start)) return;
+      continuous.moveTo(0, end);
+      wheelUpTimerRef.current = setTimeout(() => {
+        wheelUpTimerRef.current = null;
+        if (continuousRef.current === continuous && continuousAllowedRef.current) continuous.up(0, end);
+        else continuous.retire('wheel_control_lost');
+      }, 180);
+      return;
+    }
     socket.send(JSON.stringify({ type: 'swipe', x1: horizontal ? from : point.x, y1: horizontal ? point.y : from,
       x2: horizontal ? to : point.x, y2: horizontal ? point.y : to, duration_ms: 180 }));
     onControlSent?.({ deviceId, at, dimensions: { width: canvas.width, height: canvas.height }, command: { type: 'swipe', x1: horizontal ? from : point.x, y1: horizontal ? point.y : from,
@@ -692,13 +840,11 @@ export function DeviceStream({
     <div className={fit ? 'flex h-full w-full min-h-0 min-w-0 flex-col' : 'min-w-0'}>
     {readOnly && enableNavigation && <p role="status" className="border-b border-border bg-muted px-3 py-2 text-xs text-muted-foreground">Только просмотр · {readOnlyReason ?? 'роль не разрешает клики, жесты и навигацию Android.'}</p>}
     {enableNavigation && !inspection && !readOnly && <div className="flex shrink-0 flex-wrap items-center gap-2 border-b border-border bg-muted/30 px-3 py-2">
-      <button type="button" onClick={toggleContinuous} disabled={!canInteract || continuousRecording || ['probing', 'closing', 'fenced'].includes(continuousState)}
-        aria-pressed={continuousState === 'ready'} className="rounded-lg border border-border bg-background px-3 py-2 text-xs font-medium hover:bg-muted disabled:opacity-50">
-        {continuousState === 'ready' ? 'Отключить непрерывные жесты' : continuousState === 'probing' || continuousState === 'opening' ? 'Подключение жестов…' : 'Непрерывные жесты'}
-      </button>
-      <span role="status" className="text-xs text-muted-foreground">{continuousReason ?? (continuousRecording ? 'Запись использует отдельные завершённые действия' : continuousState === 'ready'
-        ? 'Зажмите и ведите мышь · отпускание завершает касание' : continuousState === 'closed' ? 'Касание Android освобождено' : 'Одна мышь · движение до отпускания')}
+      <span className={`h-2 w-2 shrink-0 rounded-full ${continuousState === 'ready' ? 'bg-emerald-500' : 'bg-muted-foreground'}`} aria-hidden />
+      <span role="status" className="text-xs text-muted-foreground">{continuousReason ?? (discreteBusy ? 'Клавиатура и навигация · ожидаем подтверждение Android' : continuousRecording ? 'Запись использует отдельные завершённые действия' : continuousState === 'ready'
+        ? 'Непрерывное управление · зажмите и ведите мышь' : continuousState === 'opening' ? 'Подключаем управление Android…' : continuousState === 'probing' ? 'Определяем возможности APK · обычные нажатия доступны' : continuousState === 'closed' ? 'Касание Android освобождено' : 'Управление Android')}
       {continuousReceipt && continuousState === 'ready' && ` · ACK №${continuousReceipt.sequence}: ${continuousReceipt.ms} мс`}</span>
+      {['fenced', 'closed'].includes(continuousState) && continuousReason && <button type="button" onClick={() => setControlSession(value => value + 1)} className="ml-auto rounded-lg border border-border px-3 py-2 text-xs hover:bg-muted">Восстановить управление</button>}
     </div>}
     {inputError && <div role="status" className="flex shrink-0 items-start justify-between gap-3 border-b border-amber-500/25 bg-amber-500/10 px-3 py-2 text-xs text-foreground">
       <p>{inputError}</p><button type="button" onClick={() => setInputError(null)} aria-label="Скрыть сообщение об отклонённой команде" className="shrink-0 rounded px-2 py-1 text-muted-foreground hover:bg-muted focus-visible:outline focus-visible:outline-2 focus-visible:outline-ring">Скрыть</button>
@@ -849,8 +995,9 @@ export function DeviceStream({
     )}
     </div>
     {enableNavigation && <AndroidNavigationBar key={deviceId} deviceId={deviceId} extended
-      available={canNavigate && !continuousBusy && wsRef.current?.readyState === WebSocket.OPEN}
-      isAvailable={() => canNavigate && !continuousRequestedRef.current && (!continuousRef.current || ['closed', 'destroyed'].includes(continuousRef.current.state)) && wsRef.current?.readyState === WebSocket.OPEN}
+      available={canNavigate && (!continuousBusy || continuousState === 'ready') && wsRef.current?.readyState === WebSocket.OPEN}
+      prepareCommand={prepareDiscreteInput}
+      isAvailable={() => canNavigate && !continuousFaultRef.current && (!continuousRef.current || ['ready', 'closed', 'destroyed'].includes(continuousRef.current.state)) && wsRef.current?.readyState === WebSocket.OPEN}
       onControlCommand={onControlCommand}
       getFrameDimensions={() => {
         const canvas = canvasRef.current;

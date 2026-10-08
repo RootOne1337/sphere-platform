@@ -1,5 +1,6 @@
 import { act, fireEvent, render } from '@testing-library/react';
 import { DeviceStream } from '@/components/sphere/DeviceStream';
+import { api } from '@/lib/api';
 
 let mockRenderFrame: ((frame: VideoFrame) => void) | null = null;
 let mockCapture: { captureEpoch: string; frameWidth: number; frameHeight: number } | null = null;
@@ -7,7 +8,7 @@ let mockCapture: { captureEpoch: string; frameWidth: number; frameHeight: number
 const TOUCH_EPOCH = '00112233-4455-6677-8899-aabbccddeeff';
 
 jest.mock('@/lib/store', () => ({ useAuthStore: () => ({ accessToken: 'fixture-token' }) }));
-jest.mock('@/lib/api', () => ({ api: { get: jest.fn() } }));
+jest.mock('@/lib/api', () => ({ api: { get: jest.fn(), post: jest.fn() } }));
 jest.mock('@/lib/h264-decoder', () => ({
   H264Decoder: class {
     constructor(onFrame: (frame: VideoFrame) => void) {
@@ -48,6 +49,7 @@ beforeEach(() => {
   jest.useFakeTimers();
   mockRenderFrame = null;
   mockCapture = null;
+  jest.mocked(api.post).mockReset().mockResolvedValue({ data: { output: '' } });
   MockSocket.instances = [];
   Object.defineProperty(global, 'WebSocket', { configurable: true, value: MockSocket });
   class TestPointerEvent extends MouseEvent {
@@ -93,14 +95,14 @@ function readyWheel() {
 }
 
 function readyContinuous() {
-  const view = readyWheel();
   mockCapture = { captureEpoch: TOUCH_EPOCH, frameWidth: 1280, frameHeight: 720 };
+  const view = readyWheel();
   const receive = (message: object) => act(() => view.socket.onmessage?.({ data: JSON.stringify(message) }));
   const sent = () => view.socket.send.mock.calls.map(([raw]) => JSON.parse(raw as string));
   const status = (sequence: number, status: number, stage = 'input') => receive({ type: 'continuous_input_status',
     session_id: 'viewer_session_fixture', owner: 'owner_session_fixture', capture_epoch: TOUCH_EPOCH,
     sequence, status, stage, origin: 'injector', device_uptime_ms: 100 });
-  fireEvent.click(view.getByRole('button', { name: 'Непрерывные жесты' }));
+  expect(sent().filter(x => x.type === 'touch_probe')).toHaveLength(1);
   receive({ type: 'touch_capability', capture_epoch: TOUCH_EPOCH, frame_width: 1280, frame_height: 720 });
   receive({ type: 'touch_session', session_id: 'viewer_session_fixture', owner: 'owner_session_fixture',
     capture_epoch: TOUCH_EPOCH, frame_width: 1280, frame_height: 720 });
@@ -110,7 +112,8 @@ function readyContinuous() {
 
 it('installed canvas integration sends MOVE before UP without a second legacy swipe', () => {
   const view = readyContinuous();
-  expect(view.getByRole('button', { name: 'Отключить непрерывные жесты' })).toHaveAttribute('aria-pressed', 'true');
+  expect(view.queryByRole('button', { name: /непрерывные жесты/i })).not.toBeInTheDocument();
+  expect(view.getByText(/Непрерывное управление/)).toBeInTheDocument();
   fireEvent.pointerDown(view.canvas, { clientX: 40, clientY: 50, pointerId: 1, button: 0, buttons: 1 });
   view.status(1, 1);
   fireEvent.pointerMove(view.canvas, { clientX: 60, clientY: 50, pointerId: 1, buttons: 1 });
@@ -120,18 +123,21 @@ it('installed canvas integration sends MOVE before UP without a second legacy sw
   fireEvent.pointerUp(view.canvas, { clientX: 55, clientY: 50, pointerId: 1, button: 0 });
   expect(view.sent().filter(x => x.type === 'touch_event').map(x => x.action)).toEqual([0, 2, 1]);
   expect(view.commands()).toEqual([]);
-  expect(view.getByRole('button', { name: 'Домой' })).toBeDisabled();
+  expect(view.getByRole('button', { name: 'Домой' })).toBeEnabled();
   view.unmount();
 });
 
-it('known native release restores discrete navigation and permits a new explicit session', () => {
+it('Home waits for native release and resumes continuous input only after the acknowledged key', async () => {
   const view = readyContinuous();
-  fireEvent.click(view.getByRole('button', { name: 'Отключить непрерывные жесты' }));
+  fireEvent.click(view.getByRole('button', { name: 'Домой' }));
   expect(view.sent().filter(x => x.type === 'touch_close')).toHaveLength(1);
-  view.status(0, 3, 'release');
+  expect(api.post).not.toHaveBeenCalled();
+  await act(async () => view.status(0, 3, 'release'));
+  expect(api.post).toHaveBeenCalledTimes(1);
+  expect(api.post).toHaveBeenCalledWith('/devices/gesture-remote/shell', { command: 'input keyevent 3' }, expect.anything());
   expect(view.getByRole('button', { name: 'Домой' })).not.toBeDisabled();
-  fireEvent.click(view.getByRole('button', { name: 'Непрерывные жесты' }));
   expect(view.sent().filter(x => x.type === 'touch_probe')).toHaveLength(2);
+  expect(view.queryByText(/связь, фокус/)).not.toBeInTheDocument();
   view.unmount();
 });
 
@@ -147,11 +153,13 @@ it('blur cancels ownership and never falls back to replaying a legacy drag', () 
 });
 
 it('old APK probe timeout preserves video and does not invent readiness', () => {
+  mockCapture = { captureEpoch: TOUCH_EPOCH, frameWidth: 1280, frameHeight: 720 };
   const view = readyWheel();
-  fireEvent.click(view.getByRole('button', { name: 'Непрерывные жесты' }));
+  view.down(1); view.up(1, 65);
+  expect(view.commands()).toHaveLength(1);
   act(() => jest.advanceTimersByTime(6000));
-  expect(view.getByText(/APK не подтвердил поддержку/)).toBeInTheDocument();
-  expect(view.getByRole('button', { name: 'Непрерывные жесты' })).not.toBeDisabled();
+  expect(view.getByText(/APK не подтвердил непрерывные жесты/)).toBeInTheDocument();
+  expect(view.queryByRole('button', { name: 'Непрерывные жесты' })).not.toBeInTheDocument();
   expect(view.canvas.width).toBe(1280);
   view.unmount();
 });
@@ -159,7 +167,129 @@ it('old APK probe timeout preserves video and does not invent readiness', () => 
 it('recording does not silently turn live motion into a successful reusable swipe', () => {
   const view = readyWheel();
   view.rerender(<DeviceStream deviceId="gesture-remote" fit="contain" enableStaticInput enableNavigation onControlSent={jest.fn()} />);
-  expect(view.getByRole('button', { name: 'Непрерывные жесты' })).toBeDisabled();
+  expect(view.getByText(/Запись использует отдельные завершённые действия/)).toBeInTheDocument();
+  view.unmount();
+});
+
+it('a late capability cannot replace the path midway through an already held legacy gesture', () => {
+  mockCapture = { captureEpoch: TOUCH_EPOCH, frameWidth: 1280, frameHeight: 720 };
+  const view = readyWheel();
+  view.down(1);
+  act(() => view.socket.onmessage?.({ data: JSON.stringify({ type: 'touch_capability', capture_epoch: TOUCH_EPOCH, frame_width: 1280, frame_height: 720 }) }));
+  view.up(1, 65);
+  expect(view.commands()).toHaveLength(1);
+  expect(view.socket.send.mock.calls.map(([raw]) => JSON.parse(raw as string)).filter(x => x.type === 'touch_open')).toHaveLength(0);
+  view.unmount();
+});
+
+it('wheel uses a bounded 180ms native gesture without legacy input or a second DOWN', () => {
+  const view = readyContinuous();
+  view.wheel();
+  view.status(1, 1);
+  act(() => jest.advanceTimersByTime(16)); view.status(2, 1);
+  fireEvent.pointerDown(view.canvas, { clientX: 30, clientY: 50, pointerId: 1, buttons: 1, button: 0 });
+  view.wheel();
+  expect(view.sent().filter(x => x.type === 'touch_event').map(x => x.action)).toEqual([0, 2]);
+  act(() => jest.advanceTimersByTime(164)); view.status(3, 1);
+  expect(view.sent().filter(x => x.type === 'touch_event').map(x => x.action)).toEqual([0, 2, 1]);
+  expect(view.sent().filter(x => x.type === 'touch_event').map(x => [x.x, x.y])).toEqual([[640,440],[640,280],[640,280]]);
+  expect(view.commands()).toEqual([]);
+  view.unmount();
+});
+
+it('losing focus cancels a pending wheel terminal rather than replaying it into a new session', () => {
+  const view = readyContinuous();
+  view.wheel(); view.status(1, 1);
+  fireEvent.blur(window);
+  act(() => jest.advanceTimersByTime(200));
+  expect(view.sent().filter(x => x.type === 'touch_event').map(x => x.action)).toEqual([0]);
+  expect(view.sent().filter(x => x.type === 'touch_close')).toHaveLength(1);
+  view.status(0, 3, 'release');
+  expect(view.sent().filter(x => x.type === 'touch_probe')).toHaveLength(1);
+  fireEvent.focus(window);
+  expect(view.sent().filter(x => x.type === 'touch_probe')).toHaveLength(2);
+  expect(view.commands()).toEqual([]);
+  view.unmount();
+});
+
+it('missing native release blocks Home, reports no dispatch and provides explicit recovery', async () => {
+  const view = readyContinuous();
+  fireEvent.click(view.getByRole('button', { name: 'Домой' }));
+  await act(async () => jest.advanceTimersByTime(3000));
+  expect(api.post).not.toHaveBeenCalled();
+  expect(view.getByRole('alert')).toHaveTextContent('команда не отправлена');
+  expect(view.getByRole('button', { name: 'Восстановить управление' })).toBeEnabled();
+  view.down(1); view.up(1,65);
+  expect(view.commands()).toEqual([]);
+  expect(view.sent().filter(x => x.type === 'touch_probe')).toHaveLength(1);
+  view.unmount();
+});
+
+it('unknown key completion does not reopen input or silently send a legacy gesture', async () => {
+  const view = readyContinuous();
+  jest.mocked(api.post).mockRejectedValueOnce(new Error('timeout'));
+  fireEvent.click(view.getByRole('button', { name: 'Домой' }));
+  await act(async () => view.status(0,3,'release'));
+  expect(api.post).toHaveBeenCalledTimes(1);
+  expect(view.getByRole('alert')).toHaveTextContent('результат не подтверждён');
+  expect(view.sent().filter(x => x.type === 'touch_probe')).toHaveLength(1);
+  view.down(1); view.up(1,65);
+  expect(view.commands()).toEqual([]);
+  view.unmount();
+});
+
+it('fresh permission at the native release boundary prevents a now forbidden Home dispatch', async () => {
+  const view = readyContinuous();
+  fireEvent.click(view.getByRole('button', { name: 'Домой' }));
+  view.rerender(<DeviceStream deviceId="gesture-remote" fit="contain" enableStaticInput enableNavigation readOnly />);
+  await act(async () => view.status(0,3,'release'));
+  expect(api.post).not.toHaveBeenCalled();
+  expect(view.getByRole('alert')).toHaveTextContent('команда не отправлена');
+  expect(view.sent().filter(x => x.type === 'touch_probe')).toHaveLength(1);
+  view.unmount();
+});
+
+it('inspection releases native ownership and only returning to control negotiates again', () => {
+  const view = readyContinuous();
+  const pick = jest.fn();
+  view.rerender(<DeviceStream deviceId="gesture-remote" fit="contain" enableStaticInput enableNavigation inspection={{onPick:pick,bounds:null}} />);
+  expect(view.sent().filter(x => x.type === 'touch_close')).toHaveLength(1);
+  view.status(0,3,'release');
+  view.down(1); view.up(1);
+  expect(pick).toHaveBeenCalledWith(640, 360, { width: 1280, height: 720 });
+  expect(view.sent().filter(x => x.type === 'touch_probe')).toHaveLength(1);
+  view.rerender(<DeviceStream deviceId="gesture-remote" fit="contain" enableStaticInput enableNavigation />);
+  expect(view.sent().filter(x => x.type === 'touch_probe')).toHaveLength(2);
+  expect(view.commands()).toEqual([]);
+  view.unmount();
+});
+
+it('switching a ready continuous session to recording waits for release then records a discrete action', () => {
+  const view = readyContinuous();
+  const record = jest.fn();
+  view.rerender(<DeviceStream deviceId="gesture-remote" fit="contain" enableStaticInput enableNavigation onControlSent={record} />);
+  view.down(1); view.up(1,65);
+  expect(view.commands()).toEqual([]);
+  view.status(0,3,'release');
+  view.down(2); view.up(2,65);
+  expect(view.commands()).toHaveLength(1);
+  expect(record).toHaveBeenCalledTimes(1);
+  expect(view.sent().filter(x => x.type === 'touch_probe')).toHaveLength(1);
+  view.wheel();
+  expect(view.commands()).toHaveLength(2);
+  expect(record).toHaveBeenCalledTimes(2);
+  expect(view.sent().filter(x => x.type === 'touch_event')).toHaveLength(0);
+  view.unmount();
+});
+
+it('switching to recording ignores a pending capability and never opens an invisible owner', () => {
+  mockCapture = { captureEpoch: TOUCH_EPOCH, frameWidth: 1280, frameHeight: 720 };
+  const view = readyWheel();
+  view.rerender(<DeviceStream deviceId="gesture-remote" fit="contain" enableStaticInput enableNavigation onControlSent={jest.fn()} />);
+  act(() => view.socket.onmessage?.({ data: JSON.stringify({ type:'touch_capability',capture_epoch:TOUCH_EPOCH,frame_width:1280,frame_height:720 }) }));
+  expect(view.socket.send.mock.calls.map(([raw]) => JSON.parse(raw as string)).filter(x=>x.type==='touch_open')).toHaveLength(0);
+  view.down(1);view.up(1,65);
+  expect(view.commands()).toHaveLength(1);
   view.unmount();
 });
 

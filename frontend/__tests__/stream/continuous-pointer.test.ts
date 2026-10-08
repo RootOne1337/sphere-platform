@@ -45,6 +45,46 @@ it('sends back-and-forth MOVE before UP, with native coordinates and one gesture
   expect(f.events().every(x => !Object.hasOwn(x, 'owner') && !Object.hasOwn(x, 'session_id'))).toBe(true);
 });
 
+it('keeps cold startup alive without applying the ready receipt deadline to opening heartbeats', () => {
+  const f = fixture(false);
+  f.controller.open(CAPTURE); f.bind();
+  for (let n = 0; n < 6; n++) f.advance(250);
+  expect(f.controller.state).toBe('opening');
+  expect(f.events()).toHaveLength(6);
+  expect(f.events().every(event => event.action === 4)).toBe(true);
+  expect(f.controller.down(1, POINT)).toBe(false);
+  expect(f.status(0, 0, 'startup')).toBe(true);
+  f.advance(250);
+  expect(f.controller.state).toBe('ready');
+  f.advance(250);
+  expect(f.controller.state).toBe('fenced');
+  expect(f.sent.filter(event => event.type === 'touch_close')).toHaveLength(1);
+});
+
+it('startup keepalive coalescing preserves actual RTT and still requires a native receipt after READY', () => {
+  const f = fixture(false);
+  f.controller.open(CAPTURE); f.bind();
+  for (let n = 0; n < 5; n++) f.advance(250);
+  f.status(0, 0, 'startup');
+  f.advance(100);
+  expect(f.status(5, 2)).toBe(true);
+  expect(f.onReceipt.mock.calls.at(-1)?.[0].receiptRoundTripMs).toBe(100);
+  expect(f.controller.pendingReceiptCount).toBe(0);
+  expect(f.controller.down(1, POINT)).toBe(true);
+  f.advance(250); f.advance(250);
+  expect(f.controller.state).toBe('fenced');
+});
+
+it('cold startup remains bounded at six seconds and never sends a pointer action before STARTUP0', () => {
+  const f = fixture(false);
+  f.controller.open(CAPTURE); f.bind();
+  for (let n = 0; n < 24; n++) f.advance(250);
+  expect(f.controller.state).toBe('fenced');
+  expect(f.events().every(event => event.action === 4)).toBe(true);
+  expect(f.controller.pendingReceiptCount).toBe(0);
+  expect(f.sent.filter(event => event.type === 'touch_close')).toHaveLength(1);
+});
+
 it('server identity alone cannot authorize DOWN; only bound injector STARTUP0 enables it', () => {
   const f = fixture(false); expect(f.controller.open(CAPTURE)).toBe(true);
   expect(f.controller.down(1, POINT)).toBe(false);

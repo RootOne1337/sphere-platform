@@ -1,5 +1,9 @@
 # Scoped подтверждения непрерывного ввода
 
+> Исторический checkpoint receipt boundary до подключения subscribers/routes.
+> Последующая [live integration](../audits/2026-10-08/CONTINUOUS-INPUT-LIVE-INTEGRATION.md)
+> и [текущее состояние](../operations/CURRENT-STATE.md) описаны отдельно.
+
 Дата: **8 октября 2026**, Asia/Yekaterinburg. Статус: **source boundary проверена
 отдельно, startup/subscriptions и публичные routes ещё не подключены**.
 Продолжает [владение и delivery](CONTINUOUS-INPUT-SERVER.md) и

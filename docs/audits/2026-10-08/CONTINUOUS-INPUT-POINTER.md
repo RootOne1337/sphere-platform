@@ -1,5 +1,8 @@
 # Непрерывные жесты: браузерный контроллер и реальная Kotlin-проверка
 
+> Исторический checkpoint контроллера до интеграции с DeviceStream.
+> [Live integration](CONTINUOUS-INPUT-LIVE-INTEGRATION.md) продолжает этот этап.
+
 Дата: **8 октября 2026, Asia/Yekaterinburg**. Предыдущий серверный source:
 **0a8cd9422c70c71284fa672be2a24f5de06b59cc**. Рабочая ветка PR [#19](https://github.com/RootOne1337/sphere-platform/pull/19).
 

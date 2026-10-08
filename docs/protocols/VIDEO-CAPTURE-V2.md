@@ -1,6 +1,9 @@
 # Binary video capture identity, version 2
 
-Status: **source canary, not installed on 3015**, 7 October 2026.
+Initial checkpoint: **source canary, not installed on 3015**, 7 October 2026.
+Later integration and installation are tracked in
+[CURRENT-STATE](../operations/CURRENT-STATE.md) and
+[live integration](../audits/2026-10-08/CONTINUOUS-INPUT-LIVE-INTEGRATION.md).
 This extends the existing v1 H.264 envelope without changing the NAL payload,
 encoding, bitrate, dimensions or aspect ratio. It is a prerequisite for
 continuous input; it does not enable continuous input by itself.
