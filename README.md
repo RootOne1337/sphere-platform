@@ -15,6 +15,17 @@
 
 </div>
 
+**Действующий статус — 9 октября 2026:** [реестр работ и требований](docs/operations/WORK-STATUS.md)
+разделяет **9 принятых / 41 открытую работу** и старые семь незакрытых findings.
+Последняя проверенная установка: UI **ec3f2267**, API **be803773** на3015;
+clock fix **1577e01e** проверен в исходниках, ещё не установлен. Непрерывное
+управление принято на PH011 в конечном scope; запись MOVE/context, idle receipt
+failure и resource coverage остаются открытыми.
+[Runtime и доказательства](docs/operations/CURRENT-STATE.md) · [Правила документации](docs/DOCUMENTATION.md).
+
+<details>
+<summary>История установок до 7 октября; версии ниже не являются текущими</summary>
+
 **6 октября — установлен рабочий Script Studio:** API `c2b91e32`, UI `952b5e2f` на
 [3015/scripts/builder](http://127.0.0.1:3015/scripts/builder). Граф ↔ JSON, 32 действия,
 bounded drafts/history, import/export, серверная проверка и адресный запуск версии.
@@ -248,6 +259,8 @@ exact hash/receipts/heartbeat, native logs6→5 и≤2MiB подтвержден
 ---
 
 <a id="overview"></a>
+</details>
+
 ## 🧭 Что такое Sphere
 
 Sphere — self-hosted платформа управления Android-устройствами и эмуляторами.
@@ -528,7 +541,17 @@ identity, доверенный ключ и параметры enrollment; APK и
 <a id="status"></a>
 ## 🔬 Состояние проекта и границы проверки
 
-**Текущий срез: 1 октября 2026.** PR #19 открыт как draft. GitHub CI для
+**Действующий срез9октября:** [реестр50работ и15дополнений из чата](docs/operations/WORK-STATUS.md)
+и [runtime evidence](docs/operations/CURRENT-STATE.md). UIec3f2267/APIbe803773
+сохранены; recorder clock fix1577e01e source-tested, не установлен. Exact f79de047
+Backend/Frontend/Android/Preview CI завершились успешно; новые revisions имеют
+собственные проверки. Product9/41 и legacy34/7 — разные scopes. Работающий
+online badge или finite canary не закрывают resource/idle/ownership и Fleet32 gates.
+
+<details>
+<summary>Исторический срез1октября2026</summary>
+
+**Исторический срез: 1 октября 2026.** PR #19 открыт как draft. GitHub CI для
 code source `2bed596` прошёл Backend/Frontend/Android; preview deployment был
 пропущен. Актуальный SHA и текущие
 проверки смотрите на [странице PR #19](https://github.com/RootOne1337/sphere-platform/pull/19).
@@ -555,6 +578,8 @@ completed receipt и fresh heartbeat — к адресной установке.
 устройств этим canary не выполнены. Не переносите старые версии/статусы из исторических
 аудитов на текущий runtime. Подробные даты, source/runtime distinction, диагностика
 APK и acceptance plan: [актуальное состояние Sphere](docs/operations/CURRENT-STATE.md).
+
+</details>
 
 <details>
 <summary>Архивная контрольная точка 25 сентября 2026</summary>

@@ -1,5 +1,8 @@
 # Эксплуатационная готовность Sphere
 
+**Действующий реестр работ:** [WORK-STATUS](WORK-STATUS.md) / [машинный статус](STATUS-REGISTRY.json).
+Source, установленный runtime и конечная приёмка разделены; старые snapshots ниже сохраняют свои даты.
+
 **Навигация обновлена: 9 октября 2026. Исторические live-снимки ниже сохранены по датам.**
 
 [Текущая сверка чата, всех 50 критериев и реализации](../audits/2026-10-09/CHAT-CODE-RECONCILIATION.md)
@@ -10,7 +13,9 @@ clock fix1577e01e прошёл 1938 frontend tests и TypeScript, но ещё н
 это не закрытие EP-018 или ресурсных gates. Idle receipt failure, global input
 arbitration, rich recorder и разрыв host collector coverage остаются OPEN.
 
-**6 октября, 01:37 UTC+5 — ограничен приём загружаемых APK-журналов:**
+## История измерений и установок
+
+**Историческая установка 6 октября, 01:37 UTC+5 — ограничен приём загружаемых APK-журналов:**
 Установленный API `76596c39`, UI `5405d465` на [3015/logs](http://127.0.0.1:3015/logs).
 Body больше 512 KiB отвергается до полного buffering; total ASGI intake deadline 60 s.
 Четыре uploads на worker включают приём и filesystem writer; весь FS lifecycle

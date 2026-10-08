@@ -4,7 +4,16 @@
 
 **Base URL:** `https://yourdomain.com/api/v1`
 **Interactive docs:** `https://yourdomain.com/api/docs` (Swagger UI)
-**OpenAPI spec:** `https://yourdomain.com/openapi.json`
+**OpenAPI snapshot:** [openapi.json](openapi.json). Native FastAPI defaults to
+`/openapi.json`; the public gateway must explicitly route that path. Do not infer
+schema availability from `/api/docs`: the local gateway returned404 for the
+root schema URL during the9October documentation review.
+
+**9October schema reconciliation:** the committed JSON equals the installed
+APIbe803773 `app.openapi()` after canonical JSON normalization:182 HTTP operations,
+144 paths. Exporting the schema did not run startup hooks or execute HTTP actions.
+The snapshot omits WebSocket protocols and does not prove authorization/outcomes.
+[Current status and scope](operations/WORK-STATUS.md).
 
 ---
 

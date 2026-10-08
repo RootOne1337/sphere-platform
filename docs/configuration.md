@@ -1,6 +1,7 @@
 # Configuration Reference
 
-> **Sphere Platform v4.7** — All environment variables
+> Configuration reference; прежняя метка v4.7 не является текущим release.
+> Значения примеров не являются настройками установленного pilot; [текущий статус](operations/CURRENT-STATE.md).
 
 ---
 

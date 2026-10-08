@@ -1,5 +1,12 @@
 # Управление одиночным потоком при статичном экране
 
+**Дополнение9октября:** основной normal viewer теперь согласует continuous
+capability/owner автоматически; поддерживаемый PH011 принимает MOVE до UP.
+Legacy APK и recordingMode используют discrete fallback. Исходный static-frame
+contract ниже сохраняется, но working video не устраняет idle receipt timeout.
+[Приёмка](../audits/2026-10-08/CONTINUOUS-INPUT-LIVE-ACCEPTANCE.md) ·
+[Текущий остаток](WORK-STATUS.md).
+
 **Дата:** 1 октября 2026, Asia/Yekaterinburg.
 **Область:** карточка устройства и отдельный `/stream/{id}`; остальные viewer defaults сохраняются.
 

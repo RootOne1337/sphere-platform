@@ -2,128 +2,55 @@
 
 [Каталог](README.md) · [Readiness](operations/READINESS.md) · [Contributing](../CONTRIBUTING.md)
 
-**Последняя сверка входных документов: 5 октября 2026, 19:06 UTC (6 октября UTC+5).** Для текущих
-версий и границ live-подтверждения используйте [каноническое состояние](operations/CURRENT-STATE.md).
+**Последняя сверка статусов и навигации:9октября2026 (UTC+5).**
+Действующие источники: [WORK-STATUS](operations/WORK-STATUS.md),
+[STATUS-REGISTRY.json](operations/STATUS-REGISTRY.json),
+[CURRENT-STATE](operations/CURRENT-STATE.md). Датированные аудиты остаются
+неизменяемыми receipts; последний большой [crosscheck](audits/2026-10-09/CHAT-CODE-RECONCILIATION.md)
+не выдаётся за новую установку или fleet acceptance.
 
-**6 октября, 01:37 UTC+5 — ограничен приём загружаемых APK-журналов:**
-Установленный API `76596c39`, UI `5405d465` на [3015/logs](http://127.0.0.1:3015/logs).
-Body больше 512 KiB отвергается до полного buffering; total ASGI intake deadline 60 s.
-Четыре uploads на worker включают приём и filesystem writer; весь FS lifecycle
-в отдельном executor. 8 MiB fixture: declared oversize 0 receive, unknown length
-9 вместо 128 chunks; Python traced peak около 8 MiB → 0,506 MiB для unknown case.
-Это не общий RSS limit или установленная причина расхода Windows C:.
-В packaged image прошли 537 device/status/WS/VPN cases, включая 35 новых upload,
-и 35 resource cases: **572 passed**; mypy/scoped Ruff/OpenAPI check прошли.
-Сохранены 14 original-byte prefixes / 3614902 bytes и 45 соседних контейнеров.
-В 01:42 UTC+5 после переключения подтверждены новые uploads в пяти файлах;
-живые declared/chunked oversize POST вернули 413, PH025 GET — 1000 строк.
-В браузере проверены непустой журнал, поиск, refresh и границы данных.
-Online 14 / offline 5 из 19 — конечный срез, не SLA; UI/APK/OTA/туннели сохранены.
-Source CI пока не принят целиком; последующий docs head проверяется отдельно.
-**9 принято / 41 открыто**, EP-033 OPEN: общие квоты, независимая очистка,
-rotation/delete concurrency, backup/restore и leak/load gates остаются.
-[Контракт и результат](audits/2026-10-06/DEVICE-LOG-UPLOAD-BUDGET.md) · [Pinned evidence](audits/2026-10-06/DEVICE-LOG-UPLOAD-EVIDENCE.json) · [Приоритеты](audits/2026-10-06/ENTERPRISE-PRIORITIES.md).
+## Покрытие и проверка
 
-**Историческая установка 6 октября, 00:55 UTC+5 — ограниченное чтение и постоянное хранение логов:**
-API `9889c9ac`, UI `5405d465` на [3015/logs](http://127.0.0.1:3015/logs).
-Предел чтения — 2 MiB, JSON-массива строк — 512 KiB; четыре операции на worker
-без растущей очереди. Файловый I/O вынесен из event loop. На одинаковом архиве
-24 MiB совпали последние 1000 строк; Python traced peak снизился с 46,04 до 0,447 MiB.
-Это не замер RSS и не установленная причина расхода Windows-диска.
-14 файлов / 902996 bytes перенесены в постоянный том; исходные байты проверены
-после rollback и пересоздания контейнера. Сохранены 45 соседних контейнеров.
-Проверки образов: 502 + 35 тестов reader, затем 26 тестов final storage image;
-23 Compose-проверки, 1307 frontend-тестов / 121 suite, build/types и scoped lint прошли.
-В живом браузере проверены ширины 1440/390 px, обе темы, поиск и обновление;
-настоящий GET для PH025 вернул 483 строки. Срезы online 14→9 и 14→11 сохранены;
-устранение reconnects и непрерывная стабильность ещё не подтверждены.
-Полный CI не прошёл: GitHub не выделил runner для backend Tests и Security.
-Android CI storage-source прошёл; CI последующего docs-коммита учитывается отдельно.
-**9 принято / 41 открыто**, EP-033 OPEN: квоты, независимая очистка, upload budget,
-backup/restore и проверки утечек/нагрузки ещё впереди.
-[Результат и ограничения](audits/2026-10-06/DEVICE-LOG-READ-BUDGET.md) · [Доказательства](audits/2026-10-06/DEVICE-LOG-READ-EVIDENCE.json) · [Приоритеты](audits/2026-10-06/ENTERPRISE-PRIORITIES.md).
+[Инвентарь документации](operations/DOCUMENT-INVENTORY.json) классифицирует все
+tracked Markdown по назначению: действующий указатель, руководство, исторический
+receipt, ADR, проектное ТЗ или сопутствующий документ. Статический scan проверяет
+локальные пути действующих guides; он не исполняет команды runbooks и не доказывает
+семантику каждой строки, актуальность сторонних сайтов или production readiness.
+Глубокая сверка runtime/source относится к конкретным требованиям STATUS-REGISTRY.
+Исторические specs и audits не переписываются в качестве действующих возможностей.
 
-**Исторический срез 6 октября, 00:00 UTC+5 — tenant-сводка EP-010 Stage B:**
-API `7fef9c53`, веб `9ad0a69e` на [3015/monitoring](http://127.0.0.1:3015/monitoring).
-Шесть отдельных источников: активный парк, связь, VPN-отчёт Android, назначения,
-сохранённые handshakes и неподключённые проверки публичного транспорта.
-Живое окно 19:00 UTC: 19 устройств, 14 online + 5 unknown; 14 VPN inactive + 5 unknown.
-Первая установка выявила text/binary Redis mismatch; отдельный фикс и регрессия
-подтвердили исправление. 476 + 35 exact-image tests, 1298 frontend tests, Node24
-build/types, scoped Ruff и OpenAPI прошли. Сохранены 45 соседей; APK/OTA не менялись.
-CI исходников API `7fef9c53`: backend 2754 passed / 30 skipped; frontend, Android
-и остальные gates прошли. CI последующего docs-коммита проверяется отдельно.
-**9 принято / 41 открыто**, EP-010 OPEN: независимый producer, транспортные probes
-и нагрузочный прогон ещё не приняты. [Доказательства и ограничения](audits/2026-10-05/ENTERPRISE-FLEET-COVERAGE.md) ·
-[Pinned receipts](audits/2026-10-05/ENTERPRISE-FLEET-COVERAGE-EVIDENCE.json).
+```powershell
+python -m scripts.check_documentation_status
+python -m unittest discover -s tests -p test_documentation_status.py
+```
 
-**Историческая установка foundation — 5 октября, 21:11 UTC+5:** API `d656b579`,
-UI `cb5b3f91` сохранён. VPN-отчёт Android имеет независимое серверное время и
-владельца сеанса; атомарная запись защищена от запоздавшего старого подключения.
-После 120 с отчёт не считается свежим. Живое окно16:20 UTC:14 свежих false и5
-unknown при14 online/5 offline из19. Это не проверка VPN-трафика или SLA.
-Exact image444+35 tests; source CI backend2722 passed/30 skipped, frontend и
-Android прошли. Сохранены 45 соседей. **9 принято/41 открыто**, EP-010 ещё OPEN.
-[Результат, ограничения и следующие критерии](audits/2026-10-05/ENTERPRISE-ANDROID-VPN-OBSERVATION.md) · [Pinned evidence](audits/2026-10-05/ENTERPRISE-ANDROID-VPN-OBSERVATION-EVIDENCE.json).
+Checker сверяет 50 уникальных EP, исходные criteria/dependencies,9 evidence-backed
+closures, отдельные legacy7, ссылки требований, hashes frozen closure receipts,
+покрытие tracked Markdown и обязательные current pointers. Его успех означает
+consistency записанных документов, а не исправность Android. После нового
+Markdown обновите inventory; после установки обновите runtime observation/evidence.
 
-**Историческая установка Stage A — 5 октября, 20:31 UTC+5:** backend `66714f26`,
-UI `cb5b3f91` сохранён. Список peers и pool counts теперь одинаково исключают
-устаревший/future handshake, неназначенные и непривязанные peers; добавлено время
-SQL-среза. Exact image: 99 VPN + 27 resource tests, mypy 231/Ruff прошли; сохранены
-45 соседних контейнеров. Живой текущий VPN-каталог пуст: нули не доказывают работу
-VPN на Android. Последующее окно 6×3 с: 14 online из 19, без утверждения SLA.
-**9 принято / 41 открыто**: весь EP-010 ещё открыт.
-[События, polling и оставшиеся источники](audits/2026-10-05/ENTERPRISE-LIVE-COVERAGE-NEXT.md) · [Image/runtime evidence](audits/2026-10-05/ENTERPRISE-LIVE-COVERAGE-EVIDENCE.json).
+## Порядок закрытия и supersession
 
-**5 октября, 19:55 UTC+5 — EP-009 принят на живом 3015:** API/UI **`cb5b3f91`**,
-gateway config **`993d9eac`** сохранён. Реальная история CPU в использованных ядрах
-и памяти в GiB cgroup контейнера: окна 1/6/24 h, сбор/обновление 15 с, среднее CPU за 1 минуту.
-Лимит памяти 2 GiB подтверждён; CPU quota не подменяется нулём. Host/RSS сюда не
-смешиваются. 1275 frontend tests/120 suites, production Node24 build/types и 27
-tests в exact API image, mypy 231/Ruff, promtool и живые queries прошли. Браузер
-1600/390 px, обе темы и автоматическое обновление проверены. При замене каждого
-API/UI сохранены 45 соседей; Prometheus reload без replacement всех 46.
-Сохранена временная потеря 14→12→13 online; последующее конечное окно 6×3с:
-14 online /5 offline из19. Это не непрерывный SLA или устранение утечки.
-**9 закрыто / 41 открыто из 50**; следующий EP-010, host leak attribution, Studio
-и stream+script load/soak открыты.
-[Приёмка и screenshots](audits/2026-10-05/ENTERPRISE-CONTAINER-RESOURCE-HISTORY.md) ·
-[Pinned evidence](audits/2026-10-05/ENTERPRISE-CONTAINER-RESOURCE-EVIDENCE.json) · [Живой monitoring](http://127.0.0.1:3015/monitoring).
+У полного EP должны быть выполнены все его acceptanceCriteria; для частично
+выполненного требования храните acceptedScope и remaining, не ставьте ACCEPTED.
+Source/test/install/live/fleet — разные стадии. CI надо ссылать на exact source SHA.
+Исправление1577e01e остаётся source-only, пока отдельная установка не подтверждена.
+Каждая приёмка указывает версии, время, устройства, сценарий, длительность и
+ограничения; unknown/rejected outcomes сохраняются рядом с успехами.
 
-**Историческая проверка5 октября:** review UI `7c985feb` / API `51ccaa36`, gateway
-`993d9eac`. EP-008 принят; product ledger8 закрыто/42 открыто отдельно от F32
-и ресурсных gates. [HTTP-приёмка](audits/2026-10-05/ENTERPRISE-HTTP-METRICS.md)
-связывает tests/build/install/rollback/live HTTP с пятью reviewed screenshots
-и pinned git blobs. Checker проверяет integrity записанных артефактов, не live
-health. [Resource recorder](audits/2026-10-05/HOST-STORAGE-NIGHT-WATCH.md) COMPLETE,
-241 срез; writer attribution/RAM acceptance OPEN. Source CI нового head требует
-отдельного результата; старые зелёные CI не переносятся на него автоматически.
+Frozen backlog5октября, prior crosscheck JSON и receipts не меняйте при закрытии:
+добавляйте новый receipt и меняйте действующий registry. Hash исторического
+snapshot относится к его исходным байтам; изменение активного guide после него
+не означает corruption. Новая более узкая canary не закрывает широкий parent EP.
+Closed workflow из чата храните как CHAT-ID со ссылкой на parent EP и остатком.
+Числа разных аудитов не складывайте и не deduplicate без отдельного доказательства.
 
-**Историческая проверка: 4 октября 2026, после перезагрузки ПК и установки в 17:14 UTC.
-API/UI c1a6e79.** [Аудит диска, ОЗУ, сборки и RPC](audits/2026-10-04/HOST-RESOURCE-PRESSURE-AND-RPC-DIAGNOSTICS.md) ·
-[Эксплуатационная процедура](operations/HOST-RESOURCES.md).
-В образах прошли 113 наборов / 1122 frontend-теста и 186 API-проверок; отдельно
-18 проверок допуска сборки. Все четыре source CI прошли. Исправлены повторные
-слои зависимостей; выполнена адресная очистка. Сжатие VHD и длительная утечка ОЗУ
-ещё не приняты. Remote 504 сохранён рядом с отдельным успешным PNG 200;
-первое окно связи FAILED: 11→14, последующее сохранило 14 online / даты подключений.
-APK 10244, Tuna и OTA сохранены. Исходный реестр: 34 исправлено / 7 незакрытых;
-визуальная приёмка, FPS/задержка, длительная нагрузка и Fleet32 admission открыты.
+## История обновления входных документов
 
-**Исторический follow-up: 4 октября 2026, 10:06 UTC+5. API/UI9716348**, APK10244 unchanged.
-[Native PNG, управление и manual Android profile](audits/2026-10-04/DEVICE-CONTROL-AND-NATIVE-CAPTURE.md).
-1117 frontend / 140 API cases в образах, schema178/140. PH025/PH010 original PNG accepted;
-Android/server/file hashes matched. 14online в конечном UI readback; первый remote504
-и seven code1005 disconnects сохранены. Human native download/keyboard, UA2/nonroot,
-full visual/latency/load/soak OPEN; original ledger34/7 не изменён.
-
-Исторический follow-up: API **9274e50** / UI **84750e3**, [F35 XPath-инспектор](audits/2026-10-04/UI-HIERARCHY-INSPECTOR.md).
-1043 frontend и 108 API cases приняты в образах; PH010/PH025 actual root trees.
-Пользовательский отказ входа/выбора воспроизведён и исправлен; 8 pointer workflows.
-Original ledger: 34 source-fixed / 7 незакрытых. Browser/native UA2/nonroot/soak OPEN.
-Прежние 500/504 и FAILED API fleet window 14→13 сохранены рядом с успехами;
-последний UI readback сохранил 14 online и epochs в 7 срезах. Это не uptime SLA.
-Historical OpenAPI: 177 operations / 139 paths; shipped API9274 schema check passed.
+Подробная runtime история прежнего входного документа сохранена в
+[его git версииf79de047](https://github.com/RootOne1337/sphere-platform/blob/f79de04725deebd1c04a45bb2038ca145c42a1d3/docs/DOCUMENTATION.md).
+Ниже старые датированные записи сохраняют свой scope.
 
 ## Где искать текущий ответ
 
@@ -134,7 +61,7 @@ Historical OpenAPI: 177 operations / 139 paths; shipped API9274 schema check pas
 | Проверка Tuna как альтернативного remote ingress | [Tuna remote stream canary](audits/2026-09-27/TUNA-REMOTE-STREAM-CANARY.md) |
 | Какие проблемы остались перед 32 устройствами | [Fleet32: актуальная таблица](audits/2026-09-20/FLEET32-PREFLIGHT.md) |
 | Что принимаем за готовность | [Readiness](operations/READINESS.md) |
-| Какую работу делаем следующей | [Roadmap](../ROADMAP.md) |
+| Какую работу делаем следующей | [Действующий реестр](operations/WORK-STATUS.md), затем [Roadmap](../ROADMAP.md) |
 | Чем доказано конкретное исправление | Датированный audit report и связанный evidence |
 | Какой API зарегистрирован в коде | [Генерируемый каталог](api-endpoints.md) / [OpenAPI](openapi.json) |
 

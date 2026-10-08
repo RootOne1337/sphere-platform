@@ -96,8 +96,12 @@ jobs:
       # Installing only mypy hides boundary errors behind missing-import Any.
       - run: pip install -r backend/requirements.txt
       - run: pip check
+      - name: Documentation status and closure integrity
+        run: |
+          python -m scripts.check_documentation_status
+          python -m unittest discover -s tests -p 'test_documentation_status.py'
       - run: python scripts/sync_action_contract.py --check
-      - run: ruff check backend/ tests/ scripts/export_api_docs.py scripts/discovery_manifest.py scripts/discovery_publisher.py scripts/ldplayer_network.py scripts/ldplayer_watchdog.py
+      - run: ruff check backend/ tests/ scripts/check_documentation_status.py scripts/export_api_docs.py scripts/discovery_manifest.py scripts/discovery_publisher.py scripts/ldplayer_network.py scripts/ldplayer_watchdog.py
       - run: mypy backend/ --ignore-missing-imports
 
   security:

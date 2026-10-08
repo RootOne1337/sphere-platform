@@ -1,10 +1,22 @@
 # Scoped подтверждения непрерывного ввода
 
+## Действующее подключение, сверка 9 октября
+
+Контракт подключён в [startup](../../backend/websocket/startup.py) и
+[ContinuousRuntime](../../backend/websocket/continuous_runtime.py), включая
+relay_native_receipt и scoped delivery. Установленный APIbe803773 и PH011/APK10249
+имеют конечную [live приёмку](../audits/2026-10-08/CONTINUOUS-INPUT-LIVE-ACCEPTANCE.md).
+Обычный viewer посылает MOVE до UP; recording сохраняет дискретный swipe.
+Idle native_receipt_timeout и общий арбитраж viewer/task/API остаются OPEN.
+[Текущий остаток](../operations/WORK-STATUS.md).
+
+## Исторический компонентный checkpoint до integration
+
 > Исторический checkpoint receipt boundary до подключения subscribers/routes.
 > Последующая [live integration](../audits/2026-10-08/CONTINUOUS-INPUT-LIVE-INTEGRATION.md)
 > и [текущее состояние](../operations/CURRENT-STATE.md) описаны отдельно.
 
-Дата: **8 октября 2026**, Asia/Yekaterinburg. Статус: **source boundary проверена
+Дата исторического checkpoint: **8 октября 2026**, Asia/Yekaterinburg. Статус: **source boundary проверена
 отдельно, startup/subscriptions и публичные routes ещё не подключены**.
 Продолжает [владение и delivery](CONTINUOUS-INPUT-SERVER.md) и
 [pointer/Kotlin приёмку](../audits/2026-10-08/CONTINUOUS-INPUT-POINTER.md).

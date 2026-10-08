@@ -1,0 +1,1568 @@
+{
+  "schemaVersion": 1,
+  "reviewedAtUtc": "2026-10-08T23:14:27.958892+00:00",
+  "scope": "All tracked Markdown classified; active local-link paths scanned. Not semantic attestation of every sentence, command execution, external-link or live acceptance.",
+  "countsByRole": {
+    "ADR": 6,
+    "CURRENT_ENTRYPOINT": 8,
+    "DATED_EVIDENCE": 224,
+    "DESIGN_SPECIFICATION": 74,
+    "OPERATING_GUIDE": 63,
+    "PROJECT_POLICY": 7,
+    "SUPPORTING_DOCUMENT": 6
+  },
+  "documents": [
+    {
+      "file": ".github/PR_develop_to_main.md",
+      "role": "PROJECT_POLICY"
+    },
+    {
+      "file": ".github/REPOSITORY-GUIDE.md",
+      "role": "PROJECT_POLICY"
+    },
+    {
+      "file": ".github/instructions/1337.instructions.md",
+      "role": "PROJECT_POLICY"
+    },
+    {
+      "file": ".github/pull_request_template.md",
+      "role": "PROJECT_POLICY"
+    },
+    {
+      "file": "CHANGELOG.md",
+      "role": "SUPPORTING_DOCUMENT"
+    },
+    {
+      "file": "CODE_OF_CONDUCT.md",
+      "role": "SUPPORTING_DOCUMENT"
+    },
+    {
+      "file": "CONTRIBUTING.md",
+      "role": "PROJECT_POLICY"
+    },
+    {
+      "file": "FULL-DEPLOYMENT-GUIDE.md",
+      "role": "SUPPORTING_DOCUMENT"
+    },
+    {
+      "file": "README.md",
+      "role": "CURRENT_ENTRYPOINT"
+    },
+    {
+      "file": "ROADMAP.md",
+      "role": "CURRENT_ENTRYPOINT"
+    },
+    {
+      "file": "SECURITY.md",
+      "role": "PROJECT_POLICY"
+    },
+    {
+      "file": "SUPPORT.md",
+      "role": "PROJECT_POLICY"
+    },
+    {
+      "file": "agent-config/README.md",
+      "role": "SUPPORTING_DOCUMENT"
+    },
+    {
+      "file": "docs/ANALYSIS-FARMING-PLATFORM.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
+      "file": "docs/ANALYSIS-FARMING-SUMMARY.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
+      "file": "docs/DOCUMENTATION.md",
+      "role": "CURRENT_ENTRYPOINT"
+    },
+    {
+      "file": "docs/README.md",
+      "role": "CURRENT_ENTRYPOINT"
+    },
+    {
+      "file": "docs/adr/ADR-001-fastapi-over-django.md",
+      "role": "ADR"
+    },
+    {
+      "file": "docs/adr/ADR-002-amneziawg-vpn.md",
+      "role": "ADR"
+    },
+    {
+      "file": "docs/adr/ADR-003-redis-pubsub-websocket.md",
+      "role": "ADR"
+    },
+    {
+      "file": "docs/adr/ADR-004-dag-script-engine.md",
+      "role": "ADR"
+    },
+    {
+      "file": "docs/adr/ADR-005-hilt-android-di.md",
+      "role": "ADR"
+    },
+    {
+      "file": "docs/adr/README.md",
+      "role": "ADR"
+    },
+    {
+      "file": "docs/android-agent.md",
+      "role": "OPERATING_GUIDE"
+    },
+    {
+      "file": "docs/api-endpoints.md",
+      "role": "OPERATING_GUIDE"
+    },
+    {
+      "file": "docs/api-reference.md",
+      "role": "OPERATING_GUIDE"
+    },
+    {
+      "file": "docs/architecture.md",
+      "role": "OPERATING_GUIDE"
+    },
+    {
+      "file": "docs/architecture/AI-READINESS.md",
+      "role": "DESIGN_SPECIFICATION"
+    },
+    {
+      "file": "docs/architecture/ANDROID-BACKGROUND-ENROLLMENT.md",
+      "role": "OPERATING_GUIDE"
+    },
+    {
+      "file": "docs/architecture/ANDROID-BOOTSTRAP-DISCOVERY.md",
+      "role": "OPERATING_GUIDE"
+    },
+    {
+      "file": "docs/architecture/ANDROID-CONNECTION-PROTOCOL.md",
+      "role": "OPERATING_GUIDE"
+    },
+    {
+      "file": "docs/architecture/ANDROID-DISCOVERY-RECOVERY.md",
+      "role": "OPERATING_GUIDE"
+    },
+    {
+      "file": "docs/architecture/ANDROID-EMULATOR-GOLDEN-IMAGE.md",
+      "role": "OPERATING_GUIDE"
+    },
+    {
+      "file": "docs/architecture/ANDROID-OTA-RELIABILITY.md",
+      "role": "OPERATING_GUIDE"
+    },
+    {
+      "file": "docs/architecture/ANDROID-SAVED-ROUTES.md",
+      "role": "OPERATING_GUIDE"
+    },
+    {
+      "file": "docs/architecture/ANDROID-SIGNED-DISCOVERY.md",
+      "role": "OPERATING_GUIDE"
+    },
+    {
+      "file": "docs/architecture/FLEET-OPERATIONS-AND-OBSERVABILITY.md",
+      "role": "OPERATING_GUIDE"
+    },
+    {
+      "file": "docs/audits/2026-09-05/ANDROID-BOOT-RECOVERY.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
+      "file": "docs/audits/2026-09-05/ANDROID-CAPTURE-LIFECYCLE.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
+      "file": "docs/audits/2026-09-05/ANDROID-JOURNAL-CAPACITY.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
+      "file": "docs/audits/2026-09-05/ANDROID-OTA-DELIVERY.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
+      "file": "docs/audits/2026-09-05/ANDROID-OTA-RECOVERY.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
+      "file": "docs/audits/2026-09-05/ANDROID-RECONNECT-DEBT.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
+      "file": "docs/audits/2026-09-05/ANDROID-SOAK-CHECKPOINT.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
+      "file": "docs/audits/2026-09-05/ANDROID-SOAK-TERMINAL.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
+      "file": "docs/audits/2026-09-05/ANDROID-UNATTENDED-CAPABILITIES.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
+      "file": "docs/audits/2026-09-05/APK-UTF8-LOG-TAIL.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
+      "file": "docs/audits/2026-09-05/AUDIT-REPORT.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
+      "file": "docs/audits/2026-09-05/AUTOMATIC-DISCOVERY-PUBLICATION.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
+      "file": "docs/audits/2026-09-05/CONNECTION-RECOVERY.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
+      "file": "docs/audits/2026-09-05/CONNECTOR-RECOVERY.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
+      "file": "docs/audits/2026-09-05/DEPENDENCY-REVIEW.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
+      "file": "docs/audits/2026-09-05/DEVICE-DIAGNOSTICS-SOURCE.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
+      "file": "docs/audits/2026-09-05/DISCOVERY-CDN-FRESHNESS.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
+      "file": "docs/audits/2026-09-05/DISCOVERY-HTTP-CACHE.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
+      "file": "docs/audits/2026-09-05/ENROLLMENT-CONCURRENCY.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
+      "file": "docs/audits/2026-09-05/ENROLLMENT-DISCOVERY-SNAPSHOT.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
+      "file": "docs/audits/2026-09-05/INTERACTIVE-COMMAND-ROUTING.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
+      "file": "docs/audits/2026-09-05/INTERACTIVE-RESULT-IDENTITY.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
+      "file": "docs/audits/2026-09-05/LDPLAYER-AUTOMATIC-RECOVERY.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
+      "file": "docs/audits/2026-09-05/LDPLAYER-NAT-INCIDENT.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
+      "file": "docs/audits/2026-09-05/NETWORK-RECOVERY-NATIVE.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
+      "file": "docs/audits/2026-09-05/NIGHT-RUN-ANALYSIS.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
+      "file": "docs/audits/2026-09-05/PIPELINE-CONTROL-RESPONSE.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
+      "file": "docs/audits/2026-09-05/REDIS-SUBSCRIPTION-RECOVERY.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
+      "file": "docs/audits/2026-09-05/ROADMAP.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
+      "file": "docs/audits/2026-09-05/SCRIPT-CREATE-RESPONSE.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
+      "file": "docs/audits/2026-09-05/SIGNED-DISCOVERY-NATIVE.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
+      "file": "docs/audits/2026-09-05/SOAK-VIEWER-MOTION.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
+      "file": "docs/audits/2026-09-05/SOAK-WINDOWS-SNAPSHOT.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
+      "file": "docs/audits/2026-09-05/STREAM-CONTROL-ROUTING.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
+      "file": "docs/audits/2026-09-05/STREAM-DEVICE-PRESENCE.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
+      "file": "docs/audits/2026-09-05/STREAM-IDLE-RECOVERY.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
+      "file": "docs/audits/2026-09-05/STREAM-MULTI-VIEWER.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
+      "file": "docs/audits/2026-09-05/STREAM-START-DELIVERY.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
+      "file": "docs/audits/2026-09-05/STREAM-VIDEO-ROUTING.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
+      "file": "docs/audits/2026-09-05/STREAM-VIEWER-RLS.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
+      "file": "docs/audits/2026-09-05/TASK-HISTORY.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
+      "file": "docs/audits/2026-09-05/VIDEO-QUEUE-BOUNDS.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
+      "file": "docs/audits/2026-09-05/VPN-LEASE-DESIGN.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
+      "file": "docs/audits/2026-09-05/WEB-STREAM-RECOVERY.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
+      "file": "docs/audits/2026-09-05/WINDOWS-BACKGROUND-WINDOWS.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
+      "file": "docs/audits/2026-09-05/pr-body.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
+      "file": "docs/audits/2026-09-20/ANDROID-KEYFRAME-STARTUP.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
+      "file": "docs/audits/2026-09-20/BATCH-RECOVERY.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
+      "file": "docs/audits/2026-09-20/CANARY-20260921.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
+      "file": "docs/audits/2026-09-20/CLONE-BINDING-V2.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
+      "file": "docs/audits/2026-09-20/CLONE-IDENTITY.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
+      "file": "docs/audits/2026-09-20/DECODER-RECOVERY.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
+      "file": "docs/audits/2026-09-20/DURABLE-CANCELLATION.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
+      "file": "docs/audits/2026-09-20/FLEET32-PREFLIGHT.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
+      "file": "docs/audits/2026-09-20/FRONTEND-STANDALONE.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
+      "file": "docs/audits/2026-09-20/OTA-TRANSPORT-RETRY.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
+      "file": "docs/audits/2026-09-20/PIPELINE-ADMISSION.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
+      "file": "docs/audits/2026-09-20/PIPELINE-NESTED-WAIT.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
+      "file": "docs/audits/2026-09-20/PIPELINE-RECOVERY.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
+      "file": "docs/audits/2026-09-20/PIPELINE-RLS.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
+      "file": "docs/audits/2026-09-20/REDIS-MEMORY.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
+      "file": "docs/audits/2026-09-20/REDIS-PERSISTENCE-HEADROOM.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
+      "file": "docs/audits/2026-09-20/REMOTE-PILOT-WEBSOCKET-REDIRECT.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
+      "file": "docs/audits/2026-09-20/RUNTIME-POOL-HARNESS.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
+      "file": "docs/audits/2026-09-20/SCHEDULER-RUNTIME.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
+      "file": "docs/audits/2026-09-20/STOP-DELIVERY-FAILURE.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
+      "file": "docs/audits/2026-09-20/STREAM-FIRST-FRAME.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
+      "file": "docs/audits/2026-09-20/TASK-DISPATCH-RLS.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
+      "file": "docs/audits/2026-09-20/WATCHDOG-STOP-RECOVERY.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
+      "file": "docs/audits/2026-09-20/evidence/README.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
+      "file": "docs/audits/2026-09-23/ANDROID-INITIAL-FRAME-RACE.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
+      "file": "docs/audits/2026-09-23/REMOTE-FLEET-LIVE-AUDIT.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
+      "file": "docs/audits/2026-09-23/REMOTE-FLEET-LIVE-FOLLOWUP.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
+      "file": "docs/audits/2026-09-23/REMOTE-INGRESS-FAILOVER.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
+      "file": "docs/audits/2026-09-24/H264-ANNEXB-QUEUE-CLASSIFICATION.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
+      "file": "docs/audits/2026-09-24/OTA-CATALOG-CONCURRENCY.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
+      "file": "docs/audits/2026-09-24/REMOTE-INGRESS-AB.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
+      "file": "docs/audits/2026-09-24/REMOTE-RECONNECT-INCIDENT.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
+      "file": "docs/audits/2026-09-24/REMOTE-VIDEO-OTA-DECISION.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
+      "file": "docs/audits/2026-09-25/ANDROID-APK-RELEASE-AUDIT.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
+      "file": "docs/audits/2026-09-25/ANDROID-STREAM-OBSERVABILITY.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
+      "file": "docs/audits/2026-09-25/CLONED-ENROLLMENT-401.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
+      "file": "docs/audits/2026-09-25/DEVICE-PRESENCE-FIRST-HEARTBEAT.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
+      "file": "docs/audits/2026-09-25/DOCKER-CONTEXT-PRIVATE-ARTIFACTS.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
+      "file": "docs/audits/2026-09-25/FLEET-MATRIX-BULK-ACTIONS.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
+      "file": "docs/audits/2026-09-25/FLEET-STREAM-STALE-FRAME.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
+      "file": "docs/audits/2026-09-25/OTA-TERMINAL-RECEIPTS.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
+      "file": "docs/audits/2026-09-26/ANDROID-COLD-BOOT-AND-OTA-CANARY.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
+      "file": "docs/audits/2026-09-26/ANDROID-PRESENCE-AND-APK-RELEASE.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
+      "file": "docs/audits/2026-09-26/REMOTE-CONTROL-PATH-DIAGNOSIS.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
+      "file": "docs/audits/2026-09-27/REMOTE-CONNECTION-AND-OTA-GATES.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
+      "file": "docs/audits/2026-09-27/TUNA-REMOTE-STREAM-CANARY.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
+      "file": "docs/audits/2026-09-28/ANDROID-RELEASE-READINESS.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
+      "file": "docs/audits/2026-09-28/FRONTEND-DEPENDENCY-SECURITY.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
+      "file": "docs/audits/2026-09-28/INFRASTRUCTURE-MONITORING-TRUTHFUL-TELEMETRY.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
+      "file": "docs/audits/2026-09-29/WEB-OPERATIONS-OBSERVABILITY-AUDIT.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
+      "file": "docs/audits/2026-09-30/ANDROID-INSPECTION-AND-VIDEO-MODES.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
+      "file": "docs/audits/2026-09-30/PYJWT-ADVISORY-FOLLOW-UP.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
+      "file": "docs/audits/2026-09-30/WEB-DEVICE-INSPECTOR.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
+      "file": "docs/audits/2026-09-30/WEB-FLEET-READABILITY.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
+      "file": "docs/audits/2026-09-30/WEB-SETTINGS-ACCOUNT-SECURITY.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
+      "file": "docs/audits/2026-10-01/CALLBACK-LIFECYCLE-CANARY.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
+      "file": "docs/audits/2026-10-01/ENCODER-CALLBACK-OWNERSHIP.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
+      "file": "docs/audits/2026-10-01/PIPELINE-TERMINAL-HEARTBEAT.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
+      "file": "docs/audits/2026-10-01/README.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
+      "file": "docs/audits/2026-10-01/STREAM-DIAGNOSTIC-OWNERSHIP.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
+      "file": "docs/audits/2026-10-01/WEB-AUDIT-REMEDIATION.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
+      "file": "docs/audits/2026-10-01/WEB-FULL-CAPABILITY-AUDIT.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
+      "file": "docs/audits/2026-10-02/AUDIT-INVESTIGATION.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
+      "file": "docs/audits/2026-10-02/AUDIT-ROLLBACK-IDENTITY.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
+      "file": "docs/audits/2026-10-02/DISCOVERY-REQUEST-OWNERSHIP.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
+      "file": "docs/audits/2026-10-02/GROUP-HIERARCHY-AND-AUDIT.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
+      "file": "docs/audits/2026-10-02/GROUP-WORKFLOWS.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
+      "file": "docs/audits/2026-10-02/ORCHESTRATION-CATALOG-PAGING.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
+      "file": "docs/audits/2026-10-02/OTA-ADDRESSED-DELIVERY.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
+      "file": "docs/audits/2026-10-02/REVIEW-RUNTIME-AND-REMOTE-RERUN.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
+      "file": "docs/audits/2026-10-02/SCRIPT-VERSION-WORKFLOW.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
+      "file": "docs/audits/2026-10-02/TASK-ARTIFACTS-AND-RERUN.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
+      "file": "docs/audits/2026-10-02/USER-ACCESS.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
+      "file": "docs/audits/2026-10-03/LOCATION-HIERARCHY.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
+      "file": "docs/audits/2026-10-03/OTA-RELEASE-IDENTITY.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
+      "file": "docs/audits/2026-10-03/OTA-SIGNER-COMPATIBILITY.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
+      "file": "docs/audits/2026-10-03/OWNED-PILOT-OTA-ROLLOUT.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
+      "file": "docs/audits/2026-10-03/PIPELINE-DEFINITION-WORKFLOW.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
+      "file": "docs/audits/2026-10-03/SESSION-CAPABILITIES.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
+      "file": "docs/audits/2026-10-03/STREAM-BITRATE-RECOVERY.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
+      "file": "docs/audits/2026-10-03/STREAM-REFERENCE-RECOVERY.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
+      "file": "docs/audits/2026-10-03/VPN-CONTROL-OUTCOMES.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
+      "file": "docs/audits/2026-10-04/DEVICE-ACTION-PERMISSIONS.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
+      "file": "docs/audits/2026-10-04/DEVICE-CONTROL-AND-NATIVE-CAPTURE.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
+      "file": "docs/audits/2026-10-04/HOST-DISK-INVENTORY-AND-CLEANUP.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
+      "file": "docs/audits/2026-10-04/HOST-RESOURCE-PRESSURE-AND-RPC-DIAGNOSTICS.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
+      "file": "docs/audits/2026-10-04/MATRIX-PREVIEW-PLAN.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
+      "file": "docs/audits/2026-10-04/ORGANIZATION-ACTION-PERMISSIONS.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
+      "file": "docs/audits/2026-10-04/UI-HIERARCHY-INSPECTOR.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
+      "file": "docs/audits/2026-10-04/VIEWER-AUTHORIZATION.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
+      "file": "docs/audits/2026-10-05/APK-LOG-RETENTION.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
+      "file": "docs/audits/2026-10-05/DISK-WRITER-ATTRIBUTION.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
+      "file": "docs/audits/2026-10-05/ENTERPRISE-ANDROID-VPN-OBSERVATION.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
+      "file": "docs/audits/2026-10-05/ENTERPRISE-CONTAINER-RESOURCE-HISTORY.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
+      "file": "docs/audits/2026-10-05/ENTERPRISE-FLEET-COVERAGE.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
+      "file": "docs/audits/2026-10-05/ENTERPRISE-HTTP-METRICS.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
+      "file": "docs/audits/2026-10-05/ENTERPRISE-LIVE-COVERAGE-NEXT.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
+      "file": "docs/audits/2026-10-05/ENTERPRISE-PRODUCT-AUDIT.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
+      "file": "docs/audits/2026-10-05/ENTERPRISE-PRODUCT-FOLLOWUP.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
+      "file": "docs/audits/2026-10-05/ENTERPRISE-PRODUCT-IMPLEMENTATION.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
+      "file": "docs/audits/2026-10-05/HOST-DISK-GROWTH.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
+      "file": "docs/audits/2026-10-05/HOST-STORAGE-NIGHT-WATCH.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
+      "file": "docs/audits/2026-10-05/VSS-RETENTION-REVIEW.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
+      "file": "docs/audits/2026-10-06/ANDROID-CLEAR-INSTALLED.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
+      "file": "docs/audits/2026-10-06/ANDROID-FOCUSED-TEXT-CLEAR.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
+      "file": "docs/audits/2026-10-06/ANDROID-SCREENSHOT-CACHE.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
+      "file": "docs/audits/2026-10-06/CONTINUOUS-INPUT-INTEGRATION.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
+      "file": "docs/audits/2026-10-06/DEVICE-LOG-READ-BUDGET.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
+      "file": "docs/audits/2026-10-06/DEVICE-LOG-UPLOAD-BUDGET.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
+      "file": "docs/audits/2026-10-06/ENTERPRISE-PRIORITIES.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
+      "file": "docs/audits/2026-10-06/FRONTEND-STANDALONE-ADMISSION.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
+      "file": "docs/audits/2026-10-06/HOST-FILESYSTEM-INCIDENT.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
+      "file": "docs/audits/2026-10-06/NATIVE-PNG-PIXEL-VERIFICATION.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
+      "file": "docs/audits/2026-10-06/PIPELINE-HEARTBEAT-TEST-REVIEW.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
+      "file": "docs/audits/2026-10-06/SCRIPT-CATALOG-DELIVERY.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
+      "file": "docs/audits/2026-10-06/SCRIPT-CATALOG-METADATA-CONTRACT.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
+      "file": "docs/audits/2026-10-06/SCRIPT-STUDIO-FOUNDATION.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
+      "file": "docs/audits/2026-10-06/STUDIO-ACTION-PARAMETERS.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
+      "file": "docs/audits/2026-10-06/STUDIO-COMMAND-RECORDING.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
+      "file": "docs/audits/2026-10-06/STUDIO-CONNECTION-EDITING.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
+      "file": "docs/audits/2026-10-06/STUDIO-FREE-CANVAS.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
+      "file": "docs/audits/2026-10-06/STUDIO-INTERACTION-FOLLOWUP.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
+      "file": "docs/audits/2026-10-06/STUDIO-REDESIGN.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
+      "file": "docs/audits/2026-10-07/CONTINUOUS-INPUT-APK-LIFECYCLE.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
+      "file": "docs/audits/2026-10-07/CONTINUOUS-TOUCH-NATIVE-CANARY.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
+      "file": "docs/audits/2026-10-07/CONTINUOUS-TOUCH-SUPERVISOR.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
+      "file": "docs/audits/2026-10-07/DOCKER-STORAGE-RETENTION.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
+      "file": "docs/audits/2026-10-07/HOST-STORAGE-FOLLOWUP.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
+      "file": "docs/audits/2026-10-07/HOST-STORAGE-VSS-CURRENT.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
+      "file": "docs/audits/2026-10-07/POSTBOOT-RECOVERY.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
+      "file": "docs/audits/2026-10-07/REVIEWED-BACKEND-DELIVERY.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
+      "file": "docs/audits/2026-10-07/REVIEWED-WEB-DELIVERY.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
+      "file": "docs/audits/2026-10-07/STORAGE-COLLECTOR-INTERRUPTION.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
+      "file": "docs/audits/2026-10-07/STUDIO-CANVAS-RESIZE.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
+      "file": "docs/audits/2026-10-07/STUDIO-NAVIGATION-PRESERVATION.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
+      "file": "docs/audits/2026-10-07/STUDIO-NODE-OCCLUSION.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
+      "file": "docs/audits/2026-10-07/STUDIO-RESPONSIVE-HEADER.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
+      "file": "docs/audits/2026-10-07/VIEWER-INPUT-ADMISSION.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
+      "file": "docs/audits/2026-10-07/VIEWER-INPUT-DELIVERY.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
+      "file": "docs/audits/2026-10-08/CONTINUOUS-INPUT-AUTOMATIC-UX.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
+      "file": "docs/audits/2026-10-08/CONTINUOUS-INPUT-HANDOFF-OBSERVATION.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
+      "file": "docs/audits/2026-10-08/CONTINUOUS-INPUT-LIVE-ACCEPTANCE.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
+      "file": "docs/audits/2026-10-08/CONTINUOUS-INPUT-LIVE-INTEGRATION.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
+      "file": "docs/audits/2026-10-08/CONTINUOUS-INPUT-POINTER.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
+      "file": "docs/audits/2026-10-08/CONTINUOUS-VIEWER-FAULT-ISOLATION.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
+      "file": "docs/audits/2026-10-08/CONTROL-HANDOFF-INSTALLED-ACCEPTANCE.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
+      "file": "docs/audits/2026-10-08/GIT-OBJECT-RECURRENCE.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
+      "file": "docs/audits/2026-10-08/IDLE-RECEIPT-RECONCILIATION.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
+      "file": "docs/audits/2026-10-08/INSPECTION-CONTROL-HANDOFF.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
+      "file": "docs/audits/2026-10-08/INSPECTION-RETURN-TO-CONTROL.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
+      "file": "docs/audits/2026-10-08/PH025-DECODER-RECOVERY.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
+      "file": "docs/audits/2026-10-08/PH025-STATIC-RECONNECT-ACCEPTANCE.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
+      "file": "docs/audits/2026-10-08/PH025-STATIC-RECONNECT.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
+      "file": "docs/audits/2026-10-08/REVIEWED-COMPOSE-LINEAGE.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
+      "file": "docs/audits/2026-10-08/STORAGE-OBSERVER-LIVENESS.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
+      "file": "docs/audits/2026-10-08/STORAGE-WINDOW-COMPLETION.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
+      "file": "docs/audits/2026-10-08/STUDIO-IDLE-RECEIPT-FOLLOWUP.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
+      "file": "docs/audits/2026-10-08/STUDIO-RECORDER-INSTALLED-ACCEPTANCE.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
+      "file": "docs/audits/2026-10-08/STUDIO-RECORDER-MODE.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
+      "file": "docs/audits/2026-10-08/STUDIO-RECORDER-NEXT-P1.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
+      "file": "docs/audits/2026-10-08/STUDIO-SESSION-REFRESH-STATE.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
+      "file": "docs/audits/2026-10-08/STUDIO-TASK-CONTROL-HANDOFF.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
+      "file": "docs/audits/2026-10-08/STUDIO-TASK-INSTALLED-ACCEPTANCE.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
+      "file": "docs/audits/2026-10-08/UI-INSPECTION-DIAGNOSTICS.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
+      "file": "docs/audits/2026-10-08/UI-INSPECTION-INSTALLED-ACCEPTANCE.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
+      "file": "docs/audits/2026-10-09/BROWSER-DIRECT-TRANSPORT-INTENT.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
+      "file": "docs/audits/2026-10-09/CHAT-CODE-RECONCILIATION.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
+      "file": "docs/audits/2026-10-09/DOCUMENTATION-RECONCILIATION.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
+      "file": "docs/audits/2026-10-09/ROUTE-SCROLL-RESTORATION.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
+      "file": "docs/audits/2026-10-09/STUDIO-LANDSCAPE-FOLLOWUP.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
+      "file": "docs/audits/2026-10-09/STUDIO-PERMISSION-OUTAGE-RETENTION.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
+      "file": "docs/audits/2026-10-09/STUDIO-RECORDER-CLOCK-FIX.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
+      "file": "docs/audits/2026-10-09/STUDIO-RESPONSIVE-INSTALLED-ACCEPTANCE.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
+      "file": "docs/audits/2026-10-09/STUDIO-RESPONSIVE-WORKSPACE.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
+      "file": "docs/audits/enterprise-audit-2026-02-23.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
+      "file": "docs/configuration.md",
+      "role": "OPERATING_GUIDE"
+    },
+    {
+      "file": "docs/deployment.md",
+      "role": "OPERATING_GUIDE"
+    },
+    {
+      "file": "docs/design/WEB-DESIGN-CONCEPTS-2026-09-28.md",
+      "role": "DESIGN_SPECIFICATION"
+    },
+    {
+      "file": "docs/design/previews/admincn-sphere-2026-09-28/CONCEPTS-RU.md",
+      "role": "DESIGN_SPECIFICATION"
+    },
+    {
+      "file": "docs/design/previews/admincn-sphere-2026-09-28/README.md",
+      "role": "DESIGN_SPECIFICATION"
+    },
+    {
+      "file": "docs/design/previews/admincn-sphere-2026-09-28/THIRD-PARTY-NOTICES.md",
+      "role": "DESIGN_SPECIFICATION"
+    },
+    {
+      "file": "docs/development.md",
+      "role": "OPERATING_GUIDE"
+    },
+    {
+      "file": "docs/load-test/01-ARCHITECTURE.md",
+      "role": "DESIGN_SPECIFICATION"
+    },
+    {
+      "file": "docs/load-test/02-SCENARIOS.md",
+      "role": "DESIGN_SPECIFICATION"
+    },
+    {
+      "file": "docs/load-test/03-METRICS-AND-CRITERIA.md",
+      "role": "DESIGN_SPECIFICATION"
+    },
+    {
+      "file": "docs/load-test/04-EXECUTION-REPORT.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
+      "file": "docs/operations/ANDROID-NAVIGATION.md",
+      "role": "OPERATING_GUIDE"
+    },
+    {
+      "file": "docs/operations/ANDROID-OVERNIGHT-SOAK.md",
+      "role": "OPERATING_GUIDE"
+    },
+    {
+      "file": "docs/operations/AUDIT-INVESTIGATION.md",
+      "role": "OPERATING_GUIDE"
+    },
+    {
+      "file": "docs/operations/BUILD-PROVENANCE.md",
+      "role": "OPERATING_GUIDE"
+    },
+    {
+      "file": "docs/operations/CODEC-INPUT-CANARY.md",
+      "role": "OPERATING_GUIDE"
+    },
+    {
+      "file": "docs/operations/CURRENT-STATE.md",
+      "role": "CURRENT_ENTRYPOINT"
+    },
+    {
+      "file": "docs/operations/DEVICE-CATALOG.md",
+      "role": "OPERATING_GUIDE"
+    },
+    {
+      "file": "docs/operations/DEVICE-LOG-STORAGE.md",
+      "role": "OPERATING_GUIDE"
+    },
+    {
+      "file": "docs/operations/DISCOVERY-PUBLISHER.md",
+      "role": "OPERATING_GUIDE"
+    },
+    {
+      "file": "docs/operations/GROUP-HIERARCHY.md",
+      "role": "OPERATING_GUIDE"
+    },
+    {
+      "file": "docs/operations/HOST-RESOURCES.md",
+      "role": "OPERATING_GUIDE"
+    },
+    {
+      "file": "docs/operations/HTTP-METRICS.md",
+      "role": "OPERATING_GUIDE"
+    },
+    {
+      "file": "docs/operations/LDPLAYER-NETWORK-RECOVERY.md",
+      "role": "OPERATING_GUIDE"
+    },
+    {
+      "file": "docs/operations/LOCAL-PILOT.md",
+      "role": "OPERATING_GUIDE"
+    },
+    {
+      "file": "docs/operations/LOCATION-HIERARCHY.md",
+      "role": "OPERATING_GUIDE"
+    },
+    {
+      "file": "docs/operations/OBSERVABILITY.md",
+      "role": "OPERATING_GUIDE"
+    },
+    {
+      "file": "docs/operations/OTA-ADDRESSED-UPDATES.md",
+      "role": "OPERATING_GUIDE"
+    },
+    {
+      "file": "docs/operations/OTA-PUBLICATION-AND-APK-CHECKS.md",
+      "role": "OPERATING_GUIDE"
+    },
+    {
+      "file": "docs/operations/PILOT-ACCEPTANCE.md",
+      "role": "OPERATING_GUIDE"
+    },
+    {
+      "file": "docs/operations/PIPELINE-DEFINITIONS.md",
+      "role": "OPERATING_GUIDE"
+    },
+    {
+      "file": "docs/operations/READINESS.md",
+      "role": "CURRENT_ENTRYPOINT"
+    },
+    {
+      "file": "docs/operations/REDIS-MEMORY.md",
+      "role": "OPERATING_GUIDE"
+    },
+    {
+      "file": "docs/operations/REMOTE-PILOT.md",
+      "role": "OPERATING_GUIDE"
+    },
+    {
+      "file": "docs/operations/REVIEW-GATEWAY.md",
+      "role": "OPERATING_GUIDE"
+    },
+    {
+      "file": "docs/operations/SCRIPT-CATALOG.md",
+      "role": "OPERATING_GUIDE"
+    },
+    {
+      "file": "docs/operations/SCRIPT-STUDIO.md",
+      "role": "CURRENT_ENTRYPOINT"
+    },
+    {
+      "file": "docs/operations/SCRIPT-VERSIONS.md",
+      "role": "OPERATING_GUIDE"
+    },
+    {
+      "file": "docs/operations/STARTUP.md",
+      "role": "OPERATING_GUIDE"
+    },
+    {
+      "file": "docs/operations/STATIC-STREAM-INPUT.md",
+      "role": "OPERATING_GUIDE"
+    },
+    {
+      "file": "docs/operations/USER-ACCESS.md",
+      "role": "OPERATING_GUIDE"
+    },
+    {
+      "file": "docs/operations/VIDEO-CADENCE-CANARY.md",
+      "role": "OPERATING_GUIDE"
+    },
+    {
+      "file": "docs/operations/VPN-CONTROL-OUTCOMES.md",
+      "role": "OPERATING_GUIDE"
+    },
+    {
+      "file": "docs/operations/WORK-STATUS.md",
+      "role": "CURRENT_ENTRYPOINT"
+    },
+    {
+      "file": "docs/pc-agent.md",
+      "role": "OPERATING_GUIDE"
+    },
+    {
+      "file": "docs/protocols/CONTINUOUS-INPUT-RECEIPTS.md",
+      "role": "OPERATING_GUIDE"
+    },
+    {
+      "file": "docs/protocols/CONTINUOUS-INPUT-SERVER.md",
+      "role": "OPERATING_GUIDE"
+    },
+    {
+      "file": "docs/protocols/VIDEO-CAPTURE-V2.md",
+      "role": "OPERATING_GUIDE"
+    },
+    {
+      "file": "docs/runbooks/01-backend-outage.md",
+      "role": "OPERATING_GUIDE"
+    },
+    {
+      "file": "docs/runbooks/02-vpn-incident.md",
+      "role": "OPERATING_GUIDE"
+    },
+    {
+      "file": "docs/runbooks/03-database-failure.md",
+      "role": "OPERATING_GUIDE"
+    },
+    {
+      "file": "docs/runbooks/04-fleet-offline.md",
+      "role": "OPERATING_GUIDE"
+    },
+    {
+      "file": "docs/runbooks/README.md",
+      "role": "OPERATING_GUIDE"
+    },
+    {
+      "file": "docs/security.md",
+      "role": "OPERATING_GUIDE"
+    },
+    {
+      "file": "docs/security/account-credentials.md",
+      "role": "OPERATING_GUIDE"
+    },
+    {
+      "file": "docs/security/device-credential-bootstrap.md",
+      "role": "OPERATING_GUIDE"
+    },
+    {
+      "file": "docs/security/device-refresh-recovery.md",
+      "role": "OPERATING_GUIDE"
+    },
+    {
+      "file": "docs/security/frontend-sessions.md",
+      "role": "OPERATING_GUIDE"
+    },
+    {
+      "file": "docs/security/postgresql-rls.md",
+      "role": "OPERATING_GUIDE"
+    },
+    {
+      "file": "docs/security/task-control-protocol.md",
+      "role": "OPERATING_GUIDE"
+    },
+    {
+      "file": "docs/security/user-auth-bootstrap.md",
+      "role": "OPERATING_GUIDE"
+    },
+    {
+      "file": "docs/web-ui-guide.md",
+      "role": "OPERATING_GUIDE"
+    },
+    {
+      "file": "specs/TZ-00-Constitution/SPLIT-1-Repo-Docker.md",
+      "role": "DESIGN_SPECIFICATION"
+    },
+    {
+      "file": "specs/TZ-00-Constitution/SPLIT-2-PostgreSQL.md",
+      "role": "DESIGN_SPECIFICATION"
+    },
+    {
+      "file": "specs/TZ-00-Constitution/SPLIT-3-Redis-Nginx.md",
+      "role": "DESIGN_SPECIFICATION"
+    },
+    {
+      "file": "specs/TZ-00-Constitution/SPLIT-4-Secrets-Env.md",
+      "role": "DESIGN_SPECIFICATION"
+    },
+    {
+      "file": "specs/TZ-00-Constitution/SPLIT-5-CICD.md",
+      "role": "DESIGN_SPECIFICATION"
+    },
+    {
+      "file": "specs/TZ-01-Auth-Service/SPLIT-1-JWT-Login.md",
+      "role": "DESIGN_SPECIFICATION"
+    },
+    {
+      "file": "specs/TZ-01-Auth-Service/SPLIT-2-MFA-Users.md",
+      "role": "DESIGN_SPECIFICATION"
+    },
+    {
+      "file": "specs/TZ-01-Auth-Service/SPLIT-3-RBAC.md",
+      "role": "DESIGN_SPECIFICATION"
+    },
+    {
+      "file": "specs/TZ-01-Auth-Service/SPLIT-4-API-Keys.md",
+      "role": "DESIGN_SPECIFICATION"
+    },
+    {
+      "file": "specs/TZ-01-Auth-Service/SPLIT-5-Audit-Log.md",
+      "role": "DESIGN_SPECIFICATION"
+    },
+    {
+      "file": "specs/TZ-02-Device-Registry/SPLIT-1-Device-CRUD.md",
+      "role": "DESIGN_SPECIFICATION"
+    },
+    {
+      "file": "specs/TZ-02-Device-Registry/SPLIT-2-Groups-Tags.md",
+      "role": "DESIGN_SPECIFICATION"
+    },
+    {
+      "file": "specs/TZ-02-Device-Registry/SPLIT-3-Device-Status-Redis.md",
+      "role": "DESIGN_SPECIFICATION"
+    },
+    {
+      "file": "specs/TZ-02-Device-Registry/SPLIT-4-Bulk-Actions.md",
+      "role": "DESIGN_SPECIFICATION"
+    },
+    {
+      "file": "specs/TZ-02-Device-Registry/SPLIT-5-Discovery.md",
+      "role": "DESIGN_SPECIFICATION"
+    },
+    {
+      "file": "specs/TZ-03-WebSocket-Layer/SPLIT-1-ConnectionManager.md",
+      "role": "DESIGN_SPECIFICATION"
+    },
+    {
+      "file": "specs/TZ-03-WebSocket-Layer/SPLIT-2-Redis-PubSub.md",
+      "role": "DESIGN_SPECIFICATION"
+    },
+    {
+      "file": "specs/TZ-03-WebSocket-Layer/SPLIT-3-Backpressure.md",
+      "role": "DESIGN_SPECIFICATION"
+    },
+    {
+      "file": "specs/TZ-03-WebSocket-Layer/SPLIT-4-Heartbeat.md",
+      "role": "DESIGN_SPECIFICATION"
+    },
+    {
+      "file": "specs/TZ-03-WebSocket-Layer/SPLIT-5-Events.md",
+      "role": "DESIGN_SPECIFICATION"
+    },
+    {
+      "file": "specs/TZ-04-Script-Engine/SPLIT-1-DAG-Schema.md",
+      "role": "DESIGN_SPECIFICATION"
+    },
+    {
+      "file": "specs/TZ-04-Script-Engine/SPLIT-2-Script-CRUD.md",
+      "role": "DESIGN_SPECIFICATION"
+    },
+    {
+      "file": "specs/TZ-04-Script-Engine/SPLIT-3-Task-Queue.md",
+      "role": "DESIGN_SPECIFICATION"
+    },
+    {
+      "file": "specs/TZ-04-Script-Engine/SPLIT-4-Wave-Batch.md",
+      "role": "DESIGN_SPECIFICATION"
+    },
+    {
+      "file": "specs/TZ-04-Script-Engine/SPLIT-5-Results.md",
+      "role": "DESIGN_SPECIFICATION"
+    },
+    {
+      "file": "specs/TZ-05-H264-Streaming/SPLIT-1-MediaProjection.md",
+      "role": "DESIGN_SPECIFICATION"
+    },
+    {
+      "file": "specs/TZ-05-H264-Streaming/SPLIT-2-MediaCodec.md",
+      "role": "DESIGN_SPECIFICATION"
+    },
+    {
+      "file": "specs/TZ-05-H264-Streaming/SPLIT-3-NAL-WebSocket.md",
+      "role": "DESIGN_SPECIFICATION"
+    },
+    {
+      "file": "specs/TZ-05-H264-Streaming/SPLIT-4-Frame-Drop.md",
+      "role": "DESIGN_SPECIFICATION"
+    },
+    {
+      "file": "specs/TZ-05-H264-Streaming/SPLIT-5-WebCodecs.md",
+      "role": "DESIGN_SPECIFICATION"
+    },
+    {
+      "file": "specs/TZ-06-VPN-AmneziaWG/SPLIT-1-AWG-Config.md",
+      "role": "DESIGN_SPECIFICATION"
+    },
+    {
+      "file": "specs/TZ-06-VPN-AmneziaWG/SPLIT-2-Pool-Manager.md",
+      "role": "DESIGN_SPECIFICATION"
+    },
+    {
+      "file": "specs/TZ-06-VPN-AmneziaWG/SPLIT-3-Self-Healing.md",
+      "role": "DESIGN_SPECIFICATION"
+    },
+    {
+      "file": "specs/TZ-06-VPN-AmneziaWG/SPLIT-4-Kill-Switch.md",
+      "role": "DESIGN_SPECIFICATION"
+    },
+    {
+      "file": "specs/TZ-06-VPN-AmneziaWG/SPLIT-5-VPN-API.md",
+      "role": "DESIGN_SPECIFICATION"
+    },
+    {
+      "file": "specs/TZ-07-Android-Agent/SPLIT-1-Architecture.md",
+      "role": "DESIGN_SPECIFICATION"
+    },
+    {
+      "file": "specs/TZ-07-Android-Agent/SPLIT-2-WebSocket-Client.md",
+      "role": "DESIGN_SPECIFICATION"
+    },
+    {
+      "file": "specs/TZ-07-Android-Agent/SPLIT-3-Command-Handler.md",
+      "role": "DESIGN_SPECIFICATION"
+    },
+    {
+      "file": "specs/TZ-07-Android-Agent/SPLIT-4-Lua-Engine.md",
+      "role": "DESIGN_SPECIFICATION"
+    },
+    {
+      "file": "specs/TZ-07-Android-Agent/SPLIT-5-OTA-Updates.md",
+      "role": "DESIGN_SPECIFICATION"
+    },
+    {
+      "file": "specs/TZ-08-PC-Agent/SPLIT-1-Architecture.md",
+      "role": "DESIGN_SPECIFICATION"
+    },
+    {
+      "file": "specs/TZ-08-PC-Agent/SPLIT-2-LDPlayer-Manager.md",
+      "role": "DESIGN_SPECIFICATION"
+    },
+    {
+      "file": "specs/TZ-08-PC-Agent/SPLIT-3-Telemetry.md",
+      "role": "DESIGN_SPECIFICATION"
+    },
+    {
+      "file": "specs/TZ-08-PC-Agent/SPLIT-4-ADB-Bridge.md",
+      "role": "DESIGN_SPECIFICATION"
+    },
+    {
+      "file": "specs/TZ-08-PC-Agent/SPLIT-5-Topology.md",
+      "role": "DESIGN_SPECIFICATION"
+    },
+    {
+      "file": "specs/TZ-09-n8n-Integration/SPLIT-1-Setup.md",
+      "role": "DESIGN_SPECIFICATION"
+    },
+    {
+      "file": "specs/TZ-09-n8n-Integration/SPLIT-2-DevicePool-Node.md",
+      "role": "DESIGN_SPECIFICATION"
+    },
+    {
+      "file": "specs/TZ-09-n8n-Integration/SPLIT-3-ExecuteScript-Node.md",
+      "role": "DESIGN_SPECIFICATION"
+    },
+    {
+      "file": "specs/TZ-09-n8n-Integration/SPLIT-4-EventTrigger-Node.md",
+      "role": "DESIGN_SPECIFICATION"
+    },
+    {
+      "file": "specs/TZ-09-n8n-Integration/SPLIT-5-Webhook-Pattern.md",
+      "role": "DESIGN_SPECIFICATION"
+    },
+    {
+      "file": "specs/TZ-10-Web-Frontend/SPLIT-1-Setup-Auth.md",
+      "role": "DESIGN_SPECIFICATION"
+    },
+    {
+      "file": "specs/TZ-10-Web-Frontend/SPLIT-2-Dashboard-Devices.md",
+      "role": "DESIGN_SPECIFICATION"
+    },
+    {
+      "file": "specs/TZ-10-Web-Frontend/SPLIT-3-Remote-Fleet.md",
+      "role": "DESIGN_SPECIFICATION"
+    },
+    {
+      "file": "specs/TZ-10-Web-Frontend/SPLIT-4-VPN-UI.md",
+      "role": "DESIGN_SPECIFICATION"
+    },
+    {
+      "file": "specs/TZ-10-Web-Frontend/SPLIT-5-Script-Builder.md",
+      "role": "DESIGN_SPECIFICATION"
+    },
+    {
+      "file": "specs/TZ-11-Monitoring/SPLIT-1-Prometheus.md",
+      "role": "DESIGN_SPECIFICATION"
+    },
+    {
+      "file": "specs/TZ-11-Monitoring/SPLIT-2-Grafana.md",
+      "role": "DESIGN_SPECIFICATION"
+    },
+    {
+      "file": "specs/TZ-11-Monitoring/SPLIT-3-Alertmanager.md",
+      "role": "DESIGN_SPECIFICATION"
+    },
+    {
+      "file": "specs/TZ-11-Monitoring/SPLIT-4-Logging.md",
+      "role": "DESIGN_SPECIFICATION"
+    },
+    {
+      "file": "specs/TZ-11-Monitoring/SPLIT-5-Health-Checks.md",
+      "role": "DESIGN_SPECIFICATION"
+    },
+    {
+      "file": "specs/TZ-12-Agent-Discovery/PLAN.md",
+      "role": "DESIGN_SPECIFICATION"
+    },
+    {
+      "file": "specs/TZ-12-Orchestrator/SPLIT-1-Script-Lifecycle.md",
+      "role": "DESIGN_SPECIFICATION"
+    },
+    {
+      "file": "specs/TZ-12-Orchestrator/SPLIT-2-Script-Caching.md",
+      "role": "DESIGN_SPECIFICATION"
+    },
+    {
+      "file": "specs/TZ-12-Orchestrator/SPLIT-3-Agent-Event-Model.md",
+      "role": "DESIGN_SPECIFICATION"
+    },
+    {
+      "file": "specs/TZ-12-Orchestrator/SPLIT-4-Orchestrator-Engine.md",
+      "role": "DESIGN_SPECIFICATION"
+    },
+    {
+      "file": "specs/TZ-12-Orchestrator/SPLIT-5-Scheduling-System.md",
+      "role": "DESIGN_SPECIFICATION"
+    },
+    {
+      "file": "tests/containers/README.md",
+      "role": "SUPPORTING_DOCUMENT"
+    },
+    {
+      "file": "tests/production/README.md",
+      "role": "SUPPORTING_DOCUMENT"
+    }
+  ]
+}

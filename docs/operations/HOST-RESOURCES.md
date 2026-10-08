@@ -1,5 +1,14 @@
 # Ресурсы хоста: диск, Windows commit, WSL и контейнеры
 
+**Действующий статус, сверка 9 октября +05:** прежнее8h окно завершено;
+read-only проверка видимых process command lines в23:10:38UTC снова дала0
+collectors. Постоянного наблюдения после deadline не подтверждено. Это не
+privileged kernel audit и не утверждение, что никакой сторонний observer не работает.
+[Остаток и приоритет](WORK-STATUS.md) · [Машинная запись](STATUS-REGISTRY.json).
+Обновление документации не запускает новый collector и не устраняет расход диска.
+
+## История окон наблюдения
+
 **Актуальное дополнение8October,18:19UTC:** limited observer завершил241/241
 samples в09:01UTC, report2.1MiB, PID отсутствует. Покрытия после deadline нет.
 C:−6.48GiB за8h; Docker VHDX и4LDPlayer allocations постоянны во всехsamples.

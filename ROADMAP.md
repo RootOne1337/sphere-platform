@@ -1,8 +1,8 @@
 # 🗺️ Куда движется Sphere
 
-**Навигация обновлена 6 октября 2026; F32-план ниже сохраняет порядок21 сентября.** [Главная](README.md) · [Полный реестр](docs/audits/2026-09-20/FLEET32-PREFLIGHT.md) · [Установленный pilot](docs/operations/LOCAL-PILOT.md)
+**Навигация обновлена 9 октября 2026; F32-план ниже сохраняет порядок21 сентября.** [Главная](README.md) · [Реестр работ](docs/operations/WORK-STATUS.md) · [Установленный pilot](docs/operations/LOCAL-PILOT.md)
 
-**Текущий продуктовый план:** [50 работ с зависимостями и приёмкой](docs/audits/2026-10-05/ENTERPRISE-PRODUCT-BACKLOG.json),
+**Текущий продуктовый план:** [50 работ с зависимостями и приёмкой](docs/operations/STATUS-REGISTRY.json),
 EP-001–009 приняты,41 пункт сохраняют открытые критерии.
 [Последний пакет ресурсной истории](docs/audits/2026-10-05/ENTERPRISE-CONTAINER-RESOURCE-HISTORY.md).
 EP-009: принята история cgroup CPU/RAM; host/RSS остаются отдельными scope.
@@ -10,11 +10,11 @@ EP-010 продолжается: [tenant coverage UI/API установлен](d
 [clock/ownership foundation сохранён](docs/audits/2026-10-05/ENTERPRISE-ANDROID-VPN-OBSERVATION.md).
 [Независимый producer, история coverage и транспортные probes](docs/audits/2026-10-05/ENTERPRISE-LIVE-COVERAGE-NEXT.md) ещё открыты. Эксплуатационный порядок пересмотрен: сначала EP-033/047 resources,
 remote rollout/recovery и selected-device control, затем Studio и реестр по dependencies.
-[Все41 открытые работы по группам](docs/audits/2026-10-06/ENTERPRISE-PRIORITIES.md).
+[Текущие41 работы, масштаб и дополнения из чата](docs/operations/WORK-STATUS.md).
 [Ограниченный reader и persistent logs](docs/audits/2026-10-06/DEVICE-LOG-READ-BUDGET.md)
 установлены частично; EP-033 целиком остаётся OPEN.
 [Upload intake и writer budget](docs/audits/2026-10-06/DEVICE-LOG-UPLOAD-BUDGET.md)
-установлены в API `76596c39`; ресурсы следующего этапа — общие квоты, независимая
+первоначально установлены в API `76596c39` (исторический rollout); ресурсы следующего этапа — общие квоты, независимая
 очистка, rotation/delete consistency и leak/load proof. Счёт 9 / 41 не изменён.
 Планируемый пользовательский stream+script тест20–30 эмуляторов — отдельный
 живой этап; целевой F32-план32 ниже не считается выполненным по 14 online.

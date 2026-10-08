@@ -4,16 +4,25 @@
 
 **От первого подключения до воспроизводимого разбора отказа.**
 
-[Главная](../README.md) · [Готовность](operations/READINESS.md) · [Открытые работы](audits/2026-09-20/FLEET32-PREFLIGHT.md) · [Помощь](../SUPPORT.md)
+[Главная](../README.md) · [Готовность](operations/READINESS.md) · [Открытые работы](operations/WORK-STATUS.md) · [Помощь](../SUPPORT.md)
 
 </div>
 
 > [!NOTE]
-> **Срез навигации: 7 октября 2026.** Канонические source/runtime факты,
+> **Срез навигации: 9 октября 2026.** Канонические source/runtime факты,
 > версии Android, ограничения диагностики и будущий этап 20–30 устройств собраны
 > в [актуальном состоянии](operations/CURRENT-STATE.md). Каталог не выполняет
 > автоматическую проверку runtime; старые аудиты сохраняют собственные даты и
 > версии и не должны читаться как текущий deploy. [Правила актуальности](DOCUMENTATION.md).
+
+**Действующий реестр:** [50 работ и дополнения из чата](operations/WORK-STATUS.md)
+([JSON](operations/STATUS-REGISTRY.json)). **9 принято / 41 открыто**; legacy7 —
+пересекающийся отдельный аудит, не дополнительный остаток. Последняя записанная
+установка UIec3f2267/APIbe803773; новый clock fix1577e01e source-only.
+Установка/CI/конечная приёмка не подменяют друг друга.
+
+<details>
+<summary>Исторические checkpoints; для текущего результата используйте ссылки выше</summary>
 
 **7 октября, 16:02 UTC+5 — повторная потеря места C: измерена за 8h:**
 [Конечный host/storage разбор и открытая атрибуция](audits/2026-10-07/HOST-STORAGE-FOLLOWUP.md) ·
@@ -371,6 +380,8 @@ API **37bb436** / UI **922f479** на 3015; 1013 frontend / 89 API провер�
 Normal/dev 10209; stable/manifest/bulk/visual/soak/F36 OPEN. Исходный аудит: 33/8.
 
 
+</details>
+
 ## 🧭 Выберите задачу
 
 | Мне нужно | Начать здесь | Дальше |
@@ -459,9 +470,14 @@ Normal/dev 10209; stable/manifest/bulk/visual/soak/F36 OPEN. Исходный а
 | Identity / credentials | [User bootstrap](security/user-auth-bootstrap.md) · [Device bootstrap](security/device-credential-bootstrap.md) · [Device refresh](security/device-refresh-recovery.md) · [Account credentials](security/account-credentials.md) |
 | VPN | [Control outcomes](operations/VPN-CONTROL-OUTCOMES.md) · [F32 evidence](audits/2026-10-03/VPN-CONTROL-OUTCOMES.md) · [Реестр ограничений F32-11/12/21](audits/2026-09-20/FLEET32-PREFLIGHT.md) · [VPN intents](audits/2026-09-05/VPN-LEASE-DESIGN.md) · [Runbook](runbooks/02-vpn-incident.md) |
 
-## 🔬 Что подтверждено проверкой
+## 🔬 Текущий результат и исторические доказательства
 
-| Последняя контрольная точка | Доказательства и границы |
+Последняя действующая сверка: [WORK-STATUS](operations/WORK-STATUS.md),
+[runtime](operations/CURRENT-STATE.md) и [документационный receipt9октября](audits/2026-10-09/DOCUMENTATION-RECONCILIATION.md).
+Таблица ниже сохраняет checkpoints сентября; слова «не проверен», версии и
+числа в ней относятся к тем датам и не заменяют последующие приёмки.
+
+| Историческая контрольная точка | Доказательства и границы |
 | --- | --- |
 | Согласованный rollout backend/APK 1.2.8 | [Canary 21 сентября](audits/2026-09-20/CANARY-20260921.md): OTA, backup/restore, 15 tasks, два pipeline |
 | Frontend `9924eb1` | [AUD-138](audits/2026-09-20/DECODER-RECOVERY.md): decoder bounds/recovery и два живых потока после restart |

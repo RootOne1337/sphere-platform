@@ -1,5 +1,8 @@
 # Script Studio: инструкция по созданию и проверке сценариев
 
+**Действующий реестр работ:** [WORK-STATUS](WORK-STATUS.md) / [машинный статус](STATUS-REGISTRY.json).
+Source, установленный runtime и конечная приёмка разделены; старые snapshots ниже сохраняют свои даты.
+
 **Сверка9октября:** [полная карта требований и границ реализации](../audits/2026-10-09/CHAT-CODE-RECONCILIATION.md).
 Source1577e01e устраняет смешение часов XPath/input в очереди; 76 focused и1938
 frontend tests проходят. На текущем3015 эта новая правка ещё не принята как
@@ -32,7 +35,8 @@ RELEASE3 и возврат в READY проверены.
 живые жесты. Start ждёт native release, Stop сохраняет поздний ACK и возвращает
 normal READY. PH011 Android View: DOWN1/MOVE4/UP1/CANCEL0; Home после Stop
 обновил исходную строку до confirmed. Task handoff текущего viewer установлен
-и проверен двумя3-step tasks, в том числе при pending XPath. Distributed lease,
+и проверен двумя3-step tasks, в том числе при pending XPath. Redis lease для
+continuous viewer подключён; общий арбитраж viewer/task/API/scheduler,
 rich recorder и последующий idle receipt failure OPEN.
 [Приёмка лаборатории](../audits/2026-10-08/STUDIO-RECORDER-INSTALLED-ACCEPTANCE.md).
 [Приёмка запуска](../audits/2026-10-08/STUDIO-TASK-INSTALLED-ACCEPTANCE.md) ·

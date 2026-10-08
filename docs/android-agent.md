@@ -1,5 +1,12 @@
 # Android Agent
 
+**Действующая граница, сверка9октября:** [WORK-STATUS](operations/WORK-STATUS.md)
+и [CURRENT-STATE](operations/CURRENT-STATE.md) указывают последнюю конечную
+PH011 canary **1.2.49-dev/10249**; смешанный парк не объявляется обновлённым.
+Normal live MOVE подтверждён на этом pilot, trajectory recorder не готов.
+UI hierarchy использует root `uiautomator dump`/XML/XPath, отдельный Appium
+UiAutomator2 server не встроен. Разделы с прежними APK ниже — история своих дат.
+
 > **Дополнение 4 октября 2026, после reboot и rollout в 17:14 UTC:** APK остаётся
 > 1.2.44-dev / 10244. Новый API/UI c1a6e79 добавляет корреляцию RPC/этапов PNG
 > через существующий Android APK и сервер. Remote 504 на display_before сохранён;
