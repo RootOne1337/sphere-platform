@@ -12,9 +12,11 @@ token refresh; UI36b160f9 установлен, живой refresh ещё не �
 API be803773 установлен: failed viewer send изолирован, независимый Android
 View подтвердил drag/wheel. Idle receipt loss повторился и остаётся P1.
 Отдельно transient capability failure при API restart потерял laboratory state
-без F5; следующим исправляется сохранение same-identity guards при таком outage.
-Source fix подготовлен, включая aborted native PNG fence; установленный UI
-пока прежний, real outage acceptance нужна.
+без F5. UI46ca2096 теперь установлен:72s API outage сохранил PH011/View,
+completed task с3отчётами/marks и PH011/priority8 в launch portal без F5.
+Все4 CI successful; frontend1915/138suites, backend3346passed/37skipped/
+229subtests. Unknown POST/dirty queue/aborted native PNG fence проверены
+fixtures отдельно. Это исправляет retention, но не idle failure/global lease.
 [Новый контракт и проверки](../2026-10-09/STUDIO-PERMISSION-OUTAGE-RETENTION.md).
 [Fault isolation и наблюдение](CONTINUOUS-VIEWER-FAULT-ISOLATION.md).
 Канонический audit ledger остаётся9accepted/41open; это уточнение существующих

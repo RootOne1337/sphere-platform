@@ -81,4 +81,21 @@ not attribute the earlier idle event to the same path; reviewed installation
 and live acceptance are pending:
 [viewer fault isolation](CONTINUOUS-VIEWER-FAULT-ISOLATION.md).
 
+## Installed follow-up at 18:39–19:28 UTC
+
+APIbe803773 was installed from its successful reviewed CI image; the viewer
+send failure is isolated. A fresh independent Android View confirmed drag
+DOWN1/MOVE5/UP1 and wheel deltaDOWN1/MOVE1/UP1, with CANCEL0. Idle
+`native_receipt_timeout` still recurred before and after this finite canary.
+The receiver was removed and the laboratory left in View. The installed API
+fix therefore does not close or explain the idle event above.
+[Installed scalar evidence](CONTINUOUS-VIEWER-INSTALLED-ACCEPTANCE.json).
+
+A separate transient capabilities outage at API replacement lost laboratory
+state without F5. UI46ca2096 retention is now installed; a finite72-second API
+outage preserved the same completed task, marks, device/View and launch options.
+Unknown POST/native-capture fences were tested separately with fixtures. This
+does not close the idle timeout. Installed evidence is tracked separately:
+[Permission outage retention](../2026-10-09/STUDIO-PERMISSION-OUTAGE-RETENTION.md).
+
 SF26-05 remains OPEN; ledger9accepted/41open unchanged.

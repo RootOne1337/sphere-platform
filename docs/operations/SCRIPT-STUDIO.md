@@ -1,8 +1,8 @@
 # Script Studio: инструкция по созданию и проверке сценариев
 
-Актуализировано: **8 октября 2026**. Каталог `/scripts`, редактор
+Актуализировано: **9 октября 2026**. Каталог `/scripts`, редактор
 `/scripts/builder`, формат **DAG1.0**, React Flow, локальная ELK0.12.0.
-На3015 установлены frontend **36b160f9** и API **be803773**. Studio сохраняет
+На3015 установлены frontend **46ca2096** и API **be803773**. Studio сохраняет
 graph/action contract и диалог сохранности; текущие runtime границы фиксируются в
 [CURRENT-STATE](CURRENT-STATE.md). Обратная гонка XPath→Control исправлена;
 быстрый переход и повторный вход в дерево проверены на установленном UI.
@@ -21,12 +21,17 @@ rich recorder и последующий idle receipt failure OPEN.
 [Сбой простоя и измерения](../audits/2026-10-08/STUDIO-IDLE-RECEIPT-FOLLOWUP.md).
 API изолирует failed viewer send от общего continuous listener; native drag и
 wheel подтверждены Android View. Idle timeout повторился, а краткий отказ
-capabilities при перезапуске API потерял laboratory state; оба follow-up OPEN.
+capabilities при прежнем перезапуске API потерял laboratory state; retention
+исправлен и принят ниже, idle follow-up остаётся OPEN.
 [Установленный API и конечные доказательства](../audits/2026-10-08/CONTINUOUS-VIEWER-FAULT-ISOLATION.md).
-Retention fix подготовлен: редактор/guards скрыто сохраняются при transient
+Retention fix установлен: редактор/guards скрыто сохраняются при transient
 outage той же сессии, без использования старых grants или повторения команд.
 Stream/native capture retirement и запрет запуска после unconfirmed capture
-проверены исходниками; установка ещё нужна.
+проверены компонентными regressions. На установленном UI72s отказ API без F5
+сохранил PH011/View, completed task с3отчётами/marks и PH011/priority8 в launch
+portal. Независимый SQL read подтвердил1task за окно; новый Android input не
+отправлялся. Все4 CI successful, frontend1915/138suites. Pending/unknown POST
+и capture abort во время outage проверены fixtures, а не живой canary.
 Portalled окно массового запуска скрывается при outage, сохраняя выбор и
 pending/unknown result. Receipt, полученный в это время, после восстановления
 открывается явной ссылкой и не допускает повторной отправки.

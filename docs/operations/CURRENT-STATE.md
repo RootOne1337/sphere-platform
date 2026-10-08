@@ -1,18 +1,24 @@
 # Sphere: актуальное состояние и критерии приёмки
 
-**Обновлено:** 8 октября 2026, Asia/Yekaterinburg; даты отдельных runtime/CI срезов указаны ниже.<br />
+**Обновлено:** 9 октября 2026, Asia/Yekaterinburg; даты отдельных runtime/CI срезов указаны ниже.<br />
 **Область:** исходники и документация ветки PR #19, записанные runtime-наблюдения, Android APK и готовность следующего прогона.<br />
 **Канонический документ текущего состояния:** этот файл. Исторические отчёты ниже сохраняют исходные даты и факты.
 
-**9 октября +05 — Studio outage retention подготовлен, ещё не установлен.**
+**9 октября +05 / 8 октября20:13–20:23 UTC — Studio outage retention установлен.**
 Временный отказ capabilities скрывает/inert редактор, сохраняя same-identity
 draft/queue/task/unknown guards; grants остаются запрещёнными. Stream/native
 reads прекращаются, preparation до POST отменяется. Native PNG remount больше
 не считается завершением прерванной Android-команды. Source regressions и
 nonincremental TypeScript прошли; полный frontend1915/138suites. Portalled окно
 запуска тоже приостанавливается, сохраняя pending/unknown/confirmed outcome
-без скрытого redirect. CI/install ещё
-нужны. На3015 пока UI36b160f9/APIbe803773. Ledger9accepted/41open.
+без скрытого redirect. Все4 exact-source CI successful; backend3346passed/
+37skipped/229subtests. На3015 UI46ca2096/APIbe803773,45other containers/schema/
+OTA/APK10249 сохранены. При72s API outage без F5 восстановились PH011/View,
+тот же completed task с3отчётами/marks, PH011/priority8 в launch portal.
+SQL read за конечное окно подтвердил1task; новые Android input не отправлялись.
+Desktop1440/mobile390 проверены, viewport reset. Dirty queue/unknown POST/native
+PNG abort доказаны fixtures; живой token refresh и idle failure не закрыты.
+Ledger9accepted/41open.
 [Контракт и доказательства](../audits/2026-10-09/STUDIO-PERMISSION-OUTAGE-RETENTION.md).
 
 **8 октября,18:39–19:28 UTC /9 октября UTC+5 — API be803773 установлен.**
@@ -23,7 +29,7 @@ preview successful. Only API replaced;45other containers/schema/OTA/APK10249
 deltaDOWN1/MOVE1/UP1, CANCEL0; receiver удалён, View выбран, viewport reset.
 Idle native_receipt_timeout повторился: конечный успех не закрывает этот P1.
 При transient capability failure потерялись laboratory/task UI state без F5;
-это следующий state-retention fix. Ledger9accepted/41open.
+это исторический trigger установленного выше state-retention fix. Ledger9accepted/41open.
 [Установка, доказательства и ограничения](../audits/2026-10-08/CONTINUOUS-VIEWER-FAULT-ISOLATION.md).
 
 **Storage window завершён09:01 UTC, не является работающим ночным наблюдателем.**

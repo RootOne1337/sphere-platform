@@ -82,6 +82,10 @@ failure: authorization boundary размонтировал Studio, после в
 F5 не выполнялся. Это другой, подтверждённый P1: route outage retention должна
 сохранять same-identity uncertainty и одновременно запрещать все новые действия
 по недоступным permissions. [Наблюдение](CONTINUOUS-VIEWER-FAULT-ISOLATION.md).
+Последующий UI46ca2096 установлен9октябряUTC+5. Конечный72s отказ API без F5
+сохранил task/marks/device/View и launch options; dirty/unknown guards и PNG
+abort проверены fixtures. Это outage acceptance, а не свидетельство token
+refresh. [Установленный retention checkpoint](../2026-10-09/STUDIO-PERMISSION-OUTAGE-RETENTION.md).
 
 Source fixtures доказывают различие refresh/session boundary, а не источник
 ранее замеченного runtime reset. Реальный same-session refresh в установленном
