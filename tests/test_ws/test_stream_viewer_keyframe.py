@@ -98,6 +98,19 @@ async def test_invalid_auth_shape_is_closed_before_database_or_registration(monk
 
 
 @pytest.mark.asyncio
+@pytest.mark.parametrize("message_type", [[], {}, None, 123])
+async def test_malformed_type_keeps_video_and_later_control_alive(authorized_viewer, message_type):
+    ws, bridge = authorized_viewer
+    ws.receive_json = AsyncMock(side_effect=[{"token": "test-viewer-token"}, {"type": message_type},
+                                            {"type": "request_keyframe"}, WebSocketDisconnect()])
+    await stream_router.stream_viewer_ws(ws, str(uuid4()))
+    ws.send_json.assert_awaited_once_with({"type": "error", "error": "stream_input_invalid", "reason": "invalid_message"})
+    assert [call.args[1]["type"] for call in bridge.send_control.await_args_list] == ["viewer_connected", "request_keyframe"]
+    ws.close.assert_not_awaited()
+    bridge.unregister_viewer.assert_awaited_once()
+
+
+@pytest.mark.asyncio
 async def test_touch_probe_requires_current_control_permission(authorized_viewer, monkeypatch):
     ws, bridge = authorized_viewer
     runtime = MagicMock(register=MagicMock(return_value=True), handle=AsyncMock(),

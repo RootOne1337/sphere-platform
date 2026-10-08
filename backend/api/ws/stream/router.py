@@ -292,7 +292,7 @@ async def stream_viewer_ws(
                 if not receive_task.done():
                     receive_task.cancel()
                 await asyncio.gather(receive_task, return_exceptions=True)
-            if isinstance(data, dict) and data.get("type") in {"touch_probe", "touch_open", "touch_event", "touch_close"}:
+            if isinstance(data, dict) and isinstance(data.get("type"), str) and data["type"] in {"touch_probe", "touch_open", "touch_event", "touch_close"}:
                 try:
                     if not touch_registered or not touch_runtime:
                         raise InputLeaseUnavailable()
