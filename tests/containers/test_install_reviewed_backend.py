@@ -255,7 +255,7 @@ class BackendInstallerTests(unittest.TestCase):
             result = installer.execute(artifact, SOURCE, IMAGE, CURRENT, False)
             self.assertFalse(result["runtimeInstalled"])
             self.assertFalse(state["installed"])
-            self.assertEqual(len(calls), 2)
+            self.assertEqual(len(calls), 3)
             self.assertTrue(all(args[-3:] == ["config", "--format", "json"] for args in calls))
 
     def test_resource_incident_prevents_image_load_and_restart(self):
@@ -263,7 +263,7 @@ class BackendInstallerTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "Host not admitted"):
                 installer.execute(artifact, SOURCE, IMAGE, CURRENT, True)
             self.assertFalse(state["installed"])
-            self.assertEqual(len(calls), 2)
+            self.assertEqual(len(calls), 3)
 
     def test_migration_mismatch_prevents_even_compose_planning(self):
         with self.installation() as (artifact, _, calls, _), \

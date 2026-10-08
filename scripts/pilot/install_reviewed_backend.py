@@ -23,6 +23,7 @@ from uuid import uuid4
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 from scripts.pilot.install_reviewed_web import (  # noqa: E402
     command,
+    freeze_compose,
     inspect,
     loaded_image_id,
     write,
@@ -199,9 +200,11 @@ def execute(artifact: Path, source: str, expected_image_id: str, expected_curren
     heads = schema_heads(current)
     require(heads == receipt["migrationHeads"], "Schema migration is not admitted by this installer")
     files = labels.get("com.docker.compose.project.config_files", "").split(",")
-    require(1 <= len(files) <= 16 and all(files), "Unexpected Compose file inventory")
+    require(1 <= len(files) <= 64 and all(files) and len(set(files)) == len(files),
+            "Unexpected Compose file inventory")
     env_file = workspace_path(Path(labels["com.docker.compose.project.environment_file"]), private=True)
     cmd = ["docker", "compose", "--project-name", PROJECT, "--env-file", str(env_file)]
+    prefix = list(cmd)
     for file in files:
         cmd += ["--file", str(workspace_path(Path(file)))]
     old = json.loads(command(cmd + ["config", "--format", "json"]))
@@ -213,7 +216,8 @@ def execute(artifact: Path, source: str, expected_image_id: str, expected_curren
     override = output / "candidate.yml"
     with override.open("x", encoding="utf-8") as stream:
         stream.write(f"services:\n  backend:\n    image: {admitted['imageTag']}\n    build: !reset null\n")
-    candidate_cmd = cmd + ["--file", str(override)]
+    frozen_cmd = freeze_compose(prefix, old, output / "baseline.json", runner=command)
+    candidate_cmd = frozen_cmd + ["--file", str(override)]
     candidate = json.loads(command(candidate_cmd + ["config", "--format", "json"]))
     validate_delta(old, candidate, admitted["imageTag"])
     catalog = ota_hash()
@@ -222,6 +226,8 @@ def execute(artifact: Path, source: str, expected_image_id: str, expected_curren
         "archiveBytes": admitted["archiveBytes"], "previousBackend": before[BACKEND], "sourceChanges": changes,
         "schemaHeads": heads, "schemaMigrationPerformed": False, "resourceFindings": findings,
         "observedAtUtc": datetime.now(timezone.utc).isoformat(), "applyRequested": apply,
+        "previousComposeFileCount": len(files), "candidateComposeFileCount": 2,
+        "completeBaselineRoundtripVerified": True,
         "otaCatalogSha256": catalog, "reportDirectory": str(output), "runtimeInstalled": False}
     write(output / "plan.json", plan)
     if not apply:

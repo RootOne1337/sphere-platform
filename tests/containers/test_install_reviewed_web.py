@@ -26,6 +26,29 @@ def config():
 
 
 class InstallTests(unittest.TestCase):
+    def test_frozen_compose_preserves_literal_dollars_and_uses_one_baseline(self):
+        old = config()
+        old["services"]["review-ui"]["environment"]["FAKE_SECRET"] = "literal-$value-${name}"
+        old["services"]["review-ui"]["entrypoint"] = ["sh", "-c", "echo $$SHELL_VALUE"]
+        old["services"]["review-ui"]["healthcheck"] = {"test": ["CMD-SHELL", "echo $$HEALTH_VALUE"]}
+        with tempfile.TemporaryDirectory() as directory, patch.object(installer, "command", return_value=json.dumps(old)) as command:
+            path = Path(directory) / "baseline.json"
+            result = installer.freeze_compose(["docker", "compose", "--project-name", installer.PROJECT], old, path)
+            self.assertEqual(result[-2:], ["--file", str(path)])
+            self.assertEqual(result.count("--file"), 1)
+            self.assertEqual(json.loads(path.read_text())["services"]["review-ui"]["environment"]["FAKE_SECRET"], "literal-$$value-$${name}")
+            self.assertEqual(json.loads(path.read_text())["services"]["review-ui"]["entrypoint"], old["services"]["review-ui"]["entrypoint"])
+            self.assertEqual(json.loads(path.read_text())["services"]["review-ui"]["healthcheck"], old["services"]["review-ui"]["healthcheck"])
+            command.assert_called_once_with(result + ["config", "--format", "json"])
+
+    def test_frozen_compose_rejects_any_roundtrip_change_before_image_load(self):
+        old = config()
+        changed = copy.deepcopy(old)
+        changed["networks"]["review"]["internal"] = False
+        with tempfile.TemporaryDirectory() as directory, patch.object(installer, "command", return_value=json.dumps(changed)):
+            with self.assertRaisesRegex(ValueError, "Frozen Compose differs"):
+                installer.freeze_compose(["docker", "compose"], old, Path(directory) / "baseline.json")
+
     def test_classic_loaded_id_matches_admitted_config(self):
         self.assertEqual(installer.loaded_image_id(Path("unused"), {"Id": IMAGE_ID}, IMAGE_ID), IMAGE_ID)
 
@@ -183,7 +206,7 @@ class InstallTests(unittest.TestCase):
                     patch.object(installer, "catalog_hash", return_value="catalog-digest"):
                 with self.assertRaisesRegex(ValueError, "Host not admitted"):
                     installer.execute(artifact, SOURCE, IMAGE_ID, apply=True)
-            self.assertEqual(len(calls), 2)
+            self.assertEqual(len(calls), 3)  # baseline, frozen roundtrip, candidate; no runtime mutation
             plans = list(private.glob("reviewed-web-install-*/plan.json"))
             self.assertEqual(len(plans), 1)
             self.assertFalse(json.loads(plans[0].read_text())["runtimeInstalled"])

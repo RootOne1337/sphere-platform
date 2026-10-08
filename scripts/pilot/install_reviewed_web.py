@@ -10,6 +10,7 @@ import subprocess
 import sys
 import tarfile
 import urllib.request
+from collections.abc import Callable
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
@@ -135,6 +136,35 @@ def write(path: Path, data: dict[str, Any]) -> None:
         stream.write(text)
 
 
+def freeze_compose(prefix: list[str], baseline: dict[str, Any], path: Path,
+                   *, runner: Callable[[list[str]], str] | None = None) -> list[str]:
+    """Collapse historical overrides, checking the complete resolved model.
+
+    Resolved environment/command values may contain literal dollars. Escape
+    them before Compose reads this private snapshot a second time. Secrets
+    remain in the same private report scope, never in operational output.
+    """
+    def escape(value: Any, keys: tuple[str, ...] = ()) -> Any:
+        # Compose's resolved shell fields retain $$ escaping in its JSON model;
+        # environment strings are already unescaped. Do not double shell escapes.
+        if (len(keys) == 3 and keys[0] == "services" and keys[2] in {"command", "entrypoint"}
+                or len(keys) == 4 and keys[0] == "services" and keys[2:] == ("healthcheck", "test")):
+            return value
+        if isinstance(value, str):
+            return value.replace("$", "$$")
+        if isinstance(value, list):
+            return [escape(item, keys) for item in value]
+        if isinstance(value, dict):
+            return {key: escape(item, keys + (key,)) for key, item in value.items()}
+        return value
+
+    write(path, escape(baseline))
+    cmd = prefix + ["--file", str(path)]
+    restored = json.loads((runner or command)(cmd + ["config", "--format", "json"]))
+    require(restored == baseline, "Frozen Compose differs from complete baseline")
+    return cmd
+
+
 def execute(artifact: Path, source: str, expected_image_id: str, apply: bool) -> dict[str, Any]:
     require(bool(re.fullmatch(r"sha256:[a-f0-9]{64}", expected_image_id)), "Expected independent CI image digest")
     artifact = private_path(artifact)
@@ -151,10 +181,12 @@ def execute(artifact: Path, source: str, expected_image_id: str, apply: bool) ->
     require(labels.get("com.docker.compose.project") == PROJECT
             and labels.get("com.docker.compose.service") == "review-ui", "Wrong UI owner")
     config_files = labels.get("com.docker.compose.project.config_files", "").split(",")
-    require(1 <= len(config_files) <= 16 and all(config_files), "Unexpected Compose inventory")
+    require(1 <= len(config_files) <= 64 and all(config_files)
+            and len(set(config_files)) == len(config_files), "Unexpected Compose inventory")
     files = [private_path(Path(name)) for name in config_files]
     env_file = private_path(Path(labels["com.docker.compose.project.environment_file"]))
     cmd = ["docker", "compose", "--project-name", PROJECT, "--env-file", str(env_file)]
+    prefix = list(cmd)
     for file in files:
         cmd += ["--file", str(file)]
     old = json.loads(command(cmd + ["config", "--format", "json"]))
@@ -170,7 +202,8 @@ def execute(artifact: Path, source: str, expected_image_id: str, apply: bool) ->
     # the previous checkout while reusing the newly admitted image tag.
     with override.open("x", encoding="utf-8") as stream:
         stream.write(f"services:\n  review-ui:\n    image: {admitted['imageTag']}\n    build: !reset null\n")
-    candidate_cmd = cmd + ["--file", str(override)]
+    frozen_cmd = freeze_compose(prefix, old, output / "baseline.json")
+    candidate_cmd = frozen_cmd + ["--file", str(override)]
     candidate = json.loads(command(candidate_cmd + ["config", "--format", "json"]))
     validate_delta(old, candidate, admitted["imageTag"])
     ota_hash = catalog_hash()
@@ -178,6 +211,8 @@ def execute(artifact: Path, source: str, expected_image_id: str, apply: bool) ->
             "archiveBytes": admitted["archiveBytes"], "previousUi": before[UI], "containerCount": len(before),
             "observedAtUtc": datetime.now(timezone.utc).isoformat(), "resourceFindings": findings,
             "applyRequested": apply, "onlyUiImageAndBuildRemovalDelta": True, "backendPreserved": True,
+            "previousComposeFileCount": len(files), "candidateComposeFileCount": 2,
+            "completeBaselineRoundtripVerified": True,
             "otaCatalogSha256": ota_hash, "reportDirectory": str(output), "runtimeInstalled": False}
     write(output / "plan.json", plan)
     if not apply:
