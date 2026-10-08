@@ -55,3 +55,13 @@ Docker VHD234731077632B logical/allocated. Конечный сбор до14:01UT
 
 Связанные материалы: [ресурсы хоста](../../operations/HOST-RESOURCES.md),
 [предыдущая остановка](../2026-10-07/STORAGE-COLLECTOR-INTERRUPTION.md).
+
+## Readback 06:51 UTC /11:51 UTC+5
+
+Same PID36664 and creation01:01:25.4113628UTC confirmed.176 complete samples,
+last06:51:25.607337UTC; report1605618B, within16MiB cap. C: free48170102784B
+versus53474902016B at first sample. Docker VHD remains234731077632B logical
+and allocated. Legitimate CI archive downloads/image installations occurred
+during this interval; this delta is not itself proof of a leak or its writer.
+Collection continues until09:01UTC. Unprivileged bounded observer does not
+provide universal process/file attribution; incident remains OPEN.
