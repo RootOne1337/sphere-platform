@@ -1,5 +1,12 @@
 # Script Studio: инструкция по созданию и проверке сценариев
 
+**Новый responsive/navigation source подготовлен; установка ещё pending.**
+Четыре compact панели, библиотека рядом с лабораторией, late ACK retention
+при скрытии и bounded Back/scroll restoration проверены локально1936tests.
+Кнопки Назад/Домой/Недавние/Меню записываются с APK outcome; recording пока
+сохраняет завершённые swipe endpoints, без continuous path и automatic pixel/
+XPath bundle. [Подробный контракт](../audits/2026-10-09/STUDIO-RESPONSIVE-WORKSPACE.md).
+
 Актуализировано: **9 октября 2026**. Каталог `/scripts`, редактор
 `/scripts/builder`, формат **DAG1.0**, React Flow, локальная ELK0.12.0.
 На3015 установлены frontend **46ca2096** и API **be803773**. Studio сохраняет

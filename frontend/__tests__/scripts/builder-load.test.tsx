@@ -54,7 +54,7 @@ jest.mock('@xyflow/react', () => {
     addEdge,
     ReactFlow: (props: ReactFlowProps) => {
       mockGraphProps = props;
-      React.useEffect(() => { props.onInit?.({ fitView: mockFitView, screenToFlowPosition: mockScreenToFlowPosition } as never); }, []);
+      React.useEffect(() => { props.onInit?.({ fitView: mockFitView, screenToFlowPosition: mockScreenToFlowPosition, getViewport: () => ({ x: 0, y: 0, zoom: 1 }) } as never); }, []);
       return <div data-testid="graph">{props.nodes?.map((node) => <button key={node.id} onClick={event => props.onNodeClick?.(event, node)}>{node.id}</button>)}{props.edges?.map(edge => <button key={edge.id} onClick={event => props.onEdgeClick?.(event, edge)}>Связь {edge.id}</button>)}</div>;
     },
     Background: () => null, Controls: () => null, MiniMap: () => null,
@@ -76,8 +76,77 @@ function deferred<T>() {
   return { promise, resolve };
 }
 
-beforeEach(() => { jest.clearAllMocks(); mockGraphProps = {}; mockWorkbenchGuard.mockReturnValue(true); mockEditId = 'script-a'; mockCanWrite = true; mockCanRead = true; mockSessionVersion = 0; localStorage.clear(); });
+beforeEach(() => { jest.clearAllMocks(); mockGraphProps = {}; mockWorkbenchGuard.mockReturnValue(true); mockEditId = 'script-a'; mockCanWrite = true; mockCanRead = true; mockSessionVersion = 0; localStorage.clear();
+  jest.spyOn(window, 'matchMedia').mockReturnValue({ matches: true, addEventListener: jest.fn(), removeEventListener: jest.fn() } as unknown as MediaQueryList);
+});
 afterEach(() => jest.restoreAllMocks());
+
+it('keeps the action library available while a laboratory is open', async () => {
+  jest.mocked(api.get).mockResolvedValue(payload() as never);
+  render(<ScriptBuilderPage />); await screen.findByText('script-a-start');
+  fireEvent.click(screen.getByRole('button', { name: 'Устройство · запись · проверка' }));
+  expect(screen.getByRole('complementary', { name: 'Каталог действий' })).toBeVisible();
+  fireEvent.click(screen.getByRole('button', { name: 'Добавить узел: Ожидание' }));
+  expect(mockGraphProps.nodes).toHaveLength(3);
+  expect(screen.getByText('Owned workbench')).toBeVisible();
+  expect(api.post).not.toHaveBeenCalled();
+});
+
+it('opens a handheld connection inspector and its device shortcut in the intended panel', async () => {
+  jest.mocked(window.matchMedia).mockReturnValue({ matches: false, addEventListener: jest.fn(), removeEventListener: jest.fn() } as unknown as MediaQueryList);
+  jest.mocked(api.get).mockResolvedValue(payload() as never);
+  render(<ScriptBuilderPage />); await screen.findByText('script-a-start');
+  fireEvent.click(screen.getByRole('button', { name: 'Панель: Параметры' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Выбрать устройство' }));
+  expect(screen.getByText('Owned workbench')).toBeVisible();
+  fireEvent.click(screen.getByRole('button', { name: 'Панель: Схема' }));
+  fireEvent.click(screen.getByRole('button', { name: /^Связь / }));
+  expect(screen.getByLabelText('Параметры шага')).toBeVisible();
+  expect(screen.getByRole('button', { name: 'Разорвать связь' })).toBeVisible();
+  fireEvent.click(screen.getByRole('button', { name: 'Панель: Схема' }));
+  fireEvent.click(screen.getByRole('button', { name: 'script-a-start' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Панель: Устройство' }));
+  expect(screen.getByText('Owned workbench')).toBeVisible();
+  expect(api.post).not.toHaveBeenCalled();
+});
+
+it('offers handheld panels without unmounting a hidden laboratory or losing the library search', async () => {
+  jest.mocked(window.matchMedia).mockReturnValue({ matches: false, addEventListener: jest.fn(), removeEventListener: jest.fn() } as unknown as MediaQueryList);
+  jest.mocked(api.get).mockResolvedValue(payload() as never);
+  render(<ScriptBuilderPage />); await screen.findByText('script-a-start');
+  expect(screen.getByLabelText('Поле графа')).toBeVisible();
+  expect(screen.getByLabelText('Каталог действий')).not.toBeVisible();
+  fireEvent.click(screen.getByRole('button', { name: 'Панель: Действия' }));
+  fireEvent.change(screen.getByLabelText('Поиск действия'), { target: { value: 'Ожидание' } });
+  expect(screen.getByRole('button', { name: 'Добавить узел: Ожидание' })).toBeVisible();
+  fireEvent.click(screen.getByRole('button', { name: 'Добавить узел: Ожидание' }));
+  expect(mockGraphProps.nodes).toHaveLength(3);
+  expect(screen.getByLabelText('Поле графа')).toBeVisible();
+  fireEvent.click(screen.getByRole('button', { name: 'Панель: Устройство' }));
+  const retained = screen.getByText('Owned workbench');
+  expect(retained).toBeVisible();
+  fireEvent.click(screen.getByRole('button', { name: 'Панель: Действия' }));
+  expect(retained).not.toBeVisible(); expect(retained).toBeInTheDocument();
+  expect(screen.getByLabelText('Поиск действия')).toHaveValue('Ожидание');
+  fireEvent.click(screen.getByRole('button', { name: 'Панель: Устройство' }));
+  expect(screen.getByText('Owned workbench')).toBe(retained);
+  expect(api.get).toHaveBeenCalledTimes(1); expect(api.post).not.toHaveBeenCalled();
+});
+
+it('opens handheld parameters on node selection and keeps unapplied edits through panel changes', async () => {
+  jest.mocked(window.matchMedia).mockReturnValue({ matches: false, addEventListener: jest.fn(), removeEventListener: jest.fn() } as unknown as MediaQueryList);
+  jest.mocked(api.get).mockResolvedValue(payload() as never);
+  render(<ScriptBuilderPage />); await screen.findByText('script-a-start');
+  fireEvent.click(screen.getByRole('button', { name: 'script-a-start' }));
+  expect(screen.getByRole('button', { name: 'Панель: Параметры' })).toHaveAttribute('aria-pressed', 'true');
+  fireEvent.click(screen.getByRole('button', { name: 'JSON шага' }));
+  const field = screen.getByLabelText('Шаг JSON: action, переходы, retry, timeout_ms');
+  fireEvent.change(field, { target: { value: '{"pending": true}' } });
+  fireEvent.click(screen.getByRole('button', { name: 'Панель: Схема' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Панель: Параметры' }));
+  expect(field).toHaveValue('{"pending": true}');
+  expect(api.put).not.toHaveBeenCalled(); expect(api.post).not.toHaveBeenCalled();
+});
 
 it('keeps an unpublished document and laboratory mounted but hidden while permissions are unavailable', async () => {
   jest.mocked(api.get).mockResolvedValue(payload() as never);

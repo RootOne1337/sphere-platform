@@ -4,6 +4,18 @@
 **Область:** исходники и документация ветки PR #19, записанные runtime-наблюдения, Android APK и готовность следующего прогона.<br />
 **Канонический документ текущего состояния:** этот файл. Исторические отчёты ниже сохраняют исходные даты и факты.
 
+**9 октября — responsive Studio/navigation source подготовлен, ещё не установлен.**
+Action library доступна рядом с лабораторией; compact workspace имеет4панели,
+не теряет queue/task/параметры и прекращает скрытый ввод/read admission.
+Поздние ACK сохраняются, hidden pre-POST preparation не запускается при возврате.
+Общая кнопка Back и bounded tab-local scroll restoration добавлены.
+Full frontend1936/139suites и nonincremental TypeScript passed. Preview подтвердил
+390×844/1280×720 и coordinate Back884→884; live landscape ещё не подтверждён.
+Четыре Android nav keys проверены до DAG export fixtures; continuous path/rich
+XPath+PNG evidence не реализованы.3015 пока46ca2096/APIbe803773, ledger9/41.
+[Новая компоновка и границы](../audits/2026-10-09/STUDIO-RESPONSIVE-WORKSPACE.md) ·
+[Контракт Back/scroll](../audits/2026-10-09/ROUTE-SCROLL-RESTORATION.md).
+
 **9 октября +05 / 8 октября20:13–20:23 UTC — Studio outage retention установлен.**
 Временный отказ capabilities скрывает/inert редактор, сохраняя same-identity
 draft/queue/task/unknown guards; grants остаются запрещёнными. Stream/native

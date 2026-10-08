@@ -2,6 +2,7 @@ import { act, fireEvent, render, screen } from '@testing-library/react';
 import { api } from '@/lib/api';
 import { AndroidNavigationBar } from '@/src/features/stream/AndroidNavigationBar';
 import type { AcknowledgedControl } from '@/src/features/stream/controlObservation';
+import { observeAcknowledgedRecording, recordingActions, type RecordedInput } from '@/src/features/scripts/studio/recording';
 
 let mockToken = 'fixture';
 jest.mock('@/lib/store', () => ({ useAuthStore: () => ({ accessToken: mockToken }) }));
@@ -11,6 +12,26 @@ function open(observer = jest.fn(), available = true) {
   return { observer, ...render(<AndroidNavigationBar deviceId="owned-device" available={available} isAvailable={() => available} extended
     getFrameDimensions={() => ({ width: 960, height: 540 })} onControlCommand={observer} />) };
 }
+it.each([['Назад', 4], ['Домой', 3], ['Недавние', 187], ['Меню', 82]] as const)(
+  'records %s as the actual acknowledged Android key and exports it after Stop', async (label, keycode) => {
+    let finish!: (value: unknown) => void;
+    jest.mocked(api.post).mockReturnValue(new Promise(resolve => { finish = resolve; }) as never);
+    let entries: RecordedInput[] = [], recording = true;
+    open(jest.fn((event: AcknowledgedControl) => {
+      entries = observeAcknowledgedRecording(entries, event, 'owned-device', recording);
+    }));
+    fireEvent.click(screen.getByRole('button', { name: label }));
+    expect(entries).toHaveLength(1);
+    expect(entries[0]).toMatchObject({ outcome: 'android-pending', command: { type: 'key_event', keycode } });
+    expect(() => recordingActions(entries)).toThrow('нет подтверждённого результата');
+    recording = false;
+    await act(async () => finish({ data: { output: '' } }));
+    expect(entries).toHaveLength(1);
+    expect(entries[0].outcome).toBe('android-confirmed');
+    expect(recordingActions(entries)).toEqual([{ type: 'key_event', keycode }]);
+    expect(api.post).toHaveBeenCalledTimes(1);
+  },
+);
 it('observes the actual key before awaiting HTTP and then confirms the same request without changing its timestamp', async () => {
   let finish!: (value: unknown) => void;
   jest.mocked(api.post).mockReturnValue(new Promise(resolve => { finish = resolve; }) as never);

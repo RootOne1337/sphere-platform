@@ -16,17 +16,18 @@ import { uiInspectionError, type UiInspectionError } from './uiInspectionError';
 
 const SNAPSHOT_LIFETIME_MS = 30_000;
 
-export function SingleDeviceStream({ deviceId, captureEnabled = false, onControlSent, onControlCommand, recordingMode = false, onRecordingControlReady, taskHandoffId, onTaskHandoffState, onInsertSelector, controlDisabled = false, compact = false }: { deviceId: string; captureEnabled?: boolean; controlDisabled?: boolean; compact?: boolean; recordingMode?: boolean; onRecordingControlReady?: (ready: boolean) => void;
+export function SingleDeviceStream({ deviceId, active = true, captureEnabled = false, onControlSent, onControlCommand, recordingMode = false, onRecordingControlReady, taskHandoffId, onTaskHandoffState, onInsertSelector, controlDisabled = false, compact = false }: { deviceId: string; active?: boolean; captureEnabled?: boolean; controlDisabled?: boolean; compact?: boolean; recordingMode?: boolean; onRecordingControlReady?: (ready: boolean) => void;
   taskHandoffId?: number; onTaskHandoffState?: (state: TaskControlHandoffState, id: number) => void;
   onControlSent?: (input: StreamInput) => void; onControlCommand?: (event: AcknowledgedControl) => void; onInsertSelector?: (node: UiHierarchyNode, snapshot: UiHierarchySnapshot) => void }) {
   const access = useCapabilities();
   const { accessToken } = useAuthStore();
-  const canInspect = access.can('device:write');
-  const canReadStream = access.can('stream:read');
+  const canInspect = active && access.can('device:write');
+  const canReadStream = active && access.can('stream:read');
   const [inspect, setInspect] = useState(false);
   const [viewOnly, setViewOnly] = useState(false);
   const [automatic, setAutomatic] = useState(true);
-  const [visible, setVisible] = useState(() => typeof document === 'undefined' || document.visibilityState !== 'hidden');
+  const [pageVisible, setPageVisible] = useState(() => typeof document === 'undefined' || document.visibilityState !== 'hidden');
+  const visible = active && pageVisible;
   const [frameReport, setFrameReport] = useState<{ dimensions: StreamFrameDimensions; deviceId: string; token: string | null } | null>(null);
   const frame = frameReport?.deviceId === deviceId && frameReport.token === accessToken ? frameReport.dimensions : null;
   const [report, setReport] = useState<{ snapshot: UiHierarchySnapshot; deviceId: string; token: string | null; at: number } | null>(null);
@@ -98,7 +99,7 @@ export function SingleDeviceStream({ deviceId, captureEnabled = false, onControl
   useEffect(() => { if (!canInspect || !canReadStream) { invalidateCapture(); invalidateFrame(); setError(null); } }, [canInspect, canReadStream, invalidateFrame, invalidateCapture]);
   useEffect(() => () => { generation.current++; controller.current?.abort(); }, []);
   useEffect(() => {
-    const changed = () => setVisible(document.visibilityState !== 'hidden');
+    const changed = () => setPageVisible(document.visibilityState !== 'hidden');
     document.addEventListener('visibilitychange', changed);
     return () => document.removeEventListener('visibilitychange', changed);
   }, []);
@@ -111,7 +112,7 @@ export function SingleDeviceStream({ deviceId, captureEnabled = false, onControl
   const age = report ? Math.max(0, now - report.at) : Infinity;
   const valid = snapshot && matchesFrame(snapshot, frame) && age < SNAPSHOT_LIFETIME_MS;
   const refresh = useCallback(async () => {
-    if (controlDisabled || taskHandoffId !== undefined || !canInspect || !inspect || !inspectionControlReady || !frame || controller.current || document.visibilityState === 'hidden') return;
+    if (!visible || controlDisabled || taskHandoffId !== undefined || !canInspect || !inspect || !inspectionControlReady || !frame || controller.current || document.visibilityState === 'hidden') return;
     const request = new AbortController();
     controller.current = request;
     const ownGeneration = ++generation.current;
@@ -155,7 +156,7 @@ export function SingleDeviceStream({ deviceId, captureEnabled = false, onControl
     } finally {
       if (controller.current === request) { controller.current = null; setPending(false); }
     }
-  }, [controlDisabled, taskHandoffId, canInspect, inspect, inspectionControlReady, frame, deviceId, accessToken, select]);
+  }, [visible, controlDisabled, taskHandoffId, canInspect, inspect, inspectionControlReady, frame, deviceId, accessToken, select]);
   // Mode entry, a new owned picture, or return to this visible page initiates
   // one read. Failed reads pause periodic updates instead of retrying root RPCs.
   useEffect(() => { if (inspect && visible) void refresh(); }, [inspect, visible, refresh]);

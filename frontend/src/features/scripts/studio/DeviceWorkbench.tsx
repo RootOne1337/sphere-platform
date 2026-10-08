@@ -19,7 +19,7 @@ import type { AcknowledgedControl, TaskControlHandoffState } from '@/src/feature
 import { actionLabel } from './presentation';
 
 interface Version { id: string; version: number; dag_hash: string | null }
-interface Props { scriptId: string | null; version: Version | null; name: string; canRun: boolean; canEdit: boolean;
+interface Props { scriptId: string | null; version: Version | null; name: string; canRun: boolean; canEdit: boolean; paneActive?: boolean;
   onInsert: (actions: DagNode['action'][]) => boolean; onExecution: (lastCompleted: string | null, logs: { node_id: string; success: boolean }[]) => void;
   registerCloseGuard?: (guard: ((silent?: boolean, confirmDiscard?: boolean) => boolean) | null) => void }
 const terminal = new Set(['completed', 'failed', 'cancelled', 'timeout', 'timed_out']);
@@ -47,7 +47,7 @@ export function DeviceWorkbench(props: Props) {
   return <section aria-label="Рабочее устройство" className="flex h-full min-h-0 min-w-0 flex-col bg-card">
     <header className="flex flex-wrap items-center justify-between gap-3 border-b px-4 py-3"><div><h2 className="flex items-center gap-2 text-sm font-semibold"><Monitor className="size-4 text-primary" />Лаборатория устройства</h2><p className="mt-1 text-xs text-muted-foreground">Живое видео · запись действий · XPath · проверка версии</p></div>
       {device && <Button size="sm" variant="outline" onClick={() => { if (!closeGuard.current || closeGuard.current()) setDevice(null); }}>Сменить устройство</Button>}</header>
-    <div className="min-h-0 flex-1 overflow-auto p-4">
+    <div data-route-scroll="studio-device" className="min-h-0 flex-1 overflow-auto overscroll-contain p-4">
       {!device ? <div className="space-y-4"><div className="rounded-xl border border-dashed bg-muted/30 p-5"><h3 className="font-semibold">Выберите тестовый Android</h3><p className="mt-2 text-xs leading-5 text-muted-foreground">Откроется один поток. Действия управления изменяют выбранный Android; добавление шагов и серверная проверка сценария его не запускают.</p></div>
         <div className="relative"><Search className="absolute left-3 top-3 size-4 text-muted-foreground" /><Input aria-label="Найти тестовое устройство" placeholder="Имя, Android ID или модель" className="pl-9" value={search} onChange={event => { setSearch(event.target.value); setPage(1); }} /></div>
         {isError ? <div role="alert">Не удалось загрузить устройства. <Button size="sm" variant="outline" onClick={() => void refetch()}>Повторить</Button></div> : isLoading ? <p role="status">Загружаем устройства…</p> : <>
@@ -60,7 +60,7 @@ export function DeviceWorkbench(props: Props) {
     </div>
   </section>;
 }
-function OwnedWorkbench({ device, scriptId, version, name, canRun, canEdit, onInsert, onExecution, registerCloseGuard }: Props & { device: Device }) {
+function OwnedWorkbench({ device, scriptId, version, name, canRun, canEdit, paneActive = true, onInsert, onExecution, registerCloseGuard }: Props & { device: Device }) {
   const access = useCapabilities();
   const { accessToken } = useAuthStore();
   const [recording, setRecording] = useState(false);
@@ -77,8 +77,8 @@ function OwnedWorkbench({ device, scriptId, version, name, canRun, canEdit, onIn
   const [taskHandoffId, setTaskHandoffId] = useState<number | undefined>();
   const handoffSequence = useRef(0);
   const pendingHandoff = useRef<{ id: number; finish: (ready: boolean) => void } | null>(null);
-  const launchBinding = useRef({ scriptId, versionId: version?.id, dagHash: version?.dag_hash, canRun, accessToken });
-  launchBinding.current = { scriptId, versionId: version?.id, dagHash: version?.dag_hash, canRun, accessToken };
+  const launchBinding = useRef({ scriptId, versionId: version?.id, dagHash: version?.dag_hash, canRun, accessToken, paneActive });
+  launchBinding.current = { scriptId, versionId: version?.id, dagHash: version?.dag_hash, canRun, accessToken, paneActive };
   const handoffChanged = useCallback((state: TaskControlHandoffState, id: number) => {
     const waiting = pendingHandoff.current;
     if (waiting?.id === id && state !== 'waiting') waiting.finish(state === 'ready');
@@ -108,16 +108,16 @@ function OwnedWorkbench({ device, scriptId, version, name, canRun, canEdit, onIn
     return guarded && confirmDiscard ? window.confirm('Закрыть устройство? Невставленная запись будет потеряна. Созданное задание продолжит работу; его можно открыть в разделе заданий.') : true;
   }); return () => registerCloseGuard?.(null); }, [entries, active, runPending, uncertain, registerCloseGuard]);
   useEffect(() => { live.current = true; return () => { live.current = false; pendingHandoff.current?.finish(false); onExecution(null, []); }; }, [onExecution]);
-  useEffect(() => { if (!canEdit || !access.can('stream:control')) setRecording(false); }, [canEdit, access]);
+  useEffect(() => { if (!paneActive || !canEdit || !access.can('stream:control')) setRecording(false); }, [paneActive, canEdit, access]);
   useEffect(() => {
-    if (!access.can('script:execute')) pendingHandoff.current?.finish(false);
-  }, [access]);
+    if (!paneActive || !access.can('script:execute')) pendingHandoff.current?.finish(false);
+  }, [paneActive, access]);
   useEffect(() => {
     if (!ownsTask || version?.id !== ownedVersion || !canRun) { onExecution(null, []); return; }
     onExecution(progress.data?.current_node ?? null, logs.data ?? []);
   }, [ownsTask, ownedVersion, version?.id, canRun, progress.data, logs.data, onExecution]);
   const sent = (input: StreamInput) => {
-    if (!recording || !canEdit || !accessRef.current.can('stream:control')) return;
+    if (!launchBinding.current.paneActive || !recording || !canEdit || !accessRef.current.can('stream:control')) return;
     try { const next = appendRecording(entriesRef.current, input, device.id); entriesRef.current = next; setEntries(next); }
     catch (reason) { setRecording(false); setError(reason instanceof Error ? reason.message : 'Не удалось записать ввод.'); }
   };
@@ -129,13 +129,13 @@ function OwnedWorkbench({ device, scriptId, version, name, canRun, canEdit, onIn
     if (event.phase !== 'submitted' && !controlRequests.current.size) setError(value => value.startsWith('Задание или команда Android ещё') ? '' : value);
     try {
       const next = observeAcknowledgedRecording(entriesRef.current, event, device.id,
-        recording && canEdit && accessRef.current.can('stream:control'));
+        launchBinding.current.paneActive && recording && canEdit && accessRef.current.can('stream:control'));
       if (next !== entriesRef.current) { entriesRef.current = next; setEntries(next); }
     } catch (reason) { setRecording(false); setError(reason instanceof Error ? reason.message : 'Не удалось записать команду.'); }
   };
   const unresolved = entries.some(entry => entry.outcome === 'android-pending' || entry.outcome === 'android-unknown');
   async function run() {
-    if (runningRequest.current || controlRequests.current.size || uncertain || active || !canRun || !scriptId || !version?.dag_hash || !accessRef.current.can('script:execute')) return;
+    if (!paneActive || runningRequest.current || controlRequests.current.size || uncertain || active || !canRun || !scriptId || !version?.dag_hash || !accessRef.current.can('script:execute')) return;
     const pinned = version.id;
     const binding = launchBinding.current;
     const id = ++handoffSequence.current;
@@ -156,7 +156,7 @@ function OwnedWorkbench({ device, scriptId, version, name, canRun, canEdit, onIn
       const current = launchBinding.current;
       if (!ready) throw new Error('Освобождение Android или завершение чтения XPath/снимка не подтверждены. Проверьте экран и диагностику перед новой попыткой.');
       if (current.scriptId !== binding.scriptId || current.versionId !== binding.versionId || current.dagHash !== binding.dagHash
-        || current.accessToken !== binding.accessToken || !current.canRun || !accessRef.current.can('script:execute')
+        || current.accessToken !== binding.accessToken || !current.paneActive || !current.canRun || !accessRef.current.can('script:execute')
         || controlRequests.current.size || document.visibilityState === 'hidden') throw new Error('Версия, доступ или состояние страницы изменились во время подготовки. Выберите сохранённую версию и запустите явно.');
       setLaunchPreparing(false);
       submitted = true;
@@ -180,8 +180,8 @@ function OwnedWorkbench({ device, scriptId, version, name, canRun, canEdit, onIn
     {!canRun && <p className="text-xs text-muted-foreground">Для проверки сохраните сценарий и откройте его неизменённую версию. Запуск всегда создаёт одно реальное задание на выбранном Android.</p>}
     {launchPreparing && <p role="status" className="rounded-lg border bg-muted/30 p-3 text-xs">Передаём управление сценарию: ждём подтверждённого освобождения Android и завершения текущего чтения XPath или снимка. Задание ещё не создано; новые действия не отправляются.</p>}
     {recording && !recordingReady && <p role="status" className="rounded-lg border bg-muted/30 p-3 text-xs">Подготавливаем запись: ожидаем видеокадр и подтверждённое освобождение управления Android. Новые действия пока не отправляются.</p>}
-    <SingleDeviceStream deviceId={device.id} captureEnabled compact recordingMode={recording} onRecordingControlReady={setRecordingReady} taskHandoffId={taskHandoffId} onTaskHandoffState={handoffChanged} controlDisabled={active || runPending || uncertain || controlPending} onControlSent={sent} onControlCommand={commandObserved} onInsertSelector={canEdit && !active && !runPending && !uncertain && !controlPending ? (node, snapshot) => {
-      if (snapshot.device_id !== device.id) return;
+    <SingleDeviceStream deviceId={device.id} active={paneActive} captureEnabled compact recordingMode={recording} onRecordingControlReady={setRecordingReady} taskHandoffId={taskHandoffId} onTaskHandoffState={handoffChanged} controlDisabled={active || runPending || uncertain || controlPending} onControlSent={sent} onControlCommand={commandObserved} onInsertSelector={canEdit && !active && !runPending && !uncertain && !controlPending ? (node, snapshot) => {
+      if (!launchBinding.current.paneActive || snapshot.device_id !== device.id) return;
       try {
         const next = appendSelectorRecording(entriesRef.current, node, snapshot, device.id, Date.now());
         entriesRef.current = next; setEntries(next); setError('');

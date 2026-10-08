@@ -26,6 +26,21 @@ const snapshot = (deviceId = 'remote') => ({ device_id: deviceId, snapshot_id: '
     bounds: { left: 100, top: 100, right: 200, bottom: 150 }, attributes: { text: '<script>safe plain text</script>', 'resource-id': 'pkg:id/ok', clickable: 'true', enabled: 'true', custom: 'retained' } }] });
 beforeEach(() => { jest.clearAllMocks(); mockPermission = true; mockStreamRead = true; mockToken = 'fixture-token'; mockInspectionReleased = true; });
 
+it('retires a hidden workspace transport and restores View only with a newly received frame', () => {
+  const view = render(<SingleDeviceStream deviceId="remote" captureEnabled />);
+  fireEvent.click(screen.getByText('Fixture frame'));
+  fireEvent.click(screen.getByRole('button', { name: 'Просмотр' }));
+  view.rerender(<SingleDeviceStream deviceId="remote" active={false} captureEnabled />);
+  expect(screen.queryByText('Fixture frame')).not.toBeInTheDocument();
+  expect(mockStreamRetired).toHaveBeenCalledTimes(1);
+  expect(screen.queryByRole('button', { name: 'Получить снимок', hidden: true })).not.toBeInTheDocument();
+  view.rerender(<SingleDeviceStream deviceId="remote" captureEnabled />);
+  expect(screen.getByRole('button', { name: 'Просмотр' })).toHaveAttribute('aria-pressed', 'true');
+  fireEvent.click(screen.getByRole('button', { name: 'XPath-инспектор' }));
+  expect(screen.getByRole('button', { name: 'Обновить дерево' })).toBeDisabled();
+  expect(api.post).not.toHaveBeenCalled();
+});
+
 it('retires transport on unavailable read grants while retaining View and requiring a new frame for inspection', async () => {
   const view = render(<SingleDeviceStream deviceId="remote" captureEnabled />);
   fireEvent.click(screen.getByText('Fixture frame'));

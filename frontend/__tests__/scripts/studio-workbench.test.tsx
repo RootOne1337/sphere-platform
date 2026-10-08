@@ -592,3 +592,38 @@ it('shows preparation until the stream reports known recording readiness', () =>
   fireEvent.click(screen.getByRole('button',{name:'Остановить запись'}));
   expect(screen.queryByText(/Подготавливаем запись/)).not.toBeInTheDocument();
 });
+
+it('stops a hidden laboratory without discarding recording and accepts only its existing late ACK', () => {
+  const view = openDevice();
+  fireEvent.click(screen.getByRole('button', { name: 'Записать действия' }));
+  act(() => mockObserve({ requestId: 'hidden-pending', input: observedInput, phase: 'submitted' }));
+  const oldObserver = mockObserve;
+  view.rerender(<DeviceWorkbench paneActive={false} scriptId={scriptId} version={version} name="Canary" canRun canEdit onInsert={view.onInsert} onExecution={view.onExecution} />);
+  expect(mockRecordingMode).toBe(false);
+  act(() => {
+    oldObserver({ requestId: 'hidden-late-new', input: observedInput, phase: 'submitted' });
+    oldObserver({ requestId: 'hidden-late-new', input: observedInput, phase: 'unknown', completedAt: 1800 });
+    oldObserver({ requestId: 'hidden-pending', input: observedInput, phase: 'confirmed', completedAt: 1800 });
+  });
+  expect(screen.getByRole('list', { name: 'Записанные действия' }).children).toHaveLength(1);
+  expect(screen.getByText('Подтверждено APK')).toBeInTheDocument();
+  view.rerender(<DeviceWorkbench paneActive scriptId={scriptId} version={version} name="Canary" canRun canEdit onInsert={view.onInsert} onExecution={view.onExecution} />);
+  expect(mockRecordingMode).toBe(false);
+  expect(view.onInsert).not.toHaveBeenCalled();
+  expect(api.post).not.toHaveBeenCalled();
+  fireEvent.click(screen.getByRole('button', { name: 'Вставить в граф' }));
+  expect(view.onInsert).toHaveBeenCalledWith([{ type: 'type_text', text: 'private fixture', clear_first: false }]);
+});
+
+it('retires hidden pre-POST handoff and never replays its late ready receipt on return', async () => {
+  mockHandoffAuto = false;
+  const view = openDevice();
+  fireEvent.click(screen.getByRole('button', { name: 'Проверить на PH025' }));
+  const oldId = mockHandoffId!, oldObserver = mockHandoffObserver!;
+  view.rerender(<DeviceWorkbench paneActive={false} scriptId={scriptId} version={version} name="Canary" canRun canEdit onInsert={view.onInsert} onExecution={view.onExecution} />);
+  await screen.findByRole('alert');
+  expect(screen.getByRole('alert')).toHaveTextContent('Задание не создано');
+  view.rerender(<DeviceWorkbench paneActive scriptId={scriptId} version={version} name="Canary" canRun canEdit onInsert={view.onInsert} onExecution={view.onExecution} />);
+  await act(async () => oldObserver('ready', oldId));
+  expect(api.post).not.toHaveBeenCalled();
+});
