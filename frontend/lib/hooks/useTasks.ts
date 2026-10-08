@@ -72,7 +72,7 @@ export function useTasks(params: {
   });
 }
 
-export function useTask(taskId: string) {
+export function useTask(taskId: string, enabled = true) {
   return useQuery<TaskDetail>({
     queryKey: ['tasks', taskId],
     queryFn: async ({ signal }) => {
@@ -80,12 +80,12 @@ export function useTask(taskId: string) {
       if (!data || data.id !== taskId) throw new Error('Ответ API относится к другому заданию');
       return data;
     },
-    enabled: !!taskId,
+    enabled: enabled && !!taskId,
     refetchInterval: 5_000,
   });
 }
 
-export function useTaskLogs(taskId: string) {
+export function useTaskLogs(taskId: string, enabled = true) {
   return useQuery<NodeExecutionLog[]>({
     queryKey: ['tasks', taskId, 'logs'],
     queryFn: async ({ signal }) => {
@@ -93,7 +93,7 @@ export function useTaskLogs(taskId: string) {
       if (!Array.isArray(data)) throw new Error('Некорректный ответ журнала задания');
       return data;
     },
-    enabled: !!taskId,
+    enabled: enabled && !!taskId,
     refetchInterval: 5_000,
   });
 }

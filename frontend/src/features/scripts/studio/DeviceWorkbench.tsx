@@ -34,13 +34,14 @@ function recordedLabel(entry: RecordedInput): string {
 const outcomeLabels = { 'transport-submitted': 'Отправлено WS', 'android-pending': 'Ожидает APK', 'android-confirmed': 'Подтверждено APK', 'android-unknown': 'Результат неизвестен', 'selector-planned': 'В план · не выполнялся' };
 
 export function DeviceWorkbench(props: Props) {
+  const access = useCapabilities();
   // Refresh rotates transport credentials within the same identity. Retain
   // recording receipts and task uncertainty; only login/logout retires them.
   const { sessionVersion } = useAuthStore();
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(1);
   const query = useDebounce(search.trim(), 300);
-  const { data, isLoading, isError, isFetching, refetch } = useDevices({ page, page_size: 25, search: query || undefined });
+  const { data, isLoading, isError, isFetching, refetch } = useDevices({ page, page_size: 25, search: query || undefined }, access.can('device:read'));
   const [device, setDevice] = useState<Device | null>(null);
   const closeGuard = useRef<((silent?: boolean) => boolean) | null>(null);
   return <section aria-label="Рабочее устройство" className="flex h-full min-h-0 min-w-0 flex-col bg-card">
@@ -86,11 +87,11 @@ function OwnedWorkbench({ device, scriptId, version, name, canRun, canEdit, onIn
   const [ownedVersion, setOwnedVersion] = useState<string | null>(null);
   const live = useRef(true), runningRequest = useRef(false);
   const accessRef = useRef(access); accessRef.current = access;
-  const task = useTask(taskId);
+  const task = useTask(taskId, access.can('script:read'));
   const ownsTask = task.data?.device_id === device.id && task.data?.script_id === scriptId && task.data?.script_version_id === ownedVersion;
   const active = Boolean(taskId && (!task.data || !ownsTask || !terminal.has(task.data.status)));
-  const progress = useTaskProgress(taskId, active && ownsTask);
-  const logs = useTaskLogs(taskId);
+  const progress = useTaskProgress(taskId, active && ownsTask && access.can('script:read'));
+  const logs = useTaskLogs(taskId, access.can('script:read'));
   const stop = useStopTask();
   useEffect(() => { registerCloseGuard?.((silent = false, confirmDiscard = true) => {
     const pending = runPending || runningRequest.current || controlRequests.current.size > 0;
@@ -108,6 +109,9 @@ function OwnedWorkbench({ device, scriptId, version, name, canRun, canEdit, onIn
   }); return () => registerCloseGuard?.(null); }, [entries, active, runPending, uncertain, registerCloseGuard]);
   useEffect(() => { live.current = true; return () => { live.current = false; pendingHandoff.current?.finish(false); onExecution(null, []); }; }, [onExecution]);
   useEffect(() => { if (!canEdit || !access.can('stream:control')) setRecording(false); }, [canEdit, access]);
+  useEffect(() => {
+    if (!access.can('script:execute')) pendingHandoff.current?.finish(false);
+  }, [access]);
   useEffect(() => {
     if (!ownsTask || version?.id !== ownedVersion || !canRun) { onExecution(null, []); return; }
     onExecution(progress.data?.current_node ?? null, logs.data ?? []);
@@ -170,7 +174,7 @@ function OwnedWorkbench({ device, scriptId, version, name, canRun, canEdit, onIn
   return <div className="space-y-4">
     <div className="flex flex-wrap items-start justify-between gap-3 rounded-xl border bg-muted/30 p-3"><div className="min-w-0 flex-1 basis-48"><p className="break-words text-sm font-semibold [overflow-wrap:anywhere]">{device.name}</p><p className="mt-1 break-words text-xs text-muted-foreground [overflow-wrap:anywhere]">Android {device.android_version ?? '—'} · Agent {device.agent_version ?? '—'}</p></div><Link href={`/devices/${device.id}`} className="flex shrink-0 items-center gap-1 text-xs text-primary">Карточка <ExternalLink className="size-3" /></Link></div>
     <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap"><Button size="sm" className="h-auto min-h-8 min-w-0 whitespace-normal" variant={recording ? 'destructive' : 'outline'} disabled={!canEdit || active || runPending || uncertain || (!recording && controlPending) || !access.can('stream:control')} onClick={() => setRecording(!recording)}>{recording ? <Square className="mr-2 size-3 shrink-0" /> : <Circle className="mr-2 size-3 shrink-0 text-rose-500" />}{recording ? 'Остановить запись' : 'Записать действия'}</Button>
-      <Button size="sm" className="h-auto min-h-8 min-w-0 whitespace-normal" disabled={!canRun || active || runPending || recording || controlPending || uncertain} onClick={() => void run()}><Play className="mr-2 size-3 shrink-0" /><span className="min-w-0 break-words [overflow-wrap:anywhere]">{launchPreparing ? 'Освобождаем Android…' : runPending ? 'Создаём задание…' : `Проверить на ${device.name}`}</span></Button>
+      <Button size="sm" className="h-auto min-h-8 min-w-0 whitespace-normal" disabled={!canRun || !access.can('script:execute') || active || runPending || recording || controlPending || uncertain} onClick={() => void run()}><Play className="mr-2 size-3 shrink-0" /><span className="min-w-0 break-words [overflow-wrap:anywhere]">{launchPreparing ? 'Освобождаем Android…' : runPending ? 'Создаём задание…' : `Проверить на ${device.name}`}</span></Button>
       {active && <Button size="sm" variant="outline" disabled={stop.isPending || !access.can('script:execute')} onClick={() => stop.mutate(taskId, { onError: reason => setError(getApiErrorMessage(reason, 'Остановка не подтверждена.')) })}>Остановить задание</Button>}</div>
     {error && <p role="alert" className="rounded-lg border border-destructive/30 p-3 text-xs text-destructive">{error} {uncertain && <Link href="/tasks" target="_blank" rel="noopener noreferrer" className="underline">Открыть задания в новой вкладке</Link>}</p>}
     {!canRun && <p className="text-xs text-muted-foreground">Для проверки сохраните сценарий и откройте его неизменённую версию. Запуск всегда создаёт одно реальное задание на выбранном Android.</p>}

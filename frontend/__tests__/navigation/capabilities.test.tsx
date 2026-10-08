@@ -8,6 +8,7 @@ import { useInspectorStore } from '@/src/features/inspector/inspectorStore';
 import { useCommandPaletteStore } from '@/src/features/navigation/commandPaletteStore';
 import rolePermissions from '../fixtures/session-capabilities.json';
 import { SPHERE_NAV_GROUPS } from '@/src/features/navigation/navigationCatalog';
+import { useEffect, useState } from 'react';
 
 jest.mock('@/lib/api', () => ({ api: { get: jest.fn() } }));
 const get = jest.mocked(api.get);
@@ -160,4 +161,70 @@ it.each(Object.keys(rolePermissions) as Array<keyof typeof rolePermissions>)('of
   expect(can('/vpn')).toBe(role !== 'script_runner' && role !== 'api_user');
   const links = SPHERE_NAV_GROUPS.flatMap(g => g.items).filter(i => can(i.href));
   expect(links.length).toBe(role === 'api_user' ? 2 : role === 'script_runner' ? 18 : role === 'viewer' ? 19 : role === 'device_manager' ? 20 : 22);
+});
+
+function studioFixture() {
+  const mounted = jest.fn(), retired = jest.fn();
+  function Editor() {
+    const access = useCapabilities();
+    const [draft, setDraft] = useState('');
+    useEffect(() => { mounted(); return retired; }, []);
+    return <div data-testid="retained-studio"><input aria-label="Private draft" value={draft} onChange={event => setDraft(event.target.value)} /><button disabled={!access.can('script:execute')}>Run retained</button></div>;
+  }
+  useAuthStore.setState({ user: { ...user, role: 'device_manager' } });
+  const client = new QueryClient({ defaultOptions: { queries: { retry: false, gcTime: 0 } } });
+  const tree = () => <QueryClientProvider client={client}><CapabilitiesProvider><RouteAccessBoundary pathname="/scripts/builder"><Editor /></RouteAccessBoundary></CapabilitiesProvider></QueryClientProvider>;
+  return { ...render(tree()), client, tree, mounted, retired };
+}
+const studioResponse = () => response([...grants, 'script:write', 'script:execute'], { role: 'device_manager' });
+
+it('retains an already verified Studio hidden and inert through a transient capability failure, with no cached grants', async () => {
+  get.mockResolvedValueOnce(studioResponse()).mockRejectedValueOnce({ response: { status: 503 } }).mockResolvedValueOnce(studioResponse());
+  const view = studioFixture();
+  fireEvent.change(await screen.findByLabelText('Private draft'), { target: { value: 'Unpublished and unknown launch state' } });
+  await act(async () => { await view.client.invalidateQueries({ queryKey: ['capabilities'] }); });
+  expect(await screen.findByRole('alert')).toHaveTextContent('Не удалось проверить права');
+  const editor = screen.getByTestId('retained-studio');
+  expect(editor).not.toBeVisible(); expect(editor.parentElement).toHaveAttribute('inert');
+  expect(screen.getByText('Run retained')).toBeDisabled();
+  expect(view.retired).not.toHaveBeenCalled();
+  fireEvent.click(screen.getByRole('button', { name: 'Проверить доступ снова' }));
+  await waitFor(() => expect(screen.getByLabelText('Private draft')).toBeVisible());
+  expect(screen.getByLabelText('Private draft')).toHaveValue('Unpublished and unknown launch state');
+  expect(view.mounted).toHaveBeenCalledTimes(1);
+});
+
+it.each([400, 401, 403, 404])('retires retained Studio after an authoritative %s capability refusal', async status => {
+  get.mockResolvedValueOnce(studioResponse()).mockRejectedValueOnce({ response: { status } });
+  const view = studioFixture(); await screen.findByLabelText('Private draft');
+  await act(async () => { await view.client.invalidateQueries({ queryKey: ['capabilities'] }); });
+  await waitFor(() => expect(screen.queryByTestId('retained-studio')).not.toBeInTheDocument());
+  expect(view.retired).toHaveBeenCalledTimes(1);
+});
+
+it('never retains Studio across a principal/session boundary or an unverified initial response', async () => {
+  get.mockResolvedValueOnce(studioResponse());
+  const view = studioFixture(); await screen.findByLabelText('Private draft');
+  fireEvent.change(screen.getByLabelText('Private draft'), { target: { value: 'former private draft' } });
+  let resolve!: (value: unknown) => void;
+  get.mockImplementationOnce(() => new Promise(done => { resolve = done; }) as never);
+  act(() => useAuthStore.setState({ user: { ...user, id: 'new-user', role: 'device_manager' }, sessionVersion: 2 }));
+  expect(screen.queryByTestId('retained-studio')).not.toBeInTheDocument();
+  await act(async () => resolve(studioResponse()));
+  expect(await screen.findByRole('alert')).toHaveTextContent('Не удалось проверить права');
+  expect(screen.queryByTestId('retained-studio')).not.toBeInTheDocument();
+});
+
+it('retires Studio on revoked grants or malformed ownership instead of treating it as a network outage', async () => {
+  get.mockResolvedValueOnce(studioResponse()).mockResolvedValueOnce(response(grants, { role: 'device_manager' }));
+  const view = studioFixture(); await screen.findByLabelText('Private draft');
+  await act(async () => { await view.client.invalidateQueries({ queryKey: ['capabilities'] }); });
+  await waitFor(() => expect(screen.queryByTestId('retained-studio')).not.toBeInTheDocument());
+  expect(view.retired).toHaveBeenCalledTimes(1);
+  get.mockResolvedValueOnce(studioResponse());
+  await act(async () => { await view.client.invalidateQueries({ queryKey: ['capabilities'] }); });
+  await screen.findByLabelText('Private draft');
+  get.mockResolvedValueOnce(response(grants, { org_id: 'wrong', role: 'device_manager' }));
+  await act(async () => { await view.client.invalidateQueries({ queryKey: ['capabilities'] }); });
+  await waitFor(() => expect(screen.queryByTestId('retained-studio')).not.toBeInTheDocument());
 });

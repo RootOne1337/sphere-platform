@@ -25,6 +25,19 @@ jest.mock('@/lib/api', () => ({
 
 const mockApi = api as jest.Mocked<typeof api>;
 
+it('keeps fleet reads inactive while access is unverified and reconciles after access returns', async () => {
+  jest.clearAllMocks();
+  mockApi.get.mockResolvedValue({ data: MOCK_DEVICES_RESPONSE });
+  let enabled = false;
+  const view = renderQueryHook(() => useDevices({ page: 1 }, enabled));
+  expect(mockApi.get).not.toHaveBeenCalled();
+  enabled = true; view.rerender();
+  await waitFor(() => expect(view.result.current.isSuccess).toBe(true));
+  expect(mockApi.get).toHaveBeenCalledTimes(1);
+  enabled = false; view.rerender();
+  expect(view.result.current.fetchStatus).toBe('idle');
+});
+
 const MOCK_DEVICES_RESPONSE = {
   items: [
     {

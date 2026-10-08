@@ -64,7 +64,7 @@ export function useDevices(params: {
   group_id?: string;
   location_id?: string;
   search?: string;
-}) {
+}, enabled = true) {
   const apiParams = {
     ...params,
     per_page: params.page_size,
@@ -72,6 +72,7 @@ export function useDevices(params: {
   };
   return useQuery<DevicesResponse>({
     queryKey: ['devices', params],
+    enabled,
     queryFn: async ({ signal }) => {
       const { data } = await api.get('/devices', { params: apiParams, signal });
       // The API contract names this field `per_page`; keep `page_size` as the

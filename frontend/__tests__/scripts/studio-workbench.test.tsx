@@ -18,20 +18,22 @@ let mockObserve: (event: AcknowledgedControl) => void;
 let mockSelectorInsert: ((node: UiHierarchyNode, snapshot: UiHierarchySnapshot) => void) | undefined;
 let mockToken = 'fixture-token';
 let mockSessionVersion = 1;
+let mockCapabilitiesAvailable = true;
+const mockReadAdmissions: Record<string, boolean | undefined> = {};
 let mockHandoffAuto = true;
 let mockHandoffId: number | undefined;
 let mockHandoffObserver: ((state: 'waiting' | 'ready' | 'blocked', id: number) => void) | undefined;
 jest.mock('@/lib/store', () => ({ useAuthStore: () => ({ accessToken: mockToken, sessionVersion: mockSessionVersion }) }));
 const mockDevice = { id: deviceId, name: 'PH025', model: 'LDPlayer', status: 'online', agent_version: '1.2.45', android_version: '9' };
-jest.mock('@/lib/hooks/useDevices', () => ({ useDevices: () => ({ data: { items: [mockDevice], total: 1, pages: 1 }, isLoading: false, isError: false, isFetching: false, refetch: jest.fn() }) }));
+jest.mock('@/lib/hooks/useDevices', () => ({ useDevices: (_params: unknown, enabled?: boolean) => { mockReadAdmissions.devices=enabled; return { data: { items: [mockDevice], total: 1, pages: 1 }, isLoading: false, isError: false, isFetching: false, refetch: jest.fn() }; } }));
 jest.mock('@/lib/hooks/useDebounce', () => ({ useDebounce: (value: unknown) => value }));
 jest.mock('@/lib/hooks/useTasks', () => ({
-  useTask: () => ({ data: mockTask, isError: false }),
+  useTask: (_id: unknown, enabled?: boolean) => { mockReadAdmissions.task=enabled; return { data: mockTask, isError: false }; },
   useTaskProgress: (_id: unknown, enabled: boolean) => ({ data: enabled || mockRetainProgressWhenDisabled ? mockProgress : undefined }),
-  useTaskLogs: () => ({ data: mockLogs, isError: false }),
+  useTaskLogs: (_id: unknown, enabled?: boolean) => { mockReadAdmissions.logs=enabled; return { data: mockLogs, isError: false }; },
   useStopTask: () => ({ isPending: false, mutate: jest.fn() }),
 }));
-jest.mock('@/src/features/access/Capabilities', () => ({ useCapabilities: () => ({ can: () => true }) }));
+jest.mock('@/src/features/access/Capabilities', () => ({ useCapabilities: () => ({ can: () => mockCapabilitiesAvailable }) }));
 jest.mock('@/lib/api', () => ({ api: { post: jest.fn() } }));
 jest.mock('next/link', () => function MockLink({ href, children, ...props }: React.AnchorHTMLAttributes<HTMLAnchorElement> & { href: string }) { return <a href={href} {...props}>{children}</a>; });
 jest.mock('@/src/features/stream/SingleDeviceStream', () => ({ SingleDeviceStream: ({ deviceId: ownedId, controlDisabled, onControlSent, onControlCommand, onInsertSelector, recordingMode, onRecordingControlReady, taskHandoffId, onTaskHandoffState }: {
@@ -46,6 +48,7 @@ jest.mock('@/src/features/stream/SingleDeviceStream', () => ({ SingleDeviceStrea
 
 beforeEach(() => {
   jest.clearAllMocks(); mockTask = undefined; mockProgress = undefined; mockLogs = []; mockRetainProgressWhenDisabled = false; mockToken = 'fixture-token'; mockSessionVersion = 1; mockHandoffAuto = true;
+  mockCapabilitiesAvailable = true;
   let sequence = 0;
   Object.defineProperty(globalThis.crypto, 'randomUUID', { configurable: true, value: () => `00000000-0000-4000-8000-${String(++sequence).padStart(12, '0')}` });
 });
@@ -56,6 +59,41 @@ function openDevice(registerCloseGuard?: (guard: ((silent?: boolean, confirmDisc
   fireEvent.click(screen.getByRole('button', { name: /PH025.*LDPlayer/ }));
   return { ...view, onInsert, onExecution };
 }
+
+it('aborts pre-POST preparation on unavailable permissions and disables reads without forgetting the selected device', async () => {
+  mockHandoffAuto = false;
+  const view = openDevice();
+  fireEvent.click(screen.getByRole('button', { name: 'Проверить на PH025' }));
+  const oldId = mockHandoffId!, oldObserver = mockHandoffObserver!;
+  mockCapabilitiesAvailable = false;
+  view.rerender(<DeviceWorkbench scriptId={scriptId} version={version} name="Canary" canRun canEdit onInsert={view.onInsert} onExecution={view.onExecution} />);
+  await screen.findByRole('alert');
+  expect(screen.getByRole('alert')).toHaveTextContent('Задание не создано');
+  expect(mockReadAdmissions).toEqual({ devices: false, task: false, logs: false });
+  expect(screen.getByRole('button', { name: 'Проверить на PH025' })).toBeDisabled();
+  mockCapabilitiesAvailable = true;
+  view.rerender(<DeviceWorkbench scriptId={scriptId} version={version} name="Canary" canRun canEdit onInsert={view.onInsert} onExecution={view.onExecution} />);
+  await act(async () => oldObserver('ready', oldId));
+  expect(api.post).not.toHaveBeenCalled();
+  expect(screen.getByRole('button', { name: 'Проверить на PH025' })).toBeEnabled();
+});
+
+it('retains an already submitted unknown task result across unavailable and restored permissions', async () => {
+  let reject!: (reason: unknown) => void;
+  jest.mocked(api.post).mockReturnValue(new Promise((_resolve, fail) => { reject = fail; }));
+  const view = openDevice();
+  fireEvent.click(screen.getByRole('button', { name: 'Проверить на PH025' }));
+  await waitFor(() => expect(api.post).toHaveBeenCalledTimes(1));
+  mockCapabilitiesAvailable = false;
+  view.rerender(<DeviceWorkbench scriptId={scriptId} version={version} name="Canary" canRun canEdit onInsert={view.onInsert} onExecution={view.onExecution} />);
+  await act(async () => reject(new Error('offline')));
+  expect(screen.getByRole('alert')).toHaveTextContent('Запуск не подтверждён');
+  mockCapabilitiesAvailable = true;
+  view.rerender(<DeviceWorkbench scriptId={scriptId} version={version} name="Canary" canRun canEdit onInsert={view.onInsert} onExecution={view.onExecution} />);
+  expect(screen.getByRole('button', { name: 'Проверить на PH025' })).toBeDisabled();
+  fireEvent.click(screen.getByRole('button', { name: 'Проверить на PH025' }));
+  expect(api.post).toHaveBeenCalledTimes(1);
+});
 
 it('creates one real task for the explicitly selected emulator and the exact saved version', async () => {
   let resolve!: (value: unknown) => void;

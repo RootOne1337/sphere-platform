@@ -248,3 +248,17 @@ describe('useStopTask', () => {
     expect(mockApi.post).toHaveBeenCalledWith('/tasks/task-001/stop');
   });
 });
+
+it.each(['task', 'logs'] as const)('does not initiate a %s read until access is enabled, then reconciles once', async kind => {
+  jest.clearAllMocks();
+  mockApi.get.mockResolvedValue({ data: kind === 'task' ? MOCK_TASK_DETAIL : MOCK_LOGS });
+  let enabled = false;
+  const view = renderQueryHook(() => kind === 'task' ? useTask('task-001', enabled) : useTaskLogs('task-001', enabled));
+  expect(mockApi.get).not.toHaveBeenCalled();
+  enabled = true; view.rerender();
+  await waitFor(() => expect(view.result.current.isSuccess).toBe(true));
+  expect(mockApi.get).toHaveBeenCalledTimes(1);
+  enabled = false; view.rerender();
+  expect(view.result.current.fetchStatus).toBe('idle');
+  expect(mockApi.get).toHaveBeenCalledTimes(1);
+});

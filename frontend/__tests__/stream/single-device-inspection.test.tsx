@@ -3,16 +3,19 @@ import { SingleDeviceStream } from '@/src/features/stream/SingleDeviceStream';
 import { api } from '@/lib/api';
 
 let mockPermission = true;
+let mockStreamRead = true;
+const mockStreamRetired = jest.fn();
 let mockToken = 'fixture-token';
 let mockStreamProps: Record<string, any>;
 let mockInspectionReleased = true;
 jest.mock('@/src/features/access/Capabilities', () => ({
-  useCapabilities: () => ({ can: () => mockPermission }), PermissionNotice: () => null,
+  useCapabilities: () => ({ can: (permission: string) => permission === 'stream:read' ? mockStreamRead : mockPermission }), PermissionNotice: () => null,
 }));
 jest.mock('@/lib/store', () => ({ useAuthStore: () => ({ accessToken: mockToken }) }));
 jest.mock('@/lib/api', () => ({ api: { post: jest.fn() } }));
 jest.mock('@/components/sphere/DeviceStream', () => ({ DeviceStream: (props: Record<string, any>) => {
   const React = jest.requireActual('react');
+  React.useEffect(() => () => mockStreamRetired(), []);
   React.useEffect(() => props.onInspectionControlReady(!!props.inspection && mockInspectionReleased), [!!props.inspection]);
   mockStreamProps = props;
   return <button onClick={() => props.onFrameDimensions({ width: 960, height: 540 })}>Fixture frame</button>;
@@ -21,7 +24,24 @@ const snapshot = (deviceId = 'remote') => ({ device_id: deviceId, snapshot_id: '
   requested_at: '2026-10-03T21:00:00Z', completed_at: '2026-10-03T21:00:02Z', width: 960, height: 540, rotation: 1, temporary_file_cleanup_confirmed: true,
   nodes: [{ id: 0, parent_id: null, depth: 0, xpath: '/hierarchy/node[1]',
     bounds: { left: 100, top: 100, right: 200, bottom: 150 }, attributes: { text: '<script>safe plain text</script>', 'resource-id': 'pkg:id/ok', clickable: 'true', enabled: 'true', custom: 'retained' } }] });
-beforeEach(() => { jest.clearAllMocks(); mockPermission = true; mockToken = 'fixture-token'; mockInspectionReleased = true; });
+beforeEach(() => { jest.clearAllMocks(); mockPermission = true; mockStreamRead = true; mockToken = 'fixture-token'; mockInspectionReleased = true; });
+
+it('retires transport on unavailable read grants while retaining View and requiring a new frame for inspection', async () => {
+  const view = render(<SingleDeviceStream deviceId="remote" captureEnabled />);
+  fireEvent.click(screen.getByText('Fixture frame'));
+  fireEvent.click(screen.getByRole('button', { name: 'Просмотр' }));
+  mockPermission = false; mockStreamRead = false;
+  view.rerender(<SingleDeviceStream deviceId="remote" captureEnabled />);
+  expect(screen.queryByText('Fixture frame')).not.toBeInTheDocument();
+  expect(mockStreamRetired).toHaveBeenCalledTimes(1);
+  expect(screen.queryByRole('button', { name: 'Получить снимок', hidden: true })).not.toBeInTheDocument();
+  mockPermission = true; mockStreamRead = true;
+  view.rerender(<SingleDeviceStream deviceId="remote" captureEnabled />);
+  expect(screen.getByRole('button', { name: 'Просмотр' })).toHaveAttribute('aria-pressed', 'true');
+  fireEvent.click(screen.getByRole('button', { name: 'XPath-инспектор' }));
+  expect(screen.getByRole('button', { name: 'Обновить дерево' })).toBeDisabled();
+  expect(api.post).not.toHaveBeenCalled();
+});
 it('passes an execution lock reason separately from the role restriction and removes it after the lock clears', () => {
   const view = render(<SingleDeviceStream deviceId="remote" controlDisabled />);
   expect(mockStreamProps.readOnly).toBe(true);
@@ -323,4 +343,70 @@ it('does not treat permission-driven HTTP abort as native read completion for a 
   expect(signal.aborted).toBe(true);
   expect(observed).toHaveBeenLastCalledWith('blocked', 14);
   expect(observed).not.toHaveBeenCalledWith('ready', 14);
+});
+
+it.each(['permission', 'token'] as const)('does not treat a remounted capture panel as completion of a %s-aborted native read', reason => {
+  jest.mocked(api.post).mockReturnValue(new Promise(() => {}));
+  const observed = jest.fn();
+  const view = render(<SingleDeviceStream deviceId="remote" captureEnabled />);
+  fireEvent.click(screen.getByRole('button', { name: 'Fixture frame' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Получить снимок', hidden: true }));
+  const signal = jest.mocked(api.post).mock.calls[0][2]?.signal as AbortSignal;
+  if (reason === 'permission') { mockPermission = false; mockStreamRead = false; }
+  else mockToken = 'new-token';
+  view.rerender(<SingleDeviceStream deviceId="remote" captureEnabled />);
+  expect(signal.aborted).toBe(true);
+  mockPermission = true; mockStreamRead = true;
+  view.rerender(<SingleDeviceStream deviceId="remote" captureEnabled controlDisabled taskHandoffId={15} onTaskHandoffState={observed} />);
+  fireEvent.click(screen.getByRole('button', { name: 'Fixture frame' }));
+  act(() => mockStreamProps.onTaskHandoffState('ready', 15));
+  expect(observed).toHaveBeenLastCalledWith('blocked', 15);
+  expect(observed).not.toHaveBeenCalledWith('ready', 15);
+  expect(api.post).toHaveBeenCalledTimes(1);
+});
+
+it('requires an explicit verified capture before clearing the native-read fence after access recovers', async () => {
+  const cryptoDescriptor = Object.getOwnPropertyDescriptor(global, 'crypto');
+  const decoderDescriptor = Object.getOwnPropertyDescriptor(global, 'TextDecoder');
+  const createUrl = URL.createObjectURL, revokeUrl = URL.revokeObjectURL;
+  Object.defineProperty(global, 'crypto', { configurable: true, value: { subtle: { digest: jest.fn().mockResolvedValue(new ArrayBuffer(32)) } } });
+  Object.defineProperty(global, 'TextDecoder', { configurable: true, value: require('util').TextDecoder });
+  URL.createObjectURL = jest.fn().mockReturnValue('blob:verified-recovery');
+  URL.revokeObjectURL = jest.fn();
+  const bytes = new ArrayBuffer(80), pixels = new Uint8Array(bytes);
+  pixels.set([137, 80, 78, 71, 13, 10, 26, 10]);
+  new DataView(bytes).setUint32(16, 2); new DataView(bytes).setUint32(20, 1);
+  const headers = { 'content-type': 'image/png', 'x-screenshot-device-id': 'remote', 'x-screenshot-id': 'a'.repeat(32),
+    'x-screenshot-sha256': '0'.repeat(64), 'x-screenshot-android-sha256': '0'.repeat(64),
+    'x-screenshot-width': '2', 'x-screenshot-height': '1', 'x-screenshot-cleanup-confirmed': 'true',
+    'x-screenshot-requested-at': '2026-10-04T00:00:00Z', 'x-screenshot-completed-at': '2026-10-04T00:00:01Z' };
+  try {
+    jest.mocked(api.post).mockReturnValueOnce(new Promise(() => {})).mockResolvedValueOnce({ data: bytes, headers });
+    const observed = jest.fn();
+    const view = render(<SingleDeviceStream deviceId="remote" captureEnabled />);
+    fireEvent.click(screen.getByRole('button', { name: 'Fixture frame' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Получить снимок', hidden: true }));
+    mockPermission = false; mockStreamRead = false;
+    view.rerender(<SingleDeviceStream deviceId="remote" captureEnabled />);
+    mockPermission = true; mockStreamRead = true;
+    view.rerender(<SingleDeviceStream deviceId="remote" captureEnabled controlDisabled taskHandoffId={16} onTaskHandoffState={observed} />);
+    fireEvent.click(screen.getByRole('button', { name: 'Fixture frame' }));
+    act(() => mockStreamProps.onTaskHandoffState('ready', 16));
+    expect(observed).toHaveBeenLastCalledWith('blocked', 16);
+    expect(api.post).toHaveBeenCalledTimes(1);
+    view.rerender(<SingleDeviceStream deviceId="remote" captureEnabled />);
+    fireEvent.click(screen.getByRole('button', { name: 'Получить снимок', hidden: true }));
+    await screen.findByRole('link', { name: 'Скачать исходный PNG', hidden: true });
+    view.rerender(<SingleDeviceStream deviceId="remote" captureEnabled controlDisabled taskHandoffId={17} onTaskHandoffState={observed} />);
+    act(() => mockStreamProps.onTaskHandoffState('ready', 17));
+    expect(observed).toHaveBeenLastCalledWith('ready', 17);
+    expect(api.post).toHaveBeenCalledTimes(2);
+    view.unmount();
+    expect(URL.revokeObjectURL).toHaveBeenCalledWith('blob:verified-recovery');
+  } finally {
+    if (cryptoDescriptor) Object.defineProperty(global, 'crypto', cryptoDescriptor);
+    if (decoderDescriptor) Object.defineProperty(global, 'TextDecoder', decoderDescriptor);
+    else Reflect.deleteProperty(global, 'TextDecoder');
+    URL.createObjectURL = createUrl; URL.revokeObjectURL = revokeUrl;
+  }
 });

@@ -4,6 +4,15 @@
 **Область:** исходники и документация ветки PR #19, записанные runtime-наблюдения, Android APK и готовность следующего прогона.<br />
 **Канонический документ текущего состояния:** этот файл. Исторические отчёты ниже сохраняют исходные даты и факты.
 
+**9 октября +05 — Studio outage retention подготовлен, ещё не установлен.**
+Временный отказ capabilities скрывает/inert редактор, сохраняя same-identity
+draft/queue/task/unknown guards; grants остаются запрещёнными. Stream/native
+reads прекращаются, preparation до POST отменяется. Native PNG remount больше
+не считается завершением прерванной Android-команды. Source regressions и
+nonincremental TypeScript прошли; полный frontend1909/138suites. CI/install ещё
+нужны. На3015 пока UI36b160f9/APIbe803773. Ledger9accepted/41open.
+[Контракт и доказательства](../audits/2026-10-09/STUDIO-PERMISSION-OUTAGE-RETENTION.md).
+
 **8 октября,18:39–19:28 UTC /9 октября UTC+5 — API be803773 установлен.**
 Failed viewer socket больше не выключает общий continuous listener. Backend
 CI3346passed/37skipped/229subtests/80.71%; frontend1892/138suites, Android и

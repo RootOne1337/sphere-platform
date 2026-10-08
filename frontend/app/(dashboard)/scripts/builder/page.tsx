@@ -109,6 +109,9 @@ function BuilderInner({ editId, storageKey }: { editId: string | null; storageKe
   );
 
   function mayLeave() {
+    // An unavailable capability read hides the confirmation dialog. Keep the
+    // workspace guard, without creating an invisible navigation promise.
+    if (!accessRef.current.can('script:read') && (dirty || inFlight.current || workbenchGuard.current?.(true) === false)) return false;
     if (inFlight.current) { setErrors('Дождитесь результата проверки или сохранения перед выходом из редактора.'); return false; }
     if (loadState !== 'ready' && !baseDocument) return true;
     const workbenchState = workbenchGuard.current?.(true) === false;
@@ -133,6 +136,7 @@ function BuilderInner({ editId, storageKey }: { editId: string | null; storageKe
   }; }, []);
   useEffect(() => {
     if (!canRead && busy) request.current?.abort();
+    if (!canRead) { leaveRequest.current?.(false); leaveRequest.current = null; setLeaveState(null); }
   }, [canRead, busy]);
   useEffect(() => {
     const before = (event: BeforeUnloadEvent) => {
@@ -426,7 +430,7 @@ function BuilderInner({ editId, storageKey }: { editId: string | null; storageKe
       return true;
     } catch (reason) { setErrors(errorMessage(reason)); return false; }
   }
-  if (!canRead) return <div role="status" className="p-6">{access.pending ? 'Проверяем права доступа к сценариям…' : 'Не подтверждено право чтения сценариев.'}</div>;
+  if (!canRead && loadState !== 'ready') return <div role="status" className="p-6">{access.pending ? 'Проверяем права доступа к сценариям…' : 'Не подтверждено право чтения сценариев.'}</div>;
   if (loadState === 'loading') return <div role="status" className="p-6">Загружаем исходник и версию сценария…</div>;
   if (loadState === 'error') return <div className="mx-auto max-w-xl p-6"><div role="alert" className="space-y-4 rounded-xl border bg-card p-6">
     <h1 className="text-lg font-semibold">Сценарий не загружен</h1><p>{loadError}</p>
@@ -451,7 +455,7 @@ function BuilderInner({ editId, storageKey }: { editId: string | null; storageKe
     label: edge.sourceHandle === 'failure' ? 'Ошибка' : edge.sourceHandle === 'true_branch' ? 'Да' : edge.sourceHandle === 'false_branch' ? 'Нет' : undefined,
     labelStyle: { fontSize: 10, fill: 'hsl(var(--foreground))' }, labelBgStyle: { fill: 'hsl(var(--card))', fillOpacity: 1 }, labelBgPadding: [6, 4] as [number, number], labelBgBorderRadius: 5,
   }));
-  return <section aria-label="Script Studio" className="studio-workspace flex min-h-[600px] min-w-0 flex-col bg-background lg:h-[calc(100dvh-4rem)] lg:min-h-0">
+  return <section aria-label="Script Studio" hidden={!canRead} inert={!canRead} aria-hidden={!canRead || undefined} className={`studio-workspace ${canRead ? 'flex' : 'hidden'} min-h-[600px] min-w-0 flex-col bg-background lg:h-[calc(100dvh-4rem)] lg:min-h-0`}>
     <header className="shrink-0 border-b bg-card">
       <div className="flex flex-col gap-3 px-4 py-3 xl:flex-row xl:items-center xl:justify-between">
         <div className="flex w-full min-w-0 items-center gap-3 xl:flex-1"><Button variant="ghost" size="icon" className="shrink-0" aria-label="К каталогу сценариев" onClick={leave}><ArrowLeft className="size-4" /></Button>

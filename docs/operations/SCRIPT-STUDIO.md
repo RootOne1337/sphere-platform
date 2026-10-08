@@ -23,6 +23,11 @@ API изолирует failed viewer send от общего continuous listener;
 wheel подтверждены Android View. Idle timeout повторился, а краткий отказ
 capabilities при перезапуске API потерял laboratory state; оба follow-up OPEN.
 [Установленный API и конечные доказательства](../audits/2026-10-08/CONTINUOUS-VIEWER-FAULT-ISOLATION.md).
+Retention fix подготовлен: редактор/guards скрыто сохраняются при transient
+outage той же сессии, без использования старых grants или повторения команд.
+Stream/native capture retirement и запрет запуска после unconfirmed capture
+проверены исходниками; установка ещё нужна.
+[Outage contract](../audits/2026-10-09/STUDIO-PERMISSION-OUTAGE-RETENTION.md).
 [Latest installed navigation](../audits/2026-10-07/STUDIO-NAVIGATION-PRESERVATION.md).
 Malformed WS input не подставляет координаты0/0, отказ отделён от video failure.
 Real transport canary, разрыв связи/Undo и server validate приняты отдельно;

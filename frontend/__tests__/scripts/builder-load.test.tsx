@@ -19,8 +19,9 @@ jest.mock('next/navigation', () => ({
 }));
 jest.mock('@/lib/api', () => ({ api: { get: jest.fn(), put: jest.fn(), post: jest.fn() } }));
 let mockCanWrite = true;
+let mockCanRead = true;
 let mockSessionVersion = 0;
-jest.mock('@/src/features/access/Capabilities', () => ({ useCapabilities: () => ({ pending: false, can: (permission: string) => permission === 'script:read' || mockCanWrite }) }));
+jest.mock('@/src/features/access/Capabilities', () => ({ useCapabilities: () => ({ pending: false, can: (permission: string) => permission === 'script:read' ? mockCanRead : mockCanWrite }) }));
 jest.mock('@/lib/store', () => ({ useAuthStore: (select: (state: unknown) => unknown) => select({ user: { id: 'operator', org_id: 'org-a' }, sessionVersion: mockSessionVersion }) }));
 jest.mock('@/components/sphere/RunScriptModal', () => ({ RunScriptModal: () => null }));
 const mockWorkbenchGuard = jest.fn((_silent?: boolean, _confirmDiscard?: boolean) => true);
@@ -74,8 +75,28 @@ function deferred<T>() {
   return { promise, resolve };
 }
 
-beforeEach(() => { jest.clearAllMocks(); mockGraphProps = {}; mockWorkbenchGuard.mockReturnValue(true); mockEditId = 'script-a'; mockCanWrite = true; mockSessionVersion = 0; localStorage.clear(); });
+beforeEach(() => { jest.clearAllMocks(); mockGraphProps = {}; mockWorkbenchGuard.mockReturnValue(true); mockEditId = 'script-a'; mockCanWrite = true; mockCanRead = true; mockSessionVersion = 0; localStorage.clear(); });
 afterEach(() => jest.restoreAllMocks());
+
+it('keeps an unpublished document and laboratory mounted but hidden while permissions are unavailable', async () => {
+  jest.mocked(api.get).mockResolvedValue(payload() as never);
+  const view = render(<ScriptBuilderPage />); await screen.findByText('script-a-start');
+  fireEvent.change(screen.getByLabelText('Название сценария'), { target: { value: 'Unsaved outage draft' } });
+  fireEvent.click(screen.getByRole('button', { name: 'Устройство · запись · проверка' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Report workbench execution' }));
+  mockWorkbenchGuard.mockReturnValue(false); mockCanRead = false; mockCanWrite = false;
+  view.rerender(<ScriptBuilderPage />);
+  expect(screen.getByText('Owned workbench')).not.toBeVisible();
+  expect(screen.getByLabelText('Название сценария')).toHaveValue('Unsaved outage draft');
+  expect(workspaceNavigationAllowed()).toBe(false);
+  expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+  expect(api.post).not.toHaveBeenCalled(); expect(api.put).not.toHaveBeenCalled();
+  mockCanRead = true; mockCanWrite = true;
+  view.rerender(<ScriptBuilderPage />);
+  expect(screen.getByText('Owned workbench')).toBeVisible();
+  expect(screen.getByLabelText('Название сценария')).toHaveValue('Unsaved outage draft');
+  expect(api.get).toHaveBeenCalledTimes(1);
+});
 
 it('protects dirty graph/source through an outside navigation link and honors explicit cancellation', async () => {
   jest.mocked(api.get).mockResolvedValue(payload() as never);

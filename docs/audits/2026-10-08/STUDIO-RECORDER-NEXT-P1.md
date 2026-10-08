@@ -13,6 +13,9 @@ API be803773 установлен: failed viewer send изолирован, не
 View подтвердил drag/wheel. Idle receipt loss повторился и остаётся P1.
 Отдельно transient capability failure при API restart потерял laboratory state
 без F5; следующим исправляется сохранение same-identity guards при таком outage.
+Source fix подготовлен, включая aborted native PNG fence; установленный UI
+пока прежний, real outage acceptance нужна.
+[Новый контракт и проверки](../2026-10-09/STUDIO-PERMISSION-OUTAGE-RETENTION.md).
 [Fault isolation и наблюдение](CONTINUOUS-VIEWER-FAULT-ISOLATION.md).
 Канонический audit ledger остаётся9accepted/41open; это уточнение существующих
 SF26-05/06, а не новая заявка о закрытии всей автоматизации.
