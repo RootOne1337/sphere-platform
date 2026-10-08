@@ -40,6 +40,23 @@ it('requests no capture on mount and downloads the verified original bytes witho
   expect(URL.createObjectURL).toHaveBeenCalledWith(expect.any(Blob));
   view.unmount(); expect(URL.revokeObjectURL).toHaveBeenCalledWith('blob:verified-fixture');
 });
+
+it('locks new captures for task handoff while draining an existing capture without abort or pixel changes', async () => {
+  let finish!: (value: unknown) => void;
+  jest.mocked(api.post).mockReturnValueOnce(new Promise(done => { finish = done; }));
+  const observed = jest.fn();
+  const view = render(<NativeScreenshotPanel deviceId="remote" enabled onActivityChange={observed} />);
+  fireEvent.click(screen.getByRole('button', { name: 'Получить снимок' }));
+  expect(observed).toHaveBeenLastCalledWith('pending');
+  const signal = jest.mocked(api.post).mock.calls[0][2]?.signal as AbortSignal;
+  view.rerender(<NativeScreenshotPanel deviceId="remote" enabled captureLocked onActivityChange={observed} />);
+  expect(signal.aborted).toBe(false);
+  await act(async () => finish({ data: png(), headers }));
+  expect(observed).toHaveBeenLastCalledWith('idle');
+  expect(screen.getByRole('link', { name: 'Скачать исходный PNG' })).toHaveAttribute('href', 'blob:verified-fixture');
+  expect(screen.getByRole('button', { name: 'Получить снимок' })).toBeDisabled();
+  expect(api.post).toHaveBeenCalledTimes(1);
+});
 it.each([
   { 'x-screenshot-device-id': 'other' }, { 'content-type': 'image/jpeg' },
   { 'x-screenshot-sha256': 'f'.repeat(64) }, { 'x-screenshot-width': '3' },

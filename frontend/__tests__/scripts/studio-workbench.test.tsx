@@ -17,6 +17,9 @@ let mockRecordingReadyObserver: ((ready: boolean) => void) | undefined;
 let mockObserve: (event: AcknowledgedControl) => void;
 let mockSelectorInsert: ((node: UiHierarchyNode, snapshot: UiHierarchySnapshot) => void) | undefined;
 let mockToken = 'fixture-token';
+let mockHandoffAuto = true;
+let mockHandoffId: number | undefined;
+let mockHandoffObserver: ((state: 'waiting' | 'ready' | 'blocked', id: number) => void) | undefined;
 jest.mock('@/lib/store', () => ({ useAuthStore: () => ({ accessToken: mockToken }) }));
 const mockDevice = { id: deviceId, name: 'PH025', model: 'LDPlayer', status: 'online', agent_version: '1.2.45', android_version: '9' };
 jest.mock('@/lib/hooks/useDevices', () => ({ useDevices: () => ({ data: { items: [mockDevice], total: 1, pages: 1 }, isLoading: false, isError: false, isFetching: false, refetch: jest.fn() }) }));
@@ -30,14 +33,18 @@ jest.mock('@/lib/hooks/useTasks', () => ({
 jest.mock('@/src/features/access/Capabilities', () => ({ useCapabilities: () => ({ can: () => true }) }));
 jest.mock('@/lib/api', () => ({ api: { post: jest.fn() } }));
 jest.mock('next/link', () => function MockLink({ href, children, ...props }: React.AnchorHTMLAttributes<HTMLAnchorElement> & { href: string }) { return <a href={href} {...props}>{children}</a>; });
-jest.mock('@/src/features/stream/SingleDeviceStream', () => ({ SingleDeviceStream: ({ deviceId: ownedId, controlDisabled, onControlSent, onControlCommand, onInsertSelector, recordingMode, onRecordingControlReady }: {
+jest.mock('@/src/features/stream/SingleDeviceStream', () => ({ SingleDeviceStream: ({ deviceId: ownedId, controlDisabled, onControlSent, onControlCommand, onInsertSelector, recordingMode, onRecordingControlReady, taskHandoffId, onTaskHandoffState }: {
   deviceId: string; controlDisabled: boolean; recordingMode?: boolean; onRecordingControlReady?: (ready: boolean) => void; onControlSent: (value: unknown) => void; onControlCommand: typeof mockObserve; onInsertSelector: typeof mockSelectorInsert;
-}) => { mockRecordingReadyObserver=onRecordingControlReady; mockRecordingMode=recordingMode; mockObserve = onControlCommand; mockSelectorInsert = onInsertSelector; return <section aria-label="Поток выбранного Android" data-device={ownedId}>
+  taskHandoffId?: number; onTaskHandoffState?: typeof mockHandoffObserver;
+}) => { const React = jest.requireActual('react');
+  React.useEffect(() => { if (mockHandoffAuto && taskHandoffId !== undefined) onTaskHandoffState?.('ready', taskHandoffId); }, [taskHandoffId, onTaskHandoffState]);
+  mockHandoffId=taskHandoffId; mockHandoffObserver=onTaskHandoffState;
+  mockRecordingReadyObserver=onRecordingControlReady; mockRecordingMode=recordingMode; mockObserve = onControlCommand; mockSelectorInsert = onInsertSelector; return <section aria-label="Поток выбранного Android" data-device={ownedId}>
   <button disabled={controlDisabled} onClick={() => onControlSent({ deviceId: ownedId, at: 1000, dimensions: { width: 960, height: 540 }, command: { type: 'click', x: 480, y: 270 } })}>Записать тестовый клик</button>
 </section>; } }));
 
 beforeEach(() => {
-  jest.clearAllMocks(); mockTask = undefined; mockProgress = undefined; mockLogs = []; mockRetainProgressWhenDisabled = false; mockToken = 'fixture-token';
+  jest.clearAllMocks(); mockTask = undefined; mockProgress = undefined; mockLogs = []; mockRetainProgressWhenDisabled = false; mockToken = 'fixture-token'; mockHandoffAuto = true;
   let sequence = 0;
   Object.defineProperty(globalThis.crypto, 'randomUUID', { configurable: true, value: () => `00000000-0000-4000-8000-${String(++sequence).padStart(12, '0')}` });
 });
@@ -55,12 +62,49 @@ it('creates one real task for the explicitly selected emulator and the exact sav
   openDevice();
   const run = screen.getByRole('button', { name: 'Проверить на PH025' });
   fireEvent.click(run); fireEvent.click(run);
-  expect(api.post).toHaveBeenCalledTimes(1);
+  await waitFor(() => expect(api.post).toHaveBeenCalledTimes(1));
   expect(api.post).toHaveBeenCalledWith('/tasks', { script_id: scriptId, device_id: deviceId, expected_current_version_id: versionId, priority: 5 }, expect.objectContaining({ timeout: 30000 }));
   expect(screen.getByRole('button', { name: 'Записать тестовый клик' })).toBeDisabled();
   resolve({ data: { id: taskId, script_id: scriptId, device_id: deviceId, script_version_id: versionId } });
   await waitFor(() => expect(screen.getByRole('link', { name: taskId })).toHaveAttribute('href', `/tasks/${taskId}`));
   expect(screen.getByRole('button', { name: 'Записать тестовый клик' })).toBeDisabled();
+});
+
+it('does not create a task until the exact handoff reports ready, ignoring an obsolete receipt', async () => {
+  mockHandoffAuto = false;
+  jest.mocked(api.post).mockResolvedValue({ data: { id: taskId, script_id: scriptId, device_id: deviceId, script_version_id: versionId } });
+  openDevice();
+  fireEvent.click(screen.getByRole('button', { name: 'Проверить на PH025' }));
+  const id = mockHandoffId!;
+  expect(api.post).not.toHaveBeenCalled();
+  expect(screen.getByRole('button', { name: 'Записать тестовый клик' })).toBeDisabled();
+  await act(async () => mockHandoffObserver?.('ready', id - 1));
+  expect(api.post).not.toHaveBeenCalled();
+  await act(async () => mockHandoffObserver?.('ready', id));
+  expect(api.post).toHaveBeenCalledTimes(1);
+  await screen.findByRole('link', { name: taskId });
+});
+
+it('distinguishes failed native preparation from an uncertain task submission and permits explicit retry', async () => {
+  mockHandoffAuto = false;
+  openDevice();
+  fireEvent.click(screen.getByRole('button', { name: 'Проверить на PH025' }));
+  await act(async () => mockHandoffObserver?.('blocked', mockHandoffId!));
+  expect(api.post).not.toHaveBeenCalled();
+  expect(screen.getByRole('alert')).toHaveTextContent('Задание не создано');
+  expect(screen.queryByRole('link', { name: 'Открыть задания в новой вкладке' })).not.toBeInTheDocument();
+  expect(screen.getByRole('button', { name: 'Проверить на PH025' })).toBeEnabled();
+});
+
+it('rechecks the saved version and run authority after waiting for native control', async () => {
+  mockHandoffAuto = false;
+  const view = openDevice();
+  fireEvent.click(screen.getByRole('button', { name: 'Проверить на PH025' }));
+  const id = mockHandoffId!;
+  view.rerender(<DeviceWorkbench scriptId={scriptId} version={{ ...version, id: 'changed-version' }} name="Canary" canRun={false} canEdit onInsert={view.onInsert} onExecution={view.onExecution} />);
+  await act(async () => mockHandoffObserver?.('ready', id));
+  expect(api.post).not.toHaveBeenCalled();
+  expect(screen.getByRole('alert')).toHaveTextContent('Задание не создано');
 });
 
 it('retains a pending launch through rejected close attempts until its owned receipt arrives', async () => {
@@ -71,6 +115,7 @@ it('retains a pending launch through rejected close attempts until its owned rec
   try {
     openDevice(next => { guard = next; });
     fireEvent.click(screen.getByRole('button', { name: 'Проверить на PH025' }));
+    await waitFor(() => expect(api.post).toHaveBeenCalledTimes(1));
     expect(guard!(true)).toBe(false);
     fireEvent.click(screen.getByRole('button', { name: 'Сменить устройство' }));
     let closed = true;
@@ -226,8 +271,34 @@ it('exposes a silent unload guard without dialogs or state changes for an unknow
   expect(guard!(true)).toBe(false);
   expect(screen.getByRole('alert').textContent).toBe(before);
   expect(confirm).not.toHaveBeenCalled();
-  expect(api.post).toHaveBeenCalledTimes(1);
+  await waitFor(() => expect(api.post).toHaveBeenCalledTimes(1));
   confirm.mockRestore();
+});
+
+it('bounds preparation without treating expiry as release or as an unknown server commit', async () => {
+  jest.useFakeTimers();
+  try {
+    mockHandoffAuto = false;
+    openDevice();
+    fireEvent.click(screen.getByRole('button', { name: 'Проверить на PH025' }));
+    expect(screen.getByRole('button', { name: 'Освобождаем Android…' })).toBeDisabled();
+    await act(async () => jest.advanceTimersByTime(55_000));
+    expect(api.post).not.toHaveBeenCalled();
+    expect(screen.getByRole('alert')).toHaveTextContent('Задание не создано');
+    expect(screen.queryByRole('link', { name: 'Открыть задания в новой вкладке' })).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Проверить на PH025' })).toBeEnabled();
+  } finally { jest.useRealTimers(); }
+});
+
+it('cannot submit from an obsolete auth session after its preparation callback arrives', async () => {
+  mockHandoffAuto = false;
+  const view = openDevice();
+  fireEvent.click(screen.getByRole('button', { name: 'Проверить на PH025' }));
+  const oldObserver = mockHandoffObserver, id = mockHandoffId!;
+  mockToken = 'changed-session';
+  view.rerender(<DeviceWorkbench scriptId={scriptId} version={version} name="Canary" canRun canEdit onInsert={view.onInsert} onExecution={view.onExecution} />);
+  await act(async () => oldObserver?.('ready', id));
+  expect(api.post).not.toHaveBeenCalled();
 });
 
 it('exposes the same side-effect-free unload guard for a pending request and an uninserted recording', async () => {
@@ -245,8 +316,24 @@ it('exposes the same side-effect-free unload guard for a pending request and an 
   fireEvent.click(screen.getByRole('button', { name: 'Проверить на PH025' }));
   expect(guard!(true)).toBe(false);
   expect(confirm).not.toHaveBeenCalled();
-  expect(api.post).toHaveBeenCalledTimes(1);
+  await waitFor(() => expect(api.post).toHaveBeenCalledTimes(1));
   confirm.mockRestore();
+});
+
+it('does not submit after the page becomes hidden while native preparation is pending', async () => {
+  mockHandoffAuto = false;
+  openDevice();
+  fireEvent.click(screen.getByRole('button', { name: 'Проверить на PH025' }));
+  const previous = Object.getOwnPropertyDescriptor(document, 'visibilityState');
+  try {
+    Object.defineProperty(document, 'visibilityState', { configurable: true, value: 'hidden' });
+    await act(async () => mockHandoffObserver?.('ready', mockHandoffId!));
+    expect(api.post).not.toHaveBeenCalled();
+    expect(screen.getByRole('alert')).toHaveTextContent('Задание не создано');
+  } finally {
+    if (previous) Object.defineProperty(document, 'visibilityState', previous);
+    else Reflect.deleteProperty(document, 'visibilityState');
+  }
 });
 
 it('requires confirmation before changing a device with an untransferred recording and respects cancellation', () => {

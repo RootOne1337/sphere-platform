@@ -69,13 +69,15 @@ export async function verifyNativeScreenshot(data: ArrayBuffer, headers: Record<
     cleanupConfirmed: headers['x-screenshot-cleanup-confirmed'] === 'true' };
 }
 
-export function NativeScreenshotPanel({ deviceId, enabled }: { deviceId: string; enabled: boolean }) {
+export function NativeScreenshotPanel({ deviceId, enabled, captureLocked = false, onActivityChange }: { deviceId: string; enabled: boolean;
+  captureLocked?: boolean; onActivityChange?: (state: 'idle' | 'pending' | 'failed') => void }) {
   const { accessToken } = useAuthStore();
   const sessionRef = useRef<{ disposed: boolean; controller: AbortController | null; url: string | null } | null>(null);
   const [image, setImage] = useState<Screenshot | null>(null);
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [previewScale, setPreviewScale] = useState<'fit' | 'native'>('fit');
+  useEffect(() => { onActivityChange?.(pending ? 'pending' : error ? 'failed' : 'idle'); }, [pending, error, onActivityChange]);
   useEffect(() => {
     const session = { disposed: false, controller: null as AbortController | null, url: null as string | null };
     sessionRef.current = session;
@@ -89,9 +91,9 @@ export function NativeScreenshotPanel({ deviceId, enabled }: { deviceId: string;
   }, [deviceId, accessToken, enabled]);
   const capture = async () => {
     const session = sessionRef.current;
-    if (!enabled || !session || session.disposed || session.controller) return;
+    if (!enabled || captureLocked || !session || session.disposed || session.controller) return;
     const controller = new AbortController(); session.controller = controller;
-    setPending(true); setError(null);
+    setPending(true); setError(null); onActivityChange?.('pending');
     try {
       const response = await api.post<ArrayBuffer>(`/devices/${encodeURIComponent(deviceId)}/screenshot/native`, {}, {
         signal: controller.signal, timeout: 100_000, responseType: 'arraybuffer',
@@ -110,7 +112,7 @@ export function NativeScreenshotPanel({ deviceId, enabled }: { deviceId: string;
     }
   };
   return <section aria-label="Исходный снимок экрана Android" className="min-w-0 space-y-4 rounded-xl border border-border bg-card p-4">
-    <div className="flex flex-wrap items-start justify-between gap-3"><div className="space-y-1"><h4 className="font-semibold">Исходный снимок экрана</h4><p className="text-sm text-muted-foreground">PNG с Android · родное разрешение · без перекодирования и уменьшения.</p></div><Button disabled={!enabled || pending} onClick={() => { void capture(); }}>{pending ? <Loader2 className="mr-2 h-4 w-4 animate-spin motion-reduce:animate-none" aria-hidden /> : <Camera className="mr-2 h-4 w-4" aria-hidden />}Получить снимок</Button></div>
+    <div className="flex flex-wrap items-start justify-between gap-3"><div className="space-y-1"><h4 className="font-semibold">Исходный снимок экрана</h4><p className="text-sm text-muted-foreground">PNG с Android · родное разрешение · без перекодирования и уменьшения.</p></div><Button disabled={!enabled || captureLocked || pending} onClick={() => { void capture(); }}>{pending ? <Loader2 className="mr-2 h-4 w-4 animate-spin motion-reduce:animate-none" aria-hidden /> : <Camera className="mr-2 h-4 w-4" aria-hidden />}Получить снимок</Button></div>
     <p className="text-xs leading-relaxed text-muted-foreground">Разовый запрос через APK с root-доступом, до 5 MiB. PNG сохраняет пиксели без потерь. DPI в свойствах файла относится к физическому размеру изображения; плотность интерфейса Android — отдельная настройка. Автоматического опроса нет.</p>
     {pending && <p role="status" className="text-sm text-muted-foreground">Android делает снимок и передаёт файл. Ожидаем полный PNG и проверяем SHA-256…</p>}
     {error && <p role="alert" className="break-words rounded-lg border border-destructive/30 p-3 text-sm text-destructive">{error} Автоповтора нет.{image ? ' Ниже предыдущий успешно полученный снимок.' : ''}</p>}

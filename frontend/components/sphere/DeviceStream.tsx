@@ -7,7 +7,7 @@ import { api } from '@/lib/api';
 import type { StreamFrameDimensions } from '@/src/features/stream/streamAspectRatio';
 import { AndroidNavigationBar } from '@/src/features/stream/AndroidNavigationBar';
 import type { UiBounds } from '@/src/features/stream/uiHierarchy';
-import type { AcknowledgedControl, StreamInput } from '@/src/features/stream/controlObservation';
+import type { AcknowledgedControl, StreamInput, TaskControlHandoffState } from '@/src/features/stream/controlObservation';
 import { ContinuousPointer, attachContinuousPointer } from '@/src/features/stream/continuousPointer';
 import type { ContinuousPointerState } from '@/src/features/stream/continuousPointer';
 
@@ -22,6 +22,9 @@ interface DeviceStreamProps {
   recordingMode?: boolean;
   /** True only after this viewer has released native ownership and discrete recording can accept input. */
   onRecordingControlReady?: (ready: boolean) => void;
+  /** A unique launch attempt locks input and waits for this viewer's known native RELEASE. */
+  taskHandoffId?: number;
+  onTaskHandoffState?: (state: TaskControlHandoffState, id: number) => void;
   enableDiagnostics?: boolean;
   /** Diagnostic export of a decoded, potentially lossy H.264 frame, never an Android screenshot. */
   enableScreenshot?: boolean;
@@ -93,6 +96,8 @@ export function DeviceStream({
   onControlCommand,
   recordingMode = false,
   onRecordingControlReady,
+  taskHandoffId,
+  onTaskHandoffState,
   enableDiagnostics = false,
   enableScreenshot = false,
   enableNavigation = false,
@@ -159,9 +164,9 @@ export function DeviceStream({
   const currentFrameOwned = hasRenderedFrame && !streamError
     && wsRef.current?.readyState === WebSocket.OPEN
     && renderedSocketRef.current === wsRef.current;
-  const canInteract = surfaceActive && !continuousFault && !discreteBusy && !inspection && !readOnly && currentFrameOwned && (connection === 'live'
+  const canInteract = surfaceActive && taskHandoffId === undefined && !continuousFault && !discreteBusy && !inspection && !readOnly && currentFrameOwned && (connection === 'live'
     || (enableStaticInput && connection === 'stale'));
-  const canSelectElement = !!inspection && currentFrameOwned && (connection === 'live'
+  const canSelectElement = taskHandoffId === undefined && !!inspection && currentFrameOwned && (connection === 'live'
     || (enableStaticInput && connection === 'stale'));
   const canSaveFrame = currentFrameOwned && connection === 'live';
   const continuousBusy = !['idle', 'probing', 'closed', 'destroyed'].includes(continuousState);
@@ -170,7 +175,7 @@ export function DeviceStream({
   continuousAllowedRef.current = canInteract && !continuousRecording && continuousRequestedRef.current;
   // Age is not a disconnect: an idle ImageReader can retain its last picture.
   // A new socket/decoder still needs its own first frame before accepting input.
-  const canNavigate = surfaceActive && !continuousFault && !inspection && !readOnly && hasRenderedFrame && !streamError
+  const canNavigate = surfaceActive && taskHandoffId === undefined && !continuousFault && !inspection && !readOnly && hasRenderedFrame && !streamError
     && (connection === 'live' || connection === 'stale')
     && renderedSocketRef.current === wsRef.current;
   const onFrameDimensionsRef = useRef(onFrameDimensions);
@@ -659,7 +664,7 @@ export function DeviceStream({
     continuousProbeArmRef.current?.();
   };
   useEffect(() => {
-    if (inspection || readOnly || continuousRecording) {
+    if (inspection || readOnly || continuousRecording || taskHandoffId !== undefined) {
       automaticProbeRef.current = null;
       if (!continuousRef.current) {
         continuousRequestedRef.current = false;
@@ -675,7 +680,7 @@ export function DeviceStream({
     beginContinuous();
     // A single capability attempt per owned video/mode; never replay a failed gesture.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [canInteract, enableNavigation, inspection, readOnly, continuousRecording, discreteBusy, continuousState]);
+  }, [canInteract, enableNavigation, inspection, readOnly, continuousRecording, taskHandoffId, discreteBusy, continuousState]);
 
   const prepareDiscreteInput = (): ((confirmed: boolean) => void) | Promise<((confirmed: boolean) => void) | null> | null => {
     const socket = wsRef.current;
@@ -720,8 +725,8 @@ export function DeviceStream({
     // A partially recorded discrete drag belongs to the old mode. Never replay
     // its UP after Stop, inspection, a lock or permission change.
     dragRef.current = null;
-    if (inspection || readOnly || continuousRecording) continuousRef.current?.retire('control_mode_changed');
-  }, [inspection, readOnly, continuousRecording]);
+    if (inspection || readOnly || continuousRecording || taskHandoffId !== undefined) continuousRef.current?.retire('control_mode_changed');
+  }, [inspection, readOnly, continuousRecording, taskHandoffId]);
   useEffect(() => {
     const controller = continuousRef.current;
     onInspectionControlReady?.(!!inspection && currentFrameOwned && !discreteBusy
@@ -733,17 +738,24 @@ export function DeviceStream({
       && (!controller || controller.state === 'closed'));
   }, [continuousRecording, canInteract, continuousState, onRecordingControlReady]);
   useEffect(() => {
+    if (taskHandoffId === undefined) return;
     const controller = continuousRef.current;
-    if (!(inspectionActive || continuousRecording) || !controller || controller.state === 'closed' || !currentFrameOwned) return;
+    const state = continuousFault || !surfaceActive ? 'blocked'
+      : currentFrameOwned && !discreteBusy && (!controller || controller.state === 'closed') ? 'ready' : 'waiting';
+    onTaskHandoffState?.(state, taskHandoffId);
+  }, [taskHandoffId, onTaskHandoffState, currentFrameOwned, discreteBusy, continuousFault, surfaceActive, continuousState]);
+  useEffect(() => {
+    const controller = continuousRef.current;
+    if (!(inspectionActive || continuousRecording || taskHandoffId !== undefined) || !controller || controller.state === 'closed' || !currentFrameOwned) return;
     const timeout = setTimeout(() => {
       if (continuousRef.current !== controller || controller.state === 'closed') return;
       continuousFaultRef.current = true;
       setContinuousFault(true);
-      setContinuousFailureCode(inspectionActive ? 'inspection_release_unknown' : 'recording_release_unknown');
-      setContinuousReason(inspectionActive ? 'Освобождение управления Android не подтверждено. Чтение дерева не отправлено; восстановите подключение.' : 'Освобождение управления Android не подтверждено. Запись действий заблокирована; восстановите подключение.');
+      setContinuousFailureCode(taskHandoffId !== undefined ? 'task_release_unknown' : inspectionActive ? 'inspection_release_unknown' : 'recording_release_unknown');
+      setContinuousReason(taskHandoffId !== undefined ? 'Освобождение управления Android не подтверждено. Задание не создано; восстановите подключение.' : inspectionActive ? 'Освобождение управления Android не подтверждено. Чтение дерева не отправлено; восстановите подключение.' : 'Освобождение управления Android не подтверждено. Запись действий заблокирована; восстановите подключение.');
     }, 3000);
     return () => clearTimeout(timeout);
-  }, [inspectionActive, continuousRecording, currentFrameOwned, continuousState]);
+  }, [inspectionActive, continuousRecording, taskHandoffId, currentFrameOwned, continuousState]);
 
   const handlePointerDown = useCallback(
     (e: React.PointerEvent<HTMLCanvasElement>) => {

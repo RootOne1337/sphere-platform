@@ -11,12 +11,13 @@ import { Button } from '@/src/shared/ui/button';
 import { NativeScreenshotPanel } from '@/src/features/devices/NativeScreenshotPanel';
 import type { StreamFrameDimensions } from './streamAspectRatio';
 import { checkedHierarchy, frameBounds, hitTestHierarchy, matchesFrame, type UiHierarchyNode, type UiHierarchySnapshot } from './uiHierarchy';
-import type { AcknowledgedControl, StreamInput } from './controlObservation';
+import type { AcknowledgedControl, StreamInput, TaskControlHandoffState } from './controlObservation';
 import { uiInspectionError, type UiInspectionError } from './uiInspectionError';
 
 const SNAPSHOT_LIFETIME_MS = 30_000;
 
-export function SingleDeviceStream({ deviceId, captureEnabled = false, onControlSent, onControlCommand, recordingMode = false, onRecordingControlReady, onInsertSelector, controlDisabled = false, compact = false }: { deviceId: string; captureEnabled?: boolean; controlDisabled?: boolean; compact?: boolean; recordingMode?: boolean; onRecordingControlReady?: (ready: boolean) => void;
+export function SingleDeviceStream({ deviceId, captureEnabled = false, onControlSent, onControlCommand, recordingMode = false, onRecordingControlReady, taskHandoffId, onTaskHandoffState, onInsertSelector, controlDisabled = false, compact = false }: { deviceId: string; captureEnabled?: boolean; controlDisabled?: boolean; compact?: boolean; recordingMode?: boolean; onRecordingControlReady?: (ready: boolean) => void;
+  taskHandoffId?: number; onTaskHandoffState?: (state: TaskControlHandoffState, id: number) => void;
   onControlSent?: (input: StreamInput) => void; onControlCommand?: (event: AcknowledgedControl) => void; onInsertSelector?: (node: UiHierarchyNode, snapshot: UiHierarchySnapshot) => void }) {
   const access = useCapabilities();
   const { accessToken } = useAuthStore();
@@ -35,11 +36,26 @@ export function SingleDeviceStream({ deviceId, captureEnabled = false, onControl
   const [error, setError] = useState<UiInspectionError | null>(null);
   const [pending, setPending] = useState(false);
   const [inspectionControlReady, setInspectionControlReady] = useState(false);
+  const [nativeHandoff, setNativeHandoff] = useState<{ state: TaskControlHandoffState; id: number } | null>(null);
+  const [captureActivity, setCaptureActivity] = useState<'idle' | 'pending' | 'failed'>('idle');
+  const handoffIdRef = useRef(taskHandoffId); handoffIdRef.current = taskHandoffId;
+  const [failedHandoffRead, setFailedHandoffRead] = useState<number | undefined>();
+  const [abortedInspectionRead, setAbortedInspectionRead] = useState(false);
+  const nativeHandoffChanged = useCallback((state: TaskControlHandoffState, id: number) => {
+    setNativeHandoff(previous => previous?.id === id && previous.state === state ? previous : { state, id });
+  }, []);
   const [now, setNow] = useState(0);
   const generation = useRef(0);
   const controller = useRef<AbortController | null>(null);
   const selectedRef = useRef<UiHierarchyNode | null>(null);
   const pendingPick = useRef<{ x: number; y: number; dimensions: StreamFrameDimensions } | null>(null);
+  useEffect(() => {
+    if (taskHandoffId === undefined) return;
+    const native = nativeHandoff?.id === taskHandoffId ? nativeHandoff.state : 'waiting';
+    const state = !visible || error || abortedInspectionRead || failedHandoffRead === taskHandoffId || captureActivity === 'failed' || native === 'blocked' ? 'blocked'
+      : controlDisabled && frame && !pending && !controller.current && captureActivity === 'idle' && native === 'ready' ? 'ready' : 'waiting';
+    onTaskHandoffState?.(state, taskHandoffId);
+  }, [taskHandoffId, onTaskHandoffState, nativeHandoff, visible, error, abortedInspectionRead, failedHandoffRead, captureActivity, controlDisabled, frame, pending]);
   const select = useCallback((node: UiHierarchyNode | null) => { selectedRef.current = node; setSelected(node); }, []);
   const onFrame = useCallback((dimensions: StreamFrameDimensions) => {
     setFrameReport({ dimensions, deviceId, token: accessToken });
@@ -50,6 +66,7 @@ export function SingleDeviceStream({ deviceId, captureEnabled = false, onControl
     // HTTP cannot cancel Android SHELL: drain it before opening input again.
     // Device/auth/socket invalidation still aborts and separates generations.
     if (abortRequest) {
+      if (controller.current) setAbortedInspectionRead(true);
       controller.current?.abort();
       controller.current = null;
       setPending(false);
@@ -76,7 +93,7 @@ export function SingleDeviceStream({ deviceId, captureEnabled = false, onControl
   const age = report ? Math.max(0, now - report.at) : Infinity;
   const valid = snapshot && matchesFrame(snapshot, frame) && age < SNAPSHOT_LIFETIME_MS;
   const refresh = useCallback(async () => {
-    if (!canInspect || !inspect || !inspectionControlReady || !frame || controller.current || document.visibilityState === 'hidden') return;
+    if (controlDisabled || taskHandoffId !== undefined || !canInspect || !inspect || !inspectionControlReady || !frame || controller.current || document.visibilityState === 'hidden') return;
     const request = new AbortController();
     controller.current = request;
     const ownGeneration = ++generation.current;
@@ -89,6 +106,7 @@ export function SingleDeviceStream({ deviceId, captureEnabled = false, onControl
         { signal: request.signal, timeout: 50_000 });
       const next = checkedHierarchy(data, deviceId);
       if (ownGeneration !== generation.current || request.signal.aborted) return;
+      setAbortedInspectionRead(false);
       // Start the lease before the request; WAN/cleanup time cannot make an
       // old Android tree appear freshly captured on arrival.
       setReport({ snapshot: next, deviceId, token: accessToken, at: requestedAt }); setNow(performance.now());
@@ -109,6 +127,9 @@ export function SingleDeviceStream({ deviceId, captureEnabled = false, onControl
         if (!node) setFeedback('Выбранный узел изменился или исчез. Выберите элемент заново.');
       }
     } catch (reason) {
+      // Discarding the displayed tree is not proof that a failed native read
+      // completed safely. Fence this launch even if its tree generation changed.
+      if (controller.current === request && handoffIdRef.current !== undefined) setFailedHandoffRead(handoffIdRef.current);
       if (ownGeneration === generation.current && !request.signal.aborted) {
         setError(uiInspectionError(reason));
         setAutomatic(false); pendingPick.current = null;
@@ -116,7 +137,7 @@ export function SingleDeviceStream({ deviceId, captureEnabled = false, onControl
     } finally {
       if (controller.current === request) { controller.current = null; setPending(false); }
     }
-  }, [canInspect, inspect, inspectionControlReady, frame, deviceId, accessToken, select]);
+  }, [controlDisabled, taskHandoffId, canInspect, inspect, inspectionControlReady, frame, deviceId, accessToken, select]);
   // Mode entry, a new owned picture, or return to this visible page initiates
   // one read. Failed reads pause periodic updates instead of retrying root RPCs.
   useEffect(() => { if (inspect && visible) void refresh(); }, [inspect, visible, refresh]);
@@ -126,12 +147,12 @@ export function SingleDeviceStream({ deviceId, captureEnabled = false, onControl
     if (inspect && visible && !pending && !report && !error) void refresh();
   }, [inspect, visible, pending, report, error, refresh]);
   useEffect(() => {
-    if (!inspect || !inspectionControlReady || !automatic || !visible || !canInspect || !frame || pending || error) return;
+    if (controlDisabled || taskHandoffId !== undefined || !inspect || !inspectionControlReady || !automatic || !visible || !canInspect || !frame || pending || error) return;
     const timer = window.setTimeout(() => { void refresh(); }, 5_000);
     return () => window.clearTimeout(timer);
-  }, [inspect, inspectionControlReady, automatic, visible, canInspect, frame, pending, error, refresh, report]);
+  }, [controlDisabled, taskHandoffId, inspect, inspectionControlReady, automatic, visible, canInspect, frame, pending, error, refresh, report]);
   const pick = (x: number, y: number, dimensions: StreamFrameDimensions) => {
-    if (!canInspect || !frame) return;
+    if (controlDisabled || taskHandoffId !== undefined || !canInspect || !frame) return;
     if (!snapshot || !report || performance.now() - report.at >= SNAPSHOT_LIFETIME_MS || !matchesFrame(snapshot, dimensions)) {
       pendingPick.current = { x, y, dimensions };
       setFeedback('Получаем актуальное дерево для выбранной точки…');
@@ -150,13 +171,13 @@ export function SingleDeviceStream({ deviceId, captureEnabled = false, onControl
   return <section className="min-w-0 space-y-3" aria-label="Видеопоток и инспектор Android">
     <div className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-border bg-card p-3">
       <div className="flex flex-wrap gap-2">
-        <Button variant={!inspect && !viewOnly ? 'default' : 'outline'} size="sm" aria-pressed={!inspect && !viewOnly} onClick={() => { setInspect(false); setViewOnly(false); invalidated(false); }}><MousePointer2 className="mr-2 h-4 w-4" aria-hidden />Управление</Button>
-        <Button variant={viewOnly ? 'default' : 'outline'} size="sm" aria-pressed={viewOnly} onClick={() => { setInspect(false); setViewOnly(true); invalidated(false); }}><Eye className="mr-2 h-4 w-4" aria-hidden />Просмотр</Button>
-        <Button variant={inspect ? 'default' : 'outline'} size="sm" disabled={!canInspect} aria-pressed={inspect} onClick={() => { if (inspect) { void refresh(); return; } invalidated(false); setViewOnly(false); setInspect(true); setAutomatic(true); setError(null); }}><ScanSearch className="mr-2 h-4 w-4" aria-hidden />XPath-инспектор</Button>
+        <Button variant={!inspect && !viewOnly ? 'default' : 'outline'} size="sm" disabled={taskHandoffId !== undefined} aria-pressed={!inspect && !viewOnly} onClick={() => { setInspect(false); setViewOnly(false); invalidated(false); }}><MousePointer2 className="mr-2 h-4 w-4" aria-hidden />Управление</Button>
+        <Button variant={viewOnly ? 'default' : 'outline'} size="sm" disabled={taskHandoffId !== undefined} aria-pressed={viewOnly} onClick={() => { setInspect(false); setViewOnly(true); invalidated(false); }}><Eye className="mr-2 h-4 w-4" aria-hidden />Просмотр</Button>
+        <Button variant={inspect ? 'default' : 'outline'} size="sm" disabled={controlDisabled || taskHandoffId !== undefined || !canInspect} aria-pressed={inspect} onClick={() => { if (inspect) { void refresh(); return; } invalidated(false); setViewOnly(false); setInspect(true); setAutomatic(true); setError(null); }}><ScanSearch className="mr-2 h-4 w-4" aria-hidden />XPath-инспектор</Button>
       </div>
       {inspect && <div className="flex flex-wrap items-center gap-2">
-        <Button variant="outline" size="sm" aria-pressed={automatic} disabled={!canInspect} onClick={() => { setAutomatic(!automatic); if (!automatic) { void refresh(); } }}>Автообновление: {automatic ? 'включено' : 'пауза'}</Button>
-        <Button variant="outline" size="sm" disabled={!canInspect || !inspectionControlReady || !frame || pending} onClick={() => { void refresh(); }}><RefreshCw className={`mr-2 h-4 w-4 ${pending ? 'animate-spin motion-reduce:animate-none' : ''}`} aria-hidden />{pending ? 'Читаем дерево…' : 'Обновить дерево'}</Button>
+        <Button variant="outline" size="sm" aria-pressed={automatic} disabled={controlDisabled || taskHandoffId !== undefined || !canInspect} onClick={() => { setAutomatic(!automatic); if (!automatic) { void refresh(); } }}>Автообновление: {automatic ? 'включено' : 'пауза'}</Button>
+        <Button variant="outline" size="sm" disabled={controlDisabled || taskHandoffId !== undefined || !canInspect || !inspectionControlReady || !frame || pending} onClick={() => { void refresh(); }}><RefreshCw className={`mr-2 h-4 w-4 ${pending ? 'animate-spin motion-reduce:animate-none' : ''}`} aria-hidden />{pending ? 'Читаем дерево…' : 'Обновить дерево'}</Button>
       </div>}
     </div>
     {!canInspect && <PermissionNotice permission="device:write" action="чтение дерева Android через root-команды" />}
@@ -164,13 +185,14 @@ export function SingleDeviceStream({ deviceId, captureEnabled = false, onControl
       <div className="min-w-0 overflow-hidden rounded-xl border border-border bg-black">
         <DeviceStream deviceId={deviceId} enableDiagnostics enableNavigation enableStaticInput
           recordingMode={recordingMode} onRecordingControlReady={onRecordingControlReady}
+          taskHandoffId={taskHandoffId} onTaskHandoffState={nativeHandoffChanged}
           onControlSent={onControlSent}
           onControlCommand={onControlCommand}
           readOnly={viewOnly || controlDisabled || !access.can('stream:control') || (!inspect && pending)}
           readOnlyReason={controlDisabled ? 'Управление временно заблокировано на время проверки задания или при неподтверждённом результате.' : viewOnly ? 'Выбран режим просмотра. Для нажатий выберите «Управление».' : !inspect && pending ? 'Завершаем чтение дерева Android. Управление включится после ответа; действия не отправляются.' : undefined}
           onFrameDimensions={onFrame} onInspectionInvalidated={invalidateFrame}
           onInspectionControlReady={setInspectionControlReady}
-          inspection={inspect ? { onPick: pick, bounds: highlight } : undefined} />
+          inspection={inspect && !controlDisabled && taskHandoffId === undefined ? { onPick: pick, bounds: highlight } : undefined} />
       </div>
       {inspect && <aside className={`min-w-0 space-y-4 rounded-xl border border-border bg-card p-4 ${compact ? 'max-h-[480px] overflow-auto' : ''}`} aria-label="Элемент Android">
         <div><h4 className="font-semibold">Инспектор элементов</h4><p className="mt-1 text-xs leading-relaxed text-muted-foreground">Нажмите элемент на видео: границы и все возвращённые Android атрибуты появятся здесь. Выбор не отправляет нажатие Android.</p></div>
@@ -215,7 +237,7 @@ export function SingleDeviceStream({ deviceId, captureEnabled = false, onControl
     </div>
     {canInspect && <details className="rounded-xl border border-border bg-card p-3">
       <summary className="cursor-pointer text-sm font-semibold">Исходный PNG для пиксельных эталонов</summary>
-      <div className="mt-3"><NativeScreenshotPanel key={deviceId} deviceId={deviceId} enabled={captureEnabled} /></div>
+      <div className="mt-3"><NativeScreenshotPanel key={deviceId} deviceId={deviceId} enabled={captureEnabled} captureLocked={controlDisabled || taskHandoffId !== undefined} onActivityChange={setCaptureActivity} /></div>
     </details>}
   </section>;
 }

@@ -234,3 +234,80 @@ it('forwards explicit recording intent and readiness without dropping receipt ob
   expect(mockStreamProps.recordingMode).toBe(false);
   expect(mockStreamProps.onControlCommand).toBe(command);expect(mockStreamProps.onControlSent).toBe(sent);
 });
+
+it('drains the existing hierarchy request before task readiness without abort or new root reads', async () => {
+  let resolve!: (value: unknown) => void;
+  jest.mocked(api.post).mockReturnValue(new Promise(done => { resolve = done; }));
+  const observed = jest.fn();
+  const view = render(<SingleDeviceStream deviceId="remote" />);
+  fireEvent.click(screen.getByRole('button', { name: 'Fixture frame' }));
+  fireEvent.click(screen.getByRole('button', { name: 'XPath-инспектор' }));
+  expect(api.post).toHaveBeenCalledTimes(1);
+  const signal = jest.mocked(api.post).mock.calls[0][2]?.signal as AbortSignal;
+  view.rerender(<SingleDeviceStream deviceId="remote" controlDisabled taskHandoffId={9} onTaskHandoffState={observed} />);
+  act(() => mockStreamProps.onTaskHandoffState('ready', 9));
+  expect(observed).toHaveBeenLastCalledWith('waiting', 9);
+  expect(signal.aborted).toBe(false);
+  expect(screen.getByRole('button', { name: 'XPath-инспектор' })).toBeDisabled();
+  await act(async () => resolve({ data: snapshot() }));
+  expect(observed).toHaveBeenLastCalledWith('ready', 9);
+  expect(api.post).toHaveBeenCalledTimes(1);
+  expect(mockStreamProps.inspection).toBeUndefined();
+});
+
+it('does not convert a failed hierarchy drain into task readiness', async () => {
+  let reject!: (reason: Error) => void;
+  jest.mocked(api.post).mockReturnValue(new Promise((_done, failed) => { reject = failed; }));
+  const observed = jest.fn();
+  const view = render(<SingleDeviceStream deviceId="remote" />);
+  fireEvent.click(screen.getByRole('button', { name: 'Fixture frame' }));
+  fireEvent.click(screen.getByRole('button', { name: 'XPath-инспектор' }));
+  view.rerender(<SingleDeviceStream deviceId="remote" controlDisabled taskHandoffId={10} onTaskHandoffState={observed} />);
+  act(() => mockStreamProps.onTaskHandoffState('ready', 10));
+  await act(async () => reject(new Error('Native read timeout')));
+  expect(observed).toHaveBeenLastCalledWith('blocked', 10);
+  expect(observed).not.toHaveBeenCalledWith('ready', 10);
+});
+
+it('does not reuse readiness from a previous launch attempt', () => {
+  const observed = jest.fn();
+  const view = render(<SingleDeviceStream deviceId="remote" controlDisabled taskHandoffId={11} onTaskHandoffState={observed} />);
+  fireEvent.click(screen.getByRole('button', { name: 'Fixture frame' }));
+  act(() => mockStreamProps.onTaskHandoffState('ready', 11));
+  expect(observed).toHaveBeenLastCalledWith('ready', 11);
+  view.rerender(<SingleDeviceStream deviceId="remote" controlDisabled taskHandoffId={12} onTaskHandoffState={observed} />);
+  expect(observed).toHaveBeenLastCalledWith('waiting', 12);
+  act(() => mockStreamProps.onTaskHandoffState('ready', 11));
+  expect(observed).not.toHaveBeenCalledWith('ready', 12);
+});
+
+it('waits for an existing native capture and fails closed on its unverified result', async () => {
+  let reject!: (reason: Error) => void;
+  jest.mocked(api.post).mockReturnValue(new Promise((_done, failed) => { reject = failed; }));
+  const observed = jest.fn();
+  const view = render(<SingleDeviceStream deviceId="remote" captureEnabled />);
+  fireEvent.click(screen.getByRole('button', { name: 'Fixture frame' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Получить снимок', hidden: true }));
+  const signal = jest.mocked(api.post).mock.calls[0][2]?.signal as AbortSignal;
+  view.rerender(<SingleDeviceStream deviceId="remote" captureEnabled controlDisabled taskHandoffId={13} onTaskHandoffState={observed} />);
+  act(() => mockStreamProps.onTaskHandoffState('ready', 13));
+  expect(signal.aborted).toBe(false);
+  expect(observed).toHaveBeenLastCalledWith('waiting', 13);
+  await act(async () => reject(new Error('Native capture result unknown')));
+  expect(observed).toHaveBeenLastCalledWith('blocked', 13);
+  expect(observed).not.toHaveBeenCalledWith('ready', 13);
+});
+
+it('does not treat permission-driven HTTP abort as native read completion for a pending task', () => {
+  jest.mocked(api.post).mockReturnValue(new Promise(() => {}));
+  const observed = jest.fn();
+  const view = open();
+  const signal = jest.mocked(api.post).mock.calls[0][2]?.signal as AbortSignal;
+  view.rerender(<SingleDeviceStream deviceId="remote" controlDisabled taskHandoffId={14} onTaskHandoffState={observed} />);
+  act(() => mockStreamProps.onTaskHandoffState('ready', 14));
+  mockPermission = false;
+  view.rerender(<SingleDeviceStream deviceId="remote" controlDisabled taskHandoffId={14} onTaskHandoffState={observed} />);
+  expect(signal.aborted).toBe(true);
+  expect(observed).toHaveBeenLastCalledWith('blocked', 14);
+  expect(observed).not.toHaveBeenCalledWith('ready', 14);
+});

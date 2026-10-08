@@ -14,6 +14,9 @@ export type AcknowledgedControl = { requestId: string; input: StreamInput } & (
   { phase: 'submitted' } | { phase: 'confirmed' | 'unknown'; completedAt: number }
 );
 
+/** Viewer-local readiness for a single task launch, not task execution success. */
+export type TaskControlHandoffState = 'waiting' | 'ready' | 'blocked';
+
 export const ANDROID_EDIT_KEYCODES = new Set([3, 4, 187, 82, 67, 112, 66, 61, 278, 277, 279]);
 
 /** Match the installed APK shell/input-text restrictions without changing text. */

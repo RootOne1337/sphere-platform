@@ -723,3 +723,31 @@ it('stopping explicit recording cancels an unfinished discrete drag before negot
   expect(view.sent().filter(x => x.type === 'touch_probe')).toHaveLength(2);
   view.unmount();
 });
+
+it('locks a held touch for a task and signals only its known native release', () => {
+  const view = readyContinuous(), observed = jest.fn();
+  view.down(1, 40); view.status(1, 1);
+  view.rerender(<DeviceStream deviceId="gesture-remote" enableStaticInput enableNavigation taskHandoffId={7} onTaskHandoffState={observed} />);
+  expect(observed).toHaveBeenLastCalledWith('waiting', 7);
+  expect(view.sent().filter(x => x.type === 'touch_close')).toHaveLength(1);
+  view.up(1, 60); view.down(2); view.up(2, 60); view.wheel();
+  expect(view.commands()).toHaveLength(0);
+  view.status(0, 3, 'release');
+  expect(observed).toHaveBeenLastCalledWith('ready', 7);
+  view.down(3); view.up(3, 60); view.wheel();
+  expect(view.commands()).toHaveLength(0);
+  expect(view.sent().filter(x => x.type === 'touch_probe')).toHaveLength(1);
+  view.unmount();
+});
+
+it.each(['missing', 'unknown'])('blocks a task handoff for %s native release', kind => {
+  const view = readyContinuous(), observed = jest.fn();
+  view.rerender(<DeviceStream deviceId="gesture-remote" enableStaticInput enableNavigation readOnly taskHandoffId={8} onTaskHandoffState={observed} />);
+  if (kind === 'unknown') view.status(0, 4, 'release');
+  else act(() => jest.advanceTimersByTime(3000));
+  expect(observed).toHaveBeenLastCalledWith('blocked', 8);
+  expect(observed).not.toHaveBeenCalledWith('ready', 8);
+  view.down(2); view.up(2, 60); view.wheel();
+  expect(view.commands()).toHaveLength(0);
+  view.unmount();
+});
