@@ -1,5 +1,12 @@
 # Ресурсы хоста: диск, Windows commit, WSL и контейнеры
 
+**Актуальное дополнение8October,18:19UTC:** limited observer завершил241/241
+samples в09:01UTC, report2.1MiB, PID отсутствует. Покрытия после deadline нет.
+C:−6.48GiB за8h; Docker VHDX и4LDPlayer allocations постоянны во всехsamples.
+Docker guest содержимое росло внутри прежнего VHD; writer расхода C: не установлен,
+VSS недоступен. Новые collector/cleanup не запускались.
+[Completion, gap и scalar evidence](../audits/2026-10-08/STORAGE-WINDOW-COMPLETION.md).
+
 **Актуальное дополнение 7 октября, 23:34 UTC+5:** прежние elevated host/ETW,
 NTFS и VMDK processes отсутствуют; последние complete samples около14:03UTC,
 их старое `running` не является текущим статусом. Причина остановки неизвестна.

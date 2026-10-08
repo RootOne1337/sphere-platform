@@ -9,9 +9,11 @@ Explicit recorder mode принят наPH011; task preparation5382fe4 пров�
 Выявлен source defect потери task/recording/unknown-POST state при same-session
 token refresh; UI36b160f9 установлен, живой refresh ещё не засвидетельствован:
 [session-state follow-up](STUDIO-SESSION-REFRESH-STATE.md).
-Приоритетный API follow-up: отказ одного viewer socket выключает shared
-continuous listener. Дефект воспроизведён и исправлен в исходниках;
-reviewed установка ещё нужна: [fault isolation](CONTINUOUS-VIEWER-FAULT-ISOLATION.md).
+API be803773 установлен: failed viewer send изолирован, независимый Android
+View подтвердил drag/wheel. Idle receipt loss повторился и остаётся P1.
+Отдельно transient capability failure при API restart потерял laboratory state
+без F5; следующим исправляется сохранение same-identity guards при таком outage.
+[Fault isolation и наблюдение](CONTINUOUS-VIEWER-FAULT-ISOLATION.md).
 Канонический audit ledger остаётся9accepted/41open; это уточнение существующих
 SF26-05/06, а не новая заявка о закрытии всей автоматизации.
 

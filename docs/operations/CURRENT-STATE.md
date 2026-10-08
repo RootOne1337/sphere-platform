@@ -4,6 +4,24 @@
 **Область:** исходники и документация ветки PR #19, записанные runtime-наблюдения, Android APK и готовность следующего прогона.<br />
 **Канонический документ текущего состояния:** этот файл. Исторические отчёты ниже сохраняют исходные даты и факты.
 
+**8 октября,18:39–19:28 UTC /9 октября UTC+5 — API be803773 установлен.**
+Failed viewer socket больше не выключает общий continuous listener. Backend
+CI3346passed/37skipped/229subtests/80.71%; frontend1892/138suites, Android и
+preview successful. Only API replaced;45other containers/schema/OTA/APK10249
+сохранены. PH011 independent View подтвердил dragDOWN1/MOVE5/UP1 и wheel
+deltaDOWN1/MOVE1/UP1, CANCEL0; receiver удалён, View выбран, viewport reset.
+Idle native_receipt_timeout повторился: конечный успех не закрывает этот P1.
+При transient capability failure потерялись laboratory/task UI state без F5;
+это следующий state-retention fix. Ledger9accepted/41open.
+[Установка, доказательства и ограничения](../audits/2026-10-08/CONTINUOUS-VIEWER-FAULT-ISOLATION.md).
+
+**Storage window завершён09:01 UTC, не является работающим ночным наблюдателем.**
+241/241samples за8h; свободное место C: уменьшилось6.48GiB, выделение Docker VHDX
+и четырёх emulator VMDK неизменно. VSS недоступен; writer attribution UNKNOWN.
+Рост внутри Docker guest не равен росту host VHDX. После09:01 есть monitoring gap;
+новый collector/autostart не запускались. Incident OPEN.
+[Полный разбор конечного окна](../audits/2026-10-08/STORAGE-WINDOW-COMPLETION.md).
+
 **8 октября,18:08–18:18 UTC — UI36b160f9 установлен; API fault isolation подготовлен.**
 Baseline5382fe4 пересоздаёт Workbench при token rotation, теряя запись/результаты
 и unknown-POST guard. Source fix привязывает очистку к sessionVersion, сохраняя

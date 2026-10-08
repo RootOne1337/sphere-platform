@@ -1,5 +1,11 @@
 # Повторная остановка ограниченного наблюдателя расхода диска
 
+**Latest checkpoint: completed09:01UTC8October.**241/241 complete samples,
+2210733B report; PID absent at18:07UTC. No autostart or ongoing coverage after
+the deadline. C:−6.48GiB; all5 watched file allocations constant. Writer unknown.
+[Final analysis and sanitized evidence](STORAGE-WINDOW-COMPLETION.md).
+The running checkpoints below are historical observations.
+
 8 октября 2026, 06:01 Asia/Yekaterinburg. Это эксплуатационный checkpoint;
 storage incident остаётся OPEN. Сборщик не является доказательством отсутствия
 утечки и не предоставляет file-to-writer attribution.

@@ -2,7 +2,7 @@
 
 Актуализировано: **8 октября 2026**. Каталог `/scripts`, редактор
 `/scripts/builder`, формат **DAG1.0**, React Flow, локальная ELK0.12.0.
-На3015 установлены frontend **5382fe4** и API **9610523**. Studio сохраняет
+На3015 установлены frontend **36b160f9** и API **be803773**. Studio сохраняет
 graph/action contract и диалог сохранности; текущие runtime границы фиксируются в
 [CURRENT-STATE](CURRENT-STATE.md). Обратная гонка XPath→Control исправлена;
 быстрый переход и повторный вход в дерево проверены на установленном UI.
@@ -19,6 +19,10 @@ rich recorder и последующий idle receipt failure OPEN.
 [Приёмка лаборатории](../audits/2026-10-08/STUDIO-RECORDER-INSTALLED-ACCEPTANCE.md).
 [Приёмка запуска](../audits/2026-10-08/STUDIO-TASK-INSTALLED-ACCEPTANCE.md) ·
 [Сбой простоя и измерения](../audits/2026-10-08/STUDIO-IDLE-RECEIPT-FOLLOWUP.md).
+API изолирует failed viewer send от общего continuous listener; native drag и
+wheel подтверждены Android View. Idle timeout повторился, а краткий отказ
+capabilities при перезапуске API потерял laboratory state; оба follow-up OPEN.
+[Установленный API и конечные доказательства](../audits/2026-10-08/CONTINUOUS-VIEWER-FAULT-ISOLATION.md).
 [Latest installed navigation](../audits/2026-10-07/STUDIO-NAVIGATION-PRESERVATION.md).
 Malformed WS input не подставляет координаты0/0, отказ отделён от video failure.
 Real transport canary, разрыв связи/Undo и server validate приняты отдельно;

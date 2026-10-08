@@ -1,7 +1,8 @@
 # Continuous input: isolate a disconnected viewer / P1 follow-up
 
-8 October 2026. Source correction; reviewed API installation and live acceptance
-are still required at this checkpoint. SF26-05 remains OPEN; ledger9accepted/41open.
+8 October 2026 UTC / 9 October UTC+5. API be803773 installed; finite Android
+gesture delivery verified. Idle receipt loss remains reproduced and OPEN.
+SF26-05 remains OPEN; ledger9accepted/41open.
 
 ## Reproduced source defect
 
@@ -72,13 +73,49 @@ The ordinary token refresh has not yet been observed in this installed browser.
 
 ![Installed UI and completed graph before API update](assets/viewer-isolation/task-before-api.png)
 
-## Acceptance still required
+## Installed API and finite acceptance
 
-Install the exact-source successful reviewed API image, preserve other containers,
-schema and OTA, then verify ordinary Control returns READY, reconnect and a finite
-gesture. Restart recovery alone does not prove the old exception's cause. Keep
-browser timer/native ACK attribution, global task/control ownership, durable
-unknown-POST reconciliation and fleet/remote fault soak OPEN.
+Exact source be803773037c16a113b50c1a2774793fffae8773 installed at
+18:39:32.677540078 UTC from successful CI37823344986. Independent CI config
+digest: sha256:f842b85644314e2c8227f7ef210bb0f61cd34798678f122afbf7f6859fe4b94b.
+Loaded image: sha256:49a0ac9dca8f27db1dd8564090ef495139682919ebaa39d5cb396c43ad51ede1.
+Archive236147247bytes. Only API replaced;45other containers, schema head
+20261006_script_catalog_metadata, pilot APK10249 and normal OTA unchanged.
+Full source CI:3346passed/37skipped/229subtests, coverage80.71%; frontend
+1892passed/138suites; Android and preview successful. Local and hosted results
+remain distinct; image installation itself is not an Android contract receipt.
+
+Ordinary Studio Control returned READY. On PH011 an independent Android View
+receiver, with no permissions/network/event log, captured one browser drag:
+DOWN1/MOVE5/UP1/CANCEL0. A subsequent wheel action added DOWN1/MOVE1/UP1/CANCEL0;
+final counters DOWN2/MOVE6/UP2/CANCEL0. The receiver was installed only on PH011,
+then uninstalled at19:28:20 UTC; pilot agent version10249 independently rechecked.
+View selected at cleanup; graph3/2, recording0, saved version unchanged. Temporary
+browser viewport reset. This is finite delivery evidence, not frame timing or
+remote/fleet latency acceptance.
+
+The first drag attempt followed a renewed idle timeout and reached no Android
+events. An explicit recovery and state-admitted second attempt delivered the
+gesture. Later idle `native_receipt_timeout` recurred, consuming the existing
+one-per-session reconciliation. No input was replayed. Home via browser was not
+accepted during that fence; no successful Home result is claimed for this run.
+The screenshot deliberately includes the remaining fence and received counters.
+
+![Independent Android receiver after drag and wheel; idle fence still present](assets/viewer-isolation/native-gesture-after-api.png)
+
+## New permission-outage finding
+
+During API replacement the browser displayed “Не удалось проверить права”. When
+the capability read recovered, the saved graph remained but the laboratory,
+selected device and prior completed task card/marks were lost. There was no F5.
+The screenshot named permission-restart-fence captures the recovered editor after
+state loss, not the transient error notice. Before/after images are retained.
+This is separate from token rotation and is a P1 state-retention follow-up; the
+authorization guard must still reject unavailable/stale permissions.
+
+Restart recovery alone does not establish the historical worker exception's cause.
+Keep browser timer/native ACK attribution, permission-outage retention, global
+task/control ownership, durable unknown-POST reconciliation and fleet/remote soak OPEN.
 
 [Historical idle failure](STUDIO-IDLE-RECEIPT-FOLLOWUP.md) ·
 [Same-session state fix](STUDIO-SESSION-REFRESH-STATE.md).

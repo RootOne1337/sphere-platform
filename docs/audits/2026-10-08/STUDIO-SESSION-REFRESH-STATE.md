@@ -76,6 +76,13 @@ View/queue0/graph3/2 сохранены. Наблюдение refresh пока �
 
 ## Оставшиеся ограничения
 
+При установке API be803773 в18:39 UTC отдельно наблюдался transient capability
+failure: authorization boundary размонтировал Studio, после восстановления
+сохранённый graph3/2 остался, но laboratory selection/task card/marks пропали.
+F5 не выполнялся. Это другой, подтверждённый P1: route outage retention должна
+сохранять same-identity uncertainty и одновременно запрещать все новые действия
+по недоступным permissions. [Наблюдение](CONTINUOUS-VIEWER-FAULT-ISOLATION.md).
+
 Source fixtures доказывают различие refresh/session boundary, а не источник
 ранее замеченного runtime reset. Реальный same-session refresh в установленном
 браузере пока не засвидетельствован. F5/unmount всё ещё удаляет in-memory queue
