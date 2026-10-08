@@ -16,6 +16,7 @@ let mockRecordingMode: boolean | undefined;
 let mockRecordingReadyObserver: ((ready: boolean) => void) | undefined;
 let mockObserve: (event: AcknowledgedControl) => void;
 let mockSelectorInsert: ((node: UiHierarchyNode, snapshot: UiHierarchySnapshot) => void) | undefined;
+let mockInputAt = 1000;
 let mockToken = 'fixture-token';
 let mockSessionVersion = 1;
 let mockCapabilitiesAvailable = true;
@@ -43,12 +44,13 @@ jest.mock('@/src/features/stream/SingleDeviceStream', () => ({ SingleDeviceStrea
   React.useEffect(() => { if (mockHandoffAuto && taskHandoffId !== undefined) onTaskHandoffState?.('ready', taskHandoffId); }, [taskHandoffId, onTaskHandoffState]);
   mockHandoffId=taskHandoffId; mockHandoffObserver=onTaskHandoffState;
   mockRecordingReadyObserver=onRecordingControlReady; mockRecordingMode=recordingMode; mockObserve = onControlCommand; mockSelectorInsert = onInsertSelector; return <section aria-label="Поток выбранного Android" data-device={ownedId}>
-  <button disabled={controlDisabled} onClick={() => onControlSent({ deviceId: ownedId, at: 1000, dimensions: { width: 960, height: 540 }, command: { type: 'click', x: 480, y: 270 } })}>Записать тестовый клик</button>
+  <button disabled={controlDisabled} onClick={() => onControlSent({ deviceId: ownedId, at: mockInputAt, dimensions: { width: 960, height: 540 }, command: { type: 'click', x: 480, y: 270 } })}>Записать тестовый клик</button>
 </section>; } }));
 
 beforeEach(() => {
   jest.clearAllMocks(); mockTask = undefined; mockProgress = undefined; mockLogs = []; mockRetainProgressWhenDisabled = false; mockToken = 'fixture-token'; mockSessionVersion = 1; mockHandoffAuto = true;
   mockCapabilitiesAvailable = true;
+  mockInputAt = 1000;
   let sequence = 0;
   Object.defineProperty(globalThis.crypto, 'randomUUID', { configurable: true, value: () => `00000000-0000-4000-8000-${String(++sequence).padStart(12, '0')}` });
 });
@@ -234,7 +236,7 @@ const selectorSnapshot: UiHierarchySnapshot = { device_id: deviceId, snapshot_id
   requested_at: '2026-10-06T00:00:00Z', completed_at: '2026-10-06T00:00:01Z', temporary_file_cleanup_confirmed: true, nodes: [selectorNode] };
 it('reviews XPath in order after recorded input, without injecting Android or mutating the graph before transfer', () => {
   const { onInsert } = openDevice();
-  const now = jest.spyOn(Date, 'now').mockReturnValue(2000);
+  const now = jest.spyOn(performance, 'now').mockReturnValue(2000);
   try {
     fireEvent.click(screen.getByRole('button', { name: 'Записать действия' }));
     fireEvent.click(screen.getByRole('button', { name: 'Записать тестовый клик' }));
@@ -249,6 +251,34 @@ it('reviews XPath in order after recorded input, without injecting Android or mu
     expect(onInsert).toHaveBeenCalledWith([{ type: 'tap', x: 640, y: 360 }, { type: 'tap_element', selector: selectorNode.xpath, strategy: 'xpath', timeout_ms: 5000 }]);
     expect(api.post).not.toHaveBeenCalled();
   } finally { now.mockRestore(); }
+});
+it.each([1_791_500_000_000, 1_000])('retains tap → XPath → tap → acknowledged key and real pauses when the wall clock is %s', wallClock => {
+  const { onInsert } = openDevice();
+  const wall = jest.spyOn(Date, 'now').mockReturnValue(wallClock);
+  const monotonic = jest.spyOn(performance, 'now').mockReturnValue(2000);
+  try {
+    fireEvent.click(screen.getByRole('button', { name: 'Записать действия' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Записать тестовый клик' }));
+    act(() => mockSelectorInsert!(selectorNode, selectorSnapshot));
+    mockInputAt = 3000;
+    fireEvent.click(screen.getByRole('button', { name: 'Записать тестовый клик' }));
+    const input = { deviceId, at: 3500, dimensions: { width: 960, height: 540 }, command: { type: 'key_event' as const, keycode: 4 } };
+    act(() => mockObserve({ requestId: 'mixed-clock-key', input, phase: 'submitted' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Остановить запись' }));
+    act(() => mockObserve({ requestId: 'mixed-clock-key', input, phase: 'confirmed', completedAt: 3800 }));
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+    expect(screen.getByRole('list', { name: 'Записанные действия' }).children).toHaveLength(4);
+    expect(screen.getByText('В план · не выполнялся')).toBeInTheDocument();
+    expect(onInsert).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole('button', { name: 'Вставить в граф' }));
+    expect(onInsert).toHaveBeenCalledWith([
+      { type: 'tap', x: 640, y: 360 }, { type: 'sleep', ms: 1000 },
+      { type: 'tap_element', selector: selectorNode.xpath, strategy: 'xpath', timeout_ms: 5000 },
+      { type: 'sleep', ms: 1000 }, { type: 'tap', x: 640, y: 360 },
+      { type: 'sleep', ms: 500 }, { type: 'key_event', keycode: 4 },
+    ]);
+    expect(api.post).not.toHaveBeenCalled();
+  } finally { wall.mockRestore(); monotonic.mockRestore(); }
 });
 it('keeps a selector-only plan for explicit review even when recording is stopped', () => {
   const { onInsert } = openDevice();

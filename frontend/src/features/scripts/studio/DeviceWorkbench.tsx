@@ -183,7 +183,8 @@ function OwnedWorkbench({ device, scriptId, version, name, canRun, canEdit, pane
     <SingleDeviceStream deviceId={device.id} active={paneActive} captureEnabled compact recordingMode={recording} onRecordingControlReady={setRecordingReady} taskHandoffId={taskHandoffId} onTaskHandoffState={handoffChanged} controlDisabled={active || runPending || uncertain || controlPending} onControlSent={sent} onControlCommand={commandObserved} onInsertSelector={canEdit && !active && !runPending && !uncertain && !controlPending ? (node, snapshot) => {
       if (!launchBinding.current.paneActive || snapshot.device_id !== device.id) return;
       try {
-        const next = appendSelectorRecording(entriesRef.current, node, snapshot, device.id, Date.now());
+        // Match stream input and ACK clocks so wall-clock changes cannot reorder the queue.
+        const next = appendSelectorRecording(entriesRef.current, node, snapshot, device.id, performance.now());
         entriesRef.current = next; setEntries(next); setError('');
       } catch (reason) { setRecording(false); setError(reason instanceof Error ? reason.message : 'XPath не добавлен в запись.'); }
     } : undefined} />
