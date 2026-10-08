@@ -262,14 +262,9 @@ async def stream_viewer_ws(
             try:
                 # Native ownership independently excludes DAG/discrete actions.
                 # Server denies opening/continuing while a known task is running.
-                if not await current_touch_permission() or not await touch_runtime.authorize(touch_viewer):
-                    raise InputLeaseUnavailable()
+                await touch_runtime.recheck_authorization(touch_viewer, current_touch_permission)
             except Exception:
-                await touch_runtime.retire(touch_viewer)
-                try:
-                    await touch_runtime.send(touch_viewer, {"type": "touch_error", "error": "control_revoked_or_unavailable"})
-                except Exception:
-                    pass
+                pass  # The bounded check already retired its owner; video stays independent.
 
     touch_auth_task = asyncio.create_task(_touch_auth_loop())
 

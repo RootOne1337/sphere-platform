@@ -4,6 +4,7 @@ from __future__ import annotations
 import asyncio
 import json
 import secrets
+from collections.abc import Awaitable, Callable
 from dataclasses import dataclass
 from typing import Any
 
@@ -139,10 +140,34 @@ class ContinuousRuntime:
             await self.retire(viewer)
 
     async def authorize(self, viewer: TouchViewer) -> bool:
-        if not viewer.lease or viewer.closing:
+        lease = viewer.lease
+        if not lease or viewer.closing:
             return True
-        return (await self.topology(viewer.device, viewer.lease.binding.agent_session)
-                and await self.store.authorize(viewer.lease))
+        current = await self.topology(viewer.device, lease.binding.agent_session)
+        if viewer.lease != lease or viewer.closing:
+            return True  # This obsolete check cannot decide another owner's validity.
+        authorized = current and await self.store.authorize(lease)
+        return True if viewer.lease != lease or viewer.closing else authorized
+
+    async def recheck_authorization(self, viewer: TouchViewer, permission: Callable[[], Awaitable[bool]]) -> None:
+        """One periodic check belongs to one owner, even across SQL/Redis awaits."""
+        lease = viewer.lease
+        if lease is None or viewer.closing:
+            return
+        try:
+            allowed = await permission()
+            if viewer.lease != lease or viewer.closing:
+                return
+            if allowed and await self.authorize(viewer):
+                return
+        except Exception:
+            pass  # Unavailable authorization closes only the still-bound owner.
+        if viewer.lease != lease or viewer.closing:
+            return
+        await self.retire(viewer)
+        if viewer.lease == lease:
+            # A RELEASE arriving during retire already resolved this old owner.
+            await self.send(viewer, {"type": "touch_error", "error": "control_revoked_or_unavailable"})
 
     async def retire(self, viewer: TouchViewer) -> None:
         viewer.closing = viewer.lease is not None

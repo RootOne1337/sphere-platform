@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import asyncio
 import json
+from dataclasses import replace
 from unittest.mock import AsyncMock
 from uuid import uuid4
 
@@ -112,6 +113,71 @@ async def test_two_workers_probe_ready_move_before_up_and_known_release(live):
     assert not viewer.closing
     assert any(c.args[0].get('stage') == 'release' for c in viewer.ws.send_json.call_args_list)
     assert await live[3][0].keys(runtime.store.namespace + ':*') == []
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize('boundary', ['topology', 'renewal'])
+@pytest.mark.parametrize('replacement', [False, True])
+async def test_authorization_never_renews_or_rejects_a_replacement_owner(live, monkeypatch, boundary, replacement):
+    runtime, viewer, _ = await open_view(live)
+    old = viewer.lease
+    entered, resume = asyncio.Event(), asyncio.Event()
+
+    async def delayed(*_):
+        entered.set()
+        await resume.wait()
+        return boundary == 'topology'
+
+    topology = AsyncMock(return_value=True)
+    renewal = AsyncMock(return_value=False)
+    monkeypatch.setattr(runtime, 'topology', delayed if boundary == 'topology' else topology)
+    monkeypatch.setattr(runtime.store, 'authorize', delayed if boundary == 'renewal' else renewal)
+    check = asyncio.create_task(runtime.authorize(viewer))
+    await asyncio.wait_for(entered.wait(), 1)
+    viewer.lease = replace(old, owner='replacement_owner_01') if replacement else None
+    resume.set()
+    assert await asyncio.wait_for(check, 1) is True  # The obsolete check does not decide a new owner's validity.
+    if boundary == 'topology':
+        renewal.assert_not_awaited()
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize('replacement', [False, True])
+async def test_late_permission_failure_cannot_retire_or_error_a_replacement_owner(live, monkeypatch, replacement):
+    runtime, viewer, _ = await open_view(live)
+    old = viewer.lease
+    entered, resume = asyncio.Event(), asyncio.Event()
+
+    async def permission():
+        entered.set()
+        await resume.wait()
+        return False
+
+    retire, send = AsyncMock(), AsyncMock()
+    monkeypatch.setattr(runtime, 'retire', retire)
+    monkeypatch.setattr(runtime, 'send', send)
+    check = asyncio.create_task(runtime.recheck_authorization(viewer, permission))
+    await asyncio.wait_for(entered.wait(), 1)
+    viewer.lease = replace(old, owner='replacement_owner_01') if replacement else None
+    resume.set()
+    await asyncio.wait_for(check, 1)
+    retire.assert_not_awaited()
+    send.assert_not_awaited()
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize('unavailable', [False, True])
+async def test_current_owner_is_still_retired_when_control_permission_is_denied_or_unavailable(live, monkeypatch, unavailable):
+    runtime, viewer, _ = await open_view(live)
+    old = viewer.lease
+    permission = AsyncMock(side_effect=RuntimeError('authorization_unavailable')) if unavailable else AsyncMock(return_value=False)
+    send = AsyncMock()
+    monkeypatch.setattr(runtime, 'send', send)
+    await runtime.recheck_authorization(viewer, permission)
+    # Real retirement is used; a known RELEASE may arrive before this assertion.
+    assert viewer.closing or viewer.lease is None
+    if viewer.lease == old:
+        send.assert_awaited_once_with(viewer, {'type': 'touch_error', 'error': 'control_revoked_or_unavailable'})
 
 
 @pytest.mark.asyncio
