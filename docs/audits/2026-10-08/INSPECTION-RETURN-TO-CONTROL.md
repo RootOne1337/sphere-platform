@@ -42,3 +42,14 @@ Exact-source hosted build/install и тот же быстрый браузерн
 
 Связь: [переход к инспектору](INSPECTION-CONTROL-HANDOFF.md),
 [ограниченное idle согласование](IDLE-RECEIPT-RECONCILIATION.md).
+
+## Установленная приёмка
+
+UI `e88c4db` установлен02:27:14UTC; exact-source hosted1848/137, types/build,
+packaged26pages/73assets и image admission passed.45 других контейнеров,
+API `2225f73` и OTA сохранены. Настоящий быстрый refresh→Control сначала
+показал «Завершаем чтение дерева Android», затем automatic native READY без
+ручного recovery. Refresh→Control→XPath получил новый46-node snapshot,
+подсветка/атрибуты работают. Следующие независимые native drag/wheel и
+Home748ms→READY прошли. Receiver удалён и version10249 сохранён.
+[Точные evidence и незакрытые условия](CONTROL-HANDOFF-INSTALLED-ACCEPTANCE.md).

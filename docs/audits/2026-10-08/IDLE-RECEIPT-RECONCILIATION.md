@@ -39,3 +39,13 @@ watchdog/ownership bounds не ослаблены. Exact-source CI/install и к
 Связанные материалы: [передача инспектору](INSPECTION-CONTROL-HANDOFF.md),
 [наблюдение Home](CONTINUOUS-INPUT-HANDOFF-OBSERVATION.md),
 [контракт receipts](../../protocols/CONTINUOUS-INPUT-RECEIPTS.md).
+
+## Установка и граница live evidence
+
+Reviewed UI `29eecb8` установлен02:01:01UTC8October. Exact-source frontend CI
+37715096698:1844passed/137suites, types/build,26packaged pages/73assets,
+archive/image admission.45 других контейнеров, API `2225f73` и OTA сохранены.
+Реальный drag/wheel и receiver→Home765ms→native READY прошли без явного recovery.
+Это installed finite acceptance штатного пути; искусственный real-transport
+idle timeout не вызывался. Автоматическая one-attempt branch подтверждена
+regressions, а не выдана за испытанную при реальной сетевой потере.

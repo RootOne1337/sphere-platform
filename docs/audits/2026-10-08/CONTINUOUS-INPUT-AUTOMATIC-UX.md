@@ -5,7 +5,12 @@ API `28104f8` и APK10249 на PH011 сохранены. Жест и колес�
 независимым Android View. Первый переход Home исполнился, но native control
 потребовал восстановления; второй Home вернулся в READY автоматически.
 [Точное наблюдение и диагностический follow-up](CONTINUOUS-INPUT-HANDOFF-OBSERVATION.md).
-Полная installed handoff qualification ещё открыта.
+Это исторический checkpoint первого automatic UI. Следующий установленный
+UI `29eecb8` /API `2225f73` подтвердил drag/wheel/Home→READY и XPath highlight.
+Полная installed handoff qualification ещё открыта: быстрый обратный переход
+во время root read воспроизвёл rejection;
+[follow-up](INSPECTION-RETURN-TO-CONTROL.md) установлен как `e88c4db` и
+повторён в браузере без recovery. [Финальная приёмка](CONTROL-HANDOFF-INSTALLED-ACCEPTANCE.md).
 
 ## Поведение
 
@@ -44,8 +49,9 @@ XPath pick и возврат к дискретной записи после и�
 Оба воспроизведены отдельными assertion (44passed/2failed) до исправления;
 добавлена проверка wheel recording после такого перехода. Полный набор после
 исправления:1837passed/137suites, TypeScript0errors. Финальный pointer subset
-с дополнительной wheel assertion:46passed. Hosted exact-source build/приёмка
-пакетного HTTP и reviewed image ещё обязательны до установки.
+с дополнительной wheel assertion:46passed. Exact-source hosted build/приёмка
+пакетного HTTP и reviewed image этого source завершены; installed observation
+сохранён отдельно. Более поздний набор1844/137 относится к `29eecb8`.
 
 Также проверяются native MOVE-before-UP без двойного SWIPE, legacy compatibility,
 startup delay, known release handoff, denied permission после release,

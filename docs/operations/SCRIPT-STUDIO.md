@@ -1,20 +1,31 @@
 # Script Studio: инструкция по созданию и проверке сценариев
 
-Актуализировано: **7 октября 2026**. Каталог `/scripts`, редактор
+Актуализировано: **8 октября 2026**. Каталог `/scripts`, редактор
 `/scripts/builder`, формат **DAG1.0**, React Flow, локальная ELK0.12.0.
-На3015 установлены frontend **af9054e** и API **a41c4e6**; latest UI сохраняет
-API/input contract предыдущей поставки и добавляет диалог сохранности Studio.
+На3015 установлены frontend **e88c4db** и API **2225f73**. Studio сохраняет
+graph/action contract и диалог сохранности; текущие runtime границы фиксируются в
+[CURRENT-STATE](CURRENT-STATE.md). Обратная гонка XPath→Control исправлена;
+быстрый переход и повторный вход в дерево проверены на установленном UI.
+[Приёмка управления и XPath](../audits/2026-10-08/CONTROL-HANDOFF-INSTALLED-ACCEPTANCE.md).
 [Latest installed navigation](../audits/2026-10-07/STUDIO-NAVIGATION-PRESERVATION.md).
 Malformed WS input не подставляет координаты0/0, отказ отделён от video failure.
 Real transport canary, разрыв связи/Undo и server validate приняты отдельно;
 новое input notice React-tested, browser malformed-notice canary не выполнен.
 [Installed evidence и ограничения](../audits/2026-10-07/VIEWER-INPUT-DELIVERY.md).
 
-**Непрерывные свайпы:** установленный веб пока отправляет законченный click/swipe
-после отпускания.7октября отдельный Android-инжектор уже доказал MOVE до UP
-и локальный CANCEL, но browser→server→APK capability/owner/queue/recording
-ещё не подключены. Не считать обычный stream или root признаком continuous
-input. [Native canary и точные оставшиеся условия](../audits/2026-10-07/CONTINUOUS-TOUCH-NATIVE-CANARY.md).
+**Непрерывные свайпы:** обычное управление автоматически согласует capability
+и native owner. НаPH011 APK10249 реальный браузер→сервер→Android View подтвердил
+MOVE до UP, wheel и переход Home→READY. Отдельного переключателя жестов нет.
+«Просмотр» запрещает ввод; XPath ждёт native release и выбирает без нажатия.
+В режиме записи сохраняются законченные дискретные действия: богатая запись
+траектории/XPath/crops и correlated playback ещё OPEN. Другие/legacy APK не
+получили это подтверждение: fallback остаётся дискретным. Не считать root или
+работающее видео признаком поддержки native continuous input.
+[Установленная canary и ограничения](../audits/2026-10-08/CONTINUOUS-INPUT-LIVE-ACCEPTANCE.md) ·
+[Обычное управление](../audits/2026-10-08/CONTINUOUS-INPUT-AUTOMATIC-UX.md).
+
+### Исторические checkpoints Studio
+
 **7 октября, 03:35 +05:** API обновлён из того же tested CI image без миграций;
 реальный editor/REST canary подтвердил server contract 1.0. Все 25 сценариев,
 task detail и 14 online agents сохранены/восстановлены.

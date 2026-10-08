@@ -5,6 +5,10 @@
 Android sources между этими commits не отличаются. Канонический статус:
 [CURRENT-STATE](../../operations/CURRENT-STATE.md).
 
+Этот документ сохраняет первоначальную установленную canary `28104f8`.
+Автоматическое управление и исправленные XPath handoffs на последнем UI
+`e88c4db` описаны в [следующей приёмке](CONTROL-HANDOFF-INSTALLED-ACCEPTANCE.md).
+
 ## Установка и границы
 
 Полный exact-source CI прошёл: backend3319 passed/37 skipped/229 subtests,

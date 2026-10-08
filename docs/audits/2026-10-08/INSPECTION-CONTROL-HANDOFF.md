@@ -49,3 +49,19 @@ SF26-05 и эксплуатационная квалификация остаю�
 не продлевает deadline; известный release отменяет timer. Новый regression
 сначала воспроизвёл64passed/1failed, затем65passed, TypeScript0errors.
 Установленная браузерная приёмка этого follow-up ещё требуется.
+
+## Установленная проверка `29eecb8`
+
+8 октября около07:04UTC+5, API `2225f73`, PH01110249. Реальный браузер показал
+ожидание native release перед первым root read, затем46узлов launcher960×540.
+Выбор значка Sphere Agent показал bounds/XPath/все возвращённые атрибуты;
+сам Android остался в launcher. Один следующий auto read завершился root SHELL
+exit1, auto polling честно приостановился и предыдущий snapshot сохранился.
+После двух отдельных read-only stage probes и явного возобновления несколько
+auto reads успешны. Причина единичного exit1 не установлена; не считать это
+безошибочным soak. Private probes использовали уникальные временные XML,
+их cleanup подтверждён; XML/полные деревья не публикуются.
+
+Обратный быстрый XPath→Control при pending read воспроизвёл другой native
+rejection. Исправление и собственная приёмка разделены в
+[следующем документе](INSPECTION-RETURN-TO-CONTROL.md).

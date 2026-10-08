@@ -4,6 +4,36 @@
 **Область:** исходники и документация ветки PR #19, записанные runtime-наблюдения, Android APK и готовность следующего прогона.<br />
 **Канонический документ текущего состояния:** этот файл. Исторические отчёты ниже сохраняют исходные даты и факты.
 
+**8 октября, 07:27–07:31 UTC+5 — финальный UI `e88c4db` установлен на3015.**
+API `2225f73` и PH011 APK10249 сохранены; frontend1848passed/137suites,
+types/build/26packaged pages/73assets.45 других контейнеров и OTA неизменны.
+Обычное управление автоматически включает живые жесты, отдельной кнопки нет.
+Исправленный быстрый XPath→Control при pending root read показал drain, затем
+вернулся в READY без recovery; повторный вход в XPath получил46узлов и highlight.
+Независимый Android View после переходов: dragDOWN1/MOVE4/UP1/CANCEL0,
+wheelDOWN1/MOVE1/UP1/CANCEL0; Home748ms вернул launcher и automatic READY.
+Тестовый receiver удалён. Единственный прежний root read exit1 пока не объяснён;
+finite успешный прогон не закрывает root/fleet fault soak. APK10249 толькоPH011,
+normalOTA не продвигался. SF26-05OPEN, ledger9accepted/41open.
+[Установленная приёмка, provenance и ограничения](../audits/2026-10-08/CONTROL-HANDOFF-INSTALLED-ACCEPTANCE.md).
+
+### Предшествующие checkpoints автоматического управления
+
+**8 октября, 07:01–07:15 UTC+5 — UI `29eecb8`, API `2225f73` установлены.**
+Обычное «Управление» включает непрерывные жесты без отдельного переключателя.
+PH011 APK10249 подтверждён независимым Android View: dragDOWN1/MOVE5/UP1/
+CANCEL0, wheelDOWN1/MOVE1/UP1/CANCEL0. Home765ms вернул launcher и native READY.
+XPath дождался release, получил46узлов и выделил launcher элемент без нажатия.
+Один следующий auto read завершился root SHELL exit1; причина не установлена.
+После явного возобновления несколько чтений успешны; это не закрывает ошибку.
+Быстрый возврат в Control во время root read воспроизвёл native rejection;
+source `e88c4db` удерживает gate до завершения запроса, его установка ещё требуется.
+UI hosted1844/137, API3327passed/37skipped/229subtests;45 других контейнеров,
+schema head и OTA сохранены. APK10249 толькоPH011; normalOTA не продвигался.
+[Обратный переход и регрессии](../audits/2026-10-08/INSPECTION-RETURN-TO-CONTROL.md) ·
+[Idle receipt recovery](../audits/2026-10-08/IDLE-RECEIPT-RECONCILIATION.md).
+SF26-05OPEN, ledger9accepted/41open; storage и повторное Git повреждение OPEN.
+
 **8 октября, 06:08–06:16 UTC+5 — автоматический UI установлен; Home follow-up открыт.**
 Reviewed UI `bc86752` на3015, API `28104f8` и APK10249 PH011 сохранены.
 Открытие видеопотока само включает native READY. Реальный браузер и Android View

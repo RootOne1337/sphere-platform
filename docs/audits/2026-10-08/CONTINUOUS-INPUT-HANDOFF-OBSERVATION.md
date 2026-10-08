@@ -44,3 +44,19 @@ owner при denied/unavailable control. Эта гонка не объявляе
 причиной первоначального браузерного fencing без точного reason readback.
 
 SF26-05, latency/fleet qualification и storage incident остаются OPEN.
+
+## Следующий установленный checkpoint
+
+API `2225f73` установлен08October01:44:42UTC, UI `29eecb8`02:01:01UTC.
+Full CI API3327passed/37skipped/229subtests; UI1844passed/137suites.
+НаPH011 APK10249 независимый View после реального CUA drag показал
+DOWN1/MOVE5/UP1/CANCEL0, wheelDOWN1/MOVE1/UP1/CANCEL0. Home с receiver
+подтверждён765ms, launcher проверен dumpsys, native READY вернулся автоматически.
+Первое историческое fencing с824ms этим не объяснено задним числом.
+
+Ранее на installed `2225f73` после минут idle прочитан точный
+`native_receipt_timeout`, без касаний в этой idle фазе. Source `29eecb8`
+добавил одно узкое согласование только после native known RELEASE3;
+UNKNOWN touch не повторяется. Installed finite Home проверен, но реальный
+принудительный idle receipt loss / fleet soak не выполнены.
+[Условия idle recovery](IDLE-RECEIPT-RECONCILIATION.md).
