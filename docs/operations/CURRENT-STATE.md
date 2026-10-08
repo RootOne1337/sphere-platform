@@ -4,13 +4,16 @@
 **Область:** исходники и документация ветки PR #19, записанные runtime-наблюдения, Android APK и готовность следующего прогона.<br />
 **Канонический документ текущего состояния:** этот файл. Исторические отчёты ниже сохраняют исходные даты и факты.
 
-**8 октября — подготовлена точная диагностика ошибок XPath.** Строковый API
-`detail` сохранён; known stage/reason/exit code, snapshot ID и cleanup confirmation
-добавляются без raw command/XML. Веб сохраняет валидное дерево, останавливает
-auto polling и позволяет скопировать диагностику.18 local HTTP/SQL/Redis и
-151 frontend tests passed; clean hosted CI и установка ещё обязательны.
-Исторический root exit1 не объяснён и остаётся OPEN.
-[Протокол, проверки и ограничения](../audits/2026-10-08/UI-INSPECTION-DIAGNOSTICS.md).
+**8 октября, 06:53–06:55 UTC — UI/API `9610523` установлены на3015.**
+XPath показывает этап отказа и snapshot ID, сохраняет возраст предыдущего дерева
+и приостанавливает автоопрос. Реальная native-owner busy canary без касаний
+показала502/native_input_busy; после RELEASE3 явный retry получил46узлов,
+cleanup/lock release подтверждены, Control вернулся в READY.
+Frontend1861/138suites; backend3335passed/37skipped/229subtests; full CI green.
+45 других контейнеров сохранены каждым install, schema/OTA без изменения;
+Compose model roundtrip проверен, UI17→2/API10→2 файлов. APK10249 толькоPH011.
+Исторический root exit1, storage и host corruption OPEN; ledger9accepted/41open.
+[Установленная приёмка и ограничения](../audits/2026-10-08/UI-INSPECTION-INSTALLED-ACCEPTANCE.md).
 
 **8 октября, 07:27–07:31 UTC+5 — финальный UI `e88c4db` установлен на3015.**
 API `2225f73` и PH011 APK10249 сохранены; frontend1848passed/137suites,

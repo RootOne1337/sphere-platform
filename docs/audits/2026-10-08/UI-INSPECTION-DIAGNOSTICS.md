@@ -112,3 +112,9 @@ highlight, read→Control и отсутствие лишнего input. Error UI
 SF26-05OPEN; product ledger9accepted/41open. Rich recording XPath/crop/pixel,
 correlated playback, remote/fleet fault qualification и storage incident
 сохраняются в аудите; диагностический patch не закрывает эти пункты.
+
+## Installed readback, 06:55 UTC
+
+UI and API9610523 are healthy on3015. Full reviewed install and finite PH011
+native-busy/retry/READY evidence are recorded in
+[installed acceptance](UI-INSPECTION-INSTALLED-ACCEPTANCE.md).

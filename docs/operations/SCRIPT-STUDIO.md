@@ -2,11 +2,17 @@
 
 Актуализировано: **8 октября 2026**. Каталог `/scripts`, редактор
 `/scripts/builder`, формат **DAG1.0**, React Flow, локальная ELK0.12.0.
-На3015 установлены frontend **e88c4db** и API **2225f73**. Studio сохраняет
+На3015 установлены frontend **9610523** и API **9610523**. Studio сохраняет
 graph/action contract и диалог сохранности; текущие runtime границы фиксируются в
 [CURRENT-STATE](CURRENT-STATE.md). Обратная гонка XPath→Control исправлена;
 быстрый переход и повторный вход в дерево проверены на установленном UI.
 [Приёмка управления и XPath](../audits/2026-10-08/CONTROL-HANDOFF-INSTALLED-ACCEPTANCE.md).
+XPath diagnostics установлены: real busy502, explicit retry46 nodes, native
+RELEASE3 и возврат в READY проверены.
+[Приёмка диагностики](../audits/2026-10-08/UI-INSPECTION-INSTALLED-ACCEPTANCE.md).
+**Studio P1 OPEN:** постоянные recorder callbacks пока запрещают continuous
+control даже вне записи. Карточка устройства и Studio имеют разные границы
+приёмки; исправление explicit recording mode следующее.
 [Latest installed navigation](../audits/2026-10-07/STUDIO-NAVIGATION-PRESERVATION.md).
 Malformed WS input не подставляет координаты0/0, отказ отделён от video failure.
 Real transport canary, разрыв связи/Undo и server validate приняты отдельно;

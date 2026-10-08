@@ -48,3 +48,9 @@ false. Установка и readback фиксируются в отдельно
 
 Этот operational fix не меняет приложение/APK, не запускает миграции, не удаляет
 исторические images/volumes/Compose files, не закрывает storage/Git incidents.
+
+## Installed readback, 06:55 UTC
+
+UI and API9610523 are healthy on3015. Full reviewed install and finite PH011
+native-busy/retry/READY evidence are recorded in
+[installed acceptance](UI-INSPECTION-INSTALLED-ACCEPTANCE.md).
