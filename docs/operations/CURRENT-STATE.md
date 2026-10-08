@@ -4,6 +4,14 @@
 **Область:** исходники и документация ветки PR #19, записанные runtime-наблюдения, Android APK и готовность следующего прогона.<br />
 **Канонический документ текущего состояния:** этот файл. Исторические отчёты ниже сохраняют исходные даты и факты.
 
+**8 октября — подготовлен fix состояния лаборатории при same-session refresh.**
+Baseline5382fe4 пересоздаёт Workbench при token rotation, теряя запись/результаты
+и unknown-POST guard. Source fix привязывает очистку к sessionVersion, сохраняя
+token/frame/native-owner invalidation транспорта.6 новых baseline regressions
+падали;93 focused tests/4suites и TypeScript прошли. Установка этого fix ещё
+не подтверждена; runtime reset наблюдался, но его trigger не записан.
+[Доказательства и ограничения](../audits/2026-10-08/STUDIO-SESSION-REFRESH-STATE.md).
+
 **8 октября, 07:49–08:06 UTC — Studio UI `5382fe4` установлен на3015.**
 API `9610523`, PH011 APK10249, schema и OTA сохранены;45 других контейнеров
 не заменены. Запуск теперь ждёт known native release и завершения текущего

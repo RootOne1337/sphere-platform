@@ -35,6 +35,19 @@ it('passes an execution lock reason separately from the role restriction and rem
   expect(mockStreamProps.readOnlyReason).toBeUndefined();
   expect(api.post).not.toHaveBeenCalled();
 });
+it('keeps View selected through token rotation and still waits for a newly authorized frame', () => {
+  const view = render(<SingleDeviceStream deviceId="remote" />);
+  fireEvent.click(screen.getByText('Fixture frame'));
+  fireEvent.click(screen.getByRole('button', { name: 'Просмотр' }));
+  mockToken = 'rotated-token';
+  view.rerender(<SingleDeviceStream deviceId="remote" />);
+  expect(screen.getByRole('button', { name: 'Просмотр' })).toHaveAttribute('aria-pressed', 'true');
+  expect(screen.getByRole('button', { name: 'Управление' })).toHaveAttribute('aria-pressed', 'false');
+  expect(mockStreamProps.readOnly).toBe(true);
+  fireEvent.click(screen.getByRole('button', { name: 'XPath-инспектор' }));
+  expect(api.post).not.toHaveBeenCalled(); // Old-token frame cannot authorize a new root read.
+  expect(screen.getByRole('button', { name: 'Обновить дерево' })).toBeDisabled();
+});
 it('exposes original capture below a selected stream without issuing a capture on mount', () => {
   render(<SingleDeviceStream deviceId="remote" captureEnabled />);
   expect(screen.getByText('Исходный PNG для пиксельных эталонов')).toBeInTheDocument();

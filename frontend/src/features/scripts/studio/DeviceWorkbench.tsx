@@ -34,9 +34,9 @@ function recordedLabel(entry: RecordedInput): string {
 const outcomeLabels = { 'transport-submitted': 'Отправлено WS', 'android-pending': 'Ожидает APK', 'android-confirmed': 'Подтверждено APK', 'android-unknown': 'Результат неизвестен', 'selector-planned': 'В план · не выполнялся' };
 
 export function DeviceWorkbench(props: Props) {
-  const { accessToken } = useAuthStore();
-  const session = useRef({ token: accessToken, epoch: 0 });
-  if (session.current.token !== accessToken) session.current = { token: accessToken, epoch: session.current.epoch + 1 };
+  // Refresh rotates transport credentials within the same identity. Retain
+  // recording receipts and task uncertainty; only login/logout retires them.
+  const { sessionVersion } = useAuthStore();
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(1);
   const query = useDebounce(search.trim(), 300);
@@ -55,7 +55,7 @@ export function DeviceWorkbench(props: Props) {
           {!data?.items.length && <p className="text-sm text-muted-foreground">Устройства не найдены.</p>}
           <div className="flex items-center justify-between gap-2 text-xs"><Button size="sm" variant="outline" disabled={page <= 1 || isFetching} onClick={() => setPage(page - 1)}>Назад</Button><span>{page} / {data?.pages || 1} · всего {data?.total ?? '—'}</span><Button size="sm" variant="outline" disabled={page >= (data?.pages ?? 1) || isFetching} onClick={() => setPage(page + 1)}>Далее</Button></div>
         </>}
-      </div> : <OwnedWorkbench key={`${device.id}:${session.current.epoch}`} {...props} registerCloseGuard={guard => { closeGuard.current = guard; props.registerCloseGuard?.(guard); }} device={device} />}
+      </div> : <OwnedWorkbench key={`${device.id}:${sessionVersion}`} {...props} registerCloseGuard={guard => { closeGuard.current = guard; props.registerCloseGuard?.(guard); }} device={device} />}
     </div>
   </section>;
 }

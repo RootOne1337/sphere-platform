@@ -17,10 +17,11 @@ let mockRecordingReadyObserver: ((ready: boolean) => void) | undefined;
 let mockObserve: (event: AcknowledgedControl) => void;
 let mockSelectorInsert: ((node: UiHierarchyNode, snapshot: UiHierarchySnapshot) => void) | undefined;
 let mockToken = 'fixture-token';
+let mockSessionVersion = 1;
 let mockHandoffAuto = true;
 let mockHandoffId: number | undefined;
 let mockHandoffObserver: ((state: 'waiting' | 'ready' | 'blocked', id: number) => void) | undefined;
-jest.mock('@/lib/store', () => ({ useAuthStore: () => ({ accessToken: mockToken }) }));
+jest.mock('@/lib/store', () => ({ useAuthStore: () => ({ accessToken: mockToken, sessionVersion: mockSessionVersion }) }));
 const mockDevice = { id: deviceId, name: 'PH025', model: 'LDPlayer', status: 'online', agent_version: '1.2.45', android_version: '9' };
 jest.mock('@/lib/hooks/useDevices', () => ({ useDevices: () => ({ data: { items: [mockDevice], total: 1, pages: 1 }, isLoading: false, isError: false, isFetching: false, refetch: jest.fn() }) }));
 jest.mock('@/lib/hooks/useDebounce', () => ({ useDebounce: (value: unknown) => value }));
@@ -44,7 +45,7 @@ jest.mock('@/src/features/stream/SingleDeviceStream', () => ({ SingleDeviceStrea
 </section>; } }));
 
 beforeEach(() => {
-  jest.clearAllMocks(); mockTask = undefined; mockProgress = undefined; mockLogs = []; mockRetainProgressWhenDisabled = false; mockToken = 'fixture-token'; mockHandoffAuto = true;
+  jest.clearAllMocks(); mockTask = undefined; mockProgress = undefined; mockLogs = []; mockRetainProgressWhenDisabled = false; mockToken = 'fixture-token'; mockSessionVersion = 1; mockHandoffAuto = true;
   let sequence = 0;
   Object.defineProperty(globalThis.crypto, 'randomUUID', { configurable: true, value: () => `00000000-0000-4000-8000-${String(++sequence).padStart(12, '0')}` });
 });
@@ -296,9 +297,84 @@ it('cannot submit from an obsolete auth session after its preparation callback a
   fireEvent.click(screen.getByRole('button', { name: 'Проверить на PH025' }));
   const oldObserver = mockHandoffObserver, id = mockHandoffId!;
   mockToken = 'changed-session';
+  mockSessionVersion++;
   view.rerender(<DeviceWorkbench scriptId={scriptId} version={version} name="Canary" canRun canEdit onInsert={view.onInsert} onExecution={view.onExecution} />);
   await act(async () => oldObserver?.('ready', id));
   expect(api.post).not.toHaveBeenCalled();
+});
+
+it('rejects a token rotation during preparation without losing the explanation or creating a task', async () => {
+  mockHandoffAuto = false;
+  const view = openDevice();
+  fireEvent.click(screen.getByRole('button', { name: 'Проверить на PH025' }));
+  const observer = mockHandoffObserver, id = mockHandoffId!;
+  mockToken = 'rotated-token'; // refreshSession preserves the same sessionVersion.
+  view.rerender(<DeviceWorkbench scriptId={scriptId} version={version} name="Canary" canRun canEdit onInsert={view.onInsert} onExecution={view.onExecution} />);
+  await act(async () => observer?.('ready', id));
+  expect(api.post).not.toHaveBeenCalled();
+  expect(screen.getByRole('alert')).toHaveTextContent('Задание не создано');
+  expect(screen.getByRole('button', { name: 'Проверить на PH025' })).toBeEnabled();
+});
+
+it('retains a submitted task through same-session refresh and accepts its owned response exactly once', async () => {
+  let resolve!: (value: unknown) => void;
+  let guard: ((silent?: boolean) => boolean) | null = null;
+  jest.mocked(api.post).mockReturnValue(new Promise(fulfilled => { resolve = fulfilled; }));
+  const view = openDevice(next => { guard = next; });
+  fireEvent.click(screen.getByRole('button', { name: 'Проверить на PH025' }));
+  await waitFor(() => expect(api.post).toHaveBeenCalledTimes(1));
+  mockToken = 'rotated-token';
+  view.rerender(<DeviceWorkbench scriptId={scriptId} version={version} name="Canary" canRun canEdit onInsert={view.onInsert} onExecution={view.onExecution} registerCloseGuard={next => { guard = next; }} />);
+  expect(screen.getByRole('button', { name: 'Создаём задание…' })).toBeDisabled();
+  expect(guard!(true)).toBe(false);
+  await act(async () => resolve({ data: { id: taskId, script_id: scriptId, device_id: deviceId, script_version_id: versionId } }));
+  expect(screen.getByRole('link', { name: taskId })).toHaveAttribute('href', `/tasks/${taskId}`);
+  expect(screen.getByRole('button', { name: 'Проверить на PH025' })).toBeDisabled();
+  expect(api.post).toHaveBeenCalledTimes(1);
+});
+
+it('keeps an unknown launch blocked across refresh instead of enabling a potentially duplicate task', async () => {
+  let guard: ((silent?: boolean) => boolean) | null = null;
+  jest.mocked(api.post).mockRejectedValue(new Error('Transport timeout'));
+  const view = openDevice(next => { guard = next; });
+  fireEvent.click(screen.getByRole('button', { name: 'Проверить на PH025' }));
+  await screen.findByRole('link', { name: 'Открыть задания в новой вкладке' });
+  mockToken = 'rotated-token';
+  view.rerender(<DeviceWorkbench scriptId={scriptId} version={version} name="Canary" canRun canEdit onInsert={view.onInsert} onExecution={view.onExecution} registerCloseGuard={next => { guard = next; }} />);
+  expect(screen.getByRole('link', { name: 'Открыть задания в новой вкладке' })).toBeInTheDocument();
+  expect(guard!(true)).toBe(false);
+  fireEvent.click(screen.getByRole('button', { name: 'Проверить на PH025' }));
+  expect(screen.getByRole('button', { name: 'Проверить на PH025' })).toBeDisabled();
+  expect(api.post).toHaveBeenCalledTimes(1);
+});
+
+it('preserves completed task reports and graph execution through an access-token refresh', async () => {
+  mockTask = { id: taskId, script_id: scriptId, device_id: deviceId, script_version_id: versionId, status: 'completed' };
+  mockLogs = ['start', 'wait', 'end'].map(node_id => ({ node_id, success: true, action_type: node_id === 'wait' ? 'sleep' : node_id, duration_ms: 0 }));
+  jest.mocked(api.post).mockResolvedValue({ data: { id: taskId, script_id: scriptId, device_id: deviceId, script_version_id: versionId } });
+  const view = openDevice();
+  fireEvent.click(screen.getByRole('button', { name: 'Проверить на PH025' }));
+  await screen.findByRole('link', { name: taskId });
+  view.onExecution.mockClear();
+  mockToken = 'rotated-token';
+  view.rerender(<DeviceWorkbench scriptId={scriptId} version={version} name="Canary" canRun canEdit onInsert={view.onInsert} onExecution={view.onExecution} />);
+  expect(screen.getByRole('link', { name: taskId })).toBeInTheDocument();
+  expect(screen.getByText('completed · отчёты шагов: 3')).toBeInTheDocument();
+  expect(view.onExecution).not.toHaveBeenCalledWith(null, []);
+  expect(api.post).toHaveBeenCalledTimes(1);
+});
+
+it('ignores a pending task response from a genuinely retired session', async () => {
+  let resolve!: (value: unknown) => void;
+  jest.mocked(api.post).mockReturnValue(new Promise(fulfilled => { resolve = fulfilled; }));
+  const view = openDevice();
+  fireEvent.click(screen.getByRole('button', { name: 'Проверить на PH025' }));
+  await waitFor(() => expect(api.post).toHaveBeenCalledTimes(1));
+  mockToken = 'another-session'; mockSessionVersion++;
+  view.rerender(<DeviceWorkbench scriptId={scriptId} version={version} name="Canary" canRun canEdit onInsert={view.onInsert} onExecution={view.onExecution} />);
+  await act(async () => resolve({ data: { id: taskId, script_id: scriptId, device_id: deviceId, script_version_id: versionId } }));
+  expect(screen.queryByRole('link', { name: taskId })).not.toBeInTheDocument();
+  expect(view.onExecution.mock.calls.every(([last, logs]) => last === null && logs.length === 0)).toBe(true);
 });
 
 it('exposes the same side-effect-free unload guard for a pending request and an uninserted recording', async () => {
@@ -417,11 +493,42 @@ it('discards private recordings on an auth session change and ignores the previo
   act(() => mockObserve({ requestId: 'old-session', input: observedInput, phase: 'submitted' }));
   const oldObserver = mockObserve;
   mockToken = 'another-session';
+  mockSessionVersion++;
   rerender(<DeviceWorkbench scriptId={scriptId} version={version} name="Canary" canRun canEdit onInsert={onInsert} onExecution={onExecution} />);
   act(() => oldObserver({ requestId: 'old-session', input: observedInput, phase: 'confirmed', completedAt: 1800 }));
   expect(screen.queryByRole('list', { name: 'Записанные действия' })).not.toBeInTheDocument();
   expect(screen.getByRole('button', { name: 'Записать действия' })).toBeEnabled();
   expect(onInsert).not.toHaveBeenCalled();
+});
+
+it('preserves ordered recording receipts across refresh and updates the existing slot without replay', () => {
+  const view = openDevice();
+  fireEvent.click(screen.getByRole('button', { name: 'Записать действия' }));
+  act(() => mockObserve({ requestId: 'same-session', input: observedInput, phase: 'submitted' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Остановить запись' }));
+  const observer = mockObserve;
+  mockToken = 'rotated-token';
+  view.rerender(<DeviceWorkbench scriptId={scriptId} version={version} name="Canary" canRun canEdit onInsert={view.onInsert} onExecution={view.onExecution} />);
+  expect(screen.getByText('Ожидает APK')).toBeInTheDocument();
+  expect(screen.getByRole('button', { name: 'Проверить на PH025' })).toBeDisabled();
+  act(() => observer({ requestId: 'same-session', input: observedInput, phase: 'unknown', completedAt: 1800 }));
+  expect(screen.getByText('Результат неизвестен')).toBeInTheDocument();
+  expect(screen.getByRole('list', { name: 'Записанные действия' }).children).toHaveLength(1);
+  expect(screen.getByRole('button', { name: 'Вставить в граф' })).toBeDisabled();
+  expect(view.onInsert).not.toHaveBeenCalled();
+  expect(api.post).not.toHaveBeenCalled();
+});
+
+it('clears private recordings at a session boundary even if the token string did not change', () => {
+  const view = openDevice();
+  fireEvent.click(screen.getByRole('button', { name: 'Записать действия' }));
+  act(() => mockObserve({ requestId: 'retired-session', input: observedInput, phase: 'submitted' }));
+  const observer = mockObserve;
+  mockSessionVersion++;
+  view.rerender(<DeviceWorkbench scriptId={scriptId} version={version} name="Canary" canRun canEdit onInsert={view.onInsert} onExecution={view.onExecution} />);
+  act(() => observer({ requestId: 'retired-session', input: observedInput, phase: 'confirmed', completedAt: 1800 }));
+  expect(screen.queryByRole('list', { name: 'Записанные действия' })).not.toBeInTheDocument();
+  expect(view.onInsert).not.toHaveBeenCalled();
 });
 
 

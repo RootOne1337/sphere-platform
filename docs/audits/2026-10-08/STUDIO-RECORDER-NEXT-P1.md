@@ -6,6 +6,9 @@ Explicit recorder mode принят наPH011; task preparation5382fe4 пров�
 повторился native receipt timeout; этот P1 важнее расширения визуальных форм.
 [Приёмка task preparation](STUDIO-TASK-INSTALLED-ACCEPTANCE.md) ·
 [Idle failure](STUDIO-IDLE-RECEIPT-FOLLOWUP.md).
+Выявлен source defect потери task/recording/unknown-POST state при same-session
+token refresh; source fix подготовлен, установка ещё требуется:
+[session-state follow-up](STUDIO-SESSION-REFRESH-STATE.md).
 Канонический audit ledger остаётся9accepted/41open; это уточнение существующих
 SF26-05/06, а не новая заявка о закрытии всей автоматизации.
 
