@@ -1,9 +1,9 @@
 'use client';
 
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
-import { useEffect, useState } from 'react';
-import { ChevronRight, Menu, Moon, Search, Sun } from 'lucide-react';
+import { usePathname, useRouter } from 'next/navigation';
+import { Suspense, useEffect, useRef, useState } from 'react';
+import { ArrowLeft, ChevronRight, Menu, Moon, Search, Sun } from 'lucide-react';
 import { useFleetEvents } from '@/lib/hooks/useFleetEvents';
 import { NOCSidebar } from '@/src/features/navigation/NOCSidebar';
 import { ContextInspector } from '@/src/features/inspector/ContextInspector';
@@ -16,6 +16,9 @@ import { Button } from '@/src/shared/ui/button';
 import { BuildProvenance } from '@/src/shared/ui/BuildProvenance';
 import { FleetConnectionStatus } from '@/src/shared/ui/FleetConnectionStatus';
 import { CapabilitiesProvider, RouteAccessBoundary } from '@/src/features/access/Capabilities';
+import { RouteScrollRestoration } from '@/src/features/navigation/ShellScrollRestoration';
+import { hasPreviousRoute, returnToPreviousRoute } from '@/src/features/navigation/routeScrollRestoration';
+import { navigateFromWorkspace } from '@/src/features/navigation/workspaceNavigationGuard';
 
 const ROUTE_TITLES: Record<string, string> = {
   '/dashboard': 'Обзор парка',
@@ -57,6 +60,9 @@ function DashboardShell({ children }: { children: React.ReactNode }) {
   const fleetConnection = useFleetEvents();
 
   const pathname = usePathname();
+  const router = useRouter();
+  const mainRef = useRef<HTMLElement>(null);
+  const parentRoute = pathname.slice(0, pathname.lastIndexOf('/')) || '/dashboard';
   const [isAppearanceOpen, setIsAppearanceOpen] = useState(false);
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
   const { fontSize, accentColor, density, setTheme: setUiTheme } = useUIStore();
@@ -104,8 +110,13 @@ function DashboardShell({ children }: { children: React.ReactNode }) {
       />
 
       <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
-        <header className="z-30 flex h-16 shrink-0 items-center justify-between gap-4 border-b border-border bg-card/95 px-4 backdrop-blur sm:px-6 lg:px-8">
-          <div className="flex min-w-0 items-center gap-3">
+        <header className="z-30 flex h-16 shrink-0 items-center justify-between gap-1 border-b border-border bg-card/95 px-2 backdrop-blur sm:gap-4 sm:px-6 lg:px-8">
+          <div className="flex min-w-0 items-center gap-1 sm:gap-3">
+            <Button type="button" variant="ghost" size="icon" className="h-9 w-9 shrink-0" aria-label="Вернуться на предыдущую страницу"
+              disabled={pathname === '/dashboard' && !hasPreviousRoute()}
+              onClick={() => navigateFromWorkspace(() => returnToPreviousRoute(parentRoute, url => router.push(url)))}>
+              <ArrowLeft className="h-4 w-4" aria-hidden="true" />
+            </Button>
             <Button
               type="button"
               variant="ghost"
@@ -116,7 +127,7 @@ function DashboardShell({ children }: { children: React.ReactNode }) {
             >
               <Menu className="h-5 w-5" aria-hidden="true" />
             </Button>
-            <nav aria-label="Хлебные крошки" className="flex min-w-0 items-center gap-2 text-sm">
+            <nav aria-label="Хлебные крошки" className="hidden min-w-0 items-center gap-2 text-sm sm:flex">
               <Link href="/dashboard" className="hidden shrink-0 text-muted-foreground transition-colors hover:text-foreground sm:inline">Sphere</Link>
               <ChevronRight className="hidden h-4 w-4 shrink-0 text-muted-foreground/60 sm:block" aria-hidden="true" />
               <span aria-current="page" className="truncate font-medium text-foreground">{currentRouteTitle(pathname)}</span>
@@ -163,7 +174,8 @@ function DashboardShell({ children }: { children: React.ReactNode }) {
           </div>
         </header>
 
-        <main id="main-content" tabIndex={-1} className="custom-scrollbar min-h-0 flex-1 overflow-y-auto overscroll-contain bg-background focus:outline-none">
+        <main ref={mainRef} id="main-content" tabIndex={-1} className="custom-scrollbar min-h-0 flex-1 overflow-y-auto overscroll-contain bg-background focus:outline-none">
+          <Suspense fallback={null}><RouteScrollRestoration main={mainRef} /></Suspense>
           <div key={pathname} className="workspace-route-enter min-h-full">
             <RouteAccessBoundary pathname={pathname}>{children}</RouteAccessBoundary>
           </div>

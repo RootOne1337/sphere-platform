@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef } from 'react';
+import { rememberRouteDeparture } from './routeScrollRestoration';
 
 type LeaveGuard = () => boolean | Promise<boolean>;
 const guards = new Map<symbol, LeaveGuard>();
@@ -34,9 +35,10 @@ export function workspaceNavigationAllowed(): boolean | Promise<boolean> {
 }
 
 export function navigateFromWorkspace(perform: () => void): void {
+  const navigate = () => { rememberRouteDeparture(); perform(); };
   const result = workspaceNavigationAllowed();
-  if (typeof result === 'boolean') { if (result) perform(); }
-  else void result.then(allowed => { if (allowed) perform(); });
+  if (typeof result === 'boolean') { if (result) navigate(); }
+  else void result.then(allowed => { if (allowed) navigate(); });
 }
 
 const resumedLinks = new WeakSet<HTMLAnchorElement>();
