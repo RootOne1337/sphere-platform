@@ -1,7 +1,10 @@
 # Возврат и сохранение позиции страницы
 
-9 октября 2026, Asia/Yekaterinburg. Source checkpoint; установка нового UI
-пока не подтверждена. Предыдущий installed UI:46ca2096, API:be803773.
+9 октября 2026, Asia/Yekaterinburg. UIec3f2267 установлен на3015,
+APIbe803773 сохранён. Историческая source preview проверка ниже отделена
+от конечной: browser Back и общая кнопка на actual1440×900 вернули каталог
+2132.5→2132.5px после route commit, без публикации/запуска сценария.
+[Installed acceptance](STUDIO-RESPONSIVE-INSTALLED-ACCEPTANCE.md).
 
 ## Контракт
 
@@ -51,7 +54,7 @@ TypeScript без incremental cache прошёл.
 Ранние semantic-click попытки вернули800px: browser automation перед кликом
 изменила scroll; диагностический departure был затем проверен coordinate
 click. Временный диагностический logger удалён из исходника.
-Это preview evidence, ещё не приёмка установленного3015.
+Это историческое preview evidence; отдельная установленная приёмка приведена выше.
 
 ## Исходники и связанные документы
 

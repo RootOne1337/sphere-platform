@@ -1,5 +1,12 @@
 # Studio: следующая работа по записи и живому управлению
 
+**Follow-up9октября:** UIec3f2267 установлен; PH011 повторно подтвердил
+Home3/Recents187/Back4/Menu82 в одной очереди. Compact Actions→Device сохранил
+все4outcomes и остановленную запись. Component tests проверяют все4кнопки
+до DAG key_event export. Recording continuous trajectory и автоматический
+tree/PNG/crop/pixel bundle по-прежнему OPEN; normal live Control не является
+доказательством записи MOVE path. [Конечная приёмка](../2026-10-09/STUDIO-RESPONSIVE-INSTALLED-ACCEPTANCE.md).
+
 8 октября 2026, Asia/Yekaterinburg. **Recorder и viewer-local task handoff установлены / P1 OPEN**.
 Explicit recorder mode принят наPH011; task preparation5382fe4 проверен двумя
 реальными3-step tasks. Богатая запись/global lease открыты. После простоя

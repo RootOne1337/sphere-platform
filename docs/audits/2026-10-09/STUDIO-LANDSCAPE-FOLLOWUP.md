@@ -1,5 +1,13 @@
 # Studio: установленный landscape нашёл вторую итерацию
 
+**Follow-up установлен:** ec3f2267 заменил b36adbb3 на3015 в21:43:08UTC.
+Actual844×390: graph195px, main342px, horizontal overflow отсутствует.
+390×844: header/menu не перекрываются, запись4/4confirmed показана без
+внутреннего224px scroll. Node add/parameters/Undo и Back2132.5 проверены.
+История ниже сохраняет наблюдение дефекта до исправления; полная запись
+траектории и адаптивная читаемость overview остаются OPEN.
+[Конечная установка и проверки](STUDIO-RESPONSIVE-INSTALLED-ACCEPTANCE.md).
+
 9 октября 2026, Asia/Yekaterinburg. Responsive source b36adbb3 установлен
 на3015 в21:28:11UTC8октября. CI frontend1936tests/139suites,26pages/73assets;
 45other containers/API/schema/OTA/APK сохранены. Browser подтвердил revision.

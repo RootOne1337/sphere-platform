@@ -1,15 +1,20 @@
 # Script Studio: инструкция по созданию и проверке сценариев
 
-**Новый responsive/navigation source подготовлен; установка ещё pending.**
-Четыре compact панели, библиотека рядом с лабораторией, late ACK retention
-при скрытии и bounded Back/scroll restoration проверены локально1936tests.
-Кнопки Назад/Домой/Недавние/Меню записываются с APK outcome; recording пока
-сохраняет завершённые swipe endpoints, без continuous path и automatic pixel/
-XPath bundle. [Подробный контракт](../audits/2026-10-09/STUDIO-RESPONSIVE-WORKSPACE.md).
+**Responsive/navigation UI ec3f2267 установлен на3015.**
+На телефоне используйте «Схема», «Действия», «Параметры», «Устройство»;
+импорт/экспорт/направление/упорядочивание/запуск доступны через «Ещё».
+Desktop библиотека остаётся доступной рядом с лабораторией. Скрытие устройства
+останавливает запись и ввод, сохраняет очередь; возврат не включает запись
+автоматически. Home/Recents/Back/Menu проверены на PH011:4/4APK confirmed,
+очередь сохранена после переключения панелей. Общая кнопка Back и browser
+Back вернули catalog2132.5px после route commit. Все4 exact-source CI successful:
+frontend1936tests/139suites, backend3346passed/37skipped/229subtests/80.72%.
+Recording сохраняет завершённые swipe endpoints, без continuous path и
+automatic pixel/XPath bundle. [Конечная приёмка и границы](../audits/2026-10-09/STUDIO-RESPONSIVE-INSTALLED-ACCEPTANCE.md).
 
 Актуализировано: **9 октября 2026**. Каталог `/scripts`, редактор
 `/scripts/builder`, формат **DAG1.0**, React Flow, локальная ELK0.12.0.
-На3015 установлены frontend **46ca2096** и API **be803773**. Studio сохраняет
+На3015 установлены frontend **ec3f2267** и API **be803773**. Studio сохраняет
 graph/action contract и диалог сохранности; текущие runtime границы фиксируются в
 [CURRENT-STATE](CURRENT-STATE.md). Обратная гонка XPath→Control исправлена;
 быстрый переход и повторный вход в дерево проверены на установленном UI.

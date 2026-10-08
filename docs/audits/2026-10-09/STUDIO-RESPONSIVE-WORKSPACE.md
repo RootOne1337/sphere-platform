@@ -1,8 +1,11 @@
 # Studio: доступные панели и сохранность рекордера
 
-9 октября 2026, Asia/Yekaterinburg. Подготовлен source checkpoint.
-Установка и3015browser acceptance пока не подтверждены; ниже не заменяет
-[canonical installed state](../../operations/CURRENT-STATE.md).
+9 октября 2026, Asia/Yekaterinburg. Ниже сохранён исходный source checkpoint.
+**Конечный UI ec3f2267 установлен и проверен на3015 в21:43–21:51UTC8октября.**
+Frontend CI1936/139suites; actual390×844/844×390/1440×900, четыре APK keys и
+browser/global Back2132.5→2132.5 подтверждены отдельно. Поздние CSS iterations
+и границы: [installed acceptance](STUDIO-RESPONSIVE-INSTALLED-ACCEPTANCE.md).
+[Canonical installed state](../../operations/CURRENT-STATE.md).
 
 ## Доказанные причины
 
