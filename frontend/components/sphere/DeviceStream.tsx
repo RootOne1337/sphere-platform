@@ -158,6 +158,7 @@ export function DeviceStream({
   const canSaveFrame = currentFrameOwned && connection === 'live';
   const continuousBusy = !['idle', 'probing', 'closed', 'destroyed'].includes(continuousState);
   const continuousRecording = !!onControlSent || !!onControlCommand;
+  const inspectionActive = !!inspection;
   continuousAllowedRef.current = canInteract && !continuousRecording && continuousRequestedRef.current;
   // Age is not a disconnect: an idle ImageReader can retain its last picture.
   // A new socket/decoder still needs its own first frame before accepting input.
@@ -706,6 +707,18 @@ export function DeviceStream({
     onInspectionControlReady?.(!!inspection && currentFrameOwned && !discreteBusy
       && (!controller || controller.state === 'closed'));
   }, [inspection, currentFrameOwned, discreteBusy, continuousState, onInspectionControlReady]);
+  useEffect(() => {
+    const controller = continuousRef.current;
+    if (!inspectionActive || !controller || controller.state === 'closed' || !currentFrameOwned) return;
+    const timeout = setTimeout(() => {
+      if (continuousRef.current !== controller || controller.state === 'closed') return;
+      continuousFaultRef.current = true;
+      setContinuousFault(true);
+      setContinuousFailureCode('inspection_release_unknown');
+      setContinuousReason('Освобождение управления Android не подтверждено. Чтение дерева не отправлено; восстановите подключение.');
+    }, 3000);
+    return () => clearTimeout(timeout);
+  }, [inspectionActive, currentFrameOwned, continuousState]);
 
   const handlePointerDown = useCallback(
     (e: React.PointerEvent<HTMLCanvasElement>) => {
@@ -854,7 +867,7 @@ export function DeviceStream({
   return (
     <div className={fit ? 'flex h-full w-full min-h-0 min-w-0 flex-col' : 'min-w-0'}>
     {readOnly && enableNavigation && <p role="status" className="border-b border-border bg-muted px-3 py-2 text-xs text-muted-foreground">Только просмотр · {readOnlyReason ?? 'роль не разрешает клики, жесты и навигацию Android.'}</p>}
-    {enableNavigation && !inspection && !readOnly && <div data-control-state={continuousState} data-control-failure={continuousFailureCode ?? undefined} className="flex shrink-0 flex-wrap items-center gap-2 border-b border-border bg-muted/30 px-3 py-2">
+    {enableNavigation && ((!inspection && !readOnly) || (inspection && continuousFault)) && <div data-control-state={continuousState} data-control-failure={continuousFailureCode ?? undefined} className="flex shrink-0 flex-wrap items-center gap-2 border-b border-border bg-muted/30 px-3 py-2">
       <span className={`h-2 w-2 shrink-0 rounded-full ${continuousState === 'ready' ? 'bg-emerald-500' : 'bg-muted-foreground'}`} aria-hidden />
       <span role="status" className="text-xs text-muted-foreground">{continuousReason ?? (discreteBusy ? 'Клавиатура и навигация · ожидаем подтверждение Android' : continuousRecording ? 'Запись использует отдельные завершённые действия' : continuousState === 'ready'
         ? 'Непрерывное управление · зажмите и ведите мышь' : continuousState === 'opening' ? 'Подключаем управление Android…' : continuousState === 'probing' ? 'Определяем возможности APK · обычные нажатия доступны' : continuousState === 'closed' ? 'Касание Android освобождено' : 'Управление Android')}

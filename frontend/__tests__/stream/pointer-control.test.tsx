@@ -187,6 +187,8 @@ it('holds root inspection until this controller receives its native RELEASE3', (
   expect(view.sent().filter(x => x.type === 'touch_close')).toHaveLength(1);
   view.status(0, 3, 'release');
   expect(inspectionReady).toHaveBeenLastCalledWith(true);
+  act(() => jest.advanceTimersByTime(3000));
+  expect(view.queryByRole('button', { name: 'Восстановить управление' })).not.toBeInTheDocument();
   expect(view.commands()).toEqual([]);
 });
 
@@ -198,6 +200,23 @@ it('a native unknown release cannot unlock root inspection', () => {
   view.status(0, 4, 'release');
   expect(inspectionReady).toHaveBeenLastCalledWith(false);
   expect(inspectionReady).not.toHaveBeenCalledWith(true);
+});
+it('a missing inspection release stays fenced and exposes explicit recovery after a bounded wait', () => {
+  const view = readyContinuous();
+  const inspectionReady = jest.fn();
+  view.rerender(<DeviceStream deviceId="gesture-remote" enableNavigation enableStaticInput
+    inspection={{ onPick: jest.fn(), bounds: null }} onInspectionControlReady={inspectionReady} />);
+  act(() => jest.advanceTimersByTime(2000));
+  // A parent age/poll render creates a fresh inspection object; it must not
+  // postpone the original deadline indefinitely.
+  view.rerender(<DeviceStream deviceId="gesture-remote" enableNavigation enableStaticInput
+    inspection={{ onPick: jest.fn(), bounds: null }} onInspectionControlReady={inspectionReady} />);
+  act(() => jest.advanceTimersByTime(1000));
+  expect(inspectionReady).not.toHaveBeenCalledWith(true);
+  expect(view.getByRole('button', { name: 'Восстановить управление' })).toBeEnabled();
+  expect(view.container.querySelector('[data-control-state]')).toHaveAttribute('data-control-failure', 'inspection_release_unknown');
+  expect(view.sent().filter(x => x.type === 'touch_close')).toHaveLength(1);
+  expect(api.post).not.toHaveBeenCalled();
 });
 
 it('a late capability cannot replace the path midway through an already held legacy gesture', () => {
