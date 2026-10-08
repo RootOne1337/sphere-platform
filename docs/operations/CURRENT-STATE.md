@@ -4,6 +4,14 @@
 **Область:** исходники и документация ветки PR #19, записанные runtime-наблюдения, Android APK и готовность следующего прогона.<br />
 **Канонический документ текущего состояния:** этот файл. Исторические отчёты ниже сохраняют исходные даты и факты.
 
+**8 октября — подготовлена точная диагностика ошибок XPath.** Строковый API
+`detail` сохранён; known stage/reason/exit code, snapshot ID и cleanup confirmation
+добавляются без raw command/XML. Веб сохраняет валидное дерево, останавливает
+auto polling и позволяет скопировать диагностику.18 local HTTP/SQL/Redis и
+151 frontend tests passed; clean hosted CI и установка ещё обязательны.
+Исторический root exit1 не объяснён и остаётся OPEN.
+[Протокол, проверки и ограничения](../audits/2026-10-08/UI-INSPECTION-DIAGNOSTICS.md).
+
 **8 октября, 07:27–07:31 UTC+5 — финальный UI `e88c4db` установлен на3015.**
 API `2225f73` и PH011 APK10249 сохранены; frontend1848passed/137suites,
 types/build/26packaged pages/73assets.45 других контейнеров и OTA неизменны.

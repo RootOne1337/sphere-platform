@@ -115,6 +115,15 @@ class BackendInstallerTests(unittest.TestCase):
             self.assertEqual(installer.source_boundary(CURRENT, SOURCE,
                 {"requirementsSha256": digest, "actionContractSha256": digest}), paths)
 
+    def test_ui_inspection_diagnostics_admits_only_the_reviewed_route_and_scalar_trace(self):
+        payload = b"unchanged canonical source\n"
+        digest = hashlib.sha256(payload).hexdigest()
+        paths = ["backend/api/v1/devices/router.py", "backend/services/ui_inspection_trace.py"]
+        with patch.object(installer, "command", return_value="\n".join(paths)), \
+                patch.object(installer.subprocess, "run", return_value=subprocess.CompletedProcess([], 0, payload)):
+            self.assertEqual(installer.source_boundary(CURRENT, SOURCE,
+                {"requirementsSha256": digest, "actionContractSha256": digest}), paths)
+
     def test_source_hash_uses_canonical_git_bytes_and_checks_both_files(self):
         payload = b"canonical\nbytes\n"
         digest = hashlib.sha256(payload).hexdigest()

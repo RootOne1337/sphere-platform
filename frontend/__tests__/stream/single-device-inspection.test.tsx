@@ -168,6 +168,32 @@ it('failure and wrong-device receipt stay errors, with an explicit operator retr
   await waitFor(() => expect(screen.queryByRole('alert')).not.toBeInTheDocument());
   expect(api.post).toHaveBeenCalledTimes(2);
 });
+it('shows the sanitized failure stage and snapshot without discarding a valid tree or retrying root', async () => {
+  await loaded();
+  jest.mocked(api.post).mockRejectedValue({ response: { data: { detail: 'generic root failure' }, headers: {
+    'x-sphere-ui-stage': 'dump', 'x-sphere-ui-reason': 'native_exit_nonzero',
+    'x-sphere-ui-snapshot': 'b'.repeat(32), 'x-sphere-ui-native-exit-code': '1',
+    'x-sphere-ui-cleanup': 'unconfirmed',
+  } } });
+  fireEvent.click(screen.getByRole('button', { name: 'Обновить дерево' }));
+  const alert = await screen.findByRole('alert');
+  expect(alert).toHaveTextContent('Создание дампа UI Automator');
+  expect(alert).toHaveTextContent('кодом 1');
+  expect(alert).toHaveTextContent('b'.repeat(32));
+  expect(alert).toHaveTextContent('Удаление временного файла не подтверждено');
+  expect(screen.getByText(/1 элементов/)).toBeInTheDocument();
+  expect(screen.getByRole('button', { name: 'Автообновление: пауза' })).toBeInTheDocument();
+  expect(api.post).toHaveBeenCalledTimes(2);
+});
+it('does not display arbitrary diagnostic header text or treat unknown stages as trusted diagnostics', async () => {
+  jest.mocked(api.post).mockRejectedValue({ response: { data: { detail: 'compatible API error' }, headers: {
+    'x-sphere-ui-stage': '<secret command>', 'x-sphere-ui-reason': 'private XML',
+    'x-sphere-ui-snapshot': 'private token', 'x-sphere-ui-native-exit-code': '1 secret',
+  } } });
+  open();
+  expect(await screen.findByRole('alert')).toHaveTextContent('compatible API error');
+  expect(screen.queryByText(/secret|private/)).not.toBeInTheDocument();
+});
 it('received permission withdrawal disables inspection even after restoring the same device', async () => {
   const view = await loaded(); mockPermission = false;
   view.rerender(<SingleDeviceStream deviceId="remote" />);

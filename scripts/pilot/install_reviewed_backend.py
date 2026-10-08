@@ -37,6 +37,7 @@ PROJECT = "sphere-pilot-20260911"
 BACKEND = f"{PROJECT}-backend-1"
 POSTGRES = f"{PROJECT}-postgres-1"
 APPROVED_PATHS = {
+    "backend/api/v1/devices/router.py", "backend/services/ui_inspection_trace.py",
     "backend/api/v1/scripts/router.py", "backend/schemas/action_contract.v1.json",
     "backend/schemas/action_parameters.py", "backend/schemas/dag.py",
     "backend/schemas/script.py", "backend/services/script_service.py",

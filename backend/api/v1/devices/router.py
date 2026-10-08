@@ -590,7 +590,10 @@ async def request_ui_hierarchy(
     svc: DeviceService = Depends(get_device_service),
     redis=Depends(get_redis_binary),
 ) -> UiHierarchyResponse:
+    import structlog
+
     from backend.services.ui_hierarchy import InvalidUiHierarchy, display_size, parse_hierarchy
+    from backend.services.ui_inspection_trace import UiInspectionTrace
 
     response.headers["Cache-Control"] = "no-store"
 
@@ -610,46 +613,91 @@ async def request_ui_hierarchy(
     path = f"/data/local/tmp/sphere-ui-{snapshot_id}.xml"
     requested_at = datetime.now(timezone.utc)
     snapshot: UiHierarchyResponse | None = None
+    trace = UiInspectionTrace()
+    failure: HTTPException | None = None
+    response_status = 200
 
-    async def shell(command: str) -> str:
+    async def shell(stage: str, command: str) -> str:
+        trace.enter(stage)
+        trace.rpc_count += 1
         result = await _request_interactive_command(device_id, current_user, svc, "SHELL", {"cmd": command}, 8.0)
         receipt = result.get("result")
         output = receipt.get("output") if isinstance(receipt, dict) else None
-        if result.get("status") != "completed" or not isinstance(output, str):
+        if result.get("status") != "completed":
+            trace.native_failure(result.get("error"))
+            raise HTTPException(502, "Android UI inspection unavailable: root/UI Automator command failed")
+        if not isinstance(output, str):
+            trace.fail("invalid_device_receipt")
             raise HTTPException(502, "Android UI inspection unavailable: root/UI Automator command failed")
         return output
 
     try:
         async with asyncio.timeout(40):
-            before = display_size(await shell("wm size"))
-            await shell(f"uiautomator dump {path}")
-            xml = await shell(f"cat {path}")
-            after = display_size(await shell("wm size"))
+            before = display_size(await shell("geometry_before", "wm size"))
+            await shell("dump", f"uiautomator dump {path}")
+            xml = await shell("read_xml", f"cat {path}")
+            after = display_size(await shell("geometry_after", "wm size"))
+            trace.enter("validate_geometry")
             if before != after:
+                trace.fail("display_geometry_changed")
                 raise HTTPException(409, "Android display geometry changed; request a new snapshot")
+            trace.enter("validate_tree")
             width, height, rotation, nodes = parse_hierarchy(xml, after)
         snapshot = UiHierarchyResponse(device_id=str(device_id), snapshot_id=snapshot_id,
                                        requested_at=requested_at, completed_at=datetime.now(timezone.utc),
                                        width=width, height=height, rotation=rotation, nodes=nodes)
         return snapshot
     except InvalidUiHierarchy as exc:
-        raise HTTPException(502, str(exc)) from exc
+        trace.fail(str(exc))
+        failure = HTTPException(502, str(exc))
+        response_status = failure.status_code
+        raise failure from exc
     except TimeoutError as exc:
-        raise HTTPException(504, "Android UI snapshot deadline exceeded; no automatic retry") from exc
+        trace.fail("snapshot_deadline_exceeded")
+        failure = HTTPException(504, "Android UI snapshot deadline exceeded; no automatic retry")
+        response_status = failure.status_code
+        raise failure from exc
+    except HTTPException as exc:
+        trace.fail("transport_unavailable" if exc.status_code == 503 else
+                   "command_deadline_exceeded" if exc.status_code == 504 else "invalid_device_receipt")
+        failure, response_status = exc, exc.status_code
+        raise
+    except asyncio.CancelledError:
+        trace.fail("request_cancelled")
+        response_status = 499
+        raise
+    except Exception as exc:
+        trace.fail("inspection_internal_error")
+        failure = HTTPException(500, "Android UI inspection failed; use the snapshot diagnostic ID")
+        response_status = 500
+        raise failure from exc
     finally:
         # Unique UUID-owned path; do not delete any other dump. Cleanup failure
         # is recorded without logging the potentially sensitive node text/XML.
         try:
-            await shell(f"rm -f {path}")
+            await shell("cleanup", f"rm -f {path}")
+            trace.cleanup_confirmed = True
             if snapshot is not None:
                 snapshot.temporary_file_cleanup_confirmed = True
         except Exception:
             logger.warning("ui_inspection_cleanup_unconfirmed", extra={"device_id": str(device_id), "snapshot_id": snapshot_id})
         try:
-            await redis.eval("if redis.call('get',KEYS[1]) == ARGV[1] then return redis.call('del',KEYS[1]) end return 0",
-                             1, key, snapshot_id)
+            trace.lock_release_confirmed = await redis.eval(
+                "if redis.call('get',KEYS[1]) == ARGV[1] then return redis.call('del',KEYS[1]) end return 0",
+                1, key, snapshot_id) == 1
         except RedisError:
             logger.warning("ui_inspection_lock_release_unconfirmed", extra={"device_id": str(device_id)})
+        trace.enter("complete")
+        headers = trace.headers(snapshot_id)
+        if failure is not None:
+            failure.headers = {**(failure.headers or {}), **headers}
+        else:
+            response.headers.update(headers)
+        structlog.get_logger().info("ui_inspection_finished", device_id=str(device_id),
+            snapshot_id=snapshot_id, status=response_status, failed_stage=trace.failed_stage,
+            reason=trace.reason, native_exit_code=trace.native_exit_code,
+            elapsed_ms=trace.elapsed_ms, stage_ms=trace.stage_ms, rpc_count=trace.rpc_count,
+            cleanup_confirmed=trace.cleanup_confirmed, lock_release_confirmed=trace.lock_release_confirmed)
 
 
 @router.post("/{device_id}/screenshot/native", response_class=Response,

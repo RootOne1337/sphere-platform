@@ -5,7 +5,6 @@ import { Copy, Eye, MousePointer2, RefreshCw, ScanSearch } from 'lucide-react';
 import { toast } from 'sonner';
 import { DeviceStream } from '@/components/sphere/DeviceStream';
 import { api } from '@/lib/api';
-import { getApiErrorMessage } from '@/lib/apiError';
 import { useAuthStore } from '@/lib/store';
 import { useCapabilities, PermissionNotice } from '@/src/features/access/Capabilities';
 import { Button } from '@/src/shared/ui/button';
@@ -13,6 +12,7 @@ import { NativeScreenshotPanel } from '@/src/features/devices/NativeScreenshotPa
 import type { StreamFrameDimensions } from './streamAspectRatio';
 import { checkedHierarchy, frameBounds, hitTestHierarchy, matchesFrame, type UiHierarchyNode, type UiHierarchySnapshot } from './uiHierarchy';
 import type { AcknowledgedControl, StreamInput } from './controlObservation';
+import { uiInspectionError, type UiInspectionError } from './uiInspectionError';
 
 const SNAPSHOT_LIFETIME_MS = 30_000;
 
@@ -32,7 +32,7 @@ export function SingleDeviceStream({ deviceId, captureEnabled = false, onControl
   const [feedback, setFeedback] = useState<string | null>(null);
   const [showTree, setShowTree] = useState(false);
   const [treeLimit, setTreeLimit] = useState(200);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<UiInspectionError | null>(null);
   const [pending, setPending] = useState(false);
   const [inspectionControlReady, setInspectionControlReady] = useState(false);
   const [now, setNow] = useState(0);
@@ -110,7 +110,7 @@ export function SingleDeviceStream({ deviceId, captureEnabled = false, onControl
       }
     } catch (reason) {
       if (ownGeneration === generation.current && !request.signal.aborted) {
-        setError(getApiErrorMessage(reason, reason instanceof Error ? reason.message : 'Не удалось прочитать дерево Android.'));
+        setError(uiInspectionError(reason));
         setAutomatic(false); pendingPick.current = null;
       }
     } finally {
@@ -174,7 +174,16 @@ export function SingleDeviceStream({ deviceId, captureEnabled = false, onControl
       {inspect && <aside className={`min-w-0 space-y-4 rounded-xl border border-border bg-card p-4 ${compact ? 'max-h-[480px] overflow-auto' : ''}`} aria-label="Элемент Android">
         <div><h4 className="font-semibold">Инспектор элементов</h4><p className="mt-1 text-xs leading-relaxed text-muted-foreground">Нажмите элемент на видео: границы и все возвращённые Android атрибуты появятся здесь. Выбор не отправляет нажатие Android.</p></div>
         <p className="text-xs leading-relaxed text-muted-foreground">UI Automator через root APK. Дерево и видео независимы. Автообновление — через 5 секунд после ответа, только в активном видимом инспекторе; при ошибке оно приостанавливается. Игровой Canvas может не раскрывать внутренних элементов.</p>
-        {error && <p role="alert" className="break-words rounded-lg border border-destructive/30 p-3 text-sm text-destructive">{error}</p>}
+        {error && <div role="alert" className="space-y-3 break-words rounded-lg border border-destructive/30 bg-destructive/5 p-3 text-sm">
+          <p className="font-medium text-destructive">{error.message}</p>
+          {error.diagnostic && <>
+            <dl className="space-y-2 text-xs"><div><dt className="text-muted-foreground">Этап отказа</dt><dd className="mt-1 font-medium">{error.diagnostic.stageLabel}</dd></div>
+              <div><dt className="text-muted-foreground">Идентификатор снимка</dt><dd className="mt-1 break-all font-mono">{error.diagnostic.snapshotId}</dd></div></dl>
+            {error.diagnostic.cleanupUnconfirmed && <p className="text-xs text-amber-600 dark:text-amber-400">Удаление временного файла не подтверждено.</p>}
+            <Button size="sm" variant="outline" className="w-full" onClick={() => { void copy(JSON.stringify(error.diagnostic, null, 2)); }}><Copy className="mr-2 h-3.5 w-3.5" aria-hidden />Скопировать диагностику</Button>
+          </>}
+          <p className="text-xs text-muted-foreground">Автообновление приостановлено. Для новой попытки нажмите «Обновить дерево».</p>
+        </div>}
         {frame && !inspectionControlReady && <p role="status" className="text-sm text-muted-foreground">Ожидаем подтверждения освобождения управления Android. Чтение дерева начнётся после него.</p>}
         {pending && <p role="status" className="text-sm">Читаем полный снимок Android, до 50 секунд. Можно выбрать точку уже сейчас.</p>}
         {!snapshot ? !pending && <p role="status" className="text-sm text-muted-foreground">{frame ? 'Обновите дерево, чтобы повторить чтение.' : 'Ожидаем первый видеокадр. Дерево загрузится автоматически.'}</p>
