@@ -5,12 +5,15 @@ import { api } from '@/lib/api';
 let mockPermission = true;
 let mockToken = 'fixture-token';
 let mockStreamProps: Record<string, any>;
+let mockInspectionReleased = true;
 jest.mock('@/src/features/access/Capabilities', () => ({
   useCapabilities: () => ({ can: () => mockPermission }), PermissionNotice: () => null,
 }));
 jest.mock('@/lib/store', () => ({ useAuthStore: () => ({ accessToken: mockToken }) }));
 jest.mock('@/lib/api', () => ({ api: { post: jest.fn() } }));
 jest.mock('@/components/sphere/DeviceStream', () => ({ DeviceStream: (props: Record<string, any>) => {
+  const React = jest.requireActual('react');
+  React.useEffect(() => props.onInspectionControlReady(!!props.inspection && mockInspectionReleased), [!!props.inspection]);
   mockStreamProps = props;
   return <button onClick={() => props.onFrameDimensions({ width: 960, height: 540 })}>Fixture frame</button>;
 } }));
@@ -18,7 +21,7 @@ const snapshot = (deviceId = 'remote') => ({ device_id: deviceId, snapshot_id: '
   requested_at: '2026-10-03T21:00:00Z', completed_at: '2026-10-03T21:00:02Z', width: 960, height: 540, rotation: 1, temporary_file_cleanup_confirmed: true,
   nodes: [{ id: 0, parent_id: null, depth: 0, xpath: '/hierarchy/node[1]',
     bounds: { left: 100, top: 100, right: 200, bottom: 150 }, attributes: { text: '<script>safe plain text</script>', 'resource-id': 'pkg:id/ok', clickable: 'true', enabled: 'true', custom: 'retained' } }] });
-beforeEach(() => { jest.clearAllMocks(); mockPermission = true; mockToken = 'fixture-token'; });
+beforeEach(() => { jest.clearAllMocks(); mockPermission = true; mockToken = 'fixture-token'; mockInspectionReleased = true; });
 it('passes an execution lock reason separately from the role restriction and removes it after the lock clears', () => {
   const view = render(<SingleDeviceStream deviceId="remote" controlDisabled />);
   expect(mockStreamProps.readOnly).toBe(true);
@@ -78,6 +81,19 @@ it('loads on inspection entry, reveals all attributes and scales highlight after
   fireEvent.click(screen.getByRole('button', { name: 'Управление' }));
   expect(mockStreamProps.inspection).toBeUndefined();
   expect(api.post).toHaveBeenCalledTimes(1);
+});
+it('does not poll root or lose the queued pick while native input release is pending', async () => {
+  mockInspectionReleased = false;
+  jest.mocked(api.post).mockResolvedValue({ data: snapshot() });
+  open();
+  expect(api.post).not.toHaveBeenCalled();
+  expect(screen.getByRole('button', { name: 'Обновить дерево' })).toBeDisabled();
+  act(() => mockStreamProps.inspection.onPick(120, 120, { width: 960, height: 540 }));
+  expect(api.post).not.toHaveBeenCalled();
+  act(() => mockStreamProps.onInspectionControlReady(true));
+  await screen.findByText('/hierarchy/node[1]');
+  expect(api.post).toHaveBeenCalledTimes(1);
+  expect(mockStreamProps.inspection.bounds).toEqual(snapshot().nodes[0].bounds);
 });
 it('geometry mismatch prevents picking/highlighting and retains the explicit warning', async () => {
   await loaded();

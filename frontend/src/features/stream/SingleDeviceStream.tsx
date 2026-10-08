@@ -34,6 +34,7 @@ export function SingleDeviceStream({ deviceId, captureEnabled = false, onControl
   const [treeLimit, setTreeLimit] = useState(200);
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
+  const [inspectionControlReady, setInspectionControlReady] = useState(false);
   const [now, setNow] = useState(0);
   const generation = useRef(0);
   const controller = useRef<AbortController | null>(null);
@@ -49,6 +50,7 @@ export function SingleDeviceStream({ deviceId, captureEnabled = false, onControl
     controller.current = null;
     pendingPick.current = null;
     setPending(false); setReport(null); select(null); setFeedback(null);
+    setInspectionControlReady(false);
   }, [select]);
   const invalidateFrame = useCallback(() => { invalidated(); setFrameReport(null); }, [invalidated]);
   useEffect(() => { invalidateFrame(); setError(null); }, [deviceId, accessToken, invalidateFrame]);
@@ -68,7 +70,7 @@ export function SingleDeviceStream({ deviceId, captureEnabled = false, onControl
   const age = report ? Math.max(0, now - report.at) : Infinity;
   const valid = snapshot && matchesFrame(snapshot, frame) && age < SNAPSHOT_LIFETIME_MS;
   const refresh = useCallback(async () => {
-    if (!canInspect || !inspect || !frame || controller.current || document.visibilityState === 'hidden') return;
+    if (!canInspect || !inspect || !inspectionControlReady || !frame || controller.current || document.visibilityState === 'hidden') return;
     const request = new AbortController();
     controller.current = request;
     const ownGeneration = ++generation.current;
@@ -108,15 +110,15 @@ export function SingleDeviceStream({ deviceId, captureEnabled = false, onControl
     } finally {
       if (ownGeneration === generation.current) { controller.current = null; setPending(false); }
     }
-  }, [canInspect, inspect, frame, deviceId, accessToken, select]);
+  }, [canInspect, inspect, inspectionControlReady, frame, deviceId, accessToken, select]);
   // Mode entry, a new owned picture, or return to this visible page initiates
   // one read. Failed reads pause periodic updates instead of retrying root RPCs.
   useEffect(() => { if (inspect && visible) void refresh(); }, [inspect, visible, refresh]);
   useEffect(() => {
-    if (!inspect || !automatic || !visible || !canInspect || !frame || pending || error) return;
+    if (!inspect || !inspectionControlReady || !automatic || !visible || !canInspect || !frame || pending || error) return;
     const timer = window.setTimeout(() => { void refresh(); }, 5_000);
     return () => window.clearTimeout(timer);
-  }, [inspect, automatic, visible, canInspect, frame, pending, error, refresh, report]);
+  }, [inspect, inspectionControlReady, automatic, visible, canInspect, frame, pending, error, refresh, report]);
   const pick = (x: number, y: number, dimensions: StreamFrameDimensions) => {
     if (!canInspect || !frame) return;
     if (!snapshot || !report || performance.now() - report.at >= SNAPSHOT_LIFETIME_MS || !matchesFrame(snapshot, dimensions)) {
@@ -143,7 +145,7 @@ export function SingleDeviceStream({ deviceId, captureEnabled = false, onControl
       </div>
       {inspect && <div className="flex flex-wrap items-center gap-2">
         <Button variant="outline" size="sm" aria-pressed={automatic} disabled={!canInspect} onClick={() => { setAutomatic(!automatic); if (!automatic) { void refresh(); } }}>Автообновление: {automatic ? 'включено' : 'пауза'}</Button>
-        <Button variant="outline" size="sm" disabled={!canInspect || !frame || pending} onClick={() => { void refresh(); }}><RefreshCw className={`mr-2 h-4 w-4 ${pending ? 'animate-spin motion-reduce:animate-none' : ''}`} aria-hidden />{pending ? 'Читаем дерево…' : 'Обновить дерево'}</Button>
+        <Button variant="outline" size="sm" disabled={!canInspect || !inspectionControlReady || !frame || pending} onClick={() => { void refresh(); }}><RefreshCw className={`mr-2 h-4 w-4 ${pending ? 'animate-spin motion-reduce:animate-none' : ''}`} aria-hidden />{pending ? 'Читаем дерево…' : 'Обновить дерево'}</Button>
       </div>}
     </div>
     {!canInspect && <PermissionNotice permission="device:write" action="чтение дерева Android через root-команды" />}
@@ -155,12 +157,14 @@ export function SingleDeviceStream({ deviceId, captureEnabled = false, onControl
           readOnly={viewOnly || controlDisabled || !access.can('stream:control')}
           readOnlyReason={controlDisabled ? 'Управление временно заблокировано на время проверки задания или при неподтверждённом результате.' : viewOnly ? 'Выбран режим просмотра. Для нажатий выберите «Управление».' : undefined}
           onFrameDimensions={onFrame} onInspectionInvalidated={invalidateFrame}
+          onInspectionControlReady={setInspectionControlReady}
           inspection={inspect ? { onPick: pick, bounds: highlight } : undefined} />
       </div>
       {inspect && <aside className={`min-w-0 space-y-4 rounded-xl border border-border bg-card p-4 ${compact ? 'max-h-[480px] overflow-auto' : ''}`} aria-label="Элемент Android">
         <div><h4 className="font-semibold">Инспектор элементов</h4><p className="mt-1 text-xs leading-relaxed text-muted-foreground">Нажмите элемент на видео: границы и все возвращённые Android атрибуты появятся здесь. Выбор не отправляет нажатие Android.</p></div>
         <p className="text-xs leading-relaxed text-muted-foreground">UI Automator через root APK. Дерево и видео независимы. Автообновление — через 5 секунд после ответа, только в активном видимом инспекторе; при ошибке оно приостанавливается. Игровой Canvas может не раскрывать внутренних элементов.</p>
         {error && <p role="alert" className="break-words rounded-lg border border-destructive/30 p-3 text-sm text-destructive">{error}</p>}
+        {frame && !inspectionControlReady && <p role="status" className="text-sm text-muted-foreground">Ожидаем подтверждения освобождения управления Android. Чтение дерева начнётся после него.</p>}
         {pending && <p role="status" className="text-sm">Читаем полный снимок Android, до 50 секунд. Можно выбрать точку уже сейчас.</p>}
         {!snapshot ? !pending && <p role="status" className="text-sm text-muted-foreground">{frame ? 'Обновите дерево, чтобы повторить чтение.' : 'Ожидаем первый видеокадр. Дерево загрузится автоматически.'}</p>
             : <div className="space-y-2 text-xs text-muted-foreground"><p>{snapshot.width} × {snapshot.height} · поворот {snapshot.rotation * 90}° · {snapshot.nodes.length} элементов</p><p>Получено: {new Date(snapshot.completed_at).toLocaleTimeString('ru-RU')} · {Math.floor(age / 1000)} с назад</p>

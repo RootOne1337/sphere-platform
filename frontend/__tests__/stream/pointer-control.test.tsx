@@ -178,6 +178,27 @@ it('recording does not silently turn live motion into a successful reusable swip
   expect(view.getByText(/Запись использует отдельные завершённые действия/)).toBeInTheDocument();
   view.unmount();
 });
+it('holds root inspection until this controller receives its native RELEASE3', () => {
+  const view = readyContinuous();
+  const inspectionReady = jest.fn();
+  view.rerender(<DeviceStream deviceId="gesture-remote" enableNavigation enableStaticInput
+    inspection={{ onPick: jest.fn(), bounds: null }} onInspectionControlReady={inspectionReady} />);
+  expect(inspectionReady).toHaveBeenLastCalledWith(false);
+  expect(view.sent().filter(x => x.type === 'touch_close')).toHaveLength(1);
+  view.status(0, 3, 'release');
+  expect(inspectionReady).toHaveBeenLastCalledWith(true);
+  expect(view.commands()).toEqual([]);
+});
+
+it('a native unknown release cannot unlock root inspection', () => {
+  const view = readyContinuous();
+  const inspectionReady = jest.fn();
+  view.rerender(<DeviceStream deviceId="gesture-remote" enableNavigation enableStaticInput
+    inspection={{ onPick: jest.fn(), bounds: null }} onInspectionControlReady={inspectionReady} />);
+  view.status(0, 4, 'release');
+  expect(inspectionReady).toHaveBeenLastCalledWith(false);
+  expect(inspectionReady).not.toHaveBeenCalledWith(true);
+});
 
 it('a late capability cannot replace the path midway through an already held legacy gesture', () => {
   mockCapture = { captureEpoch: TOUCH_EPOCH, frameWidth: 1280, frameHeight: 720 };

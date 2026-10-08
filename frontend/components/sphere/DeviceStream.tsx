@@ -32,6 +32,8 @@ interface DeviceStreamProps {
   onFrameDimensions?: (dimensions: StreamFrameDimensions) => void;
   inspection?: { onPick: (x: number, y: number, dimensions: StreamFrameDimensions) => void; bounds: UiBounds | null };
   onInspectionInvalidated?: () => void;
+  /** Root inspection must wait for this viewer's acknowledged native release. */
+  onInspectionControlReady?: (ready: boolean) => void;
 }
 
 interface StreamDiagnosticResponse {
@@ -95,6 +97,7 @@ export function DeviceStream({
   onFrameDimensions,
   inspection,
   onInspectionInvalidated,
+  onInspectionControlReady,
 }: DeviceStreamProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const wsRef = useRef<WebSocket | null>(null);
@@ -698,6 +701,11 @@ export function DeviceStream({
   useEffect(() => {
     if (inspection || readOnly || continuousRecording) continuousRef.current?.retire('control_mode_changed');
   }, [inspection, readOnly, continuousRecording]);
+  useEffect(() => {
+    const controller = continuousRef.current;
+    onInspectionControlReady?.(!!inspection && currentFrameOwned && !discreteBusy
+      && (!controller || controller.state === 'closed'));
+  }, [inspection, currentFrameOwned, discreteBusy, continuousState, onInspectionControlReady]);
 
   const handlePointerDown = useCallback(
     (e: React.PointerEvent<HTMLCanvasElement>) => {
