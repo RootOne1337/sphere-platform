@@ -120,6 +120,7 @@ export function DeviceStream({
   const [surfaceActive, setSurfaceActive] = useState(() => typeof document !== 'undefined' && !document.hidden);
   const [continuousState, setContinuousState] = useState<ContinuousPointerState | 'probing'>('idle');
   const [continuousReason, setContinuousReason] = useState<string | null>(null);
+  const [continuousFailureCode, setContinuousFailureCode] = useState<string | null>(null);
   const [continuousReceipt, setContinuousReceipt] = useState<{ action: number; sequence: number; ms: number } | null>(null);
   const dragRef = useRef<{
     x: number; y: number; pointerId: number; frameWidth: number; frameHeight: number; inspection: boolean;
@@ -215,6 +216,7 @@ export function DeviceStream({
     wheelUpTimerRef.current = null;
     setContinuousState('idle');
     setContinuousReason(null);
+    setContinuousFailureCode(null);
     setContinuousReceipt(null);
 
     const timer = setTimeout(() => {
@@ -298,6 +300,7 @@ export function DeviceStream({
         continuousFaultRef.current = false;
         setContinuousFault(false);
         setContinuousReason(null);
+        setContinuousFailureCode(null);
         let ended = false;
         let lastReceived = Date.now();
         let opened = false;
@@ -404,6 +407,7 @@ export function DeviceStream({
                     if (reason && !['viewer_closed', 'surface_blur', 'surface_hidden', 'surface_control_lost', 'control_mode_changed', 'capture_or_socket_lost'].includes(reason)) {
                       continuousFaultRef.current = true;
                       setContinuousFault(true);
+                      setContinuousFailureCode(reason);
                       setContinuousReason('Управление приостановлено: Android не подтвердил команду. Повтора нет. Проверьте экран перед восстановлением.');
                     }
                     if (state === 'closed') {
@@ -448,6 +452,7 @@ export function DeviceStream({
                 if (continuousRef.current) {
                   continuousFaultRef.current = true;
                   setContinuousFault(true);
+                  setContinuousFailureCode('server_rejected');
                 }
                 setContinuousReason(continuousRef.current
                   ? 'Управление приостановлено сервером. Видеопоток продолжается; команды не повторяются.'
@@ -627,6 +632,7 @@ export function DeviceStream({
     dragRef.current = null;
     setContinuousState('probing');
     setContinuousReason(null);
+    setContinuousFailureCode(null);
     setContinuousReceipt(null);
     wsRef.current.send(JSON.stringify({ type: 'touch_probe' }));
     continuousProbeArmRef.current?.();
@@ -666,6 +672,7 @@ export function DeviceStream({
       if (!confirmed) {
         continuousFaultRef.current = true;
         setContinuousFault(true);
+        setContinuousFailureCode('discrete_result_unknown');
         setContinuousReason('Результат команды не подтверждён. Проверьте экран перед продолжением управления.');
       }
     };
@@ -839,7 +846,7 @@ export function DeviceStream({
   return (
     <div className={fit ? 'flex h-full w-full min-h-0 min-w-0 flex-col' : 'min-w-0'}>
     {readOnly && enableNavigation && <p role="status" className="border-b border-border bg-muted px-3 py-2 text-xs text-muted-foreground">Только просмотр · {readOnlyReason ?? 'роль не разрешает клики, жесты и навигацию Android.'}</p>}
-    {enableNavigation && !inspection && !readOnly && <div className="flex shrink-0 flex-wrap items-center gap-2 border-b border-border bg-muted/30 px-3 py-2">
+    {enableNavigation && !inspection && !readOnly && <div data-control-state={continuousState} data-control-failure={continuousFailureCode ?? undefined} className="flex shrink-0 flex-wrap items-center gap-2 border-b border-border bg-muted/30 px-3 py-2">
       <span className={`h-2 w-2 shrink-0 rounded-full ${continuousState === 'ready' ? 'bg-emerald-500' : 'bg-muted-foreground'}`} aria-hidden />
       <span role="status" className="text-xs text-muted-foreground">{continuousReason ?? (discreteBusy ? 'Клавиатура и навигация · ожидаем подтверждение Android' : continuousRecording ? 'Запись использует отдельные завершённые действия' : continuousState === 'ready'
         ? 'Непрерывное управление · зажмите и ведите мышь' : continuousState === 'opening' ? 'Подключаем управление Android…' : continuousState === 'probing' ? 'Определяем возможности APK · обычные нажатия доступны' : continuousState === 'closed' ? 'Касание Android освобождено' : 'Управление Android')}
@@ -933,6 +940,7 @@ export function DeviceStream({
             className="mt-2 max-h-[70vh] w-[min(92vw,34rem)] overflow-auto rounded border border-white/20 bg-black/95 p-3 text-left font-mono text-[11px] leading-5 text-white shadow-xl"
           >
             <div className="mb-2 font-semibold">Сквозная диагностика кадра</div>
+            <div>Управление Android: {continuousState}{continuousFailureCode ? ` · причина: ${continuousFailureCode}` : ''}</div>
             {diagnosticsError ? <div className="text-red-300">{diagnosticsError}</div> : (
               <>
                 <div>Отчёт APK: {agentDiagnostics?.state === 'active_report' ? 'захват активен' : agentDiagnostics?.state ?? 'загрузка…'}

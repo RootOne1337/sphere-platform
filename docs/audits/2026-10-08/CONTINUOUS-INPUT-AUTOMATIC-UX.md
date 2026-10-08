@@ -1,9 +1,11 @@
 # Обычное управление без отдельного переключателя жестов
 
-8 октября 2026, Asia/Yekaterinburg. Source checkpoint до установки этого UX.
-На3015 пока работает ранее принятый ручной режим `28104f8` и APK10249 на PH011.
-Installed acceptance следующего UI будет записана после authenticated CI/image
-admission и проверки настоящим браузером.
+8 октября 2026, Asia/Yekaterinburg. Automatic UX `bc86752` установлен на3015;
+API `28104f8` и APK10249 на PH011 сохранены. Жест и колесо подтверждены
+независимым Android View. Первый переход Home исполнился, но native control
+потребовал восстановления; второй Home вернулся в READY автоматически.
+[Точное наблюдение и диагностический follow-up](CONTINUOUS-INPUT-HANDOFF-OBSERVATION.md).
+Полная installed handoff qualification ещё открыта.
 
 ## Поведение
 

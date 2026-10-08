@@ -138,6 +138,14 @@ it('Home waits for native release and resumes continuous input only after the ac
   expect(view.getByRole('button', { name: 'Домой' })).not.toBeDisabled();
   expect(view.sent().filter(x => x.type === 'touch_probe')).toHaveLength(2);
   expect(view.queryByText(/связь, фокус/)).not.toBeInTheDocument();
+  view.receive({ type: 'touch_capability', capture_epoch: TOUCH_EPOCH, frame_width: 1280, frame_height: 720 });
+  view.receive({ type: 'touch_session', session_id: 'viewer_session_fixture', owner: 'new_owner_session_fixture',
+    capture_epoch: TOUCH_EPOCH, frame_width: 1280, frame_height: 720 });
+  view.receive({ type: 'continuous_input_status', session_id: 'viewer_session_fixture', owner: 'new_owner_session_fixture',
+    capture_epoch: TOUCH_EPOCH, sequence: 0, status: 0, stage: 'startup', origin: 'injector', device_uptime_ms: 150 });
+  expect(view.getByText(/Непрерывное управление/)).toBeInTheDocument();
+  fireEvent.pointerDown(view.canvas, { clientX: 40, clientY: 50, pointerId: 2, button: 0, buttons: 1 });
+  expect(view.sent().filter(x => x.type === 'touch_event').map(x => x.action)).toEqual([0]);
   view.unmount();
 });
 
@@ -235,6 +243,17 @@ it('unknown key completion does not reopen input or silently send a legacy gestu
   expect(view.sent().filter(x => x.type === 'touch_probe')).toHaveLength(1);
   view.down(1); view.up(1,65);
   expect(view.commands()).toEqual([]);
+  expect(view.container.querySelector('[data-control-failure]')).toHaveAttribute('data-control-failure', 'discrete_result_unknown');
+  view.unmount();
+});
+
+it('a native failure keeps its diagnostic cause after known release and never silently retries input', () => {
+  const view = readyContinuous();
+  view.status(0, 6, 'startup');
+  view.status(0, 3, 'release');
+  expect(view.container.querySelector('[data-control-failure]')).toHaveAttribute('data-control-failure', 'native_input_rejected_or_unknown');
+  expect(view.getByRole('button', { name: 'Восстановить управление' })).toBeEnabled();
+  expect(view.sent().filter(x => x.type === 'touch_probe')).toHaveLength(1);
   view.unmount();
 });
 
