@@ -134,7 +134,7 @@ function DashboardShell({ children }: { children: React.ReactNode }) {
             </nav>
           </div>
 
-          <div className="flex shrink-0 items-center gap-1.5 sm:gap-2">
+          <div className="flex min-w-0 flex-1 items-center justify-end gap-1.5 sm:flex-none sm:gap-2">
             <FleetConnectionStatus state={fleetConnection.state} />
             <BuildProvenance />
             <Button

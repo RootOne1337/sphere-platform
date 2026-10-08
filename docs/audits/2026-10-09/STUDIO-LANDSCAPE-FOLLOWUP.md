@@ -21,3 +21,12 @@ Builder54regressions и nonincremental TypeScript прошли. Final reviewed i
 установка этой итерации и повторный screenshot ещё pending. Нельзя принимать
 реальную компоновку только по viewport capability: на временных вкладках
 фактические размеры отличались. На основной3015вкладке844×390 подтверждены.
+
+На установленном b36adbb3 PH011 подтвердил реальную запись Home3/Recents187/
+Back4/Menu82, все4 APK confirmed. Compact Actions→Device сохранил4строки и
+остановленный recording; View выбран явно. Вторая визуальная проверка нашла
+два компактных дефекта: badge сборки сжимал кнопку меню, а queue имела
+дополнительную внутреннюю224px прокрутку. Последний CSS follow-up позволяет
+правой части общей шапки сжиматься и оставляет один основной скролл workbench
+для compact queue. На desktop queue остаётся bounded224px.
+Новый screenshot после reviewed установки этих изменений ещё pending.
