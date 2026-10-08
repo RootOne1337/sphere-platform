@@ -16,7 +16,7 @@ import { uiInspectionError, type UiInspectionError } from './uiInspectionError';
 
 const SNAPSHOT_LIFETIME_MS = 30_000;
 
-export function SingleDeviceStream({ deviceId, captureEnabled = false, onControlSent, onControlCommand, onInsertSelector, controlDisabled = false, compact = false }: { deviceId: string; captureEnabled?: boolean; controlDisabled?: boolean; compact?: boolean;
+export function SingleDeviceStream({ deviceId, captureEnabled = false, onControlSent, onControlCommand, recordingMode = false, onRecordingControlReady, onInsertSelector, controlDisabled = false, compact = false }: { deviceId: string; captureEnabled?: boolean; controlDisabled?: boolean; compact?: boolean; recordingMode?: boolean; onRecordingControlReady?: (ready: boolean) => void;
   onControlSent?: (input: StreamInput) => void; onControlCommand?: (event: AcknowledgedControl) => void; onInsertSelector?: (node: UiHierarchyNode, snapshot: UiHierarchySnapshot) => void }) {
   const access = useCapabilities();
   const { accessToken } = useAuthStore();
@@ -163,6 +163,7 @@ export function SingleDeviceStream({ deviceId, captureEnabled = false, onControl
     <div className={inspect ? `grid min-w-0 items-start gap-4 ${compact ? '' : 'xl:grid-cols-[minmax(0,1fr)_minmax(280px,360px)]'}` : 'min-w-0'}>
       <div className="min-w-0 overflow-hidden rounded-xl border border-border bg-black">
         <DeviceStream deviceId={deviceId} enableDiagnostics enableNavigation enableStaticInput
+          recordingMode={recordingMode} onRecordingControlReady={onRecordingControlReady}
           onControlSent={onControlSent}
           onControlCommand={onControlCommand}
           readOnly={viewOnly || controlDisabled || !access.can('stream:control') || (!inspect && pending)}

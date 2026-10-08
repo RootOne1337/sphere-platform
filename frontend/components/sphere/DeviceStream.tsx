@@ -18,6 +18,10 @@ interface DeviceStreamProps {
   onControlSent?: (input: StreamInput) => void;
   /** HTTP key/text submissions and the separate installed-APK result. */
   onControlCommand?: (event: AcknowledgedControl) => void;
+  /** Explicit discrete recorder intent; observing command results never changes input mode. */
+  recordingMode?: boolean;
+  /** True only after this viewer has released native ownership and discrete recording can accept input. */
+  onRecordingControlReady?: (ready: boolean) => void;
   enableDiagnostics?: boolean;
   /** Diagnostic export of a decoded, potentially lossy H.264 frame, never an Android screenshot. */
   enableScreenshot?: boolean;
@@ -87,6 +91,8 @@ export function DeviceStream({
   onTap,
   onControlSent,
   onControlCommand,
+  recordingMode = false,
+  onRecordingControlReady,
   enableDiagnostics = false,
   enableScreenshot = false,
   enableNavigation = false,
@@ -159,7 +165,7 @@ export function DeviceStream({
     || (enableStaticInput && connection === 'stale'));
   const canSaveFrame = currentFrameOwned && connection === 'live';
   const continuousBusy = !['idle', 'probing', 'closed', 'destroyed'].includes(continuousState);
-  const continuousRecording = !!onControlSent || !!onControlCommand;
+  const continuousRecording = recordingMode;
   const inspectionActive = !!inspection;
   continuousAllowedRef.current = canInteract && !continuousRecording && continuousRequestedRef.current;
   // Age is not a disconnect: an idle ImageReader can retain its last picture.
@@ -711,6 +717,9 @@ export function DeviceStream({
     });
   };
   useEffect(() => {
+    // A partially recorded discrete drag belongs to the old mode. Never replay
+    // its UP after Stop, inspection, a lock or permission change.
+    dragRef.current = null;
     if (inspection || readOnly || continuousRecording) continuousRef.current?.retire('control_mode_changed');
   }, [inspection, readOnly, continuousRecording]);
   useEffect(() => {
@@ -720,16 +729,21 @@ export function DeviceStream({
   }, [inspection, currentFrameOwned, discreteBusy, continuousState, onInspectionControlReady]);
   useEffect(() => {
     const controller = continuousRef.current;
-    if (!inspectionActive || !controller || controller.state === 'closed' || !currentFrameOwned) return;
+    onRecordingControlReady?.(continuousRecording && canInteract
+      && (!controller || controller.state === 'closed'));
+  }, [continuousRecording, canInteract, continuousState, onRecordingControlReady]);
+  useEffect(() => {
+    const controller = continuousRef.current;
+    if (!(inspectionActive || continuousRecording) || !controller || controller.state === 'closed' || !currentFrameOwned) return;
     const timeout = setTimeout(() => {
       if (continuousRef.current !== controller || controller.state === 'closed') return;
       continuousFaultRef.current = true;
       setContinuousFault(true);
-      setContinuousFailureCode('inspection_release_unknown');
-      setContinuousReason('Освобождение управления Android не подтверждено. Чтение дерева не отправлено; восстановите подключение.');
+      setContinuousFailureCode(inspectionActive ? 'inspection_release_unknown' : 'recording_release_unknown');
+      setContinuousReason(inspectionActive ? 'Освобождение управления Android не подтверждено. Чтение дерева не отправлено; восстановите подключение.' : 'Освобождение управления Android не подтверждено. Запись действий заблокирована; восстановите подключение.');
     }, 3000);
     return () => clearTimeout(timeout);
-  }, [inspectionActive, currentFrameOwned, continuousState]);
+  }, [inspectionActive, continuousRecording, currentFrameOwned, continuousState]);
 
   const handlePointerDown = useCallback(
     (e: React.PointerEvent<HTMLCanvasElement>) => {
@@ -845,7 +859,7 @@ export function DeviceStream({
       x2: horizontal ? to : point.x, y2: horizontal ? point.y : to, duration_ms: 180 }));
     onControlSent?.({ deviceId, at, dimensions: { width: canvas.width, height: canvas.height }, command: { type: 'swipe', x1: horizontal ? from : point.x, y1: horizontal ? point.y : from,
       x2: horizontal ? to : point.x, y2: horizontal ? point.y : to, duration_ms: 180 } });
-  }, [canInteract, enableNavigation, toCanvasCoords, onControlSent, deviceId]);
+  }, [canInteract, enableNavigation, continuousRecording, toCanvasCoords, onControlSent, deviceId]);
   useEffect(() => {
     const canvas = canvasRef.current;
     // React delegates wheel events passively in modern browsers. A native

@@ -62,6 +62,7 @@ export function DeviceWorkbench(props: Props) {
 function OwnedWorkbench({ device, scriptId, version, name, canRun, canEdit, onInsert, onExecution, registerCloseGuard }: Props & { device: Device }) {
   const access = useCapabilities();
   const [recording, setRecording] = useState(false);
+  const [recordingReady, setRecordingReady] = useState(false);
   const [preservePauses, setPreservePauses] = useState(true);
   const [entries, setEntries] = useState<RecordedInput[]>([]);
   const entriesRef = useRef(entries); entriesRef.current = entries;
@@ -137,7 +138,8 @@ function OwnedWorkbench({ device, scriptId, version, name, canRun, canEdit, onIn
       {active && <Button size="sm" variant="outline" disabled={stop.isPending || !access.can('script:execute')} onClick={() => stop.mutate(taskId, { onError: reason => setError(getApiErrorMessage(reason, 'Остановка не подтверждена.')) })}>Остановить задание</Button>}</div>
     {error && <p role="alert" className="rounded-lg border border-destructive/30 p-3 text-xs text-destructive">{error} {uncertain && <Link href="/tasks" target="_blank" rel="noopener noreferrer" className="underline">Открыть задания в новой вкладке</Link>}</p>}
     {!canRun && <p className="text-xs text-muted-foreground">Для проверки сохраните сценарий и откройте его неизменённую версию. Запуск всегда создаёт одно реальное задание на выбранном Android.</p>}
-    <SingleDeviceStream deviceId={device.id} captureEnabled compact controlDisabled={active || runPending || uncertain || controlPending} onControlSent={sent} onControlCommand={commandObserved} onInsertSelector={canEdit && !active && !runPending && !uncertain && !controlPending ? (node, snapshot) => {
+    {recording && !recordingReady && <p role="status" className="rounded-lg border bg-muted/30 p-3 text-xs">Подготавливаем запись: ожидаем видеокадр и подтверждённое освобождение управления Android. Новые действия пока не отправляются.</p>}
+    <SingleDeviceStream deviceId={device.id} captureEnabled compact recordingMode={recording} onRecordingControlReady={setRecordingReady} controlDisabled={active || runPending || uncertain || controlPending} onControlSent={sent} onControlCommand={commandObserved} onInsertSelector={canEdit && !active && !runPending && !uncertain && !controlPending ? (node, snapshot) => {
       if (snapshot.device_id !== device.id) return;
       try {
         const next = appendSelectorRecording(entriesRef.current, node, snapshot, device.id, Date.now());

@@ -174,7 +174,7 @@ it('old APK probe timeout preserves video and does not invent readiness', () => 
 
 it('recording does not silently turn live motion into a successful reusable swipe', () => {
   const view = readyWheel();
-  view.rerender(<DeviceStream deviceId="gesture-remote" fit="contain" enableStaticInput enableNavigation onControlSent={jest.fn()} />);
+  view.rerender(<DeviceStream deviceId="gesture-remote" fit="contain" enableStaticInput enableNavigation recordingMode onControlSent={jest.fn()} />);
   expect(view.getByText(/Запись использует отдельные завершённые действия/)).toBeInTheDocument();
   view.unmount();
 });
@@ -347,7 +347,7 @@ it('inspection releases native ownership and only returning to control negotiate
 it('switching a ready continuous session to recording waits for release then records a discrete action', () => {
   const view = readyContinuous();
   const record = jest.fn();
-  view.rerender(<DeviceStream deviceId="gesture-remote" fit="contain" enableStaticInput enableNavigation onControlSent={record} />);
+  view.rerender(<DeviceStream deviceId="gesture-remote" fit="contain" enableStaticInput enableNavigation recordingMode onControlSent={record} />);
   view.down(1); view.up(1,65);
   expect(view.commands()).toEqual([]);
   view.status(0,3,'release');
@@ -365,7 +365,7 @@ it('switching a ready continuous session to recording waits for release then rec
 it('switching to recording ignores a pending capability and never opens an invisible owner', () => {
   mockCapture = { captureEpoch: TOUCH_EPOCH, frameWidth: 1280, frameHeight: 720 };
   const view = readyWheel();
-  view.rerender(<DeviceStream deviceId="gesture-remote" fit="contain" enableStaticInput enableNavigation onControlSent={jest.fn()} />);
+  view.rerender(<DeviceStream deviceId="gesture-remote" fit="contain" enableStaticInput enableNavigation recordingMode onControlSent={jest.fn()} />);
   act(() => view.socket.onmessage?.({ data: JSON.stringify({ type:'touch_capability',capture_epoch:TOUCH_EPOCH,frame_width:1280,frame_height:720 }) }));
   expect(view.socket.send.mock.calls.map(([raw]) => JSON.parse(raw as string)).filter(x=>x.type==='touch_open')).toHaveLength(0);
   view.down(1);view.up(1,65);
@@ -670,4 +670,56 @@ it('blocks remote input until a fresh frame, clamps captured drags, and blocks i
   sendPointerGesture(60, 120);
   expect(remoteCommands()).toHaveLength(2);
   expect(canvas).toHaveAttribute('aria-disabled', 'true');
+});
+
+
+it('keeps normal continuous motion with permanent recorder receipt observers', () => {
+  const view = readyContinuous(), observer = jest.fn(), command = jest.fn();
+  view.rerender(<DeviceStream deviceId="gesture-remote" fit="contain" enableStaticInput enableNavigation onControlSent={observer} onControlCommand={command} />);
+  view.down(1,40); view.status(1,1);
+  fireEvent.pointerMove(view.canvas,{ clientX:60,clientY:50,pointerId:1,buttons:1 });
+  act(() => jest.advanceTimersByTime(16));
+  expect(view.sent().filter(x => x.type === 'touch_event').map(x => x.action)).toEqual([0,2]);
+  expect(view.commands()).toHaveLength(0);
+  expect(observer).not.toHaveBeenCalled();
+  view.status(2,1); view.up(1,60); view.status(3,1);
+  view.unmount();
+});
+
+it('prepares explicit recording during held touch only after native release without replay', () => {
+  const view = readyContinuous(), observer = jest.fn(), ready = jest.fn();
+  view.down(1,40); view.status(1,1);
+  view.rerender(<DeviceStream deviceId="gesture-remote" fit="contain" enableStaticInput enableNavigation recordingMode onControlSent={observer} onRecordingControlReady={ready} />);
+  expect(ready).toHaveBeenLastCalledWith(false);
+  view.up(1,65); view.down(2); view.up(2,65);
+  expect(view.commands()).toHaveLength(0);
+  expect(view.sent().filter(x => x.type === 'touch_close')).toHaveLength(1);
+  view.status(0,3,'release');
+  expect(ready).toHaveBeenLastCalledWith(true);
+  view.down(3); view.up(3,65);
+  expect(view.commands()).toHaveLength(1); expect(observer).toHaveBeenCalledTimes(1);
+  view.unmount();
+});
+
+it.each(['missing','unknown'])('keeps recording fenced after %s native release', kind => {
+  const view = readyContinuous(), ready = jest.fn();
+  view.rerender(<DeviceStream deviceId="gesture-remote" fit="contain" enableStaticInput enableNavigation recordingMode onRecordingControlReady={ready} />);
+  if(kind === 'unknown') view.status(0,4,'release');
+  else act(() => jest.advanceTimersByTime(3000));
+  expect(ready).not.toHaveBeenCalledWith(true);
+  if(kind === 'missing') expect(view.container.querySelector('[data-control-state]')).toHaveAttribute('data-control-failure','recording_release_unknown');
+  view.down(2);view.up(2,65);view.wheel();
+  expect(view.commands()).toHaveLength(0);
+  view.unmount();
+});
+
+it('stopping explicit recording cancels an unfinished discrete drag before negotiating live input', () => {
+  const observer=jest.fn(),view=readyContinuous();
+  view.rerender(<DeviceStream deviceId="gesture-remote" fit="contain" enableStaticInput enableNavigation recordingMode onControlSent={observer} />);
+  view.status(0,3,'release'); view.down(2,40);
+  view.rerender(<DeviceStream deviceId="gesture-remote" fit="contain" enableStaticInput enableNavigation recordingMode={false} onControlSent={observer} />);
+  view.up(2,65);
+  expect(view.commands()).toHaveLength(0);expect(observer).not.toHaveBeenCalled();
+  expect(view.sent().filter(x => x.type === 'touch_probe')).toHaveLength(2);
+  view.unmount();
 });

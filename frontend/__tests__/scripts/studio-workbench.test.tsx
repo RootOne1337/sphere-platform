@@ -12,6 +12,8 @@ let mockTask: Record<string, unknown> | undefined;
 let mockProgress: Record<string, unknown> | undefined;
 let mockLogs: Record<string, unknown>[];
 let mockRetainProgressWhenDisabled = false;
+let mockRecordingMode: boolean | undefined;
+let mockRecordingReadyObserver: ((ready: boolean) => void) | undefined;
 let mockObserve: (event: AcknowledgedControl) => void;
 let mockSelectorInsert: ((node: UiHierarchyNode, snapshot: UiHierarchySnapshot) => void) | undefined;
 let mockToken = 'fixture-token';
@@ -28,9 +30,9 @@ jest.mock('@/lib/hooks/useTasks', () => ({
 jest.mock('@/src/features/access/Capabilities', () => ({ useCapabilities: () => ({ can: () => true }) }));
 jest.mock('@/lib/api', () => ({ api: { post: jest.fn() } }));
 jest.mock('next/link', () => function MockLink({ href, children, ...props }: React.AnchorHTMLAttributes<HTMLAnchorElement> & { href: string }) { return <a href={href} {...props}>{children}</a>; });
-jest.mock('@/src/features/stream/SingleDeviceStream', () => ({ SingleDeviceStream: ({ deviceId: ownedId, controlDisabled, onControlSent, onControlCommand, onInsertSelector }: {
-  deviceId: string; controlDisabled: boolean; onControlSent: (value: unknown) => void; onControlCommand: typeof mockObserve; onInsertSelector: typeof mockSelectorInsert;
-}) => { mockObserve = onControlCommand; mockSelectorInsert = onInsertSelector; return <section aria-label="Поток выбранного Android" data-device={ownedId}>
+jest.mock('@/src/features/stream/SingleDeviceStream', () => ({ SingleDeviceStream: ({ deviceId: ownedId, controlDisabled, onControlSent, onControlCommand, onInsertSelector, recordingMode, onRecordingControlReady }: {
+  deviceId: string; controlDisabled: boolean; recordingMode?: boolean; onRecordingControlReady?: (ready: boolean) => void; onControlSent: (value: unknown) => void; onControlCommand: typeof mockObserve; onInsertSelector: typeof mockSelectorInsert;
+}) => { mockRecordingReadyObserver=onRecordingControlReady; mockRecordingMode=recordingMode; mockObserve = onControlCommand; mockSelectorInsert = onInsertSelector; return <section aria-label="Поток выбранного Android" data-device={ownedId}>
   <button disabled={controlDisabled} onClick={() => onControlSent({ deviceId: ownedId, at: 1000, dimensions: { width: 960, height: 540 }, command: { type: 'click', x: 480, y: 270 } })}>Записать тестовый клик</button>
 </section>; } }));
 
@@ -333,4 +335,28 @@ it('discards private recordings on an auth session change and ignores the previo
   expect(screen.queryByRole('list', { name: 'Записанные действия' })).not.toBeInTheDocument();
   expect(screen.getByRole('button', { name: 'Записать действия' })).toBeEnabled();
   expect(onInsert).not.toHaveBeenCalled();
+});
+
+
+it('toggles recording explicitly while keeping late Android receipt observation alive', () => {
+  openDevice(); expect(mockRecordingMode).toBe(false);
+  fireEvent.click(screen.getByRole('button',{name:'Записать действия'}));expect(mockRecordingMode).toBe(true);
+  act(() => mockObserve({requestId:'late-mode',input:observedInput,phase:'submitted'}));
+  fireEvent.click(screen.getByRole('button',{name:'Остановить запись'}));expect(mockRecordingMode).toBe(false);
+  expect(screen.getByText('Ожидает APK')).toBeInTheDocument();
+  act(() => mockObserve({requestId:'late-mode',input:observedInput,phase:'confirmed',completedAt:1800}));
+  expect(screen.getByText('Подтверждено APK')).toBeInTheDocument();
+  expect(mockRecordingMode).toBe(false);
+});
+
+
+it('shows preparation until the stream reports known recording readiness', () => {
+  openDevice();fireEvent.click(screen.getByRole('button',{name:'Записать действия'}));
+  expect(screen.getByText(/Подготавливаем запись/)).toBeInTheDocument();
+  act(() => mockRecordingReadyObserver!(true));
+  expect(screen.queryByText(/Подготавливаем запись/)).not.toBeInTheDocument();
+  act(() => mockRecordingReadyObserver!(false));
+  expect(screen.getByText(/Подготавливаем запись/)).toBeInTheDocument();
+  fireEvent.click(screen.getByRole('button',{name:'Остановить запись'}));
+  expect(screen.queryByText(/Подготавливаем запись/)).not.toBeInTheDocument();
 });

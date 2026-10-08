@@ -223,3 +223,14 @@ it('shows a valid tree with a distinct warning when Android cleanup is unconfirm
   await screen.findByText(/1 элементов/);
   expect(screen.getByText(/Удаление временного файла дерева не подтверждено/)).toBeInTheDocument();
 });
+
+
+it('forwards explicit recording intent and readiness without dropping receipt observers', () => {
+  const command=jest.fn(),sent=jest.fn(),ready=jest.fn();
+  const view=render(<SingleDeviceStream deviceId="remote" recordingMode onRecordingControlReady={ready} onControlSent={sent} onControlCommand={command} />);
+  expect(mockStreamProps.recordingMode).toBe(true);
+  expect(mockStreamProps.onRecordingControlReady).toBe(ready);
+  view.rerender(<SingleDeviceStream deviceId="remote" recordingMode={false} onRecordingControlReady={ready} onControlSent={sent} onControlCommand={command} />);
+  expect(mockStreamProps.recordingMode).toBe(false);
+  expect(mockStreamProps.onControlCommand).toBe(command);expect(mockStreamProps.onControlSent).toBe(sent);
+});

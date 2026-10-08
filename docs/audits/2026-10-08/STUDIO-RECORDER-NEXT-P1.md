@@ -71,3 +71,10 @@ input при неизвестном ACK. XPath выбор, planned action и р�
 Не заявлены покадровая синхронизация, zero latency, rich evidence или durable
 continuous trajectory recording. [CURRENT-STATE](../../operations/CURRENT-STATE.md)
 сохраняет фактические installed/accepted границы.
+
+## Prepared implementation checkpoint
+
+Explicit recording mode, native-release readiness, bounded unknown-release
+fence and late observer preservation implemented.201 local regressions and
+TypeScript passed; installed acceptance pending.
+[Behavior, source tests and remaining task handoff](STUDIO-RECORDER-MODE.md).
