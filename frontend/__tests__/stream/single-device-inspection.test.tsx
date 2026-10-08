@@ -95,6 +95,49 @@ it('does not poll root or lose the queued pick while native input release is pen
   expect(api.post).toHaveBeenCalledTimes(1);
   expect(mockStreamProps.inspection.bounds).toEqual(snapshot().nodes[0].bounds);
 });
+it.each(['completed', 'failed'])('drains a %s tree read before enabling ordinary control, without abort or stale selection', async outcome => {
+  let resolve!: (value: unknown) => void;
+  let reject!: (reason: unknown) => void;
+  jest.mocked(api.post).mockImplementation(() => new Promise((yes, no) => { resolve = yes; reject = no; }) as never);
+  open();
+  const signal = jest.mocked(api.post).mock.calls[0][2]?.signal;
+  fireEvent.click(screen.getByRole('button', { name: 'Управление' }));
+  expect(mockStreamProps.inspection).toBeUndefined();
+  expect(signal?.aborted).toBe(false);
+  expect(mockStreamProps.readOnly).toBe(true);
+  expect(mockStreamProps.readOnlyReason).toMatch(/Завершаем чтение дерева Android/);
+  await act(async () => { if (outcome === 'completed') resolve({ data: snapshot() }); else reject(new Error('known root failure')); });
+  expect(mockStreamProps.readOnly).toBe(false);
+  expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+  expect(screen.queryByText(/1 элементов/)).not.toBeInTheDocument();
+  expect(api.post).toHaveBeenCalledTimes(1);
+});
+it('re-enters inspection during drain without overlapping reads and then obtains a new snapshot', async () => {
+  let resolve!: (value: unknown) => void;
+  jest.mocked(api.post).mockImplementationOnce(() => new Promise(yes => { resolve = yes; }) as never)
+    .mockResolvedValue({ data: snapshot() });
+  open();
+  fireEvent.click(screen.getByRole('button', { name: 'Управление' }));
+  fireEvent.click(screen.getByRole('button', { name: 'XPath-инспектор' }));
+  expect(api.post).toHaveBeenCalledTimes(1);
+  await act(async () => resolve({ data: snapshot() }));
+  await screen.findByText(/1 элементов/);
+  expect(api.post).toHaveBeenCalledTimes(2);
+});
+it('an obsolete aborted request cannot release a newer read on another device', async () => {
+  const resolve: Array<(value: unknown) => void> = [];
+  jest.mocked(api.post).mockImplementation(() => new Promise(yes => { resolve.push(yes); }) as never);
+  const view = open();
+  view.rerender(<SingleDeviceStream deviceId="other" />);
+  fireEvent.click(screen.getByText('Fixture frame'));
+  act(() => mockStreamProps.onInspectionControlReady(true));
+  expect(api.post).toHaveBeenCalledTimes(2);
+  await act(async () => resolve[0]({ data: snapshot() }));
+  fireEvent.click(screen.getByRole('button', { name: 'Управление' }));
+  expect(mockStreamProps.readOnly).toBe(true);
+  await act(async () => resolve[1]({ data: snapshot('other') }));
+  expect(mockStreamProps.readOnly).toBe(false);
+});
 it('geometry mismatch prevents picking/highlighting and retains the explicit warning', async () => {
   await loaded();
   await act(async () => mockStreamProps.onFrameDimensions({ width: 540, height: 960 }));

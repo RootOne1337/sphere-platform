@@ -44,12 +44,18 @@ export function SingleDeviceStream({ deviceId, captureEnabled = false, onControl
   const onFrame = useCallback((dimensions: StreamFrameDimensions) => {
     setFrameReport({ dimensions, deviceId, token: accessToken });
   }, [deviceId, accessToken]);
-  const invalidated = useCallback(() => {
+  const invalidated = useCallback((abortRequest = true) => {
     generation.current++;
-    controller.current?.abort();
-    controller.current = null;
+    // A mode change discards the tree, not the in-flight native read. Aborting
+    // HTTP cannot cancel Android SHELL: drain it before opening input again.
+    // Device/auth/socket invalidation still aborts and separates generations.
+    if (abortRequest) {
+      controller.current?.abort();
+      controller.current = null;
+      setPending(false);
+    }
     pendingPick.current = null;
-    setPending(false); setReport(null); select(null); setFeedback(null);
+    setReport(null); select(null); setFeedback(null);
     setInspectionControlReady(false);
   }, [select]);
   const invalidateFrame = useCallback(() => { invalidated(); setFrameReport(null); }, [invalidated]);
@@ -108,12 +114,17 @@ export function SingleDeviceStream({ deviceId, captureEnabled = false, onControl
         setAutomatic(false); pendingPick.current = null;
       }
     } finally {
-      if (ownGeneration === generation.current) { controller.current = null; setPending(false); }
+      if (controller.current === request) { controller.current = null; setPending(false); }
     }
   }, [canInspect, inspect, inspectionControlReady, frame, deviceId, accessToken, select]);
   // Mode entry, a new owned picture, or return to this visible page initiates
   // one read. Failed reads pause periodic updates instead of retrying root RPCs.
   useEffect(() => { if (inspect && visible) void refresh(); }, [inspect, visible, refresh]);
+  // Re-entering inspection while the previous mode's read drains must not
+  // overlap it, or leave the inspector empty once that stale response settles.
+  useEffect(() => {
+    if (inspect && visible && !pending && !report && !error) void refresh();
+  }, [inspect, visible, pending, report, error, refresh]);
   useEffect(() => {
     if (!inspect || !inspectionControlReady || !automatic || !visible || !canInspect || !frame || pending || error) return;
     const timer = window.setTimeout(() => { void refresh(); }, 5_000);
@@ -139,9 +150,9 @@ export function SingleDeviceStream({ deviceId, captureEnabled = false, onControl
   return <section className="min-w-0 space-y-3" aria-label="Видеопоток и инспектор Android">
     <div className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-border bg-card p-3">
       <div className="flex flex-wrap gap-2">
-        <Button variant={!inspect && !viewOnly ? 'default' : 'outline'} size="sm" aria-pressed={!inspect && !viewOnly} onClick={() => { setInspect(false); setViewOnly(false); invalidated(); }}><MousePointer2 className="mr-2 h-4 w-4" aria-hidden />Управление</Button>
-        <Button variant={viewOnly ? 'default' : 'outline'} size="sm" aria-pressed={viewOnly} onClick={() => { setInspect(false); setViewOnly(true); invalidated(); }}><Eye className="mr-2 h-4 w-4" aria-hidden />Просмотр</Button>
-        <Button variant={inspect ? 'default' : 'outline'} size="sm" disabled={!canInspect} aria-pressed={inspect} onClick={() => { if (inspect) { void refresh(); return; } invalidated(); setViewOnly(false); setInspect(true); setAutomatic(true); setError(null); }}><ScanSearch className="mr-2 h-4 w-4" aria-hidden />XPath-инспектор</Button>
+        <Button variant={!inspect && !viewOnly ? 'default' : 'outline'} size="sm" aria-pressed={!inspect && !viewOnly} onClick={() => { setInspect(false); setViewOnly(false); invalidated(false); }}><MousePointer2 className="mr-2 h-4 w-4" aria-hidden />Управление</Button>
+        <Button variant={viewOnly ? 'default' : 'outline'} size="sm" aria-pressed={viewOnly} onClick={() => { setInspect(false); setViewOnly(true); invalidated(false); }}><Eye className="mr-2 h-4 w-4" aria-hidden />Просмотр</Button>
+        <Button variant={inspect ? 'default' : 'outline'} size="sm" disabled={!canInspect} aria-pressed={inspect} onClick={() => { if (inspect) { void refresh(); return; } invalidated(false); setViewOnly(false); setInspect(true); setAutomatic(true); setError(null); }}><ScanSearch className="mr-2 h-4 w-4" aria-hidden />XPath-инспектор</Button>
       </div>
       {inspect && <div className="flex flex-wrap items-center gap-2">
         <Button variant="outline" size="sm" aria-pressed={automatic} disabled={!canInspect} onClick={() => { setAutomatic(!automatic); if (!automatic) { void refresh(); } }}>Автообновление: {automatic ? 'включено' : 'пауза'}</Button>
@@ -154,8 +165,8 @@ export function SingleDeviceStream({ deviceId, captureEnabled = false, onControl
         <DeviceStream deviceId={deviceId} enableDiagnostics enableNavigation enableStaticInput
           onControlSent={onControlSent}
           onControlCommand={onControlCommand}
-          readOnly={viewOnly || controlDisabled || !access.can('stream:control')}
-          readOnlyReason={controlDisabled ? 'Управление временно заблокировано на время проверки задания или при неподтверждённом результате.' : viewOnly ? 'Выбран режим просмотра. Для нажатий выберите «Управление».' : undefined}
+          readOnly={viewOnly || controlDisabled || !access.can('stream:control') || (!inspect && pending)}
+          readOnlyReason={controlDisabled ? 'Управление временно заблокировано на время проверки задания или при неподтверждённом результате.' : viewOnly ? 'Выбран режим просмотра. Для нажатий выберите «Управление».' : !inspect && pending ? 'Завершаем чтение дерева Android. Управление включится после ответа; действия не отправляются.' : undefined}
           onFrameDimensions={onFrame} onInspectionInvalidated={invalidateFrame}
           onInspectionControlReady={setInspectionControlReady}
           inspection={inspect ? { onPick: pick, bounds: highlight } : undefined} />
