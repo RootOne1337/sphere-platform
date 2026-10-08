@@ -9,7 +9,9 @@
 draft/queue/task/unknown guards; grants остаются запрещёнными. Stream/native
 reads прекращаются, preparation до POST отменяется. Native PNG remount больше
 не считается завершением прерванной Android-команды. Source regressions и
-nonincremental TypeScript прошли; полный frontend1909/138suites. CI/install ещё
+nonincremental TypeScript прошли; полный frontend1915/138suites. Portalled окно
+запуска тоже приостанавливается, сохраняя pending/unknown/confirmed outcome
+без скрытого redirect. CI/install ещё
 нужны. На3015 пока UI36b160f9/APIbe803773. Ledger9accepted/41open.
 [Контракт и доказательства](../audits/2026-10-09/STUDIO-PERMISSION-OUTAGE-RETENTION.md).
 

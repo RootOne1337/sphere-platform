@@ -39,6 +39,18 @@ const MOCK_GROUP = {
 describe('useGroups', () => {
   beforeEach(() => jest.clearAllMocks());
 
+  it('does not read or poll groups until the caller admits access', async () => {
+    mockApi.get.mockResolvedValue({ data: [MOCK_GROUP] });
+    let enabled = false;
+    const view = renderQueryHook(() => useGroups(enabled));
+    expect(mockApi.get).not.toHaveBeenCalled();
+    enabled = true; view.rerender();
+    await waitFor(() => expect(view.result.current.isSuccess).toBe(true));
+    expect(mockApi.get).toHaveBeenCalledTimes(1);
+    enabled = false; view.rerender();
+    expect(view.result.current.fetchStatus).toBe('idle');
+  });
+
   it('загружает список групп', async () => {
     mockApi.get.mockResolvedValueOnce({ data: [MOCK_GROUP] });
 

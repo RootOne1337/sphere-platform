@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { RunScriptModal } from '@/components/sphere/RunScriptModal';
 import { useDevices } from '@/lib/hooks/useDevices';
 
@@ -63,6 +63,52 @@ beforeEach(() => {
   jest.clearAllMocks();
   mockCreateTask.mockResolvedValue({ id: 'task-1' });
   mockStartBatch.mockResolvedValue({ id: 'batch-1' });
+});
+
+const versionedModal = { scriptId: 'script-1', scriptName: 'Smoke script', open: true, requireVersion: true,
+  expectedVersion: { id: 'version-3', version: 3, dag_hash: 'a'.repeat(64) }, onClose: jest.fn() };
+
+it('hides portalled controls and suspends fleet reads without resetting selection options', () => {
+  const view = renderModal(1, 1, true);
+  fireEvent.change(screen.getByLabelText('Приоритет (1–10)'), { target: { value: '8' } });
+  view.rerender(<RunScriptModal {...versionedModal} {...({ suspended: true } as any)} />);
+  expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+  expect(useDevices).toHaveBeenLastCalledWith(expect.any(Object), false);
+  expect(mockCreateTask).not.toHaveBeenCalled();
+  view.rerender(<RunScriptModal {...versionedModal} {...({ suspended: false } as any)} />);
+  expect(screen.getByLabelText('Приоритет (1–10)')).toHaveValue(8);
+  expect(screen.getByRole('button', { name: 'Запустить на 1 уст.' })).toBeEnabled();
+});
+
+it.each([1, 2])('retains a confirmed %i-target receipt received while hidden without navigating or resubmitting', async count => {
+  let resolve!: (value: unknown) => void;
+  const mutation = count === 1 ? mockCreateTask : mockStartBatch;
+  mutation.mockReturnValueOnce(new Promise(done => { resolve = done; }));
+  const view = renderModal(count, count, true);
+  fireEvent.click(screen.getByRole('button', { name: `Запустить на ${count} уст.` }));
+  view.rerender(<RunScriptModal {...versionedModal} {...({ suspended: true } as any)} />);
+  await act(async () => resolve(count === 1
+    ? { id: 'task-1', script_id: 'script-1', device_id: 'device-1', script_version_id: 'version-3' }
+    : { id: 'batch-1', script_id: 'script-1', script_version_id: 'version-3', total: 2 }));
+  expect(mockPush).not.toHaveBeenCalled();
+  view.rerender(<RunScriptModal {...versionedModal} {...({ suspended: false } as any)} />);
+  expect(screen.getByRole('button', { name: `Запустить на ${count} уст.` })).toBeDisabled();
+  expect(screen.getByRole('link', { name: 'Открыть созданное задание' })).toHaveAttribute('href', count === 1 ? '/tasks/task-1' : '/tasks?batch_id=batch-1');
+  expect(mutation).toHaveBeenCalledTimes(1);
+});
+
+it('retains unknown POST admission through portal suspension and recovery', async () => {
+  let reject!: (value: unknown) => void;
+  mockCreateTask.mockReturnValueOnce(new Promise((_done, failed) => { reject = failed; }));
+  const view = renderModal(1, 1, true);
+  fireEvent.click(screen.getByRole('button', { name: 'Запустить на 1 уст.' }));
+  view.rerender(<RunScriptModal {...versionedModal} {...({ suspended: true } as any)} />);
+  await act(async () => reject(new Error('Network result unknown')));
+  view.rerender(<RunScriptModal {...versionedModal} {...({ suspended: false } as any)} />);
+  expect(screen.getByRole('alert')).toHaveTextContent('Результат запуска неизвестен');
+  expect(screen.getByRole('button', { name: 'Запустить на 1 уст.' })).toBeDisabled();
+  expect(mockCreateTask).toHaveBeenCalledTimes(1);
+  expect(mockPush).not.toHaveBeenCalled();
 });
 
 it('blocks an incomplete all-device scope instead of silently starting a partial batch', () => {

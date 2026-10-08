@@ -513,8 +513,8 @@ function BuilderInner({ editId, storageKey }: { editId: string | null; storageKe
         </aside>}
     </div>
     <footer className="flex shrink-0 flex-wrap items-center justify-between gap-x-4 gap-y-1 border-t bg-card px-4 py-2 text-[10px] text-muted-foreground"><span>DAG 1.0 · {nodes.length} шагов · {edges.length} связей {mode === 'source' ? '(последний применённый граф)' : ''}</span><span>Undo {history.length}/20 · {nodePending ? 'Параметры не применены' : currentReceipt ? 'Исходник проверен сервером' : 'Проверка структуры не выполнена'}</span></footer>
-    <StudioLeaveDialog state={leaveState} onDecision={decideLeave} onExport={() => { try { exportFile(); } catch (reason) { setErrors(errorMessage(reason)); } }} />
-    {runOpen && editId && expectedVersion && <RunScriptModal open scriptId={editId} scriptName={document.name} expectedVersion={expectedVersion} requireVersion initialTargetMode="select" onClose={() => setRunOpen(false)} />}
+    <StudioLeaveDialog state={canRead ? leaveState : null} onDecision={decideLeave} onExport={() => { try { exportFile(); } catch (reason) { setErrors(errorMessage(reason)); } }} />
+    {runOpen && editId && expectedVersion && <RunScriptModal open suspended={!canRead || !access.can('script:execute')} scriptId={editId} scriptName={document.name} expectedVersion={expectedVersion} requireVersion initialTargetMode="select" onClose={() => setRunOpen(false)} />}
   </section>;
 }
 

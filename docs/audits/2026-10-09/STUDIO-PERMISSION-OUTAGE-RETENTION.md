@@ -70,6 +70,30 @@ Abort HTTP не отменяет уже отправленную Android-ком�
 PNG; только завершение этого запроса снимает fence для следующей попытки.
 Неуспешный drain блокирует текущую попытку, не создавая task POST.
 
+## Portalled модальные окна
+
+Финальная проверка обнаружила дополнительную границу: Radix portal окна запуска
+находится вне скрытого контейнера Studio. Одного `hidden/inert` у редактора для
+него недостаточно. Первое исправление7a3820f4 поэтому ещё не устанавливалось.
+
+RunScriptModal получает explicit `suspended` от Builder. Временный отказ закрывает
+portalled UI и новые group/fleet reads, сохраняя selection/options, pending POST
+и unknown guard в том же компоненте. Handler дополнительно проверяет текущее
+admission перед отправкой. Успешный version/target-checked receipt, пришедший
+во время outage, сохраняет ссылку на созданное задание/пакет, блокирует повтор
+и не перенаправляет скрытую страницу. После восстановления переход явный.
+Неизвестный POST остаётся неизвестным; автоматического повтора нет. Leave portal
+скрывается уже в render, а pending navigation intent завершается отказом.
+
+Modal baseline: **3 failed / 11 passed**. Новый green набор с Builder/group-hook:
+**72 passed / 3 suites**. Подтверждены обычное скрытие портала, сохранность
+приоритета, task/batch success during outage, unknown POST и передача suspended
+родителем. Полный final прогон после portal fix указан в следующем checkpoint.
+
+Local checkpoint: **1915 passed / 138 suites, 75.347 s**; nonincremental
+TypeScript прошёл. После дополнительного render fence leave portal отдельно
+повторён Builder: **50 passed**. Exact-source CI и установка ещё нужны.
+
 ## Проверки и границы доказательств
 
 Baseline route test: **1 failed / 32 passed** на прежней boundary. Первоначальный

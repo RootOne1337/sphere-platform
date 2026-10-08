@@ -23,9 +23,10 @@ function isGroup(value: unknown): value is Group {
     && Number.isSafeInteger(group.online_devices) && group.online_devices >= 0 && group.online_devices <= group.total_devices;
 }
 
-export function useGroups() {
+export function useGroups(enabled = true) {
   return useQuery<Group[]>({
     queryKey: ['groups'],
+    enabled,
     queryFn: async ({ signal }) => {
       const { data } = await api.get('/groups', { signal });
       if (!Array.isArray(data) || !data.every(isGroup)) throw new Error('Состав каталога групп не подтверждён сервером.');

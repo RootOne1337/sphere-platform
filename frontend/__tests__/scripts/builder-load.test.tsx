@@ -23,7 +23,8 @@ let mockCanRead = true;
 let mockSessionVersion = 0;
 jest.mock('@/src/features/access/Capabilities', () => ({ useCapabilities: () => ({ pending: false, can: (permission: string) => permission === 'script:read' ? mockCanRead : mockCanWrite }) }));
 jest.mock('@/lib/store', () => ({ useAuthStore: (select: (state: unknown) => unknown) => select({ user: { id: 'operator', org_id: 'org-a' }, sessionVersion: mockSessionVersion }) }));
-jest.mock('@/components/sphere/RunScriptModal', () => ({ RunScriptModal: () => null }));
+const mockRunModal = jest.fn();
+jest.mock('@/components/sphere/RunScriptModal', () => ({ RunScriptModal: (props: unknown) => { mockRunModal(props); return null; } }));
 const mockWorkbenchGuard = jest.fn((_silent?: boolean, _confirmDiscard?: boolean) => true);
 jest.mock('@/src/features/scripts/studio/DeviceWorkbench', () => ({ DeviceWorkbench: ({ registerCloseGuard, onExecution }: { registerCloseGuard: (guard: ((silent?: boolean) => boolean) | null) => void; onExecution: (last: string | null, logs: { node_id: string; success: boolean }[]) => void }) => {
   const React = jest.requireActual('react');
@@ -96,6 +97,22 @@ it('keeps an unpublished document and laboratory mounted but hidden while permis
   expect(screen.getByText('Owned workbench')).toBeVisible();
   expect(screen.getByLabelText('Название сценария')).toHaveValue('Unsaved outage draft');
   expect(api.get).toHaveBeenCalledTimes(1);
+});
+
+it('suspends an already opened portalled launch modal instead of unmounting its pending receipt', async () => {
+  const response = payload();
+  Object.assign(response.data.current_version, { id: 'script-a-version', version: 1, dag_hash: 'a'.repeat(64) });
+  jest.mocked(api.get).mockResolvedValue(response as never);
+  const view = render(<ScriptBuilderPage />); await screen.findByText('script-a-start');
+  fireEvent.click(screen.getByRole('button', { name: 'Запустить версию' }));
+  expect(mockRunModal).toHaveBeenLastCalledWith(expect.objectContaining({ open: true, suspended: false }));
+  mockCanRead = false; mockCanWrite = false;
+  view.rerender(<ScriptBuilderPage />);
+  expect(mockRunModal).toHaveBeenLastCalledWith(expect.objectContaining({ open: true, suspended: true }));
+  mockCanRead = true; mockCanWrite = true;
+  view.rerender(<ScriptBuilderPage />);
+  expect(mockRunModal).toHaveBeenLastCalledWith(expect.objectContaining({ open: true, suspended: false }));
+  expect(api.post).not.toHaveBeenCalled();
 });
 
 it('protects dirty graph/source through an outside navigation link and honors explicit cancellation', async () => {

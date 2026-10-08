@@ -46,6 +46,8 @@ interface RunScriptModalProps {
   expectedVersion?: { id: string; version: number; dag_hash: string | null };
   requireVersion?: boolean;
   initialTargetMode?: TargetMode;
+  /** Keep pending/unknown results in memory while retiring all portalled UI. */
+  suspended?: boolean;
 }
 
 // ─── Component ──────────────────────────────────────────────────────────────
@@ -58,6 +60,7 @@ export function RunScriptModal({
   expectedVersion,
   requireVersion = false,
   initialTargetMode = 'all',
+  suspended = false,
 }: RunScriptModalProps) {
   const router = useRouter();
   const qc = useQueryClient();
@@ -79,6 +82,8 @@ export function RunScriptModal({
   const [pending, setPending] = useState(false);
   const [uncertain, setUncertain] = useState(false);
   const busy = useRef(false);
+  const suspendedRef = useRef(suspended); suspendedRef.current = suspended;
+  const [completedDestination, setCompletedDestination] = useState<string | null>(null);
   const live = useRef(true);
   useEffect(() => { live.current = true; return () => { live.current = false; }; }, []);
   const versionUnavailable = requireVersion && (!expectedVersion?.id || !expectedVersion.dag_hash);
@@ -89,12 +94,12 @@ export function RunScriptModal({
   }, [deviceSearch]);
 
   // Data fetching
-  const { data: groups } = useGroups();
+  const { data: groups } = useGroups(open && !suspended);
   const { data: allDevicesData, isLoading: devicesLoading, isError: devicesLoadError } = useDevices({
     page_size: MAX_BATCH_TARGETS,
     group_id: targetMode === 'group' && selectedGroupId ? selectedGroupId : undefined,
     search: targetMode === 'select' && debouncedDeviceSearch ? debouncedDeviceSearch : undefined,
-  });
+  }, open && !suspended);
   const allDevices: Device[] = allDevicesData?.items ?? [];
 
   const createTask = useCreateTask();
@@ -133,7 +138,7 @@ export function RunScriptModal({
   // ── Submit ───────────────────────────────────────────────────────────────
 
   async function handleRun() {
-    if (busy.current || uncertain || versionUnavailable) return;
+    if (suspendedRef.current || busy.current || uncertain || completedDestination || versionUnavailable) return;
     setError(null);
     if (devicesLoading || devicesLoadError || scopeIsIncomplete) {
       setError('Список устройств неполный или недоступен. Уточните цель и повторите после загрузки полного списка.');
@@ -162,6 +167,7 @@ export function RunScriptModal({
         });
         if (expectedVersion && (task?.script_version_id !== expectedVersion.id || task.script_id !== scriptId || task.device_id !== deviceIds[0])) throw new Error('Unconfirmed task receipt');
         if (!live.current) return;
+        if (suspendedRef.current) { setCompletedDestination(`/tasks/${task.id}`); return; }
         qc.invalidateQueries({ queryKey: ['tasks'] });
         onClose();
         router.push(`/tasks/${task.id}`);
@@ -180,6 +186,7 @@ export function RunScriptModal({
         });
         if (expectedVersion && (batch.script_version_id !== expectedVersion.id || batch.script_id !== scriptId || batch.total !== deviceIds.length)) throw new Error('Unconfirmed batch receipt');
         if (!live.current) return;
+        if (suspendedRef.current) { setCompletedDestination(`/tasks?batch_id=${batch.id}`); return; }
         qc.invalidateQueries({ queryKey: ['tasks'] });
         onClose();
         router.push(`/tasks?batch_id=${batch.id}`);
@@ -209,7 +216,7 @@ export function RunScriptModal({
   // ── Render ───────────────────────────────────────────────────────────────
 
   return (
-    <Dialog open={open} onOpenChange={(v) => { if (!v && !busy.current) onClose(); }}>
+    <Dialog open={open && !suspended} onOpenChange={(v) => { if (!v && !suspendedRef.current && !busy.current) onClose(); }}>
       <DialogContent className="max-w-xl">
         <DialogHeader>
           <DialogTitle className="flex min-w-0 items-start gap-2">
@@ -225,6 +232,7 @@ export function RunScriptModal({
           {expectedVersion && <div className="space-y-1 rounded-lg border bg-muted/30 p-3 text-sm"><p className="font-medium">Версия для запуска: v{expectedVersion.version}</p><p className="break-all font-mono text-xs">SHA-256: {expectedVersion.dag_hash ?? 'Не сообщён'}</p><p className="text-xs text-muted-foreground">Сервер проверит эту версию до создания заданий. При изменении сценария запуск будет отклонён.</p></div>}
           {versionUnavailable && <p role="alert" className="text-sm text-destructive">Версия сценария не подтверждена. Обновите каталог перед запуском.</p>}
           {uncertain && <Link className="text-sm text-primary underline" href="/tasks">Открыть журнал заданий</Link>}
+          {completedDestination && <div role="status" className="space-y-2 rounded-lg border border-emerald-500/30 p-3 text-sm"><p>Запуск подтверждён сервером во время проверки доступа. Повторная отправка заблокирована.</p><Link className="text-primary underline" href={completedDestination}>Открыть созданное задание</Link></div>}
           {/* ── Target mode ─────────────────────────────────────────── */}
           <div className="space-y-2">
             <Label className="text-sm font-medium">Целевые устройства</Label>
@@ -415,7 +423,7 @@ export function RunScriptModal({
           <Button
             onClick={handleRun}
             disabled={
-              isSubmitting || uncertain || versionUnavailable ||
+              suspended || isSubmitting || uncertain || Boolean(completedDestination) || versionUnavailable ||
               (targetMode === 'group' && !selectedGroupId) ||
               (targetMode === 'select' && selectedDeviceIds.size === 0) ||
               devicesLoading ||

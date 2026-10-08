@@ -27,6 +27,9 @@ Retention fix подготовлен: редактор/guards скрыто со�
 outage той же сессии, без использования старых grants или повторения команд.
 Stream/native capture retirement и запрет запуска после unconfirmed capture
 проверены исходниками; установка ещё нужна.
+Portalled окно массового запуска скрывается при outage, сохраняя выбор и
+pending/unknown result. Receipt, полученный в это время, после восстановления
+открывается явной ссылкой и не допускает повторной отправки.
 [Outage contract](../audits/2026-10-09/STUDIO-PERMISSION-OUTAGE-RETENTION.md).
 [Latest installed navigation](../audits/2026-10-07/STUDIO-NAVIGATION-PRESERVATION.md).
 Malformed WS input не подставляет координаты0/0, отказ отделён от video failure.
