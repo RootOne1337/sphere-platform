@@ -1,7 +1,11 @@
 # Studio: следующая работа по записи и живому управлению
 
-8 октября 2026, Asia/Yekaterinburg. **Этап1 установлен / остальное OPEN / P1**. Explicit recorder mode принят
-наPH011; богатая запись и task-launch handoff ещё открыты.
+8 октября 2026, Asia/Yekaterinburg. **Recorder и viewer-local task handoff установлены / P1 OPEN**.
+Explicit recorder mode принят наPH011; task preparation5382fe4 проверен двумя
+реальными3-step tasks. Богатая запись/global lease открыты. После простоя
+повторился native receipt timeout; этот P1 важнее расширения визуальных форм.
+[Приёмка task preparation](STUDIO-TASK-INSTALLED-ACCEPTANCE.md) ·
+[Idle failure](STUDIO-IDLE-RECEIPT-FOLLOWUP.md).
 Канонический audit ledger остаётся9accepted/41open; это уточнение существующих
 SF26-05/06, а не новая заявка о закрытии всей автоматизации.
 
@@ -65,10 +69,12 @@ input при неизвестном ACK. XPath выбор, planned action и р�
 ## Последовательность
 
 1. Explicit recorder/observer handoff и установленный normal-control canary.
-2. Versioned observation manifest + native snapshot bundle, storage/RBAC limits.
-3. Review UI для XPath/crop/pixel с подтверждённой provenance каждой части.
-4. Playback корреляция node attempt/input/frame с измеренными clock границами.
-5. Remote/fleet faults и bounded soak, затем массовое включение по capability.
+2. Viewer-local task preparation и конечная canary — приняты отдельно; далее
+   bounded диагностика повторного idle receipt loss, global ownership и unknown POST.
+3. Versioned observation manifest + native snapshot bundle, storage/RBAC limits.
+4. Review UI для XPath/crop/pixel с подтверждённой provenance каждой части.
+5. Playback корреляция node attempt/input/frame с измеренными clock границами.
+6. Remote/fleet faults и bounded soak, затем массовое включение по capability.
 
 Не заявлены покадровая синхронизация, zero latency, rich evidence или durable
 continuous trajectory recording. [CURRENT-STATE](../../operations/CURRENT-STATE.md)
@@ -87,3 +93,12 @@ UIa8945e4 installed; normal native View gesture, discrete recording, late
 Home ACK after Stop and return to READY verified on PH011. Source tests and
 finite installed evidence remain separate. Task-launch handoff/rich recorder
 stay OPEN. [Installed acceptance](STUDIO-RECORDER-INSTALLED-ACCEPTANCE.md).
+
+## Installed task checkpoint07:49–08:06UTC
+
+UI5382fe4: one pinned POST follows known owned release and read/capture drain;
+failed/aborted preparation is distinct from an uncertain POST result.237 local
+regressions and all4 hosted workflows passed. Two real saved-v1 tasks completed;
+second root cleanup finished32ms before task creation. A later idle timeout
+required explicit recovery; finite240/240service ACK timings did not explain it.
+Global ownership, durable reconciliation and rich observations remain OPEN.

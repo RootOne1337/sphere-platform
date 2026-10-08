@@ -1,8 +1,9 @@
 # Studio: handoff from manual input to a saved task
 
-8 October 2026. Source implemented and locally tested; installation and real
-task canary pending. The installed UI remains `a8945e4`, API `9610523`,
-PH011 pilot APK 10249. This is a continuation of SF26-05/06, not closure of the
+8 October 2026. Source `5382fe4` installed on 3015 at 07:49 UTC; two real PH011
+task canaries completed. API `9610523` and pilot APK 10249 preserved.
+The task transition is accepted within this viewer; a later idle receipt failure
+is separately OPEN. This is a continuation of SF26-05/06, not closure of the
 product ledger (9 accepted / 41 open).
 
 ## Reproduced source defect
@@ -64,8 +65,13 @@ version during preparation. Final focused checks passed **237 tests / 7 suites**
 
 Nonincremental TypeScript passed after the final source edit. Local
 socket/decoder/native receipts are fixtures.
-Hosted exact-source build/image admission and a real installed browser→task
-canary are required before this document can claim installed acceptance.
+All four exact-source hosted workflows passed. Frontend 1884 tests / 138 suites,
+types, production build and image admission passed; backend 3337 passed /
+37 skipped / 229 subtests. On the installed build, native-control→task and
+pending-hierarchy→task both completed three steps. The second hierarchy's server
+cleanup/lock release preceded task creation by 32 ms. This proves that finite
+transition, not universal task/native exclusivity.
+[Installed evidence and follow-up failure](STUDIO-TASK-INSTALLED-ACCEPTANCE.md).
 
 ## Boundaries still open
 
@@ -77,7 +83,10 @@ frame-atomic playback is inferred from the readiness callback.
 
 Rich observation bundles, trajectory recording, fleet fault/soak and durable
 launch reconciliation remain separate audit work. Native root exit 1 and host
-storage/corruption incidents remain unresolved.
+storage/corruption incidents remain unresolved. A later no-touch
+`native_receipt_timeout` required explicit recovery; its cause is not closed
+by the successful task transitions or the finite direct service-ACK timing run.
+[Idle follow-up](STUDIO-IDLE-RECEIPT-FOLLOWUP.md).
 
 [Recorder implementation](STUDIO-RECORDER-MODE.md) ·
 [Installed recorder acceptance](STUDIO-RECORDER-INSTALLED-ACCEPTANCE.md) ·

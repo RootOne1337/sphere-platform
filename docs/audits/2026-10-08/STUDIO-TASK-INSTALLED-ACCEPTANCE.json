@@ -1,0 +1,250 @@
+{
+  "schemaVersion": 1,
+  "sourceRevision": "5382fe4bbabbe46b29eea081a8e6916afe1181bd",
+  "observationWindowUtc": {
+    "from": "2026-10-08T07:49:15Z",
+    "to": "2026-10-08T08:06:00Z"
+  },
+  "installedTransitionAccepted": true,
+  "wholeSessionFaultFree": false,
+  "localChecks": {
+    "passed": 237,
+    "suites": 7,
+    "nonincrementalTypeScriptPassed": true
+  },
+  "exactSourceCi": {
+    "allFourSuccessful": true,
+    "frontend": {
+      "runId": 37744953642,
+      "passed": 1884,
+      "suites": 138,
+      "typesPassed": true,
+      "buildPassed": true,
+      "packagedRoutes": 26,
+      "assets": 73,
+      "imageAdmissionPassed": true
+    },
+    "backend": {
+      "runId": 37744953692,
+      "passed": 3337,
+      "skipped": 37,
+      "warnings": 2,
+      "subtestsPassed": 229,
+      "seconds": 721.32
+    },
+    "android": {
+      "runId": 37744953648,
+      "conclusion": "success"
+    },
+    "preview": {
+      "runId": 37744953751,
+      "conclusion": "success"
+    }
+  },
+  "runtime": {
+    "installedAtUtc": "2026-10-08T07:49:15.183680378Z",
+    "frontendCiImageConfig": "sha256:dbc861ad1600ded35b446dcd1558605722bb3f4678f06697817a4a8eb54b051d",
+    "frontendArchiveBytes": 120866427,
+    "frontendLoadedImage": "sha256:573ddbc9293450f83c3c604ffd13424a6a580e063a716b3d89806dd6078d92f7",
+    "frontendContainer": "67f6b80267612212c2e7f758229a144bbd6e9c5ead302cb58874465e839ac698",
+    "frontendAndApiHealthyReadback": true,
+    "apiSourcePreserved": "961052334b99f9a27fa292f5217d5d0130dd6094",
+    "otherContainersPreserved": 45,
+    "schemaMigrationPerformed": false,
+    "otaCatalogSha256": "5d5dcb5521277b51f366ea5370a2f7df5fd62696de0d5b7b86a56b443b03af10",
+    "apkDeployed": false,
+    "ph011VersionCodePreserved": 10249
+  },
+  "browser": {
+    "script": "Studio canary 20261006-0227",
+    "savedVersion": 1,
+    "steps": 3,
+    "edges": 2,
+    "firstTask": {
+      "id": "8b379054-bc3e-4d05-8d2e-16e82bcb34fe",
+      "startedFromNativeReady": true,
+      "preparationVisible": true,
+      "state": "completed",
+      "reports": 3,
+      "controlReturnedReady": true
+    },
+    "secondTask": {
+      "id": "1154e45e-96dd-46d7-9bd9-c985e24e4432",
+      "startedDuringHierarchyRead": true,
+      "preparationVisibleBeforeCreation": true,
+      "newReadsAndInputLocked": true,
+      "state": "completed",
+      "reports": 3,
+      "sleepReportedMs": 2004,
+      "rootCleanupPrecededTaskCreationByMsRounded": 32
+    },
+    "frameAtomicPlayback": false,
+    "desktopViewport": [
+      1440,
+      1000
+    ],
+    "mobileViewport": [
+      390,
+      844
+    ],
+    "mobileDocumentWidth": 390,
+    "mobileBodyWidth": 390,
+    "laterIdleReceiptFailureObserved": true,
+    "idleFailureCode": "native_receipt_timeout",
+    "explicitRecoveryReturnedReady": true,
+    "displayedRecoveredServiceReceiptMs": 259
+  },
+  "independentServerEvents": {
+    "source": "bounded installed API container logs",
+    "records": [
+      {
+        "timestamp": "2026-10-08T07:51:13.532879Z",
+        "event": "task.created",
+        "task_id": "8b379054-bc3e-4d05-8d2e-16e82bcb34fe"
+      },
+      {
+        "timestamp": "2026-10-08T07:51:16.078131Z",
+        "event": "task.assignment_sent",
+        "task_id": "8b379054-bc3e-4d05-8d2e-16e82bcb34fe"
+      },
+      {
+        "timestamp": "2026-10-08T07:51:18.350884Z",
+        "event": "task.completed",
+        "task_id": "8b379054-bc3e-4d05-8d2e-16e82bcb34fe",
+        "success": true
+      },
+      {
+        "timestamp": "2026-10-08T07:53:08.421286Z",
+        "event": "task.created",
+        "task_id": "1154e45e-96dd-46d7-9bd9-c985e24e4432"
+      },
+      {
+        "timestamp": "2026-10-08T07:53:11.176730Z",
+        "event": "task.assignment_sent",
+        "task_id": "1154e45e-96dd-46d7-9bd9-c985e24e4432"
+      },
+      {
+        "timestamp": "2026-10-08T07:53:13.668274Z",
+        "event": "task.completed",
+        "task_id": "1154e45e-96dd-46d7-9bd9-c985e24e4432",
+        "success": true
+      }
+    ],
+    "inspectionBeforeSecondTask": [
+      {
+        "timestamp": "2026-10-08T07:53:08.389375Z",
+        "event": "ui_inspection_finished",
+        "snapshot_id": "0a4530e4cedf415c8c0698e9aa73846a",
+        "status": 200,
+        "failed_stage": null,
+        "reason": null,
+        "native_exit_code": null,
+        "elapsed_ms": 3214,
+        "rpc_count": 5,
+        "cleanup_confirmed": true,
+        "lock_release_confirmed": true
+      }
+    ],
+    "limitations": "Task lifecycle only; no native release ordering is inferred from these events."
+  },
+  "idleTiming": {
+    "startUtc": "2026-10-08T08:04:58.531647+00:00",
+    "endUtc": "2026-10-08T08:05:59.955025+00:00",
+    "state": "completed",
+    "device": "414ce0e9-4b93-4f96-b9ca-ee675f53835e",
+    "maximumSeconds": 60,
+    "lastPhase": "service_heartbeats",
+    "ownedBinaryBeforeProbe": true,
+    "touchesSent": 0,
+    "heartbeatIntervalMs": 250,
+    "heartbeatsSent": 240,
+    "receipts": 240,
+    "over500Ms": 0,
+    "maximumRoundTripMs": 461.92,
+    "medianRoundTripMs": 258.37,
+    "p95RoundTripMs": 264.77,
+    "stages": [
+      {
+        "stage": "startup",
+        "status": 0,
+        "sequence": 0,
+        "atMs": 961
+      },
+      {
+        "stage": "release",
+        "status": 3,
+        "sequence": 0,
+        "atMs": 61245
+      }
+    ],
+    "errors": [],
+    "limitations": [
+      "direct WebSocket service-only timings; not browser timer scheduling",
+      "does not recreate the viewer controller 500ms retirement policy",
+      "not input-to-picture latency or a fleet SLO"
+    ]
+  },
+  "screenshots": [
+    {
+      "path": "assets/task-handoff/native-transition.png",
+      "bytes": 109715,
+      "sha256": "cf8fc76648509f086c9c6c0fc30e228292c7080e726f7bd27c023503bbd004bd",
+      "source": "fresh direct CUA tab screenshot"
+    },
+    {
+      "path": "assets/task-handoff/hierarchy-preparation.png",
+      "bytes": 107883,
+      "sha256": "58c58832b5de53968c56aa20a3d841e6fa13cf87dfeb02796c1e58d1a61ace26",
+      "source": "fresh direct CUA tab screenshot"
+    },
+    {
+      "path": "assets/task-handoff/hierarchy-completed.png",
+      "bytes": 121358,
+      "sha256": "afb278389b5c34773f934559726bb7e5539eed3a02b22f0e5b5f9d12e90fd173",
+      "source": "fresh direct CUA tab screenshot"
+    },
+    {
+      "path": "assets/task-handoff/mobile-laboratory.png",
+      "bytes": 37859,
+      "sha256": "62e94f91ed11d17e308e84a106f4cbdd79df30abc662889523f44cecae0632ff",
+      "source": "fresh direct CUA tab screenshot"
+    },
+    {
+      "path": "assets/task-handoff/mobile-completed.png",
+      "bytes": 52694,
+      "sha256": "1560253e7d2a584c5c0fd889a3b3677a8af76ca0732ef5355a485f8597ed93a8",
+      "source": "fresh direct CUA tab screenshot"
+    },
+    {
+      "path": "assets/task-handoff/idle-failure.png",
+      "bytes": 107118,
+      "sha256": "d59df02e1914b61fb8ff407671326ec287de888b2c66761bb66d9272a9d90b8b",
+      "source": "fresh direct CUA tab screenshot"
+    }
+  ],
+  "cleanup": {
+    "finalMode": "view",
+    "recordingQueueEntries": 0,
+    "graphChanged": false,
+    "versionSaved": false,
+    "twoAuditTaskRecordsRetained": true,
+    "receiverInstalled": false,
+    "viewportOverrideResetCalled": true,
+    "timingProbeNativeRelease": 3
+  },
+  "notAccepted": [
+    "Global distributed task/native lease",
+    "Unknown POST durable reconciliation",
+    "Cause of idle native receipt loss",
+    "Rich trajectory XPath PNG crop pixel recording",
+    "Frame atomic playback or input to picture latency SLO",
+    "Remote fleet fault soak",
+    "Historical native root exit 1 cause",
+    "Host storage writer attribution",
+    "Host Git damage cause"
+  ],
+  "ledger": {
+    "accepted": 9,
+    "open": 41
+  }
+}

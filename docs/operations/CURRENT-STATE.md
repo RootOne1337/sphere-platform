@@ -4,6 +4,23 @@
 **Область:** исходники и документация ветки PR #19, записанные runtime-наблюдения, Android APK и готовность следующего прогона.<br />
 **Канонический документ текущего состояния:** этот файл. Исторические отчёты ниже сохраняют исходные даты и факты.
 
+**8 октября, 07:49–08:06 UTC — Studio UI `5382fe4` установлен на3015.**
+API `9610523`, PH011 APK10249, schema и OTA сохранены;45 других контейнеров
+не заменены. Запуск теперь ждёт known native release и завершения текущего
+XPath/native capture; отказ до POST сообщает, что задания нет, неизвестный
+POST не повторяется.237 local regressions/7suites и TypeScript прошли.
+Все4 exact-source CI green: frontend1884/138suites, backend3337passed/37skipped/
+229subtests, Android и preview. Две реальные saved-v1 canary выполнили3шага:
+из native READY и во время root read. Сервер подтвердил cleanup/lock release
+дерева за32ms до создания второго задания. Mobile390 без horizontal overflow;
+View/queue0/graph3/2 сохранены, viewport override reset.
+После простоя отдельно возник `native_receipt_timeout`; explicit recovery
+вернул READY.60s direct service-only probe:240/240ACK, p95≈265ms/max≈462ms,
+0touches, native RELEASE3. Он не объясняет browser idle failure.
+Idle loss, global task/native lease, rich recording, root exit1 и storage OPEN;
+ledger9accepted/41open. [Приёмка запуска](../audits/2026-10-08/STUDIO-TASK-INSTALLED-ACCEPTANCE.md) ·
+[Приоритетный сбой простоя](../audits/2026-10-08/STUDIO-IDLE-RECEIPT-FOLLOWUP.md).
+
 **8 октября, 07:10–07:15 UTC — Studio UI `a8945e4` установлен на3015.**
 API `9610523`, PH011 APK10249 сохранены. Normal Studio Control теперь continuous
 READY, независимо от callbacks записи: Android View подтвердил DOWN1/MOVE4/UP1/

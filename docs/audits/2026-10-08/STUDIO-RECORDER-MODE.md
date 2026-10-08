@@ -42,11 +42,13 @@ continuous trajectory recording, native PNG/XPath/crop/pixel evidence bundles
 or frame-synchronous playback. Those remain in
 [recorder roadmap](STUDIO-RECORDER-NEXT-P1.md).
 
-The task-launch path also needs a separate audited handoff: creating a task
-currently sets a read-only gate while the request is submitted, but does not
-await this viewer's native release before task creation. A pending launch or
-unknown outcome must never be replayed. That boundary is OPEN; it is not
-claimed as covered by the recorder mode fix.
+At this recorder checkpoint the task-launch path still needed a separate audited
+handoff: it set a read-only gate while submitting, without awaiting native release.
+The later5382fe4 source waits for this viewer's known release and current root/
+capture drain; two installed task canaries passed. That is separate from this
+recorder change: [task implementation](STUDIO-TASK-CONTROL-HANDOFF.md) and
+[installed evidence](STUDIO-TASK-INSTALLED-ACCEPTANCE.md). Distributed ownership,
+unknown POST reconciliation and subsequent idle receipt loss remain OPEN.
 
 SF26-05/06 and ledger9accepted/41open remain unchanged until their full
 acceptance criteria are met. Root SHELL exit1 and host storage incidents OPEN.
