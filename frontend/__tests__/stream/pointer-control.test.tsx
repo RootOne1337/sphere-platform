@@ -178,6 +178,27 @@ it('recording does not silently turn live motion into a successful reusable swip
   expect(view.getByText(/Запись использует отдельные завершённые действия/)).toBeInTheDocument();
   view.unmount();
 });
+it('reconciles one idle heartbeat delay only after native release without replaying input', () => {
+  const view = readyContinuous();
+  for (let i = 0; i < 4; i++) act(() => jest.advanceTimersByTime(250));
+  expect(view.sent().filter(x => x.type === 'touch_close')).toHaveLength(1);
+  expect(view.sent().filter(x => x.type === 'touch_probe')).toHaveLength(1);
+  expect(view.commands()).toEqual([]);
+  view.status(0, 3, 'release');
+  expect(view.sent().filter(x => x.type === 'touch_probe')).toHaveLength(2);
+  view.receive({ type: 'touch_capability', capture_epoch: TOUCH_EPOCH, frame_width: 1280, frame_height: 720 });
+  view.receive({ type: 'touch_session', session_id: 'second_session_fixture', owner: 'second_owner_fixture',
+    capture_epoch: TOUCH_EPOCH, frame_width: 1280, frame_height: 720 });
+  view.receive({ type: 'continuous_input_status', session_id: 'second_session_fixture', owner: 'second_owner_fixture',
+    capture_epoch: TOUCH_EPOCH, sequence: 0, status: 0, stage: 'startup', origin: 'injector', device_uptime_ms: 200 });
+  expect(view.getByText(/Непрерывное управление/)).toBeInTheDocument();
+  for (let i = 0; i < 4; i++) act(() => jest.advanceTimersByTime(250));
+  view.receive({ type: 'continuous_input_status', session_id: 'second_session_fixture', owner: 'second_owner_fixture',
+    capture_epoch: TOUCH_EPOCH, sequence: 0, status: 3, stage: 'release', origin: 'injector', device_uptime_ms: 300 });
+  expect(view.sent().filter(x => x.type === 'touch_probe')).toHaveLength(2);
+  expect(view.getByRole('button', { name: 'Восстановить управление' })).toBeEnabled();
+  expect(view.sent().filter(x => x.type === 'touch_event').every(x => x.action === 4)).toBe(true);
+});
 it('holds root inspection until this controller receives its native RELEASE3', () => {
   const view = readyContinuous();
   const inspectionReady = jest.fn();

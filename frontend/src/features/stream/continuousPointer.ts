@@ -66,6 +66,7 @@ export class ContinuousPointer {
   private lastTickAt = 0;
   private acknowledged = 0;
   private closeSent = false;
+  private idleReceiptLoss = false;
   private readonly now: () => number;
 
   constructor(private readonly options: Options) { this.now = options.now ?? (() => performance.now()); }
@@ -73,6 +74,8 @@ export class ContinuousPointer {
   get pendingReceiptCount() { return this.pending.length; }
   get hasPendingMove() { return this.move !== null; }
   get pointerHeld() { return this.held !== null; }
+  /** No Android touch or terminal outcome is unknown in this narrowly scoped failure. */
+  get recoverableIdleReceiptLoss() { return this.idleReceiptLoss; }
 
   private transition(state: ContinuousPointerState, reason: string | null = null) {
     this.stateValue = state;
@@ -269,6 +272,8 @@ export class ContinuousPointer {
   retire(reason = 'viewer_retired'): void {
     if (this.stateValue === 'idle' || this.stateValue === 'closed' || this.stateValue === 'destroyed'
       || this.stateValue === 'closing' || this.stateValue === 'fenced') return;
+    this.idleReceiptLoss = reason === 'native_receipt_timeout' && this.held === null
+      && this.terminal === null && this.pending.length > 0 && this.pending.every(p => p.action === 4);
     this.held = this.move = this.terminal = null;
     this.pending = [];
     this.transition('fenced', reason);

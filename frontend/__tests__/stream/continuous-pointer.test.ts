@@ -191,6 +191,13 @@ it('native receipt silence fences after 500ms despite a successful socket send',
   f.advance(250); f.advance(250);
   expect(f.controller.state).toBe('fenced'); expect(f.controller.pointerHeld).toBe(false);
   expect(f.onState).toHaveBeenLastCalledWith('fenced', 'native_receipt_timeout');
+  expect(f.controller.recoverableIdleReceiptLoss).toBe(false);
+});
+it('classifies only an idle heartbeat timeout as eligible for reconciliation after known release', () => {
+  const f = fixture();
+  f.advance(250); f.advance(250); f.advance(250);
+  expect(f.controller.state).toBe('fenced');
+  expect(f.controller.recoverableIdleReceiptLoss).toBe(true);
 });
 
 it('a background scheduling gap cancels instead of flushing the old pending move', () => {
@@ -225,6 +232,7 @@ it('a later heartbeat receipt cannot replace the required exact terminal receipt
   const f = fixture(); f.controller.down(1, POINT); f.ackLatest(); f.controller.up(1, POINT);
   f.advance(250); f.ackLatest(); expect(f.controller.down(1, POINT)).toBe(false);
   f.advance(250); expect(f.controller.state).toBe('fenced');
+  expect(f.controller.recoverableIdleReceiptLoss).toBe(false);
 });
 
 it('a late exact terminal receipt remains valid after a later heartbeat without replaying any command', () => {

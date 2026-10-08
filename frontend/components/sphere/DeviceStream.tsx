@@ -119,6 +119,8 @@ export function DeviceStream({
   const [controlSession, setControlSession] = useState(0);
   const continuousSupportedRef = useRef(false);
   const continuousFaultRef = useRef(false);
+  const idleRecoveryCountRef = useRef(0);
+  const [idleRecoveryCount, setIdleRecoveryCount] = useState(0);
   const [continuousFault, setContinuousFault] = useState(false);
   const [surfaceActive, setSurfaceActive] = useState(() => typeof document !== 'undefined' && !document.hidden);
   const [continuousState, setContinuousState] = useState<ContinuousPointerState | 'probing'>('idle');
@@ -211,6 +213,8 @@ export function DeviceStream({
     automaticProbeRef.current = null;
     continuousSupportedRef.current = false;
     continuousFaultRef.current = false;
+    idleRecoveryCountRef.current = 0;
+    setIdleRecoveryCount(0);
     setContinuousFault(false);
     discreteBusyRef.current = false;
     setDiscreteBusy(false);
@@ -408,7 +412,14 @@ export function DeviceStream({
                   onState: (state, reason) => {
                     if (ignore || ended || newWs !== wsRef.current) return;
                     setContinuousState(state);
-                    if (reason && !['viewer_closed', 'surface_blur', 'surface_hidden', 'surface_control_lost', 'control_mode_changed', 'capture_or_socket_lost'].includes(reason)) {
+                    const idleRecovery = reason === 'native_receipt_timeout' && controller.recoverableIdleReceiptLoss
+                      && idleRecoveryCountRef.current === 0;
+                    if (idleRecovery) {
+                      idleRecoveryCountRef.current++;
+                      setIdleRecoveryCount(idleRecoveryCountRef.current);
+                      setContinuousFailureCode('idle_receipt_timeout');
+                      setContinuousReason('Задержка подтверждения связи без касания · ожидаем освобождение Android перед повторным согласованием.');
+                    } else if (reason && !['viewer_closed', 'surface_blur', 'surface_hidden', 'surface_control_lost', 'control_mode_changed', 'capture_or_socket_lost'].includes(reason)) {
                       continuousFaultRef.current = true;
                       setContinuousFault(true);
                       setContinuousFailureCode(reason);
@@ -962,6 +973,7 @@ export function DeviceStream({
           >
             <div className="mb-2 font-semibold">Сквозная диагностика кадра</div>
             <div>Управление Android: {continuousState}{continuousFailureCode ? ` · причина: ${continuousFailureCode}` : ''}</div>
+            <div>Повторное согласование после задержки idle ACK: {idleRecoveryCount}/1 в этой видеосессии. Касания и команды не повторяются.</div>
             {diagnosticsError ? <div className="text-red-300">{diagnosticsError}</div> : (
               <>
                 <div>Отчёт APK: {agentDiagnostics?.state === 'active_report' ? 'захват активен' : agentDiagnostics?.state ?? 'загрузка…'}
