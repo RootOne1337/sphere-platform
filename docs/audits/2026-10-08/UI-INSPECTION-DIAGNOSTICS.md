@@ -95,6 +95,10 @@ Local mypy не завершён: установленный файл SQLAlchemy
 `81f6db1651ee18dbd4412bf32510405f2f211ece97bc21374fc3b82f06c5e3f6`.
 Это отдельный дефект окружения, не ошибка типов данного patch; необходим
 полный CI на clean dependencies. Причина повреждения не установлена.
+Точное восстановление того же package file позднее вернуло local mypy:
+2 changed source files passed без incremental cache. Hosted backend lint/types
+с clean dependencies тоже successful.
+[Проверка и восстановление библиотеки](GIT-OBJECT-RECURRENCE.md).
 
 ## Следующий контроль и остающиеся проблемы
 
