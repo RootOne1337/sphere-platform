@@ -1,5 +1,11 @@
 # Script Studio: инструкция по созданию и проверке сценариев
 
+**Сверка9октября:** [полная карта требований и границ реализации](../audits/2026-10-09/CHAT-CODE-RECONCILIATION.md).
+Source1577e01e устраняет смешение часов XPath/input в очереди; 76 focused и1938
+frontend tests проходят. На текущем3015 эта новая правка ещё не принята как
+installed; normal live gestures и записанная траектория — разные возможности.
+[Воспроизведение и correction receipt](../audits/2026-10-09/STUDIO-RECORDER-CLOCK-FIX.md).
+
 **Responsive/navigation UI ec3f2267 установлен на3015.**
 На телефоне используйте «Схема», «Действия», «Параметры», «Устройство»;
 импорт/экспорт/направление/упорядочивание/запуск доступны через «Ещё».
@@ -48,7 +54,7 @@ Portalled окно массового запуска скрывается при
 pending/unknown result. Receipt, полученный в это время, после восстановления
 открывается явной ссылкой и не допускает повторной отправки.
 [Outage contract](../audits/2026-10-09/STUDIO-PERMISSION-OUTAGE-RETENTION.md).
-[Latest installed navigation](../audits/2026-10-07/STUDIO-NAVIGATION-PRESERVATION.md).
+[Latest installed navigation and scroll restoration](../audits/2026-10-09/ROUTE-SCROLL-RESTORATION.md).
 Malformed WS input не подставляет координаты0/0, отказ отделён от video failure.
 Real transport canary, разрыв связи/Undo и server validate приняты отдельно;
 новое input notice React-tested, browser malformed-notice canary не выполнен.
@@ -102,13 +108,16 @@ drag узла и фокус на добавленном шаге сохраня�
 [Исходный PNG](../audits/2026-10-06/NATIVE-PNG-PIXEL-VERIFICATION.md).
 
 32 action forms и локальная проверка параметров доступны в установленном
-frontend. **Installed API114775a подтверждает action_parameters_verified=true**
-для корректного draft и отклоняет неправильные типы/обязательные параметры.
+frontend. Текущий API be803773 сохраняет contract1.0 и поле
+`action_parameters_verified=true`; первая live приёмка API114775a историческая.
+Проверка принимает корректный draft и отклоняет неправильные типы или отсутствие
+обязательных параметров опубликованного action contract.
 Результат проверки явно сообщает contract 1.0 и отсутствие Android execution
 verification. Поведение конкретного APK проверяется отдельно. UI/API SHA
 различаются; это не автоматически означает несовместимость контракта.
 
-Server contract установлен через [доставку того же CI backend image](../audits/2026-10-07/REVIEWED-BACKEND-DELIVERY.md).
+Первая доставка server contract зафиксирована в
+[исторической приёмке backend image](../audits/2026-10-07/REVIEWED-BACKEND-DELIVERY.md).
 Packaged auth/schema/valid/invalid guard проверяется после process restart;
 artifact retention/admission не заменяет live Compose/SQL/agent проверку.
 Live приёмка API записана отдельно; ни один новый script/task этим canary не запускался.

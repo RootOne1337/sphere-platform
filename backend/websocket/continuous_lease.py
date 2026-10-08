@@ -1,7 +1,9 @@
-"""Single Redis authority for a *future* continuous-input canary.
+"""Redis authority for the connected continuous-input runtime.
 
-No startup hook, public route, capability advertisement or offline queue.
+The store does not register routes or startup hooks itself; websocket.startup
+starts ContinuousRuntime, which owns capability negotiation and delivery.
 Authorization is supplied by the caller after a fresh tenant/RBAC check.
+Continuous input is never put in the offline queue or replayed.
 Native readiness and known release require a receipt from the bound APK socket.
 Redis/PubSub acceptance never means Android execution or browser rendering.
 """

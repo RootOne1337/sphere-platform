@@ -4,6 +4,20 @@
 **Область:** исходники и документация ветки PR #19, записанные runtime-наблюдения, Android APK и готовность следующего прогона.<br />
 **Канонический документ текущего состояния:** этот файл. Исторические отчёты ниже сохраняют исходные даты и факты.
 
+**9 октября — сверка чата, документов и кода:** [актуальная карта всех 50 пунктов](../audits/2026-10-09/CHAT-CODE-RECONCILIATION.md)
+и [машинный ledger с SHA-256](../audits/2026-10-09/CHAT-CODE-RECONCILIATION.json).
+Продуктовый объём остаётся **9 принято / 41 открыто**. Старый веб-аудит отдельно:
+последний записанный срез **34 source-fixed / 7 незакрытых**, включая F32/F33/F39
+PARTIAL; прежние восемь — более ранняя запись, а не остаток всего продукта.
+Найден и воспроизведён дефект смешения Date.now/performance.now при записи
+XPath → следующий input. Source **1577e01e** исправляет его; 76 focused и все
+1938 frontend tests/139 suites, nonincremental TypeScript проходят. Установка
+нового UI ещё не принята: текущий видимый 3015 остаётся ec3f2267/be803773.
+Normal continuous input уже подключён, recorded MOVE/tree/crop/pixel bundle
+остаётся OPEN. Idle receipt failure и отсутствие наблюдений за диском после
+завершения collector — приоритеты перед расширением automation.
+[Clock regression и границы](../audits/2026-10-09/STUDIO-RECORDER-CLOCK-FIX.md).
+
 **9 октября +05 / 8 октября21:43–21:51 UTC — responsive Studio/navigation установлен.**
 На3015 UI **ec3f2267** / API **be803773**. Reviewed UI заменён отдельно:
 45other containers/schema/OTA/APK10249 сохранены. Frontend CI1936tests/
