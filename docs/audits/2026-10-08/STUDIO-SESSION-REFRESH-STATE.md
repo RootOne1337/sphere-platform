@@ -1,6 +1,6 @@
 # Studio: состояние лаборатории при обновлении авторизации
 
-8 октября 2026. **Source fix / установка и runtime refresh acceptance ещё нужны.**
+8 октября 2026. **UI36b160f9 установлен; runtime refresh acceptance ещё нужна.**
 Это уточнение SF26-05/06; ledger остаётся9accepted/41open.
 
 ## Наблюдение и граница доказательств
@@ -67,7 +67,12 @@ late recording receipt; session boundary с прежней строкой token.
 token. Существующие abort/stale-tree/native-owner tests остаются обязательными.
 Workbench/stream/auth-refresh/store:93passed/4suites; nonincremental TypeScript
 прошёл. Полный frontend suite:1892passed/138suites,70.577s. Hosted CI и
-установка записываются следующим checkpoint.
+установка приняты: все4 exact-source workflows successful. Backend3337passed,
+37skipped/229subtests, frontend1892passed/138suites, Android и preview green.
+Reviewed UI установлен18:08:51 UTC,45 других контейнеров/schema/OTA сохранены.
+Реальный saved-v1 task b50dd03f-db64-47ad-8001-af461e852653 завершил3шага;
+View/queue0/graph3/2 сохранены. Наблюдение refresh пока не выполнено.
+[Installed checkpoint и API follow-up](CONTINUOUS-VIEWER-FAULT-ISOLATION.md).
 
 ## Оставшиеся ограничения
 

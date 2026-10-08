@@ -14,13 +14,18 @@ from fakeredis.aioredis import FakeRedis
 from redis.asyncio.connection import ConnectionPool
 from redis.asyncio.retry import Retry
 from redis.backoff import NoBackoff
+from redis.exceptions import ConnectionError as RedisConnectionError
 
 from backend.schemas.device_status import DeviceLiveStatus
 from backend.services.device_status_cache import DeviceStatusCache
 from backend.websocket.connection_manager import ConnectionManager
 from backend.websocket.continuous_lease import ContinuousLeaseStore
 from backend.websocket.continuous_protocol import InvalidContinuousInput
-from backend.websocket.continuous_runtime import ContinuousRuntime, TouchViewer
+from backend.websocket.continuous_runtime import (
+    ContinuousRuntime,
+    TouchViewer,
+    ViewerTransportUnavailable,
+)
 
 EPOCH = '00112233-4455-6677-8899-aabbccddeeff'
 
@@ -242,4 +247,116 @@ async def test_retired_offer_cannot_open_or_replay(live):
     await runtime.retire(viewer)
     with pytest.raises(InvalidContinuousInput):
         await runtime.handle(viewer, dict(type='touch_event', sequence=1, gesture=1, action=0, x=1, y=1))
+    assert not any(c.args[0]['type'] == 'continuous_input_event' for c in agent.send_json.call_args_list)
+
+
+async def offer_to(runtime, viewer, agent_session):
+    await runtime.publish(runtime.viewer_channel, dict(type='_continuous_offer_v1',
+        org=viewer.org, device=viewer.device, session=viewer.session, worker=runtime.worker,
+        expires=await runtime.now() + 4000, agent_session=agent_session,
+        capture_epoch=EPOCH, frame_width=960, frame_height=540))
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize('failure', [RuntimeError('closed viewer'), OSError('viewer disconnected'), TimeoutError()])
+async def test_failed_viewer_offer_does_not_stop_other_viewers_or_shared_listener(live, failure):
+    runtimes, viewer, agent, _, agent_session = live
+    runtime = runtimes[1]
+    healthy = TouchViewer(viewer.device, viewer.org, viewer.user, 'viewer_fixture_02', AsyncMock())
+    assert runtime.register(healthy)
+    viewer.ws.send_json.side_effect = failure
+    await offer_to(runtime, viewer, agent_session)
+    await eventually(lambda: not runtime.available or viewer.session not in runtime.viewers)
+    assert runtime.available and not runtime.task.done()
+    assert viewer.session not in runtime.viewers
+    assert runtime.viewers[healthy.session] is healthy
+    await offer_to(runtime, healthy, agent_session)
+    await eventually(lambda: healthy.ws.send_json.await_count == 1)
+    assert healthy.ws.send_json.call_args.args[0]['type'] == 'touch_capability'
+    agent.send_json.assert_not_awaited()  # No owner, Android command or replay for either offer.
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize('phase', ['heartbeat', 'release'])
+async def test_failed_viewer_receipt_retires_only_its_owner_without_replaying_input(live, phase):
+    runtime, viewer, agent = await open_view(live)
+    healthy = TouchViewer(viewer.device, viewer.org, viewer.user, 'viewer_fixture_02', AsyncMock())
+    assert runtime.register(healthy)
+    viewer.ws.send_json.side_effect = RuntimeError('socket closed between route and send')
+    if phase == 'heartbeat':
+        await runtime.handle(viewer, dict(type='touch_event', sequence=1, gesture=0, action=4, x=0, y=0))
+    else:
+        await runtime.handle(viewer, {'type': 'touch_close'})
+    await eventually(lambda: not runtime.available or viewer.session not in runtime.viewers)
+    assert runtime.available and not runtime.task.done()
+    assert viewer.session not in runtime.viewers
+    assert runtime.viewers[healthy.session] is healthy
+    await eventually(lambda: any(c.args[0]['type'] == 'continuous_input_close' for c in agent.send_json.call_args_list))
+    await offer_to(runtime, healthy, live[4])
+    await eventually(lambda: healthy.ws.send_json.await_count == 1)
+    events = [c.args[0] for c in agent.send_json.call_args_list if c.args[0]['type'] == 'continuous_input_event']
+    assert [event['action'] for event in events] == ([4] if phase == 'heartbeat' else [])
+    assert len([c for c in agent.send_json.call_args_list if c.args[0]['type'] == 'continuous_input_open']) == 1
+
+
+@pytest.mark.asyncio
+async def test_failed_session_binding_cannot_publish_native_open_after_viewer_transport_loss(live):
+    runtimes, viewer, agent, _, _ = live
+    runtime = runtimes[1]
+    await runtime.handle(viewer, {'type': 'touch_probe'})
+    await eventually(lambda: viewer.offer is not None)
+    viewer.ws.send_json.side_effect = RuntimeError('session binding could not be delivered')
+    with pytest.raises(ViewerTransportUnavailable):
+        await runtime.handle(viewer, dict(type='touch_open', capture_epoch=EPOCH, frame_width=960, frame_height=540))
+    assert runtime.available
+    assert viewer.session not in runtime.viewers
+    assert not any(c.args[0]['type'] == 'continuous_input_open' for c in agent.send_json.call_args_list)
+
+
+@pytest.mark.asyncio
+async def test_viewer_send_preserves_cancellation_instead_of_classifying_it_as_socket_failure(live):
+    runtime, viewer = live[0][1], live[1]
+    entered = asyncio.Event()
+
+    async def wait_forever(_):
+        entered.set()
+        await asyncio.Future()
+
+    viewer.ws.send_json.side_effect = wait_forever
+    task = asyncio.create_task(runtime.send(viewer, {'type': 'fixture'}))
+    await asyncio.wait_for(entered.wait(), 1)
+    task.cancel()
+    with pytest.raises(asyncio.CancelledError):
+        await task
+    assert runtime.available and runtime.viewers[viewer.session] is viewer
+
+
+@pytest.mark.asyncio
+async def test_displaced_viewer_cannot_open_native_input_or_unregister_the_replacement(live, monkeypatch):
+    runtime, viewer, agent = live[0][1], live[1], live[2]
+    await runtime.handle(viewer, {'type': 'touch_probe'})
+    await eventually(lambda: viewer.offer is not None)
+    replacement = TouchViewer(viewer.device, viewer.org, viewer.user, viewer.session, AsyncMock())
+    acquire = runtime.store.acquire
+
+    async def displaced(binding):
+        lease = await acquire(binding)
+        runtime.viewers[viewer.session] = replacement
+        return lease
+
+    monkeypatch.setattr(runtime.store, 'acquire', displaced)
+    with pytest.raises(ViewerTransportUnavailable):
+        await runtime.handle(viewer, dict(type='touch_open', capture_epoch=EPOCH, frame_width=960, frame_height=540))
+    assert runtime.available and runtime.viewers[replacement.session] is replacement
+    replacement.ws.send_json.assert_not_awaited()
+    assert not any(c.args[0]['type'] == 'continuous_input_open' for c in agent.send_json.call_args_list)
+
+
+@pytest.mark.asyncio
+async def test_shared_subscription_failure_still_fences_runtime_without_retry_or_input_replay(live, monkeypatch):
+    runtime, viewer, agent = await open_view(live)
+    monkeypatch.setattr(runtime.pubsub, 'get_message', AsyncMock(side_effect=RedisConnectionError('fixture outage')))
+    await eventually(lambda: not runtime.available)
+    await eventually(lambda: runtime.task.done())
+    assert viewer.closing or viewer.lease is None
     assert not any(c.args[0]['type'] == 'continuous_input_event' for c in agent.send_json.call_args_list)

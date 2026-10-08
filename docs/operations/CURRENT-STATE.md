@@ -4,13 +4,22 @@
 **Область:** исходники и документация ветки PR #19, записанные runtime-наблюдения, Android APK и готовность следующего прогона.<br />
 **Канонический документ текущего состояния:** этот файл. Исторические отчёты ниже сохраняют исходные даты и факты.
 
-**8 октября — подготовлен fix состояния лаборатории при same-session refresh.**
+**8 октября,18:08–18:18 UTC — UI36b160f9 установлен; API fault isolation подготовлен.**
 Baseline5382fe4 пересоздаёт Workbench при token rotation, теряя запись/результаты
 и unknown-POST guard. Source fix привязывает очистку к sessionVersion, сохраняя
 token/frame/native-owner invalidation транспорта.6 новых baseline regressions
-падали;93 focused tests/4suites и TypeScript прошли. Установка этого fix ещё
-не подтверждена; runtime reset наблюдался, но его trigger не записан.
+падали;93 focused tests/4suites и TypeScript прошли. Все4 CI successful:
+frontend1892/138suites, backend3337passed/37skipped/229subtests. Reviewed UI
+установлен,45 других контейнеров/schema/OTA сохранены. Saved-v1 canary
+b50dd03f завершила3шага; View/queue0/graph3/2 сохранены. Реальный token refresh
+пока не засвидетельствован; trigger прежнего runtime reset не записан.
 [Доказательства и ограничения](../audits/2026-10-08/STUDIO-SESSION-REFRESH-STATE.md).
+Видео работает, но API9610523 не подтверждает continuous capability. Source
+regressions доказали, что failed viewer send выключает общий listener.
+Fix изолирует только exact viewer и запрещает OPEN после failed binding;
+27 runtime/158 related tests, Ruff/mypy passed. API установка ещё нужна;
+реальный trigger отключения не доказан. SF26-05/06 и storage OPEN.
+[Fault isolation](../audits/2026-10-08/CONTINUOUS-VIEWER-FAULT-ISOLATION.md).
 
 **8 октября, 07:49–08:06 UTC — Studio UI `5382fe4` установлен на3015.**
 API `9610523`, PH011 APK10249, schema и OTA сохранены;45 других контейнеров

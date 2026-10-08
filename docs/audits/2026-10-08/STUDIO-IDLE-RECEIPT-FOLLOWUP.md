@@ -73,4 +73,12 @@ transport interruption independently before changing recovery policy.
 
 Task creation, cleanup and completion evidence is in
 [installed task acceptance](STUDIO-TASK-INSTALLED-ACCEPTANCE.md).
+At 18:10 UTC a fresh viewer still had video but could not obtain continuous
+capability. A deterministic two-worker regression now proves that one failed
+viewer send disables the baseline listener. The source correction isolates that
+viewer and blocks native OPEN after an undelivered session binding. This does
+not attribute the earlier idle event to the same path; reviewed installation
+and live acceptance are pending:
+[viewer fault isolation](CONTINUOUS-VIEWER-FAULT-ISOLATION.md).
+
 SF26-05 remains OPEN; ledger9accepted/41open unchanged.

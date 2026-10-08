@@ -46,6 +46,10 @@ class TouchViewer:
     closing: bool = False
 
 
+class ViewerTransportUnavailable(Exception):
+    """A retired viewer socket, distinct from shared Redis/runtime failure."""
+
+
 class ContinuousRuntime:
     def __init__(self, store: ContinuousLeaseStore, manager: ConnectionManager) -> None:
         self.store, self.manager = store, manager
@@ -79,10 +83,19 @@ class ContinuousRuntime:
         return bool(status and status.ws_session_id == session and status.status in {"online", "busy", "connecting"})
 
     async def send(self, viewer: TouchViewer, data: dict) -> None:
-        if self.viewers.get(viewer.session) is not viewer:
-            return
-        async with asyncio.timeout(OPERATION_SECONDS):
-            await viewer.ws.send_json(data)
+        try:
+            if self.viewers.get(viewer.session) is not viewer:
+                raise ViewerTransportUnavailable()
+            async with asyncio.timeout(OPERATION_SECONDS):
+                await viewer.ws.send_json(data)
+        except asyncio.CancelledError:
+            raise
+        except Exception:
+            # Socket close/timeout can race an offer or native receipt. Retire
+            # only this exact owner; never disable the shared listener or open
+            # native input after an undelivered session binding. No send replay.
+            await self.unregister(viewer)
+            raise ViewerTransportUnavailable() from None
 
     async def publish(self, channel: str, data: dict) -> None:
         raw = json.dumps(data, separators=(",", ":"))
@@ -291,7 +304,7 @@ class ContinuousRuntime:
                         channel = channel.decode("ascii")
                     try:
                         await self.route(channel, message["data"])
-                    except (InvalidContinuousInput, ValueError, TypeError, KeyError):
+                    except (ViewerTransportUnavailable, InvalidContinuousInput, ValueError, TypeError, KeyError):
                         continue
         except asyncio.CancelledError:
             pass
