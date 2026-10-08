@@ -1,22 +1,24 @@
 # Studio: следующая работа по записи и живому управлению
 
-8 октября 2026, Asia/Yekaterinburg. **OPEN / P1**, не установленный feature.
+8 октября 2026, Asia/Yekaterinburg. **Этап1 установлен / остальное OPEN / P1**. Explicit recorder mode принят
+наPH011; богатая запись и task-launch handoff ещё открыты.
 Канонический audit ledger остаётся9accepted/41open; это уточнение существующих
 SF26-05/06, а не новая заявка о закрытии всей автоматизации.
 
-## Доказанный дефект обычного управления в лаборатории
+## Исторический дефект baseline9610523 в лаборатории
 
 [DeviceWorkbench](../../../frontend/src/features/scripts/studio/DeviceWorkbench.tsx)
 передаёт `onControlSent={sent}` и `onControlCommand={commandObserved}` постоянно,
 в том числе когда `recording=false`. Callback сохраняет существующие receipts
 и close guards; простое снятие observer после Stop может потерять поздний ACK.
 
-[DeviceStream](../../../frontend/components/sphere/DeviceStream.tsx) выводит
+Baseline [DeviceStream](https://github.com/RootOne1337/sphere-platform/blob/961052334b99f9a27fa292f5217d5d0130dd6094/frontend/components/sphere/DeviceStream.tsx) выводил
 `continuousRecording = !!onControlSent || !!onControlCommand` и запрещает
 continuous input при таком значении. Поэтому normal control внутри Studio
 постоянно использует discrete fallback, хотя тот же PH011 поддерживает native
-continuous gestures в карточке устройства. Источник и условие подтверждены;
-переход внутри установленного Studio новым browser canary ещё не проверен.
+continuous gestures в карточке устройства. Источник и условие были подтверждены. Вa8945e4 условие исправлено;
+normal mode, запись, late ACK после Stop и возврат READY приняты отдельно:
+[installed acceptance](STUDIO-RECORDER-INSTALLED-ACCEPTANCE.md).
 
 Исправление должно разделить **намерение записывать дискретные действия** и
 **подписку на результаты команд**. Explicit recording mode предпочтительнее
@@ -78,3 +80,10 @@ Explicit recording mode, native-release readiness, bounded unknown-release
 fence and late observer preservation implemented.201 local regressions and
 TypeScript passed; installed acceptance pending.
 [Behavior, source tests and remaining task handoff](STUDIO-RECORDER-MODE.md).
+
+## Installed checkpoint07:15UTC
+
+UIa8945e4 installed; normal native View gesture, discrete recording, late
+Home ACK after Stop and return to READY verified on PH011. Source tests and
+finite installed evidence remain separate. Task-launch handoff/rich recorder
+stay OPEN. [Installed acceptance](STUDIO-RECORDER-INSTALLED-ACCEPTANCE.md).

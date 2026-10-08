@@ -1,6 +1,7 @@
 # Studio: explicit recorder intent and native release
 
-8 October2026. Source prepared; installed acceptance required separately.
+8 October2026. Installed UIa8945e4 on3015; API9610523 and APK10249 preserved.
+[Finite installed acceptance](STUDIO-RECORDER-INSTALLED-ACCEPTANCE.md).
 
 ## Problem and final behavior
 
@@ -49,3 +50,10 @@ claimed as covered by the recorder mode fix.
 
 SF26-05/06 and ledger9accepted/41open remain unchanged until their full
 acceptance criteria are met. Root SHELL exit1 and host storage incidents OPEN.
+
+## Installed checkpoint07:15UTC
+
+UIa8945e4 installed; normal native View gesture, discrete recording, late
+Home ACK after Stop and return to READY verified on PH011. Source tests and
+finite installed evidence remain separate. Task-launch handoff/rich recorder
+stay OPEN. [Installed acceptance](STUDIO-RECORDER-INSTALLED-ACCEPTANCE.md).

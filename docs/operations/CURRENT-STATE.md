@@ -4,6 +4,18 @@
 **Область:** исходники и документация ветки PR #19, записанные runtime-наблюдения, Android APK и готовность следующего прогона.<br />
 **Канонический документ текущего состояния:** этот файл. Исторические отчёты ниже сохраняют исходные даты и факты.
 
+**8 октября, 07:10–07:15 UTC — Studio UI `a8945e4` установлен на3015.**
+API `9610523`, PH011 APK10249 сохранены. Normal Studio Control теперь continuous
+READY, независимо от callbacks записи: Android View подтвердил DOWN1/MOVE4/UP1/
+CANCEL0. Start показал native-release preparation; записанный swipe дал1строку.
+Home оставался pending после Stop и обновил исходную2-ю строку до confirmed
+(ответ507ms); normal control вернулся в READY.201 local regressions, hosted
+frontend1869/138suites, types/build/image admission passed.45 других контейнеров
+и OTA сохранены. Graph3/2 без изменения, test queue/receiver удалены; desktop1440
+и mobile390 проверены, viewport reset. Task-launch handoff, rich recording,
+root exit1 и storage OPEN; ledger9accepted/41open.
+[Установленная приёмка](../audits/2026-10-08/STUDIO-RECORDER-INSTALLED-ACCEPTANCE.md).
+
 **8 октября, 06:53–06:55 UTC — UI/API `9610523` установлены на3015.**
 XPath показывает этап отказа и snapshot ID, сохраняет возраст предыдущего дерева
 и приостанавливает автоопрос. Реальная native-owner busy canary без касаний
