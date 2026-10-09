@@ -12,12 +12,15 @@ from scripts.check_documentation_status import (
     INVENTORY,
     REGISTRY,
     ROOT,
+    RUNTIME_GUIDES,
+    installed_runtime_banner,
     local_link_errors,
     normalized_hash,
     read_json,
     validate_installed_receipt,
     validate_inventory,
     validate_registry,
+    validate_runtime_banners,
     validate_status_report,
 )
 
@@ -28,6 +31,46 @@ class DocumentationStatusTests(unittest.TestCase):
 
     def test_recorded_status_is_consistent(self) -> None:
         self.assertEqual(validate_registry(ROOT, self.registry), [])
+
+    def test_current_runtime_banners_agree_with_frozen_installation(self) -> None:
+        self.assertEqual(validate_runtime_banners(ROOT, self.registry), [])
+
+    def test_old_api_banner_fails_while_historical_revisions_remain_valid(self) -> None:
+        banner = installed_runtime_banner(self.registry["installed"])
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            files = [*self.registry["authoritativeEntrypoints"], "docs/operations/WORK-STATUS.md", *RUNTIME_GUIDES]
+            for file in files:
+                path = root / file
+                path.parent.mkdir(parents=True, exist_ok=True)
+                path.write_text(f"# Guide\n\n{banner}\n\nHistorical API be803773 / UI 0b321d49.\n", encoding="utf-8")
+            self.assertEqual(validate_runtime_banners(root, self.registry), [])
+            path = root / "docs/operations/SCRIPT-STUDIO.md"
+            path.write_text(path.read_text(encoding="utf-8").replace(
+                self.registry["installed"]["api"][:8], "be803773"), encoding="utf-8")
+            self.assertEqual(validate_runtime_banners(root, self.registry),
+                             ["docs/operations/SCRIPT-STUDIO.md: current runtime banner is stale, malformed or buried"])
+
+    def test_banner_cannot_be_missing_duplicated_or_hidden_after_history(self) -> None:
+        registry = {"authoritativeEntrypoints": [], "installed": self.registry["installed"]}
+        banner = installed_runtime_banner(registry["installed"])
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            files = ["docs/operations/WORK-STATUS.md", *RUNTIME_GUIDES]
+            for file in files:
+                path = root / file
+                path.parent.mkdir(parents=True, exist_ok=True)
+                path.write_text(banner + "\r\n", encoding="utf-8")
+            self.assertEqual(validate_runtime_banners(root, registry), [])
+            target = root / files[0]
+            for text, expected in (("# Without banner\n", "requires one"),
+                                   (banner + "\n" + banner, "requires one"),
+                                   ("\n" * 40 + banner, "stale, malformed or buried")):
+                with self.subTest(text=text):
+                    target.write_text(text, encoding="utf-8")
+                    errors = validate_runtime_banners(root, registry)
+                    self.assertEqual(len(errors), 1)
+                    self.assertIn(expected, errors[0])
 
     def test_cannot_close_an_item_by_changing_only_its_state(self) -> None:
         self.registry["items"][17]["state"] = "ACCEPTED_RECORDED_SCOPE"

@@ -1,5 +1,7 @@
 # Эксплуатационная готовность Sphere
 
+**Проверенная установка:** UI `86354350` / API `d720232e`.
+
 **Действующий реестр работ:** [WORK-STATUS](WORK-STATUS.md) / [машинный статус](STATUS-REGISTRY.json).
 Source, установленный runtime и конечная приёмка разделены; старые snapshots ниже сохраняют свои даты.
 
@@ -8,10 +10,15 @@ Source, установленный runtime и конечная приёмка р
 [Текущая сверка чата, всех 50 критериев и реализации](../audits/2026-10-09/CHAT-CODE-RECONCILIATION.md)
 связывает исходники с последующими приёмками. **9 принято / 41 открыто** —
 продуктовый план; **34 source-fixed / 7 незакрытых** — последний записанный
-остаток старого веб-аудита. Эти счётчики нельзя объединять. UI86354350/APIbe803773
+остаток старого веб-аудита. Эти счётчики нельзя объединять. UI 86354350 / API d720232e
 установлены: bounded failure snapshot и диагностика вне обрезаемого видео приняты
 на desktop/phone. Frontend CI success; статусы API/APK CI в receipt, frontend1948tests/139suites.
 [Установка и границы](../audits/2026-10-09/STREAM-DIAGNOSTICS-INSTALLED-ACCEPTANCE.md).
+Backend-only доставка таймингов отдельно прошла все четыре exact-source CI;
+3387 backend tests / 37 skips / 233 subtests и full hosted Ruff/mypy прошли.
+Повторный idle canary завершился тайм-аутом 510 мс при наблюдаемых server spans <25 мс;
+это диагностический результат, не приёмка надёжности управления.
+[Installed timing receipt](../audits/2026-10-09/CONTINUOUS-SERVER-TIMINGS-INSTALLED.md).
 Ранее принята finite clock/recording correction, не весь EP-018. Idle receipt
 failure снова подтверждён; global input arbitration, rich recorder и resource
 acceptance OPEN. Limited host observer работает до10Oct12:42:57UTC; прежний gap

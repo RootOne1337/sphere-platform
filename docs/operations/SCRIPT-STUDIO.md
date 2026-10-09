@@ -1,15 +1,20 @@
 # Script Studio: инструкция по созданию и проверке сценариев
 
+**Проверенная установка:** UI `86354350` / API `d720232e`.
+
 **Действующий реестр работ:** [WORK-STATUS](WORK-STATUS.md) / [машинный статус](STATUS-REGISTRY.json).
 Source, установленный runtime и конечная приёмка разделены; старые snapshots ниже сохраняют свои даты.
 
-**Текущая установка9октября:** UI86354350/APIbe803773. Диагностика под видео
+**Текущая установка 9 октября:** UI 86354350 / API d720232e. Диагностика под видео
 показывает последний снимок сбоя управления; её можно прокрутить и закрыть,
 панель прекращает polling после закрытия. Desktop/phone finite acceptance и
 frontend CI success; статусы API/APK CI в receipt, frontend1948tests/139suites.
-[Installed receipt](../audits/2026-10-09/STREAM-DIAGNOSTICS-INSTALLED-ACCEPTANCE.md).
-Новый PH011 idle heartbeat timeout подтверждён с tick/buffer/ACK timings,
-участок задержки ещё неизвестен. Это диагностическое расширение, не исправление P1.
+[Приёмка панели](../audits/2026-10-09/STREAM-DIAGNOSTICS-INSTALLED-ACCEPTANCE.md).
+В API установлены ограниченные тайминги семи этапов. PH011 снова получила idle
+heartbeat timeout (510 мс, последний ACK RTT 256 мс); наблюдаемые серверные вызовы
+занимали менее 25 мс. Очереди, сеть и APK/native ещё не локализованы.
+Это диагностическое расширение, не исправление P1.
+[Установка API и сбой canary](../audits/2026-10-09/CONTINUOUS-SERVER-TIMINGS-INSTALLED.md).
 [Карта требований](../audits/2026-10-09/CHAT-CODE-RECONCILIATION.md).
 Clock fix1577e01e ранее установлен/принят в UI60be6ecd: mixed tap/XPath/tap/Back
 и graph transfer с паузами. Normal live gestures и recorded trajectory — разные возможности.
@@ -29,7 +34,7 @@ automatic pixel/XPath bundle. [Конечная приёмка и границы
 
 Актуализировано: **9 октября 2026**. Каталог `/scripts`, редактор
 `/scripts/builder`, формат **DAG1.0**, React Flow, локальная ELK0.12.0.
-На3015 установлены frontend **86354350** и API **be803773**. Studio сохраняет
+На 3015 установлены frontend **86354350** и API **d720232e**. Studio сохраняет
 graph/action contract и диалог сохранности; текущие runtime границы фиксируются в
 [CURRENT-STATE](CURRENT-STATE.md). Обратная гонка XPath→Control исправлена;
 быстрый переход и повторный вход в дерево проверены на установленном UI.
@@ -118,7 +123,7 @@ drag узла и фокус на добавленном шаге сохраня�
 [Исходный PNG](../audits/2026-10-06/NATIVE-PNG-PIXEL-VERIFICATION.md).
 
 32 action forms и локальная проверка параметров доступны в установленном
-frontend. Текущий API be803773 сохраняет contract1.0 и поле
+frontend. Текущий API d720232e сохраняет contract 1.0 и поле
 `action_parameters_verified=true`; первая live приёмка API114775a историческая.
 Проверка принимает корректный draft и отклоняет неправильные типы или отсутствие
 обязательных параметров опубликованного action contract.

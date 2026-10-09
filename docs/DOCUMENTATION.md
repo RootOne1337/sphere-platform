@@ -1,5 +1,7 @@
 # Актуальность документации
 
+**Проверенная установка:** UI `86354350` / API `d720232e`.
+
 [Каталог](README.md) · [Readiness](operations/READINESS.md) · [Contributing](../CONTRIBUTING.md)
 
 **Последняя сверка статусов и навигации:9октября2026 (UTC+5).**
@@ -32,6 +34,11 @@ Markdown обновите inventory; после установки обнови�
 Действующий installed receipt также связан с реестром normalized SHA-256,
 точными UI/API revisions и признаками installation/finite acceptance; новая
 доставка проверяется независимо от списка прежних completedCorrections.
+После установки обновляйте строку `**Проверенная установка:** UI … / API ….`
+в основных входных документах, WORK-STATUS, LOCAL-PILOT и REVIEW-GATEWAY.
+Checker требует одну точную строку в первых 40 строках каждого такого документа,
+сверенную с установленным receipt через STATUS-REGISTRY. Датированные упоминания
+версий в истории разрешены; эта проверка не доказывает семантику всей прозы.
 
 ## Порядок закрытия и supersession
 
@@ -42,8 +49,10 @@ Source clock receipt1577e01e хранит прежнюю source-only грани�
 [доставка60be6ecd](audits/2026-10-09/STUDIO-CLOCK-INSTALLED-ACCEPTANCE.md) принята
 отдельно: completedCorrections содержит её normalized SHA и точный installed SHA.
 Исторический source receipt не переписывается ради нового installed статуса.
-Последний UI86354350 имеет отдельный [installed receipt](audits/2026-10-09/STREAM-DIAGNOSTICS-INSTALLED-ACCEPTANCE.md):
-диагностика и её компоновка приняты в конечном scope, idle failure остаётся OPEN.
+Последний UI 86354350 имеет отдельный [installed receipt](audits/2026-10-09/STREAM-DIAGNOSTICS-INSTALLED-ACCEPTANCE.md):
+диагностика и её компоновка приняты в конечном scope. Последующая backend-only
+[доставка API d720232e](audits/2026-10-09/CONTINUOUS-SERVER-TIMINGS-INSTALLED.md)
+сохраняет UI и подтверждает повторный idle failure; причина остаётся OPEN.
 391/392/393 Markdown в датированных snapshots относятся к своим source revisions;
 действующее покрытие берётся из DOCUMENT-INVENTORY.json.
 Каждая приёмка указывает версии, время, устройства, сценарий, длительность и

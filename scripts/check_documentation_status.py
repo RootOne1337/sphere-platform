@@ -22,6 +22,8 @@ INVENTORY = "docs/operations/DOCUMENT-INVENTORY.json"
 SUPPLEMENTAL = {"docs/operations/WORK-STATUS.md", "docs/audits/2026-10-09/DOCUMENTATION-RECONCILIATION.md"}
 ROLES = {"CURRENT_ENTRYPOINT", "OPERATING_GUIDE", "DATED_EVIDENCE", "DESIGN_SPECIFICATION", "ADR", "PROJECT_POLICY", "SUPPORTING_DOCUMENT"}
 LINK = re.compile(r"(?<!!)\[[^\]\n]+\]\((<[^>]+>|(?:[^\s()]|\([^)]*\))+)\)")
+RUNTIME_BANNER_PREFIX = "**Проверенная установка:**"
+RUNTIME_GUIDES = ("docs/operations/LOCAL-PILOT.md", "docs/operations/REVIEW-GATEWAY.md")
 
 
 def read_json(root: Path, file: str) -> dict:
@@ -121,6 +123,34 @@ def validate_installed_receipt(root: Path, installed: dict) -> list[str]:
         errors.append("Installed UI does not match referenced observation receipt")
     if not installed.get("api") or installed["api"] != runtime.get("apiSourceRevision"):
         errors.append("Installed API does not match referenced observation receipt")
+    return errors
+
+
+def installed_runtime_banner(installed: dict) -> str:
+    """Human-readable short revisions; full identity is bound by the frozen receipt."""
+    return f"{RUNTIME_BANNER_PREFIX} UI `{installed['ui'][:8]}` / API `{installed['api'][:8]}`."
+
+
+def validate_runtime_banners(root: Path, registry: dict) -> list[str]:
+    """Check the explicit current banner, not revision mentions in dated history.
+
+    This is a bounded consistency check, not semantic validation of every sentence.
+    A single banner in the first 40 lines prevents a stale or buried primary pointer.
+    """
+    files = dict.fromkeys([*registry["authoritativeEntrypoints"], "docs/operations/WORK-STATUS.md", *RUNTIME_GUIDES])
+    expected = installed_runtime_banner(registry["installed"])
+    errors = []
+    for file in files:
+        path = root / file
+        if not path.is_file():
+            errors.append(f"{file}: current runtime document is missing")
+            continue
+        lines = path.read_text(encoding="utf-8-sig").splitlines()
+        banners = [(index, line) for index, line in enumerate(lines) if line.startswith(RUNTIME_BANNER_PREFIX)]
+        if len(banners) != 1:
+            errors.append(f"{file}: requires one current runtime banner")
+        elif banners[0][0] >= 40 or banners[0][1] != expected:
+            errors.append(f"{file}: current runtime banner is stale, malformed or buried")
     return errors
 
 
@@ -263,7 +293,8 @@ def main() -> int:
     if args.write_inventory:
         (ROOT / INVENTORY).write_text(json.dumps(make_inventory(ROOT, registry), ensure_ascii=False, indent=2) + "\n", encoding="utf-8", newline="\n")
     inventory = read_json(ROOT, INVENTORY)
-    errors = (validate_registry(ROOT, registry) + validate_inventory(ROOT, registry, inventory)
+    errors = (validate_registry(ROOT, registry) + validate_runtime_banners(ROOT, registry)
+              + validate_inventory(ROOT, registry, inventory)
               + validate_status_report(registry, (ROOT / "docs/operations/WORK-STATUS.md").read_text(encoding="utf-8-sig")))
     print(json.dumps({"valid": not errors, "product": registry["counts"], "legacyUnclosed": registry["legacy"]["unclosed"],
                       "chatRequirements": len(registry["chatRequirements"]), "markdownDocuments": len(inventory["documents"]),
