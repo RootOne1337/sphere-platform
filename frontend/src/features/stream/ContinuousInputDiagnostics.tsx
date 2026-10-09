@@ -5,8 +5,8 @@ const milliseconds = (value: number | null) => value === null ? 'нет изме
 
 /** The last failure in this viewer only. No polling, persistence, or global fleet claims. */
 export function ContinuousInputDiagnostics({ snapshot }: { snapshot: PointerFenceObservation }) {
-  return <details className="my-2 rounded border border-amber-300/30 p-2" open>
-    <summary className="cursor-pointer font-semibold text-amber-200">Последний сбой управления · {snapshot.reason}</summary>
+  return <details className="my-2 rounded border border-amber-500/30 p-2" open>
+    <summary className="cursor-pointer font-semibold text-amber-700 dark:text-amber-200">Последний сбой управления · {snapshot.reason}</summary>
     <dl className="mt-2 grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)] gap-x-3 gap-y-1 break-words">
       <dt>Фаза при остановке</dt><dd>{snapshot.phase}</dd>
       <dt>Отправлено / подтверждено</dt><dd>№{snapshot.offeredSequence} / №{snapshot.acknowledgedSequence}</dd>
@@ -19,6 +19,6 @@ export function ContinuousInputDiagnostics({ snapshot }: { snapshot: PointerFenc
       <dt>Касание / terminal ACK</dt><dd>{snapshot.pointerHeld ? 'палец удерживался' : 'палец не удерживался'} · {snapshot.terminalSequence === null ? 'не ожидался' : `№${snapshot.terminalSequence} · ${milliseconds(snapshot.terminalAgeMs)}`}</dd>
       <dt>WebSocket / буфер</dt><dd>{snapshot.socketState === 1 ? 'OPEN' : snapshot.socketState} · {snapshot.bufferedBytes === null ? 'нет измерения' : `${snapshot.bufferedBytes} B`}</dd>
     </dl>
-    <p className="mt-2 text-white/70">{snapshot.idleHeartbeatOnly ? 'Задержался только heartbeat без касания. ' : ''}Это состояние браузера в момент остановки. RTT включает весь путь до подтверждения Android; участок задержки ещё не определён. Команды не повторяются.</p>
+    <p className="mt-2 text-muted-foreground">{snapshot.idleHeartbeatOnly ? 'Задержался только heartbeat без касания. ' : ''}Это состояние браузера в момент остановки. RTT включает весь путь до подтверждения Android; участок задержки ещё не определён. Команды не повторяются.</p>
   </details>;
 }

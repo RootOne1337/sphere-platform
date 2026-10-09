@@ -124,6 +124,21 @@ it('does not start overlapping polls when the previous diagnostics request has n
   expect(api.get).toHaveBeenCalledTimes(1);
 });
 
+it('closes the separate diagnostics region and retires its pending poll without Android input', () => {
+  (api.get as jest.Mock).mockImplementation(() => new Promise(() => {}));
+  render(<DeviceStream deviceId="device-close-report" enableDiagnostics />);
+  act(() => jest.advanceTimersByTime(0));
+  fireEvent.click(screen.getByRole('button', { name: 'Диагностика' }));
+  const signal = (api.get as jest.Mock).mock.calls[0][1].signal as AbortSignal;
+  expect(screen.getByRole('region', { name: 'Диагностика стрима и управления' })).toBeInTheDocument();
+  fireEvent.click(screen.getByRole('button', { name: 'Закрыть диагностику' }));
+  expect(signal.aborted).toBe(true);
+  expect(screen.queryByRole('region', { name: 'Диагностика стрима и управления' })).not.toBeInTheDocument();
+  act(() => jest.advanceTimersByTime(45_000));
+  expect(api.get).toHaveBeenCalledTimes(1);
+  expect(Socket.instances.flatMap(socket => socket.send.mock.calls)).toEqual([]);
+});
+
 it('ages the received APK snapshot between HTTP polls instead of freezing its freshness', async () => {
   render(<DeviceStream deviceId="device-aging" enableDiagnostics />);
   act(() => jest.advanceTimersByTime(0));

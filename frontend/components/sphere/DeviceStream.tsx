@@ -1003,18 +1003,35 @@ export function DeviceStream({
         >
           {diagnosticsOpen ? 'Скрыть диагностику' : 'Диагностика'}
         </button>
-        {diagnosticsOpen && (
+      </div>
+    )}
+    </div>
+    {enableNavigation && <AndroidNavigationBar key={deviceId} deviceId={deviceId} extended
+      available={canNavigate && (!continuousBusy || continuousState === 'ready') && wsRef.current?.readyState === WebSocket.OPEN}
+      prepareCommand={prepareDiscreteInput}
+      isAvailable={() => canNavigate && !continuousFaultRef.current && (!continuousRef.current || ['ready', 'closed', 'destroyed'].includes(continuousRef.current.state)) && wsRef.current?.readyState === WebSocket.OPEN}
+      onControlCommand={onControlCommand}
+      getFrameDimensions={() => {
+        const canvas = canvasRef.current;
+        return canvas && canNavigate && renderedSocketRef.current === wsRef.current
+          ? { width: canvas.width, height: canvas.height } : null;
+      }} />}
+        {enableDiagnostics && diagnosticsOpen && (
           <div
             id={`stream-diagnostics-${deviceId}`}
-            role="status"
-            aria-live="polite"
-            className="mt-2 max-h-[70vh] w-[min(92vw,34rem)] overflow-auto rounded border border-white/20 bg-black/95 p-3 text-left font-mono text-[11px] leading-5 text-white shadow-xl"
+            role="region"
+            aria-label="Диагностика стрима и управления"
+            tabIndex={0}
+            className="mt-2 max-h-[min(60dvh,32rem)] w-full min-w-0 shrink-0 overflow-auto overscroll-contain rounded-xl border border-border bg-card p-3 text-left font-mono text-xs leading-5 text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           >
-            <div className="mb-2 font-semibold">Сквозная диагностика кадра</div>
+            <div className="sticky -top-3 z-10 -mx-3 -mt-3 mb-2 flex items-start justify-between gap-3 border-b border-border bg-card p-3">
+              <h4 className="font-semibold">Сквозная диагностика кадра</h4>
+              <button type="button" onClick={() => setDiagnosticsOpen(false)} className="shrink-0 rounded-md border border-border px-2 py-1 font-sans hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">Закрыть диагностику</button>
+            </div>
             <div>Управление Android: {continuousState}{continuousFailureCode ? ` · причина: ${continuousFailureCode}` : ''}</div>
             <div>Повторное согласование после задержки idle ACK: {idleRecoveryCount}/1 в этой видеосессии. Касания и команды не повторяются.</div>
             {pointerFailureSnapshot && <ContinuousInputDiagnostics snapshot={pointerFailureSnapshot} />}
-            {diagnosticsError ? <div className="text-red-300">{diagnosticsError}</div> : (
+            {diagnosticsError ? <div className="text-red-600 dark:text-red-300">{diagnosticsError}</div> : (
               <>
                 <div>Отчёт APK: {agentDiagnostics?.state === 'active_report' ? 'захват активен' : agentDiagnostics?.state ?? 'загрузка…'}
                   {diagnosticAgeSeconds != null && ` · snapshot ${Math.floor(diagnosticAgeSeconds)} сек назад`}
@@ -1023,7 +1040,7 @@ export function DeviceStream({
                 {agentDiagnostics?.diagnostics ? (() => {
                   const t = agentDiagnostics.diagnostics.telemetry;
   return (
-                    <div className="mt-1 grid grid-cols-2 gap-x-3">
+                    <div className="mt-1 grid grid-cols-[repeat(2,minmax(0,1fr))] gap-x-3 break-words">
                       <span>Capture FPS: {t.capture_fps ?? '—'}</span>
                       <span>Surface FPS: {t.render_fps ?? '—'}</span>
                       <span>Encoder FPS: {t.encoder_fps}</span>
@@ -1041,10 +1058,10 @@ export function DeviceStream({
                     </div>
                   );
                 })() : <div>Нет свежего отчёта активного захвата от APK.</div>}
-                <div className="mt-2 border-t border-white/15 pt-2">
+                <div className="mt-2 border-t border-border pt-2">
                   <div>Браузерный viewer: {browserStats ? `${browserStats.binaryMessagesReceived} пакетов · ${browserStats.binaryBytesReceived} байт` : 'нет данных'}</div>
                   {browserStats && (
-                    <div className="grid grid-cols-2 gap-x-3">
+                    <div className="grid grid-cols-[repeat(2,minmax(0,1fr))] gap-x-3 break-words">
                       <span>Входной видео FPS (1 с): {browserStats.receivedPictureFpsCapped ? '≥' : ''}{browserStats.receivedPictureFps}</span>
                       <span>Отрисовка FPS (1 с): {browserStats.renderedFpsCapped ? '≥' : ''}{browserStats.renderedFps}</span>
                       <span>Последний пакет: {formatTimestampAgo(browserStats.lastBinaryAtMs)}</span>
@@ -1065,26 +1082,13 @@ export function DeviceStream({
                     </div>
                   )}
                 </div>
-                <p className="mt-2 border-t border-white/15 pt-2 text-white/70">
+                <p className="mt-2 border-t border-border pt-2 text-muted-foreground">
                   Принятие кадра локальной очередью APK не подтверждает получение сервером. Сейчас серверный receipt каждого кадра и браузерный декодер не связаны общим frame ID; сравнивайте Android counters с viewer counters.
                 </p>
               </>
             )}
           </div>
         )}
-      </div>
-    )}
-    </div>
-    {enableNavigation && <AndroidNavigationBar key={deviceId} deviceId={deviceId} extended
-      available={canNavigate && (!continuousBusy || continuousState === 'ready') && wsRef.current?.readyState === WebSocket.OPEN}
-      prepareCommand={prepareDiscreteInput}
-      isAvailable={() => canNavigate && !continuousFaultRef.current && (!continuousRef.current || ['ready', 'closed', 'destroyed'].includes(continuousRef.current.state)) && wsRef.current?.readyState === WebSocket.OPEN}
-      onControlCommand={onControlCommand}
-      getFrameDimensions={() => {
-        const canvas = canvasRef.current;
-        return canvas && canNavigate && renderedSocketRef.current === wsRef.current
-          ? { width: canvas.width, height: canvas.height } : null;
-      }} />}
     </div>
   );
 }
