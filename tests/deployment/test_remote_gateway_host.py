@@ -1,5 +1,6 @@
 """Exercise the actual remote gateway config on an isolated Docker network."""
 
+import hashlib
 import os
 import re
 import shutil
@@ -86,16 +87,25 @@ def test_remote_gateway_preserves_host_without_triggering_public_http_redirect(t
         (public / "web-upstream.map").write_text("primary.example.test http://review-gateway:8080;\n", encoding="utf-8")
         (public / "agent.json").write_text('{"fixture":"bootstrap-preserved"}', encoding="utf-8")
         (public / "agent.signed.json").write_text('{"fixture":"signed-preserved"}', encoding="utf-8")
+        static = tmp_path / "static"
+        static.mkdir()
+        javascript = "// tunnel asset integrity fixture\n" * 32768
+        (static / "large.js").write_text(javascript, encoding="utf-8", newline="\n")
         reviewed_config = tmp_path / "reviewed.conf"
         reviewed_config.write_text('''events {} http { server {
             listen 8080;
+            location /observability/grafana/public/ {
+                alias /fixture/;
+                default_type application/javascript;
+            }
             location / {
                 add_header Set-Cookie "sphere_observability=fixture; HttpOnly; SameSite=Strict; Path=/observability/grafana";
                 return 200 "reviewed-ui|$http_host|$http_x_forwarded_host|$http_x_forwarded_proto|$request_uri";
             }
         }}''', encoding="utf-8")
         run("run", "-d", "--name", reviewed, "--network", network, "--network-alias", "review-gateway",
-            "--mount", f"type=bind,source={reviewed_config},target=/etc/nginx/nginx.conf,readonly", "nginx:alpine")
+            "--mount", f"type=bind,source={reviewed_config},target=/etc/nginx/nginx.conf,readonly",
+            "--mount", f"type=bind,source={static},target=/fixture,readonly", "nginx:alpine")
         # Install the private pilot routing map on this disposable edge only.
         run("cp", str(public), f"{edge}:/public")
         run("exec", edge, "nginx", "-t", "-c", "/etc/nginx/remote-pilot.conf")
@@ -113,6 +123,20 @@ def test_remote_gateway_preserves_host_without_triggering_public_http_redirect(t
                     break
                 assert time.monotonic() < deadline, response.stderr + response.stdout
                 time.sleep(0.1)
+
+        # A tunnel adds Via. Negotiated static compression must preserve every
+        # decoded byte, and clients without gzip must still receive plain JS.
+        asset_url = "http://127.0.0.1:8080/observability/grafana/public/large.js"
+        plain = run("exec", edge, "wget", "-T", "5", "-qO-",
+                    "--header", "Host: primary.example.test", asset_url)
+        assert hashlib.sha256(plain.stdout.encode()).digest() == hashlib.sha256(javascript.encode()).digest()
+        compressed = run("exec", edge, "wget", "-T", "5", "-S", "-O", "/tmp/grafana.js.gz",
+                         "--header", "Host: primary.example.test", "--header", "Accept-Encoding: gzip",
+                         "--header", "Via: 1.1 tunnel", asset_url)
+        assert "content-encoding: gzip" in compressed.stderr.lower()
+        assert "vary: accept-encoding" in compressed.stderr.lower()
+        decoded = run("exec", edge, "gzip", "-dc", "/tmp/grafana.js.gz")
+        assert hashlib.sha256(decoded.stdout.encode()).digest() == hashlib.sha256(javascript.encode()).digest()
 
         # API and WebSockets still use the original upstream/public identity.
         response = run("exec", edge, "wget", "-T", "2", "-qO-", "--header", "Host: primary.example.test",

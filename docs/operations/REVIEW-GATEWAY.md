@@ -2,6 +2,14 @@
 
 **Проверенная установка:** UI `86354350` / API `d720232e`.
 
+**Дополнение9октября16:21UTC:** публичный Nginx сжимает только static-assets
+`/observability/grafana/public/` с negotiation/Vary и `gzip_proxied any`.
+Через туннель без этого воспроизвелись JS parse errors и отказ dashboard;
+3015 работал. Два открытия после graceful reload показали реальные графики.
+Проверять исполнение dashboard, не только HTTP200 его HTML/JS. Anonymous static
+по-прежнему401; API/WS/bootstrap не менялись,46контейнеров сохранены.
+[QA, byte-integrity test и ограничения](../audits/2026-10-09/PUBLIC-WEB-SUPPLEMENTAL-QA.md).
+
 ## Действующий публичный UI — 9 октября 2026
 
 Точный действующий Tuna-host выбран приватным `web-upstream.map` публичного
