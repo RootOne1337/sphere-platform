@@ -5,12 +5,27 @@
 **10 октября — срочный source fix запуска broadcast.** Доказаны UnicodeDecodeError
 при MessagePack MGET и отдельный ValidationError обязательного online_devices
 после commit. Обе причины исправлены, 60 focused/64 delivery tests прошли;
-real PostgreSQL/Redis CI и установка требуются. Broad product 9/41 и legacy7
+real PostgreSQL/Redis broadcast test прошёл в CI; полный CI и установка требуются. Product 9/41 и legacy7
 сохраняются. Idle timeout остаётся приоритетом, direct pilot отложен ради этого сбоя.
 [Source audit](../audits/2026-10-10/BROADCAST-BINARY-PRESENCE.md).
 Первая CI и её retry остановлены Docker Hub429 до тестов. Проверено совпадение
 official-image manifests Hub/ECR; CI переводится на закреплённые ECR digests,
 обычные build defaults сохранены. [Provenance и границы](../audits/2026-10-10/CI-REGISTRY-LIMIT.md).
+CI2550: 3427 tests и252subtests прошли; единственный failure — isolated Nginx
+Docker run125 до gateway assertions. Image bootstrap/lint/security/RLS прошли,
+полный CI не принят. Остальные helper pulls закреплены; [граница коррекции](../audits/2026-10-10/CI-GATEWAY-IMAGE.md).
+Web tests/types/build и26pages/73assets прошли, но packaging failed без достаточной
+диагностики; [официальный mirror и безопасные failure categories](../audits/2026-10-10/CI-WEB-PACKAGING.md).
+
+**APK1.3.0 — проверен текущий контракт и составлен release plan.** Версия пока
+1.2.49; private continuous/direct flags не являются stable release профилем.
+Новое capability negotiation, native resource gates, idle reliability и signing
+promotion требуют отдельной приёмки. [Матрица и критерии](../design/APK-1.3-COMPATIBILITY-AND-RELEASE.md).
+
+**10 октября — проверена continuity сборщика диска.** Прежний процесс отсутствовал,
+223 samples закончились9Oct20:06UTC. Один limited observer возобновлён21:09UTC,
+due10Oct12:41UTC; три complete samples и PID/epoch/command проверены. Разрыв не
+покрыт, whole-PC writer UNKNOWN. [Receipt и границы](../audits/2026-10-10/STORAGE-OBSERVER-CONTINUITY.md).
 
 **9 октября: выполнены две попытки native direct pilot.** JNI и авторизованный
 SDP answer подтверждены, DataChannel не открылся, RTT не измерен. API9ad установлен,
@@ -57,7 +72,7 @@ idle timeout повторился, его причина и задержка о�
 bootstrap сохранены, новых images нет. Public stream/control/soak не приняты,
 9/41 не меняется. [Receipt](../audits/2026-10-09/PUBLIC-WEB-DELIVERY.md).
 
-Сверено **9 октября 2026 (UTC+5)**. Это действующий указатель статусов; машинный
+Сверено **10 октября 2026 (UTC+5)**. Это действующий указатель статусов; машинный
 источник — [STATUS-REGISTRY.json](STATUS-REGISTRY.json). Установка и runtime:
 [CURRENT-STATE](CURRENT-STATE.md). Критерии эксплуатации: [READINESS](READINESS.md).
 Предыдущая [подробная сверка чата и кода](../audits/2026-10-09/CHAT-CODE-RECONCILIATION.md)
@@ -83,12 +98,13 @@ L — несколько слоёв/проверок, XL — новая подс
 
 ## Сначала закрыть риски эксплуатации
 
-1. **Диск и ОЗУ (EP-033/047):** limited observation возобновлено9Oct12:42UTC
-   до10Oct12:42UTC: 721×120s/16MiB,24named files и RAM/Docker/WSL; complete
-   samples и process epoch проверены. Прежний разрыв не покрыт, whole-PC writer
+1. **Диск и ОЗУ (EP-033/047):** limited observation возобновлено9Oct21:09UTC
+   до10Oct12:41UTC: 467×120s/16MiB,24named files и RAM/Docker/WSL; complete
+   samples и process epoch проверены. Прежний PID отсутствует, последняя запись
+   20:06UTC; разрыв не покрыт, whole-PC writer
    UNKNOWN: VSS/USN/kernel evidence недоступны. Большой VHD не доказывает writer;
    reboot/deadline останавливают сбор, resource soak/retention ещё нужны.
-   [Окно и границы](../audits/2026-10-09/STORAGE-OBSERVER-RESTART.md).
+   [Окно и границы](../audits/2026-10-10/STORAGE-OBSERVER-CONTINUITY.md).
 2. **Idle control (EP-020/029):** PH011 native_receipt_timeout повторился
    с heartbeat512ms/tick15ms/WS OPEN0B/lastACK RTT248ms. Снимок сохраняет
    доказательство, участок задержки server/APK/native/reverse path пока неизвестен.
@@ -365,3 +381,23 @@ Android artifact выбран для изолированного RTT canary; р
   остаются историей своих SHA. После изменения запустить checker из DOCUMENTATION.
 - Не переносить successful CI одного SHA, закрытие user workflow или финальный
   readback на другой source, весь парк либо непрерывный SLA.
+
+### CHAT-16 · Стабильный APK1.3 и расширение без лишних переустановок
+
+**PARTIAL**
+
+Проверены текущие DAG/discovery/OTA границы и private release guards.
+[Versioned capability и release plan](../design/APK-1.3-COMPATIBILITY-AND-RELEASE.md).
+Остаток: idle/native/resources/совместимость/signing/staged rollout; stable1.3.0 не выпущен.
+
+### CHAT-17 · Broadcast500 и CSS preload публичного веба
+
+**SOURCE_FIXED_NOT_INSTALLED**
+
+Две причины500 воспроизведены независимо и исправлены в source.
+[Source audit](../audits/2026-10-10/BROADCAST-BINARY-PRESENCE.md),
+[CI registry correction](../audits/2026-10-10/CI-REGISTRY-LIMIT.md).
+Real-service broadcast test CI2550 прошёл; один isolated Nginx run блокирует full CI.
+Остаток: full CI/API delivery и finite runtime check. CSS в публичном каталоге/графе
+загружается; исходное предупреждение не воспроизвелось в этом окне. Idempotency,
+большой парк и unknown presence требуют самостоятельных контрактов.

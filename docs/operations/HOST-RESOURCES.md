@@ -1,11 +1,11 @@
 # Ресурсы хоста: диск, Windows commit, WSL и контейнеры
 
-**Действующий статус,9 октября17:42 UTC+5:** limited periodic observer
-возобновлён до **10 октября17:42 UTC+5**. 721×120s,16MiB; 24named files плюс
-RAM/process/Docker/WSL. Законченные samples и process identity реально проверены.
-VSS unavailable; USN/ETW не запущены, whole-PC writer UNKNOWN. Нет autostart
-после reboot/deadline; прежний разрыв не покрыт.
-[Restart evidence](../audits/2026-10-09/STORAGE-OBSERVER-RESTART.md) ·
+**Последний continuity срез10октября02:14UTC+5:** прежний PID отсутствует,
+последняя запись9Oct20:06UTC/223samples. Limited observer возобновлён21:09UTC
+до10Oct12:41UTC; три законченные записи проверены вместе с process epoch.
+467×120s/16MiB,24named files плюс RAM/process/Docker/WSL; нет autostart.
+Разрыв не покрыт, kernel/VSS unavailable, disk writer UNKNOWN.
+[Новый receipt](../audits/2026-10-10/STORAGE-OBSERVER-CONTINUITY.md) ·
 [Остаток и приоритет](WORK-STATUS.md) · [Машинная запись](STATUS-REGISTRY.json).
 Ресурсная утечка не объявлена исправленной.
 
