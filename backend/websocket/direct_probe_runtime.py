@@ -158,7 +158,18 @@ class DirectProbeRuntime:
                     or not await self.remaining(binding)):
                 return
             sdp = description(data.get("sdp"))
-            await viewer.ws.send_json(dict(type="direct_probe_answer", session_id=sid, sdp=sdp))
+            try:
+                async with asyncio.timeout(1):
+                    await viewer.ws.send_json(dict(type="direct_probe_answer", session_id=sid, sdp=sdp))
+            except Exception:
+                # This socket failure must not poison the shared worker listener.
+                await self.retire(viewer)
+                try:
+                    async with asyncio.timeout(.5):
+                        await viewer.ws.close(code=1013, reason="probe_viewer_unavailable")
+                except Exception:
+                    pass
+                return
             viewer.answered = True
             return
         if channel != f"{self.namespace}:agent:{binding['device']}":
@@ -214,7 +225,7 @@ class DirectProbeRuntime:
                     try:
                         async with asyncio.timeout(OPERATION_SECONDS):
                             await self.route(channel, message["data"])
-                    except (InvalidDirectProbe, ValueError, TypeError, KeyError):
+                    except (InvalidDirectProbe, ValueError, TypeError, KeyError, TimeoutError):
                         continue
         except asyncio.CancelledError:
             pass

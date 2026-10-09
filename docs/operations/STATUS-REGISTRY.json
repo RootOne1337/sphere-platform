@@ -103,7 +103,10 @@
     "prototypeScope": "diagnostic_echo_only",
     "runtimeInstalled": false,
     "mediaControlInstalled": false,
-    "implementationEvidence": "docs/audits/2026-10-09/DIRECT-PROBE-SOURCE.md"
+    "implementationEvidence": "docs/audits/2026-10-09/DIRECT-PROBE-SOURCE.md",
+    "sourceCorrections": [
+      "docs/audits/2026-10-09/DIRECT-PROBE-VIEWER-ISOLATION.md"
+    ]
   },
   "items": [
     {
@@ -1801,7 +1804,8 @@
       "evidence": [
         "docs/design/BROWSER-DIRECT-TRANSPORT.md",
         "docs/audits/2026-10-09/IDLE-CONTROL-RELAY-REVIEW.md",
-        "docs/audits/2026-10-09/DIRECT-PROBE-SOURCE.md"
+        "docs/audits/2026-10-09/DIRECT-PROBE-SOURCE.md",
+        "docs/audits/2026-10-09/DIRECT-PROBE-VIEWER-ISOLATION.md"
       ],
       "sourcePaths": [
         "backend/websocket/direct_probe_protocol.py",

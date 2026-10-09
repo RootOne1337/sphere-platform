@@ -7,6 +7,8 @@
 для испытания. По умолчанию отключён; Android JNI не входит в обычные сборки.
 Видео/касания на рабочей установке остаются WS; живой direct RTT ещё не измерен.
 [Scope, проверки и rollout gates](../audits/2026-10-09/DIRECT-PROBE-SOURCE.md).
+Последующая source коррекция изолирует BrokenPipe/slow viewer от общего listener;
+78 backend regression tests прошли. [Доказательство](../audits/2026-10-09/DIRECT-PROBE-VIEWER-ISOLATION.md).
 
 **9 октября: UI d70f55c6 установлен на 3015 и выбранном публичном адресе.**
 Повторная idle-потеря ACK отличается от неизвестного результата касания; held/terminal

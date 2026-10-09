@@ -219,3 +219,32 @@ async def test_listener_failure_retires_lease_and_socket_without_resubscribe(pee
     await eventually(lambda: viewer.ws.close.call_count == 1)
     assert not runtime.viewers
     assert await peers[1][1].get(runtime.key("device")) is None
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("failure", ["closed", "slow"])
+async def test_failed_viewer_answer_retires_only_that_viewer(peers, failure):
+    runtime = peers[0][1]
+    viewer = peers[-1]
+    await offer(peers)
+    if failure == "closed":
+        viewer.ws.send_json.side_effect = BrokenPipeError("fixture")
+    else:
+        async def slow_send(*args):
+            await asyncio.sleep(5)
+        viewer.ws.send_json.side_effect = slow_send
+    await peers[0][0].agent_message("device", peers[4],
+        dict(type="direct_probe_answer", session_id=viewer.session, sdp=SDP))
+    async with asyncio.timeout(2):
+        while viewer.session in runtime.viewers:
+            await asyncio.sleep(.005)
+    await eventually(lambda: viewer.ws.close.call_count == 1)
+    assert runtime.available and not runtime.task.done()
+    assert await peers[1][1].get(runtime.key("device")) is None
+    next_viewer = ProbeViewer("device", "org", "next_user", AsyncMock())
+    await runtime.open(next_viewer, SDP)
+    await eventually(lambda: next_viewer.session in peers[0][0].pending)
+    await peers[0][0].agent_message("device", peers[4],
+        dict(type="direct_probe_answer", session_id=next_viewer.session, sdp=SDP))
+    await eventually(lambda: next_viewer.ws.send_json.call_count == 1)
+    assert next_viewer.answered

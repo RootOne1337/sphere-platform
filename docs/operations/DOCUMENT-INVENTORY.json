@@ -5,7 +5,7 @@
   "countsByRole": {
     "ADR": 6,
     "CURRENT_ENTRYPOINT": 8,
-    "DATED_EVIDENCE": 237,
+    "DATED_EVIDENCE": 238,
     "DESIGN_SPECIFICATION": 75,
     "OPERATING_GUIDE": 64,
     "PROJECT_POLICY": 7,
@@ -1026,6 +1026,10 @@
     },
     {
       "file": "docs/audits/2026-10-09/DIRECT-PROBE-SOURCE.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
+      "file": "docs/audits/2026-10-09/DIRECT-PROBE-VIEWER-ISOLATION.md",
       "role": "DATED_EVIDENCE"
     },
     {
