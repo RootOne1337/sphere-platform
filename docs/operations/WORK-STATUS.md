@@ -2,6 +2,13 @@
 
 **Проверенная установка:** UI `369654a0` / API `369654a0`.
 
+**10 октября — source correction автоматического управления.** Повторный безопасный
+idle failure больше не ограничен одной попыткой; backoff до 15 секунд, fresh native
+readiness и отсутствие replay обязательны. Потерянный idle RELEASE пересоздаёт только
+viewer; ранее подтверждённый continuous path блокирует legacy swipe до нового STARTUP0.
+167 targeted и1982 full frontend tests/types/scoped lint прошли. Установка и live canary ещё не приняты.
+[Reconnect audit и точные gates](../audits/2026-10-10/CONTINUOUS-AUTO-RECOVERY.md).
+
 **10 октября — native ICE counters проверены на реальном APK.**
 Исправленный8447 прошёл все4 exact-source CI и signed admission. Один PH011:
 12native reports, remote candidates0/pairs0/DTLSnew; packet counters unknown.

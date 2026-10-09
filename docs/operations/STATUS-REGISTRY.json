@@ -26,6 +26,13 @@
   },
   "pendingCorrections": [
     {
+      "id": "continuous-idle-auto-recovery",
+      "installed": false,
+      "sourceBaseRevision": "f465d1fb63f09605174348070c0e10357035467a",
+      "evidence": "docs/audits/2026-10-10/CONTINUOUS-AUTO-RECOVERY.md",
+      "scope": "Source correction: repeated safe idle recovery with capped backoff, missing-release viewer restart, prior continuous path retained across sockets, scoped admission STARTUP5 busy retry. No input replay; unknown action and server denial fences retained.167 targeted frontend tests/types/scoped lint passed; exact CI/runtime/browser/native acceptance pending. ACK latency/direct transport are not declared fixed."
+    },
+    {
       "id": "direct-probe-native-network-summary",
       "installed": false,
       "sourceBaseRevision": "0abe15ce1e8ab82ab9ac232ce42b7c65b1055bdc",

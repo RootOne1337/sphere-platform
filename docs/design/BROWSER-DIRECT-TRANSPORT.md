@@ -91,6 +91,20 @@ STUN/numeric-candidate profile должен сравнить именно эти
 
 ## 2. Подтверждённая текущая архитектура
 
+### VPN, same-PC, LAN и Internet
+
+Прямой peer path исключает сервер Sphere из media forwarding, но подчиняется
+маршрутам ОС и VPN policy. Full tunnel обычно выбирает VPN default route;
+более специфичный физический route или split tunneling может выбрать другой
+interface. TCP сам по себе VPN не обходит. Расстояние между квартирами не меняет
+NAT topology двух отдельных домашних сетей.
+[Microsoft: VPN routing decisions](https://learn.microsoft.com/en-us/windows/security/operating-system-security/network-security/vpn/vpn-routing).
+
+Приёмка должна отдельно фиксировать selected ICE pair и OS route: host candidate
+не доказывает localhost, а srflx не доказывает путь вне VPN. При relay выбран TURN;
+это не P2P. Ни рабочий localhost URL веба, ни близость эмулятора не заменяют измерение.
+[Finite route/counter evidence](../audits/2026-10-10/DIRECT-PROBE-NATIVE-COUNTERS-CANARY.md).
+
 | Участок | Что существует сейчас | Следствие |
 | --- | --- | --- |
 | APK → сервер | Один OkHttp WS для binary video и JSON, включая input ACK | ACK может ждать ранее поставленные video bytes |

@@ -8,6 +8,11 @@
 [Исторический wording/контраст](../audits/2026-10-09/IDLE-CONTROL-UX-INSTALLED.md).
 Последний public idle timeout остаётся открытым; метрики не доказывают native ACK.
 
+**Source correction 10 октября, ещё не установлен:** повторное безопасное idle
+согласование с backoff до 15 секунд и recovery потерянного RELEASE; legacy input
+после reconnect ожидает свежий STARTUP0. Это не устранение причины ACK latency
+или повышение deadlines. [Audit, fixtures и следующий live gate](../audits/2026-10-10/CONTINUOUS-AUTO-RECOVERY.md).
+
 **Историческая доставка 9 октября, 15:17 UTC / 20:17 UTC+5: установлено в API d720232e.**
 UI 86354350 / APK 10249 сохранены. [Exact CI/image/install и failed idle canary receipt](../audits/2026-10-09/CONTINUOUS-SERVER-TIMINGS-INSTALLED.md):
 PH011 heartbeat timeout 510 мс / last ACK RTT 256 мс повторился, все наблюдаемые spans <25 мс.

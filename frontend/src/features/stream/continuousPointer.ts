@@ -168,6 +168,13 @@ export class ContinuousPointer {
       this.transition('fenced', 'release_unknown'); return false;
     }
     if (!this.current()) return false;
+    // Admission can reject a fresh owner while the previous native owner is
+    // still retiring. STARTUP has not admitted any touch: negotiate a new owner,
+    // never reinterpret an unknown input or injector failure as a retryable busy.
+    if (this.stateValue === 'opening' && message.stage === 'startup' && message.origin === 'admission'
+      && message.sequence === 0 && message.status === 5) {
+      this.retire('native_startup_busy'); return false;
+    }
     if (message.status >= 4) { this.retire('native_input_rejected_or_unknown'); return false; }
     if (message.stage === 'startup') {
       if (this.stateValue === 'ready' && message.origin === 'injector' && message.status === 0 && message.sequence === 0) return false;

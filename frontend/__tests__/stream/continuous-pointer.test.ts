@@ -31,6 +31,31 @@ function fixture(start = true, clock?: () => number) {
   };
 }
 
+it('classifies only a fresh STARTUP admission busy as retryable negotiation, without touch readiness', () => {
+  const f = fixture(false);
+  f.controller.open(CAPTURE); f.bind();
+  f.status(0, 5, 'startup', { origin: 'admission' });
+  expect(f.controller.state).toBe('fenced');
+  expect(f.onFence).toHaveBeenCalledWith(expect.objectContaining({ reason: 'native_startup_busy', pointerHeld: false }));
+  expect(f.controller.down(1, POINT)).toBe(false);
+  expect(f.events()).toEqual([]);
+  expect(f.sent.filter(x => x.type === 'touch_close')).toHaveLength(1);
+});
+
+it.each([
+  ['injector failure', 0, 5, 'startup', 'injector'],
+  ['admission unknown', 0, 6, 'startup', 'admission'],
+  ['input rejection', 1, 5, 'input', 'admission'],
+  ['nonzero startup', 1, 5, 'startup', 'admission'],
+])('does not downgrade %s to a harmless startup busy', (_label, sequence, code, stage, origin) => {
+  const f = fixture(false);
+  f.controller.open(CAPTURE); f.bind();
+  f.status(sequence as number, code as number, stage as string, { origin });
+  expect(f.onFence).toHaveBeenCalledWith(expect.objectContaining({ reason: 'native_input_rejected_or_unknown' }));
+  expect(f.controller.recoverableIdleReceiptLoss).toBe(false);
+  expect(f.events()).toEqual([]);
+});
+
 it('preserves an immutable idle failure snapshot before clearing pending receipts', () => {
   const f = fixture();
   f.advance(250); f.advance(250); f.advance(250);

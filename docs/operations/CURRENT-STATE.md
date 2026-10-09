@@ -2,6 +2,12 @@
 
 **Проверенная установка:** UI `369654a0` / API `369654a0`.
 
+**10 октября — новая source correction, пока не установлена.** Безопасный idle
+recovery повторяется с backoff до15секунд; после reconnect legacy input ждёт новую
+native readiness.1982full/167targeted frontend tests прошли; exact CI и live delivery
+ожидаются. Причина задержки ACK и direct transport остаются открытыми.
+[Исходник, регрессии и границы](../audits/2026-10-10/CONTINUOUS-AUTO-RECOVERY.md).
+
 **10 октября — broadcast исправлен и установлен.** На обоих адресах UI/API369;
 все4 exact-source CI success:3428 backend tests/252subtests,1966 frontend tests.
 Изолированный PostgreSQL/Redis test подтвердил202, commit и admission. На рабочем

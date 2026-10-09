@@ -2,6 +2,12 @@
 
 **Проверенная установка:** UI `369654a0` / API `369654a0`.
 
+**10 октября — автоматический idle recovery исправлен в source.** Повторный
+heartbeat loss не требует ручной кнопки; новый viewer не принимает legacy swipe до
+fresh native readiness.1982full/167targeted frontend tests прошли. Exact CI,
+установка и реальный canary ещё не приняты; input latency/direct gates открыты.
+[Проверки и границы](../audits/2026-10-10/CONTINUOUS-AUTO-RECOVERY.md).
+
 **10 октября — broadcast исправлен и установлен.** На обоих адресах UI/API369;
 все4 exact-source CI success:3428 backend tests/252subtests,1966 frontend tests.
 Изолированный PostgreSQL/Redis test подтвердил202, commit и admission. На рабочем

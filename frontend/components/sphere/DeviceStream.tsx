@@ -76,6 +76,9 @@ interface StreamDiagnosticResponse {
 }
 
 const FRAME_STALE_TIMEOUT_MS = 10_000;
+const IDLE_RECOVERY_LIMITS = Object.freeze({ releaseWaitMs: 3000, baseDelayMs: 750, maxDelayMs: 15_000, stableMs: 30_000 });
+const idleRecoveryDelay = (attempts: number) => Math.min(IDLE_RECOVERY_LIMITS.maxDelayMs,
+  IDLE_RECOVERY_LIMITS.baseDelayMs * 2 ** Math.min(Math.max(0, attempts - 1), 5));
 
 function formatTimestampAgo(timestamp: number | null): string {
   if (timestamp == null) return 'никогда';
@@ -134,6 +137,11 @@ export function DeviceStream({
   const continuousFaultRef = useRef(false);
   const idleRecoveryCountRef = useRef(0);
   const [idleRecoveryCount, setIdleRecoveryCount] = useState(0);
+  const idleRecoveringRef = useRef(false);
+  const [idleRecovering, setIdleRecovering] = useState(false);
+  const idleRecoveryAllowedRef = useRef(false);
+  const restartIdleSocketRef = useRef<(() => void) | null>(null);
+  const continuousReadySinceRef = useRef(-Infinity);
   const [continuousFault, setContinuousFault] = useState(false);
   const [surfaceActive, setSurfaceActive] = useState(() => typeof document !== 'undefined' && !document.hidden);
   const [continuousState, setContinuousState] = useState<ContinuousPointerState | 'probing'>('idle');
@@ -171,7 +179,7 @@ export function DeviceStream({
   const currentFrameOwned = hasRenderedFrame && !streamError
     && wsRef.current?.readyState === WebSocket.OPEN
     && renderedSocketRef.current === wsRef.current;
-  const canInteract = surfaceActive && taskHandoffId === undefined && !continuousFault && !discreteBusy && !inspection && !readOnly && currentFrameOwned && (connection === 'live'
+  const canInteract = surfaceActive && taskHandoffId === undefined && !continuousFault && !idleRecovering && !discreteBusy && !inspection && !readOnly && currentFrameOwned && (connection === 'live'
     || (enableStaticInput && connection === 'stale'));
   const canSelectElement = taskHandoffId === undefined && !!inspection && currentFrameOwned && (connection === 'live'
     || (enableStaticInput && connection === 'stale'));
@@ -182,9 +190,11 @@ export function DeviceStream({
   continuousAllowedRef.current = canInteract && !continuousRecording && continuousRequestedRef.current;
   // Age is not a disconnect: an idle ImageReader can retain its last picture.
   // A new socket/decoder still needs its own first frame before accepting input.
-  const canNavigate = surfaceActive && taskHandoffId === undefined && !continuousFault && !inspection && !readOnly && hasRenderedFrame && !streamError
+  const canNavigate = surfaceActive && taskHandoffId === undefined && !continuousFault && !idleRecovering && !inspection && !readOnly && hasRenderedFrame && !streamError
     && (connection === 'live' || connection === 'stale')
     && renderedSocketRef.current === wsRef.current;
+  idleRecoveryAllowedRef.current = enableNavigation && surfaceActive && currentFrameOwned
+    && !readOnly && !inspection && !recordingMode && taskHandoffId === undefined && !discreteBusy && !continuousFault;
   const onFrameDimensionsRef = useRef(onFrameDimensions);
   const lastFrameDimensionsRef = useRef<StreamFrameDimensions | null>(null);
   onFrameDimensionsRef.current = onFrameDimensions;
@@ -233,6 +243,10 @@ export function DeviceStream({
     continuousFaultRef.current = false;
     idleRecoveryCountRef.current = 0;
     setIdleRecoveryCount(0);
+    idleRecoveringRef.current = false;
+    setIdleRecovering(false);
+    restartIdleSocketRef.current = null;
+    continuousReadySinceRef.current = -Infinity;
     setContinuousFault(false);
     discreteBusyRef.current = false;
     setDiscreteBusy(false);
@@ -323,9 +337,14 @@ export function DeviceStream({
         ws = newWs;
         wsRef.current = newWs;
         automaticProbeRef.current = null;
-        continuousSupportedRef.current = false;
+        // Keep the previously confirmed input path across socket replacements.
+        // It grants no authority: it prevents a legacy swipe while fresh native
+        // capability/STARTUP0 is still pending on the new socket.
         continuousFaultRef.current = false;
         setContinuousFault(false);
+        idleRecoveringRef.current = false;
+        setIdleRecovering(false);
+        continuousReadySinceRef.current = -Infinity;
         setContinuousReason(null);
         setContinuousFailureCode(null);
         setPointerFailure(null);
@@ -350,7 +369,7 @@ export function DeviceStream({
           keyFrameTimer = setTimeout(requestKeyFrame, delayMs);
         };
         scheduleKeyFrameRecovery = scheduleKeyFrameRequests;
-        const finish = (retry: boolean, terminalMessage?: string) => {
+        const finish = (retry: boolean, terminalMessage?: string, minimumRetryDelayMs = 0) => {
           if (ended) return;
           ended = true;
           releaseWaiterRef.current?.finish(false);
@@ -363,6 +382,7 @@ export function DeviceStream({
           continuousDisposeRef.current = null;
           continuousRef.current = null;
           continuousRequestedRef.current = false;
+          restartIdleSocketRef.current = null;
           setContinuousState('idle');
           clearTimeout(probeTimer);
           dragRef.current = null;
@@ -381,10 +401,16 @@ export function DeviceStream({
           setConnection(retry ? 'retrying' : 'unavailable');
           if (retry) {
             const delay = Math.min(500 * 2 ** Math.min(attempt++, 6), 15_000);
-            retryTimer = setTimeout(createWs, delay * (0.8 + Math.random() * 0.4));
+            retryTimer = setTimeout(createWs, Math.max(minimumRetryDelayMs, delay * (0.8 + Math.random() * 0.4)));
           } else {
             setStreamError(terminalMessage ?? null);
           }
+        };
+        restartIdleSocketRef.current = () => {
+          if (ignore || ended || wsRef.current !== newWs || !idleRecoveryAllowedRef.current) return;
+          // No touch was in flight. Retire this viewer, then require a new frame,
+          // capability, owner and native STARTUP0; a timeout never proves release.
+          finish(true, undefined, idleRecoveryDelay(idleRecoveryCountRef.current));
         };
         watchdog = setInterval(() => {
           if (Date.now() - lastReceived >= (opened ? 30_000 : 15_000)) finish(true);
@@ -438,12 +464,16 @@ export function DeviceStream({
                     if (ignore || ended || newWs !== wsRef.current) return;
                     setContinuousState(state);
                     const idleReceiptLoss = reason === 'native_receipt_timeout' && controller.recoverableIdleReceiptLoss;
-                    const idleRecovery = idleReceiptLoss && idleRecoveryCountRef.current === 0;
+                    const idleRecovery = (idleReceiptLoss || reason === 'native_startup_busy') && !continuousFaultRef.current;
                     if (idleRecovery) {
-                      idleRecoveryCountRef.current++;
+                      idleRecoveryCountRef.current = Math.min(Number.MAX_SAFE_INTEGER, idleRecoveryCountRef.current + 1);
                       setIdleRecoveryCount(idleRecoveryCountRef.current);
-                      setContinuousFailureCode('idle_receipt_timeout');
-                      setContinuousReason('Задержка подтверждения связи без касания · ожидаем освобождение Android перед повторным согласованием.');
+                      idleRecoveringRef.current = true;
+                      setIdleRecovering(true);
+                      setContinuousFailureCode(idleReceiptLoss ? 'idle_receipt_timeout' : 'native_startup_busy');
+                      setContinuousReason(idleReceiptLoss
+                        ? 'Автоматически восстанавливаем управление · задержалось подтверждение связи без касания. Команды не повторяются.'
+                        : 'Автоматически восстанавливаем управление · Android завершает предыдущую сессию. Команды не повторяются.');
                     } else if (reason && !['viewer_closed', 'surface_blur', 'surface_hidden', 'surface_control_lost', 'control_mode_changed', 'capture_or_socket_lost'].includes(reason)) {
                       continuousFaultRef.current = true;
                       setContinuousFault(true);
@@ -454,17 +484,25 @@ export function DeviceStream({
                     }
                     if (state === 'closed') {
                       continuousRequestedRef.current = false;
-                      if (!continuousFaultRef.current) {
+                      if (!continuousFaultRef.current && !idleRecoveringRef.current) {
                         setContinuousReason(null);
                         automaticProbeRef.current = null;
                       }
                       const waiting = releaseWaiterRef.current;
                       if (waiting?.controller === controller) waiting.finish(true);
                     }
+                    if (state === 'ready') continuousReadySinceRef.current = performance.now();
                   },
                   onReceipt: receipt => {
                     if (ignore || ended || newWs !== wsRef.current) return;
                     const now = performance.now();
+                    // Only sustained native receipts reset retry backoff, not merely
+                    // receiving a frame or opening another WebSocket.
+                    if (idleRecoveryCountRef.current > 0 && controller.state === 'ready'
+                      && now - continuousReadySinceRef.current >= IDLE_RECOVERY_LIMITS.stableMs) {
+                      idleRecoveryCountRef.current = 0;
+                      setIdleRecoveryCount(0);
+                    }
                     if (now - lastContinuousReceiptAt.current < 250 && receipt.action !== 1 && receipt.action !== 3) return;
                     lastContinuousReceiptAt.current = now;
                     setContinuousReceipt({ action: receipt.action, sequence: receipt.sequence,
@@ -489,14 +527,16 @@ export function DeviceStream({
                 continuousRef.current?.retire('server_rejected');
                 if (!continuousRef.current) {
                   continuousRequestedRef.current = false;
-                  setContinuousState('idle');
+                  setContinuousState(continuousSupportedRef.current ? 'fenced' : 'idle');
                 }
-                if (continuousRef.current) {
+                if (continuousRef.current || continuousSupportedRef.current) {
+                  idleRecoveringRef.current = false;
+                  setIdleRecovering(false);
                   continuousFaultRef.current = true;
                   setContinuousFault(true);
                   setContinuousFailureCode('server_rejected');
                 }
-                setContinuousReason(continuousRef.current
+                setContinuousReason(continuousRef.current || continuousSupportedRef.current
                   ? 'Управление приостановлено сервером. Видеопоток продолжается; команды не повторяются.'
                   : 'Дискретное управление · сервер не подтвердил непрерывные жесты.');
                 return;
@@ -539,8 +579,18 @@ export function DeviceStream({
           probeTimer = setTimeout(() => {
             if (continuousRequestedRef.current && !continuousRef.current) {
               continuousRequestedRef.current = false;
-              setContinuousState('idle');
-              setContinuousReason('Дискретное управление · APK не подтвердил непрерывные жесты.');
+              if (continuousSupportedRef.current) {
+                idleRecoveryCountRef.current = Math.min(Number.MAX_SAFE_INTEGER, idleRecoveryCountRef.current + 1);
+                setIdleRecoveryCount(idleRecoveryCountRef.current);
+                idleRecoveringRef.current = true;
+                setIdleRecovering(true);
+                setContinuousState('fenced');
+                setContinuousFailureCode('capability_timeout');
+                setContinuousReason('Автоматически восстанавливаем управление · ожидаем новые возможности APK. Команды не повторяются.');
+              } else {
+                setContinuousState('idle');
+                setContinuousReason('Дискретное управление · APK не подтвердил непрерывные жесты.');
+              }
             }
           }, 6000);
         };
@@ -556,6 +606,7 @@ export function DeviceStream({
       continuousRef.current = null;
       continuousRequestedRef.current = false;
       continuousProbeArmRef.current = null;
+      restartIdleSocketRef.current = null;
       releaseWaiterRef.current?.finish(false);
       releaseWaiterRef.current = null;
       if (wheelUpTimerRef.current) clearTimeout(wheelUpTimerRef.current);
@@ -682,6 +733,11 @@ export function DeviceStream({
   useEffect(() => {
     if (inspection || readOnly || continuousRecording || taskHandoffId !== undefined) {
       automaticProbeRef.current = null;
+      if (idleRecoveringRef.current && continuousRef.current?.state === 'closed') {
+        idleRecoveringRef.current = false;
+        setIdleRecovering(false);
+        setContinuousReason(null);
+      }
       if (!continuousRef.current) {
         continuousRequestedRef.current = false;
         if (continuousState === 'probing') setContinuousState('idle');
@@ -689,7 +745,7 @@ export function DeviceStream({
       return;
     }
     const socket = wsRef.current;
-    if (!enableNavigation || !canInteract || continuousFaultRef.current || discreteBusyRef.current || !socket
+    if (!enableNavigation || !canInteract || idleRecoveringRef.current || continuousFaultRef.current || discreteBusyRef.current || !socket
       || automaticProbeRef.current === socket || !decoderRef.current?.lastRenderedCapture
       || continuousRef.current && !['closed', 'destroyed'].includes(continuousRef.current.state)) return;
     automaticProbeRef.current = socket;
@@ -697,6 +753,27 @@ export function DeviceStream({
     // A single capability attempt per owned video/mode; never replay a failed gesture.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [canInteract, enableNavigation, inspection, readOnly, continuousRecording, taskHandoffId, discreteBusy, continuousState]);
+
+  useEffect(() => {
+    if (!idleRecovering || !idleRecoveryAllowedRef.current) return;
+    const controller = continuousRef.current;
+    const socket = wsRef.current;
+    if (!socket || !['fenced', 'closed'].includes(controller?.state ?? continuousState)) return;
+    const released = controller?.state === 'closed';
+    const timeout = setTimeout(() => {
+      if (!idleRecoveringRef.current || !idleRecoveryAllowedRef.current
+        || continuousRef.current !== controller || wsRef.current !== socket) return;
+      if (controller?.state === 'closed') {
+        idleRecoveringRef.current = false;
+        setIdleRecovering(false);
+        automaticProbeRef.current = null;
+        setContinuousReason(null);
+        // The normal capability effect admits the new owner; no input is replayed.
+      } else if (!controller || controller.state === 'fenced') restartIdleSocketRef.current?.();
+    }, released ? idleRecoveryDelay(idleRecoveryCountRef.current) : IDLE_RECOVERY_LIMITS.releaseWaitMs);
+    return () => clearTimeout(timeout);
+  }, [idleRecovering, continuousState, surfaceActive, currentFrameOwned, enableNavigation,
+    inspectionActive, readOnly, continuousRecording, taskHandoffId, discreteBusy, continuousFault]);
 
   const prepareDiscreteInput = (): ((confirmed: boolean) => void) | Promise<((confirmed: boolean) => void) | null> | null => {
     const socket = wsRef.current;
@@ -925,7 +1002,7 @@ export function DeviceStream({
       <span role="status" className="min-w-0 flex-[1_1_16rem] text-xs leading-relaxed">{continuousReason ?? (discreteBusy ? 'Клавиатура и навигация · ожидаем подтверждение Android' : continuousRecording ? 'Запись использует отдельные завершённые действия' : continuousState === 'ready'
         ? 'Непрерывное управление · зажмите и ведите мышь' : continuousState === 'opening' ? 'Подключаем управление Android…' : continuousState === 'probing' ? 'Определяем возможности APK · обычные нажатия доступны' : continuousState === 'closed' ? 'Касание Android освобождено' : 'Управление Android')}
       {continuousReceipt && continuousState === 'ready' && ` · ACK №${continuousReceipt.sequence}: ${continuousReceipt.ms} мс`}</span>
-      {['fenced', 'closed'].includes(continuousState) && continuousReason && <button type="button" onClick={() => setControlSession(value => value + 1)} className="ml-auto rounded-lg border border-border px-3 py-2 text-xs hover:bg-muted">Восстановить управление</button>}
+      {continuousFault && !idleRecovering && ['fenced', 'closed'].includes(continuousState) && continuousReason && <button type="button" onClick={() => setControlSession(value => value + 1)} className="ml-auto rounded-lg border border-border px-3 py-2 text-xs hover:bg-muted">Восстановить управление</button>}
     </div>}
     {inputError && <div role="status" className="flex shrink-0 items-start justify-between gap-3 border-b border-amber-500/25 bg-amber-500/10 px-3 py-2 text-xs text-foreground">
       <p>{inputError}</p><button type="button" onClick={() => setInputError(null)} aria-label="Скрыть сообщение об отклонённой команде" className="shrink-0 rounded px-2 py-1 text-muted-foreground hover:bg-muted focus-visible:outline focus-visible:outline-2 focus-visible:outline-ring">Скрыть</button>
@@ -1034,7 +1111,7 @@ export function DeviceStream({
             <div>Управление Android: {continuousState}{continuousFailureCode ? ` · причина: ${continuousFailureCode}` : ''}</div>
             <div>Видео и управление идут через сервер (WebSocket). Прямое соединение с APK ещё не подключено.</div>
             {process.env.NEXT_PUBLIC_DIRECT_TRANSPORT_CANARY === 'true' && <DirectProbeDiagnostics deviceId={deviceId} />}
-            <div>Повторное согласование после задержки idle ACK: {idleRecoveryCount}/1 в этой видеосессии. Касания и команды не повторяются.</div>
+            <div>Автоматическое восстановление idle ACK: {idleRecoveryCount} попыток с задержкой до 15 секунд. Касания и команды не повторяются.</div>
             {pointerFailureSnapshot && <ContinuousInputDiagnostics snapshot={pointerFailureSnapshot} />}
             {diagnosticsError ? <div className="text-red-600 dark:text-red-300">{diagnosticsError}</div> : (
               <>
