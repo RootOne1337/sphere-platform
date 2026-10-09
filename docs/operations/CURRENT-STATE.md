@@ -13,8 +13,15 @@ Idle control и direct transport остаются открытыми; probe вы
 Последнее сравнение: public idle heartbeat512мс, lastACK487мс; local ACK244мс
 без fault в конечном срезе. Это не синхронный trace или причинная атрибуция.
 [Наблюдения](../audits/2026-10-10/IDLE-LOCAL-PUBLIC-COMPARISON.md).
-Close/phase/network diagnostics теперь доставлены, но новый native ICE canary
-не проведён. [APK1.3 plan](../design/APK-1.3-COMPATIBILITY-AND-RELEASE.md) — NO-GO.
+Close correction/source diagnostics входят в369; стандартный frontend compile gate
+панели выключен. Новый finite native canary во временном UI дал177requests/0responses,
+две checking пары,0echo/RTT. APK восстановлен, probeoff; ordinary public video9frames.
+[Новый runtime receipt и границы](../audits/2026-10-10/DIRECT-PROBE-NETWORK-CANARY.md).
+Следующая source доработка добавляет bounded native ICE counters; оба локальных
+Android test profiles прошли по989tests,0failures/3skipped. Новый APK не установлен,
+live native callback и новый exact-source CI ещё не приняты.
+[Source/test граница](../audits/2026-10-10/DIRECT-PROBE-NATIVE-NETWORK-SOURCE.md).
+[APK1.3 plan](../design/APK-1.3-COMPATIBILITY-AND-RELEASE.md) — NO-GO.
 Product9/41,legacy7; limited observer21:09→12:41UTC и whole-PC writer UNKNOWN.
 
 ## Исторические срезы до последней установки

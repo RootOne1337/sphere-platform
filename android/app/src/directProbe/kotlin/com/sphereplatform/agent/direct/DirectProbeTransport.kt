@@ -2,6 +2,7 @@ package com.sphereplatform.agent.direct
 
 import android.content.Context
 import android.os.SystemClock
+import android.util.Log
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.launch
@@ -29,6 +30,7 @@ class DirectProbeTransport(
         var answered = false
         var sequence = 1
         var lastEcho = 0L
+        val statsBudget = ProbeStatsBudget()
     }
 
     init {
@@ -36,6 +38,7 @@ class DirectProbeTransport(
             try {
                 while (true) {
                     peer?.let { if (!valid(it)) close() }
+                    peer?.let { if (it.answered && valid(it)) collectNetwork(it) }
                     val action = if (peer == null) queue.receive() else withTimeoutOrNull(100) { queue.receive() }
                     try { action?.invoke() } catch (e: kotlinx.coroutines.CancellationException) {
                         throw e
@@ -172,9 +175,36 @@ class DirectProbeTransport(
         p.sequence++; p.lastEcho = now
     }
 
+    private fun collectNetwork(p: Probe) {
+        val connection = p.connection ?: return
+        val sampledAt = SystemClock.elapsedRealtime()
+        if (!p.statsBudget.begin(sampledAt)) return
+        try {
+            connection.getStats { report ->
+                // Never stringify the native report: it contains addresses, IDs and certificates.
+                val rows = report.statsMap.values
+                val summary = if (rows.size <= DirectProbeNetwork.MAX_ROWS) DirectProbeNetwork.summary(
+                    rows.map { ProbeStatsRow(it.type, it.members) }) else null
+                enqueue {
+                    if (p.statsBudget.complete() && valid(p) && summary != null) {
+                        val age = (SystemClock.elapsedRealtime() - sampledAt).coerceAtLeast(0)
+                        val snapshot = buildJsonObject {
+                            put("event", "native_ice_summary")
+                            put("sampleAgeMs", age)
+                            put("network", summary)
+                        }
+                        // Canary-only local aggregate, <=32 records/peer; no per-sample socket publication.
+                        Log.i("SphereDirectProbe", snapshot.toString())
+                    }
+                }
+            }
+        } catch (_: Exception) { p.statsBudget.complete() }
+    }
+
     private fun close() {
         val old = peer
         peer = null
+        old?.statsBudget?.retire()
         old?.channel?.unregisterObserver()
         old?.channel?.close()
         old?.channel?.dispose()

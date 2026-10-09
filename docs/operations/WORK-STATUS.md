@@ -2,6 +2,13 @@
 
 **Проверенная установка:** UI `369654a0` / API `369654a0`.
 
+**10 октября — native ICE counters добавлены в исходники.** APK diagnostic peer
+считает входящие/исходящие проверки и ответы, пары и DTLS; один запрос одновременно,
+не чаще1Hz, максимум32запроса. Закрытые поля исключены, partial/overflow — unknown.
+DevDebug canary и ordinary EnterpriseDebug: по989tests/85suites,0failures/3skipped. Новая сборка не установлена; UI/API369 и исходный APK PH011 сохранены.
+Это подготовка различимого следующего canary, не закрытие idle/direct проблемы.
+[Исходники, тесты и границы](../audits/2026-10-10/DIRECT-PROBE-NATIVE-NETWORK-SOURCE.md).
+
 **10 октября — снят реальный browser ICE срез.** Один диагностический canary:
 APK answer получен, две пары проверяются,177 requests/0 responses,0 echo/RTT.
 Источник отказа сужен до установки сетевого пути; конкретная причина ещё UNKNOWN.

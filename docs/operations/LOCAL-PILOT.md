@@ -12,7 +12,9 @@ Idle control и direct transport остаются открытыми; probe вы
 
 Действующий Tuna-host и3015 используют одну паруUI/API369. Public map и
 API/WS/bootstrap routes сохранены; PH011 снова online после API replacement.
-Direct endpoint off/allowlist[], APK1.2.49-dev/10249 не менялся.
+Direct endpoint off/allowlist[], исходный APK1.2.49-dev/10249 восстановлен после
+конечного ICE canary.177requests/0responses,0RTT; успешный прямой канал не подтверждён.
+[Последний runtime receipt](../audits/2026-10-10/DIRECT-PROBE-NETWORK-CANARY.md).
 [Текущая сверка](CURRENT-STATE.md) / [реестр](STATUS-REGISTRY.json).
 Ниже сохранены исторические pilot checkpoints и ограничения их собственных окон.
 

@@ -18,6 +18,9 @@ business API/WS/health/bootstrap сохраняют прежние маршру�
 установка сохранила45соседних контейнеров. [Приёмка и границы](../audits/2026-10-10/BROADCAST-INSTALLED-ACCEPTANCE.md).
 Direct probe выключен; stream/input остаются server WS, public idle reliability
 не принята. [Сравнение с3015](../audits/2026-10-10/IDLE-LOCAL-PUBLIC-COMPARISON.md).
+Последний [конечный ICE canary и cleanup](../audits/2026-10-10/DIRECT-PROBE-NETWORK-CANARY.md):
+177requests/0responses,0RTT; исходный APK восстановлен, probeoff. Стандартный
+UI369 не включает экспериментальную панель; временные3016/3017 остановлены.
 Review stack остаётся зависимостью public UI. Проверять оба адреса после rollout;
 не пересоздавать API или volumes ради отката UI. Историческая Grafana коррекция
 и маршруты выше сохранены; это не новый global tunnel rollout.

@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "reviewedAtUtc": "2026-10-09T22:05:42.592541+00:00",
+  "reviewedAtUtc": "2026-10-09T22:18:16.565651+00:00",
   "sourceReviewed": "369654a0be4bded35e299062badc9bfe95101f1e",
   "scope": "Effective documentation status; source/install/finite acceptance kept separate. No new fleet or soak acceptance.",
   "baseline": "docs/audits/2026-10-05/ENTERPRISE-PRODUCT-BACKLOG.json",
@@ -24,7 +24,15 @@
     },
     "evidenceSha256NormalizedLf": "9c701c39633dfcbf2fba4a67711887df19a461d428fa487af8888763dee97440"
   },
-  "pendingCorrections": [],
+  "pendingCorrections": [
+    {
+      "id": "direct-probe-native-network-summary",
+      "installed": false,
+      "sourceBaseRevision": "69150948",
+      "evidence": "docs/audits/2026-10-10/DIRECT-PROBE-NATIVE-NETWORK-SOURCE.md",
+      "scope": "Canary-only local logcat aggregates: four ICE counter directions, candidate pairs, DTLS, sample age; one callback pending, 1Hz/32-call budget, no private fields. Live native callback and exact-source delivery not accepted."
+    }
+  ],
   "storage": {
     "lastObservedUtc": "2026-10-09T21:14:26.196860+00:00",
     "visibleMatchingProcesses": 1,
@@ -109,7 +117,8 @@
       "docs/audits/2026-10-09/DIRECT-PROBE-PILOT.md",
       "docs/audits/2026-10-09/DIRECT-PROBE-NETWORK-SNAPSHOT.md",
       "docs/audits/2026-10-10/BROADCAST-INSTALLED-ACCEPTANCE.json",
-      "docs/audits/2026-10-10/DIRECT-PROBE-NETWORK-CANARY.json"
+      "docs/audits/2026-10-10/DIRECT-PROBE-NETWORK-CANARY.json",
+      "docs/audits/2026-10-10/DIRECT-PROBE-NATIVE-NETWORK-SOURCE.md"
     ],
     "pilotEvidence": "docs/audits/2026-10-10/DIRECT-PROBE-NETWORK-CANARY.json",
     "pilotOutcome": "FAILED_HOST_ICE_CHECKS_WITHOUT_RESPONSES_CLEANED_UP",
@@ -1809,7 +1818,7 @@
         "EP-047"
       ],
       "acceptedScope": "Exact369 CI and standard UI/API delivery accepted for recorded corrections. One additional native host ICE attempt observed177 requests/0responses in a temporary loopback canary UI; standard compile gate remains off. No successful channel/RTT. Original APK restored, API probeoff; nine public video frames after cleanup.",
-      "remaining": "Native-side ICE summary and packet/route/mDNS attribution, controlled STUN/TURN comparison, packaged canary UI admission, live RTT, native cleanup/provenance/SBOM/resource plateau, network matrix, media/control ownership and idle reliability remain open.",
+      "remaining": "Live native-side ICE summary and packet/route/mDNS attribution, controlled STUN/TURN comparison, packaged canary UI admission, live RTT, native cleanup/provenance/SBOM/resource plateau, network matrix, media/control ownership and idle reliability remain open. Native bounded counter source/tests added but APK not installed.",
       "evidence": [
         "docs/design/BROWSER-DIRECT-TRANSPORT.md",
         "docs/audits/2026-10-09/IDLE-CONTROL-RELAY-REVIEW.md",
@@ -1818,7 +1827,8 @@
         "docs/audits/2026-10-09/DIRECT-PROBE-PILOT.md",
         "docs/audits/2026-10-09/DIRECT-PROBE-NETWORK-SNAPSHOT.md",
         "docs/audits/2026-10-10/BROADCAST-INSTALLED-ACCEPTANCE.json",
-        "docs/audits/2026-10-10/DIRECT-PROBE-NETWORK-CANARY.json"
+        "docs/audits/2026-10-10/DIRECT-PROBE-NETWORK-CANARY.json",
+        "docs/audits/2026-10-10/DIRECT-PROBE-NATIVE-NETWORK-SOURCE.md"
       ],
       "sourcePaths": [
         "backend/websocket/direct_probe_protocol.py",
@@ -1826,7 +1836,8 @@
         "backend/api/ws/direct/router.py",
         "frontend/src/features/stream/directProbe.ts",
         "android/app/src/directProbe/kotlin/com/sphereplatform/agent/direct/DirectProbeTransport.kt",
-        "frontend/src/features/stream/directProbeNetwork.ts"
+        "frontend/src/features/stream/directProbeNetwork.ts",
+        "android/app/src/main/kotlin/com/sphereplatform/agent/direct/DirectProbeNetwork.kt"
       ],
       "fleetAccepted": false
     },

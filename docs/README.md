@@ -17,6 +17,8 @@
 APK, schema/OTA и45соседних контейнеров сохранены при каждой установке.
 Idle control и direct transport остаются открытыми; probe выключен.
 [Установка, проверки и остаток](audits/2026-10-10/BROADCAST-INSTALLED-ACCEPTANCE.md).
+Последующий finite ICE canary:177requests/0responses,0RTT; original APK восстановлен,
+probeoff. [Последняя проверка runtime и границы](audits/2026-10-10/DIRECT-PROBE-NETWORK-CANARY.md).
 
 [50 работ и требования из чата](operations/WORK-STATUS.md):9принято/41открыто;
 legacy7 пересекаются с этим планом. [Текущие версии](operations/CURRENT-STATE.md) ·

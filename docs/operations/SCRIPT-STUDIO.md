@@ -13,6 +13,11 @@ APK, schema/OTA и45соседних контейнеров сохранены �
 Idle control и direct transport остаются открытыми; probe выключен.
 [Установка, проверки и остаток](../audits/2026-10-10/BROADCAST-INSTALLED-ACCEPTANCE.md).
 
+Последний [конечный ICE canary](../audits/2026-10-10/DIRECT-PROBE-NETWORK-CANARY.md)
+дал177requests/0responses и0RTT; исходный APK восстановлен, probeoff. Стандартный
+UI369 не включает экспериментальную панель; временный loopback UI остановлен.
+Запись и воспроизведение Android действий продолжают использовать обычный путь.
+
 Публично проверен существующий graphv1/3узла/2связи/Undo0 без изменения и
 каталог23сценария. Форма broadcast показывает14online и2волны, закрыта без отправки.
 Live gestures и recorded trajectory различаются: rich recorder/MOVE replay

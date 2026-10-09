@@ -24,10 +24,13 @@
 APK, schema/OTA и45соседних контейнеров сохранены при каждой установке.
 Idle control и direct transport остаются открытыми; probe выключен.
 [Установка, проверки и остаток](docs/audits/2026-10-10/BROADCAST-INSTALLED-ACCEPTANCE.md).
+Последующий finite ICE canary:177requests/0responses,0RTT; original APK восстановлен,
+probeoff. [Последняя проверка runtime и границы](docs/audits/2026-10-10/DIRECT-PROBE-NETWORK-CANARY.md).
 
 **Действующий статус:** [реестр работ и требований](docs/operations/WORK-STATUS.md)
 разделяет **9 принятых /41 открытую работу** и legacy7. Сохранённые сценарии,
-версии и Android APK не менялись. Публичный каталог и graph открываются;
+версии сохранены; исходный Android APK восстановлен после конечного canary.
+Публичный каталог и graph открываются;
 unused CSS preload warning не воспроизведён, причина пока UNKNOWN.
 Последовательное сравнение ACK:244мс на3015 против487мс через домен;
 [границы вывода](docs/audits/2026-10-10/IDLE-LOCAL-PUBLIC-COMPARISON.md).

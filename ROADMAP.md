@@ -9,6 +9,8 @@
 APK, schema/OTA и45соседних контейнеров сохранены при каждой установке.
 Idle control и direct transport остаются открытыми; probe выключен.
 [Установка, проверки и остаток](docs/audits/2026-10-10/BROADCAST-INSTALLED-ACCEPTANCE.md).
+Последующий finite ICE canary:177requests/0responses,0RTT; original APK восстановлен,
+probeoff. [Последняя проверка runtime и границы](docs/audits/2026-10-10/DIRECT-PROBE-NETWORK-CANARY.md).
 
 **Навигация обновлена 9 октября 2026; F32-план ниже сохраняет порядок21 сентября.** [Главная](README.md) · [Реестр работ](docs/operations/WORK-STATUS.md) · [Установленный pilot](docs/operations/LOCAL-PILOT.md)
 

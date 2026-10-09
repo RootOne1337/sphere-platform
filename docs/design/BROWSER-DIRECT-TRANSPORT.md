@@ -13,6 +13,17 @@ TURN и рабочая установка не переведены на WebRTC.
 а не приёмка direct path или доказанный диагноз NAT/mDNS.
 [Пилот, ограниченные ресурсы и следующий gate](../audits/2026-10-09/DIRECT-PROBE-PILOT.md).
 
+**10 октября — реальный browser ICE срез:** две checking пары,177requests/0responses,
+DTLS connecting,0echo/RTT; точная причина потери сетевого пути ещё UNKNOWN.
+Срез получен во временном loopback diagnostic UI, compile gate стандартного
+frontend выключен. Original APK восстановлен, API probeoff; ordinary public video
+вернулся9frames без decode/render errors. [Receipt](../audits/2026-10-10/DIRECT-PROBE-NETWORK-CANARY.md).
+
+**Следующий source этап:** APK получает ограниченные native ICE counters во всех
+четырёх направлениях, состояние пар и DTLS, без адресов/ключей.32запроса максимум,
+один одновременно, локальный canary logcat. Live JNI callback ещё не проверен;
+новый APK не установлен. [Source/test scope](../audits/2026-10-10/DIRECT-PROBE-NATIVE-NETWORK-SOURCE.md).
+
 [Действующие работы](../operations/WORK-STATUS.md) ·
 [Установка](../operations/CURRENT-STATE.md) ·
 [Подтверждённый текущий путь и сбой](../audits/2026-10-09/IDLE-CONTROL-RELAY-REVIEW.md) ·
@@ -367,6 +378,6 @@ text или native receipt между transport generations. Старый сер
 * Measured latency, video quality, cost, CPU/RSS/disk limits и browser compatibility.
 * Общий frame/action correlation для playback/recorder и visual assertions.
 
-**Итог статуса:** исследование и последовательный план подготовлены. Direct
-transport не реализован и не установлен; SF26-05 / EP-020 / EP-029 остаются OPEN.
+**Итог статуса:** исследование, план и diagnostic echo prototype подготовлены.
+Direct media/control не реализован и не установлен; SF26-05 / EP-020 / EP-029 остаются OPEN.
 Первоначальный deferred brief сохраняет свою дату; текущий указатель ведёт сюда.

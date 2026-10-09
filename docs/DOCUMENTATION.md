@@ -11,6 +11,11 @@
 неизменяемыми receipts; последний большой [crosscheck](audits/2026-10-09/CHAT-CODE-RECONCILIATION.md)
 не выдаётся за новую установку или fleet acceptance.
 
+Последний [runtime receipt10октября](audits/2026-10-10/DIRECT-PROBE-NETWORK-CANARY.md)
+фиксирует UI/API369, восстановленный исходный APK, probeoff и конечный отказ ICE
+177requests/0responses. Стандартный UI compile gate выключен; диагностическая
+панель проверена только во временном loopback UI. Это не direct connectivity acceptance.
+
 ## Покрытие и проверка
 
 [Инвентарь документации](operations/DOCUMENT-INVENTORY.json) классифицирует все
@@ -53,8 +58,8 @@ Source clock receipt1577e01e хранит прежнюю source-only грани�
 диагностика и её компоновка приняты в конечном scope. Последующая backend-only
 [доставка API d720232e](audits/2026-10-09/CONTINUOUS-SERVER-TIMINGS-INSTALLED.md)
 сохраняет UI и подтверждает повторный idle failure; причина остаётся OPEN.
-Последующий [native pilot receipt](audits/2026-10-09/DIRECT-PROBE-PILOT.json)
-связывает текущие UI d70/API9ad с восстановленным APK и выключенным probe.
+Исторический [native pilot receipt](audits/2026-10-09/DIRECT-PROBE-PILOT.json)
+связывает прежние UI d70/API9ad с восстановленным APK и выключенным probe.
 `browser.finiteAccepted` относится только к обычному read/first-frame return;
 `directPilot.connectivityAccepted=false` сохраняет отказ прямого соединения.
 Отрицательный pilot outcome не является закрытием пункта или приёмкой задержки.
