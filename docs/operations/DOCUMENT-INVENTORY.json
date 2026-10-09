@@ -1,11 +1,11 @@
 {
   "schemaVersion": 1,
-  "reviewedAtUtc": "2026-10-09T22:18:16.565651+00:00",
+  "reviewedAtUtc": "2026-10-09T22:41:11.769464+00:00",
   "scope": "All tracked Markdown classified; active local-link paths scanned. Not semantic attestation of every sentence, command execution, external-link or live acceptance.",
   "countsByRole": {
     "ADR": 6,
     "CURRENT_ENTRYPOINT": 8,
-    "DATED_EVIDENCE": 249,
+    "DATED_EVIDENCE": 250,
     "DESIGN_SPECIFICATION": 76,
     "OPERATING_GUIDE": 64,
     "PROJECT_POLICY": 7,
@@ -1122,6 +1122,10 @@
     },
     {
       "file": "docs/audits/2026-10-10/CI-WEB-PACKAGING.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
+      "file": "docs/audits/2026-10-10/DIRECT-PROBE-ANDROID-COMPATIBILITY.md",
       "role": "DATED_EVIDENCE"
     },
     {

@@ -112,6 +112,18 @@ Direct migration может иметь отдельный controlled rollout; н
 приписать новой версии незавершённые возможности. Перед выбором scope stable
 фиксируется конкретный профиль, обязательные gates и поддерживаемые устройства.
 
+### Локальная сеть при будущем targetSdk37
+
+Текущий source использует targetSdk35. По официальной инструкции Android17
+приложение при переходе на target37 должно отдельно согласовать разрешение
+локальной сети и обрабатывать отказ/отзыв перед LAN/UDP/mDNS connection.
+Для текущего target35 инструкция запрещает преждевременный запрос нового
+permission; manifest здесь не меняется. Проверочный PH011 — Android9/API28,
+поэтому новая защита не является установленной причиной его ICE failure.
+[Android local network protections](https://developer.android.com/privacy-and-security/local-network-permission).
+Target bump, permission UX и network denial/revocation tests — отдельный
+compatibility gate, не обещанная возможность stable1.3.
+
 ## Практический порядок выпуска
 
 1. Закрыть idle/native lifecycle в выбранном профиле и зафиксировать latency/resource

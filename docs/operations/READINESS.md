@@ -18,9 +18,11 @@ Native pilot9октября и новый10октября остаются от�
 последний browser ICE срез177requests/0responses, успешной пары нет. Исходный APK
 восстановлен, probeoff, публичный viewer9frames без decode/render errors.
 [Границы измерения](../audits/2026-10-10/DIRECT-PROBE-NETWORK-CANARY.md).
-Native-side bounded counters добавлены в source; DevDebug canary и ordinary
-EnterpriseDebug прошли по989tests,0failures/3skipped. Live JNI callback/новая
-доставка ещё открыты. [Source proof](../audits/2026-10-10/DIRECT-PROBE-NATIVE-NETWORK-SOURCE.md).
+Native-side bounded counters добавлены в source. Hosted Android CI0abe обнаружил
+API31-only conversion при minimum26; APK не устанавливался. Исправленный
+range check прошёл Android Lint0errors и оба canary profiles по990tests,
+0failures/errors/3skipped. Новые hosted CI, signed admission и live JNI callback
+ещё открыты. [Совместимость и границы](../audits/2026-10-10/DIRECT-PROBE-ANDROID-COMPATIBILITY.md).
 APK PH0111.2.49-dev/10249, новый stable1.3 не выпущен.
 [Release gates](../design/APK-1.3-COMPATIBILITY-AND-RELEASE.md).
 Limited observer возобновлён9Oct21:09UTC до10Oct12:41UTC; прежний разрыв и

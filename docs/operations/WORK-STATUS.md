@@ -2,12 +2,14 @@
 
 **Проверенная установка:** UI `369654a0` / API `369654a0`.
 
-**10 октября — native ICE counters добавлены в исходники.** APK diagnostic peer
-считает входящие/исходящие проверки и ответы, пары и DTLS; один запрос одновременно,
-не чаще1Hz, максимум32запроса. Закрытые поля исключены, partial/overflow — unknown.
-DevDebug canary и ordinary EnterpriseDebug: по989tests/85suites,0failures/3skipped. Новая сборка не установлена; UI/API369 и исходный APK PH011 сохранены.
-Это подготовка различимого следующего canary, не закрытие idle/direct проблемы.
-[Исходники, тесты и границы](../audits/2026-10-10/DIRECT-PROBE-NATIVE-NETWORK-SOURCE.md).
+**10 октября — исправлена совместимость native ICE counters с API 26+.**
+Hosted Android CI отклонил `0abe15ce`: `BigInteger.longValueExact` требует API 31.
+Кандидат не устанавливался; UI/API369 и исходный APK PH011 сохранены, probeoff.
+Преобразование заменено проверкой диапазона; добавлен тест граничных значений.
+Canary DevDebug и EnterpriseDebug: по990 tests/85 suites,0failures/errors,3skipped;
+Android Lint:0errors. Новые exact-source CI, signed admission и live native
+callback ещё нужны. Idle/direct проблема не закрыта.
+[Отказ CI, исправление и границы](../audits/2026-10-10/DIRECT-PROBE-ANDROID-COMPATIBILITY.md).
 
 **10 октября — снят реальный browser ICE срез.** Один диагностический canary:
 APK answer получен, две пары проверяются,177 requests/0 responses,0 echo/RTT.

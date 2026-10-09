@@ -26,7 +26,8 @@ internal object DirectProbeNetwork {
                 val value = when (val raw = pair.members[key]) {
                     is Long -> raw
                     is Int -> raw.toLong()
-                    is java.math.BigInteger -> runCatching { raw.longValueExact() }.getOrNull()
+                    // longValueExact requires Android API31; admitted agents include API26+.
+                    is java.math.BigInteger -> raw.takeIf { it.signum() >= 0 && it.bitLength() <= 63 }?.toLong()
                     else -> null
                 } ?: return null
                 if (value < 0 || total > Long.MAX_VALUE - value) return null

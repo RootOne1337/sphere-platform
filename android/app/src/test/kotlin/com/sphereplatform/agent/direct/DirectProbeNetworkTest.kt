@@ -49,6 +49,15 @@ class DirectProbeNetworkTest {
         }
     }
 
+    @Test fun bigIntegerCountersStayExactAtTheSignedLongBoundaryOnOlderAndroid() {
+        val maximum = BigInteger.valueOf(Long.MAX_VALUE)
+        val accepted = DirectProbeNetwork.summary(listOf(pair("requestsReceived" to maximum)))!!
+        assertEquals(Long.MAX_VALUE, accepted["requestsReceived"]!!.jsonPrimitive.long)
+        for (value in listOf(maximum + BigInteger.ONE, BigInteger.valueOf(Long.MIN_VALUE), -BigInteger.ONE)) {
+            assertEquals(JsonNull, DirectProbeNetwork.summary(listOf(pair("requestsReceived" to value)))!!["requestsReceived"])
+        }
+    }
+
     @Test fun oneOutstandingCallbackAndRateLimitPreventNativeStatsBacklog() {
         val budget = ProbeStatsBudget()
         assertTrue(budget.begin(0))

@@ -17,10 +17,12 @@ Close correction/source diagnostics входят в369; стандартный f
 панели выключен. Новый finite native canary во временном UI дал177requests/0responses,
 две checking пары,0echo/RTT. APK восстановлен, probeoff; ordinary public video9frames.
 [Новый runtime receipt и границы](../audits/2026-10-10/DIRECT-PROBE-NETWORK-CANARY.md).
-Следующая source доработка добавляет bounded native ICE counters; оба локальных
-Android test profiles прошли по989tests,0failures/3skipped. Новый APK не установлен,
-live native callback и новый exact-source CI ещё не приняты.
-[Source/test граница](../audits/2026-10-10/DIRECT-PROBE-NATIVE-NETWORK-SOURCE.md).
+Новая source диагностика native ICE counters отклонена hosted Android CI из-за
+метода API31 при minimum26. Кандидат0abe не устанавливался. Исправление проверяет
+диапазон перед преобразованием: оба canary profiles по990tests/85suites,
+0failures/errors/3skipped; Android Lint0errors. Live JNI callback, exact-source
+CI исправления и signed admission ещё открыты.
+[Отказ CI и исправление](../audits/2026-10-10/DIRECT-PROBE-ANDROID-COMPATIBILITY.md).
 [APK1.3 plan](../design/APK-1.3-COMPATIBILITY-AND-RELEASE.md) — NO-GO.
 Product9/41,legacy7; limited observer21:09→12:41UTC и whole-PC writer UNKNOWN.
 

@@ -54,6 +54,30 @@ traversal, media congestion control, frame deadlines или native input ownersh
 использоваться на резервных участках. Это не основание делать TCP обязательным
 для самого быстрого пути. [RFC 8835](https://www.rfc-editor.org/rfc/rfc8835.html).
 
+### Уточнения сети и Android compatibility — 10 октября
+
+На проверочном PH011 read-only `getprop` вернул Android9/API28; текущий source
+targetSdk/compileSdk35. Новая защита локальной сети Android17 применяется при
+targetSdk37+: потребуется отдельный runtime permission/denial/revocation flow.
+Для target35 добавлять или запрашивать `ACCESS_LOCAL_NETWORK` сейчас не нужно.
+Это будущий compatibility gate, не объяснение нынешнего отказа API28.
+[Актуальная инструкция Android, обновление2октября2026](https://developer.android.com/privacy-and-security/local-network-permission).
+
+Имя mDNS в offer само по себе не доказывает отказ: upstream WebRTC tests
+предусматривают установление связи через peer-reflexive candidate при отсутствии
+resolver. Этот test block исключён для Android и не является проверкой нашего
+pinned JNI. Нужны фактические native counters и достижимость; нельзя объявлять
+«сломанный mDNS» только по SDP.
+[Upstream test и его Android guard](https://webrtc.googlesource.com/src/+/refs/heads/main/pc/peer_connection_histogram_unittest.cc).
+
+Следующее сравнение сохраняет одинаковые peer/wire/TTL и отличается только
+явным ICE profile: host-only baseline, затем контролируемый STUN, затем TURN.
+Для STUN/TURN фиксировать владельца endpoint, краткоживущие credentials, network
+path и результат selected pair; секреты и адреса не отправлять в публичный receipt.
+Relay near peers может дать короткий путь, но не должен называться P2P. Изменение
+firewall, запуск публичного listener или разрешений Android не является скрытой
+частью диагностического профиля. Production media/control остаётся отдельным gate.
+
 ## 2. Подтверждённая текущая архитектура
 
 | Участок | Что существует сейчас | Следствие |
