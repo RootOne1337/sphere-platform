@@ -19,6 +19,17 @@ export interface PointerTransport {
 export interface PointerObservation {
   sequence: number; action: number; status: 1 | 2 | 3; deviceUptimeMs: number; receiptRoundTripMs: number;
 }
+/** One scalar failure snapshot, never a trajectory, frame, owner ID or replay queue. */
+export type PointerFenceObservation = Readonly<{
+  reason: string; phase: ContinuousPointerState; idleHeartbeatOnly: boolean;
+  offeredSequence: number; acknowledgedSequence: number; pendingCount: number;
+  oldestSequence: number | null; oldestAction: number | null;
+  oldestAgeMs: number | null; oldestDeadlineAgeMs: number | null;
+  terminalSequence: number | null; terminalAgeMs: number | null; pointerHeld: boolean;
+  tickGapMs: number | null; lastSendAgeMs: number | null;
+  lastReceiptAgeMs: number | null; lastReceiptRoundTripMs: number | null;
+  socketState: number; bufferedBytes: number | null;
+}>;
 type Options = {
   /** Exact socket instance; replacing the outer ref must destroy this controller. */
   socket: PointerTransport;
@@ -27,6 +38,7 @@ type Options = {
   now?: () => number;
   onState?: (state: ContinuousPointerState, reason: string | null) => void;
   onReceipt?: (observation: PointerObservation) => void;
+  onFence?: (observation: PointerFenceObservation) => void;
 };
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
@@ -67,6 +79,7 @@ export class ContinuousPointer {
   private acknowledged = 0;
   private closeSent = false;
   private idleReceiptLoss = false;
+  private lastReceipt: { at: number; roundTripMs: number } | null = null;
   private readonly now: () => number;
 
   constructor(private readonly options: Options) { this.now = options.now ?? (() => performance.now()); }
@@ -182,9 +195,11 @@ export class ContinuousPointer {
     this.acknowledged = Math.max(this.acknowledged, receiptSequence);
     this.pending = this.pending.filter(p => p.sequence > receiptSequence);
     if (this.terminal?.sequence === message.sequence) this.terminal = null;
+    const receivedAt = this.now();
+    this.lastReceipt = { at: receivedAt, roundTripMs: Math.max(0, receivedAt - offered.at) };
     try { this.options.onReceipt?.({ sequence: message.sequence, action: offered.action,
       status: message.status, deviceUptimeMs: message.device_uptime_ms,
-      receiptRoundTripMs: Math.max(0, this.now() - offered.at) }); } catch { /* Observation only. */ }
+      receiptRoundTripMs: this.lastReceipt.roundTripMs }); } catch { /* Observation only. */ }
     return true;
   }
 
@@ -247,12 +262,14 @@ export class ContinuousPointer {
     if (!Number.isFinite(now) || now < this.lastTickAt || now - this.lastTickAt > CONTINUOUS_POINTER_LIMITS.schedulingGapMs) {
       this.retire('scheduler_gap'); return;
     }
-    this.lastTickAt = now;
     if ((this.stateValue === 'opening' && now - this.openedAt >= CONTINUOUS_POINTER_LIMITS.startupMs)
       || (this.stateValue === 'ready' && this.pending.length > 0 && now - (this.pending[0].deadlineAt ?? this.pending[0].at) >= CONTINUOUS_POINTER_LIMITS.receiptMs)
       || (this.terminal && now - this.terminal.at >= CONTINUOUS_POINTER_LIMITS.receiptMs)) {
       this.retire('native_receipt_timeout'); return;
     }
+    // Keep the preceding tick until after the deadline check so a failure
+    // snapshot measures the actual timer gap rather than a freshly reset zero.
+    this.lastTickAt = now;
     if (this.move && this.held && now - this.lastMoveAt >= CONTINUOUS_POINTER_LIMITS.moveIntervalMs) {
       const point = this.move;
       this.move = null;
@@ -274,9 +291,25 @@ export class ContinuousPointer {
       || this.stateValue === 'closing' || this.stateValue === 'fenced') return;
     this.idleReceiptLoss = reason === 'native_receipt_timeout' && this.held === null
       && this.terminal === null && this.pending.length > 0 && this.pending.every(p => p.action === 4);
+    const now = this.now();
+    const age = (at: number | undefined): number | null => at !== undefined
+      && Number.isFinite(now) && Number.isFinite(at) && now >= at ? now - at : null;
+    const oldest = this.pending[0];
+    const snapshot: PointerFenceObservation = Object.freeze({ reason, phase: this.stateValue,
+      idleHeartbeatOnly: this.idleReceiptLoss, offeredSequence: this.sequence,
+      acknowledgedSequence: this.acknowledged, pendingCount: this.pending.length,
+      oldestSequence: oldest?.sequence ?? null, oldestAction: oldest?.action ?? null,
+      oldestAgeMs: age(oldest?.at), oldestDeadlineAgeMs: age(oldest?.deadlineAt ?? oldest?.at),
+      terminalSequence: this.terminal?.sequence ?? null, terminalAgeMs: age(this.terminal?.at),
+      pointerHeld: this.held !== null, tickGapMs: age(this.lastTickAt), lastSendAgeMs: age(this.lastSentAt),
+      lastReceiptAgeMs: age(this.lastReceipt?.at), lastReceiptRoundTripMs: this.lastReceipt?.roundTripMs ?? null,
+      socketState: this.options.socket.readyState,
+      bufferedBytes: Number.isFinite(this.options.socket.bufferedAmount) && this.options.socket.bufferedAmount >= 0
+        ? this.options.socket.bufferedAmount : null });
     this.held = this.move = this.terminal = null;
     this.pending = [];
     this.transition('fenced', reason);
+    try { this.options.onFence?.(snapshot); } catch { /* Diagnostics never postpone release or replay input. */ }
     if (!this.closeSent && this.writable()) {
       this.closeSent = true;
       try { this.options.socket.send(JSON.stringify({ type: 'touch_close' })); }

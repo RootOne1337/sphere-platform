@@ -9,7 +9,8 @@ import { AndroidNavigationBar } from '@/src/features/stream/AndroidNavigationBar
 import type { UiBounds } from '@/src/features/stream/uiHierarchy';
 import type { AcknowledgedControl, StreamInput, TaskControlHandoffState } from '@/src/features/stream/controlObservation';
 import { ContinuousPointer, attachContinuousPointer } from '@/src/features/stream/continuousPointer';
-import type { ContinuousPointerState } from '@/src/features/stream/continuousPointer';
+import type { ContinuousPointerState, PointerFenceObservation } from '@/src/features/stream/continuousPointer';
+import { ContinuousInputDiagnostics } from '@/src/features/stream/ContinuousInputDiagnostics';
 
 interface DeviceStreamProps {
   deviceId: string;
@@ -138,10 +139,15 @@ export function DeviceStream({
   const [continuousReason, setContinuousReason] = useState<string | null>(null);
   const [continuousFailureCode, setContinuousFailureCode] = useState<string | null>(null);
   const [continuousReceipt, setContinuousReceipt] = useState<{ action: number; sequence: number; ms: number } | null>(null);
+  const [pointerFailure, setPointerFailure] = useState<{
+    deviceId: string; accessToken: string | null; socket: WebSocket; snapshot: PointerFenceObservation;
+  } | null>(null);
   const dragRef = useRef<{
     x: number; y: number; pointerId: number; frameWidth: number; frameHeight: number; inspection: boolean;
   } | null>(null);
   const { accessToken } = useAuthStore();
+  const pointerFailureSnapshot = pointerFailure?.deviceId === deviceId && pointerFailure.accessToken === accessToken
+    && pointerFailure.socket === wsRef.current ? pointerFailure.snapshot : null;
   const [connection, setConnection] = useState<
     'connecting' | 'waiting' | 'live' | 'stale' | 'retrying' | 'unavailable'
   >('connecting');
@@ -237,6 +243,7 @@ export function DeviceStream({
     setContinuousReason(null);
     setContinuousFailureCode(null);
     setContinuousReceipt(null);
+    setPointerFailure(null);
 
     const timer = setTimeout(() => {
       if (ignore) return;
@@ -320,6 +327,7 @@ export function DeviceStream({
         setContinuousFault(false);
         setContinuousReason(null);
         setContinuousFailureCode(null);
+        setPointerFailure(null);
         let ended = false;
         let lastReceived = Date.now();
         let opened = false;
@@ -420,6 +428,11 @@ export function DeviceStream({
                 }
                 const controller = new ContinuousPointer({ socket: newWs,
                   renderedCapture: () => decoder?.lastRenderedCapture ?? null,
+                  onFence: snapshot => {
+                    if (ignore || ended || newWs !== wsRef.current
+                      || ['viewer_closed', 'viewer_destroyed', 'surface_blur', 'surface_hidden', 'surface_control_lost', 'control_mode_changed', 'capture_or_socket_lost'].includes(snapshot.reason)) return;
+                    setPointerFailure({ deviceId, accessToken, socket: newWs, snapshot });
+                  },
                   onState: (state, reason) => {
                     if (ignore || ended || newWs !== wsRef.current) return;
                     setContinuousState(state);
@@ -1000,6 +1013,7 @@ export function DeviceStream({
             <div className="mb-2 font-semibold">Сквозная диагностика кадра</div>
             <div>Управление Android: {continuousState}{continuousFailureCode ? ` · причина: ${continuousFailureCode}` : ''}</div>
             <div>Повторное согласование после задержки idle ACK: {idleRecoveryCount}/1 в этой видеосессии. Касания и команды не повторяются.</div>
+            {pointerFailureSnapshot && <ContinuousInputDiagnostics snapshot={pointerFailureSnapshot} />}
             {diagnosticsError ? <div className="text-red-300">{diagnosticsError}</div> : (
               <>
                 <div>Отчёт APK: {agentDiagnostics?.state === 'active_report' ? 'захват активен' : agentDiagnostics?.state ?? 'загрузка…'}

@@ -5,7 +5,7 @@
   "countsByRole": {
     "ADR": 6,
     "CURRENT_ENTRYPOINT": 8,
-    "DATED_EVIDENCE": 226,
+    "DATED_EVIDENCE": 227,
     "DESIGN_SPECIFICATION": 74,
     "OPERATING_GUIDE": 63,
     "PROJECT_POLICY": 7,
@@ -1010,6 +1010,10 @@
     },
     {
       "file": "docs/audits/2026-10-09/CHAT-CODE-RECONCILIATION.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
+      "file": "docs/audits/2026-10-09/CONTINUOUS-FENCE-DIAGNOSTICS.md",
       "role": "DATED_EVIDENCE"
     },
     {

@@ -12,8 +12,8 @@ function fixture(start = true, clock?: () => number) {
   let capture: CaptureFrameBinding | null = { ...CAPTURE };
   const sent: Array<Record<string, unknown>> = [];
   const socket = { readyState: 1, bufferedAmount: 0, send: jest.fn((raw: string) => { sent.push(JSON.parse(raw)); }) };
-  const onState = jest.fn(), onReceipt = jest.fn();
-  const controller = new ContinuousPointer({ socket, renderedCapture: () => capture, now: clock ?? (() => now), onState, onReceipt });
+  const onState = jest.fn(), onReceipt = jest.fn(), onFence = jest.fn();
+  const controller = new ContinuousPointer({ socket, renderedCapture: () => capture, now: clock ?? (() => now), onState, onReceipt, onFence });
   const bind = () => controller.receive({ type: 'touch_session', ...IDENTITY, frame_width: 960, frame_height: 540 });
   const status = (sequence: number, code = 1, stage = 'input', overrides: Record<string, unknown> = {}) =>
     controller.receive({ type: 'continuous_input_status', ...IDENTITY, sequence, status: code,
@@ -25,11 +25,77 @@ function fixture(start = true, clock?: () => number) {
     return status(latest.sequence as number, latest.action === 4 ? 2 : latest.action === 3 ? 3 : 1);
   };
   if (start) ready();
-  return { controller, socket, sent, onState, onReceipt, bind, status, ready, events, ackLatest,
+  return { controller, socket, sent, onState, onReceipt, onFence, bind, status, ready, events, ackLatest,
     capture: (value: CaptureFrameBinding | null) => { capture = value; },
     advance: (ms: number, tick = true) => { now += ms; if (tick) controller.tick(); },
   };
 }
+
+it('preserves an immutable idle failure snapshot before clearing pending receipts', () => {
+  const f = fixture();
+  f.advance(250); f.advance(250); f.advance(250);
+  expect(f.controller.state).toBe('fenced');
+  expect(f.controller.pendingReceiptCount).toBe(0);
+  expect(f.onFence).toHaveBeenCalledTimes(1);
+  const snapshot = f.onFence.mock.calls[0][0];
+  expect(snapshot).toMatchObject({ reason: 'native_receipt_timeout', phase: 'ready', idleHeartbeatOnly: true,
+    offeredSequence: 2, acknowledgedSequence: 0, pendingCount: 2, oldestSequence: 1, oldestAction: 4,
+    oldestAgeMs: 500, oldestDeadlineAgeMs: 500, tickGapMs: 250, lastSendAgeMs: 250,
+    terminalSequence: null, terminalAgeMs: null, pointerHeld: false,
+    lastReceiptAgeMs: null, lastReceiptRoundTripMs: null, socketState: 1, bufferedBytes: 0 });
+  expect(Object.isFrozen(snapshot)).toBe(true);
+  expect(JSON.stringify(snapshot)).not.toMatch(/server_owner|viewer_session|71532996|"x"|"y"|captureEpoch/);
+  f.status(2, 2); f.controller.retire(); f.controller.destroy();
+  expect(f.onFence).toHaveBeenCalledTimes(1);
+  expect(f.sent.filter(x => x.type === 'touch_close')).toHaveLength(1);
+});
+
+it('reports real browser timer starvation separately from native receipt silence', () => {
+  const f = fixture(); f.advance(501);
+  expect(f.onFence.mock.calls[0][0]).toMatchObject({ reason: 'scheduler_gap', tickGapMs: 501,
+    pendingCount: 0, oldestAgeMs: null, idleHeartbeatOnly: false });
+  expect(f.events()).toEqual([]);
+});
+
+it('captures actual RTT and age of the last ACK even when observers are throttled or throwing', () => {
+  const f = fixture(); f.controller.down(1, POINT);
+  f.advance(37, false); f.onReceipt.mockImplementation(() => { throw new Error('observer'); });
+  f.ackLatest(); f.advance(200); f.advance(250); f.advance(250); f.advance(250);
+  expect(f.onFence.mock.calls[0][0]).toMatchObject({ lastReceiptRoundTripMs: 37,
+    lastReceiptAgeMs: 950, acknowledgedSequence: 1, pointerHeld: true, idleHeartbeatOnly: false });
+});
+
+it('keeps cold-start send age distinct from the deadline age started at native READY', () => {
+  const f = fixture(false); f.controller.open(CAPTURE); f.bind();
+  for (let i = 0; i < 5; i++) f.advance(250);
+  f.status(0, 0, 'startup'); f.advance(250); f.advance(250);
+  expect(f.onFence.mock.calls[0][0]).toMatchObject({ oldestAgeMs: 1500, oldestDeadlineAgeMs: 500,
+    oldestSequence: 1, phase: 'ready' });
+});
+
+it('retains the exact unacknowledged terminal even after a newer heartbeat ACK', () => {
+  const f = fixture(); f.controller.down(1, POINT); f.ackLatest();
+  f.advance(10, false); f.controller.up(1, POINT);
+  f.advance(250); f.ackLatest(); f.advance(250);
+  expect(f.onFence.mock.calls[0][0]).toMatchObject({ terminalSequence: 2, terminalAgeMs: 500,
+    pendingCount: 0, acknowledgedSequence: 3, pointerHeld: false, idleHeartbeatOnly: false });
+});
+
+it('a throwing fence observer cannot block the single native close or retain a MOVE', () => {
+  const f = fixture(); f.onFence.mockImplementation(() => { throw new Error('observer'); });
+  f.controller.down(1, POINT); f.controller.moveTo(1, { x: 50, y: 100 });
+  f.advance(250); f.advance(250);
+  expect(f.controller.state).toBe('fenced'); expect(f.controller.hasPendingMove).toBe(false);
+  expect(f.controller.pendingReceiptCount).toBe(0);
+  expect(f.sent.filter(x => x.type === 'touch_close')).toHaveLength(1);
+});
+
+it('an invalid monotonic clock leaves ages unknown rather than inventing zero', () => {
+  let now = 50; const f = fixture(true, () => now);
+  now = NaN; f.controller.tick();
+  expect(f.onFence.mock.calls[0][0]).toMatchObject({ reason: 'scheduler_gap', tickGapMs: null,
+    lastSendAgeMs: null, oldestAgeMs: null });
+});
 
 it('sends back-and-forth MOVE before UP, with native coordinates and one gesture identity', () => {
   const f = fixture();

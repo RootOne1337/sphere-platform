@@ -199,6 +199,32 @@ it('reconciles one idle heartbeat delay only after native release without replay
   expect(view.getByRole('button', { name: 'Восстановить управление' })).toBeEnabled();
   expect(view.sent().filter(x => x.type === 'touch_event').every(x => x.action === 4)).toBe(true);
 });
+it('shows the finite failed heartbeat snapshot after RELEASE and clears it on a new device', () => {
+  const view = readyContinuous();
+  view.rerender(<DeviceStream deviceId="gesture-remote" enableNavigation enableStaticInput enableDiagnostics />);
+  for (let i = 0; i < 4; i++) act(() => jest.advanceTimersByTime(250));
+  fireEvent.click(view.getByRole('button', { name: 'Диагностика' }));
+  expect(view.getByText(/Последний сбой управления · native_receipt_timeout/)).toBeInTheDocument();
+  expect(view.getByText(/№1 · HEARTBEAT/)).toBeInTheDocument();
+  expect(view.getByText(/Задержался только heartbeat без касания/)).toBeInTheDocument();
+  expect(view.getByText(/участок задержки ещё не определён/)).toBeInTheDocument();
+  view.status(0, 3, 'release');
+  expect(view.getByText(/Последний сбой управления/)).toBeInTheDocument();
+  expect(view.commands()).toEqual([]);
+  view.rerender(<DeviceStream deviceId="another-device" enableNavigation enableStaticInput enableDiagnostics />);
+  expect(view.queryByText(/Последний сбой управления/)).not.toBeInTheDocument();
+  view.unmount();
+});
+
+it('normal inspection release does not replace a diagnostic failure with a mode-change notice', () => {
+  const view = readyContinuous();
+  view.rerender(<DeviceStream deviceId="gesture-remote" enableNavigation enableStaticInput enableDiagnostics
+    inspection={{ onPick: jest.fn(), bounds: null }} />);
+  view.status(0, 3, 'release');
+  fireEvent.click(view.getByRole('button', { name: 'Диагностика' }));
+  expect(view.queryByText(/Последний сбой управления/)).not.toBeInTheDocument();
+  view.unmount();
+});
 it('holds root inspection until this controller receives its native RELEASE3', () => {
   const view = readyContinuous();
   const inspectionReady = jest.fn();
