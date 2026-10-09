@@ -14,15 +14,16 @@ Idle control и direct transport остаются открытыми; probe вы
 media/control/network matrix, rich recorder, global ownership и resource soak.
 Локальная готовность не доказывает public latency. CSS warning не воспроизведён;
 его причина неизвестна. [ACK сравнение](../audits/2026-10-10/IDLE-LOCAL-PUBLIC-COMPARISON.md).
-Native pilot9октября и новый10октября остаются отрицательными доказательствами:
-последний browser ICE срез177requests/0responses, успешной пары нет. Исходный APK
+Native pilot9октября и предыдущий browser-only срез10октября остаются отрицательными доказательствами:
+тот browser ICE срез дал177requests/0responses, успешной пары нет. Исходный APK
 восстановлен, probeoff, публичный viewer9frames без decode/render errors.
 [Границы измерения](../audits/2026-10-10/DIRECT-PROBE-NETWORK-CANARY.md).
-Native-side bounded counters добавлены в source. Hosted Android CI0abe обнаружил
-API31-only conversion при minimum26; APK не устанавливался. Исправленный
-range check прошёл Android Lint0errors и оба canary profiles по990tests,
-0failures/errors/3skipped. Новые hosted CI, signed admission и live JNI callback
-ещё открыты. [Совместимость и границы](../audits/2026-10-10/DIRECT-PROBE-ANDROID-COMPATIBILITY.md).
+Исправленный8447 прошёл4hosted CI и signed canary admission; реальный JNI callback
+дал12reports: remote candidates0/pairs0/DTLSnew, packet counters unknown.
+Browser177/0; прямой канал/RTT не подтверждены. Исходный APK восстановлен,
+probeoff/allowlist[], listeners/tabs закрыты. Обычный public video вернул662frames
+без invalid/decode/render errors. Network/candidate handling и public idle OPEN.
+[Native counter acceptance и границы](../audits/2026-10-10/DIRECT-PROBE-NATIVE-COUNTERS-CANARY.md).
 APK PH0111.2.49-dev/10249, новый stable1.3 не выпущен.
 [Release gates](../design/APK-1.3-COMPATIBILITY-AND-RELEASE.md).
 Limited observer возобновлён9Oct21:09UTC до10Oct12:41UTC; прежний разрыв и

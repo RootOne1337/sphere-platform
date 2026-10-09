@@ -2,16 +2,16 @@
 
 **Проверенная установка:** UI `369654a0` / API `369654a0`.
 
-**10 октября — исправлена совместимость native ICE counters с API 26+.**
-Hosted Android CI отклонил `0abe15ce`: `BigInteger.longValueExact` требует API 31.
-Кандидат не устанавливался; UI/API369 и исходный APK PH011 сохранены, probeoff.
-Преобразование заменено проверкой диапазона; добавлен тест граничных значений.
-Canary DevDebug и EnterpriseDebug: по990 tests/85 suites,0failures/errors,3skipped;
-Android Lint:0errors. Новые exact-source CI, signed admission и live native
-callback ещё нужны. Idle/direct проблема не закрыта.
-[Отказ CI, исправление и границы](../audits/2026-10-10/DIRECT-PROBE-ANDROID-COMPATIBILITY.md).
+**10 октября — native ICE counters проверены на реальном APK.**
+Исправленный8447 прошёл все4 exact-source CI и signed admission. Один PH011:
+12native reports, remote candidates0/pairs0/DTLSnew; packet counters unknown.
+Browser177checks/0responses, channel/RTT нет. Это различимый результат,
+не доказанная mDNS/VPN причина. Исходный APK восстановлен, probeoff/allowlist[],
+временные3016/3017 и вкладки закрыты. Обычный public viewer вернул662decoded/drawn
+frames без invalid/decode/render errors. UI/API369 сохранены; direct/idle OPEN.
+[Native/browser counters, маршруты и возврат](../audits/2026-10-10/DIRECT-PROBE-NATIVE-COUNTERS-CANARY.md).
 
-**10 октября — снят реальный browser ICE срез.** Один диагностический canary:
+**Предыдущий срез 10 октября — browser ICE без native counters.** Один диагностический canary:
 APK answer получен, две пары проверяются,177 requests/0 responses,0 echo/RTT.
 Источник отказа сужен до установки сетевого пути; конкретная причина ещё UNKNOWN.
 Исходный APK восстановлен, API probe выключен, временные3016/3017 остановлены.
@@ -368,6 +368,16 @@ TURN/network matrix и production gate. Draft latency targets не являют�
 Новый [source ICE snapshot](../audits/2026-10-09/DIRECT-PROBE-NETWORK-SNAPSHOT.md)
 входит в369 source. Реальная проверка во временном canary UI дала177requests/0responses;
 [новый receipt](../audits/2026-10-10/DIRECT-PROBE-NETWORK-CANARY.md) сохраняет cleanup и границы.
+
+Последующий исправленный source `8447c907` прошёл четыре CI и signed admission;
+callback проверен на PH011: 12 native отчётов с remote candidates 0, pairs 0,
+DTLS `new` и неизвестными packet counters. Браузер показал 177 requests / 0 responses;
+канал и RTT не подтверждены. Исходный APK восстановлен, probe выключен; временные
+listeners и вкладки закрыты. Публичный обычный viewer показал 662 кадра без ошибок.
+Диагностика принята только в этом конечном scope. Дальше нужны контролируемые
+numeric/STUN/TURN profiles, выбранная пара и реальный echo RTT; network/resource,
+media/control и повторяющийся public idle timeout остаются открытыми.
+[Native counters, маршруты и возврат](../audits/2026-10-10/DIRECT-PROBE-NATIVE-COUNTERS-CANARY.md).
 
 Доказательства: [Исследование и порядок внедрения](../design/BROWSER-DIRECT-TRANSPORT.md),
 [Фактический relay path и idle canary](../audits/2026-10-09/IDLE-CONTROL-RELAY-REVIEW.md).

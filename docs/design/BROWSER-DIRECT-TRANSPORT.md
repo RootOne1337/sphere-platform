@@ -19,10 +19,13 @@ DTLS connecting,0echo/RTT; точная причина потери сетево
 frontend выключен. Original APK восстановлен, API probeoff; ordinary public video
 вернулся9frames без decode/render errors. [Receipt](../audits/2026-10-10/DIRECT-PROBE-NETWORK-CANARY.md).
 
-**Следующий source этап:** APK получает ограниченные native ICE counters во всех
-четырёх направлениях, состояние пар и DTLS, без адресов/ключей.32запроса максимум,
-один одновременно, локальный canary logcat. Live JNI callback ещё не проверен;
-новый APK не установлен. [Source/test scope](../audits/2026-10-10/DIRECT-PROBE-NATIVE-NETWORK-SOURCE.md).
+**Следующий этап выполнен в конечном диагностическом scope:** исправленный source
+`8447c907` прошёл четыре CI и signed admission. APK на одном PH011 выдал 12 native
+отчётов: remote candidates 0, pairs 0, DTLS `new`; packet counters неизвестны.
+Callback ограничен 32 запросами, одним pending callback и локальным canary logcat;
+адреса и ключи исключены. Исходный APK восстановлен, probe выключен. Прямой канал
+не подтверждён. [Source/test scope](../audits/2026-10-10/DIRECT-PROBE-NATIVE-NETWORK-SOURCE.md) ·
+[Фактический callback и возврат](../audits/2026-10-10/DIRECT-PROBE-NATIVE-COUNTERS-CANARY.md).
 
 [Действующие работы](../operations/WORK-STATUS.md) ·
 [Установка](../operations/CURRENT-STATE.md) ·
@@ -66,7 +69,7 @@ targetSdk37+: потребуется отдельный runtime permission/denia
 Имя mDNS в offer само по себе не доказывает отказ: upstream WebRTC tests
 предусматривают установление связи через peer-reflexive candidate при отсутствии
 resolver. Этот test block исключён для Android и не является проверкой нашего
-pinned JNI. Нужны фактические native counters и достижимость; нельзя объявлять
+pinned JNI. Полученные native counters не заменяют проверку достижимости; нельзя объявлять
 «сломанный mDNS» только по SDP.
 [Upstream test и его Android guard](https://webrtc.googlesource.com/src/+/refs/heads/main/pc/peer_connection_histogram_unittest.cc).
 
@@ -77,6 +80,14 @@ path и результат selected pair; секреты и адреса не о
 Relay near peers может дать короткий путь, но не должен называться P2P. Изменение
 firewall, запуск публичного listener или разрешений Android не является скрытой
 частью диагностического профиля. Production media/control остаётся отдельным gate.
+
+Конечный corrected-source canary8447 снял12native reports: remote candidates0,
+pairs0, DTLSnew; все4packet counters unknown. Browser показал177/0.
+Это подтверждает работу диагностического callback и отсутствие native pair rows,
+но не причину mDNS resolution или packet loss. Windows route для guest выбирает
+VPN default; Android использует interface policy table. Следующий controlled
+STUN/numeric-candidate profile должен сравнить именно эти показатели.
+[Receipt и границы](../audits/2026-10-10/DIRECT-PROBE-NATIVE-COUNTERS-CANARY.md).
 
 ## 2. Подтверждённая текущая архитектура
 

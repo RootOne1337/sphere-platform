@@ -3,7 +3,10 @@
 [Реестр работ](WORK-STATUS.md) · [Текущая установка](CURRENT-STATE.md) ·
 [Prometheus](OBSERVABILITY.md) · [Исходная проверка](../audits/2026-10-09/CONTINUOUS-SERVER-TIMINGS.md)
 
-**Текущий UI d70f55c6 сохраняет этот API;** [wording/контраст и границы](../audits/2026-10-09/IDLE-CONTROL-UX-INSTALLED.md).
+**Установленные UI/API369654a0 сохраняют эти измерения.**
+[Текущая доставка и границы](../audits/2026-10-10/BROADCAST-INSTALLED-ACCEPTANCE.md) ·
+[Исторический wording/контраст](../audits/2026-10-09/IDLE-CONTROL-UX-INSTALLED.md).
+Последний public idle timeout остаётся открытым; метрики не доказывают native ACK.
 
 **Историческая доставка 9 октября, 15:17 UTC / 20:17 UTC+5: установлено в API d720232e.**
 UI 86354350 / APK 10249 сохранены. [Exact CI/image/install и failed idle canary receipt](../audits/2026-10-09/CONTINUOUS-SERVER-TIMINGS-INSTALLED.md):
@@ -100,7 +103,8 @@ histogram_quantile(0.95,
 ## Следующая конечная проверка SF26-05
 
 1. Проверить актуальный admitted source/runtime receipt и freshness `/metrics`;
-   текущая доставка d720232e записана отдельно. Не подменять отсутствие activity нулём.
+   установленный API369654a0 и последний canary receipt указаны выше. Исторический
+   d720232e не является текущей установкой. Не подменять отсутствие activity нулём.
 2. На одном разрешённом тестовом viewer начать Control без DOWN/UP/text/record/run.
    Сохранить time window, browser oldest heartbeat/actual ACK RTT/tick/buffer,
    server histogram deltas и resource observation freshness.

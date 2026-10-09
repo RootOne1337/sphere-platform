@@ -14,15 +14,16 @@ Idle control и direct transport остаются открытыми; probe вы
 без fault в конечном срезе. Это не синхронный trace или причинная атрибуция.
 [Наблюдения](../audits/2026-10-10/IDLE-LOCAL-PUBLIC-COMPARISON.md).
 Close correction/source diagnostics входят в369; стандартный frontend compile gate
-панели выключен. Новый finite native canary во временном UI дал177requests/0responses,
+панели выключен. Предыдущий finite native canary во временном UI дал177requests/0responses,
 две checking пары,0echo/RTT. APK восстановлен, probeoff; ordinary public video9frames.
 [Новый runtime receipt и границы](../audits/2026-10-10/DIRECT-PROBE-NETWORK-CANARY.md).
-Новая source диагностика native ICE counters отклонена hosted Android CI из-за
-метода API31 при minimum26. Кандидат0abe не устанавливался. Исправление проверяет
-диапазон перед преобразованием: оба canary profiles по990tests/85suites,
-0failures/errors/3skipped; Android Lint0errors. Live JNI callback, exact-source
-CI исправления и signed admission ещё открыты.
-[Отказ CI и исправление](../audits/2026-10-10/DIRECT-PROBE-ANDROID-COMPATIBILITY.md).
+После API compatibility fix8447 все4 hosted CI/signed admission прошли.
+Native callback на PH011 дал12reports: remote candidates0/pairs0/DTLSnew;
+все4packet counters unknown. Browser177/0, channel/RTT не подтверждены.
+Исходный APK восстановлен; probeoff, временные listeners/tabs закрыты.
+Обычный public viewer вернул662decoded/drawn frames без ошибок. Причина обработки
+кандидатов/сетевого пути и idle reliability открыты; counter diagnostic принят
+только в конечном scope. [Новый receipt](../audits/2026-10-10/DIRECT-PROBE-NATIVE-COUNTERS-CANARY.md).
 [APK1.3 plan](../design/APK-1.3-COMPATIBILITY-AND-RELEASE.md) — NO-GO.
 Product9/41,legacy7; limited observer21:09→12:41UTC и whole-PC writer UNKNOWN.
 
