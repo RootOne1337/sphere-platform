@@ -216,7 +216,7 @@ class BackendInstallerTests(unittest.TestCase):
         digest = hashlib.sha256(payload).hexdigest()
         receipt = {"requirementsSha256": digest, "actionContractSha256": digest}
         paths = ["backend/api/v1/batches/router.py", "backend/services/batch_service.py",
-                 "backend/database/redis_client.py"]
+                 "backend/database/redis_client.py", "backend/Dockerfile"]
         with patch.object(installer, "command", return_value="\n".join(paths)), \
                 patch.object(installer.subprocess, "run", return_value=subprocess.CompletedProcess([], 0, payload)):
             self.assertEqual(installer.source_boundary(CURRENT, SOURCE, receipt), paths)

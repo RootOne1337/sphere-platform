@@ -8,6 +8,9 @@
 real PostgreSQL/Redis CI и установка требуются. Broad product 9/41 и legacy7
 сохраняются. Idle timeout остаётся приоритетом, direct pilot отложен ради этого сбоя.
 [Source audit](../audits/2026-10-10/BROADCAST-BINARY-PRESENCE.md).
+Первая CI и её retry остановлены Docker Hub429 до тестов. Проверено совпадение
+official-image manifests Hub/ECR; CI переводится на закреплённые ECR digests,
+обычные build defaults сохранены. [Provenance и границы](../audits/2026-10-10/CI-REGISTRY-LIMIT.md).
 
 **9 октября: выполнены две попытки native direct pilot.** JNI и авторизованный
 SDP answer подтверждены, DataChannel не открылся, RTT не измерен. API9ad установлен,

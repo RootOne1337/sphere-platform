@@ -7,6 +7,7 @@ removed; PostgreSQL stores data on tmpfs, not a persistent volume.
 
 import argparse
 import json
+import os
 import subprocess
 import time
 import uuid
@@ -38,11 +39,11 @@ def main():
     try:
         network_id = docker("network", "create", "--internal", "--label", label, run_id)
         for suffix, image, options in [
-            ("postgres", "postgres:15-alpine", ["--tmpfs", "/var/lib/postgresql/data:rw,nosuid,nodev,size=256m",
+            ("postgres", os.environ.get("SPHERE_AUDIT_POSTGRES_IMAGE", "postgres:15-alpine"), ["--tmpfs", "/var/lib/postgresql/data:rw,nosuid,nodev,size=256m",
                 "-e", "POSTGRES_DB=sphere_image_audit", "-e", "POSTGRES_USER=audit",
                 "-e", "POSTGRES_PASSWORD=isolated-image-database",
                 "--health-cmd", "pg_isready -U audit -d sphere_image_audit"]),
-            ("redis", "redis:7.2-alpine", ["--tmpfs", "/data:rw,nosuid,nodev,size=32m",
+            ("redis", os.environ.get("SPHERE_AUDIT_REDIS_IMAGE", "redis:7.2-alpine"), ["--tmpfs", "/data:rw,nosuid,nodev,size=32m",
                 "--health-cmd", "redis-cli ping"]),
         ]:
             container = docker("run", "-d", "--name", run_id + "-" + suffix, "--label", label,

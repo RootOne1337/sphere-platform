@@ -6,6 +6,7 @@ before the same disposable-volume cluster is restarted and checked again.
 
 import argparse
 import json
+import os
 import subprocess
 import time
 import unittest
@@ -65,7 +66,8 @@ class PostgresInitializationTests(unittest.TestCase):
                 "--network", "none", "--mount", f"type=volume,source={volume},target=/var/lib/postgresql/data",
                 "--mount", f"type=bind,source={REPOSITORY / 'infrastructure/postgres/init.sql'},target=/docker-entrypoint-initdb.d/init.sql,readonly",
                 "-e", "POSTGRES_DB=sphereplatform", "-e", "POSTGRES_USER=" + user,
-                "-e", "POSTGRES_PASSWORD=isolated-postgres-init-password", "postgres:15-alpine")
+                "-e", "POSTGRES_PASSWORD=isolated-postgres-init-password",
+                os.environ.get("SPHERE_AUDIT_POSTGRES_IMAGE", "postgres:15-alpine"))
             record["image_id"] = json.loads(docker("inspect", container))[0]["Image"]
             self.wait_ready(container, user)
             record["first"] = self.assert_cluster(container, user)
