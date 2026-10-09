@@ -1022,7 +1022,7 @@ export function DeviceStream({
             role="region"
             aria-label="Диагностика стрима и управления"
             tabIndex={0}
-            className="mt-2 max-h-[min(60dvh,32rem)] w-full min-w-0 shrink-0 overflow-auto overscroll-contain rounded-xl border border-border bg-card p-3 text-left font-mono text-xs leading-5 text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            className="mt-2 max-h-[min(40dvh,20rem)] w-full min-w-0 shrink-0 overflow-auto overscroll-contain rounded-xl border border-border bg-card p-3 text-left font-mono text-xs leading-5 text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           >
             <div className="sticky -top-3 z-10 -mx-3 -mt-3 mb-2 flex items-start justify-between gap-3 border-b border-border bg-card p-3">
               <h4 className="font-semibold">Сквозная диагностика кадра</h4>
