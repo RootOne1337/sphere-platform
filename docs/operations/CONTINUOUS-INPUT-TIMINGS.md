@@ -3,11 +3,13 @@
 [Реестр работ](WORK-STATUS.md) · [Текущая установка](CURRENT-STATE.md) ·
 [Prometheus](OBSERVABILITY.md) · [Исходная проверка](../audits/2026-10-09/CONTINUOUS-SERVER-TIMINGS.md)
 
-**9 октября 2026: подготовлено в исходниках, ещё не установлено.**
-На записанной установке API be803773 эта новая метрика отсутствует. До отдельного
-exact-source CI/image/install receipt отсутствие данных не трактуется как ноль
-или исправление SF26-05. Установленный UI 86354350 сохраняет последний browser
-failure snapshot; серверные spans дополняют его после установки.
+**9 октября, 15:17 UTC / 20:17 UTC+5: установлено в API d720232e.**
+UI 86354350 / APK 10249 сохранены. [Exact CI/image/install и failed idle canary receipt](../audits/2026-10-09/CONTINUOUS-SERVER-TIMINGS-INSTALLED.md):
+PH011 heartbeat timeout 510 мс / last ACK RTT 256 мс повторился, все наблюдаемые spans <25 мс.
+До callback queues/network/APK/native не локализованы; SF26-05 OPEN. Диагностика
+не меняет deadline/replay/routing и не является подтверждением Android ACK.
+Reviewed installer допускает только проверенный packaged delta; dependency/action
+Hashes/schema/Compose/container fences сохранены; 19 finite host tests passed.
 
 ## Что измеряется
 
@@ -95,8 +97,8 @@ histogram_quantile(0.95,
 
 ## Следующая конечная проверка SF26-05
 
-1. Установить admitted exact-source backend image с отдельным runtime receipt,
-   сохранив UI/APK/OTA и посторонние контейнеры; сверить новые `/metrics` серии.
+1. Проверить актуальный admitted source/runtime receipt и freshness `/metrics`;
+   текущая доставка d720232e записана отдельно. Не подменять отсутствие activity нулём.
 2. На одном разрешённом тестовом viewer начать Control без DOWN/UP/text/record/run.
    Сохранить time window, browser oldest heartbeat/actual ACK RTT/tick/buffer,
    server histogram deltas и resource observation freshness.

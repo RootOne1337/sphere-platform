@@ -1,11 +1,11 @@
 {
   "schemaVersion": 1,
-  "reviewedAtUtc": "2026-10-09T14:56:09.535595+00:00",
+  "reviewedAtUtc": "2026-10-09T15:32:01.063638+00:00",
   "scope": "All tracked Markdown classified; active local-link paths scanned. Not semantic attestation of every sentence, command execution, external-link or live acceptance.",
   "countsByRole": {
     "ADR": 6,
     "CURRENT_ENTRYPOINT": 8,
-    "DATED_EVIDENCE": 231,
+    "DATED_EVIDENCE": 232,
     "DESIGN_SPECIFICATION": 74,
     "OPERATING_GUIDE": 64,
     "PROJECT_POLICY": 7,
@@ -1014,6 +1014,10 @@
     },
     {
       "file": "docs/audits/2026-10-09/CONTINUOUS-FENCE-DIAGNOSTICS.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
+      "file": "docs/audits/2026-10-09/CONTINUOUS-SERVER-TIMINGS-INSTALLED.md",
       "role": "DATED_EVIDENCE"
     },
     {

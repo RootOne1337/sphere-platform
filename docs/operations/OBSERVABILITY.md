@@ -3,12 +3,13 @@
 **Создано:** 30 сентября 2026; **обновлено:** 9 октября 2026, Asia/Yekaterinburg. **Область:** первый рабочий этап
 серверной истории и встроенной Grafana. Это не приёмка всего парка Android.
 
-**9 октября — continuous-input timings подготовлены в source, ещё не установлены.**
-Новая `sphere_continuous_stage_duration_seconds{stage,outcome}` имеет семь
-фиксированных границ и три исхода coroutine; returned не означает Android ACK.
-Нет device/session/owner labels, payload, per-MOVE logs или нового polling.
-Точный смысл, PromQL и installation gate: [runbook](CONTINUOUS-INPUT-TIMINGS.md).
-До доставки нового API отсутствие этой метрики ожидаемо и не подменяется нулём.
+**9 октября — continuous-input timings установлены в API d720232e.**
+`sphere_continuous_stage_duration_seconds{stage,outcome}`:7fixed stages/3outcomes,
+без IDs/payload/per-MOVE logs/new polling. Returned не означает Android ACK.
+PH011 idle failure снова подтверждён, наблюдаемые spans <25ms; до callback
+queue/network/APK/native остаются неизвестными. 4workers и metric mmap1MiB
+проверены в конечном scope; resource soak не принят. Отсутствующие series не равны нулю.
+[Смысл и PromQL](CONTINUOUS-INPUT-TIMINGS.md) · [Installed receipt](../audits/2026-10-09/CONTINUOUS-SERVER-TIMINGS-INSTALLED.md).
 
 [Текущее состояние](CURRENT-STATE.md) · [Каталог документации](../README.md) ·
 [Операционный аудит веба](../audits/2026-09-29/WEB-OPERATIONS-OBSERVABILITY-AUDIT.md)

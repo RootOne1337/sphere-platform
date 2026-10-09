@@ -135,6 +135,24 @@ class BackendInstallerTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "hash mismatch"):
                 installer.source_boundary(CURRENT, SOURCE, receipt | {"requirementsSha256": "0" * 64})
 
+    def test_continuous_timing_update_preserves_dependency_and_unreviewed_source_fences(self):
+        payload = b"unchanged canonical source\n"
+        digest = hashlib.sha256(payload).hexdigest()
+        receipt = {"requirementsSha256": digest, "actionContractSha256": digest}
+        paths = ["backend/metrics.py", "backend/websocket/continuous_observability.py"]
+        with patch.object(installer, "command", return_value="\n".join(paths)), \
+                patch.object(installer.subprocess, "run", return_value=subprocess.CompletedProcess([], 0, payload)):
+            self.assertEqual(installer.source_boundary(CURRENT, SOURCE, receipt), paths)
+            with self.assertRaisesRegex(ValueError, "hash mismatch"):
+                installer.source_boundary(CURRENT, SOURCE, receipt | {"requirementsSha256": "0" * 64})
+        for additional in ("backend/requirements.txt", "backend/metrics_override.py", "alembic/versions/new.py"):
+            with self.subTest(additional=additional), \
+                    patch.object(installer, "command", return_value="\n".join(paths + [additional])), \
+                    patch.object(installer.subprocess, "run") as canonical:
+                with self.assertRaisesRegex(ValueError, "Unreviewed packaged"):
+                    installer.source_boundary(CURRENT, SOURCE, receipt)
+                canonical.assert_not_called()
+
     def test_wrong_database_owner_and_url_are_rejected_before_sql(self):
         postgres = {"Config": {"Labels": {"com.docker.compose.project": installer.PROJECT,
             "com.docker.compose.service": "postgres"}, "Env": ["POSTGRES_DB=example"]}}

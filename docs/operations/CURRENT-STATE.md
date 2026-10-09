@@ -7,15 +7,17 @@ Source, установленный runtime и конечная приёмка р
 **Область:** исходники и документация ветки PR #19, записанные runtime-наблюдения, Android APK и готовность следующего прогона.<br />
 **Канонический документ текущего состояния:** этот файл. Исторические отчёты ниже сохраняют исходные даты и факты.
 
-**9 октября — серверные тайминги continuous input подготовлены в исходниках.**
-Семь фиксированных границ / три outcomes без payload/IDs/per-MOVE logs;
-175 focused и 560 WS/monitoring tests (44 subtests) проходят. Four-worker
-histogram aggregation/retirement/replacement проверены отдельно. API be803773
-остаётся установленным; новые timings ещё не доставлены. SF26-05 OPEN,
-deadline/replay/routing не менялись. [Runbook](CONTINUOUS-INPUT-TIMINGS.md) ·
-[Source receipt](../audits/2026-10-09/CONTINUOUS-SERVER-TIMINGS.md).
+**9 октября15:17UTC /20:17UTC+5 — API d720232e установлен, UI86354350 сохранён.**
+Bounded server timings доставлены из exact-source CI image;45other containers/schema/OTA/APK
+сохранены. Все4 CI successful; backend3387passed/37skipped/233subtests, full hosted mypy.
+PH011 idle failure снова воспроизведён: heartbeat510ms/tick15ms/lastACK RTT256ms/WS OPEN0B,
+no held pointer/terminal. Все наблюдаемые server spans <25ms; queue/network/APK/native
+причина OPEN. Графv1/3узла2связи/Undo0, queue0 сохранены; View/lab/temp tab закрыты.
+Ни deadlines, ни replay не менялись.4workers/metric mmap1MiB в конечном срезе;
+это не resource soak. Product9/41 и whole-PC writer UNKNOWN сохраняются.
+[Доставка, измерения и ограничения](../audits/2026-10-09/CONTINUOUS-SERVER-TIMINGS-INSTALLED.md).
 
-**9 октября — последняя UI-only установка: 86354350/APIbe803773.**
+**Предыдущая UI-only установка9октября: 86354350/APIbe803773.**
 Failure snapshot и доступная desktop/phone диагностика установлены; frontend exact-source
 CI success, frontend1948tests/139suites. 45other containers/schema/OTA/APK сохранены.
 На предыдущем UI0b321d49 PH011 idle failure снова подтверждён: heartbeat512ms,

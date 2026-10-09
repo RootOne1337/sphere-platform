@@ -17,10 +17,11 @@
 
 **Действующий статус — 9 октября 2026:** [реестр работ и требований](docs/operations/WORK-STATUS.md)
 разделяет **9 принятых / 41 открытую работу** и старые семь незакрытых findings.
-Последняя проверенная установка: UI **86354350**, API **be803773** на3015.
-Диагностика управления сохраняет снимок сбоя; панель доступна вне обрезаемого
-видеоблока на ПК и телефоне. Frontend CI success; статусы API/APK CI в receipt, frontend1948tests/139suites.
-[Установка и границы](docs/audits/2026-10-09/STREAM-DIAGNOSTICS-INSTALLED-ACCEPTANCE.md).
+Последняя проверенная установка: UI **86354350**, API **d720232e** на3015.
+Серверные timings и browser failure snapshot установлены; PH011 idle timeout
+повторился. Наблюдаемые server spans <25ms, queue/network/APK/native причина OPEN.
+Все4 exact API-source CI successful, backend3387tests/233subtests.
+[Установка и границы](docs/audits/2026-10-09/CONTINUOUS-SERVER-TIMINGS-INSTALLED.md).
 Clock correction и PH011 mixed recording ранее приняты в конечном scope;
 idle receipt failure вновь подтверждён, его причина и whole-PC writer ещё UNKNOWN.
 Rich recorder, global ownership и ресурсная приёмка остаются открытыми.
@@ -545,10 +546,10 @@ identity, доверенный ключ и параметры enrollment; APK и
 ## 🔬 Состояние проекта и границы проверки
 
 **Действующий срез9октября:** [реестр50работ и15дополнений из чата](docs/operations/WORK-STATUS.md)
-и [runtime evidence](docs/operations/CURRENT-STATE.md). UI86354350/APIbe803773:
-bounded failure snapshot и desktop/phone diagnostics установлены. Frontend exact-source
-CI успешны, frontend1948tests/139suites. Native idle heartbeat timeout повторился
-с измерениями; исправление причины, resource/ownership и Fleet32 gates OPEN.
+и [runtime evidence](docs/operations/CURRENT-STATE.md). UI86354350/APId720232e:
+bounded server timings и browser snapshot установлены. Все4 exact-source CI successful,
+backend3387tests/233subtests. Native idle heartbeat510ms повторился при spans <25ms;
+queue/network/APK/native причина, resource/ownership и Fleet32 gates OPEN.
 Product9/41 и legacy34/7 — разные scopes.
 
 <details>

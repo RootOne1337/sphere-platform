@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
-  "reviewedAtUtc": "2026-10-09T14:56:09.535595+00:00",
-  "sourceReviewed": "caceeb34b63422a3c7d869b19c14e7d5ffaf51a7",
+  "reviewedAtUtc": "2026-10-09T15:32:01.063638+00:00",
+  "sourceReviewed": "d720232e3164d278a7322a61a90ba111e205ae3c",
   "scope": "Effective documentation status; source/install/finite acceptance kept separate. No new fleet or soak acceptance.",
   "baseline": "docs/audits/2026-10-05/ENTERPRISE-PRODUCT-BACKLOG.json",
   "previousCrosscheck": "docs/audits/2026-10-09/CHAT-CODE-RECONCILIATION.json",
@@ -11,33 +11,26 @@
     "open": 41
   },
   "installed": {
-    "lastObservedUtc": "2026-10-09T13:45:48.200627+00:00",
+    "lastObservedUtc": "2026-10-09T15:32:01.063638+00:00",
     "ui": "86354350638650215717658b9395b2751326af6c",
-    "api": "be803773037c16a113b50c1a2774793fffae8773",
-    "evidence": "docs/audits/2026-10-09/STREAM-DIAGNOSTICS-INSTALLED-ACCEPTANCE.json",
-    "observation": "UI-only admitted install, 45 other containers and OTA unchanged; finite desktop/phone diagnostics accepted. Idle failure reproduced with bounded browser snapshot, cause open.",
+    "api": "d720232e3164d278a7322a61a90ba111e205ae3c",
+    "evidence": "docs/audits/2026-10-09/CONTINUOUS-SERVER-TIMINGS-INSTALLED.json",
+    "observation": "API-only admitted diagnostic install, 45 other containers/schema/OTA preserved. PH011 idle failure reproduced; measured server coroutines <25ms, queued/network/APK/native cause remains open.",
     "pilotApk": {
       "device": "PH011",
       "version": "1.2.49-dev",
       "versionCode": 10249,
       "scope": "PH011 selected in finite current diagnostics canary; not fleet inventory"
     },
-    "evidenceSha256NormalizedLf": "24e036aaf614f12372886a20d2edb42978fbe68e971b8afafe7b4215909e3e4a"
+    "evidenceSha256NormalizedLf": "3b947190ab467fed496e7160b0315f115e11384fd0bc09feb4b2a86467acc0a2"
   },
-  "pendingCorrections": [
-    {
-      "id": "CONTINUOUS-SERVER-TIMING-INSTRUMENTATION",
-      "installed": false,
-      "evidence": "docs/audits/2026-10-09/CONTINUOUS-SERVER-TIMINGS.md",
-      "scope": "Diagnostic source instrumentation only; not an idle failure correction."
-    }
-  ],
+  "pendingCorrections": [],
   "storage": {
-    "lastObservedUtc": "2026-10-09T12:51:26.507214+00:00",
+    "lastObservedUtc": "2026-10-09T15:30:57.052614+00:00",
     "visibleMatchingProcesses": 1,
     "continuousCoverageConfirmed": true,
     "observationScope": "Finite limited periodic metadata window only, until 2026-10-10T12:42:57Z; not global kernel writer attribution or prior-gap coverage.",
-    "oneFreeDiskReadingBytes": 47609090048,
+    "oneFreeDiskReadingBytes": 59728633856,
     "latestCompletedEvidence": "docs/audits/2026-10-08/STORAGE-WINDOW-COMPLETION.json",
     "activeEvidence": "docs/audits/2026-10-09/STORAGE-OBSERVER-RESTART.json"
   },
@@ -669,8 +662,8 @@
       "priority": "P1",
       "state": "OPEN",
       "progress": "PARTIAL",
-      "currentScope": "Viewer-local release/read handoff, APK ownership и Redis continuous lease используются. UI86354350 сохраняет bounded failure snapshot; диагностика desktop/phone принята в конечном scope. Серверные timings семи границ проверены в исходниках; ещё не установлены, idle причина OPEN.",
-      "remaining": "Global viewer/task/API arbitration и debugger acceptance не завершены; idle timeoutP1. PH011 idle heartbeat512ms/tick15ms/WS0B повторился; участок задержки не определён.",
+      "currentScope": "Viewer-local release/read handoff, APK ownership и Redis continuous lease используются. UI86354350 сохраняет bounded failure snapshot; диагностика desktop/phone принята в конечном scope. Серверные timings семи границ установлены в API d720232e; PH011 heartbeat510ms повторился, все наблюдаемые spans <25ms. Queue/network/APK/native причина OPEN.",
+      "remaining": "Global viewer/task/API arbitration и debugger acceptance не завершены; idle timeoutP1. PH011 idle heartbeat510ms/tick15ms/lastACK RTT256ms/WS0B повторился; медленных измеренных backend coroutine нет, queued/network/APK/native участок ещё не определён.",
       "acceptanceCriteria": [
         "Pause/step настоящий protocol, либо явно unavailable.",
         "Late result не возрождает cancelled run.",
@@ -919,8 +912,8 @@
       "priority": "P1",
       "state": "OPEN",
       "progress": "PARTIAL",
-      "currentScope": "Normal continuous Control принят PH011APK10249; отдельный idle receipt failure повторился. UI86354350 сохраняет bounded failure snapshot; диагностика desktop/phone принята в конечном scope. Серверные timings семи границ проверены в исходниках; ещё не установлены, idle причина OPEN.",
-      "remaining": "Нет fleet input-to-pictureSLO; нужны bounded correlated timing и idle loss fix. PH011 idle heartbeat512ms/tick15ms/WS0B повторился; участок задержки не определён.",
+      "currentScope": "Normal continuous Control принят PH011APK10249; отдельный idle receipt failure повторился. UI86354350 сохраняет bounded failure snapshot; диагностика desktop/phone принята в конечном scope. Серверные timings семи границ установлены в API d720232e; PH011 heartbeat510ms повторился, все наблюдаемые spans <25ms. Queue/network/APK/native причина OPEN.",
+      "remaining": "Нет fleet input-to-pictureSLO; нужны bounded correlated timing и idle loss fix. PH011 idle heartbeat510ms/tick15ms/lastACK RTT256ms/WS0B повторился; медленных измеренных backend coroutine нет, queued/network/APK/native участок ещё не определён.",
       "acceptanceCriteria": [
         "Capture/encode/relay/decode/render FPS + drops/bitrate.",
         "Home/Back/Recents/text/wheel и transform при rotation.",
@@ -1832,5 +1825,5 @@
       "acceptedScope": "Finite PH011 tap/XPath/tap/Back recording and explicit graph insertion; not full EP-018 or fleet."
     }
   ],
-  "sourceWorktreeEvidence": "docs/audits/2026-10-09/CONTINUOUS-SERVER-TIMINGS.json"
+  "sourceWorktreeEvidence": "docs/audits/2026-10-09/CONTINUOUS-SERVER-TIMINGS-INSTALLED.json"
 }

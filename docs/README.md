@@ -18,9 +18,11 @@
 **Действующий реестр:** [50 работ и дополнения из чата](operations/WORK-STATUS.md)
 ([JSON](operations/STATUS-REGISTRY.json)). **9 принято / 41 открыто**; legacy7 —
 пересекающийся отдельный аудит, не дополнительный остаток. Последняя установка
-UI86354350/APIbe803773: failure snapshot и desktop/phone diagnostics приняты в
-конечном scope; idle timeout причина OPEN. Frontend CI success; статусы API/APK CI в receipt,
-frontend1948tests/139suites. [Receipt](audits/2026-10-09/STREAM-DIAGNOSTICS-INSTALLED-ACCEPTANCE.md).
+UI86354350/APId720232e: server timings и browser failure snapshot установлены.
+PH011 idle timeout повторился; наблюдаемые server spans <25ms, причина OPEN.
+Все4 exact API-source CI successful, backend3387tests/233subtests;
+[новый receipt](audits/2026-10-09/CONTINUOUS-SERVER-TIMINGS-INSTALLED.md).
+Историческая frontend1948tests/139suites desktop/phone приёмка сохраняет свои границы.
 Clock/recording приёмка сохранена как исторический receipt; CI/install/live не подменяют друг друга.
 
 <details>

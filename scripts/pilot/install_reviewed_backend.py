@@ -47,6 +47,7 @@ APPROVED_PATHS = {
     "backend/websocket/continuous_runtime.py", "backend/websocket/continuous_delivery.py",
     "backend/websocket/continuous_lease.py", "backend/websocket/continuous_protocol.py",
     "backend/websocket/continuous_receipts.py", "backend/websocket/frames.py",
+    "backend/websocket/continuous_observability.py", "backend/metrics.py",
 }
 PACKAGED_PATHS = ["backend", "alembic", "agent-config", "scripts/create_admin.py",
     "scripts/seed_enrollment_key.py", "scripts/backfill_script_metadata.py", "scripts/publish_script_source.py"]
