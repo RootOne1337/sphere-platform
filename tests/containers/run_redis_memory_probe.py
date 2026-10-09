@@ -6,6 +6,7 @@ installing backend test dependencies (pytest is used by the Compose renderer).
 
 import argparse
 import json
+import os
 import subprocess
 import sys
 import tempfile
@@ -85,7 +86,7 @@ def exercise(output):
         container = docker("run", "-d", "--name", run_id, "--label", "sphere.audit.redis-budget=" + run_id,
                            "--network", "none", "--memory", memory, "--memory-swap", memory,
                            "-e", "REDISCLI_AUTH=" + service["environment"]["REDIS_PASSWORD"],
-                           service["image"], *service["command"])
+                           os.environ.get("SPHERE_AUDIT_REDIS_IMAGE", service["image"]), *service["command"])
         configured = json.loads(docker("inspect", container))[0]
         record.update(image_id=configured["Image"], container_bytes=configured["HostConfig"]["Memory"],
                       swap_bytes=configured["HostConfig"]["MemorySwap"])

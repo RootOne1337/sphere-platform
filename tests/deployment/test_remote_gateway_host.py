@@ -20,14 +20,21 @@ def test_remote_gateway_preserves_host_without_triggering_public_http_redirect(t
         pytest.skip("Docker is unavailable")
 
     def run(*args, check=True):
-        return subprocess.run([docker, *args], capture_output=True, text=True, timeout=45,
-                              check=check, creationflags=0x08000000 if os.name == "nt" else 0)
+        result = subprocess.run([docker, *args], capture_output=True, text=True, timeout=45,
+                                check=False, creationflags=0x08000000 if os.name == "nt" else 0)
+        if check and result.returncode:
+            # Preserve a useful bounded category without publishing arbitrary output.
+            limited = "toomanyrequests" in result.stderr.lower() or "pull rate limit" in result.stderr.lower()
+            pytest.fail(f"Docker {args[0]} failed ({result.returncode}; "
+                        f"{'registry_rate_limit' if limited else 'unclassified'})", pytrace=False)
+        return result
 
     if run("info", check=False).returncode:
         if os.environ.get("CI"):
             pytest.fail("Docker daemon required for gateway regression")
         pytest.skip("Docker daemon unavailable")
     suffix = uuid.uuid4().hex[:12]
+    image = os.environ.get("SPHERE_AUDIT_NGINX_IMAGE", "nginx:alpine")
     network, upstream, edge, reviewed = [f"sphere-audit-host-{suffix}-{part}" for part in ("net", "upstream", "edge", "reviewed")]
     upstream_config = tmp_path / "nginx.conf"
     upstream_config.write_text('''events {} http {
@@ -49,10 +56,10 @@ def test_remote_gateway_preserves_host_without_triggering_public_http_redirect(t
     try:
         run("network", "create", "--internal", network)
         run("run", "-d", "--name", upstream, "--network", network, "--network-alias", "nginx",
-            "--mount", f"type=bind,source={upstream_config},target=/etc/nginx/nginx.conf,readonly", "nginx:alpine")
+            "--mount", f"type=bind,source={upstream_config},target=/etc/nginx/nginx.conf,readonly", image)
         run("run", "-d", "--name", edge, "--network", network,
             "--mount", f"type=bind,source={ROOT / 'infrastructure/nginx/remote-pilot.conf'},target=/etc/nginx/remote-pilot.conf,readonly",
-            "nginx:alpine", "nginx", "-c", "/etc/nginx/remote-pilot.conf", "-g", "daemon off;")
+            image, "nginx", "-c", "/etc/nginx/remote-pilot.conf", "-g", "daemon off;")
         run("exec", edge, "nginx", "-t", "-c", "/etc/nginx/remote-pilot.conf")
         deadline = time.monotonic() + 15
         while True:
@@ -105,7 +112,7 @@ def test_remote_gateway_preserves_host_without_triggering_public_http_redirect(t
         }}''', encoding="utf-8")
         run("run", "-d", "--name", reviewed, "--network", network, "--network-alias", "review-gateway",
             "--mount", f"type=bind,source={reviewed_config},target=/etc/nginx/nginx.conf,readonly",
-            "--mount", f"type=bind,source={static},target=/fixture,readonly", "nginx:alpine")
+            "--mount", f"type=bind,source={static},target=/fixture,readonly", image)
         # Install the private pilot routing map on this disposable edge only.
         run("cp", str(public), f"{edge}:/public")
         run("exec", edge, "nginx", "-t", "-c", "/etc/nginx/remote-pilot.conf")

@@ -176,6 +176,9 @@ jobs:
       AWG_H4: 4444444444
       VPN_SERVER_HOSTNAME: localhost
       SPHERE_RUN_INTEGRATION: "1"
+      # Same official manifests as the service/provenance checks; local defaults remain.
+      SPHERE_AUDIT_NGINX_IMAGE: public.ecr.aws/docker/library/nginx@sha256:0530961ff0592b58c10f767535cc0abdfccf9e389ff7cc90f87320c1bc7e8506
+      SPHERE_AUDIT_REDIS_IMAGE: public.ecr.aws/docker/library/redis@sha256:84bab713067f5494d94c24e99ae3fa3ae2388c037152edcbcf301f7cfaeb3048
       PYTHONPATH: ".:pc-agent"
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
