@@ -27,7 +27,7 @@ def test_remote_gateway_preserves_host_without_triggering_public_http_redirect(t
             pytest.fail("Docker daemon required for gateway regression")
         pytest.skip("Docker daemon unavailable")
     suffix = uuid.uuid4().hex[:12]
-    network, upstream, edge = [f"sphere-audit-host-{suffix}-{part}" for part in ("net", "upstream", "edge")]
+    network, upstream, edge, reviewed = [f"sphere-audit-host-{suffix}-{part}" for part in ("net", "upstream", "edge", "reviewed")]
     upstream_config = tmp_path / "nginx.conf"
     upstream_config.write_text('''events {} http {
     server {
@@ -41,6 +41,7 @@ def test_remote_gateway_preserves_host_without_triggering_public_http_redirect(t
         server_name _;
         location /api/ { return 200 "$http_host|$http_x_forwarded_host"; }
         location /ws/ { return 200 "$http_host|$http_x_forwarded_host|$http_upgrade|$http_connection"; }
+        location / { return 200 "original-ui"; }
     }
 }
 ''', encoding="utf-8")
@@ -75,6 +76,68 @@ def test_remote_gateway_preserves_host_without_triggering_public_http_redirect(t
             assert response.returncode == 0, response.stderr
             assert response.stdout == f"{host}|{host}|websocket|upgrade"
 
+        # No opt-in file: old UI works even though no review gateway exists.
+        original = run("exec", edge, "wget", "-T", "2", "-qO-",
+                       "--header", "Host: primary.example.test", "http://127.0.0.1:8080/login")
+        assert original.stdout == "original-ui"
+
+        public = tmp_path / "public"
+        public.mkdir()
+        (public / "web-upstream.map").write_text("primary.example.test http://review-gateway:8080;\n", encoding="utf-8")
+        (public / "agent.json").write_text('{"fixture":"bootstrap-preserved"}', encoding="utf-8")
+        (public / "agent.signed.json").write_text('{"fixture":"signed-preserved"}', encoding="utf-8")
+        reviewed_config = tmp_path / "reviewed.conf"
+        reviewed_config.write_text('''events {} http { server {
+            listen 8080;
+            location / {
+                add_header Set-Cookie "sphere_observability=fixture; HttpOnly; SameSite=Strict; Path=/observability/grafana";
+                return 200 "reviewed-ui|$http_host|$http_x_forwarded_host|$http_x_forwarded_proto|$request_uri";
+            }
+        }}''', encoding="utf-8")
+        run("run", "-d", "--name", reviewed, "--network", network, "--network-alias", "review-gateway",
+            "--mount", f"type=bind,source={reviewed_config},target=/etc/nginx/nginx.conf,readonly", "nginx:alpine")
+        # Install the private pilot routing map on this disposable edge only.
+        run("cp", str(public), f"{edge}:/public")
+        run("exec", edge, "nginx", "-t", "-c", "/etc/nginx/remote-pilot.conf")
+        run("exec", edge, "nginx", "-s", "reload", "-c", "/etc/nginx/remote-pilot.conf")
+
+        for path in ("/login", "/scripts/builder?id=fixture", "/_next/static/fixture.js",
+                     "/api/observability/http?window=1h", "/observability/grafana/"):
+            expected = f"reviewed-ui|primary.example.test|primary.example.test|https|{path}"
+            deadline = time.monotonic() + 15
+            while True:
+                response = run("exec", edge, "wget", "-T", "2", "-qO-", "--header", "Host: primary.example.test",
+                               "--header", "X-Forwarded-Host: untrusted.invalid", "http://127.0.0.1:8080" + path,
+                               check=False)
+                if response.returncode == 0 and response.stdout == expected:
+                    break
+                assert time.monotonic() < deadline, response.stderr + response.stdout
+                time.sleep(0.1)
+
+        # API and WebSockets still use the original upstream/public identity.
+        response = run("exec", edge, "wget", "-T", "2", "-qO-", "--header", "Host: primary.example.test",
+                       "http://127.0.0.1:8080/api/v1/updates/latest")
+        assert response.stdout == "primary.example.test|primary.example.test"
+        response = run("exec", edge, "wget", "-T", "2", "-qO-", "--header", "Host: primary.example.test",
+                       "--header", "Upgrade: websocket", "--header", "Connection: Upgrade",
+                       "http://127.0.0.1:8080/ws/android")
+        assert response.stdout == "primary.example.test|primary.example.test|websocket|upgrade"
+        for path, expected in (("/api/v1/config/agent", '{"fixture":"bootstrap-preserved"}'),
+                               ("/bootstrap/agent.signed.json", '{"fixture":"signed-preserved"}')):
+            response = run("exec", edge, "wget", "-T", "2", "-qO-", "--header", "Host: primary.example.test",
+                           "http://127.0.0.1:8080" + path)
+            assert response.stdout == expected
+        response = run("exec", edge, "wget", "-T", "2", "-qO-", "--header", "Host: recovered.example.test",
+                       "http://127.0.0.1:8080/login")
+        assert response.stdout == "original-ui"  # Opt-in is exact-host, not a blanket public change.
+        response = run("exec", edge, "wget", "-T", "2", "-S", "-O", "/dev/null",
+                       "--header", "Host: primary.example.test", "http://127.0.0.1:8080/login")
+        cookie = next(line for line in response.stderr.splitlines() if "Set-Cookie:" in line)
+        assert "secure" in cookie.lower() and "httponly" in cookie.lower() and "SameSite=Strict" in cookie
+        response = run("exec", edge, "wget", "-T", "2", "-qO-", "--header", "Host: primary.example.test",
+                       "http://127.0.0.1:8080/metrics", check=False)
+        assert response.returncode != 0 and "404" in response.stderr
+
         # A 200 only records response headers. The gateway log must also show
         # which public ingress was used and whether its response completed.
         access_lines = run("logs", edge).stdout
@@ -97,5 +160,5 @@ def test_remote_gateway_preserves_host_without_triggering_public_http_redirect(t
             compose = (ROOT / compose_name).read_text(encoding="utf-8")
             assert "8081:8081" not in compose
     finally:
-        run("rm", "-f", edge, upstream, check=False)
+        run("rm", "-f", edge, upstream, reviewed, check=False)
         run("network", "rm", network, check=False)

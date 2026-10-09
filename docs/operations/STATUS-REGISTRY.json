@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "reviewedAtUtc": "2026-10-09T15:32:01.063638+00:00",
+  "reviewedAtUtc": "2026-10-09T16:00:27.564136+00:00",
   "sourceReviewed": "d720232e3164d278a7322a61a90ba111e205ae3c",
   "scope": "Effective documentation status; source/install/finite acceptance kept separate. No new fleet or soak acceptance.",
   "baseline": "docs/audits/2026-10-05/ENTERPRISE-PRODUCT-BACKLOG.json",
@@ -1825,5 +1825,14 @@
       "acceptedScope": "Finite PH011 tap/XPath/tap/Back recording and explicit graph insertion; not full EP-018 or fleet."
     }
   ],
-  "sourceWorktreeEvidence": "docs/audits/2026-10-09/CONTINUOUS-SERVER-TIMINGS-INSTALLED.json"
+  "sourceWorktreeEvidence": "docs/audits/2026-10-09/CONTINUOUS-SERVER-TIMINGS-INSTALLED.json",
+  "publicWeb": {
+    "lastObservedUtc": "2026-10-09T16:00:27.564136+00:00",
+    "url": "https://sphere-agent-canary-20260927.ru.tuna.am",
+    "ui": "86354350638650215717658b9395b2751326af6c",
+    "api": "d720232e3164d278a7322a61a90ba111e205ae3c",
+    "evidence": "docs/audits/2026-10-09/PUBLIC-WEB-DELIVERY.json",
+    "evidenceSha256NormalizedLf": "0a8a9d573da1420bbc0a28cf1aa0f86d2637f6901b06d7ef62fcb01a4d29c189",
+    "scope": "Exact-host delivery and finite read-only browser acceptance; transient monitoring request failure recorded, no stream/control/soak acceptance."
+  }
 }

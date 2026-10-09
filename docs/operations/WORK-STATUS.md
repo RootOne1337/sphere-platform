@@ -2,6 +2,12 @@
 
 **Проверенная установка:** UI `86354350` / API `d720232e`.
 
+**9 октября: публичный UI синхронизирован с3015.** Действующий Tuna-host теперь
+показывает UI86354350/API d720232e. Вход, каталог22сценария, builder и мониторинг
+проверены; временный monitoring failure сохранён. Все46 контейнеров и API/WS/
+bootstrap сохранены, новых images нет. Public stream/control/soak не приняты,
+9/41 не меняется. [Receipt](../audits/2026-10-09/PUBLIC-WEB-DELIVERY.md).
+
 Сверено **9 октября 2026 (UTC+5)**. Это действующий указатель статусов; машинный
 источник — [STATUS-REGISTRY.json](STATUS-REGISTRY.json). Установка и runtime:
 [CURRENT-STATE](CURRENT-STATE.md). Критерии эксплуатации: [READINESS](READINESS.md).

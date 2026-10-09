@@ -1,6 +1,23 @@
-# Review gateway: стабильный приватный маршрут UI
+# Review gateway: локальный UI и адресный публичный маршрут
 
 **Проверенная установка:** UI `86354350` / API `d720232e`.
+
+## Действующий публичный UI — 9 октября 2026
+
+Точный действующий Tuna-host выбран приватным `web-upstream.map` публичного
+Nginx и использует тот же review UI, что3015. Public UI/Next observability идут
+через review gateway; business API/WS/health/bootstrap сохраняют прежний маршрут.
+Public observability cookie получает Secure; без авторизации resources/Grafana
+вернули401, `/metrics`404. Новые образы/контейнеры не создавались: все46 сохранены.
+Вход, каталог, builder и monitoring проверены; временный request failure и
+восстановление после refresh записаны. Cloudflare/SSH fallback не обновлялись.
+
+Review stack теперь является зависимостью этого публичного UI. При следующем
+UI rollout проверяйте3015 и выбранный public host. Для возврата старого UI
+проверяется и убирается только принадлежащая поставке запись приватного map;
+после `nginx -t -c /etc/nginx/remote-pilot.conf` выполняется graceful reload
+публичного gateway. Не пересоздавайте API или volumes ради отката UI.
+[Receipt, маршруты, проверки и границы](../audits/2026-10-09/PUBLIC-WEB-DELIVERY.md).
 
 [Действующий реестр](WORK-STATUS.md) · [Текущая установка](CURRENT-STATE.md).
 Ниже сохранены датированные результаты; они не описывают сегодняшнюю версию контейнера.
