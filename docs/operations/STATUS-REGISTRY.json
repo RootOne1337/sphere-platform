@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "reviewedAtUtc": "2026-10-09T21:51:32.755048+00:00",
+  "reviewedAtUtc": "2026-10-09T22:05:42.592541+00:00",
   "sourceReviewed": "369654a0be4bded35e299062badc9bfe95101f1e",
   "scope": "Effective documentation status; source/install/finite acceptance kept separate. No new fleet or soak acceptance.",
   "baseline": "docs/audits/2026-10-05/ENTERPRISE-PRODUCT-BACKLOG.json",
@@ -11,18 +11,18 @@
     "open": 41
   },
   "installed": {
-    "lastObservedUtc": "2026-10-09T21:51:32.755048+00:00",
+    "lastObservedUtc": "2026-10-09T22:05:42.592541+00:00",
     "ui": "369654a0be4bded35e299062badc9bfe95101f1e",
     "api": "369654a0be4bded35e299062badc9bfe95101f1e",
-    "evidence": "docs/audits/2026-10-10/BROADCAST-INSTALLED-ACCEPTANCE.json",
-    "observation": "Exact369 UI/API installed separately; each preserves45 other containers/schema/OTA/APK. Real isolated broadcast202/commit/admission passed. Both live origins return expected404 after binary presence; browser catalog/graph/form read-cancel accepted. Idle/direct/whole-PC writer remain open; probe off/allowlist[].",
+    "evidence": "docs/audits/2026-10-10/DIRECT-PROBE-NETWORK-CANARY.json",
+    "observation": "UI/API369 remain installed. One finite host ICE attempt observed two checking pairs,177 requests/0 responses; no channel/RTT. Original APK restored, APIoff/allowlist[], temporaryUI stopped. Public ordinary video nineframes and both origins health/404 verified. No direct/idle/fleet acceptance.",
     "pilotApk": {
       "device": "PH011",
       "version": "1.2.49-dev",
       "versionCode": 10249,
-      "scope": "PH011 selected in finite current diagnostics canary; not fleet inventory"
+      "scope": "PH011 original APK restored after finite diagnostic-only native canary; not fleet inventory"
     },
-    "evidenceSha256NormalizedLf": "7dcb639c2c5bdace74af1626daa862b3095d8857c54f551df0f5665493a03f5c"
+    "evidenceSha256NormalizedLf": "9c701c39633dfcbf2fba4a67711887df19a461d428fa487af8888763dee97440"
   },
   "pendingCorrections": [],
   "storage": {
@@ -84,7 +84,7 @@
     "implementationAuthorizedNow": true,
     "researchPreparedAtUtc": "2026-10-09T16:46:29Z",
     "researchEvidence": "docs/design/BROWSER-DIRECT-TRANSPORT.md",
-    "researchScope": "RTT-only native pilot attempted twice: JNI/authorized offer-answer publication verified, no ICE connection/RTT. Probe off and original APK restored; media/input remain server WS. Cause/native resource acceptance OPEN.",
+    "researchScope": "One additional native host ICE attempt observed browser checking/DTLS connecting, two pairs and177 requests/0responses;0echo/RTT. Native original restored, endpointoff. Media/input remain server WS; exact network cause and resource acceptance OPEN.",
     "researchPrerequisites": [
       "Versioned offer/input/control ownership and auth contract",
       "Bounded command-to-native/frame timing with unknown results visible",
@@ -108,10 +108,11 @@
       "docs/audits/2026-10-09/DIRECT-PROBE-VIEWER-ISOLATION.md",
       "docs/audits/2026-10-09/DIRECT-PROBE-PILOT.md",
       "docs/audits/2026-10-09/DIRECT-PROBE-NETWORK-SNAPSHOT.md",
-      "docs/audits/2026-10-10/BROADCAST-INSTALLED-ACCEPTANCE.json"
+      "docs/audits/2026-10-10/BROADCAST-INSTALLED-ACCEPTANCE.json",
+      "docs/audits/2026-10-10/DIRECT-PROBE-NETWORK-CANARY.json"
     ],
-    "pilotEvidence": "docs/audits/2026-10-09/DIRECT-PROBE-PILOT.json",
-    "pilotOutcome": "FAILED_HOST_ICE_CLEANED_UP",
+    "pilotEvidence": "docs/audits/2026-10-10/DIRECT-PROBE-NETWORK-CANARY.json",
+    "pilotOutcome": "FAILED_HOST_ICE_CHECKS_WITHOUT_RESPONSES_CLEANED_UP",
     "pilotCurrentlyEnabled": false
   },
   "items": [
@@ -1807,8 +1808,8 @@
         "EP-020",
         "EP-047"
       ],
-      "acceptedScope": "Exact9ad all four CI success; two real native echo attempts, JNI and authorized SDP publication verified. Connectivity failed/0RTT, original APK restored, endpointoff. This is negative diagnostic evidence, not media/control acceptance. Exact369 full CI and UI/API delivery now include close/phase/network diagnostics, probe remains disabled.",
-      "remaining": "Real ICE snapshot/cause/route attribution, live RTT, native cleanup/provenance/SBOM, STUN/TURN/network matrix, media/control ownership and idle reliability remain open.",
+      "acceptedScope": "Exact369 CI and standard UI/API delivery accepted for recorded corrections. One additional native host ICE attempt observed177 requests/0responses in a temporary loopback canary UI; standard compile gate remains off. No successful channel/RTT. Original APK restored, API probeoff; nine public video frames after cleanup.",
+      "remaining": "Native-side ICE summary and packet/route/mDNS attribution, controlled STUN/TURN comparison, packaged canary UI admission, live RTT, native cleanup/provenance/SBOM/resource plateau, network matrix, media/control ownership and idle reliability remain open.",
       "evidence": [
         "docs/design/BROWSER-DIRECT-TRANSPORT.md",
         "docs/audits/2026-10-09/IDLE-CONTROL-RELAY-REVIEW.md",
@@ -1816,7 +1817,8 @@
         "docs/audits/2026-10-09/DIRECT-PROBE-VIEWER-ISOLATION.md",
         "docs/audits/2026-10-09/DIRECT-PROBE-PILOT.md",
         "docs/audits/2026-10-09/DIRECT-PROBE-NETWORK-SNAPSHOT.md",
-        "docs/audits/2026-10-10/BROADCAST-INSTALLED-ACCEPTANCE.json"
+        "docs/audits/2026-10-10/BROADCAST-INSTALLED-ACCEPTANCE.json",
+        "docs/audits/2026-10-10/DIRECT-PROBE-NETWORK-CANARY.json"
       ],
       "sourcePaths": [
         "backend/websocket/direct_probe_protocol.py",
@@ -1908,13 +1910,13 @@
   ],
   "sourceWorktreeEvidence": "docs/audits/2026-10-09/CONTINUOUS-SERVER-TIMINGS-INSTALLED.json",
   "publicWeb": {
-    "lastObservedUtc": "2026-10-09T21:51:32.755048+00:00",
+    "lastObservedUtc": "2026-10-09T22:05:42.592541+00:00",
     "url": "https://sphere-agent-canary-20260927.ru.tuna.am",
     "ui": "369654a0be4bded35e299062badc9bfe95101f1e",
     "api": "369654a0be4bded35e299062badc9bfe95101f1e",
-    "evidence": "docs/audits/2026-10-10/BROADCAST-INSTALLED-ACCEPTANCE.json",
-    "evidenceSha256NormalizedLf": "7dcb639c2c5bdace74af1626daa862b3095d8857c54f551df0f5665493a03f5c",
-    "scope": "Same exact-host map, UI/API369 installed. Finite catalog/graph/form read-cancel and broadcast404 after binary presence. No direct/media/idle reliability acceptance or route map change.",
+    "evidence": "docs/audits/2026-10-10/DIRECT-PROBE-NETWORK-CANARY.json",
+    "evidenceSha256NormalizedLf": "9c701c39633dfcbf2fba4a67711887df19a461d428fa487af8888763dee97440",
+    "scope": "Same exact-host map and UI/API369. After canary cleanup: public nine decoded/drawn frames, no decode/render errors; both origins health200/expected broadcast404 and PH011online. Not direct/media/idle/steady FPS acceptance.",
     "additionalQa": {
       "evidence": "docs/audits/2026-10-09/PUBLIC-WEB-SUPPLEMENTAL-QA.json",
       "evidenceSha256NormalizedLf": "84f719a322e114a34ba4f4fc5624f717a71558f2b80f5aea1a484b50778ceac4",
@@ -1934,8 +1936,8 @@
     {
       "id": "direct-probe-network-snapshot",
       "installedRevision": "369654a0be4bded35e299062badc9bfe95101f1e",
-      "evidence": "docs/audits/2026-10-10/BROADCAST-INSTALLED-ACCEPTANCE.json",
-      "scope": "Bounded single-flight32-call summary delivered; real ICE snapshot still requires canary"
+      "evidence": "docs/audits/2026-10-10/DIRECT-PROBE-NETWORK-CANARY.json",
+      "scope": "Source in369; standard frontend compile gate off. Real bounded network summary verified only in temporary loopback diagnostic UI; failed hostICE,0RTT, cleanup complete."
     },
     {
       "id": "broadcast-binary-presence-response",

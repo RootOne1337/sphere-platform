@@ -2,6 +2,16 @@
 
 **Проверенная установка:** UI `369654a0` / API `369654a0`.
 
+**10 октября — снят реальный browser ICE срез.** Один диагностический canary:
+APK answer получен, две пары проверяются,177 requests/0 responses,0 echo/RTT.
+Источник отказа сужен до установки сетевого пути; конкретная причина ещё UNKNOWN.
+Исходный APK восстановлен, API probe выключен, временные3016/3017 остановлены.
+Обычный публичный viewer после cleanup дал9 decoded/drawn frames без ошибок.
+Панель network snapshot выключена compile-time в стандартном UI369; реальный
+срез снят только во временном loopback diagnostic UI. Это уточняет прежнюю
+формулировку доставки source, не подтверждает direct media/control или SLA.
+[Измерение, установка и следующий шаг](../audits/2026-10-10/DIRECT-PROBE-NETWORK-CANARY.md).
+
 **10 октября — broadcast исправлен и установлен.** На обоих адресах UI/API369;
 все4 exact-source CI success:3428 backend tests/252subtests,1966 frontend tests.
 Изолированный PostgreSQL/Redis test подтвердил202, commit и admission. На рабочем
@@ -35,8 +45,9 @@ Product9/41,legacy7 сохраняются. [Пилот и следующий ga
 
 **Последующий source этап:** добавлен bounded browser ICE/DTLS snapshot при отказе:
 один getStats in flight,32вызова максимум, unknown counters и возраст среза видны,
-адреса/ключи не сохраняются.16focused frontend tests/types passed; UI теперь установлен,
-новый native network canary не проведён. [Scope и gates](../audits/2026-10-09/DIRECT-PROBE-NETWORK-SNAPSHOT.md).
+адреса/ключи не сохраняются.16focused frontend tests/types passed; source входит в369,
+но стандартный UI build flag выключен. Новый native canary выполнен во временном
+диагностическом UI; результат выше. [Source scope](../audits/2026-10-09/DIRECT-PROBE-NETWORK-SNAPSHOT.md).
 
 **Первый source этап9октября: разрешён и написан direct RTT canary.** Браузерный WebRTC,
 серверное межпроцессное согласование и отдельный Android debug source set готовы
@@ -338,14 +349,16 @@ Pion/SFU/overlay рассмотрены по ролям, а не добавле�
 Maven AAR pinned, authenticated generation-bound signaling, allowlist устройств,
 WebRTC echo без media/input. Exact9ad прошёл все4CI; две native попытки получили
 SDP answer в signaling, но канал не открылся, RTT unknown. После пилота APK восстановлен,
-probe выключен. Последующая UI/API369 доставка включила close/phase/network diagnostics.
+probe выключен. Последующая UI/API369 доставка включила close correction и source
+phase/network diagnostics; их compile gate стандартного frontend выключен.
 Остаётся: native provenance/SBOM,
 ICE cause/live RTT/cleanup, media/control ownership, current-path attribution,
 TURN/network matrix и production gate. Draft latency targets не являются достигнутым SLA.
 [Исходники и проверки](../audits/2026-10-09/DIRECT-PROBE-SOURCE.md) ·
 [Фактический pilot и границы](../audits/2026-10-09/DIRECT-PROBE-PILOT.md).
 Новый [source ICE snapshot](../audits/2026-10-09/DIRECT-PROBE-NETWORK-SNAPSHOT.md)
-установлен для локализации следующего отказа; новый native network canary ещё не проведён.
+входит в369 source. Реальная проверка во временном canary UI дала177requests/0responses;
+[новый receipt](../audits/2026-10-10/DIRECT-PROBE-NETWORK-CANARY.md) сохраняет cleanup и границы.
 
 Доказательства: [Исследование и порядок внедрения](../design/BROWSER-DIRECT-TRANSPORT.md),
 [Фактический relay path и idle canary](../audits/2026-10-09/IDLE-CONTROL-RELAY-REVIEW.md).
