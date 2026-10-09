@@ -3,11 +3,26 @@ import { useEffect, useRef, useState } from 'react';
 import { useAuthStore } from '@/lib/store';
 import { startDirectProbe, type DirectProbeResult } from './directProbe';
 
+const phaseText: Record<DirectProbeResult['state'], string> = {
+  gathering: 'Подготовка сетевых адресов', signaling: 'Согласование с APK через сервер',
+  connecting: 'APK ответил · проверка прямого сетевого пути', connected: 'Канал открыт · выполняется замер',
+  finished: '20 замеров завершены', stopped: 'Замер остановлен', failed: 'Соединение не подтверждено',
+};
+const reasonText: Record<string, string> = {
+  connection_deadline: 'За 12 секунд канал не открылся. Это не измерение задержки; нужно проверить сетевой путь.',
+  probe_deadline: 'Истёк общий срок проверки. Незавершённые замеры не повторяются.',
+  echo_timeout: 'Ответ APK на пробный пакет не получен вовремя.',
+  signaling_closed: 'Сервер закрыл согласование. Проверьте доступ устройства к эксперименту и актуальность APK.',
+  signaling_unavailable: 'Согласование с сервером недоступно.',
+  webrtc_unavailable: 'Этот браузер не смог подготовить WebRTC.',
+  peer_disconnected: 'Прямой канал прерван.',
+};
+
 export function DirectProbeDiagnostics({ deviceId }: { deviceId: string }) {
   const token = useAuthStore(state => state.accessToken);
   const [result, setResult] = useState<DirectProbeResult | null>(null);
   const stop = useRef<(() => void) | null>(null);
-  const active = result && ['gathering', 'signaling', 'connected'].includes(result.state);
+  const active = result && ['gathering', 'signaling', 'connecting', 'connected'].includes(result.state);
   useEffect(() => {
     const onHidden = () => { if (document.hidden) { stop.current?.(); stop.current = null; } };
     document.addEventListener('visibilitychange', onHidden);
@@ -28,6 +43,15 @@ export function DirectProbeDiagnostics({ deviceId }: { deviceId: string }) {
     <p className="mt-1 text-muted-foreground">До 20 замеров между браузером и APK. Видео и касания пока используют текущий транспорт. Здесь проверяется только host ICE; путь через NAT может быть недоступен.</p>
     <button type="button" disabled={!token || !!active} onClick={begin} className="mt-2 rounded-md border border-border px-3 py-1.5 disabled:opacity-50 focus-visible:ring-2 focus-visible:ring-ring">Проверить прямой канал</button>
     {active && <button type="button" onClick={() => { stop.current?.(); stop.current = null; }} className="ml-2 rounded-md border border-border px-3 py-1.5">Остановить</button>}
-    {result && <div role="status" className="mt-2 break-words">{result.state} · {result.samples.length} замеров · путь: {result.path}{result.protocol && ` / ${result.protocol}`}{p95 && ` · RTT p95 ${p95} мс`}{result.reason && ` · ${result.reason}`}</div>}
+    {result && <div className="mt-3 space-y-2">
+      <div role="status" className="font-medium">{phaseText[result.state]}</div>
+      <dl className="grid grid-cols-1 gap-2 text-sm sm:grid-cols-3">
+        <div><dt className="text-muted-foreground">Ответы APK</dt><dd>{result.samples.length} / 20</dd></div>
+        <div><dt className="text-muted-foreground">RTT p95</dt><dd>{p95 ? `${p95} мс` : 'Не измерен'}</dd></div>
+        <div><dt className="text-muted-foreground">Выбранный ICE-путь</dt><dd>{({ host: 'Host-кандидаты', nat: 'Через NAT', relay: 'Ретранслятор', unknown: 'Не подтверждён' })[result.path]}{result.protocol && ` · ${result.protocol.toUpperCase()}`}</dd></div>
+      </dl>
+      {result.reason && <p className="break-words text-sm text-muted-foreground">{reasonText[result.reason] ?? 'Проверка завершилась с ошибкой. Автоматического повтора нет.'}</p>}
+      {result.reason && <details className="text-xs text-muted-foreground"><summary className="cursor-pointer">Техническая причина</summary><code>{result.reason}</code></details>}
+    </div>}
   </section>;
 }

@@ -8,10 +8,13 @@
 
 </div>
 
-**Проверенная установка:** UI `d70f55c6` / API `d720232e`.
+**Проверенная установка:** UI `d70f55c6` / API `9ad3481c`.
 
 [Прямой browser↔APK: исследование, архитектура и измеримые gates](design/BROWSER-DIRECT-TRANSPORT.md).
 WebRTC video+input и TURN fallback предложены для прототипа, ещё не установлены.
+Две native direct echo попытки подтвердили JNI/SDP answer, но канал не открылся;
+прежний PH011 APK восстановлен, probe выключен, allowlist пуст.
+[Фактический pilot и незакрытые gates](audits/2026-10-09/DIRECT-PROBE-PILOT.md).
 Server relay и повторный idle failure подтверждены отдельно.
 [Wording и контраст установлены в UI d70f55c6](audits/2026-10-09/IDLE-CONTROL-UX-INSTALLED.md);
 это не устранение задержки и не внедрение прямого транспорта.
@@ -31,12 +34,12 @@ UI d70f55c6, что 3015. Первоначальная доставка UI863543
 **Действующий реестр:** [50 работ и дополнения из чата](operations/WORK-STATUS.md)
 ([JSON](operations/STATUS-REGISTRY.json)). **9 принято / 41 открыто**; legacy7 —
 пересекающийся отдельный аудит, не дополнительный остаток. Последняя установка
-UI d70f55c6 / API d720232e: server timings и browser failure snapshot сохранены.
+UI d70f55c6 / API9ad3481c: server timings и browser failure snapshot сохранены.
 Frontend 1950 tests / 139 suites, types/build прошли; конечная проверка wording/контраста
 записана отдельно, idle reliability остаётся OPEN.
 PH011 idle timeout повторился; наблюдаемые server spans <25ms, причина OPEN.
-Все4 exact API-source CI successful, backend3387tests/233subtests;
-[новый receipt](audits/2026-10-09/CONTINUOUS-SERVER-TIMINGS-INSTALLED.md).
+Исторический API d720232e прошёл все4CI, backend3387tests/233subtests;
+[его receipt](audits/2026-10-09/CONTINUOUS-SERVER-TIMINGS-INSTALLED.md).
 Историческая frontend1948tests/139suites desktop/phone приёмка сохраняет свои границы.
 Clock/recording приёмка сохранена как исторический receipt; CI/install/live не подменяют друг друга.
 

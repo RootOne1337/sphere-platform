@@ -1,6 +1,12 @@
 # Эксплуатационная готовность Sphere
 
-**Проверенная установка:** UI `d70f55c6` / API `d720232e`.
+**Проверенная установка:** UI `d70f55c6` / API `9ad3481c`.
+
+**Native pilot: FAILED_HOST_ICE_CLEANED_UP.** Две попытки подтвердили JNI и
+публикацию SDP answer, но не direct connection/RTT. Прежний PH011 APK восстановлен,
+probe выключен, allowlist пуст. API9ad установлен; UI d70 и прежний server WS путь
+сохранены. Source close/phase corrections ещё не установлены, новый CI — отдельный gate.
+[Конечное доказательство и незакрытые критерии](../audits/2026-10-09/DIRECT-PROBE-PILOT.md).
 
 **Direct transport: PROTOTYPE_SOURCE, не production acceptance.** Разрешён RTT-only
 debug canary; feature flag, явный allowlist устройств и native generation/TTL fences
@@ -15,11 +21,12 @@ Source, установленный runtime и конечная приёмка р
 [Текущая сверка чата, всех 50 критериев и реализации](../audits/2026-10-09/CHAT-CODE-RECONCILIATION.md)
 связывает исходники с последующими приёмками. **9 принято / 41 открыто** —
 продуктовый план; **34 source-fixed / 7 незакрытых** — последний записанный
-остаток старого веб-аудита. Эти счётчики нельзя объединять. UI d70f55c6 / API d720232e
-установлены на 3015 и выбранном публичном адресе. Конечная проверка точного idle wording
+остаток старого веб-аудита. Эти счётчики нельзя объединять. UI d70f55c6 / API9ad3481c
+доступны через 3015 и выбранный публичный адрес; API-only pilot/disable проверены локально.
+Предыдущая конечная проверка точного idle wording
 и контраста статуса принята; задержка и повторный idle timeout не устранены.
 Frontend CI success: 1950 tests / 139 suites, types/build.
-[Текущий installed receipt](../audits/2026-10-09/IDLE-CONTROL-UX-INSTALLED.md).
+[Исторический UI-only receipt](../audits/2026-10-09/IDLE-CONTROL-UX-INSTALLED.md).
 Историческая desktop/phone приёмка bounded failure snapshot/панели UI86354350:
 [Установка и границы](../audits/2026-10-09/STREAM-DIAGNOSTICS-INSTALLED-ACCEPTANCE.md).
 Backend-only доставка таймингов отдельно прошла все четыре exact-source CI;

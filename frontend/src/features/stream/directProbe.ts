@@ -1,6 +1,6 @@
 /** Finite WebRTC echo canary. RTT here is neither native input ACK nor video latency. */
 export interface DirectProbeResult {
-  state: 'gathering' | 'signaling' | 'connected' | 'finished' | 'stopped' | 'failed';
+  state: 'gathering' | 'signaling' | 'connecting' | 'connected' | 'finished' | 'stopped' | 'failed';
   samples: number[];
   path: 'host' | 'nat' | 'relay' | 'unknown';
   protocol: string | null;
@@ -74,7 +74,9 @@ export function startDirectProbe(
           || data.type !== 'direct_probe_answer' || !/^[0-9a-f]{32}$/.test(data.session_id)
           || typeof data.sdp !== 'string' || new TextEncoder().encode(data.sdp).length > 32768) throw Error();
         session = data.session_id;
-        void peer.setRemoteDescription({ type: 'answer', sdp: data.sdp }).catch(() => stop('invalid_answer'));
+        void peer.setRemoteDescription({ type: 'answer', sdp: data.sdp }).then(() => {
+          if (!stopped && result.state === 'signaling') { result.state = 'connecting'; emit(); }
+        }).catch(() => stop('invalid_answer'));
       } catch { stop('invalid_signal'); }
     };
     ws.onerror = () => stop('signaling_unavailable');

@@ -1,6 +1,6 @@
 # Актуальность документации
 
-**Проверенная установка:** UI `d70f55c6` / API `d720232e`.
+**Проверенная установка:** UI `d70f55c6` / API `9ad3481c`.
 
 [Каталог](README.md) · [Readiness](operations/READINESS.md) · [Contributing](../CONTRIBUTING.md)
 
@@ -49,10 +49,15 @@ Source clock receipt1577e01e хранит прежнюю source-only грани�
 [доставка60be6ecd](audits/2026-10-09/STUDIO-CLOCK-INSTALLED-ACCEPTANCE.md) принята
 отдельно: completedCorrections содержит её normalized SHA и точный installed SHA.
 Исторический source receipt не переписывается ради нового installed статуса.
-Последний UI 86354350 имеет отдельный [installed receipt](audits/2026-10-09/STREAM-DIAGNOSTICS-INSTALLED-ACCEPTANCE.md):
+Исторический UI86354350 имеет отдельный [installed receipt](audits/2026-10-09/STREAM-DIAGNOSTICS-INSTALLED-ACCEPTANCE.md):
 диагностика и её компоновка приняты в конечном scope. Последующая backend-only
 [доставка API d720232e](audits/2026-10-09/CONTINUOUS-SERVER-TIMINGS-INSTALLED.md)
 сохраняет UI и подтверждает повторный idle failure; причина остаётся OPEN.
+Последующий [native pilot receipt](audits/2026-10-09/DIRECT-PROBE-PILOT.json)
+связывает текущие UI d70/API9ad с восстановленным APK и выключенным probe.
+`browser.finiteAccepted` относится только к обычному read/first-frame return;
+`directPilot.connectivityAccepted=false` сохраняет отказ прямого соединения.
+Отрицательный pilot outcome не является закрытием пункта или приёмкой задержки.
 391/392/393 Markdown в датированных snapshots относятся к своим source revisions;
 действующее покрытие берётся из DOCUMENT-INVENTORY.json.
 Каждая приёмка указывает версии, время, устройства, сценарий, длительность и

@@ -22,6 +22,16 @@ from backend.websocket.direct_probe_runtime import ProbeViewer, get_direct_probe
 router = APIRouter(tags=["direct-transport-canary"])
 
 
+async def close_probe(ws: WebSocket, code: int, reason: str) -> None:
+    # The browser can send an explicit stop and close its socket immediately.
+    # A concurrent worker retirement may also have closed it already.
+    try:
+        async with asyncio.timeout(1):
+            await ws.close(code=code, reason=reason)
+    except (WebSocketDisconnect, RuntimeError, OSError, TimeoutError):
+        pass
+
+
 async def authorize(token: str, device_id: str) -> tuple[str, str]:
     async with asyncio.timeout(2):
         async with AsyncSessionLocal() as db:
@@ -37,10 +47,10 @@ async def direct_probe_ws(ws: WebSocket, device_id: str) -> None:
     await ws.accept()
     runtime = get_direct_probe_runtime()
     if not settings.DIRECT_TRANSPORT_PROBE_ENABLED or not runtime or not runtime.available:
-        await ws.close(code=4003, reason="direct_probe_disabled")
+        await close_probe(ws, 4003, "direct_probe_disabled")
         return
     if device_id not in settings.DIRECT_TRANSPORT_PROBE_DEVICE_IDS:
-        await ws.close(code=4003, reason="direct_probe_device_disabled")
+        await close_probe(ws, 4003, "direct_probe_device_disabled")
         return
     viewer: ProbeViewer | None = None
     try:
@@ -79,12 +89,12 @@ async def direct_probe_ws(ws: WebSocket, device_id: str) -> None:
     except WebSocketDisconnect:
         return
     except (HTTPException, InvalidDirectProbe, ValueError, TypeError, TimeoutError):
-        await ws.close(code=4003, reason="direct_probe_rejected_or_expired")
+        await close_probe(ws, 4003, "direct_probe_rejected_or_expired")
         return
     except Exception:
-        await ws.close(code=1013, reason="direct_probe_unavailable")
+        await close_probe(ws, 1013, "direct_probe_unavailable")
         return
     finally:
         if viewer:
             await runtime.retire(viewer)
-    await ws.close(code=1000, reason="probe_finished")
+    await close_probe(ws, 1000, "probe_finished")

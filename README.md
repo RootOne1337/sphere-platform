@@ -15,7 +15,7 @@
 
 </div>
 
-**Проверенная установка:** UI `d70f55c6` / API `d720232e`.
+**Проверенная установка:** UI `d70f55c6` / API `9ad3481c`.
 
 **Публичный веб обновлён 9 октября:** действующий Tuna-host и3015 используют
 один UI d70f55c6. Маршруты первоначально проверены на UI86354350; API/WS/bootstrap
@@ -26,7 +26,10 @@
 
 **Действующий статус — 9 октября 2026:** [реестр работ и требований](docs/operations/WORK-STATUS.md)
 разделяет **9 принятых / 41 открытую работу** и старые семь незакрытых findings.
-Последняя проверенная установка: UI **d70f55c6**, API **d720232e** на 3015 и выбранном публичном адресе.
+Последняя проверенная установка: UI **d70f55c6**, API **9ad3481c** на 3015 и выбранном публичном адресе.
+Две native direct echo попытки подтвердили JNI и SDP answer, но канал не открылся:
+RTT неизвестен. Прежний APK PH011 восстановлен, probe off/allowlist[].
+[Pilot receipt и следующий gate](docs/audits/2026-10-09/DIRECT-PROBE-PILOT.md).
 Различены idle-потеря подтверждения и неизвестный результат касания; исправлен
 контраст статуса управления на тёмной поверхности видео в светлой теме.
 Frontend CI: 1950 tests / 139 suites, types/build, 26 pages / 73 assets.
@@ -34,7 +37,7 @@ Frontend CI: 1950 tests / 139 suites, types/build, 26 pages / 73 assets.
 [Прямой browser↔APK: исследование и отключённый RTT canary](docs/design/BROWSER-DIRECT-TRANSPORT.md).
 Серверные timings и browser failure snapshot установлены; PH011 idle timeout
 повторился. Наблюдаемые server spans <25ms, queue/network/APK/native причина OPEN.
-Все4 exact API-source CI successful, backend3387tests/233subtests.
+Исторический API d720232e прошёл все4CI, backend3387tests/233subtests.
 [Установка и границы](docs/audits/2026-10-09/CONTINUOUS-SERVER-TIMINGS-INSTALLED.md).
 Clock correction и PH011 mixed recording ранее приняты в конечном scope;
 idle receipt failure вновь подтверждён, его причина и whole-PC writer ещё UNKNOWN.
@@ -560,8 +563,10 @@ identity, доверенный ключ и параметры enrollment; APK и
 ## 🔬 Состояние проекта и границы проверки
 
 **Действующий срез9октября:** [реестр50работ и15дополнений из чата](docs/operations/WORK-STATUS.md)
-и [runtime evidence](docs/operations/CURRENT-STATE.md). UI d70f55c6 / API d720232e:
+и [runtime evidence](docs/operations/CURRENT-STATE.md). UI d70f55c6 / API9ad3481c:
 server timings и browser snapshot сохранены; wording/контраст управления проверены через туннель.
+Native direct echo пилот завершился без ICE connection/RTT; APK восстановлен, probe отключён.
+[Доказательство](docs/audits/2026-10-09/DIRECT-PROBE-PILOT.md).
 Frontend exact-source CI successful: 1950 tests / 139 suites, types/build.
 Историческая API-приёмка: все4 CI successful, backend3387tests/233subtests. Idle failure повторился;
 queue/network/APK/native причина, resource/ownership и Fleet32 gates OPEN.

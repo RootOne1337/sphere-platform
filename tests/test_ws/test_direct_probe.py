@@ -192,6 +192,33 @@ async def test_enabled_without_device_allowlist_still_denies_before_auth(peers, 
 
 
 @pytest.mark.asyncio
+@pytest.mark.parametrize("failure", ["disconnect", "closed", "slow"])
+async def test_explicit_browser_stop_and_socket_close_race_still_retires_lease(peers, monkeypatch, failure):
+    from fastapi import WebSocketDisconnect
+
+    from backend.api.ws.direct import router
+    runtime = peers[0][1]
+    monkeypatch.setattr(router.settings, "DIRECT_TRANSPORT_PROBE_ENABLED", True)
+    monkeypatch.setattr(router.settings, "DIRECT_TRANSPORT_PROBE_DEVICE_IDS", frozenset({"device"}))
+    monkeypatch.setattr(router, "get_direct_probe_runtime", lambda: runtime)
+    monkeypatch.setattr(router, "authorize", AsyncMock(return_value=("org", "user")))
+    socket = AsyncMock()
+    socket.receive_text.side_effect = ['{"token":"fixture"}',
+        json.dumps(dict(type="direct_probe_offer", sdp=SDP)), '{"type":"direct_probe_close"}']
+    if failure == "slow":
+        async def slow_close(**kwargs):
+            await asyncio.sleep(5)
+        socket.close.side_effect = slow_close
+    else:
+        socket.close.side_effect = WebSocketDisconnect(1006) if failure == "disconnect" else RuntimeError("already closed")
+    async with asyncio.timeout(2):
+        await router.direct_probe_ws(socket, "device")
+    assert not runtime.viewers
+    assert await peers[1][1].get(runtime.key("device")) is None
+    assert runtime.available and not runtime.task.done()
+
+
+@pytest.mark.asyncio
 async def test_runtime_capacity_reserves_before_redis_await(peers, monkeypatch):
     runtime = peers[0][1]
     ready, release = asyncio.Event(), asyncio.Event()

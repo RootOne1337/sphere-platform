@@ -1,6 +1,6 @@
 # Review gateway: локальный UI и адресный публичный маршрут
 
-**Проверенная установка:** UI `d70f55c6` / API `d720232e`.
+**Проверенная установка:** UI `d70f55c6` / API `9ad3481c`.
 
 **Дополнение9октября16:21UTC:** публичный Nginx сжимает только static-assets
 `/observability/grafana/public/` с negotiation/Vary и `gzip_proxied any`.

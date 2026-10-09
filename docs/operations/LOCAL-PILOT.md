@@ -1,6 +1,6 @@
 # Локальный стенд для совместного тестирования
 
-**Проверенная установка:** UI `d70f55c6` / API `d720232e`.
+**Проверенная установка:** UI `d70f55c6` / API `9ad3481c`.
 
 **Публичный веб, 9 октября:** действующий Tuna-host использует тот же
 UI d70f55c6, что 3015. [Текущая доставка](../audits/2026-10-09/IDLE-CONTROL-UX-INSTALLED.md). Это адресный Nginx opt-in к existing review stack; API/WS и
@@ -8,8 +8,11 @@ bootstrap сохранены. Следующий UI rollout требует пр�
 Другие tunnel hosts не обновлялись. [Доставка и ограничения](../audits/2026-10-09/PUBLIC-WEB-DELIVERY.md).
 
 **Текущие версии:** см. [CURRENT-STATE](CURRENT-STATE.md) и
-[реестр с датой наблюдения](STATUS-REGISTRY.json). UI d70f55c6 / API d720232e;
-PH011 APK 10249 сохранён. Конечная проверка wording/контраста не является
+[реестр с датой наблюдения](STATUS-REGISTRY.json). UI d70f55c6 / API9ad3481c;
+PH011 APK10249 восстановлен после двух неудачных native direct echo попыток.
+Probe endpoint off/allowlist[]; media/control остаются server WS.
+[Пилот и конечный runtime receipt](../audits/2026-10-09/DIRECT-PROBE-PILOT.md).
+Конечная проверка wording/контраста не является
 приёмкой idle reliability или утверждением о версии всего парка.
 Ниже — исторические pilot checkpoints, включая доставку API 9 октября, 15:17 UTC.
 [Receipt установки API и повторного idle-сбоя](../audits/2026-10-09/CONTINUOUS-SERVER-TIMINGS-INSTALLED.md).

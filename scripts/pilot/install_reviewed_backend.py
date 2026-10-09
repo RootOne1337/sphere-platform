@@ -18,7 +18,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 from urllib.parse import unquote, urlsplit
-from uuid import uuid4
+from uuid import UUID, uuid4
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 from scripts.pilot.install_reviewed_web import (  # noqa: E402
@@ -48,6 +48,9 @@ APPROVED_PATHS = {
     "backend/websocket/continuous_lease.py", "backend/websocket/continuous_protocol.py",
     "backend/websocket/continuous_receipts.py", "backend/websocket/frames.py",
     "backend/websocket/continuous_observability.py", "backend/metrics.py",
+    "backend/core/config.py", "backend/api/ws/direct/__init__.py",
+    "backend/api/ws/direct/router.py", "backend/websocket/direct_probe_protocol.py",
+    "backend/websocket/direct_probe_runtime.py",
 }
 PACKAGED_PATHS = ["backend", "alembic", "agent-config", "scripts/create_admin.py",
     "scripts/seed_enrollment_key.py", "scripts/backfill_script_metadata.py", "scripts/publish_script_source.py"]
@@ -83,7 +86,18 @@ def preserved(before: dict[str, Any], after: dict[str, Any]) -> None:
     require(all(before[name] == after[name] for name in before if name != BACKEND), "Another runtime changed")
 
 
-def validate_delta(old: dict[str, Any], new: dict[str, Any], tag: str) -> None:
+def probe_environment(device: str | None, disable: bool = False) -> dict[str, str]:
+    require(not (device is not None and disable), "Probe enable/disable options are mutually exclusive")
+    if disable:
+        return {"DIRECT_TRANSPORT_PROBE_ENABLED": "false", "DIRECT_TRANSPORT_PROBE_DEVICE_IDS": "[]"}
+    if device is None:
+        return {}
+    require(isinstance(device, str) and str(UUID(device)) == device, "Expected one canonical probe device UUID")
+    return {"DIRECT_TRANSPORT_PROBE_ENABLED": "true", "DIRECT_TRANSPORT_PROBE_DEVICE_IDS": json.dumps([device])}
+
+
+def validate_delta(old: dict[str, Any], new: dict[str, Any], tag: str,
+                   direct_probe_device: str | None = None, disable_direct_probe: bool = False) -> None:
     require(old.get("name") == PROJECT and new.get("name") == PROJECT, "Wrong Compose project")
     require(new["services"]["backend"]["image"] == tag and "build" not in new["services"]["backend"],
             "Candidate image/build recipe mismatch")
@@ -91,7 +105,17 @@ def validate_delta(old: dict[str, Any], new: dict[str, Any], tag: str) -> None:
     expected["services"]["backend"]["image"] = old["services"]["backend"]["image"]
     if "build" in old["services"]["backend"]:
         expected["services"]["backend"]["build"] = old["services"]["backend"]["build"]
-    require(expected == old, "Only backend image/build removal is admitted")
+    admitted_env = probe_environment(direct_probe_device, disable_direct_probe)
+    if admitted_env:
+        env = expected["services"]["backend"]["environment"]
+        old_env = old["services"]["backend"]["environment"]
+        require(all(env.get(key) == value for key, value in admitted_env.items()), "Probe opt-in/allowlist mismatch")
+        for key in admitted_env:
+            if key in old_env:
+                env[key] = old_env[key]
+            else:
+                env.pop(key, None)
+    require(expected == old, "Only backend image/build removal and explicit single-device probe are admitted")
     require(not new["services"]["backend"].get("ports"), "Direct backend port rejected")
     require(not new["services"]["backend"].get("user") and not new["services"]["backend"].get("command"),
             "Shipped runtime entry must not be overridden")
@@ -181,7 +205,9 @@ def ready(source: str) -> None:
             time.sleep(2)
 
 
-def execute(artifact: Path, source: str, expected_image_id: str, expected_current: str, apply: bool) -> dict[str, Any]:
+def execute(artifact: Path, source: str, expected_image_id: str, expected_current: str, apply: bool,
+            direct_probe_device: str | None = None, disable_direct_probe: bool = False) -> dict[str, Any]:
+    admitted_env = probe_environment(direct_probe_device, disable_direct_probe)
     require(bool(re.fullmatch(r"sha256:[a-f0-9]{64}", expected_image_id)), "Expected independent CI image ID")
     artifact = workspace_path(artifact, private=True)
     admitted = admit(artifact, source)
@@ -217,10 +243,14 @@ def execute(artifact: Path, source: str, expected_image_id: str, expected_curren
     override = output / "candidate.yml"
     with override.open("x", encoding="utf-8") as stream:
         stream.write(f"services:\n  backend:\n    image: {admitted['imageTag']}\n    build: !reset null\n")
+        if admitted_env:
+            stream.write("    environment:\n")
+            for key, value in admitted_env.items():
+                stream.write(f"      {key}: {json.dumps(value)}\n")
     frozen_cmd = freeze_compose(prefix, old, output / "baseline.json", runner=command)
     candidate_cmd = frozen_cmd + ["--file", str(override)]
     candidate = json.loads(command(candidate_cmd + ["config", "--format", "json"]))
-    validate_delta(old, candidate, admitted["imageTag"])
+    validate_delta(old, candidate, admitted["imageTag"], direct_probe_device, disable_direct_probe)
     catalog = ota_hash()
     findings = evaluate(collect(ROOT))
     plan = {"sourceRevision": source, "runId": admitted["runId"], "imageId": admitted["imageId"],
@@ -229,6 +259,8 @@ def execute(artifact: Path, source: str, expected_image_id: str, expected_curren
         "observedAtUtc": datetime.now(timezone.utc).isoformat(), "applyRequested": apply,
         "previousComposeFileCount": len(files), "candidateComposeFileCount": 2,
         "completeBaselineRoundtripVerified": True,
+        "directProbeDevice": direct_probe_device, "directProbeMediaControlEnabled": False,
+        "directProbeExplicitlyDisabled": disable_direct_probe,
         "otaCatalogSha256": catalog, "reportDirectory": str(output), "runtimeInstalled": False}
     write(output / "plan.json", plan)
     if not apply:
@@ -252,6 +284,10 @@ def execute(artifact: Path, source: str, expected_image_id: str, expected_curren
         after = snapshot()
         preserved(before, after)
         installed = inspect(BACKEND)
+        installed_env = dict(v.split("=", 1) for v in installed["Config"]["Env"] if "=" in v)
+        require(all(installed_env.get(key) == value for key, value in
+                    candidate["services"]["backend"].get("environment", {}).items()),
+                "Installed environment differs from admitted candidate")
         require(installed["Image"] == runtime_id and installed["State"]["Health"]["Status"] == "healthy",
                 "Backend image/readiness mismatch")
         require(schema_heads(installed) == heads and ota_hash() == catalog, "SQL schema/OTA catalog changed")
@@ -286,9 +322,13 @@ def main() -> int:
     parser.add_argument("--expected-image-id", required=True)
     parser.add_argument("--expected-current-source", required=True)
     parser.add_argument("--apply", action="store_true")
+    probe = parser.add_mutually_exclusive_group()
+    probe.add_argument("--direct-probe-device", help="Opt in only this canonical UUID to the diagnostic echo canary")
+    probe.add_argument("--disable-direct-probe", action="store_true", help="Disable diagnostic probe and empty its allowlist")
     args = parser.parse_args()
     try:
-        print(json.dumps(execute(args.artifact, args.source, args.expected_image_id, args.expected_current_source, args.apply)))
+        print(json.dumps(execute(args.artifact, args.source, args.expected_image_id, args.expected_current_source,
+                                 args.apply, args.direct_probe_device, args.disable_direct_probe)))
     except (ValueError, OSError, subprocess.SubprocessError, KeyError, TypeError):
         print(json.dumps({"runtimeInstalled": None, "state": "not-admitted", "detail": "Review private plan/CI/host evidence"}))
         return 2

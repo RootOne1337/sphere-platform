@@ -1,11 +1,14 @@
 # Script Studio: инструкция по созданию и проверке сценариев
 
-**Проверенная установка:** UI `d70f55c6` / API `d720232e`.
+**Проверенная установка:** UI `d70f55c6` / API `9ad3481c`.
 
 **Действующий реестр работ:** [WORK-STATUS](WORK-STATUS.md) / [машинный статус](STATUS-REGISTRY.json).
 Source, установленный runtime и конечная приёмка разделены; старые snapshots ниже сохраняют свои даты.
 
-**Текущая установка 9 октября:** UI d70f55c6 / API d720232e. Повторный idle ACK timeout
+**Текущая установка9октября:** UI d70f55c6 / API9ad3481c. API-only direct echo pilot
+не открыл канал; прежний PH011 APK восстановлен, probe выключен, allowlist пуст.
+Новая source close/phase correction не установлена; native RTT/media/control не приняты.
+[Пилот и границы](../audits/2026-10-09/DIRECT-PROBE-PILOT.md). Повторный idle ACK timeout
 имеет отдельное сообщение; неизвестное касание по-прежнему блокирует input.
 Статус управления читаем на фоне видео в светлой теме. Frontend CI success:
 1950 tests / 139 suites, types/build. [Установка и конечная проверка](../audits/2026-10-09/IDLE-CONTROL-UX-INSTALLED.md).
@@ -36,7 +39,7 @@ automatic pixel/XPath bundle. [Конечная приёмка и границы
 
 Актуализировано: **9 октября 2026**. Каталог `/scripts`, редактор
 `/scripts/builder`, формат **DAG1.0**, React Flow, локальная ELK0.12.0.
-На 3015 и выбранном публичном адресе установлены frontend **d70f55c6** и API **d720232e**. Studio сохраняет
+На 3015 и выбранном публичном адресе установлены frontend **d70f55c6** и API **9ad3481c**. Studio сохраняет
 graph/action contract и диалог сохранности; текущие runtime границы фиксируются в
 [CURRENT-STATE](CURRENT-STATE.md). Обратная гонка XPath→Control исправлена;
 быстрый переход и повторный вход в дерево проверены на установленном UI.
@@ -125,7 +128,7 @@ drag узла и фокус на добавленном шаге сохраня�
 [Исходный PNG](../audits/2026-10-06/NATIVE-PNG-PIXEL-VERIFICATION.md).
 
 32 action forms и локальная проверка параметров доступны в установленном
-frontend. Текущий API d720232e сохраняет contract 1.0 и поле
+frontend. Текущий API9ad3481c сохраняет contract 1.0 и поле
 `action_parameters_verified=true`; первая live приёмка API114775a историческая.
 Проверка принимает корректный draft и отклоняет неправильные типы или отсутствие
 обязательных параметров опубликованного action contract.

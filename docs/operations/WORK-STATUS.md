@@ -1,8 +1,16 @@
 # Работы, требования пользователя и границы приёмки
 
-**Проверенная установка:** UI `d70f55c6` / API `d720232e`.
+**Проверенная установка:** UI `d70f55c6` / API `9ad3481c`.
 
-**9 октября: разрешён и написан первый direct RTT canary.** Браузерный WebRTC,
+**9 октября: выполнены две попытки native direct pilot.** JNI и авторизованный
+SDP answer подтверждены, DataChannel не открылся, RTT не измерен. API9ad установлен,
+прежний APK PH011 восстановлен, эксперимент отключён с пустым allowlist;
+UI d70/45соседних контейнеров/schema/OTA сохранены. Idle failure снова воспроизведён.
+Source close-race/фазы диагностики исправлены:81backend,63delivery,8frontend tests,
+Ruff/mypy/types прошли; новый exact CI и установка этих исправлений ещё не приняты.
+Product9/41,legacy7 сохраняются. [Пилот и следующий gate](../audits/2026-10-09/DIRECT-PROBE-PILOT.md).
+
+**Первый source этап9октября: разрешён и написан direct RTT canary.** Браузерный WebRTC,
 серверное межпроцессное согласование и отдельный Android debug source set готовы
 для испытания. По умолчанию отключён; Android JNI не входит в обычные сборки.
 Видео/касания на рабочей установке остаются WS; живой direct RTT ещё не измерен.
@@ -72,7 +80,8 @@ L — несколько слоёв/проверок, XL — новая подс
    UI86354350 установил snapshot и доступную desktop/phone панель диагностики.
    Deadline/replay не менялись; необходимы корреляция, исправление и повторная canary.
    [Receipt и границы](../audits/2026-10-09/STREAM-DIAGNOSTICS-INSTALLED-ACCEPTANCE.md).
-   Семь серверных timing spans установлены в API d720232e без ID/payload/per-MOVE logs.
+   Семь серверных timing spans впервые установлены в API d720232e, сохранены в9ad3481c,
+   без ID/payload/per-MOVE logs.
    PH011 heartbeat510ms/lastACK RTT256ms повторился; наблюдаемые server spans <25ms.
    Queue/network/APK/native причина OPEN; диагностическая доставка не закрывает idle дефект.
    [Новый installed receipt](../audits/2026-10-09/CONTINUOUS-SERVER-TIMINGS-INSTALLED.md).
@@ -297,10 +306,14 @@ Pion/SFU/overlay рассмотрены по ролям, а не добавле�
 
 Последующим запросом пользователя разрешена разработка. Написан RTT-only canary:
 Maven AAR pinned, authenticated generation-bound signaling, allowlist устройств,
-WebRTC echo без media/input. Он отключён и не установлен в рабочее окружение.
-Остаётся: полный native provenance/SBOM, live RTT/cleanup, media/control ownership,
-current-path attribution, TURN/network matrix и production gate. Draft latency targets
-не являются достигнутым SLA. [Исходники и проверки](../audits/2026-10-09/DIRECT-PROBE-SOURCE.md).
+WebRTC echo без media/input. Exact9ad прошёл все4CI; две native попытки получили
+SDP answer в signaling, но канал не открылся, RTT unknown. После пилота APK восстановлен,
+probe выключен; API9ad остаётся установленным, UI d70 сохранён.
+Остаётся: новый source close/phase fix exact CI/delivery, native provenance/SBOM,
+ICE cause/live RTT/cleanup, media/control ownership, current-path attribution,
+TURN/network matrix и production gate. Draft latency targets не являются достигнутым SLA.
+[Исходники и проверки](../audits/2026-10-09/DIRECT-PROBE-SOURCE.md) ·
+[Фактический pilot и границы](../audits/2026-10-09/DIRECT-PROBE-PILOT.md).
 
 Доказательства: [Исследование и порядок внедрения](../design/BROWSER-DIRECT-TRANSPORT.md),
 [Фактический relay path и idle canary](../audits/2026-10-09/IDLE-CONTROL-RELAY-REVIEW.md).

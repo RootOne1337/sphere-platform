@@ -67,6 +67,38 @@ test('auth travels only in signaling and successful echoes never forward to the 
   expect(reports.at(-1)?.state).toBe('stopped');
 });
 
+test('an installed answer reports ICE checking without granting a channel or sending input', async () => {
+  const reports: DirectProbeResult[] = [];
+  const stop = startDirectProbe('wss://same-origin/ws/direct-probe/device', 'access', value => reports.push(value));
+  await flush();
+  FakeSocket.latest.onopen?.();
+  FakeSocket.latest.onmessage?.({ data: JSON.stringify({ type: 'direct_probe_answer', session_id: sid, sdp: 'v=0\r\n' }) });
+  await flush();
+  expect(reports.at(-1)?.state).toBe('connecting');
+  expect(reports.at(-1)?.samples).toEqual([]);
+  expect(FakePeer.latest.channel.send).not.toHaveBeenCalled();
+  stop();
+  expect(reports.at(-1)?.state).toBe('stopped');
+});
+
+test('late remote-description completion cannot downgrade an open or stopped probe', async () => {
+  const reports: DirectProbeResult[] = [];
+  const stop = startDirectProbe('wss://same-origin/ws/direct-probe/device', 'access', value => reports.push(value));
+  await flush();
+  const peer = FakePeer.latest;
+  let finishAnswer!: () => void;
+  peer.setRemoteDescription.mockImplementation(() => new Promise<void>(resolve => { finishAnswer = resolve; }));
+  FakeSocket.latest.onmessage?.({ data: JSON.stringify({ type: 'direct_probe_answer', session_id: sid, sdp: 'v=0\r\n' }) });
+  peer.channel.onopen?.();
+  expect(reports.at(-1)?.state).toBe('connected');
+  stop();
+  const count = reports.length;
+  finishAnswer(); await flush();
+  expect(reports).toHaveLength(count);
+  expect(reports.at(-1)?.state).toBe('stopped');
+  expect(peer.channel.send).not.toHaveBeenCalled();
+});
+
 test('echo timeout retires all timers and callbacks without retries', async () => {
   const { peer, reports } = await connected();
   jest.advanceTimersByTime(2000);

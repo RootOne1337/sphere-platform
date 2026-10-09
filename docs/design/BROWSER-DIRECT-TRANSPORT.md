@@ -6,6 +6,13 @@
 TURN и рабочая установка не переведены на WebRTC. Это не обещание задержки.
 [Точный scope, зависимости, тесты и следующие gates](../audits/2026-10-09/DIRECT-PROBE-SOURCE.md).
 
+**Последующий native pilot9октября:** exact9ad прошёл все4CI. Две попытки
+подтвердили JNI/SDP answer, но host ICE не установил канал, RTT неизвестен.
+Прежний APK восстановлен, probe off/allowlist[]; media/control остаются server WS.
+Это отрицательное доказательство и основание для проверки candidate reachability,
+а не приёмка direct path или доказанный диагноз NAT/mDNS.
+[Пилот, ограниченные ресурсы и следующий gate](../audits/2026-10-09/DIRECT-PROBE-PILOT.md).
+
 [Действующие работы](../operations/WORK-STATUS.md) ·
 [Установка](../operations/CURRENT-STATE.md) ·
 [Подтверждённый текущий путь и сбой](../audits/2026-10-09/IDLE-CONTROL-RELAY-REVIEW.md) ·

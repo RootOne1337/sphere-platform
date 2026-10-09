@@ -18,6 +18,7 @@ SOURCE = "a" * 40
 CURRENT = "c" * 40
 IMAGE = "sha256:" + "b" * 64
 TAG = f"sphere-reviewed-backend:{SOURCE}"
+PROBE_DEVICE = "414ce0e9-4b93-4f96-b9ca-ee675f53835e"
 
 
 def configuration():
@@ -39,6 +40,63 @@ def candidate(old):
 
 
 class BackendInstallerTests(unittest.TestCase):
+    def test_probe_requires_explicit_single_canonical_device(self):
+        old = configuration()
+        new = candidate(old)
+        new["services"]["backend"]["environment"].update(installer.probe_environment(PROBE_DEVICE))
+        installer.validate_delta(old, new, TAG, PROBE_DEVICE)
+        with self.assertRaises(ValueError):
+            installer.validate_delta(old, new, TAG)
+        for value in ("", PROBE_DEVICE.upper(), "{" + PROBE_DEVICE + "}", "all", PROBE_DEVICE + "," + PROBE_DEVICE):
+            with self.subTest(value=value), self.assertRaises(ValueError):
+                installer.probe_environment(value)
+        for key, value in (("DIRECT_TRANSPORT_PROBE_ENABLED", "false"),
+                           ("DIRECT_TRANSPORT_PROBE_DEVICE_IDS", "[]"),
+                           ("DIRECT_TRANSPORT_PROBE_DEVICE_IDS", json.dumps([PROBE_DEVICE, "414ce0e9-4b93-4f96-b9ca-ee675f53835f"])),
+                           ("POSTGRES_URL", "changed")):
+            changed = copy.deepcopy(new)
+            changed["services"]["backend"]["environment"][key] = value
+            with self.subTest(key=key, value=value), self.assertRaises(ValueError):
+                installer.validate_delta(old, changed, TAG, PROBE_DEVICE)
+
+    def test_probe_changes_preserve_every_unrelated_environment_and_runtime_field(self):
+        old = configuration()
+        old["services"]["backend"]["environment"].update(
+            DIRECT_TRANSPORT_PROBE_ENABLED="false", DIRECT_TRANSPORT_PROBE_DEVICE_IDS="[]", OTHER="preserved")
+        new = candidate(old)
+        new["services"]["backend"]["environment"].update(installer.probe_environment(PROBE_DEVICE))
+        installer.validate_delta(old, new, TAG, PROBE_DEVICE)
+        new["services"]["backend"]["environment"].pop("OTHER")
+        with self.assertRaises(ValueError):
+            installer.validate_delta(old, new, TAG, PROBE_DEVICE)
+
+    def test_probe_shutdown_requires_explicit_disable_and_removes_all_device_grants(self):
+        old = configuration()
+        old["services"]["backend"]["environment"].update(installer.probe_environment(PROBE_DEVICE))
+        new = candidate(old)
+        new["services"]["backend"]["environment"].update(installer.probe_environment(None, True))
+        installer.validate_delta(old, new, TAG, disable_direct_probe=True)
+        with self.assertRaises(ValueError):
+            installer.validate_delta(old, new, TAG)
+        with self.assertRaises(ValueError):
+            installer.probe_environment(PROBE_DEVICE, True)
+        new["services"]["backend"]["environment"]["DIRECT_TRANSPORT_PROBE_DEVICE_IDS"] = json.dumps([PROBE_DEVICE])
+        with self.assertRaises(ValueError):
+            installer.validate_delta(old, new, TAG, disable_direct_probe=True)
+
+    def test_probe_packaged_source_keeps_schema_dependency_and_authorization_fences(self):
+        payload = b"canonical bytes\n"
+        digest = hashlib.sha256(payload).hexdigest()
+        receipt = {"requirementsSha256": digest, "actionContractSha256": digest}
+        paths = ["backend/core/config.py", "backend/api/ws/direct/__init__.py", "backend/api/ws/direct/router.py",
+                 "backend/websocket/direct_probe_protocol.py", "backend/websocket/direct_probe_runtime.py"]
+        with patch.object(installer, "command", return_value="\n".join(paths)), \
+                patch.object(installer.subprocess, "run", return_value=subprocess.CompletedProcess([], 0, payload)):
+            self.assertEqual(installer.source_boundary(CURRENT, SOURCE, receipt), paths)
+        with patch.object(installer, "command", return_value="\n".join(paths + ["backend/core/rbac.py"])):
+            with self.assertRaisesRegex(ValueError, "Unreviewed packaged"):
+                installer.source_boundary(CURRENT, SOURCE, receipt)
+
     def test_only_backend_image_and_build_recipe_can_change(self):
         old = configuration()
         installer.validate_delta(old, candidate(old), TAG)
@@ -206,7 +264,8 @@ class BackendInstallerTests(unittest.TestCase):
         self.assertEqual(once.call_count, 8)
 
     @contextmanager
-    def installation(self, *, findings=None, gateway_failure=False, foreign_runtime=False):
+    def installation(self, *, findings=None, gateway_failure=False, foreign_runtime=False,
+                     probe_device=None, disable_probe=False, environment_drift=False):
         with tempfile.TemporaryDirectory() as temporary, ExitStack() as stack:
             root = Path(temporary)
             private = root / ".local-pilot"
@@ -224,10 +283,15 @@ class BackendInstallerTests(unittest.TestCase):
             def inspected(name):
                 self.assertEqual(name, installer.BACKEND)
                 installed = state["installed"]
+                environment = old["services"]["backend"]["environment"].copy()
+                if installed:
+                    environment.update(installer.probe_environment(probe_device, disable_probe))
+                    if environment_drift:
+                        environment["DIRECT_TRANSPORT_PROBE_ENABLED"] = "false"
                 return {"Id": "api-new" if installed else "api-old",
                     "Image": "foreign-image" if installed and foreign_runtime else IMAGE if installed else "old-image",
                     "State": {"Health": {"Status": "healthy"}},
-                    "Config": {"Env": [f"SPHERE_BUILD_SHA={SOURCE if installed else CURRENT}", "POSTGRES_URL=postgresql://postgres/example"],
+                    "Config": {"Env": [f"SPHERE_BUILD_SHA={SOURCE if installed else CURRENT}"] + [f"{k}={v}" for k, v in environment.items()],
                                "Labels": {"com.docker.compose.project": installer.PROJECT,
                                "com.docker.compose.service": "backend",
                                "com.docker.compose.project.config_files": str(compose),
@@ -246,7 +310,9 @@ class BackendInstallerTests(unittest.TestCase):
                     return "api-new"
                 self.assertEqual(args[:2], ["docker", "compose"])
                 if args[-3:] == ["config", "--format", "json"]:
-                    return json.dumps(candidate(old) if args.count("--file") == 2 else old)
+                    new = candidate(old)
+                    new["services"]["backend"]["environment"].update(installer.probe_environment(probe_device, disable_probe))
+                    return json.dumps(new if args.count("--file") == 2 else old)
                 self.assertIn("--no-deps", args)
                 self.assertIn("--no-build", args)
                 self.assertIn("never", args)
@@ -299,6 +365,35 @@ class BackendInstallerTests(unittest.TestCase):
             self.assertFalse(result["schemaMigrationPerformed"])
             self.assertFalse(result["liveContractVerified"])
             self.assertFalse(result["agentReconnectVerified"])
+            self.assertEqual(sum("up" in c for c in calls), 1)
+
+    def test_probe_install_records_one_device_and_does_not_grant_media_or_control(self):
+        with self.installation(probe_device=PROBE_DEVICE) as (artifact, private, calls, state):
+            result = installer.execute(artifact, SOURCE, IMAGE, CURRENT, True, PROBE_DEVICE)
+            self.assertTrue(state["installed"])
+            self.assertEqual(result["directProbeDevice"], PROBE_DEVICE)
+            self.assertFalse(result["directProbeMediaControlEnabled"])
+            override = next(private.glob('reviewed-backend-install-*/candidate.yml')).read_text()
+            self.assertIn(PROBE_DEVICE, override)
+            self.assertEqual(sum("up" in c for c in calls), 1)
+
+    def test_probe_environment_drift_after_replacement_rolls_back_owned_api(self):
+        with self.installation(probe_device=PROBE_DEVICE, environment_drift=True) as (artifact, private, calls, state):
+            with self.assertRaisesRegex(ValueError, "Installed environment"):
+                installer.execute(artifact, SOURCE, IMAGE, CURRENT, True, PROBE_DEVICE)
+            self.assertFalse(state["installed"])
+            self.assertEqual(sum("up" in c for c in calls), 2)
+            self.assertEqual(len(list(private.glob('reviewed-backend-install-*/rollback.json'))), 1)
+
+    def test_explicit_probe_disable_clears_allowlist_and_records_cleanup(self):
+        with self.installation(disable_probe=True) as (artifact, private, calls, state):
+            result = installer.execute(artifact, SOURCE, IMAGE, CURRENT, True, disable_direct_probe=True)
+            self.assertTrue(state["installed"])
+            self.assertTrue(result["directProbeExplicitlyDisabled"])
+            self.assertIsNone(result["directProbeDevice"])
+            self.assertFalse(result["directProbeMediaControlEnabled"])
+            override = next(private.glob('reviewed-backend-install-*/candidate.yml')).read_text()
+            self.assertIn('DIRECT_TRANSPORT_PROBE_DEVICE_IDS: "[]"', override)
             self.assertEqual(sum("up" in c for c in calls), 1)
 
     def test_gateway_failure_rolls_back_only_owned_api_and_never_sql(self):
