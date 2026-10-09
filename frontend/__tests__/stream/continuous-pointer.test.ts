@@ -53,6 +53,7 @@ it.each([
   f.status(sequence as number, code as number, stage as string, { origin });
   expect(f.onFence).toHaveBeenCalledWith(expect.objectContaining({ reason: 'native_input_rejected_or_unknown' }));
   expect(f.controller.recoverableIdleReceiptLoss).toBe(false);
+  expect(f.controller.unknownPointerReceiptLoss).toBe(false);
   expect(f.events()).toEqual([]);
 });
 
@@ -289,6 +290,29 @@ it('classifies only an idle heartbeat timeout as eligible for reconciliation aft
   f.advance(250); f.advance(250); f.advance(250);
   expect(f.controller.state).toBe('fenced');
   expect(f.controller.recoverableIdleReceiptLoss).toBe(true);
+  expect(f.controller.unknownPointerReceiptLoss).toBe(false);
+});
+
+it.each(['down', 'move', 'up', 'cancel'])('preserves an unknown %s outcome across retirement and native release', phase => {
+  const f = fixture();
+  f.controller.down(1, POINT);
+  if (phase !== 'down') {
+    f.ackLatest();
+    if (phase === 'move') { f.controller.moveTo(1, { x: 400, y: 200 }); f.advance(16); }
+    else if (phase === 'up') f.controller.up(1, POINT);
+    else f.controller.cancel(1);
+  }
+  f.advance(250); f.advance(250);
+  expect(f.controller.state).toBe('fenced');
+  expect(f.controller.unknownPointerReceiptLoss).toBe(true);
+  expect(f.controller.recoverableIdleReceiptLoss).toBe(false);
+  expect(f.sent.filter(x => x.type === 'touch_close')).toHaveLength(1);
+  const events = f.events().length;
+  f.status(0, 3, 'release');
+  expect(f.controller.state).toBe('closed');
+  expect(f.controller.unknownPointerReceiptLoss).toBe(true);
+  expect(f.controller.down(2, POINT)).toBe(false);
+  expect(f.events()).toHaveLength(events);
 });
 
 it('a background scheduling gap cancels instead of flushing the old pending move', () => {

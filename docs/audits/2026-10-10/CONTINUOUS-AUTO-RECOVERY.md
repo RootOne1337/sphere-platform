@@ -6,6 +6,12 @@
 [Реестр](../../operations/WORK-STATUS.md) ·
 [Предыдущий native ICE результат](DIRECT-PROBE-NATIVE-COUNTERS-CANARY.md).
 
+**Следующий source этап:** реальный публичный canary UIa513 подтвердил несколько
+idle recovery, но MOVE timeout снова включил manual-only fence. Этот документ
+сохраняет контракт предыдущей коррекции; новое поведение pointer timeout после
+точного RELEASE и fresh viewer описано в
+[отдельной коррекции](CONTINUOUS-POINTER-RECOVERY.md).
+
 ## Подтверждённые проблемы
 
 1. `DeviceStream` разрешал только одну автоматическую попытку после idle ACK loss

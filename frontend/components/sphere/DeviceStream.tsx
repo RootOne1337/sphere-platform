@@ -79,6 +79,7 @@ const FRAME_STALE_TIMEOUT_MS = 10_000;
 const IDLE_RECOVERY_LIMITS = Object.freeze({ releaseWaitMs: 3000, baseDelayMs: 750, maxDelayMs: 15_000, stableMs: 30_000 });
 const idleRecoveryDelay = (attempts: number) => Math.min(IDLE_RECOVERY_LIMITS.maxDelayMs,
   IDLE_RECOVERY_LIMITS.baseDelayMs * 2 ** Math.min(Math.max(0, attempts - 1), 5));
+const UNKNOWN_POINTER_NOTICE = 'Предыдущий жест не подтверждён полностью. Он не повторяется; после восстановления оцените экран перед новым действием.';
 
 function formatTimestampAgo(timestamp: number | null): string {
   if (timestamp == null) return 'никогда';
@@ -140,6 +141,8 @@ export function DeviceStream({
   const idleRecoveringRef = useRef(false);
   const [idleRecovering, setIdleRecovering] = useState(false);
   const idleRecoveryAllowedRef = useRef(false);
+  const freshViewerAfterReleaseRef = useRef(false);
+  const unknownPointerNoticeRef = useRef(false);
   const restartIdleSocketRef = useRef<(() => void) | null>(null);
   const continuousReadySinceRef = useRef(-Infinity);
   const [continuousFault, setContinuousFault] = useState(false);
@@ -245,6 +248,8 @@ export function DeviceStream({
     setIdleRecoveryCount(0);
     idleRecoveringRef.current = false;
     setIdleRecovering(false);
+    freshViewerAfterReleaseRef.current = false;
+    unknownPointerNoticeRef.current = false;
     restartIdleSocketRef.current = null;
     continuousReadySinceRef.current = -Infinity;
     setContinuousFault(false);
@@ -331,7 +336,7 @@ export function DeviceStream({
         invalidateInspectionRef.current?.();
         lastFrameDimensionsRef.current = null;
         setStreamError(null);
-        setInputError(null);
+        setInputError(unknownPointerNoticeRef.current ? UNKNOWN_POINTER_NOTICE : null);
         const newWs = new WebSocket(wsUrl);
         newWs.binaryType = 'arraybuffer';
         ws = newWs;
@@ -344,6 +349,7 @@ export function DeviceStream({
         setContinuousFault(false);
         idleRecoveringRef.current = false;
         setIdleRecovering(false);
+        freshViewerAfterReleaseRef.current = false;
         continuousReadySinceRef.current = -Infinity;
         setContinuousReason(null);
         setContinuousFailureCode(null);
@@ -408,8 +414,9 @@ export function DeviceStream({
         };
         restartIdleSocketRef.current = () => {
           if (ignore || ended || wsRef.current !== newWs || !idleRecoveryAllowedRef.current) return;
-          // No touch was in flight. Retire this viewer, then require a new frame,
-          // capability, owner and native STARTUP0; a timeout never proves release.
+          // Idle-only loss or a touch with confirmed native RELEASE may retire
+          // this viewer. Require its replacement's frame, capability, owner and
+          // STARTUP0; a timeout never proves release or replays the old gesture.
           finish(true, undefined, idleRecoveryDelay(idleRecoveryCountRef.current));
         };
         watchdog = setInterval(() => {
@@ -464,17 +471,28 @@ export function DeviceStream({
                     if (ignore || ended || newWs !== wsRef.current) return;
                     setContinuousState(state);
                     const idleReceiptLoss = reason === 'native_receipt_timeout' && controller.recoverableIdleReceiptLoss;
-                    const idleRecovery = (idleReceiptLoss || reason === 'native_startup_busy') && !continuousFaultRef.current;
+                    const pointerReceiptLoss = reason === 'native_receipt_timeout' && controller.unknownPointerReceiptLoss;
+                    const idleRecovery = (idleReceiptLoss || pointerReceiptLoss || reason === 'native_startup_busy') && !continuousFaultRef.current;
                     if (idleRecovery) {
+                      if (pointerReceiptLoss) {
+                        freshViewerAfterReleaseRef.current = true;
+                        unknownPointerNoticeRef.current = true;
+                        setInputError(UNKNOWN_POINTER_NOTICE);
+                      }
                       idleRecoveryCountRef.current = Math.min(Number.MAX_SAFE_INTEGER, idleRecoveryCountRef.current + 1);
                       setIdleRecoveryCount(idleRecoveryCountRef.current);
                       idleRecoveringRef.current = true;
                       setIdleRecovering(true);
-                      setContinuousFailureCode(idleReceiptLoss ? 'idle_receipt_timeout' : 'native_startup_busy');
-                      setContinuousReason(idleReceiptLoss
+                      setContinuousFailureCode(pointerReceiptLoss ? 'pointer_receipt_timeout' : idleReceiptLoss ? 'idle_receipt_timeout' : 'native_startup_busy');
+                      setContinuousReason(pointerReceiptLoss
+                        ? 'Автоматически восстанавливаем новую сессию · ожидаем освобождение касания и свежий кадр. Предыдущий жест не повторяется.'
+                        : idleReceiptLoss
                         ? 'Автоматически восстанавливаем управление · задержалось подтверждение связи без касания. Команды не повторяются.'
                         : 'Автоматически восстанавливаем управление · Android завершает предыдущую сессию. Команды не повторяются.');
                     } else if (reason && !['viewer_closed', 'surface_blur', 'surface_hidden', 'surface_control_lost', 'control_mode_changed', 'capture_or_socket_lost'].includes(reason)) {
+                      idleRecoveringRef.current = false;
+                      setIdleRecovering(false);
+                      freshViewerAfterReleaseRef.current = false;
                       continuousFaultRef.current = true;
                       setContinuousFault(true);
                       setContinuousFailureCode(idleReceiptLoss ? 'idle_receipt_timeout' : reason);
@@ -733,7 +751,7 @@ export function DeviceStream({
   useEffect(() => {
     if (inspection || readOnly || continuousRecording || taskHandoffId !== undefined) {
       automaticProbeRef.current = null;
-      if (idleRecoveringRef.current && continuousRef.current?.state === 'closed') {
+      if (idleRecoveringRef.current && continuousRef.current?.state === 'closed' && !freshViewerAfterReleaseRef.current) {
         idleRecoveringRef.current = false;
         setIdleRecovering(false);
         setContinuousReason(null);
@@ -763,7 +781,19 @@ export function DeviceStream({
     const timeout = setTimeout(() => {
       if (!idleRecoveringRef.current || !idleRecoveryAllowedRef.current
         || continuousRef.current !== controller || wsRef.current !== socket) return;
-      if (controller?.state === 'closed') {
+      if (freshViewerAfterReleaseRef.current) {
+        if (controller?.state === 'closed') restartIdleSocketRef.current?.();
+        else {
+          // A missing/foreign/unknown release cannot be replaced by a timer or
+          // a fresh socket when the old touch outcome is uncertain.
+          idleRecoveringRef.current = false;
+          setIdleRecovering(false);
+          continuousFaultRef.current = true;
+          setContinuousFault(true);
+          setContinuousFailureCode('pointer_release_unknown');
+          setContinuousReason('Касание Android не подтвердило освобождение. Проверьте экран перед восстановлением.');
+        }
+      } else if (controller?.state === 'closed') {
         idleRecoveringRef.current = false;
         setIdleRecovering(false);
         automaticProbeRef.current = null;
@@ -1005,7 +1035,7 @@ export function DeviceStream({
       {continuousFault && !idleRecovering && ['fenced', 'closed'].includes(continuousState) && continuousReason && <button type="button" onClick={() => setControlSession(value => value + 1)} className="ml-auto rounded-lg border border-border px-3 py-2 text-xs hover:bg-muted">Восстановить управление</button>}
     </div>}
     {inputError && <div role="status" className="flex shrink-0 items-start justify-between gap-3 border-b border-amber-500/25 bg-amber-500/10 px-3 py-2 text-xs text-foreground">
-      <p>{inputError}</p><button type="button" onClick={() => setInputError(null)} aria-label="Скрыть сообщение об отклонённой команде" className="shrink-0 rounded px-2 py-1 text-muted-foreground hover:bg-muted focus-visible:outline focus-visible:outline-2 focus-visible:outline-ring">Скрыть</button>
+      <p>{inputError}</p><button type="button" onClick={() => { unknownPointerNoticeRef.current = false; setInputError(null); }} aria-label="Скрыть сообщение об управлении" className="shrink-0 rounded px-2 py-1 text-muted-foreground hover:bg-muted focus-visible:outline focus-visible:outline-2 focus-visible:outline-ring">Скрыть</button>
     </div>}
     <div className={fit ? `relative w-full min-h-0 min-w-0 flex-1${enableNavigation ? '' : ' h-full'}` : 'relative'}>
     <canvas
@@ -1111,7 +1141,7 @@ export function DeviceStream({
             <div>Управление Android: {continuousState}{continuousFailureCode ? ` · причина: ${continuousFailureCode}` : ''}</div>
             <div>Видео и управление идут через сервер (WebSocket). Прямое соединение с APK ещё не подключено.</div>
             {process.env.NEXT_PUBLIC_DIRECT_TRANSPORT_CANARY === 'true' && <DirectProbeDiagnostics deviceId={deviceId} />}
-            <div>Автоматическое восстановление idle ACK: {idleRecoveryCount} попыток с задержкой до 15 секунд. Касания и команды не повторяются.</div>
+            <div>Автоматическое восстановление управления: {idleRecoveryCount} попыток с задержкой до 15 секунд. Касания и команды не повторяются.</div>
             {pointerFailureSnapshot && <ContinuousInputDiagnostics snapshot={pointerFailureSnapshot} />}
             {diagnosticsError ? <div className="text-red-600 dark:text-red-300">{diagnosticsError}</div> : (
               <>

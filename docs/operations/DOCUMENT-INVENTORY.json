@@ -5,7 +5,7 @@
   "countsByRole": {
     "ADR": 6,
     "CURRENT_ENTRYPOINT": 8,
-    "DATED_EVIDENCE": 252,
+    "DATED_EVIDENCE": 253,
     "DESIGN_SPECIFICATION": 76,
     "OPERATING_GUIDE": 64,
     "PROJECT_POLICY": 7,
@@ -1126,6 +1126,10 @@
     },
     {
       "file": "docs/audits/2026-10-10/CONTINUOUS-AUTO-RECOVERY.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
+      "file": "docs/audits/2026-10-10/CONTINUOUS-POINTER-RECOVERY.md",
       "role": "DATED_EVIDENCE"
     },
     {

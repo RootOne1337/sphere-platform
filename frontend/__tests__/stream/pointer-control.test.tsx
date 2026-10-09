@@ -381,7 +381,36 @@ it.each(['readonly', 'recording', 'handoff', 'inspection', 'blur'])('pauses idle
   view.unmount();
   expect(jest.getTimerCount()).toBe(0);
 });
-it.each(['held', 'terminal'])('never classifies a %s touch timeout as harmless idle connection loss', phase => {
+it.each(['readonly', 'recording', 'handoff', 'inspection', 'blur'])('pauses pointer recovery during %s and cannot bypass the fresh viewer requirement', mode => {
+  const view = readyContinuous();
+  view.down(1);
+  for (let i = 0; i < 4; i++) act(() => jest.advanceTimersByTime(250));
+  view.status(0, 3, 'release');
+  const recordingReady = jest.fn();
+  if (mode === 'blur') fireEvent.blur(window);
+  else view.rerender(<DeviceStream deviceId="gesture-remote" enableNavigation enableStaticInput
+    readOnly={mode === 'readonly'} recordingMode={mode === 'recording'}
+    onRecordingControlReady={recordingReady} taskHandoffId={mode === 'handoff' ? 7 : undefined}
+    inspection={mode === 'inspection' ? { onPick: jest.fn(), bounds: null } : undefined} />);
+  act(() => jest.advanceTimersByTime(5000));
+  view.down(2); view.up(2, 65);
+  expect(view.socket.close).not.toHaveBeenCalled();
+  expect(MockSocket.instances).toHaveLength(1);
+  expect(view.sent().filter(x => x.type === 'touch_event' && x.action === 0)).toHaveLength(1);
+  expect(view.commands()).toEqual([]);
+  expect(api.post).not.toHaveBeenCalled();
+  if (mode === 'recording') expect(recordingReady).toHaveBeenLastCalledWith(false);
+  if (mode === 'blur') fireEvent.focus(window);
+  else view.rerender(<DeviceStream deviceId="gesture-remote" enableNavigation enableStaticInput />);
+  act(() => jest.advanceTimersByTime(1500));
+  expect(view.socket.close).toHaveBeenCalledTimes(1);
+  expect(MockSocket.instances).toHaveLength(2);
+  expect(view.getByRole('button', { name: 'Домой' })).toBeDisabled();
+  view.unmount();
+  expect(jest.getTimerCount()).toBe(0);
+});
+
+it.each(['held', 'terminal'])('a %s touch timeout preserves unknown outcome and requires release plus a fresh viewer', phase => {
   const view = readyContinuous();
   view.down(1);
   if (phase === 'terminal') {
@@ -389,12 +418,58 @@ it.each(['held', 'terminal'])('never classifies a %s touch timeout as harmless i
     view.up(1, 65);
   }
   for (let i = 0; i < 4; i++) act(() => jest.advanceTimersByTime(250));
-  expect(view.getByText(/Android не подтвердил команду/)).toBeInTheDocument();
+  expect(view.getByText(/Предыдущий жест не подтверждён полностью/)).toBeInTheDocument();
   expect(view.queryByText(/подтверждение связи без касания/)).not.toBeInTheDocument();
   expect(view.getByRole('button', { name: 'Домой' })).toBeDisabled();
   view.status(0, 3, 'release');
+  act(() => jest.advanceTimersByTime(749));
   expect(view.sent().filter(x => x.type === 'touch_probe')).toHaveLength(1);
+  expect(view.socket.close).not.toHaveBeenCalled();
+  act(() => jest.advanceTimersByTime(751));
+  expect(view.socket.close).toHaveBeenCalledTimes(1);
+  expect(MockSocket.instances).toHaveLength(2);
+  const next = MockSocket.instances[1];
+  next.readyState = MockSocket.OPEN;
+  act(() => next.onopen?.(new Event('open')));
+  const messages = () => next.send.mock.calls.map(([raw]) => JSON.parse(raw as string));
+  view.up(1, 65);
+  expect(messages().filter(x => x.type === 'touch_event')).toEqual([]);
+  expect(view.getByRole('button', { name: 'Домой' })).toBeDisabled();
+  act(() => mockRenderFrame?.({ displayWidth: 1280, displayHeight: 720 } as VideoFrame));
+  const receive = (message: object) => act(() => next.onmessage?.({ data: JSON.stringify(message) }));
+  receive({ type: 'touch_capability', capture_epoch: TOUCH_EPOCH, frame_width: 1280, frame_height: 720 });
+  receive({ type: 'touch_session', session_id: 'fresh_viewer_session', owner: 'fresh_owner_session',
+    capture_epoch: TOUCH_EPOCH, frame_width: 1280, frame_height: 720 });
+  view.down(2); view.up(2, 65);
+  expect(messages().filter(x => x.type === 'touch_event')).toEqual([]);
+  receive({ type: 'continuous_input_status', session_id: 'fresh_viewer_session', owner: 'fresh_owner_session',
+    capture_epoch: TOUCH_EPOCH, sequence: 0, status: 0, stage: 'startup', origin: 'injector', device_uptime_ms: 400 });
+  view.up(1, 65);
+  expect(messages().filter(x => x.type === 'touch_event')).toEqual([]);
+  view.down(3); view.up(3, 65);
+  expect(messages().filter(x => x.type === 'touch_event').map(x => x.action)).toEqual([0, 1]);
+  expect(view.getByText(/Предыдущий жест не подтверждён полностью/)).toBeInTheDocument();
+  expect(view.queryByRole('button', { name: 'Восстановить управление' })).not.toBeInTheDocument();
   expect(view.commands()).toEqual([]);
+  view.unmount();
+  expect(jest.getTimerCount()).toBe(0);
+});
+
+it.each(['missing', 'unknown', 'foreign'])('an uncertain touch with %s RELEASE cannot restart or admit another touch', release => {
+  const view = readyContinuous();
+  view.down(1);
+  for (let i = 0; i < 4; i++) act(() => jest.advanceTimersByTime(250));
+  if (release === 'unknown') view.status(0, 4, 'release');
+  else if (release === 'foreign') view.receive({ type: 'continuous_input_status', session_id: 'foreign_session_fixture',
+    owner: 'foreign_owner_fixture', capture_epoch: TOUCH_EPOCH, sequence: 0, status: 3,
+    stage: 'release', origin: 'injector', device_uptime_ms: 150 });
+  act(() => jest.advanceTimersByTime(3000));
+  expect(view.getByRole('button', { name: 'Восстановить управление' })).toBeEnabled();
+  expect(view.socket.close).not.toHaveBeenCalled();
+  view.down(2); view.up(2);
+  expect(view.sent().filter(x => x.type === 'touch_event' && x.action === 0)).toHaveLength(1);
+  expect(view.commands()).toEqual([]);
+  expect(api.post).not.toHaveBeenCalled();
   view.unmount();
 });
 it('shows the finite failed heartbeat snapshot after RELEASE and clears it on a new device', () => {
@@ -676,7 +751,7 @@ it.each(['invalid_parameter', 'unsupported_message'])('a rejected %s cancels the
   view.down(2); view.up(2);
   expect(view.commands()).toEqual([{ type: 'click', x: 640, y: 360 }]);
   expect(MockSocket.instances).toHaveLength(1);
-  fireEvent.click(view.getByRole('button', { name: 'Скрыть сообщение об отклонённой команде' }));
+  fireEvent.click(view.getByRole('button', { name: 'Скрыть сообщение об управлении' }));
   expect(view.queryByRole('status')).not.toBeInTheDocument();
 });
 
