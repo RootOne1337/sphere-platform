@@ -193,17 +193,43 @@ it('reconciles one idle heartbeat delay only after native release without replay
     capture_epoch: TOUCH_EPOCH, sequence: 0, status: 0, stage: 'startup', origin: 'injector', device_uptime_ms: 200 });
   expect(view.getByText(/Непрерывное управление/)).toBeInTheDocument();
   for (let i = 0; i < 4; i++) act(() => jest.advanceTimersByTime(250));
+  expect(view.getByText(/задержалось подтверждение связи без касания/)).toBeInTheDocument();
+  expect(view.queryByText(/Android не подтвердил команду/)).not.toBeInTheDocument();
+  expect(view.container.querySelector('[data-control-state]')).toHaveAttribute('data-control-failure', 'idle_receipt_timeout');
+  expect(view.getByRole('button', { name: 'Домой' })).toBeDisabled();
+  const sentBeforeAttempt = view.sent().length;
+  view.down(1); view.up(1, 65);
+  expect(view.sent()).toHaveLength(sentBeforeAttempt);
   view.receive({ type: 'continuous_input_status', session_id: 'second_session_fixture', owner: 'second_owner_fixture',
     capture_epoch: TOUCH_EPOCH, sequence: 0, status: 3, stage: 'release', origin: 'injector', device_uptime_ms: 300 });
   expect(view.sent().filter(x => x.type === 'touch_probe')).toHaveLength(2);
   expect(view.getByRole('button', { name: 'Восстановить управление' })).toBeEnabled();
   expect(view.sent().filter(x => x.type === 'touch_event').every(x => x.action === 4)).toBe(true);
+  expect(view.getByText(/задержалось подтверждение связи без касания/)).toBeInTheDocument();
+  view.unmount();
+});
+it.each(['held', 'terminal'])('never classifies a %s touch timeout as harmless idle connection loss', phase => {
+  const view = readyContinuous();
+  view.down(1);
+  if (phase === 'terminal') {
+    view.status(1, 1);
+    view.up(1, 65);
+  }
+  for (let i = 0; i < 4; i++) act(() => jest.advanceTimersByTime(250));
+  expect(view.getByText(/Android не подтвердил команду/)).toBeInTheDocument();
+  expect(view.queryByText(/подтверждение связи без касания/)).not.toBeInTheDocument();
+  expect(view.getByRole('button', { name: 'Домой' })).toBeDisabled();
+  view.status(0, 3, 'release');
+  expect(view.sent().filter(x => x.type === 'touch_probe')).toHaveLength(1);
+  expect(view.commands()).toEqual([]);
+  view.unmount();
 });
 it('shows the finite failed heartbeat snapshot after RELEASE and clears it on a new device', () => {
   const view = readyContinuous();
   view.rerender(<DeviceStream deviceId="gesture-remote" enableNavigation enableStaticInput enableDiagnostics />);
   for (let i = 0; i < 4; i++) act(() => jest.advanceTimersByTime(250));
   fireEvent.click(view.getByRole('button', { name: 'Диагностика' }));
+  expect(view.getByText(/Видео и управление идут через сервер/)).toBeInTheDocument();
   expect(view.getByText(/Последний сбой управления · native_receipt_timeout/)).toBeInTheDocument();
   expect(view.getByText(/№1 · HEARTBEAT/)).toBeInTheDocument();
   expect(view.getByText(/Задержался только heartbeat без касания/)).toBeInTheDocument();

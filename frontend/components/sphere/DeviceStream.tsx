@@ -436,8 +436,8 @@ export function DeviceStream({
                   onState: (state, reason) => {
                     if (ignore || ended || newWs !== wsRef.current) return;
                     setContinuousState(state);
-                    const idleRecovery = reason === 'native_receipt_timeout' && controller.recoverableIdleReceiptLoss
-                      && idleRecoveryCountRef.current === 0;
+                    const idleReceiptLoss = reason === 'native_receipt_timeout' && controller.recoverableIdleReceiptLoss;
+                    const idleRecovery = idleReceiptLoss && idleRecoveryCountRef.current === 0;
                     if (idleRecovery) {
                       idleRecoveryCountRef.current++;
                       setIdleRecoveryCount(idleRecoveryCountRef.current);
@@ -446,8 +446,10 @@ export function DeviceStream({
                     } else if (reason && !['viewer_closed', 'surface_blur', 'surface_hidden', 'surface_control_lost', 'control_mode_changed', 'capture_or_socket_lost'].includes(reason)) {
                       continuousFaultRef.current = true;
                       setContinuousFault(true);
-                      setContinuousFailureCode(reason);
-                      setContinuousReason('Управление приостановлено: Android не подтвердил команду. Повтора нет. Проверьте экран перед восстановлением.');
+                      setContinuousFailureCode(idleReceiptLoss ? 'idle_receipt_timeout' : reason);
+                      setContinuousReason(idleReceiptLoss
+                        ? 'Управление приостановлено: задержалось подтверждение связи без касания. Автоматическое восстановление уже использовано. Восстановите управление вручную.'
+                        : 'Управление приостановлено: Android не подтвердил команду. Повтора нет. Проверьте экран перед восстановлением.');
                     }
                     if (state === 'closed') {
                       continuousRequestedRef.current = false;
@@ -1029,6 +1031,7 @@ export function DeviceStream({
               <button type="button" onClick={() => setDiagnosticsOpen(false)} className="shrink-0 rounded-md border border-border px-2 py-1 font-sans hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">Закрыть диагностику</button>
             </div>
             <div>Управление Android: {continuousState}{continuousFailureCode ? ` · причина: ${continuousFailureCode}` : ''}</div>
+            <div>Видео и управление идут через сервер (WebSocket). Прямое соединение с APK ещё не подключено.</div>
             <div>Повторное согласование после задержки idle ACK: {idleRecoveryCount}/1 в этой видеосессии. Касания и команды не повторяются.</div>
             {pointerFailureSnapshot && <ContinuousInputDiagnostics snapshot={pointerFailureSnapshot} />}
             {diagnosticsError ? <div className="text-red-600 dark:text-red-300">{diagnosticsError}</div> : (

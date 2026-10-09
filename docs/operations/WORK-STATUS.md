@@ -2,6 +2,13 @@
 
 **Проверенная установка:** UI `86354350` / API `d720232e`.
 
+**9 октября, source/test:** повторный idle heartbeat timeout больше не выдаётся
+за неизвестную команду Android; held/terminal unknown и остановка input сохранены.
+1950 frontend tests/types passed, установка этого изменения пока не выполнена.
+Public PH011 без касаний повторил ACK RTT518ms/heartbeat deadline503ms;
+source подтвердил общий APK video/receipt WebSocket, но источник задержки UNKNOWN.
+[Результат и границы](../audits/2026-10-09/IDLE-CONTROL-RELAY-REVIEW.md).
+
 **9 октября: дополнительная проверка туннеля нашла и исправила Grafana.**
 На публичном адресе большие JS давали parse errors; на3015 dashboard работал.
 Адресный gzip static-assets установлен graceful reload без replacement46контейнеров.
