@@ -7,6 +7,14 @@ Source, установленный runtime и конечная приёмка р
 **Область:** исходники и документация ветки PR #19, записанные runtime-наблюдения, Android APK и готовность следующего прогона.<br />
 **Канонический документ текущего состояния:** этот файл. Исторические отчёты ниже сохраняют исходные даты и факты.
 
+**9 октября — серверные тайминги continuous input подготовлены в исходниках.**
+Семь фиксированных границ / три outcomes без payload/IDs/per-MOVE logs;
+175 focused и 560 WS/monitoring tests (44 subtests) проходят. Four-worker
+histogram aggregation/retirement/replacement проверены отдельно. API be803773
+остаётся установленным; новые timings ещё не доставлены. SF26-05 OPEN,
+deadline/replay/routing не менялись. [Runbook](CONTINUOUS-INPUT-TIMINGS.md) ·
+[Source receipt](../audits/2026-10-09/CONTINUOUS-SERVER-TIMINGS.md).
+
 **9 октября — последняя UI-only установка: 86354350/APIbe803773.**
 Failure snapshot и доступная desktop/phone диагностика установлены; frontend exact-source
 CI success, frontend1948tests/139suites. 45other containers/schema/OTA/APK сохранены.

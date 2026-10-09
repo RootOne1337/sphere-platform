@@ -9,6 +9,7 @@ from pathlib import Path
 
 from backend import metrics
 from backend.monitoring.resource_exposition import handle_metrics
+from backend.websocket.continuous_observability import OUTCOMES, STAGES
 
 root = Path(sys.argv[1])
 index = int(sys.argv[2])
@@ -18,6 +19,9 @@ metrics.db_pool_checked_out.set(requests)
 for _ in range(requests):
     metrics.http_requests_total.labels("GET", "/canary/{id}", "200").inc()
     metrics.http_request_duration_seconds.labels("GET", "/canary/{id}").observe(0.2)
+    for stage in STAGES:
+        for outcome in OUTCOMES:
+            metrics.continuous_stage_duration_seconds.labels(stage, outcome).observe(0.125)
 
 # Thousands of transient device IDs must not enter mmap keys or new files.
 for device in range(1000):

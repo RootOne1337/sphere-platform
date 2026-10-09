@@ -38,6 +38,9 @@ L — несколько слоёв/проверок, XL — новая подс
    UI86354350 установил snapshot и доступную desktop/phone панель диагностики.
    Deadline/replay не менялись; необходимы корреляция, исправление и повторная canary.
    [Receipt и границы](../audits/2026-10-09/STREAM-DIAGNOSTICS-INSTALLED-ACCEPTANCE.md).
+   Семь серверных timing spans добавлены в source без ID/payload/per-MOVE logs;
+   CI/image/install/live pending, текущий API be803773 не заменялся.
+   [Границы и следующие проверки](CONTINUOUS-INPUT-TIMINGS.md).
 3. **Общий владелец input (EP-017/020):** Redis lease для continuous viewer существует;
    согласование viewer/task/API/scheduler и неизвестных результатов во всех комбинациях не принято.
 4. **Rich recorder (EP-018):** clock fix1577e01e сохранён в UI86354350;

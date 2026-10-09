@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
-  "reviewedAtUtc": "2026-10-09T13:45:48.200627+00:00",
-  "sourceReviewed": "86354350638650215717658b9395b2751326af6c",
+  "reviewedAtUtc": "2026-10-09T14:56:09.535595+00:00",
+  "sourceReviewed": "caceeb34b63422a3c7d869b19c14e7d5ffaf51a7",
   "scope": "Effective documentation status; source/install/finite acceptance kept separate. No new fleet or soak acceptance.",
   "baseline": "docs/audits/2026-10-05/ENTERPRISE-PRODUCT-BACKLOG.json",
   "previousCrosscheck": "docs/audits/2026-10-09/CHAT-CODE-RECONCILIATION.json",
@@ -24,7 +24,14 @@
     },
     "evidenceSha256NormalizedLf": "24e036aaf614f12372886a20d2edb42978fbe68e971b8afafe7b4215909e3e4a"
   },
-  "pendingCorrections": [],
+  "pendingCorrections": [
+    {
+      "id": "CONTINUOUS-SERVER-TIMING-INSTRUMENTATION",
+      "installed": false,
+      "evidence": "docs/audits/2026-10-09/CONTINUOUS-SERVER-TIMINGS.md",
+      "scope": "Diagnostic source instrumentation only; not an idle failure correction."
+    }
+  ],
   "storage": {
     "lastObservedUtc": "2026-10-09T12:51:26.507214+00:00",
     "visibleMatchingProcesses": 1,
@@ -662,7 +669,7 @@
       "priority": "P1",
       "state": "OPEN",
       "progress": "PARTIAL",
-      "currentScope": "Viewer-local release/read handoff, APK ownership и Redis continuous lease используются. UI86354350 сохраняет bounded failure snapshot; диагностика desktop/phone принята в конечном scope.",
+      "currentScope": "Viewer-local release/read handoff, APK ownership и Redis continuous lease используются. UI86354350 сохраняет bounded failure snapshot; диагностика desktop/phone принята в конечном scope. Серверные timings семи границ проверены в исходниках; ещё не установлены, idle причина OPEN.",
       "remaining": "Global viewer/task/API arbitration и debugger acceptance не завершены; idle timeoutP1. PH011 idle heartbeat512ms/tick15ms/WS0B повторился; участок задержки не определён.",
       "acceptanceCriteria": [
         "Pause/step настоящий protocol, либо явно unavailable.",
@@ -912,7 +919,7 @@
       "priority": "P1",
       "state": "OPEN",
       "progress": "PARTIAL",
-      "currentScope": "Normal continuous Control принят PH011APK10249; отдельный idle receipt failure повторился. UI86354350 сохраняет bounded failure snapshot; диагностика desktop/phone принята в конечном scope.",
+      "currentScope": "Normal continuous Control принят PH011APK10249; отдельный idle receipt failure повторился. UI86354350 сохраняет bounded failure snapshot; диагностика desktop/phone принята в конечном scope. Серверные timings семи границ проверены в исходниках; ещё не установлены, idle причина OPEN.",
       "remaining": "Нет fleet input-to-pictureSLO; нужны bounded correlated timing и idle loss fix. PH011 idle heartbeat512ms/tick15ms/WS0B повторился; участок задержки не определён.",
       "acceptanceCriteria": [
         "Capture/encode/relay/decode/render FPS + drops/bitrate.",
@@ -1824,5 +1831,6 @@
       "evidenceSha256NormalizedLf": "b6ad1cb158efd0625a93b60a55c63d5353f4b15f80e748173d4bb88cd81b5fed",
       "acceptedScope": "Finite PH011 tap/XPath/tap/Back recording and explicit graph insertion; not full EP-018 or fleet."
     }
-  ]
+  ],
+  "sourceWorktreeEvidence": "docs/audits/2026-10-09/CONTINUOUS-SERVER-TIMINGS.json"
 }

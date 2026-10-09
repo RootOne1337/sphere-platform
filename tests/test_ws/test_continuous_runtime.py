@@ -16,6 +16,7 @@ from redis.asyncio.retry import Retry
 from redis.backoff import NoBackoff
 from redis.exceptions import ConnectionError as RedisConnectionError
 
+from backend.metrics import continuous_stage_duration_seconds
 from backend.schemas.device_status import DeviceLiveStatus
 from backend.services.device_status_cache import DeviceStatusCache
 from backend.websocket.connection_manager import ConnectionManager
@@ -360,3 +361,29 @@ async def test_shared_subscription_failure_still_fences_runtime_without_retry_or
     await eventually(lambda: runtime.task.done())
     assert viewer.closing or viewer.lease is None
     assert not any(c.args[0]['type'] == 'continuous_input_event' for c in agent.send_json.call_args_list)
+
+
+@pytest.mark.asyncio
+async def test_real_two_worker_heartbeat_path_observes_each_local_boundary_once_or_more(live):
+    stages = {
+        'viewer_admission', 'redis_lease_operation', 'pubsub_dispatch', 'agent_delivery',
+        'agent_reply_relay', 'viewer_receipt_validation', 'viewer_socket_send',
+    }
+
+    def counts():
+        return {sample.labels['stage']: sample.value
+                for family in continuous_stage_duration_seconds.collect()
+                for sample in family.samples
+                if sample.name.endswith('_count') and sample.labels['outcome'] == 'returned'}
+
+    before = counts()
+    runtime, viewer, _ = await open_view(live)
+    await runtime.handle(viewer, dict(type='touch_event', sequence=1, gesture=0, action=4, x=0, y=0))
+    await eventually(lambda: any(c.args[0].get('sequence') == 1 and c.args[0].get('stage') == 'input'
+                                for c in viewer.ws.send_json.call_args_list))
+    after = counts()
+    assert all(after.get(stage, 0) > before.get(stage, 0) for stage in stages)
+    # Instrumentation adds no owner/session payload fields and does not alter the native protocol.
+    receipt = next(c.args[0] for c in viewer.ws.send_json.call_args_list if c.args[0].get('sequence') == 1)
+    assert set(receipt) == {'type', 'session_id', 'owner', 'capture_epoch', 'sequence', 'status',
+                            'stage', 'origin', 'device_uptime_ms'}

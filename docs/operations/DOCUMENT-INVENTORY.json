@@ -1,13 +1,13 @@
 {
   "schemaVersion": 1,
-  "reviewedAtUtc": "2026-10-09T13:45:48.200627+00:00",
+  "reviewedAtUtc": "2026-10-09T14:56:09.535595+00:00",
   "scope": "All tracked Markdown classified; active local-link paths scanned. Not semantic attestation of every sentence, command execution, external-link or live acceptance.",
   "countsByRole": {
     "ADR": 6,
     "CURRENT_ENTRYPOINT": 8,
-    "DATED_EVIDENCE": 230,
+    "DATED_EVIDENCE": 231,
     "DESIGN_SPECIFICATION": 74,
-    "OPERATING_GUIDE": 63,
+    "OPERATING_GUIDE": 64,
     "PROJECT_POLICY": 7,
     "SUPPORTING_DOCUMENT": 6
   },
@@ -1017,6 +1017,10 @@
       "role": "DATED_EVIDENCE"
     },
     {
+      "file": "docs/audits/2026-10-09/CONTINUOUS-SERVER-TIMINGS.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
       "file": "docs/audits/2026-10-09/DOCUMENTATION-RECONCILIATION.md",
       "role": "DATED_EVIDENCE"
     },
@@ -1130,6 +1134,10 @@
     },
     {
       "file": "docs/operations/CODEC-INPUT-CANARY.md",
+      "role": "OPERATING_GUIDE"
+    },
+    {
+      "file": "docs/operations/CONTINUOUS-INPUT-TIMINGS.md",
       "role": "OPERATING_GUIDE"
     },
     {

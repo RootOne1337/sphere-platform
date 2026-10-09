@@ -16,6 +16,7 @@ from backend.websocket.continuous_lease import (
     InputLease,
     InputLeaseUnavailable,
 )
+from backend.websocket.continuous_observability import timed_stage
 from backend.websocket.continuous_protocol import InvalidContinuousInput
 
 
@@ -25,6 +26,7 @@ class ContinuousDelivery(Enum):
     UNKNOWN = "unknown"
 
 
+@timed_stage("agent_delivery")
 async def deliver_continuous(store: ContinuousLeaseStore, manager: ConnectionManager,
                              device_id: str, envelope: Any) -> ContinuousDelivery:
     snapshot = manager.connection_snapshot(device_id)

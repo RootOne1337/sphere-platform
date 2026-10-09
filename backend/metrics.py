@@ -64,6 +64,12 @@ android_ws_keepalive_ack_rtt_seconds = Histogram(
     "Round-trip time for the 10-second Android WebSocket keepalive",
     buckets=[0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1.0, 2.5, 5.0],
 )
+continuous_stage_duration_seconds = Histogram(
+    "sphere_continuous_stage_duration_seconds",
+    "Backend input stage duration; returned is not an Android ACK",
+    ["stage", "outcome"],
+    buckets=[0.001, 0.01, 0.025, 0.05, 0.1, 0.25, 0.4, 0.5, 1.0],
+)
 
 # ---------------------------------------------------------------------------
 # Devices

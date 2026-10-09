@@ -72,6 +72,15 @@ def test_four_workers_aggregate_retire_and_replace(tmp_path):
             assert value(body, "sphere_http_request_duration_seconds_count", method="GET", endpoint="/canary/{id}") == 10
             assert value(body, "sphere_http_request_duration_seconds_bucket", method="GET", endpoint="/canary/{id}", le="0.25") == 10
             assert value(body, "sphere_http_request_duration_seconds_sum", method="GET", endpoint="/canary/{id}") == pytest.approx(2)
+            assert value(body, "sphere_continuous_stage_duration_seconds_count", stage="redis_lease_operation", outcome="returned") == 10
+            assert value(body, "sphere_continuous_stage_duration_seconds_sum", stage="redis_lease_operation", outcome="returned") == pytest.approx(1.25)
+            assert value(body, "sphere_continuous_stage_duration_seconds_bucket", stage="redis_lease_operation", outcome="returned", le="0.25") == 10
+            assert value(body, "sphere_continuous_stage_duration_seconds_bucket", stage="redis_lease_operation", outcome="returned", le="0.1") == 0
+            continuous_pairs = {tuple(sorted(sample.labels.items()))
+                                for family in text_string_to_metric_families(body)
+                                for sample in family.samples
+                                if sample.name == "sphere_continuous_stage_duration_seconds_count"}
+            assert len(continuous_pairs) == 21
             assert value(body, "sphere_fleet_stream_backend_ingress_frames_total") == 4000
             assert value(body, "sphere_fleet_stream_backend_ingress_packets_by_nal_total", nal_type="idr") == 4000
             assert value(body, "sphere_fleet_stream_active_viewers") == 10
@@ -106,6 +115,7 @@ def test_four_workers_aggregate_retire_and_replace(tmp_path):
         assert value(body, "sphere_db_pool_checked_out") == 6
         assert value(body, "sphere_fleet_stream_active_viewers") == 6
         assert value(body, "sphere_http_requests_total", method="GET", endpoint="/canary/{id}", status_code="200") == 10
+        assert value(body, "sphere_continuous_stage_duration_seconds_count", stage="redis_lease_operation", outcome="returned") == 10
         assert not list(directory.glob(f"gauge_live*_{retired_pid}.db"))
         assert (directory / f"counter_{retired_pid}.db").exists()
 
@@ -116,6 +126,7 @@ def test_four_workers_aggregate_retire_and_replace(tmp_path):
         assert value(body, "sphere_db_pool_checked_out") == 11
         assert value(body, "sphere_http_requests_total", method="GET", endpoint="/canary/{id}", status_code="200") == 15
         assert value(body, "sphere_http_request_duration_seconds_count", method="GET", endpoint="/canary/{id}") == 15
+        assert value(body, "sphere_continuous_stage_duration_seconds_count", stage="redis_lease_operation", outcome="returned") == 15
         assert value(body, "sphere_fleet_stream_backend_ingress_frames_total") == 5000
     finally:
         for index in range(len(workers)):

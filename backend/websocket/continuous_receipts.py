@@ -24,6 +24,7 @@ from backend.websocket.continuous_lease import (
     InputLease,
     InputLeaseUnavailable,
 )
+from backend.websocket.continuous_observability import timed_stage
 from backend.websocket.continuous_protocol import InputReceipt, InvalidContinuousInput
 
 
@@ -71,6 +72,7 @@ async def _fence_once(store: ContinuousLeaseStore, lease: InputLease) -> None:
         pass  # Repeated cancellation/outage may prevent fencing; TTL/native watchdog remain required.
 
 
+@timed_stage("viewer_receipt_validation")
 async def viewer_receipt(store: ContinuousLeaseStore, lease: InputLease, envelope: Any,
                          *, viewer_worker: str) -> dict[str, Any] | None:
     """One scoped reply. Caller still owns current auth/WS/callback lifetime.

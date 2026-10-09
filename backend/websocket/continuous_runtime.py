@@ -20,6 +20,7 @@ from backend.websocket.continuous_lease import (
     LeaseBinding,
     no_replay_redis,
 )
+from backend.websocket.continuous_observability import timed_stage
 from backend.websocket.continuous_protocol import (
     CaptureBinding,
     CloseInput,
@@ -82,6 +83,7 @@ class ContinuousRuntime:
             status = await DeviceStatusCache(self.store.redis).get_status(device)
         return bool(status and status.ws_session_id == session and status.status in {"online", "busy", "connecting"})
 
+    @timed_stage("viewer_socket_send")
     async def send(self, viewer: TouchViewer, data: dict) -> None:
         try:
             if self.viewers.get(viewer.session) is not viewer:
@@ -119,6 +121,7 @@ class ContinuousRuntime:
             "expires": await self.now() + OFFER_MS,
         })
 
+    @timed_stage("viewer_admission")
     async def handle(self, viewer: TouchViewer, data: Any) -> None:
         if not self.available or self.viewers.get(viewer.session) is not viewer:
             raise InputLeaseUnavailable()
@@ -196,6 +199,7 @@ class ContinuousRuntime:
         if self.viewers.get(viewer.session) is viewer:
             self.viewers.pop(viewer.session)
 
+    @timed_stage("agent_reply_relay")
     async def agent_message(self, device: str, session: str, data: dict) -> None:
         snapshot = self.manager.connection_snapshot(device)
         if (not self.available or snapshot is None or snapshot.session_id != session
@@ -219,6 +223,7 @@ class ContinuousRuntime:
                 "capture_epoch": capture.epoch, "frame_width": capture.width, "frame_height": capture.height,
             })
 
+    @timed_stage("pubsub_dispatch")
     async def route(self, channel: str, raw: bytes | str) -> None:
         if len(raw) > MAX_WIRE_BYTES:
             return

@@ -20,6 +20,7 @@ from redis.asyncio.retry import Retry
 from redis.backoff import NoBackoff
 from redis.exceptions import RedisError
 
+from backend.websocket.continuous_observability import timed_stage
 from backend.websocket.continuous_protocol import (
     CaptureBinding,
     InputReceipt,
@@ -292,6 +293,7 @@ class ContinuousLeaseStore:
         binding = lease.binding
         return lease if (binding.device == device_id and binding.org == org_id and binding.agent_session == agent_session) else None
 
+    @timed_stage("redis_lease_operation")
     async def _operation(self, op: str, lease: InputLease, command: dict | None = None) -> str:
         payload = json.dumps(command or {}, separators=(",", ":"))
         max_envelope = {"type": "_continuous_input_v1", "identity": lease.identity,
