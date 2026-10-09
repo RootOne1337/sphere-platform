@@ -26,11 +26,12 @@ L — несколько слоёв/проверок, XL — новая подс
 
 ## Сначала закрыть риски эксплуатации
 
-1. **Диск и ОЗУ (EP-033/047):** после окончания observer нет непрерывного покрытия.
-   Последние 241 срез показывали постоянные VHDX/VMDK allocations при изменении
-   guest data; это не атрибуция всей потери C:. 9 октября +05 read-only process
-   check снова не нашёл видимых collectors. Большой VHD не доказывает writer,
-   отдельный замер свободного места не доказывает скорость или утечку.
+1. **Диск и ОЗУ (EP-033/047):** limited observation возобновлено9Oct12:42UTC
+   до10Oct12:42UTC: 721×120s/16MiB,24named files и RAM/Docker/WSL; complete
+   samples и process epoch проверены. Прежний разрыв не покрыт, whole-PC writer
+   UNKNOWN: VSS/USN/kernel evidence недоступны. Большой VHD не доказывает writer;
+   reboot/deadline останавливают сбор, resource soak/retention ещё нужны.
+   [Окно и границы](../audits/2026-10-09/STORAGE-OBSERVER-RESTART.md).
 2. **Idle control (EP-020/029):** повторился native_receipt_timeout. Работающее
    видео не гарантирует, что следующий input будет исполнен. Нужны коррелированные
    bounded timings, исправление и повторная canary; увеличение timeout само по себе не приёмка.
@@ -211,15 +212,18 @@ Fleet WS пакетно invalidates REST queries; скрытые вкладки/
 
 Доказательства: [CHAT-CODE-RECONCILIATION](../audits/2026-10-09/CHAT-CODE-RECONCILIATION.md).
 
-### CHAT-12 · Отследить заполнение всего ПК без ручного угадывания
+### CHAT-12 · Наблюдение заполнения всего ПК без ручного угадывания
 
 **OPEN** · EP-033, EP-047.
 
-Последнее 8h окно завершено: 241 samples, VHDX и четыре VMDK allocations постоянны. В 23:10 UTC видимых collector processes нет.
+Новое limited окно9Oct12:42→10Oct12:42UTC,721×120s/16MiB. Complete samples,
+process creation/command/source identity проверены. Прежний разрыв не покрыт.
 
-Остаётся: После deadline нет непрерывного покрытия; новая потеря не атрибутирована. Нужны observer health, bounded restart/retention, privileged VSS/USN/kernel evidence и RAM acceptance.
+Остаётся: Whole-PC writer UNKNOWN: VSS unavailable, USN/ETW не запущены.
+Нет reboot autostart; после deadline нужны bounded restart/health,
+resource soak/retention и RAM acceptance.
 
-Доказательства: [STORAGE-WINDOW-COMPLETION](../audits/2026-10-08/STORAGE-WINDOW-COMPLETION.json).
+Доказательства: [STORAGE-OBSERVER-RESTART](../audits/2026-10-09/STORAGE-OBSERVER-RESTART.json), [STORAGE-WINDOW-COMPLETION](../audits/2026-10-08/STORAGE-WINDOW-COMPLETION.json).
 
 ### CHAT-13 · Единая автоматизация и универсальные ресурсы
 

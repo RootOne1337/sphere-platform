@@ -1,11 +1,13 @@
 # Ресурсы хоста: диск, Windows commit, WSL и контейнеры
 
-**Действующий статус, сверка 9 октября +05:** прежнее8h окно завершено;
-read-only проверка видимых process command lines в23:10:38UTC снова дала0
-collectors. Постоянного наблюдения после deadline не подтверждено. Это не
-privileged kernel audit и не утверждение, что никакой сторонний observer не работает.
+**Действующий статус,9 октября17:42 UTC+5:** limited periodic observer
+возобновлён до **10 октября17:42 UTC+5**. 721×120s,16MiB; 24named files плюс
+RAM/process/Docker/WSL. Законченные samples и process identity реально проверены.
+VSS unavailable; USN/ETW не запущены, whole-PC writer UNKNOWN. Нет autostart
+после reboot/deadline; прежний разрыв не покрыт.
+[Restart evidence](../audits/2026-10-09/STORAGE-OBSERVER-RESTART.md) ·
 [Остаток и приоритет](WORK-STATUS.md) · [Машинная запись](STATUS-REGISTRY.json).
-Обновление документации не запускает новый collector и не устраняет расход диска.
+Ресурсная утечка не объявлена исправленной.
 
 ## История окон наблюдения
 

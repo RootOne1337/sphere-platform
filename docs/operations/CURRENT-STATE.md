@@ -17,9 +17,16 @@ XPath → следующий input. Source **1577e01e** исправляет е�
 1938 frontend tests/139 suites, nonincremental TypeScript проходят. UI60be6ecd
 установлен на3015 с APIbe803773; finite PH011 mixed recording принята ниже.
 Normal continuous input уже подключён, recorded MOVE/tree/crop/pixel bundle
-остаётся OPEN. Idle receipt failure и отсутствие наблюдений за диском после
-завершения collector — приоритеты перед расширением automation.
+остаётся OPEN. Idle receipt failure и whole-PC writer UNKNOWN — приоритеты перед расширением
+automation. Новое limited окно наблюдения за диском описано ниже.
 [Clock regression и границы](../audits/2026-10-09/STUDIO-RECORDER-CLOCK-FIX.md).
+
+**9 октября12:42UTC /17:42UTC+5 — limited disk/RAM observation возобновлено.**
+721×120s до10Oct12:42UTC,16MiB;24known named files и RAM/process/Docker/WSL.
+Complete samples, source SHA и PID/creation/command binding проверены.
+VSS unavailable, USN/ETW не запущены; whole-PC writer UNKNOWN. Нет autostart,
+прежний gap не покрыт. EP-033/047 и9/41 сохраняются.
+[Срез и ограничения](../audits/2026-10-09/STORAGE-OBSERVER-RESTART.md).
 
 **9 октября,02:28–02:34 UTC /07:28–07:34 UTC+5 — clock fix установлен.**
 На3015 UI **60be6ecd** / API **be803773**. Все4 exact60be CI successful; frontend

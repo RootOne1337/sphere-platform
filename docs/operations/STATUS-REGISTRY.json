@@ -25,12 +25,13 @@
   },
   "pendingCorrections": [],
   "storage": {
-    "lastObservedUtc": "2026-10-08T23:10:38.3997504Z",
-    "visibleMatchingProcesses": 0,
-    "continuousCoverageConfirmed": false,
-    "observationScope": "Visible process command lines only; not privileged kernel evidence or a rate measurement.",
-    "oneFreeDiskReadingBytes": 50563411968,
-    "latestCompletedEvidence": "docs/audits/2026-10-08/STORAGE-WINDOW-COMPLETION.json"
+    "lastObservedUtc": "2026-10-09T12:51:26.507214+00:00",
+    "visibleMatchingProcesses": 1,
+    "continuousCoverageConfirmed": true,
+    "observationScope": "Finite limited periodic metadata window only, until 2026-10-10T12:42:57Z; not global kernel writer attribution or prior-gap coverage.",
+    "oneFreeDiskReadingBytes": 47609090048,
+    "latestCompletedEvidence": "docs/audits/2026-10-08/STORAGE-WINDOW-COMPLETION.json",
+    "activeEvidence": "docs/audits/2026-10-09/STORAGE-OBSERVER-RESTART.json"
   },
   "legacy": {
     "total": 41,
@@ -1732,10 +1733,11 @@
         "EP-033",
         "EP-047"
       ],
-      "acceptedScope": "Последнее 8h окно завершено: 241 samples, VHDX и четыре VMDK allocations постоянны. В 23:10 UTC видимых collector processes нет.",
-      "remaining": "После deadline нет непрерывного покрытия; новая потеря не атрибутирована. Нужны observer health, bounded restart/retention, privileged VSS/USN/kernel evidence и RAM acceptance.",
+      "acceptedScope": "Новое limited окно9Oct12:42→10Oct12:42UTC, 721×120s/16MiB; complete JSONL samples и process creation/command/source identity проверены. Предыдущее окно завершено, разрыв не покрыт.",
+      "remaining": "Whole-PC writer UNKNOWN: VSS unavailable, USN/ETW не запущены. Нет reboot autostart; после deadline потребуется bounded restart/health. Resource soak/retention и RAM acceptance открыты.",
       "evidence": [
-        "docs/audits/2026-10-08/STORAGE-WINDOW-COMPLETION.json"
+        "docs/audits/2026-10-08/STORAGE-WINDOW-COMPLETION.json",
+        "docs/audits/2026-10-09/STORAGE-OBSERVER-RESTART.json"
       ],
       "sourcePaths": [],
       "fleetAccepted": false
