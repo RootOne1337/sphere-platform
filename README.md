@@ -15,34 +15,26 @@
 
 </div>
 
-**Проверенная установка:** UI `d70f55c6` / API `9ad3481c`.
+**Проверенная установка:** UI `369654a0` / API `369654a0`.
 
-**Публичный веб обновлён 9 октября:** действующий Tuna-host и3015 используют
-один UI d70f55c6. Маршруты первоначально проверены на UI86354350; API/WS/bootstrap
-сохранены. [Доставка и ограничения](docs/audits/2026-10-09/PUBLIC-WEB-DELIVERY.md).
-Дополнительная проверка22страниц выявила и исправила загрузку больших JS Grafana
-через туннель; dashboard повторно открыт с реальными графиками.
-[QA и исправление](docs/audits/2026-10-09/PUBLIC-WEB-SUPPLEMENTAL-QA.md).
+**10 октября — broadcast исправлен и установлен.** На обоих адресах UI/API369;
+все4 exact-source CI success:3428 backend tests/252subtests,1966 frontend tests.
+Изолированный PostgreSQL/Redis test подтвердил202, commit и admission. На рабочем
+стенде ожидаемый404 после чтения presence проверен без запуска массовых действий.
+APK, schema/OTA и45соседних контейнеров сохранены при каждой установке.
+Idle control и direct transport остаются открытыми; probe выключен.
+[Установка, проверки и остаток](docs/audits/2026-10-10/BROADCAST-INSTALLED-ACCEPTANCE.md).
 
-**Действующий статус — 9 октября 2026:** [реестр работ и требований](docs/operations/WORK-STATUS.md)
-разделяет **9 принятых / 41 открытую работу** и старые семь незакрытых findings.
-Последняя проверенная установка: UI **d70f55c6**, API **9ad3481c** на 3015 и выбранном публичном адресе.
-Две native direct echo попытки подтвердили JNI и SDP answer, но канал не открылся:
-RTT неизвестен. Прежний APK PH011 восстановлен, probe off/allowlist[].
-[Pilot receipt и следующий gate](docs/audits/2026-10-09/DIRECT-PROBE-PILOT.md).
-Различены idle-потеря подтверждения и неизвестный результат касания; исправлен
-контраст статуса управления на тёмной поверхности видео в светлой теме.
-Frontend CI: 1950 tests / 139 suites, types/build, 26 pages / 73 assets.
-Задержка не исправлена; [установка и конечная проверка](docs/audits/2026-10-09/IDLE-CONTROL-UX-INSTALLED.md).
-[Прямой browser↔APK: исследование и отключённый RTT canary](docs/design/BROWSER-DIRECT-TRANSPORT.md).
-Серверные timings и browser failure snapshot установлены; PH011 idle timeout
-повторился. Наблюдаемые server spans <25ms, queue/network/APK/native причина OPEN.
-Исторический API d720232e прошёл все4CI, backend3387tests/233subtests.
-[Установка и границы](docs/audits/2026-10-09/CONTINUOUS-SERVER-TIMINGS-INSTALLED.md).
-Clock correction и PH011 mixed recording ранее приняты в конечном scope;
-idle receipt failure вновь подтверждён, его причина и whole-PC writer ещё UNKNOWN.
-Rich recorder, global ownership и ресурсная приёмка остаются открытыми.
-[Runtime и доказательства](docs/operations/CURRENT-STATE.md) · [Правила документации](docs/DOCUMENTATION.md).
+**Действующий статус:** [реестр работ и требований](docs/operations/WORK-STATUS.md)
+разделяет **9 принятых /41 открытую работу** и legacy7. Сохранённые сценарии,
+версии и Android APK не менялись. Публичный каталог и graph открываются;
+unused CSS preload warning не воспроизведён, причина пока UNKNOWN.
+Последовательное сравнение ACK:244мс на3015 против487мс через домен;
+[границы вывода](docs/audits/2026-10-10/IDLE-LOCAL-PUBLIC-COMPARISON.md).
+[Прямой browser↔APK](docs/design/BROWSER-DIRECT-TRANSPORT.md) ещё требует
+native connectivity/media/control приёмки. [APK1.3 release gates](docs/design/APK-1.3-COMPATIBILITY-AND-RELEASE.md)
+открыты; whole-PC writer также неизвестен. [Runtime](docs/operations/CURRENT-STATE.md) ·
+[Документация](docs/DOCUMENTATION.md).
 
 <details>
 <summary>История установок до 7 октября; версии ниже не являются текущими</summary>
@@ -562,13 +554,13 @@ identity, доверенный ключ и параметры enrollment; APK и
 <a id="status"></a>
 ## 🔬 Состояние проекта и границы проверки
 
-**Действующий срез9октября:** [реестр50работ и15дополнений из чата](docs/operations/WORK-STATUS.md)
-и [runtime evidence](docs/operations/CURRENT-STATE.md). UI d70f55c6 / API9ad3481c:
-server timings и browser snapshot сохранены; wording/контраст управления проверены через туннель.
+**Действующий срез10октября:** [реестр50работ и17дополнений из чата](docs/operations/WORK-STATUS.md)
+и [runtime evidence](docs/operations/CURRENT-STATE.md). UI/API369654a0:
+broadcast500 исправлен и установлен; server timings/browser snapshot сохранены.
 Native direct echo пилот завершился без ICE connection/RTT; APK восстановлен, probe отключён.
 [Доказательство](docs/audits/2026-10-09/DIRECT-PROBE-PILOT.md).
-Frontend exact-source CI successful: 1950 tests / 139 suites, types/build.
-Историческая API-приёмка: все4 CI successful, backend3387tests/233subtests. Idle failure повторился;
+Все4 exact-source CI successful: frontend1966/142suites, backend3428/252subtests.
+[Установка и границы](docs/audits/2026-10-10/BROADCAST-INSTALLED-ACCEPTANCE.md). Idle failure повторился;
 queue/network/APK/native причина, resource/ownership и Fleet32 gates OPEN.
 Product9/41 и legacy34/7 — разные scopes.
 

@@ -1,21 +1,19 @@
 # Работы, требования пользователя и границы приёмки
 
-**Проверенная установка:** UI `d70f55c6` / API `9ad3481c`.
+**Проверенная установка:** UI `369654a0` / API `369654a0`.
 
-**10 октября — срочный source fix запуска broadcast.** Доказаны UnicodeDecodeError
-при MessagePack MGET и отдельный ValidationError обязательного online_devices
-после commit. Обе причины исправлены, 60 focused/64 delivery tests прошли;
-real PostgreSQL/Redis broadcast test прошёл в CI; полный CI и установка требуются. Product 9/41 и legacy7
-сохраняются. Idle timeout остаётся приоритетом, direct pilot отложен ради этого сбоя.
-[Source audit](../audits/2026-10-10/BROADCAST-BINARY-PRESENCE.md).
-Первая CI и её retry остановлены Docker Hub429 до тестов. Проверено совпадение
-official-image manifests Hub/ECR; CI переводится на закреплённые ECR digests,
-обычные build defaults сохранены. [Provenance и границы](../audits/2026-10-10/CI-REGISTRY-LIMIT.md).
-CI2550: 3427 tests и252subtests прошли; единственный failure — isolated Nginx
-Docker run125 до gateway assertions. Image bootstrap/lint/security/RLS прошли,
-полный CI не принят. Остальные helper pulls закреплены; [граница коррекции](../audits/2026-10-10/CI-GATEWAY-IMAGE.md).
-Web tests/types/build и26pages/73assets прошли, но packaging failed без достаточной
-диагностики; [официальный mirror и безопасные failure categories](../audits/2026-10-10/CI-WEB-PACKAGING.md).
+**10 октября — broadcast исправлен и установлен.** На обоих адресах UI/API369;
+все4 exact-source CI success:3428 backend tests/252subtests,1966 frontend tests.
+Изолированный PostgreSQL/Redis test подтвердил202, commit и admission. На рабочем
+стенде ожидаемый404 после чтения presence проверен без запуска массовых действий.
+APK, schema/OTA и45соседних контейнеров сохранены при каждой установке.
+Idle control и direct transport остаются открытыми; probe выключен.
+[Установка, проверки и остаток](../audits/2026-10-10/BROADCAST-INSTALLED-ACCEPTANCE.md).
+
+Исходные CI registry failures устранены: gateway и Redis pressure helpers прошли
+полный прогон на pinned official mirror. Старые отрицательные receipts сохраняются.
+Последовательный ACK244local/487public и idle512fault записаны отдельно:
+[измерение без касаний](../audits/2026-10-10/IDLE-LOCAL-PUBLIC-COMPARISON.md).
 
 **APK1.3.0 — проверен текущий контракт и составлен release plan.** Версия пока
 1.2.49; private continuous/direct flags не являются stable release профилем.
@@ -27,18 +25,18 @@ promotion требуют отдельной приёмки. [Матрица и �
 due10Oct12:41UTC; три complete samples и PID/epoch/command проверены. Разрыв не
 покрыт, whole-PC writer UNKNOWN. [Receipt и границы](../audits/2026-10-10/STORAGE-OBSERVER-CONTINUITY.md).
 
-**9 октября: выполнены две попытки native direct pilot.** JNI и авторизованный
+**Исторический срез9октября: выполнены две попытки native direct pilot.** JNI и авторизованный
 SDP answer подтверждены, DataChannel не открылся, RTT не измерен. API9ad установлен,
 прежний APK PH011 восстановлен, эксперимент отключён с пустым allowlist;
 UI d70/45соседних контейнеров/schema/OTA сохранены. Idle failure снова воспроизведён.
 Source close-race/фазы диагностики исправлены:81backend,63delivery,8frontend tests,
-Ruff/mypy/types прошли; новый exact CI и установка этих исправлений ещё не приняты.
+Ruff/mypy/types прошли; exact369 CI и установка этих исправлений теперь приняты; native connectivity ещё нет.
 Product9/41,legacy7 сохраняются. [Пилот и следующий gate](../audits/2026-10-09/DIRECT-PROBE-PILOT.md).
 
 **Последующий source этап:** добавлен bounded browser ICE/DTLS snapshot при отказе:
 один getStats in flight,32вызова максимум, unknown counters и возраст среза видны,
-адреса/ключи не сохраняются.16focused frontend tests/types passed; runtime и
-реальные новые измерения не менялись. [Scope и gates](../audits/2026-10-09/DIRECT-PROBE-NETWORK-SNAPSHOT.md).
+адреса/ключи не сохраняются.16focused frontend tests/types passed; UI теперь установлен,
+новый native network canary не проведён. [Scope и gates](../audits/2026-10-09/DIRECT-PROBE-NETWORK-SNAPSHOT.md).
 
 **Первый source этап9октября: разрешён и написан direct RTT canary.** Браузерный WebRTC,
 серверное межпроцессное согласование и отдельный Android debug source set готовы
@@ -298,14 +296,15 @@ Fleet WS пакетно invalidates REST queries; скрытые вкладки/
 
 **OPEN** · EP-033, EP-047.
 
-Новое limited окно9Oct12:42→10Oct12:42UTC,721×120s/16MiB. Complete samples,
-process creation/command/source identity проверены. Прежний разрыв не покрыт.
+Limited observer возобновлён9Oct21:09→10Oct12:41UTC,467×120s/16MiB. Complete samples,
+process creation/command/source identity проверены. Прежний PID отсутствовал,
+223samples закончились20:06UTC; этот разрыв не покрыт.
 
 Остаётся: Whole-PC writer UNKNOWN: VSS unavailable, USN/ETW не запущены.
 Нет reboot autostart; после deadline нужны bounded restart/health,
 resource soak/retention и RAM acceptance.
 
-Доказательства: [STORAGE-OBSERVER-RESTART](../audits/2026-10-09/STORAGE-OBSERVER-RESTART.json), [STORAGE-WINDOW-COMPLETION](../audits/2026-10-08/STORAGE-WINDOW-COMPLETION.json).
+Доказательства: [STORAGE-OBSERVER-CONTINUITY](../audits/2026-10-10/STORAGE-OBSERVER-CONTINUITY.json), [STORAGE-WINDOW-COMPLETION](../audits/2026-10-08/STORAGE-WINDOW-COMPLETION.json).
 
 ### CHAT-13 · Единая автоматизация и универсальные ресурсы
 
@@ -339,14 +338,14 @@ Pion/SFU/overlay рассмотрены по ролям, а не добавле�
 Maven AAR pinned, authenticated generation-bound signaling, allowlist устройств,
 WebRTC echo без media/input. Exact9ad прошёл все4CI; две native попытки получили
 SDP answer в signaling, но канал не открылся, RTT unknown. После пилота APK восстановлен,
-probe выключен; API9ad остаётся установленным, UI d70 сохранён.
-Остаётся: новый source close/phase fix exact CI/delivery, native provenance/SBOM,
+probe выключен. Последующая UI/API369 доставка включила close/phase/network diagnostics.
+Остаётся: native provenance/SBOM,
 ICE cause/live RTT/cleanup, media/control ownership, current-path attribution,
 TURN/network matrix и production gate. Draft latency targets не являются достигнутым SLA.
 [Исходники и проверки](../audits/2026-10-09/DIRECT-PROBE-SOURCE.md) ·
 [Фактический pilot и границы](../audits/2026-10-09/DIRECT-PROBE-PILOT.md).
 Новый [source ICE snapshot](../audits/2026-10-09/DIRECT-PROBE-NETWORK-SNAPSHOT.md)
-подготовлен для локализации следующего отказа, ещё не установлен/не испытан live.
+установлен для локализации следующего отказа; новый native network canary ещё не проведён.
 
 Доказательства: [Исследование и порядок внедрения](../design/BROWSER-DIRECT-TRANSPORT.md),
 [Фактический relay path и idle canary](../audits/2026-10-09/IDLE-CONTROL-RELAY-REVIEW.md).
@@ -392,12 +391,14 @@ Android artifact выбран для изолированного RTT canary; р
 
 ### CHAT-17 · Broadcast500 и CSS preload публичного веба
 
-**SOURCE_FIXED_NOT_INSTALLED**
+**PARTIAL**
 
-Две причины500 воспроизведены независимо и исправлены в source.
+Две причины500 воспроизведены независимо, исправлены и установлены в UI/API369.
 [Source audit](../audits/2026-10-10/BROADCAST-BINARY-PRESENCE.md),
 [CI registry correction](../audits/2026-10-10/CI-REGISTRY-LIMIT.md).
-Real-service broadcast test CI2550 прошёл; один isolated Nginx run блокирует full CI.
-Остаток: full CI/API delivery и finite runtime check. CSS в публичном каталоге/графе
+Все4 exact369 CI success; backend3428/252subtests, frontend1966. Реальный isolated
+PostgreSQL/Redis test подтвердил202/commit/admission; live404 после чтения presence
+проверен на обоих адресах без массового запуска. [Installed receipt](../audits/2026-10-10/BROADCAST-INSTALLED-ACCEPTANCE.md).
+Остаток: CSS в публичном каталоге/графе
 загружается; исходное предупреждение не воспроизвелось в этом окне. Idempotency,
 большой парк и unknown presence требуют самостоятельных контрактов.

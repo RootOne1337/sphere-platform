@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
-  "reviewedAtUtc": "2026-10-09T21:26:56.849604+00:00",
-  "sourceReviewed": "2550a61b19ed71b7d9eac9293a6ddc85309662b8",
+  "reviewedAtUtc": "2026-10-09T21:51:32.755048+00:00",
+  "sourceReviewed": "369654a0be4bded35e299062badc9bfe95101f1e",
   "scope": "Effective documentation status; source/install/finite acceptance kept separate. No new fleet or soak acceptance.",
   "baseline": "docs/audits/2026-10-05/ENTERPRISE-PRODUCT-BACKLOG.json",
   "previousCrosscheck": "docs/audits/2026-10-09/CHAT-CODE-RECONCILIATION.json",
@@ -11,39 +11,20 @@
     "open": 41
   },
   "installed": {
-    "lastObservedUtc": "2026-10-09T18:23:12.534854+00:00",
-    "ui": "d70f55c6de36a01801af201ea4d6ca42bff53549",
-    "api": "9ad3481c1173fdd508b43d0314ec6cf6ffbade1d",
-    "evidence": "docs/audits/2026-10-09/DIRECT-PROBE-PILOT.json",
-    "observation": "API9ad exact-source installed; probe disabled/allowlist[] after two failed host ICE attempts; original PH011 APK restored. Existing read/first frames return; idle timeout repeats. UI d70 unchanged, 45 other containers/schema/OTA preserved.",
+    "lastObservedUtc": "2026-10-09T21:51:32.755048+00:00",
+    "ui": "369654a0be4bded35e299062badc9bfe95101f1e",
+    "api": "369654a0be4bded35e299062badc9bfe95101f1e",
+    "evidence": "docs/audits/2026-10-10/BROADCAST-INSTALLED-ACCEPTANCE.json",
+    "observation": "Exact369 UI/API installed separately; each preserves45 other containers/schema/OTA/APK. Real isolated broadcast202/commit/admission passed. Both live origins return expected404 after binary presence; browser catalog/graph/form read-cancel accepted. Idle/direct/whole-PC writer remain open; probe off/allowlist[].",
     "pilotApk": {
       "device": "PH011",
       "version": "1.2.49-dev",
       "versionCode": 10249,
       "scope": "PH011 selected in finite current diagnostics canary; not fleet inventory"
     },
-    "evidenceSha256NormalizedLf": "2cad84fa5b52be791da243d4be05f84f29c3cdc1e27608da4ce375c3abba9e39"
+    "evidenceSha256NormalizedLf": "7dcb639c2c5bdace74af1626daa862b3095d8857c54f551df0f5665493a03f5c"
   },
-  "pendingCorrections": [
-    {
-      "id": "direct-probe-pilot-cleanup",
-      "installed": false,
-      "evidence": "docs/audits/2026-10-09/DIRECT-PROBE-PILOT.md",
-      "scope": "Bounded final-close race correction and frontend phase wording; not installed on 3015"
-    },
-    {
-      "id": "direct-probe-network-snapshot",
-      "installed": false,
-      "evidence": "docs/audits/2026-10-09/DIRECT-PROBE-NETWORK-SNAPSHOT.md",
-      "scope": "Single-flight/32-call browser ICE summary, no live acceptance or installed change"
-    },
-    {
-      "id": "broadcast-binary-presence-response",
-      "installed": false,
-      "evidence": "docs/audits/2026-10-10/BROADCAST-BINARY-PRESENCE.md",
-      "scope": "MessagePack text-client and required response count source-fixed; real-service broadcast test passed CI2550. Full CI blocked by isolated Nginx Docker run; corrected registry pulls awaiting fresh full CI and API delivery."
-    }
-  ],
+  "pendingCorrections": [],
   "storage": {
     "lastObservedUtc": "2026-10-09T21:14:26.196860+00:00",
     "visibleMatchingProcesses": 1,
@@ -126,7 +107,8 @@
     "sourceCorrections": [
       "docs/audits/2026-10-09/DIRECT-PROBE-VIEWER-ISOLATION.md",
       "docs/audits/2026-10-09/DIRECT-PROBE-PILOT.md",
-      "docs/audits/2026-10-09/DIRECT-PROBE-NETWORK-SNAPSHOT.md"
+      "docs/audits/2026-10-09/DIRECT-PROBE-NETWORK-SNAPSHOT.md",
+      "docs/audits/2026-10-10/BROADCAST-INSTALLED-ACCEPTANCE.json"
     ],
     "pilotEvidence": "docs/audits/2026-10-09/DIRECT-PROBE-PILOT.json",
     "pilotOutcome": "FAILED_HOST_ICE_CLEANED_UP",
@@ -1628,7 +1610,8 @@
       "evidence": [
         "docs/audits/2026-10-08/CONTINUOUS-VIEWER-FAULT-ISOLATION.md",
         "docs/audits/2026-10-08/CONTINUOUS-INPUT-AUTOMATIC-UX.md",
-        "docs/audits/2026-10-09/STREAM-DIAGNOSTICS-INSTALLED-ACCEPTANCE.json"
+        "docs/audits/2026-10-09/STREAM-DIAGNOSTICS-INSTALLED-ACCEPTANCE.json",
+        "docs/audits/2026-10-10/IDLE-LOCAL-PUBLIC-COMPARISON.md"
       ],
       "sourcePaths": [
         "backend/websocket/continuous_runtime.py",
@@ -1770,11 +1753,12 @@
         "EP-033",
         "EP-047"
       ],
-      "acceptedScope": "Новое limited окно9Oct12:42→10Oct12:42UTC, 721×120s/16MiB; complete JSONL samples и process creation/command/source identity проверены. Предыдущее окно завершено, разрыв не покрыт.",
+      "acceptedScope": "Limited observer restarted9Oct21:09→10Oct12:41UTC,467×120s/16MiB; prior process absent,223 samples stop20:06UTC. New complete samples/process epoch verified. Gap is uncovered; no whole-PC writer attribution.",
       "remaining": "Whole-PC writer UNKNOWN: VSS unavailable, USN/ETW не запущены. Нет reboot autostart; после deadline потребуется bounded restart/health. Resource soak/retention и RAM acceptance открыты.",
       "evidence": [
         "docs/audits/2026-10-08/STORAGE-WINDOW-COMPLETION.json",
-        "docs/audits/2026-10-09/STORAGE-OBSERVER-RESTART.json"
+        "docs/audits/2026-10-09/STORAGE-OBSERVER-RESTART.json",
+        "docs/audits/2026-10-10/STORAGE-OBSERVER-CONTINUITY.json"
       ],
       "sourcePaths": [],
       "fleetAccepted": false
@@ -1823,15 +1807,16 @@
         "EP-020",
         "EP-047"
       ],
-      "acceptedScope": "Exact9ad all four CI success; two real native echo attempts, JNI and authorized SDP publication verified. Connectivity failed/0RTT, original APK restored, endpointoff. This is negative diagnostic evidence, not media/control acceptance.",
-      "remaining": "Current source cleanup/phase/network snapshot exact CI and delivery; real ICE snapshot/cause/route attribution, live RTT, native cleanup/provenance/SBOM, STUN/TURN/network matrix, media/control ownership and idle reliability remain open.",
+      "acceptedScope": "Exact9ad all four CI success; two real native echo attempts, JNI and authorized SDP publication verified. Connectivity failed/0RTT, original APK restored, endpointoff. This is negative diagnostic evidence, not media/control acceptance. Exact369 full CI and UI/API delivery now include close/phase/network diagnostics, probe remains disabled.",
+      "remaining": "Real ICE snapshot/cause/route attribution, live RTT, native cleanup/provenance/SBOM, STUN/TURN/network matrix, media/control ownership and idle reliability remain open.",
       "evidence": [
         "docs/design/BROWSER-DIRECT-TRANSPORT.md",
         "docs/audits/2026-10-09/IDLE-CONTROL-RELAY-REVIEW.md",
         "docs/audits/2026-10-09/DIRECT-PROBE-SOURCE.md",
         "docs/audits/2026-10-09/DIRECT-PROBE-VIEWER-ISOLATION.md",
         "docs/audits/2026-10-09/DIRECT-PROBE-PILOT.md",
-        "docs/audits/2026-10-09/DIRECT-PROBE-NETWORK-SNAPSHOT.md"
+        "docs/audits/2026-10-09/DIRECT-PROBE-NETWORK-SNAPSHOT.md",
+        "docs/audits/2026-10-10/BROADCAST-INSTALLED-ACCEPTANCE.json"
       ],
       "sourcePaths": [
         "backend/websocket/direct_probe_protocol.py",
@@ -1869,19 +1854,20 @@
     {
       "id": "CHAT-17",
       "title": "Broadcast500 и предупреждение CSS preload на публичном вебе",
-      "state": "SOURCE_FIXED_NOT_INSTALLED",
+      "state": "PARTIAL",
       "productItems": [
         "EP-020",
         "EP-021",
         "EP-048"
       ],
-      "acceptedScope": "Binary Redis decoding and missing response count independently reproduced and source-fixed. Real PostgreSQL/Redis HTTP202, durable tenant/version/target and admission test passed in CI2550; 3427 tests/252 subtests passed, isolated Nginx run failed before gateway assertions. Public CSS matches local; read-only scripts/graph navigation succeeds.",
-      "remaining": "Complete exact-source backend CI after isolated image pull correction, API delivery and finite runtime error-path check. Original preload warning not reproduced; large fleet, unknown Redis and idempotency remain separate open contracts.",
+      "acceptedScope": "Two broadcast500 causes fixed and installed on both origins. Exact369 all four CI success:3428 backend/252subtests,1966frontend. Real PG/Redis202,durable tenant/version/target and admission passed; live missing-script404 after real presence/no Android input. Catalog23/existing3-node graph/form read-cancel accepted; CSS as=style/stylesheet and no warning in finite pass.",
+      "remaining": "Original unused CSS preload cause UNKNOWN, not reproduced. Live broadcast execution, large fleet, unknown Redis, idempotency/lost response, expected version UI and truthful toast remain separate open contracts.",
       "evidence": [
         "docs/audits/2026-10-10/BROADCAST-BINARY-PRESENCE.md",
         "docs/audits/2026-10-10/CI-REGISTRY-LIMIT.md",
         "docs/audits/2026-10-10/CI-GATEWAY-IMAGE.md",
-        "docs/audits/2026-10-10/CI-WEB-PACKAGING.md"
+        "docs/audits/2026-10-10/CI-WEB-PACKAGING.md",
+        "docs/audits/2026-10-10/BROADCAST-INSTALLED-ACCEPTANCE.json"
       ],
       "sourcePaths": [
         "backend/services/batch_service.py",
@@ -1922,13 +1908,13 @@
   ],
   "sourceWorktreeEvidence": "docs/audits/2026-10-09/CONTINUOUS-SERVER-TIMINGS-INSTALLED.json",
   "publicWeb": {
-    "lastObservedUtc": "2026-10-09T17:03:00.032407+00:00",
+    "lastObservedUtc": "2026-10-09T21:51:32.755048+00:00",
     "url": "https://sphere-agent-canary-20260927.ru.tuna.am",
-    "ui": "d70f55c6de36a01801af201ea4d6ca42bff53549",
-    "api": "d720232e3164d278a7322a61a90ba111e205ae3c",
-    "evidence": "docs/audits/2026-10-09/IDLE-CONTROL-UX-INSTALLED.json",
-    "evidenceSha256NormalizedLf": "796062452ccfe0c60ea330123e26f00e4960b9664f2046beb1c633d9e6dbe9d3",
-    "scope": "Same exact-host map; UI-only d70f55c6 update. Finite warning/contrast/transport disclosure accepted; public idle control reliability failed again. No direct transport or API/WS/bootstrap change.",
+    "ui": "369654a0be4bded35e299062badc9bfe95101f1e",
+    "api": "369654a0be4bded35e299062badc9bfe95101f1e",
+    "evidence": "docs/audits/2026-10-10/BROADCAST-INSTALLED-ACCEPTANCE.json",
+    "evidenceSha256NormalizedLf": "7dcb639c2c5bdace74af1626daa862b3095d8857c54f551df0f5665493a03f5c",
+    "scope": "Same exact-host map, UI/API369 installed. Finite catalog/graph/form read-cancel and broadcast404 after binary presence. No direct/media/idle reliability acceptance or route map change.",
     "additionalQa": {
       "evidence": "docs/audits/2026-10-09/PUBLIC-WEB-SUPPLEMENTAL-QA.json",
       "evidenceSha256NormalizedLf": "84f719a322e114a34ba4f4fc5624f717a71558f2b80f5aea1a484b50778ceac4",
@@ -1937,5 +1923,25 @@
       "streamAcceptanceScope": "6 first-session frames, no Android input; steady FPS/control unaccepted"
     },
     "initialDeliveryEvidence": "docs/audits/2026-10-09/PUBLIC-WEB-DELIVERY.json"
-  }
+  },
+  "deliveredCorrections": [
+    {
+      "id": "direct-probe-pilot-cleanup",
+      "installedRevision": "369654a0be4bded35e299062badc9bfe95101f1e",
+      "evidence": "docs/audits/2026-10-10/BROADCAST-INSTALLED-ACCEPTANCE.json",
+      "scope": "Close race and phase wording delivered; no new native connectivity acceptance"
+    },
+    {
+      "id": "direct-probe-network-snapshot",
+      "installedRevision": "369654a0be4bded35e299062badc9bfe95101f1e",
+      "evidence": "docs/audits/2026-10-10/BROADCAST-INSTALLED-ACCEPTANCE.json",
+      "scope": "Bounded single-flight32-call summary delivered; real ICE snapshot still requires canary"
+    },
+    {
+      "id": "broadcast-binary-presence-response",
+      "installedRevision": "369654a0be4bded35e299062badc9bfe95101f1e",
+      "evidence": "docs/audits/2026-10-10/BROADCAST-INSTALLED-ACCEPTANCE.json",
+      "scope": "Two500 root causes corrected; isolated202+commit/admission and negative live404 accepted"
+    }
+  ]
 }

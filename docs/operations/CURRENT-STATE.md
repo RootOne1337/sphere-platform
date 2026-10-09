@@ -1,15 +1,26 @@
 # Sphere: актуальное состояние и критерии приёмки
 
-**Проверенная установка:** UI `d70f55c6` / API `9ad3481c`.
+**Проверенная установка:** UI `369654a0` / API `369654a0`.
 
-**10 октября — воспроизведены и исправлены в source две причины broadcast 500.**
-MessagePack presence ошибочно читался текстовым Redis-клиентом; затем обязательный
-online_devices заполнялся после валидации ответа уже сохранённого батча.
-60 focused tests и 64 delivery tests проходят; отдельный real PostgreSQL/Redis test
-добавлен для exact-source CI. Установка пока прежняя; массовые задания для проверки
-на рабочих устройствах не запускались. CSS chunk на обоих адресах имеет одинаковые
-байты и HTTP200; причина unused preload warning ещё не подтверждена.
-[Доказательства и остаток](../audits/2026-10-10/BROADCAST-BINARY-PRESENCE.md).
+**10 октября — broadcast исправлен и установлен.** На обоих адресах UI/API369;
+все4 exact-source CI success:3428 backend tests/252subtests,1966 frontend tests.
+Изолированный PostgreSQL/Redis test подтвердил202, commit и admission. На рабочем
+стенде ожидаемый404 после чтения presence проверен без запуска массовых действий.
+APK, schema/OTA и45соседних контейнеров сохранены при каждой установке.
+Idle control и direct transport остаются открытыми; probe выключен.
+[Установка, проверки и остаток](../audits/2026-10-10/BROADCAST-INSTALLED-ACCEPTANCE.md).
+
+Последнее сравнение: public idle heartbeat512мс, lastACK487мс; local ACK244мс
+без fault в конечном срезе. Это не синхронный trace или причинная атрибуция.
+[Наблюдения](../audits/2026-10-10/IDLE-LOCAL-PUBLIC-COMPARISON.md).
+Close/phase/network diagnostics теперь доставлены, но новый native ICE canary
+не проведён. [APK1.3 plan](../design/APK-1.3-COMPATIBILITY-AND-RELEASE.md) — NO-GO.
+Product9/41,legacy7; limited observer21:09→12:41UTC и whole-PC writer UNKNOWN.
+
+## Исторические срезы до последней установки
+
+Следующие даты, source-only статусы и версии относятся к записанным тогда окнам.
+Текущая установка и delivery receipt указаны выше.
 
 **9 октября18:23UTC — API9ad установлен, direct pilot завершён без соединения.**
 Две native попытки подтвердили загрузку JNI и публикацию авторизованного SDP answer,

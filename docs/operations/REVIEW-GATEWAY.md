@@ -1,6 +1,6 @@
 # Review gateway: локальный UI и адресный публичный маршрут
 
-**Проверенная установка:** UI `d70f55c6` / API `9ad3481c`.
+**Проверенная установка:** UI `369654a0` / API `369654a0`.
 
 **Дополнение9октября16:21UTC:** публичный Nginx сжимает только static-assets
 `/observability/grafana/public/` с negotiation/Vary и `gzip_proxied any`.
@@ -10,24 +10,17 @@
 по-прежнему401; API/WS/bootstrap не менялись,46контейнеров сохранены.
 [QA, byte-integrity test и ограничения](../audits/2026-10-09/PUBLIC-WEB-SUPPLEMENTAL-QA.md).
 
-## Действующий публичный UI — 9 октября 2026
+## Действующий публичный UI — 10 октября 2026
 
-Точный действующий Tuna-host выбран приватным `web-upstream.map` публичного
-Nginx и использует тот же review UI d70f55c6, что 3015. Public UI/Next observability идут
-через review gateway; business API/WS/health/bootstrap сохраняют прежний маршрут.
-Public observability cookie получает Secure; без авторизации resources/Grafana
-вернули401, `/metrics`404. Первоначальная доставка сохраняла все 46 контейнеров.
-Последующий UI-only rollout d70f55c6 заменил только review-ui, сохранив 45 соседей.
-[Установка и конечная проверка](../audits/2026-10-09/IDLE-CONTROL-UX-INSTALLED.md).
-Вход, каталог, builder и monitoring проверены; временный request failure и
-восстановление после refresh записаны. Cloudflare/SSH fallback не обновлялись.
-
-Review stack теперь является зависимостью этого публичного UI. При следующем
-UI rollout проверяйте3015 и выбранный public host. Для возврата старого UI
-проверяется и убирается только принадлежащая поставке запись приватного map;
-после `nginx -t -c /etc/nginx/remote-pilot.conf` выполняется graceful reload
-публичного gateway. Не пересоздавайте API или volumes ради отката UI.
-[Receipt, маршруты, проверки и границы](../audits/2026-10-09/PUBLIC-WEB-DELIVERY.md).
+Точный Tuna-host по прежнему приватному map использует review UI369, как3015;
+API369 установлен отдельно. Public UI/Next observability идут через review gateway,
+business API/WS/health/bootstrap сохраняют прежние маршруты. Каждая адресная
+установка сохранила45соседних контейнеров. [Приёмка и границы](../audits/2026-10-10/BROADCAST-INSTALLED-ACCEPTANCE.md).
+Direct probe выключен; stream/input остаются server WS, public idle reliability
+не принята. [Сравнение с3015](../audits/2026-10-10/IDLE-LOCAL-PUBLIC-COMPARISON.md).
+Review stack остаётся зависимостью public UI. Проверять оба адреса после rollout;
+не пересоздавать API или volumes ради отката UI. Историческая Grafana коррекция
+и маршруты выше сохранены; это не новый global tunnel rollout.
 
 [Действующий реестр](WORK-STATUS.md) · [Текущая установка](CURRENT-STATE.md).
 Ниже сохранены датированные результаты; они не описывают сегодняшнюю версию контейнера.

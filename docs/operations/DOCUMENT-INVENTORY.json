@@ -1,11 +1,11 @@
 {
   "schemaVersion": 1,
-  "reviewedAtUtc": "2026-10-09T21:26:56.849604+00:00",
+  "reviewedAtUtc": "2026-10-09T21:51:32.755048+00:00",
   "scope": "All tracked Markdown classified; active local-link paths scanned. Not semantic attestation of every sentence, command execution, external-link or live acceptance.",
   "countsByRole": {
     "ADR": 6,
     "CURRENT_ENTRYPOINT": 8,
-    "DATED_EVIDENCE": 245,
+    "DATED_EVIDENCE": 247,
     "DESIGN_SPECIFICATION": 76,
     "OPERATING_GUIDE": 64,
     "PROJECT_POLICY": 7,
@@ -1109,6 +1109,10 @@
       "role": "DATED_EVIDENCE"
     },
     {
+      "file": "docs/audits/2026-10-10/BROADCAST-INSTALLED-ACCEPTANCE.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
       "file": "docs/audits/2026-10-10/CI-GATEWAY-IMAGE.md",
       "role": "DATED_EVIDENCE"
     },
@@ -1118,6 +1122,10 @@
     },
     {
       "file": "docs/audits/2026-10-10/CI-WEB-PACKAGING.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
+      "file": "docs/audits/2026-10-10/IDLE-LOCAL-PUBLIC-COMPARISON.md",
       "role": "DATED_EVIDENCE"
     },
     {

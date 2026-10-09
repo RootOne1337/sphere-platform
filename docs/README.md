@@ -8,40 +8,22 @@
 
 </div>
 
-**Проверенная установка:** UI `d70f55c6` / API `9ad3481c`.
+**Проверенная установка:** UI `369654a0` / API `369654a0`.
 
-[Прямой browser↔APK: исследование, архитектура и измеримые gates](design/BROWSER-DIRECT-TRANSPORT.md).
-WebRTC video+input и TURN fallback предложены для прототипа, ещё не установлены.
-Две native direct echo попытки подтвердили JNI/SDP answer, но канал не открылся;
-прежний PH011 APK восстановлен, probe выключен, allowlist пуст.
-[Фактический pilot и незакрытые gates](audits/2026-10-09/DIRECT-PROBE-PILOT.md).
-Server relay и повторный idle failure подтверждены отдельно.
-[Wording и контраст установлены в UI d70f55c6](audits/2026-10-09/IDLE-CONTROL-UX-INSTALLED.md);
-это не устранение задержки и не внедрение прямого транспорта.
+**10 октября — broadcast исправлен и установлен.** На обоих адресах UI/API369;
+все4 exact-source CI success:3428 backend tests/252subtests,1966 frontend tests.
+Изолированный PostgreSQL/Redis test подтвердил202, commit и admission. На рабочем
+стенде ожидаемый404 после чтения presence проверен без запуска массовых действий.
+APK, schema/OTA и45соседних контейнеров сохранены при каждой установке.
+Idle control и direct transport остаются открытыми; probe выключен.
+[Установка, проверки и остаток](audits/2026-10-10/BROADCAST-INSTALLED-ACCEPTANCE.md).
 
-**Публичный веб обновлён 9 октября:** действующий Tuna-host использует тот же
-UI d70f55c6, что 3015. Первоначальная доставка UI86354350: [маршруты, приёмка и ограничения](audits/2026-10-09/PUBLIC-WEB-DELIVERY.md).
-Дополнительная проверка22страниц нашла и исправила публичную загрузку Grafana JS.
-[Доказательства, повторная проверка и границы](audits/2026-10-09/PUBLIC-WEB-SUPPLEMENTAL-QA.md).
-
-> [!NOTE]
-> **Срез навигации: 9 октября 2026.** Канонические source/runtime факты,
-> версии Android, ограничения диагностики и будущий этап 20–30 устройств собраны
-> в [актуальном состоянии](operations/CURRENT-STATE.md). Каталог не выполняет
-> автоматическую проверку runtime; старые аудиты сохраняют собственные даты и
-> версии и не должны читаться как текущий deploy. [Правила актуальности](DOCUMENTATION.md).
-
-**Действующий реестр:** [50 работ и дополнения из чата](operations/WORK-STATUS.md)
-([JSON](operations/STATUS-REGISTRY.json)). **9 принято / 41 открыто**; legacy7 —
-пересекающийся отдельный аудит, не дополнительный остаток. Последняя установка
-UI d70f55c6 / API9ad3481c: server timings и browser failure snapshot сохранены.
-Frontend 1950 tests / 139 suites, types/build прошли; конечная проверка wording/контраста
-записана отдельно, idle reliability остаётся OPEN.
-PH011 idle timeout повторился; наблюдаемые server spans <25ms, причина OPEN.
-Исторический API d720232e прошёл все4CI, backend3387tests/233subtests;
-[его receipt](audits/2026-10-09/CONTINUOUS-SERVER-TIMINGS-INSTALLED.md).
-Историческая frontend1948tests/139suites desktop/phone приёмка сохраняет свои границы.
-Clock/recording приёмка сохранена как исторический receipt; CI/install/live не подменяют друг друга.
+[50 работ и требования из чата](operations/WORK-STATUS.md):9принято/41открыто;
+legacy7 пересекаются с этим планом. [Текущие версии](operations/CURRENT-STATE.md) ·
+[Прямой browser↔APK](design/BROWSER-DIRECT-TRANSPORT.md) ·
+[APK1.3 compatibility/release gates](design/APK-1.3-COMPATIBILITY-AND-RELEASE.md).
+Каталог документов не доказывает runtime или готовность всего парка.
+[Правила актуальности](DOCUMENTATION.md). Старые receipts ниже сохраняют свои даты.
 
 <details>
 <summary>Исторические checkpoints; для текущего результата используйте ссылки выше</summary>

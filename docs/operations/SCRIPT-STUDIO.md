@@ -1,29 +1,23 @@
 # Script Studio: инструкция по созданию и проверке сценариев
 
-**Проверенная установка:** UI `d70f55c6` / API `9ad3481c`.
+**Проверенная установка:** UI `369654a0` / API `369654a0`.
 
 **Действующий реестр работ:** [WORK-STATUS](WORK-STATUS.md) / [машинный статус](STATUS-REGISTRY.json).
 Source, установленный runtime и конечная приёмка разделены; старые snapshots ниже сохраняют свои даты.
 
-**Текущая установка9октября:** UI d70f55c6 / API9ad3481c. API-only direct echo pilot
-не открыл канал; прежний PH011 APK восстановлен, probe выключен, allowlist пуст.
-Новая source close/phase correction не установлена; native RTT/media/control не приняты.
-[Пилот и границы](../audits/2026-10-09/DIRECT-PROBE-PILOT.md). Повторный idle ACK timeout
-имеет отдельное сообщение; неизвестное касание по-прежнему блокирует input.
-Статус управления читаем на фоне видео в светлой теме. Frontend CI success:
-1950 tests / 139 suites, types/build. [Установка и конечная проверка](../audits/2026-10-09/IDLE-CONTROL-UX-INSTALLED.md).
-Диагностика под видео сохраняет последний снимок сбоя; её можно прокрутить и закрыть,
-панель прекращает polling после закрытия. Историческая desktop/phone приёмка UI86354350:
-[Приёмка панели](../audits/2026-10-09/STREAM-DIAGNOSTICS-INSTALLED-ACCEPTANCE.md).
-В API установлены ограниченные тайминги семи этапов. PH011 снова получила idle
-heartbeat timeout (510 мс, последний ACK RTT 256 мс); наблюдаемые серверные вызовы
-занимали менее 25 мс. Очереди, сеть и APK/native ещё не локализованы.
-Это диагностическое расширение, не исправление P1.
-[Установка API и сбой canary](../audits/2026-10-09/CONTINUOUS-SERVER-TIMINGS-INSTALLED.md).
-[Карта требований](../audits/2026-10-09/CHAT-CODE-RECONCILIATION.md).
-Clock fix1577e01e ранее установлен/принят в UI60be6ecd: mixed tap/XPath/tap/Back
-и graph transfer с паузами. Normal live gestures и recorded trajectory — разные возможности.
-[Историческая clock приёмка](../audits/2026-10-09/STUDIO-CLOCK-INSTALLED-ACCEPTANCE.md).
+**10 октября — broadcast исправлен и установлен.** На обоих адресах UI/API369;
+все4 exact-source CI success:3428 backend tests/252subtests,1966 frontend tests.
+Изолированный PostgreSQL/Redis test подтвердил202, commit и admission. На рабочем
+стенде ожидаемый404 после чтения presence проверен без запуска массовых действий.
+APK, schema/OTA и45соседних контейнеров сохранены при каждой установке.
+Idle control и direct transport остаются открытыми; probe выключен.
+[Установка, проверки и остаток](../audits/2026-10-10/BROADCAST-INSTALLED-ACCEPTANCE.md).
+
+Публично проверен существующий graphv1/3узла/2связи/Undo0 без изменения и
+каталог23сценария. Форма broadcast показывает14online и2волны, закрыта без отправки.
+Live gestures и recorded trajectory различаются: rich recorder/MOVE replay
+остаются открытыми. [ACK сравнение](../audits/2026-10-10/IDLE-LOCAL-PUBLIC-COMPARISON.md).
+Ниже — ранее принятые finite UI/recording checkpoints, не полная приёмка EP-018.
 
 **Responsive/navigation впервые приняты в UIec3f2267; последующие изменения не меняли этот код.**
 На телефоне используйте «Схема», «Действия», «Параметры», «Устройство»;
@@ -37,9 +31,9 @@ frontend1936tests/139suites, backend3346passed/37skipped/229subtests/80.72%.
 Recording сохраняет завершённые swipe endpoints, без continuous path и
 automatic pixel/XPath bundle. [Конечная приёмка и границы](../audits/2026-10-09/STUDIO-RESPONSIVE-INSTALLED-ACCEPTANCE.md).
 
-Актуализировано: **9 октября 2026**. Каталог `/scripts`, редактор
+Актуализировано: **10 октября 2026**. Каталог `/scripts`, редактор
 `/scripts/builder`, формат **DAG1.0**, React Flow, локальная ELK0.12.0.
-На 3015 и выбранном публичном адресе установлены frontend **d70f55c6** и API **9ad3481c**. Studio сохраняет
+На 3015 и выбранном публичном адресе установлены frontend/API **369654a0**. Studio сохраняет
 graph/action contract и диалог сохранности; текущие runtime границы фиксируются в
 [CURRENT-STATE](CURRENT-STATE.md). Обратная гонка XPath→Control исправлена;
 быстрый переход и повторный вход в дерево проверены на установленном UI.
@@ -128,13 +122,13 @@ drag узла и фокус на добавленном шаге сохраня�
 [Исходный PNG](../audits/2026-10-06/NATIVE-PNG-PIXEL-VERIFICATION.md).
 
 32 action forms и локальная проверка параметров доступны в установленном
-frontend. Текущий API9ad3481c сохраняет contract 1.0 и поле
+frontend. Текущий API369654a0 сохраняет contract 1.0 и поле
 `action_parameters_verified=true`; первая live приёмка API114775a историческая.
 Проверка принимает корректный draft и отклоняет неправильные типы или отсутствие
 обязательных параметров опубликованного action contract.
 Результат проверки явно сообщает contract 1.0 и отсутствие Android execution
-verification. Поведение конкретного APK проверяется отдельно. UI/API SHA
-различаются; это не автоматически означает несовместимость контракта.
+verification. Поведение конкретного APK проверяется отдельно. Совпадение UI/API SHA
+не доказывает Android execution или исправность всех сценариев.
 
 Первая доставка server contract зафиксирована в
 [исторической приёмке backend image](../audits/2026-10-07/REVIEWED-BACKEND-DELIVERY.md).

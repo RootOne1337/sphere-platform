@@ -1,21 +1,20 @@
 # Локальный стенд для совместного тестирования
 
-**Проверенная установка:** UI `d70f55c6` / API `9ad3481c`.
+**Проверенная установка:** UI `369654a0` / API `369654a0`.
 
-**Публичный веб, 9 октября:** действующий Tuna-host использует тот же
-UI d70f55c6, что 3015. [Текущая доставка](../audits/2026-10-09/IDLE-CONTROL-UX-INSTALLED.md). Это адресный Nginx opt-in к existing review stack; API/WS и
-bootstrap сохранены. Следующий UI rollout требует проверки обоих адресов.
-Другие tunnel hosts не обновлялись. [Доставка и ограничения](../audits/2026-10-09/PUBLIC-WEB-DELIVERY.md).
+**10 октября — broadcast исправлен и установлен.** На обоих адресах UI/API369;
+все4 exact-source CI success:3428 backend tests/252subtests,1966 frontend tests.
+Изолированный PostgreSQL/Redis test подтвердил202, commit и admission. На рабочем
+стенде ожидаемый404 после чтения presence проверен без запуска массовых действий.
+APK, schema/OTA и45соседних контейнеров сохранены при каждой установке.
+Idle control и direct transport остаются открытыми; probe выключен.
+[Установка, проверки и остаток](../audits/2026-10-10/BROADCAST-INSTALLED-ACCEPTANCE.md).
 
-**Текущие версии:** см. [CURRENT-STATE](CURRENT-STATE.md) и
-[реестр с датой наблюдения](STATUS-REGISTRY.json). UI d70f55c6 / API9ad3481c;
-PH011 APK10249 восстановлен после двух неудачных native direct echo попыток.
-Probe endpoint off/allowlist[]; media/control остаются server WS.
-[Пилот и конечный runtime receipt](../audits/2026-10-09/DIRECT-PROBE-PILOT.md).
-Конечная проверка wording/контраста не является
-приёмкой idle reliability или утверждением о версии всего парка.
-Ниже — исторические pilot checkpoints, включая доставку API 9 октября, 15:17 UTC.
-[Receipt установки API и повторного idle-сбоя](../audits/2026-10-09/CONTINUOUS-SERVER-TIMINGS-INSTALLED.md).
+Действующий Tuna-host и3015 используют одну паруUI/API369. Public map и
+API/WS/bootstrap routes сохранены; PH011 снова online после API replacement.
+Direct endpoint off/allowlist[], APK1.2.49-dev/10249 не менялся.
+[Текущая сверка](CURRENT-STATE.md) / [реестр](STATUS-REGISTRY.json).
+Ниже сохранены исторические pilot checkpoints и ограничения их собственных окон.
 
 > **Документационный указатель, 1 октября 2026:** фактические текущие версии
 > исходников, последний записанный remote canary и границы live-проверки собраны

@@ -1,0 +1,321 @@
+{
+  "schemaVersion": 1,
+  "observedAtUtc": "2026-10-09T21:51:32.755048+00:00",
+  "runtimeInstalled": true,
+  "scope": "Installed binary presence/required broadcast response correction; finite negative live HTTP path and browser read/cancel only. No live broadcast execution, idle/direct/fleet/soak acceptance.",
+  "runtime": {
+    "sourceRevision": "369654a0be4bded35e299062badc9bfe95101f1e",
+    "apiSourceRevision": "369654a0be4bded35e299062badc9bfe95101f1e",
+    "uiContainer": {
+      "id": "ab99e502bd25ba176c485847ccedaff1933495c4533b25c2111a4e31b34792f6",
+      "imageId": "sha256:aab964f9218f3911f4f35f4aec8ed63898cbf673a7a4c122c01b3016b65e94bb",
+      "imageTag": "sphere-review-frontend:369654a0be4bded35e299062badc9bfe95101f1e",
+      "startedAt": "2026-10-09T21:35:07.521123551Z",
+      "status": "running"
+    },
+    "apiContainer": {
+      "id": "d80254ff806a3bab34471185e4dad9f300dbca4b82e5bd44c57c91eca8254a0f",
+      "imageId": "sha256:200158af913b64388c41a173b1aca781d2391b5bfadc90d5e794f08a61845499",
+      "imageTag": "sphere-reviewed-backend:369654a0be4bded35e299062badc9bfe95101f1e",
+      "startedAt": "2026-10-09T21:46:27.920139598Z",
+      "status": "running"
+    },
+    "schemaHeads": [
+      "20261006_script_catalog_metadata"
+    ],
+    "schemaMigrationPerformed": false,
+    "otaCatalogSha256": "5d5dcb5521277b51f366ea5370a2f7df5fd62696de0d5b7b86a56b443b03af10",
+    "otherContainersPreservedPerInstallation": 45,
+    "containerCount": 46,
+    "apkChanged": false,
+    "pilotApk": {
+      "device": "PH011",
+      "version": "1.2.49-dev",
+      "versionCode": 10249,
+      "scope": "One selected device, not fleet inventory"
+    },
+    "directProbeEnabled": false,
+    "directProbeDeviceIds": [],
+    "publicHostMapChanged": false,
+    "apiWsBootstrapRoutesChanged": false
+  },
+  "delivery": {
+    "ui": {
+      "sourceRevision": "369654a0be4bded35e299062badc9bfe95101f1e",
+      "runId": 37993531687,
+      "imageId": "sha256:2d09da217fd9b82603e19b958d5fb276cef725aba18a978258eba57904033526",
+      "archiveBytes": 120888747,
+      "previousUi": {
+        "id": "bce05a6ec43b0fef913e499bd5e63261d98e0b11185e3d4d52d0aad6e50b3e62",
+        "imageId": "sha256:f30a661aea04c79758458f02ce73f6e58f9445232734916b5cc4e9360159864b",
+        "imageTag": "sphere-review-frontend:d70f55c6de36a01801af201ea4d6ca42bff53549",
+        "startedAt": "2026-10-09T16:58:35.324774492Z",
+        "status": "running"
+      },
+      "containerCount": 46,
+      "observedAtUtc": "2026-10-09T21:34:38.325762+00:00",
+      "resourceFindings": [],
+      "applyRequested": true,
+      "onlyUiImageAndBuildRemovalDelta": true,
+      "backendPreserved": true,
+      "previousComposeFileCount": 2,
+      "candidateComposeFileCount": 2,
+      "completeBaselineRoundtripVerified": true,
+      "otaCatalogSha256": "5d5dcb5521277b51f366ea5370a2f7df5fd62696de0d5b7b86a56b443b03af10",
+      "reportDirectory": "C:\\Users\\dimas\\Documents\\ChatGPT\\sphere-platform\\.local-pilot\\reviewed-web-install-369654a0be4b-01797ace",
+      "runtimeInstalled": true,
+      "loadedImageId": "sha256:aab964f9218f3911f4f35f4aec8ed63898cbf673a7a4c122c01b3016b65e94bb",
+      "installedUi": {
+        "id": "ab99e502bd25ba176c485847ccedaff1933495c4533b25c2111a4e31b34792f6",
+        "imageId": "sha256:aab964f9218f3911f4f35f4aec8ed63898cbf673a7a4c122c01b3016b65e94bb",
+        "imageTag": "sphere-review-frontend:369654a0be4bded35e299062badc9bfe95101f1e",
+        "startedAt": "2026-10-09T21:35:07.521123551Z",
+        "status": "running"
+      },
+      "otherContainersPreserved": 45,
+      "browserVerified": false
+    },
+    "api": {
+      "sourceRevision": "369654a0be4bded35e299062badc9bfe95101f1e",
+      "runId": 37993531649,
+      "imageId": "sha256:ca33376383d9ddb0bb9596dcb4a465d29192ae801d7f17d227f6d46cf7100cdd",
+      "archiveBytes": 236273409,
+      "previousBackend": {
+        "id": "058b03a52c16bc66ea530b1f5a4de41147d1c47e4ee8e7fc2b169f09ee35a3b9",
+        "imageId": "sha256:73ea8abcff6b3d4cb67c82a997e8f09da11c9313311dc44982348af2e928323b",
+        "imageTag": "sphere-reviewed-backend:9ad3481c1173fdd508b43d0314ec6cf6ffbade1d",
+        "startedAt": "2026-10-09T18:20:38.819449786Z",
+        "status": "running"
+      },
+      "sourceChanges": [
+        "backend/Dockerfile",
+        "backend/api/v1/batches/router.py",
+        "backend/api/ws/direct/router.py",
+        "backend/database/redis_client.py",
+        "backend/services/batch_service.py"
+      ],
+      "schemaHeads": [
+        "20261006_script_catalog_metadata"
+      ],
+      "schemaMigrationPerformed": false,
+      "resourceFindings": [],
+      "observedAtUtc": "2026-10-09T21:45:47.483088+00:00",
+      "applyRequested": true,
+      "previousComposeFileCount": 2,
+      "candidateComposeFileCount": 2,
+      "completeBaselineRoundtripVerified": true,
+      "directProbeDevice": null,
+      "directProbeMediaControlEnabled": false,
+      "directProbeExplicitlyDisabled": true,
+      "otaCatalogSha256": "5d5dcb5521277b51f366ea5370a2f7df5fd62696de0d5b7b86a56b443b03af10",
+      "reportDirectory": "C:\\Users\\dimas\\Documents\\ChatGPT\\sphere-platform\\.local-pilot\\reviewed-backend-install-369654a0be4b-10cd5f77",
+      "runtimeInstalled": true,
+      "loadedImageId": "sha256:200158af913b64388c41a173b1aca781d2391b5bfadc90d5e794f08a61845499",
+      "installedBackend": {
+        "id": "d80254ff806a3bab34471185e4dad9f300dbca4b82e5bd44c57c91eca8254a0f",
+        "imageId": "sha256:200158af913b64388c41a173b1aca781d2391b5bfadc90d5e794f08a61845499",
+        "imageTag": "sphere-reviewed-backend:369654a0be4bded35e299062badc9bfe95101f1e",
+        "startedAt": "2026-10-09T21:46:27.920139598Z",
+        "status": "running"
+      },
+      "otherContainersPreserved": 45,
+      "liveContractVerified": false,
+      "agentReconnectVerified": false
+    },
+    "downloads": {
+      "web": {
+        "sourceRevision": "369654a0be4bded35e299062badc9bfe95101f1e",
+        "artifactId": 11645858028,
+        "runId": 37993531687,
+        "zipBytes": 120891698,
+        "zipSha256": "368ec4fa0cbf455f60daaad4fbe37e68bf4f7c6a3fe65c6002437708c558bcc4",
+        "runtimeInstalled": false,
+        "elapsedSeconds": 163.95
+      },
+      "backend": {
+        "sourceRevision": "369654a0be4bded35e299062badc9bfe95101f1e",
+        "artifactId": 11645718243,
+        "runId": 37993531649,
+        "zipBytes": 236275041,
+        "zipSha256": "71f3f299de15783cac0760b14dff115dc6395900b1c7291fe226529765197022",
+        "runtimeInstalled": false,
+        "elapsedSeconds": 304.5
+      }
+    },
+    "duplicateDownloadCleanup": {
+      "ObservedAtUtc": "2026-10-09T21:44:51.3193116Z",
+      "Files": [
+        {
+          "Path": "C:\\Users\\dimas\\Documents\\ChatGPT\\sphere-platform\\.local-pilot\\direct-probe-20261010\\backend-ci-2550a61b.zip",
+          "Bytes": 236265211
+        },
+        {
+          "Path": "C:\\Users\\dimas\\Documents\\ChatGPT\\sphere-platform\\.local-pilot\\direct-probe-20261010\\backend-ci-2550a61b\\image.tar.gz",
+          "Bytes": 236263579
+        },
+        {
+          "Path": "C:\\Users\\dimas\\Documents\\ChatGPT\\sphere-platform\\.local-pilot\\direct-probe-20261010\\backend-ci-369654a0.zip",
+          "Bytes": 236275041
+        },
+        {
+          "Path": "C:\\Users\\dimas\\Documents\\ChatGPT\\sphere-platform\\.local-pilot\\direct-probe-20261010\\web-ci-369654a0.zip",
+          "Bytes": 120891698
+        }
+      ],
+      "Bytes": 829695529.0,
+      "Scope": "Own duplicate downloads and superseded uninstalled candidate archive; admitted current archives and rollback images preserved",
+      "DockerPrune": false
+    },
+    "dockerBuildPerformed": false,
+    "dockerPrunePerformed": false,
+    "loadedImageIdentityVerifiedByInstaller": true,
+    "note": "CI archive image IDs and loaded containerd IDs intentionally retained separately; config/manifest relation verified by installer"
+  },
+  "ci": {
+    "exactSource": "369654a0be4bded35e299062badc9bfe95101f1e",
+    "runs": [
+      {
+        "conclusion": "success",
+        "databaseId": 37993531556,
+        "headSha": "369654a0be4bded35e299062badc9bfe95101f1e",
+        "name": "Preview — Deploy",
+        "status": "completed"
+      },
+      {
+        "conclusion": "success",
+        "databaseId": 37993531687,
+        "headSha": "369654a0be4bded35e299062badc9bfe95101f1e",
+        "name": "CI — Frontend",
+        "status": "completed"
+      },
+      {
+        "conclusion": "success",
+        "databaseId": 37993531643,
+        "headSha": "369654a0be4bded35e299062badc9bfe95101f1e",
+        "name": "CI — Android",
+        "status": "completed"
+      },
+      {
+        "conclusion": "success",
+        "databaseId": 37993531649,
+        "headSha": "369654a0be4bded35e299062badc9bfe95101f1e",
+        "name": "CI — Backend",
+        "status": "completed"
+      }
+    ],
+    "backend": {
+      "passed": 3428,
+      "skipped": 37,
+      "subtestsPassed": 252,
+      "coveragePercent": 80.94
+    },
+    "frontend": {
+      "tests": 1966,
+      "suites": 142,
+      "pages": 26,
+      "assets": 73
+    },
+    "isolatedRealBroadcast202CommitAdmissionPassed": true
+  },
+  "live": {
+    "observedAtUtc": "2026-10-09T21:46:58.463603+00:00",
+    "requestsStartedUtc": "2026-10-09T21:46:56.079458+00:00",
+    "sourceRevision": "369654a0be4bded35e299062badc9bfe95101f1e",
+    "reads": [
+      {
+        "origin": "http://127.0.0.1:3015",
+        "healthStatus": 200,
+        "buildSource": "369654a0be4bded35e299062badc9bfe95101f1e",
+        "missingScriptVerified": true,
+        "broadcastStatus": 404,
+        "broadcastDetail": "Script not found",
+        "requestMs": 12.16,
+        "deviceName": "auto-ph-011",
+        "deviceStatus": "online",
+        "androidInputSent": false
+      },
+      {
+        "origin": "https://sphere-agent-canary-20260927.ru.tuna.am",
+        "healthStatus": 200,
+        "buildSource": "369654a0be4bded35e299062badc9bfe95101f1e",
+        "missingScriptVerified": true,
+        "broadcastStatus": 404,
+        "broadcastDetail": "Script not found",
+        "requestMs": 245.22,
+        "deviceName": "auto-ph-011",
+        "deviceStatus": "online",
+        "androidInputSent": false
+      }
+    ],
+    "probeDisabled": {
+      "code": 4003,
+      "reason": "direct_probe_disabled",
+      "jwtSent": false
+    },
+    "apiContainer": {
+      "id": "d80254ff806a3bab34471185e4dad9f300dbca4b82e5bd44c57c91eca8254a0f",
+      "image": "sha256:200158af913b64388c41a173b1aca781d2391b5bfadc90d5e794f08a61845499",
+      "startedAtUtc": "2026-10-09T21:46:27.920139598Z"
+    },
+    "otaCatalogSha256": "5d5dcb5521277b51f366ea5370a2f7df5fd62696de0d5b7b86a56b443b03af10",
+    "scope": "Invalid script after real presence resolution; no durable intent or Android execution requested. Real committed HTTP202 verified in isolated CI.",
+    "boundedLogCheck": {
+      "linesRead": 6,
+      "tailLimit": 2000,
+      "broadcastUnhandledErrors": 0,
+      "rawLogsPublished": false
+    }
+  },
+  "browser": {
+    "observedAtUtc": "2026-10-09T21:49:25.808Z",
+    "finiteAccepted": true,
+    "scope": "Catalog/graph/broadcast form read and cancel only; no graph mutation, durable intent or Android input",
+    "sourceRevision": "369654a0be4bded35e299062badc9bfe95101f1e",
+    "apiSourceRevision": "369654a0be4bded35e299062badc9bfe95101f1e",
+    "catalogCount": 23,
+    "existingGraph": {
+      "version": 1,
+      "nodes": 3,
+      "edges": 2,
+      "undo": 0,
+      "mutated": false
+    },
+    "broadcastForm": {
+      "onlineDevices": 14,
+      "waveSize": 10,
+      "waveDelayMs": 5000,
+      "priority": 5,
+      "submitted": false,
+      "cancelled": true
+    },
+    "css": {
+      "originalChunkRenderedStylesheet": true,
+      "preloadAs": "style",
+      "warningReproduced": false,
+      "rootCause": "UNKNOWN"
+    },
+    "consoleWarningsErrors": [],
+    "screenshot": ".local-pilot/direct-probe-20261010/public-graph-installed-3696.png",
+    "idleReliabilityAccepted": false,
+    "directAccepted": false
+  },
+  "open": {
+    "idleControlReliability": "REPRODUCED_OPEN; public 512ms HEARTBEAT fault, last ACK487ms; consecutive local ACK244ms, not latency attribution proof",
+    "directMediaControl": "NOT_ACCEPTED; disabled; installed diagnostics need new authorized native canary",
+    "cssPreloadCause": "UNKNOWN; no warning reproduced in finite route check",
+    "broadcastResiduals": [
+      "idempotency/lost-response reconciliation",
+      "unknown Redis admission",
+      "over1000 targets",
+      "expected version UI",
+      "success toast wording"
+    ],
+    "wholePcWriter": "UNKNOWN; limited observer separately running; own downloads do not constitute unexplained growth",
+    "productCounts": {
+      "acceptedRecordedScope": 9,
+      "open": 41
+    },
+    "legacyUnclosed": 7
+  },
+  "worktreeScope": "Foreign tracked Prometheus configuration left untouched; no whole-worktree cleanliness attestation"
+}

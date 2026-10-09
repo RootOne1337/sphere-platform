@@ -1,10 +1,10 @@
 # Актуальность документации
 
-**Проверенная установка:** UI `d70f55c6` / API `9ad3481c`.
+**Проверенная установка:** UI `369654a0` / API `369654a0`.
 
 [Каталог](README.md) · [Readiness](operations/READINESS.md) · [Contributing](../CONTRIBUTING.md)
 
-**Последняя сверка статусов и навигации:9октября2026 (UTC+5).**
+**Последняя сверка статусов и навигации:10октября2026 (UTC+5).**
 Действующие источники: [WORK-STATUS](operations/WORK-STATUS.md),
 [STATUS-REGISTRY.json](operations/STATUS-REGISTRY.json),
 [CURRENT-STATE](operations/CURRENT-STATE.md). Датированные аудиты остаются

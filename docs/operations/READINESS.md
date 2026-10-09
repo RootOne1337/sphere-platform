@@ -1,43 +1,26 @@
 # Эксплуатационная готовность Sphere
 
-**Проверенная установка:** UI `d70f55c6` / API `9ad3481c`.
+**Проверенная установка:** UI `369654a0` / API `369654a0`.
 
-**Native pilot: FAILED_HOST_ICE_CLEANED_UP.** Две попытки подтвердили JNI и
-публикацию SDP answer, но не direct connection/RTT. Прежний PH011 APK восстановлен,
-probe выключен, allowlist пуст. API9ad установлен; UI d70 и прежний server WS путь
-сохранены. Source close/phase corrections ещё не установлены, новый CI — отдельный gate.
-[Конечное доказательство и незакрытые критерии](../audits/2026-10-09/DIRECT-PROBE-PILOT.md).
+**10 октября — broadcast исправлен и установлен.** На обоих адресах UI/API369;
+все4 exact-source CI success:3428 backend tests/252subtests,1966 frontend tests.
+Изолированный PostgreSQL/Redis test подтвердил202, commit и admission. На рабочем
+стенде ожидаемый404 после чтения presence проверен без запуска массовых действий.
+APK, schema/OTA и45соседних контейнеров сохранены при каждой установке.
+Idle control и direct transport остаются открытыми; probe выключен.
+[Установка, проверки и остаток](../audits/2026-10-10/BROADCAST-INSTALLED-ACCEPTANCE.md).
 
-**Direct transport: PROTOTYPE_SOURCE, не production acceptance.** Разрешён RTT-only
-debug canary; feature flag, явный allowlist устройств и native generation/TTL fences
-сохраняют изоляцию. Live browser↔APK RTT, native resource cleanup, media/control,
-TURN и полная network matrix не приняты. [Scope и gates](../audits/2026-10-09/DIRECT-PROBE-SOURCE.md).
-
-**Действующий реестр работ:** [WORK-STATUS](WORK-STATUS.md) / [машинный статус](STATUS-REGISTRY.json).
-Source, установленный runtime и конечная приёмка разделены; старые snapshots ниже сохраняют свои даты.
-
-**Навигация обновлена: 9 октября 2026. Исторические live-снимки ниже сохранены по датам.**
-
-[Текущая сверка чата, всех 50 критериев и реализации](../audits/2026-10-09/CHAT-CODE-RECONCILIATION.md)
-связывает исходники с последующими приёмками. **9 принято / 41 открыто** —
-продуктовый план; **34 source-fixed / 7 незакрытых** — последний записанный
-остаток старого веб-аудита. Эти счётчики нельзя объединять. UI d70f55c6 / API9ad3481c
-доступны через 3015 и выбранный публичный адрес; API-only pilot/disable проверены локально.
-Предыдущая конечная проверка точного idle wording
-и контраста статуса принята; задержка и повторный idle timeout не устранены.
-Frontend CI success: 1950 tests / 139 suites, types/build.
-[Исторический UI-only receipt](../audits/2026-10-09/IDLE-CONTROL-UX-INSTALLED.md).
-Историческая desktop/phone приёмка bounded failure snapshot/панели UI86354350:
-[Установка и границы](../audits/2026-10-09/STREAM-DIAGNOSTICS-INSTALLED-ACCEPTANCE.md).
-Backend-only доставка таймингов отдельно прошла все четыре exact-source CI;
-3387 backend tests / 37 skips / 233 subtests и full hosted Ruff/mypy прошли.
-Повторный idle canary завершился тайм-аутом 510 мс при наблюдаемых server spans <25 мс;
-это диагностический результат, не приёмка надёжности управления.
-[Installed timing receipt](../audits/2026-10-09/CONTINUOUS-SERVER-TIMINGS-INSTALLED.md).
-Ранее принята finite clock/recording correction, не весь EP-018. Idle receipt
-failure снова подтверждён; global input arbitration, rich recorder и resource
-acceptance OPEN. Limited host observer работает до10Oct12:42:57UTC; прежний gap
-и whole-PC writer/VSS/USN/ETW attribution не покрыты. Reboot/deadline прекращают сбор.
+**Открытые gates:** повторяемый idle timeout через домен, native direct ICE/RTT,
+media/control/network matrix, rich recorder, global ownership и resource soak.
+Локальная готовность не доказывает public latency. CSS warning не воспроизведён;
+его причина неизвестна. [ACK сравнение](../audits/2026-10-10/IDLE-LOCAL-PUBLIC-COMPARISON.md).
+Native pilot9октября FAILED_HOST_ICE_CLEANED_UP остаётся отрицательным доказательством.
+APK PH0111.2.49-dev/10249, новый stable1.3 не выпущен.
+[Release gates](../design/APK-1.3-COMPATIBILITY-AND-RELEASE.md).
+Limited observer возобновлён9Oct21:09UTC до10Oct12:41UTC; прежний разрыв и
+VSS/USN/ETW writer attribution не покрыты. [Continuity](../audits/2026-10-10/STORAGE-OBSERVER-CONTINUITY.md).
+**9принято/41открыто**, legacy34source-fixed/7unclosed — разные счётчики.
+[Реестр](WORK-STATUS.md) / [машинный статус](STATUS-REGISTRY.json).
 
 ## История измерений и установок
 
