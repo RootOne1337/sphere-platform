@@ -17,10 +17,11 @@
 
 **Действующий реестр:** [50 работ и дополнения из чата](operations/WORK-STATUS.md)
 ([JSON](operations/STATUS-REGISTRY.json)). **9 принято / 41 открыто**; legacy7 —
-пересекающийся отдельный аудит, не дополнительный остаток. Последняя записанная
-установка UI60be6ecd/APIbe803773; clock fix1577e01e installed и finite PH011
-recording accepted. [Receipt](audits/2026-10-09/STUDIO-CLOCK-INSTALLED-ACCEPTANCE.md).
-Установка/CI/конечная приёмка не подменяют друг друга.
+пересекающийся отдельный аудит, не дополнительный остаток. Последняя установка
+UI86354350/APIbe803773: failure snapshot и desktop/phone diagnostics приняты в
+конечном scope; idle timeout причина OPEN. Frontend CI success; статусы API/APK CI в receipt,
+frontend1948tests/139suites. [Receipt](audits/2026-10-09/STREAM-DIAGNOSTICS-INSTALLED-ACCEPTANCE.md).
+Clock/recording приёмка сохранена как исторический receipt; CI/install/live не подменяют друг друга.
 
 <details>
 <summary>Исторические checkpoints; для текущего результата используйте ссылки выше</summary>

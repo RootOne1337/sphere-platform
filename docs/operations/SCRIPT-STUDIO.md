@@ -3,15 +3,19 @@
 **Действующий реестр работ:** [WORK-STATUS](WORK-STATUS.md) / [машинный статус](STATUS-REGISTRY.json).
 Source, установленный runtime и конечная приёмка разделены; старые snapshots ниже сохраняют свои даты.
 
-**Сверка9октября:** [полная карта требований и границ реализации](../audits/2026-10-09/CHAT-CODE-RECONCILIATION.md).
-Source1577e01e устраняет смешение часов XPath/input в очереди; UI60be6ecd
-установлен на3015, APIbe803773 сохранён. PH011 tap→planned XPath→tap→Back
-проверен:4строки и явный graph transfer с паузами. Все4CI success, frontend1938
-tests/139suites. Normal live gestures и recorded trajectory — разные возможности.
-[Установка и конечная приёмка](../audits/2026-10-09/STUDIO-CLOCK-INSTALLED-ACCEPTANCE.md).
-[Воспроизведение и correction receipt](../audits/2026-10-09/STUDIO-RECORDER-CLOCK-FIX.md).
+**Текущая установка9октября:** UI86354350/APIbe803773. Диагностика под видео
+показывает последний снимок сбоя управления; её можно прокрутить и закрыть,
+панель прекращает polling после закрытия. Desktop/phone finite acceptance и
+frontend CI success; статусы API/APK CI в receipt, frontend1948tests/139suites.
+[Installed receipt](../audits/2026-10-09/STREAM-DIAGNOSTICS-INSTALLED-ACCEPTANCE.md).
+Новый PH011 idle heartbeat timeout подтверждён с tick/buffer/ACK timings,
+участок задержки ещё неизвестен. Это диагностическое расширение, не исправление P1.
+[Карта требований](../audits/2026-10-09/CHAT-CODE-RECONCILIATION.md).
+Clock fix1577e01e ранее установлен/принят в UI60be6ecd: mixed tap/XPath/tap/Back
+и graph transfer с паузами. Normal live gestures и recorded trajectory — разные возможности.
+[Историческая clock приёмка](../audits/2026-10-09/STUDIO-CLOCK-INSTALLED-ACCEPTANCE.md).
 
-**Responsive/navigation из предыдущего UIec3f2267 сохранён в установленном60be6ecd.**
+**Responsive/navigation из предыдущего UIec3f2267 сохранён в установленном86354350.**
 На телефоне используйте «Схема», «Действия», «Параметры», «Устройство»;
 импорт/экспорт/направление/упорядочивание/запуск доступны через «Ещё».
 Desktop библиотека остаётся доступной рядом с лабораторией. Скрытие устройства
@@ -25,7 +29,7 @@ automatic pixel/XPath bundle. [Конечная приёмка и границы
 
 Актуализировано: **9 октября 2026**. Каталог `/scripts`, редактор
 `/scripts/builder`, формат **DAG1.0**, React Flow, локальная ELK0.12.0.
-На3015 установлены frontend **60be6ecd** и API **be803773**. Studio сохраняет
+На3015 установлены frontend **86354350** и API **be803773**. Studio сохраняет
 graph/action contract и диалог сохранности; текущие runtime границы фиксируются в
 [CURRENT-STATE](CURRENT-STATE.md). Обратная гонка XPath→Control исправлена;
 быстрый переход и повторный вход в дерево проверены на установленном UI.

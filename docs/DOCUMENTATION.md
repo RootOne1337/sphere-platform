@@ -29,6 +29,9 @@ closures, отдельные legacy7, ссылки требований, hashes 
 покрытие tracked Markdown и обязательные current pointers. Его успех означает
 consistency записанных документов, а не исправность Android. После нового
 Markdown обновите inventory; после установки обновите runtime observation/evidence.
+Действующий installed receipt также связан с реестром normalized SHA-256,
+точными UI/API revisions и признаками installation/finite acceptance; новая
+доставка проверяется независимо от списка прежних completedCorrections.
 
 ## Порядок закрытия и supersession
 
@@ -39,6 +42,10 @@ Source clock receipt1577e01e хранит прежнюю source-only грани�
 [доставка60be6ecd](audits/2026-10-09/STUDIO-CLOCK-INSTALLED-ACCEPTANCE.md) принята
 отдельно: completedCorrections содержит её normalized SHA и точный installed SHA.
 Исторический source receipt не переписывается ради нового installed статуса.
+Последний UI86354350 имеет отдельный [installed receipt](audits/2026-10-09/STREAM-DIAGNOSTICS-INSTALLED-ACCEPTANCE.md):
+диагностика и её компоновка приняты в конечном scope, idle failure остаётся OPEN.
+391/392/393 Markdown в датированных snapshots относятся к своим source revisions;
+действующее покрытие берётся из DOCUMENT-INVENTORY.json.
 Каждая приёмка указывает версии, время, устройства, сценарий, длительность и
 ограничения; unknown/rejected outcomes сохраняются рядом с успехами.
 

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import copy
+import json
 import tempfile
 import unittest
 from pathlib import Path
@@ -14,6 +15,7 @@ from scripts.check_documentation_status import (
     local_link_errors,
     normalized_hash,
     read_json,
+    validate_installed_receipt,
     validate_inventory,
     validate_registry,
     validate_status_report,
@@ -78,7 +80,49 @@ class DocumentationStatusTests(unittest.TestCase):
 
     def test_current_installed_ui_cannot_drift_from_referenced_receipt(self) -> None:
         self.registry["installed"]["ui"] = "0" * 40
-        self.assertIn("Installed UI does not match referenced correction receipt", validate_registry(ROOT, self.registry))
+        self.assertIn("Installed UI does not match referenced observation receipt", validate_registry(ROOT, self.registry))
+
+    def test_current_installed_api_cannot_drift_from_referenced_receipt(self) -> None:
+        self.registry["installed"]["api"] = "0" * 40
+        self.assertIn("Installed API does not match referenced observation receipt", validate_registry(ROOT, self.registry))
+
+    def test_current_installed_receipt_fingerprint_is_required(self) -> None:
+        self.registry["installed"]["evidenceSha256NormalizedLf"] = "0" * 64
+        self.assertIn("Installed observation receipt fingerprint mismatch", validate_registry(ROOT, self.registry))
+
+    def test_current_installed_receipt_must_exist(self) -> None:
+        self.registry["installed"]["evidence"] = "missing-install-receipt.json"
+        self.assertIn("Installed observation receipt is missing", validate_registry(ROOT, self.registry))
+
+    def test_current_source_identity_does_not_prove_installation_or_acceptance(self) -> None:
+        installed = copy.deepcopy(self.registry["installed"])
+        original = read_json(ROOT, installed["evidence"])
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            installed["evidence"] = "receipt.json"
+            for field in ("runtimeInstalled", "finiteAccepted"):
+                with self.subTest(field=field):
+                    receipt = copy.deepcopy(original)
+                    target = receipt if field == "runtimeInstalled" else receipt["browser"]
+                    target[field] = False
+                    path = root / installed["evidence"]
+                    path.write_text(json.dumps(receipt), encoding="utf-8")
+                    installed["evidenceSha256NormalizedLf"] = normalized_hash(path)
+                    self.assertIn("Installed observation lacks installed finite acceptance",
+                                  validate_installed_receipt(root, installed))
+
+    def test_malformed_current_installed_receipt_reports_an_error(self) -> None:
+        installed = copy.deepcopy(self.registry["installed"])
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            installed["evidence"] = "receipt.json"
+            path = root / installed["evidence"]
+            for text in ("{", "[]"):
+                with self.subTest(text=text):
+                    path.write_text(text, encoding="utf-8")
+                    installed["evidenceSha256NormalizedLf"] = normalized_hash(path)
+                    self.assertEqual(validate_installed_receipt(root, installed),
+                                     ["Installed observation receipt is not valid JSON"])
 
     def test_legacy_duplicate_does_not_inflate_count(self) -> None:
         self.registry["legacy"]["open"].append("F32")

@@ -32,12 +32,15 @@ L — несколько слоёв/проверок, XL — новая подс
    UNKNOWN: VSS/USN/kernel evidence недоступны. Большой VHD не доказывает writer;
    reboot/deadline останавливают сбор, resource soak/retention ещё нужны.
    [Окно и границы](../audits/2026-10-09/STORAGE-OBSERVER-RESTART.md).
-2. **Idle control (EP-020/029):** повторился native_receipt_timeout. Работающее
-   видео не гарантирует, что следующий input будет исполнен. Нужны коррелированные
-   bounded timings, исправление и повторная canary; увеличение timeout само по себе не приёмка.
+2. **Idle control (EP-020/029):** PH011 native_receipt_timeout повторился
+   с heartbeat512ms/tick15ms/WS OPEN0B/lastACK RTT248ms. Снимок сохраняет
+   доказательство, участок задержки server/APK/native/reverse path пока неизвестен.
+   UI86354350 установил snapshot и доступную desktop/phone панель диагностики.
+   Deadline/replay не менялись; необходимы корреляция, исправление и повторная canary.
+   [Receipt и границы](../audits/2026-10-09/STREAM-DIAGNOSTICS-INSTALLED-ACCEPTANCE.md).
 3. **Общий владелец input (EP-017/020):** Redis lease для continuous viewer существует;
    согласование viewer/task/API/scheduler и неизвестных результатов во всех комбинациях не принято.
-4. **Rich recorder (EP-018):** clock fix1577e01e уже установлен в UI60be6ecd;
+4. **Rich recorder (EP-018):** clock fix1577e01e сохранён в UI86354350;
    PH011 mixed tap/XPath/tap/Back и перенос в граф приняты в конечном scope.
    Следующий объём — trajectory/context/Unicode/IME; EP-018 остаётся OPEN/PARTIAL.
 

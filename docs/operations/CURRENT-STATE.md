@@ -7,7 +7,15 @@ Source, установленный runtime и конечная приёмка р
 **Область:** исходники и документация ветки PR #19, записанные runtime-наблюдения, Android APK и готовность следующего прогона.<br />
 **Канонический документ текущего состояния:** этот файл. Исторические отчёты ниже сохраняют исходные даты и факты.
 
-**9 октября — сверка чата, документов и кода:** [актуальная карта всех 50 пунктов](../audits/2026-10-09/CHAT-CODE-RECONCILIATION.md)
+**9 октября — последняя UI-only установка: 86354350/APIbe803773.**
+Failure snapshot и доступная desktop/phone диагностика установлены; frontend exact-source
+CI success, frontend1948tests/139suites. 45other containers/schema/OTA/APK сохранены.
+На предыдущем UI0b321d49 PH011 idle failure снова подтверждён: heartbeat512ms,
+tick15ms, last ACK RTT248ms, WS OPEN/0B, без касаний/terminal. Причина OPEN,
+настройки deadline и replay не изменены. Graphv1/3узла/2связи/Undo0, queue0 сохранены.
+[Установка, приёмка и границы](../audits/2026-10-09/STREAM-DIAGNOSTICS-INSTALLED-ACCEPTANCE.md).
+
+**Предыдущая сверка9октября — чат, документы и код:** [актуальная карта всех 50 пунктов](../audits/2026-10-09/CHAT-CODE-RECONCILIATION.md)
 и [машинный ledger с SHA-256](../audits/2026-10-09/CHAT-CODE-RECONCILIATION.json).
 Продуктовый объём остаётся **9 принято / 41 открыто**. Старый веб-аудит отдельно:
 последний записанный срез **34 source-fixed / 7 незакрытых**, включая F32/F33/F39

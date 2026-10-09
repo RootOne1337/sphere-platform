@@ -17,11 +17,13 @@
 
 **Действующий статус — 9 октября 2026:** [реестр работ и требований](docs/operations/WORK-STATUS.md)
 разделяет **9 принятых / 41 открытую работу** и старые семь незакрытых findings.
-Последняя проверенная установка: UI **60be6ecd**, API **be803773** на3015;
-clock fix **1577e01e** установлен, PH011 mixed recording и graph transfer
-приняты в конечном scope. [Доказательства](docs/audits/2026-10-09/STUDIO-CLOCK-INSTALLED-ACCEPTANCE.md). Непрерывное
-управление принято на PH011 в конечном scope; запись MOVE/context, idle receipt
-failure и resource coverage остаются открытыми.
+Последняя проверенная установка: UI **86354350**, API **be803773** на3015.
+Диагностика управления сохраняет снимок сбоя; панель доступна вне обрезаемого
+видеоблока на ПК и телефоне. Frontend CI success; статусы API/APK CI в receipt, frontend1948tests/139suites.
+[Установка и границы](docs/audits/2026-10-09/STREAM-DIAGNOSTICS-INSTALLED-ACCEPTANCE.md).
+Clock correction и PH011 mixed recording ранее приняты в конечном scope;
+idle receipt failure вновь подтверждён, его причина и whole-PC writer ещё UNKNOWN.
+Rich recorder, global ownership и ресурсная приёмка остаются открытыми.
 [Runtime и доказательства](docs/operations/CURRENT-STATE.md) · [Правила документации](docs/DOCUMENTATION.md).
 
 <details>
@@ -543,11 +545,11 @@ identity, доверенный ключ и параметры enrollment; APK и
 ## 🔬 Состояние проекта и границы проверки
 
 **Действующий срез9октября:** [реестр50работ и15дополнений из чата](docs/operations/WORK-STATUS.md)
-и [runtime evidence](docs/operations/CURRENT-STATE.md). UI60be6ecd/APIbe803773:
-recorder clock fix установлен; finite PH011 mixed запись и перенос приняты. Exact60be6ecd
-Backend/Frontend/Android/Preview CI завершились успешно; новые revisions имеют
-собственные проверки. Product9/41 и legacy34/7 — разные scopes. Работающий
-online badge или finite canary не закрывают resource/idle/ownership и Fleet32 gates.
+и [runtime evidence](docs/operations/CURRENT-STATE.md). UI86354350/APIbe803773:
+bounded failure snapshot и desktop/phone diagnostics установлены. Frontend exact-source
+CI успешны, frontend1948tests/139suites. Native idle heartbeat timeout повторился
+с измерениями; исправление причины, resource/ownership и Fleet32 gates OPEN.
+Product9/41 и legacy34/7 — разные scopes.
 
 <details>
 <summary>Исторический срез1октября2026</summary>

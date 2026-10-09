@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
-  "reviewedAtUtc": "2026-10-09T02:37:05.617464+00:00",
-  "sourceReviewed": "60be6ecd0b13e33715761b53b781ad190c1e3e6e",
+  "reviewedAtUtc": "2026-10-09T13:45:48.200627+00:00",
+  "sourceReviewed": "86354350638650215717658b9395b2751326af6c",
   "scope": "Effective documentation status; source/install/finite acceptance kept separate. No new fleet or soak acceptance.",
   "baseline": "docs/audits/2026-10-05/ENTERPRISE-PRODUCT-BACKLOG.json",
   "previousCrosscheck": "docs/audits/2026-10-09/CHAT-CODE-RECONCILIATION.json",
@@ -11,17 +11,18 @@
     "open": 41
   },
   "installed": {
-    "lastObservedUtc": "2026-10-09T02:37:05.617464+00:00",
-    "ui": "60be6ecd0b13e33715761b53b781ad190c1e3e6e",
+    "lastObservedUtc": "2026-10-09T13:45:48.200627+00:00",
+    "ui": "86354350638650215717658b9395b2751326af6c",
     "api": "be803773037c16a113b50c1a2774793fffae8773",
-    "evidence": "docs/audits/2026-10-09/STUDIO-CLOCK-INSTALLED-ACCEPTANCE.json",
-    "observation": "UI-only admitted install, 45 other containers and OTA unchanged; finite browser mixed-input receipt recorded separately from fleet/soak.",
+    "evidence": "docs/audits/2026-10-09/STREAM-DIAGNOSTICS-INSTALLED-ACCEPTANCE.json",
+    "observation": "UI-only admitted install, 45 other containers and OTA unchanged; finite desktop/phone diagnostics accepted. Idle failure reproduced with bounded browser snapshot, cause open.",
     "pilotApk": {
       "device": "PH011",
       "version": "1.2.49-dev",
       "versionCode": 10249,
-      "scope": "Pinned prior finite canary, not new fleet inventory"
-    }
+      "scope": "PH011 selected in finite current diagnostics canary; not fleet inventory"
+    },
+    "evidenceSha256NormalizedLf": "24e036aaf614f12372886a20d2edb42978fbe68e971b8afafe7b4215909e3e4a"
   },
   "pendingCorrections": [],
   "storage": {
@@ -661,8 +662,8 @@
       "priority": "P1",
       "state": "OPEN",
       "progress": "PARTIAL",
-      "currentScope": "Viewer-local release/read handoff, APK ownership и Redis continuous lease используются.",
-      "remaining": "Global viewer/task/API arbitration и debugger acceptance не завершены; idle timeoutP1.",
+      "currentScope": "Viewer-local release/read handoff, APK ownership и Redis continuous lease используются. UI86354350 сохраняет bounded failure snapshot; диагностика desktop/phone принята в конечном scope.",
+      "remaining": "Global viewer/task/API arbitration и debugger acceptance не завершены; idle timeoutP1. PH011 idle heartbeat512ms/tick15ms/WS0B повторился; участок задержки не определён.",
       "acceptanceCriteria": [
         "Pause/step настоящий protocol, либо явно unavailable.",
         "Late result не возрождает cancelled run.",
@@ -911,8 +912,8 @@
       "priority": "P1",
       "state": "OPEN",
       "progress": "PARTIAL",
-      "currentScope": "Normal continuous Control принят PH011APK10249; отдельный idle receipt failure повторился.",
-      "remaining": "Нет fleet input-to-pictureSLO; нужны bounded correlated timing и idle loss fix.",
+      "currentScope": "Normal continuous Control принят PH011APK10249; отдельный idle receipt failure повторился. UI86354350 сохраняет bounded failure snapshot; диагностика desktop/phone принята в конечном scope.",
+      "remaining": "Нет fleet input-to-pictureSLO; нужны bounded correlated timing и idle loss fix. PH011 idle heartbeat512ms/tick15ms/WS0B повторился; участок задержки не определён.",
       "acceptanceCriteria": [
         "Capture/encode/relay/decode/render FPS + drops/bitrate.",
         "Home/Back/Recents/text/wheel и transform при rotation.",
@@ -1588,10 +1589,11 @@
         "EP-020"
       ],
       "acceptedScope": "Обычное управление PH011 APK10249: DOWN1/MOVE5/UP1; wheel DOWN1/MOVE1/UP1, capability и owner согласуются автоматически.",
-      "remaining": "Это не подтверждение всего парка/всех APK, нулевой задержки или исправления повторного idle native_receipt_timeout.",
+      "remaining": "Это не подтверждение всего парка/всех APK, нулевой задержки или исправления повторного idle native_receipt_timeout. 9Oct idle failure подтверждён immutable scalar snapshot; новая диагностика не исправляет его.",
       "evidence": [
         "docs/audits/2026-10-08/CONTINUOUS-VIEWER-FAULT-ISOLATION.md",
-        "docs/audits/2026-10-08/CONTINUOUS-INPUT-AUTOMATIC-UX.md"
+        "docs/audits/2026-10-08/CONTINUOUS-INPUT-AUTOMATIC-UX.md",
+        "docs/audits/2026-10-09/STREAM-DIAGNOSTICS-INSTALLED-ACCEPTANCE.json"
       ],
       "sourcePaths": [
         "backend/websocket/continuous_runtime.py",

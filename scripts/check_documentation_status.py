@@ -90,6 +90,40 @@ def local_link_errors(root: Path, file: str) -> list[str]:
     return errors
 
 
+def validate_installed_receipt(root: Path, installed: dict) -> list[str]:
+    """Bind the effective UI/API observation to its own frozen finite receipt.
+
+    Later deliveries need not be members of the historical correction list.
+    Matching a source SHA alone does not establish installation or acceptance.
+    """
+    evidence = installed.get("evidence")
+    path = root / evidence if isinstance(evidence, str) and evidence else None
+    if path is None or not path.is_file():
+        return ["Installed observation receipt is missing"]
+    if installed.get("evidenceSha256NormalizedLf") != normalized_hash(path):
+        return ["Installed observation receipt fingerprint mismatch"]
+    try:
+        receipt = read_json(root, evidence)
+    except (ValueError, UnicodeError):
+        return ["Installed observation receipt is not valid JSON"]
+    if not isinstance(receipt, dict):
+        return ["Installed observation receipt is not valid JSON"]
+    errors = []
+    runtime = receipt.get("runtime", {})
+    if not isinstance(runtime, dict):
+        runtime = {}
+    browser = receipt.get("browser", {})
+    if not isinstance(browser, dict):
+        browser = {}
+    if receipt.get("runtimeInstalled") is not True or browser.get("finiteAccepted") is not True:
+        errors.append("Installed observation lacks installed finite acceptance")
+    if not installed.get("ui") or installed["ui"] != runtime.get("sourceRevision"):
+        errors.append("Installed UI does not match referenced observation receipt")
+    if not installed.get("api") or installed["api"] != runtime.get("apiSourceRevision"):
+        errors.append("Installed API does not match referenced observation receipt")
+    return errors
+
+
 def validate_registry(root: Path, registry: dict) -> list[str]:
     errors: list[str] = []
     baseline = read_json(root, registry["baseline"])
@@ -159,6 +193,7 @@ def validate_registry(root: Path, registry: dict) -> list[str]:
     for correction in registry["pendingCorrections"]:
         if correction["installed"] or not (root / correction["evidence"]).is_file():
             errors.append("Pending source correction incorrectly marked installed or missing receipt")
+    errors.extend(validate_installed_receipt(root, registry["installed"]))
     completed = registry.get("completedCorrections", [])
     if len({item["id"] for item in completed}) != len(completed):
         errors.append("Duplicate completed correction")
