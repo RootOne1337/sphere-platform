@@ -15,10 +15,10 @@
 
 </div>
 
-**Проверенная установка:** UI `86354350` / API `d720232e`.
+**Проверенная установка:** UI `d70f55c6` / API `d720232e`.
 
 **Публичный веб обновлён 9 октября:** действующий Tuna-host и3015 используют
-один UI86354350. Вход, каталог, builder и monitoring проверены; API/WS/bootstrap
+один UI d70f55c6. Маршруты первоначально проверены на UI86354350; API/WS/bootstrap
 сохранены. [Доставка и ограничения](docs/audits/2026-10-09/PUBLIC-WEB-DELIVERY.md).
 Дополнительная проверка22страниц выявила и исправила загрузку больших JS Grafana
 через туннель; dashboard повторно открыт с реальными графиками.
@@ -26,7 +26,12 @@
 
 **Действующий статус — 9 октября 2026:** [реестр работ и требований](docs/operations/WORK-STATUS.md)
 разделяет **9 принятых / 41 открытую работу** и старые семь незакрытых findings.
-Последняя проверенная установка: UI **86354350**, API **d720232e** на3015.
+Последняя проверенная установка: UI **d70f55c6**, API **d720232e** на 3015 и выбранном публичном адресе.
+Различены idle-потеря подтверждения и неизвестный результат касания; исправлен
+контраст статуса управления на тёмной поверхности видео в светлой теме.
+Frontend CI: 1950 tests / 139 suites, types/build, 26 pages / 73 assets.
+Задержка не исправлена; [установка и конечная проверка](docs/audits/2026-10-09/IDLE-CONTROL-UX-INSTALLED.md).
+[Прямой browser↔APK: исследование и план прототипа](docs/design/BROWSER-DIRECT-TRANSPORT.md).
 Серверные timings и browser failure snapshot установлены; PH011 idle timeout
 повторился. Наблюдаемые server spans <25ms, queue/network/APK/native причина OPEN.
 Все4 exact API-source CI successful, backend3387tests/233subtests.
@@ -555,9 +560,10 @@ identity, доверенный ключ и параметры enrollment; APK и
 ## 🔬 Состояние проекта и границы проверки
 
 **Действующий срез9октября:** [реестр50работ и15дополнений из чата](docs/operations/WORK-STATUS.md)
-и [runtime evidence](docs/operations/CURRENT-STATE.md). UI86354350/APId720232e:
-bounded server timings и browser snapshot установлены. Все4 exact-source CI successful,
-backend3387tests/233subtests. Native idle heartbeat510ms повторился при spans <25ms;
+и [runtime evidence](docs/operations/CURRENT-STATE.md). UI d70f55c6 / API d720232e:
+server timings и browser snapshot сохранены; wording/контраст управления проверены через туннель.
+Frontend exact-source CI successful: 1950 tests / 139 suites, types/build.
+Историческая API-приёмка: все4 CI successful, backend3387tests/233subtests. Idle failure повторился;
 queue/network/APK/native причина, resource/ownership и Fleet32 gates OPEN.
 Product9/41 и legacy34/7 — разные scopes.
 

@@ -1,13 +1,16 @@
 # Работы, требования пользователя и границы приёмки
 
-**Проверенная установка:** UI `86354350` / API `d720232e`.
+**Проверенная установка:** UI `d70f55c6` / API `d720232e`.
 
-**9 октября, source/test:** повторный idle heartbeat timeout больше не выдаётся
-за неизвестную команду Android; held/terminal unknown и остановка input сохранены.
-1950 frontend tests/types passed, установка этого изменения пока не выполнена.
-Public PH011 без касаний повторил ACK RTT518ms/heartbeat deadline503ms;
-source подтвердил общий APK video/receipt WebSocket, но источник задержки UNKNOWN.
-[Результат и границы](../audits/2026-10-09/IDLE-CONTROL-RELAY-REVIEW.md).
+**9 октября: UI d70f55c6 установлен на 3015 и выбранном публичном адресе.**
+Повторная idle-потеря ACK отличается от неизвестного результата касания; held/terminal
+unknown, остановка input и прежние deadlines сохранены. Исправлен контраст статуса
+в светлой теме. 1950 frontend tests / 139 suites, types/build прошли.
+Конечная браузерная проверка приняла только wording/контраст и показ транспорта;
+idle timeout повторился, его причина и задержка остаются UNKNOWN/OPEN.
+[Установка и проверка](../audits/2026-10-09/IDLE-CONTROL-UX-INSTALLED.md) ·
+[Исходное воспроизведение и границы](../audits/2026-10-09/IDLE-CONTROL-RELAY-REVIEW.md) ·
+[Исследование прямого транспорта](../design/BROWSER-DIRECT-TRANSPORT.md).
 
 **9 октября: дополнительная проверка туннеля нашла и исправила Grafana.**
 На публичном адресе большие JS давали parse errors; на3015 dashboard работал.
@@ -17,8 +20,8 @@ source подтвердил общий APK video/receipt WebSocket, но ист�
 но steady FPS/control не приняты. Product9/41 сохранён.
 [Доказательства и границы](../audits/2026-10-09/PUBLIC-WEB-SUPPLEMENTAL-QA.md).
 
-**9 октября: публичный UI синхронизирован с3015.** Действующий Tuna-host теперь
-показывает UI86354350/API d720232e. Вход, каталог22сценария, builder и мониторинг
+**Первоначальная доставка 9 октября, 15:53 UTC:** публичный UI синхронизирован с 3015.
+На том срезе Tuna-host показывал UI86354350/API d720232e. Вход, каталог22сценария, builder и мониторинг
 проверены; временный monitoring failure сохранён. Все46 контейнеров и API/WS/
 bootstrap сохранены, новых images нет. Public stream/control/soak не приняты,
 9/41 не меняется. [Receipt](../audits/2026-10-09/PUBLIC-WEB-DELIVERY.md).
@@ -280,11 +283,16 @@ resource soak/retention и RAM acceptance.
 
 **DEFERRED_DESIGN** · EP-029, EP-020, EP-047.
 
-Идея пользователя сохранена отдельно от существующего WS transport; исследование допустимо как будущий этап.
+Исследование текущего WS пути и первичных источников выполнено. Предложен prototype:
+browser WebRTC ↔ Android libwebrtc, direct video и input/ACK, coturn fallback;
+Pion/SFU/overlay рассмотрены по ролям, а не добавлены обязательным media hop.
 
-Остаётся: Сначала подготовить measurement baseline и contracts; выбор WebRTC/ICE/STUN/TURN/библиотеки и разработка сейчас не выполняются.
+Остаётся: Exact Android dependency admission, grant/ownership schemas, current-path
+attribution, measured prototype/network matrix и production gate. Ни direct transport,
+ни TURN ещё не установлены. Draft latency targets не являются достигнутым SLA.
 
-Доказательства: [WORK-STATUS](WORK-STATUS.md).
+Доказательства: [Исследование и порядок внедрения](../design/BROWSER-DIRECT-TRANSPORT.md),
+[Фактический relay path и idle canary](../audits/2026-10-09/IDLE-CONTROL-RELAY-REVIEW.md).
 
 ## Когда переходить к прямому browser ↔ Android media
 
@@ -298,7 +306,8 @@ resource accounting; сетевой план должен различать sam
 До production pilot необходимы закрытые idle/control-owner риски, session/auth/
 geometry fences, подтверждённые capture/encoder/browser budgets и отдельные
 прогоны direct/relay/reconnect/revocation/version compatibility с rollback.
-Технология и библиотека пока не выбраны; эта сверка не внедряет WebRTC, VPN или AI.
+Технология предложена для прототипа в [отдельном исследовании](../design/BROWSER-DIRECT-TRANSPORT.md);
+точный Android artifact не выбран, эта сверка не внедряет WebRTC, VPN или AI.
 В новом transport APK execution сценариев и server task receipts должны сохранять
 свою независимую семантику. Устойчивые online badges — полезное наблюдение,
 но не измерение uptime, input-to-frame latency или terminal outcome.

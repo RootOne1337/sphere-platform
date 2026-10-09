@@ -3,7 +3,9 @@
 [Реестр работ](WORK-STATUS.md) · [Текущая установка](CURRENT-STATE.md) ·
 [Prometheus](OBSERVABILITY.md) · [Исходная проверка](../audits/2026-10-09/CONTINUOUS-SERVER-TIMINGS.md)
 
-**9 октября, 15:17 UTC / 20:17 UTC+5: установлено в API d720232e.**
+**Текущий UI d70f55c6 сохраняет этот API;** [wording/контраст и границы](../audits/2026-10-09/IDLE-CONTROL-UX-INSTALLED.md).
+
+**Историческая доставка 9 октября, 15:17 UTC / 20:17 UTC+5: установлено в API d720232e.**
 UI 86354350 / APK 10249 сохранены. [Exact CI/image/install и failed idle canary receipt](../audits/2026-10-09/CONTINUOUS-SERVER-TIMINGS-INSTALLED.md):
 PH011 heartbeat timeout 510 мс / last ACK RTT 256 мс повторился, все наблюдаемые spans <25 мс.
 До callback queues/network/APK/native не локализованы; SF26-05 OPEN. Диагностика

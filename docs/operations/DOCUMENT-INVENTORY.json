@@ -1,12 +1,12 @@
 {
   "schemaVersion": 1,
-  "reviewedAtUtc": "2026-10-09T16:23:02.028267+00:00",
+  "reviewedAtUtc": "2026-10-09T17:03:00.032407+00:00",
   "scope": "All tracked Markdown classified; active local-link paths scanned. Not semantic attestation of every sentence, command execution, external-link or live acceptance.",
   "countsByRole": {
     "ADR": 6,
     "CURRENT_ENTRYPOINT": 8,
-    "DATED_EVIDENCE": 235,
-    "DESIGN_SPECIFICATION": 74,
+    "DATED_EVIDENCE": 236,
+    "DESIGN_SPECIFICATION": 75,
     "OPERATING_GUIDE": 64,
     "PROJECT_POLICY": 7,
     "SUPPORTING_DOCUMENT": 6
@@ -1033,6 +1033,10 @@
       "role": "DATED_EVIDENCE"
     },
     {
+      "file": "docs/audits/2026-10-09/IDLE-CONTROL-UX-INSTALLED.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
       "file": "docs/audits/2026-10-09/PUBLIC-WEB-DELIVERY.md",
       "role": "DATED_EVIDENCE"
     },
@@ -1095,6 +1099,10 @@
     {
       "file": "docs/deployment.md",
       "role": "OPERATING_GUIDE"
+    },
+    {
+      "file": "docs/design/BROWSER-DIRECT-TRANSPORT.md",
+      "role": "DESIGN_SPECIFICATION"
     },
     {
       "file": "docs/design/WEB-DESIGN-CONCEPTS-2026-09-28.md",

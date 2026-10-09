@@ -1,6 +1,6 @@
 # Эксплуатационная готовность Sphere
 
-**Проверенная установка:** UI `86354350` / API `d720232e`.
+**Проверенная установка:** UI `d70f55c6` / API `d720232e`.
 
 **Действующий реестр работ:** [WORK-STATUS](WORK-STATUS.md) / [машинный статус](STATUS-REGISTRY.json).
 Source, установленный runtime и конечная приёмка разделены; старые snapshots ниже сохраняют свои даты.
@@ -10,9 +10,12 @@ Source, установленный runtime и конечная приёмка р
 [Текущая сверка чата, всех 50 критериев и реализации](../audits/2026-10-09/CHAT-CODE-RECONCILIATION.md)
 связывает исходники с последующими приёмками. **9 принято / 41 открыто** —
 продуктовый план; **34 source-fixed / 7 незакрытых** — последний записанный
-остаток старого веб-аудита. Эти счётчики нельзя объединять. UI 86354350 / API d720232e
-установлены: bounded failure snapshot и диагностика вне обрезаемого видео приняты
-на desktop/phone. Frontend CI success; статусы API/APK CI в receipt, frontend1948tests/139suites.
+остаток старого веб-аудита. Эти счётчики нельзя объединять. UI d70f55c6 / API d720232e
+установлены на 3015 и выбранном публичном адресе. Конечная проверка точного idle wording
+и контраста статуса принята; задержка и повторный idle timeout не устранены.
+Frontend CI success: 1950 tests / 139 suites, types/build.
+[Текущий installed receipt](../audits/2026-10-09/IDLE-CONTROL-UX-INSTALLED.md).
+Историческая desktop/phone приёмка bounded failure snapshot/панели UI86354350:
 [Установка и границы](../audits/2026-10-09/STREAM-DIAGNOSTICS-INSTALLED-ACCEPTANCE.md).
 Backend-only доставка таймингов отдельно прошла все четыре exact-source CI;
 3387 backend tests / 37 skips / 233 subtests и full hosted Ruff/mypy прошли.

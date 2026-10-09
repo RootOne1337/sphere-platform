@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
-  "reviewedAtUtc": "2026-10-09T16:23:02.028267+00:00",
-  "sourceReviewed": "d720232e3164d278a7322a61a90ba111e205ae3c",
+  "reviewedAtUtc": "2026-10-09T17:03:00.032407+00:00",
+  "sourceReviewed": "d70f55c6de36a01801af201ea4d6ca42bff53549",
   "scope": "Effective documentation status; source/install/finite acceptance kept separate. No new fleet or soak acceptance.",
   "baseline": "docs/audits/2026-10-05/ENTERPRISE-PRODUCT-BACKLOG.json",
   "previousCrosscheck": "docs/audits/2026-10-09/CHAT-CODE-RECONCILIATION.json",
@@ -11,18 +11,18 @@
     "open": 41
   },
   "installed": {
-    "lastObservedUtc": "2026-10-09T15:32:01.063638+00:00",
-    "ui": "86354350638650215717658b9395b2751326af6c",
+    "lastObservedUtc": "2026-10-09T17:03:00.032407+00:00",
+    "ui": "d70f55c6de36a01801af201ea4d6ca42bff53549",
     "api": "d720232e3164d278a7322a61a90ba111e205ae3c",
-    "evidence": "docs/audits/2026-10-09/CONTINUOUS-SERVER-TIMINGS-INSTALLED.json",
-    "observation": "API-only admitted diagnostic install, 45 other containers/schema/OTA preserved. PH011 idle failure reproduced; measured server coroutines <25ms, queued/network/APK/native cause remains open.",
+    "evidence": "docs/audits/2026-10-09/IDLE-CONTROL-UX-INSTALLED.json",
+    "observation": "UI-only exact-source rollout on3015 and selected public host; accurate idle-only warning/light-theme contrast accepted.45other containers/API/APK/schema/OTA preserved. PH011 idle failure repeated, ACK RTT510ms/deadline512ms; latency cause remains UNKNOWN.",
     "pilotApk": {
       "device": "PH011",
       "version": "1.2.49-dev",
       "versionCode": 10249,
       "scope": "PH011 selected in finite current diagnostics canary; not fleet inventory"
     },
-    "evidenceSha256NormalizedLf": "3b947190ab467fed496e7160b0315f115e11384fd0bc09feb4b2a86467acc0a2"
+    "evidenceSha256NormalizedLf": "796062452ccfe0c60ea330123e26f00e4960b9664f2046beb1c633d9e6dbe9d3"
   },
   "pendingCorrections": [],
   "storage": {
@@ -82,6 +82,9 @@
   "directMedia": {
     "state": "DEFERRED_DESIGN",
     "implementationAuthorizedNow": false,
+    "researchPreparedAtUtc": "2026-10-09T16:46:29Z",
+    "researchEvidence": "docs/design/BROWSER-DIRECT-TRANSPORT.md",
+    "researchScope": "Primary-source review and proposed browser WebRTC / Android libwebrtc prototype with coturn fallback, video plus input/ACK, ownership and network/resource gates. No prototype, dependency, TURN or new transport installed; latency cause unresolved.",
     "researchPrerequisites": [
       "Versioned offer/input/control ownership and auth contract",
       "Bounded command-to-native/frame timing with unknown results visible",
@@ -1788,10 +1791,11 @@
         "EP-020",
         "EP-047"
       ],
-      "acceptedScope": "Идея пользователя сохранена отдельно от существующего WS transport; исследование допустимо как будущий этап.",
-      "remaining": "Сначала подготовить measurement baseline и contracts; выбор WebRTC/ICE/STUN/TURN/библиотеки и разработка сейчас не выполняются.",
+      "acceptedScope": "Исследованы текущий server relay, shared APK video/receipt queue и первичные WebRTC/Pion/coturn/libwebrtc источники. Подготовлены proposed architecture, границы authority, network matrix, latency/resource targets и rollout/rollback; prototype не выполнен.",
+      "remaining": "Exact Android dependency admission, grant/ownership schemas, текущая queued/network/APK/native атрибуция и measured direct/relay prototype до production gate. Direct transport и TURN не установлены; draft targets не являются SLA.",
       "evidence": [
-        "docs/operations/WORK-STATUS.md"
+        "docs/design/BROWSER-DIRECT-TRANSPORT.md",
+        "docs/audits/2026-10-09/IDLE-CONTROL-RELAY-REVIEW.md"
       ],
       "sourcePaths": [],
       "fleetAccepted": false
@@ -1827,19 +1831,20 @@
   ],
   "sourceWorktreeEvidence": "docs/audits/2026-10-09/CONTINUOUS-SERVER-TIMINGS-INSTALLED.json",
   "publicWeb": {
-    "lastObservedUtc": "2026-10-09T16:23:02.028267+00:00",
+    "lastObservedUtc": "2026-10-09T17:03:00.032407+00:00",
     "url": "https://sphere-agent-canary-20260927.ru.tuna.am",
-    "ui": "86354350638650215717658b9395b2751326af6c",
+    "ui": "d70f55c6de36a01801af201ea4d6ca42bff53549",
     "api": "d720232e3164d278a7322a61a90ba111e205ae3c",
-    "evidence": "docs/audits/2026-10-09/PUBLIC-WEB-DELIVERY.json",
-    "evidenceSha256NormalizedLf": "0a8a9d573da1420bbc0a28cf1aa0f86d2637f6901b06d7ef62fcb01a4d29c189",
-    "scope": "Exact-host delivery; supplemental 22-page QA and installed static-only gzip restored Grafana in two opens. Finite PH011 first-image/decoder check only; steady FPS/control/soak not accepted.",
+    "evidence": "docs/audits/2026-10-09/IDLE-CONTROL-UX-INSTALLED.json",
+    "evidenceSha256NormalizedLf": "796062452ccfe0c60ea330123e26f00e4960b9664f2046beb1c633d9e6dbe9d3",
+    "scope": "Same exact-host map; UI-only d70f55c6 update. Finite warning/contrast/transport disclosure accepted; public idle control reliability failed again. No direct transport or API/WS/bootstrap change.",
     "additionalQa": {
       "evidence": "docs/audits/2026-10-09/PUBLIC-WEB-SUPPLEMENTAL-QA.json",
       "evidenceSha256NormalizedLf": "84f719a322e114a34ba4f4fc5624f717a71558f2b80f5aea1a484b50778ceac4",
       "grafanaLoadFailureMitigated": true,
       "uniqueMenuPathsChecked": 22,
       "streamAcceptanceScope": "6 first-session frames, no Android input; steady FPS/control unaccepted"
-    }
+    },
+    "initialDeliveryEvidence": "docs/audits/2026-10-09/PUBLIC-WEB-DELIVERY.json"
   }
 }

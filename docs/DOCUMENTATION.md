@@ -1,6 +1,6 @@
 # Актуальность документации
 
-**Проверенная установка:** UI `86354350` / API `d720232e`.
+**Проверенная установка:** UI `d70f55c6` / API `d720232e`.
 
 [Каталог](README.md) · [Readiness](operations/READINESS.md) · [Contributing](../CONTRIBUTING.md)
 

@@ -1,6 +1,22 @@
 # Sphere: актуальное состояние и критерии приёмки
 
-**Проверенная установка:** UI `86354350` / API `d720232e`.
+**Проверенная установка:** UI `d70f55c6` / API `d720232e`.
+
+**9 октября — UI d70f55c6 установлен на 3015 и выбранном публичном адресе.**
+Idle-only потеря подтверждения теперь имеет точную категорию и текст; при неизвестном
+касании предупреждение и блокировка сохраняются. Статус читаем в светлой теме
+на фоне видео. Frontend CI: 1950 tests / 139 suites, types/build, 26 pages / 73 assets.
+45 соседних контейнеров, API/APK/schema/OTA сохранены. Конечная проверка wording/контраста
+не закрывает повторившийся idle timeout или задержку.
+[Installed receipt](../audits/2026-10-09/IDLE-CONTROL-UX-INSTALLED.md).
+
+**9 октября — исследование direct transport, без реализации:** подтверждён общий
+APK video/input-receipt WebSocket и server relay. Public PH011 без касаний повторил
+idle failure: actual ACK RTT518ms, heartbeat deadline age503ms. Причина задержки
+не локализована. Предложен browser↔APK WebRTC prototype для video и input вместе,
+с TURN fallback и обязательными ownership/network/resource gates.
+[План и первичные источники](../design/BROWSER-DIRECT-TRANSPORT.md) ·
+[Source/test UI correction и фактическая canary](../audits/2026-10-09/IDLE-CONTROL-RELAY-REVIEW.md).
 
 **9 октября16:21UTC — исправлена загрузка Grafana через публичный туннель.**
 Дополнительная проверка воспроизвела parse errors двух больших JS, отсутствующие
@@ -11,7 +27,7 @@ PH011 read-only viewer отрисовал6кадров без decoder errors, st
 [Дополнительная QA и исправление](../audits/2026-10-09/PUBLIC-WEB-SUPPLEMENTAL-QA.md).
 
 **9 октября, 15:53 UTC / 20:53 UTC+5 — новый веб подключён к действующему Tuna-туннелю.**
-Публичный адрес теперь обслуживает тот же UI86354350, что и3015; прежний публичный
+На этом историческом срезе публичный адрес начал обслуживать UI86354350, как и 3015; прежний публичный
 frontend8fef5eb больше не выбирается для этого host. API d720232e, bootstrap/WS,
 APK/OTA и все46 контейнеров сохранены; только Nginx graceful reload, без новой
 сборки. В браузере приняты вход,22сценария, существующий граф3узла/2связи и

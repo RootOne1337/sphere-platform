@@ -8,10 +8,16 @@
 
 </div>
 
-**Проверенная установка:** UI `86354350` / API `d720232e`.
+**Проверенная установка:** UI `d70f55c6` / API `d720232e`.
+
+[Прямой browser↔APK: исследование, архитектура и измеримые gates](design/BROWSER-DIRECT-TRANSPORT.md).
+WebRTC video+input и TURN fallback предложены для прототипа, ещё не установлены.
+Server relay и повторный idle failure подтверждены отдельно.
+[Wording и контраст установлены в UI d70f55c6](audits/2026-10-09/IDLE-CONTROL-UX-INSTALLED.md);
+это не устранение задержки и не внедрение прямого транспорта.
 
 **Публичный веб обновлён 9 октября:** действующий Tuna-host использует тот же
-UI86354350, что3015. [Маршруты, приёмка и ограничения](audits/2026-10-09/PUBLIC-WEB-DELIVERY.md).
+UI d70f55c6, что 3015. Первоначальная доставка UI86354350: [маршруты, приёмка и ограничения](audits/2026-10-09/PUBLIC-WEB-DELIVERY.md).
 Дополнительная проверка22страниц нашла и исправила публичную загрузку Grafana JS.
 [Доказательства, повторная проверка и границы](audits/2026-10-09/PUBLIC-WEB-SUPPLEMENTAL-QA.md).
 
@@ -25,7 +31,9 @@ UI86354350, что3015. [Маршруты, приёмка и ограничен�
 **Действующий реестр:** [50 работ и дополнения из чата](operations/WORK-STATUS.md)
 ([JSON](operations/STATUS-REGISTRY.json)). **9 принято / 41 открыто**; legacy7 —
 пересекающийся отдельный аудит, не дополнительный остаток. Последняя установка
-UI86354350/APId720232e: server timings и browser failure snapshot установлены.
+UI d70f55c6 / API d720232e: server timings и browser failure snapshot сохранены.
+Frontend 1950 tests / 139 suites, types/build прошли; конечная проверка wording/контраста
+записана отдельно, idle reliability остаётся OPEN.
 PH011 idle timeout повторился; наблюдаемые server spans <25ms, причина OPEN.
 Все4 exact API-source CI successful, backend3387tests/233subtests;
 [новый receipt](audits/2026-10-09/CONTINUOUS-SERVER-TIMINGS-INSTALLED.md).
