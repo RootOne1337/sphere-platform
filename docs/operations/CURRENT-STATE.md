@@ -10,11 +10,15 @@ Idle-only потеря подтверждения теперь имеет точ
 не закрывает повторившийся idle timeout или задержку.
 [Installed receipt](../audits/2026-10-09/IDLE-CONTROL-UX-INSTALLED.md).
 
-**9 октября — исследование direct transport, без реализации:** подтверждён общий
+**9 октября — direct transport: исследование и отключённый source prototype:** подтверждён общий
 APK video/input-receipt WebSocket и server relay. Public PH011 без касаний повторил
 idle failure: actual ACK RTT518ms, heartbeat deadline age503ms. Причина задержки
 не локализована. Предложен browser↔APK WebRTC prototype для video и input вместе,
 с TURN fallback и обязательными ownership/network/resource gates.
+Последующим запросом разрешена разработка RTT-only canary; межпроцессное SDP,
+browser echo и отдельный Android debug source set написаны. AAR pinned; live RTT
+и native cleanup ещё не приняты, рабочий media/control транспорт сохранён.
+[Scope и source checks](../audits/2026-10-09/DIRECT-PROBE-SOURCE.md).
 [План и первичные источники](../design/BROWSER-DIRECT-TRANSPORT.md) ·
 [Source/test UI correction и фактическая canary](../audits/2026-10-09/IDLE-CONTROL-RELAY-REVIEW.md).
 

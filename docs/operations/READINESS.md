@@ -2,6 +2,11 @@
 
 **Проверенная установка:** UI `d70f55c6` / API `d720232e`.
 
+**Direct transport: PROTOTYPE_SOURCE, не production acceptance.** Разрешён RTT-only
+debug canary; feature flag, явный allowlist устройств и native generation/TTL fences
+сохраняют изоляцию. Live browser↔APK RTT, native resource cleanup, media/control,
+TURN и полная network matrix не приняты. [Scope и gates](../audits/2026-10-09/DIRECT-PROBE-SOURCE.md).
+
 **Действующий реестр работ:** [WORK-STATUS](WORK-STATUS.md) / [машинный статус](STATUS-REGISTRY.json).
 Source, установленный runtime и конечная приёмка разделены; старые snapshots ниже сохраняют свои даты.
 

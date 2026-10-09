@@ -1,9 +1,10 @@
 # Прямой транспорт браузер ↔ Android: исследование и план проверки
 
-**Дата проверки источников:** 9 октября 2026. **Статус:** PROPOSED / research
-prepared; implementation deferred. Это предложение архитектуры, а не внедрённая
-возможность, выполненный prototype или обещание задержки. Порты, зависимости,
-TURN, APK и маршруты этим документом не изменяются.
+**Дата проверки источников:** 9 октября 2026. **Статус:** архитектура PROPOSED;
+последующим запросом пользователя разрешён первый диагностический прототип.
+Написан отключённый по умолчанию RTT-only DataChannel canary; media/control,
+TURN и рабочая установка не переведены на WebRTC. Это не обещание задержки.
+[Точный scope, зависимости, тесты и следующие gates](../audits/2026-10-09/DIRECT-PROBE-SOURCE.md).
 
 [Действующие работы](../operations/WORK-STATUS.md) ·
 [Установка](../operations/CURRENT-STATE.md) ·
@@ -147,7 +148,11 @@ arm/arm64/x86/x64 GN targets. Не следует брать случайный 
 [Upstream license](https://webrtc.googlesource.com/src/+/refs/heads/main/LICENSE),
 [Android build documentation](https://webrtc.googlesource.com/src/+/refs/heads/main/docs/native-code/android/).
 
-Конкретный libwebrtc commit/AAR пока **не выбран**. Порядок admission:
+Для первого RTT canary выбран `io.getstream:stream-video-webrtc-android:146.7.0`;
+Maven Central AAR inspected и SHA-256 закреплён в Gradle verification metadata.
+Это бинарная зависимость, не утверждение о воспроизводимости её native build.
+Обычный APK не включает этот AAR; отдельный debug source set требует флаг canary.
+Полная supply-chain/native resource приёмка остаётся отдельным gate. Перед media admission:
 
 1. Проверить upstream source revision, notices, build dependencies и advisories.
 2. Получить воспроизводимый Linux CI artifact для нужных ABI; зафиксировать hashes.

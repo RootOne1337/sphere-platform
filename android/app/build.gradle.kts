@@ -71,6 +71,10 @@ require(System.getenv("SPHERE_STREAM_PLANAR_INPUT") != "true" || !releaseArtifac
 require(System.getenv("SPHERE_CONTINUOUS_INPUT_CANARY") != "true" || !releaseArtifactRequested) {
     "Continuous input is a debug canary; server/browser ownership and native lifecycle acceptance are required before release"
 }
+val directProbeCanary = System.getenv("SPHERE_DIRECT_TRANSPORT_CANARY") == "true"
+require(!directProbeCanary || !releaseArtifactRequested) {
+    "Direct transport is a diagnostic debug canary; release builds require media/control acceptance"
+}
 require(System.getenv("SPHERE_STREAM_PLANAR_INPUT") != "true" || System.getenv("SPHERE_STREAM_GPU_BRIDGE") != "true") {
     "Select only one experimental capture path"
 }
@@ -105,6 +109,9 @@ val serverPublicUrl: String = System.getenv("SPHERE_SERVER_URL") ?: if (dotEnvFi
 android {
     namespace = "com.sphereplatform.agent"
     compileSdk = 35
+    sourceSets.getByName("main").java.srcDir(
+        if (directProbeCanary) "src/directProbe/kotlin" else "src/noDirectProbe/kotlin"
+    )
 
     defaultConfig {
         applicationId = "com.sphereplatform.agent"
@@ -206,6 +213,7 @@ android {
 }
 
 dependencies {
+    if (directProbeCanary) implementation("io.getstream:stream-video-webrtc-android:146.7.0")
     // AndroidX
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.appcompat)

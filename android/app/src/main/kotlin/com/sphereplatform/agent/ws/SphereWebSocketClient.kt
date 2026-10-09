@@ -531,6 +531,16 @@ class SphereWebSocketClient(
         return ws.send(data.toByteString())
     }
 
+    /** Only bounded SDP, fenced to its authenticated socket; no retry or offline journal. */
+    fun sendDirectProbeSignal(expectedGeneration: Long, message: JsonObject): Boolean = synchronized(wsLock) {
+        if (expectedGeneration != generation || !isConnected || shouldStop) return@synchronized false
+        val socket = webSocket ?: return@synchronized false
+        val payload = message.toString()
+        val bytes = payload.toByteArray(Charsets.UTF_8).size
+        if (bytes > 36864 || socket.queueSize() + bytes > 1024 * 1024) return@synchronized false
+        socket.send(payload)
+    }
+
     /**
      * Форсированный immediate reconnect — вызывается при восстановлении сети
      * или при обнаружении нового server_url из ConfigWatchdog.

@@ -32,6 +32,18 @@ class DocumentationStatusTests(unittest.TestCase):
     def test_recorded_status_is_consistent(self) -> None:
         self.assertEqual(validate_registry(ROOT, self.registry), [])
 
+    def test_probe_source_cannot_claim_installed_media_or_omit_authorization(self) -> None:
+        for key, value in (("runtimeInstalled", True), ("mediaControlInstalled", True),
+                           ("implementationAuthorizedNow", False), ("prototypeScope", "full_control")):
+            with self.subTest(key=key):
+                changed = copy.deepcopy(self.registry)
+                changed["directMedia"][key] = value
+                self.assertTrue(any("Direct probe source" in error for error in validate_registry(ROOT, changed)))
+
+    def test_probe_evidence_cannot_be_omitted(self) -> None:
+        self.registry["directMedia"]["implementationEvidence"] = "docs/absent-probe.md"
+        self.assertIn("Direct probe implementation evidence is missing", validate_registry(ROOT, self.registry))
+
     def test_current_runtime_banners_agree_with_frozen_installation(self) -> None:
         self.assertEqual(validate_runtime_banners(ROOT, self.registry), [])
 

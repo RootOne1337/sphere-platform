@@ -241,8 +241,19 @@ def validate_registry(root: Path, registry: dict) -> list[str]:
         if (registry["installed"]["evidence"] == correction["evidence"]
                 and registry["installed"]["ui"] != correction["installedRevision"]):
             errors.append("Installed UI does not match referenced correction receipt")
-    if registry["directMedia"]["implementationAuthorizedNow"] or registry["directMedia"]["state"] != "DEFERRED_DESIGN":
-        errors.append("Direct-media implementation is outside this reconciliation scope")
+    direct = registry["directMedia"]
+    if direct["state"] == "DEFERRED_DESIGN":
+        if direct["implementationAuthorizedNow"]:
+            errors.append("Deferred direct-media design cannot claim implementation authorization")
+    elif direct["state"] == "PROTOTYPE_SOURCE":
+        if (direct["implementationAuthorizedNow"] is not True or not direct.get("implementationAuthorization")
+                or direct.get("prototypeScope") != "diagnostic_echo_only"
+                or direct.get("runtimeInstalled") is not False or direct.get("mediaControlInstalled") is not False):
+            errors.append("Direct probe source must retain authorization, diagnostic scope and uninstalled gates")
+        if not (root / direct.get("implementationEvidence", "__missing__")).is_file():
+            errors.append("Direct probe implementation evidence is missing")
+    else:
+        errors.append("Direct-media state requires a reviewed implementation/installation gate")
     for file in registry["authoritativeEntrypoints"]:
         if "WORK-STATUS" not in (root / file).read_text(encoding="utf-8-sig"):
             errors.append(f"{file}: missing authoritative work-status pointer")

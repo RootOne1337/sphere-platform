@@ -69,3 +69,50 @@ jobs:
             android/app/build/test-results/test*/**/*.xml
           if-no-files-found: warn
           retention-days: 14
+
+      - name: Verify ordinary APKs exclude experimental WebRTC JNI
+        run: |
+          python - <<'PY'
+          import pathlib, zipfile
+          apks = list(pathlib.Path('android/app/build/outputs/apk').glob('*/*/*.apk'))
+          assert apks
+          for apk in apks:
+              with zipfile.ZipFile(apk) as archive:
+                  assert not any(name.endswith('libjingle_peerconnection_so.so') for name in archive.namelist()), apk
+                  assert not any(b'Lorg/webrtc/' in archive.read(name) for name in archive.namelist() if name.endswith('.dex')), apk
+          print('WebRTC JNI absent from all ordinary debug/release APKs')
+          PY
+
+      - name: Compile and test isolated direct-transport debug canary
+        working-directory: android
+        env:
+          SPHERE_DIRECT_TRANSPORT_CANARY: "true"
+        run: ./gradlew clean testDevDebugUnitTest assembleDevDebug
+
+      - name: Verify canary JNI packaging and release denial
+        working-directory: android
+        env:
+          SPHERE_DIRECT_TRANSPORT_CANARY: "true"
+        run: |
+          python - <<'PY'
+          import zipfile
+          with zipfile.ZipFile('app/build/outputs/apk/dev/debug/app-dev-debug.apk') as archive:
+              native = {name.split('/')[1] for name in archive.namelist() if name.endswith('libjingle_peerconnection_so.so')}
+          assert native == {'arm64-v8a', 'armeabi-v7a', 'x86', 'x86_64'}, native
+          print('Four admitted WebRTC JNI ABIs packaged')
+          PY
+          if ./gradlew assembleDevRelease > "$RUNNER_TEMP/direct-probe-release-denial.log" 2>&1; then
+            echo 'Experimental direct transport unexpectedly allowed a release APK' >&2
+            exit 1
+          fi
+          grep -q 'Direct transport is a diagnostic debug canary' "$RUNNER_TEMP/direct-probe-release-denial.log"
+
+      - name: Upload direct-transport canary diagnostics
+        uses: actions/upload-artifact@v6
+        with:
+          name: android-direct-probe-${{ github.sha }}
+          path: |
+            android/app/build/outputs/apk/dev/debug/*.apk
+            android/app/build/test-results/testDevDebugUnitTest/**/*.xml
+          if-no-files-found: error
+          retention-days: 3

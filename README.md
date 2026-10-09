@@ -31,7 +31,7 @@
 контраст статуса управления на тёмной поверхности видео в светлой теме.
 Frontend CI: 1950 tests / 139 suites, types/build, 26 pages / 73 assets.
 Задержка не исправлена; [установка и конечная проверка](docs/audits/2026-10-09/IDLE-CONTROL-UX-INSTALLED.md).
-[Прямой browser↔APK: исследование и план прототипа](docs/design/BROWSER-DIRECT-TRANSPORT.md).
+[Прямой browser↔APK: исследование и отключённый RTT canary](docs/design/BROWSER-DIRECT-TRANSPORT.md).
 Серверные timings и browser failure snapshot установлены; PH011 idle timeout
 повторился. Наблюдаемые server spans <25ms, queue/network/APK/native причина OPEN.
 Все4 exact API-source CI successful, backend3387tests/233subtests.

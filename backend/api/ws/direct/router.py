@@ -1,0 +1,90 @@
+"""Opt-in 30-second WebRTC RTT canary; shared stream authentication/RBAC."""
+from __future__ import annotations
+
+import asyncio
+import uuid
+
+from fastapi import APIRouter, HTTPException, WebSocket, WebSocketDisconnect
+
+from backend.api.ws.stream.router import _authenticate_viewer
+from backend.core.config import settings
+from backend.core.rbac import has_permission
+from backend.database.engine import AsyncSessionLocal
+from backend.models.device import Device
+from backend.websocket.direct_probe_protocol import (
+    MAX_WIRE_BYTES,
+    SESSION_MS,
+    InvalidDirectProbe,
+    viewer_offer,
+)
+from backend.websocket.direct_probe_runtime import ProbeViewer, get_direct_probe_runtime
+
+router = APIRouter(tags=["direct-transport-canary"])
+
+
+async def authorize(token: str, device_id: str) -> tuple[str, str]:
+    async with asyncio.timeout(2):
+        async with AsyncSessionLocal() as db:
+            user = await _authenticate_viewer(token, db)
+            device = await db.get(Device, uuid.UUID(device_id))
+            if not device or device.org_id != user.org_id or not has_permission(user.role, "stream:read"):
+                raise HTTPException(status_code=403, detail="probe_access_denied")
+            return str(user.org_id), str(user.id)
+
+
+@router.websocket("/ws/direct-probe/{device_id}")
+async def direct_probe_ws(ws: WebSocket, device_id: str) -> None:
+    await ws.accept()
+    runtime = get_direct_probe_runtime()
+    if not settings.DIRECT_TRANSPORT_PROBE_ENABLED or not runtime or not runtime.available:
+        await ws.close(code=4003, reason="direct_probe_disabled")
+        return
+    if device_id not in settings.DIRECT_TRANSPORT_PROBE_DEVICE_IDS:
+        await ws.close(code=4003, reason="direct_probe_device_disabled")
+        return
+    viewer: ProbeViewer | None = None
+    try:
+        async with asyncio.timeout(10):
+            raw = await ws.receive_text()
+        if len(raw.encode()) > 8192:
+            raise InvalidDirectProbe("invalid_auth")
+        import json
+        first = json.loads(raw)
+        if (not isinstance(first, dict) or first.keys() != {"token"}
+                or not isinstance(first["token"], str) or not first["token"]):
+            raise InvalidDirectProbe("invalid_auth")
+        identity = await authorize(first["token"], device_id)
+        viewer = ProbeViewer(device_id, *identity, ws)
+        async with asyncio.timeout(10):
+            raw = await ws.receive_text()
+        if len(raw.encode()) > MAX_WIRE_BYTES:
+            raise InvalidDirectProbe("message_too_large")
+        await runtime.open(viewer, viewer_offer(json.loads(raw)))
+        # Token revocation and device/role changes close the signaling grant.
+        # APK also enforces a nonrenewable local TTL if the signaling path disappears.
+        async with asyncio.timeout(SESSION_MS / 1000):
+            while True:
+                try:
+                    raw = await asyncio.wait_for(ws.receive_text(), 5)
+                except asyncio.TimeoutError:
+                    if await authorize(first["token"], device_id) != identity:
+                        raise InvalidDirectProbe("probe_access_revoked")
+                    async with asyncio.timeout(2):
+                        if not viewer.binding or not await runtime.remaining(viewer.binding):
+                            raise InvalidDirectProbe("probe_expired")
+                    continue
+                if raw != '{"type":"direct_probe_close"}':
+                    raise InvalidDirectProbe("unexpected_probe_message")
+                break
+    except WebSocketDisconnect:
+        return
+    except (HTTPException, InvalidDirectProbe, ValueError, TypeError, TimeoutError):
+        await ws.close(code=4003, reason="direct_probe_rejected_or_expired")
+        return
+    except Exception:
+        await ws.close(code=1013, reason="direct_probe_unavailable")
+        return
+    finally:
+        if viewer:
+            await runtime.retire(viewer)
+    await ws.close(code=1000, reason="probe_finished")

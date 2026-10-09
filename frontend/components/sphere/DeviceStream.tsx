@@ -11,6 +11,7 @@ import type { AcknowledgedControl, StreamInput, TaskControlHandoffState } from '
 import { ContinuousPointer, attachContinuousPointer } from '@/src/features/stream/continuousPointer';
 import type { ContinuousPointerState, PointerFenceObservation } from '@/src/features/stream/continuousPointer';
 import { ContinuousInputDiagnostics } from '@/src/features/stream/ContinuousInputDiagnostics';
+import { DirectProbeDiagnostics } from '@/src/features/stream/DirectProbeDiagnostics';
 
 interface DeviceStreamProps {
   deviceId: string;
@@ -1032,6 +1033,7 @@ export function DeviceStream({
             </div>
             <div>Управление Android: {continuousState}{continuousFailureCode ? ` · причина: ${continuousFailureCode}` : ''}</div>
             <div>Видео и управление идут через сервер (WebSocket). Прямое соединение с APK ещё не подключено.</div>
+            {process.env.NEXT_PUBLIC_DIRECT_TRANSPORT_CANARY === 'true' && <DirectProbeDiagnostics deviceId={deviceId} />}
             <div>Повторное согласование после задержки idle ACK: {idleRecoveryCount}/1 в этой видеосессии. Касания и команды не повторяются.</div>
             {pointerFailureSnapshot && <ContinuousInputDiagnostics snapshot={pointerFailureSnapshot} />}
             {diagnosticsError ? <div className="text-red-600 dark:text-red-300">{diagnosticsError}</div> : (

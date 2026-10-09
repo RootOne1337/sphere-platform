@@ -92,6 +92,9 @@ class CommandDispatcher @Inject constructor(
             android.os.SystemClock::uptimeMillis, BuildConfig.CONTINUOUS_INPUT_CANARY,
         )
     } else null
+    private val directProbe = com.sphereplatform.agent.direct.DirectProbeTransport(
+        appContext, scope, wsClient::currentGeneration, wsClient::sendDirectProbeSignal,
+    )
 
     fun start() {
         updateCheckQueuedForService.set(false)
@@ -100,6 +103,8 @@ class CommandDispatcher @Inject constructor(
             val type = msg["type"]?.jsonPrimitive?.contentOrNull
             if (type == "ping") {
                 handlePingImmediate(msg)
+            } else if (directProbe.handle(msg)) {
+                // Separate RTT-only peer; cannot enter the Android command dispatcher.
             } else if (continuousInput?.handle(msg) == true) {
                 // Admission is synchronous and bounded; never launch one coroutine per MOVE.
             } else {
@@ -109,6 +114,7 @@ class CommandDispatcher @Inject constructor(
 
         // При reconnect — отправляем накопленные результаты DAG и сбрасываем heartbeat
         wsClient.onConnected = {
+            directProbe.invalidate()
             continuousInput?.invalidate()
             lastPingAt = System.currentTimeMillis()
             if (updateCheckQueuedForService.compareAndSet(false, true)) {
@@ -116,7 +122,7 @@ class CommandDispatcher @Inject constructor(
             }
             scope.launch { flushResults() }
         }
-        continuousInput?.let { controller -> wsClient.onDisconnected = { _, _ -> controller.invalidate() } }
+        wsClient.onDisconnected = { _, _ -> continuousInput?.invalidate(); directProbe.invalidate() }
 
         // FIX AUDIT-2.5: Heartbeat watchdog — если сервер не шлёт ping > 90с,
         // принудительный reconnect. Компенсирует кейс когда readTimeout
@@ -145,6 +151,7 @@ class CommandDispatcher @Inject constructor(
      * Вызывается из SphereAgentService.onDestroy() перед отменой serviceScope.
      */
     fun stop() {
+        directProbe.invalidate()
         continuousInput?.let {
             it.invalidate()
             streamingManager.setInputInvalidationListener(null)
@@ -153,7 +160,7 @@ class CommandDispatcher @Inject constructor(
         heartbeatJob = null
         wsClient.onJsonMessage = null
         wsClient.onConnected = null
-        if (continuousInput != null) wsClient.onDisconnected = null
+        wsClient.onDisconnected = null
     }
 
     /**

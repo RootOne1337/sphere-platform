@@ -2,6 +2,12 @@
 
 **Проверенная установка:** UI `d70f55c6` / API `d720232e`.
 
+**9 октября: разрешён и написан первый direct RTT canary.** Браузерный WebRTC,
+серверное межпроцессное согласование и отдельный Android debug source set готовы
+для испытания. По умолчанию отключён; Android JNI не входит в обычные сборки.
+Видео/касания на рабочей установке остаются WS; живой direct RTT ещё не измерен.
+[Scope, проверки и rollout gates](../audits/2026-10-09/DIRECT-PROBE-SOURCE.md).
+
 **9 октября: UI d70f55c6 установлен на 3015 и выбранном публичном адресе.**
 Повторная idle-потеря ACK отличается от неизвестного результата касания; held/terminal
 unknown, остановка input и прежние deadlines сохранены. Исправлен контраст статуса
@@ -281,15 +287,18 @@ resource soak/retention и RAM acceptance.
 
 ### CHAT-15 · Прямой browser ↔ Android transport
 
-**DEFERRED_DESIGN** · EP-029, EP-020, EP-047.
+**PARTIAL** · EP-029, EP-020, EP-047.
 
 Исследование текущего WS пути и первичных источников выполнено. Предложен prototype:
 browser WebRTC ↔ Android libwebrtc, direct video и input/ACK, coturn fallback;
 Pion/SFU/overlay рассмотрены по ролям, а не добавлены обязательным media hop.
 
-Остаётся: Exact Android dependency admission, grant/ownership schemas, current-path
-attribution, measured prototype/network matrix и production gate. Ни direct transport,
-ни TURN ещё не установлены. Draft latency targets не являются достигнутым SLA.
+Последующим запросом пользователя разрешена разработка. Написан RTT-only canary:
+Maven AAR pinned, authenticated generation-bound signaling, allowlist устройств,
+WebRTC echo без media/input. Он отключён и не установлен в рабочее окружение.
+Остаётся: полный native provenance/SBOM, live RTT/cleanup, media/control ownership,
+current-path attribution, TURN/network matrix и production gate. Draft latency targets
+не являются достигнутым SLA. [Исходники и проверки](../audits/2026-10-09/DIRECT-PROBE-SOURCE.md).
 
 Доказательства: [Исследование и порядок внедрения](../design/BROWSER-DIRECT-TRANSPORT.md),
 [Фактический relay path и idle canary](../audits/2026-10-09/IDLE-CONTROL-RELAY-REVIEW.md).
@@ -307,7 +316,8 @@ resource accounting; сетевой план должен различать sam
 geometry fences, подтверждённые capture/encoder/browser budgets и отдельные
 прогоны direct/relay/reconnect/revocation/version compatibility с rollback.
 Технология предложена для прототипа в [отдельном исследовании](../design/BROWSER-DIRECT-TRANSPORT.md);
-точный Android artifact не выбран, эта сверка не внедряет WebRTC, VPN или AI.
+Android artifact выбран для изолированного RTT canary; рабочий WebRTC, VPN и AI
+этим этапом не установлены. Live media/control приёмка остаётся впереди.
 В новом transport APK execution сценариев и server task receipts должны сохранять
 свою независимую семантику. Устойчивые online badges — полезное наблюдение,
 но не измерение uptime, input-to-frame latency или terminal outcome.
