@@ -10,6 +10,11 @@ Source close-race/фазы диагностики исправлены:81backend
 Ruff/mypy/types прошли; новый exact CI и установка этих исправлений ещё не приняты.
 Product9/41,legacy7 сохраняются. [Пилот и следующий gate](../audits/2026-10-09/DIRECT-PROBE-PILOT.md).
 
+**Последующий source этап:** добавлен bounded browser ICE/DTLS snapshot при отказе:
+один getStats in flight,32вызова максимум, unknown counters и возраст среза видны,
+адреса/ключи не сохраняются.16focused frontend tests/types passed; runtime и
+реальные новые измерения не менялись. [Scope и gates](../audits/2026-10-09/DIRECT-PROBE-NETWORK-SNAPSHOT.md).
+
 **Первый source этап9октября: разрешён и написан direct RTT canary.** Браузерный WebRTC,
 серверное межпроцессное согласование и отдельный Android debug source set готовы
 для испытания. По умолчанию отключён; Android JNI не входит в обычные сборки.
@@ -314,6 +319,8 @@ ICE cause/live RTT/cleanup, media/control ownership, current-path attribution,
 TURN/network matrix и production gate. Draft latency targets не являются достигнутым SLA.
 [Исходники и проверки](../audits/2026-10-09/DIRECT-PROBE-SOURCE.md) ·
 [Фактический pilot и границы](../audits/2026-10-09/DIRECT-PROBE-PILOT.md).
+Новый [source ICE snapshot](../audits/2026-10-09/DIRECT-PROBE-NETWORK-SNAPSHOT.md)
+подготовлен для локализации следующего отказа, ещё не установлен/не испытан live.
 
 Доказательства: [Исследование и порядок внедрения](../design/BROWSER-DIRECT-TRANSPORT.md),
 [Фактический relay path и idle canary](../audits/2026-10-09/IDLE-CONTROL-RELAY-REVIEW.md).

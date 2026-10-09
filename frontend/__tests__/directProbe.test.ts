@@ -11,7 +11,7 @@ class FakeChannel {
 class FakePeer {
   static latest: FakePeer;
   channel = new FakeChannel();
-  iceGatheringState = 'complete'; connectionState = 'connected';
+  iceGatheringState = 'complete'; connectionState = 'connected'; iceConnectionState = 'checking';
   localDescription = { sdp: 'v=0\r\n' };
   onicegatheringstatechange: (() => void) | null = null;
   onconnectionstatechange: (() => void) | null = null;
@@ -152,4 +152,72 @@ test('only selected candidate pair proves host/NAT/relay; endpoint IPs are exclu
   expect(probePath(stats as unknown as RTCStatsReport).path).toBe('relay');
   stats.delete('t');
   expect(probePath(stats as unknown as RTCStatsReport)).toEqual({ path: 'unknown', protocol: null });
+});
+
+test('startup ICE samples survive failure with age while selected path and RTT remain unknown', async () => {
+  const reports: DirectProbeResult[] = [];
+  startDirectProbe('wss://same-origin/ws/direct-probe/device', 'access', value => reports.push(value));
+  await flush();
+  FakePeer.latest.getStats.mockResolvedValue(new Map([
+    ['p', { type: 'candidate-pair', state: 'in-progress', requestsSent: 4, responsesReceived: 0 }],
+  ]));
+  FakeSocket.latest.onmessage?.({ data: JSON.stringify({ type: 'direct_probe_answer', session_id: sid, sdp: 'v=0\r\n' }) });
+  await flush();
+  jest.advanceTimersByTime(500); await flush();
+  const calls = FakePeer.latest.getStats.mock.calls.length;
+  jest.advanceTimersByTime(11500); await flush();
+  const last = reports.at(-1)!;
+  expect(last.reason).toBe('connection_deadline');
+  expect(last.network).toMatchObject({ checkingPairs: 1, requestsSent: 4, responsesReceived: 0 });
+  expect(last.iceState).toBe('checking');
+  expect(last.networkAgeAtStopMs).toBe(12000);
+  expect(last.path).toBe('unknown'); expect(last.samples).toEqual([]);
+  jest.advanceTimersByTime(60000); await flush();
+  expect(FakePeer.latest.getStats.mock.calls.length).toBe(calls + 1);
+  expect(jest.getTimerCount()).toBe(0);
+});
+
+test('unresolved diagnostic call cannot pile up or delay Stop and late results stay retired', async () => {
+  const reports: DirectProbeResult[] = [];
+  const stop = startDirectProbe('wss://same-origin/ws/direct-probe/device', 'access', value => reports.push(value));
+  await flush();
+  let finish!: (value: Map<any, any>) => void;
+  FakePeer.latest.getStats.mockImplementation(() => new Promise(resolve => { finish = resolve; }));
+  FakeSocket.latest.onmessage?.({ data: JSON.stringify({ type: 'direct_probe_answer', session_id: sid, sdp: 'v=0\r\n' }) });
+  await flush(); jest.advanceTimersByTime(9000); await flush();
+  expect(FakePeer.latest.getStats).toHaveBeenCalledTimes(1);
+  stop();
+  expect(FakePeer.latest.close).toHaveBeenCalledTimes(1);
+  const count = reports.length;
+  finish(new Map([['t', { type: 'transport', dtlsState: 'connected' }]])); await flush();
+  expect(reports).toHaveLength(count);
+  expect(reports.at(-1)?.network).toBeUndefined();
+  expect(jest.getTimerCount()).toBe(0);
+});
+
+test('diagnostic rejection does not misclassify a valid answer or stop the echo channel', async () => {
+  const reports: DirectProbeResult[] = [];
+  const stop = startDirectProbe('wss://same-origin/ws/direct-probe/device', 'access', value => reports.push(value));
+  await flush();
+  FakePeer.latest.getStats.mockImplementation(() => { throw new Error('stats unavailable'); });
+  FakeSocket.latest.onmessage?.({ data: JSON.stringify({ type: 'direct_probe_answer', session_id: sid, sdp: 'v=0\r\n' }) });
+  await flush();
+  expect(reports.at(-1)?.state).toBe('connecting');
+  FakePeer.latest.channel.onopen?.(); jest.advanceTimersByTime(1000);
+  FakePeer.latest.channel.onmessage?.({ data: `SP1 ${sid} 1` }); await flush();
+  expect(reports.at(-1)?.samples).toHaveLength(1);
+  expect(reports.at(-1)?.network).toBeUndefined();
+  stop();
+});
+
+test('diagnostic sampling has a hard call budget across scheduled checks and twenty echo replies', async () => {
+  const { peer, reports } = await connected();
+  for (let i = 1; i <= 20; i++) {
+    jest.advanceTimersByTime(1000); await flush();
+    peer.channel.onmessage?.({ data: `SP1 ${sid} ${i}` }); await flush();
+  }
+  jest.advanceTimersByTime(1000); await flush();
+  expect(reports.at(-1)?.state).toBe('finished');
+  expect(peer.getStats).toHaveBeenCalledTimes(32);
+  expect(jest.getTimerCount()).toBe(0);
 });

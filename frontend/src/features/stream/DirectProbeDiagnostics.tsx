@@ -24,6 +24,7 @@ export function DirectProbeDiagnostics({ deviceId }: { deviceId: string }) {
   const stop = useRef<(() => void) | null>(null);
   const active = result && ['gathering', 'signaling', 'connecting', 'connected'].includes(result.state);
   useEffect(() => {
+    setResult(null);
     const onHidden = () => { if (document.hidden) { stop.current?.(); stop.current = null; } };
     document.addEventListener('visibilitychange', onHidden);
     return () => { stop.current?.(); stop.current = null; document.removeEventListener('visibilitychange', onHidden); };
@@ -52,6 +53,17 @@ export function DirectProbeDiagnostics({ deviceId }: { deviceId: string }) {
       </dl>
       {result.reason && <p className="break-words text-sm text-muted-foreground">{reasonText[result.reason] ?? 'Проверка завершилась с ошибкой. Автоматического повтора нет.'}</p>}
       {result.reason && <details className="text-xs text-muted-foreground"><summary className="cursor-pointer">Техническая причина</summary><code>{result.reason}</code></details>}
+      {result.network && <details className="text-xs text-muted-foreground">
+        <summary className="cursor-pointer">Сетевые этапы проверки</summary>
+        <dl className="mt-2 grid grid-cols-1 gap-2 sm:grid-cols-2">
+          <div><dt>ICE / DTLS</dt><dd>{result.iceState ?? 'Не измерен'} / {result.network.dtlsState ?? 'Не измерен'}</dd></div>
+          <div><dt>Адреса браузера / APK</dt><dd>{result.network.localCandidates} / {result.network.remoteCandidates}</dd></div>
+          <div><dt>Пары: проверка / отказ / успех</dt><dd>{result.network.checkingPairs} / {result.network.failedPairs} / {result.network.succeededPairs} из {result.network.pairs}</dd></div>
+          <div><dt>ICE-запросы / ответы</dt><dd>{result.network.requestsSent ?? 'Не измерены'} / {result.network.responsesReceived ?? 'Не измерены'}</dd></div>
+          {result.networkAgeAtStopMs !== undefined && <div><dt>Возраст среза при остановке</dt><dd>{Math.round(result.networkAgeAtStopMs)} мс</dd></div>}
+        </dl>
+        <p className="mt-2">Сводка последнего браузерного среза. Успешная пара не означает выбранный путь или подтверждённое действие Android. IP и сетевые ключи здесь не сохраняются.</p>
+      </details>}
     </div>}
   </section>;
 }

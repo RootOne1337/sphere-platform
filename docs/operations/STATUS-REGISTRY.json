@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "reviewedAtUtc": "2026-10-09T18:35:30.974679+00:00",
+  "reviewedAtUtc": "2026-10-09T18:45:01.225100+00:00",
   "sourceReviewed": "9ad3481c1173fdd508b43d0314ec6cf6ffbade1d",
   "scope": "Effective documentation status; source/install/finite acceptance kept separate. No new fleet or soak acceptance.",
   "baseline": "docs/audits/2026-10-05/ENTERPRISE-PRODUCT-BACKLOG.json",
@@ -30,6 +30,12 @@
       "installed": false,
       "evidence": "docs/audits/2026-10-09/DIRECT-PROBE-PILOT.md",
       "scope": "Bounded final-close race correction and frontend phase wording; not installed on 3015"
+    },
+    {
+      "id": "direct-probe-network-snapshot",
+      "installed": false,
+      "evidence": "docs/audits/2026-10-09/DIRECT-PROBE-NETWORK-SNAPSHOT.md",
+      "scope": "Single-flight/32-call browser ICE summary, no live acceptance or installed change"
     }
   ],
   "storage": {
@@ -113,7 +119,8 @@
     "implementationEvidence": "docs/audits/2026-10-09/DIRECT-PROBE-SOURCE.md",
     "sourceCorrections": [
       "docs/audits/2026-10-09/DIRECT-PROBE-VIEWER-ISOLATION.md",
-      "docs/audits/2026-10-09/DIRECT-PROBE-PILOT.md"
+      "docs/audits/2026-10-09/DIRECT-PROBE-PILOT.md",
+      "docs/audits/2026-10-09/DIRECT-PROBE-NETWORK-SNAPSHOT.md"
     ],
     "pilotEvidence": "docs/audits/2026-10-09/DIRECT-PROBE-PILOT.json",
     "pilotOutcome": "FAILED_HOST_ICE_CLEANED_UP",
@@ -1811,20 +1818,22 @@
         "EP-047"
       ],
       "acceptedScope": "Exact9ad all four CI success; two real native echo attempts, JNI and authorized SDP publication verified. Connectivity failed/0RTT, original APK restored, endpointoff. This is negative diagnostic evidence, not media/control acceptance.",
-      "remaining": "Current source cleanup/phase corrections exact CI and delivery; ICE cause/route attribution, live RTT, native cleanup/provenance/SBOM, STUN/TURN/network matrix, media/control ownership and idle reliability remain open.",
+      "remaining": "Current source cleanup/phase/network snapshot exact CI and delivery; real ICE snapshot/cause/route attribution, live RTT, native cleanup/provenance/SBOM, STUN/TURN/network matrix, media/control ownership and idle reliability remain open.",
       "evidence": [
         "docs/design/BROWSER-DIRECT-TRANSPORT.md",
         "docs/audits/2026-10-09/IDLE-CONTROL-RELAY-REVIEW.md",
         "docs/audits/2026-10-09/DIRECT-PROBE-SOURCE.md",
         "docs/audits/2026-10-09/DIRECT-PROBE-VIEWER-ISOLATION.md",
-        "docs/audits/2026-10-09/DIRECT-PROBE-PILOT.md"
+        "docs/audits/2026-10-09/DIRECT-PROBE-PILOT.md",
+        "docs/audits/2026-10-09/DIRECT-PROBE-NETWORK-SNAPSHOT.md"
       ],
       "sourcePaths": [
         "backend/websocket/direct_probe_protocol.py",
         "backend/websocket/direct_probe_runtime.py",
         "backend/api/ws/direct/router.py",
         "frontend/src/features/stream/directProbe.ts",
-        "android/app/src/directProbe/kotlin/com/sphereplatform/agent/direct/DirectProbeTransport.kt"
+        "android/app/src/directProbe/kotlin/com/sphereplatform/agent/direct/DirectProbeTransport.kt",
+        "frontend/src/features/stream/directProbeNetwork.ts"
       ],
       "fleetAccepted": false
     }

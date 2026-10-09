@@ -10,6 +10,9 @@ UI d70 сохранён,45соседних контейнеров/schema/OTA/п�
 Обычный viewer получил13кадров без decode/render errors; idle timeout повторился.
 Новая source коррекция закрытия сокета и фаз диагностики проверена локально,
 на3015ещё не установлена. [Пилот, ресурсы и границы](../audits/2026-10-09/DIRECT-PROBE-PILOT.md).
+Последующий source bounded ICE/DTLS snapshot сохраняет counters/unknown/age при
+отказе:16focused frontend tests/types passed. Рабочий runtime не менялся;
+[exact CI/delivery и network canary ещё требуются](../audits/2026-10-09/DIRECT-PROBE-NETWORK-SNAPSHOT.md).
 
 **Предыдущая UI-only установка9октября — d70f55c6 на3015 и публичном адресе.**
 Idle-only потеря подтверждения теперь имеет точную категорию и текст; при неизвестном
