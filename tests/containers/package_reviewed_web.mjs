@@ -7,11 +7,13 @@ import { mkdir, readFile, stat, writeFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import { setTimeout as delay } from 'node:timers/promises';
 import { pageRoutes, verifyPages } from './frontend_standalone_probe.mjs';
+import { packageCommandFailure } from './package_command_failure.mjs';
 
 function command(program, args, timeout = 120000) {
   const result = spawnSync(program, args, { encoding: 'utf8', timeout, maxBuffer: 256 * 1024 });
   // No arbitrary command stdout, environment or Docker config is printed.
-  assert.ok(!result.error && result.status === 0, `${program} failed (${result.status ?? 'timeout'})`);
+  assert.ok(!result.error && result.status === 0,
+    `${program} failed (${result.status ?? 'no exit code'}; ${packageCommandFailure(result)})`);
   return result.stdout.trim();
 }
 
