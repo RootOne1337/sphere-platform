@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
-  "reviewedAtUtc": "2026-10-08T23:14:27.958892+00:00",
-  "sourceReviewed": "f79de04725deebd1c04a45bb2038ca145c42a1d3",
+  "reviewedAtUtc": "2026-10-09T02:37:05.617464+00:00",
+  "sourceReviewed": "60be6ecd0b13e33715761b53b781ad190c1e3e6e",
   "scope": "Effective documentation status; source/install/finite acceptance kept separate. No new fleet or soak acceptance.",
   "baseline": "docs/audits/2026-10-05/ENTERPRISE-PRODUCT-BACKLOG.json",
   "previousCrosscheck": "docs/audits/2026-10-09/CHAT-CODE-RECONCILIATION.json",
@@ -11,11 +11,11 @@
     "open": 41
   },
   "installed": {
-    "lastObservedUtc": "2026-10-08T23:10:38.3997504Z",
-    "ui": "ec3f22678f20c16c221d4e2d02810d4f8122e6af",
+    "lastObservedUtc": "2026-10-09T02:37:05.617464+00:00",
+    "ui": "60be6ecd0b13e33715761b53b781ad190c1e3e6e",
     "api": "be803773037c16a113b50c1a2774793fffae8773",
-    "evidence": "docs/audits/2026-10-09/STUDIO-RESPONSIVE-INSTALLED-ACCEPTANCE.json",
-    "observation": "Read-only Docker inspect: same container IDs, image IDs and startup times; running is not stream or input acceptance.",
+    "evidence": "docs/audits/2026-10-09/STUDIO-CLOCK-INSTALLED-ACCEPTANCE.json",
+    "observation": "UI-only admitted install, 45 other containers and OTA unchanged; finite browser mixed-input receipt recorded separately from fleet/soak.",
     "pilotApk": {
       "device": "PH011",
       "version": "1.2.49-dev",
@@ -23,14 +23,7 @@
       "scope": "Pinned prior finite canary, not new fleet inventory"
     }
   },
-  "pendingCorrections": [
-    {
-      "id": "RECORDER-CLOCK",
-      "sourceRevision": "1577e01e09dcf256efaed391941606bd2c400e8e",
-      "installed": false,
-      "evidence": "docs/audits/2026-10-09/STUDIO-RECORDER-CLOCK-FIX.md"
-    }
-  ],
+  "pendingCorrections": [],
   "storage": {
     "lastObservedUtc": "2026-10-08T23:10:38.3997504Z",
     "visibleMatchingProcesses": 0,
@@ -607,8 +600,8 @@
       "priority": "P1",
       "state": "OPEN",
       "progress": "PARTIAL",
-      "currentScope": "Click/swipe endpoints, explicit XPath plan и key/text ACK есть; queue200. Clock defect исправлен source1577e01e.",
-      "remaining": "Новая доставка pending; MOVE recording/Unicode/IME/automatic tree-crop-pixel bundle отсутствуют.",
+      "currentScope": "Click/swipe endpoints, explicit XPath plan и key/text ACK есть; queue200. Clock fix1577e01e установлен в UI60be6ecd; finite PH011 mixed recording и graph insertion приняты.",
+      "remaining": "MOVE recording/Unicode/IME/automatic tree-crop-pixel bundle и Fleet acceptance отсутствуют.",
       "acceptanceCriteria": [
         "Tap/drag/text/wheel нормализуются с receipts.",
         "Ambiguity и fallback coordinates видимы.",
@@ -1646,13 +1639,14 @@
     {
       "id": "CHAT-07",
       "title": "Смешанная запись XPath → tap → системная кнопка",
-      "state": "SOURCE_FIXED_NOT_INSTALLED",
+      "state": "ACCEPTED_FINITE",
       "productItems": [
         "EP-018"
       ],
-      "acceptedScope": "1577e01e: selector переведён на performance.now; два воспроизведённых clock-skew случая, 76 focused/1938 full frontend tests и TypeScript.",
-      "remaining": "Нужны доставка этого UI и конечная приёмка на выбранном устройстве. Установленный UI ec3f2267 этого fix ещё не содержит.",
+      "acceptedScope": "UI60be6ecd/APIbe803773: PH01110249 tap → planned XPath → tap → APK-confirmed Back,4 строки; явный перенос6actions с2паузами,9узлов/8связей; Undo восстановилv1/3узла/2связи. Все4CI success, frontend1938tests/139suites.",
+      "remaining": "Finite PH011 не подтверждает все устройства/rotation/clock changes/replay; MOVE/context bundle отдельно OPEN (CHAT-06/08), EP-018 остаётся OPEN/PARTIAL.",
       "evidence": [
+        "docs/audits/2026-10-09/STUDIO-CLOCK-INSTALLED-ACCEPTANCE.md",
         "docs/audits/2026-10-09/STUDIO-RECORDER-CLOCK-FIX.md"
       ],
       "sourcePaths": [
@@ -1816,5 +1810,15 @@
     "canonicalSha256": "488e804a84f62de7c81313b14d5e2dfca522c630d2583b0712c9399950950968",
     "localGatewayRootSchemaHttpStatus": 404,
     "scope": "Declared HTTP contracts only; public gateway root schema route is unavailable in this finite read. WS/input/fleet authorization/outcomes not attested."
-  }
+  },
+  "completedCorrections": [
+    {
+      "id": "RECORDER-CLOCK",
+      "sourceRevision": "1577e01e09dcf256efaed391941606bd2c400e8e",
+      "installedRevision": "60be6ecd0b13e33715761b53b781ad190c1e3e6e",
+      "evidence": "docs/audits/2026-10-09/STUDIO-CLOCK-INSTALLED-ACCEPTANCE.json",
+      "evidenceSha256NormalizedLf": "b6ad1cb158efd0625a93b60a55c63d5353f4b15f80e748173d4bb88cd81b5fed",
+      "acceptedScope": "Finite PH011 tap/XPath/tap/Back recording and explicit graph insertion; not full EP-018 or fleet."
+    }
+  ]
 }

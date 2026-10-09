@@ -17,8 +17,9 @@
 
 **Действующий статус — 9 октября 2026:** [реестр работ и требований](docs/operations/WORK-STATUS.md)
 разделяет **9 принятых / 41 открытую работу** и старые семь незакрытых findings.
-Последняя проверенная установка: UI **ec3f2267**, API **be803773** на3015;
-clock fix **1577e01e** проверен в исходниках, ещё не установлен. Непрерывное
+Последняя проверенная установка: UI **60be6ecd**, API **be803773** на3015;
+clock fix **1577e01e** установлен, PH011 mixed recording и graph transfer
+приняты в конечном scope. [Доказательства](docs/audits/2026-10-09/STUDIO-CLOCK-INSTALLED-ACCEPTANCE.md). Непрерывное
 управление принято на PH011 в конечном scope; запись MOVE/context, idle receipt
 failure и resource coverage остаются открытыми.
 [Runtime и доказательства](docs/operations/CURRENT-STATE.md) · [Правила документации](docs/DOCUMENTATION.md).
@@ -542,8 +543,8 @@ identity, доверенный ключ и параметры enrollment; APK и
 ## 🔬 Состояние проекта и границы проверки
 
 **Действующий срез9октября:** [реестр50работ и15дополнений из чата](docs/operations/WORK-STATUS.md)
-и [runtime evidence](docs/operations/CURRENT-STATE.md). UIec3f2267/APIbe803773
-сохранены; recorder clock fix1577e01e source-tested, не установлен. Exact f79de047
+и [runtime evidence](docs/operations/CURRENT-STATE.md). UI60be6ecd/APIbe803773:
+recorder clock fix установлен; finite PH011 mixed запись и перенос приняты. Exact60be6ecd
 Backend/Frontend/Android/Preview CI завершились успешно; новые revisions имеют
 собственные проверки. Product9/41 и legacy34/7 — разные scopes. Работающий
 online badge или finite canary не закрывают resource/idle/ownership и Fleet32 gates.

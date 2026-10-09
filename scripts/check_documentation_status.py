@@ -159,6 +159,23 @@ def validate_registry(root: Path, registry: dict) -> list[str]:
     for correction in registry["pendingCorrections"]:
         if correction["installed"] or not (root / correction["evidence"]).is_file():
             errors.append("Pending source correction incorrectly marked installed or missing receipt")
+    completed = registry.get("completedCorrections", [])
+    if len({item["id"] for item in completed}) != len(completed):
+        errors.append("Duplicate completed correction")
+    for correction in completed:
+        path = root / correction["evidence"]
+        if not path.is_file() or correction.get("evidenceSha256NormalizedLf") != normalized_hash(path):
+            errors.append("Completed correction receipt missing or fingerprint mismatch")
+            continue
+        receipt = read_json(root, correction["evidence"])
+        if (receipt.get("correction") != {"id": correction["id"], "sourceRevision": correction["sourceRevision"]}
+                or receipt.get("runtimeInstalled") is not True
+                or receipt.get("runtime", {}).get("sourceRevision") != correction["installedRevision"]
+                or receipt.get("browser", {}).get("finiteAccepted") is not True):
+            errors.append("Completed correction does not match its installed finite receipt")
+        if (registry["installed"]["evidence"] == correction["evidence"]
+                and registry["installed"]["ui"] != correction["installedRevision"]):
+            errors.append("Installed UI does not match referenced correction receipt")
     if registry["directMedia"]["implementationAuthorizedNow"] or registry["directMedia"]["state"] != "DEFERRED_DESIGN":
         errors.append("Direct-media implementation is outside this reconciliation scope")
     for file in registry["authoritativeEntrypoints"]:

@@ -14,14 +14,26 @@ Source, установленный runtime и конечная приёмка р
 PARTIAL; прежние восемь — более ранняя запись, а не остаток всего продукта.
 Найден и воспроизведён дефект смешения Date.now/performance.now при записи
 XPath → следующий input. Source **1577e01e** исправляет его; 76 focused и все
-1938 frontend tests/139 suites, nonincremental TypeScript проходят. Установка
-нового UI ещё не принята: текущий видимый 3015 остаётся ec3f2267/be803773.
+1938 frontend tests/139 suites, nonincremental TypeScript проходят. UI60be6ecd
+установлен на3015 с APIbe803773; finite PH011 mixed recording принята ниже.
 Normal continuous input уже подключён, recorded MOVE/tree/crop/pixel bundle
 остаётся OPEN. Idle receipt failure и отсутствие наблюдений за диском после
 завершения collector — приоритеты перед расширением automation.
 [Clock regression и границы](../audits/2026-10-09/STUDIO-RECORDER-CLOCK-FIX.md).
 
-**9 октября +05 / 8 октября21:43–21:51 UTC — responsive Studio/navigation установлен.**
+**9 октября,02:28–02:34 UTC /07:28–07:34 UTC+5 — clock fix установлен.**
+На3015 UI **60be6ecd** / API **be803773**. Все4 exact60be CI successful; frontend
+1938tests/139suites, types/build,26pages/73assets. Only UI replaced,45other
+containers/schema/OTA/APK сохранены. PH01110249: tap→planned XPath→tap→Back,
+4строки без clock error; Back APK confirmed469мс. После Stop явный transfer
+добавил4actions/2пауз, canonical9узлов/8связей; queue0. Undo восстановилv1/3узла/
+2связи; View, lab/temp tab закрыты, чистая user tab refreshed. Save/Run не
+выполнялись. Late-ACK-after-Stop live ordering не доказан, fixtures сохраняют
+это покрытие. Long-chain overview слишком мелок; rich recorder/idle/ownership/
+resources остаются OPEN,9/41 не меняется.
+[Доставка, приёмка и границы](../audits/2026-10-09/STUDIO-CLOCK-INSTALLED-ACCEPTANCE.md).
+
+**Предыдущая установка: 9 октября +05 / 8 октября21:43–21:51 UTC — responsive Studio/navigation.**
 На3015 UI **ec3f2267** / API **be803773**. Reviewed UI заменён отдельно:
 45other containers/schema/OTA/APK10249 сохранены. Frontend CI1936tests/
 139suites, types/build,26pages/73assets passed. Все4 exact-source workflows

@@ -36,9 +36,9 @@ L — несколько слоёв/проверок, XL — новая подс
    bounded timings, исправление и повторная canary; увеличение timeout само по себе не приёмка.
 3. **Общий владелец input (EP-017/020):** Redis lease для continuous viewer существует;
    согласование viewer/task/API/scheduler и неизвестных результатов во всех комбинациях не принято.
-4. **Доставка recorder fix (EP-018):** source1577e01e прошёл regression/1938 tests/TS;
-   установленный UI ec3f2267 ещё его не содержит. После доставки нужна конечная
-   mixed tap/XPath/key приёмка, затем отдельная trajectory/context работа.
+4. **Rich recorder (EP-018):** clock fix1577e01e уже установлен в UI60be6ecd;
+   PH011 mixed tap/XPath/tap/Back и перенос в граф приняты в конечном scope.
+   Следующий объём — trajectory/context/Unicode/IME; EP-018 остаётся OPEN/PARTIAL.
 
 ## Реестр продукта
 
@@ -163,13 +163,13 @@ PH011: четыре APK confirmed outcome в порядке записи, оче
 
 ### CHAT-07 · Смешанная запись XPath → tap → системная кнопка
 
-**SOURCE_FIXED_NOT_INSTALLED** · EP-018.
+**ACCEPTED_FINITE** · EP-018.
 
-1577e01e: selector переведён на performance.now; два воспроизведённых clock-skew случая, 76 focused/1938 full frontend tests и TypeScript.
+UI60be6ecd/APIbe803773: PH01110249 tap → planned XPath → tap → APK-confirmed Back,4 строки; явный перенос6actions с2паузами,9узлов/8связей; Undo восстановилv1/3узла/2связи. Все4CI success, frontend1938tests/139suites.
 
-Остаётся: Нужны доставка этого UI и конечная приёмка на выбранном устройстве. Установленный UI ec3f2267 этого fix ещё не содержит.
+Остаётся: Finite PH011 не подтверждает все устройства/rotation/clock changes/replay; MOVE/context bundle отдельно OPEN (CHAT-06/08), EP-018 остаётся OPEN/PARTIAL.
 
-Доказательства: [STUDIO-RECORDER-CLOCK-FIX](../audits/2026-10-09/STUDIO-RECORDER-CLOCK-FIX.md).
+Доказательства: [STUDIO-CLOCK-INSTALLED-ACCEPTANCE](../audits/2026-10-09/STUDIO-CLOCK-INSTALLED-ACCEPTANCE.md), [STUDIO-RECORDER-CLOCK-FIX](../audits/2026-10-09/STUDIO-RECORDER-CLOCK-FIX.md).
 
 ### CHAT-08 · Запись контекста: XPath, зона, crop, цвет пикселя
 

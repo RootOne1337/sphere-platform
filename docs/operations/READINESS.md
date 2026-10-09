@@ -9,8 +9,10 @@ Source, установленный runtime и конечная приёмка р
 связывает исходники с последующими приёмками. **9 принято / 41 открыто** —
 продуктовый план; **34 source-fixed / 7 незакрытых** — последний записанный
 остаток старого веб-аудита. Эти счётчики нельзя объединять. Новый recorder
-clock fix1577e01e прошёл 1938 frontend tests и TypeScript, но ещё не установлен;
-это не закрытие EP-018 или ресурсных gates. Idle receipt failure, global input
+clock fix1577e01e установлен в UI60be6ecd; все4 exact-sourceCI success, frontend
+1938tests/139suites/TypeScript. PH011 mixed запись и graph transfer приняты в
+конечном scope: [receipt](../audits/2026-10-09/STUDIO-CLOCK-INSTALLED-ACCEPTANCE.md).
+Это не закрытие EP-018 или ресурсных gates. Idle receipt failure, global input
 arbitration, rich recorder и разрыв host collector coverage остаются OPEN.
 
 ## История измерений и установок

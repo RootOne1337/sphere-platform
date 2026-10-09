@@ -35,7 +35,10 @@ Markdown обновите inventory; после установки обнови�
 У полного EP должны быть выполнены все его acceptanceCriteria; для частично
 выполненного требования храните acceptedScope и remaining, не ставьте ACCEPTED.
 Source/test/install/live/fleet — разные стадии. CI надо ссылать на exact source SHA.
-Исправление1577e01e остаётся source-only, пока отдельная установка не подтверждена.
+Source clock receipt1577e01e хранит прежнюю source-only границу. Новая
+[доставка60be6ecd](audits/2026-10-09/STUDIO-CLOCK-INSTALLED-ACCEPTANCE.md) принята
+отдельно: completedCorrections содержит её normalized SHA и точный installed SHA.
+Исторический source receipt не переписывается ради нового installed статуса.
 Каждая приёмка указывает версии, время, устройства, сценарий, длительность и
 ограничения; unknown/rejected outcomes сохраняются рядом с успехами.
 

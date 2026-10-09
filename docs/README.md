@@ -18,7 +18,8 @@
 **Действующий реестр:** [50 работ и дополнения из чата](operations/WORK-STATUS.md)
 ([JSON](operations/STATUS-REGISTRY.json)). **9 принято / 41 открыто**; legacy7 —
 пересекающийся отдельный аудит, не дополнительный остаток. Последняя записанная
-установка UIec3f2267/APIbe803773; новый clock fix1577e01e source-only.
+установка UI60be6ecd/APIbe803773; clock fix1577e01e installed и finite PH011
+recording accepted. [Receipt](audits/2026-10-09/STUDIO-CLOCK-INSTALLED-ACCEPTANCE.md).
 Установка/CI/конечная приёмка не подменяют друг друга.
 
 <details>

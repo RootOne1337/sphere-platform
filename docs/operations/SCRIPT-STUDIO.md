@@ -4,12 +4,14 @@
 Source, установленный runtime и конечная приёмка разделены; старые snapshots ниже сохраняют свои даты.
 
 **Сверка9октября:** [полная карта требований и границ реализации](../audits/2026-10-09/CHAT-CODE-RECONCILIATION.md).
-Source1577e01e устраняет смешение часов XPath/input в очереди; 76 focused и1938
-frontend tests проходят. На текущем3015 эта новая правка ещё не принята как
-installed; normal live gestures и записанная траектория — разные возможности.
+Source1577e01e устраняет смешение часов XPath/input в очереди; UI60be6ecd
+установлен на3015, APIbe803773 сохранён. PH011 tap→planned XPath→tap→Back
+проверен:4строки и явный graph transfer с паузами. Все4CI success, frontend1938
+tests/139suites. Normal live gestures и recorded trajectory — разные возможности.
+[Установка и конечная приёмка](../audits/2026-10-09/STUDIO-CLOCK-INSTALLED-ACCEPTANCE.md).
 [Воспроизведение и correction receipt](../audits/2026-10-09/STUDIO-RECORDER-CLOCK-FIX.md).
 
-**Responsive/navigation UI ec3f2267 установлен на3015.**
+**Responsive/navigation из предыдущего UIec3f2267 сохранён в установленном60be6ecd.**
 На телефоне используйте «Схема», «Действия», «Параметры», «Устройство»;
 импорт/экспорт/направление/упорядочивание/запуск доступны через «Ещё».
 Desktop библиотека остаётся доступной рядом с лабораторией. Скрытие устройства
@@ -23,7 +25,7 @@ automatic pixel/XPath bundle. [Конечная приёмка и границы
 
 Актуализировано: **9 октября 2026**. Каталог `/scripts`, редактор
 `/scripts/builder`, формат **DAG1.0**, React Flow, локальная ELK0.12.0.
-На3015 установлены frontend **ec3f2267** и API **be803773**. Studio сохраняет
+На3015 установлены frontend **60be6ecd** и API **be803773**. Studio сохраняет
 graph/action contract и диалог сохранности; текущие runtime границы фиксируются в
 [CURRENT-STATE](CURRENT-STATE.md). Обратная гонка XPath→Control исправлена;
 быстрый переход и повторный вход в дерево проверены на установленном UI.

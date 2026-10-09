@@ -60,8 +60,25 @@ class DocumentationStatusTests(unittest.TestCase):
         self.assertIn("EP-018: fleet acceptance is not supported by this ledger", validate_registry(ROOT, self.registry))
 
     def test_source_fix_cannot_be_reported_installed(self) -> None:
-        self.registry["pendingCorrections"][0]["installed"] = True
+        self.registry["pendingCorrections"].append({
+            "id": "UNDELIVERED", "installed": True,
+            "evidence": "docs/audits/2026-10-09/STUDIO-RECORDER-CLOCK-FIX.md",
+        })
         self.assertTrue(any("incorrectly marked installed" in e for e in validate_registry(ROOT, self.registry)))
+
+    def test_completed_correction_fingerprint_is_required(self) -> None:
+        self.registry["completedCorrections"][0]["evidenceSha256NormalizedLf"] = "0" * 64
+        self.assertIn("Completed correction receipt missing or fingerprint mismatch", validate_registry(ROOT, self.registry))
+
+    def test_unrelated_receipt_cannot_admit_a_completed_correction(self) -> None:
+        correction = self.registry["completedCorrections"][0]
+        correction["evidence"] = self.registry["items"][0]["acceptanceEvidence"]
+        correction["evidenceSha256NormalizedLf"] = normalized_hash(ROOT / correction["evidence"])
+        self.assertIn("Completed correction does not match its installed finite receipt", validate_registry(ROOT, self.registry))
+
+    def test_current_installed_ui_cannot_drift_from_referenced_receipt(self) -> None:
+        self.registry["installed"]["ui"] = "0" * 40
+        self.assertIn("Installed UI does not match referenced correction receipt", validate_registry(ROOT, self.registry))
 
     def test_legacy_duplicate_does_not_inflate_count(self) -> None:
         self.registry["legacy"]["open"].append("F32")
