@@ -51,6 +51,8 @@ APPROVED_PATHS = {
     "backend/core/config.py", "backend/api/ws/direct/__init__.py",
     "backend/api/ws/direct/router.py", "backend/websocket/direct_probe_protocol.py",
     "backend/websocket/direct_probe_runtime.py",
+    "backend/api/v1/batches/router.py", "backend/services/batch_service.py",
+    "backend/database/redis_client.py",
 }
 PACKAGED_PATHS = ["backend", "alembic", "agent-config", "scripts/create_admin.py",
     "scripts/seed_enrollment_key.py", "scripts/backfill_script_metadata.py", "scripts/publish_script_source.py"]

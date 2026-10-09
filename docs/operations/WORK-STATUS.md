@@ -2,6 +2,13 @@
 
 **Проверенная установка:** UI `d70f55c6` / API `9ad3481c`.
 
+**10 октября — срочный source fix запуска broadcast.** Доказаны UnicodeDecodeError
+при MessagePack MGET и отдельный ValidationError обязательного online_devices
+после commit. Обе причины исправлены, 60 focused/64 delivery tests прошли;
+real PostgreSQL/Redis CI и установка требуются. Broad product 9/41 и legacy7
+сохраняются. Idle timeout остаётся приоритетом, direct pilot отложен ради этого сбоя.
+[Source audit](../audits/2026-10-10/BROADCAST-BINARY-PRESENCE.md).
+
 **9 октября: выполнены две попытки native direct pilot.** JNI и авторизованный
 SDP answer подтверждены, DataChannel не открылся, RTT не измерен. API9ad установлен,
 прежний APK PH011 восстановлен, эксперимент отключён с пустым allowlist;

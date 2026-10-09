@@ -123,7 +123,7 @@ class BatchService:
 
         Возвращает (batch, online_count).
         """
-        from backend.database.redis_client import redis as _redis
+        from backend.database.redis_client import redis_binary
         from backend.services.cache_service import CacheService
         from backend.services.device_service import DeviceService
         from backend.services.device_status_cache import DeviceStatusCache
@@ -138,7 +138,9 @@ class BatchService:
             )
 
         # 2. Фильтрация по live-статусу — только online
-        status_cache = DeviceStatusCache(_redis)
+        # Presence values are MessagePack, not UTF-8. A text client fails in
+        # MGET before DeviceStatusCache can validate any individual entry.
+        status_cache = DeviceStatusCache(redis_binary)
         statuses = await status_cache.bulk_get_status(all_ids)
         online_ids = [
             uuid.UUID(did)

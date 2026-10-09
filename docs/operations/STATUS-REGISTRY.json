@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
-  "reviewedAtUtc": "2026-10-09T18:45:01.225100+00:00",
-  "sourceReviewed": "9ad3481c1173fdd508b43d0314ec6cf6ffbade1d",
+  "reviewedAtUtc": "2026-10-09T20:56:58.739220+00:00",
+  "sourceReviewed": "fd1335b472b222e3340497ec5a00bc49154eaa7d",
   "scope": "Effective documentation status; source/install/finite acceptance kept separate. No new fleet or soak acceptance.",
   "baseline": "docs/audits/2026-10-05/ENTERPRISE-PRODUCT-BACKLOG.json",
   "previousCrosscheck": "docs/audits/2026-10-09/CHAT-CODE-RECONCILIATION.json",
@@ -36,6 +36,12 @@
       "installed": false,
       "evidence": "docs/audits/2026-10-09/DIRECT-PROBE-NETWORK-SNAPSHOT.md",
       "scope": "Single-flight/32-call browser ICE summary, no live acceptance or installed change"
+    },
+    {
+      "id": "broadcast-binary-presence-response",
+      "installed": false,
+      "evidence": "docs/audits/2026-10-10/BROADCAST-BINARY-PRESENCE.md",
+      "scope": "MessagePack text-client failure and required response count corrected; real-service CI and API delivery pending."
     }
   ],
   "storage": {

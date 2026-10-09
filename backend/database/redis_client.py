@@ -4,23 +4,23 @@ import redis.asyncio as aioredis
 from backend.core.config import settings
 from backend.core.lifespan_registry import register_shutdown, register_startup
 
-# Основной клиент (строки: JWT blacklist, rate-limit, статусы устройств)
+# Основной клиент (строки: JWT blacklist, rate-limit, JSON/text keys)
 redis: aioredis.Redis | None = None
 
 # FIX: отдельный клиент без decode_responses для бинарных каналов (H.264 NAL units).
 # Канал stream:{agent_id} передаёт бинарные данные — decode_responses=True вызовет UnicodeDecodeError.
-# Используй redis_binary для Pub/Sub видеострима (TZ-05).
-# Используй redis (с decode_responses=True) для всего остального.
+# Используй redis_binary для Pub/Sub видеострима и MessagePack DeviceStatusCache.
+# redis (decode_responses=True) допустим только для UTF-8 значений.
 redis_binary: aioredis.Redis | None = None
 
 
 async def get_redis() -> aioredis.Redis | None:
-    """FastAPI dependency для Redis (строки: JWT blacklist, rate-limit, статусы устройств)."""
+    """FastAPI dependency для текстового Redis (JWT blacklist, rate-limit, JSON)."""
     return redis
 
 
 async def get_redis_binary() -> aioredis.Redis | None:
-    """FastAPI dependency для бинарного Redis (Pub/Sub H.264 NAL units, video stream)."""
+    """FastAPI dependency для бинарного Redis (H.264 и MessagePack presence/diagnostics)."""
     return redis_binary
 
 

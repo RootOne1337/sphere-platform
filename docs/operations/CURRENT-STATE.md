@@ -2,6 +2,15 @@
 
 **Проверенная установка:** UI `d70f55c6` / API `9ad3481c`.
 
+**10 октября — воспроизведены и исправлены в source две причины broadcast 500.**
+MessagePack presence ошибочно читался текстовым Redis-клиентом; затем обязательный
+online_devices заполнялся после валидации ответа уже сохранённого батча.
+60 focused tests и 64 delivery tests проходят; отдельный real PostgreSQL/Redis test
+добавлен для exact-source CI. Установка пока прежняя; массовые задания для проверки
+на рабочих устройствах не запускались. CSS chunk на обоих адресах имеет одинаковые
+байты и HTTP200; причина unused preload warning ещё не подтверждена.
+[Доказательства и остаток](../audits/2026-10-10/BROADCAST-BINARY-PRESENCE.md).
+
 **9 октября18:23UTC — API9ad установлен, direct pilot завершён без соединения.**
 Две native попытки подтвердили загрузку JNI и публикацию авторизованного SDP answer,
 но host ICE не открыл DataChannel: ноль RTT samples, причина UNKNOWN. PH011 вернули

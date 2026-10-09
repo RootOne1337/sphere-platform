@@ -101,9 +101,11 @@ async def broadcast_batch(
     batch, online_count = await svc.broadcast_batch(
         body, current_user.org_id, current_user.id
     )
-    resp = BroadcastBatchResponse.model_validate(batch)
-    resp.online_devices = online_count
-    return resp
+    # The batch is already committed. Supply the required broadcast-only field
+    # before validation, so a successful durable admission is not reported as 500.
+    return BroadcastBatchResponse(
+        **BatchResponse.model_validate(batch).model_dump(), online_devices=online_count,
+    )
 
 
 # ── Get batch status ───────────────────────────────────────────────────────────
