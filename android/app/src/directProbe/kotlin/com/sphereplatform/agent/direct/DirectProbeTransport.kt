@@ -26,6 +26,7 @@ class DirectProbeTransport(
     private var factory: PeerConnectionFactory? = null
 
     private class Probe(val session: String, val generation: Long, val token: Long, val expires: Long) {
+        val progress = DirectProbeProgress(SystemClock.elapsedRealtime())
         var connection: PeerConnection? = null
         var channel: DataChannel? = null
         var answered = false
@@ -39,8 +40,9 @@ class DirectProbeTransport(
         scope.launch {
             try {
                 while (true) {
-                    peer?.let { if (!valid(it)) close() }
-                    peer?.let { if (it.answered && valid(it)) collectNetwork(it) }
+                    peer?.let { if (!valid(it)) close(if (SystemClock.elapsedRealtime() >= it.expires) ProbeStage.EXPIRED else ProbeStage.CLOSED) }
+                    // Setup failures previously emitted no stats because sampling began only after the answer.
+                    peer?.let { if (valid(it)) collectNetwork(it) }
                     val action = if (peer == null) queue.receive() else withTimeoutOrNull(100) { queue.receive() }
                     try { action?.invoke() } catch (e: kotlinx.coroutines.CancellationException) {
                         throw e
@@ -94,6 +96,7 @@ class DirectProbeTransport(
             // Validate before creating native threads. Ordinary builds keep an empty host-only profile.
             val iceProfile = DirectProbeIceProfile.fromUrl(BuildConfig.DIRECT_PROBE_STUN_URL)
             p.iceProfile = iceProfile.name
+            progress(p, ProbeStage.OFFER_RECEIVED)
             if (factory == null) {
                 if (initialized.compareAndSet(false, true)) {
                     try {
@@ -103,6 +106,7 @@ class DirectProbeTransport(
                 }
                 factory = PeerConnectionFactory.builder().createPeerConnectionFactory()
             }
+            progress(p, ProbeStage.FACTORY_READY)
             val servers = iceProfile.serverUrl?.let { listOf(PeerConnection.IceServer.builder(it).createIceServer()) }
                 ?: emptyList()
             val config = PeerConnection.RTCConfiguration(servers)
@@ -117,10 +121,17 @@ class DirectProbeTransport(
                 override fun onRenegotiationNeeded() { enqueue { if (valid(p) && p.answered) close() } }
                 override fun onIceConnectionChange(state: PeerConnection.IceConnectionState) {
                     if (state in setOf(PeerConnection.IceConnectionState.FAILED, PeerConnection.IceConnectionState.CLOSED))
-                        enqueue { if (peer === p) close() }
+                        enqueue { if (peer === p) close(ProbeStage.CONNECTION_FAILED) }
                 }
                 override fun onIceGatheringChange(state: PeerConnection.IceGatheringState) {
-                    if (state == PeerConnection.IceGatheringState.COMPLETE) enqueue { answer(p) }
+                    enqueue {
+                        if (!valid(p)) return@enqueue
+                        if (state == PeerConnection.IceGatheringState.GATHERING) progress(p, ProbeStage.GATHERING)
+                        if (state == PeerConnection.IceGatheringState.COMPLETE) {
+                            progress(p, ProbeStage.GATHERED)
+                            answer(p)
+                        }
+                    }
                 }
                 override fun onDataChannel(channel: DataChannel) {
                     val admitted = enqueue {
@@ -129,9 +140,12 @@ class DirectProbeTransport(
                             if (peer === p) close()
                         } else {
                             p.channel = channel
+                            progress(p, ProbeStage.CHANNEL_RECEIVED)
                             channel.registerObserver(object : DataChannel.Observer {
                                 override fun onBufferedAmountChange(previous: Long) = Unit
-                                override fun onStateChange() = Unit
+                                override fun onStateChange() {
+                                    enqueue { if (valid(p) && channel.state() == DataChannel.State.OPEN) progress(p, ProbeStage.CHANNEL_OPEN) }
+                                }
                                 override fun onMessage(buffer: DataChannel.Buffer) {
                                     val text = if (!buffer.binary && buffer.data.remaining() <= 80)
                                         Charsets.UTF_8.decode(buffer.data).toString() else ""
@@ -144,19 +158,25 @@ class DirectProbeTransport(
                     if (!admitted) { channel.close(); channel.dispose() }
                 }
             }) ?: error("peer_unavailable")
-            p.connection?.setRemoteDescription(observer(p, set = {
-                p.connection?.createAnswer(observer(p, create = { desc ->
-                    p.connection?.setLocalDescription(observer(p, set = { answer(p) }), desc)
+            progress(p, ProbeStage.PEER_READY)
+            p.connection?.setRemoteDescription(observer(p, ProbeStage.REMOTE_FAILED, set = {
+                progress(p, ProbeStage.REMOTE_SET)
+                p.connection?.createAnswer(observer(p, ProbeStage.CREATE_FAILED, create = { desc ->
+                    progress(p, ProbeStage.ANSWER_CREATED)
+                    p.connection?.setLocalDescription(observer(p, ProbeStage.LOCAL_FAILED, set = {
+                        progress(p, ProbeStage.LOCAL_SET)
+                        answer(p)
+                    }), desc)
                 }), MediaConstraints())
             }), SessionDescription(SessionDescription.Type.OFFER, sdp))
-        } catch (_: Exception) { close() }
+        } catch (_: Exception) { close(ProbeStage.OPEN_FAILED) }
     }
 
-    private fun observer(p: Probe, set: () -> Unit = {}, create: (SessionDescription) -> Unit = {}) = object : SdpObserver {
+    private fun observer(p: Probe, failed: ProbeStage, set: () -> Unit = {}, create: (SessionDescription) -> Unit = {}) = object : SdpObserver {
         override fun onSetSuccess() { enqueue { if (valid(p)) set() } }
         override fun onCreateSuccess(description: SessionDescription) { enqueue { if (valid(p)) create(description) } }
-        override fun onSetFailure(error: String) { enqueue { if (peer === p) close() } }
-        override fun onCreateFailure(error: String) { enqueue { if (peer === p) close() } }
+        override fun onSetFailure(error: String) { enqueue { if (peer === p) close(failed) } }
+        override fun onCreateFailure(error: String) { enqueue { if (peer === p) close(failed) } }
     }
 
     private fun answer(p: Probe) {
@@ -165,8 +185,9 @@ class DirectProbeTransport(
         val sdp = connection.localDescription?.description ?: return
         if (!DirectProbeProtocol.validSdp(sdp) || !send(p.generation, buildJsonObject {
             put("type", "direct_probe_answer"); put("session_id", p.session); put("sdp", sdp)
-        })) { close(); return }
+        })) { close(ProbeStage.ANSWER_FAILED); return }
         p.answered = true
+        progress(p, ProbeStage.ANSWER_SENT)
     }
 
     private fun echo(p: Probe, text: String) {
@@ -197,6 +218,7 @@ class DirectProbeTransport(
                         val snapshot = buildJsonObject {
                             put("event", "native_ice_summary")
                             put("iceProfile", p.iceProfile)
+                            put("answerSent", p.answered)
                             put("sampleAgeMs", age)
                             put("network", summary)
                         }
@@ -208,9 +230,20 @@ class DirectProbeTransport(
         } catch (_: Exception) { p.statsBudget.complete() }
     }
 
-    private fun close() {
+    private fun progress(p: Probe, stage: ProbeStage) {
+        val snapshot = p.progress.record(stage, SystemClock.elapsedRealtime()) ?: return
+        Log.i("SphereDirectProbe", buildJsonObject {
+            put("event", "native_probe_progress")
+            put("iceProfile", p.iceProfile)
+            put("stage", snapshot.stage.wireName)
+            put("elapsedMs", snapshot.elapsedMs)
+        }.toString())
+    }
+
+    private fun close(stage: ProbeStage = ProbeStage.CLOSED) {
         val old = peer
         peer = null
+        old?.let { progress(it, stage) }
         old?.statsBudget?.retire()
         old?.channel?.unregisterObserver()
         old?.channel?.close()

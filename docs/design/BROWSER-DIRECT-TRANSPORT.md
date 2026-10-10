@@ -27,15 +27,15 @@ Callback ограничен 32 запросами, одним pending callback �
 не подтверждён. [Source/test scope](../audits/2026-10-10/DIRECT-PROBE-NATIVE-NETWORK-SOURCE.md) ·
 [Фактический callback и возврат](../audits/2026-10-10/DIRECT-PROBE-NATIVE-COUNTERS-CANARY.md).
 
-**10 октября — следующая prerequisite проверка:** по одному STUN binding запросу
-с Windows и Android shell получили32-byte ответы опубликованного Cloudflare узла.
-Это исключает общий запрет исходящего UDP только для этих двух socket проб,
-но не подтверждает APK UID/DNS/libwebrtc/selected pair. Локальные alias/LAN пробы
-не достигли Windows listener; фактический guest gateway вернул ICMP Port Unreachable.
-Source теперь допускает host/local/явно выбранный public диагностический профиль,
-отдельные8/8/12s phase deadlines и неизменный30s lease. Default остаётся host-only;
-working installation/probe не изменены. Следующий gate — exact signed one-PH011
-native/browser profile comparison. [Проверки и ограничения](../audits/2026-10-10/DIRECT-PROBE-STUN-PROFILES.md).
+**10 октября — public-STUN prerequisite и native pilot завершены.** По одному
+Windows/Android shell UDP binding получили32-byte ответы. Exact934 CI/signed APK
+затем проверен на PH011: browser offer host1+srflx1, но до close7,989s answer нет;
+echo/RTT/selected pair не получены. Это setup failure UNKNOWN, не доказанный NAT/
+VPN/TURN диагноз. Original APK восстановлен, рабочий probeoff, обычный просмотр
+на обоих адресах вернулся. Stats934 начинались только после answer; последующий
+source добавляет bounded pre-answer stages/stats, новый callback gate остаётся OPEN.
+[Измерение и возврат](../audits/2026-10-10/DIRECT-PROBE-PUBLIC-STUN-CANARY.md) ·
+[Source диагностики](../audits/2026-10-10/DIRECT-PROBE-NATIVE-PROGRESS-SOURCE.md).
 
 [Действующие работы](../operations/WORK-STATUS.md) ·
 [Установка](../operations/CURRENT-STATE.md) ·

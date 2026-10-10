@@ -2,15 +2,17 @@
 
 **Проверенная установка:** UI `639b6ad5` / API `369654a0`.
 
-**10 октября — source ICE-профилей проверен; UDP-проба дала различимый результат.**
-Финальный frontend2047/144, types/scoped lint; public/default Android targeted12/3
-и пять реальных Gradle denial gates прошли. Добавлены host/local/явный public STUN
-профили и раздельные8/8/12s deadlines при неизменном30s общем сроке. Windows и
-Android shell получили по одному ответу опубликованного STUN Cloudflare; локальные
-alias/LAN пробы timeout, guest gateway вернул ICMP Port Unreachable. Это не APK UID,
-native gathering, selected pair или RTT. Работающая установка и выключенный probe
-сохранены; новый source ещё не установлен. Product9/41 и stable APK NO-GO сохраняются.
-[Исходники, измерения и следующий gate](../audits/2026-10-10/DIRECT-PROBE-STUN-PROFILES.md).
+**10 октября — явный public-STUN canary выполнен; ответ APK не получен.**
+Exact934 прошёл четыре CI и signed admission. Один PH011: browser host1+srflx1,
+offer→close7,989s, answer0,echo0/RTTunknown. JNI/factory присутствуют; конкретный
+native setup этап пока UNKNOWN. Выявлен пробел: stats начинались только после
+answer. Фиксированы bounded native этапы/pre-answer stats, local tests/lint passed;
+новый source ещё не установлен. Исходный APK восстановлен, gateoff/allowlist[],
+UI639/API369 сохранены, API container epoch обновлён. Обычный public25/local24
+view-only frames без decode/render errors проверен после возврата. Product9/41,
+direct/latency и stable APK NO-GO сохраняются.
+[Реальное измерение и возврат](../audits/2026-10-10/DIRECT-PROBE-PUBLIC-STUN-CANARY.md) ·
+[Source диагностики следующего этапа](../audits/2026-10-10/DIRECT-PROBE-NATIVE-PROGRESS-SOURCE.md).
 
 **10 октября — UI автоматического управления установлен и проверен в конечном scope.**
 UI639/API369,1996frontend tests/types/scoped lint. Повторный idle recovery, точный

@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
-  "reviewedAtUtc": "2026-10-10T01:13:19.000972+00:00",
-  "sourceReviewed": "639b6ad52fe3651579499659ded46ff73027f313",
+  "reviewedAtUtc": "2026-10-10T03:23:31.290471+00:00",
+  "sourceReviewed": "934f46a809220931b6af9e183838a1e03efc6194",
   "scope": "Effective documentation status; source/install/finite acceptance kept separate. No new fleet or soak acceptance.",
   "baseline": "docs/audits/2026-10-05/ENTERPRISE-PRODUCT-BACKLOG.json",
   "previousCrosscheck": "docs/audits/2026-10-09/CHAT-CODE-RECONCILIATION.json",
@@ -11,18 +11,18 @@
     "open": 41
   },
   "installed": {
-    "lastObservedUtc": "2026-10-10T00:40:06.833372+00:00",
+    "lastObservedUtc": "2026-10-10T03:23:31.290471+00:00",
     "ui": "639b6ad52fe3651579499659ded46ff73027f313",
     "api": "369654a0be4bded35e299062badc9bfe95101f1e",
-    "evidence": "docs/audits/2026-10-10/CONTINUOUS-AUTO-RECOVERY-INSTALLED.json",
-    "observation": "UI639/API369 installed on both origins; one-PH011 finite readiness/navigation/frame checks. Repeated idle and exact release/fresh-viewer unknown-pointer safeguards, negotiation races corrected. No input replay, direct path, native latency/fleet/soak or stable APK acceptance.",
+    "evidence": "docs/audits/2026-10-10/DIRECT-PROBE-PUBLIC-STUN-CANARY.json",
+    "observation": "UI639/API369 retained; API epoch changed during finite explicit public-STUN canary then gate disabled/allowlist empty. Original PH011 APK restored, ordinary local/public view-only frames and health checked. No native answer/direct channel/input/media/latency/fleet/soak acceptance.",
     "pilotApk": {
       "device": "PH011",
       "version": "1.2.49-dev",
       "versionCode": 10249,
-      "scope": "PH011 original APK restored after one corrected native-counter diagnostic window; not fleet inventory"
+      "scope": "PH011 original APK restored after934 public-STUN diagnostic; exact SHA recorded, no fleet inventory claim"
     },
-    "evidenceSha256NormalizedLf": "b351ba347a55b74f827ab349955bd74323c8886d3cbfd5309e0ca017d5b6137b"
+    "evidenceSha256NormalizedLf": "b67466e85f0b8916460b99359e3125b5ad5d9cce2d4ba1890bdae61008fdd158"
   },
   "pendingCorrections": [
     {
@@ -37,16 +37,24 @@
       "id": "direct-probe-explicit-stun-profiles",
       "installed": false,
       "sourceBaseRevision": "e70b530ce043ba5713be80665f71c510bc628142",
-      "evidence": "docs/audits/2026-10-10/DIRECT-PROBE-STUN-PROFILES.json",
-      "scope": "Final source hashes: host/local/explicit public diagnostic profiles; frontend2047/types/lint, public/default targeted Android and five Gradle denial gates. Separate socket STUN prerequisite accepted only finite shell scope. Working probe stays OFF; native gathering/channel/RTT/media/input and deployment remain open."
+      "evidence": "docs/audits/2026-10-10/DIRECT-PROBE-PUBLIC-STUN-CANARY.json",
+      "scope": "All four934 exact-source CI and signed one-PH011 pilot passed admission. Browser host+srflx offer, no native answer before close8s; no direct channel/RTT. Original APK restored and gates off. Setup cause UNKNOWN; diagnostic stages required.",
+      "testedRevision": "934f46a809220931b6af9e183838a1e03efc6194"
+    },
+    {
+      "id": "direct-probe-native-setup-progress",
+      "installed": false,
+      "sourceBaseRevision": "934f46a809220931b6af9e183838a1e03efc6194",
+      "evidence": "docs/audits/2026-10-10/DIRECT-PROBE-NATIVE-PROGRESS-SOURCE.json",
+      "scope": "Setup-stage events and pre-answer bounded stats source checked; signed/exact CI/native callback gate pending. No deadline/protocol/media/input change."
     }
   ],
   "storage": {
-    "lastObservedUtc": "2026-10-10T00:37:53.426572+00:00",
+    "lastObservedUtc": "2026-10-10T03:22:45.084607+00:00",
     "visibleMatchingProcesses": 1,
     "continuousCoverageConfirmed": false,
     "observationScope": "Limited periodic collector resumed10Oct00:14→12:34UTC; previous86samples stop9Oct23:59, process absent. Uncovered gap and no global kernel writer attribution.",
-    "oneFreeDiskReadingBytes": 45551583232,
+    "oneFreeDiskReadingBytes": 41566281728,
     "latestCompletedEvidence": "docs/audits/2026-10-08/STORAGE-WINDOW-COMPLETION.json",
     "activeEvidence": "docs/audits/2026-10-10/STORAGE-OBSERVER-RESUME.json"
   },
@@ -129,10 +137,12 @@
       "docs/audits/2026-10-10/DIRECT-PROBE-NATIVE-NETWORK-SOURCE.md",
       "docs/audits/2026-10-10/DIRECT-PROBE-ANDROID-COMPATIBILITY.md",
       "docs/audits/2026-10-10/DIRECT-PROBE-NATIVE-COUNTERS-CANARY.json",
-      "docs/audits/2026-10-10/DIRECT-PROBE-STUN-PROFILES.json"
+      "docs/audits/2026-10-10/DIRECT-PROBE-STUN-PROFILES.json",
+      "docs/audits/2026-10-10/DIRECT-PROBE-PUBLIC-STUN-CANARY.json",
+      "docs/audits/2026-10-10/DIRECT-PROBE-NATIVE-PROGRESS-SOURCE.json"
     ],
-    "pilotEvidence": "docs/audits/2026-10-10/DIRECT-PROBE-NATIVE-COUNTERS-CANARY.json",
-    "pilotOutcome": "NATIVE_REMOTE_CANDIDATES_AND_PAIRS_ABSENT_CLEANED_UP",
+    "pilotEvidence": "docs/audits/2026-10-10/DIRECT-PROBE-PUBLIC-STUN-CANARY.json",
+    "pilotOutcome": "PUBLIC_STUN_OFFER_NO_NATIVE_ANSWER_BEFORE_CLOSE_CLEANED_UP",
     "pilotCurrentlyEnabled": false,
     "nativeDiagnosticAcceptance": {
       "state": "ACCEPTED_FINITE_DIAGNOSTIC_SCOPE",
