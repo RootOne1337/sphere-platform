@@ -132,3 +132,28 @@ test('automatic outcome reports real rendered pictures once; echoes alone still 
   expect(onOutcome).toHaveBeenCalledTimes(1);
   expect(onOutcome.mock.calls[0][1]).toBe(1);
 });
+
+test('cancelling a pending play promise preserves the transport failure and its single outcome', async () => {
+  let rejectPlayback: (error: Error) => void = () => {};
+  play.mockImplementationOnce(() => new Promise<void>((_resolve, reject) => { rejectPlayback = reject; }));
+  const onOutcome = jest.fn();
+  render(<DirectVideoProbe deviceId="device" profile="host" automaticKey="viewer:host" onOutcome={onOutcome} />);
+  act(() => mockTrack({ kind: 'video' } as MediaStreamTrack));
+  act(() => mockReport({ state: 'failed', reason: 'connection_deadline', samples: [], path: 'unknown', protocol: null }));
+  await act(async () => { rejectPlayback(new DOMException('Playback cancelled', 'AbortError')); });
+  expect(screen.getByRole('region', { name: 'Проверка видео WebRTC' })).toHaveTextContent('Проверка остановлена: connection_deadline');
+  expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+  expect(onOutcome).toHaveBeenCalledTimes(1);
+  expect(onOutcome.mock.calls[0][0].reason).toBe('connection_deadline');
+});
+
+test('a playback failure while the transport is active remains a renderer failure', async () => {
+  play.mockRejectedValueOnce(new DOMException('Decoder unavailable', 'NotSupportedError'));
+  const onOutcome = jest.fn();
+  render(<DirectVideoProbe deviceId="device" profile="host" automaticKey="viewer:host" onOutcome={onOutcome} />);
+  act(() => mockTrack({ kind: 'video' } as MediaStreamTrack));
+  await act(async () => {});
+  expect(screen.getByRole('alert')).toHaveTextContent('Браузер не смог воспроизвести');
+  expect(onOutcome).toHaveBeenCalledTimes(1);
+  expect(onOutcome.mock.calls[0][0].reason).toBe('video_renderer_failed');
+});

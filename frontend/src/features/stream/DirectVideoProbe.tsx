@@ -61,7 +61,9 @@ export function DirectVideoProbe({ deviceId, profile, onBusyChange, automaticKey
     frameCount.current = 0; latestResult.current = null;
     setPresented(0); setRenderError(null);
     const failRenderer = (message: string) => {
-      if (generation.current !== current) return;
+      // pause()/clearing srcObject rejects an outstanding play() promise.
+      // Once the transport has stopped, that cleanup is not a renderer fault.
+      if (generation.current !== current || !running(latestResult.current)) return;
       rendererFailed = true;
       setRenderError(message); stop.current?.(); clearVideo();
       const failed: DirectProbeResult = { ...(latestResult.current ?? {

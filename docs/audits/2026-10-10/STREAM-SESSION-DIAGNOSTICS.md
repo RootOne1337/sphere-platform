@@ -79,6 +79,8 @@ Fixtures: атомарное11→10, concurrent viewers, bounded samples/bytes/T
 tenant rejection, late/closed write fencing, invalid/private field rejection,
 unknown latency, independent diagnostic writer, automatic host→NAT limit,
 renderer frame/binding проверка, stale callback и WS backpressure.
+Отмена незавершённого video.play() при cleanup не заменяет исходный сетевой
+отказ ошибкой renderer; активный отказ воспроизведения остаётся отдельным сбоем.
 
 Следующий gate: проверенные образы, real viewer history на обоих адресах и
 автоматический outcome именно браузера ноутбука. Успешная конечная диагностика
