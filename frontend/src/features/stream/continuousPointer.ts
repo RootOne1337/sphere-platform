@@ -80,6 +80,8 @@ export class ContinuousPointer {
   private closeSent = false;
   private idleReceiptLoss = false;
   private pointerReceiptLoss = false;
+  private nativeFailure = false;
+  private releaseFailed = false;
   private lastReceipt: { at: number; roundTripMs: number } | null = null;
   private readonly now: () => number;
 
@@ -92,6 +94,8 @@ export class ContinuousPointer {
   get recoverableIdleReceiptLoss() { return this.idleReceiptLoss; }
   /** The prior touch outcome stays unknown; only native RELEASE can retire its authority. */
   get unknownPointerReceiptLoss() { return this.pointerReceiptLoss; }
+  /** A bound native failure may recover only after its exact confirmed RELEASE. */
+  get nativeFailureAwaitingRelease() { return this.nativeFailure; }
   matchesServerOwner(owner: unknown): boolean { return typeof owner === 'string' && this.session?.owner === owner; }
 
   /** Server confirmed refusal before binding any owner. No native RELEASE is needed. */
@@ -171,12 +175,14 @@ export class ContinuousPointer {
       this.retire('invalid_native_receipt'); return false;
     }
     if (message.stage === 'release') {
+      if (this.releaseFailed) return false;
       if (message.origin === 'injector' && message.sequence === 0 && message.status === 3) {
         this.held = this.move = this.terminal = null;
         this.pending = [];
         this.transition('closed');
         return true;
       }
+      this.releaseFailed = true;
       this.retire('release_unknown');
       this.transition('fenced', 'release_unknown'); return false;
     }
@@ -318,7 +324,9 @@ export class ContinuousPointer {
       || this.stateValue === 'closing' || this.stateValue === 'fenced') return;
     this.idleReceiptLoss = reason === 'native_receipt_timeout' && this.held === null
       && this.terminal === null && this.pending.length > 0 && this.pending.every(p => p.action === 4);
-    this.pointerReceiptLoss = ['native_receipt_timeout', 'server_runtime_retry'].includes(reason) && this.stateValue === 'ready'
+    this.nativeFailure = reason === 'native_input_rejected_or_unknown'
+      && (this.stateValue === 'opening' || this.stateValue === 'ready');
+    this.pointerReceiptLoss = ['native_receipt_timeout', 'server_runtime_retry', 'native_input_rejected_or_unknown'].includes(reason) && this.stateValue === 'ready'
       && (this.held !== null || this.terminal !== null || this.pending.some(p => p.action !== 4));
     const now = this.now();
     const age = (at: number | undefined): number | null => at !== undefined

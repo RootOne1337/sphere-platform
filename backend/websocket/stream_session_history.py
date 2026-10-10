@@ -38,6 +38,7 @@ class BrowserStreamSample(BaseModel):
     direct_frames: Counter | None = None
     direct_frame_age_ms: Milliseconds | None = None
     direct_path: Literal["host", "nat", "relay", "unknown"] | None = None
+    direct_protocol: Literal["udp", "tcp"] | None = None
     direct_network_rtt_ms: Milliseconds | None = None
     direct_jitter_buffer_ms: Milliseconds | None = None
     direct_decode_ms: Milliseconds | None = None
@@ -65,6 +66,12 @@ class BrowserStreamSample(BaseModel):
     frame_age_ms: Milliseconds | None
     control_state: Literal["idle", "probing", "opening", "ready", "closing", "closed", "fenced", "destroyed"]
     control_failure: Literal["none", "timeout", "server_rejected", "admission_retry", "runtime_retry", "other"]
+    control_failure_detail: Literal[
+        "native_receipt_timeout", "native_startup_busy", "native_input_rejected_or_unknown",
+        "server_rejected", "server_runtime_retry", "server_admission_retry", "release_unknown", "pointer_release_unknown",
+        "discrete_result_unknown", "scheduler_gap", "socket_backpressure", "socket_send_failed",
+        "invalid_native_receipt", "invalid_startup_receipt", "invalid_input_receipt", "receipt_action_mismatch",
+    ] | None = None
     control_rtt_ms: Milliseconds | None
     recovery_attempts: Annotated[int, Field(ge=0, le=1000000)]
 
@@ -130,6 +137,10 @@ if patch.sample then
     end
     summary.max_decode_errors = math.max(summary.max_decode_errors, patch.sample.decode_errors)
     summary.max_render_errors = math.max(summary.max_render_errors, patch.sample.render_errors)
+    if patch.sample.control_failure_detail then
+      summary.last_control_failure_detail = patch.sample.control_failure_detail
+      summary.last_control_failure_at = patch.sample.received_at
+    end
     record.browser_summary = summary
   end
 end

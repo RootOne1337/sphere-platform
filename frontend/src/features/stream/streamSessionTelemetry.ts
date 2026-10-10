@@ -14,6 +14,10 @@ const reasons = new Set(['probe_deadline', 'gathering_deadline', 'signaling_dead
   'invalid_video_binding', 'invalid_echo', 'channel_failed', 'channel_closed', 'offer_failed',
   'video_access_rejected', 'video_first_frame_timeout', 'video_renderer_unavailable', 'capture_changed', 'session_lifetime']);
 const directStates = new Set(['gathering', 'signaling', 'connecting', 'connected', 'finished', 'stopped', 'failed']);
+const controlFailures = new Set(['native_receipt_timeout', 'native_startup_busy', 'native_input_rejected_or_unknown',
+  'server_rejected', 'server_runtime_retry', 'server_admission_retry', 'release_unknown', 'pointer_release_unknown',
+  'discrete_result_unknown', 'scheduler_gap', 'socket_backpressure', 'socket_send_failed',
+  'invalid_native_receipt', 'invalid_startup_receipt', 'invalid_input_receipt', 'receipt_action_mismatch']);
 export const directFailure = (reason: string | null | undefined) => reason ? reasons.has(reason) ? reason : 'other' : null;
 
 /** Explicit scalar whitelist: decoder exception text and Android input never leave the viewer. */
@@ -22,6 +26,7 @@ export function browserStreamSample(stats: StreamDecoderStats, control: ControlO
   return { schema_version: 1, transport: direct?.active ? 'direct_webrtc' : 'server_websocket', visibility: document.hidden ? 'hidden' : 'visible',
     ...(direct ? { control_transport: 'server_websocket', direct_frames: counter(direct.frames),
       direct_frame_age_ms: age(direct.lastFrameAt), direct_path: direct.result?.path ?? 'unknown',
+      direct_protocol: direct.result?.protocol === 'udp' || direct.result?.protocol === 'tcp' ? direct.result.protocol : null,
       direct_state: direct.result && directStates.has(direct.result.state) ? direct.result.state : null,
       direct_failure: directFailure(direct.result?.reason),
       direct_ice_state: direct.result?.iceState ?? null,
@@ -41,6 +46,7 @@ export function browserStreamSample(stats: StreamDecoderStats, control: ControlO
     control_failure: !control.failure ? 'none' : control.failure.includes('timeout') ? 'timeout'
       : control.failure === 'server_rejected' ? 'server_rejected' : control.failure === 'server_admission_retry' ? 'admission_retry'
       : control.failure === 'server_runtime_retry' ? 'runtime_retry' : 'other',
+    control_failure_detail: control.failure && controlFailures.has(control.failure) ? control.failure : null,
     control_rtt_ms: milliseconds(control.rtt), recovery_attempts: Math.min(1000000, counter(control.attempts)) };
 }
 

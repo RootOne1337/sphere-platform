@@ -62,3 +62,15 @@ test('the main video records bounded failure and ICE phases even when no direct 
   direct.result.reason = 'private SDP or credential';
   expect(browserStreamSample(stats, { state: 'ready', failure: null, rtt: null, attempts: 0 }, 1000, direct).direct_failure).toBe('other');
 });
+
+test('retains only whitelisted control causes and the selected primary transport protocol', () => {
+  const direct = { admitted: true, admissionKnown: true, active: true, frames: 12, lastFrameAt: 900, attempts: 1,
+    result: { state: 'connected' as const, reason: null, samples: [], path: 'nat' as const, protocol: 'udp' } };
+  expect(browserStreamSample(stats, { state: 'fenced', failure: 'native_input_rejected_or_unknown', rtt: null, attempts: 1 }, 1000, direct))
+    .toMatchObject({ control_failure: 'other', control_failure_detail: 'native_input_rejected_or_unknown', direct_protocol: 'udp' });
+  direct.result.protocol = 'private address or credential';
+  const privateResult = browserStreamSample(stats, { state: 'fenced', failure: 'private native exception', rtt: null, attempts: 1 }, 1000, direct);
+  expect(privateResult.control_failure_detail).toBeNull();
+  expect(privateResult.direct_protocol).toBeNull();
+  expect(JSON.stringify(privateResult)).not.toContain('private');
+});

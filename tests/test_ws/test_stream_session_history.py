@@ -80,11 +80,28 @@ async def test_concurrent_viewers_and_samples_stay_bounded_and_keep_aggregates(s
     {"direct_network_rtt_ms": float("nan")}, {"direct_path": "192.168.0.9"}, {"direct_frames": True},
     {"direct_failure": "private SDP"}, {"direct_state": "private state"},
     {"direct_ice_state": "private address"}, {"direct_dtls_state": "private key"},
+    {"direct_protocol": "private endpoint"}, {"control_failure_detail": "private native exception"},
 ])
 async def test_invalid_and_private_browser_fields_are_never_retained(store, change):
     assert await store.begin(ORG, DEVICE, "viewer")
     assert not await store.browser(ORG, DEVICE, "viewer", SAMPLE | change)
     assert "browser_samples" not in (await store.read(ORG, DEVICE))[0]
+
+
+async def test_native_failure_cause_survives_healthy_sample_eviction_without_unbounded_logs(store):
+    assert await store.begin(ORG, DEVICE, "viewer")
+    assert await store.browser(ORG, DEVICE, "viewer", SAMPLE | {
+        "control_failure": "other", "control_failure_detail": "native_input_rejected_or_unknown",
+        "direct_protocol": "udp", "direct_path": "nat", "direct_frames": 12,
+    })
+    for _ in range(20):
+        assert await store.browser(ORG, DEVICE, "viewer", SAMPLE)
+    row = (await store.read(ORG, DEVICE))[0]
+    assert len(row["browser_samples"]) == 15
+    assert all("control_failure_detail" not in sample for sample in row["browser_samples"])
+    assert row["browser_summary"]["last_control_failure_detail"] == "native_input_rejected_or_unknown"
+    assert datetime.fromisoformat(row["browser_summary"]["last_control_failure_at"]).tzinfo is not None
+    assert len(json.dumps(row).encode()) < SESSION_BYTES
 
 
 async def test_tenant_separation_closed_fencing_and_unavailable_are_explicit(store):

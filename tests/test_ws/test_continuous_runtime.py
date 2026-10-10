@@ -231,7 +231,31 @@ async def test_current_owner_is_still_retired_when_control_permission_is_denied_
     # Real retirement is used; a known RELEASE may arrive before this assertion.
     assert viewer.closing or viewer.lease is None
     if viewer.lease == old:
-        send.assert_awaited_once_with(viewer, {'type': 'touch_error', 'error': 'control_revoked_or_unavailable'})
+        expected = {'type': 'touch_error', 'owner': old.owner}
+        if unavailable:
+            expected.update(error='input_temporarily_unavailable', reason='runtime_unavailable', retryable=True)
+        else:
+            expected.update(error='control_denied')
+        send.assert_awaited_once_with(viewer, expected)
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize('failure', ['lease', 'exception'])
+async def test_periodic_runtime_loss_is_retryable_without_weakening_permission_or_replaying_input(live, monkeypatch, failure):
+    runtime, viewer, _ = await open_view(live)
+    old = viewer.lease
+    permission = AsyncMock(return_value=True)
+    authorize = AsyncMock(side_effect=RuntimeError('lease_unavailable')) if failure == 'exception' else AsyncMock(return_value=False)
+    retire, send = AsyncMock(), AsyncMock()
+    monkeypatch.setattr(runtime, 'authorize', authorize)
+    monkeypatch.setattr(runtime, 'retire', retire)
+    monkeypatch.setattr(runtime, 'send', send)
+    await runtime.recheck_authorization(viewer, permission)
+    permission.assert_awaited_once()
+    authorize.assert_awaited_once_with(viewer)
+    retire.assert_awaited_once_with(viewer)
+    send.assert_awaited_once_with(viewer, {'type': 'touch_error', 'owner': old.owner,
+        'error': 'input_temporarily_unavailable', 'reason': 'runtime_unavailable', 'retryable': True})
 
 
 @pytest.mark.asyncio

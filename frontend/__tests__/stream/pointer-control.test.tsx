@@ -801,14 +801,96 @@ it('unknown key completion does not reopen input or silently send a legacy gestu
   view.unmount();
 });
 
-it('a native failure keeps its diagnostic cause after known release and never silently retries input', () => {
+it.each(['idle', 'held', 'terminal'])('a %s native failure waits for known release and a fresh viewer without replay', phase => {
   const view = readyContinuous();
+  if (phase !== 'idle') view.down(1);
+  if (phase === 'terminal') { view.status(1, 1); view.up(1,65); }
   view.status(0, 6, 'startup');
+  view.down(2); view.up(2,65);
+  expect(view.getByRole('button', { name: 'Домой' })).toBeDisabled();
+  expect(view.socket.close).not.toHaveBeenCalled();
+  expect(view.commands()).toEqual([]);
+  const oldEvents = view.sent().filter(x => x.type === 'touch_event');
   view.status(0, 3, 'release');
   expect(view.container.querySelector('[data-control-failure]')).toHaveAttribute('data-control-failure', 'native_input_rejected_or_unknown');
-  expect(view.getByRole('button', { name: 'Восстановить управление' })).toBeEnabled();
+  expect(view.queryByRole('button', { name: 'Восстановить управление' })).not.toBeInTheDocument();
   expect(view.sent().filter(x => x.type === 'touch_probe')).toHaveLength(1);
+  act(() => jest.advanceTimersByTime(1500));
+  expect(view.socket.close).toHaveBeenCalledTimes(1);
+  expect(MockSocket.instances).toHaveLength(2);
+  expect(view.sent().filter(x => x.type === 'touch_event')).toEqual(oldEvents);
+  const next = MockSocket.instances[1];
+  next.readyState = MockSocket.OPEN;
+  act(() => next.onopen?.(new Event('open')));
+  act(() => mockRenderFrame?.({ displayWidth: 1280, displayHeight: 720 } as VideoFrame));
+  const receive = (message: object) => act(() => next.onmessage?.({ data: JSON.stringify(message) }));
+  receive({ type: 'touch_capability', capture_epoch: TOUCH_EPOCH, frame_width: 1280, frame_height: 720 });
+  receive({ type: 'touch_session', session_id: 'fresh_viewer_session', owner: 'fresh_owner_session',
+    capture_epoch: TOUCH_EPOCH, frame_width: 1280, frame_height: 720 });
+  view.down(3); view.up(3,65);
+  const events = () => next.send.mock.calls.map(([raw]) => JSON.parse(raw as string)).filter(x => x.type === 'touch_event');
+  expect(events()).toEqual([]);
+  receive({ type: 'continuous_input_status', session_id: 'fresh_viewer_session', owner: 'fresh_owner_session',
+    capture_epoch: TOUCH_EPOCH, sequence: 0, status: 0, stage: 'startup', origin: 'injector', device_uptime_ms: 400 });
+  view.up(1,65);
+  expect(events()).toEqual([]);
+  view.down(4); view.up(4,65);
+  expect(events().map(x => x.action)).toEqual([0,1]);
+  expect(api.post).not.toHaveBeenCalled();
   view.unmount();
+  expect(jest.getTimerCount()).toBe(0);
+});
+
+it.each(['missing', 'unknown', 'foreign'])('a native failure with %s release cannot obtain a replacement owner', release => {
+  const view = readyContinuous();
+  view.down(1);
+  view.status(1, 4);
+  if (release === 'unknown') view.status(0, 4, 'release');
+  else if (release === 'foreign') view.receive({ type: 'continuous_input_status', session_id: 'foreign_session_fixture',
+    owner: 'foreign_owner_fixture', capture_epoch: TOUCH_EPOCH, sequence: 0, status: 3,
+    stage: 'release', origin: 'injector', device_uptime_ms: 150 });
+  act(() => jest.advanceTimersByTime(4000));
+  expect(MockSocket.instances).toHaveLength(1);
+  expect(view.socket.close).not.toHaveBeenCalled();
+  view.down(2); view.up(2,65);
+  expect(view.sent().filter(x => x.type === 'touch_event' && x.action === 0)).toHaveLength(1);
+  expect(view.getByRole('button', { name: 'Домой' })).toBeDisabled();
+  expect(api.post).not.toHaveBeenCalled();
+  view.unmount();
+  expect(jest.getTimerCount()).toBe(0);
+});
+
+it('a late exact RELEASE resumes automatic recovery after slow native teardown without replay', () => {
+  const view = readyContinuous();
+  view.down(1);
+  view.status(1, 4);
+  act(() => jest.advanceTimersByTime(4000));
+  expect(view.socket.close).not.toHaveBeenCalled();
+  expect(view.getByRole('button', { name: 'Домой' })).toBeDisabled();
+  view.status(0,3,'release');
+  expect(view.queryByRole('button', { name: 'Восстановить управление' })).not.toBeInTheDocument();
+  act(() => jest.advanceTimersByTime(1500));
+  expect(view.socket.close).toHaveBeenCalledTimes(1);
+  expect(MockSocket.instances).toHaveLength(2);
+  expect(view.sent().filter(x => x.type === 'touch_event' && x.action === 0)).toHaveLength(1);
+  expect(api.post).not.toHaveBeenCalled();
+  view.unmount();
+  expect(jest.getTimerCount()).toBe(0);
+});
+
+it('an explicitly unknown RELEASE stays fenced even if a later packet claims success', () => {
+  const view = readyContinuous();
+  view.down(1);
+  view.status(1,4);
+  view.status(0,4,'release');
+  view.status(0,3,'release');
+  act(() => jest.advanceTimersByTime(5000));
+  expect(view.socket.close).not.toHaveBeenCalled();
+  expect(MockSocket.instances).toHaveLength(1);
+  expect(view.getByRole('button', { name: 'Домой' })).toBeDisabled();
+  expect(api.post).not.toHaveBeenCalled();
+  view.unmount();
+  expect(jest.getTimerCount()).toBe(0);
 });
 
 it('fresh permission at the native release boundary prevents a now forbidden Home dispatch', async () => {

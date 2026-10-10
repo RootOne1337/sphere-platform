@@ -54,6 +54,7 @@ it.each([
   expect(f.onFence).toHaveBeenCalledWith(expect.objectContaining({ reason: 'native_input_rejected_or_unknown' }));
   expect(f.controller.recoverableIdleReceiptLoss).toBe(false);
   expect(f.controller.unknownPointerReceiptLoss).toBe(false);
+  expect(f.controller.nativeFailureAwaitingRelease).toBe(true);
   expect(f.events()).toEqual([]);
 });
 
@@ -74,6 +75,17 @@ it('preserves an immutable idle failure snapshot before clearing pending receipt
   f.status(2, 2); f.controller.retire(); f.controller.destroy();
   expect(f.onFence).toHaveBeenCalledTimes(1);
   expect(f.sent.filter(x => x.type === 'touch_close')).toHaveLength(1);
+});
+
+it('an unknown native release is sticky and a later success cannot unlock the same controller', () => {
+  const f = fixture();
+  f.controller.down(1, POINT);
+  expect(f.status(0, 4, 'release')).toBe(false);
+  expect(f.controller.state).toBe('fenced');
+  expect(f.status(0, 3, 'release')).toBe(false);
+  expect(f.controller.state).toBe('fenced');
+  expect(f.controller.down(2, POINT)).toBe(false);
+  expect(f.events().filter(x => x.action === 0)).toHaveLength(1);
 });
 
 it('reports real browser timer starvation separately from native receipt silence', () => {
@@ -410,7 +422,7 @@ it('only known injector RELEASE3 closes an owner; unknown release cannot reopen 
   const f = fixture(); f.controller.down(1, POINT); f.controller.close();
   expect(f.controller.state).toBe('closing'); f.status(0, 6, 'release');
   expect(f.controller.state).toBe('fenced'); expect(f.controller.open(CAPTURE)).toBe(false);
-  expect(f.status(0, 3, 'release')).toBe(true); expect(f.controller.state).toBe('closed');
+  expect(f.status(0, 3, 'release')).toBe(false); expect(f.controller.state).toBe('fenced');
   expect(f.controller.open(CAPTURE)).toBe(false); expect(f.controller.down(1, POINT)).toBe(false);
 });
 

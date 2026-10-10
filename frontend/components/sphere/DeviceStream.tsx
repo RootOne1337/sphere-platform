@@ -586,13 +586,16 @@ export function DeviceStream({
                     telemetryControl.current.state = state;
                     telemetryControl.current.failure = reason;
                     const idleReceiptLoss = reason === 'native_receipt_timeout' && controller.recoverableIdleReceiptLoss;
-                    const pointerReceiptLoss = (reason === 'native_receipt_timeout' || reason === 'server_runtime_retry')
+                    const nativeFailureRecovery = reason === 'native_input_rejected_or_unknown' && controller.nativeFailureAwaitingRelease;
+                    const pointerReceiptLoss = (reason === 'native_receipt_timeout' || reason === 'server_runtime_retry' || nativeFailureRecovery)
                       && controller.unknownPointerReceiptLoss;
-                    const idleRecovery = (idleReceiptLoss || pointerReceiptLoss || reason === 'native_startup_busy'
+                    const idleRecovery = (idleReceiptLoss || pointerReceiptLoss || nativeFailureRecovery || reason === 'native_startup_busy'
                       || reason === 'server_admission_retry' || reason === 'server_runtime_retry') && !continuousFaultRef.current;
                     if (idleRecovery) {
-                      if (pointerReceiptLoss) {
+                      if (pointerReceiptLoss || nativeFailureRecovery) {
                         freshViewerAfterReleaseRef.current = true;
+                      }
+                      if (pointerReceiptLoss) {
                         unknownPointerNoticeRef.current = true;
                         setInputError(UNKNOWN_POINTER_NOTICE);
                       }
@@ -600,9 +603,11 @@ export function DeviceStream({
                       setIdleRecoveryCount(idleRecoveryCountRef.current);
                       idleRecoveringRef.current = true;
                       setIdleRecovering(true);
-                      setContinuousFailureCode(pointerReceiptLoss ? 'pointer_receipt_timeout' : idleReceiptLoss ? 'idle_receipt_timeout' : reason);
+                      setContinuousFailureCode(nativeFailureRecovery ? reason : pointerReceiptLoss ? 'pointer_receipt_timeout' : idleReceiptLoss ? 'idle_receipt_timeout' : reason);
                       setContinuousReason(pointerReceiptLoss
                         ? 'Автоматически восстанавливаем новую сессию · ожидаем освобождение касания и свежий кадр. Предыдущий жест не повторяется.'
+                        : nativeFailureRecovery
+                        ? 'Автоматически восстанавливаем управление · ожидаем подтверждённое освобождение ввода Android и свежий кадр. Команды не повторяются.'
                         : idleReceiptLoss
                         ? 'Автоматически восстанавливаем управление · задержалось подтверждение связи без касания. Команды не повторяются.'
                         : reason === 'native_startup_busy'
@@ -621,6 +626,17 @@ export function DeviceStream({
                     }
                     if (state === 'closed') {
                       continuousRequestedRef.current = false;
+                      // A slow native teardown can finish after the diagnostic
+                      // wait expired. Only this owner's actual RELEASE3 may
+                      // resume recovery; a timeout/unknown RELEASE never can.
+                      if (freshViewerAfterReleaseRef.current && continuousFaultRef.current
+                        && !idleRecoveringRef.current) {
+                        continuousFaultRef.current = false;
+                        setContinuousFault(false);
+                        idleRecoveringRef.current = true;
+                        setIdleRecovering(true);
+                        setContinuousReason('Освобождение ввода Android подтверждено · автоматически восстанавливаем новую сессию.');
+                      }
                       if (!continuousFaultRef.current && !idleRecoveringRef.current) {
                         setContinuousReason(null);
                         automaticProbeRef.current = null;

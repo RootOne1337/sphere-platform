@@ -184,8 +184,10 @@ class ContinuousRuntime:
         lease = viewer.lease
         if lease is None or viewer.closing:
             return
+        denied = False
         try:
             allowed = await permission()
+            denied = not allowed
             if viewer.lease != lease or viewer.closing:
                 return
             if allowed and await self.authorize(viewer):
@@ -197,7 +199,15 @@ class ContinuousRuntime:
         await self.retire(viewer)
         if viewer.lease == lease:
             # A RELEASE arriving during retire already resolved this old owner.
-            await self.send(viewer, {"type": "touch_error", "error": "control_revoked_or_unavailable"})
+            # A confirmed permission denial is terminal. A topology/lease/SQL
+            # outage retires the same owner but may negotiate a fresh one;
+            # neither path resends input or proves native release.
+            error: dict[str, Any] = {"type": "touch_error", "owner": lease.owner}
+            if denied:
+                error["error"] = "control_denied"
+            else:
+                error.update(error="input_temporarily_unavailable", reason="runtime_unavailable", retryable=True)
+            await self.send(viewer, error)
 
     async def retire(self, viewer: TouchViewer) -> None:
         viewer.closing = viewer.lease is not None
