@@ -27,6 +27,16 @@ Callback ограничен 32 запросами, одним pending callback �
 не подтверждён. [Source/test scope](../audits/2026-10-10/DIRECT-PROBE-NATIVE-NETWORK-SOURCE.md) ·
 [Фактический callback и возврат](../audits/2026-10-10/DIRECT-PROBE-NATIVE-COUNTERS-CANARY.md).
 
+**10 октября — следующая prerequisite проверка:** по одному STUN binding запросу
+с Windows и Android shell получили32-byte ответы опубликованного Cloudflare узла.
+Это исключает общий запрет исходящего UDP только для этих двух socket проб,
+но не подтверждает APK UID/DNS/libwebrtc/selected pair. Локальные alias/LAN пробы
+не достигли Windows listener; фактический guest gateway вернул ICMP Port Unreachable.
+Source теперь допускает host/local/явно выбранный public диагностический профиль,
+отдельные8/8/12s phase deadlines и неизменный30s lease. Default остаётся host-only;
+working installation/probe не изменены. Следующий gate — exact signed one-PH011
+native/browser profile comparison. [Проверки и ограничения](../audits/2026-10-10/DIRECT-PROBE-STUN-PROFILES.md).
+
 [Действующие работы](../operations/WORK-STATUS.md) ·
 [Установка](../operations/CURRENT-STATE.md) ·
 [Подтверждённый текущий путь и сбой](../audits/2026-10-09/IDLE-CONTROL-RELAY-REVIEW.md) ·

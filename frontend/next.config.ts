@@ -1,5 +1,9 @@
 import type { NextConfig } from 'next';
 
+if (process.env.NEXT_PUBLIC_DIRECT_PROBE_STUN_URL && process.env.NEXT_PUBLIC_DIRECT_TRANSPORT_CANARY !== 'true') {
+  throw new Error('Diagnostic STUN requires NEXT_PUBLIC_DIRECT_TRANSPORT_CANARY=true');
+}
+
 const nextConfig: NextConfig = {
   output: 'standalone',
   // Корень артефакта должен совпадать с приложением, даже если над checkout

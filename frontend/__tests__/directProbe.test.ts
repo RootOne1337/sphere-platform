@@ -1,4 +1,5 @@
 import { probePath, startDirectProbe, type DirectProbeResult } from '@/src/features/stream/directProbe';
+import { TextEncoder } from 'util';
 
 class FakeChannel {
   bufferedAmount = 0;
@@ -10,12 +11,14 @@ class FakeChannel {
 }
 class FakePeer {
   static latest: FakePeer;
+  static initialGatheringState = 'complete';
+  static constructions = 0;
   channel = new FakeChannel();
-  iceGatheringState = 'complete'; connectionState = 'connected'; iceConnectionState = 'checking';
+  iceGatheringState = FakePeer.initialGatheringState; connectionState = 'connected'; iceConnectionState = 'checking';
   localDescription = { sdp: 'v=0\r\n' };
   onicegatheringstatechange: (() => void) | null = null;
   onconnectionstatechange: (() => void) | null = null;
-  constructor() { FakePeer.latest = this; }
+  constructor(readonly configuration: RTCConfiguration) { FakePeer.latest = this; FakePeer.constructions++; }
   createDataChannel = jest.fn(() => this.channel);
   createOffer = jest.fn(async () => ({ type: 'offer', sdp: 'v=0\r\n' }));
   setLocalDescription = jest.fn(async () => {});
@@ -47,11 +50,96 @@ async function connected() {
 }
 beforeEach(() => {
   jest.useFakeTimers();
+  FakePeer.initialGatheringState = 'complete'; FakePeer.constructions = 0;
   Object.defineProperty(globalThis, 'RTCPeerConnection', { configurable: true, value: FakePeer });
   Object.defineProperty(globalThis, 'WebSocket', { configurable: true, value: FakeSocket });
-  if (!globalThis.TextEncoder) Object.defineProperty(globalThis, 'TextEncoder', { configurable: true, value: require('util').TextEncoder });
+  if (!globalThis.TextEncoder) Object.defineProperty(globalThis, 'TextEncoder', { configurable: true, value: TextEncoder });
 });
 afterEach(() => { jest.useRealTimers(); });
+
+test('controlled profile configures exactly one STUN server and reports only its class', async () => {
+  const reports: DirectProbeResult[] = [];
+  const stop = startDirectProbe('wss://same-origin/ws/direct-probe/device', 'access', value => reports.push(value),
+    { controlledStunUrl: 'stun:10.0.2.2:3478' });
+  await flush();
+  expect(FakePeer.latest.configuration).toEqual({ iceServers: [{ urls: 'stun:10.0.2.2:3478' }], bundlePolicy: 'max-bundle' });
+  expect(reports[0].iceProfile).toBe('controlled-stun');
+  expect(JSON.stringify(reports)).not.toContain('10.0.2.2');
+  stop();
+});
+
+test('invalid diagnostic configuration allocates no peer, signaling or timer', () => {
+  expect(() => startDirectProbe('wss://same-origin', 'access', jest.fn(),
+    { controlledStunUrl: 'stun:unowned.example:3478' })).toThrow('invalid_controlled_stun');
+  expect(FakePeer.constructions).toBe(0);
+  expect(jest.getTimerCount()).toBe(0);
+});
+
+test('incomplete gathering expires before any offer is sent and retires late callbacks', async () => {
+  FakePeer.initialGatheringState = 'gathering';
+  const reports: DirectProbeResult[] = [];
+  startDirectProbe('wss://same-origin', 'access', value => reports.push(value));
+  await flush();
+  const peer = FakePeer.latest, late = peer.onicegatheringstatechange;
+  jest.advanceTimersByTime(8000);
+  expect(reports.at(-1)?.reason).toBe('gathering_deadline');
+  expect(peer.setRemoteDescription).not.toHaveBeenCalled();
+  const count = reports.length;
+  peer.iceGatheringState = 'complete'; late?.(); await flush();
+  expect(reports).toHaveLength(count);
+  expect(peer.close).toHaveBeenCalledTimes(1);
+  expect(jest.getTimerCount()).toBe(0);
+});
+
+test('signaling expires independently without calling it an ICE failure', async () => {
+  const reports: DirectProbeResult[] = [];
+  startDirectProbe('wss://same-origin', 'access', value => reports.push(value));
+  await flush();
+  const late = FakeSocket.latest.onmessage;
+  jest.advanceTimersByTime(8000);
+  expect(reports.at(-1)?.reason).toBe('signaling_deadline');
+  late?.({ data: JSON.stringify({ type: 'direct_probe_answer', session_id: sid, sdp: 'v=0\r\n' }) });
+  await flush();
+  expect(FakePeer.latest.setRemoteDescription).not.toHaveBeenCalled();
+  expect(jest.getTimerCount()).toBe(0);
+});
+
+test('ICE gets its bounded interval after gathering and signaling, without extending the total lease', async () => {
+  FakePeer.initialGatheringState = 'gathering';
+  const reports: DirectProbeResult[] = [];
+  startDirectProbe('wss://same-origin', 'access', value => reports.push(value)); await flush();
+  jest.advanceTimersByTime(7000);
+  FakePeer.latest.iceGatheringState = 'complete'; FakePeer.latest.onicegatheringstatechange?.();
+  jest.advanceTimersByTime(7000);
+  FakeSocket.latest.onmessage?.({ data: JSON.stringify({ type: 'direct_probe_answer', session_id: sid, sdp: 'v=0\r\n' }) });
+  await flush();
+  jest.advanceTimersByTime(11000); await flush();
+  expect(reports.at(-1)?.state).toBe('connecting');
+  jest.advanceTimersByTime(1000); await flush();
+  expect(reports.at(-1)?.reason).toBe('connection_deadline');
+  expect(jest.getTimerCount()).toBe(0);
+});
+
+test('an open channel cannot extend the thirty-second overall lease after slow setup', async () => {
+  FakePeer.initialGatheringState = 'gathering';
+  const reports: DirectProbeResult[] = [];
+  startDirectProbe('wss://same-origin', 'access', value => reports.push(value)); await flush();
+  jest.advanceTimersByTime(7000);
+  const peer = FakePeer.latest;
+  peer.iceGatheringState = 'complete'; peer.onicegatheringstatechange?.();
+  jest.advanceTimersByTime(7000);
+  FakeSocket.latest.onmessage?.({ data: JSON.stringify({ type: 'direct_probe_answer', session_id: sid, sdp: 'v=0\r\n' }) });
+  await flush();
+  jest.advanceTimersByTime(11000); await flush(); peer.channel.onopen?.();
+  for (let i = 1; i <= 4; i++) {
+    jest.advanceTimersByTime(1000); peer.channel.onmessage?.({ data: `SP1 ${sid} ${i}` }); await flush();
+  }
+  expect(reports.at(-1)?.samples).toHaveLength(4);
+  jest.advanceTimersByTime(1000); await flush();
+  expect(reports.at(-1)?.reason).toBe('probe_deadline');
+  expect(peer.close).toHaveBeenCalledTimes(1);
+  expect(jest.getTimerCount()).toBe(0);
+});
 
 test('auth travels only in signaling and successful echoes never forward to the server', async () => {
   const { peer, ws, reports, stop } = await connected();
@@ -139,7 +227,7 @@ test('finite successful probe closes after twenty samples and does not retain fu
 });
 
 test('only selected candidate pair proves host/NAT/relay; endpoint IPs are excluded', () => {
-  const stats = new Map<string, any>([
+  const stats = new Map<string, Record<string, unknown>>([
     ['t', { type: 'transport', selectedCandidatePairId: 'p' }],
     ['p', { type: 'candidate-pair', localCandidateId: 'l', remoteCandidateId: 'r' }],
     ['l', { candidateType: 'host', protocol: 'udp', address: '10.0.0.1' }],
@@ -181,7 +269,7 @@ test('unresolved diagnostic call cannot pile up or delay Stop and late results s
   const reports: DirectProbeResult[] = [];
   const stop = startDirectProbe('wss://same-origin/ws/direct-probe/device', 'access', value => reports.push(value));
   await flush();
-  let finish!: (value: Map<any, any>) => void;
+  let finish!: (value: Map<string, Record<string, unknown>>) => void;
   FakePeer.latest.getStats.mockImplementation(() => new Promise(resolve => { finish = resolve; }));
   FakeSocket.latest.onmessage?.({ data: JSON.stringify({ type: 'direct_probe_answer', session_id: sid, sdp: 'v=0\r\n' }) });
   await flush(); jest.advanceTimersByTime(9000); await flush();

@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "reviewedAtUtc": "2026-10-10T00:40:06.833372+00:00",
+  "reviewedAtUtc": "2026-10-10T01:13:19.000972+00:00",
   "sourceReviewed": "639b6ad52fe3651579499659ded46ff73027f313",
   "scope": "Effective documentation status; source/install/finite acceptance kept separate. No new fleet or soak acceptance.",
   "baseline": "docs/audits/2026-10-05/ENTERPRISE-PRODUCT-BACKLOG.json",
@@ -32,6 +32,13 @@
       "evidence": "docs/audits/2026-10-10/DIRECT-PROBE-NATIVE-COUNTERS-CANARY.json",
       "scope": "Native counter callback accepted only in finite diagnostic scope: exact8447 CI/signed admission,12reports, no private fields. Canary APK restored to original and not currently installed. Production promotion, ICE profile/network/channel/RTT/idle/resource acceptance remain open.",
       "testedRevision": "8447c9078eaff138d60e9cfe0a47867f67278d03"
+    },
+    {
+      "id": "direct-probe-explicit-stun-profiles",
+      "installed": false,
+      "sourceBaseRevision": "e70b530ce043ba5713be80665f71c510bc628142",
+      "evidence": "docs/audits/2026-10-10/DIRECT-PROBE-STUN-PROFILES.json",
+      "scope": "Final source hashes: host/local/explicit public diagnostic profiles; frontend2047/types/lint, public/default targeted Android and five Gradle denial gates. Separate socket STUN prerequisite accepted only finite shell scope. Working probe stays OFF; native gathering/channel/RTT/media/input and deployment remain open."
     }
   ],
   "storage": {
@@ -93,7 +100,7 @@
     "implementationAuthorizedNow": true,
     "researchPreparedAtUtc": "2026-10-09T16:46:29Z",
     "researchEvidence": "docs/design/BROWSER-DIRECT-TRANSPORT.md",
-    "researchScope": "One corrected native host ICE window:12native reports with remote0/pairs0/DTLSnew and unknown packet counters; browser177checks/0responses. Native diagnostics accepted only finite scope. Original APK restored, APIoff. Candidate handling and VPN/NAT/route hypotheses remain; no proven packet cause, direct channel/RTT or resource acceptance.",
+    "researchScope": "One corrected native host ICE window:12native reports with remote0/pairs0/DTLSnew and unknown packet counters; browser177checks/0responses. Native diagnostics accepted only finite scope. Original APK restored, APIoff. Candidate handling and VPN/NAT/route hypotheses remain; no proven packet cause, direct channel/RTT or resource acceptance. New finite shell/socket probes: Windows and Android each answered by explicit public Cloudflare STUN; local alias/LAN time out and guest gateway returns ICMP port unreachable. Shell UID is not APK UID. Three source-only ICE profiles with bounded phase deadlines are checked; no new native WebRTC channel or RTT acceptance.",
     "researchPrerequisites": [
       "Versioned offer/input/control ownership and auth contract",
       "Bounded command-to-native/frame timing with unknown results visible",
@@ -121,7 +128,8 @@
       "docs/audits/2026-10-10/DIRECT-PROBE-NETWORK-CANARY.json",
       "docs/audits/2026-10-10/DIRECT-PROBE-NATIVE-NETWORK-SOURCE.md",
       "docs/audits/2026-10-10/DIRECT-PROBE-ANDROID-COMPATIBILITY.md",
-      "docs/audits/2026-10-10/DIRECT-PROBE-NATIVE-COUNTERS-CANARY.json"
+      "docs/audits/2026-10-10/DIRECT-PROBE-NATIVE-COUNTERS-CANARY.json",
+      "docs/audits/2026-10-10/DIRECT-PROBE-STUN-PROFILES.json"
     ],
     "pilotEvidence": "docs/audits/2026-10-10/DIRECT-PROBE-NATIVE-COUNTERS-CANARY.json",
     "pilotOutcome": "NATIVE_REMOTE_CANDIDATES_AND_PAIRS_ABSENT_CLEANED_UP",
@@ -132,7 +140,8 @@
       "evidence": "docs/audits/2026-10-10/DIRECT-PROBE-NATIVE-COUNTERS-CANARY.json",
       "currentlyInstalled": false,
       "directChannelAccepted": false
-    }
+    },
+    "networkPrerequisiteEvidence": "docs/audits/2026-10-10/DIRECT-PROBE-STUN-PROFILES.json"
   },
   "items": [
     {

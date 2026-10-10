@@ -75,6 +75,24 @@ val directProbeCanary = System.getenv("SPHERE_DIRECT_TRANSPORT_CANARY") == "true
 require(!directProbeCanary || !releaseArtifactRequested) {
     "Direct transport is a diagnostic debug canary; release builds require media/control acceptance"
 }
+val directProbeStunUrl = System.getenv("SPHERE_DIRECT_PROBE_STUN_URL").orEmpty()
+require(directProbeStunUrl.isEmpty() || directProbeCanary) {
+    "Controlled STUN requires SPHERE_DIRECT_TRANSPORT_CANARY=true"
+}
+if (directProbeStunUrl.isNotEmpty() && directProbeStunUrl != "stun:stun.cloudflare.com:3478") {
+    val match = Regex("^stun:([0-9.]+):([0-9]+)$").matchEntire(directProbeStunUrl)
+    val parts = match?.groupValues?.get(1)?.split('.')
+    val canonical = parts?.size == 4 && parts.all {
+        Regex("^(0|[1-9][0-9]{0,2})$").matches(it) && it.toInt() <= 255
+    }
+    val privateIp = canonical && (parts!![0].toInt() == 10 ||
+        parts[0].toInt() == 172 && parts[1].toInt() in 16..31 ||
+        parts[0].toInt() == 192 && parts[1].toInt() == 168)
+    val port = match?.groupValues?.get(2).orEmpty()
+    require(privateIp && Regex("^[1-9][0-9]{3,4}$").matches(port) && port.toInt() in 1024..65535) {
+        "Controlled STUN requires one canonical RFC1918 IPv4 endpoint and port 1024..65535, or the pinned Cloudflare endpoint"
+    }
+}
 require(System.getenv("SPHERE_STREAM_PLANAR_INPUT") != "true" || System.getenv("SPHERE_STREAM_GPU_BRIDGE") != "true") {
     "Select only one experimental capture path"
 }
@@ -126,6 +144,7 @@ android {
         buildConfigField("boolean", "STREAM_GPU_BRIDGE", (System.getenv("SPHERE_STREAM_GPU_BRIDGE") == "true").toString())
         buildConfigField("boolean", "STREAM_PLANAR_INPUT", (System.getenv("SPHERE_STREAM_PLANAR_INPUT") == "true").toString())
         buildConfigField("boolean", "CONTINUOUS_INPUT_CANARY", (System.getenv("SPHERE_CONTINUOUS_INPUT_CANARY") == "true").toString())
+        buildConfigField("String", "DIRECT_PROBE_STUN_URL", javaString(directProbeStunUrl))
         buildConfigField("String", "BUILD_TIME", "\"${System.currentTimeMillis()}\"")
         buildConfigField("String", "DEFAULT_FALLBACK_SERVER_URL", "\"${System.getenv("SPHERE_FALLBACK_SERVER_URL") ?: ""}\"")
         buildConfigField("String", "CONFIG_MIRROR_URLS", javaString(System.getenv("SPHERE_CONFIG_MIRROR_URLS") ?: ""))

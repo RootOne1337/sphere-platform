@@ -1,5 +1,6 @@
 /** Finite WebRTC echo canary. RTT here is neither native input ACK nor video latency. */
 import { probeNetwork, type DirectProbeNetwork } from './directProbeNetwork';
+import { directProbeIceConfig, type DirectProbeIceProfile } from './directProbeIce';
 
 export interface DirectProbeResult {
   state: 'gathering' | 'signaling' | 'connecting' | 'connected' | 'finished' | 'stopped' | 'failed';
@@ -7,6 +8,7 @@ export interface DirectProbeResult {
   path: 'host' | 'nat' | 'relay' | 'unknown';
   protocol: string | null;
   reason: string | null;
+  iceProfile?: DirectProbeIceProfile;
   network?: DirectProbeNetwork;
   networkSampleAtMs?: number;
   networkAgeAtStopMs?: number;
@@ -30,10 +32,13 @@ export function probePath(stats: RTCStatsReport): Pick<DirectProbeResult, 'path'
 
 export function startDirectProbe(
   url: string, token: string, report: (value: DirectProbeResult) => void,
+  options: { controlledStunUrl?: string } = {},
 ): () => void {
+  const iceConfig = directProbeIceConfig(options.controlledStunUrl);
   let stopped = false;
-  let result: DirectProbeResult = { state: 'gathering', samples: [], path: 'unknown', protocol: null, reason: null };
-  const peer = new RTCPeerConnection({ iceServers: [], bundlePolicy: 'max-bundle' });
+  let result: DirectProbeResult = { state: 'gathering', samples: [], path: 'unknown', protocol: null,
+    reason: null, iceProfile: iceConfig.profile };
+  const peer = new RTCPeerConnection({ iceServers: iceConfig.iceServers, bundlePolicy: 'max-bundle' });
   let channel: RTCDataChannel;
   try { channel = peer.createDataChannel('sphere-probe-v1', { ordered: true }); }
   catch (error) { peer.close(); throw error; }
@@ -43,13 +48,14 @@ export function startDirectProbe(
   let pending: { sequence: number; sent: number } | null = null;
   let interval: ReturnType<typeof setInterval> | undefined;
   let networkInterval: ReturnType<typeof setInterval> | undefined;
+  let phaseDeadline: ReturnType<typeof setTimeout> | undefined;
   let statsInFlight = false, statsCalls = 0;
   const startedAt = performance.now();
   const emit = () => report({ ...result, samples: [...result.samples] });
   const stop = (reason: string | null = null) => {
     if (stopped) return;
     stopped = true;
-    clearTimeout(deadline); clearTimeout(setupDeadline);
+    clearTimeout(deadline); clearTimeout(phaseDeadline);
     if (interval) clearInterval(interval);
     if (networkInterval) clearInterval(networkInterval);
     peer.onicegatheringstatechange = null; peer.onconnectionstatechange = null;
@@ -65,7 +71,13 @@ export function startDirectProbe(
         Math.max(0, performance.now() - startedAt - result.networkSampleAtMs) }; emit();
   };
   const deadline = setTimeout(() => stop('probe_deadline'), 30_000);
-  const setupDeadline = setTimeout(() => stop('connection_deadline'), 12_000);
+  const boundPhase = (reason: string, milliseconds: number) => {
+    clearTimeout(phaseDeadline);
+    phaseDeadline = setTimeout(() => stop(reason), milliseconds);
+  };
+  // A slow gathering/signaling phase must not masquerade as failed ICE connectivity.
+  // The 30-second overall lease is never extended by a phase transition.
+  boundPhase('gathering_deadline', 8_000);
   const collectNetwork = async () => {
     if (stopped || statsInFlight || statsCalls >= 32) return;
     statsInFlight = true; statsCalls++;
@@ -83,6 +95,7 @@ export function startDirectProbe(
     if (stopped || ws || peer.iceGatheringState !== 'complete') return;
     const sdp = peer.localDescription?.sdp;
     if (!sdp || new TextEncoder().encode(sdp).length > 32768) return stop('invalid_description');
+    boundPhase('signaling_deadline', 8_000);
     result.state = 'signaling'; emit();
     ws = new WebSocket(url);
     ws.onopen = () => {
@@ -99,6 +112,7 @@ export function startDirectProbe(
           || data.type !== 'direct_probe_answer' || !/^[0-9a-f]{32}$/.test(data.session_id)
           || typeof data.sdp !== 'string' || new TextEncoder().encode(data.sdp).length > 32768) throw Error();
         session = data.session_id;
+        boundPhase('connection_deadline', 12_000);
         void peer.setRemoteDescription({ type: 'answer', sdp: data.sdp }).then(() => {
           if (stopped) return;
           if (result.state === 'signaling') { result.state = 'connecting'; emit(); }
@@ -115,7 +129,7 @@ export function startDirectProbe(
   };
   channel.onopen = () => {
     if (stopped || !session) return stop('missing_binding');
-    clearTimeout(setupDeadline);
+    clearTimeout(phaseDeadline);
     result.state = 'connected'; emit();
     interval = setInterval(() => {
       if (stopped) return;

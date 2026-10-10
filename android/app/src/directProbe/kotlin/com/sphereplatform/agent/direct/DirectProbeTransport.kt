@@ -3,6 +3,7 @@ package com.sphereplatform.agent.direct
 import android.content.Context
 import android.os.SystemClock
 import android.util.Log
+import com.sphereplatform.agent.BuildConfig
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.launch
@@ -30,6 +31,7 @@ class DirectProbeTransport(
         var answered = false
         var sequence = 1
         var lastEcho = 0L
+        var iceProfile = "host"
         val statsBudget = ProbeStatsBudget()
     }
 
@@ -89,6 +91,9 @@ class DirectProbeTransport(
     private fun open(p: Probe, sdp: String) {
         peer = p
         try {
+            // Validate before creating native threads. Ordinary builds keep an empty host-only profile.
+            val iceProfile = DirectProbeIceProfile.fromUrl(BuildConfig.DIRECT_PROBE_STUN_URL)
+            p.iceProfile = iceProfile.name
             if (factory == null) {
                 if (initialized.compareAndSet(false, true)) {
                     try {
@@ -98,8 +103,9 @@ class DirectProbeTransport(
                 }
                 factory = PeerConnectionFactory.builder().createPeerConnectionFactory()
             }
-            // Host ICE only: no unsolicited external STUN/TURN traffic or credential distribution.
-            val config = PeerConnection.RTCConfiguration(emptyList())
+            val servers = iceProfile.serverUrl?.let { listOf(PeerConnection.IceServer.builder(it).createIceServer()) }
+                ?: emptyList()
+            val config = PeerConnection.RTCConfiguration(servers)
             config.sdpSemantics = PeerConnection.SdpSemantics.UNIFIED_PLAN
             p.connection = factory?.createPeerConnection(config, object : PeerConnection.Observer {
                 override fun onSignalingChange(state: PeerConnection.SignalingState) = Unit
@@ -190,6 +196,7 @@ class DirectProbeTransport(
                         val age = (SystemClock.elapsedRealtime() - sampledAt).coerceAtLeast(0)
                         val snapshot = buildJsonObject {
                             put("event", "native_ice_summary")
+                            put("iceProfile", p.iceProfile)
                             put("sampleAgeMs", age)
                             put("network", summary)
                         }

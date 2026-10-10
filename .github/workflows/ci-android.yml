@@ -107,10 +107,42 @@ jobs:
           fi
           grep -q 'Direct transport is a diagnostic debug canary' "$RUNNER_TEMP/direct-probe-release-denial.log"
 
+      - name: Verify controlled local STUN build gates
+        working-directory: android
+        shell: bash
+        run: |
+          set -euo pipefail
+          if SPHERE_DIRECT_PROBE_STUN_URL=stun:10.0.2.2:3478 ./gradlew help > "$RUNNER_TEMP/stun-gate-denial.log" 2>&1; then
+            echo 'Controlled STUN unexpectedly allowed without the direct debug gate' >&2
+            exit 1
+          fi
+          grep -q 'Controlled STUN requires SPHERE_DIRECT_TRANSPORT_CANARY=true' "$RUNNER_TEMP/stun-gate-denial.log"
+          for endpoint in 'stun:example.com:3478' 'stun:8.8.8.8:3478' 'stun:010.0.2.2:3478' 'stun:10.0.2.2:3478?transport=udp'; do
+            if SPHERE_DIRECT_TRANSPORT_CANARY=true SPHERE_DIRECT_PROBE_STUN_URL="$endpoint" ./gradlew help > "$RUNNER_TEMP/stun-profile-denial.log" 2>&1; then
+              echo 'Non-local or non-canonical controlled STUN profile unexpectedly allowed' >&2
+              exit 1
+            fi
+            grep -q 'Controlled STUN requires one canonical RFC1918 IPv4 endpoint' "$RUNNER_TEMP/stun-profile-denial.log"
+          done
+
+      - name: Compile and test the controlled local STUN debug profile
+        working-directory: android
+        env:
+          SPHERE_DIRECT_TRANSPORT_CANARY: "true"
+          SPHERE_DIRECT_PROBE_STUN_URL: "stun:10.0.2.2:3478"
+        run: ./gradlew testDevDebugUnitTest assembleDevDebug
+
+      - name: Compile and test the explicit public STUN debug profile
+        working-directory: android
+        env:
+          SPHERE_DIRECT_TRANSPORT_CANARY: "true"
+          SPHERE_DIRECT_PROBE_STUN_URL: "stun:stun.cloudflare.com:3478"
+        run: ./gradlew testDevDebugUnitTest assembleDevDebug
+
       - name: Upload direct-transport canary diagnostics
         uses: actions/upload-artifact@v6
         with:
-          name: android-direct-probe-${{ github.sha }}
+          name: android-direct-probe-public-stun-${{ github.sha }}
           path: |
             android/app/build/outputs/apk/dev/debug/*.apk
             android/app/build/test-results/testDevDebugUnitTest/**/*.xml
