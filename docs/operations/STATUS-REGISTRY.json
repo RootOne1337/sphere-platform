@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
-  "reviewedAtUtc": "2026-10-10T16:26:54.631476+00:00",
-  "sourceReviewed": "678f78cf746e2be7b189e01a65b4b77134b373eb",
+  "reviewedAtUtc": "2026-10-10T18:21:07.148890+00:00",
+  "sourceReviewed": "a32854e6bbf4a8df5b062e9569e2258f160f753a",
   "scope": "Effective documentation status; source/install/finite acceptance kept separate. No new fleet or soak acceptance.",
   "baseline": "docs/audits/2026-10-05/ENTERPRISE-PRODUCT-BACKLOG.json",
   "previousCrosscheck": "docs/audits/2026-10-09/CHAT-CODE-RECONCILIATION.json",
@@ -11,18 +11,18 @@
     "open": 41
   },
   "installed": {
-    "lastObservedUtc": "2026-10-10T16:26:54.631476+00:00",
-    "ui": "678f78cf746e2be7b189e01a65b4b77134b373eb",
-    "api": "678f78cf746e2be7b189e01a65b4b77134b373eb",
-    "evidence": "docs/audits/2026-10-10/CONTROL-ADMISSION-RECOVERY-INSTALLED.json",
-    "observation": "UI/API678 installed on both origins; finite public PH030 card + HTTP admission checked. APK10251 preserved. Automatic admission recovery fixture-validated; native recovery, primary direct media/input and latency remain open.",
+    "lastObservedUtc": "2026-10-10T18:21:07.148890+00:00",
+    "ui": "a32854e6bbf4a8df5b062e9569e2258f160f753a",
+    "api": "c14c32351f89c6b4a67b3b7eb3f911b5a881fb46",
+    "evidence": "docs/audits/2026-10-10/STREAM-SESSION-DIAGNOSTICS-INSTALLED.json",
+    "observation": "CI-admitted UI/API on both gateways, real main-PC browser observations and automatic finite direct-video outcomes retained/read through the bounded API; the user-identified laptop reported 223 presented RTP frames at 960x540 via NAT/UDP, 20 echoes and p95 26.7 ms. Main PC uses VPN. Physical localhost topology, primary media/input, native gesture, latency SLA, full fleet and soak remain outside this finite acceptance.",
     "pilotApk": {
       "device": "PH011",
       "version": "1.2.49-dev",
       "versionCode": 10249,
       "scope": "PH011 ordinary1.2.49-dev preserved; seven ordinary WebSocket frames observed, no new APK or input acceptance."
     },
-    "evidenceSha256NormalizedLf": "796385f7981a084e7fceb21db8fc8fc39f1c85e209e9f3759d858e99890fef1e",
+    "evidenceSha256NormalizedLf": "cb892492f2fe642bd8ce09dce68428db9b107ed94c2e75635d367e60ad671c6c",
     "additionalPilotApks": [
       {
         "device": "PH030",
@@ -64,13 +64,14 @@
     }
   ],
   "storage": {
-    "lastObservedUtc": "2026-10-10T10:19:52.234371+00:00",
+    "lastObservedUtc": "2026-10-10T18:24:31.275158+00:00",
     "visibleMatchingProcesses": 1,
     "continuousCoverageConfirmed": false,
-    "observationScope": "Old limited observer stopped without terminal receipt after296samples; uncovered gap10:04:43→10:19:52UTC. New detached/breakaway limited observer PID43640 confirmed with baseline, deadline18:19UTC; no VSS/kernel writer attribution.",
-    "oneFreeDiskReadingBytes": 49300525056,
-    "latestCompletedEvidence": "docs/audits/2026-10-08/STORAGE-WINDOW-COMPLETION.json",
-    "activeEvidence": "docs/audits/2026-10-10/PH030-DIRECT-PATH-FOLLOWUP.json"
+    "observationScope": "241-sample window completed, C: free delta -13,202,395,136 bytes, Docker VHDX allocation constant 234,731,077,632 bytes. Renewed limited PID2380, 18:22 UTC to 11 Oct02:22 UTC, first sample and live process confirmed. Gap18:19:52 to18:22:19 is uncovered. Whole-PC disk writer remains UNDETERMINED.",
+    "oneFreeDiskReadingBytes": 36099588096,
+    "latestCompletedEvidence": "docs/audits/2026-10-10/STORAGE-OBSERVATION-1822.json",
+    "activeEvidence": "docs/audits/2026-10-10/STORAGE-OBSERVATION-1822.json",
+    "evidenceSha256NormalizedLf": "4677cc7ad436bd7d990ba845936b5725a5505b476c41a54aefec66f2b2ea8689"
   },
   "legacy": {
     "total": 41,
@@ -122,7 +123,7 @@
     "implementationAuthorizedNow": true,
     "researchPreparedAtUtc": "2026-10-09T16:46:29Z",
     "researchEvidence": "docs/design/BROWSER-DIRECT-TRANSPORT.md",
-    "researchScope": "PH030 targeted OTA10251 and actual package SHA confirmed. Two-origin readonly-video admission true. User laptop echo20/20 p9525.8ms remains a separate observation; no real RTP/direct input/localhost/latency acceptance.",
+    "researchScope": "CI-admitted UI/API on both gateways, real main-PC browser observations and automatic finite direct-video outcomes retained/read through the bounded API; the user-identified laptop reported 223 presented RTP frames at 960x540 via NAT/UDP, 20 echoes and p95 26.7 ms. Main PC uses VPN. Physical localhost topology, primary media/input, native gesture, latency SLA, full fleet and soak remain outside this finite acceptance.",
     "researchPrerequisites": [
       "Versioned offer/input/control ownership and auth contract",
       "Bounded command-to-native/frame timing with unknown results visible",
@@ -159,10 +160,11 @@
       "docs/audits/2026-10-10/DIRECT-ADMISSION-INSTALLED.json",
       "docs/audits/2026-10-10/DIRECT-VIDEO-READONLY-SOURCE.md",
       "docs/audits/2026-10-10/DIRECT-VIDEO-API-INSTALLED.json",
-      "docs/audits/2026-10-10/DIRECT-VIDEO-READONLY-INSTALLED.json"
+      "docs/audits/2026-10-10/DIRECT-VIDEO-READONLY-INSTALLED.json",
+      "docs/audits/2026-10-10/STREAM-SESSION-DIAGNOSTICS-INSTALLED.json"
     ],
     "pilotEvidence": "docs/audits/2026-10-10/DIRECT-VIDEO-READONLY-INSTALLED.json",
-    "pilotOutcome": "NATIVE_OTA_AND_READONLY_VIDEO_ADMISSION_CONFIRMED_RTP_PENDING",
+    "pilotOutcome": "INSTALLED_READONLY_VIDEO_WITH_FINITE_LAPTOP_RTP",
     "pilotCurrentlyEnabled": true,
     "nativeDiagnosticAcceptance": {
       "state": "ACCEPTED_FINITE_DIAGNOSTIC_SCOPE",
@@ -187,7 +189,16 @@
       "753fd530-2f19-4e5e-98ba-769863678141"
     ],
     "pilotEvidenceSha256NormalizedLf": "8d82bbc0869ce4b086e657a7e408d0c76e8a29cee6d2850200a6105bc49256cb",
-    "latestNetworkObservation": {
+    "previousNetworkObservation": {
+      "evidence": "docs/audits/2026-10-10/PH030-DIRECT-PATH-FOLLOWUP.json",
+      "evidenceSha256NormalizedLf": "7478057abcc40eb5cd1473341329e75204377753de5fab91f58554739c2a305d",
+      "topology": "browser on main PC with VPN; PH030 on laptop without VPN",
+      "outcome": "ANSWER_RECEIVED_NO_CHANNEL",
+      "laptopBrowserChannelAccepted": false
+    },
+    "readOnlyVideoInstalled": true,
+    "directInputInstalled": false,
+    "previousEchoObservation": {
       "evidence": "docs/audits/2026-10-10/PH030-LAPTOP-CHANNEL-USER-OBSERVATION.json",
       "evidenceSha256NormalizedLf": "9f430bf56f5e55815c62fec96690cc85be08d9b965672e86528fa10bf360b247",
       "topology": "Browser and emulator/APK on the same laptop without VPN; main PC alone has VPN.",
@@ -198,14 +209,7 @@
       "localhostRouteProven": false,
       "rttP95Ms": 25.8
     },
-    "previousNetworkObservation": {
-      "evidence": "docs/audits/2026-10-10/PH030-DIRECT-PATH-FOLLOWUP.json",
-      "evidenceSha256NormalizedLf": "7478057abcc40eb5cd1473341329e75204377753de5fab91f58554739c2a305d",
-      "topology": "browser on main PC with VPN; PH030 on laptop without VPN",
-      "outcome": "ANSWER_RECEIVED_NO_CHANNEL",
-      "laptopBrowserChannelAccepted": false
-    },
-    "pendingReadonlyVideo": {
+    "initialReadonlyVideoAdmission": {
       "evidence": "docs/audits/2026-10-10/DIRECT-VIDEO-READONLY-INSTALLED.json",
       "evidenceSha256NormalizedLf": "8d82bbc0869ce4b086e657a7e408d0c76e8a29cee6d2850200a6105bc49256cb",
       "apiSourceRevision": "ee0d8e6f7630dcaa3518a3fcf9bfcb35d67b7498",
@@ -219,8 +223,25 @@
       "videoAccepted": false,
       "reason": "Native OTA and admission complete; actual laptop JNI/RTP video rendering remains pending."
     },
-    "readOnlyVideoInstalled": true,
-    "directInputInstalled": false
+    "latestNetworkObservation": {
+      "evidence": "docs/audits/2026-10-10/STREAM-SESSION-DIAGNOSTICS-INSTALLED.json",
+      "evidenceSha256NormalizedLf": "cb892492f2fe642bd8ce09dce68428db9b107ed94c2e75635d367e60ad671c6c",
+      "sessionId": "8941f172754595f5",
+      "uiSourceRevision": "c4826d4682472edb912fc14e68e8fd447994a95f",
+      "outcome": "CLIENT_REPORTED_FINITE_READONLY_RTP",
+      "finiteReadonlyVideoAccepted": true,
+      "primaryDirectVideoAccepted": false,
+      "directInputAccepted": false,
+      "localhostRouteProven": false,
+      "framesPresented": 223,
+      "width": 960,
+      "height": 540,
+      "selectedPath": "nat",
+      "protocol": "udp",
+      "echoes": 20,
+      "echoRttP95Ms": 26.70000000298,
+      "topologySource": "User identifies this browser and PH030 as the laptop; route locality is not independently proven."
+    }
   },
   "items": [
     {
@@ -1918,8 +1939,8 @@
         "EP-020",
         "EP-047"
       ],
-      "acceptedScope": "Targeted PH030 OTA10251 with actual package SHA and both-origin readonly video admission. Prior user-observed laptop echo20/20 p9525.8ms remains separate. Ordinary UI/API ee0 delivery accepted in its recorded scope.",
-      "remaining": "Real laptop RTP frames and dimensions. Primary direct media/input, native TURN, localhost/LAN/WAN matrix, ownership/reconnect, ABR and resource/latency budgets.",
+      "acceptedScope": "CI-admitted UI/API on both gateways, real main-PC browser observations and automatic finite direct-video outcomes retained/read through the bounded API; the user-identified laptop reported 223 presented RTP frames at 960x540 via NAT/UDP, 20 echoes and p95 26.7 ms. Main PC uses VPN. Physical localhost topology, primary media/input, native gesture, latency SLA, full fleet and soak remain outside this finite acceptance.",
+      "remaining": "Primary direct media/input, nearest localhost/LAN/WAN/TURN paths, ownership/reconnect, ABR and resource/latency budgets remain unaccepted. Finite laptop RTP presentation is recorded separately.",
       "evidence": [
         "docs/design/BROWSER-DIRECT-TRANSPORT.md",
         "docs/audits/2026-10-09/IDLE-CONTROL-RELAY-REVIEW.md",
@@ -1937,7 +1958,8 @@
         "docs/audits/2026-10-10/DIRECT-ADMISSION-INSTALLED.json",
         "docs/audits/2026-10-10/DIRECT-VIDEO-API-INSTALLED.json",
         "docs/audits/2026-10-10/PH030-LAPTOP-CHANNEL-USER-OBSERVATION.json",
-        "docs/audits/2026-10-10/DIRECT-VIDEO-READONLY-INSTALLED.json"
+        "docs/audits/2026-10-10/DIRECT-VIDEO-READONLY-INSTALLED.json",
+        "docs/audits/2026-10-10/STREAM-SESSION-DIAGNOSTICS-INSTALLED.json"
       ],
       "sourcePaths": [
         "backend/websocket/direct_probe_protocol.py",
@@ -1965,11 +1987,13 @@
         "EP-047",
         "EP-050"
       ],
-      "acceptedScope": "DAG/discovery/OTA boundaries reviewed. Development version advanced monotonically to1.2.50/10250 for one authorized PH030 canary; actual SHA and matching terminal receipt verified. Stable1.3 not promoted.",
+      "acceptedScope": "DAG/discovery/OTA boundaries reviewed. PH030 has 1.2.51-dev / 10251, matching installed package SHA, and finite readonly RTP presentation. Stable 1.3 not promoted.",
       "remaining": "Idle reliability, native lifecycle/resources, direct path and capability matrix acceptance, production signer verification and staged OTA promotion.",
       "evidence": [
         "docs/design/APK-1.3-COMPATIBILITY-AND-RELEASE.md",
-        "docs/audits/2026-10-10/DIRECT-PROBE-TURN-AND-LAPTOP.json"
+        "docs/audits/2026-10-10/DIRECT-PROBE-TURN-AND-LAPTOP.json",
+        "docs/audits/2026-10-10/DIRECT-VIDEO-READONLY-INSTALLED.json",
+        "docs/audits/2026-10-10/STREAM-SESSION-DIAGNOSTICS-INSTALLED.json"
       ],
       "sourcePaths": [
         "android/app/build.gradle.kts",
@@ -2016,9 +2040,10 @@
         "EP-029"
       ],
       "acceptedScope": "Requirement captured. Existing native input lease is exclusive per device; local-worker viewers are not distributed per-device/tab/card presence evidence.",
-      "remaining": "Explicit view/control roles and safe controller handoff; distinguish card/stream and count sessions per tab across accounts/workers with tenant-safe TTL/heartbeat/reconnect semantics; fleet UI and concurrent native acceptance.",
+      "remaining": "Exclusive native input lease rejects another viewer with controller_busy; observed 18:07:03 UTC during two viewers, then seven touch_event rejections. Explicit view/control roles, safe transfer and tenant-safe per-tab presence/fleet indicators remain required.",
       "evidence": [
-        "docs/audits/2026-10-10/DIRECT-PROBE-TURN-AND-LAPTOP.json"
+        "docs/audits/2026-10-10/DIRECT-PROBE-TURN-AND-LAPTOP.json",
+        "docs/audits/2026-10-10/STREAM-SESSION-DIAGNOSTICS-INSTALLED.json"
       ],
       "sourcePaths": [
         "backend/websocket/continuous_runtime.py",
@@ -2051,16 +2076,17 @@
     {
       "id": "CHAT-20",
       "title": "Последние десять сеансов и автоматическая диагностика клиента",
-      "state": "SOURCE_FIXED_NOT_INSTALLED",
+      "state": "PARTIAL",
       "productItems": [
         "EP-020",
         "EP-029",
         "EP-047"
       ],
-      "acceptedScope": "Bounded Redis history and automatic readonly-video renderer implemented and tested in worktree; not installed yet.",
-      "remaining": "Install reviewed UI/API and observe a real laptop browser report/RTP outcome. Primary direct input/media and latency remain separate open gates.",
+      "acceptedScope": "CI-admitted UI/API on both gateways, real main-PC browser observations and automatic finite direct-video outcomes retained/read through the bounded API; the user-identified laptop reported 223 presented RTP frames at 960x540 via NAT/UDP, 20 echoes and p95 26.7 ms. Main PC uses VPN. Physical localhost topology, primary media/input, native gesture, latency SLA, full fleet and soak remain outside this finite acceptance.",
+      "remaining": "Promote the finite readonly canary into primary media/input with ownership/reconnect coverage; prove localhost/LAN/WAN/TURN, resource soak and latency separately. The user-identified laptop finite RTP result is retained.",
       "evidence": [
-        "docs/audits/2026-10-10/STREAM-SESSION-DIAGNOSTICS.md"
+        "docs/audits/2026-10-10/STREAM-SESSION-DIAGNOSTICS.md",
+        "docs/audits/2026-10-10/STREAM-SESSION-DIAGNOSTICS-INSTALLED.json"
       ],
       "sourcePaths": [
         "backend/websocket/stream_session_history.py",
@@ -2079,13 +2105,14 @@
     "docs/operations/SCRIPT-STUDIO.md"
   ],
   "schemaReconciliation": {
-    "source": "installed be803773 app.openapi; no startup hooks or HTTP actions",
-    "paths": 144,
-    "operations": 182,
+    "paths": 146,
+    "operations": 184,
+    "canonicalSha256": "8cb42f695f53df673b43700f78186ad575d9bcb89939d87b5789230e293340e3",
+    "sourceRevision": "c14c32351f89c6b4a67b3b7eb3f911b5a881fb46",
+    "source": "Installed app.openapi; no application lifespan hooks",
+    "observedAtUtc": "2026-10-10T17:47:22.955831+00:00",
     "sameAsCommittedCanonicalJson": true,
-    "canonicalSha256": "488e804a84f62de7c81313b14d5e2dfca522c630d2583b0712c9399950950968",
-    "localGatewayRootSchemaHttpStatus": 404,
-    "scope": "Declared HTTP contracts only; public gateway root schema route is unavailable in this finite read. WS/input/fleet authorization/outcomes not attested."
+    "scope": "Declared HTTP contracts only; no application startup hooks, native input or fleet acceptance."
   },
   "completedCorrections": [
     {
@@ -2119,17 +2146,25 @@
       "evidence": "docs/audits/2026-10-10/CONTROL-ADMISSION-RECOVERY-INSTALLED.json",
       "evidenceSha256NormalizedLf": "796385f7981a084e7fceb21db8fc8fc39f1c85e209e9f3759d858e99890fef1e",
       "acceptedScope": "CI-admitted UI/API delivery, finite public device-card rendering and per-device HTTP admission. Recovery permutations are fixtures; no new native input, primary direct-video or latency acceptance."
+    },
+    {
+      "id": "stream-session-diagnostics",
+      "sourceRevision": "a32854e6bbf4a8df5b062e9569e2258f160f753a",
+      "installedRevision": "a32854e6bbf4a8df5b062e9569e2258f160f753a",
+      "evidence": "docs/audits/2026-10-10/STREAM-SESSION-DIAGNOSTICS-INSTALLED.json",
+      "evidenceSha256NormalizedLf": "cb892492f2fe642bd8ce09dce68428db9b107ed94c2e75635d367e60ad671c6c",
+      "acceptedScope": "CI-admitted UI/API on both gateways, real main-PC browser observations and automatic finite direct-video outcomes retained/read through the bounded API; the user-identified laptop reported 223 presented RTP frames at 960x540 via NAT/UDP, 20 echoes and p95 26.7 ms. Main PC uses VPN. Physical localhost topology, primary media/input, native gesture, latency SLA, full fleet and soak remain outside this finite acceptance."
     }
   ],
   "sourceWorktreeEvidence": "docs/audits/2026-10-10/DIRECT-ADMISSION-INSTALLED.json",
   "publicWeb": {
-    "lastObservedUtc": "2026-10-10T16:26:54.631476+00:00",
+    "lastObservedUtc": "2026-10-10T18:21:07.148890+00:00",
     "url": "https://sphere-agent-canary-20260927.ru.tuna.am",
-    "ui": "678f78cf746e2be7b189e01a65b4b77134b373eb",
-    "api": "678f78cf746e2be7b189e01a65b4b77134b373eb",
-    "evidence": "docs/audits/2026-10-10/CONTROL-ADMISSION-RECOVERY-INSTALLED.json",
-    "evidenceSha256NormalizedLf": "796385f7981a084e7fceb21db8fc8fc39f1c85e209e9f3759d858e99890fef1e",
-    "scope": "CI-admitted UI/API delivery, finite public device-card rendering and per-device HTTP admission. Recovery permutations are fixtures; no new native input, primary direct-video or latency acceptance.",
+    "ui": "a32854e6bbf4a8df5b062e9569e2258f160f753a",
+    "api": "c14c32351f89c6b4a67b3b7eb3f911b5a881fb46",
+    "evidence": "docs/audits/2026-10-10/STREAM-SESSION-DIAGNOSTICS-INSTALLED.json",
+    "evidenceSha256NormalizedLf": "cb892492f2fe642bd8ce09dce68428db9b107ed94c2e75635d367e60ad671c6c",
+    "scope": "CI-admitted UI/API on both gateways, real main-PC browser observations and automatic finite direct-video outcomes retained/read through the bounded API; the user-identified laptop reported 223 presented RTP frames at 960x540 via NAT/UDP, 20 echoes and p95 26.7 ms. Main PC uses VPN. Physical localhost topology, primary media/input, native gesture, latency SLA, full fleet and soak remain outside this finite acceptance.",
     "additionalQa": {
       "evidence": "docs/audits/2026-10-09/PUBLIC-WEB-SUPPLEMENTAL-QA.json",
       "evidenceSha256NormalizedLf": "84f719a322e114a34ba4f4fc5624f717a71558f2b80f5aea1a484b50778ceac4",
