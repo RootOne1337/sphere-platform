@@ -10,11 +10,14 @@ from unittest.mock import AsyncMock
 import pytest
 from pydantic import SecretStr
 
+from backend.schemas.device_status import DeviceLiveStatus
+from backend.services.device_status_cache import DeviceStatusCache
 from backend.websocket.direct_probe_ice import issue_turn_grant, turn_url, validate_turn_grant
 from backend.websocket.direct_probe_protocol import InvalidDirectProbe
 from backend.websocket.direct_probe_runtime import ProbeViewer
 from tests.test_ws.test_direct_probe import (  # noqa: F401 (shared two-worker fixture)
     SDP,
+    VIDEO_SDP,
     eventually,
     peers,
 )
@@ -116,6 +119,40 @@ async def test_v2_auth_is_completed_before_credentials_and_offer_is_bound_to_rea
     assert ready["type"] == "direct_probe_ready" and ready["protocol"] == "sphere-probe-v2"
     assert ready["ice"]["username"].endswith(ready["session_id"] + ":browser")
     assert KEY not in json.dumps(ready)
+    assert not runtime.viewers and await peers[1][1].get(runtime.key("device")) is None
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("relay", [False, True])
+async def test_video_auth_retains_distinct_protocol_mode_and_temporary_relay_binding(peers, monkeypatch, relay):
+    from backend.api.ws.direct import router
+    runtime = peers[0][1]
+    for field, value in dict(DIRECT_TRANSPORT_PROBE_ENABLED=True, DIRECT_TRANSPORT_VIDEO_PROBE_ENABLED=True,
+                             DIRECT_TRANSPORT_PROBE_DEVICE_IDS=frozenset({"device"}),
+                             DIRECT_PROBE_TURN_URLS=URLS, DIRECT_PROBE_TURN_SECRET=SecretStr(KEY)).items():
+        monkeypatch.setattr(router.settings, field, value)
+    await DeviceStatusCache(peers[1][0]).set_status("device", DeviceLiveStatus(
+        device_id="device", status="online", ws_session_id=peers[4], agent_version_code=10251))
+    monkeypatch.setattr(router, "get_direct_probe_runtime", lambda: runtime)
+    monkeypatch.setattr(router, "authorize", AsyncMock(return_value=("org", "user")))
+    opened = AsyncMock(wraps=runtime.open)
+    monkeypatch.setattr(runtime, "open", opened)
+    ws = AsyncMock()
+    auth = dict(token="fixture", protocol="sphere-video-probe-v1")
+    if relay:
+        auth["relay"] = True
+    ws.receive_text.side_effect = [json.dumps(auth), json.dumps(dict(type="direct_probe_offer", sdp=VIDEO_SDP)),
+                                   '{"type":"direct_probe_close"}']
+    await router.direct_probe_ws(ws, "device")
+    viewer, sdp = opened.call_args.args
+    assert viewer.video is True and sdp == VIDEO_SDP
+    if relay:
+        ready = ws.send_json.call_args_list[0].args[0]
+        assert ready["protocol"] == "sphere-video-probe-v1"
+        assert ready["ice"]["username"].endswith(viewer.session + ":browser")
+        assert KEY not in json.dumps(ready)
+    else:
+        ws.send_json.assert_not_awaited()
     assert not runtime.viewers and await peers[1][1].get(runtime.key("device")) is None
 
 

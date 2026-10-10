@@ -21,6 +21,7 @@ from backend.websocket.direct_probe_protocol import (
 from backend.websocket.direct_probe_runtime import DirectProbeRuntime, ProbeViewer
 
 SDP = "v=0\r\nm=application 9 UDP/DTLS/SCTP webrtc-datachannel\r\na=fingerprint:sha-256 " + ":".join(["AB"] * 32) + "\r\n"
+VIDEO_SDP = SDP + "m=video 9 UDP/TLS/RTP/SAVPF 96\r\na=recvonly\r\na=rtpmap:96 H264/90000\r\n"
 
 
 @pytest.mark.parametrize("change", [None, 12, "", SDP + "m=video 9 UDP/TLS/RTP/SAVPF 96\r\n",
@@ -39,6 +40,60 @@ def test_strict_probe_contract_never_accepts_commands_or_client_identity():
             viewer_offer(data)
     with pytest.raises(InvalidDirectProbe):
         agent_answer(dict(type="direct_probe_answer", session_id="wrong", sdp=SDP))
+
+
+def test_video_has_separate_readonly_offer_and_sendonly_answer_contract():
+    assert description(VIDEO_SDP, video=True) == VIDEO_SDP
+    assert description(VIDEO_SDP.replace("recvonly", "sendonly"), video=True, offer=False)
+    for bad in [SDP, VIDEO_SDP.replace("recvonly", "sendrecv"), VIDEO_SDP + "a=sendonly\r\n",
+                VIDEO_SDP + "m=audio 9 UDP/TLS/RTP/SAVPF 111\r\n", VIDEO_SDP + "m=video 9 x\r\n",
+                VIDEO_SDP.replace("H264", "VP8"), VIDEO_SDP.replace("sha-256", "sha-1")]:
+        with pytest.raises(InvalidDirectProbe):
+            description(bad, video=True)
+    with pytest.raises(InvalidDirectProbe):
+        description(VIDEO_SDP)
+    with pytest.raises(InvalidDirectProbe):
+        description(VIDEO_SDP, video=True, offer=False)
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("admitted,version", [(False, 10251), (True, 10250), (True, None)])
+async def test_video_requires_its_own_server_gate_and_native_version(peers, monkeypatch, admitted, version):
+    from backend.core.config import settings
+    runtime = peers[0][1]
+    monkeypatch.setattr(settings, "DIRECT_TRANSPORT_VIDEO_PROBE_ENABLED", admitted)
+    monkeypatch.setattr(settings, "DIRECT_TRANSPORT_PROBE_DEVICE_IDS", frozenset({"device"}))
+    await DeviceStatusCache(peers[1][0]).set_status("device", DeviceLiveStatus(
+        device_id="device", status="online", ws_session_id=peers[4], agent_version_code=version))
+    with pytest.raises(InvalidDirectProbe, match="video_probe_not_admitted"):
+        await runtime.open(ProbeViewer("device", "org", "user", AsyncMock(), video=True), VIDEO_SDP)
+    assert await peers[1][0].get(runtime.key("device")) is None
+    assert peers[3].send_json.call_count == 0
+
+
+@pytest.mark.asyncio
+async def test_cross_worker_video_preserves_readonly_scope_and_rejects_echo_answer(peers, monkeypatch):
+    from backend.core.config import settings
+    monkeypatch.setattr(settings, "DIRECT_TRANSPORT_VIDEO_PROBE_ENABLED", True)
+    monkeypatch.setattr(settings, "DIRECT_TRANSPORT_PROBE_DEVICE_IDS", frozenset({"device"}))
+    await DeviceStatusCache(peers[1][0]).set_status("device", DeviceLiveStatus(
+        device_id="device", status="online", ws_session_id=peers[4], agent_version_code=10251))
+    viewer = peers[-1]
+    viewer.video = True
+    await peers[0][1].open(viewer, VIDEO_SDP)
+    await eventually(lambda: peers[3].send_json.call_count == 1)
+    sent = peers[3].send_json.call_args.args[0]
+    assert sent["media"] == "readonly_video_v1" and 0 < sent["ttl_ms"] <= 30000
+    assert "media" in viewer.binding
+    with pytest.raises(InvalidDirectProbe):
+        await peers[0][0].agent_message("device", peers[4], dict(type="direct_probe_answer", session_id=viewer.session, sdp=SDP))
+    await peers[0][0].agent_message("device", peers[4], dict(type="direct_probe_answer", session_id=viewer.session,
+                                                             sdp=VIDEO_SDP.replace("recvonly", "sendonly")))
+    await eventually(lambda: viewer.ws.send_json.call_count == 1)
+    await peers[0][1].retire(viewer)
+    await eventually(lambda: peers[3].send_json.call_count == 2)
+    assert peers[3].send_json.call_args.args[0] == dict(type="direct_probe_close", session_id=viewer.session)
+    assert await peers[1][0].get(peers[0][0].key("device")) is None
 
 
 async def eventually(predicate):

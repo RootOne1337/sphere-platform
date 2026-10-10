@@ -1,4 +1,5 @@
-import { probePath, startDirectProbe, type DirectProbeResult } from '@/src/features/stream/directProbe';
+import { probePath, startDirectProbe, startDirectVideoProbe, type DirectProbeResult } from '@/src/features/stream/directProbe';
+import { parseVideoBinding, readonlyVideoSdp } from '@/src/features/stream/directVideoProtocol';
 import { TextEncoder } from 'util';
 
 class FakeChannel {
@@ -13,13 +14,16 @@ class FakePeer {
   static latest: FakePeer;
   static initialGatheringState = 'complete';
   static constructions = 0;
+  static initialSdp = 'v=0\r\n';
   channel = new FakeChannel();
   iceGatheringState = FakePeer.initialGatheringState; connectionState = 'connected'; iceConnectionState = 'checking';
-  localDescription = { sdp: 'v=0\r\n' };
+  localDescription = { sdp: FakePeer.initialSdp };
   onicegatheringstatechange: (() => void) | null = null;
   onconnectionstatechange: (() => void) | null = null;
+  ontrack: ((event: { track: MediaStreamTrack }) => void) | null = null;
   constructor(readonly configuration: RTCConfiguration) { FakePeer.latest = this; FakePeer.constructions++; }
   createDataChannel = jest.fn(() => this.channel);
+  addTransceiver = jest.fn();
   createOffer = jest.fn(async () => ({ type: 'offer', sdp: 'v=0\r\n' }));
   setLocalDescription = jest.fn(async () => {});
   setRemoteDescription = jest.fn(async () => {});
@@ -54,11 +58,83 @@ const relayReady = () => ({ type: 'direct_probe_ready', protocol: 'sphere-probe-
 beforeEach(() => {
   jest.useFakeTimers();
   FakePeer.initialGatheringState = 'complete'; FakePeer.constructions = 0;
+  FakePeer.initialSdp = 'v=0\r\n';
   Object.defineProperty(globalThis, 'RTCPeerConnection', { configurable: true, value: FakePeer });
   Object.defineProperty(globalThis, 'WebSocket', { configurable: true, value: FakeSocket });
   if (!globalThis.TextEncoder) Object.defineProperty(globalThis, 'TextEncoder', { configurable: true, value: TextEncoder });
 });
 afterEach(() => { jest.useRealTimers(); });
+
+const appSdp = 'v=0\r\na=fingerprint:sha-256 ' + Array(32).fill('AB').join(':')
+  + '\r\nm=application 9 UDP/DTLS/SCTP webrtc-datachannel\r\n';
+const videoSdp = appSdp + 'm=video 9 UDP/TLS/RTP/SAVPF 96\r\na=recvonly\r\na=rtpmap:96 H264/90000\r\n';
+const epoch = '12345678-1234-4234-8234-123456789abc';
+async function videoConnected() {
+  FakePeer.initialSdp = videoSdp;
+  const reports: DirectProbeResult[] = [], onTrack = jest.fn();
+  const stop = startDirectVideoProbe('wss://same-origin/ws/direct-probe/device', 'access', r => reports.push(r), { onTrack });
+  await flush();
+  const ws = FakeSocket.latest, peer = FakePeer.latest;
+  ws.onopen?.();
+  ws.onmessage?.({ data: JSON.stringify({ type: 'direct_probe_answer', session_id: sid, sdp: videoSdp.replace('recvonly', 'sendonly') }) });
+  await flush(); peer.channel.onopen?.();
+  return { reports, stop, onTrack, ws, peer };
+}
+test('video negotiates an explicit receive-only transceiver and independently bound read-only channel', async () => {
+  const { reports, stop, peer, ws } = await videoConnected();
+  expect(JSON.parse(ws.send.mock.calls[0][0])).toEqual({ token: 'access', protocol: 'sphere-video-probe-v1' });
+  expect(peer.addTransceiver).toHaveBeenCalledWith('video', { direction: 'recvonly' });
+  expect(peer.createDataChannel).toHaveBeenCalledWith('sphere-video-probe-v1', { ordered: true });
+  peer.channel.onmessage?.({ data: `SV1 ${sid} ${epoch} 960 540` });
+  expect(reports.at(-1)?.videoBinding).toEqual({ captureEpoch: epoch, width: 960, height: 540 });
+  jest.advanceTimersByTime(1000); peer.channel.onmessage?.({ data: `SP1 ${sid} 1` }); await flush();
+  expect(reports.at(-1)?.samples).toHaveLength(1);
+  stop(); expect(jest.getTimerCount()).toBe(0);
+});
+test('video cleanup stops the remote track and late native track callbacks cannot revive a peer', async () => {
+  const { onTrack, stop, peer } = await videoConnected();
+  const track = { kind: 'video', onended: null, stop: jest.fn() };
+  const late = peer.ontrack;
+  peer.ontrack?.({ track: track as unknown as MediaStreamTrack });
+  expect(onTrack).toHaveBeenCalledTimes(1);
+  stop(); expect(track.stop).toHaveBeenCalledTimes(1); expect(track.onended).toBeNull();
+  const orphan = { kind: 'video', stop: jest.fn() };
+  late?.({ track: orphan as unknown as MediaStreamTrack });
+  expect(orphan.stop).toHaveBeenCalledTimes(1); expect(onTrack).toHaveBeenCalledTimes(1);
+  expect(jest.getTimerCount()).toBe(0);
+});
+test.each(['audio', 'duplicate'])('an unexpected media track retires the entire video experiment: %s', async kind => {
+  const { stop, peer, reports } = await videoConnected();
+  if (kind === 'duplicate') peer.ontrack?.({ track: { kind: 'video', stop: jest.fn() } as unknown as MediaStreamTrack });
+  const orphan = { kind: kind === 'audio' ? 'audio' : 'video', stop: jest.fn() };
+  peer.ontrack?.({ track: orphan as unknown as MediaStreamTrack });
+  expect(orphan.stop).toHaveBeenCalledTimes(1);
+  expect(reports.at(-1)?.reason).toBe('invalid_video_track'); stop(); expect(jest.getTimerCount()).toBe(0);
+});
+test('echo-only answers and bidirectional media never satisfy the video permission', async () => {
+  for (const sdp of [appSdp, videoSdp, videoSdp.replace('recvonly', 'sendrecv')]) {
+    FakePeer.initialSdp = videoSdp;
+    const reports: DirectProbeResult[] = [];
+    startDirectVideoProbe('wss://same-origin', 'access', r => reports.push(r), { onTrack: jest.fn() }); await flush();
+    FakeSocket.latest.onmessage?.({ data: JSON.stringify({ type: 'direct_probe_answer', session_id: sid, sdp }) });
+    expect(reports.at(-1)?.reason).toBe('invalid_answer'); expect(jest.getTimerCount()).toBe(0);
+  }
+});
+test('video binding rejects wrong peers, nil captures, oversized geometry and repeated metadata', async () => {
+  for (const bad of [`SV1 ${'b'.repeat(32)} ${epoch} 960 540`, `SV1 ${sid} 00000000-0000-0000-0000-000000000000 960 540`,
+    `SV1 ${sid} ${epoch} 1920 1080`, `SV1 ${sid} ${epoch} 0960 540`, '{}']) expect(parseVideoBinding(bad, sid)).toBeNull();
+  const { reports, stop, peer } = await videoConnected();
+  peer.channel.onmessage?.({ data: `SV1 ${sid} ${epoch} 960 540` });
+  peer.channel.onmessage?.({ data: `SV1 ${sid} ${epoch} 960 540` });
+  expect(reports.at(-1)?.reason).toBe('invalid_echo'); stop(); expect(jest.getTimerCount()).toBe(0);
+});
+test('read-only SDP parser rejects audio, missing codecs, weak fingerprints and scope expansion', () => {
+  expect(readonlyVideoSdp(videoSdp, true)).toBe(true);
+  expect(readonlyVideoSdp(videoSdp.replace('recvonly', 'sendonly'), false)).toBe(true);
+  for (const bad of [appSdp, videoSdp + 'm=audio 9 UDP/TLS/RTP/SAVPF 111\r\n', videoSdp + 'a=sendonly\r\n',
+    videoSdp.replace('H264', 'VP8'), videoSdp.replace('sha-256', 'sha-1'), videoSdp + 'a=candidate:x\r\n'.repeat(65)])
+    expect(readonlyVideoSdp(bad, true)).toBe(false);
+});
 
 test('relay grant handshake authenticates before allocating peer and binds the offer/answer', async () => {
   const reports: DirectProbeResult[] = [];

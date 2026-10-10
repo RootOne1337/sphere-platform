@@ -25,11 +25,12 @@ const reasonText: Record<string, string> = {
 
 export type DiagnosticProfile = 'host' | 'public-stun' | 'turn';
 
-export function DirectProbeDiagnostics({ deviceId, profile }: { deviceId: string; profile?: DiagnosticProfile }) {
+export function DirectProbeDiagnostics({ deviceId, profile, onBusyChange }: { deviceId: string; profile?: DiagnosticProfile; onBusyChange?: (busy: boolean) => void }) {
   const token = useAuthStore(state => state.accessToken);
   const [result, setResult] = useState<DirectProbeResult | null>(null);
   const stop = useRef<(() => void) | null>(null);
   const active = result && ['gathering', 'signaling', 'connecting', 'connected'].includes(result.state);
+  useEffect(() => { onBusyChange?.(!!active); }, [active, onBusyChange]);
   const relayGrant = profile ? profile === 'turn' : process.env.NEXT_PUBLIC_DIRECT_PROBE_RELAY === 'true';
   const controlledStunUrl = profile ? profile === 'public-stun' ? 'stun:stun.cloudflare.com:3478' : undefined
     : process.env.NEXT_PUBLIC_DIRECT_PROBE_STUN_URL;

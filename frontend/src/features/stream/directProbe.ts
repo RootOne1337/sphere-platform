@@ -2,6 +2,7 @@
 import { probeNetwork, type DirectProbeNetwork } from './directProbeNetwork';
 import { directProbeIceConfig, type DirectProbeIceProfile } from './directProbeIce';
 import { parseTurnReady } from './directProbeTurn';
+import { parseVideoBinding, readonlyVideoSdp, type DirectVideoBinding } from './directVideoProtocol';
 
 export interface DirectProbeResult {
   state: 'gathering' | 'signaling' | 'connecting' | 'connected' | 'finished' | 'stopped' | 'failed';
@@ -14,6 +15,7 @@ export interface DirectProbeResult {
   networkSampleAtMs?: number;
   networkAgeAtStopMs?: number;
   iceState?: RTCIceConnectionState;
+  videoBinding?: DirectVideoBinding;
 }
 export function probePath(stats: RTCStatsReport): Pick<DirectProbeResult, 'path' | 'protocol'> {
   let pair: RTCIceCandidatePairStats | undefined;
@@ -35,6 +37,21 @@ export function startDirectProbe(
   url: string, token: string, report: (value: DirectProbeResult) => void,
   options: { controlledStunUrl?: string; relayGrant?: boolean } = {},
 ): () => void {
+  return startDirectSession(url, token, report, options);
+}
+
+export function startDirectVideoProbe(
+  url: string, token: string, report: (value: DirectProbeResult) => void,
+  options: { controlledStunUrl?: string; relayGrant?: boolean; onTrack: (track: MediaStreamTrack) => void },
+): () => void {
+  return startDirectSession(url, token, report, options, options.onTrack);
+}
+
+function startDirectSession(
+  url: string, token: string, report: (value: DirectProbeResult) => void,
+  options: { controlledStunUrl?: string; relayGrant?: boolean }, onVideoTrack?: (track: MediaStreamTrack) => void,
+): () => void {
+  const video = !!onVideoTrack;
   const iceConfig = directProbeIceConfig(options.controlledStunUrl);
   let stopped = false;
   if (options.relayGrant && options.controlledStunUrl) throw new Error('conflicting_ice_profiles');
@@ -43,6 +60,7 @@ export function startDirectProbe(
   let peer: RTCPeerConnection | null = null;
   let channel: RTCDataChannel | null = null;
   let ws: WebSocket | null = null;
+  let videoTrack: MediaStreamTrack | null = null;
   let session: string | null = null;
   let answered = false, offered = false;
   let sequence = 0;
@@ -59,7 +77,8 @@ export function startDirectProbe(
     clearTimeout(deadline); clearTimeout(phaseDeadline);
     if (interval) clearInterval(interval);
     if (networkInterval) clearInterval(networkInterval);
-    if (peer) { peer.onicegatheringstatechange = null; peer.onconnectionstatechange = null; }
+    if (peer) { peer.onicegatheringstatechange = null; peer.onconnectionstatechange = null; peer.ontrack = null; }
+    if (videoTrack) { videoTrack.onended = null; try { videoTrack.stop(); } catch { /* Independent native cleanup. */ } }
     if (channel) { channel.onopen = null; channel.onmessage = null; channel.onerror = null; channel.onclose = null; }
     if (ws) {
       ws.onopen = null; ws.onmessage = null; ws.onerror = null; ws.onclose = null;
@@ -99,6 +118,7 @@ export function startDirectProbe(
     if (stopped || offered || !peer || peer.iceGatheringState !== 'complete') return;
     const sdp = peer.localDescription?.sdp;
     if (!sdp || new TextEncoder().encode(sdp).length > 32768) return stop('invalid_description');
+    if (video && !readonlyVideoSdp(sdp, true)) return stop('invalid_description');
     boundPhase('signaling_deadline', 8_000);
     result.state = 'signaling'; emit();
     offered = true;
@@ -113,7 +133,8 @@ export function startDirectProbe(
     ws.onopen = () => {
       if (stopped || !ws) return;
       try {
-        ws.send(JSON.stringify(options.relayGrant ? { token, protocol: 'sphere-probe-v2' } : { token }));
+        ws.send(JSON.stringify(video ? { token, protocol: 'sphere-video-probe-v1', ...(options.relayGrant ? { relay: true } : {}) }
+          : options.relayGrant ? { token, protocol: 'sphere-probe-v2' } : { token }));
         if (sdp) ws.send(JSON.stringify({ type: 'direct_probe_offer', sdp }));
       } catch { stop('signaling_unavailable'); }
     };
@@ -123,7 +144,7 @@ export function startDirectProbe(
         if (typeof event.data !== 'string' || new TextEncoder().encode(event.data).length > 36864) throw Error();
         const data = JSON.parse(event.data);
         if (options.relayGrant && !session) {
-          const ready = parseTurnReady(data);
+          const ready = parseTurnReady(data, video ? 'sphere-video-probe-v1' : 'sphere-probe-v2');
           if (!ready) return stop('invalid_ice_grant');
           session = ready.session;
           createPeer(ready.configuration);
@@ -133,6 +154,7 @@ export function startDirectProbe(
           || data.type !== 'direct_probe_answer' || !/^[0-9a-f]{32}$/.test(data.session_id)
           || session !== null && data.session_id !== session
           || typeof data.sdp !== 'string' || new TextEncoder().encode(data.sdp).length > 32768) throw Error();
+        if (video && !readonlyVideoSdp(data.sdp, false)) return stop('invalid_answer');
         session = data.session_id;
         answered = true;
         boundPhase('connection_deadline', 12_000);
@@ -152,7 +174,19 @@ export function startDirectProbe(
     result.state = 'gathering';
     try { peer = new RTCPeerConnection(configuration); }
     catch { stop('webrtc_unavailable'); return; }
-    try { channel = peer.createDataChannel('sphere-probe-v1', { ordered: true }); }
+    try {
+      channel = peer.createDataChannel(video ? 'sphere-video-probe-v1' : 'sphere-probe-v1', { ordered: true });
+      if (video) {
+        peer.addTransceiver('video', { direction: 'recvonly' });
+        peer.ontrack = event => {
+          if (stopped) { event.track.stop(); return; }
+          if (videoTrack || event.track.kind !== 'video') { event.track.stop(); return stop('invalid_video_track'); }
+          videoTrack = event.track;
+          videoTrack.onended = () => stop('video_track_ended');
+          try { onVideoTrack?.(videoTrack); } catch { stop('video_renderer_failed'); }
+        };
+      }
+    }
     catch { stop('webrtc_unavailable'); return; }
     peer.onicegatheringstatechange = gathered;
     peer.onconnectionstatechange = () => {
@@ -173,6 +207,11 @@ export function startDirectProbe(
     };
     channel.onmessage = event => {
       if (stopped) return;
+      if (video && !result.videoBinding) {
+        const binding = session ? parseVideoBinding(event.data, session) : null;
+        if (!binding) return stop('invalid_video_binding');
+        result = { ...result, videoBinding: binding }; emit(); return;
+      }
       if (!pending || event.data !== `SP1 ${session} ${pending.sequence}`) return stop('invalid_echo');
       result.samples.push(performance.now() - pending.sent); pending = null; emit();
       collectNetwork();

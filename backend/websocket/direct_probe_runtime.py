@@ -7,6 +7,7 @@ import secrets
 from dataclasses import dataclass, field
 from typing import Any
 
+from backend.core.config import settings
 from backend.services.device_status_cache import DeviceStatusCache
 from backend.websocket.connection_manager import ConnectionManager
 from backend.websocket.continuous_lease import no_replay_redis
@@ -15,6 +16,8 @@ from backend.websocket.direct_probe_protocol import (
     MAX_PEERS,
     MAX_WIRE_BYTES,
     SESSION_MS,
+    VIDEO_MIN_AGENT_CODE,
+    VIDEO_MODE,
     InvalidDirectProbe,
     agent_answer,
     description,
@@ -39,6 +42,7 @@ class ProbeViewer:
     reserving: bool = False
     retired: bool = False
     ice: dict | None = field(default=None, repr=False)
+    video: bool = False
 
 
 @dataclass
@@ -103,7 +107,7 @@ class DirectProbeRuntime:
         if viewer.binding:
             if not self.available or self.viewers.get(viewer.session) is not viewer or viewer.offered:
                 raise InvalidDirectProbe("probe_unavailable")
-            description(sdp)
+            description(sdp, video=viewer.video)
             async with asyncio.timeout(OPERATION_SECONDS):
                 if not await self.remaining(viewer.binding):
                     raise InvalidDirectProbe("probe_expired")
@@ -111,7 +115,7 @@ class DirectProbeRuntime:
             return
         if not self.available or viewer.binding or len(self.viewers) + self.reservations >= MAX_PEERS:
             raise InvalidDirectProbe("probe_unavailable")
-        description(sdp)
+        description(sdp, video=viewer.video)
         self.reservations += 1
         viewer.reserving = True
         try:
@@ -155,9 +159,15 @@ class DirectProbeRuntime:
             status = await DeviceStatusCache(self.redis).get_status(viewer.device)
             if not status or not status.ws_session_id or status.status not in {"online", "busy", "connecting"}:
                 raise InvalidDirectProbe("agent_unavailable")
+            if viewer.video and (not settings.DIRECT_TRANSPORT_VIDEO_PROBE_ENABLED
+                                 or viewer.device not in settings.DIRECT_TRANSPORT_PROBE_DEVICE_IDS
+                                 or not status.agent_version_code or status.agent_version_code < VIDEO_MIN_AGENT_CODE):
+                raise InvalidDirectProbe("video_probe_not_admitted")
             viewer.session = secrets.token_hex(16)
             binding = dict(session=viewer.session, device=viewer.device, org=viewer.org,
                            user=viewer.user, worker=self.worker, agent_session=status.ws_session_id)
+            if viewer.video:
+                binding["media"] = VIDEO_MODE
             if not await self.redis.set(self.key(viewer.device), self.encode(binding), nx=True, px=SESSION_MS):
                 raise InvalidDirectProbe("device_probe_busy")
             viewer.binding = binding
@@ -182,10 +192,13 @@ class DirectProbeRuntime:
             raise
 
     async def agent_message(self, device: str, agent_session: str, data: dict) -> None:
-        sid, sdp = agent_answer(data)
+        if not isinstance(data, dict):
+            raise InvalidDirectProbe("invalid_answer")
+        sid = session_id(data.get("session_id"))
         pending = self.pending.get(sid)
         if not pending:
             return
+        _, sdp = agent_answer(data, video=pending.binding.get("media") == VIDEO_MODE)
         binding, deadline = pending.binding, pending.deadline
         snapshot = self.manager.connection_snapshot(device)
         async with asyncio.timeout(OPERATION_SECONDS):
@@ -208,7 +221,9 @@ class DirectProbeRuntime:
         if not isinstance(data, dict) or data.keys() not in ({"kind", "binding", "sdp"}, {"kind", "binding"}, {"kind", "binding", "sdp", "ice"}):
             return
         binding = data["binding"]
-        if not isinstance(binding, dict) or binding.keys() != {"session", "device", "org", "user", "worker", "agent_session"}:
+        binding_keys = {"session", "device", "org", "user", "worker", "agent_session"}
+        if (not isinstance(binding, dict) or binding.keys() not in (binding_keys, binding_keys | {"media"})
+                or "media" in binding and binding["media"] != VIDEO_MODE):
             return
         sid = session_id(binding["session"])
         session_id(binding["worker"])
@@ -217,7 +232,7 @@ class DirectProbeRuntime:
             if (data["kind"] != "answer" or viewer is None or viewer.binding != binding or viewer.answered
                     or not await self.remaining(binding)):
                 return
-            sdp = description(data.get("sdp"))
+            sdp = description(data.get("sdp"), video=viewer.video, offer=False)
             try:
                 async with asyncio.timeout(1):
                     await viewer.ws.send_json(dict(type="direct_probe_answer", session_id=sid, sdp=sdp))
@@ -253,9 +268,19 @@ class DirectProbeRuntime:
         self.pending = {k: v for k, v in self.pending.items() if v.deadline > now}
         if not remaining or sid in self.pending or len(self.pending) >= MAX_PEERS:
             return
-        sdp = description(data.get("sdp"))
+        video = binding.get("media") == VIDEO_MODE
+        if video:
+            status = await DeviceStatusCache(self.redis).get_status(binding["device"])
+            if (not settings.DIRECT_TRANSPORT_VIDEO_PROBE_ENABLED
+                    or binding["device"] not in settings.DIRECT_TRANSPORT_PROBE_DEVICE_IDS
+                    or not status or status.ws_session_id != binding["agent_session"]
+                    or not status.agent_version_code or status.agent_version_code < VIDEO_MIN_AGENT_CODE):
+                return
+        sdp = description(data.get("sdp"), video=video)
         self.pending[sid] = PendingProbe(binding, now + remaining / 1000)
         message = dict(type="direct_probe_offer", session_id=sid, sdp=sdp, ttl_ms=remaining)
+        if video:
+            message["media"] = VIDEO_MODE
         if ice is not None:
             message["ice"] = ice
         await self.manager.send_to_session(binding["device"], snapshot.session_id, message)

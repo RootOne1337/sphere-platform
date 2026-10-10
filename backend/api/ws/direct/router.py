@@ -1,4 +1,4 @@
-"""Opt-in 30-second WebRTC RTT canary; shared stream authentication/RBAC."""
+"""Opt-in 30-second echo or read-only RTP video; shared stream authentication/RBAC."""
 from __future__ import annotations
 
 import asyncio
@@ -61,26 +61,30 @@ async def direct_probe_ws(ws: WebSocket, device_id: str) -> None:
             raise InvalidDirectProbe("invalid_auth")
         import json
         first = json.loads(raw)
-        if (not isinstance(first, dict) or first.keys() not in ({"token"}, {"token", "protocol"})
-                or "protocol" in first and first["protocol"] != "sphere-probe-v2"
+        if (not isinstance(first, dict) or first.keys() not in ({"token"}, {"token", "protocol"}, {"token", "protocol", "relay"})
+                or "protocol" in first and first["protocol"] not in {"sphere-probe-v2", "sphere-video-probe-v1"}
+                or "relay" in first and (first.get("protocol") != "sphere-video-probe-v1" or first["relay"] is not True)
                 or not isinstance(first["token"], str) or not first["token"]):
             raise InvalidDirectProbe("invalid_auth")
         identity = await authorize(first["token"], device_id)
-        viewer = ProbeViewer(device_id, *identity, ws)
-        if first.get("protocol") == "sphere-probe-v2":
+        video = first.get("protocol") == "sphere-video-probe-v1"
+        if video and not settings.DIRECT_TRANSPORT_VIDEO_PROBE_ENABLED:
+            raise InvalidDirectProbe("video_probe_disabled")
+        viewer = ProbeViewer(device_id, *identity, ws, video=video)
+        if first.get("protocol") == "sphere-probe-v2" or video and first.get("relay") is True:
             await runtime.prepare(viewer)
             options = dict(relay_only=settings.DIRECT_PROBE_TURN_RELAY_ONLY)
             secret = settings.DIRECT_PROBE_TURN_SECRET.get_secret_value()
             viewer.ice = issue_turn_grant(settings.DIRECT_PROBE_TURN_URLS, secret, viewer.session, "agent", **options).wire()
             browser_ice = issue_turn_grant(settings.DIRECT_PROBE_TURN_URLS, secret, viewer.session, "browser", **options)
             async with asyncio.timeout(1):
-                await ws.send_json(dict(type="direct_probe_ready", protocol="sphere-probe-v2",
+                await ws.send_json(dict(type="direct_probe_ready", protocol=first["protocol"],
                                         session_id=viewer.session, ice=browser_ice.wire()))
         async with asyncio.timeout(10):
             raw = await ws.receive_text()
         if len(raw.encode()) > MAX_WIRE_BYTES:
             raise InvalidDirectProbe("message_too_large")
-        await runtime.open(viewer, viewer_offer(json.loads(raw)))
+        await runtime.open(viewer, viewer_offer(json.loads(raw), video=video))
         # Token revocation and device/role changes close the signaling grant.
         # APK also enforces a nonrenewable local TTL if the signaling path disappears.
         async with asyncio.timeout(SESSION_MS / 1000):
@@ -88,6 +92,8 @@ async def direct_probe_ws(ws: WebSocket, device_id: str) -> None:
                 try:
                     raw = await asyncio.wait_for(ws.receive_text(), 5)
                 except asyncio.TimeoutError:
+                    if video and not settings.DIRECT_TRANSPORT_VIDEO_PROBE_ENABLED:
+                        raise InvalidDirectProbe("video_probe_disabled")
                     if await authorize(first["token"], device_id) != identity:
                         raise InvalidDirectProbe("probe_access_revoked")
                     async with asyncio.timeout(2):

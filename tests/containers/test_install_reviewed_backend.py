@@ -99,6 +99,21 @@ class BackendInstallerTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "Unreviewed packaged"):
                 installer.source_boundary(CURRENT, SOURCE, receipt)
 
+    def test_readonly_video_requires_explicit_device_and_cannot_leak_into_echo_or_shutdown(self):
+        for device, disable in ((None, False), (None, True), (PROBE_DEVICE, True)):
+            with self.subTest(device=device, disable=disable), self.assertRaises(ValueError):
+                installer.probe_environment(device, disable, True)
+        old = configuration()
+        new = candidate(old)
+        new["services"]["backend"]["environment"].update(installer.probe_environment(PROBE_DEVICE, readonly_video=True))
+        installer.validate_delta(old, new, TAG, PROBE_DEVICE, readonly_video_probe=True)
+        with self.assertRaises(ValueError):
+            installer.validate_delta(old, new, TAG, PROBE_DEVICE)
+        old = copy.deepcopy(new)
+        new["services"]["backend"]["environment"].update(installer.probe_environment(PROBE_DEVICE))
+        installer.validate_delta(old, new, TAG, PROBE_DEVICE)
+        self.assertEqual(new["services"]["backend"]["environment"]["DIRECT_TRANSPORT_VIDEO_PROBE_ENABLED"], "false")
+
     def test_only_backend_image_and_build_recipe_can_change(self):
         old = configuration()
         installer.validate_delta(old, candidate(old), TAG)

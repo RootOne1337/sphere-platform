@@ -30,6 +30,7 @@ async def admission(monkeypatch):
     monkeypatch.setattr(router, "bind_tenant_context", AsyncMock())
     monkeypatch.setattr(router, "get_direct_probe_runtime", lambda: runtime)
     monkeypatch.setattr(router.settings, "DIRECT_TRANSPORT_PROBE_ENABLED", True)
+    monkeypatch.setattr(router.settings, "DIRECT_TRANSPORT_VIDEO_PROBE_ENABLED", False)
     monkeypatch.setattr(router.settings, "DIRECT_TRANSPORT_PROBE_DEVICE_IDS", frozenset({str(DEVICE)}))
     monkeypatch.setattr(router.settings, "DIRECT_PROBE_TURN_URLS", ())
     monkeypatch.setattr(router.settings, "DIRECT_PROBE_TURN_SECRET", SecretStr(""))
@@ -54,7 +55,7 @@ async def test_allowed_read_is_private_finite_and_never_allocates_peer(admission
     assert response.headers["cache-control"] == "private, no-store"
     assert response.json() == dict(schema_version=1, device_id=str(DEVICE), enabled=True,
                                    profiles=["host", "public-stun"], scope="diagnostic_echo_only",
-                                   max_duration_ms=30000, samples=20)
+                                   max_duration_ms=30000, samples=20, readonly_video_enabled=False)
     db.get.assert_awaited_once_with(router.Device, DEVICE)
     router.bind_tenant_context.assert_awaited_once_with(db, str(ORG))
 
@@ -74,6 +75,22 @@ async def test_configuration_or_worker_denial_does_not_advertise_a_profile(admis
     response = await client.get(URL)
     assert response.status_code == 200
     assert response.json()["enabled"] is False and response.json()["profiles"] == []
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("version,online,allowed", [(10250, True, False), (None, True, False), (10251, False, False), (10251, True, True)])
+async def test_readonly_video_requires_separate_admission_and_fresh_native_version(admission, monkeypatch, version, online, allowed):
+    _, client, _, _, runtime = admission
+    monkeypatch.setattr(router.settings, "DIRECT_TRANSPORT_VIDEO_PROBE_ENABLED", True)
+    status = SimpleNamespace(agent_version_code=version, ws_session_id="fresh", status="online" if online else "offline")
+    cache = SimpleNamespace(get_status=AsyncMock(return_value=status))
+    runtime.redis = object()
+    monkeypatch.setattr(router, "DeviceStatusCache", lambda redis: cache)
+    response = await client.get(URL)
+    assert response.status_code == 200
+    assert response.json()["readonly_video_enabled"] is allowed
+    assert response.json()["scope"] == "diagnostic_echo_only"
+    runtime.prepare.assert_not_awaited()
 
 
 @pytest.mark.asyncio

@@ -11,6 +11,7 @@ import kotlinx.serialization.json.jsonPrimitive
 class DirectProbeTransport(
     context: Context, scope: CoroutineScope,
     generation: () -> Long?, send: (Long, JsonObject) -> Boolean,
+    streaming: com.sphereplatform.agent.streaming.StreamingManager,
 ) {
     fun handle(message: JsonObject) = message["type"]?.jsonPrimitive?.contentOrNull in
         setOf("direct_probe_offer", "direct_probe_close")

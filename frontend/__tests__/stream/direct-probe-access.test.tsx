@@ -8,7 +8,10 @@ const mockStop = jest.fn();
 const mockStart = jest.fn((...args: unknown[]) => { void args; return mockStop; });
 jest.mock('@/lib/store', () => ({ useAuthStore: (selector: (state: unknown) => unknown) => selector({ accessToken: mockToken }) }));
 jest.mock('@/lib/api', () => ({ api: { get: (...args: unknown[]) => mockGet(...args) } }));
-jest.mock('@/src/features/stream/directProbe', () => ({ startDirectProbe: (...args: unknown[]) => mockStart(...args) }));
+jest.mock('@/src/features/stream/directProbe', () => ({
+  startDirectProbe: (...args: unknown[]) => mockStart(...args),
+  startDirectVideoProbe: (...args: unknown[]) => mockStart(...args),
+}));
 const device = '753fd530-2f19-4e5e-98ba-769863678141';
 const allowed = { schema_version: 1, device_id: device, enabled: true,
   profiles: ['host', 'public-stun'], scope: 'diagnostic_echo_only', max_duration_ms: 30000, samples: 20 };
@@ -69,7 +72,21 @@ test('logout unmounts an active native probe and does not request admission anon
 test.each([
   { ...allowed, profiles: ['host', 'host'] }, { ...allowed, profiles: ['arbitrary'] },
   { ...allowed, enabled: false }, { ...allowed, scope: 'media_and_input' },
-  { ...allowed, samples: 200 }, { ...allowed, device_id: 'foreign' }, null,
+  { ...allowed, samples: 200 }, { ...allowed, device_id: 'foreign' },
+  { ...allowed, readonly_video_enabled: 'true' },
+  { ...allowed, enabled: false, profiles: [], readonly_video_enabled: true }, null,
 ])('strict finite admission rejects unknown/broader claims', value => {
   expect(parseProbeAdmission(value, device)).toBeNull();
+});
+
+test('the media selector needs independent server admission and never starts a peer on selection', async () => {
+  const { unmount } = render(<DirectProbeAccess deviceId={device} />);
+  await screen.findByRole('button', { name: 'Проверить прямой канал' });
+  expect(screen.queryByRole('combobox', { name: 'Что проверить' })).not.toBeInTheDocument();
+  unmount(); mockGet.mockResolvedValue({ data: { ...allowed, readonly_video_enabled: true } });
+  render(<DirectProbeAccess deviceId={device} />);
+  fireEvent.change(await screen.findByRole('combobox', { name: 'Что проверить' }), { target: { value: 'video' } });
+  expect(screen.getByRole('button', { name: 'Проверить видео с APK' })).toBeEnabled();
+  expect(mockStart).not.toHaveBeenCalled();
+  expect(screen.queryByRole('button', { name: 'Проверить прямой канал' })).not.toBeInTheDocument();
 });

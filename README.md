@@ -17,6 +17,10 @@
 
 **Проверенная установка:** UI `c17332eb` / API `c17332eb`.
 
+PH030: пользователь подтвердил конечный прямой echo-канал с ноутбука, 20/20,
+p95 25,8 мс NAT/UDP. Видео/управление пока через сервер; это не приёмка localhost.
+[Результат и границы](docs/audits/2026-10-10/PH030-LAPTOP-CHANNEL-USER-OBSERVATION.md).
+
 **10 октября — последняя UI коррекция:** автоматическая готовность после reconnect
 и навигации;1996frontend tests. Конечный PH011 scope не закрывает latency/direct/fleet.
 [Актуальная установка и ограничения](docs/audits/2026-10-10/CONTINUOUS-AUTO-RECOVERY-INSTALLED.md).

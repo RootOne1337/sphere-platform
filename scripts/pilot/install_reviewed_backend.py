@@ -91,18 +91,23 @@ def preserved(before: dict[str, Any], after: dict[str, Any]) -> None:
     require(all(before[name] == after[name] for name in before if name != BACKEND), "Another runtime changed")
 
 
-def probe_environment(device: str | None, disable: bool = False) -> dict[str, str]:
+def probe_environment(device: str | None, disable: bool = False, readonly_video: bool = False) -> dict[str, str]:
     require(not (device is not None and disable), "Probe enable/disable options are mutually exclusive")
+    require(not readonly_video or device is not None and not disable,
+            "Read-only video requires an explicit single-device probe")
     if disable:
-        return {"DIRECT_TRANSPORT_PROBE_ENABLED": "false", "DIRECT_TRANSPORT_PROBE_DEVICE_IDS": "[]"}
+        return {"DIRECT_TRANSPORT_PROBE_ENABLED": "false", "DIRECT_TRANSPORT_PROBE_DEVICE_IDS": "[]",
+                "DIRECT_TRANSPORT_VIDEO_PROBE_ENABLED": "false"}
     if device is None:
         return {}
     require(isinstance(device, str) and str(UUID(device)) == device, "Expected one canonical probe device UUID")
-    return {"DIRECT_TRANSPORT_PROBE_ENABLED": "true", "DIRECT_TRANSPORT_PROBE_DEVICE_IDS": json.dumps([device])}
+    return {"DIRECT_TRANSPORT_PROBE_ENABLED": "true", "DIRECT_TRANSPORT_PROBE_DEVICE_IDS": json.dumps([device]),
+            "DIRECT_TRANSPORT_VIDEO_PROBE_ENABLED": "true" if readonly_video else "false"}
 
 
 def validate_delta(old: dict[str, Any], new: dict[str, Any], tag: str,
-                   direct_probe_device: str | None = None, disable_direct_probe: bool = False) -> None:
+                   direct_probe_device: str | None = None, disable_direct_probe: bool = False,
+                   readonly_video_probe: bool = False) -> None:
     require(old.get("name") == PROJECT and new.get("name") == PROJECT, "Wrong Compose project")
     require(new["services"]["backend"]["image"] == tag and "build" not in new["services"]["backend"],
             "Candidate image/build recipe mismatch")
@@ -110,7 +115,7 @@ def validate_delta(old: dict[str, Any], new: dict[str, Any], tag: str,
     expected["services"]["backend"]["image"] = old["services"]["backend"]["image"]
     if "build" in old["services"]["backend"]:
         expected["services"]["backend"]["build"] = old["services"]["backend"]["build"]
-    admitted_env = probe_environment(direct_probe_device, disable_direct_probe)
+    admitted_env = probe_environment(direct_probe_device, disable_direct_probe, readonly_video_probe)
     if admitted_env:
         env = expected["services"]["backend"]["environment"]
         old_env = old["services"]["backend"]["environment"]
@@ -211,8 +216,9 @@ def ready(source: str) -> None:
 
 
 def execute(artifact: Path, source: str, expected_image_id: str, expected_current: str, apply: bool,
-            direct_probe_device: str | None = None, disable_direct_probe: bool = False) -> dict[str, Any]:
-    admitted_env = probe_environment(direct_probe_device, disable_direct_probe)
+            direct_probe_device: str | None = None, disable_direct_probe: bool = False,
+            readonly_video_probe: bool = False) -> dict[str, Any]:
+    admitted_env = probe_environment(direct_probe_device, disable_direct_probe, readonly_video_probe)
     require(bool(re.fullmatch(r"sha256:[a-f0-9]{64}", expected_image_id)), "Expected independent CI image ID")
     artifact = workspace_path(artifact, private=True)
     admitted = admit(artifact, source)
@@ -255,7 +261,7 @@ def execute(artifact: Path, source: str, expected_image_id: str, expected_curren
     frozen_cmd = freeze_compose(prefix, old, output / "baseline.json", runner=command)
     candidate_cmd = frozen_cmd + ["--file", str(override)]
     candidate = json.loads(command(candidate_cmd + ["config", "--format", "json"]))
-    validate_delta(old, candidate, admitted["imageTag"], direct_probe_device, disable_direct_probe)
+    validate_delta(old, candidate, admitted["imageTag"], direct_probe_device, disable_direct_probe, readonly_video_probe)
     catalog = ota_hash()
     findings = evaluate(collect(ROOT))
     plan = {"sourceRevision": source, "runId": admitted["runId"], "imageId": admitted["imageId"],
@@ -265,6 +271,7 @@ def execute(artifact: Path, source: str, expected_image_id: str, expected_curren
         "previousComposeFileCount": len(files), "candidateComposeFileCount": 2,
         "completeBaselineRoundtripVerified": True,
         "directProbeDevice": direct_probe_device, "directProbeMediaControlEnabled": False,
+        "directProbeReadOnlyVideoEnabled": readonly_video_probe,
         "directProbeExplicitlyDisabled": disable_direct_probe,
         "otaCatalogSha256": catalog, "reportDirectory": str(output), "runtimeInstalled": False}
     write(output / "plan.json", plan)
@@ -330,10 +337,12 @@ def main() -> int:
     probe = parser.add_mutually_exclusive_group()
     probe.add_argument("--direct-probe-device", help="Opt in only this canonical UUID to the diagnostic echo canary")
     probe.add_argument("--disable-direct-probe", action="store_true", help="Disable diagnostic probe and empty its allowlist")
+    parser.add_argument("--readonly-video-probe", action="store_true",
+                        help="Also admit finite read-only RTP video for --direct-probe-device; no Android input")
     args = parser.parse_args()
     try:
         print(json.dumps(execute(args.artifact, args.source, args.expected_image_id, args.expected_current_source,
-                                 args.apply, args.direct_probe_device, args.disable_direct_probe)))
+                                 args.apply, args.direct_probe_device, args.disable_direct_probe, args.readonly_video_probe)))
     except (ValueError, OSError, subprocess.SubprocessError, KeyError, TypeError):
         print(json.dumps({"runtimeInstalled": None, "state": "not-admitted", "detail": "Review private plan/CI/host evidence"}))
         return 2

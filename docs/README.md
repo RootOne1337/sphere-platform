@@ -10,6 +10,10 @@
 
 **Проверенная установка:** UI `c17332eb` / API `c17332eb`.
 
+Последующий [тест ноутбука PH030](audits/2026-10-10/PH030-LAPTOP-CHANNEL-USER-OBSERVATION.md):
+20/20 echo, p95 25,8 мс NAT/UDP по результату пользователя. Прямые видео/input и
+localhost требуют отдельной приёмки. [Новый RTP canary в исходниках](audits/2026-10-10/DIRECT-VIDEO-READONLY-SOURCE.md).
+
 **10 октября — последняя UI коррекция:** автоматическая готовность после reconnect
 и навигации;1996frontend tests. Конечный PH011 scope не закрывает latency/direct/fleet.
 [Актуальная установка и ограничения](audits/2026-10-10/CONTINUOUS-AUTO-RECOVERY-INSTALLED.md).

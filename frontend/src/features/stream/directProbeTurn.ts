@@ -19,11 +19,11 @@ export function validTurnUrl(value: unknown): value is string {
     parts.every(p => /^[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?$/.test(p));
 }
 
-export function parseTurnReady(value: unknown): { session: string; configuration: RTCConfiguration } | null {
+export function parseTurnReady(value: unknown, protocol = 'sphere-probe-v2'): { session: string; configuration: RTCConfiguration } | null {
   if (!value || typeof value !== 'object') return null;
   const ready = value as Record<string, unknown>;
   if (Object.keys(ready).sort().join() !== 'ice,protocol,session_id,type' || ready.type !== 'direct_probe_ready' ||
-    ready.protocol !== 'sphere-probe-v2' || typeof ready.session_id !== 'string' || ready.session_id.length !== 32 || !/^[0-9a-f]{32}$/.test(ready.session_id) ||
+    ready.protocol !== protocol || typeof ready.session_id !== 'string' || ready.session_id.length !== 32 || !/^[0-9a-f]{32}$/.test(ready.session_id) ||
     !ready.ice || typeof ready.ice !== 'object') return null;
   const ice = ready.ice as Record<string, unknown>;
   if (Object.keys(ice).sort().join() !== 'credential,policy,ttl_ms,urls,username' ||

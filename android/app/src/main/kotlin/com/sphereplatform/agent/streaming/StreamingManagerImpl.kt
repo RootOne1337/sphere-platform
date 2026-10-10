@@ -48,6 +48,10 @@ class StreamingManagerImpl @Inject constructor(
     private var inputGeometry: CaptureInputGeometry? = null
     private var inputSession: CaptureInputSession? = null
     private var inputInvalidationListener: (() -> Unit)? = null
+    private class EncodedViewer(val owner: Any, val capture: CaptureInputSession, val consume: (EncodedCaptureFrame) -> Unit) {
+        val sequence = java.util.concurrent.atomic.AtomicLong(0)
+    }
+    @Volatile private var encodedViewer: EncodedViewer? = null
 
     private var streamStartMs: Long = 0L
     private var encoderCaptureEpoch: UUID? = null
@@ -341,6 +345,17 @@ class StreamingManagerImpl @Inject constructor(
             metadata.isCodecConfig,
         )
 
+        if (!metadata.isCodecConfig) {
+            val viewer = encodedViewer
+            // No subscriber code runs under the capture/lifecycle lock. A retired
+            // peer checks its own fence, and a replacement never receives this epoch.
+            if (viewer != null && viewer.capture.epoch == captureEpoch?.toString() && metadata.presentationTimeUs > 0) {
+                runCatching { viewer.consume(EncodedCaptureFrame(viewer.capture, viewer.sequence.incrementAndGet(),
+                    Math.multiplyExact(metadata.presentationTimeUs, 1000L), metadata.isKeyFrame,
+                    nalData, encoder?.cachedSps, encoder?.cachedPps)) }
+            }
+        }
+
         // Capture these at encoder creation. A late callback must never stamp
         // an old access unit with a replacement capture's identity or clock.
         val packed = FramePackager.pack(nalData, metadata, startedMs, captureEpoch)
@@ -418,6 +433,26 @@ class StreamingManagerImpl @Inject constructor(
     @Synchronized
     override fun setInputInvalidationListener(listener: (() -> Unit)?) { inputInvalidationListener = listener }
 
+    @Synchronized
+    override fun attachEncodedViewer(owner: Any, consume: (EncodedCaptureFrame) -> Unit): CaptureInputSession? {
+        if (encodedViewer != null) return null
+        val capture = getInputSession() ?: return null
+        // H.264 level 3.1 permits at most 3600 macroblocks per picture.
+        if ((capture.frameWidth + 15L) / 16 * ((capture.frameHeight + 15L) / 16) > 3600L) return null
+        encodedViewer = EncodedViewer(owner, capture, consume)
+        return capture
+    }
+
+    @Synchronized
+    override fun detachEncodedViewer(owner: Any) {
+        if (encodedViewer?.owner === owner) encodedViewer = null
+    }
+
+    override fun isEncodedViewerCurrent(owner: Any, capture: CaptureInputSession): Boolean {
+        val viewer = encodedViewer
+        return streaming && viewer?.owner === owner && viewer.capture == capture
+    }
+
     private fun sendFrameBinary(payload: ByteArray): Boolean {
         val acceptedByLocalQueue = wsClient.sendBinary(payload)
         qualityMonitor.recordWebSocketQueueResult(payload.size, acceptedByLocalQueue)
@@ -431,6 +466,7 @@ class StreamingManagerImpl @Inject constructor(
     private fun stopInternal() {
         viewerKeyFrameCoordinator.markEncoderStopped()
         streaming = false
+        encodedViewer = null
         inputGeometry = null
         inputSession = null
         encoderCaptureEpoch = null

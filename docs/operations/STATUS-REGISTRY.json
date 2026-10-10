@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "reviewedAtUtc": "2026-10-10T10:21:30.965056+00:00",
+  "reviewedAtUtc": "2026-10-10T11:04:56.835406+00:00",
   "sourceReviewed": "c17332ebe39e2288a0db055a35d3f3c5d1ab8258",
   "scope": "Effective documentation status; source/install/finite acceptance kept separate. No new fleet or soak acceptance.",
   "baseline": "docs/audits/2026-10-05/ENTERPRISE-PRODUCT-BACKLOG.json",
@@ -15,7 +15,7 @@
     "ui": "c17332ebe39e2288a0db055a35d3f3c5d1ab8258",
     "api": "c17332ebe39e2288a0db055a35d3f3c5d1ab8258",
     "evidence": "docs/audits/2026-10-10/DIRECT-ADMISSION-INSTALLED.json",
-    "observation": "Exact CI UI/API c173 installed; two-origin authenticated per-device admission/rendering accepted. PH030-only echo pilot enabled, no direct channel/media/input or latency acceptance.",
+    "observation": "Exact CI UI/API c173 installed and two-origin per-device admission/rendering accepted. Later user-observed finite PH030 laptop echo20/20, p95=25.8ms NAT/UDP; video/input still server WebSocket, no production/media/latency acceptance.",
     "pilotApk": {
       "device": "PH011",
       "version": "1.2.49-dev",
@@ -33,7 +33,7 @@
         "apkSha256": "f7bfbc2218acd20a9f9f07b4d0f8d30c14f0547e25fc5eab648881426c69108c",
         "evidence": "docs/audits/2026-10-10/DIRECT-PROBE-TURN-AND-LAPTOP.json",
         "evidenceSha256NormalizedLf": "0a43d3a528b376459ece52eeb3fbc45b29c2541fe1a25f6925e8b4bcb1f28dae",
-        "scope": "one targeted OTA completed, fresh heartbeat and actual package SHA matched; no direct channel acceptance"
+        "scope": "One targeted OTA completed with actual package SHA matched. Subsequent finite laptop echo20/20 observed by user, separately recorded; no direct video/input or localhost acceptance."
       }
     ]
   },
@@ -122,7 +122,7 @@
     "implementationAuthorizedNow": true,
     "researchPreparedAtUtc": "2026-10-09T16:46:29Z",
     "researchEvidence": "docs/design/BROWSER-DIRECT-TRANSPORT.md",
-    "researchScope": "Finite main-PC fixture is interface-dependent: default physical route timeout, forced Ethernet response; no system route changes. Isolated coturn REST/TLS fixtures passed their bounded scope. PH030 on no-VPN laptop updated via targeted OTA to10250; actual SHA matched. No laptop browser direct channel or media/control acceptance.",
+    "researchScope": "Finite main-PC fixture is interface-dependent: default physical route timeout, forced Ethernet response; no system route changes. Isolated coturn REST/TLS fixtures passed their bounded scope. PH030 on no-VPN laptop updated via targeted OTA to10250; actual SHA matched. No laptop browser direct channel or media/control acceptance. Later user-observed laptop echo20/20, p95=25.8ms NAT/UDP is recorded separately; no localhost/media/input/latency acceptance.",
     "researchPrerequisites": [
       "Versioned offer/input/control ownership and auth contract",
       "Bounded command-to-native/frame timing with unknown results visible",
@@ -185,6 +185,17 @@
     ],
     "pilotEvidenceSha256NormalizedLf": "cc4ee00b1a75d9e0b504bb9c4781aa3467a49ac0ce6dc799c34c8441fd78faf8",
     "latestNetworkObservation": {
+      "evidence": "docs/audits/2026-10-10/PH030-LAPTOP-CHANNEL-USER-OBSERVATION.json",
+      "evidenceSha256NormalizedLf": "9f430bf56f5e55815c62fec96690cc85be08d9b965672e86528fa10bf360b247",
+      "topology": "Browser and emulator/APK on the same laptop without VPN; main PC alone has VPN.",
+      "outcome": "USER_OBSERVED_FINITE_ECHO_20_OF_20",
+      "laptopBrowserChannelObservedByUser": true,
+      "directVideoAccepted": false,
+      "directInputAccepted": false,
+      "localhostRouteProven": false,
+      "rttP95Ms": 25.8
+    },
+    "previousNetworkObservation": {
       "evidence": "docs/audits/2026-10-10/PH030-DIRECT-PATH-FOLLOWUP.json",
       "evidenceSha256NormalizedLf": "7478057abcc40eb5cd1473341329e75204377753de5fab91f58554739c2a305d",
       "topology": "browser on main PC with VPN; PH030 on laptop without VPN",

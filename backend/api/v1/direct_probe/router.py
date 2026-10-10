@@ -14,8 +14,9 @@ from backend.database.engine import get_db
 from backend.database.tenant import bind_tenant_context
 from backend.models.device import Device
 from backend.models.user import User
+from backend.services.device_status_cache import DeviceStatusCache
 from backend.websocket.direct_probe_ice import turn_urls
-from backend.websocket.direct_probe_protocol import InvalidDirectProbe
+from backend.websocket.direct_probe_protocol import VIDEO_MIN_AGENT_CODE, InvalidDirectProbe
 from backend.websocket.direct_probe_runtime import get_direct_probe_runtime
 
 router = APIRouter(prefix="/devices", tags=["direct-transport-canary"])
@@ -30,6 +31,7 @@ class ProbeCapabilities(BaseModel):
     scope: Literal["diagnostic_echo_only"] = "diagnostic_echo_only"
     max_duration_ms: Literal[30000] = 30000
     samples: Literal[20] = 20
+    readonly_video_enabled: bool = False
 
 
 def relay_configured() -> bool:
@@ -60,4 +62,9 @@ async def probe_capabilities(
     profiles: list[Profile] = ["host", "public-stun"] if enabled else []
     if enabled and relay_configured():
         profiles.append("turn")
-    return ProbeCapabilities(device_id=device_id, enabled=enabled, profiles=profiles)
+    video_enabled = False
+    if enabled and settings.DIRECT_TRANSPORT_VIDEO_PROBE_ENABLED and runtime:
+        status = await DeviceStatusCache(runtime.redis).get_status(str(device_id))
+        video_enabled = bool(status and status.ws_session_id and status.status in {"online", "busy"}
+                             and status.agent_version_code and status.agent_version_code >= VIDEO_MIN_AGENT_CODE)
+    return ProbeCapabilities(device_id=device_id, enabled=enabled, profiles=profiles, readonly_video_enabled=video_enabled)

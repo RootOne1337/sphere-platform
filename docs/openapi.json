@@ -17537,6 +17537,11 @@
             "const": 20,
             "title": "Samples",
             "default": 20
+          },
+          "readonly_video_enabled": {
+            "type": "boolean",
+            "title": "Readonly Video Enabled",
+            "default": false
           }
         },
         "type": "object",

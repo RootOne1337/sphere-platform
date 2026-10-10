@@ -1,11 +1,11 @@
 {
   "schemaVersion": 1,
-  "reviewedAtUtc": "2026-10-10T10:21:30.965056+00:00",
+  "reviewedAtUtc": "2026-10-10T11:04:56.835406+00:00",
   "scope": "All tracked Markdown classified; active local-link paths scanned. Not semantic attestation of every sentence, command execution, external-link or live acceptance.",
   "countsByRole": {
     "ADR": 6,
     "CURRENT_ENTRYPOINT": 8,
-    "DATED_EVIDENCE": 262,
+    "DATED_EVIDENCE": 264,
     "DESIGN_SPECIFICATION": 76,
     "OPERATING_GUIDE": 64,
     "PROJECT_POLICY": 7,
@@ -1177,11 +1177,19 @@
       "role": "DATED_EVIDENCE"
     },
     {
+      "file": "docs/audits/2026-10-10/DIRECT-VIDEO-READONLY-SOURCE.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
       "file": "docs/audits/2026-10-10/IDLE-LOCAL-PUBLIC-COMPARISON.md",
       "role": "DATED_EVIDENCE"
     },
     {
       "file": "docs/audits/2026-10-10/PH030-DIRECT-PATH-FOLLOWUP.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
+      "file": "docs/audits/2026-10-10/PH030-LAPTOP-CHANNEL-USER-OBSERVATION.md",
       "role": "DATED_EVIDENCE"
     },
     {
