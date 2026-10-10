@@ -23,25 +23,29 @@ const reasonText: Record<string, string> = {
   peer_disconnected: 'Прямой канал прерван.',
 };
 
-export function DirectProbeDiagnostics({ deviceId }: { deviceId: string }) {
+export type DiagnosticProfile = 'host' | 'public-stun' | 'turn';
+
+export function DirectProbeDiagnostics({ deviceId, profile }: { deviceId: string; profile?: DiagnosticProfile }) {
   const token = useAuthStore(state => state.accessToken);
   const [result, setResult] = useState<DirectProbeResult | null>(null);
   const stop = useRef<(() => void) | null>(null);
   const active = result && ['gathering', 'signaling', 'connecting', 'connected'].includes(result.state);
+  const relayGrant = profile ? profile === 'turn' : process.env.NEXT_PUBLIC_DIRECT_PROBE_RELAY === 'true';
+  const controlledStunUrl = profile ? profile === 'public-stun' ? 'stun:stun.cloudflare.com:3478' : undefined
+    : process.env.NEXT_PUBLIC_DIRECT_PROBE_STUN_URL;
   useEffect(() => {
     setResult(null);
     const onHidden = () => { if (document.hidden) { stop.current?.(); stop.current = null; } };
     document.addEventListener('visibilitychange', onHidden);
     return () => { stop.current?.(); stop.current = null; document.removeEventListener('visibilitychange', onHidden); };
-  }, [deviceId, token]);
+  }, [deviceId, token, profile]);
   const begin = () => {
     if (!token) return;
     stop.current?.();
     try {
       const base = process.env.NEXT_PUBLIC_WS_URL ?? `${location.protocol === 'https:' ? 'wss' : 'ws'}://${location.host}`;
       stop.current = startDirectProbe(`${base}/ws/direct-probe/${encodeURIComponent(deviceId)}`, token, setResult,
-        { controlledStunUrl: process.env.NEXT_PUBLIC_DIRECT_PROBE_STUN_URL,
-          relayGrant: process.env.NEXT_PUBLIC_DIRECT_PROBE_RELAY === 'true' });
+        { controlledStunUrl, relayGrant });
     } catch (error) { setResult({ state: 'failed', samples: [], path: 'unknown', protocol: null,
       reason: error instanceof DirectProbeConfigurationError ? 'invalid_controlled_stun' : 'webrtc_unavailable' }); }
   };
@@ -49,11 +53,11 @@ export function DirectProbeDiagnostics({ deviceId }: { deviceId: string }) {
   const p95 = sorted.length ? sorted[Math.ceil(sorted.length * .95) - 1].toFixed(1) : null;
   return <section className="mt-3 rounded-lg border border-border bg-background p-3 font-sans" aria-label="Проверка прямого канала WebRTC">
     <div className="font-medium">Прямой канал · экспериментальная проверка</div>
-    <p className="mt-1 text-muted-foreground">До 20 замеров между браузером и APK за 30 секунд. Видео и касания пока используют текущий транспорт. {process.env.NEXT_PUBLIC_DIRECT_PROBE_RELAY === 'true'
-      ? 'Сервер выдаёт временный TURN-доступ. Фактически выбранный путь показан ниже.' : process.env.NEXT_PUBLIC_DIRECT_PROBE_STUN_URL === 'stun:stun.cloudflare.com:3478'
-      ? 'Диагностическая сборка использует публичный STUN Cloudflare; TURN не подключён.' : process.env.NEXT_PUBLIC_DIRECT_PROBE_STUN_URL
-      ? 'Диагностическая сборка использует один локальный STUN-узел; TURN не подключён.'
-      : 'Сборка использует только host ICE; путь через NAT может быть недоступен.'}</p>
+    <p className="mt-1 text-muted-foreground">До 20 замеров между браузером и APK за 30 секунд. Видео и касания пока используют текущий транспорт. {relayGrant
+      ? 'Сервер выдаёт временный TURN-доступ. Фактически выбранный путь показан ниже.' : controlledStunUrl === 'stun:stun.cloudflare.com:3478'
+      ? 'Проверка использует публичный STUN Cloudflare; TURN не подключён.' : controlledStunUrl
+      ? 'Проверка использует один локальный STUN-узел; TURN не подключён.'
+      : 'Браузер использует только host ICE; APK использует профиль установленной сборки. Путь через NAT может быть недоступен.'}</p>
     <button type="button" disabled={!token || !!active} onClick={begin} className="mt-2 rounded-md border border-border px-3 py-1.5 disabled:opacity-50 focus-visible:ring-2 focus-visible:ring-ring">Проверить прямой канал</button>
     {active && <button type="button" onClick={() => { stop.current?.(); stop.current = null; }} className="ml-2 rounded-md border border-border px-3 py-1.5">Остановить</button>}
     {result && <div className="mt-3 space-y-2">

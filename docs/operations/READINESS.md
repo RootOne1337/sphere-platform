@@ -2,7 +2,16 @@
 
 **Проверенная установка:** UI `639b6ad5` / API `369654a0`.
 
-**Последний finite gate10октября04:16UTC:** exact161 all4CI/signed APK и реальные
+**10 октября, 05:53 UTC — PH030 адресно обновлён штатным OTA.**
+На ноутбуке без VPN установлен diagnostic APK **1.2.50-dev / 10250** (`e54b2fc8`).
+Один command ID, completed receipt после перезапуска и фактический APK SHA совпали.
+Package data и ID сохранены; ordinary Android channel не изменён. Это echo-only
+модуль, не прямой stream/input. TURN REST/TLS fixtures прошли конечные проверки;
+обычная панель per-device admission подготовлена и проверена локально, ещё не
+установлена. Browser-on-laptop channel и production media/control остаются OPEN.
+[OTA, сеть, source и пределы](../audits/2026-10-10/DIRECT-PROBE-TURN-AND-LAPTOP.md).
+
+**Предыдущий finite gate10октября04:16UTC:** exact161 all4CI/signed APK и реальные
 setup stages/pre-answer stats приняты. Три ответа392/226/243мс; фактический APK-owned
 UDP capture237исходящих к browser candidate/0входящих, STUN1/1. Direct channel/RTT,
 network drop attribution и resource plateau OPEN. Original APK restored, gateoff;

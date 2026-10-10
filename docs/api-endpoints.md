@@ -4,7 +4,7 @@ Generated from `backend.main.app.openapi()` by `scripts/export_api_docs.py`.
 Regenerate with `python -m scripts.export_api_docs`; verify with `--check`.
 The exporter does not run startup hooks or send HTTP requests.
 
-**182 HTTP operations across 144 paths.**
+**183 HTTP operations across 145 paths.**
 
 Full parameters, request bodies, response schemas and declared security schemes:
 [OpenAPI JSON](openapi.json). Manual explanations:
@@ -60,6 +60,7 @@ for tested behavior and remaining limits.
 | `GET` | `/api/v1/devices/{device_id}` | devices | 200, 422 | Получить устройство по ID |
 | `PUT` | `/api/v1/devices/{device_id}` | devices | 200, 422 | Обновить устройство |
 | `POST` | `/api/v1/devices/{device_id}/connect` | devices | 204, 422 | Инициировать ADB подключение через PC Agent (TZ-03 stub) |
+| `GET` | `/api/v1/devices/{device_id}/direct-probe-capabilities` | direct-transport-canary | 200, 422 | Read per-device admission to the finite direct-channel diagnostic |
 | `POST` | `/api/v1/devices/{device_id}/logcat` | devices | 200, 422 | Запросить logcat устройства |
 | `POST` | `/api/v1/devices/{device_id}/reboot` | devices | 200, 422 | Перезагрузить устройство через агент |
 | `GET` | `/api/v1/devices/{device_id}/screenshot` | devices | 200, 422 | Запросить скриншот устройства (TZ-03 stub) |

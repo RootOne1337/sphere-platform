@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
-  "reviewedAtUtc": "2026-10-10T04:16:38.839681+00:00",
-  "sourceReviewed": "161a23e97a323b2061aceaf56f84bc436cd90305",
+  "reviewedAtUtc": "2026-10-10T06:02:04.459414+00:00",
+  "sourceReviewed": "e54b2fc85f04118a0579e43c9a88e5d0dc09b23d",
   "scope": "Effective documentation status; source/install/finite acceptance kept separate. No new fleet or soak acceptance.",
   "baseline": "docs/audits/2026-10-05/ENTERPRISE-PRODUCT-BACKLOG.json",
   "previousCrosscheck": "docs/audits/2026-10-09/CHAT-CODE-RECONCILIATION.json",
@@ -22,7 +22,20 @@
       "versionCode": 10249,
       "scope": "PH011 original APK restored after three finite161 diagnostic installations; exact SHA in current receipt, no fleet inventory claim"
     },
-    "evidenceSha256NormalizedLf": "9e79b83c5f7fcbad68bcc25352a04c10b84000ff5bf74949d06b1dba4542be76"
+    "evidenceSha256NormalizedLf": "9e79b83c5f7fcbad68bcc25352a04c10b84000ff5bf74949d06b1dba4542be76",
+    "additionalPilotApks": [
+      {
+        "device": "PH030",
+        "deviceId": "753fd530-2f19-4e5e-98ba-769863678141",
+        "version": "1.2.50-dev",
+        "versionCode": 10250,
+        "sourceRevision": "e54b2fc85f04118a0579e43c9a88e5d0dc09b23d",
+        "apkSha256": "f7bfbc2218acd20a9f9f07b4d0f8d30c14f0547e25fc5eab648881426c69108c",
+        "evidence": "docs/audits/2026-10-10/DIRECT-PROBE-TURN-AND-LAPTOP.json",
+        "evidenceSha256NormalizedLf": "0a43d3a528b376459ece52eeb3fbc45b29c2541fe1a25f6925e8b4bcb1f28dae",
+        "scope": "one targeted OTA completed, fresh heartbeat and actual package SHA matched; no direct channel acceptance"
+      }
+    ]
   },
   "pendingCorrections": [
     {
@@ -48,16 +61,23 @@
       "evidence": "docs/audits/2026-10-10/DIRECT-PROBE-NATIVE-PROGRESS-CANARY.json",
       "scope": "Four exact-source CI/signed admission and live stages/pre-answer stats accepted in finite diagnostic scope. Three native windows:answer392/226/243ms,13reports each, ICE no successful pair. One actual UID-filtered UDP capture accepted; previous two collector attempts invalid. Original APK restored; production direct/media/control/resource gates open.",
       "testedRevision": "161a23e97a323b2061aceaf56f84bc436cd90305"
+    },
+    {
+      "id": "direct-probe-runtime-admission-panel",
+      "installed": false,
+      "sourceBaseRevision": "e54b2fc85f04118a0579e43c9a88e5d0dc09b23d",
+      "evidence": "docs/audits/2026-10-10/DIRECT-PROBE-TURN-AND-LAPTOP.json",
+      "scope": "authenticated per-device HTTP admission and ordinary-web panel source checked locally; UI/API installation and laptop browser channel remain open"
     }
   ],
   "storage": {
-    "lastObservedUtc": "2026-10-10T04:12:43.044854+00:00",
+    "lastObservedUtc": "2026-10-10T05:54:43.044879+00:00",
     "visibleMatchingProcesses": 1,
     "continuousCoverageConfirmed": false,
-    "observationScope": "Limited periodic observer PID32064 epoch00:14:44UTC,120complete samples to04:12:43UTC. C: -6804992000B, Docker VHDX allocation constant234731077632B. Earlier gap and VSS/USN/kernel attribution unavailable; current writer UNKNOWN.",
-    "oneFreeDiskReadingBytes": 39716073472,
+    "observationScope": "PID32064/epoch/source verified;171 complete samples to05:54:43UTC. C:-7716163584B; Docker VHDX allocation constant234731077632B. VSS/USN/kernel attribution unavailable; writer UNKNOWN; finite deadline12:34UTC.",
+    "oneFreeDiskReadingBytes": 38804901888,
     "latestCompletedEvidence": "docs/audits/2026-10-08/STORAGE-WINDOW-COMPLETION.json",
-    "activeEvidence": "docs/audits/2026-10-10/DIRECT-PROBE-NATIVE-PROGRESS-CANARY.json"
+    "activeEvidence": "docs/audits/2026-10-10/DIRECT-PROBE-TURN-AND-LAPTOP.json"
   },
   "legacy": {
     "total": 41,
@@ -109,7 +129,7 @@
     "implementationAuthorizedNow": true,
     "researchPreparedAtUtc": "2026-10-09T16:46:29Z",
     "researchEvidence": "docs/design/BROWSER-DIRECT-TRANSPORT.md",
-    "researchScope": "Exact161 finite one-device diagnostics prove setup/answer392/226/243ms. Final APK-owned UDP socket on wlan0:237outbound offered-candidate packets,0inbound; STUN discovery1out/1in,239captured/0kernel drops. Native241checks/0responses; browser177/0. No successful ICE pair/channel/RTT. NAT/mDNS/VPN/firewall/drop location not proven. All canaries restored, gates off; media/input remain server WS.",
+    "researchScope": "Finite main-PC fixture is interface-dependent: default physical route timeout, forced Ethernet response; no system route changes. Isolated coturn REST/TLS fixtures passed their bounded scope. PH030 on no-VPN laptop updated via targeted OTA to10250; actual SHA matched. No laptop browser direct channel or media/control acceptance.",
     "researchPrerequisites": [
       "Versioned offer/input/control ownership and auth contract",
       "Bounded command-to-native/frame timing with unknown results visible",
@@ -141,7 +161,8 @@
       "docs/audits/2026-10-10/DIRECT-PROBE-STUN-PROFILES.json",
       "docs/audits/2026-10-10/DIRECT-PROBE-PUBLIC-STUN-CANARY.json",
       "docs/audits/2026-10-10/DIRECT-PROBE-NATIVE-PROGRESS-SOURCE.json",
-      "docs/audits/2026-10-10/DIRECT-PROBE-NATIVE-PROGRESS-CANARY.json"
+      "docs/audits/2026-10-10/DIRECT-PROBE-NATIVE-PROGRESS-CANARY.json",
+      "docs/audits/2026-10-10/DIRECT-PROBE-TURN-AND-LAPTOP.json"
     ],
     "pilotEvidence": "docs/audits/2026-10-10/DIRECT-PROBE-NATIVE-PROGRESS-CANARY.json",
     "pilotOutcome": "NATIVE_ANSWER_FAST_UDP_CANDIDATE_OUTBOUND_ONLY_CHANNEL_FAILED_CLEANED_UP",
@@ -153,7 +174,18 @@
       "currentlyInstalled": false,
       "directChannelAccepted": false
     },
-    "networkPrerequisiteEvidence": "docs/audits/2026-10-10/DIRECT-PROBE-STUN-PROFILES.json"
+    "networkPrerequisiteEvidence": "docs/audits/2026-10-10/DIRECT-PROBE-TURN-AND-LAPTOP.json",
+    "additionalNativeCanary": {
+      "device": "PH030",
+      "deviceId": "753fd530-2f19-4e5e-98ba-769863678141",
+      "version": "1.2.50-dev",
+      "versionCode": 10250,
+      "sourceRevision": "e54b2fc85f04118a0579e43c9a88e5d0dc09b23d",
+      "apkSha256": "f7bfbc2218acd20a9f9f07b4d0f8d30c14f0547e25fc5eab648881426c69108c",
+      "evidence": "docs/audits/2026-10-10/DIRECT-PROBE-TURN-AND-LAPTOP.json",
+      "evidenceSha256NormalizedLf": "0a43d3a528b376459ece52eeb3fbc45b29c2541fe1a25f6925e8b4bcb1f28dae",
+      "scope": "one targeted OTA completed, fresh heartbeat and actual package SHA matched; no direct channel acceptance"
+    }
   },
   "items": [
     {
@@ -1471,8 +1503,8 @@
       "priority": "P1",
       "state": "OPEN",
       "progress": "PARTIAL",
-      "currentScope": "Observer завершён 8 октября 09: 01UTC; VHD/VMDK allocations постоянны, freeC падал; writerUNKNOWN.",
-      "remaining": "Сейчас нет новых writer measurements; нужен bounded collector health/deadline/coverage и 500/1000/128/1 load matrix.",
+      "currentScope": "Limited observer active10Oct00:14→12:34UTC;171 complete samples to05:54UTC. C:-7716163584B while Docker VHDX allocation constant234731077632B. Earlier gaps remain; no full-PC writer proof.",
+      "remaining": "VSS/USN/kernel writer attribution and reboot continuity unavailable. Need finite health/coverage, RAM/disk retention,500/1000/128/1 load and resource plateau acceptance.",
       "acceptanceCriteria": [
         "1000 registry / 128 thumbnails / 1 selected video measured.",
         "Нет роста decoder / URL / log / report buffers после teardown.",
@@ -1795,13 +1827,14 @@
         "EP-033",
         "EP-047"
       ],
-      "acceptedScope": "Previous86samples verified: C:-6522753024B, Docker VHDX same identity/logical/allocation234731077632B throughout. Process gone; limited collector resumed10Oct00:14→12:34UTC,371×120s/16MiB,24namedfiles. Gap uncovered, writer UNKNOWN.",
+      "acceptedScope": "Bounded observer PID32064/epoch/source and171 complete samples verified to05:54:43UTC. Docker allocation constant; C: writer remains UNKNOWN.",
       "remaining": "Whole-PC writer UNKNOWN: VSS unavailable, USN/ETW не запущены. Нет reboot autostart; после deadline потребуется bounded restart/health. Resource soak/retention и RAM acceptance открыты.",
       "evidence": [
         "docs/audits/2026-10-08/STORAGE-WINDOW-COMPLETION.json",
         "docs/audits/2026-10-09/STORAGE-OBSERVER-RESTART.json",
         "docs/audits/2026-10-10/STORAGE-OBSERVER-CONTINUITY.json",
-        "docs/audits/2026-10-10/STORAGE-OBSERVER-RESUME.json"
+        "docs/audits/2026-10-10/STORAGE-OBSERVER-RESUME.json",
+        "docs/audits/2026-10-10/DIRECT-PROBE-TURN-AND-LAPTOP.json"
       ],
       "sourcePaths": [],
       "fleetAccepted": false
@@ -1850,8 +1883,8 @@
         "EP-020",
         "EP-047"
       ],
-      "acceptedScope": "Exact161 all4CI/signed admission; three setup windows answer392/226/243ms and13native reports each. Final UID-filtered APK capture239packets:237outbound browser-candidate/0inbound, STUN1/1. Original APK restored, probeoff; post-cleanup local11/public2 ordinary frames. Diagnostics accepted only finite scope, no channel/RTT.",
-      "remaining": "Locate the browser/host/guest packet-path drop with a bounded host-side observation; compare an explicitly authenticated relay profile without disabling protections. Successful channel/RTT, packaged UI admission, native provenance/SBOM/resource plateau, network matrix, media/control ownership and public idle reliability remain open.",
+      "acceptedScope": "Exact161 all4CI/signed admission; three setup windows answer392/226/243ms and13native reports each. Final UID-filtered APK capture239packets:237outbound browser-candidate/0inbound, STUN1/1. Original APK restored, probeoff; post-cleanup local11/public2 ordinary frames. Diagnostics accepted only finite scope, no channel/RTT. PH030 is on the no-VPN laptop; one targeted OTA10250 completed and actual APK hash matched. Finite coturn REST/TLS fixtures and interface-dependent Windows UDP fixture recorded separately from WebRTC acceptance.",
+      "remaining": "Actual laptop browser-to-PH030 channel/RTT; native public TURN fallback, media/control, global ownership, reconnect and resource budgets. Standard-web runtime-admission panel source is tested but not yet installed.",
       "evidence": [
         "docs/design/BROWSER-DIRECT-TRANSPORT.md",
         "docs/audits/2026-10-09/IDLE-CONTROL-RELAY-REVIEW.md",
@@ -1864,7 +1897,8 @@
         "docs/audits/2026-10-10/DIRECT-PROBE-NATIVE-NETWORK-SOURCE.md",
         "docs/audits/2026-10-10/DIRECT-PROBE-ANDROID-COMPATIBILITY.md",
         "docs/audits/2026-10-10/DIRECT-PROBE-NATIVE-COUNTERS-CANARY.json",
-        "docs/audits/2026-10-10/DIRECT-PROBE-NATIVE-PROGRESS-CANARY.json"
+        "docs/audits/2026-10-10/DIRECT-PROBE-NATIVE-PROGRESS-CANARY.json",
+        "docs/audits/2026-10-10/DIRECT-PROBE-TURN-AND-LAPTOP.json"
       ],
       "sourcePaths": [
         "backend/websocket/direct_probe_protocol.py",
@@ -1875,7 +1909,10 @@
         "frontend/src/features/stream/directProbeNetwork.ts",
         "android/app/src/main/kotlin/com/sphereplatform/agent/direct/DirectProbeNetwork.kt",
         "android/app/src/main/kotlin/com/sphereplatform/agent/direct/DirectProbeProgress.kt",
-        "android/app/src/test/kotlin/com/sphereplatform/agent/direct/DirectProbeProgressTest.kt"
+        "android/app/src/test/kotlin/com/sphereplatform/agent/direct/DirectProbeProgressTest.kt",
+        "backend/websocket/direct_probe_ice.py",
+        "backend/api/v1/direct_probe/router.py",
+        "frontend/src/features/stream/DirectProbeAccess.tsx"
       ],
       "fleetAccepted": false
     },
@@ -1889,10 +1926,11 @@
         "EP-047",
         "EP-050"
       ],
-      "acceptedScope": "Source compatibility/release audit prepared; current DAG/discovery/OTA extension boundaries verified. No version bump or release promotion.",
+      "acceptedScope": "DAG/discovery/OTA boundaries reviewed. Development version advanced monotonically to1.2.50/10250 for one authorized PH030 canary; actual SHA and matching terminal receipt verified. Stable1.3 not promoted.",
       "remaining": "Idle reliability, native lifecycle/resources, direct path and capability matrix acceptance, production signer verification and staged OTA promotion.",
       "evidence": [
-        "docs/design/APK-1.3-COMPATIBILITY-AND-RELEASE.md"
+        "docs/design/APK-1.3-COMPATIBILITY-AND-RELEASE.md",
+        "docs/audits/2026-10-10/DIRECT-PROBE-TURN-AND-LAPTOP.json"
       ],
       "sourcePaths": [
         "android/app/build.gradle.kts",
@@ -1925,6 +1963,49 @@
         "backend/api/v1/batches/router.py",
         "tests/production/test_batch_broadcast.py",
         "tests/test_services/test_batch_broadcast.py"
+      ],
+      "fleetAccepted": false
+    },
+    {
+      "id": "CHAT-18",
+      "title": "Несколько зрителей: управление и presence по вкладкам",
+      "state": "OPEN",
+      "productItems": [
+        "EP-001",
+        "EP-010",
+        "EP-020",
+        "EP-029"
+      ],
+      "acceptedScope": "Requirement captured. Existing native input lease is exclusive per device; local-worker viewers are not distributed per-device/tab/card presence evidence.",
+      "remaining": "Explicit view/control roles and safe controller handoff; distinguish card/stream and count sessions per tab across accounts/workers with tenant-safe TTL/heartbeat/reconnect semantics; fleet UI and concurrent native acceptance.",
+      "evidence": [
+        "docs/audits/2026-10-10/DIRECT-PROBE-TURN-AND-LAPTOP.json"
+      ],
+      "sourcePaths": [
+        "backend/websocket/continuous_runtime.py",
+        "backend/websocket/stream_bridge.py",
+        "frontend/app/(dashboard)/devices/page.tsx",
+        "frontend/components/sphere/DeviceStream.tsx"
+      ],
+      "fleetAccepted": false
+    },
+    {
+      "id": "CHAT-19",
+      "title": "Физическая клавиатура, IME и звук устройства",
+      "state": "OPEN",
+      "productItems": [
+        "EP-020",
+        "EP-029"
+      ],
+      "acceptedScope": "Future requirement captured. Existing navigation/text actions are distinct from a complete physical-keyboard/IME/audio transport.",
+      "remaining": "Keyboard focus, composition/IME, held keys and native acknowledgement; audio capture/playback permissions, mute/autoplay, sync, compatibility and bounded resources require explicit implementation and acceptance.",
+      "evidence": [
+        "docs/audits/2026-10-10/DIRECT-PROBE-TURN-AND-LAPTOP.json"
+      ],
+      "sourcePaths": [
+        "frontend/components/sphere/DeviceStream.tsx",
+        "frontend/src/features/stream/AndroidNavigationBar.tsx",
+        "backend/api/ws/stream/router.py"
       ],
       "fleetAccepted": false
     }

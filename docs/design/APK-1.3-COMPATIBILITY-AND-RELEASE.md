@@ -1,8 +1,9 @@
 # APK 1.3.0: совместимость, расширение и критерии выпуска
 
 Сверено 10 октября 2026, UTC+5, по исходникам PR19. Это план и аудит текущих
-контрактов, не объявление stable release. VERSION_NAME=1.2.49,
-VERSION_CODE=10249; на выбранном PH011 установлен private 1.2.49-dev.
+контрактов, не объявление stable release. VERSION_NAME=1.2.50,
+VERSION_CODE=10250. PH011 сохраняет ordinary private 1.2.49-dev; PH030 получил
+diagnostic 1.2.50-dev адресным OTA с проверенным фактическим SHA.
 Повышение номера без закрытия runtime gates не является стабилизацией.
 
 Дополнение10октября04:16UTC: exact161 diagnostic APK прошёл4CI/signed admission,

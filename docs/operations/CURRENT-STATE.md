@@ -2,7 +2,16 @@
 
 **Проверенная установка:** UI `639b6ad5` / API `369654a0`.
 
-**Последняя проверка10октября04:16UTC:** exact161 native diagnostics приняты в
+**10 октября, 05:53 UTC — PH030 адресно обновлён штатным OTA.**
+На ноутбуке без VPN установлен diagnostic APK **1.2.50-dev / 10250** (`e54b2fc8`).
+Один command ID, completed receipt после перезапуска и фактический APK SHA совпали.
+Package data и ID сохранены; ordinary Android channel не изменён. Это echo-only
+модуль, не прямой stream/input. TURN REST/TLS fixtures прошли конечные проверки;
+обычная панель per-device admission подготовлена и проверена локально, ещё не
+установлена. Browser-on-laptop channel и production media/control остаются OPEN.
+[OTA, сеть, source и пределы](../audits/2026-10-10/DIRECT-PROBE-TURN-AND-LAPTOP.md).
+
+**Предыдущая проверка10октября04:16UTC:** exact161 native diagnostics приняты в
 конечном scope: setup answer392/226/243мс; финальный APK socket capture237исходящих
 к browser candidate/0обратных, STUN1/1. Прямой канал/RTT не получены, конкретный
 сетевой drop UNKNOWN. Original APK восстановлен, probeoff/allowlist[], временные

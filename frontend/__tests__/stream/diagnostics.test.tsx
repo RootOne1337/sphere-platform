@@ -3,6 +3,8 @@ import { DeviceStream } from '@/components/sphere/DeviceStream';
 import { api } from '@/lib/api';
 
 jest.mock('@/lib/api', () => ({ api: { get: jest.fn() } }));
+// Admission requests have their own suite; this suite measures APK telemetry polling.
+jest.mock('@/src/features/stream/DirectProbeAccess', () => ({ DirectProbeAccess: () => null }));
 let mockAccessToken: string | null = 'fixture-token';
 jest.mock('@/lib/store', () => ({ useAuthStore: () => ({ accessToken: mockAccessToken }) }));
 

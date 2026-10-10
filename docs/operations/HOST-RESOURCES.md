@@ -1,5 +1,12 @@
 # Ресурсы хоста: диск, Windows commit, WSL и контейнеры
 
+**Новый срез10октября05:54:43UTC:** 171 complete samples, observer PID32064
+сверен по epoch/command/source. C: free delta−7 716 163 584B; Docker VHDX
+allocation234 731 077 632B постоянен во всех samples. Named LDPlayer/Codex growth
+не покрывает весь расход; VSS/USN/kernel attribution недоступны, writer UNKNOWN.
+Это не доказательство отсутствия прошлых Docker allocations или утечек RAM.
+[Замороженный срез и известные записи работы](../audits/2026-10-10/DIRECT-PROBE-TURN-AND-LAPTOP.md).
+
 **Текущее ограниченное окно10октября:** PID32064, creation epoch00:14:44UTC,
 командная строка и новые complete samples проверены повторно04:14UTC. Окно
 00:14→12:34UTC,371×120s/16MiB,24named files плюс RAM/process/Docker/WSL.

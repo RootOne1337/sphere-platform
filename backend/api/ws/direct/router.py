@@ -38,7 +38,7 @@ async def authorize(token: str, device_id: str) -> tuple[str, str]:
         async with AsyncSessionLocal() as db:
             user = await _authenticate_viewer(token, db)
             device = await db.get(Device, uuid.UUID(device_id))
-            if not device or device.org_id != user.org_id or not has_permission(user.role, "stream:read"):
+            if not device or not device.is_active or device.org_id != user.org_id or not has_permission(user.role, "stream:read"):
                 raise HTTPException(status_code=403, detail="probe_access_denied")
             return str(user.org_id), str(user.id)
 

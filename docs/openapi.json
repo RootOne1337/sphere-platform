@@ -3011,6 +3011,54 @@
         }
       }
     },
+    "/api/v1/devices/{device_id}/direct-probe-capabilities": {
+      "get": {
+        "tags": [
+          "direct-transport-canary"
+        ],
+        "summary": "Read per-device admission to the finite direct-channel diagnostic",
+        "operationId": "probe_capabilities_api_v1_devices__device_id__direct_probe_capabilities_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "device_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Device Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProbeCapabilities"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/discovery/scan": {
       "post": {
         "tags": [
@@ -17430,6 +17478,74 @@
         ],
         "title": "PipelineStepSchema",
         "description": "Описание шага pipeline.\n\nКаждый шаг содержит id (уникальный внутри pipeline), тип, параметры\nи ссылки на следующие шаги (on_success / on_failure)."
+      },
+      "ProbeCapabilities": {
+        "properties": {
+          "schema_version": {
+            "type": "integer",
+            "enum": [
+              1
+            ],
+            "const": 1,
+            "title": "Schema Version",
+            "default": 1
+          },
+          "device_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Device Id"
+          },
+          "enabled": {
+            "type": "boolean",
+            "title": "Enabled"
+          },
+          "profiles": {
+            "items": {
+              "type": "string",
+              "enum": [
+                "host",
+                "public-stun",
+                "turn"
+              ]
+            },
+            "type": "array",
+            "title": "Profiles"
+          },
+          "scope": {
+            "type": "string",
+            "enum": [
+              "diagnostic_echo_only"
+            ],
+            "const": "diagnostic_echo_only",
+            "title": "Scope",
+            "default": "diagnostic_echo_only"
+          },
+          "max_duration_ms": {
+            "type": "integer",
+            "enum": [
+              30000
+            ],
+            "const": 30000,
+            "title": "Max Duration Ms",
+            "default": 30000
+          },
+          "samples": {
+            "type": "integer",
+            "enum": [
+              20
+            ],
+            "const": 20,
+            "title": "Samples",
+            "default": 20
+          }
+        },
+        "type": "object",
+        "required": [
+          "device_id",
+          "enabled",
+          "profiles"
+        ],
+        "title": "ProbeCapabilities"
       },
       "ReleaseAccountRequest": {
         "properties": {

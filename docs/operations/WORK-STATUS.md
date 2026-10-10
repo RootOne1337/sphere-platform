@@ -2,6 +2,15 @@
 
 **Проверенная установка:** UI `639b6ad5` / API `369654a0`.
 
+**10 октября, 05:53 UTC — PH030 адресно обновлён штатным OTA.**
+На ноутбуке без VPN установлен diagnostic APK **1.2.50-dev / 10250** (`e54b2fc8`).
+Один command ID, completed receipt после перезапуска и фактический APK SHA совпали.
+Package data и ID сохранены; ordinary Android channel не изменён. Это echo-only
+модуль, не прямой stream/input. TURN REST/TLS fixtures прошли конечные проверки;
+обычная панель per-device admission подготовлена и проверена локально, ещё не
+установлена. Browser-on-laptop channel и production media/control остаются OPEN.
+[OTA, сеть, source и пределы](../audits/2026-10-10/DIRECT-PROBE-TURN-AND-LAPTOP.md).
+
 **10 октября, 04:16UTC — native setup проверен, UDP-путь локализован до обмена между peers.**
 Exact161 прошёл4CI/signed admission. Три native process окна: answer392/226/243мс,
 по13reports; канал не открылся. Финальный APK-owned capture:237исходящих к browser
@@ -63,8 +72,9 @@ Idle control и direct transport остаются открытыми; probe вы
 Последовательный ACK244local/487public и idle512fault записаны отдельно:
 [измерение без касаний](../audits/2026-10-10/IDLE-LOCAL-PUBLIC-COMPARISON.md).
 
-**APK1.3.0 — проверен текущий контракт и составлен release plan.** Версия пока
-1.2.49; private continuous/direct flags не являются stable release профилем.
+**APK1.3.0 — проверен текущий контракт и составлен release plan.** Development
+версия 1.2.50; PH011 остаётся на ordinary 1.2.49-dev, PH030 получил diagnostic
+1.2.50-dev. Private continuous/direct flags не являются stable release профилем.
 Новое capability negotiation, native resource gates, idle reliability и signing
 promotion требуют отдельной приёмки. [Матрица и критерии](../design/APK-1.3-COMPATIBILITY-AND-RELEASE.md).
 
@@ -344,9 +354,9 @@ Fleet WS пакетно invalidates REST queries; скрытые вкладки/
 **OPEN** · EP-033, EP-047.
 
 Limited observer возобновлён10Oct00:14→12:34UTC,371×120s/16MiB.
-86предыдущих samples: C:−6522753024B при неизменных Docker VHDX identity/
-logical/allocation234731077632B. Прежний процесс исчез; разрыв после23:59
-не покрыт. Новые complete samples/process creation/command/source сверены.
+171 complete samples до05:54:43UTC: C:−7716163584B при неизменных Docker VHDX
+identity/allocation234731077632B. PID32064/process creation/command/source сверены.
+Прежний разрыв после23:59 не покрыт; точный writer всего C: ещё UNKNOWN.
 
 Остаётся: Whole-PC writer UNKNOWN: VSS unavailable, USN/ETW не запущены.
 Нет reboot autostart; после deadline нужны bounded restart/health,
@@ -377,6 +387,13 @@ resource soak/retention и RAM acceptance.
 ### CHAT-15 · Прямой browser ↔ Android transport
 
 **PARTIAL** · EP-029, EP-020, EP-047.
+
+Актуально10октября: PH030 обновлён адресным OTA до1.2.50-dev/10250, установленный
+SHA подтверждён. Обычная веб-панель admission подготовлена; 437 stream/grid
+regressions прошли, включая управление, reconnect и отдельные проверки доступа.
+Она ещё не установлена. Echo/path именно браузера ноутбука, direct media/input,
+TURN/network matrix и multi-viewer ownership остаются непроверенными.
+[Последний срез](../audits/2026-10-10/DIRECT-PROBE-TURN-AND-LAPTOP.md).
 
 Исследование текущего WS пути и первичных источников выполнено. Предложен prototype:
 browser WebRTC ↔ Android libwebrtc, direct video и input/ACK, coturn fallback;
@@ -462,3 +479,22 @@ PostgreSQL/Redis test подтвердил202/commit/admission; live404 посл
 Остаток: CSS в публичном каталоге/графе
 загружается; исходное предупреждение не воспроизвелось в этом окне. Idempotency,
 большой парк и unknown presence требуют самостоятельных контрактов.
+
+### CHAT-18 · Несколько зрителей: управление и presence по вкладкам
+
+**OPEN**
+
+Нужно считать отдельные вкладки/сессии даже одного аккаунта и отличать карточку
+от видеопотока. Текущий native input lease эксклюзивен; второй viewer не получает
+права одновременно управлять. Нужны явные view/control роли и безопасная передача
+управления, distributed tenant-safe presence с TTL и аккуратный fleet indicator.
+[Требование и фактические границы](../audits/2026-10-10/DIRECT-PROBE-TURN-AND-LAPTOP.md).
+
+### CHAT-19 · Физическая клавиатура, IME и звук устройства
+
+**OPEN**
+
+Записано как следующий этап: полноценный keyboard/IME ввод и audio capture/playback,
+native ACK, focus/held keys, permissions/mute/autoplay, sync и resource budgets.
+Нынешние text/navigation actions не закрывают этот workflow.
+[Границы этапа](../audits/2026-10-10/DIRECT-PROBE-TURN-AND-LAPTOP.md).

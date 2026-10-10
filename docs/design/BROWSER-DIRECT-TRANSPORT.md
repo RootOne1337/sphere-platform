@@ -6,7 +6,15 @@
 TURN и рабочая установка не переведены на WebRTC. Это не обещание задержки.
 [Точный scope, зависимости, тесты и следующие gates](../audits/2026-10-09/DIRECT-PROBE-SOURCE.md).
 
-**Текущий итог10октября04:16UTC:** exact161 прошёл4CI и signed admission.
+**10 октября, 05:53 UTC:** PH030 на ноутбуке без VPN обновлён через OTA до
+diagnostic1.2.50-dev/10250, фактический SHA совпал. На основном ПК UDP fixture
+зависит от выбранного интерфейса; это отдельная топология. TURN REST/TLS template
+проверен в isolated fixtures, публичный/native relay ещё не принят. Панель доступа
+для обычного веба проверена в source, ожидает установку. Browser-on-laptop channel,
+direct media/control и production SLA не подтверждены.
+[Свежие измерения, OTA и пределы](../audits/2026-10-10/DIRECT-PROBE-TURN-AND-LAPTOP.md).
+
+**Предыдущий итог10октября04:16UTC:** exact161 прошёл4CI и signed admission.
 На одном PH011 три process epochs отправили answer за392/226/243мс; channel0/RTTunknown.
 Финальный bounded capture на UID-проверенном APK socket:237исходящих UDP к browser
 srflx candidate,0обратных; STUN1/1,239captured/0kernel drops. Это подтверждает

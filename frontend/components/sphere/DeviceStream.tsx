@@ -12,6 +12,7 @@ import { ContinuousPointer, attachContinuousPointer } from '@/src/features/strea
 import type { ContinuousPointerState, PointerFenceObservation } from '@/src/features/stream/continuousPointer';
 import { ContinuousInputDiagnostics } from '@/src/features/stream/ContinuousInputDiagnostics';
 import { DirectProbeDiagnostics } from '@/src/features/stream/DirectProbeDiagnostics';
+import { DirectProbeAccess } from '@/src/features/stream/DirectProbeAccess';
 
 interface DeviceStreamProps {
   deviceId: string;
@@ -1145,7 +1146,8 @@ export function DeviceStream({
             </div>
             <div>Управление Android: {continuousState}{continuousFailureCode ? ` · причина: ${continuousFailureCode}` : ''}</div>
             <div>Видео и управление идут через сервер (WebSocket). Прямое соединение с APK ещё не подключено.</div>
-            {process.env.NEXT_PUBLIC_DIRECT_TRANSPORT_CANARY === 'true' && <DirectProbeDiagnostics deviceId={deviceId} />}
+            {process.env.NEXT_PUBLIC_DIRECT_TRANSPORT_CANARY === 'true'
+              ? <DirectProbeDiagnostics deviceId={deviceId} /> : <DirectProbeAccess deviceId={deviceId} />}
             <div>Автоматическое восстановление управления: {idleRecoveryCount} попыток с задержкой до 15 секунд. Касания и команды не повторяются.</div>
             {pointerFailureSnapshot && <ContinuousInputDiagnostics snapshot={pointerFailureSnapshot} />}
             {diagnosticsError ? <div className="text-red-600 dark:text-red-300">{diagnosticsError}</div> : (
