@@ -79,6 +79,7 @@ function startDirectSession(
   let networkInterval: ReturnType<typeof setInterval> | undefined;
   let renewalInterval: ReturnType<typeof setInterval> | undefined;
   let phaseDeadline: ReturnType<typeof setTimeout> | undefined;
+  let disconnectDeadline: ReturnType<typeof setTimeout> | undefined;
   let statsInFlight = false, statsCalls = 0;
   let renewal = 0;
   const videoStats = new DirectVideoStatsSampler();
@@ -87,7 +88,7 @@ function startDirectSession(
   const stop = (reason: string | null = null) => {
     if (stopped) return;
     stopped = true;
-    clearTimeout(deadline); clearTimeout(phaseDeadline);
+    clearTimeout(deadline); clearTimeout(phaseDeadline); clearTimeout(disconnectDeadline);
     if (interval) clearInterval(interval);
     if (networkInterval) clearInterval(networkInterval);
     if (renewalInterval) clearInterval(renewalInterval);
@@ -205,7 +206,18 @@ function startDirectSession(
     catch { stop('webrtc_unavailable'); return; }
     peer.onicegatheringstatechange = gathered;
     peer.onconnectionstatechange = () => {
-      if (peer && ['failed', 'disconnected', 'closed'].includes(peer.connectionState)) stop('peer_disconnected');
+      if (!peer || stopped) return;
+      if (['failed', 'closed'].includes(peer.connectionState)) return stop('peer_disconnected');
+      if (peer.connectionState === 'connected') {
+        clearTimeout(disconnectDeadline); disconnectDeadline = undefined;
+        void collectNetwork();
+      } else if (peer.connectionState === 'disconnected') {
+        // ICE can recover a brief connectivity loss on the same encrypted
+        // transport. No input uses this channel and no media grant is renewed
+        // past its own authorization/lease by this short recovery window.
+        if (!live || result.state !== 'connected') return stop('peer_disconnected');
+        disconnectDeadline ??= setTimeout(() => stop('peer_disconnected'), 3000);
+      }
     };
     channel.onopen = () => {
       if (stopped || !session) return stop('missing_binding');

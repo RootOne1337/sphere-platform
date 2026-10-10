@@ -11,7 +11,10 @@ const reasons = new Set(['probe_deadline', 'gathering_deadline', 'signaling_dead
   'invalid_description', 'missing_binding', 'signaling_unavailable', 'invalid_ice_grant', 'invalid_answer',
   'invalid_signal', 'signaling_closed', 'webrtc_unavailable', 'invalid_video_track', 'video_track_ended',
   'video_renderer_failed', 'peer_disconnected', 'echo_timeout', 'channel_backpressure', 'echo_send_failed',
-  'invalid_video_binding', 'invalid_echo', 'channel_failed', 'channel_closed', 'offer_failed']);
+  'invalid_video_binding', 'invalid_echo', 'channel_failed', 'channel_closed', 'offer_failed',
+  'video_access_rejected', 'video_first_frame_timeout', 'video_renderer_unavailable', 'capture_changed', 'session_lifetime']);
+const directStates = new Set(['gathering', 'signaling', 'connecting', 'connected', 'finished', 'stopped', 'failed']);
+export const directFailure = (reason: string | null | undefined) => reason ? reasons.has(reason) ? reason : 'other' : null;
 
 /** Explicit scalar whitelist: decoder exception text and Android input never leave the viewer. */
 export function browserStreamSample(stats: StreamDecoderStats, control: ControlObservation, now = Date.now(), direct?: LiveVideoObservation) {
@@ -19,6 +22,11 @@ export function browserStreamSample(stats: StreamDecoderStats, control: ControlO
   return { schema_version: 1, transport: direct?.active ? 'direct_webrtc' : 'server_websocket', visibility: document.hidden ? 'hidden' : 'visible',
     ...(direct ? { control_transport: 'server_websocket', direct_frames: counter(direct.frames),
       direct_frame_age_ms: age(direct.lastFrameAt), direct_path: direct.result?.path ?? 'unknown',
+      direct_state: direct.result && directStates.has(direct.result.state) ? direct.result.state : null,
+      direct_failure: directFailure(direct.result?.reason),
+      direct_ice_state: direct.result?.iceState ?? null,
+      direct_dtls_state: ['new', 'connecting', 'connected', 'closed', 'failed'].includes(direct.result?.network?.dtlsState ?? '')
+        ? direct.result!.network!.dtlsState : null,
       direct_network_rtt_ms: milliseconds(direct.result?.videoStats?.networkRttMs ?? null),
       direct_jitter_buffer_ms: milliseconds(direct.result?.videoStats?.jitterBufferMs ?? null),
       direct_decode_ms: milliseconds(direct.result?.videoStats?.decodeMs ?? null),
@@ -43,7 +51,7 @@ export function directDiagnosticSample(result: DirectProbeResult, frames: number
   return { schema_version: 1, mode: 'readonly_video', trigger: automatic ? 'automatic' : 'manual', profile,
     state: ['finished', 'stopped', 'failed'].includes(result.state) ? result.state : 'failed', path: result.path,
     protocol: ['udp', 'tcp'].includes(result.protocol ?? '') ? result.protocol : null,
-    reason: result.reason ? reasons.has(result.reason) ? result.reason : 'other' : null,
+    reason: directFailure(result.reason),
     echoes: samples.length, echo_rtt_p95_ms: samples.length ? milliseconds(samples[Math.ceil(samples.length * .95) - 1]) : null,
     presented_frames: counter(frames), width: result.videoBinding?.width ?? null, height: result.videoBinding?.height ?? null,
     ice_state: ice && ['new', 'checking', 'connected', 'completed', 'disconnected', 'failed', 'closed'].includes(ice) ? ice : null,

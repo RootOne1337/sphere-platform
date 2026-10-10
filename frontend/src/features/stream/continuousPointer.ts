@@ -2,14 +2,14 @@ import type { CaptureFrameBinding } from '@/lib/h264-decoder';
 
 /** Single-pointer transport. Activation requires scoped capability and a rendered v2 capture. */
 export const CONTINUOUS_POINTER_LIMITS = Object.freeze({
-  moveIntervalMs: 16, moveAgeMs: 100, heartbeatMs: 250, receiptMs: 500,
+  moveIntervalMs: 16, moveAgeMs: 100, heartbeatMs: 250, receiptMs: 500, idleReceiptMs: 1250,
   startupMs: 6000, schedulingGapMs: 500, bufferedBytes: 1024, pendingReceipts: 32,
   maxSequence: 2_147_483_647,
 });
 export type ContinuousPointerState = 'idle' | 'opening' | 'ready' | 'closing' | 'fenced' | 'closed' | 'destroyed';
 type Point = { x: number; y: number };
 type Pointer = Point & { id: number; gesture: number };
-type Pending = { sequence: number; action: number; at: number; deadlineAt?: number };
+type Pending = { sequence: number; action: number; at: number; deadlineAt?: number; idleHeartbeat: boolean };
 type Session = { session: string; owner: string };
 export interface PointerTransport {
   readonly readyState: number;
@@ -234,7 +234,7 @@ export class ContinuousPointer {
       || this.pending.length >= CONTINUOUS_POINTER_LIMITS.pendingReceipts) {
       this.retire('sequence_or_receipt_budget'); return null;
     }
-    const entry = { sequence: ++this.sequence, action, at: this.now() };
+    const entry = { sequence: ++this.sequence, action, at: this.now(), idleHeartbeat: action === 4 && gesture === 0 };
     // Register before write: synchronous test transports and future adapters
     // may deliver a receipt during send(). Unknown writes are not repeated.
     this.pending.push(entry);
@@ -246,6 +246,12 @@ export class ContinuousPointer {
   down(pointerId: number, point: Point): boolean {
     if (this.stateValue !== 'ready' || this.held || this.terminal || !integer(pointerId, 0, CONTINUOUS_POINTER_LIMITS.maxSequence)) return false;
     if (!this.current() || !this.point(point)) return false;
+    // An idle round trip may outlast the action budget without any touch being
+    // unknown. Keep monitoring that owner, but never start a new finger while
+    // its pending heartbeat is already older than the strict action budget.
+    if (this.pending.some(p => this.now() - (p.deadlineAt ?? p.at) >= CONTINUOUS_POINTER_LIMITS.receiptMs)) {
+      this.retire('native_receipt_timeout'); return false;
+    }
     if (this.gesture >= CONTINUOUS_POINTER_LIMITS.maxSequence) { this.retire('gesture_budget'); return false; }
     this.held = { ...point, id: pointerId, gesture: ++this.gesture };
     return this.event(0, point, this.gesture) !== null;
@@ -283,7 +289,8 @@ export class ContinuousPointer {
       this.retire('scheduler_gap'); return;
     }
     if ((this.stateValue === 'opening' && now - this.openedAt >= CONTINUOUS_POINTER_LIMITS.startupMs)
-      || (this.stateValue === 'ready' && this.pending.length > 0 && now - (this.pending[0].deadlineAt ?? this.pending[0].at) >= CONTINUOUS_POINTER_LIMITS.receiptMs)
+      || (this.stateValue === 'ready' && this.pending.some(p => now - (p.deadlineAt ?? p.at)
+        >= (p.idleHeartbeat ? CONTINUOUS_POINTER_LIMITS.idleReceiptMs : CONTINUOUS_POINTER_LIMITS.receiptMs)))
       || (this.terminal && now - this.terminal.at >= CONTINUOUS_POINTER_LIMITS.receiptMs)) {
       this.retire('native_receipt_timeout'); return;
     }

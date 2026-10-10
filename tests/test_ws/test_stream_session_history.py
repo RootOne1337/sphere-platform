@@ -78,6 +78,8 @@ async def test_concurrent_viewers_and_samples_stay_bounded_and_keep_aggregates(s
     {"control_state": "secret-text"}, {"pixels": "private screenshot"},
     {"transport": "unknown_transport"}, {"incoming_fps": float("inf")}, {"control_rtt_ms": "20"},
     {"direct_network_rtt_ms": float("nan")}, {"direct_path": "192.168.0.9"}, {"direct_frames": True},
+    {"direct_failure": "private SDP"}, {"direct_state": "private state"},
+    {"direct_ice_state": "private address"}, {"direct_dtls_state": "private key"},
 ])
 async def test_invalid_and_private_browser_fields_are_never_retained(store, change):
     assert await store.begin(ORG, DEVICE, "viewer")
@@ -144,6 +146,16 @@ async def test_primary_picture_reports_its_own_transport_and_keeps_network_and_r
     assert row["transport"] == "direct_webrtc" and row["control_transport"] == "server_websocket"
     assert row["direct_jitter_buffer_ms"] == 45 and row["direct_network_rtt_ms"] == 2
     assert "video_latency_ms" not in row
+
+
+async def test_failed_primary_connection_records_the_exact_phase_without_claiming_direct_frames(store):
+    assert await store.begin(ORG, DEVICE, "viewer")
+    sample = SAMPLE | dict(direct_frames=0, direct_attempts=2, direct_state="failed",
+        direct_failure="connection_deadline", direct_ice_state="checking", direct_dtls_state="new")
+    assert await store.browser(ORG, DEVICE, "viewer", sample)
+    row = (await store.read(ORG, DEVICE))[0]["browser_samples"][-1]
+    assert row["transport"] == "server_websocket" and row["direct_frames"] == 0
+    assert row["direct_failure"] == "connection_deadline" and row["direct_dtls_state"] == "new"
 
 
 async def test_full_width_counters_cannot_block_recent_observations_or_session_closure(store):

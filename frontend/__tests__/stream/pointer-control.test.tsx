@@ -16,8 +16,10 @@ jest.mock('@/src/features/stream/StreamSessionHistoryPanel', () => ({ StreamSess
 jest.mock('@/src/features/stream/LiveDirectVideo', () => ({ LiveDirectVideo: ({ session, onObservation }: {
   session: string; onObservation: (value: object) => void;
 }) => {
-  const React = require('react');
-  React.useEffect(() => onObservation({ admitted: false, admissionKnown: true, active: false,
+  const React = jest.requireActual<typeof import('react')>('react');
+  const observation = React.useRef(onObservation);
+  observation.current = onObservation;
+  React.useEffect(() => observation.current({ admitted: false, admissionKnown: true, active: false,
     frames: 0, lastFrameAt: null, attempts: 0, result: null }), [session]);
   return null;
 } }));
@@ -249,9 +251,21 @@ it('recording does not silently turn live motion into a successful reusable swip
   expect(view.getByText(/Запись использует отдельные завершённые действия/)).toBeInTheDocument();
   view.unmount();
 });
-it('automatically renegotiates repeated idle delays after native release with backoff and no replay', () => {
+it('a delayed idle ACK does not restart video or disable the ready controller', () => {
   const view = readyContinuous();
   for (let i = 0; i < 4; i++) act(() => jest.advanceTimersByTime(250));
+  expect(view.getByText(/Непрерывное управление/)).toBeInTheDocument();
+  expect(view.sent().filter(x => x.type === 'touch_close')).toEqual([]);
+  expect(view.socket.close).not.toHaveBeenCalled();
+  view.status(3, 2);
+  view.down(1); view.up(1, 65);
+  expect(view.sent().filter(x => x.type === 'touch_event' && x.action !== 4).map(x => x.action)).toEqual([0, 1]);
+  view.unmount(); expect(jest.getTimerCount()).toBe(0);
+});
+
+it('automatically renegotiates repeated idle delays after native release with backoff and no replay', () => {
+  const view = readyContinuous();
+  for (let i = 0; i < 7; i++) act(() => jest.advanceTimersByTime(250));
   expect(view.sent().filter(x => x.type === 'touch_close')).toHaveLength(1);
   expect(view.sent().filter(x => x.type === 'touch_probe')).toHaveLength(1);
   expect(view.commands()).toEqual([]);
@@ -267,7 +281,7 @@ it('automatically renegotiates repeated idle delays after native release with ba
   view.receive({ type: 'continuous_input_status', session_id: 'second_session_fixture', owner: 'second_owner_fixture',
     capture_epoch: TOUCH_EPOCH, sequence: 0, status: 0, stage: 'startup', origin: 'injector', device_uptime_ms: 200 });
   expect(view.getByText(/Непрерывное управление/)).toBeInTheDocument();
-  for (let i = 0; i < 4; i++) act(() => jest.advanceTimersByTime(250));
+  for (let i = 0; i < 7; i++) act(() => jest.advanceTimersByTime(250));
   expect(view.getByText(/Автоматически восстанавливаем управление/)).toBeInTheDocument();
   expect(view.queryByText(/Android не подтвердил команду/)).not.toBeInTheDocument();
   expect(view.container.querySelector('[data-control-state]')).toHaveAttribute('data-control-failure', 'idle_receipt_timeout');
@@ -292,7 +306,7 @@ it('a lost idle RELEASE restarts only its viewer socket, requires a new frame an
   const view = readyContinuous();
   const oldReceive = view.socket.onmessage;
   jest.spyOn(Math, 'random').mockReturnValue(0.5);
-  for (let i = 0; i < 4; i++) act(() => jest.advanceTimersByTime(250));
+  for (let i = 0; i < 7; i++) act(() => jest.advanceTimersByTime(250));
   const previousMessages = view.sent().length;
   view.down(1); view.up(1, 65);
   expect(view.sent()).toHaveLength(previousMessages);
@@ -332,7 +346,7 @@ it('a lost idle RELEASE restarts only its viewer socket, requires a new frame an
 
 it('a new-socket server denial stops recovery and cannot silently enable legacy input', () => {
   const view = readyContinuous();
-  for (let i = 0; i < 4; i++) act(() => jest.advanceTimersByTime(250));
+  for (let i = 0; i < 7; i++) act(() => jest.advanceTimersByTime(250));
   act(() => jest.advanceTimersByTime(3750));
   const next = MockSocket.instances[1];
   next.readyState = MockSocket.OPEN;
@@ -355,7 +369,7 @@ it('caps repeated idle recovery delays without giving up or accumulating timers'
     session_id: session, owner, capture_epoch: TOUCH_EPOCH, sequence, status, stage,
     origin: 'injector', device_uptime_ms: 100 });
   for (const [index, delay] of [750, 1500, 3000, 6000, 12000, 15000, 15000].entries()) {
-    for (let i = 0; i < 4; i++) act(() => jest.advanceTimersByTime(250));
+    for (let i = 0; i < 7; i++) act(() => jest.advanceTimersByTime(250));
     reply(0, 3, 'release');
     const probes = view.sent().filter(x => x.type === 'touch_probe').length;
     act(() => jest.advanceTimersByTime(delay - 1));
@@ -376,7 +390,7 @@ it('caps repeated idle recovery delays without giving up or accumulating timers'
 
 it('resets recovery backoff only after sustained native receipts', () => {
   const view = readyContinuous();
-  for (let i = 0; i < 4; i++) act(() => jest.advanceTimersByTime(250));
+  for (let i = 0; i < 7; i++) act(() => jest.advanceTimersByTime(250));
   view.status(0, 3, 'release');
   act(() => jest.advanceTimersByTime(750));
   view.receive({ type: 'touch_capability', capture_epoch: TOUCH_EPOCH, frame_width: 1280, frame_height: 720 });
@@ -392,7 +406,7 @@ it('resets recovery backoff only after sustained native receipts', () => {
     const event = view.sent().slice(newOwnerMessagesStart).filter(x => x.type === 'touch_event').at(-1);
     if (event) reply(event.sequence, 2);
   }
-  for (let i = 0; i < 4; i++) act(() => jest.advanceTimersByTime(250));
+  for (let i = 0; i < 7; i++) act(() => jest.advanceTimersByTime(250));
   reply(0, 3, 'release');
   expect(view.sent().filter(x => x.type === 'touch_probe')).toHaveLength(2);
   act(() => jest.advanceTimersByTime(750));
@@ -402,7 +416,7 @@ it('resets recovery backoff only after sustained native receipts', () => {
 
 it('recording after a known idle release accepts a new explicit action without reconnecting', () => {
   const view = readyContinuous();
-  for (let i = 0; i < 4; i++) act(() => jest.advanceTimersByTime(250));
+  for (let i = 0; i < 7; i++) act(() => jest.advanceTimersByTime(250));
   view.status(0, 3, 'release');
   const record = jest.fn();
   const ready = jest.fn();
@@ -483,7 +497,7 @@ it('recovers a temporary probe refusal before any controller exists without reop
 
 it('a stale owner error cannot cancel a replacement capability deadline', () => {
   const view = readyContinuous();
-  for (let i = 0; i < 4; i++) act(() => jest.advanceTimersByTime(250));
+  for (let i = 0; i < 7; i++) act(() => jest.advanceTimersByTime(250));
   view.status(0, 3, 'release');
   act(() => jest.advanceTimersByTime(750));
   view.receive({ type: 'touch_error', error: 'input_temporarily_unavailable', reason: 'runtime_unavailable',
@@ -546,7 +560,7 @@ it('a busy admission before native STARTUP retries negotiation without claiming 
 
 it.each(['readonly', 'recording', 'handoff', 'inspection', 'blur'])('pauses idle recovery while %s owns the surface', mode => {
   const view = readyContinuous();
-  for (let i = 0; i < 4; i++) act(() => jest.advanceTimersByTime(250));
+  for (let i = 0; i < 7; i++) act(() => jest.advanceTimersByTime(250));
   view.status(0, 3, 'release');
   if (mode === 'blur') fireEvent.blur(window);
   else view.rerender(<DeviceStream deviceId="gesture-remote" enableNavigation enableStaticInput
@@ -654,7 +668,7 @@ it.each(['missing', 'unknown', 'foreign'])('an uncertain touch with %s RELEASE c
 it('shows the finite failed heartbeat snapshot after RELEASE and clears it on a new device', () => {
   const view = readyContinuous();
   view.rerender(<DeviceStream deviceId="gesture-remote" enableNavigation enableStaticInput enableDiagnostics />);
-  for (let i = 0; i < 4; i++) act(() => jest.advanceTimersByTime(250));
+  for (let i = 0; i < 7; i++) act(() => jest.advanceTimersByTime(250));
   fireEvent.click(view.getByRole('button', { name: 'Диагностика' }));
   expect(view.getByText(/Видео и управление идут через сервер/)).toBeInTheDocument();
   expect(view.getByText(/Последний сбой управления · native_receipt_timeout/)).toBeInTheDocument();

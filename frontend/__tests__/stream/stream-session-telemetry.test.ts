@@ -51,3 +51,14 @@ test('direct results are bound to their viewer and distinguish echo RTT from pre
   expect(reporter.direct(result, session.session_id)).toBe(true);
   expect(directDiagnosticSample({ state: 'failed', samples: [], path: 'unknown', protocol: null, reason: 'private exception' }, 0, 'host', true).reason).toBe('other');
 });
+
+test('the main video records bounded failure and ICE phases even when no direct picture arrived', () => {
+  const direct = { admitted: true, admissionKnown: true, active: false, frames: 0, lastFrameAt: null, attempts: 2,
+    result: { state: 'failed' as const, reason: 'connection_deadline', samples: [], path: 'unknown' as const, protocol: null,
+      iceState: 'checking' as const, network: { dtlsState: 'new' } as never } };
+  const result = browserStreamSample(stats, { state: 'ready', failure: null, rtt: 200, attempts: 0 }, 1000, direct);
+  expect(result).toMatchObject({ transport: 'server_websocket', direct_state: 'failed',
+    direct_failure: 'connection_deadline', direct_ice_state: 'checking', direct_dtls_state: 'new', direct_frames: 0 });
+  direct.result.reason = 'private SDP or credential';
+  expect(browserStreamSample(stats, { state: 'ready', failure: null, rtt: null, attempts: 0 }, 1000, direct).direct_failure).toBe('other');
+});

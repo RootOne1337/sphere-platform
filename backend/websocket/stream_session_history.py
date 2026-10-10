@@ -20,6 +20,14 @@ REPORT_INTERVAL_SECONDS = 10
 
 Counter = Annotated[int, Field(ge=0, le=2**53 - 1)]
 Milliseconds = Annotated[float, Field(ge=0, le=86400000, allow_inf_nan=False)]
+DirectFailure = Literal[
+    "probe_deadline", "gathering_deadline", "signaling_deadline", "connection_deadline",
+    "invalid_description", "missing_binding", "signaling_unavailable", "invalid_ice_grant",
+    "invalid_answer", "invalid_signal", "signaling_closed", "webrtc_unavailable", "invalid_video_track",
+    "video_track_ended", "video_renderer_failed", "peer_disconnected", "echo_timeout", "channel_backpressure",
+    "echo_send_failed", "invalid_video_binding", "invalid_echo", "channel_failed", "channel_closed", "offer_failed",
+    "video_access_rejected", "video_first_frame_timeout", "video_renderer_unavailable", "capture_changed", "session_lifetime", "other",
+]
 
 
 class BrowserStreamSample(BaseModel):
@@ -35,6 +43,10 @@ class BrowserStreamSample(BaseModel):
     direct_decode_ms: Milliseconds | None = None
     direct_fps: Annotated[float, Field(ge=0, le=1024, allow_inf_nan=False)] | None = None
     direct_attempts: Annotated[int, Field(ge=0, le=1000000)] | None = None
+    direct_state: Literal["gathering", "signaling", "connecting", "connected", "finished", "stopped", "failed"] | None = None
+    direct_failure: DirectFailure | None = None
+    direct_ice_state: Literal["new", "checking", "connected", "completed", "disconnected", "failed", "closed"] | None = None
+    direct_dtls_state: Literal["new", "connecting", "connected", "closed", "failed"] | None = None
     visibility: Literal["visible", "hidden"]
     received_packets: Counter
     received_bytes: Counter
@@ -67,14 +79,7 @@ class DirectDiagnosticResult(BaseModel):
     state: Literal["finished", "stopped", "failed"]
     path: Literal["host", "nat", "relay", "unknown"]
     protocol: Literal["udp", "tcp"] | None
-    reason: Literal[
-        "probe_deadline", "gathering_deadline", "signaling_deadline", "connection_deadline",
-        "invalid_description", "missing_binding", "signaling_unavailable", "invalid_ice_grant",
-        "invalid_answer", "invalid_signal", "signaling_closed", "webrtc_unavailable", "invalid_video_track",
-        "video_track_ended", "video_renderer_failed", "peer_disconnected", "echo_timeout", "channel_backpressure",
-        "echo_send_failed", "invalid_video_binding", "invalid_echo", "channel_failed", "channel_closed",
-        "offer_failed", "other",
-    ] | None
+    reason: DirectFailure | None
     echoes: Annotated[int, Field(ge=0, le=20)]
     echo_rtt_p95_ms: Milliseconds | None
     presented_frames: Counter

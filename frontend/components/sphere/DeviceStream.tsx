@@ -19,7 +19,7 @@ import { AutomaticStreamDiagnostic } from '@/src/features/stream/AutomaticStream
 import { LiveDirectVideo, type LiveVideoObservation } from '@/src/features/stream/LiveDirectVideo';
 import type { DirectVideoBinding } from '@/src/features/stream/directVideoProtocol';
 import { StreamSessionHistoryPanel } from '@/src/features/stream/StreamSessionHistoryPanel';
-import { browserStreamSample, StreamSessionReporter } from '@/src/features/stream/streamSessionTelemetry';
+import { browserStreamSample, directFailure, StreamSessionReporter } from '@/src/features/stream/streamSessionTelemetry';
 
 interface DeviceStreamProps {
   deviceId: string;
@@ -1191,7 +1191,7 @@ export function DeviceStream({
       <span role="status" className="min-w-0 flex-[1_1_16rem] text-xs leading-relaxed">{continuousReason ?? (discreteBusy ? 'Клавиатура и навигация · ожидаем подтверждение Android' : continuousRecording ? 'Запись использует отдельные завершённые действия' : continuousState === 'ready'
         ? 'Непрерывное управление · зажмите и ведите мышь' : continuousState === 'opening' ? 'Подключаем управление Android…' : continuousState === 'probing' ? 'Определяем возможности APK…' : continuousState === 'closed' ? 'Касание Android освобождено' : 'Управление Android')}
       {continuousReceipt && continuousState === 'ready' && <span title={`Круговое время подтверждения Android №${continuousReceipt.sequence} через текущий серверный WebSocket, включая обработку на устройстве. Это не задержка изображения и не RTT прямого канала.`}>
-        {` · ${continuousReceipt.action === 4 ? 'Связь с Android' : 'Ответ Android'}: ${continuousReceipt.ms} мс`}
+        {` · ${continuousReceipt.action === 4 ? 'ACK связи' : 'ACK действия'} через сервер: ${continuousReceipt.ms} мс`}
       </span>}</span>
       {continuousFault && !idleRecovering && ['fenced', 'closed'].includes(continuousState) && continuousReason && <button type="button" onClick={() => setControlSession(value => value + 1)} className="ml-auto rounded-lg border border-border px-3 py-2 text-xs hover:bg-muted">Восстановить управление</button>}
     </div>}
@@ -1315,6 +1315,8 @@ export function DeviceStream({
             {directVideo.admitted && <div className="mt-2 border-t border-border pt-2">
               <div>Основной WebRTC: {directVideo.active ? 'кадры отображаются' : 'серверный резерв'} · кадров {directVideo.frames} · подключений {directVideo.attempts}</div>
               <div>Путь ICE: {directVideo.result?.path ?? 'unknown'} · {directVideo.result?.protocol ?? 'не измерен'}</div>
+              <div>Состояние канала: {directVideo.result?.state ?? 'ожидаем кадр сервера'} · ICE {directVideo.result?.iceState ?? '—'} · DTLS {directVideo.result?.network?.dtlsState ?? '—'}</div>
+              {directVideo.result?.reason && <div>Причина восстановления: {directFailure(directVideo.result.reason)}</div>}
               <div>RTT сети: {directVideo.result?.videoStats?.networkRttMs?.toFixed(1) ?? '—'} мс</div>
               <div>Буфер видео в браузере: {directVideo.result?.videoStats?.jitterBufferMs?.toFixed(1) ?? '—'} мс · декодирование: {directVideo.result?.videoStats?.decodeMs?.toFixed(1) ?? '—'} мс</div>
               <p className="text-muted-foreground">Это отдельные этапы, а не полная задержка от экрана Android до браузера.</p>

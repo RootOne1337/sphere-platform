@@ -59,14 +59,14 @@ it.each([
 
 it('preserves an immutable idle failure snapshot before clearing pending receipts', () => {
   const f = fixture();
-  f.advance(250); f.advance(250); f.advance(250);
+  for (let n = 0; n < 6; n++) f.advance(250);
   expect(f.controller.state).toBe('fenced');
   expect(f.controller.pendingReceiptCount).toBe(0);
   expect(f.onFence).toHaveBeenCalledTimes(1);
   const snapshot = f.onFence.mock.calls[0][0];
   expect(snapshot).toMatchObject({ reason: 'native_receipt_timeout', phase: 'ready', idleHeartbeatOnly: true,
-    offeredSequence: 2, acknowledgedSequence: 0, pendingCount: 2, oldestSequence: 1, oldestAction: 4,
-    oldestAgeMs: 500, oldestDeadlineAgeMs: 500, tickGapMs: 250, lastSendAgeMs: 250,
+    offeredSequence: 5, acknowledgedSequence: 0, pendingCount: 5, oldestSequence: 1, oldestAction: 4,
+    oldestAgeMs: 1250, oldestDeadlineAgeMs: 1250, tickGapMs: 250, lastSendAgeMs: 250,
     terminalSequence: null, terminalAgeMs: null, pointerHeld: false,
     lastReceiptAgeMs: null, lastReceiptRoundTripMs: null, socketState: 1, bufferedBytes: 0 });
   expect(Object.isFrozen(snapshot)).toBe(true);
@@ -94,8 +94,8 @@ it('captures actual RTT and age of the last ACK even when observers are throttle
 it('keeps cold-start send age distinct from the deadline age started at native READY', () => {
   const f = fixture(false); f.controller.open(CAPTURE); f.bind();
   for (let i = 0; i < 5; i++) f.advance(250);
-  f.status(0, 0, 'startup'); f.advance(250); f.advance(250);
-  expect(f.onFence.mock.calls[0][0]).toMatchObject({ oldestAgeMs: 1500, oldestDeadlineAgeMs: 500,
+  f.status(0, 0, 'startup'); for (let n = 0; n < 5; n++) f.advance(250);
+  expect(f.onFence.mock.calls[0][0]).toMatchObject({ oldestAgeMs: 2250, oldestDeadlineAgeMs: 1250,
     oldestSequence: 1, phase: 'ready' });
 });
 
@@ -148,7 +148,7 @@ it('keeps cold startup alive without applying the ready receipt deadline to open
   expect(f.status(0, 0, 'startup')).toBe(true);
   f.advance(250);
   expect(f.controller.state).toBe('ready');
-  f.advance(250);
+  for (let n = 0; n < 4; n++) f.advance(250);
   expect(f.controller.state).toBe('fenced');
   expect(f.sent.filter(event => event.type === 'touch_close')).toHaveLength(1);
 });
@@ -287,10 +287,31 @@ it('native receipt silence fences after 500ms despite a successful socket send',
 });
 it('classifies only an idle heartbeat timeout as eligible for reconciliation after known release', () => {
   const f = fixture();
-  f.advance(250); f.advance(250); f.advance(250);
+  for (let n = 0; n < 6; n++) f.advance(250);
   expect(f.controller.state).toBe('fenced');
   expect(f.controller.recoverableIdleReceiptLoss).toBe(true);
   expect(f.controller.unknownPointerReceiptLoss).toBe(false);
+});
+
+it('tolerates an 800ms idle ACK without reconnecting, while starting no touch on a stale heartbeat', () => {
+  const f = fixture();
+  for (let n = 0; n < 4; n++) f.advance(250);
+  expect(f.controller.state).toBe('ready');
+  f.advance(50, false); expect(f.status(1, 2)).toBe(true);
+  expect(f.onReceipt).toHaveBeenLastCalledWith(expect.objectContaining({ receiptRoundTripMs: 800 }));
+  expect(f.controller.down(1, POINT)).toBe(false);
+  expect(f.controller.recoverableIdleReceiptLoss).toBe(true);
+  expect(f.events().every(e => e.action === 4)).toBe(true);
+});
+
+it('a timely newer idle ACK permits a fresh touch; its missing ACK still fences at 500ms', () => {
+  const f = fixture();
+  for (let n = 0; n < 4; n++) f.advance(250);
+  expect(f.ackLatest()).toBe(true);
+  expect(f.controller.down(1, POINT)).toBe(true);
+  f.advance(250); f.advance(250);
+  expect(f.controller.state).toBe('fenced');
+  expect(f.controller.unknownPointerReceiptLoss).toBe(true);
 });
 
 it.each(['down', 'move', 'up', 'cancel'])('preserves an unknown %s outcome across retirement and native release', phase => {

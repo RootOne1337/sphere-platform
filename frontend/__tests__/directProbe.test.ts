@@ -109,6 +109,30 @@ test('live signaling loss stops the media immediately and retires all renewals',
   jest.advanceTimersByTime(60000); expect(peer.channel.send).not.toHaveBeenCalled();
   stop(); expect(jest.getTimerCount()).toBe(0);
 });
+
+test('live ICE recovers a transient disconnected state without replacing the peer or media grant', async () => {
+  const { stop, peer, reports } = await videoConnected(true);
+  peer.connectionState = 'disconnected'; peer.onconnectionstatechange?.();
+  jest.advanceTimersByTime(2000);
+  expect(peer.close).not.toHaveBeenCalled();
+  peer.connectionState = 'connected'; peer.onconnectionstatechange?.(); await flush();
+  jest.advanceTimersByTime(1000);
+  expect(reports.at(-1)?.state).toBe('connected');
+  expect(peer.close).not.toHaveBeenCalled();
+  stop(); expect(jest.getTimerCount()).toBe(0);
+});
+
+test.each(['disconnected', 'failed', 'closed'])('live ICE still retires a persistent or terminal %s state', async state => {
+  const { stop, peer, reports } = await videoConnected(true);
+  peer.connectionState = state; peer.onconnectionstatechange?.();
+  if (state === 'disconnected') {
+    jest.advanceTimersByTime(2999); expect(peer.close).not.toHaveBeenCalled();
+    jest.advanceTimersByTime(1);
+  }
+  expect(reports.at(-1)?.reason).toBe('peer_disconnected');
+  expect(peer.close).toHaveBeenCalledTimes(1);
+  stop(); expect(jest.getTimerCount()).toBe(0);
+});
 test('video negotiates an explicit receive-only transceiver and independently bound read-only channel', async () => {
   const { reports, stop, peer, ws } = await videoConnected();
   expect(JSON.parse(ws.send.mock.calls[0][0])).toEqual({ token: 'access', protocol: 'sphere-video-probe-v1' });
