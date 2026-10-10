@@ -254,6 +254,13 @@ def validate_registry(root: Path, registry: dict) -> list[str]:
             errors.append("Direct probe implementation evidence is missing")
         if direct["state"] == "DIAGNOSTIC_PILOT_INSTALLED":
             errors.extend(validate_diagnostic_pilot(root, direct))
+    elif direct["state"] == "READONLY_VIDEO_PILOT_INSTALLED":
+        if (direct["implementationAuthorizedNow"] is not True or not direct.get("implementationAuthorization")
+                or direct.get("prototypeScope") != "readonly_video_v1"
+                or direct.get("readOnlyVideoInstalled") is not True or direct.get("directInputInstalled") is not False
+                or direct.get("mediaControlInstalled") is not False or direct.get("runtimeInstalled") is not True):
+            errors.append("Read-only video pilot cannot imply direct Android input or production media acceptance")
+        errors.extend(validate_readonly_video_pilot(root, direct))
     else:
         errors.append("Direct-media state requires a reviewed implementation/installation gate")
     for file in registry["authoritativeEntrypoints"]:
@@ -285,6 +292,28 @@ def validate_diagnostic_pilot(root: Path, direct: dict) -> list[str]:
             or pilot.get("channelAccepted") is not False):
         errors.append("Installed diagnostic receipt must bind one device and retain unaccepted channel/media gates")
     return errors
+
+
+def validate_readonly_video_pilot(root: Path, direct: dict) -> list[str]:
+    """Separate signed/runtime delivery from the later observation of real RTP frames."""
+    path = root / direct.get("pilotEvidence", "__missing__")
+    if not path.is_file() or direct.get("pilotEvidenceSha256NormalizedLf") != normalized_hash(path):
+        return ["Read-only video installation receipt missing or fingerprint mismatch"]
+    receipt = read_json(root, str(path.relative_to(root)))
+    pilot, apk = receipt.get("diagnosticPilot", {}), receipt.get("apk", {})
+    devices = pilot.get("deviceIds")
+    if (receipt.get("runtimeInstalled") is not True or direct.get("pilotCurrentlyEnabled") is not True
+            or pilot.get("enabled") is not True or pilot.get("scope") != "readonly_video_v1"
+            or pilot.get("readOnlyVideoInstalled") is not True or pilot.get("directInputInstalled") is not False
+            or pilot.get("mediaControlInstalled") is not False or pilot.get("videoAccepted") is not False
+            or devices != direct.get("pilotDeviceIds") or not isinstance(devices, list) or len(devices) != 1
+            or not isinstance(devices[0], str)
+            or not re.fullmatch(r"[a-f0-9]{8}(?:-[a-f0-9]{4}){3}-[a-f0-9]{12}", devices[0])
+            or type(apk.get("versionCode")) is not int or apk["versionCode"] < 10251
+            or not isinstance(apk.get("sha256"), str) or not re.fullmatch(r"[a-f0-9]{64}", apk["sha256"])
+            or apk.get("installedPackageSha256") != apk.get("sha256")):
+        return ["Read-only video receipt must bind one updated APK and retain unaccepted video/input gates"]
+    return []
 
 
 def validate_inventory(root: Path, registry: dict, inventory: dict) -> list[str]:

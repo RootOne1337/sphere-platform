@@ -8,13 +8,15 @@
 
 </div>
 
-**Проверенная установка:** UI `c17332eb` / API `c17332eb`.
+**Проверенная установка:** UI `ee0d8e6f` / API `ee0d8e6f`.
+
+**10 октября — UI/API прямого видеорежима установлены.** APK1.2.51-dev собран, но PH030 офлайн и остаётся на10250; OTA и живые RTP-кадры ещё не приняты. [Доставка, проверки и следующий шаг](audits/2026-10-10/DIRECT-VIDEO-API-INSTALLED.md).
 
 Последующий [тест ноутбука PH030](audits/2026-10-10/PH030-LAPTOP-CHANNEL-USER-OBSERVATION.md):
 20/20 echo, p95 25,8 мс NAT/UDP по результату пользователя. Прямые видео/input и
 localhost требуют отдельной приёмки. [Новый RTP canary в исходниках](audits/2026-10-10/DIRECT-VIDEO-READONLY-SOURCE.md).
 
-**10 октября — последняя UI коррекция:** автоматическая готовность после reconnect
+**Предыдущая UI коррекция 10 октября:** автоматическая готовность после reconnect
 и навигации;1996frontend tests. Конечный PH011 scope не закрывает latency/direct/fleet.
 [Актуальная установка и ограничения](audits/2026-10-10/CONTINUOUS-AUTO-RECOVERY-INSTALLED.md).
 

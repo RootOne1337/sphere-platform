@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
-  "reviewedAtUtc": "2026-10-10T11:04:56.835406+00:00",
-  "sourceReviewed": "c17332ebe39e2288a0db055a35d3f3c5d1ab8258",
+  "reviewedAtUtc": "2026-10-10T11:38:03.299052+00:00",
+  "sourceReviewed": "ee0d8e6f7630dcaa3518a3fcf9bfcb35d67b7498",
   "scope": "Effective documentation status; source/install/finite acceptance kept separate. No new fleet or soak acceptance.",
   "baseline": "docs/audits/2026-10-05/ENTERPRISE-PRODUCT-BACKLOG.json",
   "previousCrosscheck": "docs/audits/2026-10-09/CHAT-CODE-RECONCILIATION.json",
@@ -11,18 +11,18 @@
     "open": 41
   },
   "installed": {
-    "lastObservedUtc": "2026-10-10T06:36:12.043608+00:00",
-    "ui": "c17332ebe39e2288a0db055a35d3f3c5d1ab8258",
-    "api": "c17332ebe39e2288a0db055a35d3f3c5d1ab8258",
-    "evidence": "docs/audits/2026-10-10/DIRECT-ADMISSION-INSTALLED.json",
-    "observation": "Exact CI UI/API c173 installed and two-origin per-device admission/rendering accepted. Later user-observed finite PH030 laptop echo20/20, p95=25.8ms NAT/UDP; video/input still server WebSocket, no production/media/latency acceptance.",
+    "lastObservedUtc": "2026-10-10T11:38:03.299052+00:00",
+    "ui": "ee0d8e6f7630dcaa3518a3fcf9bfcb35d67b7498",
+    "api": "ee0d8e6f7630dcaa3518a3fcf9bfcb35d67b7498",
+    "evidence": "docs/audits/2026-10-10/DIRECT-VIDEO-API-INSTALLED.json",
+    "observation": "Exact CI ee0 UI/API installed. Two-origin finite admission and UI, public mobile390 and ordinary PH011 video7 frames accepted. PH03010250 is offline; signed10251 built, OTA and live RTP pending. User-observed laptop echo20/20 remains separate.",
     "pilotApk": {
       "device": "PH011",
       "version": "1.2.49-dev",
       "versionCode": 10249,
-      "scope": "PH011 original APK restored after three finite161 diagnostic installations; exact SHA in current receipt, no fleet inventory claim"
+      "scope": "PH011 ordinary1.2.49-dev preserved; seven ordinary WebSocket frames observed, no new APK or input acceptance."
     },
-    "evidenceSha256NormalizedLf": "cc4ee00b1a75d9e0b504bb9c4781aa3467a49ac0ce6dc799c34c8441fd78faf8",
+    "evidenceSha256NormalizedLf": "25233cc53eac5a59327a273e1b4ed4352e228a32803ae791399fdc270a84682b",
     "additionalPilotApks": [
       {
         "device": "PH030",
@@ -122,7 +122,7 @@
     "implementationAuthorizedNow": true,
     "researchPreparedAtUtc": "2026-10-09T16:46:29Z",
     "researchEvidence": "docs/design/BROWSER-DIRECT-TRANSPORT.md",
-    "researchScope": "Finite main-PC fixture is interface-dependent: default physical route timeout, forced Ethernet response; no system route changes. Isolated coturn REST/TLS fixtures passed their bounded scope. PH030 on no-VPN laptop updated via targeted OTA to10250; actual SHA matched. No laptop browser direct channel or media/control acceptance. Later user-observed laptop echo20/20, p95=25.8ms NAT/UDP is recorded separately; no localhost/media/input/latency acceptance.",
+    "researchScope": "Earlier main-PC fixture is interface-dependent; isolated coturn REST/TLS fixtures are finite. PH030 laptop OTA10250 actual SHA matched. User subsequently reported laptop browser/APK echo20/20, p95=25.8ms over NAT/UDP; exact test time unspecified. This accepts neither localhost nor video/input/latency. ee0 UI/API readonly-video server support installed, signed10251 built, native OTA blocked by PH030 offline.",
     "researchPrerequisites": [
       "Versioned offer/input/control ownership and auth contract",
       "Bounded command-to-native/frame timing with unknown results visible",
@@ -156,10 +156,12 @@
       "docs/audits/2026-10-10/DIRECT-PROBE-NATIVE-PROGRESS-SOURCE.json",
       "docs/audits/2026-10-10/DIRECT-PROBE-NATIVE-PROGRESS-CANARY.json",
       "docs/audits/2026-10-10/DIRECT-PROBE-TURN-AND-LAPTOP.json",
-      "docs/audits/2026-10-10/DIRECT-ADMISSION-INSTALLED.json"
+      "docs/audits/2026-10-10/DIRECT-ADMISSION-INSTALLED.json",
+      "docs/audits/2026-10-10/DIRECT-VIDEO-READONLY-SOURCE.md",
+      "docs/audits/2026-10-10/DIRECT-VIDEO-API-INSTALLED.json"
     ],
     "pilotEvidence": "docs/audits/2026-10-10/DIRECT-ADMISSION-INSTALLED.json",
-    "pilotOutcome": "ADMISSION_INSTALLED_CHANNEL_UNVERIFIED",
+    "pilotOutcome": "USER_OBSERVED_LAPTOP_ECHO_API_VIDEO_NATIVE_PENDING",
     "pilotCurrentlyEnabled": true,
     "nativeDiagnosticAcceptance": {
       "state": "ACCEPTED_FINITE_DIAGNOSTIC_SCOPE",
@@ -178,7 +180,7 @@
       "apkSha256": "f7bfbc2218acd20a9f9f07b4d0f8d30c14f0547e25fc5eab648881426c69108c",
       "evidence": "docs/audits/2026-10-10/DIRECT-PROBE-TURN-AND-LAPTOP.json",
       "evidenceSha256NormalizedLf": "0a43d3a528b376459ece52eeb3fbc45b29c2541fe1a25f6925e8b4bcb1f28dae",
-      "scope": "one targeted OTA completed, fresh heartbeat and actual package SHA matched; no direct channel acceptance"
+      "scope": "One10250 targeted OTA completed with actual package SHA. Later user-observed laptop echo20/20 is separately recorded; current device offline. No direct video/input/localhost acceptance."
     },
     "pilotDeviceIds": [
       "753fd530-2f19-4e5e-98ba-769863678141"
@@ -201,6 +203,20 @@
       "topology": "browser on main PC with VPN; PH030 on laptop without VPN",
       "outcome": "ANSWER_RECEIVED_NO_CHANNEL",
       "laptopBrowserChannelAccepted": false
+    },
+    "pendingReadonlyVideo": {
+      "evidence": "docs/audits/2026-10-10/DIRECT-VIDEO-API-INSTALLED.json",
+      "evidenceSha256NormalizedLf": "25233cc53eac5a59327a273e1b4ed4352e228a32803ae791399fdc270a84682b",
+      "apiSourceRevision": "ee0d8e6f7630dcaa3518a3fcf9bfcb35d67b7498",
+      "serverFlagEnabled": true,
+      "deviceId": "753fd530-2f19-4e5e-98ba-769863678141",
+      "candidateVersionCode": 10251,
+      "candidateApkSha256": "4f3687e753fafda058f0f8d123904cceb56f6f6932bda08e4a1feb4f6dc1984c",
+      "nativeInstalled": false,
+      "nativeUpdateIssued": false,
+      "admissionEnabled": false,
+      "videoAccepted": false,
+      "reason": "PH030 offline; installed native version10250 lacks readonly-video support."
     }
   },
   "items": [
@@ -1899,8 +1915,8 @@
         "EP-020",
         "EP-047"
       ],
-      "acceptedScope": "PH030 OTA10250 actual SHA confirmed; exact CI c173 UI/API installed, finite two-origin authenticated PH030-only admission/rendering verified. No laptop direct channel/media/input acceptance.",
-      "remaining": "Actual laptop browser-to-PH030 channel/RTT; native public TURN fallback, media/control, global ownership, reconnect and resource budgets. Standard-web admission is installed; its finite UI/HTTP checks do not accept a peer channel.",
+      "acceptedScope": "PH030 targeted OTA10250 actual SHA confirmed; user-observed laptop echo20/20 p95=25.8ms NAT/UDP. Exact CI ee0 UI/API installed; two-origin admission, mobile390 and ordinary video7 frames accepted. Signed10251 is built but not installed because PH030 is offline; no live RTP/input acceptance.",
+      "remaining": "Targeted10251 OTA and actual SHA, then real laptop RTP frames and dimensions. Primary media/input transport, native TURN, localhost/LAN/WAN matrix, ownership/reconnect, ABR and resource/latency budgets remain open.",
       "evidence": [
         "docs/design/BROWSER-DIRECT-TRANSPORT.md",
         "docs/audits/2026-10-09/IDLE-CONTROL-RELAY-REVIEW.md",
@@ -1915,7 +1931,9 @@
         "docs/audits/2026-10-10/DIRECT-PROBE-NATIVE-COUNTERS-CANARY.json",
         "docs/audits/2026-10-10/DIRECT-PROBE-NATIVE-PROGRESS-CANARY.json",
         "docs/audits/2026-10-10/DIRECT-PROBE-TURN-AND-LAPTOP.json",
-        "docs/audits/2026-10-10/DIRECT-ADMISSION-INSTALLED.json"
+        "docs/audits/2026-10-10/DIRECT-ADMISSION-INSTALLED.json",
+        "docs/audits/2026-10-10/DIRECT-VIDEO-API-INSTALLED.json",
+        "docs/audits/2026-10-10/PH030-LAPTOP-CHANNEL-USER-OBSERVATION.json"
       ],
       "sourcePaths": [
         "backend/websocket/direct_probe_protocol.py",
@@ -2073,13 +2091,13 @@
   ],
   "sourceWorktreeEvidence": "docs/audits/2026-10-10/DIRECT-ADMISSION-INSTALLED.json",
   "publicWeb": {
-    "lastObservedUtc": "2026-10-10T06:36:12.043608+00:00",
+    "lastObservedUtc": "2026-10-10T11:38:03.299052+00:00",
     "url": "https://sphere-agent-canary-20260927.ru.tuna.am",
-    "ui": "c17332ebe39e2288a0db055a35d3f3c5d1ab8258",
-    "api": "c17332ebe39e2288a0db055a35d3f3c5d1ab8258",
-    "evidence": "docs/audits/2026-10-10/DIRECT-ADMISSION-INSTALLED.json",
-    "evidenceSha256NormalizedLf": "cc4ee00b1a75d9e0b504bb9c4781aa3467a49ac0ce6dc799c34c8441fd78faf8",
-    "scope": "Same public host map, exact CI c173 UI/API. Finite admission HTTP/UI verified; direct channel and media/input unaccepted.",
+    "ui": "ee0d8e6f7630dcaa3518a3fcf9bfcb35d67b7498",
+    "api": "ee0d8e6f7630dcaa3518a3fcf9bfcb35d67b7498",
+    "evidence": "docs/audits/2026-10-10/DIRECT-VIDEO-API-INSTALLED.json",
+    "evidenceSha256NormalizedLf": "25233cc53eac5a59327a273e1b4ed4352e228a32803ae791399fdc270a84682b",
+    "scope": "Exact CI ee0 UI/API on unchanged public host map. HTTP admission and desktop/mobile echo-only UI verified; no new direct RTP/input or laptop route acceptance.",
     "additionalQa": {
       "evidence": "docs/audits/2026-10-09/PUBLIC-WEB-SUPPLEMENTAL-QA.json",
       "evidenceSha256NormalizedLf": "84f719a322e114a34ba4f4fc5624f717a71558f2b80f5aea1a484b50778ceac4",

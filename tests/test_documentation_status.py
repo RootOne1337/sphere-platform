@@ -20,6 +20,7 @@ from scripts.check_documentation_status import (
     validate_diagnostic_pilot,
     validate_installed_receipt,
     validate_inventory,
+    validate_readonly_video_pilot,
     validate_registry,
     validate_runtime_banners,
     validate_status_report,
@@ -74,6 +75,35 @@ class DocumentationStatusTests(unittest.TestCase):
 
     def test_current_runtime_banners_agree_with_frozen_installation(self) -> None:
         self.assertEqual(validate_runtime_banners(ROOT, self.registry), [])
+
+    def test_readonly_video_receipt_requires_exact_updated_apk_and_keeps_input_unaccepted(self) -> None:
+        device = "753fd530-2f19-4e5e-98ba-769863678141"
+        pilot = dict(enabled=True, scope="readonly_video_v1", deviceIds=[device],
+                     readOnlyVideoInstalled=True, directInputInstalled=False,
+                     mediaControlInstalled=False, videoAccepted=False)
+        apk = dict(versionCode=10251, sha256="a" * 64, installedPackageSha256="a" * 64)
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            path = root / "pilot.json"
+
+            def bound(picture=pilot, package=apk):
+                path.write_text(json.dumps(dict(runtimeInstalled=True, diagnosticPilot=picture, apk=package)), encoding="utf-8")
+                return dict(pilotEvidence=path.name, pilotEvidenceSha256NormalizedLf=normalized_hash(path),
+                            pilotCurrentlyEnabled=True, pilotDeviceIds=[device])
+
+            self.assertEqual(validate_readonly_video_pilot(root, bound()), [])
+            for key, value in (("deviceIds", [device, device]), ("scope", "diagnostic_echo_only"),
+                               ("directInputInstalled", True), ("mediaControlInstalled", True),
+                               ("readOnlyVideoInstalled", False), ("videoAccepted", True)):
+                with self.subTest(key=key):
+                    self.assertTrue(validate_readonly_video_pilot(root, bound(pilot | {key: value})))
+            for key, value in (("versionCode", 10250), ("versionCode", True), ("sha256", "wrong"),
+                               ("installedPackageSha256", "b" * 64)):
+                with self.subTest(key=key):
+                    self.assertTrue(validate_readonly_video_pilot(root, bound(package=apk | {key: value})))
+            direct = bound()
+            path.write_text("{}", encoding="utf-8")
+            self.assertTrue(validate_readonly_video_pilot(root, direct))
 
     def test_old_api_banner_fails_while_historical_revisions_remain_valid(self) -> None:
         banner = installed_runtime_banner(self.registry["installed"])
