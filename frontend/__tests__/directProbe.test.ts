@@ -1,4 +1,4 @@
-import { probePath, startDirectProbe, startDirectVideoProbe, type DirectProbeResult } from '@/src/features/stream/directProbe';
+import { probePath, startDirectProbe, startDirectVideoProbe, startDirectVideoSession, type DirectProbeResult } from '@/src/features/stream/directProbe';
 import { parseVideoBinding, readonlyVideoSdp } from '@/src/features/stream/directVideoProtocol';
 import { TextEncoder } from 'util';
 
@@ -69,10 +69,11 @@ const appSdp = 'v=0\r\na=fingerprint:sha-256 ' + Array(32).fill('AB').join(':')
   + '\r\nm=application 9 UDP/DTLS/SCTP webrtc-datachannel\r\n';
 const videoSdp = appSdp + 'm=video 9 UDP/TLS/RTP/SAVPF 96\r\na=recvonly\r\na=rtpmap:96 H264/90000\r\n';
 const epoch = '12345678-1234-4234-8234-123456789abc';
-async function videoConnected() {
+async function videoConnected(live = false) {
   FakePeer.initialSdp = videoSdp;
   const reports: DirectProbeResult[] = [], onTrack = jest.fn();
-  const stop = startDirectVideoProbe('wss://same-origin/ws/direct-probe/device', 'access', r => reports.push(r), { onTrack });
+  const start = live ? startDirectVideoSession : startDirectVideoProbe;
+  const stop = start('wss://same-origin/ws/direct-probe/device', 'access', r => reports.push(r), { onTrack });
   await flush();
   const ws = FakeSocket.latest, peer = FakePeer.latest;
   ws.onopen?.();
@@ -80,6 +81,34 @@ async function videoConnected() {
   await flush(); peer.channel.onopen?.();
   return { reports, stop, onTrack, ws, peer };
 }
+
+test('primary video negotiates a separate grant and renews beyond the finite diagnostic lifetime', async () => {
+  const { stop, peer, ws, reports } = await videoConnected(true);
+  expect(JSON.parse(ws.send.mock.calls[0][0])).toEqual({ token: 'access', protocol: 'sphere-video-v1' });
+  expect(peer.createDataChannel).toHaveBeenCalledWith('sphere-video-v1', { ordered: true });
+  peer.channel.onmessage?.({ data: `SV1 ${sid} ${epoch} 960 540` });
+  for (let sequence = 1; sequence <= 24; sequence++) {
+    jest.advanceTimersByTime(5000);
+    expect(peer.channel.send).toHaveBeenLastCalledWith(`SL1 ${sid} ${sequence}`);
+    peer.channel.onmessage?.({ data: `SL1 ${sid} ${sequence}` }); await flush();
+  }
+  expect(reports.at(-1)?.state).toBe('connected');
+  expect(reports.at(-1)?.samples).toHaveLength(20);
+  expect(peer.close).not.toHaveBeenCalled();
+  const renewals = ws.send.mock.calls.map(([text]) => JSON.parse(text)).filter(row => row.type === 'direct_video_keepalive');
+  expect(renewals).toHaveLength(24); expect(renewals.at(-1).sequence).toBe(24);
+  stop(); expect(jest.getTimerCount()).toBe(0); expect(peer.close).toHaveBeenCalledTimes(1);
+});
+
+test('live signaling loss stops the media immediately and retires all renewals', async () => {
+  const { stop, peer, ws, reports } = await videoConnected(true);
+  peer.channel.onmessage?.({ data: `SV1 ${sid} ${epoch} 960 540` });
+  (ws.onclose as unknown as (event: { code: number }) => void)?.({ code: 4003 });
+  expect(reports.at(-1)?.reason).toBe('video_access_rejected');
+  expect(peer.close).toHaveBeenCalledTimes(1);
+  jest.advanceTimersByTime(60000); expect(peer.channel.send).not.toHaveBeenCalled();
+  stop(); expect(jest.getTimerCount()).toBe(0);
+});
 test('video negotiates an explicit receive-only transceiver and independently bound read-only channel', async () => {
   const { reports, stop, peer, ws } = await videoConnected();
   expect(JSON.parse(ws.send.mock.calls[0][0])).toEqual({ token: 'access', protocol: 'sphere-video-probe-v1' });

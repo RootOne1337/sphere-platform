@@ -25,7 +25,16 @@ Milliseconds = Annotated[float, Field(ge=0, le=86400000, allow_inf_nan=False)]
 class BrowserStreamSample(BaseModel):
     model_config = ConfigDict(extra="forbid", strict=True)
     schema_version: Literal[1]
-    transport: Literal["server_websocket"]
+    transport: Literal["server_websocket", "direct_webrtc"]
+    control_transport: Literal["server_websocket"] = "server_websocket"
+    direct_frames: Counter | None = None
+    direct_frame_age_ms: Milliseconds | None = None
+    direct_path: Literal["host", "nat", "relay", "unknown"] | None = None
+    direct_network_rtt_ms: Milliseconds | None = None
+    direct_jitter_buffer_ms: Milliseconds | None = None
+    direct_decode_ms: Milliseconds | None = None
+    direct_fps: Annotated[float, Field(ge=0, le=1024, allow_inf_nan=False)] | None = None
+    direct_attempts: Annotated[int, Field(ge=0, le=1000000)] | None = None
     visibility: Literal["visible", "hidden"]
     received_packets: Counter
     received_bytes: Counter

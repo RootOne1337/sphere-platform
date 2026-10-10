@@ -17,7 +17,11 @@ from backend.models.device import Device
 from backend.models.user import User
 from backend.services.device_status_cache import DeviceStatusCache
 from backend.websocket.direct_probe_ice import turn_urls
-from backend.websocket.direct_probe_protocol import VIDEO_MIN_AGENT_CODE, InvalidDirectProbe
+from backend.websocket.direct_probe_protocol import (
+    LIVE_VIDEO_MIN_AGENT_CODE,
+    VIDEO_MIN_AGENT_CODE,
+    InvalidDirectProbe,
+)
 from backend.websocket.direct_probe_runtime import get_direct_probe_runtime
 from backend.websocket.stream_session_history import (
     RETENTION_SECONDS,
@@ -67,6 +71,7 @@ class ProbeCapabilities(BaseModel):
     max_duration_ms: Literal[30000] = 30000
     samples: Literal[20] = 20
     readonly_video_enabled: bool = False
+    live_video_enabled: bool = False
 
 
 def relay_configured() -> bool:
@@ -98,8 +103,13 @@ async def probe_capabilities(
     if enabled and relay_configured():
         profiles.append("turn")
     video_enabled = False
-    if enabled and settings.DIRECT_TRANSPORT_VIDEO_PROBE_ENABLED and runtime:
+    live_enabled = False
+    if enabled and runtime and (settings.DIRECT_TRANSPORT_VIDEO_PROBE_ENABLED or settings.DIRECT_TRANSPORT_LIVE_VIDEO_ENABLED):
         status = await DeviceStatusCache(runtime.redis).get_status(str(device_id))
-        video_enabled = bool(status and status.ws_session_id and status.status in {"online", "busy"}
+        current = bool(status and status.ws_session_id and status.status in {"online", "busy"})
+        video_enabled = bool(current and settings.DIRECT_TRANSPORT_VIDEO_PROBE_ENABLED and status
                              and status.agent_version_code and status.agent_version_code >= VIDEO_MIN_AGENT_CODE)
-    return ProbeCapabilities(device_id=device_id, enabled=enabled, profiles=profiles, readonly_video_enabled=video_enabled)
+        live_enabled = bool(current and settings.DIRECT_TRANSPORT_LIVE_VIDEO_ENABLED and status
+                            and status.agent_version_code and status.agent_version_code >= LIVE_VIDEO_MIN_AGENT_CODE)
+    return ProbeCapabilities(device_id=device_id, enabled=enabled, profiles=profiles,
+                             readonly_video_enabled=video_enabled, live_video_enabled=live_enabled)

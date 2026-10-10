@@ -76,7 +76,8 @@ async def test_concurrent_viewers_and_samples_stay_bounded_and_keep_aggregates(s
 @pytest.mark.parametrize("change", [
     {"received_bytes": -1}, {"control_rtt_ms": float("nan")}, {"received_packets": True},
     {"control_state": "secret-text"}, {"pixels": "private screenshot"},
-    {"transport": "direct_webrtc"}, {"incoming_fps": float("inf")}, {"control_rtt_ms": "20"},
+    {"transport": "unknown_transport"}, {"incoming_fps": float("inf")}, {"control_rtt_ms": "20"},
+    {"direct_network_rtt_ms": float("nan")}, {"direct_path": "192.168.0.9"}, {"direct_frames": True},
 ])
 async def test_invalid_and_private_browser_fields_are_never_retained(store, change):
     assert await store.begin(ORG, DEVICE, "viewer")
@@ -131,6 +132,18 @@ async def test_missing_control_receipt_stays_unknown_instead_of_zero_latency(sto
     assert await store.begin(ORG, DEVICE, "viewer")
     assert await store.browser(ORG, DEVICE, "viewer", SAMPLE | {"control_rtt_ms": None})
     assert "max_control_rtt_ms" not in (await store.read(ORG, DEVICE))[0]["browser_summary"]
+
+
+async def test_primary_picture_reports_its_own_transport_and_keeps_network_and_receive_delays_separate(store):
+    assert await store.begin(ORG, DEVICE, "viewer")
+    sample = SAMPLE | dict(transport="direct_webrtc", control_transport="server_websocket", direct_frames=120,
+        direct_fps=30, direct_frame_age_ms=20, direct_network_rtt_ms=2, direct_jitter_buffer_ms=45,
+        direct_decode_ms=1.5, direct_path="host", direct_attempts=1)
+    assert await store.browser(ORG, DEVICE, "viewer", sample)
+    row = (await store.read(ORG, DEVICE))[0]["browser_samples"][-1]
+    assert row["transport"] == "direct_webrtc" and row["control_transport"] == "server_websocket"
+    assert row["direct_jitter_buffer_ms"] == 45 and row["direct_network_rtt_ms"] == 2
+    assert "video_latency_ms" not in row
 
 
 async def test_full_width_counters_cannot_block_recent_observations_or_session_closure(store):

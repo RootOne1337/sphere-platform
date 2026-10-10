@@ -40,6 +40,40 @@ def candidate(old):
 
 
 class BackendInstallerTests(unittest.TestCase):
+    def test_fleet_admission_is_explicit_bounded_and_cannot_alter_unrelated_configuration(self):
+        devices = (PROBE_DEVICE, "753fd530-2f19-4e5e-98ba-769863678141")
+        old, new = configuration(), candidate(configuration())
+        env = installer.probe_environment(None, live_video=True, devices=devices)
+        self.assertEqual(json.loads(env["DIRECT_TRANSPORT_PROBE_DEVICE_IDS"]), sorted(devices))
+        new["services"]["backend"]["environment"].update(env)
+        installer.validate_delta(old, new, TAG, live_video=True, direct_probe_devices=devices)
+        for selected in ((), (PROBE_DEVICE, PROBE_DEVICE), ("all",), [PROBE_DEVICE], (PROBE_DEVICE,) * 65):
+            with self.subTest(selected=selected), self.assertRaises(ValueError):
+                installer.probe_environment(None, live_video=True, devices=selected)
+        with self.assertRaises(ValueError):
+            installer.probe_environment(PROBE_DEVICE, devices=devices)
+        with self.assertRaises(ValueError):
+            installer.probe_environment(None, True, devices=devices)
+        with self.assertRaises(ValueError):
+            installer.validate_delta(old, new, TAG, live_video=True, direct_probe_devices=(PROBE_DEVICE,))
+        new["services"]["backend"]["environment"]["POSTGRES_URL"] = "changed"
+        with self.assertRaises(ValueError):
+            installer.validate_delta(old, new, TAG, live_video=True, direct_probe_devices=devices)
+
+    def test_primary_video_is_a_separate_explicit_device_grant(self):
+        for device, disable in ((None, False), (None, True), (PROBE_DEVICE, True)):
+            with self.subTest(device=device, disable=disable), self.assertRaises(ValueError):
+                installer.probe_environment(device, disable, live_video=True)
+        old = configuration()
+        new = candidate(old)
+        new["services"]["backend"]["environment"].update(installer.probe_environment(PROBE_DEVICE, live_video=True))
+        installer.validate_delta(old, new, TAG, PROBE_DEVICE, live_video=True)
+        self.assertEqual(new["services"]["backend"]["environment"]["DIRECT_TRANSPORT_LIVE_VIDEO_ENABLED"], "true")
+        self.assertEqual(new["services"]["backend"]["environment"]["DIRECT_TRANSPORT_VIDEO_PROBE_ENABLED"], "false")
+        with self.assertRaises(ValueError):
+            installer.validate_delta(old, new, TAG, PROBE_DEVICE)
+        self.assertEqual(installer.probe_environment(None, True)["DIRECT_TRANSPORT_LIVE_VIDEO_ENABLED"], "false")
+
     def test_probe_requires_explicit_single_canonical_device(self):
         old = configuration()
         new = candidate(old)

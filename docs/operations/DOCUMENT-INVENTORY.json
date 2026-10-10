@@ -5,7 +5,7 @@
   "countsByRole": {
     "ADR": 6,
     "CURRENT_ENTRYPOINT": 8,
-    "DATED_EVIDENCE": 269,
+    "DATED_EVIDENCE": 270,
     "DESIGN_SPECIFICATION": 76,
     "OPERATING_GUIDE": 64,
     "PROJECT_POLICY": 7,
@@ -1218,6 +1218,10 @@
     },
     {
       "file": "docs/audits/2026-10-10/STREAM-SESSION-DIAGNOSTICS.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
+      "file": "docs/audits/2026-10-11/DIRECT-PRIMARY-VIDEO-CANDIDATE.md",
       "role": "DATED_EVIDENCE"
     },
     {

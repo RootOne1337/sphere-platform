@@ -2,6 +2,7 @@ import type { StreamDecoderStats } from '@/lib/h264-decoder';
 import type { ContinuousPointerState } from './continuousPointer';
 import type { DirectProbeResult } from './directProbe';
 import type { DiagnosticProfile } from './DirectProbeDiagnostics';
+import type { LiveVideoObservation } from './LiveDirectVideo';
 
 type ControlObservation = { state: ContinuousPointerState | 'probing'; failure: string | null; rtt: number | null; attempts: number };
 const counter = (value: number) => Number.isFinite(value) ? Math.min(Number.MAX_SAFE_INTEGER, Math.max(0, Math.floor(value))) : 0;
@@ -13,9 +14,15 @@ const reasons = new Set(['probe_deadline', 'gathering_deadline', 'signaling_dead
   'invalid_video_binding', 'invalid_echo', 'channel_failed', 'channel_closed', 'offer_failed']);
 
 /** Explicit scalar whitelist: decoder exception text and Android input never leave the viewer. */
-export function browserStreamSample(stats: StreamDecoderStats, control: ControlObservation, now = Date.now()) {
+export function browserStreamSample(stats: StreamDecoderStats, control: ControlObservation, now = Date.now(), direct?: LiveVideoObservation) {
   const age = (at: number | null) => at === null ? null : milliseconds(now - at);
-  return { schema_version: 1, transport: 'server_websocket', visibility: document.hidden ? 'hidden' : 'visible',
+  return { schema_version: 1, transport: direct?.active ? 'direct_webrtc' : 'server_websocket', visibility: document.hidden ? 'hidden' : 'visible',
+    ...(direct ? { control_transport: 'server_websocket', direct_frames: counter(direct.frames),
+      direct_frame_age_ms: age(direct.lastFrameAt), direct_path: direct.result?.path ?? 'unknown',
+      direct_network_rtt_ms: milliseconds(direct.result?.videoStats?.networkRttMs ?? null),
+      direct_jitter_buffer_ms: milliseconds(direct.result?.videoStats?.jitterBufferMs ?? null),
+      direct_decode_ms: milliseconds(direct.result?.videoStats?.decodeMs ?? null),
+      direct_fps: direct.result?.videoStats?.fps ?? null, direct_attempts: Math.min(1000000, counter(direct.attempts)) } : {}),
     received_packets: counter(stats.binaryMessagesReceived), received_bytes: counter(stats.binaryBytesReceived),
     rendered_frames: counter(stats.renderedFrames), decoded_frames: counter(stats.decodedOutputs),
     invalid_packets: counter(stats.invalidPackets), decode_errors: counter(stats.decodeErrors), render_errors: counter(stats.renderErrors),

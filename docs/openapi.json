@@ -17591,6 +17591,11 @@
             "type": "boolean",
             "title": "Readonly Video Enabled",
             "default": false
+          },
+          "live_video_enabled": {
+            "type": "boolean",
+            "title": "Live Video Enabled",
+            "default": false
           }
         },
         "type": "object",

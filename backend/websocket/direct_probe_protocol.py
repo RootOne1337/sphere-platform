@@ -10,6 +10,9 @@ MAX_PEERS = 8
 CHANNEL_LABEL = "sphere-probe-v1"
 VIDEO_MODE = "readonly_video_v1"
 VIDEO_MIN_AGENT_CODE = 10251
+LIVE_VIDEO_MODE = "live_video_v1"
+LIVE_VIDEO_MIN_AGENT_CODE = 10252
+LIVE_SESSION_SECONDS = 8 * 3600
 
 
 class InvalidDirectProbe(ValueError):

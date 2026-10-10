@@ -1,4 +1,4 @@
-"""Opt-in 30-second echo or read-only RTP video; shared stream authentication/RBAC."""
+"""Bounded diagnostics and renewable primary RTP video with shared stream RBAC."""
 from __future__ import annotations
 
 import asyncio
@@ -13,6 +13,7 @@ from backend.database.engine import AsyncSessionLocal
 from backend.models.device import Device
 from backend.websocket.direct_probe_ice import issue_turn_grant
 from backend.websocket.direct_probe_protocol import (
+    LIVE_SESSION_SECONDS,
     MAX_WIRE_BYTES,
     SESSION_MS,
     InvalidDirectProbe,
@@ -62,15 +63,16 @@ async def direct_probe_ws(ws: WebSocket, device_id: str) -> None:
         import json
         first = json.loads(raw)
         if (not isinstance(first, dict) or first.keys() not in ({"token"}, {"token", "protocol"}, {"token", "protocol", "relay"})
-                or "protocol" in first and first["protocol"] not in {"sphere-probe-v2", "sphere-video-probe-v1"}
+                or "protocol" in first and first["protocol"] not in {"sphere-probe-v2", "sphere-video-probe-v1", "sphere-video-v1"}
                 or "relay" in first and (first.get("protocol") != "sphere-video-probe-v1" or first["relay"] is not True)
                 or not isinstance(first["token"], str) or not first["token"]):
             raise InvalidDirectProbe("invalid_auth")
         identity = await authorize(first["token"], device_id)
-        video = first.get("protocol") == "sphere-video-probe-v1"
-        if video and not settings.DIRECT_TRANSPORT_VIDEO_PROBE_ENABLED:
+        live = first.get("protocol") == "sphere-video-v1"
+        video = live or first.get("protocol") == "sphere-video-probe-v1"
+        if video and not (settings.DIRECT_TRANSPORT_LIVE_VIDEO_ENABLED if live else settings.DIRECT_TRANSPORT_VIDEO_PROBE_ENABLED):
             raise InvalidDirectProbe("video_probe_disabled")
-        viewer = ProbeViewer(device_id, *identity, ws, video=video)
+        viewer = ProbeViewer(device_id, *identity, ws, video=video, live=live)
         if first.get("protocol") == "sphere-probe-v2" or video and first.get("relay") is True:
             await runtime.prepare(viewer)
             options = dict(relay_only=settings.DIRECT_PROBE_TURN_RELAY_ONLY)
@@ -86,13 +88,14 @@ async def direct_probe_ws(ws: WebSocket, device_id: str) -> None:
             raise InvalidDirectProbe("message_too_large")
         await runtime.open(viewer, viewer_offer(json.loads(raw), video=video))
         # Token revocation and device/role changes close the signaling grant.
-        # APK also enforces a nonrenewable local TTL if the signaling path disappears.
-        async with asyncio.timeout(SESSION_MS / 1000):
+        # Live video requires continuing authorization and exact lease renewal.
+        # A vanished signaling path still expires locally in <=30 seconds.
+        async with asyncio.timeout(LIVE_SESSION_SECONDS if live else SESSION_MS / 1000):
             while True:
                 try:
                     raw = await asyncio.wait_for(ws.receive_text(), 5)
                 except asyncio.TimeoutError:
-                    if video and not settings.DIRECT_TRANSPORT_VIDEO_PROBE_ENABLED:
+                    if video and not (settings.DIRECT_TRANSPORT_LIVE_VIDEO_ENABLED if live else settings.DIRECT_TRANSPORT_VIDEO_PROBE_ENABLED):
                         raise InvalidDirectProbe("video_probe_disabled")
                     if await authorize(first["token"], device_id) != identity:
                         raise InvalidDirectProbe("probe_access_revoked")
@@ -100,12 +103,28 @@ async def direct_probe_ws(ws: WebSocket, device_id: str) -> None:
                         if not viewer.binding or not await runtime.remaining(viewer.binding):
                             raise InvalidDirectProbe("probe_expired")
                     continue
+                if raw == '{"type":"direct_probe_close"}':
+                    break
+                if live and len(raw.encode()) <= 128:
+                    data = json.loads(raw)
+                    if (isinstance(data, dict) and data.keys() == {"type", "sequence"}
+                            and data["type"] == "direct_video_keepalive"):
+                        if await authorize(first["token"], device_id) != identity:
+                            raise InvalidDirectProbe("probe_access_revoked")
+                        await runtime.renew(viewer, data["sequence"])
+                        continue
                 if raw != '{"type":"direct_probe_close"}':
                     raise InvalidDirectProbe("unexpected_probe_message")
-                break
     except WebSocketDisconnect:
         return
-    except (HTTPException, InvalidDirectProbe, ValueError, TypeError, TimeoutError):
+    except (HTTPException, InvalidDirectProbe, ValueError, TypeError, TimeoutError) as exc:
+        if viewer and viewer.live:
+            # Permission loss is terminal. A busy/expired peer or failed setup
+            # may reconnect; the primary picture keeps its independent fallback.
+            denied = isinstance(exc, HTTPException) or str(exc) == "probe_access_revoked"
+            await close_probe(ws, 4003 if denied else 1013,
+                              "direct_video_access_rejected" if denied else "direct_video_retry")
+            return
         await close_probe(ws, 4003, "direct_probe_rejected_or_expired")
         return
     except Exception:

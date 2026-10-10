@@ -4,7 +4,10 @@ import { api } from '@/lib/api';
 import { useAuthStore } from '@/lib/store';
 
 type SessionRecord = { session_id: string; opened_at: string; state: 'active' | 'closed' | 'stale';
-  browser_samples?: { received_at: string; rendered_frames: number; incoming_fps: number; control_rtt_ms?: number }[];
+  browser_samples?: { received_at: string; rendered_frames: number; incoming_fps: number; control_rtt_ms?: number;
+    transport?: 'server_websocket' | 'direct_webrtc'; direct_frames?: number; direct_fps?: number | null;
+    direct_path?: string; direct_network_rtt_ms?: number | null; direct_jitter_buffer_ms?: number | null;
+    direct_decode_ms?: number | null }[];
   browser_summary?: { max_control_rtt_ms?: number; max_decode_errors: number; max_render_errors: number };
   direct_diagnostics?: { profile: string; path: string; presented_frames: number; echo_rtt_p95_ms?: number; reason?: string }[];
   control_events?: { reason?: string; error: string }[] };
@@ -33,8 +36,14 @@ export function StreamSessionHistoryPanel({ deviceId }: { deviceId: string }) {
         return <li key={row.session_id} className="rounded-md border border-border bg-background p-2">
           <div className="flex flex-wrap justify-between gap-2 font-medium"><span>{new Date(row.opened_at).toLocaleString('ru-RU')}</span>
             <span>{({ active: 'Активен', closed: 'Завершён', stale: 'Связь с наблюдателем потеряна' })[row.state] ?? 'Состояние неизвестно'}</span></div>
-          <div className="mt-1 text-xs text-muted-foreground">{sample ? `${sample.rendered_frames} кадров · вход ${sample.incoming_fps} FPS` : 'Метрики браузера ещё не получены'}
+          <div className="mt-1 text-xs text-muted-foreground">{sample?.transport === 'direct_webrtc'
+            ? `Основное видео · WebRTC · ${sample.direct_frames ?? '—'} кадров · ${sample.direct_fps?.toFixed(1) ?? '—'} FPS · путь ${sample.direct_path ?? 'не определён'}`
+            : sample ? `Видео через сервер · ${sample.rendered_frames} кадров · вход ${sample.incoming_fps} FPS` : 'Метрики браузера ещё не получены'}
             {row.browser_summary && ` · максимальный RTT управления ${row.browser_summary.max_control_rtt_ms != null ? `${row.browser_summary.max_control_rtt_ms} мс` : 'не измерен'} · ошибок декодирования ${row.browser_summary.max_decode_errors}`}</div>
+          {sample?.transport === 'direct_webrtc' && <div className="mt-1 text-xs text-muted-foreground">
+            RTT сети {sample.direct_network_rtt_ms?.toFixed(1) ?? '—'} мс · буфер приёма {sample.direct_jitter_buffer_ms?.toFixed(1) ?? '—'} мс · декодирование {sample.direct_decode_ms?.toFixed(1) ?? '—'} мс.
+            Это отдельные этапы, а не полная задержка картинки. Управление через сервер.
+          </div>}
           {probe && <div className="mt-1 text-xs">Прямой тест: {probe.profile} · {probe.path} · {probe.presented_frames} кадров
             {probe.echo_rtt_p95_ms != null && ` · RTT пакетов p95 ${probe.echo_rtt_p95_ms.toFixed(1)} мс`}{probe.reason && ` · ${probe.reason}`}</div>}
           {fault && <div className="mt-1 break-words text-xs text-muted-foreground">Последний отказ управления: {fault.reason ?? fault.error}</div>}

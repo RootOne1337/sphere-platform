@@ -2,6 +2,8 @@
 import { useEffect, useRef, useCallback, useState } from 'react';
 import { H264Decoder } from '@/lib/h264-decoder';
 import type { StreamDecoderStats } from '@/lib/h264-decoder';
+import type { CaptureFrameBinding } from '@/lib/h264-decoder';
+import { parseSphereFrame } from '@/lib/sphere-frame';
 import { useAuthStore } from '@/lib/store';
 import { api } from '@/lib/api';
 import type { StreamFrameDimensions } from '@/src/features/stream/streamAspectRatio';
@@ -14,6 +16,8 @@ import { ContinuousInputDiagnostics } from '@/src/features/stream/ContinuousInpu
 import { DirectProbeDiagnostics } from '@/src/features/stream/DirectProbeDiagnostics';
 import { DirectProbeAccess } from '@/src/features/stream/DirectProbeAccess';
 import { AutomaticStreamDiagnostic } from '@/src/features/stream/AutomaticStreamDiagnostic';
+import { LiveDirectVideo, type LiveVideoObservation } from '@/src/features/stream/LiveDirectVideo';
+import type { DirectVideoBinding } from '@/src/features/stream/directVideoProtocol';
 import { StreamSessionHistoryPanel } from '@/src/features/stream/StreamSessionHistoryPanel';
 import { browserStreamSample, StreamSessionReporter } from '@/src/features/stream/streamSessionTelemetry';
 
@@ -135,6 +139,13 @@ export function DeviceStream({
   } | null>(null);
   const [automaticDiagnosticBusy, setAutomaticDiagnosticBusy] = useState(false);
   const renderedSocketRef = useRef<WebSocket | null>(null);
+  const renderedCaptureRef = useRef<CaptureFrameBinding | null>(null);
+  const serverCaptureRef = useRef<CaptureFrameBinding | null>(null);
+  const recoverServerFrameRef = useRef<(() => void) | null>(null);
+  const directFramePresentedRef = useRef<(() => void) | null>(null);
+  const directVideoRef = useRef<LiveVideoObservation>({ admitted: false, admissionKnown: false, active: false,
+    frames: 0, lastFrameAt: null, attempts: 0, result: null });
+  const [directVideo, setDirectVideo] = useState(directVideoRef.current);
   const lastWheelAt = useRef(-Infinity);
   const decoderRef = useRef<H264Decoder | null>(null);
   const continuousRef = useRef<ContinuousPointer | null>(null);
@@ -224,6 +235,39 @@ export function DeviceStream({
   const invalidateInspectionRef = useRef(onInspectionInvalidated);
   invalidateInspectionRef.current = onInspectionInvalidated;
 
+  const renderDirectFrame = useCallback((video: HTMLVideoElement, binding: DirectVideoBinding, session: string) => {
+    const socket = wsRef.current, canvas = canvasRef.current;
+    if (!socket || socket.readyState !== WebSocket.OPEN || diagnosticReporter.current?.sessionId !== session || !canvas) return false;
+    const expected = serverCaptureRef.current;
+    if (!expected || expected.captureEpoch !== binding.captureEpoch || expected.frameWidth !== binding.width || expected.frameHeight !== binding.height) return false;
+    const context = canvas.getContext('2d');
+    if (!context) return false;
+    if (canvas.width !== binding.width || canvas.height !== binding.height) {
+      dragRef.current = null; invalidateInspectionRef.current?.();
+      canvas.width = binding.width; canvas.height = binding.height;
+    }
+    context.drawImage(video, 0, 0, canvas.width, canvas.height);
+    if (!directVideoRef.current.active) decoderRef.current?.reset();
+    directVideoRef.current = { ...directVideoRef.current, active: true, lastFrameAt: Date.now() };
+    renderedCaptureRef.current = { captureEpoch: binding.captureEpoch, frameWidth: binding.width, frameHeight: binding.height };
+    renderedSocketRef.current = socket;
+    directFramePresentedRef.current?.();
+    setConnection('live'); setHasRenderedFrame(true); setStreamError(null);
+    return true;
+  }, []);
+  const observeDirectVideo = useCallback((value: LiveVideoObservation, session: string) => {
+    if (diagnosticReporter.current?.sessionId !== session) return;
+    const wasActive = directVideoRef.current.active;
+    directVideoRef.current = value; setDirectVideo(value);
+    if (wasActive && !value.active) {
+      dragRef.current = null; invalidateInspectionRef.current?.();
+      renderedCaptureRef.current = null; renderedSocketRef.current = null;
+      continuousRef.current?.retire('capture_or_socket_lost');
+      decoderRef.current?.reset(); setConnection('waiting');
+      recoverServerFrameRef.current?.();
+    }
+  }, []);
+
   useEffect(() => {
     lastFrameDimensionsRef.current = null;
     dragRef.current = null;
@@ -292,9 +336,17 @@ export function DeviceStream({
       if (!canvas) return;
 
       const ctx = canvas.getContext('2d')!;
+      directFramePresentedRef.current = () => {
+        clearTimeout(keyFrameTimer); clearTimeout(frameStaleTimer);
+        frameStaleTimer = setTimeout(() => {
+          if (ignore || wsRef.current?.readyState !== WebSocket.OPEN) return;
+          setConnection('stale');
+        }, FRAME_STALE_TIMEOUT_MS);
+      };
 
-      decoder = new H264Decoder((frame) => {
+      decoder = new H264Decoder((frame, binding) => {
         if (ignore || wsRef.current?.readyState !== WebSocket.OPEN) return;
+        if (directVideoRef.current.active) return;
         if (!ctx || frame.displayWidth < 1 || frame.displayHeight < 1) throw new Error('Invalid canvas frame.');
         // Mutate canvas directly for performance, avoid React state re-renders
         if (canvas.width !== frame.displayWidth || canvas.height !== frame.displayHeight) {
@@ -308,6 +360,8 @@ export function DeviceStream({
         // Only a successful canvas render proves a picture. A decoder output
         // that throws during drawImage must not unlock clicks or PNG export.
         ctx.drawImage(frame, 0, 0, canvas.width, canvas.height);
+        serverCaptureRef.current = binding ?? null;
+        renderedCaptureRef.current = binding ?? null;
         renderedSocketRef.current = wsRef.current;
         setConnection('live');
         setHasRenderedFrame(true);
@@ -355,6 +409,9 @@ export function DeviceStream({
         dragRef.current = null;
         invalidateInspectionRef.current?.();
         lastFrameDimensionsRef.current = null;
+        serverCaptureRef.current = null; renderedCaptureRef.current = null;
+        directVideoRef.current = { admitted: false, admissionKnown: false, active: false, frames: 0, lastFrameAt: null, attempts: 0, result: null };
+        setDirectVideo(directVideoRef.current);
         setStreamError(null);
         setInputError(unknownPointerNoticeRef.current ? UNKNOWN_POINTER_NOTICE : null);
         const newWs = new WebSocket(wsUrl);
@@ -364,7 +421,7 @@ export function DeviceStream({
         telemetryControl.current = { state: 'idle', failure: null, rtt: null, attempts: idleRecoveryCountRef.current };
         setContinuousReceipt(null);
         const reporter = new StreamSessionReporter(newWs, () => decoder
-          ? browserStreamSample(decoder.stats, telemetryControl.current) : null);
+          ? browserStreamSample(decoder.stats, telemetryControl.current, Date.now(), directVideoRef.current) : null);
         diagnosticReporter.current = reporter;
         automaticProbeRef.current = null;
         // Keep the previously confirmed input path across socket replacements.
@@ -400,6 +457,7 @@ export function DeviceStream({
           keyFrameTimer = setTimeout(requestKeyFrame, delayMs);
         };
         scheduleKeyFrameRecovery = scheduleKeyFrameRequests;
+        recoverServerFrameRef.current = () => scheduleKeyFrameRequests(0);
         const finish = (retry: boolean, terminalMessage?: string, minimumRetryDelayMs = 0) => {
           if (ended) return;
           ended = true;
@@ -425,6 +483,10 @@ export function DeviceStream({
           if (wsRef.current === newWs) wsRef.current = null;
           if (diagnosticReporter.current === reporter) diagnosticReporter.current = null;
           if (renderedSocketRef.current === newWs) renderedSocketRef.current = null;
+          serverCaptureRef.current = null; renderedCaptureRef.current = null;
+          directVideoRef.current = { ...directVideoRef.current, active: false };
+          if (!ignore) setDirectVideo(directVideoRef.current);
+          recoverServerFrameRef.current = null;
           decoder?.reset();
           if (newWs.readyState === WebSocket.OPEN || newWs.readyState === WebSocket.CONNECTING) {
             newWs.close();
@@ -467,7 +529,23 @@ export function DeviceStream({
           if (ignore || ended) return;
           lastReceived = Date.now();
           attempt = 0;
-          if (evt.data instanceof ArrayBuffer) decoder?.handleBinary(evt.data);
+          if (evt.data instanceof ArrayBuffer) {
+            if (!directVideoRef.current.active) decoder?.handleBinary(evt.data);
+            else {
+              const frame = parseSphereFrame(evt.data);
+              if (frame && frame.captureEpoch !== serverCaptureRef.current?.captureEpoch) {
+                // A newer server capture revokes the old direct picture before
+                // any pointer is mapped using its old geometry.
+                serverCaptureRef.current = null; renderedCaptureRef.current = null;
+                renderedSocketRef.current = null; dragRef.current = null;
+                continuousRef.current?.retire('capture_or_socket_lost');
+                directVideoRef.current = { ...directVideoRef.current, active: false };
+                setDirectVideo(directVideoRef.current); setConnection('waiting');
+                decoder?.reset(); decoder?.handleBinary(evt.data);
+                scheduleKeyFrameRequests(0);
+              }
+            }
+          }
           if (typeof evt.data === 'string') {
             try {
               const msg = JSON.parse(evt.data);
@@ -483,7 +561,7 @@ export function DeviceStream({
                   setContinuousReason('Дискретное управление · текущий жест завершается без смены режима.');
                   return;
                 }
-                const capture = decoder?.lastRenderedCapture;
+                const capture = renderedCaptureRef.current;
                 if (!capture || msg.capture_epoch !== capture.captureEpoch || msg.frame_width !== capture.frameWidth
                   || msg.frame_height !== capture.frameHeight) {
                   // The response grants no touch authority. Keep the owned probe
@@ -494,7 +572,7 @@ export function DeviceStream({
                   return;
                 }
                 const controller = new ContinuousPointer({ socket: newWs,
-                  renderedCapture: () => decoder?.lastRenderedCapture ?? null,
+                  renderedCapture: () => renderedCaptureRef.current,
                   onFence: snapshot => {
                     if (ignore || ended || newWs !== wsRef.current
                       || ['viewer_closed', 'viewer_destroyed', 'surface_blur', 'surface_hidden', 'surface_control_lost', 'control_mode_changed', 'capture_or_socket_lost'].includes(snapshot.reason)) return;
@@ -713,6 +791,9 @@ export function DeviceStream({
       wsRef.current = null;
       diagnosticReporter.current = null;
       renderedSocketRef.current = null;
+      renderedCaptureRef.current = null; serverCaptureRef.current = null;
+      recoverServerFrameRef.current = null;
+      directFramePresentedRef.current = null;
       ws?.close();
       decoder?.destroy();
       decoderRef.current = null;
@@ -839,7 +920,7 @@ export function DeviceStream({
     }
     const socket = wsRef.current;
     if (!enableNavigation || !canInteract || idleRecoveringRef.current || continuousFaultRef.current || discreteBusyRef.current || !socket
-      || automaticProbeRef.current === socket || !decoderRef.current?.lastRenderedCapture
+      || automaticProbeRef.current === socket || !renderedCaptureRef.current
       || continuousRef.current && !['closed', 'destroyed'].includes(continuousRef.current.state)) return;
     automaticProbeRef.current = socket;
     beginContinuous();
@@ -1136,6 +1217,11 @@ export function DeviceStream({
         objectFit: fit ?? 'contain',
       }}
     />
+    {currentDiagnosticSession && <LiveDirectVideo key={currentDiagnosticSession} deviceId={deviceId} session={currentDiagnosticSession}
+      eligible={!!serverCaptureRef.current && !recordingMode && !inspection && taskHandoffId === undefined}
+      fit={fit} expectedCapture={() => diagnosticReporter.current?.sessionId === currentDiagnosticSession ? serverCaptureRef.current : null}
+      onFrame={(video, binding) => renderDirectFrame(video, binding, currentDiagnosticSession)}
+      onObservation={value => observeDirectVideo(value, currentDiagnosticSession)} />}
     {inspection?.bounds && lastFrameDimensionsRef.current && <svg aria-label="Границы выбранного элемента" className="pointer-events-none absolute inset-0 h-full w-full" viewBox={`0 0 ${lastFrameDimensionsRef.current.width} ${lastFrameDimensionsRef.current.height}`} preserveAspectRatio={fit === 'fill' ? 'none' : fit === 'cover' ? 'xMidYMid slice' : 'xMidYMid meet'}>
       <rect x={inspection.bounds.left} y={inspection.bounds.top} width={inspection.bounds.right - inspection.bounds.left} height={inspection.bounds.bottom - inspection.bounds.top} fill="rgba(20,184,166,0.15)" stroke="#14b8a6" strokeWidth="2" vectorEffect="non-scaling-stroke" />
     </svg>}
@@ -1206,7 +1292,7 @@ export function DeviceStream({
         return canvas && canNavigate && renderedSocketRef.current === wsRef.current
           ? { width: canvas.width, height: canvas.height } : null;
       }} />}
-    {enableDiagnostics && currentDiagnosticSession && <AutomaticStreamDiagnostic deviceId={deviceId} session={currentDiagnosticSession}
+    {enableDiagnostics && currentDiagnosticSession && directVideo.admissionKnown && !directVideo.admitted && <AutomaticStreamDiagnostic deviceId={deviceId} session={currentDiagnosticSession}
       eligible={currentFrameOwned && !recordingMode && !inspection && taskHandoffId === undefined}
       onBusyChange={setAutomaticDiagnosticBusy}
       onDiagnostic={(sample, session) => { diagnosticReporter.current?.direct(sample, session); }} />}
@@ -1223,8 +1309,17 @@ export function DeviceStream({
               <button type="button" onClick={() => setDiagnosticsOpen(false)} className="shrink-0 rounded-md border border-border px-2 py-1 font-sans hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">Закрыть диагностику</button>
             </div>
             <div>Управление Android: {continuousState}{continuousFailureCode ? ` · причина: ${continuousFailureCode}` : ''}</div>
-            <div>Видео и управление идут через сервер (WebSocket). Прямое соединение с APK ещё не подключено.</div>
-            {automaticDiagnosticBusy ? <p className="mt-2 font-sans text-muted-foreground">Автоматическая проверка прямого видео выполняется. Результат появится в истории сеанса.</p> : process.env.NEXT_PUBLIC_DIRECT_TRANSPORT_CANARY === 'true'
+            <div>{directVideo.active ? 'Основное видео идёт напрямую с APK по WebRTC. Управление пока использует серверный WebSocket.'
+              : directVideo.admitted ? 'Видео идёт через сервер; прямой канал подключается или автоматически восстанавливается. Управление использует серверный WebSocket.'
+              : 'Видео и управление идут через сервер (WebSocket). Основной прямой канал для этого APK пока не включён.'}</div>
+            {directVideo.admitted && <div className="mt-2 border-t border-border pt-2">
+              <div>Основной WebRTC: {directVideo.active ? 'кадры отображаются' : 'серверный резерв'} · кадров {directVideo.frames} · подключений {directVideo.attempts}</div>
+              <div>Путь ICE: {directVideo.result?.path ?? 'unknown'} · {directVideo.result?.protocol ?? 'не измерен'}</div>
+              <div>RTT сети: {directVideo.result?.videoStats?.networkRttMs?.toFixed(1) ?? '—'} мс</div>
+              <div>Буфер видео в браузере: {directVideo.result?.videoStats?.jitterBufferMs?.toFixed(1) ?? '—'} мс · декодирование: {directVideo.result?.videoStats?.decodeMs?.toFixed(1) ?? '—'} мс</div>
+              <p className="text-muted-foreground">Это отдельные этапы, а не полная задержка от экрана Android до браузера.</p>
+            </div>}
+            {directVideo.admitted ? null : automaticDiagnosticBusy ? <p className="mt-2 font-sans text-muted-foreground">Автоматическая проверка прямого видео выполняется. Результат появится в истории сеанса.</p> : process.env.NEXT_PUBLIC_DIRECT_TRANSPORT_CANARY === 'true'
               ? <DirectProbeDiagnostics deviceId={deviceId} /> : <DirectProbeAccess deviceId={deviceId} />}
             <div>Автоматическое восстановление управления: {idleRecoveryCount} попыток с задержкой до 15 секунд. Касания и команды не повторяются.</div>
             {pointerFailureSnapshot && <ContinuousInputDiagnostics snapshot={pointerFailureSnapshot} />}

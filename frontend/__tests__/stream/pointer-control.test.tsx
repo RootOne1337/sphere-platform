@@ -13,13 +13,24 @@ jest.mock('@/lib/api', () => ({ api: { get: jest.fn(), post: jest.fn() } }));
 // Keep control delivery independent of the separately tested probe admission request.
 jest.mock('@/src/features/stream/DirectProbeAccess', () => ({ DirectProbeAccess: () => null }));
 jest.mock('@/src/features/stream/StreamSessionHistoryPanel', () => ({ StreamSessionHistoryPanel: () => null }));
+jest.mock('@/src/features/stream/LiveDirectVideo', () => ({ LiveDirectVideo: ({ session, onObservation }: {
+  session: string; onObservation: (value: object) => void;
+}) => {
+  const React = require('react');
+  React.useEffect(() => onObservation({ admitted: false, admissionKnown: true, active: false,
+    frames: 0, lastFrameAt: null, attempts: 0, result: null }), [session]);
+  return null;
+} }));
 jest.mock('@/src/features/stream/AutomaticStreamDiagnostic', () => ({
   AutomaticStreamDiagnostic: ({ eligible }: { eligible: boolean }) => { mockAutomaticEligible = eligible; return null; },
 }));
 jest.mock('@/lib/h264-decoder', () => ({
   H264Decoder: class {
-    constructor(onFrame: (frame: VideoFrame) => void) {
-      mockRenderFrame = onFrame;
+    constructor(onFrame: (frame: VideoFrame, binding?: typeof mockCapture) => void) {
+      // The real decoder passes the current presented frame's capture binding,
+      // before exposing it through lastRenderedCapture. Preserve that contract.
+      mockRenderFrame = frame => onFrame(frame, mockCapture ? { ...mockCapture,
+        frameWidth: frame.displayWidth, frameHeight: frame.displayHeight } : undefined);
     }
     init() {}
     destroy() {}

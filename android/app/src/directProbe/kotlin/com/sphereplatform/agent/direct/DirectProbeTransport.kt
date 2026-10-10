@@ -26,7 +26,9 @@ class DirectProbeTransport(
     @Volatile private var peer: Probe? = null
     private var factory: PeerConnectionFactory? = null
 
-    private class Probe(val session: String, val generation: Long, val token: Long, val expires: Long) {
+    private class Probe(val session: String, val generation: Long, val token: Long, startedAt: Long, ttlMs: Int, val live: Boolean) {
+        val lease = DirectVideoLease(startedAt, ttlMs, live)
+        val expires get() = lease.expiresAt
         val progress = DirectProbeProgress(SystemClock.elapsedRealtime())
         var connection: PeerConnection? = null
         var channel: DataChannel? = null
@@ -70,12 +72,12 @@ class DirectProbeTransport(
     }
     fun invalidate() { fence.incrementAndGet() }
     private fun valid(p: Probe) = peer === p && p.token == fence.get() &&
-        generation() == p.generation && SystemClock.elapsedRealtime() < p.expires &&
+        generation() == p.generation && p.lease.valid(SystemClock.elapsedRealtime()) &&
         (!p.videoRequested || p.capture?.let { streaming.isEncodedViewerCurrent(p, it) } == true)
 
     fun handle(message: JsonObject): Boolean {
         val kind = (message["type"] as? JsonPrimitive)?.contentOrNull
-        if (kind !in setOf("direct_probe_offer", "direct_probe_close")) return false
+        if (kind !in setOf("direct_probe_offer", "direct_probe_close", "direct_probe_renew")) return false
         val wsGeneration = generation() ?: return true
         val token = fence.get()
         val receivedAt = SystemClock.elapsedRealtime()
@@ -85,17 +87,26 @@ class DirectProbeTransport(
             if (!DirectProbeProtocol.validSession(sid)) return@enqueue
             if (kind == "direct_probe_close") {
                 if (message.keys == setOf("type", "session_id") && peer?.session == sid) close()
+            } else if (kind == "direct_probe_renew") {
+                val current = peer ?: return@enqueue
+                if (current.session != sid || !current.live || message.keys != setOf("type", "session_id", "sequence", "ttl_ms")) return@enqueue
+                val sequence = message["sequence"]?.jsonPrimitive?.intOrNull ?: return@enqueue
+                val ttl = message["ttl_ms"]?.jsonPrimitive?.intOrNull ?: return@enqueue
+                if (!valid(current) || !current.lease.renew(sequence, ttl, receivedAt, SystemClock.elapsedRealtime())) close()
             } else {
                 val sdp = message["sdp"]?.jsonPrimitive?.contentOrNull ?: return@enqueue
                 val ttl = message["ttl_ms"]?.jsonPrimitive?.intOrNull ?: return@enqueue
-                val video = message["media"]?.jsonPrimitive?.contentOrNull == DirectVideoProtocol.MODE
+                val mode = message["media"]?.jsonPrimitive?.contentOrNull
+                val live = mode == DirectVideoProtocol.LIVE_MODE
+                val video = live || mode == DirectVideoProtocol.MODE
                 val expected = setOf("type", "session_id", "sdp", "ttl_ms") +
                     (if (video) setOf("media") else emptySet()) + (if ("ice" in message) setOf("ice") else emptySet())
                 if (peer != null || message.keys != expected || ttl !in 1..DirectProbeProtocol.MAX_TTL_MS ||
                     !(if (video) DirectVideoProtocol.validSdp(sdp, true) else DirectProbeProtocol.validSdp(sdp))) return@enqueue
                 val grant = if ("ice" in message) DirectProbeTurnGrant.parse(message["ice"], sid) ?: return@enqueue else null
                 if (SystemClock.elapsedRealtime() >= receivedAt + ttl) return@enqueue
-                open(Probe(sid, wsGeneration, token, receivedAt + ttl).apply { videoRequested = video }, sdp, grant)
+                if (live && grant != null) return@enqueue // Relay renewal has a separate credential lifetime.
+                open(Probe(sid, wsGeneration, token, receivedAt, ttl, live).apply { videoRequested = video }, sdp, grant)
             }
         }
         return true
@@ -161,7 +172,7 @@ class DirectProbeTransport(
                 override fun onDataChannel(channel: DataChannel) {
                     val admitted = enqueue {
                         if (!valid(p) || p.channel != null || channel.label() !=
-                            (if (p.videoRequested) DirectVideoProtocol.LABEL else DirectProbeProtocol.LABEL)) {
+                            (if (p.live) DirectVideoProtocol.LIVE_LABEL else if (p.videoRequested) DirectVideoProtocol.LABEL else DirectProbeProtocol.LABEL)) {
                             channel.close(); channel.dispose()
                             if (peer === p) close()
                         } else {
@@ -226,7 +237,8 @@ class DirectProbeTransport(
     private fun echo(p: Probe, text: String) {
         if (!valid(p)) { if (peer === p) close(); return }
         val now = SystemClock.elapsedRealtime()
-        val echoed = DirectProbeProtocol.echo(text, p.session, p.sequence)
+        val echoed = if (p.live && p.sequence in 1..1000000) "SL1 ${p.session} ${p.sequence}".takeIf { it == text }
+            else if (p.live) null else DirectProbeProtocol.echo(text, p.session, p.sequence)
         val channel = p.channel
         if (echoed == null || (p.lastEcho != 0L && now - p.lastEcho < 100) || channel == null ||
             channel.bufferedAmount() > 1024 || !channel.send(DataChannel.Buffer(ByteBuffer.wrap(echoed.toByteArray()), false))) {

@@ -102,6 +102,86 @@ async def eventually(predicate):
             await asyncio.sleep(.005)
 
 
+async def live_offer(peers, monkeypatch):
+    from backend.core.config import settings
+    monkeypatch.setattr(settings, "DIRECT_TRANSPORT_LIVE_VIDEO_ENABLED", True)
+    monkeypatch.setattr(settings, "DIRECT_TRANSPORT_PROBE_DEVICE_IDS", frozenset({"device"}))
+    await DeviceStatusCache(peers[1][0]).set_status("device", DeviceLiveStatus(
+        device_id="device", status="online", ws_session_id=peers[4], agent_version_code=10252))
+    viewer = peers[-1]
+    viewer.video = viewer.live = True
+    await peers[0][1].open(viewer, VIDEO_SDP)
+    await eventually(lambda: peers[3].send_json.call_count == 1)
+    await peers[0][0].agent_message("device", peers[4], dict(type="direct_probe_answer", session_id=viewer.session,
+        sdp=VIDEO_SDP.replace("recvonly", "sendonly")))
+    await eventually(lambda: viewer.answered)
+    return viewer
+
+
+@pytest.mark.asyncio
+async def test_live_video_renews_exact_cross_worker_lease_and_delivers_native_ttl(peers, monkeypatch):
+    viewer = await live_offer(peers, monkeypatch)
+    runtimes, clients, _, agent, _, _ = peers
+    assert agent.send_json.call_args.args[0]["media"] == "live_video_v1"
+    await clients[0].pexpire(runtimes[0].key("device"), 10000)
+    await runtimes[1].renew(viewer, 1)
+    await eventually(lambda: agent.send_json.call_count == 2)
+    message = agent.send_json.call_args.args[0]
+    assert message["type"] == "direct_probe_renew" and message["session_id"] == viewer.session
+    assert message["sequence"] == 1 and 25000 < message["ttl_ms"] <= 30000
+    assert await runtimes[1].remaining(viewer.binding) > 25000
+    assert set(message) == {"type", "session_id", "sequence", "ttl_ms"}
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("sequence", [True, 0, 2, "1", 1000001])
+async def test_live_renewal_rejects_nonsequential_or_unbounded_messages(peers, monkeypatch, sequence):
+    viewer = await live_offer(peers, monkeypatch)
+    with pytest.raises(InvalidDirectProbe, match="invalid_video_renewal"):
+        await peers[0][1].renew(viewer, sequence)
+    assert peers[3].send_json.call_count == 1
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("change", ["expired", "replacement", "agent_reconnect", "revoked"])
+async def test_live_renewal_cannot_resurrect_expired_replaced_or_revoked_ownership(peers, monkeypatch, change):
+    from backend.core.config import settings
+    viewer = await live_offer(peers, monkeypatch)
+    runtimes, clients, _, agent, _, _ = peers
+    key = runtimes[0].key("device")
+    if change == "expired":
+        await clients[0].delete(key)
+    elif change == "replacement":
+        await clients[0].set(key, runtimes[0].encode(dict(viewer.binding, session="b" * 32)), px=30000)
+    elif change == "agent_reconnect":
+        await DeviceStatusCache(clients[0]).set_status("device", DeviceLiveStatus(
+            device_id="device", status="online", ws_session_id="replacement", agent_version_code=10252))
+    else:
+        monkeypatch.setattr(settings, "DIRECT_TRANSPORT_LIVE_VIDEO_ENABLED", False)
+    before = await clients[0].get(key)
+    with pytest.raises(InvalidDirectProbe, match="video_renewal_rejected"):
+        await runtimes[1].renew(viewer, 1)
+    assert await clients[0].get(key) == before and agent.send_json.call_count == 1
+
+
+@pytest.mark.asyncio
+async def test_live_renewal_rate_and_duplicate_fence_do_not_extend_another_peer(peers, monkeypatch):
+    viewer = await live_offer(peers, monkeypatch)
+    await peers[0][1].renew(viewer, 1)
+    await eventually(lambda: peers[3].send_json.call_count == 2)
+    for sequence in (1, 2):
+        with pytest.raises(InvalidDirectProbe, match="invalid_video_renewal"):
+            await peers[0][1].renew(viewer, sequence)
+    assert peers[3].send_json.call_count == 2
+
+
+@pytest.mark.asyncio
+async def test_finite_probe_cannot_borrow_live_video_renewal(peers):
+    await offer(peers)
+    with pytest.raises(InvalidDirectProbe, match="invalid_video_renewal"):
+        await peers[0][1].renew(peers[-1], 1)
+
+
 @pytest_asyncio.fixture
 async def peers():
     server = FakeServer()

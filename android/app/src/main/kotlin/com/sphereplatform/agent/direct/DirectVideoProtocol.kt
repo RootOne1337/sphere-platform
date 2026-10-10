@@ -5,6 +5,9 @@ object DirectVideoProtocol {
     const val MODE = "readonly_video_v1"
     const val LABEL = "sphere-video-probe-v1"
     const val MIN_VERSION_CODE = 10251
+    const val LIVE_MODE = "live_video_v1"
+    const val LIVE_LABEL = "sphere-video-v1"
+    const val LIVE_MIN_VERSION_CODE = 10252
 
     fun validSdp(value: String, offer: Boolean): Boolean {
         if (value.toByteArray(Charsets.UTF_8).size !in 1..DirectProbeProtocol.MAX_SDP_BYTES) return false
