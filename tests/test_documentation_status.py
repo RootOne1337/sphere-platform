@@ -17,6 +17,7 @@ from scripts.check_documentation_status import (
     local_link_errors,
     normalized_hash,
     read_json,
+    validate_diagnostic_pilot,
     validate_installed_receipt,
     validate_inventory,
     validate_registry,
@@ -37,12 +38,39 @@ class DocumentationStatusTests(unittest.TestCase):
                            ("implementationAuthorizedNow", False), ("prototypeScope", "full_control")):
             with self.subTest(key=key):
                 changed = copy.deepcopy(self.registry)
+                changed["directMedia"].update(state="PROTOTYPE_SOURCE", runtimeInstalled=False,
+                                              mediaControlInstalled=False, implementationAuthorizedNow=True,
+                                              prototypeScope="diagnostic_echo_only")
                 changed["directMedia"][key] = value
                 self.assertTrue(any("Direct probe source" in error for error in validate_registry(ROOT, changed)))
 
     def test_probe_evidence_cannot_be_omitted(self) -> None:
         self.registry["directMedia"]["implementationEvidence"] = "docs/absent-probe.md"
         self.assertIn("Direct probe implementation evidence is missing", validate_registry(ROOT, self.registry))
+
+    def test_installed_echo_pilot_requires_exact_finite_receipt_and_scope(self) -> None:
+        device = "753fd530-2f19-4e5e-98ba-769863678141"
+        pilot = {"enabled": True, "scope": "diagnostic_echo_only", "deviceIds": [device],
+                 "mediaControlInstalled": False, "channelAccepted": False}
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            path = root / "pilot.json"
+            path.write_text(json.dumps({"runtimeInstalled": True, "diagnosticPilot": pilot}), encoding="utf-8")
+            direct = {"runtimeInstalled": True, "pilotCurrentlyEnabled": True,
+                      "prototypeScope": "diagnostic_echo_only", "mediaControlInstalled": False,
+                      "pilotEvidence": path.name, "pilotDeviceIds": [device],
+                      "pilotEvidenceSha256NormalizedLf": normalized_hash(path)}
+            self.assertEqual(validate_diagnostic_pilot(root, direct), [])
+            for key, value in (("deviceIds", []), ("deviceIds", [device, device]),
+                               ("deviceIds", ["arbitrary"]), ("channelAccepted", True),
+                               ("mediaControlInstalled", True), ("enabled", False),
+                               ("scope", "full_control")):
+                with self.subTest(key=key, value=value):
+                    changed = pilot | {key: value}
+                    path.write_text(json.dumps({"runtimeInstalled": True, "diagnosticPilot": changed}), encoding="utf-8")
+                    bound = direct | {"pilotEvidenceSha256NormalizedLf": normalized_hash(path)}
+                    self.assertTrue(validate_diagnostic_pilot(root, bound))
+            self.assertTrue(validate_diagnostic_pilot(root, direct))
 
     def test_current_runtime_banners_agree_with_frozen_installation(self) -> None:
         self.assertEqual(validate_runtime_banners(ROOT, self.registry), [])

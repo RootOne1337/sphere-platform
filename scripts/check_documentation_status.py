@@ -245,13 +245,15 @@ def validate_registry(root: Path, registry: dict) -> list[str]:
     if direct["state"] == "DEFERRED_DESIGN":
         if direct["implementationAuthorizedNow"]:
             errors.append("Deferred direct-media design cannot claim implementation authorization")
-    elif direct["state"] == "PROTOTYPE_SOURCE":
+    elif direct["state"] in {"PROTOTYPE_SOURCE", "DIAGNOSTIC_PILOT_INSTALLED"}:
         if (direct["implementationAuthorizedNow"] is not True or not direct.get("implementationAuthorization")
-                or direct.get("prototypeScope") != "diagnostic_echo_only"
-                or direct.get("runtimeInstalled") is not False or direct.get("mediaControlInstalled") is not False):
+                or direct.get("prototypeScope") != "diagnostic_echo_only" or direct.get("mediaControlInstalled") is not False
+                or direct["state"] == "PROTOTYPE_SOURCE" and direct.get("runtimeInstalled") is not False):
             errors.append("Direct probe source must retain authorization, diagnostic scope and uninstalled gates")
         if not (root / direct.get("implementationEvidence", "__missing__")).is_file():
             errors.append("Direct probe implementation evidence is missing")
+        if direct["state"] == "DIAGNOSTIC_PILOT_INSTALLED":
+            errors.extend(validate_diagnostic_pilot(root, direct))
     else:
         errors.append("Direct-media state requires a reviewed implementation/installation gate")
     for file in registry["authoritativeEntrypoints"]:
@@ -260,6 +262,28 @@ def validate_registry(root: Path, registry: dict) -> list[str]:
     for key in ("previousCrosscheck",):
         if not (root / registry[key]).is_file():
             errors.append(f"Missing {key}")
+    return errors
+
+
+def validate_diagnostic_pilot(root: Path, direct: dict) -> list[str]:
+    """An installed echo experiment cannot imply media, input or channel acceptance."""
+    errors = []
+    if (direct.get("runtimeInstalled") is not True or direct.get("pilotCurrentlyEnabled") is not True
+            or direct.get("prototypeScope") != "diagnostic_echo_only" or direct.get("mediaControlInstalled") is not False):
+        errors.append("Installed diagnostic pilot has inconsistent runtime/scope gates")
+    path = root / direct.get("pilotEvidence", "__missing__")
+    if not path.is_file() or direct.get("pilotEvidenceSha256NormalizedLf") != normalized_hash(path):
+        return errors + ["Installed diagnostic pilot receipt missing or fingerprint mismatch"]
+    receipt = read_json(root, str(path.relative_to(root)))
+    pilot = receipt.get("diagnosticPilot", {})
+    if (receipt.get("runtimeInstalled") is not True or pilot.get("scope") != "diagnostic_echo_only"
+            or pilot.get("deviceIds") != direct.get("pilotDeviceIds")
+            or not isinstance(pilot.get("deviceIds"), list) or len(pilot["deviceIds"]) != 1
+            or not isinstance(pilot["deviceIds"][0], str)
+            or not re.fullmatch(r"[a-f0-9]{8}(?:-[a-f0-9]{4}){3}-[a-f0-9]{12}", pilot["deviceIds"][0])
+            or pilot.get("enabled") is not True or pilot.get("mediaControlInstalled") is not False
+            or pilot.get("channelAccepted") is not False):
+        errors.append("Installed diagnostic receipt must bind one device and retain unaccepted channel/media gates")
     return errors
 
 

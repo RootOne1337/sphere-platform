@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
-  "reviewedAtUtc": "2026-10-10T06:02:04.459414+00:00",
-  "sourceReviewed": "e54b2fc85f04118a0579e43c9a88e5d0dc09b23d",
+  "reviewedAtUtc": "2026-10-10T10:21:30.965056+00:00",
+  "sourceReviewed": "c17332ebe39e2288a0db055a35d3f3c5d1ab8258",
   "scope": "Effective documentation status; source/install/finite acceptance kept separate. No new fleet or soak acceptance.",
   "baseline": "docs/audits/2026-10-05/ENTERPRISE-PRODUCT-BACKLOG.json",
   "previousCrosscheck": "docs/audits/2026-10-09/CHAT-CODE-RECONCILIATION.json",
@@ -11,18 +11,18 @@
     "open": 41
   },
   "installed": {
-    "lastObservedUtc": "2026-10-10T04:16:38.839681+00:00",
-    "ui": "639b6ad52fe3651579499659ded46ff73027f313",
-    "api": "369654a0be4bded35e299062badc9bfe95101f1e",
-    "evidence": "docs/audits/2026-10-10/DIRECT-PROBE-NATIVE-PROGRESS-CANARY.json",
-    "observation": "UI639/API369 retained; exact161 setup/pre-answer stats observed on one PH011. Final UID-filtered capture:237 outbound candidate packets/0 inbound, STUN1/1. Original APK restored, gateoff/allowlist[], ordinary local11/public2 frames. No successful channel/RTT/media/input or fleet/soak acceptance.",
+    "lastObservedUtc": "2026-10-10T06:36:12.043608+00:00",
+    "ui": "c17332ebe39e2288a0db055a35d3f3c5d1ab8258",
+    "api": "c17332ebe39e2288a0db055a35d3f3c5d1ab8258",
+    "evidence": "docs/audits/2026-10-10/DIRECT-ADMISSION-INSTALLED.json",
+    "observation": "Exact CI UI/API c173 installed; two-origin authenticated per-device admission/rendering accepted. PH030-only echo pilot enabled, no direct channel/media/input or latency acceptance.",
     "pilotApk": {
       "device": "PH011",
       "version": "1.2.49-dev",
       "versionCode": 10249,
       "scope": "PH011 original APK restored after three finite161 diagnostic installations; exact SHA in current receipt, no fleet inventory claim"
     },
-    "evidenceSha256NormalizedLf": "9e79b83c5f7fcbad68bcc25352a04c10b84000ff5bf74949d06b1dba4542be76",
+    "evidenceSha256NormalizedLf": "cc4ee00b1a75d9e0b504bb9c4781aa3467a49ac0ce6dc799c34c8441fd78faf8",
     "additionalPilotApks": [
       {
         "device": "PH030",
@@ -61,23 +61,16 @@
       "evidence": "docs/audits/2026-10-10/DIRECT-PROBE-NATIVE-PROGRESS-CANARY.json",
       "scope": "Four exact-source CI/signed admission and live stages/pre-answer stats accepted in finite diagnostic scope. Three native windows:answer392/226/243ms,13reports each, ICE no successful pair. One actual UID-filtered UDP capture accepted; previous two collector attempts invalid. Original APK restored; production direct/media/control/resource gates open.",
       "testedRevision": "161a23e97a323b2061aceaf56f84bc436cd90305"
-    },
-    {
-      "id": "direct-probe-runtime-admission-panel",
-      "installed": false,
-      "sourceBaseRevision": "e54b2fc85f04118a0579e43c9a88e5d0dc09b23d",
-      "evidence": "docs/audits/2026-10-10/DIRECT-PROBE-TURN-AND-LAPTOP.json",
-      "scope": "authenticated per-device HTTP admission and ordinary-web panel source checked locally; UI/API installation and laptop browser channel remain open"
     }
   ],
   "storage": {
-    "lastObservedUtc": "2026-10-10T05:54:43.044879+00:00",
+    "lastObservedUtc": "2026-10-10T10:19:52.234371+00:00",
     "visibleMatchingProcesses": 1,
     "continuousCoverageConfirmed": false,
-    "observationScope": "PID32064/epoch/source verified;171 complete samples to05:54:43UTC. C:-7716163584B; Docker VHDX allocation constant234731077632B. VSS/USN/kernel attribution unavailable; writer UNKNOWN; finite deadline12:34UTC.",
-    "oneFreeDiskReadingBytes": 38804901888,
+    "observationScope": "Old limited observer stopped without terminal receipt after296samples; uncovered gap10:04:43→10:19:52UTC. New detached/breakaway limited observer PID43640 confirmed with baseline, deadline18:19UTC; no VSS/kernel writer attribution.",
+    "oneFreeDiskReadingBytes": 49300525056,
     "latestCompletedEvidence": "docs/audits/2026-10-08/STORAGE-WINDOW-COMPLETION.json",
-    "activeEvidence": "docs/audits/2026-10-10/DIRECT-PROBE-TURN-AND-LAPTOP.json"
+    "activeEvidence": "docs/audits/2026-10-10/PH030-DIRECT-PATH-FOLLOWUP.json"
   },
   "legacy": {
     "total": 41,
@@ -125,7 +118,7 @@
     "crosswalkScope": "Related scope only, not identity, closure or deduplication proof."
   },
   "directMedia": {
-    "state": "PROTOTYPE_SOURCE",
+    "state": "DIAGNOSTIC_PILOT_INSTALLED",
     "implementationAuthorizedNow": true,
     "researchPreparedAtUtc": "2026-10-09T16:46:29Z",
     "researchEvidence": "docs/design/BROWSER-DIRECT-TRANSPORT.md",
@@ -146,7 +139,7 @@
     "requiresAllFutureProductItemsClosed": false,
     "implementationAuthorization": "Последующий прямой запрос пользователя 9 октября 2026: начать разработку browser ↔ APK; текущее «продолжай» сохраняет авторизацию.",
     "prototypeScope": "diagnostic_echo_only",
-    "runtimeInstalled": false,
+    "runtimeInstalled": true,
     "mediaControlInstalled": false,
     "implementationEvidence": "docs/audits/2026-10-09/DIRECT-PROBE-SOURCE.md",
     "sourceCorrections": [
@@ -162,11 +155,12 @@
       "docs/audits/2026-10-10/DIRECT-PROBE-PUBLIC-STUN-CANARY.json",
       "docs/audits/2026-10-10/DIRECT-PROBE-NATIVE-PROGRESS-SOURCE.json",
       "docs/audits/2026-10-10/DIRECT-PROBE-NATIVE-PROGRESS-CANARY.json",
-      "docs/audits/2026-10-10/DIRECT-PROBE-TURN-AND-LAPTOP.json"
+      "docs/audits/2026-10-10/DIRECT-PROBE-TURN-AND-LAPTOP.json",
+      "docs/audits/2026-10-10/DIRECT-ADMISSION-INSTALLED.json"
     ],
-    "pilotEvidence": "docs/audits/2026-10-10/DIRECT-PROBE-NATIVE-PROGRESS-CANARY.json",
-    "pilotOutcome": "NATIVE_ANSWER_FAST_UDP_CANDIDATE_OUTBOUND_ONLY_CHANNEL_FAILED_CLEANED_UP",
-    "pilotCurrentlyEnabled": false,
+    "pilotEvidence": "docs/audits/2026-10-10/DIRECT-ADMISSION-INSTALLED.json",
+    "pilotOutcome": "ADMISSION_INSTALLED_CHANNEL_UNVERIFIED",
+    "pilotCurrentlyEnabled": true,
     "nativeDiagnosticAcceptance": {
       "state": "ACCEPTED_FINITE_DIAGNOSTIC_SCOPE",
       "testedRevision": "161a23e97a323b2061aceaf56f84bc436cd90305",
@@ -185,6 +179,17 @@
       "evidence": "docs/audits/2026-10-10/DIRECT-PROBE-TURN-AND-LAPTOP.json",
       "evidenceSha256NormalizedLf": "0a43d3a528b376459ece52eeb3fbc45b29c2541fe1a25f6925e8b4bcb1f28dae",
       "scope": "one targeted OTA completed, fresh heartbeat and actual package SHA matched; no direct channel acceptance"
+    },
+    "pilotDeviceIds": [
+      "753fd530-2f19-4e5e-98ba-769863678141"
+    ],
+    "pilotEvidenceSha256NormalizedLf": "cc4ee00b1a75d9e0b504bb9c4781aa3467a49ac0ce6dc799c34c8441fd78faf8",
+    "latestNetworkObservation": {
+      "evidence": "docs/audits/2026-10-10/PH030-DIRECT-PATH-FOLLOWUP.json",
+      "evidenceSha256NormalizedLf": "7478057abcc40eb5cd1473341329e75204377753de5fab91f58554739c2a305d",
+      "topology": "browser on main PC with VPN; PH030 on laptop without VPN",
+      "outcome": "ANSWER_RECEIVED_NO_CHANNEL",
+      "laptopBrowserChannelAccepted": false
     }
   },
   "items": [
@@ -1503,7 +1508,7 @@
       "priority": "P1",
       "state": "OPEN",
       "progress": "PARTIAL",
-      "currentScope": "Limited observer active10Oct00:14→12:34UTC;171 complete samples to05:54UTC. C:-7716163584B while Docker VHDX allocation constant234731077632B. Earlier gaps remain; no full-PC writer proof.",
+      "currentScope": "Limited observer active10Oct00:14→12:34UTC;191 complete samples to06:34UTC. C: net+1552838656B after earlier decreases; minimum36221018112B. Docker VHDX allocation constant234731077632B. Earlier gaps remain; no full-PC writer proof.",
       "remaining": "VSS/USN/kernel writer attribution and reboot continuity unavailable. Need finite health/coverage, RAM/disk retention,500/1000/128/1 load and resource plateau acceptance.",
       "acceptanceCriteria": [
         "1000 registry / 128 thumbnails / 1 selected video measured.",
@@ -1827,7 +1832,7 @@
         "EP-033",
         "EP-047"
       ],
-      "acceptedScope": "Bounded observer PID32064/epoch/source and171 complete samples verified to05:54:43UTC. Docker allocation constant; C: writer remains UNKNOWN.",
+      "acceptedScope": "Bounded observer PID32064/epoch/source and191 complete samples verified to06:34:43UTC. Docker allocation constant; C: falls and rises both recorded, writer remains UNKNOWN.",
       "remaining": "Whole-PC writer UNKNOWN: VSS unavailable, USN/ETW не запущены. Нет reboot autostart; после deadline потребуется bounded restart/health. Resource soak/retention и RAM acceptance открыты.",
       "evidence": [
         "docs/audits/2026-10-08/STORAGE-WINDOW-COMPLETION.json",
@@ -1883,8 +1888,8 @@
         "EP-020",
         "EP-047"
       ],
-      "acceptedScope": "Exact161 all4CI/signed admission; three setup windows answer392/226/243ms and13native reports each. Final UID-filtered APK capture239packets:237outbound browser-candidate/0inbound, STUN1/1. Original APK restored, probeoff; post-cleanup local11/public2 ordinary frames. Diagnostics accepted only finite scope, no channel/RTT. PH030 is on the no-VPN laptop; one targeted OTA10250 completed and actual APK hash matched. Finite coturn REST/TLS fixtures and interface-dependent Windows UDP fixture recorded separately from WebRTC acceptance.",
-      "remaining": "Actual laptop browser-to-PH030 channel/RTT; native public TURN fallback, media/control, global ownership, reconnect and resource budgets. Standard-web runtime-admission panel source is tested but not yet installed.",
+      "acceptedScope": "PH030 OTA10250 actual SHA confirmed; exact CI c173 UI/API installed, finite two-origin authenticated PH030-only admission/rendering verified. No laptop direct channel/media/input acceptance.",
+      "remaining": "Actual laptop browser-to-PH030 channel/RTT; native public TURN fallback, media/control, global ownership, reconnect and resource budgets. Standard-web admission is installed; its finite UI/HTTP checks do not accept a peer channel.",
       "evidence": [
         "docs/design/BROWSER-DIRECT-TRANSPORT.md",
         "docs/audits/2026-10-09/IDLE-CONTROL-RELAY-REVIEW.md",
@@ -1898,7 +1903,8 @@
         "docs/audits/2026-10-10/DIRECT-PROBE-ANDROID-COMPATIBILITY.md",
         "docs/audits/2026-10-10/DIRECT-PROBE-NATIVE-COUNTERS-CANARY.json",
         "docs/audits/2026-10-10/DIRECT-PROBE-NATIVE-PROGRESS-CANARY.json",
-        "docs/audits/2026-10-10/DIRECT-PROBE-TURN-AND-LAPTOP.json"
+        "docs/audits/2026-10-10/DIRECT-PROBE-TURN-AND-LAPTOP.json",
+        "docs/audits/2026-10-10/DIRECT-ADMISSION-INSTALLED.json"
       ],
       "sourcePaths": [
         "backend/websocket/direct_probe_protocol.py",
@@ -2044,17 +2050,25 @@
       "evidence": "docs/audits/2026-10-10/CONTINUOUS-AUTO-RECOVERY-INSTALLED.json",
       "evidenceSha256NormalizedLf": "b351ba347a55b74f827ab349955bd74323c8886d3cbfd5309e0ca017d5b6137b",
       "acceptedScope": "Finite UI installation/readiness/navigation only; one natural unknown-pointer notice followed by fresh readiness and confirmed Home on each of UI13 and final UI639. Release/hold/terminal permutations fixture-only; no independent wire trace or native latency/direct/fleet acceptance."
+    },
+    {
+      "id": "direct-probe-runtime-admission-panel",
+      "sourceRevision": "c17332ebe39e2288a0db055a35d3f3c5d1ab8258",
+      "installedRevision": "c17332ebe39e2288a0db055a35d3f3c5d1ab8258",
+      "evidence": "docs/audits/2026-10-10/DIRECT-ADMISSION-INSTALLED.json",
+      "evidenceSha256NormalizedLf": "cc4ee00b1a75d9e0b504bb9c4781aa3467a49ac0ce6dc799c34c8441fd78faf8",
+      "acceptedScope": "Finite two-origin admission/rendering only. No channel/RTT/media/input acceptance."
     }
   ],
-  "sourceWorktreeEvidence": "docs/audits/2026-10-10/CONTINUOUS-AUTO-RECOVERY-INSTALLED.json",
+  "sourceWorktreeEvidence": "docs/audits/2026-10-10/DIRECT-ADMISSION-INSTALLED.json",
   "publicWeb": {
-    "lastObservedUtc": "2026-10-10T04:16:38.839681+00:00",
+    "lastObservedUtc": "2026-10-10T06:36:12.043608+00:00",
     "url": "https://sphere-agent-canary-20260927.ru.tuna.am",
-    "ui": "639b6ad52fe3651579499659ded46ff73027f313",
-    "api": "369654a0be4bded35e299062badc9bfe95101f1e",
-    "evidence": "docs/audits/2026-10-10/DIRECT-PROBE-NATIVE-PROGRESS-CANARY.json",
-    "evidenceSha256NormalizedLf": "9e79b83c5f7fcbad68bcc25352a04c10b84000ff5bf74949d06b1dba4542be76",
-    "scope": "Same public host map, UI639/API369. Post-final-cleanup public2/local11 decoded/drawn frames,0invalid/decode/render errors. Public server_rejected opening notice retained; not control/direct/steady FPS or latency acceptance.",
+    "ui": "c17332ebe39e2288a0db055a35d3f3c5d1ab8258",
+    "api": "c17332ebe39e2288a0db055a35d3f3c5d1ab8258",
+    "evidence": "docs/audits/2026-10-10/DIRECT-ADMISSION-INSTALLED.json",
+    "evidenceSha256NormalizedLf": "cc4ee00b1a75d9e0b504bb9c4781aa3467a49ac0ce6dc799c34c8441fd78faf8",
+    "scope": "Same public host map, exact CI c173 UI/API. Finite admission HTTP/UI verified; direct channel and media/input unaccepted.",
     "additionalQa": {
       "evidence": "docs/audits/2026-10-09/PUBLIC-WEB-SUPPLEMENTAL-QA.json",
       "evidenceSha256NormalizedLf": "84f719a322e114a34ba4f4fc5624f717a71558f2b80f5aea1a484b50778ceac4",

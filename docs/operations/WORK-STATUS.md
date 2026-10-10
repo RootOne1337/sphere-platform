@@ -1,6 +1,19 @@
 # Работы, требования пользователя и границы приёмки
 
-**Проверенная установка:** UI `639b6ad5` / API `369654a0`.
+**Проверенная установка:** UI `c17332eb` / API `c17332eb`.
+
+**Последующее наблюдение 10 октября, 10:20 UTC:** ответ PH030 на согласование есть,
+прямой канал из браузера основного ПК не открылся. Browser-on-laptop остаётся
+отдельным gate. Limited storage observer возобновлён после неожиданной остановки;
+разрыв покрытия сохранён.
+[Тест и восстановление наблюдения](../audits/2026-10-10/PH030-DIRECT-PATH-FOLLOWUP.md).
+
+**10 октября, 06:36UTC — UI/API c17332eb установлены.**
+PH030-only admission panel доступна на3015 и публичном адресе. Anonymous401,
+private/no-store, два профиля, лимиты30s/20samples и отсутствие допуска PH011
+подтверждены. Визуально проверена панель; peer не запускался. APKPH0301.2.50-dev
+подтверждён отдельным OTA receipt. Direct channel/media/input/latency ещё OPEN.
+[Установка, проверки и границы](../audits/2026-10-10/DIRECT-ADMISSION-INSTALLED.md).
 
 **10 октября, 05:53 UTC — PH030 адресно обновлён штатным OTA.**
 На ноутбуке без VPN установлен diagnostic APK **1.2.50-dev / 10250** (`e54b2fc8`).
@@ -391,7 +404,7 @@ resource soak/retention и RAM acceptance.
 Актуально10октября: PH030 обновлён адресным OTA до1.2.50-dev/10250, установленный
 SHA подтверждён. Обычная веб-панель admission подготовлена; 437 stream/grid
 regressions прошли, включая управление, reconnect и отдельные проверки доступа.
-Она ещё не установлена. Echo/path именно браузера ноутбука, direct media/input,
+Она установлена в UI/API c17332eb. Echo/path именно браузера ноутбука, direct media/input,
 TURN/network matrix и multi-viewer ownership остаются непроверенными.
 [Последний срез](../audits/2026-10-10/DIRECT-PROBE-TURN-AND-LAPTOP.md).
 

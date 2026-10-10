@@ -1,10 +1,14 @@
 # Script Studio: инструкция по созданию и проверке сценариев
 
-**Проверенная установка:** UI `639b6ad5` / API `369654a0`.
+**Проверенная установка:** UI `c17332eb` / API `c17332eb`.
 
-**10 октября — последняя UI коррекция:** автоматическая готовность после reconnect
-и навигации;1996frontend tests. Конечный PH011 scope не закрывает latency/direct/fleet.
-[Актуальная установка и ограничения](../audits/2026-10-10/CONTINUOUS-AUTO-RECOVERY-INSTALLED.md).
+**10 октября — текущая установка:** UI/API `c17332eb`; 2106 frontend tests.
+В диагностике видеопотока появилась адресная проверка прямого канала PH030.
+Она измеряет только echo-пакеты; видео, запись и управление используют WebSocket.
+[Установка и ограничения](../audits/2026-10-10/DIRECT-ADMISSION-INSTALLED.md).
+Предыдущая коррекция автоматической готовности после reconnect и навигации
+сохранена; её конечная проверка PH011 не закрывает latency/direct/fleet.
+[Приёмка восстановления](../audits/2026-10-10/CONTINUOUS-AUTO-RECOVERY-INSTALLED.md).
 
 **Действующий реестр работ:** [WORK-STATUS](WORK-STATUS.md) / [машинный статус](STATUS-REGISTRY.json).
 Source, установленный runtime и конечная приёмка разделены; старые snapshots ниже сохраняют свои даты.
@@ -17,7 +21,7 @@ APK, schema/OTA и45соседних контейнеров сохранены �
 Idle control и direct transport остаются открытыми; probe выключен.
 [Установка, проверки и остаток](../audits/2026-10-10/BROADCAST-INSTALLED-ACCEPTANCE.md).
 
-Последний [конечный ICE canary](../audits/2026-10-10/DIRECT-PROBE-NETWORK-CANARY.md)
+Предыдущий [конечный ICE canary](../audits/2026-10-10/DIRECT-PROBE-NETWORK-CANARY.md)
 дал177requests/0responses и0RTT; исходный APK восстановлен, probeoff. Стандартный
 UI639b6ad5 не включает экспериментальную панель; временный loopback UI остановлен.
 Запись и воспроизведение Android действий продолжают использовать обычный путь.
@@ -42,7 +46,7 @@ automatic pixel/XPath bundle. [Конечная приёмка и границы
 
 Актуализировано: **10 октября 2026**. Каталог `/scripts`, редактор
 `/scripts/builder`, формат **DAG1.0**, React Flow, локальная ELK0.12.0.
-На 3015 и выбранном публичном адресе установлены frontend/API **369654a0**. Studio сохраняет
+На 3015 и выбранном публичном адресе установлены frontend/API **c17332eb**. Studio сохраняет
 graph/action contract и диалог сохранности; текущие runtime границы фиксируются в
 [CURRENT-STATE](CURRENT-STATE.md). Обратная гонка XPath→Control исправлена;
 быстрый переход и повторный вход в дерево проверены на установленном UI.

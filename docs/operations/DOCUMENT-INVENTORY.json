@@ -1,11 +1,11 @@
 {
   "schemaVersion": 1,
-  "reviewedAtUtc": "2026-10-10T06:02:04.459414+00:00",
+  "reviewedAtUtc": "2026-10-10T10:21:30.965056+00:00",
   "scope": "All tracked Markdown classified; active local-link paths scanned. Not semantic attestation of every sentence, command execution, external-link or live acceptance.",
   "countsByRole": {
     "ADR": 6,
     "CURRENT_ENTRYPOINT": 8,
-    "DATED_EVIDENCE": 260,
+    "DATED_EVIDENCE": 262,
     "DESIGN_SPECIFICATION": 76,
     "OPERATING_GUIDE": 64,
     "PROJECT_POLICY": 7,
@@ -1137,6 +1137,10 @@
       "role": "DATED_EVIDENCE"
     },
     {
+      "file": "docs/audits/2026-10-10/DIRECT-ADMISSION-INSTALLED.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
       "file": "docs/audits/2026-10-10/DIRECT-PROBE-ANDROID-COMPATIBILITY.md",
       "role": "DATED_EVIDENCE"
     },
@@ -1174,6 +1178,10 @@
     },
     {
       "file": "docs/audits/2026-10-10/IDLE-LOCAL-PUBLIC-COMPARISON.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
+      "file": "docs/audits/2026-10-10/PH030-DIRECT-PATH-FOLLOWUP.md",
       "role": "DATED_EVIDENCE"
     },
     {
