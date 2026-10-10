@@ -59,7 +59,7 @@ export function AutomaticStreamDiagnostic({ deviceId, session, eligible, onDiagn
   const current = attempt?.session === session ? attempt : null;
   const completed = last?.session === session ? last : null;
   if (!session || !admission.data?.video || !current) return null;
-  return <details open={busy} className="mt-2 min-w-0 rounded-lg border border-border bg-muted/20 p-2 text-left font-sans text-xs">
+  return <details open={busy} className="mt-2 min-w-0 rounded-lg border border-border bg-background p-2 text-left font-sans text-xs text-foreground">
     <summary className="cursor-pointer select-none font-medium">Автодиагностика прямого видео · {busy ? 'выполняется'
       : completed ? completed.frames > 0 ? `${completed.frames} кадров подтверждено` : 'кадры не подтверждены' : 'подготовка'}</summary>
     <p className="mt-2 text-muted-foreground">Проверка выполняется в этой вкладке. Основное видео и управление пока используют сервер; результат доступен в последних 10 сеансах.</p>
