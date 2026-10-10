@@ -71,6 +71,7 @@ describe('useFleetEvents', () => {
     act(() => jest.advanceTimersByTime(500));
     expect(invalidate).toHaveBeenCalledWith({ queryKey: ['devices'] }, { cancelRefetch: false });
     expect(invalidate).toHaveBeenCalledWith({ queryKey: ['fleet-coverage'] }, { cancelRefetch: false });
+    expect(invalidate).toHaveBeenCalledWith({ queryKey: ['direct-probe-capabilities'] }, { cancelRefetch: false });
   });
 
   function mount(onEvent?: (event: unknown) => void) {
@@ -105,7 +106,7 @@ describe('useFleetEvents', () => {
     const next = TestWebSocket.instances[1];
     act(() => { next.open(); next.message({ type: 'snapshot', data: {} }); jest.advanceTimersByTime(500); });
     expect(view.result.current.state).toBe('live');
-    for (const root of ['devices', 'dashboard', 'tasks', 'pipeline-runs', 'device-events', 'fleet-coverage']) {
+    for (const root of ['devices', 'dashboard', 'tasks', 'pipeline-runs', 'device-events', 'fleet-coverage', 'direct-probe-capabilities']) {
       expect(view.invalidate).toHaveBeenCalledWith({ queryKey: [root] }, { cancelRefetch: false });
     }
   });
@@ -120,6 +121,7 @@ describe('useFleetEvents', () => {
     act(() => jest.advanceTimersByTime(500));
     expect(view.invalidate.mock.calls.filter(call => call[0]?.queryKey?.[0] === 'tasks')).toHaveLength(1);
     expect(view.invalidate).toHaveBeenCalledWith({ queryKey: ['dashboard'] }, { cancelRefetch: false });
+    expect(view.invalidate.mock.calls.some(call => call[0]?.queryKey?.[0] === 'direct-probe-capabilities')).toBe(false);
   });
   it('recovers a silently broken transport even when close/error never arrive', () => {
     const view = mount();

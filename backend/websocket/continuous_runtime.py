@@ -51,6 +51,16 @@ class ViewerTransportUnavailable(Exception):
     """A retired viewer socket, distinct from shared Redis/runtime failure."""
 
 
+class ContinuousAdmissionRejected(InvalidContinuousInput):
+    """A known pre-owner refusal. A fresh negotiation may retry, never an input."""
+
+    def __init__(self, reason: str) -> None:
+        if reason not in {"controller_busy", "offer_expired", "capture_changed", "agent_reconnecting", "task_running"}:
+            raise ValueError("Unknown continuous admission reason")
+        self.reason = reason
+        super().__init__()
+
+
 class ContinuousRuntime:
     def __init__(self, store: ContinuousLeaseStore, manager: ConnectionManager) -> None:
         self.store, self.manager = store, manager
@@ -133,14 +143,18 @@ class ContinuousRuntime:
         message = viewer_continuous(data)
         if isinstance(message, CaptureBinding):
             offer = viewer.offer
-            if (viewer.lease or viewer.closing or not offer or offer["expires"] <= await self.now()
-                    or message != CaptureBinding(offer["capture_epoch"], offer["frame_width"], offer["frame_height"])
-                    or not await self.topology(viewer.device, offer["agent_session"])):
+            if viewer.lease or viewer.closing:
                 raise InvalidContinuousInput()
+            if not offer or offer["expires"] <= await self.now():
+                raise ContinuousAdmissionRejected("offer_expired")
+            if message != CaptureBinding(offer["capture_epoch"], offer["frame_width"], offer["frame_height"]):
+                raise ContinuousAdmissionRejected("capture_changed")
+            if not await self.topology(viewer.device, offer["agent_session"]):
+                raise ContinuousAdmissionRejected("agent_reconnecting")
             lease = await self.store.acquire(LeaseBinding(viewer.org, viewer.device, viewer.user,
                 self.worker, viewer.session, offer["agent_session"], message))
             if lease is None:
-                raise InvalidContinuousInput()
+                raise ContinuousAdmissionRejected("controller_busy")
             viewer.lease = lease
             await self.send(viewer, {"type": "touch_session", "session_id": viewer.session,
                 "owner": lease.owner, "capture_epoch": message.epoch,

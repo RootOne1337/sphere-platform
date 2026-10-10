@@ -32,10 +32,11 @@ const REFRESH_BATCH_MS = 500;
 const LIVE_QUERY_ROOTS = [
   'devices', 'tasks', 'dashboard', 'device-events', 'vpn', 'batches',
   'pipeline-runs', 'orchestration-status', 'account-sessions', 'game-accounts', 'device-inspector', 'fleet-coverage',
+  'direct-probe-capabilities',
 ];
 
 function eventQueryRoots(type: string): string[] {
-  if (type.startsWith('device.')) return ['devices', 'dashboard', 'device-events', 'fleet-coverage'];
+  if (type.startsWith('device.')) return ['devices', 'dashboard', 'device-events', 'fleet-coverage', 'direct-probe-capabilities'];
   if (type.startsWith('task.')) return ['tasks', 'devices', 'dashboard', 'batches', 'pipeline-runs', 'orchestration-status', 'device-events', 'fleet-coverage'];
   if (type.startsWith('command.')) return ['device-inspector', 'device-events'];
   if (type.startsWith('vpn.')) return ['vpn', 'devices', 'device-events', 'fleet-coverage'];

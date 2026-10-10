@@ -18,6 +18,7 @@ def authorized_viewer(monkeypatch):
     device = SimpleNamespace(org_id=org_id)
     db = AsyncMock()
     db.get.return_value = device
+    db.scalar.return_value = None
     db_context = AsyncMock()
     db_context.__aenter__.return_value = db
     db_context.__aexit__.return_value = False
@@ -122,7 +123,39 @@ async def test_touch_probe_requires_current_control_permission(authorized_viewer
     runtime.handle.assert_not_awaited()
     runtime.unregister.assert_awaited_once()
     assert ws.send_json.await_args.args[0]['type'] == 'touch_error'
+    assert ws.send_json.await_args.args[0]['error'] == 'control_denied'
+    assert ws.send_json.await_args.args[0]['retryable'] is False
     assert len(bridge.send_control.await_args_list) == 1
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize('failure,expected', [
+    ('busy', {'error': 'input_admission_rejected', 'reason': 'controller_busy', 'retryable': True}),
+    ('unavailable', {'error': 'input_temporarily_unavailable', 'reason': 'runtime_unavailable', 'retryable': True}),
+    ('invalid', {'error': 'input_rejected_or_unavailable'}),
+])
+async def test_touch_refusal_classification_preserves_video_and_never_replays(authorized_viewer, monkeypatch, failure, expected):
+    from backend.websocket.continuous_lease import InputLeaseUnavailable
+    from backend.websocket.continuous_protocol import InvalidContinuousInput
+    from backend.websocket.continuous_runtime import ContinuousAdmissionRejected
+
+    ws, bridge = authorized_viewer
+    monkeypatch.setattr('backend.database.tenant.bind_tenant_context', AsyncMock())
+    error = {'busy': ContinuousAdmissionRejected('controller_busy'),
+             'unavailable': InputLeaseUnavailable(),
+             'invalid': InvalidContinuousInput()}[failure]
+    runtime = MagicMock(register=MagicMock(return_value=True), handle=AsyncMock(side_effect=error),
+                        retire=AsyncMock(), unregister=AsyncMock())
+    monkeypatch.setattr(stream_router, 'get_continuous_runtime', lambda: runtime)
+    ws.receive_json = AsyncMock(side_effect=[{'token': 'fixture'}, {'type': 'touch_open',
+        'capture_epoch': '00112233-4455-6677-8899-aabbccddeeff', 'frame_width': 960, 'frame_height': 540},
+        {'type': 'request_keyframe'}, WebSocketDisconnect()])
+    await stream_router.stream_viewer_ws(ws, str(uuid4()))
+    ws.send_json.assert_awaited_once_with({'type': 'touch_error', 'operation': 'touch_open', **expected})
+    runtime.handle.assert_awaited_once()
+    runtime.retire.assert_awaited_once()
+    assert [c.args[1]['type'] for c in bridge.send_control.await_args_list] == ['viewer_connected', 'request_keyframe']
+    ws.close.assert_not_awaited()
 
 
 @pytest.mark.asyncio

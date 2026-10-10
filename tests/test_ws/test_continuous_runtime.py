@@ -23,6 +23,7 @@ from backend.websocket.connection_manager import ConnectionManager
 from backend.websocket.continuous_lease import ContinuousLeaseStore
 from backend.websocket.continuous_protocol import InvalidContinuousInput
 from backend.websocket.continuous_runtime import (
+    ContinuousAdmissionRejected,
     ContinuousRuntime,
     TouchViewer,
     ViewerTransportUnavailable,
@@ -119,6 +120,53 @@ async def test_two_workers_probe_ready_move_before_up_and_known_release(live):
     assert not viewer.closing
     assert any(c.args[0].get('stage') == 'release' for c in viewer.ws.send_json.call_args_list)
     assert await live[3][0].keys(runtime.store.namespace + ':*') == []
+
+
+@pytest.mark.asyncio
+async def test_second_viewer_gets_known_busy_refusal_and_can_open_after_confirmed_release(live):
+    runtime, viewer, agent = await open_view(live)
+    original = viewer.lease
+    offer = dict(viewer.offer)
+    second = TouchViewer(viewer.device, viewer.org, viewer.user, 'second_viewer_fixture', AsyncMock(), offer=offer)
+    assert runtime.register(second)
+    opening = dict(type='touch_open', capture_epoch=EPOCH, frame_width=960, frame_height=540)
+    with pytest.raises(ContinuousAdmissionRejected) as caught:
+        await runtime.handle(second, opening)
+    assert caught.value.reason == 'controller_busy'
+    assert second.lease is None
+    assert viewer.lease == original
+    second.ws.send_json.assert_not_awaited()
+    assert len([c for c in agent.send_json.call_args_list if c.args[0]['type'] == 'continuous_input_open']) == 1
+    await runtime.retire(second)  # The router retires only the refused viewer.
+    assert viewer.lease == original
+    await runtime.retire(viewer)
+    await eventually(lambda: viewer.lease is None)
+    second.offer = offer  # A fresh probe produces the same current capture binding.
+    await runtime.handle(second, opening)
+    assert second.lease is not None
+    assert second.lease.binding.viewer_session == second.session
+    assert second.lease.owner != original.owner
+    assert not any(c.args[0]['type'] == 'continuous_input_event' for c in agent.send_json.call_args_list)
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize('reason', ['offer_expired', 'capture_changed', 'agent_reconnecting'])
+async def test_stale_admission_is_classified_before_acquiring_an_owner(live, monkeypatch, reason):
+    runtimes, viewer, agent, _, _ = live
+    runtime = runtimes[1]
+    await runtime.handle(viewer, {'type': 'touch_probe'})
+    await eventually(lambda: viewer.offer is not None)
+    if reason == 'offer_expired':
+        viewer.offer['expires'] = await runtime.now() - 1
+    elif reason == 'capture_changed':
+        viewer.offer['frame_width'] = 1080
+    else:
+        monkeypatch.setattr(runtime, 'topology', AsyncMock(return_value=False))
+    with pytest.raises(ContinuousAdmissionRejected) as caught:
+        await runtime.handle(viewer, dict(type='touch_open', capture_epoch=EPOCH, frame_width=960, frame_height=540))
+    assert caught.value.reason == reason
+    assert viewer.lease is None
+    assert not any(c.args[0]['type'] == 'continuous_input_open' for c in agent.send_json.call_args_list)
 
 
 @pytest.mark.asyncio

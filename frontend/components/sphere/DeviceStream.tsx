@@ -81,6 +81,13 @@ const IDLE_RECOVERY_LIMITS = Object.freeze({ releaseWaitMs: 3000, baseDelayMs: 7
 const idleRecoveryDelay = (attempts: number) => Math.min(IDLE_RECOVERY_LIMITS.maxDelayMs,
   IDLE_RECOVERY_LIMITS.baseDelayMs * 2 ** Math.min(Math.max(0, attempts - 1), 5));
 const UNKNOWN_POINTER_NOTICE = 'Предыдущий жест не подтверждён полностью. Он не повторяется; после восстановления оцените экран перед новым действием.';
+const ADMISSION_RETRY_MESSAGES: Record<string, string> = {
+  controller_busy: 'Устройством управляет другая вкладка. Подключимся автоматически, когда управление освободится.',
+  task_running: 'На устройстве выполняется задание. Управление подключится автоматически после его завершения.',
+  offer_expired: 'Автоматически обновляем согласование управления с Android.',
+  capture_changed: 'Параметры экрана изменились. Автоматически согласуем управление заново.',
+  agent_reconnecting: 'Android переподключается. Управление восстановится автоматически.',
+};
 
 function formatTimestampAgo(timestamp: number | null): string {
   if (timestamp == null) return 'никогда';
@@ -474,8 +481,10 @@ export function DeviceStream({
                     if (ignore || ended || newWs !== wsRef.current) return;
                     setContinuousState(state);
                     const idleReceiptLoss = reason === 'native_receipt_timeout' && controller.recoverableIdleReceiptLoss;
-                    const pointerReceiptLoss = reason === 'native_receipt_timeout' && controller.unknownPointerReceiptLoss;
-                    const idleRecovery = (idleReceiptLoss || pointerReceiptLoss || reason === 'native_startup_busy') && !continuousFaultRef.current;
+                    const pointerReceiptLoss = (reason === 'native_receipt_timeout' || reason === 'server_runtime_retry')
+                      && controller.unknownPointerReceiptLoss;
+                    const idleRecovery = (idleReceiptLoss || pointerReceiptLoss || reason === 'native_startup_busy'
+                      || reason === 'server_admission_retry' || reason === 'server_runtime_retry') && !continuousFaultRef.current;
                     if (idleRecovery) {
                       if (pointerReceiptLoss) {
                         freshViewerAfterReleaseRef.current = true;
@@ -486,12 +495,14 @@ export function DeviceStream({
                       setIdleRecoveryCount(idleRecoveryCountRef.current);
                       idleRecoveringRef.current = true;
                       setIdleRecovering(true);
-                      setContinuousFailureCode(pointerReceiptLoss ? 'pointer_receipt_timeout' : idleReceiptLoss ? 'idle_receipt_timeout' : 'native_startup_busy');
+                      setContinuousFailureCode(pointerReceiptLoss ? 'pointer_receipt_timeout' : idleReceiptLoss ? 'idle_receipt_timeout' : reason);
                       setContinuousReason(pointerReceiptLoss
                         ? 'Автоматически восстанавливаем новую сессию · ожидаем освобождение касания и свежий кадр. Предыдущий жест не повторяется.'
                         : idleReceiptLoss
                         ? 'Автоматически восстанавливаем управление · задержалось подтверждение связи без касания. Команды не повторяются.'
-                        : 'Автоматически восстанавливаем управление · Android завершает предыдущую сессию. Команды не повторяются.');
+                        : reason === 'native_startup_busy'
+                        ? 'Автоматически восстанавливаем управление · Android завершает предыдущую сессию. Команды не повторяются.'
+                        : 'Автоматически восстанавливаем управление · повторно согласуем связь с Android. Команды не повторяются.');
                     } else if (reason && !['viewer_closed', 'surface_blur', 'surface_hidden', 'surface_control_lost', 'control_mode_changed', 'capture_or_socket_lost'].includes(reason)) {
                       idleRecoveringRef.current = false;
                       setIdleRecovering(false);
@@ -544,7 +555,39 @@ export function DeviceStream({
                 return;
               }
               if (msg.type === 'touch_error') {
+                const controller = continuousRef.current;
+                if (typeof msg.owner === 'string' && !controller?.matchesServerOwner(msg.owner)) return;
+                if (controller?.state === 'closed' && (msg.operation === 'touch_close' || controller.matchesServerOwner(msg.owner))) return;
                 clearTimeout(probeTimer);
+                const admissionMessage = msg.error === 'input_admission_rejected' && msg.retryable === true
+                  && typeof msg.reason === 'string' && Object.hasOwn(ADMISSION_RETRY_MESSAGES, msg.reason)
+                  ? ADMISSION_RETRY_MESSAGES[msg.reason] : null;
+                const runtimeRetry = msg.error === 'input_temporarily_unavailable' && msg.retryable === true
+                  && msg.reason === 'runtime_unavailable';
+                if (admissionMessage && controller?.rejectAdmission()) {
+                  setContinuousFailureCode(msg.reason);
+                  setContinuousReason(admissionMessage);
+                  return;
+                }
+                if (runtimeRetry && controller && ['opening', 'ready'].includes(controller.state)) {
+                  controller.retire('server_runtime_retry');
+                  return;
+                }
+                // A second error for the old CLOSE cannot cancel recovery or
+                // substitute for the native RELEASE required by an unknown touch.
+                if (runtimeRetry && idleRecoveringRef.current) return;
+                if ((admissionMessage || runtimeRetry) && !controller && continuousRequestedRef.current) {
+                  continuousRequestedRef.current = false;
+                  continuousSupportedRef.current = true;
+                  idleRecoveryCountRef.current = Math.min(Number.MAX_SAFE_INTEGER, idleRecoveryCountRef.current + 1);
+                  setIdleRecoveryCount(idleRecoveryCountRef.current);
+                  idleRecoveringRef.current = true;
+                  setIdleRecovering(true);
+                  setContinuousState('closed');
+                  setContinuousFailureCode(admissionMessage ? msg.reason : 'runtime_unavailable');
+                  setContinuousReason(admissionMessage ?? 'Автоматически восстанавливаем связь управления с Android.');
+                  return;
+                }
                 continuousRef.current?.retire('server_rejected');
                 if (!continuousRef.current) {
                   continuousRequestedRef.current = false;
@@ -557,7 +600,8 @@ export function DeviceStream({
                   setContinuousFault(true);
                   setContinuousFailureCode('server_rejected');
                 }
-                setContinuousReason(continuousRef.current || continuousSupportedRef.current
+                setContinuousReason(msg.error === 'control_denied' ? 'У этой учётной записи нет права управлять устройством.'
+                  : continuousRef.current || continuousSupportedRef.current
                   ? 'Управление приостановлено сервером. Видеопоток продолжается; команды не повторяются.'
                   : 'Дискретное управление · сервер не подтвердил непрерывные жесты.');
                 return;
@@ -780,7 +824,7 @@ export function DeviceStream({
     const controller = continuousRef.current;
     const socket = wsRef.current;
     if (!socket || !['fenced', 'closed'].includes(controller?.state ?? continuousState)) return;
-    const released = controller?.state === 'closed';
+    const released = controller?.state === 'closed' || !controller && continuousState === 'closed';
     const timeout = setTimeout(() => {
       if (!idleRecoveringRef.current || !idleRecoveryAllowedRef.current
         || continuousRef.current !== controller || wsRef.current !== socket) return;
@@ -796,7 +840,7 @@ export function DeviceStream({
           setContinuousFailureCode('pointer_release_unknown');
           setContinuousReason('Касание Android не подтвердило освобождение. Проверьте экран перед восстановлением.');
         }
-      } else if (controller?.state === 'closed') {
+      } else if (released) {
         idleRecoveringRef.current = false;
         setIdleRecovering(false);
         automaticProbeRef.current = null;

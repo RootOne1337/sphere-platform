@@ -92,6 +92,16 @@ export class ContinuousPointer {
   get recoverableIdleReceiptLoss() { return this.idleReceiptLoss; }
   /** The prior touch outcome stays unknown; only native RELEASE can retire its authority. */
   get unknownPointerReceiptLoss() { return this.pointerReceiptLoss; }
+  matchesServerOwner(owner: unknown): boolean { return typeof owner === 'string' && this.session?.owner === owner; }
+
+  /** Server confirmed refusal before binding any owner. No native RELEASE is needed. */
+  rejectAdmission(): boolean {
+    if (this.stateValue !== 'opening' || this.session || this.sequence !== 0
+      || this.held || this.terminal || this.pending.length) return false;
+    this.retire('server_admission_retry');
+    this.transition('closed');
+    return true;
+  }
 
   private transition(state: ContinuousPointerState, reason: string | null = null) {
     this.stateValue = state;
@@ -301,7 +311,7 @@ export class ContinuousPointer {
       || this.stateValue === 'closing' || this.stateValue === 'fenced') return;
     this.idleReceiptLoss = reason === 'native_receipt_timeout' && this.held === null
       && this.terminal === null && this.pending.length > 0 && this.pending.every(p => p.action === 4);
-    this.pointerReceiptLoss = reason === 'native_receipt_timeout' && this.stateValue === 'ready'
+    this.pointerReceiptLoss = ['native_receipt_timeout', 'server_runtime_retry'].includes(reason) && this.stateValue === 'ready'
       && (this.held !== null || this.terminal !== null || this.pending.some(p => p.action !== 4));
     const now = this.now();
     const age = (at: number | undefined): number | null => at !== undefined

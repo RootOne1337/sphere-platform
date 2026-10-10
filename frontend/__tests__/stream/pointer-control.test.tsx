@@ -400,6 +400,114 @@ it('recording after a known idle release accepts a new explicit action without r
   view.unmount();
 });
 
+it('a server busy refusal before binding retries on the same video socket and admits a fresh owner', () => {
+  mockCapture = { captureEpoch: TOUCH_EPOCH, frameWidth: 1280, frameHeight: 720 };
+  const view = readyWheel();
+  const receive = (message: object) => act(() => view.socket.onmessage?.({ data: JSON.stringify(message) }));
+  const sent = () => view.socket.send.mock.calls.map(([raw]) => JSON.parse(raw as string));
+  receive({ type: 'touch_capability', capture_epoch: TOUCH_EPOCH, frame_width: 1280, frame_height: 720 });
+  receive({ type: 'touch_error', error: 'input_admission_rejected', reason: 'controller_busy', retryable: true, operation: 'touch_open' });
+  expect(view.getByText(/Устройством управляет другая вкладка/)).toBeInTheDocument();
+  expect(view.queryByRole('button', { name: 'Восстановить управление' })).not.toBeInTheDocument();
+  expect(view.getByRole('button', { name: 'Домой' })).toBeDisabled();
+  view.down(1); view.up(1, 65);
+  act(() => jest.advanceTimersByTime(749));
+  expect(sent().filter(x => x.type === 'touch_probe')).toHaveLength(1);
+  act(() => jest.advanceTimersByTime(1));
+  expect(sent().filter(x => x.type === 'touch_probe')).toHaveLength(2);
+  expect(view.socket.close).not.toHaveBeenCalled();
+  expect(MockSocket.instances).toHaveLength(1);
+  receive({ type: 'touch_capability', capture_epoch: TOUCH_EPOCH, frame_width: 1280, frame_height: 720 });
+  receive({ type: 'touch_session', session_id: 'fresh_server_session', owner: 'fresh_server_owner',
+    capture_epoch: TOUCH_EPOCH, frame_width: 1280, frame_height: 720 });
+  view.down(2); view.up(2, 65);
+  expect(sent().filter(x => x.type === 'touch_event')).toEqual([]);
+  receive({ type: 'continuous_input_status', session_id: 'fresh_server_session', owner: 'fresh_server_owner',
+    capture_epoch: TOUCH_EPOCH, sequence: 0, status: 0, stage: 'startup', origin: 'injector', device_uptime_ms: 500 });
+  expect(view.getByText(/Непрерывное управление/)).toBeInTheDocument();
+  view.down(3); view.up(3, 65);
+  expect(sent().filter(x => x.type === 'touch_event').map(x => x.action)).toEqual([0, 1]);
+  expect(view.commands()).toEqual([]);
+  view.unmount();
+  expect(jest.getTimerCount()).toBe(0);
+});
+
+it('backs off repeated pre-owner refusals without interrupting video or accumulating input', () => {
+  mockCapture = { captureEpoch: TOUCH_EPOCH, frameWidth: 1280, frameHeight: 720 };
+  const view = readyWheel();
+  const receive = (message: object) => act(() => view.socket.onmessage?.({ data: JSON.stringify(message) }));
+  const sent = () => view.socket.send.mock.calls.map(([raw]) => JSON.parse(raw as string));
+  for (const [i, delay] of [750, 1500, 3000, 6000, 12000, 15000, 15000].entries()) {
+    receive({ type: 'touch_capability', capture_epoch: TOUCH_EPOCH, frame_width: 1280, frame_height: 720 });
+    receive({ type: 'touch_error', error: 'input_admission_rejected', reason: 'controller_busy', retryable: true });
+    act(() => jest.advanceTimersByTime(delay - 1));
+    expect(sent().filter(x => x.type === 'touch_probe')).toHaveLength(i + 1);
+    act(() => jest.advanceTimersByTime(1));
+    expect(sent().filter(x => x.type === 'touch_probe')).toHaveLength(i + 2);
+  }
+  expect(sent().filter(x => x.type === 'touch_event')).toEqual([]);
+  expect(view.socket.close).not.toHaveBeenCalled();
+  view.unmount();
+  expect(jest.getTimerCount()).toBe(0);
+});
+
+it('recovers a temporary probe refusal before any controller exists without reopening video', () => {
+  mockCapture = { captureEpoch: TOUCH_EPOCH, frameWidth: 1280, frameHeight: 720 };
+  const view = readyWheel();
+  act(() => view.socket.onmessage?.({ data: JSON.stringify({ type: 'touch_error', error: 'input_temporarily_unavailable',
+    reason: 'runtime_unavailable', retryable: true, operation: 'touch_probe' }) }));
+  act(() => jest.advanceTimersByTime(750));
+  const sent = view.socket.send.mock.calls.map(([raw]) => JSON.parse(raw as string));
+  expect(sent.filter(x => x.type === 'touch_probe')).toHaveLength(2);
+  expect(sent.filter(x => x.type === 'touch_event')).toEqual([]);
+  expect(view.socket.close).not.toHaveBeenCalled();
+  view.unmount();
+});
+
+it('a stale owner error cannot cancel a replacement capability deadline', () => {
+  const view = readyContinuous();
+  for (let i = 0; i < 4; i++) act(() => jest.advanceTimersByTime(250));
+  view.status(0, 3, 'release');
+  act(() => jest.advanceTimersByTime(750));
+  view.receive({ type: 'touch_error', error: 'input_temporarily_unavailable', reason: 'runtime_unavailable',
+    retryable: true, operation: 'touch_close', owner: 'owner_session_fixture' });
+  act(() => jest.advanceTimersByTime(6000));
+  expect(view.container.querySelector('[data-control-state]')).toHaveAttribute('data-control-failure', 'capability_timeout');
+  expect(view.sent().filter(x => x.type === 'touch_event').every(x => x.action === 4)).toBe(true);
+  view.unmount();
+});
+
+it('a temporary server failure during a touch waits for native RELEASE and ignores stale owner errors', () => {
+  const view = readyContinuous();
+  view.down(1);
+  view.receive({ type: 'touch_error', error: 'input_temporarily_unavailable', reason: 'runtime_unavailable',
+    retryable: true, operation: 'touch_event', owner: 'owner_session_fixture' });
+  view.receive({ type: 'touch_error', error: 'input_temporarily_unavailable', reason: 'runtime_unavailable',
+    retryable: true, operation: 'touch_close', owner: 'owner_session_fixture' });
+  act(() => jest.advanceTimersByTime(1000));
+  expect(view.socket.close).not.toHaveBeenCalled();
+  expect(view.sent().filter(x => x.type === 'touch_probe')).toHaveLength(1);
+  view.status(0, 3, 'release');
+  act(() => jest.advanceTimersByTime(750));
+  expect(view.socket.close).toHaveBeenCalledTimes(1);
+  expect(view.sent().filter(x => x.type === 'touch_event').map(x => x.action)).toEqual([0]);
+  expect(view.commands()).toEqual([]);
+  view.unmount();
+});
+
+it.each([false, true])('does not turn a malformed or nonretryable admission error into an automatic grant (%s)', retryable => {
+  mockCapture = { captureEpoch: TOUCH_EPOCH, frameWidth: 1280, frameHeight: 720 };
+  const view = readyWheel();
+  act(() => view.socket.onmessage?.({ data: JSON.stringify({ type: 'touch_capability', capture_epoch: TOUCH_EPOCH,
+    frame_width: 1280, frame_height: 720 }) }));
+  act(() => view.socket.onmessage?.({ data: JSON.stringify({ type: 'touch_error', error: 'input_admission_rejected',
+    reason: retryable ? 'unknown_reason' : 'controller_busy', retryable }) }));
+  act(() => jest.advanceTimersByTime(20_000));
+  expect(view.socket.send.mock.calls.map(([raw]) => JSON.parse(raw as string)).filter(x => x.type === 'touch_probe')).toHaveLength(1);
+  expect(MockSocket.instances).toHaveLength(1);
+  view.unmount();
+});
+
 it('a busy admission before native STARTUP retries negotiation without claiming or repeating a touch', () => {
   mockCapture = { captureEpoch: TOUCH_EPOCH, frameWidth: 1280, frameHeight: 720 };
   const view = readyWheel();

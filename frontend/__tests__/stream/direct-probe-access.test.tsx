@@ -1,12 +1,14 @@
 import React from 'react';
-import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { act, fireEvent, render as renderView, screen, waitFor } from '@testing-library/react';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { DirectProbeAccess, parseProbeAdmission } from '@/src/features/stream/DirectProbeAccess';
 
 let mockToken: string | null = 'fixture';
+let queryClient: QueryClient;
 const mockGet = jest.fn();
 const mockStop = jest.fn();
 const mockStart = jest.fn((...args: unknown[]) => { void args; return mockStop; });
-jest.mock('@/lib/store', () => ({ useAuthStore: (selector: (state: unknown) => unknown) => selector({ accessToken: mockToken }) }));
+jest.mock('@/lib/store', () => ({ useAuthStore: (selector: (state: unknown) => unknown) => selector({ accessToken: mockToken, sessionVersion: 0 }) }));
 jest.mock('@/lib/api', () => ({ api: { get: (...args: unknown[]) => mockGet(...args) } }));
 jest.mock('@/src/features/stream/directProbe', () => ({
   startDirectProbe: (...args: unknown[]) => mockStart(...args),
@@ -15,8 +17,14 @@ jest.mock('@/src/features/stream/directProbe', () => ({
 const device = '753fd530-2f19-4e5e-98ba-769863678141';
 const allowed = { schema_version: 1, device_id: device, enabled: true,
   profiles: ['host', 'public-stun'], scope: 'diagnostic_echo_only', max_duration_ms: 30000, samples: 20 };
-beforeEach(() => { mockToken = 'fixture'; mockGet.mockReset(); mockStart.mockClear(); mockStop.mockClear();
+function render(view: React.ReactElement) {
+  return renderView(view, { wrapper: ({ children }) => <QueryClientProvider client={queryClient}>{children}</QueryClientProvider> });
+}
+beforeEach(() => { queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+  jest.spyOn(HTMLMediaElement.prototype, 'pause').mockImplementation(() => {});
+  mockToken = 'fixture'; mockGet.mockReset(); mockStart.mockClear(); mockStop.mockClear();
   mockGet.mockResolvedValue({ data: allowed }); });
+afterEach(() => { queryClient.clear(); });
 
 test('ordinary UI reads admission once and creates no peer until the explicit start', async () => {
   render(<DirectProbeAccess deviceId={device} />);
@@ -89,4 +97,45 @@ test('the media selector needs independent server admission and never starts a p
   expect(screen.getByRole('button', { name: 'Проверить видео с APK' })).toBeEnabled();
   expect(mockStart).not.toHaveBeenCalled();
   expect(screen.queryByRole('button', { name: 'Проверить прямой канал' })).not.toBeInTheDocument();
+});
+
+test('online/OTA invalidation reveals new video support without reloading or starting a peer', async () => {
+  render(<DirectProbeAccess deviceId={device} />);
+  await screen.findByRole('button', { name: 'Проверить прямой канал' });
+  expect(screen.queryByRole('combobox', { name: 'Что проверить' })).not.toBeInTheDocument();
+  mockGet.mockResolvedValue({ data: { ...allowed, readonly_video_enabled: true } });
+  await act(async () => { await queryClient.invalidateQueries({ queryKey: ['direct-probe-capabilities'] }); });
+  expect(await screen.findByRole('combobox', { name: 'Что проверить' })).toBeInTheDocument();
+  expect(mockGet).toHaveBeenCalledTimes(2);
+  expect(mockStart).not.toHaveBeenCalled();
+});
+
+test('an unrelated fleet query does not reread capabilities and a failed read can be retried without a peer', async () => {
+  render(<DirectProbeAccess deviceId={device} />);
+  await screen.findByRole('button', { name: 'Проверить прямой канал' });
+  await act(async () => { await queryClient.invalidateQueries({ queryKey: ['tasks'] }); });
+  expect(mockGet).toHaveBeenCalledTimes(1);
+  mockGet.mockRejectedValueOnce(Error('temporary failure'));
+  await act(async () => { await queryClient.invalidateQueries({ queryKey: ['direct-probe-capabilities'] }); });
+  fireEvent.click(await screen.findByRole('button', { name: 'Обновить доступ к проверке' }));
+  expect(await screen.findByRole('button', { name: 'Проверить прямой канал' })).toBeEnabled();
+  expect(mockGet).toHaveBeenCalledTimes(3);
+  expect(mockStart).not.toHaveBeenCalled();
+});
+
+test('a running finite probe keeps its mode/profile through invalidation and reconciles when it finishes', async () => {
+  mockGet.mockResolvedValue({ data: { ...allowed, readonly_video_enabled: true } });
+  render(<DirectProbeAccess deviceId={device} />);
+  const mode = await screen.findByRole('combobox', { name: 'Что проверить' });
+  fireEvent.click(screen.getByRole('button', { name: 'Проверить прямой канал' }));
+  const update = mockStart.mock.calls[0][2] as (value: unknown) => void;
+  act(() => { update({ state: 'connected', samples: [], path: 'host', protocol: 'udp' }); });
+  expect(mode).toBeDisabled();
+  await act(async () => { await queryClient.invalidateQueries({ queryKey: ['direct-probe-capabilities'] }); });
+  expect(mockGet).toHaveBeenCalledTimes(1);
+  expect(mockStop).not.toHaveBeenCalled();
+  act(() => { update({ state: 'completed', samples: [1], path: 'host', protocol: 'udp' }); });
+  await waitFor(() => expect(mockGet).toHaveBeenCalledTimes(2));
+  expect(mode).toBeEnabled();
+  expect(mockStart).toHaveBeenCalledTimes(1);
 });

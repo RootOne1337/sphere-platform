@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import asyncio
 import secrets
+from typing import Any
 
 import structlog
 from fastapi import APIRouter, HTTPException, WebSocket, WebSocketDisconnect
@@ -12,7 +13,11 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from backend.core.dependencies import _is_dev_skip_auth
 from backend.database.engine import AsyncSessionLocal
 from backend.websocket.continuous_lease import InputLeaseUnavailable
-from backend.websocket.continuous_runtime import TouchViewer, get_continuous_runtime
+from backend.websocket.continuous_runtime import (
+    ContinuousAdmissionRejected,
+    TouchViewer,
+    get_continuous_runtime,
+)
 from backend.websocket.stream_bridge import get_stream_bridge
 from backend.websocket.viewer_input import InvalidViewerInput, viewer_command
 
@@ -237,9 +242,7 @@ async def stream_viewer_ws(
     ping_task = asyncio.create_task(_viewer_ping_loop())
     stop_task = asyncio.create_task(auth_stopped.wait())
 
-    async def current_touch_permission() -> bool:
-        if not await current_control_permission():
-            return False
+    async def device_task_idle() -> bool:
         async with asyncio.timeout(0.5), AsyncSessionLocal() as db:
             from sqlalchemy import select
 
@@ -251,6 +254,9 @@ async def stream_viewer_ws(
                 Task.status.in_([TaskStatus.ASSIGNED, TaskStatus.RUNNING]),
             ).limit(1))
         return running is None
+
+    async def current_touch_permission() -> bool:
+        return bool(await current_control_permission()) and await device_task_idle()
 
     async def _touch_auth_loop() -> None:
         # Separate from MOVE cadence and video. Fresh control authorization
@@ -288,18 +294,39 @@ async def stream_viewer_ws(
                     receive_task.cancel()
                 await asyncio.gather(receive_task, return_exceptions=True)
             if isinstance(data, dict) and isinstance(data.get("type"), str) and data["type"] in {"touch_probe", "touch_open", "touch_event", "touch_close"}:
+                rejection: dict[str, Any] = {"type": "touch_error", "error": "input_rejected_or_unavailable"}
                 try:
                     if not touch_registered or not touch_runtime:
                         raise InputLeaseUnavailable()
                     if data["type"] in {"touch_probe", "touch_open"}:
-                        allowed = await current_touch_permission() if data["type"] == "touch_open" else await current_control_permission()
+                        allowed = await current_control_permission()
+                        if allowed is None:
+                            break  # Authentication already retired and closed this viewer.
                         if not allowed:
-                            raise InputLeaseUnavailable()
+                            rejection = {"type": "touch_error", "error": "control_denied", "retryable": False}
+                            raise PermissionError()
+                        if data["type"] == "touch_open" and not await device_task_idle():
+                            if touch_viewer.lease is None and not touch_viewer.closing:
+                                raise ContinuousAdmissionRejected("task_running")
+                            raise PermissionError()
                     await touch_runtime.handle(touch_viewer, data)
-                except Exception:
+                except Exception as exc:
+                    if isinstance(exc, ContinuousAdmissionRejected) and touch_viewer.lease is None:
+                        rejection = {"type": "touch_error", "error": "input_admission_rejected",
+                                     "reason": exc.reason, "retryable": True}
+                    elif isinstance(exc, (InputLeaseUnavailable, TimeoutError)):
+                        rejection = {"type": "touch_error", "error": "input_temporarily_unavailable",
+                                     "reason": "runtime_unavailable", "retryable": True}
+                    logger.info("stream_touch_rejected", device_id=device_id, session_id=session_id,
+                                message_type=data["type"], reason=rejection.get("reason", rejection["error"]),
+                                retryable=rejection.get("retryable", False), owner_bound=touch_viewer.lease is not None,
+                                error_type=type(exc).__name__)
+                    rejection["operation"] = data["type"]
+                    if touch_viewer.lease is not None:
+                        rejection["owner"] = touch_viewer.lease.owner
                     if touch_runtime:
                         await touch_runtime.retire(touch_viewer)
-                    await ws.send_json({"type": "touch_error", "error": "input_rejected_or_unavailable"})
+                    await ws.send_json(rejection)
                 continue
             try:
                 control = viewer_command(data)
