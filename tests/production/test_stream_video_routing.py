@@ -315,10 +315,20 @@ async def test_malformed_input_never_dispatches_and_keeps_video_and_later_input_
             task = asyncio.create_task(module.stream_viewer_ws(viewer, device))
             try:
                 await until(lambda: any(c["type"] == "viewer_connected" for c in commands))
+                owner = next(c for c in commands if c["type"] == "viewer_connected")
+                session_metadata = {
+                    "type": "stream_session", "schema_version": 1,
+                    "session_id": owner["session_id"], "history_enabled": True,
+                    "report_interval_seconds": 10,
+                }
+                assert viewer.messages == [session_metadata]
                 viewer.incoming.put_nowait(malformed)
-                await until(lambda: bool(viewer.messages))
-                assert viewer.messages == [{"type": "error", "error": "stream_input_invalid",
-                                            "reason": reason}]
+                # Session admission precedes input. Wait for the error itself;
+                # the metadata alone must not satisfy this regression check.
+                await until(lambda: any(m.get("type") == "error" for m in viewer.messages))
+                assert viewer.messages == [session_metadata, {
+                    "type": "error", "error": "stream_input_invalid", "reason": reason,
+                }]
                 assert not any(c["type"] in {"touch_tap", "touch_swipe", "keyevent", "text"} for c in commands)
                 assert viewer.closed is None
                 await bridges[0].handle_agent_frame(device, FRAME)
@@ -326,7 +336,6 @@ async def test_malformed_input_never_dispatches_and_keeps_video_and_later_input_
                 viewer.incoming.put_nowait({"type": "click", "x": 123, "y": 456, "session_id": "spoofed"})
                 await until(lambda: any(c["type"] == "touch_tap" for c in commands))
                 tap = next(c for c in commands if c["type"] == "touch_tap")
-                owner = next(c for c in commands if c["type"] == "viewer_connected")
                 assert tap == {"type": "touch_tap", "x": 123, "y": 456, "session_id": owner["session_id"]}
             finally:
                 viewer.incoming.put_nowait(None)

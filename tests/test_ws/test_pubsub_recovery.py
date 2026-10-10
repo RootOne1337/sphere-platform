@@ -99,7 +99,9 @@ async def test_existing_clients_receive_again_after_resubscribe_failure(monkeypa
             await original_sleep(0.001)
 
     try:
-        await asyncio.wait_for(wait_for_delivery(), timeout=0.4)
+        # Recovery timing is asserted through the recorded backoff sequence.
+        # Leave scheduling headroom under coverage on a shared CI runner.
+        await asyncio.wait_for(wait_for_delivery(), timeout=3.0)
         assert restored.channels == expected_channels
         assert initial.closed and all(sub.closed for sub in failed)
         assert delays[0] == 1.0 and max(delays) <= 30.0
