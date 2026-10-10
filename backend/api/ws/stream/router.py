@@ -344,19 +344,19 @@ async def stream_viewer_ws(
                         if sample is not None:
                             enqueue_diagnostic("direct_diagnostics", sample, 3)
                 continue
-            if isinstance(data, dict) and isinstance(data.get("type"), str) and data["type"] in {"touch_probe", "touch_open", "touch_event", "touch_close"}:
+            if isinstance(data, dict) and isinstance(data.get("type"), str) and data["type"] in {"touch_probe", "touch_open", "touch_direct_open", "touch_event", "touch_close"}:
                 rejection: dict[str, Any] = {"type": "touch_error", "error": "input_rejected_or_unavailable"}
                 try:
                     if not touch_registered or not touch_runtime:
                         raise InputLeaseUnavailable()
-                    if data["type"] in {"touch_probe", "touch_open"}:
+                    if data["type"] in {"touch_probe", "touch_open", "touch_direct_open"}:
                         allowed = await current_control_permission()
                         if allowed is None:
                             break  # Authentication already retired and closed this viewer.
                         if not allowed:
                             rejection = {"type": "touch_error", "error": "control_denied", "retryable": False}
                             raise PermissionError()
-                        if data["type"] == "touch_open" and not await device_task_idle():
+                        if data["type"] in {"touch_open", "touch_direct_open"} and not await device_task_idle():
                             if touch_viewer.lease is None and not touch_viewer.closing:
                                 raise ContinuousAdmissionRejected("task_running")
                             raise PermissionError()

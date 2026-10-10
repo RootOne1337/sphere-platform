@@ -12,8 +12,10 @@ class DirectProbeTransport(
     context: Context, scope: CoroutineScope,
     generation: () -> Long?, send: (Long, JsonObject) -> Boolean,
     streaming: com.sphereplatform.agent.streaming.StreamingManager,
+    input: DirectInputHandler? = null,
 ) {
     fun handle(message: JsonObject) = message["type"]?.jsonPrimitive?.contentOrNull in
         setOf("direct_probe_offer", "direct_probe_close")
     fun invalidate() = Unit
+    fun inputChannel(session: String): DirectInputChannel? = null
 }

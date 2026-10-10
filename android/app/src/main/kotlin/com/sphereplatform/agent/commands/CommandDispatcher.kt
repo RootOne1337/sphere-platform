@@ -94,17 +94,21 @@ class CommandDispatcher @Inject constructor(
     } else null
     private val directProbe = com.sphereplatform.agent.direct.DirectProbeTransport(
         appContext, scope, wsClient::currentGeneration, wsClient::sendDirectProbeSignal, streamingManager,
+        continuousInput,
     )
 
     fun start() {
         updateCheckQueuedForService.set(false)
-        continuousInput?.let { streamingManager.setInputInvalidationListener(it::invalidate) }
+        continuousInput?.let {
+            streamingManager.setInputInvalidationListener(it::invalidate)
+            it.directChannel = directProbe::inputChannel
+        }
         wsClient.onJsonMessage = { msg ->
             val type = msg["type"]?.jsonPrimitive?.contentOrNull
             if (type == "ping") {
                 handlePingImmediate(msg)
             } else if (directProbe.handle(msg)) {
-                // Separate finite read-only peer; cannot enter the Android command dispatcher.
+                // Media/input peer accepts only its scoped protocols, never ordinary commands.
             } else if (continuousInput?.handle(msg) == true) {
                 // Admission is synchronous and bounded; never launch one coroutine per MOVE.
             } else {

@@ -119,6 +119,52 @@ async def live_offer(peers, monkeypatch):
 
 
 @pytest.mark.asyncio
+async def test_direct_input_peer_is_bound_across_workers_to_user_viewer_and_agent_generation(peers, monkeypatch):
+    from backend.core.config import settings
+    monkeypatch.setattr(settings, 'DIRECT_TRANSPORT_LIVE_VIDEO_ENABLED', True)
+    monkeypatch.setattr(settings, 'DIRECT_TRANSPORT_INPUT_ENABLED', True)
+    monkeypatch.setattr(settings, 'DIRECT_TRANSPORT_PROBE_DEVICE_IDS', frozenset({'device'}))
+    runtimes, clients, _, agent, agent_session, viewer = peers
+    await DeviceStatusCache(clients[0]).set_status('device', DeviceLiveStatus(
+        device_id='device', status='online', ws_session_id=agent_session, agent_version_code=10254))
+    viewer.video = viewer.live = True
+    viewer.control_session = '1' * 16
+    await runtimes[1].open(viewer, VIDEO_SDP)
+    await eventually(lambda: agent.send_json.call_count == 1)
+    scope = dict(device='device', org='org', user='user', session=viewer.session,
+                 agent_session=agent_session, viewer_session=viewer.control_session)
+    assert await runtimes[0].input_peer(**scope)  # Works on the separate native worker.
+    for key, value in [('device', 'other-device'), ('org', 'other-org'), ('user', 'other-user'),
+                       ('session', 'b' * 32), ('agent_session', 'other-agent'), ('viewer_session', '2' * 16)]:
+        assert not await runtimes[0].input_peer(**(scope | {key: value}))
+    await DeviceStatusCache(clients[0]).set_status('device', DeviceLiveStatus(
+        device_id='device', status='online', ws_session_id=agent_session, agent_version_code=10253))
+    assert not await runtimes[0].input_peer(**scope)
+    await runtimes[1].retire(viewer)
+    assert not await runtimes[0].input_peer(**scope)
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize('live,enabled,version', [(False, True, 10254), (True, False, 10254), (True, True, 10253)])
+async def test_readonly_disabled_and_older_peers_never_receive_direct_input_grants(peers, monkeypatch, live, enabled, version):
+    from backend.core.config import settings
+    monkeypatch.setattr(settings, 'DIRECT_TRANSPORT_LIVE_VIDEO_ENABLED', True)
+    monkeypatch.setattr(settings, 'DIRECT_TRANSPORT_VIDEO_PROBE_ENABLED', True)
+    monkeypatch.setattr(settings, 'DIRECT_TRANSPORT_INPUT_ENABLED', enabled)
+    monkeypatch.setattr(settings, 'DIRECT_TRANSPORT_PROBE_DEVICE_IDS', frozenset({'device'}))
+    runtimes, clients, _, agent, agent_session, viewer = peers
+    await DeviceStatusCache(clients[0]).set_status('device', DeviceLiveStatus(
+        device_id='device', status='online', ws_session_id=agent_session, agent_version_code=version))
+    viewer.video = True
+    viewer.live = live
+    viewer.control_session = '1' * 16
+    with pytest.raises(InvalidDirectProbe, match='input_peer_not_admitted'):
+        await runtimes[1].open(viewer, VIDEO_SDP)
+    assert await clients[0].get(runtimes[0].key('device')) is None
+    agent.send_json.assert_not_awaited()
+
+
+@pytest.mark.asyncio
 async def test_live_video_renews_exact_cross_worker_lease_and_delivers_native_ttl(peers, monkeypatch):
     viewer = await live_offer(peers, monkeypatch)
     runtimes, clients, _, agent, _, _ = peers

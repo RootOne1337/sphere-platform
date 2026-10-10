@@ -72,6 +72,7 @@ class ProbeCapabilities(BaseModel):
     samples: Literal[20] = 20
     readonly_video_enabled: bool = False
     live_video_enabled: bool = False
+    direct_input_enabled: bool = False
 
 
 def relay_configured() -> bool:
@@ -104,6 +105,7 @@ async def probe_capabilities(
         profiles.append("turn")
     video_enabled = False
     live_enabled = False
+    status = None
     if enabled and runtime and (settings.DIRECT_TRANSPORT_VIDEO_PROBE_ENABLED or settings.DIRECT_TRANSPORT_LIVE_VIDEO_ENABLED):
         status = await DeviceStatusCache(runtime.redis).get_status(str(device_id))
         current = bool(status and status.ws_session_id and status.status in {"online", "busy"})
@@ -112,4 +114,6 @@ async def probe_capabilities(
         live_enabled = bool(current and settings.DIRECT_TRANSPORT_LIVE_VIDEO_ENABLED and status
                             and status.agent_version_code and status.agent_version_code >= LIVE_VIDEO_MIN_AGENT_CODE)
     return ProbeCapabilities(device_id=device_id, enabled=enabled, profiles=profiles,
-                             readonly_video_enabled=video_enabled, live_video_enabled=live_enabled)
+                             readonly_video_enabled=video_enabled, live_video_enabled=live_enabled,
+                             direct_input_enabled=bool(live_enabled and settings.DIRECT_TRANSPORT_INPUT_ENABLED
+                                                       and status and status.agent_version_code and status.agent_version_code >= 10254))

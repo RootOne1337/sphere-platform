@@ -129,7 +129,8 @@ end
 local phase = redis.call('HGET', key, 'phase')
 if op == 'relay_receipt' then
     local receipt = cjson.decode(ARGV[3]).receipt
-    if receipt.stage == 'input' and
+    local direct = redis.call('HGET', key, 'direct_session')
+    if receipt.stage == 'input' and not direct and
        (receipt.sequence > tonumber(redis.call('HGET', key, 'sequence')) or
         (receipt.sequence == 0 and receipt.status ~= 5)) then
         redis.call('HSET', key, 'phase', 'closing')
@@ -173,8 +174,15 @@ if op == 'guard' then
         return 'stale'
     end
     if command.type == 'continuous_input_open' then
+        local direct = redis.call('HGET', key, 'direct_session')
+        if (direct and command.direct_session ~= direct) or (not direct and command.direct_session) then return 'stale' end
         if phase == 'opening_sent' or phase == 'ready' then return 'admitted' end
+    elseif command.type == 'continuous_input_authorize' then
+        if redis.call('HGET', key, 'direct_session') and
+           command.sequence == tonumber(redis.call('HGET', key, 'direct_grant_sequence') or '-1') and
+           (phase == 'opening_sent' or phase == 'ready') then return 'admitted' end
     elseif command.type == 'continuous_input_event' then
+        if redis.call('HGET', key, 'direct_session') then return 'stale' end
         if command.sequence <= tonumber(redis.call('HGET', key, 'sequence')) and
            (phase == 'ready' or (phase == 'opening_sent' and command.action == 4)) then
             return 'admitted'
@@ -189,6 +197,20 @@ elseif phase == 'closing' then return 'closing'
 elseif op == 'authorize' then
     redis.call('HSET', key, 'auth_until', now + auth)
     return 'authorized'
+elseif op == 'authorize_direct' then
+    if not redis.call('HGET', key, 'direct_session') or
+       (phase ~= 'opening_sent' and phase ~= 'ready') then return 'stale' end
+    redis.call('HSET', key, 'auth_until', now + auth)
+    local command = cjson.decode(ARGV[3])
+    command.sequence = redis.call('HINCRBY', key, 'direct_grant_sequence', 1)
+    local envelope = {type='_continuous_input_v1', identity=identity,
+                      expires_at_ms=now + age, command=command}
+    if redis.call('PUBLISH', ARGV[4], cjson.encode(envelope)) < 1 then
+        redis.call('HSET', key, 'phase', 'closing')
+        return 'no_subscriber'
+    end
+    redis.call('PEXPIRE', key, lease)
+    return 'published'
 elseif now >= tonumber(redis.call('HGET', key, 'auth_until') or '0') then
     redis.call('HSET', key, 'phase', 'closing')
     return 'auth_expired'
@@ -196,10 +218,15 @@ elseif op == 'ready' then
     if phase ~= 'opening_sent' then return 'not_opening' end
     redis.call('HSET', key, 'phase', 'ready')
     return 'ready'
-elseif op == 'open' then
+elseif op == 'open' or op == 'open_direct' then
     if phase ~= 'opening' then return 'already_sent' end
     redis.call('HSET', key, 'phase', 'opening_sent')
+    if op == 'open_direct' then
+        local command = cjson.decode(ARGV[3])
+        redis.call('HSET', key, 'direct_session', command.direct_session, 'direct_grant_sequence', 0)
+    end
 elseif op == 'event' then
+    if redis.call('HGET', key, 'direct_session') then return 'invalid_operation' end
     local event = cjson.decode(ARGV[3])
     if phase ~= 'ready' and not (phase == 'opening_sent' and event.action == 4) then
         return 'not_ready'
@@ -340,6 +367,23 @@ class ContinuousLeaseStore:
             "frame_width": capture.width, "frame_height": capture.height,
         })
 
+    async def open_direct(self, lease: InputLease, peer_session: str) -> str:
+        from backend.websocket.direct_probe_protocol import session_id
+        session_id(peer_session)
+        capture = lease.binding.capture
+        return await self._operation("open_direct", lease, {
+            "type": "continuous_input_open", "owner": lease.owner,
+            "session_id": lease.binding.viewer_session, "capture_epoch": capture.epoch,
+            "frame_width": capture.width, "frame_height": capture.height,
+            "direct_session": peer_session, "ttl_ms": AUTH_MS,
+        })
+
+    async def authorize_direct(self, lease: InputLease) -> bool:
+        """Fresh RBAC/peer check is required. Renew authority, never resend a touch."""
+        return await self._operation("authorize_direct", lease, {
+            "type": "continuous_input_authorize", "owner": lease.owner, "ttl_ms": AUTH_MS,
+        }) == "published"
+
     async def event(self, lease: InputLease, event: TouchEvent) -> str:
         if not event.inside(lease.binding.capture):
             raise ValueError("Point is outside the bound capture")
@@ -381,7 +425,17 @@ class ContinuousLeaseStore:
                 capture = binding.capture
                 expected = {"type": kind, "owner": lease.owner, "session_id": binding.viewer_session,
                             "capture_epoch": capture.epoch, "frame_width": capture.width, "frame_height": capture.height}
-                if command != expected or type(command.get("frame_width")) is not int or type(command.get("frame_height")) is not int:
+                if "direct_session" in command:
+                    from backend.websocket.direct_probe_protocol import session_id
+                    session_id(command["direct_session"])
+                    expected.update(direct_session=command["direct_session"], ttl_ms=AUTH_MS)
+                if command != expected or type(command.get("frame_width")) is not int or type(command.get("frame_height")) is not int or (
+                        "ttl_ms" in command and type(command["ttl_ms"]) is not int):
+                    return None
+            elif kind == "continuous_input_authorize":
+                if (command.keys() != {"type", "owner", "ttl_ms", "sequence"}
+                        or type(command["ttl_ms"]) is not int or command["ttl_ms"] != AUTH_MS
+                        or type(command["sequence"]) is not int or not 1 <= command["sequence"] <= 2_147_483_647):
                     return None
             elif kind == "continuous_input_event":
                 if command.keys() != {"type", "owner", "capture_epoch", "sequence", "gesture", "action", "x", "y"} or command["capture_epoch"] != binding.capture.epoch:

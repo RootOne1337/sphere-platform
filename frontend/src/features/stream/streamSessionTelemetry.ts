@@ -4,7 +4,8 @@ import type { DirectProbeResult } from './directProbe';
 import type { DiagnosticProfile } from './DirectProbeDiagnostics';
 import type { LiveVideoObservation } from './LiveDirectVideo';
 
-type ControlObservation = { state: ContinuousPointerState | 'probing'; failure: string | null; rtt: number | null; attempts: number };
+type ControlObservation = { state: ContinuousPointerState | 'probing'; failure: string | null; rtt: number | null; attempts: number;
+  transport?: 'server_websocket' | 'direct_webrtc' };
 const counter = (value: number) => Number.isFinite(value) ? Math.min(Number.MAX_SAFE_INTEGER, Math.max(0, Math.floor(value))) : 0;
 const milliseconds = (value: number | null) => value === null || !Number.isFinite(value) ? null : Math.min(86400000, Math.max(0, value));
 const reasons = new Set(['probe_deadline', 'gathering_deadline', 'signaling_deadline', 'connection_deadline',
@@ -24,7 +25,8 @@ export const directFailure = (reason: string | null | undefined) => reason ? rea
 export function browserStreamSample(stats: StreamDecoderStats, control: ControlObservation, now = Date.now(), direct?: LiveVideoObservation) {
   const age = (at: number | null) => at === null ? null : milliseconds(now - at);
   return { schema_version: 1, transport: direct?.active ? 'direct_webrtc' : 'server_websocket', visibility: document.hidden ? 'hidden' : 'visible',
-    ...(direct ? { control_transport: 'server_websocket', direct_frames: counter(direct.frames),
+    control_transport: control.transport === 'direct_webrtc' ? 'direct_webrtc' : 'server_websocket',
+    ...(direct ? { direct_frames: counter(direct.frames),
       direct_frame_age_ms: age(direct.lastFrameAt), direct_path: direct.result?.path ?? 'unknown',
       direct_protocol: direct.result?.protocol === 'udp' || direct.result?.protocol === 'tcp' ? direct.result.protocol : null,
       direct_state: direct.result && directStates.has(direct.result.state) ? direct.result.state : null,

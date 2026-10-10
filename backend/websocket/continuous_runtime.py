@@ -24,6 +24,7 @@ from backend.websocket.continuous_observability import timed_stage
 from backend.websocket.continuous_protocol import (
     CaptureBinding,
     CloseInput,
+    DirectCaptureBinding,
     InvalidContinuousInput,
     TouchEvent,
     identifier,
@@ -45,6 +46,7 @@ class TouchViewer:
     offer: dict | None = None
     lease: InputLease | None = None
     closing: bool = False
+    direct_session: str | None = None
 
 
 class ViewerTransportUnavailable(Exception):
@@ -141,28 +143,38 @@ class ContinuousRuntime:
             await self.probe(viewer)
             return
         message = viewer_continuous(data)
-        if isinstance(message, CaptureBinding):
+        if isinstance(message, (CaptureBinding, DirectCaptureBinding)):
+            direct = message.peer_session if isinstance(message, DirectCaptureBinding) else None
+            capture = message.capture if isinstance(message, DirectCaptureBinding) else message
             offer = viewer.offer
             if viewer.lease or viewer.closing:
                 raise InvalidContinuousInput()
             if not offer or offer["expires"] <= await self.now():
                 raise ContinuousAdmissionRejected("offer_expired")
-            if message != CaptureBinding(offer["capture_epoch"], offer["frame_width"], offer["frame_height"]):
+            if capture != CaptureBinding(offer["capture_epoch"], offer["frame_width"], offer["frame_height"]):
                 raise ContinuousAdmissionRejected("capture_changed")
             if not await self.topology(viewer.device, offer["agent_session"]):
                 raise ContinuousAdmissionRejected("agent_reconnecting")
+            if direct:
+                from backend.websocket.direct_probe_runtime import get_direct_probe_runtime
+                peer_runtime = get_direct_probe_runtime()
+                if not peer_runtime or not await peer_runtime.input_peer(device=viewer.device, org=viewer.org,
+                        user=viewer.user, session=direct, agent_session=offer["agent_session"], viewer_session=viewer.session):
+                    raise ContinuousAdmissionRejected("agent_reconnecting")
             lease = await self.store.acquire(LeaseBinding(viewer.org, viewer.device, viewer.user,
-                self.worker, viewer.session, offer["agent_session"], message))
+                self.worker, viewer.session, offer["agent_session"], capture))
             if lease is None:
                 raise ContinuousAdmissionRejected("controller_busy")
             viewer.lease = lease
+            viewer.direct_session = direct
             await self.send(viewer, {"type": "touch_session", "session_id": viewer.session,
-                "owner": lease.owner, "capture_epoch": message.epoch,
-                "frame_width": message.width, "frame_height": message.height})
-            if await self.store.open(lease) != "published":
+                "owner": lease.owner, "capture_epoch": capture.epoch,
+                "frame_width": capture.width, "frame_height": capture.height})
+            opened = await self.store.open_direct(lease, direct) if direct else await self.store.open(lease)
+            if opened != "published":
                 raise InputLeaseUnavailable()
         elif isinstance(message, TouchEvent):
-            if not viewer.lease or viewer.closing:
+            if not viewer.lease or viewer.closing or viewer.direct_session:
                 raise InvalidContinuousInput()
             if await self.store.event(viewer.lease, message) != "published":
                 raise InputLeaseUnavailable()
@@ -176,7 +188,12 @@ class ContinuousRuntime:
         current = await self.topology(viewer.device, lease.binding.agent_session)
         if viewer.lease != lease or viewer.closing:
             return True  # This obsolete check cannot decide another owner's validity.
-        authorized = current and await self.store.authorize(lease)
+        if current and viewer.direct_session:
+            from backend.websocket.direct_probe_runtime import get_direct_probe_runtime
+            peer_runtime = get_direct_probe_runtime()
+            current = bool(peer_runtime and await peer_runtime.input_peer(device=viewer.device, org=viewer.org,
+                user=viewer.user, session=viewer.direct_session, agent_session=lease.binding.agent_session, viewer_session=viewer.session))
+        authorized = current and (await self.store.authorize_direct(lease) if viewer.direct_session else await self.store.authorize(lease))
         return True if viewer.lease != lease or viewer.closing else authorized
 
     async def recheck_authorization(self, viewer: TouchViewer, permission: Callable[[], Awaitable[bool]]) -> None:
@@ -285,6 +302,7 @@ class ContinuousRuntime:
                         viewer.lease = None
                         viewer.offer = None
                         viewer.closing = False
+                        viewer.direct_session = None
                 return
         prefix = f"{self.store.namespace}:agent:"
         if not channel.startswith(prefix):

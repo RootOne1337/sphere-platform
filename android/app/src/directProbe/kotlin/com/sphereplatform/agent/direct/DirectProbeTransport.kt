@@ -19,6 +19,7 @@ class DirectProbeTransport(
     private val context: Context, private val scope: CoroutineScope,
     private val generation: () -> Long?, private val send: (Long, JsonObject) -> Boolean,
     private val streaming: com.sphereplatform.agent.streaming.StreamingManager,
+    private val input: DirectInputHandler? = null,
 ) {
     private companion object { val initialized = AtomicBoolean(false) }
     private val fence = AtomicLong(0)
@@ -32,6 +33,7 @@ class DirectProbeTransport(
         val progress = DirectProbeProgress(SystemClock.elapsedRealtime())
         var connection: PeerConnection? = null
         var channel: DataChannel? = null
+        @Volatile var inputChannel: DataChannel? = null
         var answered = false
         var sequence = 1
         var lastEcho = 0L
@@ -71,6 +73,23 @@ class DirectProbeTransport(
         return false
     }
     fun invalidate() { fence.incrementAndGet() }
+    fun inputChannel(session: String): DirectInputChannel? {
+        val p = peer ?: return null
+        val channel = p.inputChannel ?: return null
+        val capture = p.capture ?: return null
+        if (!BuildConfig.CONTINUOUS_INPUT_CANARY || !p.live || p.session != session || !valid(p) ||
+            channel.state() != DataChannel.State.OPEN) return null
+        return object : DirectInputChannel {
+            override val session = p.session
+            override val capture = capture
+            override fun isCurrent() = valid(p) && p.inputChannel === channel && channel.state() == DataChannel.State.OPEN
+            override fun send(message: JsonObject): Boolean {
+                val bytes = message.toString().toByteArray(Charsets.UTF_8)
+                return isCurrent() && bytes.size <= 1024 && channel.bufferedAmount() <= 1024 &&
+                    channel.send(DataChannel.Buffer(ByteBuffer.wrap(bytes), false))
+            }
+        }
+    }
     private fun valid(p: Probe) = peer === p && p.token == fence.get() &&
         generation() == p.generation && p.lease.valid(SystemClock.elapsedRealtime()) &&
         (!p.videoRequested || p.capture?.let { streaming.isEncodedViewerCurrent(p, it) } == true)
@@ -171,6 +190,29 @@ class DirectProbeTransport(
                 }
                 override fun onDataChannel(channel: DataChannel) {
                     val admitted = enqueue {
+                        if (valid(p) && p.live && BuildConfig.CONTINUOUS_INPUT_CANARY && input != null &&
+                            channel.label() == "sphere-control-v1" && p.inputChannel == null) {
+                            p.inputChannel = channel
+                            channel.registerObserver(object : DataChannel.Observer {
+                                override fun onBufferedAmountChange(previous: Long) = Unit
+                                override fun onStateChange() {
+                                    enqueue {
+                                        if (peer === p && p.inputChannel === channel && channel.state() in
+                                            setOf(DataChannel.State.CLOSING, DataChannel.State.CLOSED)) input.directClosed(p.session)
+                                    }
+                                }
+                                override fun onMessage(buffer: DataChannel.Buffer) {
+                                    val text = if (!buffer.binary && buffer.data.remaining() in 1..1024)
+                                        Charsets.UTF_8.decode(buffer.data).toString() else ""
+                                    enqueue inputMessage@{
+                                        if (!valid(p) || p.inputChannel !== channel) return@inputMessage
+                                        val message = runCatching { Json.parseToJsonElement(text) as? JsonObject }.getOrNull()
+                                        if (message == null || !input.directMessage(p.session, message)) input.directClosed(p.session)
+                                    }
+                                }
+                            })
+                            return@enqueue
+                        }
                         if (!valid(p) || p.channel != null || channel.label() !=
                             (if (p.live) DirectVideoProtocol.LIVE_LABEL else if (p.videoRequested) DirectVideoProtocol.LABEL else DirectProbeProtocol.LABEL)) {
                             channel.close(); channel.dispose()
@@ -300,11 +342,17 @@ class DirectProbeTransport(
         val old = peer
         peer = null
         old?.videoReady = false
+        old?.let { input?.directClosed(it.session) }
         old?.let { streaming.detachEncodedViewer(it) }
         old?.let { progress(it, stage) }
         old?.statsBudget?.retire()
         // One already-closed JNI wrapper must not prevent retiring other threads.
         old?.channel?.let {
+            runCatching { it.unregisterObserver() }
+            runCatching { it.close() }
+            runCatching { it.dispose() }
+        }
+        old?.inputChannel?.let {
             runCatching { it.unregisterObserver() }
             runCatching { it.close() }
             runCatching { it.dispose() }

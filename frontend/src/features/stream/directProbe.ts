@@ -4,6 +4,7 @@ import { directProbeIceConfig, type DirectProbeIceProfile } from './directProbeI
 import { parseTurnReady } from './directProbeTurn';
 import { parseVideoBinding, readonlyVideoSdp, type DirectVideoBinding } from './directVideoProtocol';
 import { DirectVideoStatsSampler, preferLowVideoDelay, type DirectVideoStats } from './directVideoStats';
+import type { DirectControlEndpoint } from './directPointerTransport';
 
 export interface DirectProbeResult {
   state: 'gathering' | 'signaling' | 'connecting' | 'connected' | 'finished' | 'stopped' | 'failed';
@@ -52,14 +53,16 @@ export function startDirectVideoProbe(
 /** Primary video has its own renewable grant; the finite diagnostic remains unchanged. */
 export function startDirectVideoSession(
   url: string, token: string, report: (value: DirectProbeResult) => void,
-  options: { controlledStunUrl?: string; onTrack: (track: MediaStreamTrack) => void },
+  options: { controlledStunUrl?: string; onTrack: (track: MediaStreamTrack) => void;
+    controlSession?: string; onControlChannel?: (channel: DirectControlEndpoint | null) => void },
 ): () => void {
   return startDirectSession(url, token, report, options, options.onTrack, true);
 }
 
 function startDirectSession(
   url: string, token: string, report: (value: DirectProbeResult) => void,
-  options: { controlledStunUrl?: string; relayGrant?: boolean }, onVideoTrack?: (track: MediaStreamTrack) => void, live = false,
+  options: { controlledStunUrl?: string; relayGrant?: boolean; controlSession?: string;
+    onControlChannel?: (channel: DirectControlEndpoint | null) => void }, onVideoTrack?: (track: MediaStreamTrack) => void, live = false,
 ): () => void {
   const video = !!onVideoTrack;
   const iceConfig = directProbeIceConfig(options.controlledStunUrl);
@@ -69,6 +72,8 @@ function startDirectSession(
     reason: null, iceProfile: options.relayGrant ? 'turn' : iceConfig.profile };
   let peer: RTCPeerConnection | null = null;
   let channel: RTCDataChannel | null = null;
+  let controlChannel: RTCDataChannel | null = null;
+  let controlListener: ((message: unknown) => void) | null = null;
   let ws: WebSocket | null = null;
   let videoTrack: MediaStreamTrack | null = null;
   let session: string | null = null;
@@ -95,6 +100,10 @@ function startDirectSession(
     if (peer) { peer.onicegatheringstatechange = null; peer.onconnectionstatechange = null; peer.ontrack = null; }
     if (videoTrack) { videoTrack.onended = null; try { videoTrack.stop(); } catch { /* Independent native cleanup. */ } }
     if (channel) { channel.onopen = null; channel.onmessage = null; channel.onerror = null; channel.onclose = null; }
+    if (controlChannel) {
+      controlChannel.onopen = null; controlChannel.onmessage = null; controlChannel.onerror = null; controlChannel.onclose = null;
+      options.onControlChannel?.(null); controlListener = null;
+    }
     if (ws) {
       ws.onopen = null; ws.onmessage = null; ws.onerror = null; ws.onclose = null;
       try { if (ws.readyState === WebSocket.OPEN) ws.send('{"type":"direct_probe_close"}'); }
@@ -102,6 +111,7 @@ function startDirectSession(
       try { ws.close(); } catch { /* Close the local native resources independently. */ }
     }
     try { channel?.close(); } catch { /* Peer cleanup must still run. */ }
+    try { controlChannel?.close(); } catch { /* Independent control cleanup. */ }
     try { peer?.close(); } catch { /* Timers and callbacks have already been retired. */ }
     pending = null;
     result = { ...result, state: reason ? 'failed' : !live && result.samples.length === 20 ? 'finished' : 'stopped', reason,
@@ -148,7 +158,8 @@ function startDirectSession(
     ws.onopen = () => {
       if (stopped || !ws) return;
       try {
-        ws.send(JSON.stringify(video ? { token, protocol: live ? 'sphere-video-v1' : 'sphere-video-probe-v1', ...(options.relayGrant ? { relay: true } : {}) }
+        ws.send(JSON.stringify(video ? { token, protocol: live ? 'sphere-video-v1' : 'sphere-video-probe-v1', ...(options.relayGrant ? { relay: true } : {}),
+          ...(live && options.controlSession ? { control_session: options.controlSession } : {}) }
           : options.relayGrant ? { token, protocol: 'sphere-probe-v2' } : { token }));
         if (sdp) ws.send(JSON.stringify({ type: 'direct_probe_offer', sdp }));
       } catch { stop('signaling_unavailable'); }
@@ -191,6 +202,32 @@ function startDirectSession(
     catch { stop('webrtc_unavailable'); return; }
     try {
       channel = peer.createDataChannel(live ? 'sphere-video-v1' : video ? 'sphere-video-probe-v1' : 'sphere-probe-v1', { ordered: true });
+      if (live && options.controlSession && options.onControlChannel) {
+        if (!/^[0-9a-f]{16}$/.test(options.controlSession)) throw Error('invalid_control_session');
+        const direct = peer.createDataChannel('sphere-control-v1', { ordered: true });
+        controlChannel = direct;
+        let retired = false;
+        const retire = () => {
+          if (retired) return;
+          retired = true; controlListener = null; options.onControlChannel?.(null);
+        };
+        direct.onopen = () => {
+          if (stopped || retired || !session) return retire();
+          options.onControlChannel?.({ session,
+            get readyState() { return !retired && direct.readyState === 'open' ? 1 : 0; },
+            get bufferedAmount() { return direct.bufferedAmount; },
+            capture: () => result.videoBinding ?? null,
+            send: data => { if (retired || stopped || direct.readyState !== 'open') throw Error('direct_input_closed'); direct.send(data); },
+            listen: listener => { controlListener = listener; return () => { if (controlListener === listener) controlListener = null; }; },
+          });
+        };
+        direct.onmessage = event => {
+          if (stopped || retired) return;
+          if (typeof event.data !== 'string' || new TextEncoder().encode(event.data).length > 1024) { retire(); direct.close(); return; }
+          try { controlListener?.(JSON.parse(event.data)); } catch { retire(); direct.close(); }
+        };
+        direct.onerror = direct.onclose = retire;
+      }
       if (video) {
         peer.addTransceiver('video', { direction: 'recvonly' });
         peer.ontrack = event => {
@@ -213,7 +250,8 @@ function startDirectSession(
         void collectNetwork();
       } else if (peer.connectionState === 'disconnected') {
         // ICE can recover a brief connectivity loss on the same encrypted
-        // transport. No input uses this channel and no media grant is renewed
+        // transport. Input retains its independent native/server deadlines;
+        // no media grant is renewed
         // past its own authorization/lease by this short recovery window.
         if (!live || result.state !== 'connected') return stop('peer_disconnected');
         disconnectDeadline ??= setTimeout(() => stop('peer_disconnected'), 3000);

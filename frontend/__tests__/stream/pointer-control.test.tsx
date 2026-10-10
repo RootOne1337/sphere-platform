@@ -1,10 +1,16 @@
 import { act, fireEvent, render } from '@testing-library/react';
 import { DeviceStream } from '@/components/sphere/DeviceStream';
 import { api } from '@/lib/api';
+import { TextEncoder } from 'node:util';
+import type { DirectControlEndpoint } from '@/src/features/stream/directPointerTransport';
 
 let mockRenderFrame: ((frame: VideoFrame) => void) | null = null;
 let mockCapture: { captureEpoch: string; frameWidth: number; frameHeight: number } | null = null;
 let mockAutomaticEligible = false;
+let mockDirectEndpoint: DirectControlEndpoint | null = null;
+let mockDirectReceipt: ((message: unknown) => void) | null = null;
+let mockDirectObserve: ((endpoint: DirectControlEndpoint | null) => void) | null = null;
+let mockVideoObserve: ((observation: object) => void) | null = null;
 
 const TOUCH_EPOCH = '00112233-4455-6677-8899-aabbccddeeff';
 
@@ -13,14 +19,21 @@ jest.mock('@/lib/api', () => ({ api: { get: jest.fn(), post: jest.fn() } }));
 // Keep control delivery independent of the separately tested probe admission request.
 jest.mock('@/src/features/stream/DirectProbeAccess', () => ({ DirectProbeAccess: () => null }));
 jest.mock('@/src/features/stream/StreamSessionHistoryPanel', () => ({ StreamSessionHistoryPanel: () => null }));
-jest.mock('@/src/features/stream/LiveDirectVideo', () => ({ LiveDirectVideo: ({ session, onObservation }: {
+jest.mock('@/src/features/stream/LiveDirectVideo', () => ({ LiveDirectVideo: ({ session, onObservation, onControlChannel }: {
   session: string; onObservation: (value: object) => void;
+  onControlChannel?: (endpoint: DirectControlEndpoint | null) => void;
 }) => {
   const React = jest.requireActual<typeof import('react')>('react');
   const observation = React.useRef(onObservation);
+  const control = React.useRef(onControlChannel);
   observation.current = onObservation;
-  React.useEffect(() => observation.current({ admitted: false, admissionKnown: true, active: false,
-    frames: 0, lastFrameAt: null, attempts: 0, result: null }), [session]);
+  control.current = onControlChannel;
+  mockDirectObserve = onControlChannel ?? null; mockVideoObserve = onObservation;
+  React.useEffect(() => {
+    observation.current({ admitted: !!mockDirectEndpoint, admissionKnown: true, active: !!mockDirectEndpoint,
+      frames: 0, lastFrameAt: null, attempts: 0, result: null });
+    if (mockDirectEndpoint) control.current?.(mockDirectEndpoint);
+  }, [session]);
   return null;
 } }));
 jest.mock('@/src/features/stream/AutomaticStreamDiagnostic', () => ({
@@ -70,6 +83,8 @@ beforeEach(() => {
   mockRenderFrame = null;
   mockCapture = null;
   mockAutomaticEligible = false;
+  mockDirectEndpoint = null; mockDirectReceipt = null; mockDirectObserve = null; mockVideoObserve = null;
+  Object.defineProperty(globalThis, 'TextEncoder', { configurable: true, value: TextEncoder });
   jest.mocked(api.post).mockReset().mockResolvedValue({ data: { output: '' } });
   MockSocket.instances = [];
   Object.defineProperty(global, 'WebSocket', { configurable: true, value: MockSocket });
@@ -94,6 +109,8 @@ function readyGestureFixture(enableStaticInput = false, readOnly = false) {
   const socket = MockSocket.instances[0];
   socket.readyState = MockSocket.OPEN;
   act(() => socket.onopen?.(new Event('open')));
+  if (mockDirectEndpoint) act(() => socket.onmessage?.({ data: JSON.stringify({ type: 'stream_session',
+    schema_version: 1, history_enabled: true, session_id: '1'.repeat(16), report_interval_seconds: 10 }) }));
   const canvas = view.container.querySelector('canvas')!;
   jest.spyOn(canvas, 'getBoundingClientRect').mockReturnValue({
     left: 0, top: 0, right: 100, bottom: 100, width: 100, height: 100, x: 0, y: 0,
@@ -130,6 +147,63 @@ function readyContinuous() {
   status(0, 0, 'startup');
   return { ...view, receive, sent, status };
 }
+
+function directEndpoint(): DirectControlEndpoint {
+  return { readyState: 1, bufferedAmount: 0, session: 'a'.repeat(32), send: jest.fn(),
+    capture: () => ({ captureEpoch: TOUCH_EPOCH, width: 1280, height: 720 }),
+    listen: listener => { mockDirectReceipt = listener; return () => { mockDirectReceipt = null; }; } };
+}
+
+it('canvas sends every live touch through its bound direct peer and revokes safely on peer loss', () => {
+  const view = readyContinuous();
+  mockDirectEndpoint = directEndpoint();
+  const endpoint = mockDirectEndpoint;
+  view.receive({ type: 'stream_session', schema_version: 1, history_enabled: true,
+    session_id: '1'.repeat(16), report_interval_seconds: 10 });
+  view.status(0, 3, 'release');
+  view.receive({ type: 'touch_capability', capture_epoch: TOUCH_EPOCH, frame_width: 1280, frame_height: 720 });
+  view.receive({ type: 'touch_session', session_id: 'viewer_session_fixture', owner: 'direct_owner_fixture',
+    capture_epoch: TOUCH_EPOCH, frame_width: 1280, frame_height: 720 });
+  view.receive({ type: 'continuous_input_status', session_id: 'viewer_session_fixture', owner: 'direct_owner_fixture',
+    capture_epoch: TOUCH_EPOCH, sequence: 0, status: 0, stage: 'startup', origin: 'injector', device_uptime_ms: 100 });
+  expect(view.sent().filter(row => row.type === 'touch_direct_open')).toHaveLength(1);
+  const ack = (sequence: number) => act(() => mockDirectReceipt?.({ type: 'continuous_input_status',
+    session_id: 'viewer_session_fixture', owner: 'direct_owner_fixture', capture_epoch: TOUCH_EPOCH,
+    sequence, status: 1, stage: 'input', origin: 'injector', device_uptime_ms: 100 }));
+  view.down(1, 40); ack(1);
+  fireEvent.pointerMove(view.canvas, { clientX: 60, clientY: 50, pointerId: 1, buttons: 1 });
+  act(() => jest.advanceTimersByTime(16)); ack(2); view.up(1, 60); ack(3);
+  expect((endpoint.send as jest.Mock).mock.calls.map(([raw]) => JSON.parse(raw).action)).toEqual([0, 2, 1]);
+  expect(view.sent().filter(row => row.type === 'touch_event')).toEqual([]);
+  expect(view.commands()).toEqual([]);
+  expect(view.getByText(/ACK действия напрямую с APK/)).toBeInTheDocument();
+  Object.defineProperty(endpoint, 'readyState', { value: 0 });
+  act(() => mockDirectObserve?.(null));
+  expect(view.sent().filter(row => row.type === 'touch_close')).toHaveLength(2);
+  view.down(2); view.up(2);
+  expect(view.sent().filter(row => row.type === 'touch_event')).toEqual([]);
+  expect(view.commands()).toEqual([]);
+  view.unmount();
+});
+
+it('an existing server owner is released before promoting an idle direct channel', () => {
+  const view = readyContinuous();
+  view.receive({ type: 'stream_session', schema_version: 1, history_enabled: true,
+    session_id: '1'.repeat(16), report_interval_seconds: 10 });
+  const endpoint = directEndpoint();
+  act(() => {
+    mockVideoObserve?.({ admitted: true, admissionKnown: true, active: true, frames: 1,
+      lastFrameAt: 1, attempts: 1, result: null });
+    mockDirectObserve?.(endpoint);
+  });
+  expect(view.sent().filter(row => row.type === 'touch_close')).toHaveLength(1);
+  expect(view.sent().filter(row => row.type === 'touch_direct_open')).toHaveLength(0);
+  view.status(0, 3, 'release');
+  view.receive({ type: 'touch_capability', capture_epoch: TOUCH_EPOCH, frame_width: 1280, frame_height: 720 });
+  expect(view.sent().filter(row => row.type === 'touch_direct_open')).toHaveLength(1);
+  expect(view.sent().filter(row => row.type === 'touch_event')).toEqual([]);
+  view.unmount();
+});
 
 it('installed canvas integration sends MOVE before UP without a second legacy swipe', () => {
   const view = readyContinuous();

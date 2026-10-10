@@ -15,6 +15,8 @@ export interface PointerTransport {
   readonly readyState: number;
   readonly bufferedAmount: number;
   send(data: string): void;
+  /** An independent revocation path may survive loss of the input data channel. */
+  closeInput?(): void;
 }
 export interface PointerObservation {
   sequence: number; action: number; status: 1 | 2 | 3; deviceUptimeMs: number; receiptRoundTripMs: number;
@@ -347,9 +349,12 @@ export class ContinuousPointer {
     this.pending = [];
     this.transition('fenced', reason);
     try { this.options.onFence?.(snapshot); } catch { /* Diagnostics never postpone release or replay input. */ }
-    if (!this.closeSent && this.writable()) {
+    if (!this.closeSent && (this.writable() || this.options.socket.closeInput)) {
       this.closeSent = true;
-      try { this.options.socket.send(JSON.stringify({ type: 'touch_close' })); }
+      try {
+        if (this.options.socket.closeInput) this.options.socket.closeInput();
+        else this.options.socket.send(JSON.stringify({ type: 'touch_close' }));
+      }
       catch { /* Unknown close is not retried; native watchdog remains mandatory. */ }
     }
   }

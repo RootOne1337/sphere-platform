@@ -2,6 +2,7 @@ package com.sphereplatform.agent.commands
 
 import com.sphereplatform.agent.streaming.CaptureInputSession
 import com.sphereplatform.agent.streaming.StreamingManager
+import com.sphereplatform.agent.direct.DirectInputChannel
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
@@ -25,6 +26,9 @@ class ContinuousInputControllerTest {
         val entered = CompletableDeferred<Unit>(); val release = CompletableDeferred<Unit>()
         val receipts = CopyOnWriteArrayList<JsonObject>()
         val samples = CopyOnWriteArrayList<TouchSample>()
+        val directReceipts = CopyOnWriteArrayList<JsonObject>()
+        var peerCurrent = true
+        val peerSession = "a".repeat(32)
         val streaming = mockk<StreamingManager>()
         init { every { streaming.getInputSession() } answers { capture } }
         val controller = ContinuousInputController(scope, TouchPipeFactory {
@@ -44,6 +48,26 @@ class ContinuousInputControllerTest {
             if (outbound && connection == expected) { receipts.add(message); true } else false
         }, now::get, enabled)
 
+        fun enableDirect() {
+            val originalCapture = checkNotNull(capture)
+            val channel = object : DirectInputChannel {
+                override val session = peerSession
+                override val capture = originalCapture
+                override fun isCurrent() = peerCurrent
+                override fun send(message: JsonObject): Boolean { directReceipts.add(message); return peerCurrent }
+            }
+            controller.directChannel = { if (it == peerSession) channel else null }
+        }
+        fun directOpen() = JsonObject(open() + mapOf("direct_session" to JsonPrimitive(peerSession), "ttl_ms" to JsonPrimitive(1500)))
+        fun directEvent(sequence: Int, action: Int) = JsonObject(event(sequence, action).filterKeys { it !in setOf("owner", "capture_epoch") } + ("type" to JsonPrimitive("touch_event")))
+        fun authorize(sequence: Int, ttl: Int = 1500, owner: String = "owner_1234") = buildJsonObject {
+            put("type", "continuous_input_authorize"); put("owner", owner); put("sequence", sequence); put("ttl_ms", ttl)
+        }
+        suspend fun readyDirect() {
+            enableDirect(); controller.handle(directOpen())
+            eventually { receipts.any { it["stage"]?.jsonPrimitive?.content == "startup" && it["status"]?.jsonPrimitive?.int == 0 } }
+        }
+
         fun open(owner: String = "owner_1234", epoch: String = "epoch_1234", width: Int = 1280) = buildJsonObject {
             put("type", "continuous_input_open"); put("owner", owner); put("session_id", "viewer_1234")
             put("capture_epoch", epoch); put("frame_width", width); put("frame_height", 720)
@@ -58,6 +82,71 @@ class ContinuousInputControllerTest {
             eventually { receipts.any { it["stage"]?.jsonPrimitive?.content == "startup" && it["status"]?.jsonPrimitive?.int == 0 } }
         }
         suspend fun stop() { controller.invalidate(); if (opens != 0) eventually { closed }; job.cancelAndJoin() }
+    }
+
+    @Test fun `direct touches and native receipts bypass the management socket`() = runBlocking {
+        val f = Fixture(); f.readyDirect()
+        for ((sequence, action) in listOf(1 to 0, 2 to 2, 3 to 1)) {
+            assertTrue(f.controller.directMessage(f.peerSession, f.directEvent(sequence, action)))
+            eventually { f.samples.size == sequence }
+        }
+        eventually { f.directReceipts.count { it["stage"] == JsonPrimitive("input") } == 3 }
+        assertEquals(listOf(0, 2, 1), f.samples.map { it.action })
+        assertTrue(f.receipts.none { it["stage"] == JsonPrimitive("input") })
+        f.stop()
+        assertTrue(f.receipts.any { it["stage"] == JsonPrimitive("release") && it["status"] == JsonPrimitive(3) })
+    }
+
+    @Test fun `a direct grant without a current matching peer never opens root`() = runBlocking {
+        val f = Fixture(); f.controller.handle(f.directOpen())
+        assertEquals(0, f.opens)
+        assertEquals(JsonPrimitive(5), f.receipts.single()["status"])
+        assertEquals(JsonPrimitive("admission"), f.receipts.single()["origin"])
+        f.stop()
+    }
+
+    @Test fun `direct owner rejects touches arriving on the server and foreign peers`() = runBlocking {
+        val f = Fixture(); f.readyDirect()
+        f.controller.handle(f.event(1, 0))
+        assertFalse(f.controller.directMessage("b".repeat(32), f.directEvent(1, 0)))
+        f.controller.directClosed("b".repeat(32))
+        assertTrue(f.samples.isEmpty()); assertFalse(f.closed)
+        assertTrue(f.controller.directMessage(f.peerSession, f.directEvent(1, 0)))
+        eventually { f.samples.size == 1 }; f.stop()
+    }
+
+    @Test fun `direct heartbeat cannot renew expired server authority`() = runBlocking {
+        val f = Fixture(); f.readyDirect(); f.now.set(1600)
+        assertFalse(f.controller.directMessage(f.peerSession, f.directEvent(1, 4)))
+        eventually { f.closed }; assertTrue(f.samples.isEmpty()); f.stop()
+    }
+
+    @Test fun `only fresh sequenced server authorization renews a direct grant`() = runBlocking {
+        val f = Fixture(); f.readyDirect(); f.now.set(1400)
+        f.controller.handle(f.authorize(1))
+        assertTrue(f.controller.directMessage(f.peerSession, f.directEvent(1, 4)))
+        eventually { f.samples.size == 1 }
+        // The independent input watchdog still needs the viewer's own heartbeat.
+        f.now.set(1700)
+        assertTrue(f.controller.directMessage(f.peerSession, f.directEvent(2, 4)))
+        eventually { f.samples.size == 2 }
+        f.controller.handle(f.authorize(1)) // A duplicate cannot extend authority.
+        eventually { f.closed }; f.stop()
+    }
+
+    @Test fun `direct peer loss cancels held touch and reports release through server`() = runBlocking {
+        val f = Fixture(); f.readyDirect()
+        f.controller.directMessage(f.peerSession, f.directEvent(1, 0)); eventually { f.samples.size == 1 }
+        f.peerCurrent = false; f.controller.directClosed(f.peerSession)
+        eventually { f.closed }
+        eventually { f.receipts.any { it["stage"] == JsonPrimitive("release") && it["status"] == JsonPrimitive(3) } }
+        assertEquals(1, f.samples.size); f.stop()
+    }
+
+    @Test fun `direct channel cannot dispatch ordinary commands`() = runBlocking {
+        val f = Fixture(); f.readyDirect()
+        assertFalse(f.controller.directMessage(f.peerSession, buildJsonObject { put("type", "EXECUTE_DAG"); put("code", "fixture") }))
+        eventually { f.closed }; assertTrue(f.samples.isEmpty()); f.stop()
     }
 
     @Test fun `default build is silent and never accesses capture or root`() = runBlocking {

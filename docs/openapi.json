@@ -17596,6 +17596,11 @@
             "type": "boolean",
             "title": "Live Video Enabled",
             "default": false
+          },
+          "direct_input_enabled": {
+            "type": "boolean",
+            "title": "Direct Input Enabled",
+            "default": false
           }
         },
         "type": "object",

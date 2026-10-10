@@ -1,0 +1,17 @@
+package com.sphereplatform.agent.direct
+
+import com.sphereplatform.agent.streaming.CaptureInputSession
+import kotlinx.serialization.json.JsonObject
+
+/** An existing authenticated peer is a transport, never authority to open native input. */
+interface DirectInputChannel {
+    val session: String
+    val capture: CaptureInputSession
+    fun isCurrent(): Boolean
+    fun send(message: JsonObject): Boolean
+}
+
+interface DirectInputHandler {
+    fun directMessage(session: String, message: JsonObject): Boolean
+    fun directClosed(session: String)
+}

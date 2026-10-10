@@ -91,7 +91,18 @@ class CloseInput:
     pass
 
 
-def viewer_continuous(message: Any) -> CaptureBinding | TouchEvent | CloseInput:
+@dataclass(frozen=True)
+class DirectCaptureBinding:
+    capture: CaptureBinding
+    peer_session: str
+
+    def __post_init__(self) -> None:
+        if (not isinstance(self.capture, CaptureBinding) or not isinstance(self.peer_session, str)
+                or len(self.peer_session) != 32 or any(c not in "0123456789abcdef" for c in self.peer_session)):
+            raise InvalidContinuousInput()
+
+
+def viewer_continuous(message: Any) -> CaptureBinding | DirectCaptureBinding | TouchEvent | CloseInput:
     """Strict proposed browser protocol. No owner/identity metadata is ignored."""
     if not isinstance(message, dict):
         raise InvalidContinuousInput()
@@ -99,6 +110,10 @@ def viewer_continuous(message: Any) -> CaptureBinding | TouchEvent | CloseInput:
     if kind == "touch_open":
         _exact(message, {"type", "capture_epoch", "frame_width", "frame_height"})
         return CaptureBinding(message["capture_epoch"], message["frame_width"], message["frame_height"])
+    if kind == "touch_direct_open":
+        _exact(message, {"type", "capture_epoch", "frame_width", "frame_height", "direct_session"})
+        return DirectCaptureBinding(CaptureBinding(message["capture_epoch"], message["frame_width"], message["frame_height"]),
+                                    message["direct_session"])
     if kind == "touch_event":
         _exact(message, {"type", "sequence", "gesture", "action", "x", "y"})
         return TouchEvent(**{name: message[name] for name in ("sequence", "gesture", "action", "x", "y")})

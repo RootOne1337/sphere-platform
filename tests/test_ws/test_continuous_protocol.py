@@ -6,6 +6,7 @@ import pytest
 from backend.websocket.continuous_protocol import (
     CaptureBinding,
     CloseInput,
+    DirectCaptureBinding,
     InputReceipt,
     InvalidContinuousInput,
     TouchEvent,
@@ -18,6 +19,15 @@ EVENT = {"type": "touch_event", "sequence": 1, "gesture": 1, "action": 0, "x": 1
 RECEIPT = {"type": "continuous_input_status", "session_id": "viewer_session_01",
            "owner": "owner_nonce_01", "capture_epoch": EPOCH, "sequence": 0,
            "status": 0, "stage": "startup", "origin": "injector", "device_uptime_ms": 1234}
+
+
+def test_direct_open_has_no_client_authority_and_requires_exact_peer_session():
+    message = OPEN | {'type': 'touch_direct_open', 'direct_session': 'a' * 32}
+    assert viewer_continuous(message) == DirectCaptureBinding(CaptureBinding(EPOCH, 960, 540), 'a' * 32)
+    for change in [{'direct_session': 'A' * 32}, {'direct_session': True}, {'direct_session': 'a' * 33},
+                   {'owner': 'forged'}, {'user': 'forged'}, {'ttl_ms': 999999}]:
+        with pytest.raises(InvalidContinuousInput):
+            viewer_continuous(message | change)
 
 
 def test_browser_cannot_mutate_validated_binding():

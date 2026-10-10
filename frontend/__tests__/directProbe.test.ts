@@ -1,8 +1,10 @@
 import { probePath, startDirectProbe, startDirectVideoProbe, startDirectVideoSession, type DirectProbeResult } from '@/src/features/stream/directProbe';
 import { parseVideoBinding, readonlyVideoSdp } from '@/src/features/stream/directVideoProtocol';
 import { TextEncoder } from 'util';
+import type { DirectControlEndpoint } from '@/src/features/stream/directPointerTransport';
 
 class FakeChannel {
+  readyState = 'open';
   bufferedAmount = 0;
   onopen: (() => void) | null = null;
   onmessage: ((e: { data: unknown }) => void) | null = null;
@@ -16,13 +18,14 @@ class FakePeer {
   static constructions = 0;
   static initialSdp = 'v=0\r\n';
   channel = new FakeChannel();
+  control = new FakeChannel();
   iceGatheringState = FakePeer.initialGatheringState; connectionState = 'connected'; iceConnectionState = 'checking';
   localDescription = { sdp: FakePeer.initialSdp };
   onicegatheringstatechange: (() => void) | null = null;
   onconnectionstatechange: (() => void) | null = null;
   ontrack: ((event: { track: MediaStreamTrack }) => void) | null = null;
   constructor(readonly configuration: RTCConfiguration) { FakePeer.latest = this; FakePeer.constructions++; }
-  createDataChannel = jest.fn(() => this.channel);
+  createDataChannel = jest.fn((label: string) => label === 'sphere-control-v1' ? this.control : this.channel);
   addTransceiver = jest.fn();
   createOffer = jest.fn(async () => ({ type: 'offer', sdp: 'v=0\r\n' }));
   setLocalDescription = jest.fn(async () => {});
@@ -81,6 +84,37 @@ async function videoConnected(live = false) {
   await flush(); peer.channel.onopen?.();
   return { reports, stop, onTrack, ws, peer };
 }
+
+test('primary input negotiates a separate reliable channel on the same peer and retires listeners', async () => {
+  FakePeer.initialSdp = videoSdp;
+  const handles: (DirectControlEndpoint | null)[] = [], receipt = jest.fn();
+  const stop = startDirectVideoSession('wss://same-origin/ws/direct-probe/device', 'access', () => {},
+    { onTrack: jest.fn(), controlSession: '1'.repeat(16), onControlChannel: value => handles.push(value) });
+  await flush();
+  const ws = FakeSocket.latest, peer = FakePeer.latest;
+  ws.onopen?.();
+  expect(JSON.parse(ws.send.mock.calls[0][0])).toEqual({ token: 'access', protocol: 'sphere-video-v1', control_session: '1'.repeat(16) });
+  ws.onmessage?.({ data: JSON.stringify({ type: 'direct_probe_answer', session_id: sid, sdp: videoSdp.replace('recvonly', 'sendonly') }) });
+  await flush(); peer.channel.onopen?.(); peer.control.onopen?.();
+  expect(peer.createDataChannel).toHaveBeenCalledWith('sphere-control-v1', { ordered: true });
+  const endpoint = handles.at(-1)!;
+  expect(endpoint.session).toBe(sid); expect(endpoint.capture()).toBeNull();
+  peer.channel.onmessage?.({ data: `SV1 ${sid} ${epoch} 960 540` });
+  expect(endpoint.capture()).toEqual({ captureEpoch: epoch, width: 960, height: 540 });
+  endpoint.listen(receipt);
+  peer.control.onmessage?.({ data: '{"type":"continuous_input_status","sequence":1}' });
+  expect(receipt).toHaveBeenCalledTimes(1);
+  endpoint.send('{"type":"touch_event"}');
+  expect(peer.control.send).toHaveBeenCalledWith('{"type":"touch_event"}');
+  expect(ws.send).toHaveBeenCalledTimes(2); // Authentication and SDP, no input.
+  const late = peer.control.onmessage;
+  peer.control.onclose?.();
+  expect(handles.at(-1)).toBeNull();
+  expect(() => endpoint.send('old input')).toThrow('direct_input_closed');
+  late?.({ data: '{"type":"continuous_input_status"}' });
+  expect(receipt).toHaveBeenCalledTimes(1); expect(peer.close).not.toHaveBeenCalled();
+  stop(); expect(peer.control.close).toHaveBeenCalledTimes(1); expect(jest.getTimerCount()).toBe(0);
+});
 
 test('primary video negotiates a separate grant and renews beyond the finite diagnostic lifetime', async () => {
   const { stop, peer, ws, reports } = await videoConnected(true);

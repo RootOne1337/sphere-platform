@@ -3,7 +3,8 @@ import { act, fireEvent, render } from '@testing-library/react';
 import { LiveDirectVideo } from '@/src/features/stream/LiveDirectVideo';
 import type { DirectProbeResult } from '@/src/features/stream/directProbe';
 
-let mockAdmission = { data: { admitted: true, profiles: ['host', 'public-stun'] }, isError: false };
+let mockAdmission: { data: { admitted: boolean; profiles: string[]; input?: boolean }; isError: boolean } =
+  { data: { admitted: true, profiles: ['host', 'public-stun'] }, isError: false };
 let mockToken: string | null = 'fixture';
 let mockReport: (result: DirectProbeResult) => void;
 let mockTrack: (track: MediaStreamTrack) => void;
@@ -40,6 +41,21 @@ function mount(onFrame = jest.fn(() => true), onObservation = jest.fn()) {
   return { ...view, onFrame, onObservation };
 }
 const present = () => mockFrame(1, { width: 960, height: 540 } as VideoFrameCallbackMetadata);
+
+test('direct input requires its own admission and a writable viewer callback', () => {
+  const callback = jest.fn();
+  const make = () => render(<LiveDirectVideo deviceId="device" session={'1'.repeat(16)} eligible
+    expectedCapture={expected} onFrame={jest.fn()} onObservation={jest.fn()} onControlChannel={callback} />);
+  const denied = make();
+  expect(mockStart.mock.calls.at(-1)![3].controlSession).toBeUndefined(); denied.unmount();
+  mockAdmission.data.input = true;
+  const allowed = make();
+  expect(mockStart.mock.calls.at(-1)![3].controlSession).toBe('1'.repeat(16));
+  const late = mockStart.mock.calls.at(-1)![3].onControlChannel;
+  allowed.unmount(); callback.mockClear(); late({}); expect(callback).not.toHaveBeenCalled();
+  const readonly = mount();
+  expect(mockStart.mock.calls.at(-1)![3].controlSession).toBeUndefined(); readonly.unmount();
+});
 
 test('automatic primary video promotes only a matching displayed frame, never an ICE result', async () => {
   const view = mount();

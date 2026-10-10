@@ -76,6 +76,8 @@ async def live():
                 owner=message['owner'], capture_epoch=EPOCH, sequence=message['sequence'],
                 status=2 if message['action'] == 4 else 3 if message['action'] == 3 else 1,
                 stage='input', origin='injector', device_uptime_ms=110)
+        elif message['type'] == 'continuous_input_authorize':
+            return  # Authority renewal has no input/native execution receipt.
         else:
             reply = dict(type='continuous_input_status', session_id=viewer.session,
                 owner=message['owner'], capture_epoch=EPOCH, sequence=0, status=3,
@@ -98,6 +100,53 @@ async def open_view(live):
         frame_width=960, frame_height=540))
     await eventually(lambda: any(c.args[0].get('stage') == 'startup' for c in viewer.ws.send_json.call_args_list))
     return runtime, viewer, agent
+
+
+@pytest.mark.asyncio
+async def test_direct_open_is_bound_to_this_viewer_and_rechecks_peer_before_each_authority_renewal(live, monkeypatch):
+    from types import SimpleNamespace
+
+    from backend.websocket import direct_probe_runtime
+    runtimes, viewer, agent, _, session = live
+    runtime = runtimes[1]
+    peer_check = AsyncMock(return_value=True)
+    monkeypatch.setattr(direct_probe_runtime, 'get_direct_probe_runtime', lambda: SimpleNamespace(input_peer=peer_check))
+    await runtime.handle(viewer, {'type': 'touch_probe'})
+    await eventually(lambda: viewer.offer is not None)
+    await runtime.handle(viewer, dict(type='touch_direct_open', capture_epoch=EPOCH, frame_width=960,
+        frame_height=540, direct_session='a' * 32))
+    await eventually(lambda: any(c.args[0].get('stage') == 'startup' for c in viewer.ws.send_json.call_args_list))
+    peer_check.assert_awaited_once_with(device=viewer.device, org=viewer.org, user=viewer.user,
+        session='a' * 32, agent_session=session, viewer_session=viewer.session)
+    assert viewer.direct_session == 'a' * 32
+    with pytest.raises(InvalidContinuousInput):
+        await runtime.handle(viewer, dict(type='touch_event', sequence=1, gesture=1, action=0, x=1, y=1))
+    assert await runtime.authorize(viewer)
+    await eventually(lambda: any(c.args[0]['type'] == 'continuous_input_authorize' for c in agent.send_json.call_args_list))
+    assert all(c.args[0]['type'] != 'continuous_input_event' for c in agent.send_json.call_args_list)
+    peer_check.return_value = False
+    assert not await runtime.authorize(viewer)
+    await runtime.handle(viewer, {'type': 'touch_close'})
+    await eventually(lambda: viewer.lease is None)
+    assert viewer.direct_session is None
+
+
+@pytest.mark.asyncio
+async def test_unmatched_direct_peer_cannot_acquire_or_open_native_owner(live, monkeypatch):
+    from types import SimpleNamespace
+
+    from backend.websocket import direct_probe_runtime
+    runtimes, viewer, agent, clients, _ = live
+    runtime = runtimes[1]
+    monkeypatch.setattr(direct_probe_runtime, 'get_direct_probe_runtime', lambda: SimpleNamespace(input_peer=AsyncMock(return_value=False)))
+    await runtime.handle(viewer, {'type': 'touch_probe'})
+    await eventually(lambda: viewer.offer is not None)
+    with pytest.raises(ContinuousAdmissionRejected):
+        await runtime.handle(viewer, dict(type='touch_direct_open', capture_epoch=EPOCH, frame_width=960,
+            frame_height=540, direct_session='a' * 32))
+    assert viewer.lease is None
+    assert all(c.args[0]['type'] != 'continuous_input_open' for c in agent.send_json.call_args_list)
+    assert await clients[0].keys(runtime.store.namespace + ':lease:*') == []
 
 
 @pytest.mark.asyncio

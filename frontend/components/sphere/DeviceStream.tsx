@@ -18,6 +18,7 @@ import { DirectProbeAccess } from '@/src/features/stream/DirectProbeAccess';
 import { AutomaticStreamDiagnostic } from '@/src/features/stream/AutomaticStreamDiagnostic';
 import { LiveDirectVideo, type LiveVideoObservation } from '@/src/features/stream/LiveDirectVideo';
 import type { DirectVideoBinding } from '@/src/features/stream/directVideoProtocol';
+import { DirectPointerTransport, type DirectControlEndpoint } from '@/src/features/stream/directPointerTransport';
 import { StreamSessionHistoryPanel } from '@/src/features/stream/StreamSessionHistoryPanel';
 import { browserStreamSample, directFailure, StreamSessionReporter } from '@/src/features/stream/streamSessionTelemetry';
 
@@ -150,6 +151,10 @@ export function DeviceStream({
   const decoderRef = useRef<H264Decoder | null>(null);
   const continuousRef = useRef<ContinuousPointer | null>(null);
   const continuousDisposeRef = useRef<(() => void) | null>(null);
+  const directControlRef = useRef<DirectControlEndpoint | null>(null);
+  const continuousRouteRef = useRef<DirectControlEndpoint | null>(null);
+  const [directControlVersion, setDirectControlVersion] = useState(0);
+  const [controlTransport, setControlTransport] = useState<'server_websocket' | 'direct_webrtc'>('server_websocket');
   const continuousRequestedRef = useRef(false);
   const continuousProbeArmRef = useRef<(() => void) | null>(null);
   const lastContinuousReceiptAt = useRef(-Infinity);
@@ -206,8 +211,8 @@ export function DeviceStream({
     ? agentDiagnostics.age_seconds + Math.max(0, diagnosticNowMs - agentReport.receivedAtMs) / 1000 : null;
   const [diagnosticsError, setDiagnosticsError] = useState<string | null>(null);
   const [browserStats, setBrowserStats] = useState<StreamDecoderStats | null>(null);
-  const telemetryControl = useRef({ state: continuousState, failure: continuousFailureCode, rtt: continuousReceipt?.ms ?? null, attempts: idleRecoveryCount });
-  telemetryControl.current = { state: continuousState, failure: continuousFailureCode, rtt: continuousReceipt?.ms ?? null, attempts: idleRecoveryCount };
+  const telemetryControl = useRef({ state: continuousState, failure: continuousFailureCode, rtt: continuousReceipt?.ms ?? null, attempts: idleRecoveryCount, transport: controlTransport });
+  telemetryControl.current = { state: continuousState, failure: continuousFailureCode, rtt: continuousReceipt?.ms ?? null, attempts: idleRecoveryCount, transport: controlTransport };
   const currentDiagnosticSession = diagnosticSession?.deviceId === deviceId && diagnosticSession.accessToken === accessToken
     && diagnosticSession.socket === wsRef.current && diagnosticSession.socket.readyState === WebSocket.OPEN ? diagnosticSession.id : null;
   const currentFrameOwned = hasRenderedFrame && !streamError
@@ -267,6 +272,17 @@ export function DeviceStream({
       recoverServerFrameRef.current?.();
     }
   }, []);
+  const observeDirectControl = useCallback((endpoint: DirectControlEndpoint | null, session: string) => {
+    if (diagnosticReporter.current?.sessionId !== session || directControlRef.current === endpoint) return;
+    const previous = directControlRef.current;
+    directControlRef.current = endpoint;
+    if (previous && continuousRouteRef.current === previous && previous !== endpoint) {
+      // Revoke the old native owner through the independent server path.
+      // No failed DOWN/MOVE/UP is sent again through another transport.
+      continuousRef.current?.retire('server_runtime_retry');
+    }
+    setDirectControlVersion(version => version + 1);
+  }, []);
 
   useEffect(() => {
     lastFrameDimensionsRef.current = null;
@@ -304,6 +320,9 @@ export function DeviceStream({
     continuousDisposeRef.current?.();
     continuousDisposeRef.current = null;
     continuousRef.current = null;
+    directControlRef.current = null;
+    continuousRouteRef.current = null;
+    setControlTransport('server_websocket');
     continuousRequestedRef.current = false;
     automaticProbeRef.current = null;
     continuousSupportedRef.current = false;
@@ -418,7 +437,9 @@ export function DeviceStream({
         newWs.binaryType = 'arraybuffer';
         ws = newWs;
         wsRef.current = newWs;
-        telemetryControl.current = { state: 'idle', failure: null, rtt: null, attempts: idleRecoveryCountRef.current };
+        telemetryControl.current = { state: 'idle', failure: null, rtt: null, attempts: idleRecoveryCountRef.current, transport: 'server_websocket' };
+        continuousRouteRef.current = null;
+        setControlTransport('server_websocket');
         setContinuousReceipt(null);
         const reporter = new StreamSessionReporter(newWs, () => decoder
           ? browserStreamSample(decoder.stats, telemetryControl.current, Date.now(), directVideoRef.current) : null);
@@ -571,7 +592,11 @@ export function DeviceStream({
                   setContinuousReason('Экран Android изменился · ожидаем совпадение кадра и возможностей APK.');
                   return;
                 }
-                const controller = new ContinuousPointer({ socket: newWs,
+                const endpoint = directVideoRef.current.active && directControlRef.current?.readyState === 1 ? directControlRef.current : null;
+                const inputTransport = endpoint ? new DirectPointerTransport(newWs, endpoint) : newWs;
+                continuousRouteRef.current = endpoint;
+                setControlTransport(endpoint ? 'direct_webrtc' : 'server_websocket');
+                const controller = new ContinuousPointer({ socket: inputTransport,
                   renderedCapture: () => renderedCaptureRef.current,
                   onFence: snapshot => {
                     if (ignore || ended || newWs !== wsRef.current
@@ -664,9 +689,14 @@ export function DeviceStream({
                 });
                 continuousSupportedRef.current = true;
                 continuousRef.current = controller;
-                continuousDisposeRef.current = attachContinuousPointer({ canvas, controller,
+                const detachReceipt = endpoint?.listen(message => {
+                  if (!ignore && !ended && wsRef.current === newWs && continuousRef.current === controller
+                    && continuousRouteRef.current === endpoint) controller.receive(message);
+                });
+                const detachPointer = attachContinuousPointer({ canvas, controller,
                   allowed: () => continuousAllowedRef.current,
                   point: (event, clamp) => continuousPointRef.current(event.clientX, event.clientY, clamp) });
+                continuousDisposeRef.current = () => { detachReceipt?.(); detachPointer(); };
                 clearTimeout(probeTimer);
                 controller.open(capture);
                 return;
@@ -920,6 +950,14 @@ export function DeviceStream({
     wsRef.current.send(JSON.stringify({ type: 'touch_probe' }));
     continuousProbeArmRef.current?.();
   };
+  useEffect(() => {
+    const controller = continuousRef.current;
+    const endpoint = directVideo.active && directControlRef.current?.readyState === 1 ? directControlRef.current : null;
+    // Upgrade only an idle, fully acknowledged owner. Known RELEASE is required
+    // before the normal capability effect admits its replacement on a new route.
+    if (controller?.state === 'ready' && endpoint && continuousRouteRef.current !== endpoint
+      && !controller.pointerHeld && controller.pendingReceiptCount === 0 && !discreteBusyRef.current) controller.close();
+  }, [directControlVersion, directVideo.active, continuousState, continuousReceipt]);
   useEffect(() => {
     if (inspection || readOnly || continuousRecording || taskHandoffId !== undefined) {
       automaticProbeRef.current = null;
@@ -1207,7 +1245,7 @@ export function DeviceStream({
       <span role="status" className="min-w-0 flex-[1_1_16rem] text-xs leading-relaxed">{continuousReason ?? (discreteBusy ? 'Клавиатура и навигация · ожидаем подтверждение Android' : continuousRecording ? 'Запись использует отдельные завершённые действия' : continuousState === 'ready'
         ? 'Непрерывное управление · зажмите и ведите мышь' : continuousState === 'opening' ? 'Подключаем управление Android…' : continuousState === 'probing' ? 'Определяем возможности APK…' : continuousState === 'closed' ? 'Касание Android освобождено' : 'Управление Android')}
       {continuousReceipt && continuousState === 'ready' && <span title={`Круговое время подтверждения Android №${continuousReceipt.sequence} через текущий серверный WebSocket, включая обработку на устройстве. Это не задержка изображения и не RTT прямого канала.`}>
-        {` · ${continuousReceipt.action === 4 ? 'ACK связи' : 'ACK действия'} через сервер: ${continuousReceipt.ms} мс`}
+        {` · ${continuousReceipt.action === 4 ? 'ACK связи' : 'ACK действия'} ${controlTransport === 'direct_webrtc' ? 'напрямую с APK' : 'через сервер'}: ${continuousReceipt.ms} мс`}
       </span>}</span>
       {continuousFault && !idleRecovering && ['fenced', 'closed'].includes(continuousState) && continuousReason && <button type="button" onClick={() => setControlSession(value => value + 1)} className="ml-auto rounded-lg border border-border px-3 py-2 text-xs hover:bg-muted">Восстановить управление</button>}
     </div>}
@@ -1237,6 +1275,7 @@ export function DeviceStream({
       eligible={!!serverCaptureRef.current && !recordingMode && !inspection && taskHandoffId === undefined}
       fit={fit} expectedCapture={() => diagnosticReporter.current?.sessionId === currentDiagnosticSession ? serverCaptureRef.current : null}
       onFrame={(video, binding) => renderDirectFrame(video, binding, currentDiagnosticSession)}
+      onControlChannel={readOnly ? undefined : endpoint => observeDirectControl(endpoint, currentDiagnosticSession)}
       onObservation={value => observeDirectVideo(value, currentDiagnosticSession)} />}
     {inspection?.bounds && lastFrameDimensionsRef.current && <svg aria-label="Границы выбранного элемента" className="pointer-events-none absolute inset-0 h-full w-full" viewBox={`0 0 ${lastFrameDimensionsRef.current.width} ${lastFrameDimensionsRef.current.height}`} preserveAspectRatio={fit === 'fill' ? 'none' : fit === 'cover' ? 'xMidYMid slice' : 'xMidYMid meet'}>
       <rect x={inspection.bounds.left} y={inspection.bounds.top} width={inspection.bounds.right - inspection.bounds.left} height={inspection.bounds.bottom - inspection.bounds.top} fill="rgba(20,184,166,0.15)" stroke="#14b8a6" strokeWidth="2" vectorEffect="non-scaling-stroke" />
@@ -1325,7 +1364,9 @@ export function DeviceStream({
               <button type="button" onClick={() => setDiagnosticsOpen(false)} className="shrink-0 rounded-md border border-border px-2 py-1 font-sans hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">Закрыть диагностику</button>
             </div>
             <div>Управление Android: {continuousState}{continuousFailureCode ? ` · причина: ${continuousFailureCode}` : ''}</div>
-            <div>{directVideo.active ? 'Основное видео идёт напрямую с APK по WebRTC. Управление пока использует серверный WebSocket.'
+            <div>{directVideo.active ? controlTransport === 'direct_webrtc'
+              ? 'Основное видео и непрерывные касания идут напрямую с APK по WebRTC. Сервер согласует право управления; кнопки Android и текст пока используют сервер.'
+              : 'Основное видео идёт напрямую с APK по WebRTC. Управление пока использует серверный WebSocket.'
               : directVideo.admitted ? 'Видео идёт через сервер; прямой канал подключается или автоматически восстанавливается. Управление использует серверный WebSocket.'
               : 'Видео и управление идут через сервер (WebSocket). Основной прямой канал для этого APK пока не включён.'}</div>
             {directVideo.admitted && <div className="mt-2 border-t border-border pt-2">

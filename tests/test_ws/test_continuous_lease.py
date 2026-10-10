@@ -113,6 +113,56 @@ async def ready(world):
     return lease
 
 
+async def test_direct_owner_renews_only_authority_and_refuses_every_server_touch(world):
+    store, other, binding, pubsub = world
+    lease = await store.acquire(binding)
+    assert lease
+    peer = "a" * 32
+    assert await store.open_direct(lease, peer) == "published"
+    opening = await published(pubsub)
+    scope = dict(device_id=binding.device, org_id=binding.org, agent_session=binding.agent_session)
+    assert (await other.delivery_command(opening, **scope))["direct_session"] == peer
+    changed = {**opening, "command": {**opening["command"], "direct_session": "b" * 32}}
+    assert await other.delivery_command(changed, **scope) is None
+    removed = {**opening, "command": {k: v for k, v in opening["command"].items() if k not in {"direct_session", "ttl_ms"}}}
+    assert await other.delivery_command(removed, **scope) is None
+    assert await store.receipt(lease, receipt(lease), agent_session=binding.agent_session)
+    assert await store.event(lease, TouchEvent(1, 1, 0, 20, 30)) == "invalid_operation"
+    assert await store.authorize_direct(lease)
+    renewal = await published(pubsub)
+    assert renewal["command"] == dict(type="continuous_input_authorize", owner=lease.owner, sequence=1, ttl_ms=AUTH_MS)
+    assert await other.delivery_command(renewal, **scope) == renewal["command"]
+    assert await store.authorize_direct(lease)
+    latest = await published(pubsub)
+    assert latest["command"]["sequence"] == 2
+    assert await other.delivery_command(renewal, **scope) is None  # No stale authorization replay.
+    assert await store.acquire(binding) is None  # A second viewer cannot take this owner.
+    forged = {**latest, "command": dict(type="continuous_input_event", owner=lease.owner,
+        capture_epoch=EPOCH, sequence=1, gesture=1, action=0, x=20, y=30)}
+    assert await other.delivery_command(forged, **scope) is None
+    assert await store.close(lease) == "published"
+    closing = await published(pubsub)
+    assert await other.delivery_command(closing, **scope) == dict(type="continuous_input_close", owner=lease.owner)
+    assert not await store.authorize_direct(lease)
+    assert await store.receipt(lease, receipt(lease, stage="release", status=3), agent_session=binding.agent_session)
+    assert await store.redis.exists(store.key(binding)) == 0
+
+
+async def test_direct_native_failure_receipt_can_report_unseen_sequence_without_claiming_execution(world):
+    store, _, binding, pubsub = world
+    lease = await store.acquire(binding)
+    assert await store.open_direct(lease, "a" * 32) == "published"
+    await published(pubsub)
+    assert await store.receipt(lease, receipt(lease), agent_session=binding.agent_session)
+    failure = receipt(lease, sequence=50, status=6, stage="input")
+    async with receipt_subscription(world) as replies:
+        assert await relay_native_receipt(store, native_manager(binding), binding.device, failure,
+                                          agent_session=binding.agent_session) == ReceiptRelay.PUBLISHED
+        assert (await published(replies))["receipt_json"]
+    assert await store.redis.hget(store.key(binding), "phase") == "closing"
+    assert not await store.authorize_direct(lease)
+
+
 async def test_native_startup_and_worker_receipt_are_one_scoped_atomic_transition(world):
     store, other, binding, agent_pubsub = world
     lease = await store.acquire(binding)

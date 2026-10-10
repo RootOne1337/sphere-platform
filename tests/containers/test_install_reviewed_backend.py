@@ -40,6 +40,24 @@ def candidate(old):
 
 
 class BackendInstallerTests(unittest.TestCase):
+    def test_direct_input_requires_live_video_and_preserves_all_other_runtime_fields(self):
+        for values in ({}, {"live_video": True}, {"device": PROBE_DEVICE},
+                       {"device": PROBE_DEVICE, "readonly_video": True},
+                       {"device": PROBE_DEVICE, "live_video": True, "disable": True}):
+            with self.subTest(values=values), self.assertRaises(ValueError):
+                installer.probe_environment(direct_input=True, **({"device": None} | values))
+        old, new = configuration(), candidate(configuration())
+        new["services"]["backend"]["environment"].update(
+            installer.probe_environment(PROBE_DEVICE, live_video=True, direct_input=True))
+        installer.validate_delta(old, new, TAG, PROBE_DEVICE, live_video=True, direct_input=True)
+        with self.assertRaises(ValueError):
+            installer.validate_delta(old, new, TAG, PROBE_DEVICE, live_video=True)
+        self.assertEqual(installer.probe_environment(PROBE_DEVICE, live_video=True)["DIRECT_TRANSPORT_INPUT_ENABLED"], "false")
+        self.assertEqual(installer.probe_environment(None, disable=True)["DIRECT_TRANSPORT_INPUT_ENABLED"], "false")
+        new["services"]["backend"]["environment"]["POSTGRES_URL"] = "changed"
+        with self.assertRaises(ValueError):
+            installer.validate_delta(old, new, TAG, PROBE_DEVICE, live_video=True, direct_input=True)
+
     def test_fleet_admission_is_explicit_bounded_and_cannot_alter_unrelated_configuration(self):
         devices = (PROBE_DEVICE, "753fd530-2f19-4e5e-98ba-769863678141")
         old, new = configuration(), candidate(configuration())

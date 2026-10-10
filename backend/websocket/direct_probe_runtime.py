@@ -49,6 +49,7 @@ class ProbeViewer:
     live: bool = False
     renewal: int = 0
     renewed_at: float = 0
+    control_session: str | None = None
 
 
 @dataclass
@@ -102,6 +103,31 @@ class DirectProbeRuntime:
         # GET + PTTL must be atomic: an expired owner's GET cannot borrow a newer owner's TTL.
         ttl = await self.redis.eval(REMAINING_EXACT, 1, self.key(binding["device"]), self.encode(binding))
         return ttl if 0 < ttl <= SESSION_MS else 0
+
+    async def input_peer(self, *, device: str, org: str, user: str, session: str, agent_session: str,
+                         viewer_session: str) -> bool:
+        """Cross-worker lookup of an existing peer; a browser cannot borrow another user's video grant."""
+        if (not self.available or not settings.DIRECT_TRANSPORT_INPUT_ENABLED
+                or not settings.DIRECT_TRANSPORT_LIVE_VIDEO_ENABLED
+                or device not in settings.DIRECT_TRANSPORT_PROBE_DEVICE_IDS):
+            return False
+        async with asyncio.timeout(OPERATION_SECONDS):
+            raw = await self.redis.get(self.key(device))
+            if not isinstance(raw, (str, bytes)) or len(raw) > MAX_WIRE_BYTES:
+                return False
+            try:
+                binding = json.loads(raw)
+                if (not isinstance(binding, dict)
+                        or binding.keys() != {"session", "device", "org", "user", "worker", "agent_session", "media", "control_session"}
+                        or binding != {**binding, "session": session, "device": device, "org": org, "user": user,
+                                       "agent_session": agent_session, "media": LIVE_VIDEO_MODE, "control_session": viewer_session}):
+                    return False
+                session_id(binding["worker"])
+            except (ValueError, TypeError):
+                return False
+            status = await DeviceStatusCache(self.redis).get_status(device)
+            return bool(status and status.agent_version_code and status.agent_version_code >= 10254
+                        and await self.remaining(binding))
 
     async def publish(self, channel: str, data: dict) -> None:
         if await self.redis.publish(channel, self.encode(data)) < 1:
@@ -178,6 +204,13 @@ class DirectProbeRuntime:
                            user=viewer.user, worker=self.worker, agent_session=status.ws_session_id)
             if viewer.video:
                 binding["media"] = LIVE_VIDEO_MODE if viewer.live else VIDEO_MODE
+            if viewer.control_session is not None:
+                if (not viewer.live or not settings.DIRECT_TRANSPORT_INPUT_ENABLED
+                        or not status.agent_version_code or status.agent_version_code < 10254
+                        or not isinstance(viewer.control_session, str)
+                        or len(viewer.control_session) != 16 or any(c not in "0123456789abcdef" for c in viewer.control_session)):
+                    raise InvalidDirectProbe("input_peer_not_admitted")
+                binding["control_session"] = viewer.control_session
             if not await self.redis.set(self.key(viewer.device), self.encode(binding), nx=True, px=SESSION_MS):
                 raise InvalidDirectProbe("device_probe_busy")
             viewer.binding = binding
@@ -253,8 +286,12 @@ class DirectProbeRuntime:
             return
         binding = data["binding"]
         binding_keys = {"session", "device", "org", "user", "worker", "agent_session"}
-        if (not isinstance(binding, dict) or binding.keys() not in (binding_keys, binding_keys | {"media"})
+        if (not isinstance(binding, dict) or binding.keys() not in (binding_keys, binding_keys | {"media"}, binding_keys | {"media", "control_session"})
                 or "media" in binding and binding["media"] not in {VIDEO_MODE, LIVE_VIDEO_MODE}):
+            return
+        if "control_session" in binding and (binding.get("media") != LIVE_VIDEO_MODE
+                or not isinstance(binding["control_session"], str) or len(binding["control_session"]) != 16
+                or any(c not in "0123456789abcdef" for c in binding["control_session"])):
             return
         sid = session_id(binding["session"])
         session_id(binding["worker"])

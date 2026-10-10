@@ -34,7 +34,7 @@ class BrowserStreamSample(BaseModel):
     model_config = ConfigDict(extra="forbid", strict=True)
     schema_version: Literal[1]
     transport: Literal["server_websocket", "direct_webrtc"]
-    control_transport: Literal["server_websocket"] = "server_websocket"
+    control_transport: Literal["server_websocket", "direct_webrtc"] = "server_websocket"
     direct_frames: Counter | None = None
     direct_frame_age_ms: Milliseconds | None = None
     direct_path: Literal["host", "nat", "relay", "unknown"] | None = None

@@ -7,6 +7,7 @@ import type { CaptureFrameBinding } from '@/lib/h264-decoder';
 import { parseProbeAdmission } from './DirectProbeAccess';
 import { startDirectVideoSession, type DirectProbeResult } from './directProbe';
 import type { DirectVideoBinding } from './directVideoProtocol';
+import type { DirectControlEndpoint } from './directPointerTransport';
 
 export interface LiveVideoObservation {
   admitted: boolean; admissionKnown: boolean; active: boolean; frames: number; lastFrameAt: number | null;
@@ -20,19 +21,20 @@ export function matchesDisplayedCapture(binding: DirectVideoBinding, expected: C
 }
 
 /** One current viewer owns the renderer. RTC readiness alone never changes the main surface. */
-export function LiveDirectVideo({ deviceId, session, eligible, fit, expectedCapture, onFrame, onObservation }: {
+export function LiveDirectVideo({ deviceId, session, eligible, fit, expectedCapture, onFrame, onObservation, onControlChannel }: {
   deviceId: string; session: string; eligible: boolean; fit?: 'contain' | 'cover' | 'fill';
   expectedCapture: () => CaptureFrameBinding | null;
   onFrame: (video: HTMLVideoElement, binding: DirectVideoBinding) => boolean;
   onObservation: (value: LiveVideoObservation) => void;
+  onControlChannel?: (channel: DirectControlEndpoint | null) => void;
 }) {
   const token = useAuthStore(state => state.accessToken);
   const sessionVersion = useAuthStore(state => state.sessionVersion);
   const [visible, setVisible] = useState(() => !document.hidden);
   const [active, setActive] = useState(false);
   const video = useRef<HTMLVideoElement>(null);
-  const callbacks = useRef({ expectedCapture, onFrame, onObservation });
-  callbacks.current = { expectedCapture, onFrame, onObservation };
+  const callbacks = useRef({ expectedCapture, onFrame, onObservation, onControlChannel });
+  callbacks.current = { expectedCapture, onFrame, onObservation, onControlChannel };
   useEffect(() => {
     const changed = () => setVisible(!document.hidden);
     document.addEventListener('visibilitychange', changed);
@@ -46,7 +48,9 @@ export function LiveDirectVideo({ deviceId, session, eligible, fit, expectedCapt
       const profiles = parseProbeAdmission(data, deviceId);
       if (!profiles || 'live_video_enabled' in data && typeof data.live_video_enabled !== 'boolean'
         || data.live_video_enabled === true && !data.enabled) throw Error('invalid_live_admission');
-      return { admitted: data.live_video_enabled === true, profiles };
+      if ('direct_input_enabled' in data && typeof data.direct_input_enabled !== 'boolean'
+        || data.direct_input_enabled === true && data.live_video_enabled !== true) throw Error('invalid_input_admission');
+      return { admitted: data.live_video_enabled === true, profiles, input: data.direct_input_enabled === true };
     },
     retry: false, staleTime: 30000, gcTime: 0,
   });
@@ -131,7 +135,12 @@ export function LiveDirectVideo({ deviceId, session, eligible, fit, expectedCapt
             firstFrame = setTimeout(() => fail('video_first_frame_timeout'), 8000);
           }
           publish();
-        }, { controlledStunUrl: stun, onTrack: track => {
+        }, { controlledStunUrl: stun,
+          ...(admission.data?.input && callbacks.current.onControlChannel ? {
+            controlSession: session, onControlChannel: (channel: DirectControlEndpoint | null) => {
+              if (!disposed && current === generation) callbacks.current.onControlChannel?.(channel);
+            },
+          } : {}), onTrack: track => {
           if (disposed || ended || current !== generation) { track.stop(); return; }
           element.srcObject = new MediaStream([track]);
           if (typeof element.requestVideoFrameCallback !== 'function') { fail('video_renderer_unavailable'); return; }
@@ -148,6 +157,7 @@ export function LiveDirectVideo({ deviceId, session, eligible, fit, expectedCapt
       disposed = true; generation++;
       if (retry !== null) clearTimeout(retry);
       cancel?.(); clearRenderer();
+      callbacks.current.onControlChannel?.(null);
       setActive(false);
       callbacks.current.onObservation({ ...empty(), admitted: observation.admitted, admissionKnown: observation.admissionKnown });
     };

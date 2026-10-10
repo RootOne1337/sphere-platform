@@ -62,9 +62,12 @@ async def direct_probe_ws(ws: WebSocket, device_id: str) -> None:
             raise InvalidDirectProbe("invalid_auth")
         import json
         first = json.loads(raw)
-        if (not isinstance(first, dict) or first.keys() not in ({"token"}, {"token", "protocol"}, {"token", "protocol", "relay"})
+        if (not isinstance(first, dict) or first.keys() not in ({"token"}, {"token", "protocol"}, {"token", "protocol", "relay"}, {"token", "protocol", "control_session"})
                 or "protocol" in first and first["protocol"] not in {"sphere-probe-v2", "sphere-video-probe-v1", "sphere-video-v1"}
                 or "relay" in first and (first.get("protocol") != "sphere-video-probe-v1" or first["relay"] is not True)
+                or "control_session" in first and (first.get("protocol") != "sphere-video-v1"
+                    or not settings.DIRECT_TRANSPORT_INPUT_ENABLED or not isinstance(first["control_session"], str)
+                    or len(first["control_session"]) != 16 or any(c not in "0123456789abcdef" for c in first["control_session"]))
                 or not isinstance(first["token"], str) or not first["token"]):
             raise InvalidDirectProbe("invalid_auth")
         identity = await authorize(first["token"], device_id)
@@ -72,7 +75,7 @@ async def direct_probe_ws(ws: WebSocket, device_id: str) -> None:
         video = live or first.get("protocol") == "sphere-video-probe-v1"
         if video and not (settings.DIRECT_TRANSPORT_LIVE_VIDEO_ENABLED if live else settings.DIRECT_TRANSPORT_VIDEO_PROBE_ENABLED):
             raise InvalidDirectProbe("video_probe_disabled")
-        viewer = ProbeViewer(device_id, *identity, ws, video=video, live=live)
+        viewer = ProbeViewer(device_id, *identity, ws, video=video, live=live, control_session=first.get("control_session"))
         if first.get("protocol") == "sphere-probe-v2" or video and first.get("relay") is True:
             await runtime.prepare(viewer)
             options = dict(relay_only=settings.DIRECT_PROBE_TURN_RELAY_ONLY)

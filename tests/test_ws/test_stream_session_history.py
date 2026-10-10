@@ -34,6 +34,14 @@ PROBE = dict(schema_version=1, mode="readonly_video", trigger="automatic", profi
              width=960, height=540, ice_state="connected", dtls_state="connected")
 
 
+async def test_control_route_is_observed_independently_of_the_video_route(store):
+    assert await store.begin(ORG, DEVICE, 'direct-control')
+    assert await store.browser(ORG, DEVICE, 'direct-control', SAMPLE | {'control_transport': 'direct_webrtc'})
+    row = (await store.read(ORG, DEVICE))[0]
+    assert row['browser_samples'][-1]['control_transport'] == 'direct_webrtc'
+    assert row['browser_samples'][-1]['transport'] == 'server_websocket'
+
+
 @pytest_asyncio.fixture
 async def store():
     server = FakeServer()
