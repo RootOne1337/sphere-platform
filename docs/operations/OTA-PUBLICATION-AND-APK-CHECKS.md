@@ -1,0 +1,167 @@
+# Проверки публикации и совместимости APK
+
+Дата: 3 октября 2026. Это дополнение к [адресной доставке](OTA-ADDRESSED-UPDATES.md),
+[архитектуре OTA](../architecture/ANDROID-OTA-RELIABILITY.md) и
+[доказательствам 11 установок](../audits/2026-10-03/OWNED-PILOT-OTA-ROLLOUT.md).
+Статус развёртывания и точные версии приводятся в [Current State](CURRENT-STATE.md).
+
+## Контракт каталога
+
+`POST /api/v1/updates/` требует `super_admin`. Поддерживаются платформы `android`,
+`android-canary`, `pc` и flavors `enterprise`, `dev`. Неизвестные поля отклоняются.
+`version_code` — целое число 1–2147483647; boolean и строка не допускаются.
+Имя версии непустое, до 128 символов без управляющих символов; SHA-256 —
+ровно 64 строчных hex-символа. Описание ограничено 16384 символами.
+
+Допустим абсолютный HTTPS URL без credentials, fragment, whitespace и некорректного
+порта либо managed-путь `/api/v1/updates/artifacts/{sha256}`. Managed-файл должен
+существовать в artifact store, иметь допустимый размер и совпадающую контрольную
+сумму. Регистрация внешнего URL **не проверяет удалённый APK** и не загружает его.
+
+В активном каталоге одна комбинация platform/flavor/versionCode может быть
+опубликована только один раз. Проверка выполняется внутри того же межпроцессного
+FileLock, что и atomic replace; два конкурентных POST одной версии дают один201
+и один409. При409 оператор перечитывает каталог. Это уникальность активного
+каталога, а не неизменяемый исторический архив: удаление записи остаётся отдельным
+действием. Production object store и durable history пока не реализованы.
+
+Если старый каталог уже содержит разные предложения с одним максимальным номером
+версии, `/latest` возвращает503. Совпадающие дубликаты и конфликты только среди
+устаревших версий не меняют более новое однозначное предложение.
+
+## Как проверить
+
+- `tests/test_updates/test_release_identity.py`: malformed input, разные каналы,
+  повтор публикации и неоднозначное историческое предложение.
+- `tests/test_updates/test_release_catalog_concurrency.py`: два настоящих процесса,
+  параллельные create/delete и сохранение предыдущего файла при сбое replace.
+- `tests/test_updates/test_updates_api.py`: HTTP, RBAC, managed artifacts и фильтры.
+
+Наличие этих проверок не означает подтверждённую установку: для неё нужны точный
+terminal receipt и новый heartbeat с установленной версией.
+
+## Публикация через веб
+
+В `OTA Updates` форма требует свежий каталог и роль `super_admin`. Ошибки полей
+показываются рядом с полями. Принимается managed-путь; browser `type=url` больше
+не исключает этот поддерживаемый сервером способ. Перед отправкой нужно подтвердить
+совместимость и область предложения; смена любого поля сбрасывает подтверждение.
+
+При ожидании ответа нельзя отправить второй POST или закрыть окно. Успех означает
+HTTP 201 и совпадение всех полей намерения, UUID релиза и даты в ответе. Ошибочный
+ответ, timeout,409 и сетевой сбой сохраняют неопределённость; автоматического POST
+retry нет. «Сверить результат с каталогом» делает только GET и принимает ровно одну
+запись с точным совпадением. Отсутствие записи либо другой файл с тем же versionCode
+не доказывают успешную публикацию. Это защита в пределах текущей страницы/сессии;
+durable reconciliation между вкладками и после reload остаётся открытым gate.
+
+Закрытие страницы/смена пользователя прерывает клиентское ожидание и не показывает
+поздний ответ старой сессии. Abort не доказывает отсутствие серверной записи.
+Форма не объявляет package/signature manifest проверенным и не подменяет результат
+установки записью каталога. `release-publication.test.tsx` проверяет эти переходы
+в JSDOM; визуальная, mobile и keyboard приёмка от этого не считаются выполненными.
+
+## Android 1.2.41 и кандидат1.2.43: проверка перед установкой
+
+Оба пути (`pm install` через root и `PackageInstaller`) проходят один общий guard
+после скачивания и SHA-256, до побочного эффекта установки. `PackageManager` читает
+метаданные **самого файла**, затем установленного приложения. Проверяются точный
+packageName, versionCode и versionName предложения, поддерживаемый minSdk и строго
+более новая версия относительно установленного пакета. `force` не разрешает
+downgrade или повтор той же версии.
+
+На Android26–27 используется GET_SIGNATURES. Guard10241 на28+ запрашивает
+только GET_SIGNING_CERTIFICATES; live PH02810241→10242 отказал signer_unavailable.
+Кандидат10243 запрашивает оба флага: современный current ответ authoritative,
+missing SigningInfo допускает legacy лишь после bounded v2-only format gate
+отдельно для candidate/installed файла. V3/rotation/unknown и malformed files
+этим fallback не допускаются. [Подробное доказательство N08](../audits/2026-10-03/OTA-SIGNER-COMPATIBILITY.md).
+Непустой набор **текущих** сертификатов должен совпадать полностью, включая все
+подписи для multi-signer APK. Перестановка подписей не меняет идентичность.
+Поддержка ротации ключей здесь намеренно закрыта: общий предок не доказывает
+совместимость двух потомков; promotion с новым ключом требует отдельной проверенной
+политики. Android installer остаётся окончательной проверкой подписи и установки.
+Это более строгая политика нашего OTA: Android рекомендует учитывать историю
+подписи одиночного signer при поддержке ротации. `apkContentsSigners` возвращает
+только текущие подписи; здесь это осознанное ограничение, а не общая рекомендация
+для всех Android-приложений. Документация API повторно проверена 3 октября 2026.
+См. [PackageManager](https://developer.android.com/reference/android/content/pm/PackageManager)
+и [SigningInfo](https://developer.android.com/reference/android/content/pm/SigningInfo).
+
+| Код | Причина до установки |
+| --- | --- |
+| `ota_metadata_invalid` | Неположительный versionCode, пустое имя или неверный digest |
+| `ota_archive_unreadable` | Android не прочитал APK или его application metadata |
+| `ota_package_mismatch` | Файл относится к другому приложению |
+| `ota_version_mismatch` | Версия файла расходится с предложением сервера |
+| `ota_sdk_unsupported` | Требуемый Android новее установленного |
+| `ota_installed_package_unavailable` | Установленный пакет не найден |
+| `ota_version_not_newer` | Версия файла равна установленной или старее неё |
+| `ota_signer_unavailable` | Android не предоставил подписи |
+| `ota_signer_mismatch` | Не совпал набор текущих сертификатов |
+
+Адресные terminal receipts сохраняют только эти разрешённые коды, без произвольного
+текста исключения. Скачанный файл удаляется также при отказе. Периодический worker
+не входит в backoff loop для неизменяемого несовместимого файла; следующая обычная
+проверка каталога остаётся по расписанию. Для сетевых сбоев retry сохранён.
+
+`OtaApkVerifierTest` исполняет production verifier с metadata Android 26 и 28.
+`OtaUpdateServiceRecoveryTest` доказывает, что файл с верной SHA-256, но не APK,
+не доходит до installer. Остальные транспортные тесты явно подменяют только
+archive-validation boundary, поскольку их bytes синтетические. Это не доказательство
+нативной установки или ротации: для них нужны отдельные live canaries.
+
+## Датированная приёмка3 октября
+
+UI 77fca37/API facba9a установлены на [3015/updates](http://127.0.0.1:3015/updates).
+1.2.41-dev опубликован в android-canary/dev и адресно установлен на 14 online
+целях; exact receipts и post-install heartbeat приняты для каждой. Пять offline
+вне этой волны. [Отчёт, tests и ограничения](../audits/2026-10-03/OTA-RELEASE-IDENTITY.md) ·
+[Evidence JSON](../audits/2026-10-03/OTA-RELEASE-IDENTITY-EVIDENCE.json).
+
+10240 installer исполнял upgrade до 10241. Live10241→10242 canary получен: terminal failed signer_unavailable,0 установок.
+Native исправленного10243 guard ещё OPEN; scoped recovery не заменяет normal OTA proof. Normal/android-dev10209 не изменён;
+finite14-device observation не является stable/global promotion или FPS/soak proof.
+Полный backend CI2381 passed/16 skipped завершил tests, но остановился на stale
+OpenAPI; generated schema repair 5bb36ca прошёл exportercheck в shipped image.
+
+## Native signer compatibility и текущий canary10244,3 октября
+
+Guard10241 реальный отказ→candidate43 совместимость→normal addressed43→44
+с exact completed receipt/heartbeat/installed hash.13 других целей получили
+scoped root recovery из-за старого блокирующего guard, а не обычные OTA receipts.
+Теперь14online10244,5offline вне приёмки;12samples это короткая проверка.
+Нормальный периодический android/dev остаётся10209;candidate44 managedcanary.
+[Проверки, crypto/format boundary и recovery evidence](../audits/2026-10-03/OTA-SIGNER-COMPATIBILITY.md).
+
+Recovery применим только к online/root-capable owned устройству с заранее
+проверенными package/cert/hash и сохранённым intent. OS installer остаётся
+окончательной проверкой; отсутствие API reply сверяется только readonly
+installed hash/version/new heartbeat. Нельзя повторять installer при unknown,
+очищать данные или считать recovery обычным OTA. Offline/force-stopped APK и
+устройство без нужных Android permissions не объявляются всегда обновляемыми.
+Это pilot recovery evidence, не готовый массовый operator UI/general manifest.
+
+## Logger canary 10245, 5 октября / 23:18 UTC 4 октября
+
+Artifact `bdfebea` / 1.2.45-dev 10245 подписан тем же pilot certificate и размещён
+immutable hash в `android-canary/dev`. PH010 local и PH025 remote получили ровно
+одну адресную scoped recovery grant каждый; completed native receipts, свежий
+heartbeat, installed APK SHA и automatic grant cleanup подтверждены.
+Без host ADB/PC Agent, data wipe и automatic installer replay.
+
+Оба устройства сами исправили прежние 6 обычных файлов до 5 и ≤2 MiB.
+Это startup/local+remote candidate acceptance; не доказательство normal periodic
+OTA и не stable/general release. Normal/android-dev 10209 сохраняется;
+12 online ещё на 10244. Полный suite: 1680 passed / 2 skipped, source: 4 CI success;
+live saturation/retention/RAM soak и следующий fleet rollout ещё отдельные gates.
+[Artifact, квоты и датированные receipts](../audits/2026-10-05/APK-LOG-RETENTION.md) ·
+[Sanitized evidence](../audits/2026-10-05/APK-LOG-RETENTION-EVIDENCE.json).
+
+Для ручного canary используется конкретный локальный файл
+`.local-pilot/apk/SphereAgent-pilot-candidate-1.2.45-dev-bdfebea.apk`.
+Проверка `aapt dump badging` 23:32 UTC показала, что прежний alias
+`LATEST-SphereAgent-pilot.apk` всё ещё 1.2.9-dev 10209 — last promoted baseline,
+а не текущий canary. Не использовать это имя как доказательство freshness.
+Alias/normal catalog не переключались этим этапом; продвижение должно сохранять
+соответствие artifact/metadata/catalog/installed proof.

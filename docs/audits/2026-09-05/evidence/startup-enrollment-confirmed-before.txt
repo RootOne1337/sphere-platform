@@ -1,0 +1,118 @@
+FFFFFFFFF...FF                                                           [100%]
+================================== FAILURES ===================================
+_______ test_startup_uses_configured_key_for_actual_device_registration _______
+tests\production\test_startup_enrollment.py:63: in test_startup_uses_configured_key_for_actual_device_registration
+    assert response.status_code == 201, response.text
+E   AssertionError: {"detail":"Невалидный или истёкший API-ключ"}
+E   assert 401 == 201
+E    +  where 401 = <Response [401 Unauthorized]>.status_code
+---------------------------- Captured stdout call -----------------------------
+{"org_id": "83acdb8c-1ad4-4bf5-b4de-970e17dbf7c5", "prefix": "sphr_legacy_ea", "event": "ensure_enrollment_key: created dev enrollment key", "level": "info", "logger": "backend.tasks.ensure_enrollment_key", "timestamp": "2026-09-11T12:16:51.018803Z"}
+------------------------------ Captured log call ------------------------------
+INFO     backend.tasks.ensure_enrollment_key:ensure_enrollment_key.py:65 {'org_id': '83acdb8c-1ad4-4bf5-b4de-970e17dbf7c5', 'prefix': 'sphr_legacy_ea', 'event': 'ensure_enrollment_key: created dev enrollment key', 'level': 'info', 'logger': 'backend.tasks.ensure_enrollment_key', 'timestamp': '2026-09-11T12:16:51.018803Z'}
+______ test_startup_uses_selected_organization_even_with_the_legacy_key _______
+tests\production\test_startup_enrollment.py:76: in test_startup_uses_selected_organization_even_with_the_legacy_key
+    assert key.org_id == w.org_b.id
+E   AssertionError: assert UUID('83acdb8c-1ad4-4bf5-b4de-970e17dbf7c5') == UUID('93fab112-c6c5-413d-8e1c-68cc62b81986')
+E    +  where UUID('83acdb8c-1ad4-4bf5-b4de-970e17dbf7c5') = <backend.models.api_key.APIKey object at 0x000001FCE4361940>.org_id
+E    +  and   UUID('93fab112-c6c5-413d-8e1c-68cc62b81986') = <backend.models.organization.Organization object at 0x000001FCE4616DB0>.id
+E    +    where <backend.models.organization.Organization object at 0x000001FCE4616DB0> = namespace(make_url=<function make_url at 0x000001FCDEBAE480>, url=postgresql+asyncpg://audit:***@127.0.0.1:55432/spher...bind=<sqlalchemy.ext.asyncio.engine.AsyncEngine object at 0x000001FCE46FF7D0>, autoflush=True, expire_on_commit=False)).org_b
+---------------------------- Captured stdout call -----------------------------
+{"org_id": "83acdb8c-1ad4-4bf5-b4de-970e17dbf7c5", "prefix": "sphr_legacy_00", "event": "ensure_enrollment_key: created dev enrollment key", "level": "info", "logger": "backend.tasks.ensure_enrollment_key", "timestamp": "2026-09-11T12:16:51.570414Z"}
+------------------------------ Captured log call ------------------------------
+INFO     backend.tasks.ensure_enrollment_key:ensure_enrollment_key.py:65 {'org_id': '83acdb8c-1ad4-4bf5-b4de-970e17dbf7c5', 'prefix': 'sphr_legacy_00', 'event': 'ensure_enrollment_key: created dev enrollment key', 'level': 'info', 'logger': 'backend.tasks.ensure_enrollment_key', 'timestamp': '2026-09-11T12:16:51.570414Z'}
+___________ test_cli_then_repeated_workers_keep_one_configured_key ____________
+tests\production\test_startup_enrollment.py:86: in test_cli_then_repeated_workers_keep_one_configured_key
+    assert outcomes == [None] * 4, outcomes
+E   AssertionError: [IntegrityError('(sqlalchemy.dialects.postgresql.asyncpg.IntegrityError) <class \'asyncpg.exceptions.UniqueViolationEr...ey_hash"
+E     DETAIL:  Key (key_hash)=(d7381c935f160c1515cca7a9409f6e593ac3f74bded45800bb8c91ee70c29b94) already exists.')]
+E   assert [IntegrityErr...ady exists.')] == [None, None, None, None]
+E
+E     At index 0 diff: IntegrityError('(sqlalchemy.dialects.postgresql.asyncpg.IntegrityError) <class \'asyncpg.exceptions.UniqueViolationError\'>: duplicate key value violates unique constraint "ix_api_keys_key_hash"\nDETAIL:  Key (key_hash)=(d7381c935f160c1515cca7a9409f6e593ac3f74bded45800bb8c91ee70c29b94) already exists.') != None
+E     Use -v to get more diff
+---------------------------- Captured stdout call -----------------------------
+Enrollment key ready: id=76b5b7b3-bf9e-4e74-8f5b-2a307dcb0fe2, org_id=83e0eaac-e8e2-4c90-bb18-bf590f89dc65
+{"org_id": "83acdb8c-1ad4-4bf5-b4de-970e17dbf7c5", "prefix": "sphr_legacy_84", "event": "ensure_enrollment_key: created dev enrollment key", "level": "info", "logger": "backend.tasks.ensure_enrollment_key", "timestamp": "2026-09-11T12:16:52.074769Z"}
+------------------------------ Captured log call ------------------------------
+INFO     backend.tasks.ensure_enrollment_key:ensure_enrollment_key.py:65 {'org_id': '83acdb8c-1ad4-4bf5-b4de-970e17dbf7c5', 'prefix': 'sphr_legacy_84', 'event': 'ensure_enrollment_key: created dev enrollment key', 'level': 'info', 'logger': 'backend.tasks.ensure_enrollment_key', 'timestamp': '2026-09-11T12:16:52.074769Z'}
+__________________ test_simultaneous_first_workers_converge ___________________
+tests\production\test_startup_enrollment.py:99: in test_simultaneous_first_workers_converge
+    assert outcomes == [None] * 4, outcomes
+E   AssertionError: [IntegrityError('(sqlalchemy.dialects.postgresql.asyncpg.IntegrityError) <class \'asyncpg.exceptions.UniqueViolationEr...ey_hash"
+E     DETAIL:  Key (key_hash)=(c4988311b31e41b41ff84ba904a9092aeb53f976f06ccb4547c2588218cf2cfb) already exists.')]
+E   assert [IntegrityErr...ady exists.')] == [None, None, None, None]
+E
+E     At index 0 diff: IntegrityError('(sqlalchemy.dialects.postgresql.asyncpg.IntegrityError) <class \'asyncpg.exceptions.UniqueViolationError\'>: duplicate key value violates unique constraint "ix_api_keys_key_hash"\nDETAIL:  Key (key_hash)=(c4988311b31e41b41ff84ba904a9092aeb53f976f06ccb4547c2588218cf2cfb) already exists.') != None
+E     Use -v to get more diff
+---------------------------- Captured stdout call -----------------------------
+{"org_id": "83acdb8c-1ad4-4bf5-b4de-970e17dbf7c5", "prefix": "sphr_startup_e", "event": "ensure_enrollment_key: created dev enrollment key", "level": "info", "logger": "backend.tasks.ensure_enrollment_key", "timestamp": "2026-09-11T12:16:52.498700Z"}
+------------------------------ Captured log call ------------------------------
+INFO     backend.tasks.ensure_enrollment_key:ensure_enrollment_key.py:65 {'org_id': '83acdb8c-1ad4-4bf5-b4de-970e17dbf7c5', 'prefix': 'sphr_startup_e', 'event': 'ensure_enrollment_key: created dev enrollment key', 'level': 'info', 'logger': 'backend.tasks.ensure_enrollment_key', 'timestamp': '2026-09-11T12:16:52.498700Z'}
+_ test_conflicting_key_is_reported_without_reactivation_or_api_shutdown[revoked] _
+tests\production\test_startup_enrollment.py:120: in test_conflicting_key_is_reported_without_reactivation_or_api_shutdown
+    assert any(entry["log_level"] == "warning" for entry in logs), logs
+E   AssertionError: [{'event': 'ensure_enrollment_key: already exists', 'log_level': 'debug'}]
+E   assert False
+E    +  where False = any(<generator object test_conflicting_key_is_reported_without_reactivation_or_api_shutdown.<locals>.<genexpr> at 0x000001FCE4322740>)
+---------------------------- Captured stdout call -----------------------------
+Enrollment key ready: id=576ad4ea-7512-4253-bad2-14853f70d486, org_id=bc52b51d-355a-4641-9e30-0f03ff06e116
+_ test_conflicting_key_is_reported_without_reactivation_or_api_shutdown[expired] _
+tests\production\test_startup_enrollment.py:120: in test_conflicting_key_is_reported_without_reactivation_or_api_shutdown
+    assert any(entry["log_level"] == "warning" for entry in logs), logs
+E   AssertionError: [{'event': 'ensure_enrollment_key: already exists', 'log_level': 'debug'}]
+E   assert False
+E    +  where False = any(<generator object test_conflicting_key_is_reported_without_reactivation_or_api_shutdown.<locals>.<genexpr> at 0x000001FCE4371560>)
+---------------------------- Captured stdout call -----------------------------
+Enrollment key ready: id=6a774138-c87e-41d2-bd1f-75f6d539d17a, org_id=70c162f1-613d-4781-a8de-0fd78a1fa9bc
+_ test_conflicting_key_is_reported_without_reactivation_or_api_shutdown[permissions] _
+tests\production\test_startup_enrollment.py:120: in test_conflicting_key_is_reported_without_reactivation_or_api_shutdown
+    assert any(entry["log_level"] == "warning" for entry in logs), logs
+E   AssertionError: [{'event': 'ensure_enrollment_key: already exists', 'log_level': 'debug'}]
+E   assert False
+E    +  where False = any(<generator object test_conflicting_key_is_reported_without_reactivation_or_api_shutdown.<locals>.<genexpr> at 0x000001FCE4370E10>)
+---------------------------- Captured stdout call -----------------------------
+Enrollment key ready: id=61105ec5-51bf-4e2a-a0a0-c94905025e24, org_id=bf4c524f-b67e-430d-83d9-dba6e980238a
+_ test_conflicting_key_is_reported_without_reactivation_or_api_shutdown[organization] _
+tests\production\test_startup_enrollment.py:120: in test_conflicting_key_is_reported_without_reactivation_or_api_shutdown
+    assert any(entry["log_level"] == "warning" for entry in logs), logs
+E   AssertionError: [{'event': 'ensure_enrollment_key: already exists', 'log_level': 'debug'}]
+E   assert False
+E    +  where False = any(<generator object test_conflicting_key_is_reported_without_reactivation_or_api_shutdown.<locals>.<genexpr> at 0x000001FCE51612F0>)
+---------------------------- Captured stdout call -----------------------------
+Enrollment key ready: id=8357be6d-5b73-4d64-ac47-990f633176ee, org_id=5850fd8e-16f8-435c-a67d-cc337db2115b
+_________ test_missing_selected_organization_does_not_bind_to_another _________
+tests\production\test_startup_enrollment.py:133: in test_missing_selected_organization_does_not_bind_to_another
+    assert any(entry["log_level"] == "warning" for entry in logs)
+E   assert False
+E    +  where False = any(<generator object test_missing_selected_organization_does_not_bind_to_another.<locals>.<genexpr> at 0x000001FCE516DCB0>)
+_______ test_backend_receives_the_selected_bootstrap_organization[full] _______
+tests\deployment\test_dev_readiness.py:41: in test_backend_receives_the_selected_bootstrap_organization
+    assert dev_services["backend"]["environment"].get("SPHERE_BOOTSTRAP_ORG_SLUG") == "audit-fixture"
+E   AssertionError: assert None == 'audit-fixture'
+E    +  where None = <built-in method get of dict object at 0x000001FCE5208A40>('SPHERE_BOOTSTRAP_ORG_SLUG')
+E    +    where <built-in method get of dict object at 0x000001FCE5208A40> = {'ACCOUNT_CREDENTIAL_KEYS': 'audit-fixture', 'AWG_H1': 'audit-fixture', 'AWG_H2': 'audit-fixture', 'AWG_H3': 'audit-fixture', ...}.get
+____ test_backend_receives_the_selected_bootstrap_organization[production] ____
+tests\deployment\test_dev_readiness.py:41: in test_backend_receives_the_selected_bootstrap_organization
+    assert dev_services["backend"]["environment"].get("SPHERE_BOOTSTRAP_ORG_SLUG") == "audit-fixture"
+E   AssertionError: assert None == 'audit-fixture'
+E    +  where None = <built-in method get of dict object at 0x000001FCE51DDE80>('SPHERE_BOOTSTRAP_ORG_SLUG')
+E    +    where <built-in method get of dict object at 0x000001FCE51DDE80> = {'ACCOUNT_CREDENTIAL_KEYS': 'audit-fixture', 'AGENT_CONFIG_ENV': 'production', 'AWG_H1': 'audit-fixture', 'AWG_H2': 'audit-fixture', ...}.get
+============================== warnings summary ===============================
+backend\api\v1\game_accounts\router.py:95
+  C:\Users\dimas\Documents\ChatGPT\sphere-platform\backend\api\v1\game_accounts\router.py:95: FastAPIDeprecationWarning: `regex` has been deprecated, please use `pattern` instead
+    sort_dir: str = Query("desc", regex="^(asc|desc)$", description="Направление сортировки"),
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ===========================
+FAILED tests/production/test_startup_enrollment.py::test_startup_uses_configured_key_for_actual_device_registration
+FAILED tests/production/test_startup_enrollment.py::test_startup_uses_selected_organization_even_with_the_legacy_key
+FAILED tests/production/test_startup_enrollment.py::test_cli_then_repeated_workers_keep_one_configured_key
+FAILED tests/production/test_startup_enrollment.py::test_simultaneous_first_workers_converge
+FAILED tests/production/test_startup_enrollment.py::test_conflicting_key_is_reported_without_reactivation_or_api_shutdown[revoked]
+FAILED tests/production/test_startup_enrollment.py::test_conflicting_key_is_reported_without_reactivation_or_api_shutdown[expired]
+FAILED tests/production/test_startup_enrollment.py::test_conflicting_key_is_reported_without_reactivation_or_api_shutdown[permissions]
+FAILED tests/production/test_startup_enrollment.py::test_conflicting_key_is_reported_without_reactivation_or_api_shutdown[organization]
+FAILED tests/production/test_startup_enrollment.py::test_missing_selected_organization_does_not_bind_to_another
+FAILED tests/deployment/test_dev_readiness.py::test_backend_receives_the_selected_bootstrap_organization[full]
+FAILED tests/deployment/test_dev_readiness.py::test_backend_receives_the_selected_bootstrap_organization[production]
+11 failed, 3 passed, 14 deselected, 1 warning in 4.89s

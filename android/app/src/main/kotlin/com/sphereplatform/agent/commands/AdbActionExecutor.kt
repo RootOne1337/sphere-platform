@@ -4,9 +4,11 @@ import android.content.Context
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import org.w3c.dom.Element
-import org.xml.sax.InputSource
 import org.xmlpull.v1.XmlPullParser
 import org.xmlpull.v1.XmlPullParserFactory
 import timber.log.Timber
@@ -14,9 +16,13 @@ import java.io.StringReader
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 import javax.inject.Singleton
-import javax.xml.parsers.DocumentBuilderFactory
 import javax.xml.xpath.XPathConstants
 import javax.xml.xpath.XPathFactory
+
+/** The shell may already have consumed the command; do not automatically retry. */
+class RootCommandOutcomeUnknownException(
+    message: String = "Root command delivery outcome is unknown",
+) : java.io.IOException(message)
 
 /**
  * AdbActionExecutor — выполняет ADB-примитивы через постоянную root-сессию.
@@ -25,10 +31,10 @@ import javax.xml.xpath.XPathFactory
  * Один `su` процесс + DataOutputStream вместо fork+exec на каждую команду.
  * Экономия ~99% CPU: команды пишутся в stdin (<1ms), а не fork/exec (50–150ms).
  *
- * ## TypeText (enterprise)
- * - Все символы кроме алфавитно-цифровых и базового ASCII экранируются
- * - Механизм clipboard-paste для текстов со спецсимволами (>ASCII126 или содержащих кавычки)
- * - `clear_first` — select all + delete перед вводом
+ * ## TypeText
+ * Использует root `input text` с кодированием пробелов и shell-кавычек.
+ * ClipboardManager/IME bridge здесь не реализован; Unicode и emoji нельзя
+ * считать поддержанными только по успешному завершению команды.
  *
  * ## FindElement (uiautomator dump)
  * - Парсит XML дамп UI дерева через Android XmlPullParser (simple) или javax.xml.xpath (xpath)
@@ -38,8 +44,8 @@ import javax.xml.xpath.XPathFactory
  *
  * ## БЕЗОПАСНОСТЬ
  * - `shell()` проверяет команду через SHELL_INJECTION_PATTERN перед su -c
- * - `typeText()` никогда не передаёт текст через sh напрямую; использует
- *   `am broadcast` для clipboard → paste, что полностью устраняет shell injection
+ * - `typeText()` кодирует пробелы и заключает текст в shell-кавычки;
+ *   clipboard/IME broadcast здесь не используется.
  */
 @Singleton
 class AdbActionExecutor @Inject constructor(
@@ -51,18 +57,10 @@ class AdbActionExecutor @Inject constructor(
 
         // UI dump poll interval for findElement
         private const val FIND_ELEMENT_POLL_MS = 500L
-        private const val UI_DUMP_PATH = "/sdcard/sphere_ui_dump.xml"
         // Таймаут одного uiautomator dump: 4s достаточно на LDPlayer.
         // 12s → каждый зависший dump блокировал IO-поток на 12 секунд!
         private const val UI_DUMP_TIMEOUT_SECONDS = 4L
 
-        // Ленивые синглтоны XML-фабрик: DocumentBuilderFactory.newInstance() и
-        // XPathFactory.newInstance() выполняют тяжёлый service discovery через
-        // рефлексию при первом вызове (~30–80ms). Кешируем фабрики — builder и
-        // XPath всё равно создаются каждый раз (не потокобезопасны), но фабрики — нет.
-        private val DOC_BUILDER_FACTORY: DocumentBuilderFactory by lazy {
-            DocumentBuilderFactory.newInstance()
-        }
         private val XPATH_FACTORY: XPathFactory by lazy {
             XPathFactory.newInstance()
         }
@@ -73,24 +71,44 @@ class AdbActionExecutor @Inject constructor(
         }
     }
 
-    private var rootProcess: Process = createRootProcess()
-
-    private var rootStream: java.io.DataOutputStream = java.io.DataOutputStream(rootProcess.outputStream)
-
+    // Agent startup and non-root capabilities must not depend on a root grant.
+    // These references are initialized only by an explicit privileged action.
+    private var rootProcess: Process? = null
+    private var rootStream: java.io.DataOutputStream? = null
     private val rootLock = Any()
+    internal val inputOwnership = DeviceInputOwnership()
+    private var rootInputOutcomeUnknown = false
+    private var rootInputPending = false
+    private val processRunner = BoundedProcessRunner()
+    private val uiDumpOwnership = Mutex()
+    private val screenshots by lazy {
+        ScreenshotFileStore(java.io.File(context.cacheDir.canonicalFile, "dag-screenshots-v1"))
+    }
 
     private fun createRootProcess(): Process =
         Runtime.getRuntime().exec("su").also {
             Timber.i("Root session opened")
         }
 
-    /** Re-create the root process if it has died. */
-    private fun ensureRootAlive() {
-        if (!rootProcess.isAlive) {
-            Timber.w("Root process died — restarting")
-            rootProcess = createRootProcess()
-            rootStream = java.io.DataOutputStream(rootProcess.outputStream)
+    /** Called only while holding rootLock, when a privileged action is requested. */
+    private fun ensureRootAlive(): java.io.DataOutputStream {
+        val existing = rootProcess
+        if (existing != null && existing.isAlive) return checkNotNull(rootStream)
+        if (existing != null && rootInputPending) rootInputOutcomeUnknown = true
+        runCatching { rootStream?.close() }
+        rootStream = null
+        rootProcess = null
+
+        val next = createRootProcess()
+        val stream = try {
+            java.io.DataOutputStream(next.outputStream)
+        } catch (e: Exception) {
+            runCatching { next.destroyForcibly() }
+            throw e
         }
+        rootProcess = next
+        rootStream = stream
+        return stream
     }
 
     private val physicalSize: android.graphics.Point
@@ -119,34 +137,91 @@ class AdbActionExecutor @Inject constructor(
      * synchronized — защита от конкурентного доступа.
      */
     private fun executeRootCommand(cmd: String) {
+        inputOwnership.claimDiscrete().use {
+            synchronized(rootLock) {
+                val stream = ensureRootAlive()
+                val process = checkNotNull(rootProcess)
+                try {
+                    rootInputPending = true
+                    stream.writeBytes("$cmd\n")
+                    stream.flush()
+                } catch (e: java.io.IOException) {
+                    // Invalidate independently of isAlive: a failed pipe can outlive
+                    // that OS observation. The failed command must never be replayed.
+                    rootProcess = null
+                    rootStream = null
+                    rootInputOutcomeUnknown = true
+                    Timber.w("Root input write failed; command outcome is unknown")
+                    runCatching { stream.close() }
+                    runCatching { process.destroyForcibly() }
+                    // Even a flush error may follow delivery of the full command.
+                    // Reopen only for a subsequent explicit command, never replay.
+                    throw RootCommandOutcomeUnknownException()
+                }
+            }
+        }
+    }
+
+    /** Whole-task reservation; nested primitive reservations remain valid for its duration. */
+    fun claimInputForTask(): AutoCloseable = inputOwnership.claimDiscrete()
+
+    /** A flush is not execution. Wait for a unique FIFO marker before opening another injector. */
+    internal suspend fun prepareContinuousInput(owner: String) = withContext(Dispatchers.IO) {
+        check(inputOwnership.owns(owner)) { "device_input_busy" }
+        val cancellation = kotlin.coroutines.coroutineContext
         synchronized(rootLock) {
-            ensureRootAlive()
+            cancellation.ensureActive()
+            if (rootInputOutcomeUnknown) throw RootCommandOutcomeUnknownException("input_handoff_unknown")
+            val process = rootProcess ?: return@synchronized
+            if (!process.isAlive) {
+                if (rootInputPending) {
+                    rootInputOutcomeUnknown = true
+                    throw RootCommandOutcomeUnknownException("input_handoff_unknown")
+                }
+                return@synchronized
+            }
+            val marker = "sphere_handoff_" + java.util.UUID.randomUUID().toString().replace("-", "")
             try {
-                rootStream.writeBytes("$cmd\n")
-                rootStream.flush()
-            } catch (e: java.io.IOException) {
-                Timber.w("Root stream write failed — reopening: ${e.message}")
-                rootProcess.destroyForcibly()
-                rootProcess = createRootProcess()
-                rootStream = java.io.DataOutputStream(rootProcess.outputStream)
-                rootStream.writeBytes("$cmd\n")
-                rootStream.flush()
+                checkNotNull(rootStream).writeBytes("printf '\\n$marker:0\\n'\n")
+                checkNotNull(rootStream).flush()
+                if (RootCommandAcknowledgement.await(process, marker, cancellation, 1_000) != 0) {
+                    throw java.io.IOException("input_handoff_failed")
+                }
+                rootInputPending = false
+            } catch (failure: Exception) {
+                rootInputOutcomeUnknown = true
+                if (failure is kotlinx.coroutines.CancellationException) throw failure
+                throw RootCommandOutcomeUnknownException("input_handoff_unknown")
             }
         }
     }
 
     /** Закрыть root-сессию при уничтожении сервиса. */
     fun closeRootSession() {
-        try {
-            synchronized(rootLock) {
-                rootStream.writeBytes("exit\n")
-                rootStream.flush()
+        synchronized(rootLock) {
+            val process = rootProcess ?: return
+            val stream = rootStream
+            // Clear ownership before cleanup. A later explicit action may open
+            // a new session, but cleanup must never start one by itself.
+            rootProcess = null
+            rootStream = null
+            try {
+                stream?.writeBytes("exit\n")
+                stream?.flush()
+                if (!process.waitFor(250, TimeUnit.MILLISECONDS)) {
+                    if (rootInputPending) rootInputOutcomeUnknown = true
+                    process.destroyForcibly()
+                } else {
+                    rootInputPending = false
+                }
+                Timber.i("Root session closed")
+            } catch (e: Exception) {
+                if (rootInputPending) rootInputOutcomeUnknown = true
+                runCatching { process.destroyForcibly() }
+                Timber.w("Root session cleanup failed")
+            } finally {
+                runCatching { stream?.close() }
             }
-            rootProcess.waitFor(5, TimeUnit.SECONDS)
-            rootProcess.destroyForcibly()
-            Timber.i("Root session closed")
-        } catch (e: Exception) {
-            Timber.w(e, "Error closing root session")
         }
     }
 
@@ -161,6 +236,11 @@ class AdbActionExecutor @Inject constructor(
         executeRootCommand("input tap $x $y")
     }
 
+    /** Live stream maps the complete gesture using its active capture geometry. */
+    fun swipeRaw(x1: Int, y1: Int, x2: Int, y2: Int, durationMs: Int) {
+        executeRootCommand("input swipe $x1 $y1 $x2 $y2 $durationMs")
+    }
+
     fun swipe(x1: Int, y1: Int, x2: Int, y2: Int, durationMs: Int) {
         executeRootCommand(
             "input swipe ${scaleX(x1)} ${scaleY(y1)} ${scaleX(x2)} ${scaleY(y2)} $durationMs"
@@ -171,36 +251,88 @@ class AdbActionExecutor @Inject constructor(
         executeRootCommand("input keyevent $keyCode")
     }
 
+    /** Ctrl+A/Delete in the focused editor, ordered after prior root-session input. */
+    suspend fun clearFocusedText() = withContext(Dispatchers.IO) {
+        inputOwnership.claimDiscrete().use {
+            val owner = kotlin.coroutines.coroutineContext
+            val apk = context.applicationInfo.sourceDir
+            require(apk.startsWith("/") && apk.endsWith(".apk") && apk.none { it == '\n' || it == '\r' }) {
+                "input_clear_invalid_apk_path"
+            }
+            val quotedApk = "'" + apk.replace("'", "'\\''") + "'"
+            val marker = "sphere_clear_" + java.util.UUID.randomUUID().toString().replace("-", "")
+            val command = "CLASSPATH=$quotedApk /system/bin/app_process /system/bin " +
+                "com.sphereplatform.agent.commands.RootInputBridge clear-focused >/dev/null 2>&1; " +
+                "printf '\\n$marker:%s\\n' \"\$?\""
+            synchronized(rootLock) {
+                owner.ensureActive()
+                val stream = ensureRootAlive()
+                val process = checkNotNull(rootProcess)
+                try {
+                    rootInputPending = true
+                    stream.writeBytes("$command\n")
+                    stream.flush()
+                    val status = RootCommandAcknowledgement.await(process, marker, owner)
+                    if (status != 0) throw java.io.IOException("input_clear_adapter_failed")
+                } catch (failure: Exception) {
+                    // Timeout/failed injection may follow an applied key. No replay or CUT fallback.
+                    rootProcess = null
+                    rootStream = null
+                    rootInputOutcomeUnknown = true
+                    runCatching { stream.close() }
+                    runCatching { process.destroyForcibly() }
+                    if (failure is kotlinx.coroutines.CancellationException) throw failure
+                    throw RootCommandOutcomeUnknownException("input_clear_outcome_unknown")
+                }
+            }
+        }
+    }
+
     /**
-     * Вводит текст безопасно через clipboard + paste.
-     *
-     * `input text` в Android интерпретирует текст через shell, что делает
-     * прямую передачу спецсимволов (`"`, `'`, `$`, `&`, и т.д.) опасной
-     * и ненадёжной. Вместо этого:
-     *   1. Помещаем текст в системный буфер обмена через ClipboardManager
-     *   2. Эмулируем Ctrl+V (KEYCODE_PASTE = 279)
-     *
-     * Это устраняет: shell injection, проблемы с кодировкой UTF-8, emoji,
-     * HTML-символы и все прочие спецсимволы одновременно.
+     * Вводит текст через root `input text`, без clipboard-paste адаптера.
+     * Пробелы кодируются как %s, одинарные кавычки — для shell. Возможность
+     * ввода зависит от key character map Android; Unicode/emoji требуют
+     * отдельного IME или Accessibility ACTION_SET_TEXT адаптера.
      */
     suspend fun typeText(text: String) = withContext(Dispatchers.IO) {
         // 'input text' is the most reliable method for emulators (no clipboard app needed).
         // Spaces must be encoded as %s for Android's input text command.
         val encoded = text.replace(" ", "%s")
         val safe = encoded.replace("'", "'\\''")
-        Timber.d("typeText: typing '${text}' (encoded='$safe')")
+        // Typed values may be account credentials. File logs are uploaded even
+        // in release builds; neither the raw nor shell-encoded value is safe.
+        Timber.d("typeText: input requested")
         executeRootCommand("input text '$safe'")
         delay(150)
     }
 
-    /** Сделать скриншот, вернуть путь к файлу на устройстве. */
-    suspend fun takeScreenshot(): String {
-        val path = "/sdcard/sphere_screenshot_${System.currentTimeMillis()}.png"
-        withContext(Dispatchers.IO) {
-            executeRootCommand("screencap -p $path")
-            delay(300)  // Wait for screencap to finish writing
-        }
-        return path
+    /** Original PNG in a bounded private cache; this is not a server artifact upload. */
+    suspend fun takeScreenshot(): String = withContext(Dispatchers.IO) {
+        val owner = kotlin.coroutines.coroutineContext
+        screenshots.capture { file ->
+            val path = "'" + file.absolutePath.replace("'", "'\\''") + "'"
+            val marker = "sphere_capture_" + java.util.UUID.randomUUID().toString().replace("-", "")
+            val command = "screencap -p $path; printf '\\n$marker:%s\\n' \"\$?\""
+            synchronized(rootLock) {
+                owner.ensureActive()
+                val stream = ensureRootAlive()
+                val process = checkNotNull(rootProcess)
+                try {
+                    stream.writeBytes("$command\n")
+                    stream.flush()
+                    if (RootCommandAcknowledgement.await(process, marker, owner) != 0) {
+                        throw java.io.IOException("screenshot_capture_failed")
+                    }
+                } catch (failure: Exception) {
+                    rootProcess = null
+                    rootStream = null
+                    runCatching { stream.close() }
+                    runCatching { process.destroyForcibly() }
+                    if (failure is kotlinx.coroutines.CancellationException) throw failure
+                    throw RootCommandOutcomeUnknownException("screenshot_capture_outcome_unknown")
+                }
+            }
+        }.absolutePath
     }
 
     // ── Device control commands ───────────────────────────────────────────────
@@ -339,46 +471,38 @@ class AdbActionExecutor @Inject constructor(
         null
     }
 
-    /**
-     * UI-дамп: kill zombie uiautomator → dump → wait → read.
-     *
-     * FIX H1: Убийство zombie uiautomator теперь через persistent root session
-     * (без fork). Сам dump + cat всё ещё через отдельный процесс (нужен stdout).
-     * FIX H5: Чтение XML ограничено 512KB для защиты от OOM.
-     */
-    private suspend fun dumpUiXml(): String? = withContext(Dispatchers.IO) {
-        try {
-            // FIX H1: Убиваем зомби через persistent session (нет fork overhead)
-            executeRootCommand("killall uiautomator 2>/dev/null")
-
-            // dump + cat — нужен stdout, поэтому отдельный процесс с timeout
-            val proc = Runtime.getRuntime().exec(
-                arrayOf("su", "-c",
-                    "uiautomator dump $UI_DUMP_PATH >/dev/null 2>&1 && cat $UI_DUMP_PATH")
-            )
-            val finished = proc.waitFor(UI_DUMP_TIMEOUT_SECONDS, TimeUnit.SECONDS)
-            if (!finished) {
-                proc.destroyForcibly()
-                executeRootCommand("killall uiautomator 2>/dev/null")
-                Timber.w("[FindElement] UI dump timed out (${UI_DUMP_TIMEOUT_SECONDS}s)")
-                return@withContext null
-            }
-            // FIX H5: Лимит на размер XML — защита от OOM при раздутом UI-дереве
-            val xml = proc.inputStream.bufferedReader().use { reader ->
-                val buf = CharArray(512 * 1024) // 512KB макс
-                val read = reader.read(buf)
-                if (read > 0) String(buf, 0, read) else ""
-            }
-            if (xml.contains("<hierarchy")) {
-                Timber.d("[FindElement] UI dump OK: ${xml.length} chars")
-                xml
-            } else {
-                Timber.w("[FindElement] UI dump: no <hierarchy> in ${xml.length} chars")
+    /** Serialized private dump with bounded EOF reads, no global process kill. */
+    private suspend fun dumpUiXml(): UiHierarchyXml.Snapshot? = uiDumpOwnership.withLock {
+        withContext(Dispatchers.IO) {
+            val file = java.io.File.createTempFile("sphere-ui-", ".xml", context.cacheDir)
+            try {
+                val quotedPath = "'" + file.absolutePath.replace("'", "'\\''") + "'"
+                val result = processRunner.run(
+                    start = { Runtime.getRuntime().exec(arrayOf("su", "-c",
+                        "uiautomator dump $quotedPath >/dev/null 2>&1 && cat $quotedPath")) },
+                    timeoutMs = UI_DUMP_TIMEOUT_SECONDS * 1000,
+                    stdoutLimit = UiHierarchyXml.MAX_BYTES, stderrLimit = 1024,
+                )
+                if (result.stdout.truncated) {
+                    throw RootCommandOutcomeUnknownException("UI dump exceeded byte budget; result incomplete")
+                }
+                if (result.exitCode != 0) return@withContext null
+                val xml = result.stdout.bytes.toString(Charsets.UTF_8)
+                // One complete validated document is shared by all selectors in this poll.
+                UiHierarchyXml.Snapshot(xml, UiHierarchyXml.parse(xml))
+            } catch (e: kotlinx.coroutines.CancellationException) {
+                throw e
+            } catch (e: ProcessOutputIncompleteException) {
+                throw RootCommandOutcomeUnknownException("UI dump unavailable: ${e.reason}")
+            } catch (e: RootCommandOutcomeUnknownException) {
+                throw e
+            } catch (e: Exception) {
+                Timber.w("[FindElement] UI dump invalid or unavailable")
                 null
+            } finally {
+                // App-owned cache directory permits unlinking even a root-written inode.
+                if (!file.delete() && file.exists()) Timber.w("[FindElement] UI dump cleanup failed")
             }
-        } catch (e: Exception) {
-            Timber.w(e, "[FindElement] UI dump failed")
-            null
         }
     }
 
@@ -393,18 +517,18 @@ class AdbActionExecutor @Inject constructor(
      * - "xpath" — полноценный XPath 1.0 через javax.xml.xpath (встроен в Android SDK).
      *             Поддерживает иерархию, несколько предикатов, позиции, логические операторы.
      *             Примеры (// = descendant-or-self, не используйте / + asterisk в KDoc):
-     *               //android.widget.Button[@text='Login']
-     *               //android.widget.Button[@resource-id='com.example:id/btn_ok']
-     *               //FrameLayout//android.widget.Button[2]
-     *               //android.widget.TextView[contains(@text,'Sign')]
-     *               //android.widget.ListView/android.widget.TextView[last()]
+     *               //node[@class='android.widget.Button' and @text='Login']
+     *               //node[@resource-id='com.example:id/btn_ok']
+     *               //node[@class='android.widget.Button'][2]
+     *               //node[contains(@text,'Sign')]
+     *               //node[@class='android.widget.ListView']/node[last()]
      */
-    private fun parseUiXml(xml: String, selector: String, strategy: String): String? {
+    private fun parseUiXml(snapshot: UiHierarchyXml.Snapshot, selector: String, strategy: String): String? {
         return try {
             if (strategy == "xpath") {
-                parseUiXmlXPath(xml, selector)
+                parseUiXmlXPath(snapshot.document, selector)
             } else {
-                parseUiXmlSimple(xml, selector, strategy)
+                parseUiXmlSimple(snapshot.xml, selector, strategy)
             }
         } catch (e: Exception) {
             Timber.w(e, "[FindElement] XML parse error")
@@ -416,9 +540,7 @@ class AdbActionExecutor @Inject constructor(
      * Полноценный XPath 1.0 через javax.xml.xpath (нет доп. зависимостей, API 8+).
      * Находит первый узел с непустым атрибутом bounds и возвращает координаты центра.
      */
-    private fun parseUiXmlXPath(xml: String, xpath: String): String? {
-        val docBuilder = DOC_BUILDER_FACTORY.newDocumentBuilder()
-        val doc = docBuilder.parse(InputSource(StringReader(xml)))
+    private fun parseUiXmlXPath(doc: org.w3c.dom.Document, xpath: String): String? {
         val xpathExpr = XPATH_FACTORY.newXPath().compile(xpath)
         val nodeList = xpathExpr.evaluate(doc, XPathConstants.NODESET)
             as org.w3c.dom.NodeList
@@ -488,7 +610,13 @@ class AdbActionExecutor @Inject constructor(
         require(command.all { it.code in 32..126 }) {
             "Non-printable characters in shell command"
         }
-        return shellExec(command)
+        return inputOwnership.claimDiscrete().use {
+            try { shellExec(command) }
+            catch (failure: RootCommandOutcomeUnknownException) {
+                synchronized(rootLock) { rootInputOutcomeUnknown = true }
+                throw failure
+            }
+        }
     }
 
     /**
@@ -500,25 +628,23 @@ class AdbActionExecutor @Inject constructor(
 
     /** Общая реализация shell exec (su -c) с таймаутом. */
     private suspend fun shellExec(command: String): String {
-        return withContext(Dispatchers.IO) {
-            val process = Runtime.getRuntime().exec(arrayOf("su", "-c", command))
-            // 5s достаточно для быстрых команд (pidof, cat, dumpsys).
-            // Прежнее значение 30s приводило к утечке IO потоков при coroutine cancellation.
-            val SHELL_TIMEOUT_SECONDS = 5L
-            val finished = process.waitFor(SHELL_TIMEOUT_SECONDS, TimeUnit.SECONDS)
-            if (!finished) {
-                process.destroyForcibly()
-                error("Shell command timed out after ${SHELL_TIMEOUT_SECONDS}s: $command")
-            }
-            val exitCode = process.exitValue()
-            // FIX H5: Лимит на чтение stdout — защита от OOM на слабых эмуляторах
-            val stdout = process.inputStream.bufferedReader().use { it.readText().take(256 * 1024) }
-            if (exitCode != 0) {
-                val stderr = process.errorStream.bufferedReader().use { it.readText().take(1024) }
-                error("Shell exit=$exitCode cmd=[$command]: ${stderr.ifEmpty { "no stderr" }}")
-            }
-            stdout
+        val result = try {
+            processRunner.run(
+                start = { Runtime.getRuntime().exec(arrayOf("su", "-c", command)) },
+                timeoutMs = 5_000, stdoutLimit = 256 * 1024, stderrLimit = 1024,
+            )
+        } catch (error: ProcessOutputIncompleteException) {
+            // The shell may have performed a side effect. DAG must not retry it.
+            throw RootCommandOutcomeUnknownException("Root command result unavailable: ${error.reason}")
         }
+        if (result.stdout.truncated) {
+            throw RootCommandOutcomeUnknownException("Root command output exceeded 256 KiB; result incomplete")
+        }
+        if (result.exitCode != 0) {
+            // Do not put the command or its potentially sensitive stderr into uploaded logs.
+            throw java.io.IOException("Shell command exited with code ${result.exitCode}")
+        }
+        return result.stdout.bytes.toString(Charsets.UTF_8)
     }
 
     // ── Extended gestures ─────────────────────────────────────────────────────
@@ -623,15 +749,14 @@ class AdbActionExecutor @Inject constructor(
 
     /** Считывает произвольный [attribute] из первого узла, найденного по селектору. */
     private fun readNodeAttribute(
-        xml: String,
+        snapshot: UiHierarchyXml.Snapshot,
         selector: String,
         strategy: String,
         attribute: String,
     ): String? {
         return try {
             if (strategy == "xpath") {
-                val doc = DOC_BUILDER_FACTORY.newDocumentBuilder()
-                    .parse(InputSource(StringReader(xml)))
+                val doc = snapshot.document
                 val nodeList = XPATH_FACTORY.newXPath().compile(selector)
                     .evaluate(doc, XPathConstants.NODESET) as org.w3c.dom.NodeList
                 for (i in 0 until nodeList.length) {
@@ -647,7 +772,7 @@ class AdbActionExecutor @Inject constructor(
                     else    -> "text"
                 }
                 val parser = XMLPULL_FACTORY.newPullParser()
-                parser.setInput(StringReader(xml))
+                parser.setInput(StringReader(snapshot.xml))
                 var ev = parser.eventType
                 while (ev != XmlPullParser.END_DOCUMENT) {
                     if (ev == XmlPullParser.START_TAG && parser.name == "node") {
@@ -716,6 +841,8 @@ class AdbActionExecutor @Inject constructor(
                 "screen_height"   to physicalSize.y,
                 "serial"          to (parts.getOrNull(5)?.ifEmpty { "unknown" } ?: "unknown"),
             )
+        } catch (e: kotlinx.coroutines.CancellationException) {
+            throw e
         } catch (e: Exception) {
             Timber.w(e, "getDeviceInfo batch failed — fallback")
             mapOf(

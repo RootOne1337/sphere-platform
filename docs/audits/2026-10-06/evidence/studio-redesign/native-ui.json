@@ -1,0 +1,62 @@
+{
+  "source": "a670a3df3c90ad10658b71ad1b639689d407cf97",
+  "recordedAt": "2026-10-06T02:06:39.946031+00:00",
+  "capture": "native-codex-browser",
+  "workbenchDesktop": {
+    "viewportWidth": 1440,
+    "documentWidth": 1440,
+    "nodeDimensions": [
+      [
+        256,
+        133
+      ],
+      [
+        256,
+        133
+      ],
+      [
+        256,
+        133
+      ]
+    ],
+    "canvasBuffer": [
+      960,
+      540
+    ],
+    "firstNodeY": 311,
+    "toolbarClear": true
+  },
+  "taskMobile": {
+    "viewportWidth": 390,
+    "documentWidth": 390,
+    "theme": "light",
+    "status": "completed",
+    "duration": "00:00:04",
+    "receivedSuccessReports": 3
+  },
+  "editorMobileAfterReload": {
+    "viewportWidth": 390,
+    "documentWidth": 390,
+    "canvasWidth": 384,
+    "canvasHeight": 440,
+    "nodeWidth": 166.40000915527344,
+    "nodeHeight": 86.449951171875,
+    "firstNodeY": 820.2750244140625,
+    "lastNodeBottom": 1179.7249755859375,
+    "canvasTop": 764,
+    "canvasBottom": 1204
+  },
+  "pendingNodeForm": {
+    "undoDisabled": true,
+    "saveDisabled": true,
+    "cancelRestoredUndo": true,
+    "undoRestoredOriginalTitle": true,
+    "publishedOrExecuted": false
+  },
+  "consoleErrorsWarningsCaptured": 0,
+  "limits": [
+    "Task POST pending-close guard is covered with a delayed-response unit regression; a real request was not artificially delayed.",
+    "Frame-exact replay, measured FPS, WAN latency, all actions and fleet load are not established by these browser observations.",
+    "Task mobile screenshot covers the execution context; report content was read separately and has its own screenshot."
+  ]
+}

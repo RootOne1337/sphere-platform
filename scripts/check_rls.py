@@ -1,110 +1,82 @@
 #!/usr/bin/env python3
+"""Compare the RLS migration inventory with model declarations (stdlib-only CI).
+
+This detects omitted tables, including associations without org_id. It cannot
+prove policy behavior: tests/production/test_rls_*.py execute the migrated schema
+on PostgreSQL as separate non-owner roles.
 """
-scripts/check_rls.py
-CI-инструмент: проверяет, что все таблицы с полем org_id покрыты
-RLS-политиками в infrastructure/postgres/rls_policies.sql.
 
-Завершается с exit code 1 если найдены непокрытые таблицы.
-
-Использование:
-    python scripts/check_rls.py
-    python scripts/check_rls.py --rls-file infrastructure/postgres/rls_policies.sql
-
-Используется в GitHub Actions job `rls-check` (ci-backend.yml).
-"""
 from __future__ import annotations
 
 import argparse
-import re
-import sys
+import ast
 from pathlib import Path
 
-# Таблицы из models/__init__.py с полем org_id
-# Поддерживается автоопределение через importlib, но для CI без asyncpg
-# используется статичный список (обновляй при добавлении новых моделей с org_id)
-TABLES_WITH_ORG_ID = {
-    "organizations",   # RLS через slug/id (самоссылка — нет org_id FK, но есть политика)
-    "users",
-    "api_keys",
-    "refresh_tokens",
-    "audit_logs",
-    "workstations",
-    "device_groups",
-    "devices",
-    "ldplayer_instances",
-    "scripts",
-    "script_versions",
-    "task_batches",
-    "tasks",
-    "vpn_peers",
-    "webhooks",
-}
-
-# Таблицы-исключения (M2M без org_id — RLS через FK каскад)
-EXEMPT_TABLES = {
-    "device_group_members",  # RLS через devices и device_groups
-    "alembic_version",
-}
+ROOT = Path(__file__).resolve().parents[1]
+MIGRATION = ROOT / "alembic/versions/20260908_tenant_policies.py"
 
 
-def extract_covered_tables(rls_sql: str) -> set[str]:
-    """Извлекает имена таблиц, для которых создаются политики в rls_policies.sql."""
-    # Паттерн: CREATE POLICY ... ON table_name ...
-    pattern = re.compile(
-        r"CREATE\s+POLICY\s+\w+\s+ON\s+(\w+)",
-        re.IGNORECASE,
-    )
-    covered = set()
-    for match in pattern.finditer(rls_sql):
-        covered.add(match.group(1).lower())
-    return covered
+def model_tables(directory: Path) -> set[str]:
+    tables = set()
+    for path in directory.rglob("*.py"):
+        tree = ast.parse(path.read_text(encoding="utf-8-sig"), filename=str(path))
+        for node in ast.walk(tree):
+            value = None
+            if isinstance(node, ast.Assign) and any(
+                isinstance(target, ast.Name) and target.id == "__tablename__" for target in node.targets
+            ):
+                value = node.value
+            elif isinstance(node, ast.AnnAssign) and isinstance(node.target, ast.Name) and node.target.id == "__tablename__":
+                value = node.value
+            elif isinstance(node, ast.Call) and (
+                isinstance(node.func, ast.Name) and node.func.id == "Table"
+                or isinstance(node.func, ast.Attribute) and node.func.attr == "Table"
+            ):
+                value = node.args[0] if node.args else next((kw.value for kw in node.keywords if kw.arg == "name"), None)
+                if value is None:
+                    raise ValueError(f"Cannot determine Table name: {path}:{node.lineno}")
+            if value is not None:
+                name = ast.literal_eval(value)
+                if not isinstance(name, str):
+                    raise ValueError(f"Non-string table name: {path}:{node.lineno}")
+                tables.add(name)
+    if not tables:
+        raise ValueError("No model tables discovered")
+    return tables
 
 
-def main() -> None:
-    parser = argparse.ArgumentParser(description="Check RLS policy coverage")
-    parser.add_argument(
-        "--rls-file",
-        default="infrastructure/postgres/rls_policies.sql",
-        help="Path to rls_policies.sql",
-    )
-    parser.add_argument(
-        "--audit-rls-file",
-        default="infrastructure/postgres/audit_log_policies.sql",
-        help="Path to audit_log_policies.sql",
-    )
+def migration_tables(path: Path) -> set[str]:
+    values = {}
+    for node in ast.parse(path.read_text(encoding="utf-8-sig")).body:
+        if isinstance(node, ast.Assign):
+            for target in node.targets:
+                if isinstance(target, ast.Name) and target.id in {"ORG_TABLES", "IDENTITY_TABLES", "ASSOCIATIONS"}:
+                    values[target.id] = ast.literal_eval(node.value)
+    if set(values) != {"ORG_TABLES", "IDENTITY_TABLES", "ASSOCIATIONS"}:
+        raise ValueError("Migration must declare all three policy inventories")
+    return set(values["ORG_TABLES"]) | set(values["IDENTITY_TABLES"]) | set(values["ASSOCIATIONS"])
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--models", type=Path, default=ROOT / "backend/models")
+    parser.add_argument("--migration", type=Path, default=MIGRATION)
     args = parser.parse_args()
-
-    rls_path = Path(args.rls_file)
-    audit_path = Path(args.audit_rls_file)
-
-    if not rls_path.exists():
-        print(f"ERROR: RLS file not found: {rls_path}", file=sys.stderr)
-        sys.exit(1)
-
-    rls_sql = rls_path.read_text(encoding="utf-8")
-    if audit_path.exists():
-        rls_sql += "\n" + audit_path.read_text(encoding="utf-8")
-
-    covered = extract_covered_tables(rls_sql)
-    required = TABLES_WITH_ORG_ID - EXEMPT_TABLES
-    missing = required - covered
-
-    print(f"✓ Tables with RLS policies: {len(covered)}")
-    print(f"✓ Tables requiring coverage: {len(required)}")
-
-    if missing:
-        print("\n❌ MISSING RLS POLICIES for tables:", file=sys.stderr)
-        for table in sorted(missing):
-            print(f"   - {table}", file=sys.stderr)
-        print(
-            "\nAdd CREATE POLICY statements to rls_policies.sql for each missing table.",
-            file=sys.stderr,
-        )
-        sys.exit(1)
-
-    print("\n✅ All tables are covered by RLS policies.")
-    sys.exit(0)
+    try:
+        required = model_tables(args.models)
+        covered = migration_tables(args.migration)
+    except (OSError, SyntaxError, ValueError) as exc:
+        print(f"RLS inventory check failed: {exc}")
+        return 1
+    missing, stale = required - covered, covered - required
+    if missing or stale:
+        print(f"Missing from migration: {sorted(missing)}; absent from models: {sorted(stale)}")
+        print("Add a reviewed policy migration and update the inventory reference; associations are not exempt.")
+        return 1
+    print(f"RLS migration inventory matches all {len(required)} model tables (including associations).")
+    print("Static inventory only. PostgreSQL runtime role/policy regressions are required separately.")
+    return 0
 
 
 if __name__ == "__main__":
-    main()
+    raise SystemExit(main())

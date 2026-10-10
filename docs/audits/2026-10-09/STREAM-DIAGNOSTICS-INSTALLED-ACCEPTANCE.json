@@ -1,0 +1,375 @@
+{
+  "schemaVersion": 1,
+  "observedAtUtc": "2026-10-09T13:45:48.200627+00:00",
+  "scope": "UI-only bounded failure observation and finite diagnostics layout acceptance; idle failure remains open.",
+  "runtimeInstalled": true,
+  "runtime": {
+    "sourceRevision": "86354350638650215717658b9395b2751326af6c",
+    "apiSourceRevision": "be803773037c16a113b50c1a2774793fffae8773",
+    "configImageId": "sha256:9f47c68a8cbb1a81c839bf1e76f0c479f7eaeb243740e117483ba707ee25cde0",
+    "loadedManifestId": "sha256:31f2aff9ceeb119415b6bcfe81596ea2be7012eaa34cf19d51a2aa735d160dbc",
+    "uiContainerId": "9d48493d4c35ac406dc36e9a4cb0f217ce053b1fb97ccc016e223c8282e028c5",
+    "startedAtUtc": "2026-10-09T13:41:17.810174839Z",
+    "otherContainersPreserved": 45,
+    "otaCatalogSha256": "5d5dcb5521277b51f366ea5370a2f7df5fd62696de0d5b7b86a56b443b03af10",
+    "schemaChanged": false,
+    "apkChanged": false,
+    "pilotApk": {
+      "device": "PH011",
+      "version": "1.2.49-dev",
+      "versionCode": 10249
+    }
+  },
+  "artifact": {
+    "source": "86354350638650215717658b9395b2751326af6c",
+    "runId": 37937795253,
+    "artifactId": 11620480314,
+    "zipBytes": 120879941,
+    "zipSha256": "9e787ab1e2aa74509ea512185ef08109d1ae99e72952e3beba4e5656f5a791a5",
+    "independentImageId": "sha256:9f47c68a8cbb1a81c839bf1e76f0c479f7eaeb243740e117483ba707ee25cde0",
+    "ciAdmission": {
+      "source": "86354350638650215717658b9395b2751326af6c",
+      "imageId": "sha256:9f47c68a8cbb1a81c839bf1e76f0c479f7eaeb243740e117483ba707ee25cde0",
+      "compressedBytes": 120876990,
+      "pages": 26,
+      "assets": 73,
+      "runId": 37937795253,
+      "runtimeInstalled": false
+    },
+    "artifactDirectory": "C:\\Users\\dimas\\Documents\\ChatGPT\\sphere-platform\\.local-pilot\\diagnostics-compact-delivery-20261009-86354350\\artifact",
+    "ciImageIdentityIndependentOfDownloadedReceipt": true
+  },
+  "ci": {
+    "exactSource": "86354350638650215717658b9395b2751326af6c",
+    "runs": [
+      {
+        "conclusion": "success",
+        "databaseId": 37937794986,
+        "headSha": "86354350638650215717658b9395b2751326af6c",
+        "status": "completed",
+        "workflowName": "CI — Android"
+      },
+      {
+        "conclusion": "success",
+        "databaseId": 37937795253,
+        "headSha": "86354350638650215717658b9395b2751326af6c",
+        "status": "completed",
+        "workflowName": "CI — Frontend"
+      },
+      {
+        "conclusion": "success",
+        "databaseId": 37937794954,
+        "headSha": "86354350638650215717658b9395b2751326af6c",
+        "status": "completed",
+        "workflowName": "Preview — Deploy"
+      },
+      {
+        "conclusion": "success",
+        "databaseId": 37937794951,
+        "headSha": "86354350638650215717658b9395b2751326af6c",
+        "status": "completed",
+        "workflowName": "CI — Backend"
+      }
+    ],
+    "frontendTests": 1948,
+    "frontendSuites": 139,
+    "pages": 26,
+    "assets": 73,
+    "typescript": "passed",
+    "allFourSuccessful": true
+  },
+  "browser": {
+    "finiteAccepted": true,
+    "atUtc": "2026-10-09T13:45:28.619Z",
+    "ui": "86354350",
+    "device": "PH011",
+    "apk": "1.2.49-dev",
+    "desktopViewport": {
+      "width": 1280,
+      "height": 720
+    },
+    "phoneViewport": {
+      "width": 390,
+      "height": 844
+    },
+    "desktop": {
+      "clientHeight": 286,
+      "clientWidth": 386,
+      "closeButton": {
+        "bottom": 424.7890625,
+        "height": 30,
+        "left": 1093.4609375,
+        "right": 1238,
+        "top": 394.7890625,
+        "width": 144.5390625,
+        "x": 1093.4609375,
+        "y": 394.7890625
+      },
+      "heading": {
+        "bottom": 414.7890625,
+        "height": 20,
+        "left": 876.3671875,
+        "right": 1063.5703125,
+        "top": 394.7890625,
+        "width": 187.203125,
+        "x": 876.3671875,
+        "y": 394.7890625
+      },
+      "rect": {
+        "bottom": 669.7890625,
+        "height": 288,
+        "left": 863.3671875,
+        "right": 1257,
+        "top": 381.7890625,
+        "width": 393.6328125,
+        "x": 863.3671875,
+        "y": 381.7890625
+      },
+      "scrollHeight": 609,
+      "scrollTop": 0,
+      "scrollWidth": 386
+    },
+    "desktopEnd": {
+      "clientHeight": 286,
+      "closeButton": {
+        "bottom": 424.7890625,
+        "height": 30,
+        "left": 1093.4609375,
+        "right": 1238,
+        "top": 394.7890625,
+        "width": 144.5390625,
+        "x": 1093.4609375,
+        "y": 394.7890625
+      },
+      "lastParagraph": {
+        "bottom": 656.7890625,
+        "height": 109,
+        "left": 876.3671875,
+        "right": 1238,
+        "top": 547.7890625,
+        "width": 361.6328125,
+        "x": 876.3671875,
+        "y": 547.7890625
+      },
+      "rect": {
+        "bottom": 669.7890625,
+        "height": 288,
+        "left": 863.3671875,
+        "right": 1257,
+        "top": 381.7890625,
+        "width": 393.6328125,
+        "x": 863.3671875,
+        "y": 381.7890625
+      },
+      "scrollHeight": 733,
+      "scrollTop": 447
+    },
+    "phone": {
+      "clientHeight": 318,
+      "clientWidth": 342,
+      "closeButton": {
+        "bottom": 448.25,
+        "height": 30,
+        "left": 203.4609375,
+        "right": 348,
+        "top": 418.25,
+        "width": 144.5390625,
+        "x": 203.4609375,
+        "y": 418.25
+      },
+      "heading": {
+        "bottom": 458.25,
+        "height": 40,
+        "left": 30,
+        "right": 191.4609375,
+        "top": 418.25,
+        "width": 161.4609375,
+        "x": 30,
+        "y": 418.25
+      },
+      "rect": {
+        "bottom": 725.25,
+        "height": 320,
+        "left": 17,
+        "right": 367,
+        "top": 405.25,
+        "width": 350,
+        "x": 17,
+        "y": 405.25
+      },
+      "scrollHeight": 843,
+      "scrollTop": 0,
+      "scrollWidth": 342
+    },
+    "phoneEnd": {
+      "clientHeight": 318,
+      "closeButton": {
+        "bottom": 448.25,
+        "height": 30,
+        "left": 203.4609375,
+        "right": 348,
+        "top": 418.25,
+        "width": 144.5390625,
+        "x": 203.4609375,
+        "y": 418.25
+      },
+      "lastParagraph": {
+        "bottom": 712.25,
+        "height": 129,
+        "left": 30,
+        "right": 348,
+        "top": 583.25,
+        "width": 318,
+        "x": 30,
+        "y": 583.25
+      },
+      "rect": {
+        "bottom": 725.25,
+        "height": 320,
+        "left": 17,
+        "right": 367,
+        "top": 405.25,
+        "width": 350,
+        "x": 17,
+        "y": 405.25
+      },
+      "scrollHeight": 843,
+      "scrollTop": 525
+    },
+    "desktopPointerClosed": true,
+    "desktopKeyboardClosed": true,
+    "phonePointerClosed": true,
+    "phoneKeyboardClosed": true,
+    "graphUnchanged": true,
+    "publishedVersion": 1,
+    "recordingQueue": 0,
+    "versionSaved": false,
+    "taskLaunched": false,
+    "recordingStarted": false,
+    "androidInputActionsSent": false,
+    "viewSelectedBeforeKeyboardTest": true,
+    "consoleErrorCount": 0,
+    "labClosed": true,
+    "viewportReset": true,
+    "temporaryTabClosed": true,
+    "userTabMutated": false,
+    "screenshots": [
+      "desktop-panel.jpg",
+      "desktop-panel-end.jpg",
+      "phone-panel.jpg",
+      "phone-panel-end.jpg"
+    ],
+    "remainingVisualScope": "Full landscape/font/accessibility/device matrix and long-chain overview remain open."
+  },
+  "priorIdleFailure": {
+    "baselineUtc": "2026-10-09T13:02:43.959Z",
+    "failureObservedUtc": "2026-10-09T13:13:05.288Z",
+    "device": "PH011",
+    "apk": "1.2.49-dev",
+    "reason": "native_receipt_timeout",
+    "idleRecoveries": 1,
+    "offeredSequence": 1340,
+    "acknowledgedSequence": 1338,
+    "pending": 2,
+    "oldestAction": "HEARTBEAT",
+    "oldestAgeMs": 512,
+    "browserTickGapMs": 15,
+    "lastReceiptRttMs": 248,
+    "lastReceiptAgeMs": 521,
+    "lastSendAgeMs": 256,
+    "held": false,
+    "terminal": null,
+    "socketState": "OPEN",
+    "bufferedBytes": 0,
+    "commandsReplayed": false,
+    "failureTimestampExact": false,
+    "idleCauseResolved": false
+  },
+  "ledger": {
+    "accepted": 9,
+    "open": 41,
+    "closedInThisBatch": [],
+    "fleetAccepted": false
+  },
+  "remaining": [
+    "Idle receipt layer correlation and correction",
+    "Global input owner",
+    "Rich recording",
+    "Whole-host writer attribution and RAM soak",
+    "Long-chain overview readability"
+  ],
+  "privateInstallReceipt": ".local-pilot/reviewed-web-install-863543506386-8f6bebe6/installed.json",
+  "visualAssets": [
+    {
+      "path": "docs/audits/2026-10-09/assets/stream-diagnostics/desktop.jpg",
+      "bytes": 103344,
+      "sha256": "5406055202a7ce6ec9cab569e883b4183eadd38e33322b67a9a34da6d0405aa7"
+    },
+    {
+      "path": "docs/audits/2026-10-09/assets/stream-diagnostics/desktop-end.jpg",
+      "bytes": 101061,
+      "sha256": "e7fde74cc89add1eeae18f1655e0ae6ed3824d511aab701921788e6f8254b2c6"
+    },
+    {
+      "path": "docs/audits/2026-10-09/assets/stream-diagnostics/phone.jpg",
+      "bytes": 54208,
+      "sha256": "f90c4b6b473dd01136726970f006f35dc09d2e1872f830125d0b695d32b287fe"
+    },
+    {
+      "path": "docs/audits/2026-10-09/assets/stream-diagnostics/phone-end.jpg",
+      "bytes": 50917,
+      "sha256": "e45181ffc69d2754cc15241e0a7e3f9a3d2a89a06044a3a31128da61ff372c6f"
+    }
+  ],
+  "sourceEstimateErrata": {
+    "phoneProspectiveHeightPx": 337.6,
+    "phoneMeasuredHeightPx": 320,
+    "reason": "The prospective value omitted the 20rem cap; the historical source audit remains dated."
+  },
+  "ownTemporaryZipCleanup": {
+    "entries": [
+      {
+        "path": "C:\\Users\\dimas\\Documents\\ChatGPT\\sphere-platform\\.local-pilot\\fence-delivery-20261009-0b321d49\\artifact.zip",
+        "bytes": 120882755,
+        "sha256": "d8227ac07273b67207e9b9468510b98a414afefce6845ccaddf1a679106f010b",
+        "retainedImageArchive": "C:\\Users\\dimas\\Documents\\ChatGPT\\sphere-platform\\.local-pilot\\fence-delivery-20261009-0b321d49\\artifact\\image.tar.gz",
+        "removed": true
+      },
+      {
+        "path": "C:\\Users\\dimas\\Documents\\ChatGPT\\sphere-platform\\.local-pilot\\diagnostics-layout-delivery-20261009-b953ec10\\artifact.zip",
+        "bytes": 120880051,
+        "sha256": "8da16d38fa62d6dc8b67256282aa6874a9e300c98d9396ba9dab311a79d32b01",
+        "retainedImageArchive": "C:\\Users\\dimas\\Documents\\ChatGPT\\sphere-platform\\.local-pilot\\diagnostics-layout-delivery-20261009-b953ec10\\artifact\\image.tar.gz",
+        "removed": true
+      }
+    ],
+    "bytesRemoved": 241762806,
+    "scope": "Only redundant ZIPs downloaded by this turn; admitted compressed images, receipts, logs and visual evidence retained.",
+    "leakCorrectionClaimed": false
+  },
+  "activeObserverStatus": {
+    "state": "running",
+    "pid": 26192,
+    "administrator": false,
+    "launchMode": "limited-unprivileged",
+    "vssAccessGuaranteed": false,
+    "startedUtc": "2026-10-09T12:42:57.051894+00:00",
+    "dueUtc": "2026-10-10T12:42:57.051894+00:00",
+    "samplesLimit": 721,
+    "samplesWritten": 33,
+    "intervalSeconds": 120,
+    "dockerEverySamples": 8,
+    "reportBudgetBytes": 16777216,
+    "sampleLimitBytes": 131072,
+    "reportBytes": 453109,
+    "cleanupPerformed": false,
+    "deviceCommandsSent": false,
+    "autostartConfigured": false,
+    "fullDirectoryScans": false,
+    "processIoIsWriterAttribution": false,
+    "sourceSha256": "d71e5c7a9fa028f91098d47c224ce53ba11723d06f03f0ee1b248dc4ce5c4bc6",
+    "lastSampleUtc": "2026-10-09T13:46:57.052186+00:00",
+    "freeDiskBytes": 46139469824
+  },
+  "activeObserverScope": "Limited periodic metadata only; matching PID/name/creation observed separately. Not whole-PC writer attribution or restart coverage."
+}

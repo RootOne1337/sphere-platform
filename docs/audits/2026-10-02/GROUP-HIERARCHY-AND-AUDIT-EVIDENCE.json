@@ -1,0 +1,410 @@
+{
+  "observedAt": "2026-10-02T01:43:14.016900+00:00",
+  "timezone": "Asia/Yekaterinburg",
+  "backendSource": "933164e2929be0223b9a918902795ade7f0a6dfa",
+  "uiSource": "a9240a7c81c47951e0029eb07cfccb6249f75bf3",
+  "commits": [
+    "dce2c99",
+    "a9240a7",
+    "933164e"
+  ],
+  "findings": [
+    "N04",
+    "N05"
+  ],
+  "sourceFileSha256": {
+    "backend/services/group_service.py": "3b7e659a2c818feb0b965256055efbe23712fcadc3d269b8e8323813ff5a76aa",
+    "backend/core/audit_identity.py": "567de8aa11d208dd03e3c87ef0245375e819439e1915eb10c9a4dac9fea76e1d",
+    "backend/core/dependencies.py": "d2dbae7fe93dbb268cd80c266d126020316624155b72b0a68621376540fd1bca",
+    "backend/middleware/audit.py": "c750d92118c8a57fc8f547937a01e5dee479c501d599e4ecc808fa246b447234",
+    "frontend/app/(dashboard)/groups/page.tsx": "0cb28e9ba3d51f67e6712eaec6da29e3282ca18ed3fe89d853cf2a5a7f68dcb9",
+    "frontend/lib/hooks/useGroups.ts": "19344ddb9ac0559dc0b4c978c0f380edb95573947698f4fda2e059409126c4eb",
+    "frontend/src/features/groups/GroupEditor.tsx": "775a9851fd0522d79a3235c599f770baa7fc6952f11a9e4ef1a1b00892c48ba3",
+    "frontend/__tests__/groups/group-hierarchy.test.tsx": "a1e2fb5553d34066986d66821d988cda0010d87f16818e345412ae3a67bf0538",
+    "tests/groups/test_hierarchy.py": "a3d8b8a5de5b529b7e25e19b0b16bb268f052f966456d6bf77f358ab4d17706c",
+    "tests/production/test_group_hierarchy.py": "0856cc08c7ff6ef89e5b7b7f5b91104db322cded2e821b1e6762a3d074de52c0",
+    "tests/production/test_audit_rollback_identity.py": "e64406e0f6aad5261a9032121a6333f5312a95edd77f25c35eb04dfc13bd2d8c"
+  },
+  "before": {
+    "source": "1767bec9d6d74ed52fbcc76df9e7a421c05e4c24",
+    "groupHttp": {
+      "tests": 7,
+      "failures": 4,
+      "errors": 0,
+      "skipped": 0
+    },
+    "groupPostgresInitialEight": {
+      "tests": 8,
+      "failures": 6,
+      "errors": 0,
+      "skipped": 0
+    },
+    "frontend": {
+      "scenarios": 8,
+      "failures": 8,
+      "runtimeErrors": 0
+    },
+    "auditRollback": {
+      "source": "a9240a7c81c47951e0029eb07cfccb6249f75bf3",
+      "tests": 4,
+      "failures": 4,
+      "errors": 0,
+      "skipped": 0
+    }
+  },
+  "after": {
+    "frontend": {
+      "numPassedTests": 761,
+      "numFailedTests": 0,
+      "numPassedTestSuites": 95,
+      "numRuntimeErrorTestSuites": 0
+    },
+    "typesExit": 0,
+    "ruffExit": 0,
+    "mypyExit": 0,
+    "groupHttp": {
+      "tests": 34,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "postgresCombined": {
+      "tests": 24,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "actualHierarchyImageGroupHttp": {
+      "tests": 34,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "actualHierarchyImagePostgres": {
+      "tests": 10,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "actualFinalImagePostgres": {
+      "tests": 24,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "imageOpenapiCheck": {
+      "exit": 0,
+      "stdout": "API schema and endpoint catalog match the registered application.\n"
+    },
+    "newFrontendRegressions": 8
+  },
+  "installedReview": {
+    "observedAt": "2026-10-02T01:41:13.186754+00:00",
+    "phase": "audit-fixed",
+    "url": "http://127.0.0.1:3015",
+    "reviewSource": "a9240a7c81c47951e0029eb07cfccb6249f75bf3",
+    "backendSource": "933164e2929be0223b9a918902795ade7f0a6dfa",
+    "loginPassed": true,
+    "sameOriginApiPassed": true,
+    "uiCompiledStampPassed": true,
+    "staticAssetPassed": true,
+    "unauthorizedObservabilityStatus": 401,
+    "oldDiscoveryPayloadStatus": 422,
+    "oldDiscoveryMissingRequiredField": "workstation_id",
+    "prometheusApiPassed": true,
+    "grafanaSessionAndHealthPassed": true,
+    "wsUpgradeSnapshotAndPongPassed": true,
+    "catalogTotal": 19,
+    "reportedStatuses": {
+      "online": 14,
+      "offline": 5
+    },
+    "nodeRuntime": "v24.21.0",
+    "containers": [
+      {
+        "name": "sphere-review-20261002-review-ui-1",
+        "id": "7b30bf52fecb5076bb85131a7bf72c7cc09b245c2d66fd959d3c39efe29aede8",
+        "imageId": "sha256:d211aabded2de5b26bc48c247d52eb4ce782d9385623b649e7ffd10776c1c4f9",
+        "image": "sphere-review-frontend:a9240a7c81c47951e0029eb07cfccb6249f75bf3",
+        "health": "healthy",
+        "startedAt": "2026-10-02T01:29:39.088732797Z",
+        "readOnly": true,
+        "restart": "unless-stopped",
+        "ports": {}
+      },
+      {
+        "name": "sphere-review-20261002-review-gateway-1",
+        "id": "c47ddbf567396d8d21eeb056d6dc808594a1237c35bf10c98f6b039a8455c826",
+        "imageId": "sha256:1d13701a5f9f3fb01aaa88cef2344d65b6b5bf6b7d9fa4cf0dca557a8d7702ba",
+        "image": "nginx:alpine",
+        "health": "healthy",
+        "startedAt": "2026-10-02T01:29:44.915587064Z",
+        "readOnly": true,
+        "restart": "unless-stopped",
+        "ports": {
+          "8080/tcp": [
+            {
+              "HostIp": "127.0.0.1",
+              "HostPort": "3015"
+            }
+          ]
+        }
+      }
+    ],
+    "remoteCommandsSent": false,
+    "browserVisualAcceptance": "OPEN_URL_POLICY_BLOCKED"
+  },
+  "backendInstallation": {
+    "source": "933164e2929be0223b9a918902795ade7f0a6dfa",
+    "previousSource": "a9240a7c81c47951e0029eb07cfccb6249f75bf3",
+    "containerId": "ebb2d6f5a31c9e3a4cf9ac679ba294606729ac2040f5375dffcca0b52e1ad810",
+    "imageId": "sha256:962f0b76f391ea17848721fe9191c4066f2764d80578f343583394158cd48e6e",
+    "observedAt": "2026-10-02T01:40:47.374937+00:00",
+    "ready": true,
+    "healthRevisionMatched": true,
+    "routes": {
+      "/api/v1/groups": [
+        "get",
+        "post"
+      ],
+      "/api/v1/groups/{group_id}": [
+        "put",
+        "delete"
+      ]
+    },
+    "onlyBackendReplaced": true,
+    "screenshotStorageConfigured": false,
+    "apkOtaTunnelsPreserved": true,
+    "browserVerified": false
+  },
+  "hierarchyLiveCanary": {
+    "startedAt": "2026-10-02T01:31:50.371514+00:00",
+    "url": "http://127.0.0.1:3015/api/v1",
+    "commandsAffectOnlyOwnedEmptyGroups": true,
+    "deviceCommandsSent": false,
+    "createdGroupIds": [
+      "edcb6367-afbe-48be-92e2-5b9d9f080ab8",
+      "64525788-f0db-421e-8c2c-7083157de219",
+      "a6cf4ef7-96c1-4cb6-9f0e-76c6d7b0b303"
+    ],
+    "createStatus": 201,
+    "updateStatus": 200,
+    "metadataConfirmedBySeparateGet": true,
+    "duplicateNameStatus": 409,
+    "filteredMembersStatus": 200,
+    "filteredEmptyTotal": 0,
+    "parentNullClearConfirmedBySeparateGet": true,
+    "parentNullClearStatus": 200,
+    "omittedParentPreserved": true,
+    "nullableMetadataCleared": true,
+    "descendantParentStatus": 400,
+    "rejectedCycleMetadataUnchanged": true,
+    "parentReassignmentConfirmed": true,
+    "parentDeleteStatus": 204,
+    "parentDeletePreservedChildAndLeaf": true,
+    "permission403LiveAccepted": false,
+    "cleanup": [
+      {
+        "groupId": "a6cf4ef7-96c1-4cb6-9f0e-76c6d7b0b303",
+        "status": 204
+      },
+      {
+        "groupId": "64525788-f0db-421e-8c2c-7083157de219",
+        "status": 204
+      }
+    ],
+    "observedAt": "2026-10-02T01:31:50.999574+00:00",
+    "existingGroupIdsPreserved": true,
+    "allDeviceMembershipsPreserved": true,
+    "deviceCatalogTotal": 19
+  },
+  "auditIdentityLiveReadback": {
+    "observedAt": "2026-10-02T01:42:02.520476+00:00",
+    "requestWindow": {
+      "from": "2026-10-02T01:41:10.918452+00:00",
+      "to": "2026-10-02T01:41:11.395146+00:00"
+    },
+    "auditEndpoint": "/api/v1/audit/logs",
+    "auditReadStatus": 200,
+    "auditRowsConfirmed": 3,
+    "rejectedHttpStatuses": [
+      400,
+      404,
+      409
+    ],
+    "correctAuthenticatedActor": true,
+    "correctFailureOutcomes": true,
+    "cleanup": [
+      {
+        "groupId": "92404279-054e-4e75-b35f-7791ec525d8d",
+        "status": 204
+      },
+      {
+        "groupId": "1dc7f03d-f864-43cd-8fef-2dc3d5474180",
+        "status": 204
+      }
+    ],
+    "deviceCommandsSent": false,
+    "firstReadProbeUsedUnsupportedRoute": true,
+    "firstReadProbeStatus": 404,
+    "correctedRouteAndDateAliases": true
+  },
+  "beforeFixLogSummary": {
+    "since": "2026-10-02T01:29:03Z",
+    "boundedTailLines": 2000,
+    "returnedLines": 174,
+    "structuredParsed": 134,
+    "levels": {
+      "warning": 28,
+      "info": 103,
+      "error": 3
+    },
+    "errorEvents": {
+      "audit_log_write_failed": 3
+    },
+    "scope": "backend finite post-installation window only"
+  },
+  "afterFixLogSummary": {
+    "since": "2026-10-02T01:40:47Z",
+    "observedAt": "2026-10-02T01:43:13.338625+00:00",
+    "tailLimit": 2000,
+    "returnedLines": 75,
+    "levels": {
+      "warning": 15,
+      "info": 46
+    },
+    "errorEvents": {}
+  },
+  "containerPreservation": {
+    "observedAt": "2026-10-02T01:43:13.117018+00:00",
+    "preexistingTotal": 46,
+    "intendedReplacements": [
+      "sphere-review-20261002-review-gateway-1",
+      "sphere-review-20261002-review-ui-1",
+      "sphere-pilot-20260911-backend-1"
+    ],
+    "preservedTotal": 43,
+    "preservedRunning": 13,
+    "idsImagesStartedAtRunningUnchanged": true
+  },
+  "previousCi": {
+    "source": "1767bec9d6d74ed52fbcc76df9e7a421c05e4c24",
+    "conclusion": "success",
+    "checks": [
+      {
+        "__typename": "CheckRun",
+        "completedAt": "2026-10-02T01:09:08Z",
+        "conclusion": "SUCCESS",
+        "detailsUrl": "https://github.com/RootOne1337/sphere-platform/actions/runs/36948503347/job/110655934121",
+        "name": "Android tests and signed release smoke build",
+        "startedAt": "2026-10-02T00:56:36Z",
+        "status": "COMPLETED",
+        "workflowName": "CI — Android"
+      },
+      {
+        "__typename": "CheckRun",
+        "completedAt": "2026-10-02T00:58:18Z",
+        "conclusion": "SUCCESS",
+        "detailsUrl": "https://github.com/RootOne1337/sphere-platform/actions/runs/36948503334/job/110655934821",
+        "name": "Production image bootstrap",
+        "startedAt": "2026-10-02T00:56:36Z",
+        "status": "COMPLETED",
+        "workflowName": "CI — Backend"
+      },
+      {
+        "__typename": "CheckRun",
+        "completedAt": "2026-10-02T00:58:23Z",
+        "conclusion": "SUCCESS",
+        "detailsUrl": "https://github.com/RootOne1337/sphere-platform/actions/runs/36948503393/job/110655934887",
+        "name": "Frontend tests, types and build",
+        "startedAt": "2026-10-02T00:56:36Z",
+        "status": "COMPLETED",
+        "workflowName": "CI — Frontend"
+      },
+      {
+        "__typename": "CheckRun",
+        "completedAt": "2026-10-02T00:56:38Z",
+        "conclusion": "SUCCESS",
+        "detailsUrl": "https://github.com/RootOne1337/sphere-platform/actions/runs/36948503337/job/110655934553",
+        "name": "guard",
+        "startedAt": "2026-10-02T00:56:36Z",
+        "status": "COMPLETED",
+        "workflowName": "Preview — Deploy"
+      },
+      {
+        "__typename": "CheckRun",
+        "completedAt": "2026-10-02T00:56:39Z",
+        "conclusion": "SKIPPED",
+        "detailsUrl": "https://github.com/RootOne1337/sphere-platform/actions/runs/36948503337/job/110655955666",
+        "name": "deploy",
+        "startedAt": "2026-10-02T00:56:39Z",
+        "status": "COMPLETED",
+        "workflowName": "Preview — Deploy"
+      },
+      {
+        "__typename": "CheckRun",
+        "completedAt": "2026-10-02T00:57:11Z",
+        "conclusion": "SUCCESS",
+        "detailsUrl": "https://github.com/RootOne1337/sphere-platform/actions/runs/36948503334/job/110655934763",
+        "name": "Lint (ruff + mypy)",
+        "startedAt": "2026-10-02T00:56:36Z",
+        "status": "COMPLETED",
+        "workflowName": "CI — Backend"
+      },
+      {
+        "__typename": "CheckRun",
+        "completedAt": "2026-10-02T00:57:09Z",
+        "conclusion": "SUCCESS",
+        "detailsUrl": "https://github.com/RootOne1337/sphere-platform/actions/runs/36948503334/job/110655934636",
+        "name": "Security (bandit + pip-audit)",
+        "startedAt": "2026-10-02T00:56:36Z",
+        "status": "COMPLETED",
+        "workflowName": "CI — Backend"
+      },
+      {
+        "__typename": "CheckRun",
+        "completedAt": "2026-10-02T00:56:44Z",
+        "conclusion": "SUCCESS",
+        "detailsUrl": "https://github.com/RootOne1337/sphere-platform/actions/runs/36948503334/job/110655934703",
+        "name": "RLS Policy Coverage",
+        "startedAt": "2026-10-02T00:56:36Z",
+        "status": "COMPLETED",
+        "workflowName": "CI — Backend"
+      },
+      {
+        "__typename": "CheckRun",
+        "completedAt": "2026-10-02T01:09:24Z",
+        "conclusion": "SUCCESS",
+        "detailsUrl": "https://github.com/RootOne1337/sphere-platform/actions/runs/36948503334/job/110655934513",
+        "name": "Tests",
+        "startedAt": "2026-10-02T00:56:36Z",
+        "status": "COMPLETED",
+        "workflowName": "CI — Backend"
+      },
+      {
+        "__typename": "CheckRun",
+        "completedAt": "2026-10-02T01:10:18Z",
+        "conclusion": "SUCCESS",
+        "detailsUrl": "https://github.com/RootOne1337/sphere-platform/actions/runs/36948503334/job/110659249434",
+        "name": "Alembic Single Head",
+        "startedAt": "2026-10-02T01:09:27Z",
+        "status": "COMPLETED",
+        "workflowName": "CI — Backend"
+      }
+    ]
+  },
+  "limits": [
+    "OPEN_URL_POLICY_BLOCKED: no fresh Sphere browser visual acceptance",
+    "No global/public frontend deployment, APK, OTA or tunnel change",
+    "No full live permission matrix, no 20-30 Android fleet trial",
+    "Advisory fence protects GroupService writes; no direct SQL or optimistic revision guarantee",
+    "Audit background writer remains best effort; durable outbox is open",
+    "Live audit first read probe used unsupported route; corrected read used the same already-issued requests without repeating writes",
+    "Local old-dependency OpenAPI check differed; actual production image exporter matched committed generated schema"
+  ],
+  "documentValidation": {
+    "relativeTargetsChecked": 524,
+    "findingAnchorsChecked": 41,
+    "missing": 0
+  }
+}

@@ -87,7 +87,7 @@ describe('useEventTriggers', () => {
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
     expect(result.current.data?.items).toHaveLength(2);
     expect(result.current.data?.total).toBe(2);
-    expect(mockApi.get).toHaveBeenCalledWith('/event-triggers', { params: {} });
+    expect(mockApi.get).toHaveBeenCalledWith('/event-triggers', { params: {}, signal: expect.any(AbortSignal) });
   });
 
   it('передаёт фильтры в query params', async () => {
@@ -100,6 +100,7 @@ describe('useEventTriggers', () => {
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
     expect(mockApi.get).toHaveBeenCalledWith('/event-triggers', {
       params: { is_active: true, per_page: 50 },
+      signal: expect.any(AbortSignal),
     });
   });
 

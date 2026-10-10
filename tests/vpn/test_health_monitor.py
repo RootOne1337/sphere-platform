@@ -128,7 +128,7 @@ class TestVPNHealthMonitor:
         assert cmd["reason"] == "stale_handshake"
 
     @pytest.mark.asyncio
-    async def test_missing_peer_triggers_readd_to_wg_server(
+    async def test_missing_handshake_does_not_readd_peer_to_wg_server(
         self, db_session, pool_service, test_org, test_device, pool_redis
     ):
         await pool_service.ip_pool.initialize_pool(str(test_org.id), count=5)
@@ -140,10 +140,10 @@ class TestVPNHealthMonitor:
         await monitor.close()
 
         assert stats["missing"] == 1
-        pool_service._add_peer_to_server.assert_called_once()
+        monitor._http.post.assert_not_awaited()
 
     @pytest.mark.asyncio
-    async def test_handshake_fetch_failure_returns_empty(
+    async def test_handshake_fetch_failure_returns_unknown(
         self, db_session, pool_service, test_org
     ):
         monitor = _make_monitor(db_session, pool_service)
@@ -151,7 +151,7 @@ class TestVPNHealthMonitor:
         times = await monitor._get_handshake_times()
         await monitor.close()
 
-        assert times == {}
+        assert times is None
 
     @pytest.mark.asyncio
     async def test_close_calls_http_aclose(

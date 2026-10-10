@@ -11,6 +11,7 @@ import {
   useVpnHealth,
   useAssignVpn,
   useRevokeVpn,
+  useBulkRevokeVpn,
   useVpnRotate,
   useVpnKillSwitch,
 } from '@/lib/hooks/useVpn';
@@ -30,18 +31,22 @@ const MOCK_PEERS = [
   {
     id: 'vpn-001',
     device_id: 'dev-001',
-    device_name: 'Pixel 7',
     assigned_ip: '10.8.0.2',
-    status: 'active' as const,
-    last_handshake: '2026-03-04T10:00:00Z',
+    status: 'assigned' as const,
+    is_active: true,
+    last_handshake_at: '2026-03-04T10:00:00Z',
+    public_key: 'peer-key-001',
+    created_at: '2026-03-04T09:00:00Z',
   },
   {
     id: 'vpn-002',
     device_id: 'dev-002',
-    device_name: 'Samsung S24',
     assigned_ip: '10.8.0.3',
-    status: 'inactive' as const,
-    last_handshake: null,
+    status: 'provisioning' as const,
+    is_active: false,
+    last_handshake_at: null,
+    public_key: 'peer-key-002',
+    created_at: '2026-03-04T09:01:00Z',
   },
 ];
 
@@ -65,6 +70,14 @@ const MOCK_HEALTH = {
 describe('useVpnPeers', () => {
   beforeEach(() => jest.clearAllMocks());
 
+  it('rejects duplicate peers instead of enabling operations from an ambiguous snapshot', async () => {
+    mockApi.get.mockResolvedValueOnce({ data: [MOCK_PEERS[0], MOCK_PEERS[0]] });
+    const { result } = renderQueryHook(() => useVpnPeers());
+    await waitFor(() => expect(result.current.isError).toBe(true));
+    expect(result.current.data).toBeUndefined();
+    expect(mockApi.get).toHaveBeenCalledTimes(1);
+  });
+
   it('загружает список VPN-пиров', async () => {
     mockApi.get.mockResolvedValueOnce({ data: MOCK_PEERS });
 
@@ -78,11 +91,11 @@ describe('useVpnPeers', () => {
   it('передаёт фильтры в параметры запроса', async () => {
     mockApi.get.mockResolvedValueOnce({ data: [MOCK_PEERS[0]] });
 
-    renderQueryHook(() => useVpnPeers({ status: 'active', device_id: 'dev-001' }));
+    renderQueryHook(() => useVpnPeers({ status: 'assigned', device_id: 'dev-001' }));
 
     await waitFor(() => expect(mockApi.get).toHaveBeenCalled());
     expect(mockApi.get).toHaveBeenCalledWith('/vpn/peers', {
-      params: { status: 'active', device_id: 'dev-001' },
+      params: { status: 'assigned', device_id: 'dev-001' },
     });
   });
 });
@@ -159,6 +172,33 @@ describe('useRevokeVpn', () => {
   });
 });
 
+describe('useBulkRevokeVpn', () => {
+  beforeEach(() => jest.clearAllMocks());
+
+  it('revokes selected VPN peers through the supported bulk API', async () => {
+    mockApi.post.mockResolvedValueOnce({
+      data: {
+        total: 2,
+        succeeded: 1,
+        failed: 1,
+        results: [
+          { device_id: 'dev-001', success: true, error: null },
+          { device_id: 'dev-002', success: false, error: 'VPN operation unavailable' },
+        ],
+      },
+    });
+
+    const { result } = renderQueryHook(() => useBulkRevokeVpn());
+    result.current.mutate(['dev-001', 'dev-002']);
+
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+    expect(mockApi.post).toHaveBeenCalledWith('/vpn/revoke/bulk', {
+      device_ids: ['dev-001', 'dev-002'],
+    });
+    expect(result.current.data?.failed).toBe(1);
+  });
+});
+
 describe('useVpnRotate', () => {
   beforeEach(() => jest.clearAllMocks());
 
@@ -189,7 +229,7 @@ describe('useVpnKillSwitch', () => {
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
     expect(mockApi.post).toHaveBeenCalledWith('/vpn/killswitch', {
       device_ids: ['dev-001', 'dev-002'],
-      enabled: true,
+      action: 'enable',
     });
   });
 
@@ -203,7 +243,7 @@ describe('useVpnKillSwitch', () => {
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
     expect(mockApi.post).toHaveBeenCalledWith('/vpn/killswitch', {
       device_ids: ['dev-001'],
-      enabled: false,
+      action: 'disable',
     });
   });
 });

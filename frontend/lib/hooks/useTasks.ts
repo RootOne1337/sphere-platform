@@ -12,6 +12,8 @@ export interface Task {
   priority: number;
   started_at: string | null;
   finished_at: string | null;
+  cancel_requested_at?: string | null;
+  timeout_requested_at?: string | null;
   wave_index: number | null;
   created_at: string;
   updated_at: string;
@@ -38,12 +40,13 @@ export interface NodeExecutionLog {
   output: unknown;
 }
 
-interface TasksResponse {
+export interface TasksResponse {
   items: Task[];
   total: number;
   page: number;
   per_page: number;
   pages: number;
+  status_counts?: Record<string, number> | null;
 }
 
 export function useTasks(params: {
@@ -53,6 +56,11 @@ export function useTasks(params: {
   device_id?: string;
   script_id?: string;
   batch_id?: string;
+  search?: string;
+  sort_by?: 'created_at' | 'script_name' | 'status' | 'priority';
+  sort_dir?: 'asc' | 'desc';
+  active_only?: boolean;
+  include_counts?: boolean;
 }) {
   return useQuery<TasksResponse>({
     queryKey: ['tasks', params],
@@ -64,26 +72,28 @@ export function useTasks(params: {
   });
 }
 
-export function useTask(taskId: string) {
+export function useTask(taskId: string, enabled = true) {
   return useQuery<TaskDetail>({
     queryKey: ['tasks', taskId],
-    queryFn: async () => {
-      const { data } = await api.get(`/tasks/${taskId}`);
+    queryFn: async ({ signal }) => {
+      const { data } = await api.get(`/tasks/${taskId}`, { signal });
+      if (!data || data.id !== taskId) throw new Error('Ответ API относится к другому заданию');
       return data;
     },
-    enabled: !!taskId,
+    enabled: enabled && !!taskId,
     refetchInterval: 5_000,
   });
 }
 
-export function useTaskLogs(taskId: string) {
+export function useTaskLogs(taskId: string, enabled = true) {
   return useQuery<NodeExecutionLog[]>({
     queryKey: ['tasks', taskId, 'logs'],
-    queryFn: async () => {
-      const { data } = await api.get(`/tasks/${taskId}/logs`);
+    queryFn: async ({ signal }) => {
+      const { data } = await api.get(`/tasks/${taskId}/logs`, { signal });
+      if (!Array.isArray(data)) throw new Error('Некорректный ответ журнала задания');
       return data;
     },
-    enabled: !!taskId,
+    enabled: enabled && !!taskId,
     refetchInterval: 5_000,
   });
 }
@@ -97,11 +107,35 @@ export interface TaskProgress {
   started_at: number | null;
 }
 
+export interface TaskScreenshotReference {
+  key: string;
+  url: string | null;
+  unavailable_reason: string | null;
+}
+
+export function useTaskScreenshots(taskId: string, enabled: boolean) {
+  return useQuery<{ task_id: string; screenshots: TaskScreenshotReference[] }>({
+    queryKey: ['tasks', taskId, 'screenshots'], enabled: enabled && !!taskId, retry: false,
+    queryFn: async ({ signal }) => {
+      const { data } = await api.get(`/tasks/${taskId}/screenshots`, { signal });
+      if (!data || data.task_id !== taskId || !Array.isArray(data.screenshots)) throw new Error('Некорректный манифест снимков задания');
+      for (const entry of data.screenshots) {
+        if (!entry || typeof entry.key !== 'string'
+          || !(entry.url === null || entry.url === `/tasks/${taskId}/screenshots/content?key=${encodeURIComponent(entry.key)}`)
+          || !(entry.unavailable_reason === null || typeof entry.unavailable_reason === 'string')) {
+          throw new Error('Некорректная ссылка на снимок задания');
+        }
+      }
+      return data;
+    },
+  });
+}
+
 export function useTaskProgress(taskId: string, enabled: boolean) {
   return useQuery<TaskProgress>({
     queryKey: ['tasks', taskId, 'progress'],
-    queryFn: async () => {
-      const { data } = await api.get(`/tasks/${taskId}/progress`);
+    queryFn: async ({ signal }) => {
+      const { data } = await api.get(`/tasks/${taskId}/progress`, { signal });
       return data;
     },
     enabled: enabled && !!taskId,
@@ -118,8 +152,8 @@ export interface LiveLogEntry {
 export function useTaskLiveLogs(taskId: string, enabled: boolean) {
   return useQuery<LiveLogEntry[]>({
     queryKey: ['tasks', taskId, 'live-logs'],
-    queryFn: async () => {
-      const { data } = await api.get(`/tasks/${taskId}/live-logs`);
+    queryFn: async ({ signal }) => {
+      const { data } = await api.get(`/tasks/${taskId}/live-logs`, { signal });
       return data;
     },
     enabled: enabled && !!taskId,
@@ -132,6 +166,7 @@ export function useCreateTask() {
   return useMutation({
     mutationFn: async (body: {
       script_id: string;
+      expected_current_version_id?: string;
       device_id: string;
       priority?: number;
     }) => {
@@ -163,19 +198,13 @@ export function useStopTask() {
   });
 }
 
-/**
- * Повторный запуск задачи — создаёт новый таск с теми же параметрами.
- * Принимает оригинальную задачу, извлекает script_id, device_id, priority.
- */
+/** The server owns the original pinned version, inputs and execution checks. */
 export function useRetryTask() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (original: Pick<Task, 'script_id' | 'device_id' | 'priority'>) => {
-      const { data } = await api.post('/tasks', {
-        script_id: original.script_id,
-        device_id: original.device_id,
-        priority: original.priority,
-      });
+    retry: false,
+    mutationFn: async (taskId: string) => {
+      const { data } = await api.post(`/tasks/${taskId}/rerun`);
       return data;
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ['tasks'] }),

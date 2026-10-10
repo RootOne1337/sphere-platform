@@ -1,0 +1,121 @@
+{
+  "observedAt": "2026-10-05T19:46:24.297677+00:00",
+  "containerStartedAt": "2026-10-05T19:41:15.304018701Z",
+  "logDirectory": "/tmp/sphere_device_logs",
+  "configuredViaEnvironment": false,
+  "coveringMounts": [],
+  "tmpfs": [
+    "/tmp/sphere-metrics"
+  ],
+  "catalog": {
+    "exists": true,
+    "deviceDirectories": 7,
+    "filesChecked": 7,
+    "bytes": 454385,
+    "catalogBound": 128,
+    "catalogTruncated": false
+  },
+  "logsWindow": {
+    "since": "2026-10-05T19:41:00Z",
+    "tailLimit": 1500,
+    "bytesCaptured": 78755,
+    "eventCounts": {
+      "startup_check (non-production): SECURITY: DB role 'sphere' has SUPERUSER or BYPASSRLS; use a separate non-owner runtime role with tenant policies.": 4,
+      "startup": 56,
+      "PubSub router started": 4,
+      "pipeline_executor.registered": 4,
+      "scheduler_engine.registered": 4,
+      "task_dispatcher.registered": 4,
+      "EventsManager PubSub listener started": 4,
+      "pool_metrics.started": 4,
+      "pipeline_executor.started": 4,
+      "scheduler_engine.started": 4,
+      "task_dispatcher.started": 4,
+      "enrollment_bootstrap_ready": 4,
+      "orchestration_engine.registered": 4,
+      "device_status_sync.started": 4,
+      "task_heartbeat_watchdog.registered": 4,
+      "orchestration_engine.started": 4,
+      "task_heartbeat_watchdog.started": 4,
+      "android_ws: auth passed": 22,
+      "Agent connected": 22,
+      "android_ws: stream resumed for reconnected agent": 22,
+      "android_ws.ota_recovery_receipt_unrecognized": 33,
+      "Agent heartbeat established": 22,
+      "android_ws.previous_failure": 22,
+      "send_to_device: \u0434\u043e\u0441\u0442\u0430\u0432\u043b\u0435\u043d\u043e": 22,
+      "Evicting old connection": 3,
+      "android_ws.disconnected": 8,
+      "Agent disconnected": 5,
+      "send_to_device: \u0443\u0441\u0442\u0440\u043e\u0439\u0441\u0442\u0432\u043e \u043d\u0435 \u043f\u043e\u0434\u043a\u043b\u044e\u0447\u0435\u043d\u043e": 1
+    },
+    "warningsErrors": {
+      "android_ws.ota_recovery_receipt_unrecognized": 33,
+      "send_to_device: \u0443\u0441\u0442\u0440\u043e\u0439\u0441\u0442\u0432\u043e \u043d\u0435 \u043f\u043e\u0434\u043a\u043b\u044e\u0447\u0435\u043d\u043e": 1
+    },
+    "disconnections": [
+      {
+        "timestamp": "2026-10-05T19:41:51.094101Z",
+        "level": "info",
+        "close_code": 4009
+      },
+      {
+        "timestamp": "2026-10-05T19:41:58.693997Z",
+        "level": "info",
+        "close_code": 1005
+      },
+      {
+        "timestamp": "2026-10-05T19:41:58.694413Z",
+        "level": "info",
+        "close_code": 1005
+      },
+      {
+        "timestamp": "2026-10-05T19:41:58.694613Z",
+        "level": "info"
+      },
+      {
+        "timestamp": "2026-10-05T19:41:58.694810Z",
+        "level": "info"
+      },
+      {
+        "timestamp": "2026-10-05T19:41:58.695691Z",
+        "level": "info",
+        "close_code": 1005
+      },
+      {
+        "timestamp": "2026-10-05T19:41:58.695825Z",
+        "level": "info"
+      },
+      {
+        "timestamp": "2026-10-05T19:41:58.698069Z",
+        "level": "info",
+        "close_code": 1005
+      },
+      {
+        "timestamp": "2026-10-05T19:41:58.699008Z",
+        "level": "info"
+      },
+      {
+        "timestamp": "2026-10-05T19:42:01.397485Z",
+        "level": "info",
+        "close_code": 4009
+      },
+      {
+        "timestamp": "2026-10-05T19:42:12.516719Z",
+        "level": "info",
+        "close_code": 4009
+      },
+      {
+        "timestamp": "2026-10-05T19:42:19.158153Z",
+        "level": "info",
+        "close_code": 1005
+      },
+      {
+        "timestamp": "2026-10-05T19:42:19.158416Z",
+        "level": "info"
+      }
+    ],
+    "timeouts": []
+  },
+  "causeAttributed": false
+}

@@ -1,0 +1,346 @@
+{
+  "schemaVersion": 1,
+  "observedAtUtc": "2026-10-10T11:38:03.299052+00:00",
+  "runtimeInstalled": true,
+  "scope": "Exact-source UI/API delivery and finite rendering/admission. Native video APK is built but not installed; no RTP video/input or latency acceptance.",
+  "runtime": {
+    "sourceRevision": "ee0d8e6f7630dcaa3518a3fcf9bfcb35d67b7498",
+    "apiSourceRevision": "ee0d8e6f7630dcaa3518a3fcf9bfcb35d67b7498",
+    "uiContainer": {
+      "id": "9be2719df1c744d7bb8c77899567611dca17127e229e985df471efb064b9638f",
+      "imageId": "sha256:bac99541be23596fde8576715659ebb6915e1db2b4dd6128db63f9204bfdcec2",
+      "imageTag": "sphere-review-frontend:ee0d8e6f7630dcaa3518a3fcf9bfcb35d67b7498",
+      "startedAt": "2026-10-10T11:25:36.726808924Z",
+      "status": "running"
+    },
+    "apiContainer": {
+      "id": "9ac4348d591e0aedab2496e29ac258516217e3a0a04ce0af99735dba969ded49",
+      "imageId": "sha256:abacfdd57f0e83df87926a9e8427f2843d45c0cce4840fdfcbb6ab344472a25f",
+      "imageTag": "sphere-reviewed-backend:ee0d8e6f7630dcaa3518a3fcf9bfcb35d67b7498",
+      "startedAt": "2026-10-10T11:28:04.146588572Z",
+      "status": "running"
+    },
+    "otherContainersPreservedPerInstall": 45,
+    "schemaMigrationPerformed": false,
+    "schemaHeads": [
+      "20261006_script_catalog_metadata"
+    ],
+    "otaCatalogSha256": "26cebb0b97bcc405e75c30dd1816b7290391563f9addd2933c7e0820c387727a",
+    "publicHostMapChanged": false,
+    "apkChangedDuringWebApiInstall": false,
+    "directMediaControlInstalled": false
+  },
+  "delivery": {
+    "web": {
+      "sourceRevision": "ee0d8e6f7630dcaa3518a3fcf9bfcb35d67b7498",
+      "runId": 38047617608,
+      "imageId": "sha256:b0ae82179516e2752edfc72d309a34a1dbb31bcbdd17545575097bdac9830f9c",
+      "archiveBytes": 120896344,
+      "previousUi": {
+        "id": "416c9520f2beb2952fc2d11db16b1c94eea81563c714775b758169618b72e621",
+        "imageId": "sha256:6d4fe2264e3334d22dbb9600ad9236b5b653bcd5e92446bf6dccd714c9312322",
+        "imageTag": "sphere-review-frontend:c17332ebe39e2288a0db055a35d3f3c5d1ab8258",
+        "startedAt": "2026-10-10T06:31:13.114693668Z",
+        "status": "running"
+      },
+      "containerCount": 46,
+      "observedAtUtc": "2026-10-10T11:25:05.805273+00:00",
+      "resourceFindings": [],
+      "applyRequested": true,
+      "onlyUiImageAndBuildRemovalDelta": true,
+      "backendPreserved": true,
+      "previousComposeFileCount": 2,
+      "candidateComposeFileCount": 2,
+      "completeBaselineRoundtripVerified": true,
+      "otaCatalogSha256": "26cebb0b97bcc405e75c30dd1816b7290391563f9addd2933c7e0820c387727a",
+      "reportDirectory": "C:\\Users\\dimas\\Documents\\ChatGPT\\sphere-platform\\.local-pilot\\reviewed-web-install-ee0d8e6f7630-69dfb3d4",
+      "runtimeInstalled": true,
+      "loadedImageId": "sha256:bac99541be23596fde8576715659ebb6915e1db2b4dd6128db63f9204bfdcec2",
+      "installedUi": {
+        "id": "9be2719df1c744d7bb8c77899567611dca17127e229e985df471efb064b9638f",
+        "imageId": "sha256:bac99541be23596fde8576715659ebb6915e1db2b4dd6128db63f9204bfdcec2",
+        "imageTag": "sphere-review-frontend:ee0d8e6f7630dcaa3518a3fcf9bfcb35d67b7498",
+        "startedAt": "2026-10-10T11:25:36.726808924Z",
+        "status": "running"
+      },
+      "otherContainersPreserved": 45,
+      "browserVerified": false
+    },
+    "backend": {
+      "sourceRevision": "ee0d8e6f7630dcaa3518a3fcf9bfcb35d67b7498",
+      "runId": 38047617620,
+      "imageId": "sha256:18614ec9ad067ec376d60cd66ed47b87d8af53fc75dc33221bd2ae23db049355",
+      "archiveBytes": 236271536,
+      "previousBackend": {
+        "id": "22f0c10d9ca8b7afcca71459429a685ab031d54588631c536563f08c9279c87a",
+        "imageId": "sha256:e4f002ec897c083a0e614f38228189d929d62ed7978e9583483b79dbace33d1b",
+        "imageTag": "sphere-reviewed-backend:c17332ebe39e2288a0db055a35d3f3c5d1ab8258",
+        "startedAt": "2026-10-10T06:29:33.031457084Z",
+        "status": "running"
+      },
+      "sourceChanges": [
+        "backend/api/v1/direct_probe/router.py",
+        "backend/api/ws/direct/router.py",
+        "backend/core/config.py",
+        "backend/websocket/direct_probe_protocol.py",
+        "backend/websocket/direct_probe_runtime.py"
+      ],
+      "schemaHeads": [
+        "20261006_script_catalog_metadata"
+      ],
+      "schemaMigrationPerformed": false,
+      "resourceFindings": [],
+      "observedAtUtc": "2026-10-10T11:27:19.665162+00:00",
+      "applyRequested": true,
+      "previousComposeFileCount": 2,
+      "candidateComposeFileCount": 2,
+      "completeBaselineRoundtripVerified": true,
+      "directProbeDevice": "753fd530-2f19-4e5e-98ba-769863678141",
+      "directProbeMediaControlEnabled": false,
+      "directProbeReadOnlyVideoEnabled": true,
+      "directProbeExplicitlyDisabled": false,
+      "otaCatalogSha256": "26cebb0b97bcc405e75c30dd1816b7290391563f9addd2933c7e0820c387727a",
+      "reportDirectory": "C:\\Users\\dimas\\Documents\\ChatGPT\\sphere-platform\\.local-pilot\\reviewed-backend-install-ee0d8e6f7630-218e2907",
+      "runtimeInstalled": true,
+      "loadedImageId": "sha256:abacfdd57f0e83df87926a9e8427f2843d45c0cce4840fdfcbb6ab344472a25f",
+      "installedBackend": {
+        "id": "9ac4348d591e0aedab2496e29ac258516217e3a0a04ce0af99735dba969ded49",
+        "imageId": "sha256:abacfdd57f0e83df87926a9e8427f2843d45c0cce4840fdfcbb6ab344472a25f",
+        "imageTag": "sphere-reviewed-backend:ee0d8e6f7630dcaa3518a3fcf9bfcb35d67b7498",
+        "startedAt": "2026-10-10T11:28:04.146588572Z",
+        "status": "running"
+      },
+      "otherContainersPreserved": 45,
+      "liveContractVerified": false,
+      "agentReconnectVerified": false
+    }
+  },
+  "http": {
+    "observedAtUtc": "2026-10-10T11:38:03.175825+00:00",
+    "observations": [
+      {
+        "origin": "http://127.0.0.1:3015",
+        "observedAtUtc": "2026-10-10T11:38:00.995519+00:00",
+        "apiSourceRevision": "ee0d8e6f7630dcaa3518a3fcf9bfcb35d67b7498",
+        "readiness": {
+          "postgres": "ok",
+          "redis": "ok"
+        },
+        "anonymousStatus": 401,
+        "cacheControl": "private, no-store",
+        "admission": {
+          "schema_version": 1,
+          "device_id": "753fd530-2f19-4e5e-98ba-769863678141",
+          "enabled": true,
+          "profiles": [
+            "host",
+            "public-stun"
+          ],
+          "scope": "diagnostic_echo_only",
+          "max_duration_ms": 30000,
+          "samples": 20,
+          "readonly_video_enabled": false
+        },
+        "nonAllowlistedDevice": {
+          "id": "414ce0e9-4b93-4f96-b9ca-ee675f53835e",
+          "name": "auto-ph-011",
+          "enabled": false,
+          "readonly_video_enabled": false
+        },
+        "device": {
+          "id": "753fd530-2f19-4e5e-98ba-769863678141",
+          "name": "auto-ph-030",
+          "status": "offline",
+          "agent_version": "1.2.50-dev",
+          "agent_version_code": 10250,
+          "last_heartbeat": "2026-10-10T11:16:59.187370Z"
+        }
+      },
+      {
+        "origin": "https://sphere-agent-canary-20260927.ru.tuna.am",
+        "observedAtUtc": "2026-10-10T11:38:03.175648+00:00",
+        "apiSourceRevision": "ee0d8e6f7630dcaa3518a3fcf9bfcb35d67b7498",
+        "readiness": {
+          "postgres": "ok",
+          "redis": "ok"
+        },
+        "anonymousStatus": 401,
+        "cacheControl": "private, no-store",
+        "admission": {
+          "schema_version": 1,
+          "device_id": "753fd530-2f19-4e5e-98ba-769863678141",
+          "enabled": true,
+          "profiles": [
+            "host",
+            "public-stun"
+          ],
+          "scope": "diagnostic_echo_only",
+          "max_duration_ms": 30000,
+          "samples": 20,
+          "readonly_video_enabled": false
+        },
+        "nonAllowlistedDevice": {
+          "id": "414ce0e9-4b93-4f96-b9ca-ee675f53835e",
+          "name": "auto-ph-011",
+          "enabled": false,
+          "readonly_video_enabled": false
+        },
+        "device": {
+          "id": "753fd530-2f19-4e5e-98ba-769863678141",
+          "name": "auto-ph-030",
+          "status": "offline",
+          "agent_version": "1.2.50-dev",
+          "agent_version_code": 10250,
+          "last_heartbeat": "2026-10-10T11:16:59.187370Z"
+        }
+      }
+    ],
+    "runtimeChanged": false,
+    "peerAllocated": false,
+    "androidCommandSent": false
+  },
+  "browser": {
+    "finiteAccepted": true,
+    "scope": "Public desktop/mobile echo-only admission rendering; local device-card build identity; finite ordinary PH011 WebSocket video. New video renderer is not exposed on offline old APK and was not live-tested.",
+    "publicDesktop": {
+      "documentWidth": 1280,
+      "observedAtUtc": "2026-10-10T11:31:21.513Z",
+      "panel": "Прямой канал · экспериментальная проверкаДо 20 замеров между браузером и APK за 30 секунд. Видео и касания пока используют текущий транспорт. Проверка использует публичный STUN Cloudflare; TURN не подключён.Проверить прямой канал",
+      "sourceBadge": "Build revisions. Frontend ee0d8e6f; backend ee0d8e6f",
+      "videoModeVisible": false,
+      "viewport": 1280
+    },
+    "publicMobile": {
+      "activeButton": "Проверить прямой канал",
+      "documentWidth": 390,
+      "observedAtUtc": "2026-10-10T11:31:40.801Z",
+      "sourceBadge": "Build revisions. Frontend ee0d8e6f; backend ee0d8e6f",
+      "videoModeVisible": false,
+      "viewport": 390
+    },
+    "localCard": {
+      "device": "auto-ph-030",
+      "documentWidth": 1280,
+      "installedVersion": true,
+      "observedAtUtc": "2026-10-10T11:33:27.131Z",
+      "offline": true,
+      "sourceBadge": "Build revisions. Frontend ee0d8e6f; backend ee0d8e6f",
+      "viewport": 1280
+    },
+    "ordinaryViewer": {
+      "androidInputSent": false,
+      "canvas": [
+        {
+          "height": 540,
+          "width": 960
+        }
+      ],
+      "deviceId": "414ce0e9-4b93-4f96-b9ca-ee675f53835e",
+      "diagnostics": "Сквозная диагностика кадраЗакрыть диагностикуУправление Android: closedВидео и управление идут через сервер (WebSocket). Прямое соединение с APK ещё не подключено.Автоматическое восстановление управления: 0 попыток с задержкой до 15 секунд. Касания и команды не повторяются.Отчёт APK: not_streamingПоследний Android heartbeat: 27 сек назадНет свежего отчёта активного захвата от APK.Браузерный viewer: 9 пакетов · 47005 байтВходной видео FPS (1 с): 0Отрисовка FPS (1 с): 0Последний пакет: 9 сек назадПоследний canvas frame: 9 сек назадNAL SPS/PPS: 1/1IDR/delta: 1/6Decode submitted: 7Decoded output: 7Drawn to canvas: 7Invalid packets: 0Decode/render errors: 0/0WebCodecs queue: 0Pending outputs: 0Queue recoveries: 0Stale output drops: 0Dropped before SPS/PPS: 0Принятие кадра локальной очередью APK не подтверждает получение сервером. Сейчас серверный receipt каждого кадра и браузерный декодер не связаны общим frame ID; сравнивайте Android counters с viewer counters.",
+      "directPeerStarted": false,
+      "observedAtUtc": "2026-10-10T11:34:07.718Z",
+      "sourceBadge": "Build revisions. Frontend ee0d8e6f; backend ee0d8e6f",
+      "transport": "server_websocket",
+      "viewOnly": true
+    },
+    "viewportRestored": true,
+    "streamsClosed": true,
+    "channelStarted": false,
+    "directVideoAccepted": false,
+    "directInputAccepted": false,
+    "screenshots": {
+      "public-desktop": {
+        "path": "docs/audits/2026-10-10/assets/direct-video/public-desktop.jpg",
+        "sha256": "f157aeef8f47e4529466ca08078e73d901d45e266b65b17a5ec37adc20177584"
+      },
+      "public-mobile": {
+        "path": "docs/audits/2026-10-10/assets/direct-video/public-mobile.jpg",
+        "sha256": "51a19718d492ee8662caec137223d46b0d7b45ce71f0314b2b624b220152817d"
+      },
+      "local-card": {
+        "path": "docs/audits/2026-10-10/assets/direct-video/local-card.jpg",
+        "sha256": "33af7cd76858c8c12a88aa95b7e79c0394d640338e8b5a66b57a304d77033921"
+      },
+      "legacy-viewer": {
+        "path": "docs/audits/2026-10-10/assets/direct-video/legacy-viewer.jpg",
+        "sha256": "96bf41e99378a818c105884c805904d6553b5b2158cc4d64162fe924160173b9"
+      }
+    }
+  },
+  "diagnosticPilot": {
+    "enabled": true,
+    "deviceIds": [
+      "753fd530-2f19-4e5e-98ba-769863678141"
+    ],
+    "scope": "diagnostic_echo_only",
+    "readOnlyVideoServerFlagEnabled": true,
+    "readOnlyVideoInstalled": false,
+    "directInputInstalled": false,
+    "mediaControlInstalled": false,
+    "videoAccepted": false,
+    "readOnlyVideoAdmission": false,
+    "nativePendingReason": "PH030 offline with 10250; 10251 and fresh native session required.",
+    "maxDurationMs": 30000,
+    "samples": 20,
+    "turnConfigured": false
+  },
+  "apkCandidate": {
+    "source_commit": "ee0d8e6f7630dcaa3518a3fcf9bfcb35d67b7498",
+    "file": "SphereAgent-direct-video-canary-1.2.51-dev-ee0d8e6.apk",
+    "sha256": "4f3687e753fafda058f0f8d123904cceb56f6f6932bda08e4a1feb4f6dc1984c",
+    "bytes": 57671668,
+    "package": "com.sphereplatform.agent.pilot.debug",
+    "version_name": "1.2.51-dev",
+    "version_code": 10251,
+    "certificate_sha256": "3ab40797d26e4f52f9e440afc6fe69f197caef71a5a27c63c86735bb1801871f",
+    "signer_matches_local_pilot_baseline": true,
+    "tests": {
+      "dev": {
+        "tests": 1013,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 3
+      },
+      "enterprise": {
+        "tests": 1013,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 3
+      }
+    },
+    "direct_probe_canary_enabled": true,
+    "direct_readonly_video_canary_enabled": true,
+    "direct_android_input_enabled": false,
+    "installed": false,
+    "published_to_ota": false,
+    "built_at": "2026-10-10T11:18:25.560904+00:00"
+  },
+  "validation": {
+    "backendCiRun": 38047617620,
+    "frontendCiRun": 38047617608,
+    "backendCiConclusion": "success",
+    "frontendCiConclusion": "success",
+    "backendTests": 3505,
+    "backendSubtests": 262,
+    "backendSkipped": 37,
+    "frontendTests": 2124,
+    "frontendSuites": 147,
+    "signedAndroidLocalBuild": "dev and enterprise lint, test, assemble passed; actual JNI/RTP delivery not accepted",
+    "androidCiRun": 38047617593,
+    "androidCiConclusion": "success",
+    "previewCiRun": 38047617598,
+    "previewCiConclusion": "success"
+  },
+  "unchangedAcceptance": {
+    "productAccepted": 9,
+    "productOpen": 41,
+    "legacyOpen": 7,
+    "stable130": false,
+    "localhostRouteProven": false,
+    "endToEndVideoLatencyMeasured": false
+  },
+  "precedingEvidence": [
+    "docs/audits/2026-10-10/DIRECT-ADMISSION-INSTALLED.json",
+    "docs/audits/2026-10-10/PH030-LAPTOP-CHANNEL-USER-OBSERVATION.json"
+  ]
+}

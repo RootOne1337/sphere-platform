@@ -1,0 +1,32 @@
+{
+  "finding": "AUD-121",
+  "at": "2026-09-19T21:51:18.610518+00:00",
+  "source_base": "75d1bae",
+  "before": {
+    "tests": 16,
+    "failures": 6,
+    "errors": 0,
+    "skipped": 0,
+    "sha256": "4d87051b81c7055445fdbb378d06f7d17aa8f102797a7bac45b493136f4a7208"
+  },
+  "after": {
+    "tests": 52,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "sha256": "5a5accd0bd862c4f029935ce1cb2588291ae6681c7ed9f9ae29db5b63a9668cd"
+  },
+  "native_before": {
+    "start": "2026-09-19T21:49:40.324821+00:00",
+    "end": "2026-09-19T21:49:44.728618+00:00",
+    "backend_source": "03b161e5faffda0a28d82eb2db94064e73b5360f",
+    "commands": 12,
+    "shell": 6,
+    "logcat": 6,
+    "missing_task_warnings": 12,
+    "log_sha256": "022cd41531f1233e029791e9ccc8b04e4b460db808bbb0f6d6a8e3b4864aea32",
+    "scope": "Two owned APKs. No reboot, settings change, games or automation task created."
+  },
+  "scope": "Isolated PostgreSQL/Redis regressions; native before on two owned APKs. Installed fix acceptance separate.",
+  "local_mypy": "Blocked by existing inferred-payload type error; archived baseline router produces the same error. Full Windows local check also reports pre-existing environment/type errors. Source GitHub checks tracked separately."
+}

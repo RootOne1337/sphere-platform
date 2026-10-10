@@ -1,8 +1,9 @@
 import { Handle, Position, type NodeProps } from '@xyflow/react';
 import { MousePointerClick } from 'lucide-react';
+import { ActionRoutes } from './ActionRoutes';
 
 export function TapNode({ data, selected }: NodeProps) {
-  const d = data as { x?: number; y?: number; description?: string };
+  const d = data.action as { x?: number; y?: number; description?: string };
   return (
     <div
       className={`rounded-lg border-2 p-3 bg-blue-950 min-w-32 text-center ${
@@ -20,7 +21,7 @@ export function TapNode({ data, selected }: NodeProps) {
       {d.description && (
         <p className="text-xs text-gray-500 mt-1 truncate">{d.description}</p>
       )}
-      <Handle type="source" position={Position.Bottom} />
+      <ActionRoutes />
     </div>
   );
 }

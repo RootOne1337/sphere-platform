@@ -1,28 +1,333 @@
 'use client';
-import { useEffect, useRef, useCallback } from 'react';
+import { useEffect, useRef, useCallback, useState } from 'react';
 import { H264Decoder } from '@/lib/h264-decoder';
+import type { StreamDecoderStats } from '@/lib/h264-decoder';
+import type { CaptureFrameBinding } from '@/lib/h264-decoder';
+import { parseSphereFrame } from '@/lib/sphere-frame';
 import { useAuthStore } from '@/lib/store';
+import { api } from '@/lib/api';
+import type { StreamFrameDimensions } from '@/src/features/stream/streamAspectRatio';
+import { AndroidNavigationBar } from '@/src/features/stream/AndroidNavigationBar';
+import type { UiBounds } from '@/src/features/stream/uiHierarchy';
+import type { AcknowledgedControl, StreamInput, TaskControlHandoffState } from '@/src/features/stream/controlObservation';
+import { ContinuousPointer, attachContinuousPointer } from '@/src/features/stream/continuousPointer';
+import type { ContinuousPointerState, PointerFenceObservation } from '@/src/features/stream/continuousPointer';
+import { ContinuousInputDiagnostics } from '@/src/features/stream/ContinuousInputDiagnostics';
+import { DirectProbeDiagnostics } from '@/src/features/stream/DirectProbeDiagnostics';
+import { DirectProbeAccess } from '@/src/features/stream/DirectProbeAccess';
+import { AutomaticStreamDiagnostic } from '@/src/features/stream/AutomaticStreamDiagnostic';
+import { LiveDirectVideo, type LiveVideoObservation } from '@/src/features/stream/LiveDirectVideo';
+import type { DirectVideoBinding } from '@/src/features/stream/directVideoProtocol';
+import { StreamSessionHistoryPanel } from '@/src/features/stream/StreamSessionHistoryPanel';
+import { browserStreamSample, directFailure, StreamSessionReporter } from '@/src/features/stream/streamSessionTelemetry';
 
 interface DeviceStreamProps {
   deviceId: string;
   onTap?: (x: number, y: number) => void;
+  /** A successful WebSocket send is not an Android execution acknowledgement. */
+  onControlSent?: (input: StreamInput) => void;
+  /** HTTP key/text submissions and the separate installed-APK result. */
+  onControlCommand?: (event: AcknowledgedControl) => void;
+  /** Explicit discrete recorder intent; observing command results never changes input mode. */
+  recordingMode?: boolean;
+  /** True only after this viewer has released native ownership and discrete recording can accept input. */
+  onRecordingControlReady?: (ready: boolean) => void;
+  /** A unique launch attempt locks input and waits for this viewer's known native RELEASE. */
+  taskHandoffId?: number;
+  onTaskHandoffState?: (state: TaskControlHandoffState, id: number) => void;
+  enableDiagnostics?: boolean;
+  /** Diagnostic export of a decoded, potentially lossy H.264 frame, never an Android screenshot. */
+  enableScreenshot?: boolean;
+  enableNavigation?: boolean;
+  /** Single-device control only; frame age alone does not invalidate geometry. */
+  enableStaticInput?: boolean;
+  /** Viewing a stream never implies authority to inject Android input. */
+  readOnly?: boolean;
+  /** Explain temporary execution locks separately from role restrictions. */
+  readOnlyReason?: string;
+  fit?: 'contain' | 'cover' | 'fill';
+  onFrameDimensions?: (dimensions: StreamFrameDimensions) => void;
+  inspection?: { onPick: (x: number, y: number, dimensions: StreamFrameDimensions) => void; bounds: UiBounds | null };
+  onInspectionInvalidated?: () => void;
+  /** Root inspection must wait for this viewer's acknowledged native release. */
+  onInspectionControlReady?: (ready: boolean) => void;
+}
+
+interface StreamDiagnosticResponse {
+  state: 'active_report' | 'not_streaming' | 'stale' | 'unavailable';
+  agent_status: string | null;
+  last_heartbeat: string | null;
+  age_seconds: number | null;
+  diagnostics: {
+    observed_at: string;
+    telemetry: {
+      schema_version: number;
+      capture_fps?: number | null;
+      render_fps?: number | null;
+      capture_frames_total?: number | null;
+      rendered_frames_total?: number | null;
+      capture_read_failures_total?: number | null;
+      render_failures_total?: number | null;
+      encoder_errors_total?: number | null;
+      frame_throttle_drops_total?: number | null;
+      capture_throttle_drops_total?: number | null;
+      encoder_input_drops_total?: number | null;
+      encoder_fps: number;
+      encoded_frames_total: number;
+      encoded_bytes_total: number;
+      ws_queue_attempts_total: number;
+      ws_queue_accepted_total: number;
+      ws_queue_rejected_total: number;
+      ws_queue_accepted_bytes_total: number;
+    };
+  } | null;
+}
+
+const FRAME_STALE_TIMEOUT_MS = 10_000;
+const IDLE_RECOVERY_LIMITS = Object.freeze({ releaseWaitMs: 3000, baseDelayMs: 750, maxDelayMs: 15_000, stableMs: 30_000 });
+const idleRecoveryDelay = (attempts: number) => Math.min(IDLE_RECOVERY_LIMITS.maxDelayMs,
+  IDLE_RECOVERY_LIMITS.baseDelayMs * 2 ** Math.min(Math.max(0, attempts - 1), 5));
+const UNKNOWN_POINTER_NOTICE = 'Предыдущий жест не подтверждён полностью. Он не повторяется; после восстановления оцените экран перед новым действием.';
+const ADMISSION_RETRY_MESSAGES: Record<string, string> = {
+  controller_busy: 'Устройством управляет другая вкладка. Подключимся автоматически, когда управление освободится.',
+  task_running: 'На устройстве выполняется задание. Управление подключится автоматически после его завершения.',
+  offer_expired: 'Автоматически обновляем согласование управления с Android.',
+  capture_changed: 'Параметры экрана изменились. Автоматически согласуем управление заново.',
+  agent_reconnecting: 'Android переподключается. Управление восстановится автоматически.',
+};
+
+function formatTimestampAgo(timestamp: number | null): string {
+  if (timestamp == null) return 'никогда';
+  const ageSeconds = Math.max(0, Math.floor((Date.now() - timestamp) / 1000));
+  if (ageSeconds < 60) return `${ageSeconds} сек назад`;
+  return `${Math.floor(ageSeconds / 60)} мин назад`;
+}
+
+function formatIsoTimestampAgo(timestamp: string | null | undefined): string {
+  if (!timestamp) return 'нет данных';
+  const parsed = Date.parse(timestamp);
+  if (!Number.isFinite(parsed)) return 'время неизвестно';
+  return formatTimestampAgo(parsed);
 }
 
 export function DeviceStream({
   deviceId,
   onTap,
+  onControlSent,
+  onControlCommand,
+  recordingMode = false,
+  onRecordingControlReady,
+  taskHandoffId,
+  onTaskHandoffState,
+  enableDiagnostics = false,
+  enableScreenshot = false,
+  enableNavigation = false,
+  enableStaticInput = false,
+  readOnly = false,
+  readOnlyReason,
+  fit,
+  onFrameDimensions,
+  inspection,
+  onInspectionInvalidated,
+  onInspectionControlReady,
 }: DeviceStreamProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const wsRef = useRef<WebSocket | null>(null);
+  const diagnosticReporter = useRef<StreamSessionReporter | null>(null);
+  const [diagnosticSession, setDiagnosticSession] = useState<{
+    socket: WebSocket; deviceId: string; accessToken: string | null; id: string;
+  } | null>(null);
+  const [automaticDiagnosticBusy, setAutomaticDiagnosticBusy] = useState(false);
+  const renderedSocketRef = useRef<WebSocket | null>(null);
+  const renderedCaptureRef = useRef<CaptureFrameBinding | null>(null);
+  const serverCaptureRef = useRef<CaptureFrameBinding | null>(null);
+  const recoverServerFrameRef = useRef<(() => void) | null>(null);
+  const directFramePresentedRef = useRef<(() => void) | null>(null);
+  const directVideoRef = useRef<LiveVideoObservation>({ admitted: false, admissionKnown: false, active: false,
+    frames: 0, lastFrameAt: null, attempts: 0, result: null });
+  const [directVideo, setDirectVideo] = useState(directVideoRef.current);
+  const lastWheelAt = useRef(-Infinity);
   const decoderRef = useRef<H264Decoder | null>(null);
-  const dragRef = useRef<{ x: number; y: number } | null>(null);
+  const continuousRef = useRef<ContinuousPointer | null>(null);
+  const continuousDisposeRef = useRef<(() => void) | null>(null);
+  const continuousRequestedRef = useRef(false);
+  const continuousProbeArmRef = useRef<(() => void) | null>(null);
+  const lastContinuousReceiptAt = useRef(-Infinity);
+  const continuousAllowedRef = useRef(false);
+  const continuousPointRef = useRef<(x: number, y: number, clamp: boolean) => { x: number; y: number } | null>(() => null);
+  const automaticProbeRef = useRef<WebSocket | null>(null);
+  const discreteBusyRef = useRef(false);
+  const releaseWaiterRef = useRef<{ controller: ContinuousPointer; finish: (known: boolean) => void } | null>(null);
+  const wheelUpTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [discreteBusy, setDiscreteBusy] = useState(false);
+  const [controlSession, setControlSession] = useState(0);
+  const continuousSupportedRef = useRef(false);
+  const continuousFaultRef = useRef(false);
+  const idleRecoveryCountRef = useRef(0);
+  const [idleRecoveryCount, setIdleRecoveryCount] = useState(0);
+  const idleRecoveringRef = useRef(false);
+  const [idleRecovering, setIdleRecovering] = useState(false);
+  const idleRecoveryAllowedRef = useRef(false);
+  const freshViewerAfterReleaseRef = useRef(false);
+  const unknownPointerNoticeRef = useRef(false);
+  const restartIdleSocketRef = useRef<(() => void) | null>(null);
+  const continuousReadySinceRef = useRef(-Infinity);
+  const [continuousFault, setContinuousFault] = useState(false);
+  const [surfaceActive, setSurfaceActive] = useState(() => typeof document !== 'undefined' && !document.hidden);
+  const [continuousState, setContinuousState] = useState<ContinuousPointerState | 'probing'>('idle');
+  const [continuousReason, setContinuousReason] = useState<string | null>(null);
+  const [continuousFailureCode, setContinuousFailureCode] = useState<string | null>(null);
+  const [continuousReceipt, setContinuousReceipt] = useState<{ action: number; sequence: number; ms: number } | null>(null);
+  const [pointerFailure, setPointerFailure] = useState<{
+    deviceId: string; accessToken: string | null; socket: WebSocket; snapshot: PointerFenceObservation;
+  } | null>(null);
+  const dragRef = useRef<{
+    x: number; y: number; pointerId: number; frameWidth: number; frameHeight: number; inspection: boolean;
+  } | null>(null);
   const { accessToken } = useAuthStore();
+  const pointerFailureSnapshot = pointerFailure?.deviceId === deviceId && pointerFailure.accessToken === accessToken
+    && pointerFailure.socket === wsRef.current ? pointerFailure.snapshot : null;
+  const [connection, setConnection] = useState<
+    'connecting' | 'waiting' | 'live' | 'stale' | 'retrying' | 'unavailable'
+  >('connecting');
+  const [hasRenderedFrame, setHasRenderedFrame] = useState(false);
+  const [streamError, setStreamError] = useState<string | null>(null);
+  const [inputError, setInputError] = useState<string | null>(null);
+  const [screenshotError, setScreenshotError] = useState<string | null>(null);
+  const [diagnosticsOpen, setDiagnosticsOpen] = useState(false);
+  const [agentReport, setAgentReport] = useState<{
+    deviceId: string; accessToken: string | null; data: StreamDiagnosticResponse; receivedAtMs: number;
+  } | null>(null);
+  const [diagnosticNowMs, setDiagnosticNowMs] = useState(0);
+  // A prior device/auth response must never be rendered under the new selection.
+  const agentDiagnostics = agentReport?.deviceId === deviceId && agentReport.accessToken === accessToken
+    ? agentReport.data : null;
+  const diagnosticAgeSeconds = agentDiagnostics?.age_seconds != null && agentReport
+    ? agentDiagnostics.age_seconds + Math.max(0, diagnosticNowMs - agentReport.receivedAtMs) / 1000 : null;
+  const [diagnosticsError, setDiagnosticsError] = useState<string | null>(null);
+  const [browserStats, setBrowserStats] = useState<StreamDecoderStats | null>(null);
+  const telemetryControl = useRef({ state: continuousState, failure: continuousFailureCode, rtt: continuousReceipt?.ms ?? null, attempts: idleRecoveryCount });
+  telemetryControl.current = { state: continuousState, failure: continuousFailureCode, rtt: continuousReceipt?.ms ?? null, attempts: idleRecoveryCount };
+  const currentDiagnosticSession = diagnosticSession?.deviceId === deviceId && diagnosticSession.accessToken === accessToken
+    && diagnosticSession.socket === wsRef.current && diagnosticSession.socket.readyState === WebSocket.OPEN ? diagnosticSession.id : null;
+  const currentFrameOwned = hasRenderedFrame && !streamError
+    && wsRef.current?.readyState === WebSocket.OPEN
+    && renderedSocketRef.current === wsRef.current;
+  const canInteract = surfaceActive && taskHandoffId === undefined && !continuousFault && !idleRecovering && !discreteBusy && !inspection && !readOnly && currentFrameOwned && (connection === 'live'
+    || (enableStaticInput && connection === 'stale'));
+  const canSelectElement = taskHandoffId === undefined && !!inspection && currentFrameOwned && (connection === 'live'
+    || (enableStaticInput && connection === 'stale'));
+  const canSaveFrame = currentFrameOwned && connection === 'live';
+  const continuousBusy = !['idle', 'probing', 'closed', 'destroyed'].includes(continuousState);
+  const continuousRecording = recordingMode;
+  const inspectionActive = !!inspection;
+  continuousAllowedRef.current = canInteract && !continuousRecording && continuousRequestedRef.current;
+  // Age is not a disconnect: an idle ImageReader can retain its last picture.
+  // A new socket/decoder still needs its own first frame before accepting input.
+  const canNavigate = surfaceActive && taskHandoffId === undefined && !continuousFault && !idleRecovering && !inspection && !readOnly && hasRenderedFrame && !streamError
+    && (connection === 'live' || connection === 'stale')
+    && renderedSocketRef.current === wsRef.current;
+  idleRecoveryAllowedRef.current = enableNavigation && surfaceActive && currentFrameOwned
+    && !readOnly && !inspection && !recordingMode && taskHandoffId === undefined && !discreteBusy && !continuousFault;
+  const onFrameDimensionsRef = useRef(onFrameDimensions);
+  const lastFrameDimensionsRef = useRef<StreamFrameDimensions | null>(null);
+  onFrameDimensionsRef.current = onFrameDimensions;
+  const invalidateInspectionRef = useRef(onInspectionInvalidated);
+  invalidateInspectionRef.current = onInspectionInvalidated;
+
+  const renderDirectFrame = useCallback((video: HTMLVideoElement, binding: DirectVideoBinding, session: string) => {
+    const socket = wsRef.current, canvas = canvasRef.current;
+    if (!socket || socket.readyState !== WebSocket.OPEN || diagnosticReporter.current?.sessionId !== session || !canvas) return false;
+    const expected = serverCaptureRef.current;
+    if (!expected || expected.captureEpoch !== binding.captureEpoch || expected.frameWidth !== binding.width || expected.frameHeight !== binding.height) return false;
+    const context = canvas.getContext('2d');
+    if (!context) return false;
+    if (canvas.width !== binding.width || canvas.height !== binding.height) {
+      dragRef.current = null; invalidateInspectionRef.current?.();
+      canvas.width = binding.width; canvas.height = binding.height;
+    }
+    context.drawImage(video, 0, 0, canvas.width, canvas.height);
+    if (!directVideoRef.current.active) decoderRef.current?.reset();
+    directVideoRef.current = { ...directVideoRef.current, active: true, lastFrameAt: Date.now() };
+    renderedCaptureRef.current = { captureEpoch: binding.captureEpoch, frameWidth: binding.width, frameHeight: binding.height };
+    renderedSocketRef.current = socket;
+    directFramePresentedRef.current?.();
+    setConnection('live'); setHasRenderedFrame(true); setStreamError(null);
+    return true;
+  }, []);
+  const observeDirectVideo = useCallback((value: LiveVideoObservation, session: string) => {
+    if (diagnosticReporter.current?.sessionId !== session) return;
+    const wasActive = directVideoRef.current.active;
+    directVideoRef.current = value; setDirectVideo(value);
+    if (wasActive && !value.active) {
+      dragRef.current = null; invalidateInspectionRef.current?.();
+      renderedCaptureRef.current = null; renderedSocketRef.current = null;
+      continuousRef.current?.retire('capture_or_socket_lost');
+      decoderRef.current?.reset(); setConnection('waiting');
+      recoverServerFrameRef.current?.();
+    }
+  }, []);
+
+  useEffect(() => {
+    lastFrameDimensionsRef.current = null;
+    dragRef.current = null;
+  }, [deviceId]);
+  useEffect(() => {
+    const focus = () => setSurfaceActive(!document.hidden);
+    const blur = () => setSurfaceActive(false);
+    window.addEventListener('focus', focus);
+    window.addEventListener('blur', blur);
+    document.addEventListener('visibilitychange', focus);
+    return () => {
+      window.removeEventListener('focus', focus);
+      window.removeEventListener('blur', blur);
+      document.removeEventListener('visibilitychange', focus);
+    };
+  }, []);
 
   useEffect(() => {
     // Defer WS creation by one tick to avoid React StrictMode double-invoke.
     let ignore = false;
     let ws: WebSocket | null = null;
     let decoder: H264Decoder | null = null;
+    let retryTimer: ReturnType<typeof setTimeout> | undefined;
+    let keyFrameTimer: ReturnType<typeof setTimeout> | undefined;
+    let frameStaleTimer: ReturnType<typeof setTimeout> | undefined;
+    let watchdog: ReturnType<typeof setInterval> | undefined;
+    let probeTimer: ReturnType<typeof setTimeout> | undefined;
+    let scheduleKeyFrameRecovery: ((delayMs?: number) => void) | undefined;
+    let attempt = 0;
+    setConnection('connecting');
+    setHasRenderedFrame(false);
+    setStreamError(null);
+    setInputError(null);
+    continuousDisposeRef.current?.();
+    continuousDisposeRef.current = null;
+    continuousRef.current = null;
+    continuousRequestedRef.current = false;
+    automaticProbeRef.current = null;
+    continuousSupportedRef.current = false;
+    continuousFaultRef.current = false;
+    idleRecoveryCountRef.current = 0;
+    setIdleRecoveryCount(0);
+    idleRecoveringRef.current = false;
+    setIdleRecovering(false);
+    freshViewerAfterReleaseRef.current = false;
+    unknownPointerNoticeRef.current = false;
+    restartIdleSocketRef.current = null;
+    continuousReadySinceRef.current = -Infinity;
+    setContinuousFault(false);
+    discreteBusyRef.current = false;
+    setDiscreteBusy(false);
+    releaseWaiterRef.current?.finish(false);
+    releaseWaiterRef.current = null;
+    if (wheelUpTimerRef.current) clearTimeout(wheelUpTimerRef.current);
+    wheelUpTimerRef.current = null;
+    setContinuousState('idle');
+    setContinuousReason(null);
+    setContinuousFailureCode(null);
+    setContinuousReceipt(null);
+    setPointerFailure(null);
 
     const timer = setTimeout(() => {
       if (ignore) return;
@@ -31,14 +336,62 @@ export function DeviceStream({
       if (!canvas) return;
 
       const ctx = canvas.getContext('2d')!;
+      directFramePresentedRef.current = () => {
+        clearTimeout(keyFrameTimer); clearTimeout(frameStaleTimer);
+        frameStaleTimer = setTimeout(() => {
+          if (ignore || wsRef.current?.readyState !== WebSocket.OPEN) return;
+          setConnection('stale');
+        }, FRAME_STALE_TIMEOUT_MS);
+      };
 
-      decoder = new H264Decoder((frame) => {
+      decoder = new H264Decoder((frame, binding) => {
+        if (ignore || wsRef.current?.readyState !== WebSocket.OPEN) return;
+        if (directVideoRef.current.active) return;
+        if (!ctx || frame.displayWidth < 1 || frame.displayHeight < 1) throw new Error('Invalid canvas frame.');
         // Mutate canvas directly for performance, avoid React state re-renders
         if (canvas.width !== frame.displayWidth || canvas.height !== frame.displayHeight) {
+          // Coordinates captured before rotation/resizing belong to the old
+          // frame. Never combine them with a release mapped to the new frame.
+          dragRef.current = null;
+          invalidateInspectionRef.current?.();
           canvas.width = frame.displayWidth;
           canvas.height = frame.displayHeight;
         }
+        // Only a successful canvas render proves a picture. A decoder output
+        // that throws during drawImage must not unlock clicks or PNG export.
         ctx.drawImage(frame, 0, 0, canvas.width, canvas.height);
+        serverCaptureRef.current = binding ?? null;
+        renderedCaptureRef.current = binding ?? null;
+        renderedSocketRef.current = wsRef.current;
+        setConnection('live');
+        setHasRenderedFrame(true);
+        setStreamError(null);
+        clearTimeout(keyFrameTimer);
+        clearTimeout(frameStaleTimer);
+        frameStaleTimer = setTimeout(() => {
+          if (ignore || wsRef.current?.readyState !== WebSocket.OPEN) return;
+          dragRef.current = null;
+          setConnection('stale');
+          scheduleKeyFrameRecovery?.();
+        }, FRAME_STALE_TIMEOUT_MS);
+        if (frame.displayWidth > 0 && frame.displayHeight > 0) {
+          const previousDimensions = lastFrameDimensionsRef.current;
+          if (
+            previousDimensions?.width !== frame.displayWidth
+            || previousDimensions?.height !== frame.displayHeight
+          ) {
+            const dimensions = { width: frame.displayWidth, height: frame.displayHeight };
+            lastFrameDimensionsRef.current = dimensions;
+            onFrameDimensionsRef.current?.(dimensions);
+          }
+        }
+      }, () => {
+        if (ignore) return;
+        dragRef.current = null;
+        setConnection('waiting');
+        // Кодек может быть исправен, но первый серверный запрос IDR мог
+        // прийти до готовности захвата. Повторяем запрос до первого output.
+        scheduleKeyFrameRecovery?.();
       });
       decoder.init();
       decoderRef.current = decoder;
@@ -49,54 +402,384 @@ export function DeviceStream({
           : 'ws://localhost');
       const wsUrl = `${wsBase}/ws/stream/${deviceId}`;
 
-      // FIX-CLOUDFLARE: Общая функция создания WS (для initial и reconnect).
-      // Decoder НЕ пересоздаётся при reconnect — сохраняет SPS/PPS конфигурацию.
-      // Бэкенд шлёт кэшированные SPS→PPS→IDR при register_viewer, что позволяет
-      // декодеру показать картинку без ожидания нового IDR от агента.
+      // One connection generation owns its callbacks and timers. A TCP open is
+      // not proof of a usable stream: reset backoff only after server traffic.
       const createWs = () => {
         if (ignore) return;
+        dragRef.current = null;
+        invalidateInspectionRef.current?.();
+        lastFrameDimensionsRef.current = null;
+        serverCaptureRef.current = null; renderedCaptureRef.current = null;
+        directVideoRef.current = { admitted: false, admissionKnown: false, active: false, frames: 0, lastFrameAt: null, attempts: 0, result: null };
+        setDirectVideo(directVideoRef.current);
+        setStreamError(null);
+        setInputError(unknownPointerNoticeRef.current ? UNKNOWN_POINTER_NOTICE : null);
         const newWs = new WebSocket(wsUrl);
         newWs.binaryType = 'arraybuffer';
         ws = newWs;
         wsRef.current = newWs;
-
+        telemetryControl.current = { state: 'idle', failure: null, rtt: null, attempts: idleRecoveryCountRef.current };
+        setContinuousReceipt(null);
+        const reporter = new StreamSessionReporter(newWs, () => decoder
+          ? browserStreamSample(decoder.stats, telemetryControl.current, Date.now(), directVideoRef.current) : null);
+        diagnosticReporter.current = reporter;
+        automaticProbeRef.current = null;
+        // Keep the previously confirmed input path across socket replacements.
+        // It grants no authority: it prevents a legacy swipe while fresh native
+        // capability/STARTUP0 is still pending on the new socket.
+        continuousFaultRef.current = false;
+        setContinuousFault(false);
+        idleRecoveringRef.current = false;
+        setIdleRecovering(false);
+        freshViewerAfterReleaseRef.current = false;
+        continuousReadySinceRef.current = -Infinity;
+        setContinuousReason(null);
+        setContinuousFailureCode(null);
+        setPointerFailure(null);
+        let ended = false;
+        let lastReceived = Date.now();
+        let opened = false;
+        let keyFrameAttempts = 0;
+        const requestKeyFrame = () => {
+          if (
+            ignore || ended || newWs !== wsRef.current || newWs.readyState !== WebSocket.OPEN
+          ) return;
+          newWs.send(JSON.stringify({ type: 'request_keyframe' }));
+          keyFrameAttempts += 1;
+          const nextDelay = keyFrameAttempts === 1
+            ? 2000
+            : Math.min(5000 * 2 ** Math.min(keyFrameAttempts - 2, 2), 20_000);
+          keyFrameTimer = setTimeout(requestKeyFrame, nextDelay);
+        };
+        const scheduleKeyFrameRequests = (delayMs = 1100) => {
+          clearTimeout(keyFrameTimer);
+          keyFrameAttempts = 0;
+          keyFrameTimer = setTimeout(requestKeyFrame, delayMs);
+        };
+        scheduleKeyFrameRecovery = scheduleKeyFrameRequests;
+        recoverServerFrameRef.current = () => scheduleKeyFrameRequests(0);
+        const finish = (retry: boolean, terminalMessage?: string, minimumRetryDelayMs = 0) => {
+          if (ended) return;
+          ended = true;
+          releaseWaiterRef.current?.finish(false);
+          releaseWaiterRef.current = null;
+          discreteBusyRef.current = false;
+          setDiscreteBusy(false);
+          if (wheelUpTimerRef.current) clearTimeout(wheelUpTimerRef.current);
+          wheelUpTimerRef.current = null;
+          continuousDisposeRef.current?.();
+          continuousDisposeRef.current = null;
+          continuousRef.current = null;
+          continuousRequestedRef.current = false;
+          restartIdleSocketRef.current = null;
+          setContinuousState('idle');
+          clearTimeout(probeTimer);
+          dragRef.current = null;
+          clearInterval(watchdog);
+          clearTimeout(keyFrameTimer);
+          clearTimeout(frameStaleTimer);
+          if (scheduleKeyFrameRecovery === scheduleKeyFrameRequests) scheduleKeyFrameRecovery = undefined;
+          newWs.onopen = newWs.onmessage = newWs.onclose = newWs.onerror = null;
+          if (wsRef.current === newWs) wsRef.current = null;
+          if (diagnosticReporter.current === reporter) diagnosticReporter.current = null;
+          if (renderedSocketRef.current === newWs) renderedSocketRef.current = null;
+          serverCaptureRef.current = null; renderedCaptureRef.current = null;
+          directVideoRef.current = { ...directVideoRef.current, active: false };
+          if (!ignore) setDirectVideo(directVideoRef.current);
+          recoverServerFrameRef.current = null;
+          decoder?.reset();
+          if (newWs.readyState === WebSocket.OPEN || newWs.readyState === WebSocket.CONNECTING) {
+            newWs.close();
+          }
+          if (ignore) return;
+          setConnection(retry ? 'retrying' : 'unavailable');
+          if (retry) {
+            const delay = Math.min(500 * 2 ** Math.min(attempt++, 6), 15_000);
+            retryTimer = setTimeout(createWs, Math.max(minimumRetryDelayMs, delay * (0.8 + Math.random() * 0.4)));
+          } else {
+            setStreamError(terminalMessage ?? null);
+          }
+        };
+        restartIdleSocketRef.current = () => {
+          if (ignore || ended || wsRef.current !== newWs || !idleRecoveryAllowedRef.current) return;
+          // Idle-only loss or a touch with confirmed native RELEASE may retire
+          // this viewer. Require its replacement's frame, capability, owner and
+          // STARTUP0; a timeout never proves release or replays the old gesture.
+          finish(true, undefined, idleRecoveryDelay(idleRecoveryCountRef.current));
+        };
+        watchdog = setInterval(() => {
+          reporter.report();
+          if (Date.now() - lastReceived >= (opened ? 30_000 : 15_000)) finish(true);
+        }, 5_000);
         newWs.onopen = () => {
+          if (ignore || ended) return;
+          opened = true;
+          lastReceived = Date.now();
           newWs.send(JSON.stringify({ token: accessToken }));
+          setConnection('waiting');
+          clearTimeout(frameStaleTimer);
+          frameStaleTimer = setTimeout(() => {
+            if (ignore || ended || newWs !== wsRef.current || newWs.readyState !== WebSocket.OPEN) return;
+            dragRef.current = null;
+            setConnection('stale');
+          }, FRAME_STALE_TIMEOUT_MS);
+          scheduleKeyFrameRequests();
         };
         newWs.onmessage = (evt) => {
+          if (ignore || ended) return;
+          lastReceived = Date.now();
+          attempt = 0;
           if (evt.data instanceof ArrayBuffer) {
-            decoder?.handleBinary(evt.data);
+            if (!directVideoRef.current.active) decoder?.handleBinary(evt.data);
+            else {
+              const frame = parseSphereFrame(evt.data);
+              if (frame && frame.captureEpoch !== serverCaptureRef.current?.captureEpoch) {
+                // A newer server capture revokes the old direct picture before
+                // any pointer is mapped using its old geometry.
+                serverCaptureRef.current = null; renderedCaptureRef.current = null;
+                renderedSocketRef.current = null; dragRef.current = null;
+                continuousRef.current?.retire('capture_or_socket_lost');
+                directVideoRef.current = { ...directVideoRef.current, active: false };
+                setDirectVideo(directVideoRef.current); setConnection('waiting');
+                decoder?.reset(); decoder?.handleBinary(evt.data);
+                scheduleKeyFrameRequests(0);
+              }
+            }
           }
-          // Сервер шлёт JSON ping — отвечаем pong для keepalive через Cloudflare
           if (typeof evt.data === 'string') {
             try {
               const msg = JSON.parse(evt.data);
-              if (msg.type === 'ping') {
-                newWs.send(JSON.stringify({ type: 'pong' }));
+              if (msg.type === 'stream_session') {
+                if (reporter.accept(msg)) setDiagnosticSession({ socket: newWs, deviceId, accessToken, id: reporter.sessionId! });
+                return;
               }
-            } catch { /* не JSON binary — игнорируем */ }
+              if (msg.type === 'touch_capability' && continuousRequestedRef.current && !continuousRef.current) {
+                if (!continuousAllowedRef.current || discreteBusyRef.current || dragRef.current) {
+                  // A capability probe has no owner. Never change input paths midway through a legacy drag.
+                  continuousRequestedRef.current = false;
+                  setContinuousState('idle');
+                  setContinuousReason('Дискретное управление · текущий жест завершается без смены режима.');
+                  return;
+                }
+                const capture = renderedCaptureRef.current;
+                if (!capture || msg.capture_epoch !== capture.captureEpoch || msg.frame_width !== capture.frameWidth
+                  || msg.frame_height !== capture.frameHeight) {
+                  // The response grants no touch authority. Keep the owned probe
+                  // deadline alive: a geometry race must not strand a previously
+                  // confirmed continuous path in idle with legacy input blocked.
+                  setContinuousState('probing');
+                  setContinuousReason('Экран Android изменился · ожидаем совпадение кадра и возможностей APK.');
+                  return;
+                }
+                const controller = new ContinuousPointer({ socket: newWs,
+                  renderedCapture: () => renderedCaptureRef.current,
+                  onFence: snapshot => {
+                    if (ignore || ended || newWs !== wsRef.current
+                      || ['viewer_closed', 'viewer_destroyed', 'surface_blur', 'surface_hidden', 'surface_control_lost', 'control_mode_changed', 'capture_or_socket_lost'].includes(snapshot.reason)) return;
+                    setPointerFailure({ deviceId, accessToken, socket: newWs, snapshot });
+                    telemetryControl.current.failure = snapshot.reason;
+                    reporter.report(true);
+                  },
+                  onState: (state, reason) => {
+                    if (ignore || ended || newWs !== wsRef.current) return;
+                    setContinuousState(state);
+                    telemetryControl.current.state = state;
+                    telemetryControl.current.failure = reason;
+                    const idleReceiptLoss = reason === 'native_receipt_timeout' && controller.recoverableIdleReceiptLoss;
+                    const nativeFailureRecovery = reason === 'native_input_rejected_or_unknown' && controller.nativeFailureAwaitingRelease;
+                    const pointerReceiptLoss = (reason === 'native_receipt_timeout' || reason === 'server_runtime_retry' || nativeFailureRecovery)
+                      && controller.unknownPointerReceiptLoss;
+                    const idleRecovery = (idleReceiptLoss || pointerReceiptLoss || nativeFailureRecovery || reason === 'native_startup_busy'
+                      || reason === 'server_admission_retry' || reason === 'server_runtime_retry') && !continuousFaultRef.current;
+                    if (idleRecovery) {
+                      if (pointerReceiptLoss || nativeFailureRecovery) {
+                        freshViewerAfterReleaseRef.current = true;
+                      }
+                      if (pointerReceiptLoss) {
+                        unknownPointerNoticeRef.current = true;
+                        setInputError(UNKNOWN_POINTER_NOTICE);
+                      }
+                      idleRecoveryCountRef.current = Math.min(Number.MAX_SAFE_INTEGER, idleRecoveryCountRef.current + 1);
+                      setIdleRecoveryCount(idleRecoveryCountRef.current);
+                      idleRecoveringRef.current = true;
+                      setIdleRecovering(true);
+                      setContinuousFailureCode(nativeFailureRecovery ? reason : pointerReceiptLoss ? 'pointer_receipt_timeout' : idleReceiptLoss ? 'idle_receipt_timeout' : reason);
+                      setContinuousReason(pointerReceiptLoss
+                        ? 'Автоматически восстанавливаем новую сессию · ожидаем освобождение касания и свежий кадр. Предыдущий жест не повторяется.'
+                        : nativeFailureRecovery
+                        ? 'Автоматически восстанавливаем управление · ожидаем подтверждённое освобождение ввода Android и свежий кадр. Команды не повторяются.'
+                        : idleReceiptLoss
+                        ? 'Автоматически восстанавливаем управление · задержалось подтверждение связи без касания. Команды не повторяются.'
+                        : reason === 'native_startup_busy'
+                        ? 'Автоматически восстанавливаем управление · Android завершает предыдущую сессию. Команды не повторяются.'
+                        : 'Автоматически восстанавливаем управление · повторно согласуем связь с Android. Команды не повторяются.');
+                    } else if (reason && !['viewer_closed', 'surface_blur', 'surface_hidden', 'surface_control_lost', 'control_mode_changed', 'capture_or_socket_lost'].includes(reason)) {
+                      idleRecoveringRef.current = false;
+                      setIdleRecovering(false);
+                      freshViewerAfterReleaseRef.current = false;
+                      continuousFaultRef.current = true;
+                      setContinuousFault(true);
+                      setContinuousFailureCode(idleReceiptLoss ? 'idle_receipt_timeout' : reason);
+                      setContinuousReason(idleReceiptLoss
+                        ? 'Управление приостановлено: задержалось подтверждение связи без касания. Автоматическое восстановление уже использовано. Восстановите управление вручную.'
+                        : 'Управление приостановлено: Android не подтвердил команду. Повтора нет. Проверьте экран перед восстановлением.');
+                    }
+                    if (state === 'closed') {
+                      continuousRequestedRef.current = false;
+                      // A slow native teardown can finish after the diagnostic
+                      // wait expired. Only this owner's actual RELEASE3 may
+                      // resume recovery; a timeout/unknown RELEASE never can.
+                      if (freshViewerAfterReleaseRef.current && continuousFaultRef.current
+                        && !idleRecoveringRef.current) {
+                        continuousFaultRef.current = false;
+                        setContinuousFault(false);
+                        idleRecoveringRef.current = true;
+                        setIdleRecovering(true);
+                        setContinuousReason('Освобождение ввода Android подтверждено · автоматически восстанавливаем новую сессию.');
+                      }
+                      if (!continuousFaultRef.current && !idleRecoveringRef.current) {
+                        setContinuousReason(null);
+                        automaticProbeRef.current = null;
+                      }
+                      const waiting = releaseWaiterRef.current;
+                      if (waiting?.controller === controller) waiting.finish(true);
+                    }
+                    if (state === 'ready') continuousReadySinceRef.current = performance.now();
+                  },
+                  onReceipt: receipt => {
+                    if (ignore || ended || newWs !== wsRef.current) return;
+                    const now = performance.now();
+                    // Only sustained native receipts reset retry backoff, not merely
+                    // receiving a frame or opening another WebSocket.
+                    if (idleRecoveryCountRef.current > 0 && controller.state === 'ready'
+                      && now - continuousReadySinceRef.current >= IDLE_RECOVERY_LIMITS.stableMs) {
+                      idleRecoveryCountRef.current = 0;
+                      setIdleRecoveryCount(0);
+                    }
+                    if (now - lastContinuousReceiptAt.current < 250 && receipt.action !== 1 && receipt.action !== 3) return;
+                    lastContinuousReceiptAt.current = now;
+                    setContinuousReceipt({ action: receipt.action, sequence: receipt.sequence,
+                      ms: Math.round(receipt.receiptRoundTripMs) });
+                  },
+                });
+                continuousSupportedRef.current = true;
+                continuousRef.current = controller;
+                continuousDisposeRef.current = attachContinuousPointer({ canvas, controller,
+                  allowed: () => continuousAllowedRef.current,
+                  point: (event, clamp) => continuousPointRef.current(event.clientX, event.clientY, clamp) });
+                clearTimeout(probeTimer);
+                controller.open(capture);
+                return;
+              }
+              if (msg.type === 'touch_session' || msg.type === 'continuous_input_status') {
+                continuousRef.current?.receive(msg);
+                return;
+              }
+              if (msg.type === 'touch_error') {
+                const controller = continuousRef.current;
+                if (typeof msg.owner === 'string' && !controller?.matchesServerOwner(msg.owner)) return;
+                if (controller?.state === 'closed' && (msg.operation === 'touch_close' || controller.matchesServerOwner(msg.owner))) return;
+                clearTimeout(probeTimer);
+                const admissionMessage = msg.error === 'input_admission_rejected' && msg.retryable === true
+                  && typeof msg.reason === 'string' && Object.hasOwn(ADMISSION_RETRY_MESSAGES, msg.reason)
+                  ? ADMISSION_RETRY_MESSAGES[msg.reason] : null;
+                const runtimeRetry = msg.error === 'input_temporarily_unavailable' && msg.retryable === true
+                  && msg.reason === 'runtime_unavailable';
+                if (admissionMessage && controller?.rejectAdmission()) {
+                  setContinuousFailureCode(msg.reason);
+                  setContinuousReason(admissionMessage);
+                  return;
+                }
+                if (runtimeRetry && controller && ['opening', 'ready'].includes(controller.state)) {
+                  controller.retire('server_runtime_retry');
+                  return;
+                }
+                // A second error for the old CLOSE cannot cancel recovery or
+                // substitute for the native RELEASE required by an unknown touch.
+                if (runtimeRetry && idleRecoveringRef.current) return;
+                if ((admissionMessage || runtimeRetry) && !controller && continuousRequestedRef.current) {
+                  continuousRequestedRef.current = false;
+                  continuousSupportedRef.current = true;
+                  idleRecoveryCountRef.current = Math.min(Number.MAX_SAFE_INTEGER, idleRecoveryCountRef.current + 1);
+                  setIdleRecoveryCount(idleRecoveryCountRef.current);
+                  idleRecoveringRef.current = true;
+                  setIdleRecovering(true);
+                  setContinuousState('closed');
+                  setContinuousFailureCode(admissionMessage ? msg.reason : 'runtime_unavailable');
+                  setContinuousReason(admissionMessage ?? 'Автоматически восстанавливаем связь управления с Android.');
+                  return;
+                }
+                continuousRef.current?.retire('server_rejected');
+                if (!continuousRef.current) {
+                  continuousRequestedRef.current = false;
+                  setContinuousState(continuousSupportedRef.current ? 'fenced' : 'idle');
+                }
+                if (continuousRef.current || continuousSupportedRef.current) {
+                  idleRecoveringRef.current = false;
+                  setIdleRecovering(false);
+                  continuousFaultRef.current = true;
+                  setContinuousFault(true);
+                  setContinuousFailureCode('server_rejected');
+                }
+                setContinuousReason(msg.error === 'control_denied' ? 'У этой учётной записи нет права управлять устройством.'
+                  : continuousRef.current || continuousSupportedRef.current
+                  ? 'Управление приостановлено сервером. Видеопоток продолжается; команды не повторяются.'
+                  : 'Дискретное управление · сервер не подтвердил непрерывные жесты.');
+                return;
+              }
+              if (msg.type === 'ping' && newWs.readyState === WebSocket.OPEN) {
+                newWs.send(JSON.stringify({ type: 'pong' }));
+              } else if (msg.type === 'error') {
+                dragRef.current = null;
+                if (msg.error === 'stream_input_invalid') {
+                  // Rejection before dispatch is separate from a broken stream
+                  // or an unknown applied action. Never replay the rejected input.
+                  setInputError(msg.reason === 'unsupported_message'
+                    ? 'Этот тип управления не поддерживается сервером. Видеопоток продолжается.'
+                    : 'Сервер отклонил некорректную команду до отправки на Android. Видеопоток продолжается.');
+                  return;
+                }
+                const messages: Record<string, string> = {
+                  stream_control_unavailable: 'Сервер не смог передать запрос видеопотока Android-агенту.',
+                  stream_control_denied: 'У этой учётной записи нет права управлять видеопотоком.',
+                };
+                const code = typeof msg.error === 'string' ? msg.error.slice(0, 80) : '';
+                setStreamError(messages[code] ?? 'Сервер сообщил об ошибке видеосессии.');
+              }
+            } catch { /* Ignore malformed control messages. */ }
           }
         };
-        newWs.onclose = (event) => {
-          const isAuthError = [4001, 4003, 4004].includes(event.code);
-          if (!ignore && event.code !== 1000 && !isAuthError) {
-            // FIX-CLOUDFLARE: Aggressive reconnect — Cloudflare Quick Tunnel дропает
-            // WS через 5-50 секунд. Быстрый backoff: 500ms → 1s → 2s → ... → max 5s.
-            let attempt = 0;
-            const maxAttempts = 100; // Бесконечный reconnect пока компонент жив
-            const tryReconnect = () => {
-              if (ignore || attempt >= maxAttempts) return;
-              const backoff = Math.min(500 * Math.pow(1.5, attempt), 5000);
-              attempt++;
-              setTimeout(() => {
-                if (ignore) return;
-                createWs();
-              }, backoff);
-            };
-            tryReconnect();
-          }
+        // A remote normal close can be a server restart. Only effect cleanup
+        // means the user stopped viewing; access/device rejections remain terminal.
+        newWs.onclose = event => {
+          const closeMessages: Record<number, string> = {
+            4001: 'Сессия просмотра не авторизована. Обновите вход и откройте устройство снова.',
+            4003: 'У этой учётной записи нет доступа к просмотру устройства.',
+            4004: 'Устройство не найдено или недоступно в этой организации.',
+          };
+          finish(![4001, 4003, 4004].includes(event.code), closeMessages[event.code]);
         };
-        newWs.onerror = () => {};
+        newWs.onerror = () => finish(true);
+        continuousProbeArmRef.current = () => {
+          clearTimeout(probeTimer);
+          probeTimer = setTimeout(() => {
+            if (continuousRequestedRef.current && !continuousRef.current) {
+              continuousRequestedRef.current = false;
+              if (continuousSupportedRef.current) {
+                idleRecoveryCountRef.current = Math.min(Number.MAX_SAFE_INTEGER, idleRecoveryCountRef.current + 1);
+                setIdleRecoveryCount(idleRecoveryCountRef.current);
+                idleRecoveringRef.current = true;
+                setIdleRecovering(true);
+                setContinuousState('fenced');
+                setContinuousFailureCode('capability_timeout');
+                setContinuousReason('Автоматически восстанавливаем управление · ожидаем новые возможности APK. Команды не повторяются.');
+              } else {
+                setContinuousState('idle');
+                setContinuousReason('Дискретное управление · APK не подтвердил непрерывные жесты.');
+              }
+            }
+          }, 6000);
+        };
       };
 
       createWs();
@@ -104,71 +787,619 @@ export function DeviceStream({
 
     return () => {
       ignore = true;
+      continuousDisposeRef.current?.();
+      continuousDisposeRef.current = null;
+      continuousRef.current = null;
+      continuousRequestedRef.current = false;
+      continuousProbeArmRef.current = null;
+      restartIdleSocketRef.current = null;
+      releaseWaiterRef.current?.finish(false);
+      releaseWaiterRef.current = null;
+      if (wheelUpTimerRef.current) clearTimeout(wheelUpTimerRef.current);
+      wheelUpTimerRef.current = null;
+      clearTimeout(probeTimer);
+      dragRef.current = null;
       clearTimeout(timer);
+      clearTimeout(retryTimer);
+      clearTimeout(keyFrameTimer);
+      clearTimeout(frameStaleTimer);
+      clearInterval(watchdog);
+      wsRef.current = null;
+      diagnosticReporter.current = null;
+      renderedSocketRef.current = null;
+      renderedCaptureRef.current = null; serverCaptureRef.current = null;
+      recoverServerFrameRef.current = null;
+      directFramePresentedRef.current = null;
       ws?.close();
       decoder?.destroy();
+      decoderRef.current = null;
     };
-  }, [deviceId, accessToken]);
+  }, [deviceId, accessToken, controlSession]);
+
+  useEffect(() => {
+    if (!enableDiagnostics || !diagnosticsOpen) return;
+    let active = true;
+    let inFlight = false;
+    const controller = new AbortController();
+    setAgentReport(null);
+    setDiagnosticsError(null);
+    const refreshAgent = async () => {
+      if (inFlight) return;
+      inFlight = true;
+      try {
+        const { data } = await api.get<StreamDiagnosticResponse>(
+          `/devices/${deviceId}/stream-diagnostics`,
+          { signal: controller.signal },
+        );
+        if (active) {
+          const receivedAtMs = performance.now();
+          setAgentReport({ deviceId, accessToken, data, receivedAtMs });
+          setDiagnosticNowMs(receivedAtMs);
+          setDiagnosticsError(null);
+        }
+      } catch {
+        if (active) setDiagnosticsError('Не удалось получить телеметрию устройства');
+      } finally {
+        inFlight = false;
+      }
+    };
+    void refreshAgent();
+    const agentTimer = window.setInterval(() => void refreshAgent(), 15_000);
+    const browserTimer = window.setInterval(() => {
+      if (active) {
+        setBrowserStats(decoderRef.current?.stats ?? null);
+        setDiagnosticNowMs(performance.now());
+      }
+    }, 1000);
+    setBrowserStats(decoderRef.current?.stats ?? null);
+    return () => {
+      active = false;
+      controller.abort();
+      window.clearInterval(agentTimer);
+      window.clearInterval(browserTimer);
+    };
+  }, [deviceId, accessToken, diagnosticsOpen, enableDiagnostics]);
 
   // ── coordinate helpers ───────────────────────────────────────────────────
   const toCanvasCoords = useCallback(
-    (clientX: number, clientY: number) => {
+    (clientX: number, clientY: number, clampToFrame = false) => {
       const canvas = canvasRef.current;
       if (!canvas) return null;
       const rect = canvas.getBoundingClientRect();
+      if (rect.width <= 0 || rect.height <= 0 || canvas.width <= 0 || canvas.height <= 0) return null;
+      const localX = clientX - rect.left;
+      const localY = clientY - rect.top;
+      let x: number;
+      let y: number;
+
+      if (fit === 'contain' || fit === 'cover') {
+        const scale = fit === 'contain'
+          ? Math.min(rect.width / canvas.width, rect.height / canvas.height)
+          : Math.max(rect.width / canvas.width, rect.height / canvas.height);
+        const renderedWidth = canvas.width * scale;
+        const renderedHeight = canvas.height * scale;
+        const offsetX = (rect.width - renderedWidth) / 2;
+        const offsetY = (rect.height - renderedHeight) / 2;
+        if (!clampToFrame && (
+          localX < offsetX || localX > offsetX + renderedWidth ||
+          localY < offsetY || localY > offsetY + renderedHeight
+        )) return null;
+        x = (localX - offsetX) / scale;
+        y = (localY - offsetY) / scale;
+      } else {
+        x = localX * (canvas.width / rect.width);
+        y = localY * (canvas.height / rect.height);
+      }
+
       return {
-        x: Math.round((clientX - rect.left) * (canvas.width / rect.width)),
-        y: Math.round((clientY - rect.top) * (canvas.height / rect.height)),
+        x: Math.max(0, Math.min(canvas.width - 1, Math.round(x))),
+        y: Math.max(0, Math.min(canvas.height - 1, Math.round(y))),
       };
     },
-    [],
+    [fit],
   );
 
   // ── pointer down — begin drag / tap ─────────────────────────────────────
+  continuousPointRef.current = toCanvasCoords;
+  const beginContinuous = () => {
+    const controller = continuousRef.current;
+    if (controller && !['closed', 'destroyed'].includes(controller.state)) {
+      return;
+    }
+    if (!canInteract || continuousRecording || !wsRef.current || wsRef.current.readyState !== WebSocket.OPEN) return;
+    continuousDisposeRef.current?.();
+    continuousDisposeRef.current = null;
+    continuousRef.current = null;
+    continuousRequestedRef.current = true;
+    continuousAllowedRef.current = true;
+    dragRef.current = null;
+    setContinuousState('probing');
+    setContinuousReason(null);
+    setContinuousFailureCode(null);
+    setContinuousReceipt(null);
+    wsRef.current.send(JSON.stringify({ type: 'touch_probe' }));
+    continuousProbeArmRef.current?.();
+  };
+  useEffect(() => {
+    if (inspection || readOnly || continuousRecording || taskHandoffId !== undefined) {
+      automaticProbeRef.current = null;
+      if (idleRecoveringRef.current && continuousRef.current?.state === 'closed' && !freshViewerAfterReleaseRef.current) {
+        idleRecoveringRef.current = false;
+        setIdleRecovering(false);
+        setContinuousReason(null);
+      }
+      if (!continuousRef.current) {
+        continuousRequestedRef.current = false;
+        if (continuousState === 'probing') setContinuousState('idle');
+      }
+      return;
+    }
+    const socket = wsRef.current;
+    if (!enableNavigation || !canInteract || idleRecoveringRef.current || continuousFaultRef.current || discreteBusyRef.current || !socket
+      || automaticProbeRef.current === socket || !renderedCaptureRef.current
+      || continuousRef.current && !['closed', 'destroyed'].includes(continuousRef.current.state)) return;
+    automaticProbeRef.current = socket;
+    beginContinuous();
+    // A single capability attempt per owned video/mode; never replay a failed gesture.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [canInteract, enableNavigation, inspection, readOnly, continuousRecording, taskHandoffId, discreteBusy, continuousState]);
+
+  useEffect(() => {
+    if (!idleRecovering || !idleRecoveryAllowedRef.current) return;
+    const controller = continuousRef.current;
+    const socket = wsRef.current;
+    if (!socket || !['fenced', 'closed'].includes(controller?.state ?? continuousState)) return;
+    const released = controller?.state === 'closed' || !controller && continuousState === 'closed';
+    const timeout = setTimeout(() => {
+      if (!idleRecoveringRef.current || !idleRecoveryAllowedRef.current
+        || continuousRef.current !== controller || wsRef.current !== socket) return;
+      if (freshViewerAfterReleaseRef.current) {
+        if (controller?.state === 'closed') restartIdleSocketRef.current?.();
+        else {
+          // A missing/foreign/unknown release cannot be replaced by a timer or
+          // a fresh socket when the old touch outcome is uncertain.
+          idleRecoveringRef.current = false;
+          setIdleRecovering(false);
+          continuousFaultRef.current = true;
+          setContinuousFault(true);
+          setContinuousFailureCode('pointer_release_unknown');
+          setContinuousReason('Касание Android не подтвердило освобождение. Проверьте экран перед восстановлением.');
+        }
+      } else if (released) {
+        idleRecoveringRef.current = false;
+        setIdleRecovering(false);
+        automaticProbeRef.current = null;
+        setContinuousReason(null);
+        // The normal capability effect admits the new owner; no input is replayed.
+      } else if (!controller || controller.state === 'fenced') restartIdleSocketRef.current?.();
+    }, released ? idleRecoveryDelay(idleRecoveryCountRef.current) : IDLE_RECOVERY_LIMITS.releaseWaitMs);
+    return () => clearTimeout(timeout);
+  }, [idleRecovering, continuousState, surfaceActive, currentFrameOwned, enableNavigation,
+    inspectionActive, readOnly, continuousRecording, taskHandoffId, discreteBusy, continuousFault]);
+
+  const prepareDiscreteInput = (): ((confirmed: boolean) => void) | Promise<((confirmed: boolean) => void) | null> | null => {
+    const socket = wsRef.current;
+    const controller = continuousRef.current;
+    if (!canNavigate || discreteBusyRef.current || !socket || socket.readyState !== WebSocket.OPEN
+      || controller && !['ready', 'closed', 'destroyed'].includes(controller.state)) return null;
+    discreteBusyRef.current = true;
+    setDiscreteBusy(true);
+    continuousRequestedRef.current = false;
+    const finish = (confirmed: boolean) => {
+      if (wsRef.current !== socket) return;
+      discreteBusyRef.current = false;
+      setDiscreteBusy(false);
+      // Navigation can cancel a capability probe before any controller exists.
+      // A known key outcome must rearm readiness in that case too; otherwise
+      // this socket remains marked probed and new gestures stay blocked in idle.
+      if (confirmed) automaticProbeRef.current = null;
+      if (!confirmed) {
+        continuousFaultRef.current = true;
+        setContinuousFault(true);
+        setContinuousFailureCode('discrete_result_unknown');
+        setContinuousReason('Результат команды не подтверждён. Проверьте экран перед продолжением управления.');
+      }
+    };
+    if (!controller || ['closed', 'destroyed'].includes(controller.state)) {
+      if (continuousState === 'probing') setContinuousState('idle');
+      return finish;
+    }
+    return new Promise(resolve => {
+      let settled = false;
+      const timeout = setTimeout(() => waiting.finish(false), 3000);
+      const waiting = { controller, finish: (known: boolean) => {
+        if (settled) return;
+        settled = true;
+        clearTimeout(timeout);
+        if (releaseWaiterRef.current === waiting) releaseWaiterRef.current = null;
+        if (known && wsRef.current === socket) resolve(finish);
+        else { setContinuousState('fenced'); finish(false); resolve(null); }
+      } };
+      releaseWaiterRef.current = waiting;
+      controller.close(); // The HTTP command waits for native RELEASE3, never a timeout or Redis acceptance.
+    });
+  };
+  useEffect(() => {
+    // A partially recorded discrete drag belongs to the old mode. Never replay
+    // its UP after Stop, inspection, a lock or permission change.
+    dragRef.current = null;
+    if (inspection || readOnly || continuousRecording || taskHandoffId !== undefined) continuousRef.current?.retire('control_mode_changed');
+  }, [inspection, readOnly, continuousRecording, taskHandoffId]);
+  useEffect(() => {
+    const controller = continuousRef.current;
+    onInspectionControlReady?.(!!inspection && currentFrameOwned && !discreteBusy
+      && (!controller || controller.state === 'closed'));
+  }, [inspection, currentFrameOwned, discreteBusy, continuousState, onInspectionControlReady]);
+  useEffect(() => {
+    const controller = continuousRef.current;
+    onRecordingControlReady?.(continuousRecording && canInteract
+      && (!controller || controller.state === 'closed'));
+  }, [continuousRecording, canInteract, continuousState, onRecordingControlReady]);
+  useEffect(() => {
+    if (taskHandoffId === undefined) return;
+    const controller = continuousRef.current;
+    const state = continuousFault || !surfaceActive ? 'blocked'
+      : currentFrameOwned && !discreteBusy && (!controller || controller.state === 'closed') ? 'ready' : 'waiting';
+    onTaskHandoffState?.(state, taskHandoffId);
+  }, [taskHandoffId, onTaskHandoffState, currentFrameOwned, discreteBusy, continuousFault, surfaceActive, continuousState]);
+  useEffect(() => {
+    const controller = continuousRef.current;
+    if (!(inspectionActive || continuousRecording || taskHandoffId !== undefined) || !controller || controller.state === 'closed' || !currentFrameOwned) return;
+    const timeout = setTimeout(() => {
+      if (continuousRef.current !== controller || controller.state === 'closed') return;
+      continuousFaultRef.current = true;
+      setContinuousFault(true);
+      setContinuousFailureCode(taskHandoffId !== undefined ? 'task_release_unknown' : inspectionActive ? 'inspection_release_unknown' : 'recording_release_unknown');
+      setContinuousReason(taskHandoffId !== undefined ? 'Освобождение управления Android не подтверждено. Задание не создано; восстановите подключение.' : inspectionActive ? 'Освобождение управления Android не подтверждено. Чтение дерева не отправлено; восстановите подключение.' : 'Освобождение управления Android не подтверждено. Запись действий заблокирована; восстановите подключение.');
+    }, 3000);
+    return () => clearTimeout(timeout);
+  }, [inspectionActive, continuousRecording, taskHandoffId, currentFrameOwned, continuousState]);
+
   const handlePointerDown = useCallback(
     (e: React.PointerEvent<HTMLCanvasElement>) => {
+      // Inspection only selects a frame; it never injects Android input. Recording
+      // may use discrete input again after this controller's known native release.
+      if (!inspection && (discreteBusyRef.current || continuousFaultRef.current
+        || continuousSupportedRef.current && !continuousRecording
+        || continuousRef.current && !['closed', 'destroyed'].includes(continuousRef.current.state))) return;
+      if (!(canInteract || canSelectElement) || wsRef.current?.readyState !== WebSocket.OPEN
+        || renderedSocketRef.current !== wsRef.current) {
+        dragRef.current = null;
+        return;
+      }
+      if (e.button !== 0 || dragRef.current) return;
       const pt = toCanvasCoords(e.clientX, e.clientY);
       if (!pt) return;
-      dragRef.current = pt;
-      (e.target as HTMLCanvasElement).setPointerCapture(e.pointerId);
+      dragRef.current = {
+        ...pt, pointerId: e.pointerId,
+        frameWidth: e.currentTarget.width, frameHeight: e.currentTarget.height,
+        inspection: !!inspection,
+      };
+      e.currentTarget.setPointerCapture(e.pointerId);
     },
-    [toCanvasCoords],
+    [canInteract, canSelectElement, inspection, continuousRecording, toCanvasCoords],
   );
 
   // ── pointer up — tap or swipe ────────────────────────────────────────────
   const handlePointerUp = useCallback(
     (e: React.PointerEvent<HTMLCanvasElement>) => {
       const start = dragRef.current;
+      if (!start || e.pointerId !== start.pointerId) return;
       dragRef.current = null;
-      if (!start) return;
+      if (!(canInteract || canSelectElement) || start.inspection !== !!inspection || wsRef.current?.readyState !== WebSocket.OPEN
+        || renderedSocketRef.current !== wsRef.current || e.button !== 0
+        || e.currentTarget.width !== start.frameWidth
+        || e.currentTarget.height !== start.frameHeight) return;
 
-      const pt = toCanvasCoords(e.clientX, e.clientY);
+      const pt = toCanvasCoords(e.clientX, e.clientY, true);
       if (!pt) return;
 
       const dist = Math.hypot(pt.x - start.x, pt.y - start.y);
 
+      if (inspection) {
+        if (dist < 12) inspection.onPick(start.x, start.y, { width: start.frameWidth, height: start.frameHeight });
+        return;
+      }
+
       if (dist < 12) {
         // Tap
         onTap?.(start.x, start.y);
-        wsRef.current?.send(JSON.stringify({ type: 'click', x: start.x, y: start.y }));
+        if (wsRef.current?.readyState === WebSocket.OPEN) {
+          wsRef.current.send(JSON.stringify({ type: 'click', x: start.x, y: start.y }));
+          onControlSent?.({ deviceId, at: performance.now(), dimensions: { width: start.frameWidth, height: start.frameHeight }, command: { type: 'click', x: start.x, y: start.y } });
+        }
       } else {
         // Swipe — duration proportional to distance, min 150ms max 600ms
         const duration_ms = Math.min(600, Math.max(150, Math.round(dist * 0.8)));
-        wsRef.current?.send(
-          JSON.stringify({ type: 'swipe', x1: start.x, y1: start.y, x2: pt.x, y2: pt.y, duration_ms }),
-        );
+        if (wsRef.current?.readyState === WebSocket.OPEN) {
+          wsRef.current.send(JSON.stringify({ type: 'swipe', x1: start.x, y1: start.y, x2: pt.x, y2: pt.y, duration_ms }));
+          onControlSent?.({ deviceId, at: performance.now(), dimensions: { width: start.frameWidth, height: start.frameHeight }, command: { type: 'swipe', x1: start.x, y1: start.y, x2: pt.x, y2: pt.y, duration_ms } });
+        }
       }
     },
-    [toCanvasCoords, onTap],
+    [canInteract, canSelectElement, inspection, toCanvasCoords, onTap, onControlSent, deviceId],
   );
 
+  const handlePointerCancel = useCallback((e: React.PointerEvent<HTMLCanvasElement>) => {
+    if (e.pointerId === dragRef.current?.pointerId) dragRef.current = null;
+  }, []);
+
+  const handleWheel = useCallback((e: WheelEvent) => {
+    const continuous = continuousRef.current;
+    if (discreteBusyRef.current || continuousFaultRef.current || continuousSupportedRef.current && !continuousRecording && continuous?.state !== 'ready'
+      || continuous && !['ready', 'closed', 'destroyed'].includes(continuous.state)) return;
+    // Wheel control belongs to the selected-device view. Never intercept
+    // browser zoom, inspection, a retained old socket frame or a held drag.
+    const socket = wsRef.current;
+    const canvas = canvasRef.current;
+    if (!enableNavigation || !canInteract || !canvas || !socket || socket.readyState !== WebSocket.OPEN
+      || renderedSocketRef.current !== socket || socket.bufferedAmount > 64 * 1024 || dragRef.current || e.ctrlKey || e.metaKey) return;
+    const point = toCanvasCoords(e.clientX, e.clientY);
+    if (!point || !Number.isFinite(e.deltaX) || !Number.isFinite(e.deltaY)) return;
+    const horizontal = Math.abs(e.deltaX) > Math.abs(e.deltaY);
+    const delta = horizontal ? e.deltaX : e.deltaY;
+    if (!delta) return;
+    e.preventDefault();
+    if (continuous?.pointerHeld || wheelUpTimerRef.current) return;
+    const at = performance.now();
+    if (at - lastWheelAt.current < 250) return;
+    lastWheelAt.current = at;
+    const size = horizontal ? canvas.width : canvas.height;
+    const normalized = Math.abs(delta) * (e.deltaMode === 1 ? 16 : e.deltaMode === 2 ? size : 1);
+    const distance = Math.min(size * 0.25, 240, Math.max(40, normalized * 2));
+    const direction = Math.sign(delta);
+    const clamp = (value: number) => Math.round(Math.max(0, Math.min(size - 1, value)));
+    const position = horizontal ? point.x : point.y;
+    const from = clamp(position + direction * distance / 2);
+    const to = clamp(position - direction * distance / 2);
+    if (from === to) return;
+    if (continuous?.state === 'ready') {
+      const start = { x: horizontal ? from : point.x, y: horizontal ? point.y : from };
+      const end = { x: horizontal ? to : point.x, y: horizontal ? point.y : to };
+      if (!continuous.down(0, start)) return;
+      continuous.moveTo(0, end);
+      wheelUpTimerRef.current = setTimeout(() => {
+        wheelUpTimerRef.current = null;
+        if (continuousRef.current === continuous && continuousAllowedRef.current) continuous.up(0, end);
+        else continuous.retire('wheel_control_lost');
+      }, 180);
+      return;
+    }
+    socket.send(JSON.stringify({ type: 'swipe', x1: horizontal ? from : point.x, y1: horizontal ? point.y : from,
+      x2: horizontal ? to : point.x, y2: horizontal ? point.y : to, duration_ms: 180 }));
+    onControlSent?.({ deviceId, at, dimensions: { width: canvas.width, height: canvas.height }, command: { type: 'swipe', x1: horizontal ? from : point.x, y1: horizontal ? point.y : from,
+      x2: horizontal ? to : point.x, y2: horizontal ? point.y : to, duration_ms: 180 } });
+  }, [canInteract, enableNavigation, continuousRecording, toCanvasCoords, onControlSent, deviceId]);
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    // React delegates wheel events passively in modern browsers. A native
+    // non-passive listener is required to prevent scrolling the surrounding page.
+    canvas?.addEventListener('wheel', handleWheel, { passive: false });
+    return () => canvas?.removeEventListener('wheel', handleWheel);
+  }, [handleWheel]);
+
+  const saveFrame = useCallback(() => {
+    const canvas = canvasRef.current;
+    if (!canSaveFrame || !canvas || canvas.width < 1 || canvas.height < 1) return;
+    setScreenshotError(null);
+    try {
+      canvas.toBlob((blob) => {
+        if (!blob) { setScreenshotError('Не удалось сохранить декодированный кадр.'); return; }
+        const url = URL.createObjectURL(blob);
+        const anchor = document.createElement('a');
+        anchor.href = url;
+        anchor.download = `Sphere-frame-${deviceId.replace(/[^a-zA-Z0-9_-]/g, '_')}-${Date.now()}.png`;
+        document.body.appendChild(anchor);
+        anchor.click();
+        anchor.remove();
+        setTimeout(() => URL.revokeObjectURL(url), 1000);
+      }, 'image/png');
+    } catch {
+      setScreenshotError('Не удалось сохранить декодированный кадр.');
+    }
+  }, [canSaveFrame, deviceId]);
+
   return (
+    <div className={fit ? 'flex h-full w-full min-h-0 min-w-0 flex-col' : 'min-w-0'}>
+    {readOnly && enableNavigation && <p role="status" className="border-b border-border bg-muted px-3 py-2 text-xs text-muted-foreground">Только просмотр · {readOnlyReason ?? 'роль не разрешает клики, жесты и навигацию Android.'}</p>}
+    {enableNavigation && ((!inspection && !readOnly) || (inspection && continuousFault)) && <div data-control-state={continuousState} data-control-failure={continuousFailureCode ?? undefined} className="flex shrink-0 flex-wrap items-center gap-2 border-b border-border bg-card px-3 py-2 text-foreground">
+      <span className={`h-2 w-2 shrink-0 rounded-full ${continuousState === 'ready' ? 'bg-emerald-500' : 'bg-muted-foreground'}`} aria-hidden />
+      <span role="status" className="min-w-0 flex-[1_1_16rem] text-xs leading-relaxed">{continuousReason ?? (discreteBusy ? 'Клавиатура и навигация · ожидаем подтверждение Android' : continuousRecording ? 'Запись использует отдельные завершённые действия' : continuousState === 'ready'
+        ? 'Непрерывное управление · зажмите и ведите мышь' : continuousState === 'opening' ? 'Подключаем управление Android…' : continuousState === 'probing' ? 'Определяем возможности APK…' : continuousState === 'closed' ? 'Касание Android освобождено' : 'Управление Android')}
+      {continuousReceipt && continuousState === 'ready' && <span title={`Круговое время подтверждения Android №${continuousReceipt.sequence} через текущий серверный WebSocket, включая обработку на устройстве. Это не задержка изображения и не RTT прямого канала.`}>
+        {` · ${continuousReceipt.action === 4 ? 'ACK связи' : 'ACK действия'} через сервер: ${continuousReceipt.ms} мс`}
+      </span>}</span>
+      {continuousFault && !idleRecovering && ['fenced', 'closed'].includes(continuousState) && continuousReason && <button type="button" onClick={() => setControlSession(value => value + 1)} className="ml-auto rounded-lg border border-border px-3 py-2 text-xs hover:bg-muted">Восстановить управление</button>}
+    </div>}
+    {inputError && <div role="status" className="flex shrink-0 items-start justify-between gap-3 border-b border-amber-300 bg-amber-50 px-3 py-2 text-xs text-amber-950 dark:border-amber-800 dark:bg-amber-950 dark:text-amber-100">
+      <p>{inputError}</p><button type="button" onClick={() => { unknownPointerNoticeRef.current = false; setInputError(null); }} aria-label="Скрыть сообщение об управлении" className="shrink-0 rounded px-2 py-1 text-inherit hover:bg-amber-200 dark:hover:bg-amber-900 focus-visible:outline focus-visible:outline-2 focus-visible:outline-current">Скрыть</button>
+    </div>}
+    <div className={fit ? `relative w-full min-h-0 min-w-0 flex-1${enableNavigation ? '' : ' h-full'}` : 'relative'}>
     <canvas
       ref={canvasRef}
       onPointerDown={handlePointerDown}
       onPointerUp={handlePointerUp}
-      className="cursor-pointer rounded border border-gray-700 bg-black touch-none"
-      style={{ width: '100%', height: 'auto' }}
+      onPointerCancel={handlePointerCancel}
+      onLostPointerCapture={handlePointerCancel}
+      aria-label={inspection ? 'Экран устройства: выбор элемента без нажатия Android' : readOnly ? readOnlyReason ? `Экран устройства: только просмотр. ${readOnlyReason}` : 'Экран устройства: только просмотр, управление запрещено для вашей роли' : canInteract
+        ? connection === 'stale' ? 'Экран устройства: управление по последнему кадру' : 'Экран устройства: свежий видеопоток'
+        : 'Экран устройства: управление доступно после получения свежего видеокадра'}
+      aria-disabled={!(canInteract || canSelectElement)}
+      className={`${canInteract || canSelectElement ? 'cursor-crosshair' : 'pointer-events-none cursor-not-allowed'} rounded border border-gray-700 bg-black touch-none`}
+      style={{
+        display: 'block',
+        width: '100%',
+        height: fit ? '100%' : 'auto',
+        objectFit: fit ?? 'contain',
+      }}
     />
+    {currentDiagnosticSession && <LiveDirectVideo key={currentDiagnosticSession} deviceId={deviceId} session={currentDiagnosticSession}
+      eligible={!!serverCaptureRef.current && !recordingMode && !inspection && taskHandoffId === undefined}
+      fit={fit} expectedCapture={() => diagnosticReporter.current?.sessionId === currentDiagnosticSession ? serverCaptureRef.current : null}
+      onFrame={(video, binding) => renderDirectFrame(video, binding, currentDiagnosticSession)}
+      onObservation={value => observeDirectVideo(value, currentDiagnosticSession)} />}
+    {inspection?.bounds && lastFrameDimensionsRef.current && <svg aria-label="Границы выбранного элемента" className="pointer-events-none absolute inset-0 h-full w-full" viewBox={`0 0 ${lastFrameDimensionsRef.current.width} ${lastFrameDimensionsRef.current.height}`} preserveAspectRatio={fit === 'fill' ? 'none' : fit === 'cover' ? 'xMidYMid slice' : 'xMidYMid meet'}>
+      <rect x={inspection.bounds.left} y={inspection.bounds.top} width={inspection.bounds.right - inspection.bounds.left} height={inspection.bounds.bottom - inspection.bounds.top} fill="rgba(20,184,166,0.15)" stroke="#14b8a6" strokeWidth="2" vectorEffect="non-scaling-stroke" />
+    </svg>}
+    {enableScreenshot && <div className="absolute bottom-2 left-2 z-20 max-w-[calc(100%-1rem)]">
+      <button type="button" disabled={!canSaveFrame} onClick={saveFrame} title="Декодированный кадр H.264: PNG не восстанавливает потерянные при кодировании пиксели. Для эталонов используйте исходный PNG с Android." className="rounded-lg border border-white/20 bg-black/80 px-3 py-2 text-xs text-white disabled:cursor-not-allowed disabled:opacity-50">Кадр видео (PNG) · не оригинал</button>
+      {screenshotError && <p role="alert" className="mt-1 rounded bg-black/90 p-2 text-xs text-red-200">{screenshotError}</p>}
+    </div>}
+    {(connection !== 'live' || streamError) && (
+      hasRenderedFrame ? (
+        <div
+          role="status"
+          aria-live="polite"
+          className={`pointer-events-none absolute left-3 top-3 z-10 flex max-w-[calc(100%-1.5rem)] items-center gap-2 rounded-full border px-3 py-1.5 text-xs font-medium shadow-lg backdrop-blur ${
+            streamError || connection === 'unavailable'
+              ? 'border-red-300/25 bg-red-950/85 text-red-100'
+              : 'border-amber-300/25 bg-black/80 text-amber-100'
+          }`}
+        >
+          <span
+            aria-hidden="true"
+            className={`h-2 w-2 shrink-0 rounded-full ${
+              streamError || connection === 'unavailable' ? 'bg-red-400' : 'bg-amber-400'
+            }`}
+          />
+          <span className="truncate">
+            {streamError ?? (
+              connection === 'stale' ? canInteract
+                ? 'Экран не обновлялся более 10 секунд · управление по последнему кадру'
+                : 'Нет новых видеокадров более 10 секунд · показан последний кадр' :
+              connection === 'retrying' ? 'Переподключение · показан последний кадр' :
+              connection === 'unavailable' ? 'Стрим недоступен · показан последний кадр' :
+              'Ожидание нового кадра · показан последний кадр'
+            )}
+          </span>
+        </div>
+      ) : (
+        <div role="status" aria-live="polite" className="absolute inset-0 flex items-center justify-center bg-black/85 text-sm text-white">
+          {streamError ?? (
+            connection === 'connecting' ? 'Подключение…' :
+            connection === 'waiting' ? 'Ожидание видеокадра…' :
+            connection === 'stale' ? 'Первый видеокадр не получен за 10 секунд' :
+            connection === 'retrying' ? 'Переподключение…' : 'Стрим недоступен'
+          )}
+        </div>
+      )
+    )}
+    {enableDiagnostics && (
+      <div className="absolute right-2 top-2 z-20">
+        <button
+          type="button"
+          aria-expanded={diagnosticsOpen}
+          aria-controls={`stream-diagnostics-${deviceId}`}
+          onClick={() => setDiagnosticsOpen(value => !value)}
+          className="rounded border border-white/20 bg-black/80 px-2 py-1 text-xs text-white"
+        >
+          {diagnosticsOpen ? 'Скрыть диагностику' : 'Диагностика'}
+        </button>
+      </div>
+    )}
+    </div>
+    {enableNavigation && <AndroidNavigationBar key={deviceId} deviceId={deviceId} extended
+      available={canNavigate && (!continuousBusy || continuousState === 'ready') && wsRef.current?.readyState === WebSocket.OPEN}
+      prepareCommand={prepareDiscreteInput}
+      isAvailable={() => canNavigate && !continuousFaultRef.current && (!continuousRef.current || ['ready', 'closed', 'destroyed'].includes(continuousRef.current.state)) && wsRef.current?.readyState === WebSocket.OPEN}
+      onControlCommand={onControlCommand}
+      getFrameDimensions={() => {
+        const canvas = canvasRef.current;
+        return canvas && canNavigate && renderedSocketRef.current === wsRef.current
+          ? { width: canvas.width, height: canvas.height } : null;
+      }} />}
+    {enableDiagnostics && currentDiagnosticSession && directVideo.admissionKnown && !directVideo.admitted && <AutomaticStreamDiagnostic deviceId={deviceId} session={currentDiagnosticSession}
+      eligible={currentFrameOwned && !recordingMode && !inspection && taskHandoffId === undefined}
+      onBusyChange={setAutomaticDiagnosticBusy}
+      onDiagnostic={(sample, session) => { diagnosticReporter.current?.direct(sample, session); }} />}
+        {enableDiagnostics && diagnosticsOpen && (
+          <div
+            id={`stream-diagnostics-${deviceId}`}
+            role="region"
+            aria-label="Диагностика стрима и управления"
+            tabIndex={0}
+            className="mt-2 max-h-[min(40dvh,20rem)] w-full min-w-0 shrink-0 overflow-auto overscroll-contain rounded-xl border border-border bg-card p-3 text-left font-mono text-xs leading-5 text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          >
+            <div className="sticky -top-3 z-10 -mx-3 -mt-3 mb-2 flex items-start justify-between gap-3 border-b border-border bg-card p-3">
+              <h4 className="font-semibold">Сквозная диагностика кадра</h4>
+              <button type="button" onClick={() => setDiagnosticsOpen(false)} className="shrink-0 rounded-md border border-border px-2 py-1 font-sans hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">Закрыть диагностику</button>
+            </div>
+            <div>Управление Android: {continuousState}{continuousFailureCode ? ` · причина: ${continuousFailureCode}` : ''}</div>
+            <div>{directVideo.active ? 'Основное видео идёт напрямую с APK по WebRTC. Управление пока использует серверный WebSocket.'
+              : directVideo.admitted ? 'Видео идёт через сервер; прямой канал подключается или автоматически восстанавливается. Управление использует серверный WebSocket.'
+              : 'Видео и управление идут через сервер (WebSocket). Основной прямой канал для этого APK пока не включён.'}</div>
+            {directVideo.admitted && <div className="mt-2 border-t border-border pt-2">
+              <div>Основной WebRTC: {directVideo.active ? 'кадры отображаются' : 'серверный резерв'} · кадров {directVideo.frames} · подключений {directVideo.attempts}</div>
+              <div>Путь ICE: {directVideo.result?.path ?? 'unknown'} · {directVideo.result?.protocol ?? 'не измерен'}</div>
+              <div>Состояние канала: {directVideo.result?.state ?? 'ожидаем кадр сервера'} · ICE {directVideo.result?.iceState ?? '—'} · DTLS {directVideo.result?.network?.dtlsState ?? '—'}</div>
+              {directVideo.result?.reason && <div>Причина восстановления: {directFailure(directVideo.result.reason)}</div>}
+              <div>RTT сети: {directVideo.result?.videoStats?.networkRttMs?.toFixed(1) ?? '—'} мс</div>
+              <div>Буфер видео в браузере: {directVideo.result?.videoStats?.jitterBufferMs?.toFixed(1) ?? '—'} мс · декодирование: {directVideo.result?.videoStats?.decodeMs?.toFixed(1) ?? '—'} мс</div>
+              <p className="text-muted-foreground">Это отдельные этапы, а не полная задержка от экрана Android до браузера.</p>
+            </div>}
+            {directVideo.admitted ? null : automaticDiagnosticBusy ? <p className="mt-2 font-sans text-muted-foreground">Автоматическая проверка прямого видео выполняется. Результат появится в истории сеанса.</p> : process.env.NEXT_PUBLIC_DIRECT_TRANSPORT_CANARY === 'true'
+              ? <DirectProbeDiagnostics deviceId={deviceId} /> : <DirectProbeAccess deviceId={deviceId} />}
+            <div>Автоматическое восстановление управления: {idleRecoveryCount} попыток с задержкой до 15 секунд. Касания и команды не повторяются.</div>
+            {pointerFailureSnapshot && <ContinuousInputDiagnostics snapshot={pointerFailureSnapshot} />}
+            <StreamSessionHistoryPanel deviceId={deviceId} />
+            {diagnosticsError ? <div className="text-red-600 dark:text-red-300">{diagnosticsError}</div> : (
+              <>
+                <div>Отчёт APK: {agentDiagnostics?.state === 'active_report' ? 'захват активен' : agentDiagnostics?.state ?? 'загрузка…'}
+                  {diagnosticAgeSeconds != null && ` · snapshot ${Math.floor(diagnosticAgeSeconds)} сек назад`}
+                </div>
+                <div>Последний Android heartbeat: {formatIsoTimestampAgo(agentDiagnostics?.last_heartbeat)}</div>
+                {agentDiagnostics?.diagnostics ? (() => {
+                  const t = agentDiagnostics.diagnostics.telemetry;
+  return (
+                    <div className="mt-1 grid grid-cols-[repeat(2,minmax(0,1fr))] gap-x-3 break-words">
+                      <span>Capture FPS: {t.capture_fps ?? '—'}</span>
+                      <span>Surface FPS: {t.render_fps ?? '—'}</span>
+                      <span>Encoder FPS: {t.encoder_fps}</span>
+                      <span>Encoded: {t.encoded_frames_total}</span>
+                      <span>Captured: {t.capture_frames_total ?? '—'}</span>
+                      <span>Rendered: {t.rendered_frames_total ?? '—'}</span>
+                      <span>Local WS accepted: {t.ws_queue_accepted_total}/{t.ws_queue_attempts_total}</span>
+                      <span>Local WS rejected: {t.ws_queue_rejected_total}</span>
+                      <span>Capture errors: {t.capture_read_failures_total ?? '—'}</span>
+                      <span>Surface errors: {t.render_failures_total ?? '—'}</span>
+                      <span>Encoder errors: {t.encoder_errors_total ?? '—'}</span>
+                      <span>Raw capture FPS skips: {t.capture_throttle_drops_total ?? '—'}</span>
+                      <span>Raw codec input skips: {t.encoder_input_drops_total ?? '—'}</span>
+                      <span>Encoded FPS drops: {t.frame_throttle_drops_total ?? '—'}</span>
+                    </div>
+                  );
+                })() : <div>Нет свежего отчёта активного захвата от APK.</div>}
+                <div className="mt-2 border-t border-border pt-2">
+                  <div>Браузерный viewer: {browserStats ? `${browserStats.binaryMessagesReceived} пакетов · ${browserStats.binaryBytesReceived} байт` : 'нет данных'}</div>
+                  {browserStats && (
+                    <div className="grid grid-cols-[repeat(2,minmax(0,1fr))] gap-x-3 break-words">
+                      <span>Входной видео FPS (1 с): {browserStats.receivedPictureFpsCapped ? '≥' : ''}{browserStats.receivedPictureFps}</span>
+                      <span>Отрисовка FPS (1 с): {browserStats.renderedFpsCapped ? '≥' : ''}{browserStats.renderedFps}</span>
+                      <span>Последний пакет: {formatTimestampAgo(browserStats.lastBinaryAtMs)}</span>
+                      <span>Последний canvas frame: {formatTimestampAgo(browserStats.lastRenderedAtMs)}</span>
+                      <span>NAL SPS/PPS: {browserStats.spsUnits}/{browserStats.ppsUnits}</span>
+                      <span>IDR/delta: {browserStats.idrUnits}/{browserStats.deltaUnits}</span>
+                      <span>Decode submitted: {browserStats.decodeSubmitted}</span>
+                      <span>Decoded output: {browserStats.decodedOutputs}</span>
+                      <span>Drawn to canvas: {browserStats.renderedFrames}</span>
+                      <span>Invalid packets: {browserStats.invalidPackets}</span>
+                      <span>Decode/render errors: {browserStats.decodeErrors}/{browserStats.renderErrors}</span>
+                      {browserStats.lastDecodeError && <span>Последняя ошибка декодера: {browserStats.lastDecodeError}</span>}
+                      <span>WebCodecs queue: {browserStats.decoderQueueSize}</span>
+                      <span>Pending outputs: {browserStats.pendingOutputCount}</span>
+                      <span>Queue recoveries: {browserStats.queueRecoveries}</span>
+                      <span>Stale output drops: {browserStats.staleOutputDrops}</span>
+                      <span>Dropped before SPS/PPS: {browserStats.framesDroppedBeforeConfiguration}</span>
+                    </div>
+                  )}
+                </div>
+                <p className="mt-2 border-t border-border pt-2 text-muted-foreground">
+                  Принятие кадра локальной очередью APK не подтверждает получение сервером. Сейчас серверный receipt каждого кадра и браузерный декодер не связаны общим frame ID; сравнивайте Android counters с viewer counters.
+                </p>
+              </>
+            )}
+          </div>
+        )}
+    </div>
   );
 }

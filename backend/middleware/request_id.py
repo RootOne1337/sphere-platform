@@ -34,7 +34,7 @@ class RequestIdMiddleware(BaseHTTPMiddleware):
         structlog.contextvars.bind_contextvars(
             request_id=request_id,
             method=request.method,
-            path=request.url.path,
+            path=request.scope["path"],
         )
 
         response = await call_next(request)

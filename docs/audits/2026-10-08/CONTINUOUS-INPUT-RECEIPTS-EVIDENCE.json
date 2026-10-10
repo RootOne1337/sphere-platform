@@ -1,0 +1,160 @@
+{
+  "schemaVersion": 1,
+  "verifiedUtc": "2026-10-07T21:32:06.083046+00:00",
+  "status": "SOURCE_SCOPED_RECEIPT_BOUNDARY_VALIDATED_NOT_ROUTED_OR_INSTALLED",
+  "sourceFiles": {
+    "backend/websocket/continuous_lease.py": {
+      "bytes": 19759,
+      "sha256": "383b890f20f64f25906c62abb99b5ad34f2bf14161206d46557f3e4c280532bc"
+    },
+    "backend/websocket/continuous_receipts.py": {
+      "bytes": 5338,
+      "sha256": "e4375ce112270b5f3f4adf211c669af0496c28d464d46ac883be7bbf3d7152fb"
+    },
+    "tests/test_ws/test_continuous_lease.py": {
+      "bytes": 36546,
+      "sha256": "5a9ce0ac83b17dd9e2554770e842ab24044c9e9567883e3b81f133ffac1e4b7d"
+    }
+  },
+  "sourceHashMeaning": "Raw workspace bytes before Git normalization; copied source is tested only in an isolated temporary Python package.",
+  "validation": {
+    "distinctNewCases": 34,
+    "distinctFullCases": 130,
+    "protocolCases": 44,
+    "leaseDeliveryReceiptCases": 86,
+    "fakeredisLuaPassed": 130,
+    "realRedisPassed": 130,
+    "ruff": "passed",
+    "mypy": "passed for 2 changed/new source modules",
+    "realExecution": "Same static Lua, two clients, per-test random audit namespace/fake device IDs and TTL/exact-key cleanup. No startup hook, agent channel, database flush/scan or Android command.",
+    "socketScope": "Real ConnectionManager with mock ConnectionInfo/sockets, not an actual JWT/Android/topology handler",
+    "integerRoundtrip": {
+      "androidUptimeInput": 9007199254740991,
+      "outputIntegerExact": 9007199254740991,
+      "method": "Raw receipt_json string through Lua; Python strict reconstruction"
+    }
+  },
+  "limits": {
+    "messageBytes": 2048,
+    "deliveryMs": 500,
+    "redisOperationMs": 250,
+    "poolConnections": 8,
+    "retries": 0,
+    "leaseMs": 1500,
+    "authMs": 1500
+  },
+  "gates": {
+    "publicRouteConnected": false,
+    "startupHookAdded": false,
+    "subscriberAdded": false,
+    "callbackRegistryAdded": false,
+    "actualCallerPermissionsValidated": false,
+    "persistentQueueUsed": false,
+    "orgBroadcastUsed": false,
+    "publicationIsViewerDelivery": false,
+    "keyExpiryIsNativeRelease": false
+  },
+  "uncertainty": "One bounded fence attempt after uncertain publication/cancellation, no replay. TTL/native watchdog remain if fencing fails. Expired identity is not reconstructed to forward a late release.",
+  "precedingBrowserExactSourceCI": {
+    "verifiedUtc": "2026-10-07T21:32:06.083046+00:00",
+    "headSha": "a979bc9a5422e707320b0883b695134f86858d3e",
+    "runs": [
+      {
+        "conclusion": "success",
+        "databaseId": 37687781841,
+        "headSha": "a979bc9a5422e707320b0883b695134f86858d3e",
+        "name": "CI — Frontend",
+        "status": "completed",
+        "updatedAt": "2026-10-07T21:16:10Z",
+        "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/37687781841"
+      },
+      {
+        "conclusion": "success",
+        "databaseId": 37687781789,
+        "headSha": "a979bc9a5422e707320b0883b695134f86858d3e",
+        "name": "Preview — Deploy",
+        "status": "completed",
+        "updatedAt": "2026-10-07T21:12:57Z",
+        "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/37687781789"
+      },
+      {
+        "conclusion": "success",
+        "databaseId": 37687781811,
+        "headSha": "a979bc9a5422e707320b0883b695134f86858d3e",
+        "name": "CI — Android",
+        "status": "completed",
+        "updatedAt": "2026-10-07T21:25:58Z",
+        "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/37687781811"
+      },
+      {
+        "conclusion": "success",
+        "databaseId": 37687781983,
+        "headSha": "a979bc9a5422e707320b0883b695134f86858d3e",
+        "name": "CI — Backend",
+        "status": "completed",
+        "updatedAt": "2026-10-07T21:27:06Z",
+        "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/37687781983"
+      }
+    ],
+    "allFourRuns": "success",
+    "backendPassed": 3268,
+    "backendSkipped": 37,
+    "backendSubtestsPassed": 229,
+    "frontendTestsPassed": 1817,
+    "frontendSuitesPassed": 137,
+    "frontendTypesAndBuild": "success",
+    "receiptSourceIncluded": false,
+    "runtimeDeploy": false
+  },
+  "privateLogHashes": {
+    "continuous-receipts-fake-20261008.log": {
+      "bytes": 180,
+      "sha256": "c0cfc1f1f3b4eceb35798c58ba334cf2c1d646893afcc539da8f6bd63ecb1fc3"
+    },
+    "continuous-receipts-real-20261008.log": {
+      "bytes": 180,
+      "sha256": "a47b1db6937c79d38bebd9c5212d51087dafcc0a721c934b27f970e6182abd37"
+    },
+    "continuous-receipts-ruff-20261008.log": {
+      "bytes": 20,
+      "sha256": "a4443afdcfb6d7363adb285762515ccf7cf50473b1a05c20c1a50f6bed4d26b0"
+    },
+    "continuous-receipts-mypy-20261008.log": {
+      "bytes": 44,
+      "sha256": "0c37c4158c91ef55c724ba017bf6465f26018199badb08e3ff13f98acdf056c2"
+    },
+    "continuous-receipt-runner.py": {
+      "bytes": 1191,
+      "sha256": "2e88e739baa4cbe4a4619301a0aea9e1bfa3169b7326ff60056872523a2e604a"
+    },
+    "continuous-pointer-ci-runs-a979bc9.json": {
+      "bytes": 1060,
+      "sha256": "ef444bec1ba5becf414954f68f4380118e67e0d21b65388a551882ffd4dd856a"
+    },
+    "continuous-pointer-backend-ci-37687781983.log": {
+      "bytes": 1497233,
+      "sha256": "fe0cecf5cbe5df30902d2eaf4f171bc73904382d8a0442bbdc89c04842c90aaa"
+    },
+    "continuous-pointer-frontend-ci-37687781841.log": {
+      "bytes": 300881,
+      "sha256": "630cf88e66f7f5a808d788fe8dfafc57938f7115211a67abd13b5fed80d12a17"
+    },
+    "continuous-pointer-android-ci-37687781811.log": {
+      "bytes": 147980,
+      "sha256": "7a4779c15d6410fc0461030cfb7f4d6209c4398fceaddd785498550bc91307b7"
+    }
+  },
+  "runtime": {
+    "webDeploy": false,
+    "apiDeploy": false,
+    "workingAPKInstall": false,
+    "continuousMode3015Enabled": false,
+    "lastAcceptedUI": "af9054ecd0a12d0bc40112298c06178472b59eae",
+    "lastAcceptedAPI": "a41c4e64bf569a7518d34606da0facbba32f77e6"
+  },
+  "acceptanceLedger": {
+    "accepted": 9,
+    "open": 41,
+    "SF26-05": "OPEN"
+  }
+}

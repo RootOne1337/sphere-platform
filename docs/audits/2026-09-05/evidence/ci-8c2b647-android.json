@@ -1,0 +1,89 @@
+{
+  "attempt": 1,
+  "conclusion": "success",
+  "databaseId": 34597814720,
+  "event": "pull_request",
+  "headSha": "8c2b647c93b09506f8266fd594beae5934232ed1",
+  "jobs": [
+    {
+      "completedAt": "2026-09-11T12:19:58Z",
+      "conclusion": "success",
+      "databaseId": 103257594587,
+      "name": "Build APK",
+      "startedAt": "2026-09-11T12:13:29Z",
+      "status": "completed",
+      "steps": [
+        {
+          "conclusion": "success",
+          "name": "Set up job",
+          "number": 1,
+          "status": "completed"
+        },
+        {
+          "conclusion": "success",
+          "name": "Run actions/checkout@v4",
+          "number": 2,
+          "status": "completed"
+        },
+        {
+          "conclusion": "success",
+          "name": "Run actions/setup-java@v4",
+          "number": 3,
+          "status": "completed"
+        },
+        {
+          "conclusion": "success",
+          "name": "Run gradle/actions/setup-gradle@v3",
+          "number": 4,
+          "status": "completed"
+        },
+        {
+          "conclusion": "success",
+          "name": "Build debug APK",
+          "number": 5,
+          "status": "completed"
+        },
+        {
+          "conclusion": "success",
+          "name": "Run unit tests",
+          "number": 6,
+          "status": "completed"
+        },
+        {
+          "conclusion": "success",
+          "name": "Upload APK artifact",
+          "number": 7,
+          "status": "completed"
+        },
+        {
+          "conclusion": "success",
+          "name": "Post Run gradle/actions/setup-gradle@v3",
+          "number": 12,
+          "status": "completed"
+        },
+        {
+          "conclusion": "success",
+          "name": "Post Run actions/setup-java@v4",
+          "number": 13,
+          "status": "completed"
+        },
+        {
+          "conclusion": "success",
+          "name": "Post Run actions/checkout@v4",
+          "number": 14,
+          "status": "completed"
+        },
+        {
+          "conclusion": "success",
+          "name": "Complete job",
+          "number": 15,
+          "status": "completed"
+        }
+      ],
+      "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/34597814720/job/103257594587"
+    }
+  ],
+  "status": "completed",
+  "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/34597814720",
+  "workflowName": "CI — Android"
+}

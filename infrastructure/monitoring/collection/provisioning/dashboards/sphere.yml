@@ -1,0 +1,10 @@
+apiVersion: 1
+providers:
+  - name: Sphere verified collection
+    type: file
+    # Poll bind mounts: Docker Desktop may not forward filesystem watch events.
+    updateIntervalSeconds: 30
+    disableDeletion: true
+    allowUiUpdates: false
+    options:
+      path: /var/lib/grafana/dashboards

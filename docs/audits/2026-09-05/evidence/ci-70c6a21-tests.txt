@@ -1,0 +1,13 @@
+Backend run 34463225417, head 70c6a21e34e2772caa90d7166c9d43571127b87b, attempt 1
+Full suite summary and all eight new ASGI/non-owner SQL auth acknowledgement cases.
+
+Tests	Unit and real-service regression tests	2026-09-10T09:56:34.9425276Z tests/production/test_agent_tenant_runtime.py::test_auth_ack_precedes_registry_publication_and_commands[device] PASSED [ 22%]
+Tests	Unit and real-service regression tests	2026-09-10T09:56:35.3908961Z tests/production/test_agent_tenant_runtime.py::test_auth_ack_precedes_registry_publication_and_commands[refreshed] PASSED [ 23%]
+Tests	Unit and real-service regression tests	2026-09-10T09:56:35.9140546Z tests/production/test_agent_tenant_runtime.py::test_auth_ack_precedes_registry_publication_and_commands[enrollment_key] PASSED [ 23%]
+Tests	Unit and real-service regression tests	2026-09-10T09:56:36.3513734Z tests/production/test_agent_tenant_runtime.py::test_auth_ack_precedes_registry_publication_and_commands[user] PASSED [ 23%]
+Tests	Unit and real-service regression tests	2026-09-10T09:56:36.7757727Z tests/production/test_agent_tenant_runtime.py::test_auth_ack_delivery_failure_does_not_publish_or_evict_session PASSED [ 23%]
+Tests	Unit and real-service regression tests	2026-09-10T09:56:37.2040269Z tests/production/test_agent_tenant_runtime.py::test_auth_ack_is_not_issued_for_rejected_identity[foreign] PASSED [ 23%]
+Tests	Unit and real-service regression tests	2026-09-10T09:56:37.5916146Z tests/production/test_agent_tenant_runtime.py::test_auth_ack_is_not_issued_for_rejected_identity[invalid_token] PASSED [ 23%]
+Tests	Unit and real-service regression tests	2026-09-10T09:56:38.0481451Z tests/production/test_agent_tenant_runtime.py::test_auth_ack_is_not_issued_for_rejected_identity[inactive] PASSED [ 23%]
+Tests	Unit and real-service regression tests	2026-09-10T10:00:30.2810098Z Required test coverage of 65% reached. Total coverage: 69.34%
+Tests	Unit and real-service regression tests	2026-09-10T10:00:30.2810860Z ================= 1383 passed, 4 warnings in 298.47s (0:04:58) =================

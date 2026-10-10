@@ -1,0 +1,64 @@
+{
+  "evidenceSchema": 1,
+  "sourceRevision": "eb7a7c26c2e644f24eb3f785b3da1c29a65929be",
+  "archiveSha256": "a52e73f9dabd8ee160df8faf5f7caf68108e5ad9dd67d07a95b24d372894cc96",
+  "archiveBytes": 9144320,
+  "gitArchiveHeadOnly": true,
+  "builds": {
+    "api-build": {
+      "kind": "api",
+      "startedAt": "2026-10-06T07:26:57.855850+00:00",
+      "finishedAt": "2026-10-06T07:27:01.534107+00:00",
+      "exit": 0,
+      "timedOut": false,
+      "gitArchive": true,
+      "archiveSha256": "a52e73f9dabd8ee160df8faf5f7caf68108e5ad9dd67d07a95b24d372894cc96",
+      "imageId": "sha256:559b6bf58e39ed080244d2708a2189856b086dc3c89bf281f62cf42d5f2b28f3",
+      "image": "sphere-pilot-20260911-backend:eb7a7c26c2e644f24eb3f785b3da1c29a65929be",
+      "servicesInstalled": false,
+      "provenance": [
+        {
+          "retainedPrivateReceipt": "api-build.json",
+          "sha256": "881c39323a71ae9b5b61b6903dfcee7bf5902a096418257827f3565102904a7b",
+          "bytes": 660
+        },
+        {
+          "retainedPrivateReceipt": "api-build.log",
+          "sha256": "135868c36429b0599bf5ee4b8dcd6dbf478f925a2cbdd5a691f6192935b50857",
+          "bytes": 2910
+        }
+      ]
+    },
+    "ui-build": {
+      "kind": "ui",
+      "startedAt": "2026-10-06T07:27:16.173128+00:00",
+      "finishedAt": "2026-10-06T07:28:11.217396+00:00",
+      "exit": 0,
+      "timedOut": false,
+      "gitArchive": true,
+      "archiveSha256": "a52e73f9dabd8ee160df8faf5f7caf68108e5ad9dd67d07a95b24d372894cc96",
+      "imageId": "sha256:63159a43a6dde21edc4950b0dd33aa99e01e04ad06e6643d7bf572fba087b1b6",
+      "image": "sphere-review-frontend:eb7a7c26c2e644f24eb3f785b3da1c29a65929be",
+      "servicesInstalled": false,
+      "provenance": [
+        {
+          "retainedPrivateReceipt": "ui-build.json",
+          "sha256": "d442fda8ab08c5d3331027073acde1d10449be4cd370929fcbd5905dae9e8ee5",
+          "bytes": 652
+        },
+        {
+          "retainedPrivateReceipt": "ui-build.log",
+          "sha256": "ad0612edf97893c322605fd787a25c6aee93c8885f217ac6ea0ed29cfc3064e5",
+          "bytes": 14233
+        }
+      ]
+    }
+  },
+  "rollbackImages": {
+    "oldApiImageId": "sha256:c274bb4aa5b7af17413101a9442a9ba7716785425df6fad396b034419990c28c",
+    "oldApiRevision": "c2b91e3202948860e4d99b3f35cbe441d2842538",
+    "oldUiImageId": "sha256:e803fc55dc05c1271762d3dca911d1f354e2a42665e8cb0cd917fff20e631c69",
+    "oldUiRevision": "a670a3df3c90ad10658b71ad1b639689d407cf97"
+  },
+  "buildDoesNotEstablishInstallation": true
+}

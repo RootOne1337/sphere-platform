@@ -1,0 +1,95 @@
+{
+  "observedAt": "2026-10-05T21:53:35.279764+00:00",
+  "task": {
+    "id": "b47cb4f2-7a92-46f2-8290-851635fe7890",
+    "script_id": "fbffbc95-3c16-4f1e-8833-d77271ac1b28",
+    "script_version_id": "843654ef-e486-4b63-8e50-578a4226df44",
+    "device_id": "b410464a-5f26-4803-a756-7840cc17b128",
+    "device_name": "auto-ph-025",
+    "script_name": "Studio canary 20261006-0227",
+    "status": "completed",
+    "started_at": "2026-10-05T21:30:34.799041Z",
+    "finished_at": "2026-10-05T21:30:37.324879Z",
+    "result": {
+      "success": true,
+      "node_logs": [
+        {
+          "node_id": "start-1",
+          "success": true,
+          "action_type": "start",
+          "duration_ms": 0
+        },
+        {
+          "node_id": "step_850394e2129d",
+          "success": true,
+          "action_type": "sleep",
+          "duration_ms": 2000
+        },
+        {
+          "node_id": "end-1",
+          "success": true,
+          "action_type": "end",
+          "duration_ms": 0
+        }
+      ],
+      "nodes_executed": 3
+    },
+    "error_message": null
+  },
+  "script": {
+    "id": "fbffbc95-3c16-4f1e-8833-d77271ac1b28",
+    "name": "Studio canary 20261006-0227",
+    "versionId": "843654ef-e486-4b63-8e50-578a4226df44",
+    "version": 1,
+    "dagHash": "6ba193f89e34a2b93efc41c60d547e21923d54417e69d3f6b795e8c7128c6916",
+    "dag": {
+      "name": null,
+      "nodes": [
+        {
+          "id": "start-1",
+          "retry": 0,
+          "action": {
+            "type": "start"
+          },
+          "on_failure": null,
+          "on_success": "step_850394e2129d",
+          "timeout_ms": 30000
+        },
+        {
+          "id": "end-1",
+          "retry": 0,
+          "action": {
+            "type": "end"
+          },
+          "on_failure": null,
+          "on_success": null,
+          "timeout_ms": 30000
+        },
+        {
+          "id": "step_850394e2129d",
+          "retry": 0,
+          "action": {
+            "ms": 2000,
+            "type": "sleep"
+          },
+          "on_failure": null,
+          "on_success": "end-1",
+          "timeout_ms": 30000
+        }
+      ],
+      "version": "1.0",
+      "entry_node": "start-1",
+      "timeout_ms": 1800000,
+      "description": null
+    }
+  },
+  "tasksForThisScript": 1,
+  "device": {
+    "id": "b410464a-5f26-4803-a756-7840cc17b128",
+    "name": "auto-ph-025",
+    "status": "online",
+    "agent_version": "1.2.45-dev"
+  },
+  "createdAndRunThroughBrowser": true,
+  "deviceSettingsFilesAppsChanged": false
+}

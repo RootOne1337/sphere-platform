@@ -1,0 +1,383 @@
+{
+  "schemaVersion": 1,
+  "observedAtUtc": "2026-10-09T15:32:01.063638+00:00",
+  "scope": "API-only diagnostic delivery, failed finite PH011 idle canary and bounded resource observation. Not idle reliability acceptance.",
+  "runtimeInstalled": true,
+  "runtime": {
+    "sourceRevision": "86354350638650215717658b9395b2751326af6c",
+    "apiSourceRevision": "d720232e3164d278a7322a61a90ba111e205ae3c",
+    "backendContainerId": "7463f441f41cf6d7d39679166d4281db28d8cd009c60c572611b0a079001ef19",
+    "backendStartedAtUtc": "2026-10-09T15:17:26.705186134Z",
+    "apiConfigImageId": "sha256:0d77eadfa4c02d52cac4a1479d5baa0aefc355a44cfa23a429c0e48cb42bc88a",
+    "apiLoadedManifestId": "sha256:ee2e9dea6466237f9cc30488784524b5aa7590f07fa117b0651cc94fefffe891",
+    "otherContainersPreserved": 45,
+    "schemaHeads": [
+      "20261006_script_catalog_metadata"
+    ],
+    "schemaChanged": false,
+    "apkChanged": false,
+    "otaCatalogSha256": "5d5dcb5521277b51f366ea5370a2f7df5fd62696de0d5b7b86a56b443b03af10",
+    "previousApiSourceRevision": "be803773037c16a113b50c1a2774793fffae8773",
+    "priorUiProof": "docs/audits/2026-10-09/STREAM-DIAGNOSTICS-INSTALLED-ACCEPTANCE.json",
+    "priorUiProofSha256NormalizedLf": "24e036aaf614f12372886a20d2edb42978fbe68e971b8afafe7b4215909e3e4a"
+  },
+  "delivery": {
+    "artifact": {
+      "source": "d720232e3164d278a7322a61a90ba111e205ae3c",
+      "runId": 37948194812,
+      "artifactId": 11623864520,
+      "zipBytes": 236229880,
+      "zipSha256": "1fdb2e4a5d608ca6c0f83079eceb2a871c2235ead3aa1f5a5e7352f4033c9588",
+      "independentImageId": "sha256:0d77eadfa4c02d52cac4a1479d5baa0aefc355a44cfa23a429c0e48cb42bc88a",
+      "ciAdmission": {
+        "sourceRevision": "d720232e3164d278a7322a61a90ba111e205ae3c",
+        "imageId": "sha256:0d77eadfa4c02d52cac4a1479d5baa0aefc355a44cfa23a429c0e48cb42bc88a",
+        "imageTag": "sphere-reviewed-backend:d720232e3164d278a7322a61a90ba111e205ae3c",
+        "archiveBytes": 236228248,
+        "runId": 37948194812,
+        "runAttempt": 1,
+        "migrationHeads": [
+          "20261006_script_catalog_metadata"
+        ],
+        "archiveAdmitted": true,
+        "runtimeInstalled": false
+      },
+      "artifactDirectory": "C:\\Users\\dimas\\Documents\\ChatGPT\\sphere-platform\\.local-pilot\\continuous-server-timings-20261009-d720232e\\artifact",
+      "ciImageIdentityIndependentOfDownloadedReceipt": true,
+      "retainedZip": false
+    },
+    "sourceChanges": [
+      "backend/metrics.py",
+      "backend/websocket/continuous_delivery.py",
+      "backend/websocket/continuous_lease.py",
+      "backend/websocket/continuous_observability.py",
+      "backend/websocket/continuous_receipts.py",
+      "backend/websocket/continuous_runtime.py"
+    ],
+    "installerReportDirectory": "C:\\Users\\dimas\\Documents\\ChatGPT\\sphere-platform\\.local-pilot\\reviewed-backend-install-d720232e3164-9a4f2f1d",
+    "hostInstallerFiniteTests": 19,
+    "sourceWorktreeNormalizedLfSha256": {
+      "scripts/pilot/install_reviewed_backend.py": "6bb71def75c1197f6737d5dafc42a2c290c59ef81ee995f8fecf88af32ecbe43",
+      "tests/containers/test_install_reviewed_backend.py": "941e7093f53dc2f4ebb489658f84b99daef8b8c322023551d0cd14d982e34089"
+    },
+    "dependencyAndActionContractHashesVerified": true,
+    "completeBaselineRoundtripVerified": true,
+    "resourceFindings": []
+  },
+  "ci": {
+    "exactSource": "d720232e3164d278a7322a61a90ba111e205ae3c",
+    "runs": [
+      {
+        "conclusion": "success",
+        "databaseId": 37948194690,
+        "headSha": "d720232e3164d278a7322a61a90ba111e205ae3c",
+        "name": "CI — Frontend",
+        "status": "completed"
+      },
+      {
+        "conclusion": "success",
+        "databaseId": 37948194703,
+        "headSha": "d720232e3164d278a7322a61a90ba111e205ae3c",
+        "name": "Preview — Deploy",
+        "status": "completed"
+      },
+      {
+        "conclusion": "success",
+        "databaseId": 37948194713,
+        "headSha": "d720232e3164d278a7322a61a90ba111e205ae3c",
+        "name": "CI — Android",
+        "status": "completed"
+      },
+      {
+        "conclusion": "success",
+        "databaseId": 37948194812,
+        "headSha": "d720232e3164d278a7322a61a90ba111e205ae3c",
+        "name": "CI — Backend",
+        "status": "completed"
+      }
+    ],
+    "allFourSuccessful": true,
+    "backendTests": 3387,
+    "backendSkipped": 37,
+    "backendSubtests": 233,
+    "backendTestSummary": {
+      "testSummaries": [
+        "3387 passed, 37 skipped, 2 warnings, 233 subtests passed in 824.48s"
+      ],
+      "jobLogBytes": 761084
+    },
+    "fullCiMypy": "passed",
+    "localFullMypyLimitation": "Unmodified game_accounts.py typing on local dependencies; source audit preserved."
+  },
+  "browser": {
+    "finiteAccepted": true,
+    "finiteAcceptedScope": "Version display, decoded video, retained failure evidence and clean unchanged graph/queue. Idle reliability failed.",
+    "idleControlAccepted": false,
+    "device": "PH011",
+    "apkVersion": "1.2.49-dev",
+    "apkVersionCode": 10249,
+    "firstReadyObservedAtUtc": "2026-10-09T15:19:17.607Z",
+    "failureReadAtUtc": "2026-10-09T15:20:57.075Z",
+    "exactFailureWallClockUtc": null,
+    "labClosedAtUtc": "2026-10-09T15:26:08.587Z",
+    "failure": {
+      "reason": "native_receipt_timeout",
+      "phase": "ready",
+      "offeredSequence": 237,
+      "acknowledgedSequence": 235,
+      "pendingCount": 2,
+      "oldestSequence": 236,
+      "oldestAction": "HEARTBEAT",
+      "oldestAgeMs": 510,
+      "oldestDeadlineAgeMs": 510,
+      "browserTickGapMs": 15,
+      "lastActualAckRttMs": 256,
+      "lastAckAgeMs": 512,
+      "lastSendAgeMs": 253,
+      "pointerHeld": false,
+      "terminalSequence": null,
+      "webSocketState": "OPEN",
+      "bufferedBytes": 0,
+      "idleRecoveryUsed": 1,
+      "idleRecoveryLimit": 1
+    },
+    "decodeRenderErrors": [
+      0,
+      0
+    ],
+    "recordedRows": 0,
+    "graphNodes": 3,
+    "graphEdges": 2,
+    "undoDepth": 0,
+    "publishedVersion": 1,
+    "saveOrRunPerformed": false,
+    "pointerTextKeyCommandsSent": false,
+    "viewSelectedAfterFailure": true,
+    "diagnosticsClosed": true,
+    "labClosed": true,
+    "temporaryTabClosed": true,
+    "userTabReloaded": false,
+    "nativeReleaseConfirmationAccepted": false,
+    "plannedIdleMinutes": 13,
+    "completedUninterruptedIdleMinutes": null,
+    "note": "Idle ended on reproduced failure. The 13-minute scrape window also includes closed/control-free reads; it is not 13 minutes of healthy control."
+  },
+  "timings": {
+    "windowStartUtc": "2026-10-09T15:18:21.494976+00:00",
+    "windowEndUtc": "2026-10-09T15:31:21.491012+00:00",
+    "samples": 27,
+    "availableSamples": 27,
+    "counterResetObserved": false,
+    "reportBytes": 207140,
+    "stages": [
+      {
+        "stage": "agent_delivery",
+        "outcome": "returned",
+        "count": 403.0,
+        "sumSeconds": 0.21262919888249598,
+        "meanMs": 0.5276158781203374,
+        "overThreshold": {
+          "0.025": 0.0,
+          "0.1": 0.0,
+          "0.25": 0.0,
+          "0.4": 0.0,
+          "0.5": 0.0,
+          "1.0": 0.0
+        }
+      },
+      {
+        "stage": "agent_reply_relay",
+        "outcome": "returned",
+        "count": 405.0,
+        "sumSeconds": 0.48021725166472606,
+        "meanMs": 1.1857216090487064,
+        "overThreshold": {
+          "0.025": 0.0,
+          "0.1": 0.0,
+          "0.25": 0.0,
+          "0.4": 0.0,
+          "0.5": 0.0,
+          "1.0": 0.0
+        }
+      },
+      {
+        "stage": "pubsub_dispatch",
+        "outcome": "returned",
+        "count": 2025.0,
+        "sumSeconds": 0.578844574309187,
+        "meanMs": 0.28584917249836395,
+        "overThreshold": {
+          "0.025": 0.0,
+          "0.1": 0.0,
+          "0.25": 0.0,
+          "0.4": 0.0,
+          "0.5": 0.0,
+          "1.0": 0.0
+        }
+      },
+      {
+        "stage": "redis_lease_operation",
+        "outcome": "returned",
+        "count": 1348.0,
+        "sumSeconds": 0.524886875617085,
+        "meanMs": 0.3893819552055527,
+        "overThreshold": {
+          "0.025": 0.0,
+          "0.1": 0.0,
+          "0.25": 0.0,
+          "0.4": 0.0,
+          "0.5": 0.0,
+          "1.0": 0.0
+        }
+      },
+      {
+        "stage": "viewer_admission",
+        "outcome": "returned",
+        "count": 405.0,
+        "sumSeconds": 0.23241109153605066,
+        "meanMs": 0.5738545470025942,
+        "overThreshold": {
+          "0.025": 0.0,
+          "0.1": 0.0,
+          "0.25": 0.0,
+          "0.4": 0.0,
+          "0.5": 0.0,
+          "1.0": 0.0
+        }
+      },
+      {
+        "stage": "viewer_receipt_validation",
+        "outcome": "returned",
+        "count": 403.0,
+        "sumSeconds": 0.10231013293378055,
+        "meanMs": 0.25387129760243315,
+        "overThreshold": {
+          "0.025": 0.0,
+          "0.1": 0.0,
+          "0.25": 0.0,
+          "0.4": 0.0,
+          "0.5": 0.0,
+          "1.0": 0.0
+        }
+      },
+      {
+        "stage": "viewer_socket_send",
+        "outcome": "returned",
+        "count": 407.0,
+        "sumSeconds": 0.0420715379586909,
+        "meanMs": 0.10336987213437566,
+        "overThreshold": {
+          "0.025": 0.0,
+          "0.1": 0.0,
+          "0.25": 0.0,
+          "0.4": 0.0,
+          "0.5": 0.0,
+          "1.0": 0.0
+        }
+      }
+    ],
+    "inclusiveDurationsMayOverlap": true,
+    "concreteSequenceCorrelationProven": false,
+    "networkApkNativeQueueDurationMeasured": false,
+    "idleFailureFixed": false
+  },
+  "resources": {
+    "start": {
+      "observedAtUtc": "2026-10-09T15:20:08.460359+00:00",
+      "phase": "start",
+      "metrics": {
+        "metricDirectories": [
+          {
+            "files": 17,
+            "bytes": 1048578
+          }
+        ],
+        "liveInstrumentedWorkers": [
+          "4.0"
+        ],
+        "scrapeBytes": 25199
+      },
+      "containerStats": {
+        "CPUPerc": "3.33%",
+        "MemUsage": "579.5MiB / 2GiB",
+        "MemPerc": "28.30%",
+        "PIDs": "26",
+        "BlockIO": "0B / 0B",
+        "NetIO": "8.5MB / 12.8MB"
+      },
+      "finiteObservationOnly": true,
+      "resourceSoakAccepted": false
+    },
+    "end": {
+      "observedAtUtc": "2026-10-09T15:26:19.430446+00:00",
+      "phase": "end",
+      "metrics": {
+        "metricDirectories": [
+          {
+            "files": 17,
+            "bytes": 1048578
+          }
+        ],
+        "liveInstrumentedWorkers": [
+          "4.0"
+        ],
+        "scrapeBytes": 25233
+      },
+      "containerStats": {
+        "CPUPerc": "1.35%",
+        "MemUsage": "589.6MiB / 2GiB",
+        "MemPerc": "28.79%",
+        "PIDs": "27",
+        "BlockIO": "0B / 0B",
+        "NetIO": "15.1MB / 20.5MB"
+      },
+      "finiteObservationOnly": true,
+      "resourceSoakAccepted": false
+    }
+  },
+  "screenshots": [
+    {
+      "file": "docs/audits/2026-10-09/assets/server-timings/browser-failure.jpg",
+      "bytes": 100366,
+      "sha256": "8fa0dcd75740a8fa8520605ce3ce6ca702791699ab63106c0703690264667277",
+      "format": "JPEG"
+    },
+    {
+      "file": "docs/audits/2026-10-09/assets/server-timings/browser-failure-fields.jpg",
+      "bytes": 98000,
+      "sha256": "1840b8d85fb5cf80bb107c60d96b4747b901e47ba43b807d6aa215ef73db1314",
+      "format": "JPEG"
+    }
+  ],
+  "storageObserver": {
+    "state": "running",
+    "pid": 26192,
+    "lastSampleUtc": "2026-10-09T15:30:57.052614+00:00",
+    "samplesWritten": 85,
+    "reportBytes": 1132896,
+    "reportBudgetBytes": 16777216,
+    "dueUtc": "2026-10-10T12:42:57.051894+00:00",
+    "sequentialRowsAndBytesVerified": true,
+    "sourceFingerprintVerified": true,
+    "vssAvailable": false,
+    "kernelWriterAttributionStarted": false,
+    "wholePcWriter": "UNKNOWN"
+  },
+  "acceptance": {
+    "diagnosticDeliveryAccepted": true,
+    "idleFailureFixed": false,
+    "specificSlowBackendCoroutineObserved": false,
+    "networkApkNativeQueuedPathLocalized": false,
+    "resourceSoakAccepted": false,
+    "fleetAccepted": false,
+    "productAccepted": 9,
+    "productOpen": 41,
+    "legacySourceFixed": 34,
+    "legacyUnclosed": 7
+  },
+  "next": [
+    "Measure Android transport/native enqueue, delivery and reply phases with bounded privacy-preserving timing.",
+    "Measure before-callback queue/scheduling gaps; global stage histograms do not correlate a concrete sequence.",
+    "Fix the localized cause, then repeat idle/touch/cancel/ownership canaries and resource soak without input replay or deadline inflation."
+  ]
+}

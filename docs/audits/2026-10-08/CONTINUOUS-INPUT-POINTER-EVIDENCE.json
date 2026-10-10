@@ -1,0 +1,323 @@
+{
+  "schemaVersion": 1,
+  "verifiedUtc": "2026-10-07T21:10:17.792145+00:00",
+  "status": "SOURCE_BROWSER_CONTROLLER_VALIDATED_REAL_KOTLIN_CANARY_NOT_INSTALLED_END_TO_END_OPEN",
+  "sourceFiles": {
+    "frontend/src/features/stream/continuousPointer.ts": {
+      "bytes": 18976,
+      "sha256": "8c3eab1f7b4448329cd7f4cc5cd4dfa520039aaa8fc886a1414a49aca2f1ea1d"
+    },
+    "frontend/__tests__/stream/continuous-pointer.test.ts": {
+      "bytes": 21331,
+      "sha256": "2e7ccc06b14ceb329e1e5a9944a79eb8afc0154c88ccfbd154a464d45b3bab76"
+    }
+  },
+  "sourceHashMeaning": "Raw workspace bytes before Git normalization; caller integration is deliberately absent.",
+  "browserValidation": {
+    "distinctNewCases": 64,
+    "leafPassed": 64,
+    "fullTestsPassed": 1817,
+    "fullSuitesPassed": 137,
+    "freshRouteTypegen": "passed",
+    "fullNonIncrementalTypeScript": "passed",
+    "transport": "Jest/jsdom, mock socket and synthetic DOM pointer events, not live browser/Android"
+  },
+  "realKotlinCanary": {
+    "startedUtc": "2026-10-07T21:03:11.735239+00:00",
+    "completedUtc": "2026-10-07T21:03:30.261732+00:00",
+    "distinctScenarios": 10,
+    "device": "idle PH010/emulator-5554, Android9, physical960x540,rotation0,density160,display60Hz",
+    "entryPoint": "debug ContinuousInputCanary via root app_process/private ADB pipe",
+    "realComponents": [
+      "ContinuousInputController",
+      "AdbActionExecutor",
+      "InputOwnership",
+      "OwnedTouchPipeFactory",
+      "RootTouchPipeFactory",
+      "RootTouchBridge",
+      "independent Android View"
+    ],
+    "simulatedComponents": [
+      "CaptureInputSession with non-UUID canary_epoch_1234/5678",
+      "connection generation"
+    ],
+    "notExercised": [
+      "MediaProjection/frame v2",
+      "Application/Service startup",
+      "CommandDispatcher/WebSocketClient",
+      "browser module",
+      "server routes/RBAC/Redis/multiworker",
+      "remote network/video rendering"
+    ],
+    "apkSha256": "2a757e45484f1400f6c1fee7abe79ddd6b216cbde01ea5685961c7c7d9cdf56c",
+    "receiverSha256": "87784dbb6ea25e43dab89d9b361d9ded798d4d51eb70e4760c82965fd991195e",
+    "apkUse": "temporary classpath only; no installation of working Sphere package",
+    "beforeUp": {
+      "down": 1,
+      "move": 5,
+      "up": 0,
+      "cancel": 0,
+      "firstDownUptimeMs": 4364676,
+      "lastMoveUptimeMs": 4365067,
+      "terminalUptimeMs": 0,
+      "x": 340,
+      "y": 168
+    },
+    "afterUp": {
+      "down": 1,
+      "move": 5,
+      "up": 1,
+      "cancel": 0,
+      "firstDownUptimeMs": 4364676,
+      "lastMoveUptimeMs": 4365067,
+      "terminalUptimeMs": 4365157,
+      "x": 400,
+      "y": 168
+    },
+    "beforeUpMoveX": [
+      340,
+      180,
+      400,
+      220,
+      340
+    ],
+    "localPrivatePipeReceiptRoundTripsMs": [
+      44.69,
+      46.265,
+      47.521,
+      50.15,
+      9.468,
+      5.454,
+      5.08
+    ],
+    "latencyMeaning": "Small command-to-injector receipt sample; not p95, end-to-end latency or render acknowledgement",
+    "silentCancelAfterDownAckMs": 1501,
+    "stationaryHeartbeatHoldMs": 1816,
+    "scenarios": [
+      "move_before_up_and_discrete_exclusion",
+      "stdin_eof_cancels_held_touch",
+      "silent_expiry",
+      "same_size_restart_and_late_old_event",
+      "connection_generation_loss",
+      "foreign_owner_does_not_cancel_real_owner",
+      "duplicate_sequence_is_cancelled_without_replay",
+      "explicit_cancel3_and_next_gesture",
+      "heartbeat2_keeps_stationary_finger_held",
+      "bounded_burst_preserves_terminal"
+    ],
+    "burstOfferedMoves": 32,
+    "burstObservedView": {
+      "down": 1,
+      "move": 1,
+      "up": 1,
+      "cancel": 0,
+      "firstDownUptimeMs": 4379795,
+      "lastMoveUptimeMs": 4379848,
+      "terminalUptimeMs": 4379849,
+      "x": 420,
+      "y": 160
+    },
+    "burstAppliedMeaning": "Coalesced MOVE, not all offered points; terminal UP and native INPUT1 separately verified",
+    "explicitCancelStatus": 3,
+    "cleanup": {
+      "receiverUninstalled": true,
+      "classpathFileRemoved": true,
+      "launcherRestored": true,
+      "workingAPKPreserved": true
+    },
+    "workingAPKBeforeAfter": "1.2.47-dev/10247 version checked both times; installed APK byte hash was not compared",
+    "privateReportHashes": {
+      "run.py": {
+        "bytes": 15569,
+        "sha256": "c475a0b523415b7307eec204e2f2628f10fdbc066c2e73bd828f9845b9ce2e46"
+      },
+      "run.log": {
+        "bytes": 532,
+        "sha256": "5a95e1ab44e4c8970ca4702646948a90ed481cb3710be5f52d16b8a27fa17617"
+      },
+      "evidence.json": {
+        "bytes": 17683,
+        "sha256": "380807cad0a81d007049d591777918c12e68ed1c93869fe92000bfd01bf4bf62"
+      },
+      "run-8-cases.py": {
+        "bytes": 13860,
+        "sha256": "ab8762e3987d953f105240e9093d781a55eecd578f95127d56fee7100dc6e1b4"
+      },
+      "run-8-cases.log": {
+        "bytes": 452,
+        "sha256": "afad4d48e06ba5566671d8c1434a4de95047d3073fffa4abe21cd3e4d2ab15f5"
+      },
+      "evidence-8-cases.json": {
+        "bytes": 10357,
+        "sha256": "3a90b6942ea543095da5f9633b6f60b579ee3a855b76bbd4f3bc41d6fceb94c6"
+      },
+      "preflight-evidence.json": {
+        "bytes": 677,
+        "sha256": "1d83936c0d44dab34353ce17408177920f071379a937a1268498cede40b43552"
+      }
+    }
+  },
+  "precedingServerExactSourceCI": {
+    "headSha": "0a8cd9422c70c71284fa672be2a24f5de06b59cc",
+    "allFourRuns": "success",
+    "runs": [
+      {
+        "conclusion": "success",
+        "databaseId": 37682637226,
+        "headSha": "0a8cd9422c70c71284fa672be2a24f5de06b59cc",
+        "name": "Preview — Deploy",
+        "status": "completed",
+        "updatedAt": "2026-10-07T20:31:32Z",
+        "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/37682637226"
+      },
+      {
+        "conclusion": "success",
+        "databaseId": 37682637240,
+        "headSha": "0a8cd9422c70c71284fa672be2a24f5de06b59cc",
+        "name": "CI — Frontend",
+        "status": "completed",
+        "updatedAt": "2026-10-07T20:34:21Z",
+        "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/37682637240"
+      },
+      {
+        "conclusion": "success",
+        "databaseId": 37682637220,
+        "headSha": "0a8cd9422c70c71284fa672be2a24f5de06b59cc",
+        "name": "CI — Backend",
+        "status": "completed",
+        "updatedAt": "2026-10-07T20:48:23Z",
+        "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/37682637220"
+      },
+      {
+        "conclusion": "success",
+        "databaseId": 37682637207,
+        "headSha": "0a8cd9422c70c71284fa672be2a24f5de06b59cc",
+        "name": "CI — Android",
+        "status": "completed",
+        "updatedAt": "2026-10-07T20:45:34Z",
+        "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/37682637207"
+      }
+    ],
+    "backend": {
+      "passed": 3268,
+      "skipped": 37,
+      "subtestsPassed": 229,
+      "fullJobs": "success"
+    },
+    "frontend": {
+      "testsPassed": 1753,
+      "suitesPassed": 136,
+      "typesAndBuild": "success"
+    },
+    "android": "All-variant tests and signed release smoke build success; no installed APK change",
+    "newBrowserSourceIncluded": false
+  },
+  "privateValidationHashes": {
+    "continuous-pointer-leaf-20261008.log": {
+      "bytes": 5264,
+      "sha256": "63e5b190d4e2be0f4301b4d8af56710d3a971eb9bc4e821bc38673f9d7ee7935"
+    },
+    "continuous-pointer-full-20261008.log": {
+      "bytes": 105343,
+      "sha256": "642d7b991ab9c84a081b7b8d3d15eefdd07f6e2512d8c3c5162c2cb2d9449440"
+    },
+    "continuous-pointer-types-20261008.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "continuous-pointer-route-types-20261008.log": {
+      "bytes": 67,
+      "sha256": "285ddc3cf0afdeab1d4968d2a6f056a3727585c9e973ddb1d943aa7c3f1fc784"
+    },
+    "continuous-server-backend-ci-37682637220.log": {
+      "bytes": 1516332,
+      "sha256": "49f2103f1eeb9ca6c5635f8b5e4bba114bef9f4b80f2d575168db211688b14d0"
+    },
+    "continuous-server-frontend-ci-37682637240.log": {
+      "bytes": 300810,
+      "sha256": "ba7b183f7007bf0819306cd366cb4bd1a11be521a74c15dc0c64b49f8d15dc12"
+    },
+    "continuous-server-android-ci-37682637207.log": {
+      "bytes": 147894,
+      "sha256": "0223259582eb099c6718bc9e8a53fec503116a96489cfc33da00ec2e3a2e3445"
+    },
+    "continuous-server-ci-runs-0a8cd9.json": {
+      "bytes": 1060,
+      "sha256": "80a1a5b5fa5bdb81922477b9486cf307bf1f0f2259dcba08704397ba3c718e43"
+    }
+  },
+  "limits": {
+    "moveIntervalMs": 16,
+    "latestMoveSlots": 1,
+    "moveAgeMs": 100,
+    "schedulerGapMs": 500,
+    "heartbeatMs": 250,
+    "receiptDeadlineMs": 500,
+    "outstandingScalarReceipts": 32,
+    "socketBufferedBytes": 1024
+  },
+  "runtime": {
+    "webDeploy": false,
+    "apiDeploy": false,
+    "workingAPKInstall": false,
+    "continuousMode3015Enabled": false,
+    "lastAcceptedUI": "af9054ecd0a12d0bc40112298c06178472b59eae",
+    "lastAcceptedAPI": "a41c4e64bf569a7518d34606da0facbba32f77e6"
+  },
+  "acceptanceLedger": {
+    "accepted": 9,
+    "open": 41,
+    "SF26-05": "OPEN"
+  },
+  "hostedCIFollowup": {
+    "verifiedUtc": "2026-10-07T21:32:06.083046+00:00",
+    "headSha": "a979bc9a5422e707320b0883b695134f86858d3e",
+    "runs": [
+      {
+        "conclusion": "success",
+        "databaseId": 37687781841,
+        "headSha": "a979bc9a5422e707320b0883b695134f86858d3e",
+        "name": "CI — Frontend",
+        "status": "completed",
+        "updatedAt": "2026-10-07T21:16:10Z",
+        "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/37687781841"
+      },
+      {
+        "conclusion": "success",
+        "databaseId": 37687781789,
+        "headSha": "a979bc9a5422e707320b0883b695134f86858d3e",
+        "name": "Preview — Deploy",
+        "status": "completed",
+        "updatedAt": "2026-10-07T21:12:57Z",
+        "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/37687781789"
+      },
+      {
+        "conclusion": "success",
+        "databaseId": 37687781811,
+        "headSha": "a979bc9a5422e707320b0883b695134f86858d3e",
+        "name": "CI — Android",
+        "status": "completed",
+        "updatedAt": "2026-10-07T21:25:58Z",
+        "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/37687781811"
+      },
+      {
+        "conclusion": "success",
+        "databaseId": 37687781983,
+        "headSha": "a979bc9a5422e707320b0883b695134f86858d3e",
+        "name": "CI — Backend",
+        "status": "completed",
+        "updatedAt": "2026-10-07T21:27:06Z",
+        "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/37687781983"
+      }
+    ],
+    "allFourRuns": "success",
+    "backendPassed": 3268,
+    "backendSkipped": 37,
+    "backendSubtestsPassed": 229,
+    "frontendTestsPassed": 1817,
+    "frontendSuitesPassed": 137,
+    "frontendTypesAndBuild": "success",
+    "receiptSourceIncluded": false,
+    "runtimeDeploy": false
+  }
+}

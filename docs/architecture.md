@@ -1,6 +1,12 @@
 # Architecture
 
-> **Sphere Platform v4.7** — System Design Reference
+> **Архитектурный справочник и проектные схемы.** Прежняя метка v4.7 не является
+> текущей версией всей платформы. Действующий [реестр](operations/WORK-STATUS.md)
+> и [runtime](operations/CURRENT-STATE.md) сверены9октября; исторический срез21сентября:
+> [установленный pilot](operations/LOCAL-PILOT.md),
+> [реестр ограничений](audits/2026-09-20/FLEET32-PREFLIGHT.md),
+> [карта компонентов](../README.md#architecture). Исторические оценки масштаба и
+> проектные свойства ниже требуют проверки по текущим контрактам и runtime evidence.
 
 ---
 
@@ -321,6 +327,7 @@ Token claims:
 
 ---
 
+<a id="websocket-architecture"></a>
 ## 6. WebSocket Architecture
 
 ### Connection Manager
@@ -479,6 +486,7 @@ The backend acts as a relay with SPS/PPS/IDR caching:
 
 ---
 
+<a id="script-engine--dag-execution"></a>
 ## 9. Script Engine & Task Queue
 
 ### DAG Schema

@@ -120,7 +120,7 @@ alembic-merge-heads: ## Автослияние множественных Alembi
 		echo "✅ Heads объединены. Запусти: alembic -c alembic/alembic.ini upgrade head"; \
 	fi
 
-rls-lint:      ## Проверить что все таблицы с org_id имеют RLS policy
+rls-lint:      ## Сверить модели (включая M2M) с inventory RLS migration; runtime проверяется отдельно
 	@python scripts/check_rls.py
 
 seed-enrollment: ## Создать enrollment API-ключ в БД (AGENT_CONFIG_ENV=production|staging|development)

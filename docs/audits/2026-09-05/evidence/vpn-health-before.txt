@@ -1,0 +1,186 @@
+FFFFFFFFFFFFF                                                            [100%]
+================================== FAILURES ===================================
+__ test_untrusted_router_snapshot_preserves_peers_without_mutation[timeout] ___
+tests\production\test_vpn_health_recovery.py:92: in test_untrusted_router_snapshot_preserves_peers_without_mutation
+    assert [request.method for request in h.requests] == ["GET"], "Poll failure must not recreate peers"
+E   AssertionError: Poll failure must not recreate peers
+E   assert ['GET', 'POST'] == ['GET']
+E     
+E     Left contains one more item: 'POST'
+E     Use -v to get more diff
+---------------------------- Captured stdout call -----------------------------
+{"exc": "audit lost response", "event": "Failed to fetch handshake times from WG Router", "level": "error", "logger": "backend.services.vpn.health_monitor", "timestamp": "2026-09-06T11:24:15.397423Z"}
+{"device_id": "30c7f0d5-1b2d-417f-8add-ed3f30f53f2d", "exc": "audit lost response", "event": "Failed to re-add missing VPN peer", "level": "error", "logger": "backend.services.vpn.health_monitor", "timestamp": "2026-09-06T11:24:15.397958Z"}
+------------------------------ Captured log call ------------------------------
+ERROR    backend.services.vpn.health_monitor:health_monitor.py:134 {'exc': 'audit lost response', 'event': 'Failed to fetch handshake times from WG Router', 'level': 'error', 'logger': 'backend.services.vpn.health_monitor', 'timestamp': '2026-09-06T11:24:15.397423Z'}
+ERROR    backend.services.vpn.health_monitor:health_monitor.py:210 {'device_id': '30c7f0d5-1b2d-417f-8add-ed3f30f53f2d', 'exc': 'audit lost response', 'event': 'Failed to re-add missing VPN peer', 'level': 'error', 'logger': 'backend.services.vpn.health_monitor', 'timestamp': '2026-09-06T11:24:15.397958Z'}
+_ test_untrusted_router_snapshot_preserves_peers_without_mutation[unauthorized] _
+tests\production\test_vpn_health_recovery.py:92: in test_untrusted_router_snapshot_preserves_peers_without_mutation
+    assert [request.method for request in h.requests] == ["GET"], "Poll failure must not recreate peers"
+E   AssertionError: Poll failure must not recreate peers
+E   assert ['GET', 'POST'] == ['GET']
+E     
+E     Left contains one more item: 'POST'
+E     Use -v to get more diff
+---------------------------- Captured stdout call -----------------------------
+{"device_id": "ac637f4e-d482-4af3-afbe-f69b34cd547a", "exc": "WG Router error 401", "event": "Failed to re-add missing VPN peer", "level": "error", "logger": "backend.services.vpn.health_monitor", "timestamp": "2026-09-06T11:24:16.058393Z"}
+------------------------------ Captured log call ------------------------------
+ERROR    backend.services.vpn.health_monitor:health_monitor.py:210 {'device_id': 'ac637f4e-d482-4af3-afbe-f69b34cd547a', 'exc': 'WG Router error 401', 'event': 'Failed to re-add missing VPN peer', 'level': 'error', 'logger': 'backend.services.vpn.health_monitor', 'timestamp': '2026-09-06T11:24:16.058393Z'}
+_ test_untrusted_router_snapshot_preserves_peers_without_mutation[unavailable] _
+tests\production\test_vpn_health_recovery.py:92: in test_untrusted_router_snapshot_preserves_peers_without_mutation
+    assert [request.method for request in h.requests] == ["GET"], "Poll failure must not recreate peers"
+E   AssertionError: Poll failure must not recreate peers
+E   assert ['GET', 'POST'] == ['GET']
+E     
+E     Left contains one more item: 'POST'
+E     Use -v to get more diff
+---------------------------- Captured stdout call -----------------------------
+{"device_id": "f48b4eac-c474-459a-bfae-8699ab2d09c9", "exc": "WG Router error 503", "event": "Failed to re-add missing VPN peer", "level": "error", "logger": "backend.services.vpn.health_monitor", "timestamp": "2026-09-06T11:24:16.296990Z"}
+------------------------------ Captured log call ------------------------------
+ERROR    backend.services.vpn.health_monitor:health_monitor.py:210 {'device_id': 'f48b4eac-c474-459a-bfae-8699ab2d09c9', 'exc': 'WG Router error 503', 'event': 'Failed to re-add missing VPN peer', 'level': 'error', 'logger': 'backend.services.vpn.health_monitor', 'timestamp': '2026-09-06T11:24:16.296990Z'}
+__ test_untrusted_router_snapshot_preserves_peers_without_mutation[bad_json] __
+tests\production\test_vpn_health_recovery.py:92: in test_untrusted_router_snapshot_preserves_peers_without_mutation
+    assert [request.method for request in h.requests] == ["GET"], "Poll failure must not recreate peers"
+E   AssertionError: Poll failure must not recreate peers
+E   assert ['GET', 'POST'] == ['GET']
+E     
+E     Left contains one more item: 'POST'
+E     Use -v to get more diff
+---------------------------- Captured stdout call -----------------------------
+{"exc": "Expecting value: line 1 column 1 (char 0)", "event": "Failed to fetch handshake times from WG Router", "level": "error", "logger": "backend.services.vpn.health_monitor", "timestamp": "2026-09-06T11:24:16.541966Z"}
+{"device_id": "93b3fa5d-02d9-4f70-b1d1-44aba07e298d", "event": "Re-added missing VPN peer", "level": "info", "logger": "backend.services.vpn.health_monitor", "timestamp": "2026-09-06T11:24:16.542581Z"}
+------------------------------ Captured log call ------------------------------
+ERROR    backend.services.vpn.health_monitor:health_monitor.py:134 {'exc': 'Expecting value: line 1 column 1 (char 0)', 'event': 'Failed to fetch handshake times from WG Router', 'level': 'error', 'logger': 'backend.services.vpn.health_monitor', 'timestamp': '2026-09-06T11:24:16.541966Z'}
+INFO     backend.services.vpn.health_monitor:health_monitor.py:208 {'device_id': '93b3fa5d-02d9-4f70-b1d1-44aba07e298d', 'event': 'Re-added missing VPN peer', 'level': 'info', 'logger': 'backend.services.vpn.health_monitor', 'timestamp': '2026-09-06T11:24:16.542581Z'}
+____ test_untrusted_router_snapshot_preserves_peers_without_mutation[list] ____
+tests\production\test_vpn_health_recovery.py:92: in test_untrusted_router_snapshot_preserves_peers_without_mutation
+    assert [request.method for request in h.requests] == ["GET"], "Poll failure must not recreate peers"
+E   AssertionError: Poll failure must not recreate peers
+E   assert ['GET', 'POST'] == ['GET']
+E     
+E     Left contains one more item: 'POST'
+E     Use -v to get more diff
+---------------------------- Captured stdout call -----------------------------
+{"exc": "'list' object has no attribute 'items'", "event": "Failed to fetch handshake times from WG Router", "level": "error", "logger": "backend.services.vpn.health_monitor", "timestamp": "2026-09-06T11:24:16.809228Z"}
+{"device_id": "787c6fd8-3488-49ab-8836-7da1ecc1134e", "event": "Re-added missing VPN peer", "level": "info", "logger": "backend.services.vpn.health_monitor", "timestamp": "2026-09-06T11:24:16.809740Z"}
+------------------------------ Captured log call ------------------------------
+ERROR    backend.services.vpn.health_monitor:health_monitor.py:134 {'exc': "'list' object has no attribute 'items'", 'event': 'Failed to fetch handshake times from WG Router', 'level': 'error', 'logger': 'backend.services.vpn.health_monitor', 'timestamp': '2026-09-06T11:24:16.809228Z'}
+INFO     backend.services.vpn.health_monitor:health_monitor.py:208 {'device_id': '787c6fd8-3488-49ab-8836-7da1ecc1134e', 'event': 'Re-added missing VPN peer', 'level': 'info', 'logger': 'backend.services.vpn.health_monitor', 'timestamp': '2026-09-06T11:24:16.809740Z'}
+_ test_untrusted_router_snapshot_preserves_peers_without_mutation[string_timestamp] _
+tests\production\test_vpn_health_recovery.py:92: in test_untrusted_router_snapshot_preserves_peers_without_mutation
+    assert [request.method for request in h.requests] == ["GET"], "Poll failure must not recreate peers"
+E   AssertionError: Poll failure must not recreate peers
+E   assert ['GET', 'POST'] == ['GET']
+E     
+E     Left contains one more item: 'POST'
+E     Use -v to get more diff
+---------------------------- Captured stdout call -----------------------------
+{"device_id": "730b35e1-ad0a-41ba-8916-c0aa07fc2e43", "event": "Re-added missing VPN peer", "level": "info", "logger": "backend.services.vpn.health_monitor", "timestamp": "2026-09-06T11:24:17.060787Z"}
+------------------------------ Captured log call ------------------------------
+INFO     backend.services.vpn.health_monitor:health_monitor.py:208 {'device_id': '730b35e1-ad0a-41ba-8916-c0aa07fc2e43', 'event': 'Re-added missing VPN peer', 'level': 'info', 'logger': 'backend.services.vpn.health_monitor', 'timestamp': '2026-09-06T11:24:17.060787Z'}
+_ test_untrusted_router_snapshot_preserves_peers_without_mutation[negative_timestamp] _
+tests\production\test_vpn_health_recovery.py:92: in test_untrusted_router_snapshot_preserves_peers_without_mutation
+    assert [request.method for request in h.requests] == ["GET"], "Poll failure must not recreate peers"
+E   AssertionError: Poll failure must not recreate peers
+E   assert ['GET', 'POST'] == ['GET']
+E     
+E     Left contains one more item: 'POST'
+E     Use -v to get more diff
+---------------------------- Captured stdout call -----------------------------
+{"device_id": "6bd5c5fc-be98-4dba-99ac-edbbdbe870ee", "event": "Re-added missing VPN peer", "level": "info", "logger": "backend.services.vpn.health_monitor", "timestamp": "2026-09-06T11:24:17.278803Z"}
+------------------------------ Captured log call ------------------------------
+INFO     backend.services.vpn.health_monitor:health_monitor.py:208 {'device_id': '6bd5c5fc-be98-4dba-99ac-edbbdbe870ee', 'event': 'Re-added missing VPN peer', 'level': 'info', 'logger': 'backend.services.vpn.health_monitor', 'timestamp': '2026-09-06T11:24:17.278803Z'}
+_ test_untrusted_router_snapshot_preserves_peers_without_mutation[bool_timestamp] _
+tests\production\test_vpn_health_recovery.py:89: in test_untrusted_router_snapshot_preserves_peers_without_mutation
+    assert peer.is_active is True
+E   assert False is True
+E    +  where False = <backend.models.vpn_peer.VPNPeer object at 0x00000248970916A0>.is_active
+---------------------------- Captured stdout call -----------------------------
+{"device_id": "5ae33344-d6b0-406a-b0d3-d8dcd4166366", "since_handshake_s": 1788693856.500685, "event": "VPN stale handshake", "level": "warning", "logger": "backend.services.vpn.health_monitor", "timestamp": "2026-09-06T11:24:17.500685Z"}
+------------------------------ Captured log call ------------------------------
+WARNING  backend.services.vpn.health_monitor:health_monitor.py:93 {'device_id': '5ae33344-d6b0-406a-b0d3-d8dcd4166366', 'since_handshake_s': 1788693856.500685, 'event': 'VPN stale handshake', 'level': 'warning', 'logger': 'backend.services.vpn.health_monitor', 'timestamp': '2026-09-06T11:24:17.500685Z'}
+_ test_untrusted_router_snapshot_preserves_peers_without_mutation[overflow_timestamp] _
+tests\production\test_vpn_health_recovery.py:92: in test_untrusted_router_snapshot_preserves_peers_without_mutation
+    assert [request.method for request in h.requests] == ["GET"], "Poll failure must not recreate peers"
+E   AssertionError: Poll failure must not recreate peers
+E   assert ['GET', 'POST'] == ['GET']
+E     
+E     Left contains one more item: 'POST'
+E     Use -v to get more diff
+---------------------------- Captured stdout call -----------------------------
+{"exc": "timestamp out of range for platform time_t", "event": "Failed to fetch handshake times from WG Router", "level": "error", "logger": "backend.services.vpn.health_monitor", "timestamp": "2026-09-06T11:24:17.759325Z"}
+{"device_id": "a195f7f9-10cf-4c2a-bb06-c15905f5508f", "event": "Re-added missing VPN peer", "level": "info", "logger": "backend.services.vpn.health_monitor", "timestamp": "2026-09-06T11:24:17.759846Z"}
+------------------------------ Captured log call ------------------------------
+ERROR    backend.services.vpn.health_monitor:health_monitor.py:134 {'exc': 'timestamp out of range for platform time_t', 'event': 'Failed to fetch handshake times from WG Router', 'level': 'error', 'logger': 'backend.services.vpn.health_monitor', 'timestamp': '2026-09-06T11:24:17.759325Z'}
+INFO     backend.services.vpn.health_monitor:health_monitor.py:208 {'device_id': 'a195f7f9-10cf-4c2a-bb06-c15905f5508f', 'event': 'Re-added missing VPN peer', 'level': 'info', 'logger': 'backend.services.vpn.health_monitor', 'timestamp': '2026-09-06T11:24:17.759846Z'}
+_______ test_no_handshake_does_not_prove_router_peer_is_absent[missing] _______
+tests\production\test_vpn_health_recovery.py:104: in test_no_handshake_does_not_prove_router_peer_is_absent
+    assert [request.method for request in h.requests] == ["GET"], "Handshake API is not a peer inventory"
+E   AssertionError: Handshake API is not a peer inventory
+E   assert ['GET', 'POST'] == ['GET']
+E     
+E     Left contains one more item: 'POST'
+E     Use -v to get more diff
+---------------------------- Captured stdout call -----------------------------
+{"device_id": "027bf702-36ce-4407-813e-c40c38079e06", "event": "Re-added missing VPN peer", "level": "info", "logger": "backend.services.vpn.health_monitor", "timestamp": "2026-09-06T11:24:17.982753Z"}
+------------------------------ Captured log call ------------------------------
+INFO     backend.services.vpn.health_monitor:health_monitor.py:208 {'device_id': '027bf702-36ce-4407-813e-c40c38079e06', 'event': 'Re-added missing VPN peer', 'level': 'info', 'logger': 'backend.services.vpn.health_monitor', 'timestamp': '2026-09-06T11:24:17.982753Z'}
+__ test_no_handshake_does_not_prove_router_peer_is_absent[never_handshaken] ___
+tests\production\test_vpn_health_recovery.py:104: in test_no_handshake_does_not_prove_router_peer_is_absent
+    assert [request.method for request in h.requests] == ["GET"], "Handshake API is not a peer inventory"
+E   AssertionError: Handshake API is not a peer inventory
+E   assert ['GET', 'POST'] == ['GET']
+E     
+E     Left contains one more item: 'POST'
+E     Use -v to get more diff
+---------------------------- Captured stdout call -----------------------------
+{"device_id": "63d36551-8958-47f1-acd6-ca547d5510ef", "event": "Re-added missing VPN peer", "level": "info", "logger": "backend.services.vpn.health_monitor", "timestamp": "2026-09-06T11:24:18.159421Z"}
+------------------------------ Captured log call ------------------------------
+INFO     backend.services.vpn.health_monitor:health_monitor.py:208 {'device_id': '63d36551-8958-47f1-acd6-ca547d5510ef', 'event': 'Re-added missing VPN peer', 'level': 'info', 'logger': 'backend.services.vpn.health_monitor', 'timestamp': '2026-09-06T11:24:18.159421Z'}
+___________ test_health_poll_uses_configured_router_authentication ____________
+tests\production\test_vpn_health_recovery.py:114: in test_health_poll_uses_configured_router_authentication
+    assert h.requests[0].headers.get("X-API-Key") == "audit-router-key"
+E   AssertionError: assert None == 'audit-router-key'
+E    +  where None = <bound method Headers.get of Headers({'host': '127.0.0.1:9', 'accept': '*/*', 'accept-encoding': 'gzip, deflate', 'connection': 'keep-alive', 'user-agent': 'python-httpx/0.27.0'})>('X-API-Key')
+E    +    where <bound method Headers.get of Headers({'host': '127.0.0.1:9', 'accept': '*/*', 'accept-encoding': 'gzip, deflate', 'connection': 'keep-alive', 'user-agent': 'python-httpx/0.27.0'})> = Headers({'host': '127.0.0.1:9', 'accept': '*/*', 'accept-encoding': 'gzip, deflate', 'connection': 'keep-alive', 'user-agent': 'python-httpx/0.27.0'}).get
+E    +      where Headers({'host': '127.0.0.1:9', 'accept': '*/*', 'accept-encoding': 'gzip, deflate', 'connection': 'keep-alive', 'user-agent': 'python-httpx/0.27.0'}) = <Request('GET', 'http://127.0.0.1:9/peers/handshakes')>.headers
+____________ test_reconnect_preserves_assigned_psk_and_obfuscation ____________
+tests\production\test_vpn_health_recovery.py:125: in test_reconnect_preserves_assigned_psk_and_obfuscation
+    assert command["config"] == expected.config, "Recovery must retain the original tunnel credentials"
+E   AssertionError: Recovery must retain the original tunnel credentials
+E   assert '[Interface]\...eepalive = 25' == '[Interface]\...preshared-key'
+E     
+E     Skipping 265 identical leading characters in diff, use -v to show
+E     - palive = 25
+E     ?            -
+E     + palive = 25
+E     - PresharedKey = audit-preshared-key
+---------------------------- Captured stdout call -----------------------------
+{"device_id": "28a98b0f-6418-45e5-b820-41a0ebf0022d", "since_handshake_s": 300.137705, "event": "VPN stale handshake", "level": "warning", "logger": "backend.services.vpn.health_monitor", "timestamp": "2026-09-06T11:24:18.567008Z"}
+------------------------------ Captured log call ------------------------------
+WARNING  backend.services.vpn.health_monitor:health_monitor.py:93 {'device_id': '28a98b0f-6418-45e5-b820-41a0ebf0022d', 'since_handshake_s': 300.137705, 'event': 'VPN stale handshake', 'level': 'warning', 'logger': 'backend.services.vpn.health_monitor', 'timestamp': '2026-09-06T11:24:18.567008Z'}
+============================== warnings summary ===============================
+.venv-audit\Lib\site-packages\pydantic\fields.py:754: 484 warnings
+  C:\Users\dimas\Documents\ChatGPT\sphere-platform\.venv-audit\Lib\site-packages\pydantic\fields.py:754: PydanticDeprecatedSince20: Using extra keyword arguments on `Field` is deprecated and will be removed. Use `json_schema_extra` instead. (Extra keys: 'deprecated'). Deprecated in Pydantic V2.0 to be removed in V3.0. See Pydantic V2 Migration Guide at https://errors.pydantic.dev/2.6/migration/
+    warn(
+
+backend\api\v1\game_accounts\router.py:94
+  C:\Users\dimas\Documents\ChatGPT\sphere-platform\backend\api\v1\game_accounts\router.py:94: DeprecationWarning: `regex` has been deprecated, please use `pattern` instead
+    sort_dir: str = Query("desc", regex="^(asc|desc)$", description="Направление сортировки"),
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ===========================
+FAILED tests/production/test_vpn_health_recovery.py::test_untrusted_router_snapshot_preserves_peers_without_mutation[timeout]
+FAILED tests/production/test_vpn_health_recovery.py::test_untrusted_router_snapshot_preserves_peers_without_mutation[unauthorized]
+FAILED tests/production/test_vpn_health_recovery.py::test_untrusted_router_snapshot_preserves_peers_without_mutation[unavailable]
+FAILED tests/production/test_vpn_health_recovery.py::test_untrusted_router_snapshot_preserves_peers_without_mutation[bad_json]
+FAILED tests/production/test_vpn_health_recovery.py::test_untrusted_router_snapshot_preserves_peers_without_mutation[list]
+FAILED tests/production/test_vpn_health_recovery.py::test_untrusted_router_snapshot_preserves_peers_without_mutation[string_timestamp]
+FAILED tests/production/test_vpn_health_recovery.py::test_untrusted_router_snapshot_preserves_peers_without_mutation[negative_timestamp]
+FAILED tests/production/test_vpn_health_recovery.py::test_untrusted_router_snapshot_preserves_peers_without_mutation[bool_timestamp]
+FAILED tests/production/test_vpn_health_recovery.py::test_untrusted_router_snapshot_preserves_peers_without_mutation[overflow_timestamp]
+FAILED tests/production/test_vpn_health_recovery.py::test_no_handshake_does_not_prove_router_peer_is_absent[missing]
+FAILED tests/production/test_vpn_health_recovery.py::test_no_handshake_does_not_prove_router_peer_is_absent[never_handshaken]
+FAILED tests/production/test_vpn_health_recovery.py::test_health_poll_uses_configured_router_authentication
+FAILED tests/production/test_vpn_health_recovery.py::test_reconnect_preserves_assigned_psk_and_obfuscation
+13 failed, 485 warnings in 3.56s

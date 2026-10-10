@@ -4,32 +4,31 @@
 
 @layer base {
   :root {
-    /* Dynamics: Variables injected via ThemeProvider */
-    /* Fallbacks during SSR / before hydration */
-    --background: 0 0% 4%;
-    --foreground: 0 0% 95%;
-    --card: 0 0% 7%;
-    --card-foreground: 0 0% 95%;
-    --popover: 0 0% 7%;
-    --popover-foreground: 0 0% 95%;
-    --primary: 217 91% 60%;
+    /* Light admin workspace fallback; saved dark themes override these tokens. */
+    --background: 210 24% 97%;
+    --foreground: 222 36% 14%;
+    --card: 0 0% 100%;
+    --card-foreground: 222 36% 14%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 222 36% 14%;
+    --primary: 160 74% 34%;
     --primary-foreground: 0 0% 100%;
-    --secondary: 0 0% 10%;
-    --secondary-foreground: 0 0% 90%;
-    --muted: 0 0% 12%;
-    --muted-foreground: 0 0% 60%;
-    --accent: 217 32% 17%;
-    --accent-foreground: 0 0% 98%;
-    --destructive: 0 70% 40%;
+    --secondary: 210 20% 94%;
+    --secondary-foreground: 222 36% 14%;
+    --muted: 210 20% 94%;
+    --muted-foreground: 215 16% 42%;
+    --accent: 160 42% 94%;
+    --accent-foreground: 160 78% 24%;
+    --destructive: 0 72% 48%;
     --destructive-foreground: 0 0% 100%;
-    --warning: 45 93% 47%;
-    --success: 142 70% 40%;
-    --border: 0 0% 15%;
-    --input: 0 0% 15%;
-    --ring: 217 91% 60%;
+    --warning: 38 92% 42%;
+    --success: 152 62% 32%;
+    --border: 214 22% 88%;
+    --input: 214 22% 88%;
+    --ring: 160 74% 34%;
 
     /* Configurable via ThemeProvider Density */
-    --radius: 0.125rem;
+    --radius: 0.625rem;
     --spacing-base: 1;
     --font-size-base: 100%;
   }
@@ -61,12 +60,12 @@ html {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: hsl(0 0% 20%);
+  background: hsl(var(--muted-foreground) / 0.28);
   border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: hsl(0 0% 30%);
+  background: hsl(var(--muted-foreground) / 0.45);
 }
 
 @keyframes indeterminate {
@@ -82,3 +81,88 @@ html {
 .animate-indeterminate {
   animation: indeterminate 1.5s ease-in-out infinite;
 }
+
+@keyframes workspace-route-enter {
+  from { opacity: 0.72; }
+  to { opacity: 1; }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .workspace-route-enter {
+    animation: workspace-route-enter 160ms ease-out both;
+  }
+}
+
+::selection {
+  color: hsl(var(--primary-foreground));
+  background: hsl(var(--primary) / 0.85);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* Existing feature pages contain a few dark-theme status utilities. Keep their
+   meaning while maintaining readable contrast in the light workspace. */
+.light-mode .text-red-300,
+.light-mode .text-red-400,
+.light-mode .text-red-500 { color: #b42318; }
+.light-mode .text-amber-200,
+.light-mode .text-amber-300,
+.light-mode .text-amber-400,
+.light-mode .text-amber-500,
+.light-mode .text-yellow-400 { color: #8a4b08; }
+.light-mode .text-emerald-300,
+.light-mode .text-emerald-400,
+.light-mode .text-green-300,
+.light-mode .text-green-400 { color: #087443; }
+.light-mode .text-blue-300,
+.light-mode .text-blue-400,
+.light-mode .text-cyan-100,
+.light-mode .text-cyan-300,
+.light-mode .text-cyan-400,
+.light-mode .text-sky-400 { color: #075985; }
+.light-mode .text-orange-400 { color: #9a3412; }
+.light-mode .text-purple-400,
+.light-mode .text-violet-400 { color: #6b21a8; }
+.light-mode .text-rose-400 { color: #9f1239; }
+.light-mode .bg-red-950 { background-color: #fef2f2; }
+.light-mode .bg-green-950,
+.light-mode .bg-emerald-950 { background-color: #ecfdf3; }
+.light-mode .bg-blue-950,
+.light-mode .bg-cyan-950 { background-color: #eff8ff; }
+.light-mode .bg-amber-950 { background-color: #fffaeb; }
+.light-mode .border-red-900,
+.light-mode .border-red-500 { border-color: #fda29b; }
+.light-mode .border-amber-500,
+.light-mode .border-amber-400 { border-color: #fec84b; }
+.light-mode .border-green-600,
+.light-mode .border-emerald-500 { border-color: #75e0a7; }
+.light-mode .border-blue-500,
+.light-mode .border-cyan-500 { border-color: #84caff; }
+
+/* Script Studio keeps graph controls legible in both operator themes. */
+.sphere-studio-flow .react-flow__controls { border: 1px solid hsl(var(--border)); border-radius: .5rem; overflow: hidden; box-shadow: none; }
+.sphere-studio-flow .react-flow__controls-button { width: 30px; height: 30px; background: hsl(var(--card)); color: hsl(var(--foreground)); border-bottom-color: hsl(var(--border)); }
+.sphere-studio-flow .react-flow__controls-button:hover { background: hsl(var(--muted)); }
+.sphere-studio-flow .react-flow__controls-button svg { fill: currentColor; }
+.sphere-studio-flow .react-flow__minimap { background: hsl(var(--card)); border: 1px solid hsl(var(--border)); border-radius: .5rem; }
+.sphere-studio-flow .react-flow__minimap-mask { fill: hsl(var(--muted)); fill-opacity: .5; }
+
+.sphere-studio-flow { background: hsl(var(--muted) / .28); }
+.studio-workflow-node { width: 256px; min-height: 132px; border: 1px solid hsl(var(--border)); border-radius: 14px; background: hsl(var(--card)); color: hsl(var(--foreground)); box-shadow: 0 3px 10px rgb(0 0 0 / .05); transition: border-color .15s, box-shadow .15s; }
+.studio-workflow-node.is-selected { border-color: hsl(var(--primary)); box-shadow: 0 0 0 3px hsl(var(--primary) / .12); }
+.studio-workflow-node.is-reported { border-color: #d97706; box-shadow: 0 0 0 3px rgb(217 119 6 / .12); }
+.studio-workflow-node.is-success { border-color: #10b981; }
+.studio-workflow-node.is-failed { border-color: #f43f5e; }
+.sphere-studio-flow .react-flow__edge.selected .react-flow__edge-path { stroke-width: 3; }
+.sphere-studio-flow .react-flow__attribution { border-radius: 5px 0 0 0; background: hsl(var(--card)); color: hsl(var(--muted-foreground)); font-size: 9px; }
+.sphere-studio-flow .react-flow__attribution a { color: inherit; }
+@media (max-width: 1023px) { .studio-device-workspace > :last-child { min-height: 540px; } }

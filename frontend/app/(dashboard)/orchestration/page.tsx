@@ -1,8 +1,10 @@
 'use client';
 
-import { useState, useMemo, useCallback, useEffect } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useState, useMemo, useCallback, useEffect, useRef } from 'react';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api';
+import { useAuthStore } from '@/lib/store';
+import { PipelineDefinitionDialog } from '@/src/features/orchestration/PipelineDefinitionDialog';
 import { toast } from 'sonner';
 import { Button } from '@/src/shared/ui/button';
 import { Input } from '@/src/shared/ui/input';
@@ -49,6 +51,13 @@ import {
 } from 'lucide-react';
 import { DeviceSelector } from '@/components/sphere/DeviceSelector';
 import { useScripts, Script } from '@/lib/hooks/useScripts';
+import { formatScriptStepCount, getScriptStepCount } from '@/src/features/scripts/scriptPresentation';
+import { ScheduleExecutionHistoryDialog } from '@/components/orchestration/ScheduleExecutionHistoryDialog';
+import { PipelineCatalogPicker } from '@/components/orchestration/PipelineCatalogPicker';
+import { PipelineResumeControl } from '@/components/orchestration/PipelineResumeControl';
+import { isoToUtcDateTimeInput, utcDateTimeInputToIso, isValidUtcDateTimeInput } from '@/src/features/orchestration/scheduleTime';
+import { useCatalogPage, CATALOG_PER_PAGE } from '@/src/features/orchestration/useCatalogPage';
+import { CatalogPagination } from '@/src/shared/ui/catalog-pagination';
 
 // ============================================================================
 //  ТИПЫ
@@ -86,12 +95,17 @@ interface PipelineRun {
     device_id: string;
     status: string;
     current_step_id: string | null;
+    execution_phase?: string;
+    execution_lease_until?: string | null;
+    cancel_requested_at?: string | null;
     context: Record<string, any>;
     input_params: Record<string, any>;
     step_logs: Array<{
         step_id: string;
         type?: string;
-        status: string;
+        status?: string;
+        event?: string;
+        reason?: string;
         started_at?: string;
         finished_at?: string;
         duration_ms?: number;
@@ -126,62 +140,9 @@ interface Schedule {
     created_at: string;
 }
 
-interface ScheduleExecution {
-    id: string;
-    schedule_id: string;
-    status: string;
-    fire_time: string;
-    actual_time: string;
-    devices_targeted: number;
-    tasks_created: number;
-    tasks_succeeded: number;
-    tasks_failed: number;
-    skip_reason: string | null;
-    created_at: string;
-}
-
-// ============================================================================
-//  ХУКИ ДАННЫХ
-// ============================================================================
-
-function usePipelines() {
-    return useQuery<Pipeline[]>({
-        queryKey: ['pipelines'],
-        queryFn: async () => {
-            try {
-                const { data } = await api.get('/pipelines?per_page=100');
-                return data.items || [];
-            } catch { return []; }
-        },
-        refetchInterval: 8000,
-    });
-}
-
-function usePipelineRuns() {
-    return useQuery<PipelineRun[]>({
-        queryKey: ['pipeline-runs'],
-        queryFn: async () => {
-            try {
-                const { data } = await api.get('/pipelines/runs?per_page=100');
-                return data.items || [];
-            } catch { return []; }
-        },
-        refetchInterval: 5000,
-    });
-}
-
-function useSchedules() {
-    return useQuery<Schedule[]>({
-        queryKey: ['schedules'],
-        queryFn: async () => {
-            try {
-                const { data } = await api.get('/schedules?per_page=100');
-                return data.items || [];
-            } catch { return []; }
-        },
-        refetchInterval: 8000,
-    });
-}
+const EMPTY_PIPELINES: Pipeline[] = [];
+const EMPTY_RUNS: PipelineRun[] = [];
+const EMPTY_SCHEDULES: Schedule[] = [];
 
 // ============================================================================
 //  УТИЛИТЫ
@@ -249,36 +210,66 @@ export default function OrchestrationPage() {
     const [tab, setTab] = useState<TabKey>('pipelines');
     const [search, setSearch] = useState('');
     const [runPipelineTarget, setRunPipelineTarget] = useState<Pipeline | null>(null);
+    const actor = useAuthStore(s => s.user);
+    const session = useAuthStore(s => s.sessionVersion);
+    const definitionScope = `${actor?.org_id}:${actor?.id}:${actor?.role}:${session}`;
+    const canManageDefinition = Boolean(actor && ['device_manager', 'org_admin', 'org_owner', 'super_admin'].includes(actor.role));
+    const [definition, setDefinition] = useState<{ id: string; scope: string; action: 'view' | 'activation' } | null>(null);
     const [showCreateSchedule, setShowCreateSchedule] = useState(false);
     const [editingSchedule, setEditingSchedule] = useState<Schedule | null>(null);
+    const [pages, setPages] = useState<Record<TabKey, number>>({ pipelines: 1, runs: 1, schedules: 1 });
+    const [filters, setFilters] = useState<Record<TabKey, string>>({ pipelines: 'all', runs: 'all', schedules: 'all' });
+    const pipelineFilter = filters.pipelines === 'all' ? {} : { is_active: filters.pipelines === 'active' };
+    const scheduleFilter = filters.schedules === 'all' ? {} : { is_active: filters.schedules === 'active' };
+    const runFilter = filters.runs === 'all' ? {} : filters.runs === 'active' ? { active_only: true } : { status: filters.runs };
+    const pipelinesQuery = useCatalogPage<Pipeline>('pipelines', pages.pipelines, pipelineFilter, { polling: tab === 'pipelines' });
+    const runsQuery = useCatalogPage<PipelineRun>('pipeline-runs', pages.runs, runFilter, { polling: tab === 'runs' });
+    const schedulesQuery = useCatalogPage<Schedule>('schedules', pages.schedules, scheduleFilter, { polling: tab === 'schedules' });
+    const pipelines = pipelinesQuery.isSuccess ? pipelinesQuery.data.items : EMPTY_PIPELINES;
+    const runs = runsQuery.isSuccess ? runsQuery.data.items : EMPTY_RUNS;
+    const schedules = schedulesQuery.isSuccess ? schedulesQuery.data.items : EMPTY_SCHEDULES;
+    const pLoading = pipelinesQuery.isLoading;
+    const rLoading = runsQuery.isLoading;
+    const sLoading = schedulesQuery.isLoading;
+    const currentQuery = tab === 'pipelines' ? pipelinesQuery : tab === 'runs' ? runsQuery : schedulesQuery;
+    const currentLabel = tab === 'pipelines' ? 'конвейеры' : tab === 'runs' ? 'запуски конвейеров' : 'расписания';
+    const currentData = currentQuery.isSuccess ? currentQuery.data : undefined;
+    const changingPage = !!currentData && pages[tab] > Math.max(1, currentData.pages);
 
-    const { data: pipelines = [], isLoading: pLoading } = usePipelines();
-    const { data: runs = [], isLoading: rLoading } = usePipelineRuns();
-    const { data: schedules = [], isLoading: sLoading } = useSchedules();
+    useEffect(() => {
+        if (currentData && changingPage) setPages(previous => ({ ...previous, [tab]: Math.max(1, currentData.pages) }));
+    }, [tab, currentData, changingPage]);
+
+    function changeTab(next: TabKey) { setSearch(''); setTab(next); }
+    function changeFilter(value: string) {
+        setSearch('');
+        setPages(previous => ({ ...previous, [tab]: 1 }));
+        setFilters(previous => ({ ...previous, [tab]: value }));
+    }
 
     // Статистика (вычисляемая)
     const stats = useMemo(() => {
-        const activeRuns = runs.filter(r => ['running', 'waiting', 'queued'].includes(r.status.toLowerCase()));
+        const activeRuns = runs.filter(r => ['running', 'waiting', 'queued', 'paused'].includes(r.status.toLowerCase()));
         const completedRuns = runs.filter(r => r.status.toLowerCase() === 'completed');
         const failedRuns = runs.filter(r => ['failed', 'timed_out'].includes(r.status.toLowerCase()));
         const activeSchedules = schedules.filter(s => s.is_active);
         return {
-            totalPipelines: pipelines.length,
-            activeRuns: activeRuns.length,
-            completedRuns: completedRuns.length,
-            failedRuns: failedRuns.length,
-            totalSchedules: schedules.length,
-            activeSchedules: activeSchedules.length,
-            successRate: runs.length > 0
+            totalPipelines: pipelinesQuery.isSuccess ? pipelinesQuery.data.total : '—',
+            activeRuns: runsQuery.isSuccess ? activeRuns.length : '—',
+            completedRuns: runsQuery.isSuccess ? completedRuns.length : '—',
+            failedRuns: runsQuery.isSuccess ? failedRuns.length : '—',
+            totalSchedules: schedulesQuery.isSuccess ? schedulesQuery.data.total : '—',
+            activeSchedules: schedulesQuery.isSuccess ? activeSchedules.length : '—',
+            successRate: !runsQuery.isSuccess ? '—' : runs.length > 0
                 ? ((completedRuns.length / runs.length) * 100).toFixed(1)
                 : '—',
         };
-    }, [pipelines, runs, schedules]);
+    }, [runs, schedules, pipelinesQuery.data, schedulesQuery.data, pipelinesQuery.isSuccess, runsQuery.isSuccess, schedulesQuery.isSuccess]);
 
-    const TABS: { key: TabKey; label: string; count: number }[] = [
-        { key: 'pipelines', label: 'Pipelines', count: pipelines.length },
-        { key: 'runs', label: 'Pipeline Runs', count: runs.length },
-        { key: 'schedules', label: 'Schedules', count: schedules.length },
+    const TABS: { key: TabKey; label: string; count: number | string }[] = [
+        { key: 'pipelines', label: 'Pipelines', count: pipelinesQuery.isSuccess ? pipelinesQuery.data.total : '—' },
+        { key: 'runs', label: 'Pipeline Runs', count: runsQuery.isSuccess ? runsQuery.data.total : '—' },
+        { key: 'schedules', label: 'Schedules', count: schedulesQuery.isSuccess ? schedulesQuery.data.total : '—' },
     ];
 
     return (
@@ -304,7 +295,8 @@ export default function OrchestrationPage() {
                         <div className="relative w-full sm:w-64">
                             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground pointer-events-none" />
                             <Input
-                                placeholder="Поиск..."
+                                aria-label="Поиск на текущей странице"
+                                placeholder="Поиск на этой странице…"
                                 className="pl-9 h-9 bg-black/50 border-border font-mono text-xs focus-visible:ring-primary/50"
                                 value={search}
                                 onChange={(e) => setSearch(e.target.value)}
@@ -318,14 +310,23 @@ export default function OrchestrationPage() {
             {/* ── STATS CARDS ────────────────────────────────────────────────── */}
             <div className="px-6 pt-5">
                 <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-3 mb-5">
-                    <StatCard label="Pipelines" value={stats.totalPipelines} icon={<Layers className="w-7 h-7 text-primary/30" strokeWidth={1} />} />
-                    <StatCard label="Active Runs" value={stats.activeRuns} icon={<Activity className="w-7 h-7 text-primary/30" strokeWidth={1} />} accent />
-                    <StatCard label="Completed" value={stats.completedRuns} icon={<CheckCircle2 className="w-7 h-7 text-success/30" strokeWidth={1} />} />
-                    <StatCard label="Failed" value={stats.failedRuns} icon={<ShieldAlert className="w-7 h-7 text-destructive/30" strokeWidth={1} />} destructive />
-                    <StatCard label="Success Rate" value={`${stats.successRate}%`} icon={<Zap className="w-7 h-7 text-success/30" strokeWidth={1} />} />
-                    <StatCard label="Schedules Active" value={`${stats.activeSchedules}/${stats.totalSchedules}`} icon={<CalendarClock className="w-7 h-7 text-primary/30" strokeWidth={1} />} />
+                    <StatCard label="Pipelines в каталоге" value={stats.totalPipelines} icon={<Layers className="w-7 h-7 text-primary/30" strokeWidth={1} />} />
+                    <StatCard label={`Активная очередь · страница ${pages.runs}`} value={stats.activeRuns} icon={<Activity className="w-7 h-7 text-primary/30" strokeWidth={1} />} accent />
+                    <StatCard label={`Завершены · страница ${pages.runs}`} value={stats.completedRuns} icon={<CheckCircle2 className="w-7 h-7 text-success/30" strokeWidth={1} />} />
+                    <StatCard label={`Ошибки · страница ${pages.runs}`} value={stats.failedRuns} icon={<ShieldAlert className="w-7 h-7 text-destructive/30" strokeWidth={1} />} destructive />
+                    <StatCard label={`Доля завершённых · страница ${pages.runs}`} value={stats.successRate === '—' ? '—' : `${stats.successRate}%`} icon={<Zap className="w-7 h-7 text-success/30" strokeWidth={1} />} />
+                    <StatCard label="Расписания в каталоге" value={stats.totalSchedules} icon={<CalendarClock className="w-7 h-7 text-primary/30" strokeWidth={1} />} />
                 </div>
+                <p className="mb-4 text-xs text-muted-foreground">Счётчики запусков и активных расписаний относятся к загруженным страницам с серверным фильтром: запуски — страница {pages.runs}, расписания — страница {pages.schedules} ({stats.activeSchedules} активных). Общие количества во вкладках — итог API с выбранным серверным фильтром.</p>
             </div>
+
+            {(pipelinesQuery.isError || runsQuery.isError || schedulesQuery.isError) && (
+                <div className="space-y-2 px-6 pt-3">
+                    <QueryFailureNotice source="Конвейеры" query={pipelinesQuery} onRetry={() => pipelinesQuery.refetch()} />
+                    <QueryFailureNotice source="Запуски" query={runsQuery} onRetry={() => runsQuery.refetch()} />
+                    <QueryFailureNotice source="Расписания" query={schedulesQuery} onRetry={() => schedulesQuery.refetch()} />
+                </div>
+            )}
 
             {/* ── TABS ───────────────────────────────────────────────────────── */}
             <div className="px-6 border-b border-border shrink-0">
@@ -333,7 +334,7 @@ export default function OrchestrationPage() {
                     {TABS.map(t => (
                         <button
                             key={t.key}
-                            onClick={() => setTab(t.key)}
+                            onClick={() => changeTab(t.key)}
                             className={`px-4 py-2 text-xs font-mono font-bold tracking-widest uppercase transition-colors relative
                 ${tab === t.key
                                     ? 'text-primary'
@@ -352,12 +353,26 @@ export default function OrchestrationPage() {
 
             {/* ── CONTENT ────────────────────────────────────────────────────── */}
             <div className="flex-1 overflow-auto p-6">
-                {tab === 'pipelines' && <PipelinesTab pipelines={pipelines} loading={pLoading} search={search} onRunPipeline={setRunPipelineTarget} />}
-                {tab === 'runs' && <RunsTab runs={runs} pipelines={pipelines} loading={rLoading} search={search} />}
-                {tab === 'schedules' && <SchedulesTab schedules={schedules} pipelines={pipelines} loading={sLoading} search={search} onCreateSchedule={() => setShowCreateSchedule(true)} onEditSchedule={setEditingSchedule} />}
+                <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+                    <label className="text-xs text-muted-foreground">Серверный фильтр
+                        <select aria-label={tab === 'runs' ? 'Серверный фильтр запусков' : tab === 'pipelines' ? 'Серверный фильтр конвейеров' : 'Серверный фильтр расписаний'} value={filters[tab]} onChange={e => changeFilter(e.target.value)} className="ml-2 rounded-md border border-border bg-card p-2 text-sm text-foreground">
+                            <option value="all">Все</option>
+                            <option value="active">{tab === 'runs' ? 'Активная очередь' : 'Активные'}</option>
+                            {tab !== 'runs' ? <option value="inactive">Неактивные</option> : ['queued', 'running', 'waiting', 'paused', 'completed', 'failed', 'cancelled', 'timed_out'].map(status => <option key={status} value={status}>{STATUS_CONFIG[status].label}</option>)}
+                        </select>
+                    </label>
+                    <Button variant="outline" size="sm" aria-label="Обновить текущий каталог" disabled={currentQuery.isFetching} onClick={() => { void currentQuery.refetch(); }}>{currentQuery.isFetching ? 'Обновляем…' : 'Обновить каталог'}</Button>
+                </div>
+                <p className="mb-3 text-xs text-muted-foreground">Текстовый поиск применяется только к текущей странице. Для других записей используйте страницы и серверный фильтр.</p>
+                {!changingPage && tab === 'pipelines' && <PipelinesTab pipelines={pipelines} loading={pLoading} error={pipelinesQuery.isError} hasSnapshot={pipelinesQuery.isSuccess} filteredByServer={filters.pipelines !== 'all'} search={search} onRunPipeline={setRunPipelineTarget} canManage={canManageDefinition} onDefinition={(p, action) => { if (actor) setDefinition({ id: p.id, scope: definitionScope, action }); }} />}
+                {!changingPage && tab === 'runs' && <RunsTab runs={runs} pipelines={pipelines} loading={rLoading} error={runsQuery.isError} hasSnapshot={runsQuery.isSuccess} filteredByServer={filters.runs !== 'all'} search={search} />}
+                {!changingPage && tab === 'schedules' && <SchedulesTab schedules={schedules} pipelines={pipelines} loading={sLoading} error={schedulesQuery.isError} hasSnapshot={schedulesQuery.isSuccess} filteredByServer={filters.schedules !== 'all'} search={search} onCreateSchedule={() => setShowCreateSchedule(true)} onEditSchedule={setEditingSchedule} />}
+                {changingPage && <p role="status">Каталог изменился; загружаем доступную страницу…</p>}
+                {currentData && !changingPage && <div className="mt-4"><CatalogPagination page={pages[tab]} perPage={CATALOG_PER_PAGE} total={currentData.total} busy={currentQuery.isFetching} label={currentLabel} onPageChange={page => setPages(previous => ({ ...previous, [tab]: page }))} /></div>}
             </div>
 
             {/* ── МОДАЛКИ (controlled mode — Dialog всегда в DOM, Portal рендерится по open) ── */}
+            {actor && definition?.scope === definitionScope && <PipelineDefinitionDialog key={`${definitionScope}:${definition.id}`} pipelineId={definition.id} orgId={actor.org_id} scope={definitionScope} canManage={canManageDefinition} initialAction={definition.action} onClose={() => setDefinition(null)} />}
             <RunPipelineDialog
                 pipeline={runPipelineTarget}
                 open={!!runPipelineTarget}
@@ -366,14 +381,34 @@ export default function OrchestrationPage() {
             <CreateScheduleDialog
                 open={showCreateSchedule}
                 onOpenChange={setShowCreateSchedule}
-                pipelines={pipelines}
             />
             <EditScheduleDialog
                 schedule={editingSchedule}
                 open={!!editingSchedule}
                 onOpenChange={(v) => { if (!v) setEditingSchedule(null); }}
-                pipelines={pipelines}
             />
+        </div>
+    );
+}
+
+function QueryFailureNotice({ source, query, onRetry }: {
+    source: string;
+    query: { isError: boolean; isFetching: boolean; data: unknown };
+    onRetry: () => Promise<unknown>;
+}) {
+    if (!query.isError) return null;
+    const hasCachedData = query.data !== undefined;
+    return (
+        <div role="alert" className="flex flex-col gap-3 rounded-lg border border-destructive/30 bg-destructive/5 p-3 text-sm sm:flex-row sm:items-center sm:justify-between">
+            <div>
+                <p className="font-semibold text-destructive">Не удалось обновить {source}.</p>
+                <p className="mt-0.5 text-xs text-muted-foreground">
+                    {hasCachedData ? 'Предыдущие данные скрыты: состояние каталога и доступность действий не подтверждены.' : 'Данные не получены; пустой список не подтверждён.'}
+                </p>
+            </div>
+            <Button type="button" variant="outline" size="sm" aria-label={`Повторить загрузку: ${source}`} onClick={() => { void onRetry(); }} disabled={query.isFetching}>
+                {query.isFetching ? 'Повторяем…' : 'Повторить загрузку'}
+            </Button>
         </div>
     );
 }
@@ -405,7 +440,7 @@ function StatCard({
 //  TAB: PIPELINES
 // ============================================================================
 
-function PipelinesTab({ pipelines, loading, search, onRunPipeline }: { pipelines: Pipeline[]; loading: boolean; search: string; onRunPipeline: (p: Pipeline) => void }) {
+function PipelinesTab({ pipelines, loading, error, hasSnapshot, filteredByServer, search, onRunPipeline, canManage, onDefinition }: { pipelines: Pipeline[]; loading: boolean; error: boolean; hasSnapshot: boolean; filteredByServer: boolean; search: string; onRunPipeline: (p: Pipeline) => void; canManage: boolean; onDefinition: (p: Pipeline, action: 'view' | 'activation') => void }) {
     const [expandedId, setExpandedId] = useState<string | null>(null);
 
     const filtered = useMemo(() => {
@@ -419,9 +454,9 @@ function PipelinesTab({ pipelines, loading, search, onRunPipeline }: { pipelines
     }, [pipelines, search]);
 
     return (
-        <div className="rounded-sm border border-border bg-card shadow-2xl overflow-hidden">
+        <div className="rounded-lg border border-border bg-card overflow-x-auto">
             <table className="w-full text-left whitespace-nowrap">
-                <thead className="bg-[#151515]/90 border-b border-border text-[10px] uppercase font-mono tracking-widest font-bold text-muted-foreground sticky top-0 backdrop-blur-sm z-10">
+                <thead className="bg-muted/90 border-b border-border text-[10px] uppercase font-mono tracking-widest font-bold text-muted-foreground sticky top-0 backdrop-blur-sm z-10">
                     <tr>
                         <th className="px-4 py-3 w-10"></th>
                         <th className="px-4 py-3">Название</th>
@@ -439,7 +474,7 @@ function PipelinesTab({ pipelines, loading, search, onRunPipeline }: { pipelines
                     )}
                     {!loading && filtered.length === 0 && (
                         <tr><td colSpan={8} className="px-4 py-12 text-center text-muted-foreground">
-                            {pipelines.length === 0 ? 'Нет pipelines. Создайте первый!' : 'Ничего не найдено'}
+                            {error && !hasSnapshot ? 'Список pipelines не загружен; пустой каталог не подтверждён.' : filteredByServer && pipelines.length === 0 ? 'По этому серверному фильтру конвейеров нет.' : pipelines.length === 0 ? 'Нет pipelines. Создайте первый!' : 'На этой странице совпадений нет.'}
                         </td></tr>
                     )}
                     {filtered.map(p => (
@@ -449,6 +484,8 @@ function PipelinesTab({ pipelines, loading, search, onRunPipeline }: { pipelines
                             expanded={expandedId === p.id}
                             onToggle={() => setExpandedId(expandedId === p.id ? null : p.id)}
                             onRunPipeline={() => onRunPipeline(p)}
+                            canManage={canManage}
+                            onDefinition={action => onDefinition(p, action)}
                         />
                     ))}
                 </tbody>
@@ -457,17 +494,7 @@ function PipelinesTab({ pipelines, loading, search, onRunPipeline }: { pipelines
     );
 }
 
-function PipelineRow({ pipeline: p, expanded, onToggle, onRunPipeline }: { pipeline: Pipeline; expanded: boolean; onToggle: () => void; onRunPipeline: () => void }) {
-    const queryClient = useQueryClient();
-
-    const toggleActiveMut = useMutation({
-        mutationFn: () => api.post(`/pipelines/${p.id}/toggle`),
-        onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ['pipelines'] });
-            toast.success(p.is_active ? 'Pipeline деактивирован' : 'Pipeline активирован');
-        },
-        onError: () => toast.error('Ошибка переключения pipeline'),
-    });
+function PipelineRow({ pipeline: p, expanded, onToggle, onRunPipeline, canManage, onDefinition }: { pipeline: Pipeline; expanded: boolean; onToggle: () => void; onRunPipeline: () => void; canManage: boolean; onDefinition: (action: 'view' | 'activation') => void }) {
 
     return (
         <>
@@ -510,8 +537,9 @@ function PipelineRow({ pipeline: p, expanded, onToggle, onRunPipeline }: { pipel
                                 : 'text-muted-foreground hover:text-success hover:bg-success/10'
                             }
                             title={p.is_active ? 'Деактивировать' : 'Активировать'}
-                            onClick={() => toggleActiveMut.mutate()}
-                            disabled={toggleActiveMut.isPending}
+                            aria-label={p.is_active ? 'Деактивировать' : 'Активировать'}
+                            onClick={() => onDefinition('activation')}
+                            disabled={!canManage}
                         >
                             {p.is_active
                                 ? <ToggleRight className="w-4 h-4" />
@@ -521,7 +549,7 @@ function PipelineRow({ pipeline: p, expanded, onToggle, onRunPipeline }: { pipel
                         <Button variant="ghost" size="tiny" className="text-muted-foreground hover:text-success hover:bg-success/10" title="Запустить" onClick={onRunPipeline}>
                             <Play className="w-3 h-3" />
                         </Button>
-                        <Button variant="ghost" size="tiny" className="text-muted-foreground hover:text-primary hover:bg-primary/10" title="Просмотр" onClick={onToggle}>
+                        <Button variant="ghost" size="tiny" className="text-muted-foreground hover:text-primary hover:bg-primary/10" title="Определение и управление" aria-label="Определение и управление" onClick={() => onDefinition('view')}>
                             <Eye className="w-3 h-3" />
                         </Button>
                     </div>
@@ -587,9 +615,9 @@ function PipelineRow({ pipeline: p, expanded, onToggle, onRunPipeline }: { pipel
 // ============================================================================
 
 function RunsTab({
-    runs, pipelines, loading, search
+    runs, pipelines, loading, error, hasSnapshot, filteredByServer, search
 }: {
-    runs: PipelineRun[]; pipelines: Pipeline[]; loading: boolean; search: string
+    runs: PipelineRun[]; pipelines: Pipeline[]; loading: boolean; error: boolean; hasSnapshot: boolean; filteredByServer: boolean; search: string
 }) {
     const queryClient = useQueryClient();
     const [expandedRunId, setExpandedRunId] = useState<string | null>(null);
@@ -598,7 +626,10 @@ function RunsTab({
     // Мутации управления
     const cancelMut = useMutation({
         mutationFn: (runId: string) => api.post(`/pipelines/runs/${runId}/cancel`),
-        onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['pipeline-runs'] }); toast.success('Run отменён'); },
+        onSuccess: ({ data }) => {
+            queryClient.invalidateQueries({ queryKey: ['pipeline-runs'] });
+            toast.success(data.status === 'cancelled' ? 'Run отменён' : 'Отмена запрошена; ожидаем завершение дочерней работы');
+        },
         onError: () => toast.error('Ошибка отмены'),
     });
 
@@ -621,6 +652,7 @@ function RunsTab({
         return sorted.filter(r =>
             r.id.toLowerCase().includes(q) ||
             r.status.toLowerCase().includes(q) ||
+            r.pipeline_id.toLowerCase().includes(q) || r.device_id.toLowerCase().includes(q) ||
             pipelineMap.get(r.pipeline_id)?.name.toLowerCase().includes(q)
         );
     }, [runs, search, pipelineMap]);
@@ -645,7 +677,7 @@ function RunsTab({
                         <tr><td colSpan={8} className="px-4 py-12 text-center text-muted-foreground animate-pulse">Загрузка runs...</td></tr>
                     )}
                     {!loading && filtered.length === 0 && (
-                        <tr><td colSpan={8} className="px-4 py-12 text-center text-muted-foreground">Нет запусков pipeline</td></tr>
+                        <tr><td colSpan={8} className="px-4 py-12 text-center text-muted-foreground">{error && !hasSnapshot ? 'Список запусков не загружен; пустой результат не подтверждён.' : search ? 'На этой странице совпадений нет.' : filteredByServer ? 'По этому серверному фильтру запусков нет.' : 'Нет запусков pipeline'}</td></tr>
                     )}
                     {filtered.map(run => {
                         const pl = pipelineMap.get(run.pipeline_id);
@@ -665,6 +697,7 @@ function RunsTab({
                                 onCancel={() => cancelMut.mutate(run.id)}
                                 onPause={() => pauseMut.mutate(run.id)}
                                 onResume={() => resumeMut.mutate(run.id)}
+                                resumePending={resumeMut.isPending}
                             />
                         );
                     })}
@@ -675,7 +708,7 @@ function RunsTab({
 }
 
 function RunRow({
-    run, pipelineName, expanded, onToggle, isActive, isPaused, onCancel, onPause, onResume
+    run, pipelineName, expanded, onToggle, isActive, isPaused, onCancel, onPause, onResume, resumePending
 }: {
     run: PipelineRun;
     pipelineName?: string;
@@ -686,6 +719,7 @@ function RunRow({
     onCancel: () => void;
     onPause: () => void;
     onResume: () => void;
+    resumePending: boolean;
 }) {
     return (
         <>
@@ -699,7 +733,7 @@ function RunRow({
                 <td className="px-4 py-3"><StatusBadge status={run.status} /></td>
                 <td className="px-4 py-3">
                     <div className="font-bold text-foreground group-hover:text-primary transition-colors">
-                        {pipelineName || 'Unknown Pipeline'}
+                        {pipelineName || run.pipeline_id}
                     </div>
                     <div className="text-[10px] text-[#555] mt-0.5">{run.id.slice(0, 12)}...</div>
                 </td>
@@ -725,9 +759,13 @@ function RunRow({
                             </>
                         )}
                         {isPaused && (
-                            <Button variant="ghost" size="tiny" className="text-muted-foreground hover:text-success hover:bg-success/10" onClick={onResume} title="Возобновить">
-                                <Play className="w-3 h-3" />
-                            </Button>
+                            <>
+                                <PipelineResumeControl run={run} onResume={onResume} pending={resumePending} />
+                                <Button variant="ghost" size="tiny" disabled={!!run.cancel_requested_at}
+                                    onClick={onCancel} title="Отменить pipeline">
+                                    <XCircle className="w-3 h-3" />
+                                </Button>
+                            </>
                         )}
                     </div>
                 </td>
@@ -745,7 +783,9 @@ function RunRow({
                                 {run.step_logs.map((log, idx) => (
                                     <div key={idx} className="flex items-center gap-3 text-[11px] font-mono">
                                         <span className="w-5 text-muted-foreground/50 text-right">{idx + 1}</span>
-                                        <StatusBadge status={log.status === 'success' ? 'completed' : log.status === 'failed' ? 'failed' : 'running'} />
+                                        {log.event
+                                            ? <Badge variant="outline">{log.event}</Badge>
+                                            : <StatusBadge status={log.status === 'success' ? 'completed' : ['failed', 'failure'].includes(log.status || '') ? 'failed' : 'running'} />}
                                         <span className="text-foreground font-bold">{log.step_id}</span>
                                         {log.type && (
                                             <Badge variant="outline" className={`text-[8px] ${STEP_TYPE_COLORS[log.type] || ''}`}>{log.type}</Badge>
@@ -756,6 +796,7 @@ function RunRow({
                                         {log.error && (
                                             <span className="text-destructive text-[10px] truncate max-w-[200px]" title={log.error}>⚠ {log.error}</span>
                                         )}
+                                        {log.reason && <span className="text-warning text-[10px]" title={log.reason}>{log.reason}</span>}
                                     </div>
                                 ))}
                             </div>
@@ -771,8 +812,9 @@ function RunRow({
 //  TAB: SCHEDULES
 // ============================================================================
 
-function SchedulesTab({ schedules, pipelines, loading, search, onCreateSchedule, onEditSchedule }: { schedules: Schedule[]; pipelines: Pipeline[]; loading: boolean; search: string; onCreateSchedule: () => void; onEditSchedule: (s: Schedule) => void }) {
+function SchedulesTab({ schedules, pipelines, loading, error, hasSnapshot, filteredByServer, search, onCreateSchedule, onEditSchedule }: { schedules: Schedule[]; pipelines: Pipeline[]; loading: boolean; error: boolean; hasSnapshot: boolean; filteredByServer: boolean; search: string; onCreateSchedule: () => void; onEditSchedule: (s: Schedule) => void }) {
     const queryClient = useQueryClient();
+    const [historySchedule, setHistorySchedule] = useState<Schedule | null>(null);
 
     const toggleMut = useMutation({
         mutationFn: ({ id, active }: { id: string; active: boolean }) =>
@@ -831,7 +873,7 @@ function SchedulesTab({ schedules, pipelines, loading, search, onCreateSchedule,
                     )}
                     {!loading && filtered.length === 0 && (
                         <tr><td colSpan={9} className="px-4 py-12 text-center text-muted-foreground">
-                            {schedules.length === 0 ? 'Нет расписаний. Создайте первое!' : 'Ничего не найдено'}
+                            {error && !hasSnapshot ? 'Список расписаний не загружен; пустой каталог не подтверждён.' : filteredByServer && schedules.length === 0 ? 'По этому серверному фильтру расписаний нет.' : schedules.length === 0 ? 'Нет расписаний. Создайте первое!' : 'На этой странице совпадений нет.'}
                         </td></tr>
                     )}
                     {filtered.map(s => {
@@ -896,6 +938,10 @@ function SchedulesTab({ schedules, pipelines, loading, search, onCreateSchedule,
                                         >
                                             <Zap className="w-3 h-3" />
                                         </Button>
+                                        <Button variant="ghost" size="tiny" title="История срабатываний"
+                                            aria-label={`История срабатываний: ${s.name}`} onClick={() => setHistorySchedule(s)}>
+                                            <Clock className="w-3 h-3" />
+                                        </Button>
                                         <Button
                                             variant="ghost" size="tiny"
                                             className="text-muted-foreground hover:text-primary hover:bg-primary/10"
@@ -924,6 +970,7 @@ function SchedulesTab({ schedules, pipelines, loading, search, onCreateSchedule,
                 </tbody>
             </table>
         </div>
+        <ScheduleExecutionHistoryDialog schedule={historySchedule} onClose={() => setHistorySchedule(null)} />
         </div>
     );
 }
@@ -1296,7 +1343,7 @@ function CreatePipelineButton() {
                                                 <option value="">Выбери скрипт...</option>
                                                 {scripts.filter(s => !s.is_archived).map(s => (
                                                     <option key={s.id} value={s.id}>
-                                                        {s.name} ({s.node_count} нод)
+                                                        {s.name} ({formatScriptStepCount(getScriptStepCount(s))})
                                                     </option>
                                                 ))}
                                             </select>
@@ -1678,11 +1725,10 @@ function describeCron(cron: string): string {
 //  ДИАЛОГ: РЕДАКТИРОВАНИЕ РАСПИСАНИЯ
 // ============================================================================
 
-function EditScheduleDialog({ schedule, open, onOpenChange, pipelines }: {
+function EditScheduleDialog({ schedule, open, onOpenChange }: {
     schedule: Schedule | null;
     open: boolean;
     onOpenChange: (v: boolean) => void;
-    pipelines: Pipeline[];
 }) {
     const queryClient = useQueryClient();
     const { data: scriptsData } = useScripts();
@@ -1693,6 +1739,8 @@ function EditScheduleDialog({ schedule, open, onOpenChange, pipelines }: {
     const [cronExpression, setCronExpression] = useState('');
     const [intervalSeconds, setIntervalSeconds] = useState(3600);
     const [oneShotAt, setOneShotAt] = useState('');
+    const [oneShotLoadError, setOneShotLoadError] = useState<string | null>(null);
+    const originalOneShot = useRef<{ raw: string; input: string } | null>(null);
     const [targetType, setTargetType] = useState<'script' | 'pipeline'>('pipeline');
     const [pipelineId, setPipelineId] = useState('');
     const [scriptId, setScriptId] = useState('');
@@ -1706,6 +1754,7 @@ function EditScheduleDialog({ schedule, open, onOpenChange, pipelines }: {
     // Синхронизация состояния формы при смене расписания
     useEffect(() => {
         if (!schedule) return;
+        originalOneShot.current = null;
         setName(schedule.name);
         setDescription(schedule.description || '');
         setTimezone(schedule.timezone || 'UTC');
@@ -1722,7 +1771,15 @@ function EditScheduleDialog({ schedule, open, onOpenChange, pipelines }: {
             setIntervalSeconds(schedule.interval_seconds);
         } else {
             setTriggerType('one_shot');
-            setOneShotAt(schedule.one_shot_at || '');
+            try {
+                const input = schedule.one_shot_at ? isoToUtcDateTimeInput(schedule.one_shot_at) : '';
+                setOneShotAt(input);
+                if (schedule.one_shot_at) originalOneShot.current = { raw: schedule.one_shot_at, input };
+                setOneShotLoadError(null);
+            } catch {
+                setOneShotAt('');
+                setOneShotLoadError('Дата запуска API некорректна. Укажите подтверждённый момент в UTC перед сохранением.');
+            }
         }
     }, [scheduleId]);
 
@@ -1749,13 +1806,9 @@ function EditScheduleDialog({ schedule, open, onOpenChange, pipelines }: {
                 payload.cron_expression = null;
                 payload.one_shot_at = null;
             } else {
-                // datetime-local возвращает строку без timezone (напр. '2026-03-10T15:30').
-                // Добавляем ':00Z' чтобы передать явный UTC ISO 8601 — иначе бэкенд
-                // получает naive datetime и выбрасывает TypeError при расчёте next_fire_at.
-                const oneShotIso = oneShotAt.includes('Z') || oneShotAt.includes('+') || oneShotAt.includes('-', 10)
-                    ? oneShotAt
-                    : oneShotAt + ':00Z';
-                payload.one_shot_at = oneShotIso;
+                // An unchanged source retains backend sub-millisecond precision and its original aware representation.
+                payload.one_shot_at = originalOneShot.current && oneShotAt === originalOneShot.current.input
+                    ? originalOneShot.current.raw : utcDateTimeInputToIso(oneShotAt);
                 payload.cron_expression = null;
                 payload.interval_seconds = null;
             }
@@ -1776,8 +1829,8 @@ function EditScheduleDialog({ schedule, open, onOpenChange, pipelines }: {
 
     const canSubmit = name.trim().length > 0 && (
         (triggerType === 'cron' && cronExpression.trim()) ||
-        (triggerType === 'interval' && intervalSeconds > 0) ||
-        (triggerType === 'one_shot' && oneShotAt)
+        (triggerType === 'interval' && Number.isInteger(intervalSeconds) && intervalSeconds >= 60 && intervalSeconds <= 86400) ||
+        (triggerType === 'one_shot' && isValidUtcDateTimeInput(oneShotAt))
     ) && (
         (targetType === 'pipeline' && pipelineId) ||
         (targetType === 'script' && scriptId)
@@ -1854,22 +1907,29 @@ function EditScheduleDialog({ schedule, open, onOpenChange, pipelines }: {
                             <Label className="text-[10px] uppercase font-bold tracking-widest text-muted-foreground">Интервал (секунды) *</Label>
                             <Input
                                 type="number"
+                                aria-label="Интервал запуска в секундах"
                                 value={intervalSeconds}
                                 onChange={e => setIntervalSeconds(Number(e.target.value))}
                                 className="h-9 bg-black/30 border-border font-mono text-xs"
-                                min={10}
+                                min={60}
+                                max={86400}
+                                step={1}
                             />
                         </div>
                     )}
                     {triggerType === 'one_shot' && (
                         <div className="space-y-1.5">
-                            <Label className="text-[10px] uppercase font-bold tracking-widest text-muted-foreground">Дата/время запуска (ISO) *</Label>
+                            <Label className="text-[10px] uppercase font-bold tracking-widest text-muted-foreground">Дата/время запуска (UTC) *</Label>
                             <Input
                                 type="datetime-local"
+                                aria-label="Дата и время запуска (UTC)"
+                                step="0.001"
                                 value={oneShotAt}
-                                onChange={e => setOneShotAt(e.target.value)}
+                                onChange={e => { setOneShotAt(e.target.value); setOneShotLoadError(null); }}
                                 className="h-9 bg-black/30 border-border font-mono text-xs"
                             />
+                            <p className="text-xs text-muted-foreground">Часовой пояс расписания применяется к CRON. Разовый запуск задаётся в UTC; часовой пояс браузера не меняет это время.</p>
+                            {oneShotLoadError && <p role="alert" className="text-xs text-destructive">{oneShotLoadError}</p>}
                         </div>
                     )}
 
@@ -1913,16 +1973,7 @@ function EditScheduleDialog({ schedule, open, onOpenChange, pipelines }: {
                     {targetType === 'pipeline' && (
                         <div className="space-y-1.5">
                             <Label className="text-[10px] uppercase font-bold tracking-widest text-muted-foreground">Pipeline *</Label>
-                            <select
-                                value={pipelineId}
-                                onChange={e => setPipelineId(e.target.value)}
-                                className="w-full h-9 rounded-sm border border-border bg-black/30 px-2 text-xs font-mono text-foreground focus:outline-none focus:ring-1 focus:ring-primary/50"
-                            >
-                                <option value="">Выбери pipeline...</option>
-                                {pipelines.map(p => (
-                                    <option key={p.id} value={p.id}>{p.name} (v{p.version})</option>
-                                ))}
-                            </select>
+                            <PipelineCatalogPicker value={pipelineId} onChange={setPipelineId} enabled={open && targetType === 'pipeline'} />
                         </div>
                     )}
                     {targetType === 'script' && (
@@ -1936,7 +1987,7 @@ function EditScheduleDialog({ schedule, open, onOpenChange, pipelines }: {
                                 <option value="">Выбери скрипт...</option>
                                 {scripts.filter(s => !s.is_archived).map(s => (
                                     <option key={s.id} value={s.id}>
-                                        {s.name} ({s.node_count} нод)
+                                        {s.name} ({formatScriptStepCount(getScriptStepCount(s))})
                                     </option>
                                 ))}
                             </select>
@@ -1973,7 +2024,7 @@ function EditScheduleDialog({ schedule, open, onOpenChange, pipelines }: {
 //  ДИАЛОГ: СОЗДАНИЕ РАСПИСАНИЯ
 // ============================================================================
 
-function CreateScheduleDialog({ open, onOpenChange, pipelines }: { open: boolean; onOpenChange: (v: boolean) => void; pipelines: Pipeline[] }) {
+function CreateScheduleDialog({ open, onOpenChange }: { open: boolean; onOpenChange: (v: boolean) => void }) {
     const queryClient = useQueryClient();
     const { data: scriptsData } = useScripts();
     const scripts = scriptsData?.items ?? [];
@@ -2007,13 +2058,7 @@ function CreateScheduleDialog({ open, onOpenChange, pipelines }: { open: boolean
             if (triggerType === 'cron') payload.cron_expression = cronExpression.trim();
             else if (triggerType === 'interval') payload.interval_seconds = intervalSeconds;
             else {
-                // datetime-local возвращает строку без timezone (напр. '2026-03-10T15:30').
-                // Добавляем ':00Z' чтобы передать явный UTC ISO 8601 — иначе бэкенд
-                // получает naive datetime и выбрасывает TypeError при расчёте next_fire_at.
-                const oneShotIso = oneShotAt.includes('Z') || oneShotAt.includes('+') || oneShotAt.includes('-', 10)
-                    ? oneShotAt
-                    : oneShotAt + ':00Z';
-                payload.one_shot_at = oneShotIso;
+                payload.one_shot_at = utcDateTimeInputToIso(oneShotAt);
             }
 
             const { data } = await api.post('/schedules', payload);
@@ -2032,12 +2077,12 @@ function CreateScheduleDialog({ open, onOpenChange, pipelines }: { open: boolean
 
     const canSubmit = name.trim().length > 0 && (
         (triggerType === 'cron' && cronExpression.trim()) ||
-        (triggerType === 'interval' && intervalSeconds > 0) ||
-        (triggerType === 'one_shot' && oneShotAt)
+        (triggerType === 'interval' && Number.isInteger(intervalSeconds) && intervalSeconds >= 60 && intervalSeconds <= 86400) ||
+        (triggerType === 'one_shot' && isValidUtcDateTimeInput(oneShotAt))
     ) && (
         (targetType === 'pipeline' && pipelineId) ||
         (targetType === 'script' && scriptId)
-    );
+    ) && targetDeviceIds.length > 0;
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
@@ -2110,22 +2155,28 @@ function CreateScheduleDialog({ open, onOpenChange, pipelines }: { open: boolean
                             <Label className="text-[10px] uppercase font-bold tracking-widest text-muted-foreground">Интервал (секунды) *</Label>
                             <Input
                                 type="number"
+                                aria-label="Интервал запуска в секундах"
                                 value={intervalSeconds}
                                 onChange={e => setIntervalSeconds(Number(e.target.value))}
                                 className="h-9 bg-black/30 border-border font-mono text-xs"
-                                min={10}
+                                min={60}
+                                max={86400}
+                                step={1}
                             />
                         </div>
                     )}
                     {triggerType === 'one_shot' && (
                         <div className="space-y-1.5">
-                            <Label className="text-[10px] uppercase font-bold tracking-widest text-muted-foreground">Дата/время запуска (ISO) *</Label>
+                            <Label className="text-[10px] uppercase font-bold tracking-widest text-muted-foreground">Дата/время запуска (UTC) *</Label>
                             <Input
                                 type="datetime-local"
+                                aria-label="Дата и время запуска (UTC)"
+                                step="0.001"
                                 value={oneShotAt}
                                 onChange={e => setOneShotAt(e.target.value)}
                                 className="h-9 bg-black/30 border-border font-mono text-xs"
                             />
+                            <p className="text-xs text-muted-foreground">Часовой пояс расписания применяется к CRON. Разовый запуск задаётся в UTC; часовой пояс браузера не меняет это время.</p>
                         </div>
                     )}
 
@@ -2169,16 +2220,7 @@ function CreateScheduleDialog({ open, onOpenChange, pipelines }: { open: boolean
                     {targetType === 'pipeline' && (
                         <div className="space-y-1.5">
                             <Label className="text-[10px] uppercase font-bold tracking-widest text-muted-foreground">Pipeline *</Label>
-                            <select
-                                value={pipelineId}
-                                onChange={e => setPipelineId(e.target.value)}
-                                className="w-full h-9 rounded-sm border border-border bg-black/30 px-2 text-xs font-mono text-foreground focus:outline-none focus:ring-1 focus:ring-primary/50"
-                            >
-                                <option value="">Выбери pipeline...</option>
-                                {pipelines.map(p => (
-                                    <option key={p.id} value={p.id}>{p.name} (v{p.version})</option>
-                                ))}
-                            </select>
+                            <PipelineCatalogPicker value={pipelineId} onChange={setPipelineId} enabled={open && targetType === 'pipeline'} />
                         </div>
                     )}
                     {targetType === 'script' && (
@@ -2192,7 +2234,7 @@ function CreateScheduleDialog({ open, onOpenChange, pipelines }: { open: boolean
                                 <option value="">Выбери скрипт...</option>
                                 {scripts.filter(s => !s.is_archived).map(s => (
                                     <option key={s.id} value={s.id}>
-                                        {s.name} ({s.node_count} нод)
+                                        {s.name} ({formatScriptStepCount(getScriptStepCount(s))})
                                     </option>
                                 ))}
                             </select>
@@ -2203,6 +2245,7 @@ function CreateScheduleDialog({ open, onOpenChange, pipelines }: { open: boolean
                     <div className="space-y-1.5">
                         <Label className="text-[10px] uppercase font-bold tracking-widest text-muted-foreground">Целевые устройства</Label>
                         <DeviceSelector value={targetDeviceIds} onChange={setTargetDeviceIds} />
+                        {!targetDeviceIds.length && <p role="status" className="text-xs text-muted-foreground">Выберите минимум одно устройство для запуска. Пустой выбор не означает весь парк.</p>}
                     </div>
                 </div>
 

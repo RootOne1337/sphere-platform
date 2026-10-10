@@ -1,0 +1,363 @@
+{
+  "schemaVersion": 1,
+  "observedAt": "2026-10-04T17:52:05.079644+00:00",
+  "scope": "Accessible Windows disk metadata and package download cache maintenance; no application code change",
+  "runtimeSource": "c1a6e79a75221c45a71160a21bc91c48b22ef5ae",
+  "readOnlyScan": {
+    "startedAt": "2026-10-04T17:40:20.463190+00:00",
+    "finishedAt": "2026-10-04T17:45:24.877792+00:00",
+    "durationSeconds": 304.422,
+    "files": 5038969,
+    "directories": 830315,
+    "errors": 123,
+    "skippedReparse": 6142,
+    "hardLinksDeduplicated": false,
+    "sparseCompressedAllocationMeasuredPerFile": false,
+    "logicalBytesObserved": 941406845544,
+    "targetFilesChangedByInventory": false,
+    "personalFileContentsRead": false,
+    "privateInventoryPublished": false,
+    "nestedAreasMustNotBeAdded": true,
+    "notAtomicSnapshot": true,
+    "physicalUsedBytesNotDerivedFromLogicalSum": true,
+    "accessibleFileSystemVolumes": [
+      "C:"
+    ],
+    "tempDriveIsAliasOnC": true
+  },
+  "workspace": {
+    "logicalBytes": 8585272787,
+    "filesObserved": 249498,
+    "trackedFiles": 2240,
+    "trackedLogicalBytes": 23150453,
+    "trackedBytesIncludedInWorkspace": true,
+    "directoryBreakdown": [
+      {
+        "path": ".local-pilot",
+        "logicalBytes": 4168401754,
+        "files": 144877,
+        "errors": 0
+      },
+      {
+        "path": "frontend",
+        "logicalBytes": 2584935870,
+        "files": 48197,
+        "errors": 0
+      },
+      {
+        "path": "android",
+        "logicalBytes": 679176282,
+        "files": 27890,
+        "errors": 0
+      },
+      {
+        "path": ".git",
+        "logicalBytes": 582355627,
+        "files": 3636,
+        "errors": 0
+      },
+      {
+        "path": ".venv-audit",
+        "logicalBytes": 336350656,
+        "files": 17229,
+        "errors": 0
+      },
+      {
+        "path": ".mypy_cache",
+        "logicalBytes": 118936972,
+        "files": 3965,
+        "errors": 0
+      },
+      {
+        "path": "docs",
+        "logicalBytes": 58690953,
+        "files": 1302,
+        "errors": 0
+      },
+      {
+        "path": ".pytest_cache",
+        "logicalBytes": 22593944,
+        "files": 6,
+        "errors": 0
+      },
+      {
+        "path": "tests",
+        "logicalBytes": 17954758,
+        "files": 1013,
+        "errors": 0
+      },
+      {
+        "path": "backend",
+        "logicalBytes": 4459454,
+        "files": 681,
+        "errors": 0
+      },
+      {
+        "path": "output",
+        "logicalBytes": 3431013,
+        "files": 39,
+        "errors": 0
+      },
+      {
+        "path": ".playwright-cli",
+        "logicalBytes": 3411718,
+        "files": 165,
+        "errors": 0
+      },
+      {
+        "path": "specs",
+        "logicalBytes": 954894,
+        "files": 66,
+        "errors": 0
+      },
+      {
+        "path": "scripts",
+        "logicalBytes": 859974,
+        "files": 84,
+        "errors": 0
+      },
+      {
+        "path": ".venv",
+        "logicalBytes": 546439,
+        "files": 18,
+        "errors": 0
+      },
+      {
+        "path": ".ruff_cache",
+        "logicalBytes": 470599,
+        "files": 79,
+        "errors": 0
+      },
+      {
+        "path": "alembic",
+        "logicalBytes": 456316,
+        "files": 89,
+        "errors": 0
+      },
+      {
+        "path": "pc-agent",
+        "logicalBytes": 159290,
+        "files": 34,
+        "errors": 0
+      },
+      {
+        "path": "n8n-nodes",
+        "logicalBytes": 106576,
+        "files": 33,
+        "errors": 0
+      },
+      {
+        "path": "infrastructure",
+        "logicalBytes": 76084,
+        "files": 30,
+        "errors": 0
+      },
+      {
+        "path": ".github",
+        "logicalBytes": 63476,
+        "files": 20,
+        "errors": 0
+      },
+      {
+        "path": "agent-config",
+        "logicalBytes": 44920,
+        "files": 14,
+        "errors": 0
+      }
+    ],
+    "runtimeDependenciesBuildOutputsHistoryAndPrivateReceiptsPreserved": true
+  },
+  "largeNonWorkspaceAreas": [
+    {
+      "category": "LDPlayer",
+      "logicalBytes": 42339781310
+    },
+    {
+      "category": "External AI application assets",
+      "logicalBytes": 41832686269
+    },
+    {
+      "category": "Windows, hard links not deduplicated",
+      "logicalBytes": 58521681075
+    },
+    {
+      "category": "Android AVD, includes sparse images",
+      "logicalBytes": 19820979385
+    }
+  ],
+  "selectedAllocationMeasurements": {
+    "observedAt": "2026-10-04T17:46:33.333966+00:00",
+    "dockerVhd": {
+      "inventoryLogicalBytes": 234731077632,
+      "currentLogicalBytes": 234731077632,
+      "allocatedBytes": 234731077632,
+      "error": 0
+    },
+    "sparseAuditAvdExample": {
+      "inventoryLogicalBytes": 6442450944,
+      "currentLogicalBytes": 6442450944,
+      "allocatedBytes": 107937792,
+      "error": 0
+    },
+    "windowsSystemFiles": [
+      {
+        "name": "pagefile.sys",
+        "currentLogicalBytes": 44485144576,
+        "allocatedBytes": null,
+        "error": 32
+      },
+      {
+        "name": "hiberfil.sys",
+        "currentLogicalBytes": 20267294720,
+        "allocatedBytes": null,
+        "error": 32
+      }
+    ],
+    "dockerSharedWithOtherProjects": true,
+    "compactionPerformed": false
+  },
+  "packageCleanup": {
+    "observedAt": "2026-10-04T17:48:59.123814+00:00",
+    "freeBeforeBytes": 39413653504,
+    "freeAfterBytes": 44487598080,
+    "observedFreeDeltaBytes": 5073944576,
+    "npmExitCode": 0,
+    "pipExitCode": 0,
+    "pipFilesRemoved": 1538,
+    "pipDirectoriesRemoved": 7805,
+    "containerCount": 46,
+    "allContainerIdentityImageStartPreserved": true,
+    "workspaceNextCachesRemoved": false,
+    "nextCacheDeletionReview": "blocked by policy",
+    "npxInstallationsPreserved": true,
+    "otherGlobalCachesPreserved": true,
+    "vhdCompacted": false,
+    "runtimeRestarted": false
+  },
+  "packageCacheRemaining": [
+    {
+      "cache": "npm",
+      "logicalBytes": 4629391474,
+      "files": 235044
+    },
+    {
+      "cache": "pip",
+      "logicalBytes": 2735,
+      "files": 19
+    }
+  ],
+  "blockedNextCachePlan": {
+    "targets": [
+      {
+        "path": "frontend/.next/cache",
+        "logicalBytes": 770248658,
+        "files": 160
+      },
+      {
+        "path": "frontend/.next-audit/cache",
+        "logicalBytes": 109500229,
+        "files": 22
+      }
+    ],
+    "totalLogicalBytes": 879748887,
+    "automaticApprovalReviewResult": "blocked by policy",
+    "commandExecuted": false,
+    "deletedBytes": 0,
+    "workaroundAttempted": false
+  },
+  "beforeCleanupUnattributedFreeSpaceChange": {
+    "initialRecordedFreeBytes": 43638882304,
+    "preCleanupRecordedFreeBytes": 39413653504,
+    "cause": "UNDETERMINED; uncontrolled host activity, not attributed to Sphere or metadata inventory",
+    "dockerVhdAndPagefileMeasuredLengthsStable": true
+  },
+  "postCleanupRuntime": {
+    "observedAt": "2026-10-04T17:50:12.909920+00:00",
+    "catalog": 19,
+    "online": 14,
+    "versionCodes": [
+      10244
+    ],
+    "deviceCommandsSent": false,
+    "apiUiTunaRestartsPerformed": false,
+    "containerIdentityImageStartComparisonCount": 46,
+    "allContainersPreserved": true,
+    "guard": {
+      "observedAt": "2026-10-04T17:49:46.936556+00:00",
+      "system": "Windows",
+      "freeDiskBytes": 44485566464,
+      "deviceCommandsSent": false,
+      "mutationsPerformed": false,
+      "availableRamBytes": 19578286080,
+      "totalRamBytes": 50668236800,
+      "committedBytes": 53811834880,
+      "commitLimitBytes": 95153381376,
+      "findings": [],
+      "buildAllowed": true
+    }
+  },
+  "longTermMemoryLeakConclusion": "UNDETERMINED; bounded overnight observation remains in progress",
+  "validationScope": "Receipt arithmetic/hash checks, JSON/links/diff validation and actual runtime readback; no new heavyweight application build",
+  "references": [
+    "https://docs.npmjs.com/cli/v11/commands/npm-cache/",
+    "https://pip.pypa.io/en/stable/cli/pip_cache/",
+    "https://learn.microsoft.com/en-us/windows-server/administration/windows-commands/compact-vdisk"
+  ],
+  "privateArtifactReceipts": [
+    {
+      "path": ".local-pilot/host-disk-20261004/private-disk-inventory.json",
+      "sha256": "e2658b0ccf7be25ce057e2677a066c509a362925a1a7391c414353f629b388ed",
+      "bytes": 342264
+    },
+    {
+      "path": ".local-pilot/host-disk-20261004/workspace-size.json",
+      "sha256": "38a6658b187a935e2b28cf062363bb9e6485006a7e5dcc5bc2e2bb0b8163aa03",
+      "bytes": 24867
+    },
+    {
+      "path": ".local-pilot/host-disk-20261004/tracked-size.json",
+      "sha256": "e8943d6bbe41300ed0dfa27bdf7f2fdfddffe9b6677da738fc07eebc23cbaeaa",
+      "bytes": 1927
+    },
+    {
+      "path": ".local-pilot/host-disk-20261004/largest-allocation.json",
+      "sha256": "7cef46a90bceb33e73fc62087762d37dc260512ba2d2bed0cc52cddc2b680c03",
+      "bytes": 4259
+    },
+    {
+      "path": ".local-pilot/host-disk-20261004/workspace-cache-plan.json",
+      "sha256": "927e18652c6eac766a127258e8adbc6a661237463fee04329fef87a6cfbbce1a",
+      "bytes": 20014
+    },
+    {
+      "path": ".local-pilot/host-disk-20261004/package-cleanup-intent.json",
+      "sha256": "ea81e07d6a752417e24088a70a7004db597cc4c2ba5193d06e90f6229bd17183",
+      "bytes": 587
+    },
+    {
+      "path": ".local-pilot/host-disk-20261004/package-cleanup-result.json",
+      "sha256": "d14c06e40a05d3b7034b7c26be264536fd19117d3632cdcc4eff1473c93b0245",
+      "bytes": 571
+    },
+    {
+      "path": ".local-pilot/host-disk-20261004/package-size-after-first-cleanup.json",
+      "sha256": "c26800849d78aaaae15d1a5dae776c6677d450c23f0ccc80b8b2dc09ce476da0",
+      "bytes": 697
+    },
+    {
+      "path": ".local-pilot/host-disk-20261004/post-cleanup-resource-guard.json",
+      "sha256": "5e494dcfb9bf380974c68ac5046c777acae506121efa2052c88ce029f27d89cc",
+      "bytes": 361
+    },
+    {
+      "path": ".local-pilot/host-disk-20261004/fleet-after-cleanup.json",
+      "sha256": "f72635d195ee7adaa6e8dc73ceca76728f6bdb268161d76849eebf943350c404",
+      "bytes": 2736
+    },
+    {
+      "path": ".local-pilot/host-disk-20261004/scan-disk.py",
+      "sha256": "b5117483579bd125026bd7f6f9100978a5ab0c64dadeb00a64f364142b17a9f6",
+      "bytes": 4548
+    }
+  ]
+}

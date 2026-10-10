@@ -24,8 +24,12 @@ class VirtualDisplayManager(
     )
 
     companion object {
-        fun createConfig(context: Context): DisplayConfig {
+        fun createConfig(context: Context, nativeSize: Boolean = false): DisplayConfig {
             val metrics = android.content.res.Resources.getSystem().displayMetrics
+            if (nativeSize) {
+                require(metrics.widthPixels > 0 && metrics.heightPixels > 0)
+                return DisplayConfig(metrics.widthPixels, metrics.heightPixels, metrics.densityDpi)
+            }
             val isLandscape = metrics.widthPixels > metrics.heightPixels
             val width = if (isLandscape) 1280 else 720
             val height = if (isLandscape) 720 else 1280

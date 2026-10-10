@@ -25,6 +25,19 @@ jest.mock('@/lib/api', () => ({
 
 const mockApi = api as jest.Mocked<typeof api>;
 
+it('keeps fleet reads inactive while access is unverified and reconciles after access returns', async () => {
+  jest.clearAllMocks();
+  mockApi.get.mockResolvedValue({ data: MOCK_DEVICES_RESPONSE });
+  let enabled = false;
+  const view = renderQueryHook(() => useDevices({ page: 1 }, enabled));
+  expect(mockApi.get).not.toHaveBeenCalled();
+  enabled = true; view.rerender();
+  await waitFor(() => expect(view.result.current.isSuccess).toBe(true));
+  expect(mockApi.get).toHaveBeenCalledTimes(1);
+  enabled = false; view.rerender();
+  expect(view.result.current.fetchStatus).toBe('idle');
+});
+
 const MOCK_DEVICES_RESPONSE = {
   items: [
     {
@@ -40,6 +53,8 @@ const MOCK_DEVICES_RESPONSE = {
       group_name: null,
       location_ids: [],
       status: 'online' as const,
+      agent_version: '1.2.20-dev',
+      agent_version_code: 10220,
       battery_level: 85,
       cpu_usage: 12.5,
       ram_usage_mb: 512,
@@ -53,7 +68,8 @@ const MOCK_DEVICES_RESPONSE = {
   ],
   total: 1,
   page: 1,
-  page_size: 20,
+  per_page: 20,
+  pages: 1,
 };
 
 describe('useDevices', () => {
@@ -68,9 +84,14 @@ describe('useDevices', () => {
 
     expect(mockApi.get).toHaveBeenCalledWith('/devices', {
       params: expect.objectContaining({ page: 1, per_page: 20, search: 'Pixel' }),
+      signal: expect.any(AbortSignal),
     });
     expect(result.current.data?.items).toHaveLength(1);
     expect(result.current.data?.items[0].name).toBe('Pixel 7');
+    expect(result.current.data?.items[0].agent_version).toBe('1.2.20-dev');
+    expect(result.current.data?.items[0].agent_version_code).toBe(10220);
+    expect(result.current.data?.page_size).toBe(20);
+    expect(result.current.data?.pages).toBe(1);
   });
 
   it('возвращает ошибку при неудачном запросе', async () => {
@@ -88,9 +109,37 @@ describe('useDevices', () => {
     renderQueryHook(() => useDevices({ page_size: 50 }));
 
     await waitFor(() => expect(mockApi.get).toHaveBeenCalled());
-    const params = mockApi.get.mock.calls[0][1]?.params;
-    expect(params.per_page).toBe(50);
-    expect(params.page_size).toBeUndefined();
+    const params = mockApi.get.mock.calls[0][1]?.params as Record<string, unknown> | undefined;
+    expect(params?.per_page).toBe(50);
+    expect(params?.page_size).toBeUndefined();
+  });
+
+  it('передаёт фильтры каталога на backend, включая live-status и location', async () => {
+    mockApi.get.mockResolvedValueOnce({ data: MOCK_DEVICES_RESPONSE });
+
+    renderQueryHook(() => useDevices({
+      page: 2,
+      page_size: 100,
+      live_status: 'attention',
+      type: 'physical',
+      group_id: 'group-1',
+      location_id: 'location-2',
+      search: 'LDPlayer',
+    }));
+
+    await waitFor(() => expect(mockApi.get).toHaveBeenCalled());
+    expect(mockApi.get).toHaveBeenCalledWith('/devices', {
+      signal: expect.any(AbortSignal),
+      params: expect.objectContaining({
+        page: 2,
+        per_page: 100,
+        live_status: 'attention',
+        type: 'physical',
+        group_id: 'group-1',
+        location_id: 'location-2',
+        search: 'LDPlayer',
+      }),
+    });
   });
 });
 

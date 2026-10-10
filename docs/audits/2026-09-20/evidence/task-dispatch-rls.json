@@ -1,0 +1,72 @@
+{
+  "finding": "AUD-135 / F32-25 task dispatcher and persisted cancellation",
+  "source_base": "b08a773830443a915c73b6c3cf8dff64e2c37e0e",
+  "recorded_at": "2026-09-21T00:00:36.652017+00:00",
+  "source_scope": "Working tree in same commit as evidence; SHA-256 uses UTF-8 LF.",
+  "source_sha256": {
+    "backend/api/v1/tasks/router.py": "e1a7f43e47a040c5cacf46676d45fd7a4524e74cf808865dfedf189bd89a8f35",
+    "backend/services/task_dispatcher.py": "a1b663ba0b5a8a15ef24a6cf4f621ec6e4bccab8e973006bae879cf6a194e190",
+    "backend/services/task_service.py": "adf0806d43e6002a7886936f7937b83038b4d46a13f3e459ebfbf67ec47fcf79",
+    "alembic/versions/20260921_task_dispatch.py": "a87203e18a4976434a4973501a69f9de538b4760bd5be242f0d7149ddb44f7ec",
+    "tests/production/test_task_dispatcher_runtime.py": "8ceeeb4ca6ac29bef327da67ce3f5d8c6036cb921aaa9340238daac4e4389e42",
+    "tests/production/test_task_dispatch_migration.py": "385584ca69a860c2f4601ff99c94918dbd60a0531345c6013ef1a391d5099646"
+  },
+  "severity": "High / P0 before runtime-role rollout",
+  "before_registered_startup": {
+    "tests": 3,
+    "failures": 3,
+    "errors": 0,
+    "skipped": 0,
+    "passed": 0,
+    "duration_seconds": 1.785
+  },
+  "before_outcomes": [
+    "Queued task not assigned under real RLS login",
+    "Persisted RUNNING cancellation not sent",
+    "Startup with Redis absent did not register dispatcher"
+  ],
+  "after_related": {
+    "tests": 101,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "passed": 101,
+    "duration_seconds": 47.268
+  },
+  "verification": [
+    "Real non-owner/NOBYPASSRLS login, one pooled connection, tenant context resets",
+    "Two organizations and competing registered workers; assignment commits before transport",
+    "New worker after lost transport reply reuses Task/command ID",
+    "Actual SQL commit followed by simulated lost response; no immediate replay",
+    "Real SELECT pg_sleep(5) cancelled by deadline; same worker/pool recovers",
+    "64 offline SQL-fixture devices before one online; full-page cache failure retains cursor",
+    "Hung transport cancelled without SQL connection retention or blocking healthy tenant",
+    "Migration predicates, duplicate device, foreign tenant link, 64-row cursor, ACL, downgrade/re-upgrade"
+  ],
+  "validation": {
+    "ruff": "pass",
+    "mypy_scoped_runtime_modules": 3,
+    "isolated_migration_upgrade": "pass",
+    "previous_head_ci": "../../2026-09-05/evidence/ci-b08a773-summary.json"
+  },
+  "intermediate_findings": [
+    "Shared isolated DB retained unrelated task intents: tests now restrict effects to fixture IDs after real SQL discovery",
+    "Move cursor advancement after successful page processing; presence failure must not skip its page"
+  ],
+  "limitations": [
+    "Transport/presence doubles; no physical APK task or stop acceptance",
+    "65 fixture devices do not establish 32/64 emulator capacity or latency",
+    "Source only; no backend/APK pilot deployment or old Docker changes",
+    "Explicit function grant and migration required; HTTP readyz does not prove worker health",
+    "Scheduler RLS remains reproduced and open; watchdog and other background paths need separate tests",
+    "Scoped/full pytest exclude tests/load; native network/Redis failover and fleet soak remain open"
+  ],
+  "after_full_backend": {
+    "tests": 1907,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "passed": 1907,
+    "duration_seconds": 539.525
+  }
+}

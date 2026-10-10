@@ -8,18 +8,18 @@ describe('useUIStore', () => {
   beforeEach(() => {
     // Сбрасываем к дефолтам
     useUIStore.setState({
-      theme: 'dark',
-      accentColor: 'violet',
-      density: 'compact',
+      theme: 'light',
+      accentColor: 'emerald',
+      density: 'comfortable',
       fontSize: 'base',
       sidebarExpanded: true,
     });
   });
 
   describe('начальное состояние', () => {
-    it('тема = dark', () => expect(useUIStore.getState().theme).toBe('dark'));
-    it('акцент = violet', () => expect(useUIStore.getState().accentColor).toBe('violet'));
-    it('плотность = compact', () => expect(useUIStore.getState().density).toBe('compact'));
+    it('uses light theme by default', () => expect(useUIStore.getState().theme).toBe('light'));
+    it('uses emerald accent by default', () => expect(useUIStore.getState().accentColor).toBe('emerald'));
+    it('uses comfortable density by default', () => expect(useUIStore.getState().density).toBe('comfortable'));
     it('шрифт = base', () => expect(useUIStore.getState().fontSize).toBe('base'));
     it('сайдбар развёрнут', () => expect(useUIStore.getState().sidebarExpanded).toBe(true));
   });

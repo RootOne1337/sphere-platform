@@ -48,6 +48,7 @@ import {
 } from '@/lib/hooks/useEventTriggers';
 import { useQuery } from '@tanstack/react-query';
 import { api } from '@/lib/api';
+import { CatalogPagination } from '@/src/shared/ui/catalog-pagination';
 
 // ── Типы пайплайнов (для выпадающего списка) ─────────────────────────
 
@@ -87,16 +88,18 @@ function timeAgo(dateStr: string | null) {
 
 export default function EventTriggersPage() {
   const [search, setSearch] = useState('');
+  const [page, setPage] = useState(1);
   const [filterActive, setFilterActive] = useState<string>('__all__');
   const [createOpen, setCreateOpen] = useState(false);
   const [editTarget, setEditTarget] = useState<EventTrigger | null>(null);
 
   const params = useMemo(() => ({
+    page,
     per_page: 100,
     is_active: filterActive === 'true' ? true : filterActive === 'false' ? false : undefined,
-  }), [filterActive]);
+  }), [filterActive, page]);
 
-  const { data, isLoading, refetch } = useEventTriggers(params);
+  const { data, isLoading, isError, isFetching, refetch } = useEventTriggers(params);
   const { data: pipelines = [] } = usePipelineOptions();
   const toggleMut = useToggleEventTrigger();
   const deleteMut = useDeleteEventTrigger();
@@ -131,7 +134,7 @@ export default function EventTriggersPage() {
                 Event Triggers
               </h1>
               <Badge variant="outline" className="ml-2 text-[9px]">
-                {triggers.length}
+                {isError || isLoading ? '—' : data?.total ?? triggers.length}
               </Badge>
             </div>
             <p className="text-xs text-muted-foreground font-mono max-w-2xl">
@@ -143,13 +146,14 @@ export default function EventTriggersPage() {
             <div className="relative w-full sm:w-64">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground pointer-events-none" />
               <Input
-                placeholder="Поиск триггеров..."
+                placeholder="Поиск на этой странице…"
+                aria-label="Поиск триггеров на текущей странице"
                 className="pl-9 h-9 bg-black/50 border-border font-mono text-xs focus-visible:ring-primary/50"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
               />
             </div>
-            <Select value={filterActive} onValueChange={setFilterActive}>
+            <Select value={filterActive} onValueChange={(value) => { setFilterActive(value); setPage(1); }}>
               <SelectTrigger className="h-9 w-[140px] text-xs font-mono">
                 <SelectValue placeholder="Все" />
               </SelectTrigger>
@@ -159,7 +163,7 @@ export default function EventTriggersPage() {
                 <SelectItem value="false">Неактивные</SelectItem>
               </SelectContent>
             </Select>
-            <Button variant="outline" size="sm" className="h-9" onClick={() => refetch()}>
+            <Button variant="outline" size="sm" className="h-9" disabled={isFetching} onClick={() => refetch()}>
               <RefreshCw className="w-3.5 h-3.5 mr-1" /> Обновить
             </Button>
             <Button size="sm" className="h-9 font-mono text-xs uppercase tracking-wider" onClick={() => setCreateOpen(true)}>
@@ -172,10 +176,10 @@ export default function EventTriggersPage() {
       {/* ── STATS ──────────────────────────────────────────────────── */}
       <div className="px-6 pt-5">
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-5">
-          <StatCard label="Всего триггеров" value={triggers.length} icon={<Zap className="w-7 h-7 text-primary/30" strokeWidth={1} />} />
-          <StatCard label="Активных" value={triggers.filter(t => t.is_active).length} icon={<Activity className="w-7 h-7 text-success/30" strokeWidth={1} />} />
-          <StatCard label="Сработало (всего)" value={triggers.reduce((s, t) => s + t.total_triggers, 0)} icon={<GitBranch className="w-7 h-7 text-primary/30" strokeWidth={1} />} />
-          <StatCard label="С ошибками" value={triggers.filter(t => !t.is_active && t.total_triggers > 0).length} icon={<ShieldAlert className="w-7 h-7 text-destructive/30" strokeWidth={1} />} />
+          <StatCard label="Всего по фильтру API" value={isError || isLoading ? '—' : data?.total ?? triggers.length} icon={<Zap className="w-7 h-7 text-primary/30" strokeWidth={1} />} />
+          <StatCard label="Активных на странице" value={isError || isLoading ? '—' : triggers.filter(t => t.is_active).length} icon={<Activity className="w-7 h-7 text-success/30" strokeWidth={1} />} />
+          <StatCard label="Срабатываний на странице" value={isError || isLoading ? '—' : triggers.reduce((s, t) => s + t.total_triggers, 0)} icon={<GitBranch className="w-7 h-7 text-primary/30" strokeWidth={1} />} />
+          <StatCard label="Неактивных со срабатываниями" value={isError || isLoading ? '—' : triggers.filter(t => !t.is_active && t.total_triggers > 0).length} icon={<ShieldAlert className="w-7 h-7 text-muted-foreground/30" strokeWidth={1} />} />
         </div>
       </div>
 
@@ -197,6 +201,12 @@ export default function EventTriggersPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-[#222]/50 font-mono text-xs text-foreground/80">
+              {isError && <tr><td colSpan={9} className="px-4 py-8 text-center">
+                <div role="alert" className="space-y-3">
+                  <p>Не удалось загрузить триггеры. Состояние каталога не подтверждено.</p>
+                  <Button variant="outline" disabled={isFetching} onClick={() => void refetch()}>Повторить загрузку триггеров</Button>
+                </div>
+              </td></tr>}
               {isLoading && (
                 <tr>
                   <td colSpan={9} className="px-4 py-8 text-center text-muted-foreground">
@@ -204,15 +214,15 @@ export default function EventTriggersPage() {
                   </td>
                 </tr>
               )}
-              {!isLoading && filtered.length === 0 && (
+              {!isLoading && !isError && filtered.length === 0 && (
                 <tr>
                   <td colSpan={9} className="px-4 py-12 text-center text-muted-foreground">
                     <Zap className="w-8 h-8 mx-auto mb-2 opacity-30" />
-                    {search ? 'Ничего не найдено' : 'Нет триггеров. Создайте первый!'}
+                    {search ? 'Ничего не найдено на этой странице' : page > 1 ? 'На этой странице триггеров нет' : 'Нет триггеров. Создайте первый!'}
                   </td>
                 </tr>
               )}
-              {filtered.map((t) => (
+              {!isError && filtered.map((t) => (
                 <tr key={t.id} className="hover:bg-muted transition-colors group">
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-2">
@@ -299,6 +309,11 @@ export default function EventTriggersPage() {
         </div>
       </div>
 
+      <div className="space-y-2 px-6 pb-5">
+        <p className="text-xs text-muted-foreground">Текстовый поиск действует на текущую страницу. Для остальных записей используйте страницы; фильтр активности применяется сервером ко всему каталогу.</p>
+        {!isLoading && !isError && data && <CatalogPagination page={page} perPage={100} total={data.total} busy={isFetching} label="триггеры" onPageChange={setPage} />}
+      </div>
+
       {/* ── Диалог создания ─────────────────────────────────────── */}
       <TriggerFormDialog
         open={createOpen}
@@ -323,7 +338,7 @@ export default function EventTriggersPage() {
 
 // ── Stat Card ────────────────────────────────────────────────────────
 
-function StatCard({ label, value, icon }: { label: string; value: number; icon: React.ReactNode }) {
+function StatCard({ label, value, icon }: { label: string; value: number | string; icon: React.ReactNode }) {
   return (
     <div className="border border-border bg-muted rounded-sm p-4 flex items-center justify-between">
       <div>

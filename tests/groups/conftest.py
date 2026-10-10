@@ -44,21 +44,6 @@ def _patch_missing_relationships() -> None:
             break
 
 
-def _patch_pg_types_for_sqlite() -> None:
-    from sqlalchemy import JSON, String
-    from sqlalchemy.dialects.postgresql import ARRAY, JSONB
-
-    for table in Base.metadata.tables.values():
-        for column in table.columns:
-            col_type = type(column.type)
-            if col_type is JSONB or col_type.__name__ == "JSONB":
-                column.type = JSON()
-            elif col_type.__name__ == "INET":
-                column.type = String(45)
-            elif col_type is ARRAY or col_type.__name__ == "ARRAY":
-                column.type = JSON()
-
-
 _patch_missing_relationships()
 
 
@@ -67,7 +52,6 @@ _patch_missing_relationships()
 @pytest_asyncio.fixture(scope="session")
 async def async_engine():
     _patch_missing_relationships()
-    _patch_pg_types_for_sqlite()
     engine = create_async_engine("sqlite+aiosqlite:///:memory:", echo=False)
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)

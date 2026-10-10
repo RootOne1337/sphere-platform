@@ -1,0 +1,33 @@
+{
+  "variant": "EnterpriseDebug",
+  "suites": 31,
+  "totals": {
+    "tests": 399,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  "config_cases": [
+    "invalid discovered URL cannot replace a usable route",
+    "restart accepts fresh response and ignores prior generation response",
+    "response from earlier route cannot overwrite a local route change",
+    "same route does not reconnect or change credentials",
+    "cancelled body read closes late response without applying it",
+    "malformed response preserves current route",
+    "second periodic owner cannot cancel the active owner or duplicate its request",
+    "cancelling periodic owner also cancels its forced request",
+    "server unavailable preserves current route",
+    "enrolled watchdog discovers public config without misusing device JWT as API key",
+    "sixty four forced checks share one pending HTTP request",
+    "blank config endpoint performs no network request",
+    "blank endpoint periodic run returns normally without network",
+    "local route change and restore still invalidates older response",
+    "ten second discovery deadline cancels stuck HTTP and permits another request",
+    "discovery rejects credential and query bearing server URLs",
+    "public config still parses bootstrap fields without sending credentials",
+    "stopped watchdog ignores further circuit notifications",
+    "oversized chunked config is rejected before reading the entire body",
+    "parent cancellation cancels discovery without waiting for held headers",
+    "stop cancels pending discovery and late response cannot change route"
+  ]
+}

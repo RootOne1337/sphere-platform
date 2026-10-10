@@ -1,0 +1,201 @@
+{
+  "source": "8a6b30edc2ecbea53bdc92d1d9a176a088778764",
+  "deployment_at": "2026-09-20T03:21:07.351925+00:00",
+  "backend_image": "sha256:825076a687e93e21acad4bbe516ac6e026e033d778a5483f03f461435dbd9765",
+  "only_new_backend_replaced": true,
+  "other_containers_preserved": true,
+  "ota_catalog_and_apk_hash_preserved": true,
+  "frontend": "03b161e",
+  "apk_version_code": 10207,
+  "capture_probe": {
+    "started_at": "2026-09-20T03:22:28.816695+00:00",
+    "viewers": [
+      {
+        "cycle": 1,
+        "ready_seconds": 1.39,
+        "device": "85f2f935-7739-400e-9389-0d71227e8f0a",
+        "frames": 3,
+        "bytes": 39293,
+        "nal_types": [
+          5,
+          7,
+          8
+        ],
+        "first_frame_seconds": 0.937
+      },
+      {
+        "cycle": 1,
+        "ready_seconds": 1.218,
+        "device": "ba1346c1-1581-452f-adee-451d36622aaf",
+        "frames": 3,
+        "bytes": 36889,
+        "nal_types": [
+          5,
+          7,
+          8
+        ],
+        "first_frame_seconds": 0.796
+      },
+      {
+        "cycle": 2,
+        "ready_seconds": 1.109,
+        "device": "85f2f935-7739-400e-9389-0d71227e8f0a",
+        "frames": 3,
+        "bytes": 38527,
+        "nal_types": [
+          5,
+          7,
+          8
+        ],
+        "first_frame_seconds": 0.75
+      },
+      {
+        "cycle": 2,
+        "ready_seconds": 1.14,
+        "device": "ba1346c1-1581-452f-adee-451d36622aaf",
+        "frames": 3,
+        "bytes": 37033,
+        "nal_types": [
+          5,
+          7,
+          8
+        ],
+        "first_frame_seconds": 0.765
+      },
+      {
+        "cycle": 3,
+        "ready_seconds": 1.125,
+        "device": "85f2f935-7739-400e-9389-0d71227e8f0a",
+        "frames": 3,
+        "bytes": 38534,
+        "nal_types": [
+          5,
+          7,
+          8
+        ],
+        "first_frame_seconds": 0.75
+      },
+      {
+        "cycle": 3,
+        "ready_seconds": 1.078,
+        "device": "ba1346c1-1581-452f-adee-451d36622aaf",
+        "frames": 3,
+        "bytes": 36963,
+        "nal_types": [
+          5,
+          7,
+          8
+        ],
+        "first_frame_seconds": 0.75
+      },
+      {
+        "cycle": 4,
+        "ready_seconds": 1.094,
+        "device": "85f2f935-7739-400e-9389-0d71227e8f0a",
+        "frames": 3,
+        "bytes": 38528,
+        "nal_types": [
+          5,
+          7,
+          8
+        ],
+        "first_frame_seconds": 0.75
+      },
+      {
+        "cycle": 4,
+        "ready_seconds": 1.062,
+        "device": "ba1346c1-1581-452f-adee-451d36622aaf",
+        "frames": 3,
+        "bytes": 36963,
+        "nal_types": [
+          5,
+          7,
+          8
+        ],
+        "first_frame_seconds": 0.734
+      },
+      {
+        "cycle": 5,
+        "ready_seconds": 1.093,
+        "device": "85f2f935-7739-400e-9389-0d71227e8f0a",
+        "frames": 3,
+        "bytes": 38534,
+        "nal_types": [
+          5,
+          7,
+          8
+        ],
+        "first_frame_seconds": 0.734
+      },
+      {
+        "cycle": 5,
+        "ready_seconds": 1.093,
+        "device": "ba1346c1-1581-452f-adee-451d36622aaf",
+        "frames": 3,
+        "bytes": 36963,
+        "nal_types": [
+          5,
+          7,
+          8
+        ],
+        "first_frame_seconds": 0.734
+      },
+      {
+        "cycle": 6,
+        "ready_seconds": 1.125,
+        "device": "85f2f935-7739-400e-9389-0d71227e8f0a",
+        "frames": 3,
+        "bytes": 38532,
+        "nal_types": [
+          5,
+          7,
+          8
+        ],
+        "first_frame_seconds": 0.75
+      },
+      {
+        "cycle": 6,
+        "ready_seconds": 1.187,
+        "device": "ba1346c1-1581-452f-adee-451d36622aaf",
+        "frames": 3,
+        "bytes": 37040,
+        "nal_types": [
+          5,
+          7,
+          8
+        ],
+        "first_frame_seconds": 0.843
+      }
+    ],
+    "devices": [
+      {
+        "device_id": "85f2f935-7739-400e-9389-0d71227e8f0a",
+        "serial": "emulator-5554",
+        "pid_before": "2182",
+        "echo_verified": true,
+        "api_status": "online",
+        "pid_after": "2182",
+        "pid_unchanged": true,
+        "crash_buffer_unchanged": true,
+        "projection_active_after_own_viewers": false
+      },
+      {
+        "device_id": "ba1346c1-1581-452f-adee-451d36622aaf",
+        "serial": "emulator-5556",
+        "pid_before": "2187",
+        "echo_verified": true,
+        "api_status": "online",
+        "pid_after": "2187",
+        "pid_unchanged": true,
+        "crash_buffer_unchanged": true,
+        "projection_active_after_own_viewers": false
+      }
+    ],
+    "scope": "Six paired capture starts after seven-second idle gaps; no new night runner or APK change.",
+    "finished_at": "2026-09-20T03:23:48.485750+00:00",
+    "backend_log_sha256": "dcb3960558c5f7869e5616addb131d0ca7274ddb92525c51dc89d06f636d2fe9",
+    "passed": true
+  },
+  "eight_hour_passed": false,
+  "boundary": "Separate 80-second native acceptance after failed night; not continuation or replacement of eight-hour test."
+}

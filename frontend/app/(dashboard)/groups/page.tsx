@@ -1,120 +1,86 @@
 'use client';
+
 import { useState } from 'react';
-import { useGroups, useCreateGroup, useDeleteGroup } from '@/lib/hooks/useGroups';
+import Link from 'next/link';
+import { type Group, useGroups } from '@/lib/hooks/useGroups';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from '@/components/ui/dialog';
-import { Plus, Trash2, FolderOpen } from 'lucide-react';
+import { Card, CardContent } from '@/components/ui/card';
+import { FolderOpen, Layers3, Pencil, Plus, RefreshCw, Trash2, Users, Wifi } from 'lucide-react';
+import { PageFrame, PageHeading } from '@/src/shared/ui/page-layout';
+import { GroupEditor } from '@/src/features/groups/GroupEditor';
+import { GroupDeleteDialog } from '@/src/features/groups/GroupDeleteDialog';
+import { PermissionNotice, useCapabilities } from '@/src/features/access/Capabilities';
 
 export default function GroupsPage() {
-  const { data: groups, isLoading } = useGroups();
-  const createGroup = useCreateGroup();
-  const deleteGroup = useDeleteGroup();
-
-  const [dialogOpen, setDialogOpen] = useState(false);
-  const [name, setName] = useState('');
-  const [description, setDescription] = useState('');
-  const [color, setColor] = useState('#3B82F6');
-
-  const handleCreate = async () => {
-    await createGroup.mutateAsync({ name, description: description || undefined, color });
-    setName('');
-    setDescription('');
-    setDialogOpen(false);
-  };
+  const access = useCapabilities();
+  const canWrite = access.can('device:write');
+  const canDelete = access.can('device:delete');
+  const { data: groups, isLoading, isError, isFetching, refetch } = useGroups();
+  const [editor, setEditor] = useState<{ group: Group | null } | null>(null);
+  const [deleting, setDeleting] = useState<Group | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
+  const available = !isError && !isLoading && groups !== undefined;
+  const exists = (group: Group | null) => available && (!group || groups?.some((item) => item.id === group.id) === true);
+  function openEditor(group: Group | null) { if (!canWrite || !exists(group)) return; setNotice(null); setEditor({ group }); }
+  function openDeletion(group: Group) { if (!canDelete || !exists(group)) return; setNotice(null); setDeleting(group); }
 
   return (
-    <div className="p-6 space-y-4">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">Groups</h1>
-        <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-          <DialogTrigger asChild>
-            <Button>
-              <Plus className="w-4 h-4 mr-2" />
-              New Group
-            </Button>
-          </DialogTrigger>
-          <DialogContent aria-describedby={undefined}>
-            <DialogHeader>
-              <DialogTitle>Create Group</DialogTitle>
-            </DialogHeader>
-            <div className="space-y-4 pt-2">
-              <div className="space-y-1">
-                <Label>Name</Label>
-                <Input value={name} onChange={(e) => setName(e.target.value)} />
-              </div>
-              <div className="space-y-1">
-                <Label>Description</Label>
-                <Input value={description} onChange={(e) => setDescription(e.target.value)} />
-              </div>
-              <div className="space-y-1">
-                <Label>Color</Label>
-                <div className="flex gap-2 items-center">
-                  <input type="color" value={color} onChange={(e) => setColor(e.target.value)} className="w-8 h-8 rounded cursor-pointer" />
-                  <span className="text-sm text-muted-foreground">{color}</span>
-                </div>
-              </div>
-              <Button onClick={handleCreate} disabled={createGroup.isPending || !name} className="w-full">
-                {createGroup.isPending ? 'Creating…' : 'Create'}
-              </Button>
-            </div>
-          </DialogContent>
-        </Dialog>
-      </div>
-
-      {isLoading ? (
-        <p className="text-muted-foreground text-sm">Loading…</p>
-      ) : !groups || groups.length === 0 ? (
-        <div className="text-center py-12 text-muted-foreground">
-          <FolderOpen className="w-12 h-12 mx-auto mb-3 opacity-50" />
-          <p>No groups yet. Create your first group to organize devices.</p>
+    <PageFrame>
+      <PageHeading eyebrow="Организация парка" title="Группы устройств"
+        description="Состав, доступность и настройки групп. Счётчики обновляются каждые 30 секунд по данным сервера."
+        actions={<>
+          <Button type="button" variant="outline" disabled={isFetching} onClick={() => { void refetch(); }}><RefreshCw className="mr-2 h-4 w-4" aria-hidden="true" />Обновить группы</Button>
+          <Button type="button" disabled={!available || !canWrite} onClick={() => openEditor(null)}><Plus className="mr-2 h-4 w-4" aria-hidden="true" />Создать группу</Button>
+        </>}
+      />
+      <PermissionNotice permission="device:write" action="создание и изменение групп" />
+      {notice && <p role="status" className="rounded-lg border border-success/30 bg-success/5 p-3 text-sm">{notice}</p>}
+      {isError ? (
+        <Card><CardContent className="flex flex-col items-start gap-3 p-6 sm:flex-row sm:items-center sm:justify-between">
+          <div><p className="font-medium">Не удалось загрузить группы</p><p className="mt-1 text-sm text-muted-foreground">Состояние данных не подтверждено сервером. Операции с группами приостановлены.</p></div>
+          <Button type="button" variant="outline" onClick={() => { void refetch(); }}>Повторить</Button>
+        </CardContent></Card>
+      ) : isLoading ? (
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3" aria-label="Загрузка групп" aria-busy="true">
+          {Array.from({ length: 3 }, (_, index) => <div key={index} className="h-40 animate-pulse rounded-xl border border-border bg-card motion-reduce:animate-none" />)}
         </div>
+      ) : !groups?.length ? (
+        <Card><CardContent className="flex min-h-64 flex-col items-center justify-center p-8 text-center">
+          <FolderOpen className="h-10 w-10 text-primary" aria-hidden="true" />
+          <p className="mt-4 font-semibold">Групп пока нет</p><p className="mt-1 max-w-md text-sm text-muted-foreground">Создайте первую группу, чтобы разделить парк по локациям, задачам или профилям работы.</p>
+          <Button className="mt-5" disabled={!available || !canWrite} onClick={() => openEditor(null)}><Plus className="mr-2 h-4 w-4" aria-hidden="true" />Создать группу</Button>
+        </CardContent></Card>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <section aria-label="Список групп" className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
           {groups.map((group) => (
-            <div
-              key={group.id}
-              className="rounded-lg border p-4 hover:bg-accent/50 transition-colors"
-              style={{ borderLeftColor: group.color ?? undefined, borderLeftWidth: group.color ? 4 : undefined }}
-            >
-              <div className="flex items-start justify-between">
-                <div>
-                  <h3 className="font-semibold">{group.name}</h3>
-                  {group.description && (
-                    <p className="text-xs text-muted-foreground mt-1">{group.description}</p>
-                  )}
+            <Card key={group.id} className="relative overflow-hidden shadow-soft transition-[border-color,box-shadow] duration-200 hover:border-primary/30 hover:shadow-md motion-reduce:transition-none">
+              <span className="absolute inset-y-0 left-0 w-1" style={{ backgroundColor: group.color ?? 'hsl(var(--primary))' }} aria-hidden="true" />
+              <CardContent className="p-5 pl-6">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0"><div className="flex items-start gap-2"><Layers3 className="mt-1 h-4 w-4 shrink-0 text-primary" aria-hidden="true" /><h2 className="break-words font-semibold tracking-tight">{group.name}</h2></div>
+                    <p className="mt-2 min-h-10 break-words text-sm leading-5 text-muted-foreground">{group.description || 'Описание не добавлено'}</p>
+                  </div>
+                  <Button type="button" size="icon" variant="ghost" className="h-9 w-9 shrink-0 text-muted-foreground hover:bg-destructive/10 hover:text-destructive" aria-label={`Удалить группу ${group.name}`} disabled={!canDelete || !available} title={!canDelete ? 'Текущие права не разрешают удаление групп' : undefined} onClick={() => openDeletion(group)}>
+                    <Trash2 className="h-4 w-4" aria-hidden="true" />
+                  </Button>
                 </div>
-                <Button
-                  size="icon"
-                  variant="ghost"
-                  className="text-red-400 hover:text-red-300 h-7 w-7"
-                  onClick={() => {
-                    if (confirm(`Delete group "${group.name}"?`)) deleteGroup.mutate(group.id);
-                  }}
-                >
-                  <Trash2 className="w-4 h-4" />
-                </Button>
-              </div>
-              <div className="flex gap-2 mt-3">
-                <Badge variant="outline">
-                  {group.total_devices} devices
-                </Badge>
-                <Badge variant="outline" className="text-green-400 border-green-600">
-                  {group.online_devices} online
-                </Badge>
-              </div>
-            </div>
+                <div className="mt-4 flex flex-wrap gap-2 border-t border-border/70 pt-4">
+                  <Badge variant="outline" className="rounded-full px-2.5"><Users className="mr-1 h-3 w-3" aria-hidden="true" />{group.total_devices} устройств</Badge>
+                  <Badge variant="success" className="rounded-full px-2.5"><Wifi className="mr-1 h-3 w-3" aria-hidden="true" />{group.online_devices} онлайн</Badge>
+                </div>
+                {group.parent_group_id && <p className="mt-3 break-words text-xs text-muted-foreground">Родительская группа: {groups.find((item) => item.id === group.parent_group_id)?.name ?? group.parent_group_id}</p>}
+                <div className="mt-4 flex flex-wrap gap-2">
+                  <Button type="button" variant="outline" size="sm" asChild><Link href={`/devices?group_id=${encodeURIComponent(group.id)}`} aria-label={`Устройства группы ${group.name}`}><Users className="mr-2 h-4 w-4" aria-hidden="true" />Устройства</Link></Button>
+                  <Button type="button" variant="outline" size="sm" aria-label={`Изменить группу ${group.name}`} disabled={!canWrite || !available} onClick={() => openEditor(group)}><Pencil className="mr-2 h-4 w-4" aria-hidden="true" />Изменить</Button>
+                </div>
+              </CardContent>
+            </Card>
           ))}
-        </div>
+        </section>
       )}
-    </div>
+      {editor && <GroupEditor key={editor.group?.id ?? '__create__'} group={editor.group} groups={groups ?? []} available={exists(editor.group)} canWrite={canWrite} onClose={() => setEditor(null)} onSaved={() => { setNotice(editor.group ? 'Группа обновлена' : 'Группа создана'); setEditor(null); }} />}
+      {deleting && <GroupDeleteDialog key={deleting.id} group={deleting} available={exists(deleting)} canDelete={canDelete} onClose={() => setDeleting(null)} onDeleted={() => { setNotice(`Группа «${deleting.name}» удалена`); setDeleting(null); }} />}
+    </PageFrame>
   );
 }

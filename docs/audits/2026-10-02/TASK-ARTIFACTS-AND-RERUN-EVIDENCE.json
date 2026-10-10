@@ -1,0 +1,168 @@
+{
+  "source": "5fcf18a87f9a2ab198b1d145eae485218871bc01",
+  "observedAt": "2026-10-01T20:30:49.081215+00:00",
+  "timezone": "Asia/Yekaterinburg",
+  "frozenAuditUnchanged": true,
+  "findings": [
+    "F16",
+    "F17"
+  ],
+  "commits": [
+    "4f141d8",
+    "7df0fc4",
+    "5fcf18a"
+  ],
+  "before": {
+    "source": "9b1f0e1",
+    "currentRegressionTestsOnFrozenBeforeSource": true,
+    "exit": 1,
+    "tests": 19,
+    "failures": 14,
+    "errors": 0,
+    "skipped": 0
+  },
+  "frontend": {
+    "suitesPassed": 91,
+    "testsPassed": 718,
+    "failed": 0,
+    "skipped": 0,
+    "addedRegressionCases": 13,
+    "strongerGlobalRetryCasesPassed": 2,
+    "beforeWebFailures": {
+      "rerun": 2,
+      "screenshot": 1
+    }
+  },
+  "backend": {
+    "taskScriptStoragePassed": 92,
+    "optInMinioSkippedInUnitRun": 1,
+    "postgresConcurrencyAndCancellationPassed": 13,
+    "realMinioAuthenticatedHttpPassed": 1,
+    "changedFilesRuffPassed": true
+  },
+  "compile": {
+    "source": "5fcf18a87f9a2ab198b1d145eae485218871bc01",
+    "exit": 0,
+    "isolatedArchive": true,
+    "productionConfigPreserved": true,
+    "sameOriginApi": true,
+    "sameOriginWsFallback": true,
+    "buildStamp": "5fcf18a87f9a2ab198b1d145eae485218871bc01",
+    "observedAt": "2026-10-01T20:24:44.3811460+00:00",
+    "browserVerified": false,
+    "lintWarnings": 44,
+    "compiledStampVerified": true
+  },
+  "apiRuntime": {
+    "source": "5fcf18a87f9a2ab198b1d145eae485218871bc01",
+    "previousSource": "8d64ca453e1028f37923c877523dbfe85acaad21",
+    "containerId": "e43088322a2d5eaef8ae05c34207d91d9a81772c550e085d94a55a69de2bdd5e",
+    "imageId": "sha256:b89cc615d7cef4f2c5301cf3e8f5909a57e3ecef2d47aa35756239849361e250",
+    "observedAt": "2026-10-01T20:27:36.537449+00:00",
+    "ready": true,
+    "healthRevisionMatched": true,
+    "routes": {
+      "/api/v1/tasks/{task_id}/rerun": [
+        "post"
+      ],
+      "/api/v1/tasks/{task_id}/screenshots": [
+        "get"
+      ],
+      "/api/v1/tasks/{task_id}/screenshots/content": [
+        "get"
+      ]
+    },
+    "onlyBackendReplaced": true,
+    "screenshotStorageConfigured": false,
+    "apkOtaTunnelsPreserved": true,
+    "browserVerified": false
+  },
+  "uiRuntime": {
+    "source": "5fcf18a87f9a2ab198b1d145eae485218871bc01",
+    "buildStamp": "5fcf18a87f9a2ab198b1d145eae485218871bc01",
+    "compiledStampVerified": true,
+    "observedAt": "2026-10-01T20:28:45.2982513+00:00",
+    "state": "owned_listeners_and_api_ready",
+    "nextPid": 772,
+    "nextStartUtc": "2026-10-01T20:28:37.0635477+00:00",
+    "relayPid": 13680,
+    "relayStartUtc": "2026-10-01T20:28:42.9303765+00:00",
+    "previousRelayPid": 48892,
+    "previousNextPid": 7416,
+    "previousNextPreserved": true,
+    "previousOwnedRelayStopped": true,
+    "port": 3015,
+    "uiPort": 3030,
+    "apiPort": 18080,
+    "apiRevision": "5fcf18a87f9a2ab198b1d145eae485218871bc01",
+    "productionConfigPreserved": true,
+    "ready": true,
+    "browserVerified": false
+  },
+  "authenticatedApiProbe": {
+    "observedAt": "2026-10-01T20:30:49.081215+00:00",
+    "baseUrl": "http://127.0.0.1:3015/api/v1",
+    "login": "passed",
+    "taskScreenshotManifest": {
+      "status": 200,
+      "references": 0,
+      "authorizedTaskRead": true
+    },
+    "missingRerunStatus": 404,
+    "missingRerunCreatesNoTask": true,
+    "deviceCatalogTotal": 19,
+    "loadedDeviceRows": 19,
+    "reportedStatuses": {
+      "online": 14,
+      "offline": 5
+    },
+    "reportedVersions": {
+      "1.2.32-dev": 2,
+      "not-reported": 5,
+      "1.2.40-dev": 2,
+      "1.2.22-dev": 5,
+      "1.2.30-dev": 3,
+      "1.2.34-dev": 2
+    },
+    "noRemoteCommandsSent": true,
+    "browserDrawVerified": false
+  },
+  "acceptance": {
+    "androidArtifactUpload": "OPEN_N01",
+    "realAndroidScreenshotToBrowser": "OPEN",
+    "browserVisual": "OPEN_URL_POLICY_BLOCKED",
+    "realAndroidRerunOutcome": "OPEN",
+    "fleet20to30": "OPEN"
+  },
+  "screenshotStorageConfigured": false,
+  "publicFrontendUpdated": false,
+  "apkOtaTunnelsChanged": false,
+  "newHeadCiComplete": false,
+  "applicationSourceCi": {
+    "source": "5fcf18a87f9a2ab198b1d145eae485218871bc01",
+    "observedAt": "2026-10-01T20:53:36.366388+00:00",
+    "backendRunUrl": "https://github.com/RootOne1337/sphere-platform/actions/runs/36921814744",
+    "backendJobConclusion": "failure",
+    "fullBackendPassed": 2165,
+    "fullBackendSkipped": 16,
+    "coveragePercent": 78.0,
+    "failureStep": "Verify generated HTTP API documentation",
+    "failureReason": "Stale generated OpenAPI and endpoint catalog",
+    "unitAndRealServiceStep": "success",
+    "redisAcceptanceStep": "skipped",
+    "alembicJob": "skipped",
+    "generatedDocsRegenerated": true,
+    "localExportCheckPassed": true,
+    "declaredHttpOperations": 171,
+    "declaredHttpPaths": 134,
+    "finalVerificationHeadCiComplete": false
+  },
+  "verificationTestCommit": "3fe5eac",
+  "documentValidation": {
+    "relativeTargetsChecked": 439,
+    "findingAnchorsChecked": 41,
+    "missing": 0
+  },
+  "historicalSnapshotBeforeDockerAndRemoteCanary": true,
+  "latestFollowupEvidence": "REVIEW-RUNTIME-AND-REMOTE-RERUN-EVIDENCE.json"
+}

@@ -1,0 +1,432 @@
+{
+  "observedAt": "2026-10-04T23:01:40.810250+00:00",
+  "source": {
+    "recorder": "1402612",
+    "projection": "9a9256f",
+    "runtimeApiUi": "c1a6e79",
+    "installedAndroid": 10244
+  },
+  "validation": {
+    "windowsCases": 8,
+    "passed": 8,
+    "skipped": 0,
+    "warnings": 571,
+    "liveCimProjectionBytes": 368,
+    "liveProjectionAdministrator": true
+  },
+  "tool": {
+    "signature": "Valid",
+    "publisher": "CN=Microsoft Corporation, O=Microsoft Corporation, L=Redmond, S=Washington, C=US",
+    "version": "4.11",
+    "sha256": "FC3AF5317C707E0555AD6E7590AD65CEB5C5085B053B41221944AC3CA3492D9C",
+    "traceStarted": false
+  },
+  "traceParser": {
+    "name": "Microsoft.Diagnostics.Tracing.TraceEvent",
+    "version": "3.2.8",
+    "license": "MIT",
+    "author": "Microsoft",
+    "packageSha256": "37284f885e75326bbd1858bf19f20c9da2818fec7a3bd49803209209be5fd38d"
+  },
+  "recorderLimits": {
+    "loggingMode": "Memory",
+    "bufferKiB": 1024,
+    "bufferCount": 128,
+    "payloadMiB": 128,
+    "durationMaxSeconds": 1800,
+    "sampleMaxBytes": 131072,
+    "totalSampleMaxBytes": 8388608,
+    "ownInstanceOnly": true,
+    "minimumFreeDiskGiB": 20,
+    "minimumAvailableRamGiB": 4
+  },
+  "cleanObservation": {
+    "startUtc": "2026-10-04T21:15:34.9698830Z",
+    "lastSampleUtc": "2026-10-04T21:25:24.6590993Z",
+    "sampleCount": 60,
+    "freeStartBytes": 47749308416,
+    "freeEndBytes": 47713853440,
+    "freeDeltaBytes": -35454976,
+    "vssUsedDeltaBytes": 117325824,
+    "vssAllocatedStartBytes": 15890276352,
+    "vssAllocatedEndBytes": 15890276352,
+    "availableRamStartBytes": 16436326400,
+    "availableRamEndBytes": 16173449216,
+    "traceBytes": 39255867,
+    "traceSha256": "457a5b221ba77f59857e6e32b87758a133c8feabb02b2b85ecf4bf89a8e35574",
+    "nativeSaveExit": 0,
+    "exitReason": "duration_limit",
+    "fileIoEvents": 70414,
+    "fileIoLogicalWriteBytes": 320300099,
+    "diskIoEvents": 10188,
+    "diskIoTransferBytes": 270414336,
+    "eventsLost": 0,
+    "firstRetainedFileIoWriteUtc": "2026-10-04T21:15:49.2388983Z",
+    "lastRetainedFileIoWriteUtc": "2026-10-04T21:25:34.5136109Z",
+    "dockerVhdLogicalWritesBytes": 3043328,
+    "dockerVhdDiskTransfersBytes": 3010560,
+    "rundownLogicalWritesBytes": 142606848
+  },
+  "ownedRetention": {
+    "plannedImages": 51,
+    "directIdRemoved": 50,
+    "initialNativeConflict": 1,
+    "aliasRemovalExit": 0,
+    "totalRemovedImages": 51,
+    "protectedImages": 39,
+    "containerCount": 46,
+    "allContainerIdentitiesAndEpochsPreserved": true,
+    "forceUsed": false,
+    "globalPruneUsed": false,
+    "volumesDeleted": false,
+    "guestUsedBeforeBytes": 211054899200,
+    "guestUsedAfterBytes": 199310188544,
+    "guestFreedBytes": 11744710656,
+    "vhdLengthBeforeAndAfterBytes": 234731077632,
+    "beforeFreeCBytes": 47673778176,
+    "shortAfterFreeCBytes": 47210278912,
+    "physicalVhdCompactionPerformed": false
+  },
+  "vssFollowup": {
+    "priorAllocatedBytes": 15890276352,
+    "afterAllocatedBytes": 16360038400,
+    "allocatedDeltaBytes": 469762048,
+    "at": "2026-10-04T21:34:36.0673623Z",
+    "usedBytes": 15974543360,
+    "causalAttributionOfEachCopiedBlock": false
+  },
+  "followup": {
+    "startUtc": "2026-10-04T21:30:59.6894693Z",
+    "stateAtReceipt": "complete",
+    "administrator": true,
+    "sampleCountAtReceipt": 16,
+    "plannedDurationSeconds": 1800,
+    "intervalSeconds": 30,
+    "launchSource": "1402612",
+    "aliasCleanupDuringWindowUtc": "2026-10-04T21:33:42.881625+00:00",
+    "fullyIdle": false,
+    "complete1800sAcceptance": false,
+    "exitReason": "free_drop_trigger",
+    "finishedAt": "2026-10-04T21:38:44.9462960Z",
+    "traceBytes": 42889463,
+    "freeDeltaBytes": -159420416,
+    "vssAllocatedDeltaBytes": 0,
+    "traceSha256": "13cbfbfaac763123ee56be6f13ddb18ca69c0ef2ee29a3d919d093721825e5d3"
+  },
+  "postCleanupLive": {
+    "observedAt": "2026-10-04T21:33:43.165652+00:00",
+    "build": {
+      "status": "ready",
+      "checks": {
+        "postgres": "ok",
+        "redis": "ok"
+      }
+    },
+    "online": 14,
+    "onlineVersionCodes": [
+      10244
+    ]
+  },
+  "privateReceipts": {
+    "tests.xml": {
+      "bytes": 1318,
+      "sha256": "d70916e8a7f9ddca8973f72cc2d0e260d240f0cf31134cac3450f0fc095909e8"
+    },
+    "tests.log": {
+      "bytes": 232,
+      "sha256": "3b7014719a5d5fa32c2465474376137822d5f34129b0174cff2c4c09276ddf36"
+    },
+    "docker-current-summary.json": {
+      "bytes": 857,
+      "sha256": "1b1e4bc728fb1c68da1e6b447c569b6e0b9d3c9542508d103214b8c9a614d536"
+    },
+    "docker-system-df-after.txt": {
+      "bytes": 296,
+      "sha256": "a68144eb1a7297f6711e94df5a60250ad8cc88988476b05a7c3c6e4471cd0033"
+    },
+    "linux-filesystem-after.txt": {
+      "bytes": 160,
+      "sha256": "919285f29fcb68a9848cac8f820fd7822053fccb72c7a6704dbf9c6cdc2097e4"
+    },
+    "owned-image-retention-plan.json": {
+      "bytes": 38017,
+      "sha256": "338b9db9db83a9f61182c82f4b2ebb19eb655dc2ed8b0992c4851d330ad5238a"
+    },
+    "owned-image-retention-result.json": {
+      "bytes": 60166,
+      "sha256": "3a7c9a5ee498836c56e9f54674cd2cea719cecd549aee0d22be2e732a0556863"
+    },
+    "owned-image-alias-removal.json": {
+      "bytes": 510,
+      "sha256": "531c6052a7e09da04f80092d99f6304f7593539bcedba5cbe59518b6818ed26c"
+    },
+    "initial-analysis-private.json": {
+      "bytes": 10653,
+      "sha256": "182d4df918ccd8c09738ade31184ea31e7868939572824f6842057bc7482635e"
+    },
+    "clean-traceevent.tsv": {
+      "bytes": 38143,
+      "sha256": "6d2fd6eae8a4e6fcf7c0dc6e1549125bbec1d456fcdfd6687090f00ffaf8b0b8"
+    },
+    "clean-traceevent.tsv.disk.tsv": {
+      "bytes": 23348,
+      "sha256": "05b377989261306c89925aeafb1dace11a890ad45d41ebc68f55eb93b749269e"
+    },
+    "clean-traceevent.log": {
+      "bytes": 181,
+      "sha256": "6a78843df89c6cc0134d4d47fe37bf723232814aa7de8d147f6224f97768151d"
+    },
+    "confounded-traceevent.tsv": {
+      "bytes": 29629,
+      "sha256": "a749e416d18897309fbb9ee96cc2a247a0d5c6850c97c4b3e27af755ded2bd72"
+    },
+    "derived-cleanup.json": {
+      "bytes": 304,
+      "sha256": "4754e425b78f1dc9f943bde01fc7089e2dea51031e7e1bccee093d6f96c31090"
+    },
+    "final-container-verification.json": {
+      "bytes": 14709,
+      "sha256": "466a9d5926662c74efd3aa6425d1d23e757681a1ca6e4a23a22d385c286c9f2b"
+    },
+    "drop-traceevent.tsv": {
+      "bytes": 183831,
+      "sha256": "14f526ba11c6597207d5d5b22fe8bd76a59e282d07c6eaf859ca8ba3a5c11680"
+    },
+    "drop-traceevent.tsv.disk.tsv": {
+      "bytes": 51753,
+      "sha256": "a7333c8f43950c15ea23b7c37c533846a586d90a26f11e8fc7526a498c79ee0b"
+    },
+    "drop-traceevent.log": {
+      "bytes": 181,
+      "sha256": "e8c6aa500ae7404bd36eca7a929ec72e4c699c6e9126b1e84c9600541d9d7e89"
+    },
+    "browser-update-verification.json": {
+      "bytes": 1577,
+      "sha256": "b773ad55feb4ab215d7433bc7700a6e23bcc106a391fc3276ec7d9e7b26b696d"
+    },
+    "cache-current.jsonl": {
+      "bytes": 277461,
+      "sha256": "12de469eb352fde1d110844e5ff8870ba82fdabf47b6162a4cf3f2f5291caecf"
+    },
+    "container-memory-current.jsonl": {
+      "bytes": 4534,
+      "sha256": "11a67c70f70bbb24d746b4c8d1133d99ed810f202338e4b5dfc8b96cab030b11"
+    },
+    "continuation-traceevent.tsv": {
+      "bytes": 43606,
+      "sha256": "7bdeb83c960694e461dc399c30334efa0c61278cd7c8d28972e4c8098b2f38b4"
+    },
+    "continuation-traceevent.tsv.disk.tsv": {
+      "bytes": 14666,
+      "sha256": "3ae14b7632e9a73d66c629ad5303966f73aa64d6d7fae4d399007391cc82edb5"
+    },
+    "continuation-traceevent.log": {
+      "bytes": 181,
+      "sha256": "b964171e6c1207c7c5909d06fdc235ab35ae1384a310df174d866e59598a3686"
+    },
+    "continuation-analysis-private.json": {
+      "bytes": 7083,
+      "sha256": "305f13d231f1596465ef57feb35ba0752b7d82346288ea3c747a5737ac21524c"
+    },
+    "vss-inventory-private.json": {
+      "bytes": 2683,
+      "sha256": "ce9b6c4b704f881064dd8b60d1508639342829aecfb3a278b1edf981acf45dc4"
+    },
+    "image-retention-tests.xml": {
+      "bytes": 2304,
+      "sha256": "323efe8a47fd1a90a7397220311a2018644b5433152950138d1ce1e7f21fbb0b"
+    },
+    "image-retention-tests.log": {
+      "bytes": 249,
+      "sha256": "981f6fcbbc0c5ab5e9e7e891fb1e8b052dc7e239e962a118194bd512a1382e22"
+    },
+    "vss-limit-application-private.json": {
+      "bytes": 2866,
+      "sha256": "14f064d72c3f4ab315e76cc504836e8065d21f29ff1626d2668cd4b4cff2f758"
+    },
+    "vss-postchange-live.json": {
+      "bytes": 389,
+      "sha256": "0625f7d4e99747ac884f1505ea261770089ce2fc156f86edaca7bdc8d47bf583"
+    }
+  },
+  "open": [
+    "R04 long RAM soak",
+    "R05 detached VHD compaction",
+    "R06 backend RSS series",
+    "R07 server log quota/sweeper",
+    "R09 installed10245 canary",
+    "Prior6.459GiB loss and21-day growth not fully attributed"
+  ],
+  "limitations": [
+    "FileIO and DiskIO overlap; write volume is not allocated growth.",
+    "Observer save/rundown writes and initial552337158-byte CSV are explicit.",
+    "Draft CSV numerical analysis invalidated for wrong field; only typed TraceEvent parser accepted.",
+    "Circular retention may overwrite beginning even when EventsLost0.",
+    "Source10245 is neither published nor installed."
+  ],
+  "browserDrop": {
+    "observedTimeUtc": "2026-10-04T21:38:25–21:38:29",
+    "freeDropBytes": 159420416,
+    "fileIoBytesBeforeStop": 429511985,
+    "diskIoTransferBytesBeforeStop": 172638208,
+    "lostEvents": 0,
+    "browserCrxLogicalWriteBytes": 231548829,
+    "extension": "AdGuard AdBlocker",
+    "version": "5.5.2.64",
+    "manifestModifiedAt": "2026-10-04T21:38:28.223302Z",
+    "temporaryFilesChecked": 12,
+    "temporaryFilesStillPresent": 0,
+    "observedAt": "2026-10-04T21:42:23.059227Z",
+    "deletedByUs": false,
+    "limitations": [
+      "Captured browser updater writes correlate with the free-space step, not proof of all historical disk loss.",
+      "File writes may overlap/cache flush; temporary files already disappeared."
+    ],
+    "fileIoEventsBeforeStop": 58320,
+    "diskIoEventsBeforeStop": 11231,
+    "sampleCutoffUtc": "2026-10-04T21:38:30.559Z"
+  },
+  "configuredGc": {
+    "enabled": true,
+    "defaultKeepStorage": "20GB",
+    "driver": "docker",
+    "buildkitVersion": "v0.27.1",
+    "notGlobalDockerObjectQuota": true,
+    "actualSweepNotVerified": true
+  },
+  "directoryUsageKiB": {
+    "containerd": 183690040,
+    "dockerBuildkitMetadata": 211584,
+    "dockerContainers": 314048,
+    "dockerVolumes": 7286644,
+    "dataTotal": 191502664,
+    "command": "du -x -k -d 2",
+    "notEquivalentToDockerReportedLogicalSizes": true
+  },
+  "continuation": {
+    "pid": 38148,
+    "source": "9a9256f",
+    "durationSeconds": 600,
+    "startedUtc": "2026-10-04T22:42:19.0077478Z",
+    "stateAtDocumentation": "complete",
+    "state": "complete",
+    "reason": "free_drop_trigger",
+    "samples": 10,
+    "firstUtc": "2026-10-04T22:42:22.2985897Z",
+    "lastUtc": "2026-10-04T22:43:50.3270238Z",
+    "freeStartBytes": 45844234240,
+    "freeEndBytes": 45607428096,
+    "freeDeltaBytes": -236806144,
+    "vssUsedDeltaBytes": 287535104,
+    "vssAllocatedDeltaBytes": 234881024,
+    "traceBytes": 36790868,
+    "traceSha256": "c1bd3ae9bb58cfac3f9cf92834769b8bb5b3dacd6ea80dcc1263a2b702befb79",
+    "parserSummary": "diskWriteEvents=17938 diskWriteBytes=642455552\nwriteEvents=71404 bytes=352240451 lostEvents=0 firstWriteUtc=2026-10-04T22:42:20.6092334Z lastWriteUtc=2026-10-04T22:43:50.1431105Z\n",
+    "dockerVhdLogicalWriteBytes": 249688064
+  },
+  "vssLatest": {
+    "observedAt": "2026-10-04T22:52:24.4594334Z",
+    "administrator": true,
+    "shadowCopyCount": 2,
+    "restorePointCount": 1,
+    "providerName": "Microsoft Software Shadow Copy provider 1.0",
+    "usedBytes": 18135015424,
+    "allocatedBytes": 18473967616,
+    "maxBytes": 20461912064,
+    "freeCBytes": 44864716800,
+    "comparisonStartUtc": "2026-10-04T21:38:30.5597979Z",
+    "freeDeltaBytes": -2182967296,
+    "allocatedDeltaBytes": 2113929216,
+    "quotaChangePerformed": true,
+    "proposedMaxBytes": 8589934592,
+    "approvalPending": false,
+    "allHistoricalLossAttributed": false
+  },
+  "imageRetentionPlanner": {
+    "source": "c89594a",
+    "cases": 14,
+    "passed": 14,
+    "ruffPassed": true,
+    "observedAt": "2026-10-04T22:52:29.967364+00:00",
+    "candidates": 0,
+    "containers": 46,
+    "deletionPerformed": false,
+    "scheduledTaskCreated": false,
+    "nativeInspectBatch": 32,
+    "reportMaxBytes": 2097152,
+    "receiptSha256": "8671523c3eaa02f2cf5920924e22d9876d2def8779aed409c5fd0e173f24c2fa"
+  },
+  "vssApplication": {
+    "startedUtc": "2026-10-04T22:58:31.3285405Z",
+    "finishedUtc": "2026-10-04T22:58:31.4341203Z",
+    "administrator": true,
+    "targetMaxBytes": 8589934592,
+    "authorizedByOperator": true,
+    "commandExecuted": true,
+    "dockerRestarted": false,
+    "systemRestoreDisabled": false,
+    "fallbackDeletionUsed": false,
+    "nativeState": "returned",
+    "nativeExit": 0,
+    "targetVerified": true,
+    "before": {
+      "observedAt": "2026-10-04T22:58:31.3109235Z",
+      "freeCBytes": 44851392512,
+      "usedBytes": 18151464960,
+      "allocatedBytes": 18473967616,
+      "maxBytes": 20461912064,
+      "shadowCopyCount": 2
+    },
+    "after": {
+      "observedAt": "2026-10-04T22:58:31.4300184Z",
+      "freeCBytes": 63325396992,
+      "usedBytes": 0,
+      "allocatedBytes": 0,
+      "maxBytes": 8589934592,
+      "shadowCopyCount": 0
+    },
+    "observedFreeGainBytes": 18474004480,
+    "postChangeLive": {
+      "observedAt": "2026-10-04T22:59:21.440432+00:00",
+      "apiBuild": {
+        "status": "ready",
+        "checks": {
+          "postgres": "ok",
+          "redis": "ok"
+        }
+      },
+      "catalogCount": 19,
+      "online": 14,
+      "onlineVersionCodes": [
+        10244
+      ],
+      "containers": 46,
+      "allContainerIdentitiesAndEpochsPreserved": true,
+      "androidCommandsSent": 0,
+      "dockerRestarted": false
+    },
+    "firstFollowup": {
+      "observedAt": "2026-10-04T23:04:43.3549979Z",
+      "freeCBytes": 63322935296,
+      "usedBytes": 0,
+      "allocatedBytes": 0,
+      "maxBytes": 8589934592,
+      "shadowCopyCount": 0,
+      "restorePointCount": 0,
+      "nativeQueryErrors": 0,
+      "freeDeltaVersusImmediateAfterBytes": -2461696,
+      "notLongSoak": true,
+      "receiptSha256": "c28f7dc6b00a214f2c5d4023978bf9c6cd1555082ea70f48c29d22ae4ed867c3"
+    }
+  },
+  "vhdWindowsFootprint": {
+    "observedAt": "2026-10-04T23:30:15.9657489Z",
+    "fileBytes": 234731077632,
+    "allocatedBytes": 234731077632,
+    "attributes": "Archive",
+    "freeCBytes": 63245205504,
+    "compressionPerformed": false,
+    "method": "GetCompressedFileSizeW",
+    "receiptSha256": "076c2d11e18322f3361174698ac347ac8ed0692a5b181f8dc87d715276cc154a"
+  }
+}

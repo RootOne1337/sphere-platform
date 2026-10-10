@@ -2,11 +2,17 @@
 # ВЛАДЕЛЕЦ: TZ-02 SPLIT-3. Redis-backed device status cache with msgpack serialization.
 from __future__ import annotations
 
+from datetime import datetime, timezone
 from typing import Any
 
 import msgpack
+import structlog
+from pydantic import ValidationError
 
 from backend.schemas.device_status import DeviceLiveStatus
+from backend.schemas.stream_diagnostics import StoredStreamDiagnostics
+
+logger = structlog.get_logger()
 
 
 class DeviceStatusCache:
@@ -18,12 +24,16 @@ class DeviceStatusCache:
 
     TTL:
         online  → 120s  (агент шлёт heartbeat каждые 30s)
+        connecting → 90s (transient socket state; expire after a failed handshake)
         другой  → 3600s (хранить оффлайн статус 1 час)
     """
 
     KEY_PREFIX = "device:status:"
     TTL_ONLINE = 120
+    TTL_CONNECTING = 90
     TTL_OFFLINE = 3600
+    STREAM_DIAGNOSTICS_PREFIX = "device:stream-diagnostics:"
+    TTL_STREAM_DIAGNOSTICS = 86400
 
     def __init__(self, redis: Any) -> None:
         self.redis = redis
@@ -31,15 +41,54 @@ class DeviceStatusCache:
     def _key(self, device_id: str) -> str:
         return f"{self.KEY_PREFIX}{device_id}"
 
-    # ── Single device ─────────────────────────────────────────────────────────
+    def _stream_diagnostics_key(self, device_id: str) -> str:
+        return f"{self.STREAM_DIAGNOSTICS_PREFIX}{device_id}"
 
-    async def set_status(self, device_id: str, status: DeviceLiveStatus) -> None:
+    async def set_stream_diagnostics(
+        self, device_id: str, snapshot: StoredStreamDiagnostics
+    ) -> None:
+        """Keep only the latest tiny telemetry snapshot for post-reconnect diagnosis."""
         if self.redis is None:
             return
+        data = msgpack.packb(snapshot.model_dump(mode="json"), use_bin_type=True)
+        await self.redis.set(
+            self._stream_diagnostics_key(device_id),
+            data,
+            ex=self.TTL_STREAM_DIAGNOSTICS,
+        )
+
+    async def get_stream_diagnostics(
+        self, device_id: str
+    ) -> StoredStreamDiagnostics | None:
+        if self.redis is None:
+            return None
+        raw = await self.redis.get(self._stream_diagnostics_key(device_id))
+        if raw is None:
+            return None
+        try:
+            unpacked = msgpack.unpackb(raw, raw=False)
+            return StoredStreamDiagnostics.model_validate(unpacked)
+        except Exception:
+            # Bad or old cached data is unavailable, never a fatal API error.
+            return None
+
+    async def clear_stream_diagnostics(self, device_id: str) -> None:
+        if self.redis is not None:
+            await self.redis.delete(self._stream_diagnostics_key(device_id))
+
+    # ── Single device ─────────────────────────────────────────────────────────
+
+    async def set_status(self, device_id: str, status: DeviceLiveStatus) -> bool:
+        if self.redis is None:
+            return False
         key = self._key(device_id)
         data = msgpack.packb(status.model_dump(mode="json"), use_bin_type=True)
-        ttl = self.TTL_ONLINE if status.status == "online" else self.TTL_OFFLINE
-        await self.redis.set(key, data, ex=ttl)
+        ttl = {
+            "online": self.TTL_ONLINE,
+            "busy": self.TTL_ONLINE,
+            "connecting": self.TTL_CONNECTING,
+        }.get(status.status, self.TTL_OFFLINE)
+        return bool(await self.redis.set(key, data, ex=ttl))
 
     async def get_status(self, device_id: str) -> DeviceLiveStatus | None:
         if self.redis is None:
@@ -49,28 +98,150 @@ class DeviceStatusCache:
             return None
         try:
             unpacked = msgpack.unpackb(raw, raw=False)
+            return DeviceLiveStatus.model_validate(unpacked).with_current_vpn_observation()
         except Exception:
             # Stale or corrupted Redis entry — treat as missing
             return None
-        return DeviceLiveStatus.model_validate(unpacked)
 
-    async def mark_offline(self, device_id: str) -> None:
-        """Called on WebSocket disconnect (TZ-03 hook)."""
-        existing = await self.get_status(device_id)
-        if existing:
-            existing.status = "offline"
-            existing.adb_connected = False
-            existing.ws_session_id = None
-            await self.set_status(device_id, existing)
-        else:
-            await self.set_status(
-                device_id, DeviceLiveStatus(device_id=device_id, status="offline")
-            )
+    async def merge_agent_status(
+        self, device_id: str, updates: dict[str, Any], *,
+        session_id: str | None, heartbeat_at: datetime | None = None,
+    ) -> bool:
+        """Merge validated agent observations with atomic Redis session ownership.
+
+        A heartbeat can rebuild disposable presence after eviction. Standalone
+        telemetry cannot create presence, confirm online or adopt another owner.
+        WATCH retries are bounded; no pending observations are queued in memory.
+        """
+        if self.redis is None:
+            return False
+        from redis.exceptions import WatchError
+
+        updates = {key: value for key, value in updates.items() if key in {
+            "battery", "cpu_usage", "ram_usage_mb", "screen_on", "vpn_active",
+            "agent_version", "agent_version_code",
+        }}
+        # Strict booleans only: "true" / 1 must never mint a new observation.
+        if "vpn_active" in updates and updates["vpn_active"] is not None and not isinstance(updates["vpn_active"], bool):
+            updates.pop("vpn_active")
+        if not updates and heartbeat_at is None:
+            return False
+        observed_at = heartbeat_at or datetime.now(timezone.utc)
+        key = self._key(device_id)
+        for _attempt in range(3):
+            async with self.redis.pipeline(transaction=True) as pipe:
+                try:
+                    await pipe.watch(key)
+                    raw = await pipe.get(key)
+                    if raw is None:
+                        if heartbeat_at is None:
+                            return False
+                        current = DeviceLiveStatus(device_id=device_id, status="online")
+                    else:
+                        try:
+                            current = DeviceLiveStatus.model_validate(msgpack.unpackb(raw, raw=False))
+                        except Exception:
+                            return False  # Unreadable ownership is not permission to replace it.
+                    if heartbeat_at is None:
+                        if current.ws_session_id != session_id:
+                            return False
+                    elif current.ws_session_id is not None and current.ws_session_id != session_id:
+                        return False
+                    if heartbeat_at is not None:
+                        if current.connected_since is None or current.status not in ("online", "busy") or current.ws_session_id != session_id:
+                            current.connected_since = heartbeat_at
+                        if current.ws_session_id != session_id:
+                            current.vpn_active = None
+                            current.vpn_observed_at = None
+                            current.vpn_observed_session_id = None
+                        current.status = "busy" if current.status == "busy" else "online"
+                        current.ws_session_id = session_id
+                        current.last_heartbeat = heartbeat_at
+                    telemetry = dict(updates)
+                    if "vpn_active" in telemetry:
+                        telemetry["vpn_observed_at"] = observed_at if telemetry["vpn_active"] is not None else None
+                        telemetry["vpn_observed_session_id"] = session_id if telemetry["vpn_active"] is not None else None
+                    try:
+                        current = DeviceLiveStatus.model_validate(current.model_dump() | telemetry)
+                    except ValidationError:
+                        logger.warning("Invalid agent telemetry ignored", device_id=device_id)
+                        if heartbeat_at is None:
+                            return False
+                        # Transport presence stays independent of invalid telemetry.
+                    data = msgpack.packb(current.model_dump(mode="json"), use_bin_type=True)
+                    ttl = {"online": self.TTL_ONLINE, "busy": self.TTL_ONLINE,
+                           "connecting": self.TTL_CONNECTING}.get(current.status, self.TTL_OFFLINE)
+                    pipe.multi()
+                    pipe.set(key, data, ex=ttl)
+                    await pipe.execute()
+                    return True
+                except WatchError:
+                    continue
+        return False
+
+    async def mark_offline(self, device_id: str, session_id: str | None = None) -> bool:
+        """Mark a device offline only if the disconnect still owns its live session.
+
+        A connection manager is process-local. With multiple backend workers, an old
+        socket can disconnect after another worker has already stored a newer session
+        in Redis. WATCH/MULTI makes the ownership check and offline write atomic, so the
+        stale worker cannot overwrite the replacement session's status.
+
+        ``session_id=None`` preserves the legacy unconditional behavior for callers
+        that do not represent a particular WebSocket session.
+        """
+        if self.redis is None:
+            return False
+
+        from redis.exceptions import WatchError
+
+        key = self._key(device_id)
+        for _attempt in range(3):
+            async with self.redis.pipeline(transaction=True) as pipe:
+                try:
+                    await pipe.watch(key)
+                    raw = await pipe.get(key)
+                    if raw is None:
+                        # A session-scoped disconnect must not invent an offline
+                        # transition after its presence key has expired or been evicted.
+                        if session_id is not None:
+                            return False
+                        existing = DeviceLiveStatus(device_id=device_id, status="offline")
+                    else:
+                        try:
+                            unpacked = msgpack.unpackb(raw, raw=False)
+                            existing = DeviceLiveStatus.model_validate(unpacked)
+                        except Exception:
+                            # Corrupted presence is unavailable. A stale socket must
+                            # never replace it with data that may belong to a new owner.
+                            if session_id is not None:
+                                return False
+                            existing = DeviceLiveStatus(device_id=device_id, status="offline")
+
+                        if session_id is not None and existing.ws_session_id != session_id:
+                            return False
+
+                        existing.status = "offline"
+                        existing.adb_connected = False
+                        existing.connected_since = None
+                        existing.ws_session_id = None
+
+                    data = msgpack.packb(existing.model_dump(mode="json"), use_bin_type=True)
+                    pipe.multi()
+                    pipe.set(key, data, ex=self.TTL_OFFLINE)
+                    await pipe.execute()
+                    return True
+                except WatchError:
+                    # A heartbeat or replacement connect changed the status between
+                    # our read and write. Re-read ownership before attempting again.
+                    continue
+
+        return False
 
     # ── Bulk (MGET — single Redis round-trip) ────────────────────────────────
 
     async def bulk_get_status(
-        self, device_ids: list[str]
+        self, device_ids: list[str], *, as_of: datetime | None = None
     ) -> dict[str, DeviceLiveStatus | None]:
         """O(1) RTT — fetch N statuses with a single MGET."""
         if not device_ids:
@@ -79,12 +250,13 @@ class DeviceStatusCache:
             return {did: None for did in device_ids}
         keys = [self._key(did) for did in device_ids]
         values = await self.redis.mget(*keys)
+        as_of = as_of or datetime.now(timezone.utc)
         result: dict[str, DeviceLiveStatus | None] = {}
         for device_id, raw in zip(device_ids, values):
             if raw is not None:
                 try:
                     unpacked = msgpack.unpackb(raw, raw=False)
-                    result[device_id] = DeviceLiveStatus.model_validate(unpacked)
+                    result[device_id] = DeviceLiveStatus.model_validate(unpacked).with_current_vpn_observation(as_of)
                 except Exception:
                     result[device_id] = None
             else:
@@ -100,11 +272,13 @@ class DeviceStatusCache:
         statuses = await self.bulk_get_status(device_ids)
         online = sum(1 for s in statuses.values() if s and s.status == "online")
         busy = sum(1 for s in statuses.values() if s and s.status == "busy")
+        connecting = sum(1 for s in statuses.values() if s and s.status == "connecting")
         return {
             "total": len(device_ids),
             "online": online,
             "busy": busy,
-            "offline": len(device_ids) - online - busy,
+            "connecting": connecting,
+            "offline": len(device_ids) - online - busy - connecting,
             "devices": statuses,
         }
 

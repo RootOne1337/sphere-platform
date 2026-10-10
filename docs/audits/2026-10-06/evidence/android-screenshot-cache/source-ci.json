@@ -1,0 +1,37 @@
+{
+  "observedAt": "2026-10-06T14:50:49.270055+00:00",
+  "sourceRevision": "3493eb68d05a1f37ed704c96f6d300b9772bc8c5",
+  "runs": [
+    {
+      "conclusion": "success",
+      "headSha": "3493eb68d05a1f37ed704c96f6d300b9772bc8c5",
+      "name": "CI — Backend",
+      "status": "completed",
+      "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/37478519113"
+    },
+    {
+      "conclusion": "success",
+      "headSha": "3493eb68d05a1f37ed704c96f6d300b9772bc8c5",
+      "name": "CI — Frontend",
+      "status": "completed",
+      "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/37478519158"
+    },
+    {
+      "conclusion": "success",
+      "headSha": "3493eb68d05a1f37ed704c96f6d300b9772bc8c5",
+      "name": "CI — Android",
+      "status": "completed",
+      "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/37478519344"
+    },
+    {
+      "conclusion": "success",
+      "headSha": "3493eb68d05a1f37ed704c96f6d300b9772bc8c5",
+      "name": "Preview — Deploy",
+      "status": "completed",
+      "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/37478519170"
+    }
+  ],
+  "windowsSymlinkFixturesNotVerifiedByLocalRun": true,
+  "linuxJUnitArtifactInspected": true,
+  "linuxJUnitReceipt": "linux-junit.json"
+}

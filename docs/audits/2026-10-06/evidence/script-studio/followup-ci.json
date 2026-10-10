@@ -1,0 +1,56 @@
+{
+  "observedAt": "2026-10-05T22:17:17.057203+00:00",
+  "source": "2dbe82e799d817b6bdec31536eb3f50f5182a200",
+  "runs": [
+    {
+      "conclusion": "success",
+      "databaseId": 37379504608,
+      "headSha": "2dbe82e799d817b6bdec31536eb3f50f5182a200",
+      "name": "Preview — Deploy",
+      "status": "completed",
+      "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/37379504608"
+    },
+    {
+      "conclusion": "success",
+      "databaseId": 37379504560,
+      "headSha": "2dbe82e799d817b6bdec31536eb3f50f5182a200",
+      "name": "CI — Frontend",
+      "status": "completed",
+      "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/37379504560"
+    },
+    {
+      "conclusion": "success",
+      "databaseId": 37379504576,
+      "headSha": "2dbe82e799d817b6bdec31536eb3f50f5182a200",
+      "name": "CI — Android",
+      "status": "completed",
+      "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/37379504576"
+    },
+    {
+      "conclusion": "success",
+      "databaseId": 37379504559,
+      "headSha": "2dbe82e799d817b6bdec31536eb3f50f5182a200",
+      "name": "CI — Backend",
+      "status": "completed",
+      "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/37379504559"
+    }
+  ],
+  "laterDocsHeadCiInherited": false,
+  "backendTests": {
+    "source": "2dbe82e799d817b6bdec31536eb3f50f5182a200",
+    "observedAt": "2026-10-05T22:16:43.063136+00:00",
+    "run": "https://github.com/RootOne1337/sphere-platform/actions/runs/37379504559",
+    "job": "https://github.com/RootOne1337/sphere-platform/actions/runs/37379504559/job/111997519437",
+    "status": "completed",
+    "conclusion": "success",
+    "failed": 0,
+    "passed": 2844,
+    "skipped": 30,
+    "warnings": 1,
+    "durationSeconds": 822.67,
+    "coveragePercent": 80.2,
+    "scope": "full backend CI with real-service tests; not the installed image subset",
+    "rawLogPublished": false
+  },
+  "allSourceRunsPassed": true
+}

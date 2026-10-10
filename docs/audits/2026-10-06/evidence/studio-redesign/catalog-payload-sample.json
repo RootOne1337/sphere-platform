@@ -1,0 +1,29 @@
+{
+  "observedAt": "2026-10-06T02:13:52.970512+00:00",
+  "apiSource": "c2b91e3202948860e4d99b3f35cbe441d2842538",
+  "uiSource": "a670a3df3c90ad10658b71ad1b639689d407cf97",
+  "request": {
+    "path": "/api/v1/scripts",
+    "state": "active",
+    "page": 1,
+    "per_page": 25
+  },
+  "httpStatus": 200,
+  "total": 19,
+  "rowsReturned": 19,
+  "rowsContainingFullCurrentDag": 19,
+  "decodedResponseBytes": 31368,
+  "downloadedBodyBytes": 31368,
+  "contentEncoding": "identity",
+  "requestRoundTripMs": 8.591,
+  "dagJsonContributionBytes": 17715,
+  "aggregateNodesInReturnedDags": 106,
+  "scope": "one-real-current-page-read-no-load-or-heap-profile",
+  "claims": [
+    "This single response confirms full DAG delivery for the present small catalog.",
+    "Re-serialized DAG bytes are not an exact per-field wire accounting.",
+    "Round-trip time includes local UI proxy/HTTP response; not a database query benchmark or WAN latency measurement.",
+    "No growing heap, memory leak or large-page scalability is proved."
+  ],
+  "scriptVersionOrTaskMutations": false
+}

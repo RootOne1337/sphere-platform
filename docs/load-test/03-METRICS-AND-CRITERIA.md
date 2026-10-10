@@ -1,5 +1,10 @@
 # ТЗ ЧАСТЬ 3: МЕТРИКИ, KPI И КРИТЕРИИ PASS/FAIL
 
+**Актуализация 21 сентября:** приведённые ниже KPI/числа и примеры сообщений —
+проектный план, не текущие результаты измерений и не основание менять память
+production. [Проверенный Redis budget и ограничения](../operations/REDIS-MEMORY.md);
+[текущая Fleet32 приёмка](../audits/2026-09-20/FLEET32-PREFLIGHT.md).
+
 > **Sphere Platform — Synthetic Fleet Load Test**
 > **Версия:** 1.0 | **Дата:** 2026-03-04
 > **Зависимости:** [01-ARCHITECTURE.md](01-ARCHITECTURE.md), [02-SCENARIOS.md](02-SCENARIOS.md)

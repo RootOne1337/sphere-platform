@@ -1,5 +1,5 @@
 # backend/core/config.py
-from pydantic import Field, field_validator
+from pydantic import Field, SecretStr, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -31,6 +31,17 @@ class Settings(BaseSettings):
     JWT_ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
     JWT_REFRESH_TOKEN_EXPIRE_DAYS: int = 7
 
+    # Independent Fernet keys, newest first. Empty disables credential use/writes.
+    # Kept out of Settings repr; provision through the deployment secret store.
+    ACCOUNT_CREDENTIAL_KEYS: SecretStr = SecretStr("")
+
+    # Private task artifacts: no public MinIO address or credentials reach browsers.
+    SCREENSHOT_STORAGE_ENDPOINT: str = ""
+    SCREENSHOT_STORAGE_ACCESS_KEY: SecretStr = SecretStr("")
+    SCREENSHOT_STORAGE_SECRET_KEY: SecretStr = SecretStr("")
+    SCREENSHOT_STORAGE_SECURE: bool = True
+    SCREENSHOT_STORAGE_REGION: str = "us-east-1"
+
     # VPN
     WG_ROUTER_URL: str = "http://localhost:8001"
     WG_ROUTER_API_KEY: str = ""
@@ -59,6 +70,13 @@ class Settings(BaseSettings):
 
     # Dev
     DEV_SKIP_AUTH: bool = False  # Пропуск JWT-проверки в dev-режиме (NEVER в production)
+    DIRECT_TRANSPORT_PROBE_ENABLED: bool = False  # Diagnostic only; no media/control grant.
+    DIRECT_TRANSPORT_PROBE_DEVICE_IDS: frozenset[str] = frozenset()  # Explicit canary scope, empty denies all.
+    DIRECT_TRANSPORT_VIDEO_PROBE_ENABLED: bool = False  # Separate finite read-only RTP admission; no input grant.
+    DIRECT_TRANSPORT_LIVE_VIDEO_ENABLED: bool = False  # Renewable primary RTP video; same explicit device allowlist, no input grant.
+    DIRECT_PROBE_TURN_URLS: tuple[str, ...] = ()  # Operator-owned endpoints only; no public default.
+    DIRECT_PROBE_TURN_SECRET: SecretStr = SecretStr("")  # coturn REST key; never returned to peers.
+    DIRECT_PROBE_TURN_RELAY_ONLY: bool = False  # Explicit diagnostic comparison; all prefers direct ICE.
 
     # App
     DEBUG: bool = False

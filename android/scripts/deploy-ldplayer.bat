@@ -23,7 +23,7 @@ set "EMU_COUNT=%~2"
 set "PACKAGE_NAME=com.sphereplatform.agent.dev"
 set "SERVER_URL=%SPHERE_SERVER_URL%"
 if "%SERVER_URL%"=="" set "SERVER_URL=https://YOUR_SERVER_URL"
-set "API_KEY=sphr_dev_enrollment_key_2025"
+set "API_KEY=%SPHERE_API_KEY%"
 
 REM Путь к ldconsole.exe (измените если нужно)
 set "LDCONSOLE=ldconsole.exe"
@@ -37,6 +37,11 @@ if "%APK_PATH%"=="" (
 )
 
 if "%EMU_COUNT%"=="" set "EMU_COUNT=1"
+
+if "%API_KEY%"=="" (
+    echo [ERROR] Set SPHERE_API_KEY to the enrollment key for this installation.
+    exit /b 2
+)
 
 echo.
 echo ══════════════════════════════════════════════════════════════

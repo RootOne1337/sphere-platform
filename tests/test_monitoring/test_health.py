@@ -55,6 +55,30 @@ def _make_mock_redis(raise_exc: Exception | None = None):
 # ── HealthService.check_all ───────────────────────────────────────────────────
 
 @pytest.mark.asyncio
+async def test_redis_memory_section_does_not_synthesize_client_count():
+    redis = _make_mock_redis()
+    redis.info.return_value = {"used_memory": 2 * 1024 * 1024}
+    result = await HealthService(_make_mock_engine(), redis)._check_redis()
+
+    assert result.details["used_memory_mb"] == 2
+    assert result.details["pong"] is True
+    assert "connected_clients" not in result.details
+    redis.info.assert_awaited_once_with("memory")
+
+
+@pytest.mark.asyncio
+async def test_missing_redis_memory_info_is_not_zero_usage():
+    redis = _make_mock_redis()
+    redis.info.return_value = {}
+    result = await HealthService(_make_mock_engine(), redis)._check_redis()
+
+    assert result.status in ("ok", "degraded")
+    assert result.details["pong"] is True
+    assert "used_memory_mb" not in result.details
+    assert "connected_clients" not in result.details
+
+
+@pytest.mark.asyncio
 async def test_check_all_healthy():
     """Все компоненты в норме → status=healthy."""
     svc = HealthService(
@@ -165,6 +189,23 @@ async def test_healthz_returns_200(health_client):
     resp = await health_client.get("/api/v1/health/healthz")
     assert resp.status_code == 200
     assert resp.json()["status"] == "alive"
+
+
+@pytest.mark.asyncio
+async def test_build_info_reports_only_a_validated_revision(health_client, monkeypatch):
+    monkeypatch.setenv("SPHERE_BUILD_SHA", "7c4d9cb6e9876543210abcdef1234567890abcde")
+    response = await health_client.get("/api/v1/health/build")
+
+    assert response.status_code == 200
+    assert response.json() == {
+        "service": "backend-api",
+        "version": "4.0.0",
+        "revision": "7c4d9cb6e9876543210abcdef1234567890abcde",
+    }
+
+    monkeypatch.setenv("SPHERE_BUILD_SHA", "token-like-value")
+    response = await health_client.get("/api/v1/health/build")
+    assert response.json()["revision"] == "unknown"
 
 
 @pytest.mark.asyncio

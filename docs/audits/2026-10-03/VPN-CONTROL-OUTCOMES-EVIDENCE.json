@@ -1,0 +1,399 @@
+{
+  "observedAt": "2026-10-03T02:04:51.671649+00:00",
+  "timezone": "Asia/Yekaterinburg",
+  "finding": "F32",
+  "status": "PARTIAL",
+  "sourceFindingsFixed": 33,
+  "remainingSourceFindings": 8,
+  "sources": {
+    "baseline": "a9664d89441da28e4b3abe29fc873f026b056487",
+    "api": "8cd5cf023d27b59b39d8a4b2aa65f4d7dc3070a3",
+    "ui": "a2c4f02972d090b0707dc3f7ae48e803810a35be",
+    "testCorrection": "3ac818f61168b942222f8cf1b08b0d6beef15754",
+    "apiContract": "3461bf63e075ee265468ca2809471fc26981fee7"
+  },
+  "backendTests": {
+    "vpn-controls-before.xml": {
+      "tests": 17,
+      "failures": 15,
+      "errors": 0,
+      "skipped": 0
+    },
+    "vpn-controls-related.xml": {
+      "tests": 159,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "vpn-controls-image-postgres-final.xml": {
+      "tests": 159,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    }
+  },
+  "targetedBackendCases": 21,
+  "frontendTests": {
+    "suitesPassed": 103,
+    "suitesFailed": 0,
+    "testsPassed": 916,
+    "testsFailed": 0,
+    "testsSkipped": 0
+  },
+  "newRegressionsAbove582": 334,
+  "packagedTestRuntime": {
+    "observedAt": "2026-10-03T01:59:26.890042+00:00",
+    "startedAt": "2026-10-03T01:58:24.581950+00:00",
+    "testSource": "3ac818f61168b942222f8cf1b08b0d6beef15754",
+    "compiledProductionSource": "a2c4f02972d090b0707dc3f7ae48e803810a35be",
+    "imageId": "sha256:6ff9d0d62bca561d87fdc6cb0317130227fc2cec2e25f3a5c9dae2368cfba4c8",
+    "productionFrontendUnchanged": true,
+    "testMountFromGitArchive": true,
+    "network": "none",
+    "exitCode": 0,
+    "tests": {
+      "numPassedTestSuites": 103,
+      "numFailedTestSuites": 0,
+      "numPassedTests": 916,
+      "numFailedTests": 0,
+      "numPendingTests": 0
+    }
+  },
+  "packagedFailedRun": {
+    "suitesPassed": 102,
+    "suitesFailed": 1,
+    "testsPassed": 913,
+    "testsFailed": 2,
+    "reason": "Build provenance tests assumed an absent BUILD_SHA, but the packaged builder intentionally sets it."
+  },
+  "staticChecks": {
+    "frontendTypes": "passed in Node24 builder with archived final tests",
+    "lintWarnings": 44,
+    "ruffVersion": "0.15.2",
+    "mypyModules": 225,
+    "openApiOperations": 175,
+    "openApiPaths": 137,
+    "openApiCheck": "passed"
+  },
+  "installedUi": {
+    "source": "a2c4f02972d090b0707dc3f7ae48e803810a35be",
+    "observedAt": "2026-10-02T22:50:41.486772+00:00",
+    "servicesHealthy": true,
+    "url": "http://127.0.0.1:3015/vpn",
+    "containers": [
+      {
+        "name": "sphere-review-20261002-review-ui-1",
+        "id": "10b83cb47e60c209f62bcd15b7f99f004c02f96441650c1a62a07487dc553936",
+        "imageId": "sha256:f14a1150b508f0ca914b836f0622b8160324fda55ec16e6e65625aae9b47a393",
+        "startedAt": "2026-10-02T22:50:29.170344608Z"
+      },
+      {
+        "name": "sphere-review-20261002-review-gateway-1",
+        "id": "b12b6ad94937ed90da37f77a1bebde7c1a0af98955af1440d29b9c3382429d67",
+        "imageId": "sha256:1d13701a5f9f3fb01aaa88cef2344d65b6b5bf6b7d9fa4cf0dca557a8d7702ba",
+        "startedAt": "2026-10-02T22:50:35.08514485Z"
+      }
+    ]
+  },
+  "installedApi": {
+    "source": "8cd5cf023d27b59b39d8a4b2aa65f4d7dc3070a3",
+    "containerId": "328410984a9e43336fbbd485438dd0af6ae8b587f99d1bf314b05b02f50e8c38",
+    "imageId": "sha256:4c378cf014d74b95c98e7a0573e551efedac0e0f3063979860bffffce83d4e9f",
+    "observedAt": "2026-10-02T22:59:12.516890+00:00",
+    "ready": true,
+    "healthRevisionMatched": true
+  },
+  "integration": {
+    "observedAt": "2026-10-02T22:59:14.693104+00:00",
+    "phase": "vpn-controls-repaired-installed",
+    "url": "http://127.0.0.1:3015",
+    "reviewSource": "a2c4f02972d090b0707dc3f7ae48e803810a35be",
+    "backendSource": "8cd5cf023d27b59b39d8a4b2aa65f4d7dc3070a3",
+    "loginPassed": true,
+    "sameOriginApiPassed": true,
+    "uiCompiledStampPassed": true,
+    "staticAssetPassed": true,
+    "unauthorizedObservabilityStatus": 401,
+    "prometheusApiPassed": true,
+    "grafanaSessionAndHealthPassed": true,
+    "wsUpgradeSnapshotAndPongPassed": true,
+    "catalogTotal": 19,
+    "reportedStatuses": {
+      "online": 14,
+      "offline": 5
+    },
+    "nodeRuntime": "v24.21.0",
+    "containers": [
+      {
+        "name": "sphere-review-20261002-review-ui-1",
+        "id": "10b83cb47e60c209f62bcd15b7f99f004c02f96441650c1a62a07487dc553936",
+        "imageId": "sha256:f14a1150b508f0ca914b836f0622b8160324fda55ec16e6e65625aae9b47a393",
+        "image": "sphere-review-frontend:a2c4f02972d090b0707dc3f7ae48e803810a35be",
+        "health": "healthy",
+        "startedAt": "2026-10-02T22:50:29.170344608Z",
+        "readOnly": true,
+        "restart": "unless-stopped",
+        "ports": {}
+      },
+      {
+        "name": "sphere-review-20261002-review-gateway-1",
+        "id": "b12b6ad94937ed90da37f77a1bebde7c1a0af98955af1440d29b9c3382429d67",
+        "imageId": "sha256:1d13701a5f9f3fb01aaa88cef2344d65b6b5bf6b7d9fa4cf0dca557a8d7702ba",
+        "image": "nginx:alpine",
+        "health": "healthy",
+        "startedAt": "2026-10-02T22:50:35.08514485Z",
+        "readOnly": true,
+        "restart": "unless-stopped",
+        "ports": {
+          "8080/tcp": [
+            {
+              "HostIp": "127.0.0.1",
+              "HostPort": "3015"
+            }
+          ]
+        }
+      }
+    ],
+    "remoteCommandsSent": false,
+    "browserVisualAcceptance": "OPEN_URL_POLICY_BLOCKED"
+  },
+  "liveApi": {
+    "observedAt": "2026-10-02T23:00:05.791860+00:00",
+    "checks": [
+      {
+        "check": "legacy-enabled-rejected",
+        "status": 422
+      },
+      {
+        "check": "missing-action-rejected",
+        "status": 422
+      },
+      {
+        "check": "empty-rotation-not-global",
+        "status": 422
+      },
+      {
+        "check": "duplicate-targets-rejected",
+        "status": 422
+      },
+      {
+        "check": "missing-target-rejects-selection",
+        "status": 404
+      },
+      {
+        "check": "unwired-sender-no-dispatch",
+        "status": 200
+      }
+    ],
+    "selectedOwnedDevices": 2,
+    "androidCommandsSent": false,
+    "vpnProviderOperationsSent": false,
+    "deviceMetadataPreserved": true,
+    "peerCatalogPreserved": true,
+    "neighborContainersPreserved": 13,
+    "onlineCohortStable": false,
+    "browserVisualAcceptance": "OPEN_URL_POLICY_BLOCKED",
+    "isSoakOrSlaEvidence": false
+  },
+  "finiteFleetSamples": [
+    {
+      "observedAt": "2026-10-02T22:59:15.367991+00:00",
+      "total": 19,
+      "reportedStatuses": {
+        "online": 14,
+        "offline": 5
+      }
+    },
+    {
+      "observedAt": "2026-10-02T22:59:25.401398+00:00",
+      "total": 19,
+      "reportedStatuses": {
+        "online": 14,
+        "offline": 5
+      }
+    },
+    {
+      "observedAt": "2026-10-02T22:59:35.427606+00:00",
+      "total": 19,
+      "reportedStatuses": {
+        "online": 14,
+        "offline": 5
+      }
+    },
+    {
+      "observedAt": "2026-10-02T22:59:45.445092+00:00",
+      "total": 19,
+      "reportedStatuses": {
+        "online": 14,
+        "offline": 5
+      }
+    },
+    {
+      "observedAt": "2026-10-02T22:59:55.470065+00:00",
+      "total": 19,
+      "reportedStatuses": {
+        "offline": 8,
+        "online": 11
+      }
+    },
+    {
+      "observedAt": "2026-10-02T23:00:05.491775+00:00",
+      "total": 19,
+      "reportedStatuses": {
+        "offline": 7,
+        "online": 12
+      }
+    }
+  ],
+  "N06": {
+    "before": "Empty rotation returned 503 before body validation because cipher credentials were initialized by DI.",
+    "after": "Deferred provider construction; actual DI tests and installed empty422/duplicate422/missing404 passed."
+  },
+  "readOnlyLogFollowup": {
+    "observedAt": "2026-10-02T23:03:25.284272+00:00",
+    "requests": 2,
+    "maxLinesPerDevice": 64,
+    "targets": [
+      "auto-ph-028",
+      "auto-ph-011"
+    ],
+    "reportedVersion": "1.2.32-dev",
+    "remoteObservation": "watchdog no ping94s; authenticated95.132s; SocketException; backoff1664ms",
+    "androidClockCorrelated": false,
+    "vpnOrRebootCommandsSent": false
+  },
+  "apkInventory": {
+    "observedAt": "2026-10-03T01:53:03.833483+00:00",
+    "total": 19,
+    "online": 14,
+    "versions": {
+      "1.2.32-dev": 2,
+      "not_reported": 5,
+      "1.2.40-dev": 3,
+      "1.2.22-dev": 5,
+      "1.2.30-dev": 2,
+      "1.2.34-dev": 2
+    },
+    "onlineVersions": {
+      "1.2.32-dev": 2,
+      "1.2.40-dev": 3,
+      "1.2.22-dev": 5,
+      "1.2.30-dev": 2,
+      "1.2.34-dev": 2
+    },
+    "source": "owned REST catalog; fields not reported remain unknown"
+  },
+  "previousPublishedCi": {
+    "source": "a9664d89441da28e4b3abe29fc873f026b056487",
+    "observedAt": "2026-10-02T22:52:21.061551+00:00",
+    "allThreeWorkflowsSucceeded": true,
+    "backendTests": {
+      "passed": 2330,
+      "skipped": 16
+    },
+    "runs": {
+      "frontend": {
+        "runId": 37071710936,
+        "source": "a9664d89441da28e4b3abe29fc873f026b056487",
+        "status": "completed",
+        "conclusion": "success",
+        "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/37071710936",
+        "jobs": [
+          {
+            "name": "Frontend tests, types and build",
+            "status": "completed",
+            "conclusion": "success"
+          }
+        ]
+      },
+      "backend": {
+        "runId": 37071710908,
+        "source": "a9664d89441da28e4b3abe29fc873f026b056487",
+        "status": "completed",
+        "conclusion": "success",
+        "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/37071710908",
+        "jobs": [
+          {
+            "name": "Tests",
+            "status": "completed",
+            "conclusion": "success"
+          },
+          {
+            "name": "Lint (ruff + mypy)",
+            "status": "completed",
+            "conclusion": "success"
+          },
+          {
+            "name": "Production image bootstrap",
+            "status": "completed",
+            "conclusion": "success"
+          },
+          {
+            "name": "Security (bandit + pip-audit)",
+            "status": "completed",
+            "conclusion": "success"
+          },
+          {
+            "name": "RLS Policy Coverage",
+            "status": "completed",
+            "conclusion": "success"
+          },
+          {
+            "name": "Alembic Single Head",
+            "status": "completed",
+            "conclusion": "success"
+          }
+        ]
+      },
+      "android": {
+        "runId": 37071711047,
+        "source": "a9664d89441da28e4b3abe29fc873f026b056487",
+        "status": "completed",
+        "conclusion": "success",
+        "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/37071711047",
+        "jobs": [
+          {
+            "name": "Android tests and signed release smoke build",
+            "status": "completed",
+            "conclusion": "success"
+          }
+        ]
+      }
+    }
+  },
+  "newHeadCi": {
+    "state": "not pushed at evidence snapshot; requires own runs"
+  },
+  "limits": [
+    "F32 PARTIAL: no accepted live Android kill-switch, durable unknown journal or browser/keyboard/mobile walkthrough.",
+    "Only the mounted page/actor scope retains unknown guards; full reload or another browser does not.",
+    "Rotation is a two-stage provider lifecycle, not exactly-once, an atomic cross-device transition or a peer revision fence.",
+    "Fresh browser acceptance remains OPEN_URL_POLICY_BLOCKED; no bypass or invented screenshots.",
+    "Finite online drift 14->11->12 is not an uptime SLA, draw-FPS or input-latency measurement.",
+    "Old APK watchdog logs do not prove the current APK has the same defect; Android clock/timezone was not verified.",
+    "Only 3 of 14 online devices report 1.2.40-dev; fleet-wide OTA is not accepted.",
+    "Public frontend, APK, OTA artifacts/catalog and Tuna were not changed by this stage.",
+    "F33 PARTIAL, F34-F36, F39-F41, N01/N03 and durable audit outbox remain open."
+  ],
+  "privateReceiptDigests": {
+    "vpn-controls-before.xml": "f6d60fdd02ce0cf7dcfa2d1815932068d4f90bac14a85f8846d6449dbc7ee7b8",
+    "vpn-controls-related.xml": "161514d1217efe86ebbe7a81412603044affc73e7db9d1b2684ae4a69713326f",
+    "vpn-controls-image-postgres-final.xml": "cde5b7adab0fd45d3b475cfd33788b09390a90e64e440459ba686e5421a675d9",
+    "vpn-controls-node24-tests.json": "40292facdc4fc4bbc061c355451dc04c0c40b7b86f7a5c26006a02d9626b1bde",
+    "vpn-controls-node24-final.json": "fb81dec9b639d61e15cc68b3ae8c12f09fa5c0ef13ebd5be962944a1484e9b4d",
+    "vpn-controls-node24-final-receipt.json": "e6a4469a27bfa0c6118f94bad002be095834188e357554f9f339163bbbd5560f",
+    "vpn-controls-live-contracts.json": "f69233b57d758a38fff80e67bc89a5c94db28c21f9a15ac86a498f2bff56330d",
+    "vpn-controls-connection-followup.json": "11801e00210025cbdb9d5aee01a7949ec14847344f077a395a2af61b3f0d1f4e",
+    "vpn-controls-current-apk-inventory.json": "afee0dc450f1cf862088ce43a634e376fc64ebd7aedcd556499b43e24c1fda34",
+    "vpn-controls-previous-head-ci.json": "7260eee0ba1659f12d8e190c274dd543c298f7e20d1419ad3493c6693e474dd0"
+  },
+  "documentValidation": {
+    "documentsChecked": 14,
+    "relativeTargetsChecked": 630,
+    "findingAnchorsChecked": 41,
+    "missing": [],
+    "testCountsMatchRawLog": true,
+    "findingCountsMatchLedger": true,
+    "frozenAuditUnchanged": true
+  }
+}

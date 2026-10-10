@@ -44,7 +44,11 @@ class TestFleetEvent:
             "alert.triggered", "stream.started", "stream.stopped",
         }
         actual = {e.value for e in EventType}
-        assert actual == expected
+        assert expected <= actual
+        # New domain events may be added without breaking the original wire contract.
+        for event_type in EventType:
+            event = FleetEvent(event_type=event_type, org_id="org-1")
+            assert FleetEvent.model_validate_json(event.model_dump_json()).event_type == event_type
 
 
 class TestEventsManager:

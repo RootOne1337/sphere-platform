@@ -1,0 +1,77 @@
+FFFFF                                                                    [100%]
+================================== FAILURES ===================================
+____ test_concurrent_creators_cannot_enqueue_the_same_device_version_twice ____
+tests\production\test_creation_recovery.py:35: in test_concurrent_creators_cannot_enqueue_the_same_device_version_twice
+    assert await asyncio.wait_for(concurrent, 3) == 409
+E   assert 201 == 409
+---------------------------- Captured stdout call -----------------------------
+{"task_id": "dadb748b-7e22-42ef-87f1-57c090ffd21b", "device_id": "81f04afd-343c-42d7-b747-5bc8e7e48ddb", "priority": 5, "event": "task.created", "level": "info", "logger": "backend.services.task_service", "timestamp": "2026-09-06T10:05:45.830653Z"}
+{"task_id": "7361aa1c-12a4-46fa-8486-ea7accb28691", "device_id": "81f04afd-343c-42d7-b747-5bc8e7e48ddb", "priority": 5, "event": "task.created", "level": "info", "logger": "backend.services.task_service", "timestamp": "2026-09-06T10:05:45.889179Z"}
+------------------------------ Captured log call ------------------------------
+INFO     backend.services.task_service:task_service.py:269 {'task_id': 'dadb748b-7e22-42ef-87f1-57c090ffd21b', 'device_id': '81f04afd-343c-42d7-b747-5bc8e7e48ddb', 'priority': 5, 'event': 'task.created', 'level': 'info', 'logger': 'backend.services.task_service', 'timestamp': '2026-09-06T10:05:45.830653Z'}
+INFO     backend.services.task_service:task_service.py:269 {'task_id': '7361aa1c-12a4-46fa-8486-ea7accb28691', 'device_id': '81f04afd-343c-42d7-b747-5bc8e7e48ddb', 'priority': 5, 'event': 'task.created', 'level': 'info', 'logger': 'backend.services.task_service', 'timestamp': '2026-09-06T10:05:45.889179Z'}
+__ test_missing_presence_cannot_replace_work_that_may_still_execute[queued] ___
+tests\production\test_creation_recovery.py:56: in test_missing_presence_cannot_replace_work_that_may_still_execute
+    with pytest.raises(HTTPException) as caught:
+E   Failed: DID NOT RAISE <class 'fastapi.exceptions.HTTPException'>
+---------------------------- Captured stdout call -----------------------------
+{"task_id": "f898d31d-ab92-49e0-9ac9-4cbec8258b52", "device_id": "824a1511-d5b6-41ab-b781-d85fa473f662", "priority": 5, "event": "task.created", "level": "info", "logger": "backend.services.task_service", "timestamp": "2026-09-06T10:05:46.254447Z"}
+{"stale_task_id": "f898d31d-ab92-49e0-9ac9-4cbec8258b52", "device_id": "824a1511-d5b6-41ab-b781-d85fa473f662", "old_status": "queued", "reason": "\u0423\u0441\u0442\u0440\u043e\u0439\u0441\u0442\u0432\u043e \u043e\u0444\u0444\u043b\u0430\u0439\u043d (status=\u043d\u0435\u0442 \u0432 \u043a\u044d\u0448\u0435), \u0437\u0430\u0434\u0430\u0447\u0430 \u043d\u0435 \u043c\u043e\u0436\u0435\u0442 \u0437\u0430\u0432\u0435\u0440\u0448\u0438\u0442\u044c\u0441\u044f", "event": "task.stale_auto_timeout", "level": "warning", "logger": "backend.services.task_service", "timestamp": "2026-09-06T10:05:46.330419Z"}
+{"task_id": "2ecc7810-0504-4dfa-8567-9bda4ef46bfb", "device_id": "824a1511-d5b6-41ab-b781-d85fa473f662", "priority": 5, "event": "task.created", "level": "info", "logger": "backend.services.task_service", "timestamp": "2026-09-06T10:05:46.336328Z"}
+------------------------------ Captured log call ------------------------------
+INFO     backend.services.task_service:task_service.py:269 {'task_id': 'f898d31d-ab92-49e0-9ac9-4cbec8258b52', 'device_id': '824a1511-d5b6-41ab-b781-d85fa473f662', 'priority': 5, 'event': 'task.created', 'level': 'info', 'logger': 'backend.services.task_service', 'timestamp': '2026-09-06T10:05:46.254447Z'}
+WARNING  backend.services.task_service:task_service.py:230 {'stale_task_id': 'f898d31d-ab92-49e0-9ac9-4cbec8258b52', 'device_id': '824a1511-d5b6-41ab-b781-d85fa473f662', 'old_status': <TaskStatus.QUEUED: 'queued'>, 'reason': 'Устройство оффлайн (status=нет в кэше), задача не может завершиться', 'event': 'task.stale_auto_timeout', 'level': 'warning', 'logger': 'backend.services.task_service', 'timestamp': '2026-09-06T10:05:46.330419Z'}
+INFO     backend.services.task_service:task_service.py:269 {'task_id': '2ecc7810-0504-4dfa-8567-9bda4ef46bfb', 'device_id': '824a1511-d5b6-41ab-b781-d85fa473f662', 'priority': 5, 'event': 'task.created', 'level': 'info', 'logger': 'backend.services.task_service', 'timestamp': '2026-09-06T10:05:46.336328Z'}
+_ test_missing_presence_cannot_replace_work_that_may_still_execute[assigned] __
+tests\production\test_creation_recovery.py:56: in test_missing_presence_cannot_replace_work_that_may_still_execute
+    with pytest.raises(HTTPException) as caught:
+E   Failed: DID NOT RAISE <class 'fastapi.exceptions.HTTPException'>
+---------------------------- Captured stdout call -----------------------------
+{"task_id": "ad3a25a8-b051-4489-b88e-8fd46e5cae90", "device_id": "bc4ba2d8-6603-48bb-8409-6acd0c4d9387", "priority": 5, "event": "task.created", "level": "info", "logger": "backend.services.task_service", "timestamp": "2026-09-06T10:05:46.513682Z"}
+{"stale_task_id": "ad3a25a8-b051-4489-b88e-8fd46e5cae90", "device_id": "bc4ba2d8-6603-48bb-8409-6acd0c4d9387", "old_status": "assigned", "reason": "\u0423\u0441\u0442\u0440\u043e\u0439\u0441\u0442\u0432\u043e \u043e\u0444\u0444\u043b\u0430\u0439\u043d (status=\u043d\u0435\u0442 \u0432 \u043a\u044d\u0448\u0435), \u0437\u0430\u0434\u0430\u0447\u0430 \u043d\u0435 \u043c\u043e\u0436\u0435\u0442 \u0437\u0430\u0432\u0435\u0440\u0448\u0438\u0442\u044c\u0441\u044f", "event": "task.stale_auto_timeout", "level": "warning", "logger": "backend.services.task_service", "timestamp": "2026-09-06T10:05:46.590480Z"}
+{"task_id": "32970088-9ebf-4338-9f7a-f9faa1370b32", "device_id": "bc4ba2d8-6603-48bb-8409-6acd0c4d9387", "priority": 5, "event": "task.created", "level": "info", "logger": "backend.services.task_service", "timestamp": "2026-09-06T10:05:46.596916Z"}
+------------------------------ Captured log call ------------------------------
+INFO     backend.services.task_service:task_service.py:269 {'task_id': 'ad3a25a8-b051-4489-b88e-8fd46e5cae90', 'device_id': 'bc4ba2d8-6603-48bb-8409-6acd0c4d9387', 'priority': 5, 'event': 'task.created', 'level': 'info', 'logger': 'backend.services.task_service', 'timestamp': '2026-09-06T10:05:46.513682Z'}
+WARNING  backend.services.task_service:task_service.py:230 {'stale_task_id': 'ad3a25a8-b051-4489-b88e-8fd46e5cae90', 'device_id': 'bc4ba2d8-6603-48bb-8409-6acd0c4d9387', 'old_status': <TaskStatus.ASSIGNED: 'assigned'>, 'reason': 'Устройство оффлайн (status=нет в кэше), задача не может завершиться', 'event': 'task.stale_auto_timeout', 'level': 'warning', 'logger': 'backend.services.task_service', 'timestamp': '2026-09-06T10:05:46.590480Z'}
+INFO     backend.services.task_service:task_service.py:269 {'task_id': '32970088-9ebf-4338-9f7a-f9faa1370b32', 'device_id': 'bc4ba2d8-6603-48bb-8409-6acd0c4d9387', 'priority': 5, 'event': 'task.created', 'level': 'info', 'logger': 'backend.services.task_service', 'timestamp': '2026-09-06T10:05:46.596916Z'}
+__ test_missing_presence_cannot_replace_work_that_may_still_execute[running] __
+tests\production\test_creation_recovery.py:56: in test_missing_presence_cannot_replace_work_that_may_still_execute
+    with pytest.raises(HTTPException) as caught:
+E   Failed: DID NOT RAISE <class 'fastapi.exceptions.HTTPException'>
+---------------------------- Captured stdout call -----------------------------
+{"task_id": "5b8dfbe8-c57c-4b28-a7d6-68e35e219816", "device_id": "19da5676-4ef3-4d53-8c05-2c0c060c4244", "priority": 5, "event": "task.created", "level": "info", "logger": "backend.services.task_service", "timestamp": "2026-09-06T10:05:46.767719Z"}
+{"stale_task_id": "5b8dfbe8-c57c-4b28-a7d6-68e35e219816", "device_id": "19da5676-4ef3-4d53-8c05-2c0c060c4244", "old_status": "running", "reason": "\u0423\u0441\u0442\u0440\u043e\u0439\u0441\u0442\u0432\u043e \u043e\u0444\u0444\u043b\u0430\u0439\u043d (status=\u043d\u0435\u0442 \u0432 \u043a\u044d\u0448\u0435), \u0437\u0430\u0434\u0430\u0447\u0430 \u043d\u0435 \u043c\u043e\u0436\u0435\u0442 \u0437\u0430\u0432\u0435\u0440\u0448\u0438\u0442\u044c\u0441\u044f", "event": "task.stale_auto_timeout", "level": "warning", "logger": "backend.services.task_service", "timestamp": "2026-09-06T10:05:46.859608Z"}
+{"task_id": "7e8e1c90-6b93-4554-ba6d-9d13a2407b4f", "device_id": "19da5676-4ef3-4d53-8c05-2c0c060c4244", "priority": 5, "event": "task.created", "level": "info", "logger": "backend.services.task_service", "timestamp": "2026-09-06T10:05:46.867179Z"}
+------------------------------ Captured log call ------------------------------
+INFO     backend.services.task_service:task_service.py:269 {'task_id': '5b8dfbe8-c57c-4b28-a7d6-68e35e219816', 'device_id': '19da5676-4ef3-4d53-8c05-2c0c060c4244', 'priority': 5, 'event': 'task.created', 'level': 'info', 'logger': 'backend.services.task_service', 'timestamp': '2026-09-06T10:05:46.767719Z'}
+WARNING  backend.services.task_service:task_service.py:230 {'stale_task_id': '5b8dfbe8-c57c-4b28-a7d6-68e35e219816', 'device_id': '19da5676-4ef3-4d53-8c05-2c0c060c4244', 'old_status': <TaskStatus.RUNNING: 'running'>, 'reason': 'Устройство оффлайн (status=нет в кэше), задача не может завершиться', 'event': 'task.stale_auto_timeout', 'level': 'warning', 'logger': 'backend.services.task_service', 'timestamp': '2026-09-06T10:05:46.859608Z'}
+INFO     backend.services.task_service:task_service.py:269 {'task_id': '7e8e1c90-6b93-4554-ba6d-9d13a2407b4f', 'device_id': '19da5676-4ef3-4d53-8c05-2c0c060c4244', 'priority': 5, 'event': 'task.created', 'level': 'info', 'logger': 'backend.services.task_service', 'timestamp': '2026-09-06T10:05:46.867179Z'}
+______________ test_old_receipt_does_not_prove_execution_stopped ______________
+tests\production\test_creation_recovery.py:72: in test_old_receipt_does_not_prove_execution_stopped
+    with pytest.raises(HTTPException) as caught:
+E   Failed: DID NOT RAISE <class 'fastapi.exceptions.HTTPException'>
+---------------------------- Captured stdout call -----------------------------
+{"task_id": "96473f70-4a07-4387-8288-d3ac3943942c", "device_id": "7fa65cef-574a-45d5-a158-f3f4c16e56e9", "priority": 5, "event": "task.created", "level": "info", "logger": "backend.services.task_service", "timestamp": "2026-09-06T10:05:47.053939Z"}
+{"stale_task_id": "96473f70-4a07-4387-8288-d3ac3943942c", "device_id": "7fa65cef-574a-45d5-a158-f3f4c16e56e9", "old_status": "running", "reason": "\u0417\u0430\u0434\u0430\u0447\u0430 \u0432\u0438\u0441\u0438\u0442 >24\u0447 (\u0441 2026-09-05T09:05:47.054444+00:00)", "event": "task.stale_auto_timeout", "level": "warning", "logger": "backend.services.task_service", "timestamp": "2026-09-06T10:05:47.151427Z"}
+{"task_id": "adaa5f09-eab9-4a2a-9655-c78513dd8223", "device_id": "7fa65cef-574a-45d5-a158-f3f4c16e56e9", "priority": 5, "event": "task.created", "level": "info", "logger": "backend.services.task_service", "timestamp": "2026-09-06T10:05:47.157378Z"}
+------------------------------ Captured log call ------------------------------
+INFO     backend.services.task_service:task_service.py:269 {'task_id': '96473f70-4a07-4387-8288-d3ac3943942c', 'device_id': '7fa65cef-574a-45d5-a158-f3f4c16e56e9', 'priority': 5, 'event': 'task.created', 'level': 'info', 'logger': 'backend.services.task_service', 'timestamp': '2026-09-06T10:05:47.053939Z'}
+WARNING  backend.services.task_service:task_service.py:230 {'stale_task_id': '96473f70-4a07-4387-8288-d3ac3943942c', 'device_id': '7fa65cef-574a-45d5-a158-f3f4c16e56e9', 'old_status': <TaskStatus.RUNNING: 'running'>, 'reason': 'Задача висит >24ч (с 2026-09-05T09:05:47.054444+00:00)', 'event': 'task.stale_auto_timeout', 'level': 'warning', 'logger': 'backend.services.task_service', 'timestamp': '2026-09-06T10:05:47.151427Z'}
+INFO     backend.services.task_service:task_service.py:269 {'task_id': 'adaa5f09-eab9-4a2a-9655-c78513dd8223', 'device_id': '7fa65cef-574a-45d5-a158-f3f4c16e56e9', 'priority': 5, 'event': 'task.created', 'level': 'info', 'logger': 'backend.services.task_service', 'timestamp': '2026-09-06T10:05:47.157378Z'}
+============================== warnings summary ===============================
+.venv-audit\Lib\site-packages\pydantic\fields.py:754: 484 warnings
+  C:\Users\dimas\Documents\ChatGPT\sphere-platform\.venv-audit\Lib\site-packages\pydantic\fields.py:754: PydanticDeprecatedSince20: Using extra keyword arguments on `Field` is deprecated and will be removed. Use `json_schema_extra` instead. (Extra keys: 'deprecated'). Deprecated in Pydantic V2.0 to be removed in V3.0. See Pydantic V2 Migration Guide at https://errors.pydantic.dev/2.6/migration/
+    warn(
+
+backend\api\v1\game_accounts\router.py:94
+  C:\Users\dimas\Documents\ChatGPT\sphere-platform\backend\api\v1\game_accounts\router.py:94: DeprecationWarning: `regex` has been deprecated, please use `pattern` instead
+    sort_dir: str = Query("desc", regex="^(asc|desc)$", description="Направление сортировки"),
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ===========================
+FAILED tests/production/test_creation_recovery.py::test_concurrent_creators_cannot_enqueue_the_same_device_version_twice
+FAILED tests/production/test_creation_recovery.py::test_missing_presence_cannot_replace_work_that_may_still_execute[queued]
+FAILED tests/production/test_creation_recovery.py::test_missing_presence_cannot_replace_work_that_may_still_execute[assigned]
+FAILED tests/production/test_creation_recovery.py::test_missing_presence_cannot_replace_work_that_may_still_execute[running]
+FAILED tests/production/test_creation_recovery.py::test_old_receipt_does_not_prove_execution_stopped
+5 failed, 485 warnings in 1.73s

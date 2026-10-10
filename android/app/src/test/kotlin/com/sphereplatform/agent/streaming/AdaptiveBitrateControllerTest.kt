@@ -95,10 +95,8 @@ class AdaptiveBitrateControllerTest {
         repeat(90) { controller.onSuccessfulDelivery() }
 
         val expected = (afterDrop * 1.05).toInt()
-        // Восстановление происходит только если разница > 100_000
-        if (expected > afterDrop + 100_000) {
-            assertEquals(expected, controller.currentBitrateBps)
-        }
+        assertEquals(expected, controller.currentBitrateBps)
+        verify(exactly = 1) { encoder.adjustBitrate(expected) }
     }
 
     @Test
@@ -118,10 +116,8 @@ class AdaptiveBitrateControllerTest {
         for (cycle in 0..10) {
             repeat(90) { highInitial.onSuccessfulDelivery() }
         }
-        assertTrue(
-            "Битрейт не должен превышать 4M",
-            highInitial.currentBitrateBps <= 4_000_000,
-        )
+        assertEquals(4_000_000, highInitial.currentBitrateBps)
+        verify(exactly = 1) { encoder.adjustBitrate(4_000_000) }
     }
 
     // ── initialBitrate ───────────────────────────────────────────────────────
@@ -147,8 +143,44 @@ class AdaptiveBitrateControllerTest {
         repeat(80) { controller.onSuccessfulDelivery() }
         controller.onFrameDropDetected() // сброс
         repeat(50) { controller.onSuccessfulDelivery() }
-        // Суммарно 80+50=130 deliveries, но drop посередине сбросил счётчик
-        // Реальный подсчёт после drop: 50 < 90 → нет восстановления от текущего
-        // afterDrop уже отличается из-за drops, но successfulDeliveries сброшен
+        assertEquals(afterDrop, controller.currentBitrateBps)
+        repeat(40) { controller.onSuccessfulDelivery() }
+        assertEquals(1_680_000, controller.currentBitrateBps)
+    }
+
+    @Test
+    fun `production encoder default recovers after ninety local admissions`() {
+        val production = AdaptiveBitrateController(encoder, initialBitrate = 1_500_000)
+        repeat(3) { production.onFrameDropDetected() }
+        assertEquals(1_200_000, production.currentBitrateBps)
+        repeat(89) { production.onSuccessfulDelivery() }
+        assertEquals(1_200_000, production.currentBitrateBps)
+        repeat(1) { production.onSuccessfulDelivery() }
+        assertEquals(1_260_000, production.currentBitrateBps)
+        verify(exactly = 1) { encoder.adjustBitrate(1_260_000) }
+    }
+
+    @Test
+    fun `floor is recoverable after congestion clears`() {
+        repeat(100) { controller.onFrameDropDetected() }
+        assertEquals(500_000, controller.currentBitrateBps)
+        repeat(90) { controller.onSuccessfulDelivery() }
+        assertEquals(525_000, controller.currentBitrateBps)
+        verify(exactly = 1) { encoder.adjustBitrate(525_000) }
+    }
+
+    @Test
+    fun `sustained local admissions return from floor to ceiling without overshoot`() {
+        repeat(100) { controller.onFrameDropDetected() }
+        var previous = controller.currentBitrateBps
+        repeat(50) {
+            repeat(90) { controller.onSuccessfulDelivery() }
+            val current = controller.currentBitrateBps
+            assertTrue(current >= previous)
+            assertTrue(current in 500_000..4_000_000)
+            previous = current
+        }
+        assertEquals(4_000_000, controller.currentBitrateBps)
+        verify(exactly = 1) { encoder.adjustBitrate(4_000_000) }
     }
 }

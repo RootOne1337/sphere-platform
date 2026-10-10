@@ -1,0 +1,49 @@
+{
+  "evidenceSchema": 1,
+  "sourceRevision": "eb7a7c26c2e644f24eb3f785b3da1c29a65929be",
+  "started_at_utc": "2026-10-06T07:16:45.763394+00:00",
+  "finished_at_utc": "2026-10-06T07:17:48.735332+00:00",
+  "result": "passed",
+  "exit_code": 0,
+  "suites": {
+    "total": 126,
+    "passed": 126,
+    "failed": 0
+  },
+  "tests": {
+    "total": 1506,
+    "passed": 1506,
+    "failed": 0,
+    "pending": 0
+  },
+  "implementation_sha256": {
+    "frontend/lib/hooks/useScriptCatalog.ts": "e8dc2a65902290a471a0da7de1aab5b2a8c916f5efc81afb95b85ec89a0bdbb3",
+    "frontend/app/(dashboard)/scripts/page.tsx": "eb5bbcd90e6949be87c54ef8b7225608525ef680e3179b8c632660010b6d46d7",
+    "frontend/__tests__/hooks/useScriptCatalog.test.ts": "0c1cff49192e15e442f315798e03866001d798efd74868a4b46acc66334ac794",
+    "frontend/__tests__/scripts/page.test.tsx": "4de23939ef73ab63b77b14c2eab21a5f5196dccdff6f36138fe72b79ca6752c6",
+    "frontend/__tests__/scripts/catalog-pagination.test.tsx": "f900624d21bdf523170326d623597730452fb3f21b663cdb70b8ccb22e157023",
+    "frontend/__tests__/scripts/version-workflow.test.tsx": "4979fab4c352ae9192e280961c786af3255bb6e217f9b3db503c64dc05bd227b",
+    "frontend/__tests__/scripts/catalog-fixtures.ts": "1086719a1942f861b37f27b3bc64851a7f9943f13ce4f5aed0cb549b71ac823c"
+  },
+  "log_bytes": 110959,
+  "json_bytes": 1479,
+  "earlier1504RunSuperseded": true,
+  "sourceHashVerification": "Exact tested checkout hashes; Git source-revision blobs verified identical after Windows CRLF normalization.",
+  "provenance": [
+    {
+      "retainedPrivateReceipt": "frontend-tests-receipt.json",
+      "sha256": "025e262587f1d38614c52f8b0e2acfc50deeae66844ecfeb9ec28c88d729941b",
+      "bytes": 1275
+    },
+    {
+      "retainedPrivateReceipt": "frontend-tests.json",
+      "sha256": "37b3f3b7d9bdda0dde1fa82e135a38de9b7203535fcd1ce1f1d23f106cb0e1af",
+      "bytes": 1479
+    },
+    {
+      "retainedPrivateReceipt": "frontend-tests.log",
+      "sha256": "dba591e054f1081f70b78f54d47e8065de0f99fffff10218fdf12d396981ec9e",
+      "bytes": 110959
+    }
+  ]
+}

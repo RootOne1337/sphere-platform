@@ -1,0 +1,420 @@
+{
+  "attempt": 1,
+  "conclusion": "success",
+  "databaseId": 34599102371,
+  "event": "pull_request",
+  "headSha": "a294c2951b6a1e7176cf84270468232d29d18b76",
+  "jobs": [
+    {
+      "completedAt": "2026-09-11T12:28:52Z",
+      "conclusion": "success",
+      "databaseId": 103261791859,
+      "name": "RLS Policy Coverage",
+      "startedAt": "2026-09-11T12:28:47Z",
+      "status": "completed",
+      "steps": [
+        {
+          "conclusion": "success",
+          "name": "Set up job",
+          "number": 1,
+          "status": "completed"
+        },
+        {
+          "conclusion": "success",
+          "name": "Run actions/checkout@v4",
+          "number": 2,
+          "status": "completed"
+        },
+        {
+          "conclusion": "success",
+          "name": "Run actions/setup-python@v5",
+          "number": 3,
+          "status": "completed"
+        },
+        {
+          "conclusion": "success",
+          "name": "Run python scripts/check_rls.py",
+          "number": 4,
+          "status": "completed"
+        },
+        {
+          "conclusion": "success",
+          "name": "Post Run actions/setup-python@v5",
+          "number": 7,
+          "status": "completed"
+        },
+        {
+          "conclusion": "success",
+          "name": "Post Run actions/checkout@v4",
+          "number": 8,
+          "status": "completed"
+        },
+        {
+          "conclusion": "success",
+          "name": "Complete job",
+          "number": 9,
+          "status": "completed"
+        }
+      ],
+      "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/34599102371/job/103261791859"
+    },
+    {
+      "completedAt": "2026-09-11T12:29:33Z",
+      "conclusion": "success",
+      "databaseId": 103261792174,
+      "name": "Production image bootstrap",
+      "startedAt": "2026-09-11T12:28:47Z",
+      "status": "completed",
+      "steps": [
+        {
+          "conclusion": "success",
+          "name": "Set up job",
+          "number": 1,
+          "status": "completed"
+        },
+        {
+          "conclusion": "success",
+          "name": "Run actions/checkout@v4",
+          "number": 2,
+          "status": "completed"
+        },
+        {
+          "conclusion": "success",
+          "name": "Build the shipped production image",
+          "number": 3,
+          "status": "completed"
+        },
+        {
+          "conclusion": "success",
+          "name": "Run bootstrap entry points without network or source mounts",
+          "number": 4,
+          "status": "completed"
+        },
+        {
+          "conclusion": "success",
+          "name": "Run actions/upload-artifact@v4",
+          "number": 5,
+          "status": "completed"
+        },
+        {
+          "conclusion": "success",
+          "name": "Post Run actions/checkout@v4",
+          "number": 10,
+          "status": "completed"
+        },
+        {
+          "conclusion": "success",
+          "name": "Complete job",
+          "number": 11,
+          "status": "completed"
+        }
+      ],
+      "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/34599102371/job/103261792174"
+    },
+    {
+      "completedAt": "2026-09-11T12:29:21Z",
+      "conclusion": "success",
+      "databaseId": 103261792204,
+      "name": "Security (bandit + pip-audit)",
+      "startedAt": "2026-09-11T12:28:47Z",
+      "status": "completed",
+      "steps": [
+        {
+          "conclusion": "success",
+          "name": "Set up job",
+          "number": 1,
+          "status": "completed"
+        },
+        {
+          "conclusion": "success",
+          "name": "Run actions/checkout@v4",
+          "number": 2,
+          "status": "completed"
+        },
+        {
+          "conclusion": "success",
+          "name": "Run actions/setup-python@v5",
+          "number": 3,
+          "status": "completed"
+        },
+        {
+          "conclusion": "success",
+          "name": "Run pip install bandit pip-audit",
+          "number": 4,
+          "status": "completed"
+        },
+        {
+          "conclusion": "success",
+          "name": "Run bandit -r backend/ -c .bandit -ll",
+          "number": 5,
+          "status": "completed"
+        },
+        {
+          "conclusion": "success",
+          "name": "Run pip-audit -r backend/requirements.txt -r pc-agent/requirements.txt",
+          "number": 6,
+          "status": "completed"
+        },
+        {
+          "conclusion": "success",
+          "name": "Post Run actions/setup-python@v5",
+          "number": 11,
+          "status": "completed"
+        },
+        {
+          "conclusion": "success",
+          "name": "Post Run actions/checkout@v4",
+          "number": 12,
+          "status": "completed"
+        },
+        {
+          "conclusion": "success",
+          "name": "Complete job",
+          "number": 13,
+          "status": "completed"
+        }
+      ],
+      "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/34599102371/job/103261792204"
+    },
+    {
+      "completedAt": "2026-09-11T12:28:57Z",
+      "conclusion": "success",
+      "databaseId": 103261792216,
+      "name": "Lint (ruff + mypy)",
+      "startedAt": "2026-09-11T12:28:47Z",
+      "status": "completed",
+      "steps": [
+        {
+          "conclusion": "success",
+          "name": "Set up job",
+          "number": 1,
+          "status": "completed"
+        },
+        {
+          "conclusion": "success",
+          "name": "Run actions/checkout@v4",
+          "number": 2,
+          "status": "completed"
+        },
+        {
+          "conclusion": "success",
+          "name": "Run actions/setup-python@v5",
+          "number": 3,
+          "status": "completed"
+        },
+        {
+          "conclusion": "success",
+          "name": "Run pip install ruff mypy",
+          "number": 4,
+          "status": "completed"
+        },
+        {
+          "conclusion": "success",
+          "name": "Run ruff check backend/ tests/ scripts/export_api_docs.py",
+          "number": 5,
+          "status": "completed"
+        },
+        {
+          "conclusion": "success",
+          "name": "Run mypy backend/ --ignore-missing-imports",
+          "number": 6,
+          "status": "completed"
+        },
+        {
+          "conclusion": "success",
+          "name": "Post Run actions/setup-python@v5",
+          "number": 11,
+          "status": "completed"
+        },
+        {
+          "conclusion": "success",
+          "name": "Post Run actions/checkout@v4",
+          "number": 12,
+          "status": "completed"
+        },
+        {
+          "conclusion": "success",
+          "name": "Complete job",
+          "number": 13,
+          "status": "completed"
+        }
+      ],
+      "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/34599102371/job/103261792216"
+    },
+    {
+      "completedAt": "2026-09-11T12:35:17Z",
+      "conclusion": "success",
+      "databaseId": 103261792273,
+      "name": "Tests",
+      "startedAt": "2026-09-11T12:28:47Z",
+      "status": "completed",
+      "steps": [
+        {
+          "conclusion": "success",
+          "name": "Set up job",
+          "number": 1,
+          "status": "completed"
+        },
+        {
+          "conclusion": "success",
+          "name": "Initialize containers",
+          "number": 2,
+          "status": "completed"
+        },
+        {
+          "conclusion": "success",
+          "name": "Run actions/checkout@v4",
+          "number": 3,
+          "status": "completed"
+        },
+        {
+          "conclusion": "success",
+          "name": "Run actions/setup-python@v5",
+          "number": 4,
+          "status": "completed"
+        },
+        {
+          "conclusion": "success",
+          "name": "Run pip install -r backend/requirements.txt -r pc-agent/requirements.txt",
+          "number": 5,
+          "status": "completed"
+        },
+        {
+          "conclusion": "success",
+          "name": "Run pip check",
+          "number": 6,
+          "status": "completed"
+        },
+        {
+          "conclusion": "success",
+          "name": "Run alembic -c alembic/alembic.ini upgrade head",
+          "number": 7,
+          "status": "completed"
+        },
+        {
+          "conclusion": "success",
+          "name": "Unit and real-service regression tests",
+          "number": 8,
+          "status": "completed"
+        },
+        {
+          "conclusion": "success",
+          "name": "Verify generated HTTP API documentation",
+          "number": 9,
+          "status": "completed"
+        },
+        {
+          "conclusion": "success",
+          "name": "Run actions/upload-artifact@v4",
+          "number": 10,
+          "status": "completed"
+        },
+        {
+          "conclusion": "success",
+          "name": "Run codecov/codecov-action@v4",
+          "number": 11,
+          "status": "completed"
+        },
+        {
+          "conclusion": "success",
+          "name": "Post Run actions/setup-python@v5",
+          "number": 20,
+          "status": "completed"
+        },
+        {
+          "conclusion": "success",
+          "name": "Post Run actions/checkout@v4",
+          "number": 21,
+          "status": "completed"
+        },
+        {
+          "conclusion": "success",
+          "name": "Stop containers",
+          "number": 22,
+          "status": "completed"
+        },
+        {
+          "conclusion": "success",
+          "name": "Complete job",
+          "number": 23,
+          "status": "completed"
+        }
+      ],
+      "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/34599102371/job/103261792273"
+    },
+    {
+      "completedAt": "2026-09-11T12:36:10Z",
+      "conclusion": "success",
+      "databaseId": 103263672042,
+      "name": "Alembic Single Head",
+      "startedAt": "2026-09-11T12:35:20Z",
+      "status": "completed",
+      "steps": [
+        {
+          "conclusion": "success",
+          "name": "Set up job",
+          "number": 1,
+          "status": "completed"
+        },
+        {
+          "conclusion": "success",
+          "name": "Initialize containers",
+          "number": 2,
+          "status": "completed"
+        },
+        {
+          "conclusion": "success",
+          "name": "Run actions/checkout@v4",
+          "number": 3,
+          "status": "completed"
+        },
+        {
+          "conclusion": "success",
+          "name": "Run actions/setup-python@v5",
+          "number": 4,
+          "status": "completed"
+        },
+        {
+          "conclusion": "success",
+          "name": "Run pip install -r backend/requirements.txt",
+          "number": 5,
+          "status": "completed"
+        },
+        {
+          "conclusion": "success",
+          "name": "Run make alembic-check",
+          "number": 6,
+          "status": "completed"
+        },
+        {
+          "conclusion": "success",
+          "name": "Post Run actions/setup-python@v5",
+          "number": 10,
+          "status": "completed"
+        },
+        {
+          "conclusion": "success",
+          "name": "Post Run actions/checkout@v4",
+          "number": 11,
+          "status": "completed"
+        },
+        {
+          "conclusion": "success",
+          "name": "Stop containers",
+          "number": 12,
+          "status": "completed"
+        },
+        {
+          "conclusion": "success",
+          "name": "Complete job",
+          "number": 13,
+          "status": "completed"
+        }
+      ],
+      "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/34599102371/job/103263672042"
+    }
+  ],
+  "status": "completed",
+  "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/34599102371",
+  "workflowName": "CI — Backend"
+}

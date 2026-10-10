@@ -1,0 +1,7 @@
+Backend run 34466367344, head e68ec0ae0b17105d2c77f78239defc3ba70bd3dd, attempt 1
+Full suite summary and both new SQL/ASGI discovery contract cases.
+
+Tests	Unit and real-service regression tests	2026-09-10T10:32:05.7512221Z tests/production/test_agent_tenant_runtime.py::test_enrolled_device_discovery_uses_public_config_without_api_key_header[False] PASSED [ 23%]
+Tests	Unit and real-service regression tests	2026-09-10T10:32:06.2032954Z tests/production/test_agent_tenant_runtime.py::test_enrolled_device_discovery_uses_public_config_without_api_key_header[True] PASSED [ 23%]
+Tests	Unit and real-service regression tests	2026-09-10T10:36:00.5770143Z Required test coverage of 65% reached. Total coverage: 69.36%
+Tests	Unit and real-service regression tests	2026-09-10T10:36:00.5770549Z ================= 1385 passed, 4 warnings in 296.30s (0:04:56) =================

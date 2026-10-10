@@ -1,0 +1,196 @@
+{
+  "checked_at": "2026-09-20T10:10:58.238314+00:00",
+  "mode": "read-only",
+  "git_head": "1c93cf0a04b07e6a005627d45be511364efe111d",
+  "containers": {
+    "backend": {
+      "health": "healthy",
+      "restart_count": 0,
+      "oom_killed": false,
+      "memory_limit_bytes": 2147483648,
+      "cpu_quota_nano": 0,
+      "log_driver": "json-file",
+      "log_options": {},
+      "source_revision": "85fb1ea537c2f7961057432e8317f44a44c74c54"
+    },
+    "frontend": {
+      "health": "healthy",
+      "restart_count": 0,
+      "oom_killed": false,
+      "memory_limit_bytes": 0,
+      "cpu_quota_nano": 0,
+      "log_driver": "json-file",
+      "log_options": {},
+      "source_revision": "03b161e5faffda0a28d82eb2db94064e73b5360f"
+    },
+    "postgres": {
+      "health": "healthy",
+      "restart_count": 0,
+      "oom_killed": false,
+      "memory_limit_bytes": 1073741824,
+      "cpu_quota_nano": 0,
+      "log_driver": "json-file",
+      "log_options": {},
+      "source_revision": null
+    },
+    "redis": {
+      "health": "healthy",
+      "restart_count": 0,
+      "oom_killed": false,
+      "memory_limit_bytes": 134217728,
+      "cpu_quota_nano": 0,
+      "log_driver": "json-file",
+      "log_options": {},
+      "source_revision": null
+    },
+    "nginx": {
+      "health": "healthy",
+      "restart_count": 0,
+      "oom_killed": false,
+      "memory_limit_bytes": 134217728,
+      "cpu_quota_nano": 0,
+      "log_driver": "json-file",
+      "log_options": {},
+      "source_revision": null
+    },
+    "minio": {
+      "health": "healthy",
+      "restart_count": 0,
+      "oom_killed": false,
+      "memory_limit_bytes": 268435456,
+      "cpu_quota_nano": 0,
+      "log_driver": "json-file",
+      "log_options": {},
+      "source_revision": null
+    },
+    "n8n": {
+      "health": "healthy",
+      "restart_count": 0,
+      "oom_killed": false,
+      "memory_limit_bytes": 0,
+      "cpu_quota_nano": 0,
+      "log_driver": "json-file",
+      "log_options": {},
+      "source_revision": null
+    },
+    "cloudflare-quick": {
+      "health": "healthy",
+      "restart_count": 0,
+      "oom_killed": false,
+      "memory_limit_bytes": 201326592,
+      "cpu_quota_nano": 0,
+      "log_driver": "json-file",
+      "log_options": {
+        "max-file": "3",
+        "max-size": "5m"
+      },
+      "source_revision": null
+    },
+    "public-gateway": {
+      "health": "healthy",
+      "restart_count": 0,
+      "oom_killed": false,
+      "memory_limit_bytes": 134217728,
+      "cpu_quota_nano": 0,
+      "log_driver": "json-file",
+      "log_options": {
+        "max-file": "3",
+        "max-size": "5m"
+      },
+      "source_revision": null
+    }
+  },
+  "backend_configuration": {
+    "db_pool_size": "default:10",
+    "db_max_overflow": "default:5",
+    "multiprocess_metrics_configured": false,
+    "vpn_key_configured": false,
+    "wg_router_url_is_loopback": true,
+    "wg_router_api_key_configured": false,
+    "wg_server_key_configured": false,
+    "workers": "4"
+  },
+  "redis_configuration": {
+    "maxmemory-policy": "allkeys-lru",
+    "maxmemory": "536870912",
+    "appendfsync": "everysec",
+    "appendonly": "yes"
+  },
+  "redis_stats": {
+    "used_memory": "1705472",
+    "used_memory_peak": "2098704",
+    "used_memory_rss": "13418496",
+    "connected_clients": "21",
+    "blocked_clients": "0",
+    "evicted_keys": "0",
+    "rejected_connections": "0",
+    "aof_last_write_status": "ok",
+    "rdb_last_bgsave_status": "ok"
+  },
+  "postgres": {
+    "max_connections": "200",
+    "statement_timeout": "30s",
+    "idle_in_transaction_session_timeout": "1min",
+    "connections": 23,
+    "idle_in_transaction": 0,
+    "db_bytes": 14638439,
+    "deadlocks": 0
+  },
+  "api_reads": {
+    "/api/v1/tasks": {
+      "http_status": 200,
+      "total": 418,
+      "status_counts": {
+        "queued": 0,
+        "assigned": 0,
+        "running": 0,
+        "completed": 418,
+        "failed": 0,
+        "timeout": 0,
+        "cancelled": 0
+      }
+    },
+    "/api/v1/health/readyz": {
+      "http_status": 200,
+      "shape": "dict"
+    },
+    "/api/v1/vpn/peers": {
+      "http_status": 200,
+      "shape": "list",
+      "count": 0
+    }
+  },
+  "android": [
+    {
+      "device": "pilot-1",
+      "pid": "2182",
+      "projection_active": false,
+      "pss_kib": 48830
+    },
+    {
+      "device": "pilot-2",
+      "pid": "2187",
+      "projection_active": false,
+      "pss_kib": 57129
+    }
+  ],
+  "metrics_observations": {
+    "scrapes": 12,
+    "distinct_process_start_times": [
+      "1.78989713042e+09",
+      "1.78989713048e+09"
+    ],
+    "ws_connections_active_has_labeled_samples": false,
+    "devices_online_has_labeled_samples": false,
+    "task_queue_depth_values": [
+      "0.0"
+    ],
+    "scope": "Worker-local scrape sample, not a fleet total or a load benchmark"
+  },
+  "limits": [
+    "Read-only snapshot of the new pilot; no runtime replacement or failure injection",
+    "Two idle APKs only; memory values are not a 32-device streaming benchmark",
+    "Crash buffer hashes omitted: normalized reads cannot be compared directly with prior raw hashes",
+    "A prior media.codec SIGABRT is historical, not classified here as a new Sphere crash"
+  ]
+}

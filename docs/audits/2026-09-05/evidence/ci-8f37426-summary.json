@@ -1,0 +1,87 @@
+{
+  "head": "8f37426b9ec660ed524e330d59a62cd21fea115d",
+  "checked_at": "2026-09-21T03:43:47.826396+00:00",
+  "runs": [
+    {
+      "conclusion": "success",
+      "databaseId": 35557514868,
+      "headSha": "8f37426b9ec660ed524e330d59a62cd21fea115d",
+      "status": "completed",
+      "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/35557514868",
+      "workflowName": "Preview \u2014 Deploy",
+      "jobs": [
+        {
+          "name": "guard",
+          "conclusion": "success"
+        },
+        {
+          "name": "deploy",
+          "conclusion": "skipped"
+        }
+      ]
+    },
+    {
+      "conclusion": "success",
+      "databaseId": 35557514909,
+      "headSha": "8f37426b9ec660ed524e330d59a62cd21fea115d",
+      "status": "completed",
+      "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/35557514909",
+      "workflowName": "CI \u2014 Frontend",
+      "jobs": [
+        {
+          "name": "Frontend tests, types and build",
+          "conclusion": "success"
+        }
+      ]
+    },
+    {
+      "conclusion": "success",
+      "databaseId": 35557514881,
+      "headSha": "8f37426b9ec660ed524e330d59a62cd21fea115d",
+      "status": "completed",
+      "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/35557514881",
+      "workflowName": "CI \u2014 Android",
+      "jobs": [
+        {
+          "name": "Build APK",
+          "conclusion": "success"
+        }
+      ]
+    },
+    {
+      "conclusion": "success",
+      "databaseId": 35557514916,
+      "headSha": "8f37426b9ec660ed524e330d59a62cd21fea115d",
+      "status": "completed",
+      "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/35557514916",
+      "workflowName": "CI \u2014 Backend",
+      "jobs": [
+        {
+          "name": "RLS Policy Coverage",
+          "conclusion": "success"
+        },
+        {
+          "name": "Lint (ruff + mypy)",
+          "conclusion": "success"
+        },
+        {
+          "name": "Production image bootstrap",
+          "conclusion": "success"
+        },
+        {
+          "name": "Security (bandit + pip-audit)",
+          "conclusion": "success"
+        },
+        {
+          "name": "Tests",
+          "conclusion": "success"
+        },
+        {
+          "name": "Alembic Single Head",
+          "conclusion": "success"
+        }
+      ]
+    }
+  ],
+  "note": "Workflow/job conclusions from GitHub. No inferred JUnit count; preview deploy may be intentionally skipped."
+}

@@ -1,0 +1,119 @@
+{
+  "evidenceSchema": 1,
+  "sourceRevision": "eb7a7c26c2e644f24eb3f785b3da1c29a65929be",
+  "source": "eb7a7c26c2e644f24eb3f785b3da1c29a65929be",
+  "observedAt": "2026-10-06T07:44:07.817295+00:00",
+  "workflows": [
+    {
+      "conclusion": "success",
+      "databaseId": 37429532718,
+      "headSha": "eb7a7c26c2e644f24eb3f785b3da1c29a65929be",
+      "name": "Preview — Deploy",
+      "status": "completed",
+      "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/37429532718",
+      "jobs": [
+        {
+          "name": "guard",
+          "status": "completed",
+          "conclusion": "success",
+          "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/37429532718/job/112156876579"
+        },
+        {
+          "name": "deploy",
+          "status": "completed",
+          "conclusion": "skipped",
+          "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/37429532718/job/112156915291"
+        }
+      ]
+    },
+    {
+      "conclusion": "success",
+      "databaseId": 37429532728,
+      "headSha": "eb7a7c26c2e644f24eb3f785b3da1c29a65929be",
+      "name": "CI — Frontend",
+      "status": "completed",
+      "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/37429532728",
+      "jobs": [
+        {
+          "name": "Frontend tests, types and build",
+          "status": "completed",
+          "conclusion": "success",
+          "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/37429532728/job/112156876852"
+        }
+      ]
+    },
+    {
+      "conclusion": "success",
+      "databaseId": 37429532773,
+      "headSha": "eb7a7c26c2e644f24eb3f785b3da1c29a65929be",
+      "name": "CI — Android",
+      "status": "completed",
+      "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/37429532773",
+      "jobs": [
+        {
+          "name": "Android tests and signed release smoke build",
+          "status": "completed",
+          "conclusion": "success",
+          "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/37429532773/job/112156876673"
+        }
+      ]
+    },
+    {
+      "conclusion": "success",
+      "databaseId": 37429532716,
+      "headSha": "eb7a7c26c2e644f24eb3f785b3da1c29a65929be",
+      "name": "CI — Backend",
+      "status": "completed",
+      "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/37429532716",
+      "jobs": [
+        {
+          "name": "Tests",
+          "status": "completed",
+          "conclusion": "success",
+          "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/37429532716/job/112156876648"
+        },
+        {
+          "name": "Lint (ruff + mypy)",
+          "status": "completed",
+          "conclusion": "success",
+          "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/37429532716/job/112156876795"
+        },
+        {
+          "name": "Production image bootstrap",
+          "status": "completed",
+          "conclusion": "success",
+          "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/37429532716/job/112156876823"
+        },
+        {
+          "name": "RLS Policy Coverage",
+          "status": "completed",
+          "conclusion": "success",
+          "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/37429532716/job/112156876921"
+        },
+        {
+          "name": "Security (bandit + pip-audit)",
+          "status": "completed",
+          "conclusion": "success",
+          "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/37429532716/job/112156877046"
+        },
+        {
+          "name": "Alembic Single Head",
+          "status": "completed",
+          "conclusion": "success",
+          "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/37429532716/job/112161710628"
+        }
+      ]
+    }
+  ],
+  "allFourCompletedSuccess": true,
+  "previewDeploymentPerformed": false,
+  "documentationHeadChecksSeparate": true,
+  "provenance": [
+    {
+      "retainedPrivateReceipt": "source-ci.json",
+      "sha256": "152c18d59c7955728788587830f6e27fff6f60d2d33d3d88f8a38cae3558094b",
+      "bytes": 3993
+    }
+  ],
+  "ciImageBuildDoesNotReplaceLocalInstalledImageEvidence": true
+}

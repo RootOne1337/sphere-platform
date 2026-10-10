@@ -6,38 +6,133 @@ on:
   pull_request:
     branches: [main, develop]
 
+permissions:
+  contents: read
+
+concurrency:
+  group: backend-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
 jobs:
+  image-bootstrap:
+    name: Production image bootstrap
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      SPHERE_BUILD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+      SPHERE_REVIEW_IMAGE: sphere-reviewed-backend:${{ github.event.pull_request.head.sha || github.sha }}
+      SPHERE_CI_RUN_ID: ${{ github.run_id }}
+      SPHERE_CI_RUN_ATTEMPT: ${{ github.run_attempt }}
+      # Docker Official Images mirror; matching Hub linux/amd64 manifests verified.
+      # Review provenance and update procedure: docs/audits/2026-10-10/CI-REGISTRY-LIMIT.md
+      SPHERE_AUDIT_POSTGRES_IMAGE: public.ecr.aws/docker/library/postgres@sha256:25d430274d8a31184f9435cc5b2f56aff254952065bbbcac0c51acedb5a1d1e7
+      SPHERE_AUDIT_REDIS_IMAGE: public.ecr.aws/docker/library/redis@sha256:84bab713067f5494d94c24e99ae3fa3ae2388c037152edcbcf301f7cfaeb3048
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+      - name: Reviewed archive admission regressions
+        run: python -m unittest discover -s tests/containers -p 'test_*reviewed*.py'
+      - name: Verify private local pilot files are excluded from Docker context
+        run: python tests/containers/dockerignore_probe.py
+      - name: Build the shipped production image
+        run: >-
+          docker build --platform linux/amd64 --build-arg BUILD_SHA="$SPHERE_BUILD_SHA"
+          --build-arg PYTHON_BASE_IMAGE=public.ecr.aws/docker/library/python@sha256:2b4f19dae3a777dfc3b76730bda1e82e1f66ab2a2686fa93ca78edbfb4f04ffe
+          --label "org.opencontainers.image.revision=$SPHERE_BUILD_SHA"
+          --label "io.sphere.ci.run=$SPHERE_CI_RUN_ID"
+          --label "io.sphere.ci.attempt=$SPHERE_CI_RUN_ATTEMPT"
+          -f backend/Dockerfile -t "$SPHERE_REVIEW_IMAGE" .
+      - name: Run bootstrap entry points without network or source mounts
+        run: |
+          docker run --rm --network none --read-only --cap-drop ALL \
+            --security-opt no-new-privileges --tmpfs /tmp:rw,nosuid,nodev,size=16m \
+            --mount "type=bind,source=${{ github.workspace }}/tests/containers/backend_bootstrap_probe.py,target=/tmp/backend_bootstrap_probe.py,readonly" \
+            "$SPHERE_REVIEW_IMAGE" python /tmp/backend_bootstrap_probe.py 2>&1 | tee image-bootstrap-probe.txt
+      - name: Fresh packaged SQL bootstrap and application process restart
+        run: >-
+          python tests/containers/run_backend_runtime_probe.py
+          --image "$SPHERE_REVIEW_IMAGE" --evidence-dir image-runtime-evidence
+      - name: Four HTTP workers, child replacement and fresh master metrics
+        run: >-
+          python tests/containers/run_multiprocess_metrics_probe.py
+          --image "$SPHERE_REVIEW_IMAGE" --evidence-dir multiprocess-metrics-evidence
+      - name: PostgreSQL entrypoint initialization and persistent-volume restart
+        run: |
+          python tests/containers/postgres_init_probe.py --evidence-dir postgres-init-evidence 2>&1 | tee postgres-init-probe.txt
+      - name: Retain the same probed backend image without rebuilding
+        run: python tests/containers/package_reviewed_backend.py
+      - name: Keep the admitted backend for operator review
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: sphere-reviewed-backend-${{ github.event.pull_request.head.sha || github.sha }}
+          path: |
+            reviewed-backend/image.tar.gz
+            reviewed-backend/receipt.json
+          if-no-files-found: error
+          retention-days: 3
+          compression-level: 0
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: image-bootstrap-probe
+          path: |
+            image-bootstrap-probe.txt
+            image-runtime-evidence/
+            multiprocess-metrics-evidence/
+            postgres-init-evidence/
+            postgres-init-probe.txt
+          if-no-files-found: warn
+
   lint:
     name: Lint (ruff + mypy)
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
           cache: pip
-      - run: pip install ruff mypy
-      - run: ruff check backend/ tests/
+      # SQLAlchemy/Starlette/Pydantic types must resolve against shipped dependencies.
+      # Installing only mypy hides boundary errors behind missing-import Any.
+      - run: pip install -r backend/requirements.txt
+      - run: pip check
+      - name: Documentation status and closure integrity
+        run: |
+          python -m scripts.check_documentation_status
+          python -m unittest discover -s tests -p 'test_documentation_status.py'
+      - run: python scripts/sync_action_contract.py --check
+      - run: ruff check backend/ tests/ scripts/check_documentation_status.py scripts/export_api_docs.py scripts/discovery_manifest.py scripts/discovery_publisher.py scripts/ldplayer_network.py scripts/ldplayer_watchdog.py
       - run: mypy backend/ --ignore-missing-imports
 
   security:
     name: Security (bandit + pip-audit)
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
           cache: pip
       - run: pip install bandit pip-audit
       - run: bandit -r backend/ -c .bandit -ll
-      - run: pip-audit -r backend/requirements.txt
+      - run: pip-audit -r backend/requirements.txt -r pc-agent/requirements.txt
 
   rls-check:
     name: RLS Policy Coverage
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
@@ -46,11 +141,12 @@ jobs:
   test:
     name: Tests
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     services:
       postgres:
-        image: postgres:15-alpine
+        image: public.ecr.aws/docker/library/postgres@sha256:25d430274d8a31184f9435cc5b2f56aff254952065bbbcac0c51acedb5a1d1e7
         env:
-          POSTGRES_DB: sphereplatform_test
+          POSTGRES_DB: sphereplatform_audit_test
           POSTGRES_USER: sphere
           POSTGRES_PASSWORD: test_password
         options: >-
@@ -61,14 +157,14 @@ jobs:
         ports:
           - 5432:5432
       redis:
-        image: redis:7.2-alpine
+        image: public.ecr.aws/docker/library/redis@sha256:84bab713067f5494d94c24e99ae3fa3ae2388c037152edcbcf301f7cfaeb3048
         options: >-
           --health-cmd "redis-cli ping"
           --health-interval 10s
         ports:
           - 6379:6379
     env:
-      POSTGRES_URL: postgresql+asyncpg://sphere:test_password@localhost:5432/sphereplatform_test
+      POSTGRES_URL: postgresql+asyncpg://sphere:test_password@localhost:5432/sphereplatform_audit_test
       REDIS_URL: redis://localhost:6379/0
       REDIS_PASSWORD: ""
       JWT_SECRET_KEY: test_jwt_secret_key_at_least_32_chars_long
@@ -79,18 +175,46 @@ jobs:
       AWG_H3: 3333333333
       AWG_H4: 4444444444
       VPN_SERVER_HOSTNAME: localhost
+      SPHERE_RUN_INTEGRATION: "1"
+      # Same official manifests as the service/provenance checks; local defaults remain.
+      SPHERE_AUDIT_NGINX_IMAGE: public.ecr.aws/docker/library/nginx@sha256:0530961ff0592b58c10f767535cc0abdfccf9e389ff7cc90f87320c1bc7e8506
+      SPHERE_AUDIT_REDIS_IMAGE: public.ecr.aws/docker/library/redis@sha256:84bab713067f5494d94c24e99ae3fa3ae2388c037152edcbcf301f7cfaeb3048
+      PYTHONPATH: ".:pc-agent"
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
           cache: pip
-      - run: pip install -r backend/requirements.txt
-      - run: pip install -r pc-agent/requirements.txt
+      # One resolver transaction: sequential installs hid conflicting exact pins.
+      - run: pip install -r backend/requirements.txt -r pc-agent/requirements.txt
+      - run: pip check
       - run: alembic -c alembic/alembic.ini upgrade head
         env:
           PYTHONPATH: "."
-      - run: pytest tests/ -v --cov=backend --cov-report=xml --cov-fail-under=65
+      # Load/soak profiles require an explicitly prepared isolated API and agents.
+      # They are not a substitute for the PostgreSQL/Redis regressions enabled here.
+      - name: Unit and real-service regression tests
+        run: >-
+          pytest tests/ --ignore=tests/load -v --tb=short
+          --junitxml=test-results.xml --cov=backend --cov-report=xml
+          --cov-fail-under=65
+      - name: Verify generated HTTP API documentation
+        run: python -m scripts.export_api_docs --check
+      - name: Redis container memory and persistence acceptance
+        run: python tests/containers/run_redis_memory_probe.py --evidence-dir redis-memory-evidence
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: backend-test-results
+          path: |
+            test-results.xml
+            redis-memory-evidence/
+            coverage.xml
+          if-no-files-found: warn
       - uses: codecov/codecov-action@v4
         with:
           file: ./coverage.xml
@@ -98,10 +222,11 @@ jobs:
   alembic-check:
     name: Alembic Single Head
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     needs: [test]
     services:
       postgres:
-        image: postgres:15-alpine
+        image: public.ecr.aws/docker/library/postgres@sha256:25d430274d8a31184f9435cc5b2f56aff254952065bbbcac0c51acedb5a1d1e7
         env:
           POSTGRES_DB: sphereplatform_test
           POSTGRES_USER: sphere
@@ -126,7 +251,10 @@ jobs:
       AWG_H4: 4444444444
       VPN_SERVER_HOSTNAME: localhost
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"

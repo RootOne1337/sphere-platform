@@ -8,11 +8,13 @@ import android.media.ImageReader
 import android.media.projection.MediaProjection
 import android.os.Handler
 import android.os.HandlerThread
+import com.sphereplatform.agent.BuildConfig
 import com.sphereplatform.agent.ws.SphereWebSocketClientContract
 import dagger.hilt.android.qualifiers.ApplicationContext
 import timber.log.Timber
 import javax.inject.Inject
 import javax.inject.Singleton
+import java.util.UUID
 
 /**
  * Production [StreamingManager] — coordinates encoder, VirtualDisplay and
@@ -31,12 +33,28 @@ class StreamingManagerImpl @Inject constructor(
 ) : StreamingManager {
 
     private var encoder: H264Encoder? = null
+    private val viewerKeyFrameCoordinator = ViewerKeyFrameCoordinator()
     private var adaptiveBitrate: AdaptiveBitrateController? = null
     private var virtualDisplayManager: VirtualDisplayManager? = null
     private var imageReader: ImageReader? = null
     private var imageReaderThread: HandlerThread? = null
+    private var gpuBridge: SurfaceTextureEncoderBridge? = null
+    internal var gpuBridgeEnabled = BuildConfig.STREAM_GPU_BRIDGE
+    internal var planarInputEnabled = BuildConfig.STREAM_PLANAR_INPUT
+    // Image/Bitmap native storage must stay alive through the complete copy and
+    // surface draw. Lifecycle methods serialize separately from codec callbacks.
+    private val frameLock = Any()
+    @Volatile private var captureSession: Any? = null
+    private var inputGeometry: CaptureInputGeometry? = null
+    private var inputSession: CaptureInputSession? = null
+    private var inputInvalidationListener: (() -> Unit)? = null
+    private class EncodedViewer(val owner: Any, val capture: CaptureInputSession, val consume: (EncodedCaptureFrame) -> Unit) {
+        val sequence = java.util.concurrent.atomic.AtomicLong(0)
+    }
+    @Volatile private var encodedViewer: EncodedViewer? = null
 
     private var streamStartMs: Long = 0L
+    private var encoderCaptureEpoch: UUID? = null
 
     @Volatile private var streaming = false
 
@@ -73,6 +91,7 @@ class StreamingManagerImpl @Inject constructor(
     // StreamingManager interface
     // -------------------------------------------------------------------------
 
+    @Synchronized
     override fun start(projection: MediaProjection) {
         if (streaming) {
             Timber.d("StreamingManagerImpl: restart — stopping existing session")
@@ -82,14 +101,29 @@ class StreamingManagerImpl @Inject constructor(
         streamStartMs = System.currentTimeMillis()
         // FIX D4: Сохраняем projection в поле
         currentProjection = projection
+        val session = Any()
+        synchronized(frameLock) { captureSession = session }
 
-        val captureConfig = VirtualDisplayManager.createConfig(context)
+        // Canary retains the actual source size; never upscale 540p to 720p
+        // before a slow emulator encoder. Default capture remains unchanged.
+        val captureConfig = VirtualDisplayManager.createConfig(context, nativeSize = gpuBridgeEnabled || planarInputEnabled)
+        val sourceMetrics = android.content.res.Resources.getSystem().displayMetrics
+        val sourceRotation = (context.getSystemService(Context.DISPLAY_SERVICE) as? android.hardware.display.DisplayManager)
+            ?.getDisplay(android.view.Display.DEFAULT_DISPLAY)?.rotation
+        inputGeometry = sourceRotation?.let {
+            CaptureInputGeometry(sourceMetrics.widthPixels, sourceMetrics.heightPixels,
+                captureConfig.width, captureConfig.height, it)
+        }
+        inputSession = inputGeometry?.let(CaptureInputSession::create)
+        val packetEpoch = if (BuildConfig.CONTINUOUS_INPUT_CANARY) inputSession?.epoch?.let(UUID::fromString) else null
+        val packetStartMs = streamStartMs
+        encoderCaptureEpoch = packetEpoch
         val encoderConfig = H264Encoder.EncoderConfig(
             width = captureConfig.width,
             height = captureConfig.height
         )
         val enc = H264Encoder(encoderConfig) { nalData, metadata ->
-            onFrameReady(nalData, metadata)
+            onFrameReady(nalData, metadata, session, packetEpoch, packetStartMs)
         }
         // FIX H3: Передаём фактический битрейт энкодера в ABR — без рассинхрона
         val abr = AdaptiveBitrateController(enc, initialBitrate = encoderConfig.bitrateBps)
@@ -101,11 +135,12 @@ class StreamingManagerImpl @Inject constructor(
         // FIX D4: Используем поле currentProjection вместо closure-захвата.
         // При длительном стриме projection из closure может быть отозвана (Android 14+).
         enc.onEncoderError = { error ->
+            qualityMonitor.recordEncoderError()
             Timber.e(error, "StreamingManagerImpl: encoder error — restarting stream")
             android.os.Handler(android.os.Looper.getMainLooper()).post {
                 try {
                     val proj = currentProjection
-                    if (proj != null) {
+                    if (proj != null && streaming && encoder === enc) {
                         stop()
                         start(proj)
                     } else {
@@ -118,8 +153,48 @@ class StreamingManagerImpl @Inject constructor(
         }
 
         // start() returns the Surface that VirtualDisplay will render into
-        val encoderSurface = enc.start()
+        var usePlanar = planarInputEnabled
+        val encoderSurface = if (usePlanar) {
+            try { enc.startPlanar(); null }
+            catch (error: Exception) {
+                // No display/projection token has been consumed. Retain the
+                // existing AVC Surface path on devices without this capability.
+                Timber.w(error, "Planar input unavailable at startup; using Surface input")
+                usePlanar = false
+                enc.start()
+            }
+        } else enc.start()
         encoder = enc
+
+        if (gpuBridgeEnabled && !usePlanar) {
+            val bridge = SurfaceTextureEncoderBridge(checkNotNull(encoderSurface), captureConfig.width,
+                captureConfig.height, frameThrottle, qualityMonitor) { error ->
+                Timber.e(error, "GPU capture failed; stopping this session")
+                Handler(android.os.Looper.getMainLooper()).post {
+                    if (encoder === enc) stop()
+                }
+            }
+            gpuBridge = bridge
+            try {
+                val captureSurface = bridge.start()
+                val vdm = VirtualDisplayManager(context, projection)
+                virtualDisplayManager = vdm
+                streaming = true
+                vdm.createDisplay(captureConfig, captureSurface)
+                viewerKeyFrameCoordinator.markEncoderReady { requestKeyFrameNow() }
+                Timber.i("StreamingManagerImpl: started GPU SurfaceTexture bridge")
+                return
+            } catch (error: SurfaceTextureEncoderBridge.InitializationFailed) {
+                // Initialization already disconnected EGL before signalling.
+                // No VirtualDisplay has consumed this projection token yet.
+                bridge.close()
+                gpuBridge = null
+                Timber.w(error, "GPU capture unavailable at startup; using CPU bridge")
+            } catch (error: Exception) {
+                stopInternal()
+                throw error // Timeout/VD failure must not reuse a projection or borrowed Surface.
+            }
+        }
 
         // ImageReader sits between VirtualDisplay (AUTO_MIRROR) and the H264 encoder surface.
         // This avoids the GraphicBufferSource acquireBuffer err=-38 crash on LDPlayer x86:
@@ -132,59 +207,98 @@ class StreamingManagerImpl @Inject constructor(
 
         val thread = HandlerThread("sphere-imagereader").also { it.start() }
         imageReaderThread = thread
+        var lastPlanarTimestamp = 0L
 
         ir.setOnImageAvailableListener({ reader ->
-            val image = try {
-                reader.acquireLatestImage()
-            } catch (e: Exception) {
-                null
-            }
-            if (image == null) return@setOnImageAvailableListener
-            
-            try {
-                val plane = image.planes[0]
-                val rowStride = plane.rowStride
-                val pixelStride = plane.pixelStride          // 4 for RGBA_8888
-                val strideWidth = rowStride / pixelStride
-
-                // FIX: Гарантируем buffer position = 0 перед чтением.
-                // На некоторых ImageReader-имплементациях (x86 эмуляторы)
-                // позиция буфера может быть не в начале после re-acquire.
-                val buffer = plane.buffer
-                buffer.position(0)
-
-                // PERF: Bitmap reuse с автоматическим fallback.
-                // Если bitmapReuseEnabled и copyPixelsFromBuffer не обновляет пиксели
-                // (device-баг), fallback на per-frame аллокацию.
-                val bmp: Bitmap
-                val needRecycle: Boolean
-                if (bitmapReuseEnabled) {
-                    bmp = getOrCreateBitmap(strideWidth, image.height)
-                    needRecycle = false
-                } else {
-                    bmp = Bitmap.createBitmap(strideWidth, image.height, Bitmap.Config.ARGB_8888)
-                    needRecycle = true
-                }
-                bmp.copyPixelsFromBuffer(buffer)
-
-                // Only lock and draw if we are still streaming
-                if (streaming) {
-                    val canvas = encoderSurface.lockCanvas(null)
-                    if (canvas != null) {
-                        val src = Rect(0, 0, image.width, image.height)
-                        val dst = Rect(0, 0, image.width, image.height)
-                        canvas.drawBitmap(bmp, src, dst, null)
-                        encoderSurface.unlockCanvasAndPost(canvas)
-                    }
-                }
-                if (needRecycle) bmp.recycle()
-            } catch (e: Exception) {
-                Timber.e(e, "StreamingManagerImpl: frame render error")
-            } finally {
-                try {
-                    image.close()
+            synchronized(frameLock) {
+                // A callback queued before stop/restart may still run after listener
+                // removal. Never acquire or render from an obsolete capture.
+                if (captureSession !== session) return@setOnImageAvailableListener
+                val image = try {
+                    reader.acquireLatestImage()
                 } catch (e: Exception) {
-                    // Ignore close errors
+                    qualityMonitor.recordCaptureReadFailure()
+                    null
+                }
+                if (image == null) return@setOnImageAvailableListener
+
+                try {
+                    // VirtualDisplay may deliver its first buffer synchronously
+                    // while createDisplay() is still starting. Drain and close
+                    // it, but never render it into a session that has stopped.
+                    if (!streaming) return@setOnImageAvailableListener
+                    val captureTimestamp = if (usePlanar) image.timestamp else System.nanoTime()
+                    if (usePlanar) {
+                        if (captureTimestamp <= lastPlanarTimestamp) return@setOnImageAvailableListener
+                        lastPlanarTimestamp = captureTimestamp
+                    }
+                    qualityMonitor.recordCapturedFrame()
+                    // Budget raw pictures before CPU copy and encoder submission.
+                    // Dropping a coded reference picture corrupts the downstream
+                    // H.264 chain even when SPS/PPS and IDR are preserved.
+                    if (!frameThrottle.shouldRenderFrame(captureTimestamp)) {
+                        qualityMonitor.recordCaptureThrottleDrop()
+                        return@setOnImageAvailableListener // image.close() still runs.
+                    }
+                    val plane = image.planes[0]
+                    val rowStride = plane.rowStride
+                    val pixelStride = plane.pixelStride          // 4 for RGBA_8888
+                    if (usePlanar) {
+                        check(image.width == captureConfig.width && image.height == captureConfig.height)
+                        if (enc.submitPlanarFrame(plane.buffer, rowStride, pixelStride, captureTimestamp / 1000L)) {
+                            qualityMonitor.recordRenderedFrame()
+                        } else qualityMonitor.recordEncoderInputDrop()
+                        return@setOnImageAvailableListener // Always close the owned raw image below.
+                    }
+                    val strideWidth = rowStride / pixelStride
+
+                    // FIX: Гарантируем buffer position = 0 перед чтением.
+                    // На некоторых ImageReader-имплементациях (x86 эмуляторы)
+                    // позиция буфера может быть не в начале после re-acquire.
+                    val buffer = plane.buffer
+                    buffer.position(0)
+
+                    // PERF: Bitmap reuse с автоматическим fallback.
+                    // Если bitmapReuseEnabled и copyPixelsFromBuffer не обновляет пиксели
+                    // (device-баг), fallback на per-frame аллокацию.
+                    val bmp: Bitmap
+                    val needRecycle: Boolean
+                    if (bitmapReuseEnabled) {
+                        bmp = getOrCreateBitmap(strideWidth, image.height)
+                        needRecycle = false
+                    } else {
+                        bmp = Bitmap.createBitmap(strideWidth, image.height, Bitmap.Config.ARGB_8888)
+                        needRecycle = true
+                    }
+                    bmp.copyPixelsFromBuffer(buffer)
+
+                    // Only lock and draw if we are still streaming
+                    if (streaming) {
+                        val canvas = checkNotNull(encoderSurface).lockCanvas(null)
+                        if (canvas != null) {
+                            val src = Rect(0, 0, image.width, image.height)
+                            val dst = Rect(0, 0, image.width, image.height)
+                            try {
+                                canvas.drawBitmap(bmp, src, dst, null)
+                            } finally {
+                                encoderSurface.unlockCanvasAndPost(canvas)
+                            }
+                            // Count only after the frame was posted successfully.
+                            qualityMonitor.recordRenderedFrame()
+                        } else {
+                            qualityMonitor.recordRenderFailure()
+                        }
+                    }
+                    if (needRecycle) bmp.recycle()
+                } catch (e: Exception) {
+                    qualityMonitor.recordRenderFailure()
+                    Timber.e(e, "StreamingManagerImpl: frame render error")
+                } finally {
+                    try {
+                        image.close()
+                    } catch (e: Exception) {
+                        // Ignore close errors
+                    }
                 }
             }
         }, Handler(thread.looper))
@@ -194,14 +308,23 @@ class StreamingManagerImpl @Inject constructor(
         android.os.SystemClock.sleep(100)
 
         val vdm = VirtualDisplayManager(context, projection)
-        // Pass ImageReader surface — keeps AUTO_MIRROR buffer path decoupled from OMX encoder
-        vdm.createDisplay(captureConfig, ir.surface)
         virtualDisplayManager = vdm
-
+        // Mark capture active before creating the display: its first frame can
+        // arrive from the ImageReader callback before createDisplay returns.
         streaming = true
-        Timber.i("StreamingManagerImpl: started")
+        try {
+            // Pass ImageReader surface — keeps AUTO_MIRROR buffer path decoupled from OMX encoder
+            vdm.createDisplay(captureConfig, ir.surface)
+        } catch (e: Exception) {
+            stopInternal()
+            throw e
+        }
+
+        viewerKeyFrameCoordinator.markEncoderReady { requestKeyFrameNow() }
+        Timber.i("StreamingManagerImpl: started input=%s", if (usePlanar) "yuv420_planar" else "surface")
     }
 
+    @Synchronized
     override fun stop() = stopInternal()
 
     override fun isActive(): Boolean = streaming
@@ -210,23 +333,33 @@ class StreamingManagerImpl @Inject constructor(
     // Frame pipeline
     // -------------------------------------------------------------------------
 
-    private fun onFrameReady(nalData: ByteArray, metadata: H264Encoder.FrameMetadata) {
-        if (!streaming) return
+    private fun onFrameReady(nalData: ByteArray, metadata: H264Encoder.FrameMetadata,
+                             session: Any, captureEpoch: UUID?, startedMs: Long) {
+        if (!streaming || captureSession !== session) return
 
-        // FIX C2: L1 backpressure — ограничиваем FPS на стороне агента.
-        // Без этого каждый кадр из MediaCodec безусловно пакуется в WS,
-        // что на слабых эмуляторах съедает 100% CPU.
-        //
-        // FIX STREAM-1: Keyframe'ы (SPS/PPS/IDR) ВСЕГДА проходят, минуя throttle.
-        // handleCodecConfig() отправляет SPS и PPS подряд за наносекунды —
-        // throttle дропал PPS (elapsed < minFrameInterval) → H.264 декодер
-        // на фронтенде не инициализировался → чёрный экран.
-        if (!metadata.isKeyFrame && !frameThrottle.shouldRenderFrame(System.nanoTime())) return
+        // Once encoded, every access unit retains its position in the reference
+        // chain. Callback scheduling/batching is not the source frame cadence.
+        qualityMonitor.recordFrame(
+            metadata.sizeBytes,
+            metadata.isKeyFrame,
+            metadata.isCodecConfig,
+        )
 
-        qualityMonitor.recordFrame(metadata.sizeBytes, metadata.isKeyFrame)
+        if (!metadata.isCodecConfig) {
+            val viewer = encodedViewer
+            // No subscriber code runs under the capture/lifecycle lock. A retired
+            // peer checks its own fence, and a replacement never receives this epoch.
+            if (viewer != null && viewer.capture.epoch == captureEpoch?.toString() && metadata.presentationTimeUs > 0) {
+                runCatching { viewer.consume(EncodedCaptureFrame(viewer.capture, viewer.sequence.incrementAndGet(),
+                    Math.multiplyExact(metadata.presentationTimeUs, 1000L), metadata.isKeyFrame,
+                    nalData, encoder?.cachedSps, encoder?.cachedPps)) }
+            }
+        }
 
-        val packed = FramePackager.pack(nalData, metadata, streamStartMs)
-        val sent = wsClient.sendBinary(packed)
+        // Capture these at encoder creation. A late callback must never stamp
+        // an old access unit with a replacement capture's identity or clock.
+        val packed = FramePackager.pack(nalData, metadata, startedMs, captureEpoch)
+        val sent = sendFrameBinary(packed)
 
         if (!sent) {
             adaptiveBitrate?.onFrameDropDetected()
@@ -243,32 +376,102 @@ class StreamingManagerImpl @Inject constructor(
      * an immediate keyframe so the viewer can start decoding without waiting
      * for the next I-frame interval.
      */
-    fun onViewerConnected() {
-        encoder?.requestKeyFrame()
+    @Synchronized
+    override fun onViewerConnected() {
+        val dispatched = viewerKeyFrameCoordinator.request { requestKeyFrameNow() }
+        if (!dispatched) {
+            Timber.i("StreamingManagerImpl: viewer key-frame request deferred until encoder is ready")
+        }
+    }
 
+    private fun requestKeyFrameNow() {
         val enc = encoder ?: return
+        if (!streaming) return
         val fakeMeta = H264Encoder.FrameMetadata(
             isKeyFrame = true,
             presentationTimeUs = 0L,
             sizeBytes = 0,
+            isCodecConfig = true,
         )
         enc.cachedSps?.let { sps ->
-            wsClient.sendBinary(FramePackager.pack(sps, fakeMeta.copy(sizeBytes = sps.size), streamStartMs))
+            sendFrameBinary(FramePackager.pack(sps, fakeMeta.copy(sizeBytes = sps.size), streamStartMs, encoderCaptureEpoch))
         }
         enc.cachedPps?.let { pps ->
-            wsClient.sendBinary(FramePackager.pack(pps, fakeMeta.copy(sizeBytes = pps.size), streamStartMs))
+            sendFrameBinary(FramePackager.pack(pps, fakeMeta.copy(sizeBytes = pps.size), streamStartMs, encoderCaptureEpoch))
+        }
+        // Planar refresh may produce output immediately. Queue decoder config
+        // before requesting that IDR so a fresh viewer cannot discard it.
+        if (enc.requestKeyFrame()) {
+            Timber.i("StreamingManagerImpl: encoder accepted viewer sync-frame request")
+        } else {
+            Timber.w("StreamingManagerImpl: encoder did not accept viewer key-frame request")
         }
     }
 
-    fun getQualityStats(): StreamQualityMonitor.StreamStats =
+    override fun getQualityStats(): StreamQualityMonitor.StreamStats =
         qualityMonitor.getStats()
+
+    @Synchronized
+    override fun mapStreamPoints(points: List<StreamPoint>): List<StreamPoint>? {
+        if (!streaming) return null
+        val metrics = android.content.res.Resources.getSystem().displayMetrics
+        val rotation = (context.getSystemService(Context.DISPLAY_SERVICE) as? android.hardware.display.DisplayManager)
+            ?.getDisplay(android.view.Display.DEFAULT_DISPLAY)?.rotation ?: return null
+        return inputGeometry?.map(points, metrics.widthPixels, metrics.heightPixels, rotation)
+    }
+
+    @Synchronized
+    override fun getInputSession(): CaptureInputSession? {
+        if (!streaming) return null
+        val session = inputSession ?: return null
+        val metrics = android.content.res.Resources.getSystem().displayMetrics
+        val rotation = (context.getSystemService(Context.DISPLAY_SERVICE) as? android.hardware.display.DisplayManager)
+            ?.getDisplay(android.view.Display.DEFAULT_DISPLAY)?.rotation ?: return null
+        return session.takeIf { it.matchesDisplay(metrics.widthPixels, metrics.heightPixels, rotation) }
+    }
+
+    @Synchronized
+    override fun setInputInvalidationListener(listener: (() -> Unit)?) { inputInvalidationListener = listener }
+
+    @Synchronized
+    override fun attachEncodedViewer(owner: Any, consume: (EncodedCaptureFrame) -> Unit): CaptureInputSession? {
+        if (encodedViewer != null) return null
+        val capture = getInputSession() ?: return null
+        // H.264 level 3.1 permits at most 3600 macroblocks per picture.
+        if ((capture.frameWidth + 15L) / 16 * ((capture.frameHeight + 15L) / 16) > 3600L) return null
+        encodedViewer = EncodedViewer(owner, capture, consume)
+        return capture
+    }
+
+    @Synchronized
+    override fun detachEncodedViewer(owner: Any) {
+        if (encodedViewer?.owner === owner) encodedViewer = null
+    }
+
+    override fun isEncodedViewerCurrent(owner: Any, capture: CaptureInputSession): Boolean {
+        val viewer = encodedViewer
+        return streaming && viewer?.owner === owner && viewer.capture == capture
+    }
+
+    private fun sendFrameBinary(payload: ByteArray): Boolean {
+        val acceptedByLocalQueue = wsClient.sendBinary(payload)
+        qualityMonitor.recordWebSocketQueueResult(payload.size, acceptedByLocalQueue)
+        return acceptedByLocalQueue
+    }
 
     // -------------------------------------------------------------------------
     // Internal helpers
     // -------------------------------------------------------------------------
 
     private fun stopInternal() {
+        viewerKeyFrameCoordinator.markEncoderStopped()
         streaming = false
+        encodedViewer = null
+        inputGeometry = null
+        inputSession = null
+        encoderCaptureEpoch = null
+        // Fence input before releasing surfaces/codec, without awaiting a root worker under this lock.
+        runCatching { inputInvalidationListener?.invoke() }
         // PERF: Индивидуальный try-catch на каждый ресурс.
         // До: один try-catch → если virtualDisplayManager.release() бросает,
         // imageReader, thread и encoder не освобождаются → утечка 5-10MB.
@@ -276,18 +479,33 @@ class StreamingManagerImpl @Inject constructor(
         try { virtualDisplayManager?.release() } catch (e: Exception) {
             Timber.w(e, "StreamingManagerImpl: virtualDisplayManager release error")
         }
-        try { imageReader?.close() } catch (e: Exception) {
-            Timber.w(e, "StreamingManagerImpl: imageReader close error")
+        synchronized(frameLock) {
+            captureSession = null
+            try { imageReader?.setOnImageAvailableListener(null, null) } catch (e: Exception) {
+                Timber.w(e, "StreamingManagerImpl: imageReader listener removal error")
+            }
+            try { imageReader?.close() } catch (e: Exception) {
+                Timber.w(e, "StreamingManagerImpl: imageReader close error")
+            }
+            try { cachedBitmap?.recycle() } catch (_: Exception) {}
+            cachedBitmap = null
+            cachedBitmapWidth = 0
+            cachedBitmapHeight = 0
         }
         try { imageReaderThread?.quitSafely() } catch (e: Exception) {
             Timber.w(e, "StreamingManagerImpl: imageReaderThread quit error")
         }
-        try { encoder?.stop() } catch (e: Exception) {
-            Timber.w(e, "StreamingManagerImpl: encoder stop error")
+        val ownedEncoder = encoder
+        val bridge = gpuBridge
+        if (bridge != null) {
+            // Never destroy the codec Surface concurrently with eglSwapBuffers.
+            bridge.close { ownedEncoder?.stop() }
+        } else {
+            try { ownedEncoder?.stop() } catch (e: Exception) {
+                Timber.w(e, "StreamingManagerImpl: encoder stop error")
+            }
         }
-        // PERF: Освобождаем кешированный Bitmap при остановке стрима
-        try { cachedBitmap?.recycle() } catch (_: Exception) {}
-
+        gpuBridge = null
         virtualDisplayManager = null
         imageReader = null
         imageReaderThread = null

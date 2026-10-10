@@ -1,0 +1,22 @@
+{
+  "observedAt": "2026-10-06T14:10:00Z",
+  "url": "http://127.0.0.1:3015/tasks/043e6a3e-e68e-4967-9cd1-104685145adf",
+  "taskStatusVisible": "Завершено",
+  "nodeReportsVisible": "25/25",
+  "replacementTextExpanded": "replacement-native",
+  "missingArtifactMessageVisible": true,
+  "desktopViewport": [
+    1280,
+    900
+  ],
+  "desktopDocumentOverflow": false,
+  "defaultViewport": [
+    583,
+    884
+  ],
+  "capturedConsoleWarningsOrErrors": 0,
+  "viewportOverrideReset": true,
+  "taskRepeatButtonNotClicked": true,
+  "apiRevision": "eb7a7c26c2e644f24eb3f785b3da1c29a65929be",
+  "uiRevision": "1c26ffc7def8c1a16ac90d2f0607f857b21d28cb"
+}

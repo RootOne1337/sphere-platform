@@ -1,0 +1,3 @@
+  × No solution found when resolving dependencies:
+  ╰─▶ Because you require pydantic-settings==2.2.1 and pydantic-settings==2.2,
+      we can conclude that your requirements are unsatisfiable.

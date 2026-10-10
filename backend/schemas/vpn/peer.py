@@ -4,8 +4,9 @@ from __future__ import annotations
 
 import uuid
 from datetime import datetime
+from typing import Literal
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 # ── Assign / Revoke ──────────────────────────────────────────────────────────
 
@@ -21,6 +22,29 @@ class VPNAssignResponse(BaseModel):
     public_key: str | None = None
     config: str = Field(..., description="AmneziaWG .conf для клиента")
     qr_code: str = Field(..., description="Base64 PNG QR-код")
+
+
+class VPNBulkRevokeRequest(BaseModel):
+    device_ids: list[uuid.UUID] = Field(min_length=1, max_length=500)
+
+    @model_validator(mode="after")
+    def require_unique_device_ids(self) -> "VPNBulkRevokeRequest":
+        if len(set(self.device_ids)) != len(self.device_ids):
+            raise ValueError("device_ids must not contain duplicates")
+        return self
+
+
+class VPNBulkRevokeItemResult(BaseModel):
+    device_id: uuid.UUID
+    success: bool
+    error: str | None = None
+
+
+class VPNBulkRevokeResponse(BaseModel):
+    total: int
+    succeeded: int
+    failed: int
+    results: list[VPNBulkRevokeItemResult]
 
 
 # ── Peer listing ─────────────────────────────────────────────────────────────
@@ -41,20 +65,27 @@ class VPNPeerResponse(BaseModel):
 # ── Pool stats ────────────────────────────────────────────────────────────────
 
 class VPNPoolStats(BaseModel):
-    total_ips: int = Field(..., description="Всего IP в подсети (allocated + free)")
-    allocated: int = Field(..., description="Назначено устройствам")
-    free: int = Field(..., description="Свободно в Redis пуле")
-    active_tunnels: int = Field(..., description="Туннели с handshake < 3 мин")
-    stale_handshakes: int = Field(..., description="Туннели с handshake > 3 мин")
+    total_ips: int = Field(..., description="Общая ёмкость платформенной подсети")
+    allocated: int = Field(..., description="Удерживаемые IP текущей организации, включая незавершённые операции")
+    free: int = Field(..., description="Свободно глобально по подтверждённым PostgreSQL reservations")
+    active_tunnels: int = Field(..., description="Назначенные устройствам peers: is_active и сохранённый handshake возрастом < 3 мин; не текущая проверка роутера/Android")
+    stale_handshakes: int = Field(..., description="Назначенные устройствам peers с сохранённым handshake возрастом >= 3 мин; отсутствие handshake не включается в этот счётчик")
+    observed_at: datetime | None = Field(None, description="UTC время среза SQL-счётчиков; отсутствие в старой версии не означает свежий замер")
+    handshake_max_age_seconds: int = Field(180, description="Максимальный возраст сохранённого handshake для active_tunnels, строго меньше этого значения")
 
 
 # ── Bulk rotate ───────────────────────────────────────────────────────────────
 
 class VPNBulkRotateRequest(BaseModel):
-    device_ids: list[uuid.UUID] = Field(
-        default=[], description="Пустой список = ротация всех устройств org"
-    )
-    reason: str = "scheduled_rotation"
+    model_config = ConfigDict(extra="forbid")
+    device_ids: list[uuid.UUID] = Field(min_length=1, max_length=500)
+    reason: str = Field("scheduled_rotation", min_length=1, max_length=100)
+
+    @model_validator(mode="after")
+    def require_unique_device_ids(self) -> "VPNBulkRotateRequest":
+        if len(set(self.device_ids)) != len(self.device_ids):
+            raise ValueError("device_ids must not contain duplicates")
+        return self
 
 
 class RotateDetail(BaseModel):
@@ -62,6 +93,8 @@ class RotateDetail(BaseModel):
     old_ip: str | None
     new_ip: str | None
     error: str | None
+    outcome: Literal["configured", "rejected", "unknown"]
+    revoke_confirmed: bool = False
 
 
 class VPNBulkRotateResponse(BaseModel):
@@ -69,14 +102,22 @@ class VPNBulkRotateResponse(BaseModel):
     success: int
     failed: int
     details: list[RotateDetail]
+    execution_confirmed: Literal[False] = False
 
 
 # ── Kill Switch ───────────────────────────────────────────────────────────────
 
 class KillSwitchRequest(BaseModel):
-    device_ids: list[str]
-    action: str = Field("enable", description="enable | disable")
-    method: str = Field("vpnservice", description="vpnservice (no-root) | iptables (root required)")
+    model_config = ConfigDict(extra="forbid")
+    device_ids: list[uuid.UUID] = Field(min_length=1, max_length=500)
+    action: Literal["enable", "disable"]
+    method: Literal["vpnservice", "iptables"] = "vpnservice"
+
+    @model_validator(mode="after")
+    def require_unique_device_ids(self) -> "KillSwitchRequest":
+        if len(set(self.device_ids)) != len(self.device_ids):
+            raise ValueError("device_ids must not contain duplicates")
+        return self
 
 
 class KillSwitchResponse(BaseModel):
@@ -84,3 +125,5 @@ class KillSwitchResponse(BaseModel):
     total: int
     success: int
     results: dict[str, bool]
+    outcomes: dict[str, Literal["submitted", "not_sent", "unsupported", "unknown"]]
+    execution_confirmed: Literal[False] = False

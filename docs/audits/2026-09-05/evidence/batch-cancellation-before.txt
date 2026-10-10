@@ -1,0 +1,131 @@
+FF.FFFFF.FFF..F                                                          [100%]
+================================== FAILURES ===================================
+____ test_batch_cancel_waits_for_result_commit_before_queue_effects[True] _____
+tests\production\test_batch_cancellation.py:88: in test_batch_cancel_waits_for_result_commit_before_queue_effects
+    assert stored.status == (TaskStatus.COMPLETED if success else TaskStatus.FAILED)
+E   AssertionError: assert <TaskStatus.C...: 'cancelled'> == <TaskStatus.C...: 'completed'>
+E
+E     - completed
+E     + cancelled
+---------------------------- Captured stdout call -----------------------------
+{"task_id": "78120ade-38a2-4d89-abf8-4fb118e1520c", "success": true, "device_id": "a10cb346-4c33-4a94-8ef3-bb2bac5a3d2c", "event": "task.completed", "level": "info", "logger": "backend.services.task_service", "timestamp": "2026-09-07T08:57:59.762644Z"}
+{"event_id": "3cdc8b4b-350a-47fe-8740-9698bed49608", "event_type": "task.completed", "device_id": "a10cb346-4c33-4a94-8ef3-bb2bac5a3d2c", "account_id": null, "event": "event_reactor.event_saved", "level": "info", "logger": "backend.services.event_reactor", "timestamp": "2026-09-07T08:57:59.782941Z"}
+{"batch_id": "513123f5-3ef7-48de-ba99-9207f25cac07", "status": "completed", "succeeded": 1, "failed": 0, "event": "batch.auto_aggregated", "level": "info", "logger": "backend.services.task_service", "timestamp": "2026-09-07T08:57:59.799751Z"}
+{"batch_id": "513123f5-3ef7-48de-ba99-9207f25cac07", "tasks_cancelled": 1, "event": "batch.cancelled", "level": "info", "logger": "backend.services.batch_service", "timestamp": "2026-09-07T08:57:59.845479Z"}
+------------------------------ Captured log call ------------------------------
+INFO     backend.services.task_service:task_service.py:415 {'task_id': '78120ade-38a2-4d89-abf8-4fb118e1520c', 'success': True, 'device_id': 'a10cb346-4c33-4a94-8ef3-bb2bac5a3d2c', 'event': 'task.completed', 'level': 'info', 'logger': 'backend.services.task_service', 'timestamp': '2026-09-07T08:57:59.762644Z'}
+INFO     backend.services.event_reactor:event_reactor.py:106 {'event_id': '3cdc8b4b-350a-47fe-8740-9698bed49608', 'event_type': 'task.completed', 'device_id': 'a10cb346-4c33-4a94-8ef3-bb2bac5a3d2c', 'account_id': None, 'event': 'event_reactor.event_saved', 'level': 'info', 'logger': 'backend.services.event_reactor', 'timestamp': '2026-09-07T08:57:59.782941Z'}
+INFO     backend.services.task_service:task_service.py:506 {'batch_id': '513123f5-3ef7-48de-ba99-9207f25cac07', 'status': <TaskBatchStatus.COMPLETED: 'completed'>, 'succeeded': 1, 'failed': 0, 'event': 'batch.auto_aggregated', 'level': 'info', 'logger': 'backend.services.task_service', 'timestamp': '2026-09-07T08:57:59.799751Z'}
+INFO     backend.services.batch_service:batch_service.py:312 {'batch_id': '513123f5-3ef7-48de-ba99-9207f25cac07', 'tasks_cancelled': 1, 'event': 'batch.cancelled', 'level': 'info', 'logger': 'backend.services.batch_service', 'timestamp': '2026-09-07T08:57:59.845479Z'}
+____ test_batch_cancel_waits_for_result_commit_before_queue_effects[False] ____
+tests\production\test_batch_cancellation.py:88: in test_batch_cancel_waits_for_result_commit_before_queue_effects
+    assert stored.status == (TaskStatus.COMPLETED if success else TaskStatus.FAILED)
+E   AssertionError: assert <TaskStatus.C...: 'cancelled'> == <TaskStatus.FAILED: 'failed'>
+E
+E     - failed
+E     + cancelled
+---------------------------- Captured stdout call -----------------------------
+{"task_id": "d11a3a78-203b-447e-a00e-4cd7eaa3f2be", "success": false, "device_id": "a3f18bc0-3a06-451f-9863-f660641c075b", "event": "task.completed", "level": "info", "logger": "backend.services.task_service", "timestamp": "2026-09-07T08:58:00.489112Z"}
+{"event_id": "74a2c7f0-76ee-4dbf-9884-15c101fdabfb", "event_type": "task.failed", "device_id": "a3f18bc0-3a06-451f-9863-f660641c075b", "account_id": null, "event": "event_reactor.event_saved", "level": "info", "logger": "backend.services.event_reactor", "timestamp": "2026-09-07T08:58:00.504448Z"}
+{"batch_id": "609397c3-2d53-4e60-90ae-363348967a19", "status": "failed", "succeeded": 0, "failed": 1, "event": "batch.auto_aggregated", "level": "info", "logger": "backend.services.task_service", "timestamp": "2026-09-07T08:58:00.519062Z"}
+{"batch_id": "609397c3-2d53-4e60-90ae-363348967a19", "tasks_cancelled": 1, "event": "batch.cancelled", "level": "info", "logger": "backend.services.batch_service", "timestamp": "2026-09-07T08:58:00.562434Z"}
+------------------------------ Captured log call ------------------------------
+INFO     backend.services.task_service:task_service.py:415 {'task_id': 'd11a3a78-203b-447e-a00e-4cd7eaa3f2be', 'success': False, 'device_id': 'a3f18bc0-3a06-451f-9863-f660641c075b', 'event': 'task.completed', 'level': 'info', 'logger': 'backend.services.task_service', 'timestamp': '2026-09-07T08:58:00.489112Z'}
+INFO     backend.services.event_reactor:event_reactor.py:106 {'event_id': '74a2c7f0-76ee-4dbf-9884-15c101fdabfb', 'event_type': 'task.failed', 'device_id': 'a3f18bc0-3a06-451f-9863-f660641c075b', 'account_id': None, 'event': 'event_reactor.event_saved', 'level': 'info', 'logger': 'backend.services.event_reactor', 'timestamp': '2026-09-07T08:58:00.504448Z'}
+INFO     backend.services.task_service:task_service.py:506 {'batch_id': '609397c3-2d53-4e60-90ae-363348967a19', 'status': <TaskBatchStatus.FAILED: 'failed'>, 'succeeded': 0, 'failed': 1, 'event': 'batch.auto_aggregated', 'level': 'info', 'logger': 'backend.services.task_service', 'timestamp': '2026-09-07T08:58:00.519062Z'}
+INFO     backend.services.batch_service:batch_service.py:312 {'batch_id': '609397c3-2d53-4e60-90ae-363348967a19', 'tasks_cancelled': 1, 'event': 'batch.cancelled', 'level': 'info', 'logger': 'backend.services.batch_service', 'timestamp': '2026-09-07T08:58:00.562434Z'}
+_ test_terminal_batch_cannot_be_cancelled_from_fresh_or_stale_snapshot[completed-True] _
+tests\production\test_batch_cancellation.py:111: in test_terminal_batch_cannot_be_cancelled_from_fresh_or_stale_snapshot
+    assert await cancel(cancellation, world, batch) == 409
+E   assert 204 == 409
+---------------------------- Captured stdout call -----------------------------
+{"batch_id": "eaf2d0ed-0dfe-4d88-ae3e-4bc69b36c954", "tasks_cancelled": 1, "event": "batch.cancelled", "level": "info", "logger": "backend.services.batch_service", "timestamp": "2026-09-07T08:58:01.481972Z"}
+------------------------------ Captured log call ------------------------------
+INFO     backend.services.batch_service:batch_service.py:312 {'batch_id': 'eaf2d0ed-0dfe-4d88-ae3e-4bc69b36c954', 'tasks_cancelled': 1, 'event': 'batch.cancelled', 'level': 'info', 'logger': 'backend.services.batch_service', 'timestamp': '2026-09-07T08:58:01.481972Z'}
+_ test_terminal_batch_cannot_be_cancelled_from_fresh_or_stale_snapshot[failed-False] _
+tests\production\test_batch_cancellation.py:111: in test_terminal_batch_cannot_be_cancelled_from_fresh_or_stale_snapshot
+    assert await cancel(cancellation, world, batch) == 409
+E   assert 204 == 409
+---------------------------- Captured stdout call -----------------------------
+{"batch_id": "ed8a04ff-f944-4824-82ad-303edebc8b60", "tasks_cancelled": 1, "event": "batch.cancelled", "level": "info", "logger": "backend.services.batch_service", "timestamp": "2026-09-07T08:58:01.809797Z"}
+------------------------------ Captured log call ------------------------------
+INFO     backend.services.batch_service:batch_service.py:312 {'batch_id': 'ed8a04ff-f944-4824-82ad-303edebc8b60', 'tasks_cancelled': 1, 'event': 'batch.cancelled', 'level': 'info', 'logger': 'backend.services.batch_service', 'timestamp': '2026-09-07T08:58:01.809797Z'}
+_ test_terminal_batch_cannot_be_cancelled_from_fresh_or_stale_snapshot[failed-True] _
+tests\production\test_batch_cancellation.py:111: in test_terminal_batch_cannot_be_cancelled_from_fresh_or_stale_snapshot
+    assert await cancel(cancellation, world, batch) == 409
+E   assert 204 == 409
+---------------------------- Captured stdout call -----------------------------
+{"batch_id": "805de0e9-5ea7-45a4-8262-c3c1112ff6b8", "tasks_cancelled": 1, "event": "batch.cancelled", "level": "info", "logger": "backend.services.batch_service", "timestamp": "2026-09-07T08:58:02.182403Z"}
+------------------------------ Captured log call ------------------------------
+INFO     backend.services.batch_service:batch_service.py:312 {'batch_id': '805de0e9-5ea7-45a4-8262-c3c1112ff6b8', 'tasks_cancelled': 1, 'event': 'batch.cancelled', 'level': 'info', 'logger': 'backend.services.batch_service', 'timestamp': '2026-09-07T08:58:02.182403Z'}
+_ test_terminal_batch_cannot_be_cancelled_from_fresh_or_stale_snapshot[partial-False] _
+tests\production\test_batch_cancellation.py:111: in test_terminal_batch_cannot_be_cancelled_from_fresh_or_stale_snapshot
+    assert await cancel(cancellation, world, batch) == 409
+E   assert 204 == 409
+---------------------------- Captured stdout call -----------------------------
+{"batch_id": "35039522-4f18-41f5-b7f9-54c2b0326236", "tasks_cancelled": 1, "event": "batch.cancelled", "level": "info", "logger": "backend.services.batch_service", "timestamp": "2026-09-07T08:58:02.526503Z"}
+------------------------------ Captured log call ------------------------------
+INFO     backend.services.batch_service:batch_service.py:312 {'batch_id': '35039522-4f18-41f5-b7f9-54c2b0326236', 'tasks_cancelled': 1, 'event': 'batch.cancelled', 'level': 'info', 'logger': 'backend.services.batch_service', 'timestamp': '2026-09-07T08:58:02.526503Z'}
+_ test_terminal_batch_cannot_be_cancelled_from_fresh_or_stale_snapshot[partial-True] _
+tests\production\test_batch_cancellation.py:111: in test_terminal_batch_cannot_be_cancelled_from_fresh_or_stale_snapshot
+    assert await cancel(cancellation, world, batch) == 409
+E   assert 204 == 409
+---------------------------- Captured stdout call -----------------------------
+{"batch_id": "4a7c4dc1-7988-446a-a7af-174f298f0382", "tasks_cancelled": 1, "event": "batch.cancelled", "level": "info", "logger": "backend.services.batch_service", "timestamp": "2026-09-07T08:58:02.855737Z"}
+------------------------------ Captured log call ------------------------------
+INFO     backend.services.batch_service:batch_service.py:312 {'batch_id': '4a7c4dc1-7988-446a-a7af-174f298f0382', 'tasks_cancelled': 1, 'event': 'batch.cancelled', 'level': 'info', 'logger': 'backend.services.batch_service', 'timestamp': '2026-09-07T08:58:02.855737Z'}
+_ test_terminal_batch_cannot_be_cancelled_from_fresh_or_stale_snapshot[cancelled-True] _
+tests\production\test_batch_cancellation.py:111: in test_terminal_batch_cannot_be_cancelled_from_fresh_or_stale_snapshot
+    assert await cancel(cancellation, world, batch) == 409
+E   assert 204 == 409
+---------------------------- Captured stdout call -----------------------------
+{"batch_id": "49e2be7b-eab6-41e4-a30b-b33425689397", "tasks_cancelled": 1, "event": "batch.cancelled", "level": "info", "logger": "backend.services.batch_service", "timestamp": "2026-09-07T08:58:03.557647Z"}
+------------------------------ Captured log call ------------------------------
+INFO     backend.services.batch_service:batch_service.py:312 {'batch_id': '49e2be7b-eab6-41e4-a30b-b33425689397', 'tasks_cancelled': 1, 'event': 'batch.cancelled', 'level': 'info', 'logger': 'backend.services.batch_service', 'timestamp': '2026-09-07T08:58:03.557647Z'}
+_____ test_batch_cancel_records_terminal_time_for_eligible_tasks[queued] ______
+tests\production\test_batch_cancellation.py:126: in test_batch_cancel_records_terminal_time_for_eligible_tasks
+    assert stored.finished_at is not None
+E   assert None is not None
+E    +  where None = <backend.models.task.Task object at 0x000002CDADA5C4A0>.finished_at
+---------------------------- Captured stdout call -----------------------------
+{"batch_id": "bb327624-6dfe-4f37-bb28-74792b2e57cc", "tasks_cancelled": 1, "event": "batch.cancelled", "level": "info", "logger": "backend.services.batch_service", "timestamp": "2026-09-07T08:58:03.797248Z"}
+------------------------------ Captured log call ------------------------------
+INFO     backend.services.batch_service:batch_service.py:312 {'batch_id': 'bb327624-6dfe-4f37-bb28-74792b2e57cc', 'tasks_cancelled': 1, 'event': 'batch.cancelled', 'level': 'info', 'logger': 'backend.services.batch_service', 'timestamp': '2026-09-07T08:58:03.797248Z'}
+____ test_batch_cancel_records_terminal_time_for_eligible_tasks[assigned] _____
+tests\production\test_batch_cancellation.py:126: in test_batch_cancel_records_terminal_time_for_eligible_tasks
+    assert stored.finished_at is not None
+E   assert None is not None
+E    +  where None = <backend.models.task.Task object at 0x000002CDADAB4650>.finished_at
+---------------------------- Captured stdout call -----------------------------
+{"batch_id": "b66664db-c685-4d86-a916-108398243320", "tasks_cancelled": 1, "event": "batch.cancelled", "level": "info", "logger": "backend.services.batch_service", "timestamp": "2026-09-07T08:58:04.082680Z"}
+------------------------------ Captured log call ------------------------------
+INFO     backend.services.batch_service:batch_service.py:312 {'batch_id': 'b66664db-c685-4d86-a916-108398243320', 'tasks_cancelled': 1, 'event': 'batch.cancelled', 'level': 'info', 'logger': 'backend.services.batch_service', 'timestamp': '2026-09-07T08:58:04.082680Z'}
+_______ test_concurrent_batch_cancellations_do_not_repeat_queue_effect ________
+tests\production\test_batch_cancellation.py:167: in test_concurrent_batch_cancellations_do_not_repeat_queue_effect
+    assert await asyncio.wait_for(pending, 3) == 409
+E   assert 204 == 409
+---------------------------- Captured stdout call -----------------------------
+{"batch_id": "2590209b-fd1a-4df3-bbe0-bd6a98789cf0", "tasks_cancelled": 1, "event": "batch.cancelled", "level": "info", "logger": "backend.services.batch_service", "timestamp": "2026-09-07T08:58:04.910033Z"}
+{"batch_id": "2590209b-fd1a-4df3-bbe0-bd6a98789cf0", "tasks_cancelled": 1, "event": "batch.cancelled", "level": "info", "logger": "backend.services.batch_service", "timestamp": "2026-09-07T08:58:04.945584Z"}
+------------------------------ Captured log call ------------------------------
+INFO     backend.services.batch_service:batch_service.py:312 {'batch_id': '2590209b-fd1a-4df3-bbe0-bd6a98789cf0', 'tasks_cancelled': 1, 'event': 'batch.cancelled', 'level': 'info', 'logger': 'backend.services.batch_service', 'timestamp': '2026-09-07T08:58:04.910033Z'}
+INFO     backend.services.batch_service:batch_service.py:312 {'batch_id': '2590209b-fd1a-4df3-bbe0-bd6a98789cf0', 'tasks_cancelled': 1, 'event': 'batch.cancelled', 'level': 'info', 'logger': 'backend.services.batch_service', 'timestamp': '2026-09-07T08:58:04.945584Z'}
+============================== warnings summary ===============================
+backend\api\v1\game_accounts\router.py:95
+  C:\Users\dimas\Documents\ChatGPT\sphere-platform\backend\api\v1\game_accounts\router.py:95: FastAPIDeprecationWarning: `regex` has been deprecated, please use `pattern` instead
+    sort_dir: str = Query("desc", regex="^(asc|desc)$", description="Направление сортировки"),
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ===========================
+FAILED tests/production/test_batch_cancellation.py::test_batch_cancel_waits_for_result_commit_before_queue_effects[True]
+FAILED tests/production/test_batch_cancellation.py::test_batch_cancel_waits_for_result_commit_before_queue_effects[False]
+FAILED tests/production/test_batch_cancellation.py::test_terminal_batch_cannot_be_cancelled_from_fresh_or_stale_snapshot[completed-True]
+FAILED tests/production/test_batch_cancellation.py::test_terminal_batch_cannot_be_cancelled_from_fresh_or_stale_snapshot[failed-False]
+FAILED tests/production/test_batch_cancellation.py::test_terminal_batch_cannot_be_cancelled_from_fresh_or_stale_snapshot[failed-True]
+FAILED tests/production/test_batch_cancellation.py::test_terminal_batch_cannot_be_cancelled_from_fresh_or_stale_snapshot[partial-False]
+FAILED tests/production/test_batch_cancellation.py::test_terminal_batch_cannot_be_cancelled_from_fresh_or_stale_snapshot[partial-True]
+FAILED tests/production/test_batch_cancellation.py::test_terminal_batch_cannot_be_cancelled_from_fresh_or_stale_snapshot[cancelled-True]
+FAILED tests/production/test_batch_cancellation.py::test_batch_cancel_records_terminal_time_for_eligible_tasks[queued]
+FAILED tests/production/test_batch_cancellation.py::test_batch_cancel_records_terminal_time_for_eligible_tasks[assigned]
+FAILED tests/production/test_batch_cancellation.py::test_concurrent_batch_cancellations_do_not_repeat_queue_effect
+11 failed, 4 passed, 1 warning in 5.68s

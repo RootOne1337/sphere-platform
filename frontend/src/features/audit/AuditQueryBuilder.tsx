@@ -1,74 +1,49 @@
 'use client';
 
 import { useState } from 'react';
-import { Search, History, X } from 'lucide-react';
+import { History, Search, X } from 'lucide-react';
 
 interface AuditQueryBuilderProps {
-    value: string;
-    onChange: (val: string) => void;
+  value: string;
+  onChange: (value: string) => void;
 }
 
-const SUGGESTIONS = [
-    'status:FAILED',
-    'status:SUCCESS',
-    'action:LOGIN_ATTEMPT',
-    'action:VPN_TUNNEL_DROP',
-    'user:admin@sphere.local'
-];
+const SUGGESTIONS = ['status:FAILED', 'status:SUCCESS', 'action:LOGIN', 'user:system'];
 
 export function AuditQueryBuilder({ value, onChange }: AuditQueryBuilderProps) {
-    const [isFocused, setIsFocused] = useState(false);
+  const [isFocused, setIsFocused] = useState(false);
 
-    const handleSuggestionClick = (suggestion: string) => {
-        // Добавляем пробел если уже что-то введено
-        const newVal = value ? `${value} ${suggestion}` : suggestion;
-        onChange(newVal);
-        setIsFocused(false);
-    };
+  const appendSuggestion = (suggestion: string) => {
+    onChange(value ? `${value.trim()} ${suggestion}` : suggestion);
+    setIsFocused(false);
+  };
 
-    const clearQuery = () => {
-        onChange('');
-    };
-
-    return (
-        <div className="relative w-[450px]">
-            <div className={`flex items-center bg-card border rounded-sm transition-colors ${isFocused ? 'border-primary ring-1 ring-primary/30' : 'border-border'}`}>
-                <div className="pl-3 pr-2 py-2 flex items-center justify-center text-muted-foreground shrink-0 border-r border-border">
-                    <Search className="w-4 h-4" />
-                </div>
-                <input
-                    type="text"
-                    className="w-full bg-transparent border-none outline-none text-xs font-mono px-3 py-2 text-foreground placeholder:text-muted-foreground/60"
-                    placeholder="e.g. status:FAILED action:VPN_DROP user:admin"
-                    value={value}
-                    onChange={(e) => onChange(e.target.value)}
-                    onFocus={() => setIsFocused(true)}
-                    onBlur={() => setTimeout(() => setIsFocused(false), 200)} // Задержка чтобы успеть кликнуть на саджест
-                />
-                {value && (
-                    <button onClick={clearQuery} className="px-3 py-2 text-muted-foreground hover:text-foreground">
-                        <X className="w-3.5 h-3.5" />
-                    </button>
-                )}
-            </div>
-
-            {/* Suggestions Dropdown */}
-            {isFocused && (
-                <div className="absolute top-full left-0 w-full mt-1 bg-muted border border-border rounded-sm shadow-2xl z-50 py-1">
-                    <div className="px-3 py-1.5 text-[10px] uppercase font-bold tracking-widest text-muted-foreground/60 flex items-center gap-1.5">
-                        <History className="w-3 h-3" /> Filters & Suggestions
-                    </div>
-                    {SUGGESTIONS.map(s => (
-                        <div
-                            key={s}
-                            className="px-4 py-2 text-xs font-mono text-muted-foreground hover:bg-primary/10 hover:text-primary cursor-pointer transition-colors"
-                            onClick={() => handleSuggestionClick(s)}
-                        >
-                            {s}
-                        </div>
-                    ))}
-                </div>
-            )}
+  return (
+    <div className="relative w-full max-w-2xl" onBlur={event => { if (!event.currentTarget.contains(event.relatedTarget)) setIsFocused(false); }}>
+      <div className={`flex min-h-10 items-center rounded-lg border bg-background transition-colors ${isFocused ? 'border-ring ring-2 ring-ring/20' : 'border-input'}`}>
+        <Search className="ml-3 h-4 w-4 shrink-0 text-muted-foreground" aria-hidden="true" />
+        <input
+          type="search"
+          aria-label="Поиск по журналу аудита"
+          className="h-10 min-w-0 flex-1 border-0 bg-transparent px-3 text-sm outline-none placeholder:text-muted-foreground/75 focus-visible:ring-0"
+          placeholder="Поиск · например status:FAILED action:LOGIN"
+          value={value}
+          maxLength={500}
+          onChange={(event) => onChange(event.target.value)}
+          onFocus={() => setIsFocused(true)}
+          onKeyDown={(event) => { if (event.key === 'Escape') setIsFocused(false); }}
+        />
+        {value && <button type="button" aria-label="Очистить запрос" onClick={() => onChange('')} className="mr-2 rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"><X className="h-4 w-4" /></button>}
+      </div>
+      {isFocused && (
+        <div className="absolute left-0 right-0 top-full z-50 mt-2 rounded-xl border border-border bg-popover p-2 shadow-xl">
+          <p className="flex items-center gap-2 px-2 py-1.5 text-xs font-medium text-muted-foreground"><History className="h-3.5 w-3.5" />Быстрые фильтры</p>
+          {SUGGESTIONS.map((suggestion) => (
+            <button key={suggestion} type="button" onMouseDown={(event) => event.preventDefault()} onClick={() => appendSuggestion(suggestion)} className="block w-full rounded-lg px-3 py-2 text-left font-mono text-xs text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">{suggestion}</button>
+          ))}
+          <p className="px-3 pb-1 pt-2 text-[11px] text-muted-foreground">Поля: <code>status</code>, <code>action</code>, <code>user</code></p>
         </div>
-    );
+      )}
+    </div>
+  );
 }

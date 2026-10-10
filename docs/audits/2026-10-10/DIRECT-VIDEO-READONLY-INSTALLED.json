@@ -1,0 +1,159 @@
+{
+  "schemaVersion": 1,
+  "observedAtUtc": "2026-10-10T15:53:59.679166+00:00",
+  "runtimeInstalled": true,
+  "scope": "One PH030 signed APK OTA and fresh two-origin readonly-video admission. No real RTP frame or Android direct input acceptance.",
+  "runtime": {
+    "sourceRevision": "ee0d8e6f7630dcaa3518a3fcf9bfcb35d67b7498",
+    "apiSourceRevision": "ee0d8e6f7630dcaa3518a3fcf9bfcb35d67b7498",
+    "nativeSourceRevision": "ee0d8e6f7630dcaa3518a3fcf9bfcb35d67b7498"
+  },
+  "apk": {
+    "device": "PH030",
+    "deviceId": "753fd530-2f19-4e5e-98ba-769863678141",
+    "version": "1.2.51-dev",
+    "versionCode": 10251,
+    "sourceRevision": "ee0d8e6f7630dcaa3518a3fcf9bfcb35d67b7498",
+    "sha256": "4f3687e753fafda058f0f8d123904cceb56f6f6932bda08e4a1feb4f6dc1984c",
+    "installedPackageSha256": "4f3687e753fafda058f0f8d123904cceb56f6f6932bda08e4a1feb4f6dc1984c",
+    "bytes": 57671668,
+    "package": "com.sphereplatform.agent.pilot.debug",
+    "certificateSha256": "3ab40797d26e4f52f9e440afc6fe69f197caef71a5a27c63c86735bb1801871f",
+    "hashConfirmedAtUtc": "2026-10-10T12:47:03.449257+00:00"
+  },
+  "ota": {
+    "state": "installed_hash_and_command_confirmed",
+    "releaseId": "df74fb14-c04f-45a6-91ce-79c32d8e906d",
+    "commandId": "803a1fe9-2b7e-420f-9ed7-408fbbd85302",
+    "terminal": {
+      "command_id": "803a1fe9-2b7e-420f-9ed7-408fbbd85302",
+      "sha256": "4f3687e753fafda058f0f8d123904cceb56f6f6932bda08e4a1feb4f6dc1984c",
+      "version_name": "1.2.51-dev",
+      "version_code": 10251,
+      "status": "completed",
+      "failure_code": null,
+      "installed_version_code": 10251,
+      "recovered_after_process_restart": true,
+      "recorded_at": "2026-10-10T12:46:57.408188+00:00"
+    },
+    "ordinaryChannelUnchanged": true,
+    "grantClearedOnCompletion": true,
+    "newCommandIds": 1,
+    "adbInstalls": 0,
+    "dataClears": 0
+  },
+  "http": {
+    "observedAtUtc": "2026-10-10T12:47:24.080412+00:00",
+    "observations": [
+      {
+        "origin": "http://127.0.0.1:3015",
+        "observedAtUtc": "2026-10-10T12:47:22.019496+00:00",
+        "apiSourceRevision": "ee0d8e6f7630dcaa3518a3fcf9bfcb35d67b7498",
+        "readiness": {
+          "postgres": "ok",
+          "redis": "ok"
+        },
+        "anonymousStatus": 401,
+        "cacheControl": "private, no-store",
+        "admission": {
+          "schema_version": 1,
+          "device_id": "753fd530-2f19-4e5e-98ba-769863678141",
+          "enabled": true,
+          "profiles": [
+            "host",
+            "public-stun"
+          ],
+          "scope": "diagnostic_echo_only",
+          "max_duration_ms": 30000,
+          "samples": 20,
+          "readonly_video_enabled": true
+        },
+        "nonAllowlistedDevice": {
+          "id": "414ce0e9-4b93-4f96-b9ca-ee675f53835e",
+          "name": "auto-ph-011",
+          "enabled": false,
+          "readonly_video_enabled": false
+        },
+        "device": {
+          "id": "753fd530-2f19-4e5e-98ba-769863678141",
+          "name": "auto-ph-030",
+          "status": "online",
+          "agent_version": "1.2.51-dev",
+          "agent_version_code": 10251,
+          "last_heartbeat": "2026-10-10T12:46:57.793114Z"
+        }
+      },
+      {
+        "origin": "https://sphere-agent-canary-20260927.ru.tuna.am",
+        "observedAtUtc": "2026-10-10T12:47:24.080270+00:00",
+        "apiSourceRevision": "ee0d8e6f7630dcaa3518a3fcf9bfcb35d67b7498",
+        "readiness": {
+          "postgres": "ok",
+          "redis": "ok"
+        },
+        "anonymousStatus": 401,
+        "cacheControl": "private, no-store",
+        "admission": {
+          "schema_version": 1,
+          "device_id": "753fd530-2f19-4e5e-98ba-769863678141",
+          "enabled": true,
+          "profiles": [
+            "host",
+            "public-stun"
+          ],
+          "scope": "diagnostic_echo_only",
+          "max_duration_ms": 30000,
+          "samples": 20,
+          "readonly_video_enabled": true
+        },
+        "nonAllowlistedDevice": {
+          "id": "414ce0e9-4b93-4f96-b9ca-ee675f53835e",
+          "name": "auto-ph-011",
+          "enabled": false,
+          "readonly_video_enabled": false
+        },
+        "device": {
+          "id": "753fd530-2f19-4e5e-98ba-769863678141",
+          "name": "auto-ph-030",
+          "status": "online",
+          "agent_version": "1.2.51-dev",
+          "agent_version_code": 10251,
+          "last_heartbeat": "2026-10-10T12:46:57.793114Z"
+        }
+      }
+    ],
+    "runtimeChanged": false,
+    "peerAllocated": false,
+    "androidCommandSent": false
+  },
+  "diagnosticPilot": {
+    "enabled": true,
+    "deviceIds": [
+      "753fd530-2f19-4e5e-98ba-769863678141"
+    ],
+    "scope": "readonly_video_v1",
+    "readOnlyVideoInstalled": true,
+    "directInputInstalled": false,
+    "mediaControlInstalled": false,
+    "videoAccepted": false,
+    "readOnlyVideoAdmission": true,
+    "maxDurationMs": 30000,
+    "samples": 20,
+    "turnConfigured": false
+  },
+  "browser": {
+    "finiteAccepted": false,
+    "directVideoAccepted": false,
+    "directInputAccepted": false,
+    "scope": "This receipt verifies OTA and HTTP admission, not browser RTP rendering."
+  },
+  "limitations": [
+    "Ordinary video and Android input still use server WebSocket.",
+    "Native JNI/RTP rendered frames remain unverified.",
+    "Echo RTT does not measure image latency or prove a localhost route.",
+    "Stable1.3.0, primary direct media/input, TURN/WAN and resource soak remain open."
+  ],
+  "precedingEvidence": [
+    "docs/audits/2026-10-10/DIRECT-VIDEO-API-INSTALLED.json"
+  ]
+}

@@ -11,6 +11,11 @@ from fastapi import WebSocket
 
 logger = structlog.get_logger()
 
+# 4001 is reserved by the Android protocol for an invalid enrollment/access
+# token. Replacing a healthy socket is not an authentication failure: Android
+# deliberately clears cached credentials when it receives 4001.
+SESSION_REPLACED_CLOSE_CODE = 4009
+
 
 class ConnectionInfo:
     __slots__ = ("ws", "device_id", "agent_type", "org_id", "connected_at", "session_id")
@@ -68,7 +73,10 @@ class ConnectionManager:
                 async def _evict_old(old_ws: WebSocket) -> None:
                     try:
                         await asyncio.wait_for(
-                            old_ws.close(code=4001, reason="replaced_by_new_connection"),
+                            old_ws.close(
+                                code=SESSION_REPLACED_CLOSE_CODE,
+                                reason="replaced_by_new_connection",
+                            ),
                             timeout=1.0,
                         )
                     except Exception:
@@ -114,6 +122,17 @@ class ConnectionManager:
             self._org_index.get(info.org_id, set()).discard(device_id)
         logger.info("Agent disconnected", device_id=device_id, session=info.session_id)
         return info
+
+    def connection_snapshot(self, device_id: str) -> ConnectionInfo | None:
+        """Capture identity/origin; callers must fence sends by its session ID."""
+        return self._connections.get(device_id)
+
+    async def send_to_session(self, device_id: str, session_id: str, message: dict) -> bool:
+        """Do not deliver a prepared command to a socket that replaced its owner."""
+        current = self._connections.get(device_id)
+        if current is None or current.session_id != session_id:
+            return False
+        return await self.send_to_device(device_id, message)
 
     async def send_to_device(self, device_id: str, message: dict) -> bool:
         """Отправить JSON сообщение конкретному агенту. Returns True если отправлено."""

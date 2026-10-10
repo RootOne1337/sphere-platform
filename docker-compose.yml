@@ -1,8 +1,13 @@
 # docker-compose.yml — только инфраструктура (PG, Redis, Nginx, n8n)
 # NOTE: поле version устарело в Docker Compose v2+ и убрано намеренно
 
+x-bounded-logs: &bounded-logs
+  driver: json-file
+  options: {max-size: "20m", max-file: "5"}
+
 services:
   postgres:
+    logging: *bounded-logs
     image: postgres:15-alpine
     command: >
       postgres
@@ -37,6 +42,7 @@ services:
       - backend-net
 
   redis:
+    logging: *bounded-logs
     image: redis:7.2-alpine
     environment:
       # Пароль как env var контейнера — нужен для healthcheck ($$REDIS_PASSWORD внутри shell)
@@ -66,11 +72,14 @@ services:
     deploy:
       resources:
         limits:
-          memory: 128M
+          # Keep 512 MiB dataset capacity plus COW, AOF and filesystem-cache headroom.
+          # A ceiling, not a reservation; see docs/operations/REDIS-MEMORY.md.
+          memory: 3072M
     networks:
       - backend-net
 
   nginx:
+    logging: *bounded-logs
     image: nginx:alpine
     ports:
       - "80:80"
@@ -99,6 +108,7 @@ services:
   # Certbot: автообновление Let's Encrypt сертификата каждые 12 часов.
   # Первичное получение — `make ssl-init` (один раз на сервере).
   certbot:
+    logging: *bounded-logs
     image: certbot/certbot:latest
     volumes:
       - certbot-data:/etc/letsencrypt
@@ -119,6 +129,7 @@ services:
     restart: unless-stopped
 
   n8n:
+    logging: *bounded-logs
     image: n8nio/n8n:1.32.0
     restart: unless-stopped
     ports:
@@ -148,6 +159,7 @@ services:
       - frontend-net
 
   minio:
+    logging: *bounded-logs
     image: minio/minio:latest
     command: server /data --console-address ":9001"
     ports:
@@ -174,6 +186,8 @@ services:
 volumes:
   postgres_data:
   redis_data:
+  ota_data: # OTA catalog and immutable APK artifacts survive backend container recreation
+  device_logs: # Uploaded Android journals survive backend container recreation
   minio_data:
   n8n_data:
   # Let's Encrypt сертификаты (certbot)

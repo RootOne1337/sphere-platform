@@ -1,0 +1,157 @@
+{
+  "schemaVersion": 1,
+  "status": "PARTIAL_EP_010_STAGE_B_FOUNDATION_INSTALLED",
+  "source": "d656b579a77a2997ea7012c9aad7fb3425e07edd",
+  "uiSourcePreserved": "cb5b3f91640c86622060e6e3adea76c6d73a6093",
+  "observedAt": "2026-10-05T16:31:38.957596+00:00",
+  "criterionClosed": false,
+  "ledger": {
+    "accepted": 9,
+    "open": 41,
+    "immutableBaselineRetained": true
+  },
+  "previousEvidence": "ENTERPRISE-LIVE-COVERAGE-EVIDENCE.json",
+  "previousEvidenceSha256": "9668cb043932f439d853ae298328f34110a251e1eb45873d07e859c8fb806688",
+  "image": {
+    "source": "d656b579a77a2997ea7012c9aad7fb3425e07edd",
+    "imageId": "sha256:deea9072fb3e86efd16e2b4a65a8944492ba0821fd3bfa5db31e5443c2dd6455",
+    "image": "sphere-pilot-20260911-backend:d656b579a77a2997ea7012c9aad7fb3425e07edd",
+    "exit": 0,
+    "gitArchive": true
+  },
+  "sourceHashes": [
+    {
+      "file": "backend/schemas/device_status.py",
+      "sha256": "e5ad0a02d2e4a2520d0613c42d16cfa0ffec375ab0443602e4d36d8e8e62c8f1"
+    },
+    {
+      "file": "backend/services/device_status_cache.py",
+      "sha256": "75bfdf93b2730951098251655df0412e4ba26a70522005c743694bca676bee67"
+    },
+    {
+      "file": "backend/websocket/heartbeat.py",
+      "sha256": "59add2cd4a3813deed0c32ca34b1f32c502ecca0f523ec9cad2220e1477edfc4"
+    },
+    {
+      "file": "backend/api/ws/android/router.py",
+      "sha256": "4298b4ba9f748eeb8dda1d7a964e81c88e16e0cc07441a23f4f3d583eff3b142"
+    },
+    {
+      "file": "backend/schemas/devices.py",
+      "sha256": "d2e5f294d7ead53ca8756efa8c35d63303fc124d7947aa6ba83d94038dc0c6c7"
+    },
+    {
+      "file": "backend/api/v1/devices/router.py",
+      "sha256": "38597b079ebf70b722c664606fd9034b4cc06876452dc413dbb85a128d18c71a"
+    },
+    {
+      "file": "tests/device_status/test_vpn_observation_freshness.py",
+      "sha256": "3c640e2d1f2575075962b7c532da3122b294e4ba9e734ae2766ec2fe4286058f"
+    },
+    {
+      "file": "tests/devices/test_vpn_observation_api.py",
+      "sha256": "a9df026abdd4059efd49a1a7cd20c937b0272507702fedcadd6e8821bbebad5f"
+    },
+    {
+      "file": "tests/production/test_presence_recovery.py",
+      "sha256": "0989ca1d22f8b4d6aa63840281ec7b6c9efc466e8b896325316c2e2946a15f4c"
+    },
+    {
+      "file": "tests/test_ws/test_heartbeat.py",
+      "sha256": "ff688a343f881412115aa5bdeb5080e53d425f8cb000a89c27ca3cef3739a6d0"
+    },
+    {
+      "file": "tests/test_ws/test_android_ws_handlers.py",
+      "sha256": "4bcf9a88fd5552a14dae0e4141b6676f28006c3f0568980e1c64fef0542aace4"
+    },
+    {
+      "file": "docs/openapi.json",
+      "sha256": "3f716b7d81b65a18b396f6a7a4bfc20ca5a3b20e52bb107d726263d08dd9f501"
+    }
+  ],
+  "receipts": [
+    {
+      "file": "evidence/android-vpn-observation/api-build.json",
+      "sha256": "a5ff704c569de33a4fba332e2e7e32e36dbad21ebe5f1fdeda51de29eca7c440"
+    },
+    {
+      "file": "evidence/android-vpn-observation/agent-status-image-tests.json",
+      "sha256": "52cab8f022ba1bee26f17d3658816a936ba987825ffafae38a4acf40f2edcbc4"
+    },
+    {
+      "file": "evidence/android-vpn-observation/agent-status-image-tests.xml",
+      "sha256": "14bdd7c2781db8ada5504f780e3e57697f615a67621d7785c6490bf7f953df20"
+    },
+    {
+      "file": "evidence/android-vpn-observation/resource-image-tests.json",
+      "sha256": "c7a16d84c9e8ad646e4a4a9ef353b380027dce2d4709deae661998092017f128"
+    },
+    {
+      "file": "evidence/android-vpn-observation/resource-image-tests.xml",
+      "sha256": "85a86bc224b7d958cf98596fc870d9f9f2d665f937a05d12e00f3eca1e317082"
+    },
+    {
+      "file": "evidence/android-vpn-observation/mypy.json",
+      "sha256": "1a70164a1c25291581eba8231f09d1e54bdfb941c00ded6826d6777c44b0a529"
+    },
+    {
+      "file": "evidence/android-vpn-observation/ruff.json",
+      "sha256": "04fc98649b1a8b0aacd30dfe3198681c5efcf817c9f066a45be991ae8601db7a"
+    },
+    {
+      "file": "evidence/android-vpn-observation/api-schema-check.json",
+      "sha256": "1a70164a1c25291581eba8231f09d1e54bdfb941c00ded6826d6777c44b0a529"
+    },
+    {
+      "file": "evidence/android-vpn-observation/redis-probe.json",
+      "sha256": "1d842a835b791abd3ed1ebafd09ab99e881b3ef872e32a1897e2e96c0352ddb3"
+    },
+    {
+      "file": "evidence/android-vpn-observation/api-installed.json",
+      "sha256": "44575b3df76ae757becb3d8c014f7fbb1c8835f0bfd0bba682d2871000a45898"
+    },
+    {
+      "file": "evidence/android-vpn-observation/live-observations.json",
+      "sha256": "663652020100d3424f8437e5b1b6df98ee9001ec8a6a60a5c07319bb34197c22"
+    },
+    {
+      "file": "evidence/android-vpn-observation/source-ci.json",
+      "sha256": "37d3e2bb25fc7c700856f50b9c02153e7e8c132d97407a196e2492eea9151af4"
+    },
+    {
+      "file": "evidence/android-vpn-observation/document-links.json",
+      "sha256": "007f23dc06cd0fa641e380b28aa5298a3e7e5f10dfd20092af2aca4665f7d6e6"
+    },
+    {
+      "file": "evidence/android-vpn-observation/browser-observation.json",
+      "sha256": "130e439c93634dcd0068dddfef744071df41ef48f90af0427da2118dd73045a3"
+    }
+  ],
+  "screenshots": [
+    {
+      "file": "assets/android-vpn-observation/monitoring-live.jpg",
+      "sha256": "cb39058a473aa0f30821b20806ea6938a4b6d9bb6d4bc2a77240aadd7bd22adb",
+      "width": 724,
+      "height": 884
+    },
+    {
+      "file": "assets/android-vpn-observation/devices-live.jpg",
+      "sha256": "49f8da80fabcdb15db20d07d3859f29987cb2d96c0482601fbadad82cb9bf64a",
+      "width": 724,
+      "height": 884
+    },
+    {
+      "file": "assets/android-vpn-observation/monitoring-viewport.jpg",
+      "sha256": "38b0218762b70c294b6d31499396220a5df42bf9800083d1dfe31bdadad2d481",
+      "width": 724,
+      "height": 884
+    }
+  ],
+  "limitations": [
+    "No infrastructure tunnel or tenant coverage dashboard in this slice",
+    "Fresh Android service flags do not prove traffic/public IP",
+    "No 1000-device or stream/script load acceptance",
+    "Unknown Windows disk/RAM writer remains open",
+    "Documentation-only follow-up CI is separate from source CI"
+  ]
+}

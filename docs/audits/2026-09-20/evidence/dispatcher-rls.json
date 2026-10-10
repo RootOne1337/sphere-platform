@@ -1,0 +1,21 @@
+{
+  "finding": "F32-25 continuation: task dispatcher runtime visibility",
+  "status": "reproduced, open; pipeline fixes do not repair task dispatcher",
+  "priority": "P0 / High for task delivery under runtime DB role",
+  "source_base": "294bd15",
+  "scope_note": "Task service/startup source unchanged in concurrent AUD-134 working tree.",
+  "observed_at": "2026-09-21T04:18:03+05:00",
+  "probe": "dispatcher_runtime_probe.py",
+  "result": {"tests": 1, "failed": 1, "errors": 0, "duration_seconds": 0.90},
+  "unscoped_poll": {"task_status": "queued", "transport_double_calls": 0},
+  "same_role_with_tenant_binding": {"task_status": "assigned", "transport_double_calls": 1},
+  "root_cause": "Task startup creates an unscoped SQL Session. RLS excludes the task/device candidates; queue remains invisible. The same role with persistent per-session tenant binding can complete assignment despite internal rollback/commit boundaries.",
+  "affected_files": ["backend/api/v1/tasks/router.py", "backend/services/task_service.py"],
+  "required_fix": "Bounded trusted discovery followed by tenant-bound dispatch/cancellation sessions; validate startup, internal rollback/commit, repeated assignment and two-tenant isolation.",
+  "limitations": [
+    "Real disposable loopback PostgreSQL and actual non-owner/NOBYPASSRLS login.",
+    "Presence and transport use AsyncMock; no Redis transport or Android commands.",
+    "ASSIGNED does not mean the APK received or executed the task.",
+    "No pilot/APK or old Docker project changes; expected failure remains outside passing CI."
+  ]
+}

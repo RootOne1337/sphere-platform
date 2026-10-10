@@ -1,0 +1,89 @@
+{
+  "version": "1.0",
+  "scope": "published-android-action-parameters",
+  "unknown_fields": "preserve",
+  "messages": {
+    "required": "Требуется поле.",
+    "integer": "Требуется целое JSON-число, не строка и не boolean.",
+    "number": "Требуется конечное JSON-число.",
+    "boolean": "Требуется JSON-boolean: true или false.",
+    "string": "Требуется строка.",
+    "object": "Требуется JSON-объект.",
+    "array": "Требуется JSON-массив.",
+    "primitive": "Допустимы строка, конечное число, boolean или null; объект и массив не поддерживаются APK.",
+    "range": "Число вне допустимого диапазона.",
+    "length": "Длина вне допустимого диапазона.",
+    "enum": "Значение не входит в поддерживаемый набор.",
+    "pattern": "Некорректный формат.",
+    "http_url": "Требуется абсолютный HTTP(S) URL с именем хоста.",
+    "check": "Требуется поддерживаемая проверка или непустой Lua-код условия.",
+    "type": "Неизвестный опубликованный тип действия."
+  },
+  "definitions": {
+    "coordinate": {"type": "integer", "min": 0, "max": 2147483647},
+    "duration": {"type": "integer", "min": 0, "max": 60000},
+    "timeout": {"type": "integer", "min": 0, "max": 3600000},
+    "delay": {"type": "integer", "min": 0, "max": 86400000},
+    "selector": {"type": "string", "nonblank": true, "max": 2048},
+    "strategy": {"type": "string", "enum": ["xpath", "id", "text", "desc", "class"]},
+    "variable": {"type": "string", "nonblank": true, "max": 128},
+    "text": {"type": "string", "max": 65536},
+    "code": {"type": "string", "nonblank": true, "max": 65536},
+    "package": {"type": "string", "nonblank": true, "max": 255, "pattern": "^[A-Za-z_][A-Za-z0-9_]*(\\.[A-Za-z_][A-Za-z0-9_]*)+$"},
+    "url": {"type": "string", "nonblank": true, "max": 8192},
+    "direction": {"type": "string", "enum": ["up", "down", "left", "right"]},
+    "selector_fields": {"type": "object", "fields": {
+      "selector": {"ref": "selector", "required": true}, "strategy": {"ref": "strategy"}, "timeout_ms": {"ref": "timeout"}
+    }},
+    "candidates": {"type": "array", "min": 1, "max": 64, "items": {"type": "object", "fields": {
+      "selector": {"ref": "selector", "required": true}, "strategy": {"ref": "strategy"}, "label": {"type": "string", "max": 256}
+    }}}
+  },
+  "common_fields": {"save_to": {"ref": "variable"}},
+  "actions": {
+    "start": {"effect": "flow", "fields": {}, "note": "Переход по on_success; запуск действий сам по себе не подтверждает состояние Android."},
+    "end": {"effect": "flow", "fields": {}, "note": "При заданном on_success исполнение продолжается; имя узла не прекращает переходы."},
+    "tap": {"effect": "control", "fields": {"x": {"ref": "coordinate", "required": true}, "y": {"ref": "coordinate", "required": true}}, "note": "Координаты должны соответствовать системе координат APK. Проверка параметров не проверяет границы экрана."},
+    "swipe": {"effect": "control", "fields": {"x1": {"ref": "coordinate", "required": true}, "y1": {"ref": "coordinate", "required": true}, "x2": {"ref": "coordinate", "required": true}, "y2": {"ref": "coordinate", "required": true}, "duration_ms": {"ref": "duration"}}, "note": "Один завершённый прямой жест. Непрерывный DOWN/MOVE/UP этим действием не реализуется."},
+    "type_text": {"effect": "control", "fields": {"text": {"ref": "text", "required": true}, "clear_first": {"type": "boolean"}}, "note": "Ввод в текущее поле. Unicode/IME и очистка зависят от установленного APK; текст хранится в сценарии."},
+    "sleep": {"effect": "flow", "fields": {"ms": {"ref": "delay", "required": true}}, "note": "Ожидание в пределах таймаута шага и графа; пауза не доказывает достижение состояния."},
+    "key_event": {"effect": "control", "fields": {"keycode": {"type": "integer", "min": 0, "max": 2147483647, "required": true}}, "note": "Android keycode, не код клавиши браузера; результат зависит от поля и приложения."},
+    "lua": {"effect": "code", "fields": {"save_to": {"ref": "variable"}, "code": {"ref": "code", "required": true}}, "note": "Сервер дополнительно проверяет Lua safety; доступность функций и результат проверяются на APK."},
+    "screenshot": {"effect": "read", "fields": {"save_to": {"ref": "variable"}}, "note": "DAG screenshot создаёт локальный PNG на Android. Наличие downloadable server artifact не подтверждено."},
+    "condition": {"effect": "read", "fields": {"check": {"type": "string", "max": 128}, "params": {"type": "object"}, "code": {"ref": "code"}, "on_true": {"type": "string", "nonblank": true, "max": 64, "required": true}, "on_false": {"type": "string", "nonblank": true, "max": 64, "required": true}}, "checks": {
+      "element_exists": {"ref": "selector_fields", "required": true},
+      "text_contains": {"type": "object", "required": true, "fields": {"selector": {"ref": "selector", "required": true}, "strategy": {"ref": "strategy"}, "text": {"ref": "text", "required": true}}},
+      "battery_above": {"type": "object", "fields": {"level": {"type": "integer", "min": 0, "max": 100}}}
+    }, "fallback_field": "code", "note": "Нативная проверка имеет приоритет над code. Семантика text_contains и unavailable battery текущего APK требует отдельной runtime-проверки."},
+    "launch_app": {"effect": "control", "fields": {"package": {"ref": "package", "required": true}, "delay_ms": {"ref": "delay"}}, "note": "Открывает установленный package. Пауза после запуска не является проверкой готовности приложения."},
+    "stop_app": {"effect": "destructive", "fields": {"package": {"ref": "package", "required": true}, "delay_ms": {"ref": "delay"}}, "note": "Принудительно останавливает приложение; повтор может прервать его работу."},
+    "clear_app_data": {"effect": "destructive", "fields": {"package": {"ref": "package", "required": true}, "delay_ms": {"ref": "delay"}}, "note": "Удаляет данные приложения, включая его аккаунты и настройки. Требует явно заданного package."},
+    "find_element": {"effect": "read", "fields": {"save_to": {"ref": "variable"}, "selector": {"ref": "selector", "required": true}, "strategy": {"ref": "strategy"}, "timeout_ms": {"ref": "timeout"}, "fail_if_not_found": {"type": "boolean"}}, "note": "Возвращает центр найденного элемента. Свежесть и наличие элемента не доказываются проверкой JSON."},
+    "find_first_element": {"effect": "read", "fields": {"save_to": {"ref": "variable"}, "candidates": {"ref": "candidates", "required": true}, "timeout_ms": {"ref": "timeout"}, "fail_if_not_found": {"type": "boolean"}}, "note": "Проверяет кандидатов против одного UI dump на итерацию и возвращает первое совпадение."},
+    "tap_first_visible": {"effect": "control", "fields": {"save_to": {"ref": "variable"}, "candidates": {"ref": "candidates", "required": true}, "timeout_ms": {"ref": "timeout"}, "fail_if_not_found": {"type": "boolean"}}, "note": "Ищет и нажимает первый найденный элемент. Повтор не гарантирует идемпотентность."},
+    "tap_element": {"effect": "control", "fields": {"save_to": {"ref": "variable"}, "selector": {"ref": "selector", "required": true}, "strategy": {"ref": "strategy"}, "timeout_ms": {"ref": "timeout"}, "fail_if_not_found": {"type": "boolean"}}, "note": "Нажимает центр найденного элемента в физических координатах, а не произвольный XPath из старого кадра."},
+    "get_element_text": {"effect": "read", "fields": {"save_to": {"ref": "variable"}, "selector": {"ref": "selector", "required": true}, "strategy": {"ref": "strategy"}, "timeout_ms": {"ref": "timeout"}, "attribute": {"type": "string", "nonblank": true, "max": 128}}, "note": "Читает указанный XML-атрибут; отсутствие элемента может вернуть null."},
+    "wait_for_element_gone": {"effect": "read", "fields": {"selector": {"ref": "selector", "required": true}, "strategy": {"ref": "strategy"}, "timeout_ms": {"ref": "timeout"}, "fail_if_not_found": {"type": "boolean"}}, "note": "Отсутствие определяется UI hierarchy; это не доказательство полного состояния игры."},
+    "scroll_to": {"effect": "control", "fields": {"selector": {"ref": "selector", "required": true}, "strategy": {"ref": "strategy"}, "direction": {"ref": "direction"}, "max_scrolls": {"type": "integer", "min": 0, "max": 1000}, "duration_ms": {"ref": "duration"}, "fail_if_not_found": {"type": "boolean"}}, "note": "Ограниченное число прокруток и поисков. Также действует таймаут шага."},
+    "long_press": {"effect": "control", "fields": {"x": {"ref": "coordinate", "required": true}, "y": {"ref": "coordinate", "required": true}, "duration_ms": {"ref": "duration"}}, "note": "Удержание в одной точке; не заменяет произвольную траекторию touch."},
+    "double_tap": {"effect": "control", "fields": {"x": {"ref": "coordinate", "required": true}, "y": {"ref": "coordinate", "required": true}}, "note": "Два нажатия; повтор шага создаёт ещё два нажатия."},
+    "scroll": {"effect": "control", "fields": {"direction": {"ref": "direction"}, "percent": {"type": "number", "min": 0, "max": 1}, "duration_ms": {"ref": "duration"}}, "note": "Свайп на долю физического экрана. Направление относится к жесту APK."},
+    "set_variable": {"effect": "context", "fields": {"key": {"ref": "variable", "required": true}, "value": {"type": "primitive"}, "from_node": {"ref": "variable"}, "from_device_info": {"ref": "variable"}}, "note": "Приоритет: value, затем from_node, затем from_device_info. Primitive value APK сохраняет как строку; без источника — null."},
+    "get_variable": {"effect": "context", "fields": {"key": {"ref": "variable", "required": true}}, "note": "Читает контекст текущего выполнения; это не чтение базы данных сервера."},
+    "increment_variable": {"effect": "context", "fields": {"key": {"ref": "variable", "required": true}, "step": {"type": "integer", "min": -2147483648, "max": 2147483647}}, "note": "APK преобразует текущее значение в Int и сохраняет результат как строку. Повтор изменит счётчик снова."},
+    "shell": {"effect": "code", "fields": {"save_to": {"ref": "variable"}, "command": {"type": "string", "nonblank": true, "max": 65536, "required": true}, "fail_on_error": {"type": "boolean"}}, "note": "Команда исполняется на Android через root helper. JSON-проверка не доказывает root-доступ и не определяет безопасность произвольной команды."},
+    "input_clear": {"effect": "control", "fields": {}, "note": "Очищает выбранное текстовое поле через root key chord. Требует соответствующей версии APK и проверки результата."},
+    "http_request": {"effect": "network", "fields": {"save_to": {"ref": "variable"}, "url": {"ref": "url", "format": "http_url", "required": true}, "method": {"type": "string", "case": "upper", "enum": ["GET", "POST", "PUT", "PATCH", "DELETE", "HEAD", "OPTIONS"]}, "body": {"ref": "text"}, "headers": {"type": "object", "max": 64, "key_pattern": "^[!#$%&'*+.^_`|~0-9A-Za-z-]+$", "values": {"type": "string", "max": 8192, "pattern": "^[^\\r\\n]*$"}}, "timeout_ms": {"ref": "timeout"}}, "note": "Запрос выполняет Android, не backend. JSON-проверка не подтверждает DNS, сетевой доступ, cancellation/deadline и полноту ответа текущего APK."},
+    "open_url": {"effect": "control", "fields": {"url": {"ref": "url", "required": true}, "delay_ms": {"ref": "delay"}}, "note": "Передаёт URL Android intent; приложение-обработчик и состояние после открытия не проверяются JSON-контрактом."},
+    "get_device_info": {"effect": "read", "fields": {"save_to": {"ref": "variable"}}, "note": "Получает доступные данные Android через APK; не означает, что все аппаратные поля доступны."},
+    "assert": {"effect": "read", "fields": {"check": {"type": "string", "required": true}, "params": {"type": "object"}, "message": {"type": "string", "max": 2048}}, "checks": {
+      "element_exists": {"ref": "selector_fields", "required": true},
+      "element_gone": {"ref": "selector_fields", "required": true},
+      "text_equals": {"type": "object", "required": true, "fields": {"selector": {"ref": "selector", "required": true}, "strategy": {"ref": "strategy"}, "timeout_ms": {"ref": "timeout"}, "value": {"ref": "text", "required": true}}},
+      "text_contains": {"type": "object", "required": true, "fields": {"selector": {"ref": "selector", "required": true}, "strategy": {"ref": "strategy"}, "timeout_ms": {"ref": "timeout"}, "value": {"ref": "text", "required": true}}},
+      "variable_equals": {"type": "object", "required": true, "fields": {"key": {"ref": "variable", "required": true}, "value": {"type": "primitive", "required": true}}},
+      "variable_contains": {"type": "object", "required": true, "fields": {"key": {"ref": "variable", "required": true}, "value": {"type": "primitive", "required": true}}},
+      "http_status": {"type": "object", "required": true, "fields": {"node_id": {"ref": "variable", "required": true}, "value": {"type": "integer", "min": 100, "max": 599}}}
+    }, "note": "Assertion проверяет конкретный результат, не здоровье всего устройства. condition.text_contains использует text, assert.text_contains — value."}
+  }
+}

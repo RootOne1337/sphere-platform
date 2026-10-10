@@ -1,0 +1,37 @@
+{
+  "baseline_sha": "a294c2951b6a1e7176cf84270468232d29d18b76",
+  "state": "existing-env-before",
+  "totals": {
+    "tests": 10,
+    "failures": 4,
+    "errors": 0,
+    "skipped": 0
+  },
+  "failures": [
+    {
+      "name": "test_unattended_bootstrap_preserves_existing_credentials[powershell-existing0-False]",
+      "failure": {
+        "message": "AssertionError: Existing installation was shadowed by newly generated credentials\nassert ['scripts/generate_secrets.py', '--output', '.env.local'] is None"
+      }
+    },
+    {
+      "name": "test_unattended_bootstrap_preserves_existing_credentials[powershell-existing1-True]",
+      "failure": {
+        "message": "AssertionError: Existing installation was shadowed by newly generated credentials\nassert ['scripts/generate_secrets.py', '--output', '.env.local'] is None"
+      }
+    },
+    {
+      "name": "test_unattended_bootstrap_preserves_existing_credentials[bash-existing0-False]",
+      "failure": {
+        "message": "AssertionError: Existing installation was shadowed by newly generated credentials\nassert ['scripts/generate_secrets.py', '--output', '.env.local'] is None"
+      }
+    },
+    {
+      "name": "test_unattended_bootstrap_preserves_existing_credentials[bash-existing1-True]",
+      "failure": {
+        "message": "AssertionError: Existing installation was shadowed by newly generated credentials\nassert ['scripts/generate_secrets.py', '--output', '.env.local'] is None"
+      }
+    }
+  ],
+  "boundary": "Actual shipped PS secret stage and Bash preamble/secret stage in temporary installation with synthetic dotenv files; generator replaced by a native process. No real secrets, database or Docker service startup."
+}

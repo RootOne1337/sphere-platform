@@ -21,8 +21,7 @@ class AgentWebSocketClient:
         self._connected = False
         self._stop_event = asyncio.Event()
 
-        # FIX 8.2: исходящая очередь — предотвращает ConcurrentMessageError
-        # websockets v12+ запрещает concurrent await ws.send()
+        # Preserve producer ordering with one sender per connection.
         self._send_queue: asyncio.Queue[dict] = asyncio.Queue(maxsize=1000)
 
         # FIX ARCH-5: сохраняем references на background tasks — защита от GC
@@ -48,8 +47,10 @@ class AgentWebSocketClient:
             if now < self._circuit_open_until:
                 wait = self._circuit_open_until - now
                 logger.warning(f"Circuit OPEN, ждём {wait:.0f}с перед следующей попыткой")
-                await asyncio.sleep(wait)
+                if await self._wait_for_stop(wait):
+                    break
                 self._consecutive_failures = 0
+                self._circuit_open_until = 0.0
 
             try:
                 await self._connect_once()
@@ -71,15 +72,19 @@ class AgentWebSocketClient:
                     f"WS разорван: {exc!r}, reconnect через {delay:.1f}с "
                     f"(попытка #{self._consecutive_failures})"
                 )
-                try:
-                    await asyncio.wait_for(
-                        asyncio.shield(self._stop_event.wait()), timeout=delay
-                    )
-                    # stop_event сработал — выходим
-                    break
-                except asyncio.TimeoutError:
-                    pass
-                delay = min(delay * config.reconnect_backoff_factor, config.reconnect_max_delay)
+            # Also pace clean peer closes; otherwise they bypass backoff and
+            # can create a tight reconnect loop. A stop interrupts either wait.
+            if await self._wait_for_stop(delay):
+                break
+            delay = min(delay * config.reconnect_backoff_factor, config.reconnect_max_delay)
+
+    async def _wait_for_stop(self, delay: float) -> bool:
+        try:
+            # Do not shield this waiter: each timeout must cancel and collect it.
+            await asyncio.wait_for(self._stop_event.wait(), timeout=delay)
+            return True
+        except asyncio.TimeoutError:
+            return False
 
     async def send(self, data: dict) -> None:
         """FIX 8.2: отправка через очередь, не напрямую в WebSocket."""
@@ -119,49 +124,51 @@ class AgentWebSocketClient:
             close_timeout=5,
         ) as ws:
             self._ws = ws
-            self._connected = True
-            logger.info("WS-соединение установлено")
-
-            # First-message auth — аналогично Android Agent
-            await ws.send(json.dumps({
-                "type": "auth",
-                "token": config.agent_token,
-                "workstation_id": config.workstation_id,
-            }))
-            logger.info("Auth-фрейм отправлен")
-
-            # FIX 8.2: сериализующий цикл отправки
-            send_task = asyncio.create_task(
-                self._send_loop(ws), name="ws_send_loop"
-            )
+            transport_tasks: set[asyncio.Task] = set()
             try:
-                async for raw in ws:
-                    try:
-                        msg = json.loads(raw)
-                    except json.JSONDecodeError:
-                        logger.warning(f"Невалидный JSON: {raw[:200]!r}")
-                        continue
+                # Cleanup must cover a failed/cancelled auth write as well as
+                # the receive loop. This flag is not a server auth acknowledgement.
+                await ws.send(json.dumps({
+                    "type": "auth",
+                    "token": config.agent_token,
+                    "workstation_id": config.workstation_id,
+                }))
+                self._connected = True
+                logger.info("Auth-фрейм отправлен")
 
-                    # FIX ARCH-5: сохраняем task-reference, иначе GC может прибить
-                    task = asyncio.create_task(
-                        self.on_message(msg), name="dispatch"
-                    )
-                    self._bg_tasks.add(task)
-                    task.add_done_callback(self._bg_tasks.discard)
+                transport_tasks = {
+                    asyncio.create_task(self._send_loop(ws), name="ws_send_loop"),
+                    asyncio.create_task(self._receive_loop(ws), name="ws_receive_loop"),
+                }
+                # Either transport direction ending invalidates the session.
+                # In particular, a dead sender must not leave a live receiver
+                # and an apparently connected client with an undrained queue.
+                done, _ = await asyncio.wait(transport_tasks, return_when=asyncio.FIRST_COMPLETED)
+                for task in done:
+                    task.result()
             finally:
                 self._connected = False
                 self._ws = None
-                send_task.cancel()
-                try:
-                    await send_task
-                except asyncio.CancelledError:
-                    pass
+                for task in transport_tasks:
+                    task.cancel()
+                await asyncio.gather(*transport_tasks, return_exceptions=True)
                 logger.info("WS-сессия завершена")
+
+    async def _receive_loop(self, ws: websockets.WebSocketClientProtocol) -> None:
+        async for raw in ws:
+            try:
+                msg = json.loads(raw)
+            except json.JSONDecodeError:
+                logger.warning(f"Невалидный JSON: {raw[:200]!r}")
+                continue
+
+            task = asyncio.create_task(self.on_message(msg), name="dispatch")
+            self._bg_tasks.add(task)
+            task.add_done_callback(self._bg_tasks.discard)
 
     async def _send_loop(self, ws: websockets.WebSocketClientProtocol) -> None:
         """
-        FIX 8.2: последовательная отправка сообщений из очереди.
-        websockets v12+ бросает ConcurrentMessageError при concurrent ws.send().
+        Последовательная отправка; ошибка передаётся владельцу WS-сессии.
         """
         while True:
             data = await self._send_queue.get()
@@ -169,5 +176,6 @@ class AgentWebSocketClient:
                 await ws.send(json.dumps(data))
             except Exception as exc:
                 logger.warning(f"Ошибка отправки WS-сообщения: {exc!r}")
-                # соединение мертво — выходим, connect_once это поймает
-                break
+                raise
+            finally:
+                self._send_queue.task_done()

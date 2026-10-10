@@ -1,0 +1,179 @@
+{
+  "recorded_at": "2026-09-14T00:25:20.578620+00:00",
+  "run_id": "night-20260914-001",
+  "status": "interim; overnight still running",
+  "independent_api_native_verification": {
+    "at": "2026-09-14T00:23:05.489766+00:00",
+    "cutoff_status": {
+      "run_id": "night-20260914-001",
+      "status": "running",
+      "started_at": "2026-09-14T00:05:57.000178+00:00",
+      "planned_seconds": 28800,
+      "pid": 7888,
+      "cycles_passed": 8,
+      "tasks_passed": 18,
+      "commands_passed": 180,
+      "samples": 36,
+      "pipeline_controls_passed": 2,
+      "devices": [
+        "85f2f935-7739-400e-9389-0d71227e8f0a",
+        "ba1346c1-1581-452f-adee-451d36622aaf"
+      ],
+      "script_id": "352a0685-c694-4f11-a160-eb2b0e4337dc",
+      "script_version_id": "2804f56c-a70a-4abf-9633-aad64c2fcdfc",
+      "failure": null,
+      "expected_end": "2026-09-14T08:05:57.000178+00:00",
+      "updated_at": "2026-09-14T00:22:58.020320+00:00",
+      "active_batch": null
+    },
+    "mode": "read-only, bounded observation; live run continues",
+    "task_files_compared": 18,
+    "pipeline_files_compared": 2,
+    "native_tasks_via_pipeline_compared": 1,
+    "devices": [
+      {
+        "device_id": "85f2f935-7739-400e-9389-0d71227e8f0a",
+        "pid": "31803",
+        "same_pid_as_ota": true,
+        "version_code": 10205,
+        "online": true,
+        "last_crash_records": [
+          "09-13 21:43:28.633 29477 30278 F libc    : Fatal signal 11 (SIGSEGV), code 1 (SEGV_MAPERR), fault addr 0x76386bdcb690 in tid 30278 (sphere-imagerea), pid 29477 (ent.pilot.debug)",
+          "09-13 21:43:31.673 30391 30445 F libc    : Fatal signal 11 (SIGSEGV), code 1 (SEGV_MAPERR), fault addr 0x76386e553c70 in tid 30445 (sphere-imagerea), pid 30391 (ent.pilot.debug)"
+        ]
+      },
+      {
+        "device_id": "ba1346c1-1581-452f-adee-451d36622aaf",
+        "pid": "386",
+        "same_pid_as_ota": true,
+        "version_code": 10205,
+        "online": true,
+        "last_crash_records": [
+          "09-13 20:49:08.140 30618 31035 F libc    : Fatal signal 11 (SIGSEGV), code 1 (SEGV_MAPERR), fault addr 0x76386d2f53f0 in tid 31035 (sphere-imagerea), pid 30618 (ent.pilot.debug)",
+          "09-13 20:49:11.441 31472 31531 F libc    : Fatal signal 11 (SIGSEGV), code 1 (SEGV_MAPERR), fault addr 0x763870a23b20 in tid 31531 (sphere-imagerea), pid 31472 (ent.pilot.debug)"
+        ]
+      }
+    ],
+    "checked_at": "2026-09-14T00:23:11.773800+00:00",
+    "passed": true
+  },
+  "resource_latency_window": {
+    "status": {
+      "run_id": "night-20260914-001",
+      "status": "running",
+      "started_at": "2026-09-14T00:05:57.000178+00:00",
+      "planned_seconds": 28800,
+      "pid": 7888,
+      "cycles_passed": 8,
+      "tasks_passed": 16,
+      "commands_passed": 170,
+      "samples": 34,
+      "pipeline_controls_passed": 2,
+      "devices": [
+        "85f2f935-7739-400e-9389-0d71227e8f0a",
+        "ba1346c1-1581-452f-adee-451d36622aaf"
+      ],
+      "script_id": "352a0685-c694-4f11-a160-eb2b0e4337dc",
+      "script_version_id": "2804f56c-a70a-4abf-9633-aad64c2fcdfc",
+      "failure": null,
+      "expected_end": "2026-09-14T08:05:57.000178+00:00",
+      "updated_at": "2026-09-14T00:21:44.772864+00:00",
+      "active_batch": null
+    },
+    "command_seconds": {
+      "count": 170,
+      "min": 0.437,
+      "max": 0.891,
+      "p50": 0.516,
+      "p95": 0.703
+    },
+    "first_frame_seconds": {
+      "count": 16,
+      "min": 0.734,
+      "max": 1.032,
+      "p50": 0.844,
+      "p95": 1.032
+    },
+    "devices": {
+      "85f2f935-7739-400e-9389-0d71227e8f0a": {
+        "observed_pids": [
+          "31803"
+        ],
+        "memory_pss_kib_by_phase": {
+          "stream": {
+            "count": 8,
+            "min": 60595,
+            "max": 64944,
+            "p50": 62794,
+            "p95": 64944
+          },
+          "after_viewer_close": {
+            "count": 8,
+            "min": 55971,
+            "max": 60736,
+            "p50": 57899,
+            "p95": 60736
+          },
+          "baseline": {
+            "count": 1,
+            "min": 57742,
+            "max": 57742,
+            "p50": 57742,
+            "p95": 57742
+          }
+        },
+        "projection_active_after_own_viewers_closed": 0
+      },
+      "ba1346c1-1581-452f-adee-451d36622aaf": {
+        "observed_pids": [
+          "386"
+        ],
+        "memory_pss_kib_by_phase": {
+          "stream": {
+            "count": 8,
+            "min": 67755,
+            "max": 68895,
+            "p50": 68055,
+            "p95": 68895
+          },
+          "after_viewer_close": {
+            "count": 8,
+            "min": 61856,
+            "max": 63993,
+            "p50": 62252,
+            "p95": 63993
+          },
+          "baseline": {
+            "count": 1,
+            "min": 62160,
+            "max": 62160,
+            "p50": 62160,
+            "p95": 62160
+          }
+        },
+        "projection_active_after_own_viewers_closed": 0
+      }
+    },
+    "incidents": [],
+    "incomplete_event_lines": 0,
+    "scope": "Observed explicit pilot devices only; nearest-rank percentiles. Running is not passed. Other operator viewers can keep projection active. Raw logs retain additional evidence."
+  },
+  "backend_warning_observation": {
+    "log_limit": 2500,
+    "since": "2026-09-14T00:05:57Z",
+    "counts": {
+      "warning:task.result.not_found": 190
+    },
+    "unique_missing_ids": 190,
+    "completed_native_task_ids": 19,
+    "missing_ids_overlap_completed_task_ids": 0,
+    "interpretation": "Interactive UUID replies enter SQL task lookup. No matched completed DAG IDs in this bounded observation; warnings remain visible and are not globally suppressed.",
+    "fix_status": "not deployed during controlled overnight run; separate regression/fix remains"
+  },
+  "runtime_unchanged": {
+    "apk": "343c6e8 / 1.2.5-dev",
+    "backend": "12249b1",
+    "frontend": "9b3afbc",
+    "harness": "9023dce"
+  }
+}

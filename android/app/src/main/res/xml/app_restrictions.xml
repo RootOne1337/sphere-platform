@@ -14,6 +14,13 @@
         android:defaultValue="" />
 
     <restriction
+        android:key="sphere_fallback_server_url"
+        android:title="@string/restriction_fallback_url_title"
+        android:description="@string/restriction_fallback_url_desc"
+        android:restrictionType="string"
+        android:defaultValue="" />
+
+    <restriction
         android:key="sphere_api_key"
         android:title="@string/restriction_api_key_title"
         android:description="@string/restriction_api_key_desc"

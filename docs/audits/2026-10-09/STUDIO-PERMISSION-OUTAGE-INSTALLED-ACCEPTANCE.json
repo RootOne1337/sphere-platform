@@ -1,0 +1,198 @@
+{
+  "state": "installed-finite-outage-accepted-open-gates-remain",
+  "assembledUtc": "2026-10-08T20:29:13.349409+00:00",
+  "uiSource": "46ca2096fef48486be821b3239eeef16f231bbc5",
+  "uiInstalledUtc": "2026-10-08T20:13:59.432214133Z",
+  "uiConfigDigest": "sha256:7ce74bf9feb70ec193c8791650a12c60a5084ffdc6411e6ec1e6b94baeaadb03",
+  "uiLoadedImageId": "sha256:0a13d13e0647848e47673b9e8fa5d9a1790ac6e5fa275a43d376c0edcc30f03a",
+  "uiArchiveBytes": 120866245,
+  "packagedPages": 26,
+  "packagedAssets": 73,
+  "otherContainersPreservedAtInstall": 45,
+  "apiSource": "be803773037c16a113b50c1a2774793fffae8773",
+  "apiLoadedImageId": "sha256:49a0ac9dca8f27db1dd8564090ef495139682919ebaa39d5cb396c43ad51ede1",
+  "schemaHead": "20261006_script_catalog_metadata",
+  "normalOtaSha256": "5d5dcb5521277b51f366ea5370a2f7df5fd62696de0d5b7b86a56b443b03af10",
+  "normalOtaChanged": false,
+  "pilotVersionName": "1.2.49-dev",
+  "pilotVersionCode": 10249,
+  "apkInstallPerformed": false,
+  "sourceCi": {
+    "frontend": {
+      "runId": 37836971092,
+      "conclusion": "success",
+      "headSha": "46ca2096fef48486be821b3239eeef16f231bbc5",
+      "status": "completed",
+      "updatedAt": "2026-10-08T20:10:13Z",
+      "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/37836971092"
+    },
+    "backend": {
+      "runId": 37836971186,
+      "conclusion": "success",
+      "headSha": "46ca2096fef48486be821b3239eeef16f231bbc5",
+      "status": "completed",
+      "updatedAt": "2026-10-08T20:24:54Z",
+      "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/37836971186"
+    },
+    "android": {
+      "runId": 37836971084,
+      "conclusion": "success",
+      "headSha": "46ca2096fef48486be821b3239eeef16f231bbc5",
+      "status": "completed",
+      "updatedAt": "2026-10-08T20:18:57Z",
+      "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/37836971084"
+    },
+    "preview": {
+      "runId": 37836971113,
+      "conclusion": "success",
+      "headSha": "46ca2096fef48486be821b3239eeef16f231bbc5",
+      "status": "completed",
+      "updatedAt": "2026-10-08T20:06:41Z",
+      "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/37836971113"
+    }
+  },
+  "frontendCi": {
+    "passed": 1915,
+    "suites": 138,
+    "jobId": 113516363445,
+    "runAttempt": 1,
+    "jobLogSha256": "acc72b0b35f3c616120a33f173a83ba9fcd8051a7aa119f123ccd1d858b19077"
+  },
+  "backendCi": {
+    "passed": 3346,
+    "skipped": 37,
+    "warnings": 2,
+    "subtests": 229,
+    "seconds": 888.39,
+    "jobId": 113516789471,
+    "privateSavedJobLogSha256": "1e6e12bb08e6a51abe78c2d3769e7a23349b7d6c280b266f3c35d610d6e732c9"
+  },
+  "localChecks": {
+    "frontendPassed": 1915,
+    "suites": 138,
+    "seconds": 75.347,
+    "nonincrementalTypes": "passed",
+    "modalBuilderGroupsPassed": 72,
+    "modalBuilderGroupsSuites": 3,
+    "finalBuilderPassed": 50
+  },
+  "runtimeOutage": {
+    "stoppedUtc": "2026-10-08T20:16:01.984884+00:00",
+    "startedUtc": "2026-10-08T20:17:14.601003+00:00",
+    "restoredUtc": "2026-10-08T20:17:33.997470+00:00",
+    "maxDownSeconds": 72,
+    "taskCountBefore": 0,
+    "state": "restored",
+    "othersPreserved": 45,
+    "schemaPreserved": true,
+    "otaPreserved": true,
+    "imagePreserved": true,
+    "androidInputSent": false,
+    "containersRecreated": false
+  },
+  "browser": {
+    "urlOrigin": "http://127.0.0.1:3015",
+    "device": "PH011",
+    "mode": "View",
+    "reloadDuringOutage": false,
+    "taskStatePreserved": true,
+    "taskReports": 3,
+    "executionMarks": 3,
+    "graphNodes": 3,
+    "graphEdges": 2,
+    "savedVersion": 1,
+    "graphSha256": "6ba193f89e34a2b93efc41c60d547e21923d54417e69d3f6b795e8c7128c6916",
+    "recordingEntries": 0,
+    "launchTargetPreserved": true,
+    "launchPriority": 8,
+    "secondLaunchClicked": false,
+    "launchClosedUsing": "Cancel",
+    "outageEvidence": "AX notice and absence of editor/task/launch portal",
+    "outageNotice": "Не удалось проверить права",
+    "outageScreenshotObtained": false,
+    "desktopViewport": [
+      1440,
+      900
+    ],
+    "mobileViewport": [
+      390,
+      844
+    ],
+    "mobileClientWidth": 390,
+    "mobileScrollWidth": 390,
+    "finalDefaultWidth": 688,
+    "finalDefaultScrollWidth": 688,
+    "viewportOverrideReset": true,
+    "boundedConsoleReadLimit": 40,
+    "boundedConsoleEntriesReturned": 0,
+    "androidInputSentInCanary": false,
+    "hierarchyOrPngRequestedInCanary": false
+  },
+  "independentTaskRead": {
+    "observedAtUtc": "2026-10-08T20:23:12.355128+00:00",
+    "windowStartUtc": "2026-10-08T20:14:14Z",
+    "scriptTaskCountInWindow": 1,
+    "taskId": "380fa1ef-9cfc-42c4-a3e5-b5e20caf8b69",
+    "status": "completed",
+    "additionalTaskPostObserved": false,
+    "databaseMutations": false
+  },
+  "fixtureOnlyInThisCheckpoint": [
+    "dirty recording queue during outage",
+    "pending and unknown POST during outage",
+    "late task/batch success during suspension",
+    "native PNG abort fence and verified recovery"
+  ],
+  "limitations": [
+    "No outage-painted screenshot; early recovered screenshot is private",
+    "No witnessed same-session token refresh",
+    "No durable replay guard across F5/unmount",
+    "No distributed viewer/task lease",
+    "Idle native_receipt_timeout remains open",
+    "No latency, bitrate, physical FPS or fleet soak acceptance",
+    "Rich recording and correlated playback remain open",
+    "Storage attribution remains open; finite observer finished and was not restarted",
+    "Direct media transport research and implementation deferred by user"
+  ],
+  "auditLedger": {
+    "accepted": 9,
+    "open": 41,
+    "releaseGatesClosedByCheckpoint": false
+  },
+  "evidence": [
+    {
+      "path": "assets/permission-outage/modal-before.jpg",
+      "mimeType": "image/jpeg",
+      "bytes": 69101,
+      "sha256": "1970a7a8e5f2b72fc4fa82027938604434bb4339e2702dd627c65232c998f550"
+    },
+    {
+      "path": "assets/permission-outage/modal-restored.jpg",
+      "mimeType": "image/jpeg",
+      "bytes": 67995,
+      "sha256": "57ad77aea630f9647792d461a6d5183bf074dc3a1a171823f0bc27f08d85c1e0"
+    },
+    {
+      "path": "assets/permission-outage/desktop-restored.jpg",
+      "mimeType": "image/jpeg",
+      "bytes": 106737,
+      "sha256": "582e2cf6f22640916d4e9844da53af9fb69572d55ab7d148185c1d1bb7dc8f24"
+    },
+    {
+      "path": "assets/permission-outage/mobile-restored.jpg",
+      "mimeType": "image/jpeg",
+      "bytes": 52730,
+      "sha256": "bc3730b455a76890f23c68f270113186ef5a47aad8477545d6d5c6e20d9e471f"
+    },
+    {
+      "path": "assets/permission-outage/default-restored.jpg",
+      "mimeType": "image/jpeg",
+      "bytes": 79082,
+      "sha256": "07766fe80b3740dffe87d16e2fa1e8a0504f5d41dcff7d50615503d909416385"
+    }
+  ],
+  "evidenceTotalBytes": 375645,
+  "evidenceBudgetBytes": 2097152,
+  "privateRawDataPublished": false,
+  "nativeAndroidPixelsPublished": false
+}

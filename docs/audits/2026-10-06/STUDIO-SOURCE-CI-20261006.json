@@ -1,0 +1,45 @@
+{
+  "observedDateUtc": "2026-10-06",
+  "sourceRevision": "517d73b04553802326308aecabf6c348975800e0",
+  "backend": {
+    "runId": 37511486723,
+    "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/37511486723",
+    "conclusion": "success",
+    "passed": 3015,
+    "skipped": 37,
+    "coveragePercent": 80.35,
+    "testSummaryAtUtc": "2026-10-06T18:41:18.9740506Z",
+    "workflowCompletedAtUtc": "2026-10-06T18:43:00Z",
+    "jobs": ["Security (bandit + pip-audit)", "Production image bootstrap", "Lint (ruff + mypy)", "Tests", "RLS Policy Coverage", "Alembic Single Head"],
+    "historicalSourceReadRejectedUpdateRollbackRegressionIncluded": true
+  },
+  "frontend": {
+    "runId": 37511486748,
+    "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/37511486748",
+    "conclusion": "success",
+    "passed": 1686,
+    "suites": 133,
+    "typesPassed": true,
+    "productionBuildPassed": true,
+    "standaloneEntryFileChecked": true,
+    "packagedHttpProbeIncluded": false,
+    "warning": "ENOENT copying app/(dashboard)/page_client-reference-manifest.js; separate source5000bc9 removes duplicate root route and adds HTTP artifact admission"
+  },
+  "android": {
+    "runId": 37511486764,
+    "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/37511486764",
+    "conclusion": "success",
+    "allVariantTestsAndSignedReleaseSmokeBuildPassed": true,
+    "deviceInstalledOrProductionSigningAccepted": false
+  },
+  "preview": {
+    "runId": 37511486785,
+    "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/37511486785",
+    "guardConclusion": "success",
+    "deployConclusion": "skipped"
+  },
+  "localBoundedSourceTests": {"scriptsFrontendPassed":395,"scriptsFrontendSuites":17,"pythonPassed":144},
+  "installedRuntime": {"uiRevision":"1c26ffc7","apiRevision":"eb7a7c26","latestStudioSourceInstalled":false},
+  "host": {"healthStatus":"Warning","operationalStatus":"Full Repair Needed","freeBytes":41028304896,"postbootRepairAcceptance":false},
+  "admission": {"accepted":9,"open":41,"newSourceBrowserAcceptance":false,"continuousInputAccepted":false}
+}

@@ -1,0 +1,2197 @@
+{
+  "schemaVersion": 1,
+  "reviewedAtUtc": "2026-10-10T18:21:07.148890+00:00",
+  "sourceReviewed": "a32854e6bbf4a8df5b062e9569e2258f160f753a",
+  "scope": "Effective documentation status; source/install/finite acceptance kept separate. No new fleet or soak acceptance.",
+  "baseline": "docs/audits/2026-10-05/ENTERPRISE-PRODUCT-BACKLOG.json",
+  "previousCrosscheck": "docs/audits/2026-10-09/CHAT-CODE-RECONCILIATION.json",
+  "counts": {
+    "items": 50,
+    "acceptedRecordedScope": 9,
+    "open": 41
+  },
+  "installed": {
+    "lastObservedUtc": "2026-10-10T18:21:07.148890+00:00",
+    "ui": "a32854e6bbf4a8df5b062e9569e2258f160f753a",
+    "api": "c14c32351f89c6b4a67b3b7eb3f911b5a881fb46",
+    "evidence": "docs/audits/2026-10-10/STREAM-SESSION-DIAGNOSTICS-INSTALLED.json",
+    "observation": "CI-admitted UI/API on both gateways, real main-PC browser observations and automatic finite direct-video outcomes retained/read through the bounded API; the user-identified laptop reported 223 presented RTP frames at 960x540 via NAT/UDP, 20 echoes and p95 26.7 ms. Main PC uses VPN. Physical localhost topology, primary media/input, native gesture, latency SLA, full fleet and soak remain outside this finite acceptance.",
+    "pilotApk": {
+      "device": "PH011",
+      "version": "1.2.49-dev",
+      "versionCode": 10249,
+      "scope": "PH011 ordinary1.2.49-dev preserved; seven ordinary WebSocket frames observed, no new APK or input acceptance."
+    },
+    "evidenceSha256NormalizedLf": "cb892492f2fe642bd8ce09dce68428db9b107ed94c2e75635d367e60ad671c6c",
+    "additionalPilotApks": [
+      {
+        "device": "PH030",
+        "deviceId": "753fd530-2f19-4e5e-98ba-769863678141",
+        "version": "1.2.51-dev",
+        "versionCode": 10251,
+        "sourceRevision": "ee0d8e6f7630dcaa3518a3fcf9bfcb35d67b7498",
+        "apkSha256": "4f3687e753fafda058f0f8d123904cceb56f6f6932bda08e4a1feb4f6dc1984c",
+        "evidence": "docs/audits/2026-10-10/DIRECT-VIDEO-READONLY-INSTALLED.json",
+        "evidenceSha256NormalizedLf": "8d82bbc0869ce4b086e657a7e408d0c76e8a29cee6d2850200a6105bc49256cb",
+        "scope": "One completed targeted OTA with installed package hash. HTTP video admission true; real RTP/direct input not accepted."
+      }
+    ]
+  },
+  "pendingCorrections": [
+    {
+      "id": "direct-probe-native-network-summary",
+      "installed": false,
+      "sourceBaseRevision": "0abe15ce1e8ab82ab9ac232ce42b7c65b1055bdc",
+      "evidence": "docs/audits/2026-10-10/DIRECT-PROBE-NATIVE-COUNTERS-CANARY.json",
+      "scope": "Native counter callback accepted only in finite diagnostic scope: exact8447 CI/signed admission,12reports, no private fields. Canary APK restored to original and not currently installed. Production promotion, ICE profile/network/channel/RTT/idle/resource acceptance remain open.",
+      "testedRevision": "8447c9078eaff138d60e9cfe0a47867f67278d03"
+    },
+    {
+      "id": "direct-probe-explicit-stun-profiles",
+      "installed": false,
+      "sourceBaseRevision": "e70b530ce043ba5713be80665f71c510bc628142",
+      "evidence": "docs/audits/2026-10-10/DIRECT-PROBE-PUBLIC-STUN-CANARY.json",
+      "scope": "All four934 exact-source CI and signed one-PH011 pilot passed admission. Browser host+srflx offer, no native answer before close8s; no direct channel/RTT. Original APK restored and gates off. Setup cause UNKNOWN; diagnostic stages required.",
+      "testedRevision": "934f46a809220931b6af9e183838a1e03efc6194"
+    },
+    {
+      "id": "direct-probe-native-setup-progress",
+      "installed": false,
+      "sourceBaseRevision": "934f46a809220931b6af9e183838a1e03efc6194",
+      "evidence": "docs/audits/2026-10-10/DIRECT-PROBE-NATIVE-PROGRESS-CANARY.json",
+      "scope": "Four exact-source CI/signed admission and live stages/pre-answer stats accepted in finite diagnostic scope. Three native windows:answer392/226/243ms,13reports each, ICE no successful pair. One actual UID-filtered UDP capture accepted; previous two collector attempts invalid. Original APK restored; production direct/media/control/resource gates open.",
+      "testedRevision": "161a23e97a323b2061aceaf56f84bc436cd90305"
+    }
+  ],
+  "storage": {
+    "lastObservedUtc": "2026-10-10T18:24:31.275158+00:00",
+    "visibleMatchingProcesses": 1,
+    "continuousCoverageConfirmed": false,
+    "observationScope": "241-sample window completed, C: free delta -13,202,395,136 bytes, Docker VHDX allocation constant 234,731,077,632 bytes. Renewed limited PID2380, 18:22 UTC to 11 Oct02:22 UTC, first sample and live process confirmed. Gap18:19:52 to18:22:19 is uncovered. Whole-PC disk writer remains UNDETERMINED.",
+    "oneFreeDiskReadingBytes": 36099588096,
+    "latestCompletedEvidence": "docs/audits/2026-10-10/STORAGE-OBSERVATION-1822.json",
+    "activeEvidence": "docs/audits/2026-10-10/STORAGE-OBSERVATION-1822.json",
+    "evidenceSha256NormalizedLf": "4677cc7ad436bd7d990ba845936b5725a5505b476c41a54aefec66f2b2ea8689"
+  },
+  "legacy": {
+    "total": 41,
+    "sourceFixed": 34,
+    "unclosed": 7,
+    "partial": [
+      "F32",
+      "F33",
+      "F39"
+    ],
+    "open": [
+      "F34",
+      "F36",
+      "F40",
+      "F41"
+    ],
+    "evidence": "docs/audits/2026-10-01/WEB-AUDIT-FIXES-VALIDATION.json",
+    "productCrosswalk": {
+      "F32": [
+        "EP-044",
+        "EP-010"
+      ],
+      "F33": [
+        "EP-041"
+      ],
+      "F34": [
+        "EP-031",
+        "EP-047"
+      ],
+      "F36": [
+        "EP-029"
+      ],
+      "F39": [
+        "EP-039",
+        "EP-048"
+      ],
+      "F40": [
+        "EP-048"
+      ],
+      "F41": [
+        "EP-047",
+        "EP-050"
+      ]
+    },
+    "crosswalkScope": "Related scope only, not identity, closure or deduplication proof."
+  },
+  "directMedia": {
+    "state": "READONLY_VIDEO_PILOT_INSTALLED",
+    "implementationAuthorizedNow": true,
+    "researchPreparedAtUtc": "2026-10-09T16:46:29Z",
+    "researchEvidence": "docs/design/BROWSER-DIRECT-TRANSPORT.md",
+    "researchScope": "CI-admitted UI/API on both gateways, real main-PC browser observations and automatic finite direct-video outcomes retained/read through the bounded API; the user-identified laptop reported 223 presented RTP frames at 960x540 via NAT/UDP, 20 echoes and p95 26.7 ms. Main PC uses VPN. Physical localhost topology, primary media/input, native gesture, latency SLA, full fleet and soak remain outside this finite acceptance.",
+    "researchPrerequisites": [
+      "Versioned offer/input/control ownership and auth contract",
+      "Bounded command-to-native/frame timing with unknown results visible",
+      "Resource accounting and observer coverage deadlines",
+      "Network matrix and explicit relay fallback/rollback acceptance plan"
+    ],
+    "productionPilotRequires": [
+      "Idle receipt failure fixed and canary repeated",
+      "Cross-viewer/task/API ownership accepted",
+      "Auth/revocation/reconnect geometry fences accepted",
+      "Capture/encoder/browser memory, network and storage limits verified",
+      "New transport direct/relay/reconnect/version compatibility acceptance"
+    ],
+    "requiresAllFutureProductItemsClosed": false,
+    "implementationAuthorization": "Последующий прямой запрос пользователя 9 октября 2026: начать разработку browser ↔ APK; текущее «продолжай» сохраняет авторизацию.",
+    "prototypeScope": "readonly_video_v1",
+    "runtimeInstalled": true,
+    "mediaControlInstalled": false,
+    "implementationEvidence": "docs/audits/2026-10-09/DIRECT-PROBE-SOURCE.md",
+    "sourceCorrections": [
+      "docs/audits/2026-10-09/DIRECT-PROBE-VIEWER-ISOLATION.md",
+      "docs/audits/2026-10-09/DIRECT-PROBE-PILOT.md",
+      "docs/audits/2026-10-09/DIRECT-PROBE-NETWORK-SNAPSHOT.md",
+      "docs/audits/2026-10-10/BROADCAST-INSTALLED-ACCEPTANCE.json",
+      "docs/audits/2026-10-10/DIRECT-PROBE-NETWORK-CANARY.json",
+      "docs/audits/2026-10-10/DIRECT-PROBE-NATIVE-NETWORK-SOURCE.md",
+      "docs/audits/2026-10-10/DIRECT-PROBE-ANDROID-COMPATIBILITY.md",
+      "docs/audits/2026-10-10/DIRECT-PROBE-NATIVE-COUNTERS-CANARY.json",
+      "docs/audits/2026-10-10/DIRECT-PROBE-STUN-PROFILES.json",
+      "docs/audits/2026-10-10/DIRECT-PROBE-PUBLIC-STUN-CANARY.json",
+      "docs/audits/2026-10-10/DIRECT-PROBE-NATIVE-PROGRESS-SOURCE.json",
+      "docs/audits/2026-10-10/DIRECT-PROBE-NATIVE-PROGRESS-CANARY.json",
+      "docs/audits/2026-10-10/DIRECT-PROBE-TURN-AND-LAPTOP.json",
+      "docs/audits/2026-10-10/DIRECT-ADMISSION-INSTALLED.json",
+      "docs/audits/2026-10-10/DIRECT-VIDEO-READONLY-SOURCE.md",
+      "docs/audits/2026-10-10/DIRECT-VIDEO-API-INSTALLED.json",
+      "docs/audits/2026-10-10/DIRECT-VIDEO-READONLY-INSTALLED.json",
+      "docs/audits/2026-10-10/STREAM-SESSION-DIAGNOSTICS-INSTALLED.json"
+    ],
+    "pilotEvidence": "docs/audits/2026-10-10/DIRECT-VIDEO-READONLY-INSTALLED.json",
+    "pilotOutcome": "INSTALLED_READONLY_VIDEO_WITH_FINITE_LAPTOP_RTP",
+    "pilotCurrentlyEnabled": true,
+    "nativeDiagnosticAcceptance": {
+      "state": "ACCEPTED_FINITE_DIAGNOSTIC_SCOPE",
+      "testedRevision": "161a23e97a323b2061aceaf56f84bc436cd90305",
+      "evidence": "docs/audits/2026-10-10/DIRECT-PROBE-NATIVE-PROGRESS-CANARY.json",
+      "currentlyInstalled": false,
+      "directChannelAccepted": false
+    },
+    "networkPrerequisiteEvidence": "docs/audits/2026-10-10/DIRECT-PROBE-TURN-AND-LAPTOP.json",
+    "additionalNativeCanary": {
+      "device": "PH030",
+      "deviceId": "753fd530-2f19-4e5e-98ba-769863678141",
+      "version": "1.2.51-dev",
+      "versionCode": 10251,
+      "sourceRevision": "ee0d8e6f7630dcaa3518a3fcf9bfcb35d67b7498",
+      "apkSha256": "4f3687e753fafda058f0f8d123904cceb56f6f6932bda08e4a1feb4f6dc1984c",
+      "evidence": "docs/audits/2026-10-10/DIRECT-VIDEO-READONLY-INSTALLED.json",
+      "evidenceSha256NormalizedLf": "8d82bbc0869ce4b086e657a7e408d0c76e8a29cee6d2850200a6105bc49256cb",
+      "scope": "One completed targeted OTA with installed package hash. HTTP video admission true; real RTP/direct input not accepted."
+    },
+    "pilotDeviceIds": [
+      "753fd530-2f19-4e5e-98ba-769863678141"
+    ],
+    "pilotEvidenceSha256NormalizedLf": "8d82bbc0869ce4b086e657a7e408d0c76e8a29cee6d2850200a6105bc49256cb",
+    "previousNetworkObservation": {
+      "evidence": "docs/audits/2026-10-10/PH030-DIRECT-PATH-FOLLOWUP.json",
+      "evidenceSha256NormalizedLf": "7478057abcc40eb5cd1473341329e75204377753de5fab91f58554739c2a305d",
+      "topology": "browser on main PC with VPN; PH030 on laptop without VPN",
+      "outcome": "ANSWER_RECEIVED_NO_CHANNEL",
+      "laptopBrowserChannelAccepted": false
+    },
+    "readOnlyVideoInstalled": true,
+    "directInputInstalled": false,
+    "previousEchoObservation": {
+      "evidence": "docs/audits/2026-10-10/PH030-LAPTOP-CHANNEL-USER-OBSERVATION.json",
+      "evidenceSha256NormalizedLf": "9f430bf56f5e55815c62fec96690cc85be08d9b965672e86528fa10bf360b247",
+      "topology": "Browser and emulator/APK on the same laptop without VPN; main PC alone has VPN.",
+      "outcome": "USER_OBSERVED_FINITE_ECHO_20_OF_20",
+      "laptopBrowserChannelObservedByUser": true,
+      "directVideoAccepted": false,
+      "directInputAccepted": false,
+      "localhostRouteProven": false,
+      "rttP95Ms": 25.8
+    },
+    "initialReadonlyVideoAdmission": {
+      "evidence": "docs/audits/2026-10-10/DIRECT-VIDEO-READONLY-INSTALLED.json",
+      "evidenceSha256NormalizedLf": "8d82bbc0869ce4b086e657a7e408d0c76e8a29cee6d2850200a6105bc49256cb",
+      "apiSourceRevision": "ee0d8e6f7630dcaa3518a3fcf9bfcb35d67b7498",
+      "serverFlagEnabled": true,
+      "deviceId": "753fd530-2f19-4e5e-98ba-769863678141",
+      "candidateVersionCode": 10251,
+      "candidateApkSha256": "4f3687e753fafda058f0f8d123904cceb56f6f6932bda08e4a1feb4f6dc1984c",
+      "nativeInstalled": true,
+      "nativeUpdateIssued": true,
+      "admissionEnabled": true,
+      "videoAccepted": false,
+      "reason": "Native OTA and admission complete; actual laptop JNI/RTP video rendering remains pending."
+    },
+    "latestNetworkObservation": {
+      "evidence": "docs/audits/2026-10-10/STREAM-SESSION-DIAGNOSTICS-INSTALLED.json",
+      "evidenceSha256NormalizedLf": "cb892492f2fe642bd8ce09dce68428db9b107ed94c2e75635d367e60ad671c6c",
+      "sessionId": "8941f172754595f5",
+      "uiSourceRevision": "c4826d4682472edb912fc14e68e8fd447994a95f",
+      "outcome": "CLIENT_REPORTED_FINITE_READONLY_RTP",
+      "finiteReadonlyVideoAccepted": true,
+      "primaryDirectVideoAccepted": false,
+      "directInputAccepted": false,
+      "localhostRouteProven": false,
+      "framesPresented": 223,
+      "width": 960,
+      "height": 540,
+      "selectedPath": "nat",
+      "protocol": "udp",
+      "echoes": 20,
+      "echoRttP95Ms": 26.70000000298,
+      "topologySource": "User identifies this browser and PH030 as the laptop; route locality is not independently proven."
+    }
+  },
+  "items": [
+    {
+      "id": "EP-001",
+      "title": "Сохранять видимость колонок после F5",
+      "priority": "P1",
+      "state": "ACCEPTED_RECORDED_SCOPE",
+      "progress": "ACCEPTED_FINITE",
+      "currentScope": "Видимость колонок сохраняется; конечная приёмка EP-001 записана отдельно.",
+      "remaining": "Общие table preferences относятся к EP-011, не автоматически к EP-001.",
+      "acceptanceCriteria": [
+        "Изменить набор колонок → F5 → тот же набор.",
+        "Миграция старой/повреждённой local schema без потери темы.",
+        "Недоступный storage не ломает каталог."
+      ],
+      "dependencies": [],
+      "acceptanceEvidence": "docs/audits/2026-10-05/ENTERPRISE-PRODUCT-IMPLEMENTATION-EVIDENCE.json",
+      "kind": "CONFIRMED_DEFECT",
+      "estimatedScope": "S",
+      "sourceRefs": [
+        {
+          "file": "frontend/src/features/devices/FleetMatrix.tsx"
+        }
+      ],
+      "assessmentBasis": "docs/audits/2026-10-09/CHAT-CODE-RECONCILIATION.md",
+      "fleetAccepted": false,
+      "acceptanceEvidenceSha256NormalizedLf": "a201be68fb80711416c9e6bb736051be9a040978f340c8981b17a116a221fa43"
+    },
+    {
+      "id": "EP-002",
+      "title": "Исправить canonical export визуального сценария",
+      "priority": "P1",
+      "state": "ACCEPTED_RECORDED_SCOPE",
+      "progress": "ACCEPTED_FINITE",
+      "currentScope": "Canonical array/action DAG совместим с сервером; связи и Undo используют тот же формат.",
+      "remaining": "Новые action/version regressions должны сохранять этот контракт.",
+      "acceptanceCriteria": [
+        "POST canonical fixture принимается сервером.",
+        "Lowercase action, links/retry/timeout сохранены.",
+        "Неверный граф не публикуется и не запускается."
+      ],
+      "dependencies": [],
+      "acceptanceEvidence": "docs/audits/2026-10-05/ENTERPRISE-PRODUCT-IMPLEMENTATION-EVIDENCE.json",
+      "kind": "CONFIRMED_DEFECT",
+      "estimatedScope": "M",
+      "sourceRefs": [
+        {
+          "file": "frontend/lib/dag/export.ts"
+        },
+        {
+          "file": "backend/schemas/dag.py"
+        },
+        {
+          "file": "frontend/app/(dashboard)/scripts/builder/page.tsx"
+        }
+      ],
+      "assessmentBasis": "docs/audits/2026-10-09/CHAT-CODE-RECONCILIATION.md",
+      "fleetAccepted": false,
+      "acceptanceEvidenceSha256NormalizedLf": "a201be68fb80711416c9e6bb736051be9a040978f340c8981b17a116a221fa43"
+    },
+    {
+      "id": "EP-003",
+      "title": "Открывать existing canonical script в builder",
+      "priority": "P1",
+      "state": "ACCEPTED_RECORDED_SCOPE",
+      "progress": "ACCEPTED_FINITE",
+      "currentScope": "Сохранённые canonical версии открываются; текущий browser canary показывает v1, 3 узла/2 связи.",
+      "remaining": "Это не roundtrip всех будущих action или legacy документов.",
+      "acceptanceCriteria": [
+        "Сохранённый canonical graph открывается.",
+        "Roundtrip не теряет поля/ветви/версию.",
+        "Load failure по-прежнему блокирует запись."
+      ],
+      "dependencies": [
+        "EP-002"
+      ],
+      "acceptanceEvidence": "docs/audits/2026-10-05/ENTERPRISE-PRODUCT-IMPLEMENTATION-EVIDENCE.json",
+      "kind": "CONFIRMED_DEFECT",
+      "estimatedScope": "M",
+      "sourceRefs": [
+        {
+          "file": "frontend/app/(dashboard)/scripts/builder/page.tsx"
+        }
+      ],
+      "assessmentBasis": "docs/audits/2026-10-09/CHAT-CODE-RECONCILIATION.md",
+      "fleetAccepted": false,
+      "acceptanceEvidenceSha256NormalizedLf": "a201be68fb80711416c9e6bb736051be9a040978f340c8981b17a116a221fa43"
+    },
+    {
+      "id": "EP-004",
+      "title": "Нормализовать device_model в Fleet Matrix",
+      "priority": "P1",
+      "state": "ACCEPTED_RECORDED_SCOPE",
+      "progress": "ACCEPTED_FINITE",
+      "currentScope": "Модель нормализована для registry/picker; отсутствие данных имеет fallback.",
+      "remaining": "Полный inventory и колонки относятся к EP-012/028.",
+      "acceptanceCriteria": [
+        "API model отображается в registry и picker одинаково.",
+        "Пустое/legacy поле отображается с честным fallback.",
+        "Поиск/сортировка используют тот же canonical field."
+      ],
+      "dependencies": [],
+      "acceptanceEvidence": "docs/audits/2026-10-05/ENTERPRISE-PRODUCT-IMPLEMENTATION-EVIDENCE.json",
+      "kind": "CONFIRMED_DEFECT",
+      "estimatedScope": "S",
+      "sourceRefs": [
+        {
+          "file": "frontend/src/features/devices/FleetMatrix.tsx"
+        },
+        {
+          "file": "frontend/lib/hooks/useDevices.ts"
+        }
+      ],
+      "assessmentBasis": "docs/audits/2026-10-09/CHAT-CODE-RECONCILIATION.md",
+      "fleetAccepted": false,
+      "acceptanceEvidenceSha256NormalizedLf": "a201be68fb80711416c9e6bb736051be9a040978f340c8981b17a116a221fa43"
+    },
+    {
+      "id": "EP-005",
+      "title": "Не показывать пустое количество узлов в pipeline picker",
+      "priority": "P2",
+      "state": "ACCEPTED_RECORDED_SCOPE",
+      "progress": "ACCEPTED_FINITE",
+      "currentScope": "Canonical current_version count принят; unknown count не считается нулём.",
+      "remaining": "Pipeline/schedule UX и semantic references — отдельные работы.",
+      "acceptanceCriteria": [
+        "Count canonical current_version одинаков в scripts/pipeline/schedule.",
+        "Unknown count обозначен явно, не пустой строкой/нулём.",
+        "Старая форма ответа не ломает выбор версии."
+      ],
+      "dependencies": [
+        "EP-002"
+      ],
+      "acceptanceEvidence": "docs/audits/2026-10-05/ENTERPRISE-PRODUCT-IMPLEMENTATION-EVIDENCE.json",
+      "kind": "CONFIRMED_DEFECT",
+      "estimatedScope": "S",
+      "sourceRefs": [
+        {
+          "file": "frontend/app/(dashboard)/orchestration/page.tsx"
+        }
+      ],
+      "assessmentBasis": "docs/audits/2026-10-09/CHAT-CODE-RECONCILIATION.md",
+      "fleetAccepted": false,
+      "acceptanceEvidenceSha256NormalizedLf": "a201be68fb80711416c9e6bb736051be9a040978f340c8981b17a116a221fa43"
+    },
+    {
+      "id": "EP-006",
+      "title": "HTTP rejection не является delivered в legacy webhook",
+      "priority": "P1",
+      "state": "ACCEPTED_RECORDED_SCOPE",
+      "progress": "ACCEPTED_FINITE",
+      "currentScope": "HTTP outcomes исправлены; loopback receipts204/403/429/503 и bounded retry приняты.",
+      "remaining": "Durable outbox/DLQ/replay требуют EP-025.",
+      "acceptanceCriteria": [
+        "2xx success, 403 rejected, 429 rate limited и 5xx retry различаются.",
+        "Не повторять terminal rejection бесконечно.",
+        "Новый результат отражён в delivery logs/receipts; n8n compatibility проверена."
+      ],
+      "dependencies": [],
+      "acceptanceEvidence": "docs/audits/2026-10-05/ENTERPRISE-PRODUCT-FOLLOWUP-EVIDENCE.json",
+      "kind": "CONFIRMED_DEFECT",
+      "estimatedScope": "S",
+      "sourceRefs": [
+        {
+          "file": "backend/services/webhook_service.py"
+        },
+        {
+          "file": "backend/services/task_service.py"
+        },
+        {
+          "file": "backend/services/batch_service.py"
+        }
+      ],
+      "assessmentBasis": "docs/audits/2026-10-09/CHAT-CODE-RECONCILIATION.md",
+      "fleetAccepted": false,
+      "acceptanceEvidenceSha256NormalizedLf": "d32f3b7eedc2e1a63ed85fa17eddae60251c421bed4bb90407894d03ca1f7b6e"
+    },
+    {
+      "id": "EP-007",
+      "title": "Встроенная Grafana должна открыть запрошенный dashboard",
+      "priority": "P1",
+      "state": "ACCEPTED_RECORDED_SCOPE",
+      "progress": "ACCEPTED_FINITE",
+      "currentScope": "Grafana proxy/dashboard/Viewer query и отзыв собственной сессии подтверждены.",
+      "remaining": "Новые панели/mobile themes/synthetic Android SLI не приняты автоматически.",
+      "acceptanceCriteria": [
+        "Получены dashboard и реальные панели, не Welcome.",
+        "Request/redirect/auth/org/UID цепочка установлена.",
+        "Истечение/отзыв Sphere session не даёт обхода RBAC."
+      ],
+      "dependencies": [],
+      "acceptanceEvidence": "docs/audits/2026-10-05/ENTERPRISE-PRODUCT-FOLLOWUP-EVIDENCE.json",
+      "kind": "OBSERVED_RUNTIME_GAP",
+      "estimatedScope": "M",
+      "sourceRefs": [
+        {
+          "file": "frontend/lib/server/observability.ts"
+        }
+      ],
+      "assessmentBasis": "docs/audits/2026-10-09/CHAT-CODE-RECONCILIATION.md",
+      "fleetAccepted": false,
+      "acceptanceEvidenceSha256NormalizedLf": "d32f3b7eedc2e1a63ed85fa17eddae60251c421bed4bb90407894d03ca1f7b6e"
+    },
+    {
+      "id": "EP-008",
+      "title": "Подключить реальные HTTP RPS и latency panels",
+      "priority": "P1",
+      "state": "ACCEPTED_RECORDED_SCOPE",
+      "progress": "ACCEPTED_FINITE",
+      "currentScope": "HTTP RPS/p95 подключены с window/unit/scope, empty/stale/error states.",
+      "remaining": "HTTP до заголовков не измеряет жест→экран или APK execution.",
+      "acceptanceCriteria": [
+        "RPS/p95 отображают unit/window/scope.",
+        "Empty/stale/error/partial vector различаются.",
+        "Endpoint/error drilldown и bounded query allowlist."
+      ],
+      "dependencies": [],
+      "acceptanceEvidence": "docs/audits/2026-10-05/ENTERPRISE-HTTP-METRICS-EVIDENCE.json",
+      "kind": "CAPABILITY_GAP",
+      "estimatedScope": "M",
+      "sourceRefs": [
+        {
+          "file": "frontend/lib/server/observability.ts"
+        },
+        {
+          "file": "backend/metrics.py"
+        }
+      ],
+      "assessmentBasis": "docs/audits/2026-10-09/CHAT-CODE-RECONCILIATION.md",
+      "fleetAccepted": false,
+      "acceptanceEvidenceSha256NormalizedLf": "c35d42bf77850f510eb7cde804f931cc5ec21d917ce7cd664a38337ccddd42c4"
+    },
+    {
+      "id": "EP-009",
+      "title": "История CPU/RAM с корректным scope",
+      "priority": "P1",
+      "state": "ACCEPTED_RECORDED_SCOPE",
+      "progress": "ACCEPTED_FINITE",
+      "currentScope": "История cgroup CPU/RAM подключена; код задаёт cadence15s.",
+      "remaining": "Windows disk/RAM, process RSS и fleet soak вне этой приёмки.",
+      "acceptanceCriteria": [
+        "История источник/единица/интервал указаны.",
+        "Process, cgroup и host не смешаны.",
+        "Unknown memory/CPU не рисуется нулём."
+      ],
+      "dependencies": [
+        "EP-008"
+      ],
+      "acceptanceEvidence": "docs/audits/2026-10-05/ENTERPRISE-CONTAINER-RESOURCE-EVIDENCE.json",
+      "kind": "CAPABILITY_GAP",
+      "estimatedScope": "M",
+      "sourceRefs": [
+        {
+          "file": "backend/api/v1/monitoring/router.py"
+        }
+      ],
+      "assessmentBasis": "docs/audits/2026-10-09/CHAT-CODE-RECONCILIATION.md",
+      "fleetAccepted": false,
+      "acceptanceEvidenceSha256NormalizedLf": "a68e408255053b447885e359208c1c19755cd9e5b1add36fbb1f030d8054d487"
+    },
+    {
+      "id": "EP-010",
+      "title": "Активные tunnels и fleet metric coverage",
+      "priority": "P1",
+      "state": "OPEN",
+      "progress": "PARTIAL",
+      "currentScope": "Tenant fleet coverage и VPN observations реализованы; StageA/B receipts сохранены.",
+      "remaining": "Independent producer/transport probes/active tunnel semantics/load ещё не приняты.",
+      "acceptanceCriteria": [
+        "Assignment/Android applied/heartbeat имеют отдельные counts.",
+        "Collector semantics не умножают gauge по workers.",
+        "Tenant scope и source freshness видны."
+      ],
+      "dependencies": [
+        "EP-008"
+      ],
+      "acceptanceEvidence": null,
+      "kind": "CAPABILITY_GAP",
+      "estimatedScope": "L",
+      "sourceRefs": [
+        {
+          "file": "backend/api/v1/monitoring/router.py"
+        },
+        {
+          "file": "backend/metrics.py"
+        }
+      ],
+      "assessmentBasis": "docs/audits/2026-10-09/CHAT-CODE-RECONCILIATION.md",
+      "fleetAccepted": false
+    },
+    {
+      "id": "EP-011",
+      "title": "Версионировать все browser table/view preferences",
+      "priority": "P1",
+      "state": "OPEN",
+      "progress": "PARTIAL",
+      "currentScope": "Column visibility/theme persistence и Back tab-memory scroll restoration есть.",
+      "remaining": "Общий registry order/width/pin/sort и cross-tab migration не принят; F5 scroll не обещан.",
+      "acceptanceCriteria": [
+        "View, columns/order/width/pin/sort/density/page size persist.",
+        "Shareable фильтры в URL, private prefs без secrets.",
+        "Reset одной таблицы и cross-tab migration."
+      ],
+      "dependencies": [
+        "EP-001"
+      ],
+      "acceptanceEvidence": null,
+      "kind": "CAPABILITY_GAP",
+      "estimatedScope": "L",
+      "sourceRefs": [
+        {
+          "file": "frontend/src/features/devices/FleetMatrix.tsx"
+        },
+        {
+          "file": "frontend/src/shared/store/useUIStore.ts"
+        }
+      ],
+      "assessmentBasis": "docs/audits/2026-10-09/CHAT-CODE-RECONCILIATION.md",
+      "fleetAccepted": false
+    },
+    {
+      "id": "EP-012",
+      "title": "Расширить registry typed columns и пресеты",
+      "priority": "P1",
+      "state": "OPEN",
+      "progress": "OPEN",
+      "currentScope": "Базовый Fleet Matrix существует; модель исправлена.",
+      "remaining": "Typed column registry, provenance/unknown, presets и 1000 rows layout/pagination остаются.",
+      "acceptanceCriteria": [
+        "Пресеты Operations/Connection/Versions/Resources.",
+        "Каждое поле имеет provenance и unknown.",
+        "1000 rows server pagination, sticky identity, no page overflow."
+      ],
+      "dependencies": [
+        "EP-004",
+        "EP-011"
+      ],
+      "acceptanceEvidence": null,
+      "kind": "CAPABILITY_GAP",
+      "estimatedScope": "M",
+      "sourceRefs": [
+        {
+          "file": "frontend/src/features/devices/FleetMatrix.tsx"
+        },
+        {
+          "file": "backend/schemas/devices.py"
+        }
+      ],
+      "assessmentBasis": "docs/audits/2026-10-09/CHAT-CODE-RECONCILIATION.md",
+      "fleetAccepted": false
+    },
+    {
+      "id": "EP-013",
+      "title": "Единые tokens, preferences и icon semantics",
+      "priority": "P2",
+      "state": "OPEN",
+      "progress": "PARTIAL",
+      "currentScope": "Theme tokens/AppearanceDrawer/Lucide и responsive Studio существуют.",
+      "remaining": "Полная 4 themes/5 accents/3 density matrix и единый redesign страниц не приняты.",
+      "acceptanceCriteria": [
+        "Старая theme/density мигрирует без reset.",
+        "Named icons/focus/reduced motion/zoom и единые units.",
+        "4 темы/5 акцентов/3 density проходят визуальную матрицу."
+      ],
+      "dependencies": [
+        "EP-011"
+      ],
+      "acceptanceEvidence": null,
+      "kind": "DESIGN_DEBT",
+      "estimatedScope": "M",
+      "sourceRefs": [
+        {
+          "file": "frontend/src/features/preferences/AppearanceDrawer.tsx"
+        },
+        {
+          "file": "frontend/src/shared/store/themeStore.ts"
+        }
+      ],
+      "assessmentBasis": "docs/audits/2026-10-09/CHAT-CODE-RECONCILIATION.md",
+      "fleetAccepted": false
+    },
+    {
+      "id": "EP-014",
+      "title": "Studio canonical AST и отдельный layout",
+      "priority": "P1",
+      "state": "OPEN",
+      "progress": "PARTIAL",
+      "currentScope": "React Flow/ELK, отдельные узлы/drag/drop/explicit insertion/reconnect/remove/Undo реализованы и конечные canaries приняты.",
+      "remaining": "Versioned composition/subgraphs и unsupported action roundtrip остаются.",
+      "acceptanceCriteria": [
+        "Semantic AST versioned, canvas metadata отдельно.",
+        "Visual/source switch без semantic drift.",
+        "Unsupported action сохраняется read-only либо блокирует Run."
+      ],
+      "dependencies": [
+        "EP-002",
+        "EP-003"
+      ],
+      "acceptanceEvidence": null,
+      "kind": "CAPABILITY_GAP",
+      "estimatedScope": "L",
+      "sourceRefs": [
+        {
+          "file": "frontend/lib/dag/export.ts"
+        },
+        {
+          "file": "frontend/app/(dashboard)/scripts/builder/page.tsx"
+        }
+      ],
+      "assessmentBasis": "docs/audits/2026-10-09/CHAT-CODE-RECONCILIATION.md",
+      "fleetAccepted": false
+    },
+    {
+      "id": "EP-015",
+      "title": "Studio source schema, drafts, conflict и undo",
+      "priority": "P1",
+      "state": "OPEN",
+      "progress": "PARTIAL",
+      "currentScope": "Draft/source/undo/outage retention и pending/unknown guards реализованы.",
+      "remaining": "Полный conflict diff и dirty draft browser Back/Forward protection не приняты.",
+      "acceptanceCriteria": [
+        "Dirty parse error не теряет текст.",
+        "Draft autosave не публикует / не запускает.",
+        "Concurrent version conflict с diff и undo/redo."
+      ],
+      "dependencies": [
+        "EP-014"
+      ],
+      "acceptanceEvidence": null,
+      "kind": "CAPABILITY_GAP",
+      "estimatedScope": "L",
+      "sourceRefs": [
+        {
+          "file": "frontend/app/(dashboard)/scripts/builder/page.tsx"
+        },
+        {
+          "file": "backend/services/script_service.py"
+        }
+      ],
+      "assessmentBasis": "docs/audits/2026-10-09/CHAT-CODE-RECONCILIATION.md",
+      "fleetAccepted": false
+    },
+    {
+      "id": "EP-016",
+      "title": "Studio каталог всех runtime actions",
+      "priority": "P1",
+      "state": "OPEN",
+      "progress": "PARTIAL",
+      "currentScope": "32 action forms/contract1.0 есть в web/backend; APK содержит исполнителей.",
+      "remaining": "Parameter validation не проверяет installed APK; action-specific live matrix всего парка не принята.",
+      "acceptanceCriteria": [
+        "Capability/action schema содержит поля/limits/effects/result.",
+        "Неизвестные версии/permissions блокируют конкретный action.",
+        "Нет promises arbitrary host code."
+      ],
+      "dependencies": [
+        "EP-014"
+      ],
+      "acceptanceEvidence": null,
+      "kind": "CAPABILITY_GAP",
+      "estimatedScope": "L",
+      "sourceRefs": [
+        {
+          "file": "backend/schemas/dag.py"
+        },
+        {
+          "file": "android/app/src/main/kotlin/com/sphereplatform/agent/commands/DagRunner.kt"
+        }
+      ],
+      "assessmentBasis": "docs/audits/2026-10-09/CHAT-CODE-RECONCILIATION.md",
+      "fleetAccepted": false
+    },
+    {
+      "id": "EP-017",
+      "title": "Live device picker и capability preflight в Studio",
+      "priority": "P1",
+      "state": "OPEN",
+      "progress": "PARTIAL",
+      "currentScope": "Лаборатория выбирает один Android и version-pinned task с viewer-local handoff.",
+      "remaining": "Полный свежий action/capability preflight и competing input admission не приняты.",
+      "acceptanceCriteria": [
+        "Target identity/version/display/root/input видны.",
+        "Offline edit разрешён, Run/Record по свежему preflight.",
+        "Смена target не переносит старый coordinate transform."
+      ],
+      "dependencies": [
+        "EP-014",
+        "EP-016"
+      ],
+      "acceptanceEvidence": null,
+      "kind": "CAPABILITY_GAP",
+      "estimatedScope": "M",
+      "sourceRefs": [
+        {
+          "file": "frontend/app/(dashboard)/scripts/builder/page.tsx"
+        }
+      ],
+      "assessmentBasis": "docs/audits/2026-10-09/CHAT-CODE-RECONCILIATION.md",
+      "fleetAccepted": false
+    },
+    {
+      "id": "EP-018",
+      "title": "Запись Android input и selector candidates",
+      "priority": "P1",
+      "state": "OPEN",
+      "progress": "PARTIAL",
+      "currentScope": "Click/swipe endpoints, explicit XPath plan и key/text ACK есть; queue200. Clock fix1577e01e установлен в UI60be6ecd; finite PH011 mixed recording и graph insertion приняты.",
+      "remaining": "MOVE recording/Unicode/IME/automatic tree-crop-pixel bundle и Fleet acceptance отсутствуют.",
+      "acceptanceCriteria": [
+        "Tap/drag/text/wheel нормализуются с receipts.",
+        "Ambiguity и fallback coordinates видимы.",
+        "Secrets redacted, bounded buffer, Stop освобождает subscriptions."
+      ],
+      "dependencies": [
+        "EP-017"
+      ],
+      "acceptanceEvidence": null,
+      "kind": "CAPABILITY_GAP",
+      "estimatedScope": "L",
+      "sourceRefs": [
+        {
+          "file": "frontend/app/(dashboard)/scripts/builder/page.tsx"
+        },
+        {
+          "file": "backend/services/ui_hierarchy.py"
+        }
+      ],
+      "assessmentBasis": "docs/audits/2026-10-09/CHAT-CODE-RECONCILIATION.md",
+      "fleetAccepted": false
+    },
+    {
+      "id": "EP-019",
+      "title": "Пошаговый trace и replay с frame correlation",
+      "priority": "P1",
+      "state": "OPEN",
+      "progress": "OPEN",
+      "currentScope": "Task logs/marks показывают завершённый шаг, но не correlated frame trace.",
+      "remaining": "Нужны command/frame/snapshot/attempt IDs, side-effect-free replay и artifact quotas/TTL.",
+      "acceptanceCriteria": [
+        "Replay trace не запускает Android actions.",
+        "Каждый step связан с command/frame/snapshot/attempt.",
+        "Unknown/failed/cancelled различаются; TTL/quota artifacts."
+      ],
+      "dependencies": [
+        "EP-017"
+      ],
+      "acceptanceEvidence": null,
+      "kind": "CAPABILITY_GAP",
+      "estimatedScope": "L",
+      "sourceRefs": [
+        {
+          "file": "frontend/app/(dashboard)/tasks/page.tsx"
+        },
+        {
+          "file": "backend/schemas/dag.py"
+        }
+      ],
+      "assessmentBasis": "docs/audits/2026-10-09/CHAT-CODE-RECONCILIATION.md",
+      "fleetAccepted": false
+    },
+    {
+      "id": "EP-020",
+      "title": "Server/agent debug pause, step, cancel и safety",
+      "priority": "P1",
+      "state": "OPEN",
+      "progress": "PARTIAL",
+      "currentScope": "Viewer-local release/read handoff, APK ownership и Redis continuous lease используются. UI86354350 сохраняет bounded failure snapshot; диагностика desktop/phone принята в конечном scope. Серверные timings семи границ установлены в API d720232e; PH011 heartbeat510ms повторился, все наблюдаемые spans <25ms. Queue/network/APK/native причина OPEN.",
+      "remaining": "Global viewer/task/API arbitration и debugger acceptance не завершены; idle timeoutP1. PH011 idle heartbeat510ms/tick15ms/lastACK RTT256ms/WS0B повторился; медленных измеренных backend coroutine нет, queued/network/APK/native участок ещё не определён.",
+      "acceptanceCriteria": [
+        "Pause/step настоящий protocol, либо явно unavailable.",
+        "Late result не возрождает cancelled run.",
+        "Retry non-idempotent input зависит от outcome."
+      ],
+      "dependencies": [
+        "EP-019"
+      ],
+      "acceptanceEvidence": null,
+      "kind": "CAPABILITY_GAP",
+      "estimatedScope": "L",
+      "sourceRefs": [
+        {
+          "file": "android/app/src/main/kotlin/com/sphereplatform/agent/commands/DagRunner.kt"
+        }
+      ],
+      "assessmentBasis": "docs/audits/2026-10-09/CHAT-CODE-RECONCILIATION.md",
+      "fleetAccepted": false
+    },
+    {
+      "id": "EP-021",
+      "title": "Объединить automation workspace и references",
+      "priority": "P1",
+      "state": "OPEN",
+      "progress": "OPEN",
+      "currentScope": "Сценарии/tasks/schedules/pipelines/triggers существуют отдельно с некоторыми deep links.",
+      "remaining": "Definition→version→run→task→device→trace, used-by graph/glossary остаются.",
+      "acceptanceCriteria": [
+        "Origin → version → run → task → device → trace deep links.",
+        "Existing URLs сохранены.",
+        "Used-by/dependency graph и glossary без неоднозначных sessions."
+      ],
+      "dependencies": [
+        "EP-014"
+      ],
+      "acceptanceEvidence": null,
+      "kind": "DESIGN_DEBT",
+      "estimatedScope": "XL",
+      "sourceRefs": [
+        {
+          "file": "frontend/app/(dashboard)/orchestration/page.tsx"
+        },
+        {
+          "file": "frontend/app/(dashboard)/event-triggers/page.tsx"
+        }
+      ],
+      "assessmentBasis": "docs/audits/2026-10-09/CHAT-CODE-RECONCILIATION.md",
+      "fleetAccepted": false
+    },
+    {
+      "id": "EP-022",
+      "title": "Task detail: полные outcomes и artifacts",
+      "priority": "P1",
+      "state": "OPEN",
+      "progress": "PARTIAL",
+      "currentScope": "Task detail показывает version/outcomes/logs/доступные screenshots; missing server file обозначается.",
+      "remaining": "Полный origin/attempt/deadline/artifact manifest и rerun plan не закрыты.",
+      "acceptanceCriteria": [
+        "Pinned hash, attempts, deadline, ACK/result раздельно.",
+        "Parent pipeline/trigger/schedule отображён.",
+        "Rerun preview выдаёт новый task, а не меняет history."
+      ],
+      "dependencies": [
+        "EP-019",
+        "EP-021"
+      ],
+      "acceptanceEvidence": null,
+      "kind": "CAPABILITY_GAP",
+      "estimatedScope": "M",
+      "sourceRefs": [
+        {
+          "file": "frontend/app/(dashboard)/tasks/[id]/page.tsx"
+        }
+      ],
+      "assessmentBasis": "docs/audits/2026-10-09/CHAT-CODE-RECONCILIATION.md",
+      "fleetAccepted": false
+    },
+    {
+      "id": "EP-023",
+      "title": "Schedules: timezone, missed fire и next run explain",
+      "priority": "P2",
+      "state": "OPEN",
+      "progress": "OPEN",
+      "currentScope": "Расписания/pipeline forms имеют имеющийся API и предыдущие regressions.",
+      "remaining": "Полный DST/missed/duplicate fire/history/conflict acceptance ещё нужен.",
+      "acceptanceCriteria": [
+        "Cron/UTC/local/DST policy показаны.",
+        "Next/missed/duplicate fire outcomes и execution history.",
+        "Отмена/enable version conflicts без double fire."
+      ],
+      "dependencies": [
+        "EP-021"
+      ],
+      "acceptanceEvidence": null,
+      "kind": "CAPABILITY_GAP",
+      "estimatedScope": "M",
+      "sourceRefs": [
+        {
+          "file": "frontend/app/(dashboard)/orchestration/page.tsx"
+        }
+      ],
+      "assessmentBasis": "docs/audits/2026-10-09/CHAT-CODE-RECONCILIATION.md",
+      "fleetAccepted": false
+    },
+    {
+      "id": "EP-024",
+      "title": "Triggers: безопасная simulation и feedback loop limits",
+      "priority": "P2",
+      "state": "OPEN",
+      "progress": "OPEN",
+      "currentScope": "Event triggers/delivery и catalog/read evidence существуют.",
+      "remaining": "Dry match без Run, cooldown/dedup/rate/recursion budgets и origin trace остаются.",
+      "acceptanceCriteria": [
+        "Test match без pipeline Run.",
+        "Cooldown/dedup/rate limits explain.",
+        "Event origin и recursion budget предотвратят бесконечную петлю."
+      ],
+      "dependencies": [
+        "EP-021"
+      ],
+      "acceptanceEvidence": null,
+      "kind": "CAPABILITY_GAP",
+      "estimatedScope": "M",
+      "sourceRefs": [
+        {
+          "file": "frontend/app/(dashboard)/event-triggers/page.tsx"
+        }
+      ],
+      "assessmentBasis": "docs/audits/2026-10-09/CHAT-CODE-RECONCILIATION.md",
+      "fleetAccepted": false
+    },
+    {
+      "id": "EP-025",
+      "title": "Webhook attempts/outbox и совместимость доставки",
+      "priority": "P1",
+      "state": "OPEN",
+      "progress": "OPEN",
+      "currentScope": "Legacy HTTP outcome исправлен EP-006; n8n имеет отдельный service.",
+      "remaining": "Operator attempts/outbox/DLQ/replay и duplicate policy требуют отдельной приёмки.",
+      "acceptanceCriteria": [
+        "Delivery ID/outcome/retry deadline/last error доступны.",
+        "Подпись и payload сохраняют совместимость.",
+        "DLQ/replay bounded и не дублируют irreversible effects."
+      ],
+      "dependencies": [
+        "EP-006",
+        "EP-021"
+      ],
+      "acceptanceEvidence": null,
+      "kind": "CAPABILITY_GAP",
+      "estimatedScope": "L",
+      "sourceRefs": [
+        {
+          "file": "backend/services/n8n_webhook_service.py"
+        },
+        {
+          "file": "frontend/app/(dashboard)/webhooks/page.tsx"
+        }
+      ],
+      "assessmentBasis": "docs/audits/2026-10-09/CHAT-CODE-RECONCILIATION.md",
+      "fleetAccepted": false
+    },
+    {
+      "id": "EP-026",
+      "title": "Typed datasources и project manifest",
+      "priority": "P2",
+      "state": "OPEN",
+      "progress": "OPEN",
+      "currentScope": "Pipeline settings schema есть; generic datasource/resource manifest не принят.",
+      "remaining": "Versioned connector contract, plan/diff/conflicts, secret refs/write effects нужны.",
+      "acceptanceCriteria": [
+        "Import plan diff/conflicts/dependencies до применения.",
+        "Secrets по refs, credentials tenant scoped.",
+        "Connector write effects/rollback отдельно от workflow definitions."
+      ],
+      "dependencies": [
+        "EP-021"
+      ],
+      "acceptanceEvidence": null,
+      "kind": "FUTURE_DESIGN",
+      "estimatedScope": "XL",
+      "sourceRefs": [
+        {
+          "file": "backend/schemas/pipeline_settings.py"
+        }
+      ],
+      "assessmentBasis": "docs/audits/2026-10-09/CHAT-CODE-RECONCILIATION.md",
+      "fleetAccepted": false
+    },
+    {
+      "id": "EP-027",
+      "title": "Inspector tree, selectors, freshness и performance",
+      "priority": "P1",
+      "state": "OPEN",
+      "progress": "PARTIAL",
+      "currentScope": "Video/tree selection, raw attributes, bounded snapshot/refresh реализованы. APK вызывает root uiautomator dump.",
+      "remaining": "Это не Appium UiAutomator2 server; performance/freshness/matcher/automatic bundle ещё открыты.",
+      "acceptanceCriteria": [
+        "Video selection/tree selection синхронны.",
+        "Ancestors/attributes/duplicates/export/selector candidates.",
+        "Singleflight/cancel obsolete, stale marked, no hidden polling."
+      ],
+      "dependencies": [],
+      "acceptanceEvidence": null,
+      "kind": "CAPABILITY_GAP",
+      "estimatedScope": "M",
+      "sourceRefs": [
+        {
+          "file": "backend/services/ui_hierarchy.py"
+        },
+        {
+          "file": "android/app/src/main/kotlin/com/sphereplatform/agent/commands/AdbActionExecutor.kt"
+        }
+      ],
+      "assessmentBasis": "docs/audits/2026-10-09/CHAT-CODE-RECONCILIATION.md",
+      "fleetAccepted": false
+    },
+    {
+      "id": "EP-028",
+      "title": "Явный device/agent telemetry scope и inventory",
+      "priority": "P1",
+      "state": "OPEN",
+      "progress": "PARTIAL",
+      "currentScope": "DeviceStatusProvider/профиль отдают доступную Android telemetry.",
+      "remaining": "Полный inventory, deviceRAM против agentRSS/PSS, observed_at/provenance/network identity не принят.",
+      "acceptanceCriteria": [
+        "Device RAM и agent PSS/RSS отдельно.",
+        "Source/error/observed_at validity не заменяется0.",
+        "Version/display/storage/network/capabilities structured."
+      ],
+      "dependencies": [],
+      "acceptanceEvidence": null,
+      "kind": "CAPABILITY_GAP",
+      "estimatedScope": "M",
+      "sourceRefs": [
+        {
+          "file": "android/app/src/main/kotlin/com/sphereplatform/agent/providers/DeviceStatusProvider.kt"
+        }
+      ],
+      "assessmentBasis": "docs/audits/2026-10-09/CHAT-CODE-RECONCILIATION.md",
+      "fleetAccepted": false
+    },
+    {
+      "id": "EP-029",
+      "title": "Selected video end-to-end диагностика и управление",
+      "priority": "P1",
+      "state": "OPEN",
+      "progress": "PARTIAL",
+      "currentScope": "Normal continuous Control принят PH011APK10249; отдельный idle receipt failure повторился. UI86354350 сохраняет bounded failure snapshot; диагностика desktop/phone принята в конечном scope. Серверные timings семи границ установлены в API d720232e; PH011 heartbeat510ms повторился, все наблюдаемые spans <25ms. Queue/network/APK/native причина OPEN.",
+      "remaining": "Нет fleet input-to-pictureSLO; нужны bounded correlated timing и idle loss fix. PH011 idle heartbeat510ms/tick15ms/lastACK RTT256ms/WS0B повторился; медленных измеренных backend coroutine нет, queued/network/APK/native участок ещё не определён.",
+      "acceptanceCriteria": [
+        "Capture/encode/relay/decode/render FPS + drops/bitrate.",
+        "Home/Back/Recents/text/wheel и transform при rotation.",
+        "Input ACK/result/frame timings без ложного cross-clock one-way claim."
+      ],
+      "dependencies": [
+        "EP-028"
+      ],
+      "acceptanceEvidence": null,
+      "kind": "CAPABILITY_GAP",
+      "estimatedScope": "L",
+      "sourceRefs": [
+        {
+          "file": "frontend/src/features/stream/SingleDeviceStream.tsx"
+        }
+      ],
+      "assessmentBasis": "docs/audits/2026-10-09/CHAT-CODE-RECONCILIATION.md",
+      "fleetAccepted": false
+    },
+    {
+      "id": "EP-030",
+      "title": "Original PNG и matching asset provenance",
+      "priority": "P2",
+      "state": "OPEN",
+      "progress": "PARTIAL",
+      "currentScope": "Original PNG имеет finite pixel/hash receipts; пользователь отложил спор.",
+      "remaining": "Matching asset provenance/region/rotation и workflow artifactsOPEN; DPI/вес сами не доказывают pixel loss.",
+      "acceptanceCriteria": [
+        "Pixel dimensions/hash/MIME/capture source проверены.",
+        "Screenshot не перекодируется из H264.",
+        "Asset version/region/scale/rotation для future matcher."
+      ],
+      "dependencies": [
+        "EP-028"
+      ],
+      "acceptanceEvidence": null,
+      "kind": "CAPABILITY_GAP",
+      "estimatedScope": "M",
+      "sourceRefs": [
+        {
+          "file": "android/app/src/main/kotlin/com/sphereplatform/agent/commands/CommandDispatcher.kt"
+        }
+      ],
+      "assessmentBasis": "docs/audits/2026-10-09/CHAT-CODE-RECONCILIATION.md",
+      "fleetAccepted": false
+    },
+    {
+      "id": "EP-031",
+      "title": "Thumbnail wall 128 вместо множества full video",
+      "priority": "P1",
+      "state": "OPEN",
+      "progress": "OPEN",
+      "currentScope": "stream/page.tsx импортирует DeviceStream; GRID_SIZES до 64, это full-video matrix.",
+      "remaining": "Thumbnail wall128, cadence5/10s, shared capture/budgets/teardown не реализован.",
+      "acceptanceCriteria": [
+        "Интервалы5/10s и128tile, shared capture/stagger.",
+        "TTL/cache/bytes/concurrency budgets.",
+        "Selected stream отдельно, teardown при filter/hidden/unmount."
+      ],
+      "dependencies": [
+        "EP-012",
+        "EP-029"
+      ],
+      "acceptanceEvidence": null,
+      "kind": "CAPABILITY_GAP",
+      "estimatedScope": "L",
+      "sourceRefs": [
+        {
+          "file": "frontend/app/(dashboard)/stream/page.tsx"
+        }
+      ],
+      "assessmentBasis": "docs/audits/2026-10-09/CHAT-CODE-RECONCILIATION.md",
+      "fleetAccepted": false
+    },
+    {
+      "id": "EP-032",
+      "title": "Общие structured logs всех разрешённых sources",
+      "priority": "P1",
+      "state": "OPEN",
+      "progress": "PARTIAL",
+      "currentScope": "Различение log sources и bounded device read реализованы.",
+      "remaining": "Общий server cursor devices/groups/run/correlation без client fanout и полный export не приняты.",
+      "acceptanceCriteria": [
+        "All devices / groups / run / correlation server query.",
+        "Source / severity / time / build / sequence schema.",
+        "Bounded cursor/export, без 1000 client fanout."
+      ],
+      "dependencies": [
+        "EP-028"
+      ],
+      "acceptanceEvidence": null,
+      "kind": "CAPABILITY_GAP",
+      "estimatedScope": "L",
+      "sourceRefs": [
+        {
+          "file": "backend/api/v1/logs/router.py"
+        },
+        {
+          "file": "frontend/app/(dashboard)/logs/page.tsx"
+        }
+      ],
+      "assessmentBasis": "docs/audits/2026-10-09/CHAT-CODE-RECONCILIATION.md",
+      "fleetAccepted": false
+    },
+    {
+      "id": "EP-033",
+      "title": "Byte-bounded backend log reads и global retention",
+      "priority": "P1",
+      "state": "OPEN",
+      "progress": "PARTIAL",
+      "currentScope": "Byte-bounded read/upload реализованы; router отделяет global quota/cross-worker lock от writer.",
+      "remaining": "Org/global sweeper/quotas/offline expiry/backup/restore/load остаются.",
+      "acceptanceCriteria": [
+        "Tail/filter byte budget и bounded concurrency.",
+        "Org/global quotas и independent retention sweeper.",
+        "Offline sources expire; disk forecast/drop counters."
+      ],
+      "dependencies": [
+        "EP-032"
+      ],
+      "acceptanceEvidence": null,
+      "kind": "CAPABILITY_GAP",
+      "estimatedScope": "L",
+      "sourceRefs": [
+        {
+          "file": "backend/api/v1/logs/router.py"
+        }
+      ],
+      "assessmentBasis": "docs/audits/2026-10-09/CHAT-CODE-RECONCILIATION.md",
+      "fleetAccepted": false
+    },
+    {
+      "id": "EP-034",
+      "title": "Audit journal semantic outcome и redacted diff",
+      "priority": "P2",
+      "state": "OPEN",
+      "progress": "PARTIAL",
+      "currentScope": "Audit journal/investigation имеют предыдущие исправления.",
+      "remaining": "Полный redacted diff, actor/effect/result correlation и cursor export не закрыты.",
+      "acceptanceCriteria": [
+        "Actor/effect/result/receipt correlations.",
+        "Before/after diff без secrets.",
+        "Server filters/cursor и bounded export всего scope."
+      ],
+      "dependencies": [
+        "EP-021",
+        "EP-032"
+      ],
+      "acceptanceEvidence": null,
+      "kind": "CAPABILITY_GAP",
+      "estimatedScope": "M",
+      "sourceRefs": [
+        {
+          "file": "frontend/app/(dashboard)/audit/page.tsx"
+        }
+      ],
+      "assessmentBasis": "docs/audits/2026-10-09/CHAT-CODE-RECONCILIATION.md",
+      "fleetAccepted": false
+    },
+    {
+      "id": "EP-035",
+      "title": "Dashboard attention queue и actionable drilldown",
+      "priority": "P2",
+      "state": "OPEN",
+      "progress": "OPEN",
+      "currentScope": "Dashboard содержит текущие агрегаты/drilldowns.",
+      "remaining": "Actionable attention queue с reason/version/affected scope и total/page acceptance нужна.",
+      "acceptanceCriteria": [
+        "Reasons affected scope/version/reconnect/task outcomes.",
+        "Link открывает конкретный filter/detail.",
+        "Data coverage и query total/page semantics видны."
+      ],
+      "dependencies": [
+        "EP-008",
+        "EP-012",
+        "EP-022"
+      ],
+      "acceptanceEvidence": null,
+      "kind": "DESIGN_DEBT",
+      "estimatedScope": "M",
+      "sourceRefs": [
+        {
+          "file": "frontend/app/(dashboard)/dashboard/page.tsx"
+        }
+      ],
+      "assessmentBasis": "docs/audits/2026-10-09/CHAT-CODE-RECONCILIATION.md",
+      "fleetAccepted": false
+    },
+    {
+      "id": "EP-036",
+      "title": "Groups membership и bulk plan",
+      "priority": "P2",
+      "state": "OPEN",
+      "progress": "PARTIAL",
+      "currentScope": "Group workflow/permissions/hierarchy имеют предыдущие исправления.",
+      "remaining": "Membership preview/owner/change evidence/bulk partial outcome UX ещё нужны.",
+      "acceptanceCriteria": [
+        "Membership preview и affected target count.",
+        "Notes/owner/last changed и audit links.",
+        "Bulk partial outcome и filter scope понятны."
+      ],
+      "dependencies": [
+        "EP-012"
+      ],
+      "acceptanceEvidence": null,
+      "kind": "CAPABILITY_GAP",
+      "estimatedScope": "M",
+      "sourceRefs": [
+        {
+          "file": "frontend/app/(dashboard)/groups/page.tsx"
+        }
+      ],
+      "assessmentBasis": "docs/audits/2026-10-09/CHAT-CODE-RECONCILIATION.md",
+      "fleetAccepted": false
+    },
+    {
+      "id": "EP-037",
+      "title": "Locations hierarchy UX и validation",
+      "priority": "P2",
+      "state": "OPEN",
+      "progress": "PARTIAL",
+      "currentScope": "Location hierarchy/forms имеют отдельные regressions.",
+      "remaining": "Полная create/edit/error/focus/mobile matrix и membership explain не приняты.",
+      "acceptanceCriteria": [
+        "Parent tree/breadcrumb/cycle validation.",
+        "Address/coordinates source/multiple membership explain.",
+        "Create/edit failures удерживают поля и focus."
+      ],
+      "dependencies": [
+        "EP-012"
+      ],
+      "acceptanceEvidence": null,
+      "kind": "DESIGN_DEBT",
+      "estimatedScope": "M",
+      "sourceRefs": [
+        {
+          "file": "frontend/app/(dashboard)/locations/page.tsx"
+        }
+      ],
+      "assessmentBasis": "docs/audits/2026-10-09/CHAT-CODE-RECONCILIATION.md",
+      "fleetAccepted": false
+    },
+    {
+      "id": "EP-038",
+      "title": "Discovery capability-scoped onboarding",
+      "priority": "P2",
+      "state": "OPEN",
+      "progress": "OPEN",
+      "currentScope": "Discovery использует текущий agent/onboarding API; будущий PC-agent не установлен.",
+      "remaining": "Android onboarding без обязательного PC-agent, budgets/progress/cancel/dedup/receipts нужны.",
+      "acceptanceCriteria": [
+        "Android onboarding не требует PC Agent.",
+        "Agent-scoped subnet/ports/budgets/progress/cancel.",
+        "Dedup results/registration receipts, permission explain."
+      ],
+      "dependencies": [],
+      "acceptanceEvidence": null,
+      "kind": "CAPABILITY_GAP",
+      "estimatedScope": "M",
+      "sourceRefs": [
+        {
+          "file": "frontend/app/(dashboard)/discovery/page.tsx"
+        }
+      ],
+      "assessmentBasis": "docs/audits/2026-10-09/CHAT-CODE-RECONCILIATION.md",
+      "fleetAccepted": false
+    },
+    {
+      "id": "EP-039",
+      "title": "Users role preview, safety и access review",
+      "priority": "P2",
+      "state": "OPEN",
+      "progress": "PARTIAL",
+      "currentScope": "Role-aware Users и описания UserDialogs есть; Jest сохраняет Radix warnings.",
+      "remaining": "Fixture warning не доказывает production defect; полная role/revision/revocation/a11y matrix нужна.",
+      "acceptanceCriteria": [
+        "Permissions preview и role revision conflict.",
+        "Last admin/self disable policy + server enforcement.",
+        "Revoked session и tenant tests."
+      ],
+      "dependencies": [],
+      "acceptanceEvidence": null,
+      "kind": "CAPABILITY_GAP",
+      "estimatedScope": "M",
+      "sourceRefs": [
+        {
+          "file": "frontend/app/(dashboard)/users/page.tsx"
+        }
+      ],
+      "assessmentBasis": "docs/audits/2026-10-09/CHAT-CODE-RECONCILIATION.md",
+      "fleetAccepted": false
+    },
+    {
+      "id": "EP-040",
+      "title": "Configuration effective state и разделение policies",
+      "priority": "P2",
+      "state": "OPEN",
+      "progress": "PARTIAL",
+      "currentScope": "Settings/pipeline settings имеют текущие permission scopes.",
+      "remaining": "Effective/applied generations, policy composition, secret lifecycle и unknown/conflict save states не приняты целиком.",
+      "acceptanceCriteria": [
+        "Workspace tabs с независимыми permission scopes.",
+        "Pending/effective/applied config generations.",
+        "Secret lifecycle и errors без ложного save success."
+      ],
+      "dependencies": [
+        "EP-013",
+        "EP-021"
+      ],
+      "acceptanceEvidence": null,
+      "kind": "DESIGN_DEBT",
+      "estimatedScope": "M",
+      "sourceRefs": [
+        {
+          "file": "frontend/app/(dashboard)/settings/page.tsx"
+        },
+        {
+          "file": "frontend/app/(dashboard)/pipeline-settings/page.tsx"
+        }
+      ],
+      "assessmentBasis": "docs/audits/2026-10-09/CHAT-CODE-RECONCILIATION.md",
+      "fleetAccepted": false
+    },
+    {
+      "id": "EP-041",
+      "title": "Release rollout receipts и каналы",
+      "priority": "P1",
+      "state": "OPEN",
+      "progress": "PARTIAL",
+      "currentScope": "Addressed OTA/release identity имеют finite receipts; pilot10249 не означает весь парк.",
+      "remaining": "Stable promotion, normal/dev compatibility, rollout/rollback и mixed-fleet soak остаются.",
+      "acceptanceCriteria": [
+        "Offered/downloaded/verified/installed/unknown по target.",
+        "Platform/flavor/code/signer/hash preflight.",
+        "Recovery/rollback constraints видны; нет скрытого массового обновления."
+      ],
+      "dependencies": [
+        "EP-012",
+        "EP-028"
+      ],
+      "acceptanceEvidence": null,
+      "kind": "CAPABILITY_GAP",
+      "estimatedScope": "L",
+      "sourceRefs": [
+        {
+          "file": "frontend/app/(dashboard)/updates/page.tsx"
+        }
+      ],
+      "assessmentBasis": "docs/audits/2026-10-09/CHAT-CODE-RECONCILIATION.md",
+      "fleetAccepted": false
+    },
+    {
+      "id": "EP-042",
+      "title": "Generic resources вместо game domain assumptions",
+      "priority": "P2",
+      "state": "OPEN",
+      "progress": "OPEN",
+      "currentScope": "GameAccount/game-specific history остаются в backend.",
+      "remaining": "ResourceType/Record/Lease/SecretRef/Connector с migration/legacy adapter/rollback нужны.",
+      "acceptanceCriteria": [
+        "Versioned ResourceType/Record/Lease/SecretRef/Connector.",
+        "Legacy adapters/migration/rollback сохраняют history.",
+        "Никакого удаления game models в UI fix phase."
+      ],
+      "dependencies": [
+        "EP-026"
+      ],
+      "acceptanceEvidence": null,
+      "kind": "FUTURE_DESIGN",
+      "estimatedScope": "XL",
+      "sourceRefs": [
+        {
+          "file": "backend/models/game_account.py"
+        },
+        {
+          "file": "backend/schemas/pipeline_settings.py"
+        }
+      ],
+      "assessmentBasis": "docs/audits/2026-10-09/CHAT-CODE-RECONCILIATION.md",
+      "fleetAccepted": false
+    },
+    {
+      "id": "EP-043",
+      "title": "Разделить account session и universal run",
+      "priority": "P2",
+      "state": "OPEN",
+      "progress": "OPEN",
+      "currentScope": "Sessions связаны с domain model; workflowRun/account session не унифицированы.",
+      "remaining": "Ясный naming/lease context/history adapter и independent CanonicalRun нужны.",
+      "acceptanceCriteria": [
+        "Названия, relations и lease context однозначны.",
+        "Исторические sessions доступны через adapter.",
+        "CanonicalRun/Task не зависят от одной игры."
+      ],
+      "dependencies": [
+        "EP-042"
+      ],
+      "acceptanceEvidence": null,
+      "kind": "FUTURE_DESIGN",
+      "estimatedScope": "XL",
+      "sourceRefs": [
+        {
+          "file": "frontend/app/(dashboard)/sessions/page.tsx"
+        }
+      ],
+      "assessmentBasis": "docs/audits/2026-10-09/CHAT-CODE-RECONCILIATION.md",
+      "fleetAccepted": false
+    },
+    {
+      "id": "EP-044",
+      "title": "VPN assigned/applied/handshake/egress outcomes",
+      "priority": "P1",
+      "state": "OPEN",
+      "progress": "PARTIAL",
+      "currentScope": "Provision outcomes/assignment/Android VPN observation разделены.",
+      "remaining": "Actual applied/handshake/egress и partial/unknown recovery требуют live targets.",
+      "acceptanceCriteria": [
+        "Provision receipt иactual Android state раздельны.",
+        "Unknown не превращается в successбез проверки.",
+        "Control transport и egress VPN разделены."
+      ],
+      "dependencies": [
+        "EP-028"
+      ],
+      "acceptanceEvidence": null,
+      "kind": "CAPABILITY_GAP",
+      "estimatedScope": "L",
+      "sourceRefs": [
+        {
+          "file": "frontend/app/(dashboard)/vpn/page.tsx"
+        }
+      ],
+      "assessmentBasis": "docs/audits/2026-10-09/CHAT-CODE-RECONCILIATION.md",
+      "fleetAccepted": false
+    },
+    {
+      "id": "EP-045",
+      "title": "Versioned VPN provider adapters и rotation",
+      "priority": "P2",
+      "state": "OPEN",
+      "progress": "DEFERRED_DESIGN",
+      "currentScope": "Amnezia/WireGuard/proxy adapters/script rotation остаются проектированием.",
+      "remaining": "Versioned import/apply/status/rotate/upgrade/rollback, secret refs исохранность control нужны.",
+      "acceptanceCriteria": [
+        "Validate/import/apply/status/rotate/upgrade/rollback contract.",
+        "Config / binary / capability versions и secret refs.",
+        "Manual/script/schedule один API, recovery control сохраняется."
+      ],
+      "dependencies": [
+        "EP-044",
+        "EP-026"
+      ],
+      "acceptanceEvidence": null,
+      "kind": "FUTURE_DESIGN",
+      "estimatedScope": "XL",
+      "sourceRefs": [
+        {
+          "file": "frontend/app/(dashboard)/vpn/page.tsx"
+        }
+      ],
+      "assessmentBasis": "docs/audits/2026-10-09/CHAT-CODE-RECONCILIATION.md",
+      "fleetAccepted": false
+    },
+    {
+      "id": "EP-046",
+      "title": "AI-ready schemas/runbooks и scoped artifacts",
+      "priority": "P2",
+      "state": "OPEN",
+      "progress": "DEFERRED_DESIGN",
+      "currentScope": "API/schemas/runbooks есть; AI provider/chat/tool runner не установлен.",
+      "remaining": "Scoped tools, draft→validate→test→publish, effects/TTL/budgets/provenance нужны.",
+      "acceptanceCriteria": [
+        "Natural language → draft → validate → test → publish.",
+        "API schemas / examples / reason codes / recovery instructions.",
+        "Observations не дают privileges, budgets / TTL / RBAC обязательны."
+      ],
+      "dependencies": [
+        "EP-016",
+        "EP-019",
+        "EP-021",
+        "EP-032"
+      ],
+      "acceptanceEvidence": null,
+      "kind": "FUTURE_DESIGN",
+      "estimatedScope": "XL",
+      "sourceRefs": [
+        {
+          "file": "backend/schemas/dag.py"
+        }
+      ],
+      "assessmentBasis": "docs/audits/2026-10-09/CHAT-CODE-RECONCILIATION.md",
+      "fleetAccepted": false
+    },
+    {
+      "id": "EP-047",
+      "title": "Общая matrix500/1000 иresource leak gates",
+      "priority": "P1",
+      "state": "OPEN",
+      "progress": "PARTIAL",
+      "currentScope": "Limited observer active10Oct00:14→12:34UTC;191 complete samples to06:34UTC. C: net+1552838656B after earlier decreases; minimum36221018112B. Docker VHDX allocation constant234731077632B. Earlier gaps remain; no full-PC writer proof.",
+      "remaining": "VSS/USN/kernel writer attribution and reboot continuity unavailable. Need finite health/coverage, RAM/disk retention,500/1000/128/1 load and resource plateau acceptance.",
+      "acceptanceCriteria": [
+        "1000 registry / 128 thumbnails / 1 selected video measured.",
+        "Нет роста decoder / URL / log / report buffers после teardown.",
+        "VHD/guest/RAM/provenance отдельные readings."
+      ],
+      "dependencies": [
+        "EP-031",
+        "EP-033"
+      ],
+      "acceptanceEvidence": null,
+      "kind": "CAPABILITY_GAP",
+      "estimatedScope": "XL",
+      "sourceRefs": [
+        {
+          "file": "frontend/src/features/devices/FleetMatrix.tsx"
+        },
+        {
+          "file": "backend/api/v1/logs/router.py"
+        }
+      ],
+      "assessmentBasis": "docs/audits/2026-10-09/CHAT-CODE-RECONCILIATION.md",
+      "fleetAccepted": false
+    },
+    {
+      "id": "EP-048",
+      "title": "Тесты всех меню/форм/ролей иvisual states",
+      "priority": "P1",
+      "state": "OPEN",
+      "progress": "PARTIAL",
+      "currentScope": "Finite desktop/portrait/landscape Studio принят ec3f2267; после clock fix1938 tests проходят.",
+      "remaining": "Все страницы/модалки/роли/темы/zoom/reduced-motion не приняты; landscape chain fit мелкий.",
+      "acceptanceCriteria": [
+        "Loading/empty/error/offline/forbidden/partial/conflict.",
+        "Keyboard / zoom / mobile / reduced motion / 4 themes.",
+        "Actual write receipt + repeat validation после deploy."
+      ],
+      "dependencies": [
+        "EP-013"
+      ],
+      "acceptanceEvidence": null,
+      "kind": "CAPABILITY_GAP",
+      "estimatedScope": "L",
+      "sourceRefs": [
+        {
+          "file": "frontend/src/features/preferences/AppearanceDrawer.tsx"
+        },
+        {
+          "file": "frontend/app/(dashboard)/orchestration/page.tsx"
+        }
+      ],
+      "assessmentBasis": "docs/audits/2026-10-09/CHAT-CODE-RECONCILIATION.md",
+      "fleetAccepted": false
+    },
+    {
+      "id": "EP-049",
+      "title": "Документация source/runtime/schema freshness",
+      "priority": "P1",
+      "state": "OPEN",
+      "progress": "PARTIAL",
+      "currentScope": "Source/installed UI/API/schema/evidenceSHA разделены; старые pointers/comments исправляются.",
+      "remaining": "Effective ledger и admission каждой новойдоставки нужны; CI старого SHA не переносится.",
+      "acceptanceCriteria": [
+        "Installed SHA/manifest/capability visible с датой.",
+        "Docs генерацияв pinned runtime, с проверенной версией генератора.",
+        "Evidence immutable; новый результат отдельнымclosure receipt.",
+        "Default-branch dependency alerts сопоставлены с PR lock и installed SBOM; другие 142 alerts пока не приняты."
+      ],
+      "dependencies": [],
+      "acceptanceEvidence": null,
+      "kind": "DESIGN_DEBT",
+      "estimatedScope": "L",
+      "sourceRefs": [
+        {
+          "file": "scripts/export_api_docs.py"
+        },
+        {
+          "file": "docs/operations/CURRENT-STATE.md"
+        }
+      ],
+      "assessmentBasis": "docs/audits/2026-10-09/CHAT-CODE-RECONCILIATION.md",
+      "fleetAccepted": false
+    },
+    {
+      "id": "EP-050",
+      "title": "Alert delivery иsynthetic Android SLI",
+      "priority": "P1",
+      "state": "OPEN",
+      "progress": "OPEN",
+      "currentScope": "Collection/HTTP/resources и events есть; synthetic Android SLI не принят.",
+      "remaining": "Alert→affected scope→runbook→recovery и bounded Android synthetic нужны.",
+      "acceptanceCriteria": [
+        "Scrape/HTTP/stream/script/OTA разные SLI.",
+        "Alert→affected scope→runbook→observed recovery.",
+        "Synthetic target bounded с разрешёнными effects."
+      ],
+      "dependencies": [
+        "EP-008",
+        "EP-019",
+        "EP-029"
+      ],
+      "acceptanceEvidence": null,
+      "kind": "CAPABILITY_GAP",
+      "estimatedScope": "L",
+      "sourceRefs": [
+        {
+          "file": "backend/api/v1/monitoring/router.py"
+        }
+      ],
+      "assessmentBasis": "docs/audits/2026-10-09/CHAT-CODE-RECONCILIATION.md",
+      "fleetAccepted": false
+    }
+  ],
+  "chatRequirements": [
+    {
+      "id": "CHAT-01",
+      "title": "Возврат назад на прежнюю позицию",
+      "state": "ACCEPTED_FINITE",
+      "productItems": [
+        "EP-011",
+        "EP-015"
+      ],
+      "acceptedScope": "Browser Back и общая кнопка Back: каталог 2132.5 → 2132.5 px после route commit; память вкладки ограничена.",
+      "remaining": "Нет обещания сохранения scroll после F5. Защита грязного черновика при browser Back/Forward остаётся открытой.",
+      "evidence": [
+        "docs/audits/2026-10-09/ROUTE-SCROLL-RESTORATION.md"
+      ],
+      "sourcePaths": [
+        "frontend/src/features/navigation/routeScrollRestoration.ts"
+      ],
+      "fleetAccepted": false
+    },
+    {
+      "id": "CHAT-02",
+      "title": "Свободные узлы и редактирование соединений",
+      "state": "ACCEPTED_FINITE",
+      "productItems": [
+        "EP-014",
+        "EP-015"
+      ],
+      "acceptedScope": "Detached add, palette drag/drop, явная вставка, разрыв/переназначение связи и Undo имеют конечную приёмку.",
+      "remaining": "Semantic subgraphs/зоны orchestration/pipeline, полный conflict diff и все графы не приняты.",
+      "evidence": [
+        "docs/audits/2026-10-07/STUDIO-INSTALLED-ACCEPTANCE.json",
+        "docs/audits/2026-10-09/STUDIO-RESPONSIVE-INSTALLED-ACCEPTANCE.json"
+      ],
+      "sourcePaths": [],
+      "fleetAccepted": false
+    },
+    {
+      "id": "CHAT-03",
+      "title": "Доступность библиотеки на телефоне и компоновка",
+      "state": "PARTIAL",
+      "productItems": [
+        "EP-013",
+        "EP-014",
+        "EP-048"
+      ],
+      "acceptedScope": "Четыре compact panels, desktop library рядом с laboratory; 390×844, 844×390 и 1440×900 проверены.",
+      "remaining": "В landscape общий fit длинной вертикальной цепочки делает узлы слишком мелкими; полная visual/a11y matrix открыта.",
+      "evidence": [
+        "docs/audits/2026-10-09/STUDIO-RESPONSIVE-INSTALLED-ACCEPTANCE.md"
+      ],
+      "sourcePaths": [],
+      "fleetAccepted": false
+    },
+    {
+      "id": "CHAT-04",
+      "title": "Палец мышью: MOVE поступает до отпускания",
+      "state": "ACCEPTED_FINITE",
+      "productItems": [
+        "EP-029",
+        "EP-020"
+      ],
+      "acceptedScope": "Обычное управление PH011 APK10249: DOWN1/MOVE5/UP1; wheel DOWN1/MOVE1/UP1, capability и owner согласуются автоматически.",
+      "remaining": "Это не подтверждение всего парка/всех APK, нулевой задержки или исправления повторного idle native_receipt_timeout. 9Oct idle failure подтверждён immutable scalar snapshot; новая диагностика не исправляет его.",
+      "evidence": [
+        "docs/audits/2026-10-08/CONTINUOUS-VIEWER-FAULT-ISOLATION.md",
+        "docs/audits/2026-10-08/CONTINUOUS-INPUT-AUTOMATIC-UX.md",
+        "docs/audits/2026-10-09/STREAM-DIAGNOSTICS-INSTALLED-ACCEPTANCE.json",
+        "docs/audits/2026-10-10/IDLE-LOCAL-PUBLIC-COMPARISON.md",
+        "docs/audits/2026-10-10/CONTINUOUS-AUTO-RECOVERY-INSTALLED.json"
+      ],
+      "sourcePaths": [
+        "backend/websocket/continuous_runtime.py",
+        "backend/websocket/startup.py",
+        "frontend/components/sphere/DeviceStream.tsx"
+      ],
+      "fleetAccepted": false
+    },
+    {
+      "id": "CHAT-05",
+      "title": "Запись Home, Back, Recents, Menu",
+      "state": "ACCEPTED_FINITE",
+      "productItems": [
+        "EP-018"
+      ],
+      "acceptedScope": "PH011: четыре APK confirmed outcome в порядке записи, очередь сохранена при переключении панелей, late ACK после Stop обновляет исходную строку.",
+      "remaining": "Подтверждение этих четырёх кнопок не закрывает весь rich recorder или все типы input.",
+      "evidence": [
+        "docs/audits/2026-10-09/STUDIO-RESPONSIVE-INSTALLED-ACCEPTANCE.json",
+        "docs/audits/2026-10-08/STUDIO-RECORDER-INSTALLED-ACCEPTANCE.md"
+      ],
+      "sourcePaths": [
+        "frontend/src/features/stream/AndroidNavigationBar.tsx"
+      ],
+      "fleetAccepted": false
+    },
+    {
+      "id": "CHAT-06",
+      "title": "Запись непрерывной траектории жеста",
+      "state": "OPEN",
+      "productItems": [
+        "EP-018",
+        "EP-019"
+      ],
+      "acceptedScope": "Рекордер сохраняет завершённые дискретные swipe endpoints. recordingMode выбирает discrete transport.",
+      "remaining": "Долговечная MOVE trajectory, нормализация времени/геометрии, лимиты, отмена и точное воспроизведение ещё не приняты.",
+      "evidence": [
+        "docs/audits/2026-10-09/CHAT-CODE-RECONCILIATION.md"
+      ],
+      "sourcePaths": [
+        "frontend/components/sphere/DeviceStream.tsx",
+        "frontend/src/features/scripts/studio/DeviceWorkbench.tsx"
+      ],
+      "fleetAccepted": false
+    },
+    {
+      "id": "CHAT-07",
+      "title": "Смешанная запись XPath → tap → системная кнопка",
+      "state": "ACCEPTED_FINITE",
+      "productItems": [
+        "EP-018"
+      ],
+      "acceptedScope": "UI60be6ecd/APIbe803773: PH01110249 tap → planned XPath → tap → APK-confirmed Back,4 строки; явный перенос6actions с2паузами,9узлов/8связей; Undo восстановилv1/3узла/2связи. Все4CI success, frontend1938tests/139suites.",
+      "remaining": "Finite PH011 не подтверждает все устройства/rotation/clock changes/replay; MOVE/context bundle отдельно OPEN (CHAT-06/08), EP-018 остаётся OPEN/PARTIAL.",
+      "evidence": [
+        "docs/audits/2026-10-09/STUDIO-CLOCK-INSTALLED-ACCEPTANCE.md",
+        "docs/audits/2026-10-09/STUDIO-RECORDER-CLOCK-FIX.md"
+      ],
+      "sourcePaths": [
+        "frontend/src/features/scripts/studio/DeviceWorkbench.tsx"
+      ],
+      "fleetAccepted": false
+    },
+    {
+      "id": "CHAT-08",
+      "title": "Запись контекста: XPath, зона, crop, цвет пикселя",
+      "state": "OPEN",
+      "productItems": [
+        "EP-018",
+        "EP-019",
+        "EP-027",
+        "EP-030"
+      ],
+      "acceptedScope": "Можно явно добавить выбранный XPath-кандидат; отдельный native PNG работает в принятом scope.",
+      "remaining": "Автоматического pre-action tree/crop/pixel bundle со связанными кадром, командой и snapshot IDs нет. Нужны freshness, quotas, TTL и экспорт.",
+      "evidence": [
+        "docs/audits/2026-10-09/CHAT-CODE-RECONCILIATION.md"
+      ],
+      "sourcePaths": [],
+      "fleetAccepted": false
+    },
+    {
+      "id": "CHAT-09",
+      "title": "Исходный PNG",
+      "state": "ACCEPTED_FINITE",
+      "productItems": [
+        "EP-030"
+      ],
+      "acceptedScope": "Отдельный native capture: original Android → server → browser bytes/hash chain; пользователь разрешил считать screenshot рабочим.",
+      "remaining": "Сравнение двух присланных файлов приостановлено пользователем. Matching assets/provenance и workflow artifacts остаются открытыми.",
+      "evidence": [
+        "docs/audits/2026-10-04/DEVICE-CONTROL-AND-NATIVE-CAPTURE.md"
+      ],
+      "sourcePaths": [],
+      "fleetAccepted": false
+    },
+    {
+      "id": "CHAT-10",
+      "title": "Веб обновляется при изменении данных",
+      "state": "PARTIAL",
+      "productItems": [
+        "EP-010",
+        "EP-050"
+      ],
+      "acceptedScope": "Fleet WS пакетно invalidates REST queries; скрытые вкладки/reconnect согласуются отдельно. Prometheus/fleet metrics обновляются polling 15 s.",
+      "remaining": "Не каждая метрика имеет push producer; events connected не доказывает исправность Android или freshness каждого показателя.",
+      "evidence": [
+        "docs/audits/2026-10-09/CHAT-CODE-RECONCILIATION.md"
+      ],
+      "sourcePaths": [
+        "frontend/lib/hooks/useFleetEvents.ts",
+        "frontend/lib/queryPollIntervals.ts"
+      ],
+      "fleetAccepted": false
+    },
+    {
+      "id": "CHAT-11",
+      "title": "128 устройств: thumbnails, Connect all, синхронизатор",
+      "state": "OPEN",
+      "productItems": [
+        "EP-031",
+        "EP-047"
+      ],
+      "acceptedScope": "Текущая /stream wall использует full DeviceStream; grid до 64.",
+      "remaining": "128 thumbnails по 5/10 s, shared capture/budgets и Connect all/synchronized input с partial outcome/Stop требуют отдельной реализации и приёмки.",
+      "evidence": [
+        "docs/audits/2026-10-09/CHAT-CODE-RECONCILIATION.md"
+      ],
+      "sourcePaths": [
+        "frontend/app/(dashboard)/stream/page.tsx"
+      ],
+      "fleetAccepted": false
+    },
+    {
+      "id": "CHAT-12",
+      "title": "Отследить заполнение всего ПК без ручного угадывания",
+      "state": "OPEN",
+      "productItems": [
+        "EP-033",
+        "EP-047"
+      ],
+      "acceptedScope": "Bounded observer PID32064/epoch/source and191 complete samples verified to06:34:43UTC. Docker allocation constant; C: falls and rises both recorded, writer remains UNKNOWN.",
+      "remaining": "Whole-PC writer UNKNOWN: VSS unavailable, USN/ETW не запущены. Нет reboot autostart; после deadline потребуется bounded restart/health. Resource soak/retention и RAM acceptance открыты.",
+      "evidence": [
+        "docs/audits/2026-10-08/STORAGE-WINDOW-COMPLETION.json",
+        "docs/audits/2026-10-09/STORAGE-OBSERVER-RESTART.json",
+        "docs/audits/2026-10-10/STORAGE-OBSERVER-CONTINUITY.json",
+        "docs/audits/2026-10-10/STORAGE-OBSERVER-RESUME.json",
+        "docs/audits/2026-10-10/DIRECT-PROBE-TURN-AND-LAPTOP.json"
+      ],
+      "sourcePaths": [],
+      "fleetAccepted": false
+    },
+    {
+      "id": "CHAT-13",
+      "title": "Единая автоматизация и универсальные ресурсы",
+      "state": "OPEN",
+      "productItems": [
+        "EP-021",
+        "EP-026",
+        "EP-042",
+        "EP-043"
+      ],
+      "acceptedScope": "Сценарии, задания, orchestration и pipeline доступны как отдельные текущие сущности.",
+      "remaining": "Общий workspace/references, универсальные project resources/connectors и semantic composition ещё не приняты.",
+      "evidence": [
+        "docs/audits/2026-10-09/CHAT-CODE-RECONCILIATION.md"
+      ],
+      "sourcePaths": [],
+      "fleetAccepted": false
+    },
+    {
+      "id": "CHAT-14",
+      "title": "Подключаемые VPN providers и AI",
+      "state": "DEFERRED_DESIGN",
+      "productItems": [
+        "EP-045",
+        "EP-046"
+      ],
+      "acceptedScope": "Требования и границы будущего этапа записаны; интеграция не объявлена установленной.",
+      "remaining": "Нужны отдельные contracts/versioning/secrets/ownership/deadlines/rollback и подтверждённые результаты, прежде чем давать управление.",
+      "evidence": [
+        "docs/architecture/AI-READINESS.md",
+        "docs/audits/2026-10-09/CHAT-CODE-RECONCILIATION.md"
+      ],
+      "sourcePaths": [],
+      "fleetAccepted": false
+    },
+    {
+      "id": "CHAT-15",
+      "title": "Прямой browser ↔ Android transport",
+      "state": "PARTIAL",
+      "productItems": [
+        "EP-029",
+        "EP-020",
+        "EP-047"
+      ],
+      "acceptedScope": "CI-admitted UI/API on both gateways, real main-PC browser observations and automatic finite direct-video outcomes retained/read through the bounded API; the user-identified laptop reported 223 presented RTP frames at 960x540 via NAT/UDP, 20 echoes and p95 26.7 ms. Main PC uses VPN. Physical localhost topology, primary media/input, native gesture, latency SLA, full fleet and soak remain outside this finite acceptance.",
+      "remaining": "Primary direct media/input, nearest localhost/LAN/WAN/TURN paths, ownership/reconnect, ABR and resource/latency budgets remain unaccepted. Finite laptop RTP presentation is recorded separately.",
+      "evidence": [
+        "docs/design/BROWSER-DIRECT-TRANSPORT.md",
+        "docs/audits/2026-10-09/IDLE-CONTROL-RELAY-REVIEW.md",
+        "docs/audits/2026-10-09/DIRECT-PROBE-SOURCE.md",
+        "docs/audits/2026-10-09/DIRECT-PROBE-VIEWER-ISOLATION.md",
+        "docs/audits/2026-10-09/DIRECT-PROBE-PILOT.md",
+        "docs/audits/2026-10-09/DIRECT-PROBE-NETWORK-SNAPSHOT.md",
+        "docs/audits/2026-10-10/BROADCAST-INSTALLED-ACCEPTANCE.json",
+        "docs/audits/2026-10-10/DIRECT-PROBE-NETWORK-CANARY.json",
+        "docs/audits/2026-10-10/DIRECT-PROBE-NATIVE-NETWORK-SOURCE.md",
+        "docs/audits/2026-10-10/DIRECT-PROBE-ANDROID-COMPATIBILITY.md",
+        "docs/audits/2026-10-10/DIRECT-PROBE-NATIVE-COUNTERS-CANARY.json",
+        "docs/audits/2026-10-10/DIRECT-PROBE-NATIVE-PROGRESS-CANARY.json",
+        "docs/audits/2026-10-10/DIRECT-PROBE-TURN-AND-LAPTOP.json",
+        "docs/audits/2026-10-10/DIRECT-ADMISSION-INSTALLED.json",
+        "docs/audits/2026-10-10/DIRECT-VIDEO-API-INSTALLED.json",
+        "docs/audits/2026-10-10/PH030-LAPTOP-CHANNEL-USER-OBSERVATION.json",
+        "docs/audits/2026-10-10/DIRECT-VIDEO-READONLY-INSTALLED.json",
+        "docs/audits/2026-10-10/STREAM-SESSION-DIAGNOSTICS-INSTALLED.json"
+      ],
+      "sourcePaths": [
+        "backend/websocket/direct_probe_protocol.py",
+        "backend/websocket/direct_probe_runtime.py",
+        "backend/api/ws/direct/router.py",
+        "frontend/src/features/stream/directProbe.ts",
+        "android/app/src/directProbe/kotlin/com/sphereplatform/agent/direct/DirectProbeTransport.kt",
+        "frontend/src/features/stream/directProbeNetwork.ts",
+        "android/app/src/main/kotlin/com/sphereplatform/agent/direct/DirectProbeNetwork.kt",
+        "android/app/src/main/kotlin/com/sphereplatform/agent/direct/DirectProbeProgress.kt",
+        "android/app/src/test/kotlin/com/sphereplatform/agent/direct/DirectProbeProgressTest.kt",
+        "backend/websocket/direct_probe_ice.py",
+        "backend/api/v1/direct_probe/router.py",
+        "frontend/src/features/stream/DirectProbeAccess.tsx"
+      ],
+      "fleetAccepted": false
+    },
+    {
+      "id": "CHAT-16",
+      "title": "Стабильный APK1.3 и расширение без лишних переустановок",
+      "state": "PARTIAL",
+      "productItems": [
+        "EP-020",
+        "EP-029",
+        "EP-047",
+        "EP-050"
+      ],
+      "acceptedScope": "DAG/discovery/OTA boundaries reviewed. PH030 has 1.2.51-dev / 10251, matching installed package SHA, and finite readonly RTP presentation. Stable 1.3 not promoted.",
+      "remaining": "Idle reliability, native lifecycle/resources, direct path and capability matrix acceptance, production signer verification and staged OTA promotion.",
+      "evidence": [
+        "docs/design/APK-1.3-COMPATIBILITY-AND-RELEASE.md",
+        "docs/audits/2026-10-10/DIRECT-PROBE-TURN-AND-LAPTOP.json",
+        "docs/audits/2026-10-10/DIRECT-VIDEO-READONLY-INSTALLED.json",
+        "docs/audits/2026-10-10/STREAM-SESSION-DIAGNOSTICS-INSTALLED.json"
+      ],
+      "sourcePaths": [
+        "android/app/build.gradle.kts",
+        "android/version.properties",
+        "android/app/src/main/kotlin/com/sphereplatform/agent/ota/OtaApkVerifier.kt",
+        ".github/workflows/release.yml"
+      ],
+      "fleetAccepted": false
+    },
+    {
+      "id": "CHAT-17",
+      "title": "Broadcast500 и предупреждение CSS preload на публичном вебе",
+      "state": "PARTIAL",
+      "productItems": [
+        "EP-020",
+        "EP-021",
+        "EP-048"
+      ],
+      "acceptedScope": "Two broadcast500 causes fixed and installed on both origins. Exact369 all four CI success:3428 backend/252subtests,1966frontend. Real PG/Redis202,durable tenant/version/target and admission passed; live missing-script404 after real presence/no Android input. Catalog23/existing3-node graph/form read-cancel accepted; CSS as=style/stylesheet and no warning in finite pass.",
+      "remaining": "Original unused CSS preload cause UNKNOWN, not reproduced. Live broadcast execution, large fleet, unknown Redis, idempotency/lost response, expected version UI and truthful toast remain separate open contracts.",
+      "evidence": [
+        "docs/audits/2026-10-10/BROADCAST-BINARY-PRESENCE.md",
+        "docs/audits/2026-10-10/CI-REGISTRY-LIMIT.md",
+        "docs/audits/2026-10-10/CI-GATEWAY-IMAGE.md",
+        "docs/audits/2026-10-10/CI-WEB-PACKAGING.md",
+        "docs/audits/2026-10-10/BROADCAST-INSTALLED-ACCEPTANCE.json"
+      ],
+      "sourcePaths": [
+        "backend/services/batch_service.py",
+        "backend/api/v1/batches/router.py",
+        "tests/production/test_batch_broadcast.py",
+        "tests/test_services/test_batch_broadcast.py"
+      ],
+      "fleetAccepted": false
+    },
+    {
+      "id": "CHAT-18",
+      "title": "Несколько зрителей: управление и presence по вкладкам",
+      "state": "OPEN",
+      "productItems": [
+        "EP-001",
+        "EP-010",
+        "EP-020",
+        "EP-029"
+      ],
+      "acceptedScope": "Requirement captured. Existing native input lease is exclusive per device; local-worker viewers are not distributed per-device/tab/card presence evidence.",
+      "remaining": "Exclusive native input lease rejects another viewer with controller_busy; observed 18:07:03 UTC during two viewers, then seven touch_event rejections. Explicit view/control roles, safe transfer and tenant-safe per-tab presence/fleet indicators remain required.",
+      "evidence": [
+        "docs/audits/2026-10-10/DIRECT-PROBE-TURN-AND-LAPTOP.json",
+        "docs/audits/2026-10-10/STREAM-SESSION-DIAGNOSTICS-INSTALLED.json"
+      ],
+      "sourcePaths": [
+        "backend/websocket/continuous_runtime.py",
+        "backend/websocket/stream_bridge.py",
+        "frontend/app/(dashboard)/devices/page.tsx",
+        "frontend/components/sphere/DeviceStream.tsx"
+      ],
+      "fleetAccepted": false
+    },
+    {
+      "id": "CHAT-19",
+      "title": "Физическая клавиатура, IME и звук устройства",
+      "state": "OPEN",
+      "productItems": [
+        "EP-020",
+        "EP-029"
+      ],
+      "acceptedScope": "Future requirement captured. Existing navigation/text actions are distinct from a complete physical-keyboard/IME/audio transport.",
+      "remaining": "Keyboard focus, composition/IME, held keys and native acknowledgement; audio capture/playback permissions, mute/autoplay, sync, compatibility and bounded resources require explicit implementation and acceptance.",
+      "evidence": [
+        "docs/audits/2026-10-10/DIRECT-PROBE-TURN-AND-LAPTOP.json"
+      ],
+      "sourcePaths": [
+        "frontend/components/sphere/DeviceStream.tsx",
+        "frontend/src/features/stream/AndroidNavigationBar.tsx",
+        "backend/api/ws/stream/router.py"
+      ],
+      "fleetAccepted": false
+    },
+    {
+      "id": "CHAT-20",
+      "title": "Последние десять сеансов и автоматическая диагностика клиента",
+      "state": "PARTIAL",
+      "productItems": [
+        "EP-020",
+        "EP-029",
+        "EP-047"
+      ],
+      "acceptedScope": "CI-admitted UI/API on both gateways, real main-PC browser observations and automatic finite direct-video outcomes retained/read through the bounded API; the user-identified laptop reported 223 presented RTP frames at 960x540 via NAT/UDP, 20 echoes and p95 26.7 ms. Main PC uses VPN. Physical localhost topology, primary media/input, native gesture, latency SLA, full fleet and soak remain outside this finite acceptance.",
+      "remaining": "Promote the finite readonly canary into primary media/input with ownership/reconnect coverage; prove localhost/LAN/WAN/TURN, resource soak and latency separately. The user-identified laptop finite RTP result is retained.",
+      "evidence": [
+        "docs/audits/2026-10-10/STREAM-SESSION-DIAGNOSTICS.md",
+        "docs/audits/2026-10-10/STREAM-SESSION-DIAGNOSTICS-INSTALLED.json"
+      ],
+      "sourcePaths": [
+        "backend/websocket/stream_session_history.py",
+        "frontend/src/features/stream/AutomaticStreamDiagnostic.tsx"
+      ],
+      "fleetAccepted": false
+    }
+  ],
+  "authoritativeEntrypoints": [
+    "README.md",
+    "ROADMAP.md",
+    "docs/README.md",
+    "docs/DOCUMENTATION.md",
+    "docs/operations/CURRENT-STATE.md",
+    "docs/operations/READINESS.md",
+    "docs/operations/SCRIPT-STUDIO.md"
+  ],
+  "schemaReconciliation": {
+    "paths": 146,
+    "operations": 184,
+    "canonicalSha256": "8cb42f695f53df673b43700f78186ad575d9bcb89939d87b5789230e293340e3",
+    "sourceRevision": "c14c32351f89c6b4a67b3b7eb3f911b5a881fb46",
+    "source": "Installed app.openapi; no application lifespan hooks",
+    "observedAtUtc": "2026-10-10T17:47:22.955831+00:00",
+    "sameAsCommittedCanonicalJson": true,
+    "scope": "Declared HTTP contracts only; no application startup hooks, native input or fleet acceptance."
+  },
+  "completedCorrections": [
+    {
+      "id": "RECORDER-CLOCK",
+      "sourceRevision": "1577e01e09dcf256efaed391941606bd2c400e8e",
+      "installedRevision": "60be6ecd0b13e33715761b53b781ad190c1e3e6e",
+      "evidence": "docs/audits/2026-10-09/STUDIO-CLOCK-INSTALLED-ACCEPTANCE.json",
+      "evidenceSha256NormalizedLf": "b6ad1cb158efd0625a93b60a55c63d5353f4b15f80e748173d4bb88cd81b5fed",
+      "acceptedScope": "Finite PH011 tap/XPath/tap/Back recording and explicit graph insertion; not full EP-018 or fleet."
+    },
+    {
+      "id": "continuous-idle-auto-recovery",
+      "sourceRevision": "639b6ad52fe3651579499659ded46ff73027f313",
+      "installedRevision": "639b6ad52fe3651579499659ded46ff73027f313",
+      "evidence": "docs/audits/2026-10-10/CONTINUOUS-AUTO-RECOVERY-INSTALLED.json",
+      "evidenceSha256NormalizedLf": "b351ba347a55b74f827ab349955bd74323c8886d3cbfd5309e0ca017d5b6137b",
+      "acceptedScope": "Finite UI installation/readiness/navigation only; one natural unknown-pointer notice followed by fresh readiness and confirmed Home on each of UI13 and final UI639. Release/hold/terminal permutations fixture-only; no independent wire trace or native latency/direct/fleet acceptance."
+    },
+    {
+      "id": "direct-probe-runtime-admission-panel",
+      "sourceRevision": "c17332ebe39e2288a0db055a35d3f3c5d1ab8258",
+      "installedRevision": "c17332ebe39e2288a0db055a35d3f3c5d1ab8258",
+      "evidence": "docs/audits/2026-10-10/DIRECT-ADMISSION-INSTALLED.json",
+      "evidenceSha256NormalizedLf": "cc4ee00b1a75d9e0b504bb9c4781aa3467a49ac0ce6dc799c34c8441fd78faf8",
+      "acceptedScope": "Finite two-origin admission/rendering only. No channel/RTT/media/input acceptance."
+    },
+    {
+      "id": "continuous-admission-auto-recovery",
+      "sourceRevision": "678f78cf746e2be7b189e01a65b4b77134b373eb",
+      "installedRevision": "678f78cf746e2be7b189e01a65b4b77134b373eb",
+      "evidence": "docs/audits/2026-10-10/CONTROL-ADMISSION-RECOVERY-INSTALLED.json",
+      "evidenceSha256NormalizedLf": "796385f7981a084e7fceb21db8fc8fc39f1c85e209e9f3759d858e99890fef1e",
+      "acceptedScope": "CI-admitted UI/API delivery, finite public device-card rendering and per-device HTTP admission. Recovery permutations are fixtures; no new native input, primary direct-video or latency acceptance."
+    },
+    {
+      "id": "stream-session-diagnostics",
+      "sourceRevision": "a32854e6bbf4a8df5b062e9569e2258f160f753a",
+      "installedRevision": "a32854e6bbf4a8df5b062e9569e2258f160f753a",
+      "evidence": "docs/audits/2026-10-10/STREAM-SESSION-DIAGNOSTICS-INSTALLED.json",
+      "evidenceSha256NormalizedLf": "cb892492f2fe642bd8ce09dce68428db9b107ed94c2e75635d367e60ad671c6c",
+      "acceptedScope": "CI-admitted UI/API on both gateways, real main-PC browser observations and automatic finite direct-video outcomes retained/read through the bounded API; the user-identified laptop reported 223 presented RTP frames at 960x540 via NAT/UDP, 20 echoes and p95 26.7 ms. Main PC uses VPN. Physical localhost topology, primary media/input, native gesture, latency SLA, full fleet and soak remain outside this finite acceptance."
+    }
+  ],
+  "sourceWorktreeEvidence": "docs/audits/2026-10-10/DIRECT-ADMISSION-INSTALLED.json",
+  "publicWeb": {
+    "lastObservedUtc": "2026-10-10T18:21:07.148890+00:00",
+    "url": "https://sphere-agent-canary-20260927.ru.tuna.am",
+    "ui": "a32854e6bbf4a8df5b062e9569e2258f160f753a",
+    "api": "c14c32351f89c6b4a67b3b7eb3f911b5a881fb46",
+    "evidence": "docs/audits/2026-10-10/STREAM-SESSION-DIAGNOSTICS-INSTALLED.json",
+    "evidenceSha256NormalizedLf": "cb892492f2fe642bd8ce09dce68428db9b107ed94c2e75635d367e60ad671c6c",
+    "scope": "CI-admitted UI/API on both gateways, real main-PC browser observations and automatic finite direct-video outcomes retained/read through the bounded API; the user-identified laptop reported 223 presented RTP frames at 960x540 via NAT/UDP, 20 echoes and p95 26.7 ms. Main PC uses VPN. Physical localhost topology, primary media/input, native gesture, latency SLA, full fleet and soak remain outside this finite acceptance.",
+    "additionalQa": {
+      "evidence": "docs/audits/2026-10-09/PUBLIC-WEB-SUPPLEMENTAL-QA.json",
+      "evidenceSha256NormalizedLf": "84f719a322e114a34ba4f4fc5624f717a71558f2b80f5aea1a484b50778ceac4",
+      "grafanaLoadFailureMitigated": true,
+      "uniqueMenuPathsChecked": 22,
+      "streamAcceptanceScope": "6 first-session frames, no Android input; steady FPS/control unaccepted"
+    },
+    "initialDeliveryEvidence": "docs/audits/2026-10-09/PUBLIC-WEB-DELIVERY.json"
+  },
+  "deliveredCorrections": [
+    {
+      "id": "direct-probe-pilot-cleanup",
+      "installedRevision": "369654a0be4bded35e299062badc9bfe95101f1e",
+      "evidence": "docs/audits/2026-10-10/BROADCAST-INSTALLED-ACCEPTANCE.json",
+      "scope": "Close race and phase wording delivered; no new native connectivity acceptance"
+    },
+    {
+      "id": "direct-probe-network-snapshot",
+      "installedRevision": "369654a0be4bded35e299062badc9bfe95101f1e",
+      "evidence": "docs/audits/2026-10-10/DIRECT-PROBE-NETWORK-CANARY.json",
+      "scope": "Source in369; standard frontend compile gate off. Real bounded network summary verified only in temporary loopback diagnostic UI; failed hostICE,0RTT, cleanup complete."
+    },
+    {
+      "id": "broadcast-binary-presence-response",
+      "installedRevision": "369654a0be4bded35e299062badc9bfe95101f1e",
+      "evidence": "docs/audits/2026-10-10/BROADCAST-INSTALLED-ACCEPTANCE.json",
+      "scope": "Two500 root causes corrected; isolated202+commit/admission and negative live404 accepted"
+    }
+  ]
+}

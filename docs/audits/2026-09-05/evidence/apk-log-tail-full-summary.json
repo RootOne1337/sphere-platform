@@ -1,0 +1,9 @@
+{
+  "tests": 515,
+  "failures": 0,
+  "errors": 0,
+  "skipped": 0,
+  "suites": 37,
+  "seconds": 122.034,
+  "validation": "Local default dev flavor, full JVM suite after AUD-100 byte-tail fix"
+}

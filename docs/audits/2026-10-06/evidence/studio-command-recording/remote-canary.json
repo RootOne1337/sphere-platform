@@ -1,0 +1,137 @@
+{
+  "observedAt": "2026-10-06T11:58:19.071039+00:00",
+  "task": {
+    "id": "432ccd1c-ccac-433b-ae33-91def3860f2e",
+    "status": "completed",
+    "device_id": "b410464a-5f26-4803-a756-7840cc17b128",
+    "script_id": "ceae4cfb-7719-4430-8882-ddfd5bbf11de",
+    "script_version_id": "0c35217a-9ae5-4ae1-a946-93f7165f8aa3",
+    "created_at": "2026-10-06T11:57:37.215155Z",
+    "started_at": "2026-10-06T11:57:37.552489Z",
+    "finished_at": "2026-10-06T11:57:47.915902Z",
+    "error": null
+  },
+  "script": {
+    "id": "ceae4cfb-7719-4430-8882-ddfd5bbf11de",
+    "name": "Studio recorder · PH025 · 2026-10-06",
+    "current_version_id": "0c35217a-9ae5-4ae1-a946-93f7165f8aa3"
+  },
+  "logs": [
+    {
+      "node_id": "start-1",
+      "action_type": "start",
+      "success": true,
+      "duration_ms": 0,
+      "created_at": null,
+      "error": null
+    },
+    {
+      "node_id": "step_955c560a4c06",
+      "action_type": "key_event",
+      "success": true,
+      "duration_ms": 3,
+      "created_at": null,
+      "error": null
+    },
+    {
+      "node_id": "setup_settings",
+      "action_type": "shell",
+      "success": true,
+      "duration_ms": 445,
+      "created_at": null,
+      "error": null
+    },
+    {
+      "node_id": "settle_settings",
+      "action_type": "sleep",
+      "success": true,
+      "duration_ms": 1501,
+      "created_at": null,
+      "error": null
+    },
+    {
+      "node_id": "step_b69fec26b77d",
+      "action_type": "tap",
+      "success": true,
+      "duration_ms": 0,
+      "created_at": null,
+      "error": null
+    },
+    {
+      "node_id": "step_5b4d53669f0c",
+      "action_type": "sleep",
+      "success": true,
+      "duration_ms": 6011,
+      "created_at": null,
+      "error": null
+    },
+    {
+      "node_id": "step_1cb5402d86ec",
+      "action_type": "type_text",
+      "success": true,
+      "duration_ms": 152,
+      "created_at": null,
+      "error": null
+    },
+    {
+      "node_id": "observe_search",
+      "action_type": "sleep",
+      "success": true,
+      "duration_ms": 2000,
+      "created_at": null,
+      "error": null
+    },
+    {
+      "node_id": "step_515916831862",
+      "action_type": "key_event",
+      "success": true,
+      "duration_ms": 1,
+      "created_at": null,
+      "error": null
+    },
+    {
+      "node_id": "end-1",
+      "action_type": "end",
+      "success": true,
+      "duration_ms": 0,
+      "created_at": null,
+      "error": null
+    }
+  ],
+  "fleet": {
+    "total": 19,
+    "statusCounts": {
+      "online": 14,
+      "busy": 0,
+      "connecting": 0,
+      "offline": 5,
+      "issues": 0
+    },
+    "presenceAvailable": true
+  },
+  "newTasksCreatedByCollector": false,
+  "apiRevision": "eb7a7c26c2e644f24eb3f785b3da1c29a65929be",
+  "versionVerifiedAt": "2026-10-06T12:05:49.867479+00:00",
+  "version": {
+    "id": "0c35217a-9ae5-4ae1-a946-93f7165f8aa3",
+    "script_id": "ceae4cfb-7719-4430-8882-ddfd5bbf11de",
+    "version": 1,
+    "dag_hash": "a7e1761f0d843456f973b4b985e8f6388ffd5cdbab2e2e9f1f1ed0b997023298",
+    "created_at": "2026-10-06T11:57:16.427705Z"
+  },
+  "nodeCount": 10,
+  "realTasksCreatedByNativeUi": 1,
+  "newScriptsCreated": 1,
+  "newVersionsCreated": 1,
+  "deviceName": "auto-ph-025",
+  "agentVersion": "1.2.45-dev",
+  "frameDimensions": [
+    960,
+    540
+  ],
+  "setupPrerequisiteExplicitlyAdded": true,
+  "frameCorrelatedReplayProven": false,
+  "apkChanged": false,
+  "tunnelsChanged": false,
+  "sourceRevision": "1c26ffc7def8c1a16ac90d2f0607f857b21d28cb"
+}

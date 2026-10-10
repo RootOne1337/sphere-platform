@@ -1,0 +1,26 @@
+F.                                                                       [100%]
+================================== FAILURES ===================================
+_______________ test_coverage_gate_preserves_hundredths[6498-2] _______________
+tests\deployment\test_coverage_gate.py:24: in test_coverage_gate_preserves_hundredths
+    assert result.returncode == expected_exit, result.stdout + result.stderr
+E   AssertionError: Name                                                                                                              Stmts   Miss  Cover
+E     -------------------------------------------------------------------------------------------------------------------------------------
+E     C:\Users\dimas\AppData\Local\Temp\pytest-of-dimas\pytest-23\test_coverage_gate_preserves_h0\boundary_fixture.py   10000   3502    65%
+E     -------------------------------------------------------------------------------------------------------------------------------------
+E     TOTAL                                                                                                             10000   3502    65%
+E     
+E   assert 0 == 2
+E    +  where 0 = CompletedProcess(args=['C:\\Users\\dimas\\Documents\\ChatGPT\\sphere-platform\\.venv-audit\\Scripts\\python.exe', '-m'...                                                                                     10000   3502    65%\n', stderr='').returncode
+============================== warnings summary ===============================
+.venv-audit\Lib\site-packages\pydantic\fields.py:754: 484 warnings
+  C:\Users\dimas\Documents\ChatGPT\sphere-platform\.venv-audit\Lib\site-packages\pydantic\fields.py:754: PydanticDeprecatedSince20: Using extra keyword arguments on `Field` is deprecated and will be removed. Use `json_schema_extra` instead. (Extra keys: 'deprecated'). Deprecated in Pydantic V2.0 to be removed in V3.0. See Pydantic V2 Migration Guide at https://errors.pydantic.dev/2.6/migration/
+    warn(
+
+backend\api\v1\game_accounts\router.py:94
+  C:\Users\dimas\Documents\ChatGPT\sphere-platform\backend\api\v1\game_accounts\router.py:94: DeprecationWarning: `regex` has been deprecated, please use `pattern` instead
+    sort_dir: str = Query("desc", regex="^(asc|desc)$", description="Направление сортировки"),
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ===========================
+FAILED tests/deployment/test_coverage_gate.py::test_coverage_gate_preserves_hundredths[6498-2]
+1 failed, 1 passed, 485 warnings in 0.99s

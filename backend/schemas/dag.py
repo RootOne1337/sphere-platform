@@ -46,8 +46,9 @@ class DAGNode(BaseModel):
     Узел DAG-графа. id — строка, не int (MERGE-3 contract).
 
     action — произвольный dict с обязательным ключом 'type'.
-    Strict-валидация полей каждого action остаётся на стороне DagRunner —
-    backend валидирует только тип, ссылки графа и отсутствие циклов.
+    Это совместимый структурный parser для исторических версий. Новые source
+    publications и POST /scripts/validate дополнительно используют versioned
+    action_parameters.py; parser не переписывает старые hashes/параметры.
     """
     id: str = Field(pattern=r'^[a-zA-Z_][\w-]{0,63}$')
     action: dict = Field(description="Action object, обязательный ключ 'type'")
@@ -60,7 +61,7 @@ class DAGNode(BaseModel):
     def validate_action_has_type(self) -> "DAGNode":
         """Проверяем что action содержит 'type' из допустимого набора."""
         action_type = self.action.get("type")
-        if not action_type:
+        if not isinstance(action_type, str) or not action_type:
             raise ValueError(f"Node '{self.id}': action must contain 'type' key")
         if action_type not in VALID_ACTION_TYPES:
             raise ValueError(
@@ -69,7 +70,7 @@ class DAGNode(BaseModel):
         # condition action обязан содержать on_true и on_false
         if action_type == "condition":
             for ref in ("on_true", "on_false"):
-                if not self.action.get(ref):
+                if not isinstance(self.action.get(ref), str) or not self.action[ref]:
                     raise ValueError(
                         f"Condition node '{self.id}': missing '{ref}' in action"
                     )
@@ -79,6 +80,8 @@ class DAGNode(BaseModel):
             lua_code = self.action.get("code", "")
         elif action_type == "condition" and "code" in self.action:
             lua_code = self.action.get("code", "")
+        if lua_code is not None and not isinstance(lua_code, str):
+            raise ValueError(f"Node '{self.id}': Lua code must be a string")
         if lua_code:
             from backend.services.lua_safety import check_lua_safety
             violations = check_lua_safety(lua_code)
@@ -111,6 +114,8 @@ class DAGScript(BaseModel):
     @model_validator(mode="after")
     def validate_dag(self) -> "DAGScript":
         node_ids = {n.id for n in self.nodes}
+        if len(node_ids) != len(self.nodes):
+            raise ValueError("Node identifiers must be unique")
 
         # 1. entry_node должен существовать
         if self.entry_node not in node_ids:

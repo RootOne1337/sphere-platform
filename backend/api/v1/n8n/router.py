@@ -7,8 +7,8 @@ import uuid
 from fastapi import APIRouter, Depends, HTTPException, Response, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from backend.core.dependencies import get_current_user, get_db
-from backend.models.task import Task, TaskStatus
+from backend.core.dependencies import get_current_user, get_db, require_permission
+from backend.models.task import Task
 from backend.models.webhook import Webhook
 from backend.schemas.webhook import (
     WebhookCreate,
@@ -155,7 +155,7 @@ class N8nTaskResponse(BaseModel):
 async def create_task(
     body: N8nTaskCreate,
     db: AsyncSession = Depends(get_db),
-    current_user=Depends(get_current_user),
+    current_user=require_permission("script:execute"),
 ) -> N8nTaskResponse:
     """
     Create a Task for execution on a device.
@@ -164,15 +164,14 @@ async def create_task(
 
     The webhook_url is stored in input_params and called by the task result handler.
     """
-    task = Task(
+    from backend.services.task_service import TaskService
+    task = await TaskService(db).create_task(
         org_id=current_user.org_id,
         device_id=body.device_id,
         script_id=body.script_id,
         priority=body.priority,
-        status=TaskStatus.QUEUED,
-        input_params={"webhook_url": body.webhook_url} if body.webhook_url else {},
+        webhook_url=body.webhook_url,
     )
-    db.add(task)
     await db.commit()
     await db.refresh(task)
     return N8nTaskResponse(
