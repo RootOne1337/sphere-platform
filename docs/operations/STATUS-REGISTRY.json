@@ -28,9 +28,9 @@
     {
       "id": "continuous-idle-auto-recovery",
       "installed": false,
-      "sourceBaseRevision": "f465d1fb63f09605174348070c0e10357035467a",
+      "sourceBaseRevision": "34497f9b9fe642050999e9d973de17f5623b4344",
       "evidence": "docs/audits/2026-10-10/CONTINUOUS-POINTER-RECOVERY.md",
-      "scope": "Follow-up source correction after actual UIa513 public MOVE512ms fault: unknown pointer outcome remains visible; exact native RELEASE3 then fresh viewer/frame/capability/STARTUP0 required for a new explicit input. Missing/foreign/unknown release, injector/HTTP/server denial fences retained. Repeated idle recovery/backoff retained.179 targeted/1994 full frontend tests/types/scoped lint passed; final exact CI/runtime/browser acceptance pending. No input replay or ACK latency/direct/fleet acceptance."
+      "scope": "Follow-up source correction after actual UI344 public navigation left input IDLE while video continued: confirmed navigation during negotiation rearms capability; mismatched capture retains bounded deadline. Exact RELEASE3/fresh viewer/STARTUP gates and unknown pointer/HTTP fences retained, no input replay. 1996 full frontend tests/types/scoped lint passed; final exact CI/runtime/browser acceptance pending. No ACK latency/direct/fleet acceptance."
     },
     {
       "id": "direct-probe-native-network-summary",

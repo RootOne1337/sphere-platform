@@ -455,9 +455,11 @@ export function DeviceStream({
                 const capture = decoder?.lastRenderedCapture;
                 if (!capture || msg.capture_epoch !== capture.captureEpoch || msg.frame_width !== capture.frameWidth
                   || msg.frame_height !== capture.frameHeight) {
-                  setContinuousState('idle');
-                  continuousRequestedRef.current = false;
-                  setContinuousReason('Кадр и захват Android изменились. Подключите жесты ещё раз.');
+                  // The response grants no touch authority. Keep the owned probe
+                  // deadline alive: a geometry race must not strand a previously
+                  // confirmed continuous path in idle with legacy input blocked.
+                  setContinuousState('probing');
+                  setContinuousReason('Экран Android изменился · ожидаем совпадение кадра и возможностей APK.');
                   return;
                 }
                 const controller = new ContinuousPointer({ socket: newWs,
@@ -817,7 +819,10 @@ export function DeviceStream({
       if (wsRef.current !== socket) return;
       discreteBusyRef.current = false;
       setDiscreteBusy(false);
-      if (confirmed && controller) automaticProbeRef.current = null;
+      // Navigation can cancel a capability probe before any controller exists.
+      // A known key outcome must rearm readiness in that case too; otherwise
+      // this socket remains marked probed and new gestures stay blocked in idle.
+      if (confirmed) automaticProbeRef.current = null;
       if (!confirmed) {
         continuousFaultRef.current = true;
         setContinuousFault(true);

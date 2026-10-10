@@ -149,6 +149,58 @@ it('Home waits for native release and resumes continuous input only after the ac
   view.unmount();
 });
 
+it('a confirmed navigation during capability negotiation rearms fresh readiness instead of stranding idle input', async () => {
+  const view = readyContinuous();
+  fireEvent.click(view.getByRole('button', { name: 'Домой' }));
+  await act(async () => view.status(0, 3, 'release'));
+  expect(view.sent().filter(x => x.type === 'touch_probe')).toHaveLength(2);
+  expect(view.container.querySelector('[data-control-state]')).toHaveAttribute('data-control-state', 'probing');
+  let confirm!: () => void;
+  jest.mocked(api.post).mockImplementationOnce(() => new Promise(resolve => { confirm = () => resolve({ data: { output: '' } }); }) as never);
+  fireEvent.click(view.getByRole('button', { name: 'Домой' }));
+  view.receive({ type: 'touch_capability', capture_epoch: TOUCH_EPOCH, frame_width: 1280, frame_height: 720 });
+  expect(view.sent().filter(x => x.type === 'touch_open')).toHaveLength(1);
+  await act(async () => confirm());
+  expect(api.post).toHaveBeenCalledTimes(2);
+  expect(view.sent().filter(x => x.type === 'touch_probe')).toHaveLength(3);
+  view.down(2); view.up(2, 65);
+  expect(view.commands()).toEqual([]);
+  view.receive({ type: 'touch_capability', capture_epoch: TOUCH_EPOCH, frame_width: 1280, frame_height: 720 });
+  view.receive({ type: 'touch_session', session_id: 'fresh_navigation_session', owner: 'fresh_navigation_owner',
+    capture_epoch: TOUCH_EPOCH, frame_width: 1280, frame_height: 720 });
+  view.down(3); view.up(3, 65);
+  expect(view.sent().filter(x => x.type === 'touch_event')).toEqual([]);
+  view.receive({ type: 'continuous_input_status', session_id: 'fresh_navigation_session', owner: 'fresh_navigation_owner',
+    capture_epoch: TOUCH_EPOCH, sequence: 0, status: 0, stage: 'startup', origin: 'injector', device_uptime_ms: 500 });
+  view.down(4); view.up(4, 65);
+  expect(view.sent().filter(x => x.type === 'touch_event').map(x => x.action)).toEqual([0, 1]);
+  expect(view.commands()).toEqual([]);
+  view.unmount();
+  // Flush promise-scheduled microtasks; the viewer's timers must still all be disposed.
+  act(() => jest.runAllTicks());
+  expect(jest.getTimerCount()).toBe(0);
+});
+
+it('a changed capture during negotiation retains its deadline and recovers the viewer without touch authority', async () => {
+  const view = readyContinuous();
+  fireEvent.click(view.getByRole('button', { name: 'Домой' }));
+  await act(async () => view.status(0, 3, 'release'));
+  view.receive({ type: 'touch_capability', capture_epoch: '11223344-5566-7788-99aa-bbccddeeff00', frame_width: 1280, frame_height: 720 });
+  expect(view.container.querySelector('[data-control-state]')).toHaveAttribute('data-control-state', 'probing');
+  view.down(2); view.up(2, 65);
+  expect(view.commands()).toEqual([]);
+  expect(view.sent().filter(x => x.type === 'touch_open')).toHaveLength(1);
+  act(() => jest.advanceTimersByTime(6000));
+  expect(view.container.querySelector('[data-control-state]')).toHaveAttribute('data-control-failure', 'capability_timeout');
+  expect(view.getByRole('button', { name: 'Домой' })).toBeDisabled();
+  act(() => jest.advanceTimersByTime(3750));
+  expect(view.socket.close).toHaveBeenCalledTimes(1);
+  expect(MockSocket.instances).toHaveLength(2);
+  expect(view.sent().filter(x => x.type === 'touch_event')).toEqual([]);
+  view.unmount();
+  expect(jest.getTimerCount()).toBe(0);
+});
+
 it('blur cancels ownership and never falls back to replaying a legacy drag', () => {
   const view = readyContinuous();
   fireEvent.pointerDown(view.canvas, { clientX: 40, clientY: 50, pointerId: 1, button: 0, buttons: 1 });

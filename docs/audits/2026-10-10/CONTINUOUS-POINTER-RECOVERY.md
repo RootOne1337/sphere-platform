@@ -83,3 +83,34 @@ fixture-only coverage этого случая. Явно сохранить от�
 echo RTT, direct/relay profiles, затем media/input и resource soak. Диагностический
 host-only canary ранее не открыл канал; эта UI коррекция не меняет этот результат.
 Product9/41 и legacy7 здесь не закрываются.
+
+## Реальная проверка UI344 и дополнительная коррекция согласования
+
+UI34497f9b установлен отдельно от API369654a0 в00:04UTC10октября.
+На публичном PH011 в00:05:31 controller READY, натуральных automatic idle
+attempts2,12decoded/drawn без ошибок. В00:06:16 после четырёх попыток READY,
+«Недавние» получили Android completion1247мс,80decoded/drawn без ошибок.
+После «Домой» (completion666мс) и второго жеста в00:06:56 состояние осталось
+IDLE; в00:07:50 оно всё ещё IDLE, хотя101кадр нарисован, ошибки0, ручной кнопки0.
+Это отрицательный результат управления, а не успешная приёмка по одному видео.
+Unknown pointer notice в этом окне не появлялся; натуральный pointer-loss recovery
+этой версии не принят. Private UI records:344-public-*.json, без подделки receipts.
+
+Исходник выявил две гонки. Подтверждённая навигационная команда во время capability
+probe отменяла ожидание до появления controller, но не снимала метку «probe уже
+выполнен» с WS. Повторная проверка теперь запускается после известного результата
+команды и требует новых capability/session/STARTUP. Неизвестный HTTP result
+сохраняет fence. Красный fixture до коррекции получил2probes вместо требуемых3.
+
+Несовпадение capture epoch/геометрии capability и уже нарисованного кадра также
+переводило UI в IDLE и отменяло ограниченный deadline. Теперь остаётся PROBING:
+touch authority не выдана, ожидание ограничено прежними6секундами, после timeout
+подтверждённый continuous path восстанавливает собственный viewer по backoff.
+Случай не подменяется legacy swipe или искусственным успешным receipt.
+
+Оба новых fixture прошли: ввод заблокирован до свежего STARTUP, старое согласование
+не принимается во время HTTP команды, unmount убирает все таймеры. Promise microtasks
+в fake-clock тесте явно завершены перед подсчётом таймеров. Полный frontend:
+**1996tests/142suites passed**, TypeScript и scoped ESLint прошли. Это follow-up
+source correction поверх344; его exact-source CI/установка/браузер проверяются
+отдельно. Причина480–510мс native ACK и direct transport остаются OPEN.
