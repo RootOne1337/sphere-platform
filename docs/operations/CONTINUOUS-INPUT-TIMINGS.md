@@ -3,15 +3,15 @@
 [Реестр работ](WORK-STATUS.md) · [Текущая установка](CURRENT-STATE.md) ·
 [Prometheus](OBSERVABILITY.md) · [Исходная проверка](../audits/2026-10-09/CONTINUOUS-SERVER-TIMINGS.md)
 
-**Установленные UI/API369654a0 сохраняют эти измерения.**
-[Текущая доставка и границы](../audits/2026-10-10/BROADCAST-INSTALLED-ACCEPTANCE.md) ·
-[Исторический wording/контраст](../audits/2026-10-09/IDLE-CONTROL-UX-INSTALLED.md).
-Последний public idle timeout остаётся открытым; метрики не доказывают native ACK.
-
-**Source correction 10 октября, ещё не установлен:** повторное безопасное idle
-согласование с backoff до 15 секунд и recovery потерянного RELEASE; legacy input
-после reconnect ожидает свежий STARTUP0. Это не устранение причины ACK latency
-или повышение deadlines. [Audit, fixtures и следующий live gate](../audits/2026-10-10/CONTINUOUS-AUTO-RECOVERY.md).
+**Установленные UI639b6ad5/API369654a0 сохраняют серверные измерения.**
+[Последняя доставка и границы](../audits/2026-10-10/CONTINUOUS-AUTO-RECOVERY-INSTALLED.md).
+Повторное automatic idle recovery, точный native RELEASE/fresh-viewer gate после
+unknown pointer loss и гонки navigation/capture исправлены.1996frontend tests прошли.
+На PH011 проверены конечные readiness/navigation/video обоих адресов; на UI13/639
+по одному unknown-pointer notice сменились новой готовностью и подтверждённым Home. Остальные
+RELEASE/hold/terminal permutations fixture-only, wire trace отсутствует.500мс deadline не увеличен: причина
+ACK latency и direct path остаются OPEN. Native ACK и показ нового кадра — разные
+сигналы; HTTP key completion также не измеряет input-to-picture latency.
 
 **Историческая доставка 9 октября, 15:17 UTC / 20:17 UTC+5: установлено в API d720232e.**
 UI 86354350 / APK 10249 сохранены. [Exact CI/image/install и failed idle canary receipt](../audits/2026-10-09/CONTINUOUS-SERVER-TIMINGS-INSTALLED.md):

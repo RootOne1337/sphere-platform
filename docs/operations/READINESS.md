@@ -1,14 +1,16 @@
 # Эксплуатационная готовность Sphere
 
-**Проверенная установка:** UI `369654a0` / API `369654a0`.
+**Проверенная установка:** UI `639b6ad5` / API `369654a0`.
 
-**10 октября — автоматический idle recovery исправлен в source.** Повторный
-heartbeat loss не требует ручной кнопки; новый viewer не принимает legacy swipe до
-fresh native readiness.1982full/167targeted frontend tests прошли. Exact CI,
-установка и реальный canary ещё не приняты; input latency/direct gates открыты.
-[Проверки и границы](../audits/2026-10-10/CONTINUOUS-AUTO-RECOVERY.md).
+**10 октября — UI автоматического управления установлен и проверен в конечном scope.**
+UI639/API369,1996frontend tests/types/scoped lint. Повторный idle recovery, точный
+RELEASE/fresh-viewer gate и гонки навигации/capture исправлены. На UI13 и финальном639
+по одному натуральному unknown-pointer notice сменились новой готовностью и
+подтверждённым Home. Перестановки RELEASE/hold/terminal покрыты fixtures;
+native latency/direct/fleet OPEN.
+[Установка, реальные срезы и границы](../audits/2026-10-10/CONTINUOUS-AUTO-RECOVERY-INSTALLED.md).
 
-**10 октября — broadcast исправлен и установлен.** На обоих адресах UI/API369;
+**Предыдущая установка10октября — broadcast.** В том срезе на обоих адресах UI/API369;
 все4 exact-source CI success:3428 backend tests/252subtests,1966 frontend tests.
 Изолированный PostgreSQL/Redis test подтвердил202, commit и admission. На рабочем
 стенде ожидаемый404 после чтения presence проверен без запуска массовых действий.
@@ -32,8 +34,9 @@ probeoff/allowlist[], listeners/tabs закрыты. Обычный public video
 [Native counter acceptance и границы](../audits/2026-10-10/DIRECT-PROBE-NATIVE-COUNTERS-CANARY.md).
 APK PH0111.2.49-dev/10249, новый stable1.3 не выпущен.
 [Release gates](../design/APK-1.3-COMPATIBILITY-AND-RELEASE.md).
-Limited observer возобновлён9Oct21:09UTC до10Oct12:41UTC; прежний разрыв и
-VSS/USN/ETW writer attribution не покрыты. [Continuity](../audits/2026-10-10/STORAGE-OBSERVER-CONTINUITY.md).
+Limited observer возобновлён10Oct00:14→12:34UTC;86предыдущих samples
+закончились23:59UTC, процесс отсутствовал. Разрыв и whole-PC writer UNKNOWN.
+[Continuity](../audits/2026-10-10/STORAGE-OBSERVER-RESUME.md).
 **9принято/41открыто**, legacy34source-fixed/7unclosed — разные счётчики.
 [Реестр](WORK-STATUS.md) / [машинный статус](STATUS-REGISTRY.json).
 

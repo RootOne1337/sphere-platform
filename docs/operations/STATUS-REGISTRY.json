@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
-  "reviewedAtUtc": "2026-10-09T23:07:36.638670+00:00",
-  "sourceReviewed": "8447c9078eaff138d60e9cfe0a47867f67278d03",
+  "reviewedAtUtc": "2026-10-10T00:40:06.833372+00:00",
+  "sourceReviewed": "639b6ad52fe3651579499659ded46ff73027f313",
   "scope": "Effective documentation status; source/install/finite acceptance kept separate. No new fleet or soak acceptance.",
   "baseline": "docs/audits/2026-10-05/ENTERPRISE-PRODUCT-BACKLOG.json",
   "previousCrosscheck": "docs/audits/2026-10-09/CHAT-CODE-RECONCILIATION.json",
@@ -11,27 +11,20 @@
     "open": 41
   },
   "installed": {
-    "lastObservedUtc": "2026-10-09T23:07:36.638670+00:00",
-    "ui": "369654a0be4bded35e299062badc9bfe95101f1e",
+    "lastObservedUtc": "2026-10-10T00:40:06.833372+00:00",
+    "ui": "639b6ad52fe3651579499659ded46ff73027f313",
     "api": "369654a0be4bded35e299062badc9bfe95101f1e",
-    "evidence": "docs/audits/2026-10-10/DIRECT-PROBE-NATIVE-COUNTERS-CANARY.json",
-    "observation": "UI/API369 remain installed. Corrected native8447 canary measured12reports: remote0/pairs0/DTLSnew, packet counters unknown. Browser177/0, no channel/RTT. Original APK restored, APIoff/allowlist[], temporary listeners/tabs closed. Public ordinary video662frames without errors; both origins health/404. No direct/idle/fleet acceptance.",
+    "evidence": "docs/audits/2026-10-10/CONTINUOUS-AUTO-RECOVERY-INSTALLED.json",
+    "observation": "UI639/API369 installed on both origins; one-PH011 finite readiness/navigation/frame checks. Repeated idle and exact release/fresh-viewer unknown-pointer safeguards, negotiation races corrected. No input replay, direct path, native latency/fleet/soak or stable APK acceptance.",
     "pilotApk": {
       "device": "PH011",
       "version": "1.2.49-dev",
       "versionCode": 10249,
       "scope": "PH011 original APK restored after one corrected native-counter diagnostic window; not fleet inventory"
     },
-    "evidenceSha256NormalizedLf": "1c63644784a2cb15fcb6942933f15fdbe40f6d03a976689a5cb9fa5c3147b249"
+    "evidenceSha256NormalizedLf": "b351ba347a55b74f827ab349955bd74323c8886d3cbfd5309e0ca017d5b6137b"
   },
   "pendingCorrections": [
-    {
-      "id": "continuous-idle-auto-recovery",
-      "installed": false,
-      "sourceBaseRevision": "34497f9b9fe642050999e9d973de17f5623b4344",
-      "evidence": "docs/audits/2026-10-10/CONTINUOUS-POINTER-RECOVERY.md",
-      "scope": "Follow-up source correction after actual UI344 public navigation left input IDLE while video continued: confirmed navigation during negotiation rearms capability; mismatched capture retains bounded deadline. Exact RELEASE3/fresh viewer/STARTUP gates and unknown pointer/HTTP fences retained, no input replay. 1996 full frontend tests/types/scoped lint passed; final exact CI/runtime/browser acceptance pending. No ACK latency/direct/fleet acceptance."
-    },
     {
       "id": "direct-probe-native-network-summary",
       "installed": false,
@@ -42,13 +35,13 @@
     }
   ],
   "storage": {
-    "lastObservedUtc": "2026-10-09T21:14:26.196860+00:00",
+    "lastObservedUtc": "2026-10-10T00:37:53.426572+00:00",
     "visibleMatchingProcesses": 1,
-    "continuousCoverageConfirmed": true,
-    "observationScope": "Finite new limited periodic metadata window only, from 9Oct21:09UTC until 10Oct12:41UTC. Previous process absent and samples stop20:06UTC; gap not covered. No global kernel writer attribution.",
-    "oneFreeDiskReadingBytes": 52831019008,
+    "continuousCoverageConfirmed": false,
+    "observationScope": "Limited periodic collector resumed10Oct00:14→12:34UTC; previous86samples stop9Oct23:59, process absent. Uncovered gap and no global kernel writer attribution.",
+    "oneFreeDiskReadingBytes": 45551583232,
     "latestCompletedEvidence": "docs/audits/2026-10-08/STORAGE-WINDOW-COMPLETION.json",
-    "activeEvidence": "docs/audits/2026-10-10/STORAGE-OBSERVER-CONTINUITY.json"
+    "activeEvidence": "docs/audits/2026-10-10/STORAGE-OBSERVER-RESUME.json"
   },
   "legacy": {
     "total": 41,
@@ -1638,7 +1631,8 @@
         "docs/audits/2026-10-08/CONTINUOUS-VIEWER-FAULT-ISOLATION.md",
         "docs/audits/2026-10-08/CONTINUOUS-INPUT-AUTOMATIC-UX.md",
         "docs/audits/2026-10-09/STREAM-DIAGNOSTICS-INSTALLED-ACCEPTANCE.json",
-        "docs/audits/2026-10-10/IDLE-LOCAL-PUBLIC-COMPARISON.md"
+        "docs/audits/2026-10-10/IDLE-LOCAL-PUBLIC-COMPARISON.md",
+        "docs/audits/2026-10-10/CONTINUOUS-AUTO-RECOVERY-INSTALLED.json"
       ],
       "sourcePaths": [
         "backend/websocket/continuous_runtime.py",
@@ -1780,12 +1774,13 @@
         "EP-033",
         "EP-047"
       ],
-      "acceptedScope": "Limited observer restarted9Oct21:09→10Oct12:41UTC,467×120s/16MiB; prior process absent,223 samples stop20:06UTC. New complete samples/process epoch verified. Gap is uncovered; no whole-PC writer attribution.",
+      "acceptedScope": "Previous86samples verified: C:-6522753024B, Docker VHDX same identity/logical/allocation234731077632B throughout. Process gone; limited collector resumed10Oct00:14→12:34UTC,371×120s/16MiB,24namedfiles. Gap uncovered, writer UNKNOWN.",
       "remaining": "Whole-PC writer UNKNOWN: VSS unavailable, USN/ETW не запущены. Нет reboot autostart; после deadline потребуется bounded restart/health. Resource soak/retention и RAM acceptance открыты.",
       "evidence": [
         "docs/audits/2026-10-08/STORAGE-WINDOW-COMPLETION.json",
         "docs/audits/2026-10-09/STORAGE-OBSERVER-RESTART.json",
-        "docs/audits/2026-10-10/STORAGE-OBSERVER-CONTINUITY.json"
+        "docs/audits/2026-10-10/STORAGE-OBSERVER-CONTINUITY.json",
+        "docs/audits/2026-10-10/STORAGE-OBSERVER-RESUME.json"
       ],
       "sourcePaths": [],
       "fleetAccepted": false
@@ -1936,9 +1931,17 @@
       "evidence": "docs/audits/2026-10-09/STUDIO-CLOCK-INSTALLED-ACCEPTANCE.json",
       "evidenceSha256NormalizedLf": "b6ad1cb158efd0625a93b60a55c63d5353f4b15f80e748173d4bb88cd81b5fed",
       "acceptedScope": "Finite PH011 tap/XPath/tap/Back recording and explicit graph insertion; not full EP-018 or fleet."
+    },
+    {
+      "id": "continuous-idle-auto-recovery",
+      "sourceRevision": "639b6ad52fe3651579499659ded46ff73027f313",
+      "installedRevision": "639b6ad52fe3651579499659ded46ff73027f313",
+      "evidence": "docs/audits/2026-10-10/CONTINUOUS-AUTO-RECOVERY-INSTALLED.json",
+      "evidenceSha256NormalizedLf": "b351ba347a55b74f827ab349955bd74323c8886d3cbfd5309e0ca017d5b6137b",
+      "acceptedScope": "Finite UI installation/readiness/navigation only; one natural unknown-pointer notice followed by fresh readiness and confirmed Home on each of UI13 and final UI639. Release/hold/terminal permutations fixture-only; no independent wire trace or native latency/direct/fleet acceptance."
     }
   ],
-  "sourceWorktreeEvidence": "docs/audits/2026-10-09/CONTINUOUS-SERVER-TIMINGS-INSTALLED.json",
+  "sourceWorktreeEvidence": "docs/audits/2026-10-10/CONTINUOUS-AUTO-RECOVERY-INSTALLED.json",
   "publicWeb": {
     "lastObservedUtc": "2026-10-09T22:05:42.592541+00:00",
     "url": "https://sphere-agent-canary-20260927.ru.tuna.am",

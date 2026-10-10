@@ -1,8 +1,12 @@
 # Локальный стенд для совместного тестирования
 
-**Проверенная установка:** UI `369654a0` / API `369654a0`.
+**Проверенная установка:** UI `639b6ad5` / API `369654a0`.
 
-**10 октября — broadcast исправлен и установлен.** На обоих адресах UI/API369;
+**10 октября — последняя UI коррекция:** автоматическая готовность после reconnect
+и навигации;1996frontend tests. Конечный PH011 scope не закрывает latency/direct/fleet.
+[Актуальная установка и ограничения](../audits/2026-10-10/CONTINUOUS-AUTO-RECOVERY-INSTALLED.md).
+
+**Предыдущая установка10октября — broadcast.** В том срезе на обоих адресах UI/API369;
 все4 exact-source CI success:3428 backend tests/252subtests,1966 frontend tests.
 Изолированный PostgreSQL/Redis test подтвердил202, commit и admission. На рабочем
 стенде ожидаемый404 после чтения presence проверен без запуска массовых действий.
@@ -10,7 +14,7 @@ APK, schema/OTA и45соседних контейнеров сохранены �
 Idle control и direct transport остаются открытыми; probe выключен.
 [Установка, проверки и остаток](../audits/2026-10-10/BROADCAST-INSTALLED-ACCEPTANCE.md).
 
-Действующий Tuna-host и3015 используют одну паруUI/API369. Public map и
+Действующий Tuna-host и3015 используют одну пару UI639/API369. Public map и
 API/WS/bootstrap routes сохранены; PH011 снова online после API replacement.
 Direct endpoint off/allowlist[], исходный APK1.2.49-dev/10249 восстановлен после
 конечного ICE canary.177requests/0responses,0RTT; успешный прямой канал не подтверждён.

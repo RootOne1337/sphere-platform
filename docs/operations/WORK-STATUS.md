@@ -1,13 +1,14 @@
 # Работы, требования пользователя и границы приёмки
 
-**Проверенная установка:** UI `369654a0` / API `369654a0`.
+**Проверенная установка:** UI `639b6ad5` / API `369654a0`.
 
-**10 октября — source correction автоматического управления.** Повторный безопасный
-idle failure больше не ограничен одной попыткой; backoff до 15 секунд, fresh native
-readiness и отсутствие replay обязательны. Потерянный idle RELEASE пересоздаёт только
-viewer; ранее подтверждённый continuous path блокирует legacy swipe до нового STARTUP0.
-167 targeted и1982 full frontend tests/types/scoped lint прошли. Установка и live canary ещё не приняты.
-[Reconnect audit и точные gates](../audits/2026-10-10/CONTINUOUS-AUTO-RECOVERY.md).
+**10 октября — UI автоматического управления установлен и проверен в конечном scope.**
+UI639/API369,1996frontend tests/types/scoped lint. Повторный idle recovery, точный
+RELEASE/fresh-viewer gate и гонки навигации/capture исправлены. На UI13 и финальном639
+по одному натуральному unknown-pointer notice сменились новой готовностью и
+подтверждённым Home. Перестановки RELEASE/hold/terminal покрыты fixtures;
+native latency/direct/fleet OPEN.
+[Установка, реальные срезы и границы](../audits/2026-10-10/CONTINUOUS-AUTO-RECOVERY-INSTALLED.md).
 
 **10 октября — native ICE counters проверены на реальном APK.**
 Исправленный8447 прошёл все4 exact-source CI и signed admission. Один PH011:
@@ -15,7 +16,7 @@ viewer; ранее подтверждённый continuous path блокируе
 Browser177checks/0responses, channel/RTT нет. Это различимый результат,
 не доказанная mDNS/VPN причина. Исходный APK восстановлен, probeoff/allowlist[],
 временные3016/3017 и вкладки закрыты. Обычный public viewer вернул662decoded/drawn
-frames без invalid/decode/render errors. UI/API369 сохранены; direct/idle OPEN.
+frames без invalid/decode/render errors. В том canary UI/API369 сохранены; direct/latency OPEN.
 [Native/browser counters, маршруты и возврат](../audits/2026-10-10/DIRECT-PROBE-NATIVE-COUNTERS-CANARY.md).
 
 **Предыдущий срез 10 октября — browser ICE без native counters.** Один диагностический canary:
@@ -28,7 +29,7 @@ APK answer получен, две пары проверяются,177 requests/0
 формулировку доставки source, не подтверждает direct media/control или SLA.
 [Измерение, установка и следующий шаг](../audits/2026-10-10/DIRECT-PROBE-NETWORK-CANARY.md).
 
-**10 октября — broadcast исправлен и установлен.** На обоих адресах UI/API369;
+**Предыдущая установка10октября — broadcast.** В том срезе на обоих адресах UI/API369;
 все4 exact-source CI success:3428 backend tests/252subtests,1966 frontend tests.
 Изолированный PostgreSQL/Redis test подтвердил202, commit и admission. На рабочем
 стенде ожидаемый404 после чтения presence проверен без запуска массовых действий.
@@ -46,10 +47,12 @@ Idle control и direct transport остаются открытыми; probe вы
 Новое capability negotiation, native resource gates, idle reliability и signing
 promotion требуют отдельной приёмки. [Матрица и критерии](../design/APK-1.3-COMPATIBILITY-AND-RELEASE.md).
 
-**10 октября — проверена continuity сборщика диска.** Прежний процесс отсутствовал,
-223 samples закончились9Oct20:06UTC. Один limited observer возобновлён21:09UTC,
-due10Oct12:41UTC; три complete samples и PID/epoch/command проверены. Разрыв не
-покрыт, whole-PC writer UNKNOWN. [Receipt и границы](../audits/2026-10-10/STORAGE-OBSERVER-CONTINUITY.md).
+**10 октября — сборщик диска возобновлён после обнаруженной остановки.**
+86samples21:09→23:59UTC: C:−6,075GiB, Docker VHDX allocation постоянен.
+Процесс отсутствовал при running status; причина остановки/расхода UNKNOWN.
+Новый PID/epoch/complete samples сверены, окно00:14→12:34UTC,371×120s/16MiB.
+Разрыв не покрыт, VSS/USN/kernel writer attribution недоступны.
+[Receipt и границы](../audits/2026-10-10/STORAGE-OBSERVER-RESUME.md).
 
 **Исторический срез9октября: выполнены две попытки native direct pilot.** JNI и авторизованный
 SDP answer подтверждены, DataChannel не открылся, RTT не измерен. API9ad установлен,
@@ -123,25 +126,21 @@ L — несколько слоёв/проверок, XL — новая подс
 
 ## Сначала закрыть риски эксплуатации
 
-1. **Диск и ОЗУ (EP-033/047):** limited observation возобновлено9Oct21:09UTC
-   до10Oct12:41UTC: 467×120s/16MiB,24named files и RAM/Docker/WSL; complete
-   samples и process epoch проверены. Прежний PID отсутствует, последняя запись
-   20:06UTC; разрыв не покрыт, whole-PC writer
-   UNKNOWN: VSS/USN/kernel evidence недоступны. Большой VHD не доказывает writer;
-   reboot/deadline останавливают сбор, resource soak/retention ещё нужны.
-   [Окно и границы](../audits/2026-10-10/STORAGE-OBSERVER-CONTINUITY.md).
-2. **Idle control (EP-020/029):** PH011 native_receipt_timeout повторился
-   с heartbeat512ms/tick15ms/WS OPEN0B/lastACK RTT248ms. Снимок сохраняет
-   доказательство, участок задержки server/APK/native/reverse path пока неизвестен.
-   UI86354350 установил snapshot и доступную desktop/phone панель диагностики.
-   Deadline/replay не менялись; необходимы корреляция, исправление и повторная canary.
-   [Receipt и границы](../audits/2026-10-09/STREAM-DIAGNOSTICS-INSTALLED-ACCEPTANCE.md).
-   Семь серверных timing spans впервые установлены в API d720232e, сохранены в9ad3481c,
-   без ID/payload/per-MOVE logs.
-   PH011 heartbeat510ms/lastACK RTT256ms повторился; наблюдаемые server spans <25ms.
-   Queue/network/APK/native причина OPEN; диагностическая доставка не закрывает idle дефект.
-   [Новый installed receipt](../audits/2026-10-09/CONTINUOUS-SERVER-TIMINGS-INSTALLED.md).
-   [Границы и следующие проверки](CONTINUOUS-INPUT-TIMINGS.md).
+1. **Диск и ОЗУ (EP-033/047):** limited observation возобновлено10Oct00:14UTC
+   до12:34UTC:371×120s/16MiB,24namedfiles и RAM/Docker/WSL. Прежний процесс
+   отсутствует,86samples закончились9Oct23:59UTC. C:−6,075GiB при постоянном
+   Docker VHDX allocation; источник расхода UNKNOWN. Разрыв не покрыт, VSS/USN/
+   kernel evidence недоступны; resource soak/retention и RAM acceptance нужны.
+   [Окно и границы](../audits/2026-10-10/STORAGE-OBSERVER-RESUME.md).
+2. **Управление и native latency (EP-020/029):** UI639/API369 установлен.
+   Повторное idle recovery и гонки navigation/capture исправлены; fresh RELEASE/
+   frame/STARTUP gates не повторяют неизвестный жест. На PH011 проверены конечные
+   UI readiness/navigation/video; по одному UI13/639 unknown-pointer recovery наблюдены,
+   перестановки RELEASE/hold/terminal пока fixture-only, wire trace отсутствует.
+   ACK пересекает500ms; server timing spans сами по себе не локализуют причину.
+   Network/APK/native/reverse-path correlation, latency/fleet/direct gates OPEN.
+   [Установка и границы](../audits/2026-10-10/CONTINUOUS-AUTO-RECOVERY-INSTALLED.md).
+   [Измерения и следующий шаг](CONTINUOUS-INPUT-TIMINGS.md).
 3. **Общий владелец input (EP-017/020):** Redis lease для continuous viewer существует;
    согласование viewer/task/API/scheduler и неизвестных результатов во всех комбинациях не принято.
 4. **Rich recorder (EP-018):** clock fix1577e01e сохранён в UI86354350;
@@ -323,15 +322,16 @@ Fleet WS пакетно invalidates REST queries; скрытые вкладки/
 
 **OPEN** · EP-033, EP-047.
 
-Limited observer возобновлён9Oct21:09→10Oct12:41UTC,467×120s/16MiB. Complete samples,
-process creation/command/source identity проверены. Прежний PID отсутствовал,
-223samples закончились20:06UTC; этот разрыв не покрыт.
+Limited observer возобновлён10Oct00:14→12:34UTC,371×120s/16MiB.
+86предыдущих samples: C:−6522753024B при неизменных Docker VHDX identity/
+logical/allocation234731077632B. Прежний процесс исчез; разрыв после23:59
+не покрыт. Новые complete samples/process creation/command/source сверены.
 
 Остаётся: Whole-PC writer UNKNOWN: VSS unavailable, USN/ETW не запущены.
 Нет reboot autostart; после deadline нужны bounded restart/health,
 resource soak/retention и RAM acceptance.
 
-Доказательства: [STORAGE-OBSERVER-CONTINUITY](../audits/2026-10-10/STORAGE-OBSERVER-CONTINUITY.json), [STORAGE-WINDOW-COMPLETION](../audits/2026-10-08/STORAGE-WINDOW-COMPLETION.json).
+Доказательства: [STORAGE-OBSERVER-RESUME](../audits/2026-10-10/STORAGE-OBSERVER-RESUME.json), [STORAGE-OBSERVER-CONTINUITY](../audits/2026-10-10/STORAGE-OBSERVER-CONTINUITY.json), [STORAGE-WINDOW-COMPLETION](../audits/2026-10-08/STORAGE-WINDOW-COMPLETION.json).
 
 ### CHAT-13 · Единая автоматизация и универсальные ресурсы
 

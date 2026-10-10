@@ -1,6 +1,10 @@
 # Актуальность документации
 
-**Проверенная установка:** UI `369654a0` / API `369654a0`.
+**Проверенная установка:** UI `639b6ad5` / API `369654a0`.
+
+**10 октября — последняя UI коррекция:** автоматическая готовность после reconnect
+и навигации;1996frontend tests. Конечный PH011 scope не закрывает latency/direct/fleet.
+[Актуальная установка и ограничения](audits/2026-10-10/CONTINUOUS-AUTO-RECOVERY-INSTALLED.md).
 
 [Каталог](README.md) · [Readiness](operations/READINESS.md) · [Contributing](../CONTRIBUTING.md)
 
@@ -11,7 +15,7 @@
 неизменяемыми receipts; последний большой [crosscheck](audits/2026-10-09/CHAT-CODE-RECONCILIATION.md)
 не выдаётся за новую установку или fleet acceptance.
 
-Последний [runtime receipt10октября](audits/2026-10-10/DIRECT-PROBE-NETWORK-CANARY.md)
+Предыдущий [runtime receipt10октября](audits/2026-10-10/DIRECT-PROBE-NETWORK-CANARY.md)
 фиксирует UI/API369, восстановленный исходный APK, probeoff и конечный отказ ICE
 177requests/0responses. Стандартный UI compile gate выключен; диагностическая
 панель проверена только во временном loopback UI. Это не direct connectivity acceptance.

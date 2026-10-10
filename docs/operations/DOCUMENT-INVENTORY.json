@@ -1,11 +1,11 @@
 {
   "schemaVersion": 1,
-  "reviewedAtUtc": "2026-10-09T23:07:36.638670+00:00",
+  "reviewedAtUtc": "2026-10-10T00:40:06.833372+00:00",
   "scope": "All tracked Markdown classified; active local-link paths scanned. Not semantic attestation of every sentence, command execution, external-link or live acceptance.",
   "countsByRole": {
     "ADR": 6,
     "CURRENT_ENTRYPOINT": 8,
-    "DATED_EVIDENCE": 253,
+    "DATED_EVIDENCE": 255,
     "DESIGN_SPECIFICATION": 76,
     "OPERATING_GUIDE": 64,
     "PROJECT_POLICY": 7,
@@ -1125,6 +1125,10 @@
       "role": "DATED_EVIDENCE"
     },
     {
+      "file": "docs/audits/2026-10-10/CONTINUOUS-AUTO-RECOVERY-INSTALLED.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
       "file": "docs/audits/2026-10-10/CONTINUOUS-AUTO-RECOVERY.md",
       "role": "DATED_EVIDENCE"
     },
@@ -1154,6 +1158,10 @@
     },
     {
       "file": "docs/audits/2026-10-10/STORAGE-OBSERVER-CONTINUITY.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
+      "file": "docs/audits/2026-10-10/STORAGE-OBSERVER-RESUME.md",
       "role": "DATED_EVIDENCE"
     },
     {

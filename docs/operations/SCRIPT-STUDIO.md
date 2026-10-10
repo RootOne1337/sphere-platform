@@ -1,11 +1,15 @@
 # Script Studio: инструкция по созданию и проверке сценариев
 
-**Проверенная установка:** UI `369654a0` / API `369654a0`.
+**Проверенная установка:** UI `639b6ad5` / API `369654a0`.
+
+**10 октября — последняя UI коррекция:** автоматическая готовность после reconnect
+и навигации;1996frontend tests. Конечный PH011 scope не закрывает latency/direct/fleet.
+[Актуальная установка и ограничения](../audits/2026-10-10/CONTINUOUS-AUTO-RECOVERY-INSTALLED.md).
 
 **Действующий реестр работ:** [WORK-STATUS](WORK-STATUS.md) / [машинный статус](STATUS-REGISTRY.json).
 Source, установленный runtime и конечная приёмка разделены; старые snapshots ниже сохраняют свои даты.
 
-**10 октября — broadcast исправлен и установлен.** На обоих адресах UI/API369;
+**Предыдущая установка10октября — broadcast.** В том срезе на обоих адресах UI/API369;
 все4 exact-source CI success:3428 backend tests/252subtests,1966 frontend tests.
 Изолированный PostgreSQL/Redis test подтвердил202, commit и admission. На рабочем
 стенде ожидаемый404 после чтения presence проверен без запуска массовых действий.
@@ -15,7 +19,7 @@ Idle control и direct transport остаются открытыми; probe вы
 
 Последний [конечный ICE canary](../audits/2026-10-10/DIRECT-PROBE-NETWORK-CANARY.md)
 дал177requests/0responses и0RTT; исходный APK восстановлен, probeoff. Стандартный
-UI369 не включает экспериментальную панель; временный loopback UI остановлен.
+UI639b6ad5 не включает экспериментальную панель; временный loopback UI остановлен.
 Запись и воспроизведение Android действий продолжают использовать обычный путь.
 
 Публично проверен существующий graphv1/3узла/2связи/Undo0 без изменения и

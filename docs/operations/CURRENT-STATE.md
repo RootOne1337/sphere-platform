@@ -1,14 +1,16 @@
 # Sphere: актуальное состояние и критерии приёмки
 
-**Проверенная установка:** UI `369654a0` / API `369654a0`.
+**Проверенная установка:** UI `639b6ad5` / API `369654a0`.
 
-**10 октября — новая source correction, пока не установлена.** Безопасный idle
-recovery повторяется с backoff до15секунд; после reconnect legacy input ждёт новую
-native readiness.1982full/167targeted frontend tests прошли; exact CI и live delivery
-ожидаются. Причина задержки ACK и direct transport остаются открытыми.
-[Исходник, регрессии и границы](../audits/2026-10-10/CONTINUOUS-AUTO-RECOVERY.md).
+**10 октября — UI автоматического управления установлен и проверен в конечном scope.**
+UI639/API369,1996frontend tests/types/scoped lint. Повторный idle recovery, точный
+RELEASE/fresh-viewer gate и гонки навигации/capture исправлены. На UI13 и финальном639
+по одному натуральному unknown-pointer notice сменились новой готовностью и
+подтверждённым Home. Перестановки RELEASE/hold/terminal покрыты fixtures;
+native latency/direct/fleet OPEN.
+[Установка, реальные срезы и границы](../audits/2026-10-10/CONTINUOUS-AUTO-RECOVERY-INSTALLED.md).
 
-**10 октября — broadcast исправлен и установлен.** На обоих адресах UI/API369;
+**Предыдущая установка10октября — broadcast.** В том срезе на обоих адресах UI/API369;
 все4 exact-source CI success:3428 backend tests/252subtests,1966 frontend tests.
 Изолированный PostgreSQL/Redis test подтвердил202, commit и admission. На рабочем
 стенде ожидаемый404 после чтения presence проверен без запуска массовых действий.
@@ -16,7 +18,7 @@ APK, schema/OTA и45соседних контейнеров сохранены �
 Idle control и direct transport остаются открытыми; probe выключен.
 [Установка, проверки и остаток](../audits/2026-10-10/BROADCAST-INSTALLED-ACCEPTANCE.md).
 
-Последнее сравнение: public idle heartbeat512мс, lastACK487мс; local ACK244мс
+Предыдущий сравнительный срез: public idle heartbeat512мс, lastACK487мс; local ACK244мс
 без fault в конечном срезе. Это не синхронный trace или причинная атрибуция.
 [Наблюдения](../audits/2026-10-10/IDLE-LOCAL-PUBLIC-COMPARISON.md).
 Close correction/source diagnostics входят в369; стандартный frontend compile gate
@@ -31,7 +33,8 @@ Native callback на PH011 дал12reports: remote candidates0/pairs0/DTLSnew;
 кандидатов/сетевого пути и idle reliability открыты; counter diagnostic принят
 только в конечном scope. [Новый receipt](../audits/2026-10-10/DIRECT-PROBE-NATIVE-COUNTERS-CANARY.md).
 [APK1.3 plan](../design/APK-1.3-COMPATIBILITY-AND-RELEASE.md) — NO-GO.
-Product9/41,legacy7; limited observer21:09→12:41UTC и whole-PC writer UNKNOWN.
+Product9/41,legacy7; limited observer возобновлён00:14→12:34UTC10октября;
+прежний процесс остановился23:59UTC, разрыв не покрыт, whole-PC writer UNKNOWN.
 
 ## Исторические срезы до последней установки
 

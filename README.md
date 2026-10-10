@@ -15,9 +15,13 @@
 
 </div>
 
-**Проверенная установка:** UI `369654a0` / API `369654a0`.
+**Проверенная установка:** UI `639b6ad5` / API `369654a0`.
 
-**10 октября — broadcast исправлен и установлен.** На обоих адресах UI/API369;
+**10 октября — последняя UI коррекция:** автоматическая готовность после reconnect
+и навигации;1996frontend tests. Конечный PH011 scope не закрывает latency/direct/fleet.
+[Актуальная установка и ограничения](docs/audits/2026-10-10/CONTINUOUS-AUTO-RECOVERY-INSTALLED.md).
+
+**Предыдущая установка10октября — broadcast.** В том срезе на обоих адресах UI/API369;
 все4 exact-source CI success:3428 backend tests/252subtests,1966 frontend tests.
 Изолированный PostgreSQL/Redis test подтвердил202, commit и admission. На рабочем
 стенде ожидаемый404 после чтения presence проверен без запуска массовых действий.

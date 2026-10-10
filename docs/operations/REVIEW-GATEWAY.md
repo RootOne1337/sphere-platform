@@ -1,6 +1,10 @@
 # Review gateway: локальный UI и адресный публичный маршрут
 
-**Проверенная установка:** UI `369654a0` / API `369654a0`.
+**Проверенная установка:** UI `639b6ad5` / API `369654a0`.
+
+**10 октября — последняя UI коррекция:** автоматическая готовность после reconnect
+и навигации;1996frontend tests. Конечный PH011 scope не закрывает latency/direct/fleet.
+[Актуальная установка и ограничения](../audits/2026-10-10/CONTINUOUS-AUTO-RECOVERY-INSTALLED.md).
 
 **Дополнение9октября16:21UTC:** публичный Nginx сжимает только static-assets
 `/observability/grafana/public/` с negotiation/Vary и `gzip_proxied any`.
@@ -12,15 +16,15 @@
 
 ## Действующий публичный UI — 10 октября 2026
 
-Точный Tuna-host по прежнему приватному map использует review UI369, как3015;
+Точный Tuna-host по прежнему приватному map использует review UI639b6ad5, как3015;
 API369 установлен отдельно. Public UI/Next observability идут через review gateway,
 business API/WS/health/bootstrap сохраняют прежние маршруты. Каждая адресная
-установка сохранила45соседних контейнеров. [Приёмка и границы](../audits/2026-10-10/BROADCAST-INSTALLED-ACCEPTANCE.md).
+установка сохранила45соседних контейнеров. [Последняя установка и границы](../audits/2026-10-10/CONTINUOUS-AUTO-RECOVERY-INSTALLED.md).
 Direct probe выключен; stream/input остаются server WS, public idle reliability
 не принята. [Сравнение с3015](../audits/2026-10-10/IDLE-LOCAL-PUBLIC-COMPARISON.md).
-Последний [конечный ICE canary и cleanup](../audits/2026-10-10/DIRECT-PROBE-NETWORK-CANARY.md):
+Последний [конечный ICE canary и cleanup](../audits/2026-10-10/DIRECT-PROBE-NATIVE-COUNTERS-CANARY.md):
 177requests/0responses,0RTT; исходный APK восстановлен, probeoff. Стандартный
-UI369 не включает экспериментальную панель; временные3016/3017 остановлены.
+UI639b6ad5 не включает экспериментальную панель; временные3016/3017 остановлены.
 Review stack остаётся зависимостью public UI. Проверять оба адреса после rollout;
 не пересоздавать API или volumes ради отката UI. Историческая Grafana коррекция
 и маршруты выше сохранены; это не новый global tunnel rollout.
