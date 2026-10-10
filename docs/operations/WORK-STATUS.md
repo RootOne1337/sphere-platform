@@ -2,12 +2,21 @@
 
 **Проверенная установка:** UI `639b6ad5` / API `369654a0`.
 
-**10 октября — явный public-STUN canary выполнен; ответ APK не получен.**
+**10 октября, 04:16UTC — native setup проверен, UDP-путь локализован до обмена между peers.**
+Exact161 прошёл4CI/signed admission. Три native process окна: answer392/226/243мс,
+по13reports; канал не открылся. Финальный APK-owned capture:237исходящих к browser
+candidate/0обратных, STUN1/1,239packets/0kernel drops. Место потери/NAT/VPN/firewall
+UNKNOWN. Original APK восстановлен, probeoff/allowlist[], ordinary local11/public2
+frames без decode/render errors. UI639/API369 сохранены, API epoch04:12:56UTC.
+Public opening server_rejected сохранён; control/latency и stable1.3 не приняты.
+Product9/41,legacy7. [Новое измерение и возврат](../audits/2026-10-10/DIRECT-PROBE-NATIVE-PROGRESS-CANARY.md).
+
+**Предыдущий срез10октября — public-STUN canary934; ответ APK не получен.**
 Exact934 прошёл четыре CI и signed admission. Один PH011: browser host1+srflx1,
 offer→close7,989s, answer0,echo0/RTTunknown. JNI/factory присутствуют; конкретный
 native setup этап пока UNKNOWN. Выявлен пробел: stats начинались только после
 answer. Фиксированы bounded native этапы/pre-answer stats, local tests/lint passed;
-новый source ещё не установлен. Исходный APK восстановлен, gateoff/allowlist[],
+на момент этого среза новый source ещё не был установлен. Исходный APK восстановлен, gateoff/allowlist[],
 UI639/API369 сохранены, API container epoch обновлён. Обычный public25/local24
 view-only frames без decode/render errors проверен после возврата. Product9/41,
 direct/latency и stable APK NO-GO сохраняются.

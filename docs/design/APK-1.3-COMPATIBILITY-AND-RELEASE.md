@@ -5,6 +5,11 @@
 VERSION_CODE=10249; на выбранном PH011 установлен private 1.2.49-dev.
 Повышение номера без закрытия runtime gates не является стабилизацией.
 
+Дополнение10октября04:16UTC: exact161 diagnostic APK прошёл4CI/signed admission,
+native setup/pre-answer stats и один UID-filtered packet capture. Ответы быстрые,
+но прямой канал не открылся; original1.2.49-dev восстановлен, OTA не менялась.
+Это не stable1.3 gate. [Фактическая проверка](../audits/2026-10-10/DIRECT-PROBE-NATIVE-PROGRESS-CANARY.md).
+
 [Действующие работы](../operations/WORK-STATUS.md) ·
 [Установка](../operations/CURRENT-STATE.md) ·
 [Прямой транспорт](BROWSER-DIRECT-TRANSPORT.md).

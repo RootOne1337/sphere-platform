@@ -6,6 +6,22 @@
 TURN и рабочая установка не переведены на WebRTC. Это не обещание задержки.
 [Точный scope, зависимости, тесты и следующие gates](../audits/2026-10-09/DIRECT-PROBE-SOURCE.md).
 
+**Текущий итог10октября04:16UTC:** exact161 прошёл4CI и signed admission.
+На одном PH011 три process epochs отправили answer за392/226/243мс; channel0/RTTunknown.
+Финальный bounded capture на UID-проверенном APK socket:237исходящих UDP к browser
+srflx candidate,0обратных; STUN1/1,239captured/0kernel drops. Это подтверждает
+выход с Android interface и STUN exchange, но не достижение Windows/browser или
+конкретную NAT/mDNS/VPN/firewall причину. Старый934 setup timeout не повторился,
+его причина остаётся UNKNOWN. Original APK restored/probeoff, UI639/API369,
+ordinary local11/public2 frames проверены. Диагностика принята только в конечном
+scope; direct media/control не подключены. Предыдущие срезы ниже исторические.
+[Native stages, packet scope, невалидные попытки и возврат](../audits/2026-10-10/DIRECT-PROBE-NATIVE-PROGRESS-CANARY.md).
+
+Следующий gate: ограниченное наблюдение Windows/browser в том же packet window,
+затем контролируемое сравнение authenticated relay. Ни STUN response, ни успешная
+публикация SDP не доказывают peer reachability. Timeout не увеличивается ради
+сокрытия неизвестного отказа; network/security settings этим этапом не менялись.
+
 **Последующий native pilot9октября:** exact9ad прошёл все4CI. Две попытки
 подтвердили JNI/SDP answer, но host ICE не установил канал, RTT неизвестен.
 Прежний APK восстановлен, probe off/allowlist[]; media/control остаются server WS.

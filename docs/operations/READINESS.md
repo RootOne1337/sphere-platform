@@ -2,6 +2,14 @@
 
 **Проверенная установка:** UI `639b6ad5` / API `369654a0`.
 
+**Последний finite gate10октября04:16UTC:** exact161 all4CI/signed APK и реальные
+setup stages/pre-answer stats приняты. Три ответа392/226/243мс; фактический APK-owned
+UDP capture237исходящих к browser candidate/0входящих, STUN1/1. Direct channel/RTT,
+network drop attribution и resource plateau OPEN. Original APK restored, gateoff;
+обычные local11/public2 frames без decode/render errors. Public server_rejected при
+opening сохранён; это не acceptance управления. Stable1.3 NO-GO.
+[Новый receipt и границы](../audits/2026-10-10/DIRECT-PROBE-NATIVE-PROGRESS-CANARY.md).
+
 **10 октября — UI автоматического управления установлен и проверен в конечном scope.**
 UI639/API369,1996frontend tests/types/scoped lint. Повторный idle recovery, точный
 RELEASE/fresh-viewer gate и гонки навигации/capture исправлены. На UI13 и финальном639

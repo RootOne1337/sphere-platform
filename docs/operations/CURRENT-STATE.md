@@ -2,6 +2,14 @@
 
 **Проверенная установка:** UI `639b6ad5` / API `369654a0`.
 
+**Последняя проверка10октября04:16UTC:** exact161 native diagnostics приняты в
+конечном scope: setup answer392/226/243мс; финальный APK socket capture237исходящих
+к browser candidate/0обратных, STUN1/1. Прямой канал/RTT не получены, конкретный
+сетевой drop UNKNOWN. Original APK восстановлен, probeoff/allowlist[], временные
+listeners/tabs закрыты. API epoch04:12:56UTC; обычный viewer local11/public2 frames
+без decoder/render errors. Public opening server_rejected сохранён, control не принят.
+[Точный текущий receipt и границы](../audits/2026-10-10/DIRECT-PROBE-NATIVE-PROGRESS-CANARY.md).
+
 **10 октября — UI автоматического управления установлен и проверен в конечном scope.**
 UI639/API369,1996frontend tests/types/scoped lint. Повторный idle recovery, точный
 RELEASE/fresh-viewer gate и гонки навигации/capture исправлены. На UI13 и финальном639

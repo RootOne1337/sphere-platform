@@ -1,6 +1,19 @@
 # Ресурсы хоста: диск, Windows commit, WSL и контейнеры
 
-**Последний continuity срез10октября02:14UTC+5:** прежний PID отсутствует,
+**Текущее ограниченное окно10октября:** PID32064, creation epoch00:14:44UTC,
+командная строка и новые complete samples проверены повторно04:14UTC. Окно
+00:14→12:34UTC,371×120s/16MiB,24named files плюс RAM/process/Docker/WSL.
+Это unprivileged mode: VSS/USN/kernel writer attribution недоступны, autostart нет.
+Заморожен срез120samples до04:12:43UTC: C:39 716 073 472B свободно,
+изменение−6 804 992 000B от первого sample. Docker VHDX allocation постоянен
+234 731 077 632B; LDPlayer/Codex named growth не покрывает весь расход.
+Причина потери C: не локализована. [Новый checkpoint](../audits/2026-10-10/DIRECT-PROBE-NATIVE-PROGRESS-CANARY.json).
+Прежнее окно остановилось9Oct23:59UTC после86samples; разрыв не покрыт.
+[Возобновление и границы](../audits/2026-10-10/STORAGE-OBSERVER-RESUME.md) ·
+[Текущая работа](WORK-STATUS.md) · [Реестр](STATUS-REGISTRY.json).
+После deadline или перезапуска ПК наличие старого status running не доказывает сбор.
+
+**Предыдущий continuity срез10октября02:14UTC+5:** прежний PID отсутствует,
 последняя запись9Oct20:06UTC/223samples. Limited observer возобновлён21:09UTC
 до10Oct12:41UTC; три законченные записи проверены вместе с process epoch.
 467×120s/16MiB,24named files плюс RAM/process/Docker/WSL; нет autostart.

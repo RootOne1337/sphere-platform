@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
-  "reviewedAtUtc": "2026-10-10T03:23:31.290471+00:00",
-  "sourceReviewed": "934f46a809220931b6af9e183838a1e03efc6194",
+  "reviewedAtUtc": "2026-10-10T04:16:38.839681+00:00",
+  "sourceReviewed": "161a23e97a323b2061aceaf56f84bc436cd90305",
   "scope": "Effective documentation status; source/install/finite acceptance kept separate. No new fleet or soak acceptance.",
   "baseline": "docs/audits/2026-10-05/ENTERPRISE-PRODUCT-BACKLOG.json",
   "previousCrosscheck": "docs/audits/2026-10-09/CHAT-CODE-RECONCILIATION.json",
@@ -11,18 +11,18 @@
     "open": 41
   },
   "installed": {
-    "lastObservedUtc": "2026-10-10T03:23:31.290471+00:00",
+    "lastObservedUtc": "2026-10-10T04:16:38.839681+00:00",
     "ui": "639b6ad52fe3651579499659ded46ff73027f313",
     "api": "369654a0be4bded35e299062badc9bfe95101f1e",
-    "evidence": "docs/audits/2026-10-10/DIRECT-PROBE-PUBLIC-STUN-CANARY.json",
-    "observation": "UI639/API369 retained; API epoch changed during finite explicit public-STUN canary then gate disabled/allowlist empty. Original PH011 APK restored, ordinary local/public view-only frames and health checked. No native answer/direct channel/input/media/latency/fleet/soak acceptance.",
+    "evidence": "docs/audits/2026-10-10/DIRECT-PROBE-NATIVE-PROGRESS-CANARY.json",
+    "observation": "UI639/API369 retained; exact161 setup/pre-answer stats observed on one PH011. Final UID-filtered capture:237 outbound candidate packets/0 inbound, STUN1/1. Original APK restored, gateoff/allowlist[], ordinary local11/public2 frames. No successful channel/RTT/media/input or fleet/soak acceptance.",
     "pilotApk": {
       "device": "PH011",
       "version": "1.2.49-dev",
       "versionCode": 10249,
-      "scope": "PH011 original APK restored after934 public-STUN diagnostic; exact SHA recorded, no fleet inventory claim"
+      "scope": "PH011 original APK restored after three finite161 diagnostic installations; exact SHA in current receipt, no fleet inventory claim"
     },
-    "evidenceSha256NormalizedLf": "b67466e85f0b8916460b99359e3125b5ad5d9cce2d4ba1890bdae61008fdd158"
+    "evidenceSha256NormalizedLf": "9e79b83c5f7fcbad68bcc25352a04c10b84000ff5bf74949d06b1dba4542be76"
   },
   "pendingCorrections": [
     {
@@ -45,18 +45,19 @@
       "id": "direct-probe-native-setup-progress",
       "installed": false,
       "sourceBaseRevision": "934f46a809220931b6af9e183838a1e03efc6194",
-      "evidence": "docs/audits/2026-10-10/DIRECT-PROBE-NATIVE-PROGRESS-SOURCE.json",
-      "scope": "Setup-stage events and pre-answer bounded stats source checked; signed/exact CI/native callback gate pending. No deadline/protocol/media/input change."
+      "evidence": "docs/audits/2026-10-10/DIRECT-PROBE-NATIVE-PROGRESS-CANARY.json",
+      "scope": "Four exact-source CI/signed admission and live stages/pre-answer stats accepted in finite diagnostic scope. Three native windows:answer392/226/243ms,13reports each, ICE no successful pair. One actual UID-filtered UDP capture accepted; previous two collector attempts invalid. Original APK restored; production direct/media/control/resource gates open.",
+      "testedRevision": "161a23e97a323b2061aceaf56f84bc436cd90305"
     }
   ],
   "storage": {
-    "lastObservedUtc": "2026-10-10T03:22:45.084607+00:00",
+    "lastObservedUtc": "2026-10-10T04:12:43.044854+00:00",
     "visibleMatchingProcesses": 1,
     "continuousCoverageConfirmed": false,
-    "observationScope": "Limited periodic collector resumed10Oct00:14→12:34UTC; previous86samples stop9Oct23:59, process absent. Uncovered gap and no global kernel writer attribution.",
-    "oneFreeDiskReadingBytes": 41566281728,
+    "observationScope": "Limited periodic observer PID32064 epoch00:14:44UTC,120complete samples to04:12:43UTC. C: -6804992000B, Docker VHDX allocation constant234731077632B. Earlier gap and VSS/USN/kernel attribution unavailable; current writer UNKNOWN.",
+    "oneFreeDiskReadingBytes": 39716073472,
     "latestCompletedEvidence": "docs/audits/2026-10-08/STORAGE-WINDOW-COMPLETION.json",
-    "activeEvidence": "docs/audits/2026-10-10/STORAGE-OBSERVER-RESUME.json"
+    "activeEvidence": "docs/audits/2026-10-10/DIRECT-PROBE-NATIVE-PROGRESS-CANARY.json"
   },
   "legacy": {
     "total": 41,
@@ -108,7 +109,7 @@
     "implementationAuthorizedNow": true,
     "researchPreparedAtUtc": "2026-10-09T16:46:29Z",
     "researchEvidence": "docs/design/BROWSER-DIRECT-TRANSPORT.md",
-    "researchScope": "One corrected native host ICE window:12native reports with remote0/pairs0/DTLSnew and unknown packet counters; browser177checks/0responses. Native diagnostics accepted only finite scope. Original APK restored, APIoff. Candidate handling and VPN/NAT/route hypotheses remain; no proven packet cause, direct channel/RTT or resource acceptance. New finite shell/socket probes: Windows and Android each answered by explicit public Cloudflare STUN; local alias/LAN time out and guest gateway returns ICMP port unreachable. Shell UID is not APK UID. Three source-only ICE profiles with bounded phase deadlines are checked; no new native WebRTC channel or RTT acceptance.",
+    "researchScope": "Exact161 finite one-device diagnostics prove setup/answer392/226/243ms. Final APK-owned UDP socket on wlan0:237outbound offered-candidate packets,0inbound; STUN discovery1out/1in,239captured/0kernel drops. Native241checks/0responses; browser177/0. No successful ICE pair/channel/RTT. NAT/mDNS/VPN/firewall/drop location not proven. All canaries restored, gates off; media/input remain server WS.",
     "researchPrerequisites": [
       "Versioned offer/input/control ownership and auth contract",
       "Bounded command-to-native/frame timing with unknown results visible",
@@ -139,15 +140,16 @@
       "docs/audits/2026-10-10/DIRECT-PROBE-NATIVE-COUNTERS-CANARY.json",
       "docs/audits/2026-10-10/DIRECT-PROBE-STUN-PROFILES.json",
       "docs/audits/2026-10-10/DIRECT-PROBE-PUBLIC-STUN-CANARY.json",
-      "docs/audits/2026-10-10/DIRECT-PROBE-NATIVE-PROGRESS-SOURCE.json"
+      "docs/audits/2026-10-10/DIRECT-PROBE-NATIVE-PROGRESS-SOURCE.json",
+      "docs/audits/2026-10-10/DIRECT-PROBE-NATIVE-PROGRESS-CANARY.json"
     ],
-    "pilotEvidence": "docs/audits/2026-10-10/DIRECT-PROBE-PUBLIC-STUN-CANARY.json",
-    "pilotOutcome": "PUBLIC_STUN_OFFER_NO_NATIVE_ANSWER_BEFORE_CLOSE_CLEANED_UP",
+    "pilotEvidence": "docs/audits/2026-10-10/DIRECT-PROBE-NATIVE-PROGRESS-CANARY.json",
+    "pilotOutcome": "NATIVE_ANSWER_FAST_UDP_CANDIDATE_OUTBOUND_ONLY_CHANNEL_FAILED_CLEANED_UP",
     "pilotCurrentlyEnabled": false,
     "nativeDiagnosticAcceptance": {
       "state": "ACCEPTED_FINITE_DIAGNOSTIC_SCOPE",
-      "testedRevision": "8447c9078eaff138d60e9cfe0a47867f67278d03",
-      "evidence": "docs/audits/2026-10-10/DIRECT-PROBE-NATIVE-COUNTERS-CANARY.json",
+      "testedRevision": "161a23e97a323b2061aceaf56f84bc436cd90305",
+      "evidence": "docs/audits/2026-10-10/DIRECT-PROBE-NATIVE-PROGRESS-CANARY.json",
       "currentlyInstalled": false,
       "directChannelAccepted": false
     },
@@ -1848,8 +1850,8 @@
         "EP-020",
         "EP-047"
       ],
-      "acceptedScope": "Exact8447 CI/signed canary and live native counter callback accepted in finite diagnostic scope.12native reports show remote0/pairs0, browser177/0; no successful channel/RTT. Original APK restored, API probeoff and standard UI compile gateoff. Ordinary public video662decoded/drawn frames after cleanup.",
-      "remaining": "Controlled numeric host/STUN/TURN candidate comparison and packet/route/mDNS attribution; packaged canary UI admission, successful channel/live RTT, native provenance/SBOM/resource plateau, network matrix, media/control ownership and public idle reliability. Native counter source tested on one device but not promoted into the current APK.",
+      "acceptedScope": "Exact161 all4CI/signed admission; three setup windows answer392/226/243ms and13native reports each. Final UID-filtered APK capture239packets:237outbound browser-candidate/0inbound, STUN1/1. Original APK restored, probeoff; post-cleanup local11/public2 ordinary frames. Diagnostics accepted only finite scope, no channel/RTT.",
+      "remaining": "Locate the browser/host/guest packet-path drop with a bounded host-side observation; compare an explicitly authenticated relay profile without disabling protections. Successful channel/RTT, packaged UI admission, native provenance/SBOM/resource plateau, network matrix, media/control ownership and public idle reliability remain open.",
       "evidence": [
         "docs/design/BROWSER-DIRECT-TRANSPORT.md",
         "docs/audits/2026-10-09/IDLE-CONTROL-RELAY-REVIEW.md",
@@ -1861,7 +1863,8 @@
         "docs/audits/2026-10-10/DIRECT-PROBE-NETWORK-CANARY.json",
         "docs/audits/2026-10-10/DIRECT-PROBE-NATIVE-NETWORK-SOURCE.md",
         "docs/audits/2026-10-10/DIRECT-PROBE-ANDROID-COMPATIBILITY.md",
-        "docs/audits/2026-10-10/DIRECT-PROBE-NATIVE-COUNTERS-CANARY.json"
+        "docs/audits/2026-10-10/DIRECT-PROBE-NATIVE-COUNTERS-CANARY.json",
+        "docs/audits/2026-10-10/DIRECT-PROBE-NATIVE-PROGRESS-CANARY.json"
       ],
       "sourcePaths": [
         "backend/websocket/direct_probe_protocol.py",
@@ -1870,7 +1873,9 @@
         "frontend/src/features/stream/directProbe.ts",
         "android/app/src/directProbe/kotlin/com/sphereplatform/agent/direct/DirectProbeTransport.kt",
         "frontend/src/features/stream/directProbeNetwork.ts",
-        "android/app/src/main/kotlin/com/sphereplatform/agent/direct/DirectProbeNetwork.kt"
+        "android/app/src/main/kotlin/com/sphereplatform/agent/direct/DirectProbeNetwork.kt",
+        "android/app/src/main/kotlin/com/sphereplatform/agent/direct/DirectProbeProgress.kt",
+        "android/app/src/test/kotlin/com/sphereplatform/agent/direct/DirectProbeProgressTest.kt"
       ],
       "fleetAccepted": false
     },
@@ -1962,13 +1967,13 @@
   ],
   "sourceWorktreeEvidence": "docs/audits/2026-10-10/CONTINUOUS-AUTO-RECOVERY-INSTALLED.json",
   "publicWeb": {
-    "lastObservedUtc": "2026-10-09T22:05:42.592541+00:00",
+    "lastObservedUtc": "2026-10-10T04:16:38.839681+00:00",
     "url": "https://sphere-agent-canary-20260927.ru.tuna.am",
-    "ui": "369654a0be4bded35e299062badc9bfe95101f1e",
+    "ui": "639b6ad52fe3651579499659ded46ff73027f313",
     "api": "369654a0be4bded35e299062badc9bfe95101f1e",
-    "evidence": "docs/audits/2026-10-10/DIRECT-PROBE-NATIVE-COUNTERS-CANARY.json",
-    "evidenceSha256NormalizedLf": "1c63644784a2cb15fcb6942933f15fdbe40f6d03a976689a5cb9fa5c3147b249",
-    "scope": "Same public host map and UI/API369. After native canary cleanup:662real public decoded/drawn frames without invalid/decode/render errors; both origins health200/expected broadcast404 and PH011online. Not direct/media/idle/steady FPS acceptance.",
+    "evidence": "docs/audits/2026-10-10/DIRECT-PROBE-NATIVE-PROGRESS-CANARY.json",
+    "evidenceSha256NormalizedLf": "9e79b83c5f7fcbad68bcc25352a04c10b84000ff5bf74949d06b1dba4542be76",
+    "scope": "Same public host map, UI639/API369. Post-final-cleanup public2/local11 decoded/drawn frames,0invalid/decode/render errors. Public server_rejected opening notice retained; not control/direct/steady FPS or latency acceptance.",
     "additionalQa": {
       "evidence": "docs/audits/2026-10-09/PUBLIC-WEB-SUPPLEMENTAL-QA.json",
       "evidenceSha256NormalizedLf": "84f719a322e114a34ba4f4fc5624f717a71558f2b80f5aea1a484b50778ceac4",
