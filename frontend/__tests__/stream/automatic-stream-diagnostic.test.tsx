@@ -3,6 +3,7 @@ import { act, render, waitFor } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { AutomaticStreamDiagnostic } from '@/src/features/stream/AutomaticStreamDiagnostic';
 import type { DirectProbeResult } from '@/src/features/stream/directProbe';
+import { AxiosError } from 'axios';
 
 const mockGet = jest.fn();
 let mockProbe: { profile: string; automaticKey: string; enabled: boolean; onOutcome: (value: DirectProbeResult, frames: number) => void };
@@ -24,15 +25,63 @@ const wrapper = ({ children }: { children: React.ReactNode }) => <QueryClientPro
 test('starts host video automatically only for an admitted live surface and does not restart on rerenders', async () => {
   const props = { deviceId: device, session: 'viewer', eligible: false, onDiagnostic: jest.fn(), onBusyChange: jest.fn() };
   const view = render(<AutomaticStreamDiagnostic {...props} />, { wrapper });
-  await waitFor(() => expect(mockGet).toHaveBeenCalledTimes(1));
+  expect(mockGet).not.toHaveBeenCalled();
   expect(mockMounted).not.toHaveBeenCalled();
   view.rerender(<AutomaticStreamDiagnostic {...props} eligible />);
   await waitFor(() => expect(mockProbe?.profile).toBe('host'));
+  expect(mockGet).toHaveBeenCalledTimes(1);
   expect(mockProbe.automaticKey).toBe('viewer:host');
   act(() => mockProbe.onOutcome({ ...failed, state: 'finished', samples: Array(20).fill(5), path: 'host' }, 10));
   expect(props.onDiagnostic.mock.calls[0][0]).toMatchObject({ presented_frames: 10, trigger: 'automatic', echo_rtt_p95_ms: 5 });
   view.rerender(<AutomaticStreamDiagnostic {...props} eligible />);
   expect(mockProbe.profile).toBe('host');
+});
+
+test('an inactive window still tests visible video, while a hidden tab waits for visibility', async () => {
+  const hidden = jest.spyOn(document, 'hidden', 'get').mockReturnValue(true);
+  try {
+    render(<AutomaticStreamDiagnostic deviceId={device} session="viewer" eligible onDiagnostic={() => {}} onBusyChange={() => {}} />, { wrapper });
+    expect(mockGet).not.toHaveBeenCalled();
+    hidden.mockReturnValue(false);
+    act(() => { window.dispatchEvent(new Event('blur')); document.dispatchEvent(new Event('visibilitychange')); });
+    await waitFor(() => expect(mockProbe.profile).toBe('host'));
+    expect(mockProbe.enabled).toBe(true);
+    hidden.mockReturnValue(true);
+    act(() => document.dispatchEvent(new Event('visibilitychange')));
+    expect(mockProbe.enabled).toBe(false);
+  } finally { hidden.mockRestore(); }
+});
+
+test('a denial cached by the manual panel cannot suppress admission for a new viewer', async () => {
+  query.setQueryData(['direct-probe-capabilities', device, 1], { profiles: [], video: false });
+  render(<AutomaticStreamDiagnostic deviceId={device} session="viewer" eligible onDiagnostic={() => {}} onBusyChange={() => {}} />, { wrapper });
+  await waitFor(() => expect(mockProbe.profile).toBe('host'));
+  expect(mockGet).toHaveBeenCalledTimes(1);
+});
+
+test('one transient server failure retries the idempotent admission read without allocating an early peer', async () => {
+  jest.useFakeTimers();
+  try {
+    mockGet.mockRejectedValueOnce(new AxiosError('transient', undefined, undefined, undefined, { status: 503 } as never));
+    render(<AutomaticStreamDiagnostic deviceId={device} session="viewer" eligible onDiagnostic={() => {}} onBusyChange={() => {}} />, { wrapper });
+    await act(async () => { await jest.advanceTimersByTimeAsync(0); });
+    expect(mockGet).toHaveBeenCalledTimes(1);
+    expect(mockMounted).not.toHaveBeenCalled();
+    await act(async () => { await jest.advanceTimersByTimeAsync(1100); });
+    expect(mockGet).toHaveBeenCalledTimes(2);
+    expect(mockProbe.profile).toBe('host');
+  } finally { jest.useRealTimers(); }
+});
+
+test.each([403, 503])('admission retries are bounded and status %s cannot open a peer', async status => {
+  jest.useFakeTimers();
+  try {
+    mockGet.mockRejectedValue(new AxiosError('unavailable', undefined, undefined, undefined, { status } as never));
+    render(<AutomaticStreamDiagnostic deviceId={device} session="viewer" eligible onDiagnostic={() => {}} onBusyChange={() => {}} />, { wrapper });
+    await act(async () => { await jest.advanceTimersByTimeAsync(5000); });
+    expect(mockGet).toHaveBeenCalledTimes(status === 503 ? 2 : 1);
+    expect(mockMounted).not.toHaveBeenCalled();
+  } finally { jest.useRealTimers(); }
 });
 
 test('a failed host video attempt permits exactly one NAT fallback without requiring any user button', async () => {

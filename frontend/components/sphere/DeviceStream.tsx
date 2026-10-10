@@ -1207,7 +1207,7 @@ export function DeviceStream({
           ? { width: canvas.width, height: canvas.height } : null;
       }} />}
     {enableDiagnostics && currentDiagnosticSession && <AutomaticStreamDiagnostic deviceId={deviceId} session={currentDiagnosticSession}
-      eligible={surfaceActive && currentFrameOwned && !recordingMode && !inspection && taskHandoffId === undefined}
+      eligible={currentFrameOwned && !recordingMode && !inspection && taskHandoffId === undefined}
       onBusyChange={setAutomaticDiagnosticBusy}
       onDiagnostic={(sample, session) => { diagnosticReporter.current?.direct(sample, session); }} />}
         {enableDiagnostics && diagnosticsOpen && (

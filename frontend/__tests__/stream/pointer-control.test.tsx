@@ -4,6 +4,7 @@ import { api } from '@/lib/api';
 
 let mockRenderFrame: ((frame: VideoFrame) => void) | null = null;
 let mockCapture: { captureEpoch: string; frameWidth: number; frameHeight: number } | null = null;
+let mockAutomaticEligible = false;
 
 const TOUCH_EPOCH = '00112233-4455-6677-8899-aabbccddeeff';
 
@@ -12,6 +13,9 @@ jest.mock('@/lib/api', () => ({ api: { get: jest.fn(), post: jest.fn() } }));
 // Keep control delivery independent of the separately tested probe admission request.
 jest.mock('@/src/features/stream/DirectProbeAccess', () => ({ DirectProbeAccess: () => null }));
 jest.mock('@/src/features/stream/StreamSessionHistoryPanel', () => ({ StreamSessionHistoryPanel: () => null }));
+jest.mock('@/src/features/stream/AutomaticStreamDiagnostic', () => ({
+  AutomaticStreamDiagnostic: ({ eligible }: { eligible: boolean }) => { mockAutomaticEligible = eligible; return null; },
+}));
 jest.mock('@/lib/h264-decoder', () => ({
   H264Decoder: class {
     constructor(onFrame: (frame: VideoFrame) => void) {
@@ -52,6 +56,7 @@ beforeEach(() => {
   jest.useFakeTimers();
   mockRenderFrame = null;
   mockCapture = null;
+  mockAutomaticEligible = false;
   jest.mocked(api.post).mockReset().mockResolvedValue({ data: { output: '' } });
   MockSocket.instances = [];
   Object.defineProperty(global, 'WebSocket', { configurable: true, value: MockSocket });
@@ -1077,6 +1082,20 @@ it('a reconnected socket with fresh video cannot receive a gesture begun in the 
 afterEach(() => {
   jest.restoreAllMocks();
   jest.useRealTimers();
+});
+
+it('keeps passive visible-video diagnostics eligible after blur while blocking mouse input', () => {
+  const view = readyGestureFixture(true);
+  view.rerender(<DeviceStream deviceId="gesture-remote" enableStaticInput enableDiagnostics />);
+  act(() => view.socket.onmessage?.({ data: JSON.stringify({ type: 'stream_session', schema_version: 1,
+    history_enabled: true, session_id: '0123456789abcdef', report_interval_seconds: 10 }) }));
+  expect(mockAutomaticEligible).toBe(true);
+  fireEvent.blur(window);
+  expect(mockAutomaticEligible).toBe(true);
+  view.down(1); view.up(1);
+  expect(view.commands()).toHaveLength(0);
+  view.rerender(<DeviceStream deviceId="gesture-remote" enableStaticInput enableDiagnostics recordingMode />);
+  expect(mockAutomaticEligible).toBe(false);
 });
 
 it('blocks remote input until a fresh frame, clamps captured drags, and blocks input after frames go stale', () => {
