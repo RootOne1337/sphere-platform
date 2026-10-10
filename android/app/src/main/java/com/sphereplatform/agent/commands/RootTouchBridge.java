@@ -70,8 +70,9 @@ public final class RootTouchBridge {
                 if (result != null) {
                     try { RootTouchWire.ack(output, 0, result.wireCode, SystemClock.uptimeMillis()); }
                     catch (Exception ignored) { /* The pipe may already have closed. */ }
-                    // Cancellation was attempted before exit; no stale input survives a pipe reader blocked on EOF.
-                    System.exit(2);
+                    // The outcome ACK still rejects expired input. A normal exit separately
+                    // proves known cleanup so a later owner is not permanently fenced.
+                    System.exit(owned.cleanupExitCode());
                 }
             }, 100, 100, TimeUnit.MILLISECONDS);
             RootTouchWire.ack(output, 0, 0, SystemClock.uptimeMillis());
@@ -83,7 +84,7 @@ public final class RootTouchBridge {
                     result = session.apply(packet.sequence, packet.gesture, packet.action, packet.x, packet.y, SystemClock.uptimeMillis());
                 }
                 RootTouchWire.ack(output, packet.sequence, result.wireCode, SystemClock.uptimeMillis());
-                if (session.isClosed()) exitCode = result == RootTouchSession.Result.CANCELLED ? 0 : 1;
+                if (session.isClosed()) exitCode = session.cleanupExitCode();
             }
         } catch (EOFException endOfOwnerPipe) {
             // Normal owner teardown or a truncated packet: both retire the session and cancel locally.

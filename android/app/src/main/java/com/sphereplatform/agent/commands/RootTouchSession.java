@@ -20,7 +20,7 @@ public final class RootTouchSession {
     private int sequence;
     private long gesture, lastGesture, downTime, lastActivity, lastTime;
     private int x, y;
-    private boolean held, closed;
+    private boolean held, closed, releaseUnknown;
 
     public RootTouchSession(int width, int height, long now, Injector injector, Geometry geometry) {
         if (width < 1 || height < 1 || now < 0) throw new IllegalArgumentException("touch_configuration_invalid");
@@ -81,8 +81,13 @@ public final class RootTouchSession {
     }
 
     public synchronized Result close(long now) {
-        if (closed) return Result.REJECTED;
+        if (closed) return releaseUnknown ? Result.UNKNOWN : Result.REJECTED;
         return fail(Math.max(now, lastTime), Result.CANCELLED);
+    }
+
+    /** Normal termination proves release, even when the owner expired or its input was rejected. */
+    public synchronized int cleanupExitCode() {
+        return closed && !held && !releaseUnknown ? 0 : 2;
     }
 
     private Result fail(long now, Result result) {
@@ -91,11 +96,12 @@ public final class RootTouchSession {
     }
 
     private boolean release(long now) {
-        if (!held) return true;
+        if (!held) return !releaseUnknown;
         // Retire ownership before injection. An uncertain CANCEL must never invite a new DOWN.
         held = false;
-        try { return injector.inject(CANCEL, x, y, downTime, now); }
-        catch (Exception failure) { return false; }
+        try { releaseUnknown = !injector.inject(CANCEL, x, y, downTime, now); }
+        catch (Exception failure) { releaseUnknown = true; }
+        return !releaseUnknown;
     }
 
     public synchronized boolean isClosed() { return closed; }

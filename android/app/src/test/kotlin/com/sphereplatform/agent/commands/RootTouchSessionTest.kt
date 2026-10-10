@@ -38,6 +38,51 @@ class RootTouchSessionTest {
         assertEquals(RootTouchSession.Result.EXPIRED, f.state.tick(2500))
         assertTrue(f.state.isClosed)
         assertTrue(f.events.isEmpty())
+        assertEquals(0, f.state.cleanupExitCode())
+    }
+
+    @Test fun `active helper cannot confirm termination before retiring its owner`() {
+        val f = Fixture()
+        assertEquals(2, f.state.cleanupExitCode())
+        f.send(1, RootTouchSession.DOWN)
+        assertEquals(2, f.state.cleanupExitCode())
+    }
+
+    @Test fun `watchdog release permits a fresh owner without replaying an expired gesture`() {
+        val f = Fixture()
+        f.send(1, RootTouchSession.DOWN)
+        assertEquals(RootTouchSession.Result.EXPIRED, f.state.tick(2501))
+        assertEquals(0, f.state.cleanupExitCode())
+        assertEquals(RootTouchSession.Result.REJECTED, f.send(2, RootTouchSession.MOVE, 2502))
+        assertEquals(listOf(0, 3), f.events.map { it.action })
+        assertEquals(0, f.state.cleanupExitCode())
+    }
+
+    @Test fun `failed watchdog cancellation stays unknown through later close and stale input`() {
+        for (throwing in listOf(false, true)) {
+            val f = Fixture()
+            f.send(1, RootTouchSession.DOWN)
+            if (throwing) f.throwAction = 3 else f.rejectAction = 3
+            assertEquals(RootTouchSession.Result.UNKNOWN, f.state.tick(2501))
+            assertEquals(2, f.state.cleanupExitCode())
+            assertEquals(RootTouchSession.Result.UNKNOWN, f.state.close(2600))
+            assertEquals(RootTouchSession.Result.REJECTED, f.send(2, 0, 2700, gesture = 2))
+            assertEquals(2, f.state.cleanupExitCode())
+            assertEquals(listOf(0, 3), f.events.map { it.action })
+        }
+    }
+
+    @Test fun `geometry rejection confirms cleanup only after cancellation succeeds`() {
+        for (cancelSucceeds in listOf(false, true)) {
+            val f = Fixture()
+            f.send(1, RootTouchSession.DOWN)
+            if (!cancelSucceeds) f.rejectAction = 3
+            f.geometry = false
+            assertEquals(if (cancelSucceeds) RootTouchSession.Result.REJECTED else RootTouchSession.Result.UNKNOWN,
+                f.state.tick(1100))
+            assertEquals(if (cancelSucceeds) 0 else 2, f.state.cleanupExitCode())
+            assertEquals(listOf(0, 3), f.events.map { it.action })
+        }
     }
 
     @Test fun `held network loss cancels locally at lease expiry and stale packets cannot revive it`() {
