@@ -13,6 +13,9 @@ import type { ContinuousPointerState, PointerFenceObservation } from '@/src/feat
 import { ContinuousInputDiagnostics } from '@/src/features/stream/ContinuousInputDiagnostics';
 import { DirectProbeDiagnostics } from '@/src/features/stream/DirectProbeDiagnostics';
 import { DirectProbeAccess } from '@/src/features/stream/DirectProbeAccess';
+import { AutomaticStreamDiagnostic } from '@/src/features/stream/AutomaticStreamDiagnostic';
+import { StreamSessionHistoryPanel } from '@/src/features/stream/StreamSessionHistoryPanel';
+import { browserStreamSample, StreamSessionReporter } from '@/src/features/stream/streamSessionTelemetry';
 
 interface DeviceStreamProps {
   deviceId: string;
@@ -126,6 +129,11 @@ export function DeviceStream({
 }: DeviceStreamProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const wsRef = useRef<WebSocket | null>(null);
+  const diagnosticReporter = useRef<StreamSessionReporter | null>(null);
+  const [diagnosticSession, setDiagnosticSession] = useState<{
+    socket: WebSocket; deviceId: string; accessToken: string | null; id: string;
+  } | null>(null);
+  const [automaticDiagnosticBusy, setAutomaticDiagnosticBusy] = useState(false);
   const renderedSocketRef = useRef<WebSocket | null>(null);
   const lastWheelAt = useRef(-Infinity);
   const decoderRef = useRef<H264Decoder | null>(null);
@@ -187,6 +195,10 @@ export function DeviceStream({
     ? agentDiagnostics.age_seconds + Math.max(0, diagnosticNowMs - agentReport.receivedAtMs) / 1000 : null;
   const [diagnosticsError, setDiagnosticsError] = useState<string | null>(null);
   const [browserStats, setBrowserStats] = useState<StreamDecoderStats | null>(null);
+  const telemetryControl = useRef({ state: continuousState, failure: continuousFailureCode, rtt: continuousReceipt?.ms ?? null, attempts: idleRecoveryCount });
+  telemetryControl.current = { state: continuousState, failure: continuousFailureCode, rtt: continuousReceipt?.ms ?? null, attempts: idleRecoveryCount };
+  const currentDiagnosticSession = diagnosticSession?.deviceId === deviceId && diagnosticSession.accessToken === accessToken
+    && diagnosticSession.socket === wsRef.current && diagnosticSession.socket.readyState === WebSocket.OPEN ? diagnosticSession.id : null;
   const currentFrameOwned = hasRenderedFrame && !streamError
     && wsRef.current?.readyState === WebSocket.OPEN
     && renderedSocketRef.current === wsRef.current;
@@ -349,6 +361,11 @@ export function DeviceStream({
         newWs.binaryType = 'arraybuffer';
         ws = newWs;
         wsRef.current = newWs;
+        telemetryControl.current = { state: 'idle', failure: null, rtt: null, attempts: idleRecoveryCountRef.current };
+        setContinuousReceipt(null);
+        const reporter = new StreamSessionReporter(newWs, () => decoder
+          ? browserStreamSample(decoder.stats, telemetryControl.current) : null);
+        diagnosticReporter.current = reporter;
         automaticProbeRef.current = null;
         // Keep the previously confirmed input path across socket replacements.
         // It grants no authority: it prevents a legacy swipe while fresh native
@@ -406,6 +423,7 @@ export function DeviceStream({
           if (scheduleKeyFrameRecovery === scheduleKeyFrameRequests) scheduleKeyFrameRecovery = undefined;
           newWs.onopen = newWs.onmessage = newWs.onclose = newWs.onerror = null;
           if (wsRef.current === newWs) wsRef.current = null;
+          if (diagnosticReporter.current === reporter) diagnosticReporter.current = null;
           if (renderedSocketRef.current === newWs) renderedSocketRef.current = null;
           decoder?.reset();
           if (newWs.readyState === WebSocket.OPEN || newWs.readyState === WebSocket.CONNECTING) {
@@ -428,6 +446,7 @@ export function DeviceStream({
           finish(true, undefined, idleRecoveryDelay(idleRecoveryCountRef.current));
         };
         watchdog = setInterval(() => {
+          reporter.report();
           if (Date.now() - lastReceived >= (opened ? 30_000 : 15_000)) finish(true);
         }, 5_000);
         newWs.onopen = () => {
@@ -452,6 +471,10 @@ export function DeviceStream({
           if (typeof evt.data === 'string') {
             try {
               const msg = JSON.parse(evt.data);
+              if (msg.type === 'stream_session') {
+                if (reporter.accept(msg)) setDiagnosticSession({ socket: newWs, deviceId, accessToken, id: reporter.sessionId! });
+                return;
+              }
               if (msg.type === 'touch_capability' && continuousRequestedRef.current && !continuousRef.current) {
                 if (!continuousAllowedRef.current || discreteBusyRef.current || dragRef.current) {
                   // A capability probe has no owner. Never change input paths midway through a legacy drag.
@@ -476,10 +499,14 @@ export function DeviceStream({
                     if (ignore || ended || newWs !== wsRef.current
                       || ['viewer_closed', 'viewer_destroyed', 'surface_blur', 'surface_hidden', 'surface_control_lost', 'control_mode_changed', 'capture_or_socket_lost'].includes(snapshot.reason)) return;
                     setPointerFailure({ deviceId, accessToken, socket: newWs, snapshot });
+                    telemetryControl.current.failure = snapshot.reason;
+                    reporter.report(true);
                   },
                   onState: (state, reason) => {
                     if (ignore || ended || newWs !== wsRef.current) return;
                     setContinuousState(state);
+                    telemetryControl.current.state = state;
+                    telemetryControl.current.failure = reason;
                     const idleReceiptLoss = reason === 'native_receipt_timeout' && controller.recoverableIdleReceiptLoss;
                     const pointerReceiptLoss = (reason === 'native_receipt_timeout' || reason === 'server_runtime_retry')
                       && controller.unknownPointerReceiptLoss;
@@ -684,6 +711,7 @@ export function DeviceStream({
       clearTimeout(frameStaleTimer);
       clearInterval(watchdog);
       wsRef.current = null;
+      diagnosticReporter.current = null;
       renderedSocketRef.current = null;
       ws?.close();
       decoder?.destroy();
@@ -1178,6 +1206,10 @@ export function DeviceStream({
         return canvas && canNavigate && renderedSocketRef.current === wsRef.current
           ? { width: canvas.width, height: canvas.height } : null;
       }} />}
+    {enableDiagnostics && currentDiagnosticSession && <AutomaticStreamDiagnostic deviceId={deviceId} session={currentDiagnosticSession}
+      eligible={surfaceActive && currentFrameOwned && !recordingMode && !inspection && taskHandoffId === undefined}
+      onBusyChange={setAutomaticDiagnosticBusy}
+      onDiagnostic={(sample, session) => { diagnosticReporter.current?.direct(sample, session); }} />}
         {enableDiagnostics && diagnosticsOpen && (
           <div
             id={`stream-diagnostics-${deviceId}`}
@@ -1192,10 +1224,11 @@ export function DeviceStream({
             </div>
             <div>Управление Android: {continuousState}{continuousFailureCode ? ` · причина: ${continuousFailureCode}` : ''}</div>
             <div>Видео и управление идут через сервер (WebSocket). Прямое соединение с APK ещё не подключено.</div>
-            {process.env.NEXT_PUBLIC_DIRECT_TRANSPORT_CANARY === 'true'
+            {automaticDiagnosticBusy ? <p className="mt-2 font-sans text-muted-foreground">Автоматическая проверка прямого видео выполняется. Результат появится в истории сеанса.</p> : process.env.NEXT_PUBLIC_DIRECT_TRANSPORT_CANARY === 'true'
               ? <DirectProbeDiagnostics deviceId={deviceId} /> : <DirectProbeAccess deviceId={deviceId} />}
             <div>Автоматическое восстановление управления: {idleRecoveryCount} попыток с задержкой до 15 секунд. Касания и команды не повторяются.</div>
             {pointerFailureSnapshot && <ContinuousInputDiagnostics snapshot={pointerFailureSnapshot} />}
+            <StreamSessionHistoryPanel deviceId={deviceId} />
             {diagnosticsError ? <div className="text-red-600 dark:text-red-300">{diagnosticsError}</div> : (
               <>
                 <div>Отчёт APK: {agentDiagnostics?.state === 'active_report' ? 'захват активен' : agentDiagnostics?.state ?? 'загрузка…'}

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import asyncio
 import secrets
+import time
 from typing import Any
 
 import structlog
@@ -11,6 +12,7 @@ from fastapi import APIRouter, HTTPException, WebSocket, WebSocketDisconnect
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.core.dependencies import _is_dev_skip_auth
+from backend.database import redis_client
 from backend.database.engine import AsyncSessionLocal
 from backend.websocket.continuous_lease import InputLeaseUnavailable
 from backend.websocket.continuous_runtime import (
@@ -19,6 +21,11 @@ from backend.websocket.continuous_runtime import (
     get_continuous_runtime,
 )
 from backend.websocket.stream_bridge import get_stream_bridge
+from backend.websocket.stream_session_history import (
+    REPORT_INTERVAL_SECONDS,
+    StreamSessionHistory,
+    utc_now,
+)
 from backend.websocket.viewer_input import InvalidViewerInput, viewer_command
 
 logger = structlog.get_logger()
@@ -175,6 +182,26 @@ async def stream_viewer_ws(
         session_id=session_id,
         user_id=user_id_str,
     )
+    history = StreamSessionHistory(redis_client.redis, redis_client.redis_binary)
+    history_enabled = await history.begin(org_id_str, device_id, session_id)
+    last_browser_report = last_direct_report = -float("inf")
+    direct_reports = 0
+    diagnostic_queue: asyncio.Queue[tuple[str, dict[str, Any], int]] = asyncio.Queue(maxsize=4)
+
+    def enqueue_diagnostic(kind: str, sample: dict[str, Any], limit: int = 15) -> None:
+        if not history_enabled or diagnostic_queue.full():
+            return
+        diagnostic_queue.put_nowait((kind, sample | {"received_at": utc_now()}, limit))
+
+    async def write_diagnostics() -> None:
+        while True:
+            kind, sample, limit = await diagnostic_queue.get()
+            try:
+                await history.update(org_id_str, device_id, session_id, {"kind": kind, "sample": sample}, limit)
+            finally:
+                diagnostic_queue.task_done()
+
+    diagnostic_writer: asyncio.Task | None = None
 
     # Notify agent → triggers SPS/PPS replay + I-frame request
     async def send_control(command: dict) -> None:
@@ -228,6 +255,8 @@ async def stream_viewer_ws(
     async def _viewer_ping_loop() -> None:
         try:
             while True:
+                if history_enabled:
+                    await history.observe_agent(org_id_str, device_id, session_id)
                 await asyncio.sleep(VIEWER_AUTH_RECHECK_SECONDS)
                 try:
                     if await current_control_permission() is None:
@@ -275,6 +304,11 @@ async def stream_viewer_ws(
     touch_auth_task = asyncio.create_task(_touch_auth_loop())
 
     try:
+        if history_enabled:
+            diagnostic_writer = asyncio.create_task(write_diagnostics())
+        if history_enabled:
+            await ws.send_json({"type": "stream_session", "schema_version": 1, "session_id": session_id,
+                                "history_enabled": True, "report_interval_seconds": REPORT_INTERVAL_SECONDS})
         await send_control({"type": "viewer_connected", "session_id": session_id})
         while True:
             receive_task = asyncio.create_task(ws.receive_json())
@@ -293,6 +327,23 @@ async def stream_viewer_ws(
                 if not receive_task.done():
                     receive_task.cancel()
                 await asyncio.gather(receive_task, return_exceptions=True)
+            if isinstance(data, dict) and isinstance(data.get("type"), str) and data["type"] in {"viewer_telemetry", "viewer_direct_result"}:
+                # This branch terminates at diagnostic storage. It never forwards
+                # a browser-supplied payload to Android or changes input ownership.
+                now = time.monotonic()
+                if history_enabled and set(data) == {"type", "sample"}:
+                    if data["type"] == "viewer_telemetry" and now - last_browser_report >= 1:
+                        last_browser_report = now
+                        sample = history.validated_sample(data["sample"])
+                        if sample is not None:
+                            enqueue_diagnostic("browser_samples", sample)
+                    elif data["type"] == "viewer_direct_result" and direct_reports < 3 and now - last_direct_report >= 1:
+                        last_direct_report = now
+                        direct_reports += 1
+                        sample = history.validated_sample(data["sample"], probe=True)
+                        if sample is not None:
+                            enqueue_diagnostic("direct_diagnostics", sample, 3)
+                continue
             if isinstance(data, dict) and isinstance(data.get("type"), str) and data["type"] in {"touch_probe", "touch_open", "touch_event", "touch_close"}:
                 rejection: dict[str, Any] = {"type": "touch_error", "error": "input_rejected_or_unavailable"}
                 try:
@@ -322,6 +373,12 @@ async def stream_viewer_ws(
                                 retryable=rejection.get("retryable", False), owner_bound=touch_viewer.lease is not None,
                                 error_type=type(exc).__name__)
                     rejection["operation"] = data["type"]
+                    if history_enabled:
+                        enqueue_diagnostic("control_events", {
+                            "operation": data["type"], "error": rejection["error"],
+                            "reason": rejection.get("reason"), "retryable": rejection.get("retryable", False),
+                            "owner_bound": touch_viewer.lease is not None,
+                        }, limit=8)
                     if touch_viewer.lease is not None:
                         rejection["owner"] = touch_viewer.lease.owner
                     if touch_runtime:
@@ -371,6 +428,16 @@ async def stream_viewer_ws(
         if touch_registered and touch_runtime:
             await touch_runtime.unregister(touch_viewer)
         await bridge.unregister_viewer(device_id, session_id)
+        if history_enabled:
+            try:
+                async with asyncio.timeout(0.5):
+                    await diagnostic_queue.join()
+            except TimeoutError:
+                pass
+            if diagnostic_writer:
+                diagnostic_writer.cancel()
+                await asyncio.gather(diagnostic_writer, return_exceptions=True)
+            await history.end(org_id_str, device_id, session_id)
         logger.info(
             "Stream viewer disconnected",
             device_id=device_id,

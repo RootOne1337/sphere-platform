@@ -4,7 +4,7 @@ Generated from `backend.main.app.openapi()` by `scripts/export_api_docs.py`.
 Regenerate with `python -m scripts.export_api_docs`; verify with `--check`.
 The exporter does not run startup hooks or send HTTP requests.
 
-**183 HTTP operations across 145 paths.**
+**184 HTTP operations across 146 paths.**
 
 Full parameters, request bodies, response schemas and declared security schemes:
 [OpenAPI JSON](openapi.json). Manual explanations:
@@ -68,6 +68,7 @@ for tested behavior and remaining limits.
 | `POST` | `/api/v1/devices/{device_id}/shell` | devices | 200, 422 | Выполнить команду shell на устройстве |
 | `GET` | `/api/v1/devices/{device_id}/status` | devices | 200, 422 | DB данные + live Redis статус устройства |
 | `GET` | `/api/v1/devices/{device_id}/stream-diagnostics` | devices | 200, 422 | Последний подтверждённый heartbeat-отчёт о стадиях Android-стрима |
+| `GET` | `/api/v1/devices/{device_id}/stream-sessions` | direct-transport-canary, stream-diagnostics | 200, 422 | Read the last ten bounded stream diagnostic sessions |
 | `POST` | `/api/v1/devices/{device_id}/ui-hierarchy` | devices | 200, 422 | Прочитать ограниченный снимок дерева Android UI Automator |
 | `POST` | `/api/v1/discovery/scan` | discovery | 200, 422 | Сканировать подсеть через PC Agent для обнаружения ADB-устройств |
 | `GET` | `/api/v1/event-triggers` | event-triggers | 200, 422 | Список EventTrigger'ов с фильтрацией |

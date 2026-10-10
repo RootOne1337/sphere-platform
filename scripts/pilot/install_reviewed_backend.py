@@ -55,6 +55,7 @@ APPROVED_PATHS = {
     "backend/api/v1/direct_probe/router.py",
     "backend/api/v1/batches/router.py", "backend/services/batch_service.py",
     "backend/database/redis_client.py",
+    "backend/websocket/stream_session_history.py",
     "backend/Dockerfile",
 }
 PACKAGED_PATHS = ["backend", "alembic", "agent-config", "scripts/create_admin.py",

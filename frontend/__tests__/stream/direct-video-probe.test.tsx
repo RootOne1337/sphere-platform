@@ -109,3 +109,26 @@ test('hidden page retires the finite peer and relay uses only authenticated temp
   expect(mockStop).toHaveBeenCalledTimes(1);
   Object.defineProperty(document, 'hidden', { configurable: true, value: false });
 });
+
+test('automatic admission starts once, can be cancelled, and never repeats on focus or rerender', () => {
+  const view = render(<DirectVideoProbe deviceId="device" profile="host" automaticKey="viewer:host" />);
+  expect(mockStart).toHaveBeenCalledTimes(1);
+  expect(screen.queryByRole('button', { name: 'Проверить видео с APK' })).not.toBeInTheDocument();
+  view.rerender(<DirectVideoProbe deviceId="device" profile="host" automaticKey="viewer:host" enabled={false} />);
+  expect(mockStop).toHaveBeenCalledTimes(1);
+  view.rerender(<DirectVideoProbe deviceId="device" profile="host" automaticKey="viewer:host" />);
+  expect(mockStart).toHaveBeenCalledTimes(1);
+});
+
+test('automatic outcome reports real rendered pictures once; echoes alone still report zero frames', async () => {
+  const onOutcome = jest.fn();
+  render(<DirectVideoProbe deviceId="device" profile="host" automaticKey="viewer:host" onOutcome={onOutcome} />);
+  act(() => { mockReport(connected); mockTrack({ kind: 'video' } as MediaStreamTrack); });
+  await act(async () => {});
+  act(() => mockFrame(1, { width: 960, height: 540 } as VideoFrameCallbackMetadata));
+  expect(onOutcome).not.toHaveBeenCalled();
+  const finished: DirectProbeResult = { ...connected, state: 'finished', samples: Array(20).fill(10) };
+  act(() => { mockReport(finished); mockReport(finished); });
+  expect(onOutcome).toHaveBeenCalledTimes(1);
+  expect(onOutcome.mock.calls[0][1]).toBe(1);
+});

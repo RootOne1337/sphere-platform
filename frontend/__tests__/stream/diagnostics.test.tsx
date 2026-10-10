@@ -5,6 +5,7 @@ import { api } from '@/lib/api';
 jest.mock('@/lib/api', () => ({ api: { get: jest.fn() } }));
 // Admission requests have their own suite; this suite measures APK telemetry polling.
 jest.mock('@/src/features/stream/DirectProbeAccess', () => ({ DirectProbeAccess: () => null }));
+jest.mock('@/src/features/stream/StreamSessionHistoryPanel', () => ({ StreamSessionHistoryPanel: () => null }));
 let mockAccessToken: string | null = 'fixture-token';
 jest.mock('@/lib/store', () => ({ useAuthStore: () => ({ accessToken: mockAccessToken }) }));
 

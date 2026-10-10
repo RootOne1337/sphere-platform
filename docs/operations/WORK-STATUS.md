@@ -1,8 +1,10 @@
 # Работы, требования пользователя и границы приёмки
 
-**Проверенная установка:** UI `ee0d8e6f` / API `ee0d8e6f`.
+**Проверенная установка:** UI `678f78cf` / API `678f78cf`.
 
-**10 октября — UI/API прямого видеорежима установлены.** APK1.2.51-dev собран, но PH030 офлайн и остаётся на10250; OTA и живые RTP-кадры ещё не приняты. [Доставка, проверки и следующий шаг](../audits/2026-10-10/DIRECT-VIDEO-API-INSTALLED.md).
+**10 октября, 16:17UTC — автоматическое восстановление допуска управления установлено.** Занятая вкладка и временный отказ сервера повторно согласуются без повтора касаний. [Доставка и пределы проверки](../audits/2026-10-10/CONTROL-ADMISSION-RECOVERY-INSTALLED.md).
+
+**10 октября — APK прямого видеорежима установлен на PH030.** Адресный OTA1.2.51-dev/10251 и фактический SHA подтверждены; реальные RTP-кадры и прямой ввод ещё не приняты. [Доставка, проверки и следующий шаг](../audits/2026-10-10/DIRECT-VIDEO-READONLY-INSTALLED.md).
 
 **Последний результат пользователя: прямой канал с ноутбука — 20/20 ответов,
 p95 25,8 мс, NAT/UDP.** Браузер и PH030 на одном ноутбуке без VPN. Это конечная
@@ -94,7 +96,7 @@ Idle control и direct transport остаются открытыми; probe вы
 [измерение без касаний](../audits/2026-10-10/IDLE-LOCAL-PUBLIC-COMPARISON.md).
 
 **APK1.3.0 — проверен текущий контракт и составлен release plan.** Development
-версия 1.2.51; signed canary собран, native OTA ожидает PH030; PH011 остаётся на ordinary 1.2.49-dev, PH030 получил diagnostic
+версия 1.2.51; canary установлен на PH030 с проверенным SHA; PH011 остаётся на ordinary 1.2.49-dev, PH030 получил diagnostic
 1.2.50-dev. Private continuous/direct flags не являются stable release профилем.
 Новое capability negotiation, native resource gates, idle reliability и signing
 promotion требуют отдельной приёмки. [Матрица и критерии](../design/APK-1.3-COMPATIBILITY-AND-RELEASE.md).
@@ -409,12 +411,13 @@ resource soak/retention и RAM acceptance.
 
 **PARTIAL** · EP-029, EP-020, EP-047.
 
-Актуально10октября: PH030 обновлён адресным OTA до1.2.50-dev/10250, установленный
-SHA подтверждён. Обычная веб-панель admission подготовлена; 437 stream/grid
-regressions прошли, включая управление, reconnect и отдельные проверки доступа.
-Она установлена в UI/API c17332eb. Echo/path именно браузера ноутбука, direct media/input,
-TURN/network matrix и multi-viewer ownership остаются непроверенными.
-[Последний срез](../audits/2026-10-10/DIRECT-PROBE-TURN-AND-LAPTOP.md).
+Актуально10октября: PH0301.2.51-dev/10251 установлен штатным OTA, SHA подтверждён.
+UI/API678 установлены на3015 и туннеле. Пользователь получил20/20 echo NAT/UDP
+в браузере ноутбука; это не видеозадержка и не доказательство localhost-пути.
+Readonly RTP renderer установлен, фактические кадры ещё не приняты. Автоматическая
+проверка и история последних10сеансов подготовлены в следующем рабочем изменении.
+[Установка](../audits/2026-10-10/CONTROL-ADMISSION-RECOVERY-INSTALLED.md).
+
 
 Исследование текущего WS пути и первичных источников выполнено. Предложен prototype:
 browser WebRTC ↔ Android libwebrtc, direct video и input/ACK, coturn fallback;
@@ -519,3 +522,12 @@ PostgreSQL/Redis test подтвердил202/commit/admission; live404 посл
 native ACK, focus/held keys, permissions/mute/autoplay, sync и resource budgets.
 Нынешние text/navigation actions не закрывают этот workflow.
 [Границы этапа](../audits/2026-10-10/DIRECT-PROBE-TURN-AND-LAPTOP.md).
+
+### CHAT-20 · Последние десять сеансов и автоматическая диагностика клиента
+
+**SOURCE_FIXED_NOT_INSTALLED**
+
+Подготовлена ограниченная история на устройство:10сеансов,32KiB/сеанс,7дней,
+раздельные счётчики APK/браузера, причины отказов и автоматический readonly-video
+test в реальном клиенте. Установка и реальные отчёты ноутбука ещё не подтверждены.
+[Контракт и пределы](../audits/2026-10-10/STREAM-SESSION-DIAGNOSTICS.md).

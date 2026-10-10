@@ -2734,6 +2734,7 @@
               "application/json": {
                 "schema": {
                   "type": "object",
+                  "additionalProperties": true,
                   "title": "Response Take Screenshot Api V1 Devices  Device Id  Screenshot Get"
                 }
               }
@@ -2885,6 +2886,7 @@
               "application/json": {
                 "schema": {
                   "type": "object",
+                  "additionalProperties": true,
                   "title": "Response Execute Shell Api V1 Devices  Device Id  Shell Post"
                 }
               }
@@ -2944,6 +2946,7 @@
               "application/json": {
                 "schema": {
                   "type": "object",
+                  "additionalProperties": true,
                   "title": "Response Request Logcat Api V1 Devices  Device Id  Logcat Post"
                 }
               }
@@ -2993,7 +2996,57 @@
               "application/json": {
                 "schema": {
                   "type": "object",
+                  "additionalProperties": true,
                   "title": "Response Reboot Device Api V1 Devices  Device Id  Reboot Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/devices/{device_id}/stream-sessions": {
+      "get": {
+        "tags": [
+          "direct-transport-canary",
+          "stream-diagnostics"
+        ],
+        "summary": "Read the last ten bounded stream diagnostic sessions",
+        "operationId": "stream_session_history_api_v1_devices__device_id__stream_sessions_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "device_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Device Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StreamSessionHistoryResponse"
                 }
               }
             }
@@ -4278,6 +4331,7 @@
               "application/json": {
                 "schema": {
                   "type": "object",
+                  "additionalProperties": true,
                   "title": "Response Move Devices Api V1 Groups  Group Id  Devices Move Post"
                 }
               }
@@ -4737,6 +4791,7 @@
               "application/json": {
                 "schema": {
                   "type": "object",
+                  "additionalProperties": true,
                   "title": "Response Assign Devices Api V1 Locations  Location Id  Devices Post"
                 }
               }
@@ -4794,6 +4849,7 @@
               "application/json": {
                 "schema": {
                   "type": "object",
+                  "additionalProperties": true,
                   "title": "Response Remove Devices Api V1 Locations  Location Id  Devices Delete"
                 }
               }
@@ -5100,6 +5156,7 @@
             "content": {
               "application/json": {
                 "schema": {
+                  "additionalProperties": true,
                   "type": "object",
                   "title": "Response Receive Alerts Api V1 Monitoring Alerts Post"
                 }
@@ -5133,6 +5190,7 @@
             "content": {
               "application/json": {
                 "schema": {
+                  "additionalProperties": true,
                   "type": "object",
                   "title": "Response Get Monitoring Metrics Api V1 Monitoring Metrics Get"
                 }
@@ -5162,6 +5220,7 @@
               "application/json": {
                 "schema": {
                   "items": {
+                    "additionalProperties": true,
                     "type": "object"
                   },
                   "type": "array",
@@ -7910,6 +7969,7 @@
               "application/json": {
                 "schema": {
                   "type": "object",
+                  "additionalProperties": true,
                   "title": "Response Request Stream Start Api V1 Streaming  Device Id  Start Post"
                 }
               }
@@ -7959,6 +8019,7 @@
               "application/json": {
                 "schema": {
                   "type": "object",
+                  "additionalProperties": true,
                   "title": "Response Request Stream Stop Api V1 Streaming  Device Id  Stop Post"
                 }
               }
@@ -8008,6 +8069,7 @@
               "application/json": {
                 "schema": {
                   "type": "object",
+                  "additionalProperties": true,
                   "title": "Response Request Keyframe Api V1 Streaming  Device Id  Keyframe Post"
                 }
               }
@@ -8480,6 +8542,7 @@
               "application/json": {
                 "schema": {
                   "type": "object",
+                  "additionalProperties": true,
                   "title": "Response Get Task Progress Api V1 Tasks  Task Id  Progress Get"
                 }
               }
@@ -8530,7 +8593,8 @@
                 "schema": {
                   "type": "array",
                   "items": {
-                    "type": "object"
+                    "type": "object",
+                    "additionalProperties": true
                   },
                   "title": "Response Get Task Live Logs Api V1 Tasks  Task Id  Live Logs Get"
                 }
@@ -8691,6 +8755,7 @@
               "application/json": {
                 "schema": {
                   "type": "object",
+                  "additionalProperties": true,
                   "title": "Response Force Stop Task Api V1 Tasks  Task Id  Stop Post"
                 }
               }
@@ -8736,6 +8801,7 @@
             "content": {
               "application/json": {
                 "schema": {
+                  "additionalProperties": true,
                   "type": "object",
                   "title": "Response Create Recovery Api V1 Updates Recovery Post"
                 }
@@ -8802,6 +8868,7 @@
               "application/json": {
                 "schema": {
                   "type": "object",
+                  "additionalProperties": true,
                   "title": "Response Dispatch Recovery Api V1 Updates Recovery  Device Id  Dispatch Post"
                 }
               }
@@ -8852,6 +8919,7 @@
               "application/json": {
                 "schema": {
                   "type": "object",
+                  "additionalProperties": true,
                   "title": "Response Get Recovery Status Api V1 Updates Recovery  Device Id  Get"
                 }
               }
@@ -9688,6 +9756,7 @@
             "content": {
               "application/json": {
                 "schema": {
+                  "additionalProperties": true,
                   "type": "object",
                   "title": "Response Vpn Health Api V1 Vpn Health Get"
                 }
@@ -10450,6 +10519,7 @@
             "title": "Duration Seconds"
           },
           "meta": {
+            "additionalProperties": true,
             "type": "object",
             "title": "Meta"
           },
@@ -10662,9 +10732,6 @@
           },
           "active": {
             "type": "boolean",
-            "enum": [
-              true
-            ],
             "const": true,
             "title": "Active"
           },
@@ -11107,6 +11174,7 @@
           "old_value": {
             "anyOf": [
               {
+                "additionalProperties": true,
                 "type": "object"
               },
               {
@@ -11118,6 +11186,7 @@
           "new_value": {
             "anyOf": [
               {
+                "additionalProperties": true,
                 "type": "object"
               },
               {
@@ -11127,6 +11196,7 @@
             "title": "New Value"
           },
           "meta": {
+            "additionalProperties": true,
             "type": "object",
             "title": "Meta",
             "default": {}
@@ -11185,6 +11255,7 @@
             "title": "Failed"
           },
           "wave_config": {
+            "additionalProperties": true,
             "type": "object",
             "title": "Wave Config"
           },
@@ -11245,6 +11316,7 @@
           },
           "admission_receipts": {
             "items": {
+              "additionalProperties": true,
               "type": "object"
             },
             "type": "array",
@@ -11412,6 +11484,7 @@
             "title": "Failed"
           },
           "wave_config": {
+            "additionalProperties": true,
             "type": "object",
             "title": "Wave Config"
           },
@@ -11597,6 +11670,7 @@
             "title": "Failed"
           },
           "wave_config": {
+            "additionalProperties": true,
             "type": "object",
             "title": "Wave Config"
           },
@@ -11735,6 +11809,7 @@
             "title": "Device Ids"
           },
           "params": {
+            "additionalProperties": true,
             "type": "object",
             "title": "Params"
           }
@@ -11854,6 +11929,7 @@
             "title": "Latency Ms"
           },
           "details": {
+            "additionalProperties": true,
             "type": "object",
             "title": "Details",
             "default": {}
@@ -12042,6 +12118,7 @@
             "title": "Pipeline Run Id"
           },
           "data": {
+            "additionalProperties": true,
             "type": "object",
             "title": "Data"
           },
@@ -12230,6 +12307,7 @@
             "description": "Pipeline для запуска при срабатывании"
           },
           "input_params_template": {
+            "additionalProperties": true,
             "type": "object",
             "title": "Input Params Template",
             "description": "Шаблон параметров. Плейсхолдеры: {device_id}, {account_id}, {event_type}, {event_id}"
@@ -12477,6 +12555,7 @@
           "meta": {
             "anyOf": [
               {
+                "additionalProperties": true,
                 "type": "object"
               },
               {
@@ -12665,6 +12744,7 @@
             "title": "Steps"
           },
           "input_schema": {
+            "additionalProperties": true,
             "type": "object",
             "title": "Input Schema"
           },
@@ -12895,6 +12975,7 @@
             "title": "Pipeline Id"
           },
           "input_params": {
+            "additionalProperties": true,
             "type": "object",
             "title": "Input Params"
           },
@@ -13017,6 +13098,7 @@
             "title": "Description"
           },
           "dag": {
+            "additionalProperties": true,
             "type": "object",
             "title": "Dag"
           },
@@ -13265,6 +13347,7 @@
             "title": "Pipeline Run Id"
           },
           "data": {
+            "additionalProperties": true,
             "type": "object",
             "title": "Data"
           },
@@ -13582,17 +13665,11 @@
         "properties": {
           "schema_version": {
             "type": "integer",
-            "enum": [
-              1
-            ],
             "const": 1,
             "title": "Schema Version"
           },
           "scope": {
             "type": "string",
-            "enum": [
-              "recent-file-tail"
-            ],
             "const": "recent-file-tail",
             "title": "Scope"
           },
@@ -13633,9 +13710,6 @@
           },
           "scan_byte_limit": {
             "type": "integer",
-            "enum": [
-              2097152
-            ],
             "const": 2097152,
             "title": "Scan Byte Limit"
           },
@@ -13647,17 +13721,11 @@
           },
           "response_byte_limit": {
             "type": "integer",
-            "enum": [
-              524288
-            ],
             "const": 524288,
             "title": "Response Byte Limit"
           },
           "max_line_bytes": {
             "type": "integer",
-            "enum": [
-              16384
-            ],
             "const": 16384,
             "title": "Max Line Bytes"
           },
@@ -13680,17 +13748,11 @@
           },
           "max_files": {
             "type": "integer",
-            "enum": [
-              3
-            ],
             "const": 3,
             "title": "Max Files"
           },
           "concurrent_reads_per_worker": {
             "type": "integer",
-            "enum": [
-              4
-            ],
             "const": 4,
             "title": "Concurrent Reads Per Worker"
           }
@@ -13867,6 +13929,7 @@
             "default": "ldplayer"
           },
           "meta": {
+            "additionalProperties": true,
             "type": "object",
             "title": "Meta",
             "description": "Дополнительные метаданные (ldplayer_name, clone_source и т.д.)."
@@ -14845,6 +14908,7 @@
             "title": "Balance After"
           },
           "meta": {
+            "additionalProperties": true,
             "type": "object",
             "title": "Meta"
           }
@@ -14961,6 +15025,7 @@
             "title": "Pipeline Id"
           },
           "input_params_template": {
+            "additionalProperties": true,
             "type": "object",
             "title": "Input Params Template"
           },
@@ -15042,18 +15107,12 @@
         "properties": {
           "schema_version": {
             "type": "integer",
-            "enum": [
-              1
-            ],
             "const": 1,
             "title": "Schema Version",
             "default": 1
           },
           "scope": {
             "type": "string",
-            "enum": [
-              "current-tenant-active-inventory"
-            ],
             "const": "current-tenant-active-inventory",
             "title": "Scope",
             "default": "current-tenant-active-inventory"
@@ -15525,6 +15584,7 @@
             "title": "Registration Provider"
           },
           "meta": {
+            "additionalProperties": true,
             "type": "object",
             "title": "Meta"
           },
@@ -15854,6 +15914,7 @@
             "title": "Registration Provider"
           },
           "meta": {
+            "additionalProperties": true,
             "type": "object",
             "title": "Meta"
           },
@@ -16054,6 +16115,7 @@
           "meta": {
             "anyOf": [
               {
+                "additionalProperties": true,
                 "type": "object"
               },
               {
@@ -16192,9 +16254,6 @@
           },
           "execution_confirmed": {
             "type": "boolean",
-            "enum": [
-              false
-            ],
             "const": false,
             "title": "Execution Confirmed",
             "default": false
@@ -16668,6 +16727,7 @@
           "output": {
             "anyOf": [
               {
+                "additionalProperties": true,
                 "type": "object"
               },
               {
@@ -16840,6 +16900,7 @@
             "title": "Failed"
           },
           "wave_config": {
+            "additionalProperties": true,
             "type": "object",
             "title": "Wave Config"
           },
@@ -16947,12 +17008,14 @@
           },
           "steps": {
             "items": {
+              "additionalProperties": true,
               "type": "object"
             },
             "type": "array",
             "title": "Steps"
           },
           "input_schema": {
+            "additionalProperties": true,
             "type": "object",
             "title": "Input Schema"
           },
@@ -17094,15 +17157,18 @@
             "title": "Current Step Id"
           },
           "context": {
+            "additionalProperties": true,
             "type": "object",
             "title": "Context"
           },
           "input_params": {
+            "additionalProperties": true,
             "type": "object",
             "title": "Input Params"
           },
           "step_logs": {
             "items": {
+              "additionalProperties": true,
               "type": "object"
             },
             "type": "array",
@@ -17353,6 +17419,7 @@
             "title": "Notes"
           },
           "meta": {
+            "additionalProperties": true,
             "type": "object",
             "title": "Meta"
           },
@@ -17425,6 +17492,7 @@
             "title": "Type"
           },
           "params": {
+            "additionalProperties": true,
             "type": "object",
             "title": "Params",
             "description": "Параметры шага (зависят от type)"
@@ -17483,9 +17551,6 @@
         "properties": {
           "schema_version": {
             "type": "integer",
-            "enum": [
-              1
-            ],
             "const": 1,
             "title": "Schema Version",
             "default": 1
@@ -17513,27 +17578,18 @@
           },
           "scope": {
             "type": "string",
-            "enum": [
-              "diagnostic_echo_only"
-            ],
             "const": "diagnostic_echo_only",
             "title": "Scope",
             "default": "diagnostic_echo_only"
           },
           "max_duration_ms": {
             "type": "integer",
-            "enum": [
-              30000
-            ],
             "const": 30000,
             "title": "Max Duration Ms",
             "default": 30000
           },
           "samples": {
             "type": "integer",
-            "enum": [
-              20
-            ],
             "const": 20,
             "title": "Samples",
             "default": 20
@@ -17715,6 +17771,7 @@
             "title": "Device Tags"
           },
           "input_params": {
+            "additionalProperties": true,
             "type": "object",
             "title": "Input Params"
           },
@@ -17747,6 +17804,7 @@
             "title": "Device Id"
           },
           "input_params": {
+            "additionalProperties": true,
             "type": "object",
             "title": "Input Params"
           }
@@ -18047,6 +18105,7 @@
             "title": "Pipeline Id"
           },
           "input_params": {
+            "additionalProperties": true,
             "type": "object",
             "title": "Input Params"
           },
@@ -18210,31 +18269,23 @@
         "properties": {
           "version": {
             "type": "string",
-            "enum": [
-              "1.0"
-            ],
             "const": "1.0",
             "title": "Version",
             "default": "1.0"
           },
           "contract": {
+            "additionalProperties": true,
             "type": "object",
             "title": "Contract"
           },
           "device_execution_verified": {
             "type": "boolean",
-            "enum": [
-              false
-            ],
             "const": false,
             "title": "Device Execution Verified",
             "default": false
           },
           "installed_apk_capabilities_verified": {
             "type": "boolean",
-            "enum": [
-              false
-            ],
             "const": false,
             "title": "Installed Apk Capabilities Verified",
             "default": false
@@ -18343,9 +18394,6 @@
         "properties": {
           "catalog_schema": {
             "type": "integer",
-            "enum": [
-              1
-            ],
             "const": 1,
             "title": "Catalog Schema",
             "default": 1
@@ -18628,14 +18676,12 @@
         "properties": {
           "schema_version": {
             "type": "integer",
-            "enum": [
-              1
-            ],
             "const": 1,
             "title": "Schema Version",
             "default": 1
           },
           "dag": {
+            "additionalProperties": true,
             "type": "object",
             "title": "Dag"
           },
@@ -18656,36 +18702,24 @@
           },
           "scope": {
             "type": "string",
-            "enum": [
-              "structure-routes-lua-safety"
-            ],
             "const": "structure-routes-lua-safety",
             "title": "Scope",
             "default": "structure-routes-lua-safety"
           },
           "action_contract_version": {
             "type": "string",
-            "enum": [
-              "1.0"
-            ],
             "const": "1.0",
             "title": "Action Contract Version",
             "default": "1.0"
           },
           "action_parameters_verified": {
             "type": "boolean",
-            "enum": [
-              true
-            ],
             "const": true,
             "title": "Action Parameters Verified",
             "default": true
           },
           "device_execution_verified": {
             "type": "boolean",
-            "enum": [
-              false
-            ],
             "const": false,
             "title": "Device Execution Verified",
             "default": false
@@ -18719,6 +18753,7 @@
           "dag": {
             "anyOf": [
               {
+                "additionalProperties": true,
                 "type": "object"
               },
               {
@@ -18802,9 +18837,6 @@
         "properties": {
           "schema_version": {
             "type": "integer",
-            "enum": [
-              1
-            ],
             "const": 1,
             "title": "Schema Version",
             "default": 1
@@ -18948,6 +18980,7 @@
             "title": "Pipeline Run Id"
           },
           "meta": {
+            "additionalProperties": true,
             "type": "object",
             "title": "Meta"
           }
@@ -19059,6 +19092,56 @@
           "state"
         ],
         "title": "StreamDiagnosticsResponse"
+      },
+      "StreamSessionHistoryResponse": {
+        "properties": {
+          "schema_version": {
+            "type": "integer",
+            "const": 1,
+            "title": "Schema Version",
+            "default": 1
+          },
+          "device_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Device Id"
+          },
+          "session_limit": {
+            "type": "integer",
+            "title": "Session Limit",
+            "default": 10
+          },
+          "session_byte_limit": {
+            "type": "integer",
+            "title": "Session Byte Limit",
+            "default": 32768
+          },
+          "retention_seconds": {
+            "type": "integer",
+            "title": "Retention Seconds",
+            "default": 604800
+          },
+          "browser_observations": {
+            "type": "string",
+            "const": "client_reported",
+            "title": "Browser Observations",
+            "default": "client_reported"
+          },
+          "sessions": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "type": "array",
+            "title": "Sessions"
+          }
+        },
+        "type": "object",
+        "required": [
+          "device_id",
+          "sessions"
+        ],
+        "title": "StreamSessionHistoryResponse"
       },
       "StreamStatusResponse": {
         "properties": {
@@ -19272,6 +19355,7 @@
           "result": {
             "anyOf": [
               {
+                "additionalProperties": true,
                 "type": "object"
               },
               {
@@ -19294,6 +19378,7 @@
           "input_params": {
             "anyOf": [
               {
+                "additionalProperties": true,
                 "type": "object"
               },
               {
@@ -19765,9 +19850,6 @@
           },
           "source": {
             "type": "string",
-            "enum": [
-              "android_uiautomator_root"
-            ],
             "const": "android_uiautomator_root",
             "title": "Source",
             "default": "android_uiautomator_root"
@@ -20039,6 +20121,7 @@
           "input_params_template": {
             "anyOf": [
               {
+                "additionalProperties": true,
                 "type": "object"
               },
               {
@@ -20262,6 +20345,7 @@
           "meta": {
             "anyOf": [
               {
+                "additionalProperties": true,
                 "type": "object"
               },
               {
@@ -20480,6 +20564,7 @@
           "input_schema": {
             "anyOf": [
               {
+                "additionalProperties": true,
                 "type": "object"
               },
               {
@@ -20896,6 +20981,7 @@
           "input_params": {
             "anyOf": [
               {
+                "additionalProperties": true,
                 "type": "object"
               },
               {
@@ -21050,6 +21136,7 @@
           "dag": {
             "anyOf": [
               {
+                "additionalProperties": true,
                 "type": "object"
               },
               {
@@ -21342,9 +21429,6 @@
           },
           "execution_confirmed": {
             "type": "boolean",
-            "enum": [
-              false
-            ],
             "const": false,
             "title": "Execution Confirmed",
             "default": false
@@ -21491,6 +21575,7 @@
       "ValidateScriptRequest": {
         "properties": {
           "dag": {
+            "additionalProperties": true,
             "type": "object",
             "title": "Dag"
           }

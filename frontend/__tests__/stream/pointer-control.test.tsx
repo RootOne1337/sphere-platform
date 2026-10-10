@@ -11,6 +11,7 @@ jest.mock('@/lib/store', () => ({ useAuthStore: () => ({ accessToken: 'fixture-t
 jest.mock('@/lib/api', () => ({ api: { get: jest.fn(), post: jest.fn() } }));
 // Keep control delivery independent of the separately tested probe admission request.
 jest.mock('@/src/features/stream/DirectProbeAccess', () => ({ DirectProbeAccess: () => null }));
+jest.mock('@/src/features/stream/StreamSessionHistoryPanel', () => ({ StreamSessionHistoryPanel: () => null }));
 jest.mock('@/lib/h264-decoder', () => ({
   H264Decoder: class {
     constructor(onFrame: (frame: VideoFrame) => void) {

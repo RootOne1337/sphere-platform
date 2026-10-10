@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 import uuid
-from typing import Literal
+from typing import Any, Literal
 
 from fastapi import APIRouter, Depends, HTTPException, Response
 from pydantic import BaseModel
@@ -10,6 +10,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.core.config import settings
 from backend.core.dependencies import require_permission
+from backend.database import redis_client
 from backend.database.engine import get_db
 from backend.database.tenant import bind_tenant_context
 from backend.models.device import Device
@@ -18,9 +19,43 @@ from backend.services.device_status_cache import DeviceStatusCache
 from backend.websocket.direct_probe_ice import turn_urls
 from backend.websocket.direct_probe_protocol import VIDEO_MIN_AGENT_CODE, InvalidDirectProbe
 from backend.websocket.direct_probe_runtime import get_direct_probe_runtime
+from backend.websocket.stream_session_history import (
+    RETENTION_SECONDS,
+    SESSION_BYTES,
+    SESSION_LIMIT,
+    StreamSessionHistory,
+)
 
 router = APIRouter(prefix="/devices", tags=["direct-transport-canary"])
 Profile = Literal["host", "public-stun", "turn"]
+
+
+class StreamSessionHistoryResponse(BaseModel):
+    schema_version: Literal[1] = 1
+    device_id: uuid.UUID
+    session_limit: int = SESSION_LIMIT
+    session_byte_limit: int = SESSION_BYTES
+    retention_seconds: int = RETENTION_SECONDS
+    browser_observations: Literal["client_reported"] = "client_reported"
+    sessions: list[dict[str, Any]]
+
+
+@router.get("/{device_id}/stream-sessions", response_model=StreamSessionHistoryResponse,
+            tags=["stream-diagnostics"], summary="Read the last ten bounded stream diagnostic sessions")
+async def stream_session_history(
+    device_id: uuid.UUID, response: Response,
+    user: User = require_permission("stream:read"), db: AsyncSession = Depends(get_db),
+) -> StreamSessionHistoryResponse:
+    response.headers["Cache-Control"] = "private, no-store"
+    await bind_tenant_context(db, str(user.org_id))
+    device = await db.get(Device, device_id)
+    if not device or not device.is_active or device.org_id != user.org_id:
+        raise HTTPException(status_code=404, detail="Device not found")
+    sessions = await StreamSessionHistory(redis_client.redis).read(str(user.org_id), str(device_id))
+    if sessions is None:
+        raise HTTPException(status_code=503, detail="Stream diagnostic history unavailable",
+                            headers={"Cache-Control": "private, no-store"})
+    return StreamSessionHistoryResponse(device_id=device_id, sessions=sessions)
 
 
 class ProbeCapabilities(BaseModel):

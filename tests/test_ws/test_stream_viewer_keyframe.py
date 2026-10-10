@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import asyncio
 import json
 from types import SimpleNamespace
 from unittest.mock import AsyncMock, MagicMock, call
@@ -186,3 +187,38 @@ async def test_active_touch_lease_blocks_legacy_swipe_on_same_viewer(authorized_
     await stream_router.stream_viewer_ws(ws, str(uuid4()))
     assert len(bridge.send_control.await_args_list) == 1
     assert ws.send_json.await_args.args[0] == {'type': 'touch_error', 'error': 'close_gestures_before_discrete_input'}
+
+
+async def test_diagnostic_storage_does_not_block_control_or_forward_payload_to_android(authorized_viewer, monkeypatch):
+    ws, bridge = authorized_viewer
+    started = asyncio.Event()
+    cancelled = asyncio.Event()
+
+    async def slow_write(*args, **kwargs):
+        started.set()
+        try:
+            await asyncio.Event().wait()
+        finally:
+            cancelled.set()
+
+    history = MagicMock(begin=AsyncMock(return_value=True), update=AsyncMock(side_effect=slow_write),
+                        observe_agent=AsyncMock(), end=AsyncMock(), validated_sample=MagicMock(return_value={"counter": 1}))
+    monkeypatch.setattr(stream_router, "StreamSessionHistory", lambda *args: history)
+    messages = iter([{"token": "fixture"}, {"type": "viewer_telemetry", "sample": {}},
+                     {"type": "request_keyframe"}, WebSocketDisconnect()])
+
+    async def receive():
+        value = next(messages)
+        if value == {"type": "request_keyframe"}:
+            await asyncio.wait_for(started.wait(), 1)
+            assert not cancelled.is_set()
+        if isinstance(value, Exception):
+            raise value
+        return value
+
+    ws.receive_json = receive
+    await stream_router.stream_viewer_ws(ws, str(uuid4()))
+    assert [c.args[1]["type"] for c in bridge.send_control.await_args_list] == ["viewer_connected", "request_keyframe"]
+    assert cancelled.is_set()
+    history.end.assert_awaited_once()
+    assert ws.send_json.await_args_list[0].args[0]["type"] == "stream_session"

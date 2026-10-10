@@ -260,6 +260,8 @@ def validate_registry(root: Path, registry: dict) -> list[str]:
                 or direct.get("readOnlyVideoInstalled") is not True or direct.get("directInputInstalled") is not False
                 or direct.get("mediaControlInstalled") is not False or direct.get("runtimeInstalled") is not True):
             errors.append("Read-only video pilot cannot imply direct Android input or production media acceptance")
+        if not (root / direct.get("implementationEvidence", "__missing__")).is_file():
+            errors.append("Direct probe implementation evidence is missing")
         errors.extend(validate_readonly_video_pilot(root, direct))
     else:
         errors.append("Direct-media state requires a reviewed implementation/installation gate")

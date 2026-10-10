@@ -2,8 +2,8 @@
 
 Сверено 10 октября 2026, UTC+5, по исходникам PR19. Это план и аудит текущих
 контрактов, не объявление stable release. VERSION_NAME=1.2.51,
-VERSION_CODE=10251 в source и новой signed сборке; OTA10251 ещё не выполнен. PH011 сохраняет ordinary private 1.2.49-dev; PH030 получил
-diagnostic 1.2.50-dev адресным OTA с проверенным фактическим SHA.
+VERSION_CODE=10251 в source и signed сборке; адресный OTA PH030 выполнен, actual package SHA совпал. PH011 сохраняет ordinary private1.2.49-dev. PH030 получил
+read-only video canary1.2.51-dev; это не приёмка основного direct media/input.
 Повышение номера без закрытия runtime gates не является стабилизацией.
 
 Дополнение10октября04:16UTC: exact161 diagnostic APK прошёл4CI/signed admission,
