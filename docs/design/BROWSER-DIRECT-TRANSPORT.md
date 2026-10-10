@@ -155,6 +155,24 @@ NAT topology двух отдельных домашних сетей.
 это не P2P. Ни рабочий localhost URL веба, ни близость эмулятора не заменяют измерение.
 [Finite route/counter evidence](../audits/2026-10-10/DIRECT-PROBE-NATIVE-COUNTERS-CANARY.md).
 
+**Уточнение проверки 10 октября:** браузер и Android на одном физическом ноутбуке
+могут находиться в разных сетевых пространствах. Android Emulator документирует
+виртуальный router и отдельный guest loopback; эти адреса нельзя автоматически
+переносить на LDPlayer. LDPlayer отдельно документирует режим bridge с выбором
+сетевого адаптера и DHCP. Наличие ноутбука в той же Wi-Fi сети само по себе не
+доказывает достижимость guest host-кандидата. Это основание проверять фактическую
+ICE-пару, а не установленная причина нынешнего отказа PH030.
+[Android Emulator: адреса и ограничения](https://developer.android.com/studio/run/emulator-networking-address),
+[LDPlayer: режим bridge](https://www.ldplayer.net/support/how-to-set-up-network-bridging-on-the-android-emulator-ldplayer.html).
+
+STUN помогает обнаружить адрес; он не становится ретранслятором видео. Для
+рабочего продукта нужны прямой достижимый маршрут и резервный TURN, когда
+сетевые ограничения исключают P2P. Trickle ICE сокращает время установления,
+но не является доказательством уменьшения задержки уже работающего видео.
+Текущие конечные проверки используют полный bounded SDP; переход к Trickle ICE,
+изменение bridge/VPN/firewall и постоянный primary media требуют своих проверок.
+[WebRTC: signaling, ICE и Trickle ICE](https://webrtc.org/getting-started/peer-connections).
+
 | Участок | Что существует сейчас | Следствие |
 | --- | --- | --- |
 | APK → сервер | Один OkHttp WS для binary video и JSON, включая input ACK | ACK может ждать ранее поставленные video bytes |

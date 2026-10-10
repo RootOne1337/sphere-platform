@@ -1,6 +1,6 @@
 """Export the registered HTTP schema without starting the application lifespan.
 
-Run from the repository root with backend dependencies/configuration available:
+Run from the repository root with pinned backend dependencies/configuration:
     python -m scripts.export_api_docs
     python -m scripts.export_api_docs --check
 
@@ -12,9 +12,32 @@ from __future__ import annotations
 
 import argparse
 import json
+from importlib.metadata import PackageNotFoundError, version
 from pathlib import Path
 
 METHODS = {"get", "put", "post", "delete", "options", "head", "patch", "trace"}
+
+
+def schema_toolchain_error(root: Path) -> str | None:
+    """Reject schema generation with a different toolchain than the shipped API."""
+    requirements = (root / "backend/requirements.txt").read_text(encoding="utf-8")
+    mismatches = []
+    for package in ("fastapi", "pydantic"):
+        pins = [line.strip().split("==", 1)[1] for line in requirements.splitlines()
+                if line.strip().startswith(f"{package}==")]
+        if len(pins) != 1:
+            mismatches.append(f"{package}: expected one exact backend requirement pin")
+            continue
+        try:
+            installed = version(package)
+        except PackageNotFoundError:
+            installed = "not installed"
+        if installed != pins[0]:
+            mismatches.append(f"{package}: expected {pins[0]}, installed {installed}")
+    if mismatches:
+        return ("API schema toolchain mismatch: " + "; ".join(mismatches) +
+                ". Run the exporter in the pinned backend environment.")
+    return None
 
 
 def render_catalog(schema: dict) -> str:
@@ -31,6 +54,7 @@ def render_catalog(schema: dict) -> str:
         "# Generated HTTP endpoint catalog", "",
         "Generated from `backend.main.app.openapi()` by `scripts/export_api_docs.py`.",
         "Regenerate with `python -m scripts.export_api_docs`; verify with `--check`.",
+        "Use the FastAPI/Pydantic versions pinned in `backend/requirements.txt`.",
         "The exporter does not run startup hooks or send HTTP requests.", "",
         f"**{len(rows)} HTTP operations across {len(schema['paths'])} paths.**", "",
         "Full parameters, request bodies, response schemas and declared security schemes:",
@@ -52,10 +76,15 @@ def main() -> int:
     parser.add_argument("--check", action="store_true", help="Fail if committed documents differ")
     args = parser.parse_args()
 
+    root = Path(__file__).resolve().parents[1]
+    toolchain_error = schema_toolchain_error(root)
+    if toolchain_error:
+        print(toolchain_error)
+        return 1
+
     from backend.main import app
 
     schema = app.openapi()
-    root = Path(__file__).resolve().parents[1]
     outputs = {
         root / "docs/openapi.json": json.dumps(schema, ensure_ascii=False, indent=2) + "\n",
         root / "docs/api-endpoints.md": render_catalog(schema),
