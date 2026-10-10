@@ -1,6 +1,6 @@
 # Review gateway: локальный UI и адресный публичный маршрут
 
-**Проверенная установка:** UI `a32854e6` / API `c14c3235`.
+**Проверенная установка:** UI `6ee80c1f` / API `6ee80c1f`.
 
 **Предыдущая UI коррекция 10 октября:** автоматическая готовность после reconnect
 и навигации;1996frontend tests. Конечный PH011 scope не закрывает latency/direct/fleet.
@@ -14,17 +14,14 @@
 по-прежнему401; API/WS/bootstrap не менялись,46контейнеров сохранены.
 [QA, byte-integrity test и ограничения](../audits/2026-10-09/PUBLIC-WEB-SUPPLEMENTAL-QA.md).
 
-## Действующий публичный UI — 10 октября 2026
+## Действующий публичный UI — 11 октября 2026
 
-Точный Tuna-host по прежнему приватному map использует review UI639b6ad5, как3015;
-API369 установлен отдельно. Public UI/Next observability идут через review gateway,
-business API/WS/health/bootstrap сохраняют прежние маршруты. Каждая адресная
-установка сохранила45соседних контейнеров. [Последняя установка и границы](../audits/2026-10-10/CONTINUOUS-AUTO-RECOVERY-INSTALLED.md).
-Direct probe выключен; stream/input остаются server WS, public idle reliability
-не принята. [Сравнение с3015](../audits/2026-10-10/IDLE-LOCAL-PUBLIC-COMPARISON.md).
-Последний [конечный ICE canary и cleanup](../audits/2026-10-10/DIRECT-PROBE-NATIVE-COUNTERS-CANARY.md):
-177requests/0responses,0RTT; исходный APK восстановлен, probeoff. Стандартный
-UI639b6ad5 не включает экспериментальную панель; временные3016/3017 остановлены.
+**11 октября — действующий срез.** UI/API `6ee80c1f` обслуживают 3015 и туннель; 29 клиентских assets совпадают. PH010 проверен на APK `1.2.54-dev`, ещё шесть машин — на53, две — на52. Прямые касания подготовлены и прошли CI, но новая установка API/UI остановлена до загрузки образа: Windows сообщает `Full Repair Needed` для C:. В текущем PH010 сеансе работал server fallback, прямой ICE не открылся. [Фактическая установка](../audits/2026-10-11/CURRENT-STREAM-DELIVERY.json) · [Подготовленная доставка и ограничения](../audits/2026-10-11/DIRECT-INPUT-DELIVERY-BLOCKED.md).
+
+Public UI/Next observability идут через review gateway; business API/WS/health/bootstrap сохраняют прежние маршруты. Direct input не включён в6ee. APK54 установлен только на PH010; публичная картинка и прямой маршрут проверяются раздельно.
+
+Отрицательные ICE canary 10 октября сохраняют свой датированный scope и не
+описывают текущие allowlist/APK. Временные UI 3016/3017 остановлены.
 Review stack остаётся зависимостью public UI. Проверять оба адреса после rollout;
 не пересоздавать API или volumes ради отката UI. Историческая Grafana коррекция
 и маршруты выше сохранены; это не новый global tunnel rollout.

@@ -32,6 +32,8 @@ SAMPLE = dict(schema_version=1, transport="server_websocket", visibility="visibl
 PROBE = dict(schema_version=1, mode="readonly_video", trigger="automatic", profile="host", state="finished",
              path="host", protocol="udp", reason=None, echoes=20, echo_rtt_p95_ms=15, presented_frames=80,
              width=960, height=540, ice_state="connected", dtls_state="connected")
+ICE = dict(local_candidates=5, remote_candidates=1, pairs=1, checking_pairs=1,
+           failed_pairs=0, succeeded_pairs=0, requests_sent=237, responses_received=0)
 
 
 async def test_control_route_is_observed_independently_of_the_video_route(store):
@@ -183,6 +185,40 @@ async def test_failed_primary_connection_records_the_exact_phase_without_claimin
     assert row["direct_failure"] == "connection_deadline" and row["direct_dtls_state"] == "new"
 
 
+async def test_primary_ice_counters_survive_automatic_history_without_claiming_video_or_input(store):
+    assert await store.begin(ORG, DEVICE, "viewer")
+    assert await store.browser(ORG, DEVICE, "viewer", SAMPLE | dict(direct_network=ICE,
+        direct_network_sample_elapsed_ms=12000.0, direct_network_age_at_stop_ms=400.0,
+        direct_frames=0, direct_failure="connection_deadline"))
+    row = (await store.read(ORG, DEVICE))[0]["browser_samples"][-1]
+    assert row["direct_network"] == ICE
+    assert row["direct_network_sample_elapsed_ms"] == 12000
+    assert row["direct_network_age_at_stop_ms"] == 400
+    assert row["transport"] == row["control_transport"] == "server_websocket"
+    assert row["direct_frames"] == 0 and "video_latency_ms" not in row
+
+
+@pytest.mark.parametrize("change", [
+    {"address": "private endpoint"}, {"candidate_id": "private id"}, {"sdp": "private key"},
+    {"requests_sent": True}, {"responses_received": -1}, {"requests_sent": 2**53},
+    {"local_candidates": 257}, {"pairs": "1"}, {"failed_pairs": False},
+    {"requests_sent": float("nan")},
+])
+async def test_nested_primary_ice_cannot_store_addresses_or_unbounded_untyped_counters(store, change):
+    assert await store.begin(ORG, DEVICE, "viewer")
+    assert not await store.browser(ORG, DEVICE, "viewer", SAMPLE | dict(direct_network=ICE | change))
+    assert "browser_samples" not in (await store.read(ORG, DEVICE))[0]
+
+
+async def test_missing_primary_packet_counters_remain_unknown_not_zero(store):
+    assert await store.begin(ORG, DEVICE, "viewer")
+    assert await store.browser(ORG, DEVICE, "viewer", SAMPLE | dict(direct_network=ICE | {
+        "requests_sent": None, "responses_received": None}))
+    row = (await store.read(ORG, DEVICE))[0]["browser_samples"][-1]
+    assert row["direct_network"]["requests_sent"] is None
+    assert row["direct_network"]["responses_received"] is None
+
+
 async def test_full_width_counters_cannot_block_recent_observations_or_session_closure(store):
     assert await store.begin(ORG, DEVICE, "viewer")
     telemetry = {
@@ -198,6 +234,8 @@ async def test_full_width_counters_cannot_block_recent_observations_or_session_c
         if name.endswith("_frames") or name in {"received_packets", "received_bytes", "decode_errors", "render_errors",
                                                 "invalid_packets", "queue_recoveries", "stale_output_drops"}
     }
+    browser.update(direct_network=ICE | dict(requests_sent=2**53 - 1, responses_received=2**53 - 1),
+                   direct_network_sample_elapsed_ms=86400000.0, direct_network_age_at_stop_ms=86400000.0)
     for i in range(25):
         assert await store.browser(ORG, DEVICE, "viewer", browser | {"received_packets": i})
         assert await store.update(ORG, DEVICE, "viewer", {

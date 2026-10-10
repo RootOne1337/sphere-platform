@@ -17,9 +17,11 @@ from scripts.check_documentation_status import (
     local_link_errors,
     normalized_hash,
     read_json,
+    validate_current_apks,
     validate_diagnostic_pilot,
     validate_installed_receipt,
     validate_inventory,
+    validate_primary_video_pilot,
     validate_readonly_video_pilot,
     validate_registry,
     validate_runtime_banners,
@@ -104,6 +106,61 @@ class DocumentationStatusTests(unittest.TestCase):
             direct = bound()
             path.write_text("{}", encoding="utf-8")
             self.assertTrue(validate_readonly_video_pilot(root, direct))
+
+    def test_primary_video_requires_every_installed_hash_and_keeps_locality_and_latency_unaccepted(self) -> None:
+        devices = ["414ce0e9-4b93-4f96-b9ca-ee675f53835e", "753fd530-2f19-4e5e-98ba-769863678141"]
+        pilot = dict(enabled=True, scope="primary_video_v1", deviceIds=devices, primaryVideoInstalled=True,
+                     directInputInstalled=False, mediaControlInstalled=False, productionAccepted=False)
+        apk = dict(versionCode=10252, sha256="a" * 64, installedDevices=[
+            dict(deviceId=d, versionCode=10252, installedPackageSha256="a" * 64) for d in devices])
+        observation = dict(deviceId=devices[0], framesPresented=1804, transport="direct_webrtc",
+                           controlTransport="server_websocket", localhostRouteProven=False, latencySlaAccepted=False)
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            path = root / "primary.json"
+
+            def bound(picture=pilot, package=apk, sample=observation):
+                path.write_text(json.dumps(dict(runtimeInstalled=True, diagnosticPilot=picture, apk=package,
+                                               browser=dict(primaryObservation=sample))), encoding="utf-8")
+                return dict(pilotEvidence=path.name, pilotEvidenceSha256NormalizedLf=normalized_hash(path),
+                            pilotCurrentlyEnabled=True, pilotDeviceIds=devices, primaryVideoObserved=True)
+
+            self.assertEqual(validate_primary_video_pilot(root, bound()), [])
+            for key, value in (("deviceIds", []), ("deviceIds", devices * 2), ("deviceIds", [1]),
+                               ("scope", "full_control"), ("directInputInstalled", True),
+                               ("mediaControlInstalled", True), ("productionAccepted", True)):
+                with self.subTest(key=key):
+                    self.assertTrue(validate_primary_video_pilot(root, bound(pilot | {key: value})))
+            for package in [apk | {"versionCode": True}, apk | {"versionCode": 10251},
+                            apk | {"sha256": "wrong"}, apk | {"installedDevices": apk["installedDevices"][:1]},
+                            apk | {"installedDevices": [apk["installedDevices"][0]] * 2},
+                            apk | {"installedDevices": [None, None]},
+                            apk | {"installedDevices": [apk["installedDevices"][0] | {"installedPackageSha256": "b" * 64},
+                                                       apk["installedDevices"][1]]}]:
+                with self.subTest(package=package):
+                    self.assertTrue(validate_primary_video_pilot(root, bound(package=package)))
+            for key, value in (("framesPresented", 0), ("framesPresented", True), ("deviceId", "ungranted"),
+                               ("transport", "server_websocket"), ("controlTransport", "direct_webrtc"),
+                               ("localhostRouteProven", True), ("latencySlaAccepted", True)):
+                with self.subTest(key=key):
+                    self.assertTrue(validate_primary_video_pilot(root, bound(sample=observation | {key: value})))
+            direct = bound()
+            path.write_text("{}", encoding="utf-8")
+            self.assertTrue(validate_primary_video_pilot(root, direct))
+
+    def test_primary_registry_cannot_claim_direct_input_or_production_from_video_installation(self) -> None:
+        base = dict(state="PRIMARY_VIDEO_PILOT_INSTALLED", implementationAuthorizedNow=True,
+                    prototypeScope="primary_video_v1", runtimeInstalled=True, primaryVideoInstalled=True,
+                    readOnlyVideoInstalled=True, primaryVideoObserved=True, directInputInstalled=False,
+                    mediaControlInstalled=False, productionAccepted=False)
+        for key, value in (("directInputInstalled", True), ("mediaControlInstalled", True),
+                           ("productionAccepted", True), ("primaryVideoObserved", 1),
+                           ("primaryVideoInstalled", False), ("implementationAuthorizedNow", False)):
+            with self.subTest(key=key):
+                changed = copy.deepcopy(self.registry)
+                changed["directMedia"].update(base | {key: value})
+                self.assertIn("Primary video pilot cannot imply direct input or production acceptance",
+                              validate_registry(ROOT, changed))
 
     def test_old_api_banner_fails_while_historical_revisions_remain_valid(self) -> None:
         banner = installed_runtime_banner(self.registry["installed"])
@@ -202,6 +259,48 @@ class DocumentationStatusTests(unittest.TestCase):
     def test_current_installed_receipt_fingerprint_is_required(self) -> None:
         self.registry["installed"]["evidenceSha256NormalizedLf"] = "0" * 64
         self.assertIn("Installed observation receipt fingerprint mismatch", validate_registry(ROOT, self.registry))
+
+    def test_pilot_apk_cannot_be_promoted_from_a_built_file_or_reported_version_alone(self) -> None:
+        for key, value in (("versionCode", 10300), ("versionCode", True), ("apkSha256", "0" * 64),
+                           ("sourceRevision", "0" * 40), ("version", "1.3.0")):
+            with self.subTest(key=key):
+                changed = copy.deepcopy(self.registry["installed"])
+                changed["pilotApk"][key] = value
+                self.assertIn("Pilot APK version/source/hash does not match installed package evidence",
+                              validate_current_apks(ROOT, changed))
+
+    def test_current_fleet_cannot_reuse_a_larger_historical_delivery_count(self) -> None:
+        changed = copy.deepcopy(self.registry["installed"])
+        changed["fleetApkEvidence"]["installedCount"] += 1
+        self.assertIn("Current APK fleet count does not match unique installed packages",
+                      validate_current_apks(ROOT, changed))
+
+    def test_current_apk_evidence_is_frozen_separately_from_runtime_identity(self) -> None:
+        changed = copy.deepcopy(self.registry["installed"])
+        changed["pilotApk"]["evidenceSha256NormalizedLf"] = "0" * 64
+        self.assertIn("Pilot APK receipt missing or fingerprint mismatch", validate_current_apks(ROOT, changed))
+
+    def test_every_current_fleet_row_requires_the_exact_catalog_package(self) -> None:
+        fleet = self.registry["installed"]["fleetApkEvidence"]
+        original = read_json(ROOT, fleet["evidence"])
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            path = root / "fleet.json"
+            for field, value in (("installedPackageSha256", "0" * 64), ("versionCode", True),
+                                  ("versionCode", 10300)):
+                with self.subTest(field=field):
+                    receipt = copy.deepcopy(original)
+                    receipt["apk"]["installedDevices"][-1][field] = value
+                    path.write_text(json.dumps(receipt), encoding="utf-8")
+                    binding = fleet | {"evidence": path.name,
+                                       "evidenceSha256NormalizedLf": normalized_hash(path)}
+                    self.assertIn("Current APK fleet includes an unverified installed package",
+                                  validate_current_apks(root, {"fleetApkEvidence": binding}))
+
+    def test_historical_primary_frames_cannot_be_promoted_to_a_current_direct_route(self) -> None:
+        self.registry["directMedia"]["primaryVideoObserved"] = True
+        self.assertIn("Historical primary frames cannot prove the current direct-video route",
+                      validate_registry(ROOT, self.registry))
 
     def test_current_installed_receipt_must_exist(self) -> None:
         self.registry["installed"]["evidence"] = "missing-install-receipt.json"

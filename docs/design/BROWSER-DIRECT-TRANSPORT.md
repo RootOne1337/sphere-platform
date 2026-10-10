@@ -1,13 +1,10 @@
 # Прямой транспорт браузер ↔ Android: исследование и план проверки
 
-**Последняя доставка 10 октября:** UI `a32854e6` / API `c14c3235`; PH030 адресно обновлён до10251, actual package SHA подтверждён. Конечный read-only тест ноутбука получил 223 кадра WebRTC; основное видео и input ещё серверные. [Точный текущий receipt](../audits/2026-10-10/STREAM-SESSION-DIAGNOSTICS-INSTALLED.md). Датированные срезы ниже описывают предыдущие этапы.
+**Текущий срез 11 октября:** UI/API `6ee80c1f` установлены на обоих адресах с29 одинаковыми assets. PH010 обновлён до10254 с проверкой installed SHA и завершённого OTA-command; ещё шесть проверенных машин используют10253, PH019/PH025 —10252. PH030 выключен. Primary WebRTC включён, но текущие PH010/PH011 проверки не открыли ICE-пару и используют резерв. APK54 поддерживает прямые касания; действующий API ещё не разрешает их. Кандидат API/UI `e9af9e60` прошёл полные CI, установка остановлена до загрузки образа из-за C: `Full Repair Needed`. [Фактическая доставка](../audits/2026-10-11/CURRENT-STREAM-DELIVERY.json) · [Блокировка и условия проверки](../audits/2026-10-11/DIRECT-INPUT-DELIVERY-BLOCKED.md).
 
-**Дата проверки источников:** 9 октября 2026. **Статус:** архитектура PROPOSED;
-последующим запросом пользователя разрешён первый диагностический прототип.
-RTT DataChannel и отдельный read-only RTP canary установлены только на PH030;
-автоматические исходы сохраняются в истории. Primary media/control и TURN
-в рабочей установке не переведены на WebRTC. Это не обещание задержки.
-[Точный scope, зависимости, тесты и следующие gates](../audits/2026-10-09/DIRECT-PROBE-SOURCE.md).
+**Новое наблюдение:** PH01054 получил41 server-fallback кадр без ошибок и подтверждённую команду Home. Native ICE сообщил237 запросов и0 ответов; конкретная причина потери пути не установлена. Последующий source сохраняет browser ICE aggregates в прежней ограниченной истории10 сеансов и показывает отдельный маршрут касаний. Это ещё не установленная telemetry; native progress остаётся отдельным локальным логом. Исторические echo/NAT результаты ниже не заменяют текущий маршрут и не измеряют полную задержку картинки.
+
+**Дата первоначального исследования:** 9 октября 2026; уточнение сетевых источников 11 октября. Последующая разработка разрешена пользователем. Конечный echo/read-only canary развился в ограниченный primary-video pilot и source прямых касаний. Срезы ниже датированы и описывают прежние этапы. RTT не является задержкой изображения.
 
 **Предыдущий echo-тест ноутбука:** пользователь получил 20/20 echo от PH030, p95
 25,8 мс, NAT/UDP. Это конечное наблюдение прямого канала; localhost, видео и input
@@ -499,6 +496,29 @@ text или native receipt между transport generations. Старый сер
 * Measured latency, video quality, cost, CPU/RSS/disk limits и browser compatibility.
 * Общий frame/action correlation для playback/recorder и visual assertions.
 
-**Итог статуса:** исследование, план и diagnostic echo prototype подготовлены.
-Direct media/control не реализован и не установлен; SF26-05 / EP-020 / EP-029 остаются OPEN.
+**Итог статуса:** primary media реализован и установлен как ограниченный pilot;
+source прямых касаний и подписанный APK 54 подготовлены. Установка direct input,
+живые native ACK, текущий ближайший маршрут и production acceptance требуют
+отдельных квитанций. SF26-05 / EP-020 / EP-029 остаются OPEN в полном scope.
 Первоначальный deferred brief сохраняет свою дату; текущий указатель ведёт сюда.
+
+## 13. Уточнение localhost и браузерной приватности, 11 октября
+
+Сигналинг сервера не задаёт физический маршрут медиапакета. ICE должен найти
+достижимую пару, а VPN, firewall и виртуальный router эмулятора могут изменять
+этот результат. Android описывает виртуальное адресное пространство эмулятора
+и ограничения host network; это применимо как модель, а конкретную топологию
+LDPlayer необходимо измерять отдельно.
+[Android: network address space](https://developer.android.com/studio/run/emulator-networking-address),
+[Android: instance interconnection and UDP mapping](https://developer.android.com/studio/run/emulator-networking-interconnect).
+
+Chromium может скрывать локальные ICE IP с помощью mDNS. Это ещё один возможный
+фактор reachability, а не установленная причина нынешнего PH010 отказа.
+Настройки приватности и VPN этим этапом не отключаются.
+[Chromium: WebRtcLocalIpsAllowedUrls policy](https://chromium.googlesource.com/chromium/src/%2B/376fc41e87a058f7a7b300b0ec3a4982b4ec0960/components/policy/resources/templates/policy_definitions/Miscellaneous/WebRtcLocalIpsAllowedUrls.yaml).
+
+Для гарантированного same-host маршрута потребуется доказанный host/guest путь
+либо локальный доверенный host adapter. Для ограниченных внешних сетей нужен
+контролируемый TURN fallback с отдельной маркировкой relay. STUN сам по себе не
+является гарантией прямого соединения.
+[WebRTC: peer connections and ICE](https://webrtc.org/getting-started/peer-connections).

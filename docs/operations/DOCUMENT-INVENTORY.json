@@ -1,11 +1,11 @@
 {
   "schemaVersion": 1,
-  "reviewedAtUtc": "2026-10-10T18:21:07.148890+00:00",
+  "reviewedAtUtc": "2026-10-10T23:12:57.015720+00:00",
   "scope": "All tracked Markdown classified; active local-link paths scanned. Not semantic attestation of every sentence, command execution, external-link or live acceptance.",
   "countsByRole": {
     "ADR": 6,
     "CURRENT_ENTRYPOINT": 8,
-    "DATED_EVIDENCE": 270,
+    "DATED_EVIDENCE": 273,
     "DESIGN_SPECIFICATION": 76,
     "OPERATING_GUIDE": 64,
     "PROJECT_POLICY": 7,
@@ -1221,7 +1221,19 @@
       "role": "DATED_EVIDENCE"
     },
     {
+      "file": "docs/audits/2026-10-11/DIRECT-INPUT-CANDIDATE.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
+      "file": "docs/audits/2026-10-11/DIRECT-INPUT-DELIVERY-BLOCKED.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
       "file": "docs/audits/2026-10-11/DIRECT-PRIMARY-VIDEO-CANDIDATE.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
+      "file": "docs/audits/2026-10-11/STREAM-RELIABILITY-AUDIT.md",
       "role": "DATED_EVIDENCE"
     },
     {

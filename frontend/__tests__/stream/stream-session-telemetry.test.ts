@@ -74,3 +74,24 @@ test('retains only whitelisted control causes and the selected primary transport
   expect(privateResult.direct_protocol).toBeNull();
   expect(JSON.stringify(privateResult)).not.toContain('private');
 });
+
+test('automatic primary history projects only bounded ICE counts, preserving unknown packet measurements', () => {
+  const network = { localCandidates: 5, remoteCandidates: 1, pairs: 1, checkingPairs: 1, failedPairs: 0,
+    succeededPairs: 0, requestsSent: 237, responsesReceived: null, dtlsState: 'new',
+    address: 'private endpoint', candidateId: 'private id', credential: 'private key' };
+  const direct = { admitted: true, admissionKnown: true, active: false, frames: 0, lastFrameAt: null, attempts: 1,
+    result: { state: 'failed' as const, reason: 'connection_deadline', samples: [], path: 'unknown' as const,
+      protocol: null, network, networkSampleAtMs: 12000, networkAgeAtStopMs: 400 } };
+  const value = browserStreamSample(stats, { state: 'ready', failure: null, rtt: 200, attempts: 0 }, 1000, direct);
+  expect(value.direct_network).toEqual({ local_candidates: 5, remote_candidates: 1, pairs: 1, checking_pairs: 1,
+    failed_pairs: 0, succeeded_pairs: 0, requests_sent: 237, responses_received: null });
+  expect(value).toMatchObject({ direct_network_sample_elapsed_ms: 12000, direct_network_age_at_stop_ms: 400,
+    transport: 'server_websocket', control_transport: 'server_websocket', direct_frames: 0 });
+  expect(JSON.stringify(value)).not.toMatch(/private|address|candidateId|credential/);
+  network.requestsSent = Number.MAX_SAFE_INTEGER + 1;
+  expect(browserStreamSample(stats, { state: 'ready', failure: null, rtt: null, attempts: 0 }, 1000, direct)
+    .direct_network?.requests_sent).toBeNull();
+  network.localCandidates = 257;
+  expect(browserStreamSample(stats, { state: 'ready', failure: null, rtt: null, attempts: 0 }, 1000, direct)
+    .direct_network).toBeNull();
+});

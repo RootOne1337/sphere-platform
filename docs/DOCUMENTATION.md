@@ -1,6 +1,8 @@
 # Актуальность документации
 
-**Проверенная установка:** UI `a32854e6` / API `c14c3235`.
+**Проверенная установка:** UI `6ee80c1f` / API `6ee80c1f`.
+
+**11 октября — действующий срез.** UI/API `6ee80c1f` обслуживают 3015 и туннель; 29 клиентских assets совпадают. PH010 проверен на APK `1.2.54-dev`, ещё шесть машин — на53, две — на52. Прямые касания подготовлены и прошли CI, но новая установка API/UI остановлена до загрузки образа: Windows сообщает `Full Repair Needed` для C:. В текущем PH010 сеансе работал server fallback, прямой ICE не открылся. [Фактическая установка](audits/2026-10-11/CURRENT-STREAM-DELIVERY.json) · [Подготовленная доставка и ограничения](audits/2026-10-11/DIRECT-INPUT-DELIVERY-BLOCKED.md).
 
 **Предыдущая UI коррекция 10 октября:** автоматическая готовность после reconnect
 и навигации;1996frontend tests. Конечный PH011 scope не закрывает latency/direct/fleet.
@@ -8,7 +10,7 @@
 
 [Каталог](README.md) · [Readiness](operations/READINESS.md) · [Contributing](../CONTRIBUTING.md)
 
-**Последняя сверка статусов и навигации:10октября2026 (UTC+5).**
+**Последняя сверка статусов и навигации:11октября2026 (UTC+5).**
 Действующие источники: [WORK-STATUS](operations/WORK-STATUS.md),
 [STATUS-REGISTRY.json](operations/STATUS-REGISTRY.json),
 [CURRENT-STATE](operations/CURRENT-STATE.md). Датированные аудиты остаются

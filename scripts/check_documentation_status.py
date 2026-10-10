@@ -131,6 +131,73 @@ def installed_runtime_banner(installed: dict) -> str:
     return f"{RUNTIME_BANNER_PREFIX} UI `{installed['ui'][:8]}` / API `{installed['api'][:8]}`."
 
 
+def validate_current_apks(root: Path, installed: dict) -> list[str]:
+    """A reported APK version must bind to an actual installed package hash.
+
+    Current mixed-version snapshots have an artifact catalog. Historical
+    single-version receipts retain their original schema and fingerprints.
+    """
+    errors = []
+    for binding in [installed.get("pilotApk"), *installed.get("additionalPilotApks", [])]:
+        if binding is None:
+            continue
+        path = root / binding.get("evidence", "__missing__")
+        if not path.is_file() or binding.get("evidenceSha256NormalizedLf") != normalized_hash(path):
+            errors.append("Pilot APK receipt missing or fingerprint mismatch")
+            continue
+        apk = read_json(root, binding["evidence"]).get("apk", {})
+        artifacts = apk.get("artifacts", [apk])
+        rows = apk.get("installedDevices", [])
+        if not isinstance(artifacts, list) or not isinstance(rows, list):
+            errors.append("Pilot APK artifact catalog or installed packages are malformed")
+            continue
+        artifact = next((r for r in artifacts if isinstance(r, dict)
+                         and r.get("versionCode") == binding.get("versionCode")), {})
+        package = next((r for r in rows if isinstance(r, dict)
+                        and r.get("deviceId") == binding.get("deviceId")), {})
+        if (type(binding.get("versionCode")) is not int
+                or binding.get("versionCode") != package.get("versionCode")
+                or binding.get("version") != artifact.get("version")
+                or binding.get("sourceRevision") != artifact.get("sourceRevision")
+                or not re.fullmatch(r"[a-f0-9]{64}", str(binding.get("apkSha256", "")))
+                or binding.get("apkSha256") != artifact.get("sha256")
+                or binding.get("apkSha256") != package.get("installedPackageSha256")):
+            errors.append("Pilot APK version/source/hash does not match installed package evidence")
+    fleet = installed.get("fleetApkEvidence")
+    if fleet:
+        path = root / fleet.get("evidence", "__missing__")
+        if not path.is_file() or fleet.get("evidenceSha256NormalizedLf") != normalized_hash(path):
+            errors.append("Current APK fleet receipt missing or fingerprint mismatch")
+        else:
+            apk = read_json(root, fleet["evidence"]).get("apk", {})
+            rows = apk.get("installedDevices", [])
+            artifacts = apk.get("artifacts", [apk])
+            if not isinstance(rows, list) or not isinstance(artifacts, list):
+                return errors + ["Current APK fleet artifact catalog or installed packages are malformed"]
+            ids = [r.get("deviceId") for r in rows if isinstance(r, dict)]
+            valid_ids = all(isinstance(d, str)
+                            and re.fullmatch(r"[a-f0-9]{8}(?:-[a-f0-9]{4}){3}-[a-f0-9]{12}", d)
+                            for d in ids)
+            if (not valid_ids or len(ids) != len(rows)
+                    or valid_ids and len(set(ids)) != len(rows)
+                    or type(fleet.get("installedCount")) is not int or fleet["installedCount"] != len(rows)):
+                errors.append("Current APK fleet count does not match unique installed packages")
+            for row in rows:
+                artifact = next((r for r in artifacts if isinstance(r, dict) and isinstance(row, dict)
+                                 and type(r.get("versionCode")) is int
+                                 and r.get("versionCode") == row.get("versionCode")), {})
+                if (not isinstance(row, dict) or type(row.get("versionCode")) is not int
+                        or not re.fullmatch(r"[a-f0-9]{64}", str(artifact.get("sha256", "")))
+                        or row.get("installedPackageSha256") != artifact.get("sha256")):
+                    errors.append("Current APK fleet includes an unverified installed package")
+                    break
+            if "verifiedVersionCounts" in fleet:
+                counts = dict(Counter(str(r.get("versionCode")) for r in rows if isinstance(r, dict)))
+                if fleet["verifiedVersionCounts"] != counts:
+                    errors.append("Current APK version counts do not match installed package evidence")
+    return errors
+
+
 def validate_runtime_banners(root: Path, registry: dict) -> list[str]:
     """Check the explicit current banner, not revision mentions in dated history.
 
@@ -224,6 +291,7 @@ def validate_registry(root: Path, registry: dict) -> list[str]:
         if correction["installed"] or not (root / correction["evidence"]).is_file():
             errors.append("Pending source correction incorrectly marked installed or missing receipt")
     errors.extend(validate_installed_receipt(root, registry["installed"]))
+    errors.extend(validate_current_apks(root, registry["installed"]))
     completed = registry.get("completedCorrections", [])
     if len({item["id"] for item in completed}) != len(completed):
         errors.append("Duplicate completed correction")
@@ -263,6 +331,30 @@ def validate_registry(root: Path, registry: dict) -> list[str]:
         if not (root / direct.get("implementationEvidence", "__missing__")).is_file():
             errors.append("Direct probe implementation evidence is missing")
         errors.extend(validate_readonly_video_pilot(root, direct))
+    elif direct["state"] == "PRIMARY_VIDEO_PILOT_INSTALLED":
+        if (direct["implementationAuthorizedNow"] is not True or not direct.get("implementationAuthorization")
+                or direct.get("prototypeScope") != "primary_video_v1"
+                or direct.get("primaryVideoInstalled") is not True or direct.get("readOnlyVideoInstalled") is not True
+                or direct.get("directInputInstalled") is not False or direct.get("mediaControlInstalled") is not False
+                or direct.get("runtimeInstalled") is not True or direct.get("productionAccepted") is not False
+                or type(direct.get("primaryVideoObserved")) is not bool):
+            errors.append("Primary video pilot cannot imply direct input or production acceptance")
+        if not (root / direct.get("implementationEvidence", "__missing__")).is_file():
+            errors.append("Direct probe implementation evidence is missing")
+        errors.extend(validate_primary_video_pilot(root, direct))
+        current_evidence = direct.get("currentObservationEvidence")
+        if current_evidence:
+            if (current_evidence != registry["installed"].get("evidence")
+                    or direct.get("currentObservationEvidenceSha256NormalizedLf")
+                    != registry["installed"].get("evidenceSha256NormalizedLf")):
+                errors.append("Current primary-video observation must match the installed observation receipt")
+            path = root / current_evidence
+            if path.is_file():
+                sample = read_json(root, current_evidence).get("browser", {})
+                if direct.get("primaryVideoObserved") is True and (
+                        type(sample.get("directFramesPresented")) is not int
+                        or sample["directFramesPresented"] <= 0):
+                    errors.append("Historical primary frames cannot prove the current direct-video route")
     else:
         errors.append("Direct-media state requires a reviewed implementation/installation gate")
     for file in registry["authoritativeEntrypoints"]:
@@ -315,6 +407,46 @@ def validate_readonly_video_pilot(root: Path, direct: dict) -> list[str]:
             or not isinstance(apk.get("sha256"), str) or not re.fullmatch(r"[a-f0-9]{64}", apk["sha256"])
             or apk.get("installedPackageSha256") != apk.get("sha256")):
         return ["Read-only video receipt must bind one updated APK and retain unaccepted video/input gates"]
+    return []
+
+
+def validate_primary_video_pilot(root: Path, direct: dict) -> list[str]:
+    """Bind the enabled fleet to installed APK hashes, separately from one observed path."""
+    path = root / direct.get("pilotEvidence", "__missing__")
+    if not path.is_file() or direct.get("pilotEvidenceSha256NormalizedLf") != normalized_hash(path):
+        return ["Primary video installation receipt missing or fingerprint mismatch"]
+    receipt = read_json(root, str(path.relative_to(root)))
+    pilot, apk = receipt.get("diagnosticPilot", {}), receipt.get("apk", {})
+    devices, installed = pilot.get("deviceIds"), apk.get("installedDevices")
+    uuid_pattern = r"[a-f0-9]{8}(?:-[a-f0-9]{4}){3}-[a-f0-9]{12}"
+    if (receipt.get("runtimeInstalled") is not True or direct.get("pilotCurrentlyEnabled") is not True
+            or pilot.get("enabled") is not True or pilot.get("scope") != "primary_video_v1"
+            or pilot.get("primaryVideoInstalled") is not True or pilot.get("directInputInstalled") is not False
+            or pilot.get("mediaControlInstalled") is not False or pilot.get("productionAccepted") is not False
+            or not isinstance(devices, list) or not 1 <= len(devices) <= 64
+            or any(not isinstance(d, str) or not re.fullmatch(uuid_pattern, d) for d in devices)
+            or len(set(devices)) != len(devices) or devices != direct.get("pilotDeviceIds")
+            or type(apk.get("versionCode")) is not int or apk["versionCode"] < 10252
+            or not isinstance(apk.get("sha256"), str) or not re.fullmatch(r"[a-f0-9]{64}", apk["sha256"])
+            or not isinstance(installed, list) or len(installed) != len(devices)):
+        return ["Primary video receipt must bind an explicit updated fleet and retain input/production gates"]
+    ids = []
+    for row in installed:
+        if (not isinstance(row, dict) or not isinstance(row.get("deviceId"), str)
+                or row.get("installedPackageSha256") != apk["sha256"]
+                or type(row.get("versionCode")) is not int or row["versionCode"] != apk["versionCode"]):
+            return ["Primary video fleet includes an unverified APK installation"]
+        ids.append(row["deviceId"])
+    if len(set(ids)) != len(ids) or set(ids) != set(devices):
+        return ["Primary video fleet does not match installed APK evidence"]
+    observation = receipt.get("browser", {}).get("primaryObservation", {})
+    if direct.get("primaryVideoObserved") is True and (
+            type(observation.get("framesPresented")) is not int or observation["framesPresented"] <= 0
+            or observation.get("deviceId") not in devices or observation.get("transport") != "direct_webrtc"
+            or observation.get("controlTransport") != "server_websocket"
+            or observation.get("localhostRouteProven") is not False
+            or observation.get("latencySlaAccepted") is not False):
+        return ["Primary video observation cannot invent frames, localhost locality or a latency SLA"]
     return []
 
 

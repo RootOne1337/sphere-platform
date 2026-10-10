@@ -1,6 +1,6 @@
 # Локальный стенд для совместного тестирования
 
-**Проверенная установка:** UI `a32854e6` / API `c14c3235`.
+**Проверенная установка:** UI `6ee80c1f` / API `6ee80c1f`.
 
 **Предыдущая UI коррекция 10 октября:** автоматическая готовность после reconnect
 и навигации;1996frontend tests. Конечный PH011 scope не закрывает latency/direct/fleet.
@@ -14,12 +14,10 @@ APK, schema/OTA и45соседних контейнеров сохранены �
 Idle control и direct transport остаются открытыми; probe выключен.
 [Установка, проверки и остаток](../audits/2026-10-10/BROADCAST-INSTALLED-ACCEPTANCE.md).
 
-Действующий Tuna-host и3015 используют одну пару UI639/API369. Public map и
-API/WS/bootstrap routes сохранены; PH011 снова online после API replacement.
-Direct endpoint off/allowlist[], исходный APK1.2.49-dev/10249 восстановлен после
-конечного ICE canary.177requests/0responses,0RTT; успешный прямой канал не подтверждён.
-[Последний runtime receipt](../audits/2026-10-10/DIRECT-PROBE-NETWORK-CANARY.md).
-[Текущая сверка](CURRENT-STATE.md) / [реестр](STATUS-REGISTRY.json).
+**11 октября — действующий срез.** UI/API `6ee80c1f` обслуживают 3015 и туннель; 29 клиентских assets совпадают. PH010 проверен на APK `1.2.54-dev`, ещё шесть машин — на53, две — на52. Прямые касания подготовлены и прошли CI, но новая установка API/UI остановлена до загрузки образа: Windows сообщает `Full Repair Needed` для C:. В текущем PH010 сеансе работал server fallback, прямой ICE не открылся. [Фактическая установка](../audits/2026-10-11/CURRENT-STREAM-DELIVERY.json) · [Подготовленная доставка и ограничения](../audits/2026-10-11/DIRECT-INPUT-DELIVERY-BLOCKED.md).
+
+API/WS/bootstrap routes и public map сохранены. При установке6ee сохранены45 соседних контейнеров и схема БД. Canary allowlist содержит15 устройств; это количество разрешённых устройств, а не девять свежих проверок пакета или15 одновременно подключённых viewers. PH030 выключен и исключён из новой OTA/QA.
+
 Ниже сохранены исторические pilot checkpoints и ограничения их собственных окон.
 
 > **Документационный указатель, 1 октября 2026:** фактические текущие версии

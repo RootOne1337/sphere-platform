@@ -31,3 +31,23 @@ test.each(['outage', 'foreign'])('does not turn an unavailable or foreign respon
   expect(await screen.findByText(/История сейчас недоступна/)).toBeInTheDocument();
   expect(screen.queryByText(/Сеансов ещё нет/)).not.toBeInTheDocument();
 });
+
+test.each([
+  ['direct_webrtc', 'Касания напрямую · WebRTC'],
+  ['server_websocket', 'Касания через сервер · WebSocket'],
+  [undefined, 'Маршрут касаний не сообщён'],
+])('primary picture never invents the independent touch route: %s', async (control, label) => {
+  mockGet.mockResolvedValue({ data: { schema_version: 1, device_id: device, session_limit: 10, sessions: [{
+    session_id: 'viewer', opened_at: '2026-10-10T10:00:00Z', state: 'closed', browser_samples: [{
+      transport: 'direct_webrtc', control_transport: control, rendered_frames: 1, incoming_fps: 0,
+      direct_frames: 120, direct_fps: 15, direct_path: 'nat', direct_network_rtt_ms: 2,
+      direct_state: 'failed', direct_failure: 'connection_deadline',
+      direct_network: { local_candidates: 5, remote_candidates: 1, pairs: 1, checking_pairs: 1,
+        failed_pairs: 0, succeeded_pairs: 0, requests_sent: 237, responses_received: null },
+    }],
+  }] } });
+  view();
+  expect(await screen.findByText(label!)).toBeInTheDocument();
+  expect(screen.getByText(/ICE-запросы \/ ответы:/)).toHaveTextContent('237 / —');
+  expect(screen.queryByText(/Управление через сервер/)).not.toBeInTheDocument();
+});

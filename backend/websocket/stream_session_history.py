@@ -30,6 +30,19 @@ DirectFailure = Literal[
 ]
 
 
+class BrowserIceSnapshot(BaseModel):
+    """Aggregate getStats counters; no SDP, candidates, IDs or addresses."""
+    model_config = ConfigDict(extra="forbid", strict=True)
+    local_candidates: Annotated[int, Field(ge=0, le=256)]
+    remote_candidates: Annotated[int, Field(ge=0, le=256)]
+    pairs: Annotated[int, Field(ge=0, le=256)]
+    checking_pairs: Annotated[int, Field(ge=0, le=256)]
+    failed_pairs: Annotated[int, Field(ge=0, le=256)]
+    succeeded_pairs: Annotated[int, Field(ge=0, le=256)]
+    requests_sent: Counter | None
+    responses_received: Counter | None
+
+
 class BrowserStreamSample(BaseModel):
     model_config = ConfigDict(extra="forbid", strict=True)
     schema_version: Literal[1]
@@ -48,6 +61,11 @@ class BrowserStreamSample(BaseModel):
     direct_failure: DirectFailure | None = None
     direct_ice_state: Literal["new", "checking", "connected", "completed", "disconnected", "failed", "closed"] | None = None
     direct_dtls_state: Literal["new", "connecting", "connected", "closed", "failed"] | None = None
+    direct_network: BrowserIceSnapshot | None = None
+    # Times relative to the beginning/end of one peer attempt, not wall-clock
+    # timestamps or end-to-end frame latency.
+    direct_network_sample_elapsed_ms: Milliseconds | None = None
+    direct_network_age_at_stop_ms: Milliseconds | None = None
     visibility: Literal["visible", "hidden"]
     received_packets: Counter
     received_bytes: Counter
@@ -226,7 +244,12 @@ class StreamSessionHistory:
     def validated_sample(data: Any, *, probe: bool = False) -> dict[str, Any] | None:
         try:
             value = DirectDiagnosticResult.model_validate(data) if probe else BrowserStreamSample.model_validate(data)
-            return value.model_dump(exclude_none=True)
+            sample = value.model_dump(exclude_none=True)
+            if isinstance(value, BrowserStreamSample) and value.direct_network is not None:
+                # An observed candidate pair can still have unmeasured packet
+                # counters. Keep their explicit nulls in the nested snapshot.
+                sample["direct_network"] = value.direct_network.model_dump()
+            return sample
         except ValidationError:
             return None
 

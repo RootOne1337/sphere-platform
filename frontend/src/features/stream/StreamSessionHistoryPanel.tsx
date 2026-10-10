@@ -5,10 +5,14 @@ import { useAuthStore } from '@/lib/store';
 
 type SessionRecord = { session_id: string; opened_at: string; state: 'active' | 'closed' | 'stale';
   browser_samples?: { received_at: string; rendered_frames: number; incoming_fps: number; control_rtt_ms?: number;
+    control_transport?: 'server_websocket' | 'direct_webrtc';
     transport?: 'server_websocket' | 'direct_webrtc'; direct_frames?: number; direct_fps?: number | null;
     direct_path?: string; direct_network_rtt_ms?: number | null; direct_jitter_buffer_ms?: number | null;
     direct_decode_ms?: number | null; direct_state?: string | null; direct_failure?: string | null;
-    direct_ice_state?: string | null; direct_dtls_state?: string | null }[];
+    direct_ice_state?: string | null; direct_dtls_state?: string | null;
+    direct_network?: { local_candidates: number; remote_candidates: number; pairs: number;
+      checking_pairs: number; failed_pairs: number; succeeded_pairs: number;
+      requests_sent: number | null; responses_received: number | null } | null }[];
   browser_summary?: { max_control_rtt_ms?: number; max_decode_errors: number; max_render_errors: number };
   direct_diagnostics?: { profile: string; path: string; presented_frames: number; echo_rtt_p95_ms?: number; reason?: string }[];
   control_events?: { reason?: string; error: string }[] };
@@ -34,6 +38,7 @@ export function StreamSessionHistoryPanel({ deviceId }: { deviceId: string }) {
         const sample = Array.isArray(row.browser_samples) ? row.browser_samples.at(-1) : null;
         const probe = Array.isArray(row.direct_diagnostics) ? row.direct_diagnostics.at(-1) : null;
         const fault = Array.isArray(row.control_events) ? row.control_events.at(-1) : null;
+        const network = sample?.direct_network;
         return <li key={row.session_id} className="rounded-md border border-border bg-background p-2">
           <div className="flex flex-wrap justify-between gap-2 font-medium"><span>{new Date(row.opened_at).toLocaleString('ru-RU')}</span>
             <span>{({ active: 'Активен', closed: 'Завершён', stale: 'Связь с наблюдателем потеряна' })[row.state] ?? 'Состояние неизвестно'}</span></div>
@@ -43,11 +48,19 @@ export function StreamSessionHistoryPanel({ deviceId }: { deviceId: string }) {
             {row.browser_summary && ` · максимальный RTT управления ${row.browser_summary.max_control_rtt_ms != null ? `${row.browser_summary.max_control_rtt_ms} мс` : 'не измерен'} · ошибок декодирования ${row.browser_summary.max_decode_errors}`}</div>
           {sample?.transport === 'direct_webrtc' && <div className="mt-1 text-xs text-muted-foreground">
             RTT сети {sample.direct_network_rtt_ms?.toFixed(1) ?? '—'} мс · буфер приёма {sample.direct_jitter_buffer_ms?.toFixed(1) ?? '—'} мс · декодирование {sample.direct_decode_ms?.toFixed(1) ?? '—'} мс.
-            Это отдельные этапы, а не полная задержка картинки. Управление через сервер.
+            Это отдельные этапы, а не полная задержка картинки.
           </div>}
+          {sample && <div className="mt-1 text-xs text-muted-foreground">{sample.control_transport === 'direct_webrtc'
+            ? 'Касания напрямую · WebRTC' : sample.control_transport === 'server_websocket'
+              ? 'Касания через сервер · WebSocket' : 'Маршрут касаний не сообщён'}</div>}
           {sample?.direct_state && <div className="mt-1 text-xs text-muted-foreground">Прямой канал: {sample.direct_state}
             {` · ICE ${sample.direct_ice_state ?? '—'} · DTLS ${sample.direct_dtls_state ?? '—'}`}
             {sample.direct_failure && ` · причина ${sample.direct_failure}`}</div>}
+          {network && <div className="mt-1 text-xs text-muted-foreground">
+            ICE-запросы / ответы: {network.requests_sent ?? '—'} / {network.responses_received ?? '—'}
+            {` · проверка / отказ / успех: ${network.checking_pairs} / ${network.failed_pairs} / ${network.succeeded_pairs} из ${network.pairs}`}
+            {` · ICE-кандидатов браузера / APK: ${network.local_candidates} / ${network.remote_candidates}`}
+          </div>}
           {probe && <div className="mt-1 text-xs">Прямой тест: {probe.profile} · {probe.path} · {probe.presented_frames} кадров
             {probe.echo_rtt_p95_ms != null && ` · RTT пакетов p95 ${probe.echo_rtt_p95_ms.toFixed(1)} мс`}{probe.reason && ` · ${probe.reason}`}</div>}
           {fault && <div className="mt-1 break-words text-xs text-muted-foreground">Последний отказ управления: {fault.reason ?? fault.error}</div>}

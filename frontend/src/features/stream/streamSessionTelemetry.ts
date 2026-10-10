@@ -3,6 +3,7 @@ import type { ContinuousPointerState } from './continuousPointer';
 import type { DirectProbeResult } from './directProbe';
 import type { DiagnosticProfile } from './DirectProbeDiagnostics';
 import type { LiveVideoObservation } from './LiveDirectVideo';
+import type { DirectProbeNetwork } from './directProbeNetwork';
 
 type ControlObservation = { state: ContinuousPointerState | 'probing'; failure: string | null; rtt: number | null; attempts: number;
   transport?: 'server_websocket' | 'direct_webrtc' };
@@ -21,6 +22,18 @@ const controlFailures = new Set(['native_receipt_timeout', 'native_startup_busy'
   'invalid_native_receipt', 'invalid_startup_receipt', 'invalid_input_receipt', 'receipt_action_mismatch']);
 export const directFailure = (reason: string | null | undefined) => reason ? reasons.has(reason) ? reason : 'other' : null;
 
+function iceSnapshot(network: DirectProbeNetwork | undefined) {
+  if (!network) return null;
+  const counts = [network.localCandidates, network.remoteCandidates, network.pairs,
+    network.checkingPairs, network.failedPairs, network.succeededPairs];
+  if (!counts.every(value => Number.isSafeInteger(value) && value >= 0 && value <= 256)) return null;
+  const packetCounter = (value: number | null) => value !== null && Number.isSafeInteger(value) && value >= 0 ? value : null;
+  // Explicit projection also protects against an SDK adding addresses later.
+  return { local_candidates: network.localCandidates, remote_candidates: network.remoteCandidates, pairs: network.pairs,
+    checking_pairs: network.checkingPairs, failed_pairs: network.failedPairs, succeeded_pairs: network.succeededPairs,
+    requests_sent: packetCounter(network.requestsSent), responses_received: packetCounter(network.responsesReceived) };
+}
+
 /** Explicit scalar whitelist: decoder exception text and Android input never leave the viewer. */
 export function browserStreamSample(stats: StreamDecoderStats, control: ControlObservation, now = Date.now(), direct?: LiveVideoObservation) {
   const age = (at: number | null) => at === null ? null : milliseconds(now - at);
@@ -34,6 +47,9 @@ export function browserStreamSample(stats: StreamDecoderStats, control: ControlO
       direct_ice_state: direct.result?.iceState ?? null,
       direct_dtls_state: ['new', 'connecting', 'connected', 'closed', 'failed'].includes(direct.result?.network?.dtlsState ?? '')
         ? direct.result!.network!.dtlsState : null,
+      direct_network: iceSnapshot(direct.result?.network),
+      direct_network_sample_elapsed_ms: milliseconds(direct.result?.networkSampleAtMs ?? null),
+      direct_network_age_at_stop_ms: milliseconds(direct.result?.networkAgeAtStopMs ?? null),
       direct_network_rtt_ms: milliseconds(direct.result?.videoStats?.networkRttMs ?? null),
       direct_jitter_buffer_ms: milliseconds(direct.result?.videoStats?.jitterBufferMs ?? null),
       direct_decode_ms: milliseconds(direct.result?.videoStats?.decodeMs ?? null),

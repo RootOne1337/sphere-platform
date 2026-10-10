@@ -78,7 +78,7 @@ export function DirectProbeDiagnostics({ deviceId, profile, onBusyChange }: { de
         <summary className="cursor-pointer">Сетевые этапы проверки</summary>
         <dl className="mt-2 grid grid-cols-1 gap-2 sm:grid-cols-2">
           <div><dt>ICE / DTLS</dt><dd>{result.iceState ?? 'Не измерен'} / {result.network.dtlsState ?? 'Не измерен'}</dd></div>
-          <div><dt>Адреса браузера / APK</dt><dd>{result.network.localCandidates} / {result.network.remoteCandidates}</dd></div>
+          <div><dt>ICE-кандидаты браузера / APK</dt><dd>{result.network.localCandidates} / {result.network.remoteCandidates}</dd></div>
           <div><dt>Пары: проверка / отказ / успех</dt><dd>{result.network.checkingPairs} / {result.network.failedPairs} / {result.network.succeededPairs} из {result.network.pairs}</dd></div>
           <div><dt>ICE-запросы / ответы</dt><dd>{result.network.requestsSent ?? 'Не измерены'} / {result.network.responsesReceived ?? 'Не измерены'}</dd></div>
           {result.networkAgeAtStopMs !== undefined && <div><dt>Возраст среза при остановке</dt><dd>{Math.round(result.networkAgeAtStopMs)} мс</dd></div>}
