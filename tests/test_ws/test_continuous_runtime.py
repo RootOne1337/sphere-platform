@@ -308,6 +308,34 @@ async def test_periodic_runtime_loss_is_retryable_without_weakening_permission_o
 
 
 @pytest.mark.asyncio
+@pytest.mark.parametrize('action', [0, 1, 2, 3, 4])
+async def test_inflight_input_after_retirement_cannot_dispatch_or_cancel_known_release_recovery(live, monkeypatch, action):
+    runtime, viewer, _ = await open_view(live)
+    old = viewer.lease
+    viewer.closing = True  # Exact owner's native RELEASE is still pending.
+    event = AsyncMock()
+    send = AsyncMock()
+    monkeypatch.setattr(runtime.store, 'event', event)
+    monkeypatch.setattr(runtime, 'send', send)
+    await runtime.handle(viewer, dict(type='touch_event', sequence=1, gesture=1, action=action, x=1, y=1))
+    event.assert_not_awaited()
+    send.assert_not_awaited()  # No input ACK and no second terminal rejection.
+    assert viewer.lease == old and viewer.closing
+
+
+@pytest.mark.asyncio
+async def test_retiring_owner_does_not_accept_malformed_input_or_a_new_owner(live):
+    runtime, viewer, _ = await open_view(live)
+    old = viewer.lease
+    viewer.closing = True
+    with pytest.raises(InvalidContinuousInput):
+        await runtime.handle(viewer, dict(type='touch_event', sequence=1, gesture=1, action=4, x=1, y=1, replay=True))
+    with pytest.raises(InvalidContinuousInput):
+        await runtime.handle(viewer, dict(type='touch_open', capture_epoch=EPOCH, frame_width=960, frame_height=540))
+    assert viewer.lease == old and viewer.closing
+
+
+@pytest.mark.asyncio
 async def test_replacement_global_topology_prevents_old_socket_offer(live):
     runtimes, viewer, agent, clients, session = live
     await DeviceStatusCache(clients[0]).set_status(viewer.device, DeviceLiveStatus(
@@ -367,8 +395,7 @@ async def test_unregister_closes_only_exact_viewer_and_removes_callback(live):
 async def test_retired_offer_cannot_open_or_replay(live):
     runtime, viewer, agent = await open_view(live)
     await runtime.retire(viewer)
-    with pytest.raises(InvalidContinuousInput):
-        await runtime.handle(viewer, dict(type='touch_event', sequence=1, gesture=1, action=0, x=1, y=1))
+    await runtime.handle(viewer, dict(type='touch_event', sequence=1, gesture=1, action=0, x=1, y=1))
     assert not any(c.args[0]['type'] == 'continuous_input_event' for c in agent.send_json.call_args_list)
 
 

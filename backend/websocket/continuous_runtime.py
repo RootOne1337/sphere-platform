@@ -174,7 +174,13 @@ class ContinuousRuntime:
             if opened != "published":
                 raise InputLeaseUnavailable()
         elif isinstance(message, TouchEvent):
-            if not viewer.lease or viewer.closing or viewer.direct_session:
+            if viewer.closing:
+                # Input sent before the browser saw retirement can arrive after
+                # the first retryable failure. Drop it without dispatch/ACK or
+                # a second terminal error while the exact native RELEASE is
+                # pending. It must not cancel safe recovery or be replayed.
+                return
+            if not viewer.lease or viewer.direct_session:
                 raise InvalidContinuousInput()
             if await self.store.event(viewer.lease, message) != "published":
                 raise InputLeaseUnavailable()
