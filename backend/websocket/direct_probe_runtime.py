@@ -4,12 +4,13 @@ from __future__ import annotations
 import asyncio
 import json
 import secrets
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Any
 
 from backend.services.device_status_cache import DeviceStatusCache
 from backend.websocket.connection_manager import ConnectionManager
 from backend.websocket.continuous_lease import no_replay_redis
+from backend.websocket.direct_probe_ice import validate_turn_grant
 from backend.websocket.direct_probe_protocol import (
     MAX_PEERS,
     MAX_WIRE_BYTES,
@@ -34,6 +35,10 @@ class ProbeViewer:
     session: str = ""
     binding: dict | None = None
     answered: bool = False
+    offered: bool = False
+    reserving: bool = False
+    retired: bool = False
+    ice: dict | None = field(default=None, repr=False)
 
 
 @dataclass
@@ -93,16 +98,59 @@ class DirectProbeRuntime:
             raise InvalidDirectProbe("transport_unavailable")
 
     async def open(self, viewer: ProbeViewer, sdp: str) -> None:
+        if viewer.reserving or viewer.retired:
+            raise InvalidDirectProbe("probe_unavailable")
+        if viewer.binding:
+            if not self.available or self.viewers.get(viewer.session) is not viewer or viewer.offered:
+                raise InvalidDirectProbe("probe_unavailable")
+            description(sdp)
+            async with asyncio.timeout(OPERATION_SECONDS):
+                if not await self.remaining(viewer.binding):
+                    raise InvalidDirectProbe("probe_expired")
+                await self._publish_offer(viewer, sdp)
+            return
         if not self.available or viewer.binding or len(self.viewers) + self.reservations >= MAX_PEERS:
             raise InvalidDirectProbe("probe_unavailable")
         description(sdp)
         self.reservations += 1
+        viewer.reserving = True
         try:
             await self._open(viewer, sdp)
+        except BaseException:
+            await self.retire(viewer)
+            raise
         finally:
             self.reservations -= 1
+            viewer.reserving = False
 
     async def _open(self, viewer: ProbeViewer, sdp: str) -> None:
+        await self._reserve(viewer)
+        async with asyncio.timeout(OPERATION_SECONDS):
+            await self._publish_offer(viewer, sdp)
+
+    async def prepare(self, viewer: ProbeViewer) -> None:
+        """Reserve the same global device lease BEFORE issuing relay credentials."""
+        if not self.available or viewer.binding or viewer.reserving or viewer.retired or len(self.viewers) + self.reservations >= MAX_PEERS:
+            raise InvalidDirectProbe("probe_unavailable")
+        self.reservations += 1
+        viewer.reserving = True
+        try:
+            await self._reserve(viewer)
+            async with asyncio.timeout(OPERATION_SECONDS):
+                # Survives socket close. Repeated connect/close cannot mint unlimited
+                # 120-second relay credentials using the same device lease.
+                if not await self.redis.set(f"{self.namespace}:relay-issued:{viewer.device}", "1", nx=True, px=15000):
+                    raise InvalidDirectProbe("relay_grant_rate_limited")
+                if not self.available or viewer.retired or self.viewers.get(viewer.session) is not viewer:
+                    raise InvalidDirectProbe("probe_unavailable")
+        except BaseException:
+            await self.retire(viewer)
+            raise
+        finally:
+            self.reservations -= 1
+            viewer.reserving = False
+
+    async def _reserve(self, viewer: ProbeViewer) -> None:
         async with asyncio.timeout(OPERATION_SECONDS):
             status = await DeviceStatusCache(self.redis).get_status(viewer.device)
             if not status or not status.ws_session_id or status.status not in {"online", "busy", "connecting"}:
@@ -113,13 +161,25 @@ class DirectProbeRuntime:
             if not await self.redis.set(self.key(viewer.device), self.encode(binding), nx=True, px=SESSION_MS):
                 raise InvalidDirectProbe("device_probe_busy")
             viewer.binding = binding
-            self.viewers[viewer.session] = viewer
-            try:
-                await self.publish(f"{self.namespace}:agent:{viewer.device}",
-                                   dict(kind="offer", binding=binding, sdp=sdp))
-            except BaseException:
+            # stop/retire may run while Redis is accepting this reservation. Publish
+            # no credentials or SDP for a retired socket, and release its exact lease.
+            if not self.available or viewer.retired:
                 await self.retire(viewer)
-                raise
+                raise InvalidDirectProbe("probe_unavailable")
+            self.viewers[viewer.session] = viewer
+
+    async def _publish_offer(self, viewer: ProbeViewer, sdp: str) -> None:
+        if viewer.offered or viewer.retired or not self.available or not viewer.binding:
+            raise InvalidDirectProbe("probe_already_offered")
+        viewer.offered = True  # A publication failure must not enable replay.
+        data = dict(kind="offer", binding=viewer.binding, sdp=sdp)
+        try:
+            if viewer.ice is not None:
+                data["ice"] = validate_turn_grant(viewer.ice, viewer.session, "agent")
+            await self.publish(f"{self.namespace}:agent:{viewer.device}", data)
+        except BaseException:
+            await self.retire(viewer)
+            raise
 
     async def agent_message(self, device: str, agent_session: str, data: dict) -> None:
         sid, sdp = agent_answer(data)
@@ -145,7 +205,7 @@ class DirectProbeRuntime:
         if len(raw) > MAX_WIRE_BYTES:
             return
         data = json.loads(raw)
-        if not isinstance(data, dict) or data.keys() not in ({"kind", "binding", "sdp"}, {"kind", "binding"}):
+        if not isinstance(data, dict) or data.keys() not in ({"kind", "binding", "sdp"}, {"kind", "binding"}, {"kind", "binding", "sdp", "ice"}):
             return
         binding = data["binding"]
         if not isinstance(binding, dict) or binding.keys() != {"session", "device", "org", "user", "worker", "agent_session"}:
@@ -187,6 +247,7 @@ class DirectProbeRuntime:
             return
         if data["kind"] != "offer":
             return
+        ice = validate_turn_grant(data["ice"], sid, "agent") if "ice" in data else None
         remaining = await self.remaining(binding)
         now = asyncio.get_running_loop().time()
         self.pending = {k: v for k, v in self.pending.items() if v.deadline > now}
@@ -194,11 +255,15 @@ class DirectProbeRuntime:
             return
         sdp = description(data.get("sdp"))
         self.pending[sid] = PendingProbe(binding, now + remaining / 1000)
-        await self.manager.send_to_session(binding["device"], snapshot.session_id,
-                                          dict(type="direct_probe_offer", session_id=sid, sdp=sdp, ttl_ms=remaining))
+        message = dict(type="direct_probe_offer", session_id=sid, sdp=sdp, ttl_ms=remaining)
+        if ice is not None:
+            message["ice"] = ice
+        await self.manager.send_to_session(binding["device"], snapshot.session_id, message)
 
     async def retire(self, viewer: ProbeViewer) -> None:
+        viewer.retired = True
         binding, viewer.binding = viewer.binding, None
+        viewer.ice = None
         if self.viewers.get(viewer.session) is viewer:
             self.viewers.pop(viewer.session, None)
         if binding:

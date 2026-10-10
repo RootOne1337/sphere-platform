@@ -9,7 +9,7 @@
     "DESIGN_SPECIFICATION": 76,
     "OPERATING_GUIDE": 64,
     "PROJECT_POLICY": 7,
-    "SUPPORTING_DOCUMENT": 6
+    "SUPPORTING_DOCUMENT": 7
   },
   "documents": [
     {
@@ -1443,6 +1443,10 @@
     {
       "file": "docs/web-ui-guide.md",
       "role": "OPERATING_GUIDE"
+    },
+    {
+      "file": "infrastructure/turn/README.md",
+      "role": "SUPPORTING_DOCUMENT"
     },
     {
       "file": "specs/TZ-00-Constitution/SPLIT-1-Repo-Docker.md",

@@ -3,7 +3,7 @@ export class DirectProbeConfigurationError extends Error {
   constructor() { super('invalid_controlled_stun'); }
 }
 
-export type DirectProbeIceProfile = 'host' | 'controlled-stun' | 'public-stun';
+export type DirectProbeIceProfile = 'host' | 'controlled-stun' | 'public-stun' | 'turn';
 
 export function directProbeIceConfig(url = ''): {
   profile: DirectProbeIceProfile; iceServers: RTCIceServer[];

@@ -72,6 +72,9 @@ class Settings(BaseSettings):
     DEV_SKIP_AUTH: bool = False  # Пропуск JWT-проверки в dev-режиме (NEVER в production)
     DIRECT_TRANSPORT_PROBE_ENABLED: bool = False  # Diagnostic only; no media/control grant.
     DIRECT_TRANSPORT_PROBE_DEVICE_IDS: frozenset[str] = frozenset()  # Explicit canary scope, empty denies all.
+    DIRECT_PROBE_TURN_URLS: tuple[str, ...] = ()  # Operator-owned endpoints only; no public default.
+    DIRECT_PROBE_TURN_SECRET: SecretStr = SecretStr("")  # coturn REST key; never returned to peers.
+    DIRECT_PROBE_TURN_RELAY_ONLY: bool = False  # Explicit diagnostic comparison; all prefers direct ICE.
 
     # App
     DEBUG: bool = False

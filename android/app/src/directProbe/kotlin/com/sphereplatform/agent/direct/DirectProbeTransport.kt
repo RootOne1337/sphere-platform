@@ -81,21 +81,23 @@ class DirectProbeTransport(
             } else {
                 val sdp = message["sdp"]?.jsonPrimitive?.contentOrNull ?: return@enqueue
                 val ttl = message["ttl_ms"]?.jsonPrimitive?.intOrNull ?: return@enqueue
-                if (peer != null || message.keys != setOf("type", "session_id", "sdp", "ttl_ms") ||
+                if (peer != null || message.keys !in setOf(setOf("type", "session_id", "sdp", "ttl_ms"),
+                        setOf("type", "session_id", "sdp", "ttl_ms", "ice")) ||
                     ttl !in 1..DirectProbeProtocol.MAX_TTL_MS || !DirectProbeProtocol.validSdp(sdp)) return@enqueue
+                val grant = if ("ice" in message) DirectProbeTurnGrant.parse(message["ice"], sid) ?: return@enqueue else null
                 if (SystemClock.elapsedRealtime() >= receivedAt + ttl) return@enqueue
-                open(Probe(sid, wsGeneration, token, receivedAt + ttl), sdp)
+                open(Probe(sid, wsGeneration, token, receivedAt + ttl), sdp, grant)
             }
         }
         return true
     }
 
-    private fun open(p: Probe, sdp: String) {
+    private fun open(p: Probe, sdp: String, grant: DirectProbeTurnGrant?) {
         peer = p
         try {
             // Validate before creating native threads. Ordinary builds keep an empty host-only profile.
             val iceProfile = DirectProbeIceProfile.fromUrl(BuildConfig.DIRECT_PROBE_STUN_URL)
-            p.iceProfile = iceProfile.name
+            p.iceProfile = if (grant == null) iceProfile.name else "turn"
             progress(p, ProbeStage.OFFER_RECEIVED)
             if (factory == null) {
                 if (initialized.compareAndSet(false, true)) {
@@ -107,9 +109,13 @@ class DirectProbeTransport(
                 factory = PeerConnectionFactory.builder().createPeerConnectionFactory()
             }
             progress(p, ProbeStage.FACTORY_READY)
-            val servers = iceProfile.serverUrl?.let { listOf(PeerConnection.IceServer.builder(it).createIceServer()) }
+            val servers = grant?.urls?.map { PeerConnection.IceServer.builder(it)
+                .setUsername(grant.username).setPassword(grant.credential).createIceServer() }
+                ?: iceProfile.serverUrl?.let { listOf(PeerConnection.IceServer.builder(it).createIceServer()) }
                 ?: emptyList()
             val config = PeerConnection.RTCConfiguration(servers)
+            if (grant != null) config.iceTransportsType = if (grant.relayOnly)
+                PeerConnection.IceTransportsType.RELAY else PeerConnection.IceTransportsType.ALL
             config.sdpSemantics = PeerConnection.SdpSemantics.UNIFIED_PLAN
             p.connection = factory?.createPeerConnection(config, object : PeerConnection.Observer {
                 override fun onSignalingChange(state: PeerConnection.SignalingState) = Unit
@@ -245,12 +251,19 @@ class DirectProbeTransport(
         peer = null
         old?.let { progress(it, stage) }
         old?.statsBudget?.retire()
-        old?.channel?.unregisterObserver()
-        old?.channel?.close()
-        old?.channel?.dispose()
-        old?.connection?.close()
-        old?.connection?.dispose()
+        // One already-closed JNI wrapper must not prevent retiring other threads.
+        old?.channel?.let {
+            runCatching { it.unregisterObserver() }
+            runCatching { it.close() }
+            runCatching { it.dispose() }
+        }
+        old?.connection?.let {
+            runCatching { it.close() }
+            runCatching { it.dispose() }
+        }
         // Factory threads are also retired after every finite probe.
-        factory?.dispose(); factory = null
+        val ownedFactory = factory
+        factory = null
+        runCatching { ownedFactory?.dispose() }
     }
 }

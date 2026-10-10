@@ -48,6 +48,9 @@ async function connected() {
   await flush(); peer.channel.onopen?.();
   return { reports, stop, ws, peer };
 }
+const relayReady = () => ({ type: 'direct_probe_ready', protocol: 'sphere-probe-v2', session_id: sid,
+  ice: { urls: ['turn:relay.example.test:3478?transport=tcp'], username: `1791605120:${sid}:browser`,
+    credential: 'A'.repeat(27) + '=', ttl_ms: 120000, policy: 'relay' } });
 beforeEach(() => {
   jest.useFakeTimers();
   FakePeer.initialGatheringState = 'complete'; FakePeer.constructions = 0;
@@ -56,6 +59,68 @@ beforeEach(() => {
   if (!globalThis.TextEncoder) Object.defineProperty(globalThis, 'TextEncoder', { configurable: true, value: TextEncoder });
 });
 afterEach(() => { jest.useRealTimers(); });
+
+test('relay grant handshake authenticates before allocating peer and binds the offer/answer', async () => {
+  const reports: DirectProbeResult[] = [];
+  const stop = startDirectProbe('wss://same-origin/ws/direct-probe/device', 'access', r => reports.push(r), { relayGrant: true });
+  expect(FakePeer.constructions).toBe(0);
+  const ws = FakeSocket.latest;
+  ws.onopen?.();
+  expect(ws.send).toHaveBeenCalledTimes(1);
+  expect(JSON.parse(ws.send.mock.calls[0][0])).toEqual({ token: 'access', protocol: 'sphere-probe-v2' });
+  ws.onmessage?.({ data: JSON.stringify(relayReady()) }); await flush();
+  const peer = FakePeer.latest;
+  expect(peer.configuration.iceTransportPolicy).toBe('relay');
+  expect(ws.send).toHaveBeenCalledTimes(2);
+  expect(JSON.parse(ws.send.mock.calls[1][0])).toEqual({ type: 'direct_probe_offer', sdp: 'v=0\r\n' });
+  ws.onmessage?.({ data: JSON.stringify({ type: 'direct_probe_answer', session_id: sid, sdp: 'v=0\r\n' }) });
+  await flush(); peer.channel.onopen?.(); jest.advanceTimersByTime(1000);
+  peer.channel.onmessage?.({ data: `SP1 ${sid} 1` }); await flush();
+  expect(reports.at(-1)?.samples).toHaveLength(1);
+  expect(JSON.stringify(reports)).not.toContain('relay.example.test');
+  expect(JSON.stringify(reports)).not.toContain('A'.repeat(27));
+  stop(); expect(jest.getTimerCount()).toBe(0);
+});
+
+test('invalid relay grant never allocates a peer and stop before grant leaves no timers', async () => {
+  const reports: DirectProbeResult[] = [];
+  const stop = startDirectProbe('wss://same-origin', 'access', r => reports.push(r), { relayGrant: true });
+  const ws = FakeSocket.latest, late = ws.onmessage;
+  ws.onmessage?.({ data: JSON.stringify({ ...relayReady(), session_id: 'wrong' }) });
+  expect(reports.at(-1)?.reason).toBe('invalid_ice_grant'); expect(FakePeer.constructions).toBe(0);
+  late?.({ data: JSON.stringify(relayReady()) }); await flush(); stop();
+  expect(FakePeer.constructions).toBe(0); expect(jest.getTimerCount()).toBe(0);
+});
+
+test('relay ready cannot replace binding with a different answer or a second ready', async () => {
+  const reports: DirectProbeResult[] = [];
+  startDirectProbe('wss://same-origin', 'access', r => reports.push(r), { relayGrant: true });
+  const ws = FakeSocket.latest;
+  ws.onmessage?.({ data: JSON.stringify(relayReady()) }); await flush();
+  ws.onmessage?.({ data: JSON.stringify({ type: 'direct_probe_answer', session_id: 'b'.repeat(32), sdp: 'v=0\r\n' }) });
+  expect(FakePeer.latest.setRemoteDescription).not.toHaveBeenCalled();
+  expect(reports.at(-1)?.reason).toBe('invalid_signal'); expect(jest.getTimerCount()).toBe(0);
+});
+
+test('missing server grant expires without allocating native browser resources', () => {
+  const reports: DirectProbeResult[] = [];
+  startDirectProbe('wss://same-origin', 'access', r => reports.push(r), { relayGrant: true });
+  jest.advanceTimersByTime(8000);
+  expect(FakePeer.constructions).toBe(0); expect(reports.at(-1)?.reason).toBe('signaling_deadline');
+  expect(jest.getTimerCount()).toBe(0);
+});
+
+test('browser constructor failure after a valid grant closes signaling and all timers', () => {
+  const reports: DirectProbeResult[] = [];
+  startDirectProbe('wss://same-origin', 'access', r => reports.push(r), { relayGrant: true });
+  Object.defineProperty(globalThis, 'RTCPeerConnection', { configurable: true,
+    value: class { constructor() { throw Error('native allocation failed'); } } });
+  const ws = FakeSocket.latest;
+  ws.onmessage?.({ data: JSON.stringify(relayReady()) });
+  expect(reports.at(-1)?.reason).toBe('webrtc_unavailable');
+  expect(ws.close).toHaveBeenCalledTimes(1);
+  expect(jest.getTimerCount()).toBe(0);
+});
 
 test('controlled profile configures exactly one STUN server and reports only its class', async () => {
   const reports: DirectProbeResult[] = [];
@@ -194,6 +259,17 @@ test('echo timeout retires all timers and callbacks without retries', async () =
   jest.advanceTimersByTime(60000);
   expect(peer.channel.send).toHaveBeenCalledTimes(1);
   expect(peer.close).toHaveBeenCalledTimes(1);
+  expect(jest.getTimerCount()).toBe(0);
+});
+
+test('signaling failure during Stop cannot leak the DataChannel or peer', async () => {
+  const { peer, ws, reports, stop } = await connected();
+  ws.send.mockImplementation(() => { throw Error('socket closed'); });
+  ws.close.mockImplementation(() => { throw Error('close unavailable'); });
+  peer.channel.close.mockImplementation(() => { throw Error('channel close unavailable'); });
+  expect(stop).not.toThrow();
+  expect(peer.close).toHaveBeenCalledTimes(1);
+  expect(reports.at(-1)?.state).toBe('stopped');
   expect(jest.getTimerCount()).toBe(0);
 });
 

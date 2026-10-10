@@ -11,6 +11,7 @@ from backend.core.config import settings
 from backend.core.rbac import has_permission
 from backend.database.engine import AsyncSessionLocal
 from backend.models.device import Device
+from backend.websocket.direct_probe_ice import issue_turn_grant
 from backend.websocket.direct_probe_protocol import (
     MAX_WIRE_BYTES,
     SESSION_MS,
@@ -60,11 +61,21 @@ async def direct_probe_ws(ws: WebSocket, device_id: str) -> None:
             raise InvalidDirectProbe("invalid_auth")
         import json
         first = json.loads(raw)
-        if (not isinstance(first, dict) or first.keys() != {"token"}
+        if (not isinstance(first, dict) or first.keys() not in ({"token"}, {"token", "protocol"})
+                or "protocol" in first and first["protocol"] != "sphere-probe-v2"
                 or not isinstance(first["token"], str) or not first["token"]):
             raise InvalidDirectProbe("invalid_auth")
         identity = await authorize(first["token"], device_id)
         viewer = ProbeViewer(device_id, *identity, ws)
+        if first.get("protocol") == "sphere-probe-v2":
+            await runtime.prepare(viewer)
+            options = dict(relay_only=settings.DIRECT_PROBE_TURN_RELAY_ONLY)
+            secret = settings.DIRECT_PROBE_TURN_SECRET.get_secret_value()
+            viewer.ice = issue_turn_grant(settings.DIRECT_PROBE_TURN_URLS, secret, viewer.session, "agent", **options).wire()
+            browser_ice = issue_turn_grant(settings.DIRECT_PROBE_TURN_URLS, secret, viewer.session, "browser", **options)
+            async with asyncio.timeout(1):
+                await ws.send_json(dict(type="direct_probe_ready", protocol="sphere-probe-v2",
+                                        session_id=viewer.session, ice=browser_ice.wire()))
         async with asyncio.timeout(10):
             raw = await ws.receive_text()
         if len(raw.encode()) > MAX_WIRE_BYTES:

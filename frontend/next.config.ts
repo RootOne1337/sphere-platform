@@ -1,4 +1,8 @@
 import type { NextConfig } from 'next';
+if (process.env.NEXT_PUBLIC_DIRECT_PROBE_RELAY === 'true' &&
+    (process.env.NEXT_PUBLIC_DIRECT_TRANSPORT_CANARY !== 'true' || process.env.NEXT_PUBLIC_DIRECT_PROBE_STUN_URL)) {
+  throw new Error('Relay diagnostics require the canary gate and exclude the static STUN profile');
+}
 
 if (process.env.NEXT_PUBLIC_DIRECT_PROBE_STUN_URL && process.env.NEXT_PUBLIC_DIRECT_TRANSPORT_CANARY !== 'true') {
   throw new Error('Diagnostic STUN requires NEXT_PUBLIC_DIRECT_TRANSPORT_CANARY=true');
