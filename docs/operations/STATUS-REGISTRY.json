@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
-  "reviewedAtUtc": "2026-10-10T23:12:57.015720+00:00",
-  "sourceReviewed": "e9af9e60be1b2dcb1f13f7dd8b17db93dc8bfa4c",
+  "reviewedAtUtc": "2026-10-11T11:38:30.531660+00:00",
+  "sourceReviewed": "4ce2c6d6ef5e9d3abbe267b29f5d266d86d59946",
   "scope": "Effective documentation status; source/install/finite acceptance kept separate. No new fleet or soak acceptance.",
   "baseline": "docs/audits/2026-10-05/ENTERPRISE-PRODUCT-BACKLOG.json",
   "previousCrosscheck": "docs/audits/2026-10-09/CHAT-CODE-RECONCILIATION.json",
@@ -84,22 +84,25 @@
       "installed": false,
       "sourceBaseRevision": "e3bf0f615fa03150e76d4e87bdd30104be927152",
       "evidence": "docs/audits/2026-10-11/NATIVE-DIRECT-DIAGNOSTICS-SOURCE.md",
-      "scope": "Source-only automatic native ICE/stage journal; candidate APK10255, initial/sparse/terminal bounded telemetry. Exact CI, install and native runtime acceptance pending.",
-      "deliveryState": "LOCAL_SOURCE_TESTED",
+      "scope": "Automatic bounded native ICE/stage journal; all three CI workflows passed. Android PR merge subtree equals reviewed head. Pilot signing, install and native runtime acceptance pending.",
+      "deliveryState": "CI_READY_NOT_INSTALLED",
       "runtimeAccepted": false,
-      "candidateVersionCode": 10255
+      "candidateVersionCode": 10255,
+      "testedRevision": "4ce2c6d6ef5e9d3abbe267b29f5d266d86d59946",
+      "ciEvidence": "docs/audits/2026-10-11/NATIVE-DIRECT-DIAGNOSTICS-CI.json",
+      "ciEvidenceSha256NormalizedLf": "b7131e2bbcfb2abe637e2b7054224529a64c3f696e13231c635c9bef6a6c3401"
     }
   ],
   "storage": {
-    "lastObservedUtc": "2026-10-11T03:39:33.8449414Z",
+    "lastObservedUtc": "2026-10-11T11:27:33.932155+00:00",
     "visibleMatchingProcesses": 2,
     "activeCollectorWorkers": 1,
     "continuousCoverageConfirmed": false,
-    "observationScope": "Completed 241 samples18:22 to02:22 UTC: C free -2,417,668,096B, VHDX allocation +1,342,177,280B, named LDPlayer +89,587,712B. Renewed limited PID43984 with first sample and process epoch,24h/721x120s/16MiB. Gap02:22 to03:35 UTC uncovered; VSS/USN/kernel writer unknown.",
-    "oneFreeDiskReadingBytes": 33415294976,
+    "observationScope": "237 measured samples03:35 to11:27 UTC: C free -1,647,091,712B; VHDX allocation constant236,073,254,912B. Six named LDPlayer allocations constant, pagefile CIM48,320MiB constant. Continuing PID43984,24h/721x120s/16MiB. VSS/USN/kernel writer unknown; earlier02:22 to03:35 gap remains uncovered.",
+    "oneFreeDiskReadingBytes": 31771045888,
     "latestCompletedEvidence": "docs/audits/2026-10-11/STORAGE-OBSERVATION-0335.json",
-    "activeEvidence": "docs/audits/2026-10-11/STORAGE-OBSERVATION-0335.json",
-    "evidenceSha256NormalizedLf": "322682299b2086e9e92d8c30027a8e51418ef676c4714693fdd34be606450a7f",
+    "activeEvidence": "docs/audits/2026-10-11/STORAGE-OBSERVATION-1127.json",
+    "evidenceSha256NormalizedLf": "e48fae6027a542bd1bc3f1578649d09bd44647ecea7320f0a63ff258850b8a40",
     "volumeObservation": {
       "observedAtUtc": "2026-10-11T03:39:33.8449414Z",
       "health": "Warning",

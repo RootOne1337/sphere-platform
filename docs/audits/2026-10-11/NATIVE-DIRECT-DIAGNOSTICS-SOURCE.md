@@ -5,7 +5,9 @@
 Рабочий API/UI остаётся `6ee80c1f`; проверенный PH010 использует10254.
 [Фактическая установка](CURRENT-STREAM-DELIVERY.json) не переписывается.
 Обновление API/UI остановлено до загрузки Docker image из-за Windows C:
-`Full Repair Needed`. CI нового кандидата и installed SHA ещё не подтверждены.
+`Full Repair Needed`. CI кандидата `4ce2c6d6` теперь подтверждён; pilot signing,
+installed SHA и native runtime этого кандидата ещё не подтверждены.
+[Неизменяемая запись CI](NATIVE-DIRECT-DIAGNOSTICS-CI.json).
 
 ## Какой пробел устранён в исходном коде
 
@@ -98,7 +100,13 @@ signaling payload. Отсутствующие historical native samples пока
 во время Redis await. Frontend stream/probe suite:26 suites/553 tests.
 TypeScript, scoped ESLint/Ruff и mypy прошли; OpenAPI пересоздан из pinned API.
 Новые pure Kotlin tests покрывают preserved age, unknown/overflow counters,
-квоту, sparse sampling, clock/terminal/callback fences; Android build ожидает CI.
+квоту, sparse sampling, clock/terminal/callback fences. Все три CI workflows
+завершились успешно: frontend153 suites/2208 tests; backend3638 tests,
+320 subtests,37 skipped, line coverage81.47%; Android обычные variants и
+isolated/local/public STUN debug profiles. Android CI использовал PR merge
+`8944ccfb`; его subtree Android совпадает с reviewed head `4ce2c6d6`.
+Release smoke key одноразовый и не является pilot signer. Remote artifacts
+API/UI проверены по metadata; их образы не загружались и не устанавливались.
 
 Панель проверена через настоящий браузер на source fixture:1280×720 и390×844.
 Использованы текущие theme tokens и CSS установленного веба. Раскрытие reports,
@@ -108,7 +116,7 @@ TypeScript, scoped ESLint/Ruff и mypy прошли; OpenAPI пересозда�
 
 ## Следующий допуск
 
-Нужны exact-source Android/API/UI CI, signed canary, здоровый Windows volume,
+CI этап завершён. Далее нужны signed pilot canary, здоровый Windows volume,
 reviewed runtime install, адресная OTA и совпадение installed SHA. Затем требуется
 реальный сеанс с автоматически полученными native reports без ручного Logcat,
 reconnect/held CANCEL, проверка PH025 и localhost/LAN/WAN/TURN/soak.

@@ -2,11 +2,21 @@
 
 **Проверенная установка:** UI `6ee80c1f` / API `6ee80c1f`.
 
-**11 октября — следующий source-кандидат APK55.** Автоматические native ICE/stage
+**11 октября — кандидат APK55 прошёл CI, установка ещё не выполнена.** Автоматические native ICE/stage
 reports привязаны к истории просмотра; initial/sparse/terminal сбор ограничен
-общим10-session/32KiB journal. Local WS и frontend regression проходят; CI/build
-нового APK ещё ожидают проверки, установка не выполнялась.
+общим10-session/32KiB journal. Frontend153 suites/2208 tests, backend3638 tests
+и320 subtests, Android build/profiles прошли. Pilot signing, адресная OTA и
+native runtime acceptance ещё не выполнены. Новый source не установлен
+ни на3015, ни на туннель, ни на весь парк эмуляторов.
 [Протокол, лимиты и проверки](../audits/2026-10-11/NATIVE-DIRECT-DIAGNOSTICS-SOURCE.md).
+
+**11 октября,11:27 UTC — C: продолжает уменьшаться при постоянном VHDX.**
+За237 срезов03:35→11:27 UTC свободное место снизилось на1 647 091 712B
+(~1.53GiB); Docker VHDX allocation во всех срезах236 073 254 912B без роста.
+Шесть заданных LDPlayer files и pagefile CIM allocation также постоянны.
+Это не доказывает отсутствие записей внутри Docker или конкретного writer:
+VSS/USN/kernel недоступны. Collector43984 продолжает24h окно, не заменялся.
+[Неизменяемый промежуточный срез](../audits/2026-10-11/STORAGE-OBSERVATION-1127.json).
 
 **11 октября — действующий срез.** UI/API `6ee80c1f` обслуживают 3015 и туннель; 29 клиентских assets совпадают. PH010 проверен на APK `1.2.54-dev`, ещё шесть машин — на53, две — на52. Прямые касания подготовлены и прошли CI, но новая установка API/UI остановлена до загрузки образа: Windows сообщает `Full Repair Needed` для C:. В текущем PH010 сеансе работал server fallback, прямой ICE не открылся. [Фактическая установка](../audits/2026-10-11/CURRENT-STREAM-DELIVERY.json) · [Подготовленная доставка и ограничения](../audits/2026-10-11/DIRECT-INPUT-DELIVERY-BLOCKED.md).
 
