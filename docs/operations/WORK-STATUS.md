@@ -2,6 +2,22 @@
 
 **Проверенная установка:** UI `6ee80c1f` / API `6ee80c1f`.
 
+**11 октября — подготовлены исправления неподвижного экрана и восстановления отрисовки.**
+Source `52239980`: все три CI прошли. Android проверен в четырёх обычных вариантах
+и совместном профиле WebRTC + planar input + continuous input; веб — 2226 тестов,
+26 собранных страниц и73 client assets; backend JUnit —4028 записей/43 skips без
+ошибок. Добавлены ограниченный raw refresh раз в секунду, watchdog реальной
+presentation и четыре native freshness measurements в прежние последние10 сеансов.
+Подписанный стендовый APK55 и новые API/UI ещё не установлены: C: Full Repair Needed;
+пользователь выбрал перезагрузку позже. CI APK подписан временным ключом и не годится
+для обновления pilot package. [Изменения, CI и порядок установки](../audits/2026-10-11/STREAM-IDLE-PROGRESS-RECOVERY.md).
+
+**11 октября,16:26 UTC — новый readback:15 APK54 подтверждены.** PH030 завершил
+ранее выданный OTA grant; проверен установленный SHA. Вместе14 completed OTA и
+PH010 already-target. Шесть offline машин не получили команду, queued grant нет.
+API/UI обоих адресов остаются6ee; новая версия55 не устанавливалась.
+[Неизменяемый follow-up](../audits/2026-10-11/APK54-FLEET-FOLLOWUP.json).
+
 **11 октября, 15:28 UTC — готовый APK54 распространён на весь доступный парк.**
 У всех 14 работающих эмуляторов проверен SHA APK 1.2.54-dev/10254: 13 адресных OTA
 завершены, PH010 уже имел эту версию. Семь устройств вне сети: PH030 ожидает
@@ -432,6 +448,14 @@ Fleet WS пакетно invalidates REST queries; скрытые вкладки/
 
 **OPEN** · EP-033, EP-047.
 
+Текущий срез: Elevated collector13708 current prefix and live process epoch verified; bounded24h/16MiB collection. VSS values are now available in this window. C: repair and independently fetched Git replacement objects are prepared, not applied. A single free-space recovery is not writer attribution or proof of a fix.
+
+Остаток: Whole-PC writer UNKNOWN: VSS unavailable, USN/ETW не запущены. Нет reboot autostart; после deadline потребуется bounded restart/health. Resource soak/retention и RAM acceptance открыты.
+
+[Новая сверка source/CI/install](../audits/2026-10-11/STREAM-IDLE-PROGRESS-RECOVERY.md).
+
+Предыдущие конечные наблюдения и исходные требования:
+
 Limited observer возобновлён10Oct00:14→12:34UTC,371×120s/16MiB.
 171 complete samples до05:54:43UTC: C:−7716163584B при неизменных Docker VHDX
 identity/allocation234731077632B. PID32064/process creation/command/source сверены.
@@ -466,6 +490,14 @@ resource soak/retention и RAM acceptance.
 ### CHAT-15 · Прямой browser ↔ Android transport
 
 **PARTIAL** · EP-029, EP-020, EP-047.
+
+Текущий срез: Историческая конечная WebRTC presentation на PH011 и echo на ноутбуке сохранены как отдельные наблюдения. СейчасUI/API6ee,15 hash-verified APK54. Source522 direct/recovery и совместный APK55 profile прошли CI; новая установка и production direct-path acceptance не выполнены.
+
+Остаток: Подписанный APK55 и API/UI522; localhost/LAN/WAN/TURN selected route; прямой ввод и handoff нескольких viewers; static/action/reconnect soak и input-to-picture/resource SLA. PH030 package обновлён, новый native stream test не выполнен.
+
+[Новая сверка source/CI/install](../audits/2026-10-11/STREAM-IDLE-PROGRESS-RECOVERY.md).
+
+Предыдущие конечные наблюдения и исходные требования:
 
 **11 октября — действующий срез.** UI/API `6ee80c1f` обслуживают 3015 и туннель; 29 клиентских assets совпадают. PH010 проверен на APK `1.2.54-dev`, ещё шесть машин — на53, две — на52. Прямые касания подготовлены и прошли CI, но новая установка API/UI остановлена до загрузки образа: Windows сообщает `Full Repair Needed` для C:. В текущем PH010 сеансе работал server fallback, прямой ICE не открылся. [Фактическая установка](../audits/2026-10-11/CURRENT-STREAM-DELIVERY.json) · [Подготовленная доставка и ограничения](../audits/2026-10-11/DIRECT-INPUT-DELIVERY-BLOCKED.md).
 
@@ -505,24 +537,25 @@ media/control и повторяющийся public idle timeout остаются
 Доказательства: [Исследование и порядок внедрения](../design/BROWSER-DIRECT-TRANSPORT.md),
 [Фактический relay path и idle canary](../audits/2026-10-09/IDLE-CONTROL-RELAY-REVIEW.md).
 
-## Когда переходить к прямому browser ↔ Android media
+## Прямой browser ↔ Android media: до production допуска
 
-Проработать архитектуру можно отдельным следующим этапом, **не ожидая завершения
-всех будущих 41 возможностей**. До выбора решения нужны versioned offer/input
-contract, auth/ownership boundaries, измеримый текущий transport baseline и
-resource accounting; сетевой план должен различать same-PC, LAN и Internet/NAT.
-Требование «прямое соединение» не означает гарантию direct path в любой сети:
-исследование должно предусмотреть явный relay fallback и его ограничения.
+Исследование и реализация уже начаты по прямому разрешению пользователя.
+Primary WebRTC video pilot установлен в UI/API6ee; direct input и новые idle/
+presentation recovery подготовлены в source522, все три CI прошли. Их установка
+и подписанный APK55 ожидают ремонта C:. Полная production приёмка ещё впереди.
 
-До production pilot необходимы закрытые idle/control-owner риски, session/auth/
-geometry fences, подтверждённые capture/encoder/browser budgets и отдельные
-прогоны direct/relay/reconnect/revocation/version compatibility с rollback.
-Технология предложена для прототипа в [отдельном исследовании](../design/BROWSER-DIRECT-TRANSPORT.md);
-Android artifact выбран для изолированного RTT canary; рабочий WebRTC, VPN и AI
-этим этапом не установлены. Live media/control приёмка остаётся впереди.
-В новом transport APK execution сценариев и server task receipts должны сохранять
-свою независимую семантику. Устойчивые online badges — полезное наблюдение,
-но не измерение uptime, input-to-frame latency или terminal outcome.
+Все41 будущие возможности продукта не блокируют этот этап автоматически.
+До production нужны session/auth/geometry и control-owner fences, реальная
+проверка удерживаемого CANCEL и fresh STARTUP, ближайшего выбранного ICE route,
+localhost/LAN/Internet и TURN fallback. Host-first ICE не обходит VPN или firewall;
+прямой маршрут доступен только для реально достижимой пары.
+
+Нужны отдельные capture/encode/network/decode/presentation и input-to-picture
+измерения, длительный idle/action/reconnect soak и ресурсные бюджеты. Android
+execution сценариев и серверные task receipts сохраняют свою семантику.
+Online badge, echo RTT и успешная сборка не доказывают эти критерии.
+[Архитектура](../design/BROWSER-DIRECT-TRANSPORT.md) ·
+[Проверенная подготовка](../audits/2026-10-11/STREAM-IDLE-PROGRESS-RECOVERY.md).
 
 ## Как закрывать работу без потери истории
 
@@ -540,9 +573,11 @@ Android artifact выбран для изолированного RTT canary; р
 
 **PARTIAL**
 
-Проверены текущие DAG/discovery/OTA границы и private release guards.
-[Versioned capability и release plan](../design/APK-1.3-COMPATIBILITY-AND-RELEASE.md).
-Остаток: idle/native/resources/совместимость/signing/staged rollout; stable1.3.0 не выпущен.
+Versioned DAG/discovery/OTA boundaries reviewed. The older PH03010251 finite RTP report is historical; current fleet follow-up verifies15 APK54 hashes including PH030. Combined source522 APK55 debug CI passed; configured pilot signing/install and stable1.3 promotion are still pending.
+
+Остаток: Idle reliability, native lifecycle/resources, direct path and capability matrix acceptance, production signer verification and staged OTA promotion.
+
+[Сверка и следующий допуск](../audits/2026-10-11/STREAM-IDLE-PROGRESS-RECOVERY.md).
 
 ### CHAT-17 · Broadcast500 и CSS preload публичного веба
 
@@ -588,8 +623,8 @@ native ACK, focus/held keys, permissions/mute/autoplay, sync и resource budgets
 
 **PARTIAL**
 
-Установлена ограниченная история на устройство: 10 сеансов, 32 KiB/сеанс, 7 дней.
-Отдельно сохраняются счётчики APK/браузера, фактический video transport, primary ICE/DTLS и код отказа, в том числе без кадра.
-Успешные 1804 primary кадра PH011 в предыдущем сеансе и новая конечная UI/API проверка не смешиваются.
-Ввод ещё серверный; ближайший localhost/LAN/WAN/TURN, direct input, длительный reconnect/idle soak и latency SLA открыты.
-[Текущая установка и границы](../audits/2026-10-11/DIRECT-PRIMARY-VIDEO-CANDIDATE.md).
+Bounded automatic diagnostics and last10 sessions were installed earlier. Source522 preserves10 sessions, 32KiB/session,15 samples/category,7days; adds presentation-stall reason and four compatible native measurements. Worst-case ages/counters retain latest observations and session close in45 local tests; new telemetry runtime not installed.
+
+Остаток: Проверка установленного APK55/API/UI: source ages, idle output, direct input, native session journal и browser presentation на реальном Android; end-to-end correlated timestamps и длительные storage/resource bounds.
+
+[Сверка и следующий допуск](../audits/2026-10-11/STREAM-IDLE-PROGRESS-RECOVERY.md).

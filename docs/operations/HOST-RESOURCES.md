@@ -1,12 +1,24 @@
 # Ресурсы хоста: диск, Windows commit, WSL и контейнеры
 
+**11 октября — текущая подготовка без тяжёлых записей.** Preflight16:39 UTC:
+C: Warning / Full Repair Needed, свободно45 332 242 432B (~42.22GiB),
+available RAM15 494 434 816B. Единственная причина отказа — `volume_not_ready`;
+headroom есть, guard не обходился. Пользователь выбрал ручной reboot позже.
+Сборки выполняются в GitHub; новые UI/API и APK55 на хосте не установлены.
+Существующий готовый APK54 доставлен отдельно:15 installed hashes, включаяPH030.
+Collector13708 проверен по живому epoch и141 complete samples; последний
+срез2026-10-11T17:04:25.487185+00:00. Процесс13732 при этом readback не виден; его прежний
+старт не считается текущим покрытием. VSS собирается основным elevated worker.
+Причина расхода C: и повреждения NTFS/Git неизвестна; repair и Git replacement
+не применены. [Точные измерения и CI](../audits/2026-10-11/STREAM-IDLE-PROGRESS-RECOVERY.json).
+
 **11 октября,12:24 UTC — дефекты подтверждены, ремонт ожидает следующей загрузки.**
 Elevated scan вернул `ScanErrorsFoundNeedSpotFix`; позднейший preflight снова
 `Full Repair Needed`. Git fsck нашёл10 повреждённых объектов, четыре в текущем
 source. Независимо полученный pushed source проверен по3089 Git blob hashes;
 локальная копия26 files/24MB включает consistent PostgreSQL dump с полным decode.
 Копия на том же SSD. BootExecute для C: подтверждён; reboot/repair/rollback не выполнены.
-Новые UI/API/APK пока не устанавливались.
+На момент этого среза новые UI/API/APK не устанавливались; позднейшая доставка APK54 описана выше.
 
 Прежний PID43984 отсутствует после последнего sample11:35 UTC. Новый elevated
 PID13708 начал24h окно12:24 UTC:24 named files, RAM/commit/process IO, отдельный

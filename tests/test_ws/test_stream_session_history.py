@@ -238,7 +238,8 @@ async def test_full_width_counters_cannot_block_recent_observations_or_session_c
     }
     telemetry.update(schema_version=2, active=True, stage="capture_encoder_ws_queue", encoder_fps=240,
                      capture_fps=240, render_fps=240, key_frame_ratio=0.9999999999999999,
-                     ws_queue_rejected_total=0)
+                     ws_queue_rejected_total=0, last_capture_age_ms=86400000,
+                     last_render_age_ms=86400000, last_encoded_age_ms=86400000)
     native = AgentStreamTelemetry.model_validate(telemetry).model_dump()
     browser = SAMPLE | {
         name: 2**53 - 1 for name in SAMPLE
@@ -264,6 +265,11 @@ async def test_full_width_counters_cannot_block_recent_observations_or_session_c
     row = (await store.read(ORG, DEVICE))[0]
     assert row["state"] == "closed" and row["browser_samples"][-1]["received_packets"] == 24
     assert 1 <= len(row["browser_samples"]) <= 15 and 1 <= len(row["agent_samples"]) <= 15
+    retained_agent = row["agent_samples"][-1]["telemetry"]
+    assert all(retained_agent[name] == 86400000 for name in (
+        "last_capture_age_ms", "last_render_age_ms", "last_encoded_age_ms",
+    ))
+    assert retained_agent["idle_refresh_frames_total"] == 2**53
     _, records = store.keys(ORG, DEVICE)
     assert len((await store.redis.hget(records, "viewer")).encode()) <= SESSION_BYTES
 
