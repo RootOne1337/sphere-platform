@@ -148,6 +148,46 @@ class DocumentationStatusTests(unittest.TestCase):
             path.write_text("{}", encoding="utf-8")
             self.assertTrue(validate_primary_video_pilot(root, direct))
 
+    def test_direct_media_installation_requires_updated_hashes_without_accepting_input_execution(self) -> None:
+        device = "414ce0e9-4b93-4f96-b9ca-ee675f53835e"
+        pilot = dict(enabled=True, scope="primary_video_and_input_v1", deviceIds=[device],
+                     primaryVideoInstalled=True, directInputInstalled=True, mediaControlInstalled=True,
+                     directInputAccepted=False, productionAccepted=False)
+        apk = dict(versionCode=10255, sha256="a" * 64, installedDevices=[
+            dict(deviceId=device, versionCode=10255, installedPackageSha256="a" * 64)])
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            path = root / "direct.json"
+
+            def bound(picture=pilot, package=apk):
+                path.write_text(json.dumps(dict(runtimeInstalled=True, diagnosticPilot=picture, apk=package)), encoding="utf-8")
+                return dict(pilotEvidence=path.name, pilotEvidenceSha256NormalizedLf=normalized_hash(path),
+                            pilotCurrentlyEnabled=True, pilotDeviceIds=[device], primaryVideoObserved=False)
+
+            self.assertEqual(validate_primary_video_pilot(root, bound(), with_direct_input=True), [])
+            for key, value in (("directInputAccepted", True), ("productionAccepted", True),
+                               ("directInputInstalled", False), ("mediaControlInstalled", False),
+                               ("scope", "primary_video_v1")):
+                with self.subTest(key=key):
+                    self.assertTrue(validate_primary_video_pilot(root, bound(picture=pilot | {key: value}), with_direct_input=True))
+            for package in (apk | {"versionCode": 10254}, apk | {"installedDevices": []},
+                            apk | {"installedDevices": [apk["installedDevices"][0] | {"installedPackageSha256": "b" * 64}]}):
+                with self.subTest(package=package):
+                    self.assertTrue(validate_primary_video_pilot(root, bound(package=package), with_direct_input=True))
+
+    def test_direct_media_registry_keeps_execution_and_production_unaccepted(self) -> None:
+        base = dict(state="DIRECT_MEDIA_PILOT_INSTALLED", implementationAuthorizedNow=True,
+                    prototypeScope="primary_video_and_input_v1", runtimeInstalled=True, primaryVideoInstalled=True,
+                    readOnlyVideoInstalled=True, primaryVideoObserved=False, directInputInstalled=True,
+                    mediaControlInstalled=True, directInputAccepted=False, productionAccepted=False)
+        for key, value in (("directInputAccepted", True), ("mediaControlInstalled", False),
+                           ("productionAccepted", True), ("implementationAuthorizedNow", False)):
+            with self.subTest(key=key):
+                changed = copy.deepcopy(self.registry)
+                changed["directMedia"].update(base | {key: value})
+                self.assertIn("Direct media installation cannot imply direct input or production acceptance",
+                              validate_registry(ROOT, changed))
+
     def test_primary_registry_cannot_claim_direct_input_or_production_from_video_installation(self) -> None:
         base = dict(state="PRIMARY_VIDEO_PILOT_INSTALLED", implementationAuthorizedNow=True,
                     prototypeScope="primary_video_v1", runtimeInstalled=True, primaryVideoInstalled=True,
@@ -237,6 +277,15 @@ class DocumentationStatusTests(unittest.TestCase):
             "evidence": "docs/audits/2026-10-09/STUDIO-RECORDER-CLOCK-FIX.md",
         })
         self.assertTrue(any("incorrectly marked installed" in e for e in validate_registry(ROOT, self.registry)))
+
+    def test_installed_correction_cannot_invent_delivery_or_runtime_acceptance(self) -> None:
+        for key, value in (("deliveryEvidenceSha256NormalizedLf", "0" * 64),
+                           ("id", "UNDELIVERED_CORRECTION"), ("runtimeAccepted", True),
+                           ("installedRevision", "0" * 40)):
+            with self.subTest(key=key):
+                changed = copy.deepcopy(self.registry)
+                changed["installedCorrections"][0][key] = value
+                self.assertTrue(any("Installed correction" in error for error in validate_registry(ROOT, changed)))
 
     def test_completed_correction_fingerprint_is_required(self) -> None:
         self.registry["completedCorrections"][0]["evidenceSha256NormalizedLf"] = "0" * 64

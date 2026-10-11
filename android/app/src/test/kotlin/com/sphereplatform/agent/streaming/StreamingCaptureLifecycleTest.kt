@@ -81,7 +81,7 @@ class StreamingCaptureLifecycleTest {
         // can be checked without trying to idle a Looper that quitSafely retired.
         mockkConstructor(Handler::class)
         val scheduled = mutableListOf<Runnable>()
-        every { anyConstructed<Handler>().postDelayed(capture(scheduled), 1000L) } returns true
+        every { anyConstructed<Handler>().postDelayed(capture(scheduled), 34L) } returns true
         every { anyConstructed<Handler>().removeCallbacksAndMessages(null) } just Runs
         var now = 1_000_000L
         manager.monotonicNs = { now }

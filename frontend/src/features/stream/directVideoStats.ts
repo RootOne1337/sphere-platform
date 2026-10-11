@@ -53,4 +53,11 @@ export function preferLowVideoDelay(receiver: RTCRtpReceiver): void {
     try { (receiver as RTCRtpReceiver & { jitterBufferTarget: number }).jitterBufferTarget = 0; }
     catch { /* Keep interoperable defaults if the browser rejects this optional setting. */ }
   }
+  // Chromium releases also expose this older receive control in seconds. Some
+  // builds hide jitterBufferTarget behind a runtime feature. Set independently:
+  // rejection of one API must not suppress the other supported control.
+  if ('playoutDelayHint' in receiver) {
+    try { (receiver as RTCRtpReceiver & { playoutDelayHint: number }).playoutDelayHint = 0; }
+    catch { /* A receive hint is optional and never a reason to drop the track. */ }
+  }
 }

@@ -24,7 +24,10 @@ type SessionRecord = { session_id: string; opened_at: string; state: 'active' | 
     direct_network?: { local_candidates: number; remote_candidates: number; pairs: number;
       checking_pairs: number; failed_pairs: number; succeeded_pairs: number;
       requests_sent: number | null; responses_received: number | null } | null }[];
-  browser_summary?: { max_control_rtt_ms?: number; max_decode_errors: number; max_render_errors: number };
+  browser_summary?: { max_control_rtt_ms?: number; max_decode_errors: number; max_render_errors: number;
+    last_control_failure_detail?: string; last_control_fence_received_at?: string;
+    last_control_fence?: {phase:string;pointer_held:boolean;idle_heartbeat_only:boolean;pending_count:number|null;
+      oldest_age_ms:number|null;last_receipt_rtt_ms:number|null;tick_gap_ms:number|null;buffered_bytes:number|null} };
   direct_diagnostics?: { profile: string; path: string; presented_frames: number; echo_rtt_p95_ms?: number; reason?: string }[];
   native_direct_samples?: { received_at: string; peer_id: string; sequence: number; kind: 'sample' | 'final';
     stage: string; elapsed_ms: number; answer_sent: boolean; network_sample_age_ms: number | null;
@@ -95,6 +98,14 @@ export function StreamSessionHistoryPanel({ deviceId }: { deviceId: string }) {
             </div> : <p className="mt-1">APK не сообщил данные для этой попытки. Отсутствие отчёта не означает нулевые счётчики или исправное соединение.</p>}
           </details>
           {fault && <div className="mt-1 break-words text-xs text-muted-foreground">Последний отказ управления: {fault.reason ?? fault.error}</div>}
+          {row.browser_summary?.last_control_failure_detail && <div className="mt-1 break-words text-xs text-muted-foreground">
+            Последний сбой в браузере: {row.browser_summary.last_control_failure_detail}.
+            {row.browser_summary.last_control_fence && <>
+              {` Фаза ${row.browser_summary.last_control_fence.phase} · ${row.browser_summary.last_control_fence.pointer_held ? 'касание удерживалось' : row.browser_summary.last_control_fence.idle_heartbeat_only ? 'только heartbeat без касания' : 'касание не удерживалось'}.`}
+              {` Ожидали ACK: ${row.browser_summary.last_control_fence.pending_count ?? '—'} · возраст старейшей команды ${row.browser_summary.last_control_fence.oldest_age_ms ?? '—'} мс · последний RTT ${row.browser_summary.last_control_fence.last_receipt_rtt_ms ?? '—'} мс.`}
+              {` Разрыв тиков браузера ${row.browser_summary.last_control_fence.tick_gap_ms ?? '—'} мс · буфер отправки ${row.browser_summary.last_control_fence.buffered_bytes ?? '—'} B.`}
+            </>}
+          </div>}
         </li>;
       })}</ol>}
   </details>;

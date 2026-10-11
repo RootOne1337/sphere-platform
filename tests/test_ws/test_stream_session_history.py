@@ -34,6 +34,52 @@ PROBE = dict(schema_version=1, mode="readonly_video", trigger="automatic", profi
              width=960, height=540, ice_state="connected", dtls_state="connected")
 ICE = dict(local_candidates=5, remote_candidates=1, pairs=1, checking_pairs=1,
            failed_pairs=0, succeeded_pairs=0, requests_sent=237, responses_received=0)
+FENCE = dict(reason="native_receipt_timeout", phase="ready", age_ms=0, pointer_held=False,
+             idle_heartbeat_only=True, offered_sequence=25, acknowledged_sequence=20, pending_count=5,
+             oldest_action=4, oldest_age_ms=1250, oldest_deadline_age_ms=1250, terminal_age_ms=None,
+             tick_gap_ms=16, last_send_age_ms=200, last_receipt_age_ms=1400, last_receipt_rtt_ms=250,
+             socket_state=1, buffered_bytes=0)
+
+
+@pytest.mark.parametrize("cause", ["idle_receipt_timeout", "pointer_receipt_timeout"])
+async def test_control_fence_survives_sample_eviction_without_becoming_an_input_authority(store, cause):
+    assert await store.begin(ORG, DEVICE, "viewer")
+    assert await store.browser(ORG, DEVICE, "viewer", SAMPLE | {
+        "control_failure": "timeout", "control_failure_detail": cause, "control_fence": FENCE,
+    })
+    for _ in range(20):
+        assert await store.browser(ORG, DEVICE, "viewer", SAMPLE)
+    row = (await store.read(ORG, DEVICE))[0]
+    assert row["browser_summary"]["last_control_failure_detail"] == cause
+    assert row["browser_summary"]["last_control_fence"] == FENCE
+    assert datetime.fromisoformat(row["browser_summary"]["last_control_fence_received_at"]).tzinfo
+    assert "control_fence" not in row["browser_samples"][-1]
+    assert len(json.dumps(row).encode()) < SESSION_BYTES
+    assert await store.begin(ORG, DEVICE, "replacement")
+    assert "browser_summary" not in (await store.read(ORG, DEVICE))[0]
+
+
+@pytest.mark.parametrize("change", [
+    {"coordinates": [1, 2]}, {"owner": "private"}, {"reason": "private exception"},
+    {"pending_count": 33}, {"offered_sequence": 2147483648}, {"oldest_action": 5},
+    {"pointer_held": 1}, {"socket_state": 4}, {"age_ms": float("nan")}, {"buffered_bytes": -1},
+])
+async def test_control_fence_rejects_private_unbounded_and_malformed_nested_fields(store, change):
+    assert await store.begin(ORG, DEVICE, "viewer")
+    assert not await store.browser(ORG, DEVICE, "viewer", SAMPLE | {"control_fence": FENCE | change})
+    assert "browser_samples" not in (await store.read(ORG, DEVICE))[0]
+
+
+async def test_maximum_fence_and_ice_samples_still_fit_the_existing_session_budget(store):
+    assert await store.begin(ORG, DEVICE, "viewer")
+    for _ in range(40):
+        assert await store.browser(ORG, DEVICE, "viewer", SAMPLE | {"direct_network": ICE, "control_fence": FENCE,
+            "control_failure_detail": "idle_receipt_timeout"})
+        assert await store.observe_agent(ORG, DEVICE, "viewer")
+    row = (await store.read(ORG, DEVICE))[0]
+    assert row["browser_summary"]["reports"] == 40
+    assert row["browser_summary"]["last_control_fence"] == FENCE
+    assert len(json.dumps(row).encode()) < SESSION_BYTES
 
 
 @pytest.mark.parametrize("reason", ["control_channel_closed", "control_channel_failed", "invalid_control_message"])

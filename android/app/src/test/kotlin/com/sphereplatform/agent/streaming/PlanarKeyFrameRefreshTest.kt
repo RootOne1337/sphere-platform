@@ -49,13 +49,38 @@ class PlanarKeyFrameRefreshTest {
     @Test fun `idle clock does not submit uninitialized pixels or repeat an active source`() {
         assertFalse(encoder.refreshIdleFrame())
         source(); callback.captured.onInputBufferAvailable(codec,7)
-        now += 999_999_999L
+        now += 33_333_333L
         assertFalse(encoder.refreshIdleFrame()); assertEquals(0,idleRefreshes)
         now += 1L
         assertTrue(encoder.refreshIdleFrame()); assertEquals(1,idleRefreshes)
-        verify(exactly=1) { codec.queueInputBuffer(7,0,6,1_001_000L,0) }
+        verify(exactly=1) { codec.queueInputBuffer(7,0,6,34_333L,0) }
         repeat(20) { assertFalse(encoder.refreshIdleFrame()) }
         verify(exactly=2) { codec.queueInputBuffer(any(),any(),any(),any(),any()) }
+    }
+
+    @Test fun `unchanged image continues at the configured cadence without new capture or raw conversion`() {
+        source()
+        val pixels = destination.array().copyOf()
+        for (frame in 1..30) {
+            callback.captured.onInputBufferAvailable(codec,7)
+            now += 33_333_334L
+            assertTrue(encoder.refreshIdleFrame())
+            assertArrayEquals(pixels, destination.array())
+        }
+        assertEquals(30, idleRefreshes)
+        verify(exactly=31) { codec.queueInputBuffer(any(),any(),any(),any(),any()) }
+        assertFalse(encoder.refreshIdleFrame())
+    }
+
+    @Test fun `cadence budget supports one to sixty fps without rounding above its limit`() {
+        for (fps in 1..60) {
+            val config = H264Encoder.EncoderConfig(fps=fps)
+            assertTrue(config.frameIntervalNs * fps >= 1_000_000_000L)
+            assertTrue(config.frameIntervalMs * fps >= 1000L)
+        }
+        for (fps in listOf(0, -1, 61, Int.MAX_VALUE)) {
+            assertThrows(IllegalArgumentException::class.java) { H264Encoder.EncoderConfig(fps=fps) }
+        }
     }
 
     @Test fun `busy idle refresh is coalesced and fresh frames resume the producer cadence`() {

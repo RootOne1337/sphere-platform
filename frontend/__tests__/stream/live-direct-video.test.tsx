@@ -204,3 +204,45 @@ test('missing native admission never creates a direct media peer', () => {
   mockAdmission.data.admitted = false;
   const view = mount(); expect(mockStart).not.toHaveBeenCalled(); view.unmount();
 });
+
+test('a network switch coalesces notifications, bypasses old cooldown and rejects old frames and control handles', async () => {
+  const network = new EventTarget();
+  Object.defineProperty(navigator, 'connection', { configurable: true, value: network });
+  mockAdmission.data.input = true;
+  const onControl = jest.fn(), onFrame = jest.fn(() => true), onObservation = jest.fn();
+  const view = render(<LiveDirectVideo deviceId="device" session={'1'.repeat(16)} eligible expectedCapture={expected}
+    onFrame={onFrame} onObservation={onObservation} onControlChannel={onControl} />);
+  act(() => {mockReport(connected); mockTrack({ kind: 'video' } as MediaStreamTrack);}); await act(async () => {});
+  act(present);
+  const lateFrame = mockFrame, lateReport = mockReport, lateControl = mockStart.mock.calls[0][3].onControlChannel;
+  act(() => {network.dispatchEvent(new Event('change')); window.dispatchEvent(new Event('online'));});
+  expect(mockStop).toHaveBeenCalledTimes(1);
+  expect(onControl).toHaveBeenLastCalledWith(null);
+  expect(onObservation).toHaveBeenLastCalledWith(expect.objectContaining({active:false,
+    result: expect.objectContaining({reason: 'network_changed'})}));
+  onControl.mockClear();
+  act(() => {lateFrame(2, {width:960,height:540} as VideoFrameCallbackMetadata); lateReport(connected); lateControl({});});
+  expect(onFrame).toHaveBeenCalledTimes(1); expect(onControl).not.toHaveBeenCalled();
+  act(() => jest.advanceTimersByTime(499)); expect(mockStart).toHaveBeenCalledTimes(1);
+  act(() => jest.advanceTimersByTime(1)); expect(mockStart).toHaveBeenCalledTimes(2);
+  view.unmount();
+  act(() => {network.dispatchEvent(new Event('change')); window.dispatchEvent(new Event('online')); jest.advanceTimersByTime(1000);});
+  expect(mockStart).toHaveBeenCalledTimes(2); expect(jest.getTimerCount()).toBe(0);
+  Object.defineProperty(navigator, 'connection', {configurable:true, value:undefined});
+});
+
+test('a changed network cancels the minute cooldown but cannot revive a hidden or unadmitted viewer', () => {
+  const view = mount();
+  for (const delay of [1000,2000,4000]) {
+    act(() => mockReport({...connected, state:'failed', reason:'connection_deadline'}));
+    act(() => jest.advanceTimersByTime(delay));
+  }
+  act(() => mockReport({...connected, state:'failed', reason:'connection_deadline'}));
+  fireEvent(window, new Event('online'));
+  act(() => jest.advanceTimersByTime(500)); expect(mockStart).toHaveBeenCalledTimes(5);
+  Object.defineProperty(document, 'hidden', {configurable:true,value:true});
+  fireEvent(document, new Event('visibilitychange'));
+  fireEvent(window, new Event('online')); act(() => jest.advanceTimersByTime(1000));
+  expect(mockStart).toHaveBeenCalledTimes(5);
+  view.unmount(); expect(jest.getTimerCount()).toBe(0);
+});

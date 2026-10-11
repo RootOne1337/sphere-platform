@@ -1,8 +1,8 @@
 {
   "schemaVersion": 1,
-  "reviewedAtUtc": "2026-10-11T17:05:07.157470+00:00",
+  "reviewedAtUtc": "2026-10-11T18:29:43.539387+00:00",
   "sourceReviewed": "5223998002451b935a25e01f1034b727561588bd",
-  "scope": "Effective source, installed packages and finite acceptance remain separate. All three source522 CI workflows and the combined direct/planar/continuous Android debug profile passed. Fifteen APK54 installed hashes are verified; APK55 and new API/UI remain uninstalled pending C: repair. No new direct-path, latency, production or soak acceptance.",
+  "scope": "API/UI522 installed on both origins; signed APK55 verified on15 compatible online devices,6 offline unverified. PH030 direct NAT video/input observed before network switch; switch recovery and closest-local routing fail. Main-PC direct gesture confirmed only with isolated numeric ICE. Full production acceptance open.",
   "baseline": "docs/audits/2026-10-05/ENTERPRISE-PRODUCT-BACKLOG.json",
   "previousCrosscheck": "docs/audits/2026-10-09/CHAT-CODE-RECONCILIATION.json",
   "counts": {
@@ -11,166 +11,81 @@
     "open": 41
   },
   "installed": {
-    "lastObservedUtc": "2026-10-10T23:12:57.015720+00:00",
-    "ui": "6ee80c1fedf6ea0c656b0d4dc599b87f6bfac135",
-    "api": "6ee80c1fedf6ea0c656b0d4dc599b87f6bfac135",
-    "evidence": "docs/audits/2026-10-11/CURRENT-STREAM-DELIVERY.json",
-    "observation": "UI/API6ee remain installed on both origins. The newer dated fleet receipt verifies15 APK54 installed hashes and14 completed addressed OTA commands; PH010 already had54. PH030 completed its existing grant. Six offline devices were not dispatched; no queued grant remains in this receipt. Signed configured APK55 and source522 API/UI are not installed because C: still needs repair. No new transport, localhost, latency or soak acceptance.",
+    "lastObservedUtc": "2026-10-11T18:29:43.539387+00:00",
+    "ui": "5223998002451b935a25e01f1034b727561588bd",
+    "api": "5223998002451b935a25e01f1034b727561588bd",
+    "evidence": "docs/audits/2026-10-11/POSTBOOT-IDLE55-DELIVERY.json",
+    "observation": "API/UI522 installed on both origins; signed APK55 verified on15 compatible online devices,6 offline unverified. PH030 direct NAT video/input observed before network switch; switch recovery and closest-local routing fail. Main-PC direct gesture confirmed only with isolated numeric ICE. Full production acceptance open.",
     "pilotApk": {
       "device": "PH010",
       "deviceId": "5df4805e-fe64-4d39-960c-19ceab206cd6",
-      "version": "1.2.54-dev",
-      "versionCode": 10254,
-      "sourceRevision": "7b6251817f42423a1ae90fb0c8837a8e976b3f60",
-      "apkSha256": "a8286157a7f78dd64fd7e954770f076d744822572602f56a154ad40fbad023d0",
-      "evidence": "docs/audits/2026-10-11/APK54-FLEET-FOLLOWUP.json",
-      "evidenceSha256NormalizedLf": "5c17a86840a0d620ed3f4000aa54d81065a2247a2c23317f0816af33752f6fcc",
-      "scope": "Actual installed package hash at the dated fleet readback. Browser/API revision and direct transport acceptance remain separate."
+      "version": "1.2.55-dev",
+      "versionCode": 10255,
+      "sourceRevision": "5223998002451b935a25e01f1034b727561588bd",
+      "apkSha256": "9abe0fce7846cfc61e1d19142b2ce854d096eac71b63fe5ba0ec6465030892ca",
+      "evidence": "docs/audits/2026-10-11/POSTBOOT-IDLE55-DELIVERY.json",
+      "evidenceSha256NormalizedLf": "e46e91ff7fcdafa6f07a020468667e0744d26ad63378d30beedb70199954daee",
+      "scope": "Exact installed package hash and completed addressed command; no direct or laptop runtime acceptance."
     },
-    "evidenceSha256NormalizedLf": "bea19c8e3da285f74df8b8e14faef6fcf1765877460d0118a4424c43c0b144b1",
+    "evidenceSha256NormalizedLf": "e46e91ff7fcdafa6f07a020468667e0744d26ad63378d30beedb70199954daee",
     "additionalPilotApks": [
       {
         "device": "PH011",
         "deviceId": "414ce0e9-4b93-4f96-b9ca-ee675f53835e",
-        "version": "1.2.54-dev",
-        "versionCode": 10254,
-        "sourceRevision": "7b6251817f42423a1ae90fb0c8837a8e976b3f60",
-        "apkSha256": "a8286157a7f78dd64fd7e954770f076d744822572602f56a154ad40fbad023d0",
-        "evidence": "docs/audits/2026-10-11/APK54-FLEET-FOLLOWUP.json",
-        "evidenceSha256NormalizedLf": "5c17a86840a0d620ed3f4000aa54d81065a2247a2c23317f0816af33752f6fcc",
-        "scope": "Actual installed package hash at the dated fleet readback. Browser/API revision and direct transport acceptance remain separate."
+        "version": "1.2.55-dev",
+        "versionCode": 10255,
+        "sourceRevision": "5223998002451b935a25e01f1034b727561588bd",
+        "apkSha256": "9abe0fce7846cfc61e1d19142b2ce854d096eac71b63fe5ba0ec6465030892ca",
+        "evidence": "docs/audits/2026-10-11/POSTBOOT-IDLE55-DELIVERY.json",
+        "evidenceSha256NormalizedLf": "e46e91ff7fcdafa6f07a020468667e0744d26ad63378d30beedb70199954daee",
+        "scope": "Exact installed package hash and completed addressed command; no direct or laptop runtime acceptance."
       }
     ],
     "fleetApkEvidence": {
-      "evidence": "docs/audits/2026-10-11/APK54-FLEET-FOLLOWUP.json",
-      "evidenceSha256NormalizedLf": "5c17a86840a0d620ed3f4000aa54d81065a2247a2c23317f0816af33752f6fcc",
-      "observedAtUtc": "2026-10-11T16:26:10.350615+00:00",
+      "evidence": "docs/audits/2026-10-11/POSTBOOT-IDLE55-DELIVERY.json",
+      "evidenceSha256NormalizedLf": "e46e91ff7fcdafa6f07a020468667e0744d26ad63378d30beedb70199954daee",
+      "observedAtUtc": "2026-10-11T18:16:13.043491+00:00",
       "installedCount": 15,
       "verifiedVersionCounts": {
-        "10254": 15
+        "10255": 15
       },
       "unverifiedOfflineCount": 6,
       "queuedOfflineCount": 0,
       "offlineNotDispatchedCount": 6,
-      "scope": "Fifteen compatible devices have exact APK54 installed hashes, including PH030. The six offline devices have no dispatched command. No direct-video/input or native soak acceptance."
+      "scope": "All15 online compatible pilot packages verified. Six offline records have no verified package or queued grant. No fleet direct/soak acceptance."
     },
-    "latestReadbackAtUtc": "2026-10-11T16:26:10.350615+00:00",
-    "latestReadbackEvidence": "docs/audits/2026-10-11/APK54-FLEET-FOLLOWUP.json",
-    "latestReadbackEvidenceSha256NormalizedLf": "5c17a86840a0d620ed3f4000aa54d81065a2247a2c23317f0816af33752f6fcc"
+    "latestReadbackAtUtc": "2026-10-11T18:16:13.043491+00:00",
+    "latestReadbackEvidence": "docs/audits/2026-10-11/POSTBOOT-IDLE55-DELIVERY.json",
+    "latestReadbackEvidenceSha256NormalizedLf": "e46e91ff7fcdafa6f07a020468667e0744d26ad63378d30beedb70199954daee"
   },
   "pendingCorrections": [
     {
-      "id": "android-confirmed-watchdog-cleanup",
+      "id": "stream-cadence-network-and-fence",
       "installed": false,
-      "sourceBaseRevision": "8fe2915a983f07fc04045e49eefda1b053a01b84",
-      "testedRevision": "b53a175846bf11055d4e0ddf00aa81c8ff5eaf56",
-      "evidence": "docs/audits/2026-10-11/DIRECT-PRIMARY-VIDEO-CANDIDATE.md",
-      "scope": "The watchdog correction is included in the hash-verified APK54 installed on15 devices. The earlier idle native cleanup exit0 was finite PH010 evidence only. Held CANCEL, PH025 runtime and six offline devices remain unaccepted; code installation is not full runtime acceptance.",
-      "deliveryState": "PARTIALLY_DELIVERED",
-      "runtimeAccepted": false,
-      "deployedDeviceCount": 15,
-      "deliveryEvidence": "docs/audits/2026-10-11/APK54-FLEET-FOLLOWUP.json",
-      "deliveryEvidenceSha256NormalizedLf": "5c17a86840a0d620ed3f4000aa54d81065a2247a2c23317f0816af33752f6fcc"
-    },
-    {
-      "id": "native-retirement-preserves-retry",
-      "installed": false,
-      "sourceBaseRevision": "6ee80c1fedf6ea0c656b0d4dc599b87f6bfac135",
-      "testedRevision": "e9af9e60be1b2dcb1f13f7dd8b17db93dc8bfa4c",
-      "evidence": "docs/audits/2026-10-11/DIRECT-INPUT-DELIVERY-BLOCKED.md",
-      "scope": "The reproduced 22ms follow-up terminal rejection during RELEASE is fixed in source/CI; runtime replacement stopped before image load.",
-      "latestIntegrationRevision": "5223998002451b935a25e01f1034b727561588bd",
-      "latestIntegrationCiEvidence": "docs/audits/2026-10-11/STREAM-IDLE-PROGRESS-RECOVERY.json",
-      "latestIntegrationCiEvidenceSha256NormalizedLf": "7ac55c8ebeeb09f6a72cc051e9ac768ea193bb343a6e675f18dfe7b65359142c"
-    },
-    {
-      "id": "native-direct-session-journal",
-      "installed": false,
-      "sourceBaseRevision": "e3bf0f615fa03150e76d4e87bdd30104be927152",
-      "evidence": "docs/audits/2026-10-11/NATIVE-DIRECT-DIAGNOSTICS-SOURCE.md",
-      "scope": "Automatic bounded native ICE/stage journal; all three CI workflows passed. Android PR merge subtree equals reviewed head. Pilot signing, install and native runtime acceptance pending.",
-      "deliveryState": "CI_READY_NOT_INSTALLED",
-      "runtimeAccepted": false,
-      "candidateVersionCode": 10255,
-      "testedRevision": "4ce2c6d6ef5e9d3abbe267b29f5d266d86d59946",
-      "ciEvidence": "docs/audits/2026-10-11/NATIVE-DIRECT-DIAGNOSTICS-CI.json",
-      "ciEvidenceSha256NormalizedLf": "b7131e2bbcfb2abe637e2b7054224529a64c3f696e13231c635c9bef6a6c3401",
-      "installationBlock": {
-        "state": "VOLUME_REPAIR_PENDING_REBOOT",
-        "evidence": "docs/audits/2026-10-11/HOST-REPAIR-1216.json",
-        "evidenceSha256NormalizedLf": "6b2ed2ff7ab94c4d9489da9f71651348e7839f438e12b3ea4508db28d1722955",
-        "installed": false
-      },
-      "latestIntegrationRevision": "5223998002451b935a25e01f1034b727561588bd",
-      "latestIntegrationCiEvidence": "docs/audits/2026-10-11/STREAM-IDLE-PROGRESS-RECOVERY.json",
-      "latestIntegrationCiEvidenceSha256NormalizedLf": "7ac55c8ebeeb09f6a72cc051e9ac768ea193bb343a6e675f18dfe7b65359142c"
-    },
-    {
-      "id": "direct-channel-and-admission-recovery",
-      "installed": false,
-      "sourceBaseRevision": "9b5a6fd8dde5ba704ba78fc5def205d6c029deb9",
-      "testedRevision": "500186e2a18378f82e55ddcab5c8700d41e29a5a",
-      "evidence": "docs/audits/2026-10-11/DIRECT-CHANNEL-RECOVERY.md",
-      "localEvidence": "docs/audits/2026-10-11/DIRECT-CHANNEL-RECOVERY.json",
-      "localEvidenceSha256NormalizedLf": "479fc95e4f34cdd6eb83a828b1bfb97afa6e2c8b39b96b9f3fce8096736d5210",
-      "deliveryState": "READY_API_UI_CI_NOT_INSTALLED",
-      "runtimeAccepted": false,
-      "scope": "Exact-peer restart and bounded admission retry locally tested; API/UI CI76 passed with trees identical to source500. Installation remains blocked by volume repair. Existing APK54 was distributed separately; source500 is not installed.",
-      "installationBlock": {
-        "state": "VOLUME_REPAIR_PENDING_REBOOT",
-        "evidence": "docs/audits/2026-10-11/HOST-REPAIR-1216.json",
-        "installed": false
-      },
-      "ciSourceRevision": "76b01afd9136cc5b85b19431a10e81706eb4ec59",
-      "apiUiCiEvidence": "docs/audits/2026-10-11/APK54-FLEET-DELIVERY.json",
-      "apiUiCiEvidenceSha256NormalizedLf": "9cdb0cd22f098c3d02538122f8da4612702fb07584c8d801d1876c6231f08e56",
-      "latestIntegrationRevision": "5223998002451b935a25e01f1034b727561588bd",
-      "latestIntegrationCiEvidence": "docs/audits/2026-10-11/STREAM-IDLE-PROGRESS-RECOVERY.json",
-      "latestIntegrationCiEvidenceSha256NormalizedLf": "7ac55c8ebeeb09f6a72cc051e9ac768ea193bb343a6e675f18dfe7b65359142c"
-    },
-    {
-      "id": "stream-idle-progress-recovery",
-      "installed": false,
-      "runtimeAccepted": false,
-      "sourceBaseRevision": "2d7464c4cdf030877694193f8adb2b18bbfab535",
-      "testedRevision": "5223998002451b935a25e01f1034b727561588bd",
-      "candidateVersionCode": 10255,
-      "deliveryState": "CI_READY_NOT_INSTALLED",
-      "evidence": "docs/audits/2026-10-11/STREAM-IDLE-PROGRESS-RECOVERY.md",
-      "ciEvidence": "docs/audits/2026-10-11/STREAM-IDLE-PROGRESS-RECOVERY.json",
-      "ciEvidenceSha256NormalizedLf": "7ac55c8ebeeb09f6a72cc051e9ac768ea193bb343a6e675f18dfe7b65359142c",
-      "scope": "Bounded raw idle refresh, presentation-progress watchdog, four compatible native measurements and exact approved installer modules. Combined Android profile and API/web CI passed; native pilot install and runtime acceptance remain pending.",
-      "installationBlock": {
-        "state": "VOLUME_REPAIR_PENDING_REBOOT",
-        "evidence": "docs/audits/2026-10-11/HOST-REPAIR-1216.json",
-        "evidenceSha256NormalizedLf": "6b2ed2ff7ab94c4d9489da9f71651348e7839f438e12b3ea4508db28d1722955",
-        "installed": false
-      }
+      "evidence": "docs/audits/2026-10-12/STREAM-NETWORK-CADENCE-FOLLOWUP.md",
+      "scope": "APK56 configured idle cadence; web network-change coalescing and capability race; bounded control-fence history. Source candidate, CI/delivery not yet recorded."
     }
   ],
   "storage": {
-    "lastObservedUtc": "2026-10-11T17:05:07.157470+00:00",
+    "lastObservedUtc": "2026-10-11T18:29:43.539387+00:00",
     "visibleMatchingProcesses": 1,
     "activeCollectorWorkers": 1,
     "continuousCoverageConfirmed": false,
-    "observationScope": "Current bounded prefix and elevated collector13708 live epoch verified. 24h/721 samples/16MiB, 24 named files, RAM/commit/process IO, separately bounded VSS and periodic Docker/WSL. The historical secondary hourly worker is not presumed alive. Coverage gaps and lack of autostart remain; NTFS repair and independent Git objects are prepared, not applied. Writer of all C: losses remains unknown.",
-    "oneFreeDiskReadingBytes": 45329227776,
+    "observationScope": "Boot NTFS repair and ten exact Git replacements completed. Current limited worker39092 has no guaranteed VSS, autostart or independent lifetime. Coverage gap remains; disk writers and hardware root cause unknown.",
+    "oneFreeDiskReadingBytes": 43034763264,
     "latestCompletedEvidence": "docs/audits/2026-10-11/STORAGE-OBSERVATION-0335.json",
-    "activeEvidence": "docs/audits/2026-10-11/HOST-REPAIR-1216.json",
-    "evidenceSha256NormalizedLf": "6b2ed2ff7ab94c4d9489da9f71651348e7839f438e12b3ea4508db28d1722955",
+    "activeEvidence": "docs/audits/2026-10-11/POSTBOOT-IDLE55-DELIVERY.json",
+    "evidenceSha256NormalizedLf": "e46e91ff7fcdafa6f07a020468667e0744d26ad63378d30beedb70199954daee",
     "volumeObservation": {
-      "observedAtUtc": "2026-10-11T16:39:48.091736+00:00",
-      "health": "Warning",
+      "observedAtUtc": "2026-10-11T18:04:10.811976+00:00",
+      "health": "Healthy",
       "operationalStatus": [
-        "Full Repair Needed"
+        "OK"
       ],
-      "currentScanResultAvailable": true,
-      "scanResult": "ScanErrorsFoundNeedSpotFix",
-      "bootRepairScheduled": true,
-      "repairCompleted": false,
+      "repairCompleted": true,
       "hardwareFailureProven": false,
-      "evidence": "docs/audits/2026-10-11/STREAM-IDLE-PROGRESS-RECOVERY.json",
-      "evidenceSha256NormalizedLf": "7ac55c8ebeeb09f6a72cc051e9ac768ea193bb343a6e675f18dfe7b65359142c"
+      "evidence": "docs/audits/2026-10-11/POSTBOOT-IDLE55-DELIVERY.json",
+      "evidenceSha256NormalizedLf": "e46e91ff7fcdafa6f07a020468667e0744d26ad63378d30beedb70199954daee"
     },
     "retentionPlan": {
       "observedAtUtc": "2026-10-10T23:47:37.483257+00:00",
@@ -180,27 +95,30 @@
       "imageExclusiveLogicalApproxBytes": 33736200000,
       "physicalBytesReclaimed": null,
       "deletionPerformed": false,
-      "blockedBy": "Windows C: Full Repair Needed",
-      "scope": "Read-only plan; 46 container dependencies protected. Rounded logical layers are not a promised host-space reclamation."
+      "blockedBy": null,
+      "scope": "Read-only plan; 46 container dependencies protected. Rounded logical layers are not a promised host-space reclamation. Postboot repair blocker cleared; no cleanup applied in this delivery."
     },
-    "hostRepairEvidence": "docs/audits/2026-10-11/HOST-REPAIR-1216.json",
-    "hostRepairEvidenceSha256NormalizedLf": "6b2ed2ff7ab94c4d9489da9f71651348e7839f438e12b3ea4508db28d1722955",
+    "hostRepairEvidence": "docs/audits/2026-10-11/POSTBOOT-IDLE55-DELIVERY.json",
+    "hostRepairEvidenceSha256NormalizedLf": "e46e91ff7fcdafa6f07a020468667e0744d26ad63378d30beedb70199954daee",
     "gitRecovery": {
-      "evidence": "docs/audits/2026-10-11/GIT-RECOVERY-1236.json",
-      "evidenceSha256NormalizedLf": "4f6ad8fc1bf497369783ce30397093b91ab97ea3fae0cc181fccc4836e6370ea",
+      "evidence": "docs/audits/2026-10-11/POSTBOOT-IDLE55-DELIVERY.json",
+      "evidenceSha256NormalizedLf": "e46e91ff7fcdafa6f07a020468667e0744d26ad63378d30beedb70199954daee",
       "verifiedReplacementCount": 10,
-      "applied": false
+      "applied": true,
+      "fsckExit": 0
     },
     "currentPrefixObservation": {
-      "observedAtUtc": "2026-10-11T17:05:07.157470+00:00",
-      "evidence": "docs/audits/2026-10-11/STREAM-IDLE-PROGRESS-RECOVERY.json",
-      "evidenceSha256NormalizedLf": "7ac55c8ebeeb09f6a72cc051e9ac768ea193bb343a6e675f18dfe7b65359142c",
-      "workerPid": 13708,
-      "completeSamples": 141,
-      "lastSampleUtc": "2026-10-11T17:04:25.487185+00:00",
+      "observedAtUtc": "2026-10-11T18:29:43.539387+00:00",
+      "evidence": "docs/audits/2026-10-11/POSTBOOT-IDLE55-DELIVERY.json",
+      "evidenceSha256NormalizedLf": "e46e91ff7fcdafa6f07a020468667e0744d26ad63378d30beedb70199954daee",
+      "workerPid": 39092,
+      "completeSamples": 17,
+      "lastSampleUtc": "2026-10-11T18:29:31.501470+00:00",
       "workerIdentityVerified": true,
-      "secondaryHourlyWorkerVisible": false,
-      "oneFreeDiskReadingBytes": 45329227776,
+      "elevated": false,
+      "memberOfJob": true,
+      "uptimeGuaranteed": false,
+      "oneFreeDiskReadingBytes": 43034763264,
       "writerAttribution": "UNDETERMINED"
     }
   },
@@ -250,11 +168,11 @@
     "crosswalkScope": "Related scope only, not identity, closure or deduplication proof."
   },
   "directMedia": {
-    "state": "PRIMARY_VIDEO_PILOT_INSTALLED",
+    "state": "DIRECT_MEDIA_PILOT_INSTALLED",
     "implementationAuthorizedNow": true,
     "researchPreparedAtUtc": "2026-10-09T16:46:29Z",
     "researchEvidence": "docs/design/BROWSER-DIRECT-TRANSPORT.md",
-    "researchScope": "Direct transport research and prototype implementation have started under explicit user authorization. UI/API6ee primary-video pilot remains installed; latest fleet evidence verifies15 APK54 packages. Source522 direct input, freshness telemetry and idle recovery passed all three CI workflows but are not installed. Historical finite route observations do not prove current localhost/LAN/WAN, latency or soak acceptance.",
+    "researchScope": "Reviewed API/UI522 installed on both origins and signed APK55 hash verified on all15 compatible online devices. Finite server fallback video/held reverse gestures accepted on PH010/PH011/PH025. Current direct ICE, direct input, nearest path, latency SLA and soak NOT accepted.",
     "researchPrerequisites": [
       "Versioned offer/input/control ownership and auth contract",
       "Bounded command-to-native/frame timing with unknown results visible",
@@ -269,10 +187,10 @@
     ],
     "requiresAllFutureProductItemsClosed": false,
     "implementationAuthorization": "Последующий прямой запрос пользователя 9 октября 2026: начать разработку browser ↔ APK; текущее «продолжай» сохраняет авторизацию.",
-    "prototypeScope": "primary_video_v1",
+    "prototypeScope": "primary_video_and_input_v1",
     "runtimeInstalled": true,
-    "mediaControlInstalled": false,
-    "implementationEvidence": "docs/audits/2026-10-11/DIRECT-INPUT-CANDIDATE.md",
+    "mediaControlInstalled": true,
+    "implementationEvidence": "docs/audits/2026-10-11/POSTBOOT-IDLE55-DELIVERY.md",
     "sourceCorrections": [
       "docs/audits/2026-10-09/DIRECT-PROBE-VIEWER-ISOLATION.md",
       "docs/audits/2026-10-09/DIRECT-PROBE-PILOT.md",
@@ -294,30 +212,31 @@
       "docs/audits/2026-10-10/STREAM-SESSION-DIAGNOSTICS-INSTALLED.json",
       "docs/audits/2026-10-11/DIRECT-PRIMARY-VIDEO-CANDIDATE.md",
       "docs/audits/2026-10-11/DIRECT-PRIMARY-VIDEO-INSTALLED.json",
-      "docs/audits/2026-10-11/STREAM-IDLE-PROGRESS-RECOVERY.json"
+      "docs/audits/2026-10-11/STREAM-IDLE-PROGRESS-RECOVERY.json",
+      "docs/audits/2026-10-11/POSTBOOT-IDLE55-DELIVERY.json"
     ],
-    "pilotEvidence": "docs/audits/2026-10-11/DIRECT-PRIMARY-VIDEO-INSTALLED.json",
-    "pilotOutcome": "INSTALLED_PRIMARY_VIDEO_WITH_HISTORICAL_PH011_PRESENTATION",
+    "pilotEvidence": "docs/audits/2026-10-11/POSTBOOT-IDLE55-DELIVERY.json",
+    "pilotOutcome": "INSTALLED_WITH_SERVER_FALLBACK_ICE_PATH_OPEN",
     "pilotCurrentlyEnabled": true,
     "nativeDiagnosticAcceptance": {
-      "state": "PRESENT_IN_SIGNED_10254_BUILD",
-      "sourceRevision": "7b6251817f42423a1ae90fb0c8837a8e976b3f60",
-      "evidence": "docs/audits/2026-10-11/APK54-FLEET-FOLLOWUP.json",
+      "state": "PRESENT_IN_INSTALLED_10255_BUILD",
+      "sourceRevision": "5223998002451b935a25e01f1034b727561588bd",
+      "evidence": "docs/audits/2026-10-11/POSTBOOT-IDLE55-DELIVERY.json",
       "currentlyInstalled": true,
       "productionAccepted": false,
-      "scope": "Previously implemented diagnostics present in the verified APK54 package. New APK55 session journal and freshness measurements remain uninstalled; package presence is not network acceptance."
+      "scope": "Session journal and native freshness fields installed; exact direct route still unaccepted."
     },
     "networkPrerequisiteEvidence": "docs/audits/2026-10-10/DIRECT-PROBE-TURN-AND-LAPTOP.json",
     "additionalNativeCanary": {
       "device": "PH030",
       "deviceId": "753fd530-2f19-4e5e-98ba-769863678141",
-      "version": "1.2.54-dev",
-      "versionCode": 10254,
-      "sourceRevision": "7b6251817f42423a1ae90fb0c8837a8e976b3f60",
-      "apkSha256": "a8286157a7f78dd64fd7e954770f076d744822572602f56a154ad40fbad023d0",
-      "evidence": "docs/audits/2026-10-11/APK54-FLEET-FOLLOWUP.json",
-      "evidenceSha256NormalizedLf": "5c17a86840a0d620ed3f4000aa54d81065a2247a2c23317f0816af33752f6fcc",
-      "scope": "PH030 completed its previously issued grant; installed APK54 hash verified at the dated follow-up. No new laptop stream/input acceptance.",
+      "version": "1.2.55-dev",
+      "versionCode": 10255,
+      "sourceRevision": "5223998002451b935a25e01f1034b727561588bd",
+      "apkSha256": "9abe0fce7846cfc61e1d19142b2ce854d096eac71b63fe5ba0ec6465030892ca",
+      "evidence": "docs/audits/2026-10-11/POSTBOOT-IDLE55-DELIVERY.json",
+      "evidenceSha256NormalizedLf": "e46e91ff7fcdafa6f07a020468667e0744d26ad63378d30beedb70199954daee",
+      "scope": "Exact installed package hash and completed addressed command; no direct or laptop runtime acceptance.",
       "currentlyOnline": true
     },
     "pilotDeviceIds": [
@@ -337,7 +256,7 @@
       "4815b950-e5cf-4686-9d46-42d0df8d41f7",
       "753fd530-2f19-4e5e-98ba-769863678141"
     ],
-    "pilotEvidenceSha256NormalizedLf": "b5fd08471312235bcfeb26a7f2cb7af4bcb6a325d6077a4e3206b03402ed0579",
+    "pilotEvidenceSha256NormalizedLf": "e46e91ff7fcdafa6f07a020468667e0744d26ad63378d30beedb70199954daee",
     "previousNetworkObservation": {
       "evidence": "docs/audits/2026-10-10/PH030-DIRECT-PATH-FOLLOWUP.json",
       "evidenceSha256NormalizedLf": "7478057abcc40eb5cd1473341329e75204377753de5fab91f58554739c2a305d",
@@ -346,7 +265,7 @@
       "laptopBrowserChannelAccepted": false
     },
     "readOnlyVideoInstalled": true,
-    "directInputInstalled": false,
+    "directInputInstalled": true,
     "previousEchoObservation": {
       "evidence": "docs/audits/2026-10-10/PH030-LAPTOP-CHANNEL-USER-OBSERVATION.json",
       "evidenceSha256NormalizedLf": "9f430bf56f5e55815c62fec96690cc85be08d9b965672e86528fa10bf360b247",
@@ -373,6 +292,66 @@
       "reason": "Native OTA and admission complete; actual laptop JNI/RTP video rendering remains pending."
     },
     "latestNetworkObservation": {
+      "outcome": "ICE_CHECKS_WITHOUT_RESPONSES",
+      "selectedPath": "unknown",
+      "directChannelEstablished": false,
+      "browserAndNativeStatsCollected": true,
+      "rawCandidateAddressesPublished": false,
+      "observation": "PH011: browser and APK server-reflexive addresses matched; APK offered a private guest address outside visible host interfaces. Candidate checks had zero responses. NAT hairpin, mDNS, routing and firewall causes remain hypotheses.",
+      "topology": "Owned headless Chrome on main Windows PC with VPN; no current laptop-browser acceptance.",
+      "evidence": "docs/audits/2026-10-11/POSTBOOT-IDLE55-DELIVERY.json",
+      "observedAtUtc": "2026-10-11T18:29:43.539387+00:00"
+    },
+    "historicalNativeDiagnosticAcceptance": {
+      "state": "ACCEPTED_FINITE_DIAGNOSTIC_SCOPE",
+      "testedRevision": "161a23e97a323b2061aceaf56f84bc436cd90305",
+      "evidence": "docs/audits/2026-10-10/DIRECT-PROBE-NATIVE-PROGRESS-CANARY.json",
+      "currentlyInstalled": false,
+      "directChannelAccepted": false
+    },
+    "historicalAdditionalNativeCanary": {
+      "device": "PH030",
+      "deviceId": "753fd530-2f19-4e5e-98ba-769863678141",
+      "version": "1.2.51-dev",
+      "versionCode": 10251,
+      "sourceRevision": "ee0d8e6f7630dcaa3518a3fcf9bfcb35d67b7498",
+      "apkSha256": "4f3687e753fafda058f0f8d123904cceb56f6f6932bda08e4a1feb4f6dc1984c",
+      "evidence": "docs/audits/2026-10-10/DIRECT-VIDEO-READONLY-INSTALLED.json",
+      "evidenceSha256NormalizedLf": "8d82bbc0869ce4b086e657a7e408d0c76e8a29cee6d2850200a6105bc49256cb",
+      "scope": "One completed targeted OTA with installed package hash. HTTP video admission true; real RTP/direct input not accepted."
+    },
+    "primaryVideoInstalled": true,
+    "primaryVideoObserved": false,
+    "productionAccepted": false,
+    "currentObservationEvidence": "docs/audits/2026-10-11/POSTBOOT-IDLE55-DELIVERY.json",
+    "currentObservationEvidenceSha256NormalizedLf": "e46e91ff7fcdafa6f07a020468667e0744d26ad63378d30beedb70199954daee",
+    "pilotEvidenceScope": "Current installed API/UI/APK55 and finite fallback observations; historical direct frames are separate.",
+    "historicalPrimaryFrames": 1804,
+    "directInputCandidate": {
+      "sourceRevision": "5223998002451b935a25e01f1034b727561588bd",
+      "apkSourceRevision": "5223998002451b935a25e01f1034b727561588bd",
+      "apkVersionCode": 10255,
+      "runtimeInstalled": true,
+      "pilotApkSigned": true,
+      "exactSourceCiPassed": true,
+      "combinedProfileCiPassed": true,
+      "block": null,
+      "evidence": "docs/audits/2026-10-11/POSTBOOT-IDLE55-DELIVERY.json",
+      "evidenceSha256NormalizedLf": "e46e91ff7fcdafa6f07a020468667e0744d26ad63378d30beedb70199954daee",
+      "directInputAccepted": false,
+      "installedCount": 15
+    },
+    "historicalDirectInputCandidate": {
+      "sourceRevision": "e9af9e60be1b2dcb1f13f7dd8b17db93dc8bfa4c",
+      "apkSourceRevision": "7b6251817f42423a1ae90fb0c8837a8e976b3f60",
+      "apkVersionCode": 10254,
+      "runtimeInstalled": false,
+      "exactSourceCiPassed": true,
+      "block": "volume_not_ready",
+      "evidence": "docs/audits/2026-10-11/DIRECT-INPUT-DELIVERY-BLOCKED.md"
+    },
+    "directInputAccepted": false,
+    "historicalPrimaryNetworkObservation": {
       "deviceId": "414ce0e9-4b93-4f96-b9ca-ee675f53835e",
       "sessionId": "4dd08aecc4900f2d",
       "openedAtUtc": "2026-10-10T19:32:29.447186+00:00",
@@ -396,52 +375,6 @@
       "primaryDirectVideoObserved": true,
       "directInputAccepted": false,
       "topologySource": "PH011 mapped to main-PC emulator5554 by current boot identity; NAT path is not loopback proof. Browser observation predates the latest idle correction."
-    },
-    "historicalNativeDiagnosticAcceptance": {
-      "state": "ACCEPTED_FINITE_DIAGNOSTIC_SCOPE",
-      "testedRevision": "161a23e97a323b2061aceaf56f84bc436cd90305",
-      "evidence": "docs/audits/2026-10-10/DIRECT-PROBE-NATIVE-PROGRESS-CANARY.json",
-      "currentlyInstalled": false,
-      "directChannelAccepted": false
-    },
-    "historicalAdditionalNativeCanary": {
-      "device": "PH030",
-      "deviceId": "753fd530-2f19-4e5e-98ba-769863678141",
-      "version": "1.2.51-dev",
-      "versionCode": 10251,
-      "sourceRevision": "ee0d8e6f7630dcaa3518a3fcf9bfcb35d67b7498",
-      "apkSha256": "4f3687e753fafda058f0f8d123904cceb56f6f6932bda08e4a1feb4f6dc1984c",
-      "evidence": "docs/audits/2026-10-10/DIRECT-VIDEO-READONLY-INSTALLED.json",
-      "evidenceSha256NormalizedLf": "8d82bbc0869ce4b086e657a7e408d0c76e8a29cee6d2850200a6105bc49256cb",
-      "scope": "One completed targeted OTA with installed package hash. HTTP video admission true; real RTP/direct input not accepted."
-    },
-    "primaryVideoInstalled": true,
-    "primaryVideoObserved": false,
-    "productionAccepted": false,
-    "currentObservationEvidence": "docs/audits/2026-10-11/CURRENT-STREAM-DELIVERY.json",
-    "currentObservationEvidenceSha256NormalizedLf": "bea19c8e3da285f74df8b8e14faef6fcf1765877460d0118a4424c43c0b144b1",
-    "pilotEvidenceScope": "Initial primary-video installation receipt, not the current package or route snapshot.",
-    "historicalPrimaryFrames": 1804,
-    "directInputCandidate": {
-      "sourceRevision": "5223998002451b935a25e01f1034b727561588bd",
-      "apkSourceRevision": "5223998002451b935a25e01f1034b727561588bd",
-      "apkVersionCode": 10255,
-      "runtimeInstalled": false,
-      "pilotApkSigned": false,
-      "exactSourceCiPassed": true,
-      "combinedProfileCiPassed": true,
-      "block": "volume_not_ready",
-      "evidence": "docs/audits/2026-10-11/STREAM-IDLE-PROGRESS-RECOVERY.json",
-      "evidenceSha256NormalizedLf": "7ac55c8ebeeb09f6a72cc051e9ac768ea193bb343a6e675f18dfe7b65359142c"
-    },
-    "historicalDirectInputCandidate": {
-      "sourceRevision": "e9af9e60be1b2dcb1f13f7dd8b17db93dc8bfa4c",
-      "apkSourceRevision": "7b6251817f42423a1ae90fb0c8837a8e976b3f60",
-      "apkVersionCode": 10254,
-      "runtimeInstalled": false,
-      "exactSourceCiPassed": true,
-      "block": "volume_not_ready",
-      "evidence": "docs/audits/2026-10-11/DIRECT-INPUT-DELIVERY-BLOCKED.md"
     }
   },
   "items": [
@@ -1009,7 +942,7 @@
       "priority": "P1",
       "state": "OPEN",
       "progress": "PARTIAL",
-      "currentScope": "UI/API6ee обслуживают оба origin;15 APK54 подтверждены по installed SHA, включая PH030. Исторический PH011 WebRTC video и конечный PH010 server fallback не доказывают текущий прямой ввод. Source522: idle refresh, presentation recovery и direct control прошли CI; API/UI и подписанный APK55 ещё не установлены.",
+      "currentScope": "UI/API522 установлены на обоих адресах;15 APK55 подтверждены по installed SHA. Конечные server fallback video и continuous gesture проверены PH010/PH011/PH025; прямой ICE не установился, latency/soak остаются OPEN.",
       "remaining": "Direct input и arbitration viewer/task/API; ближайший реально selected localhost/LAN/WAN/TURN; синхронное измерение input-to-picture; длительные idle/active/reconnect и resource проверки. Новый PH030 package readback не заменяет проверку стрима с браузера ноутбука.",
       "acceptanceCriteria": [
         "Pause/step настоящий protocol, либо явно unavailable.",
@@ -1265,7 +1198,7 @@
       "priority": "P1",
       "state": "OPEN",
       "progress": "PARTIAL",
-      "currentScope": "UI/API6ee обслуживают оба origin;15 APK54 подтверждены по installed SHA, включая PH030. Исторический PH011 WebRTC video и конечный PH010 server fallback не доказывают текущий прямой ввод. Source522: idle refresh, presentation recovery и direct control прошли CI; API/UI и подписанный APK55 ещё не установлены.",
+      "currentScope": "UI/API522 установлены на обоих адресах;15 APK55 подтверждены по installed SHA. Конечные server fallback video и continuous gesture проверены PH010/PH011/PH025; прямой ICE не установился, latency/soak остаются OPEN.",
       "remaining": "Direct input и arbitration viewer/task/API; ближайший реально selected localhost/LAN/WAN/TURN; синхронное измерение input-to-picture; длительные idle/active/reconnect и resource проверки. Новый PH030 package readback не заменяет проверку стрима с браузера ноутбука.",
       "acceptanceCriteria": [
         "Capture/encode/relay/decode/render FPS + drops/bitrate.",
@@ -1772,7 +1705,7 @@
       "priority": "P1",
       "state": "OPEN",
       "progress": "PARTIAL",
-      "currentScope": "Elevated bounded collector13708: 141 complete samples с12:24 UTC до2026-10-11T17:04:25.487185+00:00; живой process epoch проверен. Fresh preflight: C: Warning / Full Repair Needed. Строки VSS доступны в новом окне; рост/освобождение C: не устанавливает writer или исправление утечки. Ранее подготовлен read-only план53 owned unused images; удалений и нового heavy build нет.",
+      "currentScope": "После boot repair C: Healthy/OK;10 Git objects восстановлены, fsck0. Новый limited collector39092 собирает с17:57UTC; gap, отсутствие автозапуска/гарантии lifetime/VSS сохранены. Причина потери C: неизвестна.",
       "remaining": "Причина NTFS/Git corruption и writers расхода C: неизвестны; kernel/USN attribution и reboot continuity не приняты. Нужны resource plateau, retention и500/1000/128/1 нагрузочная matrix после ремонта.",
       "acceptanceCriteria": [
         "1000 registry / 128 thumbnails / 1 selected video measured.",
@@ -2157,7 +2090,7 @@
         "EP-020",
         "EP-047"
       ],
-      "acceptedScope": "Историческая конечная WebRTC presentation на PH011 и echo на ноутбуке сохранены как отдельные наблюдения. СейчасUI/API6ee,15 hash-verified APK54. Source522 direct/recovery и совместный APK55 profile прошли CI; новая установка и production direct-path acceptance не выполнены.",
+      "acceptedScope": "Исторические прямые кадры сохранены отдельно. СейчасUI/API522 и15 APK55 installed hashes; finite fallback video/gestures PH010/PH011/PH025 приняты. Новый прямой ICE/input, nearest path, latency и soak не приняты.",
       "remaining": "Подписанный APK55 и API/UI522; localhost/LAN/WAN/TURN selected route; прямой ввод и handoff нескольких viewers; static/action/reconnect soak и input-to-picture/resource SLA. PH030 package обновлён, новый native stream test не выполнен.",
       "evidence": [
         "docs/design/BROWSER-DIRECT-TRANSPORT.md",
@@ -2183,7 +2116,8 @@
         "docs/audits/2026-10-11/DIRECT-INPUT-CANDIDATE.md",
         "docs/audits/2026-10-11/DIRECT-INPUT-DELIVERY-BLOCKED.md",
         "docs/audits/2026-10-11/STREAM-IDLE-PROGRESS-RECOVERY.json",
-        "docs/audits/2026-10-11/APK54-FLEET-FOLLOWUP.json"
+        "docs/audits/2026-10-11/APK54-FLEET-FOLLOWUP.json",
+        "docs/audits/2026-10-11/POSTBOOT-IDLE55-DELIVERY.json"
       ],
       "sourcePaths": [
         "backend/websocket/direct_probe_protocol.py",
@@ -2308,14 +2242,15 @@
         "EP-029",
         "EP-047"
       ],
-      "acceptedScope": "Bounded automatic diagnostics and last10 sessions were installed earlier. Source522 preserves10 sessions, 32KiB/session,15 samples/category,7days; adds presentation-stall reason and four compatible native measurements. Worst-case ages/counters retain latest observations and session close in45 local tests; new telemetry runtime not installed.",
+      "acceptedScope": "Последние10 сеансов,32KiB/session,15samples/category,7days и четыре native freshness measurements установлены в522/55. Текущие native ICE samples доступны через авторизованный journal. Две точные категории control timeout пока теряются в whitelist; generic timeout сохраняется.",
       "remaining": "Проверка установленного APK55/API/UI: source ages, idle output, direct input, native session journal и browser presentation на реальном Android; end-to-end correlated timestamps и длительные storage/resource bounds.",
       "evidence": [
         "docs/audits/2026-10-10/STREAM-SESSION-DIAGNOSTICS.md",
         "docs/audits/2026-10-10/STREAM-SESSION-DIAGNOSTICS-INSTALLED.json",
         "docs/audits/2026-10-11/DIRECT-PRIMARY-VIDEO-INSTALLED.json",
         "docs/audits/2026-10-11/STREAM-IDLE-PROGRESS-RECOVERY.json",
-        "docs/audits/2026-10-11/APK54-FLEET-FOLLOWUP.json"
+        "docs/audits/2026-10-11/APK54-FLEET-FOLLOWUP.json",
+        "docs/audits/2026-10-11/POSTBOOT-IDLE55-DELIVERY.json"
       ],
       "sourcePaths": [
         "backend/websocket/stream_session_history.py",
@@ -2336,12 +2271,13 @@
   "schemaReconciliation": {
     "paths": 146,
     "operations": 184,
-    "canonicalSha256": "8cb42f695f53df673b43700f78186ad575d9bcb89939d87b5789230e293340e3",
-    "sourceRevision": "c14c32351f89c6b4a67b3b7eb3f911b5a881fb46",
+    "canonicalSha256": "a9332b7be3f7b9469392b9572a9f0ffa005219aaad95678a8ae6f4853e8f30a4",
+    "sourceRevision": "5223998002451b935a25e01f1034b727561588bd",
     "source": "Installed app.openapi; no application lifespan hooks",
-    "observedAtUtc": "2026-10-10T17:47:22.955831+00:00",
+    "observedAtUtc": "2026-10-11T18:24:20.350707+00:00",
     "sameAsCommittedCanonicalJson": true,
-    "scope": "Historical installed HTTP schema at its own dated observation; equality to committed schema was measured then. Prepared source schema below is separate and not installed; no native input or fleet acceptance."
+    "evidence": "docs/audits/2026-10-11/POSTBOOT-IDLE55-DELIVERY.json",
+    "scope": "Current installed source522 app.openapi equals committed canonical JSON. HTTP declaration equality is not WebSocket/native acceptance."
   },
   "completedCorrections": [
     {
@@ -2395,13 +2331,13 @@
   ],
   "sourceWorktreeEvidence": "docs/audits/2026-10-11/DIRECT-PRIMARY-VIDEO-INSTALLED.json",
   "publicWeb": {
-    "lastObservedUtc": "2026-10-11T16:26:10.350615+00:00",
+    "lastObservedUtc": "2026-10-11T18:29:43.539387+00:00",
     "url": "https://sphere-agent-canary-20260927.ru.tuna.am",
-    "ui": "6ee80c1fedf6ea0c656b0d4dc599b87f6bfac135",
-    "api": "6ee80c1fedf6ea0c656b0d4dc599b87f6bfac135",
-    "evidence": "docs/audits/2026-10-11/CURRENT-STREAM-DELIVERY.json",
-    "evidenceSha256NormalizedLf": "bea19c8e3da285f74df8b8e14faef6fcf1765877460d0118a4424c43c0b144b1",
-    "scope": "Current build/readiness readback confirms6ee UI/API on both origins; last finite browser QA is bound to CURRENT-STREAM-DELIVERY, not to this readback. Fifteen APK54 packages are verified separately. Source522 direct input/recovery and APK55 are prepared, not installed; direct path, latency and native soak remain open.",
+    "ui": "5223998002451b935a25e01f1034b727561588bd",
+    "api": "5223998002451b935a25e01f1034b727561588bd",
+    "evidence": "docs/audits/2026-10-11/POSTBOOT-IDLE55-DELIVERY.json",
+    "evidenceSha256NormalizedLf": "e46e91ff7fcdafa6f07a020468667e0744d26ad63378d30beedb70199954daee",
+    "scope": "Both origins serve522 assets/API. PH025 public-origin finite stream and continuous gesture passed over server fallback. No current direct or latency acceptance.",
     "additionalQa": {
       "evidence": "docs/audits/2026-10-09/PUBLIC-WEB-SUPPLEMENTAL-QA.json",
       "evidenceSha256NormalizedLf": "84f719a322e114a34ba4f4fc5624f717a71558f2b80f5aea1a484b50778ceac4",
@@ -2418,8 +2354,8 @@
       "evidenceSha256NormalizedLf": "b5fd08471312235bcfeb26a7f2cb7af4bcb6a325d6077a4e3206b03402ed0579",
       "scope": "Primary video canary installed on both origins, signed APK 10252 verified on 15 devices; PH011 historical browser reported1804 direct frames, NAT path and21ms final network RTT. Current finite browser QA and installed idle receipt/ICE recovery are separate observations. Input remains server WebSocket. PH025 remote input failed before any touch; native startup busy and subsequent server rejection reproduced. Android watchdog cleanup correction b53a1758 is a separate source candidate, not installed in this receipt. Localhost/LAN/WAN/TURN, direct input, latency SLA and soak are not accepted. PH030 is off."
     },
-    "latestReadbackEvidence": "docs/audits/2026-10-11/APK54-FLEET-FOLLOWUP.json",
-    "latestReadbackEvidenceSha256NormalizedLf": "5c17a86840a0d620ed3f4000aa54d81065a2247a2c23317f0816af33752f6fcc"
+    "latestReadbackEvidence": "docs/audits/2026-10-11/POSTBOOT-IDLE55-DELIVERY.json",
+    "latestReadbackEvidenceSha256NormalizedLf": "e46e91ff7fcdafa6f07a020468667e0744d26ad63378d30beedb70199954daee"
   },
   "deliveredCorrections": [
     {
@@ -2482,7 +2418,105 @@
     "paths": 146,
     "operations": 184,
     "exporterCheckPassed": true,
-    "runtimeInstalled": false,
-    "scope": "Declared HTTP schema generated from source522 with pinned toolchain; no startup, authorization, WebSocket/native or production acceptance."
+    "runtimeInstalled": true,
+    "scope": "Source522 HTTP schema is installed and its canonical bytes independently read back from the running image; no lifespan hooks executed."
+  },
+  "installedCorrections": [
+    {
+      "id": "android-confirmed-watchdog-cleanup",
+      "installed": true,
+      "sourceBaseRevision": "8fe2915a983f07fc04045e49eefda1b053a01b84",
+      "testedRevision": "b53a175846bf11055d4e0ddf00aa81c8ff5eaf56",
+      "evidence": "docs/audits/2026-10-11/DIRECT-PRIMARY-VIDEO-CANDIDATE.md",
+      "scope": "Included in hash-verified APK55/API/UI522 delivery to15 compatible devices. Native direct transport and failure/recovery soak remain unaccepted; historical source evidence is retained separately.",
+      "deliveryState": "INSTALLED_NATIVE_DIRECT_ACCEPTANCE_OPEN",
+      "runtimeAccepted": false,
+      "deployedDeviceCount": 15,
+      "deliveryEvidence": "docs/audits/2026-10-11/POSTBOOT-IDLE55-DELIVERY.json",
+      "deliveryEvidenceSha256NormalizedLf": "e46e91ff7fcdafa6f07a020468667e0744d26ad63378d30beedb70199954daee",
+      "installedRevision": "5223998002451b935a25e01f1034b727561588bd",
+      "installationBlock": null
+    },
+    {
+      "id": "native-retirement-preserves-retry",
+      "installed": true,
+      "sourceBaseRevision": "6ee80c1fedf6ea0c656b0d4dc599b87f6bfac135",
+      "testedRevision": "e9af9e60be1b2dcb1f13f7dd8b17db93dc8bfa4c",
+      "evidence": "docs/audits/2026-10-11/DIRECT-INPUT-DELIVERY-BLOCKED.md",
+      "scope": "Included in hash-verified APK55/API/UI522 delivery to15 compatible devices. Native direct transport and failure/recovery soak remain unaccepted; historical source evidence is retained separately.",
+      "latestIntegrationRevision": "5223998002451b935a25e01f1034b727561588bd",
+      "latestIntegrationCiEvidence": "docs/audits/2026-10-11/STREAM-IDLE-PROGRESS-RECOVERY.json",
+      "latestIntegrationCiEvidenceSha256NormalizedLf": "7ac55c8ebeeb09f6a72cc051e9ac768ea193bb343a6e675f18dfe7b65359142c",
+      "runtimeAccepted": false,
+      "installedRevision": "5223998002451b935a25e01f1034b727561588bd",
+      "deliveryState": "INSTALLED_NATIVE_DIRECT_ACCEPTANCE_OPEN",
+      "deliveryEvidence": "docs/audits/2026-10-11/POSTBOOT-IDLE55-DELIVERY.json",
+      "deliveryEvidenceSha256NormalizedLf": "e46e91ff7fcdafa6f07a020468667e0744d26ad63378d30beedb70199954daee",
+      "installationBlock": null
+    },
+    {
+      "id": "native-direct-session-journal",
+      "installed": true,
+      "sourceBaseRevision": "e3bf0f615fa03150e76d4e87bdd30104be927152",
+      "evidence": "docs/audits/2026-10-11/NATIVE-DIRECT-DIAGNOSTICS-SOURCE.md",
+      "scope": "Included in hash-verified APK55/API/UI522 delivery to15 compatible devices. Native direct transport and failure/recovery soak remain unaccepted; historical source evidence is retained separately.",
+      "deliveryState": "INSTALLED_NATIVE_DIRECT_ACCEPTANCE_OPEN",
+      "runtimeAccepted": false,
+      "candidateVersionCode": 10255,
+      "testedRevision": "4ce2c6d6ef5e9d3abbe267b29f5d266d86d59946",
+      "ciEvidence": "docs/audits/2026-10-11/NATIVE-DIRECT-DIAGNOSTICS-CI.json",
+      "ciEvidenceSha256NormalizedLf": "b7131e2bbcfb2abe637e2b7054224529a64c3f696e13231c635c9bef6a6c3401",
+      "installationBlock": null,
+      "latestIntegrationRevision": "5223998002451b935a25e01f1034b727561588bd",
+      "latestIntegrationCiEvidence": "docs/audits/2026-10-11/STREAM-IDLE-PROGRESS-RECOVERY.json",
+      "latestIntegrationCiEvidenceSha256NormalizedLf": "7ac55c8ebeeb09f6a72cc051e9ac768ea193bb343a6e675f18dfe7b65359142c",
+      "installedRevision": "5223998002451b935a25e01f1034b727561588bd",
+      "deliveryEvidence": "docs/audits/2026-10-11/POSTBOOT-IDLE55-DELIVERY.json",
+      "deliveryEvidenceSha256NormalizedLf": "e46e91ff7fcdafa6f07a020468667e0744d26ad63378d30beedb70199954daee"
+    },
+    {
+      "id": "direct-channel-and-admission-recovery",
+      "installed": true,
+      "sourceBaseRevision": "9b5a6fd8dde5ba704ba78fc5def205d6c029deb9",
+      "testedRevision": "500186e2a18378f82e55ddcab5c8700d41e29a5a",
+      "evidence": "docs/audits/2026-10-11/DIRECT-CHANNEL-RECOVERY.md",
+      "localEvidence": "docs/audits/2026-10-11/DIRECT-CHANNEL-RECOVERY.json",
+      "localEvidenceSha256NormalizedLf": "479fc95e4f34cdd6eb83a828b1bfb97afa6e2c8b39b96b9f3fce8096736d5210",
+      "deliveryState": "INSTALLED_NATIVE_DIRECT_ACCEPTANCE_OPEN",
+      "runtimeAccepted": false,
+      "scope": "Included in hash-verified APK55/API/UI522 delivery to15 compatible devices. Native direct transport and failure/recovery soak remain unaccepted; historical source evidence is retained separately.",
+      "installationBlock": null,
+      "ciSourceRevision": "76b01afd9136cc5b85b19431a10e81706eb4ec59",
+      "apiUiCiEvidence": "docs/audits/2026-10-11/APK54-FLEET-DELIVERY.json",
+      "apiUiCiEvidenceSha256NormalizedLf": "9cdb0cd22f098c3d02538122f8da4612702fb07584c8d801d1876c6231f08e56",
+      "latestIntegrationRevision": "5223998002451b935a25e01f1034b727561588bd",
+      "latestIntegrationCiEvidence": "docs/audits/2026-10-11/STREAM-IDLE-PROGRESS-RECOVERY.json",
+      "latestIntegrationCiEvidenceSha256NormalizedLf": "7ac55c8ebeeb09f6a72cc051e9ac768ea193bb343a6e675f18dfe7b65359142c",
+      "installedRevision": "5223998002451b935a25e01f1034b727561588bd",
+      "deliveryEvidence": "docs/audits/2026-10-11/POSTBOOT-IDLE55-DELIVERY.json",
+      "deliveryEvidenceSha256NormalizedLf": "e46e91ff7fcdafa6f07a020468667e0744d26ad63378d30beedb70199954daee"
+    },
+    {
+      "id": "stream-idle-progress-recovery",
+      "installed": true,
+      "runtimeAccepted": false,
+      "sourceBaseRevision": "2d7464c4cdf030877694193f8adb2b18bbfab535",
+      "testedRevision": "5223998002451b935a25e01f1034b727561588bd",
+      "candidateVersionCode": 10255,
+      "deliveryState": "INSTALLED_NATIVE_DIRECT_ACCEPTANCE_OPEN",
+      "evidence": "docs/audits/2026-10-11/STREAM-IDLE-PROGRESS-RECOVERY.md",
+      "ciEvidence": "docs/audits/2026-10-11/STREAM-IDLE-PROGRESS-RECOVERY.json",
+      "ciEvidenceSha256NormalizedLf": "7ac55c8ebeeb09f6a72cc051e9ac768ea193bb343a6e675f18dfe7b65359142c",
+      "scope": "Included in hash-verified APK55/API/UI522 delivery to15 compatible devices. Native direct transport and failure/recovery soak remain unaccepted; historical source evidence is retained separately.",
+      "installationBlock": null,
+      "installedRevision": "5223998002451b935a25e01f1034b727561588bd",
+      "deliveryEvidence": "docs/audits/2026-10-11/POSTBOOT-IDLE55-DELIVERY.json",
+      "deliveryEvidenceSha256NormalizedLf": "e46e91ff7fcdafa6f07a020468667e0744d26ad63378d30beedb70199954daee"
+    }
+  ],
+  "runtimeFollowup": {
+    "evidence": "docs/audits/2026-10-12/STREAM-NETWORK-CADENCE-FOLLOWUP.json",
+    "evidenceSha256NormalizedLf": "f0757c1db515e178ed27881adc26b1b3f627c0200ac405a9fe167cb0a944e122",
+    "scope": "PH030 direct NAT video/input before switch; ICE no-response fallback after switch. Main PC direct input confirmed only in isolated numeric-ICE experiment. Full acceptance remains open."
   }
 }

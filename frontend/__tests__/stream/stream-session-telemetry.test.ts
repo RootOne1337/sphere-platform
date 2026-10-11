@@ -1,5 +1,6 @@
 import { browserStreamSample, directDiagnosticSample, StreamSessionReporter, directFailure } from '@/src/features/stream/streamSessionTelemetry';
 import type { StreamDecoderStats } from '@/lib/h264-decoder';
+import type { PointerFenceObservation } from '@/src/features/stream/continuousPointer';
 
 const stats = { binaryMessagesReceived: 20, binaryBytesReceived: 300, renderedFrames: 10, decodedOutputs: 10,
   invalidPackets: 0, decodeErrors: 0, renderErrors: 0, queueRecoveries: 0, staleOutputDrops: 0,
@@ -8,6 +9,29 @@ const stats = { binaryMessagesReceived: 20, binaryBytesReceived: 300, renderedFr
 const sample = () => browserStreamSample(stats, { state: 'ready', failure: null, rtt: 25, attempts: 1 }, 1000);
 const session = { type: 'stream_session', schema_version: 1, session_id: 'abcdef0123456789', history_enabled: true, report_interval_seconds: 10 };
 const socket = () => ({ readyState: WebSocket.OPEN, bufferedAmount: 0, send: jest.fn() } as unknown as WebSocket);
+const fence: PointerFenceObservation = { reason: 'native_receipt_timeout', phase: 'ready', idleHeartbeatOnly: true,
+  offeredSequence: 25, acknowledgedSequence: 20, pendingCount: 5, oldestSequence: 21, oldestAction: 4,
+  oldestAgeMs: 1250, oldestDeadlineAgeMs: 1250, terminalSequence: null, terminalAgeMs: null, pointerHeld: false,
+  tickGapMs: 16, lastSendAgeMs: 200, lastReceiptAgeMs: 1400, lastReceiptRoundTripMs: 250, socketState: 1, bufferedBytes: 0 };
+
+test.each(['idle_receipt_timeout', 'pointer_receipt_timeout'])('preserves the specific timeout and one scalar fence snapshot: %s', failure => {
+  const result = browserStreamSample(stats, {state: 'fenced', failure, rtt: 250, attempts: 1,
+    fence: {...fence, owner: 'private owner', coordinates: [1,2], error: 'private exception'} as PointerFenceObservation, fenceAtMs: 900}, 1000);
+  expect(result).toMatchObject({control_failure: 'timeout', control_failure_detail: failure,
+    control_fence: {reason: 'native_receipt_timeout', phase: 'ready', age_ms: 100, pointer_held: false,
+      idle_heartbeat_only: true, oldest_action: 4, oldest_deadline_age_ms: 1250,
+      pending_count: 5, last_receipt_rtt_ms: 250, tick_gap_ms: 16, socket_state: 1, buffered_bytes: 0}});
+  expect(JSON.stringify(result)).not.toMatch(/private|owner|coordinates|exception/);
+});
+
+test('a bad fence field remains unknown and a missing fence cannot inherit the previous viewer', () => {
+  const result = browserStreamSample(stats, {state:'fenced', failure: 'scheduler_gap', rtt: null, attempts: 0,
+    fence: {...fence, reason:'private exception', pendingCount: 33, lastReceiptRoundTripMs: NaN,
+      offeredSequence: 2147483648, socketState: 99, bufferedBytes: -1}}, 1000);
+  expect(result.control_fence).toMatchObject({reason:'other', pending_count: null, offered_sequence: null,
+    last_receipt_rtt_ms: null, socket_state: null, buffered_bytes: null, age_ms: null});
+  expect(sample().control_fence).toBeNull();
+});
 
 beforeEach(() => jest.useFakeTimers());
 afterEach(() => jest.useRealTimers());

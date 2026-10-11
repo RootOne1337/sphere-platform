@@ -67,3 +67,19 @@ test('native observation preserves known zero, unknown counters and the original
   expect(screen.getByText(/Внутренний timestamp RTCStats здесь не измерен/)).toBeInTheDocument();
   expect(screen.getByText(/Этап: Соединение закрыто/)).toHaveTextContent('итог при закрытии');
 });
+
+test('a retired idle failure stays visible after the rolling healthy samples replace it', async () => {
+  mockGet.mockResolvedValue({data:{schema_version:1,device_id:device,session_limit:10,sessions:[{
+    session_id:'viewer',opened_at:'2026-10-10T10:00:00Z',state:'closed',
+    browser_samples:[{received_at:'2026-10-10T10:05:00Z',transport:'direct_webrtc',rendered_frames:30,incoming_fps:30}],
+    browser_summary:{max_decode_errors:0,max_render_errors:0,last_control_failure_detail:'idle_receipt_timeout',
+      last_control_fence:{phase:'ready',pointer_held:false,idle_heartbeat_only:true,pending_count:5,
+        oldest_age_ms:1250,last_receipt_rtt_ms:null,tick_gap_ms:16,buffered_bytes:0}},
+  }]}});
+  view();
+  const failure = await screen.findByText(/Последний сбой в браузере:/);
+  expect(failure).toHaveTextContent('idle_receipt_timeout');
+  expect(failure).toHaveTextContent('только heartbeat без касания');
+  expect(failure).toHaveTextContent('последний RTT — мс');
+  expect(failure).toHaveTextContent('буфер отправки 0 B');
+});

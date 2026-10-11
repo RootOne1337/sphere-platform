@@ -32,3 +32,15 @@ test('optional low-delay target is feature-detected and rejecting browsers keep 
   const rejecting = Object.defineProperty({}, 'jitterBufferTarget', { set() { throw Error(); } });
   expect(() => preferLowVideoDelay(rejecting as RTCRtpReceiver)).not.toThrow();
 });
+
+test('Chromium legacy receive hint works independently when the standard target is absent or rejected', () => {
+  const legacy = { playoutDelayHint: .2 };
+  preferLowVideoDelay(legacy as unknown as RTCRtpReceiver);
+  expect(legacy.playoutDelayHint).toBe(0);
+  const mixed = Object.defineProperty({ playoutDelayHint: .2 }, 'jitterBufferTarget', { set() { throw Error(); } });
+  preferLowVideoDelay(mixed as unknown as RTCRtpReceiver);
+  expect(mixed.playoutDelayHint).toBe(0);
+  const reverse = Object.defineProperty({ jitterBufferTarget: 200 }, 'playoutDelayHint', { set() { throw Error(); } });
+  preferLowVideoDelay(reverse as unknown as RTCRtpReceiver);
+  expect(reverse.jitterBufferTarget).toBe(0);
+});

@@ -5,6 +5,7 @@ import { TextEncoder } from 'node:util';
 import type { DirectControlEndpoint } from '@/src/features/stream/directPointerTransport';
 
 let mockRenderFrame: ((frame: VideoFrame) => void) | null = null;
+let mockDecoderStats: object | null = null;
 let mockCapture: { captureEpoch: string; frameWidth: number; frameHeight: number } | null = null;
 let mockAutomaticEligible = false;
 let mockDirectEndpoint: DirectControlEndpoint | null = null;
@@ -51,7 +52,7 @@ jest.mock('@/lib/h264-decoder', () => ({
     destroy() {}
     reset() {}
     handleBinary() {}
-    get stats() { return null; }
+    get stats() { return mockDecoderStats; }
     get lastRenderedCapture() { return mockCapture; }
   },
 }));
@@ -81,6 +82,7 @@ class MockSocket {
 beforeEach(() => {
   jest.useFakeTimers();
   mockRenderFrame = null;
+  mockDecoderStats = null;
   mockCapture = null;
   mockAutomaticEligible = false;
   mockDirectEndpoint = null; mockDirectReceipt = null; mockDirectObserve = null; mockVideoObserve = null;
@@ -757,6 +759,24 @@ it('shows the finite failed heartbeat snapshot after RELEASE and clears it on a 
   view.unmount();
 });
 
+it('automatically reports the classified idle failure and its bounded pre-release snapshot to the current history', () => {
+  mockDecoderStats = { binaryMessagesReceived: 1, binaryBytesReceived: 100, renderedFrames: 1, decodedOutputs: 1,
+    invalidPackets: 0, decodeErrors: 0, renderErrors: 0, queueRecoveries: 0, staleOutputDrops: 0,
+    decoderQueueSize: 0, pendingOutputCount: 0, receivedPictureFps: 1, renderedFps: 1,
+    lastBinaryAtMs: null, lastRenderedAtMs: null };
+  const view = readyContinuous();
+  view.receive({ type: 'stream_session', schema_version: 1, history_enabled: true,
+    session_id: '1'.repeat(16), report_interval_seconds: 10 });
+  for (let i = 0; i < 7; i++) act(() => jest.advanceTimersByTime(250));
+  const failure = view.sent().filter(x => x.type === 'viewer_telemetry').at(-1)?.sample;
+  expect(failure).toMatchObject({ control_state: 'fenced', control_failure_detail: 'idle_receipt_timeout',
+    control_fence: {reason: 'native_receipt_timeout', phase: 'ready', pointer_held: false,
+      idle_heartbeat_only: true, oldest_action: 4, buffered_bytes: 0} });
+  expect(JSON.stringify(failure)).not.toContain('owner_session_fixture');
+  expect(JSON.stringify(failure)).not.toContain(TOUCH_EPOCH);
+  view.unmount();
+});
+
 it('normal inspection release does not replace a diagnostic failure with a mode-change notice', () => {
   const view = readyContinuous();
   view.rerender(<DeviceStream deviceId="gesture-remote" enableNavigation enableStaticInput enableDiagnostics
@@ -807,11 +827,30 @@ it('a missing inspection release stays fenced and exposes explicit recovery afte
   expect(api.post).not.toHaveBeenCalled();
 });
 
+it('a capability arriving during focus loss is negotiated again after focus returns', () => {
+  mockCapture = { captureEpoch: TOUCH_EPOCH, frameWidth: 1280, frameHeight: 720 };
+  const view = readyWheel();
+  const probes = () => view.socket.send.mock.calls.map(([raw]) => JSON.parse(raw as string))
+    .filter(row => row.type === 'touch_probe');
+  expect(probes()).toHaveLength(1);
+  fireEvent(window, new Event('blur'));
+  act(() => view.socket.onmessage?.({ data: JSON.stringify({ type: 'touch_capability', capture_epoch: TOUCH_EPOCH,
+    frame_width: 1280, frame_height: 720 }) }));
+  expect(probes()).toHaveLength(1);
+  fireEvent(window, new Event('focus'));
+  expect(probes()).toHaveLength(2);
+  act(() => view.socket.onmessage?.({ data: JSON.stringify({ type: 'touch_capability', capture_epoch: TOUCH_EPOCH,
+    frame_width: 1280, frame_height: 720 }) }));
+  expect(view.socket.send.mock.calls.map(([raw]) => JSON.parse(raw as string)).filter(row => row.type === 'touch_open')).toHaveLength(1);
+  view.unmount();
+});
+
 it('a late capability cannot replace the path midway through an already held legacy gesture', () => {
   mockCapture = { captureEpoch: TOUCH_EPOCH, frameWidth: 1280, frameHeight: 720 };
   const view = readyWheel();
   view.down(1);
   act(() => view.socket.onmessage?.({ data: JSON.stringify({ type: 'touch_capability', capture_epoch: TOUCH_EPOCH, frame_width: 1280, frame_height: 720 }) }));
+  expect(view.socket.send.mock.calls.map(([raw]) => JSON.parse(raw as string)).filter(x => x.type === 'touch_probe')).toHaveLength(1);
   view.up(1, 65);
   expect(view.commands()).toHaveLength(1);
   expect(view.socket.send.mock.calls.map(([raw]) => JSON.parse(raw as string)).filter(x => x.type === 'touch_open')).toHaveLength(0);

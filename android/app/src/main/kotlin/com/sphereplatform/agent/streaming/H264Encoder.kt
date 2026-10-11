@@ -51,8 +51,11 @@ class H264Encoder(
         init {
             require(width > 0) { "width must be positive" }
             require(height > 0) { "height must be positive" }
+            require(fps in 1..60) { "fps must be between 1 and 60" }
             require(bitrateBps > 0) { "bitrateBps must be positive" }
         }
+        internal val frameIntervalNs: Long get() = (1_000_000_000L + fps - 1) / fps
+        internal val frameIntervalMs: Long get() = (1000L + fps - 1) / fps
     }
 
     data class FrameMetadata(
@@ -275,7 +278,7 @@ class H264Encoder(
                 owned = active
                 val last = planarLastSubmissionNs ?: return@synchronized false
                 val now = monotonicNs()
-                if (callbackErrorReported || !planarFrameAvailable || now - last < 1_000_000_000L) return@synchronized false
+                if (callbackErrorReported || !planarFrameAvailable || now - last < config.frameIntervalNs) return@synchronized false
                 // Keep one pending raw refresh. Real producer frames supersede it;
                 // input callbacks do not flood the codec when it is busy.
                 if (!planarRefreshPending) {

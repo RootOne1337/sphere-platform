@@ -188,7 +188,7 @@ export function DeviceStream({
   const [continuousFailureCode, setContinuousFailureCode] = useState<string | null>(null);
   const [continuousReceipt, setContinuousReceipt] = useState<{ action: number; sequence: number; ms: number } | null>(null);
   const [pointerFailure, setPointerFailure] = useState<{
-    deviceId: string; accessToken: string | null; socket: WebSocket; snapshot: PointerFenceObservation;
+    deviceId: string; accessToken: string | null; socket: WebSocket; snapshot: PointerFenceObservation; atMs: number;
   } | null>(null);
   const dragRef = useRef<{
     x: number; y: number; pointerId: number; frameWidth: number; frameHeight: number; inspection: boolean;
@@ -215,8 +215,8 @@ export function DeviceStream({
     ? agentDiagnostics.age_seconds + Math.max(0, diagnosticNowMs - agentReport.receivedAtMs) / 1000 : null;
   const [diagnosticsError, setDiagnosticsError] = useState<string | null>(null);
   const [browserStats, setBrowserStats] = useState<StreamDecoderStats | null>(null);
-  const telemetryControl = useRef({ state: continuousState, failure: continuousFailureCode, rtt: continuousReceipt?.ms ?? null, attempts: idleRecoveryCount, transport: controlTransport });
-  telemetryControl.current = { state: continuousState, failure: continuousFailureCode, rtt: continuousReceipt?.ms ?? null, attempts: idleRecoveryCount, transport: controlTransport };
+  const telemetryControl = useRef({ state: continuousState, failure: continuousFailureCode, rtt: continuousReceipt?.ms ?? null, attempts: idleRecoveryCount, transport: controlTransport, fence: pointerFailureSnapshot, fenceAtMs: pointerFailureSnapshot ? pointerFailure?.atMs ?? null : null });
+  telemetryControl.current = { state: continuousState, failure: continuousFailureCode, rtt: continuousReceipt?.ms ?? null, attempts: idleRecoveryCount, transport: controlTransport, fence: pointerFailureSnapshot, fenceAtMs: pointerFailureSnapshot ? pointerFailure?.atMs ?? null : null };
   const currentDiagnosticSession = diagnosticSession?.deviceId === deviceId && diagnosticSession.accessToken === accessToken
     && diagnosticSession.socket === wsRef.current && diagnosticSession.socket.readyState === WebSocket.OPEN ? diagnosticSession.id : null;
   const currentFrameOwned = hasRenderedFrame && !streamError
@@ -441,7 +441,7 @@ export function DeviceStream({
         newWs.binaryType = 'arraybuffer';
         ws = newWs;
         wsRef.current = newWs;
-        telemetryControl.current = { state: 'idle', failure: null, rtt: null, attempts: idleRecoveryCountRef.current, transport: 'server_websocket' };
+        telemetryControl.current = { state: 'idle', failure: null, rtt: null, attempts: idleRecoveryCountRef.current, transport: 'server_websocket', fence: null, fenceAtMs: null };
         continuousRouteRef.current = null;
         setControlTransport('server_websocket');
         setContinuousReceipt(null);
@@ -582,6 +582,10 @@ export function DeviceStream({
                 if (!continuousAllowedRef.current || discreteBusyRef.current || dragRef.current) {
                   // A capability probe has no owner. Never change input paths midway through a legacy drag.
                   continuousRequestedRef.current = false;
+                  // Focus or video promotion can change while the reply is in
+                  // flight. With no pending action, let the next usable surface
+                  // negotiate again. A legacy gesture still owns its outcome.
+                  if (!discreteBusyRef.current && !dragRef.current) automaticProbeRef.current = null;
                   setContinuousState('idle');
                   setContinuousReason('Дискретное управление · текущий жест завершается без смены режима.');
                   return;
@@ -605,19 +609,21 @@ export function DeviceStream({
                   onFence: snapshot => {
                     if (ignore || ended || newWs !== wsRef.current
                       || ['viewer_closed', 'viewer_destroyed', 'surface_blur', 'surface_hidden', 'surface_control_lost', 'control_mode_changed', 'capture_or_socket_lost'].includes(snapshot.reason)) return;
-                    setPointerFailure({ deviceId, accessToken, socket: newWs, snapshot });
-                    telemetryControl.current.failure = snapshot.reason;
+                    const atMs = Date.now();
+                    setPointerFailure({ deviceId, accessToken, socket: newWs, snapshot, atMs });
+                    telemetryControl.current.fence = snapshot;
+                    telemetryControl.current.fenceAtMs = atMs;
                     reporter.report(true);
                   },
                   onState: (state, reason) => {
                     if (ignore || ended || newWs !== wsRef.current) return;
                     setContinuousState(state);
                     telemetryControl.current.state = state;
-                    telemetryControl.current.failure = reason;
                     const idleReceiptLoss = reason === 'native_receipt_timeout' && controller.recoverableIdleReceiptLoss;
                     const nativeFailureRecovery = reason === 'native_input_rejected_or_unknown' && controller.nativeFailureAwaitingRelease;
                     const pointerReceiptLoss = (reason === 'native_receipt_timeout' || reason === 'server_runtime_retry' || nativeFailureRecovery)
                       && controller.unknownPointerReceiptLoss;
+                    telemetryControl.current.failure = nativeFailureRecovery ? reason : pointerReceiptLoss ? 'pointer_receipt_timeout' : idleReceiptLoss ? 'idle_receipt_timeout' : reason;
                     const idleRecovery = (idleReceiptLoss || pointerReceiptLoss || nativeFailureRecovery || reason === 'native_startup_busy'
                       || reason === 'server_admission_retry' || reason === 'server_runtime_retry') && !continuousFaultRef.current;
                     if (idleRecovery) {
@@ -1248,7 +1254,7 @@ export function DeviceStream({
       <span className={`h-2 w-2 shrink-0 rounded-full ${continuousState === 'ready' ? 'bg-emerald-500' : 'bg-muted-foreground'}`} aria-hidden />
       <span role="status" className="min-w-0 flex-[1_1_16rem] text-xs leading-relaxed">{continuousReason ?? (discreteBusy ? 'Клавиатура и навигация · ожидаем подтверждение Android' : continuousRecording ? 'Запись использует отдельные завершённые действия' : continuousState === 'ready'
         ? 'Непрерывное управление · зажмите и ведите мышь' : continuousState === 'opening' ? 'Подключаем управление Android…' : continuousState === 'probing' ? 'Определяем возможности APK…' : continuousState === 'closed' ? 'Касание Android освобождено' : 'Управление Android')}
-      {continuousReceipt && continuousState === 'ready' && <span title={`Круговое время подтверждения Android №${continuousReceipt.sequence} через текущий серверный WebSocket, включая обработку на устройстве. Это не задержка изображения и не RTT прямого канала.`}>
+      {continuousReceipt && continuousState === 'ready' && <span title={`Круговое время подтверждения Android №${continuousReceipt.sequence} ${controlTransport === 'direct_webrtc' ? 'напрямую по WebRTC DataChannel' : 'через серверный WebSocket'}, включая обработку на устройстве. Это не задержка изображения и не чистый сетевой RTT.`}>
         {` · ${continuousReceipt.action === 4 ? 'ACK связи' : 'ACK действия'} ${controlTransport === 'direct_webrtc' ? 'напрямую с APK' : 'через сервер'}: ${continuousReceipt.ms} мс`}
       </span>}</span>
       {continuousFault && !idleRecovering && ['fenced', 'closed'].includes(continuousState) && continuousReason && <button type="button" onClick={() => setControlSession(value => value + 1)} className="ml-auto rounded-lg border border-border px-3 py-2 text-xs hover:bg-muted">Восстановить управление</button>}

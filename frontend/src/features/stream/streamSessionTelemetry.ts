@@ -1,11 +1,13 @@
 import type { StreamDecoderStats } from '@/lib/h264-decoder';
-import type { ContinuousPointerState } from './continuousPointer';
+import type { ContinuousPointerState, PointerFenceObservation } from './continuousPointer';
 import type { DirectProbeResult } from './directProbe';
 import type { DiagnosticProfile } from './DirectProbeDiagnostics';
 import type { LiveVideoObservation } from './LiveDirectVideo';
 import type { DirectProbeNetwork } from './directProbeNetwork';
 
 type ControlObservation = { state: ContinuousPointerState | 'probing'; failure: string | null; rtt: number | null; attempts: number;
+  fence?: PointerFenceObservation | null;
+  fenceAtMs?: number | null;
   transport?: 'server_websocket' | 'direct_webrtc' };
 const counter = (value: number) => Number.isFinite(value) ? Math.min(Number.MAX_SAFE_INTEGER, Math.max(0, Math.floor(value))) : 0;
 const milliseconds = (value: number | null) => value === null || !Number.isFinite(value) ? null : Math.min(86400000, Math.max(0, value));
@@ -13,15 +15,30 @@ const reasons = new Set(['probe_deadline', 'gathering_deadline', 'signaling_dead
   'invalid_description', 'missing_binding', 'signaling_unavailable', 'invalid_ice_grant', 'invalid_answer',
   'invalid_signal', 'signaling_closed', 'webrtc_unavailable', 'invalid_video_track', 'video_track_ended',
   'video_renderer_failed', 'peer_disconnected', 'echo_timeout', 'channel_backpressure', 'echo_send_failed',
-  'invalid_video_binding', 'invalid_echo', 'channel_failed', 'channel_closed', 'offer_failed',
+  'invalid_video_binding', 'invalid_echo', 'channel_failed', 'channel_closed', 'offer_failed', 'network_changed',
   'control_channel_failed', 'control_channel_closed', 'invalid_control_message',
   'video_access_rejected', 'video_first_frame_timeout', 'video_frame_timeout', 'video_renderer_unavailable', 'capture_changed', 'session_lifetime']);
 const directStates = new Set(['gathering', 'signaling', 'connecting', 'connected', 'finished', 'stopped', 'failed']);
-const controlFailures = new Set(['native_receipt_timeout', 'native_startup_busy', 'native_input_rejected_or_unknown',
+const controlFailures = new Set(['native_receipt_timeout', 'idle_receipt_timeout', 'pointer_receipt_timeout', 'native_startup_busy', 'native_input_rejected_or_unknown',
   'server_rejected', 'server_runtime_retry', 'server_admission_retry', 'release_unknown', 'pointer_release_unknown',
   'discrete_result_unknown', 'scheduler_gap', 'socket_backpressure', 'socket_send_failed',
   'invalid_native_receipt', 'invalid_startup_receipt', 'invalid_input_receipt', 'receipt_action_mismatch']);
 export const directFailure = (reason: string | null | undefined) => reason ? reasons.has(reason) ? reason : 'other' : null;
+
+function controlFence(fence: PointerFenceObservation | null | undefined, ageMs: number | null) {
+  if (!fence || !['opening', 'ready'].includes(fence.phase)) return null;
+  const integer = (value: number | null, max: number) => value !== null && Number.isSafeInteger(value) && value >= 0 && value <= max ? value : null;
+  // Never spread this object: a future observer may contain input or identity.
+  return { reason: controlFailures.has(fence.reason) ? fence.reason : 'other', phase: fence.phase, age_ms: milliseconds(ageMs),
+    pointer_held: fence.pointerHeld === true, idle_heartbeat_only: fence.idleHeartbeatOnly === true,
+    offered_sequence: integer(fence.offeredSequence, 2147483647), acknowledged_sequence: integer(fence.acknowledgedSequence, 2147483647),
+    pending_count: integer(fence.pendingCount, 32), oldest_action: integer(fence.oldestAction, 4),
+    oldest_age_ms: milliseconds(fence.oldestAgeMs), oldest_deadline_age_ms: milliseconds(fence.oldestDeadlineAgeMs),
+    terminal_age_ms: milliseconds(fence.terminalAgeMs), tick_gap_ms: milliseconds(fence.tickGapMs),
+    last_send_age_ms: milliseconds(fence.lastSendAgeMs), last_receipt_age_ms: milliseconds(fence.lastReceiptAgeMs),
+    last_receipt_rtt_ms: milliseconds(fence.lastReceiptRoundTripMs), socket_state: integer(fence.socketState, 3),
+    buffered_bytes: integer(fence.bufferedBytes, Number.MAX_SAFE_INTEGER) };
+}
 
 function iceSnapshot(network: DirectProbeNetwork | undefined) {
   if (!network) return null;
@@ -66,6 +83,7 @@ export function browserStreamSample(stats: StreamDecoderStats, control: ControlO
       : control.failure === 'server_rejected' ? 'server_rejected' : control.failure === 'server_admission_retry' ? 'admission_retry'
       : control.failure === 'server_runtime_retry' ? 'runtime_retry' : 'other',
     control_failure_detail: control.failure && controlFailures.has(control.failure) ? control.failure : null,
+    control_fence: controlFence(control.fence, age(control.fenceAtMs ?? null)),
     control_rtt_ms: milliseconds(control.rtt), recovery_attempts: Math.min(1000000, counter(control.attempts)) };
 }
 

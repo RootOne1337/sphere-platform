@@ -25,10 +25,41 @@ DirectFailure = Literal[
     "invalid_description", "missing_binding", "signaling_unavailable", "invalid_ice_grant",
     "invalid_answer", "invalid_signal", "signaling_closed", "webrtc_unavailable", "invalid_video_track",
     "video_track_ended", "video_renderer_failed", "peer_disconnected", "echo_timeout", "channel_backpressure",
-    "echo_send_failed", "invalid_video_binding", "invalid_echo", "channel_failed", "channel_closed", "offer_failed",
+    "echo_send_failed", "invalid_video_binding", "invalid_echo", "channel_failed", "channel_closed", "offer_failed", "network_changed",
     "video_access_rejected", "video_first_frame_timeout", "video_frame_timeout", "video_renderer_unavailable", "capture_changed", "session_lifetime",
     "control_channel_failed", "control_channel_closed", "invalid_control_message", "other",
 ]
+
+
+ControlFailure = Literal[
+    "native_receipt_timeout", "idle_receipt_timeout", "pointer_receipt_timeout", "native_startup_busy", "native_input_rejected_or_unknown",
+    "server_rejected", "server_runtime_retry", "server_admission_retry", "release_unknown", "pointer_release_unknown",
+    "discrete_result_unknown", "scheduler_gap", "socket_backpressure", "socket_send_failed",
+    "invalid_native_receipt", "invalid_startup_receipt", "invalid_input_receipt", "receipt_action_mismatch",
+]
+
+
+class BrowserControlFence(BaseModel):
+    """One failure snapshot; never a trajectory, coordinates or authority."""
+    model_config = ConfigDict(extra="forbid", strict=True)
+    reason: ControlFailure | Literal["other"]
+    phase: Literal["opening", "ready"]
+    age_ms: Milliseconds | None
+    pointer_held: bool
+    idle_heartbeat_only: bool
+    offered_sequence: Annotated[int, Field(ge=0, le=2147483647)] | None
+    acknowledged_sequence: Annotated[int, Field(ge=0, le=2147483647)] | None
+    pending_count: Annotated[int, Field(ge=0, le=32)] | None
+    oldest_action: Annotated[int, Field(ge=0, le=4)] | None
+    oldest_age_ms: Milliseconds | None
+    oldest_deadline_age_ms: Milliseconds | None
+    terminal_age_ms: Milliseconds | None
+    tick_gap_ms: Milliseconds | None
+    last_send_age_ms: Milliseconds | None
+    last_receipt_age_ms: Milliseconds | None
+    last_receipt_rtt_ms: Milliseconds | None
+    socket_state: Annotated[int, Field(ge=0, le=3)] | None
+    buffered_bytes: Counter | None
 
 
 class BrowserIceSnapshot(BaseModel):
@@ -85,12 +116,8 @@ class BrowserStreamSample(BaseModel):
     frame_age_ms: Milliseconds | None
     control_state: Literal["idle", "probing", "opening", "ready", "closing", "closed", "fenced", "destroyed"]
     control_failure: Literal["none", "timeout", "server_rejected", "admission_retry", "runtime_retry", "other"]
-    control_failure_detail: Literal[
-        "native_receipt_timeout", "native_startup_busy", "native_input_rejected_or_unknown",
-        "server_rejected", "server_runtime_retry", "server_admission_retry", "release_unknown", "pointer_release_unknown",
-        "discrete_result_unknown", "scheduler_gap", "socket_backpressure", "socket_send_failed",
-        "invalid_native_receipt", "invalid_startup_receipt", "invalid_input_receipt", "receipt_action_mismatch",
-    ] | None = None
+    control_failure_detail: ControlFailure | None = None
+    control_fence: BrowserControlFence | None = None
     control_rtt_ms: Milliseconds | None
     recovery_attempts: Annotated[int, Field(ge=0, le=1000000)]
 
@@ -163,6 +190,10 @@ if patch.sample then
     if patch.sample.control_failure_detail then
       summary.last_control_failure_detail = patch.sample.control_failure_detail
       summary.last_control_failure_at = patch.sample.received_at
+    end
+    if patch.sample.control_fence then
+      summary.last_control_fence = patch.sample.control_fence
+      summary.last_control_fence_received_at = patch.sample.received_at
     end
     record.browser_summary = summary
   end
@@ -256,6 +287,8 @@ class StreamSessionHistory:
                 # An observed candidate pair can still have unmeasured packet
                 # counters. Keep their explicit nulls in the nested snapshot.
                 sample["direct_network"] = value.direct_network.model_dump()
+            if isinstance(value, BrowserStreamSample) and value.control_fence is not None:
+                sample["control_fence"] = value.control_fence.model_dump()
             return sample
         except ValidationError:
             return None

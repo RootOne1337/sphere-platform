@@ -230,7 +230,7 @@ class StreamingManagerImpl @Inject constructor(
                             val last = lastSurfaceSubmissionNs
                             val bitmap = cachedBitmap
                             val bounds = lastSurfaceBounds
-                            if (last != null && now - last >= 1_000_000_000L && bitmap != null && !bitmap.isRecycled && bounds != null) {
+                            if (last != null && now - last >= encoderConfig.frameIntervalNs && bitmap != null && !bitmap.isRecycled && bounds != null) {
                                 val surface = checkNotNull(encoderSurface)
                                 val canvas = surface.lockCanvas(null)
                                 if (canvas != null) {
@@ -246,7 +246,7 @@ class StreamingManagerImpl @Inject constructor(
                     }
                     Unit // This synchronized block owns side effects, not a Boolean result.
                 }
-                if (streaming && captureSession === session) captureHandler.postDelayed(this, 1000)
+                if (streaming && captureSession === session) captureHandler.postDelayed(this, encoderConfig.frameIntervalMs)
             }
         }
 
@@ -370,7 +370,7 @@ class StreamingManagerImpl @Inject constructor(
         }
 
         viewerKeyFrameCoordinator.markEncoderReady { requestKeyFrameNow() }
-        captureHandler.postDelayed(idleRefresh, 1000)
+        captureHandler.postDelayed(idleRefresh, encoderConfig.frameIntervalMs)
         Timber.i("StreamingManagerImpl: started input=%s", if (usePlanar) "yuv420_planar" else "surface")
     }
 

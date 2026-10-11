@@ -176,9 +176,31 @@ export function LiveDirectVideo({ deviceId, session, eligible, fit, expectedCapt
         if (disposed || ended || current !== generation) stop(); else cancel = stop;
       } catch { fail('webrtc_unavailable'); }
     };
+    // A Wi-Fi/mobile transition can leave an otherwise connected peer bound to
+    // obsolete candidates. Coalesce duplicate browser notifications and start a
+    // new authenticated attempt, even during the normal failure cooldown. Old
+    // callbacks are fenced before teardown; no input is queued or transferred.
+    const networkChanged = () => {
+      if (disposed || document.hidden) return;
+      generation++;
+      const old = cancel; cancel = null; old?.();
+      clearRenderer(); callbacks.current.onControlChannel?.(null);
+      observation.active = false;
+      observation.result = { ...(observation.result ?? { samples: [], path: 'unknown', protocol: null }),
+        state: 'failed', reason: 'network_changed' };
+      publish();
+      if (retry !== null) clearTimeout(retry);
+      attemptsInWindow = 0;
+      retry = setTimeout(() => { retry = null; begin(); }, 500);
+    };
+    const connection = (navigator as Navigator & { connection?: EventTarget }).connection;
+    window.addEventListener('online', networkChanged);
+    connection?.addEventListener('change', networkChanged);
     begin();
     return () => {
       disposed = true; generation++;
+      window.removeEventListener('online', networkChanged);
+      connection?.removeEventListener('change', networkChanged);
       if (retry !== null) clearTimeout(retry);
       cancel?.(); clearRenderer();
       callbacks.current.onControlChannel?.(null);

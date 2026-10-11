@@ -290,6 +290,20 @@ def validate_registry(root: Path, registry: dict) -> list[str]:
     for correction in registry["pendingCorrections"]:
         if correction["installed"] or not (root / correction["evidence"]).is_file():
             errors.append("Pending source correction incorrectly marked installed or missing receipt")
+    delivered = registry.get("installedCorrections", [])
+    if len({item["id"] for item in delivered}) != len(delivered):
+        errors.append("Duplicate installed correction")
+    for correction in delivered:
+        path = root / correction.get("deliveryEvidence", "__missing__")
+        if not path.is_file() or correction.get("deliveryEvidenceSha256NormalizedLf") != normalized_hash(path):
+            errors.append("Installed correction delivery receipt missing or fingerprint mismatch")
+            continue
+        receipt = read_json(root, correction["deliveryEvidence"])
+        if (correction.get("installed") is not True or correction.get("runtimeAccepted") is not False
+                or receipt.get("runtimeInstalled") is not True
+                or receipt.get("runtime", {}).get("sourceRevision") != correction.get("installedRevision")
+                or correction["id"] not in receipt.get("deliveredCorrectionIds", [])):
+            errors.append("Installed correction lacks a matching delivery or invents runtime acceptance")
     errors.extend(validate_installed_receipt(root, registry["installed"]))
     errors.extend(validate_current_apks(root, registry["installed"]))
     completed = registry.get("completedCorrections", [])
@@ -331,17 +345,20 @@ def validate_registry(root: Path, registry: dict) -> list[str]:
         if not (root / direct.get("implementationEvidence", "__missing__")).is_file():
             errors.append("Direct probe implementation evidence is missing")
         errors.extend(validate_readonly_video_pilot(root, direct))
-    elif direct["state"] == "PRIMARY_VIDEO_PILOT_INSTALLED":
+    elif direct["state"] in {"PRIMARY_VIDEO_PILOT_INSTALLED", "DIRECT_MEDIA_PILOT_INSTALLED"}:
+        with_input = direct["state"] == "DIRECT_MEDIA_PILOT_INSTALLED"
         if (direct["implementationAuthorizedNow"] is not True or not direct.get("implementationAuthorization")
-                or direct.get("prototypeScope") != "primary_video_v1"
+                or direct.get("prototypeScope") != ("primary_video_and_input_v1" if with_input else "primary_video_v1")
                 or direct.get("primaryVideoInstalled") is not True or direct.get("readOnlyVideoInstalled") is not True
-                or direct.get("directInputInstalled") is not False or direct.get("mediaControlInstalled") is not False
+                or direct.get("directInputInstalled") is not with_input or direct.get("mediaControlInstalled") is not with_input
                 or direct.get("runtimeInstalled") is not True or direct.get("productionAccepted") is not False
-                or type(direct.get("primaryVideoObserved")) is not bool):
-            errors.append("Primary video pilot cannot imply direct input or production acceptance")
+                or type(direct.get("primaryVideoObserved")) is not bool
+                or with_input and direct.get("directInputAccepted") is not False):
+            errors.append("Direct media installation cannot imply direct input or production acceptance" if with_input
+                          else "Primary video pilot cannot imply direct input or production acceptance")
         if not (root / direct.get("implementationEvidence", "__missing__")).is_file():
             errors.append("Direct probe implementation evidence is missing")
-        errors.extend(validate_primary_video_pilot(root, direct))
+        errors.extend(validate_primary_video_pilot(root, direct, with_direct_input=with_input))
         current_evidence = direct.get("currentObservationEvidence")
         if current_evidence:
             if (current_evidence != registry["installed"].get("evidence")
@@ -410,7 +427,7 @@ def validate_readonly_video_pilot(root: Path, direct: dict) -> list[str]:
     return []
 
 
-def validate_primary_video_pilot(root: Path, direct: dict) -> list[str]:
+def validate_primary_video_pilot(root: Path, direct: dict, *, with_direct_input: bool = False) -> list[str]:
     """Bind the enabled fleet to installed APK hashes, separately from one observed path."""
     path = root / direct.get("pilotEvidence", "__missing__")
     if not path.is_file() or direct.get("pilotEvidenceSha256NormalizedLf") != normalized_hash(path):
@@ -420,13 +437,15 @@ def validate_primary_video_pilot(root: Path, direct: dict) -> list[str]:
     devices, installed = pilot.get("deviceIds"), apk.get("installedDevices")
     uuid_pattern = r"[a-f0-9]{8}(?:-[a-f0-9]{4}){3}-[a-f0-9]{12}"
     if (receipt.get("runtimeInstalled") is not True or direct.get("pilotCurrentlyEnabled") is not True
-            or pilot.get("enabled") is not True or pilot.get("scope") != "primary_video_v1"
-            or pilot.get("primaryVideoInstalled") is not True or pilot.get("directInputInstalled") is not False
-            or pilot.get("mediaControlInstalled") is not False or pilot.get("productionAccepted") is not False
+            or pilot.get("enabled") is not True
+            or pilot.get("scope") != ("primary_video_and_input_v1" if with_direct_input else "primary_video_v1")
+            or pilot.get("primaryVideoInstalled") is not True or pilot.get("directInputInstalled") is not with_direct_input
+            or pilot.get("mediaControlInstalled") is not with_direct_input or pilot.get("productionAccepted") is not False
+            or with_direct_input and pilot.get("directInputAccepted") is not False
             or not isinstance(devices, list) or not 1 <= len(devices) <= 64
             or any(not isinstance(d, str) or not re.fullmatch(uuid_pattern, d) for d in devices)
             or len(set(devices)) != len(devices) or devices != direct.get("pilotDeviceIds")
-            or type(apk.get("versionCode")) is not int or apk["versionCode"] < 10252
+            or type(apk.get("versionCode")) is not int or apk["versionCode"] < (10255 if with_direct_input else 10252)
             or not isinstance(apk.get("sha256"), str) or not re.fullmatch(r"[a-f0-9]{64}", apk["sha256"])
             or not isinstance(installed, list) or len(installed) != len(devices)):
         return ["Primary video receipt must bind an explicit updated fleet and retain input/production gates"]
