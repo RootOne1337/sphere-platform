@@ -139,6 +139,18 @@ jobs:
           SPHERE_DIRECT_PROBE_STUN_URL: "stun:stun.cloudflare.com:3478"
         run: ./gradlew testDevDebugUnitTest assembleDevDebug
 
+      - name: Test the combined planar video and continuous direct-input debug profile
+        working-directory: android
+        env:
+          SPHERE_DIRECT_TRANSPORT_CANARY: "true"
+          SPHERE_DIRECT_PROBE_STUN_URL: "stun:stun.cloudflare.com:3478"
+          SPHERE_STREAM_GPU_BRIDGE: "false"
+          SPHERE_STREAM_PLANAR_INPUT: "true"
+          SPHERE_CONTINUOUS_INPUT_CANARY: "true"
+          SPHERE_DEV_APPLICATION_ID_SUFFIX: ".pilot"
+          GIT_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: ./gradlew --max-workers=2 testDevDebugUnitTest testEnterpriseDebugUnitTest lintDevDebug lintEnterpriseDebug assembleDevDebug assembleEnterpriseDebug
+
       - name: Upload direct-transport canary diagnostics
         uses: actions/upload-artifact@v6
         with:
