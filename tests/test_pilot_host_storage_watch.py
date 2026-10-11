@@ -77,6 +77,7 @@ def test_large_or_invalid_native_output_remains_unknown(monkeypatch):
 
 
 def test_vss_provider_timeout_preserves_core_host_readings(monkeypatch):
+    monkeypatch.setattr(watch.shutil, 'disk_usage', lambda _path: SimpleNamespace(free=500))
     core = {'bootUtc': 'epoch1', 'committedBytes': 1234, 'availableRamBytes': 4567,
             'processes': [{'pid': 42, 'privateBytes': 890}]}
 
@@ -98,6 +99,7 @@ def test_vss_provider_timeout_preserves_core_host_readings(monkeypatch):
 
 
 def test_exact_vss_reading_remains_available_when_core_reading_fails(monkeypatch):
+    monkeypatch.setattr(watch.shutil, 'disk_usage', lambda _path: SimpleNamespace(free=500))
     vss = {'state': 'measured', 'rows': [{'volume': 'C', 'diffVolume': 'C',
             'usedBytes': 17, 'allocatedBytes': 23, 'maxBytes': 31}], 'errorType': None}
 
