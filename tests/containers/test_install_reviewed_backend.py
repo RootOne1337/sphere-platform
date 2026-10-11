@@ -284,6 +284,26 @@ class BackendInstallerTests(unittest.TestCase):
                     installer.source_boundary(CURRENT, SOURCE, receipt)
                 canonical.assert_not_called()
 
+    def test_stream_stage_telemetry_update_admits_reviewed_dto_and_metrics_only(self):
+        payload = b"unchanged canonical source\n"
+        digest = hashlib.sha256(payload).hexdigest()
+        receipt = {"requirementsSha256": digest, "actionContractSha256": digest}
+        paths = ["backend/schemas/stream_diagnostics.py", "backend/websocket/stream_metrics.py",
+                 "backend/metrics.py", "backend/websocket/stream_session_history.py"]
+        with patch.object(installer, "command", return_value="\n".join(paths)), \
+                patch.object(installer.subprocess, "run", return_value=subprocess.CompletedProcess([], 0, payload)):
+            self.assertEqual(installer.source_boundary(CURRENT, SOURCE, receipt), paths)
+            with self.assertRaisesRegex(ValueError, "hash mismatch"):
+                installer.source_boundary(CURRENT, SOURCE, receipt | {"requirementsSha256": "0" * 64})
+        for additional in ("backend/schemas/unreviewed_telemetry.py", "backend/requirements.txt",
+                           "alembic/versions/new.py", "backend/websocket/connection_manager.py"):
+            with self.subTest(additional=additional), \
+                    patch.object(installer, "command", return_value="\n".join(paths + [additional])), \
+                    patch.object(installer.subprocess, "run") as canonical:
+                with self.assertRaisesRegex(ValueError, "Unreviewed packaged"):
+                    installer.source_boundary(CURRENT, SOURCE, receipt)
+                canonical.assert_not_called()
+
     def test_broadcast_update_admits_only_reviewed_source_with_dependency_fences(self):
         payload = b"unchanged canonical source\n"
         digest = hashlib.sha256(payload).hexdigest()

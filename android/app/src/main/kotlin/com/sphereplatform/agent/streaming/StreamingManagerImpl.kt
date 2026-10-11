@@ -127,7 +127,11 @@ class StreamingManagerImpl @Inject constructor(
         val enc = H264Encoder(encoderConfig) { nalData, metadata ->
             onFrameReady(nalData, metadata, session, packetEpoch, packetStartMs)
         }
-        enc.onIdleFrameQueued = { if (captureSession === session) qualityMonitor.recordIdleRefresh() }
+        enc.onIdleFrameQueued = {
+            synchronized(frameLock) {
+                if (streaming && captureSession === session) qualityMonitor.recordIdleRefresh()
+            }
+        }
         // FIX H3: Передаём фактический битрейт энкодера в ABR — без рассинхрона
         val abr = AdaptiveBitrateController(enc, initialBitrate = encoderConfig.bitrateBps)
         adaptiveBitrate = abr
@@ -240,6 +244,7 @@ class StreamingManagerImpl @Inject constructor(
                     } catch (error: Exception) {
                         qualityMonitor.recordRenderFailure()
                     }
+                    Unit // This synchronized block owns side effects, not a Boolean result.
                 }
                 if (streaming && captureSession === session) captureHandler.postDelayed(this, 1000)
             }
