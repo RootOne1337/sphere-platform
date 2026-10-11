@@ -68,6 +68,37 @@ test('native history follows explicit server support independently of input perm
   expect(mockStart.mock.calls.at(-1)![3].controlSession).toBeUndefined(); current.unmount();
 });
 
+test('changing view permission negotiates input once and revokes the preceding writable handle', () => {
+  mockAdmission.data.input = true;
+  const onFrame = jest.fn(() => true), onObservation = jest.fn(), onControl = jest.fn();
+  const props = { deviceId: 'device', session: '1'.repeat(16), eligible: true,
+    expectedCapture: expected, onFrame, onObservation };
+  const view = render(<LiveDirectVideo {...props} />);
+  expect(mockStart).toHaveBeenCalledTimes(1);
+  expect(mockStart.mock.calls[0][3].controlSession).toBeUndefined();
+  view.rerender(<LiveDirectVideo {...props} onControlChannel={onControl} />);
+  expect(mockStop).toHaveBeenCalledTimes(1);
+  expect(mockStart).toHaveBeenCalledTimes(2);
+  expect(mockStart.mock.calls[1][3].controlSession).toBe(props.session);
+  const oldControl = mockStart.mock.calls[1][3].onControlChannel;
+  const endpoint = { session: 'a'.repeat(32) } as DirectControlEndpoint;
+  act(() => oldControl(endpoint));
+  expect(onControl).toHaveBeenLastCalledWith(endpoint);
+  // A new callback identity does not restart an otherwise unchanged stream.
+  view.rerender(<LiveDirectVideo {...props} onControlChannel={value => onControl(value)} />);
+  expect(mockStart).toHaveBeenCalledTimes(2);
+  view.rerender(<LiveDirectVideo {...props} />);
+  expect(mockStop).toHaveBeenCalledTimes(2);
+  expect(onControl).toHaveBeenLastCalledWith(null);
+  expect(mockStart).toHaveBeenCalledTimes(3);
+  expect(mockStart.mock.calls[2][3].controlSession).toBeUndefined();
+  onControl.mockClear();
+  act(() => oldControl(endpoint));
+  expect(onControl).not.toHaveBeenCalled();
+  view.unmount();
+  expect(jest.getTimerCount()).toBe(0);
+});
+
 test('automatic primary video promotes only a matching displayed frame, never an ICE result', async () => {
   const view = mount();
   expect(mockStart).toHaveBeenCalledTimes(1);

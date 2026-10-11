@@ -155,12 +155,16 @@ export class ContinuousPointer {
     if (!object(message) || !['touch_session', 'continuous_input_status'].includes(String(message.type))) return false;
     if (this.stateValue === 'idle' || this.stateValue === 'closed' || this.stateValue === 'destroyed') return false;
     if (message.type === 'touch_session') {
-      if (this.stateValue !== 'opening' || this.session) return false;
+      // CLOSE can overtake the server's identity reply while a mode, frame or
+      // focus change retires STARTUP. Bind that pending identity only to accept
+      // its RELEASE; it must never make the retired controller writable again.
+      const retiring = this.closeSent && (this.stateValue === 'closing' || this.stateValue === 'fenced');
+      if ((this.stateValue !== 'opening' && !retiring) || this.session) return false;
       if (!exact(message, ['type', 'session_id', 'owner', 'capture_epoch', 'frame_width', 'frame_height'])
         || typeof message.session_id !== 'string' || !ID.test(message.session_id)
         || typeof message.owner !== 'string' || !ID.test(message.owner)
         || message.capture_epoch !== this.capture?.captureEpoch || message.frame_width !== this.capture?.frameWidth
-        || message.frame_height !== this.capture?.frameHeight || !this.current()) {
+        || message.frame_height !== this.capture?.frameHeight || (!retiring && !this.current())) {
         this.retire('invalid_session_binding'); return false;
       }
       this.session = { session: message.session_id, owner: message.owner };
@@ -188,6 +192,7 @@ export class ContinuousPointer {
       this.retire('release_unknown');
       this.transition('fenced', 'release_unknown'); return false;
     }
+    if (this.stateValue === 'closing' || this.stateValue === 'fenced') return false;
     if (!this.current()) return false;
     // Admission can reject a fresh owner while the previous native owner is
     // still retiring. STARTUP has not admitted any touch: negotiate a new owner,

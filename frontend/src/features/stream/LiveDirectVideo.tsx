@@ -37,6 +37,7 @@ export function LiveDirectVideo({ deviceId, session, eligible, fit, expectedCapt
   const video = useRef<HTMLVideoElement>(null);
   const callbacks = useRef({ expectedCapture, onFrame, onObservation, onControlChannel });
   callbacks.current = { expectedCapture, onFrame, onObservation, onControlChannel };
+  const controlEnabled = onControlChannel !== undefined;
   useEffect(() => {
     const changed = () => setVisible(!document.hidden);
     document.addEventListener('visibilitychange', changed);
@@ -68,6 +69,9 @@ export function LiveDirectVideo({ deviceId, session, eligible, fit, expectedCapt
     callbacks.current.onObservation(observation);
     if (!observation.admitted || !token || !eligible || !visible || !video.current) return;
     const element = video.current;
+    // Permission is part of this peer's negotiated channels. Keep its release
+    // callback even when the next render has already switched to read-only.
+    const releaseControl = callbacks.current.onControlChannel;
     const base = process.env.NEXT_PUBLIC_WS_URL ?? `${location.protocol === 'https:' ? 'wss' : 'ws'}://${location.host}`;
     // STUN supplies reflexive candidates alongside host candidates. ICE still
     // prefers a usable host pair; no separate 12-second host-only attempt.
@@ -100,7 +104,7 @@ export function LiveDirectVideo({ deviceId, session, eligible, fit, expectedCapt
       const finish = (result: DirectProbeResult) => {
         if (disposed || current !== generation || ended) return;
         ended = true;
-        callbacks.current.onControlChannel?.(null);
+        releaseControl?.(null);
         const stop = cancel; cancel = null; stop?.();
         clearRenderer(); observation.active = false; observation.result = result; publish();
         // A busy device or transient network loss must not produce a reconnect
@@ -184,7 +188,7 @@ export function LiveDirectVideo({ deviceId, session, eligible, fit, expectedCapt
       if (disposed || document.hidden) return;
       generation++;
       const old = cancel; cancel = null; old?.();
-      clearRenderer(); callbacks.current.onControlChannel?.(null);
+      clearRenderer(); releaseControl?.(null);
       observation.active = false;
       observation.result = { ...(observation.result ?? { samples: [], path: 'unknown', protocol: null }),
         state: 'failed', reason: 'network_changed' };
@@ -214,11 +218,11 @@ export function LiveDirectVideo({ deviceId, session, eligible, fit, expectedCapt
       connection?.removeEventListener('change', connectionChanged);
       if (retry !== null) clearTimeout(retry);
       cancel?.(); clearRenderer();
-      callbacks.current.onControlChannel?.(null);
+      releaseControl?.(null);
       setActive(false);
       callbacks.current.onObservation({ ...empty(), admitted: observation.admitted, admissionKnown: observation.admissionKnown });
     };
-  }, [deviceId, session, token, eligible, visible, admission.data, admission.isError]);
+  }, [deviceId, session, token, eligible, visible, admission.data, admission.isError, controlEnabled]);
   return <video ref={video} muted autoPlay playsInline aria-hidden="true" data-direct-video-active={active ? 'true' : 'false'}
     className="pointer-events-none absolute inset-0 h-full w-full rounded border border-gray-700 bg-black"
     style={{ objectFit: fit ?? 'contain', opacity: active ? 1 : 0 }} />;

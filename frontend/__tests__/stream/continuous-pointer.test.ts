@@ -42,6 +42,40 @@ it('classifies only a fresh STARTUP admission busy as retryable negotiation, wit
   expect(f.sent.filter(x => x.type === 'touch_close')).toHaveLength(1);
 });
 
+it.each(['control_mode_changed', 'capture_or_socket_lost', 'surface_blur'])(
+  'accepts only the pending owner identity for release after an opening session is retired: %s', reason => {
+    const f = fixture(false);
+    f.controller.open(CAPTURE);
+    f.controller.retire(reason);
+    f.capture(null); // A revoked picture cannot block acknowledgement of its old owner's release.
+    expect(f.controller.state).toBe('fenced');
+    expect(f.bind()).toBe(true);
+    expect(f.status(0, 0, 'startup')).toBe(false);
+    expect(f.controller.state).toBe('fenced');
+    expect(f.controller.down(1, POINT)).toBe(false);
+    expect(f.status(0, 3, 'release')).toBe(true);
+    expect(f.controller.state).toBe('closed');
+    expect(f.events()).toEqual([]);
+    expect(f.sent.filter(row => row.type === 'touch_close')).toHaveLength(1);
+  },
+);
+
+it('a retired opening owner rejects foreign bindings and an unknown release remains fenced', () => {
+  const f = fixture(false);
+  f.controller.open(CAPTURE); f.controller.retire('control_mode_changed');
+  expect(f.controller.receive({ type: 'touch_session', ...IDENTITY, capture_epoch: 'foreign',
+    frame_width: 960, frame_height: 540 })).toBe(false);
+  expect(f.bind()).toBe(true);
+  expect(f.controller.receive({ type: 'touch_session', ...IDENTITY, owner: 'another_owner_fixture',
+    frame_width: 960, frame_height: 540 })).toBe(false);
+  expect(f.status(0, 3, 'release', { owner: 'another_owner_fixture' })).toBe(false);
+  expect(f.controller.state).toBe('fenced');
+  expect(f.status(0, 4, 'release')).toBe(false);
+  expect(f.status(0, 3, 'release')).toBe(false);
+  expect(f.controller.state).toBe('fenced');
+  expect(f.events()).toEqual([]);
+});
+
 it.each([
   ['injector failure', 0, 5, 'startup', 'injector'],
   ['admission unknown', 0, 6, 'startup', 'admission'],

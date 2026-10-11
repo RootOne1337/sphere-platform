@@ -1032,6 +1032,29 @@ it('inspection releases native ownership and only returning to control negotiate
   view.unmount();
 });
 
+it('a view-mode change during startup waits for the late native release before enabling another owner', () => {
+  mockCapture = { captureEpoch: TOUCH_EPOCH, frameWidth: 1280, frameHeight: 720 };
+  const view = readyWheel();
+  const receive = (message: object) => act(() => view.socket.onmessage?.({ data: JSON.stringify(message) }));
+  const sent = () => view.socket.send.mock.calls.map(([raw]) => JSON.parse(raw as string));
+  receive({ type: 'touch_capability', capture_epoch: TOUCH_EPOCH, frame_width: 1280, frame_height: 720 });
+  view.rerender(<DeviceStream deviceId="gesture-remote" fit="contain" enableStaticInput enableNavigation readOnly />);
+  expect(sent().filter(row => row.type === 'touch_close')).toHaveLength(1);
+  view.rerender(<DeviceStream deviceId="gesture-remote" fit="contain" enableStaticInput enableNavigation />);
+  expect(sent().filter(row => row.type === 'touch_probe')).toHaveLength(1);
+  receive({ type: 'touch_session', session_id: 'viewer_session_fixture', owner: 'owner_session_fixture',
+    capture_epoch: TOUCH_EPOCH, frame_width: 1280, frame_height: 720 });
+  receive({ type: 'continuous_input_status', session_id: 'viewer_session_fixture', owner: 'owner_session_fixture',
+    capture_epoch: TOUCH_EPOCH, sequence: 0, status: 0, stage: 'startup', origin: 'injector', device_uptime_ms: 100 });
+  view.down(1); view.up(1);
+  expect(sent().filter(row => row.type === 'touch_event')).toEqual([]);
+  receive({ type: 'continuous_input_status', session_id: 'viewer_session_fixture', owner: 'owner_session_fixture',
+    capture_epoch: TOUCH_EPOCH, sequence: 0, status: 3, stage: 'release', origin: 'injector', device_uptime_ms: 110 });
+  expect(sent().filter(row => row.type === 'touch_probe')).toHaveLength(2);
+  expect(view.commands()).toEqual([]);
+  view.unmount();
+});
+
 it('switching a ready continuous session to recording waits for release then records a discrete action', () => {
   const view = readyContinuous();
   const record = jest.fn();
