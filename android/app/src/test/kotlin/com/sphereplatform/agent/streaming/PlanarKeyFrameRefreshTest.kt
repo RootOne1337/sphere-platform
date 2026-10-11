@@ -83,6 +83,28 @@ class PlanarKeyFrameRefreshTest {
         }
     }
 
+    @Test fun `continuous idle cadence cannot starve decoder recovery sync requests`() {
+        source()
+        repeat(10) {
+            callback.captured.onInputBufferAvailable(codec,7)
+            now += 33_333_334L
+            assertTrue(encoder.refreshIdleFrame())
+        }
+        callback.captured.onInputBufferAvailable(codec,7)
+        assertTrue(encoder.requestKeyFrame())
+        verify(exactly=1) { codec.setParameters(any()) }
+        repeat(8) {
+            callback.captured.onInputBufferAvailable(codec,7)
+            now += 33_333_334L
+            assertTrue(encoder.refreshIdleFrame())
+            assertTrue(encoder.requestKeyFrame())
+        }
+        // The first seven requests are bounded by the last SYNC request, while
+        // the eighth is admitted even though an idle frame was queued just now.
+        verify(exactly=2) { codec.setParameters(any()) }
+        assertEquals(18,idleRefreshes)
+    }
+
     @Test fun `busy idle refresh is coalesced and fresh frames resume the producer cadence`() {
         source(); now += 2_000_000_000L
         repeat(20) { assertFalse(encoder.refreshIdleFrame()) }

@@ -88,7 +88,7 @@ class H264Encoder(
     private var planarIdleRefreshPending = false
     private var planarLastSubmissionNs: Long? = null
     private var planarLastPtsUs = 0L
-    private var planarLastRefreshNs: Long? = null
+    private var planarLastSyncRequestNs: Long? = null
     private var callbackErrorReported = false
 
     // -------------------------------------------------------------------------
@@ -185,7 +185,7 @@ class H264Encoder(
         planarInputs = null; planarConverter = null
         planarFrameAvailable = false; planarRefreshPending = false
         planarIdleRefreshPending = false; planarLastSubmissionNs = null
-        planarLastPtsUs = 0L; planarLastRefreshNs = null
+        planarLastPtsUs = 0L; planarLastSyncRequestNs = null
         planarWindowNs = 0L; planarSamples = 0; planarConvertNs = 0L; planarQueueNs = 0L
         runCatching { owned?.stop() }.onFailure { Timber.w(it, "H264Encoder stop error") }
         runCatching { owned?.release() }.onFailure { Timber.w(it, "H264Encoder release error") }
@@ -245,9 +245,10 @@ class H264Encoder(
                 owned = activeCodec
                 if (callbackErrorReported) return@synchronized false
                 val now = monotonicNs()
-                val last = planarLastRefreshNs
-                // One pending raw refresh and at most four submissions/second,
-                // even when several viewers request a static-screen IDR.
+                val last = planarLastSyncRequestNs
+                // Bound SYNC requests independently of normal/idle frame cadence.
+                // Advancing this clock for every idle frame would starve decoder
+                // recovery whenever the configured cadence exceeds four FPS.
                 if (planarConverter != null && last != null && now - last in 0 until 250_000_000L) {
                     return@synchronized true
                 }
@@ -255,7 +256,7 @@ class H264Encoder(
                     putInt(MediaCodec.PARAMETER_KEY_REQUEST_SYNC_FRAME, 0)
                 })
                 if (planarConverter != null) {
-                    planarLastRefreshNs = now
+                    planarLastSyncRequestNs = now
                     planarRefreshPending = true
                     planarIdleRefreshPending = false
                     submitPendingPlanarRefresh(activeCodec, now)
@@ -311,7 +312,6 @@ class H264Encoder(
             val idle = planarIdleRefreshPending
             planarRefreshPending = false
             planarIdleRefreshPending = false
-            planarLastRefreshNs = now
             return idle
         } catch (error: Exception) {
             planarRefreshPending = false; planarFrameAvailable = false
