@@ -14,6 +14,7 @@ const reasons = new Set(['probe_deadline', 'gathering_deadline', 'signaling_dead
   'invalid_signal', 'signaling_closed', 'webrtc_unavailable', 'invalid_video_track', 'video_track_ended',
   'video_renderer_failed', 'peer_disconnected', 'echo_timeout', 'channel_backpressure', 'echo_send_failed',
   'invalid_video_binding', 'invalid_echo', 'channel_failed', 'channel_closed', 'offer_failed',
+  'control_channel_failed', 'control_channel_closed', 'invalid_control_message',
   'video_access_rejected', 'video_first_frame_timeout', 'video_renderer_unavailable', 'capture_changed', 'session_lifetime']);
 const directStates = new Set(['gathering', 'signaling', 'connecting', 'connected', 'finished', 'stopped', 'failed']);
 const controlFailures = new Set(['native_receipt_timeout', 'native_startup_busy', 'native_input_rejected_or_unknown',

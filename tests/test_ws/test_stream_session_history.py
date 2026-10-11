@@ -36,6 +36,17 @@ ICE = dict(local_candidates=5, remote_candidates=1, pairs=1, checking_pairs=1,
            failed_pairs=0, succeeded_pairs=0, requests_sent=237, responses_received=0)
 
 
+@pytest.mark.parametrize("reason", ["control_channel_closed", "control_channel_failed", "invalid_control_message"])
+async def test_direct_control_retirement_cause_survives_browser_and_probe_history(store, reason):
+    assert await store.begin(ORG, DEVICE, "viewer")
+    assert await store.browser(ORG, DEVICE, "viewer", SAMPLE | dict(direct_failure=reason))
+    assert await store.probe(ORG, DEVICE, "viewer", PROBE | dict(state="failed", reason=reason))
+    record = (await store.read(ORG, DEVICE))[0]
+    assert record["browser_samples"][-1]["direct_failure"] == reason
+    assert record["direct_diagnostics"][-1]["reason"] == reason
+    assert "coordinate" not in json.dumps(record)
+
+
 async def test_control_route_is_observed_independently_of_the_video_route(store):
     assert await store.begin(ORG, DEVICE, 'direct-control')
     assert await store.browser(ORG, DEVICE, 'direct-control', SAMPLE | {'control_transport': 'direct_webrtc'})

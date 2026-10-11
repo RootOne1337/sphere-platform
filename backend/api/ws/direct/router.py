@@ -55,6 +55,7 @@ async def direct_probe_ws(ws: WebSocket, device_id: str) -> None:
         await close_probe(ws, 4003, "direct_probe_device_disabled")
         return
     viewer: ProbeViewer | None = None
+    live = False
     try:
         async with asyncio.timeout(10):
             raw = await ws.receive_text()
@@ -74,9 +75,9 @@ async def direct_probe_ws(ws: WebSocket, device_id: str) -> None:
                     or any(c not in "0123456789abcdef" for c in first["history_session"]))
                 or not isinstance(first["token"], str) or not first["token"]):
             raise InvalidDirectProbe("invalid_auth")
-        identity = await authorize(first["token"], device_id)
         live = first.get("protocol") == "sphere-video-v1"
         video = live or first.get("protocol") == "sphere-video-probe-v1"
+        identity = await authorize(first["token"], device_id)
         if video and not (settings.DIRECT_TRANSPORT_LIVE_VIDEO_ENABLED if live else settings.DIRECT_TRANSPORT_VIDEO_PROBE_ENABLED):
             raise InvalidDirectProbe("video_probe_disabled")
         viewer = ProbeViewer(device_id, *identity, ws, video=video, live=live,
@@ -126,10 +127,11 @@ async def direct_probe_ws(ws: WebSocket, device_id: str) -> None:
     except WebSocketDisconnect:
         return
     except (HTTPException, InvalidDirectProbe, ValueError, TypeError, TimeoutError) as exc:
-        if viewer and viewer.live:
+        if live:
             # Permission loss is terminal. A busy/expired peer or failed setup
             # may reconnect; the primary picture keeps its independent fallback.
-            denied = isinstance(exc, HTTPException) or str(exc) == "probe_access_revoked"
+            denied = (isinstance(exc, HTTPException) and exc.status_code in {401, 403}
+                      or str(exc) == "probe_access_revoked")
             await close_probe(ws, 4003 if denied else 1013,
                               "direct_video_access_rejected" if denied else "direct_video_retry")
             return

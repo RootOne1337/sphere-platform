@@ -210,26 +210,39 @@ function startDirectSession(
         const direct = peer.createDataChannel('sphere-control-v1', { ordered: true });
         controlChannel = direct;
         let retired = false;
-        const retire = () => {
+        const retire = (reason: string) => {
           if (retired) return;
           retired = true; controlListener = null; options.onControlChannel?.(null);
+          // A closed SCTP channel cannot be reopened. Retire this exact media
+          // grant so LiveDirectVideo negotiates a fresh peer/channel and the
+          // server/native owner is released before another input OPEN.
+          // No queued touch is sent on the replacement transport.
+          stop(reason);
         };
         direct.onopen = () => {
-          if (stopped || retired || !session) return retire();
+          if (stopped || retired) return;
+          if (!session) return retire('missing_binding');
           options.onControlChannel?.({ session,
-            get readyState() { return !retired && direct.readyState === 'open' ? 1 : 0; },
+            get readyState() { return !stopped && !retired && direct.readyState === 'open' ? 1 : 0; },
             get bufferedAmount() { return direct.bufferedAmount; },
             capture: () => result.videoBinding ?? null,
             send: data => { if (retired || stopped || direct.readyState !== 'open') throw Error('direct_input_closed'); direct.send(data); },
-            listen: listener => { controlListener = listener; return () => { if (controlListener === listener) controlListener = null; }; },
+            listen: listener => {
+              if (stopped || retired) return () => {};
+              controlListener = listener;
+              return () => { if (controlListener === listener) controlListener = null; };
+            },
           });
         };
         direct.onmessage = event => {
           if (stopped || retired) return;
-          if (typeof event.data !== 'string' || new TextEncoder().encode(event.data).length > 1024) { retire(); direct.close(); return; }
-          try { controlListener?.(JSON.parse(event.data)); } catch { retire(); direct.close(); }
+          if (typeof event.data !== 'string' || new TextEncoder().encode(event.data).length > 1024) {
+            retire('invalid_control_message'); return;
+          }
+          try { controlListener?.(JSON.parse(event.data)); } catch { retire('invalid_control_message'); }
         };
-        direct.onerror = direct.onclose = retire;
+        direct.onerror = () => retire('control_channel_failed');
+        direct.onclose = () => retire('control_channel_closed');
       }
       if (video) {
         peer.addTransceiver('video', { direction: 'recvonly' });

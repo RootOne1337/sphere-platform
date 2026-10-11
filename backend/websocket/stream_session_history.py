@@ -26,7 +26,8 @@ DirectFailure = Literal[
     "invalid_answer", "invalid_signal", "signaling_closed", "webrtc_unavailable", "invalid_video_track",
     "video_track_ended", "video_renderer_failed", "peer_disconnected", "echo_timeout", "channel_backpressure",
     "echo_send_failed", "invalid_video_binding", "invalid_echo", "channel_failed", "channel_closed", "offer_failed",
-    "video_access_rejected", "video_first_frame_timeout", "video_renderer_unavailable", "capture_changed", "session_lifetime", "other",
+    "video_access_rejected", "video_first_frame_timeout", "video_renderer_unavailable", "capture_changed", "session_lifetime",
+    "control_channel_failed", "control_channel_closed", "invalid_control_message", "other",
 ]
 
 

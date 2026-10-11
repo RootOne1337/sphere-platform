@@ -1,4 +1,4 @@
-import { browserStreamSample, directDiagnosticSample, StreamSessionReporter } from '@/src/features/stream/streamSessionTelemetry';
+import { browserStreamSample, directDiagnosticSample, StreamSessionReporter, directFailure } from '@/src/features/stream/streamSessionTelemetry';
 import type { StreamDecoderStats } from '@/lib/h264-decoder';
 
 const stats = { binaryMessagesReceived: 20, binaryBytesReceived: 300, renderedFrames: 10, decodedOutputs: 10,
@@ -11,6 +11,13 @@ const socket = () => ({ readyState: WebSocket.OPEN, bufferedAmount: 0, send: jes
 
 beforeEach(() => jest.useFakeTimers());
 afterEach(() => jest.useRealTimers());
+
+test.each(['control_channel_closed', 'control_channel_failed', 'invalid_control_message'])('direct input recovery keeps its bounded cause in history: %s', reason => {
+  expect(directFailure(reason)).toBe(reason);
+  const diagnostic = directDiagnosticSample({ state: 'failed', samples: [], path: 'host', protocol: 'udp', reason }, 1, 'host', true);
+  expect(diagnostic.reason).toBe(reason);
+  expect(JSON.stringify(diagnostic)).not.toMatch(/token|coordinate|SDP|credential/);
+});
 
 test('reports only after server admission, once per cadence, with no raw decoder text or credentials', () => {
   const ws = socket(), snapshot = jest.fn(sample), reporter = new StreamSessionReporter(ws, snapshot);

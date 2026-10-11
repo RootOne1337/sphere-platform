@@ -2,6 +2,7 @@ import React from 'react';
 import { act, fireEvent, render } from '@testing-library/react';
 import { LiveDirectVideo } from '@/src/features/stream/LiveDirectVideo';
 import type { DirectProbeResult } from '@/src/features/stream/directProbe';
+import type { DirectControlEndpoint } from '@/src/features/stream/directPointerTransport';
 
 let mockAdmission: { data: { admitted: boolean; profiles: string[]; input?: boolean; nativeHistory?: boolean }; isError: boolean } =
   { data: { admitted: true, profiles: ['host', 'public-stun'] }, isError: false };
@@ -116,6 +117,41 @@ test('transient failures retry with a bounded cadence while authorization reject
   const count = mockStart.mock.calls.length;
   act(() => mockReport({ ...connected, state: 'failed', reason: 'video_access_rejected' }));
   act(() => jest.advanceTimersByTime(180000)); expect(mockStart).toHaveBeenCalledTimes(count);
+  view.unmount(); expect(jest.getTimerCount()).toBe(0);
+});
+
+test('input-channel loss revokes its handle, restores automatically and fences late callbacks before the next peer', () => {
+  mockAdmission.data.input = true;
+  const onControl = jest.fn();
+  const view = render(<LiveDirectVideo deviceId="device" session={'1'.repeat(16)} eligible expectedCapture={expected}
+    onFrame={jest.fn(() => true)} onObservation={jest.fn()} onControlChannel={onControl} />);
+  const oldControl = mockStart.mock.calls[0][3].onControlChannel;
+  const endpoint = { session: 'a'.repeat(32) } as DirectControlEndpoint;
+  act(() => oldControl(endpoint)); expect(onControl).toHaveBeenLastCalledWith(endpoint);
+  act(() => mockReport({ ...connected, state: 'failed', reason: 'control_channel_closed' }));
+  expect(mockStop).toHaveBeenCalledTimes(1); expect(onControl).toHaveBeenLastCalledWith(null);
+  onControl.mockClear(); act(() => oldControl(endpoint)); expect(onControl).not.toHaveBeenCalled();
+  act(() => jest.advanceTimersByTime(1000)); expect(mockStart).toHaveBeenCalledTimes(2);
+  act(() => oldControl(endpoint)); expect(onControl).not.toHaveBeenCalled();
+  const newControl = mockStart.mock.calls[1][3].onControlChannel;
+  const replacement = { session: 'b'.repeat(32) } as DirectControlEndpoint;
+  act(() => newControl(replacement)); expect(onControl).toHaveBeenLastCalledWith(replacement);
+  act(() => oldControl(null)); expect(onControl).toHaveBeenLastCalledWith(replacement);
+  view.unmount(); expect(onControl).toHaveBeenLastCalledWith(null); expect(jest.getTimerCount()).toBe(0);
+});
+
+test('a displayed healthy peer resets earlier setup failures instead of waiting a minute after the next isolated loss', async () => {
+  const view = mount();
+  for (const delay of [1000, 2000, 4000]) {
+    act(() => mockReport({ ...connected, state: 'failed', reason: 'connection_deadline' }));
+    act(() => jest.advanceTimersByTime(delay));
+  }
+  expect(mockStart).toHaveBeenCalledTimes(4);
+  act(() => { mockReport(connected); mockTrack({ kind: 'video' } as MediaStreamTrack); }); await act(async () => {});
+  act(present); act(() => jest.advanceTimersByTime(30000));
+  act(() => mockReport({ ...connected, state: 'failed', reason: 'control_channel_failed' }));
+  act(() => jest.advanceTimersByTime(999)); expect(mockStart).toHaveBeenCalledTimes(4);
+  act(() => jest.advanceTimersByTime(1)); expect(mockStart).toHaveBeenCalledTimes(5);
   view.unmount(); expect(jest.getTimerCount()).toBe(0);
 });
 

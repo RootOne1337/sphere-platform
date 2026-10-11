@@ -362,6 +362,52 @@ async def test_unauthorized_endpoint_never_routes_sdp(peers, monkeypatch):
 
 
 @pytest.mark.asyncio
+@pytest.mark.parametrize("status", [401, 403, 429, 503])
+async def test_live_authorization_distinguishes_denied_access_from_transient_service_failure(peers, monkeypatch, status):
+    from fastapi import HTTPException
+
+    from backend.api.ws.direct import router
+    runtime = peers[0][1]
+    monkeypatch.setattr(router.settings, "DIRECT_TRANSPORT_PROBE_ENABLED", True)
+    monkeypatch.setattr(router.settings, "DIRECT_TRANSPORT_PROBE_DEVICE_IDS", frozenset({"device"}))
+    monkeypatch.setattr(router, "get_direct_probe_runtime", lambda: runtime)
+    monkeypatch.setattr(router, "authorize", AsyncMock(side_effect=HTTPException(status)))
+    socket = AsyncMock()
+    socket.receive_text.return_value = '{"token":"fixture","protocol":"sphere-video-v1"}'
+    await router.direct_probe_ws(socket, "device")
+    assert not runtime.viewers
+    assert peers[3].send_json.call_count == 0
+    socket.receive_text.assert_awaited_once()
+    socket.close.assert_awaited_once_with(code=4003 if status in {401, 403} else 1013,
+        reason="direct_video_access_rejected" if status in {401, 403} else "direct_video_retry")
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("status", [401, 403, 429, 503])
+async def test_live_recheck_failure_retires_the_exact_lease_before_retry_or_denial(peers, monkeypatch, status):
+    from fastapi import HTTPException
+
+    from backend.api.ws.direct import router
+    runtime = peers[0][1]
+    monkeypatch.setattr(router.settings, "DIRECT_TRANSPORT_PROBE_ENABLED", True)
+    monkeypatch.setattr(router.settings, "DIRECT_TRANSPORT_LIVE_VIDEO_ENABLED", True)
+    monkeypatch.setattr(router.settings, "DIRECT_TRANSPORT_PROBE_DEVICE_IDS", frozenset({"device"}))
+    monkeypatch.setattr(router, "get_direct_probe_runtime", lambda: runtime)
+    monkeypatch.setattr(router, "authorize", AsyncMock(side_effect=[("org", "user"), HTTPException(status)]))
+    await DeviceStatusCache(peers[1][0]).set_status("device", DeviceLiveStatus(
+        device_id="device", status="online", ws_session_id=peers[4], agent_version_code=10255))
+    socket = AsyncMock()
+    socket.receive_text.side_effect = ['{"token":"fixture","protocol":"sphere-video-v1"}',
+        json.dumps(dict(type="direct_probe_offer", sdp=VIDEO_SDP)),
+        '{"type":"direct_video_keepalive","sequence":1}']
+    await router.direct_probe_ws(socket, "device")
+    assert not runtime.viewers
+    assert await peers[1][1].get(runtime.key("device")) is None
+    socket.close.assert_awaited_once_with(code=4003 if status in {401, 403} else 1013,
+        reason="direct_video_access_rejected" if status in {401, 403} else "direct_video_retry")
+
+
+@pytest.mark.asyncio
 async def test_enabled_without_device_allowlist_still_denies_before_auth(peers, monkeypatch):
     from backend.api.ws.direct import router
     monkeypatch.setattr(router.settings, "DIRECT_TRANSPORT_PROBE_ENABLED", True)

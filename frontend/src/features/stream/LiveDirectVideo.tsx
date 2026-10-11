@@ -1,6 +1,7 @@
 'use client';
 import { useEffect, useRef, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
+import { isAxiosError } from 'axios';
 import { api } from '@/lib/api';
 import { useAuthStore } from '@/lib/store';
 import type { CaptureFrameBinding } from '@/lib/h264-decoder';
@@ -53,7 +54,11 @@ export function LiveDirectVideo({ deviceId, session, eligible, fit, expectedCapt
       return { admitted: data.live_video_enabled === true, profiles, input: data.direct_input_enabled === true,
         nativeHistory: data.native_history_enabled === true };
     },
-    retry: false, staleTime: 30000, gcTime: 0,
+    retry: (count, error) => count < 3 && isAxiosError(error) && (
+      error.response ? [408, 429].includes(error.response.status) || error.response.status >= 500 && error.response.status <= 599
+        : ['ERR_NETWORK', 'ECONNABORTED', 'ETIMEDOUT'].includes(error.code ?? '')),
+    retryDelay: count => Math.min(4000, 1000 * 2 ** count),
+    refetchOnReconnect: true, staleTime: 30000, gcTime: 0,
   });
   useEffect(() => {
     const observation = empty();
@@ -86,15 +91,19 @@ export function LiveDirectVideo({ deviceId, session, eligible, fit, expectedCapt
       const current = ++generation;
       observation.attempts++; attemptsInWindow++;
       observation.active = false; observation.result = null; publish();
-      let ended = false, seen = false, bindingDeadlineArmed = false;
+      let ended = false, seen = false, bindingDeadlineArmed = false, presentedSince: number | null = null;
       const finish = (result: DirectProbeResult) => {
         if (disposed || current !== generation || ended) return;
         ended = true;
+        callbacks.current.onControlChannel?.(null);
         const stop = cancel; cancel = null; stop?.();
         clearRenderer(); observation.active = false; observation.result = result; publish();
         // A busy device or transient network loss must not produce a reconnect
         // storm. Four attempts per window, then one minute of server fallback.
         if (result.reason === 'video_access_rejected' || document.hidden) return;
+        // A healthy displayed stream starts a new failure window. Old setup
+        // failures must not impose a minute of fallback on a later isolated loss.
+        if (presentedSince !== null && performance.now() - presentedSince >= 30000) attemptsInWindow = 1;
         const delay = attemptsInWindow >= 4 ? 60000 : Math.min(15000, 1000 * 2 ** (attemptsInWindow - 1));
         retry = setTimeout(() => { retry = null; if (attemptsInWindow >= 4) attemptsInWindow = 0; begin(); }, delay);
       };
@@ -113,6 +122,7 @@ export function LiveDirectVideo({ deviceId, session, eligible, fit, expectedCapt
               if (!callbacks.current.onFrame(element, binding)) { fail('video_renderer_failed'); return; }
             } catch { fail('video_renderer_failed'); return; }
             seen = true;
+            presentedSince ??= performance.now();
             if (firstFrame !== null) clearTimeout(firstFrame);
             firstFrame = null;
             const first = !observation.active;
@@ -140,7 +150,7 @@ export function LiveDirectVideo({ deviceId, session, eligible, fit, expectedCapt
           ...(admission.data?.nativeHistory ? { historySession: session } : {}),
           ...(admission.data?.input && callbacks.current.onControlChannel ? {
             controlSession: session, onControlChannel: (channel: DirectControlEndpoint | null) => {
-              if (!disposed && current === generation) callbacks.current.onControlChannel?.(channel);
+              if (!disposed && !ended && current === generation) callbacks.current.onControlChannel?.(channel);
             },
           } : {}), onTrack: track => {
           if (disposed || ended || current !== generation) { track.stop(); return; }

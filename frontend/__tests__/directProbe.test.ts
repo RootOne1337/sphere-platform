@@ -102,7 +102,7 @@ async function videoConnected(live = false) {
   return { reports, stop, onTrack, ws, peer };
 }
 
-test('primary input negotiates a separate reliable channel on the same peer and retires listeners', async () => {
+test('loss of primary input retires its exact peer so automatic video recovery can negotiate a new input channel', async () => {
   FakePeer.initialSdp = videoSdp;
   const handles: (DirectControlEndpoint | null)[] = [], receipt = jest.fn();
   const stop = startDirectVideoSession('wss://same-origin/ws/direct-probe/device', 'access', () => {},
@@ -129,8 +129,39 @@ test('primary input negotiates a separate reliable channel on the same peer and 
   expect(handles.at(-1)).toBeNull();
   expect(() => endpoint.send('old input')).toThrow('direct_input_closed');
   late?.({ data: '{"type":"continuous_input_status"}' });
-  expect(receipt).toHaveBeenCalledTimes(1); expect(peer.close).not.toHaveBeenCalled();
+  expect(receipt).toHaveBeenCalledTimes(1); expect(peer.close).toHaveBeenCalledTimes(1);
+  expect(endpoint.readyState).toBe(0);
+  expect(jest.getTimerCount()).toBe(0);
+  expect(ws.send).toHaveBeenLastCalledWith('{"type":"direct_probe_close"}');
   stop(); expect(peer.control.close).toHaveBeenCalledTimes(1); expect(jest.getTimerCount()).toBe(0);
+});
+
+test.each(['error', 'oversized', 'binary', 'malformed'])('primary input %s retires the grant without replaying input', async failure => {
+  FakePeer.initialSdp = videoSdp;
+  const reports: DirectProbeResult[] = [], handles: (DirectControlEndpoint | null)[] = [];
+  const stop = startDirectVideoSession('wss://same-origin/ws/direct-probe/device', 'access', r => reports.push(r),
+    { onTrack: jest.fn(), controlSession: '1'.repeat(16), onControlChannel: value => handles.push(value) });
+  await flush();
+  const ws = FakeSocket.latest, peer = FakePeer.latest;
+  ws.onopen?.();
+  ws.onmessage?.({ data: JSON.stringify({ type: 'direct_probe_answer', session_id: sid, sdp: videoSdp.replace('recvonly', 'sendonly') }) });
+  await flush(); peer.channel.onopen?.(); peer.control.onopen?.();
+  const endpoint = handles.at(-1)!;
+  const receipt = jest.fn(); endpoint.listen(receipt);
+  const lateOpen = peer.control.onopen, lateMessage = peer.control.onmessage;
+  endpoint.send('{"type":"touch_event"}');
+  if (failure === 'error') peer.control.onerror?.();
+  else peer.control.onmessage?.({ data: failure === 'binary' ? new ArrayBuffer(1)
+    : failure === 'oversized' ? 'x'.repeat(1025) : '{not-json' });
+  expect(reports.at(-1)?.reason).toBe(failure === 'error' ? 'control_channel_failed' : 'invalid_control_message');
+  expect(peer.close).toHaveBeenCalledTimes(1); expect(endpoint.readyState).toBe(0);
+  expect(handles.at(-1)).toBeNull(); expect(receipt).not.toHaveBeenCalled();
+  lateOpen?.(); lateMessage?.({ data: '{"type":"continuous_input_status"}' });
+  expect(handles.at(-1)).toBeNull(); expect(receipt).not.toHaveBeenCalled();
+  jest.advanceTimersByTime(60000);
+  expect(peer.control.send).toHaveBeenCalledTimes(1);
+  expect(ws.send.mock.calls.map(([raw]) => JSON.parse(raw).type)).toEqual([undefined, 'direct_probe_offer', 'direct_probe_close']);
+  stop(); expect(jest.getTimerCount()).toBe(0);
 });
 
 test('primary video negotiates a separate grant and renews beyond the finite diagnostic lifetime', async () => {
