@@ -151,6 +151,7 @@ class DirectProbeTransport(
                 if (initialized.compareAndSet(false, true)) {
                     try {
                         PeerConnectionFactory.initialize(PeerConnectionFactory.InitializationOptions.builder(context)
+                            .setFieldTrials(DirectEncodedVideoSource.FIELD_TRIALS)
                             .setEnableInternalTracer(false).createInitializationOptions())
                     } catch (error: Exception) { initialized.set(false); throw error }
                 }

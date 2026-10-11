@@ -18,6 +18,7 @@ class DirectEncodedVideoSourceTest {
         var valid = true
         var hold = false
         var holdEncoded = false
+        var requestKeyFrame = false
         val held = mutableListOf<VideoFrame>()
         val heldEncoded = mutableListOf<EncodedImage>()
         val key = mockk<() -> Unit>(relaxed = true)
@@ -38,7 +39,8 @@ class DirectEncodedVideoSourceTest {
                 processor = firstArg()
                 processor.setSink { frame ->
                     if (hold) { frame.retain(); held.add(frame) }
-                    else encoder.encode(frame, VideoEncoder.EncodeInfo(arrayOf(EncodedImage.FrameType.VideoFrameDelta)))
+                    else encoder.encode(frame, VideoEncoder.EncodeInfo(arrayOf(if (requestKeyFrame)
+                        EncodedImage.FrameType.VideoFrameKey else EncodedImage.FrameType.VideoFrameDelta)))
                 }
             }
             every { source.capturerObserver } returns object : CapturerObserver {
@@ -94,6 +96,38 @@ class DirectEncodedVideoSourceTest {
             assertEquals(1, h.emitted.size)
         } finally { h.close() }
     }
+    @Test fun `a decoder keyframe hint does not break an intact reference chain while MediaCodec produces IDR`() {
+        val h = Harness()
+        try {
+            h.relay.submit(picture(1, true))
+            h.requestKeyFrame = true
+            h.relay.submit(picture(2, false))
+            h.requestKeyFrame = false
+            h.relay.submit(picture(3, false))
+            assertEquals(3, h.emitted.size)
+            h.relay.submit(picture(4, true))
+            assertEquals(4, h.emitted.size)
+            assertEquals(4L, h.relay.receipt()["encodeCalls"])
+            assertEquals(1L, h.relay.receipt()["keyframeHints"])
+            assertEquals(0L, h.relay.receipt()["keyframeWaitDrops"])
+            verify(exactly = 0) { h.failed.invoke() }
+        } finally { h.close() }
+    }
+
+    @Test fun `a missing coded reference still rejects deltas even with a decoder keyframe hint`() {
+        val h = Harness()
+        try {
+            h.relay.submit(picture(1, true))
+            h.requestKeyFrame = true
+            h.relay.submit(picture(3, false))
+            h.requestKeyFrame = false
+            h.relay.submit(picture(4, false))
+            assertEquals(1, h.emitted.size)
+            assertEquals(2L, h.relay.receipt()["keyframeWaitDrops"])
+            h.relay.submit(picture(5, true))
+            assertEquals(2, h.emitted.size)
+        } finally { h.close() }
+    }
     @Test fun `retired capture and malformed IDR cannot emit and close is idempotent`() {
         val h = Harness()
         h.valid = false
@@ -126,9 +160,12 @@ class DirectEncodedVideoSourceTest {
             h.relay.submit(picture(1, true)); assertEquals(1, h.emitted.size)
             h.encoder.setRateAllocation(VideoEncoder.BitrateAllocation(arrayOf(intArrayOf(0))), 30)
             h.relay.submit(picture(2, true)); assertEquals(1, h.emitted.size)
+            assertEquals(1L, h.relay.receipt()["pausedFrames"])
             h.encoder.setRateAllocation(VideoEncoder.BitrateAllocation(arrayOf(intArrayOf(1500000))), 30)
             h.relay.submit(picture(3, false)); assertEquals(1, h.emitted.size)
             h.relay.submit(picture(4, true)); assertEquals(2, h.emitted.size)
+            assertEquals(1500000L, h.relay.receipt()["targetBitrateBps"])
+            assertEquals(30L, h.relay.receipt()["targetFramerate"])
         } finally { h.close() }
     }
 }

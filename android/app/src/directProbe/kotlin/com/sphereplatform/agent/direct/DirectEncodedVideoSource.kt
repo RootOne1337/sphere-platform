@@ -19,12 +19,25 @@ internal class DirectEncodedVideoSource(
     private val requestKey: () -> Unit,
     private val failed: () -> Unit,
 ) {
+    companion object {
+        // MediaCodec has already encoded these reference-dependent pictures.
+        // The raw-frame dropper cannot safely discard one before this adapter.
+        const val FIELD_TRIALS = "WebRTC-FrameDropper/Disabled/"
+    }
     private val budget = EncodedVideoBudget()
     private val outputBudget = EncodedVideoBudget()
     private val received = AtomicLong()
     private val forwarded = AtomicLong()
     private val rejected = AtomicLong()
     private val invalid = AtomicLong()
+    private val encodeCalls = AtomicLong()
+    private val waitingKey = AtomicLong()
+    private val pausedFrames = AtomicLong()
+    private val keyHints = AtomicLong()
+    private val syncRequests = AtomicLong()
+    private val forwardedBytes = AtomicLong()
+    private val targetBitrate = AtomicLong()
+    private val targetFramerate = AtomicLong()
     private val order = EncodedVideoOrder()
     private val sourceLock = Any()
     private var source: VideoSource? = null
@@ -39,6 +52,7 @@ internal class DirectEncodedVideoSource(
             if (now - lastKeyRequestNs < 500_000_000L) return
             lastKeyRequestNs = now
         }
+        syncRequests.incrementAndGet()
         requestKey()
     }
     private fun fail() { if (broken.compareAndSet(false, true)) failed() }
@@ -103,6 +117,10 @@ internal class DirectEncodedVideoSource(
     fun receipt(): Map<String, Long> = mapOf(
         "received" to received.get(), "forwarded" to forwarded.get(),
         "budgetRejected" to rejected.get(), "invalidAccessUnits" to invalid.get(),
+        "encodeCalls" to encodeCalls.get(), "keyframeWaitDrops" to waitingKey.get(),
+        "pausedFrames" to pausedFrames.get(), "keyframeHints" to keyHints.get(),
+        "syncRequests" to syncRequests.get(), "forwardedBytes" to forwardedBytes.get(),
+        "targetBitrateBps" to targetBitrate.get(), "targetFramerate" to targetFramerate.get(),
         "failed" to if (broken.get()) 1L else 0L,
         "retainedInputFrames" to budget.retained().first.toLong(),
         "retainedInputBytes" to budget.retained().second.toLong(),
@@ -141,14 +159,20 @@ internal class DirectEncodedVideoSource(
         }
         override fun release(): VideoCodecStatus { callback = null; order.invalidate(); return VideoCodecStatus.OK }
         override fun encode(frame: VideoFrame, info: VideoEncoder.EncodeInfo): VideoCodecStatus {
+            encodeCalls.incrementAndGet()
             val sink = callback ?: return VideoCodecStatus.UNINITIALIZED
             val coded = frame.buffer as? CodedBuffer ?: run { fail(); return VideoCodecStatus.ERR_PARAMETER }
             val bytes = coded.data() ?: return VideoCodecStatus.NO_OUTPUT
-            if (!valid() || broken.get() || paused) { order.invalidate(); return VideoCodecStatus.NO_OUTPUT }
+            if (!valid() || broken.get()) { order.invalidate(); return VideoCodecStatus.NO_OUTPUT }
+            if (paused) { pausedFrames.incrementAndGet(); order.invalidate(); return VideoCodecStatus.NO_OUTPUT }
             if (info.frameTypes.contains(EncodedImage.FrameType.VideoFrameKey) && !coded.keyFrame) {
-                order.invalidate(); requestSync(); return VideoCodecStatus.NO_OUTPUT
+                // Request a real MediaCodec IDR without discarding a valid
+                // reference chain while that asynchronous request completes.
+                // An actual missing reference is still rejected by order below.
+                keyHints.incrementAndGet(); requestSync()
             }
             if (!order.admit(coded.sequence, coded.timestampNs, coded.keyFrame)) {
+                waitingKey.incrementAndGet()
                 requestSync(); return VideoCodecStatus.NO_OUTPUT
             }
             // RTP may retain the EncodedImage after this callback. Bound those
@@ -167,12 +191,15 @@ internal class DirectEncodedVideoSource(
                 owned = image
                 sink.onEncodedFrame(image, VideoEncoder.CodecSpecificInfoH264())
                 forwarded.incrementAndGet()
+                forwardedBytes.addAndGet(bytes.size.toLong())
                 VideoCodecStatus.OK
             }
             catch (_: Exception) { fail(); VideoCodecStatus.ERROR }
             finally { owned?.release() ?: release() }
         }
         override fun setRateAllocation(allocation: VideoEncoder.BitrateAllocation, framerate: Int): VideoCodecStatus {
+            targetBitrate.set(allocation.sum.coerceAtLeast(0).toLong())
+            targetFramerate.set(framerate.coerceAtLeast(0).toLong())
             val wasPaused = paused
             paused = allocation.sum <= 0
             if (paused || wasPaused != paused) order.invalidate()
