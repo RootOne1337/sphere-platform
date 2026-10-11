@@ -5,7 +5,7 @@
   "countsByRole": {
     "ADR": 6,
     "CURRENT_ENTRYPOINT": 8,
-    "DATED_EVIDENCE": 281,
+    "DATED_EVIDENCE": 282,
     "DESIGN_SPECIFICATION": 76,
     "OPERATING_GUIDE": 64,
     "PROJECT_POLICY": 7,
@@ -1262,6 +1262,10 @@
     },
     {
       "file": "docs/audits/2026-10-11/STREAM-RELIABILITY-AUDIT.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
+      "file": "docs/audits/2026-10-12/STREAM-CADENCE-KEYFRAME-RECOVERY.md",
       "role": "DATED_EVIDENCE"
     },
     {
