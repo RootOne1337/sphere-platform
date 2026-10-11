@@ -18,10 +18,8 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.RuntimeEnvironment
-import org.robolectric.Shadows.shadowOf
 import org.robolectric.annotation.Config
 import java.nio.ByteBuffer
-import java.time.Duration
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
@@ -79,23 +77,44 @@ class StreamingCaptureLifecycleTest {
     }
 
     @Test fun `idle surface refresh submits owned pixels without counting a new capture and stops with its session`() {
+        // Retain the actual scheduled callback so late execution after stop/restart
+        // can be checked without trying to idle a Looper that quitSafely retired.
+        mockkConstructor(Handler::class)
+        val scheduled = mutableListOf<Runnable>()
+        every { anyConstructed<Handler>().postDelayed(capture(scheduled), 1000L) } returns true
+        every { anyConstructed<Handler>().removeCallbacksAndMessages(null) } just Runs
         var now = 1_000_000L
         manager.monotonicNs = { now }
         manager.start(projection)
-        val handler = StreamingManagerImpl::class.java.getDeclaredField("imageReaderHandler").apply { isAccessible = true }
-            .get(manager) as Handler
-        shadowOf(handler.looper).idleFor(Duration.ofSeconds(1))
+        val retiredRefresh = scheduled.single()
+        retiredRefresh.run()
         verify(exactly=0) { canvas.drawBitmap(any<Bitmap>(),any<android.graphics.Rect>(),any<android.graphics.Rect>(),any()) }
         listeners.last().onImageAvailable(reader)
         now += 1_000_000_000L
-        shadowOf(handler.looper).idleFor(Duration.ofSeconds(1))
+        retiredRefresh.run()
         verify(exactly=2) { canvas.drawBitmap(any<Bitmap>(),any<android.graphics.Rect>(),any<android.graphics.Rect>(),any()) }
         assertEquals(1L,manager.getQualityStats().captureFramesTotal)
         assertEquals(1L,manager.getQualityStats().renderedFramesTotal)
         assertEquals(1L,manager.getQualityStats().idleRefreshFramesTotal)
-        manager.stop(); now += 3_000_000_000L
-        shadowOf(handler.looper).idleFor(Duration.ofSeconds(3))
+        val postsBeforeStop = scheduled.size
+        manager.stop()
+        now += 3_000_000_000L
+        retiredRefresh.run()
+        assertEquals("A retired callback must not schedule more work", postsBeforeStop, scheduled.size)
+        verify(exactly = 1) { anyConstructed<Handler>().removeCallbacksAndMessages(null) }
         verify(exactly=2) { canvas.drawBitmap(any<Bitmap>(),any<android.graphics.Rect>(),any<android.graphics.Rect>(),any()) }
+
+        manager.start(projection)
+        val freshRefresh = scheduled.last()
+        val postsAfterRestart = scheduled.size
+        retiredRefresh.run()
+        assertEquals("An obsolete callback must not reschedule in the new session", postsAfterRestart, scheduled.size)
+        verify(exactly=2) { canvas.drawBitmap(any<Bitmap>(),any<android.graphics.Rect>(),any<android.graphics.Rect>(),any()) }
+        listeners.last().onImageAvailable(reader)
+        now += 1_000_000_000L
+        freshRefresh.run()
+        verify(exactly=4) { canvas.drawBitmap(any<Bitmap>(),any<android.graphics.Rect>(),any<android.graphics.Rect>(),any()) }
+        assertEquals(1L, manager.getQualityStats().idleRefreshFramesTotal)
     }
 
     @Test fun `stop cannot close reader or recycle bitmap during native copy`() {
