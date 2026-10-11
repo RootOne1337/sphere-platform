@@ -1,8 +1,8 @@
 {
   "schemaVersion": 1,
-  "reviewedAtUtc": "2026-10-11T14:51:16.896687+00:00",
-  "sourceReviewed": "500186e2a18378f82e55ddcab5c8700d41e29a5a",
-  "scope": "Effective documentation status; source/install/finite acceptance kept separate. No new fleet or soak acceptance.",
+  "reviewedAtUtc": "2026-10-11T15:28:32.910493+00:00",
+  "sourceReviewed": "76b01afd9136cc5b85b19431a10e81706eb4ec59",
+  "scope": "Effective documentation status; source/install/finite acceptance kept separate. Addressed APK54 fleet installation verified; no new direct transport, production or soak acceptance.",
   "baseline": "docs/audits/2026-10-05/ENTERPRISE-PRODUCT-BACKLOG.json",
   "previousCrosscheck": "docs/audits/2026-10-09/CHAT-CODE-RECONCILIATION.json",
   "counts": {
@@ -15,7 +15,7 @@
     "ui": "6ee80c1fedf6ea0c656b0d4dc599b87f6bfac135",
     "api": "6ee80c1fedf6ea0c656b0d4dc599b87f6bfac135",
     "evidence": "docs/audits/2026-10-11/CURRENT-STREAM-DELIVERY.json",
-    "observation": "UI/API 6ee installed on both origins; APK54 exact installed SHA/completed OTA on PH010; six currently verified APK53 and two APK52 baselines. PH010 browser showed server fallback, native-confirmed Home and ready control; direct ICE did not open. Direct-input e9 source/CI is ready but no runtime replacement occurred because Windows C: reported Full Repair Needed. No direct-input/localhost/latency/production/soak acceptance.",
+    "observation": "UI/API6ee still installed on both origins. New dated fleet receipt confirms14 APK54 installed hashes and13 completed addressed OTA commands; PH010 already had54. Seven devices remain offline; PH030 has a one-hour grant. Native55 and recovery500 API/UI are not installed because C: still needs repair. No new direct-input/localhost/latency/production/soak acceptance.",
     "pilotApk": {
       "device": "PH010",
       "deviceId": "5df4805e-fe64-4d39-960c-19ceab206cd6",
@@ -23,38 +23,37 @@
       "versionCode": 10254,
       "sourceRevision": "7b6251817f42423a1ae90fb0c8837a8e976b3f60",
       "apkSha256": "a8286157a7f78dd64fd7e954770f076d744822572602f56a154ad40fbad023d0",
-      "evidence": "docs/audits/2026-10-11/CURRENT-STREAM-DELIVERY.json",
-      "evidenceSha256NormalizedLf": "bea19c8e3da285f74df8b8e14faef6fcf1765877460d0118a4424c43c0b144b1",
-      "scope": "Exact installed SHA and completed OTA command after process restart."
+      "evidence": "docs/audits/2026-10-11/APK54-FLEET-DELIVERY.json",
+      "evidenceSha256NormalizedLf": "9cdb0cd22f098c3d02538122f8da4612702fb07584c8d801d1876c6231f08e56",
+      "scope": "Actual installed package hash at the dated fleet readback. Browser/API revision and direct transport acceptance remain separate."
     },
     "evidenceSha256NormalizedLf": "bea19c8e3da285f74df8b8e14faef6fcf1765877460d0118a4424c43c0b144b1",
     "additionalPilotApks": [
       {
         "device": "PH011",
         "deviceId": "414ce0e9-4b93-4f96-b9ca-ee675f53835e",
-        "version": "1.2.53-dev",
-        "versionCode": 10253,
-        "sourceRevision": "b53a175846bf11055d4e0ddf00aa81c8ff5eaf56",
-        "apkSha256": "8b54c06e9ed9415c9fbe4eaf7fca8679ab9fe0d94528e3a86169af077e9ecd2d",
-        "evidence": "docs/audits/2026-10-11/CURRENT-STREAM-DELIVERY.json",
-        "evidenceSha256NormalizedLf": "bea19c8e3da285f74df8b8e14faef6fcf1765877460d0118a4424c43c0b144b1",
-        "scope": "Read-only package SHA inventory at the recorded time."
+        "version": "1.2.54-dev",
+        "versionCode": 10254,
+        "sourceRevision": "7b6251817f42423a1ae90fb0c8837a8e976b3f60",
+        "apkSha256": "a8286157a7f78dd64fd7e954770f076d744822572602f56a154ad40fbad023d0",
+        "evidence": "docs/audits/2026-10-11/APK54-FLEET-DELIVERY.json",
+        "evidenceSha256NormalizedLf": "9cdb0cd22f098c3d02538122f8da4612702fb07584c8d801d1876c6231f08e56",
+        "scope": "Actual installed package hash at the dated fleet readback. Browser/API revision and direct transport acceptance remain separate."
       }
     ],
     "fleetApkEvidence": {
-      "evidence": "docs/audits/2026-10-11/CURRENT-STREAM-DELIVERY.json",
-      "evidenceSha256NormalizedLf": "bea19c8e3da285f74df8b8e14faef6fcf1765877460d0118a4424c43c0b144b1",
-      "installedCount": 9,
+      "evidence": "docs/audits/2026-10-11/APK54-FLEET-DELIVERY.json",
+      "evidenceSha256NormalizedLf": "9cdb0cd22f098c3d02538122f8da4612702fb07584c8d801d1876c6231f08e56",
+      "observedAtUtc": "2026-10-11T15:28:32.910493+00:00",
+      "installedCount": 14,
       "verifiedVersionCounts": {
-        "10254": 1,
-        "10253": 6,
-        "10252": 2
+        "10254": 14
       },
-      "unverifiedOfflineCount": 6,
-      "excludedFromCurrentQa": [
-        "PH030"
-      ],
-      "scope": "Dated current package verification; historical 15-device delivery remains in its own frozen receipt."
+      "unverifiedOfflineCount": 7,
+      "queuedOfflineCount": 1,
+      "offlineNotDispatchedCount": 6,
+      "queuedOfflineExpiryUtc": "2026-10-11T16:22:13+00:00",
+      "scope": "All14 currently online compatible Android emulators have exact APK54 hashes. PH030 has a bounded grant; the other6 offline devices await a verifiable connection. No direct-video/input acceptance."
     }
   },
   "pendingCorrections": [
@@ -106,14 +105,17 @@
       "evidence": "docs/audits/2026-10-11/DIRECT-CHANNEL-RECOVERY.md",
       "localEvidence": "docs/audits/2026-10-11/DIRECT-CHANNEL-RECOVERY.json",
       "localEvidenceSha256NormalizedLf": "479fc95e4f34cdd6eb83a828b1bfb97afa6e2c8b39b96b9f3fce8096736d5210",
-      "deliveryState": "LOCAL_TESTED_CI_PENDING_NOT_INSTALLED",
+      "deliveryState": "READY_API_UI_CI_NOT_INSTALLED",
       "runtimeAccepted": false,
-      "scope": "Exact-peer retirement after direct control failure; automatic fresh grant, bounded admission retries and healthy-window reset. No touch replay; current runtime stays6ee.",
+      "scope": "Exact-peer restart and bounded admission retry locally tested; API/UI CI76 passed with trees identical to source500. Installation remains blocked by volume repair. Existing APK54 was distributed separately; source500 is not installed.",
       "installationBlock": {
         "state": "VOLUME_REPAIR_PENDING_REBOOT",
         "evidence": "docs/audits/2026-10-11/HOST-REPAIR-1216.json",
         "installed": false
-      }
+      },
+      "ciSourceRevision": "76b01afd9136cc5b85b19431a10e81706eb4ec59",
+      "apiUiCiEvidence": "docs/audits/2026-10-11/APK54-FLEET-DELIVERY.json",
+      "apiUiCiEvidenceSha256NormalizedLf": "9cdb0cd22f098c3d02538122f8da4612702fb07584c8d801d1876c6231f08e56"
     }
   ],
   "storage": {

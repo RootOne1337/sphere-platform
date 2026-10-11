@@ -1,11 +1,11 @@
 {
   "schemaVersion": 1,
-  "reviewedAtUtc": "2026-10-11T14:51:16.896687+00:00",
+  "reviewedAtUtc": "2026-10-11T15:28:32.910493+00:00",
   "scope": "All tracked Markdown classified; active local-link paths scanned. Not semantic attestation of every sentence, command execution, external-link or live acceptance.",
   "countsByRole": {
     "ADR": 6,
     "CURRENT_ENTRYPOINT": 8,
-    "DATED_EVIDENCE": 277,
+    "DATED_EVIDENCE": 278,
     "DESIGN_SPECIFICATION": 76,
     "OPERATING_GUIDE": 64,
     "PROJECT_POLICY": 7,
@@ -1218,6 +1218,10 @@
     },
     {
       "file": "docs/audits/2026-10-10/STREAM-SESSION-DIAGNOSTICS.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
+      "file": "docs/audits/2026-10-11/APK54-FLEET-DELIVERY.md",
       "role": "DATED_EVIDENCE"
     },
     {
