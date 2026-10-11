@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "reviewedAtUtc": "2026-10-11T11:38:30.531660+00:00",
+  "reviewedAtUtc": "2026-10-11T12:28:48.532065+00:00",
   "sourceReviewed": "4ce2c6d6ef5e9d3abbe267b29f5d266d86d59946",
   "scope": "Effective documentation status; source/install/finite acceptance kept separate. No new fleet or soak acceptance.",
   "baseline": "docs/audits/2026-10-05/ENTERPRISE-PRODUCT-BACKLOG.json",
@@ -90,29 +90,38 @@
       "candidateVersionCode": 10255,
       "testedRevision": "4ce2c6d6ef5e9d3abbe267b29f5d266d86d59946",
       "ciEvidence": "docs/audits/2026-10-11/NATIVE-DIRECT-DIAGNOSTICS-CI.json",
-      "ciEvidenceSha256NormalizedLf": "b7131e2bbcfb2abe637e2b7054224529a64c3f696e13231c635c9bef6a6c3401"
+      "ciEvidenceSha256NormalizedLf": "b7131e2bbcfb2abe637e2b7054224529a64c3f696e13231c635c9bef6a6c3401",
+      "installationBlock": {
+        "state": "VOLUME_REPAIR_PENDING_REBOOT",
+        "evidence": "docs/audits/2026-10-11/HOST-REPAIR-1216.json",
+        "evidenceSha256NormalizedLf": "6b2ed2ff7ab94c4d9489da9f71651348e7839f438e12b3ea4508db28d1722955",
+        "installed": false
+      }
     }
   ],
   "storage": {
-    "lastObservedUtc": "2026-10-11T11:27:33.932155+00:00",
-    "visibleMatchingProcesses": 2,
-    "activeCollectorWorkers": 1,
+    "lastObservedUtc": "2026-10-11T12:28:25.492094+00:00",
+    "visibleMatchingProcesses": 3,
+    "activeCollectorWorkers": 2,
     "continuousCoverageConfirmed": false,
-    "observationScope": "237 measured samples03:35 to11:27 UTC: C free -1,647,091,712B; VHDX allocation constant236,073,254,912B. Six named LDPlayer allocations constant, pagefile CIM48,320MiB constant. Continuing PID43984,24h/721x120s/16MiB. VSS/USN/kernel writer unknown; earlier02:22 to03:35 gap remains uncovered.",
-    "oneFreeDiskReadingBytes": 31771045888,
+    "observationScope": "Original limited worker absent after last11:35 UTC sample. New elevated 24h worker started12:24 UTC; 24 named files, RAM/commit/process IO, separate bounded VSS and periodic Docker/WSL. Native hourly VSS worker also running. Collection gap retained; exact VSS max19.057GiB differs from approved8GiB; cause of all C: losses and limit reset unknown.",
+    "oneFreeDiskReadingBytes": 31017959424,
     "latestCompletedEvidence": "docs/audits/2026-10-11/STORAGE-OBSERVATION-0335.json",
-    "activeEvidence": "docs/audits/2026-10-11/STORAGE-OBSERVATION-1127.json",
-    "evidenceSha256NormalizedLf": "e48fae6027a542bd1bc3f1578649d09bd44647ecea7320f0a63ff258850b8a40",
+    "activeEvidence": "docs/audits/2026-10-11/HOST-REPAIR-1216.json",
+    "evidenceSha256NormalizedLf": "6b2ed2ff7ab94c4d9489da9f71651348e7839f438e12b3ea4508db28d1722955",
     "volumeObservation": {
-      "observedAtUtc": "2026-10-11T03:39:33.8449414Z",
+      "observedAtUtc": "2026-10-11T12:28:47.112409+00:00",
       "health": "Warning",
       "operationalStatus": [
         "Full Repair Needed"
       ],
-      "newNtfsEventUtc": "2026-10-10T22:35:41.4232516+00:00",
-      "currentScanResultAvailable": false,
+      "currentScanResultAvailable": true,
+      "scanResult": "ScanErrorsFoundNeedSpotFix",
+      "bootRepairScheduled": true,
+      "repairCompleted": false,
       "hardwareFailureProven": false,
-      "evidence": "docs/audits/2026-10-11/STORAGE-OBSERVATION-0335.json"
+      "evidence": "docs/audits/2026-10-11/HOST-REPAIR-1216.json",
+      "evidenceSha256NormalizedLf": "6b2ed2ff7ab94c4d9489da9f71651348e7839f438e12b3ea4508db28d1722955"
     },
     "retentionPlan": {
       "observedAtUtc": "2026-10-10T23:47:37.483257+00:00",
@@ -124,7 +133,9 @@
       "deletionPerformed": false,
       "blockedBy": "Windows C: Full Repair Needed",
       "scope": "Read-only plan; 46 container dependencies protected. Rounded logical layers are not a promised host-space reclamation."
-    }
+    },
+    "hostRepairEvidence": "docs/audits/2026-10-11/HOST-REPAIR-1216.json",
+    "hostRepairEvidenceSha256NormalizedLf": "6b2ed2ff7ab94c4d9489da9f71651348e7839f438e12b3ea4508db28d1722955"
   },
   "legacy": {
     "total": 41,

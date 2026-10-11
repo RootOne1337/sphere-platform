@@ -27,7 +27,22 @@ Assert-LocalPath $manifestPath
 if ((Get-Item -LiteralPath $manifestPath).Length -gt 256KB) { throw 'Manifest budget exceeded.' }
 $manifest = Get-Content -LiteralPath $manifestPath -Raw | ConvertFrom-Json
 $files = @($manifest.files)
-if ($files.Count -lt 1 -or $files.Count -gt 32 -or $manifest.gitFsckPassed -ne $true -or $manifest.remoteSourceMatches -ne $true) {
+$gitVerified = $manifest.gitFsckPassed -is [bool] -and $manifest.gitFsckPassed -eq $true
+# A damaged object store cannot serve as the recovery source. The recovery
+# preparer may instead verify every archive file against the authenticated,
+# source-pinned remote Git tree. Preserve the failed local fsck in the receipt.
+$remoteArchiveVerified = (
+    $manifest.trackedSourceArchiveVerifiedAgainstRemoteGitBlobs -is [bool] -and
+    $manifest.trackedSourceArchiveVerifiedAgainstRemoteGitBlobs -eq $true -and
+    $manifest.sourceRevision -is [string] -and $manifest.sourceRevision -cmatch '^[a-f0-9]{40}$' -and
+    $manifest.sourceVerificationEvidenceSource -ceq $manifest.sourceRevision -and
+    $manifest.sourceVerificationTree -is [string] -and $manifest.sourceVerificationTree -cmatch '^[a-f0-9]{40}$' -and
+    ($manifest.sourceVerificationBlobCount -is [int] -or $manifest.sourceVerificationBlobCount -is [long]) -and
+    $manifest.sourceVerificationBlobCount -gt 0 -and $manifest.sourceVerificationBlobCount -le 100000 -and
+    @($files | Where-Object { $_.file -ceq 'source-HEAD.zip' }).Count -eq 1 -and
+    @($files | Where-Object { $_.file -ceq 'source-tree.private.json' }).Count -eq 1
+)
+if ($files.Count -lt 1 -or $files.Count -gt 32 -or (-not $gitVerified -and -not $remoteArchiveVerified) -or $manifest.remoteSourceMatches -ne $true) {
     throw 'Recovery manifest is incomplete.'
 }
 $bytes = 0L
@@ -53,6 +68,8 @@ foreach ($file in $files) {
 $report = [ordered]@{
     schemaVersion=1; observedAt=[DateTime]::UtcNow.ToString('o'); state='local-copy-verified'
     sourceRevision=$manifest.sourceRevision; verifiedFiles=$files.Count; verifiedBytes=$bytes
+    gitFsckPassed=$gitVerified; remoteSourceArchiveVerified=$remoteArchiveVerified
+    sourceVerification=$(if ($remoteArchiveVerified) { 'remote-git-blob-hashes' } else { 'git-fsck-and-pushed-source' })
     independentBackupAvailable=[bool]$manifest.independentBackupAvailable
     backupOnAffectedPhysicalDisk=[bool]$manifest.backupOnAffectedPhysicalDisk
     notBackedUp=$manifest.notBackedUp; schedulingRequested=[bool]$ScheduleAtNextBoot

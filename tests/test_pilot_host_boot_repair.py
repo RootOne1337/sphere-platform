@@ -79,6 +79,54 @@ def test_output_outside_workspace_rejected_before_any_read(local_copy, tmp_path)
     assert invoke(source, tmp_path / 'elsewhere').returncode != 0
 
 
+def remote_archive_manifest(backup, manifest):
+    """Trusted-preparer fixture; these tests never schedule a volume repair."""
+    manifest.update(
+        gitFsckPassed=False, sourceRevision='1' * 40,
+        trackedSourceArchiveVerifiedAgainstRemoteGitBlobs=True,
+        sourceVerificationEvidenceSource='1' * 40, sourceVerificationTree='2' * 40,
+        sourceVerificationBlobCount=1,
+    )
+    for name, data in [('source-HEAD.zip', b'verified-source-archive-fixture'),
+                       ('source-tree.private.json', b'{"tree":[]}')]:
+        (backup / name).write_bytes(data)
+        manifest['files'].append({'file': name, 'bytes': len(data),
+                                  'sha256': hashlib.sha256(data).hexdigest()})
+
+
+def test_remote_verified_archive_preserves_failed_local_git_check(local_copy):
+    source, backup, manifest = local_copy
+    remote_archive_manifest(backup, manifest)
+    save(backup, manifest)
+    result = invoke(source, backup)
+    assert result.returncode == 0, result.stderr
+    report = json.loads(result.stdout)
+    assert report['state'] == 'local-copy-verified'
+    assert not report['gitFsckPassed']
+    assert report['remoteSourceArchiveVerified']
+    assert report['sourceVerification'] == 'remote-git-blob-hashes'
+    assert not report['schedulingRequested'] and not report['repairCompleted']
+    assert not (backup / 'boot-repair-request.private.json').exists()
+
+
+@pytest.mark.parametrize('defect', ['not_verified', 'wrong_source', 'missing_tree', 'missing_archive', 'zero_blobs'])
+def test_incomplete_remote_source_proof_is_rejected(local_copy, defect):
+    source, backup, manifest = local_copy
+    remote_archive_manifest(backup, manifest)
+    if defect == 'not_verified':
+        manifest['trackedSourceArchiveVerifiedAgainstRemoteGitBlobs'] = False
+    elif defect == 'wrong_source':
+        manifest['sourceVerificationEvidenceSource'] = '3' * 40
+    elif defect == 'zero_blobs':
+        manifest['sourceVerificationBlobCount'] = 0
+    else:
+        name = 'source-tree.private.json' if defect == 'missing_tree' else 'source-HEAD.zip'
+        manifest['files'] = [entry for entry in manifest['files'] if entry['file'] != name]
+    save(backup, manifest)
+    assert invoke(source, backup).returncode != 0
+    assert not (backup / 'boot-repair-request.private.json').exists()
+
+
 def test_collector_cannot_write_through_directory_junction(tmp_path):
     workspace = tmp_path / 'workspace'
     scripts = workspace / 'scripts' / 'pilot'

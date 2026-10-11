@@ -1,5 +1,20 @@
 # Ресурсы хоста: диск, Windows commit, WSL и контейнеры
 
+**11 октября,12:24 UTC — дефекты подтверждены, ремонт ожидает следующей загрузки.**
+Elevated scan вернул `ScanErrorsFoundNeedSpotFix`; позднейший preflight снова
+`Full Repair Needed`. Git fsck нашёл10 повреждённых объектов, четыре в текущем
+source. Независимо полученный pushed source проверен по3089 Git blob hashes;
+локальная копия26 files/24MB включает consistent PostgreSQL dump с полным decode.
+Копия на том же SSD. BootExecute для C: подтверждён; reboot/repair/rollback не выполнены.
+Новые UI/API/APK пока не устанавливались.
+
+Прежний PID43984 отсутствует после последнего sample11:35 UTC. Новый elevated
+PID13708 начал24h окно12:24 UTC:24 named files, RAM/commit/process IO, отдельный
+bounded VSS query и периодический Docker/WSL. Native hourly worker13732 также
+собирает VSS. Gap сохранён, autostart нет. Exact VSS max20 461 912 064B снова
+выше одобренных8GiB; writer изменения лимита и причина всего расхода C: неизвестны.
+[Ремонт, копия, запуск и ограничения](../audits/2026-10-11/HOST-REPAIR-1216.md).
+
 **11 октября,11:27 UTC — промежуточное окно, Docker allocation не растёт.**
 237 samples03:35→11:27 UTC: C:−1 647 091 712B (~1.53GiB), Docker VHDX
 236 073 254 912B во всех samples, identity стабильна. Шесть watched LDPlayer

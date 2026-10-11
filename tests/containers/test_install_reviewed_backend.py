@@ -142,14 +142,18 @@ class BackendInstallerTests(unittest.TestCase):
         receipt = {"requirementsSha256": digest, "actionContractSha256": digest}
         paths = ["backend/core/config.py", "backend/api/ws/direct/__init__.py", "backend/api/ws/direct/router.py",
                  "backend/websocket/direct_probe_protocol.py", "backend/websocket/direct_probe_runtime.py",
+                 "backend/websocket/direct_probe_telemetry.py",
                  "backend/websocket/direct_probe_ice.py", "backend/api/v1/direct_probe/__init__.py",
                  "backend/api/v1/direct_probe/router.py"]
         with patch.object(installer, "command", return_value="\n".join(paths)), \
                 patch.object(installer.subprocess, "run", return_value=subprocess.CompletedProcess([], 0, payload)):
             self.assertEqual(installer.source_boundary(CURRENT, SOURCE, receipt), paths)
-        with patch.object(installer, "command", return_value="\n".join(paths + ["backend/core/rbac.py"])):
-            with self.assertRaisesRegex(ValueError, "Unreviewed packaged"):
-                installer.source_boundary(CURRENT, SOURCE, receipt)
+        for foreign_path in ("backend/core/rbac.py", "backend/websocket/direct_probe_telemetry_extra.py",
+                             "backend/requirements.txt", "alembic/versions/unreviewed.py"):
+            with self.subTest(path=foreign_path), \
+                    patch.object(installer, "command", return_value="\n".join(paths + [foreign_path])):
+                with self.assertRaisesRegex(ValueError, "Unreviewed packaged"):
+                    installer.source_boundary(CURRENT, SOURCE, receipt)
 
     def test_readonly_video_requires_explicit_device_and_cannot_leak_into_echo_or_shutdown(self):
         for device, disable in ((None, False), (None, True), (PROBE_DEVICE, True)):

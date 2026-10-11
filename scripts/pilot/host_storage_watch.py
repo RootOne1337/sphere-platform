@@ -30,15 +30,6 @@ $ErrorActionPreference='Stop'
 [Console]::OutputEncoding=[Text.UTF8Encoding]::new($false)
 $osInfo=Get-CimInstance Win32_OperatingSystem -OperationTimeoutSec 5
 $memory=Get-CimInstance Win32_PerfFormattedData_PerfOS_Memory -OperationTimeoutSec 5
-$vssState='measured'; $vss=@(); $vssError=$null
-try {
-    $vss=@(Get-CimInstance Win32_ShadowStorage -OperationTimeoutSec 5 | ForEach-Object {
-        if ($null -eq $_.UsedSpace -or $null -eq $_.AllocatedSpace -or $null -eq $_.MaxSpace) { throw 'Incomplete counters' }
-        [pscustomobject]@{volume=$_.Volume.CimInstanceProperties['DeviceID'].Value;
-            diffVolume=$_.DiffVolume.CimInstanceProperties['DeviceID'].Value;
-            usedBytes=[long]$_.UsedSpace;allocatedBytes=[long]$_.AllocatedSpace;maxBytes=[long]$_.MaxSpace}
-    })
-} catch { $vssState='unavailable'; $vss=@(); $vssError=$_.Exception.GetType().Name }
 $processes=@(Get-Process | Sort-Object PrivateMemorySize64 -Descending | Select-Object -First 32 | ForEach-Object {
     $started=$null
     try {$started=$_.StartTime.ToUniversalTime().ToString('o')} catch {}
@@ -54,9 +45,22 @@ $pagefiles=@(Get-CimInstance Win32_PageFileUsage -OperationTimeoutSec 5 |
     availableRamBytes=[long]$osInfo.FreePhysicalMemory*1024;totalRamBytes=[long]$osInfo.TotalVisibleMemorySize*1024;
     committedBytes=[long]$memory.CommittedBytes;commitLimitBytes=[long]$memory.CommitLimit;
     pagedPoolBytes=[long]$memory.PoolPagedBytes;nonpagedPoolBytes=[long]$memory.PoolNonpagedBytes;
-    vss=[pscustomobject]@{state=$vssState;rows=$vss;errorType=$vssError};
     processes=$processes;processIoRates=$io;processIoIncludesNonFileTraffic=$true;
     pagefilesMiB=$pagefiles} | ConvertTo-Json -Depth 5 -Compress
+"""
+
+# The VSS WMI provider may ignore OperationTimeoutSec. Give it a separate
+# owned process/deadline so it cannot discard RAM, commit, and process readings.
+VSS_COMMAND = r"""
+$ErrorActionPreference='Stop'
+[Console]::OutputEncoding=[Text.UTF8Encoding]::new($false)
+$rows=@(Get-CimInstance Win32_ShadowStorage -OperationTimeoutSec 5 | ForEach-Object {
+    if ($null -eq $_.UsedSpace -or $null -eq $_.AllocatedSpace -or $null -eq $_.MaxSpace) { throw 'Incomplete counters' }
+    [pscustomobject]@{volume=$_.Volume.CimInstanceProperties['DeviceID'].Value;
+        diffVolume=$_.DiffVolume.CimInstanceProperties['DeviceID'].Value;
+        usedBytes=[long]$_.UsedSpace;allocatedBytes=[long]$_.AllocatedSpace;maxBytes=[long]$_.MaxSpace}
+})
+[pscustomobject]@{state='measured';rows=$rows;errorType=$null} | ConvertTo-Json -Depth 5 -Compress
 """
 
 
@@ -77,8 +81,8 @@ def native(args: list[str], *, timeout: int = 25, limit: int = SAMPLE_LIMIT) -> 
         return {'state': 'unavailable', 'errorType': type(error).__name__}
 
 
-def json_probe(args: list[str], *, lines: bool = False) -> dict:
-    result = native(args)
+def json_probe(args: list[str], *, lines: bool = False, timeout: int = 25) -> dict:
+    result = native(args, timeout=timeout)
     if result['state'] != 'measured':
         return result
     try:
@@ -145,6 +149,12 @@ def collect(files: list[Path], docker: bool) -> dict:
     sample = {'observedAt': now(), 'freeDiskBytes': shutil.disk_usage('C:\\').free,
               'files': {str(path): file_state(path) for path in files},
               'host': json_probe(['powershell.exe', '-NoProfile', '-NonInteractive', '-Command', HOST_COMMAND])}
+    vss = json_probe(['powershell.exe', '-NoProfile', '-NonInteractive', '-Command', VSS_COMMAND], timeout=10)
+    sample['vssProbe'] = vss
+    if sample['host']['state'] == 'measured' and isinstance(sample['host']['value'], dict):
+        sample['host']['value']['vss'] = (vss['value']
+            if vss['state'] == 'measured' and isinstance(vss.get('value'), dict)
+            else {'state': 'unavailable', 'rows': [], 'errorType': vss.get('errorType', 'invalid_vss_response')})
     if docker:
         sample['dockerDf'] = json_probe(['docker', 'system', 'df', '--format', '{{json .}}'], lines=True)
         sample['containerStats'] = json_probe(['docker', 'stats', '--no-stream', '--format', '{{json .}}'], lines=True)

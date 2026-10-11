@@ -76,6 +76,43 @@ def test_large_or_invalid_native_output_remains_unknown(monkeypatch):
     assert watch.json_probe(['fixed-command'])['state'] == 'unavailable'
 
 
+def test_vss_provider_timeout_preserves_core_host_readings(monkeypatch):
+    core = {'bootUtc': 'epoch1', 'committedBytes': 1234, 'availableRamBytes': 4567,
+            'processes': [{'pid': 42, 'privateBytes': 890}]}
+
+    def execute(args, **kwargs):
+        if args[-1] == watch.VSS_COMMAND:
+            assert kwargs['timeout'] == 10
+            raise subprocess.TimeoutExpired(args, 10, output=b'private provider output')
+        assert args[-1] == watch.HOST_COMMAND
+        return SimpleNamespace(returncode=0, stdout=json.dumps(core).encode())
+
+    monkeypatch.setattr(watch.subprocess, 'run', execute)
+    result = watch.collect([], docker=False)
+    assert result['host']['state'] == 'measured'
+    assert result['host']['value']['committedBytes'] == 1234
+    assert result['host']['value']['processes'] == core['processes']
+    assert result['host']['value']['vss'] == {'state': 'unavailable', 'rows': [], 'errorType': 'TimeoutExpired'}
+    assert result['vssProbe'] == {'state': 'unavailable', 'errorType': 'TimeoutExpired'}
+    assert 'private provider output' not in json.dumps(result)
+
+
+def test_exact_vss_reading_remains_available_when_core_reading_fails(monkeypatch):
+    vss = {'state': 'measured', 'rows': [{'volume': 'C', 'diffVolume': 'C',
+            'usedBytes': 17, 'allocatedBytes': 23, 'maxBytes': 31}], 'errorType': None}
+
+    def execute(args, **kwargs):
+        if args[-1] == watch.VSS_COMMAND:
+            return SimpleNamespace(returncode=0, stdout=json.dumps(vss).encode())
+        raise subprocess.TimeoutExpired(args, 25)
+
+    monkeypatch.setattr(watch.subprocess, 'run', execute)
+    result = watch.collect([], docker=False)
+    assert result['host']['state'] == 'unavailable'
+    assert result['vssProbe']['state'] == 'measured'
+    assert result['vssProbe']['value'] == vss
+
+
 @pytest.mark.skipif(platform.system() != 'Windows', reason='Windows native collector launch')
 def test_invalid_cli_creates_no_report_even_on_elevated_host():
     root = Path(__file__).resolve().parents[1]

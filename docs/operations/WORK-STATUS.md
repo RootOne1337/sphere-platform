@@ -2,6 +2,21 @@
 
 **Проверенная установка:** UI `6ee80c1f` / API `6ee80c1f`.
 
+**11 октября — подтверждено повторное повреждение C: и Git; обновление ожидает ремонта.**
+Elevated scan завершён: `ScanErrorsFoundNeedSpotFix`; current preflight всё ещё
+`Full Repair Needed`. Git fsck нашёл10 corrupt objects, четыре относятся к current
+source. Pushed source3089 files проверен независимо по Git blob hashes; consistent
+PostgreSQL dump полностью прочитан. Локальная копия на том же SSD, без полного
+backup личных данных. CHKDSK C: `/f` подтверждён на следующую загрузку; reboot,
+rollback и repair этой работой не выполнены.
+
+Установщик допускает новый strict telemetry DTO;61 tests/69 subtests прошли.
+VSS provider изолирован от RAM/process collector,41 host tests прошли. Старый
+worker остановился после11:35 UTC; новый elevated13708 начал24h окно12:24 UTC.
+Exact VSS max снова около19.057GiB вместо8GiB, причина смены лимита UNKNOWN.
+UI/API остаются6ee, fleet смешанный, APK55 не собран/подписан/выложен.
+[Квитанция и следующий порядок](../audits/2026-10-11/HOST-REPAIR-1216.md).
+
 **11 октября — кандидат APK55 прошёл CI, установка ещё не выполнена.** Автоматические native ICE/stage
 reports привязаны к истории просмотра; initial/sparse/terminal сбор ограничен
 общим10-session/32KiB journal. Frontend153 suites/2208 tests, backend3638 tests

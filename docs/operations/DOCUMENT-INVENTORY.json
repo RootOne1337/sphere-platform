@@ -1,11 +1,11 @@
 {
   "schemaVersion": 1,
-  "reviewedAtUtc": "2026-10-11T11:38:30.531660+00:00",
+  "reviewedAtUtc": "2026-10-11T12:28:48.532065+00:00",
   "scope": "All tracked Markdown classified; active local-link paths scanned. Not semantic attestation of every sentence, command execution, external-link or live acceptance.",
   "countsByRole": {
     "ADR": 6,
     "CURRENT_ENTRYPOINT": 8,
-    "DATED_EVIDENCE": 275,
+    "DATED_EVIDENCE": 276,
     "DESIGN_SPECIFICATION": 76,
     "OPERATING_GUIDE": 64,
     "PROJECT_POLICY": 7,
@@ -1230,6 +1230,10 @@
     },
     {
       "file": "docs/audits/2026-10-11/DIRECT-PRIMARY-VIDEO-CANDIDATE.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
+      "file": "docs/audits/2026-10-11/HOST-REPAIR-1216.md",
       "role": "DATED_EVIDENCE"
     },
     {
