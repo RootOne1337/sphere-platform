@@ -246,3 +246,30 @@ test('a changed network cancels the minute cooldown but cannot revive a hidden o
   expect(mockStart).toHaveBeenCalledTimes(5);
   view.unmount(); expect(jest.getTimerCount()).toBe(0);
 });
+
+test('bandwidth and RTT change notifications preserve an active direct stream and its control owner', async () => {
+  const network = new EventTarget();
+  Object.defineProperty(navigator, 'connection', {configurable:true, value:network});
+  const view = mount();
+  act(() => {mockReport(connected); mockTrack({kind:'video'} as MediaStreamTrack);});
+  await act(async () => {}); act(present);
+  act(() => {network.dispatchEvent(new Event('change')); network.dispatchEvent(new Event('change'));});
+  expect(mockStop).not.toHaveBeenCalled();
+  act(() => jest.advanceTimersByTime(500)); expect(mockStart).toHaveBeenCalledTimes(1);
+  view.unmount(); expect(jest.getTimerCount()).toBe(0);
+  Object.defineProperty(navigator, 'connection', {configurable:true, value:undefined});
+});
+
+test('an explicitly changed interface retires a connected peer and creates one fresh attempt', async () => {
+  const network = Object.assign(new EventTarget(), {type:'wifi'});
+  Object.defineProperty(navigator, 'connection', {configurable:true, value:network});
+  const view = mount();
+  act(() => {mockReport(connected); mockTrack({kind:'video'} as MediaStreamTrack);});
+  await act(async () => {}); act(present);
+  network.type = 'cellular';
+  act(() => network.dispatchEvent(new Event('change')));
+  expect(mockStop).toHaveBeenCalledTimes(1);
+  act(() => jest.advanceTimersByTime(500)); expect(mockStart).toHaveBeenCalledTimes(2);
+  view.unmount(); expect(jest.getTimerCount()).toBe(0);
+  Object.defineProperty(navigator, 'connection', {configurable:true, value:undefined});
+});

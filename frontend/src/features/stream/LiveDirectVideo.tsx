@@ -193,14 +193,25 @@ export function LiveDirectVideo({ deviceId, session, eligible, fit, expectedCapt
       attemptsInWindow = 0;
       retry = setTimeout(() => { retry = null; begin(); }, 500);
     };
-    const connection = (navigator as Navigator & { connection?: EventTarget }).connection;
+    const connection = (navigator as Navigator & { connection?: EventTarget & { type?: string } }).connection;
+    let connectionType = connection?.type;
+    const connectionChanged = () => {
+      const nextType = connection?.type;
+      const interfaceChanged = !!connectionType && !!nextType && connectionType !== nextType;
+      connectionType = nextType;
+      // This event also reports new bandwidth/RTT estimates. Do not tear down a
+      // working stream or held input just because a congestion estimate changed.
+      // Without a supported interface type, actual ICE loss still owns recovery.
+      if (observation.active && observation.result?.state === 'connected' && !interfaceChanged) return;
+      networkChanged();
+    };
     window.addEventListener('online', networkChanged);
-    connection?.addEventListener('change', networkChanged);
+    connection?.addEventListener('change', connectionChanged);
     begin();
     return () => {
       disposed = true; generation++;
       window.removeEventListener('online', networkChanged);
-      connection?.removeEventListener('change', networkChanged);
+      connection?.removeEventListener('change', connectionChanged);
       if (retry !== null) clearTimeout(retry);
       cancel?.(); clearRenderer();
       callbacks.current.onControlChannel?.(null);
