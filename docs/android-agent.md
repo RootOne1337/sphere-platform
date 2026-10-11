@@ -1,9 +1,13 @@
 # Android Agent
 
-**Действующая граница, сверка9октября:** [WORK-STATUS](operations/WORK-STATUS.md)
-и [CURRENT-STATE](operations/CURRENT-STATE.md) указывают последнюю конечную
-PH011 canary **1.2.49-dev/10249**; смешанный парк не объявляется обновлённым.
-Normal live MOVE подтверждён на этом pilot, trajectory recorder не готов.
+**Действующая граница, сверка11октября:** рабочий UI/API `6ee80c1f`;
+PH010 проверен на **1.2.54-dev/10254**, ещё шесть машин на53, две на52.
+Смешанный парк не объявляется полностью обновлённым. Direct native input source
+подготовлен, но runtime flag выключен; текущий PH010 ICE не открылся.
+[Фактический срез](audits/2026-10-11/CURRENT-STREAM-DELIVERY.json) ·
+[WORK-STATUS](operations/WORK-STATUS.md). Следующий source10255 добавляет
+[автоматический native journal](audits/2026-10-11/NATIVE-DIRECT-DIAGNOSTICS-SOURCE.md);
+build/installation этой версии ещё не подтверждены.
 UI hierarchy использует root `uiautomator dump`/XML/XPath, отдельный Appium
 UiAutomator2 server не встроен. Разделы с прежними APK ниже — история своих дат.
 

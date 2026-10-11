@@ -16,6 +16,8 @@ internal data class ProbeProgressSnapshot(val stage: ProbeStage, val elapsedMs: 
 
 /** Actor-owned, <=one event per stage and no events after retirement, regardless of callbacks. */
 internal class DirectProbeProgress(private val startedAt: Long) {
+    var latest: ProbeProgressSnapshot? = null
+        private set
     private val seen = mutableSetOf<ProbeStage>()
     private var retired = false
     private var lastAt = startedAt
@@ -25,5 +27,6 @@ internal class DirectProbeProgress(private val startedAt: Long) {
         lastAt = now
         if (stage.terminal) retired = true
         return ProbeProgressSnapshot(stage, (now - startedAt).coerceAtMost(DirectProbeProtocol.MAX_TTL_MS.toLong()))
+            .also { latest = it }
     }
 }

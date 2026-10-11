@@ -119,7 +119,8 @@ async def live_offer(peers, monkeypatch):
 
 
 @pytest.mark.asyncio
-async def test_direct_input_peer_is_bound_across_workers_to_user_viewer_and_agent_generation(peers, monkeypatch):
+@pytest.mark.parametrize('with_history', [False, True])
+async def test_direct_input_peer_is_bound_across_workers_to_user_viewer_and_agent_generation(peers, monkeypatch, with_history):
     from backend.core.config import settings
     monkeypatch.setattr(settings, 'DIRECT_TRANSPORT_LIVE_VIDEO_ENABLED', True)
     monkeypatch.setattr(settings, 'DIRECT_TRANSPORT_INPUT_ENABLED', True)
@@ -129,6 +130,8 @@ async def test_direct_input_peer_is_bound_across_workers_to_user_viewer_and_agen
         device_id='device', status='online', ws_session_id=agent_session, agent_version_code=10254))
     viewer.video = viewer.live = True
     viewer.control_session = '1' * 16
+    if with_history:
+        viewer.history_session = '2' * 16
     await runtimes[1].open(viewer, VIDEO_SDP)
     await eventually(lambda: agent.send_json.call_count == 1)
     scope = dict(device='device', org='org', user='user', session=viewer.session,

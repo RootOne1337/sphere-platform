@@ -13,7 +13,7 @@ from redis.exceptions import RedisError
 from backend.services.device_status_cache import DeviceStatusCache
 
 SESSION_LIMIT = 10
-SAMPLE_LIMIT = 15  # Last 15 browser + 15 Android observations, independently.
+SAMPLE_LIMIT = 15  # Independently bounded browser, capture and native ICE observations.
 SESSION_BYTES = 32 * 1024
 RETENTION_SECONDS = 7 * 86400
 REPORT_INTERVAL_SECONDS = 10
@@ -141,6 +141,10 @@ if record.expires_at_ms <= tonumber(ARGV[6]) then
 end
 if record.ended_at then return 0 end
 local patch = cjson.decode(ARGV[2])
+-- A native peer may describe only the active viewer that authenticated its
+-- history binding. Missing legacy identity is uncorrelated, never inferred.
+if patch.kind == 'native_direct_samples' and
+  (not record._viewer_user or record._viewer_user ~= patch.viewer_user) then return 0 end
 if patch.sample then
   local name = patch.kind
   local samples = record[name] or {}
@@ -172,7 +176,7 @@ local encoded = cjson.encode(record)
 while #encoded > tonumber(ARGV[4]) do
   local largest = nil
   local largest_size = 0
-  for _, name in ipairs({'browser_samples', 'agent_samples', 'control_events', 'direct_diagnostics'}) do
+  for _, name in ipairs({'browser_samples', 'agent_samples', 'control_events', 'direct_diagnostics', 'native_direct_samples'}) do
     local samples = record[name]
     if samples and #samples > 1 then
       local size = #cjson.encode(samples)
@@ -225,11 +229,13 @@ class StreamSessionHistory:
         except (RedisError, TimeoutError):
             return None  # Diagnostic storage must never interrupt video/input.
 
-    async def begin(self, org: str, device: str, session: str) -> bool:
+    async def begin(self, org: str, device: str, session: str, *, user: str | None = None) -> bool:
         now = utc_now()
         record = {"schema_version": 1, "session_id": session, "device_id": device,
                   "opened_at": now, "last_seen_at": now, "transport": "server_websocket",
                   "expires_at_ms": int(time.time() * 1000) + RETENTION_SECONDS * 1000}
+        if user is not None:
+            record["_viewer_user"] = user
         return bool(await self._eval(_BEGIN, org, device, session, json.dumps(record), SESSION_LIMIT,
                                     RETENTION_SECONDS, int(time.time() * 1000)))
 
@@ -292,6 +298,13 @@ class StreamSessionHistory:
             pass
         return await self.update(org, device, session, {"kind": "agent_samples", "sample": sample, "last_seen_at": now})
 
+    async def native_direct(self, org: str, device: str, session: str, user: str, sample: dict[str, Any]) -> bool:
+        # Called only by the generation-bound direct runtime. Redis checks the
+        # stored viewer identity atomically with closed/expired/eviction fences.
+        return await self.update(org, device, session, {
+            "kind": "native_direct_samples", "viewer_user": user, "sample": sample,
+        })
+
     async def end(self, org: str, device: str, session: str) -> bool:
         return await self.update(org, device, session, {"ended_at": utc_now()})
 
@@ -305,6 +318,7 @@ class StreamSessionHistory:
                 continue
             try:
                 record = json.loads(value)
+                record.pop("_viewer_user", None)
                 last_seen = datetime.fromisoformat(record["last_seen_at"]).timestamp()
                 record["state"] = "closed" if record.get("ended_at") else "active" if time.time() - last_seen < 45 else "stale"
                 records.append(record)

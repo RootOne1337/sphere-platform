@@ -78,6 +78,16 @@
       "testedRevision": "e9af9e60be1b2dcb1f13f7dd8b17db93dc8bfa4c",
       "evidence": "docs/audits/2026-10-11/DIRECT-INPUT-DELIVERY-BLOCKED.md",
       "scope": "The reproduced 22ms follow-up terminal rejection during RELEASE is fixed in source/CI; runtime replacement stopped before image load."
+    },
+    {
+      "id": "native-direct-session-journal",
+      "installed": false,
+      "sourceBaseRevision": "e3bf0f615fa03150e76d4e87bdd30104be927152",
+      "evidence": "docs/audits/2026-10-11/NATIVE-DIRECT-DIAGNOSTICS-SOURCE.md",
+      "scope": "Source-only automatic native ICE/stage journal; candidate APK10255, initial/sparse/terminal bounded telemetry. Exact CI, install and native runtime acceptance pending.",
+      "deliveryState": "LOCAL_SOURCE_TESTED",
+      "runtimeAccepted": false,
+      "candidateVersionCode": 10255
     }
   ],
   "storage": {
@@ -99,6 +109,17 @@
       "currentScanResultAvailable": false,
       "hardwareFailureProven": false,
       "evidence": "docs/audits/2026-10-11/DIRECT-INPUT-DELIVERY-BLOCKED.md"
+    },
+    "retentionPlan": {
+      "observedAtUtc": "2026-10-10T23:47:37.483257+00:00",
+      "evidence": "docs/audits/2026-10-11/STORAGE-RETENTION-PLAN-2347.json",
+      "evidenceSha256NormalizedLf": "d2c849552de839f1acd5f8e7590162e336a2b5b57aef365f6fb67f192df873e6",
+      "ownedUnusedImages": 53,
+      "imageExclusiveLogicalApproxBytes": 33736200000,
+      "physicalBytesReclaimed": null,
+      "deletionPerformed": false,
+      "blockedBy": "Windows C: Full Repair Needed",
+      "scope": "Read-only plan; 46 container dependencies protected. Rounded logical layers are not a promised host-space reclamation."
     }
   },
   "legacy": {

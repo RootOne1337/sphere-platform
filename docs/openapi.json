@@ -17601,6 +17601,11 @@
             "type": "boolean",
             "title": "Direct Input Enabled",
             "default": false
+          },
+          "native_history_enabled": {
+            "type": "boolean",
+            "title": "Native History Enabled",
+            "default": false
           }
         },
         "type": "object",

@@ -3,7 +3,7 @@ import { act, fireEvent, render } from '@testing-library/react';
 import { LiveDirectVideo } from '@/src/features/stream/LiveDirectVideo';
 import type { DirectProbeResult } from '@/src/features/stream/directProbe';
 
-let mockAdmission: { data: { admitted: boolean; profiles: string[]; input?: boolean }; isError: boolean } =
+let mockAdmission: { data: { admitted: boolean; profiles: string[]; input?: boolean; nativeHistory?: boolean }; isError: boolean } =
   { data: { admitted: true, profiles: ['host', 'public-stun'] }, isError: false };
 let mockToken: string | null = 'fixture';
 let mockReport: (result: DirectProbeResult) => void;
@@ -55,6 +55,16 @@ test('direct input requires its own admission and a writable viewer callback', (
   allowed.unmount(); callback.mockClear(); late({}); expect(callback).not.toHaveBeenCalled();
   const readonly = mount();
   expect(mockStart.mock.calls.at(-1)![3].controlSession).toBeUndefined(); readonly.unmount();
+});
+
+test('native history follows explicit server support independently of input permission', () => {
+  const old = mount();
+  expect(mockStart.mock.calls.at(-1)![3].historySession).toBeUndefined(); old.unmount();
+  mockAdmission.data.nativeHistory = true;
+  const current = render(<LiveDirectVideo deviceId="device" session={'1'.repeat(16)} eligible
+    expectedCapture={expected} onFrame={jest.fn()} onObservation={jest.fn()} />);
+  expect(mockStart.mock.calls.at(-1)![3].historySession).toBe('1'.repeat(16));
+  expect(mockStart.mock.calls.at(-1)![3].controlSession).toBeUndefined(); current.unmount();
 });
 
 test('automatic primary video promotes only a matching displayed frame, never an ICE result', async () => {

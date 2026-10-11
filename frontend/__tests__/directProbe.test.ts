@@ -72,6 +72,23 @@ const appSdp = 'v=0\r\na=fingerprint:sha-256 ' + Array(32).fill('AB').join(':')
   + '\r\nm=application 9 UDP/DTLS/SCTP webrtc-datachannel\r\n';
 const videoSdp = appSdp + 'm=video 9 UDP/TLS/RTP/SAVPF 96\r\na=recvonly\r\na=rtpmap:96 H264/90000\r\n';
 const epoch = '12345678-1234-4234-8234-123456789abc';
+test('history correlation is read-only and never creates the control channel', async () => {
+  FakePeer.initialSdp = videoSdp;
+  const stop = startDirectVideoSession('wss://same-origin', 'access', () => {},
+    { onTrack: jest.fn(), historySession: '1'.repeat(16) });
+  await flush(); FakeSocket.latest.onopen?.();
+  expect(JSON.parse(FakeSocket.latest.send.mock.calls[0][0])).toEqual({ token: 'access', protocol: 'sphere-video-v1',
+    history_session: '1'.repeat(16) });
+  expect(FakePeer.latest.createDataChannel).not.toHaveBeenCalledWith('sphere-control-v1', expect.anything());
+  stop();
+});
+
+test.each(['private-session', 'A'.repeat(16), '1'.repeat(32)])('invalid journal correlation allocates no peer: %s', historySession => {
+  const previous = FakePeer.constructions;
+  expect(() => startDirectVideoSession('wss://same-origin', 'access', () => {},
+    { onTrack: jest.fn(), historySession })).toThrow('invalid_history_session');
+  expect(FakePeer.constructions).toBe(previous);
+});
 async function videoConnected(live = false) {
   FakePeer.initialSdp = videoSdp;
   const reports: DirectProbeResult[] = [], onTrack = jest.fn();

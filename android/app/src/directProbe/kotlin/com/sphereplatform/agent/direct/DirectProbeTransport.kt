@@ -31,6 +31,7 @@ class DirectProbeTransport(
         val lease = DirectVideoLease(startedAt, ttlMs, live)
         val expires get() = lease.expiresAt
         val progress = DirectProbeProgress(SystemClock.elapsedRealtime())
+        val telemetry = DirectProbeTelemetry(startedAt)
         var connection: PeerConnection? = null
         var channel: DataChannel? = null
         @Volatile var inputChannel: DataChannel? = null
@@ -42,7 +43,7 @@ class DirectProbeTransport(
         var capture: com.sphereplatform.agent.streaming.CaptureInputSession? = null
         var video: DirectEncodedVideoSource? = null
         @Volatile var videoReady = false
-        val statsBudget = ProbeStatsBudget()
+        val statsBudget = ProbeStatsBudget(live)
     }
 
     init {
@@ -145,6 +146,7 @@ class DirectProbeTransport(
             val iceProfile = DirectProbeIceProfile.fromUrl(BuildConfig.DIRECT_PROBE_STUN_URL)
             p.iceProfile = if (grant == null) iceProfile.name else "turn"
             progress(p, ProbeStage.OFFER_RECEIVED)
+            publishTelemetry(p, p.telemetry.report(ProbeStage.OFFER_RECEIVED, p.iceProfile, false, SystemClock.elapsedRealtime()))
             if (factory == null) {
                 if (initialized.compareAndSet(false, true)) {
                     try {
@@ -320,8 +322,13 @@ class DirectProbeTransport(
                             put("sampleAgeMs", age)
                             put("network", summary)
                         }
-                        // Canary-only local aggregate, <=32 records/peer; no per-sample socket publication.
-                        Log.i("SphereDirectProbe", snapshot.toString())
+                        p.telemetry.observe(summary, sampledAt)
+                        val report = p.telemetry.report(p.progress.latest?.stage ?: ProbeStage.OFFER_RECEIVED,
+                            p.iceProfile, p.answered, SystemClock.elapsedRealtime())
+                        // Keep detailed local logging finite even on an eight-hour viewer.
+                        if (report?.get("sequence")?.jsonPrimitive?.intOrNull?.let { it <= 32 } == true)
+                            Log.i("SphereDirectProbe", snapshot.toString())
+                        publishTelemetry(p, report)
                     }
                 }
             }
@@ -338,6 +345,14 @@ class DirectProbeTransport(
         }.toString())
     }
 
+    private fun publishTelemetry(p: Probe, sample: JsonObject?) {
+        if (sample == null || p.token != fence.get() || generation() != p.generation) return
+        // A full/stale signaling queue drops optional diagnostics, never the peer.
+        runCatching { send(p.generation, buildJsonObject {
+            put("type", "direct_probe_telemetry"); put("session_id", p.session); put("sample", sample)
+        }) }
+    }
+
     private fun close(stage: ProbeStage = ProbeStage.CLOSED) {
         val old = peer
         peer = null
@@ -345,6 +360,7 @@ class DirectProbeTransport(
         old?.let { input?.directClosed(it.session) }
         old?.let { streaming.detachEncodedViewer(it) }
         old?.let { progress(it, stage) }
+        old?.let { publishTelemetry(it, it.telemetry.report(stage, it.iceProfile, it.answered, SystemClock.elapsedRealtime())) }
         old?.statsBudget?.retire()
         // One already-closed JNI wrapper must not prevent retiring other threads.
         old?.channel?.let {

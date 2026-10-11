@@ -25,6 +25,8 @@ from backend.websocket.direct_probe_protocol import (
     description,
     session_id,
 )
+from backend.websocket.direct_probe_telemetry import native_peer_report
+from backend.websocket.stream_session_history import StreamSessionHistory, utc_now
 
 OPERATION_SECONDS = 2.0
 DELETE_EXACT = "if redis.call('GET', KEYS[1]) == ARGV[1] then return redis.call('DEL', KEYS[1]) else return 0 end"
@@ -50,6 +52,7 @@ class ProbeViewer:
     renewal: int = 0
     renewed_at: float = 0
     control_session: str | None = None
+    history_session: str | None = None
 
 
 @dataclass
@@ -57,6 +60,10 @@ class PendingProbe:
     binding: dict
     deadline: float
     answered: bool = False
+    diagnostic_sequence: int = 0
+    diagnostic_elapsed: int = -1
+    diagnostic_at: float = -float("inf")
+    diagnostic_closed: bool = False
 
 
 class DirectProbeRuntime:
@@ -69,6 +76,8 @@ class DirectProbeRuntime:
         self.pubsub: Any = None
         self.task: asyncio.Task | None = None
         self.reservations = 0
+        self.diagnostics: asyncio.Queue[tuple[PendingProbe, dict[str, Any]]] = asyncio.Queue(maxsize=4)
+        self.diagnostic_task: asyncio.Task | None = None
 
     @property
     def viewer_channel(self) -> str:
@@ -91,6 +100,7 @@ class DirectProbeRuntime:
             await self.pubsub.subscribe(self.viewer_channel)
         self.available = True
         self.task = asyncio.create_task(self.listen())
+        self.diagnostic_task = asyncio.create_task(self.write_diagnostics())
 
     async def topology(self, binding: dict) -> bool:
         status = await DeviceStatusCache(self.redis).get_status(binding["device"])
@@ -118,7 +128,9 @@ class DirectProbeRuntime:
             try:
                 binding = json.loads(raw)
                 if (not isinstance(binding, dict)
-                        or binding.keys() != {"session", "device", "org", "user", "worker", "agent_session", "media", "control_session"}
+                        or binding.keys() not in (
+                            {"session", "device", "org", "user", "worker", "agent_session", "media", "control_session"},
+                            {"session", "device", "org", "user", "worker", "agent_session", "media", "control_session", "history_session"})
                         or binding != {**binding, "session": session, "device": device, "org": org, "user": user,
                                        "agent_session": agent_session, "media": LIVE_VIDEO_MODE, "control_session": viewer_session}):
                     return False
@@ -211,6 +223,14 @@ class DirectProbeRuntime:
                         or len(viewer.control_session) != 16 or any(c not in "0123456789abcdef" for c in viewer.control_session)):
                     raise InvalidDirectProbe("input_peer_not_admitted")
                 binding["control_session"] = viewer.control_session
+            if viewer.history_session is not None:
+                if (not viewer.video or not isinstance(viewer.history_session, str)
+                        or len(viewer.history_session) != 16
+                        or any(c not in "0123456789abcdef" for c in viewer.history_session)):
+                    raise InvalidDirectProbe("invalid_history_session")
+                # Diagnostic correlation is separate from input admission. The
+                # journal independently verifies the authenticated user/record.
+                binding["history_session"] = viewer.history_session
             if not await self.redis.set(self.key(viewer.device), self.encode(binding), nx=True, px=SESSION_MS):
                 raise InvalidDirectProbe("device_probe_busy")
             viewer.binding = binding
@@ -278,6 +298,57 @@ class DirectProbeRuntime:
             await self.publish(f"{self.namespace}:viewer:{binding['worker']}",
                                dict(kind="answer", binding=binding, sdp=sdp))
 
+    def observe_native(self, device: str, agent_session: str, data: Any) -> bool:
+        """No Redis await in the agent's input/ACK receive loop; never replay telemetry."""
+        parsed = native_peer_report(data)
+        if parsed is None or not self.available:
+            return False
+        sid, sample = parsed
+        pending = self.pending.get(sid)
+        snapshot = self.manager.connection_snapshot(device)
+        now = asyncio.get_running_loop().time()
+        if (pending is None or pending.deadline <= now or pending.diagnostic_closed
+                or pending.binding.get("history_session") is None
+                or pending.binding["device"] != device or pending.binding["agent_session"] != agent_session
+                or snapshot is None or snapshot.session_id != agent_session
+                or snapshot.org_id != pending.binding["org"] or snapshot.agent_type != "android"
+                or sample.sequence <= pending.diagnostic_sequence or sample.elapsed_ms < pending.diagnostic_elapsed):
+            return False
+        pending.diagnostic_sequence = sample.sequence
+        pending.diagnostic_elapsed = sample.elapsed_ms
+        if sample.kind == "final":
+            pending.diagnostic_closed = True
+        elif now - pending.diagnostic_at < .75:
+            return False
+        pending.diagnostic_at = now
+        if self.diagnostics.full():
+            return False
+        self.diagnostics.put_nowait((pending, sample.model_dump() | {
+            "peer_id": sid, "received_at": utc_now(),
+        }))
+        return True
+
+    async def write_diagnostics(self) -> None:
+        history = StreamSessionHistory(self.redis)
+        while True:
+            pending, sample = await self.diagnostics.get()
+            try:
+                binding = pending.binding
+                # Drop queued observations after reconnect/retirement. Their
+                # timestamp is reception time, never this later storage time.
+                async with asyncio.timeout(OPERATION_SECONDS):
+                    if (not self.available or self.pending.get(binding["session"]) is not pending
+                            or not await self.remaining(binding)):
+                        continue
+                    if not self.available or self.pending.get(binding["session"]) is not pending:
+                        continue
+                    await history.native_direct(binding["org"], binding["device"], binding["history_session"],
+                                                binding["user"], sample)
+            except Exception:
+                pass  # Optional journal failure cannot retire media or input.
+            finally:
+                self.diagnostics.task_done()
+
     async def route(self, channel: str, raw: bytes | str) -> None:
         if len(raw) > MAX_WIRE_BYTES:
             return
@@ -286,12 +357,17 @@ class DirectProbeRuntime:
             return
         binding = data["binding"]
         binding_keys = {"session", "device", "org", "user", "worker", "agent_session"}
-        if (not isinstance(binding, dict) or binding.keys() not in (binding_keys, binding_keys | {"media"}, binding_keys | {"media", "control_session"})
+        if (not isinstance(binding, dict) or not binding_keys <= binding.keys()
+                or binding.keys() - binding_keys - {"media", "control_session", "history_session"}
                 or "media" in binding and binding["media"] not in {VIDEO_MODE, LIVE_VIDEO_MODE}):
             return
         if "control_session" in binding and (binding.get("media") != LIVE_VIDEO_MODE
                 or not isinstance(binding["control_session"], str) or len(binding["control_session"]) != 16
                 or any(c not in "0123456789abcdef" for c in binding["control_session"])):
+            return
+        if "history_session" in binding and (binding.get("media") not in {VIDEO_MODE, LIVE_VIDEO_MODE}
+                or not isinstance(binding["history_session"], str) or len(binding["history_session"]) != 16
+                or any(c not in "0123456789abcdef" for c in binding["history_session"])):
             return
         sid = session_id(binding["session"])
         session_id(binding["worker"])
@@ -421,6 +497,12 @@ class DirectProbeRuntime:
 
     async def stop(self) -> None:
         self.available = False
+        if self.diagnostic_task:
+            self.diagnostic_task.cancel()
+            await asyncio.gather(self.diagnostic_task, return_exceptions=True)
+        while not self.diagnostics.empty():
+            self.diagnostics.get_nowait()
+            self.diagnostics.task_done()
         if self.task:
             self.task.cancel()
             await asyncio.gather(self.task, return_exceptions=True)

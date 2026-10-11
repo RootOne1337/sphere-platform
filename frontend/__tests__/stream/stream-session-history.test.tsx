@@ -51,3 +51,18 @@ test.each([
   expect(screen.getByText(/ICE-запросы \/ ответы:/)).toHaveTextContent('237 / —');
   expect(screen.queryByText(/Управление через сервер/)).not.toBeInTheDocument();
 });
+
+test('native observation preserves known zero, unknown counters and the original snapshot age', async () => {
+  mockGet.mockResolvedValue({ data: { schema_version: 1, device_id: device, session_limit: 10, sessions: [{
+    session_id: 'viewer', opened_at: '2026-10-10T10:00:00Z', state: 'closed', native_direct_samples: [{
+      received_at: '2026-10-10T10:00:05Z', stage: 'closed', kind: 'final', elapsed_ms: 5000,
+      answer_sent: true, network_sample_age_ms: 3100, network: { local_candidates: 3, remote_candidates: 1,
+        pairs: 1, checking_pairs: 1, failed_pairs: 0, succeeded_pairs: 0, requests_sent: 237,
+        requests_received: null, responses_sent: null, responses_received: 0, dtls_state: 'new' },
+    }],
+  }] } });
+  view();
+  expect(await screen.findByText(/исходящие \/ входящие: 237 \/ —/)).toHaveTextContent('ответы исходящие / входящие: — / 0');
+  expect(screen.getByText(/возраст сетевого среза/)).toHaveTextContent('3100 мс');
+  expect(screen.getByText(/Этап: Соединение закрыто/)).toHaveTextContent('итог при закрытии');
+});

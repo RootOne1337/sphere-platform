@@ -891,6 +891,13 @@ async def android_agent_ws(
                             probe_runtime = get_direct_probe_runtime()
                             if probe_runtime:
                                 await probe_runtime.agent_message(device_id, session_id, msg)
+                        case "direct_probe_telemetry":
+                            from backend.websocket.direct_probe_runtime import (
+                                get_direct_probe_runtime,
+                            )
+                            probe_runtime = get_direct_probe_runtime()
+                            if probe_runtime:
+                                probe_runtime.observe_native(device_id, session_id, msg)
                         case "continuous_input_offer" | "continuous_input_status":
                             from backend.websocket.continuous_runtime import get_continuous_runtime
                             runtime = get_continuous_runtime()

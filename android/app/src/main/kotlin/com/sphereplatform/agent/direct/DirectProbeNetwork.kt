@@ -55,7 +55,7 @@ internal object DirectProbeNetwork {
 }
 
 /** Actor-owned, one outstanding native callback; no cancellation or timeout starts another call. */
-internal class ProbeStatsBudget {
+internal class ProbeStatsBudget(private val sustained: Boolean = false) {
     private var retired = false
     private var pending = false
     private var attempts = 0
@@ -63,8 +63,9 @@ internal class ProbeStatsBudget {
 
     fun begin(now: Long): Boolean {
         val previous = lastStart
-        if (retired || pending || attempts >= 32 || now < 0 ||
-            (previous != null && (now < previous || now - previous < 1000))) return false
+        val interval = if (sustained && attempts >= 32) 10000 else 1000
+        if (retired || pending || attempts >= (if (sustained) 2912 else 32) || now < 0 ||
+            (previous != null && (now < previous || now - previous < interval))) return false
         attempts++
         pending = true
         lastStart = now

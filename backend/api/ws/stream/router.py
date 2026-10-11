@@ -183,7 +183,7 @@ async def stream_viewer_ws(
         user_id=user_id_str,
     )
     history = StreamSessionHistory(redis_client.redis, redis_client.redis_binary)
-    history_enabled = await history.begin(org_id_str, device_id, session_id)
+    history_enabled = await history.begin(org_id_str, device_id, session_id, user=user_id_str)
     last_browser_report = last_direct_report = -float("inf")
     direct_reports = 0
     diagnostic_queue: asyncio.Queue[tuple[str, dict[str, Any], int]] = asyncio.Queue(maxsize=4)

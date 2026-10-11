@@ -50,7 +50,8 @@ export function LiveDirectVideo({ deviceId, session, eligible, fit, expectedCapt
         || data.live_video_enabled === true && !data.enabled) throw Error('invalid_live_admission');
       if ('direct_input_enabled' in data && typeof data.direct_input_enabled !== 'boolean'
         || data.direct_input_enabled === true && data.live_video_enabled !== true) throw Error('invalid_input_admission');
-      return { admitted: data.live_video_enabled === true, profiles, input: data.direct_input_enabled === true };
+      return { admitted: data.live_video_enabled === true, profiles, input: data.direct_input_enabled === true,
+        nativeHistory: data.native_history_enabled === true };
     },
     retry: false, staleTime: 30000, gcTime: 0,
   });
@@ -136,6 +137,7 @@ export function LiveDirectVideo({ deviceId, session, eligible, fit, expectedCapt
           }
           publish();
         }, { controlledStunUrl: stun,
+          ...(admission.data?.nativeHistory ? { historySession: session } : {}),
           ...(admission.data?.input && callbacks.current.onControlChannel ? {
             controlSession: session, onControlChannel: (channel: DirectControlEndpoint | null) => {
               if (!disposed && current === generation) callbacks.current.onControlChannel?.(channel);

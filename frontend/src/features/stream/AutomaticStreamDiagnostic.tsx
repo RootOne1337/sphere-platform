@@ -33,7 +33,8 @@ export function AutomaticStreamDiagnostic({ deviceId, session, eligible, onDiagn
       const response = await api.get(`/devices/${encodeURIComponent(deviceId)}/direct-probe-capabilities`, { signal });
       const profiles = parseProbeAdmission(response.data, deviceId);
       if (!profiles) throw Error('invalid_probe_admission');
-      return { profiles, video: response.data.readonly_video_enabled === true };
+      return { profiles, video: response.data.readonly_video_enabled === true,
+        nativeHistory: response.data.native_history_enabled === true };
     },
     retry: (failures, error) => failures < 1 && isAxiosError(error)
       && (error.response === undefined || error.response.status >= 500),
@@ -65,6 +66,7 @@ export function AutomaticStreamDiagnostic({ deviceId, session, eligible, onDiagn
     <p className="mt-2 text-muted-foreground">Проверка выполняется в этой вкладке. Основное видео и управление пока используют сервер; результат доступен в последних 10 сеансах.</p>
     <DirectVideoProbe key={`${current.session}:${current.profile}`} deviceId={deviceId} profile={current.profile}
       automaticKey={`${current.session}:${current.profile}`} enabled={eligible && visible} compact onBusyChange={setBusy}
+      historySession={admission.data.nativeHistory ? current.session : undefined}
       onOutcome={(result, frames) => {
         if (latestSession.current !== current.session) return;
         onDiagnostic(directDiagnosticSample(result, frames, current.profile, true), current.session);

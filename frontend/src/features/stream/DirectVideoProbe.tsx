@@ -7,9 +7,10 @@ import type { DiagnosticProfile } from './DirectProbeDiagnostics';
 const running = (result: DirectProbeResult | null) => !!result && ['gathering', 'signaling', 'connecting', 'connected'].includes(result.state);
 
 /** Isolated read-only renderer: it cannot unlock input on the ordinary canvas. */
-export function DirectVideoProbe({ deviceId, profile, onBusyChange, automaticKey, enabled = true, compact = false, onOutcome }: {
+export function DirectVideoProbe({ deviceId, profile, onBusyChange, automaticKey, historySession, enabled = true, compact = false, onOutcome }: {
   deviceId: string; profile: DiagnosticProfile; onBusyChange?: (busy: boolean) => void;
   automaticKey?: string | null; enabled?: boolean; compact?: boolean;
+  historySession?: string;
   onOutcome?: (result: DirectProbeResult, presentedFrames: number) => void;
 }) {
   const token = useAuthStore(state => state.accessToken);
@@ -103,6 +104,7 @@ export function DirectVideoProbe({ deviceId, profile, onBusyChange, automaticKey
       }, {
         controlledStunUrl: profile === 'public-stun' ? 'stun:stun.cloudflare.com:3478' : undefined,
         relayGrant: profile === 'turn',
+        ...(historySession ? { historySession } : {}),
         onTrack: track => {
           if (generation.current !== current || rendererFailed || !video.current) { track.stop(); return; }
           const element = video.current;

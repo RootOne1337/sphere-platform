@@ -45,7 +45,7 @@ export function startDirectProbe(
 
 export function startDirectVideoProbe(
   url: string, token: string, report: (value: DirectProbeResult) => void,
-  options: { controlledStunUrl?: string; relayGrant?: boolean; onTrack: (track: MediaStreamTrack) => void },
+  options: { controlledStunUrl?: string; relayGrant?: boolean; historySession?: string; onTrack: (track: MediaStreamTrack) => void },
 ): () => void {
   return startDirectSession(url, token, report, options, options.onTrack);
 }
@@ -54,17 +54,19 @@ export function startDirectVideoProbe(
 export function startDirectVideoSession(
   url: string, token: string, report: (value: DirectProbeResult) => void,
   options: { controlledStunUrl?: string; onTrack: (track: MediaStreamTrack) => void;
-    controlSession?: string; onControlChannel?: (channel: DirectControlEndpoint | null) => void },
+    historySession?: string; controlSession?: string; onControlChannel?: (channel: DirectControlEndpoint | null) => void },
 ): () => void {
   return startDirectSession(url, token, report, options, options.onTrack, true);
 }
 
 function startDirectSession(
   url: string, token: string, report: (value: DirectProbeResult) => void,
-  options: { controlledStunUrl?: string; relayGrant?: boolean; controlSession?: string;
+  options: { controlledStunUrl?: string; relayGrant?: boolean; controlSession?: string; historySession?: string;
     onControlChannel?: (channel: DirectControlEndpoint | null) => void }, onVideoTrack?: (track: MediaStreamTrack) => void, live = false,
 ): () => void {
   const video = !!onVideoTrack;
+  if (options.historySession !== undefined && (!video || !/^[0-9a-f]{16}$/.test(options.historySession)))
+    throw new Error('invalid_history_session');
   const iceConfig = directProbeIceConfig(options.controlledStunUrl);
   let stopped = false;
   if (options.relayGrant && options.controlledStunUrl) throw new Error('conflicting_ice_profiles');
@@ -159,7 +161,8 @@ function startDirectSession(
       if (stopped || !ws) return;
       try {
         ws.send(JSON.stringify(video ? { token, protocol: live ? 'sphere-video-v1' : 'sphere-video-probe-v1', ...(options.relayGrant ? { relay: true } : {}),
-          ...(live && options.controlSession ? { control_session: options.controlSession } : {}) }
+          ...(live && options.controlSession ? { control_session: options.controlSession } : {}),
+          ...(options.historySession ? { history_session: options.historySession } : {}) }
           : options.relayGrant ? { token, protocol: 'sphere-probe-v2' } : { token }));
         if (sdp) ws.send(JSON.stringify({ type: 'direct_probe_offer', sdp }));
       } catch { stop('signaling_unavailable'); }

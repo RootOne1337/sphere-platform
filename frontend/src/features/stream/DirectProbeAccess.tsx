@@ -18,6 +18,8 @@ export function parseProbeAdmission(value: unknown, device: string): DiagnosticP
     || data.scope !== 'diagnostic_echo_only' || data.max_duration_ms !== 30000 || data.samples !== 20
     || 'readonly_video_enabled' in data && typeof data.readonly_video_enabled !== 'boolean'
     || data.readonly_video_enabled === true && data.enabled !== true
+    || 'native_history_enabled' in data && typeof data.native_history_enabled !== 'boolean'
+    || data.native_history_enabled === true && data.enabled !== true
     || !Array.isArray(data.profiles) || data.profiles.length > 3
     || data.profiles.some(profile => !['host', 'public-stun', 'turn'].includes(profile))
     || new Set(data.profiles).size !== data.profiles.length

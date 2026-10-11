@@ -531,13 +531,15 @@ class SphereWebSocketClient(
         return ws.send(data.toByteString())
     }
 
-    /** Only bounded SDP, fenced to its authenticated socket; no retry or offline journal. */
+    /** Bounded signaling/optional aggregates, fenced to this socket; no retry or offline journal. */
     fun sendDirectProbeSignal(expectedGeneration: Long, message: JsonObject): Boolean = synchronized(wsLock) {
         if (expectedGeneration != generation || !isConnected || shouldStop) return@synchronized false
         val socket = webSocket ?: return@synchronized false
         val payload = message.toString()
         val bytes = payload.toByteArray(Charsets.UTF_8).size
-        if (bytes > 36864 || socket.queueSize() + bytes > 1024 * 1024) return@synchronized false
+        val optional = message["type"]?.jsonPrimitive?.contentOrNull == "direct_probe_telemetry"
+        if (bytes > (if (optional) 2048 else 36864) ||
+            socket.queueSize() + bytes > (if (optional) 8192 else 1024 * 1024)) return@synchronized false
         socket.send(payload)
     }
 

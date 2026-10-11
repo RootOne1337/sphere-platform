@@ -112,8 +112,10 @@ IDs, credentials, ввод и изображения не сохраняются
 
 647 WS tests +44 subtests и549 frontend stream tests прошли после этих изменений;
 TypeScript, scoped ESLint и Ruff прошли. Новая telemetry **тоже ещё не установлена**.
-Native ICE/progress aggregates пока читаются отдельно из локального canary log;
-их автоматическая привязка к истории сеанса ещё не реализована.
+В установленном APK54 native ICE/progress aggregates пока читаются отдельно
+из локального canary log. Следующий source-кандидат10255 добавляет автоматическую
+привязку к истории; CI/installation/native acceptance нового этапа ещё впереди.
+[Native journal source](NATIVE-DIRECT-DIAGNOSTICS-SOURCE.md).
 
 Реестр и441 tracked Markdown согласованы.37 documentation tests +63 subtests
 проверяют источник установки, каждый installed package SHA, текущие версии,
