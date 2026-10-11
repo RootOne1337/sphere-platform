@@ -135,7 +135,13 @@
       "scope": "Read-only plan; 46 container dependencies protected. Rounded logical layers are not a promised host-space reclamation."
     },
     "hostRepairEvidence": "docs/audits/2026-10-11/HOST-REPAIR-1216.json",
-    "hostRepairEvidenceSha256NormalizedLf": "6b2ed2ff7ab94c4d9489da9f71651348e7839f438e12b3ea4508db28d1722955"
+    "hostRepairEvidenceSha256NormalizedLf": "6b2ed2ff7ab94c4d9489da9f71651348e7839f438e12b3ea4508db28d1722955",
+    "gitRecovery": {
+      "evidence": "docs/audits/2026-10-11/GIT-RECOVERY-1236.json",
+      "evidenceSha256NormalizedLf": "4f6ad8fc1bf497369783ce30397093b91ab97ea3fae0cc181fccc4836e6370ea",
+      "verifiedReplacementCount": 10,
+      "applied": false
+    }
   },
   "legacy": {
     "total": 41,
