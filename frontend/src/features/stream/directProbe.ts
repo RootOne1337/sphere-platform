@@ -307,7 +307,9 @@ function startDirectSession(
       result.samples.push(performance.now() - pending.sent);
       if (result.samples.length > 20) result.samples.shift();
       pending = null; emit();
-      collectNetwork();
+      // Live video has one periodic sampler. Sampling again after its echo can
+      // replace a useful frame interval with zero deltas from the same instant.
+      if (!live) void collectNetwork();
     };
     channel.onerror = () => stop('channel_failed');
     channel.onclose = () => stop('channel_closed');

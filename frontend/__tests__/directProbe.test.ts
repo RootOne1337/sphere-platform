@@ -182,6 +182,35 @@ test('primary video negotiates a separate grant and renews beyond the finite dia
   stop(); expect(jest.getTimerCount()).toBe(0); expect(peer.close).toHaveBeenCalledTimes(1);
 });
 
+test('live echo replies cannot overwrite a video interval with a second zero-delta sample', async () => {
+  const { stop, peer, reports } = await videoConnected(true);
+  peer.channel.onmessage?.({ data: `SV1 ${sid} ${epoch} 960 540` });
+  let frames = 0;
+  peer.getStats.mockImplementation(async () => new Map([['video', {
+    id: 'video', type: 'inbound-rtp', kind: 'video', timestamp: performance.now(),
+    framesDecoded: frames, jitterBufferEmittedCount: frames,
+    jitterBufferDelay: frames * .02, totalDecodeTime: frames * .001,
+  }]]));
+  for (let sequence = 1; sequence <= 3; sequence++) {
+    frames += 150;
+    jest.advanceTimersByTime(5000); await flush();
+    const calls = peer.getStats.mock.calls.length;
+    const interval = reports.at(-1)?.videoStats;
+    peer.channel.onmessage?.({ data: `SL1 ${sid} ${sequence}` }); await flush();
+    expect(peer.getStats).toHaveBeenCalledTimes(calls);
+    expect(reports.at(-1)?.videoStats).toEqual(interval);
+    if (sequence > 1) {
+      expect(interval?.fps).toBe(30);
+      expect(interval?.jitterBufferMs).toBeCloseTo(20);
+      expect(interval?.decodeMs).toBeCloseTo(1);
+    }
+  }
+  const calls = peer.getStats.mock.calls.length;
+  stop(); jest.advanceTimersByTime(10000); await flush();
+  expect(peer.getStats).toHaveBeenCalledTimes(calls);
+  expect(jest.getTimerCount()).toBe(0);
+});
+
 test('live signaling loss stops the media immediately and retires all renewals', async () => {
   const { stop, peer, ws, reports } = await videoConnected(true);
   peer.channel.onmessage?.({ data: `SV1 ${sid} ${epoch} 960 540` });
