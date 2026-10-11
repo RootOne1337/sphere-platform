@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
-  "reviewedAtUtc": "2026-10-11T12:28:48.532065+00:00",
-  "sourceReviewed": "4ce2c6d6ef5e9d3abbe267b29f5d266d86d59946",
+  "reviewedAtUtc": "2026-10-11T14:51:16.896687+00:00",
+  "sourceReviewed": "500186e2a18378f82e55ddcab5c8700d41e29a5a",
   "scope": "Effective documentation status; source/install/finite acceptance kept separate. No new fleet or soak acceptance.",
   "baseline": "docs/audits/2026-10-05/ENTERPRISE-PRODUCT-BACKLOG.json",
   "previousCrosscheck": "docs/audits/2026-10-09/CHAT-CODE-RECONCILIATION.json",
@@ -95,6 +95,23 @@
         "state": "VOLUME_REPAIR_PENDING_REBOOT",
         "evidence": "docs/audits/2026-10-11/HOST-REPAIR-1216.json",
         "evidenceSha256NormalizedLf": "6b2ed2ff7ab94c4d9489da9f71651348e7839f438e12b3ea4508db28d1722955",
+        "installed": false
+      }
+    },
+    {
+      "id": "direct-channel-and-admission-recovery",
+      "installed": false,
+      "sourceBaseRevision": "9b5a6fd8dde5ba704ba78fc5def205d6c029deb9",
+      "testedRevision": "500186e2a18378f82e55ddcab5c8700d41e29a5a",
+      "evidence": "docs/audits/2026-10-11/DIRECT-CHANNEL-RECOVERY.md",
+      "localEvidence": "docs/audits/2026-10-11/DIRECT-CHANNEL-RECOVERY.json",
+      "localEvidenceSha256NormalizedLf": "479fc95e4f34cdd6eb83a828b1bfb97afa6e2c8b39b96b9f3fce8096736d5210",
+      "deliveryState": "LOCAL_TESTED_CI_PENDING_NOT_INSTALLED",
+      "runtimeAccepted": false,
+      "scope": "Exact-peer retirement after direct control failure; automatic fresh grant, bounded admission retries and healthy-window reset. No touch replay; current runtime stays6ee.",
+      "installationBlock": {
+        "state": "VOLUME_REPAIR_PENDING_REBOOT",
+        "evidence": "docs/audits/2026-10-11/HOST-REPAIR-1216.json",
         "installed": false
       }
     }

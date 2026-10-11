@@ -2,6 +2,15 @@
 
 **Проверенная установка:** UI `6ee80c1f` / API `6ee80c1f`.
 
+**11 октября,14:46 UTC — продолжено восстановление прямого канала.** Source
+`500186e2` завершает exact peer при потере control DataChannel и автоматически
+согласует следующий; старые касания не повторяются. Исправлены terminal reject
+для временного auth failure, bounded capability retries и backoff после здорового
+видео.690 WS tests/44 subtests,192 frontend tests, types/lint/schema прошли.
+CI запущен, новая установка не выполнена: C: всё ещё Full Repair Needed.
+Оба адреса подтвердили6ee; API сообщает PH01054/PH01153/PH02552. Эти reported
+versions не заменяют installed SHA или runtime acceptance. [Изменения и допуск](../audits/2026-10-11/DIRECT-CHANNEL-RECOVERY.md).
+
 **11 октября — подтверждено повторное повреждение C: и Git; обновление ожидает ремонта.**
 Elevated scan завершён: `ScanErrorsFoundNeedSpotFix`; current preflight всё ещё
 `Full Repair Needed`. Git fsck нашёл10 corrupt objects, четыре относятся к current
