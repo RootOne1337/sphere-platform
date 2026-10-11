@@ -155,7 +155,11 @@ class DirectProbeTransport(
                             .setEnableInternalTracer(false).createInitializationOptions())
                     } catch (error: Exception) { initialized.set(false); throw error }
                 }
+                // Modern WebRTC factories own their Environment/field trials.
+                // Apply the coded-reference policy to every rebuilt factory,
+                // rather than relying only on deprecated process initialization.
                 val builder = PeerConnectionFactory.builder()
+                    .setFieldTrials(DirectEncodedVideoSource.FIELD_TRIALS)
                 p.video?.let { builder.setVideoEncoderFactory(it.encoderFactory) }
                 factory = builder.createPeerConnectionFactory()
             }
