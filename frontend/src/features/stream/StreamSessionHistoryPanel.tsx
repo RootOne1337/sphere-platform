@@ -89,7 +89,8 @@ export function StreamSessionHistoryPanel({ deviceId }: { deviceId: string }) {
               {nativeNetwork ? <>
                 <p>APK · ICE-запросы исходящие / входящие: {nativeNetwork.requests_sent ?? '—'} / {nativeNetwork.requests_received ?? '—'} · ответы исходящие / входящие: {nativeNetwork.responses_sent ?? '—'} / {nativeNetwork.responses_received ?? '—'}.</p>
                 <p>Проверка / отказ / успех: {nativeNetwork.checking_pairs} / {nativeNetwork.failed_pairs} / {nativeNetwork.succeeded_pairs} из {nativeNetwork.pairs} · DTLS {nativeNetwork.dtls_state ?? '—'}.</p>
-                <p>ICE-кандидатов APK / удалённой стороны: {nativeNetwork.local_candidates} / {nativeNetwork.remote_candidates} · возраст сетевого среза при отправке {native.network_sample_age_ms ?? '—'} мс.</p>
+                <p>ICE-кандидатов APK / удалённой стороны: {nativeNetwork.local_candidates} / {nativeNetwork.remote_candidates} · с момента запроса getStats до отправки отчёта: {native.network_sample_age_ms ?? '—'} мс.</p>
+                <p>Это время запроса статистики, не задержка видео. Внутренний timestamp RTCStats здесь не измерен; getStats может возвращать кэшированные данные.</p>
               </> : <p>Сетевые счётчики APK не получены.</p>}
             </div> : <p className="mt-1">APK не сообщил данные для этой попытки. Отсутствие отчёта не означает нулевые счётчики или исправное соединение.</p>}
           </details>

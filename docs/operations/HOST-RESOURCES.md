@@ -1,5 +1,18 @@
 # Ресурсы хоста: диск, Windows commit, WSL и контейнеры
 
+**11 октября,03:35 UTC — сбор возобновлён на24 часа.** Окно18:22→02:22 UTC
+завершилось штатно:241 срез,3 173 298 байт отчёта. Свободное место C:
+снизилось на2 417 668 096B (~2.25GiB), Docker VHDX allocation вырос на1.25GiB,
+два заданных LDPlayer data.vmdk — вместе на85.44MiB. Эти размеры не объясняют
+всех writers на C:; VSS/kernel/USN attribution остаётся недоступной.
+
+Один новый limited collector, рабочий PID43984 (venv redirector22792),
+подтверждён первым срезом и process creation epoch. Срок —12октября03:35 UTC:
+721×120s, прежние24 named files,16MiB maximum, RAM/commit/process IO и Docker/WSL.
+Есть непокрытый разрыв02:22:19→03:35:33 UTC. Автозапуска после reboot нет.
+C: по-прежнему `Full Repair Needed`; устранение утечки или filesystem fault
+не объявляется. [Неизменяемый срез](../audits/2026-10-11/STORAGE-OBSERVATION-0335.json).
+
 **Позднейший срез10октября,23:47 UTC:** во втором limited окне C: −0.78GiB,
 VHDX +1.25GiB в двух отдельных окнах; одно совпало с runtime install.
 Внутри Docker занято около198GiB. Read-only retention plan нашёл53 старых

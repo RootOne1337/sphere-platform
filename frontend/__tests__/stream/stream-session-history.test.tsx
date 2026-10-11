@@ -52,7 +52,7 @@ test.each([
   expect(screen.queryByText(/Управление через сервер/)).not.toBeInTheDocument();
 });
 
-test('native observation preserves known zero, unknown counters and the original snapshot age', async () => {
+test('native observation preserves known zero, unknown counters and the original stats request age', async () => {
   mockGet.mockResolvedValue({ data: { schema_version: 1, device_id: device, session_limit: 10, sessions: [{
     session_id: 'viewer', opened_at: '2026-10-10T10:00:00Z', state: 'closed', native_direct_samples: [{
       received_at: '2026-10-10T10:00:05Z', stage: 'closed', kind: 'final', elapsed_ms: 5000,
@@ -63,6 +63,7 @@ test('native observation preserves known zero, unknown counters and the original
   }] } });
   view();
   expect(await screen.findByText(/исходящие \/ входящие: 237 \/ —/)).toHaveTextContent('ответы исходящие / входящие: — / 0');
-  expect(screen.getByText(/возраст сетевого среза/)).toHaveTextContent('3100 мс');
+  expect(screen.getByText(/с момента запроса getStats до отправки отчёта/)).toHaveTextContent('3100 мс');
+  expect(screen.getByText(/Внутренний timestamp RTCStats здесь не измерен/)).toBeInTheDocument();
   expect(screen.getByText(/Этап: Соединение закрыто/)).toHaveTextContent('итог при закрытии');
 });

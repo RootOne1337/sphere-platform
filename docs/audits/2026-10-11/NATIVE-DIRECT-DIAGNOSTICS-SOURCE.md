@@ -29,7 +29,7 @@ Android WebSocket. Сервер связывает их с конкретным 
 | answer_sent | Ответ принят локальной исходящей WS-очередью | Получение ответа браузером |
 | elapsed_ms | Монотонное время от получения offer этим peer | Пинг или задержка видео |
 | network_sample_elapsed_ms | Относительное время начала native getStats | Синхронизацию часов с браузером |
-| network_sample_age_ms | Возраст сохранённого network snapshot при отправке | Свежесть при последующем чтении истории |
+| network_sample_age_ms | Время от начала запроса getStats до отправки отчёта | Внутренний timestamp/caching RTCStats или задержку видео |
 | local/remote_candidates | Число соответствующих RTCStats rows | Различные IP или доказанный loopback |
 | checking/failed/succeeded_pairs | Состояния candidate-pair rows | Выбранный транспортный маршрут |
 | requests/responses sent/received | Агрегаты ICE-обмена | Полную задержку от экрана до экрана |
@@ -38,8 +38,15 @@ Android WebSocket. Сервер связывает их с конкретным 
 
 Неизвестные counters остаются **null**, измеренный0 остаётся0. Native64-bit
 counter вне точного диапазона JavaScript также становится null. Итог при закрытии
-сохраняет настоящий возраст последнего среза; повторная публикация не делает
-его свежим. Начальный/failure report может содержать stage без network snapshot.
+сохраняет первоначальное время запроса getStats; повторная публикация не делает
+его новым. Внутренние native RTCStats timestamps отдельно не измерены: нельзя
+исключить кеширование статистики реализацией getStats. Начальный/failure report
+может содержать stage без network snapshot.
+
+Смысл stats сверён с [W3C WebRTC Statistics](https://www.w3.org/TR/webrtc-stats/#dom-rtctransportstats-selectedcandidatepairid)
+11октября2026. Выбранная пара определяется transport-level reference;
+показанные здесь aggregates не объявляются выбранным маршрутом. Документ W3C
+имеет статус Candidate Recommendation Draft, а не окончательной рекомендации.
 
 ## Расход ресурсов и отказ записи
 

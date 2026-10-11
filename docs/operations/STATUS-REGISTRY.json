@@ -91,16 +91,17 @@
     }
   ],
   "storage": {
-    "lastObservedUtc": "2026-10-10T18:24:31.275158+00:00",
-    "visibleMatchingProcesses": 1,
+    "lastObservedUtc": "2026-10-11T03:39:33.8449414Z",
+    "visibleMatchingProcesses": 2,
+    "activeCollectorWorkers": 1,
     "continuousCoverageConfirmed": false,
-    "observationScope": "241-sample window completed, C: free delta -13,202,395,136 bytes, Docker VHDX allocation constant 234,731,077,632 bytes. Renewed limited PID2380, 18:22 UTC to 11 Oct02:22 UTC, first sample and live process confirmed. Gap18:19:52 to18:22:19 is uncovered. Whole-PC disk writer remains UNDETERMINED.",
-    "oneFreeDiskReadingBytes": 36099588096,
-    "latestCompletedEvidence": "docs/audits/2026-10-10/STORAGE-OBSERVATION-1822.json",
-    "activeEvidence": "docs/audits/2026-10-10/STORAGE-OBSERVATION-1822.json",
-    "evidenceSha256NormalizedLf": "4677cc7ad436bd7d990ba845936b5725a5505b476c41a54aefec66f2b2ea8689",
+    "observationScope": "Completed 241 samples18:22 to02:22 UTC: C free -2,417,668,096B, VHDX allocation +1,342,177,280B, named LDPlayer +89,587,712B. Renewed limited PID43984 with first sample and process epoch,24h/721x120s/16MiB. Gap02:22 to03:35 UTC uncovered; VSS/USN/kernel writer unknown.",
+    "oneFreeDiskReadingBytes": 33415294976,
+    "latestCompletedEvidence": "docs/audits/2026-10-11/STORAGE-OBSERVATION-0335.json",
+    "activeEvidence": "docs/audits/2026-10-11/STORAGE-OBSERVATION-0335.json",
+    "evidenceSha256NormalizedLf": "322682299b2086e9e92d8c30027a8e51418ef676c4714693fdd34be606450a7f",
     "volumeObservation": {
-      "observedAtUtc": "2026-10-10T23:07:43.119282+00:00",
+      "observedAtUtc": "2026-10-11T03:39:33.8449414Z",
       "health": "Warning",
       "operationalStatus": [
         "Full Repair Needed"
@@ -108,7 +109,7 @@
       "newNtfsEventUtc": "2026-10-10T22:35:41.4232516+00:00",
       "currentScanResultAvailable": false,
       "hardwareFailureProven": false,
-      "evidence": "docs/audits/2026-10-11/DIRECT-INPUT-DELIVERY-BLOCKED.md"
+      "evidence": "docs/audits/2026-10-11/STORAGE-OBSERVATION-0335.json"
     },
     "retentionPlan": {
       "observedAtUtc": "2026-10-10T23:47:37.483257+00:00",
