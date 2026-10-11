@@ -1,8 +1,8 @@
 {
   "schemaVersion": 1,
-  "reviewedAtUtc": "2026-10-11T18:29:43.539387+00:00",
-  "sourceReviewed": "5223998002451b935a25e01f1034b727561588bd",
-  "scope": "API/UI522 installed on both origins; signed APK55 verified on15 compatible online devices,6 offline unverified. PH030 direct NAT video/input observed before network switch; switch recovery and closest-local routing fail. Main-PC direct gesture confirmed only with isolated numeric ICE. Full production acceptance open.",
+  "reviewedAtUtc": "2026-10-11T21:44:57.031410+00:00",
+  "sourceReviewed": "bb7f315dad7afcdbf8dfd98a3357fdeb1ed626b4",
+  "scope": "UI6e6381f1/API3d1b3b5d installed on3015/Tuna; verified APK59 packages 15, offline or unverified 6. Controlled numeric-ICE canary mode change, synthetic online recovery, native UP and post-recovery cadence accepted. Ordinary Chrome, PH030 local route and physical network switching remain open.",
   "baseline": "docs/audits/2026-10-05/ENTERPRISE-PRODUCT-BACKLOG.json",
   "previousCrosscheck": "docs/audits/2026-10-09/CHAT-CODE-RECONCILIATION.json",
   "counts": {
@@ -11,71 +11,59 @@
     "open": 41
   },
   "installed": {
-    "lastObservedUtc": "2026-10-11T18:29:43.539387+00:00",
-    "ui": "5223998002451b935a25e01f1034b727561588bd",
-    "api": "5223998002451b935a25e01f1034b727561588bd",
-    "evidence": "docs/audits/2026-10-11/POSTBOOT-IDLE55-DELIVERY.json",
-    "observation": "API/UI522 installed on both origins; signed APK55 verified on15 compatible online devices,6 offline unverified. PH030 direct NAT video/input observed before network switch; switch recovery and closest-local routing fail. Main-PC direct gesture confirmed only with isolated numeric ICE. Full production acceptance open.",
+    "lastObservedUtc": "2026-10-11T21:44:57.031410+00:00",
+    "ui": "6e6381f1a72f85739788e452a96e135c88f8059c",
+    "api": "3d1b3b5d08b5ced32e351c1997f2874d9ab83cfb",
+    "evidence": "docs/audits/2026-10-12/STREAM59-CURRENT-DELIVERY.json",
+    "observation": "UI6e6381f1/API3d1b3b5d installed on3015/Tuna; verified APK59 packages 15, offline or unverified 6. Controlled numeric-ICE canary mode change, synthetic online recovery, native UP and post-recovery cadence accepted. Ordinary Chrome, PH030 local route and physical network switching remain open.",
     "pilotApk": {
       "device": "PH010",
       "deviceId": "5df4805e-fe64-4d39-960c-19ceab206cd6",
-      "version": "1.2.55-dev",
-      "versionCode": 10255,
-      "sourceRevision": "5223998002451b935a25e01f1034b727561588bd",
-      "apkSha256": "9abe0fce7846cfc61e1d19142b2ce854d096eac71b63fe5ba0ec6465030892ca",
-      "evidence": "docs/audits/2026-10-11/POSTBOOT-IDLE55-DELIVERY.json",
-      "evidenceSha256NormalizedLf": "e46e91ff7fcdafa6f07a020468667e0744d26ad63378d30beedb70199954daee",
-      "scope": "Exact installed package hash and completed addressed command; no direct or laptop runtime acceptance."
+      "version": "1.2.59-dev",
+      "versionCode": 10259,
+      "sourceRevision": "bb7f315dad7afcdbf8dfd98a3357fdeb1ed626b4",
+      "apkSha256": "a33dc8e7e7bfffdb24001ab733a58839228f4eb01d9ec60e3278ed7ec120796b",
+      "evidence": "docs/audits/2026-10-12/STREAM59-CURRENT-DELIVERY.json",
+      "evidenceSha256NormalizedLf": "8d0eff551d41c22333b54344ddd76e9d3cae6d63bc1407252dc9ca9f6033cbca"
     },
-    "evidenceSha256NormalizedLf": "e46e91ff7fcdafa6f07a020468667e0744d26ad63378d30beedb70199954daee",
+    "evidenceSha256NormalizedLf": "8d0eff551d41c22333b54344ddd76e9d3cae6d63bc1407252dc9ca9f6033cbca",
     "additionalPilotApks": [
       {
         "device": "PH011",
         "deviceId": "414ce0e9-4b93-4f96-b9ca-ee675f53835e",
-        "version": "1.2.55-dev",
-        "versionCode": 10255,
-        "sourceRevision": "5223998002451b935a25e01f1034b727561588bd",
-        "apkSha256": "9abe0fce7846cfc61e1d19142b2ce854d096eac71b63fe5ba0ec6465030892ca",
-        "evidence": "docs/audits/2026-10-11/POSTBOOT-IDLE55-DELIVERY.json",
-        "evidenceSha256NormalizedLf": "e46e91ff7fcdafa6f07a020468667e0744d26ad63378d30beedb70199954daee",
-        "scope": "Exact installed package hash and completed addressed command; no direct or laptop runtime acceptance."
+        "version": "1.2.59-dev",
+        "versionCode": 10259,
+        "sourceRevision": "bb7f315dad7afcdbf8dfd98a3357fdeb1ed626b4",
+        "apkSha256": "a33dc8e7e7bfffdb24001ab733a58839228f4eb01d9ec60e3278ed7ec120796b",
+        "evidence": "docs/audits/2026-10-12/STREAM59-CURRENT-DELIVERY.json",
+        "evidenceSha256NormalizedLf": "8d0eff551d41c22333b54344ddd76e9d3cae6d63bc1407252dc9ca9f6033cbca",
+        "scope": "Current installed package hash and completed addressed command; no ordinary-browser or nearest-route runtime acceptance"
       }
     ],
     "fleetApkEvidence": {
-      "evidence": "docs/audits/2026-10-11/POSTBOOT-IDLE55-DELIVERY.json",
-      "evidenceSha256NormalizedLf": "e46e91ff7fcdafa6f07a020468667e0744d26ad63378d30beedb70199954daee",
-      "observedAtUtc": "2026-10-11T18:16:13.043491+00:00",
+      "evidence": "docs/audits/2026-10-12/STREAM59-CURRENT-DELIVERY.json",
+      "evidenceSha256NormalizedLf": "8d0eff551d41c22333b54344ddd76e9d3cae6d63bc1407252dc9ca9f6033cbca",
       "installedCount": 15,
+      "offlineCount": 6,
       "verifiedVersionCounts": {
-        "10255": 15
-      },
-      "unverifiedOfflineCount": 6,
-      "queuedOfflineCount": 0,
-      "offlineNotDispatchedCount": 6,
-      "scope": "All15 online compatible pilot packages verified. Six offline records have no verified package or queued grant. No fleet direct/soak acceptance."
+        "10259": 15
+      }
     },
-    "latestReadbackAtUtc": "2026-10-11T18:16:13.043491+00:00",
-    "latestReadbackEvidence": "docs/audits/2026-10-11/POSTBOOT-IDLE55-DELIVERY.json",
-    "latestReadbackEvidenceSha256NormalizedLf": "e46e91ff7fcdafa6f07a020468667e0744d26ad63378d30beedb70199954daee"
+    "latestReadbackAtUtc": "2026-10-11T21:44:57.031410+00:00",
+    "latestReadbackEvidence": "docs/audits/2026-10-12/STREAM59-CURRENT-DELIVERY.json",
+    "latestReadbackEvidenceSha256NormalizedLf": "8d0eff551d41c22333b54344ddd76e9d3cae6d63bc1407252dc9ca9f6033cbca"
   },
-  "pendingCorrections": [
-    {
-      "id": "stream-cadence-network-and-fence",
-      "installed": false,
-      "evidence": "docs/audits/2026-10-12/STREAM-NETWORK-CADENCE-FOLLOWUP.md",
-      "scope": "APK56 configured idle cadence; web network-change coalescing and capability race; bounded control-fence history. Source candidate, CI/delivery not yet recorded."
-    }
-  ],
+  "pendingCorrections": [],
   "storage": {
-    "lastObservedUtc": "2026-10-11T18:29:43.539387+00:00",
-    "visibleMatchingProcesses": 1,
+    "lastObservedUtc": "2026-10-11T21:38:53.226846+00:00",
+    "visibleMatchingProcesses": 2,
     "activeCollectorWorkers": 1,
     "continuousCoverageConfirmed": false,
-    "observationScope": "Boot NTFS repair and ten exact Git replacements completed. Current limited worker39092 has no guaranteed VSS, autostart or independent lifetime. Coverage gap remains; disk writers and hardware root cause unknown.",
-    "oneFreeDiskReadingBytes": 43034763264,
+    "observationScope": "Previous limited collector stopped after its20:53UTC sample; live worker verified after restart21:33UTC. A coverage gap, unknown stop cause and no guaranteed independent lifetime/autostart/VSS remain; disk writers and hardware root cause unknown.",
+    "oneFreeDiskReadingBytes": 35154444288,
     "latestCompletedEvidence": "docs/audits/2026-10-11/STORAGE-OBSERVATION-0335.json",
-    "activeEvidence": "docs/audits/2026-10-11/POSTBOOT-IDLE55-DELIVERY.json",
-    "evidenceSha256NormalizedLf": "e46e91ff7fcdafa6f07a020468667e0744d26ad63378d30beedb70199954daee",
+    "activeEvidence": "docs/audits/2026-10-12/STORAGE-WATCH-RESUMED.json",
+    "evidenceSha256NormalizedLf": "b4f7b0fb6b80dcc401fef757be502724ed408638074f432797087024cc0eafca",
     "volumeObservation": {
       "observedAtUtc": "2026-10-11T18:04:10.811976+00:00",
       "health": "Healthy",
@@ -108,17 +96,17 @@
       "fsckExit": 0
     },
     "currentPrefixObservation": {
-      "observedAtUtc": "2026-10-11T18:29:43.539387+00:00",
-      "evidence": "docs/audits/2026-10-11/POSTBOOT-IDLE55-DELIVERY.json",
-      "evidenceSha256NormalizedLf": "e46e91ff7fcdafa6f07a020468667e0744d26ad63378d30beedb70199954daee",
-      "workerPid": 39092,
-      "completeSamples": 17,
-      "lastSampleUtc": "2026-10-11T18:29:31.501470+00:00",
+      "observedAtUtc": "2026-10-11T21:38:53.226846+00:00",
+      "evidence": "docs/audits/2026-10-12/STORAGE-WATCH-RESUMED.json",
+      "evidenceSha256NormalizedLf": "b4f7b0fb6b80dcc401fef757be502724ed408638074f432797087024cc0eafca",
+      "workerPid": 28000,
+      "completeSamples": 3,
+      "lastSampleUtc": "2026-10-11T21:37:18.716177+00:00",
       "workerIdentityVerified": true,
       "elevated": false,
       "memberOfJob": true,
       "uptimeGuaranteed": false,
-      "oneFreeDiskReadingBytes": 43034763264,
+      "oneFreeDiskReadingBytes": 35154444288,
       "writerAttribution": "UNDETERMINED"
     }
   },
@@ -323,8 +311,8 @@
     "primaryVideoInstalled": true,
     "primaryVideoObserved": false,
     "productionAccepted": false,
-    "currentObservationEvidence": "docs/audits/2026-10-11/POSTBOOT-IDLE55-DELIVERY.json",
-    "currentObservationEvidenceSha256NormalizedLf": "e46e91ff7fcdafa6f07a020468667e0744d26ad63378d30beedb70199954daee",
+    "currentObservationEvidence": "docs/audits/2026-10-12/STREAM59-CURRENT-DELIVERY.json",
+    "currentObservationEvidenceSha256NormalizedLf": "8d0eff551d41c22333b54344ddd76e9d3cae6d63bc1407252dc9ca9f6033cbca",
     "pilotEvidenceScope": "Current installed API/UI/APK55 and finite fallback observations; historical direct frames are separate.",
     "historicalPrimaryFrames": 1804,
     "directInputCandidate": {
@@ -375,7 +363,10 @@
       "primaryDirectVideoObserved": true,
       "directInputAccepted": false,
       "topologySource": "PH011 mapped to main-PC emulator5554 by current boot identity; NAT path is not loopback proof. Browser observation predates the latest idle correction."
-    }
+    },
+    "latestReadbackAtUtc": "2026-10-11T21:44:57.031410+00:00",
+    "latestReadbackEvidence": "docs/audits/2026-10-12/STREAM59-CURRENT-DELIVERY.json",
+    "latestReadbackEvidenceSha256NormalizedLf": "8d0eff551d41c22333b54344ddd76e9d3cae6d63bc1407252dc9ca9f6033cbca"
   },
   "items": [
     {
@@ -1705,7 +1696,7 @@
       "priority": "P1",
       "state": "OPEN",
       "progress": "PARTIAL",
-      "currentScope": "После boot repair C: Healthy/OK;10 Git objects восстановлены, fsck0. Новый limited collector39092 собирает с17:57UTC; gap, отсутствие автозапуска/гарантии lifetime/VSS сохранены. Причина потери C: неизвестна.",
+      "currentScope": "Previous limited collector stopped after its20:53UTC sample; live worker verified after restart21:33UTC. A coverage gap, unknown stop cause and no guaranteed independent lifetime/autostart/VSS remain; disk writers and hardware root cause unknown.",
       "remaining": "Причина NTFS/Git corruption и writers расхода C: неизвестны; kernel/USN attribution и reboot continuity не приняты. Нужны resource plateau, retention и500/1000/128/1 нагрузочная matrix после ремонта.",
       "acceptanceCriteria": [
         "1000 registry / 128 thumbnails / 1 selected video measured.",
@@ -2512,6 +2503,51 @@
       "installedRevision": "5223998002451b935a25e01f1034b727561588bd",
       "deliveryEvidence": "docs/audits/2026-10-11/POSTBOOT-IDLE55-DELIVERY.json",
       "deliveryEvidenceSha256NormalizedLf": "e46e91ff7fcdafa6f07a020468667e0744d26ad63378d30beedb70199954daee"
+    },
+    {
+      "id": "stream-cadence-network-and-fence",
+      "installed": true,
+      "runtimeAccepted": false,
+      "installedRevision": "3d1b3b5d08b5ced32e351c1997f2874d9ab83cfb",
+      "deliveryEvidence": "docs/audits/2026-10-12/STREAM-RECOVERY57-DELIVERY.json",
+      "deliveryEvidenceSha256NormalizedLf": "0bf620cffc063207cfe06d259a3b62ee4219568abbdd5187bd0cddf9152d44f9",
+      "scope": "Network change coalescing and fence history installed; APK57 only one canary; sustained cadence rejected"
+    },
+    {
+      "id": "stream-live-metric-sampler",
+      "installed": true,
+      "runtimeAccepted": false,
+      "installedRevision": "6e6381f1a72f85739788e452a96e135c88f8059c",
+      "deliveryEvidence": "docs/audits/2026-10-12/STREAM59-CURRENT-DELIVERY.json",
+      "deliveryEvidenceSha256NormalizedLf": "8d0eff551d41c22333b54344ddd76e9d3cae6d63bc1407252dc9ca9f6033cbca",
+      "scope": "Delivered correction only; broad production direct-media acceptance remains OPEN"
+    },
+    {
+      "id": "stream-view-permission-and-startup-release",
+      "installed": true,
+      "runtimeAccepted": false,
+      "installedRevision": "6e6381f1a72f85739788e452a96e135c88f8059c",
+      "deliveryEvidence": "docs/audits/2026-10-12/STREAM59-CURRENT-DELIVERY.json",
+      "deliveryEvidenceSha256NormalizedLf": "8d0eff551d41c22333b54344ddd76e9d3cae6d63bc1407252dc9ca9f6033cbca",
+      "scope": "Delivered correction only; broad production direct-media acceptance remains OPEN"
+    },
+    {
+      "id": "stream-coded-reference-factory-policy",
+      "installed": true,
+      "runtimeAccepted": false,
+      "installedRevision": "6e6381f1a72f85739788e452a96e135c88f8059c",
+      "deliveryEvidence": "docs/audits/2026-10-12/STREAM59-CURRENT-DELIVERY.json",
+      "deliveryEvidenceSha256NormalizedLf": "8d0eff551d41c22333b54344ddd76e9d3cae6d63bc1407252dc9ca9f6033cbca",
+      "scope": "Delivered correction only; broad production direct-media acceptance remains OPEN"
+    },
+    {
+      "id": "review-origin-preserving-root-redirect",
+      "installed": true,
+      "runtimeAccepted": false,
+      "installedRevision": "6e6381f1a72f85739788e452a96e135c88f8059c",
+      "deliveryEvidence": "docs/audits/2026-10-12/STREAM59-CURRENT-DELIVERY.json",
+      "deliveryEvidenceSha256NormalizedLf": "8d0eff551d41c22333b54344ddd76e9d3cae6d63bc1407252dc9ca9f6033cbca",
+      "scope": "Delivered correction only; broad production direct-media acceptance remains OPEN"
     }
   ],
   "runtimeFollowup": {
