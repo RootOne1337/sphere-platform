@@ -16,6 +16,7 @@ export interface LiveVideoObservation {
 }
 const empty = (): LiveVideoObservation => ({ admitted: false, admissionKnown: false, active: false, frames: 0,
   lastFrameAt: null, attempts: 0, result: null });
+const FRAME_PROGRESS_TIMEOUT_MS = 6000;
 export function matchesDisplayedCapture(binding: DirectVideoBinding, expected: CaptureFrameBinding | null, width: number, height: number): boolean {
   return !!expected && binding.captureEpoch === expected.captureEpoch && binding.width === expected.frameWidth
     && binding.height === expected.frameHeight && width === binding.width && height === binding.height;
@@ -73,6 +74,7 @@ export function LiveDirectVideo({ deviceId, session, eligible, fit, expectedCapt
     const stun = admission.data?.profiles.includes('public-stun') ? 'stun:stun.cloudflare.com:3478' : undefined;
     let disposed = false, generation = 0, attemptsInWindow = 0, cancel: (() => void) | null = null;
     let frameCallback: number | null = null, firstFrame: ReturnType<typeof setTimeout> | null = null;
+    let frameWatchdog: ReturnType<typeof setInterval> | null = null;
     let retry: ReturnType<typeof setTimeout> | null = null;
     const publish = () => {
       if (disposed) return;
@@ -84,6 +86,8 @@ export function LiveDirectVideo({ deviceId, session, eligible, fit, expectedCapt
       frameCallback = null;
       if (firstFrame !== null) clearTimeout(firstFrame);
       firstFrame = null;
+      if (frameWatchdog !== null) clearInterval(frameWatchdog);
+      frameWatchdog = null;
       element.pause(); element.srcObject = null;
     };
     const begin = () => {
@@ -92,6 +96,7 @@ export function LiveDirectVideo({ deviceId, session, eligible, fit, expectedCapt
       observation.attempts++; attemptsInWindow++;
       observation.active = false; observation.result = null; publish();
       let ended = false, seen = false, bindingDeadlineArmed = false, presentedSince: number | null = null;
+      let lastPresentedAt: number | null = null;
       const finish = (result: DirectProbeResult) => {
         if (disposed || current !== generation || ended) return;
         ended = true;
@@ -123,6 +128,13 @@ export function LiveDirectVideo({ deviceId, session, eligible, fit, expectedCapt
             } catch { fail('video_renderer_failed'); return; }
             seen = true;
             presentedSince ??= performance.now();
+            lastPresentedAt = performance.now();
+            if (frameWatchdog === null) frameWatchdog = setInterval(() => {
+              if (disposed || ended || current !== generation || document.hidden || lastPresentedAt === null) return;
+              // ICE, echo and inbound RTP statistics cannot keep a frozen renderer
+              // primary. Actual presentation is required, including idle refreshes.
+              if (performance.now() - lastPresentedAt >= FRAME_PROGRESS_TIMEOUT_MS) fail('video_frame_timeout');
+            }, 1000);
             if (firstFrame !== null) clearTimeout(firstFrame);
             firstFrame = null;
             const first = !observation.active;

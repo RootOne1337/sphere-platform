@@ -32,6 +32,10 @@ class StreamQualityMonitor @Inject constructor() {
     private var webSocketQueueAcceptedTotal = 0L
     private var webSocketQueueRejectedTotal = 0L
     private var webSocketQueueAcceptedBytesTotal = 0L
+    private var lastCaptureMs: Long? = null
+    private var lastRenderMs: Long? = null
+    private var lastEncodedMs: Long? = null
+    private var idleRefreshFramesTotal = 0L
 
     @Synchronized
     fun recordFrame(sizeBytes: Int, isKeyFrame: Boolean, isCodecConfig: Boolean = false) {
@@ -39,6 +43,7 @@ class StreamQualityMonitor @Inject constructor() {
         if (isCodecConfig) return
         val now = SystemClock.elapsedRealtime()
         frameTimestamps.addLast(now)
+        lastEncodedMs = now
         evictExpiredFrames(now)
 
         encodedBytesTotal += sizeBytes.coerceAtLeast(0)
@@ -50,6 +55,7 @@ class StreamQualityMonitor @Inject constructor() {
     fun recordCapturedFrame() {
         val now = SystemClock.elapsedRealtime()
         captureTimestamps.addLast(now)
+        lastCaptureMs = now
         evictExpired(captureTimestamps, now)
         captureFramesTotal++
     }
@@ -63,6 +69,7 @@ class StreamQualityMonitor @Inject constructor() {
     fun recordRenderedFrame() {
         val now = SystemClock.elapsedRealtime()
         renderTimestamps.addLast(now)
+        lastRenderMs = now
         evictExpired(renderTimestamps, now)
         renderedFramesTotal++
     }
@@ -71,6 +78,10 @@ class StreamQualityMonitor @Inject constructor() {
     fun recordRenderFailure() {
         renderFailuresTotal++
     }
+
+    /** Re-encoding retained pixels is not a new Android capture or source render. */
+    @Synchronized
+    fun recordIdleRefresh() { idleRefreshFramesTotal++ }
 
     @Synchronized
     fun recordEncoderError() {
@@ -132,6 +143,10 @@ class StreamQualityMonitor @Inject constructor() {
             webSocketQueueAcceptedTotal = webSocketQueueAcceptedTotal,
             webSocketQueueRejectedTotal = webSocketQueueRejectedTotal,
             webSocketQueueAcceptedBytesTotal = webSocketQueueAcceptedBytesTotal,
+            lastCaptureAgeMs = lastCaptureMs?.let { (now - it).coerceIn(0L, 86_400_000L) },
+            lastRenderAgeMs = lastRenderMs?.let { (now - it).coerceIn(0L, 86_400_000L) },
+            lastEncodedAgeMs = lastEncodedMs?.let { (now - it).coerceIn(0L, 86_400_000L) },
+            idleRefreshFramesTotal = idleRefreshFramesTotal,
         )
     }
 
@@ -170,6 +185,8 @@ class StreamQualityMonitor @Inject constructor() {
         webSocketQueueAcceptedTotal = 0L
         webSocketQueueRejectedTotal = 0L
         webSocketQueueAcceptedBytesTotal = 0L
+        lastCaptureMs = null; lastRenderMs = null; lastEncodedMs = null
+        idleRefreshFramesTotal = 0L
     }
 
     data class StreamStats(
@@ -192,5 +209,9 @@ class StreamQualityMonitor @Inject constructor() {
         val webSocketQueueAcceptedTotal: Long,
         val webSocketQueueRejectedTotal: Long,
         val webSocketQueueAcceptedBytesTotal: Long,
+        val lastCaptureAgeMs: Long? = null,
+        val lastRenderAgeMs: Long? = null,
+        val lastEncodedAgeMs: Long? = null,
+        val idleRefreshFramesTotal: Long = 0,
     )
 }

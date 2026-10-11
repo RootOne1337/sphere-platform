@@ -63,7 +63,9 @@ async def test_stream_diagnostics_returns_fresh_stage_counters_and_session(
             last_heartbeat=now,
         ))
         await cache.set_stream_diagnostics(device_id, StoredStreamDiagnostics(
-            telemetry=_telemetry(),
+            telemetry=_telemetry().model_copy(update={"last_capture_age_ms": 15000,
+                "last_render_age_ms": 15000, "last_encoded_age_ms": 10,
+                "idle_refresh_frames_total": 15}),
             observed_at=now,
             agent_session_id="session-123",
         ))
@@ -78,6 +80,10 @@ async def test_stream_diagnostics_returns_fresh_stage_counters_and_session(
         assert body["diagnostics"]["telemetry"]["encoder_input_drops_total"] == 7
         assert body["diagnostics"]["telemetry"]["frame_throttle_drops_total"] == 5
         assert body["diagnostics"]["telemetry"]["ws_queue_accepted_total"] == 150
+        assert body["diagnostics"]["telemetry"]["last_capture_age_ms"] == 15000
+        assert body["diagnostics"]["telemetry"]["last_render_age_ms"] == 15000
+        assert body["diagnostics"]["telemetry"]["last_encoded_age_ms"] == 10
+        assert body["diagnostics"]["telemetry"]["idle_refresh_frames_total"] == 15
     finally:
         app.dependency_overrides.pop(get_status_cache, None)
         await redis.aclose()

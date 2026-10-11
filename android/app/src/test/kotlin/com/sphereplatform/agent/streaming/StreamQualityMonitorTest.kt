@@ -27,6 +27,26 @@ class StreamQualityMonitorTest {
         monitor = StreamQualityMonitor()
     }
 
+    @Test fun `idle refresh does not conceal source age and session reset restores unknown ages`() {
+        assertNull(monitor.getStats().lastCaptureAgeMs)
+        assertNull(monitor.getStats().lastRenderAgeMs)
+        assertNull(monitor.getStats().lastEncodedAgeMs)
+        monitor.recordCapturedFrame(); monitor.recordRenderedFrame()
+        ShadowSystemClock.advanceBy(Duration.ofSeconds(3))
+        monitor.recordIdleRefresh(); monitor.recordFrame(32,false)
+        val stats = monitor.getStats()
+        assertEquals(3000L,stats.lastCaptureAgeMs)
+        assertEquals(3000L,stats.lastRenderAgeMs)
+        assertEquals(0L,stats.lastEncodedAgeMs)
+        assertEquals(1L,stats.idleRefreshFramesTotal)
+        assertEquals(0,stats.currentCaptureFps)
+        assertEquals(0,stats.currentRenderFps)
+        assertEquals(1,stats.currentFps)
+        monitor.reset()
+        assertNull(monitor.getStats().lastCaptureAgeMs)
+        assertEquals(0L,monitor.getStats().idleRefreshFramesTotal)
+    }
+
     // ── Пустое состояние ─────────────────────────────────────────────────────
 
     @Test

@@ -140,6 +140,34 @@ test('input-channel loss revokes its handle, restores automatically and fences l
   view.unmount(); expect(onControl).toHaveBeenLastCalledWith(null); expect(jest.getTimerCount()).toBe(0);
 });
 
+test('missing presented frames retire a connected peer, revoke input and automatically negotiate again', async () => {
+  mockAdmission.data.input = true;
+  const onControl = jest.fn(), onFrame = jest.fn(() => true), onObservation = jest.fn();
+  const view = render(<LiveDirectVideo deviceId="device" session={'1'.repeat(16)} eligible expectedCapture={expected}
+    onFrame={onFrame} onObservation={onObservation} onControlChannel={onControl} />);
+  act(() => { mockReport(connected); mockTrack({ kind: 'video' } as MediaStreamTrack); }); await act(async () => {});
+  act(present); const lateFrame = mockFrame;
+  act(() => jest.advanceTimersByTime(5000)); act(() => mockReport(connected));
+  expect(mockStop).not.toHaveBeenCalled();
+  act(() => jest.advanceTimersByTime(1000));
+  expect(mockStop).toHaveBeenCalledTimes(1); expect(onControl).toHaveBeenLastCalledWith(null);
+  expect(onObservation).toHaveBeenLastCalledWith(expect.objectContaining({ active: false,
+    result: expect.objectContaining({ reason: 'video_frame_timeout' }) }));
+  act(() => lateFrame(2, { width: 960, height: 540 } as VideoFrameCallbackMetadata));
+  expect(onFrame).toHaveBeenCalledTimes(1);
+  act(() => jest.advanceTimersByTime(1000)); expect(mockStart).toHaveBeenCalledTimes(2);
+  view.unmount(); expect(jest.getTimerCount()).toBe(0);
+});
+
+test('presented static-screen keepalives prevent the media watchdog without input activity', async () => {
+  const view = mount();
+  act(() => { mockReport(connected); mockTrack({ kind: 'video' } as MediaStreamTrack); }); await act(async () => {});
+  act(present);
+  for (let second = 0; second < 30; second++) { act(() => jest.advanceTimersByTime(1000)); act(present); }
+  expect(mockStop).not.toHaveBeenCalled(); expect(view.onFrame).toHaveBeenCalledTimes(31);
+  view.unmount(); expect(jest.getTimerCount()).toBe(0);
+});
+
 test('a displayed healthy peer resets earlier setup failures instead of waiting a minute after the next isolated loss', async () => {
   const view = mount();
   for (const delay of [1000, 2000, 4000]) {
@@ -148,7 +176,8 @@ test('a displayed healthy peer resets earlier setup failures instead of waiting 
   }
   expect(mockStart).toHaveBeenCalledTimes(4);
   act(() => { mockReport(connected); mockTrack({ kind: 'video' } as MediaStreamTrack); }); await act(async () => {});
-  act(present); act(() => jest.advanceTimersByTime(30000));
+  act(present);
+  for (let second = 0; second < 30; second++) { act(() => jest.advanceTimersByTime(1000)); act(present); }
   act(() => mockReport({ ...connected, state: 'failed', reason: 'control_channel_failed' }));
   act(() => jest.advanceTimersByTime(999)); expect(mockStart).toHaveBeenCalledTimes(4);
   act(() => jest.advanceTimersByTime(1)); expect(mockStart).toHaveBeenCalledTimes(5);

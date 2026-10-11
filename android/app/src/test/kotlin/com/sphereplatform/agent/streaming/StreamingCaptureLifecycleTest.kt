@@ -6,6 +6,7 @@ import android.graphics.Canvas
 import android.media.Image
 import android.media.ImageReader
 import android.media.projection.MediaProjection
+import android.os.Handler
 import android.view.Surface
 import com.sphereplatform.agent.BuildConfig
 import com.sphereplatform.agent.ws.SphereWebSocketClientContract
@@ -17,8 +18,10 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.RuntimeEnvironment
+import org.robolectric.Shadows.shadowOf
 import org.robolectric.annotation.Config
 import java.nio.ByteBuffer
+import java.time.Duration
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
@@ -73,6 +76,26 @@ class StreamingCaptureLifecycleTest {
     @After fun cleanup() {
         manager.stop()
         unmockkAll()
+    }
+
+    @Test fun `idle surface refresh submits owned pixels without counting a new capture and stops with its session`() {
+        var now = 1_000_000L
+        manager.monotonicNs = { now }
+        manager.start(projection)
+        val handler = StreamingManagerImpl::class.java.getDeclaredField("imageReaderHandler").apply { isAccessible = true }
+            .get(manager) as Handler
+        shadowOf(handler.looper).idleFor(Duration.ofSeconds(1))
+        verify(exactly=0) { canvas.drawBitmap(any<Bitmap>(),any<android.graphics.Rect>(),any<android.graphics.Rect>(),any()) }
+        listeners.last().onImageAvailable(reader)
+        now += 1_000_000_000L
+        shadowOf(handler.looper).idleFor(Duration.ofSeconds(1))
+        verify(exactly=2) { canvas.drawBitmap(any<Bitmap>(),any<android.graphics.Rect>(),any<android.graphics.Rect>(),any()) }
+        assertEquals(1L,manager.getQualityStats().captureFramesTotal)
+        assertEquals(1L,manager.getQualityStats().renderedFramesTotal)
+        assertEquals(1L,manager.getQualityStats().idleRefreshFramesTotal)
+        manager.stop(); now += 3_000_000_000L
+        shadowOf(handler.looper).idleFor(Duration.ofSeconds(3))
+        verify(exactly=2) { canvas.drawBitmap(any<Bitmap>(),any<android.graphics.Rect>(),any<android.graphics.Rect>(),any()) }
     }
 
     @Test fun `stop cannot close reader or recycle bitmap during native copy`() {

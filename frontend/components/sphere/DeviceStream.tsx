@@ -73,6 +73,10 @@ interface StreamDiagnosticResponse {
       frame_throttle_drops_total?: number | null;
       capture_throttle_drops_total?: number | null;
       encoder_input_drops_total?: number | null;
+      last_capture_age_ms?: number | null;
+      last_render_age_ms?: number | null;
+      last_encoded_age_ms?: number | null;
+      idle_refresh_frames_total?: number | null;
       encoder_fps: number;
       encoded_frames_total: number;
       encoded_bytes_total: number;
@@ -1398,6 +1402,10 @@ export function DeviceStream({
                       <span>Encoder FPS: {t.encoder_fps}</span>
                       <span>Encoded: {t.encoded_frames_total}</span>
                       <span>Captured: {t.capture_frames_total ?? '—'}</span>
+                      <span>Возраст захвата Android: {t.last_capture_age_ms == null ? '—' : `${t.last_capture_age_ms} мс`}</span>
+                      <span>Возраст входа кодировщика: {t.last_render_age_ms == null ? '—' : `${t.last_render_age_ms} мс`}</span>
+                      <span>Возраст выхода кодировщика: {t.last_encoded_age_ms == null ? '—' : `${t.last_encoded_age_ms} мс`}</span>
+                      <span>Повторы неподвижного кадра: {t.idle_refresh_frames_total ?? '—'}</span>
                       <span>Rendered: {t.rendered_frames_total ?? '—'}</span>
                       <span>Local WS accepted: {t.ws_queue_accepted_total}/{t.ws_queue_attempts_total}</span>
                       <span>Local WS rejected: {t.ws_queue_rejected_total}</span>

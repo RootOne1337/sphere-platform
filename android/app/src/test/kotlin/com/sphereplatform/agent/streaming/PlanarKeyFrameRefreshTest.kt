@@ -23,6 +23,7 @@ class PlanarKeyFrameRefreshTest {
     private val destination = ByteBuffer.allocate(6)
     private val rgba = ByteBuffer.allocate(16).apply { put(byteArrayOf(-1,0,0,-1, 0,-1,0,-1, 0,0,-1,-1, -1,-1,-1,-1)); rewind() }
     private var errors = 0
+    private var idleRefreshes = 0
 
     @Before fun setup() {
         mockkStatic(MediaCodec::class)
@@ -35,6 +36,7 @@ class PlanarKeyFrameRefreshTest {
         every { codec.setCallback(capture(callback)) } just Runs
         every { codec.getInputBuffer(any()) } returns destination
         encoder.onEncoderError = { errors++ }
+        encoder.onIdleFrameQueued = { idleRefreshes++ }
         encoder.startPlanar()
     }
     @After fun cleanup() { encoder.stop(); unmockkAll() }
@@ -42,6 +44,46 @@ class PlanarKeyFrameRefreshTest {
     private fun source() {
         callback.captured.onInputBufferAvailable(codec,7)
         assertTrue(encoder.submitPlanarFrame(rgba,8,4,123L))
+    }
+
+    @Test fun `idle clock does not submit uninitialized pixels or repeat an active source`() {
+        assertFalse(encoder.refreshIdleFrame())
+        source(); callback.captured.onInputBufferAvailable(codec,7)
+        now += 999_999_999L
+        assertFalse(encoder.refreshIdleFrame()); assertEquals(0,idleRefreshes)
+        now += 1L
+        assertTrue(encoder.refreshIdleFrame()); assertEquals(1,idleRefreshes)
+        verify(exactly=1) { codec.queueInputBuffer(7,0,6,1_001_000L,0) }
+        repeat(20) { assertFalse(encoder.refreshIdleFrame()) }
+        verify(exactly=2) { codec.queueInputBuffer(any(),any(),any(),any(),any()) }
+    }
+
+    @Test fun `busy idle refresh is coalesced and fresh frames resume the producer cadence`() {
+        source(); now += 2_000_000_000L
+        repeat(20) { assertFalse(encoder.refreshIdleFrame()) }
+        assertEquals(0,idleRefreshes)
+        callback.captured.onInputBufferAvailable(codec,7)
+        assertEquals(1,idleRefreshes)
+        callback.captured.onInputBufferAvailable(codec,8)
+        assertTrue(encoder.submitPlanarFrame(rgba,8,4,124L))
+        assertEquals(1,idleRefreshes); assertFalse(encoder.refreshIdleFrame())
+        verify(exactly=3) { codec.queueInputBuffer(any(),any(),any(),any(),any()) }
+    }
+
+    @Test fun `idle refresh after stop cannot submit retained pixels or report success`() {
+        source(); now += 2_000_000_000L; assertFalse(encoder.refreshIdleFrame()); encoder.stop()
+        callback.captured.onInputBufferAvailable(codec,7)
+        assertFalse(encoder.refreshIdleFrame()); assertEquals(0,idleRefreshes)
+        verify(exactly=1) { codec.queueInputBuffer(any(),any(),any(),any(),any()) }
+    }
+
+    @Test fun `uncertain idle queue failure fences once without refresh replay`() {
+        source(); callback.captured.onInputBufferAvailable(codec,7); now += 2_000_000_000L
+        every { codec.queueInputBuffer(any(),any(),any(),any(),any()) } throws IllegalStateException("uncertain")
+        assertFalse(encoder.refreshIdleFrame()); assertEquals(1,errors); assertEquals(0,idleRefreshes)
+        callback.captured.onInputBufferAvailable(codec,8); now += 2_000_000_000L
+        assertFalse(encoder.refreshIdleFrame()); assertEquals(1,errors)
+        verify(exactly=1) { codec.queueInputBuffer(7,0,6,2_001_000L,0) }
     }
 
     @Test fun `viewer before first capture never queues an uninitialized black cache`() {

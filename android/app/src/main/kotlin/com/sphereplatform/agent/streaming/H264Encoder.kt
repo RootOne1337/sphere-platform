@@ -38,6 +38,7 @@ class H264Encoder(
      * должен выполнять restart АСИНХРОННО, не из этого callback'а.
      */
     var onEncoderError: ((Exception) -> Unit)? = null
+    var onIdleFrameQueued: (() -> Unit)? = null
 
     data class EncoderConfig(
         val width: Int = 720,
@@ -81,6 +82,8 @@ class H264Encoder(
     private var planarQueueNs = 0L
     private var planarFrameAvailable = false
     private var planarRefreshPending = false
+    private var planarIdleRefreshPending = false
+    private var planarLastSubmissionNs: Long? = null
     private var planarLastPtsUs = 0L
     private var planarLastRefreshNs: Long? = null
     private var callbackErrorReported = false
@@ -178,6 +181,7 @@ class H264Encoder(
         cachedSps = null; cachedPps = null
         planarInputs = null; planarConverter = null
         planarFrameAvailable = false; planarRefreshPending = false
+        planarIdleRefreshPending = false; planarLastSubmissionNs = null
         planarLastPtsUs = 0L; planarLastRefreshNs = null
         planarWindowNs = 0L; planarSamples = 0; planarConvertNs = 0L; planarQueueNs = 0L
         runCatching { owned?.stop() }.onFailure { Timber.w(it, "H264Encoder stop error") }
@@ -207,6 +211,8 @@ class H264Encoder(
                 planarLastPtsUs = timestamp
                 planarFrameAvailable = true
                 planarRefreshPending = false // This new source frame fulfils a pending IDR request.
+                planarIdleRefreshPending = false
+                planarLastSubmissionNs = monotonicNs()
                 val queued = System.nanoTime()
                 if (planarWindowNs == 0L) planarWindowNs = started
                 planarSamples++; planarConvertNs += converted - started; planarQueueNs += queued - converted
@@ -248,6 +254,7 @@ class H264Encoder(
                 if (planarConverter != null) {
                     planarLastRefreshNs = now
                     planarRefreshPending = true
+                    planarIdleRefreshPending = false
                     submitPendingPlanarRefresh(activeCodec, now)
                 }
                 true
@@ -260,11 +267,36 @@ class H264Encoder(
     }
 
     /** Uses the existing owned I420 cache; never replays old compressed bytes. */
-    private fun submitPendingPlanarRefresh(owned: MediaCodec, now: Long) {
-        if (!planarRefreshPending || !planarFrameAvailable || callbackErrorReported) return
-        val converter = planarConverter ?: return
-        val available = planarInputs ?: return
-        val index = available.poll() ?: return // Resume once a real codec input becomes available.
+    internal fun refreshIdleFrame(): Boolean {
+        var owned: MediaCodec? = null
+        return try {
+            val queued = synchronized(inputLock) {
+                val active = codec ?: return@synchronized false
+                owned = active
+                val last = planarLastSubmissionNs ?: return@synchronized false
+                val now = monotonicNs()
+                if (callbackErrorReported || !planarFrameAvailable || now - last < 1_000_000_000L) return@synchronized false
+                // Keep one pending raw refresh. Real producer frames supersede it;
+                // input callbacks do not flood the codec when it is busy.
+                if (!planarRefreshPending) {
+                    planarRefreshPending = true
+                    planarIdleRefreshPending = true
+                }
+                submitPendingPlanarRefresh(active, now)
+            }
+            if (queued) onIdleFrameQueued?.invoke()
+            queued
+        } catch (error: Exception) {
+            owned?.let { reportCallbackError(it, error) }
+            false
+        }
+    }
+
+    private fun submitPendingPlanarRefresh(owned: MediaCodec, now: Long): Boolean {
+        if (!planarRefreshPending || !planarFrameAvailable || callbackErrorReported) return false
+        val converter = planarConverter ?: return false
+        val available = planarInputs ?: return false
+        val index = available.poll() ?: return false // Resume once a real codec input becomes available.
         var queueAttempted = false
         try {
             converter.copyLastConverted(checkNotNull(owned.getInputBuffer(index)))
@@ -272,8 +304,12 @@ class H264Encoder(
             queueAttempted = true
             owned.queueInputBuffer(index, 0, converter.outputSize, timestamp, 0)
             planarLastPtsUs = timestamp
+            planarLastSubmissionNs = now
+            val idle = planarIdleRefreshPending
             planarRefreshPending = false
+            planarIdleRefreshPending = false
             planarLastRefreshNs = now
+            return idle
         } catch (error: Exception) {
             planarRefreshPending = false; planarFrameAvailable = false
             if (!queueAttempted) available.offer(index)
@@ -294,13 +330,14 @@ class H264Encoder(
     private val encoderCallback = object : MediaCodec.Callback() {
         override fun onInputBufferAvailable(codec: MediaCodec, index: Int) {
             try {
-                synchronized(inputLock) {
+                val idleQueued = synchronized(inputLock) {
                     val available = planarInputs ?: return
                     // Old callbacks cannot lend an index or replay raw pixels into a new capture.
                     if (this@H264Encoder.codec !== codec || callbackErrorReported) return
                     check(available.offer(index)) { "Planar input callback capacity exceeded" }
                     submitPendingPlanarRefresh(codec, monotonicNs())
                 }
+                if (idleQueued) onIdleFrameQueued?.invoke()
             } catch (error: Exception) { reportCallbackError(codec, error) }
         }
 

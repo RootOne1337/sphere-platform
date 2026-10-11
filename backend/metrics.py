@@ -276,6 +276,18 @@ stream_encoder_input_drops_session = device_gauge(
     "Raw pictures skipped when no codec input buffer is free in the current Android session",
     ["device_id"],
 )
+stream_last_capture_age_ms = device_gauge(
+    "sphere_stream_last_capture_age_ms", "Age of the last real Android source capture at its telemetry snapshot", ["device_id"],
+)
+stream_last_render_age_ms = device_gauge(
+    "sphere_stream_last_render_age_ms", "Age of the last real source picture submitted to the encoder", ["device_id"],
+)
+stream_last_encoded_age_ms = device_gauge(
+    "sphere_stream_last_encoded_age_ms", "Age of the last MediaCodec picture output at its telemetry snapshot", ["device_id"],
+)
+stream_idle_refresh_frames_session = device_gauge(
+    "sphere_stream_idle_refresh_frames_session", "Cached raw pictures resubmitted while the source is idle in this capture session", ["device_id"],
+)
 stream_backend_ingress_frames_total = device_counter(
     "sphere_stream_backend_ingress_frames_total",
     "Binary video packets received from Android WebSocket connections",
@@ -363,6 +375,10 @@ def cleanup_stream_metrics(device_id: str) -> None:
         stream_frame_throttle_drops_session,
         stream_capture_throttle_drops_session,
         stream_encoder_input_drops_session,
+        stream_last_capture_age_ms,
+        stream_last_render_age_ms,
+        stream_last_encoded_age_ms,
+        stream_idle_refresh_frames_session,
     ):
         with contextlib.suppress(KeyError, ValueError):
             metric.remove(device_id)

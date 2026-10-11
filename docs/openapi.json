@@ -10902,6 +10902,58 @@
               }
             ],
             "title": "Encoder Input Drops Total"
+          },
+          "last_capture_age_ms": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "maximum": 86400000.0,
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Capture Age Ms"
+          },
+          "last_render_age_ms": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "maximum": 86400000.0,
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Render Age Ms"
+          },
+          "last_encoded_age_ms": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "maximum": 86400000.0,
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Encoded Age Ms"
+          },
+          "idle_refresh_frames_total": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "maximum": 9007199254740992.0,
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Idle Refresh Frames Total"
           }
         },
         "type": "object",

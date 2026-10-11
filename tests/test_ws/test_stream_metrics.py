@@ -71,6 +71,50 @@ def _active_stream_data_v2(**overrides) -> dict:
     return data
 
 
+def test_idle_refresh_ages_remain_distinct_and_old_agents_remove_missing_series():
+    from backend.metrics import (
+        stream_idle_refresh_frames_session,
+        stream_last_capture_age_ms,
+        stream_last_encoded_age_ms,
+        stream_last_render_age_ms,
+    )
+    device_id = _device_id()
+    metrics = StreamMetrics(device_id)
+    values = {
+        "last_capture_age_ms": 15000, "last_render_age_ms": 15000,
+        "last_encoded_age_ms": 10, "idle_refresh_frames_total": 15,
+    }
+    gauges = [stream_last_capture_age_ms, stream_last_render_age_ms,
+              stream_last_encoded_age_ms, stream_idle_refresh_frames_session]
+    try:
+        telemetry = metrics.update_from_pong(_active_stream_data_v2(
+            capture_fps=0, render_fps=0, encoder_fps=1, **values))
+        assert telemetry is not None
+        for field, metric in zip(values, gauges, strict=True):
+            assert getattr(telemetry, field) == values[field]
+            assert metric.labels(device_id=device_id)._value.get() == values[field]
+        assert metrics.update_from_pong(_active_stream_data_v2()) is not None
+        assert all((device_id,) not in gauge._metrics for gauge in gauges)
+        assert metrics.update_from_pong(_active_stream_data_v2(**values)) is not None
+    finally:
+        metrics.cleanup()
+    assert all((device_id,) not in gauge._metrics for gauge in gauges)
+
+
+@pytest.mark.parametrize("field,bad", [
+    ("last_capture_age_ms", -1), ("last_render_age_ms", 86_400_001),
+    ("last_encoded_age_ms", 1.5), ("idle_refresh_frames_total", True),
+])
+def test_invalid_idle_age_or_counter_invalidates_the_snapshot(field, bad):
+    device_id = _device_id()
+    metrics = StreamMetrics(device_id)
+    try:
+        assert metrics.update_from_pong(_active_stream_data_v2(**{field: bad})) is None
+        assert (device_id,) not in stream_fps._metrics
+    finally:
+        metrics.cleanup()
+
+
 def test_active_pong_records_encoder_and_local_queue_stages_separately():
     device_id = _device_id()
     metrics = StreamMetrics(device_id)

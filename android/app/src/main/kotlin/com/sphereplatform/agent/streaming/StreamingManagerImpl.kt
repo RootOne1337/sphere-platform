@@ -38,9 +38,11 @@ class StreamingManagerImpl @Inject constructor(
     private var virtualDisplayManager: VirtualDisplayManager? = null
     private var imageReader: ImageReader? = null
     private var imageReaderThread: HandlerThread? = null
+    private var imageReaderHandler: Handler? = null
     private var gpuBridge: SurfaceTextureEncoderBridge? = null
     internal var gpuBridgeEnabled = BuildConfig.STREAM_GPU_BRIDGE
     internal var planarInputEnabled = BuildConfig.STREAM_PLANAR_INPUT
+    internal var monotonicNs: () -> Long = System::nanoTime
     // Image/Bitmap native storage must stay alive through the complete copy and
     // surface draw. Lifecycle methods serialize separately from codec callbacks.
     private val frameLock = Any()
@@ -125,6 +127,7 @@ class StreamingManagerImpl @Inject constructor(
         val enc = H264Encoder(encoderConfig) { nalData, metadata ->
             onFrameReady(nalData, metadata, session, packetEpoch, packetStartMs)
         }
+        enc.onIdleFrameQueued = { if (captureSession === session) qualityMonitor.recordIdleRefresh() }
         // FIX H3: Передаём фактический битрейт энкодера в ABR — без рассинхрона
         val abr = AdaptiveBitrateController(enc, initialBitrate = encoderConfig.bitrateBps)
         adaptiveBitrate = abr
@@ -207,7 +210,40 @@ class StreamingManagerImpl @Inject constructor(
 
         val thread = HandlerThread("sphere-imagereader").also { it.start() }
         imageReaderThread = thread
+        val captureHandler = Handler(thread.looper)
+        imageReaderHandler = captureHandler
         var lastPlanarTimestamp = 0L
+        var lastSurfaceSubmissionNs: Long? = null
+        var lastSurfaceBounds: Rect? = null
+        val idleRefresh = object : Runnable {
+            override fun run() {
+                synchronized(frameLock) {
+                    if (!streaming || captureSession !== session) return
+                    try {
+                        if (usePlanar) enc.refreshIdleFrame()
+                        else {
+                            val now = monotonicNs()
+                            val last = lastSurfaceSubmissionNs
+                            val bitmap = cachedBitmap
+                            val bounds = lastSurfaceBounds
+                            if (last != null && now - last >= 1_000_000_000L && bitmap != null && !bitmap.isRecycled && bounds != null) {
+                                val surface = checkNotNull(encoderSurface)
+                                val canvas = surface.lockCanvas(null)
+                                if (canvas != null) {
+                                    try { canvas.drawBitmap(bitmap, bounds, bounds, null) }
+                                    finally { surface.unlockCanvasAndPost(canvas) }
+                                    lastSurfaceSubmissionNs = now
+                                    qualityMonitor.recordIdleRefresh()
+                                } else qualityMonitor.recordRenderFailure()
+                            }
+                        }
+                    } catch (error: Exception) {
+                        qualityMonitor.recordRenderFailure()
+                    }
+                }
+                if (streaming && captureSession === session) captureHandler.postDelayed(this, 1000)
+            }
+        }
 
         ir.setOnImageAvailableListener({ reader ->
             synchronized(frameLock) {
@@ -227,7 +263,7 @@ class StreamingManagerImpl @Inject constructor(
                     // while createDisplay() is still starting. Drain and close
                     // it, but never render it into a session that has stopped.
                     if (!streaming) return@setOnImageAvailableListener
-                    val captureTimestamp = if (usePlanar) image.timestamp else System.nanoTime()
+                    val captureTimestamp = if (usePlanar) image.timestamp else monotonicNs()
                     if (usePlanar) {
                         if (captureTimestamp <= lastPlanarTimestamp) return@setOnImageAvailableListener
                         lastPlanarTimestamp = captureTimestamp
@@ -270,6 +306,10 @@ class StreamingManagerImpl @Inject constructor(
                         bmp = Bitmap.createBitmap(strideWidth, image.height, Bitmap.Config.ARGB_8888)
                         needRecycle = true
                     }
+                    // A failed native copy must not make partially updated cache
+                    // pixels eligible for an idle submission.
+                    lastSurfaceSubmissionNs = null
+                    lastSurfaceBounds = null
                     bmp.copyPixelsFromBuffer(buffer)
 
                     // Only lock and draw if we are still streaming
@@ -285,6 +325,10 @@ class StreamingManagerImpl @Inject constructor(
                             }
                             // Count only after the frame was posted successfully.
                             qualityMonitor.recordRenderedFrame()
+                            if (bmp === cachedBitmap) {
+                                lastSurfaceSubmissionNs = monotonicNs()
+                                lastSurfaceBounds = src
+                            }
                         } else {
                             qualityMonitor.recordRenderFailure()
                         }
@@ -301,7 +345,7 @@ class StreamingManagerImpl @Inject constructor(
                     }
                 }
             }
-        }, Handler(thread.looper))
+        }, captureHandler)
 
         // FIX M1: Не блокируем поток — даём Surface и ImageReader время инициализироваться.
         // Thread.sleep(100) заменён на неблокирующий postDelayed через HandlerThread.
@@ -321,6 +365,7 @@ class StreamingManagerImpl @Inject constructor(
         }
 
         viewerKeyFrameCoordinator.markEncoderReady { requestKeyFrameNow() }
+        captureHandler.postDelayed(idleRefresh, 1000)
         Timber.i("StreamingManagerImpl: started input=%s", if (usePlanar) "yuv420_planar" else "surface")
     }
 
@@ -481,6 +526,7 @@ class StreamingManagerImpl @Inject constructor(
         }
         synchronized(frameLock) {
             captureSession = null
+            imageReaderHandler?.removeCallbacksAndMessages(null)
             try { imageReader?.setOnImageAvailableListener(null, null) } catch (e: Exception) {
                 Timber.w(e, "StreamingManagerImpl: imageReader listener removal error")
             }
@@ -509,6 +555,7 @@ class StreamingManagerImpl @Inject constructor(
         virtualDisplayManager = null
         imageReader = null
         imageReaderThread = null
+        imageReaderHandler = null
         encoder = null
         adaptiveBitrate = null
         currentProjection = null

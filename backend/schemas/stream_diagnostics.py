@@ -43,6 +43,12 @@ class AgentStreamTelemetry(BaseModel):
     # A raw picture skipped because no codec input buffer was free. Older
     # agents omit this; do not infer zero or confuse it with coded frame loss.
     encoder_input_drops_total: int | None = Field(default=None, ge=0, le=_MAX_COUNTER)
+    # Ages are local monotonic durations at the snapshot, not synchronized wall
+    # clocks. A cached-picture refresh must not reset the capture/render ages.
+    last_capture_age_ms: int | None = Field(default=None, ge=0, le=86_400_000)
+    last_render_age_ms: int | None = Field(default=None, ge=0, le=86_400_000)
+    last_encoded_age_ms: int | None = Field(default=None, ge=0, le=86_400_000)
+    idle_refresh_frames_total: int | None = Field(default=None, ge=0, le=_MAX_COUNTER)
 
     @model_validator(mode="after")
     def validate_contract(self) -> "AgentStreamTelemetry":
