@@ -1,5 +1,14 @@
 # Неподвижный экран, цепочка H.264 и повторное согласование: APK56–59
 
+**12 октября — дополнительная проверка обычного Chrome.** Найден конкретный
+отказ разрешения mDNS имени между Windows и виртуальной сетью Android.
+С действительным Windows lookup обычный Chrome без numeric flag получил
+30672 decoded frames при 29 FPS, без drops/freezes/packet loss; 14 native
+input ACK и UP подтверждены, серверных touches ноль. Это пока прототип с
+принадлежащим проверке SDP adapter, а не принятие установленного API.
+[Исследование и исправление discovery](DIRECT-MDNS-DISCOVERY-RESEARCH.md),
+[неизменяемый срез прототипа](DIRECT-MDNS-PROTOTYPE-OBSERVATION.json).
+
 Продолжение [анализа смены сети и частоты кадров](STREAM-NETWORK-CADENCE-FOLLOWUP.md).
 Время измерений — UTC. Этот документ фиксирует новые проверки; прежний JSON-срез
 `STREAM-NETWORK-CADENCE-FOLLOWUP.json` остаётся историческим свидетельством.

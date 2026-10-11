@@ -12,6 +12,7 @@ from backend.services.device_status_cache import DeviceStatusCache
 from backend.websocket.connection_manager import ConnectionManager
 from backend.websocket.continuous_lease import no_replay_redis
 from backend.websocket.direct_probe_ice import validate_turn_grant
+from backend.websocket.direct_probe_mdns import resolve_offer
 from backend.websocket.direct_probe_protocol import (
     LIVE_VIDEO_MIN_AGENT_CODE,
     LIVE_VIDEO_MODE,
@@ -266,8 +267,13 @@ class DirectProbeRuntime:
         if viewer.offered or viewer.retired or not self.available or not viewer.binding:
             raise InvalidDirectProbe("probe_already_offered")
         viewer.offered = True  # A publication failure must not enable replay.
-        data = dict(kind="offer", binding=viewer.binding, sdp=sdp)
         try:
+            sdp = await resolve_offer(sdp, viewer.session)
+            # The helper await cannot borrow a replaced/expired device owner.
+            if (viewer.retired or not self.available or self.viewers.get(viewer.session) is not viewer
+                    or not await self.remaining(viewer.binding)):
+                raise InvalidDirectProbe("probe_expired")
+            data = dict(kind="offer", binding=viewer.binding, sdp=sdp)
             if viewer.ice is not None:
                 data["ice"] = validate_turn_grant(viewer.ice, viewer.session, "agent")
             await self.publish(f"{self.namespace}:agent:{viewer.device}", data)

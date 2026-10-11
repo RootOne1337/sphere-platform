@@ -102,6 +102,38 @@ async def eventually(predicate):
             await asyncio.sleep(.005)
 
 
+@pytest.mark.asyncio
+async def test_discovery_await_cannot_publish_an_offer_for_a_retired_owner(peers, monkeypatch):
+    started, release = asyncio.Event(), asyncio.Event()
+    async def blocked(sdp, session):
+        started.set()
+        await release.wait()
+        return sdp
+    monkeypatch.setattr("backend.websocket.direct_probe_runtime.resolve_offer", blocked)
+    runtime = peers[0][1]
+    viewer = peers[-1]
+    task = asyncio.create_task(runtime.open(viewer, SDP))
+    await started.wait()
+    await runtime.retire(viewer)
+    release.set()
+    with pytest.raises(InvalidDirectProbe, match="probe_expired"):
+        await task
+    assert peers[3].send_json.call_count == 0
+    assert await peers[1][0].get(runtime.key("device")) is None
+
+
+@pytest.mark.asyncio
+async def test_discovery_cannot_borrow_another_owners_device_lease(peers, monkeypatch):
+    async def replaced(sdp, session):
+        await peers[1][0].set(peers[0][1].key("device"), "another-owner", px=30000)
+        return sdp
+    monkeypatch.setattr("backend.websocket.direct_probe_runtime.resolve_offer", replaced)
+    with pytest.raises(InvalidDirectProbe, match="probe_expired"):
+        await peers[0][1].open(peers[-1], SDP)
+    assert peers[3].send_json.call_count == 0
+    assert await peers[1][0].get(peers[0][1].key("device")) == b"another-owner"
+
+
 async def live_offer(peers, monkeypatch):
     from backend.core.config import settings
     monkeypatch.setattr(settings, "DIRECT_TRANSPORT_LIVE_VIDEO_ENABLED", True)

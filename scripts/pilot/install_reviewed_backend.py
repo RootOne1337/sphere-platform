@@ -1,6 +1,7 @@
 """Plan or install one reviewed schema-free contract/control update from CI.
 
-Never builds, migrates, seeds SQL, changes secrets or restarts dependencies.
+Never builds, migrates, seeds SQL, changes existing secrets or restarts dependencies.
+An explicit private mDNS helper binding may add its separate discovery credential.
 """
 from __future__ import annotations
 
@@ -51,6 +52,7 @@ APPROVED_PATHS = {
     "backend/core/config.py", "backend/api/ws/direct/__init__.py",
     "backend/api/ws/direct/router.py", "backend/websocket/direct_probe_protocol.py",
     "backend/websocket/direct_probe_runtime.py",
+    "backend/websocket/direct_probe_mdns.py",
     "backend/websocket/direct_probe_telemetry.py",
     "backend/websocket/direct_probe_ice.py", "backend/api/v1/direct_probe/__init__.py",
     "backend/api/v1/direct_probe/router.py",
@@ -122,10 +124,31 @@ def probe_environment(device: str | None, disable: bool = False, readonly_video:
             "DIRECT_TRANSPORT_INPUT_ENABLED": "true" if direct_input else "false"}
 
 
+def mdns_environment(config_file: Path | None) -> dict[str, str]:
+    if config_file is None:
+        return {}
+    private_file = workspace_path(config_file, private=True)
+    require(private_file.stat().st_size <= 4096, "Discovery configuration exceeds budget")
+    config = json.loads(private_file.read_text(encoding="utf-8-sig"))
+    require(isinstance(config, dict) and config.keys() == {"url", "tokenFile"}, "Invalid discovery configuration")
+    require(isinstance(config["url"], str) and isinstance(config["tokenFile"], str), "Invalid discovery binding")
+    parsed = urlsplit(config["url"])
+    require(parsed.scheme == "http" and parsed.hostname in {"127.0.0.1", "host.docker.internal"}
+            and parsed.port and 1024 <= parsed.port <= 65535
+            and parsed.netloc == f"{parsed.hostname}:{parsed.port}" and parsed.path == "/v1/mdns"
+            and not parsed.query and not parsed.fragment, "Discovery helper must be an explicit local endpoint")
+    token_file = workspace_path(Path(config["tokenFile"]), private=True)
+    require(token_file.stat().st_size <= 256, "Discovery credential exceeds budget")
+    token = token_file.read_text(encoding="utf-8").strip()
+    require(bool(re.fullmatch(r"[A-Za-z0-9_-]{32,128}", token)), "Invalid discovery credential")
+    return {"DIRECT_PROBE_MDNS_RESOLVER_URL": config["url"], "DIRECT_PROBE_MDNS_RESOLVER_KEY": token}
+
+
 def validate_delta(old: dict[str, Any], new: dict[str, Any], tag: str,
                    direct_probe_device: str | None = None, disable_direct_probe: bool = False,
                    readonly_video_probe: bool = False, live_video: bool = False,
-                   direct_probe_devices: tuple[str, ...] | None = None, direct_input: bool = False) -> None:
+                   direct_probe_devices: tuple[str, ...] | None = None, direct_input: bool = False,
+                   mdns_config_file: Path | None = None) -> None:
     require(old.get("name") == PROJECT and new.get("name") == PROJECT, "Wrong Compose project")
     require(new["services"]["backend"]["image"] == tag and "build" not in new["services"]["backend"],
             "Candidate image/build recipe mismatch")
@@ -134,6 +157,7 @@ def validate_delta(old: dict[str, Any], new: dict[str, Any], tag: str,
     if "build" in old["services"]["backend"]:
         expected["services"]["backend"]["build"] = old["services"]["backend"]["build"]
     admitted_env = probe_environment(direct_probe_device, disable_direct_probe, readonly_video_probe, live_video, direct_probe_devices, direct_input)
+    admitted_env.update(mdns_environment(mdns_config_file))
     if admitted_env:
         env = expected["services"]["backend"]["environment"]
         old_env = old["services"]["backend"]["environment"]
@@ -143,7 +167,7 @@ def validate_delta(old: dict[str, Any], new: dict[str, Any], tag: str,
                 env[key] = old_env[key]
             else:
                 env.pop(key, None)
-    require(expected == old, "Only backend image/build removal and explicit device grants are admitted")
+    require(expected == old, "Only backend image/build, explicit device grants and optional local discovery binding are admitted")
     require(not new["services"]["backend"].get("ports"), "Direct backend port rejected")
     require(not new["services"]["backend"].get("user") and not new["services"]["backend"].get("command"),
             "Shipped runtime entry must not be overridden")
@@ -236,8 +260,10 @@ def ready(source: str) -> None:
 def execute(artifact: Path, source: str, expected_image_id: str, expected_current: str, apply: bool,
             direct_probe_device: str | None = None, disable_direct_probe: bool = False,
             readonly_video_probe: bool = False, live_video: bool = False,
-            direct_probe_devices: tuple[str, ...] | None = None, direct_input: bool = False) -> dict[str, Any]:
+            direct_probe_devices: tuple[str, ...] | None = None, direct_input: bool = False,
+            mdns_config_file: Path | None = None) -> dict[str, Any]:
     admitted_env = probe_environment(direct_probe_device, disable_direct_probe, readonly_video_probe, live_video, direct_probe_devices, direct_input)
+    admitted_env.update(mdns_environment(mdns_config_file))
     require(bool(re.fullmatch(r"sha256:[a-f0-9]{64}", expected_image_id)), "Expected independent CI image ID")
     artifact = workspace_path(artifact, private=True)
     admitted = admit(artifact, source)
@@ -280,7 +306,7 @@ def execute(artifact: Path, source: str, expected_image_id: str, expected_curren
     frozen_cmd = freeze_compose(prefix, old, output / "baseline.json", runner=command)
     candidate_cmd = frozen_cmd + ["--file", str(override)]
     candidate = json.loads(command(candidate_cmd + ["config", "--format", "json"]))
-    validate_delta(old, candidate, admitted["imageTag"], direct_probe_device, disable_direct_probe, readonly_video_probe, live_video, direct_probe_devices, direct_input)
+    validate_delta(old, candidate, admitted["imageTag"], direct_probe_device, disable_direct_probe, readonly_video_probe, live_video, direct_probe_devices, direct_input, mdns_config_file)
     catalog = ota_hash()
     findings = evaluate(collect(ROOT))
     plan = {"sourceRevision": source, "runId": admitted["runId"], "imageId": admitted["imageId"],
@@ -294,6 +320,7 @@ def execute(artifact: Path, source: str, expected_image_id: str, expected_curren
         "directProbeReadOnlyVideoEnabled": readonly_video_probe,
         "directPrimaryVideoEnabled": live_video,
         "directInputEnabled": direct_input,
+        "localMdnsDiscoveryConfigured": mdns_config_file is not None,
         "directProbeExplicitlyDisabled": disable_direct_probe,
         "otaCatalogSha256": catalog, "reportDirectory": str(output), "runtimeInstalled": False}
     write(output / "plan.json", plan)
@@ -366,12 +393,14 @@ def main() -> int:
                         help="Admit renewable primary RTP video for the explicit device grants; control remains server-owned")
     parser.add_argument("--direct-input", action="store_true",
                         help="Admit scoped direct touch for primary video; native authority remains server-owned")
+    parser.add_argument("--mdns-config-file", type=Path,
+                        help="Explicit private local discovery binding; no media relay or extra device grant")
     args = parser.parse_args()
     try:
         print(json.dumps(execute(args.artifact, args.source, args.expected_image_id, args.expected_current_source,
                                  args.apply, args.direct_probe_device, args.disable_direct_probe, args.readonly_video_probe,
                                  args.live_video, tuple(args.direct_probe_devices) if args.direct_probe_devices is not None else None,
-                                 args.direct_input)))
+                                 args.direct_input, args.mdns_config_file)))
     except (ValueError, OSError, subprocess.SubprocessError, KeyError, TypeError):
         print(json.dumps({"runtimeInstalled": None, "state": "not-admitted", "detail": "Review private plan/CI/host evidence"}))
         return 2

@@ -78,6 +78,9 @@ class Settings(BaseSettings):
     DIRECT_PROBE_TURN_URLS: tuple[str, ...] = ()  # Operator-owned endpoints only; no public default.
     DIRECT_PROBE_TURN_SECRET: SecretStr = SecretStr("")  # coturn REST key; never returned to peers.
     DIRECT_PROBE_TURN_RELAY_ONLY: bool = False  # Explicit diagnostic comparison; all prefers direct ICE.
+    # Optional discovery-only helper on the deployment host. No media relay.
+    DIRECT_PROBE_MDNS_RESOLVER_URL: str = ""
+    DIRECT_PROBE_MDNS_RESOLVER_KEY: SecretStr = SecretStr("")
 
     # App
     DEBUG: bool = False

@@ -40,6 +40,47 @@ def candidate(old):
 
 
 class BackendInstallerTests(unittest.TestCase):
+    def test_local_discovery_binding_preserves_secrets_and_device_grants(self):
+        with tempfile.TemporaryDirectory() as folder:
+            root = Path(folder).resolve()
+            private = root / ".local-pilot"
+            private.mkdir()
+            token = private / "token.txt"
+            token.write_text("k" * 43)
+            config = private / "resolver.json"
+            config.write_text(json.dumps({"url": "http://host.docker.internal:8890/v1/mdns", "tokenFile": str(token)}))
+            with patch.object(installer, "ROOT", root), patch.object(installer, "PRIVATE", private):
+                env = installer.mdns_environment(config)
+                self.assertEqual(set(env), {"DIRECT_PROBE_MDNS_RESOLVER_URL", "DIRECT_PROBE_MDNS_RESOLVER_KEY"})
+                old = configuration()
+                new = candidate(old)
+                new["services"]["backend"]["environment"].update(env)
+                installer.validate_delta(old, new, TAG, mdns_config_file=config)
+                with self.assertRaises(ValueError):
+                    installer.validate_delta(old, new, TAG)
+                new["services"]["backend"]["environment"]["JWT_SECRET_KEY"] = "changed"
+                with self.assertRaises(ValueError):
+                    installer.validate_delta(old, new, TAG, mdns_config_file=config)
+
+    def test_local_discovery_rejects_remote_url_and_nonprivate_credential_file(self):
+        with tempfile.TemporaryDirectory() as folder:
+            root = Path(folder).resolve()
+            private = root / ".local-pilot"
+            private.mkdir()
+            token = private / "token.txt"
+            token.write_text("k" * 43)
+            config = private / "resolver.json"
+            with patch.object(installer, "ROOT", root), patch.object(installer, "PRIVATE", private):
+                for url in ("http://external.example:8890/v1/mdns", "http://127.0.0.1:8890/v1/mdns?x=1"):
+                    config.write_text(json.dumps({"url": url, "tokenFile": str(token)}))
+                    with self.subTest(url=url), self.assertRaises(ValueError):
+                        installer.mdns_environment(config)
+                outside = root / "other.txt"
+                outside.write_text("k" * 43)
+                config.write_text(json.dumps({"url": "http://127.0.0.1:8890/v1/mdns", "tokenFile": str(outside)}))
+                with self.assertRaises(ValueError):
+                    installer.mdns_environment(config)
+
     def test_direct_input_requires_live_video_and_preserves_all_other_runtime_fields(self):
         for values in ({}, {"live_video": True}, {"device": PROBE_DEVICE},
                        {"device": PROBE_DEVICE, "readonly_video": True},
