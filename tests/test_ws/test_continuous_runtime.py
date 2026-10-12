@@ -147,6 +147,45 @@ async def test_opted_in_cancel_after_delivery_still_requires_native_cleanup(live
 
 
 @pytest.mark.asyncio
+async def test_two_workers_route_late_native_release_then_accept_fresh_owner_without_input_replay(live):
+    runtime, viewer, agent = await open_view(live)
+    runtimes, _, _, clients, _ = live
+    old = viewer.lease
+    reached, proceed = asyncio.Event(), asyncio.Event()
+    original = agent.send_json.side_effect
+
+    async def delayed_release(message):
+        if message['type'] == 'continuous_input_close':
+            reached.set()
+            await proceed.wait()
+        await original(message)
+
+    agent.send_json.side_effect = delayed_release
+    try:
+        await runtime.handle(viewer, {'type': 'touch_close'})
+        await asyncio.wait_for(reached.wait(), 1)
+        assert viewer.closing and viewer.lease == old
+        await clients[0].pexpire(runtime.store.key(old.binding), 1)
+        await asyncio.sleep(0.02)
+        proceed.set()
+        await eventually(lambda: viewer.lease is None)
+        assert not viewer.closing
+        release = viewer.ws.send_json.call_args_list[-1].args[0]
+        assert release['stage'] == 'release' and release['status'] == 3 and release['owner'] == old.owner
+        assert not await clients[0].exists(runtime.store.key(old.binding))
+        await runtime.handle(viewer, {'type': 'touch_probe'})
+        await eventually(lambda: viewer.offer is not None)
+        await runtime.handle(viewer, dict(type='touch_open', capture_epoch=EPOCH, frame_width=960, frame_height=540))
+        assert viewer.lease is not None and viewer.lease.owner != old.owner
+        await eventually(lambda: len([c for c in viewer.ws.send_json.call_args_list
+                                     if c.args[0].get('stage') == 'startup']) == 2)
+        assert all(c.args[0]['type'] != 'continuous_input_event' for c in agent.send_json.call_args_list)
+        assert runtimes[0].available and runtime.available
+    finally:
+        proceed.set()
+
+
+@pytest.mark.asyncio
 async def test_direct_open_is_bound_to_this_viewer_and_rechecks_peer_before_each_authority_renewal(live, monkeypatch):
     from types import SimpleNamespace
 

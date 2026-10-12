@@ -43,17 +43,34 @@ async def relay_native_receipt(store: ContinuousLeaseStore, manager: ConnectionM
         return ReceiptRelay.REJECTED
     org_id = snapshot.org_id  # Copy before yielding; ConnectionInfo is mutable.
     try:
-        InputReceipt.parse(message)
+        receipt = InputReceipt.parse(message)
     except (InvalidContinuousInput, TypeError, ValueError):
         return ReceiptRelay.REJECTED
     lease = None
     try:
-        lease = await store.current_lease(device_id=device_id, org_id=org_id, agent_session=agent_session)
+        active = await store.current_lease(device_id=device_id, org_id=org_id, agent_session=agent_session)
+        current = manager.connection_snapshot(device_id)
+        if (current is not snapshot or current.org_id != org_id or current.session_id != agent_session
+                or current.agent_type != "android" or current.device_id != device_id):
+            return ReceiptRelay.REJECTED
+        if (active is not None and receipt.owner == active.owner and receipt.session == active.binding.viewer_session
+                and receipt.epoch == active.binding.capture.epoch):
+            lease = active
+            result = await store.relay_receipt(lease, message, agent_session=agent_session)
+            if result != "stale" or not receipt.released:
+                return ReceiptRelay.PUBLISHED if result == "relayed" else ReceiptRelay.REJECTED
+        if not receipt.released:
+            return ReceiptRelay.REJECTED
+        # A delayed cleanup ACK must not disappear with the 1500ms authority.
+        # Only a known CLOSE registers this bounded address. Neither lookup nor
+        # relay can reconstruct authority or touch a newer viewer's lease.
+        lease = await store.retired_release_lease(receipt, device_id=device_id,
+                                                 org_id=org_id, agent_session=agent_session)
         current = manager.connection_snapshot(device_id)
         if (lease is None or current is not snapshot or current.org_id != org_id or current.session_id != agent_session
                 or current.agent_type != "android" or current.device_id != device_id):
             return ReceiptRelay.REJECTED
-        result = await store.relay_receipt(lease, message, agent_session=agent_session)
+        result = await store.relay_retired_release(lease, message, agent_session=agent_session)
         return ReceiptRelay.PUBLISHED if result == "relayed" else ReceiptRelay.REJECTED
     except asyncio.CancelledError:
         if lease is not None:

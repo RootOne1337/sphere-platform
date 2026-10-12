@@ -1,7 +1,7 @@
 """Same static Lua runs in fakeredis[lua] and an optional real Redis canary.
 
 Optional SPHERE_CONTINUOUS_TEST_REDIS_URL selects an explicitly supplied Redis.
-All keys/channels are per-test random audit namespaces, expire in 1500ms and
+All keys/channels are per-test random audit namespaces, expire within 30s and
 are removed by exact name. No DB flush, scan, device commands or agent channel.
 """
 from __future__ import annotations
@@ -30,6 +30,8 @@ from backend.websocket.continuous_delivery import ContinuousDelivery, deliver_co
 from backend.websocket.continuous_lease import (
     AUTH_MS,
     LEASE_MS,
+    MAX_RELEASE_ROUTES,
+    RELEASE_ROUTE_MS,
     ContinuousLeaseStore,
     InputLease,
     InputLeaseUnavailable,
@@ -66,7 +68,7 @@ async def world():
         yield stores[0], stores[1], binding, pubsub
     finally:
         await pubsub.aclose()
-        await clients[0].delete(stores[0].key(binding))
+        await clients[0].delete(stores[0].key(binding), stores[0].release_key(binding.device))
         for client in clients:
             await client.aclose()
 
@@ -345,6 +347,172 @@ async def test_receipt_after_device_lease_expiry_does_not_reconstruct_or_publish
         assert await replies.get_message(ignore_subscribe_messages=True, timeout=0.01) is None
 
 
+@pytest.mark.parametrize("replacement", [False, True])
+async def test_known_retirement_routes_late_release_without_reviving_or_deleting_authority(world, replacement):
+    store, other, binding, _ = world
+    old = await ready(world)
+    await store.close(old)
+    await store.redis.pexpire(store.key(binding), 1)
+    await asyncio.sleep(0.02)
+    newer = await store.acquire(replace(binding, viewer_session="replacement_viewer_fixture")) if replacement else None
+    async with receipt_subscription(world) as replies:
+        message = receipt(old, stage="release", status=3)
+        assert await relay_native_receipt(store, native_manager(binding), binding.device, message,
+                                          agent_session=binding.agent_session) == ReceiptRelay.PUBLISHED
+        assert await viewer_receipt(other, old, await published(replies), viewer_worker=binding.viewer_worker) == message
+        assert await store.redis.hget(store.key(binding), "identity") == (newer.identity if newer else None)
+        # A duplicate cleanup receipt never renews old authority or deletes its replacement.
+        assert await relay_native_receipt(store, native_manager(binding), binding.device, message,
+                                          agent_session=binding.agent_session) == ReceiptRelay.REJECTED
+        assert await store.redis.hget(store.key(binding), "identity") == (newer.identity if newer else None)
+
+
+async def test_normal_release_consumes_cleanup_route_and_duplicate_cannot_relay(world):
+    store, _, binding, _ = world
+    lease = await ready(world)
+    before = await store.redis.pttl(store.key(binding))
+    await store.close(lease)
+    assert 0 < await store.redis.pttl(store.key(binding)) <= before
+    assert 0 < await store.redis.pttl(store.release_key(binding.device)) <= RELEASE_ROUTE_MS
+    async with receipt_subscription(world) as replies:
+        message = receipt(lease, stage="release", status=3)
+        manager = native_manager(binding)
+        assert await relay_native_receipt(store, manager, binding.device, message,
+                                          agent_session=binding.agent_session) == ReceiptRelay.PUBLISHED
+        await published(replies)
+        assert await store.redis.hlen(store.release_key(binding.device)) == 0
+        assert await relay_native_receipt(store, manager, binding.device, message,
+                                          agent_session=binding.agent_session) == ReceiptRelay.REJECTED
+
+
+@pytest.mark.parametrize("change", ["owner", "viewer", "capture", "org", "agent", "startup", "input", "unknown_release"])
+async def test_retired_route_accepts_only_exact_authenticated_known_release(world, change):
+    store, _, binding, _ = world
+    lease = await ready(world)
+    await store.close(lease)
+    await store.redis.delete(store.key(binding))
+    message = receipt(lease, stage="release", status=3)
+    manager = native_manager(binding)
+    if change == "owner":
+        message["owner"] = "foreign_owner_1234"
+    elif change == "viewer":
+        message["session_id"] = "foreign_viewer_1234"
+    elif change == "capture":
+        message["capture_epoch"] = "11223344-5566-7788-99aa-bbccddeeff00"
+    elif change == "org":
+        manager._connections[binding.device].org_id = "foreign_org_1234"
+    elif change == "agent":
+        manager._connections[binding.device].session_id = "foreign_agent_1234"
+    elif change == "startup":
+        message.update(stage="startup", status=0)
+    elif change == "input":
+        message.update(stage="input", status=1, sequence=1)
+    else:
+        message["status"] = 6
+    async with receipt_subscription(world) as replies:
+        assert await relay_native_receipt(store, manager, binding.device, message,
+                                          agent_session=binding.agent_session) == ReceiptRelay.REJECTED
+        assert await replies.get_message(ignore_subscribe_messages=True, timeout=0.01) is None
+    assert await store.redis.exists(store.key(binding)) == 0
+    assert await store.redis.hexists(store.release_key(binding.device), lease.owner)
+
+
+@pytest.mark.parametrize("change", ["replacement", "org", "session", "type", "device"])
+async def test_retired_route_rechecks_native_socket_after_cleanup_lookup(world, monkeypatch, change):
+    store, _, binding, _ = world
+    lease = await ready(world)
+    await store.close(lease)
+    await store.redis.delete(store.key(binding))
+    manager = native_manager(binding)
+    snapshot = manager._connections[binding.device]
+    original = store.retired_release_lease
+
+    async def changed(*args, **kwargs):
+        result = await original(*args, **kwargs)
+        if change == "replacement":
+            manager._connections[binding.device] = ConnectionInfo(AsyncMock(), binding.device, "android", binding.org, binding.agent_session)
+        else:
+            setattr(snapshot, {"org": "org_id", "session": "session_id", "type": "agent_type", "device": "device_id"}[change], "changed_identity_1234")
+        return result
+
+    monkeypatch.setattr(store, "retired_release_lease", changed)
+    assert await relay_native_receipt(store, manager, binding.device, receipt(lease, stage="release", status=3),
+                                      agent_session=binding.agent_session) == ReceiptRelay.REJECTED
+    assert await store.redis.hexists(store.release_key(binding.device), lease.owner)
+
+
+async def test_cleanup_route_has_per_entry_expiry_and_cannot_register_stale_close(world):
+    store, _, binding, _ = world
+    lease = await ready(world)
+    foreign = InputLease(lease.owner, replace(binding, viewer_session="foreign_viewer_1234"))
+    assert await store.close(foreign) == "stale"
+    assert not await store.redis.exists(store.release_key(binding.device))
+    await store.close(lease)
+    route = json.loads(await store.redis.hget(store.release_key(binding.device), lease.owner))
+    route["expires_at_ms"] = 1
+    await store.redis.hset(store.release_key(binding.device), lease.owner, json.dumps(route))
+    await store.redis.delete(store.key(binding))
+    assert await relay_native_receipt(store, native_manager(binding), binding.device, receipt(lease, stage="release", status=3),
+                                      agent_session=binding.agent_session) == ReceiptRelay.REJECTED
+    assert not await store.redis.exists(store.release_key(binding.device))
+    assert await store.close(lease) == "stale"
+    assert not await store.redis.exists(store.release_key(binding.device))
+
+
+async def test_cleanup_routes_remain_bounded_and_latest_known_release_survives(world):
+    store, _, binding, _ = world
+    leases = []
+    for _ in range(MAX_RELEASE_ROUTES + 2):
+        await store.redis.delete(store.key(binding))
+        lease = await store.acquire(binding)
+        assert lease is not None
+        assert await store.close(lease) == "published"
+        leases.append(lease)
+    assert await store.redis.hlen(store.release_key(binding.device)) == MAX_RELEASE_ROUTES
+    assert not await store.redis.hexists(store.release_key(binding.device), leases[0].owner)
+    await store.redis.delete(store.key(binding))
+    async with receipt_subscription(world) as replies:
+        assert await relay_native_receipt(store, native_manager(binding), binding.device, receipt(leases[-1], stage="release", status=3),
+                                          agent_session=binding.agent_session) == ReceiptRelay.PUBLISHED
+        await published(replies)
+    assert not await store.redis.exists(store.key(binding))
+
+
+@pytest.mark.parametrize("cancelled", [False, True])
+async def test_uncertain_retired_publication_is_not_replayed_and_replacement_stays_ready(world, monkeypatch, cancelled):
+    store, _, binding, _ = world
+    old = await ready(world)
+    await store.close(old)
+    await store.redis.delete(store.key(binding))
+    newer = await ready(world)
+    original = store.redis.eval
+    operations = []
+
+    async def uncertain(*args):
+        operation = args[2 + args[1]]
+        operations.append(operation)
+        result = await original(*args)
+        if operation == "relay":
+            raise asyncio.CancelledError() if cancelled else TimeoutError("after_publication")
+        return result
+
+    monkeypatch.setattr(store.redis, "eval", uncertain)
+    async with receipt_subscription(world) as replies:
+        message = receipt(old, stage="release", status=3, device_uptime_ms=9_007_199_254_740_991)
+        if cancelled:
+            with pytest.raises(asyncio.CancelledError):
+                await relay_native_receipt(store, native_manager(binding), binding.device, message, agent_session=binding.agent_session)
+        else:
+            assert await relay_native_receipt(store, native_manager(binding), binding.device, message,
+                                              agent_session=binding.agent_session) == ReceiptRelay.UNKNOWN
+        assert operations == ["find", "relay", "fence"]
+        envelope = await published(replies)
+        assert await viewer_receipt(store, old, envelope, viewer_worker=binding.viewer_worker) == message
+        assert await replies.get_message(ignore_subscribe_messages=True, timeout=0.01) is None
+    assert await store.redis.hget(store.key(binding), "identity") == newer.identity
+    assert await store.redis.hget(store.key(binding), "phase") == "ready"
+
+
 @pytest.mark.parametrize("cancelled", [False, True])
 async def test_uncertain_receipt_publication_is_not_replayed_and_owner_is_fenced(world, monkeypatch, cancelled):
     store, _, binding, _ = world
@@ -354,9 +522,10 @@ async def test_uncertain_receipt_publication_is_not_replayed_and_owner_is_fenced
     operations = []
 
     async def uncertain(*args):
-        operations.append(args[3])
+        operation = args[2 + args[1]]
+        operations.append(operation)
         result = await original(*args)
-        if args[3] == "relay_receipt":
+        if operation == "relay_receipt":
             raise asyncio.CancelledError() if cancelled else TimeoutError("after_publication")
         return result
     monkeypatch.setattr(store.redis, "eval", uncertain)

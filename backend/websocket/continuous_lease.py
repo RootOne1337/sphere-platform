@@ -32,6 +32,8 @@ from backend.websocket.continuous_protocol import (
 LEASE_MS = 1500
 AUTH_MS = 1500
 DELIVERY_MS = 500
+RELEASE_ROUTE_MS = 30_000
+MAX_RELEASE_ROUTES = 8
 MAX_WIRE_BYTES = 2048
 OPERATION_SECONDS = 0.25
 
@@ -156,6 +158,7 @@ if op == 'relay_receipt' then
         redis.call('HSET', key, 'phase', 'ready', 'open_delivery_started', 1)
     elseif receipt.stage == 'release' and receipt.status == 3 then
         redis.call('DEL', key)
+        redis.call('HDEL', KEYS[2], receipt.owner)
     elseif receipt.status >= 4 then
         redis.call('HSET', key, 'phase', 'closing')
     end
@@ -171,7 +174,11 @@ if op == 'relay_receipt' then
     end
     return 'relayed'
 end
-if op == 'released' then redis.call('DEL', key); return 'released' end
+if op == 'released' then
+    redis.call('DEL', key)
+    redis.call('HDEL', KEYS[2], cjson.decode(identity).owner)
+    return 'released'
+end
 if op == 'fence' then redis.call('HSET', key, 'phase', 'closing'); return 'fenced' end
 if op == 'guard' then
     local envelope = cjson.decode(ARGV[3])
@@ -206,6 +213,26 @@ if op == 'guard' then
 end
 if op == 'close' then
     if redis.call('HGET', key, 'close_sent') == '1' then return 'closing' end
+    -- Keep only a cleanup reply address after this authority expires. It can
+    -- route an authenticated native RELEASE, never authorize or replay input.
+    -- This is inside the exact live-identity check, so a stale/foreign CLOSE
+    -- cannot register a route or alter a replacement's authority.
+    local routes, oldest, oldest_expiry = KEYS[2], nil, nil
+    local entries = redis.call('HGETALL', routes)
+    for i = 1, #entries, 2 do
+        local entry = cjson.decode(entries[i + 1])
+        if entry.expires_at_ms <= now then
+            redis.call('HDEL', routes, entries[i])
+        elseif not oldest_expiry or entry.expires_at_ms < oldest_expiry then
+            oldest, oldest_expiry = entries[i], entry.expires_at_ms
+        end
+    end
+    if redis.call('HLEN', routes) >= tonumber(ARGV[9]) and oldest then
+        redis.call('HDEL', routes, oldest)
+    end
+    redis.call('HSET', routes, cjson.decode(identity).owner,
+               cjson.encode({identity=identity, expires_at_ms=now + tonumber(ARGV[8])}))
+    redis.call('PEXPIRE', routes, tonumber(ARGV[8]))
     redis.call('HSET', key, 'phase', 'closing', 'close_sent', 1)
 elseif phase == 'closing' then return 'closing'
 elseif op == 'authorize' then
@@ -275,6 +302,27 @@ return 'published'
 """
 
 
+_RELEASE_ROUTE_SCRIPT = """
+local key, op, owner, identity = KEYS[1], ARGV[1], ARGV[2], ARGV[3]
+local clock = redis.call('TIME')
+local now = tonumber(clock[1]) * 1000 + math.floor(tonumber(clock[2]) / 1000)
+local raw = redis.call('HGET', key, owner)
+if not raw then return 'stale' end
+local route = cjson.decode(raw)
+if route.expires_at_ms <= now then
+    redis.call('HDEL', key, owner)
+    return 'stale'
+end
+if op == 'find' then return route.identity end
+if op ~= 'relay' or route.identity ~= identity then return 'stale' end
+local envelope = {type='_continuous_receipt_v1', identity=identity,
+                  expires_at_ms=now + tonumber(ARGV[6]), receipt_json=ARGV[4]}
+if redis.call('PUBLISH', ARGV[5], cjson.encode(envelope)) < 1 then return 'no_subscriber' end
+redis.call('HDEL', key, owner)
+return 'relayed'
+"""
+
+
 class ContinuousLeaseStore:
     """Caller owns lifecycle, auth checks, WS tasks and pool closure.
 
@@ -308,6 +356,10 @@ class ContinuousLeaseStore:
     def channel(self, binding: LeaseBinding) -> str:
         # Separate from offline/retrying legacy command routing.
         return f"{self.namespace}:agent:{binding.device}"
+
+    def release_key(self, device_id: str) -> str:
+        identifier(device_id)
+        return f"{self.namespace}:{{{device_id}}}:release-routes"
 
     def receipt_channel(self, binding: LeaseBinding) -> str:
         return f"{self.namespace}:viewer:{binding.viewer_worker}"
@@ -347,9 +399,9 @@ class ContinuousLeaseStore:
         try:
             async with asyncio.timeout(OPERATION_SECONDS):
                 channel = self.receipt_channel(lease.binding) if op == "relay_receipt" else self.channel(lease.binding)
-                result = await self.redis.eval(_LEASE_SCRIPT, 1, self.key(lease.binding),
+                result = await self.redis.eval(_LEASE_SCRIPT, 2, self.key(lease.binding), self.release_key(lease.binding.device),
                                                op, lease.identity, payload, channel,
-                                               LEASE_MS, AUTH_MS, DELIVERY_MS)
+                                               LEASE_MS, AUTH_MS, DELIVERY_MS, RELEASE_ROUTE_MS, MAX_RELEASE_ROUTES)
         except (RedisError, TimeoutError):
             raise InputLeaseUnavailable() from None
         if isinstance(result, bytes):
@@ -405,7 +457,8 @@ class ContinuousLeaseStore:
             "owner": lease.owner, "capture_epoch": lease.binding.capture.epoch, **asdict(event)})
 
     async def close(self, lease: InputLease) -> str:
-        # Revocation can close even after authorization expiry. Never renew/delete.
+        # Revocation can close after authorization expiry. The bounded reply
+        # address outlives authority; neither its TTL nor CLOSE renew authority.
         return await self._operation("close", lease, {"type": "continuous_input_close", "owner": lease.owner})
 
     async def cancel_unstarted(self, lease: InputLease) -> str:
@@ -497,3 +550,53 @@ class ContinuousLeaseStore:
                 or receipt.owner != lease.owner or receipt.epoch != lease.binding.capture.epoch):
             return "stale"
         return await self._operation("relay_receipt", lease, {"receipt": dict(message)})
+
+    async def _release_route(self, operation: str, *, device_id: str, owner: str,
+                             identity: str = "", payload: str = "", channel: str = "") -> str:
+        try:
+            async with asyncio.timeout(OPERATION_SECONDS):
+                result = await self.redis.eval(_RELEASE_ROUTE_SCRIPT, 1, self.release_key(device_id),
+                                               operation, owner, identity, payload, channel, DELIVERY_MS)
+            if isinstance(result, bytes):
+                result = result.decode("utf-8")
+            if not isinstance(result, str) or len(result.encode()) > MAX_WIRE_BYTES:
+                raise InputLeaseUnavailable()
+            return result
+        except (RedisError, TimeoutError, UnicodeError):
+            raise InputLeaseUnavailable() from None
+
+    async def retired_release_lease(self, receipt: InputReceipt, *, device_id: str,
+                                     org_id: str, agent_session: str) -> InputLease | None:
+        """Only an exact native RELEASE can look up a previously closed owner."""
+        if not receipt.released:
+            return None
+        identity = await self._release_route("find", device_id=device_id, owner=receipt.owner)
+        if identity == "stale":
+            return None
+        try:
+            lease = InputLease.from_identity(identity)
+        except InvalidContinuousInput:
+            return None
+        binding = lease.binding
+        return lease if (binding.device == device_id and binding.org == org_id
+                         and binding.agent_session == agent_session and lease.owner == receipt.owner
+                         and binding.viewer_session == receipt.session and binding.capture.epoch == receipt.epoch) else None
+
+    async def relay_retired_release(self, lease: InputLease, message: Any, *, agent_session: str) -> str:
+        """Publish cleanup once without touching the current authority key."""
+        receipt = InputReceipt.parse(message)
+        if (not receipt.released or agent_session != lease.binding.agent_session
+                or receipt.owner != lease.owner or receipt.session != lease.binding.viewer_session
+                or receipt.epoch != lease.binding.capture.epoch):
+            return "stale"
+        payload = json.dumps({"receipt": dict(message)}, separators=(",", ":"))
+        envelope = {"type": "_continuous_receipt_v1", "identity": lease.identity,
+                    "expires_at_ms": 9_007_199_254_740_991, "receipt_json": payload}
+        if len(json.dumps(envelope, separators=(",", ":")).encode()) > MAX_WIRE_BYTES:
+            raise ValueError("Continuous input envelope exceeds byte budget")
+        result = await self._release_route("relay", device_id=lease.binding.device, owner=lease.owner,
+                                           identity=lease.identity, payload=payload,
+                                           channel=self.receipt_channel(lease.binding))
+        if result not in {"stale", "relayed", "no_subscriber"}:
+            raise InputLeaseUnavailable()
+        return result
