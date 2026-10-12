@@ -10954,6 +10954,32 @@
               }
             ],
             "title": "Idle Refresh Frames Total"
+          },
+          "legacy_suppressed_packets_total": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "maximum": 9007199254740992.0,
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Legacy Suppressed Packets Total"
+          },
+          "legacy_suppressed_encoded_bytes_total": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "maximum": 9007199254740992.0,
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Legacy Suppressed Encoded Bytes Total"
           }
         },
         "type": "object",
@@ -17657,6 +17683,11 @@
           "native_history_enabled": {
             "type": "boolean",
             "title": "Native History Enabled",
+            "default": false
+          },
+          "legacy_video_handover_enabled": {
+            "type": "boolean",
+            "title": "Legacy Video Handover Enabled",
             "default": false
           }
         },
