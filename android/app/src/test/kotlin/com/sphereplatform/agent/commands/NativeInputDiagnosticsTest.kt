@@ -30,4 +30,18 @@ class NativeInputDiagnosticsTest {
         now = Long.MAX_VALUE
         assertEquals(JsonPrimitive(86_400_000L), diagnostics.snapshot(NativeInputDiagnostics.State.CLEANUP_UNKNOWN)["last_failure_age_ms"])
     }
+
+    @Test fun `startup detail is historical fixed vocabulary with a bounded monotonic age`() {
+        var now = 100L
+        val diagnostics = NativeInputDiagnostics { now }
+        assertFalse("last_startup_detail" in diagnostics.snapshot(NativeInputDiagnostics.State.IDLE))
+        diagnostics.startupFailed(TouchStartupDetail.ROOT_ADAPTER_UNAVAILABLE)
+        now += 20
+        val ready = diagnostics.snapshot(NativeInputDiagnostics.State.READY)
+        assertEquals(JsonPrimitive("ready"), ready["state"])
+        assertEquals(JsonPrimitive("root_adapter_unavailable"), ready["last_startup_detail"])
+        assertEquals(JsonPrimitive(20L), ready["last_startup_detail_age_ms"])
+        now = Long.MAX_VALUE
+        assertEquals(JsonPrimitive(86_400_000L), diagnostics.snapshot(NativeInputDiagnostics.State.READY)["last_startup_detail_age_ms"])
+    }
 }

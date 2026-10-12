@@ -11,6 +11,8 @@ import kotlinx.coroutines.withTimeoutOrNull
 import kotlinx.serialization.json.*
 import org.webrtc.*
 import java.nio.ByteBuffer
+import java.net.Inet4Address
+import java.net.NetworkInterface
 import java.util.concurrent.atomic.AtomicLong
 import java.util.concurrent.atomic.AtomicBoolean
 
@@ -145,6 +147,17 @@ class DirectProbeTransport(
     private fun open(p: Probe, sdp: String, grant: DirectProbeTurnGrant?) {
         peer = p
         try {
+            val localAddresses = runCatching {
+                NetworkInterface.getNetworkInterfaces()?.asSequence()?.take(32)?.flatMap {
+                    it.inetAddresses.asSequence().take(8)
+                }?.filterIsInstance<Inet4Address>()?.mapNotNull { it.hostAddress }?.toList().orEmpty()
+            }.getOrDefault(emptyList())
+            val hostHints = EmulatorHostCandidates.augment(sdp, EmulatorHostCandidates.hints(localAddresses))
+            if (hostHints.added > 0) Log.i("SphereDirectProbe", buildJsonObject {
+                put("event", "native_emulator_host_candidates")
+                put("added", hostHints.added)
+                put("connected", false) // These hints are never reported as an established path.
+            }.toString())
             if (p.videoRequested) {
                 p.capture = streaming.attachEncodedViewer(p) { frame ->
                     if (p.videoReady) p.video?.submit(frame)
@@ -271,7 +284,7 @@ class DirectProbeTransport(
                         answer(p)
                     }), desc)
                 }), MediaConstraints())
-            }), SessionDescription(SessionDescription.Type.OFFER, sdp))
+            }), SessionDescription(SessionDescription.Type.OFFER, hostHints.sdp))
         } catch (_: Exception) { close(ProbeStage.OPEN_FAILED) }
     }
 

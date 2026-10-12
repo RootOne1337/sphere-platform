@@ -17,7 +17,10 @@ internal class OwnedTouchPipeFactory(
             val unknown = failure is TouchPipeCleanupUnknownException || failure is RootCommandOutcomeUnknownException ||
                 failure is kotlinx.coroutines.CancellationException
             ownership.release(binding.owner, !unknown)
-            if (unknown) throw TouchPipeCleanupUnknownException()
+            if (failure is TouchPipeCleanupUnknownException) throw failure
+            if (unknown) throw TouchPipeCleanupUnknownException(
+                if (failure is RootCommandOutcomeUnknownException) TouchStartupDetail.ROOT_HANDOFF_UNKNOWN else null,
+            )
             throw failure
         }
         return object : TouchPipe {

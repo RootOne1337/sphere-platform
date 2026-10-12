@@ -47,6 +47,7 @@ internal class ContinuousInputController(
         onReceipt = { binding, receipt ->
             val owner = active.get()
             if (owner?.binding == binding) {
+                receipt.startupDetail?.let { diagnostics.startupFailed(it) }
                 val ready = receipt.stage == ContinuousTouchSupervisor.Stage.STARTUP && receipt.status == 0
                 val staleReady = ready && !current(owner)
                 when (receipt.stage) {
@@ -64,7 +65,8 @@ internal class ContinuousInputController(
                     )
                 }
                 if (ready && !staleReady) owner.ready = true
-                if (staleReady || !reply(owner, receipt.sequence, receipt.status, receipt.stage.name.lowercase(), "injector", receipt.deviceUptimeMs)) {
+                if (staleReady || !reply(owner, receipt.sequence, receipt.status, receipt.stage.name.lowercase(),
+                        if (receipt.knownStartupRefusal) "admission" else "injector", receipt.deviceUptimeMs)) {
                     if (staleReady) diagnostics.failed(currentFailure(owner))
                     else if (receipt.stage != ContinuousTouchSupervisor.Stage.RELEASE || receipt.status == 3) {
                         diagnostics.failed(NativeInputDiagnostics.Failure.RECEIPT_UNAVAILABLE)

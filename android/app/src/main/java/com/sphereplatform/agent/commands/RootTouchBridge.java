@@ -20,14 +20,18 @@ public final class RootTouchBridge {
         ScheduledExecutorService watchdog = null;
         DataOutputStream output = new DataOutputStream(System.out);
         int exitCode = 0;
+        boolean readyPublicationAttempted = false;
+        String startupDetail = "root_required";
         try {
             if (android.os.Process.myUid() != 0 || args.length != 4 || !"touch-v1".equals(args[0])) {
                 throw new IllegalArgumentException("touch_privileged_adapter_required");
             }
+            startupDetail = "root_configuration";
             int width = Integer.parseInt(args[1]), height = Integer.parseInt(args[2]), rotation = Integer.parseInt(args[3]);
             if (width > 16384 || height > 16384 || rotation < 0 || rotation > 3) throw new IllegalArgumentException("touch_geometry_invalid");
             String managerName = Build.VERSION.SDK_INT >= 34
                     ? "android.hardware.input.InputManagerGlobal" : "android.hardware.input.InputManager";
+            startupDetail = "root_adapter_unavailable";
             Class<?> managerClass = Class.forName(managerName);
             Object manager = managerClass.getMethod("getInstance").invoke(null);
             Method inject = managerClass.getMethod("injectInputEvent", InputEvent.class, int.class);
@@ -42,6 +46,7 @@ public final class RootTouchBridge {
                         && type.getField("logicalHeight").getInt(info) == height
                         && type.getField("rotation").getInt(info) == rotation;
             };
+            startupDetail = "root_geometry";
             if (!geometry.matches()) throw new IllegalArgumentException("touch_geometry_invalid");
             session = new RootTouchSession(width, height, SystemClock.uptimeMillis(), (action, x, y, down, now) -> {
                 MotionEvent.PointerProperties finger = new MotionEvent.PointerProperties();
@@ -75,6 +80,10 @@ public final class RootTouchBridge {
                     System.exit(owned.cleanupExitCode());
                 }
             }, 100, 100, TimeUnit.MILLISECONDS);
+            startupDetail = "root_handshake";
+            // A failed flush can follow delivery of READY. Mark before writing;
+            // that failure must never be described as a known pre-input refusal.
+            readyPublicationAttempted = true;
             RootTouchWire.ack(output, 0, 0, SystemClock.uptimeMillis());
             DataInputStream input = new DataInputStream(System.in);
             while (!session.isClosed()) {
@@ -90,8 +99,16 @@ public final class RootTouchBridge {
             // Normal owner teardown or a truncated packet: both retire the session and cancel locally.
         } catch (Throwable failure) {
             // No coordinates, contents, shell command, token or reflection/platform exception in logs.
-            System.err.println("touch_adapter_failed");
-            exitCode = 1;
+            if (!readyPublicationAttempted) {
+                System.err.println("touch_startup_" + startupDetail);
+                try {
+                    RootTouchWire.ack(output, 0, 5, SystemClock.uptimeMillis());
+                    exitCode = 3; // Dedicated startup-refusal exit, never a release after input.
+                } catch (Exception unknown) { exitCode = 1; }
+            } else {
+                System.err.println("touch_adapter_failed");
+                exitCode = 1;
+            }
         } finally {
             if (watchdog != null) watchdog.shutdownNow();
             if (session != null && session.close(SystemClock.uptimeMillis()) == RootTouchSession.Result.UNKNOWN) exitCode = 2;

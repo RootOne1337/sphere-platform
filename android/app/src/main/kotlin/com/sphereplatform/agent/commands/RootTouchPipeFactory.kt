@@ -11,8 +11,14 @@ import java.io.ByteArrayOutputStream
 import java.io.IOException
 import java.util.concurrent.TimeUnit
 import kotlin.coroutines.coroutineContext
+import timber.log.Timber
 
-internal class TouchPipeCleanupUnknownException : IOException("touch_cleanup_unknown")
+internal enum class TouchStartupDetail {
+    ROOT_REQUIRED, ROOT_GEOMETRY, ROOT_ADAPTER_UNAVAILABLE, ROOT_CONFIGURATION,
+    ROOT_HANDSHAKE, ROOT_PROCESS_EXITED, ROOT_READY_TIMEOUT, ROOT_HANDOFF_UNKNOWN,
+}
+internal class TouchPipeCleanupUnknownException(val startupDetail: TouchStartupDetail? = null) : IOException("touch_cleanup_unknown")
+internal class TouchStartupUnavailableException(val detail: TouchStartupDetail) : IOException("touch_startup_unavailable")
 
 /** Lazy factory: construction never asks for root, creates a file, or opens a process. */
 internal class RootTouchPipeFactory(private val context: Context) : TouchPipeFactory {
@@ -32,11 +38,27 @@ internal class RootTouchPipeFactory(private val context: Context) : TouchPipeFac
         }
         try {
             val ready = pipe.awaitAck(5_000)
+            if (ready.sequence == 0 && ready.status == 5) {
+                val detail = pipe.startupDetail() ?: TouchStartupDetail.ROOT_HANDSHAKE
+                if (!pipe.closeStartupRefusal()) throw TouchPipeCleanupUnknownException(detail)
+                throw TouchStartupUnavailableException(detail)
+            }
             if (ready.sequence != 0 || ready.status != 0) throw IOException("touch_ready_invalid")
             pipe
+        } catch (failure: TouchStartupUnavailableException) {
+            // Exact refusal + owned exit3 proves that this helper admitted no input.
+            // It is separate from unknown execution/cleanup after READY.
+            Timber.w("Native touch startup refused: %s", failure.detail.name.lowercase())
+            throw failure
         } catch (failure: Exception) {
+            val detail = pipe.startupDetail() ?: when (failure.message) {
+                "touch_process_exited", "touch_ack_eof" -> TouchStartupDetail.ROOT_PROCESS_EXITED
+                "touch_ack_timeout" -> TouchStartupDetail.ROOT_READY_TIMEOUT
+                else -> TouchStartupDetail.ROOT_HANDSHAKE
+            }
             val confirmed = withContext(NonCancellable) { pipe.closeAndConfirm() }
-            if (!confirmed) throw TouchPipeCleanupUnknownException()
+            Timber.w("Native touch startup failed: %s; cleanup confirmed: %s", detail.name.lowercase(), confirmed)
+            if (!confirmed) throw TouchPipeCleanupUnknownException(detail)
             throw failure
         }
     }
@@ -46,6 +68,9 @@ internal class ProcessTouchPipe(private val process: Process) : TouchPipe {
     private var closed = false
     private var lastSequence = 0
     private var stderrBytes = 0
+    private var wroteSample = false
+    private val startupTail = StringBuilder(96)
+    private var startupCause: TouchStartupDetail? = null
     private val stdout = process.inputStream
     private val stderr = process.errorStream
     private val stdin = process.outputStream
@@ -53,6 +78,7 @@ internal class ProcessTouchPipe(private val process: Process) : TouchPipe {
     override suspend fun send(sample: TouchSample): RootTouchWire.Ack {
         check(!closed)
         if (sample.sequence <= lastSequence) throw IOException("touch_sequence_invalid")
+        wroteSample = true // Before the write: a throwing write may already have been consumed.
         RootTouchWire.write(stdin, RootTouchWire.Packet(sample.sequence, sample.gesture, sample.action, sample.x, sample.y))
         lastSequence = sample.sequence
         val ack = awaitAck(500)
@@ -90,12 +116,29 @@ internal class ProcessTouchPipe(private val process: Process) : TouchPipe {
         if (available <= 0) return
         val chunk = ByteArray(minOf(available, 1024))
         val count = stderr.read(chunk)
-        if (count > 0) stderrBytes += count
+        if (count > 0) {
+            stderrBytes += count
+            startupTail.append(String(chunk, 0, count, Charsets.US_ASCII))
+            TouchStartupDetail.entries.firstOrNull {
+                startupTail.contains("touch_startup_" + it.name.lowercase())
+            }?.let { startupCause = it }
+            if (startupTail.length > 64) startupTail.delete(0, startupTail.length - 64)
+        }
         // Discard private/platform errors; a flooding helper is unhealthy, never a growing log.
         if (stderrBytes > 4096) throw IOException("touch_stderr_budget")
     }
 
-    override suspend fun closeAndConfirm(): Boolean = withContext(NonCancellable + Dispatchers.IO) {
+    internal fun startupDetail(): TouchStartupDetail? {
+        runCatching { drainStderr() }
+        return startupCause
+    }
+
+    internal suspend fun closeStartupRefusal(): Boolean = closeOwned(expectedExit = 3, startupRefusal = true)
+
+    override suspend fun closeAndConfirm(): Boolean = closeOwned(expectedExit = 0, startupRefusal = false)
+
+    private suspend fun closeOwned(expectedExit: Int, startupRefusal: Boolean): Boolean = withContext(NonCancellable + Dispatchers.IO) {
+        if (startupRefusal && wroteSample) return@withContext false
         if (closed) return@withContext false
         closed = true
         runCatching { stdin.close() }
@@ -116,7 +159,7 @@ internal class ProcessTouchPipe(private val process: Process) : TouchPipe {
         // close stdout/stderr between isAlive and available(); that drain race
         // must not turn a proven exit0 into a permanent input fence. A nonzero
         // exit, deadline or force-kill still never confirms native release.
-        val confirmed = !process.isAlive && runCatching { process.exitValue() == 0 }.getOrDefault(false)
+        val confirmed = !process.isAlive && runCatching { process.exitValue() == expectedExit }.getOrDefault(false)
         if (process.isAlive) runCatching { process.destroyForcibly() }
         runCatching { stdout.close() }
         runCatching { stderr.close() }

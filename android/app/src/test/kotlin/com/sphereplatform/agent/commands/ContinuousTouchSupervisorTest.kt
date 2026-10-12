@@ -178,6 +178,43 @@ class ContinuousTouchSupervisorTest {
         } finally {f.finish()}
     }
 
+    @Test fun `known preinput refusal releases admission and permits a fresh startup`() = runBlocking {
+        val f = Fixture()
+        try {
+            f.createFailure = TouchStartupUnavailableException(TouchStartupDetail.ROOT_GEOMETRY)
+            assertTrue(f.supervisor.open(binding))
+            eventually { f.receipts.any { it.stage == ContinuousTouchSupervisor.Stage.RELEASE } }
+            f.supervisor.close()
+            val failure = f.receipts.first { it.stage == ContinuousTouchSupervisor.Stage.STARTUP }
+            assertEquals(0, failure.sequence)
+            assertEquals(5, failure.status)
+            assertTrue(failure.knownStartupRefusal)
+            assertEquals(TouchStartupDetail.ROOT_GEOMETRY, failure.startupDetail)
+            assertFalse(f.supervisor.needsReset())
+            assertTrue(f.pipes.isEmpty())
+            assertTrue(f.sent.isEmpty())
+            f.createFailure = null
+            assertTrue(f.supervisor.open(binding))
+            eventually { f.receipts.any { it.status == 0 } }
+        } finally { f.finish() }
+    }
+
+    @Test fun `unknown startup preserves diagnostic detail without claiming refusal`() = runBlocking {
+        val f = Fixture()
+        try {
+            f.createFailure = TouchPipeCleanupUnknownException(TouchStartupDetail.ROOT_PROCESS_EXITED)
+            assertTrue(f.supervisor.open(binding))
+            eventually { f.supervisor.needsReset() }
+            f.supervisor.close()
+            val failure = f.receipts.first { it.stage == ContinuousTouchSupervisor.Stage.STARTUP }
+            assertEquals(6, failure.status)
+            assertFalse(failure.knownStartupRefusal)
+            assertEquals(TouchStartupDetail.ROOT_PROCESS_EXITED, failure.startupDetail)
+            assertFalse(f.supervisor.open(binding))
+            assertTrue(f.receipts.none { it.status == 3 })
+        } finally { f.finish() }
+    }
+
     @Test fun `outbound receipt failure cannot prevent pipe cleanup`() = runBlocking {
         val f = Fixture()
         try {

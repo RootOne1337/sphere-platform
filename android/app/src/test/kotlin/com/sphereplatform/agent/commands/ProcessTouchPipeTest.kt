@@ -140,4 +140,40 @@ class ProcessTouchPipeTest {
         assertTrue(pipe.closeAndConfirm())
         Unit
     }
+
+    @Test fun `dedicated startup refusal exit is known only before any sample write`() = runBlocking {
+        val (refused, output) = process(response(0, 5), exit = 3)
+        val pipe = ProcessTouchPipe(refused)
+        assertEquals(5, pipe.awaitAck(500).status)
+        assertTrue(pipe.closeStartupRefusal())
+        assertEquals(0, output.size())
+        assertFalse(pipe.closeStartupRefusal())
+        for (code in listOf(0, 1, 2)) {
+            val (other, _) = process(response(0, 5), exit = code)
+            assertFalse(ProcessTouchPipe(other).closeStartupRefusal())
+        }
+        Unit
+    }
+
+    @Test fun `startup refusal exit never confirms execution or an already attempted write`() = runBlocking {
+        val (refused, _) = process(response(1, 1), exit = 3)
+        val pipe = ProcessTouchPipe(refused)
+        pipe.send(TouchSample(1, 1, 0, 100, 120, 1000))
+        assertFalse(pipe.closeStartupRefusal())
+        assertFalse(pipe.closeAndConfirm())
+        val (another, _) = process(ByteArray(0), exit = 3)
+        assertFalse(ProcessTouchPipe(another).closeAndConfirm())
+        Unit
+    }
+
+    @Test fun `only fixed startup detail survives bounded stderr parsing`() {
+        val (refused, _) = process(ByteArray(0), exit = 3)
+        every { refused.errorStream } returns ByteArrayInputStream(
+            "platform private address and exception\ntouch_startup_root_geometry\n".toByteArray(),
+        )
+        assertEquals(TouchStartupDetail.ROOT_GEOMETRY, ProcessTouchPipe(refused).startupDetail())
+        val (unknown, _) = process(ByteArray(0), exit = 1)
+        every { unknown.errorStream } returns ByteArrayInputStream("touch_adapter_failed private platform detail".toByteArray())
+        assertNull(ProcessTouchPipe(unknown).startupDetail())
+    }
 }

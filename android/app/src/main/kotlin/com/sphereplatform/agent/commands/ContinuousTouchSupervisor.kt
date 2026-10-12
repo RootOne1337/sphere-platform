@@ -21,7 +21,8 @@ internal class ContinuousTouchSupervisor(
     private val onReceipt: (TouchBinding, Receipt) -> Unit,
 ) {
     enum class Stage { STARTUP, INPUT, RELEASE }
-    data class Receipt(val sequence: Int, val status: Int, val deviceUptimeMs: Long, val stage: Stage)
+    data class Receipt(val sequence: Int, val status: Int, val deviceUptimeMs: Long, val stage: Stage,
+                       val knownStartupRefusal: Boolean = false, val startupDetail: TouchStartupDetail? = null)
     private data class Owner(val mailbox: ContinuousTouchMailbox, val job: Job)
     private val lifecycle = Mutex()
     private var current: Owner? = null
@@ -55,7 +56,14 @@ internal class ContinuousTouchSupervisor(
                 }
             } catch (failure: Exception) {
                 // Input may have been consumed. No replay and no exception/private data in receipts.
-                emit(binding, Receipt(attemptedSequence, 6, uptime(), if (attemptedSequence == 0) Stage.STARTUP else Stage.INPUT))
+                val refused = attemptedSequence == 0 && failure is TouchStartupUnavailableException
+                val detail = when (failure) {
+                    is TouchStartupUnavailableException -> failure.detail
+                    is TouchPipeCleanupUnknownException -> failure.startupDetail
+                    else -> null
+                }
+                emit(binding, Receipt(attemptedSequence, if (refused) 5 else 6, uptime(),
+                    if (attemptedSequence == 0) Stage.STARTUP else Stage.INPUT, refused, detail))
                 if (failure is TouchPipeCleanupUnknownException) resetRequired = true
             } finally {
                 mailbox.retire()

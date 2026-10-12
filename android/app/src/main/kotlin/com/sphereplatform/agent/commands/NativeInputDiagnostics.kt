@@ -18,6 +18,11 @@ internal class NativeInputDiagnostics(private val uptime: () -> Long) {
     private val counts = LongArray(Event.entries.size)
     private var failure: Failure? = null
     private var failureAt = 0L
+    private var startupDetail: TouchStartupDetail? = null
+    private var startupDetailAt = 0L
+
+    @Synchronized
+    fun startupFailed(detail: TouchStartupDetail) { startupDetail = detail; startupDetailAt = uptime() }
 
     @Synchronized
     fun record(event: Event, reason: Failure? = null) {
@@ -35,6 +40,10 @@ internal class NativeInputDiagnostics(private val uptime: () -> Long) {
         put("schema_version", 1)
         put("scope", "agent_process")
         put("state", state.name.lowercase())
+        startupDetail?.let {
+            put("last_startup_detail", it.name.lowercase())
+            put("last_startup_detail_age_ms", (uptime() - startupDetailAt).coerceIn(0, MAX_AGE_MS))
+        }
         failure?.let {
             put("last_failure", it.name.lowercase())
             put("last_failure_age_ms", (uptime() - failureAt).coerceIn(0, MAX_AGE_MS))
