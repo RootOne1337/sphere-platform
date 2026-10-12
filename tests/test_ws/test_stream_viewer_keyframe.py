@@ -222,3 +222,37 @@ async def test_diagnostic_storage_does_not_block_control_or_forward_payload_to_a
     assert cancelled.is_set()
     history.end.assert_awaited_once()
     assert ws.send_json.await_args_list[0].args[0]["type"] == "stream_session"
+
+
+async def test_terminal_peer_observation_is_not_lost_behind_a_periodic_report(authorized_viewer, monkeypatch):
+    from backend.websocket.stream_session_history import StreamSessionHistory
+    from tests.test_ws.test_stream_session_history import DIRECT_FAILURE, SAMPLE
+
+    ws, bridge = authorized_viewer
+    history = MagicMock(begin=AsyncMock(return_value=True), update=AsyncMock(return_value=True),
+                        observe_agent=AsyncMock(), end=AsyncMock(),
+                        validated_sample=StreamSessionHistory.validated_sample)
+    monkeypatch.setattr(stream_router, "StreamSessionHistory", lambda *args: history)
+    # Back-to-back delivery deliberately models TCP coalescing: a separate
+    # failure budget must not depend on a one-second arrival gap.
+    values = iter([{"token": "fixture"}, {"type": "viewer_telemetry", "sample": SAMPLE},
+                   {"type": "viewer_telemetry", "sample": DIRECT_FAILURE},
+                   {"type": "viewer_telemetry", "sample": DIRECT_FAILURE},
+                   {"type": "request_keyframe"}, WebSocketDisconnect()])
+
+    async def receive():
+        await asyncio.sleep(0)
+        value = next(values)
+        if isinstance(value, Exception):
+            raise value
+        return value
+
+    ws.receive_json = receive
+    await stream_router.stream_viewer_ws(ws, str(uuid4()))
+    samples = [c.args[3]["sample"] for c in history.update.await_args_list
+               if c.args[3].get("kind") == "browser_samples"]
+    assert len(samples) == 2
+    assert samples[0].get("direct_failure") is None
+    assert samples[1]["direct_failure"] == "connection_deadline"
+    assert samples[1]["direct_network"]["responses_received"] == 0
+    assert [c.args[1]["type"] for c in bridge.send_control.await_args_list] == ["viewer_connected", "request_keyframe"]

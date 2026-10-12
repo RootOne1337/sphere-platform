@@ -83,3 +83,24 @@ test('a retired idle failure stays visible after the rolling healthy samples rep
   expect(failure).toHaveTextContent('последний RTT — мс');
   expect(failure).toHaveTextContent('буфер отправки 0 B');
 });
+
+test.each([0, null])('a retained direct failure is dated separately from recovered video and unknown is not zero: %s', async responses => {
+  mockGet.mockResolvedValue({data:{schema_version:1,device_id:device,session_limit:10,sessions:[{
+    session_id:'viewer',opened_at:'2026-10-12T10:00:00Z',state:'closed',
+    browser_samples:[{received_at:'2026-10-12T10:05:00Z',transport:'direct_webrtc',rendered_frames:30,incoming_fps:30,
+      direct_state:'connected',direct_frames:120,direct_path:'host'}],
+    browser_summary:{max_decode_errors:0,max_render_errors:0,last_direct_failure:{
+      reason:'connection_deadline',received_at:'2026-10-12T10:00:12Z',attempt:1,ice_state:'checking',dtls_state:'new',
+      network:{local_candidates:5,remote_candidates:2,pairs:2,checking_pairs:2,failed_pairs:0,succeeded_pairs:0,
+        requests_sent:143,responses_received:responses},
+    }},
+  }]}});
+  view();
+  expect(await screen.findByText(/Последний отказ прямого канала/)).toBeInTheDocument();
+  expect(screen.getByText(/Прямой канал: connected/)).toBeInTheDocument();
+  expect(screen.getByText(/Прямой сетевой маршрут не установлен в срок/)).toHaveTextContent('Попытка 1. ICE checking · DTLS new.');
+  expect(screen.getByText(/Это сохранённый отказ/)).toHaveTextContent('а не текущее состояние соединения');
+  expect(screen.getByText(/При отказе · ICE-запросы/)).toHaveTextContent(`143 / ${responses === null ? '—' : '0'}`);
+  if (responses === 0) expect(screen.getByText(/причина ограничения сети этим не установлена/)).toBeInTheDocument();
+  else expect(screen.queryByText(/ответы не получены/)).not.toBeInTheDocument();
+});

@@ -14,6 +14,23 @@ const nativeStageText: Record<string, string> = {
   closed: 'Соединение закрыто', expired: 'Срок подключения истёк',
 };
 
+type IceSnapshot = { local_candidates: number; remote_candidates: number; pairs: number;
+  checking_pairs: number; failed_pairs: number; succeeded_pairs: number;
+  requests_sent: number | null; responses_received: number | null };
+type DirectFailureObservation = { reason: string; received_at: string; attempt?: number;
+  ice_state?: string; dtls_state?: string; network?: IceSnapshot;
+  network_sample_elapsed_ms?: number; network_age_at_stop_ms?: number };
+const directFailureText: Record<string, string> = {
+  gathering_deadline: 'Не удалось завершить поиск сетевых адресов',
+  signaling_deadline: 'Не получен ответ на согласование',
+  connection_deadline: 'Прямой сетевой маршрут не установлен в срок',
+  peer_disconnected: 'Прямое соединение прервано',
+  video_first_frame_timeout: 'Первый прямой видеокадр не получен',
+  video_frame_timeout: 'Прямые видеокадры перестали поступать',
+  video_access_rejected: 'Доступ к прямому каналу отозван',
+  network_changed: 'Сеть браузера изменилась',
+};
+
 type SessionRecord = { session_id: string; opened_at: string; state: 'active' | 'closed' | 'stale';
   browser_samples?: { received_at: string; rendered_frames: number; incoming_fps: number; control_rtt_ms?: number;
     control_transport?: 'server_websocket' | 'direct_webrtc';
@@ -21,10 +38,9 @@ type SessionRecord = { session_id: string; opened_at: string; state: 'active' | 
     direct_path?: string; direct_network_rtt_ms?: number | null; direct_jitter_buffer_ms?: number | null;
     direct_decode_ms?: number | null; direct_state?: string | null; direct_failure?: string | null;
     direct_ice_state?: string | null; direct_dtls_state?: string | null;
-    direct_network?: { local_candidates: number; remote_candidates: number; pairs: number;
-      checking_pairs: number; failed_pairs: number; succeeded_pairs: number;
-      requests_sent: number | null; responses_received: number | null } | null }[];
+    direct_network?: IceSnapshot | null }[];
   browser_summary?: { max_control_rtt_ms?: number; max_decode_errors: number; max_render_errors: number;
+    last_direct_failure?: DirectFailureObservation;
     last_control_failure_detail?: string; last_control_fence_received_at?: string;
     last_control_fence?: {phase:string;pointer_held:boolean;idle_heartbeat_only:boolean;pending_count:number|null;
       oldest_age_ms:number|null;last_receipt_rtt_ms:number|null;tick_gap_ms:number|null;buffered_bytes:number|null} };
@@ -55,6 +71,7 @@ export function StreamSessionHistoryPanel({ deviceId }: { deviceId: string }) {
       : !history.data.length ? <p className="mt-2 text-muted-foreground">Сеансов ещё нет. Сбор начинается при подключении нового просмотра.</p>
       : <ol className="mt-3 space-y-2">{history.data.map(row => {
         const sample = Array.isArray(row.browser_samples) ? row.browser_samples.at(-1) : null;
+        const lastDirectFailure = row.browser_summary?.last_direct_failure;
         const probe = Array.isArray(row.direct_diagnostics) ? row.direct_diagnostics.at(-1) : null;
         const fault = Array.isArray(row.control_events) ? row.control_events.at(-1) : null;
         const network = sample?.direct_network;
@@ -82,6 +99,16 @@ export function StreamSessionHistoryPanel({ deviceId }: { deviceId: string }) {
             {` · проверка / отказ / успех: ${network.checking_pairs} / ${network.failed_pairs} / ${network.succeeded_pairs} из ${network.pairs}`}
             {` · ICE-кандидатов браузера / APK: ${network.local_candidates} / ${network.remote_candidates}`}
           </div>}
+          {lastDirectFailure && <details className="mt-2 min-w-0 text-xs text-muted-foreground">
+            <summary className="cursor-pointer">Последний отказ прямого канала · {new Date(lastDirectFailure.received_at).toLocaleString('ru-RU')}</summary>
+            <p className="mt-1">{directFailureText[lastDirectFailure.reason] ?? 'Прямое соединение завершилось с ошибкой'}.
+              {lastDirectFailure.attempt != null && ` Попытка ${lastDirectFailure.attempt}.`}
+              {` ICE ${lastDirectFailure.ice_state ?? 'не измерен'} · DTLS ${lastDirectFailure.dtls_state ?? 'не измерен'}.`}</p>
+            {lastDirectFailure.network && <p className="mt-1">При отказе · ICE-запросы / ответы: {lastDirectFailure.network.requests_sent ?? '—'} / {lastDirectFailure.network.responses_received ?? '—'}.
+              {lastDirectFailure.network.requests_sent != null && lastDirectFailure.network.requests_sent > 0
+                && lastDirectFailure.network.responses_received === 0 && ' Запросы отправлялись, ответы не получены; причина ограничения сети этим не установлена.'}</p>}
+            <p className="mt-1">Это сохранённый отказ, а не текущее состояние соединения. Код: <code>{lastDirectFailure.reason}</code>.</p>
+          </details>}
           {probe && <div className="mt-1 text-xs">Прямой тест: {probe.profile} · {probe.path} · {probe.presented_frames} кадров
             {probe.echo_rtt_p95_ms != null && ` · RTT пакетов p95 ${probe.echo_rtt_p95_ms.toFixed(1)} мс`}{probe.reason && ` · ${probe.reason}`}</div>}
           <details className="mt-2 min-w-0 text-xs text-muted-foreground">

@@ -19,6 +19,7 @@ from backend.schemas.stream_diagnostics import AgentStreamTelemetry
 from backend.websocket.stream_session_history import (
     RETENTION_SECONDS,
     SESSION_BYTES,
+    BrowserReportAdmission,
     StreamSessionHistory,
 )
 
@@ -34,6 +35,9 @@ PROBE = dict(schema_version=1, mode="readonly_video", trigger="automatic", profi
              width=960, height=540, ice_state="connected", dtls_state="connected")
 ICE = dict(local_candidates=5, remote_candidates=1, pairs=1, checking_pairs=1,
            failed_pairs=0, succeeded_pairs=0, requests_sent=237, responses_received=0)
+DIRECT_FAILURE = SAMPLE | dict(direct_state="failed", direct_failure="connection_deadline", direct_attempts=1,
+                              direct_network=ICE, direct_ice_state="checking", direct_dtls_state="new",
+                              direct_network_sample_elapsed_ms=12000, direct_network_age_at_stop_ms=400)
 FENCE = dict(reason="native_receipt_timeout", phase="ready", age_ms=0, pointer_held=False,
              idle_heartbeat_only=True, offered_sequence=25, acknowledged_sequence=20, pending_count=5,
              oldest_action=4, oldest_age_ms=1250, oldest_deadline_age_ms=1250, terminal_age_ms=None,
@@ -57,6 +61,60 @@ async def test_control_fence_survives_sample_eviction_without_becoming_an_input_
     assert len(json.dumps(row).encode()) < SESSION_BYTES
     assert await store.begin(ORG, DEVICE, "replacement")
     assert "browser_summary" not in (await store.read(ORG, DEVICE))[0]
+
+
+def test_failure_immediately_after_periodic_report_has_independent_bounded_admission():
+    admission = BrowserReportAdmission()
+    assert admission.accept(SAMPLE, 100)
+    assert admission.accept(DIRECT_FAILURE, 100.05)
+    assert not admission.accept(DIRECT_FAILURE, 100.1)
+    assert not admission.accept(DIRECT_FAILURE | {"direct_attempts": 2}, 100.9)
+    assert admission.accept(DIRECT_FAILURE | {"direct_attempts": 2}, 101.05)
+    assert not admission.accept(SAMPLE, 101.5)
+    assert admission.accept(SAMPLE, 102.05)
+
+
+def test_nonterminal_or_missing_failure_cannot_bypass_periodic_admission():
+    admission = BrowserReportAdmission()
+    assert admission.accept(SAMPLE, 100)
+    assert not admission.accept(DIRECT_FAILURE | {"direct_state": "connecting"}, 100.1)
+    assert not admission.accept(DIRECT_FAILURE | {"direct_failure": None}, 100.1)
+    assert admission.accept(DIRECT_FAILURE, 100.2)
+    # Changing an arbitrary counter does not create a new failure admission.
+    assert not admission.accept(DIRECT_FAILURE | {"received_packets": 101}, 100.3)
+
+
+async def test_last_direct_failure_survives_successful_samples_without_unbounded_storage_or_new_viewer_leak(store):
+    assert await store.begin(ORG, DEVICE, "failed-viewer")
+    assert await store.browser(ORG, DEVICE, "failed-viewer", DIRECT_FAILURE)
+    for _ in range(40):
+        assert await store.browser(ORG, DEVICE, "failed-viewer", SAMPLE | {"direct_state": "connected"})
+    row = (await store.read(ORG, DEVICE))[0]
+    failure = row["browser_summary"]["last_direct_failure"]
+    assert failure["reason"] == "connection_deadline" and failure["attempt"] == 1
+    assert failure["ice_state"] == "checking" and failure["dtls_state"] == "new"
+    assert failure["network"] == ICE
+    assert failure["network_sample_elapsed_ms"] == 12000 and failure["network_age_at_stop_ms"] == 400
+    assert datetime.fromisoformat(failure["received_at"]).tzinfo is not None
+    assert len(row["browser_samples"]) == 15
+    assert all("direct_failure" not in sample for sample in row["browser_samples"])
+    assert len(json.dumps(row).encode()) < SESSION_BYTES
+    assert not await store.browser(ORG, DEVICE, "failed-viewer", DIRECT_FAILURE | {
+        "direct_network": ICE | {"address": "private endpoint"},
+    })
+    assert "private" not in json.dumps((await store.read(ORG, DEVICE))[0])
+    assert await store.begin(ORG, DEVICE, "new-viewer")
+    assert "browser_summary" not in (await store.read(ORG, DEVICE))[0]
+
+
+async def test_unknown_ice_packet_counts_remain_null_in_retained_failure(store):
+    assert await store.begin(ORG, DEVICE, "viewer")
+    assert await store.browser(ORG, DEVICE, "viewer", DIRECT_FAILURE | {"direct_network": ICE | {
+        "requests_sent": None, "responses_received": None,
+    }})
+    failure = (await store.read(ORG, DEVICE))[0]["browser_summary"]["last_direct_failure"]
+    assert failure["network"]["requests_sent"] is None
+    assert failure["network"]["responses_received"] is None
 
 
 @pytest.mark.parametrize("change", [
@@ -292,7 +350,9 @@ async def test_full_width_counters_cannot_block_recent_observations_or_session_c
         if name.endswith("_frames") or name in {"received_packets", "received_bytes", "decode_errors", "render_errors",
                                                 "invalid_packets", "queue_recoveries", "stale_output_drops"}
     }
-    browser.update(direct_network=ICE | dict(requests_sent=2**53 - 1, responses_received=2**53 - 1),
+    browser.update(direct_state="failed", direct_failure="connection_deadline", direct_attempts=1000000,
+                   direct_ice_state="checking", direct_dtls_state="new", control_fence=FENCE,
+                   direct_network=ICE | dict(requests_sent=2**53 - 1, responses_received=2**53 - 1),
                    direct_network_sample_elapsed_ms=86400000.0, direct_network_age_at_stop_ms=86400000.0)
     for i in range(25):
         assert await store.browser(ORG, DEVICE, "viewer", browser | {"received_packets": i})
@@ -310,6 +370,8 @@ async def test_full_width_counters_cannot_block_recent_observations_or_session_c
     assert await store.end(ORG, DEVICE, "viewer")
     row = (await store.read(ORG, DEVICE))[0]
     assert row["state"] == "closed" and row["browser_samples"][-1]["received_packets"] == 24
+    assert row["browser_summary"]["last_direct_failure"]["reason"] == "connection_deadline"
+    assert row["browser_summary"]["last_control_fence"] == FENCE
     assert 1 <= len(row["browser_samples"]) <= 15 and 1 <= len(row["agent_samples"]) <= 15
     retained_agent = row["agent_samples"][-1]["telemetry"]
     assert all(retained_agent[name] == 86400000 for name in (

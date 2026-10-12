@@ -105,6 +105,8 @@ export function directDiagnosticSample(result: DirectProbeResult, frames: number
 export class StreamSessionReporter {
   private session: string | null = null;
   private lastSent = -Infinity;
+  private lastFailureSent = -Infinity;
+  private lastFailureKey: string | null = null;
   constructor(private socket: WebSocket, private snapshot: () => ReturnType<typeof browserStreamSample> | null) {}
   get sessionId() { return this.session; }
   accept(value: unknown): boolean {
@@ -133,6 +135,24 @@ export class StreamSessionReporter {
       const sample = this.snapshot();
       if (sample && this.send('viewer_telemetry', sample)) this.lastSent = now;
     } catch { /* Optional telemetry cannot interrupt the video watchdog. */ }
+  }
+  /** Capture a terminal peer observation before retry replaces it. No extra
+   * timer, input, queue or resend: one separate bounded failure admission. */
+  reportFailure(failed = true): void {
+    if (!failed) { this.lastFailureKey = null; return; }
+    if (!this.session) return;
+    const now = performance.now();
+    if (now - this.lastFailureSent < 1000) return;
+    try {
+      const sample = this.snapshot();
+      if (!sample || sample.direct_state !== 'failed' || !sample.direct_failure) return;
+      const key = `${sample.direct_attempts ?? 0}:${sample.direct_failure}`;
+      if (key === this.lastFailureKey) return;
+      if (this.send('viewer_telemetry', sample)) {
+        this.lastFailureKey = key;
+        this.lastFailureSent = this.lastSent = now;
+      }
+    } catch { /* Failure diagnostics cannot interrupt fallback or input release. */ }
   }
   direct(sample: ReturnType<typeof directDiagnosticSample>, session: string): boolean {
     return session === this.session && this.send('viewer_direct_result', sample);

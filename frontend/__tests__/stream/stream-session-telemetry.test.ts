@@ -73,6 +73,71 @@ test('a telemetry getter failure cannot prevent the next watchdog tick or throw 
   reporter.report(); expect(ws.send).toHaveBeenCalledTimes(1);
 });
 
+const failureSample = (attempt = 1) => browserStreamSample(stats,
+  { state: 'ready', failure: null, rtt: 25, attempts: 1 }, 1000,
+  { admitted: true, admissionKnown: true, active: false, frames: 0, lastFrameAt: null, attempts: attempt,
+    result: { state: 'failed', samples: [], path: 'unknown', protocol: null, reason: 'connection_deadline',
+      iceState: 'checking', network: { localCandidates: 5, remoteCandidates: 2, pairs: 2, checkingPairs: 2,
+        failedPairs: 0, succeededPairs: 0, requestsSent: 143, responsesReceived: 0, dtlsState: 'new' } } });
+
+test('a failure between periodic reports is sent before a retry erases its ICE observation', () => {
+  const ws = socket();
+  let current = sample();
+  const reporter = new StreamSessionReporter(ws, () => current);
+  reporter.accept(session);
+  jest.advanceTimersByTime(50);
+  current = failureSample();
+  reporter.reportFailure();
+  const messages = (ws.send as jest.Mock).mock.calls.map(([text]) => JSON.parse(text));
+  expect(messages).toHaveLength(2);
+  expect(messages[1]).toMatchObject({ type: 'viewer_telemetry', sample: {
+    direct_state: 'failed', direct_failure: 'connection_deadline', direct_attempts: 1,
+    direct_network: { requests_sent: 143, responses_received: 0 }, direct_dtls_state: 'new',
+  } });
+  // A subsequent setup state cannot mutate the already sent failure.
+  current = sample();
+  jest.advanceTimersByTime(5000); reporter.report();
+  expect(ws.send).toHaveBeenCalledTimes(2);
+  expect(JSON.stringify(messages[1])).not.toMatch(/private|token|session_id|credential|candidateId|coordinate/);
+});
+
+test('failure callbacks are deduplicated and rate capped separately from the periodic report', () => {
+  const ws = socket();
+  let current = failureSample();
+  const reporter = new StreamSessionReporter(ws, () => current);
+  reporter.accept(session);
+  reporter.reportFailure(); reporter.reportFailure();
+  expect(ws.send).toHaveBeenCalledTimes(2);
+  jest.advanceTimersByTime(1000); reporter.reportFailure();
+  expect(ws.send).toHaveBeenCalledTimes(2);
+  // A new peer/effect can restart its attempt counter within the same viewer.
+  reporter.reportFailure(false); reporter.reportFailure();
+  expect(ws.send).toHaveBeenCalledTimes(3);
+  current = failureSample(2); reporter.reportFailure();
+  expect(ws.send).toHaveBeenCalledTimes(3);
+  jest.advanceTimersByTime(1000); reporter.reportFailure();
+  expect(ws.send).toHaveBeenCalledTimes(4);
+});
+
+test('terminal diagnostics never gain admission, retain a payload for replay, or affect a replacement viewer', () => {
+  const ws = socket(), snapshot = jest.fn(failureSample);
+  const reporter = new StreamSessionReporter(ws, snapshot);
+  reporter.reportFailure(); expect(snapshot).not.toHaveBeenCalled();
+  (ws as unknown as { bufferedAmount: number }).bufferedAmount = 100000;
+  reporter.accept(session); reporter.reportFailure();
+  expect(ws.send).not.toHaveBeenCalled();
+  (ws as unknown as { bufferedAmount: number }).bufferedAmount = 0;
+  jest.advanceTimersByTime(1000);
+  expect(ws.send).not.toHaveBeenCalled();
+  (ws as unknown as { readyState: number }).readyState = WebSocket.CLOSED;
+  reporter.reportFailure(); expect(ws.send).not.toHaveBeenCalled();
+  const replacement = socket(), next = new StreamSessionReporter(replacement, sample);
+  next.accept({ ...session, session_id: '1'.repeat(16) });
+  next.reportFailure();
+  expect(replacement.send).toHaveBeenCalledTimes(1);
+  expect(JSON.parse((replacement.send as jest.Mock).mock.calls[0][0]).sample.direct_failure).toBeUndefined();
+});
+
 test('direct results are bound to their viewer and distinguish echo RTT from presented frames', () => {
   const ws = socket(), reporter = new StreamSessionReporter(ws, sample);
   reporter.accept(session);

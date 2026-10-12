@@ -23,6 +23,7 @@ from backend.websocket.continuous_runtime import (
 from backend.websocket.stream_bridge import get_stream_bridge
 from backend.websocket.stream_session_history import (
     REPORT_INTERVAL_SECONDS,
+    BrowserReportAdmission,
     StreamSessionHistory,
     utc_now,
 )
@@ -185,7 +186,8 @@ async def stream_viewer_ws(
     )
     history = StreamSessionHistory(redis_client.redis, redis_client.redis_binary)
     history_enabled = await history.begin(org_id_str, device_id, session_id, user=user_id_str)
-    last_browser_report = last_direct_report = -float("inf")
+    browser_report_admission = BrowserReportAdmission()
+    last_direct_report = -float("inf")
     last_delivery_change = -float("inf")
     direct_reports = 0
     diagnostic_queue: asyncio.Queue[tuple[str, dict[str, Any], int]] = asyncio.Queue(maxsize=4)
@@ -334,10 +336,9 @@ async def stream_viewer_ws(
                 # a browser-supplied payload to Android or changes input ownership.
                 now = time.monotonic()
                 if history_enabled and set(data) == {"type", "sample"}:
-                    if data["type"] == "viewer_telemetry" and now - last_browser_report >= 1:
-                        last_browser_report = now
+                    if data["type"] == "viewer_telemetry":
                         sample = history.validated_sample(data["sample"])
-                        if sample is not None:
+                        if sample is not None and browser_report_admission.accept(sample, now):
                             enqueue_diagnostic("browser_samples", sample)
                     elif data["type"] == "viewer_direct_result" and direct_reports < 3 and now - last_direct_report >= 1:
                         last_direct_report = now

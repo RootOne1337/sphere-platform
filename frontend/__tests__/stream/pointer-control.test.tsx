@@ -825,6 +825,33 @@ it('automatically reports the classified idle failure and its bounded pre-releas
   view.unmount();
 });
 
+it('records a direct attempt failure immediately without waiting for the watchdog or sending an Android action', () => {
+  mockDecoderStats = { binaryMessagesReceived: 1, binaryBytesReceived: 100, renderedFrames: 1, decodedOutputs: 1,
+    invalidPackets: 0, decodeErrors: 0, renderErrors: 0, queueRecoveries: 0, staleOutputDrops: 0,
+    decoderQueueSize: 0, pendingOutputCount: 0, receivedPictureFps: 1, renderedFps: 1,
+    lastBinaryAtMs: null, lastRenderedAtMs: null };
+  const view = readyContinuous();
+  view.receive({ type: 'stream_session', schema_version: 1, history_enabled: true,
+    session_id: '1'.repeat(16), report_interval_seconds: 10 });
+  const observation = { admitted: true, admissionKnown: true, active: false, frames: 0, lastFrameAt: null, attempts: 1,
+    result: { state: 'failed', reason: 'connection_deadline', path: 'unknown', protocol: null, samples: [],
+      iceState: 'checking', network: { localCandidates: 5, remoteCandidates: 2, pairs: 2, checkingPairs: 2,
+        failedPairs: 0, succeededPairs: 0, requestsSent: 143, responsesReceived: 0, dtlsState: 'new' } } };
+  const before = view.sent().length;
+  act(() => mockVideoObserve?.(observation));
+  const messages = view.sent().slice(before);
+  expect(messages).toHaveLength(1);
+  expect(messages[0]).toMatchObject({ type: 'viewer_telemetry', sample: {
+    direct_state: 'failed', direct_failure: 'connection_deadline', direct_network: { requests_sent: 143, responses_received: 0 },
+  } });
+  act(() => mockVideoObserve?.({ ...observation, result: { state: 'gathering', samples: [], path: 'unknown', protocol: null } }));
+  expect(messages[0].sample.direct_failure).toBe('connection_deadline');
+  expect(view.commands()).toHaveLength(0);
+  view.unmount();
+  act(() => mockVideoObserve?.(observation));
+  expect(view.sent().filter(x => x.type === 'viewer_telemetry' && x.sample.direct_failure)).toHaveLength(1);
+});
+
 it('normal inspection release does not replace a diagnostic failure with a mode-change notice', () => {
   const view = readyContinuous();
   view.rerender(<DeviceStream deviceId="gesture-remote" enableNavigation enableStaticInput enableDiagnostics

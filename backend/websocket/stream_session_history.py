@@ -195,6 +195,18 @@ if patch.sample then
       summary.last_control_fence = patch.sample.control_fence
       summary.last_control_fence_received_at = patch.sample.received_at
     end
+    if patch.sample.direct_state == 'failed' and patch.sample.direct_failure then
+      -- A retry replaces the live state quickly. Keep one bounded, explicitly
+      -- projected failure even after healthy samples evict its original row.
+      summary.last_direct_failure = {
+        reason=patch.sample.direct_failure, received_at=patch.sample.received_at,
+        attempt=patch.sample.direct_attempts, ice_state=patch.sample.direct_ice_state,
+        dtls_state=patch.sample.direct_dtls_state, network=patch.sample.direct_network,
+        network_sample_elapsed_ms=patch.sample.direct_network_sample_elapsed_ms,
+        network_age_at_stop_ms=patch.sample.direct_network_age_at_stop_ms,
+        transport=patch.sample.transport
+      }
+    end
     record.browser_summary = summary
   end
 end
@@ -239,6 +251,31 @@ return result
 
 def utc_now() -> str:
     return datetime.now(timezone.utc).isoformat()
+
+
+class BrowserReportAdmission:
+    """Periodic samples and newly observed failures have independent 1 Hz caps.
+
+    Call only with a validated BrowserStreamSample projection. A periodic report
+    immediately before failure must not suppress that terminal observation.
+    This affects diagnostic storage only; it never grants Android authority.
+    """
+
+    def __init__(self) -> None:
+        self.last_report = self.last_failure = -float("inf")
+        self.last_failure_key: tuple[Any, Any] | None = None
+
+    def accept(self, sample: dict[str, Any], now: float) -> bool:
+        failure = sample.get("direct_state") == "failed" and bool(sample.get("direct_failure"))
+        key = (sample.get("direct_attempts"), sample.get("direct_failure"))
+        new_failure = failure and key != self.last_failure_key and now - self.last_failure >= 1
+        if now - self.last_report < 1 and not new_failure:
+            return False
+        self.last_report = now
+        if failure:
+            self.last_failure = now
+            self.last_failure_key = key
+        return True
 
 
 class StreamSessionHistory:

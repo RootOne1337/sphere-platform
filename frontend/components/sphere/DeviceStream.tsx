@@ -270,6 +270,9 @@ export function DeviceStream({
     if (diagnosticReporter.current?.sessionId !== session) return;
     const wasActive = directVideoRef.current.active;
     directVideoRef.current = value; setDirectVideo(value);
+    // A failed attempt can be replaced after one second; the ten-second
+    // periodic report can otherwise miss every failure in a reconnect loop.
+    diagnosticReporter.current?.reportFailure(value.result?.state === 'failed');
     if (wasActive && !value.active) {
       dragRef.current = null; invalidateInspectionRef.current?.();
       renderedCaptureRef.current = null; renderedSocketRef.current = null;
