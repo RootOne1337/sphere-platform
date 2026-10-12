@@ -4,8 +4,11 @@
 отказ разрешения mDNS имени между Windows и виртуальной сетью Android.
 С действительным Windows lookup обычный Chrome без numeric flag получил
 30672 decoded frames при 29 FPS, без drops/freezes/packet loss; 14 native
-input ACK и UP подтверждены, серверных touches ноль. Это пока прототип с
-принадлежащим проверке SDP adapter, а не принятие установленного API.
+input ACK и UP подтверждены, серверных touches ноль. Первоначально это был
+прототип с SDP adapter. Теперь UI/API `cac67643` установлены; обычный Chrome
+без этого adapter подтвердил direct video/input на 3015 и Tuna.
+[Текущий срез](DIRECT-MDNS-INSTALLED-OBSERVATION.json) оставляет OPEN legacy
+uplink, WAN/VPS discovery, shared input и полный latency/soak.
 [Исследование и исправление discovery](DIRECT-MDNS-DISCOVERY-RESEARCH.md),
 [неизменяемый срез прототипа](DIRECT-MDNS-PROTOTYPE-OBSERVATION.json).
 

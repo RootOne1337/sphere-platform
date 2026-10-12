@@ -1,8 +1,8 @@
 {
   "schemaVersion": 1,
-  "reviewedAtUtc": "2026-10-11T21:44:57.031410+00:00",
-  "sourceReviewed": "bb7f315dad7afcdbf8dfd98a3357fdeb1ed626b4",
-  "scope": "UI6e6381f1/API3d1b3b5d installed on3015/Tuna; verified APK59 packages 15, offline or unverified 6. Controlled numeric-ICE canary mode change, synthetic online recovery, native UP and post-recovery cadence accepted. Ordinary Chrome, PH030 local route and physical network switching remain open.",
+  "reviewedAtUtc": "2026-10-12T00:14:15.751201+00:00",
+  "sourceReviewed": "cac676431a41de58c5edd1ffd921ae97726b4925",
+  "scope": "UI/API cac67643 installed on 3015/Tuna; ordinary Chromium without transport overrides passed PH010 native gestures, mode transitions and synthetic recovery. PH030 user-session telemetry confirmed direct media/control. Legacy video copy, WAN/VPS discovery, physical network switching, shared input and full latency acceptance remain OPEN.",
   "baseline": "docs/audits/2026-10-05/ENTERPRISE-PRODUCT-BACKLOG.json",
   "previousCrosscheck": "docs/audits/2026-10-09/CHAT-CODE-RECONCILIATION.json",
   "counts": {
@@ -11,11 +11,11 @@
     "open": 41
   },
   "installed": {
-    "lastObservedUtc": "2026-10-11T21:44:57.031410+00:00",
-    "ui": "6e6381f1a72f85739788e452a96e135c88f8059c",
-    "api": "3d1b3b5d08b5ced32e351c1997f2874d9ab83cfb",
-    "evidence": "docs/audits/2026-10-12/STREAM59-CURRENT-DELIVERY.json",
-    "observation": "UI6e6381f1/API3d1b3b5d installed on3015/Tuna; verified APK59 packages 15, offline or unverified 6. Controlled numeric-ICE canary mode change, synthetic online recovery, native UP and post-recovery cadence accepted. Ordinary Chrome, PH030 local route and physical network switching remain open.",
+    "lastObservedUtc": "2026-10-12T00:14:15.751201+00:00",
+    "ui": "cac676431a41de58c5edd1ffd921ae97726b4925",
+    "api": "cac676431a41de58c5edd1ffd921ae97726b4925",
+    "evidence": "docs/audits/2026-10-12/DIRECT-MDNS-INSTALLED-OBSERVATION.json",
+    "observation": "UI/API cac67643 installed on 3015/Tuna; ordinary Chromium without transport overrides passed PH010 native gestures, mode transitions and synthetic recovery. PH030 user-session telemetry confirmed direct media/control. Legacy video copy, WAN/VPS discovery, physical network switching, shared input and full latency acceptance remain OPEN.",
     "pilotApk": {
       "device": "PH010",
       "deviceId": "5df4805e-fe64-4d39-960c-19ceab206cd6",
@@ -26,7 +26,7 @@
       "evidence": "docs/audits/2026-10-12/STREAM59-CURRENT-DELIVERY.json",
       "evidenceSha256NormalizedLf": "8d0eff551d41c22333b54344ddd76e9d3cae6d63bc1407252dc9ca9f6033cbca"
     },
-    "evidenceSha256NormalizedLf": "8d0eff551d41c22333b54344ddd76e9d3cae6d63bc1407252dc9ca9f6033cbca",
+    "evidenceSha256NormalizedLf": "be8a4431705686d4ea29682d8b0a058473fee49dada70a2662f38a3ac03d168a",
     "additionalPilotApks": [
       {
         "device": "PH011",
@@ -49,11 +49,18 @@
         "10259": 15
       }
     },
-    "latestReadbackAtUtc": "2026-10-11T21:44:57.031410+00:00",
-    "latestReadbackEvidence": "docs/audits/2026-10-12/STREAM59-CURRENT-DELIVERY.json",
-    "latestReadbackEvidenceSha256NormalizedLf": "8d0eff551d41c22333b54344ddd76e9d3cae6d63bc1407252dc9ca9f6033cbca"
+    "latestReadbackAtUtc": "2026-10-12T00:14:15.751201+00:00",
+    "latestReadbackEvidence": "docs/audits/2026-10-12/DIRECT-MDNS-INSTALLED-OBSERVATION.json",
+    "latestReadbackEvidenceSha256NormalizedLf": "be8a4431705686d4ea29682d8b0a058473fee49dada70a2662f38a3ac03d168a"
   },
-  "pendingCorrections": [],
+  "pendingCorrections": [
+    {
+      "id": "direct-legacy-uplink-suppression",
+      "installed": false,
+      "evidence": "docs/audits/2026-10-12/DIRECT-MDNS-DISCOVERY-RESEARCH.md",
+      "scope": "Direct RTC works; Native still sends duplicate legacy WS video and adapts bitrate from its queue. Scope safe handover/fallback before declaring server bandwidth removed."
+    }
+  ],
   "storage": {
     "lastObservedUtc": "2026-10-11T21:38:53.226846+00:00",
     "visibleMatchingProcesses": 2,
@@ -311,8 +318,8 @@
     "primaryVideoInstalled": true,
     "primaryVideoObserved": false,
     "productionAccepted": false,
-    "currentObservationEvidence": "docs/audits/2026-10-12/STREAM59-CURRENT-DELIVERY.json",
-    "currentObservationEvidenceSha256NormalizedLf": "8d0eff551d41c22333b54344ddd76e9d3cae6d63bc1407252dc9ca9f6033cbca",
+    "currentObservationEvidence": "docs/audits/2026-10-12/DIRECT-MDNS-INSTALLED-OBSERVATION.json",
+    "currentObservationEvidenceSha256NormalizedLf": "be8a4431705686d4ea29682d8b0a058473fee49dada70a2662f38a3ac03d168a",
     "pilotEvidenceScope": "Current installed API/UI/APK55 and finite fallback observations; historical direct frames are separate.",
     "historicalPrimaryFrames": 1804,
     "directInputCandidate": {
@@ -364,9 +371,15 @@
       "directInputAccepted": false,
       "topologySource": "PH011 mapped to main-PC emulator5554 by current boot identity; NAT path is not loopback proof. Browser observation predates the latest idle correction."
     },
-    "latestReadbackAtUtc": "2026-10-11T21:44:57.031410+00:00",
-    "latestReadbackEvidence": "docs/audits/2026-10-12/STREAM59-CURRENT-DELIVERY.json",
-    "latestReadbackEvidenceSha256NormalizedLf": "8d0eff551d41c22333b54344ddd76e9d3cae6d63bc1407252dc9ca9f6033cbca"
+    "latestReadbackAtUtc": "2026-10-12T00:14:15.751201+00:00",
+    "latestReadbackEvidence": "docs/audits/2026-10-12/DIRECT-MDNS-INSTALLED-OBSERVATION.json",
+    "latestReadbackEvidenceSha256NormalizedLf": "be8a4431705686d4ea29682d8b0a058473fee49dada70a2662f38a3ac03d168a",
+    "ordinaryBrowserObservation": {
+      "evidence": "docs/audits/2026-10-12/DIRECT-MDNS-INSTALLED-OBSERVATION.json",
+      "evidenceSha256NormalizedLf": "be8a4431705686d4ea29682d8b0a058473fee49dada70a2662f38a3ac03d168a",
+      "scope": "UI/API cac67643 installed on 3015/Tuna; ordinary Chromium without transport overrides passed PH010 native gestures, mode transitions and synthetic recovery. PH030 user-session telemetry confirmed direct media/control. Legacy video copy, WAN/VPS discovery, physical network switching, shared input and full latency acceptance remain OPEN.",
+      "legacyUplinkSuppressed": false
+    }
   },
   "items": [
     {
@@ -2548,6 +2561,15 @@
       "deliveryEvidence": "docs/audits/2026-10-12/STREAM59-CURRENT-DELIVERY.json",
       "deliveryEvidenceSha256NormalizedLf": "8d0eff551d41c22333b54344ddd76e9d3cae6d63bc1407252dc9ca9f6033cbca",
       "scope": "Delivered correction only; broad production direct-media acceptance remains OPEN"
+    },
+    {
+      "id": "ordinary-chromium-local-mdns-discovery",
+      "installed": true,
+      "runtimeAccepted": false,
+      "installedRevision": "cac676431a41de58c5edd1ffd921ae97726b4925",
+      "deliveryEvidence": "docs/audits/2026-10-12/DIRECT-MDNS-INSTALLED-OBSERVATION.json",
+      "deliveryEvidenceSha256NormalizedLf": "be8a4431705686d4ea29682d8b0a058473fee49dada70a2662f38a3ac03d168a",
+      "scope": "UI/API cac67643 installed on 3015/Tuna; ordinary Chromium without transport overrides passed PH010 native gestures, mode transitions and synthetic recovery. PH030 user-session telemetry confirmed direct media/control. Legacy video copy, WAN/VPS discovery, physical network switching, shared input and full latency acceptance remain OPEN."
     }
   ],
   "runtimeFollowup": {
