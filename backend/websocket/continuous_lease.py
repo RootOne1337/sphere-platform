@@ -142,6 +142,10 @@ if op == 'cancel_unstarted' then
 end
 if op == 'relay_receipt' then
     local receipt = cjson.decode(ARGV[3]).receipt
+    local refused_before_owner = receipt.stage == 'startup' and receipt.status == 5 and
+        receipt.origin == 'admission' and receipt.sequence == 0 and
+        (phase == 'opening_sent' or phase == 'closing') and
+        redis.call('HGET', key, 'startup_confirmed') ~= '1'
     local direct = redis.call('HGET', key, 'direct_session')
     if receipt.stage == 'input' and not direct and
        (receipt.sequence > tonumber(redis.call('HGET', key, 'sequence')) or
@@ -155,8 +159,14 @@ if op == 'relay_receipt' then
             redis.call('HSET', key, 'phase', 'closing')
             return 'auth_expired'
         end
-        redis.call('HSET', key, 'phase', 'ready', 'open_delivery_started', 1)
+        redis.call('HSET', key, 'phase', 'ready', 'open_delivery_started', 1, 'startup_confirmed', 1)
     elseif receipt.stage == 'release' and receipt.status == 3 then
+        redis.call('DEL', key)
+        redis.call('HDEL', KEYS[2], receipt.owner)
+    elseif refused_before_owner then
+        -- Native explicitly declined this OPEN before acquiring its resources.
+        -- There will be no RELEASE for this owner. Never apply this transition
+        -- after a confirmed STARTUP, or to an input/injector/unknown failure.
         redis.call('DEL', key)
         redis.call('HDEL', KEYS[2], receipt.owner)
     elseif receipt.status >= 4 then
@@ -166,6 +176,7 @@ if op == 'relay_receipt' then
     -- than rounding them through Lua cjson's default number precision.
     local envelope = {type='_continuous_receipt_v1', identity=identity,
                       expires_at_ms=now + age, receipt_json=ARGV[3]}
+    if refused_before_owner then envelope.admission_refused = true end
     if redis.call('PUBLISH', ARGV[4], cjson.encode(envelope)) < 1 then
         if redis.call('HGET', key, 'identity') == identity then
             redis.call('HSET', key, 'phase', 'closing')
@@ -257,7 +268,7 @@ elseif now >= tonumber(redis.call('HGET', key, 'auth_until') or '0') then
     return 'auth_expired'
 elseif op == 'ready' then
     if phase ~= 'opening_sent' then return 'not_opening' end
-    redis.call('HSET', key, 'phase', 'ready', 'open_delivery_started', 1)
+    redis.call('HSET', key, 'phase', 'ready', 'open_delivery_started', 1, 'startup_confirmed', 1)
     return 'ready'
 elseif op == 'open' or op == 'open_direct' then
     if phase ~= 'opening' then return 'already_sent' end

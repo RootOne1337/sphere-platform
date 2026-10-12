@@ -337,6 +337,60 @@ async def test_auth_expired_native_startup_cannot_ready_viewer(world):
         assert await replies.get_message(ignore_subscribe_messages=True, timeout=0.01) is None
 
 
+@pytest.mark.parametrize("closing", [False, True])
+async def test_exact_pre_owner_native_refusal_releases_unclaimed_slot_without_fake_release(world, closing):
+    store, other, binding, pubsub = world
+    lease = await store.acquire(binding)
+    await store.open(lease)
+    await published(pubsub)
+    if closing:
+        await store.close(lease)
+    message = receipt(lease, stage="startup", origin="admission", status=5)
+    async with receipt_subscription(world) as replies:
+        assert await relay_native_receipt(store, native_manager(binding), binding.device, message,
+                                          agent_session=binding.agent_session) == ReceiptRelay.PUBLISHED
+        envelope = await published(replies)
+        assert envelope.get("admission_refused") is True
+        assert await viewer_receipt(other, lease, envelope, viewer_worker=binding.viewer_worker) == message
+        assert await store.redis.exists(store.key(binding)) == 0
+        assert await store.redis.hlen(store.release_key(binding.device)) == 0
+        newer = await store.acquire(binding)
+        assert newer is not None and newer.owner != lease.owner
+        assert await relay_native_receipt(store, native_manager(binding), binding.device, message,
+                                          agent_session=binding.agent_session) == ReceiptRelay.REJECTED
+        assert await store.redis.hget(store.key(binding), "identity") == newer.identity
+
+
+async def test_conflicting_startup_refusal_after_ready_does_not_claim_native_cleanup(world):
+    store, other, binding, _ = world
+    lease = await ready(world)
+    message = receipt(lease, stage="startup", origin="admission", status=5)
+    async with receipt_subscription(world) as replies:
+        assert await relay_native_receipt(store, native_manager(binding), binding.device, message,
+                                          agent_session=binding.agent_session) == ReceiptRelay.PUBLISHED
+        envelope = await published(replies)
+        assert "admission_refused" not in envelope
+        assert await store.redis.hget(store.key(binding), "identity") == lease.identity
+        assert await store.redis.hget(store.key(binding), "phase") == "closing"
+
+
+@pytest.mark.parametrize("flag,changes", [
+    ("true", {}), (1, {}), (False, {}),
+    (True, {"origin": "injector"}), (True, {"stage": "input", "sequence": 1}),
+    (True, {"stage": "release", "origin": "injector", "status": 3}),
+])
+async def test_refusal_resolution_marker_cannot_describe_another_native_outcome(world, flag, changes):
+    store, other, binding, _ = world
+    lease = await ready(world)
+    seconds, micros = await store.redis.time()
+    message = receipt(lease, stage="startup", status=5, origin="admission") | changes
+    envelope = {"type": "_continuous_receipt_v1", "identity": lease.identity,
+                "expires_at_ms": int(seconds) * 1000 + int(micros) // 1000 + 400,
+                "receipt_json": json.dumps({"receipt": message}),
+                "admission_refused": flag}
+    assert await viewer_receipt(other, lease, envelope, viewer_worker=binding.viewer_worker) is None
+
+
 async def test_receipt_after_device_lease_expiry_does_not_reconstruct_or_publish_old_owner(world):
     store, _, binding, _ = world
     lease = await ready(world)

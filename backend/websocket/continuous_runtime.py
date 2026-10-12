@@ -315,15 +315,27 @@ class ContinuousRuntime:
                     return
                 receipt = await viewer_receipt(self.store, identity, data, viewer_worker=self.worker)
                 if receipt:
-                    if receipt["stage"] == "startup" and not await self.topology(viewer.device, identity.binding.agent_session):
-                        await self.retire(viewer)
+                    if viewer.lease != identity:
+                        return  # A validation await must not decide a newer owner's lifetime.
+                    refused = data.get("admission_refused") is True
+                    if receipt["stage"] == "startup" and not refused:
+                        current = await self.topology(viewer.device, identity.binding.agent_session)
+                        if viewer.lease != identity:
+                            return
+                        if not current:
+                            await self.retire(viewer)
+                            return
+                    if viewer.lease != identity:
                         return
-                    await self.send(viewer, receipt)
-                    if receipt["stage"] == "release" and receipt["status"] == 3:
+                    if refused or (receipt["stage"] == "release" and receipt["status"] == 3):
+                        # Complete this exact local owner before another socket callback
+                        # can open a replacement. The browser still receives the native
+                        # refusal; no ready/release/executed receipt is synthesized.
                         viewer.lease = None
                         viewer.offer = None
                         viewer.closing = False
                         viewer.direct_session = None
+                    await self.send(viewer, receipt)
                 return
         prefix = f"{self.store.namespace}:agent:"
         if not channel.startswith(prefix):

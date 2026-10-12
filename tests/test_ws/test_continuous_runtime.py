@@ -103,6 +103,57 @@ async def open_view(live):
 
 
 @pytest.mark.asyncio
+async def test_native_pre_owner_refusal_clears_local_slot_and_allows_fresh_probe(live):
+    runtimes, viewer, agent, _, session = live
+    runtime = runtimes[1]
+    original = agent.send_json.side_effect
+
+    async def decline_open(message):
+        if message['type'] != 'continuous_input_open':
+            return await original(message)
+        await runtimes[0].agent_message(viewer.device, session, {
+            'type': 'continuous_input_status', 'session_id': viewer.session,
+            'owner': message['owner'], 'capture_epoch': EPOCH,
+            'sequence': 0, 'status': 5, 'stage': 'startup', 'origin': 'admission',
+            'device_uptime_ms': 100,
+        })
+
+    agent.send_json.side_effect = decline_open
+    await runtime.handle(viewer, {'type': 'touch_probe'})
+    await eventually(lambda: viewer.offer is not None)
+    await runtime.handle(viewer, {'type': 'touch_open', 'capture_epoch': EPOCH,
+                                  'frame_width': 960, 'frame_height': 540})
+    await eventually(lambda: any(c.args[0].get('status') == 5 for c in viewer.ws.send_json.call_args_list))
+    assert viewer.lease is None and viewer.offer is None and not viewer.closing
+    assert not any(c.args[0].get('stage') == 'release' for c in viewer.ws.send_json.call_args_list)
+    await runtime.handle(viewer, {'type': 'touch_probe'})
+    await eventually(lambda: viewer.offer is not None)
+
+
+@pytest.mark.asyncio
+async def test_old_release_send_callback_cannot_erase_replacement_owner(live):
+    runtime, viewer, _ = await open_view(live)
+    old = viewer.lease
+    replaced = asyncio.Event()
+    newer = None
+
+    async def during_send(message):
+        nonlocal newer
+        if message.get('stage') == 'release':
+            newer = await runtime.store.acquire(old.binding)
+            assert newer is not None
+            viewer.lease = newer
+            viewer.closing = False
+            replaced.set()
+
+    viewer.ws.send_json.side_effect = during_send
+    await runtime.handle(viewer, {'type': 'touch_close'})
+    await asyncio.wait_for(replaced.wait(), 1)
+    assert viewer.lease == newer
+    assert await runtime.store.redis.hget(runtime.store.key(newer.binding), 'identity') == newer.identity.encode()
+
+
+@pytest.mark.asyncio
 async def test_open_cancelled_before_agent_delivery_confirms_admission_only_and_can_negotiate_again(live, monkeypatch):
     runtimes, viewer, agent, _, _ = live
     runtime = runtimes[1]

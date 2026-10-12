@@ -105,7 +105,10 @@ async def viewer_receipt(store: ContinuousLeaseStore, lease: InputLease, envelop
             if len(envelope.encode() if isinstance(envelope, str) else envelope) > MAX_WIRE_BYTES:
                 return None
             envelope = json.loads(envelope)
-        if not isinstance(envelope, dict) or envelope.keys() != {"type", "identity", "expires_at_ms", "receipt_json"}:
+        required = {"type", "identity", "expires_at_ms", "receipt_json"}
+        if not isinstance(envelope, dict) or envelope.keys() not in (required, required | {"admission_refused"}):
+            return None
+        if "admission_refused" in envelope and envelope["admission_refused"] is not True:
             return None
         if envelope["type"] != "_continuous_receipt_v1" or envelope["identity"] != lease.identity:
             return None
@@ -120,6 +123,8 @@ async def viewer_receipt(store: ContinuousLeaseStore, lease: InputLease, envelop
             return None
         message = payload["receipt"]
         receipt = InputReceipt.parse(message)
+        if "admission_refused" in envelope and not receipt.refused_startup:
+            return None
         if (receipt.session != lease.binding.viewer_session or receipt.owner != lease.owner
                 or receipt.epoch != lease.binding.capture.epoch):
             return None

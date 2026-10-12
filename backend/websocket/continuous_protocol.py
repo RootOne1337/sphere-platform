@@ -172,5 +172,9 @@ class InputReceipt:
         return self.stage == "release" and self.origin == "injector" and self.status == 3
 
     @property
+    def refused_startup(self) -> bool:
+        return self.stage == "startup" and self.origin == "admission" and self.status == 5 and self.sequence == 0
+
+    @property
     def failed(self) -> bool:
         return self.status in (4, 5, 6)
