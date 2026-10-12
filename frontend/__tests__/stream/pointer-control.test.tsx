@@ -326,24 +326,68 @@ it('a confirmed navigation during capability negotiation rearms fresh readiness 
   expect(jest.getTimerCount()).toBe(0);
 });
 
-it('a changed capture during negotiation retains its deadline and recovers the viewer without touch authority', async () => {
+it('a stale capability retries only input on the healthy viewer and still requires fresh native startup', async () => {
   const view = readyContinuous();
   fireEvent.click(view.getByRole('button', { name: 'Домой' }));
   await act(async () => view.status(0, 3, 'release'));
   view.receive({ type: 'touch_capability', capture_epoch: '11223344-5566-7788-99aa-bbccddeeff00', frame_width: 1280, frame_height: 720 });
-  expect(view.container.querySelector('[data-control-state]')).toHaveAttribute('data-control-state', 'probing');
+  expect(view.container.querySelector('[data-control-state]')).toHaveAttribute('data-control-state', 'closed');
   view.down(2); view.up(2, 65);
   expect(view.commands()).toEqual([]);
   expect(view.sent().filter(x => x.type === 'touch_open')).toHaveLength(1);
-  act(() => jest.advanceTimersByTime(6000));
-  expect(view.container.querySelector('[data-control-state]')).toHaveAttribute('data-control-failure', 'capability_timeout');
+  expect(view.container.querySelector('[data-control-state]')).toHaveAttribute('data-control-failure', 'capability_changed');
   expect(view.getByRole('button', { name: 'Домой' })).toBeDisabled();
-  act(() => jest.advanceTimersByTime(3750));
-  expect(view.socket.close).toHaveBeenCalledTimes(1);
-  expect(MockSocket.instances).toHaveLength(2);
+  const probes = view.sent().filter(x => x.type === 'touch_probe').length;
+  act(() => jest.advanceTimersByTime(750));
+  expect(view.sent().filter(x => x.type === 'touch_probe')).toHaveLength(probes + 1);
+  expect(view.socket.close).not.toHaveBeenCalled();
+  expect(MockSocket.instances).toHaveLength(1);
   expect(view.sent().filter(x => x.type === 'touch_event')).toEqual([]);
+  view.receive({ type: 'touch_capability', capture_epoch: TOUCH_EPOCH, frame_width: 1280, frame_height: 720 });
+  view.receive({ type: 'touch_session', session_id: 'new_capture_session', owner: 'new_capture_owner',
+    capture_epoch: TOUCH_EPOCH, frame_width: 1280, frame_height: 720 });
+  view.down(3); view.up(3, 65);
+  expect(view.sent().filter(x => x.type === 'touch_event')).toEqual([]);
+  view.receive({ type: 'continuous_input_status', session_id: 'new_capture_session', owner: 'new_capture_owner',
+    capture_epoch: TOUCH_EPOCH, sequence: 0, status: 0, stage: 'startup', origin: 'injector', device_uptime_ms: 900 });
+  view.down(4); view.up(4, 65);
+  expect(view.sent().filter(x => x.type === 'touch_event').map(x => x.action)).toEqual([0, 1]);
   view.unmount();
   expect(jest.getTimerCount()).toBe(0);
+});
+
+it('a missing capability on a negotiated direct control channel retries without replacing video or sending input', () => {
+  mockCapture = { captureEpoch: TOUCH_EPOCH, frameWidth: 1280, frameHeight: 720 };
+  const view = readyWheel();
+  mockDirectEndpoint = directEndpoint();
+  act(() => view.socket.onmessage?.({ data: JSON.stringify({ type: 'stream_session', schema_version: 1,
+    history_enabled: true, session_id: '1'.repeat(16), report_interval_seconds: 10 }) }));
+  const sent = () => view.socket.send.mock.calls.map(([message]) => JSON.parse(message as string));
+  expect(sent().filter(x => x.type === 'touch_probe')).toHaveLength(1);
+  act(() => jest.advanceTimersByTime(6000));
+  expect(view.container.querySelector('[data-control-state]')).toHaveAttribute('data-control-failure', 'capability_timeout');
+  expect(view.container.querySelector('[data-control-state]')).toHaveAttribute('data-control-state', 'closed');
+  act(() => jest.advanceTimersByTime(750));
+  expect(sent().filter(x => x.type === 'touch_probe')).toHaveLength(2);
+  expect(sent().filter(x => ['touch_open', 'touch_direct_open', 'touch_event', 'click', 'swipe'].includes(x.type))).toEqual([]);
+  expect(view.socket.close).not.toHaveBeenCalled();
+  expect(MockSocket.instances).toHaveLength(1);
+  view.unmount(); expect(jest.getTimerCount()).toBe(0);
+});
+
+it('a late direct channel re-arms capability after the unknown-support deadline without replay', () => {
+  mockCapture = { captureEpoch: TOUCH_EPOCH, frameWidth: 1280, frameHeight: 720 };
+  const view = readyWheel();
+  const sent = () => view.socket.send.mock.calls.map(([message]) => JSON.parse(message as string));
+  act(() => view.socket.onmessage?.({ data: JSON.stringify({ type: 'stream_session', schema_version: 1,
+    history_enabled: true, session_id: '1'.repeat(16), report_interval_seconds: 10 }) }));
+  act(() => jest.advanceTimersByTime(6000));
+  expect(sent().filter(x => x.type === 'touch_probe')).toHaveLength(1);
+  act(() => mockDirectObserve?.(directEndpoint()));
+  expect(sent().filter(x => x.type === 'touch_probe')).toHaveLength(2);
+  expect(sent().filter(x => ['touch_open', 'touch_direct_open', 'touch_event', 'click', 'swipe'].includes(x.type))).toEqual([]);
+  expect(view.socket.close).not.toHaveBeenCalled();
+  view.unmount(); expect(jest.getTimerCount()).toBe(0);
 });
 
 it('blur cancels ownership and never falls back to replaying a legacy drag', () => {

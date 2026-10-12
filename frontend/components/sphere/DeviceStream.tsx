@@ -234,6 +234,9 @@ export function DeviceStream({
   const continuousBusy = !['idle', 'probing', 'closed', 'destroyed'].includes(continuousState);
   const continuousRecording = recordingMode;
   const inspectionActive = !!inspection;
+  // Capability negotiation has no controller yet. Report its actual phase,
+  // rather than leaving the last controller's state as a misleading idle.
+  telemetryControl.current.state = continuousRef.current?.state ?? continuousState;
   continuousAllowedRef.current = canInteract && !continuousRecording && continuousRequestedRef.current;
   // Age is not a disconnect: an idle ImageReader can retain its last picture.
   // A new socket/decoder still needs its own first frame before accepting input.
@@ -287,6 +290,11 @@ export function DeviceStream({
     if (diagnosticReporter.current?.sessionId !== session || directControlRef.current === endpoint) return;
     const previous = directControlRef.current;
     directControlRef.current = endpoint;
+    if (endpoint?.readyState === 1 && !continuousRef.current && !continuousRequestedRef.current) {
+      // A late authenticated control channel may arrive after the first
+      // capability deadline. There is no owner or touch to release here.
+      automaticProbeRef.current = null;
+    }
     if (previous && continuousRouteRef.current === previous && previous !== endpoint) {
       // Revoke the old native owner through the independent server path.
       // No failed DOWN/MOVE/UP is sent again through another transport.
@@ -568,6 +576,27 @@ export function DeviceStream({
           }, FRAME_STALE_TIMEOUT_MS);
           scheduleKeyFrameRequests();
         };
+        const retryCapabilityWithoutOwner = (reason: 'capability_changed' | 'capability_timeout') => {
+          if (ignore || ended || newWs !== wsRef.current || !continuousRequestedRef.current || continuousRef.current) return;
+          // A probe grants no owner and admits no touch. Its stale/missing reply
+          // can be replaced independently of a healthy video peer. Once OPEN
+          // created a controller, only that owner's native RELEASE may retire it.
+          clearTimeout(probeTimer);
+          continuousRequestedRef.current = false;
+          continuousSupportedRef.current = true;
+          idleRecoveryCountRef.current = Math.min(Number.MAX_SAFE_INTEGER, idleRecoveryCountRef.current + 1);
+          setIdleRecoveryCount(idleRecoveryCountRef.current);
+          idleRecoveringRef.current = true;
+          setIdleRecovering(true);
+          telemetryControl.current.state = 'closed';
+          telemetryControl.current.failure = 'server_admission_retry';
+          setContinuousState('closed');
+          setContinuousFailureCode(reason);
+          setContinuousReason(reason === 'capability_changed'
+            ? 'Кадр Android обновился · повторно согласуем управление. Команды не повторяются.'
+            : 'Повторно запрашиваем возможности управления APK. Команды не повторяются.');
+          reporter.report(true);
+        };
         newWs.onmessage = (evt) => {
           if (ignore || ended) return;
           lastReceived = Date.now();
@@ -611,11 +640,7 @@ export function DeviceStream({
                 const capture = renderedCaptureRef.current;
                 if (!capture || msg.capture_epoch !== capture.captureEpoch || msg.frame_width !== capture.frameWidth
                   || msg.frame_height !== capture.frameHeight) {
-                  // The response grants no touch authority. Keep the owned probe
-                  // deadline alive: a geometry race must not strand a previously
-                  // confirmed continuous path in idle with legacy input blocked.
-                  setContinuousState('probing');
-                  setContinuousReason('Экран Android изменился · ожидаем совпадение кадра и возможностей APK.');
+                  retryCapabilityWithoutOwner('capability_changed');
                   return;
                 }
                 const endpoint = directVideoRef.current.active && directControlRef.current?.readyState === 1 ? directControlRef.current : null;
@@ -625,7 +650,7 @@ export function DeviceStream({
                 const controller = new ContinuousPointer({ socket: inputTransport,
                   renderedCapture: () => renderedCaptureRef.current,
                   onFence: snapshot => {
-                    if (ignore || ended || newWs !== wsRef.current
+                    if (ignore || ended || newWs !== wsRef.current || continuousRef.current !== controller
                       || ['viewer_closed', 'viewer_destroyed', 'surface_blur', 'surface_hidden', 'surface_control_lost', 'control_mode_changed', 'capture_or_socket_lost'].includes(snapshot.reason)) return;
                     const atMs = Date.now();
                     setPointerFailure({ deviceId, accessToken, socket: newWs, snapshot, atMs });
@@ -634,7 +659,7 @@ export function DeviceStream({
                     reporter.report(true);
                   },
                   onState: (state, reason) => {
-                    if (ignore || ended || newWs !== wsRef.current) return;
+                    if (ignore || ended || newWs !== wsRef.current || continuousRef.current !== controller) return;
                     setContinuousState(state);
                     telemetryControl.current.state = state;
                     const idleReceiptLoss = reason === 'native_receipt_timeout' && controller.recoverableIdleReceiptLoss;
@@ -700,7 +725,7 @@ export function DeviceStream({
                     if (state === 'ready') continuousReadySinceRef.current = performance.now();
                   },
                   onReceipt: receipt => {
-                    if (ignore || ended || newWs !== wsRef.current) return;
+                    if (ignore || ended || newWs !== wsRef.current || continuousRef.current !== controller) return;
                     const now = performance.now();
                     // Only sustained native receipts reset retry backoff, not merely
                     // receiving a frame or opening another WebSocket.
@@ -822,16 +847,10 @@ export function DeviceStream({
           clearTimeout(probeTimer);
           probeTimer = setTimeout(() => {
             if (continuousRequestedRef.current && !continuousRef.current) {
-              continuousRequestedRef.current = false;
-              if (continuousSupportedRef.current) {
-                idleRecoveryCountRef.current = Math.min(Number.MAX_SAFE_INTEGER, idleRecoveryCountRef.current + 1);
-                setIdleRecoveryCount(idleRecoveryCountRef.current);
-                idleRecoveringRef.current = true;
-                setIdleRecovering(true);
-                setContinuousState('fenced');
-                setContinuousFailureCode('capability_timeout');
-                setContinuousReason('Автоматически восстанавливаем управление · ожидаем новые возможности APK. Команды не повторяются.');
+              if (continuousSupportedRef.current || directVideoRef.current.active && directControlRef.current?.readyState === 1) {
+                retryCapabilityWithoutOwner('capability_timeout');
               } else {
+                continuousRequestedRef.current = false;
                 setContinuousState('idle');
                 setContinuousReason('Дискретное управление · APK не подтвердил непрерывные жесты.');
               }
@@ -1009,7 +1028,7 @@ export function DeviceStream({
     beginContinuous();
     // A single capability attempt per owned video/mode; never replay a failed gesture.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [canInteract, enableNavigation, inspection, readOnly, continuousRecording, taskHandoffId, discreteBusy, continuousState]);
+  }, [canInteract, enableNavigation, inspection, readOnly, continuousRecording, taskHandoffId, discreteBusy, continuousState, directControlVersion]);
 
   useEffect(() => {
     if (!idleRecovering || !idleRecoveryAllowedRef.current) return;
