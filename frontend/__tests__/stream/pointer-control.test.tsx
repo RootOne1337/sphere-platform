@@ -207,6 +207,54 @@ it('an existing server owner is released before promoting an idle direct channel
   view.unmount();
 });
 
+it('pending idle heartbeats do not strand recovered direct input on a slower server route', () => {
+  const view = readyContinuous();
+  view.receive({ type: 'stream_session', schema_version: 1, history_enabled: true,
+    session_id: '1'.repeat(16), report_interval_seconds: 10 });
+  act(() => jest.advanceTimersByTime(288));
+  expect(view.sent().filter(row => row.type === 'touch_event').map(row => row.action)).toEqual([4]);
+  const endpoint = directEndpoint();
+  act(() => {
+    mockVideoObserve?.({ admitted: true, admissionKnown: true, active: true, frames: 1,
+      lastFrameAt: 1, attempts: 1, result: null });
+    mockDirectObserve?.(endpoint);
+  });
+  expect(view.sent().filter(row => row.type === 'touch_close')).toHaveLength(1);
+  expect(view.sent().filter(row => row.type === 'touch_direct_open')).toHaveLength(0);
+  view.down(1); view.up(1);
+  expect(view.sent().filter(row => row.type === 'touch_event').map(row => row.action)).toEqual([4]);
+  view.status(0, 3, 'release');
+  view.receive({ type: 'touch_capability', capture_epoch: TOUCH_EPOCH, frame_width: 1280, frame_height: 720 });
+  expect(view.sent().filter(row => row.type === 'touch_direct_open')).toHaveLength(1);
+  expect(endpoint.send).not.toHaveBeenCalled();
+  view.unmount();
+});
+
+it('direct promotion waits for a held gesture and its native UP while ignoring only idle heartbeats', () => {
+  const view = readyContinuous();
+  view.receive({ type: 'stream_session', schema_version: 1, history_enabled: true,
+    session_id: '1'.repeat(16), report_interval_seconds: 10 });
+  view.down(1); view.status(1, 1);
+  const endpoint = directEndpoint();
+  act(() => {
+    mockVideoObserve?.({ admitted: true, admissionKnown: true, active: true, frames: 1,
+      lastFrameAt: 1, attempts: 1, result: null });
+    mockDirectObserve?.(endpoint);
+  });
+  expect(view.sent().filter(row => row.type === 'touch_close')).toHaveLength(0);
+  view.up(1);
+  act(() => jest.advanceTimersByTime(288));
+  expect(view.sent().filter(row => row.type === 'touch_event').map(row => row.action)).toEqual([0, 1, 4]);
+  expect(view.sent().filter(row => row.type === 'touch_close')).toHaveLength(0);
+  view.status(2, 1);
+  expect(view.sent().filter(row => row.type === 'touch_close')).toHaveLength(1);
+  expect(view.sent().filter(row => row.type === 'touch_direct_open')).toHaveLength(0);
+  view.status(0, 3, 'release');
+  view.receive({ type: 'touch_capability', capture_epoch: TOUCH_EPOCH, frame_width: 1280, frame_height: 720 });
+  expect(view.sent().filter(row => row.type === 'touch_direct_open')).toHaveLength(1);
+  view.unmount();
+});
+
 it('installed canvas integration sends MOVE before UP without a second legacy swipe', () => {
   const view = readyContinuous();
   expect(view.queryByRole('button', { name: /непрерывные жесты/i })).not.toBeInTheDocument();

@@ -92,6 +92,10 @@ export class ContinuousPointer {
   get pendingReceiptCount() { return this.pending.length; }
   get hasPendingMove() { return this.move !== null; }
   get pointerHeld() { return this.held !== null; }
+  /** Idle keepalives have no touch outcome. The old owner still needs native RELEASE before replacement. */
+  get pointerOutcomeConfirmed() {
+    return !this.held && !this.move && !this.terminal && this.pending.every(entry => entry.idleHeartbeat);
+  }
   /** No Android touch or terminal outcome is unknown in this narrowly scoped failure. */
   get recoverableIdleReceiptLoss() { return this.idleReceiptLoss; }
   /** The prior touch outcome stays unknown; only native RELEASE can retire its authority. */

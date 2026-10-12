@@ -973,10 +973,11 @@ export function DeviceStream({
   useEffect(() => {
     const controller = continuousRef.current;
     const endpoint = directVideo.active && directControlRef.current?.readyState === 1 ? directControlRef.current : null;
-    // Upgrade only an idle, fully acknowledged owner. Known RELEASE is required
-    // before the normal capability effect admits its replacement on a new route.
+    // Idle keepalives can overlap forever when server RTT exceeds their interval.
+    // They have no touch outcome to await. Every actual gesture must be confirmed,
+    // and native RELEASE is still required before the replacement owner opens.
     if (controller?.state === 'ready' && endpoint && continuousRouteRef.current !== endpoint
-      && !controller.pointerHeld && controller.pendingReceiptCount === 0 && !discreteBusyRef.current) controller.close();
+      && controller.pointerOutcomeConfirmed && !discreteBusyRef.current) controller.close();
   }, [directControlVersion, directVideo.active, continuousState, continuousReceipt]);
   useEffect(() => {
     if (inspection || readOnly || continuousRecording || taskHandoffId !== undefined) {
