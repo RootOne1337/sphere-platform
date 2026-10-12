@@ -72,6 +72,42 @@ it('an exact server cancellation resolves a retired opening that never reached n
   expect(f.events()).toEqual([]);
 });
 
+it.each(['onState', 'onFence'] as const)(
+  'cleanup precedes %s telemetry that can fill the shared WebSocket buffer', observer => {
+    const f = fixture(false);
+    f.controller.open(CAPTURE);
+    const telemetry = () => {
+      f.socket.send(JSON.stringify({ type: 'viewer_telemetry', sample: { phase: 'fenced' } }));
+      f.socket.bufferedAmount = LIMITS.bufferedBytes + 1;
+    };
+    if (observer === 'onState') f.onState.mockImplementation(state => { if (state === 'fenced') telemetry(); });
+    else f.onFence.mockImplementation(telemetry);
+    f.controller.retire('surface_control_lost');
+    expect(f.sent.slice(1)).toEqual([
+      { type: 'touch_close', cancel_unstarted: true },
+      { type: 'viewer_telemetry', sample: { phase: 'fenced' } },
+    ]);
+    expect(f.onFence).toHaveBeenCalledWith(expect.objectContaining({ bufferedBytes: 0, offeredSequence: 0 }));
+    f.bind();
+    expect(f.controller.receive({ type: 'touch_cancelled', ...IDENTITY, origin: 'admission' })).toBe(true);
+    expect(f.controller.state).toBe('closed');
+    expect(f.events()).toEqual([]);
+  },
+);
+
+it('an immediate exact RELEASE during cleanup is not overwritten by the delayed fence observer', () => {
+  const f = fixture();
+  f.socket.send.mockImplementationOnce(raw => {
+    f.sent.push(JSON.parse(raw));
+    f.status(0, 3, 'release');
+  });
+  f.controller.retire('surface_control_lost');
+  expect(f.controller.state).toBe('closed');
+  expect(f.onState).toHaveBeenLastCalledWith('closed', null);
+  expect(f.sent.filter(row => row.type === 'touch_close')).toHaveLength(1);
+  expect(f.events()).toEqual([]);
+});
+
 it.each(['foreign', 'no_identity', 'native_ready', 'unknown_release', 'extra_fields'])(
   'a cancellation cannot release %s input authority', variant => {
     const f = fixture(variant === 'native_ready');

@@ -375,8 +375,10 @@ export class ContinuousPointer {
         ? this.options.socket.bufferedAmount : null });
     this.held = this.move = this.terminal = null;
     this.pending = [];
-    this.transition('fenced', reason);
-    try { this.options.onFence?.(snapshot); } catch { /* Diagnostics never postpone release or replay input. */ }
+    // Revoke before notifying observers: onFence reports share this socket and
+    // can immediately raise bufferedAmount above the input byte budget. The
+    // previous order let our own diagnostics silently prevent the only CLOSE.
+    this.stateValue = 'fenced';
     if (!this.closeSent && (this.writable() || this.options.socket.closeInput)) {
       this.closeSent = true;
       try {
@@ -386,6 +388,10 @@ export class ContinuousPointer {
       }
       catch { /* Unknown close is not retried; native watchdog remains mandatory. */ }
     }
+    // A synchronous transport may already have delivered exact cleanup proof.
+    // An observer cannot overwrite that confirmed closed state with fenced.
+    if (this.stateValue === 'fenced') this.transition('fenced', reason);
+    try { this.options.onFence?.(snapshot); } catch { /* Diagnostics never postpone release or replay input. */ }
   }
 
   close(): void {
