@@ -99,6 +99,34 @@ class ProcessTouchPipeTest {
         Unit
     }
 
+    @Test fun `normal owned helper exit confirms cleanup when Android closes output pipes during drain`() = runBlocking {
+        val (process, _) = process(ByteArray(0))
+        val closedPipe = object : InputStream() {
+            override fun read(): Int = throw IOException("fixture stream already closed")
+            override fun available(): Int = throw IOException("fixture stream already closed")
+        }
+        every { process.inputStream } returns closedPipe
+        every { process.errorStream } returns closedPipe
+        every { process.isAlive } returnsMany listOf(true, false, false, false)
+        val pipe = ProcessTouchPipe(process)
+        assertTrue(pipe.closeAndConfirm())
+        verify(exactly = 0) { process.destroyForcibly() }
+        Unit
+    }
+
+    @Test fun `closed output pipes never convert failed helper exit to confirmed release`() = runBlocking {
+        val (process, _) = process(ByteArray(0), exit = 2)
+        val closedPipe = object : InputStream() {
+            override fun read(): Int = throw IOException("fixture stream already closed")
+            override fun available(): Int = throw IOException("fixture stream already closed")
+        }
+        every { process.inputStream } returns closedPipe
+        every { process.errorStream } returns closedPipe
+        every { process.isAlive } returnsMany listOf(true, false, false, false)
+        assertFalse(ProcessTouchPipe(process).closeAndConfirm())
+        Unit
+    }
+
     @Test fun `stdin failure is not replayed and closure still checks owned process`() = runBlocking {
         val (process,_) = process(ByteArray(0))
         val broken = object : OutputStream() {

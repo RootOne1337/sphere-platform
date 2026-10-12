@@ -101,20 +101,22 @@ internal class ProcessTouchPipe(private val process: Process) : TouchPipe {
         runCatching { stdin.close() }
         val deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(2)
         // EOF asks the helper to cancel before exiting. Force-kill is cleanup, not release confirmation.
-        var drainValid = true
         var outputBytes = 0
         while (process.isAlive && System.nanoTime() < deadline) {
-            runCatching { drainStderr() }.onFailure { drainValid = false }
+            runCatching { drainStderr() }
             runCatching {
                 val count = stdout.available()
-                if (count > 0) {
-                    outputBytes += stdout.read(ByteArray(minOf(count, 1024)))
-                    if (outputBytes > 4096) drainValid = false
+                if (count > 0 && outputBytes < 4096) {
+                    outputBytes += stdout.read(ByteArray(minOf(count, 1024, 4096 - outputBytes))).coerceAtLeast(0)
                 }
-            }.onFailure { drainValid = false }
+            }
             delay(10)
         }
-        val confirmed = drainValid && !process.isAlive && runCatching { process.exitValue() == 0 }.getOrDefault(false)
+        // The owned helper's normal exit is its cleanup receipt. Android may
+        // close stdout/stderr between isAlive and available(); that drain race
+        // must not turn a proven exit0 into a permanent input fence. A nonzero
+        // exit, deadline or force-kill still never confirms native release.
+        val confirmed = !process.isAlive && runCatching { process.exitValue() == 0 }.getOrDefault(false)
         if (process.isAlive) runCatching { process.destroyForcibly() }
         runCatching { stdout.close() }
         runCatching { stderr.close() }

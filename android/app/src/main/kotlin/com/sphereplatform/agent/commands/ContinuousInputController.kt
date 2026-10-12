@@ -253,7 +253,7 @@ internal class ContinuousInputController(
         generation() == owner.generation && capture() == owner.capture &&
         (owner.direct == null || owner.direct.isCurrent() && uptime() < owner.grantUntil)
 
-    private fun currentFailure(owner: Owner) = when {
+    private fun currentFailure(owner: Owner): NativeInputDiagnostics.Failure = when {
         supervisor.needsReset() -> NativeInputDiagnostics.Failure.CLEANUP_UNKNOWN
         !scope.isActive -> NativeInputDiagnostics.Failure.SCOPE_INACTIVE
         owner.retired || closing.get() -> NativeInputDiagnostics.Failure.RETIRING_OWNER
