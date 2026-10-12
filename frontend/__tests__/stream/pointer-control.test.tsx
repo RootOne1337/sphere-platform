@@ -1228,6 +1228,38 @@ it('a cancelled undelivered opening renegotiates input on the same video without
   view.unmount();
 });
 
+it.each(['native_release', 'admission_cancel', 'permission_denied'])('old CLOSE errors preserve cleanup and permission boundaries: %s', (completion) => {
+  mockCapture = { captureEpoch: TOUCH_EPOCH, frameWidth: 1280, frameHeight: 720 };
+  const view = readyWheel();
+  const receive = (message: object) => act(() => view.socket.onmessage?.({ data: JSON.stringify(message) }));
+  const sent = () => view.socket.send.mock.calls.map(([raw]) => JSON.parse(raw as string));
+  receive({ type: 'touch_capability', capture_epoch: TOUCH_EPOCH, frame_width: 1280, frame_height: 720 });
+  receive({ type: 'touch_session', session_id: 'viewer_session_fixture', owner: 'retiring_owner_fixture',
+    capture_epoch: TOUCH_EPOCH, frame_width: 1280, frame_height: 720 });
+  jest.spyOn(document, 'hidden', 'get').mockReturnValue(true);
+  fireEvent(document, new Event('visibilitychange'));
+  expect(sent().filter(row => row.type === 'touch_close')).toHaveLength(1);
+  jest.spyOn(document, 'hidden', 'get').mockReturnValue(false);
+  fireEvent(document, new Event('visibilitychange'));
+  receive({ type: 'touch_error', operation: 'touch_close', owner: 'retiring_owner_fixture',
+    error: completion === 'permission_denied' ? 'control_denied' : 'input_rejected_or_unavailable' });
+  act(() => jest.advanceTimersByTime(1200));
+  expect(sent().filter(row => row.type === 'touch_probe')).toHaveLength(1);
+  if (completion !== 'admission_cancel') {
+    receive({ type: 'continuous_input_status', session_id: 'viewer_session_fixture', owner: 'retiring_owner_fixture',
+      capture_epoch: TOUCH_EPOCH, sequence: 0, status: 3, stage: 'release', origin: 'injector', device_uptime_ms: 100 });
+  } else {
+    receive({ type: 'touch_cancelled', session_id: 'viewer_session_fixture', owner: 'retiring_owner_fixture',
+      capture_epoch: TOUCH_EPOCH, origin: 'admission' });
+  }
+  act(() => jest.advanceTimersByTime(1200));
+  expect(sent().filter(row => row.type === 'touch_probe')).toHaveLength(completion === 'permission_denied' ? 1 : 2);
+  expect(sent().filter(row => row.type === 'touch_event')).toEqual([]);
+  expect(MockSocket.instances).toHaveLength(1);
+  expect(view.commands()).toEqual([]);
+  view.unmount();
+});
+
 it('switching a ready continuous session to recording waits for release then records a discrete action', () => {
   const view = readyContinuous();
   const record = jest.fn();

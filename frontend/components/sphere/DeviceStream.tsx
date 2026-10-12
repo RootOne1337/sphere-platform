@@ -762,6 +762,11 @@ export function DeviceStream({
                 const controller = continuousRef.current;
                 if (typeof msg.owner === 'string' && !controller?.matchesServerOwner(msg.owner)) return;
                 if (controller?.state === 'closed' && (msg.operation === 'touch_close' || controller.matchesServerOwner(msg.owner))) return;
+                // An old CLOSE error does not resolve retirement, but cannot
+                // poison recovery after the exact RELEASE/cancellation arrives.
+                // Keep waiting for that proof; a permission denial stays terminal.
+                if (controller && ['closing', 'fenced'].includes(controller.state)
+                  && msg.operation === 'touch_close' && msg.error !== 'control_denied') return;
                 clearTimeout(probeTimer);
                 const admissionMessage = msg.error === 'input_admission_rejected' && msg.retryable === true
                   && typeof msg.reason === 'string' && Object.hasOwn(ADMISSION_RETRY_MESSAGES, msg.reason)
