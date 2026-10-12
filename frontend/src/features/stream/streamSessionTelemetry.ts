@@ -22,7 +22,8 @@ const directStates = new Set(['gathering', 'signaling', 'connecting', 'connected
 const controlFailures = new Set(['native_receipt_timeout', 'idle_receipt_timeout', 'pointer_receipt_timeout', 'native_startup_busy', 'native_input_rejected_or_unknown',
   'server_rejected', 'server_runtime_retry', 'server_admission_retry', 'release_unknown', 'pointer_release_unknown',
   'discrete_result_unknown', 'scheduler_gap', 'socket_backpressure', 'socket_send_failed',
-  'invalid_native_receipt', 'invalid_startup_receipt', 'invalid_input_receipt', 'receipt_action_mismatch']);
+  'invalid_native_receipt', 'invalid_startup_receipt', 'invalid_input_receipt', 'receipt_action_mismatch',
+  'surface_control_lost', 'surface_blur', 'surface_hidden', 'capture_or_socket_lost']);
 export const directFailure = (reason: string | null | undefined) => reason ? reasons.has(reason) ? reason : 'other' : null;
 
 function controlFence(fence: PointerFenceObservation | null | undefined, ageMs: number | null) {

@@ -16,7 +16,7 @@ export interface PointerTransport {
   readonly bufferedAmount: number;
   send(data: string): void;
   /** An independent revocation path may survive loss of the input data channel. */
-  closeInput?(): void;
+  closeInput?(cancelUnstarted?: boolean): void;
 }
 export interface PointerObservation {
   sequence: number; action: number; status: 1 | 2 | 3; deviceUptimeMs: number; receiptRoundTripMs: number;
@@ -84,6 +84,7 @@ export class ContinuousPointer {
   private pointerReceiptLoss = false;
   private nativeFailure = false;
   private releaseFailed = false;
+  private nativeStarted = false;
   private lastReceipt: { at: number; roundTripMs: number } | null = null;
   private readonly now: () => number;
 
@@ -156,7 +157,7 @@ export class ContinuousPointer {
 
   /** Trusted server replies, received on the same socket, never browser-selected owner metadata. */
   receive(message: unknown): boolean {
-    if (!object(message) || !['touch_session', 'continuous_input_status'].includes(String(message.type))) return false;
+    if (!object(message) || !['touch_session', 'touch_cancelled', 'continuous_input_status'].includes(String(message.type))) return false;
     if (this.stateValue === 'idle' || this.stateValue === 'closed' || this.stateValue === 'destroyed') return false;
     if (message.type === 'touch_session') {
       // CLOSE can overtake the server's identity reply while a mode, frame or
@@ -177,6 +178,17 @@ export class ContinuousPointer {
     // Foreign, stale and unsolicited receipts cannot release or fail another owner.
     if (!this.session || message.owner !== this.session.owner || message.session_id !== this.session.session
       || message.capture_epoch !== this.capture?.captureEpoch) return false;
+    if (message.type === 'touch_cancelled') {
+      // The server's atomic delivery claim proves this exact OPEN was never
+      // offered to the APK socket. A timeout/absent STARTUP cannot prove this.
+      // Once native STARTUP or uncertain cleanup exists, only RELEASE3 applies.
+      if (!exact(message, ['type', 'session_id', 'owner', 'capture_epoch', 'origin'])
+        || message.origin !== 'admission' || !this.closeSent || this.nativeStarted || this.releaseFailed
+        || this.held || this.terminal || this.pending.some(p => p.action !== 4)) return false;
+      this.pending = [];
+      this.transition('closed', 'server_admission_retry');
+      return true;
+    }
     if (!exact(message, ['type', 'session_id', 'owner', 'capture_epoch', 'sequence', 'status', 'stage', 'origin', 'device_uptime_ms'])
       || !integer(message.sequence, 0, CONTINUOUS_POINTER_LIMITS.maxSequence)
       || !integer(message.device_uptime_ms, 0, Number.MAX_SAFE_INTEGER)
@@ -217,6 +229,7 @@ export class ContinuousPointer {
         // Only keepalives can be sent before STARTUP0. Cold root startup has its own
         // deadline; their receipt deadline starts at READY, while RTT retains send time.
         this.pending = this.pending.map(p => ({ ...p, deadlineAt: this.now() }));
+        this.nativeStarted = true;
         this.transition('ready'); return true;
       }
       this.retire('invalid_startup_receipt'); return false;
@@ -338,6 +351,7 @@ export class ContinuousPointer {
   retire(reason = 'viewer_retired'): void {
     if (this.stateValue === 'idle' || this.stateValue === 'closed' || this.stateValue === 'destroyed'
       || this.stateValue === 'closing' || this.stateValue === 'fenced') return;
+    const cancelUnstarted = this.stateValue === 'opening' && !this.nativeStarted;
     this.idleReceiptLoss = reason === 'native_receipt_timeout' && this.held === null
       && this.terminal === null && this.pending.length > 0 && this.pending.every(p => p.action === 4);
     this.nativeFailure = reason === 'native_input_rejected_or_unknown'
@@ -366,8 +380,9 @@ export class ContinuousPointer {
     if (!this.closeSent && (this.writable() || this.options.socket.closeInput)) {
       this.closeSent = true;
       try {
-        if (this.options.socket.closeInput) this.options.socket.closeInput();
-        else this.options.socket.send(JSON.stringify({ type: 'touch_close' }));
+        if (this.options.socket.closeInput) this.options.socket.closeInput(cancelUnstarted);
+        else this.options.socket.send(JSON.stringify(cancelUnstarted
+          ? { type: 'touch_close', cancel_unstarted: true } : { type: 'touch_close' }));
       }
       catch { /* Unknown close is not retried; native watchdog remains mandatory. */ }
     }

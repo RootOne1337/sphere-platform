@@ -57,6 +57,39 @@ it('discards pre-startup keepalives after native admission refusal without repla
   expect(f.status(1, 2)).toBe(false);
 });
 
+it('an exact server cancellation resolves a retired opening that never reached native delivery', () => {
+  const f = fixture(false);
+  f.controller.open(CAPTURE);
+  f.controller.retire('surface_control_lost');
+  f.capture(null);
+  f.bind();
+  expect(f.sent.at(-1)).toEqual({ type: 'touch_close', cancel_unstarted: true });
+  expect(f.controller.receive({ type: 'touch_cancelled', ...IDENTITY, origin: 'admission' })).toBe(true);
+  expect(f.controller.state).toBe('closed');
+  expect(f.onState).toHaveBeenLastCalledWith('closed', 'server_admission_retry');
+  expect(f.status(0, 0, 'startup')).toBe(false);
+  expect(f.controller.down(1, POINT)).toBe(false);
+  expect(f.events()).toEqual([]);
+});
+
+it.each(['foreign', 'no_identity', 'native_ready', 'unknown_release', 'extra_fields'])(
+  'a cancellation cannot release %s input authority', variant => {
+    const f = fixture(variant === 'native_ready');
+    if (variant !== 'native_ready') {
+      f.controller.open(CAPTURE);
+      if (variant !== 'no_identity') f.bind();
+    }
+    f.controller.retire('capture_or_socket_lost');
+    if (variant === 'unknown_release') f.status(0, 6, 'release');
+    const message = { type: 'touch_cancelled', ...IDENTITY, origin: 'admission',
+      ...(variant === 'foreign' ? { owner: 'foreign_owner_1234' } : {}),
+      ...(variant === 'extra_fields' ? { status: 3 } : {}) };
+    expect(f.controller.receive(message)).toBe(false);
+    expect(f.controller.state).toBe('fenced');
+    expect(f.controller.down(1, POINT)).toBe(false);
+  },
+);
+
 it.each(['control_mode_changed', 'capture_or_socket_lost', 'surface_blur'])(
   'accepts only the pending owner identity for release after an opening session is retired: %s', reason => {
     const f = fixture(false);

@@ -45,7 +45,8 @@ FENCE = dict(reason="native_receipt_timeout", phase="ready", age_ms=0, pointer_h
              socket_state=1, buffered_bytes=0)
 
 
-@pytest.mark.parametrize("cause", ["idle_receipt_timeout", "pointer_receipt_timeout"])
+@pytest.mark.parametrize("cause", ["idle_receipt_timeout", "pointer_receipt_timeout", "surface_control_lost",
+                                   "surface_blur", "surface_hidden", "capture_or_socket_lost"])
 async def test_control_fence_survives_sample_eviction_without_becoming_an_input_authority(store, cause):
     assert await store.begin(ORG, DEVICE, "viewer")
     assert await store.browser(ORG, DEVICE, "viewer", SAMPLE | {

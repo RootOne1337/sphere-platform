@@ -103,6 +103,50 @@ async def open_view(live):
 
 
 @pytest.mark.asyncio
+async def test_open_cancelled_before_agent_delivery_confirms_admission_only_and_can_negotiate_again(live, monkeypatch):
+    runtimes, viewer, agent, _, _ = live
+    runtime = runtimes[1]
+    await runtime.handle(viewer, {'type': 'touch_probe'})
+    await eventually(lambda: viewer.offer is not None)
+    reached, proceed = asyncio.Event(), asyncio.Event()
+    original = runtimes[0].store.delivery_command
+
+    async def delayed_guard(envelope, **scope):
+        if envelope['command']['type'] == 'continuous_input_open':
+            reached.set()
+            await proceed.wait()
+        return await original(envelope, **scope)
+
+    monkeypatch.setattr(runtimes[0].store, 'delivery_command', delayed_guard)
+    try:
+        await runtime.handle(viewer, dict(type='touch_open', capture_epoch=EPOCH,
+            frame_width=960, frame_height=540))
+        await asyncio.wait_for(reached.wait(), 1)
+        old = viewer.lease
+        await runtime.handle(viewer, {'type': 'touch_close', 'cancel_unstarted': True})
+        assert viewer.lease is None and not viewer.closing
+        assert viewer.ws.send_json.call_args_list[-1].args[0] == {
+            'type': 'touch_cancelled', 'session_id': viewer.session, 'owner': old.owner,
+            'capture_epoch': EPOCH, 'origin': 'admission'}
+        proceed.set()
+        await runtime.handle(viewer, {'type': 'touch_probe'})
+        await eventually(lambda: viewer.offer is not None)
+        assert all(c.args[0]['type'] != 'continuous_input_open' for c in agent.send_json.call_args_list)
+        assert all(c.args[0].get('stage') != 'release' for c in viewer.ws.send_json.call_args_list)
+    finally:
+        proceed.set()
+
+
+@pytest.mark.asyncio
+async def test_opted_in_cancel_after_delivery_still_requires_native_cleanup(live):
+    runtime, viewer, agent = await open_view(live)
+    await runtime.handle(viewer, {'type': 'touch_close', 'cancel_unstarted': True})
+    await eventually(lambda: viewer.lease is None)
+    assert all(c.args[0].get('type') != 'touch_cancelled' for c in viewer.ws.send_json.call_args_list)
+    assert any(c.args[0]['type'] == 'continuous_input_close' for c in agent.send_json.call_args_list)
+
+
+@pytest.mark.asyncio
 async def test_direct_open_is_bound_to_this_viewer_and_rechecks_peer_before_each_authority_renewal(live, monkeypatch):
     from types import SimpleNamespace
 

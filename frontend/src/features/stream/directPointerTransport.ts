@@ -36,13 +36,13 @@ export class DirectPointerTransport implements PointerTransport {
       || data.action < 0 || data.action > 4 || data.x < 0 || data.y < 0) throw Error('invalid_direct_input');
     this.direct.send(raw);
   }
-  closeInput(): void {
+  closeInput(cancelUnstarted = false): void {
     // Revocation stays available when the peer/data channel has already gone.
     // Sending CLOSE through both paths cancels one owner; it never replays a touch.
     if (this.direct.readyState === 1 && this.direct.bufferedAmount <= 1024) {
       try { this.direct.send('{"type":"touch_close"}'); } catch { /* Independent server revocation below. */ }
     }
     if (this.server.readyState !== 1 || this.server.bufferedAmount > 1024) throw Error('close_transport_unavailable');
-    this.server.send('{"type":"touch_close"}');
+    this.server.send(cancelUnstarted ? '{"type":"touch_close","cancel_unstarted":true}' : '{"type":"touch_close"}');
   }
 }

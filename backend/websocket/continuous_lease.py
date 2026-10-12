@@ -119,7 +119,7 @@ if op == 'acquire' then
     if redis.call('EXISTS', key) ~= 0 then return 'busy' end
     redis.call('HSET', key, 'identity', identity, 'phase', 'opening',
                'auth_until', now + auth, 'sequence', 0,
-               'held', 0, 'gesture', 0, 'last_gesture', 0)
+               'held', 0, 'gesture', 0, 'last_gesture', 0, 'open_delivery_started', 0)
     redis.call('PEXPIRE', key, lease)
     return 'acquired'
 end
@@ -127,6 +127,17 @@ if redis.call('HGET', key, 'identity') ~= identity or redis.call('PTTL', key) <=
     return 'stale'
 end
 local phase = redis.call('HGET', key, 'phase')
+if op == 'cancel_unstarted' then
+    -- This marker is claimed atomically before the first APK socket write.
+    -- Missing/expired/legacy authority or any claimed write is uncertain,
+    -- even when no native STARTUP arrived. Only an explicitly unclaimed OPEN
+    -- can be cancelled without asking an injector that never received it.
+    if redis.call('HGET', key, 'open_delivery_started') ~= '0' or phase == 'ready' then
+        return 'delivery_started'
+    end
+    redis.call('DEL', key)
+    return 'cancelled'
+end
 if op == 'relay_receipt' then
     local receipt = cjson.decode(ARGV[3]).receipt
     local direct = redis.call('HGET', key, 'direct_session')
@@ -142,7 +153,7 @@ if op == 'relay_receipt' then
             redis.call('HSET', key, 'phase', 'closing')
             return 'auth_expired'
         end
-        redis.call('HSET', key, 'phase', 'ready')
+        redis.call('HSET', key, 'phase', 'ready', 'open_delivery_started', 1)
     elseif receipt.stage == 'release' and receipt.status == 3 then
         redis.call('DEL', key)
     elseif receipt.status >= 4 then
@@ -176,7 +187,10 @@ if op == 'guard' then
     if command.type == 'continuous_input_open' then
         local direct = redis.call('HGET', key, 'direct_session')
         if (direct and command.direct_session ~= direct) or (not direct and command.direct_session) then return 'stale' end
-        if phase == 'opening_sent' or phase == 'ready' then return 'admitted' end
+        if phase == 'opening_sent' or phase == 'ready' then
+            redis.call('HSET', key, 'open_delivery_started', 1)
+            return 'admitted'
+        end
     elseif command.type == 'continuous_input_authorize' then
         if redis.call('HGET', key, 'direct_session') and
            command.sequence == tonumber(redis.call('HGET', key, 'direct_grant_sequence') or '-1') and
@@ -216,7 +230,7 @@ elseif now >= tonumber(redis.call('HGET', key, 'auth_until') or '0') then
     return 'auth_expired'
 elseif op == 'ready' then
     if phase ~= 'opening_sent' then return 'not_opening' end
-    redis.call('HSET', key, 'phase', 'ready')
+    redis.call('HSET', key, 'phase', 'ready', 'open_delivery_started', 1)
     return 'ready'
 elseif op == 'open' or op == 'open_direct' then
     if phase ~= 'opening' then return 'already_sent' end
@@ -346,7 +360,7 @@ class ContinuousLeaseStore:
         if not isinstance(result, str) or result not in {"acquired", "busy", "stale", "released", "closing", "authorized",
                           "auth_expired", "not_opening", "ready", "already_sent", "not_ready",
                           "invalid_order", "invalid_operation", "no_subscriber", "published",
-                          "admitted", "expired", "fenced", "relayed"}:
+                          "admitted", "expired", "fenced", "relayed", "cancelled", "delivery_started"}:
             raise InputLeaseUnavailable()
         return result
 
@@ -393,6 +407,15 @@ class ContinuousLeaseStore:
     async def close(self, lease: InputLease) -> str:
         # Revocation can close even after authorization expiry. Never renew/delete.
         return await self._operation("close", lease, {"type": "continuous_input_close", "owner": lease.owner})
+
+    async def cancel_unstarted(self, lease: InputLease) -> str:
+        """Cancel only a positively unclaimed OPEN, never infer native release.
+
+        Competes atomically with the receiving worker's delivery guard. A
+        successful cancellation makes every queued old envelope stale without
+        deleting a replacement or extending any authorization deadline.
+        """
+        return await self._operation("cancel_unstarted", lease)
 
     async def fence(self, lease: InputLease) -> None:
         """No publication or deletion. Unknown outcomes cannot enable another send."""

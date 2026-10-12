@@ -1188,6 +1188,46 @@ it('a view-mode change during startup waits for the late native release before e
   view.unmount();
 });
 
+it('a cancelled undelivered opening renegotiates input on the same video without waiting for nonexistent native release', () => {
+  mockCapture = { captureEpoch: TOUCH_EPOCH, frameWidth: 1280, frameHeight: 720 };
+  mockDecoderStats = { binaryMessagesReceived: 1, binaryBytesReceived: 100, renderedFrames: 1, decodedOutputs: 1,
+    invalidPackets: 0, decodeErrors: 0, renderErrors: 0, queueRecoveries: 0, staleOutputDrops: 0,
+    decoderQueueSize: 0, pendingOutputCount: 0, receivedPictureFps: 1, renderedFps: 1,
+    lastBinaryAtMs: null, lastRenderedAtMs: null };
+  const view = readyWheel();
+  const receive = (message: object) => act(() => view.socket.onmessage?.({ data: JSON.stringify(message) }));
+  const sent = () => view.socket.send.mock.calls.map(([raw]) => JSON.parse(raw as string));
+  receive({ type: 'stream_session', schema_version: 1, history_enabled: true,
+    session_id: '1'.repeat(16), report_interval_seconds: 10 });
+  act(() => jest.advanceTimersByTime(1100));
+  receive({ type: 'touch_capability', capture_epoch: TOUCH_EPOCH, frame_width: 1280, frame_height: 720 });
+  jest.spyOn(document, 'hidden', 'get').mockReturnValue(true);
+  fireEvent(document, new Event('visibilitychange'));
+  expect(sent().filter(row => row.type === 'touch_close')).toEqual([{type: 'touch_close', cancel_unstarted: true}]);
+  const fence = sent().filter(row => row.type === 'viewer_telemetry').at(-1)?.sample.control_fence;
+  expect(fence).toMatchObject({ reason: 'surface_hidden', phase: 'opening', offered_sequence: 0, pointer_held: false });
+  jest.spyOn(document, 'hidden', 'get').mockReturnValue(false);
+  fireEvent(document, new Event('visibilitychange'));
+  receive({ type: 'touch_session', session_id: 'viewer_session_fixture', owner: 'cancelled_owner_fixture',
+    capture_epoch: TOUCH_EPOCH, frame_width: 1280, frame_height: 720 });
+  receive({ type: 'touch_cancelled', session_id: 'viewer_session_fixture', owner: 'cancelled_owner_fixture',
+    capture_epoch: TOUCH_EPOCH, origin: 'admission' });
+  act(() => jest.advanceTimersByTime(1200));
+  expect(MockSocket.instances).toHaveLength(1);
+  expect(view.socket.close).not.toHaveBeenCalled();
+  expect(sent().filter(row => row.type === 'touch_probe')).toHaveLength(2);
+  receive({ type: 'touch_capability', capture_epoch: TOUCH_EPOCH, frame_width: 1280, frame_height: 720 });
+  receive({ type: 'touch_session', session_id: 'viewer_session_fixture', owner: 'replacement_owner_fixture',
+    capture_epoch: TOUCH_EPOCH, frame_width: 1280, frame_height: 720 });
+  view.down(1); view.up(1);
+  expect(sent().filter(row => row.type === 'touch_event')).toEqual([]);
+  receive({ type: 'continuous_input_status', session_id: 'viewer_session_fixture', owner: 'replacement_owner_fixture',
+    capture_epoch: TOUCH_EPOCH, sequence: 0, status: 0, stage: 'startup', origin: 'injector', device_uptime_ms: 100 });
+  expect(view.container.querySelector('[data-control-state]')).toHaveAttribute('data-control-state', 'ready');
+  expect(view.commands()).toEqual([]);
+  view.unmount();
+});
+
 it('switching a ready continuous session to recording waits for release then records a discrete action', () => {
   const view = readyContinuous();
   const record = jest.fn();

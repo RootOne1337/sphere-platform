@@ -39,6 +39,15 @@ def test_browser_cannot_mutate_validated_binding():
         capture.width = 1
 
 
+def test_pre_delivery_cancel_is_explicit_and_does_not_select_an_owner():
+    assert viewer_continuous({'type': 'touch_close', 'cancel_unstarted': True}) == CloseInput(True)
+    for value in (False, 1, 'true', None):
+        with pytest.raises(InvalidContinuousInput):
+            viewer_continuous({'type': 'touch_close', 'cancel_unstarted': value})
+    with pytest.raises(InvalidContinuousInput):
+        viewer_continuous({'type': 'touch_close', 'cancel_unstarted': True, 'owner': 'foreign_owner_01'})
+
+
 @pytest.mark.parametrize("extra", ["owner", "session_id", "org_id", "agent_session", "capture_epoch"])
 def test_browser_event_rejects_identity_and_capture_overrides(extra):
     with pytest.raises(InvalidContinuousInput, match="^continuous_input_invalid$"):

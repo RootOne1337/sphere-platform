@@ -148,6 +148,46 @@ async def test_direct_owner_renews_only_authority_and_refuses_every_server_touch
     assert await store.redis.exists(store.key(binding)) == 0
 
 
+async def test_cancel_before_delivery_claim_prevents_late_open_and_preserves_replacement(world):
+    store, other, binding, pubsub = world
+    old = await store.acquire(binding)
+    assert old and await store.open(old) == "published"
+    queued = await published(pubsub)
+    assert await store.cancel_unstarted(old) == "cancelled"
+    replacement = await store.acquire(binding)
+    assert replacement and replacement != old
+    assert await other.delivery_command(queued, device_id=binding.device, org_id=binding.org,
+                                        agent_session=binding.agent_session) is None
+    assert await store.cancel_unstarted(old) == "stale"
+    assert await store.current_lease(device_id=binding.device, org_id=binding.org,
+                                     agent_session=binding.agent_session) == replacement
+
+
+async def test_delivery_claim_makes_cancel_uncertain_until_actual_native_release(world):
+    store, other, binding, pubsub = world
+    lease = await store.acquire(binding)
+    assert lease and await store.open(lease) == "published"
+    queued = await published(pubsub)
+    assert await other.delivery_command(queued, device_id=binding.device, org_id=binding.org,
+                                       agent_session=binding.agent_session)
+    assert await store.cancel_unstarted(lease) == "delivery_started"
+    assert await store.acquire(binding) is None
+    assert await store.close(lease) == "published"
+    assert await store.cancel_unstarted(lease) == "delivery_started"
+    assert await store.receipt(lease, receipt(lease, stage="release", status=3),
+                               agent_session=binding.agent_session)
+
+
+async def test_cancel_does_not_infer_unsent_input_from_expired_or_legacy_authority(world):
+    store, _, binding, _ = world
+    lease = await store.acquire(binding)
+    assert lease
+    await store.redis.hdel(store.key(binding), "open_delivery_started")
+    assert await store.cancel_unstarted(lease) == "delivery_started"
+    await store.redis.delete(store.key(binding))
+    assert await store.cancel_unstarted(lease) == "stale"
+
+
 async def test_direct_native_failure_receipt_can_report_unseen_sequence_without_claiming_execution(world):
     store, _, binding, pubsub = world
     lease = await store.acquire(binding)

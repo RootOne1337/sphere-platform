@@ -651,7 +651,7 @@ export function DeviceStream({
                   renderedCapture: () => renderedCaptureRef.current,
                   onFence: snapshot => {
                     if (ignore || ended || newWs !== wsRef.current || continuousRef.current !== controller
-                      || ['viewer_closed', 'viewer_destroyed', 'surface_blur', 'surface_hidden', 'surface_control_lost', 'control_mode_changed', 'capture_or_socket_lost'].includes(snapshot.reason)) return;
+                      || ['viewer_closed', 'viewer_destroyed', 'control_mode_changed'].includes(snapshot.reason)) return;
                     const atMs = Date.now();
                     setPointerFailure({ deviceId, accessToken, socket: newWs, snapshot, atMs });
                     telemetryControl.current.fence = snapshot;
@@ -754,7 +754,7 @@ export function DeviceStream({
                 controller.open(capture);
                 return;
               }
-              if (msg.type === 'touch_session' || msg.type === 'continuous_input_status') {
+              if (msg.type === 'touch_session' || msg.type === 'touch_cancelled' || msg.type === 'continuous_input_status') {
                 continuousRef.current?.receive(msg);
                 return;
               }

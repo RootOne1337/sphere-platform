@@ -185,7 +185,7 @@ class ContinuousRuntime:
             if await self.store.event(viewer.lease, message) != "published":
                 raise InputLeaseUnavailable()
         elif isinstance(message, CloseInput):
-            await self.retire(viewer)
+            await self.retire(viewer, cancel_unstarted=message.cancel_unstarted)
 
     async def authorize(self, viewer: TouchViewer) -> bool:
         lease = viewer.lease
@@ -232,12 +232,27 @@ class ContinuousRuntime:
                 error.update(error="input_temporarily_unavailable", reason="runtime_unavailable", retryable=True)
             await self.send(viewer, error)
 
-    async def retire(self, viewer: TouchViewer) -> None:
+    async def retire(self, viewer: TouchViewer, *, cancel_unstarted: bool = False) -> None:
         viewer.closing = viewer.lease is not None
         viewer.offer = None
-        if viewer.lease:
+        lease = viewer.lease
+        if lease:
+            if cancel_unstarted:
+                try:
+                    cancelled = await self.store.cancel_unstarted(lease) == "cancelled"
+                except InputLeaseUnavailable:
+                    cancelled = False  # Unknown Redis outcome never certifies an unsent OPEN.
+                if cancelled and viewer.lease == lease:
+                    viewer.lease = None
+                    viewer.closing = False
+                    viewer.direct_session = None
+                    # Opt-in preserves older viewers' native-release contract.
+                    # This certifies no socket delivery was started, not a native ACK.
+                    await self.send(viewer, {"type": "touch_cancelled", "session_id": viewer.session,
+                        "owner": lease.owner, "capture_epoch": lease.binding.capture.epoch, "origin": "admission"})
+                    return
             try:
-                await self.store.close(viewer.lease)
+                await self.store.close(lease)
             except (InputLeaseUnavailable, asyncio.CancelledError):
                 pass  # Native watchdog applies; never claim known release or retry input.
 

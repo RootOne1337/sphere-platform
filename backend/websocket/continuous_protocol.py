@@ -88,7 +88,7 @@ class TouchEvent:
 
 @dataclass(frozen=True)
 class CloseInput:
-    pass
+    cancel_unstarted: bool = False
 
 
 @dataclass(frozen=True)
@@ -118,6 +118,11 @@ def viewer_continuous(message: Any) -> CaptureBinding | DirectCaptureBinding | T
         _exact(message, {"type", "sequence", "gesture", "action", "x", "y"})
         return TouchEvent(**{name: message[name] for name in ("sequence", "gesture", "action", "x", "y")})
     if kind == "touch_close":
+        if "cancel_unstarted" in message:
+            _exact(message, {"type", "cancel_unstarted"})
+            if message["cancel_unstarted"] is not True:
+                raise InvalidContinuousInput()
+            return CloseInput(True)
         _exact(message, {"type"})
         return CloseInput()
     raise InvalidContinuousInput()
