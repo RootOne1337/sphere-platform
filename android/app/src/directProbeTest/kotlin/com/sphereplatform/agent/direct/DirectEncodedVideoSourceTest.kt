@@ -83,6 +83,25 @@ class DirectEncodedVideoSourceTest {
         } finally { h.close() }
         verify(exactly = 1) { h.track.dispose() }; verify(exactly = 1) { h.source.dispose() }
     }
+    @Test fun `coded buffer uses framework aligned timestamp without adopting raw crop or drop`() {
+        val h = Harness()
+        try {
+            h.hold = true
+            val original = picture(1, true)
+            h.relay.submit(original)
+            assertEquals(1, h.held.size)
+            val aligned = h.held.single()
+            assertEquals(original.timestampNs + 100, aligned.timestampNs)
+            assertEquals(960, aligned.buffer.width)
+            assertEquals(540, aligned.buffer.height)
+            assertEquals(1L, h.relay.receipt()["retainedInputFrames"])
+            h.encoder.encode(aligned, VideoEncoder.EncodeInfo(arrayOf(EncodedImage.FrameType.VideoFrameDelta)))
+            assertArrayEquals(original.sps!! + original.pps!! + original.data, h.emitted.single())
+            verify(exactly = 0) { h.failed.invoke() }
+        } finally { h.close() }
+        assertEquals(0L, h.relay.receipt()["retainedInputFrames"])
+        assertEquals(0L, h.relay.receipt()["retainedOutputFrames"])
+    }
     @Test fun `native retained frames cannot fill an unbounded queue and recovery requires IDR`() {
         val h = Harness()
         try {

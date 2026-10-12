@@ -48,6 +48,7 @@ class DirectProbeTransport(
         var video: DirectEncodedVideoSource? = null
         @Volatile var videoReady = false
         val statsBudget = ProbeStatsBudget(live)
+        var hostHints: List<String> = emptyList() // Peer-local routes; never serialized.
     }
 
     init {
@@ -164,8 +165,8 @@ class DirectProbeTransport(
                 network?.let { manager.getLinkProperties(it) }?.routes.orEmpty()
                     .filter { it.isDefaultRoute }.take(8).mapNotNull { (it.gateway as? Inet4Address)?.hostAddress }
             }.getOrDefault(emptyList())
-            val hostHints = EmulatorHostCandidates.augment(sdp,
-                EmulatorHostCandidates.hints(localAddresses, gateways, x86Guest))
+            p.hostHints = EmulatorHostCandidates.hints(localAddresses, gateways, x86Guest)
+            val hostHints = EmulatorHostCandidates.augment(sdp, p.hostHints)
             Log.i("SphereDirectProbe", buildJsonObject {
                 put("event", "native_emulator_host_candidates")
                 put("added", hostHints.added)
@@ -353,8 +354,10 @@ class DirectProbeTransport(
             connection.getStats { report ->
                 // Never stringify the native report: it contains addresses, IDs and certificates.
                 val rows = report.statsMap.values
-                val summary = if (rows.size <= DirectProbeNetwork.MAX_ROWS) DirectProbeNetwork.summary(
-                    rows.map { ProbeStatsRow(it.type, it.members) }) else null
+                val projected = if (rows.size <= DirectProbeNetwork.MAX_ROWS)
+                    rows.map { ProbeStatsRow(it.type, it.members, it.id) } else emptyList()
+                val summary = if (rows.size <= DirectProbeNetwork.MAX_ROWS) DirectProbeNetwork.summary(projected) else null
+                val hostSelected = DirectProbeNetwork.emulatorHostSelected(projected, p.hostHints)
                 enqueue {
                     if (p.statsBudget.complete() && valid(p) && summary != null) {
                         val age = (SystemClock.elapsedRealtime() - sampledAt).coerceAtLeast(0)
@@ -364,6 +367,7 @@ class DirectProbeTransport(
                             put("answerSent", p.answered)
                             put("sampleAgeMs", age)
                             put("network", summary)
+                            put("emulatorHostSelected", hostSelected?.let(::JsonPrimitive) ?: JsonNull)
                         }
                         p.telemetry.observe(summary, sampledAt)
                         val report = p.telemetry.report(p.progress.latest?.stage ?: ProbeStage.OFFER_RECEIVED,

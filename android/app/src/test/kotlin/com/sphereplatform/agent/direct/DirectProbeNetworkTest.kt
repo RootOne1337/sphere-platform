@@ -8,6 +8,29 @@ import org.junit.Test
 import java.math.BigInteger
 
 class DirectProbeNetworkTest {
+    private fun selectedRows(address: String, connected: Boolean = true) = listOf(
+        ProbeStatsRow("transport", mapOf("selectedCandidatePairId" to "pair", "dtlsState" to if (connected) "connected" else "new"), "transport"),
+        ProbeStatsRow("candidate-pair", mapOf("remoteCandidateId" to "remote", "state" to "succeeded"), "pair"),
+        ProbeStatsRow("remote-candidate", mapOf("address" to address), "remote"),
+    )
+
+    @Test fun `host hint proof requires the selected pair connected DTLS and exact remote address`() {
+        assertEquals(true, DirectProbeNetwork.emulatorHostSelected(selectedRows("192.168.232.2"), listOf("192.168.232.2")))
+        assertEquals(false, DirectProbeNetwork.emulatorHostSelected(selectedRows("192.168.1.9"), listOf("192.168.232.2")))
+        assertNull(DirectProbeNetwork.emulatorHostSelected(selectedRows("192.168.232.2", false), listOf("192.168.232.2")))
+        assertNull(DirectProbeNetwork.emulatorHostSelected(selectedRows(""), listOf("192.168.232.2")))
+        assertNull(DirectProbeNetwork.emulatorHostSelected(selectedRows("peer.local"), listOf("192.168.232.2")))
+        assertNull(DirectProbeNetwork.emulatorHostSelected(selectedRows("192.168.232.2"), emptyList()))
+    }
+
+    @Test fun `a successful unrelated pair never proves the host local route`() {
+        val rows = selectedRows("192.168.1.9") + listOf(
+            ProbeStatsRow("candidate-pair", mapOf("state" to "succeeded", "remoteCandidateId" to "host"), "other"),
+            ProbeStatsRow("remote-candidate", mapOf("address" to "192.168.232.2"), "host"),
+        )
+        assertEquals(false, DirectProbeNetwork.emulatorHostSelected(rows, listOf("192.168.232.2")))
+        assertNull(DirectProbeNetwork.emulatorHostSelected(rows.filterNot { it.type == "transport" }, listOf("192.168.232.2")))
+    }
     private fun pair(vararg members: Pair<String, Any?>) = ProbeStatsRow("candidate-pair", mapOf(*members))
 
     @Test fun nativeReceiveAndSendCountersDoNotExportPrivateRtcStats() {

@@ -69,7 +69,8 @@ internal class DirectEncodedVideoSource(
         val created = factory.createVideoSource(true)
         source = created
         // Encoded pictures cannot be cropped, rescaled or selectively dropped as raw
-        // pixels. Keep source dimensions and timestamps; our gate detects later drops.
+        // pixels. Keep source dimensions and coded order; use WebRTC's aligned
+        // clock independently of its raw-picture crop/drop suggestions.
         created.setVideoProcessor(object : VideoProcessor {
             private var sink: VideoSink? = null
             override fun setSink(sink: VideoSink?) { this.sink = sink }
@@ -77,7 +78,15 @@ internal class DirectEncodedVideoSource(
             override fun onCapturerStopped() = Unit
             override fun onFrameCaptured(frame: VideoFrame) { sink?.onFrame(frame) }
             override fun onFrameCaptured(frame: VideoFrame, parameters: VideoProcessor.FrameAdaptationParameters) {
-                sink?.onFrame(frame)
+                // adaptFrame also translates the capture clock into WebRTC's
+                // monotonic clock. Bypassing that timestamp with the raw crop/drop
+                // policy can let the receive buffer drift on a host-local path.
+                // Retain the same coded buffer: no pixel conversion, scaling,
+                // reference-frame drop or additional encoded payload allocation.
+                val target = sink ?: return
+                frame.buffer.retain()
+                val aligned = VideoFrame(frame.buffer, frame.rotation, parameters.timestampNs)
+                try { target.onFrame(aligned) } finally { aligned.release() }
             }
         })
         created.capturerObserver.onCapturerStarted(true)

@@ -6,12 +6,27 @@ import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
 
-/** Deliberately excludes RTCStats IDs, addresses, SDP, certificates and credentials. */
-internal data class ProbeStatsRow(val type: String, val members: Map<String, Any?>)
+/** Memory-only projection; summary output excludes identity, addresses and credentials. */
+internal data class ProbeStatsRow(val type: String, val members: Map<String, Any?>, val id: String? = null)
 
 internal object DirectProbeNetwork {
     const val MAX_ROWS = 256
     private val dtlsStates = setOf("new", "connecting", "connected", "closed", "failed")
+
+    /** Memory-only identity/address comparison. Only the nullable result may be logged. */
+    fun emulatorHostSelected(rows: List<ProbeStatsRow>, hints: List<String>): Boolean? {
+        if (rows.size > MAX_ROWS || hints.isEmpty()) return null
+        val transports = rows.filter { it.type == "transport" && it.members["dtlsState"] == "connected" }
+        val selected = transports.mapNotNull { it.members["selectedCandidatePairId"] as? String }.distinct().singleOrNull()
+            ?: return null
+        val pair = rows.singleOrNull { it.id == selected && it.type == "candidate-pair" } ?: return null
+        if (pair.members["state"] != "succeeded") return null
+        val remoteId = pair.members["remoteCandidateId"] as? String ?: return null
+        val remote = rows.singleOrNull { it.id == remoteId && it.type == "remote-candidate" } ?: return null
+        val address = (remote.members["address"] as? String ?: remote.members["ip"] as? String)
+            ?.takeIf { it.isNotEmpty() && !it.endsWith(".local") } ?: return null
+        return address in hints
+    }
 
     /** A partial, invalid or overflowing measurement is unknown, never a fabricated zero. */
     fun summary(rows: List<ProbeStatsRow>): JsonObject? {
