@@ -457,6 +457,62 @@ async def download_artifact(
                         headers={"Cache-Control": "private, no-store"})
 
 
+@router.get(
+    "/downloads/latest", response_class=FileResponse,
+    responses={200: {"description": "Latest published APK in the exact channel",
+                     "content": {"application/vnd.android.package-archive": {"schema": {"type": "string", "format": "binary"}}},
+                     "headers": {"X-Sphere-APK-SHA256": {"schema": {"type": "string", "pattern": "^[a-f0-9]{64}$"}},
+                                 "X-Sphere-Version-Code": {"schema": {"type": "integer"}}}},
+               401: {"description": "Operator authentication required"},
+               403: {"description": "device:read permission required"},
+               404: {"description": "No published APK in this channel"},
+               409: {"description": "Latest release is hosted externally"},
+               503: {"description": "Catalog or artifact unavailable"}},
+)
+async def download_latest_apk(
+    platform: Literal["android", "android-canary"] = Query(default="android-canary"),
+    flavor: Literal["enterprise", "dev"] = Query(default="dev"),
+    _user=require_permission("device:read"),
+) -> FileResponse:
+    """Download the latest exact-channel APK with operator authentication.
+
+    Resolve at request time, independently of the browser's cached catalog.
+    Agent authentication stays on /artifacts; never forward user credentials to
+    an external release URL or silently substitute an older managed release.
+    """
+    matching = [release for release in _load_releases()
+                if release.get("platform") == platform and release.get("flavor") == flavor]
+    if not matching:
+        raise HTTPException(status_code=404, detail="В выбранном канале ещё нет опубликованного APK")
+    try:
+        # Historical file catalogs can predate request validation. Fail closed
+        # rather than compare mixed types or manufacture a download identity.
+        validated = [CreateReleaseRequest.model_validate({
+            field: release[field] for field in CreateReleaseRequest.model_fields if field in release
+        }).model_dump() for release in matching]
+    except (ValidationError, TypeError, ValueError) as exc:
+        raise HTTPException(status_code=503, detail="OTA release catalog is invalid") from exc
+    latest = _latest_release(validated)
+    if latest["download_url"] != _ARTIFACT_PREFIX + latest["sha256"]:
+        raise HTTPException(status_code=409, detail="Последний APK размещён вне сервера; скачивание здесь недоступно")
+    path = _artifact_path(latest["sha256"])
+    try:
+        file_stat = path.stat()
+    except OSError as exc:
+        raise HTTPException(status_code=503, detail="APK temporarily unavailable") from exc
+    if not 0 < file_stat.st_size <= _MAX_ARTIFACT_BYTES:
+        raise HTTPException(status_code=503, detail="APK size is invalid")
+    version = re.sub(r"[^a-zA-Z0-9_.-]", "-", latest["version_name"]).strip(".-")[:100]
+    filename = f"SphereAgent-{version or latest['version_code']}-{platform}-{flavor}.apk"
+    return FileResponse(
+        path, stat_result=file_stat, filename=filename,
+        media_type="application/vnd.android.package-archive",
+        headers={"Cache-Control": "private, no-store", "X-Content-Type-Options": "nosniff",
+                 "X-Sphere-APK-SHA256": latest["sha256"],
+                 "X-Sphere-Version-Code": str(latest["version_code"])},
+    )
+
+
 # ── List all releases (admin) ─────────────────────────────────────────────────
 
 @router.get("/")

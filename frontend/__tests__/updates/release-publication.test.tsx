@@ -13,7 +13,7 @@ beforeEach(() => jest.resetAllMocks());
 function deferred<T>() { let resolve!: (value: T) => void; const promise = new Promise<T>(done => { resolve = done; }); return { promise, resolve }; }
 async function open(available = true) {
   const view = render(<CreateReleaseDialog available={available} onCreated={created} />);
-  fireEvent.click(screen.getByRole('button', { name: '+ New Release' }));
+  fireEvent.click(screen.getByRole('button', { name: '+ Новый релиз' }));
   if (available) await screen.findByRole('dialog');
   return view;
 }
@@ -48,7 +48,7 @@ it('classifies rejection separately from an uncertain commit', () => {
 });
 it('cannot open a publication form without a current catalog', async () => {
   await open(false);
-  expect(screen.getByRole('button', { name: '+ New Release' })).toBeDisabled();
+  expect(screen.getByRole('button', { name: '+ Новый релиз' })).toBeDisabled();
   expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
   expect(api.post).not.toHaveBeenCalled();
 });

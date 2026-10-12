@@ -9,6 +9,7 @@ import './globals.css';
 import { Providers } from './providers';
 import { ThemeProvider } from '@/src/shared/ui/ThemeProvider';
 import { AppToaster } from '@/src/shared/ui/AppToaster';
+import { themeBootstrapScript } from '@/src/shared/theme';
 
 export const metadata: Metadata = {
   title: 'Sphere Platform | Управление устройствами',
@@ -21,7 +22,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="ru">
+    <html lang="ru" className="dark" suppressHydrationWarning>
+      <head><script dangerouslySetInnerHTML={{ __html: themeBootstrapScript }} /></head>
       <body className="font-sans antialiased text-sm bg-background text-foreground transition-colors duration-200">
         <ThemeProvider>
           <Providers>{children}</Providers>

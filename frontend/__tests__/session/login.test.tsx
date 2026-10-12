@@ -89,3 +89,15 @@ it('displays a server revocation warning on the login page', () => {
   render(<LoginPage />);
   expect(screen.getByRole('status')).toHaveTextContent('could not be confirmed');
 });
+
+it('can reveal and conceal the password without submitting or clearing it', () => {
+  render(<LoginPage />);
+  const password = screen.getByLabelText('Пароль');
+  fireEvent.change(password, { target: { value: 'kept-value' } });
+  fireEvent.click(screen.getByRole('button', { name: 'Показать пароль' }));
+  expect(password).toHaveAttribute('type', 'text');
+  expect(password).toHaveValue('kept-value');
+  fireEvent.click(screen.getByRole('button', { name: 'Скрыть пароль' }));
+  expect(password).toHaveAttribute('type', 'password');
+  expect(requests).toHaveLength(0);
+});

@@ -18,7 +18,7 @@ it('describes catalog-wide periodic delivery without offering a broken direct pu
 
   render(<UpdatesPage />, { wrapper: createWrapper() });
   expect(await screen.findByText('v1.2.15-dev')).toBeInTheDocument();
-  expect(screen.getByText(/all agents of that flavor/i)).toBeInTheDocument();
+  expect(screen.getByText(/только при совпадении платформы и варианта сборки/i)).toBeInTheDocument();
   expect(screen.queryByRole('button', { name: 'PH006' })).not.toBeInTheDocument();
   expect(api.post).not.toHaveBeenCalled();
 });
@@ -33,6 +33,6 @@ it('shows canary releases in the default catalog view without implying normal ag
 
   render(<UpdatesPage />, { wrapper: createWrapper() });
   expect(await screen.findByText('v1.2.28-dev')).toBeInTheDocument();
-  expect(screen.getByText(/normal Android agents do not poll this channel/i)).toBeInTheDocument();
+  expect(screen.getByText(/обычные Android-агенты не проверяют его/i)).toBeInTheDocument();
   expect(api.get).toHaveBeenCalledWith('/updates/?', { signal: expect.any(AbortSignal) });
 });

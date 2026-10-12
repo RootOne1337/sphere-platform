@@ -10,6 +10,9 @@ if (process.env.NEXT_PUBLIC_DIRECT_PROBE_STUN_URL && process.env.NEXT_PUBLIC_DIR
 
 const nextConfig: NextConfig = {
   output: 'standalone',
+  // API collections use a trailing slash. Let the upstream API own redirects;
+  // otherwise dev rewrites can loop between Next's /updates and FastAPI's /updates/.
+  skipTrailingSlashRedirect: true,
   // Корень артефакта должен совпадать с приложением, даже если над checkout
   // лежит посторонний package-lock.json.
   outputFileTracingRoot: process.cwd(),
@@ -20,6 +23,10 @@ const nextConfig: NextConfig = {
       return [];
     }
     return [
+      {
+        source: '/api/:path*/',
+        destination: `${process.env.NEXT_PUBLIC_API_BASE_URL ?? 'http://localhost:8000'}/api/:path*/`,
+      },
       {
         source: '/api/:path*',
         destination: `${process.env.NEXT_PUBLIC_API_BASE_URL ?? 'http://localhost:8000'}/api/:path*`,

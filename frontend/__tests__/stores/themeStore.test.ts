@@ -5,11 +5,11 @@ import { useThemeStore } from '@/src/shared/store/themeStore';
 
 describe('useThemeStore', () => {
   beforeEach(() => {
-    useThemeStore.setState({ theme: 'light-corporate', density: 'cozy' });
+    useThemeStore.setState({ theme: 'neo-dark', density: 'cozy' });
   });
 
   describe('начальное состояние', () => {
-    it('uses the light admin workspace as the first-run theme', () => expect(useThemeStore.getState().theme).toBe('light-corporate'));
+    it('uses dark as the first-run theme', () => expect(useThemeStore.getInitialState().theme).toBe('neo-dark'));
     it('density = cozy', () => expect(useThemeStore.getState().density).toBe('cozy'));
   });
 

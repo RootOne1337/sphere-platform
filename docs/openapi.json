@@ -9111,6 +9111,102 @@
         }
       }
     },
+    "/api/v1/updates/downloads/latest": {
+      "get": {
+        "tags": [
+          "updates"
+        ],
+        "summary": "Download Latest Apk",
+        "description": "Download the latest exact-channel APK with operator authentication.\n\nResolve at request time, independently of the browser's cached catalog.\nAgent authentication stays on /artifacts; never forward user credentials to\nan external release URL or silently substitute an older managed release.",
+        "operationId": "download_latest_apk_api_v1_updates_downloads_latest_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "platform",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "enum": [
+                "android",
+                "android-canary"
+              ],
+              "type": "string",
+              "default": "android-canary",
+              "title": "Platform"
+            }
+          },
+          {
+            "name": "flavor",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "enum": [
+                "enterprise",
+                "dev"
+              ],
+              "type": "string",
+              "default": "dev",
+              "title": "Flavor"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Latest published APK in the exact channel",
+            "content": {
+              "application/vnd.android.package-archive": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            },
+            "headers": {
+              "X-Sphere-APK-SHA256": {
+                "schema": {
+                  "type": "string",
+                  "pattern": "^[a-f0-9]{64}$"
+                }
+              },
+              "X-Sphere-Version-Code": {
+                "schema": {
+                  "type": "integer"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Operator authentication required"
+          },
+          "403": {
+            "description": "device:read permission required"
+          },
+          "404": {
+            "description": "No published APK in this channel"
+          },
+          "409": {
+            "description": "Latest release is hosted externally"
+          },
+          "503": {
+            "description": "Catalog or artifact unavailable"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/updates/": {
       "get": {
         "tags": [

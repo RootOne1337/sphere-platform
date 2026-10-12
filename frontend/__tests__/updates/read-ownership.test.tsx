@@ -38,7 +38,7 @@ it('does not turn an initial failed read into an empty catalog and recovers on r
   jest.mocked(api.get).mockRejectedValueOnce(new Error('offline')).mockResolvedValueOnce(response('recovered') as never);
   render(<UpdatesPage />, { wrapper: createWrapper() });
   expect(await screen.findByRole('alert')).toHaveTextContent('Не удалось загрузить релизы');
-  expect(screen.queryByText(/No releases yet/)).not.toBeInTheDocument();
+  expect(screen.queryByText(/Опубликованных релизов пока нет/)).not.toBeInTheDocument();
   expect(screen.queryByText('0 releases')).not.toBeInTheDocument();
   fireEvent.click(screen.getByRole('button', { name: 'Повторить загрузку релизов' }));
   expect(await screen.findByText('vrecovered')).toBeInTheDocument();
@@ -47,7 +47,7 @@ it('does not turn an initial failed read into an empty catalog and recovers on r
 it('shows empty only after a successful read', async () => {
   jest.mocked(api.get).mockResolvedValue({ data: { releases: [], total: 0 } } as never);
   render(<UpdatesPage />, { wrapper: createWrapper() });
-  expect(await screen.findByText(/No releases yet/)).toBeInTheDocument();
+  expect(await screen.findByText(/Опубликованных релизов пока нет/)).toBeInTheDocument();
   expect(screen.queryByRole('alert')).not.toBeInTheDocument();
 });
 
@@ -73,7 +73,7 @@ it('never shows another filter catalog when the new filter read fails', async ()
   expect(await screen.findByRole('alert')).toBeInTheDocument();
   expect(screen.queryByText('vold')).not.toBeInTheDocument();
   expect(screen.queryByRole('button', { name: 'Delete' })).not.toBeInTheDocument();
-  expect(screen.queryByText(/No releases yet/)).not.toBeInTheDocument();
+  expect(screen.queryByText(/Опубликованных релизов пока нет/)).not.toBeInTheDocument();
 });
 
 it('hides cached action rows after refresh failure and restores them after retry', async () => {
@@ -103,5 +103,5 @@ it('rejects a malformed catalog instead of claiming it is empty', async () => {
   jest.mocked(api.get).mockResolvedValue({ data: { total: 0 } } as never);
   render(<UpdatesPage />, { wrapper: createWrapper() });
   expect(await screen.findByRole('alert')).toBeInTheDocument();
-  expect(screen.queryByText(/No releases yet/)).not.toBeInTheDocument();
+  expect(screen.queryByText(/Опубликованных релизов пока нет/)).not.toBeInTheDocument();
 });

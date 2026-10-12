@@ -184,6 +184,86 @@ def test_default_update_store_is_not_container_tmp(monkeypatch):
 
 
 class TestManagedArtifacts:
+    async def test_operator_download_resolves_latest_channel_and_streams_exact_bytes(
+        self, viewer_client, isolate_updates_file,
+    ):
+        artifacts = isolate_updates_file.parent / "artifacts"
+        artifacts.mkdir()
+        releases = []
+        for code, platform, flavor, content in [
+            (10259, "android-canary", "dev", b"old-apk"),
+            (10260, "android-canary", "dev", b"PK\x03\x04exact-new-apk\x00\xff"),
+            (10299, "android", "dev", b"other-platform"),
+            (10300, "android-canary", "enterprise", b"other-flavor"),
+        ]:
+            digest = hashlib.sha256(content).hexdigest()
+            (artifacts / f"{digest}.apk").write_bytes(content)
+            releases.append({**_VALID_RELEASE, "platform": platform, "flavor": flavor,
+                             "version_code": code, "version_name": f"1.2.{code}-dev",
+                             "sha256": digest, "download_url": updates_module._ARTIFACT_PREFIX + digest})
+        updates_module._save_releases(releases)
+        url = "/api/v1/updates/downloads/latest?platform=android-canary&flavor=dev"
+        response = await viewer_client.get(url)
+        expected = b"PK\x03\x04exact-new-apk\x00\xff"
+        assert response.status_code == 200, response.text
+        assert response.content == expected
+        assert response.headers["x-sphere-apk-sha256"] == hashlib.sha256(expected).hexdigest()
+        assert response.headers["x-sphere-version-code"] == "10260"
+        assert response.headers["content-type"] == "application/vnd.android.package-archive"
+        assert response.headers["content-length"] == str(len(expected))
+        assert response.headers["cache-control"] == "private, no-store"
+        assert response.headers["x-content-type-options"] == "nosniff"
+        assert response.headers["content-disposition"].startswith("attachment; filename=")
+        assert "android-canary-dev.apk" in response.headers["content-disposition"]
+        partial = await viewer_client.get(url, headers={"Range": "bytes=0-3"})
+        assert partial.status_code == 206
+        assert partial.content == expected[:4]
+        # A page opened before publication still downloads the new latest file.
+        new_content = b"newer-after-page-open"
+        digest = hashlib.sha256(new_content).hexdigest()
+        (artifacts / f"{digest}.apk").write_bytes(new_content)
+        updates_module._save_releases([*releases, {**releases[1], "version_code": 10261,
+            "version_name": "1.2.61-dev", "sha256": digest,
+            "download_url": updates_module._ARTIFACT_PREFIX + digest}])
+        assert (await viewer_client.get(url)).content == new_content
+
+    async def test_operator_download_requires_operator_auth(self, anon_client, monkeypatch):
+        def must_not_read():
+            raise AssertionError("unauthenticated artifact lookup")
+        monkeypatch.setattr(updates_module, "_load_releases", must_not_read)
+        assert (await anon_client.get("/api/v1/updates/downloads/latest")).status_code == 401
+
+    async def test_operator_download_does_not_substitute_old_file_for_external_latest(self, viewer_client):
+        updates_module._save_releases([{**_VALID_RELEASE, "platform": "android-canary", "flavor": "dev"}])
+        response = await viewer_client.get("/api/v1/updates/downloads/latest")
+        assert response.status_code == 409
+        assert "location" not in response.headers
+
+    @pytest.mark.parametrize("kind,expected", [
+        ("empty", 404), ("missing_file", 404), ("zero_size", 503),
+        ("oversized_file", 503), ("bad_version", 503), ("ambiguous", 503),
+    ])
+    async def test_operator_download_rejects_unavailable_or_ambiguous_artifacts(
+        self, viewer_client, isolate_updates_file, kind, expected,
+    ):
+        release = {**_VALID_RELEASE, "platform": "android-canary", "flavor": "dev",
+                   "download_url": updates_module._ARTIFACT_PREFIX + _VALID_RELEASE["sha256"]}
+        if kind in {"zero_size", "oversized_file"}:
+            artifacts = isolate_updates_file.parent / "artifacts"
+            artifacts.mkdir()
+            with (artifacts / f"{release['sha256']}.apk").open("wb") as stream:
+                stream.truncate(0 if kind == "zero_size" else updates_module._MAX_ARTIFACT_BYTES + 1)
+        if kind == "bad_version":
+            release["version_code"] = "42"
+        releases = [] if kind == "empty" else [release]
+        if kind == "ambiguous":
+            releases.append({**release, "sha256": "b" * 64})
+        updates_module._save_releases(releases)
+        assert (await viewer_client.get("/api/v1/updates/downloads/latest")).status_code == expected
+
+    async def test_operator_download_does_not_accept_pc_channel(self, viewer_client):
+        assert (await viewer_client.get("/api/v1/updates/downloads/latest?platform=pc")).status_code == 422
+
     async def test_redispatch_keeps_command_id_deadline_and_grant(self, admin_client, db_session, updates_org, monkeypatch):
         import time
         import uuid

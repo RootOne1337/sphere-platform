@@ -16,6 +16,7 @@ import { useAuthStore } from '@/lib/store';
 import { CreateReleaseDialog } from '@/src/features/updates/CreateReleaseDialog';
 import { RecoveryDialog } from '@/src/features/updates/RecoveryDialog';
 import { isManagedAndroidRelease } from '@/src/features/updates/recovery';
+import { AgentDownloadPanel } from '@/src/features/updates/AgentDownloadPanel';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -90,13 +91,13 @@ function UpdatesCatalog({ scope, canManage, canReadRecovery }: { scope: string; 
   };
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className="mx-auto flex w-full max-w-[1600px] flex-col gap-6 px-4 py-6 sm:px-6 lg:px-8">
       {/* Header */}
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-semibold">OTA Updates</h1>
+          <h1 className="text-2xl font-semibold tracking-tight">Обновления и приложения</h1>
           <p className="text-sm text-muted-foreground mt-0.5">
-            Manage the releases offered by agents&apos; scheduled update checks
+            Скачивайте агент, управляйте релизами и проверяйте доставку обновлений.
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
@@ -107,12 +108,12 @@ function UpdatesCatalog({ scope, canManage, canReadRecovery }: { scope: string; 
         </div>
       </div>
 
+      <AgentDownloadPanel releases={releases} available={!isPending && !isError} />
+
       <div className="rounded-lg border border-amber-500/30 bg-amber-500/5 px-4 py-3 text-sm text-muted-foreground">
-        Publishing a release makes it eligible for all agents of that flavor on their next
-        scheduled check <strong>only when the platform also matches</strong>. Registering a
-        release does not upload the APK. Android scheduling and connectivity can delay
-        delivery. Addressed OTA below uses a separate bounded permission and verifies
-        its terminal receipt and installed version before expanding a rollout.
+        Агенты обнаруживают опубликованный релиз при плановой проверке <strong>только при совпадении платформы и варианта сборки</strong>.
+        Регистрация релиза не загружает сам APK. Для адресной установки используйте «Адресное OTA»;
+        результат подтверждается ответом агента и установленной версией.
       </div>
 
       {/* Filters */}
@@ -122,7 +123,7 @@ function UpdatesCatalog({ scope, canManage, canReadRecovery }: { scope: string; 
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">All platforms</SelectItem>
+            <SelectItem value="all">Все платформы</SelectItem>
             <SelectItem value="android">Android</SelectItem>
             <SelectItem value="android-canary">Android canary</SelectItem>
             <SelectItem value="pc">PC</SelectItem>
@@ -133,18 +134,18 @@ function UpdatesCatalog({ scope, canManage, canReadRecovery }: { scope: string; 
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">All flavors</SelectItem>
+            <SelectItem value="all">Все сборки</SelectItem>
             <SelectItem value="enterprise">enterprise</SelectItem>
             <SelectItem value="dev">dev</SelectItem>
           </SelectContent>
         </Select>
         <Badge variant="outline">
-          {isError || isPending ? 'Количество релизов неизвестно' : `${data?.total ?? 0} release${data?.total !== 1 ? 's' : ''}`}
+          {isError || isPending ? 'Количество релизов неизвестно' : `Релизов: ${data?.total ?? 0}`}
         </Badge>
       </div>
 
       {/* Content */}
-      {isPending && !isError && <div role="status" className="text-muted-foreground">Loading releases…</div>}
+      {isPending && !isError && <div role="status" className="text-muted-foreground">Загружаем релизы…</div>}
       {isError && (
         <div role="alert" className="rounded-lg border border-destructive/30 p-4">
           <p className="text-destructive">Не удалось загрузить релизы. Актуальный каталог неизвестен.</p>
@@ -156,7 +157,7 @@ function UpdatesCatalog({ scope, canManage, canReadRecovery }: { scope: string; 
       )}
       {!isPending && !isError && releases.length === 0 && (
         <div className="rounded-lg border border-dashed p-12 text-center text-muted-foreground">
-          No releases yet. Create one with &ldquo;+ New Release&rdquo;.
+          Опубликованных релизов пока нет.
         </div>
       )}
 
@@ -171,16 +172,16 @@ function UpdatesCatalog({ scope, canManage, canReadRecovery }: { scope: string; 
                   <Badge variant="outline" className="text-xs">{release.flavor}</Badge>
                   <Badge variant="outline" className="text-xs">{release.platform}</Badge>
                   {release.mandatory && (
-                    <Badge variant="destructive" className="text-xs">Mandatory</Badge>
+                    <Badge variant="destructive" className="text-xs">Обязательное</Badge>
                   )}
                 </div>
                 {release.platform === 'android-canary' && (
                   <div className="text-xs text-amber-500 mt-1">
-                    Canary catalog only: normal Android agents do not poll this channel.
+                    Пилотный канал: обычные Android-агенты не проверяют его.
                   </div>
                 )}
                 <div className="text-xs text-muted-foreground mt-1">
-                  Version code {release.version_code} · Released {new Date(release.created_at).toLocaleString()}
+                  Код {release.version_code} · Опубликован {new Date(release.created_at).toLocaleString('ru-RU')}
                 </div>
                 {release.changelog && (
                   <div className="text-sm mt-1 text-muted-foreground">{release.changelog}</div>

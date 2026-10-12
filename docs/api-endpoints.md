@@ -5,7 +5,7 @@ Regenerate with `python -m scripts.export_api_docs`; verify with `--check`.
 Use the FastAPI/Pydantic versions pinned in `backend/requirements.txt`.
 The exporter does not run startup hooks or send HTTP requests.
 
-**184 HTTP operations across 146 paths.**
+**185 HTTP operations across 147 paths.**
 
 Full parameters, request bodies, response schemas and declared security schemes:
 [OpenAPI JSON](openapi.json). Manual explanations:
@@ -182,6 +182,7 @@ for tested behavior and remaining limits.
 | `GET` | `/api/v1/updates/` | updates | 200, 422 | List Releases |
 | `POST` | `/api/v1/updates/` | updates | 201, 422 | Create Release |
 | `GET` | `/api/v1/updates/artifacts/{sha256}` | updates | 200, 422 | Download Artifact |
+| `GET` | `/api/v1/updates/downloads/latest` | updates | 200, 401, 403, 404, 409, 422, 503 | Download Latest Apk |
 | `GET` | `/api/v1/updates/latest` | updates | 200, 422 | Get Latest |
 | `POST` | `/api/v1/updates/recovery` | updates | 201, 422 | Create Recovery |
 | `DELETE` | `/api/v1/updates/recovery/{device_id}` | updates | 204, 422 | Revoke Recovery |

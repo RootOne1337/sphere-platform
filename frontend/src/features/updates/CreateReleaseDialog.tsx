@@ -74,7 +74,7 @@ export function CreateReleaseDialog({ available, onCreated }: { available: boole
   const frozen = pending || Boolean(unresolved);
   const field = (key: 'version_code' | 'version_name' | 'download_url' | 'sha256' | 'changelog', label: string, maxLength: number) => <div className="space-y-1.5"><Label htmlFor={`release-${key}`}>{label}</Label><Input id={`release-${key}`} inputMode={key === 'version_code' ? 'numeric' : undefined} maxLength={maxLength} value={draft[key]} disabled={frozen} aria-invalid={Boolean(errors[key])} aria-describedby={errors[key] ? `release-${key}-error` : undefined} onChange={event => edit(key, event.target.value)} />{errors[key] && <p id={`release-${key}-error`} className="text-xs text-destructive">{errors[key]}</p>}</div>;
   return <Dialog open={open} onOpenChange={value => { if (!request.current) setOpen(value); }}>
-    <DialogTrigger asChild><Button disabled={!available}>+ New Release</Button></DialogTrigger>
+    <DialogTrigger asChild><Button disabled={!available}>+ Новый релиз</Button></DialogTrigger>
     <DialogContent className="sm:max-w-[600px]" onEscapeKeyDown={event => { if (request.current) event.preventDefault(); }} onInteractOutside={event => { if (request.current) event.preventDefault(); }}>
       <DialogHeader><DialogTitle>Публикация APK-релиза</DialogTitle><DialogDescription>Регистрация метаданных. Managed APK должен быть заранее загружен и проверен; внешний файл сервер не загружает.</DialogDescription></DialogHeader>
       <form onSubmit={submit} className="space-y-4" noValidate aria-busy={pending}>

@@ -4,28 +4,29 @@
 
 @layer base {
   :root {
-    /* Light admin workspace fallback; saved dark themes override these tokens. */
-    --background: 210 24% 97%;
-    --foreground: 222 36% 14%;
-    --card: 0 0% 100%;
-    --card-foreground: 222 36% 14%;
-    --popover: 0 0% 100%;
-    --popover-foreground: 222 36% 14%;
-    --primary: 160 74% 34%;
-    --primary-foreground: 0 0% 100%;
-    --secondary: 210 20% 94%;
-    --secondary-foreground: 222 36% 14%;
-    --muted: 210 20% 94%;
-    --muted-foreground: 215 16% 42%;
-    --accent: 160 42% 94%;
-    --accent-foreground: 160 78% 24%;
-    --destructive: 0 72% 48%;
+    /* First visit is dark; saved preferences are applied before paint. */
+    color-scheme: dark;
+    --background: 222 20% 5%;
+    --foreground: 210 20% 96%;
+    --card: 222 18% 7%;
+    --card-foreground: 210 20% 96%;
+    --popover: 222 18% 8%;
+    --popover-foreground: 210 20% 96%;
+    --primary: 160 65% 48%;
+    --primary-foreground: 164 70% 5%;
+    --secondary: 218 15% 12%;
+    --secondary-foreground: 210 20% 92%;
+    --muted: 218 15% 12%;
+    --muted-foreground: 217 12% 65%;
+    --accent: 160 20% 13%;
+    --accent-foreground: 158 65% 72%;
+    --border: 218 14% 17%;
+    --input: 218 14% 20%;
+    --ring: 160 65% 48%;
+    --success: 152 65% 48%;
+    --warning: 38 92% 58%;
+    --destructive: 0 84% 68%;
     --destructive-foreground: 0 0% 100%;
-    --warning: 38 92% 42%;
-    --success: 152 62% 32%;
-    --border: 214 22% 88%;
-    --input: 214 22% 88%;
-    --ring: 160 74% 34%;
 
     /* Configurable via ThemeProvider Density */
     --radius: 0.625rem;
