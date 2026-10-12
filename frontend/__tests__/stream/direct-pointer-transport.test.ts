@@ -37,14 +37,29 @@ test.each([{ ...open, capture_epoch: 'different' }, { ...open, frame_width: 540 
     expect(() => transport.send(JSON.stringify(value))).toThrow();
     expect(direct.send).not.toHaveBeenCalled(); expect(server.send).not.toHaveBeenCalled();
   });
-test('native revocation survives a lost data channel, without sending a touch through the server', () => {
+test.each(['opening', 'ready'])('native revocation of %s survives a lost data channel, without sending a touch through the server', phase => {
   const { server, direct, transport } = fixture();
   const pointer = new ContinuousPointer({ socket: transport, renderedCapture: () => capture, now: () => 0 });
-  pointer.open(capture); server.send.mockClear();
+  pointer.open(capture);
+  if (phase === 'ready') {
+    pointer.receive({type: 'touch_session', session_id: 'viewer_session_fixture', owner: 'owner_session_fixture',
+      capture_epoch: epoch, frame_width: 960, frame_height: 540});
+    pointer.receive({type: 'continuous_input_status', session_id: 'viewer_session_fixture', owner: 'owner_session_fixture',
+      capture_epoch: epoch, sequence: 0, status: 0, stage: 'startup', origin: 'injector', device_uptime_ms: 100});
+  }
+  server.send.mockClear();
   Object.defineProperty(direct, 'readyState', { value: 0 });
   pointer.retire('server_runtime_retry');
   expect(server.send).toHaveBeenCalledTimes(1);
-  expect(JSON.parse(server.send.mock.calls[0][0])).toEqual({ type: 'touch_close' });
+  expect(JSON.parse(server.send.mock.calls[0][0])).toEqual(phase === 'opening'
+    ? { type: 'touch_close', cancel_unstarted: true } : { type: 'touch_close' });
   expect(direct.send).not.toHaveBeenCalled();
   expect(pointer.state).toBe('fenced');
+});
+
+test('an unstarted cancellation stays on the server while native CLOSE retains its strict wire shape', () => {
+  const {server, direct, transport} = fixture();
+  transport.closeInput(true);
+  expect(JSON.parse(server.send.mock.calls[0][0])).toEqual({type: 'touch_close', cancel_unstarted: true});
+  expect(JSON.parse((direct.send as jest.Mock).mock.calls[0][0])).toEqual({type: 'touch_close'});
 });
