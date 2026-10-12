@@ -261,6 +261,26 @@ def ready(source: str) -> None:
             time.sleep(2)
 
 
+def load_or_reuse_image(artifact: Path, admitted: dict[str, Any]) -> tuple[str, bool]:
+    """A failed preflight must not import the same archive on every attempt.
+
+    Reuse is allowed only after the usual archive/CI admission and exact config
+    or manifest-to-config verification. A mismatched existing tag is rejected;
+    it is never overwritten or treated as a reason to bypass host checks.
+    """
+    tag = admitted["imageTag"]
+    existing = command(["docker", "image", "ls", "--quiet", "--no-trunc", "--filter", f"reference={tag}"])
+    identifiers = existing.splitlines()
+    require(len(identifiers) <= 1 and all(re.fullmatch(r"sha256:[a-f0-9]{64}", value) for value in identifiers),
+            "Unexpected admitted image inventory")
+    loaded = not identifiers
+    if loaded:
+        command(["docker", "image", "load", "--input", str(artifact / "image.tar.gz")], timeout=180)
+    images = json.loads(command(["docker", "image", "inspect", tag]))
+    require(isinstance(images, list) and len(images) == 1 and isinstance(images[0], dict), "Unexpected admitted image inspection")
+    return loaded_image_id(artifact, images[0], admitted["imageId"]), loaded
+
+
 def execute(artifact: Path, source: str, expected_image_id: str, expected_current: str, apply: bool,
             direct_probe_device: str | None = None, disable_direct_probe: bool = False,
             readonly_video_probe: bool = False, live_video: bool = False,
@@ -334,9 +354,7 @@ def execute(artifact: Path, source: str, expected_image_id: str, expected_curren
     preserved(before, snapshot())
     require(inspect(BACKEND)["Id"] == before[BACKEND]["id"] and schema_heads(current) == heads,
             "Backend/database changed before load")
-    command(["docker", "image", "load", "--input", str(artifact / "image.tar.gz")], timeout=180)
-    image = json.loads(command(["docker", "image", "inspect", admitted["imageTag"]]))[0]
-    runtime_id = loaded_image_id(artifact, image, admitted["imageId"])
+    runtime_id, archive_loaded = load_or_reuse_image(artifact, admitted)
     require(not evaluate(collect(ROOT)), "Host not admitted before replacement")
     preserved(before, snapshot())
     require(inspect(BACKEND)["Id"] == before[BACKEND]["id"] and schema_heads(current) == heads,
@@ -357,7 +375,8 @@ def execute(artifact: Path, source: str, expected_image_id: str, expected_curren
                 "Backend image/readiness mismatch")
         require(schema_heads(installed) == heads and ota_hash() == catalog, "SQL schema/OTA catalog changed")
         ready(source)
-        result = plan | {"runtimeInstalled": True, "loadedImageId": runtime_id, "installedBackend": after[BACKEND],
+        result = plan | {"runtimeInstalled": True, "loadedImageId": runtime_id, "imageArchiveLoaded": archive_loaded,
+            "installedBackend": after[BACKEND],
             "otherContainersPreserved": len(before) - 1, "liveContractVerified": False, "agentReconnectVerified": False}
         write(output / "installed.json", result)
         return result

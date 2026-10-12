@@ -40,6 +40,29 @@ def candidate(old):
 
 
 class BackendInstallerTests(unittest.TestCase):
+    def test_exact_already_loaded_image_is_reused_without_another_archive_import(self):
+        admitted = {"imageId": IMAGE, "imageTag": TAG}
+        with patch.object(installer, "command", side_effect=[IMAGE, json.dumps([{"Id": IMAGE}])]) as command:
+            self.assertEqual(installer.load_or_reuse_image(Path("unused"), admitted), (IMAGE, False))
+            self.assertEqual(command.call_count, 2)
+            self.assertTrue(all("load" not in call.args[0] for call in command.call_args_list))
+
+    def test_missing_image_imports_once_and_verifies_exact_admitted_config(self):
+        admitted = {"imageId": IMAGE, "imageTag": TAG}
+        with patch.object(installer, "command", side_effect=["", "loaded", json.dumps([{"Id": IMAGE}])]) as command:
+            self.assertEqual(installer.load_or_reuse_image(Path("unused"), admitted), (IMAGE, True))
+            self.assertEqual(sum("load" in call.args[0] for call in command.call_args_list), 1)
+
+    def test_wrong_existing_tag_or_ambiguous_inventory_is_not_reimported(self):
+        admitted = {"imageId": IMAGE, "imageTag": TAG}
+        wrong = "sha256:" + "d" * 64
+        for replies in ([wrong, json.dumps([{"Id": wrong}])], [IMAGE + "\n" + wrong], ["malformed"],
+                        [IMAGE, "[]"], [IMAGE, json.dumps([{"Id": IMAGE}, {"Id": IMAGE}])]):
+            with self.subTest(replies=replies), patch.object(installer, "command", side_effect=replies) as command:
+                with self.assertRaises(ValueError):
+                    installer.load_or_reuse_image(Path("unused"), admitted)
+                self.assertTrue(all("load" not in call.args[0] for call in command.call_args_list))
+
     def test_local_discovery_binding_preserves_secrets_and_device_grants(self):
         with tempfile.TemporaryDirectory() as folder:
             root = Path(folder).resolve()
@@ -453,6 +476,8 @@ class BackendInstallerTests(unittest.TestCase):
 
             def command(args, **kwargs):
                 calls.append(args)
+                if args[:3] == ["docker", "image", "ls"]:
+                    return ""
                 if args[:3] == ["docker", "image", "load"]:
                     return "loaded"
                 if args[:3] == ["docker", "image", "inspect"]:
