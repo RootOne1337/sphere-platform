@@ -1,8 +1,12 @@
 # Работы, требования пользователя и границы приёмки
 
-**Проверенная установка:** UI `cac67643` / API `cac67643`.
+**Проверенная установка:** UI `331bac0a` / API `98370d43`.
 
-**12 октября — действующая установка и ограничения.** UI/API `cac67643` установлены на 3015 и Tuna; 29 JS/CSS совпадают, PG/Redis ready, история защищена авторизацией и private/no-store. Ранее SHA и завершённой OTA-командой подтверждены 15 APK59 `1.2.59-dev/10259`; шесть ранее недоступных пакетов не подтверждены. Обычный Chrome154 с mDNS, без numeric flag и SDP-перехватчика, получил прямое видео и native DOWN/MOVE/UP; проверены смена просмотра/управления и синтетическое переподключение. Реальный сеанс PH030 показал direct media/control, около 28–29 FPS и network RTT 1–5 мс; это не полная задержка картинки. Windows discovery helper закреплён и запускается при входе пользователя. APK59 продолжает дублировать legacy H264 через сервер; этот трафик ещё не устранён. WAN/VPS discovery, physical switch, shared input и glass latency OPEN. [Текущий срез](../audits/2026-10-12/DIRECT-MDNS-INSTALLED-OBSERVATION.json), [исследование и следующий дефект](../audits/2026-10-12/DIRECT-MDNS-DISCOVERY-RESEARCH.md).
+**12 октября — действующая установка и ограничения.** UI `331bac0a` / API `98370d43` установлены на 3015 и Tuna. Исправление ввода изменило только фронтенд; код бэкенда в этих ревизиях одинаков. На обоих адресах совпадают 29 JS/CSS, PostgreSQL и Redis готовы, история сеансов требует авторизации и отдаётся с private/no-store. APK `1.2.60-dev / 10260` подтверждён установленным SHA и завершённой OTA на 15 доступных устройствах. Шесть выключенных устройств не подтверждены; обычный канал Android не изменён.
+
+На PH010 обычный Chrome 154 получил прямое видео и подтверждения Android для DOWN/MOVE/UP. На каждом адресе проверены по три обрыва RTC, фактическое резервное видео и автоматический возврат прямого ввода. При прямом просмотре серверная копия не дала новых байтов; отдельный серверный зритель продолжил получать кадры. Смена маршрута ввода больше не ждёт опустошения очереди idle heartbeat.
+
+Полная задержка картинки, ближайший путь во всех сетях, обнаружение при удалённом VPS, физическая смена сети, совместный ввод, звук, клавиатура и 60 FPS остаются открытыми. [Текущий протокол](../audits/2026-10-12/DIRECT-VIDEO-HANDOVER-OBSERVATION.json), [изменения и границы проверки](../audits/2026-10-12/DIRECT-VIDEO-HANDOVER.md). Удалённая PH025 пока получает серверное видео: Android answer пришёл, ICE-ответов нет; [сетевой отказ](../audits/2026-10-12/PH025-DIRECT-ROUTE-OBSERVATION.json).
 
 **12 октября — сборщик диска возобновлён, непрерывность не подтверждена.** Предыдущий worker завершился: последний срез20:53UTC,89 записей. Новый процесс с21:33UTC проверен по identity и свежим срезам; интервал120с,24 именованных файла, Docker каждые8срезов, лимит16MiB/24ч. Пропуск наблюдений сохранён; причина остановки и роста диска неизвестна. Lifetime, автозапуск и VSS не гарантированы. [Срез возобновления](../audits/2026-10-12/STORAGE-WATCH-RESUMED.json).
 
@@ -388,9 +392,11 @@ Detached add, palette drag/drop, явная вставка, разрыв/пер�
 
 **ACCEPTED_FINITE** · EP-029, EP-020.
 
-Обычное управление PH011 APK10249: DOWN1/MOVE5/UP1; wheel DOWN1/MOVE1/UP1, capability и owner согласуются автоматически.
+Текущий срез: PH010 на APK 10260 подтвердил прямые DOWN, MOVE и UP через 3015 и Tuna, включая жест после каждого из шести обрывов RTC. Серверных событий касания в этих жестах не было.
 
-Остаётся: Это не подтверждение всего парка/всех APK, нулевой задержки или исправления повторного idle native_receipt_timeout.
+Предыдущая конечная приёмка PH011 / APK 10249: DOWN 1 / MOVE 5 / UP 1; wheel DOWN 1 / MOVE 1 / UP 1, capability и owner согласуются автоматически.
+
+Остаётся: Конечные direct DOWN/MOVE/UP и восстановление после RTC-loss проверены на PH010/10260; это не нулевая задержка, не весь парк и не длительный idle/active soak.
 
 Доказательства: [CONTINUOUS-VIEWER-FAULT-ISOLATION](../audits/2026-10-08/CONTINUOUS-VIEWER-FAULT-ISOLATION.md), [CONTINUOUS-INPUT-AUTOMATIC-UX](../audits/2026-10-08/CONTINUOUS-INPUT-AUTOMATIC-UX.md).
 
@@ -468,7 +474,7 @@ Fleet WS пакетно invalidates REST queries; скрытые вкладки/
 
 **OPEN** · EP-033, EP-047.
 
-Текущий срез: Elevated collector13708 current prefix and live process epoch verified; bounded24h/16MiB collection. VSS values are now available in this window. C: repair and independently fetched Git replacement objects are prepared, not applied. A single free-space recovery is not writer attribution or proof of a fix.
+Текущий срез: Ограниченный непривилегированный collector28000 после перезапуска подтвердил125 последовательных samples; bounded24h/16MiB. C: после ремонта Healthy/OK,10 проверенных Git-объектов заменены. Потеря места не атрибутирована полностью; VSS недоступен в текущем окне.
 
 Остаток: Whole-PC writer UNKNOWN: VSS unavailable, USN/ETW не запущены. Нет reboot autostart; после deadline потребуется bounded restart/health. Resource soak/retention и RAM acceptance открыты.
 
@@ -511,15 +517,15 @@ resource soak/retention и RAM acceptance.
 
 **PARTIAL** · EP-029, EP-020, EP-047.
 
-Текущий срез: Историческая конечная WebRTC presentation на PH011 и echo на ноутбуке сохранены как отдельные наблюдения. СейчасUI/API6ee,15 hash-verified APK54. Source522 direct/recovery и совместный APK55 profile прошли CI; новая установка и production direct-path acceptance не выполнены.
+Текущий срез: UI331/API983 и APK60 установлены; 15 installed SHA и завершённых OTA подтверждены. На PH010 через3015/Tuna наблюдались прямое видео и нативные жесты, по3 восстановления RTC с прямым вводом, подавление серверной копии и отдельный legacy зритель. Это конечная проверка, не приёмка всех сетей. УдалённаяPH025: answer получен, ICE146/226 requests безresponses;764 server frames. Прямой удалённый путь не принят.
 
-Остаток: Подписанный APK55 и API/UI522; localhost/LAN/WAN/TURN selected route; прямой ввод и handoff нескольких viewers; static/action/reconnect soak и input-to-picture/resource SLA. PH030 package обновлён, новый native stream test не выполнен.
+Остаток: Ближайший фактически выбранный localhost/LAN/WAN/TURN; удалённый VPS и workstation discovery; синхронный input-to-picture; физическая смена сети; совместный ввод viewer/task/API, кнопки/текст/звук, FPS60 и настройки качества; длительные idle/active/reconnect и resource проверки.
 
-[Новая сверка source/CI/install](../audits/2026-10-11/STREAM-IDLE-PROGRESS-RECOVERY.md).
+[Текущая установка и проверка](../audits/2026-10-12/DIRECT-VIDEO-HANDOVER-OBSERVATION.json).
 
 Предыдущие конечные наблюдения и исходные требования:
 
-**11 октября — действующий срез.** UI/API `6ee80c1f` обслуживают 3015 и туннель; 29 клиентских assets совпадают. PH010 проверен на APK `1.2.54-dev`, ещё шесть машин — на53, две — на52. Прямые касания подготовлены и прошли CI, но новая установка API/UI остановлена до загрузки образа: Windows сообщает `Full Repair Needed` для C:. В текущем PH010 сеансе работал server fallback, прямой ICE не открылся. [Фактическая установка](../audits/2026-10-11/CURRENT-STREAM-DELIVERY.json) · [Подготовленная доставка и ограничения](../audits/2026-10-11/DIRECT-INPUT-DELIVERY-BLOCKED.md).
+**Исторический срез11октября до ремонта и следующих установок.** UI/API `6ee80c1f` обслуживают 3015 и туннель; 29 клиентских assets совпадают. PH010 проверен на APK `1.2.54-dev`, ещё шесть машин — на53, две — на52. Прямые касания подготовлены и прошли CI, но новая установка API/UI остановлена до загрузки образа: Windows сообщает `Full Repair Needed` для C:. В текущем PH010 сеансе работал server fallback, прямой ICE не открылся. [Фактическая установка](../audits/2026-10-11/CURRENT-STREAM-DELIVERY.json) · [Подготовленная доставка и ограничения](../audits/2026-10-11/DIRECT-INPUT-DELIVERY-BLOCKED.md).
 
 На PH010 после OTA54 получены41 server frames без ошибок, подтверждённый Home и ready; прямое соединение не открылось: native ICE237requests/0responses. Signed54 и completed OTA не означают установку API/UI e9 или прямой ввод. Код e9 устраняет вторичный terminal rejection через22мс во время RELEASE, который отменял автоматическое восстановление. История сеансов дополнена в исходниках отдельным маршрутом касаний и bounded ICE-counters; 647 WS tests/44subtests и549 frontend stream tests прошли. Эта новая telemetry ещё не установлена.
 
@@ -560,9 +566,7 @@ media/control и повторяющийся public idle timeout остаются
 ## Прямой browser ↔ Android media: до production допуска
 
 Исследование и реализация уже начаты по прямому разрешению пользователя.
-Primary WebRTC video pilot установлен в UI/API6ee; direct input и новые idle/
-presentation recovery подготовлены в source522, все три CI прошли. Их установка
-и подписанный APK55 ожидают ремонта C:. Полная production приёмка ещё впереди.
+UI331/API983 и 15 APK60 установлены; конечные прямое видео, ввод и возврат после RTC-loss проверены на PH010. C: после ремонта Healthy/OK. Полная приёмка сетевой матрицы, latency и длительного soak ещё впереди.
 
 Все41 будущие возможности продукта не блокируют этот этап автоматически.
 До production нужны session/auth/geometry и control-owner fences, реальная
@@ -593,7 +597,9 @@ Online badge, echo RTT и успешная сборка не доказываю�
 
 **PARTIAL**
 
-Versioned DAG/discovery/OTA boundaries reviewed. The older PH03010251 finite RTP report is historical; current fleet follow-up verifies15 APK54 hashes including PH030. Combined source522 APK55 debug CI passed; configured pilot signing/install and stable1.3 promotion are still pending.
+Текущий срез: Подписанный APK60/10260 установлен и проверен по package SHA и completed OTA на 15 доступных устройствах; обычный Android channel не изменён. Local/enterprise тесты: 1052 cases каждый, 0 failures/errors, 3 skipped каждый. Это dev/canary, стабильный 1.3 ещё не выпущен.
+
+**Историческая запись 11 октября, до текущей установки.** Versioned DAG/discovery/OTA boundaries reviewed. The older PH03010251 finite RTP report is historical; current fleet follow-up verifies15 APK54 hashes including PH030. Combined source522 APK55 debug CI passed; configured pilot signing/install and stable1.3 promotion are still pending.
 
 Остаток: Idle reliability, native lifecycle/resources, direct path and capability matrix acceptance, production signer verification and staged OTA promotion.
 
@@ -643,8 +649,10 @@ native ACK, focus/held keys, permissions/mute/autoplay, sync и resource budgets
 
 **PARTIAL**
 
-Bounded automatic diagnostics and last10 sessions were installed earlier. Source522 preserves10 sessions, 32KiB/session,15 samples/category,7days; adds presentation-stall reason and four compatible native measurements. Worst-case ages/counters retain latest observations and session close in45 local tests; new telemetry runtime not installed.
+Текущий срез: В UI331/API983/APK60 установлены последние 10 сеансов, 32 KiB/session, 15 samples/category, 7 days; авторизация и private/no-store проверены на обоих адресах. Конечные direct/native, presentation и suppression counters наблюдались на PH010. Неподтверждённое MOVE не выдаётся за выполненное.
 
-Остаток: Проверка установленного APK55/API/UI: source ages, idle output, direct input, native session journal и browser presentation на реальном Android; end-to-end correlated timestamps и длительные storage/resource bounds.
+**Историческая запись 11 октября, до текущей установки.** Bounded automatic diagnostics and last10 sessions were installed earlier. Source522 preserves10 sessions, 32KiB/session,15 samples/category,7days; adds presentation-stall reason and four compatible native measurements. Worst-case ages/counters retain latest observations and session close in45 local tests; new telemetry runtime not installed.
+
+Остаток: End-to-end frame correlation, физическая смена сети, длительная idle/active/resource приёмка, точные категории timeout и проверка browser↔APK разных сетей остаются открытыми.
 
 [Сверка и следующий допуск](../audits/2026-10-11/STREAM-IDLE-PROGRESS-RECOVERY.md).

@@ -462,10 +462,22 @@ def validate_primary_video_pilot(root: Path, direct: dict, *, with_direct_input:
     if direct.get("primaryVideoObserved") is True and (
             type(observation.get("framesPresented")) is not int or observation["framesPresented"] <= 0
             or observation.get("deviceId") not in devices or observation.get("transport") != "direct_webrtc"
-            or observation.get("controlTransport") != "server_websocket"
+            or observation.get("controlTransport") not in ({"server_websocket", "direct_webrtc"}
+                                                           if with_direct_input else {"server_websocket"})
             or observation.get("localhostRouteProven") is not False
             or observation.get("latencySlaAccepted") is not False):
         return ["Primary video observation cannot invent frames, localhost locality or a latency SLA"]
+    if direct.get("primaryVideoObserved") is True and observation.get("controlTransport") == "direct_webrtc":
+        gestures = receipt.get("browser", {}).get("nativeGestureObservations")
+        if not isinstance(gestures, list) or not any(
+                isinstance(row, dict) and row.get("deviceId") == observation.get("deviceId")
+                and type(row.get("sentEvents")) is int and row["sentEvents"] >= 3
+                and type(row.get("nativeInputReceipts")) is int and 3 <= row["nativeInputReceipts"] <= row["sentEvents"]
+                and row.get("nativeDownConfirmed") is True and row.get("nativeUpConfirmed") is True
+                and type(row.get("nativeMoveReceipts")) is int and 1 <= row["nativeMoveReceipts"] <= row["nativeInputReceipts"] - 2
+                and type(row.get("serverTouchEvents")) is int
+                and row["serverTouchEvents"] == 0 for row in gestures):
+            return ["Observed direct input requires matching native gesture and UP receipts without server touch events"]
     return []
 
 

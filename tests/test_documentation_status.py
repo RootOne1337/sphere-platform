@@ -188,6 +188,40 @@ class DocumentationStatusTests(unittest.TestCase):
                 self.assertIn("Direct media installation cannot imply direct input or production acceptance",
                               validate_registry(ROOT, changed))
 
+    def test_observed_direct_input_needs_native_receipts_for_the_same_device_and_no_server_events(self) -> None:
+        device = "414ce0e9-4b93-4f96-b9ca-ee675f53835e"
+        pilot = dict(enabled=True, scope="primary_video_and_input_v1", deviceIds=[device],
+                     primaryVideoInstalled=True, directInputInstalled=True, mediaControlInstalled=True,
+                     directInputAccepted=False, productionAccepted=False)
+        apk = dict(versionCode=10260, sha256="a" * 64, installedDevices=[
+            dict(deviceId=device, versionCode=10260, installedPackageSha256="a" * 64)])
+        observation = dict(deviceId=device, framesPresented=100, transport="direct_webrtc",
+                           controlTransport="direct_webrtc", localhostRouteProven=False, latencySlaAccepted=False)
+        gesture = dict(deviceId=device, sentEvents=13, nativeInputReceipts=13,
+                       nativeDownConfirmed=True, nativeMoveReceipts=11, nativeUpConfirmed=True, serverTouchEvents=0)
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            path = root / "observed.json"
+
+            def validate(gestures):
+                path.write_text(json.dumps(dict(runtimeInstalled=True, diagnosticPilot=pilot, apk=apk,
+                    browser=dict(primaryObservation=observation, nativeGestureObservations=gestures))), encoding="utf-8")
+                direct = dict(pilotEvidence=path.name, pilotEvidenceSha256NormalizedLf=normalized_hash(path),
+                              pilotCurrentlyEnabled=True, pilotDeviceIds=[device], primaryVideoObserved=True)
+                return validate_primary_video_pilot(root, direct, with_direct_input=True)
+
+            self.assertEqual(validate([gesture]), [])
+            self.assertEqual(validate([gesture | {"nativeInputReceipts": 12, "nativeMoveReceipts": 10}]), [])
+            for rows in (None, [], [None], [gesture | {"deviceId": "unrelated"}],
+                         [gesture | {"sentEvents": True}], [gesture | {"sentEvents": 0}],
+                         [gesture | {"nativeInputReceipts": 1}], [gesture | {"nativeInputReceipts": 14}],
+                         [gesture | {"nativeInputReceipts": True}], [gesture | {"nativeDownConfirmed": False}],
+                         [gesture | {"nativeMoveReceipts": 0}], [gesture | {"nativeMoveReceipts": True}],
+                         [gesture | {"nativeUpConfirmed": False}], [gesture | {"serverTouchEvents": 1}],
+                         [gesture | {"serverTouchEvents": False}]):
+                with self.subTest(rows=rows):
+                    self.assertTrue(validate(rows))
+
     def test_primary_registry_cannot_claim_direct_input_or_production_from_video_installation(self) -> None:
         base = dict(state="PRIMARY_VIDEO_PILOT_INSTALLED", implementationAuthorizedNow=True,
                     prototypeScope="primary_video_v1", runtimeInstalled=True, primaryVideoInstalled=True,
@@ -348,6 +382,13 @@ class DocumentationStatusTests(unittest.TestCase):
 
     def test_historical_primary_frames_cannot_be_promoted_to_a_current_direct_route(self) -> None:
         self.registry["directMedia"]["primaryVideoObserved"] = True
+        # Use the frozen historical receipt that has no current presentation
+        # count, independently of whether today's installation is now observed.
+        historical = "docs/audits/2026-10-12/DIRECT-MDNS-INSTALLED-OBSERVATION.json"
+        digest = normalized_hash(ROOT / historical)
+        self.registry["installed"].update(evidence=historical, evidenceSha256NormalizedLf=digest)
+        self.registry["directMedia"].update(currentObservationEvidence=historical,
+                                          currentObservationEvidenceSha256NormalizedLf=digest)
         self.assertIn("Historical primary frames cannot prove the current direct-video route",
                       validate_registry(ROOT, self.registry))
 
