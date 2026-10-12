@@ -9,7 +9,16 @@
 schema availability from `/api/docs`: the local gateway returned404 for the
 root schema URL during the9October documentation review.
 
-**9October schema reconciliation:** the committed JSON equals the installed
+**12 October installed schema:** UI/API `ed9d54d0` serve both 3015 and Tuna.
+The running API's canonical schema matches the committed JSON: 185 HTTP operations,
+147 paths. This includes authenticated exact-channel APK download at
+`GET /api/v1/updates/downloads/latest`; `platform=android-canary&flavor=dev`
+is the default. The response is a binary APK with private/no-store caching,
+download filename and Range support. Operator `device:read` is required;
+the agent artifact endpoint retains its separate authentication.
+[Installed proof and limits](audits/2026-10-12/APK-DOWNLOAD-AND-LOGIN.md).
+
+**Historical 9 October schema reconciliation:** the then-committed JSON equalled the installed
 APIbe803773 `app.openapi()` after canonical JSON normalization:182 HTTP operations,
 144 paths. Exporting the schema did not run startup hooks or execute HTTP actions.
 The snapshot omits WebSocket protocols and does not prove authorization/outcomes.

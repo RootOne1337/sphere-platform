@@ -1,13 +1,21 @@
 # Android Agent
 
-**Действующая граница, сверка11октября:** рабочий UI/API `6ee80c1f`;
-PH010 проверен на **1.2.54-dev/10254**, ещё шесть машин на53, две на52.
-Смешанный парк не объявляется полностью обновлённым. Direct native input source
-подготовлен, но runtime flag выключен; текущий PH010 ICE не открылся.
-[Фактический срез](audits/2026-10-11/CURRENT-STREAM-DELIVERY.json) ·
-[WORK-STATUS](operations/WORK-STATUS.md). Следующий source10255 добавляет
-[автоматический native journal](audits/2026-10-11/NATIVE-DIRECT-DIAGNOSTICS-SOURCE.md);
-build/installation этой версии ещё не подтверждены.
+**Действующая установка, 12 октября:** UI/API `ed9d54d0`, пилотный APK
+**1.2.60-dev / 10260**. Установленный SHA и completed OTA ранее проверены на
+15 устройствах. Свежий срез после установки API: 14 онлайн сообщают10260,
+семь офлайн; их свежая установка не подтверждается этим срезом.
+Прямые видео и native DOWN/MOVE/UP PH010 повторно проверены на3015 и Tuna.
+Удалённая PH025, физическая смена сети, совместный ввод и задержка картинки
+остаются открытыми. [Установка и границы](audits/2026-10-12/APK-DOWNLOAD-AND-LOGIN.md) ·
+[WORK-STATUS](operations/WORK-STATUS.md).
+
+Для ручной установки войдите в веб → «Обновления» → «Скачать последний APK».
+По умолчанию выбран `Android · пилот dev`; сервер выбирает последнюю опубликованную
+версию именно этого канала при нажатии. Есть прогресс и отмена скачивания,
+рядом ссылка на официальный LDPlayer. Скачивание не означает установку в эмулятор.
+Обычный Android/dev канал не продвинут и остаётся10209. Плановая OTA проверяет
+свой канал; адресная установка и подтверждение результата описаны в
+[OTA guide](operations/OTA-ADDRESSED-UPDATES.md).
 UI hierarchy использует root `uiautomator dump`/XML/XPath, отдельный Appium
 UiAutomator2 server не встроен. Разделы с прежними APK ниже — история своих дат.
 
@@ -51,7 +59,7 @@ full visual/latency/load/soak OPEN; original ledger34/7 не изменён.
 > [Artifact/OTA/native evidence](audits/2026-10-01/CALLBACK-LIFECYCLE-CANARY.md) ·
 > [Текущее состояние](operations/CURRENT-STATE.md).
 
-> **Последний native trial 10240:** PH010 — 299 pictures/10 s, native 960×540;
+> **Исторический native trial 10240:** PH010 — 299 pictures/10 s, native 960×540;
 > PH025 — 5 Hz, first picture 9.844 s, startup-окно 4 pictures/10 s, следующее 21/10 s.
 > Свежий post-encoding heartbeat получен; поздний read содержит старый snapshot.
 > Browser draw/input latency и Android 14+ projection recovery ещё не приняты.

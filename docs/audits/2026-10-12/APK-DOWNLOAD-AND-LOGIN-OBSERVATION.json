@@ -1,0 +1,1037 @@
+{
+  "schemaVersion": 1,
+  "observedAtUtc": "2026-10-12T12:36:18.186603+00:00",
+  "runtimeInstalled": true,
+  "scope": "UI and API ed9 installed on 3015/Tuna. Latest exact-channel authenticated APK download and dark responsive login accepted finitely on both origins. APK60 reused unchanged; fresh reported-version readback is separate from previous installed hashes. PH010 direct video/native gesture smoke passed; WAN, closest route, network switching, shared input and full display latency remain OPEN.",
+  "runtime": {
+    "sourceRevision": "ed9d54d090e2b5a5d471502335ddf6b8b86dbd35",
+    "apiSourceRevision": "ed9d54d090e2b5a5d471502335ddf6b8b86dbd35",
+    "uiContainer": {
+      "id": "a1dfd48490617fcf31e909a8b9af5430ccf2f8ab2af85eb70a6768e84ef9ecc2",
+      "imageId": "sha256:1a01acab886cc568281f16c44e0ea34219b1435662e28ccc724b92040f9e4e2b",
+      "imageTag": "sphere-review-frontend:ed9d54d090e2b5a5d471502335ddf6b8b86dbd35",
+      "startedAt": "2026-10-12T12:26:14.368304742Z",
+      "status": "running"
+    },
+    "apiContainer": {
+      "id": "aff5b156c3a7b75d2ada5fb38e0faa3b9ac185703aa64c5a8881ef4f5e5c7c86",
+      "imageId": "sha256:4a610090799e1df431d05d2398ef6ee63cc65927f8e5597790262d0145508e07",
+      "imageTag": "sphere-reviewed-backend:ed9d54d090e2b5a5d471502335ddf6b8b86dbd35",
+      "startedAt": "2026-10-12T12:25:16.767782962Z",
+      "status": "running"
+    },
+    "schemaMigrationPerformed": false,
+    "schemaHeads": [
+      "20261006_script_catalog_metadata"
+    ],
+    "otherContainersPreservedPerInstall": 45,
+    "primaryDirectVideoEnabled": true,
+    "directMediaControlInstalled": true,
+    "localMdnsDiscoveryConfigured": true
+  },
+  "delivery": {
+    "exactRuntimeSourceCi": [
+      {
+        "kind": "web",
+        "runId": 38246537397,
+        "sourceRevision": "ed9d54d090e2b5a5d471502335ddf6b8b86dbd35",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "kind": "backend",
+        "runId": 38246537467,
+        "sourceRevision": "ed9d54d090e2b5a5d471502335ddf6b8b86dbd35",
+        "status": "completed",
+        "conclusion": "success"
+      }
+    ],
+    "webArtifactAdmission": {
+      "artifactId": 11746032330,
+      "runId": 38246537397,
+      "sourceRevision": "ed9d54d090e2b5a5d471502335ddf6b8b86dbd35",
+      "zipBytes": 121029904,
+      "zipSha256": "172ef5fe1744cacb3aa13e9938adc1383d889fa2e1454b317d74f6b64e0b4ea2",
+      "githubDigestVerified": true,
+      "imageIdVerifiedFromAuthenticatedLog": "sha256:a8c45ced5382539226d5636a72b9a8dce86d4e43271dc445fc9ecf3d4908c7d0"
+    },
+    "apiArtifactAdmission": {
+      "artifactId": 11746471930,
+      "runId": 38246537467,
+      "sourceRevision": "ed9d54d090e2b5a5d471502335ddf6b8b86dbd35",
+      "zipBytes": 236449063,
+      "zipSha256": "d094e6281a6b4bf2bf98382ccb715595de7f963e48c2f1eeb2b8333153979b68",
+      "githubDigestVerified": true,
+      "imageIdVerifiedFromAuthenticatedLog": "sha256:f45573d4cf71658f9c16ddb42bd684dd9a292984ef8f30b1f0c0c1146ba55f95"
+    },
+    "staticAssetsIdentical": true,
+    "origins": [
+      {
+        "origin": "http://127.0.0.1:3015",
+        "observedAtUtc": "2026-10-12T12:28:16.450501+00:00",
+        "apiSourceRevision": "ed9d54d090e2b5a5d471502335ddf6b8b86dbd35",
+        "ready": true,
+        "rootStatus": 307,
+        "rootLocation": "/dashboard",
+        "assetHashes": {
+          "/_next/static/chunks/1255-7783d2635cd63343.js": "96dee89aaaa2dd3c48add536d4fc9bee2f5c2067b6c1fecbf82a9718c1832fe5",
+          "/_next/static/chunks/4545-753eca0214cc2f1e.js": "74994250e81f0f13014c6191a409eee997ccecd0cbc0036a7ea46f41163c73dd",
+          "/_next/static/chunks/4bd1b696-100b9d70ed4e49c1.js": "5421e13a91a9389517b66179f3b4b5eaa0d95245438066d4d7b19ac30aeb809b",
+          "/_next/static/chunks/5718-16651f0353cbc87c.js": "d57e36d081d510e605b625463639db89d1f306021f878714cf2f0c0b2f440c15",
+          "/_next/static/chunks/5776-04ef09d5a87e6710.js": "390740518086c4ed38333b87ba5e03a22cd562d23424b7836a64dd0e3905448a",
+          "/_next/static/chunks/643-ac6cb88a22cb81ec.js": "ca821c0c816ed855a8b730a3bcbfbe9fa7ea64cbf7a6208c7cf83097ffb58c21",
+          "/_next/static/chunks/8720-c9ee040177c11cae.js": "5c5e3504935a574ca8219d40d3860ca39e02ac7e68b07024f6749f9aeac3826b",
+          "/_next/static/chunks/app/(auth)/login/page-3832c634bf766d30.js": "5241ba6c86be36470e0c0201d2a41a0a02932bfdac7b2b0941d2edca78f26248",
+          "/_next/static/chunks/app/layout-db491bcd0cf2c0d3.js": "a43960bd65effe9513fda30eae465d1e1e7f91799c4c3ac334be25e06e1da069",
+          "/_next/static/chunks/main-app-51acae7907d4f0ba.js": "be53511dbfec95b02aa1cbd3f64fe6684b82b7deb96958aa8a108fafe68d28e0",
+          "/_next/static/chunks/polyfills-42372ed130431b0a.js": "0973c1d64c88adc8e3c950410cb58b288f72118d5965b78049438deb8f2f9683",
+          "/_next/static/chunks/webpack-063896ccdf8e8196.js": "9e3105d43f0dd1ade90392e4206bfbc2d6f0e41997528c9e75401f680521074b",
+          "/_next/static/css/c03ea5251d6514bc.css": "c6bc3d4f096964a05207476b1e54011adb36cf61384ffd827687b24baabbc2b9",
+          "/_next/static/css/ee1c600aa5123b7f.css": "0c00dd01ddab4118a3300ac9fc8894072af371b3d9118ae9c3a8d95aa6eea855",
+          "/_next/static/chunks/2454-d80d28eff7b10127.js": "0187298047f83536b40ee274577081fe5c918ad697fe9110b42c085541139a08",
+          "/_next/static/chunks/2619-04bc32f026a0d946.js": "a9b6c2213ea787a015c0169d198b4a90d7a44a0cc17abb0d132e8362d3016ced",
+          "/_next/static/chunks/3148-952a6ed4d3b537cd.js": "249a836009021cbb097257a716850615e86e573aba9419157407fc3988f4acba",
+          "/_next/static/chunks/317-0f8cf7b0659f53a3.js": "1b98c6d311ae76b320ef15b41ee47af4b74969eb481d1599a947aafe6c131024",
+          "/_next/static/chunks/4193-a6ee8a8bd3560102.js": "07de32e049cba61fb3d97233c561e3866a7ef900e756a303d384c5ef6cf33691",
+          "/_next/static/chunks/4249-23c879e685d3e739.js": "216701859446d2b71fd9cb9c71bfe9e9886a0e173509c0ad768191a548a8d50c",
+          "/_next/static/chunks/5597-17fa58e7d898b65f.js": "42cc937fb906462d42f2ed2f24468eda82f2ac66b576b0bfefcbc7eefc196032",
+          "/_next/static/chunks/5642-499ffb0973eb98d5.js": "3bd6d1bd5ee08d3b8f8d3cbcdbff04c9d1bb6ceefa0db26f946a800d1a15f2bc",
+          "/_next/static/chunks/7037-aa1baea7dba9b9e6.js": "f6bac0b3ca4f2f91b913ef48465eddde2b7791e2706d2918f79704f98cc88336",
+          "/_next/static/chunks/7668-40b3a41946c6ce9a.js": "593f88aeb9a3d54531d5114a5563bfc9aa588683a1d10e6340a6fb9ae745b3e6",
+          "/_next/static/chunks/8223-30a8dbd7e7fed22a.js": "dbce6bca01a99e5240c44901e606a86caa74c41bc159adabc9dcfa5526c18b70",
+          "/_next/static/chunks/9187-400f26aaa788e57d.js": "d80b25e831dfd8f86b2d8c2c1a766bfe8ee1c4f421d5328abbddb35eb2f82fa4",
+          "/_next/static/chunks/app/(dashboard)/layout-4d4c7ead80626695.js": "74d9e22b6f9783589dbaf80402d4cb5956f908489677a3cb863c695afd5317e2",
+          "/_next/static/chunks/app/(dashboard)/updates/page-325df27995c340ef.js": "638574a1c7391335892127c76da8a7e2e24a991862e00dfc4e89577242e3e49c",
+          "/_next/static/chunks/e868780c-91a04c9ad30f5ebf.js": "76344805bf5565619687fac87845103751b88c6c1def9d0c9c6c6efb209f0d22",
+          "/_next/static/css/343d268372e978c3.css": "060dd6d743cf8de3061f78412d14a6b74012e094c8d58be23cfdd5fc9d6561e8",
+          "/_next/static/chunks/9690-9143cea5293c9bcc.js": "d309b0bddb398527336cdfeb8e53a56eaaa337f9ad3ee6980584806ec27773f1",
+          "/_next/static/chunks/app/(dashboard)/stream/page-86af407b288ca974.js": "7fd89cd77fed9af5cdbbfacb2487ccc35a6092ccdfbad61a05ff8f1d76732f2d"
+        },
+        "routeAssetCounts": {
+          "/login": 14,
+          "/updates": 29,
+          "/stream": 29
+        },
+        "anonymousLatestDownloadStatus": 401,
+        "authenticatedRangeStatus": 206,
+        "rangeMatchesPublishedApk": true,
+        "downloadPrivateNoStore": true,
+        "downloadNosniff": true,
+        "nosniffHeaderOccurrences": 1,
+        "pilotVersionCode": 10260,
+        "ordinaryDevVersionCode": 10209,
+        "authenticatedHistoryPrivateNoStore": true,
+        "sessionLimit": 10
+      },
+      {
+        "origin": "https://sphere-agent-canary-20260927.ru.tuna.am",
+        "observedAtUtc": "2026-10-12T12:28:47.543580+00:00",
+        "apiSourceRevision": "ed9d54d090e2b5a5d471502335ddf6b8b86dbd35",
+        "ready": true,
+        "rootStatus": 307,
+        "rootLocation": "/dashboard",
+        "assetHashes": {
+          "/_next/static/chunks/1255-7783d2635cd63343.js": "96dee89aaaa2dd3c48add536d4fc9bee2f5c2067b6c1fecbf82a9718c1832fe5",
+          "/_next/static/chunks/4545-753eca0214cc2f1e.js": "74994250e81f0f13014c6191a409eee997ccecd0cbc0036a7ea46f41163c73dd",
+          "/_next/static/chunks/4bd1b696-100b9d70ed4e49c1.js": "5421e13a91a9389517b66179f3b4b5eaa0d95245438066d4d7b19ac30aeb809b",
+          "/_next/static/chunks/5718-16651f0353cbc87c.js": "d57e36d081d510e605b625463639db89d1f306021f878714cf2f0c0b2f440c15",
+          "/_next/static/chunks/5776-04ef09d5a87e6710.js": "390740518086c4ed38333b87ba5e03a22cd562d23424b7836a64dd0e3905448a",
+          "/_next/static/chunks/643-ac6cb88a22cb81ec.js": "ca821c0c816ed855a8b730a3bcbfbe9fa7ea64cbf7a6208c7cf83097ffb58c21",
+          "/_next/static/chunks/8720-c9ee040177c11cae.js": "5c5e3504935a574ca8219d40d3860ca39e02ac7e68b07024f6749f9aeac3826b",
+          "/_next/static/chunks/app/(auth)/login/page-3832c634bf766d30.js": "5241ba6c86be36470e0c0201d2a41a0a02932bfdac7b2b0941d2edca78f26248",
+          "/_next/static/chunks/app/layout-db491bcd0cf2c0d3.js": "a43960bd65effe9513fda30eae465d1e1e7f91799c4c3ac334be25e06e1da069",
+          "/_next/static/chunks/main-app-51acae7907d4f0ba.js": "be53511dbfec95b02aa1cbd3f64fe6684b82b7deb96958aa8a108fafe68d28e0",
+          "/_next/static/chunks/polyfills-42372ed130431b0a.js": "0973c1d64c88adc8e3c950410cb58b288f72118d5965b78049438deb8f2f9683",
+          "/_next/static/chunks/webpack-063896ccdf8e8196.js": "9e3105d43f0dd1ade90392e4206bfbc2d6f0e41997528c9e75401f680521074b",
+          "/_next/static/css/c03ea5251d6514bc.css": "c6bc3d4f096964a05207476b1e54011adb36cf61384ffd827687b24baabbc2b9",
+          "/_next/static/css/ee1c600aa5123b7f.css": "0c00dd01ddab4118a3300ac9fc8894072af371b3d9118ae9c3a8d95aa6eea855",
+          "/_next/static/chunks/2454-d80d28eff7b10127.js": "0187298047f83536b40ee274577081fe5c918ad697fe9110b42c085541139a08",
+          "/_next/static/chunks/2619-04bc32f026a0d946.js": "a9b6c2213ea787a015c0169d198b4a90d7a44a0cc17abb0d132e8362d3016ced",
+          "/_next/static/chunks/3148-952a6ed4d3b537cd.js": "249a836009021cbb097257a716850615e86e573aba9419157407fc3988f4acba",
+          "/_next/static/chunks/317-0f8cf7b0659f53a3.js": "1b98c6d311ae76b320ef15b41ee47af4b74969eb481d1599a947aafe6c131024",
+          "/_next/static/chunks/4193-a6ee8a8bd3560102.js": "07de32e049cba61fb3d97233c561e3866a7ef900e756a303d384c5ef6cf33691",
+          "/_next/static/chunks/4249-23c879e685d3e739.js": "216701859446d2b71fd9cb9c71bfe9e9886a0e173509c0ad768191a548a8d50c",
+          "/_next/static/chunks/5597-17fa58e7d898b65f.js": "42cc937fb906462d42f2ed2f24468eda82f2ac66b576b0bfefcbc7eefc196032",
+          "/_next/static/chunks/5642-499ffb0973eb98d5.js": "3bd6d1bd5ee08d3b8f8d3cbcdbff04c9d1bb6ceefa0db26f946a800d1a15f2bc",
+          "/_next/static/chunks/7037-aa1baea7dba9b9e6.js": "f6bac0b3ca4f2f91b913ef48465eddde2b7791e2706d2918f79704f98cc88336",
+          "/_next/static/chunks/7668-40b3a41946c6ce9a.js": "593f88aeb9a3d54531d5114a5563bfc9aa588683a1d10e6340a6fb9ae745b3e6",
+          "/_next/static/chunks/8223-30a8dbd7e7fed22a.js": "dbce6bca01a99e5240c44901e606a86caa74c41bc159adabc9dcfa5526c18b70",
+          "/_next/static/chunks/9187-400f26aaa788e57d.js": "d80b25e831dfd8f86b2d8c2c1a766bfe8ee1c4f421d5328abbddb35eb2f82fa4",
+          "/_next/static/chunks/app/(dashboard)/layout-4d4c7ead80626695.js": "74d9e22b6f9783589dbaf80402d4cb5956f908489677a3cb863c695afd5317e2",
+          "/_next/static/chunks/app/(dashboard)/updates/page-325df27995c340ef.js": "638574a1c7391335892127c76da8a7e2e24a991862e00dfc4e89577242e3e49c",
+          "/_next/static/chunks/e868780c-91a04c9ad30f5ebf.js": "76344805bf5565619687fac87845103751b88c6c1def9d0c9c6c6efb209f0d22",
+          "/_next/static/css/343d268372e978c3.css": "060dd6d743cf8de3061f78412d14a6b74012e094c8d58be23cfdd5fc9d6561e8",
+          "/_next/static/chunks/9690-9143cea5293c9bcc.js": "d309b0bddb398527336cdfeb8e53a56eaaa337f9ad3ee6980584806ec27773f1",
+          "/_next/static/chunks/app/(dashboard)/stream/page-86af407b288ca974.js": "7fd89cd77fed9af5cdbbfacb2487ccc35a6092ccdfbad61a05ff8f1d76732f2d"
+        },
+        "routeAssetCounts": {
+          "/login": 14,
+          "/updates": 29,
+          "/stream": 29
+        },
+        "anonymousLatestDownloadStatus": 401,
+        "authenticatedRangeStatus": 206,
+        "rangeMatchesPublishedApk": true,
+        "downloadPrivateNoStore": true,
+        "downloadNosniff": true,
+        "nosniffHeaderOccurrences": 2,
+        "pilotVersionCode": 10260,
+        "ordinaryDevVersionCode": 10209,
+        "authenticatedHistoryPrivateNoStore": true,
+        "sessionLimit": 10
+      }
+    ],
+    "androidTreeAtBothSources": "f276f8d9e16b10e45b285e0fba45b7ff0fb66efb"
+  },
+  "httpSchema": {
+    "paths": 147,
+    "operations": 185,
+    "canonicalSha256": "28642f21db93ce9146ffc00b9900d733c32b1d62ad05848e8d82fd767e2ec4e1",
+    "sourceRevision": "ed9d54d090e2b5a5d471502335ddf6b8b86dbd35",
+    "source": "Installed app.openapi; no application lifespan hooks",
+    "observedAtUtc": "2026-10-12T12:33:18.480747+00:00",
+    "sameAsCommittedCanonicalJson": true
+  },
+  "apk": {
+    "version": "1.2.60-dev",
+    "versionCode": 10260,
+    "sourceRevision": "e9c550e82cd9f4745b12c396be101a89eed5dbf4",
+    "sha256": "912b9119304b75c79e5de731b94d20e0c8d1c5c5099c8e409c30bed7c56a88f4",
+    "bytes": 57688052,
+    "newApkBuiltOrPublishedInThisDelivery": false,
+    "priorInstalledPackageEvidence": "docs/audits/2026-10-12/DIRECT-VIDEO-HANDOVER-OBSERVATION.json",
+    "priorVerifiedInstalledCount": 15,
+    "ordinaryAndroidChannelChanged": false,
+    "exactApkSourceCi": {
+      "kind": "android",
+      "runId": 38190287231,
+      "sourceRevision": "e9c550e82cd9f4745b12c396be101a89eed5dbf4",
+      "status": "completed",
+      "conclusion": "success"
+    },
+    "freshReadback": {
+      "observedAt": "2026-10-12T12:34:09.900558+00:00",
+      "deviceMutations": 0,
+      "emulators": [
+        {
+          "id": "753fd530-2f19-4e5e-98ba-769863678141",
+          "name": "auto-ph-030",
+          "status": "offline",
+          "agent_version": "1.2.60-dev",
+          "agent_version_code": 10260,
+          "last_heartbeat": "2026-10-12T12:29:25.621612Z"
+        },
+        {
+          "id": "867ec296-ca4a-4fb2-bb46-ce10b016bfdc",
+          "name": "auto-ph-029",
+          "status": "offline",
+          "agent_version": null,
+          "agent_version_code": null,
+          "last_heartbeat": null
+        },
+        {
+          "id": "4815b950-e5cf-4686-9d46-42d0df8d41f7",
+          "name": "auto-ph-028",
+          "status": "online",
+          "agent_version": "1.2.60-dev",
+          "agent_version_code": 10260,
+          "last_heartbeat": "2026-10-12T12:33:50.315527Z"
+        },
+        {
+          "id": "db32e00c-3ef4-4b21-acb4-84717737f2a8",
+          "name": "auto-ph-027",
+          "status": "offline",
+          "agent_version": null,
+          "agent_version_code": null,
+          "last_heartbeat": null
+        },
+        {
+          "id": "daef8a88-6c90-4a6b-bb3b-6b81126a8f45",
+          "name": "auto-ph-026",
+          "status": "offline",
+          "agent_version": null,
+          "agent_version_code": null,
+          "last_heartbeat": null
+        },
+        {
+          "id": "b410464a-5f26-4803-a756-7840cc17b128",
+          "name": "auto-ph-025",
+          "status": "online",
+          "agent_version": "1.2.60-dev",
+          "agent_version_code": 10260,
+          "last_heartbeat": "2026-10-12T12:33:50.847521Z"
+        },
+        {
+          "id": "dce1b4c3-cfd5-47c7-a948-78f572aea72c",
+          "name": "auto-ph-024",
+          "status": "offline",
+          "agent_version": null,
+          "agent_version_code": null,
+          "last_heartbeat": null
+        },
+        {
+          "id": "58c08910-5051-4e43-ab84-f84cd23c8a03",
+          "name": "auto-ph-023",
+          "status": "offline",
+          "agent_version": null,
+          "agent_version_code": null,
+          "last_heartbeat": null
+        },
+        {
+          "id": "d088c147-7ada-4b29-9e79-f991b20fcf91",
+          "name": "auto-ph-022",
+          "status": "online",
+          "agent_version": "1.2.60-dev",
+          "agent_version_code": 10260,
+          "last_heartbeat": "2026-10-12T12:33:52.325984Z"
+        },
+        {
+          "id": "91c4155d-31a0-4dc1-83e9-f197b3473d16",
+          "name": "auto-ph-021",
+          "status": "offline",
+          "agent_version": null,
+          "agent_version_code": null,
+          "last_heartbeat": null
+        },
+        {
+          "id": "75c29a32-2867-4b60-947c-003e712e538f",
+          "name": "auto-ph-020",
+          "status": "online",
+          "agent_version": "1.2.60-dev",
+          "agent_version_code": 10260,
+          "last_heartbeat": "2026-10-12T12:33:50.665271Z"
+        },
+        {
+          "id": "c37e687a-ee83-466d-846f-3f4b36047fa7",
+          "name": "auto-ph-019",
+          "status": "online",
+          "agent_version": "1.2.60-dev",
+          "agent_version_code": 10260,
+          "last_heartbeat": "2026-10-12T12:33:51.000461Z"
+        },
+        {
+          "id": "bafef86f-3ab4-469b-ae0c-cf2771b55813",
+          "name": "auto-ph-018",
+          "status": "online",
+          "agent_version": "1.2.60-dev",
+          "agent_version_code": 10260,
+          "last_heartbeat": "2026-10-12T12:33:51.443827Z"
+        },
+        {
+          "id": "1dd7e59c-b68f-406a-93cd-5f4e34fdea90",
+          "name": "auto-ph-017",
+          "status": "online",
+          "agent_version": "1.2.60-dev",
+          "agent_version_code": 10260,
+          "last_heartbeat": "2026-10-12T12:33:52.709270Z"
+        },
+        {
+          "id": "3c4c4218-27ba-4d8d-a7d2-4348c2f91c93",
+          "name": "auto-ph-016",
+          "status": "online",
+          "agent_version": "1.2.60-dev",
+          "agent_version_code": 10260,
+          "last_heartbeat": "2026-10-12T12:33:51.192607Z"
+        },
+        {
+          "id": "930a6505-b7ec-4eee-93fe-9aaa66517871",
+          "name": "auto-ph-015",
+          "status": "online",
+          "agent_version": "1.2.60-dev",
+          "agent_version_code": 10260,
+          "last_heartbeat": "2026-10-12T12:33:50.401340Z"
+        },
+        {
+          "id": "673d5774-24b1-4b57-8dfb-90c46f627ce3",
+          "name": "auto-ph-014",
+          "status": "online",
+          "agent_version": "1.2.60-dev",
+          "agent_version_code": 10260,
+          "last_heartbeat": "2026-10-12T12:33:50.551636Z"
+        },
+        {
+          "id": "6d830af5-b7cc-44b4-b7f5-5e0275aceb3b",
+          "name": "auto-ph-013",
+          "status": "online",
+          "agent_version": "1.2.60-dev",
+          "agent_version_code": 10260,
+          "last_heartbeat": "2026-10-12T12:33:50.602537Z"
+        },
+        {
+          "id": "8c187cfa-e5ea-4939-a137-07619437953d",
+          "name": "auto-ph-012",
+          "status": "online",
+          "agent_version": "1.2.60-dev",
+          "agent_version_code": 10260,
+          "last_heartbeat": "2026-10-12T12:33:50.658887Z"
+        },
+        {
+          "id": "414ce0e9-4b93-4f96-b9ca-ee675f53835e",
+          "name": "auto-ph-011",
+          "status": "online",
+          "agent_version": "1.2.60-dev",
+          "agent_version_code": 10260,
+          "last_heartbeat": "2026-10-12T12:33:52.206575Z"
+        },
+        {
+          "id": "5df4805e-fe64-4d39-960c-19ceab206cd6",
+          "name": "auto-ph-010",
+          "status": "online",
+          "agent_version": "1.2.60-dev",
+          "agent_version_code": 10260,
+          "last_heartbeat": "2026-10-12T12:33:51.805001Z"
+        }
+      ]
+    },
+    "freshOnlineCount": 14,
+    "freshOfflineCount": 7,
+    "freshReadbackIsInstalledHashProof": false
+  },
+  "browser": {
+    "finiteAccepted": true,
+    "engine": "Stock isolated Chrome; no launch flags, SDP or transport rewriting",
+    "observations": [
+      {
+        "label": "local",
+        "login": {
+          "observedAt": "2026-10-12T12:28:18.503Z",
+          "origin": "http://127.0.0.1:3015",
+          "observations": [
+            {
+              "width": 1440,
+              "height": 1000,
+              "name": "desktop",
+              "horizontalOverflow": false,
+              "rootDark": true,
+              "rootColorScheme": "dark",
+              "loginColorScheme": "dark",
+              "loginBackground": "rgb(10, 13, 18)",
+              "inputHeight": 48,
+              "passwordHeight": 48,
+              "submitHeight": 48,
+              "h1Count": 1
+            },
+            {
+              "width": 390,
+              "height": 844,
+              "name": "phone",
+              "horizontalOverflow": false,
+              "rootDark": true,
+              "rootColorScheme": "dark",
+              "loginColorScheme": "dark",
+              "loginBackground": "rgb(10, 13, 18)",
+              "inputHeight": 48,
+              "passwordHeight": 48,
+              "submitHeight": 48,
+              "h1Count": 1
+            },
+            {
+              "width": 320,
+              "height": 740,
+              "name": "narrow-phone",
+              "horizontalOverflow": false,
+              "rootDark": true,
+              "rootColorScheme": "dark",
+              "loginColorScheme": "dark",
+              "loginBackground": "rgb(10, 13, 18)",
+              "inputHeight": 48,
+              "passwordHeight": 48,
+              "submitHeight": 48,
+              "h1Count": 1
+            },
+            {
+              "width": 844,
+              "height": 390,
+              "name": "landscape",
+              "horizontalOverflow": false,
+              "rootDark": true,
+              "rootColorScheme": "dark",
+              "loginColorScheme": "dark",
+              "loginBackground": "rgb(10, 13, 18)",
+              "inputHeight": 48,
+              "passwordHeight": 48,
+              "submitHeight": 48,
+              "h1Count": 1
+            },
+            {
+              "width": 768,
+              "height": 1024,
+              "name": "tablet",
+              "horizontalOverflow": false,
+              "rootDark": true,
+              "rootColorScheme": "dark",
+              "loginColorScheme": "dark",
+              "loginBackground": "rgb(10, 13, 18)",
+              "inputHeight": 48,
+              "passwordHeight": 48,
+              "submitHeight": 48,
+              "h1Count": 1
+            }
+          ],
+          "revealWorks": true,
+          "hideWorks": true,
+          "savedLight": {
+            "rootDark": false,
+            "rootColorScheme": "light",
+            "rootDensity": {
+              "radius": "0.875rem",
+              "spacing": "1.25",
+              "fontSize": "115%"
+            },
+            "loginColorScheme": "dark",
+            "loginBackground": "rgb(10, 13, 18)",
+            "stored": {
+              "theme": "light-corporate",
+              "density": "spacious"
+            }
+          },
+          "pageErrors": [],
+          "staticAssetFailures": []
+        },
+        "updatesLayout": {
+          "observedAt": "2026-10-12T12:29:35.908Z",
+          "origin": "http://127.0.0.1:3015",
+          "observations": [
+            {
+              "width": 1440,
+              "height": 1000,
+              "label": "desktop",
+              "horizontalOverflow": false,
+              "documentWidth": 1440,
+              "downloadButton": {
+                "x": 668.265625,
+                "y": 317,
+                "width": 232.34375,
+                "height": 44,
+                "top": 317,
+                "right": 900.609375,
+                "bottom": 361,
+                "left": 668.265625
+              },
+              "card": {
+                "x": 296,
+                "y": 166,
+                "width": 1112,
+                "height": 254,
+                "top": 166,
+                "right": 1408,
+                "bottom": 420,
+                "left": 296
+              }
+            },
+            {
+              "width": 390,
+              "height": 844,
+              "label": "phone",
+              "horizontalOverflow": false,
+              "documentWidth": 390,
+              "downloadButton": {
+                "x": 37,
+                "y": 489,
+                "width": 316,
+                "height": 44,
+                "top": 489,
+                "right": 353,
+                "bottom": 533,
+                "left": 37
+              },
+              "card": {
+                "x": 16,
+                "y": 238,
+                "width": 358,
+                "height": 654,
+                "top": 238,
+                "right": 374,
+                "bottom": 892,
+                "left": 16
+              }
+            },
+            {
+              "width": 320,
+              "height": 740,
+              "label": "narrow-phone",
+              "horizontalOverflow": false,
+              "documentWidth": 320,
+              "downloadButton": {
+                "x": 37,
+                "y": 637,
+                "width": 246,
+                "height": 44,
+                "top": 637,
+                "right": 283,
+                "bottom": 681,
+                "left": 37
+              },
+              "card": {
+                "x": 16,
+                "y": 318,
+                "width": 288,
+                "height": 766,
+                "top": 318,
+                "right": 304,
+                "bottom": 1084,
+                "left": 16
+              }
+            }
+          ],
+          "pageErrors": []
+        },
+        "download": {
+          "observedAt": "2026-10-12T12:28:59.925Z",
+          "origin": "http://127.0.0.1:3015",
+          "channel": "android-canary/dev",
+          "officialLink": "https://www.ldplayer.net/",
+          "status": 200,
+          "requestPath": "/api/v1/updates/downloads/latest?platform=android-canary&flavor=dev",
+          "headers": {
+            "contentType": "application/vnd.android.package-archive",
+            "contentLength": "57688052",
+            "contentDisposition": "attachment; filename=\"SphereAgent-1.2.60-dev-android-canary-dev.apk\"",
+            "cacheControl": "private, no-store",
+            "nosniff": "nosniff",
+            "sha256": "912b9119304b75c79e5de731b94d20e0c8d1c5c5099c8e409c30bed7c56a88f4",
+            "versionCode": "10260"
+          },
+          "suggestedFilename": "SphereAgent-1.2.60-dev-android-canary-dev.apk",
+          "downloadFailure": null,
+          "elapsedMs": 927,
+          "saveMessageVisible": true,
+          "pageErrors": [],
+          "staticAssetFailures": [],
+          "downloadedBytes": 57688052,
+          "downloadedSha256": "912b9119304b75c79e5de731b94d20e0c8d1c5c5099c8e409c30bed7c56a88f4",
+          "exactPublishedApkVerified": true
+        },
+        "streamSmoke": {
+          "observedAt": "2026-10-12T12:30:00.566Z",
+          "origin": "http://127.0.0.1:3015",
+          "deviceId": "5df4805e-fe64-4d39-960c-19ceab206cd6",
+          "ordinaryChrome": true,
+          "transportOverrides": false,
+          "commandsReplayed": false,
+          "before": {
+            "at": "2026-10-12T12:29:57.878Z",
+            "binaryPackets": 70,
+            "binaryBytes": 582115,
+            "directAcks": 2,
+            "deliveryErrors": 0,
+            "directFramesPresented": 0,
+            "nativePresentedFrames": 0,
+            "video": [
+              {
+                "framesDecoded": 137,
+                "framesReceived": 137,
+                "framesPerSecond": 30,
+                "bytesReceived": 907985,
+                "packetsLost": 0,
+                "freezeCount": 0
+              }
+            ],
+            "networkRttMs": 1
+          },
+          "after": {
+            "at": "2026-10-12T12:30:00.081Z",
+            "binaryPackets": 70,
+            "binaryBytes": 582115,
+            "directAcks": 3,
+            "deliveryErrors": 0,
+            "directFramesPresented": 56,
+            "nativePresentedFrames": 187,
+            "video": [
+              {
+                "framesDecoded": 200,
+                "framesReceived": 201,
+                "framesPerSecond": 29,
+                "bytesReceived": 1410439,
+                "packetsLost": 0,
+                "freezeCount": 0
+              }
+            ],
+            "networkRttMs": 0
+          },
+          "final": {
+            "at": "2026-10-12T12:30:00.536Z",
+            "binaryPackets": 70,
+            "binaryBytes": 582115,
+            "directAcks": 3,
+            "deliveryErrors": 0,
+            "directFramesPresented": 66,
+            "nativePresentedFrames": 199,
+            "video": [
+              {
+                "framesDecoded": 212,
+                "framesReceived": 212,
+                "framesPerSecond": 28,
+                "bytesReceived": 1531872,
+                "packetsLost": 0,
+                "freezeCount": 0
+              }
+            ],
+            "networkRttMs": 0
+          },
+          "gesture": {
+            "sentEvents": 13,
+            "nativeInputReceipts": 13,
+            "nativeDownConfirmed": true,
+            "nativeMoveReceipts": 11,
+            "nativeUpConfirmed": true,
+            "serverTouchEvents": 0
+          },
+          "nativeWebSocketSend": true,
+          "pageErrors": [],
+          "viewerClosedByNavigation": true
+        }
+      },
+      {
+        "label": "tuna",
+        "login": {
+          "observedAt": "2026-10-12T12:30:56.928Z",
+          "origin": "https://sphere-agent-canary-20260927.ru.tuna.am",
+          "observations": [
+            {
+              "width": 1440,
+              "height": 1000,
+              "name": "desktop",
+              "horizontalOverflow": false,
+              "rootDark": true,
+              "rootColorScheme": "dark",
+              "loginColorScheme": "dark",
+              "loginBackground": "rgb(10, 13, 18)",
+              "inputHeight": 48,
+              "passwordHeight": 48,
+              "submitHeight": 48,
+              "h1Count": 1
+            },
+            {
+              "width": 390,
+              "height": 844,
+              "name": "phone",
+              "horizontalOverflow": false,
+              "rootDark": true,
+              "rootColorScheme": "dark",
+              "loginColorScheme": "dark",
+              "loginBackground": "rgb(10, 13, 18)",
+              "inputHeight": 48,
+              "passwordHeight": 48,
+              "submitHeight": 48,
+              "h1Count": 1
+            },
+            {
+              "width": 320,
+              "height": 740,
+              "name": "narrow-phone",
+              "horizontalOverflow": false,
+              "rootDark": true,
+              "rootColorScheme": "dark",
+              "loginColorScheme": "dark",
+              "loginBackground": "rgb(10, 13, 18)",
+              "inputHeight": 48,
+              "passwordHeight": 48,
+              "submitHeight": 48,
+              "h1Count": 1
+            },
+            {
+              "width": 844,
+              "height": 390,
+              "name": "landscape",
+              "horizontalOverflow": false,
+              "rootDark": true,
+              "rootColorScheme": "dark",
+              "loginColorScheme": "dark",
+              "loginBackground": "rgb(10, 13, 18)",
+              "inputHeight": 48,
+              "passwordHeight": 48,
+              "submitHeight": 48,
+              "h1Count": 1
+            },
+            {
+              "width": 768,
+              "height": 1024,
+              "name": "tablet",
+              "horizontalOverflow": false,
+              "rootDark": true,
+              "rootColorScheme": "dark",
+              "loginColorScheme": "dark",
+              "loginBackground": "rgb(10, 13, 18)",
+              "inputHeight": 48,
+              "passwordHeight": 48,
+              "submitHeight": 48,
+              "h1Count": 1
+            }
+          ],
+          "revealWorks": true,
+          "hideWorks": true,
+          "savedLight": {
+            "rootDark": false,
+            "rootColorScheme": "light",
+            "rootDensity": {
+              "radius": "0.875rem",
+              "spacing": "1.25",
+              "fontSize": "115%"
+            },
+            "loginColorScheme": "dark",
+            "loginBackground": "rgb(10, 13, 18)",
+            "stored": {
+              "theme": "light-corporate",
+              "density": "spacious"
+            }
+          },
+          "pageErrors": [],
+          "staticAssetFailures": []
+        },
+        "updatesLayout": {
+          "observedAt": "2026-10-12T12:32:34.961Z",
+          "origin": "https://sphere-agent-canary-20260927.ru.tuna.am",
+          "observations": [
+            {
+              "width": 1440,
+              "height": 1000,
+              "label": "desktop",
+              "horizontalOverflow": false,
+              "documentWidth": 1440,
+              "downloadButton": {
+                "x": 668.265625,
+                "y": 317,
+                "width": 232.34375,
+                "height": 44,
+                "top": 317,
+                "right": 900.609375,
+                "bottom": 361,
+                "left": 668.265625
+              },
+              "card": {
+                "x": 296,
+                "y": 166,
+                "width": 1112,
+                "height": 254,
+                "top": 166,
+                "right": 1408,
+                "bottom": 420,
+                "left": 296
+              }
+            },
+            {
+              "width": 390,
+              "height": 844,
+              "label": "phone",
+              "horizontalOverflow": false,
+              "documentWidth": 390,
+              "downloadButton": {
+                "x": 37,
+                "y": 489,
+                "width": 316,
+                "height": 44,
+                "top": 489,
+                "right": 353,
+                "bottom": 533,
+                "left": 37
+              },
+              "card": {
+                "x": 16,
+                "y": 238,
+                "width": 358,
+                "height": 654,
+                "top": 238,
+                "right": 374,
+                "bottom": 892,
+                "left": 16
+              }
+            },
+            {
+              "width": 320,
+              "height": 740,
+              "label": "narrow-phone",
+              "horizontalOverflow": false,
+              "documentWidth": 320,
+              "downloadButton": {
+                "x": 37,
+                "y": 637,
+                "width": 246,
+                "height": 44,
+                "top": 637,
+                "right": 283,
+                "bottom": 681,
+                "left": 37
+              },
+              "card": {
+                "x": 16,
+                "y": 318,
+                "width": 288,
+                "height": 766,
+                "top": 318,
+                "right": 304,
+                "bottom": 1084,
+                "left": 16
+              }
+            }
+          ],
+          "pageErrors": []
+        },
+        "download": {
+          "observedAt": "2026-10-12T12:31:22.263Z",
+          "origin": "https://sphere-agent-canary-20260927.ru.tuna.am",
+          "channel": "android-canary/dev",
+          "officialLink": "https://www.ldplayer.net/",
+          "status": 200,
+          "requestPath": "/api/v1/updates/downloads/latest?platform=android-canary&flavor=dev",
+          "headers": {
+            "contentType": "application/vnd.android.package-archive",
+            "contentLength": "57688052",
+            "contentDisposition": "attachment; filename=\"SphereAgent-1.2.60-dev-android-canary-dev.apk\"",
+            "cacheControl": "private, no-store",
+            "nosniff": "nosniff, nosniff",
+            "sha256": "912b9119304b75c79e5de731b94d20e0c8d1c5c5099c8e409c30bed7c56a88f4",
+            "versionCode": "10260"
+          },
+          "suggestedFilename": "SphereAgent-1.2.60-dev-android-canary-dev.apk",
+          "downloadFailure": null,
+          "elapsedMs": 8489,
+          "saveMessageVisible": true,
+          "pageErrors": [],
+          "staticAssetFailures": [],
+          "downloadedBytes": 57688052,
+          "downloadedSha256": "912b9119304b75c79e5de731b94d20e0c8d1c5c5099c8e409c30bed7c56a88f4",
+          "exactPublishedApkVerified": true
+        },
+        "streamSmoke": {
+          "observedAt": "2026-10-12T12:33:01.625Z",
+          "origin": "https://sphere-agent-canary-20260927.ru.tuna.am",
+          "deviceId": "5df4805e-fe64-4d39-960c-19ceab206cd6",
+          "ordinaryChrome": true,
+          "transportOverrides": false,
+          "commandsReplayed": false,
+          "before": {
+            "at": "2026-10-12T12:32:58.787Z",
+            "binaryPackets": 98,
+            "binaryBytes": 705191,
+            "directAcks": 2,
+            "deliveryErrors": 0,
+            "directFramesPresented": 0,
+            "nativePresentedFrames": 0,
+            "video": [
+              {
+                "framesDecoded": 150,
+                "framesReceived": 150,
+                "framesPerSecond": 27,
+                "bytesReceived": 1009204,
+                "packetsLost": 0,
+                "freezeCount": 0
+              }
+            ],
+            "networkRttMs": 0
+          },
+          "after": {
+            "at": "2026-10-12T12:33:00.990Z",
+            "binaryPackets": 98,
+            "binaryBytes": 705191,
+            "directAcks": 3,
+            "deliveryErrors": 0,
+            "directFramesPresented": 56,
+            "nativePresentedFrames": 207,
+            "video": [
+              {
+                "framesDecoded": 216,
+                "framesReceived": 217,
+                "framesPerSecond": 29,
+                "bytesReceived": 1412843,
+                "packetsLost": 0,
+                "freezeCount": 0
+              }
+            ],
+            "networkRttMs": 2
+          },
+          "final": {
+            "at": "2026-10-12T12:33:01.427Z",
+            "binaryPackets": 98,
+            "binaryBytes": 705191,
+            "directAcks": 3,
+            "deliveryErrors": 0,
+            "directFramesPresented": 66,
+            "nativePresentedFrames": 221,
+            "video": [
+              {
+                "framesDecoded": 229,
+                "framesReceived": 230,
+                "framesPerSecond": 29,
+                "bytesReceived": 1509504,
+                "packetsLost": 0,
+                "freezeCount": 0
+              }
+            ],
+            "networkRttMs": 2
+          },
+          "gesture": {
+            "sentEvents": 14,
+            "nativeInputReceipts": 14,
+            "nativeDownConfirmed": true,
+            "nativeMoveReceipts": 12,
+            "nativeUpConfirmed": true,
+            "serverTouchEvents": 0
+          },
+          "nativeWebSocketSend": true,
+          "pageErrors": [],
+          "viewerClosedByNavigation": true
+        }
+      }
+    ],
+    "directFramesPresented": 132,
+    "screenshots": [
+      {
+        "path": "docs/audits/2026-10-12/assets/updates-login/login-desktop.png",
+        "sha256": "21e51c90db7553ffa7acfc7757093e6eb3e120fc48d270c84db39df75d63ea82",
+        "bytes": 129347
+      },
+      {
+        "path": "docs/audits/2026-10-12/assets/updates-login/login-phone.png",
+        "sha256": "347d0b41e0ac28ea53fa8f65f72dcdd8215028015ec195d72626abad2011d768",
+        "bytes": 49619
+      },
+      {
+        "path": "docs/audits/2026-10-12/assets/updates-login/updates-desktop.png",
+        "sha256": "8647ca2219f0ea9ad14ef333e8e63df89925ee9e38f58ea7c323853bf76e7f98",
+        "bytes": 277819
+      },
+      {
+        "path": "docs/audits/2026-10-12/assets/updates-login/updates-phone.png",
+        "sha256": "b7d0da430dd7061af50770cd73a7770433a37a0872d0e69d7230c3de4e3e87ef",
+        "bytes": 96213
+      }
+    ],
+    "allOwnedViewersClosedByNavigation": true,
+    "allOwnedBrowsersClosedNormally": true,
+    "mfaRuntimeWithEnabledUserTested": false,
+    "mfaAndSessionFencingUnitTestsPassed": true
+  },
+  "validation": {
+    "backendTestsPassed": 3762,
+    "backendSubtestsPassed": 361,
+    "backendSkipped": 43,
+    "frontendTestsPassed": 2260,
+    "frontendSuitesPassed": 156,
+    "typescriptPassed": true,
+    "apiSchemaAndCatalogMatchInstalled": true,
+    "reviewedArtifactAdmissionTestsPassed": 71,
+    "documentationTestsPassedBeforeRecord": 41
+  },
+  "remaining": [
+    "PH025 remote direct ICE cause and route acceptance",
+    "Localhost/LAN/WAN/TURN matrix and physical interface switching",
+    "Shared input, audio, keyboard and 60 FPS acceptance",
+    "Glass-to-glass video latency and long resource/reconnect soak",
+    "Offline devices are not fresh installed-package confirmations"
+  ],
+  "ledger": {
+    "productItemsClosedInThisBatch": [],
+    "newChatFiniteScopes": [
+      "CHAT-21",
+      "CHAT-22"
+    ],
+    "existingProductCountsChanged": false
+  },
+  "privacy": {
+    "rawSdpPublished": false,
+    "candidateAddressesPublished": false,
+    "tokensPublished": false,
+    "inputTextPublished": false
+  }
+}

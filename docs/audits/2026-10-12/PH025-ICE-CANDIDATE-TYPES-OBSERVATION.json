@@ -1,0 +1,113 @@
+{
+  "schemaVersion": 1,
+  "observedAtUtc": "2026-10-12T02:50:52.919Z",
+  "scope": "Finite ordinary Chrome PH025 read-only follow-up; sanitized candidate types only",
+  "runtimeEvidence": "docs/audits/2026-10-12/DIRECT-VIDEO-HANDOVER-OBSERVATION.json",
+  "deviceName": "PH025",
+  "deviceId": "b410464a-5f26-4803-a756-7840cc17b128",
+  "elapsedMs": 27020,
+  "samples": 9,
+  "commandsSent": 0,
+  "viewerClosedByNavigation": true,
+  "browserClosedNormally": true,
+  "maximumServerCanvasFrames": 570,
+  "directFramesPresented": 0,
+  "inputOwnershipPresentAtLastSample": false,
+  "latestActiveBrowserSnapshot": {
+    "connection": "connecting",
+    "ice": "checking",
+    "gathering": "complete",
+    "gatheredLocal": [
+      {
+        "type": "host",
+        "protocol": "udp",
+        "family": "mdns"
+      },
+      {
+        "type": "srflx",
+        "protocol": "udp",
+        "family": "ipv4"
+      }
+    ],
+    "gatheringErrors": [
+      {
+        "code": 701,
+        "service": "stun"
+      }
+    ],
+    "local": [
+      {
+        "type": "host",
+        "protocol": "tcp"
+      },
+      {
+        "type": "host",
+        "protocol": "tcp"
+      },
+      {
+        "type": "host",
+        "protocol": "udp"
+      },
+      {
+        "type": "host",
+        "protocol": "udp"
+      },
+      {
+        "type": "srflx",
+        "protocol": "udp"
+      }
+    ],
+    "remote": [
+      {
+        "type": "srflx",
+        "protocol": "udp"
+      },
+      {
+        "type": "host",
+        "protocol": "udp"
+      }
+    ],
+    "pairs": [
+      {
+        "state": "in-progress",
+        "local": {
+          "type": "host",
+          "protocol": "udp"
+        },
+        "remote": {
+          "type": "srflx",
+          "protocol": "udp"
+        },
+        "requestsSent": 85,
+        "responsesReceived": 0
+      },
+      {
+        "state": "in-progress",
+        "local": {
+          "type": "host",
+          "protocol": "udp"
+        },
+        "remote": {
+          "type": "host",
+          "protocol": "udp"
+        },
+        "requestsSent": 85,
+        "responsesReceived": 0
+      }
+    ],
+    "video": []
+  },
+  "iceRequestsSent": 170,
+  "iceResponsesReceived": 0,
+  "localUdpReflexiveCandidatePresent": true,
+  "remoteUdpReflexiveCandidatePresent": true,
+  "rawAddressesRecorded": false,
+  "rawSdpRecorded": false,
+  "transportOptionsChanged": false,
+  "actualNetworkCause": "UNDETERMINED",
+  "directRouteAccepted": false,
+  "productionAccepted": false,
+  "interpretation": "Both descriptions provide UDP reflexive candidates and local gathering completes. The observed pairs get no responses. A concurrent STUN error does not justify claiming that all reflexive discovery failed; gathering success does not establish peer reachability.",
+  "previousIndependentBrowserAndNativeEvidence": "docs/audits/2026-10-12/PH025-DIRECT-ROUTE-OBSERVATION.json",
+  "limitation": "This follow-up records browser stats and received remote candidate types, not a new synchronized native stats report or a NAT classification."
+}

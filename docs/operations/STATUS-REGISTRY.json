@@ -1,8 +1,8 @@
 {
   "schemaVersion": 1,
-  "reviewedAtUtc": "2026-10-12T02:29:59.844123+00:00",
-  "sourceReviewed": "331bac0a9dada03148b50f802123226d92d54b22",
-  "scope": "UI331/API983 installed on 3015/Tuna; frontend-only input promotion fix, backend code tree unchanged; signed APK60 installed hashes and completed OTA commands confirmed on15 online devices. PH010 ordinary Chrome direct video/native gestures, actual server fallback and recovery, and mixed legacy viewer accepted finitely. Closest routes, physical network switching, shared input and full display latency remain OPEN. Remote PH025 signaling succeeded but ICE returned no responses; server reserve works, TURN unconfigured.",
+  "reviewedAtUtc": "2026-10-12T12:36:18.186603+00:00",
+  "sourceReviewed": "ed9d54d090e2b5a5d471502335ddf6b8b86dbd35",
+  "scope": "UI and API ed9 installed on 3015/Tuna. Latest exact-channel authenticated APK download and dark responsive login accepted finitely on both origins. APK60 reused unchanged; fresh reported-version readback is separate from previous installed hashes. PH010 direct video/native gesture smoke passed; WAN, closest route, network switching, shared input and full display latency remain OPEN.",
   "baseline": "docs/audits/2026-10-05/ENTERPRISE-PRODUCT-BACKLOG.json",
   "previousCrosscheck": "docs/audits/2026-10-09/CHAT-CODE-RECONCILIATION.json",
   "counts": {
@@ -11,11 +11,11 @@
     "open": 41
   },
   "installed": {
-    "lastObservedUtc": "2026-10-12T02:29:59.844123+00:00",
-    "ui": "331bac0a9dada03148b50f802123226d92d54b22",
-    "api": "98370d437de5802c7ea1d35da459783db5d95570",
-    "evidence": "docs/audits/2026-10-12/DIRECT-VIDEO-HANDOVER-OBSERVATION.json",
-    "observation": "UI331/API983 installed on 3015/Tuna; frontend-only input promotion fix, backend code tree unchanged; signed APK60 installed hashes and completed OTA commands confirmed on15 online devices. PH010 ordinary Chrome direct video/native gestures, actual server fallback and recovery, and mixed legacy viewer accepted finitely. Closest routes, physical network switching, shared input and full display latency remain OPEN.",
+    "lastObservedUtc": "2026-10-12T12:36:18.186603+00:00",
+    "ui": "ed9d54d090e2b5a5d471502335ddf6b8b86dbd35",
+    "api": "ed9d54d090e2b5a5d471502335ddf6b8b86dbd35",
+    "evidence": "docs/audits/2026-10-12/APK-DOWNLOAD-AND-LOGIN-OBSERVATION.json",
+    "observation": "UI and API ed9 installed on 3015/Tuna. Latest exact-channel authenticated APK download and dark responsive login accepted finitely on both origins. APK60 reused unchanged; fresh reported-version readback is separate from previous installed hashes. PH010 direct video/native gesture smoke passed; WAN, closest route, network switching, shared input and full display latency remain OPEN.",
     "pilotApk": {
       "device": "auto-ph-010",
       "deviceId": "5df4805e-fe64-4d39-960c-19ceab206cd6",
@@ -27,7 +27,7 @@
       "evidenceSha256NormalizedLf": "4486ac4a61700b764feae27f94550325934f7a5a44f6da5af20e741653c08e0d",
       "scope": "Exact installed package hash and completed addressed OTA; runtime acceptance is limited to separately recorded browser observations"
     },
-    "evidenceSha256NormalizedLf": "4486ac4a61700b764feae27f94550325934f7a5a44f6da5af20e741653c08e0d",
+    "evidenceSha256NormalizedLf": "76377dd99f12f21437782ce41f6c64bfd297dae0ef23d119256471c12378fbf4",
     "additionalPilotApks": [
       {
         "device": "auto-ph-011",
@@ -72,9 +72,25 @@
         "10260": 15
       }
     },
-    "latestReadbackAtUtc": "2026-10-12T02:29:59.844123+00:00",
-    "latestReadbackEvidence": "docs/audits/2026-10-12/DIRECT-VIDEO-HANDOVER-OBSERVATION.json",
-    "latestReadbackEvidenceSha256NormalizedLf": "4486ac4a61700b764feae27f94550325934f7a5a44f6da5af20e741653c08e0d"
+    "latestReadbackAtUtc": "2026-10-12T12:36:18.186603+00:00",
+    "latestReadbackEvidence": "docs/audits/2026-10-12/APK-DOWNLOAD-AND-LOGIN-OBSERVATION.json",
+    "latestReadbackEvidenceSha256NormalizedLf": "76377dd99f12f21437782ce41f6c64bfd297dae0ef23d119256471c12378fbf4",
+    "previousRuntimeObservation": {
+      "ui": "331bac0a9dada03148b50f802123226d92d54b22",
+      "api": "98370d437de5802c7ea1d35da459783db5d95570",
+      "evidence": "docs/audits/2026-10-12/DIRECT-VIDEO-HANDOVER-OBSERVATION.json",
+      "evidenceSha256NormalizedLf": "4486ac4a61700b764feae27f94550325934f7a5a44f6da5af20e741653c08e0d",
+      "lastObservedUtc": "2026-10-12T02:29:59.844123+00:00"
+    },
+    "freshFleetReportedVersions": {
+      "observedAtUtc": "2026-10-12T12:34:09.900558+00:00",
+      "onlineCount": 14,
+      "offlineCount": 7,
+      "onlineVersionCode": 10260,
+      "isInstalledPackageHashProof": false,
+      "evidence": "docs/audits/2026-10-12/APK-DOWNLOAD-AND-LOGIN-OBSERVATION.json",
+      "evidenceSha256NormalizedLf": "76377dd99f12f21437782ce41f6c64bfd297dae0ef23d119256471c12378fbf4"
+    }
   },
   "pendingCorrections": [],
   "storage": {
@@ -182,7 +198,7 @@
     "implementationAuthorizedNow": true,
     "researchPreparedAtUtc": "2026-10-09T16:46:29Z",
     "researchEvidence": "docs/design/BROWSER-DIRECT-TRANSPORT.md",
-    "researchScope": "UI331/API983 installed on 3015/Tuna; frontend-only input promotion fix, backend code tree unchanged; signed APK60 installed hashes and completed OTA commands confirmed on15 online devices. PH010 ordinary Chrome direct video/native gestures, actual server fallback and recovery, and mixed legacy viewer accepted finitely. Closest routes, physical network switching, shared input and full display latency remain OPEN.",
+    "researchScope": "UI and API ed9 installed on 3015/Tuna. Latest exact-channel authenticated APK download and dark responsive login accepted finitely on both origins. APK60 reused unchanged; fresh reported-version readback is separate from previous installed hashes. PH010 direct video/native gesture smoke passed; WAN, closest route, network switching, shared input and full display latency remain OPEN.",
     "researchPrerequisites": [
       "Versioned offer/input/control ownership and auth contract",
       "Bounded command-to-native/frame timing with unknown results visible",
@@ -226,7 +242,10 @@
       "docs/audits/2026-10-11/POSTBOOT-IDLE55-DELIVERY.json",
       "docs/audits/2026-10-12/DIRECT-VIDEO-HANDOVER-OBSERVATION.json",
       "docs/audits/2026-10-12/DIRECT-VIDEO-HANDOVER.md",
-      "docs/audits/2026-10-12/PH025-DIRECT-ROUTE-OBSERVATION.json"
+      "docs/audits/2026-10-12/PH025-DIRECT-ROUTE-OBSERVATION.json",
+      "docs/audits/2026-10-12/APK-DOWNLOAD-AND-LOGIN-OBSERVATION.json",
+      "docs/audits/2026-10-12/APK-DOWNLOAD-AND-LOGIN.md",
+      "docs/audits/2026-10-12/PH025-ICE-CANDIDATE-TYPES-OBSERVATION.json"
     ],
     "pilotEvidence": "docs/audits/2026-10-12/DIRECT-VIDEO-HANDOVER-OBSERVATION.json",
     "pilotOutcome": "INSTALLED_FINITE_DIRECT_VIDEO_INPUT_AND_RECOVERY_OBSERVED",
@@ -304,20 +323,22 @@
       "reason": "Native OTA and admission complete; actual laptop JNI/RTP video rendering remains pending."
     },
     "latestNetworkObservation": {
-      "outcome": "REMOTE_PH025_ANSWER_RECEIVED_ICE_NO_RESPONSES",
+      "outcome": "REMOTE_PH025_UDP_REFLEXIVE_PRESENT_ICE_NO_RESPONSES",
       "selectedPath": "unknown",
       "directChannelEstablished": false,
       "deviceId": "b410464a-5f26-4803-a756-7840cc17b128",
-      "evidence": "docs/audits/2026-10-12/PH025-DIRECT-ROUTE-OBSERVATION.json",
-      "evidenceSha256NormalizedLf": "232423d456e8c628dd5fd5eedb0c00587eb89fea809ba6be70cb6ff6fbb90c17",
-      "observedAtUtc": "2026-10-12T02:37:58.696326+00:00",
-      "browserAndNativeStatsCollected": true,
+      "evidence": "docs/audits/2026-10-12/PH025-ICE-CANDIDATE-TYPES-OBSERVATION.json",
+      "evidenceSha256NormalizedLf": "a97b4ac2197553332e46043596d255bceafb9a12c70a2640b3ef9ba216647ddc",
+      "observedAtUtc": "2026-10-12T02:50:52.919Z",
+      "browserAndNativeStatsCollected": false,
+      "receivedRemoteCandidateTypesCollected": true,
       "rawCandidateAddressesPublished": false,
-      "browserIceRequests": 146,
-      "nativeIceRequests": 226,
+      "browserIceRequests": 170,
       "iceResponses": 0,
+      "localUdpReflexiveCandidatePresent": true,
+      "remoteUdpReflexiveCandidatePresent": true,
       "actualNetworkCause": "UNDETERMINED",
-      "observation": "Read-only PH025 delivered764 server canvas frames; Android signaling answer arrived, ICE checks received no responses. TURN unconfigured; no remote direct/input acceptance.",
+      "observation": "Finite PH025 read-only follow-up: gathering complete; both descriptions have UDP reflexive candidates; two checking pairs got no responses. Server canvas advanced to 570, direct frames stayed zero. Native stats from the preceding observation are separate.",
       "topology": "Owned ordinary Chrome on main PC, PH025 on remote emulator host"
     },
     "historicalNativeDiagnosticAcceptance": {
@@ -341,8 +362,8 @@
     "primaryVideoInstalled": true,
     "primaryVideoObserved": true,
     "productionAccepted": false,
-    "currentObservationEvidence": "docs/audits/2026-10-12/DIRECT-VIDEO-HANDOVER-OBSERVATION.json",
-    "currentObservationEvidenceSha256NormalizedLf": "4486ac4a61700b764feae27f94550325934f7a5a44f6da5af20e741653c08e0d",
+    "currentObservationEvidence": "docs/audits/2026-10-12/APK-DOWNLOAD-AND-LOGIN-OBSERVATION.json",
+    "currentObservationEvidenceSha256NormalizedLf": "76377dd99f12f21437782ce41f6c64bfd297dae0ef23d119256471c12378fbf4",
     "pilotEvidenceScope": "UI331/API983 installed on 3015/Tuna; frontend-only input promotion fix, backend code tree unchanged; signed APK60 installed hashes and completed OTA commands confirmed on15 online devices. PH010 ordinary Chrome direct video/native gestures, actual server fallback and recovery, and mixed legacy viewer accepted finitely. Closest routes, physical network switching, shared input and full display latency remain OPEN.",
     "historicalPrimaryFrames": 1804,
     "directInputCandidate": {
@@ -466,6 +487,26 @@
       "physicalNetworkSwitchAccepted": false
     },
     "remoteNetworkObservation": {
+      "outcome": "REMOTE_PH025_UDP_REFLEXIVE_PRESENT_ICE_NO_RESPONSES",
+      "selectedPath": "unknown",
+      "directChannelEstablished": false,
+      "deviceId": "b410464a-5f26-4803-a756-7840cc17b128",
+      "evidence": "docs/audits/2026-10-12/PH025-ICE-CANDIDATE-TYPES-OBSERVATION.json",
+      "evidenceSha256NormalizedLf": "a97b4ac2197553332e46043596d255bceafb9a12c70a2640b3ef9ba216647ddc",
+      "observedAtUtc": "2026-10-12T02:50:52.919Z",
+      "browserAndNativeStatsCollected": false,
+      "receivedRemoteCandidateTypesCollected": true,
+      "rawCandidateAddressesPublished": false,
+      "browserIceRequests": 170,
+      "iceResponses": 0,
+      "localUdpReflexiveCandidatePresent": true,
+      "remoteUdpReflexiveCandidatePresent": true,
+      "actualNetworkCause": "UNDETERMINED",
+      "observation": "Finite PH025 read-only follow-up: gathering complete; both descriptions have UDP reflexive candidates; two checking pairs got no responses. Server canvas advanced to 570, direct frames stayed zero. Native stats from the preceding observation are separate.",
+      "topology": "Owned ordinary Chrome on main PC, PH025 on remote emulator host"
+    },
+    "nextDeliveryPriority": "Remote ICE reachability and bounded renewable live-media TURN fallback; separate from PH010 input-promotion correction",
+    "previousRemoteNetworkObservation": {
       "outcome": "REMOTE_PH025_ANSWER_RECEIVED_ICE_NO_RESPONSES",
       "selectedPath": "unknown",
       "directChannelEstablished": false,
@@ -481,8 +522,7 @@
       "actualNetworkCause": "UNDETERMINED",
       "observation": "Read-only PH025 delivered764 server canvas frames; Android signaling answer arrived, ICE checks received no responses. TURN unconfigured; no remote direct/input acceptance.",
       "topology": "Owned ordinary Chrome on main PC, PH025 on remote emulator host"
-    },
-    "nextDeliveryPriority": "Remote ICE reachability and bounded renewable live-media TURN fallback; separate from PH010 input-promotion correction"
+    }
   },
   "items": [
     {
@@ -840,7 +880,7 @@
       "priority": "P2",
       "state": "OPEN",
       "progress": "PARTIAL",
-      "currentScope": "Theme tokens/AppearanceDrawer/Lucide и responsive Studio существуют.",
+      "currentScope": "UIed9: validated default dark tokens before paint, preserved explicit light/density preferences and a dark adaptive login have finite browser evidence on both origins. Full theme/accent/appearance coverage remains open.",
       "remaining": "Полная 4 themes/5 accents/3 density matrix и единый redesign страниц не приняты.",
       "acceptanceCriteria": [
         "Старая theme/density мигрирует без reset.",
@@ -859,9 +899,12 @@
         },
         {
           "file": "frontend/src/shared/store/themeStore.ts"
+        },
+        {
+          "file": "frontend/src/shared/theme.ts"
         }
       ],
-      "assessmentBasis": "docs/audits/2026-10-09/CHAT-CODE-RECONCILIATION.md",
+      "assessmentBasis": "docs/audits/2026-10-12/APK-DOWNLOAD-AND-LOGIN.md",
       "fleetAccepted": false
     },
     {
@@ -1651,7 +1694,7 @@
       "priority": "P1",
       "state": "OPEN",
       "progress": "PARTIAL",
-      "currentScope": "Addressed OTA/release identity имеют finite receipts; pilot10249 не означает весь парк.",
+      "currentScope": "Previous APK60 installed SHA and completed OTA verified on 15 devices. Current readback: 14 online report10260, seven offline. UI/APIed9 exact-channel latest APK browser download passed on both origins; this is not stable rollout acceptance.",
       "remaining": "Stable promotion, normal/dev compatibility, rollout/rollback и mixed-fleet soak остаются.",
       "acceptanceCriteria": [
         "Offered/downloaded/verified/installed/unknown по target.",
@@ -1668,9 +1711,15 @@
       "sourceRefs": [
         {
           "file": "frontend/app/(dashboard)/updates/page.tsx"
+        },
+        {
+          "file": "frontend/src/features/updates/AgentDownloadPanel.tsx"
+        },
+        {
+          "file": "backend/api/v1/updates/router.py"
         }
       ],
-      "assessmentBasis": "docs/audits/2026-10-09/CHAT-CODE-RECONCILIATION.md",
+      "assessmentBasis": "docs/audits/2026-10-12/APK-DOWNLOAD-AND-LOGIN.md",
       "fleetAccepted": false
     },
     {
@@ -1855,7 +1904,7 @@
       "priority": "P1",
       "state": "OPEN",
       "progress": "PARTIAL",
-      "currentScope": "Finite desktop/portrait/landscape Studio принят ec3f2267; после clock fix1938 tests проходят.",
+      "currentScope": "Dated Studio finite tests retained. UIed9 login passed five viewports per origin; Updates passed three. Both real downloads and PH010 native gestures passed; frontend2260 tests/156 suites pass. Full product matrix remains open.",
       "remaining": "Все страницы/модалки/роли/темы/zoom/reduced-motion не приняты; landscape chain fit мелкий.",
       "acceptanceCriteria": [
         "Loading/empty/error/offline/forbidden/partial/conflict.",
@@ -1876,7 +1925,7 @@
           "file": "frontend/app/(dashboard)/orchestration/page.tsx"
         }
       ],
-      "assessmentBasis": "docs/audits/2026-10-09/CHAT-CODE-RECONCILIATION.md",
+      "assessmentBasis": "docs/audits/2026-10-12/APK-DOWNLOAD-AND-LOGIN.md",
       "fleetAccepted": false
     },
     {
@@ -2209,7 +2258,7 @@
         "EP-020",
         "EP-047"
       ],
-      "acceptedScope": "UI331/API983 и APK60 установлены; 15 installed SHA и завершённых OTA подтверждены. На PH010 через3015/Tuna наблюдались прямое видео и нативные жесты, по3 восстановления RTC с прямым вводом, подавление серверной копии и отдельный legacy зритель. Это конечная проверка, не приёмка всех сетей. УдалённаяPH025: answer получен, ICE146/226 requests безresponses;764 server frames. Прямой удалённый путь не принят.",
+      "acceptedScope": "UI/APIed9/APK60: current ordinary Chrome PH010 direct video and native DOWN/MOVE/UP passed on both origins; no steady server-video bytes or server touch events. Historical UI331 controlled RTC recovery remains separately recorded. PH025 remote ICE has no responses.",
       "remaining": "Ближайший фактически выбранный localhost/LAN/WAN/TURN; удалённый VPS и workstation discovery; синхронный input-to-picture; физическая смена сети; совместный ввод viewer/task/API, кнопки/текст/звук, FPS60 и настройки качества; длительные idle/active/reconnect и resource проверки.",
       "evidence": [
         "docs/design/BROWSER-DIRECT-TRANSPORT.md",
@@ -2238,7 +2287,8 @@
         "docs/audits/2026-10-11/APK54-FLEET-FOLLOWUP.json",
         "docs/audits/2026-10-11/POSTBOOT-IDLE55-DELIVERY.json",
         "docs/audits/2026-10-12/DIRECT-VIDEO-HANDOVER-OBSERVATION.json",
-        "docs/audits/2026-10-12/PH025-DIRECT-ROUTE-OBSERVATION.json"
+        "docs/audits/2026-10-12/PH025-DIRECT-ROUTE-OBSERVATION.json",
+        "docs/audits/2026-10-12/APK-DOWNLOAD-AND-LOGIN-OBSERVATION.json"
       ],
       "sourcePaths": [
         "backend/websocket/direct_probe_protocol.py",
@@ -2364,7 +2414,7 @@
         "EP-029",
         "EP-047"
       ],
-      "acceptedScope": "В UI331/API983/APK60 установлены последние10 сеансов,32KiB/session,15samples/category,7days; авторизация и private/no-store проверены наобоих адресах. Конечные direct/native, presentation и suppression counters наблюдались наPH010. Неподтверждённое MOVE не выдаётся за выполненное.",
+      "acceptedScope": "В UI/APIed9/APK60 сохранены последние 10 сеансов, 32KiB/session, 15samples/category, 7days; авторизация и private/no-store повторно проверены на обоих адресах. PH010 direct/native и presentation counters наблюдались в конечной проверке; неподтверждённый MOVE не считается выполненным.",
       "remaining": "End-to-end frame correlation, физическая смена сети, длительная idle/active/resource приёмка, точные категории timeout и проверка browser↔APK разных сетей остаются открытыми.",
       "evidence": [
         "docs/audits/2026-10-10/STREAM-SESSION-DIAGNOSTICS.md",
@@ -2373,11 +2423,53 @@
         "docs/audits/2026-10-11/STREAM-IDLE-PROGRESS-RECOVERY.json",
         "docs/audits/2026-10-11/APK54-FLEET-FOLLOWUP.json",
         "docs/audits/2026-10-11/POSTBOOT-IDLE55-DELIVERY.json",
-        "docs/audits/2026-10-12/DIRECT-VIDEO-HANDOVER-OBSERVATION.json"
+        "docs/audits/2026-10-12/DIRECT-VIDEO-HANDOVER-OBSERVATION.json",
+        "docs/audits/2026-10-12/APK-DOWNLOAD-AND-LOGIN-OBSERVATION.json"
       ],
       "sourcePaths": [
         "backend/websocket/stream_session_history.py",
         "frontend/src/features/stream/AutomaticStreamDiagnostic.tsx"
+      ],
+      "fleetAccepted": false
+    },
+    {
+      "id": "CHAT-21",
+      "title": "Скачать всегда актуальный APK и официальный LDPlayer",
+      "state": "ACCEPTED_FINITE",
+      "productItems": [
+        "EP-041",
+        "EP-048"
+      ],
+      "acceptedScope": "Установлены latest exact-channel endpoint и browser download с progress/cancel. Полные APK10260 через3015/Tuna совпали по SHA и57,688,052B; 927/8489ms. Официальный LDPlayer link проверен в DOM.",
+      "remaining": "Внешние latest URL здесь не проксируются; скачивание не подтверждает установку. Stable promotion, все роли и offline fleet остаются отдельными открытыми gates.",
+      "evidence": [
+        "docs/audits/2026-10-12/APK-DOWNLOAD-AND-LOGIN-OBSERVATION.json",
+        "docs/audits/2026-10-12/APK-DOWNLOAD-AND-LOGIN.md"
+      ],
+      "sourcePaths": [
+        "frontend/src/features/updates/AgentDownloadPanel.tsx",
+        "backend/api/v1/updates/router.py"
+      ],
+      "fleetAccepted": false
+    },
+    {
+      "id": "CHAT-22",
+      "title": "Тёмный адаптивный вход и сохранение темы рабочего пространства",
+      "state": "ACCEPTED_FINITE",
+      "productItems": [
+        "EP-013",
+        "EP-048"
+      ],
+      "acceptedScope": "UIed9 установлен на обоих адресах. Пять viewports, 48px controls, reveal/hide, real login и сохранение light/spacious проверены; dark login и default neo-dark подтверждены.",
+      "remaining": "Живой MFA-enabled user, все роли, screen reader, zoom и полная theme/accent/density matrix не приняты.",
+      "evidence": [
+        "docs/audits/2026-10-12/APK-DOWNLOAD-AND-LOGIN-OBSERVATION.json",
+        "docs/audits/2026-10-12/APK-DOWNLOAD-AND-LOGIN.md"
+      ],
+      "sourcePaths": [
+        "frontend/app/(auth)/login/page.tsx",
+        "frontend/src/shared/theme.ts",
+        "frontend/src/shared/store/themeStore.ts"
       ],
       "fleetAccepted": false
     }
@@ -2392,15 +2484,15 @@
     "docs/operations/SCRIPT-STUDIO.md"
   ],
   "schemaReconciliation": {
-    "paths": 146,
-    "operations": 184,
-    "canonicalSha256": "a9332b7be3f7b9469392b9572a9f0ffa005219aaad95678a8ae6f4853e8f30a4",
-    "sourceRevision": "5223998002451b935a25e01f1034b727561588bd",
+    "paths": 147,
+    "operations": 185,
+    "canonicalSha256": "28642f21db93ce9146ffc00b9900d733c32b1d62ad05848e8d82fd767e2ec4e1",
+    "sourceRevision": "ed9d54d090e2b5a5d471502335ddf6b8b86dbd35",
     "source": "Installed app.openapi; no application lifespan hooks",
-    "observedAtUtc": "2026-10-11T18:24:20.350707+00:00",
+    "observedAtUtc": "2026-10-12T12:33:18.480747+00:00",
     "sameAsCommittedCanonicalJson": true,
-    "evidence": "docs/audits/2026-10-11/POSTBOOT-IDLE55-DELIVERY.json",
-    "scope": "Current installed source522 app.openapi equals committed canonical JSON. HTTP declaration equality is not WebSocket/native acceptance."
+    "evidence": "docs/audits/2026-10-12/APK-DOWNLOAD-AND-LOGIN-OBSERVATION.json",
+    "scope": "Current installed ed9 HTTP declaration matches its committed canonical schema; no lifespan hooks. This is not WebSocket/native acceptance."
   },
   "completedCorrections": [
     {
@@ -2452,15 +2544,15 @@
       "acceptedScope": "Primary video canary installed on both origins, signed APK 10252 verified on 15 devices; PH011 historical browser reported1804 direct frames, NAT path and21ms final network RTT. Current finite browser QA and installed idle receipt/ICE recovery are separate observations. Input remains server WebSocket. PH025 remote input failed before any touch; native startup busy and subsequent server rejection reproduced. Android watchdog cleanup correction b53a1758 is a separate source candidate, not installed in this receipt. Localhost/LAN/WAN/TURN, direct input, latency SLA and soak are not accepted. PH030 is off."
     }
   ],
-  "sourceWorktreeEvidence": "docs/audits/2026-10-11/DIRECT-PRIMARY-VIDEO-INSTALLED.json",
+  "sourceWorktreeEvidence": "docs/audits/2026-10-12/APK-DOWNLOAD-AND-LOGIN-OBSERVATION.json",
   "publicWeb": {
-    "lastObservedUtc": "2026-10-11T18:29:43.539387+00:00",
+    "lastObservedUtc": "2026-10-12T12:36:18.186603+00:00",
     "url": "https://sphere-agent-canary-20260927.ru.tuna.am",
-    "ui": "5223998002451b935a25e01f1034b727561588bd",
-    "api": "5223998002451b935a25e01f1034b727561588bd",
-    "evidence": "docs/audits/2026-10-11/POSTBOOT-IDLE55-DELIVERY.json",
-    "evidenceSha256NormalizedLf": "e46e91ff7fcdafa6f07a020468667e0744d26ad63378d30beedb70199954daee",
-    "scope": "Both origins serve522 assets/API. PH025 public-origin finite stream and continuous gesture passed over server fallback. No current direct or latency acceptance.",
+    "ui": "ed9d54d090e2b5a5d471502335ddf6b8b86dbd35",
+    "api": "ed9d54d090e2b5a5d471502335ddf6b8b86dbd35",
+    "evidence": "docs/audits/2026-10-12/APK-DOWNLOAD-AND-LOGIN-OBSERVATION.json",
+    "evidenceSha256NormalizedLf": "76377dd99f12f21437782ce41f6c64bfd297dae0ef23d119256471c12378fbf4",
+    "scope": "UI and API ed9 installed on 3015/Tuna. Latest exact-channel authenticated APK download and dark responsive login accepted finitely on both origins. APK60 reused unchanged; fresh reported-version readback is separate from previous installed hashes. PH010 direct video/native gesture smoke passed; WAN, closest route, network switching, shared input and full display latency remain OPEN.",
     "additionalQa": {
       "evidence": "docs/audits/2026-10-09/PUBLIC-WEB-SUPPLEMENTAL-QA.json",
       "evidenceSha256NormalizedLf": "84f719a322e114a34ba4f4fc5624f717a71558f2b80f5aea1a484b50778ceac4",
@@ -2477,8 +2569,16 @@
       "evidenceSha256NormalizedLf": "b5fd08471312235bcfeb26a7f2cb7af4bcb6a325d6077a4e3206b03402ed0579",
       "scope": "Primary video canary installed on both origins, signed APK 10252 verified on 15 devices; PH011 historical browser reported1804 direct frames, NAT path and21ms final network RTT. Current finite browser QA and installed idle receipt/ICE recovery are separate observations. Input remains server WebSocket. PH025 remote input failed before any touch; native startup busy and subsequent server rejection reproduced. Android watchdog cleanup correction b53a1758 is a separate source candidate, not installed in this receipt. Localhost/LAN/WAN/TURN, direct input, latency SLA and soak are not accepted. PH030 is off."
     },
-    "latestReadbackEvidence": "docs/audits/2026-10-11/POSTBOOT-IDLE55-DELIVERY.json",
-    "latestReadbackEvidenceSha256NormalizedLf": "e46e91ff7fcdafa6f07a020468667e0744d26ad63378d30beedb70199954daee"
+    "latestReadbackEvidence": "docs/audits/2026-10-12/APK-DOWNLOAD-AND-LOGIN-OBSERVATION.json",
+    "latestReadbackEvidenceSha256NormalizedLf": "76377dd99f12f21437782ce41f6c64bfd297dae0ef23d119256471c12378fbf4",
+    "previousReadbackObservation": {
+      "lastObservedUtc": "2026-10-11T18:29:43.539387+00:00",
+      "ui": "5223998002451b935a25e01f1034b727561588bd",
+      "api": "5223998002451b935a25e01f1034b727561588bd",
+      "evidence": "docs/audits/2026-10-11/POSTBOOT-IDLE55-DELIVERY.json",
+      "evidenceSha256NormalizedLf": "e46e91ff7fcdafa6f07a020468667e0744d26ad63378d30beedb70199954daee",
+      "scope": "Both origins serve522 assets/API. PH025 public-origin finite stream and continuous gesture passed over server fallback. No current direct or latency acceptance."
+    }
   },
   "deliveredCorrections": [
     {
@@ -2533,16 +2633,17 @@
     }
   ],
   "sourceSchemaReconciliation": {
-    "sourceRevision": "5223998002451b935a25e01f1034b727561588bd",
-    "observedAtUtc": "2026-10-11T17:05:07.157470+00:00",
+    "sourceRevision": "ed9d54d090e2b5a5d471502335ddf6b8b86dbd35",
+    "observedAtUtc": "2026-10-12T12:33:18.480747+00:00",
     "artifact": "docs/openapi.json",
-    "gitBlob": "7cb273f2ac3664be92358d627670b5e767cb4861",
-    "sha256NormalizedLf": "a9332b7be3f7b9469392b9572a9f0ffa005219aaad95678a8ae6f4853e8f30a4",
-    "paths": 146,
-    "operations": 184,
+    "gitBlob": "ddd17764d841c5beff4882719f032b1f7d6bcd5a",
+    "sha256NormalizedLf": "28642f21db93ce9146ffc00b9900d733c32b1d62ad05848e8d82fd767e2ec4e1",
+    "paths": 147,
+    "operations": 185,
     "exporterCheckPassed": true,
     "runtimeInstalled": true,
-    "scope": "Source522 HTTP schema is installed and its canonical bytes independently read back from the running image; no lifespan hooks executed."
+    "evidence": "docs/audits/2026-10-12/APK-DOWNLOAD-AND-LOGIN-OBSERVATION.json",
+    "scope": "Current installed ed9 app.openapi canonical hash matches the source schema, read without lifespan hooks."
   },
   "installedCorrections": [
     {
@@ -2710,8 +2811,37 @@
     }
   ],
   "runtimeFollowup": {
+    "evidence": "docs/audits/2026-10-12/APK-DOWNLOAD-AND-LOGIN-OBSERVATION.json",
+    "evidenceSha256NormalizedLf": "76377dd99f12f21437782ce41f6c64bfd297dae0ef23d119256471c12378fbf4",
+    "scope": "Current ed9 ordinary Chrome PH010 finite direct video/native DOWN/MOVE/UP passed on both origins; zero steady legacy-byte growth. The earlier PH030 switch and PH025 ICE failures remain separate open observations."
+  },
+  "previousSchemaReconciliation": {
+    "paths": 146,
+    "operations": 184,
+    "canonicalSha256": "a9332b7be3f7b9469392b9572a9f0ffa005219aaad95678a8ae6f4853e8f30a4",
+    "sourceRevision": "5223998002451b935a25e01f1034b727561588bd",
+    "source": "Installed app.openapi; no application lifespan hooks",
+    "observedAtUtc": "2026-10-11T18:24:20.350707+00:00",
+    "sameAsCommittedCanonicalJson": true,
+    "evidence": "docs/audits/2026-10-11/POSTBOOT-IDLE55-DELIVERY.json",
+    "scope": "Current installed source522 app.openapi equals committed canonical JSON. HTTP declaration equality is not WebSocket/native acceptance."
+  },
+  "previousSourceSchemaReconciliation": {
+    "sourceRevision": "5223998002451b935a25e01f1034b727561588bd",
+    "observedAtUtc": "2026-10-11T17:05:07.157470+00:00",
+    "artifact": "docs/openapi.json",
+    "gitBlob": "7cb273f2ac3664be92358d627670b5e767cb4861",
+    "sha256NormalizedLf": "a9332b7be3f7b9469392b9572a9f0ffa005219aaad95678a8ae6f4853e8f30a4",
+    "paths": 146,
+    "operations": 184,
+    "exporterCheckPassed": true,
+    "runtimeInstalled": true,
+    "scope": "Source522 HTTP schema is installed and its canonical bytes independently read back from the running image; no lifespan hooks executed."
+  },
+  "previousRuntimeFollowup": {
     "evidence": "docs/audits/2026-10-12/STREAM-NETWORK-CADENCE-FOLLOWUP.json",
     "evidenceSha256NormalizedLf": "f0757c1db515e178ed27881adc26b1b3f627c0200ac405a9fe167cb0a944e122",
     "scope": "PH030 direct NAT video/input before switch; ICE no-response fallback after switch. Main PC direct input confirmed only in isolated numeric-ICE experiment. Full acceptance remains open."
-  }
+  },
+  "previousSourceWorktreeEvidence": "docs/audits/2026-10-11/DIRECT-PRIMARY-VIDEO-INSTALLED.json"
 }

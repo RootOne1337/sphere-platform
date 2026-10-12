@@ -1,11 +1,22 @@
 # Проверки публикации и совместимости APK
 
+**Действующая установка, 12 октября:** UI/API `ed9d54d0`, пилотный APK `1.2.60-dev / 10260`. Последний APK скачивается из карточки Sphere Agent в «Обновлениях». [Текущая доставка и границы](../audits/2026-10-12/APK-DOWNLOAD-AND-LOGIN.md). Результаты предыдущих волн ниже относятся к указанным датам.
+
 Дата: 3 октября 2026. Это дополнение к [адресной доставке](OTA-ADDRESSED-UPDATES.md),
 [архитектуре OTA](../architecture/ANDROID-OTA-RELIABILITY.md) и
 [доказательствам 11 установок](../audits/2026-10-03/OWNED-PILOT-OTA-ROLLOUT.md).
 Статус развёртывания и точные версии приводятся в [Current State](CURRENT-STATE.md).
 
 ## Контракт каталога
+
+**Дополнение установленного источника `ed9d54d0`, 12 октября.**
+`GET /api/v1/updates/downloads/latest` позволяет оператору с `device:read`
+скачать последний managed APK точного Android platform/flavor.
+По умолчанию `android-canary/dev`; пустой канал —404, внешний latest URL —409.
+JWT оператора не пересылается внешнему хосту. Поддержаны binary MIME, безопасное
+имя, SHA/code headers, private/no-store и Range. Агентский `/artifacts/{sha256}`
+не менял авторизацию. Оба полных browser downloads проверены по bytes/SHA;
+[протокол и ограничения](../audits/2026-10-12/APK-DOWNLOAD-AND-LOGIN.md).
 
 `POST /api/v1/updates/` требует `super_admin`. Поддерживаются платформы `android`,
 `android-canary`, `pc` и flavors `enterprise`, `dev`. Неизвестные поля отклоняются.

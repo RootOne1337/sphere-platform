@@ -1,12 +1,14 @@
 # Работы, требования пользователя и границы приёмки
 
-**Проверенная установка:** UI `331bac0a` / API `98370d43`.
+**Проверенная установка:** UI `ed9d54d0` / API `ed9d54d0`.
 
-**12 октября — действующая установка и ограничения.** UI `331bac0a` / API `98370d43` установлены на 3015 и Tuna. Исправление ввода изменило только фронтенд; код бэкенда в этих ревизиях одинаков. На обоих адресах совпадают 29 JS/CSS, PostgreSQL и Redis готовы, история сеансов требует авторизации и отдаётся с private/no-store. APK `1.2.60-dev / 10260` подтверждён установленным SHA и завершённой OTA на 15 доступных устройствах. Шесть выключенных устройств не подтверждены; обычный канал Android не изменён.
+**12 октября — актуальный APK и вход установлены.** UI/API `ed9d54d0` обслуживают 3015 и Tuna. В «Обновлениях» можно скачать последний APK выбранного канала с прогрессом и отменой; рядом официальный LDPlayer. Полный APK60 совпал по SHA-256 на обоих адресах (927/8489 мс в конечной проверке). Вход тёмный и адаптивный; сохранённая светлая тема рабочего пространства не сбрасывается. Свежий срез: 14 онлайн сообщают APK10260, семь офлайн; ранее installed SHA подтверждён на 15 устройствах. После установки PH010 подтвердил прямые видео и DOWN/MOVE/UP через оба адреса. 3762 backend tests / 361 subtests и 2260 frontend tests прошли. [Изменения и границы](../audits/2026-10-12/APK-DOWNLOAD-AND-LOGIN.md) · [Протокол](../audits/2026-10-12/APK-DOWNLOAD-AND-LOGIN-OBSERVATION.json).
+
+**12 октября, 02:29 UTC — предыдущая конечная проверка транспорта.** UI `331bac0a` / API `98370d43` были установлены на 3015 и Tuna. Исправление ввода изменило только фронтенд; код бэкенда в этих ревизиях одинаков. На обоих адресах совпадают 29 JS/CSS, PostgreSQL и Redis готовы, история сеансов требует авторизации и отдаётся с private/no-store. APK `1.2.60-dev / 10260` подтверждён установленным SHA и завершённой OTA на 15 доступных устройствах. Шесть выключенных устройств не подтверждены; обычный канал Android не изменён.
 
 На PH010 обычный Chrome 154 получил прямое видео и подтверждения Android для DOWN/MOVE/UP. На каждом адресе проверены по три обрыва RTC, фактическое резервное видео и автоматический возврат прямого ввода. При прямом просмотре серверная копия не дала новых байтов; отдельный серверный зритель продолжил получать кадры. Смена маршрута ввода больше не ждёт опустошения очереди idle heartbeat.
 
-Полная задержка картинки, ближайший путь во всех сетях, обнаружение при удалённом VPS, физическая смена сети, совместный ввод, звук, клавиатура и 60 FPS остаются открытыми. [Текущий протокол](../audits/2026-10-12/DIRECT-VIDEO-HANDOVER-OBSERVATION.json), [изменения и границы проверки](../audits/2026-10-12/DIRECT-VIDEO-HANDOVER.md). Удалённая PH025 пока получает серверное видео: Android answer пришёл, ICE-ответов нет; [сетевой отказ](../audits/2026-10-12/PH025-DIRECT-ROUTE-OBSERVATION.json).
+Полная задержка картинки, ближайший путь во всех сетях, обнаружение при удалённом VPS, физическая смена сети, совместный ввод, звук, клавиатура и 60 FPS остаются открытыми. [Протокол предыдущего испытания](../audits/2026-10-12/DIRECT-VIDEO-HANDOVER-OBSERVATION.json), [изменения и границы проверки](../audits/2026-10-12/DIRECT-VIDEO-HANDOVER.md). Удалённая PH025 пока получает серверное видео: Android answer пришёл, ICE-ответов нет; [сетевой отказ](../audits/2026-10-12/PH025-DIRECT-ROUTE-OBSERVATION.json).
 
 **12 октября — сборщик диска возобновлён, непрерывность не подтверждена.** Предыдущий worker завершился: последний срез20:53UTC,89 записей. Новый процесс с21:33UTC проверен по identity и свежим срезам; интервал120с,24 именованных файла, Docker каждые8срезов, лимит16MiB/24ч. Пропуск наблюдений сохранён; причина остановки и роста диска неизвестна. Lifetime, автозапуск и VSS не гарантированы. [Срез возобновления](../audits/2026-10-12/STORAGE-WATCH-RESUMED.json).
 
@@ -649,10 +651,30 @@ native ACK, focus/held keys, permissions/mute/autoplay, sync и resource budgets
 
 **PARTIAL**
 
-Текущий срез: В UI331/API983/APK60 установлены последние 10 сеансов, 32 KiB/session, 15 samples/category, 7 days; авторизация и private/no-store проверены на обоих адресах. Конечные direct/native, presentation и suppression counters наблюдались на PH010. Неподтверждённое MOVE не выдаётся за выполненное.
+Предыдущий срез: В UI331/API983/APK60 установлены последние 10 сеансов, 32 KiB/session, 15 samples/category, 7 days; авторизация и private/no-store проверены на обоих адресах. Конечные direct/native, presentation и suppression counters наблюдались на PH010. Неподтверждённое MOVE не выдаётся за выполненное.
 
 **Историческая запись 11 октября, до текущей установки.** Bounded automatic diagnostics and last10 sessions were installed earlier. Source522 preserves10 sessions, 32KiB/session,15 samples/category,7days; adds presentation-stall reason and four compatible native measurements. Worst-case ages/counters retain latest observations and session close in45 local tests; new telemetry runtime not installed.
 
 Остаток: End-to-end frame correlation, физическая смена сети, длительная idle/active/resource приёмка, точные категории timeout и проверка browser↔APK разных сетей остаются открытыми.
 
 [Сверка и следующий допуск](../audits/2026-10-11/STREAM-IDLE-PROGRESS-RECOVERY.md).
+
+### CHAT-21 · Скачать всегда актуальный APK и официальный LDPlayer
+
+**ACCEPTED_FINITE**
+
+Установлены latest exact-channel endpoint и browser download с progress/cancel. Полные APK10260 через3015/Tuna совпали по SHA и57,688,052B; 927/8489ms. Официальный LDPlayer link проверен в DOM.
+
+Остаток: Внешние latest URL здесь не проксируются; скачивание не подтверждает установку. Stable promotion, все роли и offline fleet остаются отдельными открытыми gates.
+
+[Установленная доработка](../audits/2026-10-12/APK-DOWNLOAD-AND-LOGIN.md).
+
+### CHAT-22 · Тёмный адаптивный вход и сохранение темы рабочего пространства
+
+**ACCEPTED_FINITE**
+
+UIed9 установлен на обоих адресах. Пять viewports, 48px controls, reveal/hide, real login и сохранение light/spacious проверены; dark login и default neo-dark подтверждены.
+
+Остаток: Живой MFA-enabled user, все роли, screen reader, zoom и полная theme/accent/density matrix не приняты.
+
+[Установленная доработка](../audits/2026-10-12/APK-DOWNLOAD-AND-LOGIN.md).
