@@ -332,6 +332,11 @@ class StreamingCaptureLifecycleTest {
     }
 
     @Test fun `expired duplicate lease resumes at headers and IDR while RTP retains intervening references`() {
+        // Construct the capture Handler under the mock. Installing it after
+        // start() lets a real recovery callback race the test's packet list.
+        mockkConstructor(Handler::class)
+        val recoveries = mutableListOf<Runnable>()
+        every { anyConstructed<Handler>().post(capture(recoveries)) } returns true
         manager.start(projection)
         val owner = Any()
         val direct = mutableListOf<EncodedCaptureFrame>()
@@ -345,8 +350,6 @@ class StreamingCaptureLifecycleTest {
         every { anyConstructed<H264Encoder>().cachedPps } returns byteArrayOf(0,0,0,1,0x68)
         // Keep the posted recovery on its owned handler rather than invoking a
         // lifecycle lock synchronously from the codec callback.
-        mockkConstructor(Handler::class)
-        every { anyConstructed<Handler>().post(any()) } returns true
         assertTrue(manager.renewLegacyVideoDelivery(owner, capture, false, 1000))
         val delta = byteArrayOf(0,0,0,1,0x41)
         emitEncoded(delta, H264Encoder.FrameMetadata(false,33333,delta.size), epoch=epoch)
@@ -355,6 +358,7 @@ class StreamingCaptureLifecycleTest {
         val idr = byteArrayOf(0,0,0,1,0x65)
         emitEncoded(idr, H264Encoder.FrameMetadata(true,99999,idr.size), epoch=epoch)
         assertEquals(3, direct.size)
+        assertEquals(1, recoveries.size)
         assertEquals(listOf(0x67,0x68,0x65), packets.map {
             val header = if (it[0] == FramePackager.CAPTURE_VERSION) FramePackager.CAPTURE_HEADER_SIZE else FramePackager.HEADER_SIZE
             it[header+4].toInt()
