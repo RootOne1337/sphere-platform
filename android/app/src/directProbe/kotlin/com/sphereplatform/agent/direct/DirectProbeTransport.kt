@@ -1,6 +1,8 @@
 package com.sphereplatform.agent.direct
 
 import android.content.Context
+import android.net.ConnectivityManager
+import android.os.Build
 import android.os.SystemClock
 import android.util.Log
 import com.sphereplatform.agent.BuildConfig
@@ -152,10 +154,23 @@ class DirectProbeTransport(
                     it.inetAddresses.asSequence().take(8)
                 }?.filterIsInstance<Inet4Address>()?.mapNotNull { it.hostAddress }?.toList().orEmpty()
             }.getOrDefault(emptyList())
-            val hostHints = EmulatorHostCandidates.augment(sdp, EmulatorHostCandidates.hints(localAddresses))
-            if (hostHints.added > 0) Log.i("SphereDirectProbe", buildJsonObject {
+            // LDPlayer may spoof Build.HARDWARE as qcom and use a nonstandard
+            // NAT subnet. The ABI and app's actual link routes avoid guessing
+            // 10.0.2.2 on such guests. Reading these routes sends no network traffic.
+            val x86Guest = Build.SUPPORTED_ABIS.any { it == "x86" || it == "x86_64" }
+            val gateways = runCatching {
+                val manager = context.getSystemService(ConnectivityManager::class.java)
+                val network = manager.activeNetwork
+                network?.let { manager.getLinkProperties(it) }?.routes.orEmpty()
+                    .filter { it.isDefaultRoute }.take(8).mapNotNull { (it.gateway as? Inet4Address)?.hostAddress }
+            }.getOrDefault(emptyList())
+            val hostHints = EmulatorHostCandidates.augment(sdp,
+                EmulatorHostCandidates.hints(localAddresses, gateways, x86Guest))
+            Log.i("SphereDirectProbe", buildJsonObject {
                 put("event", "native_emulator_host_candidates")
                 put("added", hostHints.added)
+                put("x86Guest", x86Guest)
+                put("defaultGatewayCount", gateways.size)
                 put("connected", false) // These hints are never reported as an established path.
             }.toString())
             if (p.videoRequested) {

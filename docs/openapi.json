@@ -16840,6 +16840,40 @@
             ],
             "title": "Last Failure Age Ms"
           },
+          "last_startup_detail": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "root_required",
+                  "root_geometry",
+                  "root_adapter_unavailable",
+                  "root_configuration",
+                  "root_handshake",
+                  "root_process_exited",
+                  "root_ready_timeout",
+                  "root_handoff_unknown"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Startup Detail"
+          },
+          "last_startup_detail_age_ms": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "maximum": 86400000.0,
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Startup Detail Age Ms"
+          },
           "open_attempts_total": {
             "type": "integer",
             "maximum": 9007199254740992.0,

@@ -16,12 +16,16 @@ internal object EmulatorHostCandidates {
 
     data class Result(val sdp: String, val added: Int)
 
-    /** Only the well-known virtual guest/host pairs. No general LAN or port scan. */
-    fun hints(localAddresses: Iterable<String>): List<String> =
-        localAddresses.take(256).mapNotNull { aliases[it] }.distinct().take(2)
+    /** Recognized NAT pairs or an x86 guest's actual default gateway. No subnet scan. */
+    fun hints(localAddresses: Iterable<String>, gateways: List<String> = emptyList(), x86Guest: Boolean = false): List<String> {
+        val fixed = localAddresses.take(256).mapNotNull { aliases[it] }
+        val discovered = if (x86Guest) gateways.take(8).filter { privateV4(it) } else emptyList()
+        return (fixed + discovered).distinct().take(2)
+    }
 
     fun augment(sdp: String, hints: List<String>): Result {
-        val admitted = hints.filter { it in aliases.values }.distinct().take(2)
+        // Hints come from local interface/route discovery, never a remote SDP field.
+        val admitted = hints.filter { privateV4(it) }.distinct().take(2)
         if (admitted.isEmpty() || sdp.toByteArray(Charsets.UTF_8).size > DirectProbeProtocol.MAX_SDP_BYTES)
             return Result(sdp, 0)
         val lines = sdp.splitToSequence('\n').toList()

@@ -27,3 +27,10 @@ test('a previous busy cause is not presented as the current state', () => {
   expect(screen.getByText(/Ввод Android: Готов/)).toBeInTheDocument();
   expect(screen.getByText(/Последний сбой: Ввод занят другим владельцем · 0 мс/)).toBeInTheDocument();
 });
+
+test('a historical startup problem remains separate from a ready current adapter', () => {
+  render(<NativeInputDiagnostic telemetry={{ ...telemetry, state: 'ready',
+    last_startup_detail: 'root_geometry', last_startup_detail_age_ms: 300 }} />);
+  expect(screen.getByText(/Ввод Android: Готов/)).toBeInTheDocument();
+  expect(screen.getByText(/Последний сбой запуска: Размер или поворот экрана изменился при запуске · 300 мс/)).toBeInTheDocument();
+});

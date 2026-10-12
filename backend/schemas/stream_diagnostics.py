@@ -24,6 +24,11 @@ class NativeInputTelemetry(BaseModel):
         "input_not_ready", "input_rejected", "receipt_unavailable", "scope_inactive",
     ] | None = None
     last_failure_age_ms: int | None = Field(default=None, ge=0, le=86_400_000)
+    last_startup_detail: Literal[
+        "root_required", "root_geometry", "root_adapter_unavailable", "root_configuration",
+        "root_handshake", "root_process_exited", "root_ready_timeout", "root_handoff_unknown",
+    ] | None = None
+    last_startup_detail_age_ms: int | None = Field(default=None, ge=0, le=86_400_000)
     open_attempts_total: int = Field(ge=0, le=_MAX_COUNTER)
     open_rejections_total: int = Field(ge=0, le=_MAX_COUNTER)
     startups_total: int = Field(ge=0, le=_MAX_COUNTER)
@@ -36,6 +41,8 @@ class NativeInputTelemetry(BaseModel):
     def validate_failure_age(self) -> "NativeInputTelemetry":
         if (self.last_failure is None) != (self.last_failure_age_ms is None):
             raise ValueError("native input failure and its monotonic age must be paired")
+        if (self.last_startup_detail is None) != (self.last_startup_detail_age_ms is None):
+            raise ValueError("native startup detail and its monotonic age must be paired")
         return self
 
 

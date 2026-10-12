@@ -37,7 +37,7 @@ class EmulatorHostCandidatesTest {
             candidate("printer.local"), candidate(port = "0"), candidate(port = "65536"), candidate("10.999.1.2"),
             candidate().replace("2122260223", "4294967296"), candidate("::1"))
         for (source in cases) assertEquals(EmulatorHostCandidates.Result(source, 0), EmulatorHostCandidates.augment(source, listOf("10.0.2.2")))
-        assertEquals(EmulatorHostCandidates.Result(candidate(), 0), EmulatorHostCandidates.augment(candidate(), listOf("192.168.1.2", "8.8.8.8")))
+        assertEquals(EmulatorHostCandidates.Result(candidate(), 0), EmulatorHostCandidates.augment(candidate(), listOf("127.0.0.1", "8.8.8.8", "0.0.0.0", "::1")))
     }
 
     @Test fun `bundle sections candidates and description size stay bounded`() {
@@ -57,5 +57,19 @@ class EmulatorHostCandidatesTest {
         assertEquals(3, result.sdp.lines().size)
         val same = candidate("10.0.2.2")
         assertEquals(EmulatorHostCandidates.Result(same, 0), EmulatorHostCandidates.augment(same, listOf("10.0.2.2")))
+    }
+
+    @Test fun `nonstandard x86 guest uses only actual private default gateways`() {
+        val hints = EmulatorHostCandidates.hints(listOf("192.168.232.101"),
+            listOf("192.168.232.2", "192.168.232.2", "8.8.8.8", "127.0.0.1"), x86Guest = true)
+        assertEquals(listOf("192.168.232.2"), hints)
+        val result = EmulatorHostCandidates.augment(candidate(), hints)
+        assertEquals(1, result.added)
+        assertTrue(result.sdp.contains("192.168.232.2 45678 typ host"))
+    }
+
+    @Test fun `ordinary ARM LAN gateway is not guessed to be the browser host`() {
+        assertTrue(EmulatorHostCandidates.hints(listOf("192.168.1.5"), listOf("192.168.1.1"), x86Guest = false).isEmpty())
+        assertTrue(EmulatorHostCandidates.hints(listOf("192.168.232.101"), emptyList(), x86Guest = true).isEmpty())
     }
 }

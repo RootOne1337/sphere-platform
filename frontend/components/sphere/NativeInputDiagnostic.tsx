@@ -4,6 +4,8 @@ export interface NativeInputTelemetry {
   state: 'disabled' | 'idle' | 'opening' | 'ready' | 'retiring' | 'cleanup_unknown';
   last_failure?: keyof typeof failureLabels | null;
   last_failure_age_ms?: number | null;
+  last_startup_detail?: keyof typeof startupLabels | null;
+  last_startup_detail_age_ms?: number | null;
   open_attempts_total: number;
   open_rejections_total: number;
   startups_total: number;
@@ -36,6 +38,17 @@ const failureLabels = {
   scope_inactive: 'Служба агента завершает работу',
 };
 
+const startupLabels = {
+  root_required: 'Привилегированный адаптер недоступен',
+  root_geometry: 'Размер или поворот экрана изменился при запуске',
+  root_adapter_unavailable: 'Системный адаптер ввода недоступен',
+  root_configuration: 'Параметры адаптера отклонены',
+  root_handshake: 'Готовность адаптера не подтверждена',
+  root_process_exited: 'Процесс адаптера завершился до готовности',
+  root_ready_timeout: 'Адаптер не подтвердил готовность в срок',
+  root_handoff_unknown: 'Завершение предыдущего адаптера не подтверждено',
+};
+
 /** Shown only inside diagnostics. A process counter is not a per-viewer success rate. */
 export function NativeInputDiagnostic({ telemetry }: { telemetry?: NativeInputTelemetry | null }) {
   if (!telemetry) return <div className="col-span-2 mt-2">Диагностика ввода APK не передана.</div>;
@@ -48,6 +61,10 @@ export function NativeInputDiagnostic({ telemetry }: { telemetry?: NativeInputTe
           {telemetry.last_failure_age_ms != null && ` · ${telemetry.last_failure_age_ms} мс назад в срезе`}
         </div>
       ) : <div>Сбои ввода в процессе агента не зафиксированы.</div>}
+      {telemetry.last_startup_detail && <div>
+        Последний сбой запуска: {startupLabels[telemetry.last_startup_detail] ?? 'Причина не распознана'}
+        {telemetry.last_startup_detail_age_ms != null && ` · ${telemetry.last_startup_detail_age_ms} мс назад в срезе`}.
+      </div>}
       <div className="grid grid-cols-2 gap-x-3 break-words">
         <span>Запросы запуска: {telemetry.open_attempts_total}</span>
         <span>Отказы до запуска: {telemetry.open_rejections_total}</span>

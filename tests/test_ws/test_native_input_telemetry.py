@@ -18,7 +18,7 @@ def test_native_input_snapshot_preserves_cause_and_drops_private_extras():
         "owner": "private-owner", "coordinates": [12, 34], "token": "private-token",
         "samples": [{"gesture": 123}],
     }).model_dump()
-    assert value == snapshot()
+    assert value == snapshot() | dict(last_startup_detail=None, last_startup_detail_age_ms=None)
     assert "private" not in str(value)
 
 
@@ -37,3 +37,25 @@ def test_native_input_without_previous_failure_has_no_invented_failure_age():
     data = snapshot() | dict(state="idle", last_failure=None, last_failure_age_ms=None)
     value = NativeInputTelemetry.model_validate(data)
     assert value.last_failure is None and value.last_failure_age_ms is None
+
+
+def test_native_startup_detail_is_historical_not_current_state():
+    value = NativeInputTelemetry.model_validate(snapshot() | dict(
+        state="ready", last_startup_detail="root_geometry", last_startup_detail_age_ms=123,
+    ))
+    assert value.state == "ready"
+    assert value.last_startup_detail == "root_geometry"
+    assert value.last_startup_detail_age_ms == 123
+
+
+@pytest.mark.parametrize("change", [
+    dict(last_startup_detail="private-address-or-exception", last_startup_detail_age_ms=1),
+    dict(last_startup_detail="root_geometry"), dict(last_startup_detail_age_ms=1),
+    dict(last_startup_detail="root_geometry", last_startup_detail_age_ms=-1),
+    dict(last_startup_detail="root_geometry", last_startup_detail_age_ms=True),
+    dict(last_startup_detail="root_geometry", last_startup_detail_age_ms="1"),
+    dict(last_startup_detail="root_geometry", last_startup_detail_age_ms=86_400_001),
+])
+def test_native_startup_detail_rejects_unknown_unpaired_or_unbounded_values(change):
+    with pytest.raises(ValidationError):
+        NativeInputTelemetry.model_validate(snapshot() | change)
