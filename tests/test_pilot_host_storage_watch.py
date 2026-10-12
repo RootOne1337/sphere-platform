@@ -2,6 +2,7 @@
 import json
 import platform
 import subprocess
+import sys
 from pathlib import Path
 from types import SimpleNamespace
 
@@ -120,7 +121,7 @@ def test_invalid_cli_creates_no_report_even_on_elevated_host():
     root = Path(__file__).resolve().parents[1]
     target = root / '.local-pilot' / 'host-storage-invalid-test'
     assert not target.exists()
-    result = subprocess.run([str(root / '.venv-audit/Scripts/python.exe'), '-m',
+    result = subprocess.run([sys.executable, '-m',
         'scripts.pilot.host_storage_watch', '--output-dir', str(target), '--samples', '1'],
         capture_output=True, timeout=15, cwd=root)
     assert result.returncode != 0 and not target.exists()

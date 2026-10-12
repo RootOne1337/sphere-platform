@@ -387,11 +387,24 @@ async def test_two_recovery_workers_do_not_execute_one_expired_run_twice(world, 
 
 
 async def test_pending_child_timeout_never_releases_identity_or_launches_retry(world, monkeypatch):
+    from backend.services.orchestrator import step_handlers
+
     run = await seed(world, kind="execute_script", params={"script_id": str(world.script.id)})
     async with world.sessions() as db:
         current = await db.get(PipelineRun, run.id)
-        current.steps_snapshot = [{**current.steps_snapshot[0], "timeout_ms": 100, "retries": 3}]
+        current.steps_snapshot = [{**current.steps_snapshot[0], "timeout_ms": 10000, "retries": 3}]
         await db.commit()
+
+    async def timeout_after_durable_child(task, run, db, *, checkpointed):
+        # Test the unknown outcome AFTER admission. A 100 ms wall deadline can
+        # expire during PostgreSQL admission on a busy/Windows runner instead.
+        async with world.sessions() as observer:
+            persisted = await observer.get(PipelineRun, run.id)
+            assert checkpointed and persisted.current_task_id == task.id
+            assert (await observer.get(Task, task.id)).status == TaskStatus.QUEUED
+        raise asyncio.TimeoutError
+
+    monkeypatch.setattr(step_handlers, "_wait_for_task", timeout_after_durable_child)
     monkeypatch.setattr("backend.services.orchestrator.pipeline_executor.AsyncSessionLocal", world.sessions)
     await PipelineExecutor()._execute_run(run.id)
     async with world.sessions() as db:
