@@ -38,6 +38,7 @@ internal class ContinuousInputController(
     }
     private val active = AtomicReference<Owner?>()
     private val closing = AtomicBoolean(false)
+    private val diagnostics = NativeInputDiagnostics(uptime)
     private val supervisor = ContinuousTouchSupervisor(scope, factory, uptime,
         isCurrent = { binding ->
             val owner = active.get()
@@ -48,8 +49,26 @@ internal class ContinuousInputController(
             if (owner?.binding == binding) {
                 val ready = receipt.stage == ContinuousTouchSupervisor.Stage.STARTUP && receipt.status == 0
                 val staleReady = ready && !current(owner)
+                when (receipt.stage) {
+                    ContinuousTouchSupervisor.Stage.STARTUP -> if (ready && !staleReady) {
+                        diagnostics.record(NativeInputDiagnostics.Event.STARTUP)
+                    } else if (receipt.status >= 4) {
+                        diagnostics.record(NativeInputDiagnostics.Event.STARTUP_FAILURE, NativeInputDiagnostics.Failure.NATIVE_STARTUP_FAILED)
+                    }
+                    ContinuousTouchSupervisor.Stage.INPUT -> if (receipt.status >= 4) {
+                        diagnostics.record(NativeInputDiagnostics.Event.INPUT_FAILURE, NativeInputDiagnostics.Failure.NATIVE_INPUT_FAILED)
+                    }
+                    ContinuousTouchSupervisor.Stage.RELEASE -> diagnostics.record(
+                        if (receipt.status == 3) NativeInputDiagnostics.Event.RELEASE else NativeInputDiagnostics.Event.UNKNOWN_RELEASE,
+                        if (receipt.status == 3) null else NativeInputDiagnostics.Failure.CLEANUP_UNKNOWN,
+                    )
+                }
                 if (ready && !staleReady) owner.ready = true
                 if (staleReady || !reply(owner, receipt.sequence, receipt.status, receipt.stage.name.lowercase(), "injector", receipt.deviceUptimeMs)) {
+                    if (staleReady) diagnostics.failed(currentFailure(owner))
+                    else if (receipt.stage != ContinuousTouchSupervisor.Stage.RELEASE || receipt.status == 3) {
+                        diagnostics.failed(NativeInputDiagnostics.Failure.RECEIPT_UNAVAILABLE)
+                    }
                     supervisorInvalidation()
                 }
                 if (receipt.stage == ContinuousTouchSupervisor.Stage.RELEASE) active.compareAndSet(owner, null)
@@ -119,6 +138,20 @@ internal class ContinuousInputController(
 
     private fun supervisorInvalidation() { supervisor.invalidate() }
 
+    /** Piggybacks on the existing heartbeat; reading never opens or resets the injector. */
+    fun diagnosticSnapshot(): JsonObject {
+        val owner = active.get()
+        val state = when {
+            !enabled -> NativeInputDiagnostics.State.DISABLED
+            supervisor.needsReset() -> NativeInputDiagnostics.State.CLEANUP_UNKNOWN
+            closing.get() || owner?.retired == true -> NativeInputDiagnostics.State.RETIRING
+            owner == null -> NativeInputDiagnostics.State.IDLE
+            owner.ready -> NativeInputDiagnostics.State.READY
+            else -> NativeInputDiagnostics.State.OPENING
+        }
+        return diagnostics.snapshot(state)
+    }
+
     private fun probe(message: JsonObject, connection: Long) {
         val session = identifier(message, "session_id") ?: return
         if (!exact(message, setOf("type", "session_id"))) return
@@ -146,10 +179,18 @@ internal class ContinuousInputController(
         val keys = setOf("type", "owner", "session_id", "capture_epoch", "frame_width", "frame_height") +
             if (directRequested) setOf("direct_session", "ttl_ms") else emptySet()
         if (!exact(message, keys) || directRequested && (peerSession == null || integer(message, "ttl_ms") != 1500)) return
-        val capture = capture() ?: return
-        if (capture.epoch != epoch || capture.frameWidth != width || capture.frameHeight != height) return
+        diagnostics.record(NativeInputDiagnostics.Event.OPEN_ATTEMPT)
+        val capture = capture() ?: run {
+            diagnostics.record(NativeInputDiagnostics.Event.OPEN_REJECTION, NativeInputDiagnostics.Failure.CAPTURE_UNAVAILABLE)
+            return
+        }
+        if (capture.epoch != epoch || capture.frameWidth != width || capture.frameHeight != height) {
+            diagnostics.record(NativeInputDiagnostics.Event.OPEN_REJECTION, NativeInputDiagnostics.Failure.CAPTURE_CHANGED)
+            return
+        }
         val direct = if (directRequested) directChannel?.invoke(checkNotNull(peerSession)) else null
         if (directRequested && (direct == null || !direct.isCurrent() || direct.capture != capture)) {
+            diagnostics.record(NativeInputDiagnostics.Event.OPEN_REJECTION, NativeInputDiagnostics.Failure.DIRECT_CHANNEL_UNAVAILABLE)
             // Exact pre-owner refusal, not an unknown native outcome.
             reply(Owner(TouchBinding(ownerId, epoch, capture.physicalWidth, capture.physicalHeight, capture.rotation), session, connection, capture),
                 0, 5, "startup", "admission", uptime())
@@ -158,12 +199,15 @@ internal class ContinuousInputController(
         val candidate = Owner(TouchBinding(ownerId, epoch, capture.physicalWidth, capture.physicalHeight, capture.rotation), session, connection, capture,
             direct, if (direct != null) uptime() + 1500 else 0)
         if (closing.get() || !active.compareAndSet(null, candidate)) {
+            diagnostics.record(NativeInputDiagnostics.Event.OPEN_REJECTION,
+                if (closing.get()) NativeInputDiagnostics.Failure.RETIRING_OWNER else NativeInputDiagnostics.Failure.ACTIVE_OWNER)
             reply(candidate, 0, 5, "startup", "admission", uptime())
             return
         }
         // Only one lifecycle coroutine can be admitted. MOVE messages never allocate a coroutine.
         scope.launch {
             if (!current(candidate) || !supervisor.open(candidate.binding)) {
+                diagnostics.record(NativeInputDiagnostics.Event.OPEN_REJECTION, currentFailure(candidate))
                 active.compareAndSet(candidate, null)
                 reply(candidate, 0, 5, "startup", "admission", uptime())
             } else candidate.admitted = true
@@ -185,11 +229,13 @@ internal class ContinuousInputController(
             && epoch != null && sequence != null && gesture != null && action != null && x != null && y != null
         val point = if (valid && current(owner)) owner.capture.map(epoch!!, owner.capture.frameWidth, owner.capture.frameHeight, StreamPoint(x!!, y!!)) else null
         if (point == null) {
+            diagnostics.record(NativeInputDiagnostics.Event.INPUT_FAILURE, NativeInputDiagnostics.Failure.INPUT_REJECTED)
             reply(owner, sequence?.coerceAtLeast(0) ?: 0, 5, "input", "admission", uptime())
             invalidate()
             return
         }
         if (!owner.ready && action != RootTouchSession.HEARTBEAT) {
+            diagnostics.record(NativeInputDiagnostics.Event.INPUT_FAILURE, NativeInputDiagnostics.Failure.INPUT_NOT_READY)
             reply(owner, sequence!!.coerceAtLeast(0), 5, "input", "admission", uptime())
             invalidate()
             return
@@ -197,6 +243,7 @@ internal class ContinuousInputController(
         if (!owner.admitted && action == RootTouchSession.HEARTBEAT) return
         val result = supervisor.offer(owner.binding.owner, epoch!!, sequence!!, gesture!!, action!!, point.x, point.y)
         if (result !in setOf(ContinuousTouchMailbox.Admission.QUEUED, ContinuousTouchMailbox.Admission.COALESCED)) {
+            diagnostics.record(NativeInputDiagnostics.Event.INPUT_FAILURE, NativeInputDiagnostics.Failure.INPUT_REJECTED)
             reply(owner, sequence.coerceAtLeast(0), 5, "input", "admission", uptime())
             invalidate()
         }
@@ -205,6 +252,17 @@ internal class ContinuousInputController(
     private fun current(owner: Owner): Boolean = scope.isActive && !owner.retired && active.get() === owner &&
         generation() == owner.generation && capture() == owner.capture &&
         (owner.direct == null || owner.direct.isCurrent() && uptime() < owner.grantUntil)
+
+    private fun currentFailure(owner: Owner) = when {
+        supervisor.needsReset() -> NativeInputDiagnostics.Failure.CLEANUP_UNKNOWN
+        !scope.isActive -> NativeInputDiagnostics.Failure.SCOPE_INACTIVE
+        owner.retired || closing.get() -> NativeInputDiagnostics.Failure.RETIRING_OWNER
+        generation() != owner.generation -> NativeInputDiagnostics.Failure.TRANSPORT_CHANGED
+        capture() != owner.capture -> NativeInputDiagnostics.Failure.CAPTURE_CHANGED
+        owner.direct != null && !owner.direct.isCurrent() -> NativeInputDiagnostics.Failure.DIRECT_CHANNEL_UNAVAILABLE
+        owner.direct != null && uptime() >= owner.grantUntil -> NativeInputDiagnostics.Failure.AUTHORIZATION_EXPIRED
+        else -> NativeInputDiagnostics.Failure.SUPERVISOR_BUSY
+    }
 
     private fun capture(): CaptureInputSession? = runCatching { streaming.getInputSession() }.getOrNull()
 

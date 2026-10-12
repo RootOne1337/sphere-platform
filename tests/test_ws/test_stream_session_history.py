@@ -15,7 +15,7 @@ from fastapi import HTTPException, Response
 from redis.exceptions import ConnectionError as RedisConnectionError
 
 from backend.api.v1.direct_probe.router import stream_session_history
-from backend.schemas.stream_diagnostics import AgentStreamTelemetry
+from backend.schemas.stream_diagnostics import AgentStreamTelemetry, NativeInputTelemetry
 from backend.websocket.stream_session_history import (
     RETENTION_SECONDS,
     SESSION_BYTES,
@@ -344,6 +344,10 @@ async def test_full_width_counters_cannot_block_recent_observations_or_session_c
                      capture_fps=240, render_fps=240, key_frame_ratio=0.9999999999999999,
                      ws_queue_rejected_total=0, last_capture_age_ms=86400000,
                      last_render_age_ms=86400000, last_encoded_age_ms=86400000)
+    telemetry["native_input"] = {
+        name: 2**53 for name in NativeInputTelemetry.model_fields if name.endswith("_total")
+    } | dict(schema_version=1, scope="agent_process", state="cleanup_unknown",
+             last_failure="direct_channel_unavailable", last_failure_age_ms=86400000)
     native = AgentStreamTelemetry.model_validate(telemetry).model_dump()
     browser = SAMPLE | {
         name: 2**53 - 1 for name in SAMPLE
@@ -378,6 +382,8 @@ async def test_full_width_counters_cannot_block_recent_observations_or_session_c
         "last_capture_age_ms", "last_render_age_ms", "last_encoded_age_ms",
     ))
     assert retained_agent["idle_refresh_frames_total"] == 2**53
+    assert retained_agent["native_input"]["unknown_releases_total"] == 2**53
+    assert retained_agent["native_input"]["last_failure"] == "direct_channel_unavailable"
     _, records = store.keys(ORG, DEVICE)
     assert len((await store.redis.hget(records, "viewer")).encode()) <= SESSION_BYTES
 

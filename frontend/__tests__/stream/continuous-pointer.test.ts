@@ -532,6 +532,17 @@ describe('native canvas event lifecycle', () => {
     };
     return { ...f, canvas, event, mapper, enabled: (value: boolean) => { enabled = value; }, geometry: (value: boolean) => { geometry = value; } };
   }
+  it('a visible idle viewer stays connected when the physical emulator takes window focus', () => {
+    const f = surface();
+    window.dispatchEvent(new Event('blur'));
+    jest.advanceTimersByTime(LIMITS.heartbeatMs + LIMITS.moveIntervalMs);
+    expect(f.controller.state).toBe('ready');
+    expect(f.sent.filter(x => x.type === 'touch_close')).toEqual([]);
+    expect(f.events()).toEqual([expect.objectContaining({ action: 4, gesture: 0 })]);
+    f.ackLatest();
+    f.event('pointerdown');
+    expect(f.events().at(-1)).toMatchObject({ action: 0 });
+  });
   it('native pointermove sends before pointerup and keeps reverse movement intact', () => {
     const f = surface(); f.event('pointerdown'); f.ackLatest();
     expect(f.canvas.setPointerCapture).toHaveBeenCalledWith(1);

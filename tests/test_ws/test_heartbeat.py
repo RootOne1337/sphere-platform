@@ -292,6 +292,14 @@ class TestHeartbeatManager:
                 "ws_queue_rejected_total": 1,
                 "ws_queue_accepted_bytes_total": 990_000,
                 "private_token": "must-not-be-persisted",
+                "native_input": {
+                    "schema_version": 1, "scope": "agent_process", "state": "cleanup_unknown",
+                    "last_failure": "cleanup_unknown", "last_failure_age_ms": 120,
+                    "open_attempts_total": 3, "open_rejections_total": 2, "startups_total": 1,
+                    "startup_failures_total": 0, "input_failures_total": 0,
+                    "releases_total": 0, "unknown_releases_total": 1,
+                    "owner": "private-owner-must-not-be-persisted",
+                },
             },
         })
 
@@ -300,6 +308,9 @@ class TestHeartbeatManager:
         assert snapshot.agent_session_id == "ws-session-7"
         assert snapshot.telemetry.capture_fps == 16
         assert "private_token" not in snapshot.telemetry.model_dump()
+        assert snapshot.telemetry.native_input is not None
+        assert snapshot.telemetry.native_input.last_failure == "cleanup_unknown"
+        assert "private-owner" not in str(snapshot.telemetry.model_dump())
         assert await fake_cache.redis.ttl("device:stream-diagnostics:dev-stream") > 0
 
         await heartbeat.handle_pong({"type": "pong", "ts": time.time()})

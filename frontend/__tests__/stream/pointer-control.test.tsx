@@ -683,11 +683,14 @@ it('a busy admission before native STARTUP retries only input without restarting
   view.unmount();
 });
 
-it.each(['readonly', 'recording', 'handoff', 'inspection', 'blur'])('pauses idle recovery while %s owns the surface', mode => {
+it.each(['readonly', 'recording', 'handoff', 'inspection', 'hidden'])('pauses idle recovery while %s owns the surface', mode => {
   const view = readyContinuous();
   for (let i = 0; i < 7; i++) act(() => jest.advanceTimersByTime(250));
   view.status(0, 3, 'release');
-  if (mode === 'blur') fireEvent.blur(window);
+  if (mode === 'hidden') {
+    jest.spyOn(document, 'hidden', 'get').mockReturnValue(true);
+    fireEvent(document, new Event('visibilitychange'));
+  }
   else view.rerender(<DeviceStream deviceId="gesture-remote" enableNavigation enableStaticInput
     readOnly={mode === 'readonly'} recordingMode={mode === 'recording'}
     taskHandoffId={mode === 'handoff' ? 7 : undefined}
@@ -699,13 +702,16 @@ it.each(['readonly', 'recording', 'handoff', 'inspection', 'blur'])('pauses idle
   view.unmount();
   expect(jest.getTimerCount()).toBe(0);
 });
-it.each(['readonly', 'recording', 'handoff', 'inspection', 'blur'])('pauses pointer recovery during %s and cannot bypass the fresh viewer requirement', mode => {
+it.each(['readonly', 'recording', 'handoff', 'inspection', 'hidden'])('pauses pointer recovery during %s and cannot bypass the fresh viewer requirement', mode => {
   const view = readyContinuous();
   view.down(1);
   for (let i = 0; i < 4; i++) act(() => jest.advanceTimersByTime(250));
   view.status(0, 3, 'release');
   const recordingReady = jest.fn();
-  if (mode === 'blur') fireEvent.blur(window);
+  if (mode === 'hidden') {
+    jest.spyOn(document, 'hidden', 'get').mockReturnValue(true);
+    fireEvent(document, new Event('visibilitychange'));
+  }
   else view.rerender(<DeviceStream deviceId="gesture-remote" enableNavigation enableStaticInput
     readOnly={mode === 'readonly'} recordingMode={mode === 'recording'}
     onRecordingControlReady={recordingReady} taskHandoffId={mode === 'handoff' ? 7 : undefined}
@@ -718,7 +724,10 @@ it.each(['readonly', 'recording', 'handoff', 'inspection', 'blur'])('pauses poin
   expect(view.commands()).toEqual([]);
   expect(api.post).not.toHaveBeenCalled();
   if (mode === 'recording') expect(recordingReady).toHaveBeenLastCalledWith(false);
-  if (mode === 'blur') fireEvent.focus(window);
+  if (mode === 'hidden') {
+    jest.spyOn(document, 'hidden', 'get').mockReturnValue(false);
+    fireEvent(document, new Event('visibilitychange'));
+  }
   else view.rerender(<DeviceStream deviceId="gesture-remote" enableNavigation enableStaticInput />);
   act(() => jest.advanceTimersByTime(1500));
   expect(view.socket.close).toHaveBeenCalledTimes(1);
@@ -903,17 +912,19 @@ it('a missing inspection release stays fenced and exposes explicit recovery afte
   expect(api.post).not.toHaveBeenCalled();
 });
 
-it('a capability arriving during focus loss is negotiated again after focus returns', () => {
+it('a capability arriving while hidden is negotiated again when the page becomes visible', () => {
   mockCapture = { captureEpoch: TOUCH_EPOCH, frameWidth: 1280, frameHeight: 720 };
   const view = readyWheel();
   const probes = () => view.socket.send.mock.calls.map(([raw]) => JSON.parse(raw as string))
     .filter(row => row.type === 'touch_probe');
   expect(probes()).toHaveLength(1);
-  fireEvent(window, new Event('blur'));
+  jest.spyOn(document, 'hidden', 'get').mockReturnValue(true);
+  fireEvent(document, new Event('visibilitychange'));
   act(() => view.socket.onmessage?.({ data: JSON.stringify({ type: 'touch_capability', capture_epoch: TOUCH_EPOCH,
     frame_width: 1280, frame_height: 720 }) }));
   expect(probes()).toHaveLength(1);
-  fireEvent(window, new Event('focus'));
+  jest.spyOn(document, 'hidden', 'get').mockReturnValue(false);
+  fireEvent(document, new Event('visibilitychange'));
   expect(probes()).toHaveLength(2);
   act(() => view.socket.onmessage?.({ data: JSON.stringify({ type: 'touch_capability', capture_epoch: TOUCH_EPOCH,
     frame_width: 1280, frame_height: 720 }) }));
@@ -956,9 +967,11 @@ it('losing focus cancels a pending wheel terminal rather than replaying it into 
   expect(view.sent().filter(x => x.type === 'touch_event').map(x => x.action)).toEqual([0]);
   expect(view.sent().filter(x => x.type === 'touch_close')).toHaveLength(1);
   view.status(0, 3, 'release');
-  expect(view.sent().filter(x => x.type === 'touch_probe')).toHaveLength(1);
+  expect(view.sent().filter(x => x.type === 'touch_probe')).toHaveLength(2);
   fireEvent.focus(window);
   expect(view.sent().filter(x => x.type === 'touch_probe')).toHaveLength(2);
+  expect(view.sent().filter(x => x.type === 'touch_event').map(x => x.action)).toEqual([0]);
+  expect(MockSocket.instances).toHaveLength(1);
   expect(view.commands()).toEqual([]);
   view.unmount();
 });
@@ -1403,7 +1416,7 @@ afterEach(() => {
   jest.useRealTimers();
 });
 
-it('keeps passive visible-video diagnostics eligible after blur while blocking mouse input', () => {
+it('keeps the visible client and passive diagnostics available beside the physical emulator after blur', () => {
   const view = readyGestureFixture(true);
   view.rerender(<DeviceStream deviceId="gesture-remote" enableStaticInput enableDiagnostics />);
   act(() => view.socket.onmessage?.({ data: JSON.stringify({ type: 'stream_session', schema_version: 1,
@@ -1412,7 +1425,7 @@ it('keeps passive visible-video diagnostics eligible after blur while blocking m
   fireEvent.blur(window);
   expect(mockAutomaticEligible).toBe(true);
   view.down(1); view.up(1);
-  expect(view.commands()).toHaveLength(0);
+  expect(view.commands()).toEqual([{ type: 'click', x: 640, y: 360 }]);
   view.rerender(<DeviceStream deviceId="gesture-remote" enableStaticInput enableDiagnostics recordingMode />);
   expect(mockAutomaticEligible).toBe(false);
 });

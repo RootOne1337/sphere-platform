@@ -440,7 +440,13 @@ export function attachContinuousPointer(options: {
     pointer = null;
     controller.cancel(event.pointerId);
   };
-  const blur = () => { pointer = null; controller.retire('surface_blur'); };
+  const blur = () => {
+    const held = pointer !== null || controller.pointerHeld;
+    pointer = null;
+    // Switching to the physical emulator does not revoke an idle viewer.
+    // A held browser finger still requires its exact native release.
+    if (held) controller.retire('surface_blur');
+  };
   const visibility = () => { if (document.hidden) { pointer = null; controller.retire('surface_hidden'); } };
   canvas.addEventListener('pointerdown', down);
   canvas.addEventListener('pointermove', move);

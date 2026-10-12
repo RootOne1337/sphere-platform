@@ -21,6 +21,7 @@ import type { DirectVideoBinding } from '@/src/features/stream/directVideoProtoc
 import { DirectPointerTransport, type DirectControlEndpoint } from '@/src/features/stream/directPointerTransport';
 import { StreamSessionHistoryPanel } from '@/src/features/stream/StreamSessionHistoryPanel';
 import { browserStreamSample, directFailure, StreamSessionReporter } from '@/src/features/stream/streamSessionTelemetry';
+import { NativeInputDiagnostic, type NativeInputTelemetry } from './NativeInputDiagnostic';
 
 interface DeviceStreamProps {
   deviceId: string;
@@ -79,6 +80,7 @@ interface StreamDiagnosticResponse {
       idle_refresh_frames_total?: number | null;
       legacy_suppressed_packets_total?: number | null;
       legacy_suppressed_encoded_bytes_total?: number | null;
+      native_input?: NativeInputTelemetry | null;
       encoder_fps: number;
       encoded_frames_total: number;
       encoded_bytes_total: number;
@@ -307,7 +309,10 @@ export function DeviceStream({
   }, [deviceId]);
   useEffect(() => {
     const focus = () => setSurfaceActive(!document.hidden);
-    const blur = () => setSurfaceActive(false);
+    // A visible browser beside the emulator remains a client when the user
+    // interacts with the emulator window. The pointer adapter separately
+    // retires an actually held browser gesture on blur.
+    const blur = () => setSurfaceActive(!document.hidden);
     window.addEventListener('focus', focus);
     window.addEventListener('blur', blur);
     document.addEventListener('visibilitychange', focus);
@@ -1438,6 +1443,7 @@ export function DeviceStream({
                       <span>Raw capture FPS skips: {t.capture_throttle_drops_total ?? '—'}</span>
                       <span>Raw codec input skips: {t.encoder_input_drops_total ?? '—'}</span>
                       <span>Encoded FPS drops: {t.frame_throttle_drops_total ?? '—'}</span>
+                      <NativeInputDiagnostic telemetry={t.native_input} />
                     </div>
                   );
                 })() : <div>Нет свежего отчёта активного захвата от APK.</div>}

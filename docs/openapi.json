@@ -11076,6 +11076,16 @@
               }
             ],
             "title": "Legacy Suppressed Encoded Bytes Total"
+          },
+          "native_input": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/NativeInputTelemetry"
+              },
+              {
+                "type": "null"
+              }
+            ]
           }
         },
         "type": "object",
@@ -16758,6 +16768,136 @@
           "script_id"
         ],
         "title": "N8nTaskResponse"
+      },
+      "NativeInputTelemetry": {
+        "properties": {
+          "schema_version": {
+            "type": "integer",
+            "enum": [
+              1
+            ],
+            "const": 1,
+            "title": "Schema Version"
+          },
+          "scope": {
+            "type": "string",
+            "enum": [
+              "agent_process"
+            ],
+            "const": "agent_process",
+            "title": "Scope"
+          },
+          "state": {
+            "type": "string",
+            "enum": [
+              "disabled",
+              "idle",
+              "opening",
+              "ready",
+              "retiring",
+              "cleanup_unknown"
+            ],
+            "title": "State"
+          },
+          "last_failure": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "active_owner",
+                  "retiring_owner",
+                  "capture_unavailable",
+                  "capture_changed",
+                  "direct_channel_unavailable",
+                  "authorization_expired",
+                  "transport_changed",
+                  "supervisor_busy",
+                  "cleanup_unknown",
+                  "native_startup_failed",
+                  "native_input_failed",
+                  "input_not_ready",
+                  "input_rejected",
+                  "receipt_unavailable",
+                  "scope_inactive"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Failure"
+          },
+          "last_failure_age_ms": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "maximum": 86400000.0,
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Failure Age Ms"
+          },
+          "open_attempts_total": {
+            "type": "integer",
+            "maximum": 9007199254740992.0,
+            "minimum": 0.0,
+            "title": "Open Attempts Total"
+          },
+          "open_rejections_total": {
+            "type": "integer",
+            "maximum": 9007199254740992.0,
+            "minimum": 0.0,
+            "title": "Open Rejections Total"
+          },
+          "startups_total": {
+            "type": "integer",
+            "maximum": 9007199254740992.0,
+            "minimum": 0.0,
+            "title": "Startups Total"
+          },
+          "startup_failures_total": {
+            "type": "integer",
+            "maximum": 9007199254740992.0,
+            "minimum": 0.0,
+            "title": "Startup Failures Total"
+          },
+          "input_failures_total": {
+            "type": "integer",
+            "maximum": 9007199254740992.0,
+            "minimum": 0.0,
+            "title": "Input Failures Total"
+          },
+          "releases_total": {
+            "type": "integer",
+            "maximum": 9007199254740992.0,
+            "minimum": 0.0,
+            "title": "Releases Total"
+          },
+          "unknown_releases_total": {
+            "type": "integer",
+            "maximum": 9007199254740992.0,
+            "minimum": 0.0,
+            "title": "Unknown Releases Total"
+          }
+        },
+        "type": "object",
+        "required": [
+          "schema_version",
+          "scope",
+          "state",
+          "open_attempts_total",
+          "open_rejections_total",
+          "startups_total",
+          "startup_failures_total",
+          "input_failures_total",
+          "releases_total",
+          "unknown_releases_total"
+        ],
+        "title": "NativeInputTelemetry",
+        "description": "Small agent-process snapshot; never an input trace or execution receipt."
       },
       "NickCheckRequest": {
         "properties": {

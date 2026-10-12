@@ -233,6 +233,7 @@ class CommandDispatcher @Inject constructor(
                     put("idle_refresh_frames_total", stats.idleRefreshFramesTotal)
                     put("legacy_suppressed_packets_total", stats.legacySuppressedPacketsTotal)
                     put("legacy_suppressed_encoded_bytes_total", stats.legacySuppressedEncodedBytesTotal)
+                    continuousInput?.let { put("native_input", it.diagnosticSnapshot()) }
                     put("encoder_fps", stats.currentFps)
                     put("encoded_frames_total", stats.totalFrames)
                     put("encoded_bytes_total", stats.totalEncodedBytes)

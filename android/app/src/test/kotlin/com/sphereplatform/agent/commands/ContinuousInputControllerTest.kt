@@ -14,7 +14,8 @@ import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.atomic.AtomicLong
 
 class ContinuousInputControllerTest {
-    private class Fixture(enabled: Boolean = true, private val holdStartup: Boolean = false) {
+    private class Fixture(enabled: Boolean = true, private val holdStartup: Boolean = false,
+                          private val cleanupConfirmed: Boolean = true) {
         val job = SupervisorJob()
         val scope = CoroutineScope(job + Dispatchers.Unconfined)
         val now = AtomicLong(100)
@@ -42,7 +43,7 @@ class ContinuousInputControllerTest {
                         RootTouchWire.readAck(java.io.ByteArrayInputStream(it.toByteArray()))
                     }
                 }
-                override suspend fun closeAndConfirm(): Boolean { closed = true; return true }
+                override suspend fun closeAndConfirm(): Boolean { closed = true; return cleanupConfirmed }
             }
         }, streaming, { connection }, { expected, message ->
             if (outbound && connection == expected) { receipts.add(message); true } else false
@@ -102,7 +103,48 @@ class ContinuousInputControllerTest {
         assertEquals(0, f.opens)
         assertEquals(JsonPrimitive(5), f.receipts.single()["status"])
         assertEquals(JsonPrimitive("admission"), f.receipts.single()["origin"])
+        val diagnostic = f.controller.diagnosticSnapshot()
+        assertEquals(JsonPrimitive("direct_channel_unavailable"), diagnostic["last_failure"])
+        assertEquals(JsonPrimitive(1), diagnostic["open_rejections_total"])
+        assertEquals(JsonPrimitive("idle"), diagnostic["state"])
         f.stop()
+    }
+
+    @Test fun `diagnostics distinguish an active owner without retaining its identity or restarting it`() = runBlocking {
+        val f = Fixture()
+        try {
+            f.ready()
+            f.controller.handle(f.open("other_1234"))
+            val snapshot = f.controller.diagnosticSnapshot()
+            assertEquals(JsonPrimitive("ready"), snapshot["state"])
+            assertEquals(JsonPrimitive("active_owner"), snapshot["last_failure"])
+            assertEquals(JsonPrimitive(2), snapshot["open_attempts_total"])
+            assertEquals(JsonPrimitive(1), snapshot["startups_total"])
+            repeat(100) { f.controller.diagnosticSnapshot() }
+            assertEquals(1, f.opens)
+            assertFalse(snapshot.toString().contains("owner_1234"))
+            assertFalse(snapshot.toString().contains("epoch_1234"))
+            assertFalse(f.closed)
+        } finally { f.stop() }
+    }
+
+    @Test fun `unknown cleanup remains visible after release and blocks another injector`() = runBlocking {
+        val f = Fixture(cleanupConfirmed = false)
+        try {
+            f.ready()
+            f.controller.invalidate()
+            eventually { f.controller.diagnosticSnapshot()["unknown_releases_total"] == JsonPrimitive(1) }
+            val snapshot = f.controller.diagnosticSnapshot()
+            assertEquals(JsonPrimitive("cleanup_unknown"), snapshot["state"])
+            assertEquals(JsonPrimitive("cleanup_unknown"), snapshot["last_failure"])
+            assertEquals(JsonPrimitive(0), snapshot["releases_total"])
+            delay(20)
+            f.controller.handle(f.open("other_1234"))
+            eventually { f.receipts.any { it["owner"] == JsonPrimitive("other_1234") && it["status"] == JsonPrimitive(5) } }
+            assertEquals(1, f.opens)
+            assertEquals(JsonPrimitive("cleanup_unknown"), f.controller.diagnosticSnapshot()["last_failure"])
+            assertTrue(f.samples.isEmpty())
+        } finally { f.stop() }
     }
 
     @Test fun `direct owner rejects touches arriving on the server and foreign peers`() = runBlocking {

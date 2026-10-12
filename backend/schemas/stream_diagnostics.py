@@ -9,6 +9,36 @@ from pydantic import BaseModel, ConfigDict, Field, model_validator
 _MAX_COUNTER = 2**53
 
 
+class NativeInputTelemetry(BaseModel):
+    """Small agent-process snapshot; never an input trace or execution receipt."""
+
+    model_config = ConfigDict(extra="ignore", strict=True)
+
+    schema_version: Literal[1]
+    scope: Literal["agent_process"]
+    state: Literal["disabled", "idle", "opening", "ready", "retiring", "cleanup_unknown"]
+    last_failure: Literal[
+        "active_owner", "retiring_owner", "capture_unavailable", "capture_changed",
+        "direct_channel_unavailable", "authorization_expired", "transport_changed",
+        "supervisor_busy", "cleanup_unknown", "native_startup_failed", "native_input_failed",
+        "input_not_ready", "input_rejected", "receipt_unavailable", "scope_inactive",
+    ] | None = None
+    last_failure_age_ms: int | None = Field(default=None, ge=0, le=86_400_000)
+    open_attempts_total: int = Field(ge=0, le=_MAX_COUNTER)
+    open_rejections_total: int = Field(ge=0, le=_MAX_COUNTER)
+    startups_total: int = Field(ge=0, le=_MAX_COUNTER)
+    startup_failures_total: int = Field(ge=0, le=_MAX_COUNTER)
+    input_failures_total: int = Field(ge=0, le=_MAX_COUNTER)
+    releases_total: int = Field(ge=0, le=_MAX_COUNTER)
+    unknown_releases_total: int = Field(ge=0, le=_MAX_COUNTER)
+
+    @model_validator(mode="after")
+    def validate_failure_age(self) -> "NativeInputTelemetry":
+        if (self.last_failure is None) != (self.last_failure_age_ms is None):
+            raise ValueError("native input failure and its monotonic age must be paired")
+        return self
+
+
 class AgentStreamTelemetry(BaseModel):
     """Cumulative counters reported by one Android capture session.
 
@@ -52,6 +82,8 @@ class AgentStreamTelemetry(BaseModel):
     # Deliberately skipped duplicate WS packets; never coded RTP loss.
     legacy_suppressed_packets_total: int | None = Field(default=None, ge=0, le=_MAX_COUNTER)
     legacy_suppressed_encoded_bytes_total: int | None = Field(default=None, ge=0, le=_MAX_COUNTER)
+    # Optional, process-scoped canary extension. Missing means unreported, not idle.
+    native_input: NativeInputTelemetry | None = None
 
     @model_validator(mode="after")
     def validate_contract(self) -> "AgentStreamTelemetry":
