@@ -35,11 +35,26 @@ it('classifies only a fresh STARTUP admission busy as retryable negotiation, wit
   const f = fixture(false);
   f.controller.open(CAPTURE); f.bind();
   f.status(0, 5, 'startup', { origin: 'admission' });
-  expect(f.controller.state).toBe('fenced');
+  expect(f.controller.state).toBe('closed');
   expect(f.onFence).toHaveBeenCalledWith(expect.objectContaining({ reason: 'native_startup_busy', pointerHeld: false }));
   expect(f.controller.down(1, POINT)).toBe(false);
   expect(f.events()).toEqual([]);
   expect(f.sent.filter(x => x.type === 'touch_close')).toHaveLength(1);
+  expect(f.status(0, 0, 'startup')).toBe(false);
+  expect(f.controller.state).toBe('closed');
+});
+
+it('discards pre-startup keepalives after native admission refusal without replay or readiness', () => {
+  const f = fixture(false);
+  f.controller.open(CAPTURE); f.bind(); f.advance(LIMITS.heartbeatMs);
+  expect(f.events()).toEqual([expect.objectContaining({ action: 4 })]);
+  f.status(0, 5, 'startup', { origin: 'admission' });
+  const sent = f.sent.length;
+  f.advance(LIMITS.startupMs * 2);
+  expect(f.controller.state).toBe('closed');
+  expect(f.sent).toHaveLength(sent);
+  expect(f.controller.down(1, POINT)).toBe(false);
+  expect(f.status(1, 2)).toBe(false);
 });
 
 it.each(['control_mode_changed', 'capture_or_socket_lost', 'surface_blur'])(

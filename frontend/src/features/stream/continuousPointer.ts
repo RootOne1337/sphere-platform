@@ -203,7 +203,12 @@ export class ContinuousPointer {
     // never reinterpret an unknown input or injector failure as a retryable busy.
     if (this.stateValue === 'opening' && message.stage === 'startup' && message.origin === 'admission'
       && message.sequence === 0 && message.status === 5) {
-      this.retire('native_startup_busy'); return false;
+      // APK refused this owner before STARTUP. No pointer action was admitted,
+      // so waiting for this rejected owner's RELEASE would never complete and
+      // would unnecessarily restart a healthy video peer. Revoke the pending
+      // server reservation, then let the surface retry only input admission.
+      this.retire('native_startup_busy');
+      this.transition('closed'); return false;
     }
     if (message.status >= 4) { this.retire('native_input_rejected_or_unknown'); return false; }
     if (message.stage === 'startup') {

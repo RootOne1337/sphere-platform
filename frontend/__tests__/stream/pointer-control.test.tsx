@@ -663,7 +663,7 @@ it.each([false, true])('does not turn a malformed or nonretryable admission erro
   view.unmount();
 });
 
-it('a busy admission before native STARTUP retries negotiation without claiming or repeating a touch', () => {
+it('a busy admission before native STARTUP retries only input without restarting the healthy viewer', () => {
   mockCapture = { captureEpoch: TOUCH_EPOCH, frameWidth: 1280, frameHeight: 720 };
   const view = readyWheel();
   const receive = (message: object) => act(() => view.socket.onmessage?.({ data: JSON.stringify(message) }));
@@ -677,8 +677,9 @@ it('a busy admission before native STARTUP retries negotiation without claiming 
   view.down(1); view.up(1, 65);
   expect(view.commands()).toEqual([]);
   act(() => jest.advanceTimersByTime(3750));
-  expect(MockSocket.instances).toHaveLength(2);
-  expect(view.socket.close).toHaveBeenCalledTimes(1);
+  expect(MockSocket.instances).toHaveLength(1);
+  expect(view.socket.close).not.toHaveBeenCalled();
+  expect(view.socket.send.mock.calls.filter(([raw]) => JSON.parse(raw).type === 'touch_probe')).toHaveLength(2);
   view.unmount();
 });
 
