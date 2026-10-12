@@ -305,6 +305,78 @@ class StreamingCaptureLifecycleTest {
         verify(exactly = 0) { wsClient.sendBinary(any()) }
     }
 
+    @Test fun `direct delivery retains every coded picture while omitting duplicate WS packets and false drops`() {
+        manager.start(projection)
+        val owner = Any()
+        val direct = mutableListOf<EncodedCaptureFrame>()
+        val capture = checkNotNull(manager.attachEncodedViewer(owner, direct::add))
+        var now = 100L
+        manager.monotonicMs = { now }
+        assertTrue(manager.renewLegacyVideoDelivery(owner, capture, false, 5000))
+        val epoch = java.util.UUID.fromString(capture.epoch)
+        for ((index, type) in listOf(0x65, 0x41, 0x41).withIndex()) {
+            val nal = byteArrayOf(0, 0, 0, 1, type.toByte())
+            emitEncoded(nal, H264Encoder.FrameMetadata(index == 0, (index + 1) * 33333L, nal.size), epoch=epoch)
+            now++
+        }
+        manager.requestDirectKeyFrame()
+        assertEquals(3, direct.size)
+        assertEquals(listOf(1L, 2L, 3L), direct.map { it.sequence })
+        verify(exactly=0) { wsClient.sendBinary(any()) }
+        val stats = manager.getQualityStats()
+        assertEquals(3L, stats.totalFrames)
+        assertEquals(3L, stats.legacySuppressedPacketsTotal)
+        assertEquals(15L, stats.legacySuppressedEncodedBytesTotal)
+        assertEquals(0L, stats.webSocketQueueRejectedTotal)
+        assertEquals(0L, stats.frameThrottleDropsTotal)
+    }
+
+    @Test fun `expired duplicate lease resumes at headers and IDR while RTP retains intervening references`() {
+        manager.start(projection)
+        val owner = Any()
+        val direct = mutableListOf<EncodedCaptureFrame>()
+        val capture = checkNotNull(manager.attachEncodedViewer(owner, direct::add))
+        val epoch = java.util.UUID.fromString(capture.epoch)
+        var now = 100L
+        manager.monotonicMs = { now }
+        val packets = mutableListOf<ByteArray>()
+        every { wsClient.sendBinary(capture(packets)) } returns true
+        every { anyConstructed<H264Encoder>().cachedSps } returns byteArrayOf(0,0,0,1,0x67)
+        every { anyConstructed<H264Encoder>().cachedPps } returns byteArrayOf(0,0,0,1,0x68)
+        // Keep the posted recovery on its owned handler rather than invoking a
+        // lifecycle lock synchronously from the codec callback.
+        mockkConstructor(Handler::class)
+        every { anyConstructed<Handler>().post(any()) } returns true
+        assertTrue(manager.renewLegacyVideoDelivery(owner, capture, false, 1000))
+        val delta = byteArrayOf(0,0,0,1,0x41)
+        emitEncoded(delta, H264Encoder.FrameMetadata(false,33333,delta.size), epoch=epoch)
+        now = 1100L
+        emitEncoded(delta, H264Encoder.FrameMetadata(false,66666,delta.size), epoch=epoch)
+        val idr = byteArrayOf(0,0,0,1,0x65)
+        emitEncoded(idr, H264Encoder.FrameMetadata(true,99999,idr.size), epoch=epoch)
+        assertEquals(3, direct.size)
+        assertEquals(listOf(0x67,0x68,0x65), packets.map {
+            val header = if (it[0] == FramePackager.CAPTURE_VERSION) FramePackager.CAPTURE_HEADER_SIZE else FramePackager.HEADER_SIZE
+            it[header+4].toInt()
+        })
+    }
+
+    @Test fun `foreign or detached peer cannot suppress another current owner`() {
+        manager.start(projection)
+        val old = Any()
+        val capture = checkNotNull(manager.attachEncodedViewer(old) {})
+        assertFalse(manager.renewLegacyVideoDelivery(Any(),capture,false,5000))
+        manager.detachEncodedViewer(old)
+        val replacement = Any()
+        val current = checkNotNull(manager.attachEncodedViewer(replacement) {})
+        assertFalse(manager.renewLegacyVideoDelivery(old,capture,false,5000))
+        manager.detachEncodedViewer(old)
+        assertTrue(manager.isEncodedViewerCurrent(replacement,current))
+        assertTrue(manager.renewLegacyVideoDelivery(replacement,current,false,5000))
+        manager.stop()
+        assertFalse(manager.renewLegacyVideoDelivery(replacement,current,false,5000))
+    }
+
     @Test fun `GPU capture surface goes directly to VirtualDisplay without CPU images`() {
         mockkConstructor(SurfaceTextureEncoderBridge::class)
         val captureSurface = mockk<Surface>(relaxed = true)

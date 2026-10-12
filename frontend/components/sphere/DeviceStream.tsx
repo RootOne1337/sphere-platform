@@ -77,6 +77,8 @@ interface StreamDiagnosticResponse {
       last_render_age_ms?: number | null;
       last_encoded_age_ms?: number | null;
       idle_refresh_frames_total?: number | null;
+      legacy_suppressed_packets_total?: number | null;
+      legacy_suppressed_encoded_bytes_total?: number | null;
       encoder_fps: number;
       encoded_frames_total: number;
       encoded_bytes_total: number;
@@ -286,6 +288,14 @@ export function DeviceStream({
       continuousRef.current?.retire('server_runtime_retry');
     }
     setDirectControlVersion(version => version + 1);
+  }, []);
+  const selectVideoDelivery = useCallback((peerSession: string | null, session: string) => {
+    const socket = wsRef.current;
+    if (!socket || socket.readyState !== WebSocket.OPEN || diagnosticReporter.current?.sessionId !== session) return;
+    try {
+      socket.send(JSON.stringify(peerSession ? { type: 'video_delivery', mode: 'direct', peer_session: peerSession }
+        : { type: 'video_delivery', mode: 'legacy' }));
+    } catch { /* Native and server media leases both expire independently. */ }
   }, []);
 
   useEffect(() => {
@@ -1286,7 +1296,8 @@ export function DeviceStream({
       fit={fit} expectedCapture={() => diagnosticReporter.current?.sessionId === currentDiagnosticSession ? serverCaptureRef.current : null}
       onFrame={(video, binding) => renderDirectFrame(video, binding, currentDiagnosticSession)}
       onControlChannel={readOnly ? undefined : endpoint => observeDirectControl(endpoint, currentDiagnosticSession)}
-      onObservation={value => observeDirectVideo(value, currentDiagnosticSession)} />}
+      onObservation={value => observeDirectVideo(value, currentDiagnosticSession)}
+      onDeliveryChange={peer => selectVideoDelivery(peer, currentDiagnosticSession)} />}
     {inspection?.bounds && lastFrameDimensionsRef.current && <svg aria-label="Границы выбранного элемента" className="pointer-events-none absolute inset-0 h-full w-full" viewBox={`0 0 ${lastFrameDimensionsRef.current.width} ${lastFrameDimensionsRef.current.height}`} preserveAspectRatio={fit === 'fill' ? 'none' : fit === 'cover' ? 'xMidYMid slice' : 'xMidYMid meet'}>
       <rect x={inspection.bounds.left} y={inspection.bounds.top} width={inspection.bounds.right - inspection.bounds.left} height={inspection.bounds.bottom - inspection.bounds.top} fill="rgba(20,184,166,0.15)" stroke="#14b8a6" strokeWidth="2" vectorEffect="non-scaling-stroke" />
     </svg>}
@@ -1415,6 +1426,8 @@ export function DeviceStream({
                       <span>Rendered: {t.rendered_frames_total ?? '—'}</span>
                       <span>Local WS accepted: {t.ws_queue_accepted_total}/{t.ws_queue_attempts_total}</span>
                       <span>Local WS rejected: {t.ws_queue_rejected_total}</span>
+                      <span>Не отправлено дублирующих пакетов: {t.legacy_suppressed_packets_total ?? '—'}</span>
+                      <span>Не отправлено дублирующих NAL-байтов: {t.legacy_suppressed_encoded_bytes_total ?? '—'}</span>
                       <span>Capture errors: {t.capture_read_failures_total ?? '—'}</span>
                       <span>Surface errors: {t.render_failures_total ?? '—'}</span>
                       <span>Encoder errors: {t.encoder_errors_total ?? '—'}</span>

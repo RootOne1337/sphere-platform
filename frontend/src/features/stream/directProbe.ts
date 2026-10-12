@@ -19,6 +19,8 @@ export interface DirectProbeResult {
   iceState?: RTCIceConnectionState;
   videoBinding?: DirectVideoBinding;
   videoStats?: DirectVideoStats;
+  /** Exact signaling nonce; never included in public diagnostic scalar samples. */
+  session?: string;
 }
 export function probePath(stats: RTCStatsReport): Pick<DirectProbeResult, 'path' | 'protocol'> {
   let pair: RTCIceCandidatePairStats | undefined;
@@ -185,6 +187,7 @@ function startDirectSession(
           || typeof data.sdp !== 'string' || new TextEncoder().encode(data.sdp).length > 32768) throw Error();
         if (video && !readonlyVideoSdp(data.sdp, false)) return stop('invalid_answer');
         session = data.session_id;
+        result.session = session ?? undefined;
         answered = true;
         boundPhase('connection_deadline', 12_000);
         void peer.setRemoteDescription({ type: 'answer', sdp: data.sdp }).then(() => {

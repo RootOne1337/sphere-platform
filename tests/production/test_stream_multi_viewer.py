@@ -155,3 +155,28 @@ async def test_concurrent_viewers_share_one_subscription_and_recover_together(wo
         assert dict(await world.redis.pubsub_numsub(channel))[channel] == 0
         with pytest.raises(ConnectionError):
             await bridge.register_viewer(device, Viewer(""), "after-close")
+
+
+async def test_direct_only_worker_does_not_stop_capture_or_other_workers_legacy_video(world):
+    async with workers(world) as (bridges, commands):
+        device = str(world.dev_a.id)
+        direct, fallback = Viewer(""), Viewer("")
+        await bridges[1].register_viewer(device, direct, "direct")
+        await bridges[1].set_legacy_delivery(device, "direct", False)
+        video = "sphere:stream:video:" + device
+        presence = "sphere:stream:presence:" + device
+        assert dict(await world.redis.pubsub_numsub(video))[video] == 0
+        assert dict(await world.redis.pubsub_numsub(presence))[presence] == 1
+        commands.clear()
+        # Execute actual Redis Lua: no WS video subscriber does not mean no viewer.
+        assert not await bridges[0].transport.stop_if_unused(device)
+        assert not any(command["type"] == "stop_stream" for command in commands)
+        await bridges[2].register_viewer(device, fallback, "fallback")
+        await bridges[0].handle_agent_frame(device, FRAME)
+        assert await asyncio.wait_for(fallback.frames.get(), 2) == FRAME
+        assert direct.frames.empty()
+        await bridges[2].unregister_viewer(device, "fallback")
+        assert not await bridges[0].transport.stop_if_unused(device)
+        await bridges[1].set_legacy_delivery(device, "direct", True)
+        await bridges[0].handle_agent_frame(device, FRAME)
+        assert await asyncio.wait_for(direct.frames.get(), 2) == FRAME

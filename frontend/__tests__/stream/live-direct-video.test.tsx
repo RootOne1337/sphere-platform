@@ -4,7 +4,7 @@ import { LiveDirectVideo } from '@/src/features/stream/LiveDirectVideo';
 import type { DirectProbeResult } from '@/src/features/stream/directProbe';
 import type { DirectControlEndpoint } from '@/src/features/stream/directPointerTransport';
 
-let mockAdmission: { data: { admitted: boolean; profiles: string[]; input?: boolean; nativeHistory?: boolean }; isError: boolean } =
+let mockAdmission: { data: { admitted: boolean; profiles: string[]; input?: boolean; nativeHistory?: boolean; handover?: boolean }; isError: boolean } =
   { data: { admitted: true, profiles: ['host', 'public-stun'] }, isError: false };
 let mockToken: string | null = 'fixture';
 let mockReport: (result: DirectProbeResult) => void;
@@ -112,6 +112,45 @@ test('automatic primary video promotes only a matching displayed frame, never an
   expect(view.onObservation).toHaveBeenLastCalledWith(expect.objectContaining({ active: true, frames: 1 }));
   view.unmount(); act(() => jest.runAllTicks());
   expect(mockStop).toHaveBeenCalledTimes(1); expect(jest.getTimerCount()).toBe(0);
+});
+
+test('duplicate video handover follows presentation, renews only fresh frames and releases on teardown', async () => {
+  mockAdmission.data.handover = true;
+  const onDelivery = jest.fn();
+  const props = { deviceId: 'device', session: '1'.repeat(16), eligible: true, expectedCapture: expected,
+    onFrame: jest.fn(() => true), onObservation: jest.fn(), onDeliveryChange: onDelivery };
+  const view = render(<LiveDirectVideo {...props} />);
+  const current = { ...connected, session: 'a'.repeat(32) };
+  expect(mockStart.mock.calls[0][3].historySession).toBe(props.session);
+  act(() => mockReport(current));
+  expect(onDelivery).not.toHaveBeenCalled();
+  act(() => mockTrack({ kind: 'video' } as MediaStreamTrack)); await act(async () => {});
+  act(present);
+  expect(onDelivery).toHaveBeenCalledTimes(1);
+  expect(onDelivery).toHaveBeenLastCalledWith(current.session);
+  act(() => jest.advanceTimersByTime(2000)); act(present);
+  act(() => jest.advanceTimersByTime(1000));
+  expect(onDelivery).toHaveBeenCalledTimes(2);
+  view.rerender(<LiveDirectVideo {...props} onDeliveryChange={peer => onDelivery(peer)} />);
+  expect(mockStart).toHaveBeenCalledTimes(1); // Callback identity cannot replace a working peer.
+  act(() => jest.advanceTimersByTime(3000));
+  expect(onDelivery).toHaveBeenCalledTimes(2); // Last displayed picture is too old; stats cannot renew.
+  act(() => jest.advanceTimersByTime(2000));
+  expect(onDelivery).toHaveBeenLastCalledWith(null); // Renderer watchdog restores reserve automatically.
+  view.unmount(); expect(jest.getTimerCount()).toBe(0);
+});
+
+test('old native versions and rejected renderers never suppress the server reserve', async () => {
+  for (const handover of [false, true]) {
+    mockAdmission.data.handover = handover;
+    const onDelivery = jest.fn();
+    const view = render(<LiveDirectVideo deviceId="device" session={'1'.repeat(16)} eligible expectedCapture={expected}
+      onFrame={jest.fn(() => false)} onObservation={jest.fn()} onDeliveryChange={onDelivery} />);
+    act(() => { mockReport({ ...connected, session: 'a'.repeat(32) }); mockTrack({ kind: 'video' } as MediaStreamTrack); });
+    await act(async () => {}); act(present);
+    expect(onDelivery).not.toHaveBeenCalled();
+    view.unmount();
+  }
 });
 
 test('periodic connected statistics cannot extend the first-picture deadline', () => {

@@ -60,6 +60,9 @@ APPROVED_PATHS = {
     "backend/database/redis_client.py",
     "backend/schemas/stream_diagnostics.py", "backend/websocket/stream_metrics.py",
     "backend/websocket/stream_session_history.py",
+    "backend/websocket/channels.py", "backend/websocket/video_delivery.py",
+    "backend/websocket/video_transport.py", "backend/websocket/video_queue.py",
+    "backend/websocket/stream_bridge.py",
     "backend/Dockerfile",
 }
 PACKAGED_PATHS = ["backend", "alembic", "agent-config", "scripts/create_admin.py",

@@ -57,7 +57,7 @@ async def test_allowed_read_is_private_finite_and_never_allocates_peer(admission
     assert response.json() == dict(schema_version=1, device_id=str(DEVICE), enabled=True,
                                    profiles=["host", "public-stun"], scope="diagnostic_echo_only",
                                    max_duration_ms=30000, samples=20, readonly_video_enabled=False, live_video_enabled=False,
-                                   direct_input_enabled=False, native_history_enabled=False)
+                                   direct_input_enabled=False, native_history_enabled=False, legacy_video_handover_enabled=False)
     db.get.assert_awaited_once_with(router.Device, DEVICE)
     router.bind_tenant_context.assert_awaited_once_with(db, str(ORG))
 
@@ -140,6 +140,18 @@ async def test_primary_video_requires_its_own_native_version_and_never_allocates
     assert response.status_code == 200 and response.json()["live_video_enabled"] is allowed
     assert response.json()["readonly_video_enabled"] is False
     runtime.prepare.assert_not_awaited()
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("version,online,allowed", [(10259, True, False), (None, True, False), (10260, False, False), (10260, True, True)])
+async def test_legacy_handover_requires_current_native_support(admission, monkeypatch, version, online, allowed):
+    _, client, _, _, runtime = admission
+    monkeypatch.setattr(router.settings, "DIRECT_TRANSPORT_LIVE_VIDEO_ENABLED", True)
+    runtime.redis = object()
+    cache = SimpleNamespace(get_status=AsyncMock(return_value=SimpleNamespace(
+        agent_version_code=version, ws_session_id="fresh", status="online" if online else "offline")))
+    monkeypatch.setattr(router, "DeviceStatusCache", lambda redis: cache)
+    assert (await client.get(URL)).json()["legacy_video_handover_enabled"] is allowed
 
 
 @pytest.mark.asyncio

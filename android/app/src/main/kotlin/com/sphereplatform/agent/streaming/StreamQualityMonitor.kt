@@ -36,6 +36,8 @@ class StreamQualityMonitor @Inject constructor() {
     private var lastRenderMs: Long? = null
     private var lastEncodedMs: Long? = null
     private var idleRefreshFramesTotal = 0L
+    private var legacySuppressedPacketsTotal = 0L
+    private var legacySuppressedEncodedBytesTotal = 0L
 
     @Synchronized
     fun recordFrame(sizeBytes: Int, isKeyFrame: Boolean, isCodecConfig: Boolean = false) {
@@ -115,6 +117,13 @@ class StreamQualityMonitor @Inject constructor() {
         }
     }
 
+    /** Deliberately omitted duplicate NAL bytes; neither RTP loss nor WS rejection. */
+    @Synchronized
+    fun recordLegacySuppression(sizeBytes: Int) {
+        legacySuppressedPacketsTotal++
+        legacySuppressedEncodedBytesTotal += sizeBytes.coerceAtLeast(0)
+    }
+
     @Synchronized
     fun getStats(): StreamStats {
         // Prune during reads too: after an encoder stalls, no new frame arrives to
@@ -147,6 +156,8 @@ class StreamQualityMonitor @Inject constructor() {
             lastRenderAgeMs = lastRenderMs?.let { (now - it).coerceIn(0L, 86_400_000L) },
             lastEncodedAgeMs = lastEncodedMs?.let { (now - it).coerceIn(0L, 86_400_000L) },
             idleRefreshFramesTotal = idleRefreshFramesTotal,
+            legacySuppressedPacketsTotal = legacySuppressedPacketsTotal,
+            legacySuppressedEncodedBytesTotal = legacySuppressedEncodedBytesTotal,
         )
     }
 
@@ -187,6 +198,8 @@ class StreamQualityMonitor @Inject constructor() {
         webSocketQueueAcceptedBytesTotal = 0L
         lastCaptureMs = null; lastRenderMs = null; lastEncodedMs = null
         idleRefreshFramesTotal = 0L
+        legacySuppressedPacketsTotal = 0L
+        legacySuppressedEncodedBytesTotal = 0L
     }
 
     data class StreamStats(
@@ -213,5 +226,7 @@ class StreamQualityMonitor @Inject constructor() {
         val lastRenderAgeMs: Long? = null,
         val lastEncodedAgeMs: Long? = null,
         val idleRefreshFramesTotal: Long = 0,
+        val legacySuppressedPacketsTotal: Long = 0,
+        val legacySuppressedEncodedBytesTotal: Long = 0,
     )
 }

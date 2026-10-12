@@ -23,6 +23,9 @@ interface StreamingManager {
     /** Notify an active stream that a new viewer needs codec configuration and a keyframe. */
     fun onViewerConnected() {}
 
+    /** Native RTP sync request; does not create demand for duplicate WS bytes. */
+    fun requestDirectKeyFrame() {}
+
     /** Map one whole live gesture; inactive/resized capture returns null. */
     fun mapStreamPoints(points: List<StreamPoint>): List<StreamPoint>? = null
 
@@ -40,4 +43,7 @@ interface StreamingManager {
 
     /** Lock-free fence for encoder/native callbacks, including same-size capture restarts. */
     fun isEncodedViewerCurrent(owner: Any, capture: CaptureInputSession): Boolean = false
+
+    /** Exact current peer/capture may renew only the bounded duplicate-video lease. */
+    fun renewLegacyVideoDelivery(owner: Any, capture: CaptureInputSession, enabled: Boolean, ttlMs: Int): Boolean = false
 }

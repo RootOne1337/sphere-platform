@@ -41,7 +41,12 @@ class VideoTransport:
         self._task: asyncio.Task | None = None
 
     async def subscribe(self, device_id: str) -> None:
-        channel = ChannelPattern.video_stream(device_id)
+        await self._subscribe(ChannelPattern.video_stream(device_id))
+
+    async def subscribe_presence(self, device_id: str) -> None:
+        await self._subscribe(ChannelPattern.video_presence(device_id))
+
+    async def _subscribe(self, channel: str) -> None:
         async with self._lock:
             ready = self._channels.get(channel)
             if ready is None:
@@ -55,7 +60,12 @@ class VideoTransport:
             await ready.wait()
 
     async def unsubscribe(self, device_id: str) -> None:
-        channel = ChannelPattern.video_stream(device_id)
+        await self._unsubscribe(ChannelPattern.video_stream(device_id))
+
+    async def unsubscribe_presence(self, device_id: str) -> None:
+        await self._unsubscribe(ChannelPattern.video_presence(device_id))
+
+    async def _unsubscribe(self, channel: str) -> None:
         async with self._lock:
             self._channels.pop(channel, None)
             self._established.discard(channel)
@@ -89,7 +99,9 @@ class VideoTransport:
                         if message is None:
                             continue
                         channel = message["channel"].decode()
-                        device = channel.removeprefix("sphere:stream:video:")
+                        presence = channel.startswith("sphere:stream:presence:")
+                        prefix = "sphere:stream:presence:" if presence else "sphere:stream:video:"
+                        device = channel.removeprefix(prefix)
                         if channel not in self._channels:
                             continue
                         if message["type"] == "subscribe":
@@ -97,13 +109,15 @@ class VideoTransport:
                             if channel in self._established:
                                 # Capture may have stopped while the transport
                                 # was unavailable. Recover it as well as the IDR.
-                                await self.control(device, {
-                                    "type": "start_stream", "quality": "720p", "bitrate": 2_000_000,
-                                })
-                                await self.control(device, {"type": "viewer_connected"})
+                                if presence:
+                                    await self.control(device, {
+                                        "type": "start_stream", "quality": "720p", "bitrate": 2_000_000,
+                                    })
+                                else:
+                                    await self.control(device, {"type": "viewer_connected"})
                             self._established.add(channel)
                             backoff = 0.25
-                        elif message["type"] == "message":
+                        elif message["type"] == "message" and not presence:
                             await self.receive(device, message["data"])
                 except (RedisError, OSError, TimeoutError):
                     logger.warning("stream_video_transport_recovering", retry_seconds=backoff)
@@ -124,12 +138,12 @@ class VideoTransport:
         return await self.redis.publish(ChannelPattern.video_stream(device_id), data)
 
     async def has_viewers(self, device_id: str) -> bool:
-        result = await self.redis.pubsub_numsub(ChannelPattern.video_stream(device_id))
+        result = await self.redis.pubsub_numsub(ChannelPattern.video_presence(device_id))
         return bool(result[0][1])
 
     async def stop_if_unused(self, device_id: str) -> bool:
         return await self.redis.eval(
-            STOP_IF_UNUSED, 0, ChannelPattern.video_stream(device_id),
+            STOP_IF_UNUSED, 0, ChannelPattern.video_presence(device_id),
             ChannelPattern.agent_cmd(device_id), json.dumps({"type": "stop_stream"}),
         ) > 0
 

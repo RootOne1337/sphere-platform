@@ -288,6 +288,12 @@ stream_last_encoded_age_ms = device_gauge(
 stream_idle_refresh_frames_session = device_gauge(
     "sphere_stream_idle_refresh_frames_session", "Cached raw pictures resubmitted while the source is idle in this capture session", ["device_id"],
 )
+stream_legacy_suppressed_packets_session = device_gauge(
+    "sphere_stream_legacy_suppressed_packets_session", "Duplicate WS packets omitted while direct video is primary", ["device_id"],
+)
+stream_legacy_suppressed_encoded_bytes_session = device_gauge(
+    "sphere_stream_legacy_suppressed_encoded_bytes_session", "Duplicate NAL bytes omitted while direct video is primary", ["device_id"],
+)
 stream_backend_ingress_frames_total = device_counter(
     "sphere_stream_backend_ingress_frames_total",
     "Binary video packets received from Android WebSocket connections",
@@ -379,6 +385,8 @@ def cleanup_stream_metrics(device_id: str) -> None:
         stream_last_render_age_ms,
         stream_last_encoded_age_ms,
         stream_idle_refresh_frames_session,
+        stream_legacy_suppressed_packets_session,
+        stream_legacy_suppressed_encoded_bytes_session,
     ):
         with contextlib.suppress(KeyError, ValueError):
             metric.remove(device_id)

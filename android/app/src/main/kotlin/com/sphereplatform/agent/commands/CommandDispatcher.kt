@@ -231,6 +231,8 @@ class CommandDispatcher @Inject constructor(
                     put("last_render_age_ms", stats.lastRenderAgeMs)
                     put("last_encoded_age_ms", stats.lastEncodedAgeMs)
                     put("idle_refresh_frames_total", stats.idleRefreshFramesTotal)
+                    put("legacy_suppressed_packets_total", stats.legacySuppressedPacketsTotal)
+                    put("legacy_suppressed_encoded_bytes_total", stats.legacySuppressedEncodedBytesTotal)
                     put("encoder_fps", stats.currentFps)
                     put("encoded_frames_total", stats.totalFrames)
                     put("encoded_bytes_total", stats.totalEncodedBytes)

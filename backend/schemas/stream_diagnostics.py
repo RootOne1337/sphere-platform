@@ -49,6 +49,9 @@ class AgentStreamTelemetry(BaseModel):
     last_render_age_ms: int | None = Field(default=None, ge=0, le=86_400_000)
     last_encoded_age_ms: int | None = Field(default=None, ge=0, le=86_400_000)
     idle_refresh_frames_total: int | None = Field(default=None, ge=0, le=_MAX_COUNTER)
+    # Deliberately skipped duplicate WS packets; never coded RTP loss.
+    legacy_suppressed_packets_total: int | None = Field(default=None, ge=0, le=_MAX_COUNTER)
+    legacy_suppressed_encoded_bytes_total: int | None = Field(default=None, ge=0, le=_MAX_COUNTER)
 
     @model_validator(mode="after")
     def validate_contract(self) -> "AgentStreamTelemetry":

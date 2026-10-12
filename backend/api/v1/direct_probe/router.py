@@ -75,6 +75,7 @@ class ProbeCapabilities(BaseModel):
     live_video_enabled: bool = False
     direct_input_enabled: bool = False
     native_history_enabled: bool = False
+    legacy_video_handover_enabled: bool = False
 
 
 def relay_configured() -> bool:
@@ -117,6 +118,8 @@ async def probe_capabilities(
                             and status.agent_version_code and status.agent_version_code >= LIVE_VIDEO_MIN_AGENT_CODE)
     return ProbeCapabilities(device_id=device_id, enabled=enabled, profiles=profiles,
                              readonly_video_enabled=video_enabled, live_video_enabled=live_enabled,
+                             legacy_video_handover_enabled=bool(live_enabled and status
+                                 and status.agent_version_code and status.agent_version_code >= 10260),
                              native_history_enabled=bool((video_enabled or live_enabled) and status
                                                          and status.agent_version_code
                                                          and status.agent_version_code >= NATIVE_HISTORY_MIN_AGENT_CODE),

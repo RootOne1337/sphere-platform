@@ -109,10 +109,20 @@ class DirectProbeTransport(
                 if (message.keys == setOf("type", "session_id") && peer?.session == sid) close()
             } else if (kind == "direct_probe_renew") {
                 val current = peer ?: return@enqueue
-                if (current.session != sid || !current.live || message.keys != setOf("type", "session_id", "sequence", "ttl_ms")) return@enqueue
+                if (current.session != sid || !current.live || message.keys !in setOf(LegacyVideoRenewal.BASE_KEYS, LegacyVideoRenewal.EXTENDED_KEYS)) return@enqueue
+                val delivery = if (message.keys == LegacyVideoRenewal.EXTENDED_KEYS)
+                    LegacyVideoRenewal.parse(message) ?: return@enqueue else null
                 val sequence = message["sequence"]?.jsonPrimitive?.intOrNull ?: return@enqueue
                 val ttl = message["ttl_ms"]?.jsonPrimitive?.intOrNull ?: return@enqueue
-                if (!valid(current) || !current.lease.renew(sequence, ttl, receivedAt, SystemClock.elapsedRealtime())) close()
+                val now = SystemClock.elapsedRealtime()
+                if (!valid(current) || !current.lease.renew(sequence, ttl, receivedAt, now)) close()
+                else if (delivery != null && current.videoReady) {
+                    val remaining = delivery.ttlMs - (now - receivedAt)
+                    current.capture?.let { capture ->
+                        if (remaining > 0 && remaining <= 10000)
+                            streaming.renewLegacyVideoDelivery(current, capture, delivery.enabled, remaining.toInt())
+                    }
+                }
             } else {
                 val sdp = message["sdp"]?.jsonPrimitive?.contentOrNull ?: return@enqueue
                 val ttl = message["ttl_ms"]?.jsonPrimitive?.intOrNull ?: return@enqueue
@@ -140,7 +150,7 @@ class DirectProbeTransport(
                     if (p.videoReady) p.video?.submit(frame)
                 } ?: error("active_capture_required")
                 p.video = DirectEncodedVideoSource(checkNotNull(p.capture), { valid(p) },
-                    { if (valid(p)) streaming.onViewerConnected() }, { enqueue { if (peer === p) close() } })
+                    { if (valid(p)) streaming.requestDirectKeyFrame() }, { enqueue { if (peer === p) close() } })
             }
             // Validate before creating native threads. Ordinary builds keep an empty host-only profile.
             val iceProfile = DirectProbeIceProfile.fromUrl(BuildConfig.DIRECT_PROBE_STUN_URL)
@@ -303,7 +313,7 @@ class DirectProbeTransport(
             val capture = checkNotNull(p.capture)
             val binding = "SV1 ${p.session} ${capture.epoch} ${capture.frameWidth} ${capture.frameHeight}"
             if (!channel.send(DataChannel.Buffer(ByteBuffer.wrap(binding.toByteArray()), false))) close()
-            else { p.videoReady = true; streaming.onViewerConnected() }
+            else { p.videoReady = true; streaming.requestDirectKeyFrame() }
         }
     }
 

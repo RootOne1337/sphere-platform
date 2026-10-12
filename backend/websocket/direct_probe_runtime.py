@@ -9,6 +9,7 @@ from typing import Any
 
 from backend.core.config import settings
 from backend.services.device_status_cache import DeviceStatusCache
+from backend.websocket.channels import ChannelPattern
 from backend.websocket.connection_manager import ConnectionManager
 from backend.websocket.continuous_lease import no_replay_redis
 from backend.websocket.direct_probe_ice import validate_turn_grant
@@ -30,6 +31,7 @@ from backend.websocket.direct_probe_telemetry import native_peer_report
 from backend.websocket.stream_session_history import StreamSessionHistory, utc_now
 
 OPERATION_SECONDS = 2.0
+LEGACY_HANDOVER_MIN_AGENT_CODE = 10260
 DELETE_EXACT = "if redis.call('GET', KEYS[1]) == ARGV[1] then return redis.call('DEL', KEYS[1]) else return 0 end"
 REMAINING_EXACT = "if redis.call('GET', KEYS[1]) == ARGV[1] then return redis.call('PTTL', KEYS[1]) else return 0 end"
 RENEW_EXACT = "if redis.call('GET', KEYS[1]) == ARGV[1] then return redis.call('PEXPIRE', KEYS[1], ARGV[2]) else return 0 end"
@@ -141,6 +143,47 @@ class DirectProbeRuntime:
             status = await DeviceStatusCache(self.redis).get_status(device)
             return bool(status and status.agent_version_code and status.agent_version_code >= 10254
                         and await self.remaining(binding))
+
+    async def video_peer(self, *, device: str, org: str, user: str, session: str, viewer_session: str) -> bool:
+        """The stream may retire only its own duplicate, never another viewer's.
+
+        Read-only viewers bind through the existing history correlation nonce;
+        this lookup grants no Android input or diagnostic command forwarding.
+        """
+        if (not self.available or not settings.DIRECT_TRANSPORT_LIVE_VIDEO_ENABLED
+                or device not in settings.DIRECT_TRANSPORT_PROBE_DEVICE_IDS):
+            return False
+        async with asyncio.timeout(OPERATION_SECONDS):
+            raw = await self.redis.get(self.key(device))
+            if not isinstance(raw, (str, bytes)) or len(raw) > MAX_WIRE_BYTES:
+                return False
+            try:
+                binding = json.loads(raw)
+                required = {"session", "device", "org", "user", "worker", "agent_session", "media"}
+                if (not isinstance(binding, dict) or not required <= binding.keys()
+                        or binding.keys() - required - {"control_session", "history_session"}
+                        or any(binding.get(k) != v for k, v in {
+                            "session": session, "device": device, "org": org, "user": user, "media": LIVE_VIDEO_MODE,
+                        }.items())
+                        or binding.get("history_session") != viewer_session):
+                    return False
+                session_id(binding["worker"])
+                session_id(binding["session"])
+            except (ValueError, TypeError):
+                return False
+            status = await DeviceStatusCache(self.redis).get_status(device)
+            return bool(status and status.agent_version_code
+                        and status.agent_version_code >= LEGACY_HANDOVER_MIN_AGENT_CODE and await self.remaining(binding))
+
+    async def legacy_video_required(self, device: str) -> bool:
+        # NUMSUB is global across viewer workers. Presence is a different topic:
+        # a direct-only worker keeps capture alive without subscribing to bytes.
+        try:
+            async with asyncio.timeout(.25):
+                result = await self.redis.pubsub_numsub(ChannelPattern.video_stream(device))
+                return bool(result[0][1])
+        except Exception:
+            return True  # Unknown demand never suppresses the recovery transport.
 
     async def publish(self, channel: str, data: dict) -> None:
         if await self.redis.publish(channel, self.encode(data)) < 1:
@@ -426,8 +469,11 @@ class DirectProbeRuntime:
             if not remaining:
                 return
             pending.deadline = asyncio.get_running_loop().time() + remaining / 1000
-            await self.manager.send_to_session(binding["device"], snapshot.session_id,
-                dict(type="direct_probe_renew", session_id=sid, sequence=sequence, ttl_ms=remaining))
+            message = dict(type="direct_probe_renew", session_id=sid, sequence=sequence, ttl_ms=remaining)
+            if status.agent_version_code >= LEGACY_HANDOVER_MIN_AGENT_CODE:
+                message.update(legacy_video_enabled=await self.legacy_video_required(binding["device"]),
+                               legacy_ttl_ms=min(remaining, 10000))
+            await self.manager.send_to_session(binding["device"], snapshot.session_id, message)
             return
         if data["kind"] != "offer":
             return

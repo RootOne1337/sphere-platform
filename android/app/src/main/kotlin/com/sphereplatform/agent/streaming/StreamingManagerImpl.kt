@@ -43,6 +43,7 @@ class StreamingManagerImpl @Inject constructor(
     internal var gpuBridgeEnabled = BuildConfig.STREAM_GPU_BRIDGE
     internal var planarInputEnabled = BuildConfig.STREAM_PLANAR_INPUT
     internal var monotonicNs: () -> Long = System::nanoTime
+    internal var monotonicMs: () -> Long = android.os.SystemClock::elapsedRealtime
     // Image/Bitmap native storage must stay alive through the complete copy and
     // surface draw. Lifecycle methods serialize separately from codec callbacks.
     private val frameLock = Any()
@@ -52,6 +53,8 @@ class StreamingManagerImpl @Inject constructor(
     private var inputInvalidationListener: (() -> Unit)? = null
     private class EncodedViewer(val owner: Any, val capture: CaptureInputSession, val consume: (EncodedCaptureFrame) -> Unit) {
         val sequence = java.util.concurrent.atomic.AtomicLong(0)
+        val legacy = LegacyVideoDeliveryLease()
+        val awaitingLegacyIdr = java.util.concurrent.atomic.AtomicBoolean(false)
     }
     @Volatile private var encodedViewer: EncodedViewer? = null
 
@@ -406,6 +409,31 @@ class StreamingManagerImpl @Inject constructor(
             }
         }
 
+        val deliveryViewer = encodedViewer?.takeIf { it.capture.epoch == captureEpoch?.toString() }
+        val delivery = deliveryViewer?.legacy?.observe(monotonicMs())
+        if (delivery?.sendLegacy == false) {
+            qualityMonitor.recordLegacySuppression(nalData.size)
+            return // Encoded RTP already consumed this exact access unit above.
+        }
+        if (delivery?.requestKeyFrame == true) {
+            deliveryViewer.awaitingLegacyIdr.set(true)
+            // Never acquire the lifecycle lock on the codec callback thread:
+            // stop() may be waiting for that callback to finish.
+            (imageReaderHandler ?: Handler(context.mainLooper)).post {
+                if (streaming && captureSession === session) onViewerConnected()
+            }
+        }
+        if (deliveryViewer?.awaitingLegacyIdr?.get() == true && !metadata.isCodecConfig) {
+            if (!metadata.isKeyFrame) {
+                qualityMonitor.recordLegacySuppression(nalData.size)
+                return
+            }
+            // An already queued IDR can beat the recovery Handler. Configuration
+            // must still precede it, independently of callback scheduling.
+            replayLegacyHeaders()
+            deliveryViewer.awaitingLegacyIdr.set(false)
+        }
+
         // Capture these at encoder creation. A late callback must never stamp
         // an old access unit with a replacement capture's identity or clock.
         val packed = FramePackager.pack(nalData, metadata, startedMs, captureEpoch)
@@ -428,13 +456,19 @@ class StreamingManagerImpl @Inject constructor(
      */
     @Synchronized
     override fun onViewerConnected() {
+        encodedViewer?.legacy?.requireLegacy(monotonicMs())
         val dispatched = viewerKeyFrameCoordinator.request { requestKeyFrameNow() }
         if (!dispatched) {
             Timber.i("StreamingManagerImpl: viewer key-frame request deferred until encoder is ready")
         }
     }
 
-    private fun requestKeyFrameNow() {
+    @Synchronized
+    override fun requestDirectKeyFrame() {
+        viewerKeyFrameCoordinator.request { requestKeyFrameNow(sendLegacyHeaders = false) }
+    }
+
+    private fun replayLegacyHeaders() {
         val enc = encoder ?: return
         if (!streaming) return
         val fakeMeta = H264Encoder.FrameMetadata(
@@ -449,6 +483,12 @@ class StreamingManagerImpl @Inject constructor(
         enc.cachedPps?.let { pps ->
             sendFrameBinary(FramePackager.pack(pps, fakeMeta.copy(sizeBytes = pps.size), streamStartMs, encoderCaptureEpoch))
         }
+    }
+
+    private fun requestKeyFrameNow(sendLegacyHeaders: Boolean = true) {
+        val enc = encoder ?: return
+        if (!streaming) return
+        if (sendLegacyHeaders) replayLegacyHeaders()
         // Planar refresh may produce output immediately. Queue decoder config
         // before requesting that IDR so a fresh viewer cannot discard it.
         if (enc.requestKeyFrame()) {
@@ -495,12 +535,23 @@ class StreamingManagerImpl @Inject constructor(
 
     @Synchronized
     override fun detachEncodedViewer(owner: Any) {
-        if (encodedViewer?.owner === owner) encodedViewer = null
+        if (encodedViewer?.owner === owner) {
+            val wasSuppressed = encodedViewer?.legacy?.observe(monotonicMs())?.sendLegacy == false
+            encodedViewer = null
+            if (wasSuppressed) viewerKeyFrameCoordinator.request { requestKeyFrameNow() }
+        }
     }
 
     override fun isEncodedViewerCurrent(owner: Any, capture: CaptureInputSession): Boolean {
         val viewer = encodedViewer
         return streaming && viewer?.owner === owner && viewer.capture == capture
+    }
+
+    @Synchronized
+    override fun renewLegacyVideoDelivery(owner: Any, capture: CaptureInputSession, enabled: Boolean, ttlMs: Int): Boolean {
+        val viewer = encodedViewer ?: return false
+        if (!streaming || viewer.owner !== owner || viewer.capture != capture || getInputSession() != capture) return false
+        return viewer.legacy.renew(enabled, monotonicMs(), ttlMs)
     }
 
     private fun sendFrameBinary(payload: ByteArray): Boolean {

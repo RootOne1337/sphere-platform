@@ -26,6 +26,7 @@ from backend.websocket.stream_session_history import (
     StreamSessionHistory,
     utc_now,
 )
+from backend.websocket.video_delivery import select_delivery
 from backend.websocket.viewer_input import InvalidViewerInput, viewer_command
 
 logger = structlog.get_logger()
@@ -185,6 +186,7 @@ async def stream_viewer_ws(
     history = StreamSessionHistory(redis_client.redis, redis_client.redis_binary)
     history_enabled = await history.begin(org_id_str, device_id, session_id, user=user_id_str)
     last_browser_report = last_direct_report = -float("inf")
+    last_delivery_change = -float("inf")
     direct_reports = 0
     diagnostic_queue: asyncio.Queue[tuple[str, dict[str, Any], int]] = asyncio.Queue(maxsize=4)
 
@@ -343,6 +345,23 @@ async def stream_viewer_ws(
                         sample = history.validated_sample(data["sample"], probe=True)
                         if sample is not None:
                             enqueue_diagnostic("direct_diagnostics", sample, 3)
+                continue
+            if isinstance(data, dict) and data.get("type") == "video_delivery":
+                try:
+                    now = time.monotonic()
+                    if data.get("mode") != "legacy" and now - last_delivery_change < .25:
+                        continue
+                    last_delivery_change = now
+                    if data.get("mode") == "direct" and await current_control_permission() is None:
+                        break
+                    from backend.websocket.direct_probe_runtime import get_direct_probe_runtime
+                    mode = await select_delivery(data, runtime=get_direct_probe_runtime(), bridge=bridge,
+                        device=device_id, org=org_id_str, user=user_id_str, viewer_session=session_id)
+                    await ws.send_json({"type": "video_delivery_ack", "mode": mode})
+                except Exception:
+                    # This bounded media operation never retires input or forwards
+                    # browser JSON to Android. The default remains legacy delivery.
+                    await ws.send_json({"type": "video_delivery_error", "reason": "unavailable"})
                 continue
             if isinstance(data, dict) and isinstance(data.get("type"), str) and data["type"] in {"touch_probe", "touch_open", "touch_direct_open", "touch_event", "touch_close"}:
                 rejection: dict[str, Any] = {"type": "touch_error", "error": "input_rejected_or_unavailable"}

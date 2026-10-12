@@ -215,6 +215,51 @@ async def test_live_video_renews_exact_cross_worker_lease_and_delivers_native_tt
 
 
 @pytest.mark.asyncio
+async def test_video_handover_requires_exact_viewer_and_current_capture_owner(peers, monkeypatch):
+    from backend.core.config import settings
+    monkeypatch.setattr(settings, "DIRECT_TRANSPORT_LIVE_VIDEO_ENABLED", True)
+    monkeypatch.setattr(settings, "DIRECT_TRANSPORT_PROBE_DEVICE_IDS", frozenset({"device"}))
+    runtimes, clients, _, _, generation, viewer = peers
+    await DeviceStatusCache(clients[0]).set_status("device", DeviceLiveStatus(
+        device_id="device", status="online", ws_session_id=generation, agent_version_code=10260))
+    viewer.video = viewer.live = True
+    viewer.history_session = "1" * 16
+    await runtimes[1].open(viewer, VIDEO_SDP)
+    scope = dict(device="device", org="org", user="user", session=viewer.session, viewer_session=viewer.history_session)
+    assert await runtimes[0].video_peer(**scope)  # Separate native and viewer workers.
+    for key, value in [("org", "foreign"), ("user", "other"), ("viewer_session", "2" * 16), ("session", "a" * 32)]:
+        assert not await runtimes[0].video_peer(**(scope | {key: value}))
+    await DeviceStatusCache(clients[0]).set_status("device", DeviceLiveStatus(
+        device_id="device", status="online", ws_session_id=generation, agent_version_code=10259))
+    assert not await runtimes[0].video_peer(**scope)
+    await runtimes[1].retire(viewer)
+    assert not await runtimes[0].video_peer(**scope)
+
+
+@pytest.mark.asyncio
+async def test_native_handover_renewal_counts_legacy_demand_across_workers_and_fails_open(peers, monkeypatch):
+    from backend.websocket.channels import ChannelPattern
+    viewer = await live_offer(peers, monkeypatch)
+    runtimes, clients, _, agent, generation, _ = peers
+    await DeviceStatusCache(clients[0]).set_status("device", DeviceLiveStatus(
+        device_id="device", status="online", ws_session_id=generation, agent_version_code=10260))
+    await runtimes[1].renew(viewer, 1)
+    await eventually(lambda: agent.send_json.call_count == 2)
+    assert agent.send_json.call_args.args[0]["legacy_video_enabled"] is False
+    assert agent.send_json.call_args.args[0]["legacy_ttl_ms"] == 10000
+    subscriber = clients[0].pubsub()
+    try:
+        await subscriber.subscribe(ChannelPattern.video_stream("device"))
+        assert await runtimes[1].legacy_video_required("device") is True
+        await subscriber.unsubscribe(ChannelPattern.video_stream("device"))
+        assert await runtimes[1].legacy_video_required("device") is False
+        monkeypatch.setattr(runtimes[1].redis, "pubsub_numsub", AsyncMock(side_effect=TimeoutError))
+        assert await runtimes[1].legacy_video_required("device") is True
+    finally:
+        await subscriber.aclose()
+
+
+@pytest.mark.asyncio
 @pytest.mark.parametrize("sequence", [True, 0, 2, "1", 1000001])
 async def test_live_renewal_rejects_nonsequential_or_unbounded_messages(peers, monkeypatch, sequence):
     viewer = await live_offer(peers, monkeypatch)

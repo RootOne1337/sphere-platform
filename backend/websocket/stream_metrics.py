@@ -23,6 +23,8 @@ from backend.metrics import (
     stream_last_capture_age_ms,
     stream_last_encoded_age_ms,
     stream_last_render_age_ms,
+    stream_legacy_suppressed_encoded_bytes_session,
+    stream_legacy_suppressed_packets_session,
     stream_render_failures_session,
     stream_render_fps,
     stream_render_frames_session,
@@ -83,6 +85,8 @@ class StreamMetrics:
             ("last_render_age_ms", stream_last_render_age_ms),
             ("last_encoded_age_ms", stream_last_encoded_age_ms),
             ("idle_refresh_frames_total", stream_idle_refresh_frames_session),
+            ("legacy_suppressed_packets_total", stream_legacy_suppressed_packets_session),
+            ("legacy_suppressed_encoded_bytes_total", stream_legacy_suppressed_encoded_bytes_session),
         )
         for field, metric in optional_metric_fields:
             value = getattr(telemetry, field)

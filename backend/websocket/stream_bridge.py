@@ -30,6 +30,12 @@ class ViewerSession:
     queue: VideoStreamQueue
     socket: WebSocket
     task: asyncio.Task
+    legacy: bool = True
+    direct_until: float = 0
+    delivery_task: asyncio.Task | None = None
+
+
+DIRECT_DELIVERY_SECONDS = 10.0
 
 
 class VideoStreamBridge:
@@ -61,6 +67,7 @@ class VideoStreamBridge:
             viewers = self._viewers.setdefault(device_id, {})
             if session_id in viewers:
                 raise ValueError("Viewer session already registered")
+            had_legacy = any(viewer.legacy for viewer in viewers.values())
             old_stop = self._delayed_stop_tasks.pop(device_id, None)
             if old_stop:
                 old_stop.cancel()
@@ -70,8 +77,11 @@ class VideoStreamBridge:
             viewers[session_id] = ViewerSession(queue, viewer_ws, task)
             record_active_viewer_delta(device_id, 1)
             try:
-                if self.transport and len(viewers) == 1:
-                    await self.transport.subscribe(device_id)
+                if self.transport:
+                    if len(viewers) == 1:
+                        await self.transport.subscribe_presence(device_id)
+                    if not had_legacy:
+                        await self.transport.subscribe(device_id)
                 sent = await self.send_control(device_id, {
                     "type": "start_stream", "quality": "720p", "bitrate": 2_000_000,
                 })
@@ -93,6 +103,78 @@ class VideoStreamBridge:
         async with self._device_lock(device_id):
             await self._unregister_viewer_locked(device_id, session_id)
 
+    async def set_legacy_delivery(self, device_id: str, session_id: str, enabled: bool) -> bool:
+        """Only an authenticated, peer-bound route may suppress its own copy.
+
+        Absence of actual presented-frame renewals restores the legacy worker
+        subscription independently of the signaling peer's longer lease.
+        """
+        async with self._device_lock(device_id):
+            viewer = self._viewers.get(device_id, {}).get(session_id)
+            if self._closed or viewer is None:
+                return False
+            if enabled:
+                await self._resume_legacy_locked(device_id, viewer)
+                return True
+            if viewer.legacy:
+                viewer.legacy = False
+                await viewer.queue.handover()
+                try:
+                    if self.transport and not any(v.legacy for v in self._viewers[device_id].values()):
+                        await self.transport.unsubscribe(device_id)
+                except BaseException:
+                    # An uncertain transition never leaves a viewer marked direct.
+                    viewer.legacy = True
+                    viewer.direct_until = time.monotonic()
+                    self._ensure_delivery_deadline(device_id, session_id, viewer)
+                    raise
+            viewer.direct_until = time.monotonic() + DIRECT_DELIVERY_SECONDS
+            self._ensure_delivery_deadline(device_id, session_id, viewer)
+            return True
+
+    def _ensure_delivery_deadline(self, device_id: str, session_id: str, viewer: ViewerSession) -> None:
+        if viewer.delivery_task is None or viewer.delivery_task.done():
+            viewer.delivery_task = asyncio.create_task(self._delivery_deadline(device_id, session_id, viewer))
+
+    async def _resume_legacy_locked(self, device_id: str, viewer: ViewerSession) -> None:
+        recovering = not viewer.legacy or viewer.direct_until > 0
+        had_legacy = any(v.legacy for v in self._viewers.get(device_id, {}).values())
+        # The subscription ACK precedes headers/IDR. Another worker's direct
+        # viewer cannot suppress bytes needed by this newly resumed viewer.
+        if self.transport and (viewer.legacy or not had_legacy):
+            await self.transport.subscribe(device_id)
+        if not viewer.legacy:
+            await viewer.queue.handover()
+            viewer.legacy = True
+        if recovering and not await self.send_control(device_id, {"type": "viewer_connected"}):
+            raise ConnectionError("Legacy reference recovery unavailable")
+        if viewer.delivery_task and viewer.delivery_task is not asyncio.current_task():
+            viewer.delivery_task.cancel()
+        viewer.delivery_task = None
+        viewer.direct_until = 0
+
+    async def _delivery_deadline(self, device_id: str, session_id: str, viewer: ViewerSession) -> None:
+        try:
+            while True:
+                await asyncio.sleep(max(0, viewer.direct_until - time.monotonic()))
+                async with self._device_lock(device_id):
+                    if self._closed or self._viewers.get(device_id, {}).get(session_id) is not viewer or viewer.direct_until <= 0:
+                        return
+                    if time.monotonic() >= viewer.direct_until:
+                        await self._resume_legacy_locked(device_id, viewer)
+                        return
+        except asyncio.CancelledError:
+            pass
+        except (RedisError, TimeoutError, OSError):
+            # Native suppression independently expires; retry subscription after
+            # transport loss instead of pinning a silent viewer forever.
+            if not self._closed and self._viewers.get(device_id, {}).get(session_id) is viewer:
+                viewer.direct_until = time.monotonic() + 1
+                viewer.delivery_task = asyncio.create_task(self._delivery_deadline(device_id, session_id, viewer))
+        finally:
+            if viewer.delivery_task is asyncio.current_task():
+                viewer.delivery_task = None
+
     async def _unregister_viewer_locked(self, device_id: str, session_id: str | None) -> None:
         viewers = self._viewers.get(device_id)
         if not viewers or (session_id is not None and session_id not in viewers):
@@ -103,19 +185,23 @@ class VideoStreamBridge:
             record_active_viewer_delta(device_id, -1)
             if viewer.task is not asyncio.current_task():
                 viewer.task.cancel()
-        if viewers:
-            return
-        self._viewers.pop(device_id, None)
+            if viewer.delivery_task:
+                viewer.delivery_task.cancel()
         try:
             if self.transport:
-                await self.transport.unsubscribe(device_id)
+                if not any(v.legacy for v in viewers.values()):
+                    await self.transport.unsubscribe(device_id)
+                if not viewers:
+                    await self.transport.unsubscribe_presence(device_id)
         except (RedisError, TimeoutError):
             logger.warning("stream_unsubscribe_pending_recovery", device_id=device_id)
         finally:
-            old_stop = self._delayed_stop_tasks.pop(device_id, None)
-            if old_stop:
-                old_stop.cancel()
-            self._delayed_stop_tasks[device_id] = asyncio.create_task(self._delayed_stop(device_id))
+            if not viewers:
+                self._viewers.pop(device_id, None)
+                old_stop = self._delayed_stop_tasks.pop(device_id, None)
+                if old_stop:
+                    old_stop.cancel()
+                self._delayed_stop_tasks[device_id] = asyncio.create_task(self._delayed_stop(device_id))
 
     async def _delayed_stop(self, device_id: str) -> None:
         try:
@@ -186,7 +272,8 @@ class VideoStreamBridge:
         # Each viewer owns its backpressure; frame bytes are shared, not copied.
         frame = VideoFrame(frame_data, device_id)
         for viewer in tuple(self._viewers.get(device_id, {}).values()):
-            await viewer.queue.put(frame)
+            if viewer.legacy:
+                await viewer.queue.put(frame)
 
     def _schedule_keyframe(self, device_id: str) -> None:
         if self._closed or device_id in self._keyframe_tasks:
@@ -213,6 +300,9 @@ class VideoStreamBridge:
         try:
             while True:
                 frame = await queue.wait()
+                viewer = self._viewers.get(device_id, {}).get(session_id)
+                if not viewer or not viewer.legacy:
+                    continue
                 async with asyncio.timeout(5):
                     await viewer_ws.send_bytes(frame.data)
                 record_viewer_send(device_id, len(frame.data))
@@ -259,7 +349,8 @@ class VideoStreamBridge:
     async def close(self) -> None:
         self._closed = True
         devices = list(self._viewers)
-        viewer_tasks = [v.task for viewers in self._viewers.values() for v in viewers.values()]
+        viewer_tasks = [task for viewers in self._viewers.values() for v in viewers.values()
+                        for task in (v.task, v.delivery_task) if task is not None]
         for device in devices:
             await self.unregister_viewer(device)
         if self.transport:

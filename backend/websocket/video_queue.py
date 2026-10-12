@@ -117,6 +117,19 @@ class VideoStreamQueue:
         async with self._lock:
             self._invalidate_chain_sync("reference_gap")
 
+    async def handover(self) -> None:
+        """Retire old transport bytes without treating deliberate handover as loss.
+
+        A resumed legacy viewer still starts at fresh headers and an IDR. Its
+        caller owns that recovery request; an active RTC chain needs no reset.
+        """
+        async with self._lock:
+            self._queue.clear()
+            self._bytes = 0
+            self._ready.clear()
+            self._awaiting_idr = True
+            self._last_recovery_request = None
+
     def _evict_stale_sync(self) -> None:
         """Expire pictures and their dependants; keep codec configuration."""
         now = time.monotonic()
