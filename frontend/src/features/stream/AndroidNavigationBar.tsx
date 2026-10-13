@@ -36,7 +36,7 @@ interface CommandSession {
   observation: { requestId: string; input: StreamInput; notify: (event: AcknowledgedControl) => void } | null;
 }
 
-export function AndroidNavigationBar({ deviceId, available, isAvailable, prepareCommand, extended = false, getFrameDimensions, onControlCommand }: {
+export function AndroidNavigationBar({ deviceId, available, isAvailable, prepareCommand, extended = false, compact = false, getFrameDimensions, onControlCommand }: {
   deviceId: string;
   available: boolean;
   /** Recheck transport at the action boundary, even before React rerenders. */
@@ -44,6 +44,7 @@ export function AndroidNavigationBar({ deviceId, available, isAvailable, prepare
   /** Pause continuous input and wait for native release before a discrete command. Never retry unknown input. */
   prepareCommand?: () => ((confirmed: boolean) => void) | Promise<((confirmed: boolean) => void) | null> | null;
   extended?: boolean;
+  compact?: boolean;
   getFrameDimensions?: () => StreamFrameDimensions | null;
   onControlCommand?: (event: AcknowledgedControl) => void;
 }) {
@@ -136,14 +137,19 @@ export function AndroidNavigationBar({ deviceId, available, isAvailable, prepare
 
   const pending = receipt.state === 'sending';
   return <section aria-label="Навигация Android" aria-busy={pending}
-    className="shrink-0 space-y-2 border-t border-border bg-card p-3 text-foreground">
-    <div className="flex flex-wrap items-center justify-between gap-2">
+    className={compact ? 'dark relative flex shrink-0 items-center gap-1 rounded-2xl border border-white/20 bg-zinc-950/75 p-1.5 text-white shadow-lg backdrop-blur'
+      : 'shrink-0 space-y-2 border-t border-border bg-card p-3 text-foreground'}>
+    <div className={compact ? 'sr-only' : 'flex flex-wrap items-center justify-between gap-2'}>
       <span className="text-xs font-medium">Навигация Android</span>
       <span className="text-[11px] text-muted-foreground">Через APK · требуется root-доступ</span>
     </div>
-    {extended && <details className="rounded-lg border border-border p-3">
-      <summary className="flex cursor-pointer items-center gap-2 text-sm font-medium"><Keyboard className="h-4 w-4" aria-hidden />Клавиатура и текст</summary>
-      <div className="mt-3 space-y-3">
+    {extended && <details className={compact ? 'order-last' : 'rounded-lg border border-border p-3'}>
+      <summary title="Клавиатура и текст" className={compact
+        ? 'flex h-11 w-11 cursor-pointer list-none items-center justify-center rounded-xl hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white [&::-webkit-details-marker]:hidden'
+        : 'flex cursor-pointer items-center gap-2 text-sm font-medium'}><Keyboard className="h-4 w-4" aria-hidden /><span className={compact ? 'sr-only' : undefined}>Клавиатура и текст</span></summary>
+      <div className={compact
+        ? 'absolute bottom-[calc(100%+0.75rem)] right-0 max-h-[min(60dvh,28rem)] w-[min(24rem,calc(100vw-2rem))] space-y-3 overflow-y-auto rounded-xl border border-white/20 bg-zinc-950 p-3 text-foreground shadow-xl'
+        : 'mt-3 space-y-3'}>
         <p className="text-xs leading-relaxed text-muted-foreground">Выберите поле на экране Android. Копировать/вырезать/вставить работают с выделением и буфером Android; буфер браузера отдельный. Колесо над видео выполняет короткий свайп; Ctrl + колесо оставляет масштабирование браузера.</p>
         <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">{EDIT_KEYS.map(key => <Button key={key.code} type="button" variant="outline" size="sm" disabled={!available || pending} onClick={() => { void sendKey(key); }}>{key.label}</Button>)}</div>
         <label className="block space-y-2 text-xs font-medium"><span>Текст для Android</span><textarea aria-label="Текст для Android" value={draft} disabled={!available || pending} maxLength={1024} onChange={event => setDraft(event.target.value)} rows={2} className="block w-full resize-y rounded-lg border border-input bg-background p-3 text-sm disabled:opacity-50" /></label>
@@ -152,17 +158,21 @@ export function AndroidNavigationBar({ deviceId, available, isAvailable, prepare
         <Button type="button" disabled={!available || pending || !textCommand(draft)} onClick={() => { const command = textCommand(draft); if (command) void sendCommand(command, 'Ввод текста', { type: 'type_text', text: draft }, true); }}>Ввести текст</Button>
       </div>
     </details>}
-    <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+    <div className={compact ? 'grid grid-cols-4 gap-1' : 'grid grid-cols-2 gap-2 sm:grid-cols-4'}>
       {KEYS.map((key) => <Button key={key.code} type="button" variant="outline"
+        title={key.label} className={compact ? 'h-11 w-11 shrink-0 border-0 bg-transparent p-0 text-white hover:bg-white/10 hover:text-white' : undefined}
         disabled={!available || pending} onClick={() => { void sendKey(key); }}>
         {pending && receipt.label === key.label
-          ? <Loader2 className="mr-2 h-4 w-4 animate-spin motion-reduce:animate-none" aria-hidden="true" />
-          : <key.icon className="mr-2 h-4 w-4" aria-hidden="true" />}
-        {key.label}
+          ? <Loader2 className={`${compact ? '' : 'mr-2 '}h-4 w-4 animate-spin motion-reduce:animate-none`} aria-hidden="true" />
+          : <key.icon className={`${compact ? '' : 'mr-2 '}h-4 w-4`} aria-hidden="true" />}
+        <span className={compact ? 'sr-only' : undefined}>{key.label}</span>
       </Button>)}
     </div>
     <p role={receipt.state === 'unknown' || receipt.state === 'not_sent' ? 'alert' : 'status'} aria-live="polite"
-      className={`break-words text-xs leading-5 ${receipt.state === 'unknown' || receipt.state === 'not_sent' ? 'text-destructive' : 'text-muted-foreground'}`}>
+      className={compact ? ['sending', 'unknown', 'not_sent'].includes(receipt.state)
+        ? 'absolute bottom-[calc(100%+0.5rem)] left-0 max-w-full rounded-lg bg-zinc-950/95 p-2 text-xs leading-5 text-white shadow-lg'
+        : 'sr-only'
+        : `break-words text-xs leading-5 ${receipt.state === 'unknown' || receipt.state === 'not_sent' ? 'text-destructive' : 'text-muted-foreground'}`}>
       {receipt.state === 'sending' ? `«${receipt.label}»: ожидаем ответ Android…`
         : receipt.state === 'confirmed' ? `«${receipt.label}»: выполнение подтверждено · ответ команды ${receipt.elapsedMs} мс. Это не задержка появления кадра.`
         : receipt.state === 'unknown' ? `«${receipt.label}»: результат не подтверждён. ${receipt.message} Автоповтора нет; проверьте экран перед новым нажатием.`

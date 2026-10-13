@@ -1,5 +1,6 @@
 'use client';
 import { useEffect, useRef, useCallback, useState } from 'react';
+import { Maximize2, Minimize2 } from 'lucide-react';
 import { H264Decoder } from '@/lib/h264-decoder';
 import type { StreamDecoderStats } from '@/lib/h264-decoder';
 import type { CaptureFrameBinding } from '@/lib/h264-decoder';
@@ -26,6 +27,8 @@ import { StreamQualityControl } from '@/src/features/stream/StreamQualityControl
 import type { StreamQualitySnapshot } from '@/src/features/stream/streamQuality';
 import { StreamStatusLine } from '@/src/features/stream/StreamStatusLine';
 import { deferLegacyInput } from '@/src/features/stream/directInputRouting';
+import { useStreamFullscreen } from '@/src/features/stream/useStreamFullscreen';
+import { StreamControlsTray } from '@/src/features/stream/StreamControlsTray';
 
 interface DeviceStreamProps {
   deviceId: string;
@@ -145,6 +148,8 @@ export function DeviceStream({
   onInspectionInvalidated,
   onInspectionControlReady,
 }: DeviceStreamProps) {
+  const fullscreen = useStreamFullscreen();
+  const surfaceFit = fullscreen.active ? 'contain' : fit;
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const wsRef = useRef<WebSocket | null>(null);
   const diagnosticReporter = useRef<StreamSessionReporter | null>(null);
@@ -986,8 +991,8 @@ export function DeviceStream({
       let x: number;
       let y: number;
 
-      if (fit === 'contain' || fit === 'cover') {
-        const scale = fit === 'contain'
+      if (surfaceFit === 'contain' || surfaceFit === 'cover') {
+        const scale = surfaceFit === 'contain'
           ? Math.min(rect.width / canvas.width, rect.height / canvas.height)
           : Math.max(rect.width / canvas.width, rect.height / canvas.height);
         const renderedWidth = canvas.width * scale;
@@ -1010,7 +1015,7 @@ export function DeviceStream({
         y: Math.max(0, Math.min(canvas.height - 1, Math.round(y))),
       };
     },
-    [fit],
+    [surfaceFit],
   );
 
   // ── pointer down — begin drag / tap ─────────────────────────────────────
@@ -1330,7 +1335,10 @@ export function DeviceStream({
   }, [canSaveFrame, deviceId]);
 
   return (
-    <div className={fit ? 'flex h-full w-full min-h-0 min-w-0 flex-col' : 'min-w-0'}>
+    <div ref={fullscreen.ref} data-stream-fullscreen={fullscreen.active}
+      className={fullscreen.active ? 'relative flex h-[100dvh] w-full min-h-0 min-w-0 flex-col overflow-hidden bg-black'
+        : fit ? 'flex h-full w-full min-h-0 min-w-0 flex-col' : 'min-w-0'}>
+    {fullscreen.error && <p role="status" className="shrink-0 bg-card px-3 py-2 text-xs text-foreground">{fullscreen.error}</p>}
     {readOnly && enableNavigation && <p role="status" className="border-b border-border bg-muted px-3 py-2 text-xs text-muted-foreground">Только просмотр · {readOnlyReason ?? 'роль не разрешает клики, жесты и навигацию Android.'}</p>}
     <StreamStatusLine direct={directVideo.active} directInput={directVideo.active && controlTransport === 'direct_webrtc'}
       live={connection === 'live' && !streamError}
@@ -1351,7 +1359,7 @@ export function DeviceStream({
     {inputError && <div role="status" className="flex shrink-0 items-start justify-between gap-3 border-b border-amber-300 bg-amber-50 px-3 py-2 text-xs text-amber-950 dark:border-amber-800 dark:bg-amber-950 dark:text-amber-100">
       <p>{inputError}</p><button type="button" onClick={() => { unknownPointerNoticeRef.current = false; setInputError(null); }} aria-label="Скрыть сообщение об управлении" className="shrink-0 rounded px-2 py-1 text-inherit hover:bg-amber-200 dark:hover:bg-amber-900 focus-visible:outline focus-visible:outline-2 focus-visible:outline-current">Скрыть</button>
     </div>}
-    <div className={fit ? `relative w-full min-h-0 min-w-0 flex-1${enableNavigation ? '' : ' h-full'}` : 'relative'}>
+    <div className={surfaceFit ? `relative w-full min-h-0 min-w-0 flex-1${enableNavigation ? '' : ' h-full'}` : 'relative'}>
     <canvas
       ref={canvasRef}
       onPointerDown={handlePointerDown}
@@ -1366,22 +1374,22 @@ export function DeviceStream({
       style={{
         display: 'block',
         width: '100%',
-        height: fit ? '100%' : 'auto',
-        objectFit: fit ?? 'contain',
+        height: surfaceFit ? '100%' : 'auto',
+        objectFit: surfaceFit ?? 'contain',
       }}
     />
     {currentDiagnosticSession && <LiveDirectVideo key={currentDiagnosticSession} deviceId={deviceId} session={currentDiagnosticSession}
       eligible={!!serverCaptureRef.current && !recordingMode && !inspection && taskHandoffId === undefined}
-      fit={fit} expectedCapture={() => diagnosticReporter.current?.sessionId === currentDiagnosticSession ? serverCaptureRef.current : null}
+      fit={surfaceFit} expectedCapture={() => diagnosticReporter.current?.sessionId === currentDiagnosticSession ? serverCaptureRef.current : null}
       receiverProfileLevelId={() => decoderRef.current?.lastRenderedProfileLevelId ?? null}
       onFrame={(video, binding) => renderDirectFrame(video, binding, currentDiagnosticSession)}
       onControlChannel={readOnly ? undefined : endpoint => observeDirectControl(endpoint, currentDiagnosticSession)}
       onObservation={value => observeDirectVideo(value, currentDiagnosticSession)}
       onDeliveryChange={peer => selectVideoDelivery(peer, currentDiagnosticSession)} />}
-    {inspection?.bounds && lastFrameDimensionsRef.current && <svg aria-label="Границы выбранного элемента" className="pointer-events-none absolute inset-0 h-full w-full" viewBox={`0 0 ${lastFrameDimensionsRef.current.width} ${lastFrameDimensionsRef.current.height}`} preserveAspectRatio={fit === 'fill' ? 'none' : fit === 'cover' ? 'xMidYMid slice' : 'xMidYMid meet'}>
+    {inspection?.bounds && lastFrameDimensionsRef.current && <svg aria-label="Границы выбранного элемента" className="pointer-events-none absolute inset-0 h-full w-full" viewBox={`0 0 ${lastFrameDimensionsRef.current.width} ${lastFrameDimensionsRef.current.height}`} preserveAspectRatio={surfaceFit === 'fill' ? 'none' : surfaceFit === 'cover' ? 'xMidYMid slice' : 'xMidYMid meet'}>
       <rect x={inspection.bounds.left} y={inspection.bounds.top} width={inspection.bounds.right - inspection.bounds.left} height={inspection.bounds.bottom - inspection.bounds.top} fill="rgba(20,184,166,0.15)" stroke="#14b8a6" strokeWidth="2" vectorEffect="non-scaling-stroke" />
     </svg>}
-    {enableScreenshot && <div className="absolute bottom-2 left-2 z-20 max-w-[calc(100%-1rem)]">
+    {enableScreenshot && <div className={`absolute left-2 z-20 max-w-[calc(100%-1rem)] ${fullscreen.active ? 'top-14' : 'bottom-2'}`}>
       <button type="button" disabled={!canSaveFrame} onClick={saveFrame} title="Декодированный кадр H.264: PNG не восстанавливает потерянные при кодировании пиксели. Для эталонов используйте исходный PNG с Android." className="rounded-lg border border-white/20 bg-black/80 px-3 py-2 text-xs text-white disabled:cursor-not-allowed disabled:opacity-50">Кадр видео (PNG) · не оригинал</button>
       {screenshotError && <p role="alert" className="mt-1 rounded bg-black/90 p-2 text-xs text-red-200">{screenshotError}</p>}
     </div>}
@@ -1424,10 +1432,15 @@ export function DeviceStream({
         </div>
       )
     )}
-    {enableDiagnostics && (
-      <div className="absolute right-2 top-2 z-20 flex flex-wrap justify-end gap-1.5">
-        <StreamQualityControl deviceId={deviceId} readOnly={readOnly} />
-        <button
+    <div className="absolute right-2 top-2 z-20 flex max-w-[calc(100%-1rem)] flex-wrap justify-end gap-1.5">
+      <button type="button" aria-label={fullscreen.active ? 'Выйти из полноэкранного режима' : 'На весь экран'}
+        title={fullscreen.available ? fullscreen.active ? 'Выйти из полноэкранного режима' : 'На весь экран' : 'Полноэкранный режим недоступен в этом браузере'}
+        aria-pressed={fullscreen.active} disabled={!fullscreen.available} onClick={() => void fullscreen.toggle()}
+        className="flex h-11 w-11 items-center justify-center rounded-lg border border-white/20 bg-black/75 text-white backdrop-blur hover:bg-zinc-800 disabled:opacity-40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white">
+        {fullscreen.active ? <Minimize2 className="h-4 w-4" aria-hidden /> : <Maximize2 className="h-4 w-4" aria-hidden />}
+      </button>
+      {enableDiagnostics && <><StreamQualityControl deviceId={deviceId} readOnly={readOnly} />
+      <button
           type="button"
           aria-expanded={diagnosticsOpen}
           aria-controls={`stream-diagnostics-${deviceId}`}
@@ -1435,11 +1448,11 @@ export function DeviceStream({
           className="rounded border border-white/20 bg-black/80 px-2 py-1 text-xs text-white"
         >
           {diagnosticsOpen ? 'Скрыть диагностику' : 'Диагностика'}
-        </button>
-      </div>
-    )}
+        </button></>}
     </div>
-    {enableNavigation && <AndroidNavigationBar key={deviceId} deviceId={deviceId} extended
+    </div>
+    {enableNavigation && <StreamControlsTray viewport={fullscreen.ref} overlay={fullscreen.active}>
+      <AndroidNavigationBar key={deviceId} deviceId={deviceId} extended compact={fullscreen.active}
       available={canNavigate && (!continuousBusy || continuousState === 'ready') && wsRef.current?.readyState === WebSocket.OPEN}
       prepareCommand={prepareDiscreteInput}
       isAvailable={() => canNavigate && !continuousFaultRef.current && (!continuousRef.current || ['ready', 'closed', 'destroyed'].includes(continuousRef.current.state)) && wsRef.current?.readyState === WebSocket.OPEN}
@@ -1448,7 +1461,7 @@ export function DeviceStream({
         const canvas = canvasRef.current;
         return canvas && canNavigate && renderedSocketRef.current === wsRef.current
           ? { width: canvas.width, height: canvas.height } : null;
-      }} />}
+      }} /></StreamControlsTray>}
     {enableDiagnostics && currentDiagnosticSession && directVideo.admissionKnown && !directVideo.admitted && <AutomaticStreamDiagnostic deviceId={deviceId} session={currentDiagnosticSession}
       eligible={currentFrameOwned && !recordingMode && !inspection && taskHandoffId === undefined}
       onBusyChange={setAutomaticDiagnosticBusy}
