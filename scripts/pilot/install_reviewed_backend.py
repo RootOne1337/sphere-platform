@@ -31,6 +31,7 @@ from scripts.pilot.install_reviewed_web import (  # noqa: E402
 )
 from scripts.pilot.resource_guard import admitted_findings, collect, evaluate  # noqa: E402
 from scripts.pilot.reviewed_backend_artifact import admit  # noqa: E402
+from scripts.pilot.reviewed_ci import check_artifact_attempt  # noqa: E402
 from scripts.pilot.reviewed_image_archive import bounded_json, require  # noqa: E402
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -191,12 +192,12 @@ def validate_delta(old: dict[str, Any], new: dict[str, Any], tag: str,
 
 def check_ci(receipt: dict[str, Any]) -> None:
     run = json.loads(command(["gh", "api", f"repos/RootOne1337/sphere-platform/actions/runs/{receipt['runId']}"]))
-    require(run.get("head_sha") == receipt["sourceRevision"] and run.get("run_attempt") == receipt["runAttempt"],
-            "GitHub source/run/attempt mismatch")
+    require(run.get("head_sha") == receipt["sourceRevision"], "GitHub source/run mismatch")
     require(run.get("path") == ".github/workflows/ci-backend.yml" and run.get("name") == "CI — Backend",
             "Unexpected backend workflow")
     require(run.get("status") == "completed" and run.get("conclusion") == "success", "Complete backend CI not admitted")
     require(run.get("head_repository", {}).get("full_name") == "RootOne1337/sphere-platform", "Unexpected head repository")
+    check_artifact_attempt(run, receipt, command)
 
 
 def source_boundary(current: str, source: str, receipt: dict[str, Any]) -> list[str]:

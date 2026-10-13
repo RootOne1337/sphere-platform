@@ -12,6 +12,7 @@ let mockDirectEndpoint: DirectControlEndpoint | null = null;
 let mockDirectReceipt: ((message: unknown) => void) | null = null;
 let mockDirectObserve: ((endpoint: DirectControlEndpoint | null) => void) | null = null;
 let mockVideoObserve: ((observation: object) => void) | null = null;
+let mockInputAdmission: { admissionKnown: boolean; admitted: boolean; sharedInput?: boolean } | null = null;
 
 const TOUCH_EPOCH = '00112233-4455-6677-8899-aabbccddeeff';
 
@@ -32,7 +33,7 @@ jest.mock('@/src/features/stream/LiveDirectVideo', () => ({ LiveDirectVideo: ({ 
   mockDirectObserve = onControlChannel ?? null; mockVideoObserve = onObservation;
   React.useEffect(() => {
     observation.current({ admitted: !!mockDirectEndpoint, admissionKnown: true, active: !!mockDirectEndpoint,
-      frames: 0, lastFrameAt: null, attempts: 0, result: null });
+      frames: 0, lastFrameAt: null, attempts: 0, result: null, ...mockInputAdmission });
     if (mockDirectEndpoint) control.current?.(mockDirectEndpoint);
   }, [session]);
   return null;
@@ -86,6 +87,7 @@ beforeEach(() => {
   mockCapture = null;
   mockAutomaticEligible = false;
   mockDirectEndpoint = null; mockDirectReceipt = null; mockDirectObserve = null; mockVideoObserve = null;
+  mockInputAdmission = null;
   Object.defineProperty(globalThis, 'TextEncoder', { configurable: true, value: TextEncoder });
   jest.mocked(api.post).mockReset().mockResolvedValue({ data: { output: '' } });
   MockSocket.instances = [];
@@ -155,6 +157,32 @@ function directEndpoint(): DirectControlEndpoint {
     capture: () => ({ captureEpoch: TOUCH_EPOCH, width: 1280, height: 720 }),
     listen: listener => { mockDirectReceipt = listener; return () => { mockDirectReceipt = null; }; } };
 }
+
+it.each([false, true])('does not open exclusive input while shared admission is known=%s and the peer is connecting', known => {
+  mockCapture = { captureEpoch: TOUCH_EPOCH, frameWidth: 1280, frameHeight: 720 };
+  mockInputAdmission = { admissionKnown: known, admitted: known, sharedInput: known };
+  const view = readyWheel();
+  const receive = (message: object) => act(() => view.socket.onmessage?.({ data: JSON.stringify(message) }));
+  const sent = () => view.socket.send.mock.calls.map(([raw]) => JSON.parse(raw as string));
+  receive({ type: 'stream_session', schema_version: 1, history_enabled: true,
+    session_id: '1'.repeat(16), report_interval_seconds: 10 });
+  // A capability request can beat the REST admission. Its late reply grants no owner.
+  receive({ type: 'touch_capability', capture_epoch: TOUCH_EPOCH, frame_width: 1280, frame_height: 720 });
+  expect(sent().filter(row => ['touch_open', 'touch_direct_open'].includes(row.type))).toHaveLength(0);
+  view.down(1); view.up(1); view.wheel();
+  expect(view.commands()).toHaveLength(0);
+  expect(view.container.querySelector('[data-control-state]')).toHaveAttribute('data-control-state', 'probing');
+  const endpoint = { ...directEndpoint(), sharedInput: true };
+  act(() => {
+    mockDirectObserve?.(endpoint);
+    mockVideoObserve?.({ admitted: true, admissionKnown: true, sharedInput: true, active: true,
+      frames: 1, lastFrameAt: Date.now(), attempts: 1, result: null });
+  });
+  receive({ type: 'touch_capability', capture_epoch: TOUCH_EPOCH, frame_width: 1280, frame_height: 720 });
+  expect(sent().filter(row => ['touch_open', 'touch_direct_open'].includes(row.type))).toHaveLength(0);
+  expect((endpoint.send as jest.Mock).mock.calls.map(([raw]) => JSON.parse(raw).type)).toContain('touch_open');
+  view.unmount();
+});
 
 it('canvas sends every live touch through its bound direct peer and revokes safely on peer loss', () => {
   const view = readyContinuous();

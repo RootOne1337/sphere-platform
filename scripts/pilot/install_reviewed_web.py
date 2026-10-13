@@ -84,12 +84,14 @@ def preserved(before: dict[str, Any], after: dict[str, Any]) -> None:
 
 
 def check_ci(receipt: dict[str, Any]) -> None:
+    from scripts.pilot.reviewed_ci import check_artifact_attempt
+
     run = json.loads(command(["gh", "api", f"repos/RootOne1337/sphere-platform/actions/runs/{receipt['runId']}"]))
-    require(run.get("head_sha") == receipt["sourceRevision"] and run.get("run_attempt") == receipt["runAttempt"],
-            "GitHub run/source/attempt mismatch")
+    require(run.get("head_sha") == receipt["sourceRevision"], "GitHub run/source mismatch")
     require(run.get("path") == ".github/workflows/ci-frontend.yml" and run.get("name") == "CI — Frontend",
             "Unexpected workflow identity")
     require(run.get("status") == "completed" and run.get("conclusion") == "success", "CI run not admitted")
+    check_artifact_attempt(run, receipt, command)
 
 
 def catalog_hash() -> str:

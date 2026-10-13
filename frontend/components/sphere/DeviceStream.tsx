@@ -25,6 +25,7 @@ import { NativeInputDiagnostic, type NativeInputTelemetry } from './NativeInputD
 import { StreamQualityControl } from '@/src/features/stream/StreamQualityControl';
 import type { StreamQualitySnapshot } from '@/src/features/stream/streamQuality';
 import { StreamStatusLine } from '@/src/features/stream/StreamStatusLine';
+import { deferLegacyInput } from '@/src/features/stream/directInputRouting';
 
 interface DeviceStreamProps {
   deviceId: string;
@@ -242,6 +243,8 @@ export function DeviceStream({
   telemetryControl.current = { state: continuousState, failure: continuousFailureCode, rtt: continuousReceipt?.ms ?? null, attempts: idleRecoveryCount, transport: controlTransport, fence: pointerFailureSnapshot, fenceAtMs: pointerFailureSnapshot ? pointerFailure?.atMs ?? null : null };
   const currentDiagnosticSession = diagnosticSession?.deviceId === deviceId && diagnosticSession.accessToken === accessToken
     && diagnosticSession.socket === wsRef.current && diagnosticSession.socket.readyState === WebSocket.OPEN ? diagnosticSession.id : null;
+  const waitingForDirectInput = !recordingMode && !inspection && !readOnly && taskHandoffId === undefined
+    && deferLegacyInput(!!currentDiagnosticSession, directVideo, directControlRef.current);
   const currentFrameOwned = hasRenderedFrame && !streamError
     && wsRef.current?.readyState === WebSocket.OPEN
     && renderedSocketRef.current === wsRef.current;
@@ -256,10 +259,10 @@ export function DeviceStream({
   // Capability negotiation has no controller yet. Report its actual phase,
   // rather than leaving the last controller's state as a misleading idle.
   telemetryControl.current.state = continuousRef.current?.state ?? continuousState;
-  continuousAllowedRef.current = canInteract && !continuousRecording && continuousRequestedRef.current;
+  continuousAllowedRef.current = canInteract && !waitingForDirectInput && !continuousRecording && continuousRequestedRef.current;
   // Age is not a disconnect: an idle ImageReader can retain its last picture.
   // A new socket/decoder still needs its own first frame before accepting input.
-  const canNavigate = surfaceActive && taskHandoffId === undefined && !continuousFault && !idleRecovering && !inspection && !readOnly && hasRenderedFrame && !streamError
+  const canNavigate = surfaceActive && !waitingForDirectInput && taskHandoffId === undefined && !continuousFault && !idleRecovering && !inspection && !readOnly && hasRenderedFrame && !streamError
     && (connection === 'live' || connection === 'stale')
     && renderedSocketRef.current === wsRef.current;
   idleRecoveryAllowedRef.current = enableNavigation && surfaceActive && currentFrameOwned
@@ -645,6 +648,16 @@ export function DeviceStream({
                 return;
               }
               if (msg.type === 'touch_capability' && continuousRequestedRef.current && !continuousRef.current) {
+                if (deferLegacyInput(!!reporter.sessionId, directVideoRef.current, directControlRef.current)) {
+                  // Capability is not ownership. A late reply must not open the
+                  // exclusive v1 pipe while another shared peer already owns it.
+                  clearTimeout(probeTimer);
+                  continuousRequestedRef.current = false;
+                  automaticProbeRef.current = null;
+                  setContinuousState('probing');
+                  setContinuousReason('Согласуем прямое совместное управление…');
+                  return;
+                }
                 if (!continuousAllowedRef.current || discreteBusyRef.current || dragRef.current) {
                   // A capability probe has no owner. Never change input paths midway through a legacy drag.
                   continuousRequestedRef.current = false;
@@ -1008,6 +1021,7 @@ export function DeviceStream({
       return;
     }
     if (!canInteract || continuousRecording || !wsRef.current || wsRef.current.readyState !== WebSocket.OPEN) return;
+    if (deferLegacyInput(!!diagnosticReporter.current?.sessionId, directVideoRef.current, directControlRef.current)) return;
     continuousDisposeRef.current?.();
     continuousDisposeRef.current = null;
     continuousRef.current = null;
@@ -1045,6 +1059,11 @@ export function DeviceStream({
       return;
     }
     const socket = wsRef.current;
+    if (enableNavigation && canInteract && waitingForDirectInput && !continuousRef.current) {
+      setContinuousState('probing');
+      setContinuousReason('Согласуем прямое совместное управление…');
+      return;
+    }
     if (!enableNavigation || !canInteract || idleRecoveringRef.current || continuousFaultRef.current || discreteBusyRef.current || !socket
       || automaticProbeRef.current === socket || !renderedCaptureRef.current
       || continuousRef.current && !['closed', 'destroyed'].includes(continuousRef.current.state)) return;
@@ -1052,7 +1071,8 @@ export function DeviceStream({
     beginContinuous();
     // A single capability attempt per owned video/mode; never replay a failed gesture.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [canInteract, enableNavigation, inspection, readOnly, continuousRecording, taskHandoffId, discreteBusy, continuousState, directControlVersion]);
+  }, [canInteract, enableNavigation, inspection, readOnly, continuousRecording, taskHandoffId, discreteBusy, continuousState, directControlVersion,
+    waitingForDirectInput]);
 
   useEffect(() => {
     if (!idleRecovering || !idleRecoveryAllowedRef.current) return;
@@ -1169,7 +1189,7 @@ export function DeviceStream({
     (e: React.PointerEvent<HTMLCanvasElement>) => {
       // Inspection only selects a frame; it never injects Android input. Recording
       // may use discrete input again after this controller's known native release.
-      if (!inspection && (discreteBusyRef.current || continuousFaultRef.current
+      if (!inspection && (waitingForDirectInput || discreteBusyRef.current || continuousFaultRef.current
         || continuousSupportedRef.current && !continuousRecording
         || continuousRef.current && !['closed', 'destroyed'].includes(continuousRef.current.state))) return;
       if (!(canInteract || canSelectElement) || wsRef.current?.readyState !== WebSocket.OPEN
@@ -1187,7 +1207,7 @@ export function DeviceStream({
       };
       e.currentTarget.setPointerCapture(e.pointerId);
     },
-    [canInteract, canSelectElement, inspection, continuousRecording, toCanvasCoords],
+    [canInteract, canSelectElement, inspection, continuousRecording, waitingForDirectInput, toCanvasCoords],
   );
 
   // ── pointer up — tap or swipe ────────────────────────────────────────────
@@ -1236,7 +1256,7 @@ export function DeviceStream({
 
   const handleWheel = useCallback((e: WheelEvent) => {
     const continuous = continuousRef.current;
-    if (discreteBusyRef.current || continuousFaultRef.current || continuousSupportedRef.current && !continuousRecording && continuous?.state !== 'ready'
+    if (waitingForDirectInput || discreteBusyRef.current || continuousFaultRef.current || continuousSupportedRef.current && !continuousRecording && continuous?.state !== 'ready'
       || continuous && !['ready', 'closed', 'destroyed'].includes(continuous.state)) return;
     // Wheel control belongs to the selected-device view. Never intercept
     // browser zoom, inspection, a retained old socket frame or a held drag.
@@ -1279,7 +1299,7 @@ export function DeviceStream({
       x2: horizontal ? to : point.x, y2: horizontal ? point.y : to, duration_ms: 180 }));
     onControlSent?.({ deviceId, at, dimensions: { width: canvas.width, height: canvas.height }, command: { type: 'swipe', x1: horizontal ? from : point.x, y1: horizontal ? point.y : from,
       x2: horizontal ? to : point.x, y2: horizontal ? point.y : to, duration_ms: 180 } });
-  }, [canInteract, enableNavigation, continuousRecording, toCanvasCoords, onControlSent, deviceId]);
+  }, [canInteract, enableNavigation, continuousRecording, waitingForDirectInput, toCanvasCoords, onControlSent, deviceId]);
   useEffect(() => {
     const canvas = canvasRef.current;
     // React delegates wheel events passively in modern browsers. A native

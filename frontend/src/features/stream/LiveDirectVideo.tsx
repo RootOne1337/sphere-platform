@@ -13,6 +13,7 @@ import { needsHigherH264ReceiveLevel } from './h264ReceiverOffer';
 
 export interface LiveVideoObservation {
   admitted: boolean; admissionKnown: boolean; active: boolean; frames: number; lastFrameAt: number | null;
+  sharedInput?: boolean;
   attempts: number; result: DirectProbeResult | null;
 }
 const empty = (): LiveVideoObservation => ({ admitted: false, admissionKnown: false, active: false, frames: 0,
@@ -74,6 +75,7 @@ export function LiveDirectVideo({ deviceId, session, eligible, fit, expectedCapt
     const observation = empty();
     observation.admitted = admission.data?.admitted === true;
     observation.admissionKnown = !!admission.data || admission.isError;
+    observation.sharedInput = admission.data?.sharedInput === true;
     callbacks.current.onObservation(observation);
     if (!observation.admitted || !token || !eligible || !visible || !video.current) return;
     const element = video.current;
@@ -251,7 +253,8 @@ export function LiveDirectVideo({ deviceId, session, eligible, fit, expectedCapt
       cancel?.(); clearRenderer();
       releaseControl?.(null);
       setActive(false);
-      callbacks.current.onObservation({ ...empty(), admitted: observation.admitted, admissionKnown: observation.admissionKnown });
+      callbacks.current.onObservation({ ...empty(), admitted: observation.admitted, admissionKnown: observation.admissionKnown,
+        sharedInput: observation.sharedInput });
     };
   }, [deviceId, session, token, eligible, visible, admission.data, admission.isError, controlEnabled]);
   return <video ref={video} muted autoPlay playsInline aria-hidden="true" data-direct-video-active={active ? 'true' : 'false'}
