@@ -15,15 +15,22 @@ class CaptureInputGeometryTest {
     @Test fun `540p canary retains native pixels and density while default remains legacy`() {
         val metrics = Resources.getSystem().displayMetrics
         val oldWidth = metrics.widthPixels; val oldHeight = metrics.heightPixels; val oldDensity = metrics.densityDpi
+        val display = (RuntimeEnvironment.getApplication().getSystemService(android.content.Context.DISPLAY_SERVICE) as android.hardware.display.DisplayManager)
+            .getDisplay(android.view.Display.DEFAULT_DISPLAY)
+        val shadow = org.robolectric.Shadows.shadowOf(display)
+        val real = android.util.DisplayMetrics().also { display.getRealMetrics(it) }
         try {
-            metrics.widthPixels = 960; metrics.heightPixels = 540; metrics.densityDpi = 160
+            shadow.setRealWidth(960); shadow.setRealHeight(540); shadow.setDensityDpi(160)
+            // Stale application Resources must not override the captured display.
+            metrics.widthPixels = 320; metrics.heightPixels = 470; metrics.densityDpi = 240
             val context = RuntimeEnvironment.getApplication()
             assertEquals(VirtualDisplayManager.DisplayConfig(960, 540, 160), VirtualDisplayManager.createConfig(context, true))
             assertEquals(VirtualDisplayManager.DisplayConfig(1280, 720), VirtualDisplayManager.createConfig(context))
-            metrics.widthPixels = 540; metrics.heightPixels = 960
+            shadow.setRealWidth(540); shadow.setRealHeight(960)
             assertEquals(VirtualDisplayManager.DisplayConfig(540, 960, 160), VirtualDisplayManager.createConfig(context, true))
         } finally {
             metrics.widthPixels = oldWidth; metrics.heightPixels = oldHeight; metrics.densityDpi = oldDensity
+            shadow.setRealWidth(real.widthPixels); shadow.setRealHeight(real.heightPixels); shadow.setDensityDpi(real.densityDpi)
         }
     }
     @Test fun `native gesture is identity and legacy gesture scales all points once`() {

@@ -530,7 +530,9 @@ class StreamingCaptureLifecycleTest {
     }
 
     private fun planarFixture() {
-        android.content.res.Resources.getSystem().displayMetrics.apply { widthPixels=4; heightPixels=4 }
+        val display = (RuntimeEnvironment.getApplication().getSystemService(android.content.Context.DISPLAY_SERVICE) as android.hardware.display.DisplayManager)
+            .getDisplay(android.view.Display.DEFAULT_DISPLAY)
+        org.robolectric.Shadows.shadowOf(display).apply { setRealWidth(4); setRealHeight(4) }
         manager.planarInputEnabled=true
         every { anyConstructed<H264Encoder>().startPlanar() } just Runs
         every { anyConstructed<H264Encoder>().submitPlanarFrame(any(),any(),any(),any()) } returns true
