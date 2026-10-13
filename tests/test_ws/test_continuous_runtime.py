@@ -103,6 +103,84 @@ async def open_view(live):
 
 
 @pytest.mark.asyncio
+async def test_direct_release_can_be_seen_before_server_release_without_rejecting_fresh_probe(live):
+    runtime, viewer, agent = await open_view(live)
+    runtimes, _, _, _, session = live
+    old = viewer.lease
+    probes_before = sum(c.args[0]['type'] == 'continuous_input_probe' for c in agent.send_json.call_args_list)
+    # The browser already saw RELEASE3 over RTC, while the authenticated copy
+    # is still travelling to this worker. Probing grants no new input authority.
+    for _ in range(100):
+        await runtime.handle(viewer, {'type': 'touch_probe'})
+    assert viewer.lease == old and not viewer.closing
+    assert sum(c.args[0]['type'] == 'continuous_input_probe' for c in agent.send_json.call_args_list) == probes_before
+    await runtimes[0].agent_message(viewer.device, session, {
+        'type': 'continuous_input_status', 'session_id': viewer.session, 'owner': old.owner,
+        'capture_epoch': EPOCH, 'sequence': 0, 'status': 3, 'stage': 'release',
+        'origin': 'injector', 'device_uptime_ms': 120,
+    })
+    await eventually(lambda: viewer.lease is None and viewer.offer is not None)
+    assert sum(c.args[0]['type'] == 'continuous_input_probe' for c in agent.send_json.call_args_list) == probes_before + 1
+    messages = [c.args[0] for c in viewer.ws.send_json.call_args_list]
+    assert [m['type'] for m in messages][-2:] == ['continuous_input_status', 'touch_capability']
+    assert messages[-2]['status'] == 3
+    assert all(c.args[0]['type'] not in {'continuous_input_event', 'continuous_input_close'} for c in agent.send_json.call_args_list)
+    await runtime.handle(viewer, dict(type='touch_open', capture_epoch=EPOCH, frame_width=960, frame_height=540))
+    assert viewer.lease is not None and viewer.lease.owner != old.owner
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize('ending', ['unknown_release', 'expired_probe', 'unregistered', 'explicit_close'])
+async def test_deferred_probe_never_substitutes_for_current_confirmed_native_release(live, monkeypatch, ending):
+    runtime, viewer, agent = await open_view(live)
+    runtimes, _, _, _, session = live
+    old = viewer.lease
+    previous_offer = viewer.offer
+    original_now = await runtime.now()
+    clock = AsyncMock(return_value=original_now)
+    monkeypatch.setattr(runtime, 'now', clock)
+    await runtime.handle(viewer, {'type': 'touch_probe'})
+    probes_before = sum(c.args[0]['type'] == 'continuous_input_probe' for c in agent.send_json.call_args_list)
+    if ending == 'expired_probe':
+        clock.return_value = original_now + 5001
+    if ending == 'unregistered':
+        await runtime.unregister(viewer)
+    elif ending == 'explicit_close':
+        await runtime.handle(viewer, {'type': 'touch_close'})
+        await eventually(lambda: viewer.lease is None)
+    else:
+        await runtimes[0].agent_message(viewer.device, session, {
+            'type': 'continuous_input_status', 'session_id': viewer.session, 'owner': old.owner,
+            'capture_epoch': EPOCH, 'sequence': 0, 'status': 6 if ending == 'unknown_release' else 3,
+            'stage': 'release', 'origin': 'injector', 'device_uptime_ms': 120,
+        })
+        await eventually(lambda: any(c.args[0].get('stage') == 'release' for c in viewer.ws.send_json.call_args_list))
+    await asyncio.sleep(.03)
+    assert sum(c.args[0]['type'] == 'continuous_input_probe' for c in agent.send_json.call_args_list) == probes_before
+    if ending == 'unknown_release':
+        assert viewer.lease == old and viewer.offer == previous_offer
+    else:
+        assert viewer.offer is None
+
+
+@pytest.mark.asyncio
+async def test_foreign_release_cannot_flush_deferred_probe_or_release_current_authority(live):
+    runtime, viewer, agent = await open_view(live)
+    runtimes, _, _, _, session = live
+    old = viewer.lease
+    await runtime.handle(viewer, {'type': 'touch_probe'})
+    probes_before = sum(c.args[0]['type'] == 'continuous_input_probe' for c in agent.send_json.call_args_list)
+    await runtimes[0].agent_message(viewer.device, session, {
+        'type': 'continuous_input_status', 'session_id': viewer.session, 'owner': 'foreign_owner_01',
+        'capture_epoch': EPOCH, 'sequence': 0, 'status': 3, 'stage': 'release',
+        'origin': 'injector', 'device_uptime_ms': 120,
+    })
+    await asyncio.sleep(.03)
+    assert viewer.lease == old and not viewer.closing
+    assert sum(c.args[0]['type'] == 'continuous_input_probe' for c in agent.send_json.call_args_list) == probes_before
+
+
+@pytest.mark.asyncio
 async def test_native_pre_owner_refusal_clears_local_slot_and_allows_fresh_probe(live):
     runtimes, viewer, agent, _, session = live
     runtime = runtimes[1]

@@ -47,6 +47,7 @@ class TouchViewer:
     lease: InputLease | None = None
     closing: bool = False
     direct_session: str | None = None
+    deferred_probe: tuple[InputLease, int] | None = None
 
 
 class ViewerTransportUnavailable(Exception):
@@ -138,8 +139,22 @@ class ContinuousRuntime:
         if not self.available or self.viewers.get(viewer.session) is not viewer:
             raise InputLeaseUnavailable()
         if data == {"type": "touch_probe"}:
-            if viewer.lease is not None:
-                raise InvalidContinuousInput()
+            lease = viewer.lease
+            if lease is not None:
+                # RTC RELEASE can reach the browser before its authenticated
+                # server copy. Remember one bounded capability request, never
+                # input or replacement authority. Only exact native cleanup
+                # may complete this owner and dispatch that fresh probe.
+                expires = await self.now() + OFFER_MS
+                if self.viewers.get(viewer.session) is not viewer:
+                    raise ViewerTransportUnavailable()
+                if viewer.lease == lease:
+                    if viewer.deferred_probe is None:
+                        viewer.deferred_probe = (lease, expires)
+                    return
+                if viewer.lease is not None:
+                    return  # An obsolete request cannot attach to a newer owner.
+            viewer.deferred_probe = None
             await self.probe(viewer)
             return
         message = viewer_continuous(data)
@@ -167,6 +182,7 @@ class ContinuousRuntime:
                 raise ContinuousAdmissionRejected("controller_busy")
             viewer.lease = lease
             viewer.direct_session = direct
+            viewer.deferred_probe = None
             await self.send(viewer, {"type": "touch_session", "session_id": viewer.session,
                 "owner": lease.owner, "capture_epoch": capture.epoch,
                 "frame_width": capture.width, "frame_height": capture.height})
@@ -233,6 +249,7 @@ class ContinuousRuntime:
             await self.send(viewer, error)
 
     async def retire(self, viewer: TouchViewer, *, cancel_unstarted: bool = False) -> None:
+        viewer.deferred_probe = None
         viewer.closing = viewer.lease is not None
         viewer.offer = None
         lease = viewer.lease
@@ -327,7 +344,9 @@ class ContinuousRuntime:
                             return
                     if viewer.lease != identity:
                         return
-                    if refused or (receipt["stage"] == "release" and receipt["status"] == 3):
+                    completed = refused or (receipt["stage"] == "release" and receipt["status"] == 3)
+                    pending = viewer.deferred_probe
+                    if completed:
                         # Complete this exact local owner before another socket callback
                         # can open a replacement. The browser still receives the native
                         # refusal; no ready/release/executed receipt is synthesized.
@@ -336,6 +355,12 @@ class ContinuousRuntime:
                         viewer.closing = False
                         viewer.direct_session = None
                     await self.send(viewer, receipt)
+                    if completed and pending is not None and viewer.deferred_probe is pending:
+                        viewer.deferred_probe = None
+                        now = await self.now()
+                        if (pending[0] == identity and now < pending[1]
+                                and self.viewers.get(viewer.session) is viewer and viewer.lease is None):
+                            await self.probe(viewer)
                 return
         prefix = f"{self.store.namespace}:agent:"
         if not channel.startswith(prefix):

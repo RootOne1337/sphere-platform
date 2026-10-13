@@ -9,12 +9,33 @@ from __future__ import annotations
 import argparse
 import json
 import time
+from datetime import datetime, timezone
 from pathlib import Path
 from types import SimpleNamespace
 from urllib.parse import quote
 
 from scripts.pilot import local_ci as ci
 from scripts.pilot.atomic_json import write_json
+
+
+def volume_exception_authorized(config: dict, now: datetime | None = None) -> bool:
+    """An operator's temporary volume warning exception is never a global bypass."""
+    exception = config.get("volumeException")
+    if exception is None:
+        return False
+    if not isinstance(exception, dict) or exception.get("authorized") is not True:
+        raise ci.Refused("invalid_volume_exception")
+    try:
+        expiry = datetime.fromisoformat(exception["expiresAtUtc"])
+    except (KeyError, TypeError, ValueError):
+        raise ci.Refused("invalid_volume_exception_expiry") from None
+    current = now or datetime.now(timezone.utc)
+    if expiry.tzinfo is None or expiry.utcoffset().total_seconds() != 0:
+        raise ci.Refused("utc_volume_exception_expiry_required")
+    remaining = (expiry - current).total_seconds()
+    if remaining <= 0 or remaining > 24 * 3600:
+        raise ci.Refused("volume_exception_expired_or_outside_budget")
+    return True
 
 
 def next_commit(root: Path, trusted_ref: str) -> str | None:
@@ -43,6 +64,7 @@ def tick(config: dict, state: dict) -> dict:
                            profiles=config["profiles"], python=config["python"],
                            node=config["node"], java_home=config["javaHome"],
                            android_home=config["androidHome"], publish=True,
+                           allow_degraded_volume=volume_exception_authorized(config),
                            report_url=f"https://github.com/{ci.REPOSITORY}/commit/{sha}")
     receipt = ci.run(args)
     return {"schemaVersion": 1, "observedAt": ci.utc(), "queueState": "idle",
