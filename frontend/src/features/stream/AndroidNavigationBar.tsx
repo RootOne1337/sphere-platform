@@ -148,7 +148,7 @@ export function AndroidNavigationBar({ deviceId, available, isAvailable, prepare
         ? 'flex h-11 w-11 cursor-pointer list-none items-center justify-center rounded-xl hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white [&::-webkit-details-marker]:hidden'
         : 'flex cursor-pointer items-center gap-2 text-sm font-medium'}><Keyboard className="h-4 w-4" aria-hidden /><span className={compact ? 'sr-only' : undefined}>Клавиатура и текст</span></summary>
       <div className={compact
-        ? 'absolute bottom-[calc(100%+0.75rem)] right-0 max-h-[min(60dvh,28rem)] w-[min(24rem,calc(100vw-2rem))] space-y-3 overflow-y-auto rounded-xl border border-white/20 bg-zinc-950 p-3 text-foreground shadow-xl'
+        ? 'fixed bottom-[calc(max(0.5rem,env(safe-area-inset-bottom))+4.5rem)] left-1/2 max-h-[min(60dvh,28rem)] w-[min(24rem,calc(100vw-2rem))] -translate-x-1/2 space-y-3 overflow-y-auto rounded-xl border border-white/20 bg-zinc-950 p-3 text-foreground shadow-xl'
         : 'mt-3 space-y-3'}>
         <p className="text-xs leading-relaxed text-muted-foreground">Выберите поле на экране Android. Копировать/вырезать/вставить работают с выделением и буфером Android; буфер браузера отдельный. Колесо над видео выполняет короткий свайп; Ctrl + колесо оставляет масштабирование браузера.</p>
         <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">{EDIT_KEYS.map(key => <Button key={key.code} type="button" variant="outline" size="sm" disabled={!available || pending} onClick={() => { void sendKey(key); }}>{key.label}</Button>)}</div>
