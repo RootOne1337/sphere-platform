@@ -34,6 +34,25 @@ test('shared OPEN, touch and close use only the same direct media peer', () => {
   expect(f.server.send).not.toHaveBeenCalled();
   expect((f.direct.send as jest.Mock).mock.calls.map(c => JSON.parse(c[0]).type)).toEqual(['touch_open', 'touch_event', 'touch_close']);
 });
+test('a hidden idle shared participant can rejoin a replaced peer without transferring old authority', () => {
+  const f = fixture(); f.receipt('ready');
+  f.pointer.retire('surface_hidden');
+  expect(f.pointer.canRejoinIdleSharedPeer).toBe(true);
+  expect(f.pointer.down(1, { x: 10, y: 20 })).toBe(false);
+  expect(f.server.send).not.toHaveBeenCalled();
+});
+test.each(['held', 'unacknowledged_up', 'pending_key', 'native_failure', 'unknown_cleanup'])('%s cannot use idle peer rejoin', mode => {
+  const f = fixture(true,true); f.receipt('ready');
+  if (mode === 'held' || mode === 'unacknowledged_up') {
+    f.pointer.down(1,{x:10,y:20}); f.receipt('applied',1,0,1);
+    if (mode === 'unacknowledged_up') f.pointer.up(1,{x:10,y:20});
+  }
+  if (mode === 'pending_key') void f.pointer.keyTap(3);
+  if (mode === 'native_failure') f.receipt('unknown',1,0,1);
+  if (mode === 'unknown_cleanup') f.receipt('unknown',0,3,0);
+  f.pointer.retire('surface_hidden');
+  expect(f.pointer.canRejoinIdleSharedPeer).toBe(false);
+});
 
 test('native Home uses the same participant and only its exact key receipt confirms completion', async () => {
   const f = fixture(true, true); f.receipt('ready');

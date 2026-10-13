@@ -329,6 +329,21 @@ export function DeviceStream({
       // No failed DOWN/MOVE/UP is sent again through another transport.
       continuousRef.current?.retire('server_runtime_retry');
     }
+    const retiredRoute = continuousRouteRef.current;
+    if (endpoint?.sharedInput && endpoint.readyState === 1 && retiredRoute?.sharedInput
+      && endpoint.session !== retiredRoute.session && continuousRef.current?.canRejoinIdleSharedPeer) {
+      // Hiding the page can close the old data channel before its native CLOSE
+      // receipt returns. This retired participant had no uncertain action. A new
+      // authenticated v2 peer must obtain its own native READY; nothing is replayed
+      // or transferred, and APK still denies admission during unknown cleanup.
+      continuousDisposeRef.current?.();
+      continuousDisposeRef.current = null; continuousRef.current = null; continuousRouteRef.current = null;
+      continuousRequestedRef.current = false; automaticProbeRef.current = null;
+      freshViewerAfterReleaseRef.current = false;
+      idleRecoveringRef.current = false; setIdleRecovering(false);
+      continuousFaultRef.current = false; setContinuousFault(false);
+      setContinuousState('idle'); setContinuousReason(null); setContinuousFailureCode(null); setContinuousReceipt(null);
+    }
     setDirectControlVersion(version => version + 1);
   }, []);
   const selectVideoDelivery = useCallback((peerSession: string | null, session: string) => {
@@ -1372,7 +1387,8 @@ export function DeviceStream({
         : fit ? 'flex h-full w-full min-h-0 min-w-0 flex-col' : 'min-w-0'}>
     {fullscreen.error && <p role="status" className="shrink-0 bg-card px-3 py-2 text-xs text-foreground">{fullscreen.error}</p>}
     {readOnly && enableNavigation && <p role="status" className="border-b border-border bg-muted px-3 py-2 text-xs text-muted-foreground">Только просмотр · {readOnlyReason ?? 'роль не разрешает клики, жесты и навигацию Android.'}</p>}
-    <StreamStatusLine direct={directVideo.active} directInput={directVideo.active && controlTransport === 'direct_webrtc'}
+    <StreamStatusLine direct={directVideo.active} directInput={directVideo.active && controlTransport === 'direct_webrtc'
+      && continuousState === 'ready' && !continuousFault && !idleRecovering}
       live={connection === 'live' && !streamError}
       rtt={directVideo.active ? directVideo.result?.videoStats?.networkRttMs ?? null : serverRttMs}
       width={directVideo.active ? directVideo.result?.videoStats?.width ?? lastFrameDimensionsRef.current?.width ?? null : lastFrameDimensionsRef.current?.width ?? null}
@@ -1382,7 +1398,8 @@ export function DeviceStream({
     {enableNavigation && ((!inspection && !readOnly) || (inspection && continuousFault)) && <div data-control-state={continuousState} data-control-failure={continuousFailureCode ?? undefined} className="flex shrink-0 flex-wrap items-center gap-2 border-b border-border bg-card px-3 py-2 text-foreground">
       <span className={`h-2 w-2 shrink-0 rounded-full ${continuousState === 'ready' ? 'bg-emerald-500' : 'bg-muted-foreground'}`} aria-hidden />
       <span role="status" className="min-w-0 flex-[1_1_16rem] text-xs leading-relaxed">{continuousReason ?? (discreteBusy ? 'Клавиатура и навигация · ожидаем подтверждение Android' : continuousRecording ? 'Запись использует отдельные завершённые действия' : continuousState === 'ready'
-        ? 'Непрерывное управление · зажмите и ведите мышь' : continuousState === 'opening' ? 'Подключаем управление Android…' : continuousState === 'probing' ? 'Определяем возможности APK…' : continuousState === 'closed' ? 'Касание Android освобождено' : 'Управление Android')}
+        ? 'Непрерывное управление · зажмите и ведите мышь' : continuousState === 'opening' ? 'Подключаем управление Android…' : continuousState === 'probing' ? 'Определяем возможности APK…' : continuousState === 'closed' ? 'Касание Android освобождено'
+        : continuousState === 'fenced' ? 'Управление приостановлено · ожидаем новую готовность Android' : 'Управление Android')}
       {continuousReceipt && continuousState === 'ready' && <span title={`Круговое время подтверждения Android №${continuousReceipt.sequence} ${controlTransport === 'direct_webrtc' ? 'напрямую по WebRTC DataChannel' : 'через серверный WebSocket'}, включая обработку на устройстве. Это не задержка изображения и не чистый сетевой RTT.`}>
         {` · ${continuousReceipt.action === 4 ? 'ACK связи' : 'ACK действия'} ${controlTransport === 'direct_webrtc' ? 'напрямую с APK' : 'через сервер'}: ${continuousReceipt.ms} мс`}
       </span>}</span>
@@ -1516,9 +1533,14 @@ export function DeviceStream({
               <button type="button" onClick={() => setDiagnosticsOpen(false)} className="shrink-0 rounded-md border border-border px-2 py-1 font-sans hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">Закрыть диагностику</button>
             </div>
             <div>Управление Android: {continuousState}{continuousFailureCode ? ` · причина: ${continuousFailureCode}` : ''}</div>
-            <div>{directVideo.active ? controlTransport === 'direct_webrtc'
-              ? 'Основное видео и непрерывные касания идут напрямую с APK по WebRTC. Сервер согласует право управления; кнопки Android и текст пока используют сервер.'
-              : 'Основное видео идёт напрямую с APK по WebRTC. Управление пока использует серверный WebSocket.'
+            <div>{directVideo.active ? continuousState !== 'ready' || continuousFault || idleRecovering
+              ? readOnly ? 'Видео идёт напрямую с APK. Этот сеанс открыт только для просмотра.'
+                : 'Видео идёт напрямую с APK. Управление сейчас не готово; connected у видеоканала не подтверждает готовность ввода.'
+              : controlTransport === 'direct_webrtc'
+              ? continuousRef.current?.supportsNativeKeys
+                ? 'Видео, непрерывные касания и системные клавиши идут напрямую с APK по WebRTC. Сервер согласует право управления; отдельная панель текста пока использует сервер.'
+                : 'Основное видео и непрерывные касания идут напрямую с APK по WebRTC. Сервер согласует право управления; кнопки Android и текст пока используют сервер.'
+              : 'Основное видео идёт напрямую с APK по WebRTC. Готовое управление использует серверный WebSocket.'
               : directVideo.admitted ? 'Видео идёт через сервер; прямой канал подключается или автоматически восстанавливается. Управление использует серверный WebSocket.'
               : 'Видео и управление идут через сервер (WebSocket). Основной прямой канал для этого APK пока не включён.'}</div>
             {directVideo.admitted && <div className="mt-2 border-t border-border pt-2">

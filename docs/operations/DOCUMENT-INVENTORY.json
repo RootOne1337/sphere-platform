@@ -5,7 +5,7 @@
   "countsByRole": {
     "ADR": 6,
     "CURRENT_ENTRYPOINT": 8,
-    "DATED_EVIDENCE": 298,
+    "DATED_EVIDENCE": 301,
     "DESIGN_SPECIFICATION": 76,
     "OPERATING_GUIDE": 64,
     "PROJECT_POLICY": 7,
@@ -1321,11 +1321,23 @@
       "role": "DATED_EVIDENCE"
     },
     {
+      "file": "docs/audits/2026-10-14/DIRECT-AUDIO-PLAN.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
       "file": "docs/audits/2026-10-14/DIRECT-INPUT-UX-REQUIREMENTS.md",
       "role": "DATED_EVIDENCE"
     },
     {
       "file": "docs/audits/2026-10-14/DIRECT-KEYBOARD-PLAN.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
+      "file": "docs/audits/2026-10-14/PH010-HIDDEN-TAB-INCIDENT.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
+      "file": "docs/audits/2026-10-14/PH030-INPUT-INCIDENT.md",
       "role": "DATED_EVIDENCE"
     },
     {

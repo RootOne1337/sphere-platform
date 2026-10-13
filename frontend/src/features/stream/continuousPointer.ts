@@ -91,6 +91,7 @@ export class ContinuousPointer {
   private nativeFailure = false;
   private releaseFailed = false;
   private nativeStarted = false;
+  private idleSharedSurfaceLoss = false;
   private lastReceipt: { at: number; roundTripMs: number } | null = null;
   private readonly now: () => number;
 
@@ -100,6 +101,8 @@ export class ContinuousPointer {
   get hasPendingMove() { return this.move !== null; }
   get pointerHeld() { return this.held !== null; }
   get supportsNativeKeys() { return this.options.sharedInput === true && this.options.nativeKeys === true; }
+  /** A replaced shared peer can rejoin only when retirement had no uncertain action. */
+  get canRejoinIdleSharedPeer() { return this.stateValue === 'fenced' && this.idleSharedSurfaceLoss; }
   /** Idle keepalives have no touch outcome. The old owner still needs native RELEASE before replacement. */
   get pointerOutcomeConfirmed() {
     return !this.held && !this.move && !this.terminal && this.pending.every(entry => entry.idleHeartbeat);
@@ -431,6 +434,9 @@ export class ContinuousPointer {
     if (this.stateValue === 'idle' || this.stateValue === 'closed' || this.stateValue === 'destroyed'
       || this.stateValue === 'closing' || this.stateValue === 'fenced') return;
     const cancelUnstarted = this.stateValue === 'opening' && !this.nativeStarted;
+    this.idleSharedSurfaceLoss = this.options.sharedInput === true && this.stateValue === 'ready'
+      && ['surface_hidden', 'surface_blur', 'surface_control_lost', 'capture_or_socket_lost', 'server_runtime_retry'].includes(reason)
+      && this.pointerOutcomeConfirmed && this.keyReceipts.size === 0 && !this.nativeFailure && !this.releaseFailed;
     this.idleReceiptLoss = reason === 'native_receipt_timeout' && this.held === null
       && this.terminal === null && this.pending.length > 0 && this.pending.every(p => p.action === 4);
     this.nativeFailure = reason === 'native_input_rejected_or_unknown'

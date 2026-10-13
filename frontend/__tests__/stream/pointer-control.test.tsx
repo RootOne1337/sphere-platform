@@ -172,6 +172,48 @@ function directEndpoint(): DirectControlEndpoint {
     listen: listener => { mockDirectReceipt = listener; return () => { mockDirectReceipt = null; }; } };
 }
 
+it('rejoins a fresh shared peer after hiding an idle tab loses the old CLOSE receipt', () => {
+  mockCapture = { captureEpoch: TOUCH_EPOCH, frameWidth: 1280, frameHeight: 720 };
+  const oldEndpoint = { ...directEndpoint(), sharedInput: true };
+  mockInputAdmission = { admissionKnown: true, admitted: true, sharedInput: true };
+  const view = readyWheel();
+  const receive = (message: object) => act(() => view.socket.onmessage?.({data:JSON.stringify(message)}));
+  receive({type:'stream_session',schema_version:1,history_enabled:true,session_id:'1'.repeat(16),report_interval_seconds:10});
+  act(() => {
+    mockDirectObserve?.(oldEndpoint);
+    mockVideoObserve?.({admitted:true,admissionKnown:true,sharedInput:true,active:true,
+      frames:1,lastFrameAt:Date.now(),attempts:1,result:null});
+  });
+  const bind = (endpoint: DirectControlEndpoint) => {
+    act(() => mockDirectReceipt?.({type:'touch_session',session_id:endpoint.session,owner:'b'.repeat(32),
+      capture_epoch:TOUCH_EPOCH,frame_width:1280,frame_height:720}));
+    act(() => mockDirectReceipt?.({type:'shared_input_status',session_id:endpoint.session,owner:'b'.repeat(32),
+      capture_epoch:TOUCH_EPOCH,sequence:0,gesture:0,action:4,outcome:'ready',device_uptime_ms:100}));
+  };
+  receive({type:'touch_capability',capture_epoch:TOUCH_EPOCH,frame_width:1280,frame_height:720}); bind(oldEndpoint);
+  expect(view.container.querySelector('[data-control-state]')).toHaveAttribute('data-control-state','ready');
+  const hidden = jest.spyOn(document,'hidden','get').mockReturnValue(true);
+  act(() => document.dispatchEvent(new Event('visibilitychange')));
+  expect(view.container.querySelector('[data-control-state]')).toHaveAttribute('data-control-state','fenced');
+  expect(view.container.querySelector('[aria-label="Сводка видеопотока"]')).toHaveTextContent('Видео напрямую');
+  expect(view.container.querySelector('[aria-label="Сводка видеопотока"]')).not.toHaveTextContent('видео и касания');
+  Object.defineProperty(oldEndpoint,'readyState',{value:3});
+  act(() => mockDirectObserve?.(null));
+  hidden.mockReturnValue(false);
+  act(() => document.dispatchEvent(new Event('visibilitychange')));
+  const nextEndpoint = {...directEndpoint(),session:'c'.repeat(32),sharedInput:true};
+  act(() => mockDirectObserve?.(nextEndpoint));
+  receive({type:'touch_capability',capture_epoch:TOUCH_EPOCH,frame_width:1280,frame_height:720});
+  expect(view.container.querySelector('[data-control-state]')).toHaveAttribute('data-control-state','opening');
+  expect((nextEndpoint.send as jest.Mock).mock.calls.map(([raw])=>JSON.parse(raw).type)).toEqual(['touch_open']);
+  bind(nextEndpoint);
+  expect(view.container.querySelector('[data-control-state]')).toHaveAttribute('data-control-state','ready');
+  expect(view.container.querySelector('[aria-label="Сводка видеопотока"]')).toHaveTextContent('Прямой канал · видео и касания');
+  expect(MockSocket.instances).toHaveLength(1);
+  expect(view.commands()).toEqual([]);
+  view.unmount();
+});
+
 it.each([false, true])('does not open exclusive input while shared admission is known=%s and the peer is connecting', known => {
   mockCapture = { captureEpoch: TOUCH_EPOCH, frameWidth: 1280, frameHeight: 720 };
   mockInputAdmission = { admissionKnown: known, admitted: known, sharedInput: known };
