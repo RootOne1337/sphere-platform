@@ -401,6 +401,22 @@ class BackendInstallerTests(unittest.TestCase):
                 installer.schema_heads({})
             command.assert_not_called()
 
+    def test_source_quality_and_viewer_counts_keep_database_and_dependency_changes_outside_scope(self):
+        paths = ["backend/api/v1/streaming/router.py", "backend/schemas/stream_quality.py",
+                 "backend/schemas/devices.py", "backend/services/device_viewers.py"]
+        content = b"canonical dependency or action contract"
+        receipt = {key: hashlib.sha256(content).hexdigest()
+                   for key in ("requirementsSha256", "actionContractSha256")}
+        with patch.object(installer, "command", return_value="\n".join(paths)), \
+                patch.object(installer.subprocess, "run", return_value=subprocess.CompletedProcess([], 0, content)):
+            self.assertEqual(installer.source_boundary(CURRENT, SOURCE, receipt), paths)
+            with self.assertRaises(ValueError):
+                installer.source_boundary(CURRENT, SOURCE, receipt | {"requirementsSha256": "0" * 64})
+        for extra in ("backend/models/device.py", "backend/requirements.txt", "alembic/versions/unreviewed.py"):
+            with self.subTest(extra=extra), patch.object(installer, "command", return_value="\n".join(paths + [extra])):
+                with self.assertRaises(ValueError):
+                    installer.source_boundary(CURRENT, SOURCE, receipt)
+
     def test_schema_read_is_single_head_and_never_migration(self):
         postgres = {"Config": {"Labels": {"com.docker.compose.project": installer.PROJECT,
             "com.docker.compose.service": "postgres"}, "Env": ["POSTGRES_DB=example"]}}

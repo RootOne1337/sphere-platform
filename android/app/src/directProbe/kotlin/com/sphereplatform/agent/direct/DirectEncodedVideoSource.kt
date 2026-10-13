@@ -117,7 +117,7 @@ internal class DirectEncodedVideoSource(
         val size = frame.data.size.toLong() + if (frame.keyFrame) (frame.sps?.size ?: 0) + (frame.pps?.size ?: 0) else 0
         val release = if (size <= Int.MAX_VALUE) budget.reserve(size.toInt()) else null
         if (release == null) { rejected.incrementAndGet(); order.invalidate(); requestSync(); return }
-        val bytes = EncodedVideoAccessUnit.prepare(frame)
+        val bytes = EncodedVideoAccessUnit.prepare(frame, profileLevelId)
         if (bytes == null) { invalid.incrementAndGet(); release(); order.invalidate(); requestSync(); return }
         val buffer = CodedBuffer(frame, bytes, release)
         val videoFrame = VideoFrame(buffer, 0, frame.timestampNs)

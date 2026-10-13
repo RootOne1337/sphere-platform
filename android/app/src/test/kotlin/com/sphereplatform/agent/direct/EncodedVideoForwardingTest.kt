@@ -17,6 +17,15 @@ class EncodedVideoForwardingTest {
         val delta = frame(false, nal(0x41, 0x80))
         assertSame(delta.data, EncodedVideoAccessUnit.prepare(delta))
     }
+    @Test fun `first native higher level IDR fits only its capability admitted source ceiling`() {
+        val idr = frame().copy(sps = nal(0x67, 66, 0xc0, 32, 0x80))
+        assertNull(EncodedVideoAccessUnit.prepare(idr))
+        assertArrayEquals(idr.sps!! + idr.pps!! + idr.data, EncodedVideoAccessUnit.prepare(idr, "42e020"))
+        assertArrayEquals(idr.sps!! + idr.pps!! + idr.data, EncodedVideoAccessUnit.prepare(idr, "42e029"))
+        assertNull(EncodedVideoAccessUnit.prepare(idr.copy(sps = nal(0x67, 66, 0xc0, 41, 0x80)), "42e020"))
+        assertNull(EncodedVideoAccessUnit.prepare(idr, "640020"))
+        assertNull(EncodedVideoAccessUnit.prepare(idr, "42e0ff"))
+    }
     @Test fun `AVCC leading junk unsupported slices wrong frame flags and excessive NAL counts fail closed`() {
         for (bad in listOf(frame(data = byteArrayOf(0, 0, 0, 2, 0x65, 0x88.toByte())),
             frame(data = byteArrayOf(9) + nal(0x65, 0x88)), frame(data = nal(0xe5, 0x88)),

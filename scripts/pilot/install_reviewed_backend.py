@@ -58,6 +58,8 @@ APPROVED_PATHS = {
     "backend/api/v1/direct_probe/router.py",
     "backend/api/v1/batches/router.py", "backend/services/batch_service.py",
     "backend/api/v1/updates/router.py",
+    "backend/api/v1/streaming/router.py", "backend/schemas/stream_quality.py",
+    "backend/schemas/devices.py", "backend/services/device_viewers.py",
     "backend/database/redis_client.py",
     "backend/schemas/stream_diagnostics.py", "backend/websocket/stream_metrics.py",
     "backend/websocket/stream_session_history.py",

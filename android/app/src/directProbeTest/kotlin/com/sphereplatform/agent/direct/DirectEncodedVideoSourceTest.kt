@@ -29,7 +29,7 @@ class DirectEncodedVideoSourceTest {
         } finally { relay.close() }
     }
 
-    private class Harness {
+    private class Harness(profile: String = "42e01f") {
         var valid = true
         var hold = false
         var holdEncoded = false
@@ -40,7 +40,7 @@ class DirectEncodedVideoSourceTest {
         val failed = mockk<() -> Unit>(relaxed = true)
         val rate = mockk<(Int, Int) -> Unit>(relaxed = true)
         val capture = CaptureInputSession("a".repeat(32), 960, 540, 960, 540, 0)
-        val relay = DirectEncodedVideoSource(capture, { valid }, key, failed, onRate = rate)
+        val relay = DirectEncodedVideoSource(capture, { valid }, key, failed, profileLevelId = profile, onRate = rate)
         val source = mockk<VideoSource>(relaxed = true)
         val track = mockk<VideoTrack>(relaxed = true)
         val factory = mockk<PeerConnectionFactory>()
@@ -82,6 +82,19 @@ class DirectEncodedVideoSourceTest {
             relay.close(); held.forEach(VideoFrame::release); held.clear()
             heldEncoded.forEach(EncodedImage::release); heldEncoded.clear(); encoder.release()
         }
+    }
+
+    @Test fun `native source first IDR above level31 reaches RTP under the same admitted source ceiling`() {
+        val h = Harness("42e020")
+        try {
+            val idr = picture(1, true).copy(sps = nal(0x67, 66, 0xc0, 32, 0x80))
+            h.relay.submit(idr)
+            h.relay.submit(picture(2, false))
+            assertEquals(2, h.emitted.size)
+            assertArrayEquals(idr.sps!! + idr.pps!! + idr.data, h.emitted[0])
+            assertEquals(0L, h.relay.receipt()["invalidAccessUnits"])
+            verify(exactly = 0) { h.failed.invoke() }
+        } finally { h.close() }
     }
 
     @Test fun `existing encoded bytes reach RTP callback with exact dimensions and no raw conversion`() {

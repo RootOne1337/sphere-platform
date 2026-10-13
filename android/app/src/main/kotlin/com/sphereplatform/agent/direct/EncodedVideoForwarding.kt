@@ -58,7 +58,10 @@ object EncodedVideoAccessUnit {
         }
     }
 
-    fun prepare(frame: EncodedCaptureFrame): ByteArray? {
+    fun prepare(frame: EncodedCaptureFrame, profileLevelId: String = "42e01f"): ByteArray? {
+        if (!Regex("42e0[0-9a-f]{2}").matches(profileLevelId)) return null
+        val ceiling = profileLevelId.takeLast(2).toInt(16)
+        if (ceiling !in setOf(31, 32, 40, 41, 42, 50, 51, 52)) return null
         val nals = types(frame.data) ?: return null
         if (nals.any { it.second !in setOf(1, 5, 6, 7, 8, 9) } ||
             nals.none { it.second in setOf(1, 5) } || frame.keyFrame != nals.any { it.second == 5 }) return null
@@ -69,9 +72,13 @@ object EncodedVideoAccessUnit {
         val spsNals = types(sps) ?: return null
         if (spsNals.size != 1 || spsNals[0].second != 7 || types(pps)?.map { it.second } != listOf(8)) return null
         val at = spsNals[0].first
-        // The advertised constrained-baseline H.264 level 3.1 must match the actual SPS.
+        // The actual SPS must fit this source's admitted and negotiated ceiling.
+        // A fixed level3.1 guard rejects the source's first IDR at60 FPS.
         if (at + 3 >= sps.size || sps[at + 1].toInt() and 255 != 66 ||
-            sps[at + 2].toInt() and 0x40 == 0 || sps[at + 3].toInt() and 255 !in 1..31) return null
+            sps[at + 2].toInt() and 0x40 == 0) return null
+        val actualLevel = sps[at + 3].toInt() and 255
+        if (actualLevel !in setOf(10, 11, 12, 13, 20, 21, 22, 30, 31, 32, 40, 41, 42, 50, 51, 52) ||
+            actualLevel > ceiling) return null
         if (sps.size + pps.size + frame.data.size > EncodedVideoBudget.MAX_FRAME_BYTES) return null
         return sps + pps + frame.data
     }
