@@ -20,6 +20,11 @@ internal class NativeInputDiagnostics(private val uptime: () -> Long) {
     private var failureAt = 0L
     private var startupDetail: TouchStartupDetail? = null
     private var startupDetailAt = 0L
+    private var releaseReason: TouchEndReason? = null
+    private var releaseAt = 0L
+
+    @Synchronized
+    fun released(reason: TouchEndReason) { releaseReason = reason; releaseAt = uptime() }
 
     @Synchronized
     fun startupFailed(detail: TouchStartupDetail) { startupDetail = detail; startupDetailAt = uptime() }
@@ -40,6 +45,10 @@ internal class NativeInputDiagnostics(private val uptime: () -> Long) {
         put("schema_version", 1)
         put("scope", "agent_process")
         put("state", state.name.lowercase())
+        releaseReason?.let {
+            put("last_release_reason", it.name.lowercase())
+            put("last_release_age_ms", (uptime() - releaseAt).coerceIn(0, MAX_AGE_MS))
+        }
         startupDetail?.let {
             put("last_startup_detail", it.name.lowercase())
             put("last_startup_detail_age_ms", (uptime() - startupDetailAt).coerceIn(0, MAX_AGE_MS))

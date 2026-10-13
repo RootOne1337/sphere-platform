@@ -22,7 +22,8 @@ internal class ContinuousTouchSupervisor(
 ) {
     enum class Stage { STARTUP, INPUT, RELEASE }
     data class Receipt(val sequence: Int, val status: Int, val deviceUptimeMs: Long, val stage: Stage,
-                       val knownStartupRefusal: Boolean = false, val startupDetail: TouchStartupDetail? = null)
+                       val knownStartupRefusal: Boolean = false, val startupDetail: TouchStartupDetail? = null,
+                       val endReason: TouchEndReason? = null)
     private data class Owner(val mailbox: ContinuousTouchMailbox, val job: Job)
     private val lifecycle = Mutex()
     private var current: Owner? = null
@@ -51,12 +52,18 @@ internal class ContinuousTouchSupervisor(
                     if (mailbox.isRetired() || !isCurrent(binding)) break
                     attemptedSequence = sample.sequence
                     val ack = pipe.send(sample)
+                    if (ack.status !in setOf(1, 2, 3)) mailbox.retire(TouchEndReason.NATIVE_FAILURE)
                     emit(binding, Receipt(ack.sequence, ack.status, ack.uptimeMs, Stage.INPUT))
                     if (ack.status !in setOf(1, 2, 3)) break
                 }
             } catch (failure: Exception) {
                 // Input may have been consumed. No replay and no exception/private data in receipts.
                 val refused = attemptedSequence == 0 && failure is TouchStartupUnavailableException
+                mailbox.retire(when {
+                    !scope.isActive -> TouchEndReason.SCOPE_INACTIVE
+                    refused -> TouchEndReason.STARTUP_REFUSED
+                    else -> TouchEndReason.NATIVE_FAILURE
+                })
                 val detail = when (failure) {
                     is TouchStartupUnavailableException -> failure.detail
                     is TouchPipeCleanupUnknownException -> failure.startupDetail
@@ -71,7 +78,8 @@ internal class ContinuousTouchSupervisor(
                 withContext(NonCancellable + Dispatchers.IO) {
                     val confirmed = (pipe?.let { runCatching { it.closeAndConfirm() }.getOrDefault(false) } ?: true) && !resetRequired
                     if (!confirmed) resetRequired = true
-                    emit(binding, Receipt(0, if (confirmed) 3 else 6, uptime(), Stage.RELEASE))
+                    emit(binding, Receipt(0, if (confirmed) 3 else 6, uptime(), Stage.RELEASE,
+                        endReason = if (confirmed) mailbox.terminationReason() else TouchEndReason.CLEANUP_UNKNOWN))
                 }
             }
         }
@@ -93,7 +101,7 @@ internal class ContinuousTouchSupervisor(
     suspend fun close() = lifecycle.withLock { retireCurrent() }
 
     /** Immediate fencing, usable from disconnect/stop callbacks before asynchronous cleanup. */
-    fun invalidate() { admitted.getAndSet(null)?.retire() }
+    fun invalidate(reason: TouchEndReason = TouchEndReason.OWNER_RETIRED) { admitted.getAndSet(null)?.retire(reason) }
     fun needsReset(): Boolean = resetRequired
 
     private suspend fun retireCurrent() {

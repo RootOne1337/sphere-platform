@@ -160,7 +160,24 @@ class ContinuousInputControllerTest {
     @Test fun `direct heartbeat cannot renew expired server authority`() = runBlocking {
         val f = Fixture(); f.readyDirect(); f.now.set(1600)
         assertFalse(f.controller.directMessage(f.peerSession, f.directEvent(1, 4)))
-        eventually { f.closed }; assertTrue(f.samples.isEmpty()); f.stop()
+        eventually { f.controller.diagnosticSnapshot()["last_release_reason"] == JsonPrimitive("authorization_expired") }
+        assertTrue(f.closed); assertTrue(f.samples.isEmpty()); f.stop()
+    }
+
+    @Test fun `direct viewer close and lost channel report distinct causes without changing receipt wire`() = runBlocking {
+        for (channelLost in listOf(false, true)) {
+            val f = Fixture(); f.readyDirect()
+            try {
+                if (channelLost) f.controller.directClosed(f.peerSession)
+                else assertTrue(f.controller.directMessage(f.peerSession, buildJsonObject { put("type", "touch_close") }))
+                val expected = if (channelLost) "direct_channel_unavailable" else "viewer_closed"
+                eventually { f.controller.diagnosticSnapshot()["last_release_reason"] == JsonPrimitive(expected) }
+                assertTrue(f.samples.isEmpty())
+                val release = f.receipts.last { it["stage"] == JsonPrimitive("release") }
+                assertEquals(setOf("type", "session_id", "owner", "capture_epoch", "sequence", "status", "stage", "origin", "device_uptime_ms"), release.keys)
+                assertEquals(JsonPrimitive(3), release["status"])
+            } finally { f.stop() }
+        }
     }
 
     @Test fun `only fresh sequenced server authorization renews a direct grant`() = runBlocking {

@@ -18,7 +18,8 @@ def test_native_input_snapshot_preserves_cause_and_drops_private_extras():
         "owner": "private-owner", "coordinates": [12, 34], "token": "private-token",
         "samples": [{"gesture": 123}],
     }).model_dump()
-    assert value == snapshot() | dict(last_startup_detail=None, last_startup_detail_age_ms=None)
+    assert value == snapshot() | dict(last_startup_detail=None, last_startup_detail_age_ms=None,
+                                     last_release_reason=None, last_release_age_ms=None)
     assert "private" not in str(value)
 
 
@@ -59,3 +60,37 @@ def test_native_startup_detail_is_historical_not_current_state():
 def test_native_startup_detail_rejects_unknown_unpaired_or_unbounded_values(change):
     with pytest.raises(ValidationError):
         NativeInputTelemetry.model_validate(snapshot() | change)
+
+
+@pytest.mark.parametrize("reason", [
+    "owner_retired", "viewer_closed", "viewer_heartbeat_expired", "pending_input_expired",
+    "invalid_input", "queue_overflow", "clock_regression", "authorization_expired",
+    "scope_inactive", "transport_changed", "capture_changed", "direct_channel_unavailable",
+    "receipt_unavailable", "native_failure", "startup_refused", "cleanup_unknown",
+])
+def test_native_release_cause_is_retained_after_another_owner_becomes_ready(reason):
+    value = NativeInputTelemetry.model_validate(snapshot() | dict(
+        state="ready", last_release_reason=reason, last_release_age_ms=500,
+    ))
+    assert value.state == "ready"
+    assert value.last_release_reason == reason
+    assert value.last_release_age_ms == 500
+
+
+@pytest.mark.parametrize("change", [
+    dict(last_release_reason="private-owner-or-exception", last_release_age_ms=1),
+    dict(last_release_reason="viewer_closed"), dict(last_release_age_ms=1),
+    dict(last_release_reason="viewer_closed", last_release_age_ms=-1),
+    dict(last_release_reason="viewer_closed", last_release_age_ms=True),
+    dict(last_release_reason="viewer_closed", last_release_age_ms="1"),
+    dict(last_release_reason="viewer_closed", last_release_age_ms=86_400_001),
+])
+def test_native_release_cause_rejects_unknown_unpaired_or_unbounded_values(change):
+    with pytest.raises(ValidationError):
+        NativeInputTelemetry.model_validate(snapshot() | change)
+
+
+def test_older_apk_without_release_cause_remains_compatible():
+    value = NativeInputTelemetry.model_validate(snapshot())
+    assert value.last_release_reason is None
+    assert value.last_release_age_ms is None

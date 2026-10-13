@@ -44,4 +44,20 @@ class NativeInputDiagnosticsTest {
         now = Long.MAX_VALUE
         assertEquals(JsonPrimitive(86_400_000L), diagnostics.snapshot(NativeInputDiagnostics.State.READY)["last_startup_detail_age_ms"])
     }
+
+    @Test fun `release cause is fixed bounded history independent of readiness or failure`() {
+        var now = 100L
+        val diagnostics = NativeInputDiagnostics { now }
+        assertFalse("last_release_reason" in diagnostics.snapshot(NativeInputDiagnostics.State.IDLE))
+        diagnostics.released(TouchEndReason.VIEWER_HEARTBEAT_EXPIRED)
+        now = 130L
+        val ready = diagnostics.snapshot(NativeInputDiagnostics.State.READY)
+        assertEquals(JsonPrimitive("viewer_heartbeat_expired"), ready["last_release_reason"])
+        assertEquals(JsonPrimitive(30L), ready["last_release_age_ms"])
+        assertFalse("last_failure" in ready)
+        now = Long.MAX_VALUE
+        assertEquals(JsonPrimitive(86_400_000L), diagnostics.snapshot(NativeInputDiagnostics.State.READY)["last_release_age_ms"])
+        now = 99L
+        assertEquals(JsonPrimitive(0L), diagnostics.snapshot(NativeInputDiagnostics.State.IDLE)["last_release_age_ms"])
+    }
 }

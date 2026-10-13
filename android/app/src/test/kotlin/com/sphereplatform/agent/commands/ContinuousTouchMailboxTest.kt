@@ -130,4 +130,42 @@ class ContinuousTouchMailboxTest {
         assertThrows(IllegalArgumentException::class.java) { binding.copy(height = 16385) }
         assertThrows(IllegalArgumentException::class.java) { binding.copy(rotation = 4) }
     }
+
+    @Test fun `first termination cause survives cleanup and later offers`() {
+        val m = mailbox()
+        m.send(1, 4, gesture = 0)
+        assertTrue(m.expired(2501))
+        assertEquals(TouchEndReason.VIEWER_HEARTBEAT_EXPIRED, m.terminationReason())
+        m.retire(TouchEndReason.VIEWER_CLOSED)
+        m.retire()
+        assertEquals(ContinuousTouchMailbox.Admission.RETIRED, m.send(2, 4, gesture = 0, at = 2502))
+        assertEquals(TouchEndReason.VIEWER_HEARTBEAT_EXPIRED, m.terminationReason())
+    }
+
+    @Test fun `pending age and clock failures have distinct causes without freshening old input`() {
+        val stale = mailbox()
+        stale.send(1, 0)
+        stale.send(2, 4, at = 1490)
+        assertNull(stale.poll(1501))
+        assertEquals(TouchEndReason.PENDING_INPUT_EXPIRED, stale.terminationReason())
+        val regressed = mailbox()
+        assertTrue(regressed.expired(999))
+        assertEquals(TouchEndReason.CLOCK_REGRESSION, regressed.terminationReason())
+        val malformed = mailbox()
+        malformed.send(1, 5)
+        assertEquals(TouchEndReason.INVALID_INPUT, malformed.terminationReason())
+    }
+
+    @Test fun `overflow and requested close remain distinct from heartbeat loss`() {
+        val overflowing = mailbox()
+        overflowing.send(1, 0)
+        overflowing.send(2, 2)
+        overflowing.send(3, 4)
+        overflowing.send(4, 2)
+        assertEquals(TouchEndReason.QUEUE_OVERFLOW, overflowing.terminationReason())
+        val closed = mailbox()
+        closed.retire(TouchEndReason.VIEWER_CLOSED)
+        assertEquals(TouchEndReason.VIEWER_CLOSED, closed.terminationReason())
+        assertEquals(0, closed.size())
+    }
 }

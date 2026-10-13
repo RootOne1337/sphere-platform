@@ -16874,6 +16874,48 @@
             ],
             "title": "Last Startup Detail Age Ms"
           },
+          "last_release_reason": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "owner_retired",
+                  "viewer_closed",
+                  "viewer_heartbeat_expired",
+                  "pending_input_expired",
+                  "invalid_input",
+                  "queue_overflow",
+                  "clock_regression",
+                  "authorization_expired",
+                  "scope_inactive",
+                  "transport_changed",
+                  "capture_changed",
+                  "direct_channel_unavailable",
+                  "receipt_unavailable",
+                  "native_failure",
+                  "startup_refused",
+                  "cleanup_unknown"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Release Reason"
+          },
+          "last_release_age_ms": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "maximum": 86400000.0,
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Release Age Ms"
+          },
           "open_attempts_total": {
             "type": "integer",
             "maximum": 9007199254740992.0,

@@ -189,6 +189,76 @@ class LocalCIResultsTest(unittest.TestCase):
             ci.retain_runs(self.root, keep=0)
         self.assertTrue(directory.exists())
 
+    def android_output_run(self, state="success"):
+        directory = self.root / "runs/20261012T140000Z-cccccccc"
+        directory.mkdir(parents=True)
+        marker = {"schemaVersion": 1, "runId": directory.name,
+                  "workflowMode": "maintainer-local-executor", "state": state,
+                  "profiles": {"android": {"state": state}}}
+        (directory / "receipt.json").write_text(json.dumps(marker))
+        reports = directory / "android-build/app/test-results/testDevDebugUnitTest"
+        reports.mkdir(parents=True)
+        (reports / "TEST-fixture.xml").write_text('<testsuite tests="1" failures="0" errors="0"/>')
+        cache = directory / "gradle-project-cache/nested"
+        cache.mkdir(parents=True)
+        (cache / "derived.bin").write_bytes(b"derived")
+        return directory, marker
+
+    def test_android_derived_outputs_are_removed_but_reports_and_results_survive(self):
+        import zipfile
+        directory, _ = self.android_output_run()
+        result = ci.retain_runs(self.root)
+        self.assertEqual(result["retainedRuns"], 1)
+        self.assertFalse((directory / "android-build").exists())
+        self.assertFalse((directory / "gradle-project-cache").exists())
+        self.assertEqual(json.loads((directory / "receipt.json").read_text())["state"], "success")
+        with zipfile.ZipFile(directory / "android-final-junit.zip") as archive:
+            self.assertEqual(archive.namelist(), ["testDevDebugUnitTest/TEST-fixture.xml"])
+            self.assertIn(b'tests="1"', archive.read(archive.namelist()[0]))
+        self.assertEqual(ci.retain_runs(self.root)["retainedRuns"], 1)
+
+    def test_android_active_or_wrong_marker_never_discards_outputs(self):
+        directory, marker = self.android_output_run(state="running")
+        for bad in [marker, marker | {"state": "success", "runId": "other"},
+                    marker | {"state": "success", "profiles": {}},
+                    marker | {"state": "success", "workflowMode": "foreign"}]:
+            with self.subTest(marker=bad):
+                with self.assertRaisesRegex(ci.Refused, "marker_mismatch"):
+                    ci.cleanup_android_outputs(directory, bad)
+                self.assertTrue((directory / "android-build").exists())
+
+    def test_android_redirect_anywhere_refuses_entire_deletion_set(self):
+        directory, marker = self.android_output_run()
+        original = Path.is_symlink
+        for name in ["android-build", "gradle-project-cache/nested/derived.bin"]:
+            target = directory / name
+            with self.subTest(path=name), patch.object(Path, "is_symlink", lambda path: str(path).removeprefix('\\\\?\\') == str(target) or original(path)):
+                with self.assertRaisesRegex(ci.Refused, "android_output_redirected"):
+                    ci.cleanup_android_outputs(directory, marker)
+            self.assertTrue((directory / "android-build").exists())
+            self.assertTrue((directory / "gradle-project-cache").exists())
+
+    def test_android_cleanup_preserves_foreign_siblings_and_shared_cache(self):
+        directory, marker = self.android_output_run()
+        foreign = directory / "foreign-build"
+        foreign.mkdir()
+        (foreign / "keep.txt").write_text("keep")
+        shared = self.root / "shared-gradle-cache"
+        shared.mkdir()
+        (shared / "keep.bin").write_bytes(b"keep")
+        ci.cleanup_android_outputs(directory, marker)
+        self.assertTrue((foreign / "keep.txt").exists())
+        self.assertTrue((shared / "keep.bin").exists())
+
+    @unittest.skipUnless(os.name == "nt", "Windows extended path behavior")
+    def test_android_cleanup_handles_generated_names_beyond_max_path(self):
+        directory, marker = self.android_output_run()
+        long_directory = Path('\\\\?\\' + str(directory.resolve())) / 'android-build' / ('nested-' * 20) / ('generated-' * 15)
+        long_directory.mkdir(parents=True)
+        (long_directory / 'hilt-generated.java').write_text('derived')
+        ci.cleanup_android_outputs(directory, marker)
+        self.assertFalse((directory / 'android-build').exists())
+
     def test_lock_refuses_parallel_heavy_job(self):
         with ci.execution_lock(self.root / "execution.lock"):
             with self.assertRaisesRegex(ci.Refused, "another_local_ci_job"):

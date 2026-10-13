@@ -329,6 +329,52 @@ def same_component(root: Path, sha: str, paths: list[str]) -> None:
         raise Refused("component_content_mismatch")
 
 
+def cleanup_android_outputs(directory: Path, data: dict) -> dict:
+    """Discard only this marked run's derived outputs, after preserving its reports."""
+    if (not re.fullmatch(r"[0-9]{8}T[0-9]{6}Z-[0-9a-f]{8}", directory.name) or
+            data.get("schemaVersion") != 1 or data.get("runId") != directory.name or
+            data.get("workflowMode") != "maintainer-local-executor" or
+            data.get("state") not in {"success", "failure", "error"} or
+            "android" not in data.get("profiles", {})):
+        raise Refused("android_output_marker_mismatch")
+    root = directory.resolve(strict=True)
+    if os.name == "nt":
+        text = str(root)
+        # Gradle generates deeply nested Hilt/KSP names beyond MAX_PATH.
+        # Use the Windows extended path for inspection and deletion alike.
+        if not text.startswith("\\\\?\\"):
+            directory = Path("\\\\?\\UNC\\" + text[2:] if text.startswith("\\\\") else "\\\\?\\" + text)
+            root = directory.resolve(strict=True)
+    targets = [directory / name for name in ("android-build", "gradle-project-cache")
+               if (directory / name).exists() or (directory / name).is_symlink()]
+    # Validate the whole deletion set before touching any target. No redirects,
+    # junctions or other reparse points may reach the source or shared cache.
+    for target in targets:
+        if (target.is_symlink() or (os.name == "nt" and target.is_junction()) or
+                not target.is_dir() or not target.resolve(strict=True).is_relative_to(root)):
+            raise Refused("android_output_redirected")
+        for parent, dirs, files in os.walk(target, followlinks=False):
+            for name in dirs + files:
+                child = Path(parent) / name
+                if (child.is_symlink() or (os.name == "nt" and child.is_junction()) or
+                        not child.resolve(strict=True).is_relative_to(root)):
+                    raise Refused("android_output_redirected")
+    # These final Gradle reports may include combined Debug and ordinary Release
+    # variants. The separately recorded counts retain each invocation's meaning.
+    reports = sorted((directory / "android-build/app/test-results").glob("*/TEST-*.xml"))
+    if reports:
+        import zipfile
+        archive = directory / "android-final-junit.zip"
+        if archive.is_symlink():
+            raise Refused("android_report_redirected")
+        with zipfile.ZipFile(archive, "w", compression=zipfile.ZIP_DEFLATED) as output:
+            for report in reports:
+                output.write(report, report.relative_to(directory / "android-build/app/test-results").as_posix())
+    for target in targets:
+        shutil.rmtree(target)
+    return {"removedDirectories": [target.name for target in targets], "finalReportsArchived": bool(reports)}
+
+
 def retain_runs(base: Path, *, keep: int = 10, byte_limit: int = 256 * 1024 * 1024) -> dict:
     """Prune only completed marked runs inside this executor's exact directory."""
     owned = []
@@ -342,6 +388,11 @@ def retain_runs(base: Path, *, keep: int = 10, byte_limit: int = 256 * 1024 * 10
         if (data.get("schemaVersion") != 1 or data.get("runId") != directory.name or
                 data.get("workflowMode") != "maintainer-local-executor"):
             raise Refused("run_marker_mismatch")
+        if data.get("state") != "running" and "android" in data.get("profiles", {}) and any(
+                (directory / name).exists() for name in ("android-build", "gradle-project-cache")):
+            cleanup = cleanup_android_outputs(directory, data)
+            data["androidOutputCleanup"] = cleanup
+            write_json(marker, data)
         files = list(directory.iterdir())
         if any(not file.is_file() or file.is_symlink() or
                (os.name == "nt" and file.is_junction()) for file in files):

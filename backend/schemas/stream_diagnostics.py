@@ -29,6 +29,15 @@ class NativeInputTelemetry(BaseModel):
         "root_handshake", "root_process_exited", "root_ready_timeout", "root_handoff_unknown",
     ] | None = None
     last_startup_detail_age_ms: int | None = Field(default=None, ge=0, le=86_400_000)
+    # A confirmed native RELEASE describes cleanup, not why the owner ended.
+    # Keep its first local cause separately, without input samples or owner IDs.
+    last_release_reason: Literal[
+        "owner_retired", "viewer_closed", "viewer_heartbeat_expired", "pending_input_expired",
+        "invalid_input", "queue_overflow", "clock_regression", "authorization_expired",
+        "scope_inactive", "transport_changed", "capture_changed", "direct_channel_unavailable",
+        "receipt_unavailable", "native_failure", "startup_refused", "cleanup_unknown",
+    ] | None = None
+    last_release_age_ms: int | None = Field(default=None, ge=0, le=86_400_000)
     open_attempts_total: int = Field(ge=0, le=_MAX_COUNTER)
     open_rejections_total: int = Field(ge=0, le=_MAX_COUNTER)
     startups_total: int = Field(ge=0, le=_MAX_COUNTER)
@@ -43,6 +52,8 @@ class NativeInputTelemetry(BaseModel):
             raise ValueError("native input failure and its monotonic age must be paired")
         if (self.last_startup_detail is None) != (self.last_startup_detail_age_ms is None):
             raise ValueError("native startup detail and its monotonic age must be paired")
+        if (self.last_release_reason is None) != (self.last_release_age_ms is None):
+            raise ValueError("native release reason and its monotonic age must be paired")
         return self
 
 

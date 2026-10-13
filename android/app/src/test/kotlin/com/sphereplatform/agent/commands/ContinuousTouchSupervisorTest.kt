@@ -163,6 +163,7 @@ class ContinuousTouchSupervisorTest {
             assertFalse(f.supervisor.open(binding.copy(owner="other_012345")))
             assertEquals(1,f.pipes.size)
             assertEquals(6,f.receipts.last().status)
+            assertEquals(TouchEndReason.CLEANUP_UNKNOWN, f.receipts.last().endReason)
         } finally {f.finish()}
     }
 

@@ -35,6 +35,7 @@ internal class ContinuousInputController(
         @Volatile var admitted = false
         @Volatile var ready = false
         var grantSequence = 0
+        val endReason = AtomicReference<TouchEndReason?>()
     }
     private val active = AtomicReference<Owner?>()
     private val closing = AtomicBoolean(false)
@@ -48,6 +49,11 @@ internal class ContinuousInputController(
             val owner = active.get()
             if (owner?.binding == binding) {
                 receipt.startupDetail?.let { diagnostics.startupFailed(it) }
+                if (receipt.stage == ContinuousTouchSupervisor.Stage.RELEASE) {
+                    val reason = receipt.endReason?.takeUnless { it == TouchEndReason.OWNER_RETIRED }
+                        ?: owner.endReason.get() ?: TouchEndReason.OWNER_RETIRED
+                    diagnostics.released(reason)
+                }
                 val ready = receipt.stage == ContinuousTouchSupervisor.Stage.STARTUP && receipt.status == 0
                 val staleReady = ready && !current(owner)
                 when (receipt.stage) {
@@ -71,7 +77,7 @@ internal class ContinuousInputController(
                     else if (receipt.stage != ContinuousTouchSupervisor.Stage.RELEASE || receipt.status == 3) {
                         diagnostics.failed(NativeInputDiagnostics.Failure.RECEIPT_UNAVAILABLE)
                     }
-                    supervisorInvalidation()
+                    supervisorInvalidation(TouchEndReason.RECEIPT_UNAVAILABLE)
                 }
                 if (receipt.stage == ContinuousTouchSupervisor.Stage.RELEASE) active.compareAndSet(owner, null)
             }
@@ -91,7 +97,8 @@ internal class ContinuousInputController(
             "continuous_input_authorize" -> authorizeDirect(message, connection)
             "continuous_input_close" -> {
                 val owner = active.get()
-                if (owner != null && owner.generation == connection && identifier(message, "owner") == owner.binding.owner) invalidate()
+                if (owner != null && owner.generation == connection && identifier(message, "owner") == owner.binding.owner)
+                    invalidate(TouchEndReason.VIEWER_CLOSED)
             }
         }
         return true
@@ -100,13 +107,13 @@ internal class ContinuousInputController(
     override fun directMessage(session: String, message: JsonObject): Boolean {
         val owner = active.get() ?: return false
         if (!enabled || owner.direct?.session != session) return false
-        if (!current(owner)) { invalidate(); return false }
+        if (!current(owner)) { invalidate(owner.endReason.get() ?: TouchEndReason.OWNER_RETIRED); return false }
         if (message["type"] == JsonPrimitive("touch_close") && exact(message, setOf("type"))) {
-            invalidate(); return true
+            invalidate(TouchEndReason.VIEWER_CLOSED); return true
         }
         if (message["type"] != JsonPrimitive("touch_event") ||
             !exact(message, setOf("type", "sequence", "gesture", "action", "x", "y"))) {
-            invalidate(); return false
+            invalidate(TouchEndReason.INVALID_INPUT); return false
         }
         offer(JsonObject(message + mapOf("type" to JsonPrimitive("continuous_input_event"),
             "owner" to JsonPrimitive(owner.binding.owner), "capture_epoch" to JsonPrimitive(owner.binding.captureEpoch))), owner.generation)
@@ -114,7 +121,7 @@ internal class ContinuousInputController(
     }
 
     override fun directClosed(session: String) {
-        if (active.get()?.direct?.session == session) invalidate()
+        if (active.get()?.direct?.session == session) invalidate(TouchEndReason.DIRECT_CHANNEL_UNAVAILABLE)
     }
 
     private fun authorizeDirect(message: JsonObject, connection: Long) {
@@ -134,16 +141,16 @@ internal class ContinuousInputController(
     }
 
     /** Local lifecycle loss is immediate fencing; teardown runs outside capture/socket locks. */
-    fun invalidate() {
+    fun invalidate(reason: TouchEndReason = TouchEndReason.OWNER_RETIRED) {
         if (!enabled) return
-        active.get()?.retired = true
-        supervisorInvalidation()
+        active.get()?.let { it.endReason.compareAndSet(null, reason); it.retired = true }
+        supervisorInvalidation(reason)
         if (closing.compareAndSet(false, true)) scope.launch {
             try { supervisor.close() } finally { closing.set(false) }
         }
     }
 
-    private fun supervisorInvalidation() { supervisor.invalidate() }
+    private fun supervisorInvalidation(reason: TouchEndReason = TouchEndReason.OWNER_RETIRED) { supervisor.invalidate(reason) }
 
     /** Piggybacks on the existing heartbeat; reading never opens or resets the injector. */
     fun diagnosticSnapshot(): JsonObject {
@@ -238,13 +245,13 @@ internal class ContinuousInputController(
         if (point == null) {
             diagnostics.record(NativeInputDiagnostics.Event.INPUT_FAILURE, NativeInputDiagnostics.Failure.INPUT_REJECTED)
             reply(owner, sequence?.coerceAtLeast(0) ?: 0, 5, "input", "admission", uptime())
-            invalidate()
+            invalidate(owner.endReason.get() ?: TouchEndReason.INVALID_INPUT)
             return
         }
         if (!owner.ready && action != RootTouchSession.HEARTBEAT) {
             diagnostics.record(NativeInputDiagnostics.Event.INPUT_FAILURE, NativeInputDiagnostics.Failure.INPUT_NOT_READY)
             reply(owner, sequence!!.coerceAtLeast(0), 5, "input", "admission", uptime())
-            invalidate()
+            invalidate(TouchEndReason.INVALID_INPUT)
             return
         }
         if (!owner.admitted && action == RootTouchSession.HEARTBEAT) return
@@ -252,13 +259,23 @@ internal class ContinuousInputController(
         if (result !in setOf(ContinuousTouchMailbox.Admission.QUEUED, ContinuousTouchMailbox.Admission.COALESCED)) {
             diagnostics.record(NativeInputDiagnostics.Event.INPUT_FAILURE, NativeInputDiagnostics.Failure.INPUT_REJECTED)
             reply(owner, sequence.coerceAtLeast(0), 5, "input", "admission", uptime())
-            invalidate()
+            invalidate(TouchEndReason.INVALID_INPUT)
         }
     }
 
-    private fun current(owner: Owner): Boolean = scope.isActive && !owner.retired && active.get() === owner &&
-        generation() == owner.generation && capture() == owner.capture &&
-        (owner.direct == null || owner.direct.isCurrent() && uptime() < owner.grantUntil)
+    private fun current(owner: Owner): Boolean {
+        val reason = when {
+            !scope.isActive -> TouchEndReason.SCOPE_INACTIVE
+            owner.retired || active.get() !== owner -> owner.endReason.get() ?: TouchEndReason.OWNER_RETIRED
+            generation() != owner.generation -> TouchEndReason.TRANSPORT_CHANGED
+            capture() != owner.capture -> TouchEndReason.CAPTURE_CHANGED
+            owner.direct != null && !owner.direct.isCurrent() -> TouchEndReason.DIRECT_CHANNEL_UNAVAILABLE
+            owner.direct != null && uptime() >= owner.grantUntil -> TouchEndReason.AUTHORIZATION_EXPIRED
+            else -> null
+        }
+        if (reason != null) owner.endReason.compareAndSet(null, reason)
+        return reason == null
+    }
 
     private fun currentFailure(owner: Owner): NativeInputDiagnostics.Failure = when {
         supervisor.needsReset() -> NativeInputDiagnostics.Failure.CLEANUP_UNKNOWN

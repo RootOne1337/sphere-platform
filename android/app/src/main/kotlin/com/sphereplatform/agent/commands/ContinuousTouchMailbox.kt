@@ -24,6 +24,14 @@ internal data class TouchSample(
     val receivedAtMs: Long,
 )
 
+/** Fixed process-local causes. No owner, coordinates or exception text may be retained here. */
+internal enum class TouchEndReason {
+    OWNER_RETIRED, VIEWER_CLOSED, VIEWER_HEARTBEAT_EXPIRED, PENDING_INPUT_EXPIRED,
+    INVALID_INPUT, QUEUE_OVERFLOW, CLOCK_REGRESSION, AUTHORIZATION_EXPIRED,
+    SCOPE_INACTIVE, TRANSPORT_CHANGED, CAPTURE_CHANGED, DIRECT_CHANNEL_UNAVAILABLE,
+    RECEIPT_UNAVAILABLE, NATIVE_FAILURE, STARTUP_REFUSED, CLEANUP_UNKNOWN,
+}
+
 /** At most four pending events. MOVE coalescing never crosses DOWN/UP/CANCEL barriers. */
 internal class ContinuousTouchMailbox(val binding: TouchBinding, openedAtMs: Long) {
     enum class Admission { QUEUED, COALESCED, WRONG_OWNER, RETIRED, INVALID, OVERFLOW }
@@ -34,6 +42,7 @@ internal class ContinuousTouchMailbox(val binding: TouchBinding, openedAtMs: Lon
     private var held = false
     private var lastReceipt = openedAtMs
     private var retired = false
+    private var endReason: TouchEndReason? = null
 
     init { require(openedAtMs >= 0) }
 
@@ -51,7 +60,14 @@ internal class ContinuousTouchMailbox(val binding: TouchBinding, openedAtMs: Lon
                 RootTouchSession.HEARTBEAT -> sample.gesture != if (held) gesture else 0L
                 else -> !held || sample.gesture != gesture
             }
-        if (invalid) { retire(); return Admission.INVALID }
+        if (invalid) {
+            retire(when {
+                sample.receivedAtMs < lastReceipt -> TouchEndReason.CLOCK_REGRESSION
+                sample.receivedAtMs - lastReceipt >= RootTouchSession.LEASE_MS -> TouchEndReason.VIEWER_HEARTBEAT_EXPIRED
+                else -> TouchEndReason.INVALID_INPUT
+            })
+            return Admission.INVALID
+        }
 
         val tail = pending.lastOrNull()
         // Only adjacent MOVE samples can be replaced; preserve gesture order and terminal events.
@@ -62,7 +78,7 @@ internal class ContinuousTouchMailbox(val binding: TouchBinding, openedAtMs: Lon
         if (coalesced || heartbeat) pending.removeLast()
         // Reserve one slot for UP/CANCEL. Overflow fails closed rather than dropping a terminal event.
         val limit = if (sample.action == RootTouchSession.UP || sample.action == RootTouchSession.CANCEL) CAPACITY else CAPACITY - 1
-        if (pending.size >= limit) { retire(); return Admission.OVERFLOW }
+        if (pending.size >= limit) { retire(TouchEndReason.QUEUE_OVERFLOW); return Admission.OVERFLOW }
         // A later browser heartbeat cannot freshen an old movement blocked behind an injector.
         pending.addLast(sample)
         lastSequence = sample.sequence
@@ -79,7 +95,7 @@ internal class ContinuousTouchMailbox(val binding: TouchBinding, openedAtMs: Lon
         if (expired(now)) return null
         val sample = pending.firstOrNull() ?: return null
         if (now < sample.receivedAtMs || now - sample.receivedAtMs >= MAX_PENDING_AGE_MS) {
-            retire()
+            retire(if (now < sample.receivedAtMs) TouchEndReason.CLOCK_REGRESSION else TouchEndReason.PENDING_INPUT_EXPIRED)
             return null
         }
         return pending.removeFirst()
@@ -87,11 +103,17 @@ internal class ContinuousTouchMailbox(val binding: TouchBinding, openedAtMs: Lon
 
     @Synchronized
     fun expired(now: Long): Boolean {
-        if (!retired && (now < lastReceipt || now - lastReceipt >= RootTouchSession.LEASE_MS)) retire()
+        if (!retired && (now < lastReceipt || now - lastReceipt >= RootTouchSession.LEASE_MS))
+            retire(if (now < lastReceipt) TouchEndReason.CLOCK_REGRESSION else TouchEndReason.VIEWER_HEARTBEAT_EXPIRED)
         return retired
     }
 
-    @Synchronized fun retire() { retired = true; pending.clear() }
+    @Synchronized fun retire(reason: TouchEndReason = TouchEndReason.OWNER_RETIRED) {
+        if (!retired) endReason = reason
+        retired = true
+        pending.clear()
+    }
+    @Synchronized fun terminationReason(): TouchEndReason? = endReason
     @Synchronized fun isRetired(): Boolean = retired
     @Synchronized fun size(): Int = pending.size
 
