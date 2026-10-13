@@ -109,7 +109,7 @@ export function NativeInputDiagnostic({ telemetry }: { telemetry?: NativeInputTe
         Последнее завершение: {label(releaseLabels, telemetry.last_release_reason)}
         {snapshotAge(telemetry.last_release_age_ms)}
       </div>}
-      <div className="grid grid-cols-2 gap-x-3 break-words">
+      <div className="grid grid-cols-1 gap-x-3 break-words sm:grid-cols-2">
         <span>Запросы запуска: {telemetry.open_attempts_total}</span>
         <span>Отказы до запуска: {telemetry.open_rejections_total}</span>
         <span>Готовые запуски: {telemetry.startups_total}</span>
