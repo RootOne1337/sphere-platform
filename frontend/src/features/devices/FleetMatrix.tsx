@@ -12,6 +12,7 @@ import {
     OnChangeFn,
 } from "@tanstack/react-table";
 import { Device } from "@/lib/hooks/useDevices";
+import { DeviceViewerBadge } from './DeviceViewerBadge';
 import { useFleetTablePreferences } from './fleetTablePreferences';
 import { getReportedDeviceModel } from './devicePresentation';
 import { DeviceStatusBadge } from "@/components/sphere/DeviceStatusBadge";
@@ -105,7 +106,7 @@ export function FleetMatrix({ data, isLoading, rowSelection, onRowSelectionChang
                     const metadata = getReportedDeviceModel(device) ?? "Модель не сообщена";
                     return (
                         <div className="flex h-full flex-col justify-center pr-4">
-                            <button
+                            <div className="flex min-w-0 items-center gap-1.5"><button
                                 type="button"
                                 data-inspector-device={device.id}
                                 onClick={(event) => {
@@ -117,6 +118,8 @@ export function FleetMatrix({ data, isLoading, rowSelection, onRowSelectionChang
                             >
                                 {device.name}
                             </button>
+                            <DeviceViewerBadge card={device.card_viewers} stream={device.stream_viewers} />
+                            </div>
                             <span className="line-clamp-2 whitespace-normal text-xs leading-4 text-muted-foreground" title={metadata}>
                                 {metadata}
                             </span>

@@ -185,6 +185,9 @@ async def stream_viewer_ws(
         user_id=user_id_str,
     )
     history = StreamSessionHistory(redis_client.redis, redis_client.redis_binary)
+    from backend.services.device_viewers import DeviceViewers
+    viewer_presence = DeviceViewers(redis_client.redis)
+    await viewer_presence.touch(org_id_str, device_id, "stream", session_id)
     history_enabled = await history.begin(org_id_str, device_id, session_id, user=user_id_str)
     browser_report_admission = BrowserReportAdmission()
     last_direct_report = -float("inf")
@@ -259,6 +262,7 @@ async def stream_viewer_ws(
     async def _viewer_ping_loop() -> None:
         try:
             while True:
+                await viewer_presence.touch(org_id_str, device_id, "stream", session_id)
                 if history_enabled:
                     await history.observe_agent(org_id_str, device_id, session_id)
                 await asyncio.sleep(VIEWER_AUTH_RECHECK_SECONDS)
@@ -448,6 +452,7 @@ async def stream_viewer_ws(
         if touch_registered and touch_runtime:
             await touch_runtime.unregister(touch_viewer)
         await bridge.unregister_viewer(device_id, session_id)
+        await viewer_presence.touch(org_id_str, device_id, "stream", session_id, False)
         if history_enabled:
             try:
                 async with asyncio.timeout(0.5):

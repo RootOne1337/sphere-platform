@@ -95,6 +95,7 @@ function startDirectSession(
   let renewalInterval: ReturnType<typeof setInterval> | undefined;
   let phaseDeadline: ReturnType<typeof setTimeout> | undefined;
   let disconnectDeadline: ReturnType<typeof setTimeout> | undefined;
+  let localCandidateDeadline: ReturnType<typeof setTimeout> | undefined;
   let statsInFlight = false, statsCalls = 0;
   let renewal = 0;
   const videoStats = new DirectVideoStatsSampler();
@@ -104,6 +105,7 @@ function startDirectSession(
     if (stopped) return;
     stopped = true;
     clearTimeout(deadline); clearTimeout(phaseDeadline); clearTimeout(disconnectDeadline);
+    clearTimeout(localCandidateDeadline);
     if (interval) clearInterval(interval);
     if (networkInterval) clearInterval(networkInterval);
     if (renewalInterval) clearInterval(renewalInterval);
@@ -149,11 +151,13 @@ function startDirectSession(
     } catch { /* Missing stats retain the previous sample or unknown. */ }
     finally { statsInFlight = false; }
   };
-  const gathered = () => {
-    if (stopped || offered || !peer || peer.iceGatheringState !== 'complete') return;
+  const gathered = (availableLocalCandidates = false) => {
+    if (stopped || offered || !peer || !availableLocalCandidates && peer.iceGatheringState !== 'complete') return;
     const sdp = peer.localDescription?.sdp;
     if (!sdp || new TextEncoder().encode(sdp).length > 32768) return stop('invalid_description');
     if (video && !readonlyVideoSdp(sdp, true)) return stop('invalid_description');
+    if (availableLocalCandidates && !/^a=candidate:\S+\s+\d+\s+udp\s+\d+\s+\S+\s+\d+\s+typ\s+(?:host|srflx)\b/im.test(sdp)) return;
+    clearTimeout(localCandidateDeadline);
     boundPhase('signaling_deadline', 8_000);
     result.state = 'signaling'; emit();
     offered = true;
@@ -266,7 +270,7 @@ function startDirectSession(
       }
     }
     catch { stop('webrtc_unavailable'); return; }
-    peer.onicegatheringstatechange = gathered;
+    peer.onicegatheringstatechange = () => gathered();
     peer.onconnectionstatechange = () => {
       if (!peer || stopped) return;
       if (['failed', 'closed'].includes(peer.connectionState)) return stop('peer_disconnected');
@@ -337,7 +341,15 @@ function startDirectSession(
         .then(prepared => { if (!stopped && peer) return peer.setLocalDescription(prepared); });
       if (!stopped && peer) return peer.setLocalDescription(offer);
     })
-      .then(gathered).catch(() => stop('offer_failed'));
+      .then(() => {
+        gathered();
+        // Some mobile networks leave STUN gathering pending even though usable
+        // host candidates already exist. Offer the bounded collected batch once;
+        // a later gathering callback cannot open a second peer or duplicate SDP.
+        // No TURN credential/relay diagnostic is shortened by this local path.
+        if (live && !options.relayGrant && !stopped && !offered)
+          localCandidateDeadline = setTimeout(() => gathered(true), 2000);
+      }).catch(() => stop('offer_failed'));
   };
   emit();
   try {

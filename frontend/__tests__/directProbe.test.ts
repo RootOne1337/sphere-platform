@@ -83,6 +83,35 @@ test('history correlation is read-only and never creates the control channel', a
   stop();
 });
 
+test('pending public STUN cannot prevent live signaling with collected local UDP candidates', async () => {
+  FakePeer.initialGatheringState = 'gathering';
+  FakePeer.initialSdp = videoSdp + 'a=candidate:1 1 udp 2122260223 browser.local 53000 typ host\r\n';
+  const reports: DirectProbeResult[] = [];
+  const stop = startDirectVideoSession('wss://same-origin', 'access', value => reports.push(value),
+    { controlledStunUrl: 'stun:stun.cloudflare.com:3478', onTrack: jest.fn() });
+  await flush();
+  expect(reports.at(-1)?.state).toBe('gathering');
+  jest.advanceTimersByTime(2000); await flush();
+  expect(reports.at(-1)?.state).toBe('signaling');
+  const socket = FakeSocket.latest; socket.onopen?.();
+  expect(socket.send).toHaveBeenCalledTimes(2);
+  expect(JSON.parse(socket.send.mock.calls[1][0]).sdp).toContain('browser.local');
+  FakePeer.latest.iceGatheringState = 'complete'; FakePeer.latest.onicegatheringstatechange?.();
+  expect(FakeSocket.latest).toBe(socket); expect(socket.send).toHaveBeenCalledTimes(2);
+  stop(); expect(jest.getTimerCount()).toBe(0);
+});
+
+test('no local candidate remains unknown and cannot bypass the original gathering deadline', async () => {
+  FakePeer.initialGatheringState = 'gathering'; FakePeer.initialSdp = videoSdp;
+  const reports: DirectProbeResult[] = [];
+  const stop = startDirectVideoSession('wss://same-origin', 'access', value => reports.push(value), { onTrack: jest.fn() });
+  await flush(); jest.advanceTimersByTime(2000); await flush();
+  expect(reports.at(-1)?.state).toBe('gathering');
+  jest.advanceTimersByTime(6000);
+  expect(reports.at(-1)?.reason).toBe('gathering_deadline');
+  stop(); expect(jest.getTimerCount()).toBe(0);
+});
+
 test.each(['private-session', 'A'.repeat(16), '1'.repeat(32)])('invalid journal correlation allocates no peer: %s', historySession => {
   const previous = FakePeer.constructions;
   expect(() => startDirectVideoSession('wss://same-origin', 'access', () => {},
@@ -325,7 +354,8 @@ test('echo-only answers and bidirectional media never satisfy the video permissi
 });
 test('video binding rejects wrong peers, nil captures, oversized geometry and repeated metadata', async () => {
   for (const bad of [`SV1 ${'b'.repeat(32)} ${epoch} 960 540`, `SV1 ${sid} 00000000-0000-0000-0000-000000000000 960 540`,
-    `SV1 ${sid} ${epoch} 1920 1080`, `SV1 ${sid} ${epoch} 0960 540`, '{}']) expect(parseVideoBinding(bad, sid)).toBeNull();
+    `SV1 ${sid} ${epoch} 8192 8192`, `SV1 ${sid} ${epoch} 0960 540`, '{}']) expect(parseVideoBinding(bad, sid)).toBeNull();
+  expect(parseVideoBinding(`SV1 ${sid} ${epoch} 1920 1080`, sid)).toEqual({ captureEpoch: epoch, width: 1920, height: 1080 });
   const { reports, stop, peer } = await videoConnected();
   peer.channel.onmessage?.({ data: `SV1 ${sid} ${epoch} 960 540` });
   peer.channel.onmessage?.({ data: `SV1 ${sid} ${epoch} 960 540` });

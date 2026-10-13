@@ -125,6 +125,8 @@ class UpdateDeviceRequest(BaseModel):
 # ── Response ──────────────────────────────────────────────────────────────────
 
 class DeviceResponse(BaseModel):
+    card_viewers: int | None = Field(default=None, ge=0, le=128)
+    stream_viewers: int | None = Field(default=None, ge=0, le=128)
     """Ответ на GET/POST/PUT device — все поля из DB + meta + live-телеметрия из Redis."""
 
     id: uuid.UUID

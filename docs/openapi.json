@@ -1929,6 +1929,65 @@
         }
       }
     },
+    "/api/v1/devices/{device_id}/viewers": {
+      "post": {
+        "tags": [
+          "devices"
+        ],
+        "summary": "Pulse Device Card Viewer",
+        "operationId": "pulse_device_card_viewer_api_v1_devices__device_id__viewers_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "device_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Device Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DeviceViewerPulse"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "title": "Response Pulse Device Card Viewer Api V1 Devices  Device Id  Viewers Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/devices/me": {
       "get": {
         "tags": [
@@ -14387,6 +14446,32 @@
       },
       "DeviceResponse": {
         "properties": {
+          "card_viewers": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "maximum": 128.0,
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Card Viewers"
+          },
+          "stream_viewers": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "maximum": 128.0,
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Stream Viewers"
+          },
           "id": {
             "type": "string",
             "format": "uuid",
@@ -14683,8 +14768,7 @@
           "created_at",
           "updated_at"
         ],
-        "title": "DeviceResponse",
-        "description": "Ответ на GET/POST/PUT device — все поля из DB + meta + live-телеметрия из Redis."
+        "title": "DeviceResponse"
       },
       "DeviceStatusCounts": {
         "properties": {
@@ -14728,6 +14812,32 @@
       },
       "DeviceStatusResponse": {
         "properties": {
+          "card_viewers": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "maximum": 128.0,
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Card Viewers"
+          },
+          "stream_viewers": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "maximum": 128.0,
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Stream Viewers"
+          },
           "id": {
             "type": "string",
             "format": "uuid",
@@ -15037,6 +15147,26 @@
         ],
         "title": "DeviceStatusResponse",
         "description": "Расширенный ответ для GET /devices/{id}/status — добавляет live из Redis."
+      },
+      "DeviceViewerPulse": {
+        "properties": {
+          "session": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{32}$",
+            "title": "Session"
+          },
+          "active": {
+            "type": "boolean",
+            "title": "Active",
+            "default": true
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "session"
+        ],
+        "title": "DeviceViewerPulse"
       },
       "DiscoverRequest": {
         "properties": {

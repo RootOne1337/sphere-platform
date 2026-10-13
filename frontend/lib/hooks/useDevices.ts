@@ -16,6 +16,8 @@ export interface Device {
   status: 'online' | 'offline' | 'connecting' | 'busy' | 'error' | 'maintenance' | 'unknown';
   agent_version?: string | null;
   agent_version_code?: number | null;
+  card_viewers?: number | null;
+  stream_viewers?: number | null;
   battery_level: number | null;
   cpu_usage: number | null;
   ram_usage_mb: number | null;

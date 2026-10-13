@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import asyncio
+import hashlib
 import logging
 import uuid
 from datetime import datetime, timezone
@@ -11,11 +12,12 @@ from typing import Any, Literal
 
 from fastapi import APIRouter, Cookie, Depends, Header, HTTPException, Query, Response
 from fastapi import status as http_status
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 from redis.exceptions import RedisError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.core.dependencies import require_permission
+from backend.database import redis_client
 from backend.database.engine import get_db
 from backend.database.redis_client import get_redis_binary
 from backend.models.user import User
@@ -43,9 +45,31 @@ from backend.services.cache_service import CacheService
 from backend.services.device_registration_service import DeviceRegistrationService
 from backend.services.device_service import DeviceService
 from backend.services.device_status_cache import DeviceStatusCache
+from backend.services.device_viewers import DeviceViewers
 
 router = APIRouter(prefix="/devices", tags=["devices"])
 logger = logging.getLogger(__name__)
+
+
+class DeviceViewerPulse(BaseModel):
+    model_config = ConfigDict(extra="forbid", strict=True)
+    session: str = Field(pattern=r"^[0-9a-f]{32}$")
+    active: bool = True
+
+
+@router.post("/{device_id}/viewers")
+async def pulse_device_card_viewer(
+    device_id: uuid.UUID, pulse: DeviceViewerPulse, response: Response,
+    current_user: User = require_permission("device:read"), db: AsyncSession = Depends(get_db),
+) -> dict:
+    svc = DeviceService(db, CacheService())
+    await svc.get_device(device_id, current_user.org_id)
+    response.headers["Cache-Control"] = "private, no-store"
+    viewers = DeviceViewers(redis_client.redis)
+    member = hashlib.sha256(f"{current_user.id}:{pulse.session}".encode()).hexdigest()[:32]
+    accepted = await viewers.touch(str(current_user.org_id), str(device_id), "card", member, pulse.active)
+    counts = await viewers.counts(str(current_user.org_id), [str(device_id)])
+    return {"available": counts is not None, "registered": accepted, "counts": counts.get(str(device_id)) if counts else None}
 
 
 def get_device_service(db: AsyncSession = Depends(get_db)) -> DeviceService:
@@ -200,8 +224,12 @@ async def list_devices(
     total = len(matching_ids)
     page_ids = matching_ids[(page - 1) * per_page : page * per_page]
     devices = await svc.get_devices_by_ids(page_ids, current_user.org_id)
+    viewer_counts = await DeviceViewers(redis_client.redis).counts(str(current_user.org_id), [str(d.id) for d in devices])
     # Enrich only the returned page; aggregate candidates were read through one MGET.
     for device in devices:
+        count = (viewer_counts or {}).get(str(device.id))
+        device.card_viewers = count["card"] if count else None
+        device.stream_viewers = count["stream"] if count else None
         device.status = effective_statuses.get(device.id, "unknown")
         live = live_statuses.get(str(device.id))
         if live:

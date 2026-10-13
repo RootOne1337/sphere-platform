@@ -3,6 +3,8 @@ import userEvent from '@testing-library/user-event';
 import { api } from '@/lib/api';
 import { createTestQueryClient, createWrapper } from '../helpers';
 import { DeviceInspectorDetail } from '@/src/features/devices/DeviceInspectorDetail';
+// Presence pulses are exercised separately; this suite verifies device commands.
+jest.mock('@/src/features/devices/DeviceViewerPresence', () => ({ DeviceViewerPresence: () => null }));
 import { DeviceHistoryPanel, validateDeviceHistory, validateDeviceDiagnostics, validateDeviceLogs } from '@/src/features/devices/DeviceOperationsPanels';
 import { validateDeviceSnapshot } from '@/lib/hooks/useDeviceSnapshot';
 import { toast } from 'sonner';

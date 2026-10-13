@@ -5,7 +5,7 @@ Regenerate with `python -m scripts.export_api_docs`; verify with `--check`.
 Use the FastAPI/Pydantic versions pinned in `backend/requirements.txt`.
 The exporter does not run startup hooks or send HTTP requests.
 
-**187 HTTP operations across 148 paths.**
+**188 HTTP operations across 149 paths.**
 
 Full parameters, request bodies, response schemas and declared security schemes:
 [OpenAPI JSON](openapi.json). Manual explanations:
@@ -71,6 +71,7 @@ for tested behavior and remaining limits.
 | `GET` | `/api/v1/devices/{device_id}/stream-diagnostics` | devices | 200, 422 | Последний подтверждённый heartbeat-отчёт о стадиях Android-стрима |
 | `GET` | `/api/v1/devices/{device_id}/stream-sessions` | direct-transport-canary, stream-diagnostics | 200, 422 | Read the last ten bounded stream diagnostic sessions |
 | `POST` | `/api/v1/devices/{device_id}/ui-hierarchy` | devices | 200, 422 | Прочитать ограниченный снимок дерева Android UI Automator |
+| `POST` | `/api/v1/devices/{device_id}/viewers` | devices | 200, 422 | Pulse Device Card Viewer |
 | `POST` | `/api/v1/discovery/scan` | discovery | 200, 422 | Сканировать подсеть через PC Agent для обнаружения ADB-устройств |
 | `GET` | `/api/v1/event-triggers` | event-triggers | 200, 422 | Список EventTrigger'ов с фильтрацией |
 | `POST` | `/api/v1/event-triggers` | event-triggers | 201, 422 | Создать EventTrigger |

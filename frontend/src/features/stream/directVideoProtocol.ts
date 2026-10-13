@@ -25,6 +25,8 @@ export function parseVideoBinding(value: unknown, session: string): DirectVideoB
   const match = /^SV1 ([0-9a-f]{32}) ([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}) ([1-9][0-9]{0,4}) ([1-9][0-9]{0,4})$/.exec(value);
   if (!match || match[1] !== session || match[2] === '00000000-0000-0000-0000-000000000000') return null;
   const width = Number(match[3]), height = Number(match[4]);
-  if (width > 16384 || height > 16384 || Math.ceil(width / 16) * Math.ceil(height / 16) > 3600) return null;
+  // AVC source admission and receiver negotiation now cover levels up to5.2.
+  // Keep a finite picture budget; level3.1 must not silently reject native1080p.
+  if (width > 8192 || height > 8192 || Math.ceil(width / 16) * Math.ceil(height / 16) > 36864) return null;
   return { captureEpoch: match[2], width, height };
 }
