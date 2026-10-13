@@ -269,8 +269,8 @@ class DirectProbeRuntime:
                                  or not status.agent_version_code or status.agent_version_code < minimum):
                 raise InvalidDirectProbe("video_probe_not_admitted")
             viewer.session = secrets.token_hex(16)
-            binding = dict(session=viewer.session, device=viewer.device, org=viewer.org,
-                           user=viewer.user, worker=self.worker, agent_session=status.ws_session_id)
+            binding: dict[str, Any] = dict(session=viewer.session, device=viewer.device, org=viewer.org,
+                                          user=viewer.user, worker=self.worker, agent_session=status.ws_session_id)
             if viewer.video:
                 binding["media"] = LIVE_VIDEO_MODE if viewer.live else VIDEO_MODE
             if viewer.video and status.agent_version_code and status.agent_version_code >= SHARED_PEER_MIN_AGENT_CODE:

@@ -18315,6 +18315,11 @@
             "type": "boolean",
             "title": "Legacy Video Handover Enabled",
             "default": false
+          },
+          "shared_input_enabled": {
+            "type": "boolean",
+            "title": "Shared Input Enabled",
+            "default": false
           }
         },
         "type": "object",

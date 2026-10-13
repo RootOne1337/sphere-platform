@@ -712,3 +712,14 @@ native ACK, focus/held keys, permissions/mute/autoplay, sync и resource budgets
 **OPEN**
 
 Отложено пользователем. Last10 stream sessions/7days не доказывают месячную историю инфраструктуры. Требуется аудит historian storage, retention, durability при restart и calendar/range UI.
+
+
+### CHAT-27 · Fullscreen stream, полупрозрачная навигация и touch-клиент
+
+**OPEN**
+
+Запрошены fullscreen, компактная полупрозрачная панель системных кнопок,
+явное открытие панели без hover на телефоне, safe-area/viewport/rotation и
+реальные сенсорные жесты. Уточнён сценарий телефона-hotspot одновременно
+с работающим laptop peer и требование 20+ участников. Native keyboard/IME
+остаётся CHAT-19. [Полный контракт и наблюдение PH030](../audits/2026-10-14/DIRECT-INPUT-UX-REQUIREMENTS.md).

@@ -3177,19 +3177,23 @@
         "EP-029"
       ],
       "acceptedScope": "Installed independent per-tab card counts and authenticated viewer stream counts; real two-card exact cleanup passed. Shared control runtime is not installed.",
-      "remaining": "Общий native input arbiter, multi-peer video fanout, local emulator input coexistence and ten simultaneous controlling viewers require runtime integration/acceptance.",
+      "remaining": "Shared v2 input and multi-peer encoded fanout are implemented in candidate source973 but not installed/accepted. Require live10 controllers, then20+ with explicit memory/JNI/network budgets, physical emulator input coexistence and independent peer cleanup. Viewer counts do not prove control readiness.",
       "evidence": [
         "docs/audits/2026-10-10/DIRECT-PROBE-TURN-AND-LAPTOP.json",
         "docs/audits/2026-10-10/STREAM-SESSION-DIAGNOSTICS-INSTALLED.json",
         "docs/audits/2026-10-13/INPUT-OPEN-CANCELLATION-OBSERVATION.json",
         "docs/audits/2026-10-13/INPUT-OPEN-CANCELLATION.md",
-        "docs/audits/2026-10-13/DIRECT-SOURCE-QUALITY-INSTALLED.json"
+        "docs/audits/2026-10-13/DIRECT-SOURCE-QUALITY-INSTALLED.json",
+        "docs/audits/2026-10-13/SHARED-DIRECT-INPUT.md",
+        "docs/audits/2026-10-14/DIRECT-INPUT-UX-REQUIREMENTS.md"
       ],
       "sourcePaths": [
         "backend/websocket/continuous_runtime.py",
         "backend/websocket/stream_bridge.py",
         "frontend/app/(dashboard)/devices/page.tsx",
-        "frontend/components/sphere/DeviceStream.tsx"
+        "frontend/components/sphere/DeviceStream.tsx",
+        "backend/websocket/shared_peer_lease.py",
+        "android/app/src/main/kotlin/com/sphereplatform/agent/commands/SharedDirectInputController.kt"
       ],
       "fleetAccepted": false
     },
@@ -3202,9 +3206,10 @@
         "EP-029"
       ],
       "acceptedScope": "Future requirement captured. Existing navigation/text actions are distinct from a complete physical-keyboard/IME/audio transport.",
-      "remaining": "Keyboard focus, composition/IME, held keys and native acknowledgement; audio capture/playback permissions, mute/autoplay, sync, compatibility and bounded resources require explicit implementation and acceptance.",
+      "remaining": "Explicit physical-keyboard focus on stream; Unicode, IME/composition/paste/editing, key-down/up, modifiers and native receipts without showing an Android soft keyboard unnecessarily. Clear held keys on lifecycle loss, never record typed contents. Same direct media peer for keyboard and navigation. Audio permissions/mute/autoplay/sync and bounded compatibility remain open.",
       "evidence": [
-        "docs/audits/2026-10-10/DIRECT-PROBE-TURN-AND-LAPTOP.json"
+        "docs/audits/2026-10-10/DIRECT-PROBE-TURN-AND-LAPTOP.json",
+        "docs/audits/2026-10-14/DIRECT-INPUT-UX-REQUIREMENTS.md"
       ],
       "sourcePaths": [
         "frontend/components/sphere/DeviceStream.tsx",
@@ -3363,6 +3368,26 @@
         "backend/websocket/stream_session_history.py",
         "infrastructure/monitoring/collection/prometheus.yml"
       ]
+    },
+    {
+      "id": "CHAT-27",
+      "title": "Fullscreen stream, полупрозрачная навигация и touch-клиент",
+      "state": "OPEN",
+      "productItems": [
+        "EP-020",
+        "EP-029"
+      ],
+      "acceptedScope": "Requirement recorded; current responsive quality dialog does not establish fullscreen/mobile input acceptance.",
+      "remaining": "Fullscreen feature detection/exit/focus, hover/focus navigation tray with explicit touch toggle, safe-area/dynamic viewport/rotation, actual phone hotspot and Pointer Events/capture geometry acceptance.",
+      "evidence": [
+        "docs/audits/2026-10-14/DIRECT-INPUT-UX-REQUIREMENTS.md"
+      ],
+      "sourcePaths": [
+        "frontend/components/sphere/DeviceStream.tsx",
+        "frontend/src/features/stream/AndroidNavigationBar.tsx",
+        "frontend/src/features/stream/continuousPointer.ts"
+      ],
+      "fleetAccepted": false
     }
   ],
   "authoritativeEntrypoints": [

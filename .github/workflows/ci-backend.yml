@@ -37,13 +37,22 @@ jobs:
       - name: Verify private local pilot files are excluded from Docker context
         run: python tests/containers/dockerignore_probe.py
       - name: Build the shipped production image
-        run: >-
-          docker build --platform linux/amd64 --build-arg BUILD_SHA="$SPHERE_BUILD_SHA"
-          --build-arg PYTHON_BASE_IMAGE=public.ecr.aws/docker/library/python@sha256:2b4f19dae3a777dfc3b76730bda1e82e1f66ab2a2686fa93ca78edbfb4f04ffe
-          --label "org.opencontainers.image.revision=$SPHERE_BUILD_SHA"
-          --label "io.sphere.ci.run=$SPHERE_CI_RUN_ID"
-          --label "io.sphere.ci.attempt=$SPHERE_CI_RUN_ATTEMPT"
-          -f backend/Dockerfile -t "$SPHERE_REVIEW_IMAGE" .
+        run: |
+          # Both registries must serve this exact reviewed manifest. A mirror
+          # quota/network failure may select its canonical origin, never a tag
+          # or a different base. Application build failures are not retried.
+          digest=sha256:2b4f19dae3a777dfc3b76730bda1e82e1f66ab2a2686fa93ca78edbfb4f04ffe
+          base="public.ecr.aws/docker/library/python@$digest"
+          if ! docker pull --platform linux/amd64 "$base"; then
+            base="docker.io/library/python@$digest"
+            docker pull --platform linux/amd64 "$base"
+          fi
+          docker build --platform linux/amd64 --build-arg BUILD_SHA="$SPHERE_BUILD_SHA" \
+            --build-arg "PYTHON_BASE_IMAGE=$base" \
+            --label "org.opencontainers.image.revision=$SPHERE_BUILD_SHA" \
+            --label "io.sphere.ci.run=$SPHERE_CI_RUN_ID" \
+            --label "io.sphere.ci.attempt=$SPHERE_CI_RUN_ATTEMPT" \
+            -f backend/Dockerfile -t "$SPHERE_REVIEW_IMAGE" .
       - name: Run bootstrap entry points without network or source mounts
         run: |
           docker run --rm --network none --read-only --cap-drop ALL \
