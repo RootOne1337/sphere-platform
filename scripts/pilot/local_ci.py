@@ -23,7 +23,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 from scripts.pilot.atomic_json import write_json
-from scripts.pilot.resource_guard import collect, evaluate
+from scripts.pilot.resource_guard import admitted_findings, collect, evaluate
 from scripts.pilot.windows_ci_job import WindowsChildJob
 
 SHA = re.compile(r"[0-9a-f]{40}\Z")
@@ -460,12 +460,15 @@ def run_profile(root: Path, work: Path, run_dir: Path, profile: str, args, recei
     def step(label: str, argv: list[str], cwd: Path = work, extra: dict | None = None,
              timeout: int = 1200) -> None:
         observation = collect(root)
-        findings = evaluate(observation, min_ram_gib=12 if profile == "android" else 4)
+        raw_findings = evaluate(observation, min_ram_gib=12 if profile == "android" else 4)
+        findings = admitted_findings(raw_findings,
+            allow_degraded_volume=getattr(args, "allow_degraded_volume", False))
         if findings:
             raise Refused("resource_guard:" + ",".join(findings))
         print(json.dumps({"profile": profile, "step": label, "state": "started"}), flush=True)
         item = {"name": label, **run_step(argv, cwd, env | (extra or {}),
                 run_dir / f"{profile}-{len(result['steps'])}.log", timeout=timeout)}
+        item["resourcePreflight"] = observation | {"findings": raw_findings, "admissionFindings": findings}
         result["steps"].append(item)
         write_json(result_path, result)
         if item["exitCode"] != 0 or item["timedOut"]:
@@ -522,13 +525,21 @@ def run_profile(root: Path, work: Path, run_dir: Path, profile: str, args, recei
                        SPHERE_SERVER_URL="http://10.0.2.2:8000")
             result["javaVersion"] = command([str(Path(env["JAVA_HOME"]) / "bin" / ("java.exe" if os.name == "nt" else "java")), "--version"], root)
             gradle = str(android / ("gradlew.bat" if os.name == "nt" else "gradlew"))
-            flags = ["--offline", "--no-daemon", "--max-workers=2", "-Dorg.gradle.parallel=false"]
-            result["sourceMode"] = "verified-component-workspace-with-existing-gradle-cache"
+            # Old output directories can be unreadable after a filesystem incident.
+            # Never borrow old test reports/classes; keep every run's outputs private.
+            output_base = run_dir / "android-build"
+            init_script = run_dir / "android-output.gradle"
+            init_script.write_text('allprojects { p -> p.layout.buildDirectory.set(new File(' +
+                json.dumps(output_base.as_posix()) + ', p.name)) }\n', encoding="utf-8")
+            flags = ["--offline", "--no-daemon", "--max-workers=2", "-Dorg.gradle.parallel=false",
+                     "--init-script", str(init_script), "--project-cache-dir", str(run_dir / "gradle-project-cache"),
+                     "--no-configuration-cache"]
+            result["sourceMode"] = "verified-component-workspace-with-fresh-build-output"
             ordinary = [":app:testDevDebugUnitTest", ":app:testDevReleaseUnitTest",
                         ":app:testEnterpriseDebugUnitTest", ":app:testEnterpriseReleaseUnitTest"]
             clean_tests = [task.replace(":app:test", ":app:cleanTest") for task in ordinary]
             step("ordinary-all-unit-variants", [gradle, *flags, *clean_tests, *ordinary], android, timeout=2400)
-            files = [p for task in ordinary for p in (android / "app/build/test-results" / task.split(":")[-1]).glob("TEST-*.xml")]
+            files = [p for task in ordinary for p in (output_base / "app/test-results" / task.split(":")[-1]).glob("TEST-*.xml")]
             result["ordinaryTests"] = junit_counts(files, started)
             canary_started = time.time()
             canary = {"SPHERE_DIRECT_TRANSPORT_CANARY": "true",
@@ -538,7 +549,7 @@ def run_profile(root: Path, work: Path, run_dir: Path, profile: str, args, recei
             direct = [ordinary[0], ordinary[2]]
             step("direct-planar-continuous-unit-variants", [gradle, *flags,
                  *[task.replace(":app:test", ":app:cleanTest") for task in direct], *direct], android, canary, timeout=2400)
-            files = [p for task in direct for p in (android / "app/build/test-results" / task.split(":")[-1]).glob("TEST-*.xml")]
+            files = [p for task in direct for p in (output_base / "app/test-results" / task.split(":")[-1]).glob("TEST-*.xml")]
             result["tests"] = junit_counts(files, canary_started)
             for counts in [result["tests"], result["ordinaryTests"]]:
                 if counts["failures"] or counts["errors"]:
@@ -586,10 +597,15 @@ def run(args) -> dict:
                    "source": source, "executorSha256": hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),
                    "profiles": {}, "rawLogsUploaded": False, "productionPackagingAccepted": False,
                    "publicForkJobsAccepted": False, "workflowMode": "maintainer-local-executor"}
+        receipt["volumeExceptionRequested"] = getattr(args, "allow_degraded_volume", False)
         receipt["retentionBeforeRun"] = retention
         write_json(run_dir / "receipt.json", receipt)
         try:
-            if evaluate(collect(root)):
+            observation = collect(root)
+            findings = evaluate(observation)
+            receipt["resourcePreflight"] = observation | {"findings": findings}
+            write_json(run_dir / "receipt.json", receipt)
+            if admitted_findings(findings, allow_degraded_volume=receipt["volumeExceptionRequested"]):
                 raise Refused("resource_guard_before_checkout")
             git(root, "worktree", "add", "--detach", str(work), args.sha)
             for profile in args.profiles:
@@ -650,6 +666,8 @@ def main() -> int:
     parser.add_argument("--android-home", default=os.environ.get("ANDROID_HOME"))
     parser.add_argument("--publish", action="store_true")
     parser.add_argument("--report-url")
+    parser.add_argument("--allow-degraded-volume", action="store_true",
+                        help="Explicit operator exception for a measured volume warning only")
     args = parser.parse_args()
     if len(args.profiles) != len(set(args.profiles)):
         parser.error("Profiles must be unique")

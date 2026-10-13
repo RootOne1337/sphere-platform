@@ -525,6 +525,21 @@ class BackendInstallerTests(unittest.TestCase):
             self.assertFalse(state["installed"])
             self.assertEqual(len(calls), 3)
 
+    def test_authorized_volume_exception_is_recorded_without_hiding_warning(self):
+        with self.installation(findings=["volume_not_ready"]) as (artifact, _, _, state):
+            result = installer.execute(artifact, SOURCE, IMAGE, CURRENT, True, allow_degraded_volume=True)
+            self.assertTrue(state["installed"])
+            self.assertEqual(result["resourceFindings"], ["volume_not_ready"])
+            self.assertEqual(result["admissionFindings"], [])
+            self.assertTrue(result["volumeExceptionApplied"])
+
+    def test_authorized_volume_exception_still_refuses_low_memory(self):
+        with self.installation(findings=["volume_not_ready", "ram_headroom_low"]) as (artifact, _, calls, state):
+            with self.assertRaisesRegex(ValueError, "Host not admitted"):
+                installer.execute(artifact, SOURCE, IMAGE, CURRENT, True, allow_degraded_volume=True)
+            self.assertFalse(state["installed"])
+            self.assertEqual(len(calls), 3)
+
     def test_migration_mismatch_prevents_even_compose_planning(self):
         with self.installation() as (artifact, _, calls, _), \
                 patch.object(installer, "schema_heads", return_value=["different-head"]):

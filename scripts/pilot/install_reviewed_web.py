@@ -17,7 +17,7 @@ from typing import Any
 from uuid import uuid4
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
-from scripts.pilot.resource_guard import collect, evaluate  # noqa: E402
+from scripts.pilot.resource_guard import admitted_findings, collect, evaluate  # noqa: E402
 from scripts.pilot.reviewed_web_artifact import admit, bounded_json, require  # noqa: E402
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -165,7 +165,8 @@ def freeze_compose(prefix: list[str], baseline: dict[str, Any], path: Path,
     return cmd
 
 
-def execute(artifact: Path, source: str, expected_image_id: str, apply: bool) -> dict[str, Any]:
+def execute(artifact: Path, source: str, expected_image_id: str, apply: bool,
+            *, allow_degraded_volume: bool = False) -> dict[str, Any]:
     require(bool(re.fullmatch(r"sha256:[a-f0-9]{64}", expected_image_id)), "Expected independent CI image digest")
     artifact = private_path(artifact)
     admitted = admit(artifact, source)
@@ -174,6 +175,7 @@ def execute(artifact: Path, source: str, expected_image_id: str, apply: bool) ->
     check_ci(receipt)
     host = collect(ROOT)
     findings = evaluate(host)
+    admission_findings = admitted_findings(findings, allow_degraded_volume=allow_degraded_volume)
     before = snapshot()
     current = inspect(UI)
     require(current["Id"] == before[UI]["id"], "UI changed during planning")
@@ -210,6 +212,8 @@ def execute(artifact: Path, source: str, expected_image_id: str, apply: bool) ->
     plan = {"sourceRevision": source, "runId": admitted["runId"], "imageId": admitted["imageId"],
             "archiveBytes": admitted["archiveBytes"], "previousUi": before[UI], "containerCount": len(before),
             "observedAtUtc": datetime.now(timezone.utc).isoformat(), "resourceFindings": findings,
+            "admissionFindings": admission_findings, "volumeExceptionRequested": allow_degraded_volume,
+            "volumeExceptionApplied": allow_degraded_volume and "volume_not_ready" in findings,
             "applyRequested": apply, "onlyUiImageAndBuildRemovalDelta": True, "backendPreserved": True,
             "previousComposeFileCount": len(files), "candidateComposeFileCount": 2,
             "completeBaselineRoundtripVerified": True,
@@ -217,15 +221,15 @@ def execute(artifact: Path, source: str, expected_image_id: str, apply: bool) ->
     write(output / "plan.json", plan)
     if not apply:
         return plan
-    require(not findings, "Host not admitted; no image loaded or runtime stopped")
-    # Before using --apply on the incident host, operator must also accept the
-    # new boot/Wininit repair report per HOST-FILESYSTEM-INCIDENT.md.
-    require(not evaluate(collect(ROOT)), "Host changed before image load")
+    require(not admission_findings, "Host not admitted; no image loaded or runtime stopped")
+    require(not admitted_findings(evaluate(collect(ROOT)), allow_degraded_volume=allow_degraded_volume),
+            "Host changed before image load")
     preserved(before, snapshot())
     command(["docker", "image", "load", "--input", str(artifact / "image.tar.gz")], timeout=180)
     image = json.loads(command(["docker", "image", "inspect", admitted["imageTag"]]))[0]
     runtime_id = loaded_image_id(artifact, image, admitted["imageId"])
-    require(not evaluate(collect(ROOT)), "Host changed before UI replacement")
+    require(not admitted_findings(evaluate(collect(ROOT)), allow_degraded_volume=allow_degraded_volume),
+            "Host changed before UI replacement")
     preserved(before, snapshot())
     require(inspect(UI)["Id"] == before[UI]["id"], "UI changed before replacement")
     write(output / "intent.json", {"sourceRevision": source, "beforeUi": before[UI], "imageId": image["Id"]})
@@ -266,10 +270,13 @@ def main() -> int:
     parser.add_argument("--artifact", type=Path, required=True)
     parser.add_argument("--source", required=True)
     parser.add_argument("--expected-image-id", required=True, help="Image ID from authenticated CI logs/admission, not the downloaded receipt")
-    parser.add_argument("--apply", action="store_true", help="Install only after host/postboot acceptance")
+    parser.add_argument("--apply", action="store_true", help="Install the admitted UI image")
+    parser.add_argument("--allow-degraded-volume", action="store_true",
+                        help="Explicit operator exception for the measured volume warning only")
     args = parser.parse_args()
     try:
-        print(json.dumps(execute(args.artifact, args.source, args.expected_image_id, args.apply)))
+        print(json.dumps(execute(args.artifact, args.source, args.expected_image_id, args.apply,
+                                 allow_degraded_volume=args.allow_degraded_volume)))
     except (ValueError, OSError, subprocess.SubprocessError, KeyError, TypeError):
         print(json.dumps({"runtimeInstalled": None, "state": "not-admitted", "detail": "Review private plan/CI/host evidence"}))
         return 2

@@ -79,6 +79,28 @@ def test_full_repair_needed_blocks_build_despite_good_disk_ram_and_commit():
     assert guard.evaluate(snapshot) == ["volume_not_ready"]
 
 
+def test_volume_exception_is_explicit_and_keeps_raw_measurements():
+    snapshot = healthy() | {"volumeHealthStatus": "Warning", "volumeOperationalStatus": ["Full Repair Needed"]}
+    findings = guard.evaluate(snapshot)
+    assert guard.admitted_findings(findings) == ["volume_not_ready"]
+    assert guard.admitted_findings(findings, allow_degraded_volume=True) == []
+    assert findings == ["volume_not_ready"]
+    assert snapshot["volumeOperationalStatus"] == ["Full Repair Needed"]
+
+
+@pytest.mark.parametrize("finding", ["disk_headroom_low", "ram_headroom_low", "commit_headroom_low",
+    "disk_measurement_unavailable", "memory_measurement_unavailable", "commit_measurement_unavailable",
+    "volume_health_unavailable", "unsupported_host"])
+def test_volume_exception_never_waives_other_refusals(finding):
+    assert guard.admitted_findings(["volume_not_ready", finding], allow_degraded_volume=True) == [finding]
+
+
+@pytest.mark.parametrize("value", [1, "true", None, []])
+def test_volume_exception_rejects_implicit_truthy_values(value):
+    with pytest.raises(ValueError, match="explicit boolean"):
+        guard.admitted_findings(["volume_not_ready"], allow_degraded_volume=value)
+
+
 @pytest.mark.parametrize("health,operations", [
     (None, ["OK"]), ("Healthy", None), ("Healthy", []), ("Healthy", "OK"),
     ("Healthy", [None]), ("", ["OK"]),

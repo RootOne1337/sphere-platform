@@ -29,7 +29,7 @@ from scripts.pilot.install_reviewed_web import (  # noqa: E402
     loaded_image_id,
     write,
 )
-from scripts.pilot.resource_guard import collect, evaluate  # noqa: E402
+from scripts.pilot.resource_guard import admitted_findings, collect, evaluate  # noqa: E402
 from scripts.pilot.reviewed_backend_artifact import admit  # noqa: E402
 from scripts.pilot.reviewed_image_archive import bounded_json, require  # noqa: E402
 
@@ -285,7 +285,7 @@ def execute(artifact: Path, source: str, expected_image_id: str, expected_curren
             direct_probe_device: str | None = None, disable_direct_probe: bool = False,
             readonly_video_probe: bool = False, live_video: bool = False,
             direct_probe_devices: tuple[str, ...] | None = None, direct_input: bool = False,
-            mdns_config_file: Path | None = None) -> dict[str, Any]:
+            mdns_config_file: Path | None = None, *, allow_degraded_volume: bool = False) -> dict[str, Any]:
     admitted_env = probe_environment(direct_probe_device, disable_direct_probe, readonly_video_probe, live_video, direct_probe_devices, direct_input)
     admitted_env.update(mdns_environment(mdns_config_file))
     require(bool(re.fullmatch(r"sha256:[a-f0-9]{64}", expected_image_id)), "Expected independent CI image ID")
@@ -332,10 +332,14 @@ def execute(artifact: Path, source: str, expected_image_id: str, expected_curren
     candidate = json.loads(command(candidate_cmd + ["config", "--format", "json"]))
     validate_delta(old, candidate, admitted["imageTag"], direct_probe_device, disable_direct_probe, readonly_video_probe, live_video, direct_probe_devices, direct_input, mdns_config_file)
     catalog = ota_hash()
+    effective_env = candidate["services"]["backend"].get("environment", {})
     findings = evaluate(collect(ROOT))
+    admission_findings = admitted_findings(findings, allow_degraded_volume=allow_degraded_volume)
     plan = {"sourceRevision": source, "runId": admitted["runId"], "imageId": admitted["imageId"],
         "archiveBytes": admitted["archiveBytes"], "previousBackend": before[BACKEND], "sourceChanges": changes,
         "schemaHeads": heads, "schemaMigrationPerformed": False, "resourceFindings": findings,
+        "admissionFindings": admission_findings, "volumeExceptionRequested": allow_degraded_volume,
+        "volumeExceptionApplied": allow_degraded_volume and "volume_not_ready" in findings,
         "observedAtUtc": datetime.now(timezone.utc).isoformat(), "applyRequested": apply,
         "previousComposeFileCount": len(files), "candidateComposeFileCount": 2,
         "completeBaselineRoundtripVerified": True,
@@ -346,16 +350,24 @@ def execute(artifact: Path, source: str, expected_image_id: str, expected_curren
         "directInputEnabled": direct_input,
         "localMdnsDiscoveryConfigured": mdns_config_file is not None,
         "directProbeExplicitlyDisabled": disable_direct_probe,
+        "effectiveTransportSettings": {
+            "directProbeEnabled": effective_env.get("DIRECT_TRANSPORT_PROBE_ENABLED") == "true",
+            "readOnlyVideoEnabled": effective_env.get("DIRECT_TRANSPORT_VIDEO_PROBE_ENABLED") == "true",
+            "primaryVideoEnabled": effective_env.get("DIRECT_TRANSPORT_LIVE_VIDEO_ENABLED") == "true",
+            "inputEnabled": effective_env.get("DIRECT_TRANSPORT_INPUT_ENABLED") == "true",
+        },
         "otaCatalogSha256": catalog, "reportDirectory": str(output), "runtimeInstalled": False}
     write(output / "plan.json", plan)
     if not apply:
         return plan
-    require(not findings and not evaluate(collect(ROOT)), "Host not admitted before image load")
+    require(not admission_findings and not admitted_findings(evaluate(collect(ROOT)),
+            allow_degraded_volume=allow_degraded_volume), "Host not admitted before image load")
     preserved(before, snapshot())
     require(inspect(BACKEND)["Id"] == before[BACKEND]["id"] and schema_heads(current) == heads,
             "Backend/database changed before load")
     runtime_id, archive_loaded = load_or_reuse_image(artifact, admitted)
-    require(not evaluate(collect(ROOT)), "Host not admitted before replacement")
+    require(not admitted_findings(evaluate(collect(ROOT)), allow_degraded_volume=allow_degraded_volume),
+            "Host not admitted before replacement")
     preserved(before, snapshot())
     require(inspect(BACKEND)["Id"] == before[BACKEND]["id"] and schema_heads(current) == heads,
             "Backend/database changed before replacement")
@@ -410,6 +422,8 @@ def main() -> int:
     parser.add_argument("--expected-image-id", required=True)
     parser.add_argument("--expected-current-source", required=True)
     parser.add_argument("--apply", action="store_true")
+    parser.add_argument("--allow-degraded-volume", action="store_true",
+                        help="Explicit operator exception for the measured volume warning only")
     probe = parser.add_mutually_exclusive_group()
     probe.add_argument("--direct-probe-device", help="Opt in only this canonical UUID to the diagnostic echo canary")
     probe.add_argument("--direct-probe-devices", nargs="+", help="Explicit reviewed fleet of 1..64 distinct canonical UUIDs")
@@ -427,7 +441,8 @@ def main() -> int:
         print(json.dumps(execute(args.artifact, args.source, args.expected_image_id, args.expected_current_source,
                                  args.apply, args.direct_probe_device, args.disable_direct_probe, args.readonly_video_probe,
                                  args.live_video, tuple(args.direct_probe_devices) if args.direct_probe_devices is not None else None,
-                                 args.direct_input, args.mdns_config_file)))
+                                 args.direct_input, args.mdns_config_file,
+                                 allow_degraded_volume=args.allow_degraded_volume)))
     except (ValueError, OSError, subprocess.SubprocessError, KeyError, TypeError):
         print(json.dumps({"runtimeInstalled": None, "state": "not-admitted", "detail": "Review private plan/CI/host evidence"}))
         return 2

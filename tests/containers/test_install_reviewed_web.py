@@ -206,11 +206,21 @@ class InstallTests(unittest.TestCase):
                     patch.object(installer, "catalog_hash", return_value="catalog-digest"):
                 with self.assertRaisesRegex(ValueError, "Host not admitted"):
                     installer.execute(artifact, SOURCE, IMAGE_ID, apply=True)
+                self.assertEqual(len(calls), 3)
+                calls.clear()
+                # The authorized volume warning must not mask a later RAM drop.
+                with patch.object(installer, "collect", side_effect=[host, host | {"availableRamBytes": 1}]), \
+                        self.assertRaisesRegex(ValueError, "Host changed before image load"):
+                    installer.execute(artifact, SOURCE, IMAGE_ID, apply=True, allow_degraded_volume=True)
             self.assertEqual(len(calls), 3)  # baseline, frozen roundtrip, candidate; no runtime mutation
             plans = list(private.glob("reviewed-web-install-*/plan.json"))
-            self.assertEqual(len(plans), 1)
-            self.assertFalse(json.loads(plans[0].read_text())["runtimeInstalled"])
-            self.assertEqual(json.loads(plans[0].read_text())["resourceFindings"], ["volume_not_ready"])
+            self.assertEqual(len(plans), 2)
+            recorded = [json.loads(plan.read_text()) for plan in plans]
+            self.assertTrue(all(not plan["runtimeInstalled"] for plan in recorded))
+            self.assertTrue(all(plan["resourceFindings"] == ["volume_not_ready"] for plan in recorded))
+            exception = next(plan for plan in recorded if plan["volumeExceptionRequested"])
+            self.assertEqual(exception["admissionFindings"], [])
+            self.assertTrue(exception["volumeExceptionApplied"])
 
     def test_self_reported_image_id_cannot_replace_independent_ci_admission(self):
         with patch.object(installer, "private_path", return_value=Path("unused")), \

@@ -76,6 +76,19 @@ def evaluate(snapshot: dict, *, min_disk_gib: float = 20, min_ram_gib: float = 4
     return findings
 
 
+def admitted_findings(findings: list[str], *, allow_degraded_volume: bool = False) -> list[str]:
+    """An explicit operator exception waives only a measured volume warning.
+
+    Keep the original findings in the operation receipt. Missing measurements,
+    disk/RAM/commit pressure and source/artifact integrity are never waived.
+    This is per invocation; it does not change the collector or scheduled jobs.
+    """
+    if not isinstance(allow_degraded_volume, bool):
+        raise ValueError("Volume exception must be an explicit boolean")
+    return [finding for finding in findings
+            if not (allow_degraded_volume and finding == "volume_not_ready")]
+
+
 def collect(path: Path) -> dict:
     snapshot = {"observedAt": datetime.now(timezone.utc).isoformat(),
                 "system": platform.system(), "freeDiskBytes": shutil.disk_usage(path).free,
@@ -114,6 +127,8 @@ def main() -> int:
     parser.add_argument("--min-disk-gib", type=float, default=20)
     parser.add_argument("--min-ram-gib", type=float, default=4)
     parser.add_argument("--max-commit-percent", type=float, default=85)
+    parser.add_argument("--allow-degraded-volume", action="store_true",
+                        help="Explicit operator exception for a measured volume warning only")
     args = parser.parse_args()
     snapshot = collect(args.path.resolve(strict=True))
     try:
@@ -122,7 +137,11 @@ def main() -> int:
                                        max_commit_percent=args.max_commit_percent)
     except ValueError as error:
         parser.error(str(error))
-    snapshot["buildAllowed"] = not snapshot["findings"]
+    snapshot["admissionFindings"] = admitted_findings(
+        snapshot["findings"], allow_degraded_volume=args.allow_degraded_volume)
+    snapshot["volumeExceptionRequested"] = args.allow_degraded_volume
+    snapshot["volumeExceptionApplied"] = args.allow_degraded_volume and "volume_not_ready" in snapshot["findings"]
+    snapshot["buildAllowed"] = not snapshot["admissionFindings"]
     if args.output:
         write_json(args.output, snapshot)
     print(json.dumps(snapshot))
