@@ -57,6 +57,60 @@ it('discards pre-startup keepalives after native admission refusal without repla
   expect(f.status(1, 2)).toBe(false);
 });
 
+it.each(['surface_control_lost', 'surface_hidden', 'control_mode_changed'])(
+  'a late exact pre-start refusal resolves retired %s without waiting for an owner that was not admitted', reason => {
+    const f = fixture(false);
+    f.controller.open(CAPTURE); f.bind(); f.advance(LIMITS.heartbeatMs);
+    f.controller.retire(reason);
+    expect(f.controller.state).toBe('fenced');
+    f.status(0, 5, 'startup', { origin: 'admission' });
+    expect(f.controller.state).toBe('closed');
+    expect(f.onState).toHaveBeenLastCalledWith('closed', 'native_startup_busy');
+    expect(f.controller.pendingReceiptCount).toBe(0);
+    expect(f.sent.filter(x => x.type === 'touch_close')).toHaveLength(1);
+    expect(f.events().every(x => x.action === 4)).toBe(true);
+    const count = f.sent.length;
+    f.advance(LIMITS.startupMs * 2);
+    expect(f.controller.down(1, POINT)).toBe(false);
+    expect(f.sent).toHaveLength(count);
+  },
+);
+
+it('a pending retired identity accepts only its exact late admission refusal', () => {
+  const f = fixture(false);
+  f.controller.open(CAPTURE); f.controller.retire('surface_control_lost'); f.capture(null); f.bind();
+  expect(f.status(0, 5, 'startup', { origin: 'admission', owner: 'foreign_owner_1234' })).toBe(false);
+  expect(f.controller.state).toBe('fenced');
+  f.status(0, 5, 'startup', { origin: 'admission' });
+  expect(f.controller.state).toBe('closed');
+  expect(f.events()).toEqual([]);
+});
+
+it('a late exact pre-start refusal also resolves an explicitly closing candidate', () => {
+  const f = fixture(false);
+  f.controller.open(CAPTURE); f.bind(); f.controller.close();
+  expect(f.controller.state).toBe('closing');
+  f.status(0, 5, 'startup', { origin: 'admission' });
+  expect(f.controller.state).toBe('closed');
+  expect(f.onState).toHaveBeenLastCalledWith('closed', 'native_startup_busy');
+  expect(f.sent.filter(x => x.type === 'touch_close')).toHaveLength(1);
+  expect(f.events()).toEqual([]);
+});
+
+it.each(['native_ready', 'unknown_release', 'unknown_startup', 'injector_refusal', 'extra_fields'])(
+  'a late admission refusal cannot resolve %s', variant => {
+    const f = fixture(variant === 'native_ready');
+    if (variant !== 'native_ready') { f.controller.open(CAPTURE); f.bind(); }
+    if (variant === 'unknown_startup') f.status(0, 6, 'startup');
+    f.controller.retire('surface_control_lost');
+    if (variant === 'unknown_release') f.status(0, 6, 'release');
+    f.status(0, 5, 'startup', { origin: variant === 'injector_refusal' ? 'injector' : 'admission',
+      ...(variant === 'extra_fields' ? { extra: true } : {}) });
+    expect(f.controller.state).toBe('fenced');
+    expect(f.controller.down(1, POINT)).toBe(false);
+  },
+);
+
 it('an exact server cancellation resolves a retired opening that never reached native delivery', () => {
   const f = fixture(false);
   f.controller.open(CAPTURE);

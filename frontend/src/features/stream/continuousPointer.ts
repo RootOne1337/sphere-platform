@@ -208,20 +208,26 @@ export class ContinuousPointer {
       this.retire('release_unknown');
       this.transition('fenced', 'release_unknown'); return false;
     }
-    if (this.stateValue === 'closing' || this.stateValue === 'fenced') return false;
-    if (!this.current()) return false;
     // Admission can reject a fresh owner while the previous native owner is
-    // still retiring. STARTUP has not admitted any touch: negotiate a new owner,
-    // never reinterpret an unknown input or injector failure as a retryable busy.
-    if (this.stateValue === 'opening' && message.stage === 'startup' && message.origin === 'admission'
+    // still retiring. That exact refusal may arrive after this surface retired
+    // its pending OPEN. This candidate has no native owner to emit RELEASE3.
+    // Never downgrade a ready owner, uncertain startup or unknown cleanup.
+    if ((this.stateValue === 'opening' || this.closeSent) && !this.nativeStarted
+      && !this.nativeFailure && !this.releaseFailed
+      && message.stage === 'startup' && message.origin === 'admission'
       && message.sequence === 0 && message.status === 5) {
       // APK refused this owner before STARTUP. No pointer action was admitted,
       // so waiting for this rejected owner's RELEASE would never complete and
       // would unnecessarily restart a healthy video peer. Revoke the pending
       // server reservation, then let the surface retry only input admission.
+      const alreadyRetired = this.stateValue === 'closing' || this.stateValue === 'fenced';
       this.retire('native_startup_busy');
-      this.transition('closed'); return false;
+      // A prior retirement already sent CLOSE and reported its fence. Notify
+      // recovery once, without sending another CLOSE or claiming input success.
+      this.transition('closed', alreadyRetired ? 'native_startup_busy' : null); return false;
     }
+    if (this.stateValue === 'closing' || this.stateValue === 'fenced') return false;
+    if (!this.current()) return false;
     if (message.status >= 4) { this.retire('native_input_rejected_or_unknown'); return false; }
     if (message.stage === 'startup') {
       if (this.stateValue === 'ready' && message.origin === 'injector' && message.status === 0 && message.sequence === 0) return false;
