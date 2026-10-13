@@ -23,8 +23,9 @@ class DirectEncodedVideoSourceTest {
         val heldEncoded = mutableListOf<EncodedImage>()
         val key = mockk<() -> Unit>(relaxed = true)
         val failed = mockk<() -> Unit>(relaxed = true)
+        val rate = mockk<(Int, Int) -> Unit>(relaxed = true)
         val capture = CaptureInputSession("a".repeat(32), 960, 540, 960, 540, 0)
-        val relay = DirectEncodedVideoSource(capture, { valid }, key, failed)
+        val relay = DirectEncodedVideoSource(capture, { valid }, key, failed, onRate = rate)
         val source = mockk<VideoSource>(relaxed = true)
         val track = mockk<VideoTrack>(relaxed = true)
         val factory = mockk<PeerConnectionFactory>()
@@ -82,6 +83,20 @@ class DirectEncodedVideoSourceTest {
             verify(exactly = 1) { h.factory.createVideoSource(true) }
         } finally { h.close() }
         verify(exactly = 1) { h.track.dispose() }; verify(exactly = 1) { h.source.dispose() }
+    }
+    @Test fun `rtp estimate reaches the source without reencoding and retired peers cannot tune a replacement`() {
+        val h = Harness()
+        try {
+            h.encoder.setRateAllocation(VideoEncoder.BitrateAllocation(arrayOf(intArrayOf(12_000_000))), 60)
+            verify(exactly = 1) { h.rate.invoke(12_000_000, 60) }
+            h.valid = false
+            h.encoder.setRateAllocation(VideoEncoder.BitrateAllocation(arrayOf(intArrayOf(100_000))), 1)
+            verify(exactly = 0) { h.rate.invoke(100_000, 1) }
+            assertTrue(h.emitted.isEmpty())
+        } finally { h.close() }
+        h.valid = true
+        h.encoder.setRateAllocation(VideoEncoder.BitrateAllocation(arrayOf(intArrayOf(200_000))), 1)
+        verify(exactly = 0) { h.rate.invoke(200_000, 1) }
     }
     @Test fun `coded buffer uses framework aligned timestamp without adopting raw crop or drop`() {
         val h = Harness()

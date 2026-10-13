@@ -184,6 +184,8 @@ export function LiveDirectVideo({ deviceId, session, eligible, fit, expectedCapt
           }
           publish();
         }, { controlledStunUrl: stun,
+          receiverSize: (() => { const capture = callbacks.current.expectedCapture();
+            return capture ? { width: capture.frameWidth, height: capture.frameHeight } : undefined; })(),
           hasRecentVideoFrame: () => !disposed && !ended && current === generation && !document.hidden
             && lastPresentedAt !== null && performance.now() - lastPresentedAt < FRAME_PROGRESS_TIMEOUT_MS,
           ...(admission.data?.nativeHistory || admission.data?.handover ? { historySession: session } : {}),

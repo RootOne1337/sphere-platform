@@ -69,11 +69,59 @@ class StreamingCaptureLifecycleTest {
             frameThrottle, qualityMonitor)
         manager.gpuBridgeEnabled = false // CPU fixture is independent of canary build flags.
         manager.planarInputEnabled = false
+        manager.qualityProfilesEnabled = false
+        every { anyConstructed<H264Encoder>().adjustFrameRate(any()) } just Runs
+        every { anyConstructed<H264Encoder>().frameIntervalMs } returns 34L
+        every { anyConstructed<H264Encoder>().frameIntervalNs } returns 33_333_334L
     }
 
     @After fun cleanup() {
         manager.stop()
         unmockkAll()
+    }
+
+    @Test fun `quality change persists without replacing capture or retiring its direct subscriber`() {
+        manager.qualityProfilesEnabled = true
+        manager.codecSource = { w, h, _, _ -> StreamQualityPolicy.Source(w, h, 60f) }
+        var bitrate = 2_000_000
+        every { anyConstructed<H264Encoder>().adjustBitrate(any()) } answers { bitrate = firstArg(); true }
+        every { anyConstructed<H264Encoder>().targetBitrateBps } answers { bitrate }
+        every { frameThrottle.targetFps } returns 60
+        manager.start(projection)
+        val token = captureToken()
+        val owner = Any(); val capture = checkNotNull(manager.attachEncodedViewer(owner) {})
+        val snapshot = manager.configureStreamQuality(StreamQualitySettings("detail", 60, 12_000_000))
+        assertSame(token, captureToken()); assertTrue(manager.isEncodedViewerCurrent(owner, capture))
+        assertEquals(12_000_000, snapshot.active!!.targetBitrateBps)
+        verify(exactly = 1) { anyConstructed<VirtualDisplayManager>().createDisplay(any(), any()) }
+        verify(exactly = 0) { anyConstructed<H264Encoder>().stop() }
+        val recreated = StreamingManagerImpl(RuntimeEnvironment.getApplication(), wsClient, frameThrottle, qualityMonitor)
+        assertEquals(snapshot.settings, recreated.getStreamQuality().settings)
+        RuntimeEnvironment.getApplication().getSharedPreferences("sphere_stream_quality_v1", android.content.Context.MODE_PRIVATE).edit().clear().commit()
+    }
+
+    @Test fun `codec refusal leaves the prior device preference and capture current`() {
+        manager.qualityProfilesEnabled = true
+        manager.codecSource = { w, h, _, _ -> StreamQualityPolicy.Source(w, h, 60f) }
+        manager.start(projection)
+        val before = manager.getStreamQuality().settings
+        val token = captureToken()
+        every { anyConstructed<H264Encoder>().adjustBitrate(any()) } returns false
+        assertThrows(IllegalStateException::class.java) { manager.configureStreamQuality(StreamQualitySettings("detail")) }
+        assertEquals(before, manager.getStreamQuality().settings); assertSame(token, captureToken())
+    }
+
+    @Test fun `rate estimate from a detached peer cannot retune the new viewer source`() {
+        manager.qualityProfilesEnabled = true
+        manager.codecSource = { w, h, _, _ -> StreamQualityPolicy.Source(w, h, 60f) }
+        manager.start(projection)
+        val old = Any(); val oldCapture = checkNotNull(manager.attachEncodedViewer(old) {})
+        manager.detachEncodedViewer(old)
+        val current = Any(); val capture = checkNotNull(manager.attachEncodedViewer(current) {})
+        manager.onDirectRateEstimate(old, oldCapture, 100_000, 1)
+        org.robolectric.Shadows.shadowOf(android.os.Looper.getMainLooper()).idle()
+        verify(exactly = 0) { anyConstructed<H264Encoder>().adjustBitrate(any()) }
+        assertTrue(manager.isEncodedViewerCurrent(current, capture))
     }
 
     @Test fun `idle surface refresh submits owned pixels without counting a new capture and stops with its session`() {

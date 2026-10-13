@@ -24,13 +24,21 @@ import org.junit.Test
  */
 class AdaptiveBitrateControllerTest {
 
+    @Test fun `refused codec update cannot masquerade as a lower applied bitrate`() {
+        val codec = mockk<H264Encoder>()
+        every { codec.adjustBitrate(any()) } returns false
+        val abr = AdaptiveBitrateController(codec, initialBitrate = 2_000_000)
+        repeat(3) { abr.onFrameDropDetected() }
+        assertEquals(2_000_000, abr.currentBitrateBps)
+    }
+
     private lateinit var encoder: H264Encoder
     private lateinit var controller: AdaptiveBitrateController
 
     @Before
     fun setUp() {
         encoder = mockk(relaxed = true)
-        every { encoder.adjustBitrate(any()) } just Runs
+        every { encoder.adjustBitrate(any()) } returns true
         controller = AdaptiveBitrateController(encoder)
     }
 

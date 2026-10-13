@@ -32,8 +32,7 @@ class AdaptiveBitrateController(
         if (consecutiveDrops >= 3) {
             val newBitrate = (currentBitrate * 0.8).toInt().coerceAtLeast(minBitrate)
             if (newBitrate != currentBitrate) {
-                currentBitrate = newBitrate
-                encoder.adjustBitrate(currentBitrate)
+                if (encoder.adjustBitrate(newBitrate)) currentBitrate = newBitrate
                 Timber.d("ABR: bitrate reduced to ${currentBitrate / 1000} kbps")
             }
         }
@@ -49,8 +48,7 @@ class AdaptiveBitrateController(
         // A fixed 100kbps threshold made every target <=2Mbps unrecoverable:
         // e.g. 1.2Mbps +5% is only 60kbps. Debounce already limits updates.
         if (newBitrate > currentBitrate) {
-            currentBitrate = newBitrate
-            encoder.adjustBitrate(currentBitrate)
+            if (encoder.adjustBitrate(newBitrate)) currentBitrate = newBitrate
             Timber.d("ABR: bitrate restored to ${currentBitrate / 1000} kbps")
         }
     }

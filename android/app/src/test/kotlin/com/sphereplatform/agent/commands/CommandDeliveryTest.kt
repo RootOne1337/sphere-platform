@@ -234,6 +234,8 @@ class CommandDeliveryTest {
     @Test fun activeStreamStatsAreIncludedInHeartbeatPong() = runTest {
         val streaming = mockk<StreamingManager>(relaxed = true)
         every { streaming.isActive() } returns true
+        every { streaming.getStreamQualityTelemetry() } returns com.sphereplatform.agent.streaming.StreamQualitySnapshot(
+            true, settings = com.sphereplatform.agent.streaming.StreamQualitySettings("detail", 60, 12_000_000))
         every { streaming.getQualityStats() } returns StreamQualityMonitor.StreamStats(
             currentFps = 17,
             totalFrames = 88,
@@ -262,6 +264,7 @@ class CommandDeliveryTest {
         assertEquals(0L, stream["frame_throttle_drops_total"]?.jsonPrimitive?.long)
         assertEquals(23L, stream["capture_throttle_drops_total"]?.jsonPrimitive?.long)
         assertEquals(17, stream["encoder_fps"]?.jsonPrimitive?.int)
+        assertEquals("detail", stream["source_quality"]!!.jsonObject["settings"]!!.jsonObject["profile"]!!.jsonPrimitive.content)
         assertEquals(88L, stream["encoded_frames_total"]?.jsonPrimitive?.long)
         assertEquals(456_789L, stream["encoded_bytes_total"]?.jsonPrimitive?.long)
         assertEquals(29L, stream["ws_queue_accepted_total"]?.jsonPrimitive?.long)

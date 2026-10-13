@@ -6,6 +6,8 @@ from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
+from backend.schemas.stream_quality import StreamQualitySnapshot
+
 _MAX_COUNTER = 2**53
 
 
@@ -102,6 +104,8 @@ class AgentStreamTelemetry(BaseModel):
     legacy_suppressed_encoded_bytes_total: int | None = Field(default=None, ge=0, le=_MAX_COUNTER)
     # Optional, process-scoped canary extension. Missing means unreported, not idle.
     native_input: NativeInputTelemetry | None = None
+    # Source policy and applied encoder targets; never confuse these with measured FPS.
+    source_quality: StreamQualitySnapshot | None = None
 
     @model_validator(mode="after")
     def validate_contract(self) -> "AgentStreamTelemetry":

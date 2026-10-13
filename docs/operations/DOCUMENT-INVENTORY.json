@@ -5,7 +5,7 @@
   "countsByRole": {
     "ADR": 6,
     "CURRENT_ENTRYPOINT": 8,
-    "DATED_EVIDENCE": 291,
+    "DATED_EVIDENCE": 292,
     "DESIGN_SPECIFICATION": 76,
     "OPERATING_GUIDE": 64,
     "PROJECT_POLICY": 7,
@@ -1302,6 +1302,10 @@
     },
     {
       "file": "docs/audits/2026-10-13/DIRECT-SESSION-STABILITY.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
+      "file": "docs/audits/2026-10-13/DIRECT-SOURCE-QUALITY.md",
       "role": "DATED_EVIDENCE"
     },
     {

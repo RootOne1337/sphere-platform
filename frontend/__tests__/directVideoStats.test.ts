@@ -9,6 +9,15 @@ test('reports interval buffer and decode time separately from network RTT', () =
   expect(result.jitterBufferMs).toBeCloseTo(50); expect(result.decodeMs).toBeCloseTo(2); expect(result.fps).toBe(20);
   expect(result.networkRttMs).toBeNull(); expect(result).not.toHaveProperty('videoLatencyMs');
 });
+
+test('receive bitrate is a byte delta over the current track interval, not a network capacity claim', () => {
+  const sample = new DirectVideoStatsSampler();
+  expect(sample.sample(report({ timestamp: 1000, bytesReceived: 1000, frameWidth: 960, frameHeight: 540 })).bitrateBps).toBeNull();
+  const result = sample.sample(report({ timestamp: 2000, bytesReceived: 1_501_000, frameWidth: 960, frameHeight: 540 }));
+  expect(result.bitrateBps).toBe(12_000_000); expect(result.width).toBe(960); expect(result.height).toBe(540);
+  expect(sample.sample(report({ timestamp: 3000, bytesReceived: 1 })).bitrateBps).toBeNull();
+  expect(sample.sample(report({ id: 'new', timestamp: 4000, bytesReceived: 2_000_000 })).bitrateBps).toBeNull();
+});
 test('missing counters, resets and track changes never become fabricated zero delay', () => {
   const sample = new DirectVideoStatsSampler();
   sample.sample(report({ timestamp: 1000, framesDecoded: 20, jitterBufferDelay: 1, jitterBufferEmittedCount: 20, totalDecodeTime: .1 }));

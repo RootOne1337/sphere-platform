@@ -13,16 +13,29 @@ import javax.inject.Singleton
 @Singleton
 class FrameThrottle @Inject constructor() {
 
-    val targetFps: Int = 30
-
-    private val frameDurationNs = 1_000_000_000L / targetFps
+    @Volatile var targetFps: Int = 30
+        private set
     /**
      * PERF: Pre-computed минимальный интервал (80% от полного).
      * До: `frameDurationNs * 0.8` = Long→Double конвертация + Float multiply на каждый кадр (30 fps).
      * После: одно Long-сравнение на горячем пути raw capture.
      */
-    private val minFrameIntervalNs = frameDurationNs * 4L / 5L  // 80% без Float
-    @Volatile private var lastFrameTimeNs = 0L
+    @Volatile private var minFrameIntervalNs = 1_000_000_000L / targetFps * 4L / 5L
+    private var lastFrameTimeNs: Long? = null
+    private var nextFrameTimeNs: Long? = null
+    private var precise = false
+
+    @Synchronized
+    fun configure(fps: Int, newCapture: Boolean = false, precise: Boolean = true) {
+        require(fps in 1..60)
+        if (fps != targetFps || this.precise != precise) {
+            nextFrameTimeNs = lastFrameTimeNs?.let { it + 1_000_000_000L / fps }
+        }
+        targetFps = fps
+        this.precise = precise
+        minFrameIntervalNs = 1_000_000_000L / fps * 4L / 5L
+        if (newCapture) { lastFrameTimeNs = null; nextFrameTimeNs = null; _totalFrames.set(0); _droppedFrames.set(0) }
+    }
 
     /**
      * FIX F2: Счётчики дропов обёрнуты в AtomicInteger — доступ из capture callback
@@ -38,16 +51,24 @@ class FrameThrottle @Inject constructor() {
      *
      * @param frameTimeNs monotonic capture-callback timestamp in nanoseconds.
      */
+    @Synchronized
     fun shouldRenderFrame(frameTimeNs: Long): Boolean {
         _totalFrames.incrementAndGet()
-        val elapsed = frameTimeNs - lastFrameTimeNs
+        val last = lastFrameTimeNs
+        val elapsed = last?.let { frameTimeNs - it }
 
-        if (elapsed < minFrameIntervalNs) {
+        val tooEarly = if (precise) nextFrameTimeNs?.let { frameTimeNs + 100_000L < it } == true
+            else elapsed != null && elapsed < minFrameIntervalNs
+        if (frameTimeNs < 0 || elapsed != null && elapsed < 0 || tooEarly) {
             _droppedFrames.incrementAndGet()
             return false
         }
 
         lastFrameTimeNs = frameTimeNs
+        val interval = 1_000_000_000L / targetFps
+        nextFrameTimeNs = ((nextFrameTimeNs ?: frameTimeNs) + interval).let {
+            if (it <= frameTimeNs) frameTimeNs + interval else it
+        }
         return true
     }
 

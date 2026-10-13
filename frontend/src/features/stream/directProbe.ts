@@ -5,6 +5,7 @@ import { parseTurnReady } from './directProbeTurn';
 import { parseVideoBinding, readonlyVideoSdp, type DirectVideoBinding } from './directVideoProtocol';
 import { DirectVideoStatsSampler, preferLowVideoDelay, type DirectVideoStats } from './directVideoStats';
 import type { DirectControlEndpoint } from './directPointerTransport';
+import { h264ReceiverOffer } from './h264ReceiverOffer';
 
 export interface DirectProbeResult {
   state: 'gathering' | 'signaling' | 'connecting' | 'connected' | 'finished' | 'stopped' | 'failed';
@@ -56,6 +57,7 @@ export function startDirectVideoProbe(
 export function startDirectVideoSession(
   url: string, token: string, report: (value: DirectProbeResult) => void,
   options: { controlledStunUrl?: string; onTrack: (track: MediaStreamTrack) => void;
+    receiverSize?: { width: number; height: number };
     historySession?: string; controlSession?: string; onControlChannel?: (channel: DirectControlEndpoint | null) => void;
     /** Actual recent presentation, independently bounded by the renderer watchdog. */
     hasRecentVideoFrame?: () => boolean },
@@ -67,6 +69,7 @@ function startDirectSession(
   url: string, token: string, report: (value: DirectProbeResult) => void,
   options: { controlledStunUrl?: string; relayGrant?: boolean; controlSession?: string; historySession?: string;
     onControlChannel?: (channel: DirectControlEndpoint | null) => void;
+    receiverSize?: { width: number; height: number };
     hasRecentVideoFrame?: () => boolean }, onVideoTrack?: (track: MediaStreamTrack) => void, live = false,
 ): () => void {
   const video = !!onVideoTrack;
@@ -329,7 +332,11 @@ function startDirectSession(
     channel.onerror = () => stop('channel_failed');
     channel.onclose = () => stop('channel_closed');
     emit();
-    void peer.createOffer().then(offer => { if (!stopped && peer) return peer.setLocalDescription(offer); })
+    void peer.createOffer().then(offer => {
+      if (live && video && options.receiverSize) return h264ReceiverOffer(offer, options.receiverSize)
+        .then(prepared => { if (!stopped && peer) return peer.setLocalDescription(prepared); });
+      if (!stopped && peer) return peer.setLocalDescription(offer);
+    })
       .then(gathered).catch(() => stop('offer_failed'));
   };
   emit();

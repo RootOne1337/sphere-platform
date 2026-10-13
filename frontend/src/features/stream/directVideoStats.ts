@@ -2,17 +2,18 @@
 export interface DirectVideoStats {
   packets: number | null; bytes: number | null; decoded: number | null; dropped: number | null;
   fps: number | null; jitterBufferMs: number | null; decodeMs: number | null; networkRttMs: number | null;
+  bitrateBps?: number | null; width?: number | null; height?: number | null;
 }
 const count = (value: unknown): number | null => typeof value === 'number' && Number.isSafeInteger(value)
   && value >= 0 ? value : null;
 const finite = (value: unknown): number | null => typeof value === 'number' && Number.isFinite(value)
   && value >= 0 ? value : null;
-type Previous = { id: string; at: number; decoded: number | null; delay: number | null; emitted: number | null; decode: number | null };
+type Previous = { id: string; at: number; decoded: number | null; bytes: number | null; delay: number | null; emitted: number | null; decode: number | null };
 export class DirectVideoStatsSampler {
   private previous: Previous | null = null;
   sample(report: RTCStatsReport): DirectVideoStats {
     const result: DirectVideoStats = { packets: null, bytes: null, decoded: null, dropped: null,
-      fps: null, jitterBufferMs: null, decodeMs: null, networkRttMs: null };
+      fps: null, jitterBufferMs: null, decodeMs: null, networkRttMs: null, bitrateBps: null, width: null, height: null };
     const videos: RTCInboundRtpStreamStats[] = [];
     report.forEach(row => {
       if (row.type === 'inbound-rtp' && row.kind === 'video') videos.push(row);
@@ -26,7 +27,11 @@ export class DirectVideoStatsSampler {
     const row = videos[0], at = finite(row.timestamp);
     result.packets = count(row.packetsReceived); result.bytes = count(row.bytesReceived);
     result.decoded = count(row.framesDecoded); result.dropped = count(row.framesDropped);
-    const next: Previous = { id: row.id, at: at ?? 0, decoded: result.decoded,
+    const width = count(row.frameWidth), height = count(row.frameHeight);
+    if (width !== null && height !== null && width > 0 && height > 0 && width <= 8192 && height <= 8192) {
+      result.width = width; result.height = height;
+    }
+    const next: Previous = { id: row.id, at: at ?? 0, decoded: result.decoded, bytes: result.bytes,
       delay: finite(row.jitterBufferDelay), emitted: count(row.jitterBufferEmittedCount), decode: finite(row.totalDecodeTime) };
     const old = this.previous;
     if (at !== null && old?.id === next.id && at > old.at) {
@@ -37,6 +42,10 @@ export class DirectVideoStatsSampler {
       };
       result.jitterBufferMs = mean(next.delay, old.delay, next.emitted, old.emitted);
       result.decodeMs = mean(next.decode, old.decode, next.decoded, old.decoded);
+      if (next.bytes !== null && old.bytes !== null && next.bytes >= old.bytes) {
+        const bitrate = (next.bytes - old.bytes) * 8000 / (at - old.at);
+        if (bitrate <= 1_000_000_000) result.bitrateBps = bitrate;
+      }
       if (next.decoded !== null && old.decoded !== null && next.decoded >= old.decoded) {
         const fps = (next.decoded - old.decoded) * 1000 / (at - old.at);
         if (fps <= 1024) result.fps = fps;

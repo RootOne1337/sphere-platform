@@ -22,6 +22,9 @@ import { DirectPointerTransport, type DirectControlEndpoint } from '@/src/featur
 import { StreamSessionHistoryPanel } from '@/src/features/stream/StreamSessionHistoryPanel';
 import { browserStreamSample, directFailure, StreamSessionReporter } from '@/src/features/stream/streamSessionTelemetry';
 import { NativeInputDiagnostic, type NativeInputTelemetry } from './NativeInputDiagnostic';
+import { StreamQualityControl } from '@/src/features/stream/StreamQualityControl';
+import type { StreamQualitySnapshot } from '@/src/features/stream/streamQuality';
+import { StreamStatusLine } from '@/src/features/stream/StreamStatusLine';
 
 interface DeviceStreamProps {
   deviceId: string;
@@ -81,6 +84,7 @@ interface StreamDiagnosticResponse {
       legacy_suppressed_packets_total?: number | null;
       legacy_suppressed_encoded_bytes_total?: number | null;
       native_input?: NativeInputTelemetry | null;
+      source_quality?: StreamQualitySnapshot | null;
       encoder_fps: number;
       encoded_frames_total: number;
       encoded_bytes_total: number;
@@ -219,6 +223,21 @@ export function DeviceStream({
     ? agentDiagnostics.age_seconds + Math.max(0, diagnosticNowMs - agentReport.receivedAtMs) / 1000 : null;
   const [diagnosticsError, setDiagnosticsError] = useState<string | null>(null);
   const [browserStats, setBrowserStats] = useState<StreamDecoderStats | null>(null);
+  const [receiveRate, setReceiveRate] = useState<number | null>(null);
+  useEffect(() => {
+    let previous: { decoder: H264Decoder; at: number; bytes: number } | null = null;
+    const timer = setInterval(() => {
+      const decoder = decoderRef.current;
+      if (!decoder) { previous = null; setReceiveRate(null); return; }
+      const stats = decoder.stats, at = performance.now();
+      if (!stats) { previous = null; setReceiveRate(null); return; }
+      setBrowserStats(stats);
+      setReceiveRate(previous?.decoder === decoder && at > previous.at && stats.binaryBytesReceived >= previous.bytes
+        ? (stats.binaryBytesReceived - previous.bytes) * 8000 / (at - previous.at) : null);
+      previous = { decoder, at, bytes: stats.binaryBytesReceived };
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [deviceId, accessToken]);
   const telemetryControl = useRef({ state: continuousState, failure: continuousFailureCode, rtt: continuousReceipt?.ms ?? null, attempts: idleRecoveryCount, transport: controlTransport, fence: pointerFailureSnapshot, fenceAtMs: pointerFailureSnapshot ? pointerFailure?.atMs ?? null : null });
   telemetryControl.current = { state: continuousState, failure: continuousFailureCode, rtt: continuousReceipt?.ms ?? null, attempts: idleRecoveryCount, transport: controlTransport, fence: pointerFailureSnapshot, fenceAtMs: pointerFailureSnapshot ? pointerFailure?.atMs ?? null : null };
   const currentDiagnosticSession = diagnosticSession?.deviceId === deviceId && diagnosticSession.accessToken === accessToken
@@ -1293,6 +1312,13 @@ export function DeviceStream({
   return (
     <div className={fit ? 'flex h-full w-full min-h-0 min-w-0 flex-col' : 'min-w-0'}>
     {readOnly && enableNavigation && <p role="status" className="border-b border-border bg-muted px-3 py-2 text-xs text-muted-foreground">Только просмотр · {readOnlyReason ?? 'роль не разрешает клики, жесты и навигацию Android.'}</p>}
+    <StreamStatusLine direct={directVideo.active} directInput={directVideo.active && controlTransport === 'direct_webrtc'}
+      live={connection === 'live' && !streamError}
+      rtt={directVideo.active ? directVideo.result?.videoStats?.networkRttMs ?? null : null}
+      width={directVideo.active ? directVideo.result?.videoStats?.width ?? lastFrameDimensionsRef.current?.width ?? null : lastFrameDimensionsRef.current?.width ?? null}
+      height={directVideo.active ? directVideo.result?.videoStats?.height ?? lastFrameDimensionsRef.current?.height ?? null : lastFrameDimensionsRef.current?.height ?? null}
+      fps={directVideo.active ? directVideo.result?.videoStats?.fps ?? null : browserStats?.renderedFps ?? null}
+      bitrate={directVideo.active ? directVideo.result?.videoStats?.bitrateBps ?? null : receiveRate} />
     {enableNavigation && ((!inspection && !readOnly) || (inspection && continuousFault)) && <div data-control-state={continuousState} data-control-failure={continuousFailureCode ?? undefined} className="flex shrink-0 flex-wrap items-center gap-2 border-b border-border bg-card px-3 py-2 text-foreground">
       <span className={`h-2 w-2 shrink-0 rounded-full ${continuousState === 'ready' ? 'bg-emerald-500' : 'bg-muted-foreground'}`} aria-hidden />
       <span role="status" className="min-w-0 flex-[1_1_16rem] text-xs leading-relaxed">{continuousReason ?? (discreteBusy ? 'Клавиатура и навигация · ожидаем подтверждение Android' : continuousRecording ? 'Запись использует отдельные завершённые действия' : continuousState === 'ready'
@@ -1378,7 +1404,8 @@ export function DeviceStream({
       )
     )}
     {enableDiagnostics && (
-      <div className="absolute right-2 top-2 z-20">
+      <div className="absolute right-2 top-2 z-20 flex flex-wrap justify-end gap-1.5">
+        <StreamQualityControl deviceId={deviceId} readOnly={readOnly} />
         <button
           type="button"
           aria-expanded={diagnosticsOpen}
@@ -1450,6 +1477,7 @@ export function DeviceStream({
                       <span>Capture FPS: {t.capture_fps ?? '—'}</span>
                       <span>Surface FPS: {t.render_fps ?? '—'}</span>
                       <span>Encoder FPS: {t.encoder_fps}</span>
+                      {t.source_quality?.active && <span>Цель источника: {t.source_quality.active.target_fps} FPS · {(t.source_quality.active.target_bitrate_bps / 1_000_000).toFixed(1)} Мбит/с · {t.source_quality.active.adaptation}</span>}
                       <span>Encoded: {t.encoded_frames_total}</span>
                       <span>Captured: {t.capture_frames_total ?? '—'}</span>
                       <span>Возраст захвата Android: {t.last_capture_age_ms == null ? '—' : `${t.last_capture_age_ms} мс`}</span>

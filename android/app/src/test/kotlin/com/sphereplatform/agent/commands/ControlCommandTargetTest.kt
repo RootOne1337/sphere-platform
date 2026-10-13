@@ -15,6 +15,7 @@ import org.junit.Test
 class ControlCommandTargetTest {
     private val ws = mockk<SphereWebSocketClient>(relaxed = true)
     private val adb = mockk<AdbActionExecutor>(relaxed = true)
+    private val streaming = mockk<com.sphereplatform.agent.streaming.StreamingManager>(relaxed = true)
     private val callback = slot<((JsonObject) -> Unit)?>()
     private val messages = mutableListOf<JsonObject>()
     private val oldId = "11111111-1111-4111-8111-111111111111"
@@ -35,7 +36,7 @@ class ControlCommandTargetTest {
         return CommandDispatcher(ws, adb, runner, mockk(relaxed = true),
             mockk(relaxed = true), mockk(relaxed = true), mockk(relaxed = true),
             mockk(relaxed = true), mockk(relaxed = true), mockk(relaxed = true),
-            mockk(relaxed = true), scope, mockk(relaxed = true), mockk(relaxed = true), journal,
+            mockk(relaxed = true), scope, streaming, mockk(relaxed = true), journal,
             mockk<UpdateCheckScheduler>(relaxed = true))
             .also { it.start() }
     }
@@ -65,6 +66,50 @@ class ControlCommandTargetTest {
     }
 
     private fun send(message: JsonObject) { callback.captured!!(message) }
+    private val qualityId = "interactive_12345678-1234-4234-8234-123456789abc"
+    private fun quality(action: String, settings: JsonObject? = null, age: Long = 0) = buildJsonObject {
+        put("type", "stream_quality"); put("command_id", qualityId)
+        put("signed_at", System.currentTimeMillis() / 1000 - age); put("ttl_seconds", 15)
+        put("payload", buildJsonObject { put("action", action); settings?.let { put("settings", it) } })
+    }
+
+    @Test fun qualityWriteAcknowledgesTheActualManagerSnapshotWithoutTouchOrCaptureCommands() = runTest {
+        val settings = com.sphereplatform.agent.streaming.StreamQualitySettings("detail", 60, 12_000_000)
+        every { streaming.configureStreamQuality(settings) } returns
+            com.sphereplatform.agent.streaming.StreamQualitySnapshot(true, settings = settings)
+        val dispatcher = start(backgroundScope)
+        send(quality("set", buildJsonObject { put("profile", "detail"); put("max_fps", 60); put("max_bitrate_bps", 12_000_000) }))
+        runCurrent()
+        assertEquals("completed", terminal(qualityId)!!["status"]!!.jsonPrimitive.content)
+        assertEquals("detail", terminal(qualityId)!!["result"]!!.jsonObject["settings"]!!.jsonObject["profile"]!!.jsonPrimitive.content)
+        verify(exactly = 1) { streaming.configureStreamQuality(settings) }
+        verify(exactly = 0) { streaming.stop() }
+        dispatcher.stop()
+    }
+
+    @Test fun expiredOrInvalidQualityCannotReachTheSharedEncoder() = runTest {
+        val dispatcher = start(backgroundScope)
+        send(quality("set", buildJsonObject { put("max_fps", 60) }, age = 60)); runCurrent()
+        assertEquals("expired", terminal(qualityId)!!["error"]!!.jsonPrimitive.content)
+        send(quality("set", buildJsonObject { put("max_fps", 61) })); runCurrent()
+        assertEquals("stream_quality_invalid", terminal(qualityId)!!["error"]!!.jsonPrimitive.content)
+        verify(exactly = 0) { streaming.configureStreamQuality(any()) }
+        dispatcher.stop()
+    }
+
+    @Test fun qualityReadDoesNotWritePreferencesAndCodecRefusalIsNotCompleted() = runTest {
+        every { streaming.getStreamQuality() } returns com.sphereplatform.agent.streaming.StreamQualitySnapshot(
+            true, settings = com.sphereplatform.agent.streaming.StreamQualitySettings())
+        every { streaming.configureStreamQuality(any()) } throws IllegalStateException("stream_quality_codec_refused")
+        val dispatcher = start(backgroundScope)
+        send(quality("get")); runCurrent()
+        assertEquals("completed", terminal(qualityId)!!["status"]!!.jsonPrimitive.content)
+        verify(exactly = 0) { streaming.configureStreamQuality(any()) }
+        send(quality("set", buildJsonObject { put("profile", "detail") })); runCurrent()
+        assertEquals("failed", terminal(qualityId)!!["status"]!!.jsonPrimitive.content)
+        assertEquals("stream_quality_codec_refused", terminal(qualityId)!!["error"]!!.jsonPrimitive.content)
+        dispatcher.stop()
+    }
     private fun durableCancel(target: String = currentId) = JsonObject(control("CANCEL_DAG") +
         ("payload" to buildJsonObject { put("task_id", target); put("durable", true) }))
 

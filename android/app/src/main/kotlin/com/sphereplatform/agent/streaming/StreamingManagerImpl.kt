@@ -15,6 +15,10 @@ import timber.log.Timber
 import javax.inject.Inject
 import javax.inject.Singleton
 import java.util.UUID
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
+import java.util.concurrent.atomic.AtomicBoolean
+import java.util.concurrent.atomic.AtomicReference
 
 /**
  * Production [StreamingManager] — coordinates encoder, VirtualDisplay and
@@ -42,6 +46,22 @@ class StreamingManagerImpl @Inject constructor(
     private var gpuBridge: SurfaceTextureEncoderBridge? = null
     internal var gpuBridgeEnabled = BuildConfig.STREAM_GPU_BRIDGE
     internal var planarInputEnabled = BuildConfig.STREAM_PLANAR_INPUT
+    internal var qualityProfilesEnabled = BuildConfig.CONTINUOUS_INPUT_CANARY
+    internal var codecSource: (Int, Int, Float, Boolean) -> StreamQualityPolicy.Source = StreamCodecCapability::source
+    private val qualityPreferences by lazy { context.getSharedPreferences("sphere_stream_quality_v1", Context.MODE_PRIVATE) }
+    private var qualitySettings: StreamQualitySettings = runCatching {
+        qualityPreferences.getString("settings", null)?.let { Json.decodeFromString<StreamQualitySettings>(it) }
+    }.getOrNull() ?: StreamQualitySettings()
+    private var qualitySource: StreamQualityPolicy.Source? = null
+    private var qualityPlan: StreamQualityPolicy.Plan? = null
+    private var sourceRateGovernor: DirectSourceRateGovernor? = null
+    private var rateAdaptation = "source"
+    private data class RateEstimate(val owner: Any, val capture: CaptureInputSession, val bitrate: Int, val fps: Int)
+    private val pendingRate = AtomicReference<RateEstimate?>()
+    private val rateScheduled = AtomicBoolean(false)
+    private data class CachedQuality(val capture: Any?, val value: StreamQualitySnapshot)
+    private val cachedQuality = AtomicReference<CachedQuality?>()
+    private val qualityHandler by lazy { Handler(context.mainLooper) }
     internal var monotonicNs: () -> Long = System::nanoTime
     internal var monotonicMs: () -> Long = android.os.SystemClock::elapsedRealtime
     // Image/Bitmap native storage must stay alive through the complete copy and
@@ -123,10 +143,18 @@ class StreamingManagerImpl @Inject constructor(
         val packetEpoch = if (BuildConfig.CONTINUOUS_INPUT_CANARY) inputSession?.epoch?.let(UUID::fromString) else null
         val packetStartMs = streamStartMs
         encoderCaptureEpoch = packetEpoch
-        val encoderConfig = H264Encoder.EncoderConfig(
-            width = captureConfig.width,
-            height = captureConfig.height
-        )
+        val display = (context.getSystemService(Context.DISPLAY_SERVICE) as? android.hardware.display.DisplayManager)
+            ?.getDisplay(android.view.Display.DEFAULT_DISPLAY)
+        val source = if (qualityProfilesEnabled) codecSource(captureConfig.width, captureConfig.height,
+            display?.refreshRate ?: 30f, planarInputEnabled) else null
+        val plan = source?.let { StreamQualityPolicy.plan(qualitySettings, it) }
+        qualitySource = source; qualityPlan = plan
+        sourceRateGovernor = plan?.let(::DirectSourceRateGovernor)
+        rateAdaptation = "source"
+        val encoderConfig = H264Encoder.EncoderConfig(width = captureConfig.width, height = captureConfig.height,
+            fps = source?.maximumFps ?: 30, bitrateBps = plan?.initialBitrate ?: 1_500_000,
+            maxBitrateBps = source?.codecMaxBitrate ?: 4_000_000)
+        frameThrottle.configure(plan?.maxFps ?: encoderConfig.fps, newCapture = true, precise = qualityProfilesEnabled)
         val enc = H264Encoder(encoderConfig) { nalData, metadata ->
             onFrameReady(nalData, metadata, session, packetEpoch, packetStartMs)
         }
@@ -136,7 +164,8 @@ class StreamingManagerImpl @Inject constructor(
             }
         }
         // FIX H3: Передаём фактический битрейт энкодера в ABR — без рассинхрона
-        val abr = AdaptiveBitrateController(enc, initialBitrate = encoderConfig.bitrateBps)
+        val abr = AdaptiveBitrateController(enc, minBitrate = plan?.minBitrate ?: 500_000,
+            maxBitrate = plan?.maxBitrate ?: 4_000_000, initialBitrate = encoderConfig.bitrateBps)
         adaptiveBitrate = abr
 
         // FIX AUDIT-1.4: Подписка на ошибку кодека для автоматического restart.
@@ -175,6 +204,7 @@ class StreamingManagerImpl @Inject constructor(
             }
         } else enc.start()
         encoder = enc
+        enc.adjustFrameRate(plan?.maxFps ?: encoderConfig.fps)
 
         if (gpuBridgeEnabled && !usePlanar) {
             val bridge = SurfaceTextureEncoderBridge(checkNotNull(encoderSurface), captureConfig.width,
@@ -191,6 +221,7 @@ class StreamingManagerImpl @Inject constructor(
                 virtualDisplayManager = vdm
                 streaming = true
                 vdm.createDisplay(captureConfig, captureSurface)
+                getStreamQuality()
                 viewerKeyFrameCoordinator.markEncoderReady { requestKeyFrameNow() }
                 Timber.i("StreamingManagerImpl: started GPU SurfaceTexture bridge")
                 return
@@ -233,7 +264,7 @@ class StreamingManagerImpl @Inject constructor(
                             val last = lastSurfaceSubmissionNs
                             val bitmap = cachedBitmap
                             val bounds = lastSurfaceBounds
-                            if (last != null && now - last >= encoderConfig.frameIntervalNs && bitmap != null && !bitmap.isRecycled && bounds != null) {
+                            if (last != null && now - last >= enc.frameIntervalNs && bitmap != null && !bitmap.isRecycled && bounds != null) {
                                 val surface = checkNotNull(encoderSurface)
                                 val canvas = surface.lockCanvas(null)
                                 if (canvas != null) {
@@ -249,7 +280,7 @@ class StreamingManagerImpl @Inject constructor(
                     }
                     Unit // This synchronized block owns side effects, not a Boolean result.
                 }
-                if (streaming && captureSession === session) captureHandler.postDelayed(this, encoderConfig.frameIntervalMs)
+                if (streaming && captureSession === session) captureHandler.postDelayed(this, enc.frameIntervalMs)
             }
         }
 
@@ -373,7 +404,8 @@ class StreamingManagerImpl @Inject constructor(
         }
 
         viewerKeyFrameCoordinator.markEncoderReady { requestKeyFrameNow() }
-        captureHandler.postDelayed(idleRefresh, encoderConfig.frameIntervalMs)
+        getStreamQuality()
+        captureHandler.postDelayed(idleRefresh, enc.frameIntervalMs)
         Timber.i("StreamingManagerImpl: started input=%s", if (usePlanar) "yuv420_planar" else "surface")
     }
 
@@ -439,13 +471,22 @@ class StreamingManagerImpl @Inject constructor(
         val packed = FramePackager.pack(nalData, metadata, startedMs, captureEpoch)
         val sent = sendFrameBinary(packed)
 
-        if (!sent) {
+        if (!sent && (!qualityProfilesEnabled || encodedViewer == null)) {
             adaptiveBitrate?.onFrameDropDetected()
             if (metadata.isKeyFrame) {
                 Timber.w("StreamingManagerImpl: I-frame send failed — WS queue may be full")
             }
-        } else {
+        } else if (sent && (!qualityProfilesEnabled || encodedViewer == null)) {
             adaptiveBitrate?.onSuccessfulDelivery()
+        }
+        if (qualityProfilesEnabled && encodedViewer == null) {
+            val bitrate = encoder?.targetBitrateBps
+            cachedQuality.updateAndGet { old ->
+                if (old?.capture !== session || old.value.active == null || bitrate == null
+                    || old.value.active.targetBitrateBps == bitrate && old.value.active.adaptation == "legacy_queue") old
+                else old.copy(value = old.value.copy(active = old.value.active.copy(
+                    targetBitrateBps = bitrate, adaptation = "legacy_queue")))
+            }
         }
     }
 
@@ -502,6 +543,86 @@ class StreamingManagerImpl @Inject constructor(
         qualityMonitor.getStats()
 
     @Synchronized
+    override fun getStreamQuality(): StreamQualitySnapshot {
+        val source = qualitySource
+        val plan = qualityPlan
+        val enc = encoder
+        val value = StreamQualitySnapshot(qualityProfilesEnabled, settings = qualitySettings,
+            active = if (streaming && source != null && plan != null && enc != null)
+                StreamQualitySnapshot.Active(source.width, source.height, source.sourceFps,
+                    source.codecMaxFps, frameThrottle.targetFps, plan.maxBitrate, enc.targetBitrateBps, rateAdaptation)
+            else null)
+        cachedQuality.set(CachedQuality(captureSession, value))
+        return value
+    }
+
+    override fun getStreamQualityTelemetry(): StreamQualitySnapshot? = cachedQuality.get()?.value?.takeIf { it.supported }
+
+    @Synchronized
+    override fun configureStreamQuality(settings: StreamQualitySettings): StreamQualitySnapshot {
+        check(qualityProfilesEnabled) { "stream_quality_unsupported" }
+        val source = qualitySource
+        val enc = encoder
+        val plan = source?.let { StreamQualityPolicy.plan(settings, it) }
+        val previousBitrate = enc?.targetBitrateBps
+        if (streaming && enc != null && plan != null) {
+            check(enc.adjustBitrate(plan.initialBitrate)) { "stream_quality_codec_refused" }
+        }
+        if (!qualityPreferences.edit().putString("settings", Json.encodeToString(settings)).commit()) {
+            // Retain the old preference and source policy if durable storage refused the write.
+            previousBitrate?.let { enc.adjustBitrate(it) }
+            throw IllegalStateException("stream_quality_storage_unavailable")
+        }
+        qualitySettings = settings
+        if (plan != null && enc != null && streaming) {
+            qualityPlan = plan
+            sourceRateGovernor?.configure(plan)
+            frameThrottle.configure(plan.maxFps)
+            enc.adjustFrameRate(plan.maxFps)
+            adaptiveBitrate = AdaptiveBitrateController(enc, plan.minBitrate, plan.maxBitrate, plan.initialBitrate)
+            rateAdaptation = "source"
+        }
+        return getStreamQuality()
+    }
+
+    @Synchronized
+    override fun encodedProfileLevelId(): String = encoder?.profileLevelId ?: "42e01f"
+
+    @Synchronized
+    override fun encodedRateLimits(): Pair<Int, Int> =
+        (qualitySource?.codecMaxBitrate ?: 4_000_000) to (qualitySource?.maximumFps ?: 30)
+
+    override fun onDirectRateEstimate(owner: Any, capture: CaptureInputSession, bitrate: Int, fps: Int) {
+        if (!qualityProfilesEnabled || !isEncodedViewerCurrent(owner, capture)
+            || bitrate !in 0..100_000_000 || fps !in 0..240) return
+        pendingRate.set(RateEstimate(owner, capture, bitrate, fps))
+        if (rateScheduled.compareAndSet(false, true)) qualityHandler.post(drainRate)
+    }
+
+    // One replaceable estimate and at most one posted callback. No native callback
+    // waits for MediaCodec/lifecycle locks or creates a coroutine per allocation.
+    private val drainRate = object : Runnable {
+        override fun run() {
+            val estimate = pendingRate.getAndSet(null)
+            synchronized(this@StreamingManagerImpl) {
+                if (estimate != null && isEncodedViewerCurrent(estimate.owner, estimate.capture)) {
+                    val rate = sourceRateGovernor?.observe(estimate.bitrate, estimate.fps, monotonicMs())
+                    val enc = encoder
+                    if (rate != null && enc != null) {
+                        if (enc.adjustBitrate(rate.bitrate)) {
+                            frameThrottle.configure(rate.fps); enc.adjustFrameRate(rate.fps)
+                            rateAdaptation = "webrtc"
+                            getStreamQuality()
+                        } else sourceRateGovernor?.refused(enc.targetBitrateBps, frameThrottle.targetFps)
+                    }
+                }
+            }
+            rateScheduled.set(false)
+            if (pendingRate.get() != null && rateScheduled.compareAndSet(false, true)) qualityHandler.post(this)
+        }
+    }
+
+    @Synchronized
     override fun mapStreamPoints(points: List<StreamPoint>): List<StreamPoint>? {
         if (!streaming) return null
         val metrics = android.content.res.Resources.getSystem().displayMetrics
@@ -527,8 +648,7 @@ class StreamingManagerImpl @Inject constructor(
     override fun attachEncodedViewer(owner: Any, consume: (EncodedCaptureFrame) -> Unit): CaptureInputSession? {
         if (encodedViewer != null) return null
         val capture = getInputSession() ?: return null
-        // H.264 level 3.1 permits at most 3600 macroblocks per picture.
-        if ((capture.frameWidth + 15L) / 16 * ((capture.frameHeight + 15L) / 16) > 3600L) return null
+        // The encoded adapter advertises the actual configured AVC level ceiling.
         encodedViewer = EncodedViewer(owner, capture, consume)
         return capture
     }
@@ -567,6 +687,7 @@ class StreamingManagerImpl @Inject constructor(
     private fun stopInternal() {
         viewerKeyFrameCoordinator.markEncoderStopped()
         streaming = false
+        cachedQuality.set(null)
         encodedViewer = null
         inputGeometry = null
         inputSession = null
@@ -614,6 +735,8 @@ class StreamingManagerImpl @Inject constructor(
         imageReaderHandler = null
         encoder = null
         adaptiveBitrate = null
+        pendingRate.set(null)
+        qualitySource = null; qualityPlan = null; sourceRateGovernor = null; rateAdaptation = "source"
         currentProjection = null
         cachedBitmap = null
         cachedBitmapWidth = 0

@@ -18,6 +18,8 @@ internal class DirectEncodedVideoSource(
     private val valid: () -> Boolean,
     private val requestKey: () -> Unit,
     private val failed: () -> Unit,
+    private val profileLevelId: String = "42e01f",
+    private val onRate: (Int, Int) -> Unit = { _, _ -> },
 ) {
     companion object {
         // MediaCodec has already encoded these reference-dependent pictures.
@@ -42,7 +44,7 @@ internal class DirectEncodedVideoSource(
     private val sourceLock = Any()
     private var source: VideoSource? = null
     private var track: VideoTrack? = null
-    private var closed = false
+    @Volatile private var closed = false
     private var lastKeyRequestNs = 0L
     private val broken = AtomicBoolean(false)
 
@@ -59,7 +61,7 @@ internal class DirectEncodedVideoSource(
 
     val encoderFactory = object : VideoEncoderFactory {
         override fun getSupportedCodecs() = arrayOf(VideoCodecInfo("H264", mapOf(
-            "profile-level-id" to "42e01f", "level-asymmetry-allowed" to "1", "packetization-mode" to "1"), emptyList()))
+            "profile-level-id" to profileLevelId, "level-asymmetry-allowed" to "1", "packetization-mode" to "1"), emptyList()))
         override fun createEncoder(info: VideoCodecInfo): VideoEncoder? =
             if (info.name.equals("H264", true) && info.params == supportedCodecs[0].params) ForwardEncoder() else null
     }
@@ -213,9 +215,9 @@ internal class DirectEncodedVideoSource(
             paused = allocation.sum <= 0
             if (paused || wasPaused != paused) order.invalidate()
             if (wasPaused && !paused) requestSync()
-            // The finite adapter shares the existing MediaCodec output and its
-            // current source rate policy. Coordinated RTP/source rate adaptation
-            // is a separate production gate; a nonzero target is not applied here.
+            // Handoff is a single coalesced source estimate. The source adapts raw
+            // cadence/MediaCodec bitrate; the encoded reference chain remains intact.
+            if (valid() && !closed) onRate(allocation.sum.coerceAtLeast(0), framerate.coerceAtLeast(0))
             return VideoCodecStatus.OK
         }
         override fun getScalingSettings(): VideoEncoder.ScalingSettings = VideoEncoder.ScalingSettings.OFF

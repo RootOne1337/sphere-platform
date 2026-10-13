@@ -34,6 +34,7 @@ import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.booleanOrNull
 import kotlinx.serialization.json.contentOrNull
 import kotlinx.serialization.json.decodeFromJsonElement
+import kotlinx.serialization.json.encodeToJsonElement
 import kotlinx.serialization.json.int
 import kotlinx.serialization.json.intOrNull
 import kotlinx.serialization.json.jsonObject
@@ -234,6 +235,9 @@ class CommandDispatcher @Inject constructor(
                     put("legacy_suppressed_packets_total", stats.legacySuppressedPacketsTotal)
                     put("legacy_suppressed_encoded_bytes_total", stats.legacySuppressedEncodedBytesTotal)
                     continuousInput?.let { put("native_input", it.diagnosticSnapshot()) }
+                    // Optional diagnostic serialization must not interrupt heartbeat liveness.
+                    runCatching { streamingManager.getStreamQualityTelemetry()?.let { Json.encodeToJsonElement(it) } }
+                        .getOrNull()?.let { put("source_quality", it) }
                     put("encoder_fps", stats.currentFps)
                     put("encoded_frames_total", stats.totalFrames)
                     put("encoded_bytes_total", stats.totalEncodedBytes)
@@ -283,6 +287,30 @@ class CommandDispatcher @Inject constructor(
                     addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
                 }
                 appContext.startActivity(intent)
+                return
+            }
+            "stream_quality" -> {
+                val id = msg["command_id"]?.jsonPrimitive?.contentOrNull ?: return
+                if (!Regex("interactive_[0-9a-fA-F-]{36}").matches(id)) return
+                val signedAt = msg["signed_at"]?.jsonPrimitive?.longOrNull
+                val ttl = msg["ttl_seconds"]?.jsonPrimitive?.intOrNull
+                val age = signedAt?.let { System.currentTimeMillis() / 1000 - it }
+                if (age == null || ttl !in 1..30 || age < -30 || age > checkNotNull(ttl)) {
+                    ack(id, "failed", error = "expired"); return
+                }
+                try {
+                    val payload = msg["payload"] as? JsonObject ?: error("stream_quality_invalid")
+                    val snapshot = when (payload["action"]?.jsonPrimitive?.contentOrNull) {
+                        "get" -> streamingManager.getStreamQuality()
+                        "set" -> streamingManager.configureStreamQuality(Json.decodeFromJsonElement(
+                            checkNotNull(payload["settings"])))
+                        else -> error("stream_quality_invalid")
+                    } ?: error("stream_quality_unsupported")
+                    ack(id, "completed", result = Json.encodeToJsonElement(snapshot).jsonObject)
+                } catch (error: Exception) {
+                    val known = setOf("stream_quality_unsupported", "stream_quality_codec_refused", "stream_quality_storage_unavailable")
+                    ack(id, "failed", error = error.message?.takeIf { it in known } ?: "stream_quality_invalid")
+                }
                 return
             }
             "stop_stream" -> {

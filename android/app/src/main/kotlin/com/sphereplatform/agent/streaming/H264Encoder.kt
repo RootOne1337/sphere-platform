@@ -13,7 +13,7 @@ import java.util.concurrent.ArrayBlockingQueue
 /**
  * Asynchronous H.264 encoder using [MediaCodec] surface input mode.
  *
- * - Baseline Profile Level 3.1 → maximum WebCodecs compatibility
+ * - Baseline profile; AVC level covers source size, cadence and bitrate ceiling
  * - [MediaFormat.KEY_LOW_LATENCY] = 1 (API 30+) for real-time streaming
  * - CBR for predictable bitrate over the network
  * - SPS/PPS cached and replayed when a new viewer connects
@@ -46,6 +46,7 @@ class H264Encoder(
         val fps: Int = 30,
         val bitrateBps: Int = 1_500_000,
         val iFrameIntervalSec: Int = 1,
+        val maxBitrateBps: Int = maxOf(bitrateBps, 4_000_000),
     ) {
         // LOW-3: validate at construction time, not silently at encode time
         init {
@@ -53,10 +54,21 @@ class H264Encoder(
             require(height > 0) { "height must be positive" }
             require(fps in 1..60) { "fps must be between 1 and 60" }
             require(bitrateBps > 0) { "bitrateBps must be positive" }
+            require(maxBitrateBps >= bitrateBps) { "maximum bitrate must cover initial bitrate" }
         }
         internal val frameIntervalNs: Long get() = (1_000_000_000L + fps - 1) / fps
         internal val frameIntervalMs: Long get() = (1000L + fps - 1) / fps
+        internal val avcLevel: AvcLevel get() = AvcLevel.required(width, height, fps, maxBitrateBps)
     }
+
+    @Volatile private var targetFps = config.fps
+    @Volatile var targetBitrateBps: Int = config.bitrateBps
+        private set
+    internal val frameIntervalNs: Long get() = (1_000_000_000L + targetFps - 1) / targetFps
+    internal val frameIntervalMs: Long get() = (1000L + targetFps - 1) / targetFps
+    internal val profileLevelId: String get() = config.avcLevel.profileLevelId
+
+    internal fun adjustFrameRate(fps: Int) { require(fps in 1..config.fps); targetFps = fps }
 
     data class FrameMetadata(
         val isKeyFrame: Boolean,
@@ -117,14 +129,15 @@ class H264Encoder(
             setInteger(MediaFormat.KEY_FRAME_RATE, config.fps)
             setInteger(MediaFormat.KEY_I_FRAME_INTERVAL, config.iFrameIntervalSec)
 
-            // Baseline Profile Level 3.1 — compatible with WebCodecs "avc1.42E01F"
+            // Cadence/bitrate can exceed level 3.1 even at 960×540. Advertise the
+            // same ceiling to RTP and MediaCodec instead of sending an invalid SPS.
             setInteger(
                 MediaFormat.KEY_PROFILE,
                 MediaCodecInfo.CodecProfileLevel.AVCProfileBaseline,
             )
             setInteger(
                 MediaFormat.KEY_LEVEL,
-                MediaCodecInfo.CodecProfileLevel.AVCLevel31,
+                config.avcLevel.androidLevel,
             )
 
             // Critical for real-time streaming (API 30+)
@@ -279,7 +292,7 @@ class H264Encoder(
                 owned = active
                 val last = planarLastSubmissionNs ?: return@synchronized false
                 val now = monotonicNs()
-                if (callbackErrorReported || !planarFrameAvailable || now - last < config.frameIntervalNs) return@synchronized false
+                if (callbackErrorReported || !planarFrameAvailable || now - last < frameIntervalNs) return@synchronized false
                 // Keep one pending raw refresh. Real producer frames supersede it;
                 // input callbacks do not flood the codec when it is busy.
                 if (!planarRefreshPending) {
@@ -320,10 +333,15 @@ class H264Encoder(
         }
     }
 
-    fun adjustBitrate(newBitrateBps: Int) {
-        codec?.setParameters(Bundle().apply {
-            putInt(MediaCodec.PARAMETER_KEY_VIDEO_BITRATE, newBitrateBps)
-        })
+    fun adjustBitrate(newBitrateBps: Int): Boolean = synchronized(inputLock) {
+        require(newBitrateBps in 1..config.maxBitrateBps)
+        val owned = codec ?: return@synchronized false
+        if (callbackErrorReported) return@synchronized false
+        runCatching {
+            owned.setParameters(Bundle().apply { putInt(MediaCodec.PARAMETER_KEY_VIDEO_BITRATE, newBitrateBps) })
+            targetBitrateBps = newBitrateBps
+            true
+        }.getOrElse { Timber.w("H264Encoder: live bitrate update refused"); false }
     }
 
     // -------------------------------------------------------------------------

@@ -7880,6 +7880,112 @@
         }
       }
     },
+    "/api/v1/streaming/{device_id}/quality": {
+      "get": {
+        "tags": [
+          "streaming"
+        ],
+        "summary": "Get Stream Quality",
+        "description": "Read the current device-wide preference and applied source limits from Android.",
+        "operationId": "get_stream_quality_api_v1_streaming__device_id__quality_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "device_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Device Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StreamQualitySnapshot"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "streaming"
+        ],
+        "summary": "Configure Stream Quality",
+        "description": "Persist source preferences without restarting capture; all viewers share this encoder.",
+        "operationId": "configure_stream_quality_api_v1_streaming__device_id__quality_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "device_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Device Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StreamQualitySettings"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StreamQualitySnapshot"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/streaming/{device_id}/status": {
       "get": {
         "tags": [
@@ -10700,6 +10806,74 @@
         "title": "AccountStatsResponse",
         "description": "Агрегированная статистика аккаунтов для дашборда."
       },
+      "ActiveStreamQuality": {
+        "properties": {
+          "width": {
+            "type": "integer",
+            "maximum": 8192.0,
+            "minimum": 1.0,
+            "title": "Width"
+          },
+          "height": {
+            "type": "integer",
+            "maximum": 8192.0,
+            "minimum": 1.0,
+            "title": "Height"
+          },
+          "source_fps": {
+            "type": "integer",
+            "maximum": 240.0,
+            "minimum": 1.0,
+            "title": "Source Fps"
+          },
+          "codec_max_fps": {
+            "type": "integer",
+            "maximum": 60.0,
+            "minimum": 1.0,
+            "title": "Codec Max Fps"
+          },
+          "target_fps": {
+            "type": "integer",
+            "maximum": 60.0,
+            "minimum": 1.0,
+            "title": "Target Fps"
+          },
+          "max_bitrate_bps": {
+            "type": "integer",
+            "maximum": 32000000.0,
+            "minimum": 1.0,
+            "title": "Max Bitrate Bps"
+          },
+          "target_bitrate_bps": {
+            "type": "integer",
+            "maximum": 32000000.0,
+            "minimum": 1.0,
+            "title": "Target Bitrate Bps"
+          },
+          "adaptation": {
+            "type": "string",
+            "enum": [
+              "source",
+              "webrtc",
+              "legacy_queue"
+            ],
+            "title": "Adaptation"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "width",
+          "height",
+          "source_fps",
+          "codec_max_fps",
+          "target_fps",
+          "max_bitrate_bps",
+          "target_bitrate_bps",
+          "adaptation"
+        ],
+        "title": "ActiveStreamQuality"
+      },
       "AgentConfigResponse": {
         "properties": {
           "server_url": {
@@ -11081,6 +11255,16 @@
             "anyOf": [
               {
                 "$ref": "#/components/schemas/NativeInputTelemetry"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "source_quality": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/StreamQualitySnapshot"
               },
               {
                 "type": "null"
@@ -19518,6 +19702,86 @@
           "state"
         ],
         "title": "StreamDiagnosticsResponse"
+      },
+      "StreamQualitySettings": {
+        "properties": {
+          "profile": {
+            "type": "string",
+            "enum": [
+              "auto",
+              "detail",
+              "economy"
+            ],
+            "title": "Profile",
+            "default": "auto"
+          },
+          "max_fps": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "maximum": 60.0,
+                "minimum": 1.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Max Fps"
+          },
+          "max_bitrate_bps": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "maximum": 32000000.0,
+                "minimum": 100000.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Max Bitrate Bps"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "title": "StreamQualitySettings"
+      },
+      "StreamQualitySnapshot": {
+        "properties": {
+          "supported": {
+            "type": "boolean",
+            "title": "Supported"
+          },
+          "protocol": {
+            "type": "integer",
+            "enum": [
+              1
+            ],
+            "const": 1,
+            "title": "Protocol",
+            "default": 1
+          },
+          "settings": {
+            "$ref": "#/components/schemas/StreamQualitySettings"
+          },
+          "active": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ActiveStreamQuality"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "supported",
+          "settings"
+        ],
+        "title": "StreamQualitySnapshot"
       },
       "StreamSessionHistoryResponse": {
         "properties": {

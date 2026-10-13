@@ -19,6 +19,33 @@ import java.util.concurrent.atomic.AtomicInteger
  */
 class FrameThrottleTest {
 
+    @Test fun `configured sixty fps admits all source pictures including first timestamp zero`() {
+        val gate = FrameThrottle(); gate.configure(60, newCapture = true)
+        assertEquals(60, (0 until 60).count { gate.shouldRenderFrame(it * 16_666_667L) })
+    }
+    @Test fun `nondivisor codec limit budgets fifty two pictures instead of leaking all sixty or halving cadence`() {
+        val gate = FrameThrottle(); gate.configure(52, newCapture = true)
+        val admitted = (0 until 600).count { gate.shouldRenderFrame(it * 16_666_667L) }
+        assertTrue("52 FPS budget over ten seconds: $admitted", admitted in 519..521)
+    }
+    @Test fun `a pause cannot accumulate a burst of catch up pictures`() {
+        val gate = FrameThrottle(); gate.configure(60); assertTrue(gate.shouldRenderFrame(0))
+        assertTrue(gate.shouldRenderFrame(10_000_000_000L))
+        repeat(100) { assertFalse(gate.shouldRenderFrame(10_000_000_001L + it)) }
+    }
+    @Test fun `live cadence change preserves the last picture and new capture resets the gate`() {
+        val gate = FrameThrottle(); assertTrue(gate.shouldRenderFrame(0))
+        gate.configure(1)
+        assertFalse(gate.shouldRenderFrame(16_666_667L)); assertTrue(gate.shouldRenderFrame(1_000_000_000L))
+        gate.configure(60, newCapture = true)
+        assertTrue(gate.shouldRenderFrame(0)); assertEquals(1, gate.totalFrames); assertEquals(0, gate.droppedFrames)
+    }
+    @Test fun `invalid fps cannot mutate a working throttle`() {
+        val gate = FrameThrottle(); gate.configure(60)
+        assertThrows(IllegalArgumentException::class.java) { gate.configure(61) }
+        assertEquals(60, gate.targetFps)
+    }
+
     private lateinit var throttle: FrameThrottle
 
     @Before

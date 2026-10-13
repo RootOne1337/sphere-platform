@@ -5,7 +5,7 @@ Regenerate with `python -m scripts.export_api_docs`; verify with `--check`.
 Use the FastAPI/Pydantic versions pinned in `backend/requirements.txt`.
 The exporter does not run startup hooks or send HTTP requests.
 
-**185 HTTP operations across 147 paths.**
+**187 HTTP operations across 148 paths.**
 
 Full parameters, request bodies, response schemas and declared security schemes:
 [OpenAPI JSON](openapi.json). Manual explanations:
@@ -165,6 +165,8 @@ for tested behavior and remaining limits.
 | `GET` | `/api/v1/scripts/{script_id}/versions/{version_id}` | scripts | 200, 422 | Прочитать одну неизменяемую версию с DAG и хешем |
 | `POST` | `/api/v1/scripts/{script_id}/versions/{version_id}/rollback` | scripts | 200, 422 | Откатить скрипт к указанной версии (создаёт новую версию) |
 | `POST` | `/api/v1/streaming/{device_id}/keyframe` | streaming | 200, 422 | Request Keyframe |
+| `GET` | `/api/v1/streaming/{device_id}/quality` | streaming | 200, 422 | Get Stream Quality |
+| `POST` | `/api/v1/streaming/{device_id}/quality` | streaming | 200, 422 | Configure Stream Quality |
 | `POST` | `/api/v1/streaming/{device_id}/start` | streaming | 200, 422 | Request Stream Start |
 | `GET` | `/api/v1/streaming/{device_id}/status` | streaming | 200, 422 | Get Stream Status |
 | `POST` | `/api/v1/streaming/{device_id}/stop` | streaming | 200, 422 | Request Stream Stop |

@@ -175,11 +175,15 @@ class DirectProbeTransport(
                 put("connected", false) // These hints are never reported as an established path.
             }.toString())
             if (p.videoRequested) {
+                check(AvcReceiveCapabilities.accepts(sdp, streaming.encodedProfileLevelId())) { "receiver_level_insufficient" }
                 p.capture = streaming.attachEncodedViewer(p) { frame ->
                     if (p.videoReady) p.video?.submit(frame)
                 } ?: error("active_capture_required")
                 p.video = DirectEncodedVideoSource(checkNotNull(p.capture), { valid(p) },
-                    { if (valid(p)) streaming.requestDirectKeyFrame() }, { enqueue { if (peer === p) close() } })
+                    { if (valid(p)) streaming.requestDirectKeyFrame() }, { enqueue { if (peer === p) close() } },
+                    streaming.encodedProfileLevelId(), { bitrate, fps ->
+                        p.capture?.let { streaming.onDirectRateEstimate(p, it, bitrate, fps) }
+                    })
             }
             // Validate before creating native threads. Ordinary builds keep an empty host-only profile.
             val iceProfile = DirectProbeIceProfile.fromUrl(BuildConfig.DIRECT_PROBE_STUN_URL)
@@ -289,7 +293,16 @@ class DirectProbeTransport(
             p.connection?.setRemoteDescription(observer(p, ProbeStage.REMOTE_FAILED, set = {
                 progress(p, ProbeStage.REMOTE_SET)
                 p.video?.let { video ->
-                    p.connection?.addTrack(video.start(checkNotNull(factory)), listOf("sphere-screen"))
+                    p.connection?.addTrack(video.start(checkNotNull(factory)), listOf("sphere-screen"))?.let { sender ->
+                        val limits = streaming.encodedRateLimits()
+                        val parameters = sender.parameters
+                        parameters.encodings.forEach { encoding ->
+                            encoding.maxBitrateBps = limits.first
+                            encoding.maxFramerate = limits.second
+                        }
+                        parameters.degradationPreference = RtpParameters.DegradationPreference.MAINTAIN_RESOLUTION
+                        check(sender.setParameters(parameters)) { "rtp_source_limits_refused" }
+                    }
                     p.connection?.transceivers?.filter { it.mediaType == MediaStreamTrack.MediaType.MEDIA_TYPE_VIDEO }
                         ?.forEach { it.direction = RtpTransceiver.RtpTransceiverDirection.SEND_ONLY }
                 }

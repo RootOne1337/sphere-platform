@@ -20,6 +20,18 @@ interface StreamingManager {
     /** Returns stage-specific counters for the current stream, if available. */
     fun getQualityStats(): StreamQualityMonitor.StreamStats? = null
 
+    /** Device-wide persisted source preferences; changing them never replaces capture. */
+    fun getStreamQuality(): StreamQualitySnapshot? = null
+    /** Immutable, nonblocking snapshot for the WebSocket heartbeat reader. */
+    fun getStreamQualityTelemetry(): StreamQualitySnapshot? = null
+    fun configureStreamQuality(settings: StreamQualitySettings): StreamQualitySnapshot? = null
+
+    /** MediaCodec ceiling used by the encoded RTP adapter. */
+    fun encodedProfileLevelId(): String = "42e01f"
+    fun encodedRateLimits(): Pair<Int, Int> = 4_000_000 to 30
+    /** Bounded asynchronous handoff from the WebRTC encoder callback. */
+    fun onDirectRateEstimate(owner: Any, capture: CaptureInputSession, bitrate: Int, fps: Int) {}
+
     /** Notify an active stream that a new viewer needs codec configuration and a keyframe. */
     fun onViewerConnected() {}
 
