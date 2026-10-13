@@ -136,6 +136,20 @@ function readyWheel() {
   return { ...view, wheel };
 }
 
+test('passive server stream measures the authenticated link and clears it on socket retirement', () => {
+  const view = readyGestureFixture(false, true);
+  expect(view.container.querySelector('[aria-label="Сводка видеопотока"]')).toHaveTextContent('RTT сервера —');
+  act(() => view.socket.onmessage?.({ data: JSON.stringify({ type: 'stream_link_ready', schema_version: 1 }) }));
+  const probes = view.socket.send.mock.calls.map(([raw]) => JSON.parse(raw)).filter(m => m.type === 'stream_link_probe');
+  expect(probes).toEqual([{ type: 'stream_link_probe', sequence: 1 }]);
+  act(() => jest.advanceTimersByTime(25));
+  act(() => view.socket.onmessage?.({ data: JSON.stringify({ type: 'stream_link_result', sequence: 1 }) }));
+  expect(view.container.querySelector('[aria-label="Сводка видеопотока"]')).toHaveTextContent('RTT сервера 25 мс');
+  expect(probes.some(m => m.type === 'touch_event')).toBe(false);
+  act(() => view.socket.onclose?.({ code: 1000 }));
+  expect(view.container.querySelector('[aria-label="Сводка видеопотока"]')).toHaveTextContent('RTT сервера —');
+});
+
 function readyContinuous() {
   mockCapture = { captureEpoch: TOUCH_EPOCH, frameWidth: 1280, frameHeight: 720 };
   const view = readyWheel();

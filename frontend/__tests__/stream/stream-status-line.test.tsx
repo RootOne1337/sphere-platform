@@ -21,3 +21,8 @@ test('video direct alone does not imply direct input and invalid or missing rate
   expect(screen.getByLabelText('Сводка видеопотока')).not.toHaveTextContent('видео и касания');
   expect(screen.getByLabelText('Сводка видеопотока')).toHaveTextContent('— FPS');
 });
+test('server RTT is labelled as the server segment without borrowing the Android ACK', () => {
+  render(<StreamStatusLine {...healthy} direct={false} directInput={false} live={false} rtt={250} />);
+  expect(screen.getByLabelText('Сводка видеопотока')).toHaveTextContent('RTT сервера 250 мс');
+  expect(screen.getByTitle(/не RTT до APK, не ACK/)).toBeInTheDocument();
+});

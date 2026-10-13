@@ -33,6 +33,7 @@ const directFailureText: Record<string, string> = {
 
 type SessionRecord = { session_id: string; opened_at: string; state: 'active' | 'closed' | 'stale';
   browser_samples?: { received_at: string; rendered_frames: number; incoming_fps: number; control_rtt_ms?: number;
+    server_link_rtt_ms?: number | null; server_link_sample_age_ms?: number | null;
     control_transport?: 'server_websocket' | 'direct_webrtc';
     transport?: 'server_websocket' | 'direct_webrtc'; direct_frames?: number; direct_fps?: number | null;
     direct_path?: string; direct_network_rtt_ms?: number | null; direct_jitter_buffer_ms?: number | null;
@@ -87,6 +88,11 @@ export function StreamSessionHistoryPanel({ deviceId }: { deviceId: string }) {
           {sample?.transport === 'direct_webrtc' && <div className="mt-1 text-xs text-muted-foreground">
             RTT сети {sample.direct_network_rtt_ms?.toFixed(1) ?? '—'} мс · буфер приёма {sample.direct_jitter_buffer_ms?.toFixed(1) ?? '—'} мс · декодирование {sample.direct_decode_ms?.toFixed(1) ?? '—'} мс.
             Это отдельные этапы, а не полная задержка картинки.
+          </div>}
+          {sample?.transport === 'server_websocket' && <div className="mt-1 text-xs text-muted-foreground">
+            RTT браузер ↔ сервер {sample.server_link_rtt_ms?.toFixed(1) ?? '—'} мс
+            {sample.server_link_sample_age_ms != null && ` · возраст замера ${(sample.server_link_sample_age_ms / 1000).toFixed(1)} с`}.
+            Это участок до сервера, а не задержка видео или подтверждение Android.
           </div>}
           {sample && <div className="mt-1 text-xs text-muted-foreground">{sample.control_transport === 'direct_webrtc'
             ? 'Касания напрямую · WebRTC' : sample.control_transport === 'server_websocket'

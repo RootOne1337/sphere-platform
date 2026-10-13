@@ -29,6 +29,7 @@ from backend.websocket.stream_session_history import (
 )
 from backend.websocket.video_delivery import select_delivery
 from backend.websocket.viewer_input import InvalidViewerInput, viewer_command
+from backend.websocket.viewer_link import ViewerLinkProbe
 
 logger = structlog.get_logger()
 
@@ -310,6 +311,7 @@ async def stream_viewer_ws(
                 pass  # The bounded check already retired its owner; video stays independent.
 
     touch_auth_task = asyncio.create_task(_touch_auth_loop())
+    link_probe = ViewerLinkProbe()
 
     try:
         if history_enabled:
@@ -317,6 +319,7 @@ async def stream_viewer_ws(
         if history_enabled:
             await ws.send_json({"type": "stream_session", "schema_version": 1, "session_id": session_id,
                                 "history_enabled": True, "report_interval_seconds": REPORT_INTERVAL_SECONDS})
+        await ws.send_json({"type": "stream_link_ready", "schema_version": 1})
         await send_control({"type": "viewer_connected", "session_id": session_id})
         while True:
             receive_task = asyncio.create_task(ws.receive_json())
@@ -335,6 +338,11 @@ async def stream_viewer_ws(
                 if not receive_task.done():
                     receive_task.cancel()
                 await asyncio.gather(receive_task, return_exceptions=True)
+            if isinstance(data, dict) and data.get("type") == "stream_link_probe":
+                reply = link_probe.reply(data, time.monotonic())
+                if reply is not None:
+                    await ws.send_json(reply)
+                continue
             if isinstance(data, dict) and isinstance(data.get("type"), str) and data["type"] in {"viewer_telemetry", "viewer_direct_result"}:
                 # This branch terminates at diagnostic storage. It never forwards
                 # a browser-supplied payload to Android or changes input ownership.

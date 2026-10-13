@@ -4,6 +4,7 @@ import type { DirectProbeResult } from './directProbe';
 import type { DiagnosticProfile } from './DirectProbeDiagnostics';
 import type { LiveVideoObservation } from './LiveDirectVideo';
 import type { DirectProbeNetwork } from './directProbeNetwork';
+import type { ServerLinkSample } from './serverLinkRtt';
 
 type ControlObservation = { state: ContinuousPointerState | 'probing'; failure: string | null; rtt: number | null; attempts: number;
   fence?: PointerFenceObservation | null;
@@ -54,10 +55,13 @@ function iceSnapshot(network: DirectProbeNetwork | undefined) {
 }
 
 /** Explicit scalar whitelist: decoder exception text and Android input never leave the viewer. */
-export function browserStreamSample(stats: StreamDecoderStats, control: ControlObservation, now = Date.now(), direct?: LiveVideoObservation) {
+export function browserStreamSample(stats: StreamDecoderStats, control: ControlObservation, now = Date.now(), direct?: LiveVideoObservation,
+  serverLink?: ServerLinkSample | null) {
   const age = (at: number | null) => at === null ? null : milliseconds(now - at);
   return { schema_version: 1, transport: direct?.active ? 'direct_webrtc' : 'server_websocket', visibility: document.hidden ? 'hidden' : 'visible',
     control_transport: control.transport === 'direct_webrtc' ? 'direct_webrtc' : 'server_websocket',
+    server_link_rtt_ms: milliseconds(serverLink?.rttMs ?? null),
+    server_link_sample_age_ms: milliseconds(serverLink?.ageMs ?? null),
     ...(direct ? { direct_frames: counter(direct.frames),
       direct_frame_age_ms: age(direct.lastFrameAt), direct_path: direct.result?.path ?? 'unknown',
       direct_protocol: direct.result?.protocol === 'udp' || direct.result?.protocol === 'tcp' ? direct.result.protocol : null,

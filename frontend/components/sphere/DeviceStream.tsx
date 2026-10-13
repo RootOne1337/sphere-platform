@@ -29,6 +29,7 @@ import { StreamStatusLine } from '@/src/features/stream/StreamStatusLine';
 import { deferLegacyInput } from '@/src/features/stream/directInputRouting';
 import { useStreamFullscreen } from '@/src/features/stream/useStreamFullscreen';
 import { StreamControlsTray } from '@/src/features/stream/StreamControlsTray';
+import { ServerLinkRtt } from '@/src/features/stream/serverLinkRtt';
 
 interface DeviceStreamProps {
   deviceId: string;
@@ -152,6 +153,7 @@ export function DeviceStream({
   const surfaceFit = fullscreen.active ? 'contain' : fit;
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const wsRef = useRef<WebSocket | null>(null);
+  const [serverRttMs, setServerRttMs] = useState<number | null>(null);
   const diagnosticReporter = useRef<StreamSessionReporter | null>(null);
   const [diagnosticSession, setDiagnosticSession] = useState<{
     socket: WebSocket; deviceId: string; accessToken: string | null; id: string;
@@ -494,12 +496,15 @@ export function DeviceStream({
         newWs.binaryType = 'arraybuffer';
         ws = newWs;
         wsRef.current = newWs;
+        setServerRttMs(null);
+        const linkRtt = new ServerLinkRtt(newWs);
+        let linkAuthorized = false;
         telemetryControl.current = { state: 'idle', failure: null, rtt: null, attempts: idleRecoveryCountRef.current, transport: 'server_websocket', fence: null, fenceAtMs: null };
         continuousRouteRef.current = null;
         setControlTransport('server_websocket');
         setContinuousReceipt(null);
         const reporter = new StreamSessionReporter(newWs, () => decoder
-          ? browserStreamSample(decoder.stats, telemetryControl.current, Date.now(), directVideoRef.current) : null);
+          ? browserStreamSample(decoder.stats, telemetryControl.current, Date.now(), directVideoRef.current, linkRtt.sample()) : null);
         diagnosticReporter.current = reporter;
         automaticProbeRef.current = null;
         // Keep the previously confirmed input path across socket replacements.
@@ -539,6 +544,8 @@ export function DeviceStream({
         const finish = (retry: boolean, terminalMessage?: string, minimumRetryDelayMs = 0) => {
           if (ended) return;
           ended = true;
+          linkRtt.stop();
+          if (!ignore) setServerRttMs(null);
           releaseWaiterRef.current?.finish(false);
           releaseWaiterRef.current = null;
           discreteBusyRef.current = false;
@@ -586,6 +593,8 @@ export function DeviceStream({
           finish(true, undefined, idleRecoveryDelay(idleRecoveryCountRef.current));
         };
         watchdog = setInterval(() => {
+          if (linkAuthorized) linkRtt.tick(!document.hidden);
+          setServerRttMs(linkRtt.sample()?.rttMs ?? null);
           reporter.report();
           if (Date.now() - lastReceived >= (opened ? 30_000 : 15_000)) finish(true);
         }, 5_000);
@@ -648,6 +657,16 @@ export function DeviceStream({
           if (typeof evt.data === 'string') {
             try {
               const msg = JSON.parse(evt.data);
+              if (msg.type === 'stream_link_ready' && msg.schema_version === 1) {
+                linkAuthorized = true;
+                linkRtt.tick(!document.hidden);
+                return;
+              }
+              if (msg.type === 'stream_link_result') {
+                linkRtt.receive(msg);
+                setServerRttMs(document.hidden ? null : linkRtt.sample()?.rttMs ?? null);
+                return;
+              }
               if (msg.type === 'stream_session') {
                 if (reporter.accept(msg)) setDiagnosticSession({ socket: newWs, deviceId, accessToken, id: reporter.sessionId! });
                 return;
@@ -1355,7 +1374,7 @@ export function DeviceStream({
     {readOnly && enableNavigation && <p role="status" className="border-b border-border bg-muted px-3 py-2 text-xs text-muted-foreground">Только просмотр · {readOnlyReason ?? 'роль не разрешает клики, жесты и навигацию Android.'}</p>}
     <StreamStatusLine direct={directVideo.active} directInput={directVideo.active && controlTransport === 'direct_webrtc'}
       live={connection === 'live' && !streamError}
-      rtt={directVideo.active ? directVideo.result?.videoStats?.networkRttMs ?? null : null}
+      rtt={directVideo.active ? directVideo.result?.videoStats?.networkRttMs ?? null : serverRttMs}
       width={directVideo.active ? directVideo.result?.videoStats?.width ?? lastFrameDimensionsRef.current?.width ?? null : lastFrameDimensionsRef.current?.width ?? null}
       height={directVideo.active ? directVideo.result?.videoStats?.height ?? lastFrameDimensionsRef.current?.height ?? null : lastFrameDimensionsRef.current?.height ?? null}
       fps={directVideo.active ? directVideo.result?.videoStats?.fps ?? null : browserStats?.renderedFps ?? null}

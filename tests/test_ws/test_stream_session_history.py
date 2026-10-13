@@ -45,6 +45,13 @@ FENCE = dict(reason="native_receipt_timeout", phase="ready", age_ms=0, pointer_h
              socket_state=1, buffered_bytes=0)
 
 
+def test_server_link_rtt_and_android_receipt_are_distinct_and_age_is_required():
+    valid = StreamSessionHistory.validated_sample(SAMPLE | {"server_link_rtt_ms": 20, "server_link_sample_age_ms": 50})
+    assert valid is not None and valid["server_link_rtt_ms"] == 20 and valid["control_rtt_ms"] == 15
+    assert StreamSessionHistory.validated_sample(SAMPLE | {"server_link_rtt_ms": 20}) is None
+    assert StreamSessionHistory.validated_sample(SAMPLE | {"server_link_rtt_ms": -1, "server_link_sample_age_ms": 0}) is None
+
+
 @pytest.mark.parametrize("cause", ["idle_receipt_timeout", "pointer_receipt_timeout", "surface_control_lost",
                                    "surface_blur", "surface_hidden", "capture_or_socket_lost"])
 async def test_control_fence_survives_sample_eviction_without_becoming_an_input_authority(store, cause):

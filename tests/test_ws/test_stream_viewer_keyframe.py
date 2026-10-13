@@ -50,6 +50,20 @@ def authorized_viewer(monkeypatch):
 
 
 @pytest.mark.asyncio
+async def test_link_probe_is_echoed_for_a_passive_viewer_without_android_dispatch(authorized_viewer, monkeypatch):
+    ws, bridge = authorized_viewer
+    monkeypatch.setattr("backend.core.rbac.has_permission", lambda _role, permission: permission == "stream:read")
+    ws.receive_json = AsyncMock(side_effect=[{"token": "fixture"},
+        {"type": "stream_link_probe", "sequence": 8},
+        {"type": "stream_link_probe", "sequence": 9, "text": "private"}, WebSocketDisconnect()])
+    await stream_router.stream_viewer_ws(ws, str(uuid4()))
+    assert call({"type": "stream_link_ready", "schema_version": 1}) in ws.send_json.await_args_list
+    assert call({"type": "stream_link_result", "sequence": 8}) in ws.send_json.await_args_list
+    assert len(bridge.send_control.await_args_list) == 1  # Existing stream-start control only.
+    assert not any("private" in str(args) for args in ws.send_json.await_args_list)
+
+
+@pytest.mark.asyncio
 async def test_viewer_keyframe_request_is_forwarded_to_the_android_agent(authorized_viewer):
     ws, bridge = authorized_viewer
     device_id = str(uuid4())
@@ -78,7 +92,8 @@ async def test_bad_json_is_rejected_without_retiring_stream_or_logging_payload(a
     warning = MagicMock()
     monkeypatch.setattr(stream_router.logger, "warning", warning)
     await stream_router.stream_viewer_ws(ws, str(uuid4()))
-    ws.send_json.assert_awaited_once_with({"type": "error", "error": "stream_input_invalid", "reason": "invalid_message"})
+    assert ws.send_json.await_args_list == [call({"type": "stream_link_ready", "schema_version": 1}),
+        call({"type": "error", "error": "stream_input_invalid", "reason": "invalid_message"})]
     assert [call.args[1]["type"] for call in bridge.send_control.await_args_list] == ["viewer_connected", "request_keyframe"]
     ws.close.assert_not_awaited()
     bridge.unregister_viewer.assert_awaited_once()
@@ -106,7 +121,8 @@ async def test_malformed_type_keeps_video_and_later_control_alive(authorized_vie
     ws.receive_json = AsyncMock(side_effect=[{"token": "test-viewer-token"}, {"type": message_type},
                                             {"type": "request_keyframe"}, WebSocketDisconnect()])
     await stream_router.stream_viewer_ws(ws, str(uuid4()))
-    ws.send_json.assert_awaited_once_with({"type": "error", "error": "stream_input_invalid", "reason": "invalid_message"})
+    assert ws.send_json.await_args_list == [call({"type": "stream_link_ready", "schema_version": 1}),
+        call({"type": "error", "error": "stream_input_invalid", "reason": "invalid_message"})]
     assert [call.args[1]["type"] for call in bridge.send_control.await_args_list] == ["viewer_connected", "request_keyframe"]
     ws.close.assert_not_awaited()
     bridge.unregister_viewer.assert_awaited_once()
@@ -152,7 +168,8 @@ async def test_touch_refusal_classification_preserves_video_and_never_replays(au
         'capture_epoch': '00112233-4455-6677-8899-aabbccddeeff', 'frame_width': 960, 'frame_height': 540},
         {'type': 'request_keyframe'}, WebSocketDisconnect()])
     await stream_router.stream_viewer_ws(ws, str(uuid4()))
-    ws.send_json.assert_awaited_once_with({'type': 'touch_error', 'operation': 'touch_open', **expected})
+    assert ws.send_json.await_args_list == [call({"type": "stream_link_ready", "schema_version": 1}),
+        call({'type': 'touch_error', 'operation': 'touch_open', **expected})]
     runtime.handle.assert_awaited_once()
     runtime.retire.assert_awaited_once()
     assert [c.args[1]['type'] for c in bridge.send_control.await_args_list] == ['viewer_connected', 'request_keyframe']

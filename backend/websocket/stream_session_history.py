@@ -7,7 +7,7 @@ import time
 from datetime import datetime, timezone
 from typing import Annotated, Any, Literal
 
-from pydantic import BaseModel, ConfigDict, Field, ValidationError
+from pydantic import BaseModel, ConfigDict, Field, ValidationError, model_validator
 from redis.exceptions import RedisError
 
 from backend.services.device_status_cache import DeviceStatusCache
@@ -81,6 +81,8 @@ class BrowserStreamSample(BaseModel):
     schema_version: Literal[1]
     transport: Literal["server_websocket", "direct_webrtc"]
     control_transport: Literal["server_websocket", "direct_webrtc"] = "server_websocket"
+    server_link_rtt_ms: Milliseconds | None = None
+    server_link_sample_age_ms: Milliseconds | None = None
     direct_frames: Counter | None = None
     direct_frame_age_ms: Milliseconds | None = None
     direct_path: Literal["host", "nat", "relay", "unknown"] | None = None
@@ -121,6 +123,12 @@ class BrowserStreamSample(BaseModel):
     control_fence: BrowserControlFence | None = None
     control_rtt_ms: Milliseconds | None
     recovery_attempts: Annotated[int, Field(ge=0, le=1000000)]
+
+    @model_validator(mode="after")
+    def validate_link_age(self) -> "BrowserStreamSample":
+        if (self.server_link_rtt_ms is None) != (self.server_link_sample_age_ms is None):
+            raise ValueError("server link RTT and sample age must be paired")
+        return self
 
 
 class DirectDiagnosticResult(BaseModel):

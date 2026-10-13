@@ -7,6 +7,12 @@ const stats = { binaryMessagesReceived: 20, binaryBytesReceived: 300, renderedFr
   decoderQueueSize: 0, pendingOutputCount: 0, receivedPictureFps: 15, renderedFps: 15,
   lastBinaryAtMs: 900, lastRenderedAtMs: 800, lastDecodeError: 'private native exception' } as StreamDecoderStats;
 const sample = () => browserStreamSample(stats, { state: 'ready', failure: null, rtt: 25, attempts: 1 }, 1000);
+test('server echo and Android receipt retain separate scalar values and a missing echo stays unknown', () => {
+  const result = browserStreamSample(stats, { state: 'ready', failure: null, rtt: 140, attempts: 0 }, 1000,
+    undefined, { rttMs: 34, ageMs: 20 });
+  expect(result).toMatchObject({ control_rtt_ms: 140, server_link_rtt_ms: 34, server_link_sample_age_ms: 20 });
+  expect(sample().server_link_rtt_ms).toBeNull();
+});
 const session = { type: 'stream_session', schema_version: 1, session_id: 'abcdef0123456789', history_enabled: true, report_interval_seconds: 10 };
 const socket = () => ({ readyState: WebSocket.OPEN, bufferedAmount: 0, send: jest.fn() } as unknown as WebSocket);
 const fence: PointerFenceObservation = { reason: 'native_receipt_timeout', phase: 'ready', idleHeartbeatOnly: true,

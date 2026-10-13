@@ -4,6 +4,8 @@ export interface NativeInputTelemetry {
   state: 'disabled' | 'idle' | 'opening' | 'ready' | 'retiring' | 'cleanup_unknown';
   last_failure?: keyof typeof failureLabels | null;
   last_failure_age_ms?: number | null;
+  last_input_detail?: keyof typeof inputLabels | null;
+  last_input_detail_age_ms?: number | null;
   last_startup_detail?: keyof typeof startupLabels | null;
   last_startup_detail_age_ms?: number | null;
   last_release_reason?: keyof typeof releaseLabels | null;
@@ -49,6 +51,19 @@ const startupLabels = {
   root_process_exited: 'Процесс адаптера завершился до готовности',
   root_ready_timeout: 'Адаптер не подтвердил готовность в срок',
   root_handoff_unknown: 'Завершение предыдущего адаптера не подтверждено',
+};
+
+const inputLabels = {
+  touch_ack_timeout: 'Истёк срок подтверждения системного адаптера',
+  touch_ack_mismatch: 'Нарушен порядок подтверждений системного адаптера',
+  touch_ack_action_mismatch: 'Адаптер подтвердил другой тип действия',
+  touch_process_exited: 'Системный адаптер ввода завершился',
+  touch_ack_eof: 'Канал подтверждений системного адаптера закрылся',
+  native_expired: 'Android отклонил просроченное действие',
+  native_rejected: 'Системная очередь Android отклонила действие',
+  native_unknown: 'Результат системного действия не подтверждён',
+  touch_cleanup_unknown: 'Системный адаптер не подтвердил очистку',
+  native_adapter_exception: 'Сбой системного адаптера ввода',
 };
 
 const releaseLabels = {
@@ -101,6 +116,10 @@ export function NativeInputDiagnostic({ telemetry }: { telemetry?: NativeInputTe
           {snapshotAge(telemetry.last_failure_age_ms)}
         </div>
       ) : <div>Сбои ввода в процессе агента не зафиксированы.</div>}
+      {telemetry.last_input_detail && <div>
+        Последний отказ действия: {label(inputLabels, telemetry.last_input_detail)}
+        {snapshotAge(telemetry.last_input_detail_age_ms)}.
+      </div>}
       {telemetry.last_startup_detail && <div>
         Последний сбой запуска: {label(startupLabels, telemetry.last_startup_detail)}
         {snapshotAge(telemetry.last_startup_detail_age_ms)}.

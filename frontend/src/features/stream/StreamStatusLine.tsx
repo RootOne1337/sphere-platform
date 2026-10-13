@@ -12,7 +12,9 @@ export function StreamStatusLine(props: Props) {
       <span className={`h-1.5 w-1.5 rounded-full ${props.live ? 'bg-emerald-500' : 'bg-muted-foreground'}`} aria-hidden />
       {props.direct ? props.directInput ? 'Прямой канал · видео и касания' : 'Видео напрямую' : 'Через сервер'}
     </span>
-    <span className="inline-flex items-center gap-1" title="RTT выбранного сетевого пути. Это не полная задержка от экрана Android до браузера."><Network className="h-3 w-3" aria-hidden />RTT {props.live && rtt !== null ? `${rtt.toFixed(rtt < 10 ? 1 : 0)} мс` : '—'}</span>
+    <span className="inline-flex items-center gap-1" title={props.direct
+      ? 'RTT выбранного сетевого пути. Это не полная задержка от экрана Android до браузера.'
+      : 'Круговое время WebSocket браузер ↔ сервер, включая очередь сервера и обработку браузером. Это не RTT до APK, не ACK действия Android и не полная задержка видео.'}><Network className="h-3 w-3" aria-hidden />{props.direct ? 'RTT' : 'RTT сервера'} {(!props.direct || props.live) && rtt !== null ? `${rtt.toFixed(rtt < 10 ? 1 : 0)} мс` : '—'}</span>
     <span className="inline-flex items-center gap-1"><Video className="h-3 w-3" aria-hidden />{size}</span>
     <span title="Фактическая частота декодирования в браузере">{fps === null ? '—' : fps.toFixed(0)} FPS</span>
     <span className="inline-flex items-center gap-1" title="Измеренный получаемый видеобитрейт. Это не максимальная скорость вашей сети."><ArrowDown className="h-3 w-3" aria-hidden />{bitrate === null ? '—' : (bitrate / 1_000_000).toFixed(1)} Мбит/с</span>

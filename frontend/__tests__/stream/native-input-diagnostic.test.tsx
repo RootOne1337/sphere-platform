@@ -34,6 +34,11 @@ test('a historical startup problem remains separate from a ready current adapter
   expect(screen.getByText(/Ввод Android: Готов/)).toBeInTheDocument();
   expect(screen.getByText(/Последний сбой запуска: Размер или поворот экрана изменился при запуске · 300 мс/)).toBeInTheDocument();
 });
+test('cleanup failure retains the separate original input failure detail', () => {
+  render(<NativeInputDiagnostic telemetry={{ ...telemetry, last_input_detail: 'touch_ack_timeout', last_input_detail_age_ms: 300 }} />);
+  expect(screen.getByText(/Последний отказ действия: Истёк срок подтверждения системного адаптера · 300 мс/)).toBeInTheDocument();
+  expect(screen.getByText(/Android не подтвердил освобождение предыдущего ввода/)).toBeInTheDocument();
+});
 
 test('a confirmed current adapter retains its separately dated release cause', () => {
   render(<NativeInputDiagnostic telemetry={{ ...telemetry, state: 'ready',

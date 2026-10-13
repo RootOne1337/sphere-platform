@@ -17154,6 +17154,42 @@
             ],
             "title": "Last Failure Age Ms"
           },
+          "last_input_detail": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "touch_ack_timeout",
+                  "touch_ack_mismatch",
+                  "touch_ack_action_mismatch",
+                  "touch_process_exited",
+                  "touch_ack_eof",
+                  "native_expired",
+                  "native_rejected",
+                  "native_unknown",
+                  "touch_cleanup_unknown",
+                  "native_adapter_exception"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Input Detail"
+          },
+          "last_input_detail_age_ms": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "maximum": 86400000.0,
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Input Detail Age Ms"
+          },
           "last_startup_detail": {
             "anyOf": [
               {
@@ -18319,6 +18355,11 @@
           "shared_input_enabled": {
             "type": "boolean",
             "title": "Shared Input Enabled",
+            "default": false
+          },
+          "direct_key_input_enabled": {
+            "type": "boolean",
+            "title": "Direct Key Input Enabled",
             "default": false
           }
         },
