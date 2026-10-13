@@ -1,0 +1,830 @@
+{
+  "schemaVersion": 1,
+  "observedAtUtc": "2026-10-13T18:06:20.684946+00:00",
+  "runtimeInstalled": true,
+  "scope": "UIa3e61800 / API69da45cb installed on3015/Tuna. APK68 exact installed packages confirmed on14 available emulators; seven offline including PH030 remain unverified. PH010 ordinary Chrome direct video and13 native input receipts passed on both origins, stable54-59FPS at native target60. Quality changes keep one peer/capture; viewer tab counts and old APK65 compatibility verified. Shared input, autonomous offline grants, direct navigation and broad network/phone SLA remain OPEN.",
+  "runtime": {
+    "sourceRevision": "a3e61800a23e45ae028c01df9f29484b05b35ead",
+    "apiSourceRevision": "69da45cbc76aa16c92080b497347624a94920945",
+    "uiContainer": {
+      "id": "0ab8cecd359c0ec0ade4e186b941badbf180b435c02e7d3af253cdd7e68dee8b",
+      "imageId": "sha256:0985ead225786f698c0a20dd90f8e9345825fe26335c8393d072be7f403df5a9",
+      "imageTag": "sphere-review-frontend:a3e61800a23e45ae028c01df9f29484b05b35ead",
+      "startedAt": "2026-10-13T17:30:13.305512281Z",
+      "status": "running"
+    },
+    "apiContainer": {
+      "id": "7465fc09e6878f7fc1d8c07de6a6b5eea60ec9983296c73ce7295c1883be8c0c",
+      "imageId": "sha256:353a8ebc09b923c99cb4fbf74c757ccf92aed81fc8280b0e1ead5fc221c63833",
+      "imageTag": "sphere-reviewed-backend:69da45cbc76aa16c92080b497347624a94920945",
+      "startedAt": "2026-10-13T16:29:47.951801656Z",
+      "status": "running"
+    },
+    "uiCiRunId": 38437041384,
+    "apiCiRunId": 38426691787,
+    "schemaMigrationPerformed": false,
+    "schemaHeads": [
+      "20261006_script_catalog_metadata"
+    ],
+    "otherContainersPreservedPerInstall": 45
+  },
+  "browser": {
+    "finiteAccepted": true,
+    "productionAccepted": false,
+    "observations": [
+      {
+        "origin": "http://127.0.0.1:3015",
+        "observedAtUtc": "2026-10-13T17:33:01.258Z",
+        "ordinaryChrome": true,
+        "transportOverrides": false,
+        "commandsReplayed": false,
+        "viewerClosedByNavigation": true,
+        "actualFpsSamples": [
+          57,
+          54,
+          58,
+          57,
+          55,
+          59
+        ],
+        "nativeGesture": {
+          "sentEvents": 13,
+          "nativeInputReceipts": 13,
+          "nativeDownConfirmed": true,
+          "nativeMoveReceipts": 11,
+          "nativeUpConfirmed": true,
+          "serverTouchEvents": 0
+        },
+        "networkRttSamplesMs": [
+          1,
+          1,
+          0,
+          1,
+          1,
+          1
+        ],
+        "decodedFramesIn60Seconds": 3393,
+        "reserveVideoBytesAdded": 0,
+        "deliveryErrors": 0,
+        "pageErrors": [],
+        "before": [
+          {
+            "framesDecoded": 440,
+            "framesReceived": 485,
+            "framesPerSecond": 57,
+            "bytesReceived": 319717,
+            "packetsLost": 0,
+            "freezeCount": 0,
+            "jitterBufferDelay": 4.82018,
+            "jitterBufferEmittedCount": 454,
+            "jitterBufferTargetDelay": 16.848273,
+            "jitterBufferMinimumDelay": 16.848273,
+            "totalDecodeTime": 0.138821
+          }
+        ],
+        "after": [
+          {
+            "framesDecoded": 3833,
+            "framesReceived": 3879,
+            "framesPerSecond": 59,
+            "bytesReceived": 13373313,
+            "packetsLost": 0,
+            "freezeCount": 0,
+            "jitterBufferDelay": 122.135787,
+            "jitterBufferEmittedCount": 3847,
+            "jitterBufferTargetDelay": 180.697419,
+            "jitterBufferMinimumDelay": 180.697419,
+            "totalDecodeTime": 1.3466879999999999
+          }
+        ]
+      },
+      {
+        "origin": "https://sphere-agent-canary-20260927.ru.tuna.am",
+        "observedAtUtc": "2026-10-13T17:56:21.368Z",
+        "ordinaryChrome": true,
+        "transportOverrides": false,
+        "commandsReplayed": false,
+        "viewerClosedByNavigation": true,
+        "actualFpsSamples": [
+          58,
+          57,
+          57,
+          58,
+          58,
+          57
+        ],
+        "nativeGesture": {
+          "sentEvents": 13,
+          "nativeInputReceipts": 13,
+          "nativeDownConfirmed": true,
+          "nativeMoveReceipts": 11,
+          "nativeUpConfirmed": true,
+          "serverTouchEvents": 0
+        },
+        "networkRttSamplesMs": [
+          1,
+          1,
+          0,
+          1,
+          0,
+          0
+        ],
+        "decodedFramesIn60Seconds": 3442,
+        "reserveVideoBytesAdded": 0,
+        "deliveryErrors": 0,
+        "pageErrors": [],
+        "before": [
+          {
+            "framesDecoded": 283,
+            "framesReceived": 285,
+            "framesPerSecond": 58,
+            "bytesReceived": 93097,
+            "packetsLost": 0,
+            "freezeCount": 0,
+            "jitterBufferDelay": 2.270813,
+            "jitterBufferEmittedCount": 284,
+            "jitterBufferTargetDelay": 7.142257,
+            "jitterBufferMinimumDelay": 7.142257,
+            "totalDecodeTime": 0.14072099999999998
+          }
+        ],
+        "after": [
+          {
+            "framesDecoded": 3725,
+            "framesReceived": 3728,
+            "framesPerSecond": 57,
+            "bytesReceived": 10455779,
+            "packetsLost": 0,
+            "freezeCount": 0,
+            "jitterBufferDelay": 94.150595,
+            "jitterBufferEmittedCount": 3726,
+            "jitterBufferTargetDelay": 136.408673,
+            "jitterBufferMinimumDelay": 136.408673,
+            "totalDecodeTime": 1.250681
+          }
+        ]
+      }
+    ],
+    "glassToGlassLatencyMeasured": false,
+    "topology": "Owned ordinary Chrome and Android emulator PH010; selected direct UDP peer observed; no address or loopback classification asserted",
+    "directFramesPresented": 4771,
+    "presentationCountScope": "Sum of presentation callbacks during the two finite60-second origin checks"
+  },
+  "quality": {
+    "receipts": [
+      {
+        "method": "GET",
+        "status": 200,
+        "body": {
+          "supported": true,
+          "protocol": 1,
+          "settings": {
+            "profile": "auto",
+            "max_fps": null,
+            "max_bitrate_bps": null
+          },
+          "active": {
+            "width": 960,
+            "height": 540,
+            "source_fps": 60,
+            "codec_max_fps": 60,
+            "target_fps": 60,
+            "max_bitrate_bps": 12000000,
+            "target_bitrate_bps": 1597501,
+            "adaptation": "webrtc"
+          }
+        }
+      },
+      {
+        "method": "POST",
+        "status": 200,
+        "body": {
+          "supported": true,
+          "protocol": 1,
+          "settings": {
+            "profile": "detail",
+            "max_fps": 60,
+            "max_bitrate_bps": 12000000
+          },
+          "active": {
+            "width": 960,
+            "height": 540,
+            "source_fps": 60,
+            "codec_max_fps": 60,
+            "target_fps": 60,
+            "max_bitrate_bps": 12000000,
+            "target_bitrate_bps": 12000000,
+            "adaptation": "source"
+          }
+        }
+      },
+      {
+        "method": "POST",
+        "status": 200,
+        "body": {
+          "supported": true,
+          "protocol": 1,
+          "settings": {
+            "profile": "economy",
+            "max_fps": 24,
+            "max_bitrate_bps": 1500000
+          },
+          "active": {
+            "width": 960,
+            "height": 540,
+            "source_fps": 60,
+            "codec_max_fps": 60,
+            "target_fps": 24,
+            "max_bitrate_bps": 1500000,
+            "target_bitrate_bps": 1500000,
+            "adaptation": "source"
+          }
+        }
+      },
+      {
+        "method": "POST",
+        "status": 200,
+        "body": {
+          "supported": true,
+          "protocol": 1,
+          "settings": {
+            "profile": "auto",
+            "max_fps": null,
+            "max_bitrate_bps": null
+          },
+          "active": {
+            "width": 960,
+            "height": 540,
+            "source_fps": 60,
+            "codec_max_fps": 60,
+            "target_fps": 60,
+            "max_bitrate_bps": 12000000,
+            "target_bitrate_bps": 2000000,
+            "adaptation": "source"
+          }
+        }
+      }
+    ],
+    "rates": [
+      {
+        "profile": "initial",
+        "sample": {
+          "at": "2026-10-13T17:40:45.225Z",
+          "peerCount": 1,
+          "epochs": 1,
+          "controlState": "ready",
+          "summary": "Прямой канал · видео и касанияRTT 1.0 мс960 × 54057 FPS0.2 Мбит/с",
+          "rows": [
+            {
+              "framesDecoded": 848,
+              "framesPerSecond": 62,
+              "width": 960,
+              "height": 540,
+              "bytesReceived": 965433,
+              "packetsLost": 0,
+              "jitterBufferDelay": 33.930676999999996,
+              "jitterBufferEmittedCount": 848
+            }
+          ]
+        }
+      },
+      {
+        "profile": "detail",
+        "sample": {
+          "at": "2026-10-13T17:40:58.738Z",
+          "peerCount": 1,
+          "epochs": 1,
+          "controlState": "ready",
+          "summary": "Прямой канал · видео и касанияRTT 1.0 мс960 × 54057 FPS2.8 Мбит/с",
+          "rows": [
+            {
+              "framesDecoded": 1616,
+              "framesPerSecond": 56,
+              "width": 960,
+              "height": 540,
+              "bytesReceived": 4863133,
+              "packetsLost": 0,
+              "jitterBufferDelay": 58.54403,
+              "jitterBufferEmittedCount": 1616
+            }
+          ]
+        }
+      },
+      {
+        "profile": "economy",
+        "sample": {
+          "at": "2026-10-13T17:41:08.987Z",
+          "peerCount": 1,
+          "epochs": 1,
+          "controlState": "ready",
+          "summary": "Прямой канал · видео и касанияRTT 0.0 мс960 × 54035 FPS0.9 Мбит/с",
+          "rows": [
+            {
+              "framesDecoded": 1960,
+              "framesPerSecond": 24,
+              "width": 960,
+              "height": 540,
+              "bytesReceived": 6018606,
+              "packetsLost": 0,
+              "jitterBufferDelay": 72.105081,
+              "jitterBufferEmittedCount": 1960
+            }
+          ]
+        }
+      },
+      {
+        "profile": "auto",
+        "sample": {
+          "at": "2026-10-13T17:41:18.120Z",
+          "peerCount": 1,
+          "epochs": 1,
+          "controlState": "ready",
+          "summary": "Прямой канал · видео и касанияRTT 1.0 мс960 × 54051 FPS2.0 Мбит/с",
+          "rows": [
+            {
+              "framesDecoded": 2406,
+              "framesPerSecond": 56,
+              "width": 960,
+              "height": 540,
+              "bytesReceived": 7951398,
+              "packetsLost": 0,
+              "jitterBufferDelay": 86.99885499999999,
+              "jitterBufferEmittedCount": 2406
+            }
+          ]
+        }
+      },
+      {
+        "profile": "restored",
+        "sample": {
+          "at": "2026-10-13T17:41:21.151Z",
+          "peerCount": 1,
+          "epochs": 1,
+          "controlState": "ready",
+          "summary": "Прямой канал · видео и касанияRTT 2.0 мс960 × 54057 FPS1.8 Мбит/с",
+          "rows": [
+            {
+              "framesDecoded": 2581,
+              "framesPerSecond": 58,
+              "width": 960,
+              "height": 540,
+              "bytesReceived": 8674307,
+              "packetsLost": 0,
+              "jitterBufferDelay": 92.565136,
+              "jitterBufferEmittedCount": 2581
+            }
+          ]
+        }
+      }
+    ],
+    "layouts": [
+      {
+        "shape": "desktop",
+        "width": 1440,
+        "height": 1000,
+        "pageWidth": 1440,
+        "dialogWidth": 512,
+        "dialogScrollWidth": 510,
+        "dialogHeight": 537,
+        "top": 231.5,
+        "bottom": 768.5,
+        "screenshot": "output/playwright/source-quality-local-desktop.png"
+      },
+      {
+        "shape": "phone",
+        "width": 390,
+        "height": 844,
+        "pageWidth": 390,
+        "dialogWidth": 358,
+        "dialogScrollWidth": 356,
+        "dialogHeight": 645,
+        "top": 99.5,
+        "bottom": 744.5,
+        "screenshot": "output/playwright/source-quality-local-phone.png"
+      }
+    ],
+    "originalSettingsRestored": true,
+    "samePeerAndCaptureEpoch": true,
+    "losslessEncodingClaimed": false
+  },
+  "viewers": {
+    "independentTabNonces": 2,
+    "twoCards": {
+      "card": 2,
+      "stream": 0
+    },
+    "afterOneClosed": {
+      "card": 1,
+      "stream": 0
+    },
+    "streamCountsDescribeAuthenticatedConnections": true,
+    "uniquePeopleCountClaimed": false
+  },
+  "legacyCompatibility": {
+    "deviceId": "414ce0e9-4b93-4f96-b9ca-ee675f53835e",
+    "versionCode": 10265,
+    "directInputReady": true,
+    "video": [
+      {
+        "framesDecoded": 68,
+        "bytesReceived": 561289
+      }
+    ],
+    "gestureInjected": false
+  },
+  "apk": {
+    "artifacts": [
+      {
+        "sourceRevision": "180f8a0f6d0ce6f083d4ca14edd464720d4a3b56",
+        "version": "1.2.68-dev",
+        "versionCode": 10268,
+        "sha256": "ac22fc741b7a3c1da753802d7d9339ece83bf181c4e1eead98244e212d37e319",
+        "bytes": 57769972,
+        "package": "com.sphereplatform.agent.pilot.debug",
+        "signerSha256": "3ab40797d26e4f52f9e440afc6fe69f197caef71a5a27c63c86735bb1801871f",
+        "tests": {
+          "dev": {
+            "tests": 1162,
+            "failures": 0,
+            "errors": 0,
+            "skipped": 3
+          },
+          "enterprise": {
+            "tests": 1162,
+            "failures": 0,
+            "errors": 0,
+            "skipped": 3
+          }
+        }
+      }
+    ],
+    "installedDevices": [
+      {
+        "deviceId": "4815b950-e5cf-4686-9d46-42d0df8d41f7",
+        "device": "auto-ph-028",
+        "versionCode": 10268,
+        "installedPackageSha256": "ac22fc741b7a3c1da753802d7d9339ece83bf181c4e1eead98244e212d37e319",
+        "packageProofObservedAtUtc": "2026-10-13T17:48:51.490279+00:00",
+        "otaResult": {
+          "commandId": "f315b33d-0e2e-40bb-b9fe-4688196a2cda",
+          "status": "completed",
+          "installedVersionCode": 10268,
+          "recordedAtUtc": "2026-10-13T17:41:24.284171+00:00"
+        }
+      },
+      {
+        "deviceId": "b410464a-5f26-4803-a756-7840cc17b128",
+        "device": "auto-ph-025",
+        "versionCode": 10268,
+        "installedPackageSha256": "ac22fc741b7a3c1da753802d7d9339ece83bf181c4e1eead98244e212d37e319",
+        "packageProofObservedAtUtc": "2026-10-13T17:48:51.490279+00:00",
+        "otaResult": {
+          "commandId": "ac32deb9-7d51-4752-8194-0e726c0994a2",
+          "status": "completed",
+          "installedVersionCode": 10268,
+          "recordedAtUtc": "2026-10-13T17:41:52.216846+00:00"
+        }
+      },
+      {
+        "deviceId": "d088c147-7ada-4b29-9e79-f991b20fcf91",
+        "device": "auto-ph-022",
+        "versionCode": 10268,
+        "installedPackageSha256": "ac22fc741b7a3c1da753802d7d9339ece83bf181c4e1eead98244e212d37e319",
+        "packageProofObservedAtUtc": "2026-10-13T17:48:51.490279+00:00",
+        "otaResult": {
+          "commandId": "ee8f089a-7e2c-4b87-9363-96fdd49fcadc",
+          "status": "completed",
+          "installedVersionCode": 10268,
+          "recordedAtUtc": "2026-10-13T17:41:57.693769+00:00"
+        }
+      },
+      {
+        "deviceId": "75c29a32-2867-4b60-947c-003e712e538f",
+        "device": "auto-ph-020",
+        "versionCode": 10268,
+        "installedPackageSha256": "ac22fc741b7a3c1da753802d7d9339ece83bf181c4e1eead98244e212d37e319",
+        "packageProofObservedAtUtc": "2026-10-13T17:48:51.490279+00:00",
+        "otaResult": {
+          "commandId": "54ea3c89-0138-4b0d-9c2a-12f495933dc9",
+          "status": "completed",
+          "installedVersionCode": 10268,
+          "recordedAtUtc": "2026-10-13T17:42:01.648344+00:00"
+        }
+      },
+      {
+        "deviceId": "c37e687a-ee83-466d-846f-3f4b36047fa7",
+        "device": "auto-ph-019",
+        "versionCode": 10268,
+        "installedPackageSha256": "ac22fc741b7a3c1da753802d7d9339ece83bf181c4e1eead98244e212d37e319",
+        "packageProofObservedAtUtc": "2026-10-13T17:48:51.490279+00:00",
+        "otaResult": {
+          "commandId": "e864f2f5-d4fe-4ac5-adbd-2616079ad8c0",
+          "status": "completed",
+          "installedVersionCode": 10268,
+          "recordedAtUtc": "2026-10-13T17:42:10.208039+00:00"
+        }
+      },
+      {
+        "deviceId": "bafef86f-3ab4-469b-ae0c-cf2771b55813",
+        "device": "auto-ph-018",
+        "versionCode": 10268,
+        "installedPackageSha256": "ac22fc741b7a3c1da753802d7d9339ece83bf181c4e1eead98244e212d37e319",
+        "packageProofObservedAtUtc": "2026-10-13T17:48:51.490279+00:00",
+        "otaResult": {
+          "commandId": "a2274497-266a-4890-b9ce-44e24790151b",
+          "status": "completed",
+          "installedVersionCode": 10268,
+          "recordedAtUtc": "2026-10-13T17:42:18.581894+00:00"
+        }
+      },
+      {
+        "deviceId": "1dd7e59c-b68f-406a-93cd-5f4e34fdea90",
+        "device": "auto-ph-017",
+        "versionCode": 10268,
+        "installedPackageSha256": "ac22fc741b7a3c1da753802d7d9339ece83bf181c4e1eead98244e212d37e319",
+        "packageProofObservedAtUtc": "2026-10-13T17:48:51.490279+00:00",
+        "otaResult": {
+          "commandId": "b79891ce-8fa9-476d-8b6c-4e35bfecadee",
+          "status": "completed",
+          "installedVersionCode": 10268,
+          "recordedAtUtc": "2026-10-13T17:42:28.938259+00:00"
+        }
+      },
+      {
+        "deviceId": "3c4c4218-27ba-4d8d-a7d2-4348c2f91c93",
+        "device": "auto-ph-016",
+        "versionCode": 10268,
+        "installedPackageSha256": "ac22fc741b7a3c1da753802d7d9339ece83bf181c4e1eead98244e212d37e319",
+        "packageProofObservedAtUtc": "2026-10-13T17:48:51.490279+00:00",
+        "otaResult": {
+          "commandId": "7a289229-beeb-4228-8260-253a3f0da9b6",
+          "status": "completed",
+          "installedVersionCode": 10268,
+          "recordedAtUtc": "2026-10-13T17:42:28.684755+00:00"
+        }
+      },
+      {
+        "deviceId": "930a6505-b7ec-4eee-93fe-9aaa66517871",
+        "device": "auto-ph-015",
+        "versionCode": 10268,
+        "installedPackageSha256": "ac22fc741b7a3c1da753802d7d9339ece83bf181c4e1eead98244e212d37e319",
+        "packageProofObservedAtUtc": "2026-10-13T17:48:51.490279+00:00",
+        "otaResult": {
+          "commandId": "6271525f-11dd-4272-867a-a8d4d1b0cd9f",
+          "status": "completed",
+          "installedVersionCode": 10268,
+          "recordedAtUtc": "2026-10-13T17:42:31.083663+00:00"
+        }
+      },
+      {
+        "deviceId": "673d5774-24b1-4b57-8dfb-90c46f627ce3",
+        "device": "auto-ph-014",
+        "versionCode": 10268,
+        "installedPackageSha256": "ac22fc741b7a3c1da753802d7d9339ece83bf181c4e1eead98244e212d37e319",
+        "packageProofObservedAtUtc": "2026-10-13T17:48:51.490279+00:00",
+        "otaResult": {
+          "commandId": "844e0386-f586-411b-a8e9-b1ace810f34b",
+          "status": "completed",
+          "installedVersionCode": 10268,
+          "recordedAtUtc": "2026-10-13T17:42:33.142724+00:00"
+        }
+      },
+      {
+        "deviceId": "6d830af5-b7cc-44b4-b7f5-5e0275aceb3b",
+        "device": "auto-ph-013",
+        "versionCode": 10268,
+        "installedPackageSha256": "ac22fc741b7a3c1da753802d7d9339ece83bf181c4e1eead98244e212d37e319",
+        "packageProofObservedAtUtc": "2026-10-13T17:48:51.490279+00:00",
+        "otaResult": {
+          "commandId": "2a3de82e-97fc-41a0-8903-3b5ed94b331f",
+          "status": "completed",
+          "installedVersionCode": 10268,
+          "recordedAtUtc": "2026-10-13T17:42:34.073543+00:00"
+        }
+      },
+      {
+        "deviceId": "8c187cfa-e5ea-4939-a137-07619437953d",
+        "device": "auto-ph-012",
+        "versionCode": 10268,
+        "installedPackageSha256": "ac22fc741b7a3c1da753802d7d9339ece83bf181c4e1eead98244e212d37e319",
+        "packageProofObservedAtUtc": "2026-10-13T17:48:51.490279+00:00",
+        "otaResult": {
+          "commandId": "19cf81b6-091c-4488-b81b-571b38084f5b",
+          "status": "completed",
+          "installedVersionCode": 10268,
+          "recordedAtUtc": "2026-10-13T17:42:34.941305+00:00"
+        }
+      },
+      {
+        "deviceId": "414ce0e9-4b93-4f96-b9ca-ee675f53835e",
+        "device": "auto-ph-011",
+        "versionCode": 10268,
+        "installedPackageSha256": "ac22fc741b7a3c1da753802d7d9339ece83bf181c4e1eead98244e212d37e319",
+        "packageProofObservedAtUtc": "2026-10-13T17:48:51.490279+00:00",
+        "otaResult": {
+          "commandId": "e17f19f6-5038-495b-b913-42102cb59d5a",
+          "status": "completed",
+          "installedVersionCode": 10268,
+          "recordedAtUtc": "2026-10-13T17:42:39.865667+00:00"
+        }
+      },
+      {
+        "deviceId": "5df4805e-fe64-4d39-960c-19ceab206cd6",
+        "device": "auto-ph-010",
+        "versionCode": 10268,
+        "installedPackageSha256": "ac22fc741b7a3c1da753802d7d9339ece83bf181c4e1eead98244e212d37e319",
+        "packageProofObservedAtUtc": "2026-10-13T17:48:51.490279+00:00",
+        "otaResult": {
+          "commandId": "859f5b7e-5839-45b0-8d72-5740d4176272",
+          "status": "completed",
+          "installedVersionCode": 10268,
+          "recordedAtUtc": "2026-10-13T17:27:56.646318+00:00"
+        }
+      }
+    ],
+    "installedCount": 14,
+    "offlineDevices": [
+      {
+        "deviceId": "753fd530-2f19-4e5e-98ba-769863678141",
+        "device": "auto-ph-030",
+        "lastReportedVersionCode": 10265,
+        "currentPackageVerified": false,
+        "updateGrantIssued": false
+      },
+      {
+        "deviceId": "867ec296-ca4a-4fb2-bb46-ce10b016bfdc",
+        "device": "auto-ph-029",
+        "lastReportedVersionCode": null,
+        "currentPackageVerified": false,
+        "updateGrantIssued": false
+      },
+      {
+        "deviceId": "db32e00c-3ef4-4b21-acb4-84717737f2a8",
+        "device": "auto-ph-027",
+        "lastReportedVersionCode": null,
+        "currentPackageVerified": false,
+        "updateGrantIssued": false
+      },
+      {
+        "deviceId": "daef8a88-6c90-4a6b-bb3b-6b81126a8f45",
+        "device": "auto-ph-026",
+        "lastReportedVersionCode": null,
+        "currentPackageVerified": false,
+        "updateGrantIssued": false
+      },
+      {
+        "deviceId": "dce1b4c3-cfd5-47c7-a948-78f572aea72c",
+        "device": "auto-ph-024",
+        "lastReportedVersionCode": null,
+        "currentPackageVerified": false,
+        "updateGrantIssued": false
+      },
+      {
+        "deviceId": "58c08910-5051-4e43-ab84-f84cd23c8a03",
+        "device": "auto-ph-023",
+        "lastReportedVersionCode": null,
+        "currentPackageVerified": false,
+        "updateGrantIssued": false
+      },
+      {
+        "deviceId": "91c4155d-31a0-4dc1-83e9-f197b3473d16",
+        "device": "auto-ph-021",
+        "lastReportedVersionCode": null,
+        "currentPackageVerified": false,
+        "updateGrantIssued": false
+      }
+    ],
+    "offlineCount": 7,
+    "verifiedVersionCounts": {
+      "10268": 14
+    },
+    "ordinaryChannelUnchanged": true,
+    "adbInstalls": 0,
+    "dataClears": 0,
+    "exactCi": {
+      "runId": 38435514281,
+      "sourceRevision": "180f8a0f6d0ce6f083d4ca14edd464720d4a3b56",
+      "status": "completed",
+      "conclusion": "success",
+      "observedAtUtc": "2026-10-13T17:40:12.090690+00:00"
+    },
+    "canaryAcceptance": {
+      "accepted": true,
+      "observedAtUtc": "2026-10-13T17:38:54.711489+00:00",
+      "scope": "Finite PH010 ordinary Chrome on3015, full native DOWN/MOVE/UP receipts, stable actual50+ FPS over60s, source target60, zero new reserved server video bytes; broad SLA, multi-controller and offline independence not accepted.",
+      "actualFpsSamples": [
+        57,
+        54,
+        58,
+        57,
+        55,
+        59
+      ],
+      "decodedFramesIn60s": 3393,
+      "nativeInputReceipts": 13,
+      "sourceTargetFps": 60,
+      "networkRttMs": 1,
+      "streamProofSha256": "781c9ebdbf56e28f875a4ea83b05c72412cf4dd680651816c47e6a6dd450a5bb",
+      "webRevision": "a3e61800a23e45ae028c01df9f29484b05b35ead"
+    },
+    "packageProofScope": "Per-device completed OTA and installed base.apk SHA; current online/offline state is a separate fresh inventory"
+  },
+  "apiSchema": {
+    "paths": 149,
+    "operations": 188,
+    "canonicalSha256": "9df82aa4cd1e568e6bd7c1ce5496591c674832c5cebc869c6751fc64e7c13655",
+    "qualityMethods": [
+      "get",
+      "post"
+    ],
+    "viewersMethods": [
+      "post"
+    ],
+    "sourceRevision": "69da45cbc76aa16c92080b497347624a94920945",
+    "observedAtUtc": "2026-10-13T16:31:11.460851+00:00",
+    "applicationLifespanStarted": false,
+    "sameAsCommittedCanonicalJson": true
+  },
+  "localCi": {
+    "sourceRevision": "180f8a0f6d0ce6f083d4ca14edd464720d4a3b56",
+    "receipt": {
+      "runId": "20261013T170723Z-d4f89ee7",
+      "state": "success",
+      "sourceRevision": "180f8a0f6d0ce6f083d4ca14edd464720d4a3b56",
+      "profiles": {
+        "frontend": {
+          "state": "success",
+          "tests": {
+            "tests": 2336,
+            "passed": 2336,
+            "failures": 0,
+            "failedSuites": 0,
+            "skipped": 0,
+            "suites": 161,
+            "success": true
+          },
+          "packagingVerified": false,
+          "elapsedSeconds": 136.713
+        },
+        "backend": {
+          "state": "success",
+          "tests": {
+            "tests": 4002,
+            "failures": 0,
+            "errors": 0,
+            "skipped": 1
+          },
+          "packagingVerified": false,
+          "elapsedSeconds": 945.489
+        },
+        "android": {
+          "state": "success",
+          "tests": {
+            "tests": 2324,
+            "failures": 0,
+            "errors": 0,
+            "skipped": 6
+          },
+          "ordinaryTests": {
+            "tests": 4604,
+            "failures": 0,
+            "errors": 0,
+            "skipped": 12
+          },
+          "packagingVerified": false,
+          "elapsedSeconds": 1423.19
+        }
+      }
+    },
+    "fullCloudMigrationAccepted": false,
+    "scope": "Local trusted queue with exact-SHA GitHub statuses; Linux packaged runtime and release gates still use hosted CI"
+  },
+  "rejectedCandidates": [
+    {
+      "versionCode": 10266,
+      "reason": "First native RTP frame missing: exact fmtp equality and fixed SPS level31 guard",
+      "withdrawn": true
+    },
+    {
+      "versionCode": 10267,
+      "reason": "Native input/video passed; measured-input FPS feedback collapsed cadence39 to5",
+      "withdrawn": true
+    }
+  ],
+  "boundaries": {
+    "sharedControlInstalled": false,
+    "brokerIndependentSessionInstalled": false,
+    "directNavigationInstalled": false,
+    "realPhoneNewBuildAccepted": false,
+    "wideWanTurnAccepted": false,
+    "frameIdCorrelationAccepted": false,
+    "infrastructureMonthlyRetentionAccepted": false,
+    "localCiFullMigrationAccepted": false,
+    "stable13ReleaseAccepted": false
+  },
+  "volumeWarningException": {
+    "authority": "Explicit user authorization to keep building and installing as-is on13October",
+    "volumeStillRequiresRepair": true,
+    "otherResourceGatesPreserved": true
+  }
+}

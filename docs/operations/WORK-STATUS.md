@@ -1,8 +1,10 @@
 # Работы, требования пользователя и границы приёмки
 
-**Проверенная установка:** UI `954d466c` / API `b65b0b54`.
+**Проверенная установка:** UI `a3e61800` / API `69da45cb`.
 
-**13 октября — подтверждён прямой маршрут с ноутбука.** UI `954d466c` установлен на 3015 и Tuna. PH025 передаёт видео и ввод напрямую по NAT/UDP: RTT сети 20–22 мс. На PH030 наблюдалось около 30 минут прямого видео и готового ввода без восстановления в счётчиках; следующий viewer учтён отдельно. Исправлен поздний отказ запуска, который мог блокировать ввод при живом видео; проверены реальные жесты и шесть повторных открытий. Диагностика причин завершения адаптирована для телефона. APK `1.2.65-dev` остаётся актуальным; точный установленный SHA подтверждён на всех 15 доступных эмуляторах, включая PH030; шесть офлайн не обновлялись. [Изменения, границы и результаты](../audits/2026-10-13/DIRECT-INPUT-RECOVERY.md) · [Протокол](../audits/2026-10-13/DIRECT-INPUT-RECOVERY-OBSERVATION.json).
+**13 октября — качество и доставка обновлений.** UI `a3e61800` / API `69da45cb` установлены на 3015 и Tuna. APK `1.2.68-dev` (10268) подтверждён установленным SHA и завершённой OTA-командой на 14 доступных эмуляторах; семь офлайн, включая PH030, не обновлены. PH010 в обычном Chrome на обоих адресах получил 54–59 FPS при цели 60 и все 13 native подтверждений жеста; после перехода на прямой поток резервное серверное видео не передавалось. Настройки качества применяются вживую; краткая строка показывает маршрут, RTT, размер, фактические FPS и битрейт. Добавлены счётчики вкладок и потоков; скачивание последнего APK проверено побайтово. Совместный ввод, автономный peer без сервера, прямые системные кнопки, реальный телефон, широкая WAN/TURN matrix и полный перенос CI остаются открытыми. [Установка, проверки и границы](../audits/2026-10-13/DIRECT-SOURCE-QUALITY-DELIVERY.md).
+
+**Ранее 13 октября — подтверждён прямой маршрут с ноутбука.** UI `954d466c` установлен на 3015 и Tuna. PH025 передаёт видео и ввод напрямую по NAT/UDP: RTT сети 20–22 мс. На PH030 наблюдалось около 30 минут прямого видео и готового ввода без восстановления в счётчиках; следующий viewer учтён отдельно. Исправлен поздний отказ запуска, который мог блокировать ввод при живом видео; проверены реальные жесты и шесть повторных открытий. Диагностика причин завершения адаптирована для телефона. APK `1.2.65-dev` был установлен на момент этой проверки; точный установленный SHA подтверждён на всех 15 доступных эмуляторах, включая PH030; шесть офлайн не обновлялись. [Изменения, границы и результаты](../audits/2026-10-13/DIRECT-INPUT-RECOVERY.md) · [Протокол](../audits/2026-10-13/DIRECT-INPUT-RECOVERY-OBSERVATION.json).
 
 **Предыдущее наблюдение 13 октября, 06:35 UTC — прямая связь и диагностика.** UI `73419abe` / API `b65b0b54` обслуживают 3015 и Tuna. APK `1.2.65-dev / 10265` подтверждён установленным SHA на 14 доступных эмуляторах. PH030 ранее завершил OTA65, но сейчас офлайн; актуальный SHA и стабильность ноутбучного ввода не приняты. PH010 подтвердил прямое видео и native жест на обоих адресах. Исправлены поздний диагностический echo и гонка повторного допуска до точного RELEASE. Причина завершения нативного ввода теперь сохраняется отдельно от результата cleanup. Общий ввод, Home/Back напрямую, независимость от серверного lease, WAN/TURN и длительная стабильность остаются открытыми. [Изменения и проверки](../audits/2026-10-13/DIRECT-SESSION-STABILITY.md) · [Протокол](../audits/2026-10-13/DIRECT-SESSION-STABILITY-OBSERVATION.json) · [Локальные тесты и границы переноса CI](../audits/2026-10-13/CI-COST-AND-LOCAL-RUNNER.md).
 
@@ -605,7 +607,7 @@ Online badge, echo RTT и успешная сборка не доказываю�
 
 **PARTIAL**
 
-Текущий срез: Подписанный APK60/10260 установлен и проверен по package SHA и completed OTA на 15 доступных устройствах; обычный Android channel не изменён. Local/enterprise тесты: 1052 cases каждый, 0 failures/errors, 3 skipped каждый. Это dev/canary, стабильный 1.3 ещё не выпущен.
+Текущий срез: APK68/10268 подтверждён по установленному SHA и completed OTA на14 доступных устройствах; семь офлайн, включаяPH030, не подтверждены. Dev/enterprise combined profile: 1162 cases каждый, 0 failures/errors, 3 skipped каждый. Это dev/canary, стабильный1.3 ещё не выпущен.
 
 **Историческая запись 11 октября, до текущей установки.** Versioned DAG/discovery/OTA boundaries reviewed. The older PH03010251 finite RTP report is historical; current fleet follow-up verifies15 APK54 hashes including PH030. Combined source522 APK55 debug CI passed; configured pilot signing/install and stable1.3 promotion are still pending.
 
@@ -631,10 +633,11 @@ PostgreSQL/Redis test подтвердил202/commit/admission; live404 посл
 
 **OPEN**
 
-Нужно считать отдельные вкладки/сессии даже одного аккаунта и отличать карточку
-от видеопотока. Текущий native input lease эксклюзивен; второй viewer не получает
-права одновременно управлять. Нужны явные view/control роли и безопасная передача
-управления, distributed tenant-safe presence с TTL и аккуратный fleet indicator.
+Отдельные вкладки одного аккаунта и подключения видеопотока теперь считаются
+раздельно. Реальный тест двух карточек и точного закрытия одной прошёл.
+Текущий native input lease эксклюзивен; второй viewer не получает
+права одновременно управлять. Остались общий input arbiter, multi-peer video fanout и проверка десяти
+управляющих зрителей; presence с TTL и компактный fleet indicator уже установлены.
 [Требование и фактические границы](../audits/2026-10-10/DIRECT-PROBE-TURN-AND-LAPTOP.md).
 
 10 октября, 18:07:03 UTC — при двух viewer история сохранила
@@ -669,7 +672,7 @@ native ACK, focus/held keys, permissions/mute/autoplay, sync и resource budgets
 
 **ACCEPTED_FINITE**
 
-Установлены latest exact-channel endpoint и browser download с progress/cancel. Полные APK10260 через3015/Tuna совпали по SHA и57,688,052B; 927/8489ms. Официальный LDPlayer link проверен в DOM.
+Установлены latest exact-channel endpoint и browser download с progress/cancel. Последний APK10268 через 3015 и Tuna сохранён браузером: SHA совпал, размер 57 769 972 байта, измерения 1005 / 11 249 мс. Официальный LDPlayer link проверен в DOM. [Текущий протокол](../audits/2026-10-13/DIRECT-SOURCE-QUALITY-DELIVERY-CHECK.json). Историческая приёмка APK10260: 57 688 052 байта, 927 / 8489 мс.
 
 Остаток: Внешние latest URL здесь не проксируются; скачивание не подтверждает установку. Stable promotion, все роли и offline fleet остаются отдельными открытыми gates.
 
@@ -679,7 +682,7 @@ native ACK, focus/held keys, permissions/mute/autoplay, sync и resource budgets
 
 **ACCEPTED_FINITE**
 
-UIed9 установлен на обоих адресах. Пять viewports, 48px controls, reveal/hide, real login и сохранение light/spacious проверены; dark login и default neo-dark подтверждены.
+Историческая приёмка UIed9 на обоих адресах: пять viewports, 48px controls, reveal/hide, real login и сохранение light/spacious проверены; dark login и default neo-dark подтверждены.
 
 Остаток: Живой MFA-enabled user, все роли, screen reader, zoom и полная theme/accent/density matrix не приняты.
 
@@ -689,4 +692,23 @@ UIed9 установлен на обоих адресах. Пять viewports, 4
 
 **PARTIAL**
 
-GitHub API подтвердил публичный sphere-platform и отсутствие self-hosted runners. Стандартные Ubuntu jobs этого публичного проекта не относятся к2000 private minutes. Точный billing usage/budgets аккаунта не получен; размер artifacts не считается начислением. В исходнике Android добавлена отмена устаревших jobs однойPR/ref. Отдельный Linux runner, ресурсные квоты, trusted execution и проверка reports/checks на SHA остаются проектом. [Аудит стоимости и контракт переноса](../audits/2026-10-13/CI-COST-AND-LOCAL-RUNNER.md).
+Локальная trusted очередь выполнила frontend/backend/Android для точного источника `180f8a0f` и опубликовала проверенные GitHub statuses. Для `a3e61800` завершились frontend (2339 тестов) и backend (4002 cases, 1 skipped, без failures/errors); Android оценивается отдельным результатом. Self-hosted GitHub runner не зарегистрирован. Hosted packaging/security/Linux parity остаются; полный перенос не принят. Billing usage/budgets аккаунта не получены. [Аудит стоимости и контракт переноса](../audits/2026-10-13/CI-COST-AND-LOCAL-RUNNER.md).
+
+
+### CHAT-24 · Настройки качества, source FPS и краткая строка параметров
+
+**PARTIAL**
+
+Установлены профили, лимиты FPS/битрейта и краткая строка маршрута, RTT, размера, фактических FPS и битрейта. PH010 подтвердил native target 60 и 54–59 декодируемых FPS на обоих адресах, изменение профилей без нового peer/capture и адаптивную панель. Lossless, все аппаратные варианты и 60 FPS при любой нагрузке не заявлены. [Конечная приёмка](../audits/2026-10-13/DIRECT-SOURCE-QUALITY-DELIVERY.md).
+
+### CHAT-25 · Установленный localhost/LAN peer при потере Интернета/сервера
+
+**OPEN**
+
+Чистые модели bounded grants и shared input существуют; runtime не подключён. Текущий direct v1 зависит от server lease и lifecycle. Нужны negotiated v2 grant, раздельное время жизни broker/peer и физическая проверка WAN loss при сохранённом локальном пути.
+
+### CHAT-26 · Месячная история инфраструктурных метрик и фильтр дат
+
+**OPEN**
+
+Отложено пользователем. Last10 stream sessions/7days не доказывают месячную историю инфраструктуры. Требуется аудит historian storage, retention, durability при restart и calendar/range UI.

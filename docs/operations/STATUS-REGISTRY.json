@@ -1,8 +1,8 @@
 {
   "schemaVersion": 1,
-  "reviewedAtUtc": "2026-10-13T12:53:53.021954+00:00",
-  "sourceReviewed": "954d466cc5587c3c87adb0595a785e5eb3d47175",
-  "scope": "UI954d466c / APIb65b0b54 installed on 3015/Tuna; APK65 unchanged. PH010 finite direct video and native gestures pass on both origins and six fresh viewer cycles on Tuna. PH030 observed a finite approximately 30 minute direct video/input window; PH025 laptop route has direct NAT/UDP video/input with network RTT 20-22 ms. Exact late pre-start admission refusal now allows input renegotiation without restarting healthy video. Shared control, direct navigation, independent capability, broad WAN/TURN and production SLA remain OPEN.",
+  "reviewedAtUtc": "2026-10-13T18:06:20.684946+00:00",
+  "sourceReviewed": "a3e61800a23e45ae028c01df9f29484b05b35ead",
+  "scope": "UIa3e61800 / API69da45cb installed on3015/Tuna. APK68 exact installed packages confirmed on14 available emulators; seven offline including PH030 remain unverified. PH010 ordinary Chrome direct video and13 native input receipts passed on both origins, stable54-59FPS at native target60. Quality changes keep one peer/capture; viewer tab counts and old APK65 compatibility verified. Shared input, autonomous offline grants, direct navigation and broad network/phone SLA remain OPEN.",
   "baseline": "docs/audits/2026-10-05/ENTERPRISE-PRODUCT-BACKLOG.json",
   "previousCrosscheck": "docs/audits/2026-10-09/CHAT-CODE-RECONCILIATION.json",
   "counts": {
@@ -11,206 +11,194 @@
     "open": 41
   },
   "installed": {
-    "lastObservedUtc": "2026-10-13T12:53:53.021954+00:00",
-    "ui": "954d466cc5587c3c87adb0595a785e5eb3d47175",
-    "api": "b65b0b5469510f9c0c94d5242234bdba43570c77",
-    "evidence": "docs/audits/2026-10-13/DIRECT-INPUT-RECOVERY-OBSERVATION.json",
-    "observation": "UI954d466c / APIb65b0b54 installed on 3015/Tuna; APK65 unchanged. PH010 finite direct video and native gestures pass on both origins and six fresh viewer cycles on Tuna. PH030 observed a finite approximately 30 minute direct video/input window; PH025 laptop route has direct NAT/UDP video/input with network RTT 20-22 ms. Exact late pre-start admission refusal now allows input renegotiation without restarting healthy video. Shared control, direct navigation, independent capability, broad WAN/TURN and production SLA remain OPEN.",
+    "lastObservedUtc": "2026-10-13T18:06:20.684946+00:00",
+    "ui": "a3e61800a23e45ae028c01df9f29484b05b35ead",
+    "api": "69da45cbc76aa16c92080b497347624a94920945",
+    "evidence": "docs/audits/2026-10-13/DIRECT-SOURCE-QUALITY-INSTALLED.json",
+    "observation": "UIa3e61800 / API69da45cb installed on3015/Tuna. APK68 exact installed packages confirmed on14 available emulators; seven offline including PH030 remain unverified. PH010 ordinary Chrome direct video and13 native input receipts passed on both origins, stable54-59FPS at native target60. Quality changes keep one peer/capture; viewer tab counts and old APK65 compatibility verified. Shared input, autonomous offline grants, direct navigation and broad network/phone SLA remain OPEN.",
     "pilotApk": {
       "device": "auto-ph-010",
       "deviceId": "5df4805e-fe64-4d39-960c-19ceab206cd6",
-      "version": "1.2.65-dev",
-      "versionCode": 10265,
-      "sourceRevision": "0e8d7bbdd7269778944b36ccbba7a6ba3ede9c20",
-      "apkSha256": "7a620e7a57ca6b1440adb2637d068ad8e800ee2d11bbaa3c0c073a69ae37b7c1",
-      "evidence": "docs/audits/2026-10-13/DIRECT-INPUT-RECOVERY-OBSERVATION.json",
-      "evidenceSha256NormalizedLf": "a6cbf3a2c160dadf9f151594f53e7f55937ef2b2f9eaee1702128def6087ace1",
-      "packageProofObservedAtUtc": "2026-10-13T06:35:03.047826+00:00",
-      "scope": "Exact package SHA and completed addressed OTA; proof time is per device, runtime acceptance separate."
+      "version": "1.2.68-dev",
+      "versionCode": 10268,
+      "sourceRevision": "180f8a0f6d0ce6f083d4ca14edd464720d4a3b56",
+      "apkSha256": "ac22fc741b7a3c1da753802d7d9339ece83bf181c4e1eead98244e212d37e319",
+      "evidence": "docs/audits/2026-10-13/DIRECT-SOURCE-QUALITY-INSTALLED.json",
+      "evidenceSha256NormalizedLf": "cf12ebe6171fbb7602a9d9aba4e771c8b7d05425929b6f0dc3c5d5e3e48182fb",
+      "packageProofObservedAtUtc": "2026-10-13T17:48:51.490279+00:00",
+      "scope": "Exact installed package and addressed OTA; runtime acceptance limited to PH010 finite browser observations"
     },
-    "evidenceSha256NormalizedLf": "a6cbf3a2c160dadf9f151594f53e7f55937ef2b2f9eaee1702128def6087ace1",
+    "evidenceSha256NormalizedLf": "cf12ebe6171fbb7602a9d9aba4e771c8b7d05425929b6f0dc3c5d5e3e48182fb",
     "additionalPilotApks": [
       {
         "device": "auto-ph-028",
         "deviceId": "4815b950-e5cf-4686-9d46-42d0df8d41f7",
-        "version": "1.2.65-dev",
-        "versionCode": 10265,
-        "sourceRevision": "0e8d7bbdd7269778944b36ccbba7a6ba3ede9c20",
-        "apkSha256": "7a620e7a57ca6b1440adb2637d068ad8e800ee2d11bbaa3c0c073a69ae37b7c1",
-        "evidence": "docs/audits/2026-10-13/DIRECT-INPUT-RECOVERY-OBSERVATION.json",
-        "evidenceSha256NormalizedLf": "a6cbf3a2c160dadf9f151594f53e7f55937ef2b2f9eaee1702128def6087ace1",
-        "packageProofObservedAtUtc": "2026-10-13T06:35:03.047826+00:00",
-        "scope": "Exact package SHA and completed addressed OTA; proof time is per device, runtime acceptance separate."
+        "version": "1.2.68-dev",
+        "versionCode": 10268,
+        "sourceRevision": "180f8a0f6d0ce6f083d4ca14edd464720d4a3b56",
+        "apkSha256": "ac22fc741b7a3c1da753802d7d9339ece83bf181c4e1eead98244e212d37e319",
+        "evidence": "docs/audits/2026-10-13/DIRECT-SOURCE-QUALITY-INSTALLED.json",
+        "evidenceSha256NormalizedLf": "cf12ebe6171fbb7602a9d9aba4e771c8b7d05425929b6f0dc3c5d5e3e48182fb",
+        "packageProofObservedAtUtc": "2026-10-13T17:48:51.490279+00:00",
+        "scope": "Exact installed package and addressed OTA; runtime acceptance limited to PH010 finite browser observations"
       },
       {
         "device": "auto-ph-025",
         "deviceId": "b410464a-5f26-4803-a756-7840cc17b128",
-        "version": "1.2.65-dev",
-        "versionCode": 10265,
-        "sourceRevision": "0e8d7bbdd7269778944b36ccbba7a6ba3ede9c20",
-        "apkSha256": "7a620e7a57ca6b1440adb2637d068ad8e800ee2d11bbaa3c0c073a69ae37b7c1",
-        "evidence": "docs/audits/2026-10-13/DIRECT-INPUT-RECOVERY-OBSERVATION.json",
-        "evidenceSha256NormalizedLf": "a6cbf3a2c160dadf9f151594f53e7f55937ef2b2f9eaee1702128def6087ace1",
-        "packageProofObservedAtUtc": "2026-10-13T06:35:03.047826+00:00",
-        "scope": "Exact package SHA and completed addressed OTA; proof time is per device, runtime acceptance separate."
+        "version": "1.2.68-dev",
+        "versionCode": 10268,
+        "sourceRevision": "180f8a0f6d0ce6f083d4ca14edd464720d4a3b56",
+        "apkSha256": "ac22fc741b7a3c1da753802d7d9339ece83bf181c4e1eead98244e212d37e319",
+        "evidence": "docs/audits/2026-10-13/DIRECT-SOURCE-QUALITY-INSTALLED.json",
+        "evidenceSha256NormalizedLf": "cf12ebe6171fbb7602a9d9aba4e771c8b7d05425929b6f0dc3c5d5e3e48182fb",
+        "packageProofObservedAtUtc": "2026-10-13T17:48:51.490279+00:00",
+        "scope": "Exact installed package and addressed OTA; runtime acceptance limited to PH010 finite browser observations"
       },
       {
         "device": "auto-ph-022",
         "deviceId": "d088c147-7ada-4b29-9e79-f991b20fcf91",
-        "version": "1.2.65-dev",
-        "versionCode": 10265,
-        "sourceRevision": "0e8d7bbdd7269778944b36ccbba7a6ba3ede9c20",
-        "apkSha256": "7a620e7a57ca6b1440adb2637d068ad8e800ee2d11bbaa3c0c073a69ae37b7c1",
-        "evidence": "docs/audits/2026-10-13/DIRECT-INPUT-RECOVERY-OBSERVATION.json",
-        "evidenceSha256NormalizedLf": "a6cbf3a2c160dadf9f151594f53e7f55937ef2b2f9eaee1702128def6087ace1",
-        "packageProofObservedAtUtc": "2026-10-13T06:35:03.047826+00:00",
-        "scope": "Exact package SHA and completed addressed OTA; proof time is per device, runtime acceptance separate."
+        "version": "1.2.68-dev",
+        "versionCode": 10268,
+        "sourceRevision": "180f8a0f6d0ce6f083d4ca14edd464720d4a3b56",
+        "apkSha256": "ac22fc741b7a3c1da753802d7d9339ece83bf181c4e1eead98244e212d37e319",
+        "evidence": "docs/audits/2026-10-13/DIRECT-SOURCE-QUALITY-INSTALLED.json",
+        "evidenceSha256NormalizedLf": "cf12ebe6171fbb7602a9d9aba4e771c8b7d05425929b6f0dc3c5d5e3e48182fb",
+        "packageProofObservedAtUtc": "2026-10-13T17:48:51.490279+00:00",
+        "scope": "Exact installed package and addressed OTA; runtime acceptance limited to PH010 finite browser observations"
       },
       {
         "device": "auto-ph-020",
         "deviceId": "75c29a32-2867-4b60-947c-003e712e538f",
-        "version": "1.2.65-dev",
-        "versionCode": 10265,
-        "sourceRevision": "0e8d7bbdd7269778944b36ccbba7a6ba3ede9c20",
-        "apkSha256": "7a620e7a57ca6b1440adb2637d068ad8e800ee2d11bbaa3c0c073a69ae37b7c1",
-        "evidence": "docs/audits/2026-10-13/DIRECT-INPUT-RECOVERY-OBSERVATION.json",
-        "evidenceSha256NormalizedLf": "a6cbf3a2c160dadf9f151594f53e7f55937ef2b2f9eaee1702128def6087ace1",
-        "packageProofObservedAtUtc": "2026-10-13T06:35:03.047826+00:00",
-        "scope": "Exact package SHA and completed addressed OTA; proof time is per device, runtime acceptance separate."
+        "version": "1.2.68-dev",
+        "versionCode": 10268,
+        "sourceRevision": "180f8a0f6d0ce6f083d4ca14edd464720d4a3b56",
+        "apkSha256": "ac22fc741b7a3c1da753802d7d9339ece83bf181c4e1eead98244e212d37e319",
+        "evidence": "docs/audits/2026-10-13/DIRECT-SOURCE-QUALITY-INSTALLED.json",
+        "evidenceSha256NormalizedLf": "cf12ebe6171fbb7602a9d9aba4e771c8b7d05425929b6f0dc3c5d5e3e48182fb",
+        "packageProofObservedAtUtc": "2026-10-13T17:48:51.490279+00:00",
+        "scope": "Exact installed package and addressed OTA; runtime acceptance limited to PH010 finite browser observations"
       },
       {
         "device": "auto-ph-019",
         "deviceId": "c37e687a-ee83-466d-846f-3f4b36047fa7",
-        "version": "1.2.65-dev",
-        "versionCode": 10265,
-        "sourceRevision": "0e8d7bbdd7269778944b36ccbba7a6ba3ede9c20",
-        "apkSha256": "7a620e7a57ca6b1440adb2637d068ad8e800ee2d11bbaa3c0c073a69ae37b7c1",
-        "evidence": "docs/audits/2026-10-13/DIRECT-INPUT-RECOVERY-OBSERVATION.json",
-        "evidenceSha256NormalizedLf": "a6cbf3a2c160dadf9f151594f53e7f55937ef2b2f9eaee1702128def6087ace1",
-        "packageProofObservedAtUtc": "2026-10-13T06:35:03.047826+00:00",
-        "scope": "Exact package SHA and completed addressed OTA; proof time is per device, runtime acceptance separate."
+        "version": "1.2.68-dev",
+        "versionCode": 10268,
+        "sourceRevision": "180f8a0f6d0ce6f083d4ca14edd464720d4a3b56",
+        "apkSha256": "ac22fc741b7a3c1da753802d7d9339ece83bf181c4e1eead98244e212d37e319",
+        "evidence": "docs/audits/2026-10-13/DIRECT-SOURCE-QUALITY-INSTALLED.json",
+        "evidenceSha256NormalizedLf": "cf12ebe6171fbb7602a9d9aba4e771c8b7d05425929b6f0dc3c5d5e3e48182fb",
+        "packageProofObservedAtUtc": "2026-10-13T17:48:51.490279+00:00",
+        "scope": "Exact installed package and addressed OTA; runtime acceptance limited to PH010 finite browser observations"
       },
       {
         "device": "auto-ph-018",
         "deviceId": "bafef86f-3ab4-469b-ae0c-cf2771b55813",
-        "version": "1.2.65-dev",
-        "versionCode": 10265,
-        "sourceRevision": "0e8d7bbdd7269778944b36ccbba7a6ba3ede9c20",
-        "apkSha256": "7a620e7a57ca6b1440adb2637d068ad8e800ee2d11bbaa3c0c073a69ae37b7c1",
-        "evidence": "docs/audits/2026-10-13/DIRECT-INPUT-RECOVERY-OBSERVATION.json",
-        "evidenceSha256NormalizedLf": "a6cbf3a2c160dadf9f151594f53e7f55937ef2b2f9eaee1702128def6087ace1",
-        "packageProofObservedAtUtc": "2026-10-13T06:35:03.047826+00:00",
-        "scope": "Exact package SHA and completed addressed OTA; proof time is per device, runtime acceptance separate."
+        "version": "1.2.68-dev",
+        "versionCode": 10268,
+        "sourceRevision": "180f8a0f6d0ce6f083d4ca14edd464720d4a3b56",
+        "apkSha256": "ac22fc741b7a3c1da753802d7d9339ece83bf181c4e1eead98244e212d37e319",
+        "evidence": "docs/audits/2026-10-13/DIRECT-SOURCE-QUALITY-INSTALLED.json",
+        "evidenceSha256NormalizedLf": "cf12ebe6171fbb7602a9d9aba4e771c8b7d05425929b6f0dc3c5d5e3e48182fb",
+        "packageProofObservedAtUtc": "2026-10-13T17:48:51.490279+00:00",
+        "scope": "Exact installed package and addressed OTA; runtime acceptance limited to PH010 finite browser observations"
       },
       {
         "device": "auto-ph-017",
         "deviceId": "1dd7e59c-b68f-406a-93cd-5f4e34fdea90",
-        "version": "1.2.65-dev",
-        "versionCode": 10265,
-        "sourceRevision": "0e8d7bbdd7269778944b36ccbba7a6ba3ede9c20",
-        "apkSha256": "7a620e7a57ca6b1440adb2637d068ad8e800ee2d11bbaa3c0c073a69ae37b7c1",
-        "evidence": "docs/audits/2026-10-13/DIRECT-INPUT-RECOVERY-OBSERVATION.json",
-        "evidenceSha256NormalizedLf": "a6cbf3a2c160dadf9f151594f53e7f55937ef2b2f9eaee1702128def6087ace1",
-        "packageProofObservedAtUtc": "2026-10-13T06:35:03.047826+00:00",
-        "scope": "Exact package SHA and completed addressed OTA; proof time is per device, runtime acceptance separate."
+        "version": "1.2.68-dev",
+        "versionCode": 10268,
+        "sourceRevision": "180f8a0f6d0ce6f083d4ca14edd464720d4a3b56",
+        "apkSha256": "ac22fc741b7a3c1da753802d7d9339ece83bf181c4e1eead98244e212d37e319",
+        "evidence": "docs/audits/2026-10-13/DIRECT-SOURCE-QUALITY-INSTALLED.json",
+        "evidenceSha256NormalizedLf": "cf12ebe6171fbb7602a9d9aba4e771c8b7d05425929b6f0dc3c5d5e3e48182fb",
+        "packageProofObservedAtUtc": "2026-10-13T17:48:51.490279+00:00",
+        "scope": "Exact installed package and addressed OTA; runtime acceptance limited to PH010 finite browser observations"
       },
       {
         "device": "auto-ph-016",
         "deviceId": "3c4c4218-27ba-4d8d-a7d2-4348c2f91c93",
-        "version": "1.2.65-dev",
-        "versionCode": 10265,
-        "sourceRevision": "0e8d7bbdd7269778944b36ccbba7a6ba3ede9c20",
-        "apkSha256": "7a620e7a57ca6b1440adb2637d068ad8e800ee2d11bbaa3c0c073a69ae37b7c1",
-        "evidence": "docs/audits/2026-10-13/DIRECT-INPUT-RECOVERY-OBSERVATION.json",
-        "evidenceSha256NormalizedLf": "a6cbf3a2c160dadf9f151594f53e7f55937ef2b2f9eaee1702128def6087ace1",
-        "packageProofObservedAtUtc": "2026-10-13T06:35:03.047826+00:00",
-        "scope": "Exact package SHA and completed addressed OTA; proof time is per device, runtime acceptance separate."
+        "version": "1.2.68-dev",
+        "versionCode": 10268,
+        "sourceRevision": "180f8a0f6d0ce6f083d4ca14edd464720d4a3b56",
+        "apkSha256": "ac22fc741b7a3c1da753802d7d9339ece83bf181c4e1eead98244e212d37e319",
+        "evidence": "docs/audits/2026-10-13/DIRECT-SOURCE-QUALITY-INSTALLED.json",
+        "evidenceSha256NormalizedLf": "cf12ebe6171fbb7602a9d9aba4e771c8b7d05425929b6f0dc3c5d5e3e48182fb",
+        "packageProofObservedAtUtc": "2026-10-13T17:48:51.490279+00:00",
+        "scope": "Exact installed package and addressed OTA; runtime acceptance limited to PH010 finite browser observations"
       },
       {
         "device": "auto-ph-015",
         "deviceId": "930a6505-b7ec-4eee-93fe-9aaa66517871",
-        "version": "1.2.65-dev",
-        "versionCode": 10265,
-        "sourceRevision": "0e8d7bbdd7269778944b36ccbba7a6ba3ede9c20",
-        "apkSha256": "7a620e7a57ca6b1440adb2637d068ad8e800ee2d11bbaa3c0c073a69ae37b7c1",
-        "evidence": "docs/audits/2026-10-13/DIRECT-INPUT-RECOVERY-OBSERVATION.json",
-        "evidenceSha256NormalizedLf": "a6cbf3a2c160dadf9f151594f53e7f55937ef2b2f9eaee1702128def6087ace1",
-        "packageProofObservedAtUtc": "2026-10-13T06:35:03.047826+00:00",
-        "scope": "Exact package SHA and completed addressed OTA; proof time is per device, runtime acceptance separate."
+        "version": "1.2.68-dev",
+        "versionCode": 10268,
+        "sourceRevision": "180f8a0f6d0ce6f083d4ca14edd464720d4a3b56",
+        "apkSha256": "ac22fc741b7a3c1da753802d7d9339ece83bf181c4e1eead98244e212d37e319",
+        "evidence": "docs/audits/2026-10-13/DIRECT-SOURCE-QUALITY-INSTALLED.json",
+        "evidenceSha256NormalizedLf": "cf12ebe6171fbb7602a9d9aba4e771c8b7d05425929b6f0dc3c5d5e3e48182fb",
+        "packageProofObservedAtUtc": "2026-10-13T17:48:51.490279+00:00",
+        "scope": "Exact installed package and addressed OTA; runtime acceptance limited to PH010 finite browser observations"
       },
       {
         "device": "auto-ph-014",
         "deviceId": "673d5774-24b1-4b57-8dfb-90c46f627ce3",
-        "version": "1.2.65-dev",
-        "versionCode": 10265,
-        "sourceRevision": "0e8d7bbdd7269778944b36ccbba7a6ba3ede9c20",
-        "apkSha256": "7a620e7a57ca6b1440adb2637d068ad8e800ee2d11bbaa3c0c073a69ae37b7c1",
-        "evidence": "docs/audits/2026-10-13/DIRECT-INPUT-RECOVERY-OBSERVATION.json",
-        "evidenceSha256NormalizedLf": "a6cbf3a2c160dadf9f151594f53e7f55937ef2b2f9eaee1702128def6087ace1",
-        "packageProofObservedAtUtc": "2026-10-13T06:35:03.047826+00:00",
-        "scope": "Exact package SHA and completed addressed OTA; proof time is per device, runtime acceptance separate."
+        "version": "1.2.68-dev",
+        "versionCode": 10268,
+        "sourceRevision": "180f8a0f6d0ce6f083d4ca14edd464720d4a3b56",
+        "apkSha256": "ac22fc741b7a3c1da753802d7d9339ece83bf181c4e1eead98244e212d37e319",
+        "evidence": "docs/audits/2026-10-13/DIRECT-SOURCE-QUALITY-INSTALLED.json",
+        "evidenceSha256NormalizedLf": "cf12ebe6171fbb7602a9d9aba4e771c8b7d05425929b6f0dc3c5d5e3e48182fb",
+        "packageProofObservedAtUtc": "2026-10-13T17:48:51.490279+00:00",
+        "scope": "Exact installed package and addressed OTA; runtime acceptance limited to PH010 finite browser observations"
       },
       {
         "device": "auto-ph-013",
         "deviceId": "6d830af5-b7cc-44b4-b7f5-5e0275aceb3b",
-        "version": "1.2.65-dev",
-        "versionCode": 10265,
-        "sourceRevision": "0e8d7bbdd7269778944b36ccbba7a6ba3ede9c20",
-        "apkSha256": "7a620e7a57ca6b1440adb2637d068ad8e800ee2d11bbaa3c0c073a69ae37b7c1",
-        "evidence": "docs/audits/2026-10-13/DIRECT-INPUT-RECOVERY-OBSERVATION.json",
-        "evidenceSha256NormalizedLf": "a6cbf3a2c160dadf9f151594f53e7f55937ef2b2f9eaee1702128def6087ace1",
-        "packageProofObservedAtUtc": "2026-10-13T06:35:03.047826+00:00",
-        "scope": "Exact package SHA and completed addressed OTA; proof time is per device, runtime acceptance separate."
+        "version": "1.2.68-dev",
+        "versionCode": 10268,
+        "sourceRevision": "180f8a0f6d0ce6f083d4ca14edd464720d4a3b56",
+        "apkSha256": "ac22fc741b7a3c1da753802d7d9339ece83bf181c4e1eead98244e212d37e319",
+        "evidence": "docs/audits/2026-10-13/DIRECT-SOURCE-QUALITY-INSTALLED.json",
+        "evidenceSha256NormalizedLf": "cf12ebe6171fbb7602a9d9aba4e771c8b7d05425929b6f0dc3c5d5e3e48182fb",
+        "packageProofObservedAtUtc": "2026-10-13T17:48:51.490279+00:00",
+        "scope": "Exact installed package and addressed OTA; runtime acceptance limited to PH010 finite browser observations"
       },
       {
         "device": "auto-ph-012",
         "deviceId": "8c187cfa-e5ea-4939-a137-07619437953d",
-        "version": "1.2.65-dev",
-        "versionCode": 10265,
-        "sourceRevision": "0e8d7bbdd7269778944b36ccbba7a6ba3ede9c20",
-        "apkSha256": "7a620e7a57ca6b1440adb2637d068ad8e800ee2d11bbaa3c0c073a69ae37b7c1",
-        "evidence": "docs/audits/2026-10-13/DIRECT-INPUT-RECOVERY-OBSERVATION.json",
-        "evidenceSha256NormalizedLf": "a6cbf3a2c160dadf9f151594f53e7f55937ef2b2f9eaee1702128def6087ace1",
-        "packageProofObservedAtUtc": "2026-10-13T06:35:03.047826+00:00",
-        "scope": "Exact package SHA and completed addressed OTA; proof time is per device, runtime acceptance separate."
+        "version": "1.2.68-dev",
+        "versionCode": 10268,
+        "sourceRevision": "180f8a0f6d0ce6f083d4ca14edd464720d4a3b56",
+        "apkSha256": "ac22fc741b7a3c1da753802d7d9339ece83bf181c4e1eead98244e212d37e319",
+        "evidence": "docs/audits/2026-10-13/DIRECT-SOURCE-QUALITY-INSTALLED.json",
+        "evidenceSha256NormalizedLf": "cf12ebe6171fbb7602a9d9aba4e771c8b7d05425929b6f0dc3c5d5e3e48182fb",
+        "packageProofObservedAtUtc": "2026-10-13T17:48:51.490279+00:00",
+        "scope": "Exact installed package and addressed OTA; runtime acceptance limited to PH010 finite browser observations"
       },
       {
         "device": "auto-ph-011",
         "deviceId": "414ce0e9-4b93-4f96-b9ca-ee675f53835e",
-        "version": "1.2.65-dev",
-        "versionCode": 10265,
-        "sourceRevision": "0e8d7bbdd7269778944b36ccbba7a6ba3ede9c20",
-        "apkSha256": "7a620e7a57ca6b1440adb2637d068ad8e800ee2d11bbaa3c0c073a69ae37b7c1",
-        "evidence": "docs/audits/2026-10-13/DIRECT-INPUT-RECOVERY-OBSERVATION.json",
-        "evidenceSha256NormalizedLf": "a6cbf3a2c160dadf9f151594f53e7f55937ef2b2f9eaee1702128def6087ace1",
-        "packageProofObservedAtUtc": "2026-10-13T06:35:03.047826+00:00",
-        "scope": "Exact package SHA and completed addressed OTA; proof time is per device, runtime acceptance separate."
-      },
-      {
-        "device": "auto-ph-030",
-        "deviceId": "753fd530-2f19-4e5e-98ba-769863678141",
-        "version": "1.2.65-dev",
-        "versionCode": 10265,
-        "sourceRevision": "0e8d7bbdd7269778944b36ccbba7a6ba3ede9c20",
-        "apkSha256": "7a620e7a57ca6b1440adb2637d068ad8e800ee2d11bbaa3c0c073a69ae37b7c1",
-        "evidence": "docs/audits/2026-10-13/DIRECT-INPUT-RECOVERY-OBSERVATION.json",
-        "evidenceSha256NormalizedLf": "a6cbf3a2c160dadf9f151594f53e7f55937ef2b2f9eaee1702128def6087ace1",
-        "packageProofObservedAtUtc": "2026-10-13T12:43:23.974191+00:00",
-        "scope": "Exact package SHA and completed addressed OTA; proof time is per device, runtime acceptance separate."
+        "version": "1.2.68-dev",
+        "versionCode": 10268,
+        "sourceRevision": "180f8a0f6d0ce6f083d4ca14edd464720d4a3b56",
+        "apkSha256": "ac22fc741b7a3c1da753802d7d9339ece83bf181c4e1eead98244e212d37e319",
+        "evidence": "docs/audits/2026-10-13/DIRECT-SOURCE-QUALITY-INSTALLED.json",
+        "evidenceSha256NormalizedLf": "cf12ebe6171fbb7602a9d9aba4e771c8b7d05425929b6f0dc3c5d5e3e48182fb",
+        "packageProofObservedAtUtc": "2026-10-13T17:48:51.490279+00:00",
+        "scope": "Exact installed package and addressed OTA; runtime acceptance limited to PH010 finite browser observations"
       }
     ],
     "fleetApkEvidence": {
-      "evidence": "docs/audits/2026-10-13/DIRECT-INPUT-RECOVERY-OBSERVATION.json",
-      "evidenceSha256NormalizedLf": "a6cbf3a2c160dadf9f151594f53e7f55937ef2b2f9eaee1702128def6087ace1",
-      "installedCount": 15,
+      "evidence": "docs/audits/2026-10-13/DIRECT-SOURCE-QUALITY-INSTALLED.json",
+      "evidenceSha256NormalizedLf": "cf12ebe6171fbb7602a9d9aba4e771c8b7d05425929b6f0dc3c5d5e3e48182fb",
+      "installedCount": 14,
+      "offlineCount": 7,
       "verifiedVersionCounts": {
-        "10265": 15
-      },
-      "scope": "14 exact APK65 hashes remain dated to the prior receipt; PH030 was read after its active input ended naturally. Each package row records its own proof time. No forced close or data reset."
+        "10268": 14
+      }
     },
-    "latestReadbackAtUtc": "2026-10-13T12:53:53.021954+00:00",
-    "latestReadbackEvidence": "docs/audits/2026-10-13/DIRECT-INPUT-RECOVERY-OBSERVATION.json",
-    "latestReadbackEvidenceSha256NormalizedLf": "a6cbf3a2c160dadf9f151594f53e7f55937ef2b2f9eaee1702128def6087ace1",
+    "latestReadbackAtUtc": "2026-10-13T18:06:20.684946+00:00",
+    "latestReadbackEvidence": "docs/audits/2026-10-13/DIRECT-SOURCE-QUALITY-INSTALLED.json",
+    "latestReadbackEvidenceSha256NormalizedLf": "cf12ebe6171fbb7602a9d9aba4e771c8b7d05425929b6f0dc3c5d5e3e48182fb",
     "previousRuntimeObservation": {
       "ui": "ed9d54d090e2b5a5d471502335ddf6b8b86dbd35",
       "api": "ed9d54d090e2b5a5d471502335ddf6b8b86dbd35",
@@ -500,6 +488,203 @@
       "lastObservedUtc": "2026-10-13T06:35:03.047826+00:00",
       "evidence": "docs/audits/2026-10-13/DIRECT-SESSION-STABILITY-OBSERVATION.json",
       "evidenceSha256NormalizedLf": "2a70d3db77a07bac4fc69220b80085c8ff11e99da4683ea8b684839bcd39325b"
+    },
+    "historicalBeforeSourceQuality": {
+      "ui": "954d466cc5587c3c87adb0595a785e5eb3d47175",
+      "api": "b65b0b5469510f9c0c94d5242234bdba43570c77",
+      "evidence": "docs/audits/2026-10-13/DIRECT-INPUT-RECOVERY-OBSERVATION.json",
+      "evidenceSha256NormalizedLf": "a6cbf3a2c160dadf9f151594f53e7f55937ef2b2f9eaee1702128def6087ace1",
+      "pilotApk": {
+        "device": "auto-ph-010",
+        "deviceId": "5df4805e-fe64-4d39-960c-19ceab206cd6",
+        "version": "1.2.65-dev",
+        "versionCode": 10265,
+        "sourceRevision": "0e8d7bbdd7269778944b36ccbba7a6ba3ede9c20",
+        "apkSha256": "7a620e7a57ca6b1440adb2637d068ad8e800ee2d11bbaa3c0c073a69ae37b7c1",
+        "evidence": "docs/audits/2026-10-13/DIRECT-INPUT-RECOVERY-OBSERVATION.json",
+        "evidenceSha256NormalizedLf": "a6cbf3a2c160dadf9f151594f53e7f55937ef2b2f9eaee1702128def6087ace1",
+        "packageProofObservedAtUtc": "2026-10-13T06:35:03.047826+00:00",
+        "scope": "Exact package SHA and completed addressed OTA; proof time is per device, runtime acceptance separate."
+      },
+      "additionalPilotApks": [
+        {
+          "device": "auto-ph-028",
+          "deviceId": "4815b950-e5cf-4686-9d46-42d0df8d41f7",
+          "version": "1.2.65-dev",
+          "versionCode": 10265,
+          "sourceRevision": "0e8d7bbdd7269778944b36ccbba7a6ba3ede9c20",
+          "apkSha256": "7a620e7a57ca6b1440adb2637d068ad8e800ee2d11bbaa3c0c073a69ae37b7c1",
+          "evidence": "docs/audits/2026-10-13/DIRECT-INPUT-RECOVERY-OBSERVATION.json",
+          "evidenceSha256NormalizedLf": "a6cbf3a2c160dadf9f151594f53e7f55937ef2b2f9eaee1702128def6087ace1",
+          "packageProofObservedAtUtc": "2026-10-13T06:35:03.047826+00:00",
+          "scope": "Exact package SHA and completed addressed OTA; proof time is per device, runtime acceptance separate."
+        },
+        {
+          "device": "auto-ph-025",
+          "deviceId": "b410464a-5f26-4803-a756-7840cc17b128",
+          "version": "1.2.65-dev",
+          "versionCode": 10265,
+          "sourceRevision": "0e8d7bbdd7269778944b36ccbba7a6ba3ede9c20",
+          "apkSha256": "7a620e7a57ca6b1440adb2637d068ad8e800ee2d11bbaa3c0c073a69ae37b7c1",
+          "evidence": "docs/audits/2026-10-13/DIRECT-INPUT-RECOVERY-OBSERVATION.json",
+          "evidenceSha256NormalizedLf": "a6cbf3a2c160dadf9f151594f53e7f55937ef2b2f9eaee1702128def6087ace1",
+          "packageProofObservedAtUtc": "2026-10-13T06:35:03.047826+00:00",
+          "scope": "Exact package SHA and completed addressed OTA; proof time is per device, runtime acceptance separate."
+        },
+        {
+          "device": "auto-ph-022",
+          "deviceId": "d088c147-7ada-4b29-9e79-f991b20fcf91",
+          "version": "1.2.65-dev",
+          "versionCode": 10265,
+          "sourceRevision": "0e8d7bbdd7269778944b36ccbba7a6ba3ede9c20",
+          "apkSha256": "7a620e7a57ca6b1440adb2637d068ad8e800ee2d11bbaa3c0c073a69ae37b7c1",
+          "evidence": "docs/audits/2026-10-13/DIRECT-INPUT-RECOVERY-OBSERVATION.json",
+          "evidenceSha256NormalizedLf": "a6cbf3a2c160dadf9f151594f53e7f55937ef2b2f9eaee1702128def6087ace1",
+          "packageProofObservedAtUtc": "2026-10-13T06:35:03.047826+00:00",
+          "scope": "Exact package SHA and completed addressed OTA; proof time is per device, runtime acceptance separate."
+        },
+        {
+          "device": "auto-ph-020",
+          "deviceId": "75c29a32-2867-4b60-947c-003e712e538f",
+          "version": "1.2.65-dev",
+          "versionCode": 10265,
+          "sourceRevision": "0e8d7bbdd7269778944b36ccbba7a6ba3ede9c20",
+          "apkSha256": "7a620e7a57ca6b1440adb2637d068ad8e800ee2d11bbaa3c0c073a69ae37b7c1",
+          "evidence": "docs/audits/2026-10-13/DIRECT-INPUT-RECOVERY-OBSERVATION.json",
+          "evidenceSha256NormalizedLf": "a6cbf3a2c160dadf9f151594f53e7f55937ef2b2f9eaee1702128def6087ace1",
+          "packageProofObservedAtUtc": "2026-10-13T06:35:03.047826+00:00",
+          "scope": "Exact package SHA and completed addressed OTA; proof time is per device, runtime acceptance separate."
+        },
+        {
+          "device": "auto-ph-019",
+          "deviceId": "c37e687a-ee83-466d-846f-3f4b36047fa7",
+          "version": "1.2.65-dev",
+          "versionCode": 10265,
+          "sourceRevision": "0e8d7bbdd7269778944b36ccbba7a6ba3ede9c20",
+          "apkSha256": "7a620e7a57ca6b1440adb2637d068ad8e800ee2d11bbaa3c0c073a69ae37b7c1",
+          "evidence": "docs/audits/2026-10-13/DIRECT-INPUT-RECOVERY-OBSERVATION.json",
+          "evidenceSha256NormalizedLf": "a6cbf3a2c160dadf9f151594f53e7f55937ef2b2f9eaee1702128def6087ace1",
+          "packageProofObservedAtUtc": "2026-10-13T06:35:03.047826+00:00",
+          "scope": "Exact package SHA and completed addressed OTA; proof time is per device, runtime acceptance separate."
+        },
+        {
+          "device": "auto-ph-018",
+          "deviceId": "bafef86f-3ab4-469b-ae0c-cf2771b55813",
+          "version": "1.2.65-dev",
+          "versionCode": 10265,
+          "sourceRevision": "0e8d7bbdd7269778944b36ccbba7a6ba3ede9c20",
+          "apkSha256": "7a620e7a57ca6b1440adb2637d068ad8e800ee2d11bbaa3c0c073a69ae37b7c1",
+          "evidence": "docs/audits/2026-10-13/DIRECT-INPUT-RECOVERY-OBSERVATION.json",
+          "evidenceSha256NormalizedLf": "a6cbf3a2c160dadf9f151594f53e7f55937ef2b2f9eaee1702128def6087ace1",
+          "packageProofObservedAtUtc": "2026-10-13T06:35:03.047826+00:00",
+          "scope": "Exact package SHA and completed addressed OTA; proof time is per device, runtime acceptance separate."
+        },
+        {
+          "device": "auto-ph-017",
+          "deviceId": "1dd7e59c-b68f-406a-93cd-5f4e34fdea90",
+          "version": "1.2.65-dev",
+          "versionCode": 10265,
+          "sourceRevision": "0e8d7bbdd7269778944b36ccbba7a6ba3ede9c20",
+          "apkSha256": "7a620e7a57ca6b1440adb2637d068ad8e800ee2d11bbaa3c0c073a69ae37b7c1",
+          "evidence": "docs/audits/2026-10-13/DIRECT-INPUT-RECOVERY-OBSERVATION.json",
+          "evidenceSha256NormalizedLf": "a6cbf3a2c160dadf9f151594f53e7f55937ef2b2f9eaee1702128def6087ace1",
+          "packageProofObservedAtUtc": "2026-10-13T06:35:03.047826+00:00",
+          "scope": "Exact package SHA and completed addressed OTA; proof time is per device, runtime acceptance separate."
+        },
+        {
+          "device": "auto-ph-016",
+          "deviceId": "3c4c4218-27ba-4d8d-a7d2-4348c2f91c93",
+          "version": "1.2.65-dev",
+          "versionCode": 10265,
+          "sourceRevision": "0e8d7bbdd7269778944b36ccbba7a6ba3ede9c20",
+          "apkSha256": "7a620e7a57ca6b1440adb2637d068ad8e800ee2d11bbaa3c0c073a69ae37b7c1",
+          "evidence": "docs/audits/2026-10-13/DIRECT-INPUT-RECOVERY-OBSERVATION.json",
+          "evidenceSha256NormalizedLf": "a6cbf3a2c160dadf9f151594f53e7f55937ef2b2f9eaee1702128def6087ace1",
+          "packageProofObservedAtUtc": "2026-10-13T06:35:03.047826+00:00",
+          "scope": "Exact package SHA and completed addressed OTA; proof time is per device, runtime acceptance separate."
+        },
+        {
+          "device": "auto-ph-015",
+          "deviceId": "930a6505-b7ec-4eee-93fe-9aaa66517871",
+          "version": "1.2.65-dev",
+          "versionCode": 10265,
+          "sourceRevision": "0e8d7bbdd7269778944b36ccbba7a6ba3ede9c20",
+          "apkSha256": "7a620e7a57ca6b1440adb2637d068ad8e800ee2d11bbaa3c0c073a69ae37b7c1",
+          "evidence": "docs/audits/2026-10-13/DIRECT-INPUT-RECOVERY-OBSERVATION.json",
+          "evidenceSha256NormalizedLf": "a6cbf3a2c160dadf9f151594f53e7f55937ef2b2f9eaee1702128def6087ace1",
+          "packageProofObservedAtUtc": "2026-10-13T06:35:03.047826+00:00",
+          "scope": "Exact package SHA and completed addressed OTA; proof time is per device, runtime acceptance separate."
+        },
+        {
+          "device": "auto-ph-014",
+          "deviceId": "673d5774-24b1-4b57-8dfb-90c46f627ce3",
+          "version": "1.2.65-dev",
+          "versionCode": 10265,
+          "sourceRevision": "0e8d7bbdd7269778944b36ccbba7a6ba3ede9c20",
+          "apkSha256": "7a620e7a57ca6b1440adb2637d068ad8e800ee2d11bbaa3c0c073a69ae37b7c1",
+          "evidence": "docs/audits/2026-10-13/DIRECT-INPUT-RECOVERY-OBSERVATION.json",
+          "evidenceSha256NormalizedLf": "a6cbf3a2c160dadf9f151594f53e7f55937ef2b2f9eaee1702128def6087ace1",
+          "packageProofObservedAtUtc": "2026-10-13T06:35:03.047826+00:00",
+          "scope": "Exact package SHA and completed addressed OTA; proof time is per device, runtime acceptance separate."
+        },
+        {
+          "device": "auto-ph-013",
+          "deviceId": "6d830af5-b7cc-44b4-b7f5-5e0275aceb3b",
+          "version": "1.2.65-dev",
+          "versionCode": 10265,
+          "sourceRevision": "0e8d7bbdd7269778944b36ccbba7a6ba3ede9c20",
+          "apkSha256": "7a620e7a57ca6b1440adb2637d068ad8e800ee2d11bbaa3c0c073a69ae37b7c1",
+          "evidence": "docs/audits/2026-10-13/DIRECT-INPUT-RECOVERY-OBSERVATION.json",
+          "evidenceSha256NormalizedLf": "a6cbf3a2c160dadf9f151594f53e7f55937ef2b2f9eaee1702128def6087ace1",
+          "packageProofObservedAtUtc": "2026-10-13T06:35:03.047826+00:00",
+          "scope": "Exact package SHA and completed addressed OTA; proof time is per device, runtime acceptance separate."
+        },
+        {
+          "device": "auto-ph-012",
+          "deviceId": "8c187cfa-e5ea-4939-a137-07619437953d",
+          "version": "1.2.65-dev",
+          "versionCode": 10265,
+          "sourceRevision": "0e8d7bbdd7269778944b36ccbba7a6ba3ede9c20",
+          "apkSha256": "7a620e7a57ca6b1440adb2637d068ad8e800ee2d11bbaa3c0c073a69ae37b7c1",
+          "evidence": "docs/audits/2026-10-13/DIRECT-INPUT-RECOVERY-OBSERVATION.json",
+          "evidenceSha256NormalizedLf": "a6cbf3a2c160dadf9f151594f53e7f55937ef2b2f9eaee1702128def6087ace1",
+          "packageProofObservedAtUtc": "2026-10-13T06:35:03.047826+00:00",
+          "scope": "Exact package SHA and completed addressed OTA; proof time is per device, runtime acceptance separate."
+        },
+        {
+          "device": "auto-ph-011",
+          "deviceId": "414ce0e9-4b93-4f96-b9ca-ee675f53835e",
+          "version": "1.2.65-dev",
+          "versionCode": 10265,
+          "sourceRevision": "0e8d7bbdd7269778944b36ccbba7a6ba3ede9c20",
+          "apkSha256": "7a620e7a57ca6b1440adb2637d068ad8e800ee2d11bbaa3c0c073a69ae37b7c1",
+          "evidence": "docs/audits/2026-10-13/DIRECT-INPUT-RECOVERY-OBSERVATION.json",
+          "evidenceSha256NormalizedLf": "a6cbf3a2c160dadf9f151594f53e7f55937ef2b2f9eaee1702128def6087ace1",
+          "packageProofObservedAtUtc": "2026-10-13T06:35:03.047826+00:00",
+          "scope": "Exact package SHA and completed addressed OTA; proof time is per device, runtime acceptance separate."
+        },
+        {
+          "device": "auto-ph-030",
+          "deviceId": "753fd530-2f19-4e5e-98ba-769863678141",
+          "version": "1.2.65-dev",
+          "versionCode": 10265,
+          "sourceRevision": "0e8d7bbdd7269778944b36ccbba7a6ba3ede9c20",
+          "apkSha256": "7a620e7a57ca6b1440adb2637d068ad8e800ee2d11bbaa3c0c073a69ae37b7c1",
+          "evidence": "docs/audits/2026-10-13/DIRECT-INPUT-RECOVERY-OBSERVATION.json",
+          "evidenceSha256NormalizedLf": "a6cbf3a2c160dadf9f151594f53e7f55937ef2b2f9eaee1702128def6087ace1",
+          "packageProofObservedAtUtc": "2026-10-13T12:43:23.974191+00:00",
+          "scope": "Exact package SHA and completed addressed OTA; proof time is per device, runtime acceptance separate."
+        }
+      ],
+      "fleetApkEvidence": {
+        "evidence": "docs/audits/2026-10-13/DIRECT-INPUT-RECOVERY-OBSERVATION.json",
+        "evidenceSha256NormalizedLf": "a6cbf3a2c160dadf9f151594f53e7f55937ef2b2f9eaee1702128def6087ace1",
+        "installedCount": 15,
+        "verifiedVersionCounts": {
+          "10265": 15
+        },
+        "scope": "14 exact APK65 hashes remain dated to the prior receipt; PH030 was read after its active input ended naturally. Each package row records its own proof time. No forced close or data reset."
+      }
     }
   },
   "pendingCorrections": [],
@@ -829,24 +1014,24 @@
     "primaryVideoInstalled": true,
     "primaryVideoObserved": true,
     "productionAccepted": false,
-    "currentObservationEvidence": "docs/audits/2026-10-13/DIRECT-INPUT-RECOVERY-OBSERVATION.json",
-    "currentObservationEvidenceSha256NormalizedLf": "a6cbf3a2c160dadf9f151594f53e7f55937ef2b2f9eaee1702128def6087ace1",
+    "currentObservationEvidence": "docs/audits/2026-10-13/DIRECT-SOURCE-QUALITY-INSTALLED.json",
+    "currentObservationEvidenceSha256NormalizedLf": "cf12ebe6171fbb7602a9d9aba4e771c8b7d05425929b6f0dc3c5d5e3e48182fb",
     "pilotEvidenceScope": "UI331/API983 installed on 3015/Tuna; frontend-only input promotion fix, backend code tree unchanged; signed APK60 installed hashes and completed OTA commands confirmed on15 online devices. PH010 ordinary Chrome direct video/native gestures, actual server fallback and recovery, and mixed legacy viewer accepted finitely. Closest routes, physical network switching, shared input and full display latency remain OPEN.",
     "historicalPrimaryFrames": 1804,
     "directInputCandidate": {
-      "sourceRevision": "954d466cc5587c3c87adb0595a785e5eb3d47175",
-      "apiSourceRevision": "b65b0b5469510f9c0c94d5242234bdba43570c77",
-      "apkSourceRevision": "0e8d7bbdd7269778944b36ccbba7a6ba3ede9c20",
-      "apkVersionCode": 10265,
+      "sourceRevision": "a3e61800a23e45ae028c01df9f29484b05b35ead",
+      "apiSourceRevision": "69da45cbc76aa16c92080b497347624a94920945",
+      "apkSourceRevision": "180f8a0f6d0ce6f083d4ca14edd464720d4a3b56",
+      "apkVersionCode": 10268,
       "runtimeInstalled": true,
       "pilotApkSigned": true,
       "exactSourceCiPassed": true,
-      "evidence": "docs/audits/2026-10-13/DIRECT-INPUT-RECOVERY-OBSERVATION.json",
-      "evidenceSha256NormalizedLf": "a6cbf3a2c160dadf9f151594f53e7f55937ef2b2f9eaee1702128def6087ace1",
+      "evidence": "docs/audits/2026-10-13/DIRECT-SOURCE-QUALITY-INSTALLED.json",
+      "evidenceSha256NormalizedLf": "cf12ebe6171fbb7602a9d9aba4e771c8b7d05425929b6f0dc3c5d5e3e48182fb",
       "directInputAccepted": false,
       "directInputObservedFinite": true,
       "installedCount": 14,
-      "scope": "UI954d466c / APIb65b0b54 installed on 3015/Tuna; APK65 unchanged. PH010 finite direct video and native gestures pass on both origins and six fresh viewer cycles on Tuna. PH030 observed a finite approximately 30 minute direct video/input window; PH025 laptop route has direct NAT/UDP video/input with network RTT 20-22 ms. Exact late pre-start admission refusal now allows input renegotiation without restarting healthy video. Shared control, direct navigation, independent capability, broad WAN/TURN and production SLA remain OPEN."
+      "scope": "Finite PH010 ordinary Chrome on3015/Tuna: native13-event gesture and stable54-59FPS, zero reserved server video bytes. Other topologies and production reliability remain open."
     },
     "historicalDirectInputCandidate": {
       "sourceRevision": "e9af9e60be1b2dcb1f13f7dd8b17db93dc8bfa4c",
@@ -883,13 +1068,13 @@
       "directInputAccepted": false,
       "topologySource": "PH011 mapped to main-PC emulator5554 by current boot identity; NAT path is not loopback proof. Browser observation predates the latest idle correction."
     },
-    "latestReadbackAtUtc": "2026-10-13T12:53:53.021954+00:00",
-    "latestReadbackEvidence": "docs/audits/2026-10-13/DIRECT-INPUT-RECOVERY-OBSERVATION.json",
-    "latestReadbackEvidenceSha256NormalizedLf": "a6cbf3a2c160dadf9f151594f53e7f55937ef2b2f9eaee1702128def6087ace1",
+    "latestReadbackAtUtc": "2026-10-13T18:06:20.684946+00:00",
+    "latestReadbackEvidence": "docs/audits/2026-10-13/DIRECT-SOURCE-QUALITY-INSTALLED.json",
+    "latestReadbackEvidenceSha256NormalizedLf": "cf12ebe6171fbb7602a9d9aba4e771c8b7d05425929b6f0dc3c5d5e3e48182fb",
     "ordinaryBrowserObservation": {
-      "evidence": "docs/audits/2026-10-13/DIRECT-INPUT-RECOVERY-OBSERVATION.json",
-      "evidenceSha256NormalizedLf": "a6cbf3a2c160dadf9f151594f53e7f55937ef2b2f9eaee1702128def6087ace1",
-      "scope": "PH010 ordinary Chrome: current UI on both origins, one minute and native DOWN/MOVE/UP; six fresh viewer cycles on Tuna.",
+      "evidence": "docs/audits/2026-10-13/DIRECT-SOURCE-QUALITY-INSTALLED.json",
+      "evidenceSha256NormalizedLf": "cf12ebe6171fbb7602a9d9aba4e771c8b7d05425929b6f0dc3c5d5e3e48182fb",
+      "scope": "Finite PH010 ordinary Chrome on3015/Tuna: native13-event gesture and stable54-59FPS, zero reserved server video bytes. Other topologies and production reliability remain open.",
       "legacyUplinkSuppressed": true,
       "actualPh030Accepted": false
     },
@@ -941,15 +1126,15 @@
     "historicalResearchScope": "Reviewed API/UI522 installed on both origins and signed APK55 hash verified on all15 compatible online devices. Finite server fallback video/held reverse gestures accepted on PH010/PH011/PH025. Current direct ICE, direct input, nearest path, latency SLA and soak NOT accepted.",
     "directInputObservedFinite": true,
     "currentPrimaryNetworkObservation": {
-      "outcome": "FINITE_PH010_DIRECT_VIDEO_AND_NATIVE_INPUT",
-      "directChannelEstablished": true,
+      "outcome": "FINITE_PH010_DIRECT_VIDEO_NATIVE_INPUT_AND_SOURCE_CADENCE",
       "deviceId": "5df4805e-fe64-4d39-960c-19ceab206cd6",
-      "selectedPath": "unknown",
+      "directChannelEstablished": true,
+      "selectedPath": "nat",
       "rawCandidateAddressesPublished": false,
-      "evidence": "docs/audits/2026-10-13/DIRECT-INPUT-RECOVERY-OBSERVATION.json",
-      "evidenceSha256NormalizedLf": "a6cbf3a2c160dadf9f151594f53e7f55937ef2b2f9eaee1702128def6087ace1",
-      "observedAtUtc": "2026-10-13T12:53:53.021954+00:00",
-      "topology": "Own ordinary Chrome and PH010 through 3015/Tuna",
+      "evidence": "docs/audits/2026-10-13/DIRECT-SOURCE-QUALITY-INSTALLED.json",
+      "evidenceSha256NormalizedLf": "cf12ebe6171fbb7602a9d9aba4e771c8b7d05425929b6f0dc3c5d5e3e48182fb",
+      "observedAtUtc": "2026-10-13T18:06:20.684946+00:00",
+      "topology": "Own ordinary Chrome and PH010 through3015/Tuna",
       "localhostRouteProven": false,
       "latencySlaAccepted": false,
       "physicalNetworkSwitchAccepted": false
@@ -970,7 +1155,7 @@
       "productionAccepted": false,
       "scope": "Observed before final UI installation: working direct NAT/UDP video and input on this laptop route. Earlier server fallback on another client route remains historical and does not invalidate this selected pair."
     },
-    "nextDeliveryPriority": "Close shared input/direct navigation and server-independent authorization design; broader WAN/TURN, real network switch, 60 FPS and long soak remain OPEN.",
+    "nextDeliveryPriority": "Wire and validate negotiated shared-input/independent-grant runtime; direct navigation; real phone and wider network matrix. Native model tests alone do not close these requirements.",
     "previousRemoteNetworkObservation": {
       "evidence": "docs/audits/2026-10-13/DIRECT-SESSION-STABILITY-OBSERVATION.json",
       "evidenceSha256NormalizedLf": "2a70d3db77a07bac4fc69220b80085c8ff11e99da4683ea8b684839bcd39325b",
@@ -984,9 +1169,9 @@
       "scope": "Current APK65: server fallback and idle input ready over one minute; direct ICE received no replies. No pointer action injected."
     },
     "directInputFiniteObservation": {
-      "evidence": "docs/audits/2026-10-13/DIRECT-INPUT-RECOVERY-OBSERVATION.json",
-      "evidenceSha256NormalizedLf": "a6cbf3a2c160dadf9f151594f53e7f55937ef2b2f9eaee1702128def6087ace1",
-      "scope": "Current UI/API: native DOWN/MOVE/UP receipts on both origins and six Tuna fresh viewer cycles; no server touch_event.",
+      "evidence": "docs/audits/2026-10-13/DIRECT-SOURCE-QUALITY-INSTALLED.json",
+      "evidenceSha256NormalizedLf": "cf12ebe6171fbb7602a9d9aba4e771c8b7d05425929b6f0dc3c5d5e3e48182fb",
+      "scope": "Finite PH010 ordinary Chrome on3015/Tuna: native13-event gesture and stable54-59FPS, zero reserved server video bytes. Other topologies and production reliability remain open.",
       "actualPh030Accepted": false
     },
     "historicalBeforeInputCancellationCurrentPrimaryNetworkObservation": {
@@ -1085,6 +1270,52 @@
         "evidence": "docs/audits/2026-10-13/INPUT-OPEN-CANCELLATION-OBSERVATION.json",
         "scope": "Two cold ordinary PH010 60-second active passes on UI3d5c2a8f / APIfc273fa3 through 3015/Tuna, without diagnostics or transport overrides; this does not accept the actual PH030 laptop or long-lived production reliability.",
         "actualPh030Accepted": false
+      }
+    },
+    "historicalBeforeSourceQuality": {
+      "currentObservationEvidence": "docs/audits/2026-10-13/DIRECT-INPUT-RECOVERY-OBSERVATION.json",
+      "currentObservationEvidenceSha256NormalizedLf": "a6cbf3a2c160dadf9f151594f53e7f55937ef2b2f9eaee1702128def6087ace1",
+      "currentPrimaryNetworkObservation": {
+        "outcome": "FINITE_PH010_DIRECT_VIDEO_AND_NATIVE_INPUT",
+        "directChannelEstablished": true,
+        "deviceId": "5df4805e-fe64-4d39-960c-19ceab206cd6",
+        "selectedPath": "unknown",
+        "rawCandidateAddressesPublished": false,
+        "evidence": "docs/audits/2026-10-13/DIRECT-INPUT-RECOVERY-OBSERVATION.json",
+        "evidenceSha256NormalizedLf": "a6cbf3a2c160dadf9f151594f53e7f55937ef2b2f9eaee1702128def6087ace1",
+        "observedAtUtc": "2026-10-13T12:53:53.021954+00:00",
+        "topology": "Own ordinary Chrome and PH010 through 3015/Tuna",
+        "localhostRouteProven": false,
+        "latencySlaAccepted": false,
+        "physicalNetworkSwitchAccepted": false
+      },
+      "ordinaryBrowserObservation": {
+        "evidence": "docs/audits/2026-10-13/DIRECT-INPUT-RECOVERY-OBSERVATION.json",
+        "evidenceSha256NormalizedLf": "a6cbf3a2c160dadf9f151594f53e7f55937ef2b2f9eaee1702128def6087ace1",
+        "scope": "PH010 ordinary Chrome: current UI on both origins, one minute and native DOWN/MOVE/UP; six fresh viewer cycles on Tuna.",
+        "legacyUplinkSuppressed": true,
+        "actualPh030Accepted": false
+      },
+      "directInputFiniteObservation": {
+        "evidence": "docs/audits/2026-10-13/DIRECT-INPUT-RECOVERY-OBSERVATION.json",
+        "evidenceSha256NormalizedLf": "a6cbf3a2c160dadf9f151594f53e7f55937ef2b2f9eaee1702128def6087ace1",
+        "scope": "Current UI/API: native DOWN/MOVE/UP receipts on both origins and six Tuna fresh viewer cycles; no server touch_event.",
+        "actualPh030Accepted": false
+      },
+      "directInputCandidate": {
+        "sourceRevision": "954d466cc5587c3c87adb0595a785e5eb3d47175",
+        "apiSourceRevision": "b65b0b5469510f9c0c94d5242234bdba43570c77",
+        "apkSourceRevision": "0e8d7bbdd7269778944b36ccbba7a6ba3ede9c20",
+        "apkVersionCode": 10265,
+        "runtimeInstalled": true,
+        "pilotApkSigned": true,
+        "exactSourceCiPassed": true,
+        "evidence": "docs/audits/2026-10-13/DIRECT-INPUT-RECOVERY-OBSERVATION.json",
+        "evidenceSha256NormalizedLf": "a6cbf3a2c160dadf9f151594f53e7f55937ef2b2f9eaee1702128def6087ace1",
+        "directInputAccepted": false,
+        "directInputObservedFinite": true,
+        "installedCount": 14,
+        "scope": "UI954d466c / APIb65b0b54 installed on 3015/Tuna; APK65 unchanged. PH010 finite direct video and native gestures pass on both origins and six fresh viewer cycles on Tuna. PH030 observed a finite approximately 30 minute direct video/input window; PH025 laptop route has direct NAT/UDP video/input with network RTT 20-22 ms. Exact late pre-start admission refusal now allows input renegotiation without restarting healthy video. Shared control, direct navigation, independent capability, broad WAN/TURN and production SLA remain OPEN."
       }
     }
   },
@@ -2827,8 +3058,8 @@
         "EP-020",
         "EP-047"
       ],
-      "acceptedScope": "Two cold ordinary PH010 60-second active passes on UI3d5c2a8f / APIfc273fa3 through 3015/Tuna, without diagnostics or transport overrides; this does not accept the actual PH030 laptop or long-lived production reliability. Unstarted OPEN cancellation installed; actual PH030 failed session is retained and requires fresh acceptance.",
-      "remaining": "Ближайший фактически выбранный localhost/LAN/WAN/TURN; удалённый VPS и workstation discovery; синхронный input-to-picture; физическая смена сети; совместный ввод viewer/task/API, кнопки/текст/звук, FPS60 и настройки качества; длительные idle/active/reconnect и resource проверки.",
+      "acceptedScope": "UIa3e61800 / API69da45cb installed on3015/Tuna. APK68 exact installed packages confirmed on14 available emulators; seven offline including PH030 remain unverified. PH010 ordinary Chrome direct video and13 native input receipts passed on both origins, stable54-59FPS at native target60. Quality changes keep one peer/capture; viewer tab counts and old APK65 compatibility verified. Shared input, autonomous offline grants, direct navigation and broad network/phone SLA remain OPEN.",
+      "remaining": "Совместный ввод, независимость установленного peer от серверного lease, прямые навигационные клавиши/IME/audio, реальный телефон, удалённый VPS, LAN/WAN/TURN и длительная приёмка всех комбинаций.",
       "evidence": [
         "docs/design/BROWSER-DIRECT-TRANSPORT.md",
         "docs/audits/2026-10-09/IDLE-CONTROL-RELAY-REVIEW.md",
@@ -2859,7 +3090,8 @@
         "docs/audits/2026-10-12/PH025-DIRECT-ROUTE-OBSERVATION.json",
         "docs/audits/2026-10-12/APK-DOWNLOAD-AND-LOGIN-OBSERVATION.json",
         "docs/audits/2026-10-13/INPUT-OPEN-CANCELLATION-OBSERVATION.json",
-        "docs/audits/2026-10-13/INPUT-OPEN-CANCELLATION.md"
+        "docs/audits/2026-10-13/INPUT-OPEN-CANCELLATION.md",
+        "docs/audits/2026-10-13/DIRECT-SOURCE-QUALITY-INSTALLED.json"
       ],
       "sourcePaths": [
         "backend/websocket/direct_probe_protocol.py",
@@ -2944,13 +3176,14 @@
         "EP-020",
         "EP-029"
       ],
-      "acceptedScope": "Shared-input contract documented only; server/native still hold one owner. No simultaneous multi-viewer input acceptance.",
-      "remaining": "Exclusive native input lease rejects another viewer with controller_busy; observed 18:07:03 UTC during two viewers, then seven touch_event rejections. Explicit view/control roles, safe transfer and tenant-safe per-tab presence/fleet indicators remain required.",
+      "acceptedScope": "Installed independent per-tab card counts and authenticated viewer stream counts; real two-card exact cleanup passed. Shared control runtime is not installed.",
+      "remaining": "Общий native input arbiter, multi-peer video fanout, local emulator input coexistence and ten simultaneous controlling viewers require runtime integration/acceptance.",
       "evidence": [
         "docs/audits/2026-10-10/DIRECT-PROBE-TURN-AND-LAPTOP.json",
         "docs/audits/2026-10-10/STREAM-SESSION-DIAGNOSTICS-INSTALLED.json",
         "docs/audits/2026-10-13/INPUT-OPEN-CANCELLATION-OBSERVATION.json",
-        "docs/audits/2026-10-13/INPUT-OPEN-CANCELLATION.md"
+        "docs/audits/2026-10-13/INPUT-OPEN-CANCELLATION.md",
+        "docs/audits/2026-10-13/DIRECT-SOURCE-QUALITY-INSTALLED.json"
       ],
       "sourcePaths": [
         "backend/websocket/continuous_runtime.py",
@@ -3017,11 +3250,12 @@
         "EP-041",
         "EP-048"
       ],
-      "acceptedScope": "Установлены latest exact-channel endpoint и browser download с progress/cancel. Полные APK10260 через3015/Tuna совпали по SHA и57,688,052B; 927/8489ms. Официальный LDPlayer link проверен в DOM.",
+      "acceptedScope": "Latest exact-channel APK download with progress/cancel is installed. Ordinary browser saved APK10268 through3015/Tuna:57769972 bytes, exact signed SHA confirmed, measured1005/11249ms. Official LDPlayer link verified.",
       "remaining": "Внешние latest URL здесь не проксируются; скачивание не подтверждает установку. Stable promotion, все роли и offline fleet остаются отдельными открытыми gates.",
       "evidence": [
         "docs/audits/2026-10-12/APK-DOWNLOAD-AND-LOGIN-OBSERVATION.json",
-        "docs/audits/2026-10-12/APK-DOWNLOAD-AND-LOGIN.md"
+        "docs/audits/2026-10-12/APK-DOWNLOAD-AND-LOGIN.md",
+        "docs/audits/2026-10-13/DIRECT-SOURCE-QUALITY-DELIVERY-CHECK.json"
       ],
       "sourcePaths": [
         "frontend/src/features/updates/AgentDownloadPanel.tsx",
@@ -3059,17 +3293,75 @@
         "EP-047",
         "EP-048"
       ],
-      "acceptedScope": "Read-only GitHub API confirms public repository and standard Ubuntu jobs; local runner count0. Current billing rules and migration contract documented. New Android concurrency is a source change, not a completed local runner migration.",
-      "remaining": "Account usage/budgets unavailable; isolated local runner, resource quotas, trusted public-PR routing and same-SHA checks/JUnit need separate implementation/acceptance.",
+      "acceptedScope": "Trusted local queue posted and read back successful Frontend/Backend/Android statuses for exact source180f8a0f. Self-hosted GitHub runner is not registered; cloud packaging/security/Linux parity still exist.",
+      "remaining": "Полный перенос workflow/packaging, отсутствие hosted расходов, автономный запуск после reboot, trusted job routing и Linux parity ещё не приняты.",
       "evidence": [
         "docs/audits/2026-10-13/CI-COST-AND-LOCAL-RUNNER.md",
-        "docs/audits/2026-10-13/INPUT-OPEN-CANCELLATION-OBSERVATION.json"
+        "docs/audits/2026-10-13/INPUT-OPEN-CANCELLATION-OBSERVATION.json",
+        "docs/audits/2026-10-13/DIRECT-SOURCE-QUALITY-INSTALLED.json"
       ],
       "sourcePaths": [
         ".github/workflows/ci-backend.yml",
         ".github/workflows/ci-frontend.yml",
         ".github/workflows/ci-android.yml",
         "scripts/pilot/install_reviewed_backend.py"
+      ]
+    },
+    {
+      "id": "CHAT-24",
+      "title": "Настройки качества, source FPS и краткая строка параметров",
+      "state": "PARTIAL",
+      "productItems": [
+        "EP-029",
+        "EP-047",
+        "EP-048"
+      ],
+      "acceptedScope": "Installed device-wide quality profiles, FPS/bitrate limits and compact real route/RTT/resolution/received FPS/bitrate; finite PH010 native target60 with stable54-59 FPS, live profile changes and phone layout passed.",
+      "remaining": "Full hardware/load/network matrix; source refresh Hz is not app-produced motion FPS; lossless and unconditional60 FPS are not claimed.",
+      "evidence": [
+        "docs/audits/2026-10-13/DIRECT-SOURCE-QUALITY-INSTALLED.json"
+      ],
+      "sourcePaths": [
+        "frontend/src/features/stream/StreamStatusLine.tsx",
+        "frontend/src/features/stream/StreamQualityControl.tsx",
+        "android/app/src/main/kotlin/com/sphereplatform/agent/streaming/StreamQualityPolicy.kt"
+      ]
+    },
+    {
+      "id": "CHAT-25",
+      "title": "Сохранить установленный localhost/LAN peer при пропадании Интернета/сервера",
+      "state": "OPEN",
+      "productItems": [
+        "EP-029",
+        "EP-020",
+        "EP-047"
+      ],
+      "acceptedScope": "Pure bounded grant and shared-pointer foundations exist; no autonomous runtime is installed.",
+      "remaining": "Sign/validate negotiated v2 grants, separate broker loss from peer loss, decouple renderer/input lifetime and test real WAN loss with a surviving local path.",
+      "evidence": [
+        "docs/audits/2026-10-13/DIRECT-SOURCE-QUALITY.md",
+        "docs/audits/2026-10-13/DIRECT-SOURCE-QUALITY-INSTALLED.json"
+      ],
+      "sourcePaths": [
+        "backend/websocket/direct_probe_runtime.py",
+        "docs/design/BROWSER-DIRECT-TRANSPORT.md"
+      ]
+    },
+    {
+      "id": "CHAT-26",
+      "title": "Месячная история инфраструктурных метрик и фильтр по датам",
+      "state": "OPEN",
+      "productItems": [
+        "EP-047"
+      ],
+      "acceptedScope": "Deferred by user; last10 stream sessions/7days do not prove monthly infrastructure history.",
+      "remaining": "Audit actual historian storage, retention, restart durability and calendar/date range UI before claiming month-old metrics available.",
+      "evidence": [
+        "docs/audits/2026-10-13/DIRECT-SOURCE-QUALITY.md"
+      ],
+      "sourcePaths": [
+        "backend/websocket/stream_session_history.py",
+        "infrastructure/monitoring/collection/prometheus.yml"
       ]
     }
   ],
@@ -3083,16 +3375,23 @@
     "docs/operations/SCRIPT-STUDIO.md"
   ],
   "schemaReconciliation": {
-    "paths": 147,
-    "operations": 185,
-    "canonicalSha256": "fcf5c3c4e2bb26da5e2604560298166453f6ac6c865221f73bedc2768eaa54a0",
-    "sourceRevision": "b65b0b5469510f9c0c94d5242234bdba43570c77",
-    "source": "Installed app.openapi; no application lifespan hooks",
-    "observedAtUtc": "2026-10-13T06:01:36.597793+00:00",
+    "paths": 149,
+    "operations": 188,
+    "canonicalSha256": "9df82aa4cd1e568e6bd7c1ce5496591c674832c5cebc869c6751fc64e7c13655",
+    "qualityMethods": [
+      "get",
+      "post"
+    ],
+    "viewersMethods": [
+      "post"
+    ],
+    "sourceRevision": "69da45cbc76aa16c92080b497347624a94920945",
+    "observedAtUtc": "2026-10-13T16:31:11.460851+00:00",
+    "applicationLifespanStarted": false,
     "sameAsCommittedCanonicalJson": true,
-    "evidence": "docs/audits/2026-10-13/DIRECT-SESSION-STABILITY-OBSERVATION.json",
-    "evidenceSha256NormalizedLf": "2a70d3db77a07bac4fc69220b80085c8ff11e99da4683ea8b684839bcd39325b",
-    "scope": "Installed app.openapi matches committed HTTP schema; WebSocket/native route acceptance is separate."
+    "evidence": "docs/audits/2026-10-13/DIRECT-SOURCE-QUALITY-INSTALLED.json",
+    "evidenceSha256NormalizedLf": "cf12ebe6171fbb7602a9d9aba4e771c8b7d05425929b6f0dc3c5d5e3e48182fb",
+    "scope": "Installed app.openapi without lifespan; no SQL migration"
   },
   "completedCorrections": [
     {
@@ -3241,17 +3540,17 @@
     }
   ],
   "sourceSchemaReconciliation": {
-    "sourceRevision": "b65b0b5469510f9c0c94d5242234bdba43570c77",
-    "observedAtUtc": "2026-10-13T06:35:03.047826+00:00",
+    "sourceRevision": "69da45cbc76aa16c92080b497347624a94920945",
+    "observedAtUtc": "2026-10-13T18:06:20.684946+00:00",
     "artifact": "docs/openapi.json",
-    "gitBlob": "5673c8f916164213f85a90b55dae204f467050d0",
-    "sha256NormalizedLf": "fcf5c3c4e2bb26da5e2604560298166453f6ac6c865221f73bedc2768eaa54a0",
-    "paths": 147,
-    "operations": 185,
+    "gitBlob": "8473d77ac81379eed5ced4d82891e83154b5258e",
+    "sha256NormalizedLf": "9df82aa4cd1e568e6bd7c1ce5496591c674832c5cebc869c6751fc64e7c13655",
+    "paths": 149,
+    "operations": 188,
     "exporterCheckPassed": true,
     "runtimeInstalled": true,
-    "evidence": "docs/audits/2026-10-13/DIRECT-SESSION-STABILITY-OBSERVATION.json",
-    "evidenceSha256NormalizedLf": "2a70d3db77a07bac4fc69220b80085c8ff11e99da4683ea8b684839bcd39325b",
+    "evidence": "docs/audits/2026-10-13/DIRECT-SOURCE-QUALITY-INSTALLED.json",
+    "evidenceSha256NormalizedLf": "cf12ebe6171fbb7602a9d9aba4e771c8b7d05425929b6f0dc3c5d5e3e48182fb",
     "scope": "Installed API65 telemetry schema; no lifespan hooks used for comparison."
   },
   "installedCorrections": [
@@ -3446,26 +3745,28 @@
   "previousSchemaReconciliation": {
     "paths": 147,
     "operations": 185,
-    "canonicalSha256": "4bb06130d5c9234d79a3a46f6e3b49b2a09866701df6d187742e331933b3485c",
-    "sourceRevision": "fc273fa3196c6380c18f91b1a0e3214ecb5dd990",
+    "canonicalSha256": "fcf5c3c4e2bb26da5e2604560298166453f6ac6c865221f73bedc2768eaa54a0",
+    "sourceRevision": "b65b0b5469510f9c0c94d5242234bdba43570c77",
     "source": "Installed app.openapi; no application lifespan hooks",
-    "observedAtUtc": "2026-10-12T21:51:13.757291+00:00",
+    "observedAtUtc": "2026-10-13T06:01:36.597793+00:00",
     "sameAsCommittedCanonicalJson": true,
-    "evidence": "docs/audits/2026-10-13/INPUT-OPEN-CANCELLATION-OBSERVATION.json",
-    "scope": "Installedfc273fa3 app.openapi equals committed canonical HTTP schema; WebSocket/native acceptance is separate"
+    "evidence": "docs/audits/2026-10-13/DIRECT-SESSION-STABILITY-OBSERVATION.json",
+    "evidenceSha256NormalizedLf": "2a70d3db77a07bac4fc69220b80085c8ff11e99da4683ea8b684839bcd39325b",
+    "scope": "Installed app.openapi matches committed HTTP schema; WebSocket/native route acceptance is separate."
   },
   "previousSourceSchemaReconciliation": {
-    "sourceRevision": "fc273fa3196c6380c18f91b1a0e3214ecb5dd990",
-    "observedAtUtc": "2026-10-12T22:04:34.332950+00:00",
+    "sourceRevision": "b65b0b5469510f9c0c94d5242234bdba43570c77",
+    "observedAtUtc": "2026-10-13T06:35:03.047826+00:00",
     "artifact": "docs/openapi.json",
-    "gitBlob": "7bd13cd00f88bb99148a345524740ad1f65f14ed",
-    "sha256NormalizedLf": "4bb06130d5c9234d79a3a46f6e3b49b2a09866701df6d187742e331933b3485c",
+    "gitBlob": "5673c8f916164213f85a90b55dae204f467050d0",
+    "sha256NormalizedLf": "fcf5c3c4e2bb26da5e2604560298166453f6ac6c865221f73bedc2768eaa54a0",
     "paths": 147,
     "operations": 185,
     "exporterCheckPassed": true,
     "runtimeInstalled": true,
-    "evidence": "docs/audits/2026-10-13/INPUT-OPEN-CANCELLATION-OBSERVATION.json",
-    "scope": "Installedfc273fa3 source schema matches without running lifespan hooks"
+    "evidence": "docs/audits/2026-10-13/DIRECT-SESSION-STABILITY-OBSERVATION.json",
+    "evidenceSha256NormalizedLf": "2a70d3db77a07bac4fc69220b80085c8ff11e99da4683ea8b684839bcd39325b",
+    "scope": "Installed API65 telemetry schema; no lifespan hooks used for comparison."
   },
   "previousRuntimeFollowup": {
     "evidence": "docs/audits/2026-10-13/INPUT-OPEN-CANCELLATION-OBSERVATION.json",
@@ -3488,7 +3789,7 @@
   },
   "previousSourceWorktreeEvidence": "docs/audits/2026-10-11/DIRECT-PRIMARY-VIDEO-INSTALLED.json",
   "ciExecutionAudit": {
-    "evidence": "docs/audits/2026-10-13/DIRECT-INPUT-RECOVERY-OBSERVATION.json",
+    "evidence": "docs/audits/2026-10-13/DIRECT-SOURCE-QUALITY-INSTALLED.json",
     "guide": "docs/audits/2026-10-13/CI-COST-AND-LOCAL-RUNNER.md",
     "repositoryVisibility": "public",
     "standardHostedRunner": "ubuntu-latest",
@@ -3496,8 +3797,8 @@
     "accountQuotaExhaustionProven": false,
     "selfHostedRunnersRegistered": 0,
     "localMigrationAccepted": false,
-    "scope": "Local exact-SHA results retained, including Android RAM admission errors on 954d466c and 37784e55. No test success invented for a resource-denied profile; cloud packaging/security/Linux parity remain.",
-    "evidenceSha256NormalizedLf": "a6cbf3a2c160dadf9f151594f53e7f55937ef2b2f9eaee1702128def6087ace1",
+    "scope": "Local source180f8a0f complete trusted regression profiles and GitHub statuses; hosted artifact packaging and Android release gates remain.",
+    "evidenceSha256NormalizedLf": "cf12ebe6171fbb7602a9d9aba4e771c8b7d05425929b6f0dc3c5d5e3e48182fb",
     "localRegressionProfilesVerified": [
       "frontend",
       "backend",
