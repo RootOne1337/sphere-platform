@@ -304,6 +304,29 @@ def same_component(root: Path, sha: str, paths: list[str]) -> None:
     # Include staged changes and unexpected source files, not only unstaged diff.
     if git(root, "diff", sha, "--", *paths) or git(root, "ls-files", "--others", "--exclude-standard", "--", *paths):
         raise Refused("component_source_changed")
+    # NTFS incidents can replace bytes without changing Git's cached stat tuple.
+    # Hash actual file content with Git's own newline/filter conversion every time.
+    entries = git(root, "ls-tree", "-r", "-z", sha, "--", *paths).split("\0")
+    files, expected = [], []
+    for entry in entries:
+        if not entry:
+            continue
+        metadata, name = entry.split("\t", 1)
+        mode, kind, blob = metadata.split()
+        if mode not in {"100644", "100755"} or kind != "blob":
+            raise Refused("component_source_not_regular")
+        file = root / name
+        if not file.is_file() or file.is_symlink() or os.name == "nt" and file.is_junction():
+            raise Refused("component_source_not_regular")
+        files.append(name)
+        expected.append(blob)
+    if not files:
+        raise Refused("component_source_missing")
+    result = subprocess.run(["git", "hash-object", "--stdin-paths"], cwd=root,
+                            input="\n".join(json.dumps(p, ensure_ascii=False) for p in files) + "\n",
+                            capture_output=True, text=True, encoding="utf-8", timeout=60)
+    if result.returncode or result.stdout.splitlines() != expected:
+        raise Refused("component_content_mismatch")
 
 
 def retain_runs(base: Path, *, keep: int = 10, byte_limit: int = 256 * 1024 * 1024) -> dict:

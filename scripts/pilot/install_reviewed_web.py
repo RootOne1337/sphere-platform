@@ -242,6 +242,8 @@ def execute(artifact: Path, source: str, expected_image_id: str, apply: bool) ->
             require(response.status == 200, "Gateway UI readiness failed")
         result = plan | {"runtimeInstalled": True, "loadedImageId": runtime_id, "installedUi": after[UI],
                          "otherContainersPreserved": len(before) - 1, "browserVerified": False}
+        from scripts.pilot.reviewed_artifact_retention import post_install
+        result["cacheRetention"] = post_install(ROOT, source, before[UI]["imageId"])
         write(output / "installed.json", result)
         return result
     except Exception:

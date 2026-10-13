@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import json
 import os
+import subprocess
 import sys
 import tempfile
 import time
@@ -11,6 +12,40 @@ from pathlib import Path
 from unittest.mock import patch
 
 from scripts.pilot import local_ci as ci
+
+
+class LocalCISourceContentTest(unittest.TestCase):
+    def setUp(self):
+        self.temporary = tempfile.TemporaryDirectory()
+        self.addCleanup(self.temporary.cleanup)
+        self.root = Path(self.temporary.name)
+        self.file = self.root / 'android/source.kt'
+        self.file.parent.mkdir()
+        self.file.write_bytes(b'package fixture\n')
+        for args in [['init', '-q'], ['config', 'core.autocrlf', 'false'],
+                     ['add', 'android/source.kt'],
+                     ['-c', 'user.name=Fixture', '-c', 'user.email=fixture@example.invalid',
+                      'commit', '-qm', 'source fixture']]:
+            subprocess.run(['git', *args], cwd=self.root, check=True, capture_output=True)
+        self.sha = ci.git(self.root, 'rev-parse', 'HEAD')
+
+    def test_clean_source_bytes_are_accepted(self):
+        ci.same_component(self.root, self.sha, ['android'])
+
+    def test_cached_clean_diff_does_not_hide_same_size_content_damage(self):
+        previous = self.file.stat()
+        self.file.write_bytes(b'\xff' * previous.st_size)
+        os.utime(self.file, ns=(previous.st_atime_ns, previous.st_mtime_ns))
+        real_git = ci.git
+
+        def cached_git(root, *args):
+            if args[0] in {'diff', 'ls-files'}:
+                return ''  # Reproduce a stat-cache falsely reporting no change.
+            return real_git(root, *args)
+
+        with patch.object(ci, 'git', side_effect=cached_git):
+            with self.assertRaisesRegex(ci.Refused, 'component_content_mismatch'):
+                ci.same_component(self.root, self.sha, ['android'])
 
 
 class LocalCIResultsTest(unittest.TestCase):

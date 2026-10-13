@@ -378,6 +378,10 @@ def execute(artifact: Path, source: str, expected_image_id: str, expected_curren
         result = plan | {"runtimeInstalled": True, "loadedImageId": runtime_id, "imageArchiveLoaded": archive_loaded,
             "installedBackend": after[BACKEND],
             "otherContainersPreserved": len(before) - 1, "liveContractVerified": False, "agentReconnectVerified": False}
+        # Successful delivery must not accumulate another archive/image forever.
+        # Maintenance failure does not roll back an already healthy installation.
+        from scripts.pilot.reviewed_artifact_retention import post_install
+        result["cacheRetention"] = post_install(ROOT, source, before[BACKEND]["imageId"])
         write(output / "installed.json", result)
         return result
     except Exception:
