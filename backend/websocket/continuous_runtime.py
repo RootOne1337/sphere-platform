@@ -345,7 +345,7 @@ class ContinuousRuntime:
                     if viewer.lease != identity:
                         return
                     completed = refused or (receipt["stage"] == "release" and receipt["status"] == 3)
-                    pending = viewer.deferred_probe
+                    release_probe = viewer.deferred_probe
                     if completed:
                         # Complete this exact local owner before another socket callback
                         # can open a replacement. The browser still receives the native
@@ -355,10 +355,10 @@ class ContinuousRuntime:
                         viewer.closing = False
                         viewer.direct_session = None
                     await self.send(viewer, receipt)
-                    if completed and pending is not None and viewer.deferred_probe is pending:
+                    if completed and release_probe is not None and viewer.deferred_probe is release_probe:
                         viewer.deferred_probe = None
                         now = await self.now()
-                        if (pending[0] == identity and now < pending[1]
+                        if (release_probe[0] == identity and now < release_probe[1]
                                 and self.viewers.get(viewer.session) is viewer and viewer.lease is None):
                             await self.probe(viewer)
                 return
