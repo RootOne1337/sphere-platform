@@ -37,8 +37,8 @@ export function StreamControlsTray({ viewport, overlay, children }: {
     <div aria-hidden={overlay && !shown} inert={overlay && !shown}
       onFocusCapture={() => setFocused(true)}
       onBlurCapture={event => { if (!event.currentTarget.contains(event.relatedTarget as Node | null)) setFocused(false); }}
-      className={overlay ? `max-w-full transition-[opacity,transform] duration-150 motion-reduce:transition-none ${shown
-        ? 'pointer-events-auto translate-y-0 opacity-100' : 'pointer-events-none translate-y-2 opacity-0'}` : 'contents'}>
+      className={overlay ? `max-w-full transition-opacity duration-150 motion-reduce:transition-none ${shown
+        ? 'pointer-events-auto opacity-100' : 'pointer-events-none opacity-0'}` : 'contents'}>
       {children}
     </div>
     {overlay && <button type="button" aria-label={pinned ? 'Скрыть панель Android' : 'Показать панель Android'}

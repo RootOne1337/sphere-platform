@@ -137,7 +137,7 @@ export function AndroidNavigationBar({ deviceId, available, isAvailable, prepare
 
   const pending = receipt.state === 'sending';
   return <section aria-label="Навигация Android" aria-busy={pending}
-    className={compact ? 'dark relative flex shrink-0 items-center gap-1 rounded-2xl border border-white/20 bg-zinc-950/75 p-1.5 text-white shadow-lg backdrop-blur'
+    className={compact ? 'dark relative flex shrink-0 items-center gap-1 rounded-2xl border border-white/20 bg-zinc-950/90 p-1.5 text-white shadow-lg'
       : 'shrink-0 space-y-2 border-t border-border bg-card p-3 text-foreground'}>
     <div className={compact ? 'sr-only' : 'flex flex-wrap items-center justify-between gap-2'}>
       <span className="text-xs font-medium">Навигация Android</span>
