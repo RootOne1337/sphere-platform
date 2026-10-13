@@ -139,9 +139,7 @@ class StreamingManagerImpl @Inject constructor(
         // Canary retains the actual source size; never upscale 540p to 720p
         // before a slow emulator encoder. Default capture remains unchanged.
         val sourceDisplay = displayGeometry()
-        val captureConfig = if ((gpuBridgeEnabled || planarInputEnabled) && sourceDisplay != null)
-            VirtualDisplayManager.DisplayConfig(sourceDisplay.width, sourceDisplay.height, sourceDisplay.dpi)
-            else VirtualDisplayManager.createConfig(context)
+        val captureConfig = VirtualDisplayManager.createConfig(context, nativeSize = gpuBridgeEnabled || planarInputEnabled)
         inputGeometry = sourceDisplay?.let {
             CaptureInputGeometry(it.width, it.height,
                 captureConfig.width, captureConfig.height, it.rotation)
@@ -241,7 +239,7 @@ class StreamingManagerImpl @Inject constructor(
                 gpuBridge = null
                 Timber.w(error, "GPU capture unavailable at startup; using CPU bridge")
             } catch (error: Exception) {
-                stopInternal()
+                if (retainedDisplay == null) stopInternal()
                 throw error // Timeout/VD failure must not reuse a projection or borrowed Surface.
             }
         }
@@ -409,7 +407,7 @@ class StreamingManagerImpl @Inject constructor(
             if (retainedDisplay == null) vdm.createDisplay(captureConfig, ir.surface)
             else vdm.reconfigureDisplay(captureConfig, ir.surface)
         } catch (e: Exception) {
-            stopInternal()
+            if (retainedDisplay == null) stopInternal()
             throw e
         }
 
