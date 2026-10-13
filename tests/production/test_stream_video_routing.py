@@ -321,12 +321,13 @@ async def test_malformed_input_never_dispatches_and_keeps_video_and_later_input_
                     "session_id": owner["session_id"], "history_enabled": True,
                     "report_interval_seconds": 10,
                 }
-                assert viewer.messages == [session_metadata]
+                link_metadata = {"type": "stream_link_ready", "schema_version": 1}
+                assert viewer.messages == [session_metadata, link_metadata]
                 viewer.incoming.put_nowait(malformed)
                 # Session admission precedes input. Wait for the error itself;
                 # the metadata alone must not satisfy this regression check.
                 await until(lambda: any(m.get("type") == "error" for m in viewer.messages))
-                assert viewer.messages == [session_metadata, {
+                assert viewer.messages == [session_metadata, link_metadata, {
                     "type": "error", "error": "stream_input_invalid", "reason": reason,
                 }]
                 assert not any(c["type"] in {"touch_tap", "touch_swipe", "keyevent", "text"} for c in commands)
