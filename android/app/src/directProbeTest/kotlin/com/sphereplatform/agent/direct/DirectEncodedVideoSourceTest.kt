@@ -14,6 +14,21 @@ class DirectEncodedVideoSourceTest {
         sequence * 1_000_000L, key, nal(if (key) 0x65 else 0x41, 0x80),
         nal(0x67, 66, 0xc0, 31, 0x80), nal(0x68, 0xce, 0x80))
 
+    @Test fun `factory accepts negotiated higher receive level while retaining the source codec ceiling`() {
+        val relay = DirectEncodedVideoSource(capture, { true }, {}, {}, profileLevelId = "42e020")
+        try {
+            val offered = relay.encoderFactory.supportedCodecs.single()
+            assertEquals("42e020", offered.params["profile-level-id"])
+            assertNotNull(relay.encoderFactory.createEncoder(VideoCodecInfo("H264", offered.params +
+                mapOf("profile-level-id" to "42e029", "x-google-start-bitrate" to "8000"), emptyList())))
+            assertNull(relay.encoderFactory.createEncoder(VideoCodecInfo("H264", offered.params +
+                mapOf("profile-level-id" to "42e01f"), emptyList())))
+            assertNull(relay.encoderFactory.createEncoder(VideoCodecInfo("VP9", offered.params, emptyList())))
+            assertEquals(3L, relay.receipt()["encoderRequests"])
+            assertEquals(2L, relay.receipt()["encoderRefusals"])
+        } finally { relay.close() }
+    }
+
     private class Harness {
         var valid = true
         var hold = false

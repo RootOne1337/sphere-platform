@@ -33,6 +33,10 @@ internal class DirectEncodedVideoSource(
     private val rejected = AtomicLong()
     private val invalid = AtomicLong()
     private val encodeCalls = AtomicLong()
+    private val encoderRequests = AtomicLong()
+    private val encoderRefusals = AtomicLong()
+    private val encoderInitializations = AtomicLong()
+    private val requestedLevel = AtomicLong()
     private val waitingKey = AtomicLong()
     private val pausedFrames = AtomicLong()
     private val keyHints = AtomicLong()
@@ -62,8 +66,20 @@ internal class DirectEncodedVideoSource(
     val encoderFactory = object : VideoEncoderFactory {
         override fun getSupportedCodecs() = arrayOf(VideoCodecInfo("H264", mapOf(
             "profile-level-id" to profileLevelId, "level-asymmetry-allowed" to "1", "packetization-mode" to "1"), emptyList()))
-        override fun createEncoder(info: VideoCodecInfo): VideoEncoder? =
-            if (info.name.equals("H264", true) && info.params == supportedCodecs[0].params) ForwardEncoder() else null
+        override fun createEncoder(info: VideoCodecInfo): VideoEncoder? {
+            encoderRequests.incrementAndGet()
+            requestedLevel.set(info.params["profile-level-id"]?.takeIf {
+                Regex("[0-9a-fA-F]{6}").matches(it)
+            }?.takeLast(2)?.toLong(16) ?: 0L)
+            // The negotiated receiver level may be higher than this already-coded
+            // source. WebRTC also carries independent fmtp parameters into the
+            // factory. Equality of the complete map incorrectly rejects a valid
+            // encoder: check the coded profile, level and packetization instead.
+            if (info.name.equals("H264", true) && AvcReceiveCapabilities.acceptsParameters(info.params, profileLevelId))
+                return ForwardEncoder()
+            encoderRefusals.incrementAndGet()
+            return null
+        }
     }
 
     fun start(factory: PeerConnectionFactory): VideoTrack = synchronized(sourceLock) {
@@ -129,6 +145,8 @@ internal class DirectEncodedVideoSource(
         "received" to received.get(), "forwarded" to forwarded.get(),
         "budgetRejected" to rejected.get(), "invalidAccessUnits" to invalid.get(),
         "encodeCalls" to encodeCalls.get(), "keyframeWaitDrops" to waitingKey.get(),
+        "encoderRequests" to encoderRequests.get(), "encoderRefusals" to encoderRefusals.get(),
+        "encoderInitializations" to encoderInitializations.get(), "requestedLevel" to requestedLevel.get(),
         "pausedFrames" to pausedFrames.get(), "keyframeHints" to keyHints.get(),
         "syncRequests" to syncRequests.get(), "forwardedBytes" to forwardedBytes.get(),
         "targetBitrateBps" to targetBitrate.get(), "targetFramerate" to targetFramerate.get(),
@@ -162,6 +180,7 @@ internal class DirectEncodedVideoSource(
         private var callback: VideoEncoder.Callback? = null
         private var paused = false
         override fun initEncode(settings: VideoEncoder.Settings, callback: VideoEncoder.Callback): VideoCodecStatus {
+            encoderInitializations.incrementAndGet()
             if (settings.width != capture.frameWidth || settings.height != capture.frameHeight || settings.numberOfSimulcastStreams > 1) {
                 fail(); return VideoCodecStatus.ERR_SIZE
             }
