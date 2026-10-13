@@ -56,7 +56,9 @@ export function startDirectVideoProbe(
 export function startDirectVideoSession(
   url: string, token: string, report: (value: DirectProbeResult) => void,
   options: { controlledStunUrl?: string; onTrack: (track: MediaStreamTrack) => void;
-    historySession?: string; controlSession?: string; onControlChannel?: (channel: DirectControlEndpoint | null) => void },
+    historySession?: string; controlSession?: string; onControlChannel?: (channel: DirectControlEndpoint | null) => void;
+    /** Actual recent presentation, independently bounded by the renderer watchdog. */
+    hasRecentVideoFrame?: () => boolean },
 ): () => void {
   return startDirectSession(url, token, report, options, options.onTrack, true);
 }
@@ -64,7 +66,8 @@ export function startDirectVideoSession(
 function startDirectSession(
   url: string, token: string, report: (value: DirectProbeResult) => void,
   options: { controlledStunUrl?: string; relayGrant?: boolean; controlSession?: string; historySession?: string;
-    onControlChannel?: (channel: DirectControlEndpoint | null) => void }, onVideoTrack?: (track: MediaStreamTrack) => void, live = false,
+    onControlChannel?: (channel: DirectControlEndpoint | null) => void;
+    hasRecentVideoFrame?: () => boolean }, onVideoTrack?: (track: MediaStreamTrack) => void, live = false,
 ): () => void {
   const video = !!onVideoTrack;
   if (options.historySession !== undefined && (!video || !/^[0-9a-f]{16}$/.test(options.historySession)))
@@ -292,7 +295,16 @@ function startDirectSession(
       }
       interval = setInterval(() => {
         if (stopped) return;
-        if (pending) return stop('echo_timeout');
+        if (pending) {
+          // Echo measures SCTP turnaround, not video health. A delayed reply
+          // must not discard a peer that is still presenting fresh video.
+          // Keep the one outstanding packet: no queue, retransmission, invented
+          // RTT or relaxation of input/authorization/ICE/renderer deadlines.
+          let presenting = false;
+          try { presenting = live && options.hasRecentVideoFrame?.() === true; } catch { /* Unknown is not progress. */ }
+          if (presenting && peer?.connectionState === 'connected') return;
+          return stop('echo_timeout');
+        }
         if (!live && sequence >= 20) return stop();
         if (!channel || channel.bufferedAmount > 1024) return stop('channel_backpressure');
         pending = { sequence: ++sequence, sent: performance.now() };

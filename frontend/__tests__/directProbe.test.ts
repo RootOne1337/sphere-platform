@@ -89,11 +89,11 @@ test.each(['private-session', 'A'.repeat(16), '1'.repeat(32)])('invalid journal 
     { onTrack: jest.fn(), historySession })).toThrow('invalid_history_session');
   expect(FakePeer.constructions).toBe(previous);
 });
-async function videoConnected(live = false) {
+async function videoConnected(live = false, hasRecentVideoFrame?: () => boolean) {
   FakePeer.initialSdp = videoSdp;
   const reports: DirectProbeResult[] = [], onTrack = jest.fn();
   const start = live ? startDirectVideoSession : startDirectVideoProbe;
-  const stop = start('wss://same-origin/ws/direct-probe/device', 'access', r => reports.push(r), { onTrack });
+  const stop = start('wss://same-origin/ws/direct-probe/device', 'access', r => reports.push(r), { onTrack, hasRecentVideoFrame });
   await flush();
   const ws = FakeSocket.latest, peer = FakePeer.latest;
   ws.onopen?.();
@@ -209,6 +209,45 @@ test('live echo replies cannot overwrite a video interval with a second zero-del
   stop(); jest.advanceTimersByTime(10000); await flush();
   expect(peer.getStats).toHaveBeenCalledTimes(calls);
   expect(jest.getTimerCount()).toBe(0);
+});
+
+test('late diagnostic echo preserves presenting video without queuing packets or inventing RTT', async () => {
+  const { stop, peer, reports, ws } = await videoConnected(true, () => true);
+  peer.channel.onmessage?.({ data: `SV1 ${sid} ${epoch} 960 540` });
+  jest.advanceTimersByTime(45000); await flush();
+  expect(reports.at(-1)?.state).toBe('connected');
+  expect(reports.at(-1)?.samples).toEqual([]);
+  expect(peer.channel.send).toHaveBeenCalledTimes(1);
+  expect(peer.close).not.toHaveBeenCalled();
+  expect(ws.send.mock.calls.filter(([raw]) => JSON.parse(raw).type === 'direct_video_keepalive')).toHaveLength(9);
+  peer.channel.onmessage?.({ data: `SL1 ${sid} 1` });
+  expect(reports.at(-1)?.samples).toEqual([40000]);
+  jest.advanceTimersByTime(5000); await flush();
+  expect(peer.channel.send).toHaveBeenLastCalledWith(`SL1 ${sid} 2`);
+  stop(); expect(jest.getTimerCount()).toBe(0);
+});
+
+test.each(['stalled', 'unknown', 'observer_error'])('live echo cannot claim healthy video from %s presentation', async progress => {
+  let presenting = true;
+  const proof = () => { if (!presenting && progress === 'observer_error') throw Error('unavailable'); return presenting; };
+  const { peer, reports, stop } = await videoConnected(true, progress === 'unknown' ? undefined : proof);
+  peer.channel.onmessage?.({ data: `SV1 ${sid} ${epoch} 960 540` });
+  jest.advanceTimersByTime(5000); presenting = false;
+  jest.advanceTimersByTime(5000); await flush();
+  expect(reports.at(-1)?.reason).toBe('echo_timeout');
+  expect(peer.close).toHaveBeenCalledTimes(1);
+  expect(peer.channel.send).toHaveBeenCalledTimes(1);
+  stop(); expect(jest.getTimerCount()).toBe(0);
+});
+
+test('fresh video cannot retain a peer after signaling revokes its permission', async () => {
+  const { peer, ws, reports, stop } = await videoConnected(true, () => true);
+  peer.channel.onmessage?.({ data: `SV1 ${sid} ${epoch} 960 540` });
+  jest.advanceTimersByTime(15000); await flush();
+  (ws.onclose as unknown as (event: { code: number }) => void)?.({ code: 4003 });
+  expect(reports.at(-1)?.reason).toBe('video_access_rejected');
+  expect(peer.close).toHaveBeenCalledTimes(1);
+  stop(); expect(jest.getTimerCount()).toBe(0);
 });
 
 test('live signaling loss stops the media immediately and retires all renewals', async () => {

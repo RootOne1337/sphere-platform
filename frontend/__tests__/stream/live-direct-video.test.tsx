@@ -229,6 +229,26 @@ test('missing presented frames retire a connected peer, revoke input and automat
   view.unmount(); expect(jest.getTimerCount()).toBe(0);
 });
 
+test('echo health uses actual current presentation and cannot borrow a stopped or replacement renderer', async () => {
+  const view = mount();
+  const proof = mockStart.mock.calls[0][3].hasRecentVideoFrame;
+  expect(proof()).toBe(false);
+  act(() => { mockReport(connected); mockTrack({ kind: 'video' } as MediaStreamTrack); }); await act(async () => {});
+  expect(proof()).toBe(false);
+  act(present); expect(proof()).toBe(true);
+  act(() => jest.advanceTimersByTime(5999)); expect(proof()).toBe(true);
+  act(() => jest.advanceTimersByTime(1)); expect(proof()).toBe(false);
+  act(() => jest.advanceTimersByTime(1000));
+  expect(mockStart).toHaveBeenCalledTimes(2);
+  act(() => { mockReport(connected); mockTrack({ kind: 'video' } as MediaStreamTrack); }); await act(async () => {});
+  act(present);
+  expect(mockStart.mock.calls[1][3].hasRecentVideoFrame()).toBe(true);
+  expect(proof()).toBe(false);
+  view.unmount(); expect(mockStart.mock.calls[1][3].hasRecentVideoFrame()).toBe(false);
+  act(() => jest.advanceTimersByTime(0));
+  expect(jest.getTimerCount()).toBe(0);
+});
+
 test('presented static-screen keepalives prevent the media watchdog without input activity', async () => {
   const view = mount();
   act(() => { mockReport(connected); mockTrack({ kind: 'video' } as MediaStreamTrack); }); await act(async () => {});
