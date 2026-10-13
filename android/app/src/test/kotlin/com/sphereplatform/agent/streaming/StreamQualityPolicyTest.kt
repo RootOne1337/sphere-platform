@@ -58,6 +58,22 @@ class StreamQualityPolicyTest {
         repeat(10_000) { if (governor.observe(32_000_000, 60, 1000) != null) changed++ }
         assertEquals(1, changed)
     }
+    @Test fun `observed input cadence cannot recursively collapse the configured source fps`() {
+        val governor = DirectSourceRateGovernor(StreamQualityPolicy.plan(StreamQualitySettings(), source))
+        for ((index, observed) in listOf(39, 28, 20, 10, 7, 5, 1).withIndex()) {
+            assertNull(governor.observe(2_000_000, observed, index * 1000L))
+            assertEquals(60, governor.rate.fps)
+        }
+        assertEquals(500_000, governor.observe(500_000, 1, 8000)!!.bitrate)
+        assertEquals(60, governor.rate.fps)
+    }
+    @Test fun `explicit low source fps remains bounded independently of the observed input estimate`() {
+        val governor = DirectSourceRateGovernor(StreamQualityPolicy.plan(StreamQualitySettings("economy", 24), source))
+        for ((index, observed) in listOf(60, 24, 10, 1, 60).withIndex()) {
+            governor.observe(500_000, observed, index * 1000L)
+            assertEquals(24, governor.rate.fps)
+        }
+    }
     @Test fun `zero allocation cannot stop the capture needed by another fallback viewer`() {
         val governor = DirectSourceRateGovernor(StreamQualityPolicy.plan(StreamQualitySettings(), source))
         val before = governor.rate

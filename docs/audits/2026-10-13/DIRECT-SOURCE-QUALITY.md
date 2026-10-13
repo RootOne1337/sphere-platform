@@ -108,6 +108,23 @@ encoder requests/refusals/initializations и числовой requested level. �
 согласованного потолка по-прежнему отклоняются; первый IDR32 покрыт отдельным
 тестом доRTP callback. Промежуточная сборка доэтой проверки не публикуется.
 
+## Падение cadence при живой проверке APK67
+
+APK67 подтверждён точным установленным SHA наPH010. В конечном тесте на3015
+прямое видео и13 native DOWN/MOVE/UP receipts прошли, RTT сети1–2 мс, новые
+серверные видеобайты послеpromotion отсутствовали. Однако за60 секунд фактический
+FPS упал39→28→20→10→7→5 без потерь RTP иfreeze counter. Массовая раздача удержана.
+
+Источник неправильно использовал framerate изRTP encoder allocation как новый
+capture limit. WebRTC обновляет этот framerate изизмеренной входной частоты;
+небольшое отклонение планировщика превращалось вположительную обратную связь.
+APK68 сохраняет частоту display/codec/user policy и адаптирует сетевой битрейт
+доMediaCodec. Низкий explicit FPS иeconomy ceiling сохраняются. Снижение целевого
+FPS поизмеренному input FPS больше не выполняется; это не отмена congestion control.
+Настройки не являются обещанием60 фактических FPS при любой нагрузке.
+[Первичный код WebRTC](https://webrtc.googlesource.com/src/+/refs/heads/main/video/video_stream_encoder.cc)
+связывает `GetInputFramerateFps()` с`rate_control.framerate_fps` приобновлении encoder rates.
+
 ## Телефон и число зрителей: дополнительная проверка
 
 В сеансах PH03013 октября около15:37–15:41 UTC наблюдался `gathering_deadline`: браузер

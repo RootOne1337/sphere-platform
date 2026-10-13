@@ -72,9 +72,14 @@ internal class DirectSourceRateGovernor(private var plan: StreamQualityPolicy.Pl
         // Zero is RTP pause, not permission to stop capture needed by fallback viewers.
         if (bitrate == 0 || fps == 0) return null
         val wanted = bitrate.coerceIn(plan.minBitrate, plan.maxBitrate)
-        val targetFps = minOf(fps, plan.maxFps).coerceAtLeast(1)
+        // WebRTC derives this encoder estimate from its observed input cadence.
+        // Feeding that estimate back into the capture throttle creates a loop:
+        // scheduling jitter lowers the estimate, which lowers the source again.
+        // Source cadence belongs to the display/codec/user policy; the network
+        // allocation adapts bitrate before encoding without throttling by input FPS.
+        val targetFps = plan.maxFps
         val elapsed = changedAt?.let { nowMs - it }
-        val reducing = wanted < current.bitrate * 85L / 100 || targetFps < current.fps
+        val reducing = wanted < current.bitrate * 85L / 100
         if (elapsed != null && elapsed < if (reducing) 250 else 1000) return null
         // Fast congestion response, gradual growth: no repeated codec changes per packet.
         val nextBitrate = if (wanted > current.bitrate)
