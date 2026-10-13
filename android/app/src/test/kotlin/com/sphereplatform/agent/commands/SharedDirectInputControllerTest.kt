@@ -20,12 +20,13 @@ class SharedDirectInputControllerTest {
         val packets = CopyOnWriteArrayList<TouchSample>()
         val opened = AtomicInteger()
         val closed = AtomicInteger()
+        val keys = CopyOnWriteArrayList<Pair<Int, Int>>()
         var unknownCancel = false
         val controller = SharedDirectInputController(scope, TouchPipeFactory {
             opened.incrementAndGet()
             val native = RootTouchSession(960, 540, now.get(), { action, _, _, _, _ ->
                 !(unknownCancel && action == RootTouchSession.CANCEL)
-            }, { true })
+            }, { true }, { action, code, _, _, _ -> keys += action to code; true })
             object : TouchPipe {
                 override suspend fun send(sample: TouchSample): RootTouchWire.Ack {
                     packets += sample
@@ -55,6 +56,9 @@ class SharedDirectInputControllerTest {
             fun open() = controller.message(id, buildJsonObject {
                 put("type", "touch_open"); put("capture_epoch", capture.epoch)
                 put("frame_width", 960); put("frame_height", 540)
+            })
+            fun key(sequence: Int, code: Int) = controller.message(id, buildJsonObject {
+                put("type", "key_event"); put("sequence", sequence); put("keycode", code)
             })
         }
         suspend fun peer(n: Int): Peer = Peer(n.toString(16).padStart(32, '0')).also {
@@ -138,8 +142,41 @@ class SharedDirectInputControllerTest {
             b.event(1, 0); eventually { "unknown" in b.outcomes() }
             assertFalse("applied" in b.outcomes())
             assertEquals(listOf(0, 3), f.packets.filter { it.action != 4 }.map { it.action })
-            assertFalse(f.controller.grant(f.Peer("c".repeat(32))))
+            // Transport admission is independent of native execution: video
+            // stays available, while the uncertain injector still rejects OPEN.
+            val watcher = f.Peer("c".repeat(32))
+            assertTrue(f.controller.grant(watcher)); assertTrue(watcher.open())
+            eventually { "denied" in watcher.outcomes() }
+            assertFalse("ready" in watcher.outcomes())
             assertEquals(1, f.opened.get())
+        } finally { f.finish() }
+    }
+
+    @Test fun `system keys use the existing shared pipe and interrupt only the held gesture`() = runBlocking {
+        val f = Fixture()
+        try {
+            val a = f.peer(1); val b = f.peer(2)
+            a.event(1, 0); eventually { "applied" in a.outcomes() }
+            assertTrue(b.key(1, 3))
+            eventually { "applied" in b.outcomes() && "interrupted" in a.outcomes() }
+            assertEquals(listOf(0, 3, 5), f.packets.filter { it.action != 4 }.map { it.action })
+            assertEquals(listOf(0 to 3, 1 to 3), f.keys.toList())
+            assertEquals(1, f.opened.get()); assertEquals(0, f.closed.get())
+            a.event(2, 1); eventually { a.outcomes().count { it == "interrupted" } == 2 }
+            assertTrue(a.key(3, 4)); eventually { a.outcomes().count { it == "applied" } == 2 }
+            assertEquals(listOf(0 to 3, 1 to 3, 0 to 4, 1 to 4), f.keys.toList())
+            assertEquals(0, f.closed.get())
+        } finally { f.finish() }
+    }
+
+    @Test fun `duplicate key and forbidden power key never replay or execute on a foreign participant`() = runBlocking {
+        val f = Fixture()
+        try {
+            val a = f.peer(1); val b = f.peer(2)
+            a.key(1, 187); eventually { "applied" in a.outcomes() }
+            a.key(1, 187); eventually { "closed" in a.outcomes() }
+            b.key(1, 26); eventually { "closed" in b.outcomes() }
+            assertEquals(listOf(0 to 187, 1 to 187), f.keys.toList())
         } finally { f.finish() }
     }
 

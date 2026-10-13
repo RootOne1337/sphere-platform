@@ -71,6 +71,8 @@ class StreamingManagerImpl @Inject constructor(
     private var inputGeometry: CaptureInputGeometry? = null
     private var inputSession: CaptureInputSession? = null
     private var inputInvalidationListener: (() -> Unit)? = null
+    private var displayListener: android.hardware.display.DisplayManager.DisplayListener? = null
+    internal var displayGeometry: () -> CaptureDisplayGeometry? = { CaptureDisplayGeometry.read(context) }
     private class EncodedViewer(val owner: Any, val capture: CaptureInputSession, val consume: (EncodedCaptureFrame) -> Unit) {
         val sequence = java.util.concurrent.atomic.AtomicLong(0)
         val legacy = LegacyVideoDeliveryLease()
@@ -119,6 +121,10 @@ class StreamingManagerImpl @Inject constructor(
 
     @Synchronized
     override fun start(projection: MediaProjection) {
+        startCapture(projection, null)
+    }
+
+    private fun startCapture(projection: MediaProjection, retainedDisplay: VirtualDisplayManager?) {
         if (streaming) {
             Timber.d("StreamingManagerImpl: restart — stopping existing session")
             stopInternal()
@@ -132,13 +138,13 @@ class StreamingManagerImpl @Inject constructor(
 
         // Canary retains the actual source size; never upscale 540p to 720p
         // before a slow emulator encoder. Default capture remains unchanged.
-        val captureConfig = VirtualDisplayManager.createConfig(context, nativeSize = gpuBridgeEnabled || planarInputEnabled)
-        val sourceMetrics = android.content.res.Resources.getSystem().displayMetrics
-        val sourceRotation = (context.getSystemService(Context.DISPLAY_SERVICE) as? android.hardware.display.DisplayManager)
-            ?.getDisplay(android.view.Display.DEFAULT_DISPLAY)?.rotation
-        inputGeometry = sourceRotation?.let {
-            CaptureInputGeometry(sourceMetrics.widthPixels, sourceMetrics.heightPixels,
-                captureConfig.width, captureConfig.height, it)
+        val sourceDisplay = displayGeometry()
+        val captureConfig = if ((gpuBridgeEnabled || planarInputEnabled) && sourceDisplay != null)
+            VirtualDisplayManager.DisplayConfig(sourceDisplay.width, sourceDisplay.height, sourceDisplay.dpi)
+            else VirtualDisplayManager.createConfig(context)
+        inputGeometry = sourceDisplay?.let {
+            CaptureInputGeometry(it.width, it.height,
+                captureConfig.width, captureConfig.height, it.rotation)
         }
         inputSession = inputGeometry?.let(CaptureInputSession::create)
         val packetEpoch = if (BuildConfig.CONTINUOUS_INPUT_CANARY) inputSession?.epoch?.let(UUID::fromString) else null
@@ -218,10 +224,12 @@ class StreamingManagerImpl @Inject constructor(
             gpuBridge = bridge
             try {
                 val captureSurface = bridge.start()
-                val vdm = VirtualDisplayManager(context, projection)
+                val vdm = retainedDisplay ?: VirtualDisplayManager(context, projection)
                 virtualDisplayManager = vdm
                 streaming = true
-                vdm.createDisplay(captureConfig, captureSurface)
+                if (retainedDisplay == null) vdm.createDisplay(captureConfig, captureSurface)
+                else vdm.reconfigureDisplay(captureConfig, captureSurface)
+                watchDisplay(session)
                 getStreamQuality()
                 viewerKeyFrameCoordinator.markEncoderReady { requestKeyFrameNow() }
                 Timber.i("StreamingManagerImpl: started GPU SurfaceTexture bridge")
@@ -391,20 +399,22 @@ class StreamingManagerImpl @Inject constructor(
         // Thread.sleep(100) заменён на неблокирующий postDelayed через HandlerThread.
         android.os.SystemClock.sleep(100)
 
-        val vdm = VirtualDisplayManager(context, projection)
+        val vdm = retainedDisplay ?: VirtualDisplayManager(context, projection)
         virtualDisplayManager = vdm
         // Mark capture active before creating the display: its first frame can
         // arrive from the ImageReader callback before createDisplay returns.
         streaming = true
         try {
             // Pass ImageReader surface — keeps AUTO_MIRROR buffer path decoupled from OMX encoder
-            vdm.createDisplay(captureConfig, ir.surface)
+            if (retainedDisplay == null) vdm.createDisplay(captureConfig, ir.surface)
+            else vdm.reconfigureDisplay(captureConfig, ir.surface)
         } catch (e: Exception) {
             stopInternal()
             throw e
         }
 
         viewerKeyFrameCoordinator.markEncoderReady { requestKeyFrameNow() }
+        watchDisplay(session)
         getStreamQuality()
         captureHandler.postDelayed(idleRefresh, enc.frameIntervalMs)
         Timber.i("StreamingManagerImpl: started input=%s", if (usePlanar) "yuv420_planar" else "surface")
@@ -414,6 +424,40 @@ class StreamingManagerImpl @Inject constructor(
     override fun stop() = stopInternal()
 
     override fun isActive(): Boolean = streaming
+
+    private fun watchDisplay(session: Any) {
+        val manager = context.getSystemService(Context.DISPLAY_SERVICE) as? android.hardware.display.DisplayManager ?: return
+        val listener = object : android.hardware.display.DisplayManager.DisplayListener {
+            override fun onDisplayAdded(id: Int) = Unit
+            override fun onDisplayRemoved(id: Int) = Unit
+            override fun onDisplayChanged(id: Int) {
+                if (id == android.view.Display.DEFAULT_DISPLAY && captureSession === session) reconfigureIfDisplayChanged()
+            }
+        }
+        displayListener = listener
+        manager.registerDisplayListener(listener, qualityHandler)
+    }
+
+    @Synchronized
+    internal fun reconfigureIfDisplayChanged() {
+        if (!streaming) return
+        val display = displayGeometry() ?: return
+        if (inputSession?.matchesDisplay(display.width, display.height, display.rotation) != false) return
+        val projection = currentProjection ?: return
+        val retained = virtualDisplayManager ?: return
+        try {
+            retained.detachSurface()
+            virtualDisplayManager = null // stopInternal retires codec/input, but preserves this projection's display.
+            stopInternal()
+            startCapture(projection, retained)
+            Timber.i("StreamingManagerImpl: source geometry changed; capture rebound")
+        } catch (failure: Exception) {
+            val attached = virtualDisplayManager === retained
+            stopInternal()
+            if (!attached) runCatching { retained.release() }
+            Timber.w("StreamingManagerImpl: source geometry rebind failed")
+        }
+    }
 
     // -------------------------------------------------------------------------
     // Frame pipeline
@@ -594,6 +638,9 @@ class StreamingManagerImpl @Inject constructor(
     override fun encodedRateLimits(): Pair<Int, Int> =
         (qualitySource?.codecMaxBitrate ?: 4_000_000) to (qualitySource?.maximumFps ?: 30)
 
+    @Synchronized
+    override fun encodedInitialBitrate(): Int = qualityPlan?.initialBitrate ?: 2_000_000
+
     override fun onDirectRateEstimate(owner: Any, capture: CaptureInputSession, bitrate: Int, fps: Int) {
         if (!qualityProfilesEnabled || !isEncodedViewerCurrent(owner, capture)
             || bitrate !in 0..100_000_000 || fps !in 0..240) return
@@ -636,20 +683,16 @@ class StreamingManagerImpl @Inject constructor(
     @Synchronized
     override fun mapStreamPoints(points: List<StreamPoint>): List<StreamPoint>? {
         if (!streaming) return null
-        val metrics = android.content.res.Resources.getSystem().displayMetrics
-        val rotation = (context.getSystemService(Context.DISPLAY_SERVICE) as? android.hardware.display.DisplayManager)
-            ?.getDisplay(android.view.Display.DEFAULT_DISPLAY)?.rotation ?: return null
-        return inputGeometry?.map(points, metrics.widthPixels, metrics.heightPixels, rotation)
+        val display = displayGeometry() ?: return null
+        return inputGeometry?.map(points, display.width, display.height, display.rotation)
     }
 
     @Synchronized
     override fun getInputSession(): CaptureInputSession? {
         if (!streaming) return null
         val session = inputSession ?: return null
-        val metrics = android.content.res.Resources.getSystem().displayMetrics
-        val rotation = (context.getSystemService(Context.DISPLAY_SERVICE) as? android.hardware.display.DisplayManager)
-            ?.getDisplay(android.view.Display.DEFAULT_DISPLAY)?.rotation ?: return null
-        return session.takeIf { it.matchesDisplay(metrics.widthPixels, metrics.heightPixels, rotation) }
+        val display = displayGeometry() ?: return null
+        return session.takeIf { it.matchesDisplay(display.width, display.height, display.rotation) }
     }
 
     @Synchronized
@@ -696,6 +739,10 @@ class StreamingManagerImpl @Inject constructor(
     // -------------------------------------------------------------------------
 
     private fun stopInternal() {
+        displayListener?.let { listener ->
+            runCatching { (context.getSystemService(Context.DISPLAY_SERVICE) as? android.hardware.display.DisplayManager)?.unregisterDisplayListener(listener) }
+        }
+        displayListener = null
         viewerKeyFrameCoordinator.markEncoderStopped()
         streaming = false
         cachedQuality.set(null)

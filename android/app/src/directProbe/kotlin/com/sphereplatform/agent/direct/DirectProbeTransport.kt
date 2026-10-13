@@ -188,7 +188,7 @@ class DirectProbeTransport(
                     { if (valid(p)) streaming.requestDirectKeyFrame() }, { enqueue { if (peers[p.session] === p) close(p) } },
                     streaming.encodedProfileLevelId(), { bitrate, fps ->
                         p.capture?.let { streaming.onDirectRateEstimate(p, it, bitrate, fps) }
-                    })
+                    }, streaming.encodedRateLimits().first, streaming.encodedInitialBitrate())
             }
             // Validate before creating native threads. Ordinary builds keep an empty host-only profile.
             val iceProfile = DirectProbeIceProfile.fromUrl(BuildConfig.DIRECT_PROBE_STUN_URL)
@@ -304,6 +304,10 @@ class DirectProbeTransport(
                     if (!admitted) { channel.close(); channel.dispose() }
                 }
             }) ?: error("peer_unavailable")
+            if (p.videoRequested) {
+                val maximum = streaming.encodedRateLimits().first.coerceIn(100_000, 32_000_000)
+                p.connection?.setBitrate(null, streaming.encodedInitialBitrate().coerceIn(100_000, maximum), maximum)
+            }
             progress(p, ProbeStage.PEER_READY)
             p.connection?.setRemoteDescription(observer(p, ProbeStage.REMOTE_FAILED, set = {
                 progress(p, ProbeStage.REMOTE_SET)
@@ -329,12 +333,21 @@ class DirectProbeTransport(
                     }), desc)
                 }), MediaConstraints())
             }), SessionDescription(SessionDescription.Type.OFFER, hostHints.sdp))
-        } catch (_: Exception) { close(p, ProbeStage.OPEN_FAILED) }
+        } catch (failure: Exception) {
+            // Finite adapter discriminators, never platform exception text, SDP
+            // or peer addresses. Reconnect failures used to hide the actual cause.
+            val detail = when (failure.message) {
+                "receiver_level_insufficient", "active_capture_required", "peer_unavailable" -> failure.message
+                else -> "native_peer_adapter"
+            }
+            Log.w("SphereDirectProbe", "native_peer_setup_failure:" + detail)
+            close(p, ProbeStage.OPEN_FAILED)
+        }
     }
 
     private fun observer(p: Probe, failed: ProbeStage, set: () -> Unit = {}, create: (SessionDescription) -> Unit = {}) = object : SdpObserver {
-        override fun onSetSuccess() { enqueue { if (valid(p)) set() } }
-        override fun onCreateSuccess(description: SessionDescription) { enqueue { if (valid(p)) create(description) } }
+        override fun onSetSuccess() { enqueue { if (valid(p)) try { set() } catch (_: Exception) { close(p, failed) } } }
+        override fun onCreateSuccess(description: SessionDescription) { enqueue { if (valid(p)) try { create(description) } catch (_: Exception) { close(p, failed) } } }
         override fun onSetFailure(error: String) { enqueue { if (peers[p.session] === p) close(p, failed) } }
         override fun onCreateFailure(error: String) { enqueue { if (peers[p.session] === p) close(p, failed) } }
     }

@@ -76,12 +76,22 @@ function QualityPanel({ deviceId, readOnly }: { deviceId: string; readOnly: bool
       {busy && !snapshot && <p role="status" className="flex items-center gap-2 text-sm"><Loader2 className="h-4 w-4 animate-spin" />Читаем настройки Android…</p>}
       {snapshot?.supported === false && <p className="text-sm text-muted-foreground">Для настройки качества обновите APK.</p>}
       {snapshot?.supported && <form className="space-y-4" onSubmit={event => { event.preventDefault(); void save(); }}>
+        <div aria-label="Быстрые настройки качества" className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+          {[
+            { label: 'Авто', profile: 'auto' as const, fps: '', mbps: '' },
+            { label: 'Текст', profile: 'detail' as const, fps: '30', mbps: '8' },
+            { label: 'LAN · 60 FPS', profile: 'detail' as const, fps: '60', mbps: '24' },
+            { label: 'Экономия', profile: 'economy' as const, fps: '30', mbps: '1' },
+          ].map(preset => <button key={preset.label} type="button" disabled={busy || readOnly}
+            className="min-h-11 rounded-lg border border-border px-2 py-2 text-xs font-medium hover:bg-muted disabled:opacity-50"
+            onClick={() => { setProfile(preset.profile); setFps(preset.fps); setMbps(preset.mbps); }}>{preset.label}</button>)}
+        </div>
         <label className="block text-sm font-medium">Профиль
           <select className={field} value={profile} disabled={busy || readOnly} onChange={e => setProfile(e.target.value as StreamQualitySettings['profile'])}>
             <option value="auto">Авто · по возможностям канала</option><option value="detail">Высокая детализация</option><option value="economy">Экономия трафика</option>
           </select>
         </label>
-        <p className="text-xs leading-5 text-muted-foreground">{profile === 'detail' ? 'Повышенный битрейт для чёткого текста и деталей. При перегрузке прямого канала поток адаптируется.'
+        <p className="text-xs leading-5 text-muted-foreground">{profile === 'detail' ? 'Повышенный битрейт для текста и движения. LAN · 60 FPS задаёт до 24 Мбит/с; возможности кодека и сети могут снизить этот предел. При перегрузке поток адаптируется.'
           : profile === 'economy' ? 'До 30 FPS и 2 Мбит/с, с сохранением исходного размера кадра.'
           : 'Поток увеличивает детализацию на быстром канале и снижает нагрузку при перегрузке. Быстрый прямой путь не ограничивается низким стартовым битрейтом.'}</p>
         <div className="grid grid-cols-1 gap-4 min-[360px]:grid-cols-2">

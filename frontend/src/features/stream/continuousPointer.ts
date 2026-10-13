@@ -1,4 +1,5 @@
 import type { CaptureFrameBinding } from '@/lib/h264-decoder';
+import { supportedDirectKey } from './directPointerTransport';
 
 /** Single-pointer transport. Activation requires scoped capability and a rendered v2 capture. */
 export const CONTINUOUS_POINTER_LIMITS = Object.freeze({
@@ -11,6 +12,7 @@ type Point = { x: number; y: number };
 type Pointer = Point & { id: number; gesture: number };
 type Pending = { sequence: number; gesture: number; action: number; at: number; deadlineAt?: number; idleHeartbeat: boolean };
 type Session = { session: string; owner: string };
+export type NativeKeyReceipt = { outcome: 'applied'; receiptRoundTripMs: number } | { outcome: 'not_sent' | 'unknown' };
 export interface PointerTransport {
   readonly readyState: number;
   readonly bufferedAmount: number;
@@ -37,6 +39,7 @@ type Options = {
   socket: PointerTransport;
   /** Negotiated v2 participant semantics on the same server-authorized media peer. */
   sharedInput?: boolean;
+  nativeKeys?: boolean;
   /** Only the decoder's successfully rendered v2 binding, owned by this socket. */
   renderedCapture: () => CaptureFrameBinding | null;
   now?: () => number;
@@ -75,6 +78,7 @@ export class ContinuousPointer {
   private sequence = 0;
   private gesture = 0;
   private pending: Pending[] = [];
+  private keyReceipts = new Map<number, (receipt: NativeKeyReceipt) => void>();
   private terminal: Pending | null = null;
   private openedAt = 0;
   private lastSentAt = 0;
@@ -95,6 +99,7 @@ export class ContinuousPointer {
   get pendingReceiptCount() { return this.pending.length; }
   get hasPendingMove() { return this.move !== null; }
   get pointerHeld() { return this.held !== null; }
+  get supportsNativeKeys() { return this.options.sharedInput === true && this.options.nativeKeys === true; }
   /** Idle keepalives have no touch outcome. The old owner still needs native RELEASE before replacement. */
   get pointerOutcomeConfirmed() {
     return !this.held && !this.move && !this.terminal && this.pending.every(entry => entry.idleHeartbeat);
@@ -204,6 +209,7 @@ export class ContinuousPointer {
       if (message.origin === 'injector' && message.sequence === 0 && message.status === 3) {
         this.held = this.move = this.terminal = null;
         this.pending = [];
+        this.finishKeys();
         this.transition('closed');
         return true;
       }
@@ -248,7 +254,7 @@ export class ContinuousPointer {
       this.retire('invalid_input_receipt'); return false;
     }
     const terminalReceipt = this.terminal?.sequence === message.sequence;
-    if (message.sequence <= this.acknowledged && !terminalReceipt) return false;
+    if (message.sequence <= this.acknowledged && !terminalReceipt && !this.keyReceipts.has(message.sequence)) return false;
     const offered = terminalReceipt ? this.terminal : this.pending.find(p => p.sequence === message.sequence);
     if (!offered || (offered.action === 4 ? message.status !== 2 : offered.action === 3 ? message.status !== 3 : message.status !== 1)) {
       this.retire('receipt_action_mismatch'); return false;
@@ -257,10 +263,15 @@ export class ContinuousPointer {
     // scalar deadlines does NOT report those earlier MOVE as applied.
     const receiptSequence = message.sequence;
     this.acknowledged = Math.max(this.acknowledged, receiptSequence);
-    this.pending = this.pending.filter(p => p.sequence > receiptSequence);
+    this.pending = this.pending.filter(p => p.sequence > receiptSequence || p.action === 5 && p.sequence !== receiptSequence);
     if (this.terminal?.sequence === message.sequence) this.terminal = null;
     const receivedAt = this.now();
     this.lastReceipt = { at: receivedAt, roundTripMs: Math.max(0, receivedAt - offered.at) };
+    if (offered.action === 5) {
+      const resolve = this.keyReceipts.get(offered.sequence);
+      this.keyReceipts.delete(offered.sequence);
+      resolve?.({ outcome: 'applied', receiptRoundTripMs: this.lastReceipt.roundTripMs });
+    }
     try { this.options.onReceipt?.({ sequence: message.sequence, action: offered.action,
       status: message.status, deviceUptimeMs: message.device_uptime_ms,
       receiptRoundTripMs: this.lastReceipt.roundTripMs }); } catch { /* Observation only. */ }
@@ -274,7 +285,7 @@ export class ContinuousPointer {
       || !exact(message, ['type', 'session_id', 'owner', 'capture_epoch', 'sequence', 'gesture', 'action', 'outcome', 'device_uptime_ms'])
       || !integer(message.sequence, 0, CONTINUOUS_POINTER_LIMITS.maxSequence)
       || !integer(message.gesture, 0, CONTINUOUS_POINTER_LIMITS.maxSequence)
-      || !integer(message.action, 0, 4) || !integer(message.device_uptime_ms, 0, Number.MAX_SAFE_INTEGER)) return false;
+      || !integer(message.action, 0, this.supportsNativeKeys ? 5 : 4) || !integer(message.device_uptime_ms, 0, Number.MAX_SAFE_INTEGER)) return false;
     const base = { type: 'continuous_input_status', session_id: message.session_id, owner: message.owner,
       capture_epoch: message.capture_epoch, sequence: message.sequence, origin: 'injector', device_uptime_ms: message.device_uptime_ms };
     if (message.outcome === 'interrupted') {
@@ -307,6 +318,23 @@ export class ContinuousPointer {
       return this.receive({ ...base, status: 6, stage: this.nativeStarted ? 'input' : 'startup' });
     }
     return false;
+  }
+
+  /** No HTTP handoff or pointer-owner teardown. Only an exact native key ACK resolves applied. */
+  keyTap(keycode: number): Promise<NativeKeyReceipt> {
+    if (!this.supportsNativeKeys || !supportedDirectKey(keycode) || this.stateValue !== 'ready'
+      || !this.current() || !this.writable() || this.keyReceipts.size > 0) return Promise.resolve({ outcome: 'not_sent' });
+    if (this.sequence >= CONTINUOUS_POINTER_LIMITS.maxSequence
+      || this.pending.length >= CONTINUOUS_POINTER_LIMITS.pendingReceipts) return Promise.resolve({ outcome: 'not_sent' });
+    // Cancel an unsent MOVE; Android arbitrates any held gesture in the same ordered actor.
+    this.move = null;
+    const entry: Pending = { sequence: ++this.sequence, gesture: 0, action: 5, at: this.now(), idleHeartbeat: false };
+    this.pending.push(entry);
+    this.lastSentAt = entry.at;
+    return new Promise(resolve => {
+      this.keyReceipts.set(entry.sequence, resolve);
+      this.write({ type: 'key_event', sequence: entry.sequence, keycode });
+    });
   }
 
   private point(point: Point): boolean {
@@ -426,6 +454,7 @@ export class ContinuousPointer {
         ? this.options.socket.bufferedAmount : null });
     this.held = this.move = this.terminal = null;
     this.pending = [];
+    this.finishKeys();
     // Revoke before notifying observers: onFence reports share this socket and
     // can immediately raise bufferedAmount above the input byte budget. The
     // previous order let our own diagnostics silently prevent the only CLOSE.
@@ -456,7 +485,13 @@ export class ContinuousPointer {
     this.retire('viewer_destroyed');
     this.session = this.capture = this.held = this.move = this.terminal = null;
     this.pending = [];
+    this.finishKeys();
     this.transition('destroyed');
+  }
+
+  private finishKeys(): void {
+    const waiting = [...this.keyReceipts.values()]; this.keyReceipts.clear();
+    waiting.forEach(resolve => resolve({ outcome: 'unknown' }));
   }
 }
 

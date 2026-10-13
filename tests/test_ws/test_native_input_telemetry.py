@@ -19,8 +19,27 @@ def test_native_input_snapshot_preserves_cause_and_drops_private_extras():
         "samples": [{"gesture": 123}],
     }).model_dump()
     assert value == snapshot() | dict(last_startup_detail=None, last_startup_detail_age_ms=None,
-                                     last_release_reason=None, last_release_age_ms=None)
+                                     last_release_reason=None, last_release_age_ms=None,
+                                     last_input_detail=None, last_input_detail_age_ms=None)
     assert "private" not in str(value)
+
+
+def test_native_input_failure_retains_bounded_adapter_cause_without_keys_or_exception_contents():
+    value = NativeInputTelemetry.model_validate(snapshot() | dict(
+        last_input_detail="touch_ack_timeout", last_input_detail_age_ms=30,
+    ))
+    assert value.last_input_detail == "touch_ack_timeout"
+    assert value.last_input_detail_age_ms == 30
+
+
+@pytest.mark.parametrize("change", [
+    dict(last_input_detail="private-key-or-exception", last_input_detail_age_ms=1),
+    dict(last_input_detail="touch_ack_timeout"), dict(last_input_detail_age_ms=1),
+    dict(last_input_detail="touch_ack_timeout", last_input_detail_age_ms=86_400_001),
+])
+def test_native_input_details_reject_unsupported_unpaired_or_unbounded_values(change):
+    with pytest.raises(ValidationError):
+        NativeInputTelemetry.model_validate(snapshot() | change)
 
 
 @pytest.mark.parametrize("change", [

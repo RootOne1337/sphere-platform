@@ -100,6 +100,44 @@ class StreamingCaptureLifecycleTest {
         RuntimeEnvironment.getApplication().getSharedPreferences("sphere_stream_quality_v1", android.content.Context.MODE_PRIVATE).edit().clear().commit()
     }
 
+    @Test fun `rotation changes capture identity once and reuses the projections existing display`() {
+        var source = CaptureDisplayGeometry(960, 540, 0, 240)
+        manager.displayGeometry = { source }
+        every { anyConstructed<VirtualDisplayManager>().detachSurface() } just Runs
+        every { anyConstructed<VirtualDisplayManager>().reconfigureDisplay(any(), any()) } returns mockk(relaxed = true)
+        val invalidations = mockk<() -> Unit>(relaxed = true)
+        manager.setInputInvalidationListener(invalidations)
+        manager.start(projection)
+        val owner = Any(); val before = checkNotNull(manager.attachEncodedViewer(owner) {})
+        source = source.copy(width = 540, height = 960, rotation = 1)
+        manager.reconfigureIfDisplayChanged()
+        val after = checkNotNull(manager.getInputSession())
+        assertNotEquals(before.epoch, after.epoch)
+        assertEquals(540, after.physicalWidth); assertEquals(960, after.physicalHeight)
+        assertEquals(1, after.rotation)
+        assertFalse(manager.isEncodedViewerCurrent(owner, before))
+        assertTrue(manager.isActive())
+        verify(exactly = 1) { invalidations() }
+        verify(exactly = 1) { anyConstructed<VirtualDisplayManager>().createDisplay(any(), any()) }
+        verify(exactly = 1) { anyConstructed<VirtualDisplayManager>().reconfigureDisplay(any(), any()) }
+        verify(exactly = 0) { anyConstructed<VirtualDisplayManager>().release() }
+        manager.reconfigureIfDisplayChanged()
+        assertEquals(after, manager.getInputSession())
+        verify(exactly = 1) { anyConstructed<VirtualDisplayManager>().reconfigureDisplay(any(), any()) }
+    }
+
+    @Test fun `same size half turn changes input epoch and a failed rebind releases retained native resources`() {
+        var source = CaptureDisplayGeometry(960, 540, 0, 240)
+        manager.displayGeometry = { source }
+        every { anyConstructed<VirtualDisplayManager>().detachSurface() } just Runs
+        every { anyConstructed<VirtualDisplayManager>().reconfigureDisplay(any(), any()) } throws IllegalStateException("fixture")
+        manager.start(projection)
+        source = source.copy(rotation = 2)
+        manager.reconfigureIfDisplayChanged()
+        assertFalse(manager.isActive()); assertNull(manager.getInputSession())
+        verify(exactly = 1) { anyConstructed<VirtualDisplayManager>().release() }
+    }
+
     @Test fun `codec refusal leaves the prior device preference and capture current`() {
         manager.qualityProfilesEnabled = true
         manager.codecSource = { w, h, _, _ -> StreamQualityPolicy.Source(w, h, 60f) }

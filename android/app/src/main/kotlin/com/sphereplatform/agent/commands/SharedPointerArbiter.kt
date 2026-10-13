@@ -68,11 +68,28 @@ internal class SharedPointerArbiter(
             if (event.receivedAtMs > now || now - event.receivedAtMs >= MAX_EVENT_AGE_MS)
                 return reject(participant, event, Outcome.EXPIRED)
             if (event.sequence < 1 || event.sequence <= participant.sequence || event.gesture !in 0..Int.MAX_VALUE.toLong()
-                || event.action !in RootTouchSession.DOWN..RootTouchSession.HEARTBEAT
-                || event.x !in 0 until width || event.y !in 0 until height)
+                || event.action !in RootTouchSession.DOWN..RootTouchSession.KEY_TAP
+                || (if (event.action == RootTouchSession.KEY_TAP) event.gesture != 0L
+                    || !RootTouchSession.supportedKey(event.x) || event.y != 0
+                    else event.x !in 0 until width || event.y !in 0 until height))
                 return reject(participant, event, Outcome.INVALID)
             participant.sequence = event.sequence
             participant.lastSeenMs = now
+            if (event.action == RootTouchSession.KEY_TAP) {
+                val notices = mutableListOf<Notice>()
+                held?.let { previous ->
+                    if (!dispatch(NativeAction(RootTouchSession.CANCEL, previous.nativeGesture, previous.x, previous.y))) return fenceAll()
+                    previous.participant.gesture = null
+                    previous.participant.interruptedGesture = previous.gesture
+                    held = null
+                    notices += Notice(previous.participant.id, previous.participant.sequence, previous.gesture, Outcome.INTERRUPTED)
+                }
+                val afterCancel = checkedTime() ?: return notices + fenceAll()
+                if (afterCancel >= participant.expiresAtMs || afterCancel - event.receivedAtMs >= MAX_EVENT_AGE_MS)
+                    return notices + reject(participant, event, Outcome.EXPIRED)
+                if (!dispatch(NativeAction(RootTouchSession.KEY_TAP, 0, event.x, event.y))) return notices + fenceAll()
+                return notices + event.notice(Outcome.APPLIED)
+            }
             if (participant.gesture == null && event.gesture != 0L && event.gesture == participant.interruptedGesture)
                 return listOf(event.notice(Outcome.INTERRUPTED))
             if (event.action == RootTouchSession.HEARTBEAT) {

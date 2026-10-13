@@ -3,6 +3,7 @@ package com.sphereplatform.agent.commands;
 /** One private pipe owns one single-finger gesture. No Android dependency in the state machine. */
 public final class RootTouchSession {
     public static final int DOWN = 0, UP = 1, MOVE = 2, CANCEL = 3, HEARTBEAT = 4;
+    public static final int KEY_TAP = 5, KEY_RELEASE = -1;
     public static final long LEASE_MS = 1500;
     public enum Result {
         DISPATCHER_ACCEPTED(1), HEARTBEAT_ACCEPTED(2), CANCELLED(3), EXPIRED(4), REJECTED(5), UNKNOWN(6);
@@ -13,20 +14,32 @@ public final class RootTouchSession {
         boolean inject(int action, int x, int y, long downTime, long eventTime) throws Exception;
     }
     public interface Geometry { boolean matches() throws Exception; }
+    public interface KeyInjector {
+        boolean inject(int action, int keyCode, int metaState, long downTime, long eventTime) throws Exception;
+    }
 
     private final Injector injector;
+    private final KeyInjector keyInjector;
     private final Geometry geometry;
     private final int width, height;
     private int sequence;
     private long gesture, lastGesture, downTime, lastActivity, lastTime;
     private int x, y;
     private boolean held, closed, releaseUnknown;
+    private boolean keyHeld;
+    private int heldKey, heldMeta;
+    private long keyDownTime;
 
     public RootTouchSession(int width, int height, long now, Injector injector, Geometry geometry) {
+        this(width, height, now, injector, geometry, null);
+    }
+
+    public RootTouchSession(int width, int height, long now, Injector injector, Geometry geometry, KeyInjector keyInjector) {
         if (width < 1 || height < 1 || now < 0) throw new IllegalArgumentException("touch_configuration_invalid");
         this.width = width;
         this.height = height;
         this.injector = injector;
+        this.keyInjector = keyInjector;
         this.geometry = geometry;
         lastActivity = lastTime = now;
     }
@@ -35,6 +48,7 @@ public final class RootTouchSession {
         if (closed) return Result.REJECTED;
         Result expiry = tick(now);
         if (expiry != null) return expiry;
+        if (action == KEY_TAP) return keyTap(nextSequence, nextGesture, nextX, nextY, now);
         // Gaps are permitted when MOVE is coalesced; duplicates/reordering are not.
         if (nextSequence <= sequence || nextSequence < 1 || action < DOWN || action > HEARTBEAT
                 || nextX < 0 || nextX >= width || nextY < 0 || nextY >= height
@@ -66,6 +80,34 @@ public final class RootTouchSession {
         }
     }
 
+    /** A finite Android navigation/edit key, on the same ordered native pipe as touch. */
+    public static boolean supportedKey(int code) {
+        switch (code) {
+            case 3: case 4: case 187: case 82: // Home, Back, Recents, Menu
+            case 67: case 112: case 66: case 61: // Backspace, Delete, Enter, Tab
+            case 19: case 20: case 21: case 22: case 23: // D-pad
+            case 111: case 122: case 123: case 92: case 93: // Escape, line/page navigation
+            case 278: case 277: case 279: // Android copy/cut/paste
+                return true;
+            default: return false;
+        }
+    }
+
+    private Result keyTap(int nextSequence, long nextGesture, int code, int meta, long now) {
+        if (keyInjector == null || held || keyHeld || nextSequence < 1 || nextSequence <= sequence
+                || nextGesture != 0 || !supportedKey(code) || meta != 0) return fail(now, Result.REJECTED);
+        sequence = nextSequence;
+        lastActivity = lastTime = now;
+        heldKey = code; heldMeta = meta; keyDownTime = now;
+        keyHeld = true; // A throwing/false DOWN may already have been delivered.
+        try {
+            if (!keyInjector.inject(DOWN, code, meta, now, now)) return fail(now, Result.UNKNOWN);
+            if (!keyInjector.inject(UP, code, meta, now, now)) return fail(now, Result.UNKNOWN);
+            keyHeld = false;
+            return Result.DISPATCHER_ACCEPTED;
+        } catch (Exception failure) { return fail(now, Result.UNKNOWN); }
+    }
+
     /** Called locally even when the APK, WebSocket or browser no longer sends anything. */
     public synchronized Result tick(long now) {
         if (closed) return null;
@@ -87,7 +129,7 @@ public final class RootTouchSession {
 
     /** Normal termination proves release, even when the owner expired or its input was rejected. */
     public synchronized int cleanupExitCode() {
-        return closed && !held && !releaseUnknown ? 0 : 2;
+        return closed && !held && !keyHeld && !releaseUnknown ? 0 : 2;
     }
 
     private Result fail(long now, Result result) {
@@ -96,10 +138,15 @@ public final class RootTouchSession {
     }
 
     private boolean release(long now) {
+        if (keyHeld) {
+            keyHeld = false;
+            try { releaseUnknown |= !keyInjector.inject(KEY_RELEASE, heldKey, heldMeta, keyDownTime, now); }
+            catch (Exception failure) { releaseUnknown = true; }
+        }
         if (!held) return !releaseUnknown;
         // Retire ownership before injection. An uncertain CANCEL must never invite a new DOWN.
         held = false;
-        try { releaseUnknown = !injector.inject(CANCEL, x, y, downTime, now); }
+        try { releaseUnknown |= !injector.inject(CANCEL, x, y, downTime, now); }
         catch (Exception failure) { releaseUnknown = true; }
         return !releaseUnknown;
     }

@@ -20,6 +20,8 @@ internal class DirectEncodedVideoSource(
     private val failed: () -> Unit,
     private val profileLevelId: String = "42e01f",
     private val onRate: (Int, Int) -> Unit = { _, _ -> },
+    private val maxBitrateBps: Int = 32_000_000,
+    private val startBitrateBps: Int = 2_000_000,
 ) {
     companion object {
         // MediaCodec has already encoded these reference-dependent pictures.
@@ -65,7 +67,13 @@ internal class DirectEncodedVideoSource(
 
     val encoderFactory = object : VideoEncoderFactory {
         override fun getSupportedCodecs() = arrayOf(VideoCodecInfo("H264", mapOf(
-            "profile-level-id" to profileLevelId, "level-asymmetry-allowed" to "1", "packetization-mode" to "1"), emptyList()))
+            "profile-level-id" to profileLevelId, "level-asymmetry-allowed" to "1", "packetization-mode" to "1",
+            // RtpSender's maximum alone does not replace the codec's default
+            // screenshare allocation. Advertise the bounded coded-source budget
+            // too; congestion control may still allocate less on a slow route.
+            "x-google-max-bitrate" to (maxBitrateBps.coerceIn(100_000, 32_000_000) / 1000).toString(),
+            "x-google-start-bitrate" to (startBitrateBps.coerceIn(100_000, maxBitrateBps.coerceIn(100_000, 32_000_000)) / 1000).toString()
+        ), emptyList()))
         override fun createEncoder(info: VideoCodecInfo): VideoEncoder? {
             encoderRequests.incrementAndGet()
             requestedLevel.set(info.params["profile-level-id"]?.takeIf {

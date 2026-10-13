@@ -21,6 +21,34 @@ function setup(deviceId = 'remote/id') {
 }
 
 it.each([['Назад', 4], ['Домой', 3], ['Недавние', 187], ['Меню', 82]])(
+  '%s uses negotiated native input without stopping the shared pointer or sending HTTP', async (label, code) => {
+    const prepare = jest.fn();
+    const sendDirectKey = jest.fn().mockResolvedValue({ outcome: 'applied', receiptRoundTripMs: 2 });
+    render(<AndroidNavigationBar deviceId="remote" available isAvailable={() => true} prepareCommand={prepare} sendDirectKey={sendDirectKey} />);
+    await userEvent.click(screen.getByRole('button', { name: label }));
+    expect(sendDirectKey).toHaveBeenCalledWith(code);
+    expect(prepare).not.toHaveBeenCalled(); expect(post).not.toHaveBeenCalled();
+    expect(await screen.findByRole('status')).toHaveTextContent('выполнение подтверждено');
+  },
+);
+
+it.each(['unknown', 'not_sent'])('a native %s result never retries through the server', async outcome => {
+  const sendDirectKey = jest.fn().mockResolvedValue({ outcome });
+  render(<AndroidNavigationBar deviceId="remote" available isAvailable={() => true} sendDirectKey={sendDirectKey} />);
+  await userEvent.click(screen.getByRole('button', { name: 'Домой' }));
+  expect(await screen.findByRole('alert')).toHaveTextContent(outcome === 'unknown' ? 'результат не подтверждён' : 'команда не отправлена');
+  expect(sendDirectKey).toHaveBeenCalledTimes(1); expect(post).not.toHaveBeenCalled();
+});
+
+it('known legacy input ownership refusal does not poison subsequent pointer recovery', async () => {
+  const finish = jest.fn(); post.mockResolvedValue({ data: { error: 'device_input_busy' } });
+  render(<AndroidNavigationBar deviceId="remote" available isAvailable={() => true} prepareCommand={() => finish} />);
+  await userEvent.click(screen.getByRole('button', { name: 'Домой' }));
+  expect(await screen.findByRole('alert')).toHaveTextContent('команда не отправлена');
+  expect(finish).toHaveBeenCalledWith(true);
+});
+
+it.each([['Назад', 4], ['Домой', 3], ['Недавние', 187], ['Меню', 82]])(
   '%s uses the installed-agent acknowledged command contract, including empty output', async (label, code) => {
     setup();
     await userEvent.click(screen.getByRole('button', { name: label }));

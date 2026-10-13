@@ -15,6 +15,14 @@ async function open(readOnly = false) {
   fireEvent.click(screen.getByRole('button', { name: 'Качество видеопотока' }));
   await screen.findByLabelText('Профиль'); return view;
 }
+test('LAN preset is an explicit draft, not an unsolicited device update or an unbounded quality promise', async () => {
+  await open();
+  fireEvent.click(screen.getByRole('button', { name: 'LAN · 60 FPS' }));
+  expect(screen.getByLabelText('Лимит FPS')).toHaveValue(60);
+  expect(screen.getByLabelText('Лимит битрейта, Мбит/с')).toHaveValue(24);
+  expect(screen.getByLabelText('Профиль')).toHaveValue('detail');
+  expect(api.post).not.toHaveBeenCalled();
+});
 test('mounting a viewer sends no quality commands; opening reads one current APK snapshot', async () => {
   render(<StreamQualityControl deviceId="one" readOnly={false} />);
   expect(api.get).not.toHaveBeenCalled(); expect(api.post).not.toHaveBeenCalled();

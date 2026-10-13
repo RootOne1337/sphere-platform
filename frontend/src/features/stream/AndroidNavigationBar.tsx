@@ -9,6 +9,7 @@ import { DEVICE_COMMAND_TIMEOUT, interactiveResult } from '@/src/features/device
 import { Button } from '@/src/shared/ui/button';
 import { androidTextCommand as textCommand, type AndroidControlCommand, type AcknowledgedControl, type StreamInput } from './controlObservation';
 import type { StreamFrameDimensions } from './streamAspectRatio';
+import type { NativeKeyReceipt } from './continuousPointer';
 
 const KEYS = [
   { code: 4, label: 'Назад', icon: ArrowLeft },
@@ -36,13 +37,15 @@ interface CommandSession {
   observation: { requestId: string; input: StreamInput; notify: (event: AcknowledgedControl) => void } | null;
 }
 
-export function AndroidNavigationBar({ deviceId, available, isAvailable, prepareCommand, extended = false, compact = false, getFrameDimensions, onControlCommand }: {
+export function AndroidNavigationBar({ deviceId, available, isAvailable, prepareCommand, sendDirectKey, extended = false, compact = false, getFrameDimensions, onControlCommand }: {
   deviceId: string;
   available: boolean;
   /** Recheck transport at the action boundary, even before React rerenders. */
   isAvailable: () => boolean;
   /** Pause continuous input and wait for native release before a discrete command. Never retry unknown input. */
   prepareCommand?: () => ((confirmed: boolean) => void) | Promise<((confirmed: boolean) => void) | null> | null;
+  /** Negotiated native key input on the very same media peer. Never fall back after an unknown result. */
+  sendDirectKey?: (keycode: number) => Promise<NativeKeyReceipt>;
   extended?: boolean;
   compact?: boolean;
   getFrameDimensions?: () => StreamFrameDimensions | null;
@@ -52,8 +55,8 @@ export function AndroidNavigationBar({ deviceId, available, isAvailable, prepare
   const sessionRef = useRef<CommandSession | null>(null);
   const [receipt, setReceipt] = useState<Receipt>({ state: 'idle' });
   const [draft, setDraft] = useState('');
-  const admissionRef = useRef({ available, isAvailable, prepareCommand });
-  admissionRef.current = { available, isAvailable, prepareCommand };
+  const admissionRef = useRef({ available, isAvailable, prepareCommand, sendDirectKey });
+  admissionRef.current = { available, isAvailable, prepareCommand, sendDirectKey };
 
   useEffect(() => {
     const session: CommandSession = { deviceId, token: accessToken, disposed: false, controller: null, observation: null };
@@ -85,7 +88,8 @@ export function AndroidNavigationBar({ deviceId, available, isAvailable, prepare
     let confirmed = false;
     let submitted = false;
     try {
-      const prepare = admissionRef.current.prepareCommand;
+      const directKey = action.type === 'key_event' ? admissionRef.current.sendDirectKey : undefined;
+      const prepare = directKey ? undefined : admissionRef.current.prepareCommand;
       const admission = prepare?.();
       prepared = admission instanceof Promise ? await admission : admission ?? null;
       if (prepare && !prepared) throw new Error('Касание Android не освобождено или связь изменилась.');
@@ -107,11 +111,24 @@ export function AndroidNavigationBar({ deviceId, available, isAvailable, prepare
       // Installed agents already support the acknowledged interactive SHELL
       // contract. Their flat WebSocket `keyevent` message is not supported.
       submitted = true;
-      const { data } = await api.post(`/devices/${encodeURIComponent(deviceId)}/shell`, {
-        command,
-      }, { signal: controller.signal, timeout: DEVICE_COMMAND_TIMEOUT.shell });
-      if (session.disposed || sessionRef.current !== session) return;
-      interactiveResult(data, 'output'); // Empty stdout is a valid completion.
+      if (directKey && action.type === 'key_event') {
+        const result = await directKey(action.keycode);
+        if (session.disposed || sessionRef.current !== session) return;
+        if (result.outcome === 'not_sent') {
+          submitted = false;
+          throw new Error('Прямое управление ещё согласуется.');
+        }
+        if (result.outcome !== 'applied') throw new Error('Android не подтвердил нажатие. Связь восстанавливается автоматически.');
+      } else {
+        const { data } = await api.post(`/devices/${encodeURIComponent(deviceId)}/shell`, {
+          command,
+        }, { signal: controller.signal, timeout: DEVICE_COMMAND_TIMEOUT.shell });
+        if (session.disposed || sessionRef.current !== session) return;
+        // An explicit ownership refusal precedes execution. It is not an
+        // uncertain click and must not fence an otherwise healthy media peer.
+        if (data?.error === 'device_input_busy') submitted = false;
+        interactiveResult(data, 'output'); // Empty stdout is a valid completion.
+      }
       confirmed = true;
       if (session.observation) {
         session.observation.notify({ requestId: session.observation.requestId, input: session.observation.input, phase: 'confirmed', completedAt: performance.now() });

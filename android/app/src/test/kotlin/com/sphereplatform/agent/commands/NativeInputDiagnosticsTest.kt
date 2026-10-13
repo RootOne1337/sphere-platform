@@ -5,6 +5,17 @@ import org.junit.Assert.*
 import org.junit.Test
 
 class NativeInputDiagnosticsTest {
+    @Test fun `input failure details are bounded vocabulary and never expose exception contents`() {
+        var now = 100L
+        val diagnostics = NativeInputDiagnostics { now }
+        diagnostics.inputFailed("touch_ack_timeout")
+        now += 25
+        val snapshot = diagnostics.snapshot(NativeInputDiagnostics.State.RETIRING)
+        assertEquals(JsonPrimitive("touch_ack_timeout"), snapshot["last_input_detail"])
+        assertEquals(JsonPrimitive(25L), snapshot["last_input_detail_age_ms"])
+        diagnostics.inputFailed("private token and keystrokes")
+        assertEquals(JsonPrimitive("native_adapter_exception"), diagnostics.snapshot(NativeInputDiagnostics.State.IDLE)["last_input_detail"])
+    }
     @Test fun `snapshot keeps historical cause separate from current state`() {
         var now = 100L
         val diagnostics = NativeInputDiagnostics { now }

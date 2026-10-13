@@ -58,7 +58,7 @@ export function startDirectVideoSession(
   url: string, token: string, report: (value: DirectProbeResult) => void,
   options: { controlledStunUrl?: string; onTrack: (track: MediaStreamTrack) => void;
     receiverSize?: { width: number; height: number };
-    historySession?: string; controlSession?: string; sharedInput?: boolean; onControlChannel?: (channel: DirectControlEndpoint | null) => void;
+    historySession?: string; controlSession?: string; sharedInput?: boolean; nativeKeys?: boolean; onControlChannel?: (channel: DirectControlEndpoint | null) => void;
     /** Actual recent presentation, independently bounded by the renderer watchdog. */
     hasRecentVideoFrame?: () => boolean },
 ): () => void {
@@ -67,7 +67,7 @@ export function startDirectVideoSession(
 
 function startDirectSession(
   url: string, token: string, report: (value: DirectProbeResult) => void,
-  options: { controlledStunUrl?: string; relayGrant?: boolean; controlSession?: string; historySession?: string; sharedInput?: boolean;
+  options: { controlledStunUrl?: string; relayGrant?: boolean; controlSession?: string; historySession?: string; sharedInput?: boolean; nativeKeys?: boolean;
     onControlChannel?: (channel: DirectControlEndpoint | null) => void;
     receiverSize?: { width: number; height: number };
     hasRecentVideoFrame?: () => boolean }, onVideoTrack?: (track: MediaStreamTrack) => void, live = false,
@@ -237,6 +237,7 @@ function startDirectSession(
           if (stopped || retired) return;
           if (!session) return retire('missing_binding');
           options.onControlChannel?.({ session, sharedInput: options.sharedInput === true,
+            nativeKeys: options.sharedInput === true && options.nativeKeys === true,
             get readyState() { return !stopped && !retired && direct.readyState === 'open' ? 1 : 0; },
             get bufferedAmount() { return direct.bufferedAmount; },
             capture: () => result.videoBinding ?? null,

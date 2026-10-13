@@ -685,6 +685,7 @@ export function DeviceStream({
                 continuousRouteRef.current = endpoint;
                 setControlTransport(endpoint ? 'direct_webrtc' : 'server_websocket');
                 const controller = new ContinuousPointer({ socket: inputTransport, sharedInput: endpoint?.sharedInput === true,
+                  nativeKeys: endpoint?.nativeKeys === true,
                   renderedCapture: () => renderedCaptureRef.current,
                   onFence: snapshot => {
                     if (ignore || ended || newWs !== wsRef.current || continuousRef.current !== controller
@@ -741,6 +742,18 @@ export function DeviceStream({
                     }
                     if (state === 'closed') {
                       continuousRequestedRef.current = false;
+                      const route = continuousRouteRef.current;
+                      const shown = renderedCaptureRef.current;
+                      const directCapture = route?.capture();
+                      if (freshViewerAfterReleaseRef.current && route?.sharedInput
+                        && directControlRef.current === route && route.readyState === 1 && directVideoRef.current.active
+                        && shown && directCapture?.captureEpoch === shown.captureEpoch
+                        && directCapture.width === shown.frameWidth && directCapture.height === shown.frameHeight) {
+                        // Exact native RELEASE has already arrived. The same v2
+                        // media peer/capture can admit a new participant; refreshing
+                        // the server socket here needlessly tears down healthy video.
+                        freshViewerAfterReleaseRef.current = false;
+                      }
                       // A slow native teardown can finish after the diagnostic
                       // wait expired. Only this owner's actual RELEASE3 may
                       // resume recovery; a timeout/unknown RELEASE never can.
@@ -1455,6 +1468,11 @@ export function DeviceStream({
       <AndroidNavigationBar key={deviceId} deviceId={deviceId} extended compact={fullscreen.active}
       available={canNavigate && (!continuousBusy || continuousState === 'ready') && wsRef.current?.readyState === WebSocket.OPEN}
       prepareCommand={prepareDiscreteInput}
+      sendDirectKey={continuousRouteRef.current?.nativeKeys ? keycode => {
+        const controller = continuousRef.current;
+        return canNavigate && !continuousFaultRef.current && continuousRouteRef.current?.readyState === 1 && controller
+          ? controller.keyTap(keycode) : Promise.resolve({ outcome: 'not_sent' as const });
+      } : undefined}
       isAvailable={() => canNavigate && !continuousFaultRef.current && (!continuousRef.current || ['ready', 'closed', 'destroyed'].includes(continuousRef.current.state)) && wsRef.current?.readyState === WebSocket.OPEN}
       onControlCommand={onControlCommand}
       getFrameDimensions={() => {

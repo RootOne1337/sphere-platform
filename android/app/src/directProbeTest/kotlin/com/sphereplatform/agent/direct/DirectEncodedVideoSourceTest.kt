@@ -8,6 +8,15 @@ import org.junit.Test
 import org.webrtc.*
 
 class DirectEncodedVideoSourceTest {
+    @Test fun `codec allocation advertises actual high detail ceiling instead of a two megabit default`() {
+        val relay = DirectEncodedVideoSource(capture, { true }, {}, {}, maxBitrateBps = 12_000_000, startBitrateBps = 8_000_000)
+        try {
+            val parameters = relay.encoderFactory.supportedCodecs.single().params
+            assertEquals("12000", parameters["x-google-max-bitrate"])
+            assertEquals("8000", parameters["x-google-start-bitrate"])
+            assertNotNull(relay.encoderFactory.createEncoder(VideoCodecInfo("H264", parameters, emptyList())))
+        } finally { relay.close() }
+    }
     private val capture = CaptureInputSession("a".repeat(32), 960, 540, 960, 540, 0)
     private fun nal(vararg values: Int) = byteArrayOf(0, 0, 0, 1) + values.map(Int::toByte).toByteArray()
     private fun picture(sequence: Long, key: Boolean) = EncodedCaptureFrame(capture, sequence,

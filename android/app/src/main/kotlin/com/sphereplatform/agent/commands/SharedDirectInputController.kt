@@ -56,7 +56,10 @@ internal class SharedDirectInputController(
                     if (participants.isEmpty()) wake.receive() else withTimeoutOrNull(10) { wake.receive() }
                     if (participants.isEmpty()) continue
                     try { drain() } catch (failure: kotlinx.coroutines.CancellationException) { throw failure }
-                    catch (_: Exception) { retireGroup() }
+                    catch (failure: Exception) {
+                        diagnostics.inputFailed(failure.message ?: "native_adapter_exception")
+                        retireGroup()
+                    }
                 }
             } finally {
                 withContext(NonCancellable) { retireGroup() }
@@ -68,7 +71,9 @@ internal class SharedDirectInputController(
     fun owns(session: String): Boolean = grants.containsKey(session)
 
     fun grant(channel: DirectInputChannel): Boolean = synchronized(admission) {
-        if (resetRequired || groupRetiring || !channel.isCurrent() || channel.capture != capture()) return false
+        // Granting this authenticated transport does not acquire native input.
+        // An unavailable injector must not tear down a healthy video peer.
+        if (!channel.isCurrent() || channel.capture != capture()) return false
         val prior = grants[channel.session]
         if (prior != null) return prior.isCurrent() && prior.capture == channel.capture
         if (grants.size >= SharedPointerArbiter.MAX_PARTICIPANTS) return false
@@ -85,20 +90,25 @@ internal class SharedDirectInputController(
         if (type == "touch_close" && message.keys == setOf("type")) {
             retire(participant); return true
         }
-        if (type != "touch_event" || message.keys != setOf("type", "sequence", "gesture", "action", "x", "y")) {
+        val key = type == "key_event" && message.keys == setOf("type", "sequence", "keycode")
+        if (!key && (type != "touch_event" || message.keys != setOf("type", "sequence", "gesture", "action", "x", "y"))) {
             retire(participant); return false
         }
         val sequence = integer(message, "sequence")
-        val gesture = number(message, "gesture")
-        val action = integer(message, "action")
+        val gesture = if (key) 0L else number(message, "gesture")
+        val action = if (key) RootTouchSession.KEY_TAP else integer(message, "action")
+        val keyCode = if (key) integer(message, "keycode") else null
         val x = integer(message, "x"); val y = integer(message, "y")
         val mapped = if (x != null && y != null) channel.capture.map(channel.capture.epoch,
             channel.capture.frameWidth, channel.capture.frameHeight, StreamPoint(x, y)) else null
-        if (sequence == null || gesture == null || action == null || mapped == null || participant.retiring
+        if (sequence == null || gesture == null || action == null
+            || (if (key) keyCode == null || !RootTouchSession.supportedKey(keyCode) else mapped == null) || participant.retiring
             || !participant.ready && action != RootTouchSession.HEARTBEAT) {
             retire(participant); return true
         }
-        val event = SharedPointerArbiter.Event(participant.owner, sequence, gesture, action, mapped.x, mapped.y, uptime())
+        val event = SharedPointerArbiter.Event(participant.owner, sequence, gesture, action,
+            if (key) checkNotNull(keyCode) else checkNotNull(mapped).x,
+            if (key) 0 else checkNotNull(mapped).y, uptime())
         if (mailbox.offer(event) !in setOf(SharedInputMailbox.Admission.QUEUED, SharedInputMailbox.Admission.COALESCED)) {
             retire(participant)
         }
@@ -128,7 +138,7 @@ internal class SharedDirectInputController(
         grants[channel.session] === channel && channel.isCurrent() && channel.capture == capture()
 
     private fun open(channel: DirectInputChannel, message: JsonObject): Boolean = synchronized(admission) {
-        if (resetRequired || groupRetiring || message.keys != setOf("type", "capture_epoch", "frame_width", "frame_height")
+        if (message.keys != setOf("type", "capture_epoch", "frame_width", "frame_height")
             || message["capture_epoch"] != JsonPrimitive(channel.capture.epoch)
             || integer(message, "frame_width") != channel.capture.frameWidth
             || integer(message, "frame_height") != channel.capture.frameHeight || !current(channel)
@@ -142,6 +152,12 @@ internal class SharedDirectInputController(
             put("capture_epoch", channel.capture.epoch); put("frame_width", channel.capture.frameWidth)
             put("frame_height", channel.capture.frameHeight)
         })) retire(participant)
+        if (resetRequired || groupRetiring) {
+            status(participant, 0, 0, 4, "denied")
+            status(participant, 0, 0, 3, "closed")
+            remove(participant)
+            return true
+        }
         wake.trySend(Unit)
         true
     }
@@ -178,7 +194,10 @@ internal class SharedDirectInputController(
                 arbiter = SharedPointerArbiter(cap.physicalWidth, cap.physicalHeight, uptime) { action ->
                     val ack = nextPipe.send(TouchSample(++nativeSequence, action.gesture, action.action, action.x, action.y, uptime()))
                     nativeAt = ack.uptimeMs; lastNativeAt = uptime()
-                    nativeX = action.x; nativeY = action.y
+                    if (action.action != RootTouchSession.KEY_TAP) { nativeX = action.x; nativeY = action.y }
+                    if (ack.status >= 4) diagnostics.inputFailed(when (ack.status) {
+                        4 -> "native_expired"; 5 -> "native_rejected"; else -> "native_unknown"
+                    })
                     ack.sequence == nativeSequence && ack.status == (if (action.action == RootTouchSession.CANCEL) 3 else 1)
                 }
             }
@@ -260,7 +279,7 @@ internal class SharedDirectInputController(
     private suspend fun closePipe(): Boolean {
         val old = pipe; pipe = null; arbiter = null; binding = null
         val confirmed = old == null || runCatching { old.closeAndConfirm() }.getOrDefault(false)
-        if (!confirmed) resetRequired = true
+        if (!confirmed) resetRequired = true // Preserve the original native failure discriminator.
         return confirmed
     }
 

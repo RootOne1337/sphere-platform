@@ -5,6 +5,7 @@ import type { DirectVideoBinding } from './directVideoProtocol';
 export interface DirectControlEndpoint extends PointerTransport {
   readonly session: string;
   readonly sharedInput?: boolean;
+  readonly nativeKeys?: boolean;
   capture(): DirectVideoBinding | null;
   listen(receipt: (message: unknown) => void): () => void;
 }
@@ -28,6 +29,12 @@ export class DirectPointerTransport implements PointerTransport {
       else this.server.send(JSON.stringify({ ...data, type: 'touch_direct_open', direct_session: this.direct.session }));
       return;
     }
+    if (data.type === 'key_event' && Object.keys(data).sort().join() === 'keycode,sequence,type') {
+      if (!this.direct.sharedInput || !this.direct.nativeKeys || !Number.isSafeInteger(data.sequence)
+        || data.sequence < 1 || data.sequence > 2147483647 || !supportedDirectKey(data.keycode)) throw Error('invalid_direct_key');
+      this.direct.send(raw);
+      return;
+    }
     if (data.type !== 'touch_event' || Object.keys(data).sort().join() !== 'action,gesture,sequence,type,x,y') {
       throw Error('invalid_direct_input');
     }
@@ -49,3 +56,8 @@ export class DirectPointerTransport implements PointerTransport {
     this.server.send(cancelUnstarted ? '{"type":"touch_close","cancel_unstarted":true}' : '{"type":"touch_close"}');
   }
 }
+
+export const DIRECT_KEY_CODES = Object.freeze([3, 4, 187, 82, 67, 112, 66, 61,
+  19, 20, 21, 22, 23, 111, 122, 123, 92, 93, 278, 277, 279]);
+export const supportedDirectKey = (code: unknown): code is number =>
+  typeof code === 'number' && Number.isSafeInteger(code) && DIRECT_KEY_CODES.includes(code);

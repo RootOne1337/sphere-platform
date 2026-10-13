@@ -29,6 +29,7 @@ interface StreamingManager {
     /** MediaCodec ceiling used by the encoded RTP adapter. */
     fun encodedProfileLevelId(): String = "42e01f"
     fun encodedRateLimits(): Pair<Int, Int> = 4_000_000 to 30
+    fun encodedInitialBitrate(): Int = 2_000_000
     /** Bounded asynchronous handoff from the WebRTC encoder callback. */
     fun onDirectRateEstimate(owner: Any, capture: CaptureInputSession, bitrate: Int, fps: Int) {}
 
