@@ -1,5 +1,7 @@
 # Optional direct-transport relay
 
+Позднейший срез: [прямой маршрут с ноутбука и восстановление запуска ввода](../../docs/audits/2026-10-13/DIRECT-INPUT-RECOVERY.md). Старые наблюдения ниже сохраняют собственные версии и время.
+
 Текущий direct pilot: [наблюдение 13 октября](../../docs/audits/2026-10-13/DIRECT-SESSION-STABILITY.md). TURN остаётся выключенным; связь во всех NAT/WAN сетях не принята.
 
 Status: deployment template, **not an installed public service**. The default

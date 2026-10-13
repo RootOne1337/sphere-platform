@@ -1,11 +1,11 @@
 {
   "schemaVersion": 1,
-  "reviewedAtUtc": "2026-10-13T06:35:03.047826+00:00",
+  "reviewedAtUtc": "2026-10-13T12:53:53.021954+00:00",
   "scope": "All tracked Markdown classified; active local-link paths scanned. Not semantic attestation of every sentence, command execution, external-link or live acceptance.",
   "countsByRole": {
     "ADR": 6,
     "CURRENT_ENTRYPOINT": 8,
-    "DATED_EVIDENCE": 290,
+    "DATED_EVIDENCE": 291,
     "DESIGN_SPECIFICATION": 76,
     "OPERATING_GUIDE": 64,
     "PROJECT_POLICY": 7,
@@ -1294,6 +1294,10 @@
     },
     {
       "file": "docs/audits/2026-10-13/CI-COST-AND-LOCAL-RUNNER.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
+      "file": "docs/audits/2026-10-13/DIRECT-INPUT-RECOVERY.md",
       "role": "DATED_EVIDENCE"
     },
     {
