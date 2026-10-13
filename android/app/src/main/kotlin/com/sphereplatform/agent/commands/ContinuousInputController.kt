@@ -122,10 +122,15 @@ internal class ContinuousInputController(
         if (owner.direct == null || owner.generation != connection || identifier(message, "owner") != owner.binding.owner) return
         val sequence = integer(message, "sequence") ?: return
         val ttl = integer(message, "ttl_ms") ?: return
-        if (!exact(message, setOf("type", "owner", "sequence", "ttl_ms")) || ttl != 1500 ||
-            sequence != owner.grantSequence + 1 || !current(owner)) { invalidate(); return }
-        owner.grantSequence = sequence
-        owner.grantUntil = uptime() + ttl
+        synchronized(owner) {
+            if (!exact(message, setOf("type", "owner", "sequence", "ttl_ms")) || ttl != 1500 ||
+                sequence <= 0 || !current(owner)) { invalidate(); return }
+            // Authorization is a latest-only snapshot: the server may supersede
+            // intermediate grants. Stale/duplicate snapshots cannot renew the TTL.
+            if (sequence <= owner.grantSequence) return
+            owner.grantSequence = sequence
+            owner.grantUntil = uptime() + ttl
+        }
     }
 
     /** Local lifecycle loss is immediate fencing; teardown runs outside capture/socket locks. */

@@ -172,8 +172,36 @@ class ContinuousInputControllerTest {
         f.now.set(1700)
         assertTrue(f.controller.directMessage(f.peerSession, f.directEvent(2, 4)))
         eventually { f.samples.size == 2 }
-        f.controller.handle(f.authorize(1)) // A duplicate cannot extend authority.
+        f.controller.handle(f.authorize(1)) // A duplicate is ignored and cannot extend authority.
+        assertFalse(f.closed)
+        f.now.set(2901) // The original grant ended at 1400 + 1500, not 1700 + 1500.
+        assertFalse(f.controller.directMessage(f.peerSession, f.directEvent(3, 4)))
         eventually { f.closed }; f.stop()
+    }
+
+    @Test fun `coalesced fresh authorization accepts gaps while stale grants cannot extend or revoke it`() = runBlocking {
+        val f = Fixture(); f.readyDirect(); f.now.set(1400)
+        f.controller.handle(f.authorize(3)) // Server intentionally superseded grants 1 and 2.
+        assertTrue(f.controller.directMessage(f.peerSession, f.directEvent(1, 4)))
+        eventually { f.samples.size == 1 }
+        f.now.set(1450); f.controller.handle(f.authorize(2))
+        assertFalse(f.closed)
+        f.now.set(1490); f.controller.handle(f.authorize(3))
+        assertFalse(f.closed)
+        f.now.set(1500); f.controller.handle(f.authorize(7))
+        f.now.set(1600)
+        assertTrue(f.controller.directMessage(f.peerSession, f.directEvent(2, 4)))
+        eventually { f.samples.size == 2 }
+        f.now.set(3001)
+        assertFalse(f.controller.directMessage(f.peerSession, f.directEvent(3, 4)))
+        eventually { f.closed }; f.stop()
+    }
+
+    @Test fun `a sequence gap cannot revive expired authorization`() = runBlocking {
+        val f = Fixture(); f.readyDirect(); f.now.set(1601)
+        f.controller.handle(f.authorize(5))
+        assertFalse(f.controller.directMessage(f.peerSession, f.directEvent(1, 4)))
+        eventually { f.closed }; assertTrue(f.samples.isEmpty()); f.stop()
     }
 
     @Test fun `direct peer loss cancels held touch and reports release through server`() = runBlocking {
