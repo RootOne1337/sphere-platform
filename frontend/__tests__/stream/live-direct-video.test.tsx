@@ -43,6 +43,15 @@ function mount(onFrame = jest.fn(() => true), onObservation = jest.fn()) {
 }
 const present = () => mockFrame(1, { width: 960, height: 540 } as VideoFrameCallbackMetadata);
 
+test('older source codecs retain their offer while a presented higher source enables receiver capability lookup', () => {
+  const low = render(<LiveDirectVideo deviceId="device" session="viewer" eligible expectedCapture={expected}
+    receiverProfileLevelId={() => '42c01f'} onFrame={jest.fn()} onObservation={jest.fn()} />);
+  expect(mockStart.mock.calls.at(-1)![3].receiverSize).toBeUndefined(); low.unmount();
+  const high = render(<LiveDirectVideo deviceId="device" session="viewer" eligible expectedCapture={expected}
+    receiverProfileLevelId={() => '42c020'} onFrame={jest.fn()} onObservation={jest.fn()} />);
+  expect(mockStart.mock.calls.at(-1)![3].receiverSize).toEqual({ width: 960, height: 540 }); high.unmount();
+});
+
 test('direct input requires its own admission and a writable viewer callback', () => {
   const callback = jest.fn();
   const make = () => render(<LiveDirectVideo deviceId="device" session={'1'.repeat(16)} eligible

@@ -62,6 +62,16 @@ beforeEach(() => {
 });
 afterEach(() => { decoder.destroy(); jest.restoreAllMocks(); });
 
+it('receiver negotiation reads only the SPS of a successfully presented current capture', () => {
+  expect(decoder.lastRenderedProfileLevelId).toBeNull();
+  decoder.handleBinary(capturePacket([0x67, 0x42, 0xc0, 0x20]));
+  decoder.handleBinary(capturePacket(PPS)); decoder.handleBinary(capturePacket([0x65, 1]));
+  expect(decoder.lastRenderedProfileLevelId).toBeNull();
+  newest().output(12345_000);
+  expect(decoder.lastRenderedProfileLevelId).toBe('42c020');
+  decoder.reset(); expect(decoder.lastRenderedProfileLevelId).toBeNull();
+});
+
 it('does not retain and replay frames received before SPS/PPS', () => {
   const idr = new Uint8Array(1024); idr[0] = 0x65;
   for (let i = 0; i < 2048; i++) decoder.handleBinary(packet(idr, i));

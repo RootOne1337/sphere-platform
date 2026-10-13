@@ -1,8 +1,14 @@
-import { h264ReceiverOffer } from '@/src/features/stream/h264ReceiverOffer';
+import { h264ReceiverOffer, needsHigherH264ReceiveLevel } from '@/src/features/stream/h264ReceiverOffer';
 
 const offer: RTCSessionDescriptionInit = { type: 'offer', sdp: 'v=0\r\nm=video 9 UDP/TLS/RTP/SAVPF 96 97\r\na=rtpmap:96 H264/90000\r\na=fmtp:96 level-asymmetry-allowed=1;packetization-mode=1;profile-level-id=42e01f\r\na=rtpmap:97 VP9/90000\r\na=fmtp:97 profile-id=0\r\na=fingerprint:sha-256 unchanged\r\na=candidate:unchanged\r\n' };
 const size = { width: 960, height: 540 };
 let decode: jest.Mock;
+test('only a presented higher constrained baseline source needs an expanded receiver offer', () => {
+  for (const profile of [null, undefined, '', '42e01f', '42c01f', '420029', '640029', '42e0ff'])
+    expect(needsHigherH264ReceiveLevel(profile)).toBe(false);
+  for (const profile of ['42c020', '42e029', '42E02A', '42c034'])
+    expect(needsHigherH264ReceiveLevel(profile)).toBe(true);
+});
 beforeEach(() => { decode = jest.fn().mockResolvedValue({ supported: true }); Object.defineProperty(navigator, 'mediaCapabilities', { configurable: true, value: { decodingInfo: decode } }); });
 test('only a confirmed receiver capability raises constrained baseline fmtp', async () => {
   const actual = await h264ReceiverOffer(offer, size);

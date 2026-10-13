@@ -320,6 +320,12 @@ export class H264Decoder {
     return this.renderedCapture ? { ...this.renderedCapture } : null;
   }
 
+  /** Current SPS only after a successful presentation; reset/recovery retires it. */
+  get lastRenderedProfileLevelId(): string | null {
+    if (!this.renderedCapture || !this.configured || !this.spsNal || this.spsNal.length < 4) return null;
+    return Array.from(this.spsNal.subarray(1, 4), byte => byte.toString(16).padStart(2, '0')).join('');
+  }
+
   get stats(): StreamDecoderStats {
     const received = this.receivedPictures.sample;
     const rendered = this.renderedPictures.sample;

@@ -9,6 +9,7 @@ import { parseProbeAdmission } from './DirectProbeAccess';
 import { startDirectVideoSession, type DirectProbeResult } from './directProbe';
 import type { DirectVideoBinding } from './directVideoProtocol';
 import type { DirectControlEndpoint } from './directPointerTransport';
+import { needsHigherH264ReceiveLevel } from './h264ReceiverOffer';
 
 export interface LiveVideoObservation {
   admitted: boolean; admissionKnown: boolean; active: boolean; frames: number; lastFrameAt: number | null;
@@ -23,9 +24,10 @@ export function matchesDisplayedCapture(binding: DirectVideoBinding, expected: C
 }
 
 /** One current viewer owns the renderer. RTC readiness alone never changes the main surface. */
-export function LiveDirectVideo({ deviceId, session, eligible, fit, expectedCapture, onFrame, onObservation, onControlChannel, onDeliveryChange }: {
+export function LiveDirectVideo({ deviceId, session, eligible, fit, expectedCapture, receiverProfileLevelId, onFrame, onObservation, onControlChannel, onDeliveryChange }: {
   deviceId: string; session: string; eligible: boolean; fit?: 'contain' | 'cover' | 'fill';
   expectedCapture: () => CaptureFrameBinding | null;
+  receiverProfileLevelId?: () => string | null;
   onFrame: (video: HTMLVideoElement, binding: DirectVideoBinding) => boolean;
   onObservation: (value: LiveVideoObservation) => void;
   onControlChannel?: (channel: DirectControlEndpoint | null) => void;
@@ -36,8 +38,8 @@ export function LiveDirectVideo({ deviceId, session, eligible, fit, expectedCapt
   const [visible, setVisible] = useState(() => !document.hidden);
   const [active, setActive] = useState(false);
   const video = useRef<HTMLVideoElement>(null);
-  const callbacks = useRef({ expectedCapture, onFrame, onObservation, onControlChannel, onDeliveryChange });
-  callbacks.current = { expectedCapture, onFrame, onObservation, onControlChannel, onDeliveryChange };
+  const callbacks = useRef({ expectedCapture, receiverProfileLevelId, onFrame, onObservation, onControlChannel, onDeliveryChange });
+  callbacks.current = { expectedCapture, receiverProfileLevelId, onFrame, onObservation, onControlChannel, onDeliveryChange };
   const controlEnabled = onControlChannel !== undefined;
   useEffect(() => {
     const changed = () => setVisible(!document.hidden);
@@ -184,7 +186,8 @@ export function LiveDirectVideo({ deviceId, session, eligible, fit, expectedCapt
           }
           publish();
         }, { controlledStunUrl: stun,
-          receiverSize: (() => { const capture = callbacks.current.expectedCapture();
+          receiverSize: (() => { if (!needsHigherH264ReceiveLevel(callbacks.current.receiverProfileLevelId?.())) return undefined;
+            const capture = callbacks.current.expectedCapture();
             return capture ? { width: capture.frameWidth, height: capture.frameHeight } : undefined; })(),
           hasRecentVideoFrame: () => !disposed && !ended && current === generation && !document.hidden
             && lastPresentedAt !== null && performance.now() - lastPresentedAt < FRAME_PROGRESS_TIMEOUT_MS,

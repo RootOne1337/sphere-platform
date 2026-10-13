@@ -125,6 +125,17 @@ FPS поизмеренному input FPS больше не выполняетс�
 [Первичный код WebRTC](https://webrtc.googlesource.com/src/+/refs/heads/main/video/video_stream_encoder.cc)
 связывает `GetInputFramerateFps()` с`rate_control.framerate_fps` приобновлении encoder rates.
 
+## Совместимость receive offer
+
+Native receipt APK67 подтвердил request level41 приsource level32. Ранние APK
+сравнивают fmtp-map буквально, поэтому новый веб не должен повышать offer для
+source level31. WebCodecs теперь выдаёт profile/level только послеуспешного
+предъявления текущего кадра; reset/recovery очищает этот признак. Live direct
+путь расширяет receive capability только для уже показанного constrained-baseline
+SPS сlevel выше31, послепроверки самого браузера. Старые источники сохраняют
+обычный offer; SDP разрешения, payload IDs иtimers не расширяются.
+Обратная совместимость иновый source проверяются отдельно вruntime.
+
 ## Телефон и число зрителей: дополнительная проверка
 
 В сеансах PH03013 октября около15:37–15:41 UTC наблюдался `gathering_deadline`: браузер

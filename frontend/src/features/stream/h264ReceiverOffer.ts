@@ -1,3 +1,9 @@
+/** Older level31 sources retain the ordinary offer and their exact codec format. */
+export function needsHigherH264ReceiveLevel(profile: string | null | undefined): boolean {
+  return typeof profile === 'string' && /^42[ce]0[0-9a-f]{2}$/i.test(profile)
+    && [32, 40, 41, 42, 50, 51, 52].includes(parseInt(profile.slice(-2), 16));
+}
+
 /** Raise H.264 receive level only after this browser confirms decoding it.
  * Only constrained-baseline fmtp changes; ICE, DTLS, sections and payload IDs stay intact.
  */

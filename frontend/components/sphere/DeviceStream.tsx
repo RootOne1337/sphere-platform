@@ -1353,6 +1353,7 @@ export function DeviceStream({
     {currentDiagnosticSession && <LiveDirectVideo key={currentDiagnosticSession} deviceId={deviceId} session={currentDiagnosticSession}
       eligible={!!serverCaptureRef.current && !recordingMode && !inspection && taskHandoffId === undefined}
       fit={fit} expectedCapture={() => diagnosticReporter.current?.sessionId === currentDiagnosticSession ? serverCaptureRef.current : null}
+      receiverProfileLevelId={() => decoderRef.current?.lastRenderedProfileLevelId ?? null}
       onFrame={(video, binding) => renderDirectFrame(video, binding, currentDiagnosticSession)}
       onControlChannel={readOnly ? undefined : endpoint => observeDirectControl(endpoint, currentDiagnosticSession)}
       onObservation={value => observeDirectVideo(value, currentDiagnosticSession)}
