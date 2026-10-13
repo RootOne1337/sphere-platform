@@ -1,8 +1,18 @@
 # Optional direct-transport relay
 
-Status: deployment template, **not an installed public service**. The ordinary
-Sphere viewer still uses its existing WebSocket stream. `sphere-probe-v2` admits
-only the finite DataChannel echo diagnostic; it does not authorize video or input.
+Текущий direct pilot: [наблюдение 13 октября](../../docs/audits/2026-10-13/DIRECT-SESSION-STABILITY.md). TURN остаётся выключенным; связь во всех NAT/WAN сетях не принята.
+
+Status: deployment template, **not an installed public service**. The default
+viewer without canary admission uses its existing WebSocket stream. The admitted
+canaries, including APK63 on PH010/PH030, can use primary WebRTC video and native DataChannel touches, with
+server video as a reserve. That live path currently negotiates host and public
+STUN candidates; it does not consume this template's TURN credentials.
+
+TURN admission currently covers the finite `sphere-probe-v2` DataChannel echo
+diagnostic and the separately admitted `sphere-video-probe-v1` video diagnostic.
+Neither diagnostic grants native input. The live `sphere-video-v1` protocol
+rejects a relay grant. A successful diagnostic allocation therefore does not
+establish a working relay path for ordinary viewing or control.
 
 The image is pinned to the official coturn 4.18.0-r0 Linux amd64 manifest. This
 compose file targets a Linux relay host, not Docker Desktop host networking. A
@@ -46,6 +56,12 @@ explicit diagnostic comparison; do not label its selected path as P2P. The
 already authenticated allocation; allocation/refresh behavior needs its own
 acceptance check.
 
+Live relay support still needs an explicit credential renewal and ICE restart
+contract across API, browser and APK. Do not pass these finite credentials to a
+long-running live peer or increase their lifetime to hide missing renewal.
+Validate continuity beyond credential expiry, revocation and reconnect before
+admitting live relay traffic.
+
 Open 3478 UDP/TCP, 5349 TCP, and UDP 49200–49327 on the relay host and its upstream
 gateway. Configure `external-ip=PUBLIC/PRIVATE` in `turnserver.conf` if needed;
 verify the mapped relay ports. The template blocks private/loopback/link-local
@@ -69,9 +85,16 @@ denials, quotas, refresh behavior and selected-pair evidence from real clients.
 
 Run localhost, LAN and separate-network checks independently. Record selected ICE
 pair, VPN route, connection success, RTT distribution, loss, resource plateau and
-reconnect behavior. Browser↔APK media, native input ownership and session presence
-require additional implementation and tests; successful TURN authentication alone
-does not close those requirements.
+reconnect behavior. Existing canary direct-video/input checks do not accept WAN
+relay behavior. Live relay renewal, native input ownership through relay,
+authorization loss and long-session recovery require additional implementation
+and tests; successful TURN authentication alone does not close those requirements.
+
+The 12 October PH025 observation sent ICE checks from both peers without receiving
+responses. It narrows the observed failure to connectivity checking, but does not
+identify NAT, a firewall, VPN or an emulator bridge as the cause. An installed
+public TURN service and a direct/relay comparison remain open. See the current
+[stream observation](../../docs/operations/CURRENT-STATE.md).
 
 To stop only this relay:
 
