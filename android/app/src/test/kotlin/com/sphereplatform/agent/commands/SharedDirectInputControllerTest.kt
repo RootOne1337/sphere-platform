@@ -9,6 +9,8 @@ import org.junit.Test
 import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicLong
+import java.io.ByteArrayInputStream
+import java.io.ByteArrayOutputStream
 
 class SharedDirectInputControllerTest {
     private class Fixture {
@@ -28,7 +30,9 @@ class SharedDirectInputControllerTest {
                 override suspend fun send(sample: TouchSample): RootTouchWire.Ack {
                     packets += sample
                     val result = native.apply(sample.sequence, sample.gesture, sample.action, sample.x, sample.y, now.get())
-                    return RootTouchWire.Ack(sample.sequence, result.wireCode, now.get())
+                    val bytes = ByteArrayOutputStream()
+                    RootTouchWire.ack(bytes, sample.sequence, result.wireCode, now.get())
+                    return RootTouchWire.readAck(ByteArrayInputStream(bytes.toByteArray()))
                 }
                 override suspend fun closeAndConfirm(): Boolean {
                     closed.incrementAndGet(); native.close(now.get())

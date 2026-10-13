@@ -96,6 +96,7 @@ class DirectProbeRuntime:
         return self.shared.key(binding["device"], binding["session"]) if binding.get("shared") is True else self.key(binding["device"])
 
     async def peer_binding(self, device: str, session: str) -> str | bytes | None:
+        session_id(session)
         raw = await self.redis.get(self.shared.key(device, session))
         return raw if raw is not None else await self.redis.get(self.key(device))
 

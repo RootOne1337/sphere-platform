@@ -57,7 +57,8 @@ async def test_allowed_read_is_private_finite_and_never_allocates_peer(admission
     assert response.json() == dict(schema_version=1, device_id=str(DEVICE), enabled=True,
                                    profiles=["host", "public-stun"], scope="diagnostic_echo_only",
                                    max_duration_ms=30000, samples=20, readonly_video_enabled=False, live_video_enabled=False,
-                                   direct_input_enabled=False, native_history_enabled=False, legacy_video_handover_enabled=False)
+                                   direct_input_enabled=False, native_history_enabled=False, legacy_video_handover_enabled=False,
+                                   shared_input_enabled=False)
     db.get.assert_awaited_once_with(router.Device, DEVICE)
     router.bind_tenant_context.assert_awaited_once_with(db, str(ORG))
 
@@ -211,3 +212,44 @@ async def test_ws_also_rejects_an_inactive_device_after_capability_read(monkeypa
     with pytest.raises(HTTPException) as rejected:
         await ws_router.authorize("fixture", str(DEVICE))
     assert rejected.value.status_code == 403
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("role,allowed", [("viewer", False), ("device_manager", True), ("super_admin", True)])
+async def test_shared_signaling_requires_control_permission_separately_from_video_read(monkeypatch, role, allowed):
+    from backend.api.ws.direct import router as ws_router
+    db = AsyncMock()
+    db.get.return_value = SimpleNamespace(org_id=ORG, is_active=True)
+
+    @asynccontextmanager
+    async def session():
+        yield db
+
+    user = SimpleNamespace(id=uuid.uuid4(), org_id=ORG, role=role)
+    monkeypatch.setattr(ws_router, "AsyncSessionLocal", session)
+    monkeypatch.setattr(ws_router, "_authenticate_viewer", AsyncMock(return_value=user))
+    assert await ws_router.authorize("fixture", str(DEVICE)) == (str(ORG), str(user.id))
+    if allowed:
+        assert await ws_router.authorize("fixture", str(DEVICE), control=True) == (str(ORG), str(user.id))
+    else:
+        with pytest.raises(HTTPException) as rejected:
+            await ws_router.authorize("fixture", str(DEVICE), control=True)
+        assert rejected.value.status_code == 403
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("version,online,enabled,allowed", [
+    (10268, True, True, False), (10269, True, True, True), (10269, False, True, False),
+    (10269, True, False, False), (None, True, True, False),
+])
+async def test_shared_capability_requires_native_support_and_server_input_gate(admission, monkeypatch, version, online, enabled, allowed):
+    _, client, _, _, runtime = admission
+    monkeypatch.setattr(router.settings, "DIRECT_TRANSPORT_LIVE_VIDEO_ENABLED", True)
+    monkeypatch.setattr(router.settings, "DIRECT_TRANSPORT_INPUT_ENABLED", enabled)
+    runtime.redis = object()
+    cache = SimpleNamespace(get_status=AsyncMock(return_value=SimpleNamespace(
+        agent_version_code=version, ws_session_id="fresh", status="online" if online else "offline")))
+    monkeypatch.setattr(router, "DeviceStatusCache", lambda redis: cache)
+    response = await client.get(URL)
+    assert response.json()["shared_input_enabled"] is allowed
+    assert response.headers["cache-control"] == "private, no-store"

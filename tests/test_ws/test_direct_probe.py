@@ -13,6 +13,7 @@ from backend.schemas.device_status import DeviceLiveStatus
 from backend.services.device_status_cache import DeviceStatusCache
 from backend.websocket.connection_manager import ConnectionManager
 from backend.websocket.direct_probe_protocol import (
+    MAX_PEERS,
     InvalidDirectProbe,
     agent_answer,
     description,
@@ -579,13 +580,16 @@ async def test_runtime_capacity_reserves_before_redis_await(peers, monkeypatch):
         ready.set()
         await release.wait()
     monkeypatch.setattr(runtime, "_open", slow_open)
-    tasks = [asyncio.create_task(runtime.open(ProbeViewer(str(i), "org", "user", AsyncMock()), SDP)) for i in range(8)]
-    await ready.wait()
-    await asyncio.sleep(0)
-    with pytest.raises(InvalidDirectProbe, match="probe_unavailable"):
-        await runtime.open(ProbeViewer("overflow", "org", "user", AsyncMock()), SDP)
-    release.set()
-    await asyncio.gather(*tasks)
+    tasks = [asyncio.create_task(runtime.open(ProbeViewer(str(i), "org", "user", AsyncMock()), SDP)) for i in range(MAX_PEERS)]
+    try:
+        await ready.wait()
+        await asyncio.sleep(0)
+        async with asyncio.timeout(2):
+            with pytest.raises(InvalidDirectProbe, match="probe_unavailable"):
+                await runtime.open(ProbeViewer("overflow", "org", "user", AsyncMock()), SDP)
+    finally:
+        release.set()
+        await asyncio.gather(*tasks)
     assert runtime.reservations == 0
 
 

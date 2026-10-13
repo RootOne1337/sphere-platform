@@ -52,6 +52,7 @@ APPROVED_PATHS = {
     "backend/core/config.py", "backend/api/ws/direct/__init__.py",
     "backend/api/ws/direct/router.py", "backend/websocket/direct_probe_protocol.py",
     "backend/websocket/direct_probe_runtime.py",
+    "backend/websocket/shared_peer_lease.py",
     "backend/websocket/direct_probe_mdns.py",
     "backend/websocket/direct_probe_telemetry.py",
     "backend/websocket/direct_probe_ice.py", "backend/api/v1/direct_probe/__init__.py",
