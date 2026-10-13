@@ -32,6 +32,7 @@
 В истории не хранится идентифицирующий User-Agent, поэтому эти записи не объявлены
 однозначно принадлежащими телефону. Повторная проверка нужна после совместного runtime.
 
-[Кандидат совместного ввода](../2026-10-13/SHARED-DIRECT-INPUT.md),
-[рабочая установка APK68](../2026-10-13/DIRECT-SOURCE-QUALITY-DELIVERY.md),
+[Конечная приёмка совместного ввода и fullscreen](SHARED-INPUT-FULLSCREEN-DELIVERY.md),
+[физическая клавиатура: контракт, ещё не установлена](DIRECT-KEYBOARD-PLAN.md),
+[историческая установка APK68](../2026-10-13/DIRECT-SOURCE-QUALITY-DELIVERY.md),
 [текущий реестр](../../operations/WORK-STATUS.md).
