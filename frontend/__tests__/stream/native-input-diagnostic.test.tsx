@@ -34,3 +34,38 @@ test('a historical startup problem remains separate from a ready current adapter
   expect(screen.getByText(/Ввод Android: Готов/)).toBeInTheDocument();
   expect(screen.getByText(/Последний сбой запуска: Размер или поворот экрана изменился при запуске · 300 мс/)).toBeInTheDocument();
 });
+
+test('a confirmed current adapter retains its separately dated release cause', () => {
+  render(<NativeInputDiagnostic telemetry={{ ...telemetry, state: 'ready',
+    last_release_reason: 'viewer_closed', last_release_age_ms: 260706,
+    last_failure: 'receipt_unavailable', last_failure_age_ms: 32422753 }} />);
+  expect(screen.getByText('Ввод Android: Готов')).toBeInTheDocument();
+  expect(screen.getByText(/Последнее завершение: Клиент закрыл управление · 4 мин 20 с назад в срезе/)).toBeInTheDocument();
+  expect(screen.getByText(/Последний сбой: Не удалось отправить подтверждение Android · 9 ч назад в срезе/)).toBeInTheDocument();
+});
+
+test('release cause does not imply successful cleanup', () => {
+  render(<NativeInputDiagnostic telemetry={{ ...telemetry,
+    last_release_reason: 'cleanup_unknown', last_release_age_ms: 0 }} />);
+  expect(screen.getByText(/Последнее завершение: Освобождение ввода не подтверждено · 0 мс назад в срезе/)).toBeInTheDocument();
+  expect(screen.getByText('Неподтверждённые освобождения: 1')).toBeInTheDocument();
+});
+
+test('older agents do not get an invented release cause', () => {
+  render(<NativeInputDiagnostic telemetry={telemetry} />);
+  expect(screen.queryByText(/Последнее завершение/)).not.toBeInTheDocument();
+});
+
+test.each(['authorization_expired', 'viewer_heartbeat_expired', 'native_failure'] as const)(
+  'shows a recognised native release cause: %s', reason => {
+    render(<NativeInputDiagnostic telemetry={{ ...telemetry, last_release_reason: reason, last_release_age_ms: 86400000 }} />);
+    expect(screen.getByText(/Последнее завершение:/)).not.toHaveTextContent('Причина не распознана');
+    expect(screen.getByText(/не менее 24 ч назад в срезе/)).toBeInTheDocument();
+  },
+);
+
+test.each(['future_reason', '__proto__', 'constructor'])('unknown cause %s stays readable', reason => {
+  render(<NativeInputDiagnostic telemetry={{ ...telemetry,
+    last_release_reason: reason as NativeInputTelemetry['last_release_reason'], last_release_age_ms: 1000 }} />);
+  expect(screen.getByText(/Последнее завершение: Причина не распознана · 1 с назад в срезе/)).toBeInTheDocument();
+});
