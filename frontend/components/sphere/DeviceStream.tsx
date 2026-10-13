@@ -666,7 +666,7 @@ export function DeviceStream({
                 const inputTransport = endpoint ? new DirectPointerTransport(newWs, endpoint) : newWs;
                 continuousRouteRef.current = endpoint;
                 setControlTransport(endpoint ? 'direct_webrtc' : 'server_websocket');
-                const controller = new ContinuousPointer({ socket: inputTransport,
+                const controller = new ContinuousPointer({ socket: inputTransport, sharedInput: endpoint?.sharedInput === true,
                   renderedCapture: () => renderedCaptureRef.current,
                   onFence: snapshot => {
                     if (ignore || ended || newWs !== wsRef.current || continuousRef.current !== controller

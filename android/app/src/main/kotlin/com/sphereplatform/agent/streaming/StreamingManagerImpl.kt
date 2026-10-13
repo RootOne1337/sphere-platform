@@ -74,9 +74,10 @@ class StreamingManagerImpl @Inject constructor(
     private class EncodedViewer(val owner: Any, val capture: CaptureInputSession, val consume: (EncodedCaptureFrame) -> Unit) {
         val sequence = java.util.concurrent.atomic.AtomicLong(0)
         val legacy = LegacyVideoDeliveryLease()
-        val awaitingLegacyIdr = java.util.concurrent.atomic.AtomicBoolean(false)
+        @Volatile var rate: Pair<Int, Long>? = null
     }
-    @Volatile private var encodedViewer: EncodedViewer? = null
+    @Volatile private var encodedViewers: List<EncodedViewer> = emptyList()
+    private val awaitingLegacyIdr = java.util.concurrent.atomic.AtomicBoolean(false)
 
     private var streamStartMs: Long = 0L
     private var encoderCaptureEpoch: UUID? = null
@@ -431,31 +432,32 @@ class StreamingManagerImpl @Inject constructor(
         )
 
         if (!metadata.isCodecConfig) {
-            val viewer = encodedViewer
-            // No subscriber code runs under the capture/lifecycle lock. A retired
-            // peer checks its own fence, and a replacement never receives this epoch.
-            if (viewer != null && viewer.capture.epoch == captureEpoch?.toString() && metadata.presentationTimeUs > 0) {
-                runCatching { viewer.consume(EncodedCaptureFrame(viewer.capture, viewer.sequence.incrementAndGet(),
-                    Math.multiplyExact(metadata.presentationTimeUs, 1000L), metadata.isKeyFrame,
-                    nalData, encoder?.cachedSps, encoder?.cachedPps)) }
+            for (viewer in encodedViewers) {
+                // No subscriber code runs under the capture/lifecycle lock. A retired
+                // peer checks its own fence, and a replacement never receives this epoch.
+                if (viewer.capture.epoch == captureEpoch?.toString() && metadata.presentationTimeUs > 0) {
+                    runCatching { viewer.consume(EncodedCaptureFrame(viewer.capture, viewer.sequence.incrementAndGet(),
+                        Math.multiplyExact(metadata.presentationTimeUs, 1000L), metadata.isKeyFrame,
+                        nalData, encoder?.cachedSps, encoder?.cachedPps)) }
+                }
             }
         }
 
-        val deliveryViewer = encodedViewer?.takeIf { it.capture.epoch == captureEpoch?.toString() }
-        val delivery = deliveryViewer?.legacy?.observe(monotonicMs())
-        if (delivery?.sendLegacy == false) {
+        val delivery = encodedViewers.filter { it.capture.epoch == captureEpoch?.toString() }
+            .map { it.legacy.observe(monotonicMs()) }
+        if (delivery.isNotEmpty() && delivery.none { it.sendLegacy }) {
             qualityMonitor.recordLegacySuppression(nalData.size)
             return // Encoded RTP already consumed this exact access unit above.
         }
-        if (delivery?.requestKeyFrame == true) {
-            deliveryViewer.awaitingLegacyIdr.set(true)
+        if (delivery.any { it.requestKeyFrame }) {
+            awaitingLegacyIdr.set(true)
             // Never acquire the lifecycle lock on the codec callback thread:
             // stop() may be waiting for that callback to finish.
             (imageReaderHandler ?: Handler(context.mainLooper)).post {
                 if (streaming && captureSession === session) onViewerConnected()
             }
         }
-        if (deliveryViewer?.awaitingLegacyIdr?.get() == true && !metadata.isCodecConfig) {
+        if (awaitingLegacyIdr.get() && !metadata.isCodecConfig) {
             if (!metadata.isKeyFrame) {
                 qualityMonitor.recordLegacySuppression(nalData.size)
                 return
@@ -463,7 +465,7 @@ class StreamingManagerImpl @Inject constructor(
             // An already queued IDR can beat the recovery Handler. Configuration
             // must still precede it, independently of callback scheduling.
             replayLegacyHeaders()
-            deliveryViewer.awaitingLegacyIdr.set(false)
+            awaitingLegacyIdr.set(false)
         }
 
         // Capture these at encoder creation. A late callback must never stamp
@@ -471,15 +473,15 @@ class StreamingManagerImpl @Inject constructor(
         val packed = FramePackager.pack(nalData, metadata, startedMs, captureEpoch)
         val sent = sendFrameBinary(packed)
 
-        if (!sent && (!qualityProfilesEnabled || encodedViewer == null)) {
+        if (!sent && (!qualityProfilesEnabled || encodedViewers.isEmpty())) {
             adaptiveBitrate?.onFrameDropDetected()
             if (metadata.isKeyFrame) {
                 Timber.w("StreamingManagerImpl: I-frame send failed — WS queue may be full")
             }
-        } else if (sent && (!qualityProfilesEnabled || encodedViewer == null)) {
+        } else if (sent && (!qualityProfilesEnabled || encodedViewers.isEmpty())) {
             adaptiveBitrate?.onSuccessfulDelivery()
         }
-        if (qualityProfilesEnabled && encodedViewer == null) {
+        if (qualityProfilesEnabled && encodedViewers.isEmpty()) {
             val bitrate = encoder?.targetBitrateBps
             cachedQuality.updateAndGet { old ->
                 if (old?.capture !== session || old.value.active == null || bitrate == null
@@ -497,7 +499,7 @@ class StreamingManagerImpl @Inject constructor(
      */
     @Synchronized
     override fun onViewerConnected() {
-        encodedViewer?.legacy?.requireLegacy(monotonicMs())
+        encodedViewers.forEach { it.legacy.requireLegacy(monotonicMs()) }
         val dispatched = viewerKeyFrameCoordinator.request { requestKeyFrameNow() }
         if (!dispatched) {
             Timber.i("StreamingManagerImpl: viewer key-frame request deferred until encoder is ready")
@@ -595,6 +597,8 @@ class StreamingManagerImpl @Inject constructor(
     override fun onDirectRateEstimate(owner: Any, capture: CaptureInputSession, bitrate: Int, fps: Int) {
         if (!qualityProfilesEnabled || !isEncodedViewerCurrent(owner, capture)
             || bitrate !in 0..100_000_000 || fps !in 0..240) return
+        val viewer = encodedViewers.firstOrNull { it.owner === owner && it.capture == capture } ?: return
+        viewer.rate = bitrate to monotonicMs()
         pendingRate.set(RateEstimate(owner, capture, bitrate, fps))
         if (rateScheduled.compareAndSet(false, true)) qualityHandler.post(drainRate)
     }
@@ -606,7 +610,14 @@ class StreamingManagerImpl @Inject constructor(
             val estimate = pendingRate.getAndSet(null)
             synchronized(this@StreamingManagerImpl) {
                 if (estimate != null && isEncodedViewerCurrent(estimate.owner, estimate.capture)) {
-                    val rate = sourceRateGovernor?.observe(estimate.bitrate, estimate.fps, monotonicMs())
+                    // One coded source serves all current peers. The weakest recent
+                    // allocation controls that source; one fast peer cannot repeatedly
+                    // overwrite a slow peer's budget and fill its RTP queue.
+                    val now = monotonicMs()
+                    val sharedBitrate = encodedViewers.filter { it.capture == estimate.capture }
+                        .mapNotNull { it.rate?.takeIf { sample -> now >= sample.second && now - sample.second <= 10000 }?.first }
+                        .minOrNull() ?: estimate.bitrate
+                    val rate = sourceRateGovernor?.observe(sharedBitrate, estimate.fps, now)
                     val enc = encoder
                     if (rate != null && enc != null) {
                         if (enc.adjustBitrate(rate.bitrate)) {
@@ -646,30 +657,30 @@ class StreamingManagerImpl @Inject constructor(
 
     @Synchronized
     override fun attachEncodedViewer(owner: Any, consume: (EncodedCaptureFrame) -> Unit): CaptureInputSession? {
-        if (encodedViewer != null) return null
+        if (encodedViewers.size >= 10 || encodedViewers.any { it.owner === owner }) return null
         val capture = getInputSession() ?: return null
         // The encoded adapter advertises the actual configured AVC level ceiling.
-        encodedViewer = EncodedViewer(owner, capture, consume)
+        encodedViewers = encodedViewers + EncodedViewer(owner, capture, consume)
         return capture
     }
 
     @Synchronized
     override fun detachEncodedViewer(owner: Any) {
-        if (encodedViewer?.owner === owner) {
-            val wasSuppressed = encodedViewer?.legacy?.observe(monotonicMs())?.sendLegacy == false
-            encodedViewer = null
-            if (wasSuppressed) viewerKeyFrameCoordinator.request { requestKeyFrameNow() }
+        val viewer = encodedViewers.firstOrNull { it.owner === owner } ?: return
+        encodedViewers = encodedViewers.filterNot { it === viewer }
+        if (encodedViewers.isEmpty() && !viewer.legacy.observe(monotonicMs()).sendLegacy) {
+            awaitingLegacyIdr.set(true)
+            viewerKeyFrameCoordinator.request { requestKeyFrameNow() }
         }
     }
 
     override fun isEncodedViewerCurrent(owner: Any, capture: CaptureInputSession): Boolean {
-        val viewer = encodedViewer
-        return streaming && viewer?.owner === owner && viewer.capture == capture
+        return streaming && encodedViewers.any { it.owner === owner && it.capture == capture }
     }
 
     @Synchronized
     override fun renewLegacyVideoDelivery(owner: Any, capture: CaptureInputSession, enabled: Boolean, ttlMs: Int): Boolean {
-        val viewer = encodedViewer ?: return false
+        val viewer = encodedViewers.firstOrNull { it.owner === owner } ?: return false
         if (!streaming || viewer.owner !== owner || viewer.capture != capture || getInputSession() != capture) return false
         return viewer.legacy.renew(enabled, monotonicMs(), ttlMs)
     }
@@ -688,7 +699,8 @@ class StreamingManagerImpl @Inject constructor(
         viewerKeyFrameCoordinator.markEncoderStopped()
         streaming = false
         cachedQuality.set(null)
-        encodedViewer = null
+        encodedViewers = emptyList()
+        awaitingLegacyIdr.set(false)
         inputGeometry = null
         inputSession = null
         encoderCaptureEpoch = null

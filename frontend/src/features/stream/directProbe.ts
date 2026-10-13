@@ -58,7 +58,7 @@ export function startDirectVideoSession(
   url: string, token: string, report: (value: DirectProbeResult) => void,
   options: { controlledStunUrl?: string; onTrack: (track: MediaStreamTrack) => void;
     receiverSize?: { width: number; height: number };
-    historySession?: string; controlSession?: string; onControlChannel?: (channel: DirectControlEndpoint | null) => void;
+    historySession?: string; controlSession?: string; sharedInput?: boolean; onControlChannel?: (channel: DirectControlEndpoint | null) => void;
     /** Actual recent presentation, independently bounded by the renderer watchdog. */
     hasRecentVideoFrame?: () => boolean },
 ): () => void {
@@ -67,7 +67,7 @@ export function startDirectVideoSession(
 
 function startDirectSession(
   url: string, token: string, report: (value: DirectProbeResult) => void,
-  options: { controlledStunUrl?: string; relayGrant?: boolean; controlSession?: string; historySession?: string;
+  options: { controlledStunUrl?: string; relayGrant?: boolean; controlSession?: string; historySession?: string; sharedInput?: boolean;
     onControlChannel?: (channel: DirectControlEndpoint | null) => void;
     receiverSize?: { width: number; height: number };
     hasRecentVideoFrame?: () => boolean }, onVideoTrack?: (track: MediaStreamTrack) => void, live = false,
@@ -174,6 +174,7 @@ function startDirectSession(
       try {
         ws.send(JSON.stringify(video ? { token, protocol: live ? 'sphere-video-v1' : 'sphere-video-probe-v1', ...(options.relayGrant ? { relay: true } : {}),
           ...(live && options.controlSession ? { control_session: options.controlSession } : {}),
+          ...(live && options.controlSession && options.sharedInput ? { shared_control: true } : {}),
           ...(options.historySession ? { history_session: options.historySession } : {}) }
           : options.relayGrant ? { token, protocol: 'sphere-probe-v2' } : { token }));
         if (sdp) ws.send(JSON.stringify({ type: 'direct_probe_offer', sdp }));
@@ -220,7 +221,7 @@ function startDirectSession(
       channel = peer.createDataChannel(live ? 'sphere-video-v1' : video ? 'sphere-video-probe-v1' : 'sphere-probe-v1', { ordered: true });
       if (live && options.controlSession && options.onControlChannel) {
         if (!/^[0-9a-f]{16}$/.test(options.controlSession)) throw Error('invalid_control_session');
-        const direct = peer.createDataChannel('sphere-control-v1', { ordered: true });
+        const direct = peer.createDataChannel(options.sharedInput ? 'sphere-control-v2' : 'sphere-control-v1', { ordered: true });
         controlChannel = direct;
         let retired = false;
         const retire = (reason: string) => {
@@ -235,7 +236,7 @@ function startDirectSession(
         direct.onopen = () => {
           if (stopped || retired) return;
           if (!session) return retire('missing_binding');
-          options.onControlChannel?.({ session,
+          options.onControlChannel?.({ session, sharedInput: options.sharedInput === true,
             get readyState() { return !stopped && !retired && direct.readyState === 'open' ? 1 : 0; },
             get bufferedAmount() { return direct.bufferedAmount; },
             capture: () => result.videoBinding ?? null,

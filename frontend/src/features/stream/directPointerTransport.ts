@@ -4,6 +4,7 @@ import type { DirectVideoBinding } from './directVideoProtocol';
 /** The peer comes from authenticated signaling. This handle cannot grant native ownership. */
 export interface DirectControlEndpoint extends PointerTransport {
   readonly session: string;
+  readonly sharedInput?: boolean;
   capture(): DirectVideoBinding | null;
   listen(receipt: (message: unknown) => void): () => void;
 }
@@ -11,8 +12,8 @@ export interface DirectControlEndpoint extends PointerTransport {
 /** One fixed route per native owner. A failed direct send is never retried over WebSocket. */
 export class DirectPointerTransport implements PointerTransport {
   constructor(private readonly server: PointerTransport, readonly direct: DirectControlEndpoint) {}
-  get readyState() { return this.server.readyState === 1 && this.direct.readyState === 1 ? 1 : 0; }
-  get bufferedAmount() { return this.server.bufferedAmount + this.direct.bufferedAmount; }
+  get readyState() { return (this.direct.sharedInput || this.server.readyState === 1) && this.direct.readyState === 1 ? 1 : 0; }
+  get bufferedAmount() { return (this.direct.sharedInput ? 0 : this.server.bufferedAmount) + this.direct.bufferedAmount; }
   send(raw: string): void {
     if (new TextEncoder().encode(raw).length > 1024) throw Error('direct_input_message_too_large');
     const data = JSON.parse(raw);
@@ -23,7 +24,8 @@ export class DirectPointerTransport implements PointerTransport {
       const binding = this.direct.capture();
       if (!binding || !/^[0-9a-f]{32}$/.test(this.direct.session) || data.capture_epoch !== binding.captureEpoch
         || data.frame_width !== binding.width || data.frame_height !== binding.height) throw Error('direct_capture_changed');
-      this.server.send(JSON.stringify({ ...data, type: 'touch_direct_open', direct_session: this.direct.session }));
+      if (this.direct.sharedInput) this.direct.send(raw);
+      else this.server.send(JSON.stringify({ ...data, type: 'touch_direct_open', direct_session: this.direct.session }));
       return;
     }
     if (data.type !== 'touch_event' || Object.keys(data).sort().join() !== 'action,gesture,sequence,type,x,y') {
@@ -42,6 +44,7 @@ export class DirectPointerTransport implements PointerTransport {
     if (this.direct.readyState === 1 && this.direct.bufferedAmount <= 1024) {
       try { this.direct.send('{"type":"touch_close"}'); } catch { /* Independent server revocation below. */ }
     }
+    if (this.direct.sharedInput) return; // Exact participant cleanup on the same authorized media peer.
     if (this.server.readyState !== 1 || this.server.bufferedAmount > 1024) throw Error('close_transport_unavailable');
     this.server.send(cancelUnstarted ? '{"type":"touch_close","cancel_unstarted":true}' : '{"type":"touch_close"}');
   }

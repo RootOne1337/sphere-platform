@@ -34,12 +34,14 @@ async def close_probe(ws: WebSocket, code: int, reason: str) -> None:
         pass
 
 
-async def authorize(token: str, device_id: str) -> tuple[str, str]:
+async def authorize(token: str, device_id: str, *, control: bool = False) -> tuple[str, str]:
     async with asyncio.timeout(2):
         async with AsyncSessionLocal() as db:
             user = await _authenticate_viewer(token, db)
             device = await db.get(Device, uuid.UUID(device_id))
-            if not device or not device.is_active or device.org_id != user.org_id or not has_permission(user.role, "stream:read"):
+            if (not device or not device.is_active or device.org_id != user.org_id
+                    or not has_permission(user.role, "stream:read")
+                    or control and not has_permission(user.role, "stream:control")):
                 raise HTTPException(status_code=403, detail="probe_access_denied")
             return str(user.org_id), str(user.id)
 
@@ -64,7 +66,8 @@ async def direct_probe_ws(ws: WebSocket, device_id: str) -> None:
         import json
         first = json.loads(raw)
         if (not isinstance(first, dict) or "token" not in first
-                or first.keys() - {"token", "protocol", "relay", "control_session", "history_session"}
+                or first.keys() - {"token", "protocol", "relay", "control_session", "history_session", "shared_control"}
+                or "shared_control" in first and (first["shared_control"] is not True or "control_session" not in first)
                 or "protocol" in first and first["protocol"] not in {"sphere-probe-v2", "sphere-video-probe-v1", "sphere-video-v1"}
                 or "relay" in first and (first.get("protocol") != "sphere-video-probe-v1" or first["relay"] is not True)
                 or "control_session" in first and (first.get("protocol") != "sphere-video-v1"
@@ -77,11 +80,17 @@ async def direct_probe_ws(ws: WebSocket, device_id: str) -> None:
             raise InvalidDirectProbe("invalid_auth")
         live = first.get("protocol") == "sphere-video-v1"
         video = live or first.get("protocol") == "sphere-video-probe-v1"
-        identity = await authorize(first["token"], device_id)
+        async def current_identity() -> tuple[str, str]:
+            if first.get("shared_control") is True:
+                return await authorize(first["token"], device_id, control=True)
+            return await authorize(first["token"], device_id)
+
+        identity = await current_identity()
         if video and not (settings.DIRECT_TRANSPORT_LIVE_VIDEO_ENABLED if live else settings.DIRECT_TRANSPORT_VIDEO_PROBE_ENABLED):
             raise InvalidDirectProbe("video_probe_disabled")
         viewer = ProbeViewer(device_id, *identity, ws, video=video, live=live,
-                             control_session=first.get("control_session"), history_session=first.get("history_session"))
+                             control_session=first.get("control_session"), history_session=first.get("history_session"),
+                             shared_control=first.get("shared_control") is True)
         if first.get("protocol") == "sphere-probe-v2" or video and first.get("relay") is True:
             await runtime.prepare(viewer)
             options = dict(relay_only=settings.DIRECT_PROBE_TURN_RELAY_ONLY)
@@ -106,7 +115,7 @@ async def direct_probe_ws(ws: WebSocket, device_id: str) -> None:
                 except asyncio.TimeoutError:
                     if video and not (settings.DIRECT_TRANSPORT_LIVE_VIDEO_ENABLED if live else settings.DIRECT_TRANSPORT_VIDEO_PROBE_ENABLED):
                         raise InvalidDirectProbe("video_probe_disabled")
-                    if await authorize(first["token"], device_id) != identity:
+                    if await current_identity() != identity:
                         raise InvalidDirectProbe("probe_access_revoked")
                     async with asyncio.timeout(2):
                         if not viewer.binding or not await runtime.remaining(viewer.binding):
@@ -118,7 +127,7 @@ async def direct_probe_ws(ws: WebSocket, device_id: str) -> None:
                     data = json.loads(raw)
                     if (isinstance(data, dict) and data.keys() == {"type", "sequence"}
                             and data["type"] == "direct_video_keepalive"):
-                        if await authorize(first["token"], device_id) != identity:
+                        if await current_identity() != identity:
                             raise InvalidDirectProbe("probe_access_revoked")
                         await runtime.renew(viewer, data["sequence"])
                         continue

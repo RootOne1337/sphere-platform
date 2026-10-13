@@ -28,6 +28,7 @@ from backend.websocket.direct_probe_protocol import (
     session_id,
 )
 from backend.websocket.direct_probe_telemetry import native_peer_report
+from backend.websocket.shared_peer_lease import SHARED_PEER_MIN_AGENT_CODE, SharedPeerLease
 from backend.websocket.stream_session_history import StreamSessionHistory, utc_now
 
 OPERATION_SECONDS = 2.0
@@ -56,6 +57,7 @@ class ProbeViewer:
     renewed_at: float = 0
     control_session: str | None = None
     history_session: str | None = None
+    shared_control: bool = False
 
 
 @dataclass
@@ -72,6 +74,7 @@ class PendingProbe:
 class DirectProbeRuntime:
     def __init__(self, redis: Any, manager: ConnectionManager, namespace: str = "sphere:direct-probe:v1") -> None:
         self.redis, self.manager, self.namespace = redis, manager, namespace
+        self.shared = SharedPeerLease(redis, namespace)
         self.worker = secrets.token_hex(16)
         self.viewers: dict[str, ProbeViewer] = {}
         self.pending: dict[str, PendingProbe] = {}
@@ -88,6 +91,13 @@ class DirectProbeRuntime:
 
     def key(self, device: str) -> str:
         return f"{self.namespace}:lease:{device}"
+
+    def lease_key(self, binding: dict) -> str:
+        return self.shared.key(binding["device"], binding["session"]) if binding.get("shared") is True else self.key(binding["device"])
+
+    async def peer_binding(self, device: str, session: str) -> str | bytes | None:
+        raw = await self.redis.get(self.shared.key(device, session))
+        return raw if raw is not None else await self.redis.get(self.key(device))
 
     @staticmethod
     def encode(data: dict) -> str:
@@ -114,7 +124,7 @@ class DirectProbeRuntime:
         if not await self.topology(binding):
             return 0
         # GET + PTTL must be atomic: an expired owner's GET cannot borrow a newer owner's TTL.
-        ttl = await self.redis.eval(REMAINING_EXACT, 1, self.key(binding["device"]), self.encode(binding))
+        ttl = await self.redis.eval(REMAINING_EXACT, 1, self.lease_key(binding), self.encode(binding))
         return ttl if 0 < ttl <= SESSION_MS else 0
 
     async def input_peer(self, *, device: str, org: str, user: str, session: str, agent_session: str,
@@ -125,15 +135,15 @@ class DirectProbeRuntime:
                 or device not in settings.DIRECT_TRANSPORT_PROBE_DEVICE_IDS):
             return False
         async with asyncio.timeout(OPERATION_SECONDS):
-            raw = await self.redis.get(self.key(device))
+            raw = await self.peer_binding(device, session)
             if not isinstance(raw, (str, bytes)) or len(raw) > MAX_WIRE_BYTES:
                 return False
             try:
                 binding = json.loads(raw)
                 if (not isinstance(binding, dict)
-                        or binding.keys() not in (
-                            {"session", "device", "org", "user", "worker", "agent_session", "media", "control_session"},
-                            {"session", "device", "org", "user", "worker", "agent_session", "media", "control_session", "history_session"})
+                        or not {"session", "device", "org", "user", "worker", "agent_session", "media", "control_session"} <= binding.keys()
+                        or binding.keys() - {"session", "device", "org", "user", "worker", "agent_session", "media", "control_session", "history_session", "shared"}
+                        or "shared" in binding and binding["shared"] is not True
                         or binding != {**binding, "session": session, "device": device, "org": org, "user": user,
                                        "agent_session": agent_session, "media": LIVE_VIDEO_MODE, "control_session": viewer_session}):
                     return False
@@ -154,14 +164,16 @@ class DirectProbeRuntime:
                 or device not in settings.DIRECT_TRANSPORT_PROBE_DEVICE_IDS):
             return False
         async with asyncio.timeout(OPERATION_SECONDS):
-            raw = await self.redis.get(self.key(device))
+            raw = await self.peer_binding(device, session)
             if not isinstance(raw, (str, bytes)) or len(raw) > MAX_WIRE_BYTES:
                 return False
             try:
                 binding = json.loads(raw)
                 required = {"session", "device", "org", "user", "worker", "agent_session", "media"}
                 if (not isinstance(binding, dict) or not required <= binding.keys()
-                        or binding.keys() - required - {"control_session", "history_session"}
+                        or binding.keys() - required - {"control_session", "history_session", "shared", "shared_control"}
+                        or "shared" in binding and binding["shared"] is not True
+                        or "shared_control" in binding and (binding["shared_control"] is not True or binding.get("shared") is not True)
                         or any(binding.get(k) != v for k, v in {
                             "session": session, "device": device, "org": org, "user": user, "media": LIVE_VIDEO_MODE,
                         }.items())
@@ -260,6 +272,12 @@ class DirectProbeRuntime:
                            user=viewer.user, worker=self.worker, agent_session=status.ws_session_id)
             if viewer.video:
                 binding["media"] = LIVE_VIDEO_MODE if viewer.live else VIDEO_MODE
+            if viewer.video and status.agent_version_code and status.agent_version_code >= SHARED_PEER_MIN_AGENT_CODE:
+                binding["shared"] = True
+            if viewer.shared_control:
+                if not binding.get("shared") or not viewer.live or viewer.control_session is None:
+                    raise InvalidDirectProbe("shared_input_not_admitted")
+                binding["shared_control"] = True
             if viewer.control_session is not None:
                 if (not viewer.live or not settings.DIRECT_TRANSPORT_INPUT_ENABLED
                         or not status.agent_version_code or status.agent_version_code < 10254
@@ -275,7 +293,9 @@ class DirectProbeRuntime:
                 # Diagnostic correlation is separate from input admission. The
                 # journal independently verifies the authenticated user/record.
                 binding["history_session"] = viewer.history_session
-            if not await self.redis.set(self.key(viewer.device), self.encode(binding), nx=True, px=SESSION_MS):
+            acquired = (await self.shared.acquire(binding, self.encode(binding)) if binding.get("shared") else
+                        await self.redis.set(self.key(viewer.device), self.encode(binding), nx=True, px=SESSION_MS))
+            if not acquired:
                 raise InvalidDirectProbe("device_probe_busy")
             viewer.binding = binding
             # stop/retire may run while Redis is accepting this reservation. Publish
@@ -299,7 +319,8 @@ class DirectProbeRuntime:
                     or viewer.device not in settings.DIRECT_TRANSPORT_PROBE_DEVICE_IDS
                     or not status or not status.agent_version_code or status.agent_version_code < LIVE_VIDEO_MIN_AGENT_CODE
                     or not await self.remaining(viewer.binding)
-                    or not await self.redis.eval(RENEW_EXACT, 1, self.key(viewer.device), self.encode(viewer.binding), SESSION_MS)):
+                    or not (await self.shared.renew(viewer.binding, self.encode(viewer.binding)) if viewer.binding.get("shared") else
+                            await self.redis.eval(RENEW_EXACT, 1, self.key(viewer.device), self.encode(viewer.binding), SESSION_MS))):
                 raise InvalidDirectProbe("video_renewal_rejected")
             viewer.renewal = sequence
             viewer.renewed_at = now
@@ -407,7 +428,10 @@ class DirectProbeRuntime:
         binding = data["binding"]
         binding_keys = {"session", "device", "org", "user", "worker", "agent_session"}
         if (not isinstance(binding, dict) or not binding_keys <= binding.keys()
-                or binding.keys() - binding_keys - {"media", "control_session", "history_session"}
+                or binding.keys() - binding_keys - {"media", "control_session", "history_session", "shared", "shared_control"}
+                or "shared" in binding and binding["shared"] is not True
+                or "shared_control" in binding and (binding["shared_control"] is not True or binding.get("shared") is not True
+                    or "control_session" not in binding or binding.get("media") != LIVE_VIDEO_MODE)
                 or "media" in binding and binding["media"] not in {VIDEO_MODE, LIVE_VIDEO_MODE}):
             return
         if "control_session" in binding and (binding.get("media") != LIVE_VIDEO_MODE
@@ -499,6 +523,8 @@ class DirectProbeRuntime:
         message = dict(type="direct_probe_offer", session_id=sid, sdp=sdp, ttl_ms=remaining)
         if video:
             message["media"] = LIVE_VIDEO_MODE if live else VIDEO_MODE
+        if binding.get("shared_control") is True:
+            message["shared_control"] = True
         if ice is not None:
             message["ice"] = ice
         await self.manager.send_to_session(binding["device"], snapshot.session_id, message)
@@ -518,7 +544,10 @@ class DirectProbeRuntime:
                 pass  # Native monotonic TTL still retires the peer.
             try:
                 async with asyncio.timeout(OPERATION_SECONDS):
-                    await self.redis.eval(DELETE_EXACT, 1, self.key(viewer.device), self.encode(binding))
+                    if binding.get("shared"):
+                        await self.shared.release(binding, self.encode(binding))
+                    else:
+                        await self.redis.eval(DELETE_EXACT, 1, self.key(viewer.device), self.encode(binding))
             except Exception:
                 pass  # Redis TTL bounds any orphan, never delete another owner.
 

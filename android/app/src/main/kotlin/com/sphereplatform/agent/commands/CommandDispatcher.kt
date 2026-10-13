@@ -86,22 +86,36 @@ class CommandDispatcher @Inject constructor(
     /** FIX D1: Job heartbeat watchdog — отменяется в stop(). */
     private var heartbeatJob: kotlinx.coroutines.Job? = null
     private val updateCheckQueuedForService = AtomicBoolean(false)
+    private val inputDiagnostics = NativeInputDiagnostics(android.os.SystemClock::uptimeMillis)
+    private val touchFactory = OwnedTouchPipeFactory(adbActions.inputOwnership, adbActions::prepareContinuousInput, RootTouchPipeFactory(appContext))
+    private val sharedInput = if (BuildConfig.CONTINUOUS_INPUT_CANARY) SharedDirectInputController(
+        scope, touchFactory, streamingManager::getInputSession, android.os.SystemClock::uptimeMillis,
+        diagnostics = inputDiagnostics,
+    ) else null
     private val continuousInput = if (BuildConfig.CONTINUOUS_INPUT_CANARY) {
         ContinuousInputController(scope,
-            OwnedTouchPipeFactory(adbActions.inputOwnership, adbActions::prepareContinuousInput, RootTouchPipeFactory(appContext)),
+            touchFactory,
             streamingManager, wsClient::currentGeneration, wsClient::sendInputReceipt,
             android.os.SystemClock::uptimeMillis, BuildConfig.CONTINUOUS_INPUT_CANARY,
+            inputDiagnostics,
         )
     } else null
     private val directProbe = com.sphereplatform.agent.direct.DirectProbeTransport(
         appContext, scope, wsClient::currentGeneration, wsClient::sendDirectProbeSignal, streamingManager,
-        continuousInput,
+        object : com.sphereplatform.agent.direct.DirectInputHandler {
+            override fun directMessage(session: String, message: JsonObject): Boolean =
+                if (sharedInput?.owns(session) == true) sharedInput.message(session, message)
+                else continuousInput?.directMessage(session, message) ?: false
+            override fun directClosed(session: String) { sharedInput?.closed(session); continuousInput?.directClosed(session) }
+            override fun sharedGranted(channel: com.sphereplatform.agent.direct.DirectInputChannel): Boolean =
+                sharedInput?.grant(channel) ?: false
+        },
     )
 
     fun start() {
         updateCheckQueuedForService.set(false)
         continuousInput?.let {
-            streamingManager.setInputInvalidationListener(it::invalidate)
+            streamingManager.setInputInvalidationListener { it.invalidate(); sharedInput?.invalidate() }
             it.directChannel = directProbe::inputChannel
         }
         wsClient.onJsonMessage = { msg ->
@@ -121,13 +135,14 @@ class CommandDispatcher @Inject constructor(
         wsClient.onConnected = {
             directProbe.invalidate()
             continuousInput?.invalidate()
+            sharedInput?.invalidate()
             lastPingAt = System.currentTimeMillis()
             if (updateCheckQueuedForService.compareAndSet(false, true)) {
                 updateCheckScheduler.scheduleImmediate()
             }
             scope.launch { flushResults() }
         }
-        wsClient.onDisconnected = { _, _ -> continuousInput?.invalidate(); directProbe.invalidate() }
+        wsClient.onDisconnected = { _, _ -> continuousInput?.invalidate(); sharedInput?.invalidate(); directProbe.invalidate() }
 
         // FIX AUDIT-2.5: Heartbeat watchdog — если сервер не шлёт ping > 90с,
         // принудительный reconnect. Компенсирует кейс когда readTimeout
@@ -156,6 +171,7 @@ class CommandDispatcher @Inject constructor(
      * Вызывается из SphereAgentService.onDestroy() перед отменой serviceScope.
      */
     fun stop() {
+        sharedInput?.invalidate()
         directProbe.invalidate()
         continuousInput?.let {
             it.invalidate()
@@ -234,7 +250,7 @@ class CommandDispatcher @Inject constructor(
                     put("idle_refresh_frames_total", stats.idleRefreshFramesTotal)
                     put("legacy_suppressed_packets_total", stats.legacySuppressedPacketsTotal)
                     put("legacy_suppressed_encoded_bytes_total", stats.legacySuppressedEncodedBytesTotal)
-                    continuousInput?.let { put("native_input", it.diagnosticSnapshot()) }
+                    continuousInput?.let { put("native_input", sharedInput?.diagnosticSnapshot() ?: it.diagnosticSnapshot()) }
                     // Optional diagnostic serialization must not interrupt heartbeat liveness.
                     runCatching { streamingManager.getStreamQualityTelemetry()?.let { Json.encodeToJsonElement(it) } }
                         .getOrNull()?.let { put("source_quality", it) }

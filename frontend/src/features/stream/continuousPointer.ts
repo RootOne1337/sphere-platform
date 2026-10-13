@@ -9,7 +9,7 @@ export const CONTINUOUS_POINTER_LIMITS = Object.freeze({
 export type ContinuousPointerState = 'idle' | 'opening' | 'ready' | 'closing' | 'fenced' | 'closed' | 'destroyed';
 type Point = { x: number; y: number };
 type Pointer = Point & { id: number; gesture: number };
-type Pending = { sequence: number; action: number; at: number; deadlineAt?: number; idleHeartbeat: boolean };
+type Pending = { sequence: number; gesture: number; action: number; at: number; deadlineAt?: number; idleHeartbeat: boolean };
 type Session = { session: string; owner: string };
 export interface PointerTransport {
   readonly readyState: number;
@@ -35,6 +35,8 @@ export type PointerFenceObservation = Readonly<{
 type Options = {
   /** Exact socket instance; replacing the outer ref must destroy this controller. */
   socket: PointerTransport;
+  /** Negotiated v2 participant semantics on the same server-authorized media peer. */
+  sharedInput?: boolean;
   /** Only the decoder's successfully rendered v2 binding, owned by this socket. */
   renderedCapture: () => CaptureFrameBinding | null;
   now?: () => number;
@@ -157,6 +159,7 @@ export class ContinuousPointer {
 
   /** Trusted server replies, received on the same socket, never browser-selected owner metadata. */
   receive(message: unknown): boolean {
+    if (object(message) && message.type === 'shared_input_status') return this.receiveShared(message);
     if (!object(message) || !['touch_session', 'touch_cancelled', 'continuous_input_status'].includes(String(message.type))) return false;
     if (this.stateValue === 'idle' || this.stateValue === 'closed' || this.stateValue === 'destroyed') return false;
     if (message.type === 'touch_session') {
@@ -264,6 +267,48 @@ export class ContinuousPointer {
     return true;
   }
 
+  private receiveShared(message: Record<string, unknown>): boolean {
+    if (!this.options.sharedInput || !this.session || !this.capture
+      || message.session_id !== this.session.session || message.owner !== this.session.owner
+      || message.capture_epoch !== this.capture.captureEpoch
+      || !exact(message, ['type', 'session_id', 'owner', 'capture_epoch', 'sequence', 'gesture', 'action', 'outcome', 'device_uptime_ms'])
+      || !integer(message.sequence, 0, CONTINUOUS_POINTER_LIMITS.maxSequence)
+      || !integer(message.gesture, 0, CONTINUOUS_POINTER_LIMITS.maxSequence)
+      || !integer(message.action, 0, 4) || !integer(message.device_uptime_ms, 0, Number.MAX_SAFE_INTEGER)) return false;
+    const base = { type: 'continuous_input_status', session_id: message.session_id, owner: message.owner,
+      capture_epoch: message.capture_epoch, sequence: message.sequence, origin: 'injector', device_uptime_ms: message.device_uptime_ms };
+    if (message.outcome === 'interrupted') {
+      if (this.stateValue !== 'ready' || message.gesture === 0
+        || this.held?.gesture !== message.gesture && !this.pending.some(p => p.gesture === message.gesture)) return false;
+      // Android confirmed CANCEL before another participant's DOWN. This is
+      // neither a broken peer nor an applied UP. Old buffered MOVE/UP cannot
+      // reclaim the pointer; a fresh local DOWN uses the next gesture nonce.
+      if (this.held?.gesture === message.gesture) this.held = this.move = null;
+      if (this.terminal?.gesture === message.gesture) this.terminal = null;
+      this.pending = this.pending.filter(p => p.gesture !== message.gesture);
+      return true;
+    }
+    if (message.outcome === 'ready' && message.sequence === 0 && message.gesture === 0)
+      return this.receive({ ...base, status: 0, stage: 'startup' });
+    if (message.outcome === 'denied' && message.sequence === 0 && !this.nativeStarted)
+      return this.receive({ ...base, origin: 'admission', status: 5, stage: 'startup' });
+    if (message.outcome === 'closed' && message.sequence === 0)
+      return this.receive({ ...base, status: 3, stage: 'release' });
+    if (message.outcome === 'applied' || message.outcome === 'alive') {
+      const offered = this.pending.find(p => p.sequence === message.sequence) ??
+        (this.terminal?.sequence === message.sequence ? this.terminal : null);
+      if (!offered || offered.action !== message.action || offered.gesture !== message.gesture
+        || message.outcome === 'alive' && message.action !== 4
+        || message.outcome === 'applied' && message.action === 4) return false;
+      // ALIVE is APK actor liveness; APPLIED is the exact native pipe receipt.
+      return this.receive({ ...base, status: message.outcome === 'alive' ? 2 : message.action === 3 ? 3 : 1, stage: 'input' });
+    }
+    if (['unknown', 'expired', 'invalid', 'denied'].includes(String(message.outcome))) {
+      return this.receive({ ...base, status: 6, stage: this.nativeStarted ? 'input' : 'startup' });
+    }
+    return false;
+  }
+
   private point(point: Point): boolean {
     return !!this.capture && integer(point.x, 0, this.capture.frameWidth - 1)
       && integer(point.y, 0, this.capture.frameHeight - 1);
@@ -275,7 +320,7 @@ export class ContinuousPointer {
       || this.pending.length >= CONTINUOUS_POINTER_LIMITS.pendingReceipts) {
       this.retire('sequence_or_receipt_budget'); return null;
     }
-    const entry = { sequence: ++this.sequence, action, at: this.now(), idleHeartbeat: action === 4 && gesture === 0 };
+    const entry = { sequence: ++this.sequence, gesture, action, at: this.now(), idleHeartbeat: action === 4 && gesture === 0 };
     // Register before write: synchronous test transports and future adapters
     // may deliver a receipt during send(). Unknown writes are not repeated.
     this.pending.push(entry);

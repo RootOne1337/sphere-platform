@@ -18,7 +18,7 @@ import java.net.NetworkInterface
 import java.util.concurrent.atomic.AtomicLong
 import java.util.concurrent.atomic.AtomicBoolean
 
-/** One peer, bounded callback mailbox, monotonic TTL and authenticated WS generation fence. */
+/** Ten independently owned peers, bounded callbacks and exact monotonic/generation fences. */
 class DirectProbeTransport(
     private val context: Context, private val scope: CoroutineScope,
     private val generation: () -> Long?, private val send: (Long, JsonObject) -> Boolean,
@@ -27,15 +27,15 @@ class DirectProbeTransport(
 ) {
     private companion object { val initialized = AtomicBoolean(false) }
     private val fence = AtomicLong(0)
-    private val queue = Channel<() -> Unit>(32)
-    @Volatile private var peer: Probe? = null
-    private var factory: PeerConnectionFactory? = null
+    private val queue = Channel<() -> Unit>(128)
+    private val peers = java.util.concurrent.ConcurrentHashMap<String, Probe>()
 
     private class Probe(val session: String, val generation: Long, val token: Long, startedAt: Long, ttlMs: Int, val live: Boolean) {
         val lease = DirectVideoLease(startedAt, ttlMs, live)
         val expires get() = lease.expiresAt
         val progress = DirectProbeProgress(SystemClock.elapsedRealtime())
         val telemetry = DirectProbeTelemetry(startedAt)
+        var factory: PeerConnectionFactory? = null
         var connection: PeerConnection? = null
         var channel: DataChannel? = null
         @Volatile var inputChannel: DataChannel? = null
@@ -44,6 +44,7 @@ class DirectProbeTransport(
         var lastEcho = 0L
         var iceProfile = "host"
         var videoRequested = false
+        var sharedControl = false
         var capture: com.sphereplatform.agent.streaming.CaptureInputSession? = null
         var video: DirectEncodedVideoSource? = null
         @Volatile var videoReady = false
@@ -55,19 +56,18 @@ class DirectProbeTransport(
         scope.launch {
             try {
                 while (true) {
-                    peer?.let { if (!valid(it)) close(if (SystemClock.elapsedRealtime() >= it.expires) ProbeStage.EXPIRED else ProbeStage.CLOSED) }
-                    peer?.let { if (it.videoRequested && it.capture != streaming.getInputSession()) close() }
-                    // Setup failures previously emitted no stats because sampling began only after the answer.
-                    peer?.let { if (valid(it)) collectNetwork(it) }
-                    val action = if (peer == null) queue.receive() else withTimeoutOrNull(100) { queue.receive() }
+                    for (p in peers.values.toList()) {
+                        if (!valid(p)) close(p, if (SystemClock.elapsedRealtime() >= p.expires) ProbeStage.EXPIRED else ProbeStage.CLOSED)
+                        else if (p.videoRequested && p.capture != streaming.getInputSession()) close(p)
+                        else collectNetwork(p)
+                    }
+                    val action = if (peers.isEmpty()) queue.receive() else withTimeoutOrNull(100) { queue.receive() }
                     try { action?.invoke() } catch (e: kotlinx.coroutines.CancellationException) {
                         throw e
-                    } catch (_: Exception) { invalidate(); close() }
+                    } catch (_: Exception) { invalidate(); closeAll() }
                 }
             } finally {
-                close()
-                factory?.dispose()
-                factory = null
+                closeAll()
                 queue.close()
             }
         }
@@ -80,7 +80,7 @@ class DirectProbeTransport(
     }
     fun invalidate() { fence.incrementAndGet() }
     fun inputChannel(session: String): DirectInputChannel? {
-        val p = peer ?: return null
+        val p = peers[session] ?: return null
         val channel = p.inputChannel ?: return null
         val capture = p.capture ?: return null
         if (!BuildConfig.CONTINUOUS_INPUT_CANARY || !p.live || p.session != session || !valid(p) ||
@@ -96,7 +96,7 @@ class DirectProbeTransport(
             }
         }
     }
-    private fun valid(p: Probe) = peer === p && p.token == fence.get() &&
+    private fun valid(p: Probe) = peers[p.session] === p && p.token == fence.get() &&
         generation() == p.generation && p.lease.valid(SystemClock.elapsedRealtime()) &&
         (!p.videoRequested || p.capture?.let { streaming.isEncodedViewerCurrent(p, it) } == true)
 
@@ -111,16 +111,16 @@ class DirectProbeTransport(
             val sid = message["session_id"]?.jsonPrimitive?.contentOrNull ?: return@enqueue
             if (!DirectProbeProtocol.validSession(sid)) return@enqueue
             if (kind == "direct_probe_close") {
-                if (message.keys == setOf("type", "session_id") && peer?.session == sid) close()
+                if (message.keys == setOf("type", "session_id")) peers[sid]?.let { close(it) }
             } else if (kind == "direct_probe_renew") {
-                val current = peer ?: return@enqueue
+                val current = peers[sid] ?: return@enqueue
                 if (current.session != sid || !current.live || message.keys !in setOf(LegacyVideoRenewal.BASE_KEYS, LegacyVideoRenewal.EXTENDED_KEYS)) return@enqueue
                 val delivery = if (message.keys == LegacyVideoRenewal.EXTENDED_KEYS)
                     LegacyVideoRenewal.parse(message) ?: return@enqueue else null
                 val sequence = message["sequence"]?.jsonPrimitive?.intOrNull ?: return@enqueue
                 val ttl = message["ttl_ms"]?.jsonPrimitive?.intOrNull ?: return@enqueue
                 val now = SystemClock.elapsedRealtime()
-                if (!valid(current) || !current.lease.renew(sequence, ttl, receivedAt, now)) close()
+                if (!valid(current) || !current.lease.renew(sequence, ttl, receivedAt, now)) close(current)
                 else if (delivery != null && current.videoReady) {
                     val remaining = delivery.ttlMs - (now - receivedAt)
                     current.capture?.let { capture ->
@@ -135,20 +135,25 @@ class DirectProbeTransport(
                 val live = mode == DirectVideoProtocol.LIVE_MODE
                 val video = live || mode == DirectVideoProtocol.MODE
                 val expected = setOf("type", "session_id", "sdp", "ttl_ms") +
-                    (if (video) setOf("media") else emptySet()) + (if ("ice" in message) setOf("ice") else emptySet())
-                if (peer != null || message.keys != expected || ttl !in 1..DirectProbeProtocol.MAX_TTL_MS ||
+                    (if (video) setOf("media") else emptySet()) + (if ("ice" in message) setOf("ice") else emptySet()) +
+                    (if ("shared_control" in message) setOf("shared_control") else emptySet())
+                if (peers.size >= 10 || peers.containsKey(sid) || message.keys != expected || ttl !in 1..DirectProbeProtocol.MAX_TTL_MS ||
                     !(if (video) DirectVideoProtocol.validSdp(sdp, true) else DirectProbeProtocol.validSdp(sdp))) return@enqueue
                 val grant = if ("ice" in message) DirectProbeTurnGrant.parse(message["ice"], sid) ?: return@enqueue else null
                 if (SystemClock.elapsedRealtime() >= receivedAt + ttl) return@enqueue
                 if (live && grant != null) return@enqueue // Relay renewal has a separate credential lifetime.
-                open(Probe(sid, wsGeneration, token, receivedAt, ttl, live).apply { videoRequested = video }, sdp, grant)
+                val sharedControl = message["shared_control"] == JsonPrimitive(true)
+                if ("shared_control" in message && (!sharedControl || !live)) return@enqueue
+                open(Probe(sid, wsGeneration, token, receivedAt, ttl, live).apply {
+                    videoRequested = video; this.sharedControl = sharedControl
+                }, sdp, grant)
             }
         }
         return true
     }
 
     private fun open(p: Probe, sdp: String, grant: DirectProbeTurnGrant?) {
-        peer = p
+        check(peers.putIfAbsent(p.session, p) == null)
         try {
             val localAddresses = runCatching {
                 NetworkInterface.getNetworkInterfaces()?.asSequence()?.take(32)?.flatMap {
@@ -180,7 +185,7 @@ class DirectProbeTransport(
                     if (p.videoReady) p.video?.submit(frame)
                 } ?: error("active_capture_required")
                 p.video = DirectEncodedVideoSource(checkNotNull(p.capture), { valid(p) },
-                    { if (valid(p)) streaming.requestDirectKeyFrame() }, { enqueue { if (peer === p) close() } },
+                    { if (valid(p)) streaming.requestDirectKeyFrame() }, { enqueue { if (peers[p.session] === p) close(p) } },
                     streaming.encodedProfileLevelId(), { bitrate, fps ->
                         p.capture?.let { streaming.onDirectRateEstimate(p, it, bitrate, fps) }
                     })
@@ -190,7 +195,7 @@ class DirectProbeTransport(
             p.iceProfile = if (grant == null) iceProfile.name else "turn"
             progress(p, ProbeStage.OFFER_RECEIVED)
             publishTelemetry(p, p.telemetry.report(ProbeStage.OFFER_RECEIVED, p.iceProfile, false, SystemClock.elapsedRealtime()))
-            if (factory == null) {
+            if (p.factory == null) {
                 if (initialized.compareAndSet(false, true)) {
                     try {
                         PeerConnectionFactory.initialize(PeerConnectionFactory.InitializationOptions.builder(context)
@@ -204,7 +209,7 @@ class DirectProbeTransport(
                 val builder = PeerConnectionFactory.builder()
                     .setFieldTrials(DirectEncodedVideoSource.FIELD_TRIALS)
                 p.video?.let { builder.setVideoEncoderFactory(it.encoderFactory) }
-                factory = builder.createPeerConnectionFactory()
+                p.factory = builder.createPeerConnectionFactory()
             }
             progress(p, ProbeStage.FACTORY_READY)
             val servers = grant?.urls?.map { PeerConnection.IceServer.builder(it)
@@ -216,17 +221,17 @@ class DirectProbeTransport(
             if (grant != null) config.iceTransportsType = if (grant.relayOnly)
                 PeerConnection.IceTransportsType.RELAY else PeerConnection.IceTransportsType.ALL
             config.sdpSemantics = PeerConnection.SdpSemantics.UNIFIED_PLAN
-            p.connection = factory?.createPeerConnection(config, object : PeerConnection.Observer {
+            p.connection = p.factory?.createPeerConnection(config, object : PeerConnection.Observer {
                 override fun onSignalingChange(state: PeerConnection.SignalingState) = Unit
                 override fun onIceConnectionReceivingChange(receiving: Boolean) = Unit
                 override fun onIceCandidate(candidate: IceCandidate) = Unit
                 override fun onIceCandidatesRemoved(candidates: Array<out IceCandidate>) = Unit
                 override fun onAddStream(stream: MediaStream) = Unit
                 override fun onRemoveStream(stream: MediaStream) = Unit
-                override fun onRenegotiationNeeded() { enqueue { if (valid(p) && p.answered && !p.videoRequested) close() } }
+                override fun onRenegotiationNeeded() { enqueue { if (valid(p) && p.answered && !p.videoRequested) close(p) } }
                 override fun onIceConnectionChange(state: PeerConnection.IceConnectionState) {
                     if (state in setOf(PeerConnection.IceConnectionState.FAILED, PeerConnection.IceConnectionState.CLOSED))
-                        enqueue { if (peer === p) close(ProbeStage.CONNECTION_FAILED) }
+                        enqueue { if (peers[p.session] === p) close(p, ProbeStage.CONNECTION_FAILED) }
                 }
                 override fun onIceGatheringChange(state: PeerConnection.IceGatheringState) {
                     enqueue {
@@ -241,32 +246,42 @@ class DirectProbeTransport(
                 override fun onDataChannel(channel: DataChannel) {
                     val admitted = enqueue {
                         if (valid(p) && p.live && BuildConfig.CONTINUOUS_INPUT_CANARY && input != null &&
-                            channel.label() == "sphere-control-v1" && p.inputChannel == null) {
+                            channel.label() == (if (p.sharedControl) "sphere-control-v2" else "sphere-control-v1") && p.inputChannel == null) {
                             p.inputChannel = channel
                             channel.registerObserver(object : DataChannel.Observer {
                                 override fun onBufferedAmountChange(previous: Long) = Unit
                                 override fun onStateChange() {
                                     enqueue {
-                                        if (peer === p && p.inputChannel === channel && channel.state() in
+                                        if (p.sharedControl && valid(p) && channel.state() == DataChannel.State.OPEN) {
+                                            inputChannel(p.session)?.let { if (!input.sharedGranted(it)) close(p) }
+                                        }
+                                        if (peers[p.session] === p && p.inputChannel === channel && channel.state() in
                                             setOf(DataChannel.State.CLOSING, DataChannel.State.CLOSED)) input.directClosed(p.session)
                                     }
                                 }
                                 override fun onMessage(buffer: DataChannel.Buffer) {
                                     val text = if (!buffer.binary && buffer.data.remaining() in 1..1024)
                                         Charsets.UTF_8.decode(buffer.data).toString() else ""
-                                    enqueue inputMessage@{
-                                        if (!valid(p) || p.inputChannel !== channel) return@inputMessage
-                                        val message = runCatching { Json.parseToJsonElement(text) as? JsonObject }.getOrNull()
-                                        if (message == null || !input.directMessage(p.session, message)) input.directClosed(p.session)
+                                    // V2 has its own bounded per-participant actor. MOVE does not
+                                    // allocate a closure in the shared signaling/stats mailbox.
+                                    val dispatch = {
+                                        if (valid(p) && p.inputChannel === channel) {
+                                            val message = runCatching { Json.parseToJsonElement(text) as? JsonObject }.getOrNull()
+                                            if (message == null || !input.directMessage(p.session, message)) input.directClosed(p.session)
+                                        }
                                     }
+                                    if (p.sharedControl) dispatch() else enqueue(dispatch)
                                 }
                             })
+                            if (p.sharedControl && channel.state() == DataChannel.State.OPEN) {
+                                inputChannel(p.session)?.let { if (!input.sharedGranted(it)) close(p) }
+                            }
                             return@enqueue
                         }
                         if (!valid(p) || p.channel != null || channel.label() !=
                             (if (p.live) DirectVideoProtocol.LIVE_LABEL else if (p.videoRequested) DirectVideoProtocol.LABEL else DirectProbeProtocol.LABEL)) {
                             channel.close(); channel.dispose()
-                            if (peer === p) close()
+                            if (peers[p.session] === p) close(p)
                         } else {
                             p.channel = channel
                             progress(p, ProbeStage.CHANNEL_RECEIVED)
@@ -293,7 +308,7 @@ class DirectProbeTransport(
             p.connection?.setRemoteDescription(observer(p, ProbeStage.REMOTE_FAILED, set = {
                 progress(p, ProbeStage.REMOTE_SET)
                 p.video?.let { video ->
-                    p.connection?.addTrack(video.start(checkNotNull(factory)), listOf("sphere-screen"))?.let { sender ->
+                    p.connection?.addTrack(video.start(checkNotNull(p.factory)), listOf("sphere-screen"))?.let { sender ->
                         val limits = streaming.encodedRateLimits()
                         val parameters = sender.parameters
                         parameters.encodings.forEach { encoding ->
@@ -314,14 +329,14 @@ class DirectProbeTransport(
                     }), desc)
                 }), MediaConstraints())
             }), SessionDescription(SessionDescription.Type.OFFER, hostHints.sdp))
-        } catch (_: Exception) { close(ProbeStage.OPEN_FAILED) }
+        } catch (_: Exception) { close(p, ProbeStage.OPEN_FAILED) }
     }
 
     private fun observer(p: Probe, failed: ProbeStage, set: () -> Unit = {}, create: (SessionDescription) -> Unit = {}) = object : SdpObserver {
         override fun onSetSuccess() { enqueue { if (valid(p)) set() } }
         override fun onCreateSuccess(description: SessionDescription) { enqueue { if (valid(p)) create(description) } }
-        override fun onSetFailure(error: String) { enqueue { if (peer === p) close(failed) } }
-        override fun onCreateFailure(error: String) { enqueue { if (peer === p) close(failed) } }
+        override fun onSetFailure(error: String) { enqueue { if (peers[p.session] === p) close(p, failed) } }
+        override fun onCreateFailure(error: String) { enqueue { if (peers[p.session] === p) close(p, failed) } }
     }
 
     private fun answer(p: Probe) {
@@ -330,20 +345,20 @@ class DirectProbeTransport(
         val sdp = connection.localDescription?.description ?: return
         if (!(if (p.videoRequested) DirectVideoProtocol.validSdp(sdp, false) else DirectProbeProtocol.validSdp(sdp)) || !send(p.generation, buildJsonObject {
             put("type", "direct_probe_answer"); put("session_id", p.session); put("sdp", sdp)
-        })) { close(ProbeStage.ANSWER_FAILED); return }
+        })) { close(p, ProbeStage.ANSWER_FAILED); return }
         p.answered = true
         progress(p, ProbeStage.ANSWER_SENT)
     }
 
     private fun echo(p: Probe, text: String) {
-        if (!valid(p)) { if (peer === p) close(); return }
+        if (!valid(p)) { if (peers[p.session] === p) close(p); return }
         val now = SystemClock.elapsedRealtime()
         val echoed = if (p.live && p.sequence in 1..1000000) "SL1 ${p.session} ${p.sequence}".takeIf { it == text }
             else if (p.live) null else DirectProbeProtocol.echo(text, p.session, p.sequence)
         val channel = p.channel
         if (echoed == null || (p.lastEcho != 0L && now - p.lastEcho < 100) || channel == null ||
             channel.bufferedAmount() > 1024 || !channel.send(DataChannel.Buffer(ByteBuffer.wrap(echoed.toByteArray()), false))) {
-            close(); return
+            close(p); return
         }
         p.sequence++; p.lastEcho = now
     }
@@ -354,7 +369,7 @@ class DirectProbeTransport(
         if (p.videoRequested && !p.videoReady) {
             val capture = checkNotNull(p.capture)
             val binding = "SV1 ${p.session} ${capture.epoch} ${capture.frameWidth} ${capture.frameHeight}"
-            if (!channel.send(DataChannel.Buffer(ByteBuffer.wrap(binding.toByteArray()), false))) close()
+            if (!channel.send(DataChannel.Buffer(ByteBuffer.wrap(binding.toByteArray()), false))) close(p)
             else { p.videoReady = true; streaming.requestDirectKeyFrame() }
         }
     }
@@ -413,9 +428,10 @@ class DirectProbeTransport(
         }) }
     }
 
-    private fun close(stage: ProbeStage = ProbeStage.CLOSED) {
-        val old = peer
-        peer = null
+    private fun closeAll() { peers.values.toList().forEach { close(it) } }
+
+    private fun close(old: Probe, stage: ProbeStage = ProbeStage.CLOSED) {
+        if (!peers.remove(old.session, old)) return
         old?.videoReady = false
         old?.let { input?.directClosed(it.session) }
         old?.let { streaming.detachEncodedViewer(it) }
@@ -445,8 +461,8 @@ class DirectProbeTransport(
             }.toString())
         }
         // Factory threads are also retired after every finite probe.
-        val ownedFactory = factory
-        factory = null
+        val ownedFactory = old.factory
+        old.factory = null
         runCatching { ownedFactory?.dispose() }
     }
 }

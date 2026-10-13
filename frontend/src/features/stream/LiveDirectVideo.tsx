@@ -58,8 +58,11 @@ export function LiveDirectVideo({ deviceId, session, eligible, fit, expectedCapt
         || data.direct_input_enabled === true && data.live_video_enabled !== true) throw Error('invalid_input_admission');
       if ('legacy_video_handover_enabled' in data && typeof data.legacy_video_handover_enabled !== 'boolean'
         || data.legacy_video_handover_enabled === true && data.live_video_enabled !== true) throw Error('invalid_delivery_admission');
+      if ('shared_input_enabled' in data && typeof data.shared_input_enabled !== 'boolean'
+        || data.shared_input_enabled === true && data.direct_input_enabled !== true) throw Error('invalid_shared_input_admission');
       return { admitted: data.live_video_enabled === true, profiles, input: data.direct_input_enabled === true,
-        nativeHistory: data.native_history_enabled === true, handover: data.legacy_video_handover_enabled === true };
+        nativeHistory: data.native_history_enabled === true, handover: data.legacy_video_handover_enabled === true,
+        sharedInput: data.shared_input_enabled === true };
     },
     retry: (count, error) => count < 3 && isAxiosError(error) && (
       error.response ? [408, 429].includes(error.response.status) || error.response.status >= 500 && error.response.status <= 599
@@ -193,7 +196,7 @@ export function LiveDirectVideo({ deviceId, session, eligible, fit, expectedCapt
             && lastPresentedAt !== null && performance.now() - lastPresentedAt < FRAME_PROGRESS_TIMEOUT_MS,
           ...(admission.data?.nativeHistory || admission.data?.handover ? { historySession: session } : {}),
           ...(admission.data?.input && callbacks.current.onControlChannel ? {
-            controlSession: session, onControlChannel: (channel: DirectControlEndpoint | null) => {
+            controlSession: session, sharedInput: admission.data.sharedInput, onControlChannel: (channel: DirectControlEndpoint | null) => {
               if (!disposed && !ended && current === generation) callbacks.current.onControlChannel?.(channel);
             },
           } : {}), onTrack: track => {

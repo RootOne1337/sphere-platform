@@ -6,7 +6,7 @@ import re
 MAX_SDP_BYTES = 32_768
 MAX_WIRE_BYTES = 36_864
 SESSION_MS = 30_000
-MAX_PEERS = 8
+MAX_PEERS = 64  # Per-worker bound; shared leases separately cap each device at ten.
 CHANNEL_LABEL = "sphere-probe-v1"
 VIDEO_MODE = "readonly_video_v1"
 VIDEO_MIN_AGENT_CODE = 10251

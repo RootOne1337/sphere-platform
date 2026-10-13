@@ -14,4 +14,6 @@ interface DirectInputChannel {
 interface DirectInputHandler {
     fun directMessage(session: String, message: JsonObject): Boolean
     fun directClosed(session: String)
+    /** Called only for server-authorized v2 control on this same media peer. */
+    fun sharedGranted(channel: DirectInputChannel): Boolean = false
 }

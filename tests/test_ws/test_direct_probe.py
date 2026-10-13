@@ -103,6 +103,52 @@ async def eventually(predicate):
 
 
 @pytest.mark.asyncio
+async def test_shared_peers_bind_each_user_and_retire_only_the_exact_peer(peers, monkeypatch):
+    from backend.core.config import settings
+    runtimes, clients, _, agent, agent_session, _ = peers
+    monkeypatch.setattr(settings, "DIRECT_TRANSPORT_LIVE_VIDEO_ENABLED", True)
+    monkeypatch.setattr(settings, "DIRECT_TRANSPORT_INPUT_ENABLED", True)
+    monkeypatch.setattr(settings, "DIRECT_TRANSPORT_PROBE_DEVICE_IDS", frozenset({"device"}))
+    await DeviceStatusCache(clients[0]).set_status("device", DeviceLiveStatus(
+        device_id="device", status="online", ws_session_id=agent_session, agent_version_code=10269))
+    a = ProbeViewer("device", "org", "user", AsyncMock(), video=True, live=True,
+                    control_session="a" * 16, history_session="a" * 16, shared_control=True)
+    b = ProbeViewer("device", "org", "other-user", AsyncMock(), video=True, live=True,
+                    control_session="b" * 16, history_session="b" * 16, shared_control=True)
+    await runtimes[0].open(a, VIDEO_SDP)
+    await runtimes[1].open(b, VIDEO_SDP)
+    await eventually(lambda: agent.send_json.call_count == 2)
+    assert a.binding["shared"] is True and b.binding["shared_control"] is True
+    assert all(call.args[0]["shared_control"] is True for call in agent.send_json.call_args_list)
+    assert await clients[0].zcard(runtimes[0].shared.index("device")) == 2
+    scope = dict(device="device", org="org", user="other-user", session=b.session, viewer_session=b.history_session)
+    assert await runtimes[0].video_peer(**scope)
+    assert not await runtimes[0].video_peer(**(scope | {"user": "user"}))
+    assert not await runtimes[0].input_peer(device="device", org="org", user="other-user", session=b.session,
+        viewer_session=b.control_session, agent_session=agent_session)  # V2 cannot borrow the legacy input lease.
+    await runtimes[0].retire(a)
+    assert await runtimes[1].remaining(b.binding) > 0
+    assert await clients[0].zcard(runtimes[0].shared.index("device")) == 1
+    await runtimes[1].retire(b)
+    assert await clients[0].zcard(runtimes[0].shared.index("device")) == 0
+
+
+@pytest.mark.asyncio
+async def test_shared_control_never_reaches_an_older_agent(peers, monkeypatch):
+    from backend.core.config import settings
+    monkeypatch.setattr(settings, "DIRECT_TRANSPORT_LIVE_VIDEO_ENABLED", True)
+    monkeypatch.setattr(settings, "DIRECT_TRANSPORT_INPUT_ENABLED", True)
+    monkeypatch.setattr(settings, "DIRECT_TRANSPORT_PROBE_DEVICE_IDS", frozenset({"device"}))
+    await DeviceStatusCache(peers[1][0]).set_status("device", DeviceLiveStatus(
+        device_id="device", status="online", ws_session_id=peers[4], agent_version_code=10268))
+    viewer = ProbeViewer("device", "org", "user", AsyncMock(), video=True, live=True,
+                         control_session="a" * 16, shared_control=True)
+    with pytest.raises(InvalidDirectProbe, match="shared_input_not_admitted"):
+        await peers[0][1].open(viewer, VIDEO_SDP)
+    assert peers[3].send_json.call_count == 0
+
+
+@pytest.mark.asyncio
 async def test_discovery_await_cannot_publish_an_offer_for_a_retired_owner(peers, monkeypatch):
     started, release = asyncio.Event(), asyncio.Event()
     async def blocked(sdp, session):

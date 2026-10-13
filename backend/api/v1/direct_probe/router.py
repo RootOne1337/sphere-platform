@@ -24,6 +24,7 @@ from backend.websocket.direct_probe_protocol import (
 )
 from backend.websocket.direct_probe_runtime import get_direct_probe_runtime
 from backend.websocket.direct_probe_telemetry import NATIVE_HISTORY_MIN_AGENT_CODE
+from backend.websocket.shared_peer_lease import SHARED_PEER_MIN_AGENT_CODE
 from backend.websocket.stream_session_history import (
     RETENTION_SECONDS,
     SESSION_BYTES,
@@ -76,6 +77,7 @@ class ProbeCapabilities(BaseModel):
     direct_input_enabled: bool = False
     native_history_enabled: bool = False
     legacy_video_handover_enabled: bool = False
+    shared_input_enabled: bool = False
 
 
 def relay_configured() -> bool:
@@ -117,6 +119,9 @@ async def probe_capabilities(
         live_enabled = bool(current and settings.DIRECT_TRANSPORT_LIVE_VIDEO_ENABLED and status
                             and status.agent_version_code and status.agent_version_code >= LIVE_VIDEO_MIN_AGENT_CODE)
     return ProbeCapabilities(device_id=device_id, enabled=enabled, profiles=profiles,
+                             shared_input_enabled=bool(live_enabled and settings.DIRECT_TRANSPORT_INPUT_ENABLED
+                                 and status and status.agent_version_code
+                                 and status.agent_version_code >= SHARED_PEER_MIN_AGENT_CODE),
                              readonly_video_enabled=video_enabled, live_video_enabled=live_enabled,
                              legacy_video_handover_enabled=bool(live_enabled and status
                                  and status.agent_version_code and status.agent_version_code >= 10260),
