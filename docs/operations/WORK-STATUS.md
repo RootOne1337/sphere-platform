@@ -1,8 +1,10 @@
 # Работы, требования пользователя и границы приёмки
 
-**Проверенная установка:** UI `37543bb2` / API `be0578d0`.
+**Проверенная установка:** UI `b182a0c8` / API `04cf1015`.
 
-**14 октября — прямые системные кнопки и восстановление ввода.** APK `1.2.72-dev /10272`, UI37543bb2 и APIbe0578d0 установлены; 15 доступных эмуляторов завершили OTA, 14 подтвердили установленный SHA, 1 — только команду и версию; шесть офлайн ожидают. На обоих адресах прошли два клиента с mouse/touch и кнопками; десять клиентов через Tuna подтвердили 40 системных нажатий и совместные жесты. Автовосстановление после трёх принудительных обрывов RTC проверено. Реальное скрытие вкладки, телефон/hotspot, 20+, полноценные клавиатура/IME, звук, автономность без сервера и полный перенос CI остаются открытыми. [Результаты и границы](../audits/2026-10-14/DIRECT-SYSTEM-INPUT72-DELIVERY.md).
+**15 октября местного времени — клавиатура76 и незакрытый совместный сеанс.** НаPH011 APK76 подтверждён по файлу и OTA;PH030 сообщает76 с completed OTA,13 доступных машин остаются72,шесть офлайн. Два локальных клиента и фактический Unicode/IME/fullscreen прошли проверку. Текущий прогон десяти клиентов черезTuna потерял готовые peer при открытии остальных; массовая OTA удержана. Исправление transient auth и диагностика signaling подготовлены,ещё не установлены. [Факты и границы](../audits/2026-10-14/KEYBOARD76-PARTIAL-DELIVERY.md).
+
+**Предыдущее наблюдение 14 октября — прямые системные кнопки и восстановление ввода.** APK `1.2.72-dev /10272`, UI37543bb2 и APIbe0578d0 установлены; 15 доступных эмуляторов завершили OTA, 14 подтвердили установленный SHA, 1 — только команду и версию; шесть офлайн ожидают. На обоих адресах прошли два клиента с mouse/touch и кнопками; десять клиентов через Tuna подтвердили 40 системных нажатий и совместные жесты. Автовосстановление после трёх принудительных обрывов RTC проверено. Реальное скрытие вкладки, телефон/hotspot, 20+, полноценные клавиатура/IME, звук, автономность без сервера и полный перенос CI остаются открытыми. [Результаты и границы](../audits/2026-10-14/DIRECT-SYSTEM-INPUT72-DELIVERY.md).
 
 **Предыдущее наблюдение 14 октября — совместный ввод и fullscreen.** UI `103d8532` / API `3538b650` установлены на 3015 и Tuna. APK `1.2.69-dev /10269`: завершённая OTA и версия подтверждены на 15 доступных эмуляторах; на 14 проверен установленный SHA, у PH030 чтение хеша удержано активным вводом. Шесть офлайн остаются без нового grant. Десять независимых клиентов прошли прямые жесты, takeover и закрытие одного без обрыва девяти; fullscreen и сенсорная геометрия 390×844 /844×390 проверены на обоих адресах с сохранением одного peer. Полноценная клавиатура/IME, прямые системные кнопки, 20+, реальный телефон/hotspot, автономность без сервера и полный перенос CI остаются открытыми. [Установка и границы](../audits/2026-10-14/SHARED-INPUT-FULLSCREEN-DELIVERY.md).
 
@@ -529,53 +531,13 @@ resource soak/retention и RAM acceptance.
 
 ### CHAT-15 · Прямой browser ↔ Android transport
 
-**PARTIAL** · EP-029, EP-020, EP-047.
+**PARTIAL**
 
-Исторический срез 12 октября, до обновлений управления: UI331/API983 и APK60 были установлены; 15 installed SHA и завершённых OTA подтверждены. На PH010 через3015/Tuna наблюдались прямое видео и нативные жесты, по3 восстановления RTC с прямым вводом, подавление серверной копии и отдельный legacy зритель. Это конечная проверка, не приёмка всех сетей. УдалённаяPH025: answer получен, ICE146/226 requests безresponses;764 server frames. Прямой удалённый путь не принят.
+UIb182a0c8/API04cf1015 installed on3015/Tuna. APK76 confirmed onPH011;PH030 has exact completed OTA/version but no fresh package hash.13 reachable devices still72;6offline. Two-client local real mouse/touch and actual fullscreen Unicode/chords/composition accepted. Current ten-Tuna opening failed; fleet rollout held. Not production acceptance.
 
-Остаток: Ближайший фактически выбранный localhost/LAN/WAN/TURN; удалённый VPS и workstation discovery; синхронный input-to-picture; физическая смена сети; совместный ввод viewer/task/API, кнопки/текст/звук, FPS60 и настройки качества; длительные idle/active/reconnect и resource проверки.
+Остаётся: Current ten-client recovery/root cause and fleet76;20+,physical phone/hotspot,LAN/WAN/TURN,long soak and broker independence.
 
-[Текущая установка и проверка](../audits/2026-10-12/DIRECT-VIDEO-HANDOVER-OBSERVATION.json).
-
-Предыдущие конечные наблюдения и исходные требования:
-
-**Исторический срез11октября до ремонта и следующих установок.** UI/API `6ee80c1f` обслуживают 3015 и туннель; 29 клиентских assets совпадают. PH010 проверен на APK `1.2.54-dev`, ещё шесть машин — на53, две — на52. Прямые касания подготовлены и прошли CI, но новая установка API/UI остановлена до загрузки образа: Windows сообщает `Full Repair Needed` для C:. В текущем PH010 сеансе работал server fallback, прямой ICE не открылся. [Фактическая установка](../audits/2026-10-11/CURRENT-STREAM-DELIVERY.json) · [Подготовленная доставка и ограничения](../audits/2026-10-11/DIRECT-INPUT-DELIVERY-BLOCKED.md).
-
-На PH010 после OTA54 получены41 server frames без ошибок, подтверждённый Home и ready; прямое соединение не открылось: native ICE237requests/0responses. Signed54 и completed OTA не означают установку API/UI e9 или прямой ввод. Код e9 устраняет вторичный terminal rejection через22мс во время RELEASE, который отменял автоматическое восстановление. История сеансов дополнена в исходниках отдельным маршрутом касаний и bounded ICE-counters; 647 WS tests/44subtests и549 frontend stream tests прошли. Эта новая telemetry ещё не установлена.
-
-**Датированные предыдущие этапы; их результаты не заменяют текущий receipt.**
-
-Исследование текущего WS пути и первичных источников выполнено. Предложен prototype:
-browser WebRTC ↔ Android libwebrtc, direct video и input/ACK, coturn fallback;
-Pion/SFU/overlay рассмотрены по ролям, а не добавлены обязательным media hop.
-
-Последующим запросом пользователя разрешена разработка. Написан RTT-only canary:
-Maven AAR pinned, authenticated generation-bound signaling, allowlist устройств,
-WebRTC echo без media/input. Exact9ad прошёл все4CI; две native попытки получили
-SDP answer в signaling, но канал не открылся, RTT unknown. После пилота APK восстановлен,
-probe выключен. Последующая UI/API369 доставка включила close correction и source
-phase/network diagnostics; их compile gate стандартного frontend выключен.
-Остаётся: native provenance/SBOM,
-ICE cause/live RTT/cleanup, media/control ownership, current-path attribution,
-TURN/network matrix и production gate. Draft latency targets не являются достигнутым SLA.
-[Исходники и проверки](../audits/2026-10-09/DIRECT-PROBE-SOURCE.md) ·
-[Фактический pilot и границы](../audits/2026-10-09/DIRECT-PROBE-PILOT.md).
-Новый [source ICE snapshot](../audits/2026-10-09/DIRECT-PROBE-NETWORK-SNAPSHOT.md)
-входит в369 source. Реальная проверка во временном canary UI дала177requests/0responses;
-[новый receipt](../audits/2026-10-10/DIRECT-PROBE-NETWORK-CANARY.md) сохраняет cleanup и границы.
-
-Последующий исправленный source `8447c907` прошёл четыре CI и signed admission;
-callback проверен на PH011: 12 native отчётов с remote candidates 0, pairs 0,
-DTLS `new` и неизвестными packet counters. Браузер показал 177 requests / 0 responses;
-канал и RTT не подтверждены. Исходный APK восстановлен, probe выключен; временные
-listeners и вкладки закрыты. Публичный обычный viewer показал 662 кадра без ошибок.
-Диагностика принята только в этом конечном scope. Дальше нужны контролируемые
-numeric/STUN/TURN profiles, выбранная пара и реальный echo RTT; network/resource,
-media/control и повторяющийся public idle timeout остаются открытыми.
-[Native counters, маршруты и возврат](../audits/2026-10-10/DIRECT-PROBE-NATIVE-COUNTERS-CANARY.md).
-
-Доказательства: [Исследование и порядок внедрения](../design/BROWSER-DIRECT-TRANSPORT.md),
-[Фактический relay path и idle canary](../audits/2026-10-09/IDLE-CONTROL-RELAY-REVIEW.md).
+[Текущий протокол](../audits/2026-10-14/KEYBOARD76-PARTIAL-OBSERVATION.json).
 
 ## Прямой browser ↔ Android media: до production допуска
 
@@ -637,20 +599,21 @@ PostgreSQL/Redis test подтвердил202/commit/admission; live404 посл
 
 **PARTIAL**
 
-В APK72/APIbe/UI375 установлен совместный ввод v2 и видео для нескольких peers. Десять отдельных контекстов Chrome с обычным входом через Tuna подтвердили реальные жесты, 40 системных нажатий, прерывание прежнего жеста новым и закрытие одного клиента без обрыва остальных девяти за 30-секундный контрольный отрезок. После готовности peers не заменялись; первоначальные попытки согласования учитываются отдельно.
+Current UIb182/API04/APK76: two local clients passed12 mouse/touch rounds and native keys. Earlier UI4525/identical APK76 passed ten Tuna clients; the current ten-Tuna opening failed and is not accepted.
 
-Остаток: 20+ участников с бюджетами памяти/JNI/кодека/сети, физический ввод на эмуляторе, длительная нагрузка, настоящий телефон/hotspot и разные локации. Полноценный keyboard/IME не установлен.
+Остаётся: Current ten-client opening failure;20+,physical emulator/phone/hotspot/geography and longer shared-input soak.
 
-[Текущая установка](../audits/2026-10-14/DIRECT-SYSTEM-INPUT72-DELIVERY.md).
+[Текущий протокол](../audits/2026-10-14/KEYBOARD76-PARTIAL-OBSERVATION.json).
+
 ### CHAT-19 · Физическая клавиатура, IME и звук устройства
 
-**OPEN**
+**PARTIAL**
 
-Fullscreen не включает физическую клавиатуру. В APK72 Home/Back/Recents/Menu и конечные клавиши редактирования идут по тому же прямому peer, что и касания. Ограниченный ASCII-текст остаётся серверной командой. Обработчики физической клавиатуры и Android IME отсутствуют; ввод русского текста, composition и paste требуют отдельной доработки APK и веба. [Проверка кода и порядок реализации](../audits/2026-10-14/DIRECT-KEYBOARD-PLAN.md).
+Direct fullscreen physical keys,Unicode,Ctrl+A,composition and game-key edges are implemented on APK76; actual Android fields and original IME restoration verified onPH011.
 
-Остаток: Explicit physical-keyboard focus on stream; Unicode, IME/composition/paste/editing, key-down/up, modifiers and native receipts without showing an Android soft keyboard unnecessarily. Clear held keys on lifecycle loss, never record typed contents. Same direct media peer for keyboard and navigation. Audio permissions/mute/autoplay/sync and bounded compatibility remain open.
+Остаётся: Fleet76 held by current ten-client incident;server-fallback full keyboard,recorder/DAG Unicode,broader OS-key/IME/repeat/background matrix and optional default-off audio.
 
-[Текущая установка](../audits/2026-10-14/DIRECT-SYSTEM-INPUT72-DELIVERY.md).
+[Текущий протокол](../audits/2026-10-14/KEYBOARD76-PARTIAL-OBSERVATION.json).
 
 ### CHAT-20 · Последние десять сеансов и автоматическая диагностика клиента
 
@@ -668,11 +631,11 @@ Fullscreen не включает физическую клавиатуру. В A
 
 **ACCEPTED_FINITE**
 
-Последний APK72 полностью скачан через 3015 и Tuna: 57 786 356 байт, точный SHA проверен, измерения 1016 /10094 мс. Официальная ссылка LDPlayer присутствует. Скачивание и подтверждение установки учитываются отдельно.
+Latest signed canary APK76 downloaded fully through3015/Tuna with exact SHA/bytes; ordinary Android channel unchanged. Download is separate from installed-package proof.
 
-Остаток: Внешние latest URL здесь не проксируются; скачивание не подтверждает установку. Stable promotion, все роли и offline fleet остаются отдельными открытыми gates.
+Остаётся: Внешние latest URL здесь не проксируются; скачивание не подтверждает установку. Stable promotion, все роли и offline fleet остаются отдельными открытыми gates.
 
-[Текущая установка](../audits/2026-10-14/DIRECT-SYSTEM-INPUT72-DELIVERY.md).
+[Текущий протокол](../audits/2026-10-14/KEYBOARD76-PARTIAL-OBSERVATION.json).
 
 ### CHAT-22 · Тёмный адаптивный вход и сохранение темы рабочего пространства
 
@@ -688,11 +651,11 @@ Fullscreen не включает физическую клавиатуру. В A
 
 **PARTIAL**
 
-Локальные trusted профили и GitHub statuses существуют. APK72 прошёл локально два варианта по 1178 тестов, lint и подписанные сборки; полная exact Android CI150, frontend CI375 и backend CIbe всё ещё выполнялись на hosted runners. Для последующих неизменных компонентных деревьев успешные CI переиспользуются с явным статусом и отменой дубликатов. Self-hosted runner не зарегистрирован; полный перенос и отсутствие hosted расходов не подтверждены.
+Frontend2429tests/types and101targeted backend checks/statuses ran locally; full migration incomplete. Repo is currently public with standard ubuntu-latest workflows;2000 private-repo minutes are not this repository runner limit.
 
-Остаток: Полный перенос workflow/packaging, отсутствие hosted расходов, автономный запуск после reboot, trusted job routing и Linux parity ещё не приняты.
+Остаётся: Полный перенос workflow/packaging, отсутствие hosted расходов, автономный запуск после reboot, trusted job routing и Linux parity ещё не приняты.
 
-[Текущая установка](../audits/2026-10-14/DIRECT-SYSTEM-INPUT72-DELIVERY.md).
+[Текущий протокол](../audits/2026-10-14/KEYBOARD76-PARTIAL-OBSERVATION.json).
 
 ### CHAT-24 · Настройки качества, source FPS и краткая строка параметров
 
@@ -717,8 +680,9 @@ Fullscreen не включает физическую клавиатуру. В A
 
 **PARTIAL**
 
-Установлены native fullscreen, панель Android с кнопками 44px и явное открытие без hover. Настоящие браузерные mouse/touch события прошли проверку 390×844 /844×390 на 3015/Tuna без замены video/canvas или peer.
+Installed native fullscreen, accessible44px Android tray and explicit touch toggle; actual browser mouse/touch passed390x844/844x390 on3015/Tuna without remounting media elements or replacing the peer.
 
-Остаток: настоящий телефон/hotspot, мобильные браузеры/safe-area/zoom и полноценная клавиатура/IME. Системные кнопки переведены на прямой peer в APK72; реальная потеря RTC проверена с автоматическим новым native READY и Home ACK. Физическое переключение фоновой вкладки ещё не принято.
+Остаётся: Real phone/hotspot,safe-area/zoom and visibility/network matrix;broader keyboard/browser/IME cases. Fullscreen physical keyboard finite accepted onPH011/APK76.
 
-[Текущая установка](../audits/2026-10-14/DIRECT-SYSTEM-INPUT72-DELIVERY.md).
+[Текущий протокол](../audits/2026-10-14/KEYBOARD76-PARTIAL-OBSERVATION.json).
+

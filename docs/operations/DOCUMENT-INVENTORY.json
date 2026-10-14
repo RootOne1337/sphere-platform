@@ -1,11 +1,11 @@
 {
   "schemaVersion": 1,
-  "reviewedAtUtc": "2026-10-14T01:17:54.423398+00:00",
+  "reviewedAtUtc": "2026-10-14T19:41:06.991661+00:00",
   "scope": "All tracked Markdown classified; active local-link paths scanned. Not semantic attestation of every sentence, command execution, external-link or live acceptance.",
   "countsByRole": {
     "ADR": 6,
     "CURRENT_ENTRYPOINT": 8,
-    "DATED_EVIDENCE": 305,
+    "DATED_EVIDENCE": 310,
     "DESIGN_SPECIFICATION": 76,
     "OPERATING_GUIDE": 64,
     "PROJECT_POLICY": 7,
@@ -1321,6 +1321,10 @@
       "role": "DATED_EVIDENCE"
     },
     {
+      "file": "docs/audits/2026-10-14/CODEC-RECOVERY.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
       "file": "docs/audits/2026-10-14/DIRECT-AUDIO-PLAN.md",
       "role": "DATED_EVIDENCE"
     },
@@ -1349,6 +1353,18 @@
       "role": "DATED_EVIDENCE"
     },
     {
+      "file": "docs/audits/2026-10-14/KEYBOARD75-SELECTION.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
+      "file": "docs/audits/2026-10-14/KEYBOARD76-BURST.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
+      "file": "docs/audits/2026-10-14/KEYBOARD76-PARTIAL-DELIVERY.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
       "file": "docs/audits/2026-10-14/PH010-HIDDEN-TAB-INCIDENT.md",
       "role": "DATED_EVIDENCE"
     },
@@ -1362,6 +1378,10 @@
     },
     {
       "file": "docs/audits/2026-10-14/SHARED-INPUT-FULLSCREEN-DELIVERY.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
+      "file": "docs/audits/2026-10-14/SHARED-INPUT-RECEIPT-BUDGET.md",
       "role": "DATED_EVIDENCE"
     },
     {

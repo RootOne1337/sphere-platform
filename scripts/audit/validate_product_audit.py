@@ -17,6 +17,25 @@ from urllib.parse import unquote
 ROOT = Path(__file__).resolve().parents[2]
 DIRECTORY = ROOT / "docs/audits/2026-10-05"
 
+_DATED_NAVIGATION_NOTE = [
+    "> Это замороженный baseline5октября, а не перечень текущих дефектов.",
+    "> Последующие конечные приёмки закрыли EP-001–009; общий план остаётся9/41.",
+    "> [Сверка всех50пунктов с запросами и кодом на9октября](../2026-10-09/CHAT-CODE-RECONCILIATION.md).",
+    "",
+]
+
+
+def frozen_audit_body(document: str) -> str:
+    """Separate the exact later navigation note from the original frozen audit.
+
+    No general stripping of quotes, headings, whitespace or unknown notes:
+    edits to the evidence body still participate in its recorded line count.
+    """
+    lines = document.splitlines()
+    if lines[2:6] == _DATED_NAVIGATION_NOTE:
+        return "\n".join(lines[:2] + lines[6:]) + "\n"
+    return document
+
 
 def main() -> None:
     document = (DIRECTORY / "ENTERPRISE-PRODUCT-AUDIT.md").read_text(encoding="utf-8")
@@ -26,7 +45,7 @@ def main() -> None:
     assert manifest["source"] == evidence["source"]
     assert manifest["frontendGitBlobHashes"].keys() == evidence["frontendSourceHashes"].keys()
     assert len(document.splitlines()) >= 3000, "Required detailed audit is incomplete"
-    assert len(document.splitlines()) == evidence["validation"]["documentLineCount"]
+    assert len(frozen_audit_body(document).splitlines()) == evidence["validation"]["documentLineCount"]
     assert evidence["openApiRuntimeMatchesCommitted"] is True
     assert backlog["source"] == evidence["source"]
     items = {item["id"]: item for item in backlog["items"]}
@@ -97,6 +116,7 @@ def main() -> None:
     assert not re.search(r"tt_[a-z0-9]{20,}|ghp_[A-Za-z0-9]{20,}|Bearer\s+eyJ", published)
     print(json.dumps({
         "result": "PASS", "documentLines": len(document.splitlines()),
+        "frozenDocumentLines": len(frozen_audit_body(document).splitlines()),
         "backlogItems": len(items), "sourceReferences": len(evidence["sourceReferences"]),
         "codeLinks": len(code_links), "localLinks": checked_local,
         "reviewedScreenshots": len(evidence["screenshots"]),

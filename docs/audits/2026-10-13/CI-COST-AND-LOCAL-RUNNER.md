@@ -1,5 +1,15 @@
 # Стоимость CI и выполнение проверок на своей машине
 
+**Дополнительная сверка15октября местного времени.** GitHub API сообщает
+`RootOne1337/sphere-platform` visibility `public`; текущие workflow используют
+стандартный `ubuntu-latest`. По [действующим правилам GitHub](https://docs.github.com/en/billing/concepts/product-billing/github-actions)
+стандартные hosted запуски public repositories бесплатны. Квота2000 минут
+дляprivate repository не является лимитом runner minutes этого проекта.
+Это не сверка полного счёта аккаунта или стоимости других продуктов.
+Сам локальный перенос всё ещё не завершён: API runners сообщает0 registered.
+Локальные frontend/targeted backend статусы проверены на `adc598e3`;
+[текущая установка и границы](../2026-10-14/KEYBOARD76-PARTIAL-DELIVERY.md).
+
 Дата сверки: 13 октября 2026, Asia/Yekaterinburg.
 Статус: локальный исполнитель регрессий проверен; GitHub self-hosted runner не установлен. Полный перенос CI ещё не принят.
 Текущая установка продукта: [WORK-STATUS](../../operations/WORK-STATUS.md).

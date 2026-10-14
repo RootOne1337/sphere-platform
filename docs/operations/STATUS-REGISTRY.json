@@ -1,8 +1,8 @@
 {
   "schemaVersion": 1,
-  "reviewedAtUtc": "2026-10-14T01:17:54.423398+00:00",
-  "sourceReviewed": "1509822830d0ad079322a16d850c722701aa6e16",
-  "scope": "UI37543bb2 / APIbe0578d0 installed on3015/Tuna. APK72 completed OTA on15 online emulators;14 exact installed SHA proofs,1 command/version-only proofs;6 offline pending. Both origins passed two-client real input/native keys. Ten Tuna clients passed40 keys,takeover and9 survivors; forced RTC loss recovered automatically. Physical keyboard/IME,audio,20+,real phone/hotspot,offline autonomy and full CI migration remain open.",
+  "reviewedAtUtc": "2026-10-14T19:41:06.991661+00:00",
+  "sourceReviewed": "adc598e3215fed2bb59e4bae2bba6f8c39afc5e6",
+  "scope": "UIb182a0c8/API04cf1015 installed on3015/Tuna. APK76 confirmed onPH011;PH030 has exact completed OTA/version but no fresh package hash.13 reachable devices still72;6offline. Two-client local real mouse/touch and actual fullscreen Unicode/chords/composition accepted. Current ten-Tuna opening failed; fleet rollout held. Not production acceptance.",
   "baseline": "docs/audits/2026-10-05/ENTERPRISE-PRODUCT-BACKLOG.json",
   "previousCrosscheck": "docs/audits/2026-10-09/CHAT-CODE-RECONCILIATION.json",
   "counts": {
@@ -11,196 +11,38 @@
     "open": 41
   },
   "installed": {
-    "lastObservedUtc": "2026-10-14T01:17:54.423398+00:00",
-    "ui": "37543bb2ff2d81392be07003dbeaf53aa369ebe6",
-    "api": "be0578d058948a40e3f922e347911ecf2bcd32cf",
-    "evidence": "docs/audits/2026-10-14/DIRECT-SYSTEM-INPUT72-OBSERVATION.json",
-    "observation": "UI37543bb2 / APIbe0578d0 installed on3015/Tuna. APK72 completed OTA on15 online emulators;14 exact installed SHA proofs,1 command/version-only proofs;6 offline pending. Both origins passed two-client real input/native keys. Ten Tuna clients passed40 keys,takeover and9 survivors; forced RTC loss recovered automatically. Physical keyboard/IME,audio,20+,real phone/hotspot,offline autonomy and full CI migration remain open.",
+    "lastObservedUtc": "2026-10-14T19:41:06.991661+00:00",
+    "ui": "b182a0c82367df4f1e95fe92ff64b09f80d9e672",
+    "api": "04cf101523de3af76ba9a1a0f46f9094a277c3c5",
+    "evidence": "docs/audits/2026-10-14/KEYBOARD76-PARTIAL-OBSERVATION.json",
+    "observation": "UIb182a0c8/API04cf1015 installed on3015/Tuna. APK76 confirmed onPH011;PH030 has exact completed OTA/version but no fresh package hash.13 reachable devices still72;6offline. Two-client local real mouse/touch and actual fullscreen Unicode/chords/composition accepted. Current ten-Tuna opening failed; fleet rollout held. Not production acceptance.",
     "pilotApk": {
       "device": "auto-ph-011",
       "deviceId": "414ce0e9-4b93-4f96-b9ca-ee675f53835e",
-      "version": "1.2.72-dev",
-      "versionCode": 10272,
-      "sourceRevision": "1509822830d0ad079322a16d850c722701aa6e16",
-      "apkSha256": "d7d1b8ca79cea46327543998540e1e9f3a76c3acff6ae64cd9dd7e25db00ff6d",
-      "evidence": "docs/audits/2026-10-14/DIRECT-SYSTEM-INPUT72-OBSERVATION.json",
-      "evidenceSha256NormalizedLf": "563e318e02ca0591701af69e55a03cec50378358a59bb983da859ad2d7362cfb",
-      "packageProofObservedAtUtc": "2026-10-14T01:16:06.006846+00:00",
-      "scope": "Exact installed package proof. Live availability and finite runtime tests are reported separately."
+      "version": "1.2.76-dev",
+      "versionCode": 10276,
+      "sourceRevision": "b3e2b967f336163af5754c88980733ac46382380",
+      "apkSha256": "e0a7806ab59d2a5856277ab419b86f93f92251dd1694dc2162fb06cac56865a9",
+      "evidence": "docs/audits/2026-10-14/KEYBOARD76-PARTIAL-OBSERVATION.json",
+      "evidenceSha256NormalizedLf": "e5b5c21f639d0cdb1fc9522e96fa5e1a8ddb4711bc9a3d21cfb0e02fc8c9293b"
     },
-    "evidenceSha256NormalizedLf": "563e318e02ca0591701af69e55a03cec50378358a59bb983da859ad2d7362cfb",
-    "additionalPilotApks": [
-      {
-        "device": "auto-ph-028",
-        "deviceId": "4815b950-e5cf-4686-9d46-42d0df8d41f7",
-        "version": "1.2.72-dev",
-        "versionCode": 10272,
-        "sourceRevision": "1509822830d0ad079322a16d850c722701aa6e16",
-        "apkSha256": "d7d1b8ca79cea46327543998540e1e9f3a76c3acff6ae64cd9dd7e25db00ff6d",
-        "evidence": "docs/audits/2026-10-14/DIRECT-SYSTEM-INPUT72-OBSERVATION.json",
-        "evidenceSha256NormalizedLf": "563e318e02ca0591701af69e55a03cec50378358a59bb983da859ad2d7362cfb",
-        "packageProofObservedAtUtc": "2026-10-14T01:16:06.006846+00:00",
-        "scope": "Exact installed package proof. Live availability and finite runtime tests are reported separately."
-      },
-      {
-        "device": "auto-ph-025",
-        "deviceId": "b410464a-5f26-4803-a756-7840cc17b128",
-        "version": "1.2.72-dev",
-        "versionCode": 10272,
-        "sourceRevision": "1509822830d0ad079322a16d850c722701aa6e16",
-        "apkSha256": "d7d1b8ca79cea46327543998540e1e9f3a76c3acff6ae64cd9dd7e25db00ff6d",
-        "evidence": "docs/audits/2026-10-14/DIRECT-SYSTEM-INPUT72-OBSERVATION.json",
-        "evidenceSha256NormalizedLf": "563e318e02ca0591701af69e55a03cec50378358a59bb983da859ad2d7362cfb",
-        "packageProofObservedAtUtc": "2026-10-14T01:16:06.006846+00:00",
-        "scope": "Exact installed package proof. Live availability and finite runtime tests are reported separately."
-      },
-      {
-        "device": "auto-ph-022",
-        "deviceId": "d088c147-7ada-4b29-9e79-f991b20fcf91",
-        "version": "1.2.72-dev",
-        "versionCode": 10272,
-        "sourceRevision": "1509822830d0ad079322a16d850c722701aa6e16",
-        "apkSha256": "d7d1b8ca79cea46327543998540e1e9f3a76c3acff6ae64cd9dd7e25db00ff6d",
-        "evidence": "docs/audits/2026-10-14/DIRECT-SYSTEM-INPUT72-OBSERVATION.json",
-        "evidenceSha256NormalizedLf": "563e318e02ca0591701af69e55a03cec50378358a59bb983da859ad2d7362cfb",
-        "packageProofObservedAtUtc": "2026-10-14T01:16:06.006846+00:00",
-        "scope": "Exact installed package proof. Live availability and finite runtime tests are reported separately."
-      },
-      {
-        "device": "auto-ph-020",
-        "deviceId": "75c29a32-2867-4b60-947c-003e712e538f",
-        "version": "1.2.72-dev",
-        "versionCode": 10272,
-        "sourceRevision": "1509822830d0ad079322a16d850c722701aa6e16",
-        "apkSha256": "d7d1b8ca79cea46327543998540e1e9f3a76c3acff6ae64cd9dd7e25db00ff6d",
-        "evidence": "docs/audits/2026-10-14/DIRECT-SYSTEM-INPUT72-OBSERVATION.json",
-        "evidenceSha256NormalizedLf": "563e318e02ca0591701af69e55a03cec50378358a59bb983da859ad2d7362cfb",
-        "packageProofObservedAtUtc": "2026-10-14T01:16:06.006846+00:00",
-        "scope": "Exact installed package proof. Live availability and finite runtime tests are reported separately."
-      },
-      {
-        "device": "auto-ph-019",
-        "deviceId": "c37e687a-ee83-466d-846f-3f4b36047fa7",
-        "version": "1.2.72-dev",
-        "versionCode": 10272,
-        "sourceRevision": "1509822830d0ad079322a16d850c722701aa6e16",
-        "apkSha256": "d7d1b8ca79cea46327543998540e1e9f3a76c3acff6ae64cd9dd7e25db00ff6d",
-        "evidence": "docs/audits/2026-10-14/DIRECT-SYSTEM-INPUT72-OBSERVATION.json",
-        "evidenceSha256NormalizedLf": "563e318e02ca0591701af69e55a03cec50378358a59bb983da859ad2d7362cfb",
-        "packageProofObservedAtUtc": "2026-10-14T01:16:06.006846+00:00",
-        "scope": "Exact installed package proof. Live availability and finite runtime tests are reported separately."
-      },
-      {
-        "device": "auto-ph-018",
-        "deviceId": "bafef86f-3ab4-469b-ae0c-cf2771b55813",
-        "version": "1.2.72-dev",
-        "versionCode": 10272,
-        "sourceRevision": "1509822830d0ad079322a16d850c722701aa6e16",
-        "apkSha256": "d7d1b8ca79cea46327543998540e1e9f3a76c3acff6ae64cd9dd7e25db00ff6d",
-        "evidence": "docs/audits/2026-10-14/DIRECT-SYSTEM-INPUT72-OBSERVATION.json",
-        "evidenceSha256NormalizedLf": "563e318e02ca0591701af69e55a03cec50378358a59bb983da859ad2d7362cfb",
-        "packageProofObservedAtUtc": "2026-10-14T01:16:06.006846+00:00",
-        "scope": "Exact installed package proof. Live availability and finite runtime tests are reported separately."
-      },
-      {
-        "device": "auto-ph-017",
-        "deviceId": "1dd7e59c-b68f-406a-93cd-5f4e34fdea90",
-        "version": "1.2.72-dev",
-        "versionCode": 10272,
-        "sourceRevision": "1509822830d0ad079322a16d850c722701aa6e16",
-        "apkSha256": "d7d1b8ca79cea46327543998540e1e9f3a76c3acff6ae64cd9dd7e25db00ff6d",
-        "evidence": "docs/audits/2026-10-14/DIRECT-SYSTEM-INPUT72-OBSERVATION.json",
-        "evidenceSha256NormalizedLf": "563e318e02ca0591701af69e55a03cec50378358a59bb983da859ad2d7362cfb",
-        "packageProofObservedAtUtc": "2026-10-14T01:16:06.006846+00:00",
-        "scope": "Exact installed package proof. Live availability and finite runtime tests are reported separately."
-      },
-      {
-        "device": "auto-ph-016",
-        "deviceId": "3c4c4218-27ba-4d8d-a7d2-4348c2f91c93",
-        "version": "1.2.72-dev",
-        "versionCode": 10272,
-        "sourceRevision": "1509822830d0ad079322a16d850c722701aa6e16",
-        "apkSha256": "d7d1b8ca79cea46327543998540e1e9f3a76c3acff6ae64cd9dd7e25db00ff6d",
-        "evidence": "docs/audits/2026-10-14/DIRECT-SYSTEM-INPUT72-OBSERVATION.json",
-        "evidenceSha256NormalizedLf": "563e318e02ca0591701af69e55a03cec50378358a59bb983da859ad2d7362cfb",
-        "packageProofObservedAtUtc": "2026-10-14T01:16:06.006846+00:00",
-        "scope": "Exact installed package proof. Live availability and finite runtime tests are reported separately."
-      },
-      {
-        "device": "auto-ph-015",
-        "deviceId": "930a6505-b7ec-4eee-93fe-9aaa66517871",
-        "version": "1.2.72-dev",
-        "versionCode": 10272,
-        "sourceRevision": "1509822830d0ad079322a16d850c722701aa6e16",
-        "apkSha256": "d7d1b8ca79cea46327543998540e1e9f3a76c3acff6ae64cd9dd7e25db00ff6d",
-        "evidence": "docs/audits/2026-10-14/DIRECT-SYSTEM-INPUT72-OBSERVATION.json",
-        "evidenceSha256NormalizedLf": "563e318e02ca0591701af69e55a03cec50378358a59bb983da859ad2d7362cfb",
-        "packageProofObservedAtUtc": "2026-10-14T01:16:06.006846+00:00",
-        "scope": "Exact installed package proof. Live availability and finite runtime tests are reported separately."
-      },
-      {
-        "device": "auto-ph-014",
-        "deviceId": "673d5774-24b1-4b57-8dfb-90c46f627ce3",
-        "version": "1.2.72-dev",
-        "versionCode": 10272,
-        "sourceRevision": "1509822830d0ad079322a16d850c722701aa6e16",
-        "apkSha256": "d7d1b8ca79cea46327543998540e1e9f3a76c3acff6ae64cd9dd7e25db00ff6d",
-        "evidence": "docs/audits/2026-10-14/DIRECT-SYSTEM-INPUT72-OBSERVATION.json",
-        "evidenceSha256NormalizedLf": "563e318e02ca0591701af69e55a03cec50378358a59bb983da859ad2d7362cfb",
-        "packageProofObservedAtUtc": "2026-10-14T01:16:06.006846+00:00",
-        "scope": "Exact installed package proof. Live availability and finite runtime tests are reported separately."
-      },
-      {
-        "device": "auto-ph-013",
-        "deviceId": "6d830af5-b7cc-44b4-b7f5-5e0275aceb3b",
-        "version": "1.2.72-dev",
-        "versionCode": 10272,
-        "sourceRevision": "1509822830d0ad079322a16d850c722701aa6e16",
-        "apkSha256": "d7d1b8ca79cea46327543998540e1e9f3a76c3acff6ae64cd9dd7e25db00ff6d",
-        "evidence": "docs/audits/2026-10-14/DIRECT-SYSTEM-INPUT72-OBSERVATION.json",
-        "evidenceSha256NormalizedLf": "563e318e02ca0591701af69e55a03cec50378358a59bb983da859ad2d7362cfb",
-        "packageProofObservedAtUtc": "2026-10-14T01:16:06.006846+00:00",
-        "scope": "Exact installed package proof. Live availability and finite runtime tests are reported separately."
-      },
-      {
-        "device": "auto-ph-012",
-        "deviceId": "8c187cfa-e5ea-4939-a137-07619437953d",
-        "version": "1.2.72-dev",
-        "versionCode": 10272,
-        "sourceRevision": "1509822830d0ad079322a16d850c722701aa6e16",
-        "apkSha256": "d7d1b8ca79cea46327543998540e1e9f3a76c3acff6ae64cd9dd7e25db00ff6d",
-        "evidence": "docs/audits/2026-10-14/DIRECT-SYSTEM-INPUT72-OBSERVATION.json",
-        "evidenceSha256NormalizedLf": "563e318e02ca0591701af69e55a03cec50378358a59bb983da859ad2d7362cfb",
-        "packageProofObservedAtUtc": "2026-10-14T01:16:06.006846+00:00",
-        "scope": "Exact installed package proof. Live availability and finite runtime tests are reported separately."
-      },
-      {
-        "device": "auto-ph-010",
-        "deviceId": "5df4805e-fe64-4d39-960c-19ceab206cd6",
-        "version": "1.2.72-dev",
-        "versionCode": 10272,
-        "sourceRevision": "1509822830d0ad079322a16d850c722701aa6e16",
-        "apkSha256": "d7d1b8ca79cea46327543998540e1e9f3a76c3acff6ae64cd9dd7e25db00ff6d",
-        "evidence": "docs/audits/2026-10-14/DIRECT-SYSTEM-INPUT72-OBSERVATION.json",
-        "evidenceSha256NormalizedLf": "563e318e02ca0591701af69e55a03cec50378358a59bb983da859ad2d7362cfb",
-        "packageProofObservedAtUtc": "2026-10-14T01:16:06.006846+00:00",
-        "scope": "Exact installed package proof. Live availability and finite runtime tests are reported separately."
-      }
-    ],
+    "evidenceSha256NormalizedLf": "e5b5c21f639d0cdb1fc9522e96fa5e1a8ddb4711bc9a3d21cfb0e02fc8c9293b",
+    "additionalPilotApks": [],
     "fleetApkEvidence": {
-      "evidence": "docs/audits/2026-10-14/DIRECT-SYSTEM-INPUT72-OBSERVATION.json",
-      "evidenceSha256NormalizedLf": "563e318e02ca0591701af69e55a03cec50378358a59bb983da859ad2d7362cfb",
-      "installedCount": 14,
-      "completedOtaCount": 15,
-      "offlineCount": 6,
+      "evidence": "docs/audits/2026-10-14/KEYBOARD76-PARTIAL-OBSERVATION.json",
+      "evidenceSha256NormalizedLf": "e5b5c21f639d0cdb1fc9522e96fa5e1a8ddb4711bc9a3d21cfb0e02fc8c9293b",
+      "installedCount": 1,
       "partialPackageProofCount": 1,
+      "targetCompletedOtaCount": 2,
+      "targetPendingOnlineCount": 13,
+      "offlineCount": 6,
       "verifiedVersionCounts": {
-        "10272": 14
+        "10276": 1
       }
     },
-    "latestReadbackAtUtc": "2026-10-14T01:17:54.423398+00:00",
-    "latestReadbackEvidence": "docs/audits/2026-10-14/DIRECT-SYSTEM-INPUT72-OBSERVATION.json",
-    "latestReadbackEvidenceSha256NormalizedLf": "563e318e02ca0591701af69e55a03cec50378358a59bb983da859ad2d7362cfb",
+    "latestReadbackAtUtc": "2026-10-14T19:41:06.991661+00:00",
+    "latestReadbackEvidence": "docs/audits/2026-10-14/KEYBOARD76-PARTIAL-OBSERVATION.json",
+    "latestReadbackEvidenceSha256NormalizedLf": "e5b5c21f639d0cdb1fc9522e96fa5e1a8ddb4711bc9a3d21cfb0e02fc8c9293b",
     "previousRuntimeObservation": {
       "ui": "ed9d54d090e2b5a5d471502335ddf6b8b86dbd35",
       "api": "ed9d54d090e2b5a5d471502335ddf6b8b86dbd35",
@@ -209,16 +51,17 @@
       "lastObservedUtc": "2026-10-12T12:36:18.186603+00:00"
     },
     "freshFleetReportedVersions": {
-      "observedAtUtc": "2026-10-14T01:16:34.337409+00:00",
+      "observedAtUtc": "2026-10-14T19:33:19.842358+00:00",
       "devices": [
         {
           "deviceId": "753fd530-2f19-4e5e-98ba-769863678141",
           "device": "auto-ph-030",
           "status": "online",
-          "reportedVersionCode": 10272,
+          "reportedVersionCode": 10276,
           "currentInstalledHashVerified": false,
-          "completed72Ota": true,
-          "offlineRolloutPending": false
+          "completed76Ota": true,
+          "pendingUpdate": false,
+          "newlyOnlineSinceBaseline": false
         },
         {
           "deviceId": "867ec296-ca4a-4fb2-bb46-ce10b016bfdc",
@@ -226,17 +69,19 @@
           "status": "offline",
           "reportedVersionCode": null,
           "currentInstalledHashVerified": false,
-          "completed72Ota": false,
-          "offlineRolloutPending": true
+          "completed76Ota": false,
+          "pendingUpdate": true,
+          "newlyOnlineSinceBaseline": false
         },
         {
           "deviceId": "4815b950-e5cf-4686-9d46-42d0df8d41f7",
           "device": "auto-ph-028",
           "status": "online",
           "reportedVersionCode": 10272,
-          "currentInstalledHashVerified": true,
-          "completed72Ota": true,
-          "offlineRolloutPending": false
+          "currentInstalledHashVerified": false,
+          "completed76Ota": false,
+          "pendingUpdate": true,
+          "newlyOnlineSinceBaseline": false
         },
         {
           "deviceId": "db32e00c-3ef4-4b21-acb4-84717737f2a8",
@@ -244,8 +89,9 @@
           "status": "offline",
           "reportedVersionCode": null,
           "currentInstalledHashVerified": false,
-          "completed72Ota": false,
-          "offlineRolloutPending": true
+          "completed76Ota": false,
+          "pendingUpdate": true,
+          "newlyOnlineSinceBaseline": false
         },
         {
           "deviceId": "daef8a88-6c90-4a6b-bb3b-6b81126a8f45",
@@ -253,17 +99,19 @@
           "status": "offline",
           "reportedVersionCode": null,
           "currentInstalledHashVerified": false,
-          "completed72Ota": false,
-          "offlineRolloutPending": true
+          "completed76Ota": false,
+          "pendingUpdate": true,
+          "newlyOnlineSinceBaseline": false
         },
         {
           "deviceId": "b410464a-5f26-4803-a756-7840cc17b128",
           "device": "auto-ph-025",
           "status": "online",
           "reportedVersionCode": 10272,
-          "currentInstalledHashVerified": true,
-          "completed72Ota": true,
-          "offlineRolloutPending": false
+          "currentInstalledHashVerified": false,
+          "completed76Ota": false,
+          "pendingUpdate": true,
+          "newlyOnlineSinceBaseline": false
         },
         {
           "deviceId": "dce1b4c3-cfd5-47c7-a948-78f572aea72c",
@@ -271,8 +119,9 @@
           "status": "offline",
           "reportedVersionCode": null,
           "currentInstalledHashVerified": false,
-          "completed72Ota": false,
-          "offlineRolloutPending": true
+          "completed76Ota": false,
+          "pendingUpdate": true,
+          "newlyOnlineSinceBaseline": false
         },
         {
           "deviceId": "58c08910-5051-4e43-ab84-f84cd23c8a03",
@@ -280,17 +129,19 @@
           "status": "offline",
           "reportedVersionCode": null,
           "currentInstalledHashVerified": false,
-          "completed72Ota": false,
-          "offlineRolloutPending": true
+          "completed76Ota": false,
+          "pendingUpdate": true,
+          "newlyOnlineSinceBaseline": false
         },
         {
           "deviceId": "d088c147-7ada-4b29-9e79-f991b20fcf91",
           "device": "auto-ph-022",
           "status": "online",
           "reportedVersionCode": 10272,
-          "currentInstalledHashVerified": true,
-          "completed72Ota": true,
-          "offlineRolloutPending": false
+          "currentInstalledHashVerified": false,
+          "completed76Ota": false,
+          "pendingUpdate": true,
+          "newlyOnlineSinceBaseline": false
         },
         {
           "deviceId": "91c4155d-31a0-4dc1-83e9-f197b3473d16",
@@ -298,111 +149,123 @@
           "status": "offline",
           "reportedVersionCode": null,
           "currentInstalledHashVerified": false,
-          "completed72Ota": false,
-          "offlineRolloutPending": true
+          "completed76Ota": false,
+          "pendingUpdate": true,
+          "newlyOnlineSinceBaseline": false
         },
         {
           "deviceId": "75c29a32-2867-4b60-947c-003e712e538f",
           "device": "auto-ph-020",
           "status": "online",
           "reportedVersionCode": 10272,
-          "currentInstalledHashVerified": true,
-          "completed72Ota": true,
-          "offlineRolloutPending": false
+          "currentInstalledHashVerified": false,
+          "completed76Ota": false,
+          "pendingUpdate": true,
+          "newlyOnlineSinceBaseline": false
         },
         {
           "deviceId": "c37e687a-ee83-466d-846f-3f4b36047fa7",
           "device": "auto-ph-019",
           "status": "online",
           "reportedVersionCode": 10272,
-          "currentInstalledHashVerified": true,
-          "completed72Ota": true,
-          "offlineRolloutPending": false
+          "currentInstalledHashVerified": false,
+          "completed76Ota": false,
+          "pendingUpdate": true,
+          "newlyOnlineSinceBaseline": false
         },
         {
           "deviceId": "bafef86f-3ab4-469b-ae0c-cf2771b55813",
           "device": "auto-ph-018",
           "status": "online",
           "reportedVersionCode": 10272,
-          "currentInstalledHashVerified": true,
-          "completed72Ota": true,
-          "offlineRolloutPending": false
+          "currentInstalledHashVerified": false,
+          "completed76Ota": false,
+          "pendingUpdate": true,
+          "newlyOnlineSinceBaseline": false
         },
         {
           "deviceId": "1dd7e59c-b68f-406a-93cd-5f4e34fdea90",
           "device": "auto-ph-017",
           "status": "online",
           "reportedVersionCode": 10272,
-          "currentInstalledHashVerified": true,
-          "completed72Ota": true,
-          "offlineRolloutPending": false
+          "currentInstalledHashVerified": false,
+          "completed76Ota": false,
+          "pendingUpdate": true,
+          "newlyOnlineSinceBaseline": false
         },
         {
           "deviceId": "3c4c4218-27ba-4d8d-a7d2-4348c2f91c93",
           "device": "auto-ph-016",
           "status": "online",
           "reportedVersionCode": 10272,
-          "currentInstalledHashVerified": true,
-          "completed72Ota": true,
-          "offlineRolloutPending": false
+          "currentInstalledHashVerified": false,
+          "completed76Ota": false,
+          "pendingUpdate": true,
+          "newlyOnlineSinceBaseline": false
         },
         {
           "deviceId": "930a6505-b7ec-4eee-93fe-9aaa66517871",
           "device": "auto-ph-015",
           "status": "online",
           "reportedVersionCode": 10272,
-          "currentInstalledHashVerified": true,
-          "completed72Ota": true,
-          "offlineRolloutPending": false
+          "currentInstalledHashVerified": false,
+          "completed76Ota": false,
+          "pendingUpdate": true,
+          "newlyOnlineSinceBaseline": false
         },
         {
           "deviceId": "673d5774-24b1-4b57-8dfb-90c46f627ce3",
           "device": "auto-ph-014",
           "status": "online",
           "reportedVersionCode": 10272,
-          "currentInstalledHashVerified": true,
-          "completed72Ota": true,
-          "offlineRolloutPending": false
+          "currentInstalledHashVerified": false,
+          "completed76Ota": false,
+          "pendingUpdate": true,
+          "newlyOnlineSinceBaseline": false
         },
         {
           "deviceId": "6d830af5-b7cc-44b4-b7f5-5e0275aceb3b",
           "device": "auto-ph-013",
           "status": "online",
           "reportedVersionCode": 10272,
-          "currentInstalledHashVerified": true,
-          "completed72Ota": true,
-          "offlineRolloutPending": false
+          "currentInstalledHashVerified": false,
+          "completed76Ota": false,
+          "pendingUpdate": true,
+          "newlyOnlineSinceBaseline": false
         },
         {
           "deviceId": "8c187cfa-e5ea-4939-a137-07619437953d",
           "device": "auto-ph-012",
           "status": "online",
           "reportedVersionCode": 10272,
-          "currentInstalledHashVerified": true,
-          "completed72Ota": true,
-          "offlineRolloutPending": false
+          "currentInstalledHashVerified": false,
+          "completed76Ota": false,
+          "pendingUpdate": true,
+          "newlyOnlineSinceBaseline": false
         },
         {
           "deviceId": "414ce0e9-4b93-4f96-b9ca-ee675f53835e",
           "device": "auto-ph-011",
           "status": "online",
-          "reportedVersionCode": 10272,
+          "reportedVersionCode": 10276,
           "currentInstalledHashVerified": true,
-          "completed72Ota": true,
-          "offlineRolloutPending": false
+          "completed76Ota": true,
+          "pendingUpdate": false,
+          "newlyOnlineSinceBaseline": false
         },
         {
           "deviceId": "5df4805e-fe64-4d39-960c-19ceab206cd6",
           "device": "auto-ph-010",
           "status": "online",
           "reportedVersionCode": 10272,
-          "currentInstalledHashVerified": true,
-          "completed72Ota": true,
-          "offlineRolloutPending": false
+          "currentInstalledHashVerified": false,
+          "completed76Ota": false,
+          "pendingUpdate": true,
+          "newlyOnlineSinceBaseline": false
         }
       ],
       "deviceCommandsSent": 0,
-      "scope": "Read-only live inventory plus earlier exact package proofs. Completed OTA, reported version and fresh installed SHA are distinct; offline delivery is pending, not queued."
+      "scope": "Read-only current inventory joined to earlier exact OTA/package proofs; offline update delivery is pending, not queued."
     },
     "historicalPilotApkBindings": [
       {
@@ -1074,6 +937,193 @@
           "10269": 14
         }
       }
+    },
+    "historicalBeforeKeyboard76Partial": {
+      "ui": "37543bb2ff2d81392be07003dbeaf53aa369ebe6",
+      "api": "be0578d058948a40e3f922e347911ecf2bcd32cf",
+      "evidence": "docs/audits/2026-10-14/DIRECT-SYSTEM-INPUT72-OBSERVATION.json",
+      "evidenceSha256NormalizedLf": "563e318e02ca0591701af69e55a03cec50378358a59bb983da859ad2d7362cfb",
+      "pilotApk": {
+        "device": "auto-ph-011",
+        "deviceId": "414ce0e9-4b93-4f96-b9ca-ee675f53835e",
+        "version": "1.2.72-dev",
+        "versionCode": 10272,
+        "sourceRevision": "1509822830d0ad079322a16d850c722701aa6e16",
+        "apkSha256": "d7d1b8ca79cea46327543998540e1e9f3a76c3acff6ae64cd9dd7e25db00ff6d",
+        "evidence": "docs/audits/2026-10-14/DIRECT-SYSTEM-INPUT72-OBSERVATION.json",
+        "evidenceSha256NormalizedLf": "563e318e02ca0591701af69e55a03cec50378358a59bb983da859ad2d7362cfb",
+        "packageProofObservedAtUtc": "2026-10-14T01:16:06.006846+00:00",
+        "scope": "Exact installed package proof. Live availability and finite runtime tests are reported separately."
+      },
+      "additionalPilotApks": [
+        {
+          "device": "auto-ph-028",
+          "deviceId": "4815b950-e5cf-4686-9d46-42d0df8d41f7",
+          "version": "1.2.72-dev",
+          "versionCode": 10272,
+          "sourceRevision": "1509822830d0ad079322a16d850c722701aa6e16",
+          "apkSha256": "d7d1b8ca79cea46327543998540e1e9f3a76c3acff6ae64cd9dd7e25db00ff6d",
+          "evidence": "docs/audits/2026-10-14/DIRECT-SYSTEM-INPUT72-OBSERVATION.json",
+          "evidenceSha256NormalizedLf": "563e318e02ca0591701af69e55a03cec50378358a59bb983da859ad2d7362cfb",
+          "packageProofObservedAtUtc": "2026-10-14T01:16:06.006846+00:00",
+          "scope": "Exact installed package proof. Live availability and finite runtime tests are reported separately."
+        },
+        {
+          "device": "auto-ph-025",
+          "deviceId": "b410464a-5f26-4803-a756-7840cc17b128",
+          "version": "1.2.72-dev",
+          "versionCode": 10272,
+          "sourceRevision": "1509822830d0ad079322a16d850c722701aa6e16",
+          "apkSha256": "d7d1b8ca79cea46327543998540e1e9f3a76c3acff6ae64cd9dd7e25db00ff6d",
+          "evidence": "docs/audits/2026-10-14/DIRECT-SYSTEM-INPUT72-OBSERVATION.json",
+          "evidenceSha256NormalizedLf": "563e318e02ca0591701af69e55a03cec50378358a59bb983da859ad2d7362cfb",
+          "packageProofObservedAtUtc": "2026-10-14T01:16:06.006846+00:00",
+          "scope": "Exact installed package proof. Live availability and finite runtime tests are reported separately."
+        },
+        {
+          "device": "auto-ph-022",
+          "deviceId": "d088c147-7ada-4b29-9e79-f991b20fcf91",
+          "version": "1.2.72-dev",
+          "versionCode": 10272,
+          "sourceRevision": "1509822830d0ad079322a16d850c722701aa6e16",
+          "apkSha256": "d7d1b8ca79cea46327543998540e1e9f3a76c3acff6ae64cd9dd7e25db00ff6d",
+          "evidence": "docs/audits/2026-10-14/DIRECT-SYSTEM-INPUT72-OBSERVATION.json",
+          "evidenceSha256NormalizedLf": "563e318e02ca0591701af69e55a03cec50378358a59bb983da859ad2d7362cfb",
+          "packageProofObservedAtUtc": "2026-10-14T01:16:06.006846+00:00",
+          "scope": "Exact installed package proof. Live availability and finite runtime tests are reported separately."
+        },
+        {
+          "device": "auto-ph-020",
+          "deviceId": "75c29a32-2867-4b60-947c-003e712e538f",
+          "version": "1.2.72-dev",
+          "versionCode": 10272,
+          "sourceRevision": "1509822830d0ad079322a16d850c722701aa6e16",
+          "apkSha256": "d7d1b8ca79cea46327543998540e1e9f3a76c3acff6ae64cd9dd7e25db00ff6d",
+          "evidence": "docs/audits/2026-10-14/DIRECT-SYSTEM-INPUT72-OBSERVATION.json",
+          "evidenceSha256NormalizedLf": "563e318e02ca0591701af69e55a03cec50378358a59bb983da859ad2d7362cfb",
+          "packageProofObservedAtUtc": "2026-10-14T01:16:06.006846+00:00",
+          "scope": "Exact installed package proof. Live availability and finite runtime tests are reported separately."
+        },
+        {
+          "device": "auto-ph-019",
+          "deviceId": "c37e687a-ee83-466d-846f-3f4b36047fa7",
+          "version": "1.2.72-dev",
+          "versionCode": 10272,
+          "sourceRevision": "1509822830d0ad079322a16d850c722701aa6e16",
+          "apkSha256": "d7d1b8ca79cea46327543998540e1e9f3a76c3acff6ae64cd9dd7e25db00ff6d",
+          "evidence": "docs/audits/2026-10-14/DIRECT-SYSTEM-INPUT72-OBSERVATION.json",
+          "evidenceSha256NormalizedLf": "563e318e02ca0591701af69e55a03cec50378358a59bb983da859ad2d7362cfb",
+          "packageProofObservedAtUtc": "2026-10-14T01:16:06.006846+00:00",
+          "scope": "Exact installed package proof. Live availability and finite runtime tests are reported separately."
+        },
+        {
+          "device": "auto-ph-018",
+          "deviceId": "bafef86f-3ab4-469b-ae0c-cf2771b55813",
+          "version": "1.2.72-dev",
+          "versionCode": 10272,
+          "sourceRevision": "1509822830d0ad079322a16d850c722701aa6e16",
+          "apkSha256": "d7d1b8ca79cea46327543998540e1e9f3a76c3acff6ae64cd9dd7e25db00ff6d",
+          "evidence": "docs/audits/2026-10-14/DIRECT-SYSTEM-INPUT72-OBSERVATION.json",
+          "evidenceSha256NormalizedLf": "563e318e02ca0591701af69e55a03cec50378358a59bb983da859ad2d7362cfb",
+          "packageProofObservedAtUtc": "2026-10-14T01:16:06.006846+00:00",
+          "scope": "Exact installed package proof. Live availability and finite runtime tests are reported separately."
+        },
+        {
+          "device": "auto-ph-017",
+          "deviceId": "1dd7e59c-b68f-406a-93cd-5f4e34fdea90",
+          "version": "1.2.72-dev",
+          "versionCode": 10272,
+          "sourceRevision": "1509822830d0ad079322a16d850c722701aa6e16",
+          "apkSha256": "d7d1b8ca79cea46327543998540e1e9f3a76c3acff6ae64cd9dd7e25db00ff6d",
+          "evidence": "docs/audits/2026-10-14/DIRECT-SYSTEM-INPUT72-OBSERVATION.json",
+          "evidenceSha256NormalizedLf": "563e318e02ca0591701af69e55a03cec50378358a59bb983da859ad2d7362cfb",
+          "packageProofObservedAtUtc": "2026-10-14T01:16:06.006846+00:00",
+          "scope": "Exact installed package proof. Live availability and finite runtime tests are reported separately."
+        },
+        {
+          "device": "auto-ph-016",
+          "deviceId": "3c4c4218-27ba-4d8d-a7d2-4348c2f91c93",
+          "version": "1.2.72-dev",
+          "versionCode": 10272,
+          "sourceRevision": "1509822830d0ad079322a16d850c722701aa6e16",
+          "apkSha256": "d7d1b8ca79cea46327543998540e1e9f3a76c3acff6ae64cd9dd7e25db00ff6d",
+          "evidence": "docs/audits/2026-10-14/DIRECT-SYSTEM-INPUT72-OBSERVATION.json",
+          "evidenceSha256NormalizedLf": "563e318e02ca0591701af69e55a03cec50378358a59bb983da859ad2d7362cfb",
+          "packageProofObservedAtUtc": "2026-10-14T01:16:06.006846+00:00",
+          "scope": "Exact installed package proof. Live availability and finite runtime tests are reported separately."
+        },
+        {
+          "device": "auto-ph-015",
+          "deviceId": "930a6505-b7ec-4eee-93fe-9aaa66517871",
+          "version": "1.2.72-dev",
+          "versionCode": 10272,
+          "sourceRevision": "1509822830d0ad079322a16d850c722701aa6e16",
+          "apkSha256": "d7d1b8ca79cea46327543998540e1e9f3a76c3acff6ae64cd9dd7e25db00ff6d",
+          "evidence": "docs/audits/2026-10-14/DIRECT-SYSTEM-INPUT72-OBSERVATION.json",
+          "evidenceSha256NormalizedLf": "563e318e02ca0591701af69e55a03cec50378358a59bb983da859ad2d7362cfb",
+          "packageProofObservedAtUtc": "2026-10-14T01:16:06.006846+00:00",
+          "scope": "Exact installed package proof. Live availability and finite runtime tests are reported separately."
+        },
+        {
+          "device": "auto-ph-014",
+          "deviceId": "673d5774-24b1-4b57-8dfb-90c46f627ce3",
+          "version": "1.2.72-dev",
+          "versionCode": 10272,
+          "sourceRevision": "1509822830d0ad079322a16d850c722701aa6e16",
+          "apkSha256": "d7d1b8ca79cea46327543998540e1e9f3a76c3acff6ae64cd9dd7e25db00ff6d",
+          "evidence": "docs/audits/2026-10-14/DIRECT-SYSTEM-INPUT72-OBSERVATION.json",
+          "evidenceSha256NormalizedLf": "563e318e02ca0591701af69e55a03cec50378358a59bb983da859ad2d7362cfb",
+          "packageProofObservedAtUtc": "2026-10-14T01:16:06.006846+00:00",
+          "scope": "Exact installed package proof. Live availability and finite runtime tests are reported separately."
+        },
+        {
+          "device": "auto-ph-013",
+          "deviceId": "6d830af5-b7cc-44b4-b7f5-5e0275aceb3b",
+          "version": "1.2.72-dev",
+          "versionCode": 10272,
+          "sourceRevision": "1509822830d0ad079322a16d850c722701aa6e16",
+          "apkSha256": "d7d1b8ca79cea46327543998540e1e9f3a76c3acff6ae64cd9dd7e25db00ff6d",
+          "evidence": "docs/audits/2026-10-14/DIRECT-SYSTEM-INPUT72-OBSERVATION.json",
+          "evidenceSha256NormalizedLf": "563e318e02ca0591701af69e55a03cec50378358a59bb983da859ad2d7362cfb",
+          "packageProofObservedAtUtc": "2026-10-14T01:16:06.006846+00:00",
+          "scope": "Exact installed package proof. Live availability and finite runtime tests are reported separately."
+        },
+        {
+          "device": "auto-ph-012",
+          "deviceId": "8c187cfa-e5ea-4939-a137-07619437953d",
+          "version": "1.2.72-dev",
+          "versionCode": 10272,
+          "sourceRevision": "1509822830d0ad079322a16d850c722701aa6e16",
+          "apkSha256": "d7d1b8ca79cea46327543998540e1e9f3a76c3acff6ae64cd9dd7e25db00ff6d",
+          "evidence": "docs/audits/2026-10-14/DIRECT-SYSTEM-INPUT72-OBSERVATION.json",
+          "evidenceSha256NormalizedLf": "563e318e02ca0591701af69e55a03cec50378358a59bb983da859ad2d7362cfb",
+          "packageProofObservedAtUtc": "2026-10-14T01:16:06.006846+00:00",
+          "scope": "Exact installed package proof. Live availability and finite runtime tests are reported separately."
+        },
+        {
+          "device": "auto-ph-010",
+          "deviceId": "5df4805e-fe64-4d39-960c-19ceab206cd6",
+          "version": "1.2.72-dev",
+          "versionCode": 10272,
+          "sourceRevision": "1509822830d0ad079322a16d850c722701aa6e16",
+          "apkSha256": "d7d1b8ca79cea46327543998540e1e9f3a76c3acff6ae64cd9dd7e25db00ff6d",
+          "evidence": "docs/audits/2026-10-14/DIRECT-SYSTEM-INPUT72-OBSERVATION.json",
+          "evidenceSha256NormalizedLf": "563e318e02ca0591701af69e55a03cec50378358a59bb983da859ad2d7362cfb",
+          "packageProofObservedAtUtc": "2026-10-14T01:16:06.006846+00:00",
+          "scope": "Exact installed package proof. Live availability and finite runtime tests are reported separately."
+        }
+      ],
+      "fleetApkEvidence": {
+        "evidence": "docs/audits/2026-10-14/DIRECT-SYSTEM-INPUT72-OBSERVATION.json",
+        "evidenceSha256NormalizedLf": "563e318e02ca0591701af69e55a03cec50378358a59bb983da859ad2d7362cfb",
+        "installedCount": 14,
+        "completedOtaCount": 15,
+        "offlineCount": 6,
+        "partialPackageProofCount": 1,
+        "verifiedVersionCounts": {
+          "10272": 14
+        }
+      }
     }
   },
   "pendingCorrections": [],
@@ -1403,8 +1453,8 @@
     "primaryVideoInstalled": true,
     "primaryVideoObserved": true,
     "productionAccepted": false,
-    "currentObservationEvidence": "docs/audits/2026-10-14/DIRECT-SYSTEM-INPUT72-OBSERVATION.json",
-    "currentObservationEvidenceSha256NormalizedLf": "563e318e02ca0591701af69e55a03cec50378358a59bb983da859ad2d7362cfb",
+    "currentObservationEvidence": "docs/audits/2026-10-14/KEYBOARD76-PARTIAL-OBSERVATION.json",
+    "currentObservationEvidenceSha256NormalizedLf": "e5b5c21f639d0cdb1fc9522e96fa5e1a8ddb4711bc9a3d21cfb0e02fc8c9293b",
     "pilotEvidenceScope": "UI331/API983 installed on 3015/Tuna; frontend-only input promotion fix, backend code tree unchanged; signed APK60 installed hashes and completed OTA commands confirmed on15 online devices. PH010 ordinary Chrome direct video/native gestures, actual server fallback and recovery, and mixed legacy viewer accepted finitely. Closest routes, physical network switching, shared input and full display latency remain OPEN.",
     "historicalPrimaryFrames": 1804,
     "directInputCandidate": {
@@ -1457,9 +1507,9 @@
       "directInputAccepted": false,
       "topologySource": "PH011 mapped to main-PC emulator5554 by current boot identity; NAT path is not loopback proof. Browser observation predates the latest idle correction."
     },
-    "latestReadbackAtUtc": "2026-10-14T01:17:54.423398+00:00",
-    "latestReadbackEvidence": "docs/audits/2026-10-14/DIRECT-SYSTEM-INPUT72-OBSERVATION.json",
-    "latestReadbackEvidenceSha256NormalizedLf": "563e318e02ca0591701af69e55a03cec50378358a59bb983da859ad2d7362cfb",
+    "latestReadbackAtUtc": "2026-10-14T19:41:06.991661+00:00",
+    "latestReadbackEvidence": "docs/audits/2026-10-14/KEYBOARD76-PARTIAL-OBSERVATION.json",
+    "latestReadbackEvidenceSha256NormalizedLf": "e5b5c21f639d0cdb1fc9522e96fa5e1a8ddb4711bc9a3d21cfb0e02fc8c9293b",
     "ordinaryBrowserObservation": {
       "evidence": "docs/audits/2026-10-13/DIRECT-SOURCE-QUALITY-INSTALLED.json",
       "evidenceSha256NormalizedLf": "cf12ebe6171fbb7602a9d9aba4e771c8b7d05425929b6f0dc3c5d5e3e48182fb",
@@ -1515,18 +1565,16 @@
     "historicalResearchScope": "Reviewed API/UI522 installed on both origins and signed APK55 hash verified on all15 compatible online devices. Finite server fallback video/held reverse gestures accepted on PH010/PH011/PH025. Current direct ICE, direct input, nearest path, latency SLA and soak NOT accepted.",
     "directInputObservedFinite": true,
     "currentPrimaryNetworkObservation": {
-      "outcome": "FINITE_TEN_SHARED_NATIVE_SYSTEM_INPUT",
+      "outcome": "PARTIAL_TWO_CLIENT_AND_KEYBOARD_FINITE",
       "deviceId": "414ce0e9-4b93-4f96-b9ca-ee675f53835e",
       "directChannelEstablished": true,
-      "selectedPath": "nat",
+      "evidence": "docs/audits/2026-10-14/KEYBOARD76-PARTIAL-OBSERVATION.json",
+      "evidenceSha256NormalizedLf": "e5b5c21f639d0cdb1fc9522e96fa5e1a8ddb4711bc9a3d21cfb0e02fc8c9293b",
+      "observedAtUtc": "2026-10-14T19:41:06.991661+00:00",
       "rawCandidateAddressesPublished": false,
-      "evidence": "docs/audits/2026-10-14/DIRECT-SYSTEM-INPUT72-OBSERVATION.json",
-      "evidenceSha256NormalizedLf": "563e318e02ca0591701af69e55a03cec50378358a59bb983da859ad2d7362cfb",
-      "observedAtUtc": "2026-10-14T01:17:54.423398+00:00",
-      "topology": "Owned ordinary Chrome and PH011 through3015 andTuna",
       "localhostRouteProven": false,
       "latencySlaAccepted": false,
-      "physicalNetworkSwitchAccepted": false
+      "tenTunaAccepted": false
     },
     "remoteNetworkObservation": {
       "evidence": "docs/audits/2026-10-13/DIRECT-INPUT-RECOVERY-OBSERVATION.json",
@@ -1544,7 +1592,7 @@
       "productionAccepted": false,
       "scope": "Observed before final UI installation: working direct NAT/UDP video and input on this laptop route. Earlier server fallback on another client route remains historical and does not invalidate this selected pair."
     },
-    "nextDeliveryPriority": "Full keyboard/IME, optional audio, real phone/hotspot and20+ resource matrix, broker-independent grants and longer soak.",
+    "nextDeliveryPriority": "Diagnose and fix lost direct/control during ten-client opening before fleet76 rollout; then phone/hotspot,20+,broker autonomy,keyboard fallback/audio and full local CI.",
     "previousRemoteNetworkObservation": {
       "evidence": "docs/audits/2026-10-13/DIRECT-SESSION-STABILITY-OBSERVATION.json",
       "evidenceSha256NormalizedLf": "2a70d3db77a07bac4fc69220b80085c8ff11e99da4683ea8b684839bcd39325b",
@@ -1726,8 +1774,22 @@
       }
     },
     "currentInputProtocol": "shared_input_v2",
-    "currentSharedParticipantsAccepted": 10,
-    "originalPilotGateRetainedAsHistorical": true
+    "currentSharedParticipantsAccepted": 2,
+    "originalPilotGateRetainedAsHistorical": true,
+    "historicalBeforeKeyboardPartialCurrentNetwork": {
+      "outcome": "FINITE_TEN_SHARED_NATIVE_SYSTEM_INPUT",
+      "deviceId": "414ce0e9-4b93-4f96-b9ca-ee675f53835e",
+      "directChannelEstablished": true,
+      "selectedPath": "nat",
+      "rawCandidateAddressesPublished": false,
+      "evidence": "docs/audits/2026-10-14/DIRECT-SYSTEM-INPUT72-OBSERVATION.json",
+      "evidenceSha256NormalizedLf": "563e318e02ca0591701af69e55a03cec50378358a59bb983da859ad2d7362cfb",
+      "observedAtUtc": "2026-10-14T01:17:54.423398+00:00",
+      "topology": "Owned ordinary Chrome and PH011 through3015 andTuna",
+      "localhostRouteProven": false,
+      "latencySlaAccepted": false,
+      "physicalNetworkSwitchAccepted": false
+    }
   },
   "items": [
     {
@@ -3469,8 +3531,8 @@
         "EP-020",
         "EP-047"
       ],
-      "acceptedScope": "UI37543bb2 / APIbe0578d0 installed on3015/Tuna. APK72 completed OTA on15 online emulators;14 exact installed SHA proofs,1 command/version-only proofs;6 offline pending. Both origins passed two-client real input/native keys. Ten Tuna clients passed40 keys,takeover and9 survivors; forced RTC loss recovered automatically. Physical keyboard/IME,audio,20+,real phone/hotspot,offline autonomy and full CI migration remain open.",
-      "remaining": "Совместный ввод, независимость установленного peer от серверного lease, прямые навигационные клавиши/IME/audio, реальный телефон, удалённый VPS, LAN/WAN/TURN и длительная приёмка всех комбинаций.",
+      "acceptedScope": "UIb182a0c8/API04cf1015 installed on3015/Tuna. APK76 confirmed onPH011;PH030 has exact completed OTA/version but no fresh package hash.13 reachable devices still72;6offline. Two-client local real mouse/touch and actual fullscreen Unicode/chords/composition accepted. Current ten-Tuna opening failed; fleet rollout held. Not production acceptance.",
+      "remaining": "Current ten-client recovery/root cause and fleet76;20+,physical phone/hotspot,LAN/WAN/TURN,long soak and broker independence.",
       "evidence": [
         "docs/design/BROWSER-DIRECT-TRANSPORT.md",
         "docs/audits/2026-10-09/IDLE-CONTROL-RELAY-REVIEW.md",
@@ -3504,7 +3566,8 @@
         "docs/audits/2026-10-13/INPUT-OPEN-CANCELLATION.md",
         "docs/audits/2026-10-13/DIRECT-SOURCE-QUALITY-INSTALLED.json",
         "docs/audits/2026-10-14/SHARED-INPUT-FULLSCREEN-INSTALLED.json",
-        "docs/audits/2026-10-14/DIRECT-SYSTEM-INPUT72-OBSERVATION.json"
+        "docs/audits/2026-10-14/DIRECT-SYSTEM-INPUT72-OBSERVATION.json",
+        "docs/audits/2026-10-14/KEYBOARD76-PARTIAL-OBSERVATION.json"
       ],
       "sourcePaths": [
         "backend/websocket/direct_probe_protocol.py",
@@ -3589,8 +3652,8 @@
         "EP-020",
         "EP-029"
       ],
-      "acceptedScope": "APK72/APIbe/UI375: ten direct participants,40 native system keys,real gestures,takeover and independent close with9 survivors for30s.",
-      "remaining": "20+,physical emulator input and phone/hotspot/geographical matrix,long soak and complete keyboard/IME.",
+      "acceptedScope": "Current UIb182/API04/APK76: two local clients passed12 mouse/touch rounds and native keys. Earlier UI4525/identical APK76 passed ten Tuna clients; the current ten-Tuna opening failed and is not accepted.",
+      "remaining": "Current ten-client opening failure;20+,physical emulator/phone/hotspot/geography and longer shared-input soak.",
       "evidence": [
         "docs/audits/2026-10-10/DIRECT-PROBE-TURN-AND-LAPTOP.json",
         "docs/audits/2026-10-10/STREAM-SESSION-DIAGNOSTICS-INSTALLED.json",
@@ -3600,7 +3663,8 @@
         "docs/audits/2026-10-13/SHARED-DIRECT-INPUT.md",
         "docs/audits/2026-10-14/DIRECT-INPUT-UX-REQUIREMENTS.md",
         "docs/audits/2026-10-14/SHARED-INPUT-FULLSCREEN-INSTALLED.json",
-        "docs/audits/2026-10-14/DIRECT-SYSTEM-INPUT72-OBSERVATION.json"
+        "docs/audits/2026-10-14/DIRECT-SYSTEM-INPUT72-OBSERVATION.json",
+        "docs/audits/2026-10-14/KEYBOARD76-PARTIAL-OBSERVATION.json"
       ],
       "sourcePaths": [
         "backend/websocket/continuous_runtime.py",
@@ -3615,19 +3679,20 @@
     {
       "id": "CHAT-19",
       "title": "Физическая клавиатура, IME и звук устройства",
-      "state": "OPEN",
+      "state": "PARTIAL",
       "productItems": [
         "EP-020",
         "EP-029"
       ],
-      "acceptedScope": "Home/Back/Recents/Menu are now direct on the authorized media peer. Full physical keyboard/Unicode/IME and audio are not implemented.",
-      "remaining": "Physical keyboard input,Unicode/IME,paste,held modifiers,focus and editor lifecycle; optional default-off audio.",
+      "acceptedScope": "Direct fullscreen physical keys,Unicode,Ctrl+A,composition and game-key edges are implemented on APK76; actual Android fields and original IME restoration verified onPH011.",
+      "remaining": "Fleet76 held by current ten-client incident;server-fallback full keyboard,recorder/DAG Unicode,broader OS-key/IME/repeat/background matrix and optional default-off audio.",
       "evidence": [
         "docs/audits/2026-10-10/DIRECT-PROBE-TURN-AND-LAPTOP.json",
         "docs/audits/2026-10-14/DIRECT-INPUT-UX-REQUIREMENTS.md",
         "docs/audits/2026-10-14/SHARED-INPUT-FULLSCREEN-INSTALLED.json",
         "docs/audits/2026-10-14/DIRECT-KEYBOARD-PLAN.md",
-        "docs/audits/2026-10-14/DIRECT-SYSTEM-INPUT72-OBSERVATION.json"
+        "docs/audits/2026-10-14/DIRECT-SYSTEM-INPUT72-OBSERVATION.json",
+        "docs/audits/2026-10-14/KEYBOARD76-PARTIAL-OBSERVATION.json"
       ],
       "sourcePaths": [
         "frontend/components/sphere/DeviceStream.tsx",
@@ -3674,14 +3739,15 @@
         "EP-041",
         "EP-048"
       ],
-      "acceptedScope": "Latest APK72 downloaded fully on both origins with exact SHA/bytes. Download and installed package proofs are distinct.",
+      "acceptedScope": "Latest signed canary APK76 downloaded fully through3015/Tuna with exact SHA/bytes; ordinary Android channel unchanged. Download is separate from installed-package proof.",
       "remaining": "Внешние latest URL здесь не проксируются; скачивание не подтверждает установку. Stable promotion, все роли и offline fleet остаются отдельными открытыми gates.",
       "evidence": [
         "docs/audits/2026-10-12/APK-DOWNLOAD-AND-LOGIN-OBSERVATION.json",
         "docs/audits/2026-10-12/APK-DOWNLOAD-AND-LOGIN.md",
         "docs/audits/2026-10-13/DIRECT-SOURCE-QUALITY-DELIVERY-CHECK.json",
         "docs/audits/2026-10-14/SHARED-INPUT-FULLSCREEN-INSTALLED.json",
-        "docs/audits/2026-10-14/DIRECT-SYSTEM-INPUT72-OBSERVATION.json"
+        "docs/audits/2026-10-14/DIRECT-SYSTEM-INPUT72-OBSERVATION.json",
+        "docs/audits/2026-10-14/KEYBOARD76-PARTIAL-OBSERVATION.json"
       ],
       "sourcePaths": [
         "frontend/src/features/updates/AgentDownloadPanel.tsx",
@@ -3719,14 +3785,15 @@
         "EP-047",
         "EP-048"
       ],
-      "acceptedScope": "Signed debug canary tests/lint/build run locally. Full exact Android workflow still hosted; unchanged UI/API evidence reused explicitly. Local statuses do not mean all Actions gates were migrated.",
+      "acceptedScope": "Frontend2429tests/types and101targeted backend checks/statuses ran locally; full migration incomplete. Repo is currently public with standard ubuntu-latest workflows;2000 private-repo minutes are not this repository runner limit.",
       "remaining": "Полный перенос workflow/packaging, отсутствие hosted расходов, автономный запуск после reboot, trusted job routing и Linux parity ещё не приняты.",
       "evidence": [
         "docs/audits/2026-10-13/CI-COST-AND-LOCAL-RUNNER.md",
         "docs/audits/2026-10-13/INPUT-OPEN-CANCELLATION-OBSERVATION.json",
         "docs/audits/2026-10-13/DIRECT-SOURCE-QUALITY-INSTALLED.json",
         "docs/audits/2026-10-14/SHARED-INPUT-FULLSCREEN-INSTALLED.json",
-        "docs/audits/2026-10-14/DIRECT-SYSTEM-INPUT72-OBSERVATION.json"
+        "docs/audits/2026-10-14/DIRECT-SYSTEM-INPUT72-OBSERVATION.json",
+        "docs/audits/2026-10-14/KEYBOARD76-PARTIAL-OBSERVATION.json"
       ],
       "sourcePaths": [
         ".github/workflows/ci-backend.yml",
@@ -3801,11 +3868,12 @@
         "EP-029"
       ],
       "acceptedScope": "Installed native fullscreen, accessible44px Android tray and explicit touch toggle; actual browser mouse/touch passed390x844/844x390 on3015/Tuna without remounting media elements or replacing the peer.",
-      "remaining": "Real phone/hotspot and mobile browser/safe-area/zoom matrix,complete physical keyboard/IME. Native fullscreen and direct navigation are installed; physical tab visibility test remains unproven.",
+      "remaining": "Real phone/hotspot,safe-area/zoom and visibility/network matrix;broader keyboard/browser/IME cases. Fullscreen physical keyboard finite accepted onPH011/APK76.",
       "evidence": [
         "docs/audits/2026-10-14/DIRECT-INPUT-UX-REQUIREMENTS.md",
         "docs/audits/2026-10-14/SHARED-INPUT-FULLSCREEN-INSTALLED.json",
-        "docs/audits/2026-10-14/DIRECT-SYSTEM-INPUT72-OBSERVATION.json"
+        "docs/audits/2026-10-14/DIRECT-SYSTEM-INPUT72-OBSERVATION.json",
+        "docs/audits/2026-10-14/KEYBOARD76-PARTIAL-OBSERVATION.json"
       ],
       "sourcePaths": [
         "frontend/components/sphere/DeviceStream.tsx",
