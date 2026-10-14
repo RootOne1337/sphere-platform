@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "reviewedAtUtc": "2026-10-14T22:34:35.379790+00:00",
+  "reviewedAtUtc": "2026-10-14T23:26:34.858613+00:00",
   "sourceReviewed": "4b39c385f2d9600bbf8ad9e9c53453338af3367d",
   "scope": "UI4b39c385 / API969a7444 installed on3015/Tuna. APK76 completed OTA on15 devices;14 exact installed hashes,1 command/version-only proofs;6 offline pending. Finite local two-client mouse/touch/native keys, ten Tuna clients, three forced peer recoveries, actual agent-process restart and Unicode/chords/composition/fullscreen with original IME restoration accepted. Not20+, real phone/hotspot, WAN/TURN, broker-offline autonomy, audio, server-fallback full keyboard, full local CI or production SLA. User remote PH025 check: direct video/control READY, network RTT22ms and control ACK25–26ms; finite observation only. Active development and installation paused by user.",
   "baseline": "docs/audits/2026-10-05/ENTERPRISE-PRODUCT-BACKLOG.json",
@@ -4099,6 +4099,61 @@
         "frontend/src/features/stream/continuousPointer.ts"
       ],
       "fleetAccepted": false
+    },
+    {
+      "id": "CHAT-28",
+      "title": "Визуальный аудит, размеры, hover/pin sidebar, темы, логотип и glass",
+      "state": "PARTIAL",
+      "productItems": [],
+      "acceptedScope": "Finite audit prepared:29 page templates accounted,127 states,2468 button/link crops,509 button source sites and47 DialogContent sites.20 prioritized findings with evidence and acceptance criteria. No redesign installed.",
+      "remaining": "Implement UX-01…20; conditional dialogs/roles, real phone keyboard, every theme/accent combination and performance/contrast regression acceptance.",
+      "evidence": [
+        "docs/audits/2026-10-15/UI-UX-VISUAL-AUDIT.md",
+        "docs/audits/2026-10-15/UI-VISUAL-OBSERVATION.json",
+        "docs/audits/2026-10-15/UI-CONTROL-INVENTORY.json"
+      ],
+      "sourcePaths": [
+        "frontend/src/features/navigation/NOCSidebar.tsx",
+        "frontend/src/features/preferences/AppearanceDrawer.tsx",
+        "frontend/src/shared/theme.ts",
+        "frontend/src/shared/store/useUIStore.ts",
+        "frontend/components/ui/dialog.tsx"
+      ],
+      "fleetAccepted": false
+    },
+    {
+      "id": "CHAT-29",
+      "title": "Android файловый менеджер: папки, upload/download, очередь и resume",
+      "state": "DEFERRED_DESIGN",
+      "productItems": [],
+      "acceptedScope": "Design prepared for browser explorer, typed Android storage provider, resumable HTTPS fallback and later direct file transport; current APK76 does not implement the proposed file protocol.",
+      "remaining": "Implement filesystem capability/API/APK, explorer, actual transfers with integrity/resume/cleanup/resource limits and stream-control regression acceptance.",
+      "evidence": [
+        "docs/design/ANDROID-FILE-MANAGER.md",
+        "docs/audits/2026-10-15/UI-UX-VISUAL-AUDIT.md"
+      ],
+      "sourcePaths": [
+        "android/app/src/main/kotlin/com/sphereplatform/agent/commands/CommandDispatcher.kt",
+        "frontend/src/features/devices/DeviceInspectorDetail.tsx"
+      ],
+      "fleetAccepted": false
+    },
+    {
+      "id": "CHAT-30",
+      "title": "Системный профиль Android не должен конфликтовать с прямым вводом",
+      "state": "OPEN",
+      "productItems": [],
+      "acceptedScope": "User-reported PH025 getprop/device_input_busy is consistent with source:profile POSTs shell and shell reserves discrete input. No remote repro or fix/deployment in this audit.",
+      "remaining": "Typed read-only diagnostic worker without input ownership; understandable fixed errors/trace and actual simultaneous stream/control/profile regression.",
+      "evidence": [
+        "docs/audits/2026-10-15/UI-UX-VISUAL-AUDIT.md",
+        "docs/audits/2026-10-15/UI-VISUAL-OBSERVATION.json"
+      ],
+      "sourcePaths": [
+        "frontend/src/features/devices/AndroidProfilePanel.tsx",
+        "android/app/src/main/kotlin/com/sphereplatform/agent/commands/AdbActionExecutor.kt"
+      ],
+      "fleetAccepted": false
     }
   ],
   "authoritativeEntrypoints": [
@@ -4966,6 +5021,28 @@
     "workingRuntimeRemainsRunning": true,
     "preparedNextVersion": "1.2.77",
     "preparedNextVersionInstalled": false,
-    "scope": "Freeze active development and delivery; retain installed APK76/UI4b/API969 and recorded acceptance limits."
+    "scope": "Freeze active development and delivery; retain installed APK76/UI4b/API969 and recorded acceptance limits.",
+    "latestUserWork": "Visual/source audit and Android file-manager design completed on user request; transport/delivery freeze and paused automation remain in effect."
+  },
+  "visualAudit": {
+    "state": "AUDIT_AND_DESIGN_PREPARED_NOT_IMPLEMENTED",
+    "reviewedAtUtc": "2026-10-14T23:26:34.858613+00:00",
+    "evidence": "docs/audits/2026-10-15/UI-VISUAL-OBSERVATION.json",
+    "evidenceSha256NormalizedLf": "46bd441a902151be6710820314ce3943ddfe844b546d02c4e6793e981c8d0655",
+    "guide": "docs/audits/2026-10-15/UI-UX-VISUAL-AUDIT.md",
+    "sourceInventory": "docs/audits/2026-10-15/UI-CONTROL-INVENTORY.json",
+    "sourceInventorySha256NormalizedLf": "6ccf73bc207733569b8cfb512a44d76f3a8e81b1ad11afee91ba255b85a19946",
+    "fileManagerDesign": "docs/design/ANDROID-FILE-MANAGER.md",
+    "sourcePages": 29,
+    "screenshots": 127,
+    "buttonCrops": 2468,
+    "buttonSourceSites": 509,
+    "dialogSourceSites": 47,
+    "observedDialogScreens": 45,
+    "stagedScreens": 4,
+    "productionUiAccepted": false,
+    "allConditionalDialogsVisuallyObserved": false,
+    "runtimeModified": false,
+    "scope": "Installed UI4b/API969; read-only browser/source audit and design proposal. Unavailable roles, conditional records, OS keyboard and live-stream states have explicit gaps. No new APK/Web/API installation."
   }
 }
