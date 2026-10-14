@@ -81,6 +81,7 @@ class ProbeCapabilities(BaseModel):
     shared_input_enabled: bool = False
     direct_key_input_enabled: bool = False
     trickle_ice_enabled: bool = False
+    direct_keyboard_enabled: bool = False
 
 
 def relay_configured() -> bool:
@@ -122,6 +123,8 @@ async def probe_capabilities(
         live_enabled = bool(current and settings.DIRECT_TRANSPORT_LIVE_VIDEO_ENABLED and status
                             and status.agent_version_code and status.agent_version_code >= LIVE_VIDEO_MIN_AGENT_CODE)
     return ProbeCapabilities(device_id=device_id, enabled=enabled, profiles=profiles,
+                             direct_keyboard_enabled=bool(live_enabled and settings.DIRECT_TRANSPORT_INPUT_ENABLED
+                                 and status and status.agent_version_code and status.agent_version_code >= 10274),
                              trickle_ice_enabled=bool(live_enabled and status and status.agent_version_code
                                  and status.agent_version_code >= MIN_TRICKLE_AGENT_CODE),
                              direct_key_input_enabled=bool(live_enabled and settings.DIRECT_TRANSPORT_INPUT_ENABLED

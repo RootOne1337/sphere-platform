@@ -66,7 +66,8 @@ async def direct_probe_ws(ws: WebSocket, device_id: str) -> None:
         import json
         first = json.loads(raw)
         if (not isinstance(first, dict) or "token" not in first
-                or first.keys() - {"token", "protocol", "relay", "control_session", "history_session", "shared_control", "trickle_ice"}
+                or first.keys() - {"token", "protocol", "relay", "control_session", "history_session", "shared_control", "trickle_ice", "keyboard"}
+                or "keyboard" in first and (first["keyboard"] is not True or first.get("shared_control") is not True)
                 or "trickle_ice" in first and (first["trickle_ice"] is not True or first.get("protocol") != "sphere-video-v1")
                 or "shared_control" in first and (first["shared_control"] is not True or "control_session" not in first)
                 or "protocol" in first and first["protocol"] not in {"sphere-probe-v2", "sphere-video-probe-v1", "sphere-video-v1"}
@@ -91,7 +92,8 @@ async def direct_probe_ws(ws: WebSocket, device_id: str) -> None:
             raise InvalidDirectProbe("video_probe_disabled")
         viewer = ProbeViewer(device_id, *identity, ws, video=video, live=live,
                              control_session=first.get("control_session"), history_session=first.get("history_session"),
-                             shared_control=first.get("shared_control") is True, trickle=first.get("trickle_ice") is True)
+                             shared_control=first.get("shared_control") is True, trickle=first.get("trickle_ice") is True,
+                             keyboard=first.get("keyboard") is True)
         if first.get("protocol") == "sphere-probe-v2" or video and first.get("relay") is True:
             await runtime.prepare(viewer)
             options = dict(relay_only=settings.DIRECT_PROBE_TURN_RELAY_ONLY)

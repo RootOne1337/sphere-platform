@@ -32,8 +32,9 @@ internal class SharedInputMailbox {
         val slot = slots[event.participant] ?: return Admission.UNREGISTERED
         if (slot.closeOrder != null) return Admission.RETIRED
         if (event.sequence < 1 || event.sequence <= slot.sequence || event.gesture !in 0..Int.MAX_VALUE.toLong()
-            || event.action !in RootTouchSession.DOWN..RootTouchSession.KEY_TAP || event.receivedAtMs < 0
-            || (if (event.action == RootTouchSession.KEY_TAP) event.gesture != 0L
+            || event.action !in setOf(0, 1, 2, 3, 4, 5, RemoteKeyboardCommand.ACTION) || event.receivedAtMs < 0
+            || (if (event.action == RemoteKeyboardCommand.ACTION) event.keyboard == null || event.gesture != 0L
+                else if (event.action == RootTouchSession.KEY_TAP) event.gesture != 0L
                 || !RootTouchSession.supportedKey(event.x) || event.y != 0
                 else event.x !in 0..16383 || event.y !in 0..16383) || order == Long.MAX_VALUE) {
             retire(event.participant)

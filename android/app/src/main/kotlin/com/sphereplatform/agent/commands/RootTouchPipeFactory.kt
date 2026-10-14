@@ -15,7 +15,7 @@ import timber.log.Timber
 
 internal enum class TouchStartupDetail {
     ROOT_REQUIRED, ROOT_GEOMETRY, ROOT_ADAPTER_UNAVAILABLE, ROOT_CONFIGURATION,
-    ROOT_HANDSHAKE, ROOT_PROCESS_EXITED, ROOT_READY_TIMEOUT, ROOT_HANDOFF_UNKNOWN,
+    ROOT_HANDSHAKE, ROOT_PROCESS_EXITED, ROOT_READY_TIMEOUT, ROOT_HANDOFF_UNKNOWN, ROOT_INPUT_BUSY,
 }
 internal class TouchPipeCleanupUnknownException(val startupDetail: TouchStartupDetail? = null) : IOException("touch_cleanup_unknown")
 internal class TouchStartupUnavailableException(val detail: TouchStartupDetail) : IOException("touch_startup_unavailable")

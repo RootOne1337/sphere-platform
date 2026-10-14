@@ -4,6 +4,8 @@ package com.sphereplatform.agent.commands;
 public final class RootTouchSession {
     public static final int DOWN = 0, UP = 1, MOVE = 2, CANCEL = 3, HEARTBEAT = 4;
     public static final int KEY_TAP = 5, KEY_RELEASE = -1;
+    public static final int KEY_DOWN = 6, KEY_UP = 7, KEY_RESET = 8;
+    private static final int KEY_META_MASK = 0x711003;
     public static final long LEASE_MS = 1500;
     public enum Result {
         DISPATCHER_ACCEPTED(1), HEARTBEAT_ACCEPTED(2), CANCELLED(3), EXPIRED(4), REJECTED(5), UNKNOWN(6);
@@ -29,6 +31,7 @@ public final class RootTouchSession {
     private boolean keyHeld;
     private int heldKey, heldMeta;
     private long keyDownTime;
+    private final java.util.LinkedHashMap<Integer, long[]> keyboardHeld = new java.util.LinkedHashMap<>();
 
     public RootTouchSession(int width, int height, long now, Injector injector, Geometry geometry) {
         this(width, height, now, injector, geometry, null);
@@ -49,6 +52,7 @@ public final class RootTouchSession {
         Result expiry = tick(now);
         if (expiry != null) return expiry;
         if (action == KEY_TAP) return keyTap(nextSequence, nextGesture, nextX, nextY, now);
+        if (action >= KEY_DOWN && action <= KEY_RESET) return keyboard(nextSequence, nextGesture, action, nextX, nextY, now);
         // Gaps are permitted when MOVE is coalesced; duplicates/reordering are not.
         if (nextSequence <= sequence || nextSequence < 1 || action < DOWN || action > HEARTBEAT
                 || nextX < 0 || nextX >= width || nextY < 0 || nextY >= height
@@ -93,6 +97,49 @@ public final class RootTouchSession {
         }
     }
 
+    /** Physical keyboard keys only. Power/volume and arbitrary Android actions stay excluded. */
+    public static boolean supportedHardwareKey(int code) {
+        return supportedKey(code) || code >= 7 && code <= 16 || code >= 29 && code <= 77
+                || code == 81 || code >= 113 && code <= 118 || code == 124
+                || code >= 131 && code <= 164;
+    }
+    public static boolean supportedMeta(int meta) { return meta >= 0 && (meta & ~KEY_META_MASK) == 0; }
+
+    private Result keyboard(int nextSequence, long nextGesture, int action, int code, int meta, long now) {
+        if (keyInjector == null || nextSequence < 1 || nextSequence <= sequence || nextGesture != 0
+                || !supportedMeta(meta) || (action == KEY_RESET ? code != 0 || meta != 0 : !supportedHardwareKey(code)))
+            return fail(now, Result.REJECTED);
+        sequence = nextSequence; lastActivity = lastTime = now;
+        if (action == KEY_RESET) return releaseKeyboard(now) ? Result.DISPATCHER_ACCEPTED : fail(now, Result.UNKNOWN);
+        long[] prior = keyboardHeld.get(code);
+        if (action == KEY_DOWN) {
+            // Repeated browser keydown must not inject duplicate DOWN edges.
+            if (prior != null) return Result.DISPATCHER_ACCEPTED;
+            if (keyboardHeld.size() >= 16) return fail(now, Result.REJECTED);
+            keyboardHeld.put(code, new long[]{now, meta}); // Covers an uncertain native DOWN.
+            try {
+                return keyInjector.inject(DOWN, code, meta, now, now)
+                        ? Result.DISPATCHER_ACCEPTED : fail(now, Result.UNKNOWN);
+            } catch (Exception failure) { return fail(now, Result.UNKNOWN); }
+        }
+        // A stale UP after takeover/reset has no held edge to replay.
+        if (prior == null) return Result.DISPATCHER_ACCEPTED;
+        try {
+            if (!keyInjector.inject(UP, code, meta, prior[0], now)) return fail(now, Result.UNKNOWN);
+            keyboardHeld.remove(code);
+            return Result.DISPATCHER_ACCEPTED;
+        } catch (Exception failure) { return fail(now, Result.UNKNOWN); }
+    }
+
+    private boolean releaseKeyboard(long now) {
+        for (java.util.Map.Entry<Integer, long[]> key : keyboardHeld.entrySet()) {
+            try { releaseUnknown |= !keyInjector.inject(KEY_RELEASE, key.getKey(), (int) key.getValue()[1], key.getValue()[0], now); }
+            catch (Exception failure) { releaseUnknown = true; }
+        }
+        keyboardHeld.clear();
+        return !releaseUnknown;
+    }
+
     private Result keyTap(int nextSequence, long nextGesture, int code, int meta, long now) {
         if (keyInjector == null || held || keyHeld || nextSequence < 1 || nextSequence <= sequence
                 || nextGesture != 0 || !supportedKey(code) || meta != 0) return fail(now, Result.REJECTED);
@@ -129,7 +176,7 @@ public final class RootTouchSession {
 
     /** Normal termination proves release, even when the owner expired or its input was rejected. */
     public synchronized int cleanupExitCode() {
-        return closed && !held && !keyHeld && !releaseUnknown ? 0 : 2;
+        return closed && !held && !keyHeld && keyboardHeld.isEmpty() && !releaseUnknown ? 0 : 2;
     }
 
     private Result fail(long now, Result result) {
@@ -138,6 +185,7 @@ public final class RootTouchSession {
     }
 
     private boolean release(long now) {
+        releaseKeyboard(now);
         if (keyHeld) {
             keyHeld = false;
             try { releaseUnknown |= !keyInjector.inject(KEY_RELEASE, heldKey, heldMeta, keyDownTime, now); }

@@ -60,7 +60,7 @@ export function startDirectVideoSession(
   url: string, token: string, report: (value: DirectProbeResult) => void,
   options: { controlledStunUrl?: string; onTrack: (track: MediaStreamTrack) => void;
     receiverSize?: { width: number; height: number };
-    historySession?: string; controlSession?: string; sharedInput?: boolean; nativeKeys?: boolean; trickleIce?: boolean; onControlChannel?: (channel: DirectControlEndpoint | null) => void;
+    historySession?: string; controlSession?: string; sharedInput?: boolean; nativeKeys?: boolean; keyboard?: boolean; trickleIce?: boolean; onControlChannel?: (channel: DirectControlEndpoint | null) => void;
     /** Actual recent presentation, independently bounded by the renderer watchdog. */
     hasRecentVideoFrame?: () => boolean },
 ): () => void {
@@ -69,7 +69,7 @@ export function startDirectVideoSession(
 
 function startDirectSession(
   url: string, token: string, report: (value: DirectProbeResult) => void,
-  options: { controlledStunUrl?: string; relayGrant?: boolean; controlSession?: string; historySession?: string; sharedInput?: boolean; nativeKeys?: boolean; trickleIce?: boolean;
+  options: { controlledStunUrl?: string; relayGrant?: boolean; controlSession?: string; historySession?: string; sharedInput?: boolean; nativeKeys?: boolean; keyboard?: boolean; trickleIce?: boolean;
     onControlChannel?: (channel: DirectControlEndpoint | null) => void;
     receiverSize?: { width: number; height: number };
     hasRecentVideoFrame?: () => boolean }, onVideoTrack?: (track: MediaStreamTrack) => void, live = false,
@@ -194,6 +194,7 @@ function startDirectSession(
         ws.send(JSON.stringify(video ? { token, protocol: live ? 'sphere-video-v1' : 'sphere-video-probe-v1', ...(options.relayGrant ? { relay: true } : {}),
           ...(live && options.controlSession ? { control_session: options.controlSession } : {}),
           ...(live && options.controlSession && options.sharedInput ? { shared_control: true } : {}),
+          ...(live && options.controlSession && options.sharedInput && options.keyboard ? { keyboard: true } : {}),
           ...(live && options.trickleIce ? { trickle_ice: true } : {}),
           ...(options.historySession ? { history_session: options.historySession } : {}) }
           : options.relayGrant ? { token, protocol: 'sphere-probe-v2' } : { token }));
@@ -280,6 +281,7 @@ function startDirectSession(
           clearTimeout(controlDeadline); controlState('open'); emit();
           options.onControlChannel?.({ session, sharedInput: options.sharedInput === true,
             nativeKeys: options.sharedInput === true && options.nativeKeys === true,
+            keyboard: options.sharedInput === true && options.keyboard === true,
             get readyState() { return !stopped && !retired && direct.readyState === 'open' ? 1 : 0; },
             get bufferedAmount() { return direct.bufferedAmount; },
             capture: () => result.videoBinding ?? null,

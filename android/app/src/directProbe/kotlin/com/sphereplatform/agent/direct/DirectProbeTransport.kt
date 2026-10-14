@@ -45,6 +45,7 @@ class DirectProbeTransport(
         var iceProfile = "host"
         var videoRequested = false
         var sharedControl = false
+        var keyboard = false
         var trickle = false
         var candidatesReceived = 0
         var candidatesSent = 0
@@ -92,6 +93,7 @@ class DirectProbeTransport(
         if (!BuildConfig.CONTINUOUS_INPUT_CANARY || !p.live || p.session != session || !valid(p) ||
             channel.state() != DataChannel.State.OPEN) return null
         return object : DirectInputChannel {
+            override val keyboardSupported = p.keyboard
             override val session = p.session
             override val capture = capture
             override fun isCurrent() = valid(p) && p.inputChannel === channel && channel.state() == DataChannel.State.OPEN
@@ -150,6 +152,7 @@ class DirectProbeTransport(
                 val expected = setOf("type", "session_id", "sdp", "ttl_ms") +
                     (if (video) setOf("media") else emptySet()) + (if ("ice" in message) setOf("ice") else emptySet()) +
                     (if ("shared_control" in message) setOf("shared_control") else emptySet()) +
+                    (if ("keyboard" in message) setOf("keyboard") else emptySet()) +
                     (if ("trickle_ice" in message) setOf("trickle_ice") else emptySet())
                 if (peers.size >= 10 || peers.containsKey(sid) || message.keys != expected || ttl !in 1..DirectProbeProtocol.MAX_TTL_MS ||
                     !(if (video) DirectVideoProtocol.validSdp(sdp, true) else DirectProbeProtocol.validSdp(sdp))) return@enqueue
@@ -158,10 +161,12 @@ class DirectProbeTransport(
                 if (live && grant != null) return@enqueue // Relay renewal has a separate credential lifetime.
                 val sharedControl = message["shared_control"] == JsonPrimitive(true)
                 if ("shared_control" in message && (!sharedControl || !live)) return@enqueue
+                val keyboard = message["keyboard"] == JsonPrimitive(true)
+                if ("keyboard" in message && (!keyboard || !sharedControl)) return@enqueue
                 val trickle = message["trickle_ice"] == JsonPrimitive(true)
                 if ("trickle_ice" in message && (!trickle || !live || grant != null)) return@enqueue
                 open(Probe(sid, wsGeneration, token, receivedAt, ttl, live).apply {
-                    videoRequested = video; this.sharedControl = sharedControl; this.trickle = trickle
+                    videoRequested = video; this.sharedControl = sharedControl; this.trickle = trickle; this.keyboard = keyboard
                 }, sdp, grant)
             }
         }
@@ -285,7 +290,7 @@ class DirectProbeTransport(
                                     }
                                 }
                                 override fun onMessage(buffer: DataChannel.Buffer) {
-                                    val text = if (!buffer.binary && buffer.data.remaining() in 1..1024)
+                                    val text = if (!buffer.binary && buffer.data.remaining() in 1..(if (p.keyboard) 8192 else 1024))
                                         Charsets.UTF_8.decode(buffer.data).toString() else ""
                                     // V2 has its own bounded per-participant actor. MOVE does not
                                     // allocate a closure in the shared signaling/stats mailbox.

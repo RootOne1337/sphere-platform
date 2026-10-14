@@ -1,5 +1,6 @@
 import type { CaptureFrameBinding } from '@/lib/h264-decoder';
 import { supportedDirectKey } from './directPointerTransport';
+import { validKeyboardCommand, type RemoteKeyboardCommand, type RemoteKeyboardState, type RemoteKeyboardReceipt } from './remoteKeyboardProtocol';
 
 /** Single-pointer transport. Activation requires scoped capability and a rendered v2 capture. */
 export const CONTINUOUS_POINTER_LIMITS = Object.freeze({
@@ -10,7 +11,8 @@ export const CONTINUOUS_POINTER_LIMITS = Object.freeze({
 export type ContinuousPointerState = 'idle' | 'opening' | 'ready' | 'closing' | 'fenced' | 'closed' | 'destroyed';
 type Point = { x: number; y: number };
 type Pointer = Point & { id: number; gesture: number };
-type Pending = { sequence: number; gesture: number; action: number; at: number; deadlineAt?: number; idleHeartbeat: boolean };
+type Pending = { sequence: number; gesture: number; action: number; at: number; deadlineAt?: number; idleHeartbeat: boolean;
+  keyboardEdge?: { operation:'key_down'|'key_up'|'reset'; keycode:number } };
 type Session = { session: string; owner: string };
 export type NativeKeyReceipt = { outcome: 'applied'; receiptRoundTripMs: number } | { outcome: 'not_sent' | 'unknown' };
 export interface PointerTransport {
@@ -40,6 +42,8 @@ type Options = {
   /** Negotiated v2 participant semantics on the same server-authorized media peer. */
   sharedInput?: boolean;
   nativeKeys?: boolean;
+  keyboard?: boolean;
+  onKeyboardState?: (state: RemoteKeyboardState) => void;
   /** Only the decoder's successfully rendered v2 binding, owned by this socket. */
   renderedCapture: () => CaptureFrameBinding | null;
   now?: () => number;
@@ -79,6 +83,10 @@ export class ContinuousPointer {
   private gesture = 0;
   private pending: Pending[] = [];
   private keyReceipts = new Map<number, (receipt: NativeKeyReceipt) => void>();
+  private keyboardReceipts = new Map<number, (receipt: RemoteKeyboardReceipt) => void>();
+  private keyboardHeld = new Set<number>();
+  private keyboardValue: RemoteKeyboardState = { enabled: false, editorGeneration: 0, editorActive: false, reason: 'disabled' };
+  private keyboardOpeningAt: number | null = null;
   private terminal: Pending | null = null;
   private openedAt = 0;
   private lastSentAt = 0;
@@ -92,6 +100,7 @@ export class ContinuousPointer {
   private releaseFailed = false;
   private nativeStarted = false;
   private idleSharedSurfaceLoss = false;
+  private sharedTransportRetired = false;
   private lastReceipt: { at: number; roundTripMs: number } | null = null;
   private readonly now: () => number;
 
@@ -101,11 +110,49 @@ export class ContinuousPointer {
   get hasPendingMove() { return this.move !== null; }
   get pointerHeld() { return this.held !== null; }
   get supportsNativeKeys() { return this.options.sharedInput === true && this.options.nativeKeys === true; }
+  get supportsKeyboard() { return this.options.sharedInput === true && this.options.keyboard === true; }
+  get keyboardState() { return this.keyboardValue; }
+  keyboardMode(enabled: boolean): boolean {
+    if (!this.supportsKeyboard || this.stateValue !== 'ready' || !this.current()) return false;
+    this.keyboardOpeningAt = enabled ? this.now() : null;
+    if (!enabled) this.setKeyboard({ ...this.keyboardValue, enabled: false, editorActive: false, reason: 'disabled' });
+    return this.write({ type: 'keyboard_mode', enabled });
+  }
+  async disableKeyboard(): Promise<void> {
+    if (this.keyboardValue.enabled && this.stateValue === 'ready') {
+      const result = await this.keyboard({ operation:'reset', editor_generation:this.keyboardValue.editorGeneration });
+      if (result.outcome !== 'accepted') { this.retire('keyboard_release_unknown'); return; }
+    }
+    this.keyboardMode(false);
+  }
+  private setKeyboard(state: RemoteKeyboardState) {
+    this.keyboardValue = state;
+    try { this.options.onKeyboardState?.(state); } catch { /* Observer only. */ }
+  }
+  keyboard(command: RemoteKeyboardCommand): Promise<RemoteKeyboardReceipt> {
+    if (!this.supportsKeyboard || !this.keyboardValue.enabled || this.stateValue !== 'ready' || !validKeyboardCommand(command)
+      || !this.current() || !this.writable() || this.pending.length >= CONTINUOUS_POINTER_LIMITS.pendingReceipts
+      || this.sequence >= CONTINUOUS_POINTER_LIMITS.maxSequence) return Promise.resolve({ outcome: 'not_sent' });
+    this.move = null;
+    const entry: Pending = { sequence: ++this.sequence, gesture: 0, action: 9, at: this.now(), idleHeartbeat: false,
+      ...(['key_down','key_up','reset'].includes(command.operation) ? { keyboardEdge:{operation:command.operation as 'key_down'|'key_up'|'reset',
+        keycode:'keycode' in command ? command.keycode:0} } : {}) };
+    this.pending.push(entry); this.lastSentAt = entry.at;
+    return new Promise(resolve => {
+      this.keyboardReceipts.set(entry.sequence, resolve);
+      this.write({ type: 'keyboard_event', sequence: entry.sequence, ...command });
+    });
+  }
   /** A replaced shared peer can rejoin only when retirement had no uncertain action. */
   get canRejoinIdleSharedPeer() { return this.stateValue === 'fenced' && this.idleSharedSurfaceLoss; }
+  /** A fresh authorized peer must obtain its own native READY after old transport loss.
+   * Old actions remain unknown and are never transferred/replayed. APK denies READY
+   * when the previous participant's native cancellation cannot be confirmed. */
+  get canRejoinRetiredSharedPeer() { return this.stateValue === 'fenced' && this.sharedTransportRetired
+    && this.options.socket.readyState !== 1 && !this.releaseFailed; }
   /** Idle keepalives have no touch outcome. The old owner still needs native RELEASE before replacement. */
   get pointerOutcomeConfirmed() {
-    return !this.held && !this.move && !this.terminal && this.pending.every(entry => entry.idleHeartbeat);
+    return !this.held && !this.move && !this.terminal && this.keyboardHeld.size === 0 && this.pending.every(entry => entry.idleHeartbeat);
   }
   /** No Android touch or terminal outcome is unknown in this narrowly scoped failure. */
   get recoverableIdleReceiptLoss() { return this.idleReceiptLoss; }
@@ -131,6 +178,11 @@ export class ContinuousPointer {
 
   private current(): boolean {
     const now = this.now();
+    if (this.keyboardOpeningAt !== null && now - this.keyboardOpeningAt >= 15000) {
+      this.keyboardOpeningAt = null;
+      this.setKeyboard({ ...this.keyboardValue, enabled:false, editorActive:false, reason:'unavailable' });
+      this.write({ type:'keyboard_mode', enabled:false });
+    }
     if (!Number.isFinite(now) || now < this.lastTickAt || now - this.lastTickAt > CONTINUOUS_POINTER_LIMITS.schedulingGapMs) {
       this.retire('scheduler_gap'); return false;
     }
@@ -144,7 +196,7 @@ export class ContinuousPointer {
   private writable(): boolean {
     const buffered = this.options.socket.bufferedAmount;
     return this.options.socket.readyState === 1 && Number.isFinite(buffered) && buffered >= 0
-      && buffered <= CONTINUOUS_POINTER_LIMITS.bufferedBytes;
+      && buffered <= (this.supportsKeyboard ? 8192 : CONTINUOUS_POINTER_LIMITS.bufferedBytes);
   }
 
   private write(message: Record<string, unknown>): boolean {
@@ -167,6 +219,7 @@ export class ContinuousPointer {
 
   /** Trusted server replies, received on the same socket, never browser-selected owner metadata. */
   receive(message: unknown): boolean {
+    if (object(message) && ['keyboard_state', 'keyboard_result'].includes(String(message.type))) return this.receiveKeyboard(message);
     if (object(message) && message.type === 'shared_input_status') return this.receiveShared(message);
     if (!object(message) || !['touch_session', 'touch_cancelled', 'continuous_input_status'].includes(String(message.type))) return false;
     if (this.stateValue === 'idle' || this.stateValue === 'closed' || this.stateValue === 'destroyed') return false;
@@ -266,11 +319,12 @@ export class ContinuousPointer {
     // scalar deadlines does NOT report those earlier MOVE as applied.
     const receiptSequence = message.sequence;
     this.acknowledged = Math.max(this.acknowledged, receiptSequence);
-    this.pending = this.pending.filter(p => p.sequence > receiptSequence || p.action === 5 && p.sequence !== receiptSequence);
+    this.pending = this.pending.filter(p => p.sequence > receiptSequence || [5,9].includes(p.action) && p.sequence !== receiptSequence);
     if (this.terminal?.sequence === message.sequence) this.terminal = null;
     const receivedAt = this.now();
     this.lastReceipt = { at: receivedAt, roundTripMs: Math.max(0, receivedAt - offered.at) };
     if (offered.action === 5) {
+      this.keyboardHeld.clear(); // Native navigation resets held keys before its finite tap.
       const resolve = this.keyReceipts.get(offered.sequence);
       this.keyReceipts.delete(offered.sequence);
       resolve?.({ outcome: 'applied', receiptRoundTripMs: this.lastReceipt.roundTripMs });
@@ -288,10 +342,14 @@ export class ContinuousPointer {
       || !exact(message, ['type', 'session_id', 'owner', 'capture_epoch', 'sequence', 'gesture', 'action', 'outcome', 'device_uptime_ms'])
       || !integer(message.sequence, 0, CONTINUOUS_POINTER_LIMITS.maxSequence)
       || !integer(message.gesture, 0, CONTINUOUS_POINTER_LIMITS.maxSequence)
-      || !integer(message.action, 0, this.supportsNativeKeys ? 5 : 4) || !integer(message.device_uptime_ms, 0, Number.MAX_SAFE_INTEGER)) return false;
+      || !integer(message.action, 0, this.supportsKeyboard ? 9 : this.supportsNativeKeys ? 5 : 4) || !integer(message.device_uptime_ms, 0, Number.MAX_SAFE_INTEGER)) return false;
     const base = { type: 'continuous_input_status', session_id: message.session_id, owner: message.owner,
       capture_epoch: message.capture_epoch, sequence: message.sequence, origin: 'injector', device_uptime_ms: message.device_uptime_ms };
     if (message.outcome === 'interrupted') {
+      if (message.gesture === 0 && this.supportsKeyboard && this.stateValue === 'ready') {
+        this.keyboardHeld.clear();
+        return true; // Native RESET proved takeover; an old key UP must not reclaim it.
+      }
       if (this.stateValue !== 'ready' || message.gesture === 0
         || this.held?.gesture !== message.gesture && !this.pending.some(p => p.gesture === message.gesture)) return false;
       // Android confirmed CANCEL before another participant's DOWN. This is
@@ -321,6 +379,41 @@ export class ContinuousPointer {
       return this.receive({ ...base, status: 6, stage: this.nativeStarted ? 'input' : 'startup' });
     }
     return false;
+  }
+
+  private receiveKeyboard(message: Record<string, unknown>): boolean {
+    if (!this.supportsKeyboard || !this.session || message.session_id !== this.session.session || message.owner !== this.session.owner
+      || message.capture_epoch !== this.capture?.captureEpoch || this.stateValue !== 'ready') return false;
+    if (message.type === 'keyboard_state') {
+      if (!exact(message, ['type','session_id','owner','capture_epoch','enabled','editor_generation','editor_active','reason'])
+        || typeof message.enabled !== 'boolean' || typeof message.editor_active !== 'boolean'
+        || !integer(message.editor_generation, 0, 2147483647) || !['current','ready','disabled','unavailable'].includes(String(message.reason))) return false;
+      this.keyboardOpeningAt = null;
+      this.setKeyboard({ enabled: message.enabled, editorGeneration: message.editor_generation, editorActive: message.editor_active,
+        reason: message.reason as string });
+      return true;
+    }
+    if (!exact(message,['type','session_id','owner','capture_epoch','sequence','outcome','device_uptime_ms'])
+      || !integer(message.sequence,1,CONTINUOUS_POINTER_LIMITS.maxSequence) || !integer(message.device_uptime_ms,0,Number.MAX_SAFE_INTEGER)
+      || !['accepted','no_editor','stale_editor','unavailable','unknown','interrupted'].includes(String(message.outcome))) return false;
+    const entry = this.pending.find(p => p.sequence === message.sequence && p.action === 9);
+    const resolve = this.keyboardReceipts.get(message.sequence);
+    if (!entry || !resolve) return false;
+    this.pending = this.pending.filter(p => p.sequence !== message.sequence);
+    this.keyboardReceipts.delete(message.sequence);
+    if (message.outcome === 'accepted' && entry.keyboardEdge) {
+      if (entry.keyboardEdge.operation === 'key_down') this.keyboardHeld.add(entry.keyboardEdge.keycode);
+      if (entry.keyboardEdge.operation === 'key_up') this.keyboardHeld.delete(entry.keyboardEdge.keycode);
+      if (entry.keyboardEdge.operation === 'reset') this.keyboardHeld.clear();
+    }
+    if (message.outcome === 'interrupted' && entry.keyboardEdge?.operation === 'key_up') this.keyboardHeld.delete(entry.keyboardEdge.keycode);
+    this.acknowledged = Math.max(this.acknowledged, message.sequence);
+    const roundTripMs = Math.max(0,this.now()-entry.at);
+    this.lastReceipt = { at:this.now(), roundTripMs };
+    resolve(message.outcome === 'accepted' ? { outcome:'accepted', receiptRoundTripMs:roundTripMs } : { outcome:message.outcome as Exclude<RemoteKeyboardReceipt['outcome'],'accepted'|'not_sent'> });
+    if (message.outcome === 'accepted') try { this.options.onReceipt?.({ sequence:message.sequence, action:9, status:1,
+      deviceUptimeMs:message.device_uptime_ms, receiptRoundTripMs:roundTripMs }); } catch { /* Observation only. */ }
+    return true;
   }
 
   /** No HTTP handoff or pointer-owner teardown. Only an exact native key ACK resolves applied. */
@@ -434,6 +527,8 @@ export class ContinuousPointer {
     if (this.stateValue === 'idle' || this.stateValue === 'closed' || this.stateValue === 'destroyed'
       || this.stateValue === 'closing' || this.stateValue === 'fenced') return;
     const cancelUnstarted = this.stateValue === 'opening' && !this.nativeStarted;
+    this.sharedTransportRetired = this.options.sharedInput === true && ['server_runtime_retry','capture_or_socket_lost'].includes(reason)
+      && !this.nativeFailure && !this.releaseFailed;
     this.idleSharedSurfaceLoss = this.options.sharedInput === true && this.stateValue === 'ready'
       && ['surface_hidden', 'surface_blur', 'surface_control_lost', 'capture_or_socket_lost', 'server_runtime_retry'].includes(reason)
       && this.pointerOutcomeConfirmed && this.keyReceipts.size === 0 && !this.nativeFailure && !this.releaseFailed;
@@ -498,6 +593,11 @@ export class ContinuousPointer {
   private finishKeys(): void {
     const waiting = [...this.keyReceipts.values()]; this.keyReceipts.clear();
     waiting.forEach(resolve => resolve({ outcome: 'unknown' }));
+    const keyboardWaiting = [...this.keyboardReceipts.values()]; this.keyboardReceipts.clear();
+    keyboardWaiting.forEach(resolve => resolve({ outcome:'unknown' }));
+    this.keyboardHeld.clear();
+    this.keyboardOpeningAt = null;
+    this.setKeyboard({ ...this.keyboardValue, enabled:false, editorActive:false, reason:'connection_lost' });
   }
 }
 

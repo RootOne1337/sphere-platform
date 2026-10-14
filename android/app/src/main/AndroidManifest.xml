@@ -47,6 +47,15 @@
 
         <!-- ─── Foreground Service ───────────────────────────────────────── -->
         <service
+            android:name=".commands.RemoteInputMethodService"
+            android:label="Sphere Remote Keyboard"
+            android:permission="android.permission.BIND_INPUT_METHOD"
+            android:exported="true">
+            <intent-filter><action android:name="android.view.InputMethod" /></intent-filter>
+            <meta-data android:name="android.view.im" android:resource="@xml/remote_input_method" />
+        </service>
+
+        <service
             android:name=".service.SphereAgentService"
             android:foregroundServiceType="specialUse"
             android:exported="false"

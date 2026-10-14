@@ -9,6 +9,18 @@ from scripts.pilot import reviewed_artifact_retention as retention
 
 
 class ReviewedCacheRetentionTest(unittest.TestCase):
+    def test_new_web_download_survives_backend_install_before_docker_load(self):
+        source = "a" * 40
+        self.receipt.update(repository="RootOne1337/sphere-platform", runId=123,
+            observedAtUtc="2026-10-14T02:25:34Z", image={"tag":"sphere-review-frontend:"+source})
+        (self.directory / "receipt.json").write_text(json.dumps(self.receipt))
+        pending = retention.pending_archive_records(self.base, {source})
+        self.assertEqual(len(pending), 1)
+        installed = [{"kind":"sphere-review-frontend", "source":"b"*40, "created":"2026-10-13T00:00:00Z"}]
+        self.assertIn(source, retention.retained_sources(installed + pending, 3))
+        self.archive.write_bytes(b"bad-archive!")
+        self.assertEqual(retention.pending_archive_records(self.base, {source}), [])
+
     def setUp(self):
         self.temporary = tempfile.TemporaryDirectory()
         self.addCleanup(self.temporary.cleanup)

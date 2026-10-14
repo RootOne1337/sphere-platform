@@ -95,6 +95,33 @@ def retained_sources(records: list[dict], keep: int) -> set[str]:
     return result
 
 
+def pending_archive_records(base: Path, history: set[str]) -> list[dict]:
+    """Downloaded candidates have no Docker image yet. Retain them by component too."""
+    records = []
+    for directory in base.iterdir():
+        if not OWNED.fullmatch(directory.name) or not directory.is_dir() or not (directory / 'receipt.json').exists():
+            continue
+        try:
+            receipt = bounded_json(directory / 'receipt.json', base)
+            source = receipt.get('sourceRevision', '')
+            tag = receipt.get('image', {}).get('tag')
+            created = receipt.get('observedAtUtc', '')
+            if (source not in history or receipt.get('repository') != 'RootOne1337/sphere-platform'
+                    or type(receipt.get('runId')) is not int or receipt['runId'] <= 0
+                    or tag not in [kind + ':' + source for kind in NAMES]
+                    or not isinstance(created, str)):
+                continue
+            datetime.fromisoformat(created.replace('Z', '+00:00'))
+            present = next((name for name in ('image.tar.gz', 'download.zip') if (directory / name).exists()), None)
+            if present is None:
+                continue
+            archive_identity(directory, receipt, present, base)
+            records.append({'kind': tag.split(':')[0], 'source': source, 'created': created})
+        except (ValueError, OSError, KeyError, TypeError):
+            continue
+    return records
+
+
 def execute(root: Path, *, apply: bool = False, images: bool = False, keep: int = 3,
             protect_source: str | None = None, protect_images: tuple[str, ...] = ()) -> dict:
     if (not 3 <= keep <= 10 or protect_source is not None and not SHA.fullmatch(protect_source)
@@ -131,7 +158,7 @@ def execute(root: Path, *, apply: bool = False, images: bool = False, keep: int 
             records.append({'id': image['Id'], 'source': source, 'kind': aliases[0].split(':')[0],
                             'tags': aliases, 'created': image['Created'], 'referenced': image['Id'] in used})
         records = list({r['id']: r for r in records}.values())
-        protected = retained_sources(records, keep) | ({protect_source} if protect_source else set())
+        protected = retained_sources(records + pending_archive_records(base, history), keep) | ({protect_source} if protect_source else set())
         protected.update(r['source'] for r in records if r['referenced'] or r['id'] in protect_images)
         archive_plan, rejected = [], []
         for directory in base.iterdir():

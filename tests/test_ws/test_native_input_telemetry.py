@@ -20,7 +20,10 @@ def test_native_input_snapshot_preserves_cause_and_drops_private_extras():
     }).model_dump()
     assert value == snapshot() | dict(last_startup_detail=None, last_startup_detail_age_ms=None,
                                      last_release_reason=None, last_release_age_ms=None,
-                                     last_input_detail=None, last_input_detail_age_ms=None)
+                                     last_input_detail=None, last_input_detail_age_ms=None,
+                                     keyboard_commands_total=None, keyboard_accepted_total=None,
+                                     keyboard_refused_total=None, keyboard_unknown_total=None,
+                                     last_keyboard_result=None, last_keyboard_result_age_ms=None)
     assert "private" not in str(value)
 
 

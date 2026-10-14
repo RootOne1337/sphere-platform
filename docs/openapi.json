@@ -17202,7 +17202,8 @@
                   "root_handshake",
                   "root_process_exited",
                   "root_ready_timeout",
-                  "root_handoff_unknown"
+                  "root_handoff_unknown",
+                  "root_input_busy"
                 ]
               },
               {
@@ -17307,6 +17308,89 @@
             "maximum": 9007199254740992.0,
             "minimum": 0.0,
             "title": "Unknown Releases Total"
+          },
+          "keyboard_commands_total": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "maximum": 9007199254740992.0,
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Keyboard Commands Total"
+          },
+          "keyboard_accepted_total": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "maximum": 9007199254740992.0,
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Keyboard Accepted Total"
+          },
+          "keyboard_refused_total": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "maximum": 9007199254740992.0,
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Keyboard Refused Total"
+          },
+          "keyboard_unknown_total": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "maximum": 9007199254740992.0,
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Keyboard Unknown Total"
+          },
+          "last_keyboard_result": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "accepted",
+                  "no_editor",
+                  "stale_editor",
+                  "unavailable",
+                  "unknown"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Keyboard Result"
+          },
+          "last_keyboard_result_age_ms": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "maximum": 86400000.0,
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Keyboard Result Age Ms"
           }
         },
         "type": "object",
@@ -18365,6 +18449,11 @@
           "trickle_ice_enabled": {
             "type": "boolean",
             "title": "Trickle Ice Enabled",
+            "default": false
+          },
+          "direct_keyboard_enabled": {
+            "type": "boolean",
+            "title": "Direct Keyboard Enabled",
             "default": false
           }
         },

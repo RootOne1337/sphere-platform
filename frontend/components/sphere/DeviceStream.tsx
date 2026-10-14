@@ -30,6 +30,7 @@ import { deferLegacyInput } from '@/src/features/stream/directInputRouting';
 import { useStreamFullscreen } from '@/src/features/stream/useStreamFullscreen';
 import { StreamControlsTray } from '@/src/features/stream/StreamControlsTray';
 import { ServerLinkRtt } from '@/src/features/stream/serverLinkRtt';
+import { RemoteKeyboardCapture } from '@/src/features/stream/RemoteKeyboardCapture';
 
 interface DeviceStreamProps {
   deviceId: string;
@@ -341,8 +342,10 @@ export function DeviceStream({
       continuousRef.current?.retire('server_runtime_retry');
     }
     const retiredRoute = continuousRouteRef.current;
-    if (endpoint?.sharedInput && endpoint.readyState === 1 && retiredRoute?.sharedInput
-      && endpoint.session !== retiredRoute.session && continuousRef.current?.canRejoinIdleSharedPeer) {
+    const releasedFallback = continuousRef.current?.state === 'closed' && retiredRoute !== endpoint;
+    if (endpoint?.sharedInput && endpoint.readyState === 1 && (releasedFallback || retiredRoute?.sharedInput
+      && endpoint.session !== retiredRoute.session && (continuousRef.current?.canRejoinIdleSharedPeer
+        || continuousRef.current?.canRejoinRetiredSharedPeer))) {
       // Hiding the page can close the old data channel before its native CLOSE
       // receipt returns. This retired participant had no uncertain action. A new
       // authenticated v2 peer must obtain its own native READY; nothing is replayed
@@ -667,7 +670,7 @@ export function DeviceStream({
           continuousRouteRef.current = endpoint;
           setControlTransport(endpoint ? 'direct_webrtc' : 'server_websocket');
           const controller = new ContinuousPointer({ socket: inputTransport, sharedInput: endpoint?.sharedInput === true,
-            nativeKeys: endpoint?.nativeKeys === true,
+            nativeKeys: endpoint?.nativeKeys === true, keyboard: endpoint?.keyboard === true,
             renderedCapture: () => renderedCaptureRef.current,
             onFence: snapshot => {
               if (ignore || ended || newWs !== wsRef.current || continuousRef.current !== controller
@@ -725,6 +728,18 @@ export function DeviceStream({
               if (state === 'closed') {
                 continuousRequestedRef.current = false;
                 const route = continuousRouteRef.current;
+                const readyDirect = directControlRef.current;
+                if (readyDirect?.sharedInput && readyDirect.readyState === 1 && readyDirect !== route && directVideoRef.current.active) {
+                  // An old fallback has now delivered its exact RELEASE. Open
+                  // the authorized shared channel without restarting signaling.
+                  // Previous uncertain actions remain in history and are not replayed.
+                  freshViewerAfterReleaseRef.current = false;
+                  idleRecoveringRef.current = false; setIdleRecovering(false);
+                  continuousFaultRef.current = false; setContinuousFault(false);
+                  automaticProbeRef.current = null;
+                  setContinuousReason(null);
+                  setDirectControlVersion(version => version + 1);
+                }
                 const shown = renderedCaptureRef.current;
                 const directCapture = route?.capture();
                 if (freshViewerAfterReleaseRef.current && route?.sharedInput
@@ -1531,6 +1546,8 @@ export function DeviceStream({
     </div>
     </div>
     {enableNavigation && <StreamControlsTray viewport={fullscreen.ref} overlay={fullscreen.active}>
+      <RemoteKeyboardCapture key={`keyboard-${deviceId}`} viewport={fullscreen.ref}
+        controller={() => continuousRef.current} available={canNavigate && continuousState === 'ready' && !continuousFault} />
       <AndroidNavigationBar key={deviceId} deviceId={deviceId} extended compact={fullscreen.active}
       available={canNavigate && (!continuousBusy || continuousState === 'ready') && wsRef.current?.readyState === WebSocket.OPEN}
       prepareCommand={prepareDiscreteInput}

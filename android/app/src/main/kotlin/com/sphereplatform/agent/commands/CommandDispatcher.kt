@@ -88,9 +88,13 @@ class CommandDispatcher @Inject constructor(
     private val updateCheckQueuedForService = AtomicBoolean(false)
     private val inputDiagnostics = NativeInputDiagnostics(android.os.SystemClock::uptimeMillis)
     private val touchFactory = OwnedTouchPipeFactory(adbActions.inputOwnership, adbActions::prepareContinuousInput, RootTouchPipeFactory(appContext))
+    private val remoteKeyboard = if (BuildConfig.CONTINUOUS_INPUT_CANARY) AndroidRemoteKeyboard(appContext).also { adapter ->
+        scope.launch(Dispatchers.IO) { adapter.recoverInterruptedLease() }
+    } else null
     private val sharedInput = if (BuildConfig.CONTINUOUS_INPUT_CANARY) SharedDirectInputController(
         scope, touchFactory, streamingManager::getInputSession, android.os.SystemClock::uptimeMillis,
         diagnostics = inputDiagnostics,
+        keyboard = remoteKeyboard,
     ) else null
     private val continuousInput = if (BuildConfig.CONTINUOUS_INPUT_CANARY) {
         ContinuousInputController(scope,

@@ -61,7 +61,9 @@ class DeviceInputOwnershipTest {
         val dag = ownership.claimDiscrete()
         var touched = false
         val factory = OwnedTouchPipeFactory(ownership, { touched = true }, TouchPipeFactory { touched = true; testPipe(true) })
-        assertFails { factory.open(binding()) }
+        val failure=runCatching { factory.open(binding()) }.exceptionOrNull()
+        assertTrue(failure is TouchStartupUnavailableException)
+        assertEquals(TouchStartupDetail.ROOT_INPUT_BUSY,(failure as TouchStartupUnavailableException).detail)
         assertFalse(touched)
         dag.close()
     }

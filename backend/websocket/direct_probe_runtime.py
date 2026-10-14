@@ -64,6 +64,7 @@ class ProbeViewer:
     history_session: str | None = None
     shared_control: bool = False
     trickle: bool = False
+    keyboard: bool = False
     candidates: int = 0
 
 
@@ -151,7 +152,7 @@ class DirectProbeRuntime:
                 binding = json.loads(raw)
                 if (not isinstance(binding, dict)
                         or not {"session", "device", "org", "user", "worker", "agent_session", "media", "control_session"} <= binding.keys()
-                        or binding.keys() - {"session", "device", "org", "user", "worker", "agent_session", "media", "control_session", "history_session", "shared", "trickle"}
+                        or binding.keys() - {"session", "device", "org", "user", "worker", "agent_session", "media", "control_session", "history_session", "shared", "trickle", "keyboard"}
                         or "shared" in binding and binding["shared"] is not True
                         or binding != {**binding, "session": session, "device": device, "org": org, "user": user,
                                        "agent_session": agent_session, "media": LIVE_VIDEO_MODE, "control_session": viewer_session}):
@@ -180,7 +181,8 @@ class DirectProbeRuntime:
                 binding = json.loads(raw)
                 required = {"session", "device", "org", "user", "worker", "agent_session", "media"}
                 if (not isinstance(binding, dict) or not required <= binding.keys()
-                        or binding.keys() - required - {"control_session", "history_session", "shared", "shared_control", "trickle"}
+                        or binding.keys() - required - {"control_session", "history_session", "shared", "shared_control", "trickle", "keyboard"}
+                        or "keyboard" in binding and (binding["keyboard"] is not True or binding.get("shared_control") is not True)
                         or "trickle" in binding and binding["trickle"] is not True
                         or "shared" in binding and binding["shared"] is not True
                         or "shared_control" in binding and (binding["shared_control"] is not True or binding.get("shared") is not True)
@@ -292,6 +294,10 @@ class DirectProbeRuntime:
                 if not binding.get("shared") or not viewer.live or viewer.control_session is None:
                     raise InvalidDirectProbe("shared_input_not_admitted")
                 binding["shared_control"] = True
+            if viewer.keyboard:
+                if not viewer.shared_control or not status.agent_version_code or status.agent_version_code < 10274:
+                    raise InvalidDirectProbe("keyboard_not_admitted")
+                binding["keyboard"] = True
             if viewer.control_session is not None:
                 if (not viewer.live or not settings.DIRECT_TRANSPORT_INPUT_ENABLED
                         or not status.agent_version_code or status.agent_version_code < 10254
@@ -476,7 +482,8 @@ class DirectProbeRuntime:
         binding = data["binding"]
         binding_keys = {"session", "device", "org", "user", "worker", "agent_session"}
         if (not isinstance(binding, dict) or not binding_keys <= binding.keys()
-                or binding.keys() - binding_keys - {"media", "control_session", "history_session", "shared", "shared_control", "trickle"}
+                or binding.keys() - binding_keys - {"media", "control_session", "history_session", "shared", "shared_control", "trickle", "keyboard"}
+                or "keyboard" in binding and (binding["keyboard"] is not True or binding.get("shared_control") is not True)
                 or "trickle" in binding and (binding['trickle'] is not True or binding.get('media') != LIVE_VIDEO_MODE)
                 or "shared" in binding and binding["shared"] is not True
                 or "shared_control" in binding and (binding["shared_control"] is not True or binding.get("shared") is not True
@@ -593,6 +600,11 @@ class DirectProbeRuntime:
             message["media"] = LIVE_VIDEO_MODE if live else VIDEO_MODE
         if binding.get("shared_control") is True:
             message["shared_control"] = True
+        if binding.get("keyboard") is True:
+            if not status or not status.agent_version_code or status.agent_version_code < 10274:
+                self.pending.pop(sid, None)
+                return
+            message["keyboard"] = True
         if binding.get('trickle') is True:
             message['trickle_ice'] = True
         if ice is not None:

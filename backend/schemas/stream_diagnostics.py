@@ -34,7 +34,7 @@ class NativeInputTelemetry(BaseModel):
     last_input_detail_age_ms: int | None = Field(default=None, ge=0, le=86_400_000)
     last_startup_detail: Literal[
         "root_required", "root_geometry", "root_adapter_unavailable", "root_configuration",
-        "root_handshake", "root_process_exited", "root_ready_timeout", "root_handoff_unknown",
+        "root_handshake", "root_process_exited", "root_ready_timeout", "root_handoff_unknown", "root_input_busy",
     ] | None = None
     last_startup_detail_age_ms: int | None = Field(default=None, ge=0, le=86_400_000)
     # A confirmed native RELEASE describes cleanup, not why the owner ended.
@@ -53,9 +53,17 @@ class NativeInputTelemetry(BaseModel):
     input_failures_total: int = Field(ge=0, le=_MAX_COUNTER)
     releases_total: int = Field(ge=0, le=_MAX_COUNTER)
     unknown_releases_total: int = Field(ge=0, le=_MAX_COUNTER)
+    keyboard_commands_total: int | None = Field(default=None, ge=0, le=_MAX_COUNTER)
+    keyboard_accepted_total: int | None = Field(default=None, ge=0, le=_MAX_COUNTER)
+    keyboard_refused_total: int | None = Field(default=None, ge=0, le=_MAX_COUNTER)
+    keyboard_unknown_total: int | None = Field(default=None, ge=0, le=_MAX_COUNTER)
+    last_keyboard_result: Literal["accepted", "no_editor", "stale_editor", "unavailable", "unknown"] | None = None
+    last_keyboard_result_age_ms: int | None = Field(default=None, ge=0, le=86_400_000)
 
     @model_validator(mode="after")
     def validate_failure_age(self) -> "NativeInputTelemetry":
+        if (self.last_keyboard_result is None) != (self.last_keyboard_result_age_ms is None):
+            raise ValueError("keyboard result and monotonic age must be paired")
         if (self.last_failure is None) != (self.last_failure_age_ms is None):
             raise ValueError("native input failure and its monotonic age must be paired")
         if (self.last_input_detail is None) != (self.last_input_detail_age_ms is None):

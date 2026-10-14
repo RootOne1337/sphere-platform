@@ -214,6 +214,30 @@ it('rejoins a fresh shared peer after hiding an idle tab loses the old CLOSE rec
   view.unmount();
 });
 
+it.each([false,true])('promotes a late shared peer after exact fallback release without another signaling reconnect (endpoint first=%s)', endpointFirst => {
+  mockCapture={captureEpoch:TOUCH_EPOCH,frameWidth:1280,frameHeight:720};
+  mockInputAdmission={admissionKnown:true,admitted:false,sharedInput:false};
+  const view=readyWheel();
+  const receive=(m:object)=>act(()=>view.socket.onmessage?.({data:JSON.stringify(m)}));
+  receive({type:'stream_session',schema_version:1,history_enabled:true,session_id:'1'.repeat(16),report_interval_seconds:10});
+  receive({type:'touch_capability',capture_epoch:TOUCH_EPOCH,frame_width:1280,frame_height:720});
+  receive({type:'touch_session',session_id:'fallback_session',owner:'fallback_owner',capture_epoch:TOUCH_EPOCH,frame_width:1280,frame_height:720});
+  const endpoint={...directEndpoint(),sharedInput:true,session:'c'.repeat(32)};
+  const direct=()=>act(()=>{mockVideoObserve?.({admitted:true,admissionKnown:true,sharedInput:true,active:true,frames:1,lastFrameAt:Date.now(),attempts:2,result:null});mockDirectObserve?.(endpoint);});
+  if(endpointFirst)direct();
+  receive({type:'continuous_input_status',session_id:'fallback_session',owner:'fallback_owner',capture_epoch:TOUCH_EPOCH,
+    sequence:0,status:6,stage:'startup',origin:'injector',device_uptime_ms:100});
+  receive({type:'continuous_input_status',session_id:'fallback_session',owner:'fallback_owner',capture_epoch:TOUCH_EPOCH,
+    sequence:0,status:3,stage:'release',origin:'injector',device_uptime_ms:101});
+  if(!endpointFirst)direct();
+  expect((endpoint.send as jest.Mock).mock.calls.map(([raw])=>JSON.parse(raw).type)).toEqual(['touch_open']);
+  act(()=>mockDirectReceipt?.({type:'touch_session',session_id:endpoint.session,owner:'b'.repeat(32),capture_epoch:TOUCH_EPOCH,frame_width:1280,frame_height:720}));
+  act(()=>mockDirectReceipt?.({type:'shared_input_status',session_id:endpoint.session,owner:'b'.repeat(32),capture_epoch:TOUCH_EPOCH,
+    sequence:0,gesture:0,action:4,outcome:'ready',device_uptime_ms:102}));
+  expect(view.container.querySelector('[data-control-state]')).toHaveAttribute('data-control-state','ready');
+  expect(MockSocket.instances).toHaveLength(1);expect(view.commands()).toEqual([]);view.unmount();
+});
+
 it.each([false, true])('does not open exclusive input while shared admission is known=%s and the peer is connecting', known => {
   mockCapture = { captureEpoch: TOUCH_EPOCH, frameWidth: 1280, frameHeight: 720 };
   mockInputAdmission = { admissionKnown: known, admitted: known, sharedInput: known };

@@ -9,7 +9,7 @@ internal class OwnedTouchPipeFactory(
     private val delegate: TouchPipeFactory,
 ) : TouchPipeFactory {
     override suspend fun open(binding: TouchBinding): TouchPipe {
-        if (!ownership.claimContinuous(binding.owner)) throw IOException("device_input_busy")
+        if (!ownership.claimContinuous(binding.owner)) throw TouchStartupUnavailableException(TouchStartupDetail.ROOT_INPUT_BUSY)
         val pipe = try {
             prepare(binding.owner)
             delegate.open(binding)

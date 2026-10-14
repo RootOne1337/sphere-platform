@@ -36,7 +36,7 @@ ControlFailure = Literal[
     "server_rejected", "server_runtime_retry", "server_admission_retry", "release_unknown", "pointer_release_unknown",
     "discrete_result_unknown", "scheduler_gap", "socket_backpressure", "socket_send_failed",
     "invalid_native_receipt", "invalid_startup_receipt", "invalid_input_receipt", "receipt_action_mismatch",
-    "surface_control_lost", "surface_blur", "surface_hidden", "capture_or_socket_lost",
+    "surface_control_lost", "surface_blur", "surface_hidden", "capture_or_socket_lost", "keyboard_release_unknown",
 ]
 
 
@@ -51,7 +51,7 @@ class BrowserControlFence(BaseModel):
     offered_sequence: Annotated[int, Field(ge=0, le=2147483647)] | None
     acknowledged_sequence: Annotated[int, Field(ge=0, le=2147483647)] | None
     pending_count: Annotated[int, Field(ge=0, le=32)] | None
-    oldest_action: Annotated[int, Field(ge=0, le=5)] | None
+    oldest_action: Annotated[int, Field(ge=0, le=9)] | None
     oldest_age_ms: Milliseconds | None
     oldest_deadline_age_ms: Milliseconds | None
     terminal_age_ms: Milliseconds | None

@@ -65,10 +65,12 @@ export function LiveDirectVideo({ deviceId, session, eligible, fit, expectedCapt
         || data.direct_key_input_enabled === true && data.shared_input_enabled !== true) throw Error('invalid_key_input_admission');
       if ('trickle_ice_enabled' in data && typeof data.trickle_ice_enabled !== 'boolean'
         || data.trickle_ice_enabled === true && data.live_video_enabled !== true) throw Error('invalid_ice_admission');
+      if ('direct_keyboard_enabled' in data && typeof data.direct_keyboard_enabled !== 'boolean'
+        || data.direct_keyboard_enabled === true && data.shared_input_enabled !== true) throw Error('invalid_keyboard_admission');
       return { admitted: data.live_video_enabled === true, profiles, input: data.direct_input_enabled === true,
         nativeHistory: data.native_history_enabled === true, handover: data.legacy_video_handover_enabled === true,
         sharedInput: data.shared_input_enabled === true, nativeKeys: data.direct_key_input_enabled === true,
-        trickleIce: data.trickle_ice_enabled === true };
+        trickleIce: data.trickle_ice_enabled === true, keyboard: data.direct_keyboard_enabled === true };
     },
     retry: (count, error) => count < 3 && isAxiosError(error) && (
       error.response ? [408, 429].includes(error.response.status) || error.response.status >= 500 && error.response.status <= 599
@@ -203,7 +205,7 @@ export function LiveDirectVideo({ deviceId, session, eligible, fit, expectedCapt
             && lastPresentedAt !== null && performance.now() - lastPresentedAt < FRAME_PROGRESS_TIMEOUT_MS,
           ...(admission.data?.nativeHistory || admission.data?.handover ? { historySession: session } : {}),
           ...(admission.data?.input && callbacks.current.onControlChannel ? {
-            controlSession: session, sharedInput: admission.data.sharedInput, nativeKeys: admission.data.nativeKeys, onControlChannel: (channel: DirectControlEndpoint | null) => {
+            controlSession: session, sharedInput: admission.data.sharedInput, nativeKeys: admission.data.nativeKeys, keyboard: admission.data.keyboard, onControlChannel: (channel: DirectControlEndpoint | null) => {
               if (!disposed && !ended && current === generation) callbacks.current.onControlChannel?.(channel);
             },
           } : {}), onTrack: track => {

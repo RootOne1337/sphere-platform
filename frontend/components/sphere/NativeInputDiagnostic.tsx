@@ -17,6 +17,12 @@ export interface NativeInputTelemetry {
   input_failures_total: number;
   releases_total: number;
   unknown_releases_total: number;
+  keyboard_commands_total?: number | null;
+  keyboard_accepted_total?: number | null;
+  keyboard_refused_total?: number | null;
+  keyboard_unknown_total?: number | null;
+  last_keyboard_result?: 'accepted' | 'no_editor' | 'stale_editor' | 'unavailable' | 'unknown' | null;
+  last_keyboard_result_age_ms?: number | null;
 }
 
 const stateLabels = {
@@ -43,6 +49,7 @@ const failureLabels = {
 };
 
 const startupLabels = {
+  root_input_busy: 'Нативный ввод занят другой активной сессией',
   root_required: 'Привилегированный адаптер недоступен',
   root_geometry: 'Размер или поворот экрана изменился при запуске',
   root_adapter_unavailable: 'Системный адаптер ввода недоступен',
@@ -136,7 +143,16 @@ export function NativeInputDiagnostic({ telemetry }: { telemetry?: NativeInputTe
         <span>Сбои действий: {telemetry.input_failures_total}</span>
         <span>Освобождения: {telemetry.releases_total}</span>
         <span>Неподтверждённые освобождения: {telemetry.unknown_releases_total}</span>
+        {telemetry.keyboard_commands_total != null && <>
+          <span>Команды клавиатуры: {telemetry.keyboard_commands_total}</span>
+          <span>Принятые Android: {telemetry.keyboard_accepted_total ?? '—'}</span>
+          <span>Отказы клавиатуры: {telemetry.keyboard_refused_total ?? '—'}</span>
+          <span>Неизвестный результат: {telemetry.keyboard_unknown_total ?? '—'}</span>
+        </>}
       </div>
+      {telemetry.last_keyboard_result && <div>Клавиатура: {label({ accepted:'Android принял ввод', no_editor:'Нет выбранного поля',
+        stale_editor:'Поле изменилось', unavailable:'IME недоступен', unknown:'Результат не подтверждён' }, telemetry.last_keyboard_result)}
+        {snapshotAge(telemetry.last_keyboard_result_age_ms)}.</div>}
       <div className="text-muted-foreground">Счётчики за время работы процесса APK. Последний сбой может относиться к предыдущему сеансу; состояние выше относится к этому срезу.</div>
     </div>
   );

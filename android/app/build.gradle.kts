@@ -131,6 +131,7 @@ android {
         if (directProbeCanary) "src/directProbe/kotlin" else "src/noDirectProbe/kotlin"
     )
     if (directProbeCanary) sourceSets.getByName("test").java.srcDir("src/directProbeTest/kotlin")
+    if (directProbeCanary) sourceSets.getByName("debug").manifest.srcFile("src/directProbe/AndroidManifest.xml")
 
     defaultConfig {
         applicationId = "com.sphereplatform.agent"

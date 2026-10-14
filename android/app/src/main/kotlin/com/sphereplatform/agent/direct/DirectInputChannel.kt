@@ -5,6 +5,7 @@ import kotlinx.serialization.json.JsonObject
 
 /** An existing authenticated peer is a transport, never authority to open native input. */
 interface DirectInputChannel {
+    val keyboardSupported: Boolean get() = false
     val session: String
     val capture: CaptureInputSession
     fun isCurrent(): Boolean

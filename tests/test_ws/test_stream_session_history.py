@@ -127,7 +127,7 @@ async def test_unknown_ice_packet_counts_remain_null_in_retained_failure(store):
 
 @pytest.mark.parametrize("change", [
     {"coordinates": [1, 2]}, {"owner": "private"}, {"reason": "private exception"},
-    {"pending_count": 33}, {"offered_sequence": 2147483648}, {"oldest_action": 6},
+    {"pending_count": 33}, {"offered_sequence": 2147483648}, {"oldest_action": 10},
     {"pointer_held": 1}, {"socket_state": 4}, {"age_ms": float("nan")}, {"buffered_bytes": -1},
 ])
 async def test_control_fence_rejects_private_unbounded_and_malformed_nested_fields(store, change):

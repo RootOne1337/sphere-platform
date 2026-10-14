@@ -20,8 +20,10 @@ internal class SharedPointerArbiter(
     enum class Outcome { APPLIED, ALIVE, INTERRUPTED, CLOSED, DENIED, EXPIRED, INVALID, UNKNOWN, BUSY }
     data class Notice(val participant: String, val sequence: Int, val gesture: Long, val outcome: Outcome)
     data class Event(val participant: String, val sequence: Int, val gesture: Long,
-                     val action: Int, val x: Int, val y: Int, val receivedAtMs: Long)
-    data class NativeAction(val action: Int, val gesture: Long, val x: Int, val y: Int)
+                     val action: Int, val x: Int, val y: Int, val receivedAtMs: Long,
+                     val keyboard: RemoteKeyboardCommand? = null)
+    data class NativeAction(val action: Int, val gesture: Long, val x: Int, val y: Int,
+                            val keyboard: RemoteKeyboardCommand? = null, val participant: String? = null)
     private class Participant(val id: String, val expiresAtMs: Long, val control: Boolean, now: Long) {
         var sequence = 0
         var lastGesture = 0L
@@ -32,6 +34,10 @@ internal class SharedPointerArbiter(
     private data class Held(val participant: Participant, val gesture: Long, val nativeGesture: Long, var x: Int, var y: Int)
     private val participants = LinkedHashMap<String, Participant>()
     private var held: Held? = null
+    private var keyboardOwner: Participant? = null
+    private val heldKeys = mutableSetOf<Int>()
+    private var keyboardInterruption: Notice? = null
+    fun takeKeyboardInterruption(): Notice? = keyboardInterruption.also { keyboardInterruption = null }
     private var nativeGesture = 0L
     private var lastTime = uptime().also { require(it >= 0) }
     private var operating = false
@@ -68,14 +74,47 @@ internal class SharedPointerArbiter(
             if (event.receivedAtMs > now || now - event.receivedAtMs >= MAX_EVENT_AGE_MS)
                 return reject(participant, event, Outcome.EXPIRED)
             if (event.sequence < 1 || event.sequence <= participant.sequence || event.gesture !in 0..Int.MAX_VALUE.toLong()
-                || event.action !in RootTouchSession.DOWN..RootTouchSession.KEY_TAP
-                || (if (event.action == RootTouchSession.KEY_TAP) event.gesture != 0L
+                || event.action !in setOf(0, 1, 2, 3, 4, 5, RemoteKeyboardCommand.ACTION)
+                || (if (event.action == RemoteKeyboardCommand.ACTION) event.keyboard == null || event.gesture != 0L
+                    else if (event.action == RootTouchSession.KEY_TAP) event.gesture != 0L
                     || !RootTouchSession.supportedKey(event.x) || event.y != 0
                     else event.x !in 0 until width || event.y !in 0 until height))
                 return reject(participant, event, Outcome.INVALID)
             participant.sequence = event.sequence
             participant.lastSeenMs = now
+            if (event.action == RemoteKeyboardCommand.ACTION) {
+                val command = checkNotNull(event.keyboard)
+                if (command.operation == RemoteKeyboardCommand.Operation.KEY_DOWN && keyboardOwner === participant
+                    && heldKeys.size >= 16 && command.keyCode !in heldKeys) return reject(participant, event, Outcome.INVALID)
+                if (command.operation == RemoteKeyboardCommand.Operation.KEY_UP && keyboardOwner !== participant)
+                    return listOf(event.notice(Outcome.INTERRUPTED))
+                if (command.operation == RemoteKeyboardCommand.Operation.RESET && keyboardOwner !== participant)
+                    return if (dispatch(NativeAction(RemoteKeyboardCommand.ACTION, 0, 0, 0, command, participant.id)))
+                        listOf(event.notice(Outcome.APPLIED)) else fenceAll()
+                val notices = mutableListOf<Notice>()
+                held?.takeIf { it.participant !== participant }?.let { previous ->
+                    if (!dispatch(NativeAction(RootTouchSession.CANCEL, previous.nativeGesture, previous.x, previous.y))) return fenceAll()
+                    previous.participant.gesture = null; previous.participant.interruptedGesture = previous.gesture; held = null
+                    notices += Notice(previous.participant.id, previous.participant.sequence, previous.gesture, Outcome.INTERRUPTED)
+                }
+                if (keyboardOwner != null && keyboardOwner !== participant && !resetKeyboard()) return notices + fenceAll()
+                val afterCancel = checkedTime() ?: return notices + fenceAll()
+                if (afterCancel >= participant.expiresAtMs || afterCancel - event.receivedAtMs >= MAX_EVENT_AGE_MS)
+                    return notices + reject(participant, event, Outcome.EXPIRED)
+                val action = when (command.operation) {
+                    RemoteKeyboardCommand.Operation.KEY_DOWN -> RootTouchSession.KEY_DOWN
+                    RemoteKeyboardCommand.Operation.KEY_UP -> RootTouchSession.KEY_UP
+                    RemoteKeyboardCommand.Operation.RESET -> RootTouchSession.KEY_RESET
+                    else -> RemoteKeyboardCommand.ACTION
+                }
+                if (!dispatch(NativeAction(action, 0, command.keyCode, command.meta, command, participant.id))) return notices + fenceAll()
+                if (action == RootTouchSession.KEY_DOWN) { keyboardOwner = participant; heldKeys += command.keyCode }
+                if (action == RootTouchSession.KEY_UP) { heldKeys -= command.keyCode; if (heldKeys.isEmpty()) keyboardOwner = null }
+                if (action == RootTouchSession.KEY_RESET) { keyboardOwner = null; heldKeys.clear() }
+                return notices + event.notice(Outcome.APPLIED)
+            }
             if (event.action == RootTouchSession.KEY_TAP) {
+                if (!resetKeyboard()) return fenceAll()
                 val notices = mutableListOf<Notice>()
                 held?.let { previous ->
                     if (!dispatch(NativeAction(RootTouchSession.CANCEL, previous.nativeGesture, previous.x, previous.y))) return fenceAll()
@@ -97,6 +136,7 @@ internal class SharedPointerArbiter(
                 else reject(participant, event, Outcome.INVALID)
             }
             if (event.action == RootTouchSession.DOWN) {
+                if (keyboardOwner != null && keyboardOwner !== participant && !resetKeyboard()) return fenceAll()
                 if (participant.gesture != null || event.gesture <= participant.lastGesture)
                     return reject(participant, event, Outcome.INVALID)
                 val notices = mutableListOf<Notice>()
@@ -166,6 +206,7 @@ internal class SharedPointerArbiter(
     }
 
     private suspend fun removeInternal(participant: Participant, outcome: Outcome): List<Notice> {
+        if (keyboardOwner === participant && !resetKeyboard()) return fenceAll()
         val current = held
         if (current?.participant === participant) {
             if (!dispatch(NativeAction(RootTouchSession.CANCEL, current.nativeGesture, current.x, current.y))) return fenceAll()
@@ -176,6 +217,13 @@ internal class SharedPointerArbiter(
     }
 
     private suspend fun dispatch(action: NativeAction): Boolean = try { deliver(action) } catch (_: Exception) { false }
+    private suspend fun resetKeyboard(): Boolean {
+        if (keyboardOwner == null) return true
+        if (!dispatch(NativeAction(RootTouchSession.KEY_RESET, 0, 0, 0, participant = keyboardOwner?.id))) return false
+        keyboardOwner?.let { keyboardInterruption = Notice(it.id,it.sequence,0,Outcome.INTERRUPTED) }
+        heldKeys.clear(); keyboardOwner = null
+        return true
+    }
     private fun checkedTime(): Long? {
         val now = uptime()
         if (now < lastTime) return null
@@ -186,7 +234,7 @@ internal class SharedPointerArbiter(
         fenced = true
         // Only confirmed external pipe teardown may reset this object; UNKNOWN is never APPLIED.
         return participants.values.map { Notice(it.id, it.sequence, it.gesture ?: 0L, Outcome.UNKNOWN) }.also {
-            participants.clear(); held = null
+            participants.clear(); held = null; heldKeys.clear(); keyboardOwner = null; keyboardInterruption = null
         }
     }
     private fun Event.notice(outcome: Outcome) = Notice(participant, sequence, gesture, outcome)

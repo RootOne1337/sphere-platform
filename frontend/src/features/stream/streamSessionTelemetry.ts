@@ -24,7 +24,7 @@ const controlFailures = new Set(['native_receipt_timeout', 'idle_receipt_timeout
   'server_rejected', 'server_runtime_retry', 'server_admission_retry', 'release_unknown', 'pointer_release_unknown',
   'discrete_result_unknown', 'scheduler_gap', 'socket_backpressure', 'socket_send_failed',
   'invalid_native_receipt', 'invalid_startup_receipt', 'invalid_input_receipt', 'receipt_action_mismatch',
-  'surface_control_lost', 'surface_blur', 'surface_hidden', 'capture_or_socket_lost']);
+  'surface_control_lost', 'surface_blur', 'surface_hidden', 'capture_or_socket_lost', 'keyboard_release_unknown']);
 export const directFailure = (reason: string | null | undefined) => reason ? reasons.has(reason) ? reason : 'other' : null;
 
 function controlFence(fence: PointerFenceObservation | null | undefined, ageMs: number | null) {
@@ -34,7 +34,7 @@ function controlFence(fence: PointerFenceObservation | null | undefined, ageMs: 
   return { reason: controlFailures.has(fence.reason) ? fence.reason : 'other', phase: fence.phase, age_ms: milliseconds(ageMs),
     pointer_held: fence.pointerHeld === true, idle_heartbeat_only: fence.idleHeartbeatOnly === true,
     offered_sequence: integer(fence.offeredSequence, 2147483647), acknowledged_sequence: integer(fence.acknowledgedSequence, 2147483647),
-    pending_count: integer(fence.pendingCount, 32), oldest_action: integer(fence.oldestAction, 5),
+    pending_count: integer(fence.pendingCount, 32), oldest_action: integer(fence.oldestAction, 9),
     oldest_age_ms: milliseconds(fence.oldestAgeMs), oldest_deadline_age_ms: milliseconds(fence.oldestDeadlineAgeMs),
     terminal_age_ms: milliseconds(fence.terminalAgeMs), tick_gap_ms: milliseconds(fence.tickGapMs),
     last_send_age_ms: milliseconds(fence.lastSendAgeMs), last_receipt_age_ms: milliseconds(fence.lastReceiptAgeMs),

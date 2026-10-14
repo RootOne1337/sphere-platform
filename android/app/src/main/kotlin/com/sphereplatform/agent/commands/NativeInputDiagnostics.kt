@@ -24,6 +24,22 @@ internal class NativeInputDiagnostics(private val uptime: () -> Long) {
     private var releaseAt = 0L
     private var inputDetail: String? = null
     private var inputDetailAt = 0L
+    private var keyboardCommands = 0L
+    private var keyboardAccepted = 0L
+    private var keyboardRefused = 0L
+    private var keyboardUnknown = 0L
+    private var keyboardResult: RemoteKeyboardAdapter.Result? = null
+    private var keyboardAt = 0L
+
+    @Synchronized fun keyboard(result: RemoteKeyboardAdapter.Result) {
+        keyboardCommands = (keyboardCommands + 1).coerceAtMost(MAX_COUNTER)
+        when (result) {
+            RemoteKeyboardAdapter.Result.ACCEPTED -> keyboardAccepted = (keyboardAccepted + 1).coerceAtMost(MAX_COUNTER)
+            RemoteKeyboardAdapter.Result.UNKNOWN -> keyboardUnknown = (keyboardUnknown + 1).coerceAtMost(MAX_COUNTER)
+            else -> keyboardRefused = (keyboardRefused + 1).coerceAtMost(MAX_COUNTER)
+        }
+        keyboardResult = result; keyboardAt = uptime()
+    }
 
     @Synchronized
     fun inputFailed(detail: String) {
@@ -80,6 +96,9 @@ internal class NativeInputDiagnostics(private val uptime: () -> Long) {
         put("input_failures_total", counts[Event.INPUT_FAILURE.ordinal])
         put("releases_total", counts[Event.RELEASE.ordinal])
         put("unknown_releases_total", counts[Event.UNKNOWN_RELEASE.ordinal])
+        put("keyboard_commands_total", keyboardCommands); put("keyboard_accepted_total", keyboardAccepted)
+        put("keyboard_refused_total", keyboardRefused); put("keyboard_unknown_total", keyboardUnknown)
+        keyboardResult?.let { put("last_keyboard_result", it.name.lowercase()); put("last_keyboard_result_age_ms", (uptime() - keyboardAt).coerceIn(0, MAX_AGE_MS)) }
     }
 
     private companion object {
