@@ -127,13 +127,21 @@ async def test_unknown_ice_packet_counts_remain_null_in_retained_failure(store):
 
 @pytest.mark.parametrize("change", [
     {"coordinates": [1, 2]}, {"owner": "private"}, {"reason": "private exception"},
-    {"pending_count": 33}, {"offered_sequence": 2147483648}, {"oldest_action": 5},
+    {"pending_count": 33}, {"offered_sequence": 2147483648}, {"oldest_action": 6},
     {"pointer_held": 1}, {"socket_state": 4}, {"age_ms": float("nan")}, {"buffered_bytes": -1},
 ])
 async def test_control_fence_rejects_private_unbounded_and_malformed_nested_fields(store, change):
     assert await store.begin(ORG, DEVICE, "viewer")
     assert not await store.browser(ORG, DEVICE, "viewer", SAMPLE | {"control_fence": FENCE | change})
     assert "browser_samples" not in (await store.read(ORG, DEVICE))[0]
+
+
+async def test_pending_native_key_has_a_diagnostic_action_without_storing_the_keycode(store):
+    assert await store.begin(ORG, DEVICE, "viewer")
+    assert await store.browser(ORG, DEVICE, "viewer", SAMPLE | {"control_fence": FENCE | {'oldest_action': 5}})
+    row = (await store.read(ORG, DEVICE))[0]
+    assert row['browser_samples'][0]['control_fence']['oldest_action'] == 5
+    assert 'keycode' not in json.dumps(row)
 
 
 async def test_maximum_fence_and_ice_samples_still_fit_the_existing_session_budget(store):
