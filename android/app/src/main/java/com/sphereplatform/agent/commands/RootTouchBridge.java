@@ -61,12 +61,14 @@ public final class RootTouchBridge {
                         new MotionEvent.PointerProperties[]{finger}, new MotionEvent.PointerCoords[]{point},
                         0, 0, 1f, 1f, 0, 0, InputDevice.SOURCE_TOUCHSCREEN, 0);
                 try {
-                    // User actions use WAIT_FOR_RESULT. Cleanup is ordered ASYNC:
-                    // another physical/injected DOWN may already have cancelled our
-                    // stream, so CANCEL need not find a target window. Native queue
-                    // acceptance retires this pipe's finger; it does not claim that
-                    // the interrupted user action completed or replay that action.
-                    return Boolean.TRUE.equals(inject.invoke(manager, event, action == RootTouchSession.CANCEL ? 0 : 1));
+                    // Live pointer events use ordered ASYNC submission, just like
+                    // interactive keys. A physical touch or another participant
+                    // may change focus/replace the stream while Android dispatches
+                    // it. Waiting on that transient target can refuse DOWN/UP and
+                    // unnecessarily retire every live participant. Native ACK is
+                    // submission acceptance, not application/display completion.
+                    // CANCEL is cleanup only; no interrupted action is replayed.
+                    return Boolean.TRUE.equals(inject.invoke(manager, event, 0));
                 } finally { event.recycle(); }
             }, geometry, (action, code, meta, down, now) -> {
                 boolean cleanup = action == RootTouchSession.KEY_RELEASE;
