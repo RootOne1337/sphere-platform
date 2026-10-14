@@ -34,6 +34,40 @@ test('shared OPEN, touch and close use only the same direct media peer', () => {
   expect(f.server.send).not.toHaveBeenCalled();
   expect((f.direct.send as jest.Mock).mock.calls.map(c => JSON.parse(c[0]).type)).toEqual(['touch_open', 'touch_event', 'touch_close']);
 });
+
+test('a shared queued action can receive its exact bounded native result after 500ms', () => {
+  const f = fixture(); f.receipt('ready');
+  f.pointer.down(1, { x: 10, y: 20 }); f.pointer.up(1, { x: 10, y: 20 });
+  const tick = (at: number) => { f.now.value = at; f.pointer.tick(); };
+  tick(250); tick(500); tick(750);
+  expect(f.pointer.state).toBe('ready');
+  expect(f.receipt('applied', 1, 0, 1)).toBe(true);
+  expect(f.receipt('applied', 2, 1, 1)).toBe(true);
+  expect(f.pointer.state).toBe('ready');
+  expect(f.pointer.pendingReceiptCount).toBe(3); // Idle heartbeat results remain independently outstanding.
+  expect(f.server.send).not.toHaveBeenCalled();
+  expect((f.direct.send as jest.Mock).mock.calls.map(c => JSON.parse(c[0])).filter(m => m.action === 0)).toHaveLength(1);
+  expect((f.direct.send as jest.Mock).mock.calls.map(c => JSON.parse(c[0])).filter(m => m.action === 1)).toHaveLength(1);
+});
+
+test('shared receipt silence is bounded and late success cannot resurrect or replay that controller', () => {
+  const f = fixture(); f.receipt('ready'); f.pointer.down(1, { x: 10, y: 20 });
+  for (const at of [250, 500, 750, 1000]) { f.now.value = at; f.pointer.tick(); }
+  expect(f.pointer.state).toBe('ready');
+  f.now.value = 1250; f.pointer.tick();
+  expect(f.pointer.state).toBe('fenced');
+  expect(f.onFence).toHaveBeenCalledWith(expect.objectContaining({ reason: 'native_receipt_timeout', oldestAgeMs: 1250 }));
+  expect(f.receipt('applied', 1, 0, 1)).toBe(false);
+  expect(f.pointer.down(2, { x: 10, y: 20 })).toBe(false);
+  expect(f.server.send).not.toHaveBeenCalled();
+});
+
+test('an explicit native refusal still retires shared input immediately', () => {
+  const f = fixture(); f.receipt('ready'); f.pointer.down(1, { x: 10, y: 20 });
+  f.now.value = 10; f.receipt('expired', 1, 0, 1);
+  expect(f.pointer.state).toBe('fenced');
+  expect(f.onState).toHaveBeenLastCalledWith('fenced', 'native_input_rejected_or_unknown');
+});
 test('a hidden idle shared participant can rejoin a replaced peer without transferring old authority', () => {
   const f = fixture(); f.receipt('ready');
   f.pointer.retire('surface_hidden');

@@ -5,6 +5,10 @@ import { validKeyboardCommand, type RemoteKeyboardCommand, type RemoteKeyboardSt
 /** Single-pointer transport. Activation requires scoped capability and a rendered v2 capture. */
 export const CONTINUOUS_POINTER_LIMITS = Object.freeze({
   moveIntervalMs: 16, moveAgeMs: 100, heartbeatMs: 250, receiptMs: 500, idleReceiptMs: 1250,
+  // Shared APK input serializes multiple participants. Its local queue age and
+  // injector ACK each have a 500ms bound, before transport turnaround. The
+  // browser must allow that bounded result to arrive without replaying input.
+  sharedReceiptMs: 1250,
   startupMs: 6000, schedulingGapMs: 500, bufferedBytes: 1024, pendingReceipts: 32,
   maxSequence: 2_147_483_647,
 });
@@ -111,6 +115,9 @@ export class ContinuousPointer {
   get pointerHeld() { return this.held !== null; }
   get supportsNativeKeys() { return this.options.sharedInput === true && this.options.nativeKeys === true; }
   get supportsKeyboard() { return this.options.sharedInput === true && this.options.keyboard === true; }
+  private get actionReceiptMs() {
+    return this.options.sharedInput === true ? CONTINUOUS_POINTER_LIMITS.sharedReceiptMs : CONTINUOUS_POINTER_LIMITS.receiptMs;
+  }
   get keyboardState() { return this.keyboardValue; }
   keyboardMode(enabled: boolean): boolean {
     if (!this.supportsKeyboard || this.stateValue !== 'ready' || !this.current()) return false;
@@ -459,7 +466,7 @@ export class ContinuousPointer {
     // An idle round trip may outlast the action budget without any touch being
     // unknown. Keep monitoring that owner, but never start a new finger while
     // its pending heartbeat is already older than the strict action budget.
-    if (this.pending.some(p => this.now() - (p.deadlineAt ?? p.at) >= CONTINUOUS_POINTER_LIMITS.receiptMs)) {
+    if (this.pending.some(p => this.now() - (p.deadlineAt ?? p.at) >= this.actionReceiptMs)) {
       this.retire('native_receipt_timeout'); return false;
     }
     if (this.gesture >= CONTINUOUS_POINTER_LIMITS.maxSequence) { this.retire('gesture_budget'); return false; }
@@ -500,8 +507,8 @@ export class ContinuousPointer {
     }
     if ((this.stateValue === 'opening' && now - this.openedAt >= CONTINUOUS_POINTER_LIMITS.startupMs)
       || (this.stateValue === 'ready' && this.pending.some(p => now - (p.deadlineAt ?? p.at)
-        >= (p.idleHeartbeat ? CONTINUOUS_POINTER_LIMITS.idleReceiptMs : CONTINUOUS_POINTER_LIMITS.receiptMs)))
-      || (this.terminal && now - this.terminal.at >= CONTINUOUS_POINTER_LIMITS.receiptMs)) {
+        >= (p.idleHeartbeat ? CONTINUOUS_POINTER_LIMITS.idleReceiptMs : this.actionReceiptMs)))
+      || (this.terminal && now - this.terminal.at >= this.actionReceiptMs)) {
       this.retire('native_receipt_timeout'); return;
     }
     // Keep the preceding tick until after the deadline check so a failure
