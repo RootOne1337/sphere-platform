@@ -112,7 +112,9 @@ internal class SharedDirectInputController(
                     while (isActive && !participant.retiring && current(channel)) {
                         val desired = participant.keyboardRequested
                         if (desired) {
-                            val enabled = runCatching { keyboard.enable(participant.owner) }.getOrDefault(false)
+                            val enabled = try { keyboard.enable(participant.owner) }
+                                catch (cancelled: kotlinx.coroutines.CancellationException) { throw cancelled }
+                                catch (_: Exception) { false }
                             participant.keyboardEnabled = enabled && participant.keyboardRequested && !participant.retiring && current(channel)
                             if (!participant.keyboardEnabled) keyboard.disable(participant.owner)
                             keyboardState(participant, if (participant.keyboardEnabled) "ready" else "unavailable")
@@ -128,11 +130,13 @@ internal class SharedDirectInputController(
                         if (completed) break
                     }
                 } finally {
-                    if (!completed) participant.keyboardChanging.set(false)
-                    if (participant.retiring || !current(channel) || !participant.keyboardRequested) {
+                    if (!completed) {
                         participant.keyboardEnabled = false
-                        keyboard.disable(participant.owner)
-                        keyboardState(participant, "disabled")
+                        withContext(NonCancellable) {
+                            keyboard.disable(participant.owner)
+                            keyboardState(participant, "disabled")
+                        }
+                        participant.keyboardChanging.set(false)
                     }
                 }
             }

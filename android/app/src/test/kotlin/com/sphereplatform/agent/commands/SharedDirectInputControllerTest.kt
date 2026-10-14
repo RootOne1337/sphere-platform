@@ -22,8 +22,10 @@ class SharedDirectInputControllerTest {
         val closed = AtomicInteger()
         val keys = CopyOnWriteArrayList<Pair<Int, Int>>()
         var unknownCancel = false
+        var refusedOpens = 0
         val controller = SharedDirectInputController(scope, TouchPipeFactory {
             opened.incrementAndGet()
+            if (refusedOpens > 0) { refusedOpens--; throw TouchStartupUnavailableException(TouchStartupDetail.ROOT_INPUT_BUSY) }
             val native = RootTouchSession(960, 540, now.get(), { action, _, _, _, _ ->
                 !(unknownCancel && action == RootTouchSession.CANCEL)
             }, { true }, { action, code, _, _, _ -> keys += action to code; true })
@@ -46,8 +48,9 @@ class SharedDirectInputControllerTest {
             override val capture = this@Fixture.capture
             @Volatile var current = true
             val messages = CopyOnWriteArrayList<JsonObject>()
+            var onMessage: ((JsonObject) -> Unit)? = null
             override fun isCurrent() = current
-            override fun send(message: JsonObject): Boolean { if (current) messages += message; return current }
+            override fun send(message: JsonObject): Boolean { if (current) { messages += message; onMessage?.invoke(message) }; return current }
             fun outcomes() = messages.mapNotNull { it["outcome"]?.jsonPrimitive?.content }
             fun event(sequence: Int, action: Int, gesture: Long = 1) = controller.message(id, buildJsonObject {
                 put("type", "touch_event"); put("sequence", sequence); put("gesture", gesture)
@@ -75,6 +78,20 @@ class SharedDirectInputControllerTest {
             assertFalse(peer.open()); assertFalse(peer.event(1, 0))
             assertEquals(0, f.opened.get()); assertTrue(f.packets.isEmpty())
         } finally { f.finish() }
+    }
+
+    @Test fun `known startup refusal ends its participant before an immediate same-peer OPEN`() = runBlocking {
+        val f=Fixture();f.refusedOpens=1
+        try {
+            val peer=f.Peer("a".repeat(32));var reopened=false
+            peer.onMessage={message -> if (!reopened && message["outcome"]==JsonPrimitive("closed")) {
+                reopened=true;assertTrue(peer.open())
+            }}
+            assertTrue(f.controller.grant(peer));assertTrue(peer.open())
+            eventually { "ready" in peer.outcomes() }
+            assertEquals(listOf("denied","closed","ready"),peer.outcomes().filter{it!="alive"})
+            assertEquals(2,f.opened.get());assertEquals(0,f.closed.get())
+        } finally {f.finish()}
     }
 
     @Test fun `ten peers share one native pipe and every peer can click`() = runBlocking {
