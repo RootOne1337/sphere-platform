@@ -2,7 +2,7 @@ import { StrictMode } from 'react';
 import { act, renderHook, waitFor } from '@testing-library/react';
 import axios, { AxiosError, AxiosResponse, InternalAxiosRequestConfig } from 'axios';
 import { api } from '@/lib/api';
-import { getRefreshToken, saveRefreshToken, useAuthStore, useInitAuth } from '@/lib/store';
+import { getRefreshToken, refreshSession, saveRefreshToken, useAuthStore, useInitAuth } from '@/lib/store';
 
 function deferred<T>() {
   let resolve!: (value: T) => void;
@@ -198,6 +198,45 @@ it('fails closed if the cookie refresh belongs to a different identity', async (
   expect(await pending).toBeInstanceOf(Error);
   expect(useAuthStore.getState().user).toBeNull();
   expect(getRefreshToken()).toBeNull();
+});
+
+it.each([undefined, 408, 429, 500, 503])('retains the active identity after a transient refresh failure %s without replay', async status => {
+  identify('a');
+  const version = useAuthStore.getState().sessionVersion;
+  const pending = refreshSession(version).catch(error => error);
+  await waitFor(() => expect(refreshRequests).toHaveLength(1));
+  const config = refreshRequests[0];
+  const failure = new AxiosError('transport unavailable', status === undefined ? 'ECONNABORTED' : 'ERR_BAD_RESPONSE',
+    config, undefined, status === undefined ? undefined : response(config, {}, status));
+  refreshReply.reject(failure);
+  expect(await pending).toBe(failure);
+  expect(useAuthStore.getState()).toMatchObject({ accessToken: tokens('a').access_token,
+    user: tokens('a').user, sessionVersion: version, explicitlySignedOut: false });
+  expect(getRefreshToken()).toBe(tokens('a').refresh_token);
+  expect(refreshRequests).toHaveLength(1);
+  expect(localStorage.getItem('sphere_signed_out')).toBeNull();
+
+  // A later explicit refresh is a separate operation, not a transport retry.
+  refreshReply = deferred();
+  const next = refreshSession(version);
+  await waitFor(() => expect(refreshRequests).toHaveLength(2));
+  refreshReply.resolve({ ...tokens('a'), access_token: 'recovered-a' });
+  expect(await next).toBe('recovered-a');
+  expect(useAuthStore.getState().sessionVersion).toBe(version);
+});
+
+it.each([400, 401, 403, 422])('retires credentials after an authoritative refresh rejection %s', async status => {
+  identify('a');
+  const version = useAuthStore.getState().sessionVersion;
+  const pending = refreshSession(version).catch(error => error);
+  await waitFor(() => expect(refreshRequests).toHaveLength(1));
+  const config = refreshRequests[0];
+  refreshReply.reject(new AxiosError('refresh rejected', 'ERR_BAD_REQUEST', config,
+    undefined, response(config, {}, status)));
+  expect(await pending).toBeInstanceOf(AxiosError);
+  expect(useAuthStore.getState().user).toBeNull();
+  expect(getRefreshToken()).toBeNull();
+  expect(useAuthStore.getState().sessionVersion).toBeGreaterThan(version);
 });
 
 it('does not restore a cookie session after an explicit logout and remount', async () => {

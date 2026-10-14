@@ -104,7 +104,15 @@ export function refreshSession(version = useAuthStore.getState().sessionVersion)
     useAuthStore.setState({ accessToken: data.access_token, user: data.user, explicitlySignedOut: false });
     return data.access_token;
   }).catch(error => {
-    if (useAuthStore.getState().sessionVersion === version) useAuthStore.getState().logout();
+    // A missing/late broker response is not a revocation. Preserve this exact
+    // identity and its credentials; the failed operation still rejects and is
+    // never retried here. A later explicit request may try its own refresh.
+    // Confirmed auth rejection, malformed tokens and identity changes remain
+    // terminal, and a newer login/logout cannot be altered by this old work.
+    const status = axios.isAxiosError(error) ? error.response?.status : undefined;
+    const transient = axios.isAxiosError(error)
+      && (status === undefined || status === 408 || status === 429 || status >= 500);
+    if (!transient && useAuthStore.getState().sessionVersion === version) useAuthStore.getState().logout();
     throw error;
   }).finally(() => {
     if (refreshing?.promise === promise) refreshing = null;

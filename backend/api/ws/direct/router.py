@@ -4,6 +4,7 @@ from __future__ import annotations
 import asyncio
 import uuid
 
+import structlog
 from fastapi import APIRouter, HTTPException, WebSocket, WebSocketDisconnect
 
 from backend.api.ws.stream.router import _authenticate_viewer
@@ -22,6 +23,33 @@ from backend.websocket.direct_probe_protocol import (
 from backend.websocket.direct_probe_runtime import ProbeViewer, get_direct_probe_runtime
 
 router = APIRouter(tags=["direct-transport-canary"])
+logger = structlog.get_logger()
+_FAILURE_CODES = frozenset({
+    "invalid_auth", "probe_access_revoked", "probe_expired", "probe_unavailable",
+    "invalid_video_renewal", "video_renewal_rejected", "device_probe_busy",
+    "video_probe_disabled", "unexpected_probe_message", "message_too_large",
+    "probe_already_offered", "candidate_not_admitted", "invalid_ice_candidate",
+})
+
+
+def signaling_failure_code(error: Exception) -> str:
+    """Preserve fixed admission codes; never log a peer message or exception text."""
+    if isinstance(error, InvalidDirectProbe):
+        return str(error) if str(error) in _FAILURE_CODES else "protocol_rejected"
+    if isinstance(error, HTTPException):
+        return "access_rejected" if error.status_code in {401, 403} else "http_rejected"
+    if isinstance(error, TimeoutError):
+        return "operation_deadline"
+    if isinstance(error, WebSocketDisconnect):
+        return "signaling_disconnected"
+    if isinstance(error, (ValueError, TypeError)):
+        return "malformed_message"
+    return "signaling_unavailable"
+
+
+def record_signaling_failure(device: str, phase: str, error: Exception) -> None:
+    logger.warning("direct_video_signaling_stopped", device_id=device,
+                   phase=phase, reason_code=signaling_failure_code(error))
 
 
 async def close_probe(ws: WebSocket, code: int, reason: str) -> None:
@@ -58,6 +86,7 @@ async def direct_probe_ws(ws: WebSocket, device_id: str) -> None:
         return
     viewer: ProbeViewer | None = None
     live = False
+    phase = "authentication"
     try:
         async with asyncio.timeout(10):
             raw = await ws.receive_text()
@@ -87,6 +116,7 @@ async def direct_probe_ws(ws: WebSocket, device_id: str) -> None:
                 return await authorize(first["token"], device_id, control=True)
             return await authorize(first["token"], device_id)
 
+        phase = "authorization"
         identity = await current_identity()
         if video and not (settings.DIRECT_TRANSPORT_LIVE_VIDEO_ENABLED if live else settings.DIRECT_TRANSPORT_VIDEO_PROBE_ENABLED):
             raise InvalidDirectProbe("video_probe_disabled")
@@ -107,15 +137,18 @@ async def direct_probe_ws(ws: WebSocket, device_id: str) -> None:
             raw = await ws.receive_text()
         if len(raw.encode()) > MAX_WIRE_BYTES:
             raise InvalidDirectProbe("message_too_large")
+        phase = "offer"
         await runtime.open(viewer, viewer_offer(json.loads(raw), video=video))
         # Token revocation and device/role changes close the signaling grant.
         # Live video requires continuing authorization and exact lease renewal.
         # A vanished signaling path still expires locally in <=30 seconds.
         async with asyncio.timeout(LIVE_SESSION_SECONDS if live else SESSION_MS / 1000):
             while True:
+                phase = "waiting_client"
                 try:
                     raw = await asyncio.wait_for(ws.receive_text(), 5)
                 except asyncio.TimeoutError:
+                    phase = "periodic_authorization"
                     if video and not (settings.DIRECT_TRANSPORT_LIVE_VIDEO_ENABLED if live else settings.DIRECT_TRANSPORT_VIDEO_PROBE_ENABLED):
                         raise InvalidDirectProbe("video_probe_disabled")
                     if await current_identity() != identity:
@@ -129,22 +162,28 @@ async def direct_probe_ws(ws: WebSocket, device_id: str) -> None:
                 if live and viewer.trickle and len(raw.encode()) <= 3072:
                     data = json.loads(raw)
                     if isinstance(data, dict) and data.keys() == {"type", "ice"} and data['type'] == 'direct_probe_candidate':
+                        phase = "candidate"
                         await runtime.browser_candidate(viewer, data['ice'])
                         continue
                 if live and len(raw.encode()) <= 128:
                     data = json.loads(raw)
                     if (isinstance(data, dict) and data.keys() == {"type", "sequence"}
                             and data["type"] == "direct_video_keepalive"):
+                        phase = "renew_authorization"
                         if await current_identity() != identity:
                             raise InvalidDirectProbe("probe_access_revoked")
+                        phase = "renewal"
                         await runtime.renew(viewer, data["sequence"])
                         continue
                 if raw != '{"type":"direct_probe_close"}':
                     raise InvalidDirectProbe("unexpected_probe_message")
-    except WebSocketDisconnect:
+    except WebSocketDisconnect as exc:
+        if live:
+            record_signaling_failure(device_id, phase, exc)
         return
     except (HTTPException, InvalidDirectProbe, ValueError, TypeError, TimeoutError) as exc:
         if live:
+            record_signaling_failure(device_id, phase, exc)
             # Permission loss is terminal. A busy/expired peer or failed setup
             # may reconnect; the primary picture keeps its independent fallback.
             denied = (isinstance(exc, HTTPException) and exc.status_code in {401, 403}
@@ -154,7 +193,9 @@ async def direct_probe_ws(ws: WebSocket, device_id: str) -> None:
             return
         await close_probe(ws, 4003, "direct_probe_rejected_or_expired")
         return
-    except Exception:
+    except Exception as exc:
+        if live:
+            record_signaling_failure(device_id, phase, exc)
         await close_probe(ws, 1013, "direct_probe_unavailable")
         return
     finally:
