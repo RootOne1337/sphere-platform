@@ -11,6 +11,38 @@ class SharedInputMailboxTest {
     private val b="participant_B_1234"
     private fun event(id: String, sequence: Int, action: Int, gesture: Long = 1, receivedAt: Long = 1000) =
         SharedPointerArbiter.Event(id,sequence,gesture,action,100,120,receivedAt)
+    private fun key(sequence: Int, operation: RemoteKeyboardCommand.Operation, code: Int = 29) =
+        SharedPointerArbiter.Event(a, sequence, 0, RemoteKeyboardCommand.ACTION, 0, 0, 1000,
+            RemoteKeyboardCommand(operation, 1, keyCode=code))
+
+    @Test fun `four fast modifier edges survive a queued heartbeat without native drain`() {
+        val m=SharedInputMailbox();m.register(a)
+        assertEquals(SharedInputMailbox.Admission.QUEUED,m.offer(event(a,1,4,gesture=0)))
+        for ((sequence, operation) in listOf(2 to RemoteKeyboardCommand.Operation.KEY_DOWN,
+            3 to RemoteKeyboardCommand.Operation.KEY_DOWN,4 to RemoteKeyboardCommand.Operation.KEY_UP,
+            5 to RemoteKeyboardCommand.Operation.KEY_UP)) {
+            assertEquals(SharedInputMailbox.Admission.QUEUED,m.offer(key(sequence,operation)))
+        }
+        assertEquals(listOf(1,2,3,4,5),generateSequence { m.poll() }
+            .map { (it as SharedInputMailbox.Work.Input).event.sequence }.toList())
+    }
+    @Test fun `keyboard capacity remains finite and reserves the final key release`() {
+        val m=SharedInputMailbox();m.register(a)
+        repeat(31) { assertEquals(SharedInputMailbox.Admission.QUEUED,m.offer(key(it+1,RemoteKeyboardCommand.Operation.KEY_DOWN))) }
+        assertEquals(SharedInputMailbox.Admission.QUEUED,m.offer(key(32,RemoteKeyboardCommand.Operation.KEY_UP)))
+        assertEquals(32,m.pendingCount())
+        assertEquals(SharedInputMailbox.Admission.OVERFLOW,m.offer(key(33,RemoteKeyboardCommand.Operation.KEY_UP)))
+        assertEquals(1,m.pendingCount());assertEquals(SharedInputMailbox.Work.Close(a),m.poll())
+    }
+    @Test fun `keyboard burst does not consume the four-entry pointer cleanup budget`() {
+        val m=SharedInputMailbox();m.register(a)
+        repeat(8) { assertEquals(SharedInputMailbox.Admission.QUEUED,m.offer(key(it+1,RemoteKeyboardCommand.Operation.KEY_DOWN))) }
+        assertEquals(SharedInputMailbox.Admission.QUEUED,m.offer(event(a,9,0)))
+        assertEquals(SharedInputMailbox.Admission.QUEUED,m.offer(event(a,10,2)))
+        assertEquals(SharedInputMailbox.Admission.QUEUED,m.offer(event(a,11,4)))
+        assertEquals(SharedInputMailbox.Admission.QUEUED,m.offer(event(a,12,1)))
+        assertEquals(12,m.pendingCount())
+    }
 
     @Test fun `unknown client cannot allocate queue memory`() {
         val m=SharedInputMailbox()

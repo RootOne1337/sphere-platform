@@ -29,7 +29,7 @@ internal class AndroidRemoteKeyboard(context: Context) : RemoteKeyboardAdapter {
         override fun clear() = preferences.edit().clear().commit()
     })
     @Volatile private var snapshot = RemoteKeyboardAdapter.State(false, 0, false)
-    private var owned = false
+    @Volatile private var owned = false
     private val owners = mutableSetOf<String>()
     override fun state() = snapshot
     override suspend fun enable(owner: String): Boolean = mutex.withLock {

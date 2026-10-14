@@ -1,12 +1,14 @@
 package com.sphereplatform.agent.commands
 
 /**
- * Callback-to-native actor mailbox: ten registered clients, four entries each, one drain actor.
+ * Callback-to-native actor mailbox: ten registered clients, four pointer entries and
+ * 32 keyboard entries each, one drain actor. A modifier chord is several ordered
+ * edges; applying the old three-event pointer budget to it retired healthy input.
  * No coroutine, closure or unbounded list is created per MOVE. Ordering uses APK arrival order.
  * Coalescing changes the retained event's arrival order; it cannot overtake another client's DOWN.
  */
 internal class SharedInputMailbox {
-    companion object { const val PER_PARTICIPANT = 4 }
+    companion object { const val PER_PARTICIPANT = 4; const val KEYBOARD_PENDING = 32 }
     enum class Admission { QUEUED, COALESCED, UNREGISTERED, RETIRED, INVALID, OVERFLOW }
     sealed interface Work {
         data class Input(val event: SharedPointerArbiter.Event) : Work
@@ -43,9 +45,14 @@ internal class SharedInputMailbox {
         val tail = slot.pending.lastOrNull()
         val replaceable = tail?.event?.action == event.action && tail.event.gesture == event.gesture
             && event.action in setOf(RootTouchSession.MOVE, RootTouchSession.HEARTBEAT)
-        val terminal = event.action == RootTouchSession.UP || event.action == RootTouchSession.CANCEL
-        val sizeAfterReplacement = slot.pending.size - if (replaceable) 1 else 0
-        if (sizeAfterReplacement >= if (terminal) PER_PARTICIPANT else PER_PARTICIPANT - 1) {
+        val keyboard = event.action == RemoteKeyboardCommand.ACTION
+        val terminal = if (keyboard) event.keyboard?.operation in setOf(RemoteKeyboardCommand.Operation.KEY_UP,
+            RemoteKeyboardCommand.Operation.RESET, RemoteKeyboardCommand.Operation.FINISH)
+            else event.action == RootTouchSession.UP || event.action == RootTouchSession.CANCEL
+        val sizeAfterReplacement = slot.pending.count { (it.event.action == RemoteKeyboardCommand.ACTION) == keyboard }
+            - if (replaceable) 1 else 0
+        val budget = if (keyboard) KEYBOARD_PENDING else PER_PARTICIPANT
+        if (sizeAfterReplacement >= if (terminal) budget else budget - 1) {
             retire(event.participant)
             return Admission.OVERFLOW
         }

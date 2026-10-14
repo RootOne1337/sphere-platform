@@ -165,7 +165,10 @@ internal class SharedDirectInputController(
         val event = SharedPointerArbiter.Event(participant.owner, sequence, gesture, action,
             if (keyboardCommand != null) 0 else if (key) checkNotNull(keyCode) else checkNotNull(mapped).x,
             if (key || keyboardCommand != null) 0 else checkNotNull(mapped).y, uptime(), keyboardCommand)
-        if (mailbox.offer(event) !in setOf(SharedInputMailbox.Admission.QUEUED, SharedInputMailbox.Admission.COALESCED)) {
+        val admission = mailbox.offer(event)
+        if (admission !in setOf(SharedInputMailbox.Admission.QUEUED, SharedInputMailbox.Admission.COALESCED)) {
+            diagnostics.record(NativeInputDiagnostics.Event.INPUT_FAILURE, NativeInputDiagnostics.Failure.INPUT_REJECTED)
+            timber.log.Timber.w("Shared input admission refused: %s", admission.name.lowercase())
             retire(participant)
         }
         wake.trySend(Unit)
