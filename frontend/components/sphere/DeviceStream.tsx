@@ -322,7 +322,7 @@ export function DeviceStream({
       dragRef.current = null; invalidateInspectionRef.current?.();
       renderedCaptureRef.current = null; renderedSocketRef.current = null;
       continuousRef.current?.retire('capture_or_socket_lost');
-      decoderRef.current?.reset(); setConnection('waiting');
+      decoderRef.current?.recoverCapture(serverCaptureRef.current?.captureEpoch ?? null); setConnection('waiting');
       recoverServerFrameRef.current?.();
     }
   }, []);

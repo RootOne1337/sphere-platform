@@ -196,6 +196,19 @@ export class H264Decoder {
     this.onRecovery();
   }
 
+  /** A media-peer loss does not replace an unchanged source encoder.
+   * Keep only this capture's codec headers for receiver negotiation; retire
+   * decoded references and rendered input authority until a fresh IDR.
+   */
+  recoverCapture(captureEpoch: string | null) {
+    if (this.destroyed) return;
+    if (captureEpoch === null || captureEpoch !== this.captureEpoch) {
+      this.reset();
+      return;
+    }
+    this.recover();
+  }
+
   /** A new socket/encoder must never reuse the previous stream's references. */
   reset() {
     this.retireDecoder();

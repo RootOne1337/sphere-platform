@@ -97,6 +97,35 @@ it('never reuses codec headers after capture replacement or destroy', () => {
   expect(decoder.profileLevelIdForCapture('aabbccdd-eeff-0011-2233-445566778899')).toBeNull();
 });
 
+it('rejoins an unchanged capture with known codec evidence while waiting for a fresh IDR', () => {
+  decoder.handleBinary(capturePacket([0x67, 0x42, 0xc0, 0x29]));
+  decoder.handleBinary(capturePacket(PPS)); decoder.handleBinary(capturePacket([0x65, 1]));
+  const old = newest(); old.output(12345_000);
+  const capture = decoder.lastRenderedCapture!; rendered.mockClear();
+  const previousInstances = Codec.instances.length;
+  decoder.recoverCapture(capture.captureEpoch);
+  expect(decoder.profileLevelIdForCapture(capture.captureEpoch)).toBe('42c029');
+  expect(decoder.lastRenderedCapture).toBeNull();
+  expect(decoder.lastRenderedProfileLevelId).toBeNull();
+  old.output(12345_000); expect(rendered).not.toHaveBeenCalled();
+  now = 1000;
+  decoder.handleBinary(capturePacket([0x41, 2], CAPTURE_A, 12346));
+  expect(Codec.instances).toHaveLength(previousInstances);
+  decoder.handleBinary(capturePacket([0x65, 3], CAPTURE_A, 12347));
+  const fresh = newest(); expect(fresh).not.toBe(old);
+  expect(fresh.chunks).toHaveLength(1); expect(rendered).not.toHaveBeenCalled();
+  fresh.output(12347_000);
+  expect(decoder.lastRenderedCapture).toEqual(capture);
+});
+
+it.each([null, 'aabbccdd-eeff-0011-2233-445566778899'])('does not borrow another source codec during media recovery %s', epoch => {
+  captureConfigure(); decoder.handleBinary(capturePacket([0x65, 1])); newest().output(12345_000);
+  const capture = decoder.lastRenderedCapture!;
+  decoder.recoverCapture(epoch);
+  expect(decoder.lastRenderedCapture).toBeNull();
+  expect(decoder.profileLevelIdForCapture(capture.captureEpoch)).toBeNull();
+});
+
 it('does not retain and replay frames received before SPS/PPS', () => {
   const idr = new Uint8Array(1024); idr[0] = 0x65;
   for (let i = 0; i < 2048; i++) decoder.handleBinary(packet(idr, i));
