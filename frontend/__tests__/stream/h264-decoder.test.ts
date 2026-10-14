@@ -72,6 +72,31 @@ it('receiver negotiation reads only the SPS of a successfully presented current 
   decoder.reset(); expect(decoder.lastRenderedProfileLevelId).toBeNull();
 });
 
+it('keeps current codec headers available for negotiation during recovery without promoting stale input', () => {
+  decoder.handleBinary(capturePacket([0x67, 0x42, 0xc0, 0x20]));
+  decoder.handleBinary(capturePacket(PPS)); decoder.handleBinary(capturePacket([0x65, 1]));
+  const old = newest(); old.output(12345_000);
+  const capture = decoder.lastRenderedCapture!;
+  expect(decoder.profileLevelIdForCapture(capture.captureEpoch)).toBe('42c020');
+  old.callbacks.error(new DOMException('decoder temporarily unavailable'));
+  expect(decoder.lastRenderedCapture).toBeNull();
+  expect(decoder.lastRenderedProfileLevelId).toBeNull();
+  expect(decoder.profileLevelIdForCapture(capture.captureEpoch)).toBe('42c020');
+  expect(decoder.profileLevelIdForCapture('aabbccdd-eeff-0011-2233-445566778899')).toBeNull();
+  decoder.reset(); expect(decoder.profileLevelIdForCapture(capture.captureEpoch)).toBeNull();
+});
+
+it('never reuses codec headers after capture replacement or destroy', () => {
+  captureConfigure(); decoder.handleBinary(capturePacket([0x65, 1])); newest().output(12345_000);
+  const capture = decoder.lastRenderedCapture!;
+  decoder.handleBinary(capturePacket([0x67, 0x42, 0xc0, 0x29], CAPTURE_B));
+  expect(decoder.profileLevelIdForCapture(capture.captureEpoch)).toBeNull();
+  expect(decoder.lastRenderedCapture).toBeNull();
+  expect(decoder.profileLevelIdForCapture('aabbccdd-eeff-0011-2233-445566778899')).toBe('42c029');
+  decoder.destroy();
+  expect(decoder.profileLevelIdForCapture('aabbccdd-eeff-0011-2233-445566778899')).toBeNull();
+});
+
 it('does not retain and replay frames received before SPS/PPS', () => {
   const idr = new Uint8Array(1024); idr[0] = 0x65;
   for (let i = 0; i < 2048; i++) decoder.handleBinary(packet(idr, i));

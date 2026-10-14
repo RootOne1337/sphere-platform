@@ -326,6 +326,15 @@ export class H264Decoder {
     return Array.from(this.spsNal.subarray(1, 4), byte => byte.toString(16).padStart(2, '0')).join('');
   }
 
+  /** Codec negotiation needs current headers, independently of decoder recovery.
+   * This does not prove a displayed frame or authorize input. A caller must bind
+   * it to the capture it has actually displayed; another epoch cannot reuse it.
+   */
+  profileLevelIdForCapture(captureEpoch: string): string | null {
+    if (this.destroyed || this.captureEpoch !== captureEpoch || !this.spsNal || this.spsNal.length < 4) return null;
+    return Array.from(this.spsNal.subarray(1, 4), byte => byte.toString(16).padStart(2, '0')).join('');
+  }
+
   get stats(): StreamDecoderStats {
     const received = this.receivedPictures.sample;
     const rendered = this.renderedPictures.sample;
