@@ -91,6 +91,12 @@ class RemoteImeLeaseTest {
         assertFalse(lease.acquire()); assertEquals(RemoteImeLease.Failure.SAVE, lease.failure)
         assertTrue(gateway.operations.isEmpty())
     }
+    @Test fun `inactive keyboard configuration does not crash dispatcher and refuses invalid acquisition`() = runBlocking {
+        val gateway = Gateway(); val store = Store(); val lease = RemoteImeLease("/com.example.RemoteIme", gateway, store)
+        assertTrue(lease.restore()); assertFalse(lease.acquire())
+        assertEquals(RemoteImeLease.Failure.COMPONENT, lease.failure); assertTrue(gateway.operations.isEmpty())
+        store.save(RemoteImeLease.Saved(original, false)); assertFalse(lease.restore()); assertTrue(store.pending())
+    }
     @Test fun `interrupted selection keeps recoverable lease without replaying input`() = runBlocking {
         val gateway = Gateway().apply { cancelSelection = true }; val store = Store(); val lease = RemoteImeLease(remote, gateway, store)
         try { lease.acquire(); fail("cancellation swallowed") } catch (_: CancellationException) { /* expected */ }

@@ -17,7 +17,6 @@ internal object RemoteImeSelection {
 
 /** Serialized by the caller. Saves restoration before any change and keeps uncertain cleanup pending. */
 internal class RemoteImeLease(private val component: String, private val gateway: Gateway, private val store: Store) {
-    init { require(RemoteImeSelection.valid(component)) }
     data class Saved(val previous: String, val wasEnabled: Boolean)
     interface Store {
         fun pending(): Boolean
@@ -32,11 +31,12 @@ internal class RemoteImeLease(private val component: String, private val gateway
         suspend fun disable(id: String): Boolean
         suspend fun select(id: String): Boolean
     }
-    enum class Failure { NONE, RESTORE, SELECTION_READ, ENABLED_READ, SAVE, ENABLE, SELECT, SELECTION_CONFIRM }
+    enum class Failure { NONE, COMPONENT, RESTORE, SELECTION_READ, ENABLED_READ, SAVE, ENABLE, SELECT, SELECTION_CONFIRM }
     var failure = Failure.NONE
         private set
     suspend fun acquire(): Boolean {
         failure = Failure.NONE
+        if (!RemoteImeSelection.valid(component)) return refuse(Failure.COMPONENT)
         if (store.pending() && !restore()) return refuse(Failure.RESTORE)
         val previous = gateway.selected()?.takeIf(RemoteImeSelection::valid)
             ?.takeIf { it != component } ?: return refuse(Failure.SELECTION_READ)
@@ -55,6 +55,7 @@ internal class RemoteImeLease(private val component: String, private val gateway
     }
     suspend fun restore(): Boolean {
         if (!store.pending()) return true
+        if (!RemoteImeSelection.valid(component)) return false
         val saved = store.read()?.takeIf { RemoteImeSelection.valid(it.previous) && it.previous != component } ?: return false
         val selected = gateway.selected()?.takeIf(RemoteImeSelection::valid) ?: return false
         // A physical user choosing a third IME wins; do not overwrite that choice.
