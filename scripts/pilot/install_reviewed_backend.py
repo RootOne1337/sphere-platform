@@ -44,7 +44,7 @@ APPROVED_PATHS = {
     "backend/api/v1/scripts/router.py", "backend/schemas/action_contract.v1.json",
     "backend/schemas/action_parameters.py", "backend/schemas/dag.py",
     "backend/schemas/script.py", "backend/services/script_service.py",
-    "backend/api/ws/stream/router.py", "backend/websocket/viewer_input.py",
+    "backend/api/ws/stream/router.py", "backend/websocket/viewer_input.py", "backend/websocket/viewer_link.py",
     "backend/api/ws/android/router.py", "backend/websocket/startup.py",
     "backend/websocket/continuous_runtime.py", "backend/websocket/continuous_delivery.py",
     "backend/websocket/continuous_lease.py", "backend/websocket/continuous_protocol.py",
