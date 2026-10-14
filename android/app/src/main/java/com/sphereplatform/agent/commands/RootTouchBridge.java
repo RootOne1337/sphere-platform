@@ -73,7 +73,13 @@ public final class RootTouchBridge {
                 KeyEvent event = new KeyEvent(down, now, cleanup ? KeyEvent.ACTION_UP : action,
                         code, 0, meta, KeyCharacterMap.VIRTUAL_KEYBOARD, 0,
                         KeyEvent.FLAG_FROM_SYSTEM | (cleanup ? KeyEvent.FLAG_CANCELED : 0), InputDevice.SOURCE_KEYBOARD);
-                return Boolean.TRUE.equals(inject.invoke(manager, event, cleanup ? 0 : 1));
+                // Interactive keys may themselves change focus (Home/Recents)
+                // while another participant queues a key. WAIT_FOR_RESULT ties
+                // this ordered input pipe to that transient focused window and
+                // can refuse the next edge. Submit both edges asynchronously,
+                // as remote-control input, preserving order and exact pipe ACK.
+                // ACK means native submission, never application completion.
+                return Boolean.TRUE.equals(inject.invoke(manager, event, 0));
             });
             RootTouchSession owned = session;
             watchdog = Executors.newSingleThreadScheduledExecutor();
