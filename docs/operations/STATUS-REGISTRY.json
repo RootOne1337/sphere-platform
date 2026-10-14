@@ -1,8 +1,8 @@
 {
   "schemaVersion": 1,
-  "reviewedAtUtc": "2026-10-14T22:14:09.863647+00:00",
+  "reviewedAtUtc": "2026-10-14T22:34:35.379790+00:00",
   "sourceReviewed": "4b39c385f2d9600bbf8ad9e9c53453338af3367d",
-  "scope": "UI4b39c385 / API969a7444 installed on3015/Tuna. APK76 completed OTA on15 devices;14 exact installed hashes,1 command/version-only proofs;6 offline pending. Finite local two-client mouse/touch/native keys, ten Tuna clients, three forced peer recoveries, actual agent-process restart and Unicode/chords/composition/fullscreen with original IME restoration accepted. Not20+, real phone/hotspot, WAN/TURN, broker-offline autonomy, audio, server-fallback full keyboard, full local CI or production SLA.",
+  "scope": "UI4b39c385 / API969a7444 installed on3015/Tuna. APK76 completed OTA on15 devices;14 exact installed hashes,1 command/version-only proofs;6 offline pending. Finite local two-client mouse/touch/native keys, ten Tuna clients, three forced peer recoveries, actual agent-process restart and Unicode/chords/composition/fullscreen with original IME restoration accepted. Not20+, real phone/hotspot, WAN/TURN, broker-offline autonomy, audio, server-fallback full keyboard, full local CI or production SLA. User remote PH025 check: direct video/control READY, network RTT22ms and control ACK25–26ms; finite observation only. Active development and installation paused by user.",
   "baseline": "docs/audits/2026-10-05/ENTERPRISE-PRODUCT-BACKLOG.json",
   "previousCrosscheck": "docs/audits/2026-10-09/CHAT-CODE-RECONCILIATION.json",
   "counts": {
@@ -1780,7 +1780,7 @@
       "productionAccepted": false,
       "scope": "Observed before final UI installation: working direct NAT/UDP video and input on this laptop route. Earlier server fallback on another client route remains historical and does not invalidate this selected pair."
     },
-    "nextDeliveryPriority": "Real phone/hotspot and20+ resource matrix; stable route/recovery long soak; broker-independent peer grants; server-fallback keyboard/recorder; optional audio and full local CI.",
+    "nextDeliveryPriority": "Paused by user. Resume with a specific failure and last10 sessions; then burst input latency, longer stability, real phone/hotspot and20+ clients, wider WAN/TURN, broker-independent peer grants, server-fallback keyboard/recorder, optional audio and full local CI.",
     "previousRemoteNetworkObservation": {
       "evidence": "docs/audits/2026-10-13/DIRECT-SESSION-STABILITY-OBSERVATION.json",
       "evidenceSha256NormalizedLf": "2a70d3db77a07bac4fc69220b80085c8ff11e99da4683ea8b684839bcd39325b",
@@ -1977,6 +1977,26 @@
       "localhostRouteProven": false,
       "latencySlaAccepted": false,
       "physicalNetworkSwitchAccepted": false
+    },
+    "developmentPausedByUser": true,
+    "latestUserRemoteObservation": {
+      "evidence": "docs/audits/2026-10-15/PH025-REMOTE-USER-OBSERVATION.json",
+      "evidenceSha256NormalizedLf": "019b5ae39a8253a4c0084e34649aba5ea572cce06afc54cd30fba42e7b5d0a06",
+      "observedAtUtc": "2026-10-14T22:26:43.053006+00:00",
+      "device": "PH025",
+      "versionCode": 10276,
+      "videoTransport": "direct_webrtc",
+      "controlTransport": "direct_webrtc",
+      "controlState": "ready",
+      "networkRttMs": 22,
+      "controlAckRttMs": [
+        26,
+        25
+      ],
+      "topologySource": "User reports laptop and emulator in different networks; not candidate-IP inference.",
+      "finiteUserCheckAccepted": true,
+      "productionAccepted": false,
+      "guide": "docs/audits/2026-10-15/STREAM-CONTROL-FREEZE.md"
     }
   },
   "items": [
@@ -3720,7 +3740,7 @@
         "EP-020",
         "EP-047"
       ],
-      "acceptedScope": "UI4b39c385 / API969a7444 installed on3015/Tuna. APK76 completed OTA on15 devices;14 exact installed hashes,1 command/version-only proofs;6 offline pending. Finite local two-client mouse/touch/native keys, ten Tuna clients, three forced peer recoveries, actual agent-process restart and Unicode/chords/composition/fullscreen with original IME restoration accepted. Not20+, real phone/hotspot, WAN/TURN, broker-offline autonomy, audio, server-fallback full keyboard, full local CI or production SLA.",
+      "acceptedScope": "UI4b39c385 / API969a7444 installed on3015/Tuna. APK76 completed OTA on15 devices;14 exact installed hashes,1 command/version-only proofs;6 offline pending. Finite local two-client mouse/touch/native keys, ten Tuna clients, three forced peer recoveries, actual agent-process restart and Unicode/chords/composition/fullscreen with original IME restoration accepted. Not20+, real phone/hotspot, WAN/TURN, broker-offline autonomy, audio, server-fallback full keyboard, full local CI or production SLA. User remote PH025 check on APK76 corroborated by two direct READY video/control samples (network22ms,control25–26ms); not broad WAN/soak acceptance.",
       "remaining": "20+, physical phone/hotspot/LAN/WAN/TURN and long soak; broker-independent session authorization and remaining transport recovery cases.",
       "evidence": [
         "docs/design/BROWSER-DIRECT-TRANSPORT.md",
@@ -3757,7 +3777,8 @@
         "docs/audits/2026-10-14/SHARED-INPUT-FULLSCREEN-INSTALLED.json",
         "docs/audits/2026-10-14/DIRECT-SYSTEM-INPUT72-OBSERVATION.json",
         "docs/audits/2026-10-14/KEYBOARD76-PARTIAL-OBSERVATION.json",
-        "docs/audits/2026-10-15/DIRECT-KEYBOARD76-OBSERVATION.json"
+        "docs/audits/2026-10-15/DIRECT-KEYBOARD76-OBSERVATION.json",
+        "docs/audits/2026-10-15/PH025-REMOTE-USER-OBSERVATION.json"
       ],
       "sourcePaths": [
         "backend/websocket/direct_probe_protocol.py",
@@ -3902,7 +3923,7 @@
         "EP-029",
         "EP-047"
       ],
-      "acceptedScope": "Installedfc273fa3 keeps last10 sessions, bounded32KiB/15samples/7days and private/no-store authorization. Four lifecycle fence reasons added. Native grant expiry/cleanup and actual PH030 failures remain open.",
+      "acceptedScope": "Installedfc273fa3 keeps last10 sessions, bounded32KiB/15samples/7days and private/no-store authorization. Four lifecycle fence reasons added. Native grant expiry/cleanup and actual PH030 failures remain open. User remote PH025 check on APK76 corroborated by two direct READY video/control samples (network22ms,control25–26ms); not broad WAN/soak acceptance.",
       "remaining": "End-to-end frame correlation, физическая смена сети, длительная idle/active/resource приёмка, точные категории timeout и проверка browser↔APK разных сетей остаются открытыми.",
       "evidence": [
         "docs/audits/2026-10-10/STREAM-SESSION-DIAGNOSTICS.md",
@@ -3916,7 +3937,8 @@
         "docs/audits/2026-10-13/INPUT-OPEN-CANCELLATION-OBSERVATION.json",
         "docs/audits/2026-10-13/INPUT-OPEN-CANCELLATION.md",
         "docs/audits/2026-10-14/DIRECT-SYSTEM-INPUT72-OBSERVATION.json",
-        "docs/audits/2026-10-15/DIRECT-KEYBOARD76-OBSERVATION.json"
+        "docs/audits/2026-10-15/DIRECT-KEYBOARD76-OBSERVATION.json",
+        "docs/audits/2026-10-15/PH025-REMOTE-USER-OBSERVATION.json"
       ],
       "sourcePaths": [
         "backend/websocket/stream_session_history.py",
@@ -4932,5 +4954,18 @@
         "packagingVerified": false
       }
     ]
+  },
+  "developmentState": {
+    "state": "PAUSED_BY_USER",
+    "recordedAtUtc": "2026-10-14T22:34:35.379790+00:00",
+    "reason": "User confirmed remote PH025 and requested a freeze plus documentation.",
+    "guide": "docs/audits/2026-10-15/STREAM-CONTROL-FREEZE.md",
+    "automationId": "enterprise",
+    "automationStatus": "PAUSED",
+    "newRuntimeInstallationsPaused": true,
+    "workingRuntimeRemainsRunning": true,
+    "preparedNextVersion": "1.2.77",
+    "preparedNextVersionInstalled": false,
+    "scope": "Freeze active development and delivery; retain installed APK76/UI4b/API969 and recorded acceptance limits."
   }
 }
