@@ -23,9 +23,11 @@ class SharedDirectInputControllerTest {
         val keys = CopyOnWriteArrayList<Pair<Int, Int>>()
         var unknownCancel = false
         var processingMs = 0L
+        var startupCleanupUnknown = false
         var refusedOpens = 0
         val controller = SharedDirectInputController(scope, TouchPipeFactory {
             opened.incrementAndGet()
+            if (startupCleanupUnknown) throw TouchPipeCleanupUnknownException(TouchStartupDetail.ROOT_READY_TIMEOUT)
             if (refusedOpens > 0) { refusedOpens--; throw TouchStartupUnavailableException(TouchStartupDetail.ROOT_INPUT_BUSY) }
             val native = RootTouchSession(960, 540, now.get(), { action, _, _, _, _ ->
                 !(unknownCancel && action == RootTouchSession.CANCEL)
@@ -79,6 +81,29 @@ class SharedDirectInputControllerTest {
             val peer = f.Peer("a".repeat(32))
             assertFalse(peer.open()); assertFalse(peer.event(1, 0))
             assertEquals(0, f.opened.get()); assertTrue(f.packets.isEmpty())
+        } finally { f.finish() }
+    }
+
+    @Test fun `unconfirmed startup cleanup retains the original phase without granting fresh input`() = runBlocking {
+        val f = Fixture(); f.startupCleanupUnknown = true
+        try {
+            val peer = f.Peer("a".repeat(32))
+            assertTrue(f.controller.grant(peer)); assertTrue(peer.open())
+            eventually { f.controller.diagnosticSnapshot()?.get("state") == JsonPrimitive("cleanup_unknown") }
+            val snapshot = checkNotNull(f.controller.diagnosticSnapshot())
+            assertEquals(JsonPrimitive("root_ready_timeout"), snapshot["last_startup_detail"])
+            assertEquals(JsonPrimitive(1L), snapshot["startup_failures_total"])
+            assertEquals(JsonPrimitive(0L), snapshot["startups_total"])
+            assertTrue(f.packets.isEmpty())
+            assertFalse("ready" in peer.outcomes())
+            assertFalse("closed" in peer.outcomes())
+            val another = f.Peer("b".repeat(32))
+            assertTrue(f.controller.grant(another)); assertTrue(another.open())
+            eventually { "unknown" in another.outcomes() }
+            assertFalse("ready" in another.outcomes())
+            assertFalse("denied" in another.outcomes())
+            assertFalse("closed" in another.outcomes())
+            assertTrue(f.packets.isEmpty())
         } finally { f.finish() }
     }
 
@@ -184,8 +209,10 @@ class SharedDirectInputControllerTest {
             // stays available, while the uncertain injector still rejects OPEN.
             val watcher = f.Peer("c".repeat(32))
             assertTrue(f.controller.grant(watcher)); assertTrue(watcher.open())
-            eventually { "denied" in watcher.outcomes() }
+            eventually { "unknown" in watcher.outcomes() }
             assertFalse("ready" in watcher.outcomes())
+            assertFalse("denied" in watcher.outcomes())
+            assertFalse("closed" in watcher.outcomes())
             assertEquals(1, f.opened.get())
         } finally { f.finish() }
     }

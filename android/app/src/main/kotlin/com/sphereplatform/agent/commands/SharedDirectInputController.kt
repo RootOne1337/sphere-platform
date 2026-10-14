@@ -212,9 +212,9 @@ internal class SharedDirectInputController(
             put("frame_height", channel.capture.frameHeight)
         })) retire(participant)
         if (resetRequired || groupRetiring) {
-            status(participant, 0, 0, 4, "denied")
+            status(participant, 0, 0, 4, if (resetRequired) "unknown" else "denied")
             remove(participant)
-            status(participant, 0, 0, 3, "closed")
+            if (!resetRequired) status(participant, 0, 0, 3, "closed")
             return true
         }
         wake.trySend(Unit)
@@ -238,6 +238,15 @@ internal class SharedDirectInputController(
                 val owner = "shared_" + UUID.randomUUID().toString().replace("-", "")
                 val nextBinding = TouchBinding(owner, cap.epoch, cap.physicalWidth, cap.physicalHeight, cap.rotation)
                 val nextPipe = try { factory.open(nextBinding) } catch (failure: Exception) {
+                    if (failure !is kotlinx.coroutines.CancellationException) {
+                        diagnostics.record(NativeInputDiagnostics.Event.STARTUP_FAILURE,
+                            NativeInputDiagnostics.Failure.NATIVE_STARTUP_FAILED)
+                        when (failure) {
+                            is TouchStartupUnavailableException -> failure.detail
+                            is TouchPipeCleanupUnknownException -> failure.startupDetail
+                            else -> null
+                        }?.let(diagnostics::startupFailed)
+                    }
                     if (failure is TouchPipeCleanupUnknownException || failure is kotlinx.coroutines.CancellationException) {
                         resetRequired = true
                         throw failure
@@ -399,7 +408,9 @@ internal class SharedDirectInputController(
 
     private suspend fun closePipe(): Boolean {
         val old = pipe; pipe = null; arbiter = null; binding = null
-        val confirmed = old == null || runCatching { old.closeAndConfirm() }.getOrDefault(false)
+        // A failed startup may already have fenced native ownership before a
+        // TouchPipe object was returned. Absence of that object proves no cleanup.
+        val confirmed = if (old == null) !resetRequired else runCatching { old.closeAndConfirm() }.getOrDefault(false)
         if (!confirmed) resetRequired = true // Preserve the original native failure discriminator.
         return confirmed
     }
