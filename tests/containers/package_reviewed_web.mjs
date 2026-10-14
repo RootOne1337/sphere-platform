@@ -8,6 +8,7 @@ import { resolve } from 'node:path';
 import { setTimeout as delay } from 'node:timers/promises';
 import { pageRoutes, verifyPages } from './frontend_standalone_probe.mjs';
 import { packageCommandFailure } from './package_command_failure.mjs';
+import { buildReviewedWebImage } from './reviewed_web_image_build.mjs';
 
 function command(program, args, timeout = 120000) {
   const result = spawnSync(program, args, { encoding: 'utf8', timeout, maxBuffer: 256 * 1024 });
@@ -33,8 +34,9 @@ async function run() {
   const routes = pageRoutes(JSON.parse(raw.toString('utf8')));
   const image = `sphere-review-frontend:${source}`;
   const name = `sphere-reviewed-web-ci-${runId}-${runAttempt}`;
-  command('docker', ['build', '--platform', 'linux/amd64', '--label', `io.sphere.ci.run=${runId}`, '--label', `io.sphere.ci.attempt=${runAttempt}`,
-    '--build-arg', `BUILD_SHA=${source}`, '-f', resolve('../tests/containers/frontend_review.Dockerfile'), '-t', image, artifact], 240000);
+  const build = buildReviewedWebImage(['--platform', 'linux/amd64', '--label', `io.sphere.ci.run=${runId}`, '--label', `io.sphere.ci.attempt=${runAttempt}`,
+    '--build-arg', `BUILD_SHA=${source}`, '-f', resolve('../tests/containers/frontend_review.Dockerfile'), '-t', image, artifact]);
+  console.log(JSON.stringify({ stage: 'reviewed_web_image_build', ...build }));
   const imageId = command('docker', ['image', 'inspect', '--format', '{{.Id}}', image]);
   assert.match(imageId, /^sha256:[a-f0-9]{64}$/);
   let owned = false;
