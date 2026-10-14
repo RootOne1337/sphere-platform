@@ -52,6 +52,22 @@ def test_server_link_rtt_and_android_receipt_are_distinct_and_age_is_required():
     assert StreamSessionHistory.validated_sample(SAMPLE | {"server_link_rtt_ms": -1, "server_link_sample_age_ms": 0}) is None
 
 
+async def test_action_peak_survives_sample_eviction_and_does_not_inherit_into_next_viewer(store):
+    assert await store.begin(ORG, DEVICE, "burst")
+    assert await store.browser(ORG, DEVICE, "burst", SAMPLE | {
+        "control_rtt_ms": 2, "control_action_latency": {"samples": 3, "p95_ms": 180, "max_ms": 180},
+    })
+    for _ in range(20):
+        assert await store.browser(ORG, DEVICE, "burst", SAMPLE)
+    row = (await store.read(ORG, DEVICE))[0]
+    assert row["browser_summary"]["max_control_action_rtt_ms"] == 180
+    assert row["browser_summary"]["max_control_rtt_ms"] == 15
+    assert "control_action_latency" not in row["browser_samples"][-1]
+    assert len(json.dumps(row).encode()) < SESSION_BYTES
+    assert await store.begin(ORG, DEVICE, "replacement")
+    assert "browser_summary" not in (await store.read(ORG, DEVICE))[0]
+
+
 @pytest.mark.parametrize("cause", ["idle_receipt_timeout", "pointer_receipt_timeout", "surface_control_lost",
                                    "surface_blur", "surface_hidden", "capture_or_socket_lost"])
 async def test_control_fence_survives_sample_eviction_without_becoming_an_input_authority(store, cause):

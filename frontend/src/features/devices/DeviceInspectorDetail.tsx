@@ -77,7 +77,7 @@ export function DeviceInspectorDetail({ deviceId, fullPage = false }: { deviceId
       <div className="flex flex-wrap items-start justify-between gap-3"><div className="min-w-0"><h3 className="break-words text-xl font-semibold tracking-tight">{device.name}</h3><p className="mt-1 text-sm text-muted-foreground">{getReportedDeviceModel(device) ?? 'Модель не сообщена'} · Android {device.android_version || 'не сообщён'}</p></div><DeviceStatusBadge status={device.status} /></div>
       <div className="flex flex-wrap items-center gap-2"><Button variant="outline" size="sm" disabled={query.isFetching} onClick={() => { void query.refetch(); }}><RefreshCw className="mr-2 h-4 w-4" aria-hidden />Обновить карточку</Button>{!fullPage && <Button asChild variant="ghost" size="sm"><Link href={`/devices/${encodeURIComponent(deviceId)}`}><ExternalLink className="mr-2 h-4 w-4" aria-hidden />Полная карточка</Link></Button>}</div>
       <p className="text-xs text-muted-foreground">Запрос API: {utcTime(new Date(query.dataUpdatedAt).toISOString())} · опрос каждые 15 секунд.</p>
-      {query.isError && <p role="alert" className="rounded-xl border border-destructive/30 bg-destructive/5 p-3 text-sm text-destructive">Обновление карточки не удалось. Показан сохранённый ответ; управление заблокировано до успешной проверки.</p>}
+      {query.isError && <p role="alert" className="rounded-xl border border-destructive/30 bg-destructive/5 p-3 text-sm text-destructive">Обновление карточки не удалось. Показан сохранённый ответ; команды карточки заблокированы до успешной проверки. Состояние видеопотока проверяется при подключении.</p>}
     </header>
     <Tabs value={VIEWS.some(([key]) => key === view) ? view : 'summary'} onValueChange={(value) => setView(value as View)}>
       <TabsList aria-label="Разделы карточки устройства" className="grid h-auto w-full grid-cols-3 gap-1 bg-muted/50 p-1 sm:grid-cols-5">{VIEWS.map(([key, label]) => <TabsTrigger key={key} value={key} className="min-w-0 px-2 py-2 text-xs">{label}</TabsTrigger>)}</TabsList>
@@ -106,7 +106,7 @@ export function DeviceInspectorDetail({ deviceId, fullPage = false }: { deviceId
             <p className="text-xs text-muted-foreground">Статус heartbeat не гарантирует видеокадр или исполнение команды. Результат проверяется отдельно.</p>
             {!canWrite && <p role="status" className="text-xs text-muted-foreground">Роль не разрешает терминал, shell-скрипты и перезагрузку. Просмотр доступен согласно правам API.</p>}
             <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
-              <Button variant="outline" disabled={!isReachable || !canViewStream} onClick={() => setView('stream')}><MonitorPlay className="mr-2 h-4 w-4" aria-hidden />Видеопоток</Button>
+              <Button variant="outline" disabled={!canViewStream} onClick={() => setView('stream')}><MonitorPlay className="mr-2 h-4 w-4" aria-hidden />Видеопоток</Button>
               <Button variant="outline" disabled={!isReachable || !canWrite} onClick={() => setView('terminal')}><Terminal className="mr-2 h-4 w-4" aria-hidden />Терминал</Button>
               <Button variant="outline" disabled={!isReachable || !access.can('device:read')} onClick={() => setView('logcat')}><FileText className="mr-2 h-4 w-4" aria-hidden />Logcat</Button>
               <Button variant="outline" disabled={!isReachable || !canWrite} onClick={() => setView('script')}><Code2 className="mr-2 h-4 w-4" aria-hidden />Shell-скрипт</Button>

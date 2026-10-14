@@ -43,6 +43,26 @@ it('marks a cached snapshot and blocks commands when a later refresh fails', asy
   fireEvent.click(screen.getByRole('button', { name: 'Обновить карточку' }));
   expect(await screen.findByRole('alert')).toHaveTextContent('сохранённый ответ');
   expect(screen.getByRole('button', { name: 'Перезагрузка' })).toBeDisabled();
+  expect(screen.getByRole('button', { name: 'Видеопоток' })).toBeEnabled();
+});
+
+it('opens the separately authorized stream while the catalogue reports a disconnected agent', async () => {
+  mockGet.mockResolvedValue({ data: { ...device, status: 'offline' } });
+  render(<DeviceInspectorDetail deviceId="dev-1" />, { wrapper: createWrapper() });
+  await screen.findByText('Remote A');
+  expect(screen.getByRole('button', { name: 'Перезагрузка' })).toBeDisabled();
+  fireEvent.click(screen.getByRole('button', { name: 'Видеопоток' }));
+  expect(await screen.findByText('Fixture stream')).toBeInTheDocument();
+  expect(mockPost).not.toHaveBeenCalled();
+});
+
+it('still denies stream access when the role lacks stream permission', async () => {
+  mockCan = permission => permission !== 'stream:read';
+  render(<DeviceInspectorDetail deviceId="dev-1" />, { wrapper: createWrapper() });
+  await screen.findByText('Remote A');
+  fireEvent.click(screen.getByRole('button', { name: 'Видеопоток' }));
+  expect(screen.getByRole('button', { name: 'Видеопоток' })).toBeDisabled();
+  expect(screen.queryByText('Fixture stream')).not.toBeInTheDocument();
 });
 
 it('does not use a cached online card to enable commands before revalidation', async () => {

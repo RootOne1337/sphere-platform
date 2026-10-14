@@ -2,6 +2,12 @@ export interface NativeInputTelemetry {
   schema_version: 1;
   scope: 'agent_process';
   state: 'disabled' | 'idle' | 'opening' | 'ready' | 'retiring' | 'cleanup_unknown';
+  shared_input_timing?: {
+    scope: 'shared_actor'; window_samples: number; samples_total: number;
+    queue_wait_ms_last: number; queue_wait_ms_max: number; queue_wait_ms_p95: number;
+    processing_ms_last: number; processing_ms_max: number; processing_ms_p95: number;
+    pending_last: number; pending_max: number;
+  } | null;
   last_failure?: keyof typeof failureLabels | null;
   last_failure_age_ms?: number | null;
   last_input_detail?: keyof typeof inputLabels | null;
@@ -153,6 +159,13 @@ export function NativeInputDiagnostic({ telemetry }: { telemetry?: NativeInputTe
       {telemetry.last_keyboard_result && <div>Клавиатура: {label({ accepted:'Android принял ввод', no_editor:'Нет выбранного поля',
         stale_editor:'Поле изменилось', unavailable:'IME недоступен', unknown:'Результат не подтверждён' }, telemetry.last_keyboard_result)}
         {snapshotAge(telemetry.last_keyboard_result_age_ms)}.</div>}
+      {telemetry.shared_input_timing && <div className="space-y-1">
+        <div>Последние {telemetry.shared_input_timing.window_samples} действий Android · всего {telemetry.shared_input_timing.samples_total}</div>
+        <div>Очередь: p95 {telemetry.shared_input_timing.queue_wait_ms_p95} мс · максимум {telemetry.shared_input_timing.queue_wait_ms_max} мс</div>
+        <div>Обработка: p95 {telemetry.shared_input_timing.processing_ms_p95} мс · максимум {telemetry.shared_input_timing.processing_ms_max} мс</div>
+        <div>Ожидали обработки: максимум {telemetry.shared_input_timing.pending_max} команд</div>
+        <p className="text-muted-foreground">Время в очереди APK и обработка с подтверждением native/IME. Сеть и обновление экрана сюда не входят; служебные heartbeat не учитываются.</p>
+      </div>}
       <div className="text-muted-foreground">Счётчики за время работы процесса APK. Последний сбой может относиться к предыдущему сеансу; состояние выше относится к этому срезу.</div>
     </div>
   );

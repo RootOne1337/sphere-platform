@@ -76,6 +76,20 @@ class BrowserIceSnapshot(BaseModel):
     responses_received: Counter | None
 
 
+class ControlActionLatency(BaseModel):
+    """ACK RTT for the last 128 actions; not network or displayed latency."""
+    model_config = ConfigDict(extra="forbid", strict=True)
+    samples: Annotated[int, Field(ge=1, le=128)]
+    p95_ms: Annotated[float, Field(ge=0, le=10_000, allow_inf_nan=False)]
+    max_ms: Annotated[float, Field(ge=0, le=10_000, allow_inf_nan=False)]
+
+    @model_validator(mode="after")
+    def validate_maximum(self) -> "ControlActionLatency":
+        if self.p95_ms > self.max_ms:
+            raise ValueError("action percentile cannot exceed window maximum")
+        return self
+
+
 class BrowserStreamSample(BaseModel):
     model_config = ConfigDict(extra="forbid", strict=True)
     schema_version: Literal[1]
@@ -124,6 +138,7 @@ class BrowserStreamSample(BaseModel):
     control_failure_detail: ControlFailure | None = None
     control_fence: BrowserControlFence | None = None
     control_rtt_ms: Milliseconds | None
+    control_action_latency: ControlActionLatency | None = None
     recovery_attempts: Annotated[int, Field(ge=0, le=1000000)]
 
     @model_validator(mode="after")
@@ -195,6 +210,10 @@ if patch.sample then
     summary.reports = math.min(summary.reports + 1, 9007199254740991)
     if patch.sample.control_rtt_ms then
       summary.max_control_rtt_ms = math.max(summary.max_control_rtt_ms or 0, patch.sample.control_rtt_ms)
+    end
+    if patch.sample.control_action_latency and patch.sample.control_action_latency ~= cjson.null then
+      summary.max_control_action_rtt_ms = math.max(summary.max_control_action_rtt_ms or 0,
+        patch.sample.control_action_latency.max_ms)
     end
     summary.max_decode_errors = math.max(summary.max_decode_errors, patch.sample.decode_errors)
     summary.max_render_errors = math.max(summary.max_render_errors, patch.sample.render_errors)

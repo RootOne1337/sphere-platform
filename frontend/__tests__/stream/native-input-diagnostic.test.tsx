@@ -14,6 +14,18 @@ test('an older APK is unreported rather than healthy or zero', () => {
   expect(screen.queryByText(/Запросы запуска/)).not.toBeInTheDocument();
 });
 
+test('action burst timing separates APK queue, processing and network scope', () => {
+  render(<NativeInputDiagnostic telemetry={{ ...telemetry, shared_input_timing: {
+    scope: 'shared_actor', window_samples: 3, samples_total: 20,
+    queue_wait_ms_last: 2, queue_wait_ms_p95: 180, queue_wait_ms_max: 180,
+    processing_ms_last: 6, processing_ms_p95: 25, processing_ms_max: 25,
+    pending_last: 0, pending_max: 2,
+  } }} />);
+  expect(screen.getByText('Очередь: p95 180 мс · максимум 180 мс')).toBeInTheDocument();
+  expect(screen.getByText('Обработка: p95 25 мс · максимум 25 мс')).toBeInTheDocument();
+  expect(screen.getByText(/Сеть и обновление экрана сюда не входят/)).toBeInTheDocument();
+});
+
 test('unknown release has a readable cause and process scope', () => {
   render(<NativeInputDiagnostic telemetry={telemetry} />);
   expect(screen.getByText(/Ввод Android: Освобождение не подтверждено/)).toBeInTheDocument();

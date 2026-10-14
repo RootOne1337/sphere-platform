@@ -27,6 +27,7 @@ import { StreamQualityControl } from '@/src/features/stream/StreamQualityControl
 import type { StreamQualitySnapshot } from '@/src/features/stream/streamQuality';
 import { StreamStatusLine } from '@/src/features/stream/StreamStatusLine';
 import { deferLegacyInput } from '@/src/features/stream/directInputRouting';
+import { ControlLatencyWindow } from '@/src/features/stream/controlLatencyWindow';
 import { useStreamFullscreen } from '@/src/features/stream/useStreamFullscreen';
 import { StreamControlsTray } from '@/src/features/stream/StreamControlsTray';
 import { ServerLinkRtt } from '@/src/features/stream/serverLinkRtt';
@@ -532,8 +533,9 @@ export function DeviceStream({
         continuousRouteRef.current = null;
         setControlTransport('server_websocket');
         setContinuousReceipt(null);
+        const actionLatency = new ControlLatencyWindow();
         const reporter = new StreamSessionReporter(newWs, () => decoder
-          ? browserStreamSample(decoder.stats, telemetryControl.current, Date.now(), directVideoRef.current, linkRtt.sample()) : null);
+          ? browserStreamSample(decoder.stats, telemetryControl.current, Date.now(), directVideoRef.current, linkRtt.sample(), actionLatency.snapshot()) : null);
         diagnosticReporter.current = reporter;
         automaticProbeRef.current = null;
         // Keep the previously confirmed input path across socket replacements.
@@ -773,6 +775,7 @@ export function DeviceStream({
             },
             onReceipt: receipt => {
               if (ignore || ended || newWs !== wsRef.current || continuousRef.current !== controller) return;
+              actionLatency.record(receipt.action, receipt.receiptRoundTripMs);
               const now = performance.now();
               // Only sustained native receipts reset retry backoff, not merely
               // receiving a frame or opening another WebSocket.

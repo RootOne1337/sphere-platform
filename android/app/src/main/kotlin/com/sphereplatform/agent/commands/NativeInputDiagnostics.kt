@@ -30,6 +30,10 @@ internal class NativeInputDiagnostics(private val uptime: () -> Long) {
     private var keyboardUnknown = 0L
     private var keyboardResult: RemoteKeyboardAdapter.Result? = null
     private var keyboardAt = 0L
+    private val sharedTiming = SharedInputTiming()
+
+    fun sharedDispatchTiming(waitMs: Long, processingMs: Long, pending: Int) =
+        sharedTiming.record(waitMs, processingMs, pending)
 
     @Synchronized fun keyboard(result: RemoteKeyboardAdapter.Result) {
         keyboardCommands = (keyboardCommands + 1).coerceAtMost(MAX_COUNTER)
@@ -73,6 +77,7 @@ internal class NativeInputDiagnostics(private val uptime: () -> Long) {
         put("schema_version", 1)
         put("scope", "agent_process")
         put("state", state.name.lowercase())
+        sharedTiming.snapshot()?.let { put("shared_input_timing", it) }
         inputDetail?.let {
             put("last_input_detail", it)
             put("last_input_detail_age_ms", (uptime() - inputDetailAt).coerceIn(0, MAX_AGE_MS))

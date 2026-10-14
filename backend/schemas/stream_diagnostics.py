@@ -11,6 +11,38 @@ from backend.schemas.stream_quality import StreamQualitySnapshot
 _MAX_COUNTER = 2**53
 
 
+class SharedInputTimingTelemetry(BaseModel):
+    """Last 128 action dispatches; heartbeat traffic is excluded."""
+
+    model_config = ConfigDict(extra="ignore", strict=True)
+
+    scope: Literal["shared_actor"]
+    window_samples: int = Field(ge=1, le=128)
+    samples_total: int = Field(ge=1, le=_MAX_COUNTER)
+    queue_wait_ms_last: int = Field(ge=0, le=10_000)
+    queue_wait_ms_max: int = Field(ge=0, le=10_000)
+    queue_wait_ms_p95: int = Field(ge=0, le=10_000)
+    processing_ms_last: int = Field(ge=0, le=10_000)
+    processing_ms_max: int = Field(ge=0, le=10_000)
+    processing_ms_p95: int = Field(ge=0, le=10_000)
+    pending_last: int = Field(ge=0, le=360)
+    pending_max: int = Field(ge=0, le=360)
+
+    @model_validator(mode="after")
+    def validate_window(self) -> "SharedInputTimingTelemetry":
+        if self.samples_total < self.window_samples:
+            raise ValueError("action window cannot exceed cumulative samples")
+        for last, p95, maximum in (
+            (self.queue_wait_ms_last, self.queue_wait_ms_p95, self.queue_wait_ms_max),
+            (self.processing_ms_last, self.processing_ms_p95, self.processing_ms_max),
+        ):
+            if last > maximum or p95 > maximum:
+                raise ValueError("action duration cannot exceed window maximum")
+        if self.pending_last > self.pending_max:
+            raise ValueError("pending count cannot exceed window maximum")
+        return self
+
+
 class NativeInputTelemetry(BaseModel):
     """Small agent-process snapshot; never an input trace or execution receipt."""
 
@@ -19,6 +51,7 @@ class NativeInputTelemetry(BaseModel):
     schema_version: Literal[1]
     scope: Literal["agent_process"]
     state: Literal["disabled", "idle", "opening", "ready", "retiring", "cleanup_unknown"]
+    shared_input_timing: SharedInputTimingTelemetry | None = None
     last_failure: Literal[
         "active_owner", "retiring_owner", "capture_unavailable", "capture_changed",
         "direct_channel_unavailable", "authorization_expired", "transport_changed",

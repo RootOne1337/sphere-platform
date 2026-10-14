@@ -17113,6 +17113,16 @@
             ],
             "title": "State"
           },
+          "shared_input_timing": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/SharedInputTimingTelemetry"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "last_failure": {
             "anyOf": [
               {
@@ -19811,6 +19821,94 @@
         },
         "type": "object",
         "title": "SetTagsRequest"
+      },
+      "SharedInputTimingTelemetry": {
+        "properties": {
+          "scope": {
+            "type": "string",
+            "enum": [
+              "shared_actor"
+            ],
+            "const": "shared_actor",
+            "title": "Scope"
+          },
+          "window_samples": {
+            "type": "integer",
+            "maximum": 128.0,
+            "minimum": 1.0,
+            "title": "Window Samples"
+          },
+          "samples_total": {
+            "type": "integer",
+            "maximum": 9007199254740992.0,
+            "minimum": 1.0,
+            "title": "Samples Total"
+          },
+          "queue_wait_ms_last": {
+            "type": "integer",
+            "maximum": 10000.0,
+            "minimum": 0.0,
+            "title": "Queue Wait Ms Last"
+          },
+          "queue_wait_ms_max": {
+            "type": "integer",
+            "maximum": 10000.0,
+            "minimum": 0.0,
+            "title": "Queue Wait Ms Max"
+          },
+          "queue_wait_ms_p95": {
+            "type": "integer",
+            "maximum": 10000.0,
+            "minimum": 0.0,
+            "title": "Queue Wait Ms P95"
+          },
+          "processing_ms_last": {
+            "type": "integer",
+            "maximum": 10000.0,
+            "minimum": 0.0,
+            "title": "Processing Ms Last"
+          },
+          "processing_ms_max": {
+            "type": "integer",
+            "maximum": 10000.0,
+            "minimum": 0.0,
+            "title": "Processing Ms Max"
+          },
+          "processing_ms_p95": {
+            "type": "integer",
+            "maximum": 10000.0,
+            "minimum": 0.0,
+            "title": "Processing Ms P95"
+          },
+          "pending_last": {
+            "type": "integer",
+            "maximum": 360.0,
+            "minimum": 0.0,
+            "title": "Pending Last"
+          },
+          "pending_max": {
+            "type": "integer",
+            "maximum": 360.0,
+            "minimum": 0.0,
+            "title": "Pending Max"
+          }
+        },
+        "type": "object",
+        "required": [
+          "scope",
+          "window_samples",
+          "samples_total",
+          "queue_wait_ms_last",
+          "queue_wait_ms_max",
+          "queue_wait_ms_p95",
+          "processing_ms_last",
+          "processing_ms_max",
+          "processing_ms_p95",
+          "pending_last",
+          "pending_max"
+        ],
+        "title": "SharedInputTimingTelemetry",
+        "description": "Last 128 action dispatches; heartbeat traffic is excluded."
       },
       "StartSessionRequest": {
         "properties": {

@@ -22,6 +22,7 @@ class SharedDirectInputControllerTest {
         val closed = AtomicInteger()
         val keys = CopyOnWriteArrayList<Pair<Int, Int>>()
         var unknownCancel = false
+        var processingMs = 0L
         var refusedOpens = 0
         val controller = SharedDirectInputController(scope, TouchPipeFactory {
             opened.incrementAndGet()
@@ -32,6 +33,7 @@ class SharedDirectInputControllerTest {
             object : TouchPipe {
                 override suspend fun send(sample: TouchSample): RootTouchWire.Ack {
                     packets += sample
+                    now.addAndGet(processingMs)
                     val result = native.apply(sample.sequence, sample.gesture, sample.action, sample.x, sample.y, now.get())
                     val bytes = ByteArrayOutputStream()
                     RootTouchWire.ack(bytes, sample.sequence, result.wireCode, now.get())
@@ -77,6 +79,25 @@ class SharedDirectInputControllerTest {
             val peer = f.Peer("a".repeat(32))
             assertFalse(peer.open()); assertFalse(peer.event(1, 0))
             assertEquals(0, f.opened.get()); assertTrue(f.packets.isEmpty())
+        } finally { f.finish() }
+    }
+
+    @Test fun `native dispatch time is sampled while idle heartbeat cannot dilute actions`() = runBlocking {
+        val f = Fixture()
+        try {
+            val peer = f.peer(1)
+            f.processingMs = 60
+            assertTrue(peer.event(1, RootTouchSession.DOWN))
+            eventually { peer.outcomes().count { it == "applied" } == 1 }
+            val measured = checkNotNull(f.controller.diagnosticSnapshot())["shared_input_timing"]!!.jsonObject
+            assertEquals(JsonPrimitive(60L), measured["processing_ms_last"])
+            assertEquals(JsonPrimitive(1), measured["window_samples"])
+            f.processingMs = 0
+            assertTrue(peer.event(2, RootTouchSession.HEARTBEAT))
+            eventually { peer.messages.any { it["sequence"] == JsonPrimitive(2) } }
+            val idle = checkNotNull(f.controller.diagnosticSnapshot())["shared_input_timing"]!!.jsonObject
+            assertEquals(JsonPrimitive(1), idle["window_samples"])
+            assertEquals(JsonPrimitive(60L), idle["processing_ms_max"])
         } finally { f.finish() }
     }
 

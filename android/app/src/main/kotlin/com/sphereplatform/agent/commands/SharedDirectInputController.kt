@@ -305,7 +305,18 @@ internal class SharedDirectInputController(
                     val p = participants.values.firstOrNull { it.owner == work.event.participant } ?: return@repeat
                     if (!p.ready || p.retiring || !current(p.channel)) { retire(p); return@repeat }
                     p.keyboardResult = RemoteKeyboardAdapter.Result.ACCEPTED
-                    val notices = currentArbiter?.offer(work.event).orEmpty()
+                    val started = uptime()
+                    val pending = mailbox.pendingCount()
+                    val notices = try { currentArbiter?.offer(work.event).orEmpty() }
+                    finally {
+                        // Idle heartbeats cannot dilute action bursts. Processing
+                        // includes arbitration, native submission/ACK and optional
+                        // IME work; it does not assert application/display completion.
+                        if (work.event.action != RootTouchSession.HEARTBEAT) {
+                            diagnostics.sharedDispatchTiming(started - work.event.receivedAtMs,
+                                uptime() - started, pending)
+                        }
+                    }
                     if (currentArbiter?.fenced == true) { retireGroup(); return }
                     currentArbiter?.takeKeyboardInterruption()?.let { notice(it,null) }
                     notices.forEach { notice(it, work.event) }

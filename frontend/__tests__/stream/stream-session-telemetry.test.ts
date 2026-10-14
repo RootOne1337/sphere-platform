@@ -13,6 +13,15 @@ test('server echo and Android receipt retain separate scalar values and a missin
   expect(result).toMatchObject({ control_rtt_ms: 140, server_link_rtt_ms: 34, server_link_sample_age_ms: 20 });
   expect(sample().server_link_rtt_ms).toBeNull();
 });
+
+test('retains action burst peaks separately from the most recent idle ACK and projects only scalars', () => {
+  const latency = { samples: 3, p95Ms: 180, maxMs: 180, owner: 'private-owner', text: 'private-input' };
+  const result = browserStreamSample(stats, { state: 'ready', failure: null, rtt: 2, attempts: 0 }, 1000,
+    undefined, undefined, latency);
+  expect(result).toMatchObject({ control_rtt_ms: 2, control_action_latency: { samples: 3, p95_ms: 180, max_ms: 180 } });
+  expect(JSON.stringify(result)).not.toContain('private');
+  expect(sample()).not.toHaveProperty('control_action_latency');
+});
 const session = { type: 'stream_session', schema_version: 1, session_id: 'abcdef0123456789', history_enabled: true, report_interval_seconds: 10 };
 const socket = () => ({ readyState: WebSocket.OPEN, bufferedAmount: 0, send: jest.fn() } as unknown as WebSocket);
 const fence: PointerFenceObservation = { reason: 'native_receipt_timeout', phase: 'ready', idleHeartbeatOnly: true,

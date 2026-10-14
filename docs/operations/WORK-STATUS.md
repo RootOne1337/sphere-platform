@@ -1,8 +1,10 @@
 # Работы, требования пользователя и границы приёмки
 
-**Проверенная установка:** UI `b182a0c8` / API `04cf1015`.
+**Проверенная установка:** UI `4b39c385` / API `969a7444`.
 
-**15 октября местного времени — клавиатура76 и незакрытый совместный сеанс.** НаPH011 APK76 подтверждён по файлу и OTA;PH030 сообщает76 с completed OTA,13 доступных машин остаются72,шесть офлайн. Два локальных клиента и фактический Unicode/IME/fullscreen прошли проверку. Текущий прогон десяти клиентов черезTuna потерял готовые peer при открытии остальных; массовая OTA удержана. Исправление transient auth и диагностика signaling подготовлены,ещё не установлены. [Факты и границы](../audits/2026-10-14/KEYBOARD76-PARTIAL-DELIVERY.md).
+**15 октября — установка APK 76 и проверка прямого управления.** Все 15 доступных эмуляторов завершили OTA: 14 подтвердили хеш установленного пакета, PH030 — команду и версию. Шесть выключенных устройств ожидают. На текущем вебе прошли два одновременных клиента, десять клиентов через Tuna, 40 системных нажатий, фактический ввод Unicode в fullscreen и три восстановления RTC. Отдельно проверено восстановление после перезапуска процесса APK. Сетевые отказы прежних прогонов сохранены; непрерывность без signaling и общий production-статус остаются открытыми. [Установка и границы](../audits/2026-10-15/DIRECT-KEYBOARD76-DELIVERY.md)
+
+**Предыдущее наблюдение 15 октября — клавиатура76 и незакрытый совместный сеанс.** НаPH011 APK76 подтверждён по файлу и OTA;PH030 сообщает76 с completed OTA,13 доступных машин остаются72,шесть офлайн. Два локальных клиента и фактический Unicode/IME/fullscreen прошли проверку. Текущий прогон десяти клиентов черезTuna потерял готовые peer при открытии остальных; массовая OTA удержана. Исправление transient auth и диагностика signaling подготовлены,ещё не установлены. [Факты и границы](../audits/2026-10-14/KEYBOARD76-PARTIAL-DELIVERY.md).
 
 **Предыдущее наблюдение 14 октября — прямые системные кнопки и восстановление ввода.** APK `1.2.72-dev /10272`, UI37543bb2 и APIbe0578d0 установлены; 15 доступных эмуляторов завершили OTA, 14 подтвердили установленный SHA, 1 — только команду и версию; шесть офлайн ожидают. На обоих адресах прошли два клиента с mouse/touch и кнопками; десять клиентов через Tuna подтвердили 40 системных нажатий и совместные жесты. Автовосстановление после трёх принудительных обрывов RTC проверено. Реальное скрытие вкладки, телефон/hotspot, 20+, полноценные клавиатура/IME, звук, автономность без сервера и полный перенос CI остаются открытыми. [Результаты и границы](../audits/2026-10-14/DIRECT-SYSTEM-INPUT72-DELIVERY.md).
 
@@ -533,11 +535,11 @@ resource soak/retention и RAM acceptance.
 
 **PARTIAL**
 
-UIb182a0c8/API04cf1015 installed on3015/Tuna. APK76 confirmed onPH011;PH030 has exact completed OTA/version but no fresh package hash.13 reachable devices still72;6offline. Two-client local real mouse/touch and actual fullscreen Unicode/chords/composition accepted. Current ten-Tuna opening failed; fleet rollout held. Not production acceptance.
+UI4b39c385 / API969a7444 installed on3015/Tuna. APK76 completed OTA on15 devices;14 exact installed hashes,1 command/version-only proofs;6 offline pending. Finite local two-client mouse/touch/native keys, ten Tuna clients, three forced peer recoveries, actual agent-process restart and Unicode/chords/composition/fullscreen with original IME restoration accepted. Not20+, real phone/hotspot, WAN/TURN, broker-offline autonomy, audio, server-fallback full keyboard, full local CI or production SLA.
 
-Остаётся: Current ten-client recovery/root cause and fleet76;20+,physical phone/hotspot,LAN/WAN/TURN,long soak and broker independence.
+Остаётся: 20+, physical phone/hotspot/LAN/WAN/TURN and long soak; broker-independent session authorization and remaining transport recovery cases.
 
-[Текущий протокол](../audits/2026-10-14/KEYBOARD76-PARTIAL-OBSERVATION.json).
+[Текущий протокол](../audits/2026-10-15/DIRECT-KEYBOARD76-OBSERVATION.json).
 
 ## Прямой browser ↔ Android media: до production допуска
 
@@ -599,21 +601,21 @@ PostgreSQL/Redis test подтвердил202/commit/admission; live404 посл
 
 **PARTIAL**
 
-Current UIb182/API04/APK76: two local clients passed12 mouse/touch rounds and native keys. Earlier UI4525/identical APK76 passed ten Tuna clients; the current ten-Tuna opening failed and is not accepted.
+APK76/UI4b39/API969: ten direct participants,40 native system keys,gestures,takeover and9 survivors for30s; two actual keyboard owners verified earlier on the same APK.
 
-Остаётся: Current ten-client opening failure;20+,physical emulator/phone/hotspot/geography and longer shared-input soak.
+Остаётся: 20+, real physical emulator input and phone/hotspot/geographical matrix; longer shared-keyboard and video soak.
 
-[Текущий протокол](../audits/2026-10-14/KEYBOARD76-PARTIAL-OBSERVATION.json).
+[Текущий протокол](../audits/2026-10-15/DIRECT-KEYBOARD76-OBSERVATION.json).
 
 ### CHAT-19 · Физическая клавиатура, IME и звук устройства
 
 **PARTIAL**
 
-Direct fullscreen physical keys,Unicode,Ctrl+A,composition and game-key edges are implemented on APK76; actual Android fields and original IME restoration verified onPH011.
+Direct fullscreen physical keys,Unicode,Backspace,Ctrl+A,composition and native game-key edges are implemented and actual Android fields verified; prior IME restored. Home/Back/Recents/Menu use the same authorized media peer.
 
-Остаётся: Fleet76 held by current ten-client incident;server-fallback full keyboard,recorder/DAG Unicode,broader OS-key/IME/repeat/background matrix and optional default-off audio.
+Остаётся: Server-fallback full keyboard; recorder/DAG Unicode playback; broader IME/OS-shortcuts/key-repeat/background matrix; optional default-off audio.
 
-[Текущий протокол](../audits/2026-10-14/KEYBOARD76-PARTIAL-OBSERVATION.json).
+[Текущий протокол](../audits/2026-10-15/DIRECT-KEYBOARD76-OBSERVATION.json).
 
 ### CHAT-20 · Последние десять сеансов и автоматическая диагностика клиента
 
@@ -631,11 +633,11 @@ Direct fullscreen physical keys,Unicode,Ctrl+A,composition and game-key edges ar
 
 **ACCEPTED_FINITE**
 
-Latest signed canary APK76 downloaded fully through3015/Tuna with exact SHA/bytes; ordinary Android channel unchanged. Download is separate from installed-package proof.
+Latest signed canary APK76 downloaded fully on both origins with exact SHA/bytes. Ordinary Android channel is unchanged; download and installation proofs are distinct.
 
 Остаётся: Внешние latest URL здесь не проксируются; скачивание не подтверждает установку. Stable promotion, все роли и offline fleet остаются отдельными открытыми gates.
 
-[Текущий протокол](../audits/2026-10-14/KEYBOARD76-PARTIAL-OBSERVATION.json).
+[Текущий протокол](../audits/2026-10-15/DIRECT-KEYBOARD76-OBSERVATION.json).
 
 ### CHAT-22 · Тёмный адаптивный вход и сохранение темы рабочего пространства
 
@@ -651,11 +653,11 @@ Latest signed canary APK76 downloaded fully through3015/Tuna with exact SHA/byte
 
 **PARTIAL**
 
-Frontend2429tests/types and101targeted backend checks/statuses ran locally; full migration incomplete. Repo is currently public with standard ubuntu-latest workflows;2000 private-repo minutes are not this repository runner limit.
+Frontend2432tests/types,101 targeted backend routing/diagnostic tests and signed Android76 dev/enterprise1206tests per profile/lint/build ran locally with exact GitHub status readback. Hosted full frontend packaging, full Android and security/Linux gates remain; no all-workflow local migration claim.
 
 Остаётся: Полный перенос workflow/packaging, отсутствие hosted расходов, автономный запуск после reboot, trusted job routing и Linux parity ещё не приняты.
 
-[Текущий протокол](../audits/2026-10-14/KEYBOARD76-PARTIAL-OBSERVATION.json).
+[Текущий протокол](../audits/2026-10-15/DIRECT-KEYBOARD76-OBSERVATION.json).
 
 ### CHAT-24 · Настройки качества, source FPS и краткая строка параметров
 
@@ -682,7 +684,6 @@ Frontend2429tests/types and101targeted backend checks/statuses ran locally; full
 
 Installed native fullscreen, accessible44px Android tray and explicit touch toggle; actual browser mouse/touch passed390x844/844x390 on3015/Tuna without remounting media elements or replacing the peer.
 
-Остаётся: Real phone/hotspot,safe-area/zoom and visibility/network matrix;broader keyboard/browser/IME cases. Fullscreen physical keyboard finite accepted onPH011/APK76.
+Остаётся: Real phone/hotspot,safe-area/zoom and physical visibility/network changes; broader keyboard/composition/browser matrix. Fullscreen direct keyboard is now implemented and finite accepted.
 
-[Текущий протокол](../audits/2026-10-14/KEYBOARD76-PARTIAL-OBSERVATION.json).
-
+[Текущий протокол](../audits/2026-10-15/DIRECT-KEYBOARD76-OBSERVATION.json).

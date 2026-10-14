@@ -5,6 +5,7 @@ import type { DiagnosticProfile } from './DirectProbeDiagnostics';
 import type { LiveVideoObservation } from './LiveDirectVideo';
 import type { DirectProbeNetwork } from './directProbeNetwork';
 import type { ServerLinkSample } from './serverLinkRtt';
+import type { ControlLatencySnapshot } from './controlLatencyWindow';
 
 type ControlObservation = { state: ContinuousPointerState | 'probing'; failure: string | null; rtt: number | null; attempts: number;
   fence?: PointerFenceObservation | null;
@@ -56,7 +57,7 @@ function iceSnapshot(network: DirectProbeNetwork | undefined) {
 
 /** Explicit scalar whitelist: decoder exception text and Android input never leave the viewer. */
 export function browserStreamSample(stats: StreamDecoderStats, control: ControlObservation, now = Date.now(), direct?: LiveVideoObservation,
-  serverLink?: ServerLinkSample | null) {
+  serverLink?: ServerLinkSample | null, actionLatency?: ControlLatencySnapshot | null) {
   const age = (at: number | null) => at === null ? null : milliseconds(now - at);
   return { schema_version: 1, transport: direct?.active ? 'direct_webrtc' : 'server_websocket', visibility: document.hidden ? 'hidden' : 'visible',
     control_transport: control.transport === 'direct_webrtc' ? 'direct_webrtc' : 'server_websocket',
@@ -91,7 +92,10 @@ export function browserStreamSample(stats: StreamDecoderStats, control: ControlO
       : control.failure === 'server_runtime_retry' ? 'runtime_retry' : 'other',
     control_failure_detail: control.failure && controlFailures.has(control.failure) ? control.failure : null,
     control_fence: controlFence(control.fence, age(control.fenceAtMs ?? null)),
-    control_rtt_ms: milliseconds(control.rtt), recovery_attempts: Math.min(1000000, counter(control.attempts)) };
+    control_rtt_ms: milliseconds(control.rtt),
+    ...(actionLatency ? { control_action_latency: { samples: actionLatency.samples,
+      p95_ms: milliseconds(actionLatency.p95Ms), max_ms: milliseconds(actionLatency.maxMs) } } : {}),
+    recovery_attempts: Math.min(1000000, counter(control.attempts)) };
 }
 
 export function directDiagnosticSample(result: DirectProbeResult, frames: number, profile: DiagnosticProfile, automatic: boolean) {
