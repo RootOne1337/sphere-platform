@@ -58,7 +58,7 @@ async def test_allowed_read_is_private_finite_and_never_allocates_peer(admission
                                    profiles=["host", "public-stun"], scope="diagnostic_echo_only",
                                    max_duration_ms=30000, samples=20, readonly_video_enabled=False, live_video_enabled=False,
                                    direct_input_enabled=False, native_history_enabled=False, legacy_video_handover_enabled=False,
-                                   shared_input_enabled=False, direct_key_input_enabled=False)
+                                   shared_input_enabled=False, direct_key_input_enabled=False, trickle_ice_enabled=False)
     db.get.assert_awaited_once_with(router.Device, DEVICE)
     router.bind_tenant_context.assert_awaited_once_with(db, str(ORG))
 

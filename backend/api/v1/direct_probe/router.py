@@ -16,6 +16,7 @@ from backend.database.tenant import bind_tenant_context
 from backend.models.device import Device
 from backend.models.user import User
 from backend.services.device_status_cache import DeviceStatusCache
+from backend.websocket.direct_probe_candidates import MIN_TRICKLE_AGENT_CODE
 from backend.websocket.direct_probe_ice import turn_urls
 from backend.websocket.direct_probe_protocol import (
     LIVE_VIDEO_MIN_AGENT_CODE,
@@ -79,6 +80,7 @@ class ProbeCapabilities(BaseModel):
     legacy_video_handover_enabled: bool = False
     shared_input_enabled: bool = False
     direct_key_input_enabled: bool = False
+    trickle_ice_enabled: bool = False
 
 
 def relay_configured() -> bool:
@@ -120,6 +122,8 @@ async def probe_capabilities(
         live_enabled = bool(current and settings.DIRECT_TRANSPORT_LIVE_VIDEO_ENABLED and status
                             and status.agent_version_code and status.agent_version_code >= LIVE_VIDEO_MIN_AGENT_CODE)
     return ProbeCapabilities(device_id=device_id, enabled=enabled, profiles=profiles,
+                             trickle_ice_enabled=bool(live_enabled and status and status.agent_version_code
+                                 and status.agent_version_code >= MIN_TRICKLE_AGENT_CODE),
                              direct_key_input_enabled=bool(live_enabled and settings.DIRECT_TRANSPORT_INPUT_ENABLED
                                  and status and status.agent_version_code and status.agent_version_code >= 10270),
                              shared_input_enabled=bool(live_enabled and settings.DIRECT_TRANSPORT_INPUT_ENABLED

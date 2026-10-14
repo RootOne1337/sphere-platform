@@ -66,7 +66,8 @@ async def direct_probe_ws(ws: WebSocket, device_id: str) -> None:
         import json
         first = json.loads(raw)
         if (not isinstance(first, dict) or "token" not in first
-                or first.keys() - {"token", "protocol", "relay", "control_session", "history_session", "shared_control"}
+                or first.keys() - {"token", "protocol", "relay", "control_session", "history_session", "shared_control", "trickle_ice"}
+                or "trickle_ice" in first and (first["trickle_ice"] is not True or first.get("protocol") != "sphere-video-v1")
                 or "shared_control" in first and (first["shared_control"] is not True or "control_session" not in first)
                 or "protocol" in first and first["protocol"] not in {"sphere-probe-v2", "sphere-video-probe-v1", "sphere-video-v1"}
                 or "relay" in first and (first.get("protocol") != "sphere-video-probe-v1" or first["relay"] is not True)
@@ -90,7 +91,7 @@ async def direct_probe_ws(ws: WebSocket, device_id: str) -> None:
             raise InvalidDirectProbe("video_probe_disabled")
         viewer = ProbeViewer(device_id, *identity, ws, video=video, live=live,
                              control_session=first.get("control_session"), history_session=first.get("history_session"),
-                             shared_control=first.get("shared_control") is True)
+                             shared_control=first.get("shared_control") is True, trickle=first.get("trickle_ice") is True)
         if first.get("protocol") == "sphere-probe-v2" or video and first.get("relay") is True:
             await runtime.prepare(viewer)
             options = dict(relay_only=settings.DIRECT_PROBE_TURN_RELAY_ONLY)
@@ -123,6 +124,11 @@ async def direct_probe_ws(ws: WebSocket, device_id: str) -> None:
                     continue
                 if raw == '{"type":"direct_probe_close"}':
                     break
+                if live and viewer.trickle and len(raw.encode()) <= 3072:
+                    data = json.loads(raw)
+                    if isinstance(data, dict) and data.keys() == {"type", "ice"} and data['type'] == 'direct_probe_candidate':
+                        await runtime.browser_candidate(viewer, data['ice'])
+                        continue
                 if live and len(raw.encode()) <= 128:
                     data = json.loads(raw)
                     if (isinstance(data, dict) and data.keys() == {"type", "sequence"}

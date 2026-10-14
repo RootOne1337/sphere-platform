@@ -12,6 +12,11 @@ from backend.services.device_status_cache import DeviceStatusCache
 from backend.websocket.channels import ChannelPattern
 from backend.websocket.connection_manager import ConnectionManager
 from backend.websocket.continuous_lease import no_replay_redis
+from backend.websocket.direct_probe_candidates import (
+    MAX_CANDIDATES,
+    MIN_TRICKLE_AGENT_CODE,
+    candidate,
+)
 from backend.websocket.direct_probe_ice import validate_turn_grant
 from backend.websocket.direct_probe_mdns import resolve_offer
 from backend.websocket.direct_probe_protocol import (
@@ -58,6 +63,8 @@ class ProbeViewer:
     control_session: str | None = None
     history_session: str | None = None
     shared_control: bool = False
+    trickle: bool = False
+    candidates: int = 0
 
 
 @dataclass
@@ -69,6 +76,7 @@ class PendingProbe:
     diagnostic_elapsed: int = -1
     diagnostic_at: float = -float("inf")
     diagnostic_closed: bool = False
+    candidates: int = 0
 
 
 class DirectProbeRuntime:
@@ -143,7 +151,7 @@ class DirectProbeRuntime:
                 binding = json.loads(raw)
                 if (not isinstance(binding, dict)
                         or not {"session", "device", "org", "user", "worker", "agent_session", "media", "control_session"} <= binding.keys()
-                        or binding.keys() - {"session", "device", "org", "user", "worker", "agent_session", "media", "control_session", "history_session", "shared"}
+                        or binding.keys() - {"session", "device", "org", "user", "worker", "agent_session", "media", "control_session", "history_session", "shared", "trickle"}
                         or "shared" in binding and binding["shared"] is not True
                         or binding != {**binding, "session": session, "device": device, "org": org, "user": user,
                                        "agent_session": agent_session, "media": LIVE_VIDEO_MODE, "control_session": viewer_session}):
@@ -172,7 +180,8 @@ class DirectProbeRuntime:
                 binding = json.loads(raw)
                 required = {"session", "device", "org", "user", "worker", "agent_session", "media"}
                 if (not isinstance(binding, dict) or not required <= binding.keys()
-                        or binding.keys() - required - {"control_session", "history_session", "shared", "shared_control"}
+                        or binding.keys() - required - {"control_session", "history_session", "shared", "shared_control", "trickle"}
+                        or "trickle" in binding and binding["trickle"] is not True
                         or "shared" in binding and binding["shared"] is not True
                         or "shared_control" in binding and (binding["shared_control"] is not True or binding.get("shared") is not True)
                         or any(binding.get(k) != v for k, v in {
@@ -273,6 +282,10 @@ class DirectProbeRuntime:
                                           user=viewer.user, worker=self.worker, agent_session=status.ws_session_id)
             if viewer.video:
                 binding["media"] = LIVE_VIDEO_MODE if viewer.live else VIDEO_MODE
+            if viewer.trickle:
+                if not viewer.live or not status.agent_version_code or status.agent_version_code < MIN_TRICKLE_AGENT_CODE:
+                    raise InvalidDirectProbe('trickle_not_admitted')
+                binding['trickle'] = True
             if viewer.video and status.agent_version_code and status.agent_version_code >= SHARED_PEER_MIN_AGENT_CODE:
                 binding["shared"] = True
             if viewer.shared_control:
@@ -353,6 +366,22 @@ class DirectProbeRuntime:
         pending = self.pending.get(sid)
         if not pending:
             return
+        if data.get('type') == 'direct_probe_candidate':
+            if data.keys() != {'type', 'session_id', 'ice'} or pending.binding.get('trickle') is not True:
+                raise InvalidDirectProbe('invalid_ice_candidate')
+            ice = candidate(data['ice'])
+            binding = pending.binding
+            snapshot = self.manager.connection_snapshot(device)
+            async with asyncio.timeout(OPERATION_SECONDS):
+                if (not self.available or not pending.answered or pending.candidates >= MAX_CANDIDATES
+                        or binding['device'] != device or binding['agent_session'] != agent_session
+                        or snapshot is None or snapshot.session_id != agent_session
+                        or snapshot.org_id != binding['org'] or not await self.remaining(binding)):
+                    return
+                pending.candidates += 1
+                await self.publish(f"{self.namespace}:viewer:{binding['worker']}",
+                                   dict(kind='candidate', binding=binding, ice=ice))
+            return
         _, sdp = agent_answer(data, video=pending.binding.get("media") in {VIDEO_MODE, LIVE_VIDEO_MODE})
         binding, deadline = pending.binding, pending.deadline
         snapshot = self.manager.connection_snapshot(device)
@@ -368,6 +397,24 @@ class DirectProbeRuntime:
             pending.answered = True  # Before publication await; failure must not enable replay.
             await self.publish(f"{self.namespace}:viewer:{binding['worker']}",
                                dict(kind="answer", binding=binding, sdp=sdp))
+
+    async def browser_candidate(self, viewer: ProbeViewer, value: Any) -> None:
+        ice = candidate(value)
+        if (not viewer.trickle or not viewer.offered or viewer.retired or not viewer.binding
+                or self.viewers.get(viewer.session) is not viewer or viewer.candidates >= MAX_CANDIDATES):
+            raise InvalidDirectProbe('candidate_not_admitted')
+        async with asyncio.timeout(OPERATION_SECONDS):
+            if not await self.remaining(viewer.binding):
+                raise InvalidDirectProbe('probe_expired')
+            viewer.candidates += 1
+            # Optional discovery-only mapping has the same bounded scope as SDP.
+            # An unresolved name remains an ICE hint, never a central-LAN claim.
+            mapped = await resolve_offer('a=' + ice['candidate'] + '\r\n', viewer.session)
+            ice = candidate(ice | {'candidate': mapped.removeprefix('a=').strip()})
+            if viewer.retired or not viewer.binding or self.viewers.get(viewer.session) is not viewer:
+                return
+            await self.publish(f'{self.namespace}:agent:{viewer.device}',
+                               dict(kind='candidate', binding=viewer.binding, ice=ice))
 
     def observe_native(self, device: str, agent_session: str, data: Any) -> bool:
         """No Redis await in the agent's input/ACK receive loop; never replay telemetry."""
@@ -424,12 +471,13 @@ class DirectProbeRuntime:
         if len(raw) > MAX_WIRE_BYTES:
             return
         data = json.loads(raw)
-        if not isinstance(data, dict) or data.keys() not in ({"kind", "binding", "sdp"}, {"kind", "binding"}, {"kind", "binding", "sdp", "ice"}, {"kind", "binding", "sequence"}):
+        if not isinstance(data, dict) or data.keys() not in ({"kind", "binding", "sdp"}, {"kind", "binding"}, {"kind", "binding", "sdp", "ice"}, {"kind", "binding", "sequence"}, {"kind", "binding", "ice"}):
             return
         binding = data["binding"]
         binding_keys = {"session", "device", "org", "user", "worker", "agent_session"}
         if (not isinstance(binding, dict) or not binding_keys <= binding.keys()
-                or binding.keys() - binding_keys - {"media", "control_session", "history_session", "shared", "shared_control"}
+                or binding.keys() - binding_keys - {"media", "control_session", "history_session", "shared", "shared_control", "trickle"}
+                or "trickle" in binding and (binding['trickle'] is not True or binding.get('media') != LIVE_VIDEO_MODE)
                 or "shared" in binding and binding["shared"] is not True
                 or "shared_control" in binding and (binding["shared_control"] is not True or binding.get("shared") is not True
                     or "control_session" not in binding or binding.get("media") != LIVE_VIDEO_MODE)
@@ -447,6 +495,17 @@ class DirectProbeRuntime:
         session_id(binding["worker"])
         if channel == self.viewer_channel:
             viewer = self.viewers.get(sid)
+            if data['kind'] == 'candidate':
+                if (viewer is None or not viewer.trickle or not viewer.answered or viewer.binding != binding
+                        or not await self.remaining(binding)):
+                    return
+                candidate_ice = candidate(data.get('ice'))
+                try:
+                    async with asyncio.timeout(1):
+                        await viewer.ws.send_json(dict(type='direct_probe_candidate', session_id=sid, ice=candidate_ice))
+                except Exception:
+                    await self.retire(viewer)
+                return
             if (data["kind"] != "answer" or viewer is None or viewer.binding != binding or viewer.answered
                     or not await self.remaining(binding)):
                 return
@@ -477,6 +536,14 @@ class DirectProbeRuntime:
                 self.pending.pop(sid, None)
                 await self.manager.send_to_session(binding["device"], snapshot.session_id,
                                                    dict(type="direct_probe_close", session_id=sid))
+            return
+        if data['kind'] == 'candidate':
+            pending = self.pending.get(sid)
+            if not pending or pending.binding != binding or binding.get('trickle') is not True or not await self.remaining(binding):
+                return
+            candidate_ice = candidate(data.get('ice'))
+            await self.manager.send_to_session(binding['device'], snapshot.session_id,
+                                              dict(type='direct_probe_candidate', session_id=sid, ice=candidate_ice))
             return
         if data["kind"] == "renew":
             pending = self.pending.get(sid)
@@ -526,6 +593,8 @@ class DirectProbeRuntime:
             message["media"] = LIVE_VIDEO_MODE if live else VIDEO_MODE
         if binding.get("shared_control") is True:
             message["shared_control"] = True
+        if binding.get('trickle') is True:
+            message['trickle_ice'] = True
         if ice is not None:
             message["ice"] = ice
         await self.manager.send_to_session(binding["device"], snapshot.session_id, message)

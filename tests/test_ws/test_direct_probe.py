@@ -104,6 +104,40 @@ async def eventually(predicate):
 
 
 @pytest.mark.asyncio
+async def test_trickle_routes_late_candidates_only_to_the_exact_live_peer(peers, monkeypatch):
+    from backend.core.config import settings
+    from backend.websocket.direct_probe_candidates import MAX_CANDIDATES
+    runtimes, clients, _, agent, agent_session, _ = peers
+    monkeypatch.setattr(settings, 'DIRECT_TRANSPORT_LIVE_VIDEO_ENABLED', True)
+    monkeypatch.setattr(settings, 'DIRECT_TRANSPORT_PROBE_DEVICE_IDS', frozenset({'device'}))
+    await DeviceStatusCache(clients[0]).set_status('device', DeviceLiveStatus(
+        device_id='device', status='online', ws_session_id=agent_session, agent_version_code=10273))
+    viewer = ProbeViewer('device', 'org', 'user', AsyncMock(), video=True, live=True, trickle=True)
+    await runtimes[1].open(viewer, VIDEO_SDP)
+    await eventually(lambda: agent.send_json.call_count == 1)
+    assert agent.send_json.call_args.args[0]['trickle_ice'] is True
+    ice = dict(candidate='candidate:1 1 udp 2122260223 192.168.1.20 53000 typ host', sdpMid='0', sdpMLineIndex=0)
+    await runtimes[1].browser_candidate(viewer, ice)
+    await eventually(lambda: agent.send_json.call_count == 2)
+    assert agent.send_json.call_args.args[0] == dict(type='direct_probe_candidate', session_id=viewer.session, ice=ice)
+    await runtimes[0].agent_message('device', agent_session, dict(type='direct_probe_answer', session_id=viewer.session,
+        sdp=VIDEO_SDP.replace('recvonly', 'sendonly')))
+    await eventually(lambda: viewer.ws.send_json.call_count == 1)
+    native = dict(type='direct_probe_candidate', session_id=viewer.session, ice=ice)
+    await runtimes[0].agent_message('device', 'different-agent-epoch', native)
+    assert viewer.ws.send_json.call_count == 1
+    await runtimes[0].agent_message('device', agent_session, native)
+    await eventually(lambda: viewer.ws.send_json.call_count == 2)
+    assert viewer.ws.send_json.call_args.args[0] == native
+    viewer.candidates = MAX_CANDIDATES
+    with pytest.raises(InvalidDirectProbe, match='candidate_not_admitted'):
+        await runtimes[1].browser_candidate(viewer, ice)
+    await runtimes[1].retire(viewer)
+    await runtimes[0].agent_message('device', agent_session, native)
+    assert viewer.ws.send_json.call_count == 2
+
+
+@pytest.mark.asyncio
 async def test_shared_peers_bind_each_user_and_retire_only_the_exact_peer(peers, monkeypatch):
     from backend.core.config import settings
     runtimes, clients, _, agent, agent_session, _ = peers

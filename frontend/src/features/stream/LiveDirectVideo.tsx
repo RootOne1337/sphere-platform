@@ -63,9 +63,12 @@ export function LiveDirectVideo({ deviceId, session, eligible, fit, expectedCapt
         || data.shared_input_enabled === true && data.direct_input_enabled !== true) throw Error('invalid_shared_input_admission');
       if ('direct_key_input_enabled' in data && typeof data.direct_key_input_enabled !== 'boolean'
         || data.direct_key_input_enabled === true && data.shared_input_enabled !== true) throw Error('invalid_key_input_admission');
+      if ('trickle_ice_enabled' in data && typeof data.trickle_ice_enabled !== 'boolean'
+        || data.trickle_ice_enabled === true && data.live_video_enabled !== true) throw Error('invalid_ice_admission');
       return { admitted: data.live_video_enabled === true, profiles, input: data.direct_input_enabled === true,
         nativeHistory: data.native_history_enabled === true, handover: data.legacy_video_handover_enabled === true,
-        sharedInput: data.shared_input_enabled === true, nativeKeys: data.direct_key_input_enabled === true };
+        sharedInput: data.shared_input_enabled === true, nativeKeys: data.direct_key_input_enabled === true,
+        trickleIce: data.trickle_ice_enabled === true };
     },
     retry: (count, error) => count < 3 && isAxiosError(error) && (
       error.response ? [408, 429].includes(error.response.status) || error.response.status >= 500 && error.response.status <= 599
@@ -192,7 +195,7 @@ export function LiveDirectVideo({ deviceId, session, eligible, fit, expectedCapt
             firstFrame = setTimeout(() => fail('video_first_frame_timeout'), 8000);
           }
           publish();
-        }, { controlledStunUrl: stun,
+        }, { controlledStunUrl: stun, trickleIce: admission.data?.trickleIce === true,
           receiverSize: (() => { if (!needsHigherH264ReceiveLevel(callbacks.current.receiverProfileLevelId?.())) return undefined;
             const capture = callbacks.current.expectedCapture();
             return capture ? { width: capture.frameWidth, height: capture.frameHeight } : undefined; })(),

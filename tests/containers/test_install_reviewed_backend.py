@@ -353,7 +353,8 @@ class BackendInstallerTests(unittest.TestCase):
         digest = hashlib.sha256(payload).hexdigest()
         receipt = {"requirementsSha256": digest, "actionContractSha256": digest}
         paths = ["backend/schemas/stream_diagnostics.py", "backend/websocket/stream_metrics.py",
-                 "backend/metrics.py", "backend/websocket/stream_session_history.py", "backend/websocket/viewer_link.py"]
+                 "backend/metrics.py", "backend/websocket/stream_session_history.py", "backend/websocket/viewer_link.py",
+                 "backend/websocket/direct_probe_candidates.py"]
         with patch.object(installer, "command", return_value="\n".join(paths)), \
                 patch.object(installer.subprocess, "run", return_value=subprocess.CompletedProcess([], 0, payload)):
             self.assertEqual(installer.source_boundary(CURRENT, SOURCE, receipt), paths)

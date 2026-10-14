@@ -25,11 +25,13 @@ class FakePeer {
   onconnectionstatechange: (() => void) | null = null;
   ontrack: ((event: { track: MediaStreamTrack }) => void) | null = null;
   constructor(readonly configuration: RTCConfiguration) { FakePeer.latest = this; FakePeer.constructions++; }
-  createDataChannel = jest.fn((label: string) => label === 'sphere-control-v1' ? this.control : this.channel);
+  createDataChannel = jest.fn((label: string) => label.startsWith('sphere-control-') ? this.control : this.channel);
   addTransceiver = jest.fn();
   createOffer = jest.fn(async () => ({ type: 'offer', sdp: 'v=0\r\n' }));
   setLocalDescription = jest.fn(async () => {});
   setRemoteDescription = jest.fn(async () => {});
+  addIceCandidate = jest.fn(async () => {});
+  onicecandidate: ((event: { candidate: RTCIceCandidateInit | null }) => void) | null = null;
   getStats = jest.fn(async () => new Map());
   close = jest.fn();
 }
@@ -83,6 +85,45 @@ test('history correlation is read-only and never creates the control channel', a
   stop();
 });
 
+test.each([false, true])('video readiness cannot hide a never-opened control channel (shared=%s)', async sharedInput => {
+  FakePeer.initialSdp = videoSdp;
+  const reports: DirectProbeResult[] = [], handles: (DirectControlEndpoint | null)[] = [];
+  const stop = startDirectVideoSession('wss://same-origin/ws/direct-probe/device', 'access', r => reports.push(r),
+    { onTrack: jest.fn(), controlSession: '1'.repeat(16), sharedInput, onControlChannel: c => handles.push(c) });
+  await flush();
+  const peer=FakePeer.latest, ws=FakeSocket.latest;
+  peer.control.readyState='connecting';
+  ws.onopen?.();
+  ws.onmessage?.({data:JSON.stringify({type:'direct_probe_answer',session_id:sid,sdp:videoSdp.replace('recvonly','sendonly')})});
+  await flush(); peer.channel.onopen?.();
+  expect(reports.at(-1)?.state).toBe('connected');
+  expect(reports.at(-1)?.controlChannelState).toBe('connecting');
+  // Keep media echo valid while only the input channel fails its own deadline.
+  jest.advanceTimersByTime(5000);
+  peer.channel.onmessage?.({data:`SV1 ${sid} ${epoch} 960 540`});
+  peer.channel.onmessage?.({data:`SL1 ${sid} 1`});
+  jest.advanceTimersByTime(1000);
+  expect(reports.at(-1)).toMatchObject({state:'failed',reason:'control_channel_deadline',controlChannelState:'failed'});
+  expect(peer.close).toHaveBeenCalledTimes(1);
+  expect(handles).toEqual([null]);
+  stop(); expect(jest.getTimerCount()).toBe(0);
+});
+
+test('a late input OPEN before its deadline cancels only the input setup timer', async () => {
+  FakePeer.initialSdp=videoSdp;
+  const reports: DirectProbeResult[]=[];
+  const stop=startDirectVideoSession('wss://same-origin/ws/direct-probe/device','access',r=>reports.push(r),
+    {onTrack:jest.fn(),controlSession:'1'.repeat(16),sharedInput:true,onControlChannel:jest.fn(),hasRecentVideoFrame:()=>true});
+  await flush(); const peer=FakePeer.latest,ws=FakeSocket.latest;
+  peer.control.readyState='connecting';ws.onopen?.();
+  ws.onmessage?.({data:JSON.stringify({type:'direct_probe_answer',session_id:sid,sdp:videoSdp.replace('recvonly','sendonly')})});
+  await flush();peer.channel.onopen?.();
+  jest.advanceTimersByTime(4000);peer.control.readyState='open';peer.control.onopen?.();
+  jest.advanceTimersByTime(2500);
+  expect(reports.at(-1)?.controlChannelState).toBe('open');
+  expect(peer.close).not.toHaveBeenCalled();stop();expect(jest.getTimerCount()).toBe(0);
+});
+
 test('pending public STUN cannot prevent live signaling with collected local UDP candidates', async () => {
   FakePeer.initialGatheringState = 'gathering';
   FakePeer.initialSdp = videoSdp + 'a=candidate:1 1 udp 2122260223 browser.local 53000 typ host\r\n';
@@ -110,6 +151,30 @@ test('no local candidate remains unknown and cannot bypass the original gatherin
   jest.advanceTimersByTime(6000);
   expect(reports.at(-1)?.reason).toBe('gathering_deadline');
   stop(); expect(jest.getTimerCount()).toBe(0);
+});
+
+test('trickle offers the first usable host and preserves a late reflexive candidate', async () => {
+  FakePeer.initialGatheringState='gathering';
+  FakePeer.initialSdp=videoSdp+'a=candidate:1 1 udp 2122260223 browser.local 53000 typ host\r\n';
+  const reports: DirectProbeResult[]=[];
+  const stop=startDirectVideoSession('wss://same-origin/ws/direct-probe/device','access',r=>reports.push(r),
+    {onTrack:jest.fn(),trickleIce:true});
+  await flush(); const peer=FakePeer.latest;
+  const host={candidate:'candidate:1 1 udp 2122260223 browser.local 53000 typ host',sdpMid:'0',sdpMLineIndex:0};
+  peer.onicecandidate?.({candidate:host});
+  expect(reports.at(-1)?.state).toBe('signaling');
+  const ws=FakeSocket.latest;ws.onopen?.();
+  expect(JSON.parse(ws.send.mock.calls[0][0]).trickle_ice).toBe(true);
+  expect(JSON.parse(ws.send.mock.calls[1][0]).type).toBe('direct_probe_offer');
+  const late={...host,candidate:'candidate:2 1 udp 1686052607 203.0.113.4 62000 typ srflx'};
+  peer.onicecandidate?.({candidate:late});
+  expect(JSON.parse(ws.send.mock.calls.at(-1)![0])).toEqual({type:'direct_probe_candidate',ice:late});
+  ws.onmessage?.({data:JSON.stringify({type:'direct_probe_answer',session_id:sid,sdp:videoSdp.replace('recvonly','sendonly')})});
+  // A candidate received before setRemoteDescription completes is held boundedly.
+  ws.onmessage?.({data:JSON.stringify({type:'direct_probe_candidate',session_id:sid,ice:late})});
+  expect(peer.addIceCandidate).not.toHaveBeenCalled();await flush();
+  expect(peer.addIceCandidate).toHaveBeenCalledWith(late);
+  stop();peer.onicecandidate?.({candidate:late});expect(jest.getTimerCount()).toBe(0);
 });
 
 test.each(['private-session', 'A'.repeat(16), '1'.repeat(32)])('invalid journal correlation allocates no peer: %s', historySession => {

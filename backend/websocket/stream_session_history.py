@@ -27,7 +27,7 @@ DirectFailure = Literal[
     "video_track_ended", "video_renderer_failed", "peer_disconnected", "echo_timeout", "channel_backpressure",
     "echo_send_failed", "invalid_video_binding", "invalid_echo", "channel_failed", "channel_closed", "offer_failed", "network_changed",
     "video_access_rejected", "video_first_frame_timeout", "video_frame_timeout", "video_renderer_unavailable", "capture_changed", "session_lifetime",
-    "control_channel_failed", "control_channel_closed", "invalid_control_message", "other",
+    "control_channel_failed", "control_channel_closed", "control_channel_deadline", "invalid_control_message", "invalid_ice_candidate", "candidate_limit", "other",
 ]
 
 
@@ -51,7 +51,7 @@ class BrowserControlFence(BaseModel):
     offered_sequence: Annotated[int, Field(ge=0, le=2147483647)] | None
     acknowledged_sequence: Annotated[int, Field(ge=0, le=2147483647)] | None
     pending_count: Annotated[int, Field(ge=0, le=32)] | None
-    oldest_action: Annotated[int, Field(ge=0, le=4)] | None
+    oldest_action: Annotated[int, Field(ge=0, le=5)] | None
     oldest_age_ms: Milliseconds | None
     oldest_deadline_age_ms: Milliseconds | None
     terminal_age_ms: Milliseconds | None
@@ -94,6 +94,8 @@ class BrowserStreamSample(BaseModel):
     direct_attempts: Annotated[int, Field(ge=0, le=1000000)] | None = None
     direct_state: Literal["gathering", "signaling", "connecting", "connected", "finished", "stopped", "failed"] | None = None
     direct_failure: DirectFailure | None = None
+    direct_control_channel_state: Literal["connecting", "open", "closing", "closed", "failed"] | None = None
+    direct_control_channel_elapsed_ms: Milliseconds | None = None
     direct_ice_state: Literal["new", "checking", "connected", "completed", "disconnected", "failed", "closed"] | None = None
     direct_dtls_state: Literal["new", "connecting", "connected", "closed", "failed"] | None = None
     direct_network: BrowserIceSnapshot | None = None

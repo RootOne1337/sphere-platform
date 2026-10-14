@@ -24,3 +24,12 @@ test('older agents, disabled direct mode and older servers keep their legacy pat
   expect(deferLegacyInput(true, { ...shared, admitted: false }, null)).toBe(false);
   expect(deferLegacyInput(false, { ...shared, admissionKnown: false }, null)).toBe(false);
 });
+
+test('a retired direct failure permits fallback admission and a fresh attempt defers it again', () => {
+  expect(deferLegacyInput(true, { ...shared, result: { state: 'failed' } }, null)).toBe(false);
+  expect(deferLegacyInput(true, { ...shared, result: { state: 'stopped' } }, null)).toBe(false);
+  expect(deferLegacyInput(true, { ...shared, result: { state: 'gathering' } }, null)).toBe(true);
+  expect(deferLegacyInput(true, { ...shared, result: { state: 'connecting' } }, null)).toBe(true);
+  // A still-active video with missing control is a different failure boundary.
+  expect(deferLegacyInput(true, { ...shared, active: true, result: { state: 'failed' } }, null)).toBe(true);
+});

@@ -240,6 +240,46 @@ it.each([false, true])('does not open exclusive input while shared admission is 
   view.unmount();
 });
 
+it('the authenticated shared endpoint opens native input without a server capability round trip', () => {
+  mockCapture={captureEpoch:TOUCH_EPOCH,frameWidth:1280,frameHeight:720};
+  mockInputAdmission={admissionKnown:true,admitted:true,sharedInput:true};
+  const view=readyWheel();
+  act(()=>view.socket.onmessage?.({data:JSON.stringify({type:'stream_session',schema_version:1,history_enabled:true,
+    session_id:'1'.repeat(16),report_interval_seconds:10})}));
+  const count=view.socket.send.mock.calls.filter(([raw])=>JSON.parse(raw).type==='touch_probe').length;
+  const endpoint={...directEndpoint(),sharedInput:true};
+  act(()=>{
+    mockDirectObserve?.(endpoint);
+    mockVideoObserve?.({admitted:true,admissionKnown:true,sharedInput:true,active:true,
+      frames:1,lastFrameAt:Date.now(),attempts:1,result:null});
+  });
+  expect((endpoint.send as jest.Mock).mock.calls.map(([raw])=>JSON.parse(raw))).toEqual([
+    {type:'touch_open',capture_epoch:TOUCH_EPOCH,frame_width:1280,frame_height:720}]);
+  expect(view.socket.send.mock.calls.filter(([raw])=>JSON.parse(raw).type==='touch_probe')).toHaveLength(count);
+  expect(view.container.querySelector('[data-control-state]')).toHaveAttribute('data-control-state','opening');
+  // Open SCTP is not native READY and must not admit an unconfirmed tap.
+  view.down(1);view.up(1);expect((endpoint.send as jest.Mock)).toHaveBeenCalledTimes(1);
+  view.unmount();
+});
+
+it('failed shared ICE rearms server input instead of leaving the live fallback video in probing', () => {
+  mockCapture={captureEpoch:TOUCH_EPOCH,frameWidth:1280,frameHeight:720};
+  mockInputAdmission={admissionKnown:true,admitted:true,sharedInput:true};
+  const view=readyWheel();
+  const receive=(message:object)=>act(()=>view.socket.onmessage?.({data:JSON.stringify(message)}));
+  receive({type:'stream_session',schema_version:1,history_enabled:true,session_id:'1'.repeat(16),report_interval_seconds:10});
+  receive({type:'touch_capability',capture_epoch:TOUCH_EPOCH,frame_width:1280,frame_height:720});
+  const sent=()=>view.socket.send.mock.calls.map(([raw])=>JSON.parse(raw));
+  expect(sent().filter(s=>s.type==='touch_open')).toHaveLength(0);
+  act(()=>mockVideoObserve?.({admitted:true,admissionKnown:true,sharedInput:true,active:false,
+    frames:0,lastFrameAt:null,attempts:1,result:{state:'failed',reason:'connection_deadline'}}));
+  receive({type:'touch_capability',capture_epoch:TOUCH_EPOCH,frame_width:1280,frame_height:720});
+  expect(sent().filter(s=>s.type==='touch_open')).toHaveLength(1);
+  expect(view.container.querySelector('[data-control-state]')).toHaveAttribute('data-control-state','opening');
+  view.down(1);view.up(1);expect(view.commands()).toEqual([]);
+  view.unmount();
+});
+
 it('canvas sends every live touch through its bound direct peer and revokes safely on peer loss', () => {
   const view = readyContinuous();
   mockDirectEndpoint = directEndpoint();

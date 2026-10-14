@@ -177,6 +177,7 @@ export function DeviceStream({
   const [controlTransport, setControlTransport] = useState<'server_websocket' | 'direct_webrtc'>('server_websocket');
   const continuousRequestedRef = useRef(false);
   const continuousProbeArmRef = useRef<(() => void) | null>(null);
+  const directInputAdmissionRef = useRef<((capture: CaptureFrameBinding) => boolean) | null>(null);
   const lastContinuousReceiptAt = useRef(-Infinity);
   const continuousAllowedRef = useRef(false);
   const continuousPointRef = useRef<(x: number, y: number, clamp: boolean) => { x: number; y: number } | null>(() => null);
@@ -251,6 +252,10 @@ export function DeviceStream({
   const currentDiagnosticSession = diagnosticSession?.deviceId === deviceId && diagnosticSession.accessToken === accessToken
     && diagnosticSession.socket === wsRef.current && diagnosticSession.socket.readyState === WebSocket.OPEN ? diagnosticSession.id : null;
   const waitingForDirectInput = !recordingMode && !inspection && !readOnly && taskHandoffId === undefined
+    // Keep an already admitted fallback owner until the direct endpoint is
+    // usable and its idle/pending outcomes can be released exactly. A background
+    // ICE retry must not interrupt a gesture on the working server route.
+    && !(continuousRouteRef.current === null && ['opening', 'ready'].includes(continuousRef.current?.state ?? ''))
     && deferLegacyInput(!!currentDiagnosticSession, directVideo, directControlRef.current);
   const currentFrameOwned = hasRenderedFrame && !streamError
     && wsRef.current?.readyState === WebSocket.OPEN
@@ -304,6 +309,11 @@ export function DeviceStream({
     if (diagnosticReporter.current?.sessionId !== session) return;
     const wasActive = directVideoRef.current.active;
     directVideoRef.current = value; setDirectVideo(value);
+    if (value.result && ['failed', 'stopped', 'finished'].includes(value.result.state) && !continuousRef.current) {
+      // Waiting for a shared peer created no native owner. A failed attempt
+      // must rearm actual fallback capability admission on this same viewer.
+      continuousRequestedRef.current = false; automaticProbeRef.current = null;
+    }
     // A failed attempt can be replaced after one second; the ten-second
     // periodic report can otherwise miss every failure in a reconnect loop.
     diagnosticReporter.current?.reportFailure(value.result?.state === 'failed');
@@ -319,10 +329,11 @@ export function DeviceStream({
     if (diagnosticReporter.current?.sessionId !== session || directControlRef.current === endpoint) return;
     const previous = directControlRef.current;
     directControlRef.current = endpoint;
-    if (endpoint?.readyState === 1 && !continuousRef.current && !continuousRequestedRef.current) {
+    if (endpoint?.readyState === 1 && !continuousRef.current && (endpoint.sharedInput || !continuousRequestedRef.current)) {
       // A late authenticated control channel may arrive after the first
       // capability deadline. There is no owner or touch to release here.
       automaticProbeRef.current = null;
+      continuousRequestedRef.current = false;
     }
     if (previous && continuousRouteRef.current === previous && previous !== endpoint) {
       // Revoke the old native owner through the independent server path.
@@ -648,6 +659,140 @@ export function DeviceStream({
             : 'Повторно запрашиваем возможности управления APK. Команды не повторяются.');
           reporter.report(true);
         };
+        const admitContinuous = (capture: CaptureFrameBinding, endpoint: DirectControlEndpoint | null) => {
+          if (ignore || ended || newWs !== wsRef.current || newWs.readyState !== WebSocket.OPEN
+            || !continuousAllowedRef.current || discreteBusyRef.current || dragRef.current
+            || continuousRef.current && !["closed", "destroyed"].includes(continuousRef.current.state)) return false;
+          const inputTransport = endpoint ? new DirectPointerTransport(newWs, endpoint) : newWs;
+          continuousRouteRef.current = endpoint;
+          setControlTransport(endpoint ? 'direct_webrtc' : 'server_websocket');
+          const controller = new ContinuousPointer({ socket: inputTransport, sharedInput: endpoint?.sharedInput === true,
+            nativeKeys: endpoint?.nativeKeys === true,
+            renderedCapture: () => renderedCaptureRef.current,
+            onFence: snapshot => {
+              if (ignore || ended || newWs !== wsRef.current || continuousRef.current !== controller
+                || ['viewer_closed', 'viewer_destroyed', 'control_mode_changed'].includes(snapshot.reason)) return;
+              const atMs = Date.now();
+              setPointerFailure({ deviceId, accessToken, socket: newWs, snapshot, atMs });
+              telemetryControl.current.fence = snapshot;
+              telemetryControl.current.fenceAtMs = atMs;
+              reporter.report(true);
+            },
+            onState: (state, reason) => {
+              if (ignore || ended || newWs !== wsRef.current || continuousRef.current !== controller) return;
+              setContinuousState(state);
+              telemetryControl.current.state = state;
+              const idleReceiptLoss = reason === 'native_receipt_timeout' && controller.recoverableIdleReceiptLoss;
+              const nativeFailureRecovery = reason === 'native_input_rejected_or_unknown' && controller.nativeFailureAwaitingRelease;
+              const pointerReceiptLoss = (reason === 'native_receipt_timeout' || reason === 'server_runtime_retry' || nativeFailureRecovery)
+                && controller.unknownPointerReceiptLoss;
+              telemetryControl.current.failure = nativeFailureRecovery ? reason : pointerReceiptLoss ? 'pointer_receipt_timeout' : idleReceiptLoss ? 'idle_receipt_timeout' : reason;
+              const idleRecovery = (idleReceiptLoss || pointerReceiptLoss || nativeFailureRecovery || reason === 'native_startup_busy'
+                || reason === 'server_admission_retry' || reason === 'server_runtime_retry') && !continuousFaultRef.current;
+              if (idleRecovery) {
+                if (pointerReceiptLoss || nativeFailureRecovery) {
+                  freshViewerAfterReleaseRef.current = true;
+                }
+                if (pointerReceiptLoss) {
+                  unknownPointerNoticeRef.current = true;
+                  setInputError(UNKNOWN_POINTER_NOTICE);
+                }
+                idleRecoveryCountRef.current = Math.min(Number.MAX_SAFE_INTEGER, idleRecoveryCountRef.current + 1);
+                setIdleRecoveryCount(idleRecoveryCountRef.current);
+                idleRecoveringRef.current = true;
+                setIdleRecovering(true);
+                setContinuousFailureCode(nativeFailureRecovery ? reason : pointerReceiptLoss ? 'pointer_receipt_timeout' : idleReceiptLoss ? 'idle_receipt_timeout' : reason);
+                setContinuousReason(pointerReceiptLoss
+                  ? 'Автоматически восстанавливаем новую сессию · ожидаем освобождение касания и свежий кадр. Предыдущий жест не повторяется.'
+                  : nativeFailureRecovery
+                  ? 'Автоматически восстанавливаем управление · ожидаем подтверждённое освобождение ввода Android и свежий кадр. Команды не повторяются.'
+                  : idleReceiptLoss
+                  ? 'Автоматически восстанавливаем управление · задержалось подтверждение связи без касания. Команды не повторяются.'
+                  : reason === 'native_startup_busy'
+                  ? 'Автоматически восстанавливаем управление · Android завершает предыдущую сессию. Команды не повторяются.'
+                  : 'Автоматически восстанавливаем управление · повторно согласуем связь с Android. Команды не повторяются.');
+              } else if (reason && !['viewer_closed', 'surface_blur', 'surface_hidden', 'surface_control_lost', 'control_mode_changed', 'capture_or_socket_lost'].includes(reason)) {
+                idleRecoveringRef.current = false;
+                setIdleRecovering(false);
+                freshViewerAfterReleaseRef.current = false;
+                continuousFaultRef.current = true;
+                setContinuousFault(true);
+                setContinuousFailureCode(idleReceiptLoss ? 'idle_receipt_timeout' : reason);
+                setContinuousReason(idleReceiptLoss
+                  ? 'Управление приостановлено: задержалось подтверждение связи без касания. Автоматическое восстановление уже использовано. Восстановите управление вручную.'
+                  : 'Управление приостановлено: Android не подтвердил команду. Повтора нет. Проверьте экран перед восстановлением.');
+              }
+              if (state === 'closed') {
+                continuousRequestedRef.current = false;
+                const route = continuousRouteRef.current;
+                const shown = renderedCaptureRef.current;
+                const directCapture = route?.capture();
+                if (freshViewerAfterReleaseRef.current && route?.sharedInput
+                  && directControlRef.current === route && route.readyState === 1 && directVideoRef.current.active
+                  && shown && directCapture?.captureEpoch === shown.captureEpoch
+                  && directCapture.width === shown.frameWidth && directCapture.height === shown.frameHeight) {
+                  // Exact native RELEASE has already arrived. The same v2
+                  // media peer/capture can admit a new participant; refreshing
+                  // the server socket here needlessly tears down healthy video.
+                  freshViewerAfterReleaseRef.current = false;
+                }
+                // A slow native teardown can finish after the diagnostic
+                // wait expired. Only this owner's actual RELEASE3 may
+                // resume recovery; a timeout/unknown RELEASE never can.
+                if (freshViewerAfterReleaseRef.current && continuousFaultRef.current
+                  && !idleRecoveringRef.current) {
+                  continuousFaultRef.current = false;
+                  setContinuousFault(false);
+                  idleRecoveringRef.current = true;
+                  setIdleRecovering(true);
+                  setContinuousReason('Освобождение ввода Android подтверждено · автоматически восстанавливаем новую сессию.');
+                }
+                if (!continuousFaultRef.current && !idleRecoveringRef.current) {
+                  setContinuousReason(null);
+                  automaticProbeRef.current = null;
+                }
+                const waiting = releaseWaiterRef.current;
+                if (waiting?.controller === controller) waiting.finish(true);
+              }
+              if (state === 'ready') continuousReadySinceRef.current = performance.now();
+            },
+            onReceipt: receipt => {
+              if (ignore || ended || newWs !== wsRef.current || continuousRef.current !== controller) return;
+              const now = performance.now();
+              // Only sustained native receipts reset retry backoff, not merely
+              // receiving a frame or opening another WebSocket.
+              if (idleRecoveryCountRef.current > 0 && controller.state === 'ready'
+                && now - continuousReadySinceRef.current >= IDLE_RECOVERY_LIMITS.stableMs) {
+                idleRecoveryCountRef.current = 0;
+                setIdleRecoveryCount(0);
+              }
+              if (now - lastContinuousReceiptAt.current < 250 && receipt.action !== 1 && receipt.action !== 3) return;
+              lastContinuousReceiptAt.current = now;
+              setContinuousReceipt({ action: receipt.action, sequence: receipt.sequence,
+                ms: Math.round(receipt.receiptRoundTripMs) });
+            },
+          });
+          continuousSupportedRef.current = true;
+          continuousRef.current = controller;
+          const detachReceipt = endpoint?.listen(message => {
+            if (!ignore && !ended && wsRef.current === newWs && continuousRef.current === controller
+              && continuousRouteRef.current === endpoint) controller.receive(message);
+          });
+          const detachPointer = attachContinuousPointer({ canvas, controller,
+            allowed: () => continuousAllowedRef.current,
+            point: (event, clamp) => continuousPointRef.current(event.clientX, event.clientY, clamp) });
+          continuousDisposeRef.current = () => { detachReceipt?.(); detachPointer(); };
+          clearTimeout(probeTimer);
+          controller.open(capture);
+          return true;
+        };
+        directInputAdmissionRef.current = capture => {
+          const endpoint = directControlRef.current, binding = endpoint?.capture();
+          if (!directVideoRef.current.active || !endpoint?.sharedInput || endpoint.readyState !== 1
+            || !binding || binding.captureEpoch !== capture.captureEpoch
+            || binding.width !== capture.frameWidth || binding.height !== capture.frameHeight) return false;
+          return admitContinuous(capture, endpoint);
+        };
         newWs.onmessage = (evt) => {
           if (ignore || ended) return;
           lastReceived = Date.now();
@@ -715,127 +860,7 @@ export function DeviceStream({
                   return;
                 }
                 const endpoint = directVideoRef.current.active && directControlRef.current?.readyState === 1 ? directControlRef.current : null;
-                const inputTransport = endpoint ? new DirectPointerTransport(newWs, endpoint) : newWs;
-                continuousRouteRef.current = endpoint;
-                setControlTransport(endpoint ? 'direct_webrtc' : 'server_websocket');
-                const controller = new ContinuousPointer({ socket: inputTransport, sharedInput: endpoint?.sharedInput === true,
-                  nativeKeys: endpoint?.nativeKeys === true,
-                  renderedCapture: () => renderedCaptureRef.current,
-                  onFence: snapshot => {
-                    if (ignore || ended || newWs !== wsRef.current || continuousRef.current !== controller
-                      || ['viewer_closed', 'viewer_destroyed', 'control_mode_changed'].includes(snapshot.reason)) return;
-                    const atMs = Date.now();
-                    setPointerFailure({ deviceId, accessToken, socket: newWs, snapshot, atMs });
-                    telemetryControl.current.fence = snapshot;
-                    telemetryControl.current.fenceAtMs = atMs;
-                    reporter.report(true);
-                  },
-                  onState: (state, reason) => {
-                    if (ignore || ended || newWs !== wsRef.current || continuousRef.current !== controller) return;
-                    setContinuousState(state);
-                    telemetryControl.current.state = state;
-                    const idleReceiptLoss = reason === 'native_receipt_timeout' && controller.recoverableIdleReceiptLoss;
-                    const nativeFailureRecovery = reason === 'native_input_rejected_or_unknown' && controller.nativeFailureAwaitingRelease;
-                    const pointerReceiptLoss = (reason === 'native_receipt_timeout' || reason === 'server_runtime_retry' || nativeFailureRecovery)
-                      && controller.unknownPointerReceiptLoss;
-                    telemetryControl.current.failure = nativeFailureRecovery ? reason : pointerReceiptLoss ? 'pointer_receipt_timeout' : idleReceiptLoss ? 'idle_receipt_timeout' : reason;
-                    const idleRecovery = (idleReceiptLoss || pointerReceiptLoss || nativeFailureRecovery || reason === 'native_startup_busy'
-                      || reason === 'server_admission_retry' || reason === 'server_runtime_retry') && !continuousFaultRef.current;
-                    if (idleRecovery) {
-                      if (pointerReceiptLoss || nativeFailureRecovery) {
-                        freshViewerAfterReleaseRef.current = true;
-                      }
-                      if (pointerReceiptLoss) {
-                        unknownPointerNoticeRef.current = true;
-                        setInputError(UNKNOWN_POINTER_NOTICE);
-                      }
-                      idleRecoveryCountRef.current = Math.min(Number.MAX_SAFE_INTEGER, idleRecoveryCountRef.current + 1);
-                      setIdleRecoveryCount(idleRecoveryCountRef.current);
-                      idleRecoveringRef.current = true;
-                      setIdleRecovering(true);
-                      setContinuousFailureCode(nativeFailureRecovery ? reason : pointerReceiptLoss ? 'pointer_receipt_timeout' : idleReceiptLoss ? 'idle_receipt_timeout' : reason);
-                      setContinuousReason(pointerReceiptLoss
-                        ? 'Автоматически восстанавливаем новую сессию · ожидаем освобождение касания и свежий кадр. Предыдущий жест не повторяется.'
-                        : nativeFailureRecovery
-                        ? 'Автоматически восстанавливаем управление · ожидаем подтверждённое освобождение ввода Android и свежий кадр. Команды не повторяются.'
-                        : idleReceiptLoss
-                        ? 'Автоматически восстанавливаем управление · задержалось подтверждение связи без касания. Команды не повторяются.'
-                        : reason === 'native_startup_busy'
-                        ? 'Автоматически восстанавливаем управление · Android завершает предыдущую сессию. Команды не повторяются.'
-                        : 'Автоматически восстанавливаем управление · повторно согласуем связь с Android. Команды не повторяются.');
-                    } else if (reason && !['viewer_closed', 'surface_blur', 'surface_hidden', 'surface_control_lost', 'control_mode_changed', 'capture_or_socket_lost'].includes(reason)) {
-                      idleRecoveringRef.current = false;
-                      setIdleRecovering(false);
-                      freshViewerAfterReleaseRef.current = false;
-                      continuousFaultRef.current = true;
-                      setContinuousFault(true);
-                      setContinuousFailureCode(idleReceiptLoss ? 'idle_receipt_timeout' : reason);
-                      setContinuousReason(idleReceiptLoss
-                        ? 'Управление приостановлено: задержалось подтверждение связи без касания. Автоматическое восстановление уже использовано. Восстановите управление вручную.'
-                        : 'Управление приостановлено: Android не подтвердил команду. Повтора нет. Проверьте экран перед восстановлением.');
-                    }
-                    if (state === 'closed') {
-                      continuousRequestedRef.current = false;
-                      const route = continuousRouteRef.current;
-                      const shown = renderedCaptureRef.current;
-                      const directCapture = route?.capture();
-                      if (freshViewerAfterReleaseRef.current && route?.sharedInput
-                        && directControlRef.current === route && route.readyState === 1 && directVideoRef.current.active
-                        && shown && directCapture?.captureEpoch === shown.captureEpoch
-                        && directCapture.width === shown.frameWidth && directCapture.height === shown.frameHeight) {
-                        // Exact native RELEASE has already arrived. The same v2
-                        // media peer/capture can admit a new participant; refreshing
-                        // the server socket here needlessly tears down healthy video.
-                        freshViewerAfterReleaseRef.current = false;
-                      }
-                      // A slow native teardown can finish after the diagnostic
-                      // wait expired. Only this owner's actual RELEASE3 may
-                      // resume recovery; a timeout/unknown RELEASE never can.
-                      if (freshViewerAfterReleaseRef.current && continuousFaultRef.current
-                        && !idleRecoveringRef.current) {
-                        continuousFaultRef.current = false;
-                        setContinuousFault(false);
-                        idleRecoveringRef.current = true;
-                        setIdleRecovering(true);
-                        setContinuousReason('Освобождение ввода Android подтверждено · автоматически восстанавливаем новую сессию.');
-                      }
-                      if (!continuousFaultRef.current && !idleRecoveringRef.current) {
-                        setContinuousReason(null);
-                        automaticProbeRef.current = null;
-                      }
-                      const waiting = releaseWaiterRef.current;
-                      if (waiting?.controller === controller) waiting.finish(true);
-                    }
-                    if (state === 'ready') continuousReadySinceRef.current = performance.now();
-                  },
-                  onReceipt: receipt => {
-                    if (ignore || ended || newWs !== wsRef.current || continuousRef.current !== controller) return;
-                    const now = performance.now();
-                    // Only sustained native receipts reset retry backoff, not merely
-                    // receiving a frame or opening another WebSocket.
-                    if (idleRecoveryCountRef.current > 0 && controller.state === 'ready'
-                      && now - continuousReadySinceRef.current >= IDLE_RECOVERY_LIMITS.stableMs) {
-                      idleRecoveryCountRef.current = 0;
-                      setIdleRecoveryCount(0);
-                    }
-                    if (now - lastContinuousReceiptAt.current < 250 && receipt.action !== 1 && receipt.action !== 3) return;
-                    lastContinuousReceiptAt.current = now;
-                    setContinuousReceipt({ action: receipt.action, sequence: receipt.sequence,
-                      ms: Math.round(receipt.receiptRoundTripMs) });
-                  },
-                });
-                continuousSupportedRef.current = true;
-                continuousRef.current = controller;
-                const detachReceipt = endpoint?.listen(message => {
-                  if (!ignore && !ended && wsRef.current === newWs && continuousRef.current === controller
-                    && continuousRouteRef.current === endpoint) controller.receive(message);
-                });
-                const detachPointer = attachContinuousPointer({ canvas, controller,
-                  allowed: () => continuousAllowedRef.current,
-                  point: (event, clamp) => continuousPointRef.current(event.clientX, event.clientY, clamp) });
-                continuousDisposeRef.current = () => { detachReceipt?.(); detachPointer(); };
-                clearTimeout(probeTimer);
-                controller.open(capture);
+                admitContinuous(capture, endpoint);
                 return;
               }
               if (msg.type === 'touch_session' || msg.type === 'touch_cancelled' || msg.type === 'continuous_input_status') {
@@ -958,6 +983,7 @@ export function DeviceStream({
       continuousRef.current = null;
       continuousRequestedRef.current = false;
       continuousProbeArmRef.current = null;
+      directInputAdmissionRef.current = null;
       restartIdleSocketRef.current = null;
       releaseWaiterRef.current?.finish(false);
       releaseWaiterRef.current = null;
@@ -1084,6 +1110,10 @@ export function DeviceStream({
     setContinuousReason(null);
     setContinuousFailureCode(null);
     setContinuousReceipt(null);
+    // The authenticated shared endpoint already binds this exact capture.
+    // OPEN/READY use the same peer without an extra broker capability trip.
+    const capture = renderedCaptureRef.current;
+    if (capture && directInputAdmissionRef.current?.(capture)) return;
     wsRef.current.send(JSON.stringify({ type: 'touch_probe' }));
     continuousProbeArmRef.current?.();
   };

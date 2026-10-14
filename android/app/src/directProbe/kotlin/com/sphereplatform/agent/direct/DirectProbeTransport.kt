@@ -45,6 +45,12 @@ class DirectProbeTransport(
         var iceProfile = "host"
         var videoRequested = false
         var sharedControl = false
+        var trickle = false
+        var candidatesReceived = 0
+        var candidatesSent = 0
+        val localCandidates = ArrayList<DirectIceCandidate.Fields>()
+        val remoteCandidates = ArrayList<DirectIceCandidate.Fields>()
+        var remoteSet = false
         var capture: com.sphereplatform.agent.streaming.CaptureInputSession? = null
         var video: DirectEncodedVideoSource? = null
         @Volatile var videoReady = false
@@ -102,7 +108,7 @@ class DirectProbeTransport(
 
     fun handle(message: JsonObject): Boolean {
         val kind = (message["type"] as? JsonPrimitive)?.contentOrNull
-        if (kind !in setOf("direct_probe_offer", "direct_probe_close", "direct_probe_renew")) return false
+        if (kind !in setOf("direct_probe_offer", "direct_probe_close", "direct_probe_renew", "direct_probe_candidate")) return false
         val wsGeneration = generation() ?: return true
         val token = fence.get()
         val receivedAt = SystemClock.elapsedRealtime()
@@ -112,6 +118,13 @@ class DirectProbeTransport(
             if (!DirectProbeProtocol.validSession(sid)) return@enqueue
             if (kind == "direct_probe_close") {
                 if (message.keys == setOf("type", "session_id")) peers[sid]?.let { close(it) }
+            } else if (kind == "direct_probe_candidate") {
+                val current = peers[sid] ?: return@enqueue
+                if (!current.trickle || !valid(current) || current.candidatesReceived >= DirectIceCandidate.MAX
+                    || message.keys != setOf("type", "session_id", "ice")) return@enqueue
+                val candidate = DirectIceCandidate.parse(message["ice"]) ?: return@enqueue
+                current.candidatesReceived++
+                if (current.remoteSet) addCandidate(current, candidate) else current.remoteCandidates.add(candidate)
             } else if (kind == "direct_probe_renew") {
                 val current = peers[sid] ?: return@enqueue
                 if (current.session != sid || !current.live || message.keys !in setOf(LegacyVideoRenewal.BASE_KEYS, LegacyVideoRenewal.EXTENDED_KEYS)) return@enqueue
@@ -136,7 +149,8 @@ class DirectProbeTransport(
                 val video = live || mode == DirectVideoProtocol.MODE
                 val expected = setOf("type", "session_id", "sdp", "ttl_ms") +
                     (if (video) setOf("media") else emptySet()) + (if ("ice" in message) setOf("ice") else emptySet()) +
-                    (if ("shared_control" in message) setOf("shared_control") else emptySet())
+                    (if ("shared_control" in message) setOf("shared_control") else emptySet()) +
+                    (if ("trickle_ice" in message) setOf("trickle_ice") else emptySet())
                 if (peers.size >= 10 || peers.containsKey(sid) || message.keys != expected || ttl !in 1..DirectProbeProtocol.MAX_TTL_MS ||
                     !(if (video) DirectVideoProtocol.validSdp(sdp, true) else DirectProbeProtocol.validSdp(sdp))) return@enqueue
                 val grant = if ("ice" in message) DirectProbeTurnGrant.parse(message["ice"], sid) ?: return@enqueue else null
@@ -144,8 +158,10 @@ class DirectProbeTransport(
                 if (live && grant != null) return@enqueue // Relay renewal has a separate credential lifetime.
                 val sharedControl = message["shared_control"] == JsonPrimitive(true)
                 if ("shared_control" in message && (!sharedControl || !live)) return@enqueue
+                val trickle = message["trickle_ice"] == JsonPrimitive(true)
+                if ("trickle_ice" in message && (!trickle || !live || grant != null)) return@enqueue
                 open(Probe(sid, wsGeneration, token, receivedAt, ttl, live).apply {
-                    videoRequested = video; this.sharedControl = sharedControl
+                    videoRequested = video; this.sharedControl = sharedControl; this.trickle = trickle
                 }, sdp, grant)
             }
         }
@@ -224,7 +240,16 @@ class DirectProbeTransport(
             p.connection = p.factory?.createPeerConnection(config, object : PeerConnection.Observer {
                 override fun onSignalingChange(state: PeerConnection.SignalingState) = Unit
                 override fun onIceConnectionReceivingChange(receiving: Boolean) = Unit
-                override fun onIceCandidate(candidate: IceCandidate) = Unit
+                override fun onIceCandidate(candidate: IceCandidate) {
+                    enqueue {
+                        if (!valid(p) || !p.trickle || p.candidatesSent + p.localCandidates.size >= DirectIceCandidate.MAX) return@enqueue
+                        val fields = DirectIceCandidate.parse(buildJsonObject {
+                            put("candidate", candidate.sdp); put("sdpMid", candidate.sdpMid)
+                            put("sdpMLineIndex", candidate.sdpMLineIndex)
+                        }) ?: return@enqueue
+                        if (p.answered) sendCandidate(p, fields) else p.localCandidates.add(fields)
+                    }
+                }
                 override fun onIceCandidatesRemoved(candidates: Array<out IceCandidate>) = Unit
                 override fun onAddStream(stream: MediaStream) = Unit
                 override fun onRemoveStream(stream: MediaStream) = Unit
@@ -264,8 +289,19 @@ class DirectProbeTransport(
                                         Charsets.UTF_8.decode(buffer.data).toString() else ""
                                     // V2 has its own bounded per-participant actor. MOVE does not
                                     // allocate a closure in the shared signaling/stats mailbox.
-                                    val dispatch = {
+                                    val dispatch = letDispatch@{
                                         if (valid(p) && p.inputChannel === channel) {
+                                            // SCTP onMessage may precede the queued OPEN-state
+                                            // callback. Establish the authenticated shared grant
+                                            // synchronously before the first participant OPEN;
+                                            // otherwise a fast localhost client loses that OPEN.
+                                            if (p.sharedControl) {
+                                                val current = inputChannel(p.session)
+                                                if (current == null || !input.sharedGranted(current)) {
+                                                    enqueue { if (peers[p.session] === p) close(p) }
+                                                    return@letDispatch
+                                                }
+                                            }
                                             val message = runCatching { Json.parseToJsonElement(text) as? JsonObject }.getOrNull()
                                             if (message == null || !input.directMessage(p.session, message)) input.directClosed(p.session)
                                         }
@@ -310,6 +346,10 @@ class DirectProbeTransport(
             }
             progress(p, ProbeStage.PEER_READY)
             p.connection?.setRemoteDescription(observer(p, ProbeStage.REMOTE_FAILED, set = {
+                p.remoteSet = true
+                val candidates = p.remoteCandidates.toList(); p.remoteCandidates.clear()
+                candidates.forEach { if (valid(p)) addCandidate(p, it) }
+                if (!valid(p)) return@observer
                 progress(p, ProbeStage.REMOTE_SET)
                 p.video?.let { video ->
                     p.connection?.addTrack(video.start(checkNotNull(p.factory)), listOf("sphere-screen"))?.let { sender ->
@@ -354,13 +394,29 @@ class DirectProbeTransport(
 
     private fun answer(p: Probe) {
         val connection = p.connection ?: return
-        if (!valid(p) || p.answered || connection.iceGatheringState() != PeerConnection.IceGatheringState.COMPLETE) return
+        if (!valid(p) || p.answered || !p.trickle && connection.iceGatheringState() != PeerConnection.IceGatheringState.COMPLETE) return
         val sdp = connection.localDescription?.description ?: return
         if (!(if (p.videoRequested) DirectVideoProtocol.validSdp(sdp, false) else DirectProbeProtocol.validSdp(sdp)) || !send(p.generation, buildJsonObject {
             put("type", "direct_probe_answer"); put("session_id", p.session); put("sdp", sdp)
         })) { close(p, ProbeStage.ANSWER_FAILED); return }
         p.answered = true
         progress(p, ProbeStage.ANSWER_SENT)
+        val candidates = p.localCandidates.toList(); p.localCandidates.clear()
+        candidates.forEach { if (valid(p)) sendCandidate(p, it) }
+    }
+
+    private fun sendCandidate(p: Probe, fields: DirectIceCandidate.Fields) {
+        if (!valid(p) || !p.trickle || !p.answered || p.candidatesSent >= DirectIceCandidate.MAX) return
+        p.candidatesSent++
+        if (!send(p.generation, buildJsonObject {
+            put("type", "direct_probe_candidate"); put("session_id", p.session)
+            put("ice", DirectIceCandidate.wire(fields))
+        })) close(p, ProbeStage.ANSWER_FAILED)
+    }
+
+    private fun addCandidate(p: Probe, fields: DirectIceCandidate.Fields) {
+        if (p.connection?.addIceCandidate(IceCandidate(fields.mid, fields.index, fields.candidate)) != true)
+            close(p, ProbeStage.REMOTE_FAILED)
     }
 
     private fun echo(p: Probe, text: String) {

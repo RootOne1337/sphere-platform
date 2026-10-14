@@ -18361,6 +18361,11 @@
             "type": "boolean",
             "title": "Direct Key Input Enabled",
             "default": false
+          },
+          "trickle_ice_enabled": {
+            "type": "boolean",
+            "title": "Trickle Ice Enabled",
+            "default": false
           }
         },
         "type": "object",

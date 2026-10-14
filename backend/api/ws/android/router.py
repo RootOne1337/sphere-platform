@@ -884,7 +884,7 @@ async def android_agent_ws(
                             await handle_command_result(device_id, org_id_str, msg, manager)
                         case "event":
                             await handle_device_event(device_id, org_id_str, msg)
-                        case "direct_probe_answer":
+                        case "direct_probe_answer" | "direct_probe_candidate":
                             from backend.websocket.direct_probe_runtime import (
                                 get_direct_probe_runtime,
                             )

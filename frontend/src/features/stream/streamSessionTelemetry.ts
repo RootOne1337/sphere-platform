@@ -17,7 +17,7 @@ const reasons = new Set(['probe_deadline', 'gathering_deadline', 'signaling_dead
   'invalid_signal', 'signaling_closed', 'webrtc_unavailable', 'invalid_video_track', 'video_track_ended',
   'video_renderer_failed', 'peer_disconnected', 'echo_timeout', 'channel_backpressure', 'echo_send_failed',
   'invalid_video_binding', 'invalid_echo', 'channel_failed', 'channel_closed', 'offer_failed', 'network_changed',
-  'control_channel_failed', 'control_channel_closed', 'invalid_control_message',
+  'control_channel_failed', 'control_channel_closed', 'control_channel_deadline', 'invalid_control_message', 'invalid_ice_candidate', 'candidate_limit',
   'video_access_rejected', 'video_first_frame_timeout', 'video_frame_timeout', 'video_renderer_unavailable', 'capture_changed', 'session_lifetime']);
 const directStates = new Set(['gathering', 'signaling', 'connecting', 'connected', 'finished', 'stopped', 'failed']);
 const controlFailures = new Set(['native_receipt_timeout', 'idle_receipt_timeout', 'pointer_receipt_timeout', 'native_startup_busy', 'native_input_rejected_or_unknown',
@@ -34,7 +34,7 @@ function controlFence(fence: PointerFenceObservation | null | undefined, ageMs: 
   return { reason: controlFailures.has(fence.reason) ? fence.reason : 'other', phase: fence.phase, age_ms: milliseconds(ageMs),
     pointer_held: fence.pointerHeld === true, idle_heartbeat_only: fence.idleHeartbeatOnly === true,
     offered_sequence: integer(fence.offeredSequence, 2147483647), acknowledged_sequence: integer(fence.acknowledgedSequence, 2147483647),
-    pending_count: integer(fence.pendingCount, 32), oldest_action: integer(fence.oldestAction, 4),
+    pending_count: integer(fence.pendingCount, 32), oldest_action: integer(fence.oldestAction, 5),
     oldest_age_ms: milliseconds(fence.oldestAgeMs), oldest_deadline_age_ms: milliseconds(fence.oldestDeadlineAgeMs),
     terminal_age_ms: milliseconds(fence.terminalAgeMs), tick_gap_ms: milliseconds(fence.tickGapMs),
     last_send_age_ms: milliseconds(fence.lastSendAgeMs), last_receipt_age_ms: milliseconds(fence.lastReceiptAgeMs),
@@ -67,6 +67,8 @@ export function browserStreamSample(stats: StreamDecoderStats, control: ControlO
       direct_protocol: direct.result?.protocol === 'udp' || direct.result?.protocol === 'tcp' ? direct.result.protocol : null,
       direct_state: direct.result && directStates.has(direct.result.state) ? direct.result.state : null,
       direct_failure: directFailure(direct.result?.reason),
+      direct_control_channel_state: direct.result?.controlChannelState ?? null,
+      direct_control_channel_elapsed_ms: milliseconds(direct.result?.controlChannelElapsedMs ?? null),
       direct_ice_state: direct.result?.iceState ?? null,
       direct_dtls_state: ['new', 'connecting', 'connected', 'closed', 'failed'].includes(direct.result?.network?.dtlsState ?? '')
         ? direct.result!.network!.dtlsState : null,

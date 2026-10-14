@@ -18,6 +18,8 @@ export interface DirectProbeResult {
   networkSampleAtMs?: number;
   networkAgeAtStopMs?: number;
   iceState?: RTCIceConnectionState;
+  controlChannelState?: 'connecting' | 'open' | 'closing' | 'closed' | 'failed';
+  controlChannelElapsedMs?: number;
   videoBinding?: DirectVideoBinding;
   videoStats?: DirectVideoStats;
   /** Exact signaling nonce; never included in public diagnostic scalar samples. */
@@ -58,7 +60,7 @@ export function startDirectVideoSession(
   url: string, token: string, report: (value: DirectProbeResult) => void,
   options: { controlledStunUrl?: string; onTrack: (track: MediaStreamTrack) => void;
     receiverSize?: { width: number; height: number };
-    historySession?: string; controlSession?: string; sharedInput?: boolean; nativeKeys?: boolean; onControlChannel?: (channel: DirectControlEndpoint | null) => void;
+    historySession?: string; controlSession?: string; sharedInput?: boolean; nativeKeys?: boolean; trickleIce?: boolean; onControlChannel?: (channel: DirectControlEndpoint | null) => void;
     /** Actual recent presentation, independently bounded by the renderer watchdog. */
     hasRecentVideoFrame?: () => boolean },
 ): () => void {
@@ -67,7 +69,7 @@ export function startDirectVideoSession(
 
 function startDirectSession(
   url: string, token: string, report: (value: DirectProbeResult) => void,
-  options: { controlledStunUrl?: string; relayGrant?: boolean; controlSession?: string; historySession?: string; sharedInput?: boolean; nativeKeys?: boolean;
+  options: { controlledStunUrl?: string; relayGrant?: boolean; controlSession?: string; historySession?: string; sharedInput?: boolean; nativeKeys?: boolean; trickleIce?: boolean;
     onControlChannel?: (channel: DirectControlEndpoint | null) => void;
     receiverSize?: { width: number; height: number };
     hasRecentVideoFrame?: () => boolean }, onVideoTrack?: (track: MediaStreamTrack) => void, live = false,
@@ -88,6 +90,9 @@ function startDirectSession(
   let videoTrack: MediaStreamTrack | null = null;
   let session: string | null = null;
   let answered = false, offered = false;
+  let remoteSet = false, localCandidatesSent = 0, remoteCandidatesReceived = 0;
+  let signalingReady = false;
+  const localCandidates: RTCIceCandidateInit[] = [], remoteCandidates: RTCIceCandidateInit[] = [];
   let sequence = 0;
   let pending: { sequence: number; sent: number } | null = null;
   let interval: ReturnType<typeof setInterval> | undefined;
@@ -96,6 +101,7 @@ function startDirectSession(
   let phaseDeadline: ReturnType<typeof setTimeout> | undefined;
   let disconnectDeadline: ReturnType<typeof setTimeout> | undefined;
   let localCandidateDeadline: ReturnType<typeof setTimeout> | undefined;
+  let controlDeadline: ReturnType<typeof setTimeout> | undefined;
   let statsInFlight = false, statsCalls = 0;
   let renewal = 0;
   const videoStats = new DirectVideoStatsSampler();
@@ -105,11 +111,11 @@ function startDirectSession(
     if (stopped) return;
     stopped = true;
     clearTimeout(deadline); clearTimeout(phaseDeadline); clearTimeout(disconnectDeadline);
-    clearTimeout(localCandidateDeadline);
+    clearTimeout(localCandidateDeadline); clearTimeout(controlDeadline);
     if (interval) clearInterval(interval);
     if (networkInterval) clearInterval(networkInterval);
     if (renewalInterval) clearInterval(renewalInterval);
-    if (peer) { peer.onicegatheringstatechange = null; peer.onconnectionstatechange = null; peer.ontrack = null; }
+    if (peer) { peer.onicegatheringstatechange = null; peer.onicecandidate = null; peer.onconnectionstatechange = null; peer.ontrack = null; }
     if (videoTrack) { videoTrack.onended = null; try { videoTrack.stop(); } catch { /* Independent native cleanup. */ } }
     if (channel) { channel.onopen = null; channel.onmessage = null; channel.onerror = null; channel.onclose = null; }
     if (controlChannel) {
@@ -125,7 +131,7 @@ function startDirectSession(
     try { channel?.close(); } catch { /* Peer cleanup must still run. */ }
     try { controlChannel?.close(); } catch { /* Independent control cleanup. */ }
     try { peer?.close(); } catch { /* Timers and callbacks have already been retired. */ }
-    pending = null;
+    pending = null; localCandidates.length = remoteCandidates.length = 0;
     result = { ...result, state: reason ? 'failed' : !live && result.samples.length === 20 ? 'finished' : 'stopped', reason,
       networkAgeAtStopMs: result.networkSampleAtMs === undefined ? undefined :
         Math.max(0, performance.now() - startedAt - result.networkSampleAtMs) }; emit();
@@ -167,6 +173,19 @@ function startDirectSession(
       catch { stop('signaling_unavailable'); }
     } else openSignaling(sdp);
   };
+  const flushCandidates = () => {
+    if (!options.trickleIce || stopped || !offered || !signalingReady || ws?.readyState !== WebSocket.OPEN) return;
+    while (localCandidates.length && localCandidatesSent < 64) {
+      const ice = localCandidates.shift()!;
+      localCandidatesSent++;
+      try { ws.send(JSON.stringify({ type: 'direct_probe_candidate', ice })); }
+      catch { stop('signaling_unavailable'); return; }
+    }
+  };
+  const addCandidate = (ice: RTCIceCandidateInit) => {
+    if (stopped || !peer) return;
+    void peer.addIceCandidate(ice).catch(() => stop('invalid_ice_candidate'));
+  };
   const openSignaling = (sdp?: string) => {
     ws = new WebSocket(url);
     ws.onopen = () => {
@@ -175,9 +194,12 @@ function startDirectSession(
         ws.send(JSON.stringify(video ? { token, protocol: live ? 'sphere-video-v1' : 'sphere-video-probe-v1', ...(options.relayGrant ? { relay: true } : {}),
           ...(live && options.controlSession ? { control_session: options.controlSession } : {}),
           ...(live && options.controlSession && options.sharedInput ? { shared_control: true } : {}),
+          ...(live && options.trickleIce ? { trickle_ice: true } : {}),
           ...(options.historySession ? { history_session: options.historySession } : {}) }
           : options.relayGrant ? { token, protocol: 'sphere-probe-v2' } : { token }));
         if (sdp) ws.send(JSON.stringify({ type: 'direct_probe_offer', sdp }));
+        signalingReady = true;
+        flushCandidates();
       } catch { stop('signaling_unavailable'); }
     };
     ws.onmessage = event => {
@@ -185,6 +207,17 @@ function startDirectSession(
       try {
         if (typeof event.data !== 'string' || new TextEncoder().encode(event.data).length > 36864) throw Error();
         const data = JSON.parse(event.data);
+        if (data.type === 'direct_probe_candidate' && live && options.trickleIce && session && answered) {
+          if (Object.keys(data).sort().join() !== 'ice,session_id,type' || data.session_id !== session
+            || !data.ice || Object.keys(data.ice).sort().join() !== 'candidate,sdpMLineIndex,sdpMid'
+            || typeof data.ice.candidate !== 'string' || data.ice.candidate.length > 2048
+            || typeof data.ice.sdpMid !== 'string' || !/^[A-Za-z0-9_-]{1,16}$/.test(data.ice.sdpMid)
+            || !Number.isSafeInteger(data.ice.sdpMLineIndex) || data.ice.sdpMLineIndex < 0 || data.ice.sdpMLineIndex > 7
+            || remoteCandidatesReceived >= 64) return stop('invalid_ice_candidate');
+          remoteCandidatesReceived++;
+          if (remoteSet) addCandidate(data.ice); else remoteCandidates.push(data.ice);
+          return;
+        }
         if (options.relayGrant && !session) {
           const ready = parseTurnReady(data, video ? 'sphere-video-probe-v1' : 'sphere-probe-v2');
           if (!ready) return stop('invalid_ice_grant');
@@ -203,6 +236,8 @@ function startDirectSession(
         boundPhase('connection_deadline', 12_000);
         void peer.setRemoteDescription({ type: 'answer', sdp: data.sdp }).then(() => {
           if (stopped) return;
+          remoteSet = true;
+          remoteCandidates.splice(0).forEach(addCandidate);
           if (result.state === 'signaling') { result.state = 'connecting'; emit(); }
           collectNetwork(); networkInterval = setInterval(collectNetwork, live ? 5000 : 1000);
         }).catch(() => stop('invalid_answer'));
@@ -223,10 +258,16 @@ function startDirectSession(
         if (!/^[0-9a-f]{16}$/.test(options.controlSession)) throw Error('invalid_control_session');
         const direct = peer.createDataChannel(options.sharedInput ? 'sphere-control-v2' : 'sphere-control-v1', { ordered: true });
         controlChannel = direct;
+        const controlState = (state: NonNullable<DirectProbeResult['controlChannelState']>) => {
+          result = { ...result, controlChannelState: state, controlChannelElapsedMs: Math.max(0, performance.now() - startedAt) };
+        };
+        controlState('connecting');
         let retired = false;
         const retire = (reason: string) => {
           if (retired) return;
-          retired = true; controlListener = null; options.onControlChannel?.(null);
+          retired = true; clearTimeout(controlDeadline);
+          controlState(reason === 'control_channel_closed' ? 'closed' : 'failed');
+          controlListener = null; options.onControlChannel?.(null);
           // A closed SCTP channel cannot be reopened. Retire this exact media
           // grant so LiveDirectVideo negotiates a fresh peer/channel and the
           // server/native owner is released before another input OPEN.
@@ -236,6 +277,7 @@ function startDirectSession(
         direct.onopen = () => {
           if (stopped || retired) return;
           if (!session) return retire('missing_binding');
+          clearTimeout(controlDeadline); controlState('open'); emit();
           options.onControlChannel?.({ session, sharedInput: options.sharedInput === true,
             nativeKeys: options.sharedInput === true && options.nativeKeys === true,
             get readyState() { return !stopped && !retired && direct.readyState === 'open' ? 1 : 0; },
@@ -273,6 +315,18 @@ function startDirectSession(
     }
     catch { stop('webrtc_unavailable'); return; }
     peer.onicegatheringstatechange = () => gathered();
+    peer.onicecandidate = event => {
+      if (stopped || !live || !options.trickleIce || !event.candidate) return;
+      if (localCandidatesSent + localCandidates.length >= 64) return stop('candidate_limit');
+      const c = event.candidate;
+      if (!/^candidate:\S+\s+[12]\s+udp\s+/i.test(c.candidate)) return; // TCP stays in the bounded SDP batch.
+      // Bounded credentials/addresses live only in authenticated signaling.
+      if (c.candidate.length > 2048 || !c.sdpMid || c.sdpMLineIndex === null) return stop('invalid_ice_candidate');
+      localCandidates.push({ candidate: c.candidate, sdpMid: c.sdpMid, sdpMLineIndex: c.sdpMLineIndex });
+      // Begin ICE as soon as the first usable local candidate exists. Later
+      // host/reflexive candidates are preserved instead of discarded at2s.
+      gathered(true); flushCandidates();
+    };
     peer.onconnectionstatechange = () => {
       if (!peer || stopped) return;
       if (['failed', 'closed'].includes(peer.connectionState)) return stop('peer_disconnected');
@@ -293,6 +347,16 @@ function startDirectSession(
       clearTimeout(phaseDeadline);
       result.state = 'connected'; emit();
       if (live) {
+        // Media SCTP readiness is independent from input SCTP readiness. The
+        // eight-hour live lease cannot replace this bounded setup deadline.
+        if (controlChannel && controlChannel.readyState !== 'open') {
+          controlDeadline = setTimeout(() => {
+            if (stopped || controlChannel?.readyState === 'open') return;
+            result = { ...result, controlChannelState: 'failed',
+              controlChannelElapsedMs: Math.max(0, performance.now() - startedAt) };
+            stop('control_channel_deadline');
+          }, 6000);
+        }
         clearTimeout(deadline);
         deadline = setTimeout(() => stop('session_lifetime'), 8 * 3600_000);
         renewalInterval = setInterval(() => {

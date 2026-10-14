@@ -42,11 +42,22 @@ test('a bad fence field remains unknown and a missing fence cannot inherit the p
 beforeEach(() => jest.useFakeTimers());
 afterEach(() => jest.useRealTimers());
 
-test.each(['control_channel_closed', 'control_channel_failed', 'invalid_control_message'])('direct input recovery keeps its bounded cause in history: %s', reason => {
+test.each(['control_channel_closed', 'control_channel_failed', 'control_channel_deadline', 'invalid_control_message', 'invalid_ice_candidate'])('direct input recovery keeps its bounded cause in history: %s', reason => {
   expect(directFailure(reason)).toBe(reason);
   const diagnostic = directDiagnosticSample({ state: 'failed', samples: [], path: 'host', protocol: 'udp', reason }, 1, 'host', true);
   expect(diagnostic.reason).toBe(reason);
   expect(JSON.stringify(diagnostic)).not.toMatch(/token|coordinate|SDP|credential/);
+});
+
+test('an unready SCTP channel and a pending native key remain distinct diagnostic facts without input text', () => {
+  const direct={admitted:true,admissionKnown:true,active:true,frames:2,lastFrameAt:1000,attempts:1,
+    result:{state:'connected' as const,samples:[],path:'host' as const,protocol:'udp',reason:null,
+      controlChannelState:'connecting' as const,controlChannelElapsedMs:1300}};
+  const result=browserStreamSample(stats,{state:'opening',failure:null,rtt:null,attempts:0,
+    fence:{...fence,oldestAction:5}},1000,direct);
+  expect(result).toMatchObject({transport:'direct_webrtc',control_state:'opening',
+    direct_control_channel_state:'connecting',direct_control_channel_elapsed_ms:1300,control_fence:{oldest_action:5}});
+  expect(JSON.stringify(result)).not.toMatch(/keycode|text|owner|candidate:/);
 });
 
 test('reports only after server admission, once per cadence, with no raw decoder text or credentials', () => {
