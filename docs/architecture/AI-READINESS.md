@@ -1,5 +1,10 @@
 # Будущий AI-контур: готовность и границы интеграции
 
+**Реализация 16 октября, после основного проекта:** [первый headless transport pilot](../audits/2026-10-16/HEADLESS-MOTOR-WORKER.md)
+работает с APK76 без браузера: direct video, RGB около5 Гц, native admission/idle ALIVE и закрытие участника.
+Есть отдельный модуль и инструкция [MOTOR-WORKER](../operations/MOTOR-WORKER.md).
+Начальные серверные bytes, input actuation, task delegation, модель и gameplay остаются отдельными незакрытыми пунктами.
+
 **Основной документ от 16 октября:** [Игровой AI-контур Sphere: архитектура, модели и план реализации](../design/MOTOR-AI-PLATFORM.md).
 Он объединяет требования Black Russia/50×5 Гц, сравнение NitroGen/GameWAM/VLM, связи исходников,
 контракты, владение DAG/эпизодом, эксплуатацию и 13 gates. Датированные материалы ниже — история

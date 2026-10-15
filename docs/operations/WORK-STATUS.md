@@ -1,5 +1,11 @@
 # Работы, требования пользователя и границы приёмки
 
+**16 октября — выполнена первая часть P0-C/G02 AI-плана.** Добавлен headless `motor_worker` с direct H.264,
+одним latest-frame slot, RGB sampling и отдельным control admission/idle heartbeat/close.
+PH011: 15,013с, 75 RGB, 49 ALIVE, после handover0 server-media bytes; два пересекающихся клиента тоже прошли.
+В ходе разработки обнаружен native SDP abort; совместимость клиента исправлена, общая APK hardening не принята.
+Модель, profile/multi-touch, DAG delegation и gameplay пока не реализованы. [Квитанция и оставшиеся работы](../audits/2026-10-16/HEADLESS-MOTOR-WORKER.md).
+
 **16 октября — объединён проект будущего игрового AI.** [Основной документ](../design/MOTOR-AI-PLATFORM.md)
 содержит 26 требований, сравнение моторных моделей/VLM и доказательств, контракты и план до приёмки.
 По коду выявлен будущий конфликт: DAG удерживает discrete reservation и не допустит continuous motor child

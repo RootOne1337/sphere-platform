@@ -5,9 +5,9 @@
   "countsByRole": {
     "ADR": 6,
     "CURRENT_ENTRYPOINT": 8,
-    "DATED_EVIDENCE": 325,
+    "DATED_EVIDENCE": 326,
     "DESIGN_SPECIFICATION": 80,
-    "OPERATING_GUIDE": 64,
+    "OPERATING_GUIDE": 65,
     "PROJECT_POLICY": 7,
     "SUPPORTING_DOCUMENT": 7
   },
@@ -1433,6 +1433,10 @@
       "role": "DATED_EVIDENCE"
     },
     {
+      "file": "docs/audits/2026-10-16/HEADLESS-MOTOR-WORKER.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
       "file": "docs/audits/2026-10-16/MODE-TRANSPORT-AUTHORIZATION.md",
       "role": "DATED_EVIDENCE"
     },
@@ -1578,6 +1582,10 @@
     },
     {
       "file": "docs/operations/LOCATION-HIERARCHY.md",
+      "role": "OPERATING_GUIDE"
+    },
+    {
+      "file": "docs/operations/MOTOR-WORKER.md",
       "role": "OPERATING_GUIDE"
     },
     {

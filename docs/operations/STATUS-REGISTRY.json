@@ -5199,6 +5199,22 @@
       "gameplayAccepted": false,
       "fleetCapacityBenchmarked": false,
       "taskEpisodeDelegationImplemented": false
+    },
+    "headlessTransportPilot": {
+      "observedAtUtc": "2026-10-15T22:35:57.070450+00:00",
+      "guide": "docs/operations/MOTOR-WORKER.md",
+      "evidence": "docs/audits/2026-10-16/HEADLESS-MOTOR-WORKER.json",
+      "evidenceSha256NormalizedLf": "637d6d21974c618ed27bfa7522bae9cb646702d8a01c3e59635131647179b6d9",
+      "module": "motor_worker",
+      "version": "0.1.0",
+      "headlessTransportImplemented": true,
+      "idleNativeAdmissionConfirmed": true,
+      "nativeGameActionsVerified": false,
+      "modelInstalled": false,
+      "gameplayAccepted": false,
+      "strictNoServerBootstrapBytes": false,
+      "sourceClockCorrelationImplemented": false,
+      "uiApiApkChanged": false
     }
   }
 }
