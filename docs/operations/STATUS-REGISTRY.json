@@ -1,8 +1,8 @@
 {
   "schemaVersion": 1,
-  "reviewedAtUtc": "2026-10-15T00:28:30.182541+00:00",
-  "sourceReviewed": "4b39c385f2d9600bbf8ad9e9c53453338af3367d",
-  "scope": "UI4b39c385 / API969a7444 installed on3015/Tuna. APK76 completed OTA on15 devices;14 exact installed hashes,1 command/version-only proofs;6 offline pending. Finite local two-client mouse/touch/native keys, ten Tuna clients, three forced peer recoveries, actual agent-process restart and Unicode/chords/composition/fullscreen with original IME restoration accepted. Not20+, real phone/hotspot, WAN/TURN, broker-offline autonomy, audio, server-fallback full keyboard, full local CI or production SLA. User remote PH025 check: direct video/control READY, network RTT22ms and control ACK25–26ms; finite observation only. Web UI implementation resumed by user; stream/control baseline retained, UI-only installation pending.",
+  "reviewedAtUtc": "2026-10-15T00:40:25.912592+00:00",
+  "sourceReviewed": "cde2f094f1b6404be359c48d391d30f39f8adbdc",
+  "scope": "UIcde2f094/API969 installed on3015/Tuna. Fleet and appearance first wave accepted in finite UI scope; original transport/APK76 evidence and open limits retained. APK77 not installed. UI implementation authorized; heartbeat remains paused.",
   "baseline": "docs/audits/2026-10-05/ENTERPRISE-PRODUCT-BACKLOG.json",
   "previousCrosscheck": "docs/audits/2026-10-09/CHAT-CODE-RECONCILIATION.json",
   "counts": {
@@ -11,11 +11,11 @@
     "open": 41
   },
   "installed": {
-    "lastObservedUtc": "2026-10-14T22:14:09.863647+00:00",
-    "ui": "4b39c385f2d9600bbf8ad9e9c53453338af3367d",
+    "lastObservedUtc": "2026-10-15T00:40:25.912592+00:00",
+    "ui": "cde2f094f1b6404be359c48d391d30f39f8adbdc",
     "api": "969a74440d67e987be98f37cdb450f7c47817f68",
-    "evidence": "docs/audits/2026-10-15/DIRECT-KEYBOARD76-OBSERVATION.json",
-    "observation": "UI4b39c385 / API969a7444 installed on3015/Tuna. APK76 completed OTA on15 devices;14 exact installed hashes,1 command/version-only proofs;6 offline pending. Finite local two-client mouse/touch/native keys, ten Tuna clients, three forced peer recoveries, actual agent-process restart and Unicode/chords/composition/fullscreen with original IME restoration accepted. Not20+, real phone/hotspot, WAN/TURN, broker-offline autonomy, audio, server-fallback full keyboard, full local CI or production SLA.",
+    "evidence": "docs/audits/2026-10-15/UI-REFINEMENT-INSTALLED.json",
+    "observation": "UI fleet/appearance refinement installed on3015/Tuna; finite UI checks and stream smoke. API969/APK76 baseline retained, no new fleet OTA. Original keyboard76 acceptance remains historical and bounded.",
     "pilotApk": {
       "device": "auto-ph-011",
       "deviceId": "414ce0e9-4b93-4f96-b9ca-ee675f53835e",
@@ -28,7 +28,7 @@
       "packageProofObservedAtUtc": "2026-10-14T22:12:45.514176+00:00",
       "scope": "Exact installed package proof; availability and finite runtime tests reported separately."
     },
-    "evidenceSha256NormalizedLf": "34cf2a66e9f42399404a6bbc8341392d2d0ebd7a828dfcccedcf27ddfb520aa8",
+    "evidenceSha256NormalizedLf": "b77c34bcf399a2bf7f29c3a04a4a4f6057f51510495c3e4c582dfe744746b9b7",
     "additionalPilotApks": [
       {
         "device": "auto-ph-028",
@@ -1640,8 +1640,8 @@
     "primaryVideoInstalled": true,
     "primaryVideoObserved": true,
     "productionAccepted": false,
-    "currentObservationEvidence": "docs/audits/2026-10-15/DIRECT-KEYBOARD76-OBSERVATION.json",
-    "currentObservationEvidenceSha256NormalizedLf": "34cf2a66e9f42399404a6bbc8341392d2d0ebd7a828dfcccedcf27ddfb520aa8",
+    "currentObservationEvidence": "docs/audits/2026-10-15/UI-REFINEMENT-INSTALLED.json",
+    "currentObservationEvidenceSha256NormalizedLf": "b77c34bcf399a2bf7f29c3a04a4a4f6057f51510495c3e4c582dfe744746b9b7",
     "pilotEvidenceScope": "UI331/API983 installed on 3015/Tuna; frontend-only input promotion fix, backend code tree unchanged; signed APK60 installed hashes and completed OTA commands confirmed on15 online devices. PH010 ordinary Chrome direct video/native gestures, actual server fallback and recovery, and mixed legacy viewer accepted finitely. Closest routes, physical network switching, shared input and full display latency remain OPEN.",
     "historicalPrimaryFrames": 1804,
     "directInputCandidate": {
@@ -4105,14 +4105,15 @@
       "title": "Визуальный аудит, размеры, hover/pin sidebar, темы, логотип и glass",
       "state": "PARTIAL",
       "productItems": [],
-      "acceptedScope": "Finite original audit retained. First UI wave implemented and locally checked: AG Grid Community 36.2.0 resizing/reorder/pinning, mobile cards, appearance/palette/density contract, sidebar auto/pin/rail, logo, optional glass and clipped toolbars. 169 suites/2455 tests and real Chrome finite checks passed. Not yet installed.",
-      "remaining": "Exact-source CI and UI delivery; UX-06 read-only profile, remaining summaries/terminology/forms/roles, actual phone keyboard, exhaustive visual/performance/contrast acceptance. Android explorer remains design-only.",
+      "acceptedScope": "Finite original audit retained. First UI wave implemented and locally checked: AG Grid Community 36.2.0 resizing/reorder/pinning, mobile cards, appearance/palette/density contract, sidebar auto/pin/rail, logo, optional glass and clipped toolbars. 169 suites/2455 tests and real Chrome finite checks passed. UI installed on3015/Tuna after exact-source CI and finite browser validation.",
+      "remaining": "UX-06 read-only profile, remaining summaries/terminology/forms/roles, actual phone keyboard, exhaustive visual/performance/contrast acceptance. Android explorer remains design-only.",
       "evidence": [
         "docs/audits/2026-10-15/UI-UX-VISUAL-AUDIT.md",
         "docs/audits/2026-10-15/UI-VISUAL-OBSERVATION.json",
         "docs/audits/2026-10-15/UI-CONTROL-INVENTORY.json",
         "docs/audits/2026-10-15/UI-REFINEMENT-DELIVERY.md",
-        "docs/audits/2026-10-15/UI-REFINEMENT-OBSERVATION.json"
+        "docs/audits/2026-10-15/UI-REFINEMENT-OBSERVATION.json",
+        "docs/audits/2026-10-15/UI-REFINEMENT-INSTALLED.json"
       ],
       "sourcePaths": [
         "frontend/src/features/navigation/NOCSidebar.tsx",
@@ -5013,8 +5014,8 @@
     ]
   },
   "developmentState": {
-    "state": "UI_REFINEMENT_ACTIVE_BY_USER",
-    "recordedAtUtc": "2026-10-15T00:28:30.182541+00:00",
+    "state": "UI_REFINEMENT_DELIVERED",
+    "recordedAtUtc": "2026-10-15T00:40:25.912592+00:00",
     "reason": "User explicitly resumed implementation of web redesign and requested ready-made resizable/reorderable fleet table.",
     "guide": "docs/audits/2026-10-15/STREAM-CONTROL-FREEZE.md",
     "automationId": "enterprise",
@@ -5024,7 +5025,7 @@
     "preparedNextVersion": "1.2.77",
     "preparedNextVersionInstalled": false,
     "scope": "Web UI refinement authorized. Stable stream/control baseline retained; APK77 not installed. Scheduled enterprise heartbeat remains paused.",
-    "latestUserWork": "AG Grid Community fleet, adaptive cards, appearance contract and common UI implemented; local tests passed; exact CI and UI-only installation pending."
+    "latestUserWork": "UI first wave installed on3015/Tuna after exact-source CI. Finite fleet, appearance and stream smoke verified. Remaining audit findings tracked separately; heartbeat remains paused."
   },
   "visualAudit": {
     "state": "AUDIT_AND_DESIGN_PREPARED_NOT_IMPLEMENTED",
@@ -5048,12 +5049,14 @@
     "scope": "Installed UI4b/API969; read-only browser/source audit and design proposal. Unavailable roles, conditional records, OS keyboard and live-stream states have explicit gaps. No new APK/Web/API installation."
   },
   "uiRefinement": {
-    "state": "SOURCE_VALIDATED_NOT_INSTALLED",
-    "reviewedAtUtc": "2026-10-15T00:28:30.182541+00:00",
+    "state": "INSTALLED_FINITE",
+    "reviewedAtUtc": "2026-10-15T00:40:25.912592+00:00",
     "guide": "docs/audits/2026-10-15/UI-REFINEMENT-DELIVERY.md",
-    "evidence": "docs/audits/2026-10-15/UI-REFINEMENT-OBSERVATION.json",
-    "evidenceSha256NormalizedLf": "53fcbc47930b56fef64114357c0c3423b6c0fe621049acc27747fb66b89057b2",
+    "evidence": "docs/audits/2026-10-15/UI-REFINEMENT-INSTALLED.json",
+    "evidenceSha256NormalizedLf": "b77c34bcf399a2bf7f29c3a04a4a4f6057f51510495c3e4c582dfe744746b9b7",
     "originalAuditUnchanged": true,
-    "allAuditFindingsClosed": false
+    "allAuditFindingsClosed": false,
+    "sourceRevision": "cde2f094f1b6404be359c48d391d30f39f8adbdc",
+    "sourceValidation": "docs/audits/2026-10-15/UI-REFINEMENT-OBSERVATION.json"
   }
 }
