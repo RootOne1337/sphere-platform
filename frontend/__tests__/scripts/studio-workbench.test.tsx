@@ -644,13 +644,18 @@ it('drains native input after Stop without disabling its own controller, then im
   expect(view.onInsert).toHaveBeenCalledWith([{type:'tap',x:640,y:360}]);
 });
 
-it.each(['unknown','interrupted','unsupported'] as const)('does not import a native %s gesture or accept its late success',outcome=>{
+it.each(['unknown','interrupted','unsupported','cancelled'] as const)('does not import a native %s gesture or accept its late success',outcome=>{
   const view=openDevice();fireEvent.click(screen.getByRole('button',{name:'Записать действия'}));
   act(()=>mockNativeObserver!({phase:'started',requestId:'native-1'}));
   act(()=>mockNativeObserver!({phase:'finished',requestId:'native-1',outcome,input:null,completedAt:1100}));
-  expect(mockRecordingMode).toBe(false);expect(screen.getByRole('alert')).toBeInTheDocument();
+  expect(mockRecordingMode).toBe(false);
+  if(outcome==='unknown')expect(screen.getByRole('alert')).toBeInTheDocument();
+  else {expect(screen.queryByRole('alert')).not.toBeInTheDocument();expect(screen.getByText(/Он не (?:добавлен|заменён)/)).toBeInTheDocument();}
   expect(screen.getByRole('button',{name:'Вставить в граф'})).toBeDisabled();
   expect(view.onInsert).not.toHaveBeenCalled();
+  act(()=>mockNativeObserver!({phase:'finished',requestId:'native-1',outcome:'confirmed',completedAt:1200,
+    input:{deviceId,at:1000,dimensions:{width:960,height:540},command:{type:'click',x:480,y:270}}}));
+  expect(screen.queryByRole('list',{name:'Записанные действия'})).not.toBeInTheDocument();
 });
 
 it('stops a hidden laboratory without discarding recording and accepts only its existing late ACK', () => {
