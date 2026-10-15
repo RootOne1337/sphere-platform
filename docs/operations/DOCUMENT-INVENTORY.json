@@ -7,7 +7,7 @@
     "CURRENT_ENTRYPOINT": 8,
     "DATED_EVIDENCE": 327,
     "DESIGN_SPECIFICATION": 80,
-    "OPERATING_GUIDE": 65,
+    "OPERATING_GUIDE": 66,
     "PROJECT_POLICY": 7,
     "SUPPORTING_DOCUMENT": 7
   },
@@ -1578,6 +1578,10 @@
     },
     {
       "file": "docs/operations/LDPLAYER-NETWORK-RECOVERY.md",
+      "role": "OPERATING_GUIDE"
+    },
+    {
+      "file": "docs/operations/LOCAL-BACKEND-DELIVERY.md",
       "role": "OPERATING_GUIDE"
     },
     {

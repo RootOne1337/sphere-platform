@@ -62,6 +62,7 @@ APPROVED_PATHS = {
     "backend/api/v1/batches/router.py", "backend/services/batch_service.py",
     "backend/api/v1/updates/router.py",
     "backend/api/v1/streaming/router.py", "backend/schemas/stream_quality.py",
+    "backend/services/stream_quality.py", "backend/websocket/capture_lifecycle.py",
     "backend/schemas/devices.py", "backend/services/device_viewers.py",
     "backend/database/redis_client.py",
     "backend/schemas/stream_diagnostics.py", "backend/websocket/stream_metrics.py",
@@ -280,9 +281,13 @@ def load_or_reuse_image(artifact: Path, admitted: dict[str, Any]) -> tuple[str, 
             "Unexpected admitted image inventory")
     loaded = not identifiers
     if loaded:
+        require(not admitted.get("localArtifact"), "Local image missing; rebuild and probe instead of importing an archive")
         command(["docker", "image", "load", "--input", str(artifact / "image.tar.gz")], timeout=180)
     images = json.loads(command(["docker", "image", "inspect", tag]))
     require(isinstance(images, list) and len(images) == 1 and isinstance(images[0], dict), "Unexpected admitted image inspection")
+    if admitted.get("localArtifact"):
+        require(images[0].get("Id") == admitted["imageId"], "Local image identity changed")
+        return admitted["imageId"], False
     return loaded_image_id(artifact, images[0], admitted["imageId"]), loaded
 
 
@@ -290,15 +295,17 @@ def execute(artifact: Path, source: str, expected_image_id: str, expected_curren
             direct_probe_device: str | None = None, disable_direct_probe: bool = False,
             readonly_video_probe: bool = False, live_video: bool = False,
             direct_probe_devices: tuple[str, ...] | None = None, direct_input: bool = False,
-            mdns_config_file: Path | None = None, *, allow_degraded_volume: bool = False) -> dict[str, Any]:
+            mdns_config_file: Path | None = None, *, allow_degraded_volume: bool = False,
+            local_artifact: bool = False) -> dict[str, Any]:
     admitted_env = probe_environment(direct_probe_device, disable_direct_probe, readonly_video_probe, live_video, direct_probe_devices, direct_input)
     admitted_env.update(mdns_environment(mdns_config_file))
     require(bool(re.fullmatch(r"sha256:[a-f0-9]{64}", expected_image_id)), "Expected independent CI image ID")
     artifact = workspace_path(artifact, private=True)
-    admitted = admit(artifact, source)
+    admitted = admit(artifact, source, local=True) if local_artifact else admit(artifact, source)
     require(admitted["imageId"] == expected_image_id, "Archive image differs from independent CI admission")
     receipt = bounded_json(artifact / "receipt.json", 256 * 1024)
-    check_ci(receipt)
+    if not local_artifact:
+        check_ci(receipt)
     before = snapshot()
     current = inspect(BACKEND)
     require(current["Id"] == before[BACKEND]["id"] and current["State"]["Health"]["Status"] == "healthy",
@@ -341,6 +348,7 @@ def execute(artifact: Path, source: str, expected_image_id: str, expected_curren
     findings = evaluate(collect(ROOT))
     admission_findings = admitted_findings(findings, allow_degraded_volume=allow_degraded_volume)
     plan = {"sourceRevision": source, "runId": admitted["runId"], "imageId": admitted["imageId"],
+        "provenance": "maintainer-local-executor" if local_artifact else "github-hosted-ci",
         "archiveBytes": admitted["archiveBytes"], "previousBackend": before[BACKEND], "sourceChanges": changes,
         "schemaHeads": heads, "schemaMigrationPerformed": False, "resourceFindings": findings,
         "admissionFindings": admission_findings, "volumeExceptionRequested": allow_degraded_volume,
@@ -398,7 +406,9 @@ def execute(artifact: Path, source: str, expected_image_id: str, expected_curren
         # Successful delivery must not accumulate another archive/image forever.
         # Maintenance failure does not roll back an already healthy installation.
         from scripts.pilot.reviewed_artifact_retention import post_install
-        result["cacheRetention"] = post_install(ROOT, source, before[BACKEND]["imageId"])
+        result["cacheRetention"] = ({"state": "not-needed-for-local-archive", "archivesCreated": 0,
+                                     "previousImagePreserved": True} if local_artifact else
+                                    post_install(ROOT, source, before[BACKEND]["imageId"]))
         write(output / "installed.json", result)
         return result
     except Exception:
@@ -427,6 +437,8 @@ def main() -> int:
     parser.add_argument("--expected-image-id", required=True)
     parser.add_argument("--expected-current-source", required=True)
     parser.add_argument("--apply", action="store_true")
+    parser.add_argument("--local-artifact", action="store_true",
+                        help="Require local full-suite, image-source and packaged probes instead of hosted CI provenance")
     parser.add_argument("--allow-degraded-volume", action="store_true",
                         help="Explicit operator exception for the measured volume warning only")
     probe = parser.add_mutually_exclusive_group()
@@ -447,7 +459,8 @@ def main() -> int:
                                  args.apply, args.direct_probe_device, args.disable_direct_probe, args.readonly_video_probe,
                                  args.live_video, tuple(args.direct_probe_devices) if args.direct_probe_devices is not None else None,
                                  args.direct_input, args.mdns_config_file,
-                                 allow_degraded_volume=args.allow_degraded_volume)))
+                                 allow_degraded_volume=args.allow_degraded_volume,
+                                 local_artifact=args.local_artifact)))
     except (ValueError, OSError, subprocess.SubprocessError, KeyError, TypeError):
         print(json.dumps({"runtimeInstalled": None, "state": "not-admitted", "detail": "Review private plan/CI/host evidence"}))
         return 2

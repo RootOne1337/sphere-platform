@@ -22,7 +22,10 @@ COMMAND = ["gunicorn", "backend.main:app", "--config", "backend/gunicorn_conf.py
            "--access-logfile", "-"]
 
 
-def admit(directory: Path, source: str) -> dict[str, Any]:
+def admit(directory: Path, source: str, *, local: bool = False) -> dict[str, Any]:
+    if local:
+        from scripts.pilot.local_backend_artifact import admit_local
+        return admit_local(directory, source)
     require(bool(re.fullmatch(r"[a-f0-9]{40}", source)), "Expected full source revision")
     directory = directory.resolve(strict=True)
     receipt = bounded_json(directory / "receipt.json", 256 * 1024)
