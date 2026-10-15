@@ -5,8 +5,8 @@
   "countsByRole": {
     "ADR": 6,
     "CURRENT_ENTRYPOINT": 8,
-    "DATED_EVIDENCE": 324,
-    "DESIGN_SPECIFICATION": 78,
+    "DATED_EVIDENCE": 325,
+    "DESIGN_SPECIFICATION": 79,
     "OPERATING_GUIDE": 64,
     "PROJECT_POLICY": 7,
     "SUPPORTING_DOCUMENT": 7
@@ -1437,6 +1437,10 @@
       "role": "DATED_EVIDENCE"
     },
     {
+      "file": "docs/audits/2026-10-16/NITROGEN-NAVIGATION-AND-BUDGET.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
       "file": "docs/audits/2026-10-16/NITROGEN-READINESS.md",
       "role": "DATED_EVIDENCE"
     },
@@ -1466,6 +1470,10 @@
     },
     {
       "file": "docs/design/DIRECT-RECORDER.md",
+      "role": "DESIGN_SPECIFICATION"
+    },
+    {
+      "file": "docs/design/GAME-CONTROL-PROFILES.md",
       "role": "DESIGN_SPECIFICATION"
     },
     {

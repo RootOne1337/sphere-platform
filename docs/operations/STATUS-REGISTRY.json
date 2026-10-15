@@ -5165,6 +5165,24 @@
     "gameplayAccepted": false,
     "modelInstalled": false,
     "commercialUseCleared": false,
-    "runtimeChanged": false
+    "runtimeChanged": false,
+    "navigationAndProfilesFollowup": {
+      "observedAtUtc": "2026-10-15T21:13:20.162394+00:00",
+      "sourceBaseRevision": "a598202b2069e7e6a896e9683899e0ae52146044",
+      "guide": "docs/audits/2026-10-16/NITROGEN-NAVIGATION-AND-BUDGET.md",
+      "design": "docs/design/GAME-CONTROL-PROFILES.md",
+      "evidence": "docs/audits/2026-10-16/NITROGEN-NAVIGATION-AND-BUDGET.json",
+      "evidenceSha256NormalizedLf": "ee4fad833bc13bf0d52698b5c837cd530c85b9254b0105305640dac571b4444c",
+      "game": "Black Russia",
+      "targetDevices": 50,
+      "targetObservationHzPerDevice": [4, 5],
+      "calculator": "scripts/pilot/motor_budget.py",
+      "calculatorUnitTestsPassed": 9,
+      "gameProfileImplemented": false,
+      "multiTouchImplemented": false,
+      "gpuCapacityMeasured": false,
+      "waypointNavigationAccepted": false,
+      "upstreamSamplingDeterministicByDefault": false
+    }
   }
 }
