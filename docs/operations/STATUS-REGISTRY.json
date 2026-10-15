@@ -1,8 +1,8 @@
 {
   "schemaVersion": 1,
-  "reviewedAtUtc": "2026-10-15T01:04:45.792438+00:00",
-  "sourceReviewed": "cde2f094f1b6404be359c48d391d30f39f8adbdc",
-  "scope": "UIcde2f094/API969 installed on3015/Tuna. Fleet and appearance first wave accepted in finite UI scope; original transport/APK76 evidence and open limits retained. APK77 not installed. UI implementation authorized; heartbeat remains paused.",
+  "reviewedAtUtc": "2026-10-15T01:14:10.962234+00:00",
+  "sourceReviewed": "92bd6dd8f6e3b45f9fa470d6015d1e5196d7f859",
+  "scope": "UI92bd6dd8/API969 installed on3015/Tuna. Material/inspector first follow-up accepted in finite UI scope. APK76 and original transport evidence retained, APK77 not installed, remaining audit items open; heartbeat remains paused.",
   "baseline": "docs/audits/2026-10-05/ENTERPRISE-PRODUCT-BACKLOG.json",
   "previousCrosscheck": "docs/audits/2026-10-09/CHAT-CODE-RECONCILIATION.json",
   "counts": {
@@ -11,11 +11,11 @@
     "open": 41
   },
   "installed": {
-    "lastObservedUtc": "2026-10-15T00:40:25.912592+00:00",
-    "ui": "cde2f094f1b6404be359c48d391d30f39f8adbdc",
+    "lastObservedUtc": "2026-10-15T01:14:10.962234+00:00",
+    "ui": "92bd6dd8f6e3b45f9fa470d6015d1e5196d7f859",
     "api": "969a74440d67e987be98f37cdb450f7c47817f68",
-    "evidence": "docs/audits/2026-10-15/UI-REFINEMENT-INSTALLED.json",
-    "observation": "UI fleet/appearance refinement installed on3015/Tuna; finite UI checks and stream smoke. API969/APK76 baseline retained, no new fleet OTA. Original keyboard76 acceptance remains historical and bounded.",
+    "evidence": "docs/audits/2026-10-15/MATERIALS-INSPECTOR-INSTALLED.json",
+    "observation": "UI92bd6dd8 installed on3015/Tuna: eight palettes, material looks, device modal and non-overlapping wall. Finite UI/material/presentation checks and direct-stream smoke; API969/APK76 unchanged. Earlier expanded transport acceptance remains bounded historical evidence.",
     "pilotApk": {
       "device": "auto-ph-011",
       "deviceId": "414ce0e9-4b93-4f96-b9ca-ee675f53835e",
@@ -28,7 +28,7 @@
       "packageProofObservedAtUtc": "2026-10-14T22:12:45.514176+00:00",
       "scope": "Exact installed package proof; availability and finite runtime tests reported separately."
     },
-    "evidenceSha256NormalizedLf": "b77c34bcf399a2bf7f29c3a04a4a4f6057f51510495c3e4c582dfe744746b9b7",
+    "evidenceSha256NormalizedLf": "cde2c247e9d0e9e4efbae92cda3019abbcf9c0b17a5d918ac5801a1e15e4c504",
     "additionalPilotApks": [
       {
         "device": "auto-ph-028",
@@ -1640,8 +1640,8 @@
     "primaryVideoInstalled": true,
     "primaryVideoObserved": true,
     "productionAccepted": false,
-    "currentObservationEvidence": "docs/audits/2026-10-15/UI-REFINEMENT-INSTALLED.json",
-    "currentObservationEvidenceSha256NormalizedLf": "b77c34bcf399a2bf7f29c3a04a4a4f6057f51510495c3e4c582dfe744746b9b7",
+    "currentObservationEvidence": "docs/audits/2026-10-15/MATERIALS-INSPECTOR-INSTALLED.json",
+    "currentObservationEvidenceSha256NormalizedLf": "cde2c247e9d0e9e4efbae92cda3019abbcf9c0b17a5d918ac5801a1e15e4c504",
     "pilotEvidenceScope": "UI331/API983 installed on 3015/Tuna; frontend-only input promotion fix, backend code tree unchanged; signed APK60 installed hashes and completed OTA commands confirmed on15 online devices. PH010 ordinary Chrome direct video/native gestures, actual server fallback and recovery, and mixed legacy viewer accepted finitely. Closest routes, physical network switching, shared input and full display latency remain OPEN.",
     "historicalPrimaryFrames": 1804,
     "directInputCandidate": {
@@ -4105,7 +4105,7 @@
       "title": "Визуальный аудит, размеры, hover/pin sidebar, темы, логотип и glass",
       "state": "PARTIAL",
       "productItems": [],
-      "acceptedScope": "Finite original audit retained. First UI wave implemented and locally checked: AG Grid Community 36.2.0 resizing/reorder/pinning, mobile cards, appearance/palette/density contract, sidebar auto/pin/rail, logo, optional glass and clipped toolbars. 169 suites/2455 tests and real Chrome finite checks passed. UI installed on3015/Tuna after exact-source CI and finite browser validation.",
+      "acceptedScope": "Finite original audit plus installed UI first waves: AG Grid resizing/reorder/pinning, mobile cards, appearance contract, eight palettes/six looks, real matte/glass/intensity, modal/drawer inspector, motion with system limits, sidebar and fixed wall layout. Source2464 frontend tests, exact-source CI and finite installed browser checks passed. Not global production acceptance.",
       "remaining": "UX-06 read-only profile, remaining summaries/terminology/forms/roles, actual phone keyboard, exhaustive visual/performance/contrast acceptance. Android explorer remains design-only.",
       "evidence": [
         "docs/audits/2026-10-15/UI-UX-VISUAL-AUDIT.md",
@@ -4113,14 +4113,19 @@
         "docs/audits/2026-10-15/UI-CONTROL-INVENTORY.json",
         "docs/audits/2026-10-15/UI-REFINEMENT-DELIVERY.md",
         "docs/audits/2026-10-15/UI-REFINEMENT-OBSERVATION.json",
-        "docs/audits/2026-10-15/UI-REFINEMENT-INSTALLED.json"
+        "docs/audits/2026-10-15/UI-REFINEMENT-INSTALLED.json",
+        "docs/audits/2026-10-15/MATERIALS-INSPECTOR-DELIVERY.md",
+        "docs/audits/2026-10-15/MATERIALS-INSPECTOR-INSTALLED.json"
       ],
       "sourcePaths": [
         "frontend/src/features/navigation/NOCSidebar.tsx",
         "frontend/src/features/preferences/AppearanceDrawer.tsx",
         "frontend/src/shared/theme.ts",
         "frontend/src/shared/store/useUIStore.ts",
-        "frontend/components/ui/dialog.tsx"
+        "frontend/components/ui/dialog.tsx",
+        "frontend/src/features/inspector/ContextInspector.tsx",
+        "frontend/src/features/devices/MultiStreamGrid.tsx",
+        "frontend/src/shared/themePresets.ts"
       ],
       "fleetAccepted": false
     },
@@ -5014,8 +5019,8 @@
     ]
   },
   "developmentState": {
-    "state": "UI_MATERIAL_REFINEMENT_ACTIVE",
-    "recordedAtUtc": "2026-10-15T01:04:45.792438+00:00",
+    "state": "UI_MATERIAL_REFINEMENT_DELIVERED",
+    "recordedAtUtc": "2026-10-15T01:14:10.962234+00:00",
     "reason": "User explicitly resumed implementation of web redesign and requested ready-made resizable/reorderable fleet table.",
     "guide": "docs/audits/2026-10-15/STREAM-CONTROL-FREEZE.md",
     "automationId": "enterprise",
@@ -5025,7 +5030,7 @@
     "preparedNextVersion": "1.2.77",
     "preparedNextVersionInstalled": false,
     "scope": "Web UI refinement authorized. Stable stream/control baseline retained; APK77 not installed. Scheduled enterprise heartbeat remains paused.",
-    "latestUserWork": "Material and inspector refinement requested by user, source implemented and locally tested; exact CI and web-only rollout pending. Heartbeat remains paused."
+    "latestUserWork": "Material and inspector UI installed after exact-source CI; finite clean browser checks on3015/Tuna passed. API/APK unchanged. Remaining UI audit and file manager are open; heartbeat paused."
   },
   "visualAudit": {
     "state": "AUDIT_AND_DESIGN_PREPARED_NOT_IMPLEMENTED",
@@ -5057,13 +5062,16 @@
     "originalAuditUnchanged": true,
     "allAuditFindingsClosed": false,
     "sourceRevision": "cde2f094f1b6404be359c48d391d30f39f8adbdc",
-    "sourceValidation": "docs/audits/2026-10-15/UI-REFINEMENT-OBSERVATION.json"
+    "sourceValidation": "docs/audits/2026-10-15/UI-REFINEMENT-OBSERVATION.json",
+    "supersededBy": "docs/audits/2026-10-15/MATERIALS-INSPECTOR-INSTALLED.json"
   },
   "materialRefinement": {
-    "state": "SOURCE_VALIDATED_NOT_INSTALLED",
+    "state": "INSTALLED_FINITE",
     "guide": "docs/audits/2026-10-15/MATERIALS-INSPECTOR-DELIVERY.md",
-    "evidence": "docs/audits/2026-10-15/MATERIALS-INSPECTOR-OBSERVATION.json",
-    "evidenceSha256NormalizedLf": "d33fd4f811ecf3790a28c346c135daa1185caaadb5488de27ed9b4bcc574d854",
-    "scope": "Real matte/glass, recommended looks, eight palettes, modal inspector, shared motion and non-overlapping video wall. UI-only delivery pending."
+    "evidence": "docs/audits/2026-10-15/MATERIALS-INSPECTOR-INSTALLED.json",
+    "evidenceSha256NormalizedLf": "cde2c247e9d0e9e4efbae92cda3019abbcf9c0b17a5d918ac5801a1e15e4c504",
+    "scope": "Material, appearance, modal inspector and wall UI installed on3015/Tuna. API/APK catalog and other containers preserved. Finite UI checks and one live wall smoke; not production SLA or64-live capacity.",
+    "sourceRevision": "92bd6dd8f6e3b45f9fa470d6015d1e5196d7f859",
+    "sourceValidation": "docs/audits/2026-10-15/MATERIALS-INSPECTOR-OBSERVATION.json"
   }
 }
