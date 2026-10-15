@@ -332,6 +332,28 @@ it('failed shared ICE rearms server input instead of leaving the live fallback v
   view.unmount();
 });
 
+it('a background ICE retry does not discard the fallback capability requested after the first failure', () => {
+  mockCapture={captureEpoch:TOUCH_EPOCH,frameWidth:1280,frameHeight:720};
+  mockInputAdmission={admissionKnown:true,admitted:true,sharedInput:true};
+  const view=readyWheel();
+  const receive=(message:object)=>act(()=>view.socket.onmessage?.({data:JSON.stringify(message)}));
+  const sent=()=>view.socket.send.mock.calls.map(([raw])=>JSON.parse(raw));
+  receive({type:'stream_session',schema_version:1,history_enabled:true,session_id:'1'.repeat(16),report_interval_seconds:10});
+  const base={admitted:true,admissionKnown:true,sharedInput:true,active:false,frames:0,lastFrameAt:null};
+  act(()=>mockVideoObserve?.({...base,attempts:1,result:{state:'failed',reason:'connection_deadline'}}));
+  // Real fallback capability can arrive after the one-second direct retry starts.
+  act(()=>mockVideoObserve?.({...base,attempts:2,result:{state:'connecting'}}));
+  receive({type:'touch_capability',capture_epoch:TOUCH_EPOCH,frame_width:1280,frame_height:720});
+  expect(sent().filter(s=>s.type==='touch_open')).toHaveLength(1);
+  receive({type:'touch_session',session_id:'fallback_session',owner:'fallback_owner',capture_epoch:TOUCH_EPOCH,frame_width:1280,frame_height:720});
+  receive({type:'continuous_input_status',session_id:'fallback_session',owner:'fallback_owner',capture_epoch:TOUCH_EPOCH,
+    sequence:0,status:0,stage:'startup',origin:'injector',device_uptime_ms:100});
+  expect(view.container.querySelector('[data-control-state]')).toHaveAttribute('data-control-state','ready');
+  expect(view.commands()).toEqual([]);
+  expect(MockSocket.instances).toHaveLength(1);
+  view.unmount();
+});
+
 it('canvas sends every live touch through its bound direct peer and revokes safely on peer loss', () => {
   const view = readyContinuous();
   mockDirectEndpoint = directEndpoint();
