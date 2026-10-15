@@ -213,6 +213,7 @@ export function SingleDeviceStream({ deviceId, active = true, captureEnabled = f
     <div className={inspect ? `grid min-w-0 items-start gap-4 ${compact ? '' : 'xl:grid-cols-[minmax(0,1fr)_minmax(280px,360px)]'}` : 'min-w-0'}>
       <div className="min-w-0 overflow-hidden rounded-xl border border-border bg-black">
         {canReadStream ? <DeviceStream deviceId={deviceId} enableDiagnostics enableNavigation enableStaticInput
+          directControlAuthorized={access.can('stream:control')}
           recordingMode={recordingMode} onRecordingControlReady={onRecordingControlReady}
           onGestureRecording={onGestureRecording}
           taskHandoffId={taskHandoffId} onTaskHandoffState={nativeHandoffChanged}

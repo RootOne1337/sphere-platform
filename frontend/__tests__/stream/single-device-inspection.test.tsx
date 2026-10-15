@@ -70,6 +70,21 @@ it('passes an execution lock reason separately from the role restriction and rem
   expect(mockStreamProps.readOnlyReason).toBeUndefined();
   expect(api.post).not.toHaveBeenCalled();
 });
+it('keeps direct channel permission across View and execution locks, but revokes it with the role', () => {
+  const view = render(<SingleDeviceStream deviceId="remote" />);
+  expect(mockStreamProps.directControlAuthorized).toBe(true);
+  fireEvent.click(screen.getByRole('button', { name: 'Просмотр' }));
+  expect(mockStreamProps.readOnly).toBe(true);
+  expect(mockStreamProps.directControlAuthorized).toBe(true);
+  view.rerender(<SingleDeviceStream deviceId="remote" controlDisabled />);
+  expect(mockStreamProps.readOnly).toBe(true);
+  expect(mockStreamProps.directControlAuthorized).toBe(true);
+  mockPermission = false;
+  view.rerender(<SingleDeviceStream deviceId="remote" />);
+  expect(mockStreamProps.readOnly).toBe(true);
+  expect(mockStreamProps.directControlAuthorized).toBe(false);
+  expect(api.post).not.toHaveBeenCalled();
+});
 it('keeps View selected through token rotation and still waits for a newly authorized frame', () => {
   const view = render(<SingleDeviceStream deviceId="remote" />);
   fireEvent.click(screen.getByText('Fixture frame'));
@@ -154,6 +169,7 @@ it.each(['completed', 'failed'])('drains a %s tree read before enabling ordinary
   expect(signal?.aborted).toBe(false);
   expect(mockStreamProps.readOnly).toBe(true);
   expect(mockStreamProps.readOnlyReason).toMatch(/Завершаем чтение дерева Android/);
+  expect(mockStreamProps.directControlAuthorized).toBe(true);
   await act(async () => { if (outcome === 'completed') resolve({ data: snapshot() }); else reject(new Error('known root failure')); });
   expect(mockStreamProps.readOnly).toBe(false);
   expect(screen.queryByRole('alert')).not.toBeInTheDocument();

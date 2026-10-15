@@ -179,6 +179,27 @@ function directEndpoint(): DirectControlEndpoint {
     listen: listener => { mockDirectReceipt = listener; return () => { mockDirectReceipt = null; }; } };
 }
 
+it('retains the negotiated control channel through a temporary View lock without allowing input', () => {
+  mockCapture = { captureEpoch: TOUCH_EPOCH, frameWidth: 1280, frameHeight: 720 };
+  const view = readyGestureFixture(true);
+  mockDirectEndpoint = directEndpoint();
+  act(() => view.socket.onmessage?.({ data: JSON.stringify({ type: 'stream_session',
+    schema_version: 1, history_enabled: true, session_id: '1'.repeat(16), report_interval_seconds: 10 }) }));
+  expect(mockDirectObserve).not.toBeNull();
+  view.rerender(<DeviceStream deviceId="gesture-remote" fit="contain" enableStaticInput directControlAuthorized readOnly />);
+  expect(mockDirectObserve).not.toBeNull();
+  expect(mockVideoEligible).toBe(true);
+  view.down(1); view.up(1);
+  expect(mockDirectEndpoint.send).not.toHaveBeenCalled();
+  expect(view.commands()).toEqual([]);
+  view.rerender(<DeviceStream deviceId="gesture-remote" fit="contain" enableStaticInput directControlAuthorized />);
+  expect(mockDirectObserve).not.toBeNull();
+  view.rerender(<DeviceStream deviceId="gesture-remote" fit="contain" enableStaticInput directControlAuthorized={false} readOnly />);
+  expect(mockDirectObserve).toBeNull();
+  expect(view.commands()).toEqual([]);
+  view.unmount();
+});
+
 it('rejoins a fresh shared peer after hiding an idle tab loses the old CLOSE receipt', () => {
   mockCapture = { captureEpoch: TOUCH_EPOCH, frameWidth: 1280, frameHeight: 720 };
   const oldEndpoint = { ...directEndpoint(), sharedInput: true };

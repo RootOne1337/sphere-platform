@@ -60,6 +60,9 @@ interface DeviceStreamProps {
   enableStaticInput?: boolean;
   /** Viewing a stream never implies authority to inject Android input. */
   readOnly?: boolean;
+  /** Role permission to negotiate input on the media peer, independent of a temporary View/read lock.
+   * Native input still requires !readOnly, the owned frame and this participant's READY. */
+  directControlAuthorized?: boolean;
   /** Explain temporary execution locks separately from role restrictions. */
   readOnlyReason?: string;
   fit?: 'contain' | 'cover' | 'fill';
@@ -151,6 +154,7 @@ export function DeviceStream({
   enableNavigation = false,
   enableStaticInput = false,
   readOnly = false,
+  directControlAuthorized = !readOnly,
   readOnlyReason,
   fit,
   onFrameDimensions,
@@ -1512,7 +1516,7 @@ export function DeviceStream({
         return capture ? decoderRef.current?.profileLevelIdForCapture(capture.captureEpoch) ?? null : null;
       }}
       onFrame={(video, binding) => renderDirectFrame(video, binding, currentDiagnosticSession)}
-      onControlChannel={readOnly ? undefined : endpoint => observeDirectControl(endpoint, currentDiagnosticSession)}
+      onControlChannel={directControlAuthorized ? endpoint => observeDirectControl(endpoint, currentDiagnosticSession) : undefined}
       onObservation={value => observeDirectVideo(value, currentDiagnosticSession)}
       onDeliveryChange={peer => selectVideoDelivery(peer, currentDiagnosticSession)} />}
     {inspection?.bounds && lastFrameDimensionsRef.current && <svg aria-label="Границы выбранного элемента" className="pointer-events-none absolute inset-0 h-full w-full" viewBox={`0 0 ${lastFrameDimensionsRef.current.width} ${lastFrameDimensionsRef.current.height}`} preserveAspectRatio={surfaceFit === 'fill' ? 'none' : surfaceFit === 'cover' ? 'xMidYMid slice' : 'xMidYMid meet'}>
