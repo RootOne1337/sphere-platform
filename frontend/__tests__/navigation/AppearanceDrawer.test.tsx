@@ -40,7 +40,7 @@ it('applies a recommended glass look without resetting text size, density or ins
   fireEvent.click(screen.getByRole('button', { name: /^Песочное стекло/ }));
   expect(useThemeStore.getState()).toMatchObject({ theme: 'sandstone', density: 'compact' });
   expect(useUIStore.getState()).toMatchObject({ surfaceStyle: 'glass', glassStrength: 'vivid', accentColor: 'theme', fontSize: 'lg', inspectorMode: 'drawer' });
-  fireEvent.click(screen.getByRole('button', { name: 'Матовые' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Непрозрачный' }));
   expect(useThemeStore.getState().theme).toBe('sandstone');
   expect(useUIStore.getState().surfaceStyle).toBe('solid');
 });

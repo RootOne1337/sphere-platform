@@ -69,8 +69,8 @@ export function AppearanceDrawer({ open, onClose }: { open: boolean; onClose: ()
               {ACCENTS.map(accent => <button key={accent.id} type="button" data-ui="button" aria-label={accent.label} aria-pressed={ui.accentColor === accent.id} onClick={() => ui.setAccentColor(accent.id)} className={`relative flex h-11 w-11 items-center justify-center rounded-full border-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${ui.accentColor === accent.id ? 'border-foreground' : 'border-transparent'}`}><span className="h-7 w-7 rounded-full shadow-sm" style={{ backgroundColor: accent.color }} />{ui.accentColor === accent.id && <Check className="absolute h-4 w-4 text-white" aria-hidden />}</button>)}
             </div>
           </Section>
-          <Section title="Материал" icon={<Waves className="h-4 w-4 text-muted-foreground" aria-hidden />} description="Стекло меняет фон, навигацию и всплывающие поверхности. Таблицы, редактор и видео остаются непрозрачными.">
-            <Choices<SurfaceStyle> label="Материал" value={ui.surfaceStyle} options={[[ 'glass', 'Стекло' ], [ 'solid', 'Матовые' ]]} onChange={ui.setSurfaceStyle} />
+          <Section title="Материал" icon={<Waves className="h-4 w-4 text-muted-foreground" aria-hidden />} description="Стекло: прозрачные тонированные плитки, панели и окна. Непрозрачный режим полностью убирает прозрачность. Поля, таблицы, редактор и видео сохраняют сплошной рабочий фон.">
+            <Choices<SurfaceStyle> label="Материал" value={ui.surfaceStyle} options={[[ 'glass', 'Стекло' ], [ 'solid', 'Непрозрачный' ]]} onChange={ui.setSurfaceStyle} />
             {ui.surfaceStyle === 'glass' && <Choices<GlassStrength> label="Интенсивность стекла" value={ui.glassStrength} options={[[ 'soft', 'Лёгкое' ], [ 'balanced', 'Среднее' ], [ 'vivid', 'Яркое' ]]} onChange={ui.setGlassStrength} />}
             <Button variant="outline" size="sm" className="w-full" onClick={() => chooseLook(recommended)}><Sparkles className="h-3.5 w-3.5" aria-hidden />Рекомендуемое сочетание</Button>
           </Section>

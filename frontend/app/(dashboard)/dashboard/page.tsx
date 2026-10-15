@@ -290,7 +290,7 @@ export default function DashboardPage() {
 
   return (
     <div className="mx-auto flex min-h-full w-full max-w-[1720px] flex-col gap-6 p-4 sm:p-6 xl:p-8">
-      <header className="flex flex-col gap-5 rounded-2xl border border-border bg-card p-5 shadow-sm sm:flex-row sm:items-end sm:justify-between sm:p-6">
+      <header className="sphere-material sphere-panel flex flex-col gap-5 rounded-2xl border border-border bg-card p-5 shadow-sm sm:flex-row sm:items-end sm:justify-between sm:p-6">
         <div className="min-w-0">
           <p className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.13em] text-primary"><span className="h-2 w-2 rounded-full bg-primary" aria-hidden="true" />Операционный центр</p>
           <h1 className="mt-2 text-2xl font-semibold tracking-tight text-foreground sm:text-3xl">Обзор парка</h1>

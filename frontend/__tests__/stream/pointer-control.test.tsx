@@ -13,6 +13,7 @@ let mockDirectReceipt: ((message: unknown) => void) | null = null;
 let mockDirectObserve: ((endpoint: DirectControlEndpoint | null) => void) | null = null;
 let mockVideoObserve: ((observation: object) => void) | null = null;
 let mockInputAdmission: { admissionKnown: boolean; admitted: boolean; sharedInput?: boolean } | null = null;
+let mockVideoEligible = false;
 
 const TOUCH_EPOCH = '00112233-4455-6677-8899-aabbccddeeff';
 
@@ -21,8 +22,8 @@ jest.mock('@/lib/api', () => ({ api: { get: jest.fn(), post: jest.fn() } }));
 // Keep control delivery independent of the separately tested probe admission request.
 jest.mock('@/src/features/stream/DirectProbeAccess', () => ({ DirectProbeAccess: () => null }));
 jest.mock('@/src/features/stream/StreamSessionHistoryPanel', () => ({ StreamSessionHistoryPanel: () => null }));
-jest.mock('@/src/features/stream/LiveDirectVideo', () => ({ LiveDirectVideo: ({ session, onObservation, onControlChannel }: {
-  session: string; onObservation: (value: object) => void;
+jest.mock('@/src/features/stream/LiveDirectVideo', () => ({ LiveDirectVideo: ({ session, eligible, onObservation, onControlChannel }: {
+  session: string; eligible: boolean; onObservation: (value: object) => void;
   onControlChannel?: (endpoint: DirectControlEndpoint | null) => void;
 }) => {
   const React = jest.requireActual<typeof import('react')>('react');
@@ -31,6 +32,7 @@ jest.mock('@/src/features/stream/LiveDirectVideo', () => ({ LiveDirectVideo: ({ 
   observation.current = onObservation;
   control.current = onControlChannel;
   mockDirectObserve = onControlChannel ?? null; mockVideoObserve = onObservation;
+  mockVideoEligible = eligible;
   React.useEffect(() => {
     observation.current({ admitted: !!mockDirectEndpoint, admissionKnown: true, active: !!mockDirectEndpoint,
       frames: 0, lastFrameAt: null, attempts: 0, result: null, ...mockInputAdmission });
@@ -1829,5 +1831,22 @@ it.each(['missing', 'unknown'])('blocks a task handoff for %s native release', k
   expect(observed).not.toHaveBeenCalledWith('ready', 8);
   view.down(2); view.up(2, 60); view.wheel();
   expect(view.commands()).toHaveLength(0);
+  view.unmount();
+});
+
+it.each(['recording', 'xpath'])('keeps the direct video peer alive while %s waits for native input release', mode => {
+  const view = readyContinuous();
+  view.receive({ type: 'stream_session', schema_version: 1, history_enabled: true, session_id: '1'.repeat(16), report_interval_seconds: 10 });
+  const ready = jest.fn();
+  expect(mockVideoEligible).toBe(true);
+  view.rerender(<DeviceStream deviceId="gesture-remote" enableNavigation enableStaticInput recordingMode={mode === 'recording'}
+    onRecordingControlReady={mode === 'recording' ? ready : undefined} inspection={mode === 'xpath' ? { onPick: jest.fn(), bounds: null } : undefined} onInspectionControlReady={mode === 'xpath' ? ready : undefined} />);
+  expect(mockVideoEligible).toBe(true);
+  expect(ready).toHaveBeenLastCalledWith(false);
+  view.status(0, 3, 'release');
+  expect(ready).toHaveBeenLastCalledWith(true);
+  expect(mockVideoEligible).toBe(true);
+  act(() => jest.advanceTimersByTime(3000));
+  expect(view.queryByText(/Освобождение управления Android не подтверждено/)).not.toBeInTheDocument();
   view.unmount();
 });

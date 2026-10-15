@@ -303,3 +303,12 @@ html[data-motion="reduced"] *, html[data-motion="reduced"] *::before, html[data-
 
 body:has([data-stream-fullscreen="true"]) .mobile-menu-handle,
 body:has([role="dialog"][data-state="open"]) .mobile-menu-handle { display:none; }
+
+/* Content panels share the selected material. Nested cards use only a tint,
+   keeping one filtered layer rather than a blur pipeline per nested statistic. */
+@supports (backdrop-filter: blur(1px)) {
+  [data-surface="glass"] .sphere-material .sphere-panel { backdrop-filter:none; -webkit-backdrop-filter:none; background:hsl(var(--card) / .58); box-shadow:inset 0 1px 0 rgb(255 255 255 / .05); }
+}
+@media (prefers-reduced-transparency: reduce) {
+  [data-surface="glass"] .sphere-material .sphere-panel { background:hsl(var(--card)); }
+}
