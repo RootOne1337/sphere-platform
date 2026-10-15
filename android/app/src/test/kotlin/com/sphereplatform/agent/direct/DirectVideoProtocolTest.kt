@@ -21,4 +21,11 @@ class DirectVideoProtocolTest {
             app + video + "a=candidate:x\r\n".repeat(65), (app + video).repeat(1000)))
             assertFalse(DirectVideoProtocol.validSdp(bad, true))
     }
+    @Test fun `receiver source declarations are rejected before JNI but sender answers retain sources`() {
+        for (source in listOf("a=ssrc:123 cname:fixture", "a=ssrc-group:FID 123 456", "a=msid:stream track")) {
+            assertFalse(DirectVideoProtocol.validSdp(app + video + source + "\r\n", true))
+            assertTrue(DirectVideoProtocol.validSdp(app + video.replace("recvonly", "sendonly") + source + "\r\n", false))
+        }
+        assertTrue(DirectVideoProtocol.validSdp(app.replace("v=0\r\n", "v=0\r\na=msid-semantic:WMS *\r\n") + video, true))
+    }
 }

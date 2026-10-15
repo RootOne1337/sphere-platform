@@ -20,6 +20,11 @@ object DirectVideoProtocol {
         val application = sections.singleOrNull { it[0].startsWith("m=application ") } ?: return false
         val video = sections.singleOrNull { it[0].startsWith("m=video ") } ?: return false
         val fingerprints = lines.filter { it.startsWith("a=fingerprint:") }
+        // Defense in depth before setRemoteDescription/JNI: this send-only
+        // transport has no receiver track/decoder. Reject source-bearing
+        // receiver offers; WebRTC 146 has aborted on this unsupported shape.
+        // The local answer must retain its legitimate RTP source identifiers.
+        if (offer && lines.any { it.startsWith("a=ssrc:") || it.startsWith("a=ssrc-group:") || it.startsWith("a=msid:") }) return false
         return lines.firstOrNull() == "v=0" && sections.size == 2 &&
             application[0].contains("UDP/DTLS/SCTP") && video[0].contains("UDP/TLS/RTP/SAVPF") &&
             video.count { it in setOf("a=sendrecv", "a=sendonly", "a=recvonly", "a=inactive") } == 1 &&

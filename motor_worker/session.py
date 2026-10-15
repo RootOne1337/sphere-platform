@@ -99,6 +99,7 @@ class HeadlessSession:
         self.failure_phase: str | None = None
         self.capture_ws = None
         self.capture_session: str | None = None
+        self.capture_dimensions: tuple[int, int] | None = None
         self.capture_started = asyncio.Event()
         self.server_bootstrap_bytes = 0
         self.server_bytes_after_handover = 0
@@ -202,23 +203,32 @@ class HeadlessSession:
             offer = wire_offer(self.peer.localDescription.sdp)
             async with AsyncExitStack() as stack:
                 if self.config.capture_lifecycle:
-                    self.phase = "capture_bootstrap"
+                    self.phase = "capture_start"
                     self.capture_ws = await stack.enter_async_context(
                         connect(
                             signaling_url(self.config.base_url, self.config.device_id).replace(
                                 "/ws/direct-probe/", "/ws/stream/"
                             ),
-                            max_size=1024 * 1024 + 30,
+                            max_size=4096,
                             max_queue=2,
                             open_timeout=8,
                             close_timeout=2,
                             proxy=None,
                         )
                     )
-                    await self.capture_ws.send(json.dumps({"token": token}))
+                    await self.capture_ws.send(
+                        json.dumps({"token": token, "delivery": "capture_only"})
+                    )
                     self.spawn(self._capture_messages())
                     async with asyncio.timeout(12):
-                        await self.capture_started.wait()
+                        ready = asyncio.create_task(self.capture_started.wait())
+                        failed = asyncio.create_task(self.failed.wait())
+                        try:
+                            await asyncio.wait((ready, failed), return_when=asyncio.FIRST_COMPLETED)
+                        finally:
+                            ready.cancel()
+                            failed.cancel()
+                            await asyncio.gather(ready, failed, return_exceptions=True)
                     if self.failure:
                         raise ProtocolError(self.failure)
                 ws = await stack.enter_async_context(
@@ -293,37 +303,38 @@ class HeadlessSession:
         return self.report()
 
     async def _capture_messages(self) -> None:
-        """Capture presence + explicit legacy-copy suppression, never decode relay."""
+        """Read-only capture presence. No server media is accepted, even at startup."""
         async for raw in self.capture_ws:
             if isinstance(raw, bytes):
                 if self.handover_at is not None:
                     self.server_bytes_after_handover += len(raw)
                 else:
                     self.server_bootstrap_bytes += len(raw)
-                if self.server_bootstrap_bytes > 8 * 1024 * 1024:
-                    raise ProtocolError("capture_bootstrap_byte_budget")
-                if self.server_bytes_after_handover > 1024 * 1024:
-                    raise ProtocolError("server_copy_resumed")
-                # A v2 encoded packet proves capture initialization, not pixels
-                # seen by the model. Its bytes are counted then discarded.
-                if (
-                    len(raw) <= 30
-                    or raw[0] != 2
-                    or int.from_bytes(raw[10:14], "big") != len(raw) - 30
-                ):
-                    raise ProtocolError("invalid_bootstrap_frame")
-                if self.capture_session:
-                    self.capture_started.set()
-                continue
+                raise ProtocolError("server_media_forbidden")
             data = message(raw)
             if data.get("type") == "stream_session":
                 if (
                     self.capture_session is not None
+                    or data.get("delivery") != "capture_only"
+                    or data.get("schema_version") != 1
                     or not isinstance(data.get("session_id"), str)
                     or not re.fullmatch("[0-9a-f]{16}", data["session_id"])
                 ):
                     raise ProtocolError("invalid_capture_session")
                 self.capture_session = data["session_id"]
+            elif data.get("type") == "capture_ready":
+                if (
+                    self.capture_dimensions is not None
+                    or self.capture_session is None
+                    or data.get("session_id") != self.capture_session
+                    or data.get("schema_version") != 1
+                    or set(data) != {"type", "schema_version", "session_id", "width", "height"}
+                    or not integer(data.get("width"), 1, 8192)
+                    or not integer(data.get("height"), 1, 8192)
+                ):
+                    raise ProtocolError("invalid_capture_readiness")
+                self.capture_dimensions = (data["width"], data["height"])
+                self.capture_started.set()
             elif data.get("type") == "video_delivery_ack":
                 if data.get("mode") != "direct":
                     raise ProtocolError("invalid_delivery_ack")
@@ -358,6 +369,11 @@ class HeadlessSession:
                 raise ProtocolError("missing_session_binding")
             if self.binding is None:
                 self.binding = VideoBinding.parse(raw, self.session)
+                if self.capture_dimensions is not None and self.capture_dimensions != (
+                    self.binding.width,
+                    self.binding.height,
+                ):
+                    raise ProtocolError("capture_changed_since_readiness")
                 if ((self.binding.width + 15) // 16) * ((self.binding.height + 15) // 16) > 8704:
                     raise ProtocolError("capture_exceeds_receiver_budget")
             elif self.pending_echo and raw == self.pending_echo[0]:
@@ -625,6 +641,8 @@ class HeadlessSession:
             "signalingRenewalsSent": self.keepalive_count,
             "captureLifecycle": {
                 "requested": self.config.capture_lifecycle,
+                "delivery": "capture_only" if self.config.capture_lifecycle else "external",
+                "sourceReadinessConfirmed": self.capture_dimensions is not None,
                 "directDeliveryAcks": self.handover_acks,
                 "serverBootstrapBytesDiscarded": self.server_bootstrap_bytes,
                 "serverBytesAfterHandover": self.server_bytes_after_handover,

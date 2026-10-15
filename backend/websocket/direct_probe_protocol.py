@@ -52,6 +52,12 @@ def description(value: object, *, video: bool = False, offer: bool = True) -> st
                    for f in fingerprints)
             or sum(line.startswith("a=candidate:") for line in lines) > 64):
         raise InvalidDirectProbe("invalid_description")
+    if video and offer and any(line.startswith(("a=ssrc:", "a=ssrc-group:", "a=msid:")) for line in lines):
+        # Our APK is send-only and has no decoder factory. Receiver offers
+        # announcing a sender are outside this contract and have triggered a
+        # native WebRTC 146 abort. Reject before forwarding anything to JNI.
+        # Answers legitimately identify the APK's RTP sender and remain valid.
+        raise InvalidDirectProbe("unsupported_receiver_sources")
     return value
 
 

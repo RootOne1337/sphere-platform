@@ -14,6 +14,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from backend.core.dependencies import _is_dev_skip_auth
 from backend.database import redis_client
 from backend.database.engine import AsyncSessionLocal
+from backend.websocket.capture_lifecycle import await_capture_ready
 from backend.websocket.continuous_lease import InputLeaseUnavailable
 from backend.websocket.continuous_runtime import (
     ContinuousAdmissionRejected,
@@ -125,6 +126,10 @@ async def stream_viewer_ws(
         await ws.close(code=4001, reason="invalid_auth_message")
         return
     token = first.get("token", "")
+    capture_only = first.get("delivery") == "capture_only"
+    if "delivery" in first and (not capture_only or first.keys() != {"token", "delivery"}):
+        await ws.close(code=4001, reason="invalid_capture_admission")
+        return
     if not token and not _is_dev_skip_auth():
         await ws.close(code=4001, reason="no_token")
         return
@@ -175,7 +180,10 @@ async def stream_viewer_ws(
     session_id = secrets.token_hex(8)
 
     try:
-        await bridge.register_viewer(device_id, ws, session_id)
+        if capture_only:
+            await bridge.register_viewer(device_id, ws, session_id, capture_only=True)
+        else:
+            await bridge.register_viewer(device_id, ws, session_id)
     except Exception:
         await ws.close(code=1013, reason="stream_transport_unavailable")
         return
@@ -184,6 +192,7 @@ async def stream_viewer_ws(
         device_id=device_id,
         session_id=session_id,
         user_id=user_id_str,
+        delivery="capture_only" if capture_only else "legacy",
     )
     history = StreamSessionHistory(redis_client.redis, redis_client.redis_binary)
     from backend.services.device_viewers import DeviceViewers
@@ -223,7 +232,7 @@ async def stream_viewer_ws(
     auth_stopped = asyncio.Event()
     touch_runtime = get_continuous_runtime()
     touch_viewer = TouchViewer(device_id, org_id_str, user_id_str, session_id, ws)
-    touch_registered = bool(touch_runtime and touch_runtime.register(touch_viewer))
+    touch_registered = bool(not capture_only and touch_runtime and touch_runtime.register(touch_viewer))
 
     async def current_control_permission() -> bool | None:
         """Fresh identity/ownership for input; no DB session is held while streaming."""
@@ -316,11 +325,26 @@ async def stream_viewer_ws(
     try:
         if history_enabled:
             diagnostic_writer = asyncio.create_task(write_diagnostics())
-        if history_enabled:
+        if history_enabled or capture_only:
             await ws.send_json({"type": "stream_session", "schema_version": 1, "session_id": session_id,
-                                "history_enabled": True, "report_interval_seconds": REPORT_INTERVAL_SECONDS})
+                                "history_enabled": history_enabled, "report_interval_seconds": REPORT_INTERVAL_SECONDS,
+                                **({"delivery": "capture_only"} if capture_only else {})})
         await ws.send_json({"type": "stream_link_ready", "schema_version": 1})
-        await send_control({"type": "viewer_connected", "session_id": session_id})
+        if capture_only:
+            try:
+                source = await await_capture_ready(device_id)
+                if await current_control_permission() is None:
+                    return
+                await ws.send_json({"type": "capture_ready", "schema_version": 1,
+                                    "session_id": session_id, **source})
+            except Exception as exc:
+                logger.info("capture_only_readiness_rejected", device_id=device_id,
+                            session_id=session_id, error_type=type(exc).__name__,
+                            status_code=exc.status_code if isinstance(exc, HTTPException) else None)
+                await ws.close(code=1013, reason="capture_readiness_unavailable")
+                return
+        else:
+            await send_control({"type": "viewer_connected", "session_id": session_id})
         while True:
             receive_task = asyncio.create_task(ws.receive_json())
             try:
@@ -375,6 +399,11 @@ async def stream_viewer_ws(
                     # This bounded media operation never retires input or forwards
                     # browser JSON to Android. The default remains legacy delivery.
                     await ws.send_json({"type": "video_delivery_error", "reason": "unavailable"})
+                continue
+            if capture_only:
+                # Capture presence is a read-only lease. Commands require their
+                # own authenticated direct peer; this socket cannot grant input.
+                await ws.send_json({"type": "error", "error": "capture_only_message_rejected"})
                 continue
             if isinstance(data, dict) and isinstance(data.get("type"), str) and data["type"] in {"touch_probe", "touch_open", "touch_direct_open", "touch_event", "touch_close"}:
                 rejection: dict[str, Any] = {"type": "touch_error", "error": "input_rejected_or_unavailable"}

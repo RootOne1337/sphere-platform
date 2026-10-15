@@ -25,6 +25,14 @@ SDP = "v=0\r\nm=application 9 UDP/DTLS/SCTP webrtc-datachannel\r\na=fingerprint:
 VIDEO_SDP = SDP + "m=video 9 UDP/TLS/RTP/SAVPF 96\r\na=recvonly\r\na=rtpmap:96 H264/90000\r\n"
 
 
+@pytest.mark.parametrize("source", ["a=ssrc:123 cname:fixture", "a=ssrc-group:FID 123 456", "a=msid:stream track"])
+def test_receiver_sources_are_rejected_before_native_signaling(source):
+    with pytest.raises(InvalidDirectProbe, match="unsupported_receiver_sources"):
+        viewer_offer({"type": "direct_probe_offer", "sdp": VIDEO_SDP + source + "\r\n"}, video=True)
+    assert description(VIDEO_SDP.replace("recvonly", "sendonly") + source + "\r\n", video=True, offer=False)
+    assert description(VIDEO_SDP.replace("v=0\r\n", "v=0\r\na=msid-semantic:WMS *\r\n"), video=True)
+
+
 @pytest.mark.parametrize("change", [None, 12, "", SDP + "m=video 9 UDP/TLS/RTP/SAVPF 96\r\n",
                                     SDP.replace("sha-256", "sha-1"), SDP * 500,
                                     SDP + "a=candidate:x\r\n" * 65],

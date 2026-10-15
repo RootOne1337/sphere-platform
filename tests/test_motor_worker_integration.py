@@ -31,6 +31,8 @@ class HeadlessIntegrationTests(unittest.IsolatedAsyncioTestCase):
         self.stop_video = False
         self.bad_binding = False
         self.allow_cancel_close = False
+        self.server_media = False
+        self.foreign_readiness = False
         self.server = await serve(self.endpoint, "127.0.0.1", 0)
         self.url = f"http://127.0.0.1:{self.server.sockets[0].getsockname()[1]}"
 
@@ -41,10 +43,20 @@ class HeadlessIntegrationTests(unittest.IsolatedAsyncioTestCase):
 
     async def endpoint(self, ws):
         if "/ws/stream/" in ws.request.path:
-            await ws.recv()  # Authentication fixture, deliberately not retained.
+            auth = json.loads(await ws.recv())
+            self.assertEqual(auth, {"token": "fixture-token", "delivery": "capture_only"})
             sid = secrets.token_hex(8)
             self.capture_identity = sid
-            await ws.send(json.dumps({"type": "stream_session", "session_id": sid}))
+            await ws.send(
+                json.dumps(
+                    {
+                        "type": "stream_session",
+                        "schema_version": 1,
+                        "delivery": "capture_only",
+                        "session_id": sid,
+                    }
+                )
+            )
             packet = (
                 b"\x02\x01"
                 + bytes(8)
@@ -52,7 +64,19 @@ class HeadlessIntegrationTests(unittest.IsolatedAsyncioTestCase):
                 + bytes.fromhex(DEVICE.replace("-", ""))
                 + b"\x00\x00\x01\x67"
             )
-            await ws.send(packet)
+            if self.server_media:
+                await ws.send(packet)
+            await ws.send(
+                json.dumps(
+                    {
+                        "type": "capture_ready",
+                        "schema_version": 1,
+                        "session_id": "0" * 16 if self.foreign_readiness else sid,
+                        "width": 320,
+                        "height": 180,
+                    }
+                )
+            )
             async for raw in ws:
                 d = json.loads(raw)
                 if d.get("type") == "video_delivery":
@@ -243,14 +267,31 @@ class HeadlessIntegrationTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(report["failure"], "invalid_capture_binding")
         self.assertFalse(any(d.get("type") == "touch_open" for d in self.received))
 
-    async def test_capture_lifecycle_bootstraps_then_acknowledges_direct_delivery(self):
+    async def test_capture_lifecycle_never_receives_server_media(self):
         session = HeadlessSession(SessionConfig(self.url, DEVICE, duration=1, probe_control=True))
         report = await session.run("fixture-token")
         self.assertTrue(report["success"], report)
-        self.assertEqual(report["captureLifecycle"]["serverBootstrapBytesDiscarded"], 34)
+        self.assertEqual(report["captureLifecycle"]["serverBootstrapBytesDiscarded"], 0)
+        self.assertTrue(report["captureLifecycle"]["sourceReadinessConfirmed"])
         self.assertEqual(report["captureLifecycle"]["serverBytesAfterHandover"], 0)
         self.assertGreaterEqual(report["captureLifecycle"]["directDeliveryAcks"], 1)
         self.assertEqual(report["captureLifecycle"]["relayFramesDecoded"], 0)
+
+    async def test_accidental_relay_fails_closed_before_opening_input(self):
+        self.server_media = True
+        session = HeadlessSession(SessionConfig(self.url, DEVICE, duration=1, probe_control=True))
+        report = await session.run("fixture-token")
+        self.assertFalse(report["success"])
+        self.assertEqual(report["failure"], "server_media_forbidden")
+        self.assertFalse(any(d.get("type") == "touch_open" for d in self.received))
+
+    async def test_foreign_readiness_never_opens_direct_peer_or_input(self):
+        self.foreign_readiness = True
+        session = HeadlessSession(SessionConfig(self.url, DEVICE, duration=1, probe_control=True))
+        report = await session.run("fixture-token")
+        self.assertFalse(report["success"])
+        self.assertEqual(report["failure"], "invalid_capture_readiness")
+        self.assertFalse(self.peers)
 
     async def test_video_stall_ends_probe_and_closes_idle_input(self):
         self.stop_video = True

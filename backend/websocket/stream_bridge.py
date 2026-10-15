@@ -27,15 +27,17 @@ logger = structlog.get_logger()
 
 @dataclass
 class ViewerSession:
-    queue: VideoStreamQueue
+    queue: VideoStreamQueue | None
     socket: WebSocket
-    task: asyncio.Task
+    task: asyncio.Task | None
     legacy: bool = True
+    capture_only: bool = False
     direct_until: float = 0
     delivery_task: asyncio.Task | None = None
 
 
 DIRECT_DELIVERY_SECONDS = 10.0
+CAPTURE_SETUP_SECONDS = 40.0
 
 
 class VideoStreamBridge:
@@ -60,7 +62,8 @@ class VideoStreamBridge:
                 return await self.publisher.send_command_live(device_id, command)
         return await self.manager.send_to_device(device_id, command)
 
-    async def register_viewer(self, device_id: str, viewer_ws: WebSocket, session_id: str) -> None:
+    async def register_viewer(self, device_id: str, viewer_ws: WebSocket, session_id: str,
+                              *, capture_only: bool = False) -> None:
         async with self._device_lock(device_id):
             if self._closed:
                 raise ConnectionError("Video bridge is closed")
@@ -72,15 +75,19 @@ class VideoStreamBridge:
             if old_stop:
                 old_stop.cancel()
             self._pending_stops.discard(device_id)
-            queue = VideoStreamQueue(device_id, on_recovery=lambda: self._schedule_keyframe(device_id))
-            task = asyncio.create_task(self._viewer_send_loop(device_id, session_id, queue, viewer_ws))
-            viewers[session_id] = ViewerSession(queue, viewer_ws, task)
+            if capture_only:
+                queue, task = None, None
+            else:
+                queue = VideoStreamQueue(device_id, on_recovery=lambda: self._schedule_keyframe(device_id))
+                task = asyncio.create_task(self._viewer_send_loop(device_id, session_id, queue, viewer_ws))
+            viewer = viewers[session_id] = ViewerSession(
+                queue, viewer_ws, task, legacy=not capture_only, capture_only=capture_only)
             record_active_viewer_delta(device_id, 1)
             try:
                 if self.transport:
                     if len(viewers) == 1:
                         await self.transport.subscribe_presence(device_id)
-                    if not had_legacy:
+                    if not had_legacy and not capture_only:
                         await self.transport.subscribe(device_id)
                 sent = await self.send_control(device_id, {
                     "type": "start_stream", "quality": "720p", "bitrate": 2_000_000,
@@ -88,6 +95,9 @@ class VideoStreamBridge:
                 if not sent:
                     logger.warning("stream_start_unavailable", device_id=device_id, session_id=session_id)
                     raise ConnectionError("Capture command transport unavailable")
+                if capture_only:
+                    viewer.direct_until = time.monotonic() + CAPTURE_SETUP_SECONDS
+                    self._ensure_delivery_deadline(device_id, session_id, viewer)
             except BaseException:
                 await self._unregister_viewer_locked(device_id, session_id)
                 raise
@@ -113,11 +123,23 @@ class VideoStreamBridge:
             viewer = self._viewers.get(device_id, {}).get(session_id)
             if self._closed or viewer is None:
                 return False
+            if viewer.capture_only:
+                if enabled:
+                    return False  # Immutable admission: never silently turn on relay.
+                viewer.direct_until = time.monotonic() + DIRECT_DELIVERY_SECONDS
+                # The initial setup grace is longer than the active lease. Wake
+                # the owned timer when that deadline moves earlier as well.
+                if viewer.delivery_task:
+                    viewer.delivery_task.cancel()
+                    viewer.delivery_task = None
+                self._ensure_delivery_deadline(device_id, session_id, viewer)
+                return True
             if enabled:
                 await self._resume_legacy_locked(device_id, viewer)
                 return True
             if viewer.legacy:
                 viewer.legacy = False
+                assert viewer.queue is not None
                 await viewer.queue.handover()
                 try:
                     if self.transport and not any(v.legacy for v in self._viewers[device_id].values()):
@@ -137,6 +159,8 @@ class VideoStreamBridge:
             viewer.delivery_task = asyncio.create_task(self._delivery_deadline(device_id, session_id, viewer))
 
     async def _resume_legacy_locked(self, device_id: str, viewer: ViewerSession) -> None:
+        if viewer.capture_only or viewer.queue is None:
+            raise ValueError("Capture-only admission cannot resume relay")
         recovering = not viewer.legacy or viewer.direct_until > 0
         had_legacy = any(v.legacy for v in self._viewers.get(device_id, {}).values())
         # The subscription ACK precedes headers/IDR. Another worker's direct
@@ -161,6 +185,12 @@ class VideoStreamBridge:
                     if self._closed or self._viewers.get(device_id, {}).get(session_id) is not viewer or viewer.direct_until <= 0:
                         return
                     if time.monotonic() >= viewer.direct_until:
+                        if viewer.capture_only:
+                            await self._unregister_viewer_locked(device_id, session_id)
+                            logger.info("capture_only_lease_expired", device_id=device_id, session_id=session_id)
+                            async with asyncio.timeout(1):
+                                await viewer.socket.close(code=4008, reason="capture_lease_expired")
+                            return
                         await self._resume_legacy_locked(device_id, viewer)
                         return
         except asyncio.CancelledError:
@@ -183,9 +213,9 @@ class VideoStreamBridge:
         for session in sessions:
             viewer = viewers.pop(session)
             record_active_viewer_delta(device_id, -1)
-            if viewer.task is not asyncio.current_task():
+            if viewer.task is not None and viewer.task is not asyncio.current_task():
                 viewer.task.cancel()
-            if viewer.delivery_task:
+            if viewer.delivery_task and viewer.delivery_task is not asyncio.current_task():
                 viewer.delivery_task.cancel()
         try:
             if self.transport:
@@ -272,7 +302,7 @@ class VideoStreamBridge:
         # Each viewer owns its backpressure; frame bytes are shared, not copied.
         frame = VideoFrame(frame_data, device_id)
         for viewer in tuple(self._viewers.get(device_id, {}).values()):
-            if viewer.legacy:
+            if viewer.legacy and viewer.queue is not None:
                 await viewer.queue.put(frame)
 
     def _schedule_keyframe(self, device_id: str) -> None:
@@ -342,7 +372,7 @@ class VideoStreamBridge:
         return device_id in self._viewers
 
     def get_drop_ratio(self, device_id: str) -> float:
-        queues = [v.queue for v in self._viewers.get(device_id, {}).values()]
+        queues = [v.queue for v in self._viewers.get(device_id, {}).values() if v.queue is not None]
         received = sum(q.frames_received for q in queues)
         return sum(q.frames_dropped for q in queues) / received if received else 0.0
 
