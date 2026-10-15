@@ -14,7 +14,8 @@ import { SingleDeviceStream } from '@/src/features/stream/SingleDeviceStream';
 import { Button } from '@/src/shared/ui/button';
 import { Input } from '@/components/ui/input';
 import type { DagNode } from '@/lib/dag/export';
-import { appendRecording, appendSelectorRecording, observeAcknowledgedRecording, recordingActions, type RecordedInput, type StreamInput } from './recording';
+import { appendRecording, appendNativeRecording, appendSelectorRecording, observeAcknowledgedRecording, recordingActions, type RecordedInput, type StreamInput } from './recording';
+import type { NativeGestureRecordingEvent } from '@/src/features/stream/nativeGestureRecording';
 import type { AcknowledgedControl, TaskControlHandoffState } from '@/src/features/stream/controlObservation';
 import { actionLabel } from './presentation';
 
@@ -70,6 +71,8 @@ function OwnedWorkbench({ device, scriptId, version, name, canRun, canEdit, pane
   const entriesRef = useRef(entries); entriesRef.current = entries;
   const controlRequests = useRef(new Set<string>());
   const [controlPending, setControlPending] = useState(false);
+  const nativeRequests = useRef(new Set<string>());
+  const [nativePending, setNativePending] = useState(false);
   const [error, setError] = useState('');
   const [taskId, setTaskId] = useState('');
   const [runPending, setRunPending] = useState(false);
@@ -94,7 +97,7 @@ function OwnedWorkbench({ device, scriptId, version, name, canRun, canEdit, pane
   const logs = useTaskLogs(taskId, access.can('script:read'));
   const stop = useStopTask();
   useEffect(() => { registerCloseGuard?.((silent = false, confirmDiscard = true) => {
-    const pending = runPending || runningRequest.current || controlRequests.current.size > 0;
+    const pending = runPending || runningRequest.current || controlRequests.current.size > 0 || nativeRequests.current.size > 0;
     const guarded = Boolean(entriesRef.current.length || active || pending || uncertain);
     if (silent) return !guarded;
     if (pending) {
@@ -133,9 +136,28 @@ function OwnedWorkbench({ device, scriptId, version, name, canRun, canEdit, pane
       if (next !== entriesRef.current) { entriesRef.current = next; setEntries(next); }
     } catch (reason) { setRecording(false); setError(reason instanceof Error ? reason.message : 'Не удалось записать команду.'); }
   };
+  const nativeObserved = (event: NativeGestureRecordingEvent) => {
+    if (!live.current) return;
+    if (event.phase === 'started') { nativeRequests.current.add(event.requestId); setNativePending(true); return; }
+    if (!nativeRequests.current.delete(event.requestId)) return;
+    setNativePending(nativeRequests.current.size > 0);
+    if (event.outcome === 'confirmed' && event.input) {
+      try {
+        const next = appendNativeRecording(entriesRef.current,event.input,device.id,event.requestId,event.completedAt);
+        entriesRef.current=next; setEntries(next);
+      } catch (reason) { setRecording(false); setError(reason instanceof Error ? reason.message : 'Нативный жест не записан.'); }
+      return;
+    }
+    setRecording(false);
+    setError(event.outcome === 'unsupported'
+      ? 'Жест выполнен на Android, но его форма или длительность не поддерживается текущим форматом сценария. Он не заменён прямым свайпом и не добавлен в граф. Предыдущая запись сохранена.'
+      : event.outcome === 'cancelled' ? 'Текущий жест отменён при остановке записи. Он не добавлен в граф; предыдущая запись сохранена.'
+      : event.outcome === 'interrupted' ? 'Жест прерван другим вводом. Он не добавлен в граф; предыдущая запись сохранена.'
+      : 'Результат жеста Android не подтверждён. Он не добавлен в граф и не повторяется; предыдущая запись сохранена.');
+  };
   const unresolved = entries.some(entry => entry.outcome === 'android-pending' || entry.outcome === 'android-unknown');
   async function run() {
-    if (!paneActive || runningRequest.current || controlRequests.current.size || uncertain || active || !canRun || !scriptId || !version?.dag_hash || !accessRef.current.can('script:execute')) return;
+    if (!paneActive || runningRequest.current || controlRequests.current.size || nativeRequests.current.size || uncertain || active || !canRun || !scriptId || !version?.dag_hash || !accessRef.current.can('script:execute')) return;
     const pinned = version.id;
     const binding = launchBinding.current;
     const id = ++handoffSequence.current;
@@ -157,7 +179,7 @@ function OwnedWorkbench({ device, scriptId, version, name, canRun, canEdit, pane
       if (!ready) throw new Error('Освобождение Android или завершение чтения XPath/снимка не подтверждены. Проверьте экран и диагностику перед новой попыткой.');
       if (current.scriptId !== binding.scriptId || current.versionId !== binding.versionId || current.dagHash !== binding.dagHash
         || current.accessToken !== binding.accessToken || !current.paneActive || !current.canRun || !accessRef.current.can('script:execute')
-        || controlRequests.current.size || document.visibilityState === 'hidden') throw new Error('Версия, доступ или состояние страницы изменились во время подготовки. Выберите сохранённую версию и запустите явно.');
+        || controlRequests.current.size || nativeRequests.current.size || document.visibilityState === 'hidden') throw new Error('Версия, доступ или состояние страницы изменились во время подготовки. Выберите сохранённую версию и запустите явно.');
       setLaunchPreparing(false);
       submitted = true;
       const { data } = await api.post('/tasks', { script_id: scriptId, device_id: device.id, expected_current_version_id: pinned, priority: 5 }, { timeout: 30000 });
@@ -173,27 +195,28 @@ function OwnedWorkbench({ device, scriptId, version, name, canRun, canEdit, pane
   }
   return <div className="space-y-4">
     <div className="flex flex-wrap items-start justify-between gap-3 rounded-xl border bg-muted/30 p-3"><div className="min-w-0 flex-1 basis-48"><p className="break-words text-sm font-semibold [overflow-wrap:anywhere]">{device.name}</p><p className="mt-1 break-words text-xs text-muted-foreground [overflow-wrap:anywhere]">Android {device.android_version ?? '—'} · Agent {device.agent_version ?? '—'}</p></div><Link href={`/devices/${device.id}`} className="flex shrink-0 items-center gap-1 text-xs text-primary">Карточка <ExternalLink className="size-3" /></Link></div>
-    <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap"><Button size="sm" className="h-auto min-h-8 min-w-0 whitespace-normal" variant={recording ? 'destructive' : 'outline'} disabled={!canEdit || active || runPending || uncertain || (!recording && controlPending) || !access.can('stream:control')} onClick={() => setRecording(!recording)}>{recording ? <Square className="mr-2 size-3 shrink-0" /> : <Circle className="mr-2 size-3 shrink-0 text-rose-500" />}{recording ? 'Остановить запись' : 'Записать действия'}</Button>
-      <Button size="sm" className="h-auto min-h-8 min-w-0 whitespace-normal" disabled={!canRun || !access.can('script:execute') || active || runPending || recording || controlPending || uncertain} onClick={() => void run()}><Play className="mr-2 size-3 shrink-0" /><span className="min-w-0 break-words [overflow-wrap:anywhere]">{launchPreparing ? 'Освобождаем Android…' : runPending ? 'Создаём задание…' : `Проверить на ${device.name}`}</span></Button>
+    <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap"><Button size="sm" className="h-auto min-h-8 min-w-0 whitespace-normal" variant={recording ? 'destructive' : 'outline'} disabled={!canEdit || active || runPending || uncertain || (!recording && (controlPending || nativePending)) || !access.can('stream:control')} onClick={() => setRecording(!recording)}>{recording ? <Square className="mr-2 size-3 shrink-0" /> : <Circle className="mr-2 size-3 shrink-0 text-rose-500" />}{recording ? 'Остановить запись' : 'Записать действия'}</Button>
+      <Button size="sm" className="h-auto min-h-8 min-w-0 whitespace-normal" disabled={!canRun || !access.can('script:execute') || active || runPending || recording || controlPending || nativePending || uncertain} onClick={() => void run()}><Play className="mr-2 size-3 shrink-0" /><span className="min-w-0 break-words [overflow-wrap:anywhere]">{launchPreparing ? 'Освобождаем Android…' : runPending ? 'Создаём задание…' : `Проверить на ${device.name}`}</span></Button>
       {active && <Button size="sm" variant="outline" disabled={stop.isPending || !access.can('script:execute')} onClick={() => stop.mutate(taskId, { onError: reason => setError(getApiErrorMessage(reason, 'Остановка не подтверждена.')) })}>Остановить задание</Button>}</div>
     {error && <p role="alert" className="rounded-lg border border-destructive/30 p-3 text-xs text-destructive">{error} {uncertain && <Link href="/tasks" target="_blank" rel="noopener noreferrer" className="underline">Открыть задания в новой вкладке</Link>}</p>}
     {!canRun && <p className="text-xs text-muted-foreground">Для проверки сохраните сценарий и откройте его неизменённую версию. Запуск всегда создаёт одно реальное задание на выбранном Android.</p>}
     {launchPreparing && <p role="status" className="rounded-lg border bg-muted/30 p-3 text-xs">Передаём управление сценарию: ждём подтверждённого освобождения Android и завершения текущего чтения XPath или снимка. Задание ещё не создано; новые действия не отправляются.</p>}
-    {recording && !recordingReady && <p role="status" className="rounded-lg border bg-muted/30 p-3 text-xs">Подготавливаем запись: ожидаем видеокадр и подтверждённое освобождение управления Android. Новые действия пока не отправляются.</p>}
-    <SingleDeviceStream deviceId={device.id} active={paneActive} captureEnabled compact recordingMode={recording} onRecordingControlReady={setRecordingReady} taskHandoffId={taskHandoffId} onTaskHandoffState={handoffChanged} controlDisabled={active || runPending || uncertain || controlPending} onControlSent={sent} onControlCommand={commandObserved} onInsertSelector={canEdit && !active && !runPending && !uncertain && !controlPending ? (node, snapshot) => {
+    {recording && !recordingReady && <p role="status" className="rounded-lg border bg-muted/30 p-3 text-xs">Подготавливаем запись: ожидаем видеокадр и готовность нативного управления Android. Неподтверждённые действия не записываются.</p>}
+    {nativePending && <p role="status" className="rounded-lg border bg-muted/30 p-3 text-xs">Жест выполняется на Android. Ожидаем его завершение и подтверждение; перенос записи пока недоступен.</p>}
+    <SingleDeviceStream deviceId={device.id} active={paneActive} captureEnabled compact recordingMode={recording} onRecordingControlReady={setRecordingReady} taskHandoffId={taskHandoffId} onTaskHandoffState={handoffChanged} controlDisabled={active || runPending || uncertain} modeChangeDisabled={controlPending || nativePending} onControlSent={sent} onControlCommand={commandObserved} onInsertSelector={canEdit && !active && !runPending && !uncertain && !controlPending && !nativePending ? (node, snapshot) => {
       if (!launchBinding.current.paneActive || snapshot.device_id !== device.id) return;
       try {
         // Match stream input and ACK clocks so wall-clock changes cannot reorder the queue.
         const next = appendSelectorRecording(entriesRef.current, node, snapshot, device.id, performance.now());
         entriesRef.current = next; setEntries(next); setError('');
       } catch (reason) { setRecording(false); setError(reason instanceof Error ? reason.message : 'XPath не добавлен в запись.'); }
-    } : undefined} />
-    <div className="rounded-xl border"><header className="flex flex-wrap items-center justify-between gap-2 border-b px-3 py-2"><h3 className="flex items-center gap-2 text-xs font-semibold"><Radio className={`size-3 ${recording ? 'text-rose-500' : 'text-muted-foreground'}`} />Запись · {entries.length}/200</h3><div className="flex flex-wrap gap-1"><Button size="sm" variant="ghost" disabled={!entries.length || recording || controlPending || !canEdit} onClick={() => { entriesRef.current = []; setEntries([]); }} aria-label="Очистить запись"><Trash2 className="size-3" /></Button><Button size="sm" variant="outline" disabled={!entries.length || recording || controlPending || unresolved || !canEdit} onClick={() => { try { if (onInsert(recordingActions(entriesRef.current, preservePauses))) { entriesRef.current = []; setEntries([]); setError(''); } } catch (reason) { setError(reason instanceof Error ? reason.message : 'Запись не перенесена.'); } }}>Вставить в граф</Button></div></header>
-      <label className="flex items-center gap-2 px-3 pt-3 text-xs"><input type="checkbox" checked={preservePauses} disabled={recording || controlPending} onChange={event => setPreservePauses(event.target.checked)} />Сохранять паузы между действиями (до 60 с)</label>
-      <p className="px-3 py-2 text-[11px] leading-5 text-muted-foreground">Клики, свайпы и колесо: отправка по WebSocket, без ACK выполнения. Текст и кнопки Android: отдельное подтверждение APK. XPath добавляется явно из инспектора. Буфер Android и выбранное поле зависят от приложения; запись не сохраняет содержимое буфера.</p>
+    } : undefined} onGestureRecording={nativeObserved} />
+    <div className="rounded-xl border"><header className="flex flex-wrap items-center justify-between gap-2 border-b px-3 py-2"><h3 className="flex items-center gap-2 text-xs font-semibold"><Radio className={`size-3 ${recording ? 'text-rose-500' : 'text-muted-foreground'}`} />Запись · {entries.length}/200</h3><div className="flex flex-wrap gap-1"><Button size="sm" variant="ghost" disabled={!entries.length || recording || controlPending || nativePending || !canEdit} onClick={() => { entriesRef.current = []; setEntries([]); }} aria-label="Очистить запись"><Trash2 className="size-3" /></Button><Button size="sm" variant="outline" disabled={!entries.length || recording || controlPending || nativePending || unresolved || !canEdit} onClick={() => { try { if (onInsert(recordingActions(entriesRef.current, preservePauses))) { entriesRef.current = []; setEntries([]); setError(''); } } catch (reason) { setError(reason instanceof Error ? reason.message : 'Запись не перенесена.'); } }}>Вставить в граф</Button></div></header>
+      <label className="flex items-center gap-2 px-3 pt-3 text-xs"><input type="checkbox" checked={preservePauses} disabled={recording || controlPending || nativePending} onChange={event => setPreservePauses(event.target.checked)} />Сохранять паузы между действиями (до 60 с)</label>
+      <p className="px-3 py-2 text-[11px] leading-5 text-muted-foreground">Клики, прямые свайпы и колесо записываются после подтверждения APK на том же канале управления. Кривые и жесты дольше 10 с пока не переносятся в сценарий. Текст и кнопки Android имеют отдельные подтверждения; аппаратные клавиши и содержимое буфера здесь не записываются. XPath добавляется явно из инспектора.</p>
       <p className="px-3 pb-2 text-[11px] leading-5 text-muted-foreground">Текст скрыт в списке, но войдёт в исходник при вставке в граф. До вставки запись хранится только в памяти этой страницы; не записывайте пароли. Выбранный XPath добавляется в ту же очередь как будущий шаг и сейчас не нажимает Android. Остановите запись и вставьте очередь в граф.</p>
       {unresolved && <p role="status" className="px-3 pb-3 text-xs text-amber-700 dark:text-amber-400">Перенос заблокирован: дождитесь ответа APK. Если результат неизвестен, проверьте экран и явно удалите сомнительное действие; автоматического повтора нет.</p>}
-      {!!entries.length && <ol aria-label="Записанные действия" className="overflow-auto px-3 pb-3 xl:max-h-56">{entries.map((entry, index) => <li key={entry.id} className="flex flex-wrap items-center gap-2 border-t py-2 text-xs"><span className="min-w-0 flex-1 basis-40 break-words">{index + 1}. {recordedLabel(entry)}</span><span className={`rounded-full border px-2 py-1 text-[10px] ${entry.outcome === 'android-unknown' ? 'text-destructive' : entry.outcome === 'android-confirmed' ? 'text-emerald-700 dark:text-emerald-400' : 'text-muted-foreground'}`}>{outcomeLabels[entry.outcome]}</span><Button size="sm" variant="ghost" disabled={recording || controlPending || !canEdit} aria-label={`Удалить действие ${index + 1}`} onClick={() => { const next = entriesRef.current.filter(value => value.id !== entry.id); entriesRef.current = next; setEntries(next); }}><Trash2 className="size-3" /></Button></li>)}</ol>}
+      {!!entries.length && <ol aria-label="Записанные действия" className="overflow-auto px-3 pb-3 xl:max-h-56">{entries.map((entry, index) => <li key={entry.id} className="flex flex-wrap items-center gap-2 border-t py-2 text-xs"><span className="min-w-0 flex-1 basis-40 break-words">{index + 1}. {recordedLabel(entry)}</span><span className={`rounded-full border px-2 py-1 text-[10px] ${entry.outcome === 'android-unknown' ? 'text-destructive' : entry.outcome === 'android-confirmed' ? 'text-emerald-700 dark:text-emerald-400' : 'text-muted-foreground'}`}>{outcomeLabels[entry.outcome]}</span><Button size="sm" variant="ghost" disabled={recording || controlPending || nativePending || !canEdit} aria-label={`Удалить действие ${index + 1}`} onClick={() => { const next = entriesRef.current.filter(value => value.id !== entry.id); entriesRef.current = next; setEntries(next); }}><Trash2 className="size-3" /></Button></li>)}</ol>}
     </div>
     {taskId && <div className="rounded-xl border p-3"><h3 className="flex items-center gap-2 text-sm font-semibold"><CheckCheck className="size-4 text-primary" />Проверка {name}</h3><Link href={`/tasks/${taskId}`} target="_blank" rel="noopener noreferrer" title="Открыть задание в новой вкладке, сохранив редактор" className="mt-2 block break-all font-mono text-xs text-primary">{taskId}</Link>
       {task.isError || !ownsTask ? <p role="status" className="mt-2 text-xs">Ожидаем подтверждённое состояние выбранного задания…</p> : <><p className="mt-2 text-xs">{task.data!.status} · {terminal.has(task.data!.status)

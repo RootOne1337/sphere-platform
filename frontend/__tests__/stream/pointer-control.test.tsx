@@ -564,9 +564,11 @@ it('old APK probe timeout preserves video and does not invent readiness', () => 
 });
 
 it('recording does not silently turn live motion into a successful reusable swipe', () => {
-  const view = readyWheel();
+  const view = readyContinuous();
   view.rerender(<DeviceStream deviceId="gesture-remote" fit="contain" enableStaticInput enableNavigation recordingMode onControlSent={jest.fn()} />);
-  expect(view.getByText(/Запись использует отдельные завершённые действия/)).toBeInTheDocument();
+  expect(view.getByText(/Запись · непрерывный ввод с подтверждением Android/)).toBeInTheDocument();
+  expect(view.commands()).toHaveLength(0);
+  expect(view.sent().filter(x=>x.type==='touch_close')).toHaveLength(0);
   view.unmount();
 });
 it('a delayed idle ACK does not restart video or disable the ready controller', () => {
@@ -732,20 +734,25 @@ it('resets recovery backoff only after sustained native receipts', () => {
   view.unmount();
 });
 
-it('recording after a known idle release accepts a new explicit action without reconnecting', () => {
+it('recording after an idle release obtains fresh native READY on the same video socket', () => {
   const view = readyContinuous();
   for (let i = 0; i < 7; i++) act(() => jest.advanceTimersByTime(250));
   view.status(0, 3, 'release');
-  const record = jest.fn();
+  const record = jest.fn(),native=jest.fn();
   const ready = jest.fn();
   view.rerender(<DeviceStream deviceId="gesture-remote" fit="contain" enableStaticInput enableNavigation
-    recordingMode onControlSent={record} onRecordingControlReady={ready} />);
+    recordingMode onControlSent={record} onRecordingControlReady={ready} onGestureRecording={native} />);
+  expect(ready).toHaveBeenLastCalledWith(false);
+  act(()=>jest.advanceTimersByTime(750));
+  view.receive({type:'touch_capability',capture_epoch:TOUCH_EPOCH,frame_width:1280,frame_height:720});
+  view.receive({type:'touch_session',session_id:'viewer_session_fixture',owner:'owner_session_fixture',
+    capture_epoch:TOUCH_EPOCH,frame_width:1280,frame_height:720});view.status(0,0,'startup');
   expect(ready).toHaveBeenLastCalledWith(true);
-  view.down(9); view.up(9, 65);
-  expect(record).toHaveBeenCalledTimes(1);
-  expect(view.commands()).toHaveLength(1);
+  view.down(9);view.status(1,1);view.up(9);view.status(2,1);
+  expect(record).not.toHaveBeenCalled();expect(view.commands()).toHaveLength(0);
+  expect(native.mock.calls.at(-1)?.[0]).toMatchObject({outcome:'confirmed'});
   expect(view.socket.close).not.toHaveBeenCalled();
-  expect(view.sent().filter(x => x.type === 'touch_probe')).toHaveLength(1);
+  expect(view.sent().filter(x => x.type === 'touch_probe')).toHaveLength(2);
   view.unmount();
 });
 
@@ -877,7 +884,7 @@ it('a busy admission before native STARTUP retries only input without restarting
   view.unmount();
 });
 
-it.each(['readonly', 'recording', 'handoff', 'inspection', 'hidden'])('pauses idle recovery while %s owns the surface', mode => {
+it.each(['readonly', 'handoff', 'inspection', 'hidden'])('pauses idle recovery while %s owns the surface', mode => {
   const view = readyContinuous();
   for (let i = 0; i < 7; i++) act(() => jest.advanceTimersByTime(250));
   view.status(0, 3, 'release');
@@ -896,7 +903,7 @@ it.each(['readonly', 'recording', 'handoff', 'inspection', 'hidden'])('pauses id
   view.unmount();
   expect(jest.getTimerCount()).toBe(0);
 });
-it.each(['readonly', 'recording', 'handoff', 'inspection', 'hidden'])('pauses pointer recovery during %s and cannot bypass the fresh viewer requirement', mode => {
+it.each(['readonly', 'handoff', 'inspection', 'hidden'])('pauses pointer recovery during %s and cannot bypass the fresh viewer requirement', mode => {
   const view = readyContinuous();
   view.down(1);
   for (let i = 0; i < 4; i++) act(() => jest.advanceTimersByTime(250));
@@ -1412,33 +1419,39 @@ it.each(['native_release', 'admission_cancel', 'permission_denied'])('old CLOSE 
   view.unmount();
 });
 
-it('switching a ready continuous session to recording waits for release then records a discrete action', () => {
+it('records pointer and wheel ACKs without replacing a ready continuous session', () => {
   const view = readyContinuous();
-  const record = jest.fn();
-  view.rerender(<DeviceStream deviceId="gesture-remote" fit="contain" enableStaticInput enableNavigation recordingMode onControlSent={record} />);
-  view.down(1); view.up(1,65);
-  expect(view.commands()).toEqual([]);
-  view.status(0,3,'release');
-  view.down(2); view.up(2,65);
-  expect(view.commands()).toHaveLength(1);
-  expect(record).toHaveBeenCalledTimes(1);
+  const record = jest.fn(), native=jest.fn();
+  view.rerender(<DeviceStream deviceId="gesture-remote" fit="contain" enableStaticInput enableNavigation recordingMode onControlSent={record} onGestureRecording={native} />);
+  view.down(1);view.status(1,1);view.up(1);view.status(2,1);
+  expect(native.mock.calls.at(-1)?.[0]).toMatchObject({outcome:'confirmed'});
   expect(view.sent().filter(x => x.type === 'touch_probe')).toHaveLength(1);
   view.wheel();
-  expect(view.commands()).toHaveLength(2);
-  expect(record).toHaveBeenCalledTimes(2);
-  expect(view.sent().filter(x => x.type === 'touch_event')).toHaveLength(0);
+  const down=view.sent().filter(x=>x.type==='touch_event'&&x.action===0).at(-1)!;
+  view.status(down.sequence,1);
+  act(()=>jest.advanceTimersByTime(180));
+  const up=view.sent().filter(x=>x.type==='touch_event'&&x.action===1).at(-1)!;view.status(up.sequence,1);
+  expect(native.mock.calls.filter(([e])=>e.phase==='finished'&&e.outcome==='confirmed')).toHaveLength(2);
+  expect(view.commands()).toHaveLength(0);expect(record).not.toHaveBeenCalled();
+  expect(view.sent().filter(x=>x.type==='touch_close')).toHaveLength(0);
   view.unmount();
 });
 
-it('switching to recording ignores a pending capability and never opens an invisible owner', () => {
+it('recording uses pending native capability but never falls back to an unacknowledged click before READY', () => {
   mockCapture = { captureEpoch: TOUCH_EPOCH, frameWidth: 1280, frameHeight: 720 };
   const view = readyWheel();
   view.rerender(<DeviceStream deviceId="gesture-remote" fit="contain" enableStaticInput enableNavigation recordingMode onControlSent={jest.fn()} />);
   act(() => view.socket.onmessage?.({ data: JSON.stringify({ type:'touch_capability',capture_epoch:TOUCH_EPOCH,frame_width:1280,frame_height:720 }) }));
-  expect(view.socket.send.mock.calls.map(([raw]) => JSON.parse(raw as string)).filter(x=>x.type==='touch_open')).toHaveLength(0);
+  expect(view.socket.send.mock.calls.map(([raw]) => JSON.parse(raw as string)).filter(x=>x.type==='touch_open')).toHaveLength(1);
   view.down(1);view.up(1,65);
-  expect(view.commands()).toHaveLength(1);
+  expect(view.commands()).toHaveLength(0);
   view.unmount();
+});
+
+it('never completes a legacy drag that began before recording mode was enabled',()=>{
+  const view=readyWheel();view.down(1);
+  view.rerender(<DeviceStream deviceId="gesture-remote" fit="contain" enableStaticInput enableNavigation recordingMode/>);
+  view.up(1,65);expect(view.commands()).toHaveLength(0);view.unmount();
 });
 
 it('maps downward and upward wheel movements to bounded swipes at native video coordinates', () => {
@@ -1768,41 +1781,43 @@ it('keeps normal continuous motion with permanent recorder receipt observers', (
   view.unmount();
 });
 
-it('prepares explicit recording during held touch only after native release without replay', () => {
-  const view = readyContinuous(), observer = jest.fn(), ready = jest.fn();
+it('starts recording on the same controller and cancels a preceding held finger without replay', () => {
+  const view = readyContinuous(), observer = jest.fn(), ready = jest.fn(), native = jest.fn();
   view.down(1,40); view.status(1,1);
-  view.rerender(<DeviceStream deviceId="gesture-remote" fit="contain" enableStaticInput enableNavigation recordingMode onControlSent={observer} onRecordingControlReady={ready} />);
-  expect(ready).toHaveBeenLastCalledWith(false);
-  view.up(1,65); view.down(2); view.up(2,65);
-  expect(view.commands()).toHaveLength(0);
-  expect(view.sent().filter(x => x.type === 'touch_close')).toHaveLength(1);
-  view.status(0,3,'release');
+  view.rerender(<DeviceStream deviceId="gesture-remote" fit="contain" enableStaticInput enableNavigation recordingMode onControlSent={observer} onRecordingControlReady={ready} onGestureRecording={native} />);
+  expect(view.sent().filter(x=>x.type==='touch_event').map(x=>x.action)).toEqual([0,3]);
+  expect(view.sent().filter(x=>x.type==='touch_close')).toHaveLength(0);
+  view.status(2,3); view.up(1,65);
   expect(ready).toHaveBeenLastCalledWith(true);
-  view.down(3); view.up(3,65);
-  expect(view.commands()).toHaveLength(1); expect(observer).toHaveBeenCalledTimes(1);
+  view.down(3);view.status(3,1);view.up(3);view.status(4,1);
+  expect(view.commands()).toHaveLength(0);expect(observer).not.toHaveBeenCalled();
+  expect(native.mock.calls.map(([e])=>e.phase)).toEqual(['started','finished']);
+  expect(native.mock.calls[1][0]).toMatchObject({outcome:'confirmed',input:{command:{type:'click'}}});
   view.unmount();
 });
 
-it.each(['missing','unknown'])('keeps recording fenced after %s native release', kind => {
-  const view = readyContinuous(), ready = jest.fn();
-  view.rerender(<DeviceStream deviceId="gesture-remote" fit="contain" enableStaticInput enableNavigation recordingMode onRecordingControlReady={ready} />);
-  if(kind === 'unknown') view.status(0,4,'release');
-  else act(() => jest.advanceTimersByTime(3000));
-  expect(ready).not.toHaveBeenCalledWith(true);
-  if(kind === 'missing') expect(view.container.querySelector('[data-control-state]')).toHaveAttribute('data-control-failure','recording_release_unknown');
+it.each(['missing','unknown'])('reports a %s native gesture result without legacy recording or replay', kind => {
+  const view = readyContinuous(), native = jest.fn();
+  view.rerender(<DeviceStream deviceId="gesture-remote" fit="contain" enableStaticInput enableNavigation recordingMode onGestureRecording={native} />);
+  view.down(1);view.status(1,1);view.up(1);
+  if(kind === 'unknown') view.status(2,6);else act(() => jest.advanceTimersByTime(520));
+  expect(native.mock.calls.at(-1)?.[0]).toMatchObject({phase:'finished',outcome:'unknown',input:null});
   view.down(2);view.up(2,65);view.wheel();
   expect(view.commands()).toHaveLength(0);
   view.unmount();
 });
 
-it('stopping explicit recording cancels an unfinished discrete drag before negotiating live input', () => {
-  const observer=jest.fn(),view=readyContinuous();
-  view.rerender(<DeviceStream deviceId="gesture-remote" fit="contain" enableStaticInput enableNavigation recordingMode onControlSent={observer} />);
-  view.status(0,3,'release'); view.down(2,40);
-  view.rerender(<DeviceStream deviceId="gesture-remote" fit="contain" enableStaticInput enableNavigation recordingMode={false} onControlSent={observer} />);
+it('stopping recording cancels its held gesture on the existing controller and drains its exact ACK', () => {
+  const observer=jest.fn(),native=jest.fn(),view=readyContinuous();
+  view.rerender(<DeviceStream deviceId="gesture-remote" fit="contain" enableStaticInput enableNavigation recordingMode onControlSent={observer} onGestureRecording={native} />);
+  view.down(2,40);view.status(1,1);
+  view.rerender(<DeviceStream deviceId="gesture-remote" fit="contain" enableStaticInput enableNavigation recordingMode={false} onControlSent={observer} onGestureRecording={native} />);
+  view.status(2,3);
   view.up(2,65);
   expect(view.commands()).toHaveLength(0);expect(observer).not.toHaveBeenCalled();
-  expect(view.sent().filter(x => x.type === 'touch_probe')).toHaveLength(2);
+  expect(view.sent().filter(x => x.type === 'touch_probe')).toHaveLength(1);
+  expect(view.sent().filter(x=>x.type==='touch_close')).toHaveLength(0);
+  expect(native.mock.calls.at(-1)?.[0]).toMatchObject({outcome:'cancelled'});
   view.unmount();
 });
 
@@ -1834,7 +1849,7 @@ it.each(['missing', 'unknown'])('blocks a task handoff for %s native release', k
   view.unmount();
 });
 
-it.each(['recording', 'xpath'])('keeps the direct video peer alive while %s waits for native input release', mode => {
+it.each(['recording', 'xpath'])('keeps the direct video peer alive across %s native input mode', mode => {
   const view = readyContinuous();
   view.receive({ type: 'stream_session', schema_version: 1, history_enabled: true, session_id: '1'.repeat(16), report_interval_seconds: 10 });
   const ready = jest.fn();
@@ -1842,8 +1857,8 @@ it.each(['recording', 'xpath'])('keeps the direct video peer alive while %s wait
   view.rerender(<DeviceStream deviceId="gesture-remote" enableNavigation enableStaticInput recordingMode={mode === 'recording'}
     onRecordingControlReady={mode === 'recording' ? ready : undefined} inspection={mode === 'xpath' ? { onPick: jest.fn(), bounds: null } : undefined} onInspectionControlReady={mode === 'xpath' ? ready : undefined} />);
   expect(mockVideoEligible).toBe(true);
-  expect(ready).toHaveBeenLastCalledWith(false);
-  view.status(0, 3, 'release');
+  expect(ready).toHaveBeenLastCalledWith(mode==='recording');
+  if(mode==='xpath')view.status(0, 3, 'release');
   expect(ready).toHaveBeenLastCalledWith(true);
   expect(mockVideoEligible).toBe(true);
   act(() => jest.advanceTimersByTime(3000));

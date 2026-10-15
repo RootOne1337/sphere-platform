@@ -33,6 +33,7 @@ import { StreamControlsTray } from '@/src/features/stream/StreamControlsTray';
 import { ServerLinkRtt } from '@/src/features/stream/serverLinkRtt';
 import { RemoteKeyboardCapture } from '@/src/features/stream/RemoteKeyboardCapture';
 import { StreamOverlayToolbar } from '@/src/features/stream/StreamOverlayToolbar';
+import { NativeGestureRecording, type NativeGestureRecordingEvent } from '@/src/features/stream/nativeGestureRecording';
 
 interface DeviceStreamProps {
   deviceId: string;
@@ -41,9 +42,10 @@ interface DeviceStreamProps {
   onControlSent?: (input: StreamInput) => void;
   /** HTTP key/text submissions and the separate installed-APK result. */
   onControlCommand?: (event: AcknowledgedControl) => void;
-  /** Explicit discrete recorder intent; observing command results never changes input mode. */
+  /** Observe this viewer's native input without replacing its transport. */
   recordingMode?: boolean;
-  /** True only after this viewer has released native ownership and discrete recording can accept input. */
+  onGestureRecording?: (event: NativeGestureRecordingEvent) => void;
+  /** Native READY, separate from video/DataChannel readiness. */
   onRecordingControlReady?: (ready: boolean) => void;
   /** A unique launch attempt locks input and waits for this viewer's known native RELEASE. */
   taskHandoffId?: number;
@@ -139,6 +141,7 @@ export function DeviceStream({
   onControlSent,
   onControlCommand,
   recordingMode = false,
+  onGestureRecording,
   onRecordingControlReady,
   taskHandoffId,
   onTaskHandoffState,
@@ -257,7 +260,9 @@ export function DeviceStream({
   telemetryControl.current = { state: continuousState, failure: continuousFailureCode, rtt: continuousReceipt?.ms ?? null, attempts: idleRecoveryCount, transport: controlTransport, fence: pointerFailureSnapshot, fenceAtMs: pointerFailureSnapshot ? pointerFailure?.atMs ?? null : null };
   const currentDiagnosticSession = diagnosticSession?.deviceId === deviceId && diagnosticSession.accessToken === accessToken
     && diagnosticSession.socket === wsRef.current && diagnosticSession.socket.readyState === WebSocket.OPEN ? diagnosticSession.id : null;
-  const waitingForDirectInput = !recordingMode && !inspection && !readOnly && taskHandoffId === undefined
+  const recordingRef = useRef(recordingMode); recordingRef.current = recordingMode;
+  const gestureRecordingRef = useRef(onGestureRecording); gestureRecordingRef.current = onGestureRecording;
+  const waitingForDirectInput = !inspection && !readOnly && taskHandoffId === undefined
     // Keep an already admitted fallback owner until the direct endpoint is
     // usable and its idle/pending outcomes can be released exactly. A background
     // ICE retry must not interrupt a gesture on the working server route.
@@ -277,14 +282,14 @@ export function DeviceStream({
   // Capability negotiation has no controller yet. Report its actual phase,
   // rather than leaving the last controller's state as a misleading idle.
   telemetryControl.current.state = continuousRef.current?.state ?? continuousState;
-  continuousAllowedRef.current = canInteract && !waitingForDirectInput && !continuousRecording && continuousRequestedRef.current;
+  continuousAllowedRef.current = canInteract && !waitingForDirectInput && continuousRequestedRef.current;
   // Age is not a disconnect: an idle ImageReader can retain its last picture.
   // A new socket/decoder still needs its own first frame before accepting input.
   const canNavigate = surfaceActive && !waitingForDirectInput && taskHandoffId === undefined && !continuousFault && !idleRecovering && !inspection && !readOnly && hasRenderedFrame && !streamError
     && (connection === 'live' || connection === 'stale')
     && renderedSocketRef.current === wsRef.current;
   idleRecoveryAllowedRef.current = enableNavigation && surfaceActive && currentFrameOwned
-    && !readOnly && !inspection && !recordingMode && taskHandoffId === undefined && !discreteBusy && !continuousFault;
+    && !readOnly && !inspection && taskHandoffId === undefined && !discreteBusy && !continuousFault;
   const onFrameDimensionsRef = useRef(onFrameDimensions);
   const lastFrameDimensionsRef = useRef<StreamFrameDimensions | null>(null);
   onFrameDimensionsRef.current = onFrameDimensions;
@@ -675,9 +680,13 @@ export function DeviceStream({
           const inputTransport = endpoint ? new DirectPointerTransport(newWs, endpoint) : newWs;
           continuousRouteRef.current = endpoint;
           setControlTransport(endpoint ? 'direct_webrtc' : 'server_websocket');
+          const recorder = new NativeGestureRecording({ deviceId, enabled: () => recordingRef.current,
+            onEvent: event => gestureRecordingRef.current?.(event) });
           const controller = new ContinuousPointer({ socket: inputTransport, sharedInput: endpoint?.sharedInput === true,
             nativeKeys: endpoint?.nativeKeys === true, keyboard: endpoint?.keyboard === true,
             renderedCapture: () => renderedCaptureRef.current,
+            onInput: input => recorder.offered(input),
+            onGestureInterrupted: gesture => recorder.interrupted(gesture),
             onFence: snapshot => {
               if (ignore || ended || newWs !== wsRef.current || continuousRef.current !== controller
                 || ['viewer_closed', 'viewer_destroyed', 'control_mode_changed'].includes(snapshot.reason)) return;
@@ -688,6 +697,7 @@ export function DeviceStream({
               reporter.report(true);
             },
             onState: (state, reason) => {
+              if (['fenced', 'closed', 'destroyed'].includes(state)) recorder.retired();
               if (ignore || ended || newWs !== wsRef.current || continuousRef.current !== controller) return;
               setContinuousState(state);
               telemetryControl.current.state = state;
@@ -779,6 +789,7 @@ export function DeviceStream({
             },
             onReceipt: receipt => {
               if (ignore || ended || newWs !== wsRef.current || continuousRef.current !== controller) return;
+              recorder.receipt(receipt);
               actionLatency.record(receipt.action, receipt.receiptRoundTripMs);
               const now = performance.now();
               // Only sustained native receipts reset retry backoff, not merely
@@ -803,7 +814,7 @@ export function DeviceStream({
           const detachPointer = attachContinuousPointer({ canvas, controller,
             allowed: () => continuousAllowedRef.current,
             point: (event, clamp) => continuousPointRef.current(event.clientX, event.clientY, clamp) });
-          continuousDisposeRef.current = () => { detachReceipt?.(); detachPointer(); };
+          continuousDisposeRef.current = () => { recorder.retired(); detachReceipt?.(); detachPointer(); };
           clearTimeout(probeTimer);
           controller.open(capture);
           return true;
@@ -1120,7 +1131,7 @@ export function DeviceStream({
     if (controller && !['closed', 'destroyed'].includes(controller.state)) {
       return;
     }
-    if (!canInteract || continuousRecording || !wsRef.current || wsRef.current.readyState !== WebSocket.OPEN) return;
+    if (!canInteract || !wsRef.current || wsRef.current.readyState !== WebSocket.OPEN) return;
     if (deferLegacyInput(!!diagnosticReporter.current?.sessionId, directVideoRef.current, directControlRef.current)) return;
     continuousDisposeRef.current?.();
     continuousDisposeRef.current = null;
@@ -1149,7 +1160,7 @@ export function DeviceStream({
       && controller.pointerOutcomeConfirmed && !discreteBusyRef.current) controller.close();
   }, [directControlVersion, directVideo.active, continuousState, continuousReceipt]);
   useEffect(() => {
-    if (inspection || readOnly || continuousRecording || taskHandoffId !== undefined) {
+    if (inspection || readOnly || taskHandoffId !== undefined) {
       automaticProbeRef.current = null;
       if (idleRecoveringRef.current && continuousRef.current?.state === 'closed' && !freshViewerAfterReleaseRef.current) {
         idleRecoveringRef.current = false;
@@ -1257,8 +1268,13 @@ export function DeviceStream({
     // A partially recorded discrete drag belongs to the old mode. Never replay
     // its UP after Stop, inspection, a lock or permission change.
     dragRef.current = null;
-    if (inspection || readOnly || continuousRecording || taskHandoffId !== undefined) continuousRef.current?.retire('control_mode_changed');
-  }, [inspection, readOnly, continuousRecording, taskHandoffId]);
+    if (inspection || readOnly || taskHandoffId !== undefined) continuousRef.current?.retire('control_mode_changed');
+  }, [inspection, readOnly, taskHandoffId]);
+  useEffect(() => {
+    // Mode changes cannot record half a held finger; CANCEL uses the same peer.
+    dragRef.current = null;
+    continuousRef.current?.cancelActiveGesture();
+  }, [recordingMode]);
   useEffect(() => {
     const controller = continuousRef.current;
     onInspectionControlReady?.(!!inspection && currentFrameOwned && !discreteBusy
@@ -1266,8 +1282,7 @@ export function DeviceStream({
   }, [inspection, currentFrameOwned, discreteBusy, continuousState, onInspectionControlReady]);
   useEffect(() => {
     const controller = continuousRef.current;
-    onRecordingControlReady?.(continuousRecording && canInteract
-      && (!controller || controller.state === 'closed'));
+    onRecordingControlReady?.(continuousRecording && canInteract && controller?.state === 'ready');
   }, [continuousRecording, canInteract, continuousState, onRecordingControlReady]);
   useEffect(() => {
     if (taskHandoffId === undefined) return;
@@ -1278,23 +1293,22 @@ export function DeviceStream({
   }, [taskHandoffId, onTaskHandoffState, currentFrameOwned, discreteBusy, continuousFault, surfaceActive, continuousState]);
   useEffect(() => {
     const controller = continuousRef.current;
-    if (!(inspectionActive || continuousRecording || taskHandoffId !== undefined) || !controller || controller.state === 'closed' || !currentFrameOwned) return;
+    if (!(inspectionActive || taskHandoffId !== undefined) || !controller || controller.state === 'closed' || !currentFrameOwned) return;
     const timeout = setTimeout(() => {
       if (continuousRef.current !== controller || controller.state === 'closed') return;
       continuousFaultRef.current = true;
       setContinuousFault(true);
-      setContinuousFailureCode(taskHandoffId !== undefined ? 'task_release_unknown' : inspectionActive ? 'inspection_release_unknown' : 'recording_release_unknown');
-      setContinuousReason(taskHandoffId !== undefined ? 'Освобождение управления Android не подтверждено. Задание не создано; восстановите подключение.' : inspectionActive ? 'Освобождение управления Android не подтверждено. Чтение дерева не отправлено; восстановите подключение.' : 'Освобождение управления Android не подтверждено. Запись действий заблокирована; восстановите подключение.');
+      setContinuousFailureCode(taskHandoffId !== undefined ? 'task_release_unknown' : 'inspection_release_unknown');
+      setContinuousReason(taskHandoffId !== undefined ? 'Освобождение управления Android не подтверждено. Задание не создано; восстановите подключение.' : 'Освобождение управления Android не подтверждено. Чтение дерева не отправлено; восстановите подключение.');
     }, 3000);
     return () => clearTimeout(timeout);
   }, [inspectionActive, continuousRecording, taskHandoffId, currentFrameOwned, continuousState]);
 
   const handlePointerDown = useCallback(
     (e: React.PointerEvent<HTMLCanvasElement>) => {
-      // Inspection only selects a frame; it never injects Android input. Recording
-      // may use discrete input again after this controller's known native release.
-      if (!inspection && (waitingForDirectInput || discreteBusyRef.current || continuousFaultRef.current
-        || continuousSupportedRef.current && !continuousRecording
+      // Native recording never falls through to unacknowledged legacy clicks.
+      if (!inspection && (recordingMode || waitingForDirectInput || discreteBusyRef.current || continuousFaultRef.current
+        || continuousSupportedRef.current
         || continuousRef.current && !['closed', 'destroyed'].includes(continuousRef.current.state))) return;
       if (!(canInteract || canSelectElement) || wsRef.current?.readyState !== WebSocket.OPEN
         || renderedSocketRef.current !== wsRef.current) {
@@ -1320,6 +1334,7 @@ export function DeviceStream({
       const start = dragRef.current;
       if (!start || e.pointerId !== start.pointerId) return;
       dragRef.current = null;
+      if (recordingMode && !inspection) return;
       if (!(canInteract || canSelectElement) || start.inspection !== !!inspection || wsRef.current?.readyState !== WebSocket.OPEN
         || renderedSocketRef.current !== wsRef.current || e.button !== 0
         || e.currentTarget.width !== start.frameWidth
@@ -1351,7 +1366,7 @@ export function DeviceStream({
         }
       }
     },
-    [canInteract, canSelectElement, inspection, toCanvasCoords, onTap, onControlSent, deviceId],
+    [canInteract, canSelectElement, inspection, recordingMode, toCanvasCoords, onTap, onControlSent, deviceId],
   );
 
   const handlePointerCancel = useCallback((e: React.PointerEvent<HTMLCanvasElement>) => {
@@ -1360,7 +1375,7 @@ export function DeviceStream({
 
   const handleWheel = useCallback((e: WheelEvent) => {
     const continuous = continuousRef.current;
-    if (waitingForDirectInput || discreteBusyRef.current || continuousFaultRef.current || continuousSupportedRef.current && !continuousRecording && continuous?.state !== 'ready'
+    if (waitingForDirectInput || discreteBusyRef.current || continuousFaultRef.current || (recordingMode || continuousSupportedRef.current) && continuous?.state !== 'ready'
       || continuous && !['ready', 'closed', 'destroyed'].includes(continuous.state)) return;
     // Wheel control belongs to the selected-device view. Never intercept
     // browser zoom, inspection, a retained old socket frame or a held drag.
@@ -1449,7 +1464,7 @@ export function DeviceStream({
       bitrate={directVideo.active ? directVideo.result?.videoStats?.bitrateBps ?? null : receiveRate} /></div>
     {enableNavigation && ((!inspection && !readOnly) || (inspection && continuousFault)) && <div data-control-state={continuousState} data-control-failure={continuousFailureCode ?? undefined} className={fullscreen.active ? continuousFault && continuousReason ? 'absolute bottom-16 left-2 z-20 max-w-[calc(100%-1rem)] rounded-xl border border-amber-300/30 bg-black/80 px-3 py-2 text-amber-100' : 'sr-only' : 'flex shrink-0 flex-wrap items-center gap-2 border-b border-border bg-card px-3 py-2 text-foreground'}>
       <span className={`h-2 w-2 shrink-0 rounded-full ${continuousState === 'ready' ? 'bg-emerald-500' : 'bg-muted-foreground'}`} aria-hidden />
-      <span role="status" className="min-w-0 flex-[1_1_16rem] text-xs leading-relaxed">{continuousReason ?? (discreteBusy ? 'Клавиатура и навигация · ожидаем подтверждение Android' : continuousRecording ? 'Запись использует отдельные завершённые действия' : continuousState === 'ready'
+      <span role="status" className="min-w-0 flex-[1_1_16rem] text-xs leading-relaxed">{continuousReason ?? (discreteBusy ? 'Клавиатура и навигация · ожидаем подтверждение Android' : continuousRecording && continuousState === 'ready' ? 'Запись · непрерывный ввод с подтверждением Android' : continuousState === 'ready'
         ? 'Непрерывное управление · зажмите и ведите мышь' : continuousState === 'opening' ? 'Подключаем управление Android…' : continuousState === 'probing' ? 'Определяем возможности APK…' : continuousState === 'closed' ? 'Касание Android освобождено'
         : continuousState === 'fenced' ? 'Управление приостановлено · ожидаем новую готовность Android' : 'Управление Android')}
       {continuousReceipt && continuousState === 'ready' && <span title={`Круговое время подтверждения Android №${continuousReceipt.sequence} ${controlTransport === 'direct_webrtc' ? 'напрямую по WebRTC DataChannel' : 'через серверный WebSocket'}, включая обработку на устройстве. Это не задержка изображения и не чистый сетевой RTT.`}>

@@ -3,6 +3,7 @@ import { DeviceWorkbench } from '@/src/features/scripts/studio/DeviceWorkbench';
 import { api } from '@/lib/api';
 import type { AcknowledgedControl } from '@/src/features/stream/controlObservation';
 import type { UiHierarchyNode, UiHierarchySnapshot } from '@/src/features/stream/uiHierarchy';
+import type { NativeGestureRecordingEvent } from '@/src/features/stream/nativeGestureRecording';
 
 const deviceId = 'b410464a-5f26-4803-a756-7840cc17b128';
 const scriptId = 'fbffbc95-3c16-4f1e-8833-d77271ac1b28';
@@ -14,6 +15,7 @@ let mockLogs: Record<string, unknown>[];
 let mockRetainProgressWhenDisabled = false;
 let mockRecordingMode: boolean | undefined;
 let mockRecordingReadyObserver: ((ready: boolean) => void) | undefined;
+let mockNativeObserver: ((event: NativeGestureRecordingEvent) => void) | undefined;
 let mockObserve: (event: AcknowledgedControl) => void;
 let mockSelectorInsert: ((node: UiHierarchyNode, snapshot: UiHierarchySnapshot) => void) | undefined;
 let mockInputAt = 1000;
@@ -37,13 +39,14 @@ jest.mock('@/lib/hooks/useTasks', () => ({
 jest.mock('@/src/features/access/Capabilities', () => ({ useCapabilities: () => ({ can: () => mockCapabilitiesAvailable }) }));
 jest.mock('@/lib/api', () => ({ api: { post: jest.fn() } }));
 jest.mock('next/link', () => function MockLink({ href, children, ...props }: React.AnchorHTMLAttributes<HTMLAnchorElement> & { href: string }) { return <a href={href} {...props}>{children}</a>; });
-jest.mock('@/src/features/stream/SingleDeviceStream', () => ({ SingleDeviceStream: ({ deviceId: ownedId, controlDisabled, onControlSent, onControlCommand, onInsertSelector, recordingMode, onRecordingControlReady, taskHandoffId, onTaskHandoffState }: {
+jest.mock('@/src/features/stream/SingleDeviceStream', () => ({ SingleDeviceStream: ({ deviceId: ownedId, controlDisabled, onControlSent, onControlCommand, onInsertSelector, recordingMode, onRecordingControlReady, onGestureRecording, taskHandoffId, onTaskHandoffState }: {
   deviceId: string; controlDisabled: boolean; recordingMode?: boolean; onRecordingControlReady?: (ready: boolean) => void; onControlSent: (value: unknown) => void; onControlCommand: typeof mockObserve; onInsertSelector: typeof mockSelectorInsert;
+  onGestureRecording?: (event:NativeGestureRecordingEvent)=>void;
   taskHandoffId?: number; onTaskHandoffState?: typeof mockHandoffObserver;
 }) => { const React = jest.requireActual('react');
   React.useEffect(() => { if (mockHandoffAuto && taskHandoffId !== undefined) onTaskHandoffState?.('ready', taskHandoffId); }, [taskHandoffId, onTaskHandoffState]);
   mockHandoffId=taskHandoffId; mockHandoffObserver=onTaskHandoffState;
-  mockRecordingReadyObserver=onRecordingControlReady; mockRecordingMode=recordingMode; mockObserve = onControlCommand; mockSelectorInsert = onInsertSelector; return <section aria-label="Поток выбранного Android" data-device={ownedId}>
+  mockNativeObserver=onGestureRecording;mockRecordingReadyObserver=onRecordingControlReady; mockRecordingMode=recordingMode; mockObserve = onControlCommand; mockSelectorInsert = onInsertSelector; return <section aria-label="Поток выбранного Android" data-device={ownedId}>
   <button disabled={controlDisabled} onClick={() => onControlSent({ deviceId: ownedId, at: mockInputAt, dimensions: { width: 960, height: 540 }, command: { type: 'click', x: 480, y: 270 } })}>Записать тестовый клик</button>
 </section>; } }));
 
@@ -604,6 +607,7 @@ it('toggles recording explicitly while keeping late Android receipt observation 
   openDevice(); expect(mockRecordingMode).toBe(false);
   fireEvent.click(screen.getByRole('button',{name:'Записать действия'}));expect(mockRecordingMode).toBe(true);
   act(() => mockObserve({requestId:'late-mode',input:observedInput,phase:'submitted'}));
+  expect(screen.getByRole('button',{name:'Записать тестовый клик'})).not.toBeDisabled();
   fireEvent.click(screen.getByRole('button',{name:'Остановить запись'}));expect(mockRecordingMode).toBe(false);
   expect(screen.getByText('Ожидает APK')).toBeInTheDocument();
   act(() => mockObserve({requestId:'late-mode',input:observedInput,phase:'confirmed',completedAt:1800}));
@@ -621,6 +625,32 @@ it('shows preparation until the stream reports known recording readiness', () =>
   expect(screen.getByText(/Подготавливаем запись/)).toBeInTheDocument();
   fireEvent.click(screen.getByRole('button',{name:'Остановить запись'}));
   expect(screen.queryByText(/Подготавливаем запись/)).not.toBeInTheDocument();
+});
+
+it('drains native input after Stop without disabling its own controller, then imports only the confirmed result',()=>{
+  const view=openDevice();fireEvent.click(screen.getByRole('button',{name:'Записать действия'}));
+  act(()=>mockNativeObserver!({phase:'started',requestId:'native-1'}));
+  expect(screen.getByRole('button',{name:'Записать тестовый клик'})).not.toBeDisabled();
+  expect(screen.getByRole('button',{name:'Проверить на PH025'})).toBeDisabled();
+  fireEvent.click(screen.getByRole('button',{name:'Остановить запись'}));
+  expect(screen.getByText(/Жест выполняется на Android/)).toBeInTheDocument();
+  expect(screen.getByRole('button',{name:'Вставить в граф'})).toBeDisabled();
+  const input={deviceId,at:1000,dimensions:{width:960,height:540},command:{type:'click' as const,x:480,y:270}};
+  act(()=>mockNativeObserver!({phase:'finished',requestId:'native-1',input,outcome:'confirmed',completedAt:1100}));
+  expect(screen.queryByText(/Жест выполняется на Android/)).not.toBeInTheDocument();
+  expect(screen.getByText('Подтверждено APK')).toBeInTheDocument();
+  act(()=>mockNativeObserver!({phase:'finished',requestId:'native-1',input,outcome:'confirmed',completedAt:1200}));
+  fireEvent.click(screen.getByRole('button',{name:'Вставить в граф'}));
+  expect(view.onInsert).toHaveBeenCalledWith([{type:'tap',x:640,y:360}]);
+});
+
+it.each(['unknown','interrupted','unsupported'] as const)('does not import a native %s gesture or accept its late success',outcome=>{
+  const view=openDevice();fireEvent.click(screen.getByRole('button',{name:'Записать действия'}));
+  act(()=>mockNativeObserver!({phase:'started',requestId:'native-1'}));
+  act(()=>mockNativeObserver!({phase:'finished',requestId:'native-1',outcome,input:null,completedAt:1100}));
+  expect(mockRecordingMode).toBe(false);expect(screen.getByRole('alert')).toBeInTheDocument();
+  expect(screen.getByRole('button',{name:'Вставить в граф'})).toBeDisabled();
+  expect(view.onInsert).not.toHaveBeenCalled();
 });
 
 it('stops a hidden laboratory without discarding recording and accepts only its existing late ACK', () => {

@@ -13,10 +13,12 @@ import type { StreamFrameDimensions } from './streamAspectRatio';
 import { checkedHierarchy, frameBounds, hitTestHierarchy, matchesFrame, type UiHierarchyNode, type UiHierarchySnapshot } from './uiHierarchy';
 import type { AcknowledgedControl, StreamInput, TaskControlHandoffState } from './controlObservation';
 import { uiInspectionError, type UiInspectionError } from './uiInspectionError';
+import type { NativeGestureRecordingEvent } from './nativeGestureRecording';
 
 const SNAPSHOT_LIFETIME_MS = 30_000;
 
-export function SingleDeviceStream({ deviceId, active = true, captureEnabled = false, onControlSent, onControlCommand, recordingMode = false, onRecordingControlReady, taskHandoffId, onTaskHandoffState, onInsertSelector, controlDisabled = false, compact = false }: { deviceId: string; active?: boolean; captureEnabled?: boolean; controlDisabled?: boolean; compact?: boolean; recordingMode?: boolean; onRecordingControlReady?: (ready: boolean) => void;
+export function SingleDeviceStream({ deviceId, active = true, captureEnabled = false, onControlSent, onControlCommand, onGestureRecording, recordingMode = false, onRecordingControlReady, taskHandoffId, onTaskHandoffState, onInsertSelector, controlDisabled = false, modeChangeDisabled = false, compact = false }: { deviceId: string; active?: boolean; captureEnabled?: boolean; controlDisabled?: boolean; modeChangeDisabled?: boolean; compact?: boolean; recordingMode?: boolean; onRecordingControlReady?: (ready: boolean) => void;
+  onGestureRecording?: (event: NativeGestureRecordingEvent) => void;
   taskHandoffId?: number; onTaskHandoffState?: (state: TaskControlHandoffState, id: number) => void;
   onControlSent?: (input: StreamInput) => void; onControlCommand?: (event: AcknowledgedControl) => void; onInsertSelector?: (node: UiHierarchyNode, snapshot: UiHierarchySnapshot) => void }) {
   const access = useCapabilities();
@@ -112,7 +114,7 @@ export function SingleDeviceStream({ deviceId, active = true, captureEnabled = f
   const age = report ? Math.max(0, now - report.at) : Infinity;
   const valid = snapshot && matchesFrame(snapshot, frame) && age < SNAPSHOT_LIFETIME_MS;
   const refresh = useCallback(async () => {
-    if (!visible || controlDisabled || taskHandoffId !== undefined || !canInspect || !inspect || !inspectionControlReady || !frame || controller.current || document.visibilityState === 'hidden') return;
+    if (!visible || controlDisabled || modeChangeDisabled || taskHandoffId !== undefined || !canInspect || !inspect || !inspectionControlReady || !frame || controller.current || document.visibilityState === 'hidden') return;
     const request = new AbortController();
     controller.current = request;
     const ownGeneration = ++generation.current;
@@ -156,7 +158,7 @@ export function SingleDeviceStream({ deviceId, active = true, captureEnabled = f
     } finally {
       if (controller.current === request) { controller.current = null; setPending(false); }
     }
-  }, [visible, controlDisabled, taskHandoffId, canInspect, inspect, inspectionControlReady, frame, deviceId, accessToken, select]);
+  }, [visible, controlDisabled, modeChangeDisabled, taskHandoffId, canInspect, inspect, inspectionControlReady, frame, deviceId, accessToken, select]);
   // Mode entry, a new owned picture, or return to this visible page initiates
   // one read. Failed reads pause periodic updates instead of retrying root RPCs.
   useEffect(() => { if (inspect && visible) void refresh(); }, [inspect, visible, refresh]);
@@ -190,13 +192,13 @@ export function SingleDeviceStream({ deviceId, active = true, captureEnabled = f
   return <section className="min-w-0 space-y-3" aria-label="Видеопоток и инспектор Android">
     <div className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-border bg-card p-3">
       <div className="flex flex-wrap gap-2">
-        <Button variant={!inspect && !viewOnly ? 'default' : 'outline'} size="sm" disabled={taskHandoffId !== undefined} aria-pressed={!inspect && !viewOnly} onClick={() => { setInspect(false); setViewOnly(false); invalidated(false); }}><MousePointer2 className="mr-2 h-4 w-4" aria-hidden />Управление</Button>
-        <Button variant={viewOnly ? 'default' : 'outline'} size="sm" disabled={taskHandoffId !== undefined} aria-pressed={viewOnly} onClick={() => { setInspect(false); setViewOnly(true); invalidated(false); }}><Eye className="mr-2 h-4 w-4" aria-hidden />Просмотр</Button>
-        <Button variant={inspect ? 'default' : 'outline'} size="sm" disabled={controlDisabled || taskHandoffId !== undefined || !canInspect} aria-pressed={inspect} onClick={() => { if (inspect) { void refresh(); return; } invalidated(false); setViewOnly(false); setInspect(true); setAutomatic(true); setError(null); }}><ScanSearch className="mr-2 h-4 w-4" aria-hidden />XPath-инспектор</Button>
+        <Button variant={!inspect && !viewOnly ? 'default' : 'outline'} size="sm" disabled={modeChangeDisabled || taskHandoffId !== undefined} aria-pressed={!inspect && !viewOnly} onClick={() => { setInspect(false); setViewOnly(false); invalidated(false); }}><MousePointer2 className="mr-2 h-4 w-4" aria-hidden />Управление</Button>
+        <Button variant={viewOnly ? 'default' : 'outline'} size="sm" disabled={modeChangeDisabled || taskHandoffId !== undefined} aria-pressed={viewOnly} onClick={() => { setInspect(false); setViewOnly(true); invalidated(false); }}><Eye className="mr-2 h-4 w-4" aria-hidden />Просмотр</Button>
+        <Button variant={inspect ? 'default' : 'outline'} size="sm" disabled={modeChangeDisabled || controlDisabled || taskHandoffId !== undefined || !canInspect} aria-pressed={inspect} onClick={() => { if (inspect) { void refresh(); return; } invalidated(false); setViewOnly(false); setInspect(true); setAutomatic(true); setError(null); }}><ScanSearch className="mr-2 h-4 w-4" aria-hidden />XPath-инспектор</Button>
       </div>
       {inspect && <div className="flex flex-wrap items-center gap-2">
-        <Button variant="outline" size="sm" aria-pressed={automatic} disabled={controlDisabled || taskHandoffId !== undefined || !canInspect} onClick={() => { setAutomatic(!automatic); if (!automatic) { void refresh(); } }}>Автообновление: {automatic ? 'включено' : 'пауза'}</Button>
-        <Button variant="outline" size="sm" disabled={controlDisabled || taskHandoffId !== undefined || !canInspect || !inspectionControlReady || !frame || pending} onClick={() => { void refresh(); }}><RefreshCw className={`mr-2 h-4 w-4 ${pending ? 'animate-spin motion-reduce:animate-none' : ''}`} aria-hidden />{pending ? 'Читаем дерево…' : 'Обновить дерево'}</Button>
+        <Button variant="outline" size="sm" aria-pressed={automatic} disabled={modeChangeDisabled || controlDisabled || taskHandoffId !== undefined || !canInspect} onClick={() => { setAutomatic(!automatic); if (!automatic) { void refresh(); } }}>Автообновление: {automatic ? 'включено' : 'пауза'}</Button>
+        <Button variant="outline" size="sm" disabled={modeChangeDisabled || controlDisabled || taskHandoffId !== undefined || !canInspect || !inspectionControlReady || !frame || pending} onClick={() => { void refresh(); }}><RefreshCw className={`mr-2 h-4 w-4 ${pending ? 'animate-spin motion-reduce:animate-none' : ''}`} aria-hidden />{pending ? 'Читаем дерево…' : 'Обновить дерево'}</Button>
       </div>}
     </div>
     {!canInspect && <PermissionNotice permission="device:write" action="чтение дерева Android через root-команды" />}
@@ -205,6 +207,7 @@ export function SingleDeviceStream({ deviceId, active = true, captureEnabled = f
       <div className="min-w-0 overflow-hidden rounded-xl border border-border bg-black">
         {canReadStream ? <DeviceStream deviceId={deviceId} enableDiagnostics enableNavigation enableStaticInput
           recordingMode={recordingMode} onRecordingControlReady={onRecordingControlReady}
+          onGestureRecording={onGestureRecording}
           taskHandoffId={taskHandoffId} onTaskHandoffState={nativeHandoffChanged}
           onControlSent={onControlSent}
           onControlCommand={onControlCommand}
@@ -258,7 +261,7 @@ export function SingleDeviceStream({ deviceId, active = true, captureEnabled = f
     </div>
     {canInspect && <details className="rounded-xl border border-border bg-card p-3">
       <summary className="cursor-pointer text-sm font-semibold">Исходный PNG для пиксельных эталонов</summary>
-      <div className="mt-3"><NativeScreenshotPanel key={deviceId} deviceId={deviceId} enabled={captureEnabled} captureLocked={controlDisabled || taskHandoffId !== undefined} onActivityChange={captureChanged} /></div>
+      <div className="mt-3"><NativeScreenshotPanel key={deviceId} deviceId={deviceId} enabled={captureEnabled} captureLocked={modeChangeDisabled || controlDisabled || taskHandoffId !== undefined} onActivityChange={captureChanged} /></div>
     </details>}
   </section>;
 }

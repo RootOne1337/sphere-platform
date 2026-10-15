@@ -29,6 +29,11 @@ export interface PointerTransport {
 export interface PointerObservation {
   sequence: number; action: number; status: 1 | 2 | 3; deviceUptimeMs: number; receiptRoundTripMs: number;
 }
+/** Viewer-local observation only. Never include this payload in fleet telemetry. */
+export interface PointerInputObservation {
+  sequence: number; gesture: number; action: 0 | 1 | 2 | 3;
+  x: number; y: number; at: number; capture: CaptureFrameBinding;
+}
 /** One scalar failure snapshot, never a trajectory, frame, owner ID or replay queue. */
 export type PointerFenceObservation = Readonly<{
   reason: string; phase: ContinuousPointerState; idleHeartbeatOnly: boolean;
@@ -53,6 +58,8 @@ type Options = {
   now?: () => number;
   onState?: (state: ContinuousPointerState, reason: string | null) => void;
   onReceipt?: (observation: PointerObservation) => void;
+  onInput?: (observation: PointerInputObservation) => void;
+  onGestureInterrupted?: (gesture: number) => void;
   onFence?: (observation: PointerFenceObservation) => void;
 };
 
@@ -359,6 +366,7 @@ export class ContinuousPointer {
       }
       if (this.stateValue !== 'ready' || message.gesture === 0
         || this.held?.gesture !== message.gesture && !this.pending.some(p => p.gesture === message.gesture)) return false;
+      try { this.options.onGestureInterrupted?.(message.gesture); } catch { /* Observation only. */ }
       // Android confirmed CANCEL before another participant's DOWN. This is
       // neither a broken peer nor an applied UP. Old buffered MOVE/UP cannot
       // reclaim the pointer; a fresh local DOWN uses the next gesture nonce.
@@ -456,6 +464,12 @@ export class ContinuousPointer {
     // may deliver a receipt during send(). Unknown writes are not repeated.
     this.pending.push(entry);
     this.lastSentAt = entry.at;
+    // Register the local observer before write: an ordered in-process adapter
+    // may synchronously deliver the exact native receipt from send().
+    if (action >= 0 && action <= 3 && this.capture) try {
+      this.options.onInput?.({ sequence: entry.sequence, gesture, action: action as 0 | 1 | 2 | 3,
+        x: point.x, y: point.y, at: entry.at, capture: { ...this.capture } });
+    } catch { /* Recorder failure never changes input delivery. */ }
     if (!this.write({ type: 'touch_event', sequence: entry.sequence, gesture, action, x: point.x, y: point.y })) return null;
     return entry;
   }
@@ -497,6 +511,8 @@ export class ContinuousPointer {
   cancel(pointerId: number) {
     return this.held ? this.finish(pointerId, this.move ?? this.held, 3) : false;
   }
+  /** Stop a local recording without retiring its healthy video/input peer. */
+  cancelActiveGesture() { return this.held ? this.cancel(this.held.id) : false; }
 
   tick(): void {
     if (this.stateValue !== 'opening' && this.stateValue !== 'ready') return;

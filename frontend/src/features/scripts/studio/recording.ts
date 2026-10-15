@@ -20,6 +20,14 @@ export function appendRecording(entries: RecordedInput[], input: StreamInput, de
   if (input.command.type === 'type_text' && !androidTextCommand(input.command.text)) throw new Error('Текст не поддерживается установленным каналом Android.');
   return [...entries, { ...input, dimensions: { ...input.dimensions }, command: { ...input.command }, id: crypto.randomUUID(), outcome: 'transport-submitted' }];
 }
+export function appendNativeRecording(entries: RecordedInput[], input: StreamInput, deviceId: string, requestId: string, completedAt: number): RecordedInput[] {
+  if (!requestId || entries.some(entry => entry.requestId === requestId)
+    || !['click','swipe'].includes(input.command.type) || !Number.isFinite(completedAt) || completedAt < input.at)
+    throw new Error('Нативная запись не соответствует подтверждённому жесту.');
+  const next = appendRecording(entries,input,deviceId);
+  next[next.length-1] = {...next[next.length-1], requestId, completedAt, outcome:'android-confirmed'};
+  return next;
+}
 /** Selecting a hierarchy node declares a future action; it never injects input.
  * Keep it in the same ordered review buffer instead of mutating the DAG early. */
 export function appendSelectorRecording(entries: RecordedInput[], node: UiHierarchyNode, snapshot: UiHierarchySnapshot,

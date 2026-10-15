@@ -283,6 +283,18 @@ it('forwards explicit recording intent and readiness without dropping receipt ob
   expect(mockStreamProps.onControlCommand).toBe(command);expect(mockStreamProps.onControlSent).toBe(sent);
 });
 
+it('locks mode changes during pending input without revoking the input controller awaiting its ACK',()=>{
+  const native=jest.fn();
+  const view=render(<SingleDeviceStream deviceId="remote" modeChangeDisabled onGestureRecording={native}/>);
+  expect(screen.getByRole('button',{name:'Управление'})).toBeDisabled();
+  expect(screen.getByRole('button',{name:'Просмотр'})).toBeDisabled();
+  expect(screen.getByRole('button',{name:'XPath-инспектор'})).toBeDisabled();
+  expect(mockStreamProps.readOnly).toBe(false);expect(mockStreamProps.onGestureRecording).toBe(native);
+  view.rerender(<SingleDeviceStream deviceId="remote" onGestureRecording={native}/>);
+  expect(screen.getByRole('button',{name:'Управление'})).not.toBeDisabled();
+  expect(mockStreamProps.readOnly).toBe(false);
+});
+
 it('drains the existing hierarchy request before task readiness without abort or new root reads', async () => {
   let resolve!: (value: unknown) => void;
   jest.mocked(api.post).mockReturnValue(new Promise(done => { resolve = done; }));
