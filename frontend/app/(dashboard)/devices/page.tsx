@@ -330,7 +330,7 @@ function DevicesRegistry({ initialGroupId }: { initialGroupId: string }) {
   };
 
   return (
-    <div className="mx-auto flex min-h-full w-full min-w-0 max-w-[1720px] flex-col gap-[var(--page-gap)] px-4 py-[var(--page-padding-y)] md:min-h-0 sm:px-[var(--page-padding-x)] xl:px-8 [@media(min-width:768px)_and_(min-height:700px)]:h-[calc(100dvh-4rem)]">
+    <div className={`mx-auto flex min-h-full w-full min-w-0 max-w-[1720px] flex-col gap-[var(--page-gap)] px-4 py-[var(--page-padding-y)] sm:px-[var(--page-padding-x)] xl:px-8 ${viewMode === 'grid' ? 'md:min-h-0 [@media(min-width:768px)_and_(min-height:700px)]:h-[calc(100dvh-4rem)]' : ''}`}>
       <header className="shrink-0 space-y-3">
         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <div className="min-w-0">
