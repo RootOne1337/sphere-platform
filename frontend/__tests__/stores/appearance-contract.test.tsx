@@ -80,7 +80,7 @@ it('preserves material intensity and motion before paint, after hydration and fr
   expect(document.documentElement.style.cssText).toBe(before);
   expect(document.documentElement.dataset.motion).toBe('reduced');
   expect(useUIStore.getState().inspectorMode).toBe('drawer');
-  expect(document.documentElement.style.getPropertyValue('--glass-opacity')).toBe('.48');
+  expect(document.documentElement.style.getPropertyValue('--glass-opacity')).toBe('.44');
 });
 
 it('rejects untrusted material and motion values while retaining known old preferences', async () => {

@@ -51,7 +51,7 @@ export function AppearanceDrawer({ open, onClose }: { open: boolean; onClose: ()
         <TabsContent value="style" className="custom-scrollbar m-0 min-h-0 flex-1 space-y-6 overflow-y-auto overscroll-contain px-5 py-5 sm:px-6">
           <div className="appearance-sample relative overflow-hidden rounded-2xl border border-border p-4" aria-label={`Предпросмотр: ${ui.surfaceStyle === 'glass' ? 'стекло' : 'матовые поверхности'}`}>
             <div className="sphere-material relative rounded-xl border border-border p-3"><div className="flex items-center gap-2 text-sm font-semibold"><span className="h-2 w-2 rounded-full bg-primary" />Sphere<span className="ml-auto rounded-md bg-primary px-2 py-1 text-[10px] text-primary-foreground">Акцент</span></div><div className="mt-3 h-2 w-3/4 rounded bg-muted-foreground/25" /><div className="mt-2 h-2 w-1/2 rounded bg-muted-foreground/15" /></div>
-            <p className="relative mt-3 text-xs font-medium text-foreground">{ui.surfaceStyle === 'glass' ? 'Тонированное стекло и мягкий свет' : 'Спокойные непрозрачные поверхности'}</p>
+            <p className="relative mt-3 text-xs font-medium text-foreground">{ui.surfaceStyle === 'glass' ? 'Размытый фон · спокойная прозрачность' : 'Спокойные непрозрачные поверхности'}</p>
           </div>
           <Section title="Готовые сочетания" icon={<Sparkles className="h-4 w-4 text-muted-foreground" aria-hidden />} description="Палитра, акцент и материал в один клик. Размер текста и плотность сохраняются.">
             <div className="grid grid-cols-2 gap-2">{WORKSPACE_LOOKS.map(look => {
@@ -69,9 +69,9 @@ export function AppearanceDrawer({ open, onClose }: { open: boolean; onClose: ()
               {ACCENTS.map(accent => <button key={accent.id} type="button" data-ui="button" aria-label={accent.label} aria-pressed={ui.accentColor === accent.id} onClick={() => ui.setAccentColor(accent.id)} className={`relative flex h-11 w-11 items-center justify-center rounded-full border-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${ui.accentColor === accent.id ? 'border-foreground' : 'border-transparent'}`}><span className="h-7 w-7 rounded-full shadow-sm" style={{ backgroundColor: accent.color }} />{ui.accentColor === accent.id && <Check className="absolute h-4 w-4 text-white" aria-hidden />}</button>)}
             </div>
           </Section>
-          <Section title="Материал" icon={<Waves className="h-4 w-4 text-muted-foreground" aria-hidden />} description="Стекло: прозрачные тонированные плитки, панели и окна. Непрозрачный режим полностью убирает прозрачность. Поля, таблицы, редактор и видео сохраняют сплошной рабочий фон.">
+          <Section title="Материал" icon={<Waves className="h-4 w-4 text-muted-foreground" aria-hidden />} description="Окна и меню размывают содержимое под ними. Плитки плотнее, чтобы данные оставались читаемыми. Непрозрачный режим отключает эффект; поля, таблицы и видео сохраняют сплошной фон.">
             <Choices<SurfaceStyle> label="Материал" value={ui.surfaceStyle} options={[[ 'glass', 'Стекло' ], [ 'solid', 'Непрозрачный' ]]} onChange={ui.setSurfaceStyle} />
-            {ui.surfaceStyle === 'glass' && <Choices<GlassStrength> label="Интенсивность стекла" value={ui.glassStrength} options={[[ 'soft', 'Лёгкое' ], [ 'balanced', 'Среднее' ], [ 'vivid', 'Яркое' ]]} onChange={ui.setGlassStrength} />}
+            {ui.surfaceStyle === 'glass' && <Choices<GlassStrength> label="Интенсивность стекла" value={ui.glassStrength} options={[[ 'soft', 'Плотное' ], [ 'balanced', 'Обычное' ], [ 'vivid', 'Прозрачное' ]]} onChange={ui.setGlassStrength} />}
             <Button variant="outline" size="sm" className="w-full" onClick={() => chooseLook(recommended)}><Sparkles className="h-3.5 w-3.5" aria-hidden />Рекомендуемое сочетание</Button>
           </Section>
         </TabsContent>

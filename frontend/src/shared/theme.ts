@@ -201,9 +201,9 @@ export const OPPOSITE_THEME: Record<ThemeType, ThemeType> = {
 };
 
 export const GLASS_STRENGTHS: Record<GlassStrength, Record<string, string>> = {
-    soft: { '--glass-opacity': '.84', '--glass-blur': '16px', '--aura-opacity': '.12', '--glass-tint-opacity': '.05', '--glass-highlight': '.10' },
-    balanced: { '--glass-opacity': '.66', '--glass-blur': '24px', '--aura-opacity': '.20', '--glass-tint-opacity': '.10', '--glass-highlight': '.17' },
-    vivid: { '--glass-opacity': '.48', '--glass-blur': '32px', '--aura-opacity': '.28', '--glass-tint-opacity': '.16', '--glass-highlight': '.24' },
+    soft: { '--glass-opacity': '.78', '--glass-panel-opacity': '.90', '--glass-blur': '20px', '--aura-opacity': '.04' },
+    balanced: { '--glass-opacity': '.62', '--glass-panel-opacity': '.82', '--glass-blur': '28px', '--aura-opacity': '.06' },
+    vivid: { '--glass-opacity': '.44', '--glass-panel-opacity': '.72', '--glass-blur': '36px', '--aura-opacity': '.08' },
 };
 export const SURFACE_TINTS: Record<ThemeType, string> = {
     'neo-dark': '165 50% 35%', 'matrix-green': '135 45% 30%', 'deep-space': '255 60% 55%',
