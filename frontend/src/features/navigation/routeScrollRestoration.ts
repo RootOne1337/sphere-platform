@@ -26,6 +26,7 @@ export function createRouteScrollRestoration(main: HTMLElement) {
   let live = true;
   let frame: number | null = null;
   let observer: ResizeObserver | null = null;
+  let contentObserver: MutationObserver | null = null;
   let timer: number | null = null;
   let pending: Entry | null = null;
   let departure: { id: string; areas: Entry['areas'] } | null = null;
@@ -63,6 +64,7 @@ export function createRouteScrollRestoration(main: HTMLElement) {
   }
   function cancelRestore() {
     pending = null; observer?.disconnect(); observer = null;
+    contentObserver?.disconnect(); contentObserver = null;
     if (timer !== null) window.clearTimeout(timer);
     timer = null;
   }
@@ -174,6 +176,17 @@ export function createRouteScrollRestoration(main: HTMLElement) {
         observer.observe(main);
         if (main.firstElementChild) observer.observe(main.firstElementChild);
         for (const element of areas().values()) observer.observe(element);
+      }
+      // Lazy grids/editors can mount a saved scroll area without changing the
+      // outer page's dimensions. Watch bounded structural changes until it
+      // exists; style changes, keystrokes and ordinary idle rendering do not
+      // keep a permanent observer alive.
+      if (typeof MutationObserver !== 'undefined') {
+        contentObserver = new MutationObserver(() => {
+          if (!pending || frame !== null) return;
+          frame = window.requestAnimationFrame(() => { frame = null; restore(); });
+        });
+        contentObserver.observe(main, { childList: true, subtree: true, attributes: true, attributeFilter: ['data-route-scroll'] });
       }
       timer = window.setTimeout(cancelRestore, 10000);
     },

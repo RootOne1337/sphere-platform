@@ -67,7 +67,7 @@ describe('build provenance', () => {
     client.clear();
   });
 
-  it('warns when known frontend and backend revisions differ', async () => {
+  it('keeps independently versioned frontend and API revisions informational', async () => {
     mockFetch(async () => ({
       ok: true,
       json: async () => ({ service: 'backend-api', revision: 'c51f4c3a1234567890abcdef1234567890abcdef' }),
@@ -77,9 +77,10 @@ describe('build provenance', () => {
 
     await waitFor(() => expect(screen.getByRole('status')).toHaveTextContent('API c51f4c3a'));
     expect(screen.getByRole('status')).toHaveTextContent('WEB 7c4d9cb6');
-    expect(screen.getByRole('status')).toHaveTextContent('MISMATCH');
-    expect(screen.getByRole('status')).toHaveAttribute('aria-label', expect.stringContaining('revisions mismatch'));
-    expect(screen.getByRole('status')).toHaveAttribute('title', expect.stringContaining('different commits'));
+    expect(screen.getByRole('status')).not.toHaveTextContent('MISMATCH');
+    expect(screen.getByRole('status')).toHaveAttribute('aria-label', expect.stringContaining('independently versioned'));
+    expect(screen.getByRole('status')).toHaveAttribute('title', expect.stringContaining('Это не проверка совместимости контрактов'));
+    expect(screen.getByRole('status')).not.toHaveClass('text-amber-700');
     client.clear();
   });
 

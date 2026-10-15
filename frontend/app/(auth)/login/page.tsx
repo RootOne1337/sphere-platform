@@ -1,4 +1,6 @@
 'use client';
+
+import { SphereMark } from '@/src/shared/ui/SphereMark';
 import { useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
@@ -97,7 +99,7 @@ export default function LoginPage() {
       </div>
       <header className="mx-auto flex w-full max-w-[1360px] items-center justify-between gap-4 px-5 py-6 sm:px-10 sm:py-8">
         <div className="flex items-center gap-3" aria-label="Sphere Platform">
-          <SphereMark />
+          <SphereMark className="h-9 w-9 shrink-0 text-emerald-400" />
           <span className="text-xl font-semibold tracking-tight">Sphere<span className="ml-2 hidden text-sm font-normal text-slate-400 sm:inline">Platform</span></span>
         </div>
         <span className="hidden text-xs tracking-wide text-slate-400 sm:block">Устройства. Сценарии. Контроль.</span>
@@ -172,14 +174,6 @@ export default function LoginPage() {
   );
 }
 
-function SphereMark() {
-  return <svg viewBox="0 0 40 40" fill="none" aria-hidden="true" className="h-9 w-9 shrink-0 text-emerald-400">
-    <rect x="0.5" y="0.5" width="39" height="39" rx="12" fill="currentColor" fillOpacity="0.08" stroke="currentColor" strokeOpacity="0.25" />
-    <circle cx="20" cy="20" r="9" stroke="currentColor" strokeWidth="1.5" />
-    <ellipse cx="20" cy="20" rx="4" ry="9" stroke="currentColor" strokeWidth="1.5" transform="rotate(35 20 20)" />
-    <path d="M11 20h18" stroke="currentColor" strokeWidth="1.5" /><circle cx="28" cy="12" r="2.5" fill="currentColor" />
-  </svg>;
-}
 function Feature({ icon: Icon, title, text }: { icon: typeof Radio; title: string; text: string }) {
   return <div><Icon className="mb-3 h-[18px] w-[18px] text-emerald-400/80" aria-hidden="true" /><p className="text-sm font-medium text-slate-200">{title}</p><p className="mt-1 text-xs leading-5 text-slate-400">{text}</p></div>;
 }

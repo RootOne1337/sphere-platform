@@ -53,69 +53,41 @@ export function MultiStreamGrid({ devices, selectedIds, onClose }: MultiStreamGr
     };
 
     return (
-        <div className="flex flex-col h-full bg-card border rounded-sm border-border">
-            {/* Toolbar */}
-            <div className="flex items-center gap-2 overflow-x-auto custom-scrollbar justify-between p-3 border-b border-border bg-muted">
-                <div className="flex items-center gap-4 shrink-0">
-                    <div className="flex items-center gap-2">
-                        <MonitorPlay className="w-4 h-4 text-primary" />
-                        <span className="text-xs font-mono font-bold tracking-widest uppercase">Global Operations Center</span>
+        <div className="stream-wall flex h-full min-h-0 min-w-0 flex-col rounded-xl border border-border bg-card">
+            <header className="shrink-0 space-y-3 border-b border-border bg-card p-3">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                    <div className="flex min-w-0 items-center gap-2">
+                        <MonitorPlay className="h-4 w-4 shrink-0 text-primary" aria-hidden />
+                        <h2 className="text-sm font-semibold">Видеостена</h2>
+                        <Badge variant="outline" className={broadcastActive ? 'border-primary/20 bg-primary/10 text-primary' : 'text-muted-foreground'}>
+                            {broadcastActive ? 'В эфире' : 'Ожидание'}
+                        </Badge>
                     </div>
-                    <Badge
-                        variant="outline"
-                        className={`text-[10px] motion-reduce:animate-none ${broadcastActive
-                            ? 'bg-primary/10 text-primary border-primary/20 animate-pulse'
-                            : 'bg-muted text-muted-foreground border-border'}`}
-                    >
-                        {broadcastActive ? 'LIVE BROADCAST' : 'STANDBY'}
-                    </Badge>
-
-                    <div className="h-4 w-px bg-border hidden md:block" />
-
-                    {/* Кнопка START / STOP ВЕЩАНИЯ */}
-                    <Button
-                        variant={broadcastActive ? 'destructive' : 'noc'}
-                        size="sm"
-                        onClick={() => setBroadcastActive(!broadcastActive)}
-                        aria-label={broadcastActive ? 'Остановить вещание' : 'Запустить вещание'}
-                        className="h-7 text-[10px] tracking-wider uppercase font-bold gap-1.5"
-                    >
-                        {broadcastActive ? (
-                            <><Pause className="w-3 h-3" /> STOP</>
-                        ) : (
-                            <><Play className="w-3 h-3" /> START</>
-                        )}
-                    </Button>
-
-                    <div className="h-4 w-px bg-border hidden md:block" />
-
-                    {/* View Options — динамические кнопки из GRID_SIZE_OPTIONS */}
-                    <div role="group" aria-label="Размер сетки потоков" className="items-center gap-1 hidden md:flex">
-                        {GRID_SIZE_OPTIONS.map((s) => (
-                            <Button key={s} type="button" variant="ghost" size="sm" aria-pressed={gridSize === s} title={`Показывать до ${s} потоков`} onClick={() => setGridSize(s)} className={`h-7 text-[10px] px-2 ${gridSize === s ? 'bg-background text-foreground' : 'text-muted-foreground'}`}>{gridLabel(s)}</Button>
-                        ))}
-
-                        <div className="h-3 w-px bg-border mx-1" />
-
-                        <Button variant="ghost" size="sm" aria-pressed={showHUD} onClick={toggleHUD} className={`h-7 text-[10px] px-2 ${showHUD ? 'bg-primary/20 text-primary border border-primary/30' : 'bg-transparent text-muted-foreground'}`}>HUD</Button>
-                        <Button variant="ghost" size="sm" aria-pressed={showStats} onClick={toggleStats} className={`h-7 text-[10px] px-2 ${showStats ? 'bg-primary/20 text-primary border border-primary/30' : 'bg-transparent text-muted-foreground'}`}>Статистика</Button>
-                        <Button variant="ghost" size="sm" aria-label="Изменить масштаб видео" aria-pressed={objectFit === 'cover'} onClick={() => setObjectFit(objectFit === 'contain' ? 'cover' : 'contain')} className="h-7 text-[10px] px-2 text-muted-foreground hover:bg-border">FIT: {objectFit.toUpperCase()}</Button>
+                    <div className="flex flex-wrap items-center gap-2">
+                        <Button variant={broadcastActive ? 'secondary' : 'default'} size="sm"
+                            onClick={() => setBroadcastActive(!broadcastActive)}
+                            aria-label={broadcastActive ? 'Остановить вещание' : 'Запустить вещание'}>
+                            {broadcastActive ? <><Pause className="h-3.5 w-3.5" aria-hidden />Приостановить</> : <><Play className="h-3.5 w-3.5" aria-hidden />Запустить</>}
+                        </Button>
+                        {onClose && <Button variant="ghost" size="sm" aria-label="Остановить потоки" onClick={() => { setBroadcastActive(false); onClose(); }}>
+                            <X className="h-3.5 w-3.5" aria-hidden />Закрыть
+                        </Button>}
                     </div>
                 </div>
-
-                <div className="flex items-center gap-2 shrink-0">
-                    <Button
-                        variant="destructive"
-                        size="sm"
-                        className="h-8 text-xs tracking-wide font-semibold"
-                        onClick={() => { setBroadcastActive(false); onClose?.(); }}
-                        disabled={!broadcastActive}
-                        aria-label="Остановить потоки"
-                    >
-                        <X className="w-3.5 h-3.5 mr-1.5" /> Остановить потоки
+                <div className="flex flex-wrap items-center gap-2">
+                    <label className="flex items-center gap-2 text-xs text-muted-foreground">Сетка
+                        <select data-ui="select" aria-label="Размер сетки потоков" value={gridSize} onChange={event => { const size = GRID_SIZE_OPTIONS.find(item => item === Number(event.target.value)); if (size !== undefined) setGridSize(size); }}
+                            className="h-[var(--control-sm-height)] rounded-md border border-input bg-background px-2 text-sm text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
+                            {GRID_SIZE_OPTIONS.map(size => <option key={size} value={size}>{gridLabel(size)}</option>)}
+                        </select>
+                    </label>
+                    <Button variant={showHUD ? 'secondary' : 'ghost'} size="sm" aria-pressed={showHUD} onClick={toggleHUD}>Метки</Button>
+                    <Button variant={showStats ? 'secondary' : 'ghost'} size="sm" aria-pressed={showStats} onClick={toggleStats}>Статистика</Button>
+                    <Button variant="ghost" size="sm" aria-label="Изменить масштаб видео" aria-pressed={objectFit === 'cover'} onClick={() => setObjectFit(objectFit === 'contain' ? 'cover' : 'contain')}>
+                        {objectFit === 'contain' ? 'Вписать' : 'Заполнить'}
                     </Button>
                 </div>
-            </div>
+            </header>
             {streamCandidates.length > visibleDevices.length && (
                 <p role="status" className="shrink-0 border-b border-border bg-card px-3 py-2 text-xs text-muted-foreground">
                     Показаны первые {visibleDevices.length} из {streamCandidates.length} устройств. Увеличьте размер сетки или сузьте выбор, чтобы открыть остальные потоки.
@@ -124,16 +96,16 @@ export function MultiStreamGrid({ devices, selectedIds, onClose }: MultiStreamGr
 
             {/* Matrix Grid */}
             <div
-                className="flex-1 p-2 bg-background overflow-y-auto overflow-x-hidden custom-scrollbar grid gap-2"
-                style={{ gridTemplateColumns: `repeat(${columns}, minmax(0, 1fr))` }}
+                className="stream-wall-cells custom-scrollbar grid min-h-0 flex-1 gap-3 overflow-x-hidden overflow-y-auto bg-background p-3"
+                style={{ '--stream-columns': columns, '--stream-narrow-columns': Math.min(columns, 2) } as React.CSSProperties}
             >
                 {visibleDevices.map((device) => {
                     const reachable = isDeviceReachable(device);
                     return (
-                    <div key={device.id} className="relative bg-muted border border-border rounded-sm overflow-hidden group flex flex-col min-h-[150px] aspect-video">
+                    <div key={device.id} className="relative bg-muted border border-border rounded-lg overflow-hidden group flex min-w-0 flex-col aspect-video">
                         {/* Video Layer */}
                         <div
-                            className="flex-1 relative bg-black/80 flex flex-col items-center justify-center overflow-hidden"
+                            className="flex-1 relative bg-background flex flex-col items-center justify-center overflow-hidden"
                         >
                             {broadcastActive && reachable ? (
                                 /* Реальный видео-стрим через WebSocket H.264 */
@@ -142,14 +114,14 @@ export function MultiStreamGrid({ devices, selectedIds, onClose }: MultiStreamGr
                                 /* Онлайн, но стрим не включён — показываем готовность */
                                 <div className="flex flex-col items-center justify-center text-muted-foreground gap-2">
                                     <Play className="w-6 h-6 opacity-30" />
-                                    <span className="text-[10px] font-mono font-bold tracking-widest uppercase">Ready</span>
-                                    <span className="text-[8px] text-[#555] font-mono">Нажмите START для запуска</span>
+                                    <span className="text-xs font-medium">Готов к просмотру</span>
+                                    <span className="text-xs text-muted-foreground">Нажмите «Запустить»</span>
                                 </div>
                             ) : (
                                 /* Оффлайн */
                                 <div className="flex flex-col items-center justify-center text-muted-foreground gap-2">
                                     <X className="w-6 h-6 opacity-30" />
-                                    <span className="text-[10px] font-mono font-bold tracking-widest uppercase">Stream Offline</span>
+                                    <span className="text-xs font-medium">Устройство не в сети</span>
                                     <span className="text-xs text-muted-foreground">Проверьте heartbeat и доступность устройства</span>
                                 </div>
                             )}
@@ -164,15 +136,15 @@ export function MultiStreamGrid({ devices, selectedIds, onClose }: MultiStreamGr
                         </div>
 
                         {/* Bottom Telemetry Bar */}
-                        <div className="h-6 shrink-0 bg-card border-t border-border px-2 flex items-center justify-between">
-                            <span className="text-[9px] font-mono text-muted-foreground font-bold tracking-widest truncate">{getReportedDeviceModel(device) ?? 'Модель не сообщена'}</span>
+                        <div className="min-h-8 shrink-0 bg-card border-t border-border px-2 flex items-center justify-between">
+                            <span className="text-xs text-muted-foreground truncate">{getReportedDeviceModel(device) ?? 'Модель не сообщена'}</span>
 
                             {showStats && reachable && (
                                 <div className="flex items-center gap-3">
-                                    <div className="flex items-center gap-1 text-[8px] font-mono text-warning">
+                                    <div className="flex items-center gap-1 text-[11px] font-mono text-warning">
                                         <Activity className="w-2.5 h-2.5" /> {formatHeartbeatAge(device.last_heartbeat)}
                                     </div>
-                                    <div className="flex items-center gap-1 text-[8px] font-mono text-muted-foreground">
+                                    <div className="flex items-center gap-1 text-[11px] font-mono text-muted-foreground">
                                         <Cpu className="w-2.5 h-2.5" /> {device.cpu_usage != null ? `${device.cpu_usage}%` : '—'}
                                     </div>
                                 </div>
@@ -185,8 +157,8 @@ export function MultiStreamGrid({ devices, selectedIds, onClose }: MultiStreamGr
 
                 {/* Пустые слоты если устройств меньше чем ячеек сетки */}
                 {Array.from({ length: Math.max(0, gridSize - Math.min(visibleDevices.length, gridSize)) }).map((_, i) => (
-                    <div key={`empty-${i}`} className="bg-muted/30 border border-border border-dashed rounded-sm aspect-video flex items-center justify-center min-h-[150px]">
-                        <span className="text-[10px] font-mono text-[#555] uppercase tracking-widest">No Signal</span>
+                    <div key={`empty-${i}`} className="bg-muted/30 border border-border border-dashed rounded-lg aspect-video flex items-center justify-center">
+                        <span className="text-xs text-muted-foreground">Свободный слот</span>
                     </div>
                 ))}
 

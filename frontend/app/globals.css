@@ -32,11 +32,42 @@
     --radius: 0.625rem;
     --spacing-base: 1;
     --font-size-base: 100%;
+    --control-height: 2.375rem;
+    --control-sm-height: 2rem;
+    --control-lg-height: 2.75rem;
+    --control-icon-size: 2.375rem;
+    --control-padding: 1rem;
+    --row-padding-y: .75rem;
+    --row-padding-x: 1rem;
+    --page-gap: 1.5rem;
+    --page-padding-y: 1.5rem;
+    --page-padding-x: 1.5rem;
+    --panel-padding: 1.25rem;
+    --nav-height: 2.5rem;
   }
 }
 
 html {
   font-size: var(--font-size-base);
+}
+
+/* Glass belongs to navigation chrome; tables, editors and video stay opaque. */
+.sphere-chrome { background: hsl(var(--card)); }
+@supports (backdrop-filter: blur(1px)) {
+  [data-surface="glass"] .sphere-chrome {
+    background: hsl(var(--card) / .88);
+    backdrop-filter: blur(12px) saturate(1.08);
+  }
+}
+@media (prefers-reduced-transparency: reduce) {
+  [data-surface="glass"] .sphere-chrome { background: hsl(var(--card)); backdrop-filter: none; }
+}
+@media (pointer: coarse) {
+  [data-ui="button"], [data-ui="input"], [data-ui="select"], [data-ui="menuitem"], .sphere-nav-link {
+    min-height: 44px;
+  }
+  [data-ui="button"] { min-width: 44px; }
+  [data-ui="input"], [data-ui="select"] { font-size: max(16px, 1rem); }
 }
 
 @layer base {
@@ -167,3 +198,17 @@ html {
 .sphere-studio-flow .react-flow__attribution { border-radius: 5px 0 0 0; background: hsl(var(--card)); color: hsl(var(--muted-foreground)); font-size: 9px; }
 .sphere-studio-flow .react-flow__attribution a { color: inherit; }
 @media (max-width: 1023px) { .studio-device-workspace > :last-child { min-height: 540px; } }
+
+/* Adapt the wall to its own pane, including the narrow context inspector. */
+.stream-wall { container-type: inline-size; }
+.stream-wall-cells { grid-template-columns: repeat(var(--stream-columns, 2), minmax(0, 1fr)); }
+@container (max-width: 640px) { .stream-wall-cells { grid-template-columns: repeat(var(--stream-narrow-columns, 2), minmax(0, 1fr)); } }
+@container (max-width: 400px) { .stream-wall-cells { grid-template-columns: minmax(0, 1fr); } }
+
+.sphere-fleet-grid .ag-cell-wrapper, .sphere-fleet-grid .ag-cell-value { height: 100%; width: 100%; }
+.sphere-fleet-grid .ag-cell { line-height: 1.4; }
+.sphere-fleet-grid .ag-cell-value > div { display: flex; align-items: center; }
+.sphere-fleet-grid .sphere-fleet-select { padding-inline: 0; }
+.sphere-fleet-grid .sphere-fleet-select .ag-header-cell-comp-wrapper { width: 100%; }
+.sphere-fleet-grid .ag-header-cell-resize:hover::after { background: hsl(var(--primary)); }
+.sphere-fleet-grid .ag-root-wrapper { border-radius: 0; }

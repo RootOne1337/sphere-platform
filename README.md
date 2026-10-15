@@ -1,5 +1,7 @@
 <div align="center">
 
+**15 октября — реализация веб-доработок возобновлена пользователем.** Готовая таблица AG Grid Community с resize/reorder/pinning, мобильные карточки, темы/акценты/плотность, auto/pin sidebar и исправления toolbar проверены локально: 169 suites / 2455 tests. Новый UI пока не установлен; далее exact-source CI и установка только веба. Транспортная база и APK76 сохранены, APK77 не установлен; heartbeat остаётся на паузе. [Реализация и границы](docs/audits/2026-10-15/UI-REFINEMENT-DELIVERY.md).
+
 <img src="docs/assets/sphere-cover.svg" width="100%" alt="Sphere Platform — разные устройства, единое управление" />
 
 **Android-парк. Локальное исполнение. Контроль из браузера.**

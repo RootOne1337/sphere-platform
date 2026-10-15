@@ -145,7 +145,7 @@ it('resets page and selection when navigation changes the bookmarked group', () 
 
 it('does not treat absent legacy metadata as a failed live-presence source', () => {
   render(<DevicesPage />);
-  expect(screen.getByRole('navigation', { name: 'Страницы реестра устройств' })).toHaveTextContent('live presence состояние не сообщено API');
+  expect(screen.getByRole('navigation', { name: 'Страницы реестра устройств' }).querySelector('[title]')).toHaveAttribute('title', expect.stringContaining('Наличие: состояние не сообщено API'));
   expect(screen.getByText(/Статусы рассчитаны по загруженной странице/)).toBeInTheDocument();
   expect(screen.queryByText('источник live presence недоступен')).not.toBeInTheDocument();
 });
@@ -161,8 +161,8 @@ it.each([true, false])('renders explicit presence metadata %s separately from un
   } as never);
   render(<DevicesPage />);
   const footer = screen.getByRole('navigation', { name: 'Страницы реестра устройств' });
-  expect(footer).toHaveTextContent(`live presence ${available ? 'доступен' : 'недоступен'}`);
-  expect(footer).toHaveTextContent('30.09.2026, 10:15:00 UTC');
+  expect(footer.querySelector('[title]')).toHaveAttribute('title', expect.stringContaining(`Наличие: ${available ? 'доступен' : 'недоступен'}`));
+  expect(footer.querySelector('[title]')).toHaveAttribute('title', expect.stringContaining('30.09.2026, 10:15:00 UTC'));
   expect(screen.queryByText(/Статусы рассчитаны по загруженной странице/)).not.toBeInTheDocument();
 });
 
@@ -179,7 +179,7 @@ it('wires fleet status cards to the visible device list and clears attention thr
   render(<DevicesPage />);
   const list = screen.getByRole('list', { name: 'Filtered devices' });
   const statusCards = screen.getByRole('region', { name: 'Состояние устройств' });
-  const cardButton = (label: string) => within(statusCards).getByText(label, { selector: 'p' }).closest('button')!;
+  const cardButton = (label: string) => within(statusCards).getByRole('button', { name: new RegExp(`^${label} `) });
 
   expect(within(list).getAllByRole('listitem')).toHaveLength(4);
   fireEvent.click(cardButton('В сети'));

@@ -4,45 +4,45 @@ import { Activity, HelpCircle, LoaderCircle, Wifi, WifiOff } from 'lucide-react'
 export function DeviceStatusBadge({ status }: { status: string }) {
   const variants = {
     online: {
-      variant: 'default' as const,
+      variant: 'outline' as const,
       icon: Wifi,
-      label: 'Online',
-      className: 'bg-green-600',
+      label: 'В сети',
+      className: 'border-success/30 bg-success/10 text-success',
     },
     offline: {
       variant: 'secondary' as const,
       icon: WifiOff,
-      label: 'Offline',
-      className: 'bg-gray-600',
+      label: 'Не в сети',
+      className: 'border-border bg-muted text-muted-foreground',
     },
     connecting: {
       variant: 'outline' as const,
       icon: LoaderCircle,
-      label: 'Connecting',
-      className: 'border-amber-500 text-amber-500',
+      label: 'Подключение',
+      className: 'border-warning/30 bg-warning/10 text-warning',
     },
     busy: {
       variant: 'outline' as const,
       icon: Activity,
-      label: 'Busy',
-      className: 'border-amber-500 text-amber-500',
+      label: 'В работе',
+      className: 'border-warning/30 bg-warning/10 text-warning',
     },
     maintenance: {
       variant: 'outline' as const,
       icon: Activity,
-      label: 'Maintenance',
+      label: 'Обслуживание',
       className: 'border-primary/60 text-primary',
     },
     error: {
       variant: 'destructive' as const,
       icon: HelpCircle,
-      label: 'Error',
+      label: 'Ошибка',
       className: '',
     },
     unknown: {
       variant: 'outline' as const,
       icon: HelpCircle,
-      label: 'Unknown',
+      label: 'Неизвестно',
       className: '',
     },
   };

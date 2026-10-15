@@ -33,7 +33,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Activity, AlertTriangle, ChevronLeft, ChevronRight, Cpu, Filter, FolderOpen, LayoutGrid, List, Loader2, MapPin, Pencil, RefreshCcw, Search, Server, ShieldOff, Wifi, WifiOff } from 'lucide-react';
+import { Activity, AlertTriangle, ChevronLeft, ChevronRight, Cpu, Filter, FolderOpen, LayoutGrid, List, Loader2, MapPin, MonitorPlay, Pencil, RefreshCcw, Search, Server, ShieldOff, Wifi, WifiOff } from 'lucide-react';
 import { useGameServers } from '@/lib/hooks/usePipelineSettings';
 import { toast } from 'sonner';
 import { PermissionNotice, useCapabilities } from '@/src/features/access/Capabilities';
@@ -59,7 +59,7 @@ function DevicesRegistry({ initialGroupId }: { initialGroupId: string }) {
   const [search, setSearch] = useState('');
   const debouncedSearch = useDebounce(search, 300);
   const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
-  const [viewMode, setViewMode] = useState<'table' | 'grid'>('table');
+  const [viewMode, setViewMode] = useState<'table' | 'cards' | 'grid'>('table');
   const [statusFilter, setStatusFilter] = useState<DeviceStatusFilter>('all');
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(100);
@@ -330,18 +330,16 @@ function DevicesRegistry({ initialGroupId }: { initialGroupId: string }) {
   };
 
   return (
-    <div className="mx-auto flex min-h-full w-full max-w-[1720px] flex-col gap-5 p-4 md:h-full md:min-h-0 md:p-6 xl:p-8">
-      <header className="shrink-0 space-y-5">
+    <div className="mx-auto flex min-h-full w-full min-w-0 max-w-[1720px] flex-col gap-[var(--page-gap)] px-4 py-[var(--page-padding-y)] md:min-h-0 sm:px-[var(--page-padding-x)] xl:px-8 [@media(min-width:768px)_and_(min-height:700px)]:h-[calc(100dvh-4rem)]">
+      <header className="shrink-0 space-y-3">
         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <div className="min-w-0">
-            <p className="mb-1 inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.13em] text-primary"><span className="h-2 w-2 rounded-full bg-primary" aria-hidden="true" />Управление парком</p>
+            <p className="mb-1 hidden items-center gap-2 text-xs font-semibold uppercase tracking-[0.13em] text-primary sm:inline-flex"><span className="h-2 w-2 rounded-full bg-primary" aria-hidden="true" />Управление парком</p>
             <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
-              <h1 className="text-2xl font-semibold tracking-tight text-foreground sm:text-3xl">Устройства</h1>
-              <span className="rounded-full border border-border bg-card px-2.5 py-1 text-xs font-medium text-muted-foreground">Fleet Matrix</span>
+              <h1 className="text-xl font-semibold tracking-tight text-foreground sm:text-2xl">Устройства</h1>
             </div>
             <p className="mt-2 text-sm text-muted-foreground">
-              {data ? `Показано ${pageStart}–${pageEnd} из ${data.total}; в области фильтров ${scopeTotal} устройств.` : devicesLoadError ? 'Реестр сейчас недоступен.' : 'Загрузка реестра…'}
-              {' '}Live-статусы и счётчики берутся из API.
+              {data ? `Показано ${pageStart}–${pageEnd} из ${data.total} · в области ${scopeTotal}` : devicesLoadError ? 'Реестр сейчас недоступен.' : 'Загрузка реестра…'}
             </p>
           </div>
 
@@ -359,6 +357,11 @@ function DevicesRegistry({ initialGroupId }: { initialGroupId: string }) {
               >
                 <List className="h-4 w-4" aria-hidden="true" />
               </Button>
+              <Button type="button" variant={viewMode === 'cards' ? 'secondary' : 'ghost'} size="icon"
+                aria-label="Карточки устройств" aria-pressed={viewMode === 'cards'} title="Карточки устройств"
+                onClick={() => setViewMode('cards')} className="h-9 w-9 rounded-md">
+                <LayoutGrid className="h-4 w-4" aria-hidden="true" />
+              </Button>
               <Button
                 type="button"
                 variant={viewMode === 'grid' ? 'secondary' : 'ghost'}
@@ -369,14 +372,14 @@ function DevicesRegistry({ initialGroupId }: { initialGroupId: string }) {
                 onClick={() => setViewMode('grid')}
                 className="h-9 w-9 rounded-md"
               >
-                <LayoutGrid className="h-4 w-4" aria-hidden="true" />
+                <MonitorPlay className="h-4 w-4" aria-hidden="true" />
               </Button>
             </div>
             <Button
               variant="outline"
               onClick={() => { void refetch(); }}
               disabled={isFetching}
-              className="h-11 rounded-lg px-4"
+              className="rounded-lg"
               aria-live="polite"
             >
               <RefreshCcw className={`mr-2 h-4 w-4 ${isFetching ? 'animate-spin motion-reduce:animate-none' : ''}`} aria-hidden="true" />
@@ -385,7 +388,7 @@ function DevicesRegistry({ initialGroupId }: { initialGroupId: string }) {
           </div>
         </div>
 
-        <section aria-label="Состояние устройств" className="grid grid-cols-2 gap-2 sm:grid-cols-3 sm:gap-3 xl:grid-cols-6">
+        <section aria-label="Состояние устройств" className="grid grid-cols-3 gap-1.5 xl:grid-cols-6">
           {[
             { filter: 'all' as const, label: 'В области', value: hasSnapshot ? scopeTotal : '—', note: 'поиск, группа и локация', icon: Cpu, tone: 'text-primary' },
             { filter: 'online' as const, label: 'В сети', value: hasSnapshot ? statusCounts.online : '—', note: 'online + busy по API', icon: Wifi, tone: 'text-emerald-700 dark:text-emerald-400' },
@@ -395,6 +398,7 @@ function DevicesRegistry({ initialGroupId }: { initialGroupId: string }) {
             { filter: 'attention' as const, label: 'Требуют внимания', value: hasSnapshot ? statusCounts.issues : '—', note: 'ошибка, неизвестно или обслуживание', icon: AlertTriangle, tone: 'text-amber-700 dark:text-amber-400' },
           ].map(({ filter, label, value, note, icon: Icon, tone }) => (
             <button
+              data-ui="button"
               key={label}
               type="button"
               aria-pressed={statusFilter === filter}
@@ -402,14 +406,12 @@ function DevicesRegistry({ initialGroupId }: { initialGroupId: string }) {
                 setStatusFilter((current) => current === filter && filter !== 'all' ? 'all' : filter);
                 resetPage();
               }}
-              className={`rounded-xl border bg-card p-3 text-left transition-all duration-150 hover:border-primary/40 hover:bg-accent/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring motion-reduce:transition-none sm:p-4 ${statusFilter === filter ? 'border-primary/50 ring-1 ring-primary/30' : 'border-border'}`}
+              title={note}
+              className={`flex min-h-12 min-w-0 items-center gap-1.5 rounded-lg border bg-card px-2 py-2 text-left transition-colors hover:border-primary/40 hover:bg-accent/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring motion-reduce:transition-none sm:gap-2 sm:px-3 ${statusFilter === filter ? 'border-primary/50 ring-1 ring-primary/20' : 'border-border'}`}
             >
-              <div className="flex items-center justify-between gap-3">
-                <p className="text-sm font-medium text-muted-foreground">{label}</p>
-                <Icon className={`h-4 w-4 ${tone}`} aria-hidden="true" />
-              </div>
-              <p className={`mt-2 text-xl font-semibold tabular-nums sm:mt-3 sm:text-2xl ${tone}`} aria-live="polite">{value}</p>
-              <p className="mt-1 hidden text-xs text-muted-foreground sm:block">{note}</p>
+              <Icon className={`hidden h-3.5 w-3.5 shrink-0 sm:block ${tone}`} aria-hidden="true" />
+              <span className="min-w-0 flex-1 text-[11px] font-medium leading-4 text-muted-foreground [overflow-wrap:anywhere] sm:text-xs">{label}</span>
+              <span className={`shrink-0 text-base font-semibold tabular-nums ${tone}`} aria-live="polite">{value}</span>
             </button>
           ))}
         </section>
@@ -499,11 +501,12 @@ function DevicesRegistry({ initialGroupId }: { initialGroupId: string }) {
               </Button>
             </div>
           )}
-          {selectedIds.length > 0 && viewMode === 'table' && (
+          {selectedIds.length > 0 && viewMode !== 'grid' && (
             <div className="flex flex-wrap items-center gap-2 rounded-lg border border-primary/20 bg-primary/5 p-3" aria-live="polite">
               <span className="mr-1 inline-flex min-h-9 items-center rounded-md bg-primary/10 px-3 text-sm font-semibold text-primary">
                 Выбрано: {selectedIds.length}
               </span>
+              <Button variant="ghost" size="sm" onClick={() => setRowSelection({})}>Снять выделение</Button>
               <Button variant="outline" size="sm" onClick={handleBulkReboot} disabled={!canWrite || bulkMutation.isPending || exceedsBulkLimit} className="h-9 rounded-md">
                 <RefreshCcw className={`mr-2 h-4 w-4 ${bulkMutation.isPending ? 'animate-spin motion-reduce:animate-none' : ''}`} aria-hidden="true" />
                 {bulkMutation.isPending ? 'Отправка…' : 'Перезапустить'}
@@ -576,8 +579,9 @@ function DevicesRegistry({ initialGroupId }: { initialGroupId: string }) {
                 {isFetching ? 'Повтор…' : 'Повторить загрузку'}
               </Button>
             </div>
-          ) : viewMode === 'table' ? (
+          ) : viewMode !== 'grid' ? (
             <FleetMatrix
+              presentation={viewMode === 'cards' ? 'cards' : 'table'}
               data={pageItems}
               isLoading={isLoading}
               rowSelection={rowSelection}
@@ -589,13 +593,14 @@ function DevicesRegistry({ initialGroupId }: { initialGroupId: string }) {
             <MultiStreamGrid devices={pageItems} selectedIds={selectedIds} />
           )}
           <nav aria-label="Страницы реестра устройств" className="mt-3 flex flex-wrap items-center justify-between gap-3 border-t border-border pt-3">
-            <p className="text-xs text-muted-foreground" aria-live="polite">
-              {data ? `Страница ${data.page} из ${Math.max(1, data.pages)} · ${pageItems.length} строк · live presence ${presenceLabel} · срез API ${validSnapshotTime} · обновление каждые 30 с` : 'Пагинация появится после загрузки данных'}
+            <p className="text-xs text-muted-foreground" aria-live="polite" title={`Наличие: ${presenceLabel}. Срез API ${validSnapshotTime}. Обновление каждые 30 с.`}>
+              {data ? `Страница ${data.page} из ${Math.max(1, data.pages)} · ${pageItems.length} устройств` : 'Пагинация появится после загрузки данных'}
             </p>
-            <div className="flex items-center gap-2">
-              <label htmlFor="device-page-size" className="text-xs text-muted-foreground">Строк на странице</label>
+            <div className="flex max-w-full flex-wrap items-center gap-2">
+              <label htmlFor="device-page-size" className="text-xs text-muted-foreground">На странице</label>
               <select
                 id="device-page-size"
+                data-ui="select"
                 value={pageSize}
                 onChange={(event) => { setPageSize(Number(event.target.value)); resetPage(); }}
                 className="h-9 rounded-md border border-border bg-background px-2 text-sm text-foreground"

@@ -60,7 +60,7 @@ beforeEach(() => {
   mockCanAccessRoute = () => true;
   jest.clearAllMocks();
   mockPathname = '/devices/device-123';
-  useUIStore.setState({ sidebarExpanded: true });
+  useUIStore.setState({ sidebarExpanded: true, sidebarMode: 'pinned' });
   mockDesktop = true;
   mockBreakpointChange = undefined;
   Object.defineProperty(window, 'matchMedia', { configurable: true, value: jest.fn(() => ({
@@ -139,7 +139,7 @@ it('traps mobile focus, hides the background and restores the opener on Escape',
 
 it('keeps mobile labels visible even when the desktop preference is collapsed', async () => {
   mockDesktop = false;
-  useUIStore.setState({ sidebarExpanded: false });
+  useUIStore.setState({ sidebarExpanded: false, sidebarMode: 'rail' });
   render(<MobileNavigation />);
   await userEvent.click(screen.getByRole('button', { name: 'Открыть меню' }));
   expect(screen.getByRole('link', { name: 'Парк устройств' })).toHaveTextContent('Парк устройств');
@@ -156,4 +156,27 @@ it('reconciles mobile and desktop navigation at the actual breakpoint', async ()
   await act(async () => { mockBreakpointChange?.(); });
   expect(screen.getByRole('navigation', { name: 'Основная навигация' })).toBeInTheDocument();
   expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+});
+
+it('opens auto navigation on mouse hover, closes after leaving and persists pinning', () => {
+  jest.useFakeTimers();
+  try {
+    useUIStore.setState({ sidebarMode: 'auto', sidebarExpanded: true });
+    render(<NOCSidebar />);
+    const panel = screen.getByRole('complementary', { name: 'Боковая панель Sphere' });
+    expect(panel).toHaveAttribute('data-expanded', 'false');
+    fireEvent.pointerEnter(panel, { pointerType: 'mouse' });
+    // jsdom PointerEvent may omit pointerType; focus remains an independent
+    // accessible way to open the same auto state. Real hover is tested in Chrome.
+    const link = screen.getByRole('link', { name: 'Парк устройств' });
+    jest.spyOn(link, 'matches').mockReturnValue(true);
+    fireEvent.focus(link);
+    act(() => jest.advanceTimersByTime(180));
+    expect(panel).toHaveAttribute('data-expanded', 'true');
+    fireEvent.click(screen.getByRole('button', { name: 'Закрепить меню' }));
+    expect(useUIStore.getState().sidebarMode).toBe('pinned');
+    fireEvent.pointerLeave(panel);
+    act(() => jest.advanceTimersByTime(250));
+    expect(panel).toHaveAttribute('data-expanded', 'true');
+  } finally { jest.useRealTimers(); }
 });

@@ -197,19 +197,19 @@ export default function AccountsPage() {
   const hasFilters = filterGame !== "__all__" || filterStatus !== "__all__" || filterServer !== "__all__" || debouncedSearch;
 
   return (
-    <div className="p-4 md:p-6 space-y-4 font-mono">
+    <div className="mx-auto w-full min-w-0 max-w-[1720px] space-y-[var(--page-gap)] px-4 py-[var(--page-padding-y)] sm:px-[var(--page-padding-x)]">
       {/* ── Заголовок ──────────────────────────────────────────────────── */}
-      <div className="flex items-center justify-between">
-        <div>
+      <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
+        <div className="min-w-0">
           <h1 className="text-xl font-bold text-foreground flex items-center gap-2">
             <Gamepad2 className="w-6 h-6 text-primary" />
-            Game Accounts
+            Игровые аккаунты
           </h1>
           <p className="text-xs text-muted-foreground mt-0.5">
             Управление игровыми аккаунтами · {isError || isLoading ? 'число записей не подтверждено' : `${total} записей`}
           </p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex max-w-full flex-wrap gap-2">
           <Button variant="outline" size="sm" disabled={isFetching} onClick={() => refetch()}>
             <RefreshCw className="w-3.5 h-3.5 mr-1" />
             Обновить

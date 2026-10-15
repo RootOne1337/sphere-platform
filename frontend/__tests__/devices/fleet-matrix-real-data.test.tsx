@@ -3,12 +3,11 @@ import userEvent from '@testing-library/user-event';
 import { FleetMatrix } from '@/src/features/devices/FleetMatrix';
 import type { Device } from '@/lib/hooks/useDevices';
 
-jest.mock('@tanstack/react-virtual', () => ({
-  useVirtualizer: ({ count }: { count: number }) => ({
-    getTotalSize: () => count * 48,
-    getVirtualItems: () => Array.from({ length: count }, (_, index) => ({ index, start: index * 48, size: 48 })),
-  }),
-}));
+jest.mock('ag-grid-react', () => jest.requireActual('../mocks/agGridReact'));
+jest.mock('next/dynamic', () => () => {
+  const React = jest.requireActual('react');
+  return (props: unknown) => React.createElement(jest.requireActual('@/src/features/devices/FleetDataGrid').FleetDataGrid, props);
+});
 
 jest.mock('@/src/features/inspector/inspectorStore', () => ({
   useInspectorStore: () => ({ openInspector: jest.fn() }),
@@ -145,7 +144,7 @@ it('keeps optional access columns available through the column menu', async () =
   render(<FleetMatrix data={[device]} isLoading={false} rowSelection={{}} onRowSelectionChange={jest.fn()} />);
   expect(screen.queryByText('ADB linked')).not.toBeInTheDocument();
   await user.click(screen.getByRole('button', { name: 'Настроить видимые колонки' }));
-  await user.click(await screen.findByRole('menuitemcheckbox', { name: 'Доступ' }));
+  await user.click(await screen.findByRole('checkbox', { name: 'Доступ' }));
   expect(screen.getByText('ADB linked')).toBeInTheDocument();
 });
 
@@ -163,7 +162,7 @@ it('restores columns and sorting after remount without restoring selected device
   const props = { data: [device], isLoading: false, rowSelection: {}, onRowSelectionChange: jest.fn() };
   const view = render(<FleetMatrix {...props} />);
   await user.click(screen.getByRole('button', { name: 'Настроить видимые колонки' }));
-  await user.click(await screen.findByRole('menuitemcheckbox', { name: 'Доступ' }));
+  await user.click(await screen.findByRole('checkbox', { name: 'Доступ' }));
   await user.keyboard('{Escape}');
   await user.click(screen.getByRole('button', { name: 'Сортировать по Устройство' }));
   view.unmount();
@@ -182,7 +181,7 @@ it('offers reported CPU/RAM and Android ID columns while distinguishing zero fro
   const view = render(<FleetMatrix {...props} data={[{ ...device, cpu_usage: 0, ram_usage_mb: 0 }]} />);
   for (const name of ['CPU Android', 'RAM Android', 'Android ID']) {
     await user.click(screen.getByRole('button', { name: 'Настроить видимые колонки' }));
-    await user.click(await screen.findByRole('menuitemcheckbox', { name }));
+    await user.click(await screen.findByRole('checkbox', { name }));
     await user.keyboard('{Escape}');
   }
   expect(screen.getByText('0.0%')).toBeInTheDocument();
@@ -199,8 +198,8 @@ it('keeps device changes and deletion under separate menu permissions', async ()
   render(<FleetMatrix data={[device]} isLoading={false} rowSelection={{}} onRowSelectionChange={jest.fn()} onDeviceAction={onDeviceAction} canDeviceAction={action => action !== 'delete'} />);
   await user.click(screen.getByRole('button', { name: 'Действия устройства PH006' }));
   expect(screen.getByRole('menuitem', { name: 'Переименовать' })).not.toHaveAttribute('aria-disabled', 'true');
-  expect(screen.getByRole('menuitem', { name: 'Удалить' })).toHaveAttribute('aria-disabled', 'true');
-  await user.click(screen.getByRole('menuitem', { name: 'Удалить' }));
+  expect(screen.getByRole('menuitem', { name: 'Убрать из каталога' })).toHaveAttribute('aria-disabled', 'true');
+  await user.click(screen.getByRole('menuitem', { name: 'Убрать из каталога' }));
   expect(onDeviceAction).not.toHaveBeenCalled();
   await user.click(screen.getByRole('menuitem', { name: 'Переименовать' }));
   expect(onDeviceAction).toHaveBeenCalledWith('device-1', 'rename');
@@ -213,11 +212,9 @@ it('withdraws menu commands when authority changes while the menu is open', asyn
   const view = render(<FleetMatrix {...base} canDeviceAction={() => true} />);
   await user.click(screen.getByRole('button', { name: 'Действия устройства PH006' }));
   view.rerender(<FleetMatrix {...base} canDeviceAction={() => false} />);
-  // Replacing the memoized table cell retires its former popup. Reopening must
-  // consult the new permission decision instead of recovering old menu authority.
-  expect(screen.queryByRole('menu')).not.toBeInTheDocument();
-  await user.click(screen.getByRole('button', { name: 'Действия устройства PH006' }));
-  for (const name of ['Переименовать', 'В группу', 'В локацию', 'Игровой сервер', 'Удалить']) {
+  // An open menu must update its authority rather than retaining old callbacks.
+  expect(screen.getByRole('menu')).toBeInTheDocument();
+  for (const name of ['Переименовать', 'Назначить группу', 'Назначить локацию', 'Игровой сервер', 'Убрать из каталога']) {
     expect(screen.getByRole('menuitem', { name })).toHaveAttribute('aria-disabled', 'true');
   }
   await user.click(screen.getByRole('menuitem', { name: 'Переименовать' }));
@@ -229,7 +226,8 @@ it('offers no mutation in a menu without an explicit permission decision', async
   const onDeviceAction = jest.fn();
   render(<FleetMatrix data={[device]} isLoading={false} rowSelection={{}} onRowSelectionChange={jest.fn()} onDeviceAction={onDeviceAction} />);
   await user.click(screen.getByRole('button', { name: 'Действия устройства PH006' }));
-  for (const item of screen.getAllByRole('menuitem')) expect(item).toHaveAttribute('aria-disabled', 'true');
+  expect(screen.getByRole('menuitem', { name: 'Полная карточка' })).toHaveAttribute('href', '/devices/device-1');
+  for (const name of ['Переименовать', 'Назначить группу', 'Назначить локацию', 'Игровой сервер', 'Убрать из каталога']) expect(screen.getByRole('menuitem', { name })).toHaveAttribute('aria-disabled', 'true');
   expect(onDeviceAction).not.toHaveBeenCalled();
 });
 
@@ -247,21 +245,28 @@ it('shows an honest empty state when the registry has no devices', () => {
   expect(screen.getByRole('status')).toHaveTextContent('первого heartbeat');
 });
 
-it('preserves device column widths so narrow screens can scroll the fleet table horizontally', () => {
-  const { container } = render(
-    <FleetMatrix
-      data={[device]}
-      isLoading={false}
-      rowSelection={{}}
-      onRowSelectionChange={jest.fn()}
-    />,
-  );
+it('lets an operator enter a complete width before validating and stores only presentation settings', async () => {
+  const user = userEvent.setup();
+  render(<FleetMatrix data={[device]} isLoading={false} rowSelection={{}} onRowSelectionChange={jest.fn()} />);
+  await user.click(screen.getByRole('button', { name: 'Настроить видимые колонки' }));
+  const input = screen.getByRole('spinbutton', { name: 'Ширина Устройство' });
+  await user.clear(input); await user.type(input, '320'); await user.tab();
+  expect(JSON.parse(localStorage.getItem('sphere.fleet.table.v1')!).columnSizing.name).toBe(320);
+  await user.clear(input); await user.type(input, '12'); await user.tab();
+  expect(input).toHaveAttribute('aria-invalid', 'true');
+  expect(JSON.parse(localStorage.getItem('sphere.fleet.table.v1')!).columnSizing.name).toBe(320);
+  const raw = localStorage.getItem('sphere.fleet.table.v1')!;
+  expect(raw).not.toContain(device.id); expect(raw).not.toContain(device.name);
+});
 
-  const row = container.querySelector('[role="rowgroup"] [role="row"]');
-  const cells = row?.querySelectorAll('[role="cell"]');
-
-  expect(row).toHaveClass('min-w-max');
-  expect(cells?.length).toBeGreaterThan(0);
-  expect(Array.from(cells ?? []).every((cell) => cell.classList.contains('shrink-0'))).toBe(true);
-  expect(screen.getByRole('button', { name: 'Открыть устройство PH006' })).toBeInTheDocument();
+it('preserves selection and sorted device order when switching to cards', async () => {
+  const user = userEvent.setup(); const onSelection = jest.fn();
+  const props = { data: [device, { ...device, id: 'second', name: 'PH001' }], isLoading: false, rowSelection: { 'device-1': true }, onRowSelectionChange: onSelection };
+  const view = render(<FleetMatrix {...props} />);
+  await user.click(screen.getByRole('button', { name: 'Сортировать по Устройство' }));
+  view.rerender(<FleetMatrix {...props} presentation="cards" />);
+  expect(screen.getByRole('checkbox', { name: 'Выбрать PH006' })).toBeChecked();
+  const names = screen.getAllByRole('button', { name: /Открыть устройство/ }).map(value => value.textContent);
+  expect(names).toEqual(['PH001', 'PH006']);
+  expect(onSelection).not.toHaveBeenCalled();
 });

@@ -92,6 +92,21 @@ it('waits boundedly for asynchronously loaded content to grow instead of accepti
   maximum = 1000; resized([], {} as ResizeObserver); expect(position).toBe(800);
 });
 
+it('restores a lazy grid that mounts after the route without changing the outer page size', async () => {
+  const pane = document.createElement('div'); pane.dataset.routeScroll = 'fleet-grid'; main.append(pane);
+  const state = window.history.state; pane.scrollTop = 480; pane.scrollLeft = 160;
+  pane.dispatchEvent(new Event('scroll')); frame?.();
+  window.history.pushState({}, '', '/devices'); controller.routeRendered('/devices'); pane.remove();
+  pop(state, '/scripts');
+  const restored = document.createElement('div'); main.append(restored);
+  restored.dataset.routeScroll = 'fleet-grid';
+  await Promise.resolve(); frame?.();
+  expect(restored.scrollTop).toBe(480); expect(restored.scrollLeft).toBe(160);
+  // A completed restoration must not pull subsequent grid updates backwards.
+  restored.scrollTop = 120; restored.append(document.createElement('div'));
+  await Promise.resolve(); frame?.(); expect(restored.scrollTop).toBe(120);
+});
+
 it('lets the operator scroll during deferred restoration and never jumps back over that action', () => {
   const state = window.history.state; remember(800);
   window.history.pushState({}, '', '/devices'); controller.routeRendered('/devices');

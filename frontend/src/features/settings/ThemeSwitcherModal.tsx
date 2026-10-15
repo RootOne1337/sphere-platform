@@ -4,13 +4,10 @@ import { Code2, LayoutGrid, Maximize, Monitor, Moon, Paintbrush, Shrink, Sun, ty
 import { Button } from '@/src/shared/ui/button';
 import { useThemeStore, type DensityType, type ThemeType } from '@/src/shared/store/themeStore';
 import { useUIStore, type UIDensity } from '@/src/shared/store/useUIStore';
+import { isLightTheme } from '@/src/shared/theme';
+import { THEME_PRESETS } from '@/src/shared/themePresets';
 
-const THEMES: { id: ThemeType; label: string; description: string; icon: LucideIcon; swatches: string[] }[] = [
-    { id: 'light-corporate', label: 'Светлая', description: 'Чистая рабочая область', icon: Sun, swatches: ['#f4f7f8', '#ffffff', '#16845d'] },
-    { id: 'neo-dark', label: 'Тёмная', description: 'Нейтральная тёмная тема', icon: Moon, swatches: ['#09090b', '#18181b', '#e4e4e7'] },
-    { id: 'deep-space', label: 'Deep Space', description: 'Тёмно-синяя палитра', icon: Monitor, swatches: ['#080817', '#111126', '#3b82f6'] },
-    { id: 'matrix-green', label: 'Matrix', description: 'Высокий контраст, зелёный', icon: Code2, swatches: ['#001000', '#061b06', '#00d900'] },
-];
+const THEMES = THEME_PRESETS.map(item => ({ ...item, icon: isLightTheme(item.id) ? Sun : item.id === 'matrix-green' ? Code2 : item.id === 'deep-space' ? Monitor : Moon }));
 
 const DENSITIES: { id: DensityType; uiId: UIDensity; label: string; description: string; icon: LucideIcon }[] = [
     { id: 'compact', uiId: 'compact', label: 'Компактная', description: 'Больше строк и данных на экране', icon: Shrink },
@@ -25,7 +22,7 @@ export function ThemeSwitcherModal({ onClose }: { onClose?: () => void }) {
 
     const chooseTheme = (nextTheme: ThemeType) => {
         setTheme(nextTheme);
-        setUiTheme(nextTheme === 'light-corporate' ? 'light' : 'dark');
+        setUiTheme(isLightTheme(nextTheme) ? 'light' : 'dark');
     };
 
     const chooseDensity = (nextDensity: DensityType, uiDensity: UIDensity) => {
@@ -49,7 +46,7 @@ export function ThemeSwitcherModal({ onClose }: { onClose?: () => void }) {
                     {THEMES.map(({ id, label, description, icon: Icon, swatches }) => (
                         <button
                             key={id}
-                            type="button"
+                            type="button" data-ui="button"
                             aria-pressed={theme === id}
                             onClick={() => chooseTheme(id)}
                             className={`rounded-xl border p-3 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring motion-reduce:transition-none ${theme === id ? 'border-primary bg-primary/5 ring-1 ring-primary/20' : 'border-border bg-background hover:border-primary/40'}`}
@@ -70,7 +67,7 @@ export function ThemeSwitcherModal({ onClose }: { onClose?: () => void }) {
                     {DENSITIES.map(({ id, uiId, label, description, icon: Icon }) => (
                         <button
                             key={id}
-                            type="button"
+                            type="button" data-ui="button"
                             aria-pressed={density === id}
                             onClick={() => chooseDensity(id, uiId)}
                             className={`flex min-h-14 w-full items-center gap-3 rounded-xl border px-3 py-2.5 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring motion-reduce:transition-none ${density === id ? 'border-primary bg-primary/5' : 'border-border bg-background hover:border-primary/40'}`}

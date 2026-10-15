@@ -1,8 +1,8 @@
 {
   "schemaVersion": 1,
-  "reviewedAtUtc": "2026-10-14T23:26:34.858613+00:00",
+  "reviewedAtUtc": "2026-10-15T00:28:30.182541+00:00",
   "sourceReviewed": "4b39c385f2d9600bbf8ad9e9c53453338af3367d",
-  "scope": "UI4b39c385 / API969a7444 installed on3015/Tuna. APK76 completed OTA on15 devices;14 exact installed hashes,1 command/version-only proofs;6 offline pending. Finite local two-client mouse/touch/native keys, ten Tuna clients, three forced peer recoveries, actual agent-process restart and Unicode/chords/composition/fullscreen with original IME restoration accepted. Not20+, real phone/hotspot, WAN/TURN, broker-offline autonomy, audio, server-fallback full keyboard, full local CI or production SLA. User remote PH025 check: direct video/control READY, network RTT22ms and control ACK25–26ms; finite observation only. Active development and installation paused by user.",
+  "scope": "UI4b39c385 / API969a7444 installed on3015/Tuna. APK76 completed OTA on15 devices;14 exact installed hashes,1 command/version-only proofs;6 offline pending. Finite local two-client mouse/touch/native keys, ten Tuna clients, three forced peer recoveries, actual agent-process restart and Unicode/chords/composition/fullscreen with original IME restoration accepted. Not20+, real phone/hotspot, WAN/TURN, broker-offline autonomy, audio, server-fallback full keyboard, full local CI or production SLA. User remote PH025 check: direct video/control READY, network RTT22ms and control ACK25–26ms; finite observation only. Web UI implementation resumed by user; stream/control baseline retained, UI-only installation pending.",
   "baseline": "docs/audits/2026-10-05/ENTERPRISE-PRODUCT-BACKLOG.json",
   "previousCrosscheck": "docs/audits/2026-10-09/CHAT-CODE-RECONCILIATION.json",
   "counts": {
@@ -4105,12 +4105,14 @@
       "title": "Визуальный аудит, размеры, hover/pin sidebar, темы, логотип и glass",
       "state": "PARTIAL",
       "productItems": [],
-      "acceptedScope": "Finite audit prepared:29 page templates accounted,127 states,2468 button/link crops,509 button source sites and47 DialogContent sites.20 prioritized findings with evidence and acceptance criteria. No redesign installed.",
-      "remaining": "Implement UX-01…20; conditional dialogs/roles, real phone keyboard, every theme/accent combination and performance/contrast regression acceptance.",
+      "acceptedScope": "Finite original audit retained. First UI wave implemented and locally checked: AG Grid Community 36.2.0 resizing/reorder/pinning, mobile cards, appearance/palette/density contract, sidebar auto/pin/rail, logo, optional glass and clipped toolbars. 169 suites/2455 tests and real Chrome finite checks passed. Not yet installed.",
+      "remaining": "Exact-source CI and UI delivery; UX-06 read-only profile, remaining summaries/terminology/forms/roles, actual phone keyboard, exhaustive visual/performance/contrast acceptance. Android explorer remains design-only.",
       "evidence": [
         "docs/audits/2026-10-15/UI-UX-VISUAL-AUDIT.md",
         "docs/audits/2026-10-15/UI-VISUAL-OBSERVATION.json",
-        "docs/audits/2026-10-15/UI-CONTROL-INVENTORY.json"
+        "docs/audits/2026-10-15/UI-CONTROL-INVENTORY.json",
+        "docs/audits/2026-10-15/UI-REFINEMENT-DELIVERY.md",
+        "docs/audits/2026-10-15/UI-REFINEMENT-OBSERVATION.json"
       ],
       "sourcePaths": [
         "frontend/src/features/navigation/NOCSidebar.tsx",
@@ -5011,18 +5013,18 @@
     ]
   },
   "developmentState": {
-    "state": "PAUSED_BY_USER",
-    "recordedAtUtc": "2026-10-14T22:34:35.379790+00:00",
-    "reason": "User confirmed remote PH025 and requested a freeze plus documentation.",
+    "state": "UI_REFINEMENT_ACTIVE_BY_USER",
+    "recordedAtUtc": "2026-10-15T00:28:30.182541+00:00",
+    "reason": "User explicitly resumed implementation of web redesign and requested ready-made resizable/reorderable fleet table.",
     "guide": "docs/audits/2026-10-15/STREAM-CONTROL-FREEZE.md",
     "automationId": "enterprise",
     "automationStatus": "PAUSED",
-    "newRuntimeInstallationsPaused": true,
+    "newRuntimeInstallationsPaused": false,
     "workingRuntimeRemainsRunning": true,
     "preparedNextVersion": "1.2.77",
     "preparedNextVersionInstalled": false,
-    "scope": "Freeze active development and delivery; retain installed APK76/UI4b/API969 and recorded acceptance limits.",
-    "latestUserWork": "Visual/source audit and Android file-manager design completed on user request; transport/delivery freeze and paused automation remain in effect."
+    "scope": "Web UI refinement authorized. Stable stream/control baseline retained; APK77 not installed. Scheduled enterprise heartbeat remains paused.",
+    "latestUserWork": "AG Grid Community fleet, adaptive cards, appearance contract and common UI implemented; local tests passed; exact CI and UI-only installation pending."
   },
   "visualAudit": {
     "state": "AUDIT_AND_DESIGN_PREPARED_NOT_IMPLEMENTED",
@@ -5044,5 +5046,14 @@
     "allConditionalDialogsVisuallyObserved": false,
     "runtimeModified": false,
     "scope": "Installed UI4b/API969; read-only browser/source audit and design proposal. Unavailable roles, conditional records, OS keyboard and live-stream states have explicit gaps. No new APK/Web/API installation."
+  },
+  "uiRefinement": {
+    "state": "SOURCE_VALIDATED_NOT_INSTALLED",
+    "reviewedAtUtc": "2026-10-15T00:28:30.182541+00:00",
+    "guide": "docs/audits/2026-10-15/UI-REFINEMENT-DELIVERY.md",
+    "evidence": "docs/audits/2026-10-15/UI-REFINEMENT-OBSERVATION.json",
+    "evidenceSha256NormalizedLf": "53fcbc47930b56fef64114357c0c3423b6c0fe621049acc27747fb66b89057b2",
+    "originalAuditUnchanged": true,
+    "allAuditFindingsClosed": false
   }
 }

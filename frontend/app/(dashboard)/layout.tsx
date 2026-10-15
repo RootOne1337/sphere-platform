@@ -12,6 +12,8 @@ import { AppearanceDrawer } from '@/src/features/preferences/AppearanceDrawer';
 import { useCommandPaletteStore } from '@/src/features/navigation/commandPaletteStore';
 import { useUIStore } from '@/src/shared/store/useUIStore';
 import { useThemeStore } from '@/src/shared/store/themeStore';
+import { isLightTheme } from '@/src/shared/theme';
+import { SphereMark } from '@/src/shared/ui/SphereMark';
 import { Button } from '@/src/shared/ui/button';
 import { BuildProvenance } from '@/src/shared/ui/BuildProvenance';
 import { FleetConnectionStatus } from '@/src/shared/ui/FleetConnectionStatus';
@@ -65,31 +67,11 @@ function DashboardShell({ children }: { children: React.ReactNode }) {
   const parentRoute = pathname.slice(0, pathname.lastIndexOf('/')) || '/dashboard';
   const [isAppearanceOpen, setIsAppearanceOpen] = useState(false);
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
-  const { fontSize, accentColor, density, setTheme: setUiTheme } = useUIStore();
+  const setUiTheme = useUIStore((state) => state.setTheme);
   const theme = useThemeStore((state) => state.theme);
   const setTheme = useThemeStore((state) => state.setTheme);
   const toggleCommandPalette = useCommandPaletteStore((state) => state.toggle);
-  const isLight = theme === 'light-corporate';
-
-  useEffect(() => {
-    const root = document.documentElement;
-
-    switch (fontSize) {
-      case 'sm': root.style.fontSize = '14px'; break;
-      case 'base': root.style.fontSize = '16px'; break;
-      case 'lg': root.style.fontSize = '18px'; break;
-    }
-
-    switch (accentColor) {
-      case 'violet': root.style.setProperty('--primary', '262.1 83.3% 57.8%'); break;
-      case 'blue': root.style.setProperty('--primary', '221.2 83.2% 53.3%'); break;
-      case 'emerald': root.style.setProperty('--primary', '160 74% 34%'); break;
-      case 'rose': root.style.setProperty('--primary', '346.8 77.2% 42%'); break;
-      case 'amber': root.style.setProperty('--primary', '38 92% 40%'); break;
-    }
-
-    root.classList.toggle('density-compact', density === 'compact');
-  }, [fontSize, accentColor, density]);
+  const isLight = isLightTheme(theme);
 
   const toggleTheme = () => {
     const nextTheme = isLight ? 'neo-dark' : 'light-corporate';
@@ -110,7 +92,7 @@ function DashboardShell({ children }: { children: React.ReactNode }) {
       />
 
       <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
-        <header className="z-30 flex h-16 shrink-0 items-center justify-between gap-1 border-b border-border bg-card/95 px-2 backdrop-blur sm:gap-4 sm:px-6 lg:px-8 [@media(max-height:500px)]:h-12">
+        <header className="sphere-chrome z-30 flex h-16 shrink-0 items-center justify-between gap-1 border-b border-border px-2 sm:gap-4 sm:px-5 lg:px-6 [@media(max-height:500px)]:h-12">
           <div className="flex min-w-0 items-center gap-1 sm:gap-3">
             <Button type="button" variant="ghost" size="icon" className="h-9 w-9 shrink-0" aria-label="Вернуться на предыдущую страницу"
               disabled={pathname === '/dashboard' && !hasPreviousRoute()}
@@ -169,7 +151,7 @@ function DashboardShell({ children }: { children: React.ReactNode }) {
               aria-label="Открыть настройки интерфейса"
               title="Настройки интерфейса"
             >
-              <span className="flex h-7 w-7 items-center justify-center rounded-full bg-primary/10 text-xs font-semibold text-primary">S</span>
+              <SphereMark className="h-6 w-6 text-primary" />
             </Button>
           </div>
         </header>

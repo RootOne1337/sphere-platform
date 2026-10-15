@@ -13,7 +13,8 @@ it('honors an explicitly saved light theme and density before paint and after hy
   localStorage.setItem('sphere-theme-preferences', JSON.stringify({ state: { theme: 'light-corporate', density: 'compact' }, version: 0 }));
   bootstrap();
   expect(document.documentElement.classList.contains('light-mode')).toBe(true);
-  expect(document.documentElement.style.getPropertyValue('--font-size-base')).toBe('85%');
+  expect(document.documentElement.style.getPropertyValue('--font-size-base')).toBe('100%');
+  expect(document.documentElement.style.getPropertyValue('--control-height')).toBe('2rem');
   await useThemeStore.persist.rehydrate();
   expect(useThemeStore.getState().theme).toBe('light-corporate');
   expect(useThemeStore.getState().density).toBe('compact');

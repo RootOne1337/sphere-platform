@@ -1,10 +1,13 @@
 "use client";
 
 import * as React from "react";
-import { useVirtualizer } from "@tanstack/react-virtual";
+import Link from 'next/link';
+import { useThemeStore } from '@/src/shared/store/themeStore';
+import { useUIStore } from '@/src/shared/store/useUIStore';
+import dynamic from 'next/dynamic';
+const FleetDataGrid = dynamic(() => import('./FleetDataGrid').then(module => module.FleetDataGrid), { ssr: false, loading: () => <div role="status" className="flex min-h-64 flex-1 items-center justify-center text-sm text-muted-foreground">Подготавливаем таблицу…</div> });
 import {
     ColumnDef,
-    flexRender,
     getCoreRowModel,
     getSortedRowModel,
     useReactTable,
@@ -21,10 +24,9 @@ import { Badge } from "@/src/shared/ui/badge";
 import { Button } from "@/src/shared/ui/button";
 import { cn } from "@/src/shared/lib/utils";
 import { useInspectorStore } from "@/src/features/inspector/inspectorStore";
-import { Activity, Cpu, Wifi, Battery, Shield, Columns3, MoreHorizontal, Pencil, FolderOpen, MapPin, Trash2, Server } from "lucide-react";
+import { Activity, Cpu, Wifi, Battery, Shield, MoreHorizontal, Pencil, FolderOpen, MapPin, Trash2, Server } from "lucide-react";
 import {
     DropdownMenu,
-    DropdownMenuCheckboxItem,
     DropdownMenuContent,
     DropdownMenuItem,
     DropdownMenuLabel,
@@ -56,12 +58,28 @@ interface FleetMatrixProps {
     onRowSelectionChange: OnChangeFn<RowSelectionState>;
     onDeviceAction?: (deviceId: string, action: DeviceAction) => void;
     canDeviceAction?: (action: DeviceAction) => boolean;
+    presentation?: 'table' | 'cards';
 }
 
-export function FleetMatrix({ data, isLoading, rowSelection, onRowSelectionChange, onDeviceAction, canDeviceAction }: FleetMatrixProps) {
+export function FleetMatrix({ data, isLoading, rowSelection, onRowSelectionChange, onDeviceAction, canDeviceAction, presentation = 'table' }: FleetMatrixProps) {
     const { openInspector } = useInspectorStore();
-    const parentRef = React.useRef<HTMLDivElement>(null);
-    const { columnVisibility, setColumnVisibility, sorting, setSorting, reset, storageUnavailable } = useFleetTablePreferences();
+    const actionAuthority = React.useRef({ onDeviceAction, canDeviceAction });
+    actionAuthority.current = { onDeviceAction, canDeviceAction };
+    const selectionId = React.useId();
+    const density = useThemeStore(state => state.density);
+    const fontSize = useUIStore(state => state.fontSize);
+    const [isNarrow, setIsNarrow] = React.useState<boolean | null>(null);
+    React.useEffect(() => {
+        if (typeof window.matchMedia !== 'function') { setIsNarrow(false); return; }
+        const media = window.matchMedia('(max-width: 639px)');
+        const reconcile = () => setIsNarrow(media.matches);
+        reconcile(); media.addEventListener('change', reconcile);
+        return () => media.removeEventListener('change', reconcile);
+    }, []);
+    const cardLayout = presentation === 'cards' || isNarrow;
+    const rowHeight = Math.ceil(({ compact: 60, cozy: 72, spacious: 88 }[density]) * ({ sm: .875, base: 1, lg: 1.125 }[fontSize]));
+    const preferences = useFleetTablePreferences();
+    const { columnVisibility, setColumnVisibility, sorting, setSorting } = preferences;
     const [clockNow, setClockNow] = React.useState(() => Date.now());
 
     React.useEffect(() => {
@@ -73,26 +91,32 @@ export function FleetMatrix({ data, isLoading, rowSelection, onRowSelectionChang
         () => [
             {
                 id: "select",
-                size: 40,
+                size: 52,
                 enableHiding: false,
                 header: ({ table }) => (
-                    <div className="flex items-center justify-center h-full">
+                    <div className="flex h-full items-center justify-center">
+                        <label htmlFor={`${selectionId}-all`} className="flex h-11 w-11 cursor-pointer items-center justify-center">
                         <Checkbox
-                            checked={table.getIsAllPageRowsSelected()}
+                            id={`${selectionId}-all`}
+                            checked={table.getIsAllPageRowsSelected() ? true : table.getIsSomePageRowsSelected() ? 'indeterminate' : false}
                             onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
                             aria-label="Выбрать все видимые устройства"
                             className="border-muted-foreground/50 data-[state=checked]:bg-primary data-[state=checked]:border-primary"
                         />
+                        </label>
                     </div>
                 ),
                 cell: ({ row }) => (
-                    <div className="flex items-center justify-center h-full" onClick={(e) => e.stopPropagation()}>
+                    <div className="flex h-full items-center justify-center" onClick={(e) => e.stopPropagation()}>
+                        <label htmlFor={`${selectionId}-${row.id}`} className="flex h-11 w-11 cursor-pointer items-center justify-center">
                         <Checkbox
+                            id={`${selectionId}-${row.id}`}
                             checked={row.getIsSelected()}
                             onCheckedChange={(value) => row.toggleSelected(!!value)}
                             aria-label={`Выбрать ${row.original.name}`}
                             className="border-muted-foreground/50 data-[state=checked]:bg-primary data-[state=checked]:border-primary"
                         />
+                        </label>
                     </div>
                 ),
             },
@@ -100,12 +124,12 @@ export function FleetMatrix({ data, isLoading, rowSelection, onRowSelectionChang
                 accessorKey: "name",
                 header: "Устройство",
                 enableHiding: false,
-                size: 190,
+                size: 240,
                 cell: ({ row }) => {
                     const device = row.original;
                     const metadata = getReportedDeviceModel(device) ?? "Модель не сообщена";
                     return (
-                        <div className="flex h-full flex-col justify-center pr-4">
+                        <div className="flex h-full flex-col justify-center pr-1">
                             <div className="flex min-w-0 items-center gap-1.5"><button
                                 type="button"
                                 data-inspector-device={device.id}
@@ -114,13 +138,13 @@ export function FleetMatrix({ data, isLoading, rowSelection, onRowSelectionChang
                                     openInspector("device", device.id, device);
                                 }}
                                 aria-label={`Открыть устройство ${device.name}`}
-                                className="w-fit max-w-full truncate text-left font-mono text-[13px] font-semibold text-foreground transition-colors hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary motion-reduce:transition-none"
+                                className="w-fit max-w-full truncate rounded-sm text-left text-sm font-semibold text-foreground transition-colors hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary motion-reduce:transition-none"
                             >
                                 {device.name}
                             </button>
                             <DeviceViewerBadge card={device.card_viewers} stream={device.stream_viewers} />
                             </div>
-                            <span className="line-clamp-2 whitespace-normal text-xs leading-4 text-muted-foreground" title={metadata}>
+                            <span className="truncate text-xs leading-4 text-muted-foreground" title={metadata}>
                                 {metadata}
                             </span>
                         </div>
@@ -131,21 +155,21 @@ export function FleetMatrix({ data, isLoading, rowSelection, onRowSelectionChang
                 id: "agent_version",
                 header: "Android / агент",
                 accessorFn: (device) => device.agent_version ?? '',
-                size: 190,
+                size: 180,
                 cell: ({ row }) => {
                     const device = row.original;
                     const android = device.android_version?.trim();
                     const agent = device.agent_version?.trim();
                     return <div className="flex h-full flex-col justify-center gap-1 whitespace-normal text-xs leading-4">
                         <span>{android ? `Android ${android.replace(/^Android\s+/i, '')}` : 'Android не сообщён'}</span>
-                        <span className="break-words font-mono text-muted-foreground">{agent ? `Agent ${agent}` : 'Агент не сообщил версию'}</span>
+                        <span className="truncate font-mono text-[11px] text-muted-foreground">{agent ? `Agent ${agent}` : 'Агент не сообщил версию'}</span>
                     </div>;
                 },
             },
             {
                 accessorKey: "status",
                 header: "Состояние",
-                size: 190,
+                size: 185,
                 cell: ({ row }) => {
                     const device = row.original;
                     const uptime = formatElapsedSince(device.connected_since, clockNow);
@@ -168,7 +192,7 @@ export function FleetMatrix({ data, isLoading, rowSelection, onRowSelectionChang
             {
                 accessorKey: "battery_level",
                 header: "Заряд",
-                size: 76,
+                size: 90,
                 cell: ({ row }) => {
                     const lvl = row.original.battery_level;
                     if (typeof lvl !== 'number' || !Number.isFinite(lvl) || lvl < 0 || lvl > 100) return <span className="text-muted-foreground">—</span>;
@@ -301,71 +325,13 @@ export function FleetMatrix({ data, isLoading, rowSelection, onRowSelectionChang
             },
             {
                 id: "actions",
-                size: 48,
+                size: 52,
                 enableHiding: false,
                 header: () => null,
-                cell: ({ row }) => {
-                    const device = row.original;
-                    return (
-                        <div className="flex items-center justify-center h-full" onClick={(e) => e.stopPropagation()}>
-                            <DropdownMenu>
-                                <DropdownMenuTrigger asChild>
-                                    <Button
-                                        type="button"
-                                        variant="ghost"
-                                        size="icon"
-                                        aria-label={`Действия устройства ${device.name}`}
-                                        title={`Действия устройства ${device.name}`}
-                                        className="h-8 w-8 rounded-sm text-muted-foreground opacity-0 transition-opacity hover:text-primary focus-visible:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary group-hover:opacity-100 motion-reduce:transition-none"
-                                    >
-                                        <MoreHorizontal className="h-4 w-4" aria-hidden="true" />
-                                    </Button>
-                                </DropdownMenuTrigger>
-                                <DropdownMenuContent align="end" className="w-44 bg-card border-border">
-                                    <DropdownMenuItem
-                                        className="text-xs font-mono cursor-pointer"
-                                        disabled={!canDeviceAction?.('rename') || !onDeviceAction}
-                                        onClick={() => { if (canDeviceAction?.('rename')) onDeviceAction?.(device.id, 'rename'); }}
-                                    >
-                                        <Pencil className="w-3 h-3 mr-2" /> Переименовать
-                                    </DropdownMenuItem>
-                                    <DropdownMenuItem
-                                        className="text-xs font-mono cursor-pointer"
-                                        disabled={!canDeviceAction?.('assign_group') || !onDeviceAction}
-                                        onClick={() => { if (canDeviceAction?.('assign_group')) onDeviceAction?.(device.id, 'assign_group'); }}
-                                    >
-                                        <FolderOpen className="w-3 h-3 mr-2" /> В группу
-                                    </DropdownMenuItem>
-                                    <DropdownMenuItem
-                                        className="text-xs font-mono cursor-pointer"
-                                        disabled={!canDeviceAction?.('assign_location') || !onDeviceAction}
-                                        onClick={() => { if (canDeviceAction?.('assign_location')) onDeviceAction?.(device.id, 'assign_location'); }}
-                                    >
-                                        <MapPin className="w-3 h-3 mr-2" /> В локацию
-                                    </DropdownMenuItem>
-                                    <DropdownMenuItem
-                                        className="text-xs font-mono cursor-pointer"
-                                        disabled={!canDeviceAction?.('assign_server') || !onDeviceAction}
-                                        onClick={() => { if (canDeviceAction?.('assign_server')) onDeviceAction?.(device.id, 'assign_server'); }}
-                                    >
-                                        <Server className="w-3 h-3 mr-2" /> Игровой сервер
-                                    </DropdownMenuItem>
-                                    <DropdownMenuSeparator className="bg-border" />
-                                    <DropdownMenuItem
-                                        className="text-xs font-mono cursor-pointer text-destructive focus:text-destructive"
-                                        disabled={!canDeviceAction?.('delete') || !onDeviceAction}
-                                        onClick={() => { if (canDeviceAction?.('delete')) onDeviceAction?.(device.id, 'delete'); }}
-                                    >
-                                        <Trash2 className="w-3 h-3 mr-2" /> Удалить
-                                    </DropdownMenuItem>
-                                </DropdownMenuContent>
-                            </DropdownMenu>
-                        </div>
-                    );
-                },
+                cell: ({ row }) => <FleetDeviceActions device={row.original} onDeviceAction={(id, action) => actionAuthority.current.onDeviceAction?.(id, action)} canDeviceAction={action => actionAuthority.current.canDeviceAction?.(action) ?? false} />,
             },
         ],
-        [clockNow, onDeviceAction, openInspector, canDeviceAction]
+        [clockNow, onDeviceAction, openInspector, canDeviceAction, selectionId]
     );
 
     const table = useReactTable({
@@ -382,13 +348,6 @@ export function FleetMatrix({ data, isLoading, rowSelection, onRowSelectionChang
     });
 
     const { rows } = table.getRowModel();
-
-    const virtualizer = useVirtualizer({
-        count: rows.length,
-        getScrollElement: () => parentRef.current,
-        estimateSize: () => 84,
-        overscan: 20,
-    });
 
     if (isLoading) {
         return (
@@ -416,119 +375,77 @@ export function FleetMatrix({ data, isLoading, rowSelection, onRowSelectionChang
         );
     }
 
-    return (
-        <div role="table" aria-label="Устройства организации" className="relative flex flex-1 flex-col overflow-x-auto overflow-y-hidden rounded-lg border border-border bg-card shadow-sm custom-scrollbar">
-            {/* Dynamic Header (Sticky) */}
-            <div role="row" className="sticky top-0 z-10 flex h-10 min-w-max border-b border-border bg-muted text-xs font-medium text-muted-foreground">
-                {table.getFlatHeaders().map((header) => {
-                    const canSort = header.column.getCanSort();
-                    const sorted = header.column.getIsSorted();
-                    return (
-                        <div
-                            key={header.id}
-                            role="columnheader"
-                            aria-sort={sorted === 'asc' ? 'ascending' : sorted === 'desc' ? 'descending' : undefined}
-                            className="flex shrink-0 items-center truncate border-r border-border px-3 last:border-r-0"
-                            style={{ width: header.getSize() }}
-                        >
-                            {header.isPlaceholder ? null : canSort ? (
-                                <button
-                                    type="button"
-                                    onClick={header.column.getToggleSortingHandler()}
-                                    aria-label={`Сортировать по ${typeof header.column.columnDef.header === 'string' ? header.column.columnDef.header : header.column.id}`}
-                                    className="flex h-full w-full items-center text-left transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary motion-reduce:transition-none"
-                                >
-                                    {flexRender(header.column.columnDef.header, header.getContext())}
-                                    {sorted === 'asc' && <span className="ml-1 text-primary" aria-hidden="true">↑</span>}
-                                    {sorted === 'desc' && <span className="ml-1 text-primary" aria-hidden="true">↓</span>}
-                                </button>
-                            ) : flexRender(header.column.columnDef.header, header.getContext())}
+    if (cardLayout) return (
+        <section aria-label="Карточки устройств" className="flex min-h-0 min-w-0 flex-1 flex-col">
+            <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+                <label htmlFor={`${selectionId}-cards-all`} className="flex min-h-11 cursor-pointer items-center gap-2 text-xs text-muted-foreground">
+                    <Checkbox id={`${selectionId}-cards-all`} checked={table.getIsAllPageRowsSelected() ? true : table.getIsSomePageRowsSelected() ? 'indeterminate' : false}
+                        aria-label="Выбрать все видимые устройства" onCheckedChange={value => table.toggleAllPageRowsSelected(!!value)} />Выбрать все
+                </label>
+                <select data-ui="select" aria-label="Сортировка устройств" className="h-[var(--control-height)] max-w-full rounded-lg border border-input bg-background px-3 text-sm"
+                    value={!sorting.length ? '' : `${sorting[0].id}:${sorting[0].desc ? 'desc' : 'asc'}`}
+                    onChange={event => { const [id, direction] = event.target.value.split(':'); setSorting(id ? [{ id, desc: direction === 'desc' }] : []); }}>
+                    <option value="">По умолчанию</option><option value="name:asc">Имя: А — Я</option><option value="name:desc">Имя: Я — А</option>
+                    <option value="status:asc">Состояние</option><option value="last_seen:desc">Последний контакт</option>
+                    {sorting.length > 0 && !['name:asc', 'name:desc', 'status:asc', 'last_seen:desc'].includes(`${sorting[0].id}:${sorting[0].desc ? 'desc' : 'asc'}`) &&
+                        <option value={`${sorting[0].id}:${sorting[0].desc ? 'desc' : 'asc'}`}>Сортировка из таблицы</option>}
+                </select>
+            </div>
+            <div className="grid min-h-0 min-w-0 gap-3 sm:flex-1 sm:grid-cols-2 sm:overflow-y-auto xl:grid-cols-3 2xl:grid-cols-4" role="list" aria-label="Устройства организации">
+                {rows.map(row => {
+                    const device = row.original; const heartbeat = formatElapsedSince(device.last_heartbeat, clockNow);
+                    const contact = formatElapsedSince(device.last_seen, clockNow);
+                    const uptime = formatElapsedSince(device.connected_since, clockNow);
+                    return <article key={row.id} role="listitem" className={cn('min-w-0 rounded-xl border bg-background p-3 transition-colors hover:border-primary/40', row.getIsSelected() ? 'border-primary/50 bg-primary/5' : 'border-border')}>
+                        <div className="flex items-center gap-2">
+                            <label htmlFor={`${selectionId}-card-${row.id}`} className="flex h-11 w-7 shrink-0 cursor-pointer items-center justify-center">
+                                <Checkbox id={`${selectionId}-card-${row.id}`} aria-label={`Выбрать ${device.name}`} checked={row.getIsSelected()} onCheckedChange={value => row.toggleSelected(!!value)} />
+                            </label>
+                            <button type="button" data-inspector-device={device.id} aria-label={`Открыть устройство ${device.name}`} onClick={() => openInspector('device', device.id, device)}
+                                className="min-h-11 min-w-0 flex-1 truncate rounded-md text-left text-sm font-semibold text-foreground hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">{device.name}</button>
+                            <DeviceViewerBadge card={device.card_viewers} stream={device.stream_viewers} />
+                            <FleetDeviceActions device={device} onDeviceAction={onDeviceAction} canDeviceAction={canDeviceAction} />
                         </div>
-                    );
+                        <p className="truncate text-xs text-muted-foreground" title={getReportedDeviceModel(device) ?? undefined}>{getReportedDeviceModel(device) ?? 'Модель не сообщена'}</p>
+                        <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
+                            <DeviceStatusBadge status={device.status} />
+                            <span className="text-xs text-muted-foreground">{['online', 'busy'].includes(device.status) && uptime ? `В сети ${uptime}` : device.status === 'connecting' ? 'Ожидаем APK' : 'Нет активной связи'}</span>
+                        </div>
+                        <dl className="mt-3 grid grid-cols-2 gap-x-3 gap-y-2 border-t border-border pt-3 text-xs">
+                            <div className="min-w-0"><dt className="text-muted-foreground">Android</dt><dd className="mt-1 truncate">{device.android_version?.replace(/^Android\s+/i, '') || 'Не сообщён'}</dd></div>
+                            <div className="min-w-0"><dt className="text-muted-foreground">Sphere Agent</dt><dd className="mt-1 truncate font-mono" title={device.agent_version ?? undefined}>{device.agent_version || 'Не сообщён'}</dd></div>
+                            <div className="col-span-2"><dt className="sr-only">Последний контакт</dt><dd className="text-muted-foreground">{heartbeat ? `heartbeat ${heartbeat} назад` : contact ? `Контакт ${contact} назад` : 'Нет данных о сигнале'}</dd></div>
+                        </dl>
+                    </article>;
                 })}
-
-                {/* Column Visibility Toggle */}
-                <div className="absolute right-0 top-0 h-full w-8 border-l border-border bg-muted flex items-center justify-center">
-                    <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="icon" aria-label="Настроить видимые колонки" className="h-7 w-7 rounded-md text-muted-foreground hover:text-primary">
-                                <Columns3 className="w-3.5 h-3.5" />
-                            </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" className="w-40 bg-card border-border">
-                            <DropdownMenuLabel className="text-xs text-muted-foreground">Колонки · на этом браузере</DropdownMenuLabel>
-                            <DropdownMenuSeparator className="bg-border" />
-                            {table
-                                .getAllColumns()
-                                .filter((column) => typeof column.accessorFn !== "undefined" && column.getCanHide())
-                                .map((column) => {
-                                    return (
-                                        <DropdownMenuCheckboxItem
-                                            key={column.id}
-                                            className="capitalize text-xs font-mono font-bold"
-                                            checked={column.getIsVisible()}
-                                            onCheckedChange={(value) => column.toggleVisibility(!!value)}
-                                        >
-                                            {typeof column.columnDef.header === 'string' ? column.columnDef.header : column.id}
-                                        </DropdownMenuCheckboxItem>
-                                    );
-                                })}
-                            <DropdownMenuSeparator />
-                            <DropdownMenuItem onClick={reset}>Сбросить вид и сортировку</DropdownMenuItem>
-                            {storageUnavailable && <p role="status" className="max-w-56 p-2 text-xs text-warning">Хранилище браузера недоступно. Настройки действуют до перезагрузки.</p>}
-                        </DropdownMenuContent>
-                    </DropdownMenu>
-                </div>
             </div>
-
-            {/* Virtualized Body */}
-            <div
-                ref={parentRef}
-                role="rowgroup"
-                className="relative min-w-max flex-1 overflow-x-hidden overflow-y-auto bg-card custom-scrollbar"
-            >
-                <div
-                    style={{
-                        height: `${virtualizer.getTotalSize()}px`,
-                        width: "100%",
-                        position: "relative",
-                    }}
-                >
-                    {virtualizer.getVirtualItems().map((virtualRow) => {
-                        const row = rows[virtualRow.index];
-                        const isSelected = row.getIsSelected();
-                        return (
-                            <div
-                                key={row.id}
-                                role="row"
-                                aria-selected={isSelected}
-                                className={cn(
-                                    "group absolute left-0 top-0 flex min-w-max border-b border-border/60 transition-colors hover:bg-muted/60 motion-reduce:transition-none",
-                                    isSelected && "bg-primary/5 hover:bg-primary/10"
-                                )}
-                                style={{
-                                    height: `${virtualRow.size}px`,
-                                    transform: `translateY(${virtualRow.start}px)`,
-                                }}
-                            >
-                                {row.getVisibleCells().map((cell) => (
-                                    <div
-                                        key={cell.id}
-                                        role="cell"
-                                        className="shrink-0 overflow-hidden border-r border-transparent px-3 transition-colors group-hover:border-border last:border-r-0 motion-reduce:transition-none"
-                                        style={{ width: cell.column.getSize() }}
-                                    >
-                                        {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                                    </div>
-                                ))}
-                            </div>
-                        );
-                    })}
-                </div>
-            </div>
-
-            {/* Decorative footer line */}
-            <div className="h-1 w-full bg-gradient-to-r from-transparent via-primary/20 to-transparent flex-shrink-0" />
-        </div>
+        </section>
     );
+
+    if (isNarrow === null) return <div role="status" className="flex min-h-64 flex-1 items-center justify-center text-sm text-muted-foreground">Подготавливаем список…</div>;
+    return <FleetDataGrid table={table} preferences={preferences} rowHeight={rowHeight} clockNow={clockNow} />;
+}
+
+
+function FleetDeviceActions({ device, onDeviceAction, canDeviceAction }: { device: Device; onDeviceAction?: (id: string, action: DeviceAction) => void; canDeviceAction?: (action: DeviceAction) => boolean }) {
+    return <div className="flex h-full items-center justify-center" onClick={event => event.stopPropagation()}>
+        <DropdownMenu>
+            <DropdownMenuTrigger asChild><Button type="button" variant="ghost" size="icon" aria-label={`Действия устройства ${device.name}`} title={`Действия устройства ${device.name}`} className="h-9 w-9 text-muted-foreground hover:text-primary">
+                <MoreHorizontal className="h-4 w-4" aria-hidden />
+            </Button></DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-56">
+                <DropdownMenuLabel className="truncate text-xs text-muted-foreground">{device.name}</DropdownMenuLabel>
+                <DropdownMenuItem asChild><Link href={`/devices/${device.id}`}><Cpu className="mr-2 h-4 w-4" aria-hidden />Полная карточка</Link></DropdownMenuItem>
+                <DropdownMenuSeparator />
+                {([['rename', 'Переименовать', Pencil], ['assign_group', 'Назначить группу', FolderOpen], ['assign_location', 'Назначить локацию', MapPin], ['assign_server', 'Игровой сервер', Server]] as const).map(([action, label, Icon]) =>
+                    <DropdownMenuItem key={action} disabled={!canDeviceAction?.(action) || !onDeviceAction} onClick={() => { if (canDeviceAction?.(action)) onDeviceAction?.(device.id, action); }}>
+                        <Icon className="mr-2 h-4 w-4" aria-hidden />{label}
+                    </DropdownMenuItem>)}
+                <DropdownMenuSeparator />
+                <DropdownMenuItem className="text-destructive focus:bg-destructive/10 focus:text-destructive" disabled={!canDeviceAction?.('delete') || !onDeviceAction} onClick={() => { if (canDeviceAction?.('delete')) onDeviceAction?.(device.id, 'delete'); }}>
+                    <Trash2 className="mr-2 h-4 w-4" aria-hidden />Убрать из каталога
+                </DropdownMenuItem>
+            </DropdownMenuContent>
+        </DropdownMenu>
+    </div>;
 }

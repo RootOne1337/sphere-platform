@@ -105,13 +105,15 @@ export function DeviceInspectorDetail({ deviceId, fullPage = false }: { deviceId
             <h4 className="text-sm font-semibold">Управление устройством</h4>
             <p className="text-xs text-muted-foreground">Статус heartbeat не гарантирует видеокадр или исполнение команды. Результат проверяется отдельно.</p>
             {!canWrite && <p role="status" className="text-xs text-muted-foreground">Роль не разрешает терминал, shell-скрипты и перезагрузку. Просмотр доступен согласно правам API.</p>}
-            <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
-              <Button variant="outline" disabled={!canViewStream} onClick={() => setView('stream')}><MonitorPlay className="mr-2 h-4 w-4" aria-hidden />Видеопоток</Button>
+            <div className="flex flex-wrap gap-2">
+              <Button disabled={!canViewStream} onClick={() => setView('stream')}><MonitorPlay className="h-4 w-4" aria-hidden />Видеопоток</Button>
               <Button variant="outline" disabled={!isReachable || !canWrite} onClick={() => setView('terminal')}><Terminal className="mr-2 h-4 w-4" aria-hidden />Терминал</Button>
               <Button variant="outline" disabled={!isReachable || !access.can('device:read')} onClick={() => setView('logcat')}><FileText className="mr-2 h-4 w-4" aria-hidden />Logcat</Button>
               <Button variant="outline" disabled={!isReachable || !canWrite} onClick={() => setView('script')}><Code2 className="mr-2 h-4 w-4" aria-hidden />Shell-скрипт</Button>
               <Button variant="outline" disabled={!isReachable || !canWrite} onClick={() => setView('screenshot')}><Camera className="mr-2 h-4 w-4" aria-hidden />Снимок экрана</Button>
-              <Button variant="outline" disabled={!canWrite || !isReachable || rebootPending} onClick={() => setRebootOpen(true)}><RefreshCw className="mr-2 h-4 w-4" aria-hidden />Перезагрузка</Button>
+            </div>
+            <div className="border-t border-border pt-3">
+              <Button variant="ghost" size="sm" className="text-destructive hover:bg-destructive/10 hover:text-destructive" disabled={!canWrite || !isReachable || rebootPending} onClick={() => setRebootOpen(true)}><RefreshCw className="h-4 w-4" aria-hidden />Перезагрузка</Button>
             </div>
             {!isReachable && <p className="text-xs text-muted-foreground">Живые команды недоступны при этом состоянии. Сохранённые задачи, события и логи можно проверить во вкладках.</p>}
           </section>

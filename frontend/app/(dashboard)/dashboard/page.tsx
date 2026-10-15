@@ -103,14 +103,14 @@ function MetricCard({
 }) {
   return (
     <Card className="group rounded-xl border-border/80 bg-card transition-colors hover:border-primary/30 motion-reduce:transition-none">
-      <CardContent className="flex min-h-[128px] items-start justify-between gap-4 p-4 sm:p-5">
+      <CardContent className="flex min-h-24 items-start justify-between gap-2 p-3 sm:min-h-28 sm:p-[var(--panel-padding)]">
         <div className="min-w-0">
-          <p className="text-sm font-medium text-muted-foreground">{label}</p>
-          <p className={`mt-3 text-3xl font-semibold tabular-nums tracking-tight ${tone}`}>{value}</p>
-          <p className="mt-1 text-xs text-muted-foreground">{detail}</p>
+          <p className="text-xs font-medium text-muted-foreground sm:text-sm">{label}</p>
+          <p className={`mt-2 text-2xl font-semibold tabular-nums tracking-tight ${tone}`}>{value}</p>
+          <p className="mt-1 hidden text-xs text-muted-foreground sm:block">{detail}</p>
         </div>
-        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-border bg-background text-muted-foreground transition-colors group-hover:border-primary/30 group-hover:text-primary motion-reduce:transition-none">
-          <Icon className="h-5 w-5" aria-hidden="true" />
+        <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg border border-border bg-background text-muted-foreground transition-colors group-hover:border-primary/30 group-hover:text-primary motion-reduce:transition-none sm:h-9 sm:w-9">
+          <Icon className="h-4 w-4" aria-hidden="true" />
         </span>
       </CardContent>
     </Card>
@@ -315,7 +315,7 @@ export default function DashboardPage() {
         </div>
       )}
 
-      <section aria-label="Сводные показатели устройств" className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-5">
+      <section aria-label="Сводные показатели устройств" className="grid grid-cols-2 gap-2 xl:grid-cols-5">
         <MetricCard label="Всего устройств" value={fleet.isLoading ? '—' : stats?.total ?? '—'} detail="Записей в организации" icon={Smartphone} tone="text-foreground" />
         <MetricCard label="Онлайн" value={fleet.isLoading ? '—' : stats?.online ?? '—'} detail="Статус online по API" icon={Wifi} tone="text-emerald-700 dark:text-emerald-400" />
         <MetricCard label="Выполняют задачи" value={fleet.isLoading ? '—' : stats?.busy ?? '—'} detail="Busy по статусу API" icon={Zap} tone="text-primary" />
