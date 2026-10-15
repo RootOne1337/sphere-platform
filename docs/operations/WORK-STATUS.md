@@ -1,5 +1,11 @@
 # Работы, требования пользователя и границы приёмки
 
+**16 октября — объединён проект будущего игрового AI.** [Основной документ](../design/MOTOR-AI-PLATFORM.md)
+содержит 26 требований, сравнение моторных моделей/VLM и доказательств, контракты и план до приёмки.
+По коду выявлен будущий конфликт: DAG удерживает discrete reservation и не допустит continuous motor child
+без atomic delegation. 5 Гц остаются проверяемой гипотезой для игры, 50 устройств — неизмеренной целью.
+Модели не устанавливались; runtime не менялся. [Источники и хеши](../audits/2026-10-16/MOTOR-AI-SOURCE-REVIEW.json).
+
 **16 октября — уточнены Black Russia, зоны управления и 50×4–5 Hz.** Подготовлен проект общего WASD/model профиля с исполнением на APK. Проверено: Android KeyEvent не задействует Windows mapper LDPlayer; NitroGen использует stochastic sampling, а нынешний общий encoder не даёт независимого AI low-FPS stream. Добавлен офлайн motor budget calculator, 9 его тестов прошли. Это подготовка: профили/multi-touch/GPU worker/gameplay ещё не реализованы; runtime сохранён. [Навигация и нагрузка](../audits/2026-10-16/NITROGEN-NAVIGATION-AND-BUDGET.md), [дизайн](../design/GAME-CONTROL-PROFILES.md).
 
 **16 октября — готовность NitroGen проверена по коду и первоисточникам.** Сценарий: отдельная GPU-станция получает кадры APK и возвращает действия по LAN. Основа стрима есть, но headless client, игровой gamepad/multi-touch adapter и observation/action lifecycle ещё нужны; дефекты цвета/восстановления остаются. Ревизии, фактические 25 измерений действий, обсуждения, аппаратный срез и критерии первого supervised episode зафиксированы. Модель не установлена, GPU/gameplay не испытаны; текущий runtime сохранён. [Аудит](../audits/2026-10-16/NITROGEN-READINESS.md).

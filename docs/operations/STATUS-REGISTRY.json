@@ -5175,7 +5175,10 @@
       "evidenceSha256NormalizedLf": "ee4fad833bc13bf0d52698b5c837cd530c85b9254b0105305640dac571b4444c",
       "game": "Black Russia",
       "targetDevices": 50,
-      "targetObservationHzPerDevice": [4, 5],
+      "targetObservationHzPerDevice": [
+        4,
+        5
+      ],
       "calculator": "scripts/pilot/motor_budget.py",
       "calculatorUnitTestsPassed": 9,
       "gameProfileImplemented": false,
@@ -5183,6 +5186,19 @@
       "gpuCapacityMeasured": false,
       "waypointNavigationAccepted": false,
       "upstreamSamplingDeterministicByDefault": false
+    },
+    "unifiedMotorDesign": {
+      "reviewedAtUtc": "2026-10-15T21:42:26.620653+00:00",
+      "sourceBaseRevision": "38ec739fa6239806c0f5bd5ab624fc129aa46012",
+      "guide": "docs/design/MOTOR-AI-PLATFORM.md",
+      "evidence": "docs/audits/2026-10-16/MOTOR-AI-SOURCE-REVIEW.json",
+      "evidenceSha256NormalizedLf": "d40d656b65f73a8ec8ebc75a3c72d00bb2e8aa3a07f98359095491fbd8e1a744",
+      "scope": "Unified design, current model landscape, primary/community source review and source-linked implementation/acceptance plan.",
+      "runtimeChanged": false,
+      "modelInstalled": false,
+      "gameplayAccepted": false,
+      "fleetCapacityBenchmarked": false,
+      "taskEpisodeDelegationImplemented": false
     }
   }
 }
