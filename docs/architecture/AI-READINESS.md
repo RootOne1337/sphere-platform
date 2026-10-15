@@ -1,5 +1,12 @@
 # Будущий AI-контур: готовность и границы интеграции
 
+**Дополнение 16 октября:** выполнен [предметный аудит NitroGen и отдельной GPU-станции в LAN](../audits/2026-10-16/NITROGEN-READINESS.md).
+Закреплены code/model revisions, фактическая 25-мерная схема действий, первичные обсуждения,
+локальный аппаратный срез и 11 проверок готовности. Direct video/touch/keyboard — полезная основа;
+headless GPU client, gamepad/multi-touch adapter и supervised gameplay ещё не реализованы.
+Ни GPU benchmark, ни способность играть в GTA San Andreas/Black Rush не подтверждены.
+Старые ограничения клавиатуры/hold ниже читаются как состояние сентября; текущие возможности и пробелы — в новом аудите.
+
 **Дополнение9октября:** более свежие требования — [EP-046 и CHAT-14](../operations/WORK-STATUS.md).
 AI остаётся будущим design scope. Запрос128 thumbnail tiles по5/10s относится
 к operator wall, а исследовательская AI observation cadence требует собственного

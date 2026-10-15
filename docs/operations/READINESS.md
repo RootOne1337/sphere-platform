@@ -1063,7 +1063,7 @@ README и руководства обновляются по реализова�
 | P1 | Большое число устройств расходует память/CPU | APK имеет backpressure видео и ограниченный журнал; фактических idle/stream/action профилей нет | Измерить отдельные режимы idle, DAG, preview, active control; ограничить очереди и конкурентность по измеренным bottlenecks |
 | P1 | PC-agent / рабочая станция перезапускаются | AUD-63–66 исправляют auth/registration/result/recovery; topology отправляется только initial task | Повторная регистрация после каждого reconnect, provisioning, crash/ADB timeout, сохранение результата и восстановление после host reboot |
 | P2 | Полный UI и визуальная система | Есть страницы и handlers; Jest/type/build не доказывают каждый пользовательский сценарий | Проверить таблицу действий: click → request → persisted effect → updated UI → error/retry, затем визуальная унификация |
-| P3 | Подключение моторной модели | Базовые экран/действия/DAG есть, observation-action loop не спроектирован | Отдельный дизайн и benchmark; [анализ](../architecture/AI-READINESS.md), без AI implementation сейчас |
+| P3 | Подключение моторной модели | Direct video/touch/keyboard — основа; 16 октября выполнен аудит NitroGen/LAN, headless worker и игровой adapter отсутствуют | [Пробелы, контракты и этапы испытаний](../audits/2026-10-16/NITROGEN-READINESS.md); GPU/gameplay не испытаны, AI не установлен |
 
 P0 — порядок эксплуатационной работы, а не CVSS. Недоделанный путь обозначается
 как пробел, а дефект — как дефект только с кодом и воспроизведением. Авторизация

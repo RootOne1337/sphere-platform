@@ -5,7 +5,7 @@
   "countsByRole": {
     "ADR": 6,
     "CURRENT_ENTRYPOINT": 8,
-    "DATED_EVIDENCE": 323,
+    "DATED_EVIDENCE": 324,
     "DESIGN_SPECIFICATION": 78,
     "OPERATING_GUIDE": 64,
     "PROJECT_POLICY": 7,
@@ -1434,6 +1434,10 @@
     },
     {
       "file": "docs/audits/2026-10-16/MODE-TRANSPORT-AUTHORIZATION.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
+      "file": "docs/audits/2026-10-16/NITROGEN-READINESS.md",
       "role": "DATED_EVIDENCE"
     },
     {

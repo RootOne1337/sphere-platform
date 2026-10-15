@@ -3726,6 +3726,8 @@
       "remaining": "Нужны отдельные contracts/versioning/secrets/ownership/deadlines/rollback и подтверждённые результаты, прежде чем давать управление.",
       "evidence": [
         "docs/architecture/AI-READINESS.md",
+        "docs/audits/2026-10-16/NITROGEN-READINESS.md",
+        "docs/audits/2026-10-16/NITROGEN-READINESS.json",
         "docs/audits/2026-10-09/CHAT-CODE-RECONCILIATION.md"
       ],
       "sourcePaths": [],
@@ -5146,5 +5148,23 @@
     "backgroundRetryDoesNotStarveFallback": true,
     "nativeBlankTapConfirmed": true,
     "productionAccepted": false
+  },
+  "aiReadinessAssessment": {
+    "state": "ADAPTERS_REQUIRED_NOT_READY_FOR_GAMEPLAY",
+    "observedAtUtc": "2026-10-15T20:54:28.417950+00:00",
+    "sourceRevision": "aeade1a01abcb73eecf905dcc53a50313a54384c",
+    "guide": "docs/audits/2026-10-16/NITROGEN-READINESS.md",
+    "evidence": "docs/audits/2026-10-16/NITROGEN-READINESS.json",
+    "evidenceSha256NormalizedLf": "4b487aa21212c755a25c32e9aaa330d83f9355473a434517947890ca75c948db",
+    "topology": "Separate GPU workstation directly receives APK video and sends input over LAN; backend authenticates/signals and records episode metadata.",
+    "upstreamCodeRevision": "32608444660950ffda95e1e57c79632ad65bea10",
+    "modelRevision": "584c8dded734d032f07a4bcc0ccb330e703298c4",
+    "headlessWorkerImplemented": false,
+    "gameAdapterImplemented": false,
+    "targetGpuBenchmarked": false,
+    "gameplayAccepted": false,
+    "modelInstalled": false,
+    "commercialUseCleared": false,
+    "runtimeChanged": false
   }
 }

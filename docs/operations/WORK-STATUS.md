@@ -1,5 +1,7 @@
 # Работы, требования пользователя и границы приёмки
 
+**16 октября — готовность NitroGen проверена по коду и первоисточникам.** Сценарий: отдельная GPU-станция получает кадры APK и возвращает действия по LAN. Основа стрима есть, но headless client, игровой gamepad/multi-touch adapter и observation/action lifecycle ещё нужны; дефекты цвета/восстановления остаются. Ревизии, фактические 25 измерений действий, обсуждения, аппаратный срез и критерии первого supervised episode зафиксированы. Модель не установлена, GPU/gameplay не испытаны; текущий runtime сохранён. [Аудит](../audits/2026-10-16/NITROGEN-READINESS.md).
+
 **16 октября — каналы Studio и резервный ввод исправлены.** На 3015 и Tuna установлен UI `19c4272b`: временные режимы сохраняют согласованные каналы, фоновые ICE-попытки не блокируют admission резервного управления. Проверен настоящий native READY и DOWN/UP при задержанном ответе fallback. Локально и в точном frontend CI: 172 набора / 2508 тестов. Сетевые потери PH030, прежние heartbeat-сбои и искажение цвета остаются открытыми; API969/APK76 сохранены. [Результаты и ограничения](../audits/2026-10-16/MODE-TRANSPORT-AUTHORIZATION.md).
 
 **15 октября — новый парк и оформление установлены на 3015 и Tuna.** AG Grid Community: resize/reorder/pinning, сохранение вида; телефон — карточки. Шесть палитр, независимые акцент/плотность/шрифт, auto/pin sidebar, optional glass и логотип. Локально 169 suites / 2455 tests; exact-source CI и конечные браузерные проверки прошли. API969/APK76 сохранены, APK77 не устанавливался; heartbeat на паузе. [Поставка и оставшиеся пункты](../audits/2026-10-15/UI-REFINEMENT-DELIVERY.md).
@@ -537,7 +539,7 @@ resource soak/retention и RAM acceptance.
 
 Остаётся: Нужны отдельные contracts/versioning/secrets/ownership/deadlines/rollback и подтверждённые результаты, прежде чем давать управление.
 
-Доказательства: [AI-READINESS](../architecture/AI-READINESS.md), [CHAT-CODE-RECONCILIATION](../audits/2026-10-09/CHAT-CODE-RECONCILIATION.md).
+Доказательства: [AI-READINESS](../architecture/AI-READINESS.md), [NitroGen/LAN — аудит 16 октября](../audits/2026-10-16/NITROGEN-READINESS.md), [CHAT-CODE-RECONCILIATION](../audits/2026-10-09/CHAT-CODE-RECONCILIATION.md).
 
 ### CHAT-15 · Прямой browser ↔ Android transport
 
