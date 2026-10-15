@@ -315,6 +315,9 @@ def execute(artifact: Path, source: str, expected_image_id: str, expected_curren
             "Wrong backend owner")
     runtime_env = dict(v.split("=", 1) for v in current["Config"]["Env"] if "=" in v)
     require(runtime_env.get("SPHERE_BUILD_SHA") == expected_current, "Backend revision changed before planning")
+    if local_artifact:
+        require(receipt.get("parentImageId") == current["Image"] and receipt.get("parentSource") == expected_current,
+                "Local artifact was not built from this installed backend")
     changes = source_boundary(expected_current, source, receipt)
     heads = schema_heads(current)
     require(heads == receipt["migrationHeads"], "Schema migration is not admitted by this installer")

@@ -106,7 +106,10 @@ class LocalRunAdmissionTests(unittest.TestCase):
         folder = self.private / "local-package"
         folder.mkdir()
         expected = {"backend/requirements.txt": "c" * 64, "backend/schemas/action_contract.v1.json": "d" * 64}
-        config = {"Id": IMAGE, "Os": "linux", "Architecture": "amd64", "Config": {
+        parent_id = "sha256:" + "e" * 64
+        parent_layers = ["sha256:" + "f" * 64]
+        config = {"Id": IMAGE, "Os": "linux", "Architecture": "amd64",
+            "RootFS": {"Layers": [*parent_layers, "sha256:" + "1" * 64]}, "Config": {
             "User": "sphere", "Cmd": local.COMMAND, "WorkingDir": "/app",
             "Entrypoint": ["/bin/sh", "/app/backend/docker-entrypoint.sh"],
             "Env": ["SPHERE_BUILD_SHA=" + SOURCE], "Labels": {
@@ -128,6 +131,7 @@ class LocalRunAdmissionTests(unittest.TestCase):
             "image": {"tag": "sphere-reviewed-backend:" + SOURCE, "id": IMAGE},
             "localExecution": self.binding(), "runtimeProbe": write_probe("runtime.json", runtime),
             "metricsProbe": write_probe("metrics.json", metrics), "migrationHeads": ["head1"],
+            "parentImageId": parent_id, "parentSource": "c" * 40,
             "requirementsSha256": "c" * 64, "actionContractSha256": "d" * 64}
         path = folder / "receipt.json"
 
@@ -135,6 +139,8 @@ class LocalRunAdmissionTests(unittest.TestCase):
             if args[0] == "gh":
                 return self.status()
             if args[:3] == ["docker", "image", "inspect"]:
+                if args[-1] == parent_id:
+                    return json.dumps([{"Id": parent_id, "RootFS": {"Layers": parent_layers}}])
                 return json.dumps([config])
             return "head1 (head)"
 
@@ -151,6 +157,7 @@ class LocalRunAdmissionTests(unittest.TestCase):
                            lambda c: c["Config"].update(User="root"),
                            lambda c: c["Config"].update(Cmd=["sh"]),
                            lambda c: c["Config"].update(Env=["SPHERE_BUILD_SHA=wrong"]),
+                           lambda c: c.update(RootFS={"Layers": ["sha256:" + "2" * 64]}),
                            lambda c: c["Config"]["Labels"].update({"io.sphere.ci.run": "123"}),
                            lambda c: c["Config"]["Labels"].update({"io.sphere.local.run": "other"})]:
                 config = copy.deepcopy(original)

@@ -165,6 +165,17 @@ def admit_local(directory: Path, source: str) -> dict:
             and IMAGE.fullmatch(image["id"]), "Local image binding mismatch")
     data = json.loads(command(["docker", "image", "inspect", tag]))
     require(isinstance(data, list) and len(data) == 1 and data[0].get("Id") == image["id"], "Local image missing or replaced")
+    parent_id = receipt.get("parentImageId")
+    require(isinstance(parent_id, str) and IMAGE.fullmatch(parent_id)
+            and isinstance(receipt.get("parentSource"), str)
+            and re.fullmatch(r"[0-9a-f]{40}", receipt["parentSource"]), "Local parent identity missing")
+    parents = json.loads(command(["docker", "image", "inspect", parent_id]))
+    require(isinstance(parents, list) and len(parents) == 1 and parents[0].get("Id") == parent_id,
+            "Local parent image missing or replaced")
+    layers = parents[0].get("RootFS", {}).get("Layers")
+    require(isinstance(layers, list) and bool(layers) and all(isinstance(v, str) and IMAGE.fullmatch(v) for v in layers)
+            and data[0].get("RootFS", {}).get("Layers", [])[:-1] == layers,
+            "Local image dependency layers differ from admitted parent")
     config = data[0].get("Config", {})
     labels = config.get("Labels", {})
     require(data[0].get("Os") == "linux" and data[0].get("Architecture") == "amd64"
