@@ -1,8 +1,8 @@
 {
   "schemaVersion": 1,
-  "reviewedAtUtc": "2026-10-15T17:04:50.697Z",
-  "sourceReviewed": "92df9aafcc87c1e72f72762692dab37106a9e732",
-  "scope": "Studio mode coordination, restored-frame notification and portrait touch layout installed with exact-source CI and finite UI checks. Recurring installed PH025 idle receipt timeouts remain open; one Home ACK is not stream/control reliability acceptance. API969/APK76 retained; heartbeat paused.",
+  "reviewedAtUtc": "2026-10-15T20:41:40.790Z",
+  "sourceReviewed": "19c4272b3fffa98fdf7a35bd56b09967ac036e24",
+  "scope": "Installed UI19c4272b preserves authorized channels across temporary mode locks and keeps fallback input admission available during background ICE retries. Finite native ACK and fault-injected fallback checks passed. PH030 network loss/idle failures and decoded color corruption remain open; API969/APK76 preserved.",
   "baseline": "docs/audits/2026-10-05/ENTERPRISE-PRODUCT-BACKLOG.json",
   "previousCrosscheck": "docs/audits/2026-10-09/CHAT-CODE-RECONCILIATION.json",
   "counts": {
@@ -11,11 +11,11 @@
     "open": 41
   },
   "installed": {
-    "lastObservedUtc": "2026-10-15T17:04:50.697Z",
-    "ui": "92df9aafcc87c1e72f72762692dab37106a9e732",
+    "lastObservedUtc": "2026-10-15T20:41:40.790Z",
+    "ui": "19c4272b3fffa98fdf7a35bd56b09967ac036e24",
     "api": "969a74440d67e987be98f37cdb450f7c47817f68",
-    "evidence": "docs/audits/2026-10-15/STUDIO-MODE-LIFECYCLE-INSTALLED.json",
-    "observation": "UI92df9aaf installed on3015/Tuna: View/XPath recording coordination, first restored direct/server frame rebind, preparation below video, portrait touch layout. Finite UI checks; native input acceptance is explicit in receipt. API969/APK76 retained.",
+    "evidence": "docs/audits/2026-10-16/FALLBACK-ADMISSION-CURRENT.json",
+    "observation": "UI19c4272b on3015/Tuna: initial direct negotiation remains preferred; background retries no longer starve fallback admission. Real delayed-capability diagnostic reached native READY and one blank tap confirmed DOWN/UP. Separate ordinary viewer returned to direct READY; broad reliability remains open.",
     "pilotApk": {
       "device": "auto-ph-011",
       "deviceId": "414ce0e9-4b93-4f96-b9ca-ee675f53835e",
@@ -28,7 +28,7 @@
       "packageProofObservedAtUtc": "2026-10-14T22:12:45.514176+00:00",
       "scope": "Exact installed package proof; availability and finite runtime tests reported separately."
     },
-    "evidenceSha256NormalizedLf": "42e2d60e06f9be3d50e6f66ea9f536ccef56e71a110a469fe124913f2e80298c",
+    "evidenceSha256NormalizedLf": "fa816c3311f25b9a259c2f3eecb5909d75a923ca47bb52744eb50dfa6b2cfe90",
     "additionalPilotApks": [
       {
         "device": "auto-ph-028",
@@ -1640,8 +1640,8 @@
     "primaryVideoInstalled": true,
     "primaryVideoObserved": true,
     "productionAccepted": false,
-    "currentObservationEvidence": "docs/audits/2026-10-15/STUDIO-MODE-LIFECYCLE-INSTALLED.json",
-    "currentObservationEvidenceSha256NormalizedLf": "42e2d60e06f9be3d50e6f66ea9f536ccef56e71a110a469fe124913f2e80298c",
+    "currentObservationEvidence": "docs/audits/2026-10-16/FALLBACK-ADMISSION-CURRENT.json",
+    "currentObservationEvidenceSha256NormalizedLf": "fa816c3311f25b9a259c2f3eecb5909d75a923ca47bb52744eb50dfa6b2cfe90",
     "pilotEvidenceScope": "UI331/API983 installed on 3015/Tuna; frontend-only input promotion fix, backend code tree unchanged; signed APK60 installed hashes and completed OTA commands confirmed on15 online devices. PH010 ordinary Chrome direct video/native gestures, actual server fallback and recovery, and mixed legacy viewer accepted finitely. Closest routes, physical network switching, shared input and full display latency remain OPEN.",
     "historicalPrimaryFrames": 1804,
     "directInputCandidate": {
@@ -4105,7 +4105,7 @@
       "title": "Визуальный аудит, размеры, hover/pin sidebar, темы, логотип и glass",
       "state": "PARTIAL",
       "productItems": [],
-      "acceptedScope": "Finite original audit and installed UI: AG Grid resize/reorder/pinning with taller mobile/desktop viewport; palettes/materials/modal/forms; compact fullscreen tools/default scoped keyboard; preserved direct peer during recorder/XPath. Bounded native recording uses existing controller and Android DOWN+terminal ACK; explicit cancellation/interruption/unknown and pending locks without self-revocation. Exact-source CI172 suites/2497 tests plus finite installed browser checks. Not global production acceptance. Studio recording mode coordination, first-frame rebind and finite390x844 touch layout checks in UI92df9aaf.",
+      "acceptedScope": "Finite original audit and installed UI: AG Grid resize/reorder/pinning with taller mobile/desktop viewport; palettes/materials/modal/forms; compact fullscreen tools/default scoped keyboard; preserved direct peer during recorder/XPath. Bounded native recording uses existing controller and Android DOWN+terminal ACK; explicit cancellation/interruption/unknown and pending locks without self-revocation. Exact-source CI172 suites/2497 tests plus finite installed browser checks. Not global production acceptance. Studio recording mode coordination, first-frame rebind and finite390x844 touch layout checks in UI92df9aaf. UIfc7cdad4 retains negotiated media channels across temporary View/tree-read locks; two installed recorded taps and direct Home ACK checked finitely. UI19c4272b permits fallback admission during background ICE retries; a fault-injected delayed capability and native DOWN/UP were checked finitely.",
       "remaining": "UX06 read-only profile, other summary/terminology/forms/roles, physical phone keyboard, exhaustive visual/performance/contrast acceptance. Arbitrary trajectory and physical keyboard recording/replay,20+ viewer/WAN/real relay/soak acceptance and Android explorer remain open.",
       "evidence": [
         "docs/audits/2026-10-15/UI-UX-VISUAL-AUDIT.md",
@@ -4125,7 +4125,10 @@
         "docs/audits/2026-10-15/DIRECT-RECORDER-ACK-OBSERVATION.json",
         "docs/audits/2026-10-15/DIRECT-RECORDER-ACK-INSTALLED.json",
         "docs/audits/2026-10-15/STUDIO-MODE-LIFECYCLE.md",
-        "docs/audits/2026-10-15/STUDIO-MODE-LIFECYCLE-INSTALLED.json"
+        "docs/audits/2026-10-15/STUDIO-MODE-LIFECYCLE-INSTALLED.json",
+        "docs/audits/2026-10-16/MODE-TRANSPORT-AUTHORIZATION.md",
+        "docs/audits/2026-10-16/MODE-TRANSPORT-AUTHORIZATION-INSTALLED.json",
+        "docs/audits/2026-10-16/FALLBACK-ADMISSION-INSTALLED.json"
       ],
       "sourcePaths": [
         "frontend/src/features/navigation/NOCSidebar.tsx",
@@ -5029,8 +5032,8 @@
     ]
   },
   "developmentState": {
-    "state": "STUDIO_MODE_UX_DELIVERED",
-    "recordedAtUtc": "2026-10-15T17:04:50.697Z",
+    "state": "MODE_AND_FALLBACK_CORRECTIONS_DELIVERED",
+    "recordedAtUtc": "2026-10-15T20:38:36.018Z",
     "reason": "User explicitly resumed implementation of web redesign and requested ready-made resizable/reorderable fleet table.",
     "guide": "docs/audits/2026-10-15/STREAM-CONTROL-FREEZE.md",
     "automationId": "enterprise",
@@ -5040,7 +5043,7 @@
     "preparedNextVersion": "1.2.77",
     "preparedNextVersionInstalled": false,
     "scope": "Web UI refinement authorized. Stable stream/control baseline retained; APK77 not installed. Scheduled enterprise heartbeat remains paused.",
-    "latestUserWork": "Continued visual audit: recording selects Control from View/XPath, mode changes stop recording without discarding its draft, recovered same-size frames rebind, portrait touch video fits above footer. Broader transport and UI acceptance remain open; API/APK unchanged; heartbeat stays paused."
+    "latestUserWork": "UI19c4272b installed and finite native fallback fault test passed; PH030 saved incident and two-viewer packet loss recorded. Recurring heartbeat failures and color corruption need further localization. No APK/API update or broad production acceptance claimed; enterprise heartbeat remains paused."
   },
   "visualAudit": {
     "state": "AUDIT_AND_DESIGN_PREPARED_NOT_IMPLEMENTED",
@@ -5088,7 +5091,7 @@
   "directRecorder": {
     "state": "PARTIAL_INSTALLED",
     "guide": "docs/design/DIRECT-RECORDER.md",
-    "currentCorrection": "docs/audits/2026-10-15/STUDIO-MODE-LIFECYCLE.md",
+    "currentCorrection": "docs/audits/2026-10-16/MODE-TRANSPORT-AUTHORIZATION.md",
     "sourceRevision": "7b85aa5b1ac08ba1df0c8b673c4e924f24b34c86",
     "evidence": "docs/audits/2026-10-15/DIRECT-RECORDER-ACK-INSTALLED.json",
     "evidenceSha256NormalizedLf": "6677eef4fd322b03cea1f5f4a5e459278291b33122289881c8f21091ec78691f",
@@ -5111,7 +5114,8 @@
       "physicalKeyboardRecording": false
     },
     "nextScope": "Typed gesture_path and APK runner support; physical keyboard/IME recording; wider relay/WAN/multi-viewer/soak acceptance.",
-    "lifecycleEvidence": "docs/audits/2026-10-15/STUDIO-MODE-LIFECYCLE-INSTALLED.json"
+    "lifecycleEvidence": "docs/audits/2026-10-15/STUDIO-MODE-LIFECYCLE-INSTALLED.json",
+    "modeTransportEvidence": "docs/audits/2026-10-16/MODE-TRANSPORT-AUTHORIZATION-INSTALLED.json"
   },
   "studioModeLifecycle": {
     "state": "INSTALLED_FINITE",
@@ -5120,6 +5124,27 @@
     "evidence": "docs/audits/2026-10-15/STUDIO-MODE-LIFECYCLE-INSTALLED.json",
     "evidenceSha256NormalizedLf": "42e2d60e06f9be3d50e6f66ea9f536ccef56e71a110a469fe124913f2e80298c",
     "nativeInputAccepted": false,
-    "openTransportFinding": "Installed PH025: recurring idle_receipt_timeout, direct video with temporarily unavailable input, later server fallback. Native Home ACK152ms observed separately; root cause not isolated."
+    "openTransportFinding": "Installed PH025: recurring idle_receipt_timeout, direct video with temporarily unavailable input, later server fallback. Native Home ACK152ms observed separately; root cause not isolated.",
+    "supersededBy": "docs/audits/2026-10-16/MODE-TRANSPORT-AUTHORIZATION-INSTALLED.json"
+  },
+  "modeTransportAuthorization": {
+    "state": "INSTALLED_FINITE",
+    "sourceRevision": "fc7cdad4bbae51da8b86e6c12d5ba5c13dff6e64",
+    "evidence": "docs/audits/2026-10-16/MODE-TRANSPORT-AUTHORIZATION-INSTALLED.json",
+    "evidenceSha256NormalizedLf": "6664edce7b68ec585ff99c0a951f380699542b041b6ebccac6304e1a2a95cd61",
+    "guide": "docs/audits/2026-10-16/MODE-TRANSPORT-AUTHORIZATION.md",
+    "sameChannelsAcrossTemporaryLocks": true,
+    "roleRevocationStillRenegotiates": true,
+    "broadTransportReliabilityAccepted": false
+  },
+  "fallbackInputAdmission": {
+    "state": "INSTALLED_FINITE",
+    "sourceRevision": "19c4272b3fffa98fdf7a35bd56b09967ac036e24",
+    "evidence": "docs/audits/2026-10-16/FALLBACK-ADMISSION-INSTALLED.json",
+    "evidenceSha256NormalizedLf": "9557bbbdffc7c2bad3d8361a11b160344863a6344ae6b5dcac6ef47a271404c5",
+    "initialDirectPreferred": true,
+    "backgroundRetryDoesNotStarveFallback": true,
+    "nativeBlankTapConfirmed": true,
+    "productionAccepted": false
   }
 }

@@ -1,11 +1,11 @@
 {
   "schemaVersion": 1,
-  "reviewedAtUtc": "2026-10-15T17:04:50.697Z",
+  "reviewedAtUtc": "2026-10-15T20:41:40.790Z",
   "scope": "All tracked Markdown classified; active local-link paths scanned. Not semantic attestation of every sentence, command execution, external-link or live acceptance.",
   "countsByRole": {
     "ADR": 6,
     "CURRENT_ENTRYPOINT": 8,
-    "DATED_EVIDENCE": 322,
+    "DATED_EVIDENCE": 323,
     "DESIGN_SPECIFICATION": 78,
     "OPERATING_GUIDE": 64,
     "PROJECT_POLICY": 7,
@@ -1430,6 +1430,10 @@
     },
     {
       "file": "docs/audits/2026-10-15/UI-UX-VISUAL-AUDIT.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
+      "file": "docs/audits/2026-10-16/MODE-TRANSPORT-AUTHORIZATION.md",
       "role": "DATED_EVIDENCE"
     },
     {
