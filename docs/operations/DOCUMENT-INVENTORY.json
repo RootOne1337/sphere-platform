@@ -5,7 +5,7 @@
   "countsByRole": {
     "ADR": 6,
     "CURRENT_ENTRYPOINT": 8,
-    "DATED_EVIDENCE": 316,
+    "DATED_EVIDENCE": 317,
     "DESIGN_SPECIFICATION": 77,
     "OPERATING_GUIDE": 64,
     "PROJECT_POLICY": 7,
@@ -1382,6 +1382,10 @@
     },
     {
       "file": "docs/audits/2026-10-14/SHARED-INPUT-RECEIPT-BUDGET.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
+      "file": "docs/audits/2026-10-15/DIALOGS-GLASS-DELIVERY.md",
       "role": "DATED_EVIDENCE"
     },
     {

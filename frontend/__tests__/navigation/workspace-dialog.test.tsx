@@ -2,9 +2,9 @@ import { act, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { useState } from 'react';
 import { Dialog, DialogBody, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 
-function Editor({ layout = 'workspace' }: { layout?: 'workspace' | 'default' }) {
+function Editor({ layout = 'workspace', open = true }: { layout?: 'workspace' | 'default'; open?: boolean }) {
   const [draft, setDraft] = useState('');
-  return <Dialog open><DialogContent layout={layout} aria-describedby={undefined}>
+  return <Dialog open={open}><DialogContent layout={layout} aria-describedby={undefined}>
     <DialogHeader><DialogTitle>Рабочая форма</DialogTitle></DialogHeader>
     <DialogBody><input aria-label="Черновик" value={draft} onChange={e => setDraft(e.target.value)} /></DialogBody>
     <DialogFooter><button>Проверить</button></DialogFooter>
@@ -57,4 +57,16 @@ it('leaves conventional dialogs independent of visual viewport events', () => {
   render(<Editor layout="default" />);
   expect(add).not.toHaveBeenCalled();
   expect(screen.getByRole('dialog').style.getPropertyValue('--dialog-viewport-height')).toBe('');
+});
+
+it('does not retain resize observers for mounted but closed forms', async () => {
+  const add = jest.spyOn(viewport, 'addEventListener');
+  const remove = jest.spyOn(viewport, 'removeEventListener');
+  const view = render(<Editor open={false} />);
+  expect(add).not.toHaveBeenCalled();
+  view.rerender(<Editor />);
+  await waitFor(() => expect(screen.getByRole('dialog').style.getPropertyValue('--dialog-viewport-height')).toBe('800px'));
+  view.rerender(<Editor open={false} />);
+  await waitFor(() => expect(remove).toHaveBeenCalledWith('resize', expect.any(Function)));
+  expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
 });

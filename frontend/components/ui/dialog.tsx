@@ -29,31 +29,37 @@ const DialogContent = React.forwardRef<
   React.ElementRef<typeof DialogPrimitive.Content>,
   React.ComponentPropsWithoutRef<typeof DialogPrimitive.Content> & { placement?: 'center' | 'right'; layout?: 'default' | 'workspace' }
 >(({ className, children, placement = 'center', layout = 'default', style, ...props }, ref) => {
-  const viewportStyle = useDialogViewport(layout === 'workspace');
+  const [content, setContent] = React.useState<HTMLElement | null>(null);
+  const contentRef = React.useCallback((node: HTMLDivElement | null) => {
+    setContent(node);
+    if (typeof ref === 'function') ref(node);
+    else if (ref) ref.current = node;
+  }, [ref]);
+  const viewportStyle = useDialogViewport(layout === 'workspace' && content !== null);
   return (
-  <DialogPortal>
-    <DialogOverlay />
-    <DialogPrimitive.Content
-      ref={ref}
-      data-placement={placement}
-      data-layout={layout}
-      style={{ ...viewportStyle, ...style }}
-      className={cn(
-        'sphere-dialog sphere-material fixed z-50 gap-4 overflow-y-auto overscroll-contain border bg-background shadow-lg',
-        placement === 'right'
-          ? 'inset-y-0 right-0 flex h-dvh max-h-none w-[min(440px,100vw)] flex-col rounded-none border-l p-0'
-          : 'left-[50%] top-[50%] grid max-h-[calc(100dvh_-_2rem)] w-[calc(100%_-_2rem)] max-w-lg translate-x-[-50%] translate-y-[-50%] rounded-xl p-6',
-        className,
-      )}
-      {...props}
-    >
-      {children}
-      <DialogClose data-ui="button" className="absolute right-2 top-2 flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground ring-offset-background transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none">
-        <X className="h-4 w-4" aria-hidden="true" />
-        <span className="sr-only">Закрыть</span>
-      </DialogClose>
-    </DialogPrimitive.Content>
-  </DialogPortal>
+    <DialogPortal>
+      <DialogOverlay />
+      <DialogPrimitive.Content
+        ref={contentRef}
+        data-placement={placement}
+        data-layout={layout}
+        style={{ ...viewportStyle, ...style }}
+        className={cn(
+          'sphere-dialog sphere-material fixed z-50 gap-4 overflow-y-auto overscroll-contain border bg-background shadow-lg',
+          placement === 'right'
+            ? 'inset-y-0 right-0 flex h-dvh max-h-none w-[min(440px,100vw)] flex-col rounded-none border-l p-0'
+            : 'left-[50%] top-[50%] grid max-h-[calc(100dvh_-_2rem)] w-[calc(100%_-_2rem)] max-w-lg translate-x-[-50%] translate-y-[-50%] rounded-xl p-6',
+          className,
+        )}
+        {...props}
+      >
+        {children}
+        <DialogClose data-ui="button" className="absolute right-2 top-2 flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground ring-offset-background transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none">
+          <X className="h-4 w-4" aria-hidden="true" />
+          <span className="sr-only">Закрыть</span>
+        </DialogClose>
+      </DialogPrimitive.Content>
+    </DialogPortal>
   );
 });
 DialogContent.displayName = DialogPrimitive.Content.displayName;
