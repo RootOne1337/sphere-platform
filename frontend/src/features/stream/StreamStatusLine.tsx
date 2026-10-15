@@ -11,7 +11,9 @@ export function StreamStatusLine(props: Props) {
     <span className="inline-flex min-w-0 items-center gap-1.5 truncate"><span className={`h-1.5 w-1.5 shrink-0 rounded-full ${props.live ? 'bg-emerald-400' : 'bg-zinc-400'}`} aria-hidden />{props.direct ? 'Напрямую' : 'Сервер'}</span>
     <span className="shrink-0" title={props.direct ? 'Сетевой RTT, не задержка изображения' : 'RTT браузер ↔ сервер, не до APK'}>{(!props.direct || props.live) && rtt !== null ? `${rtt.toFixed(rtt < 10 ? 1 : 0)} мс` : '—'}</span>
   </div>;
-  return <div aria-label="Сводка видеопотока" className="flex shrink-0 flex-wrap items-center gap-x-3 gap-y-1 border-b border-border bg-muted/30 px-3 py-1.5 text-[11px] tabular-nums text-muted-foreground">
+  // Live RTT/ACK/bitrate text must never reflow the canvas during a held gesture.
+  // Keep one line; narrow screens can scroll the summary without widening the page.
+  return <div aria-label="Сводка видеопотока" className="flex shrink-0 items-center gap-x-3 overflow-x-auto whitespace-nowrap border-b border-border bg-muted/30 px-3 py-1.5 text-[11px] tabular-nums text-muted-foreground [scrollbar-width:none] [&::-webkit-scrollbar]:hidden [&>span]:shrink-0">
     <span className="inline-flex items-center gap-1.5 font-medium text-foreground" title={props.directInput ? 'Видео и непрерывные касания идут напрямую с APK.' : props.direct ? 'Видео идёт напрямую с APK; маршрут управления отображается отдельно.' : 'Видео передаётся через сервер.'}>
       <span className={`h-1.5 w-1.5 rounded-full ${props.live ? 'bg-emerald-500' : 'bg-muted-foreground'}`} aria-hidden />
       {props.direct ? props.directInput ? 'Прямой канал · видео и касания' : 'Видео напрямую' : 'Через сервер'}
