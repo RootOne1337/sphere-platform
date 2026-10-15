@@ -17,7 +17,8 @@ import type { NativeGestureRecordingEvent } from './nativeGestureRecording';
 
 const SNAPSHOT_LIFETIME_MS = 30_000;
 
-export function SingleDeviceStream({ deviceId, active = true, captureEnabled = false, onControlSent, onControlCommand, onGestureRecording, recordingMode = false, onRecordingControlReady, taskHandoffId, onTaskHandoffState, onInsertSelector, controlDisabled = false, modeChangeDisabled = false, compact = false }: { deviceId: string; active?: boolean; captureEnabled?: boolean; controlDisabled?: boolean; modeChangeDisabled?: boolean; compact?: boolean; recordingMode?: boolean; onRecordingControlReady?: (ready: boolean) => void;
+export function SingleDeviceStream({ deviceId, active = true, captureEnabled = false, onControlSent, onControlCommand, onGestureRecording, recordingMode = false, onRecordingControlReady, onModeChange, taskHandoffId, onTaskHandoffState, onInsertSelector, controlDisabled = false, modeChangeDisabled = false, compact = false }: { deviceId: string; active?: boolean; captureEnabled?: boolean; controlDisabled?: boolean; modeChangeDisabled?: boolean; compact?: boolean; recordingMode?: boolean; onRecordingControlReady?: (ready: boolean) => void;
+  onModeChange?: (mode: 'control' | 'view' | 'inspect') => void;
   onGestureRecording?: (event: NativeGestureRecordingEvent) => void;
   taskHandoffId?: number; onTaskHandoffState?: (state: TaskControlHandoffState, id: number) => void;
   onControlSent?: (input: StreamInput) => void; onControlCommand?: (event: AcknowledgedControl) => void; onInsertSelector?: (node: UiHierarchyNode, snapshot: UiHierarchySnapshot) => void }) {
@@ -96,6 +97,12 @@ export function SingleDeviceStream({ deviceId, active = true, captureEnabled = f
     setReport(null); select(null); setFeedback(null);
     setInspectionControlReady(false);
   }, [select]);
+  useEffect(() => {
+    if (!recordingMode) return;
+    // Recording needs native control. Leave View/XPath without aborting an
+    // Android tree read: the existing pending barrier drains it before input.
+    setInspect(false); setViewOnly(false); invalidated(false);
+  }, [recordingMode, invalidated]);
   const invalidateFrame = useCallback(() => { invalidated(); setFrameReport(null); }, [invalidated]);
   useEffect(() => { invalidateCapture(); invalidateFrame(); setError(null); }, [deviceId, accessToken, invalidateFrame, invalidateCapture]);
   useEffect(() => { if (!canInspect || !canReadStream) { invalidateCapture(); invalidateFrame(); setError(null); } }, [canInspect, canReadStream, invalidateFrame, invalidateCapture]);
@@ -192,9 +199,9 @@ export function SingleDeviceStream({ deviceId, active = true, captureEnabled = f
   return <section className="min-w-0 space-y-3" aria-label="Видеопоток и инспектор Android">
     <div className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-border bg-card p-3">
       <div className="flex flex-wrap gap-2">
-        <Button variant={!inspect && !viewOnly ? 'default' : 'outline'} size="sm" disabled={modeChangeDisabled || taskHandoffId !== undefined} aria-pressed={!inspect && !viewOnly} onClick={() => { setInspect(false); setViewOnly(false); invalidated(false); }}><MousePointer2 className="mr-2 h-4 w-4" aria-hidden />Управление</Button>
-        <Button variant={viewOnly ? 'default' : 'outline'} size="sm" disabled={modeChangeDisabled || taskHandoffId !== undefined} aria-pressed={viewOnly} onClick={() => { setInspect(false); setViewOnly(true); invalidated(false); }}><Eye className="mr-2 h-4 w-4" aria-hidden />Просмотр</Button>
-        <Button variant={inspect ? 'default' : 'outline'} size="sm" disabled={modeChangeDisabled || controlDisabled || taskHandoffId !== undefined || !canInspect} aria-pressed={inspect} onClick={() => { if (inspect) { void refresh(); return; } invalidated(false); setViewOnly(false); setInspect(true); setAutomatic(true); setError(null); }}><ScanSearch className="mr-2 h-4 w-4" aria-hidden />XPath-инспектор</Button>
+        <Button variant={!inspect && !viewOnly ? 'default' : 'outline'} size="sm" disabled={modeChangeDisabled || taskHandoffId !== undefined} aria-pressed={!inspect && !viewOnly} onClick={() => { onModeChange?.('control'); setInspect(false); setViewOnly(false); invalidated(false); }}><MousePointer2 className="mr-2 h-4 w-4" aria-hidden />Управление</Button>
+        <Button variant={viewOnly ? 'default' : 'outline'} size="sm" disabled={modeChangeDisabled || taskHandoffId !== undefined} aria-pressed={viewOnly} onClick={() => { onModeChange?.('view'); setInspect(false); setViewOnly(true); invalidated(false); }}><Eye className="mr-2 h-4 w-4" aria-hidden />Просмотр</Button>
+        <Button variant={inspect ? 'default' : 'outline'} size="sm" disabled={modeChangeDisabled || controlDisabled || taskHandoffId !== undefined || !canInspect} aria-pressed={inspect} onClick={() => { onModeChange?.('inspect'); if (inspect) { void refresh(); return; } invalidated(false); setViewOnly(false); setInspect(true); setAutomatic(true); setError(null); }}><ScanSearch className="mr-2 h-4 w-4" aria-hidden />XPath-инспектор</Button>
       </div>
       {inspect && <div className="flex flex-wrap items-center gap-2">
         <Button variant="outline" size="sm" aria-pressed={automatic} disabled={modeChangeDisabled || controlDisabled || taskHandoffId !== undefined || !canInspect} onClick={() => { setAutomatic(!automatic); if (!automatic) { void refresh(); } }}>Автообновление: {automatic ? 'включено' : 'пауза'}</Button>

@@ -437,3 +437,37 @@ it('requires an explicit verified capture before clearing the native-read fence 
     URL.createObjectURL = createUrl; URL.revokeObjectURL = revokeUrl;
   }
 });
+it('starts recording from View on native control without replacing the video component', () => {
+  const view = render(<SingleDeviceStream deviceId="remote" />);
+  fireEvent.click(screen.getByRole('button',{name:'Просмотр'}));
+  expect(mockStreamProps.readOnly).toBe(true);
+  view.rerender(<SingleDeviceStream deviceId="remote" recordingMode />);
+  expect(screen.getByRole('button',{name:'Управление'})).toHaveAttribute('aria-pressed','true');
+  expect(mockStreamProps.readOnly).toBe(false);
+  expect(mockStreamRetired).not.toHaveBeenCalled();
+});
+it('starts recording from XPath by draining the existing Android read before native control', async () => {
+  let finish!: (value: unknown) => void;
+  jest.mocked(api.post).mockImplementation(() => new Promise(resolve => {finish=resolve;}) as any);
+  const view = render(<SingleDeviceStream deviceId="remote" />);
+  fireEvent.click(screen.getByText('Fixture frame'));
+  fireEvent.click(screen.getByRole('button',{name:'XPath-инспектор'}));
+  await waitFor(() => expect(api.post).toHaveBeenCalledTimes(1));
+  const signal=jest.mocked(api.post).mock.calls[0][2]!.signal;
+  view.rerender(<SingleDeviceStream deviceId="remote" recordingMode />);
+  expect(screen.getByRole('button',{name:'Управление'})).toHaveAttribute('aria-pressed','true');
+  expect(mockStreamProps.inspection).toBeUndefined();
+  expect(mockStreamProps.readOnly).toBe(true);
+  expect(signal!.aborted).toBe(false);
+  await act(async()=>finish({data:snapshot()}));
+  await waitFor(()=>expect(mockStreamProps.readOnly).toBe(false));
+  expect(api.post).toHaveBeenCalledTimes(1);
+  expect(mockStreamRetired).not.toHaveBeenCalled();
+});
+it('reports actual mode intent so the owner can stop recording without discarding its draft',()=>{
+  const mode=jest.fn();render(<SingleDeviceStream deviceId="remote" onModeChange={mode} />);
+  fireEvent.click(screen.getByRole('button',{name:'Просмотр'}));
+  fireEvent.click(screen.getByRole('button',{name:'Управление'}));
+  fireEvent.click(screen.getByRole('button',{name:'XPath-инспектор'}));
+  expect(mode.mock.calls.map(([value])=>value)).toEqual(['view','control','inspect']);
+});

@@ -3,6 +3,7 @@ import { DeviceStream } from '@/components/sphere/DeviceStream';
 import { api } from '@/lib/api';
 import { TextEncoder } from 'node:util';
 import type { DirectControlEndpoint } from '@/src/features/stream/directPointerTransport';
+import type { DirectVideoBinding } from '@/src/features/stream/directVideoProtocol';
 
 let mockRenderFrame: ((frame: VideoFrame) => void) | null = null;
 let mockDecoderStats: object | null = null;
@@ -14,6 +15,7 @@ let mockDirectObserve: ((endpoint: DirectControlEndpoint | null) => void) | null
 let mockVideoObserve: ((observation: object) => void) | null = null;
 let mockInputAdmission: { admissionKnown: boolean; admitted: boolean; sharedInput?: boolean } | null = null;
 let mockVideoEligible = false;
+let mockPresentDirectFrame: ((video: HTMLVideoElement, binding: DirectVideoBinding) => boolean) | null = null;
 
 const TOUCH_EPOCH = '00112233-4455-6677-8899-aabbccddeeff';
 
@@ -22,9 +24,10 @@ jest.mock('@/lib/api', () => ({ api: { get: jest.fn(), post: jest.fn() } }));
 // Keep control delivery independent of the separately tested probe admission request.
 jest.mock('@/src/features/stream/DirectProbeAccess', () => ({ DirectProbeAccess: () => null }));
 jest.mock('@/src/features/stream/StreamSessionHistoryPanel', () => ({ StreamSessionHistoryPanel: () => null }));
-jest.mock('@/src/features/stream/LiveDirectVideo', () => ({ LiveDirectVideo: ({ session, eligible, onObservation, onControlChannel }: {
+jest.mock('@/src/features/stream/LiveDirectVideo', () => ({ LiveDirectVideo: ({ session, eligible, onObservation, onControlChannel, onFrame }: {
   session: string; eligible: boolean; onObservation: (value: object) => void;
   onControlChannel?: (endpoint: DirectControlEndpoint | null) => void;
+  onFrame: (video: HTMLVideoElement, binding: DirectVideoBinding) => boolean;
 }) => {
   const React = jest.requireActual<typeof import('react')>('react');
   const observation = React.useRef(onObservation);
@@ -33,6 +36,7 @@ jest.mock('@/src/features/stream/LiveDirectVideo', () => ({ LiveDirectVideo: ({ 
   control.current = onControlChannel;
   mockDirectObserve = onControlChannel ?? null; mockVideoObserve = onObservation;
   mockVideoEligible = eligible;
+  mockPresentDirectFrame = onFrame;
   React.useEffect(() => {
     observation.current({ admitted: !!mockDirectEndpoint, admissionKnown: true, active: !!mockDirectEndpoint,
       frames: 0, lastFrameAt: null, attempts: 0, result: null, ...mockInputAdmission });
@@ -54,6 +58,7 @@ jest.mock('@/lib/h264-decoder', () => ({
     init() {}
     destroy() {}
     reset() {}
+    recoverCapture() {}
     handleBinary() {}
     get stats() { return mockDecoderStats; }
     get lastRenderedCapture() { return mockCapture; }
@@ -88,7 +93,7 @@ beforeEach(() => {
   mockDecoderStats = null;
   mockCapture = null;
   mockAutomaticEligible = false;
-  mockDirectEndpoint = null; mockDirectReceipt = null; mockDirectObserve = null; mockVideoObserve = null;
+  mockDirectEndpoint = null; mockDirectReceipt = null; mockDirectObserve = null; mockVideoObserve = null; mockPresentDirectFrame = null;
   mockInputAdmission = null;
   Object.defineProperty(globalThis, 'TextEncoder', { configurable: true, value: TextEncoder });
   jest.mocked(api.post).mockReset().mockResolvedValue({ data: { output: '' } });
@@ -1864,4 +1869,27 @@ it.each(['recording', 'xpath'])('keeps the direct video peer alive across %s nat
   act(() => jest.advanceTimersByTime(3000));
   expect(view.queryByText(/Освобождение управления Android не подтверждено/)).not.toBeInTheDocument();
   view.unmount();
+});
+it.each(['direct','server'])('reports the first owned %s frame again after capture loss even with unchanged dimensions', source => {
+  mockCapture={captureEpoch:TOUCH_EPOCH,frameWidth:1280,frameHeight:720};
+  const view=readyWheel();const frame=jest.fn(),invalidated=jest.fn();
+  view.rerender(<DeviceStream deviceId="gesture-remote" fit="contain" enableStaticInput enableNavigation onFrameDimensions={frame} onInspectionInvalidated={invalidated}/>);
+  act(()=>view.socket.onmessage?.({data:JSON.stringify({type:'stream_session',schema_version:1,history_enabled:true,session_id:'1'.repeat(16),report_interval_seconds:10})}));
+  act(()=>mockVideoObserve?.({admitted:true,admissionKnown:true,active:true,frames:1,lastFrameAt:Date.now(),attempts:1,result:null}));
+  act(()=>mockVideoObserve?.({admitted:true,admissionKnown:true,active:false,frames:1,lastFrameAt:Date.now(),attempts:1,result:null}));
+  expect(invalidated).toHaveBeenCalled();frame.mockClear();
+  const present=()=> source==='direct'
+    ? mockPresentDirectFrame!(document.createElement('video'),{captureEpoch:TOUCH_EPOCH,width:1280,height:720})
+    : mockRenderFrame!({displayWidth:1280,displayHeight:720} as VideoFrame);
+  act(()=>{present();});
+  expect(frame).toHaveBeenCalledTimes(1);expect(frame).toHaveBeenCalledWith({width:1280,height:720});
+  act(()=>{present();});expect(frame).toHaveBeenCalledTimes(1);
+});
+it('never announces a direct frame whose capture was not admitted',()=>{
+  mockCapture={captureEpoch:TOUCH_EPOCH,frameWidth:1280,frameHeight:720};
+  const view=readyWheel();const frame=jest.fn();
+  view.rerender(<DeviceStream deviceId="gesture-remote" fit="contain" enableStaticInput enableNavigation onFrameDimensions={frame}/>);
+  act(()=>view.socket.onmessage?.({data:JSON.stringify({type:'stream_session',schema_version:1,history_enabled:true,session_id:'1'.repeat(16),report_interval_seconds:10})}));
+  act(()=>{expect(mockPresentDirectFrame!(document.createElement('video'),{captureEpoch:'different-capture',width:1280,height:720})).toBe(false);});
+  expect(frame).not.toHaveBeenCalled();
 });

@@ -301,6 +301,7 @@ export function DeviceStream({
     if (!socket || socket.readyState !== WebSocket.OPEN || diagnosticReporter.current?.sessionId !== session || !canvas) return false;
     const expected = serverCaptureRef.current;
     if (!expected || expected.captureEpoch !== binding.captureEpoch || expected.frameWidth !== binding.width || expected.frameHeight !== binding.height) return false;
+    const firstOwnedFrame = renderedSocketRef.current !== socket || renderedCaptureRef.current?.captureEpoch !== binding.captureEpoch;
     const context = canvas.getContext('2d');
     if (!context) return false;
     if (canvas.width !== binding.width || canvas.height !== binding.height) {
@@ -312,6 +313,12 @@ export function DeviceStream({
     directVideoRef.current = { ...directVideoRef.current, active: true, lastFrameAt: Date.now() };
     renderedCaptureRef.current = { captureEpoch: binding.captureEpoch, frameWidth: binding.width, frameHeight: binding.height };
     renderedSocketRef.current = socket;
+    const previousDimensions = lastFrameDimensionsRef.current;
+    if (firstOwnedFrame || previousDimensions?.width !== binding.width || previousDimensions?.height !== binding.height) {
+      const dimensions = { width: binding.width, height: binding.height };
+      lastFrameDimensionsRef.current = dimensions;
+      onFrameDimensionsRef.current?.(dimensions);
+    }
     directFramePresentedRef.current?.();
     setConnection('live'); setHasRenderedFrame(true); setStreamError(null);
     return true;
@@ -465,6 +472,7 @@ export function DeviceStream({
         if (ignore || wsRef.current?.readyState !== WebSocket.OPEN) return;
         if (directVideoRef.current.active) return;
         if (!ctx || frame.displayWidth < 1 || frame.displayHeight < 1) throw new Error('Invalid canvas frame.');
+        const firstOwnedFrame = renderedSocketRef.current !== wsRef.current || renderedCaptureRef.current?.captureEpoch !== binding?.captureEpoch;
         // Mutate canvas directly for performance, avoid React state re-renders
         if (canvas.width !== frame.displayWidth || canvas.height !== frame.displayHeight) {
           // Coordinates captured before rotation/resizing belong to the old
@@ -494,7 +502,7 @@ export function DeviceStream({
         if (frame.displayWidth > 0 && frame.displayHeight > 0) {
           const previousDimensions = lastFrameDimensionsRef.current;
           if (
-            previousDimensions?.width !== frame.displayWidth
+            firstOwnedFrame || previousDimensions?.width !== frame.displayWidth
             || previousDimensions?.height !== frame.displayHeight
           ) {
             const dimensions = { width: frame.displayWidth, height: frame.displayHeight };

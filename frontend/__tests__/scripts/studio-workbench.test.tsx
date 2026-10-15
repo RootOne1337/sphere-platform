@@ -24,6 +24,7 @@ let mockSessionVersion = 1;
 let mockCapabilitiesAvailable = true;
 const mockReadAdmissions: Record<string, boolean | undefined> = {};
 let mockHandoffAuto = true;
+let mockModeObserver: ((mode: 'control' | 'view' | 'inspect') => void) | undefined;
 let mockHandoffId: number | undefined;
 let mockHandoffObserver: ((state: 'waiting' | 'ready' | 'blocked', id: number) => void) | undefined;
 jest.mock('@/lib/store', () => ({ useAuthStore: () => ({ accessToken: mockToken, sessionVersion: mockSessionVersion }) }));
@@ -39,13 +40,14 @@ jest.mock('@/lib/hooks/useTasks', () => ({
 jest.mock('@/src/features/access/Capabilities', () => ({ useCapabilities: () => ({ can: () => mockCapabilitiesAvailable }) }));
 jest.mock('@/lib/api', () => ({ api: { post: jest.fn() } }));
 jest.mock('next/link', () => function MockLink({ href, children, ...props }: React.AnchorHTMLAttributes<HTMLAnchorElement> & { href: string }) { return <a href={href} {...props}>{children}</a>; });
-jest.mock('@/src/features/stream/SingleDeviceStream', () => ({ SingleDeviceStream: ({ deviceId: ownedId, controlDisabled, onControlSent, onControlCommand, onInsertSelector, recordingMode, onRecordingControlReady, onGestureRecording, taskHandoffId, onTaskHandoffState }: {
+jest.mock('@/src/features/stream/SingleDeviceStream', () => ({ SingleDeviceStream: ({ deviceId: ownedId, controlDisabled, onControlSent, onControlCommand, onInsertSelector, recordingMode, onRecordingControlReady, onGestureRecording, onModeChange, taskHandoffId, onTaskHandoffState }: {
   deviceId: string; controlDisabled: boolean; recordingMode?: boolean; onRecordingControlReady?: (ready: boolean) => void; onControlSent: (value: unknown) => void; onControlCommand: typeof mockObserve; onInsertSelector: typeof mockSelectorInsert;
   onGestureRecording?: (event:NativeGestureRecordingEvent)=>void;
+  onModeChange?: typeof mockModeObserver;
   taskHandoffId?: number; onTaskHandoffState?: typeof mockHandoffObserver;
 }) => { const React = jest.requireActual('react');
   React.useEffect(() => { if (mockHandoffAuto && taskHandoffId !== undefined) onTaskHandoffState?.('ready', taskHandoffId); }, [taskHandoffId, onTaskHandoffState]);
-  mockHandoffId=taskHandoffId; mockHandoffObserver=onTaskHandoffState;
+  mockHandoffId=taskHandoffId; mockHandoffObserver=onTaskHandoffState; mockModeObserver=onModeChange;
   mockNativeObserver=onGestureRecording;mockRecordingReadyObserver=onRecordingControlReady; mockRecordingMode=recordingMode; mockObserve = onControlCommand; mockSelectorInsert = onInsertSelector; return <section aria-label="Поток выбранного Android" data-device={ownedId}>
   <button disabled={controlDisabled} onClick={() => onControlSent({ deviceId: ownedId, at: mockInputAt, dimensions: { width: 960, height: 540 }, command: { type: 'click', x: 480, y: 270 } })}>Записать тестовый клик</button>
 </section>; } }));
@@ -691,4 +693,17 @@ it('retires hidden pre-POST handoff and never replays its late ready receipt on 
   view.rerender(<DeviceWorkbench paneActive scriptId={scriptId} version={version} name="Canary" canRun canEdit onInsert={view.onInsert} onExecution={view.onExecution} />);
   await act(async () => oldObserver('ready', oldId));
   expect(api.post).not.toHaveBeenCalled();
+});
+it.each(['view','inspect'] as const)('stops native recording on %s while retaining acknowledged entries', mode => {
+  const view = openDevice();
+  fireEvent.click(screen.getByRole('button', { name: 'Записать действия' }));
+  act(() => mockNativeObserver!({phase:'started',requestId:'mode-record'}));
+  act(() => mockNativeObserver!({phase:'finished',requestId:'mode-record',outcome:'confirmed',completedAt:1100,
+    input:{deviceId,at:1000,dimensions:{width:960,height:540},command:{type:'click',x:480,y:270}}}));
+  act(() => mockModeObserver!(mode));
+  expect(mockRecordingMode).toBe(false);
+  expect(screen.getByText('Запись остановлена при смене режима. Подтверждённые действия сохранены.')).toBeInTheDocument();
+  expect(screen.getByText('Подтверждено APK')).toBeInTheDocument();
+  fireEvent.click(screen.getByRole('button',{name:'Вставить в граф'}));
+  expect(view.onInsert).toHaveBeenCalledTimes(1);
 });
