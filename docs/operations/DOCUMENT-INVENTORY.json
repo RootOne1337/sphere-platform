@@ -1,11 +1,11 @@
 {
   "schemaVersion": 1,
-  "reviewedAtUtc": "2026-10-15T09:14:28.019Z",
+  "reviewedAtUtc": "2026-10-15T10:29:44.156Z",
   "scope": "All tracked Markdown classified; active local-link paths scanned. Not semantic attestation of every sentence, command execution, external-link or live acceptance.",
   "countsByRole": {
     "ADR": 6,
     "CURRENT_ENTRYPOINT": 8,
-    "DATED_EVIDENCE": 320,
+    "DATED_EVIDENCE": 321,
     "DESIGN_SPECIFICATION": 78,
     "OPERATING_GUIDE": 64,
     "PROJECT_POLICY": 7,
@@ -1390,6 +1390,10 @@
     },
     {
       "file": "docs/audits/2026-10-15/DIRECT-KEYBOARD76-DELIVERY.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
+      "file": "docs/audits/2026-10-15/DIRECT-RECORDER-ACK.md",
       "role": "DATED_EVIDENCE"
     },
     {
