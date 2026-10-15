@@ -1,6 +1,6 @@
 # Headless motor worker: первый транспортный этап
 
-16 октября 2026 · версия модуля `0.1.0` · **пилот транспорта, без модели и игрового ввода**.
+16 октября 2026 · версия модуля `0.2.0` · **пилот транспорта, без модели и игрового ввода**.
 
 Основной план — [MOTOR-AI-PLATFORM](../design/MOTOR-AI-PLATFORM.md).
 Код — [motor_worker](../../motor_worker/session.py). Это реализация части P0-C/G02:
@@ -51,22 +51,29 @@ HTTP разрешён только для loopback; для другого хос
 `--seconds` ограничен 1–300, наблюдения — 1–20 Гц. Default ICE без STUN/TURN; единственный
 необязательный `--stun stun:stun.cloudflare.com:3478` задаётся явно. Relay candidates отвергаются.
 
-## Почему нужен серверный lifecycle socket
+## Capture-only lifecycle socket
 
-В действующей установке capture зависит от реестра stream viewers. Простой REST start и direct offer
-не создают корректный lifecycle: offer может опередить capture, а сервер остановит его без зрителей.
-Поэтому модуль регистрируется на существующем `/ws/stream/{id}` для capture presence, ждёт первый
-валидный v2 пакет и получает session identity. Браузер для этого не нужен.
+Capture зависит от общего реестра stream viewers. Модуль регистрируется на `/ws/stream/{id}`
+с первым сообщением `{token, delivery: "capture_only"}`. Backend сохраняет JWT/tenant/RBAC,
+но не создаёт video queue, sender или media subscription. Получение серверного binary payload
+считается ошибкой, даже на этапе запуска. Этот режим не может переключиться на relay.
 
-Затем он согласует WebRTC через `/ws/direct-probe/{id}`, связывает history/control nonce и после
-первого direct кадра подтверждает `video_delivery: direct`. Раз в 3 секунды поддерживает отключение
-своей серверной копии; direct signaling grant обновляется раз в 5 секунд. Эти существующие lease
-не заменяются новым неаутентифицированным socket.
+Backend ждёт completed native `stream_quality: get` с активным источником и возвращает `capture_ready`
+с session identity и размерами. Только явно inactive снимки повторяются: до 40 чтений/250 мс,
+общий deadline 10 с. Готовность источника не заменяет первый direct кадр и точный epoch из `SV1`.
 
-**При старте сейчас приходят серверные encoded bytes.** Модуль их считает и отбрасывает, не декодирует
-и не подаёт модели. В конечном испытании после handover ACK новых media bytes через сервер не было.
-Это ещё не режим «ни одного серверного кадра с первого пакета». Для него нужен отдельный authenticated
-capture-only admission в backend с общей presence/stop семантикой; этот следующий шаг остаётся открытым.
+Затем `/ws/direct-probe/{id}` согласует настоящий peer, связывает history/control nonce и после
+первого direct кадра подтверждает `video_delivery: direct`. Каждые 3 секунды клиент продлевает
+10-секундную capture-only аренду; direct signaling grant продлевается раз в 5 секунд.
+Стартовая аренда ограничена 40 секундами. Потерянная аренда закрывается без включения relay.
+Сам lifecycle socket не предоставляет разрешение на команды ввода.
+
+**Требуется backend с реализацией `3d427a13` или её потомком. Основной API969a7444 пока не обновлён.**
+Проверка PH011 прошла на временном API-кандидате, удалённом после прогона: с первого пакета
+server→headless media =0 байт. Команда с 3015 выше рассчитана на поставку обновлённого API.
+Прежний backend не поддерживает этот admission; клиент не подменяет его молчаливым relay fallback.
+Это не доказательство нулевого APK→server bootstrap-трафика: legacy suppression включается позже.
+[Прогон и точные границы](../audits/2026-10-16/MOTOR-CAPTURE-ONLY.md).
 
 `--existing-capture` отключает lifecycle socket и требует, чтобы capture уже поддерживался другим
 авторизованным потребителем. Это специальный режим проверки, не способ обеспечить автономный запуск.
@@ -88,7 +95,9 @@ capture-only admission в backend с общей presence/stop семантико
 в WebRTC146 после `setRemoteDescription`, до native input OPEN. После удаления объявлений
 несуществующего источника последующие конечные прогоны завершились успешно. Это локализованная
 совместимость нашего клиента; точное место abort в stripped C++ binary не символицировано.
-Отдельная защита APK от иных неподдерживаемых SDP остаётся P0, а не объявляется исправленной этим клиентом.
+Backend и исходники Android теперь отвергают source-bearing recvonly offers до JNI; sendonly answers
+и session `msid-semantic` сохраняются. Android guard скомпилирован и проверен тремя unit-тестами,
+но новый APK не устанавливался. Защита от всех иных неподдерживаемых SDP не заявляется.
 Похожий upstream [issue GetStream #123](https://github.com/GetStream/webrtc-android/issues/123)
 содержит пользовательские наблюдения о codec factories; они не заменяют локальное воспроизведение.
 
@@ -109,7 +118,7 @@ capture-only admission в backend с общей presence/stop семантико
 | `actorAliveReceipts` | Живость APK shared actor, не native tap/gesture execution |
 | `participantClosedConfirmed` | Подтверждено закрытие своего idle participant; не произвольный global release |
 | `nativeActionAppliedVerified: false` | Физические игровые действия этим этапом не проверялись |
-| `captureLifecycle` | Счётчики bootstrap/server bytes, handover ACK и нулевого relay decode |
+| `captureLifecycle` | Режим capture-only, source readiness, нулевые server bytes и продления привязанного peer |
 
 RTP PTS и receiver sequence показывают прогресс транспорта. Они не являются общим capture frame ID
 и не доказывают, что повторно закодированный статичный source frame новый. Cross-host clock mapping,
@@ -128,6 +137,8 @@ lost ALIVE, video stall, cancellation, foreign capture binding и capture lifecy
 В обычном backend окружении integration tests явно skipped; такой skip не считается положительной media проверкой.
 
 Конечные device results, первоначальные отрицательные прогоны и ограничения —
+[MOTOR-CAPTURE-ONLY.json](../audits/2026-10-16/MOTOR-CAPTURE-ONLY.json).
+Предыдущая версия0.1 и её стартовая серверная копия — в архиве
 [HEADLESS-MOTOR-WORKER.json](../audits/2026-10-16/HEADLESS-MOTOR-WORKER.json).
-Следующие этапы: capture-only admission без стартовой серверной копии, native SDP hardening,
+Следующие этапы: штатная локальная упаковка и rollout backend/APK guards,
 общий игровой profile executor, frame/clock contract и atomic DAG→episode delegation.

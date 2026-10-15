@@ -5215,6 +5215,22 @@
       "strictNoServerBootstrapBytes": false,
       "sourceClockCorrelationImplemented": false,
       "uiApiApkChanged": false
+    },
+    "captureOnlyTransportPilot": {
+      "observedAtUtc": "2026-10-15T22:52:19.764827+00:00",
+      "implementationRevision": "3d427a13caf161801fff796c56a3e4e3d19a6435",
+      "guide": "docs/operations/MOTOR-WORKER.md",
+      "evidence": "docs/audits/2026-10-16/MOTOR-CAPTURE-ONLY.json",
+      "evidenceSha256NormalizedLf": "0301545118da72cdd04cf2e5e89ebee6a12d38d7696f0df96238c2a5037204c9",
+      "version": "0.2.0",
+      "headlessTransportImplemented": true,
+      "zeroServerToHeadlessMediaFromStartupVerified": true,
+      "zeroApkToServerMediaFromStartupVerified": false,
+      "nativeGameActionsVerified": false,
+      "modelInstalled": false,
+      "gameplayAccepted": false,
+      "productionRolloutPerformed": false,
+      "candidateContainerRemoved": true
     }
   }
 }

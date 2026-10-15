@@ -1,5 +1,13 @@
 # Работы, требования пользователя и границы приёмки
 
+**16 октября — второй транспортный этап AI: capture-only без начальной серверной копии клиенту.**
+Реализованы отдельная read-only presence, native source readiness и ограниченная аренда без перехода на relay.
+PH011 через временный API-кандидат:15,007с,873decoded,75RGB/4,998Гц,READY/49idle ALIVE/CLOSED,
+server→headless media0байт с запуска. Кандидат удалён; основная UI19c4272b/API969a7444/APK76 сохранена.
+SDP guard добавлен в backend/Android source; Android compiled/unit-проверен, новый APK не установлен.
+Следующий шаг — локальная упаковка и rollout. Модель/игровые действия не реализованы.
+[Результаты и границы](../audits/2026-10-16/MOTOR-CAPTURE-ONLY.md).
+
 **16 октября — выполнена первая часть P0-C/G02 AI-плана.** Добавлен headless `motor_worker` с direct H.264,
 одним latest-frame slot, RGB sampling и отдельным control admission/idle heartbeat/close.
 PH011: 15,013с, 75 RGB, 49 ALIVE, после handover0 server-media bytes; два пересекающихся клиента тоже прошли.

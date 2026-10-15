@@ -1,5 +1,11 @@
 # Будущий AI-контур: готовность и границы интеграции
 
+**Второй транспортный этап, 16 октября:** [capture-only pilot](../audits/2026-10-16/MOTOR-CAPTURE-ONLY.md)
+исключил начальные server→headless media bytes на PH011 через отдельный API-кандидат.
+Worker0.2, native readiness и ограниченная аренда проверены; main API/APK пока не обновлены.
+Отсутствие APK→server bootstrap media и независимость от signaling не доказаны.
+Модель, игровые действия, source freshness и ёмкость50×5Гц остаются открытыми.
+
 **Реализация 16 октября, после основного проекта:** [первый headless transport pilot](../audits/2026-10-16/HEADLESS-MOTOR-WORKER.md)
 работает с APK76 без браузера: direct video, RGB около5 Гц, native admission/idle ALIVE и закрытие участника.
 Есть отдельный модуль и инструкция [MOTOR-WORKER](../operations/MOTOR-WORKER.md).

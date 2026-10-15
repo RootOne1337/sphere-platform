@@ -1,5 +1,11 @@
 # Эксплуатационная готовность Sphere
 
+**16 октября — capture-only transport проверен на отдельном API-кандидате.** Headless0.2 получил с PH011
+873decoded/75RGB за15,007с, direct READY/49idle ALIVE/CLOSED; server→headless видео0байт с первого пакета.
+Source readiness подтверждается native RPC; lease завершается без включения relay. Основная установка
+UI19c4272b/API969a7444/APK76 не менялась; rollout и новый APK guard ещё нужны. Модель/игровые действия
+не подключены. [Квитанция](../audits/2026-10-16/MOTOR-CAPTURE-ONLY.md), [инструкция](MOTOR-WORKER.md).
+
 **16 октября — начат AI-план: headless transport реализован и проверен на PH011.** Отдельный `motor_worker`
 получил прямое H.264 видео, 75 RGB observations за15,013с, подтвердил native admission/49 idle ALIVE/CLOSED.
 Два пересекающихся idle клиента также завершились; после handover новых server-media bytes не было.
