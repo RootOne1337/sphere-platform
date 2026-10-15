@@ -1,3 +1,5 @@
+'use client';
+
 import * as React from 'react';
 import * as DialogPrimitive from '@radix-ui/react-dialog';
 import { X } from 'lucide-react';
@@ -25,13 +27,17 @@ DialogOverlay.displayName = DialogPrimitive.Overlay.displayName;
 
 const DialogContent = React.forwardRef<
   React.ElementRef<typeof DialogPrimitive.Content>,
-  React.ComponentPropsWithoutRef<typeof DialogPrimitive.Content> & { placement?: 'center' | 'right' }
->(({ className, children, placement = 'center', ...props }, ref) => (
+  React.ComponentPropsWithoutRef<typeof DialogPrimitive.Content> & { placement?: 'center' | 'right'; layout?: 'default' | 'workspace' }
+>(({ className, children, placement = 'center', layout = 'default', style, ...props }, ref) => {
+  const viewportStyle = useDialogViewport(layout === 'workspace');
+  return (
   <DialogPortal>
     <DialogOverlay />
     <DialogPrimitive.Content
       ref={ref}
       data-placement={placement}
+      data-layout={layout}
+      style={{ ...viewportStyle, ...style }}
       className={cn(
         'sphere-dialog sphere-material fixed z-50 gap-4 overflow-y-auto overscroll-contain border bg-background shadow-lg',
         placement === 'right'
@@ -48,16 +54,50 @@ const DialogContent = React.forwardRef<
       </DialogClose>
     </DialogPrimitive.Content>
   </DialogPortal>
-));
+  );
+});
 DialogContent.displayName = DialogPrimitive.Content.displayName;
 
+// Mobile browsers may pan/shrink only the visual viewport when the keyboard opens.
+// Scope this to workspace dialogs; a viewport update never remounts the form.
+function useDialogViewport(enabled: boolean) {
+  const [style, setStyle] = React.useState<React.CSSProperties>();
+  React.useEffect(() => {
+    const viewport = window.visualViewport;
+    if (!enabled || !viewport) return;
+    let frame = 0;
+    const measure = () => {
+      cancelAnimationFrame(frame);
+      frame = requestAnimationFrame(() => {
+        if (!Number.isFinite(viewport.height) || viewport.height <= 0 || !Number.isFinite(viewport.offsetTop)) return;
+        setStyle({ '--dialog-viewport-height': `${viewport.height}px`, '--dialog-viewport-top': `${viewport.offsetTop}px` } as React.CSSProperties);
+      });
+    };
+    measure();
+    viewport.addEventListener('resize', measure);
+    viewport.addEventListener('scroll', measure);
+    return () => {
+      cancelAnimationFrame(frame);
+      viewport.removeEventListener('resize', measure);
+      viewport.removeEventListener('scroll', measure);
+    };
+  }, [enabled]);
+  return enabled ? style : undefined;
+}
+
+const DialogBody = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivElement>>(
+  ({ className, ...props }, ref) => <div ref={ref} data-dialog-body className={cn('sphere-dialog-body', className)} {...props} />,
+);
+DialogBody.displayName = 'DialogBody';
+
 const DialogHeader = ({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) => (
-  <div className={cn('flex flex-col space-y-1.5 pr-6 text-left', className)} {...props} />
+  <div data-dialog-header className={cn('flex flex-col space-y-1.5 pr-6 text-left', className)} {...props} />
 );
 DialogHeader.displayName = 'DialogHeader';
 
 const DialogFooter = ({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) => (
   <div
+    data-dialog-footer
     className={cn('flex flex-col-reverse gap-2 sm:flex-row sm:justify-end', className)}
     {...props}
   />
@@ -95,6 +135,7 @@ export {
   DialogClose,
   DialogTrigger,
   DialogContent,
+  DialogBody,
   DialogHeader,
   DialogFooter,
   DialogTitle,

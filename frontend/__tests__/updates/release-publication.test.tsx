@@ -59,6 +59,7 @@ it('requires impact consent and shows field errors without sending invalid data'
   fireEvent.click(screen.getByRole('button', { name: 'Опубликовать релиз' }));
   expect(screen.getByLabelText('Номер версии (versionCode)')).toHaveAttribute('aria-invalid', 'true');
   expect(screen.getByLabelText('SHA-256 APK')).toHaveAttribute('aria-invalid', 'true');
+  expect(screen.getByLabelText('Номер версии (versionCode)')).toHaveFocus();
   expect(api.post).not.toHaveBeenCalled();
 });
 it('sends one exact managed release and waits for an exact receipt', async () => {

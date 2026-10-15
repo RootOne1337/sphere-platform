@@ -15,7 +15,7 @@ export function utcTime(value: unknown): string {
 }
 
 export function Metric({ label, value }: { label: string; value: ReactNode }) {
-  return <div className="min-w-0 rounded-xl border border-border bg-muted/20 p-3"><dt className="text-xs text-muted-foreground">{label}</dt><dd className="mt-1 break-words text-sm font-medium tabular-nums">{value}</dd></div>;
+  return <div className="sphere-inset min-w-0 rounded-xl border border-border bg-muted/20 p-3"><dt className="text-xs text-muted-foreground">{label}</dt><dd className="mt-1 break-words text-sm font-medium tabular-nums">{value}</dd></div>;
 }
 
 function QueryState({ loading, error, cached, updatedAt }: { loading: boolean; error: boolean; cached: boolean; updatedAt: number }) {

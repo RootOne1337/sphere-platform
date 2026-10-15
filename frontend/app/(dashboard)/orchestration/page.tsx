@@ -13,6 +13,7 @@ import { Label } from '@/components/ui/label';
 import {
     Dialog,
     DialogContent,
+    DialogBody,
     DialogHeader,
     DialogTitle,
     DialogDescription,
@@ -1142,7 +1143,7 @@ function CreatePipelineButton() {
                 <Plus className="w-4 h-4 mr-2" /> Новый Pipeline
             </Button>
             <Dialog open={open} onOpenChange={setOpen}>
-                <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden flex flex-col bg-card border-border">
+                <DialogContent layout="workspace" className="max-w-4xl">
                 <DialogHeader>
                     <DialogTitle className="font-mono tracking-tight flex items-center gap-2">
                         <GitBranch className="w-5 h-5 text-primary" />
@@ -1153,16 +1154,16 @@ function CreatePipelineButton() {
                     </DialogDescription>
                 </DialogHeader>
 
-                <div className="flex-1 overflow-y-auto space-y-5 pr-2 custom-scrollbar">
+                <DialogBody>
                     {/* Основные поля */}
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                         <div className="space-y-1.5">
                             <Label className="text-[10px] uppercase font-bold tracking-widest text-muted-foreground">Название *</Label>
                             <Input
                                 placeholder="Например: Reboot + Screenshot + Report"
                                 value={name}
                                 onChange={e => setName(e.target.value)}
-                                className="h-9 bg-black/30 border-border font-mono text-xs"
+                                className="h-9 bg-background border-border font-mono text-xs"
                             />
                         </div>
                         <div className="space-y-1.5">
@@ -1171,7 +1172,7 @@ function CreatePipelineButton() {
                                 placeholder="automation, reboot, critical"
                                 value={tags}
                                 onChange={e => setTags(e.target.value)}
-                                className="h-9 bg-black/30 border-border font-mono text-xs"
+                                className="h-9 bg-background border-border font-mono text-xs"
                             />
                         </div>
                     </div>
@@ -1182,17 +1183,17 @@ function CreatePipelineButton() {
                             value={description}
                             onChange={e => setDescription(e.target.value)}
                             rows={2}
-                            className="w-full rounded-sm border border-border bg-black/30 px-3 py-2 text-xs font-mono text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary/50 resize-none"
+                            className="w-full rounded-sm border border-border bg-background px-3 py-2 text-xs font-mono text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary/50 resize-none"
                         />
                     </div>
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                         <div className="space-y-1.5">
                             <Label className="text-[10px] uppercase font-bold tracking-widest text-muted-foreground">Глобальный таймаут (мс)</Label>
                             <Input
                                 type="number"
                                 value={globalTimeout}
                                 onChange={e => setGlobalTimeout(Number(e.target.value))}
-                                className="h-9 bg-black/30 border-border font-mono text-xs"
+                                className="h-9 bg-background border-border font-mono text-xs"
                                 min={10000}
                                 max={259200000}
                             />
@@ -1203,7 +1204,7 @@ function CreatePipelineButton() {
                                 type="number"
                                 value={maxRetries}
                                 onChange={e => setMaxRetries(Number(e.target.value))}
-                                className="h-9 bg-black/30 border-border font-mono text-xs"
+                                className="h-9 bg-background border-border font-mono text-xs"
                                 min={0}
                                 max={5}
                             />
@@ -1256,7 +1257,7 @@ function CreatePipelineButton() {
                                             <Input
                                                 value={step.id}
                                                 onChange={e => updateStep(idx, { id: e.target.value })}
-                                                className="h-7 bg-black/30 border-border font-mono text-[11px]"
+                                                className="h-7 bg-background border-border font-mono text-[11px]"
                                                 placeholder="step_1"
                                             />
                                         </div>
@@ -1265,7 +1266,7 @@ function CreatePipelineButton() {
                                             <Input
                                                 value={step.name}
                                                 onChange={e => updateStep(idx, { name: e.target.value })}
-                                                className="h-7 bg-black/30 border-border font-mono text-[11px]"
+                                                className="h-7 bg-background border-border font-mono text-[11px]"
                                                 placeholder="Выполнить скрипт"
                                             />
                                         </div>
@@ -1274,7 +1275,7 @@ function CreatePipelineButton() {
                                             <select
                                                 value={step.type}
                                                 onChange={e => updateStep(idx, { type: e.target.value })}
-                                                className="w-full h-7 rounded-sm border border-border bg-black/30 px-2 text-[11px] font-mono text-foreground focus:outline-none focus:ring-1 focus:ring-primary/50"
+                                                className="w-full h-7 rounded-sm border border-border bg-background px-2 text-[11px] font-mono text-foreground focus:outline-none focus:ring-1 focus:ring-primary/50"
                                             >
                                                 {STEP_TYPES.map(st => (
                                                     <option key={st.value} value={st.value}>{st.label}</option>
@@ -1289,7 +1290,7 @@ function CreatePipelineButton() {
                                                 type="number"
                                                 value={step.timeout_ms}
                                                 onChange={e => updateStep(idx, { timeout_ms: Number(e.target.value) })}
-                                                className="h-7 bg-black/30 border-border font-mono text-[11px]"
+                                                className="h-7 bg-background border-border font-mono text-[11px]"
                                                 min={1000}
                                                 max={3600000}
                                             />
@@ -1300,7 +1301,7 @@ function CreatePipelineButton() {
                                                 type="number"
                                                 value={step.retries}
                                                 onChange={e => updateStep(idx, { retries: Number(e.target.value) })}
-                                                className="h-7 bg-black/30 border-border font-mono text-[11px]"
+                                                className="h-7 bg-background border-border font-mono text-[11px]"
                                                 min={0}
                                                 max={10}
                                             />
@@ -1310,7 +1311,7 @@ function CreatePipelineButton() {
                                             <Input
                                                 value={step.on_success}
                                                 onChange={e => updateStep(idx, { on_success: e.target.value })}
-                                                className="h-7 bg-black/30 border-border font-mono text-[11px]"
+                                                className="h-7 bg-background border-border font-mono text-[11px]"
                                                 placeholder="step_2"
                                             />
                                         </div>
@@ -1319,7 +1320,7 @@ function CreatePipelineButton() {
                                             <Input
                                                 value={step.on_failure}
                                                 onChange={e => updateStep(idx, { on_failure: e.target.value })}
-                                                className="h-7 bg-black/30 border-border font-mono text-[11px]"
+                                                className="h-7 bg-background border-border font-mono text-[11px]"
                                                 placeholder=""
                                             />
                                         </div>
@@ -1338,7 +1339,7 @@ function CreatePipelineButton() {
                                                         name: step.name || scr?.name || '',
                                                     });
                                                 }}
-                                                className="w-full h-7 rounded-sm border border-border bg-black/30 px-2 text-[11px] font-mono text-foreground focus:outline-none focus:ring-1 focus:ring-primary/50"
+                                                className="w-full h-7 rounded-sm border border-border bg-background px-2 text-[11px] font-mono text-foreground focus:outline-none focus:ring-1 focus:ring-primary/50"
                                             >
                                                 <option value="">Выбери скрипт...</option>
                                                 {scripts.filter(s => !s.is_archived).map(s => (
@@ -1355,7 +1356,7 @@ function CreatePipelineButton() {
                                             value={step.params}
                                             onChange={e => updateStep(idx, { params: e.target.value })}
                                             rows={2}
-                                            className={`w-full rounded-sm border px-2 py-1.5 text-[11px] font-mono text-foreground bg-black/30 placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary/50 resize-none ${
+                                            className={`w-full rounded-sm border px-2 py-1.5 text-[11px] font-mono text-foreground bg-background placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary/50 resize-none ${
                                                 validateParamsJson(step.params) ? 'border-border' : 'border-destructive'
                                             }`}
                                             placeholder='{"script_id": "...", "args": ["--flag"]}'
@@ -1365,7 +1366,13 @@ function CreatePipelineButton() {
                             ))}
                         </div>
                     </div>
-                </div>
+                                {showDeviceSelector && (
+                    <div className="mt-3 pt-3 border-t border-border">
+                        <Label className="text-[10px] uppercase font-bold tracking-widest text-muted-foreground mb-2 block">Целевые устройства</Label>
+                        <DeviceSelector value={targetDeviceIds} onChange={setTargetDeviceIds} />
+                    </div>
+                )}
+                </DialogBody>
 
                 <DialogFooter className="mt-4 pt-4 border-t border-border">
                     <Button variant="outline" onClick={() => setOpen(false)} className="font-mono text-xs">
@@ -1403,12 +1410,7 @@ function CreatePipelineButton() {
                     </Button>
                 </DialogFooter>
 
-                {showDeviceSelector && (
-                    <div className="mt-3 pt-3 border-t border-border">
-                        <Label className="text-[10px] uppercase font-bold tracking-widest text-muted-foreground mb-2 block">Целевые устройства</Label>
-                        <DeviceSelector value={targetDeviceIds} onChange={setTargetDeviceIds} />
-                    </div>
-                )}
+
             </DialogContent>
         </Dialog>
         </>
@@ -1461,7 +1463,7 @@ function RunPipelineDialog({ pipeline, open, onOpenChange }: { pipeline: Pipelin
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className="max-w-2xl max-h-[85vh] overflow-hidden flex flex-col bg-card border-border">
+            <DialogContent layout="workspace" className="max-w-2xl">
                 <DialogHeader>
                     <DialogTitle className="font-mono tracking-tight flex items-center gap-2">
                         <Play className="w-5 h-5 text-success" />
@@ -1472,7 +1474,7 @@ function RunPipelineDialog({ pipeline, open, onOpenChange }: { pipeline: Pipelin
                     </DialogDescription>
                 </DialogHeader>
 
-                <div className="flex-1 overflow-y-auto space-y-4 pr-2">
+                <DialogBody>
                     {/* Выбор устройств */}
                     <DeviceSelector value={selectedDeviceIds} onChange={setSelectedDeviceIds} />
 
@@ -1482,7 +1484,7 @@ function RunPipelineDialog({ pipeline, open, onOpenChange }: { pipeline: Pipelin
                             value={inputParams}
                             onChange={e => setInputParams(e.target.value)}
                             rows={3}
-                            className="w-full rounded-sm border border-border bg-black/30 px-3 py-2 text-xs font-mono text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary/50 resize-none"
+                            className="w-full rounded-sm border border-border bg-background px-3 py-2 text-xs font-mono text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary/50 resize-none"
                             placeholder='{"key": "value"}'
                         />
                     </div>
@@ -1501,7 +1503,7 @@ function RunPipelineDialog({ pipeline, open, onOpenChange }: { pipeline: Pipelin
                             ))}
                         </div>
                     </div>
-                </div>
+                </DialogBody>
 
                 <DialogFooter className="mt-4">
                     <Button variant="outline" onClick={() => onOpenChange(false)} className="font-mono text-xs">
@@ -1838,7 +1840,7 @@ function EditScheduleDialog({ schedule, open, onOpenChange }: {
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className="max-w-2xl bg-card border-border">
+            <DialogContent layout="workspace" className="max-w-2xl">
                 <DialogHeader>
                     <DialogTitle className="font-mono tracking-tight flex items-center gap-2">
                         <Pencil className="w-5 h-5 text-primary" />
@@ -1849,15 +1851,15 @@ function EditScheduleDialog({ schedule, open, onOpenChange }: {
                     </DialogDescription>
                 </DialogHeader>
 
-                <div className="space-y-4 max-h-[60vh] overflow-y-auto pr-2">
-                    <div className="grid grid-cols-2 gap-4">
+                <DialogBody>
+                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                         <div className="space-y-1.5">
                             <Label className="text-[10px] uppercase font-bold tracking-widest text-muted-foreground">Название *</Label>
                             <Input
                                 placeholder="Ежечасный health-check"
                                 value={name}
                                 onChange={e => setName(e.target.value)}
-                                className="h-9 bg-black/30 border-border font-mono text-xs"
+                                className="h-9 bg-background border-border font-mono text-xs"
                             />
                         </div>
                         <div className="space-y-1.5">
@@ -1865,7 +1867,7 @@ function EditScheduleDialog({ schedule, open, onOpenChange }: {
                             <Input
                                 value={timezone}
                                 onChange={e => setTimezone(e.target.value)}
-                                className="h-9 bg-black/30 border-border font-mono text-xs"
+                                className="h-9 bg-background border-border font-mono text-xs"
                                 placeholder="UTC"
                             />
                         </div>
@@ -1877,7 +1879,7 @@ function EditScheduleDialog({ schedule, open, onOpenChange }: {
                             placeholder="Описание расписания..."
                             value={description}
                             onChange={e => setDescription(e.target.value)}
-                            className="h-9 bg-black/30 border-border font-mono text-xs"
+                            className="h-9 bg-background border-border font-mono text-xs"
                         />
                     </div>
 
@@ -1910,7 +1912,7 @@ function EditScheduleDialog({ schedule, open, onOpenChange }: {
                                 aria-label="Интервал запуска в секундах"
                                 value={intervalSeconds}
                                 onChange={e => setIntervalSeconds(Number(e.target.value))}
-                                className="h-9 bg-black/30 border-border font-mono text-xs"
+                                className="h-9 bg-background border-border font-mono text-xs"
                                 min={60}
                                 max={86400}
                                 step={1}
@@ -1926,7 +1928,7 @@ function EditScheduleDialog({ schedule, open, onOpenChange }: {
                                 step="0.001"
                                 value={oneShotAt}
                                 onChange={e => { setOneShotAt(e.target.value); setOneShotLoadError(null); }}
-                                className="h-9 bg-black/30 border-border font-mono text-xs"
+                                className="h-9 bg-background border-border font-mono text-xs"
                             />
                             <p className="text-xs text-muted-foreground">Часовой пояс расписания применяется к CRON. Разовый запуск задаётся в UTC; часовой пояс браузера не меняет это время.</p>
                             {oneShotLoadError && <p role="alert" className="text-xs text-destructive">{oneShotLoadError}</p>}
@@ -1934,7 +1936,7 @@ function EditScheduleDialog({ schedule, open, onOpenChange }: {
                     )}
 
                     {/* Цель */}
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                         <div className="space-y-1.5">
                             <Label className="text-[10px] uppercase font-bold tracking-widest text-muted-foreground">Тип цели</Label>
                             <div className="flex gap-2">
@@ -1961,7 +1963,7 @@ function EditScheduleDialog({ schedule, open, onOpenChange }: {
                             <select
                                 value={conflictPolicy}
                                 onChange={e => setConflictPolicy(e.target.value as any)}
-                                className="w-full h-9 rounded-sm border border-border bg-black/30 px-2 text-xs font-mono text-foreground focus:outline-none focus:ring-1 focus:ring-primary/50"
+                                className="w-full h-9 rounded-sm border border-border bg-background px-2 text-xs font-mono text-foreground focus:outline-none focus:ring-1 focus:ring-primary/50"
                             >
                                 <option value="skip">SKIP</option>
                                 <option value="queue">QUEUE</option>
@@ -1982,7 +1984,7 @@ function EditScheduleDialog({ schedule, open, onOpenChange }: {
                             <select
                                 value={scriptId}
                                 onChange={e => setScriptId(e.target.value)}
-                                className="w-full h-9 rounded-sm border border-border bg-black/30 px-2 text-xs font-mono text-foreground focus:outline-none focus:ring-1 focus:ring-primary/50"
+                                className="w-full h-9 rounded-sm border border-border bg-background px-2 text-xs font-mono text-foreground focus:outline-none focus:ring-1 focus:ring-primary/50"
                             >
                                 <option value="">Выбери скрипт...</option>
                                 {scripts.filter(s => !s.is_archived).map(s => (
@@ -1999,7 +2001,7 @@ function EditScheduleDialog({ schedule, open, onOpenChange }: {
                         <Label className="text-[10px] uppercase font-bold tracking-widest text-muted-foreground">Целевые устройства</Label>
                         <DeviceSelector value={targetDeviceIds} onChange={setTargetDeviceIds} />
                     </div>
-                </div>
+                </DialogBody>
 
                 <DialogFooter className="mt-4 pt-4 border-t border-border">
                     <Button variant="outline" onClick={() => onOpenChange(false)} className="font-mono text-xs">
@@ -2086,7 +2088,7 @@ function CreateScheduleDialog({ open, onOpenChange }: { open: boolean; onOpenCha
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className="max-w-2xl bg-card border-border">
+            <DialogContent layout="workspace" className="max-w-2xl">
                 <DialogHeader>
                     <DialogTitle className="font-mono tracking-tight flex items-center gap-2">
                         <CalendarClock className="w-5 h-5 text-primary" />
@@ -2097,15 +2099,15 @@ function CreateScheduleDialog({ open, onOpenChange }: { open: boolean; onOpenCha
                     </DialogDescription>
                 </DialogHeader>
 
-                <div className="space-y-4 max-h-[60vh] overflow-y-auto pr-2">
-                    <div className="grid grid-cols-2 gap-4">
+                <DialogBody>
+                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                         <div className="space-y-1.5">
                             <Label className="text-[10px] uppercase font-bold tracking-widest text-muted-foreground">Название *</Label>
                             <Input
                                 placeholder="Ежечасный health-check"
                                 value={name}
                                 onChange={e => setName(e.target.value)}
-                                className="h-9 bg-black/30 border-border font-mono text-xs"
+                                className="h-9 bg-background border-border font-mono text-xs"
                             />
                         </div>
                         <div className="space-y-1.5">
@@ -2113,7 +2115,7 @@ function CreateScheduleDialog({ open, onOpenChange }: { open: boolean; onOpenCha
                             <Input
                                 value={timezone}
                                 onChange={e => setTimezone(e.target.value)}
-                                className="h-9 bg-black/30 border-border font-mono text-xs"
+                                className="h-9 bg-background border-border font-mono text-xs"
                                 placeholder="UTC"
                             />
                         </div>
@@ -2125,7 +2127,7 @@ function CreateScheduleDialog({ open, onOpenChange }: { open: boolean; onOpenCha
                             placeholder="Описание расписания..."
                             value={description}
                             onChange={e => setDescription(e.target.value)}
-                            className="h-9 bg-black/30 border-border font-mono text-xs"
+                            className="h-9 bg-background border-border font-mono text-xs"
                         />
                     </div>
 
@@ -2158,7 +2160,7 @@ function CreateScheduleDialog({ open, onOpenChange }: { open: boolean; onOpenCha
                                 aria-label="Интервал запуска в секундах"
                                 value={intervalSeconds}
                                 onChange={e => setIntervalSeconds(Number(e.target.value))}
-                                className="h-9 bg-black/30 border-border font-mono text-xs"
+                                className="h-9 bg-background border-border font-mono text-xs"
                                 min={60}
                                 max={86400}
                                 step={1}
@@ -2174,14 +2176,14 @@ function CreateScheduleDialog({ open, onOpenChange }: { open: boolean; onOpenCha
                                 step="0.001"
                                 value={oneShotAt}
                                 onChange={e => setOneShotAt(e.target.value)}
-                                className="h-9 bg-black/30 border-border font-mono text-xs"
+                                className="h-9 bg-background border-border font-mono text-xs"
                             />
                             <p className="text-xs text-muted-foreground">Часовой пояс расписания применяется к CRON. Разовый запуск задаётся в UTC; часовой пояс браузера не меняет это время.</p>
                         </div>
                     )}
 
                     {/* Цель */}
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                         <div className="space-y-1.5">
                             <Label className="text-[10px] uppercase font-bold tracking-widest text-muted-foreground">Тип цели</Label>
                             <div className="flex gap-2">
@@ -2208,7 +2210,7 @@ function CreateScheduleDialog({ open, onOpenChange }: { open: boolean; onOpenCha
                             <select
                                 value={conflictPolicy}
                                 onChange={e => setConflictPolicy(e.target.value as any)}
-                                className="w-full h-9 rounded-sm border border-border bg-black/30 px-2 text-xs font-mono text-foreground focus:outline-none focus:ring-1 focus:ring-primary/50"
+                                className="w-full h-9 rounded-sm border border-border bg-background px-2 text-xs font-mono text-foreground focus:outline-none focus:ring-1 focus:ring-primary/50"
                             >
                                 <option value="skip">SKIP</option>
                                 <option value="queue">QUEUE</option>
@@ -2229,7 +2231,7 @@ function CreateScheduleDialog({ open, onOpenChange }: { open: boolean; onOpenCha
                             <select
                                 value={scriptId}
                                 onChange={e => setScriptId(e.target.value)}
-                                className="w-full h-9 rounded-sm border border-border bg-black/30 px-2 text-xs font-mono text-foreground focus:outline-none focus:ring-1 focus:ring-primary/50"
+                                className="w-full h-9 rounded-sm border border-border bg-background px-2 text-xs font-mono text-foreground focus:outline-none focus:ring-1 focus:ring-primary/50"
                             >
                                 <option value="">Выбери скрипт...</option>
                                 {scripts.filter(s => !s.is_archived).map(s => (
@@ -2247,7 +2249,7 @@ function CreateScheduleDialog({ open, onOpenChange }: { open: boolean; onOpenCha
                         <DeviceSelector value={targetDeviceIds} onChange={setTargetDeviceIds} />
                         {!targetDeviceIds.length && <p role="status" className="text-xs text-muted-foreground">Выберите минимум одно устройство для запуска. Пустой выбор не означает весь парк.</p>}
                     </div>
-                </div>
+                </DialogBody>
 
                 <DialogFooter className="mt-4 pt-4 border-t border-border">
                     <Button variant="outline" onClick={() => onOpenChange(false)} className="font-mono text-xs">

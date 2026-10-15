@@ -101,7 +101,7 @@ export function DeviceInspectorDetail({ deviceId, fullPage = false }: { deviceId
             <Metric label="Заряд" value={reportedNumber(device.battery_level, '%', 100)} />
             <Metric label="Экран Android" value={typeof device.screen_on === 'boolean' ? device.screen_on ? 'Включён' : 'Выключен' : 'Не сообщено'} />
           </dl>
-          <section aria-label="Управление устройством" className="space-y-3 rounded-xl border border-border p-4">
+          <section aria-label="Управление устройством" className="space-y-3 sphere-inset rounded-xl border border-border p-4">
             <h4 className="text-sm font-semibold">Управление устройством</h4>
             <p className="text-xs text-muted-foreground">Статус heartbeat не гарантирует видеокадр или исполнение команды. Результат проверяется отдельно.</p>
             {!canWrite && <p role="status" className="text-xs text-muted-foreground">Роль не разрешает терминал, shell-скрипты и перезагрузку. Просмотр доступен согласно правам API.</p>}
@@ -117,7 +117,7 @@ export function DeviceInspectorDetail({ deviceId, fullPage = false }: { deviceId
             </div>
             {!isReachable && <p className="text-xs text-muted-foreground">Живые команды недоступны при этом состоянии. Сохранённые задачи, события и логи можно проверить во вкладках.</p>}
           </section>
-          <section className="space-y-3 rounded-xl border border-border p-4"><div className="flex flex-wrap items-center justify-between gap-3"><h4 className="text-sm font-semibold">Идентификация и доступ</h4><Button variant="outline" disabled={!canWrite || !isReachable} onClick={() => setView('profile')}>Системный профиль Android</Button></div><dl className="device-inspector-metrics grid grid-cols-1 gap-3 sm:grid-cols-2">
+          <section className="space-y-3 sphere-inset rounded-xl border border-border p-4"><div className="flex flex-wrap items-center justify-between gap-3"><h4 className="text-sm font-semibold">Идентификация и доступ</h4><Button variant="outline" disabled={!canWrite || !isReachable} onClick={() => setView('profile')}>Системный профиль Android</Button></div><dl className="device-inspector-metrics grid grid-cols-1 gap-3 sm:grid-cols-2">
             <Metric label="ID Sphere" value={<span className="break-all font-mono text-xs">{device.id}</span>} />
             <Metric label={device.android_id ? 'Android ID' : 'Серийный идентификатор'} value={<span className="break-all font-mono text-xs">{device.android_id || device.serial || 'Не сообщён'}</span>} />
             <Metric label="ADB (дополнительный канал)" value={typeof device.adb_connected === 'boolean' ? device.adb_connected ? 'Подключён' : 'Не подключён' : 'Не сообщено'} />

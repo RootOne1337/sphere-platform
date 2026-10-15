@@ -5,7 +5,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogBody, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { definitionDraft, definitionFailure, parsePipelineDefinition, presentDefinition, validateDefinitionDraft, verifyDefinitionReceipt,
   type DefinitionDraft, type DefinitionPatch, type PipelineDefinition } from './pipelineDefinition';
 
@@ -25,6 +25,9 @@ export function PipelineDefinitionDialog({ pipelineId, orgId, scope, canManage, 
   const [discard, setDiscard] = useState<'close' | 'reload' | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
+  const feedback = useRef<HTMLParagraphElement>(null);
+  const preview = useRef<HTMLElement>(null);
+  useEffect(() => { if (error) feedback.current?.focus(); else if (confirmation) preview.current?.focus(); }, [error, confirmation]);
   const busy = useRef(false);
   const live = useRef(true);
   const initialized = useRef(false);
@@ -83,14 +86,15 @@ export function PipelineDefinitionDialog({ pipelineId, orgId, scope, canManage, 
   function requestClose() { if (!busy.current) { if (edit) setDiscard('close'); else onClose(); } }
   const data = detail.data;
   return <Dialog open onOpenChange={open => { if (!open) requestClose(); }}>
-    <DialogContent className="sm:max-w-[1100px]" onEscapeKeyDown={event => { if (busy.current || edit) event.preventDefault(); if (edit && !busy.current) setDiscard('close'); }} onPointerDownOutside={event => { if (busy.current || edit) event.preventDefault(); }}>
+    <DialogContent layout="workspace" className="sm:max-w-[1100px]" onEscapeKeyDown={event => { if (busy.current || edit) event.preventDefault(); if (edit && !busy.current) setDiscard('close'); }} onPointerDownOutside={event => { if (busy.current || edit) event.preventDefault(); }}>
       <DialogHeader><DialogTitle>Определение и управление pipeline</DialogTitle><DialogDescription>Состояние из API, параметры и переходы шагов. Изменение требует проверки и подтверждения; просмотр не запускает устройства.</DialogDescription></DialogHeader>
+      <DialogBody>
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="min-w-0"><h2 className="break-words text-lg font-semibold">{data?.name ?? 'Загрузка определения…'}</h2><p className="mt-1 break-all font-mono text-xs text-muted-foreground">ID: {pipelineId}</p></div>
         <Button variant="outline" disabled={pending || detail.isFetching} onClick={() => { void refresh(); }}>Перечитать состояние</Button>
       </div>
       {detail.isError && <p role="alert" className="rounded-lg border border-destructive/30 p-3 text-sm text-destructive">Не удалось получить достоверное определение pipeline. Изменение недоступно; предыдущий снимок не считается текущим.</p>}
-      {error && <p role="alert" className="rounded-lg border border-destructive/30 bg-destructive/5 p-3 text-sm">{error}</p>}
+      {error && <p ref={feedback} tabIndex={-1} role="alert" className="rounded-lg border border-destructive/30 bg-destructive/5 p-3 text-sm">{error}</p>}
       {notice && <p role="status" className="rounded-lg border border-success/30 bg-success/5 p-3 text-sm">{notice}</p>}
       {data && !detail.isError && <>
         <dl className="grid min-w-0 grid-cols-2 gap-3 rounded-lg border bg-muted/30 p-4 text-sm md:grid-cols-4">
@@ -113,13 +117,12 @@ export function PipelineDefinitionDialog({ pipelineId, orgId, scope, canManage, 
           <div className="grid gap-4 md:grid-cols-2">
             <label className="space-y-2 text-sm">Название<Input disabled={pending} value={edit.draft.name} onChange={e => setEdit({ ...edit, draft: { ...edit.draft, name: e.target.value } })} /></label>
             <label className="space-y-2 text-sm">Глобальный таймаут, мс<Input type="number" min={10000} max={259200000} disabled={pending} value={edit.draft.global_timeout_ms} onChange={e => setEdit({ ...edit, draft: { ...edit.draft, global_timeout_ms: e.target.value } })} /></label>
-            {(['description', 'tags', 'input_schema', 'steps'] as const).map(field => <label key={field} className={`min-w-0 space-y-2 text-sm ${field === 'steps' ? 'md:col-span-2' : ''}`}>
-              {{ description: 'Описание (пустое — очистить)', tags: 'Теги JSON', input_schema: 'Входная схема JSON', steps: 'Шаги JSON' }[field]}
-              <textarea className="block w-full resize-y rounded-md border bg-background p-3 font-mono text-xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring" rows={field === 'steps' ? 14 : 4} disabled={pending} value={edit.draft[field]} onChange={e => setEdit({ ...edit, draft: { ...edit.draft, [field]: e.target.value } })} />
-            </label>)}
+            {(['description', 'tags', 'input_schema', 'steps'] as const).map(field => <div key={field} className={`min-w-0 space-y-2 text-sm ${field === 'steps' ? 'md:col-span-2' : ''}`}>
+              <label htmlFor={`definition-${field}`}>{{ description: 'Описание (пустое — очистить)', tags: 'Теги JSON', input_schema: 'Входная схема JSON', steps: 'Шаги JSON' }[field]}</label>
+              <textarea id={`definition-${field}`} className="block w-full resize-y rounded-md border bg-background p-3 font-mono text-xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring" rows={field === 'steps' ? 14 : 4} disabled={pending} value={edit.draft[field]} onChange={e => setEdit({ ...edit, draft: { ...edit.draft, [field]: e.target.value } })} />
+            </div>)}
           </div>
           <p className="text-xs text-muted-foreground">Редактор содержит исходные параметры. Секреты скрыты в обзоре и подтверждении; не вставляйте их в снимки экрана. Проверка графа не заменяет проверку семантики параметров каждого обработчика.</p>
-          <Button disabled={!writable || changedUnderDraft} onClick={prepareEdit}>Проверить изменения</Button>
         </section> : <div className="grid min-w-0 gap-4 lg:grid-cols-[2fr_1fr]">
           <section className="min-w-0 space-y-3"><h3 className="font-semibold">Шаги и переходы</h3>{data.steps.map((step, i) => <details key={i} className="rounded-lg border p-3">
             <summary className="cursor-pointer break-words text-sm">{i + 1}. {String(step.name ?? step.id ?? 'Шаг')} · {String(step.type ?? 'тип неизвестен')}</summary>
@@ -128,14 +131,20 @@ export function PipelineDefinitionDialog({ pipelineId, orgId, scope, canManage, 
           <section className="min-w-0 space-y-3"><h3 className="font-semibold">Описание и входные данные</h3><p className="whitespace-pre-wrap break-words text-sm">{data.description ?? 'Описание не задано'}</p><p className="break-words text-xs">Теги: {data.tags.join(', ') || '—'}</p><pre className="max-h-96 overflow-auto whitespace-pre-wrap break-all rounded-lg border bg-muted/20 p-3 text-xs">{presentDefinition(data.input_schema)}</pre></section>
         </div>}
       </>}
-      {confirmation && <section className="space-y-3 rounded-lg border border-warning/40 bg-warning/5 p-4" aria-label="Подтверждение изменения">
+      {confirmation && <section ref={preview} tabIndex={-1} className="space-y-3 rounded-lg border border-warning/40 bg-warning/5 p-4" aria-label="Подтверждение изменения">
         <h3 className="font-semibold">Проверка перед записью</h3><p className="break-all text-xs">{confirmation.baseline.id} · v{confirmation.baseline.version} · {confirmation.baseline.updated_at}</p>
         <p className="text-sm">{confirmation.kind === 'activation' ? confirmation.patch.is_active ? 'Разрешить новые запуски этого pipeline?' : 'Запретить новые запуски этого pipeline? Действующие задания продолжатся.' : 'Сохранить перечисленные изменения определения? Конфликт отклонит всю запись.'}</p>
         <pre className="max-h-64 overflow-auto whitespace-pre-wrap break-all rounded-lg border bg-background p-3 text-xs">{presentDefinition(confirmation.patch)}</pre>
         {!confirmationValid && <p role="alert" className="text-sm text-warning">Состояние изменилось или ещё проверяется. Перечитайте данные и подтвердите заново.</p>}
-        <div className="flex flex-wrap gap-2"><Button disabled={!confirmationValid} onClick={() => { void submit(); }}>{pending ? 'Сохраняем…' : 'Подтвердить запись'}</Button><Button variant="outline" disabled={pending} onClick={() => setConfirmation(null)}>Отменить подтверждение</Button></div>
       </section>}
-      {discard && <section className="space-y-3 rounded-lg border border-warning/40 p-4"><p>Отбросить несохранённый черновик?</p><div className="flex gap-2"><Button disabled={pending} onClick={() => { const action = discard; setDiscard(null); setEdit(null); setConfirmation(null); if (action === 'close') onClose(); else void refresh(); }}>Да, отбросить</Button><Button variant="outline" onClick={() => setDiscard(null)}>Сохранить черновик</Button></div></section>}
+      </DialogBody>
+      <DialogFooter>
+        {discard ? <div className="w-full space-y-3" role="group" aria-label="Несохранённый черновик"><p className="text-sm">Отбросить несохранённый черновик?</p><div className="flex flex-wrap gap-2"><Button disabled={pending} onClick={() => { const action = discard; setDiscard(null); setEdit(null); setConfirmation(null); if (action === 'close') onClose(); else void refresh(); }}>Да, отбросить</Button><Button variant="outline" onClick={() => setDiscard(null)}>Оставить черновик</Button></div></div> : <>
+          <Button variant="outline" disabled={pending} onClick={requestClose}>Закрыть окно</Button>
+          {confirmation ? <><Button variant="outline" disabled={pending} onClick={() => setConfirmation(null)}>Отменить подтверждение</Button><Button disabled={!confirmationValid} onClick={() => { void submit(); }}>{pending ? 'Сохраняем…' : 'Подтвердить запись'}</Button></>
+            : edit && <Button disabled={!writable || changedUnderDraft} onClick={prepareEdit}>Проверить изменения</Button>}
+        </>}
+      </DialogFooter>
     </DialogContent>
   </Dialog>;
 }

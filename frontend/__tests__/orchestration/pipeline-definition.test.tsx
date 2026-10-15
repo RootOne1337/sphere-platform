@@ -101,7 +101,7 @@ it('requires explicit discard before closing an unsaved draft', async () => {
   const { dialog, onClose } = await open(); editName(dialog);
   fireEvent.click(within(dialog).getByRole('button', { name: 'Закрыть' }));
   expect(onClose).not.toHaveBeenCalled();
-  fireEvent.click(within(dialog).getByRole('button', { name: 'Сохранить черновик' }));
+  fireEvent.click(within(dialog).getByRole('button', { name: 'Оставить черновик' }));
   expect(within(dialog).getByLabelText('Название')).toHaveValue('Edited pipeline');
   fireEvent.click(within(dialog).getByRole('button', { name: 'Закрыть' }));
   fireEvent.click(within(dialog).getByRole('button', { name: 'Да, отбросить' }));

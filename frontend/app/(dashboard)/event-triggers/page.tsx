@@ -9,6 +9,7 @@ import { Label } from '@/components/ui/label';
 import {
   Dialog,
   DialogContent,
+  DialogBody,
   DialogHeader,
   DialogTitle,
   DialogDescription,
@@ -447,24 +448,24 @@ function TriggerFormDialog({ open, onClose, pipelines, mode, trigger }: TriggerF
 
   return (
     <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
-      <DialogContent className="max-w-lg">
+      <DialogContent layout="workspace" className="max-w-xl">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2 font-mono text-sm uppercase tracking-widest">
+          <DialogTitle className="flex items-center gap-2 text-lg font-semibold">
             <Zap className="w-4 h-4 text-primary" />
-            {mode === 'create' ? 'Создать Event Trigger' : 'Редактировать Trigger'}
+            {mode === 'create' ? 'Создать триггер события' : 'Редактировать триггер'}
           </DialogTitle>
           <DialogDescription className="text-xs font-mono">
-            Триггер автоматически запускает Pipeline при наступлении события.
+            Триггер автоматически запускает сценарий при наступлении события.
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-4 pt-2">
+        <DialogBody>
           {/* Имя */}
           <div className="space-y-1">
-            <Label className="text-[10px] uppercase tracking-widest font-mono font-bold text-muted-foreground">
+            <Label htmlFor="trigger-name" className="text-sm font-medium">
               Имя *
             </Label>
-            <Input
+            <Input id="trigger-name"
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="Бан → Ротация аккаунта"
@@ -474,10 +475,10 @@ function TriggerFormDialog({ open, onClose, pipelines, mode, trigger }: TriggerF
 
           {/* Описание */}
           <div className="space-y-1">
-            <Label className="text-[10px] uppercase tracking-widest font-mono font-bold text-muted-foreground">
+            <Label htmlFor="trigger-description" className="text-sm font-medium">
               Описание
             </Label>
-            <Input
+            <Input id="trigger-description"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               placeholder="Авто-ротация аккаунта при бане"
@@ -487,10 +488,10 @@ function TriggerFormDialog({ open, onClose, pipelines, mode, trigger }: TriggerF
 
           {/* Паттерн */}
           <div className="space-y-1">
-            <Label className="text-[10px] uppercase tracking-widest font-mono font-bold text-muted-foreground">
-              Event Type Pattern (Glob) *
+            <Label htmlFor="trigger-pattern" className="text-sm font-medium">
+              Шаблон события (glob) *
             </Label>
-            <Input
+            <Input id="trigger-pattern"
               value={pattern}
               onChange={(e) => setPattern(e.target.value)}
               placeholder="account.banned"
@@ -498,30 +499,32 @@ function TriggerFormDialog({ open, onClose, pipelines, mode, trigger }: TriggerF
             />
             <div className="flex flex-wrap gap-1 mt-1">
               {PATTERN_EXAMPLES.map(p => (
-                <Badge
+                <Button
                   key={p}
+                  type="button"
+                  size="sm"
                   variant="outline"
-                  className="text-[9px] cursor-pointer hover:bg-primary/10 hover:border-primary/50"
+                  className="font-mono text-xs"
                   onClick={() => setPattern(p)}
                 >
                   {p}
-                </Badge>
+                </Button>
               ))}
             </div>
           </div>
 
           {/* Pipeline */}
           <div className="space-y-1">
-            <Label className="text-[10px] uppercase tracking-widest font-mono font-bold text-muted-foreground">
-              Pipeline для запуска *
+            <Label htmlFor="trigger-pipeline" className="text-sm font-medium">
+              Сценарий для запуска *
             </Label>
             <Select value={pipelineId} onValueChange={setPipelineId}>
-              <SelectTrigger className="text-xs font-mono">
-                <SelectValue placeholder="Выберите pipeline..." />
+              <SelectTrigger id="trigger-pipeline" className="text-xs font-mono">
+                <SelectValue placeholder="Выберите сценарий…" />
               </SelectTrigger>
               <SelectContent>
                 {pipelines.length === 0 && (
-                  <SelectItem value="__none__" disabled>Нет доступных pipelines</SelectItem>
+                  <SelectItem value="__none__" disabled>Нет доступных сценариев</SelectItem>
                 )}
                 {pipelines.map(p => (
                   <SelectItem key={p.id} value={p.id}>
@@ -537,12 +540,12 @@ function TriggerFormDialog({ open, onClose, pipelines, mode, trigger }: TriggerF
           </div>
 
           {/* Cooldown + Rate limit */}
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <div className="space-y-1">
-              <Label className="text-[10px] uppercase tracking-widest font-mono font-bold text-muted-foreground">
-                Cooldown (сек)
+              <Label htmlFor="trigger-cooldown" className="text-sm font-medium">
+                Пауза между запусками, сек
               </Label>
-              <Input
+              <Input id="trigger-cooldown"
                 type="number"
                 min={0}
                 value={cooldown}
@@ -551,10 +554,10 @@ function TriggerFormDialog({ open, onClose, pipelines, mode, trigger }: TriggerF
               />
             </div>
             <div className="space-y-1">
-              <Label className="text-[10px] uppercase tracking-widest font-mono font-bold text-muted-foreground">
+              <Label htmlFor="trigger-limit" className="text-sm font-medium">
                 Макс. в час (0 = ∞)
               </Label>
-              <Input
+              <Input id="trigger-limit"
                 type="number"
                 min={0}
                 value={maxPerHour}
@@ -566,10 +569,10 @@ function TriggerFormDialog({ open, onClose, pipelines, mode, trigger }: TriggerF
 
           {/* JSON Template */}
           <div className="space-y-1">
-            <Label className="text-[10px] uppercase tracking-widest font-mono font-bold text-muted-foreground">
+            <Label htmlFor="trigger-params" className="text-sm font-medium">
               Шаблон параметров (JSON)
             </Label>
-            <textarea
+            <textarea id="trigger-params"
               value={paramsJson}
               onChange={(e) => setParamsJson(e.target.value)}
               rows={4}
@@ -580,7 +583,7 @@ function TriggerFormDialog({ open, onClose, pipelines, mode, trigger }: TriggerF
               Плейсхолдеры: {'{device_id}'}, {'{account_id}'}, {'{event_type}'}, {'{event_id}'}
             </p>
           </div>
-        </div>
+        </DialogBody>
 
         <DialogFooter>
           <Button variant="outline" onClick={onClose} disabled={isSubmitting}>

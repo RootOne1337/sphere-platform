@@ -60,16 +60,35 @@ html {
 .appearance-sample { background-color: hsl(var(--background)); }
 @supports (backdrop-filter: blur(1px)) {
   [data-surface="glass"] .sphere-chrome, [data-surface="glass"] .sphere-material {
-    background: linear-gradient(135deg, hsl(var(--card) / .16), transparent 65%), hsl(var(--card) / var(--glass-opacity, .82));
-    backdrop-filter: blur(var(--glass-blur, 20px)) saturate(1.25);
-    -webkit-backdrop-filter: blur(var(--glass-blur, 20px)) saturate(1.25);
-    box-shadow: inset 0 1px 0 hsl(var(--foreground) / .06), 0 8px 32px hsl(var(--foreground) / .035);
+    background:
+      linear-gradient(145deg, rgb(255 255 255 / var(--glass-highlight, .17)), transparent 42%),
+      radial-gradient(ellipse at 0% 0%, hsl(var(--primary) / var(--glass-tint-opacity, .10)), transparent 65%),
+      radial-gradient(ellipse at 100% 100%, hsl(var(--surface-tint) / var(--glass-tint-opacity, .10)), transparent 70%),
+      hsl(var(--card) / var(--glass-opacity, .66));
+    backdrop-filter: blur(var(--glass-blur, 24px)) saturate(1.45);
+    -webkit-backdrop-filter: blur(var(--glass-blur, 24px)) saturate(1.45);
+    border-color: hsl(var(--primary) / .22);
+    box-shadow: inset 0 1px 0 rgb(255 255 255 / var(--glass-highlight, .17)), inset 1px 0 0 rgb(255 255 255 / .07), inset 0 -1px 0 hsl(var(--primary) / .12), 0 12px 40px rgb(0 0 0 / .12);
+  }
+  /* The window owns the blur. A second full-screen blur flattens its backdrop. */
+  [data-surface="glass"] .sphere-dialog-overlay { background: hsl(var(--background) / .24); backdrop-filter: none; -webkit-backdrop-filter: none; }
+  [data-surface="glass"] .sphere-dialog { box-shadow: inset 0 1px 0 rgb(255 255 255 / var(--glass-highlight, .17)), inset 1px 0 0 rgb(255 255 255 / .08), 0 24px 80px rgb(0 0 0 / .28); }
+  [data-surface="glass"] :is(.sphere-material, .sphere-chrome) .text-muted-foreground { color: hsl(var(--foreground) / .76); }
+  .dark[data-surface="glass"] :is(.sphere-material, .sphere-chrome) .text-muted-foreground { color: hsl(var(--foreground) / .94); }
+  /* Inset panels share the tint without stacking expensive backdrop filters. */
+  [data-surface="glass"] .sphere-material .sphere-inset,
+  [data-surface="glass"] .sphere-dialog[data-layout="workspace"] [data-dialog-footer] {
+    background: hsl(var(--card) / .58); border-color: hsl(var(--primary) / .15);
+    box-shadow: inset 0 1px 0 rgb(255 255 255 / .045);
   }
 }
 [data-surface="solid"] .sphere-material { box-shadow: 0 12px 40px hsl(var(--foreground) / .08); }
 @media (prefers-reduced-transparency: reduce) {
   [data-surface="glass"] .sphere-chrome, [data-surface="glass"] .sphere-material { background: hsl(var(--card)); backdrop-filter: none; -webkit-backdrop-filter: none; }
   [data-surface="glass"] .sphere-workspace, [data-surface="glass"] .appearance-sample { background-image: none; }
+  [data-surface="glass"] .sphere-material .sphere-inset { background: hsl(var(--card)); }
+  [data-surface="glass"] .sphere-dialog-overlay { background: hsl(var(--background) / .5); backdrop-filter: none; -webkit-backdrop-filter: none; }
+  [data-surface="glass"] .sphere-dialog[data-layout="workspace"] [data-dialog-footer] { background: hsl(var(--card)); }
 }
 
 /* Shared, short motion; geometry/stream counters never animate on polling. */
@@ -85,6 +104,26 @@ html {
 .sphere-dialog[data-placement="right"][data-state="closed"] { animation-name: sphere-panel-exit; }
 .sphere-dialog-overlay[data-state="open"] { animation: sphere-overlay-enter 160ms ease-out both; }
 .sphere-dialog-overlay[data-state="closed"] { animation: sphere-overlay-exit 130ms ease-in both; }
+.sphere-dialog[data-layout="workspace"] {
+  display: flex; flex-direction: column; gap: 0; padding: 0; overflow: hidden;
+  top: calc(var(--dialog-viewport-top, 0px) + var(--dialog-viewport-height, 100dvh) / 2);
+  max-height: calc(var(--dialog-viewport-height, 100dvh) - 2rem);
+}
+.sphere-dialog[data-layout="workspace"] > [data-dialog-header] { flex: none; padding: 1.25rem 3.25rem 1rem 1.5rem; border-bottom: 1px solid hsl(var(--border)); }
+.sphere-dialog-body { display: flex; min-width: 0; min-height: 0; flex: 1 1 auto; flex-direction: column; gap: 1rem; overflow-y: auto; overscroll-behavior: contain; padding: 1.25rem 1.5rem; scroll-padding-block: 1rem; }
+.sphere-dialog-body > * { flex-shrink: 0; }
+.sphere-dialog-form { display: flex; flex: 1 1 auto; min-height: 0; min-width: 0; flex-direction: column; overflow: hidden; }
+.sphere-dialog[data-layout="workspace"] [data-dialog-footer] { flex: none; margin: 0; padding: 1rem 1.5rem; border-top: 1px solid hsl(var(--border)); background: hsl(var(--card)); }
+.sphere-dialog[data-layout="workspace"] [data-dialog-footer] button { white-space: normal; height: auto; min-height: var(--control-height); overflow-wrap: anywhere; }
+.sphere-dialog[data-layout="workspace"] [data-dialog-body] :is(input, textarea, select) { scroll-margin-block: 1rem; }
+@media (max-width: 639px) {
+  .sphere-dialog[data-layout="workspace"] { left: 0; top: var(--dialog-viewport-top, 0px); transform: none; width: 100%; max-width: none; max-height: var(--dialog-viewport-height, 100dvh); border-radius: 0; }
+  .sphere-dialog[data-layout="workspace"] > [data-dialog-header] { padding: max(1rem, env(safe-area-inset-top)) 3.25rem 1rem max(1rem, env(safe-area-inset-left)); }
+  .sphere-dialog-body { padding: 1rem max(1rem, env(safe-area-inset-right)) 1rem max(1rem, env(safe-area-inset-left)); }
+  .sphere-dialog[data-layout="workspace"] [data-dialog-footer] { flex-direction: row; flex-wrap: wrap; padding: .75rem max(1rem, env(safe-area-inset-right)) max(.75rem, env(safe-area-inset-bottom)) max(1rem, env(safe-area-inset-left)); }
+  .sphere-dialog[data-layout="workspace"] [data-dialog-footer] > button { flex: 1 1 8rem; }
+  .sphere-dialog[data-layout="workspace"] [data-dialog-body] :is(input, textarea, select) { font-size: max(1rem, 16px); }
+}
 .sphere-tab-panel[data-state="active"] { animation: workspace-route-enter 140ms ease-out; }
 [data-ui="button"] { transition-property: background-color, border-color, color, box-shadow; transition-duration: 150ms; }
 html[data-motion="reduced"] *, html[data-motion="reduced"] *::before, html[data-motion="reduced"] *::after {

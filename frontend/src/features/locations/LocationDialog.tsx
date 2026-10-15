@@ -6,7 +6,7 @@ import { api } from '@/lib/api';
 import type { Location } from '@/lib/hooks/useLocations';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogBody, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { emptyLocationDraft, locationDraft, locationFailure, locationPath, parentChoices, parseLocation, validateLocationDraft, verifyLocationReceipt, type LocationDraft } from './locationContract';
 import { PermissionNotice } from '@/src/features/access/Capabilities';
 
@@ -20,6 +20,8 @@ export function LocationDialog({ id, mode, orgId, scope, catalog, catalogFresh, 
   const [pending, setPending] = useState(false); const [blocked, setBlocked] = useState(false);
   const [error, setError] = useState<string | null>(null); const [notice, setNotice] = useState<string | null>(null);
   const [discard, setDiscard] = useState<'close' | 'reload' | null>(null);
+  const feedback = useRef<HTMLParagraphElement>(null);
+  useEffect(() => { if (error) feedback.current?.focus(); }, [error]);
   const detail = useQuery({ queryKey: ['location-detail', scope, id], enabled: Boolean(id), retry: false, staleTime: 0,
     refetchInterval: 15000, refetchIntervalInBackground: false,
     queryFn: async ({ signal }) => parseLocation((await api.get('/locations/' + id, { signal })).data, orgId, id) });
@@ -73,19 +75,19 @@ export function LocationDialog({ id, mode, orgId, scope, catalog, catalogFresh, 
   const set = (field: keyof LocationDraft, value: string) => { setDraft(v => ({ ...v, [field]: value })); setNotice(null); };
   const choices = parentChoices(catalog, id);
   return <Dialog open onOpenChange={open => { if (!open) close(); }}>
-    <DialogContent className="sm:max-w-2xl" onEscapeKeyDown={event => { if (busy.current || dirty) event.preventDefault(); if (dirty && !busy.current) setDiscard('close'); }} onPointerDownOutside={event => { if (busy.current || dirty) event.preventDefault(); }}>
+    <DialogContent layout="workspace" className="sm:max-w-2xl" onEscapeKeyDown={event => { if (busy.current || dirty) event.preventDefault(); if (dirty && !busy.current) setDiscard('close'); }} onPointerDownOutside={event => { if (busy.current || dirty) event.preventDefault(); }}>
       <DialogHeader><DialogTitle>{title}</DialogTitle><DialogDescription>Ручные координаты и иерархия организации. Счётчики относятся к прямым назначениям устройств; геолокация автоматически не определяется.</DialogDescription></DialogHeader>
+      <DialogBody>
       <PermissionNotice permission={mode === 'delete' ? 'device:delete' : 'device:write'} action={mode === 'delete' ? 'удаление локации' : mode === 'create' ? 'создание локации' : 'изменение локации'} />
       <div className="flex flex-wrap items-center justify-between gap-2"><p className="break-all font-mono text-xs text-muted-foreground">{id ?? 'Новая локация'}</p><Button variant="outline" disabled={pending || detail.isFetching} onClick={() => { if (dirty) setDiscard('reload'); else void refresh(); }}>Перечитать состояние</Button></div>
       {id && !baseline && !detail.isError && <p role="status">Загрузка локации…</p>}
       {detail.isError && <p role="alert">Не удалось получить достоверную карточку локации. Изменения заблокированы.</p>}
       {stale && <p role="alert" className="rounded-lg border border-warning/40 p-3 text-sm">Состояние изменилось на сервере. Черновик сохранён; перечитайте состояние перед записью.</p>}
-      {error && <p role="alert" className="rounded-lg border border-destructive/30 bg-destructive/5 p-3 text-sm">{error}</p>}
+      {error && <p ref={feedback} tabIndex={-1} role="alert" className="rounded-lg border border-destructive/30 bg-destructive/5 p-3 text-sm">{error}</p>}
       {notice && <p role="status" className="rounded-lg border border-success/30 bg-success/5 p-3 text-sm">{notice}</p>}
       {mode === 'delete' ? baseline && <section className="space-y-3 rounded-lg border border-destructive/30 p-4" aria-label="Подтверждение удаления">
         <p className="break-words font-semibold">Удалить «{baseline.name}»?</p><p className="text-sm">Локация и её прямые назначения ({baseline.total_devices} устройств) будут удалены. Устройства сохранятся. Дочерние локации станут корневыми; их назначения сохранятся.</p>
         <p className="break-words text-sm">Дочерние локации: {catalog.filter(v => v.parent_location_id === id).map(v => v.name).join(', ') || 'нет'}.</p>
-        <Button variant="destructive" disabled={!writable} onClick={() => { void submit(); }}>{pending ? 'Удаляем…' : 'Подтвердить удаление'}</Button>
       </section> : (!id || baseline) && <>
         <fieldset disabled={pending || !canWrite} className="grid min-w-0 gap-4 sm:grid-cols-2">
           <label className="space-y-2 text-sm sm:col-span-2">Название<Input value={draft.name} maxLength={255} autoComplete="off" onChange={e => set('name', e.target.value)} /></label>
@@ -101,9 +103,15 @@ export function LocationDialog({ id, mode, orgId, scope, catalog, catalogFresh, 
           <label className="space-y-2 text-sm">Цвет (#RRGGBB)<Input value={draft.color} maxLength={7} placeholder="Не задан" onChange={e => set('color', e.target.value)} /></label>
           {baseline && <p className="self-center break-words text-xs text-muted-foreground">Прямые назначения: {baseline.total_devices} · online по сохранённому статусу: {baseline.online_devices}</p>}
         </fieldset>
-        <Button disabled={!writable || !draft.name.trim()} onClick={() => { void submit(); }}>{pending ? 'Сохраняем…' : mode === 'create' ? 'Создать локацию' : 'Сохранить изменения'}</Button>
       </>}
-      {discard && <section className="space-y-3 rounded-lg border border-warning/40 p-4"><p>Отбросить несохранённый черновик?</p><div className="flex flex-wrap gap-2"><Button disabled={pending} onClick={() => { const action = discard; setDiscard(null); if (action === 'close') onClose(); else void refresh(); }}>Да, отбросить</Button><Button variant="outline" onClick={() => setDiscard(null)}>Оставить черновик</Button></div></section>}
+      </DialogBody>
+      <DialogFooter>
+        {discard ? <div className="w-full space-y-3" role="group" aria-label="Несохранённый черновик"><p className="text-sm">Отбросить несохранённый черновик?</p><div className="flex flex-wrap gap-2"><Button disabled={pending} onClick={() => { const action = discard; setDiscard(null); if (action === 'close') onClose(); else void refresh(); }}>Да, отбросить</Button><Button variant="outline" onClick={() => setDiscard(null)}>Оставить черновик</Button></div></div> : <>
+          <Button variant="outline" disabled={pending} onClick={close}>Закрыть окно</Button>
+          {mode === 'delete' ? baseline && <Button variant="destructive" disabled={!writable} onClick={() => { void submit(); }}>{pending ? 'Удаляем…' : 'Подтвердить удаление'}</Button>
+            : <Button disabled={!writable || !draft.name.trim()} onClick={() => { void submit(); }}>{pending ? 'Сохраняем…' : mode === 'create' ? 'Создать локацию' : 'Сохранить изменения'}</Button>}
+        </>}
+      </DialogFooter>
     </DialogContent>
   </Dialog>;
 }
