@@ -288,9 +288,18 @@ html[data-motion="reduced"] *, html[data-motion="reduced"] *::before, html[data-
 .sphere-fleet-grid .sphere-fleet-select { padding-inline: 0; }
 .sphere-fleet-grid .sphere-fleet-select .ag-header-cell-comp-wrapper { width: 100%; }
 .sphere-fleet-grid .ag-header-cell-resize:hover::after { background: hsl(var(--primary)); }
-.sphere-fleet-grid .ag-root-wrapper { border-radius: 0; }
+.sphere-fleet-grid .ag-root-wrapper { border-radius: 0; flex: 1 1 auto; min-height: 240px; }
 
 .stream-wall-tile { container-type: inline-size; }
 .stream-wall-placeholder { padding: .75rem; text-align: center; }
 @container (max-width: 220px) { .stream-wall-placeholder .stream-wall-help { display: none; } .stream-wall-placeholder { padding: .375rem; gap: .25rem; } .stream-wall-placeholder svg { width: 18px; height: 18px; } }
 .stream-wall-tile .stream-wall-stage .stream-compact-status { position: absolute; inset: .375rem .375rem auto; z-index: 10; border: 1px solid rgb(255 255 255 / .12); border-radius: .375rem; background: rgb(0 0 0 / .7); color: #fff; padding: .25rem .375rem; font-size: 10px; }
+
+/* Stream tools are overlays, never layout rows or Android gesture interceptors. */
+.stream-tool-button { display:flex; width:44px; height:44px; align-items:center; justify-content:center; border-radius:.75rem; color:#fff; background:transparent; flex-shrink:0; }
+.stream-tool-button:hover { background:rgb(255 255 255 / .12); }
+.stream-tool-button:focus-visible { outline:2px solid white; outline-offset:-2px; }
+.stream-tool-button:disabled { opacity:.4; }
+
+body:has([data-stream-fullscreen="true"]) .mobile-menu-handle,
+body:has([role="dialog"][data-state="open"]) .mobile-menu-handle { display:none; }

@@ -2,6 +2,8 @@ import { act, fireEvent, render, screen } from '@testing-library/react';
 import { useRef } from 'react';
 import { useStreamFullscreen } from '@/src/features/stream/useStreamFullscreen';
 import { StreamControlsTray } from '@/src/features/stream/StreamControlsTray';
+import { StreamOverlayToolbar } from '@/src/features/stream/StreamOverlayToolbar';
+import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 
 let owner: Element | null, request: jest.Mock, exit: jest.Mock;
 function Harness() {
@@ -115,4 +117,22 @@ test('changing presentation keeps the same controls and regular mode stays visib
   view.rerender(<Tray />);
   fireEvent.click(screen.getByRole('button', { name: 'Показать панель Android' }));
   expect(screen.getByRole('button', { name: 'Домой' })).toBe(home);
+});
+
+test('compact tools stay mounted and are revealed explicitly without consuming canvas input', () => {
+  function Tools() { const viewport=useRef<HTMLDivElement>(null);return <div ref={viewport}><StreamOverlayToolbar viewport={viewport}><button>Качество</button></StreamOverlayToolbar></div>; }
+  render(<Tools />);
+  const quality=screen.getByRole('button',{name:'Качество',hidden:true});
+  expect(screen.queryByRole('button',{name:'Качество'})).not.toBeInTheDocument();
+  fireEvent.click(screen.getByRole('button',{name:'Показать инструменты стрима'}));
+  expect(screen.getByRole('button',{name:'Качество'})).toBe(quality);
+  fireEvent.click(screen.getByRole('button',{name:'Скрыть инструменты стрима'}));
+  expect(screen.queryByRole('button',{name:'Качество'})).not.toBeInTheDocument();
+});
+
+test('quality and other dialogs are portaled into the fullscreen owner', async () => {
+  const surface=document.createElement('div');document.body.append(surface);owner=surface;
+  const view=render(<Dialog open><DialogContent aria-describedby={undefined}><DialogTitle>Качество</DialogTitle></DialogContent></Dialog>);
+  expect(surface).toContainElement(await screen.findByRole('dialog'));
+  view.unmount();surface.remove();owner=null;
 });

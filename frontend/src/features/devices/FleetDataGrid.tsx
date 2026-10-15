@@ -146,7 +146,7 @@ export function FleetDataGrid({ table, preferences, rowHeight, clockNow }: Fleet
     // A fresh context value updates the checkbox without rebuilding every grid
     // header (which would steal keyboard focus during selection or heartbeat).
     const headerContext = useMemo(() => ({ table }), [table, table.options.data, table.getState().rowSelection]);
-    return <GridHeaderContext.Provider value={headerContext}><section className="flex min-h-[20rem] min-w-0 flex-1 flex-col overflow-hidden rounded-xl border border-border bg-card" aria-label="Таблица устройств">
+    return <GridHeaderContext.Provider value={headerContext}><section className="flex h-[min(65dvh,38rem)] min-h-[20rem] min-w-0 flex-1 flex-col sm:h-auto overflow-hidden rounded-xl border border-border bg-card" aria-label="Таблица устройств">
         <div className="flex shrink-0 flex-wrap items-center justify-between gap-2 border-b border-border px-3 py-2">
             <p className="text-xs text-muted-foreground"><span className="font-medium text-foreground">{table.options.data.length}</span> устройств на странице</p>
             <div className="flex flex-wrap gap-1">
@@ -155,7 +155,7 @@ export function FleetDataGrid({ table, preferences, rowHeight, clockNow }: Fleet
             </div>
         </div>
         <div ref={root} className="sphere-fleet-grid min-h-0 min-w-0 flex-1" style={{ minHeight: 240 }}>
-            <AgGridReact<Device> modules={modules} theme={fleetTheme} loadThemeGoogleFonts={false} rowData={table.options.data} columnDefs={columnDefs}
+            <AgGridReact<Device> containerStyle={{ height: '100%', minHeight: 240, display: 'flex', flexDirection: 'column' }} modules={modules} theme={fleetTheme} loadThemeGoogleFonts={false} rowData={table.options.data} columnDefs={columnDefs}
                 defaultColDef={defaultColumn}
                 getRowId={params => params.data.id} rowHeight={rowHeight} headerHeight={44} rowBuffer={12}
                 onGridReady={onReady} onGridPreDestroyed={() => { api.current = null; }}

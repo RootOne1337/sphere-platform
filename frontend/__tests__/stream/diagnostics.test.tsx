@@ -74,6 +74,7 @@ afterEach(() => { jest.restoreAllMocks(); jest.useRealTimers(); });
 it('shows agent and browser stages only when operator opens diagnostics', async () => {
   render(<DeviceStream deviceId="device-1" enableDiagnostics />);
   act(() => jest.advanceTimersByTime(0));
+  if (screen.queryByRole('button', { name: 'Показать инструменты стрима' })) fireEvent.click(screen.getByRole('button', { name: 'Показать инструменты стрима' }));
   fireEvent.click(screen.getByRole('button', { name: 'Диагностика' }));
 
   expect(await screen.findByText(/Отчёт APK: захват активен/)).toBeInTheDocument();
@@ -101,6 +102,7 @@ it('keeps raw capture skips unknown for an older agent instead of displaying zer
   } });
   render(<DeviceStream deviceId="device-old" enableDiagnostics />);
   act(() => jest.advanceTimersByTime(0));
+  if (screen.queryByRole('button', { name: 'Показать инструменты стрима' })) fireEvent.click(screen.getByRole('button', { name: 'Показать инструменты стрима' }));
   fireEvent.click(screen.getByRole('button', { name: 'Диагностика' }));
   expect(await screen.findByText('Raw capture FPS skips: —')).toBeInTheDocument();
   expect(screen.getByText('Encoded FPS drops: 50')).toBeInTheDocument();
@@ -109,6 +111,7 @@ it('keeps raw capture skips unknown for an older agent instead of displaying zer
 it('does not show a previous device snapshot while the new device request is pending', async () => {
   const view = render(<DeviceStream deviceId="device-first" enableDiagnostics />);
   act(() => jest.advanceTimersByTime(0));
+  if (screen.queryByRole('button', { name: 'Показать инструменты стрима' })) fireEvent.click(screen.getByRole('button', { name: 'Показать инструменты стрима' }));
   fireEvent.click(screen.getByRole('button', { name: 'Диагностика' }));
   expect(await screen.findByText('Capture FPS: 15')).toBeInTheDocument();
   (api.get as jest.Mock).mockImplementation(() => new Promise(() => {}));
@@ -122,6 +125,7 @@ it('does not start overlapping polls when the previous diagnostics request has n
   (api.get as jest.Mock).mockImplementation(() => new Promise(() => {}));
   render(<DeviceStream deviceId="device-slow" enableDiagnostics />);
   act(() => jest.advanceTimersByTime(0));
+  if (screen.queryByRole('button', { name: 'Показать инструменты стрима' })) fireEvent.click(screen.getByRole('button', { name: 'Показать инструменты стрима' }));
   fireEvent.click(screen.getByRole('button', { name: 'Диагностика' }));
   act(() => jest.advanceTimersByTime(45_000));
   expect(api.get).toHaveBeenCalledTimes(1);
@@ -131,6 +135,7 @@ it('closes the separate diagnostics region and retires its pending poll without 
   (api.get as jest.Mock).mockImplementation(() => new Promise(() => {}));
   render(<DeviceStream deviceId="device-close-report" enableDiagnostics />);
   act(() => jest.advanceTimersByTime(0));
+  if (screen.queryByRole('button', { name: 'Показать инструменты стрима' })) fireEvent.click(screen.getByRole('button', { name: 'Показать инструменты стрима' }));
   fireEvent.click(screen.getByRole('button', { name: 'Диагностика' }));
   const signal = (api.get as jest.Mock).mock.calls[0][1].signal as AbortSignal;
   expect(screen.getByRole('region', { name: 'Диагностика стрима и управления' })).toBeInTheDocument();
@@ -145,6 +150,7 @@ it('closes the separate diagnostics region and retires its pending poll without 
 it('ages the received APK snapshot between HTTP polls instead of freezing its freshness', async () => {
   render(<DeviceStream deviceId="device-aging" enableDiagnostics />);
   act(() => jest.advanceTimersByTime(0));
+  if (screen.queryByRole('button', { name: 'Показать инструменты стрима' })) fireEvent.click(screen.getByRole('button', { name: 'Показать инструменты стрима' }));
   fireEvent.click(screen.getByRole('button', { name: 'Диагностика' }));
   await act(async () => {});
   expect(screen.getByText(/snapshot 4 сек назад/)).toBeInTheDocument();
@@ -156,6 +162,7 @@ it('ages the received APK snapshot between HTTP polls instead of freezing its fr
 it('invalidates the APK report and aborts its poll when the authentication session changes', async () => {
   const view = render(<DeviceStream deviceId="device-session" enableDiagnostics />);
   act(() => jest.advanceTimersByTime(0));
+  if (screen.queryByRole('button', { name: 'Показать инструменты стрима' })) fireEvent.click(screen.getByRole('button', { name: 'Показать инструменты стрима' }));
   fireEvent.click(screen.getByRole('button', { name: 'Диагностика' }));
   await act(async () => {});
   expect(screen.getByText('Capture FPS: 15')).toBeInTheDocument();
@@ -173,6 +180,7 @@ it('ignores a late old-device response even when the transport does not honor ab
   (api.get as jest.Mock).mockImplementationOnce(() => new Promise((resolve) => { resolveOld = resolve; }));
   const view = render(<DeviceStream deviceId="device-old-pending" enableDiagnostics />);
   act(() => jest.advanceTimersByTime(0));
+  if (screen.queryByRole('button', { name: 'Показать инструменты стрима' })) fireEvent.click(screen.getByRole('button', { name: 'Показать инструменты стрима' }));
   fireEvent.click(screen.getByRole('button', { name: 'Диагностика' }));
   view.rerender(<DeviceStream deviceId="device-current" enableDiagnostics />);
   await act(async () => {});
@@ -186,6 +194,7 @@ it('ignores a late old-device response even when the transport does not honor ab
 it('retries a failed poll and replaces the failure message with the next successful report', async () => {
   render(<DeviceStream deviceId="device-retry" enableDiagnostics />);
   act(() => jest.advanceTimersByTime(0));
+  if (screen.queryByRole('button', { name: 'Показать инструменты стрима' })) fireEvent.click(screen.getByRole('button', { name: 'Показать инструменты стрима' }));
   fireEvent.click(screen.getByRole('button', { name: 'Диагностика' }));
   await act(async () => {});
   (api.get as jest.Mock).mockRejectedValueOnce(new Error('fixture transport failure'));
@@ -221,7 +230,8 @@ it('allowing control on a static picture does not relabel a stale PNG export as 
   socket.readyState = Socket.OPEN;
   act(() => socket.onopen?.());
   act(() => mockFrameCallback?.({ displayWidth: 960, displayHeight: 540 } as VideoFrame));
-  const button = screen.getByRole('button', { name: 'Кадр видео (PNG) · не оригинал' });
+  fireEvent.click(screen.getByRole('button', { name: 'Показать инструменты стрима' }));
+  const button = screen.getByRole('button', { name: 'Сохранить кадр видео (PNG)' });
   expect(button).toBeEnabled();
   act(() => jest.advanceTimersByTime(10_000));
   expect(container.querySelector('canvas')).toHaveAttribute('aria-disabled', 'false');
@@ -265,7 +275,8 @@ it('exports only a freshly rendered canvas frame and sends no screenshot API com
   const download = jest.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(() => {});
   render(<DeviceStream deviceId="device-png" enableScreenshot />);
   act(() => jest.advanceTimersByTime(0));
-  const button = screen.getByRole('button', { name: 'Кадр видео (PNG) · не оригинал' });
+  fireEvent.click(screen.getByRole('button', { name: 'Показать инструменты стрима' }));
+  const button = screen.getByRole('button', { name: 'Сохранить кадр видео (PNG)' });
   expect(button).toBeDisabled();
   const socket = Socket.instances[0]; socket.readyState = Socket.OPEN;
   act(() => socket.onopen?.());
@@ -287,6 +298,7 @@ it('does not claim a rendered picture when drawing the decoder output fails', ()
   const socket = Socket.instances[0]; socket.readyState = Socket.OPEN;
   act(() => socket.onopen?.());
   expect(() => act(() => mockFrameCallback?.({ displayWidth: 1920, displayHeight: 1080 } as VideoFrame))).toThrow('canvas failure');
-  expect(screen.getByRole('button', { name: 'Кадр видео (PNG) · не оригинал' })).toBeDisabled();
+  fireEvent.click(screen.getByRole('button', { name: 'Показать инструменты стрима' }));
+  expect(screen.getByRole('button', { name: 'Сохранить кадр видео (PNG)' })).toBeDisabled();
   expect(screen.getByText('Ожидание видеокадра…')).toBeInTheDocument();
 });

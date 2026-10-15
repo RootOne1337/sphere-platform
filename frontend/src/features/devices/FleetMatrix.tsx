@@ -68,15 +68,9 @@ export function FleetMatrix({ data, isLoading, rowSelection, onRowSelectionChang
     const selectionId = React.useId();
     const density = useThemeStore(state => state.density);
     const fontSize = useUIStore(state => state.fontSize);
-    const [isNarrow, setIsNarrow] = React.useState<boolean | null>(null);
-    React.useEffect(() => {
-        if (typeof window.matchMedia !== 'function') { setIsNarrow(false); return; }
-        const media = window.matchMedia('(max-width: 639px)');
-        const reconcile = () => setIsNarrow(media.matches);
-        reconcile(); media.addEventListener('change', reconcile);
-        return () => media.removeEventListener('change', reconcile);
-    }, []);
-    const cardLayout = presentation === 'cards' || isNarrow;
+    // Honour the explicit presentation on every screen. Narrow table users can
+    // scroll columns; choosing cards must remain a separate, predictable action.
+    const cardLayout = presentation === 'cards';
     const rowHeight = Math.ceil(({ compact: 60, cozy: 72, spacious: 88 }[density]) * ({ sm: .875, base: 1, lg: 1.125 }[fontSize]));
     const preferences = useFleetTablePreferences();
     const { columnVisibility, setColumnVisibility, sorting, setSorting } = preferences;
@@ -422,7 +416,6 @@ export function FleetMatrix({ data, isLoading, rowSelection, onRowSelectionChang
         </section>
     );
 
-    if (isNarrow === null) return <div role="status" className="flex min-h-64 flex-1 items-center justify-center text-sm text-muted-foreground">Подготавливаем список…</div>;
     return <FleetDataGrid table={table} preferences={preferences} rowHeight={rowHeight} clockNow={clockNow} />;
 }
 

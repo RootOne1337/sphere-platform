@@ -6,12 +6,12 @@ import { api } from '@/lib/api';
 import { useAuthStore } from '@/lib/store';
 import { parseStreamQuality, qualityDraft, type StreamQualitySettings, type StreamQualitySnapshot } from './streamQuality';
 
-export function StreamQualityControl({ deviceId, readOnly }: { deviceId: string; readOnly: boolean }) {
+export function StreamQualityControl({ deviceId, readOnly, compact = false }: { deviceId: string; readOnly: boolean; compact?: boolean }) {
   const version = useAuthStore(state => state.sessionVersion);
-  return <QualityPanel key={`${deviceId}:${version}`} deviceId={deviceId} readOnly={readOnly} />;
+  return <QualityPanel key={`${deviceId}:${version}`} deviceId={deviceId} readOnly={readOnly} compact={compact} />;
 }
 
-function QualityPanel({ deviceId, readOnly }: { deviceId: string; readOnly: boolean }) {
+function QualityPanel({ deviceId, readOnly, compact = false }: { deviceId: string; readOnly: boolean; compact?: boolean }) {
   const [open, setOpen] = useState(false);
   const [snapshot, setSnapshot] = useState<StreamQualitySnapshot | null>(null);
   const [profile, setProfile] = useState<StreamQualitySettings['profile']>('auto');
@@ -67,8 +67,8 @@ function QualityPanel({ deviceId, readOnly }: { deviceId: string; readOnly: bool
   const active = snapshot?.active;
   return <Dialog open={open} onOpenChange={setOpen}>
     <DialogTrigger asChild><button type="button" aria-label="Качество видеопотока"
-      className="inline-flex items-center gap-1.5 rounded border border-white/20 bg-black/80 px-2 py-1 text-xs text-white">
-      <SlidersHorizontal className="h-3.5 w-3.5" aria-hidden="true" />Качество
+      title="Качество видеопотока" className={compact ? 'stream-tool-button' : 'inline-flex items-center gap-1.5 rounded border border-white/20 bg-black/80 px-2 py-1 text-xs text-white'}>
+      <SlidersHorizontal className="h-3.5 w-3.5" aria-hidden="true" />{!compact && 'Качество'}
     </button></DialogTrigger>
     <DialogContent className="max-h-[90dvh] max-w-lg overflow-y-auto rounded-2xl">
       <DialogHeader><DialogTitle>Качество видеопотока</DialogTitle>

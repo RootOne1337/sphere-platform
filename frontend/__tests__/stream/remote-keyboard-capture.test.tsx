@@ -12,11 +12,11 @@ function fixture(editor=true) {
   const disable=jest.fn(async()=>{state.enabled=false;});
   const controller={state:'ready',supportsKeyboard:true,keyboardState:state,keyboard,keyboardMode:mode,disableKeyboard:disable} as unknown as ContinuousPointer;
   const view=render(<RemoteKeyboardCapture controller={()=>controller} available viewport={ref}/>);
-  fireEvent.click(view.getByRole('button',{name:'Ввод с клавиатуры'}));
+
   const input=view.getByLabelText('Ввод на Android');
   const before=(data:string)=>input.dispatchEvent(new InputEvent('beforeinput',{bubbles:true,cancelable:true,inputType:'insertText',data}));
   const cleanup=()=>{view.unmount();viewport.remove();act(()=>jest.runOnlyPendingTimers());};
-  return {view,input,before,state,keyboard,mode,disable,cleanup};
+  return {view,input,before,state,keyboard,mode,disable,cleanup,viewport};
 }
 beforeEach(()=>jest.useFakeTimers());afterEach(()=>jest.useRealTimers());
 test('focused editor Unicode is submitted exactly once and never also sent as a physical key',async()=>{
@@ -49,4 +49,22 @@ test('typing elsewhere in the browser is not captured and unready typing is expl
   f.state.enabled=false;act(()=>f.before('lost?'));await act(async()=>{});
   expect(f.keyboard).not.toHaveBeenCalled();expect(f.view.getByRole('alert')).toHaveTextContent('не отправлен');
   f.cleanup();expect(jest.getTimerCount()).toBe(0);
+});
+
+test('hardware mode is automatic; a touch on a game never requests a soft keyboard',()=>{
+  const f=fixture(false);const canvas=document.createElement('canvas');f.viewport.append(canvas);
+  const pointer=new MouseEvent('pointerup',{bubbles:true});Object.defineProperty(pointer,'pointerType',{value:'touch'});
+  act(()=>canvas.dispatchEvent(pointer));
+  expect(f.mode).toHaveBeenCalledWith(true);expect(f.input).toHaveAttribute('inputmode','none');expect(f.input).toHaveFocus();
+  expect(f.view.queryByRole('button',{name:'Открыть экранную клавиатуру'})).not.toBeInTheDocument();
+  f.cleanup();
+});
+
+test('soft keyboard action is offered only for an Android editor and remains outside hidden trays',()=>{
+  const f=fixture();act(()=>jest.advanceTimersByTime(100));
+  fireEvent.click(f.view.getByRole('button',{name:'Открыть экранную клавиатуру'}));
+  expect(f.input).toHaveAttribute('inputmode','text');expect(f.input.parentElement).toBe(f.viewport);
+  f.state.editorActive=false;act(()=>jest.advanceTimersByTime(100));
+  expect(f.view.queryByRole('button',{name:'Открыть экранную клавиатуру'})).not.toBeInTheDocument();
+  f.cleanup();
 });

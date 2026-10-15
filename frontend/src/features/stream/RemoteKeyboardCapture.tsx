@@ -1,5 +1,6 @@
 'use client';
 import { useEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { Keyboard } from 'lucide-react';
 import type { ContinuousPointer } from './continuousPointer';
 import { androidPhysicalKey, validRemoteText, type RemoteKeyboardCommand } from './remoteKeyboardProtocol';
@@ -10,14 +11,17 @@ export function RemoteKeyboardCapture({ controller, available, viewport }: {
 }) {
   const callbacks = useRef({ controller, available }); callbacks.current = { controller, available };
   const textarea = useRef<HTMLTextAreaElement>(null);
-  const [wanted, setWanted] = useState(false), [ready, setReady] = useState(false);
+  const [host, setHost] = useState<HTMLElement | null>(null);
+  useEffect(() => { setHost(viewport.current); }, [viewport]);
+  const [wanted, setWanted] = useState(true), [ready, setReady] = useState(false), [editorActive, setEditorActive] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const wantedRef = useRef(false);
+  const wantedRef = useRef(true);
   const cleanupRef = useRef<() => void>(() => {});
   useEffect(() => {
     const input = textarea.current;
     if (!input) return;
-    let current: ContinuousPointer | null = null, composing = false, lastCompositionInsert: string | null = null, disposed = false;
+    let current: ContinuousPointer | null = null, requested: ContinuousPointer | null = null, composing = false, lastCompositionInsert: string | null = null, disposed = false;
+    let touch = false, recentTouch = 0, wasEditor = false;
     const held = new Map<string, number>();
     const errors = { not_sent:'Ввод не отправлен: канал управления ещё не готов.', unknown:'Результат ввода не подтверждён. Проверьте поле перед следующим вводом.',
       no_editor:'Выберите поле ввода на Android.', stale_editor:'Поле ввода изменилось. Повторите ввод в выбранном поле.',
@@ -36,21 +40,39 @@ export function RemoteKeyboardCapture({ controller, available, viewport }: {
       held.clear(); composing = false; lastCompositionInsert = null; input.value = '';
     };
     cleanupRef.current = release;
-    const focus = () => {
-      if (wantedRef.current && callbacks.current.available && current?.keyboardState.enabled) input.focus({ preventScroll:true });
+    const focus = (soft = false) => {
+      if (!wantedRef.current || !callbacks.current.available || !current?.keyboardState.enabled) return;
+      // A touch on the game/video is not a request for the phone's soft keyboard.
+      input.inputMode = soft && current.keyboardState.editorActive ? 'text' : 'none';
+      input.focus({ preventScroll:true });
     };
     const pointer = (event: PointerEvent) => {
       const target = event.target;
-      if (target instanceof Element && !target.closest('button,input,textarea,select,a,summary')) focus();
+      if (target instanceof Element && !target.closest('button,input,textarea,select,a,summary,[role="dialog"]') && target.closest('canvas')) {
+        touch = event.pointerType === 'touch' || event.pointerType === 'pen';
+        if (touch) recentTouch = Date.now();
+        focus(touch);
+      }
     };
     const tick = () => {
       const next = callbacks.current.available ? callbacks.current.controller() : null;
       if (next !== current) {
-        release(); current = next; setReady(false);
-        if (wantedRef.current && current?.state === 'ready' && current.supportsKeyboard) current.keyboardMode(true);
+        release(); current = next; requested = null; setReady(false);
+      }
+      if (wantedRef.current && current?.state === 'ready' && current.supportsKeyboard && requested !== current) {
+        if (current.keyboardMode(true)) requested = current;
       }
       const enabled = !!current?.keyboardState.enabled && current.state === 'ready';
       setReady(enabled);
+      const editor = enabled && !!current?.keyboardState.editorActive;
+      setEditorActive(editor);
+      if (!editor && touch) input.inputMode = 'none';
+      // Android reports the focused editor after the click ACK. Chrome can then
+      // show its IME; browsers requiring a fresh user activation use the explicit icon.
+      if (editor && !wasEditor && touch && Date.now() - recentTouch < 1500 && document.activeElement === input) {
+        input.blur(); focus(true);
+      }
+      wasEditor = editor;
       if (wantedRef.current && current?.keyboardState.reason === 'unavailable') setError(errors.unavailable);
     };
     const meta = (event: KeyboardEvent) => (event.shiftKey ? 1:0) | (event.altKey ? 2:0) | (event.ctrlKey ? 4096:0)
@@ -116,7 +138,7 @@ export function RemoteKeyboardCapture({ controller, available, viewport }: {
     input.addEventListener('paste',paste); input.addEventListener('compositionstart',compositionStart);
     input.addEventListener('compositionupdate',compositionUpdate); input.addEventListener('compositionend',compositionEnd);
     input.addEventListener('blur',release); document.addEventListener('visibilitychange',hidden); window.addEventListener('blur',release);
-    const surface = viewport.current; surface?.addEventListener('pointerdown',pointer);
+    const surface = viewport.current; surface?.addEventListener('pointerup',pointer);
     const timer = setInterval(tick,100); tick();
     return () => {
       disposed = true;
@@ -125,9 +147,9 @@ export function RemoteKeyboardCapture({ controller, available, viewport }: {
       input.removeEventListener('paste',paste); input.removeEventListener('compositionstart',compositionStart);
       input.removeEventListener('compositionupdate',compositionUpdate); input.removeEventListener('compositionend',compositionEnd);
       input.removeEventListener('blur',release); document.removeEventListener('visibilitychange',hidden); window.removeEventListener('blur',release);
-      surface?.removeEventListener('pointerdown',pointer);
+      surface?.removeEventListener('pointerup',pointer);
     };
-  }, [viewport]);
+  }, [viewport, host]);
   const toggle = () => {
     const next = !wantedRef.current; wantedRef.current = next; setWanted(next); setError(null);
     if (!next) cleanupRef.current();
@@ -135,16 +157,20 @@ export function RemoteKeyboardCapture({ controller, available, viewport }: {
     if (next) {
       if (!c?.keyboardMode(true)) setError('Клавиатура доступна после подключения прямого управления и обновления APK.');
     } else void c?.disableKeyboard();
-    if (next) textarea.current?.focus({ preventScroll:true });
+    if (next && textarea.current) { textarea.current.inputMode = 'none'; textarea.current.focus({ preventScroll:true }); }
   };
   return <div className="min-w-0 space-y-1">
-    <button type="button" aria-pressed={wanted} disabled={!available} onClick={toggle}
+    <div className="flex flex-wrap gap-1"><button type="button" aria-label={wanted ? 'Отключить аппаратную клавиатуру' : 'Включить аппаратную клавиатуру'} aria-pressed={wanted} disabled={!available} onClick={toggle}
       className="flex min-h-11 items-center gap-2 rounded-lg border border-border bg-background/90 px-3 py-2 text-xs hover:bg-muted disabled:opacity-50">
-      <Keyboard className="h-4 w-4" aria-hidden />{wanted ? ready ? 'Клавиатура включена' : 'Подключаем клавиатуру…' : 'Ввод с клавиатуры'}
+      <Keyboard className="h-4 w-4" aria-hidden /><span>{wanted ? ready ? 'Клавиатура' : 'Подключаем клавиатуру…' : 'Клавиатура выключена'}</span>
     </button>
-    <textarea ref={textarea} aria-label="Ввод на Android" autoComplete="off" autoCorrect="off" spellCheck={false}
-      tabIndex={wanted ? 0:-1} onInput={event => { if (!(event.nativeEvent as InputEvent).isComposing) event.currentTarget.value = ''; }}
-      className="absolute h-px w-px resize-none overflow-hidden opacity-0" />
+    {wanted && ready && editorActive && <button type="button" aria-label="Открыть экранную клавиатуру" title="Поле Android готово к вводу"
+      className="flex min-h-11 items-center gap-2 rounded-lg border border-border bg-background/90 px-3 py-2 text-xs hover:bg-muted"
+      onClick={() => { const input = textarea.current; if (input) { input.inputMode = 'text'; input.focus({ preventScroll:true }); } }}><Keyboard className="h-4 w-4" aria-hidden />Печатать</button>}
+    </div>
+    {host && createPortal(<textarea ref={textarea} aria-label="Ввод на Android" inputMode="none" autoComplete="off" autoCorrect="off" spellCheck={false}
+      tabIndex={-1} onInput={event => { if (!(event.nativeEvent as InputEvent).isComposing) event.currentTarget.value = ''; }}
+      className="absolute left-0 top-0 h-px w-px resize-none overflow-hidden opacity-0" />, host)}
     {error && <p role="alert" className="max-w-md text-xs text-amber-600 dark:text-amber-300">{error}</p>}
   </div>;
 }

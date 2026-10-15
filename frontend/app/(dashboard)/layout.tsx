@@ -5,6 +5,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import { Suspense, useEffect, useRef, useState } from 'react';
 import { ArrowLeft, ChevronRight, Menu, Moon, Search, Sun } from 'lucide-react';
 import { useFleetEvents } from '@/lib/hooks/useFleetEvents';
+import { MobileMenuHandle } from '@/src/features/navigation/MobileMenuHandle';
 import { NOCSidebar } from '@/src/features/navigation/NOCSidebar';
 import { ContextInspector } from '@/src/features/inspector/ContextInspector';
 import { GlobalCommandPalette } from '@/src/features/navigation/GlobalCommandPalette';
@@ -90,6 +91,7 @@ function DashboardShell({ children }: { children: React.ReactNode }) {
         isMobileOpen={isMobileSidebarOpen}
         onMobileClose={() => setIsMobileSidebarOpen(false)}
       />
+      {!isMobileSidebarOpen && <MobileMenuHandle onOpen={() => setIsMobileSidebarOpen(true)} />}
 
       <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
         <header className="sphere-chrome z-30 flex h-16 shrink-0 items-center justify-between gap-1 border-b border-border px-2 sm:gap-4 sm:px-5 lg:px-6 [@media(max-height:500px)]:h-12">

@@ -7,7 +7,15 @@ import { cn } from '@/lib/utils';
 
 const Dialog = DialogPrimitive.Root;
 const DialogTrigger = DialogPrimitive.Trigger;
-const DialogPortal = DialogPrimitive.Portal;
+function DialogPortal({ container, ...props }: React.ComponentPropsWithoutRef<typeof DialogPrimitive.Portal>) {
+  const [fullscreen, setFullscreen] = React.useState<HTMLElement | undefined>();
+  React.useEffect(() => {
+    const sync = () => setFullscreen(document.fullscreenElement instanceof HTMLElement ? document.fullscreenElement : undefined);
+    sync(); document.addEventListener('fullscreenchange', sync);
+    return () => document.removeEventListener('fullscreenchange', sync);
+  }, []);
+  return <DialogPrimitive.Portal container={container ?? fullscreen} {...props} />;
+}
 const DialogClose = DialogPrimitive.Close;
 
 const DialogOverlay = React.forwardRef<

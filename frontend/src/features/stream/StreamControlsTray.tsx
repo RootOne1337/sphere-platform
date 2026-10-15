@@ -42,7 +42,7 @@ export function StreamControlsTray({ viewport, overlay, children }: {
       {children}
     </div>
     {overlay && <button type="button" aria-label={pinned ? 'Скрыть панель Android' : 'Показать панель Android'}
-      aria-expanded={shown} aria-pressed={pinned} onClick={() => setPinned(value => !value)}
+      aria-expanded={shown} aria-pressed={pinned} onClick={() => { setPinned(value => !value); setHovered(false); setFocused(false); }}
       className="pointer-events-auto absolute bottom-0 right-0 flex h-11 w-11 items-center justify-center rounded-xl border border-white/20 bg-zinc-950/70 text-white shadow-lg backdrop-blur hover:bg-zinc-800/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white">
       {pinned ? <ChevronDown className="h-5 w-5" aria-hidden /> : <Ellipsis className="h-5 w-5" aria-hidden />}
     </button>}

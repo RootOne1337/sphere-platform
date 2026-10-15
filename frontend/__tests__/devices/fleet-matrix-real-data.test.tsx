@@ -16,6 +16,19 @@ jest.mock('@/src/features/inspector/inspectorStore', () => ({
 beforeEach(() => window.localStorage.clear());
 afterEach(() => jest.useRealTimers());
 
+it('honours the selected table on a narrow viewport instead of silently replacing it with cards', () => {
+  const original = window.matchMedia;
+  window.matchMedia = jest.fn(() => ({ matches: true, addEventListener: jest.fn(), removeEventListener: jest.fn() })) as never;
+  try {
+    const props = { data: [device], isLoading: false, rowSelection: {}, onRowSelectionChange: jest.fn() };
+    const view = render(<FleetMatrix {...props} presentation="table" />);
+    expect(screen.getByRole('region', { name: 'Таблица устройств' })).toBeInTheDocument();
+    expect(screen.queryByRole('region', { name: 'Карточки устройств' })).not.toBeInTheDocument();
+    view.rerender(<FleetMatrix {...props} presentation="cards" />);
+    expect(screen.getByRole('region', { name: 'Карточки устройств' })).toBeInTheDocument();
+  } finally { window.matchMedia = original; }
+});
+
 const device = {
   id: 'device-1',
   name: 'PH006',

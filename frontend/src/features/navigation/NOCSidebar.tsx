@@ -32,6 +32,7 @@ export function NOCSidebar({ onOpenAppearance, isMobileOpen = false, onMobileClo
     const [focusWithin, setFocusWithin] = useState(false);
     const hoverTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
     const returnFocusRef = useRef<HTMLElement | null>(null);
+    const swipe = useRef<{ x: number; y: number; id: number } | null>(null);
     const sidebarMode = useUIStore((state) => state.sidebarMode);
     const setSidebarMode = useUIStore((state) => state.setSidebarMode);
     const clearHoverTimer = () => { if (hoverTimer.current !== null) clearTimeout(hoverTimer.current); hoverTimer.current = null; };
@@ -67,6 +68,9 @@ export function NOCSidebar({ onOpenAppearance, isMobileOpen = false, onMobileClo
                 aria-label="Боковая панель Sphere"
                 data-sidebar-mode={sidebarMode}
                 data-expanded={showLabels}
+                onPointerDown={event => { if (!isDesktop && event.isPrimary && event.pointerType === 'touch' && event.target instanceof Element && !event.target.closest('button,input,textarea,select,a')) swipe.current = { x: event.clientX, y: event.clientY, id: event.pointerId }; }}
+                onPointerCancel={() => { swipe.current = null; }}
+                onPointerUp={event => { const start = swipe.current; swipe.current = null; if (start && event.pointerId === start.id && start.x - event.clientX > 72 && Math.abs(start.y - event.clientY) < 40) onMobileClose?.(); }}
                 onPointerEnter={(event) => {
                     if (!isDesktop || sidebarMode !== 'auto' || event.pointerType !== 'mouse' || !window.matchMedia('(hover: hover) and (pointer: fine)').matches) return;
                     clearHoverTimer();

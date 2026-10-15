@@ -995,6 +995,7 @@ it('shows the finite failed heartbeat snapshot after RELEASE and clears it on a 
   const view = readyContinuous();
   view.rerender(<DeviceStream deviceId="gesture-remote" enableNavigation enableStaticInput enableDiagnostics />);
   for (let i = 0; i < 7; i++) act(() => jest.advanceTimersByTime(250));
+  fireEvent.click(view.getByRole('button', { name: 'Показать инструменты стрима' }));
   fireEvent.click(view.getByRole('button', { name: 'Диагностика' }));
   expect(view.getByText(/Видео и управление идут через сервер/)).toBeInTheDocument();
   expect(view.getByText(/Последний сбой управления · native_receipt_timeout/)).toBeInTheDocument();
@@ -1059,6 +1060,7 @@ it('normal inspection release does not replace a diagnostic failure with a mode-
   view.rerender(<DeviceStream deviceId="gesture-remote" enableNavigation enableStaticInput enableDiagnostics
     inspection={{ onPick: jest.fn(), bounds: null }} />);
   view.status(0, 3, 'release');
+  fireEvent.click(view.getByRole('button', { name: 'Показать инструменты стрима' }));
   fireEvent.click(view.getByRole('button', { name: 'Диагностика' }));
   expect(view.queryByText(/Последний сбой управления/)).not.toBeInTheDocument();
   view.unmount();
