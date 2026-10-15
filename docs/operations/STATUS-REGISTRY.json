@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "reviewedAtUtc": "2026-10-15T00:40:25.912592+00:00",
+  "reviewedAtUtc": "2026-10-15T01:04:45.792438+00:00",
   "sourceReviewed": "cde2f094f1b6404be359c48d391d30f39f8adbdc",
   "scope": "UIcde2f094/API969 installed on3015/Tuna. Fleet and appearance first wave accepted in finite UI scope; original transport/APK76 evidence and open limits retained. APK77 not installed. UI implementation authorized; heartbeat remains paused.",
   "baseline": "docs/audits/2026-10-05/ENTERPRISE-PRODUCT-BACKLOG.json",
@@ -5014,8 +5014,8 @@
     ]
   },
   "developmentState": {
-    "state": "UI_REFINEMENT_DELIVERED",
-    "recordedAtUtc": "2026-10-15T00:40:25.912592+00:00",
+    "state": "UI_MATERIAL_REFINEMENT_ACTIVE",
+    "recordedAtUtc": "2026-10-15T01:04:45.792438+00:00",
     "reason": "User explicitly resumed implementation of web redesign and requested ready-made resizable/reorderable fleet table.",
     "guide": "docs/audits/2026-10-15/STREAM-CONTROL-FREEZE.md",
     "automationId": "enterprise",
@@ -5025,7 +5025,7 @@
     "preparedNextVersion": "1.2.77",
     "preparedNextVersionInstalled": false,
     "scope": "Web UI refinement authorized. Stable stream/control baseline retained; APK77 not installed. Scheduled enterprise heartbeat remains paused.",
-    "latestUserWork": "UI first wave installed on3015/Tuna after exact-source CI. Finite fleet, appearance and stream smoke verified. Remaining audit findings tracked separately; heartbeat remains paused."
+    "latestUserWork": "Material and inspector refinement requested by user, source implemented and locally tested; exact CI and web-only rollout pending. Heartbeat remains paused."
   },
   "visualAudit": {
     "state": "AUDIT_AND_DESIGN_PREPARED_NOT_IMPLEMENTED",
@@ -5058,5 +5058,12 @@
     "allAuditFindingsClosed": false,
     "sourceRevision": "cde2f094f1b6404be359c48d391d30f39f8adbdc",
     "sourceValidation": "docs/audits/2026-10-15/UI-REFINEMENT-OBSERVATION.json"
+  },
+  "materialRefinement": {
+    "state": "SOURCE_VALIDATED_NOT_INSTALLED",
+    "guide": "docs/audits/2026-10-15/MATERIALS-INSPECTOR-DELIVERY.md",
+    "evidence": "docs/audits/2026-10-15/MATERIALS-INSPECTOR-OBSERVATION.json",
+    "evidenceSha256NormalizedLf": "d33fd4f811ecf3790a28c346c135daa1185caaadb5488de27ed9b4bcc574d854",
+    "scope": "Real matte/glass, recommended looks, eight palettes, modal inspector, shared motion and non-overlapping video wall. UI-only delivery pending."
   }
 }

@@ -16,7 +16,7 @@ function contrast(a: string, b: string) { const x = luminance(a); const y = lumi
 beforeEach(() => {
   localStorage.clear(); document.documentElement.removeAttribute('style'); document.documentElement.className = '';
   useThemeStore.setState({ theme: 'neo-dark', density: 'cozy' });
-  useUIStore.setState({ accentColor: 'theme', fontSize: 'base', sidebarMode: 'auto', surfaceStyle: 'glass' });
+  useUIStore.setState({ accentColor: 'theme', fontSize: 'base', sidebarMode: 'auto', surfaceStyle: 'glass', glassStrength: 'balanced', motionMode: 'system' });
 });
 
 it.each(Object.keys(THEMES) as ThemeType[])('%s keeps ordinary semantic text readable for every selectable accent', theme => {
@@ -68,4 +68,23 @@ it('rejects corrupt persisted settings without replacing store actions', async (
   expect(useUIStore.getState().fontSize).toBe('base');
   expect(useUIStore.getState().sidebarMode).toBe('auto');
   expect(typeof useUIStore.getState().setAccentColor).toBe('function');
+});
+
+it('preserves material intensity and motion before paint, after hydration and from saved version1 settings', async () => {
+  localStorage.setItem('sphere-ui-preferences', JSON.stringify({ state: { surfaceStyle: 'glass', glassStrength: 'vivid', motionMode: 'reduced', inspectorMode: 'drawer', accentColor: 'amber' }, version: 1 }));
+  localStorage.setItem('sphere-theme-preferences', JSON.stringify({ state: { theme: 'sandstone', density: 'compact' } }));
+  new Function(themeBootstrapScript)();
+  const before = document.documentElement.style.cssText;
+  await useUIStore.persist.rehydrate();
+  applyTheme(document.documentElement, 'sandstone', 'compact', useUIStore.getState());
+  expect(document.documentElement.style.cssText).toBe(before);
+  expect(document.documentElement.dataset.motion).toBe('reduced');
+  expect(useUIStore.getState().inspectorMode).toBe('drawer');
+  expect(document.documentElement.style.getPropertyValue('--glass-opacity')).toBe('.72');
+});
+
+it('rejects untrusted material and motion values while retaining known old preferences', async () => {
+  localStorage.setItem('sphere-ui-preferences', JSON.stringify({ state: { surfaceStyle: 'solid', glassStrength: '__proto__', motionMode: 'fast', inspectorMode: 'evil', accentColor: 'blue' }, version: 1 }));
+  await useUIStore.persist.rehydrate();
+  expect(useUIStore.getState()).toMatchObject({ surfaceStyle: 'solid', glassStrength: 'balanced', motionMode: 'system', inspectorMode: 'modal', accentColor: 'blue' });
 });

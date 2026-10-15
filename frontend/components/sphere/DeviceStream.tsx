@@ -47,6 +47,8 @@ interface DeviceStreamProps {
   /** A unique launch attempt locks input and waits for this viewer's known native RELEASE. */
   taskHandoffId?: number;
   onTaskHandoffState?: (state: TaskControlHandoffState, id: number) => void;
+  /** Compact, non-wrapping video-wall chrome; transport and input are unchanged. */
+  compact?: boolean;
   enableDiagnostics?: boolean;
   /** Diagnostic export of a decoded, potentially lossy H.264 frame, never an Android screenshot. */
   enableScreenshot?: boolean;
@@ -139,6 +141,7 @@ export function DeviceStream({
   onRecordingControlReady,
   taskHandoffId,
   onTaskHandoffState,
+  compact = false,
   enableDiagnostics = false,
   enableScreenshot = false,
   enableNavigation = false,
@@ -1435,7 +1438,7 @@ export function DeviceStream({
         : fit ? 'flex h-full w-full min-h-0 min-w-0 flex-col' : 'min-w-0'}>
     {fullscreen.error && <p role="status" className="shrink-0 bg-card px-3 py-2 text-xs text-foreground">{fullscreen.error}</p>}
     {readOnly && enableNavigation && <p role="status" className="border-b border-border bg-muted px-3 py-2 text-xs text-muted-foreground">Только просмотр · {readOnlyReason ?? 'роль не разрешает клики, жесты и навигацию Android.'}</p>}
-    <StreamStatusLine direct={directVideo.active} directInput={directVideo.active && controlTransport === 'direct_webrtc'
+    <StreamStatusLine compact={compact} direct={directVideo.active} directInput={directVideo.active && controlTransport === 'direct_webrtc'
       && continuousState === 'ready' && !continuousFault && !idleRecovering}
       live={connection === 'live' && !streamError}
       rtt={directVideo.active ? directVideo.result?.videoStats?.networkRttMs ?? null : serverRttMs}

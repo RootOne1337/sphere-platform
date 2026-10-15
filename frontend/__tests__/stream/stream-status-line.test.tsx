@@ -26,3 +26,10 @@ test('server RTT is labelled as the server segment without borrowing the Android
   expect(screen.getByLabelText('Сводка видеопотока')).toHaveTextContent('RTT сервера 250 мс');
   expect(screen.getByTitle(/не RTT до APK, не ACK/)).toBeInTheDocument();
 });
+
+test('video wall chrome stays concise and keeps full measured details available', () => {
+  render(<StreamStatusLine {...healthy} compact />);
+  expect(screen.getByLabelText('Сводка видеопотока')).toHaveTextContent('Напрямую1.5 мс');
+  expect(screen.getByTitle(/Прямой канал · 960 × 540 · 60 FPS · 12.3 Мбит/)).toBeInTheDocument();
+  expect(screen.getByTitle(/не задержка изображения/)).toBeInTheDocument();
+});

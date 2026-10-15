@@ -12,7 +12,7 @@ import { AppearanceDrawer } from '@/src/features/preferences/AppearanceDrawer';
 import { useCommandPaletteStore } from '@/src/features/navigation/commandPaletteStore';
 import { useUIStore } from '@/src/shared/store/useUIStore';
 import { useThemeStore } from '@/src/shared/store/themeStore';
-import { isLightTheme } from '@/src/shared/theme';
+import { isLightTheme, OPPOSITE_THEME } from '@/src/shared/theme';
 import { SphereMark } from '@/src/shared/ui/SphereMark';
 import { Button } from '@/src/shared/ui/button';
 import { BuildProvenance } from '@/src/shared/ui/BuildProvenance';
@@ -74,13 +74,13 @@ function DashboardShell({ children }: { children: React.ReactNode }) {
   const isLight = isLightTheme(theme);
 
   const toggleTheme = () => {
-    const nextTheme = isLight ? 'neo-dark' : 'light-corporate';
+    const nextTheme = OPPOSITE_THEME[theme];
     setTheme(nextTheme);
     setUiTheme(isLight ? 'dark' : 'light');
   };
 
   return (
-    <div className="relative flex h-dvh min-h-0 overflow-hidden bg-background text-foreground">
+    <div className="sphere-workspace relative flex h-dvh min-h-0 overflow-hidden bg-background text-foreground">
       <a href="#main-content" className="sr-only z-[200] rounded-md bg-card p-3 text-foreground focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:ring-2 focus:ring-ring">
         Перейти к содержимому
       </a>
@@ -156,7 +156,7 @@ function DashboardShell({ children }: { children: React.ReactNode }) {
           </div>
         </header>
 
-        <main ref={mainRef} id="main-content" tabIndex={-1} className="custom-scrollbar min-h-0 flex-1 overflow-y-auto overscroll-contain bg-background focus:outline-none">
+        <main ref={mainRef} id="main-content" tabIndex={-1} className="custom-scrollbar min-h-0 flex-1 overflow-y-auto overscroll-contain bg-transparent focus:outline-none">
           <Suspense fallback={null}><RouteScrollRestoration main={mainRef} /></Suspense>
           <div key={pathname} className="workspace-route-enter min-h-full">
             <RouteAccessBoundary pathname={pathname}>{children}</RouteAccessBoundary>

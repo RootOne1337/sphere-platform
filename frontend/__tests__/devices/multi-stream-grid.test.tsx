@@ -3,8 +3,8 @@ import { MultiStreamGrid } from '@/src/features/devices/MultiStreamGrid';
 import type { Device } from '@/lib/hooks/useDevices';
 
 jest.mock('@/components/sphere/DeviceStream', () => ({
-  DeviceStream: ({ deviceId, fit }: { deviceId: string; fit: string }) => (
-    <div data-testid={`stream-${deviceId}`} data-fit={fit} />
+  DeviceStream: ({ deviceId, fit, compact }: { deviceId: string; fit: string; compact: boolean }) => (
+    <div data-testid={`stream-${deviceId}`} data-fit={fit} data-compact={compact} />
   ),
 }));
 
@@ -85,6 +85,7 @@ describe('MultiStreamGrid', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Запустить вещание' }));
     expect(screen.getByTestId('stream-remote-selected')).toBeInTheDocument();
     expect(screen.getByTestId('stream-remote-selected')).toHaveAttribute('data-fit', 'contain');
+    expect(screen.getByTestId('stream-remote-selected')).toHaveAttribute('data-compact', 'true');
     expect(screen.queryByTestId('stream-local-first')).not.toBeInTheDocument();
 
     fireEvent.click(screen.getByRole('button', { name: 'Остановить потоки' }));
@@ -123,7 +124,7 @@ describe('MultiStreamGrid', () => {
       />,
     );
 
-    expect(screen.getByText('1 мин назад')).toBeInTheDocument();
+    expect(screen.getByTitle('Heartbeat · 1 мин назад')).toHaveTextContent('1м');
     expect(screen.getByText(/Проверьте heartbeat и доступность устройства/)).toBeInTheDocument();
     expect(screen.queryByText('ERR_CONN_REFUSED')).not.toBeInTheDocument();
     expect(screen.queryByText('< 5s')).not.toBeInTheDocument();
@@ -142,4 +143,12 @@ describe('MultiStreamGrid', () => {
     expect(screen.queryByTestId('stream-device-4')).not.toBeInTheDocument();
     expect(screen.getByRole('status')).toHaveTextContent('Показаны первые 4 из 5 устройств');
   });
+});
+
+it('bounds CPU precision and keeps long device names inside the tile identity', () => {
+  const name = 'a very long emulator name repeated many times for layout';
+  render(<MultiStreamGrid devices={[{ ...makeDevice('cpu', 'online', null), name, cpu_usage: .217246 }]}/>);
+  expect(screen.getByLabelText(`Поток ${name}`)).toBeInTheDocument();
+  expect(screen.getByText('0,2%')).toBeInTheDocument();
+  expect(screen.getByTitle(name)).toHaveTextContent(name);
 });

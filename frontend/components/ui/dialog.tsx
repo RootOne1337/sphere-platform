@@ -15,7 +15,7 @@ const DialogOverlay = React.forwardRef<
   <DialogPrimitive.Overlay
     ref={ref}
     className={cn(
-      'fixed inset-0 z-50 bg-slate-950/40 backdrop-blur-sm data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0',
+      'sphere-dialog-overlay fixed inset-0 z-50 bg-slate-950/30 backdrop-blur-sm',
       className,
     )}
     {...props}
@@ -31,11 +31,12 @@ const DialogContent = React.forwardRef<
     <DialogOverlay />
     <DialogPrimitive.Content
       ref={ref}
+      data-placement={placement}
       className={cn(
-        'fixed z-50 gap-4 overflow-y-auto overscroll-contain border bg-background shadow-lg duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 motion-reduce:animate-none',
+        'sphere-dialog sphere-material fixed z-50 gap-4 overflow-y-auto overscroll-contain border bg-background shadow-lg',
         placement === 'right'
-          ? 'inset-y-0 right-0 flex h-dvh max-h-none w-[min(440px,100vw)] flex-col rounded-none border-l p-0 data-[state=open]:slide-in-from-right data-[state=closed]:slide-out-to-right'
-          : 'left-[50%] top-[50%] grid max-h-[calc(100dvh_-_2rem)] w-[calc(100%_-_2rem)] max-w-lg translate-x-[-50%] translate-y-[-50%] rounded-xl p-6 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[state=closed]:slide-out-to-left-1/2 data-[state=closed]:slide-out-to-top-[48%] data-[state=open]:slide-in-from-left-1/2 data-[state=open]:slide-in-from-top-[48%]',
+          ? 'inset-y-0 right-0 flex h-dvh max-h-none w-[min(440px,100vw)] flex-col rounded-none border-l p-0'
+          : 'left-[50%] top-[50%] grid max-h-[calc(100dvh_-_2rem)] w-[calc(100%_-_2rem)] max-w-lg translate-x-[-50%] translate-y-[-50%] rounded-xl p-6',
         className,
       )}
       {...props}

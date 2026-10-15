@@ -1,14 +1,15 @@
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { ContextInspector } from '@/src/features/inspector/ContextInspector';
+import { useUIStore } from '@/src/shared/store/useUIStore';
 import { useInspectorStore } from '@/src/features/inspector/inspectorStore';
 
-jest.mock('@/src/features/devices/DeviceInspectorDetail', () => ({ DeviceInspectorDetail: () => null }));
+jest.mock('@/src/features/devices/DeviceInspectorDetail', () => ({ DeviceInspectorDetail: () => <input aria-label="Черновик детали" defaultValue="" /> }));
 jest.mock('@/src/features/access/Capabilities', () => ({ RouteAccessBoundary: ({ children }: { children: React.ReactNode }) => children }));
 let mockPath = '/devices';
 jest.mock('next/navigation', () => ({ usePathname: () => mockPath }));
 
 describe('ContextInspector', () => {
-  beforeEach(() => { mockPath = '/devices'; useInspectorStore.getState().closeInspector(); });
+  beforeEach(() => { mockPath = '/devices'; useUIStore.setState({ inspectorMode: 'modal' }); useInspectorStore.getState().closeInspector(); });
 
   it('is hidden from keyboard and assistive navigation until opened, then closes accessibly', () => {
     render(<ContextInspector />);
@@ -49,4 +50,18 @@ describe('ContextInspector', () => {
     fireEvent.keyDown(screen.getByRole('dialog'), { key: 'Escape', code: 'Escape' });
     await waitFor(() => expect(screen.getByRole('button', { name: 'Открыть устройство' })).toHaveFocus());
   });
+});
+
+it('defaults to a modal and changes presentation without discarding the open detail state', () => {
+  render(<ContextInspector />);
+  act(() => useInspectorStore.getState().openInspector('device', 'id-1'));
+  const dialog = screen.getByRole('dialog');
+  expect(dialog).toHaveAttribute('data-placement', 'center');
+  fireEvent.change(screen.getByLabelText('Черновик детали'), { target: { value: 'unsaved local state' } });
+  fireEvent.click(screen.getByRole('button', { name: 'Открывать карточку сбоку' }));
+  expect(dialog).toHaveAttribute('data-placement', 'right');
+  expect(screen.getByLabelText('Черновик детали')).toHaveValue('unsaved local state');
+  fireEvent.click(screen.getByRole('button', { name: 'Открывать карточку в окне' }));
+  expect(dialog).toHaveAttribute('data-placement', 'center');
+  expect(screen.getByLabelText('Черновик детали')).toHaveValue('unsaved local state');
 });

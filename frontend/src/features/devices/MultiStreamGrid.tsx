@@ -40,6 +40,7 @@ export function MultiStreamGrid({ devices, selectedIds, onClose }: MultiStreamGr
         : devices;
     const visibleDevices = streamCandidates.slice(0, gridSize);
 
+    const formatCpu = (value: number | null) => typeof value === 'number' && Number.isFinite(value) && value >= 0 && value <= 100 ? `${value.toLocaleString('ru-RU', { maximumFractionDigits: 1 })}%` : '—';
     const formatHeartbeatAge = (timestamp: string | null) => {
         if (!timestamp) return 'нет данных';
         const seenAt = Date.parse(timestamp);
@@ -102,27 +103,27 @@ export function MultiStreamGrid({ devices, selectedIds, onClose }: MultiStreamGr
                 {visibleDevices.map((device) => {
                     const reachable = isDeviceReachable(device);
                     return (
-                    <div key={device.id} className="relative bg-muted border border-border rounded-lg overflow-hidden group flex min-w-0 flex-col aspect-video">
+                    <div key={device.id} className="stream-wall-tile relative flex min-w-0 flex-col overflow-hidden rounded-xl border border-border bg-card" aria-label={`Поток ${device.name}`}>
                         {/* Video Layer */}
                         <div
-                            className="flex-1 relative bg-background flex flex-col items-center justify-center overflow-hidden"
+                            className="stream-wall-stage relative flex aspect-video min-h-0 w-full flex-col items-center justify-center overflow-hidden bg-black"
                         >
                             {broadcastActive && reachable ? (
                                 /* Реальный видео-стрим через WebSocket H.264 */
-                                <DeviceStream readOnly deviceId={device.id} fit={objectFit} />
+                                <DeviceStream compact readOnly deviceId={device.id} fit={objectFit} />
                             ) : reachable ? (
                                 /* Онлайн, но стрим не включён — показываем готовность */
-                                <div className="flex flex-col items-center justify-center text-muted-foreground gap-2">
+                                <div className="stream-wall-placeholder flex h-full w-full flex-col items-center justify-center gap-2 bg-background text-muted-foreground">
                                     <Play className="w-6 h-6 opacity-30" />
                                     <span className="text-xs font-medium">Готов к просмотру</span>
-                                    <span className="text-xs text-muted-foreground">Нажмите «Запустить»</span>
+                                    <span className="stream-wall-help text-xs text-muted-foreground">Нажмите «Запустить»</span>
                                 </div>
                             ) : (
                                 /* Оффлайн */
-                                <div className="flex flex-col items-center justify-center text-muted-foreground gap-2">
+                                <div className="stream-wall-placeholder flex h-full w-full flex-col items-center justify-center gap-2 bg-background text-muted-foreground">
                                     <X className="w-6 h-6 opacity-30" />
                                     <span className="text-xs font-medium">Устройство не в сети</span>
-                                    <span className="text-xs text-muted-foreground">Проверьте heartbeat и доступность устройства</span>
+                                    <span className="stream-wall-help text-xs text-muted-foreground">Проверьте heartbeat и доступность устройства</span>
                                 </div>
                             )}
 
@@ -135,21 +136,14 @@ export function MultiStreamGrid({ devices, selectedIds, onClose }: MultiStreamGr
                             )}
                         </div>
 
-                        {/* Bottom Telemetry Bar */}
-                        <div className="min-h-8 shrink-0 bg-card border-t border-border px-2 flex items-center justify-between">
-                            <span className="text-xs text-muted-foreground truncate">{getReportedDeviceModel(device) ?? 'Модель не сообщена'}</span>
-
-                            {showStats && reachable && (
-                                <div className="flex items-center gap-3">
-                                    <div className="flex items-center gap-1 text-[11px] font-mono text-warning">
-                                        <Activity className="w-2.5 h-2.5" /> {formatHeartbeatAge(device.last_heartbeat)}
-                                    </div>
-                                    <div className="flex items-center gap-1 text-[11px] font-mono text-muted-foreground">
-                                        <Cpu className="w-2.5 h-2.5" /> {device.cpu_usage != null ? `${device.cpu_usage}%` : '—'}
-                                    </div>
-                                </div>
-                            )}
-                        </div>
+                        <footer className="shrink-0 space-y-1 border-t border-border bg-card px-2 py-2">
+                            <div className="flex min-w-0 items-center justify-between gap-2"><span className="min-w-0 truncate text-xs font-semibold" title={device.name}>{device.name}</span>
+                                {showStats && reachable && <span className="inline-flex shrink-0 items-center gap-1 text-[10px] tabular-nums text-muted-foreground" title="Загрузка CPU по отчёту APK"><Cpu className="h-2.5 w-2.5" aria-hidden />{formatCpu(device.cpu_usage)}</span>}
+                            </div>
+                            <div className="flex min-w-0 items-center justify-between gap-2"><span className="min-w-0 truncate text-[10px] text-muted-foreground" title={getReportedDeviceModel(device) ?? undefined}>{getReportedDeviceModel(device) ?? 'Модель не сообщена'}</span>
+                                {showStats && reachable && <span className="inline-flex shrink-0 items-center gap-1 text-[10px] text-muted-foreground" title={`Heartbeat · ${formatHeartbeatAge(device.last_heartbeat)}`} aria-label={`Heartbeat · ${formatHeartbeatAge(device.last_heartbeat)}`}><Activity className="h-2.5 w-2.5" aria-hidden />{formatHeartbeatAge(device.last_heartbeat).replace(' сек назад', 'с').replace(' мин назад', 'м').replace(' ч назад', 'ч')}</span>}
+                            </div>
+                        </footer>
 
                     </div>
                     );
@@ -157,7 +151,7 @@ export function MultiStreamGrid({ devices, selectedIds, onClose }: MultiStreamGr
 
                 {/* Пустые слоты если устройств меньше чем ячеек сетки */}
                 {Array.from({ length: Math.max(0, gridSize - Math.min(visibleDevices.length, gridSize)) }).map((_, i) => (
-                    <div key={`empty-${i}`} className="bg-muted/30 border border-border border-dashed rounded-lg aspect-video flex items-center justify-center">
+                    <div key={`empty-${i}`} className="flex aspect-video items-center justify-center rounded-xl border border-dashed border-border bg-muted/30">
                         <span className="text-xs text-muted-foreground">Свободный слот</span>
                     </div>
                 ))}

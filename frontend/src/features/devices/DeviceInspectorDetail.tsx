@@ -91,7 +91,7 @@ export function DeviceInspectorDetail({ deviceId, fullPage = false }: { deviceId
           {view === 'screenshot' && canWrite && <NativeScreenshotPanel key={deviceId} deviceId={deviceId} enabled={isReachable} />}
           {view === 'profile' && canWrite && <AndroidProfilePanel key={deviceId} deviceId={deviceId} enabled={isReachable} />}
         </> : <>
-          <dl className={`grid grid-cols-2 gap-3 ${fullPage ? 'lg:grid-cols-4' : ''}`}>
+          <dl className={`device-inspector-metrics grid grid-cols-2 gap-3 ${fullPage ? 'lg:grid-cols-4' : ''}`}>
             <Metric label="Sphere Agent" value={device.agent_version ? `${device.agent_version}${device.agent_version_code ? ` / ${device.agent_version_code}` : ''}` : 'Версия не сообщена'} />
             <Metric label="Длительность текущей связи" value={['online', 'busy'].includes(device.status) ? elapsed(device.connected_since) : 'Нет подтверждённой активной связи'} />
             <Metric label="Последний heartbeat APK" value={utcTime(device.last_heartbeat)} />
@@ -117,7 +117,7 @@ export function DeviceInspectorDetail({ deviceId, fullPage = false }: { deviceId
             </div>
             {!isReachable && <p className="text-xs text-muted-foreground">Живые команды недоступны при этом состоянии. Сохранённые задачи, события и логи можно проверить во вкладках.</p>}
           </section>
-          <section className="space-y-3 rounded-xl border border-border p-4"><div className="flex flex-wrap items-center justify-between gap-3"><h4 className="text-sm font-semibold">Идентификация и доступ</h4><Button variant="outline" disabled={!canWrite || !isReachable} onClick={() => setView('profile')}>Системный профиль Android</Button></div><dl className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+          <section className="space-y-3 rounded-xl border border-border p-4"><div className="flex flex-wrap items-center justify-between gap-3"><h4 className="text-sm font-semibold">Идентификация и доступ</h4><Button variant="outline" disabled={!canWrite || !isReachable} onClick={() => setView('profile')}>Системный профиль Android</Button></div><dl className="device-inspector-metrics grid grid-cols-1 gap-3 sm:grid-cols-2">
             <Metric label="ID Sphere" value={<span className="break-all font-mono text-xs">{device.id}</span>} />
             <Metric label={device.android_id ? 'Android ID' : 'Серийный идентификатор'} value={<span className="break-all font-mono text-xs">{device.android_id || device.serial || 'Не сообщён'}</span>} />
             <Metric label="ADB (дополнительный канал)" value={typeof device.adb_connected === 'boolean' ? device.adb_connected ? 'Подключён' : 'Не подключён' : 'Не сообщено'} />
@@ -126,7 +126,7 @@ export function DeviceInspectorDetail({ deviceId, fullPage = false }: { deviceId
             <Metric label="Локации" value={device.location_ids?.join(', ') || 'Не назначены'} />
             <Metric label="Игровой сервер" value={device.server_name || 'Не назначен'} />
             <Metric label="Создано" value={utcTime(device.created_at)} /><Metric label="Изменено" value={utcTime(device.updated_at)} />
-          </dl>{device.notes && <p className="whitespace-pre-wrap break-words text-sm text-muted-foreground">{device.notes}</p>}{!!device.tags?.length && <div className="flex flex-wrap gap-2">{device.tags.map((tag) => <Badge key={tag} variant="outline" className="max-w-full break-all">{tag}</Badge>)}</div>}<Button asChild variant="outline" size="sm"><Link href="/devices">Переименование, группы и удаление в реестре</Link></Button></section>
+          </dl>{device.notes && <p className="whitespace-pre-wrap break-words text-sm text-muted-foreground">{device.notes}</p>}{!!device.tags?.length && <div className="flex flex-wrap gap-2">{device.tags.map((tag) => <Badge key={tag} variant="outline" className="max-w-full break-all">{tag}</Badge>)}</div>}<Button asChild variant="outline" size="sm" className="h-auto min-h-[var(--control-sm-height)] max-w-full whitespace-normal py-2 text-left"><Link href="/devices" title="Переименование, группы и удаление">Изменить запись в реестре</Link></Button></section>
         </>}
       </TabsContent>
       <TabsContent value="tasks" className="mt-5"><DeviceHistoryPanel deviceId={deviceId} kind="tasks" /></TabsContent>
