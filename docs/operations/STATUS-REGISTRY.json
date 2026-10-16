@@ -1,8 +1,8 @@
 {
   "schemaVersion": 1,
-  "reviewedAtUtc": "2026-10-16T01:29:38.463489+00:00",
-  "sourceReviewed": "27f3a61fa5f2f3d2c1d8d56ed1dce7dbffe024a2",
-  "scope": "API27f3a61f capture-only transport installed; signed APK77 completed OTA on four online devices, three current installed hashes and one busy PH030 partial proof. Finite two-client browser tests on3015/Tuna and headless single/overlap probes passed. Model, gameplay, LAN proof, 17 offline updates and production SLA remain open.",
+  "reviewedAtUtc": "2026-10-16T02:17:55.413786+00:00",
+  "sourceReviewed": "589c455df86b7069020d3f02cf83a228baac00f0",
+  "scope": "APK78 pre-input startup fence fix installed on four online devices; three installed hashes verified, PH030 completed OTA/current version and live native READY with package hash unverified. PH011 finite two-client input canary and headless probe passed; PH030 read-only direct READY observed for 140 seconds. First root READY timeout cause and transient browser startup timeout remain open. UI19c4272b/API27f3a61f unchanged; 17 offline devices, model/gameplay and production SLA remain open.",
   "baseline": "docs/audits/2026-10-05/ENTERPRISE-PRODUCT-BACKLOG.json",
   "previousCrosscheck": "docs/audits/2026-10-09/CHAT-CODE-RECONCILIATION.json",
   "counts": {
@@ -11,59 +11,59 @@
     "open": 41
   },
   "installed": {
-    "lastObservedUtc": "2026-10-16T01:29:38.463489+00:00",
+    "lastObservedUtc": "2026-10-16T02:17:55.413786+00:00",
     "ui": "19c4272b3fffa98fdf7a35bd56b09967ac036e24",
     "api": "27f3a61fa5f2f3d2c1d8d56ed1dce7dbffe024a2",
-    "evidence": "docs/audits/2026-10-16/MOTOR-TRANSPORT-DELIVERY.json",
-    "observation": "API27f3a61f capture-only transport installed; signed APK77 completed OTA on four online devices, three current installed hashes and one busy PH030 partial proof. Finite two-client browser tests on3015/Tuna and headless single/overlap probes passed. Model, gameplay, LAN proof, 17 offline updates and production SLA remain open.",
+    "evidence": "docs/audits/2026-10-16/PH030-STARTUP78-RECOVERY.json",
+    "observation": "APK78 pre-input startup fence fix installed on four online devices; three installed hashes verified, PH030 completed OTA/current version and live native READY with package hash unverified. PH011 finite two-client input canary and headless probe passed; PH030 read-only direct READY observed for 140 seconds. First root READY timeout cause and transient browser startup timeout remain open. UI19c4272b/API27f3a61f unchanged; 17 offline devices, model/gameplay and production SLA remain open.",
     "pilotApk": {
       "device": "auto-ph-011",
       "deviceId": "414ce0e9-4b93-4f96-b9ca-ee675f53835e",
-      "version": "1.2.77-dev",
-      "versionCode": 10277,
-      "sourceRevision": "27f3a61fa5f2f3d2c1d8d56ed1dce7dbffe024a2",
-      "apkSha256": "9144dc1a25c9ced752fdec392580b6322db7d189817aed9591aa7e34cc2f0f5e",
-      "evidence": "docs/audits/2026-10-16/MOTOR-TRANSPORT-DELIVERY.json",
-      "evidenceSha256NormalizedLf": "0320f530f97aa90110ff5c83acd673db27a19a1342c360f936baf0e08c871087",
-      "packageProofObservedAtUtc": "2026-10-16T01:26:05.871791+00:00",
-      "scope": "Exact installed package hash; finite runtime canary and other devices are distinguished in the receipt."
+      "version": "1.2.78-dev",
+      "versionCode": 10278,
+      "sourceRevision": "589c455df86b7069020d3f02cf83a228baac00f0",
+      "apkSha256": "8df41db16dead2e8e3aa1a48b2ee964d6be9c4a14e259bea36d36a7ca93ac9ec",
+      "evidence": "docs/audits/2026-10-16/PH030-STARTUP78-RECOVERY.json",
+      "evidenceSha256NormalizedLf": "b9cd458b371b74c71fdedd382a23e1dc108d0e1e84ea5ad876746a213d5d3133",
+      "packageProofObservedAtUtc": "2026-10-16T02:13:29.955992+00:00",
+      "scope": "Exact installed package hash; finite canary and read-only PH030 recovery are distinguished in receipt."
     },
-    "evidenceSha256NormalizedLf": "0320f530f97aa90110ff5c83acd673db27a19a1342c360f936baf0e08c871087",
+    "evidenceSha256NormalizedLf": "b9cd458b371b74c71fdedd382a23e1dc108d0e1e84ea5ad876746a213d5d3133",
     "additionalPilotApks": [
       {
         "device": "auto-ph-025",
         "deviceId": "b410464a-5f26-4803-a756-7840cc17b128",
-        "version": "1.2.77-dev",
-        "versionCode": 10277,
-        "sourceRevision": "27f3a61fa5f2f3d2c1d8d56ed1dce7dbffe024a2",
-        "apkSha256": "9144dc1a25c9ced752fdec392580b6322db7d189817aed9591aa7e34cc2f0f5e",
-        "evidence": "docs/audits/2026-10-16/MOTOR-TRANSPORT-DELIVERY.json",
-        "evidenceSha256NormalizedLf": "0320f530f97aa90110ff5c83acd673db27a19a1342c360f936baf0e08c871087",
-        "packageProofObservedAtUtc": "2026-10-16T01:26:05.871791+00:00",
-        "scope": "Exact installed package hash; finite runtime canary and other devices are distinguished in the receipt."
+        "version": "1.2.78-dev",
+        "versionCode": 10278,
+        "sourceRevision": "589c455df86b7069020d3f02cf83a228baac00f0",
+        "apkSha256": "8df41db16dead2e8e3aa1a48b2ee964d6be9c4a14e259bea36d36a7ca93ac9ec",
+        "evidence": "docs/audits/2026-10-16/PH030-STARTUP78-RECOVERY.json",
+        "evidenceSha256NormalizedLf": "b9cd458b371b74c71fdedd382a23e1dc108d0e1e84ea5ad876746a213d5d3133",
+        "packageProofObservedAtUtc": "2026-10-16T02:13:29.955992+00:00",
+        "scope": "Exact installed package hash; finite canary and read-only PH030 recovery are distinguished in receipt."
       },
       {
         "device": "auto-ph-010",
         "deviceId": "5df4805e-fe64-4d39-960c-19ceab206cd6",
-        "version": "1.2.77-dev",
-        "versionCode": 10277,
-        "sourceRevision": "27f3a61fa5f2f3d2c1d8d56ed1dce7dbffe024a2",
-        "apkSha256": "9144dc1a25c9ced752fdec392580b6322db7d189817aed9591aa7e34cc2f0f5e",
-        "evidence": "docs/audits/2026-10-16/MOTOR-TRANSPORT-DELIVERY.json",
-        "evidenceSha256NormalizedLf": "0320f530f97aa90110ff5c83acd673db27a19a1342c360f936baf0e08c871087",
-        "packageProofObservedAtUtc": "2026-10-16T01:26:05.871791+00:00",
-        "scope": "Exact installed package hash; finite runtime canary and other devices are distinguished in the receipt."
+        "version": "1.2.78-dev",
+        "versionCode": 10278,
+        "sourceRevision": "589c455df86b7069020d3f02cf83a228baac00f0",
+        "apkSha256": "8df41db16dead2e8e3aa1a48b2ee964d6be9c4a14e259bea36d36a7ca93ac9ec",
+        "evidence": "docs/audits/2026-10-16/PH030-STARTUP78-RECOVERY.json",
+        "evidenceSha256NormalizedLf": "b9cd458b371b74c71fdedd382a23e1dc108d0e1e84ea5ad876746a213d5d3133",
+        "packageProofObservedAtUtc": "2026-10-16T02:13:29.955992+00:00",
+        "scope": "Exact installed package hash; finite canary and read-only PH030 recovery are distinguished in receipt."
       }
     ],
     "fleetApkEvidence": {
-      "evidence": "docs/audits/2026-10-16/MOTOR-TRANSPORT-DELIVERY.json",
-      "evidenceSha256NormalizedLf": "0320f530f97aa90110ff5c83acd673db27a19a1342c360f936baf0e08c871087",
+      "evidence": "docs/audits/2026-10-16/PH030-STARTUP78-RECOVERY.json",
+      "evidenceSha256NormalizedLf": "b9cd458b371b74c71fdedd382a23e1dc108d0e1e84ea5ad876746a213d5d3133",
       "installedCount": 3,
       "completedOtaCount": 4,
       "offlineCount": 17,
       "partialPackageProofCount": 1,
       "verifiedVersionCounts": {
-        "10277": 3
+        "10278": 3
       }
     },
     "latestReadbackAtUtc": "2026-10-14T22:14:09.863647+00:00",
@@ -1195,19 +1195,23 @@
       {
         "deviceId": "753fd530-2f19-4e5e-98ba-769863678141",
         "name": "auto-ph-030",
-        "versionCode": 10277,
-        "reason": "native_input_busy",
+        "versionCode": 10278,
         "installedPackageSha256": null,
-        "completedOtaCommandId": "24304e45-b154-49b4-b79b-103c01b0ba1a",
-        "preflight": {
-          "currentVersionCode": 10276,
-          "completedOtaCommandId": "07bd32df-d92c-4a1d-9bdf-ee58575779e4",
-          "otaArtifactSha256": "e0a7806ab59d2a5856277ab419b86f93f92251dd1694dc2162fb06cac56865a9",
-          "currentPackageHashVerified": false,
-          "reason": "native_input_busy"
-        }
+        "reason": "native_input_busy",
+        "completedOtaCommandId": "192c866c-0f31-4fc7-a583-016e77e2e21b"
       }
-    ]
+    ],
+    "previousFleetObservationBeforeApk78": {
+      "evidence": "docs/audits/2026-10-16/MOTOR-TRANSPORT-DELIVERY.json",
+      "evidenceSha256NormalizedLf": "0320f530f97aa90110ff5c83acd673db27a19a1342c360f936baf0e08c871087",
+      "installedCount": 3,
+      "completedOtaCount": 4,
+      "offlineCount": 17,
+      "partialPackageProofCount": 1,
+      "verifiedVersionCounts": {
+        "10277": 3
+      }
+    }
   },
   "pendingCorrections": [],
   "storage": {
@@ -1536,8 +1540,8 @@
     "primaryVideoInstalled": true,
     "primaryVideoObserved": true,
     "productionAccepted": false,
-    "currentObservationEvidence": "docs/audits/2026-10-16/MOTOR-TRANSPORT-DELIVERY.json",
-    "currentObservationEvidenceSha256NormalizedLf": "0320f530f97aa90110ff5c83acd673db27a19a1342c360f936baf0e08c871087",
+    "currentObservationEvidence": "docs/audits/2026-10-16/PH030-STARTUP78-RECOVERY.json",
+    "currentObservationEvidenceSha256NormalizedLf": "b9cd458b371b74c71fdedd382a23e1dc108d0e1e84ea5ad876746a213d5d3133",
     "pilotEvidenceScope": "UI331/API983 installed on 3015/Tuna; frontend-only input promotion fix, backend code tree unchanged; signed APK60 installed hashes and completed OTA commands confirmed on15 online devices. PH010 ordinary Chrome direct video/native gestures, actual server fallback and recovery, and mixed legacy viewer accepted finitely. Closest routes, physical network switching, shared input and full display latency remain OPEN.",
     "historicalPrimaryFrames": 1804,
     "directInputCandidate": {
@@ -1594,10 +1598,11 @@
     "latestReadbackEvidence": "docs/audits/2026-10-15/DIRECT-KEYBOARD76-OBSERVATION.json",
     "latestReadbackEvidenceSha256NormalizedLf": "34cf2a66e9f42399404a6bbc8341392d2d0ebd7a828dfcccedcf27ddfb520aa8",
     "ordinaryBrowserObservation": {
-      "evidence": "docs/audits/2026-10-16/MOTOR-TRANSPORT-DELIVERY.json",
-      "evidenceSha256NormalizedLf": "0320f530f97aa90110ff5c83acd673db27a19a1342c360f936baf0e08c871087",
-      "scope": "Two ordinary browser contexts per origin;12 simultaneous mouse/touch rounds,4 native navigation keys each,30s soak,one surviving participant.",
+      "evidence": "docs/audits/2026-10-16/PH030-STARTUP78-RECOVERY.json",
+      "evidenceSha256NormalizedLf": "b9cd458b371b74c71fdedd382a23e1dc108d0e1e84ea5ad876746a213d5d3133",
+      "scope": "APK78 PH011 two contexts3015:12 simultaneous rounds,4 native keys each,30s soak,survivor key. PH030 read-only140s READY; physical gestures not independently verified.",
       "actualPh030Accepted": false,
+      "actualPh030LiveReadyObserved": true,
       "legacyUplinkSuppressionRetested": false
     },
     "historicalIdle55LatestNetworkObservation": {
@@ -1648,14 +1653,14 @@
     "historicalResearchScope": "Reviewed API/UI522 installed on both origins and signed APK55 hash verified on all15 compatible online devices. Finite server fallback video/held reverse gestures accepted on PH010/PH011/PH025. Current direct ICE, direct input, nearest path, latency SLA and soak NOT accepted.",
     "directInputObservedFinite": true,
     "currentPrimaryNetworkObservation": {
-      "outcome": "FINITE_TWO_CLIENT_NATIVE_INPUT_AND_CAPTURE_ONLY_HEADLESS",
+      "outcome": "FINITE_INPUT_CANARY_AND_PH030_STARTUP_RECOVERY",
       "deviceId": "414ce0e9-4b93-4f96-b9ca-ee675f53835e",
       "directChannelEstablished": true,
       "rawCandidateAddressesPublished": false,
-      "evidence": "docs/audits/2026-10-16/MOTOR-TRANSPORT-DELIVERY.json",
-      "evidenceSha256NormalizedLf": "0320f530f97aa90110ff5c83acd673db27a19a1342c360f936baf0e08c871087",
-      "observedAtUtc": "2026-10-16T01:29:38.463489+00:00",
-      "topology": "Owned ordinary Chrome on3015/Tuna and PH011; separate headless probes on the same installed API/APK.",
+      "evidence": "docs/audits/2026-10-16/PH030-STARTUP78-RECOVERY.json",
+      "evidenceSha256NormalizedLf": "b9cd458b371b74c71fdedd382a23e1dc108d0e1e84ea5ad876746a213d5d3133",
+      "observedAtUtc": "2026-10-16T02:17:55.413786+00:00",
+      "topology": "PH011 ordinary Chrome3015 two-client input; PH030 actual user direct READY140s; PH011 headless.",
       "localhostRouteProven": false,
       "latencySlaAccepted": false,
       "physicalNetworkSwitchAccepted": false
@@ -1690,10 +1695,11 @@
       "scope": "Current APK65: server fallback and idle input ready over one minute; direct ICE received no replies. No pointer action injected."
     },
     "directInputFiniteObservation": {
-      "evidence": "docs/audits/2026-10-16/MOTOR-TRANSPORT-DELIVERY.json",
-      "evidenceSha256NormalizedLf": "0320f530f97aa90110ff5c83acd673db27a19a1342c360f936baf0e08c871087",
-      "scope": "APK77 finite shared taps/native navigation over one main peer per browser; no server key/touch commands. Headless ALIVE is not native gameplay actuation.",
-      "actualPh030Accepted": false
+      "evidence": "docs/audits/2026-10-16/PH030-STARTUP78-RECOVERY.json",
+      "evidenceSha256NormalizedLf": "b9cd458b371b74c71fdedd382a23e1dc108d0e1e84ea5ad876746a213d5d3133",
+      "scope": "APK78 native pointer/navigation canary PH011; PH030 no permanent pre-input cleanup fence after startup refusal. No unknown-input reset or replay.",
+      "actualPh030Accepted": false,
+      "actualPh030LiveReadyObserved": true
     },
     "historicalBeforeInputCancellationCurrentPrimaryNetworkObservation": {
       "outcome": "FINITE_DIRECT_VIDEO_NATIVE_INPUT_AND_AUTOMATIC_RECOVERY",
@@ -1907,7 +1913,20 @@
       "latencySlaAccepted": false,
       "physicalNetworkSwitchAccepted": false
     },
-    "historicalSharedParticipantsAcceptedBefore77": 10
+    "historicalSharedParticipantsAcceptedBefore77": 10,
+    "historicalNetworkBeforeStartup78": {
+      "outcome": "FINITE_TWO_CLIENT_NATIVE_INPUT_AND_CAPTURE_ONLY_HEADLESS",
+      "deviceId": "414ce0e9-4b93-4f96-b9ca-ee675f53835e",
+      "directChannelEstablished": true,
+      "rawCandidateAddressesPublished": false,
+      "evidence": "docs/audits/2026-10-16/MOTOR-TRANSPORT-DELIVERY.json",
+      "evidenceSha256NormalizedLf": "0320f530f97aa90110ff5c83acd673db27a19a1342c360f936baf0e08c871087",
+      "observedAtUtc": "2026-10-16T01:29:38.463489+00:00",
+      "topology": "Owned ordinary Chrome on3015/Tuna and PH011; separate headless probes on the same installed API/APK.",
+      "localhostRouteProven": false,
+      "latencySlaAccepted": false,
+      "physicalNetworkSwitchAccepted": false
+    }
   },
   "items": [
     {
@@ -5144,16 +5163,16 @@
     },
     "currentImplementation": {
       "state": "TRANSPORT_INSTALLED_GAME_ADAPTERS_REQUIRED",
-      "observedAtUtc": "2026-10-16T01:29:38.463489+00:00",
-      "evidence": "docs/audits/2026-10-16/MOTOR-TRANSPORT-DELIVERY.json",
-      "evidenceSha256NormalizedLf": "0320f530f97aa90110ff5c83acd673db27a19a1342c360f936baf0e08c871087",
+      "observedAtUtc": "2026-10-16T02:17:55.413786+00:00",
+      "evidence": "docs/audits/2026-10-16/PH030-STARTUP78-RECOVERY.json",
+      "evidenceSha256NormalizedLf": "b9cd458b371b74c71fdedd382a23e1dc108d0e1e84ea5ad876746a213d5d3133",
       "headlessTransportImplemented": true,
       "headlessWorkerVersion": "0.2.0",
       "headlessActionExecutionImplemented": false,
       "zeroServerToHeadlessMediaFromStartupVerified": true,
       "zeroApkToServerMediaFromStartupVerified": false,
       "backendGuardInstalled": true,
-      "apkGuardVersionCode": 10277,
+      "apkGuardVersionCode": 10278,
       "completedOtaCount": 4,
       "installedHashCount": 3,
       "partialPackageProofCount": 1,
@@ -5164,7 +5183,9 @@
       "inferenceExecuted": false,
       "gameProfileImplemented": false,
       "gameplayAccepted": false,
-      "fullGateG02Accepted": false
+      "fullGateG02Accepted": false,
+      "preInputStartupRecoveryInstalled": true,
+      "originalRootReadyTimeoutCauseMeasured": false
     }
   }
 }

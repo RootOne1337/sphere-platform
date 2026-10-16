@@ -95,7 +95,7 @@ server→headless media =0 байт с запуска. Команда с 3015 в
 в WebRTC146 после `setRemoteDescription`, до native input OPEN. После удаления объявлений
 несуществующего источника последующие конечные прогоны завершились успешно. Это локализованная
 совместимость нашего клиента; точное место abort в stripped C++ binary не символицировано.
-Установленные backend27f3a61f и APK77 отвергают source-bearing recvonly offers до JNI; sendonly answers
+Установленные backend27f3a61f и APK78 отвергают source-bearing recvonly offers до JNI; sendonly answers
 и session `msid-semantic` сохраняются. На APK77 прошли конечные browser/native и headless проверки.
 Защита от всех иных неподдерживаемых SDP не заявляется.
 Похожий upstream [issue GetStream #123](https://github.com/GetStream/webrtc-android/issues/123)
@@ -137,7 +137,8 @@ lost ALIVE, video stall, cancellation, foreign capture binding и capture lifecy
 В обычном backend окружении integration tests явно skipped; такой skip не считается положительной media проверкой.
 
 Текущая поставка и device results —
-[MOTOR-TRANSPORT-DELIVERY.json](../audits/2026-10-16/MOTOR-TRANSPORT-DELIVERY.json).
+[PH030-STARTUP78-RECOVERY.json](../audits/2026-10-16/PH030-STARTUP78-RECOVERY.json).
+APK78: восстановление после startup-отказа до первого input packet; PH011 headless READY/ALIVE/CLOSE и 871 decoded frame за15с, server→worker video0байт. Игровой ввод не добавлен.
 Первоначальные отрицательные прогоны и отдельный кандидат —
 [MOTOR-CAPTURE-ONLY.json](../audits/2026-10-16/MOTOR-CAPTURE-ONLY.json).
 Предыдущая версия0.1 и её стартовая серверная копия — в архиве
