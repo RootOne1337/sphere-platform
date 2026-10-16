@@ -6,6 +6,8 @@ export type StreamInput = {
   deviceId: string;
   /** Monotonic time at submission, never the time a late reply arrived. */
   at: number;
+  /** Local terminal pointer submission, separate from the later native ACK. */
+  endedAt?: number;
   dimensions: StreamFrameDimensions;
   command: AndroidControlCommand | { type: 'click'; x: number; y: number }
     | { type: 'swipe'; x1: number; y1: number; x2: number; y2: number; duration_ms: number };

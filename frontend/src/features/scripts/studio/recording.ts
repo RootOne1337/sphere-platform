@@ -10,6 +10,8 @@ export type RecordedInput = (StreamInput | PlannedSelector) & { id: string; requ
 export const RECORDING_LIMIT = 200;
 export function appendRecording(entries: RecordedInput[], input: StreamInput, deviceId: string): RecordedInput[] {
   if (input.deviceId !== deviceId || !Number.isFinite(input.at) || ![input.dimensions.width, input.dimensions.height].every(value => Number.isInteger(value) && value >= 1 && value <= 16384)) throw new Error('Ввод относится к другому устройству или неверному кадру.');
+  if (input.endedAt !== undefined && (!['click', 'swipe'].includes(input.command.type)
+    || !Number.isFinite(input.endedAt) || input.endedAt < input.at)) throw new Error('Некорректное время завершения жеста.');
   if (entries.length >= RECORDING_LIMIT) throw new Error('Достигнут лимит записи: 200 действий. Остановите и перенесите запись.');
   if (!['click', 'swipe', 'key_event', 'type_text'].includes(input.command.type)) throw new Error('Неизвестный тип ввода.');
   if (entries.length && input.at < entries[entries.length - 1].at) throw new Error('Запись нарушает порядок времени.');
@@ -22,7 +24,7 @@ export function appendRecording(entries: RecordedInput[], input: StreamInput, de
 }
 export function appendNativeRecording(entries: RecordedInput[], input: StreamInput, deviceId: string, requestId: string, completedAt: number): RecordedInput[] {
   if (!requestId || entries.some(entry => entry.requestId === requestId)
-    || !['click','swipe'].includes(input.command.type) || !Number.isFinite(completedAt) || completedAt < input.at)
+    || !['click','swipe'].includes(input.command.type) || !Number.isFinite(completedAt) || completedAt < (input.endedAt ?? input.at))
     throw new Error('Нативная запись не соответствует подтверждённому жесту.');
   const next = appendRecording(entries,input,deviceId);
   next[next.length-1] = {...next[next.length-1], requestId, completedAt, outcome:'android-confirmed'};
@@ -92,11 +94,11 @@ export function recordingActions(entries: RecordedInput[], preservePauses = true
     if (index) {
       const previous = entries[index - 1];
       if (previous.deviceId !== entries[index].deviceId || entries[index].at < previous.at) throw new Error('Запись смешивает устройства или нарушает порядок времени.');
-      // The replayed key/text step waits for execution itself. Do not also
-      // encode its HTTP round-trip as an extra sleep. Overlap adds no pause.
-      const previousEnd = previous.completedAt ?? previous.at + (previous.command.type === 'swipe' ? previous.command.duration_ms : 0);
+      // Pointer pauses start at local UP, not its later ACK. Key/text steps
+      // await execution themselves; overlap does not create a negative pause.
+      const previousEnd = ('endedAt' in previous ? previous.endedAt : undefined) ?? previous.completedAt ?? previous.at + (previous.command.type === 'swipe' ? previous.command.duration_ms : 0);
       const gap = Math.max(0, Math.round(entries[index].at - previousEnd));
-      if (preservePauses && gap >= 100) actions.push({ type: 'sleep', ms: Math.min(60000, gap) });
+      if (preservePauses && gap > 0) actions.push({ type: 'sleep', ms: Math.min(60000, gap) });
     }
     actions.push(recordedAction(entries[index]));
   }

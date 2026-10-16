@@ -650,7 +650,7 @@ it.each(['unknown','interrupted','unsupported','cancelled'] as const)('does not 
   const view=openDevice();fireEvent.click(screen.getByRole('button',{name:'Записать действия'}));
   act(()=>mockNativeObserver!({phase:'started',requestId:'native-1'}));
   act(()=>mockNativeObserver!({phase:'finished',requestId:'native-1',outcome,input:null,completedAt:1100}));
-  expect(mockRecordingMode).toBe(false);
+  expect(mockRecordingMode).toBe(outcome !== 'unknown');
   if(outcome==='unknown')expect(screen.getByRole('alert')).toBeInTheDocument();
   else {expect(screen.queryByRole('alert')).not.toBeInTheDocument();expect(screen.getByText(/Он не (?:добавлен|заменён)/)).toBeInTheDocument();}
   expect(screen.getByRole('button',{name:'Вставить в граф'})).toBeDisabled();

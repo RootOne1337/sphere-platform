@@ -1921,6 +1921,20 @@ it('locks a held touch for a task and signals only its known native release', ()
   view.unmount();
 });
 
+it('keeps the direct media peer during task handoff until its native release can arrive', () => {
+  const view = readyContinuous(), observed = jest.fn();
+  view.receive({ type:'stream_session', schema_version:1, history_enabled:true, session_id:'1'.repeat(16), report_interval_seconds:10 });
+  expect(mockVideoEligible).toBe(true);
+  view.rerender(<DeviceStream deviceId="gesture-remote" enableStaticInput enableNavigation readOnly taskHandoffId={9} onTaskHandoffState={observed} />);
+  expect(mockVideoEligible).toBe(true);
+  expect(observed).toHaveBeenLastCalledWith('waiting',9);
+  view.status(0,3,'release');
+  expect(observed).toHaveBeenLastCalledWith('ready',9);
+  expect(mockVideoEligible).toBe(true);
+  expect(view.commands()).toEqual([]);
+  view.unmount();
+});
+
 it.each(['missing', 'unknown'])('blocks a task handoff for %s native release', kind => {
   const view = readyContinuous(), observed = jest.fn();
   view.rerender(<DeviceStream deviceId="gesture-remote" enableStaticInput enableNavigation readOnly taskHandoffId={8} onTaskHandoffState={observed} />);

@@ -19,7 +19,24 @@ it('records a tap only after exact DOWN and UP receipts, retaining submission ti
   f.ack(99,1); expect(f.events).toHaveLength(1);
   f.ack(2,1);f.ack(2,1);
   expect(f.events).toHaveLength(2);
-  expect(f.events[1]).toMatchObject({phase:'finished',outcome:'confirmed',input:{at:0,command:{type:'click',x:100,y:200}}});
+  expect(f.events[1]).toMatchObject({phase:'finished',outcome:'confirmed',input:{at:0,endedAt:30,command:{type:'click',x:100,y:200}}});
+});
+it('retains the actual pause between gestures even when the first native receipt arrives late',()=>{
+  const f=fixture(); f.offer(0); f.ack(1,0); f.offer(1,100,200,30,2);
+  // A second gesture starts locally while the first terminal ACK is in flight.
+  f.offer(2,100,200,80,99,2); f.ack(2,1);
+  const event=f.events[1]; if(event.phase!=='finished'||!event.input)throw Error('missing terminal');
+  const first=appendNativeRecording([],event.input,'owned',event.requestId,event.completedAt);
+  const second=appendNativeRecording(first,{deviceId:'owned',at:80,endedAt:100,dimensions:{width:960,height:540},
+    command:{type:'click',x:200,y:200}},'owned','second',120);
+  expect(first[0]).toMatchObject({endedAt:30,completedAt:80});
+  expect(recordingActions(second)).toEqual([
+    {type:'tap',x:133,y:266}, {type:'sleep',ms:50}, {type:'tap',x:266,y:266},
+  ]);
+});
+it.each([Number.NaN,Number.POSITIVE_INFINITY,-1,200])('rejects a terminal timestamp outside submission and native confirmation: %s',endedAt=>{
+  expect(()=>appendNativeRecording([],{deviceId:'owned',at:0,endedAt,dimensions:{width:960,height:540},
+    command:{type:'click',x:100,y:200}},'owned','invalid',100)).toThrow();
 });
 it('exports a confirmed straight swipe without adding ACK latency to replay pauses',()=>{
   const f=fixture();f.offer(0);f.ack(1,0);f.offer(2,200,200,100,2);f.offer(1,300,200,200,3);f.ack(3,1);

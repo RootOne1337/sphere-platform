@@ -73,7 +73,7 @@ export class NativeGestureRecording {
         progress = Math.max(progress,along);
       }
     }
-    return { deviceId:this.options.deviceId, at:start.at,
+    return { deviceId:this.options.deviceId, at:start.at, endedAt:end.at,
       dimensions:{width:start.capture.frameWidth,height:start.capture.frameHeight},
       command: stationary && duration < 250 ? {type:'click',x:start.x,y:start.y}
         : {type:'swipe',x1:start.x,y1:start.y,x2:stationary?start.x:end.x,y2:stationary?start.y:end.y,duration_ms:Math.max(1,duration)} };

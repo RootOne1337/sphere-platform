@@ -1509,7 +1509,7 @@ export function DeviceStream({
     {currentDiagnosticSession && <LiveDirectVideo key={currentDiagnosticSession} deviceId={deviceId} session={currentDiagnosticSession}
       // Recording/XPath change who may inject input, not ownership of the video
       // peer. Retiring it here also destroyed the route carrying native RELEASE.
-      eligible={!!serverCaptureRef.current && taskHandoffId === undefined}
+      eligible={!!serverCaptureRef.current}
       fit={surfaceFit} expectedCapture={() => diagnosticReporter.current?.sessionId === currentDiagnosticSession ? serverCaptureRef.current : null}
       receiverProfileLevelId={() => {
         const capture = serverCaptureRef.current;
