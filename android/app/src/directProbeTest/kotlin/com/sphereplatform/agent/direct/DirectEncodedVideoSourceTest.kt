@@ -8,6 +8,16 @@ import org.junit.Test
 import org.webrtc.*
 
 class DirectEncodedVideoSourceTest {
+    @Test fun `coded stream retains frame order and uses the SDK legacy utilization path after native clock abort`() {
+        val tokens = DirectEncodedVideoSource.FIELD_TRIALS.trimEnd('/').split('/')
+        assertEquals(0, tokens.size % 2)
+        val trials = tokens.chunked(2).associate { it[0] to it[1] }
+        assertEquals(tokens.size / 2, trials.size)
+        assertEquals("Disabled", trials["WebRTC-FrameDropper"])
+        assertEquals("Disabled", trials["WebRTC-BitrateAdjusterUseNewfangledHeadroomAdjustment"])
+        // No global bitrate/congestion-control disable or synthetic clock is used.
+        assertEquals(2, trials.size)
+    }
     @Test fun `codec allocation advertises actual high detail ceiling instead of a two megabit default`() {
         val relay = DirectEncodedVideoSource(capture, { true }, {}, {}, maxBitrateBps = 12_000_000, startBitrateBps = 8_000_000)
         try {

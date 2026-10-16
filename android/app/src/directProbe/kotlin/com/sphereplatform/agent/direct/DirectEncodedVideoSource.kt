@@ -26,7 +26,13 @@ internal class DirectEncodedVideoSource(
     companion object {
         // MediaCodec has already encoded these reference-dependent pictures.
         // The raw-frame dropper cannot safely discard one before this adapter.
-        const val FIELD_TRIALS = "WebRTC-FrameDropper/Disabled/"
+        // The pinned SDK's new headroom tracker aborts the entire APK when its
+        // clock samples regress even by microseconds (observed on LDPlayer).
+        // Use its supported legacy utilization algorithm, retaining network
+        // congestion control, rate allocation and the real MediaCodec feedback.
+        // This does not change capture/RTP timestamps or hide a failed frame.
+        const val FIELD_TRIALS = "WebRTC-FrameDropper/Disabled/" +
+            "WebRTC-BitrateAdjusterUseNewfangledHeadroomAdjustment/Disabled/"
     }
     private val budget = EncodedVideoBudget()
     private val outputBudget = EncodedVideoBudget()
