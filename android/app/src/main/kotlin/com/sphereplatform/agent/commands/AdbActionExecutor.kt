@@ -81,6 +81,8 @@ class AdbActionExecutor @Inject constructor(
     private var rootInputPending = false
     private val processRunner = BoundedProcessRunner()
     private val uiDumpOwnership = Mutex()
+    private data class PointerTimeline(val player: TimedPointerPathPlayer, val binding: TouchBinding, val current: () -> Boolean)
+    private var pointerTimeline: PointerTimeline? = null // Only the task-authorized coroutine tree may enter.
     private val screenshots by lazy {
         ScreenshotFileStore(java.io.File(context.cacheDir.canonicalFile, "dag-screenshots-v1"))
     }
@@ -205,19 +207,35 @@ class AdbActionExecutor @Inject constructor(
         withContext(Dispatchers.IO) {
             val path = TimedPointerPath.parse(value) // Reject the complete path before asking for root.
             inputOwnership.claimTaskPrimitive().use {
-                drainRootInput()
-                val display = (context.getSystemService(Context.WINDOW_SERVICE) as android.view.WindowManager).defaultDisplay
-                val size = physicalSize
-                val rotation = display.rotation
-                val token = java.util.UUID.randomUUID().toString()
-                val binding = TouchBinding(token, token, size.x, size.y, rotation)
-                TimedPointerPathPlayer(RootTouchPipeFactory(context), android.os.SystemClock::uptimeMillis,
-                    onCleanupUnknown = { inputOwnership.fence() }).play(path, binding, current = {
-                    val currentSize = physicalSize
-                    currentSize.x == size.x && currentSize.y == size.y && display.rotation == rotation
-                }, checkpoint = checkpoint)
+                val timeline = pointerTimeline ?: run {
+                    drainRootInput()
+                    val display = (context.getSystemService(Context.WINDOW_SERVICE) as android.view.WindowManager).defaultDisplay
+                    val size = physicalSize
+                    val rotation = display.rotation
+                    val token = java.util.UUID.randomUUID().toString()
+                    PointerTimeline(TimedPointerPathPlayer(RootTouchPipeFactory(context), android.os.SystemClock::uptimeMillis,
+                        onCleanupUnknown = { inputOwnership.fence() }, retainBetweenPaths = true),
+                        TouchBinding(token, token, size.x, size.y, rotation), {
+                            val currentSize = physicalSize
+                            currentSize.x == size.x && currentSize.y == size.y && display.rotation == rotation
+                        }).also { pointerTimeline = it }
+                }
+                timeline.player.play(path, timeline.binding, timeline.current, checkpoint)
             }
         }
+
+    internal suspend fun pointerGap(ms: Long, checkpoint: suspend () -> Unit): Boolean = withContext(Dispatchers.IO) {
+        inputOwnership.claimTaskPrimitive().use {
+            pointerTimeline?.let { it.player.gap(ms, it.current, checkpoint) } ?: false
+        }
+    }
+
+    internal suspend fun finishPointerTimeline() = withContext(Dispatchers.IO) {
+        val timeline = pointerTimeline
+        pointerTimeline = null
+        timeline?.player?.close()
+        Unit
+    }
 
     /** Закрыть root-сессию при уничтожении сервиса. */
     fun closeRootSession() {

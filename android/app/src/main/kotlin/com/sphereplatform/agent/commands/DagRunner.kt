@@ -153,6 +153,9 @@ class DagRunner @Inject constructor(
 
     private suspend fun awaitExecutionPermission() {
         checkCancellation()
+        // Pause is an explicit timing barrier. Never leave an idle native lease
+        // unattended while waiting for an arbitrary resume.
+        if (pauseRequested) adbActions.finishPointerTimeline()
         while (pauseRequested) {
             delay(200L)
             checkCancellation()
@@ -235,6 +238,7 @@ class DagRunner @Inject constructor(
             awaitExecutionPermission()
             inputReservation = adbActions.claimInputForTask()
             withContext((inputReservation as? TaskInputReservation)?.context ?: EmptyCoroutineContext) {
+            try {
             while (currentNodeId != null) {
                 // PERF: Проверка лимита маршрутных переходов
                 routingHops++
@@ -347,6 +351,7 @@ class DagRunner @Inject constructor(
                     throw RuntimeException("DAG failed at node '$nodeId': $nodeError")
                 }
             }
+            } finally { withContext(NonCancellable) { adbActions.finishPointerTimeline() } }
             }
             } finally {
                 withContext(NonCancellable) {
@@ -410,6 +415,7 @@ class DagRunner @Inject constructor(
         }
         // Applies to top-level nodes, each retry and every nested loop action.
         awaitExecutionPermission()
+        if (type != "pointer_path" && type != "sleep") adbActions.finishPointerTimeline()
         val result = executeNodeInternal(type, action, ctx, depth)
         // A stop accepted during the final action must not become DAG success.
         checkCancellation()
@@ -447,6 +453,9 @@ class DagRunner @Inject constructor(
             buildJsonObject {
                 put("points_applied", result.points); put("duration_ms", result.durationMs)
                 put("max_schedule_lateness_ms", result.maxScheduleLatenessMs)
+                put("timeline_offset_ms", result.timelineOffsetMs)
+                put("start_lateness_ms", result.startLatenessMs)
+                put("helper_reused", result.helperReused)
             }
         }
 
@@ -461,7 +470,11 @@ class DagRunner @Inject constructor(
         }
 
         "sleep" -> {
-            delay(action["ms"]!!.jsonPrimitive.long)
+            val ms = action["ms"]!!.jsonPrimitive.long
+            if (!adbActions.pointerGap(ms) {
+                checkCancellation()
+                if (pauseRequested) throw PointerPathInterruptedException(0, "pointer_timeline_paused_and_released")
+            }) delay(ms)
             null
         }
 

@@ -172,6 +172,55 @@ class DagRunnerTest {
         verify(exactly = 0) { adbActions.tap(any(),any()) }
     }
 
+    @OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
+    @Test fun `path sleep path shares timeline until another action and closes before task release`() = runTest {
+        val events = mutableListOf<String>()
+        every { adbActions.claimInputForTask() } returns AutoCloseable { events.add("release") }
+        coEvery { adbActions.pointerPath(any(), any()) } coAnswers {
+            events.add("path"); TimedPointerPathPlayer.Result(2, 100, 0)
+        }
+        coEvery { adbActions.pointerGap(400, any()) } coAnswers { events.add("gap"); true }
+        coEvery { adbActions.finishPointerTimeline() } coAnswers { events.add("close") }
+        every { adbActions.tap(1, 2) } answers { events.add("tap") }
+        val dag = buildDag("a", node("a", "pointer_path", "gap") { put("path", buildJsonObject {}) },
+            node("gap", "sleep", "b") { put("ms", 400) },
+            node("b", "pointer_path", "tap") { put("path", buildJsonObject {}) },
+            node("tap", "tap", "end") { put("x", 1); put("y", 2) }, node("end", "end"))
+        assertTrue(runner.execute("shared-timeline", dag)["success"]!!.jsonPrimitive.boolean)
+        assertEquals(listOf("path", "gap", "path", "close", "tap", "close", "release"), events)
+        assertEquals(0L, testScheduler.currentTime) // No second relative delay after an anchored gap.
+    }
+
+    @Test fun `unknown timeline cleanup prevents next injector and still releases reservations`() = runTest {
+        var closes = 0; var released = false
+        every { adbActions.claimInputForTask() } returns AutoCloseable { released = true }
+        coEvery { adbActions.pointerPath(any(), any()) } returns TimedPointerPathPlayer.Result(2, 100, 0)
+        coEvery { adbActions.finishPointerTimeline() } coAnswers {
+            if (++closes == 1) throw PointerPathInterruptedException(0, "pointer_path_cleanup_unknown")
+        }
+        val dag = buildDag("a", node("a", "pointer_path", "tap") { put("path", buildJsonObject {}) },
+            node("tap", "tap", onFailure = "end", retry = 3) { put("x", 1); put("y", 2) }, node("end", "end"))
+        try { runner.execute("unknown-retirement", dag); fail() } catch (_: PointerPathInterruptedException) {}
+        verify(exactly = 0) { adbActions.tap(any(), any()) }; assertTrue(released)
+    }
+
+    @Test fun `cancel in recorded gap cleans retained helper before returning manual authority`() = runTest {
+        val events = mutableListOf<String>()
+        every { adbActions.claimInputForTask() } returns AutoCloseable { events.add("release") }
+        coEvery { adbActions.pointerPath(any(), any()) } returns TimedPointerPathPlayer.Result(2, 100, 0)
+        coEvery { adbActions.pointerGap(any(), any()) } coAnswers {
+            runner.requestCancel("cancel-gap")
+            secondArg<suspend () -> Unit>().invoke(); true
+        }
+        coEvery { adbActions.finishPointerTimeline() } coAnswers { events.add("close") }
+        val dag = buildDag("a", node("a", "pointer_path", "gap") { put("path", buildJsonObject {}) },
+            node("gap", "sleep", "b") { put("ms", 5000) },
+            node("b", "pointer_path") { put("path", buildJsonObject {}) })
+        assertEquals(JsonPrimitive(true), runner.execute("cancel-gap", dag)["cancelled"])
+        coVerify(exactly = 1) { adbActions.pointerPath(any(), any()) }
+        assertEquals(listOf("close", "release"), events)
+    }
+
     @Test
     fun `нода swipe`() = runTest {
         val dag = buildDag(

@@ -17,8 +17,9 @@ class TimedPointerPathTest {
             put("x", p.second); put("y", p.third)
         }) } })
     })
-    private class Fixture {
+    private class Fixture(retain: Boolean = false) {
         var now = 1000L; var closed = false; var fenced = false; var current = true
+        var opens = 0; var closes = 0
         var ackDelay = 0L; var reject = false; var writeFails = false; var cleanup = true
         val injected = mutableListOf<List<Long>>()
         val samples = mutableListOf<TouchSample>()
@@ -36,10 +37,10 @@ class TimedPointerPathTest {
                 return RootTouchWire.readAck(ByteArrayInputStream(out.toByteArray()))
             }
             override suspend fun closeAndConfirm(): Boolean {
-                closed = true; session.close(now); return cleanup
+                closes++; closed = true; session.close(now); return cleanup
             }
         }
-        val player = TimedPointerPathPlayer(TouchPipeFactory { pipe }, { now }, { now += it }, { fenced = true })
+        val player = TimedPointerPathPlayer(TouchPipeFactory { opens++; pipe }, { now }, { now += it }, { fenced = true }, retain)
         val binding = TouchBinding("task_owner_1234", "task_epoch_1234", 1920, 1080, 0)
         suspend fun play(path: TimedPointerPath, checkpoint: suspend () -> Unit = {}) = player.play(path, binding, { current }, checkpoint)
     }
@@ -59,6 +60,61 @@ class TimedPointerPathTest {
         val f = Fixture(); f.ackDelay = 12
         f.play(path(Triple(0,1,2), Triple(100,2,3), Triple(200,3,4), Triple(300,4,5)))
         assertEquals(listOf(1000L,1100L,1200L,1300L), f.injected.map { it[4] })
+    }
+    @Test fun `two gestures and their gap share one helper and planned timeline despite ACK and bookkeeping`() = runBlocking {
+        val f = Fixture(retain = true); f.ackDelay = 12
+        val first = f.play(path(Triple(0,1,2), Triple(100,2,3)))
+        assertFalse(f.closed); assertFalse(first.helperReused)
+        f.now += 17 // DAG logging and progress after the native UP ACK.
+        assertTrue(f.player.gap(400, { f.current }) {})
+        f.now += 11 // Bookkeeping after the gap does not rebase the second path.
+        val second = f.play(path(Triple(0,3,4), Triple(100,4,5)))
+        assertEquals(listOf(1000L,1100L,1511L,1600L), f.injected.map { it[4] })
+        assertEquals(listOf(1000L,1000L,1511L,1511L), f.injected.map { it[3] })
+        assertEquals(500L, second.timelineOffsetMs); assertEquals(11L, second.startLatenessMs)
+        assertTrue(second.helperReused); assertEquals(1, f.opens); assertEquals(0, f.closes)
+        val touch = f.samples.filter { it.action != RootTouchSession.HEARTBEAT }
+        assertEquals(listOf(1L,1L,2L,2L), touch.map { it.gesture })
+        assertTrue(f.samples.zipWithNext().all { (a,b) -> b.sequence > a.sequence })
+        f.player.close(); f.player.close(); assertEquals(1, f.closes); assertFalse(f.session.isHeld)
+    }
+    @Test fun `long idle gap maintains lease without injecting extra motion`() = runBlocking {
+        val f = Fixture(retain = true)
+        f.play(path(Triple(0,1,2), Triple(100,2,3)))
+        assertTrue(f.player.gap(5000, { f.current }) {})
+        val second = f.play(path(Triple(0,3,4), Triple(100,4,5)))
+        assertEquals(listOf(1000L,1100L,6100L,6200L), f.injected.map { it[4] })
+        assertEquals(5100L, second.timelineOffsetMs)
+        assertTrue(f.samples.count { it.action == RootTouchSession.HEARTBEAT && it.gesture == 0L } >= 15)
+        assertEquals(1, f.opens); f.player.close()
+    }
+    @Test fun `cancel in an idle gap closes before propagation and never emits next DOWN`() = runBlocking {
+        val f = Fixture(retain = true)
+        f.play(path(Triple(0,1,2), Triple(100,2,3)))
+        try { f.player.gap(5000, { f.current }) { if (f.now >= 1400) throw CancellationException("test_cancel") }; fail() }
+        catch (_: CancellationException) {}
+        assertEquals(listOf(0L,1L), f.injected.map { it[0] }); assertTrue(f.closed)
+        assertFalse(f.player.gap(1, { f.current }) {}); assertEquals(1, f.opens)
+    }
+    @Test fun `overdue next gesture terminates timeline without a catch up DOWN`() = runBlocking {
+        val f = Fixture(retain = true)
+        f.play(path(Triple(0,1,2), Triple(100,2,3))); f.now += 250
+        try { f.play(path(Triple(0,3,4), Triple(100,4,5))); fail() }
+        catch (e: PointerPathInterruptedException) { assertEquals(0, e.attemptedPoints) }
+        assertEquals(listOf(0L,1L), f.injected.map { it[0] }); assertTrue(f.closed)
+    }
+    @Test fun `geometry change between paths closes retained helper without replay`() = runBlocking {
+        val f = Fixture(retain = true)
+        f.play(path(Triple(0,1,2), Triple(100,2,3))); f.current = false
+        try { f.play(path(Triple(0,3,4), Triple(100,4,5))); fail() }
+        catch (_: PointerPathInterruptedException) {}
+        assertTrue(f.closed); assertEquals(1, f.opens); assertEquals(2, f.injected.size)
+    }
+    @Test fun `unknown retained helper cleanup fences at explicit task boundary`() = runBlocking {
+        val f = Fixture(retain = true)
+        f.play(path(Triple(0,1,2), Triple(100,2,3))); f.cleanup = false
+        try { f.player.close(); fail() } catch (_: PointerPathInterruptedException) {}
+        assertTrue(f.fenced); assertEquals(1, f.closes)
     }
     @Test fun `missed schedule never produces a burst of stale moves`() = runBlocking {
         val f = Fixture(); f.ackDelay = 220
