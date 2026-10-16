@@ -20,6 +20,8 @@ import org.luaj.vm2.lib.jse.JsePlatform
 import timber.log.Timber
 import javax.inject.Inject
 import javax.inject.Singleton
+import kotlin.coroutines.CoroutineContext
+import kotlin.coroutines.ContinuationInterceptor
 
 /**
  * LuaEngine — встроенный Lua 5.2 интерпретатор (LuaJ) с sandbox.
@@ -69,7 +71,7 @@ class LuaEngine @Inject constructor(
         // Dispatchers.IO: LuaJ блокирует поток, IO-пул не ограничен = CPU-пул не голодает
         return withContext(Dispatchers.IO) {
             Timber.d("[Lua] execute: ctx keys=${ctx.keys}, types=${ctx.mapValues { it.value?.let { v -> v::class.simpleName } }}")
-            val globals = buildSandbox(ctx)
+            val globals = buildSandbox(ctx, kotlin.coroutines.coroutineContext.minusKey(ContinuationInterceptor))
             val chunk = globals.load(code, "script")
             val result = try {
                 chunk.call()
@@ -85,7 +87,7 @@ class LuaEngine @Inject constructor(
         }
     }
 
-    private fun buildSandbox(ctx: Map<String, Any?>): Globals {
+    private fun buildSandbox(ctx: Map<String, Any?>, bindingContext: CoroutineContext): Globals {
         val globals = JsePlatform.debugGlobals()
 
         // КРИТИЧНО: luajava = JNI-мост → любой java класс из Lua
@@ -99,7 +101,7 @@ class LuaEngine @Inject constructor(
         BLOCKED_FUNCTIONS.forEach { fn -> globals.set(fn, LuaValue.NIL) }
 
         // Регистрируем Android-биндинги
-        registerAndroidBindings(globals)
+        registerAndroidBindings(globals, bindingContext)
 
         // Передаём контекст выполнения (результаты предыдущих нод DAG)
         val ctxTable = LuaTable()
@@ -109,7 +111,7 @@ class LuaEngine @Inject constructor(
         return globals
     }
 
-    private fun registerAndroidBindings(globals: Globals) {
+    private fun registerAndroidBindings(globals: Globals, bindingContext: CoroutineContext) {
         // tap(x, y)
         globals.set("tap", object : TwoArgFunction() {
             override fun call(x: LuaValue, y: LuaValue): LuaValue {
@@ -135,7 +137,8 @@ class LuaEngine @Inject constructor(
         globals.set("type_text", object : OneArgFunction() {
             override fun call(text: LuaValue): LuaValue {
                 // FIX M2: withTimeout защищает от зависания IO-потока
-                runBlocking { withTimeout(BINDING_TIMEOUT_MS) { adbActions.typeText(text.checkjstring()) } }
+                // Preserve task authority and cancellation across this synchronous Lua bridge.
+                runBlocking(bindingContext) { withTimeout(BINDING_TIMEOUT_MS) { adbActions.typeText(text.checkjstring()) } }
                 return LuaValue.TRUE
             }
         })
@@ -153,7 +156,7 @@ class LuaEngine @Inject constructor(
             override fun call(ms: LuaValue): LuaValue {
                 // execute() запущен на Dispatchers.IO — runBlocking допустим.
                 // delay() корректно обрабатывает withTimeout и cancellation.
-                runBlocking { delay(ms.checklong()) }
+                runBlocking(bindingContext) { delay(ms.checklong()) }
                 return LuaValue.TRUE
             }
         })
@@ -170,7 +173,7 @@ class LuaEngine @Inject constructor(
         globals.set("screenshot", object : ZeroArgFunction() {
             override fun call(): LuaValue {
                 // FIX M2: withTimeout защищает от зависания IO-потока
-                val path = runBlocking { withTimeout(BINDING_TIMEOUT_MS) { adbActions.takeScreenshot() } }
+                val path = runBlocking(bindingContext) { withTimeout(BINDING_TIMEOUT_MS) { adbActions.takeScreenshot() } }
                 return LuaValue.valueOf(path)
             }
         })
@@ -184,7 +187,7 @@ class LuaEngine @Inject constructor(
                 val strategy = if (args.narg() >= 2) args.checkjstring(2) else "text"
                 val timeoutMs = if (args.narg() >= 3) args.checkint(3) else 10_000
                 // FIX M2: withTimeout ограничивает время захвата IO-потока
-                val result = runBlocking {
+                val result = runBlocking(bindingContext) {
                     withTimeout(BINDING_TIMEOUT_MS) {
                         adbActions.findElement(selector, strategy, timeoutMs)
                     }
