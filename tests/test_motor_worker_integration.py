@@ -12,6 +12,7 @@ import time
 import unittest
 from fractions import Fraction
 
+from motor_worker.pointer_probe import PointerProbe, ProbePoint
 from motor_worker.session import HeadlessSession, SessionConfig
 
 AVAILABLE = all(importlib.util.find_spec(m) for m in ["aiortc", "av", "websockets", "numpy"])
@@ -33,6 +34,9 @@ class HeadlessIntegrationTests(unittest.IsolatedAsyncioTestCase):
         self.allow_cancel_close = False
         self.server_media = False
         self.foreign_readiness = False
+        self.availability_state = None
+        self.no_pointer_ack = False
+        self.after_down = asyncio.Event()
         self.server = await serve(self.endpoint, "127.0.0.1", 0)
         self.url = f"http://127.0.0.1:{self.server.sockets[0].getsockname()[1]}"
 
@@ -141,12 +145,35 @@ class HeadlessIntegrationTests(unittest.IsolatedAsyncioTestCase):
                     channel.send(raw)
             else:
 
+                def availability():
+                    if fixture.availability_state:
+                        channel.send(
+                            json.dumps(
+                                dict(
+                                    type="input_availability",
+                                    schema_version=1,
+                                    session_id=sid,
+                                    capture_epoch=DEVICE,
+                                    revision=0,
+                                    state=fixture.availability_state,
+                                    task_id=None
+                                    if fixture.availability_state == "manual"
+                                    else "owned-task-1234",
+                                )
+                            )
+                        )
+
+                if channel.readyState == "open":
+                    availability()
+                else:
+                    channel.on("open", availability)
+
                 @channel.on("message")
                 def control(raw):
                     d = json.loads(raw)
                     self.received.append(d)
 
-                    def status(outcome, seq=0, action=4):
+                    def status(outcome, seq=0, action=4, gesture=0):
                         channel.send(
                             json.dumps(
                                 dict(
@@ -155,7 +182,7 @@ class HeadlessIntegrationTests(unittest.IsolatedAsyncioTestCase):
                                     owner=owner,
                                     capture_epoch=DEVICE,
                                     sequence=seq,
-                                    gesture=0,
+                                    gesture=gesture,
                                     action=action,
                                     outcome=outcome,
                                     device_uptime_ms=int(time.monotonic() * 1000),
@@ -179,8 +206,12 @@ class HeadlessIntegrationTests(unittest.IsolatedAsyncioTestCase):
                         if not self.no_ready:
                             status("ready")
                     elif d["type"] == "touch_event":
-                        if not self.no_alive:
-                            status("alive", d["sequence"])
+                        if d["action"] == 0:
+                            self.after_down.set()
+                        if d["action"] == 4 and not self.no_alive:
+                            status("alive", d["sequence"], gesture=d["gesture"])
+                        elif d["action"] != 4 and not self.no_pointer_ack:
+                            status("applied", d["sequence"], d["action"], d["gesture"])
                     elif d["type"] == "touch_close":
                         if not self.no_closed:
                             status("closed", action=3)
@@ -236,6 +267,106 @@ class HeadlessIntegrationTests(unittest.IsolatedAsyncioTestCase):
         self.assertTrue(report["success"], report)
         self.assertFalse(report["control"]["requested"])
         self.assertFalse(any(d.get("type") == "touch_open" for d in self.received))
+
+    async def test_current_apk_availability_before_admission_does_not_break_media(self):
+        self.availability_state = "manual"
+        session = HeadlessSession(SessionConfig(self.url, DEVICE, duration=1, probe_control=True))
+        report = await session.run("fixture-token")
+        self.assertTrue(report["success"], report)
+        self.assertEqual(report["control"]["availabilityState"], "manual")
+        self.assertTrue(report["control"]["participantClosedConfirmed"])
+
+    async def test_automation_availability_stops_before_asking_for_native_input(self):
+        self.availability_state = "automation"
+        session = HeadlessSession(SessionConfig(self.url, DEVICE, duration=1, probe_control=True))
+        report = await session.run("fixture-token")
+        self.assertEqual(report["failure"], "control_unavailable_automation")
+        self.assertFalse(any(d.get("type") == "touch_open" for d in self.received))
+
+    def probe_config(self, *, width=320, duration=2, hold_ms=1000):
+        return SessionConfig(
+            self.url,
+            DEVICE,
+            duration=duration,
+            probe_control=True,
+            pointer_probe=PointerProbe(
+                width,
+                180,
+                (
+                    ProbePoint(0, 0, 120, 80),
+                    ProbePoint(500, 2, 140, 80),
+                    ProbePoint(hold_ms, 1, 140, 80),
+                ),
+            ),
+        )
+
+    async def test_real_media_pointer_hold_move_release_and_exact_native_receipts(self):
+        self.availability_state = "manual"
+        session = HeadlessSession(self.probe_config())
+        report = await session.run("fixture-token")
+        self.assertTrue(report["success"], report)
+        self.assertTrue(report["control"]["nativeActionAppliedVerified"])
+        self.assertEqual(report["pointerProbe"]["appliedReceipts"], 3)
+        events = [v for v in self.received if v.get("type") == "touch_event"]
+        self.assertEqual([v["action"] for v in events if v["action"] != 4], [0, 2, 1])
+        self.assertTrue(any(v["action"] == 4 and v["gesture"] == 1 for v in events))
+        self.assertTrue(report["control"]["participantClosedConfirmed"])
+
+    async def test_unknown_down_does_not_send_move_or_repeat_and_still_closes(self):
+        self.availability_state = "manual"
+        self.no_pointer_ack = True
+        session = HeadlessSession(self.probe_config())
+        report = await session.run("fixture-token")
+        self.assertFalse(report["success"])
+        self.assertFalse(report["control"]["nativeActionAppliedVerified"])
+        self.assertEqual(
+            [
+                v["action"]
+                for v in self.received
+                if v.get("type") == "touch_event" and v["action"] != 4
+            ],
+            [0],
+        )
+        self.assertTrue(report["control"]["participantClosedConfirmed"])
+
+    async def test_probe_geometry_mismatch_never_opens_native_input(self):
+        self.availability_state = "manual"
+        session = HeadlessSession(self.probe_config(width=321))
+        report = await session.run("fixture-token")
+        self.assertEqual(report["failure"], "pointer_probe_geometry_mismatch")
+        self.assertFalse(any(d.get("type") == "touch_open" for d in self.received))
+
+    async def test_cancel_after_down_closes_participant_before_transport(self):
+        self.availability_state = "manual"
+        self.allow_cancel_close = True
+        session = HeadlessSession(self.probe_config(duration=5, hold_ms=4000))
+        task = asyncio.create_task(session.run("fixture-token"))
+        async with asyncio.timeout(5):
+            await self.after_down.wait()
+        task.cancel()
+        with self.assertRaises(asyncio.CancelledError):
+            await task
+        report = session.report()
+        self.assertTrue(report["control"]["participantClosedConfirmed"])
+        self.assertFalse(report["pointerProbe"]["complete"])
+        self.assertEqual(
+            [
+                v["action"]
+                for v in self.received
+                if v.get("type") == "touch_event" and v["action"] != 4
+            ],
+            [0],
+        )
+
+    async def test_stalled_video_releases_held_input_without_waiting_for_next_point(self):
+        self.availability_state = "manual"
+        self.stop_video = True
+        session = HeadlessSession(self.probe_config(duration=5, hold_ms=4000))
+        report = await session.run("fixture-token")
+        self.assertEqual(report["failure"], "pointer_probe_receiver_frame_stale")
+        self.assertTrue(report["control"]["participantClosedConfirmed"])
+        self.assertFalse(report["pointerProbe"]["complete"])
+        self.assertLess(report["durationObservedSeconds"], 2)
 
     async def test_lost_actor_receipt_fails_and_still_closes_participant(self):
         self.no_alive = True

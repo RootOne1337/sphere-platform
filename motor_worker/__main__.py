@@ -10,13 +10,14 @@ import os
 import sys
 from pathlib import Path
 
+from motor_worker.pointer_probe import PointerProbe
 from motor_worker.protocol import ProtocolError
 from motor_worker.session import HeadlessSession, SessionConfig
 
 
 def main() -> int:
     parser = argparse.ArgumentParser(
-        description="Direct APK video + optional idle native admission. No model/game input."
+        description="Direct APK video, idle admission or opt-in finite pointer probe. No model."
     )
     parser.add_argument("--base-url", required=True)
     parser.add_argument("--device", required=True)
@@ -25,9 +26,14 @@ def main() -> int:
     parser.add_argument(
         "--probe-control",
         action="store_true",
-        help="OPEN/idle HEARTBEAT/CLOSE only; never click or type",
+        help="Confirm native admission; idle only unless --pointer-probe is also supplied",
     )
     parser.add_argument("--stun", choices=["stun:stun.cloudflare.com:3478"])
+    parser.add_argument(
+        "--pointer-probe",
+        type=Path,
+        help="Opt-in real single-finger path JSON, max5s/64points; requires --probe-control",
+    )
     parser.add_argument(
         "--existing-capture",
         action="store_true",
@@ -42,6 +48,17 @@ def main() -> int:
     # emits only our finite structured report and fixed errors.
     logging.disable(logging.CRITICAL)
     try:
+        probe = None
+        if args.pointer_probe:
+            try:
+                with args.pointer_probe.open("rb") as source:
+                    raw = source.read(16385)
+            except OSError as exc:
+                raise ProtocolError("pointer_probe_file_unavailable") from exc
+            try:
+                probe = PointerProbe.parse(raw.decode("utf-8"))
+            except UnicodeDecodeError as exc:
+                raise ProtocolError("invalid_pointer_probe") from exc
         config = SessionConfig(
             args.base_url,
             args.device,
@@ -50,6 +67,7 @@ def main() -> int:
             args.probe_control,
             args.stun,
             not args.existing_capture,
+            probe,
         )
         token = os.environ.get("SPHERE_ACCESS_TOKEN", "")
         if not token:

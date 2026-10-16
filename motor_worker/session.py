@@ -1,7 +1,7 @@
-"""Finite headless video receiver and optional idle control-admission probe.
+"""Finite headless video receiver, idle admission and opt-in pointer probe.
 
 Uses existing authenticated signaling; no server-media fallback and no gameplay
-commands. One peer, one decoded-frame slot, one outstanding echo/idle receipt.
+profiles. One peer, one decoded-frame slot, one outstanding native receipt.
 """
 
 from __future__ import annotations
@@ -19,8 +19,10 @@ from dataclasses import dataclass
 from importlib.metadata import version
 
 from motor_worker.observation import LatestFrame
+from motor_worker.pointer_probe import PointerProbe
 from motor_worker.protocol import (
     ControlAdmission,
+    InputAvailability,
     ProtocolError,
     VideoBinding,
     integer,
@@ -41,6 +43,7 @@ class SessionConfig:
     probe_control: bool = False
     stun_url: str | None = None
     capture_lifecycle: bool = True
+    pointer_probe: PointerProbe | None = None
 
     def __post_init__(self) -> None:
         signaling_url(self.base_url, self.device_id)
@@ -55,6 +58,12 @@ class SessionConfig:
             raise ProtocolError("invalid_control_option")
         if self.stun_url is not None and self.stun_url != "stun:stun.cloudflare.com:3478":
             raise ProtocolError("invalid_stun_option")
+        if self.pointer_probe is not None and (
+            type(self.pointer_probe) is not PointerProbe
+            or not self.probe_control
+            or self.duration < self.pointer_probe.points[-1].at_ms / 1000 + 1
+        ):
+            raise ProtocolError("invalid_pointer_probe_budget")
 
 
 def _rgb_sample(frame) -> dict:
@@ -76,6 +85,7 @@ class HeadlessSession:
         self.binding: VideoBinding | None = None
         self.session: str | None = None
         self.admission: ControlAdmission | None = None
+        self.availability: InputAvailability | None = None
         self.frames = LatestFrame()
         self.failure: str | None = None
         self.failed = asyncio.Event()
@@ -109,6 +119,9 @@ class HeadlessSession:
         self.task_failure: dict | None = None
         self.observations_at_start = 0
         self.decoded_at_start = 0
+        self.probe_started_at: float | None = None
+        self.probe_index = 0
+        self.probe_samples: deque[dict] = deque(maxlen=64)
 
     def fail(self, reason: str) -> None:
         if not self.closing and self.failure is None:
@@ -263,6 +276,7 @@ class HeadlessSession:
                 ):
                     raise ProtocolError("invalid_answer")
                 self.session = answer["session_id"]
+                self.availability = InputAvailability(self.session)
                 self.phase = "remote_description"
                 async with asyncio.timeout(5):
                     await self.peer.setRemoteDescription(
@@ -369,6 +383,8 @@ class HeadlessSession:
                 raise ProtocolError("missing_session_binding")
             if self.binding is None:
                 self.binding = VideoBinding.parse(raw, self.session)
+                if self.availability:
+                    self.availability.bind(self.binding.epoch)
                 if self.capture_dimensions is not None and self.capture_dimensions != (
                     self.binding.width,
                     self.binding.height,
@@ -387,11 +403,21 @@ class HeadlessSession:
 
     def _control_message(self, raw: object) -> None:
         try:
+            data = message(raw, 1024)
+            if data.get("type") == "input_availability":
+                if self.availability is None:
+                    raise ProtocolError("missing_availability_session")
+                self.availability.receive(data)
+                if self.availability.state != "manual":
+                    self.fail("control_unavailable_" + self.availability.state)
+                return
             if self.admission is None:
                 raise ProtocolError("unsolicited_control_message")
             self.admission.receive(raw, time.perf_counter())
             if self.admission.failure:
                 self.fail(self.admission.failure)
+            elif self.admission.closed and not self.admission.closing:
+                self.fail("control_participant_revoked")
         except ProtocolError as exc:
             self.fail(str(exc))
 
@@ -490,10 +516,20 @@ class HeadlessSession:
                 and self.control.readyState == "open"
                 and not self.open_sent
             ):
-                self.admission = ControlAdmission(self.session, self.binding)
+                probe = self.config.pointer_probe
+                if probe and (probe.width, probe.height) != (
+                    self.binding.width,
+                    self.binding.height,
+                ):
+                    raise ProtocolError("pointer_probe_geometry_mismatch")
+                self.admission = ControlAdmission(
+                    self.session, self.binding, allow_pointer=probe is not None
+                )
                 self.open_sent = True
                 self.control_open_at = now
                 self._send_control(self.admission.open_message())
+            if self.config.pointer_probe and self.admission and self.admission.ready:
+                self._tick_pointer_probe(now)
             if self.admission and self.admission.ready and now - heartbeat_at >= 0.3:
                 packet = self.admission.heartbeat(now)
                 if packet:
@@ -520,6 +556,8 @@ class HeadlessSession:
                 if self.frames.latest is None or now - self.frames.latest.received_at > 3:
                     raise ProtocolError("video_frame_deadline")
                 if self.monitor_seconds >= self.config.duration:
+                    if self.config.pointer_probe and not self._probe_complete():
+                        raise ProtocolError("pointer_probe_incomplete")
                     if self.sample_count <= self.observations_at_start or self.echo_count < 1:
                         raise ProtocolError("observation_or_echo_unconfirmed")
                     if self.config.probe_control and (
@@ -542,6 +580,54 @@ class HeadlessSession:
                 echo_at = now
             await asyncio.sleep(0.02)
 
+    def _probe_complete(self) -> bool:
+        return bool(
+            self.config.pointer_probe
+            and self.admission
+            and self.probe_index == len(self.config.pointer_probe.points)
+            and self.admission.applied_receipts == self.probe_index
+            and self.admission.pending_event is None
+            and not self.admission.held
+        )
+
+    def _tick_pointer_probe(self, now: float) -> None:
+        probe, control = self.config.pointer_probe, self.admission
+        if not probe or not control:
+            return
+        if not self.availability or self.availability.state is None:
+            return  # Legacy READY alone does not authorize this opt-in probe.
+        if self.availability.state != "manual":
+            raise ProtocolError("pointer_probe_input_unavailable")
+        frame = self.frames.latest
+        if control.held and (frame is None or not 0 <= now - frame.received_at <= 0.25):
+            raise ProtocolError("pointer_probe_receiver_frame_stale")
+        if self.probe_index == len(probe.points):
+            return
+        if self.probe_started_at is None:
+            self.probe_started_at = now
+        point = probe.points[self.probe_index]
+        due = self.probe_started_at + point.at_ms / 1000
+        if now < due:
+            return
+        if now - due > 0.1:
+            raise ProtocolError("pointer_probe_schedule_missed")
+        if control.pending is not None:
+            return
+        if frame is None or not 0 <= now - frame.received_at <= 0.25:
+            raise ProtocolError("pointer_probe_receiver_frame_stale")
+        packet = control.pointer(point.action, point.x, point.y, now)
+        self.probe_index += 1
+        self.probe_samples.append(
+            dict(
+                sequence=packet["sequence"],
+                action=point.action,
+                receiverSequence=frame.receiver_sequence,
+                receiverFrameAgeMs=round((now - frame.received_at) * 1000, 3),
+                scheduleLatenessMs=round((now - due) * 1000, 3),
+            )
+        )
+        self._send_control(packet)
+
     def _send_control(self, packet: dict) -> None:
         if (
             not self.control
@@ -552,6 +638,9 @@ class HeadlessSession:
         self.control.send(json.dumps(packet, separators=(",", ":")))
 
     async def close_control(self) -> None:
+        if self.admission and self.admission.closed:
+            self.release_confirmed = True
+            return
         if self.admission and not self.admission.closing:
             try:
                 self._send_control(self.admission.close_message())
@@ -604,7 +693,9 @@ class HeadlessSession:
         control = self.admission
         return {
             "schemaVersion": 1,
-            "kind": "HEADLESS_TRANSPORT_PILOT_NOT_GAMEPLAY",
+            "kind": "HEADLESS_POINTER_PROBE_NOT_GAMEPLAY"
+            if self.config.pointer_probe
+            else "HEADLESS_TRANSPORT_PILOT_NOT_GAMEPLAY",
             "deviceId": self.config.device_id,
             "success": self.failure is None
             and self.monitor_seconds >= self.config.duration
@@ -655,15 +746,27 @@ class HeadlessSession:
                 "actorAliveReceipts": control.alive_receipts if control else 0,
                 "lastActorRttMs": control.last_actor_rtt_ms if control else None,
                 "participantClosedConfirmed": self.release_confirmed,
-                "nativeActionAppliedVerified": False,
-                "pointerKeyTextCommandsSent": 0,
+                "nativeActionAppliedVerified": self._probe_complete() and self.release_confirmed,
+                "pointerKeyTextCommandsSent": control.pointer_commands if control else 0,
+                "availabilityState": self.availability.state if self.availability else None,
+            },
+            "pointerProbe": {
+                "requested": self.config.pointer_probe is not None,
+                "expectedPoints": len(self.config.pointer_probe.points)
+                if self.config.pointer_probe
+                else 0,
+                "attemptedPoints": self.probe_index,
+                "appliedReceipts": control.applied_receipts if control else 0,
+                "lastNativeActionRttMs": control.last_action_rtt_ms if control else None,
+                "complete": self._probe_complete(),
+                "samples": list(self.probe_samples),
             },
             "bounds": {"decodedFrameSlots": 1, "observationTailLimit": 64, "inputReplay": False},
             "limitations": [
                 "No source capture frame ID/clock mapping: receiver age is not capture age.",
                 "Unique RTP PTS is transport progress, not proof of fresh Android source pixels.",
                 "Selected ICE pair proves a peer route, not LAN or VPN bypass.",
-                "Idle ALIVE is APK actor liveness; no native gameplay action was executed.",
+                "Idle ALIVE is actor liveness. Optional pointer ACKs prove dispatch, not game semantics or source-to-screen latency.",
                 "User JWT pilot only; service identity, task delegation and model integration remain open.",
             ],
             "modelInstalled": False,

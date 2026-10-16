@@ -7,6 +7,7 @@ from types import SimpleNamespace as NS
 from motor_worker.observation import LatestFrame
 from motor_worker.protocol import (
     ControlAdmission,
+    InputAvailability,
     ProtocolError,
     VideoBinding,
     message,
@@ -74,6 +75,69 @@ def sdp(direction="recvonly"):
 
 
 class ProtocolTests(unittest.TestCase):
+    def test_availability_before_video_is_bound_later_and_never_grants_native_ready(self):
+        p = InputAvailability(SESSION)
+        d = dict(
+            type="input_availability",
+            schema_version=1,
+            session_id=SESSION,
+            capture_epoch=EPOCH,
+            revision=0,
+            state="manual",
+            task_id=None,
+        )
+        p.receive(d)
+        p.bind(EPOCH)
+        p.receive(d)
+        self.assertEqual(p.state, "manual")
+        self.assertFalse(ControlAdmission(SESSION, CAPTURE).ready)
+
+    def test_foreign_stale_and_conflicting_availability_cannot_reopen_input(self):
+        p = InputAvailability(SESSION)
+        p.bind(EPOCH)
+        d = dict(
+            type="input_availability",
+            schema_version=1,
+            session_id=SESSION,
+            capture_epoch=EPOCH,
+            revision=2,
+            state="automation",
+            task_id="owned-task-1234",
+        )
+        p.receive(d)
+        for changed in [
+            dict(revision=1),
+            dict(state="manual", task_id=None),
+            dict(session_id=OWNER),
+            dict(capture_epoch=SESSION),
+            dict(schema_version=True),
+            dict(state=[]),
+            dict(state="manual"),
+            dict(task_id=None),
+            dict(extra=1),
+        ]:
+            with self.subTest(changed=changed), self.assertRaises(ProtocolError):
+                p.receive(d | changed)
+        self.assertEqual(p.state, "automation")
+        p.receive(d | dict(revision=3, state="manual", task_id=None))
+        self.assertEqual(p.state, "manual")
+
+    def test_availability_first_snapshot_cannot_change_capture_after_video_binding(self):
+        p = InputAvailability(SESSION)
+        p.receive(
+            dict(
+                type="input_availability",
+                schema_version=1,
+                session_id=SESSION,
+                capture_epoch=EPOCH,
+                revision=0,
+                state="manual",
+                task_id=None,
+            )
+        )
+        with self.assertRaisesRegex(ProtocolError, "foreign_availability_capture"):
+            p.bind("414ce0e9-4b93-4f96-b9ca-ee675f53835e")
+
     def test_only_tls_or_local_plaintext_and_canonical_device_identity(self):
         self.assertEqual(
             signaling_url("http://127.0.0.1:3015", EPOCH),

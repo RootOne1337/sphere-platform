@@ -1,7 +1,8 @@
 """Bounded implementation of the existing Sphere video/shared-admission wire.
 
-Does not import the backend or grant input authority. This pilot only emits OPEN,
-idle HEARTBEAT and CLOSE, never pointer/key/text/game actions.
+Does not import the backend or grant input authority. Default operation emits
+OPEN/idle HEARTBEAT/CLOSE only. Pointer events need a separate explicit opt-in;
+keys, text and game profiles are not implemented here.
 """
 
 from __future__ import annotations
@@ -180,10 +181,77 @@ class VideoBinding:
         return cls(epoch, width, height)
 
 
+class InputAvailability:
+    """A bound state snapshot; it never substitutes for native READY or an ACK."""
+
+    def __init__(self, session: str):
+        self.session = session
+        self.epoch: str | None = None
+        self.snapshot: dict | None = None
+
+    def bind(self, epoch: str) -> None:
+        if self.snapshot and self.snapshot["capture_epoch"] != epoch:
+            raise ProtocolError("foreign_availability_capture")
+        self.epoch = epoch
+
+    def receive(self, data: dict) -> None:
+        epoch = data.get("capture_epoch")
+        try:
+            canonical = (
+                isinstance(epoch, str)
+                and str(uuid.UUID(epoch)) == epoch
+                and uuid.UUID(epoch).int != 0
+            )
+        except ValueError:
+            canonical = False
+        state, task = data.get("state"), data.get("task_id")
+        if (
+            data.keys()
+            != {
+                "type",
+                "schema_version",
+                "session_id",
+                "capture_epoch",
+                "revision",
+                "state",
+                "task_id",
+            }
+            or data["type"] != "input_availability"
+            or not integer(data["schema_version"], 1, 1)
+            or data["session_id"] != self.session
+            or not canonical
+            or self.epoch is not None
+            and epoch != self.epoch
+            or not integer(data["revision"], 0, 2**53 - 1)
+            or not isinstance(state, str)
+            or state not in {"manual", "preparing", "automation", "cleanup_unknown"}
+            or task is not None
+            and (not isinstance(task, str) or not re.fullmatch(r"[A-Za-z0-9_-]{8,128}", task))
+            or state in {"preparing", "automation"}
+            and task is None
+            or state == "manual"
+            and task is not None
+        ):
+            raise ProtocolError("invalid_input_availability")
+        if self.snapshot and (
+            data["revision"] < self.snapshot["revision"]
+            or data["revision"] == self.snapshot["revision"]
+            and data != self.snapshot
+        ):
+            raise ProtocolError("stale_or_conflicting_availability")
+        self.snapshot = dict(data)
+
+    @property
+    def state(self) -> str | None:
+        return self.snapshot["state"] if self.snapshot else None
+
+
 class ControlAdmission:
     """Finite observer of native admission. READY is never inferred from media."""
 
-    def __init__(self, session: str, binding: VideoBinding):
+    def __init__(self, session: str, binding: VideoBinding, *, allow_pointer: bool = False):
+        if type(allow_pointer) is not bool:
+            raise ProtocolError("invalid_control_option")
         self.session, self.binding = session, binding
         self.owner: str | None = None
         self.ready = False
@@ -195,6 +263,14 @@ class ControlAdmission:
         self.pending: tuple[int, float] | None = None
         self.alive_receipts = 0
         self.last_actor_rtt_ms: float | None = None
+        self.allow_pointer = allow_pointer
+        self.pending_event: tuple[int, int] | None = None
+        self.held = False
+        self.gesture = 0
+        self.xy = (0, 0)
+        self.pointer_commands = 0
+        self.applied_receipts = 0
+        self.last_action_rtt_ms: float | None = None
 
     def open_message(self) -> dict:
         return {
@@ -254,6 +330,8 @@ class ControlAdmission:
             self.closed = True
             self.ready = False
             self.pending = None
+            self.pending_event = None
+            self.held = False
         elif outcome == "ready" and seq == 0 and data["gesture"] == 0 and data["action"] == 4:
             if self.closing or self.closed or self.failure or self.ever_ready:
                 raise ProtocolError("unexpected_control_ready")
@@ -263,12 +341,28 @@ class ControlAdmission:
             and self.ready
             and self.pending
             and seq == self.pending[0]
-            and data["gesture"] == 0
+            and self.pending_event is None
+            and data["gesture"] == (self.gesture if self.held else 0)
             and data["action"] == 4
         ):
             self.alive_receipts += 1
             self.last_actor_rtt_ms = max(0, (now - self.pending[1]) * 1000)
             self.pending = None
+        elif (
+            outcome == "applied"
+            and self.allow_pointer
+            and self.ready
+            and self.pending
+            and seq == self.pending[0]
+            and self.pending_event == (data["gesture"], data["action"])
+        ):
+            self.held = data["action"] in {0, 2}
+            self.applied_receipts += 1
+            self.last_action_rtt_ms = max(0, (now - self.pending[1]) * 1000)
+            self.pending = self.pending_event = None
+        elif outcome == "interrupted" and self.allow_pointer:
+            self.failure = "control_interrupted"
+            self.ready = False
         elif outcome in {"denied", "unknown", "expired", "invalid", "busy"}:
             self.failure = "control_" + outcome
             self.ready = False
@@ -279,8 +373,10 @@ class ControlAdmission:
         if not self.ready or self.closing or self.closed or self.failure:
             return None
         if self.pending:
-            if now - self.pending[1] >= 1:
-                raise ProtocolError("control_alive_deadline")
+            if now - self.pending[1] >= (0.5 if self.pending_event else 1):
+                raise ProtocolError(
+                    "control_action_deadline" if self.pending_event else "control_alive_deadline"
+                )
             return None
         self.sequence += 1
         if self.sequence > 2147483647:
@@ -289,11 +385,43 @@ class ControlAdmission:
         return {
             "type": "touch_event",
             "sequence": self.sequence,
-            "gesture": 0,
+            "gesture": self.gesture if self.held else 0,
             "action": 4,
-            "x": 0,
-            "y": 0,
+            "x": self.xy[0],
+            "y": self.xy[1],
         }
+
+    def pointer(self, action: int, x: int, y: int, now: float) -> dict:
+        if (
+            not self.allow_pointer
+            or not self.ready
+            or self.closing
+            or self.closed
+            or self.failure
+            or self.pending is not None
+            or not integer(action, 0, 3)
+            or not integer(x, 0, self.binding.width - 1)
+            or not integer(y, 0, self.binding.height - 1)
+            or (self.held if action == 0 else not self.held)
+        ):
+            raise ProtocolError("pointer_not_admitted")
+        if action == 0:
+            self.gesture += 1
+        self.sequence += 1
+        if self.sequence > 2147483647 or self.gesture > 2147483647:
+            raise ProtocolError("control_sequence_limit")
+        self.pending = self.sequence, now
+        self.pending_event = self.gesture, action
+        self.xy = x, y
+        self.pointer_commands += 1  # Reserve before a potentially partial send; never retry.
+        return dict(
+            type="touch_event",
+            sequence=self.sequence,
+            gesture=self.gesture,
+            action=action,
+            x=x,
+            y=y,
+        )
 
     def close_message(self) -> dict:
         self.closing = True
