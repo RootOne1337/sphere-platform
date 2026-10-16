@@ -192,6 +192,10 @@ export function DeviceStream({
   const [directEndpoint, setDirectEndpoint] = useState<DirectControlEndpoint | null>(null);
   const availabilityRef = useRef<{ endpoint: DirectControlEndpoint; value: InputAvailability } | null>(null);
   const [inputAvailability, setInputAvailability] = useState<{ endpoint: DirectControlEndpoint; value: InputAvailability } | null>(null);
+  const hasInputReservation = () => {
+    const snapshot = availabilityRef.current;
+    return !!snapshot && snapshot.endpoint === directControlRef.current && snapshot.value.state !== 'manual';
+  };
   const continuousRouteRef = useRef<DirectControlEndpoint | null>(null);
   const [directControlVersion, setDirectControlVersion] = useState(0);
   const [controlTransport, setControlTransport] = useState<'server_websocket' | 'direct_webrtc'>('server_websocket');
@@ -405,7 +409,8 @@ export function DeviceStream({
       } else if (previous?.endpoint === directEndpoint && previous.value.state !== 'manual') {
         // Availability never substitutes for native RELEASE. Only a closed
         // controller may admit a fresh participant on this same media peer.
-        if (continuousRef.current?.state === 'closed') {
+        if (!continuousRef.current || continuousRef.current.state === 'closed') {
+          continuousRequestedRef.current = false;
           automaticProbeRef.current = null;
           continuousFaultRef.current = false; setContinuousFault(false);
           idleRecoveringRef.current = false; setIdleRecovering(false);
@@ -725,7 +730,7 @@ export function DeviceStream({
         };
         const admitContinuous = (capture: CaptureFrameBinding, endpoint: DirectControlEndpoint | null) => {
           if (ignore || ended || newWs !== wsRef.current || newWs.readyState !== WebSocket.OPEN
-            || !continuousAllowedRef.current || discreteBusyRef.current || dragRef.current
+            || hasInputReservation() || !continuousAllowedRef.current || discreteBusyRef.current || dragRef.current
             || continuousRef.current && !["closed", "destroyed"].includes(continuousRef.current.state)) return false;
           const inputTransport = endpoint ? new DirectPointerTransport(newWs, endpoint) : newWs;
           continuousRouteRef.current = endpoint;
@@ -1181,7 +1186,7 @@ export function DeviceStream({
     if (controller && !['closed', 'destroyed'].includes(controller.state)) {
       return;
     }
-    if (!canInteract || !wsRef.current || wsRef.current.readyState !== WebSocket.OPEN) return;
+    if (hasInputReservation() || !canInteract || !wsRef.current || wsRef.current.readyState !== WebSocket.OPEN) return;
     if (deferLegacyInput(!!diagnosticReporter.current?.sessionId, directVideoRef.current, directControlRef.current)) return;
     continuousDisposeRef.current?.();
     continuousDisposeRef.current = null;

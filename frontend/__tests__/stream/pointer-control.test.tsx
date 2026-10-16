@@ -219,6 +219,22 @@ it.each(['normal','early-manual','cleanup-unknown'])('keeps media while automati
   view.unmount();
 });
 
+it('a viewer arriving during automation resumes without waiting for its earlier capability probe',()=>{
+  mockCapture={captureEpoch:TOUCH_EPOCH,frameWidth:1280,frameHeight:720};
+  mockInputAdmission={admissionKnown:true,admitted:true,sharedInput:true};
+  const snapshot={type:'input_availability',schema_version:1,session_id:'a'.repeat(32),capture_epoch:TOUCH_EPOCH,
+    revision:4,state:'automation',task_id:'owned-task-1234'};
+  const endpoint={...directEndpoint(),sharedInput:true,availability:()=>snapshot};
+  const view=readyWheel();
+  act(()=>view.socket.onmessage?.({data:JSON.stringify({type:'stream_session',schema_version:1,history_enabled:true,session_id:'1'.repeat(16),report_interval_seconds:10})}));
+  act(()=>{mockDirectObserve?.(endpoint);mockVideoObserve?.({admitted:true,admissionKnown:true,sharedInput:true,active:true,frames:1,lastFrameAt:Date.now(),attempts:1,result:null});});
+  const opens=()=> (endpoint.send as jest.Mock).mock.calls.map(([raw])=>JSON.parse(raw)).filter(x=>x.type==='touch_open');
+  expect(opens()).toHaveLength(0);expect(mockVideoEligible).toBe(true);
+  act(()=>mockDirectReceipt?.({...snapshot,revision:5,state:'manual',task_id:null}));
+  expect(opens()).toHaveLength(1);expect(view.socket.close).not.toHaveBeenCalled();
+  view.unmount();
+});
+
 it('retains the negotiated control channel through a temporary View lock without allowing input', () => {
   mockCapture = { captureEpoch: TOUCH_EPOCH, frameWidth: 1280, frameHeight: 720 };
   const view = readyGestureFixture(true);
