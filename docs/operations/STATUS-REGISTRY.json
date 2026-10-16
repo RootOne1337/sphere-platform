@@ -1,8 +1,8 @@
 {
   "schemaVersion": 1,
-  "reviewedAtUtc": "2026-10-16T14:17:12.659672+00:00",
-  "sourceReviewed": "f7b6f6c130e2a76bdbc1d065a861d3ed186edf42",
-  "scope": "UI f7b6f6c1 installed on3015/Tuna: finite recording/handoff on PH011 and wall UI accepted; 2529 local frontend tests. Second controlling client still causes device_input_busy; PH025 needed an ICE retry. Full paths, low-FPS previews and new platform capabilities remain open. API27/APK79 preserved.",
+  "reviewedAtUtc": "2026-10-16T16:26:25.264633+00:00",
+  "sourceReviewed": "ed220169d6f357b69be28f0c6001a6b53690644c",
+  "scope": "UI ed220169 on3015/Tuna and APK80 installed on four online devices, exact package hashes plus completed OTA. PH011 finite 2/3-client task handoff, cancel, held DOWN and automatic manual resume accepted; media peers retained. Full paths, rich recording and global production SLA remain open. API27 preserved; 17 offline not updated.",
   "baseline": "docs/audits/2026-10-05/ENTERPRISE-PRODUCT-BACKLOG.json",
   "previousCrosscheck": "docs/audits/2026-10-09/CHAT-CODE-RECONCILIATION.json",
   "counts": {
@@ -11,76 +11,74 @@
     "open": 41
   },
   "installed": {
-    "lastObservedUtc": "2026-10-16T14:17:12.659672+00:00",
-    "ui": "f7b6f6c130e2a76bdbc1d065a861d3ed186edf42",
+    "lastObservedUtc": "2026-10-16T16:26:25.264633+00:00",
+    "ui": "ed220169d6f357b69be28f0c6001a6b53690644c",
     "api": "27f3a61fa5f2f3d2c1d8d56ed1dce7dbffe024a2",
-    "evidence": "docs/audits/2026-10-16/STUDIO-RECORDING-HANDOFF-DELIVERY.json",
-    "observation": "UI f7b6f6c1 installed on3015/Tuna: finite recording/handoff on PH011 and wall UI accepted; 2529 local frontend tests. Second controlling client still causes device_input_busy; PH025 needed an ICE retry. Full paths, low-FPS previews and new platform capabilities remain open. API27/APK79 preserved.",
+    "evidence": "docs/audits/2026-10-16/AUTOMATION-INPUT80-DELIVERY.json",
+    "observation": "UI ed220169 on3015/Tuna and APK80 installed on four online devices, exact package hashes plus completed OTA. PH011 finite 2/3-client task handoff, cancel, held DOWN and automatic manual resume accepted; media peers retained. Full paths, rich recording and global production SLA remain open. API27 preserved; 17 offline not updated.",
     "pilotApk": {
       "device": "auto-ph-011",
       "deviceId": "414ce0e9-4b93-4f96-b9ca-ee675f53835e",
-      "version": "1.2.79-dev",
-      "versionCode": 10279,
-      "sourceRevision": "9c9ef56cd3ef487b4fa19010ff9b8b5a68748445",
-      "apkSha256": "31c61aa8d38ea9f46074138e0cdd55bbbffac49e63320681954cd1a7e3576942",
-      "evidence": "docs/audits/2026-10-16/NATIVE-HEADROOM79-DELIVERY.json",
-      "evidenceSha256NormalizedLf": "e20f4bba0d343cf1ecc002d253761b6f5329fddcbecfb1c7fe7a6bb56e129b27",
-      "packageProofObservedAtUtc": "2026-10-16T13:15:20.663015+00:00",
-      "scope": "Exact installed package hash; finite PH011 checks and read-only PH030 observation are separate."
+      "version": "1.2.80-dev",
+      "versionCode": 10280,
+      "sourceRevision": "dd8146e828d3424224f12783c422f3253576d803",
+      "apkSha256": "7b8f8ec8ffab3804fcf00702834fb175fe702ff40f07e6e0f5bc4ea6df9f511b",
+      "evidence": "docs/audits/2026-10-16/AUTOMATION-INPUT80-DELIVERY.json",
+      "evidenceSha256NormalizedLf": "a170f4468607ac5f6bf05e0b6a1c080ac5c887478728e73b39a0cc7f6d241076",
+      "packageProofObservedAtUtc": "2026-10-16T16:26:25.264633+00:00",
+      "scope": "Exact installed package hash and completed OTA. Runtime multi-client acceptance is PH011 only."
     },
-    "evidenceSha256NormalizedLf": "f9a5d0d6c83c6d6aff7405ef37c7ea0bb383e74897e721bdfa850da301ac1294",
+    "evidenceSha256NormalizedLf": "a170f4468607ac5f6bf05e0b6a1c080ac5c887478728e73b39a0cc7f6d241076",
     "additionalPilotApks": [
       {
         "device": "auto-ph-030",
         "deviceId": "753fd530-2f19-4e5e-98ba-769863678141",
-        "version": "1.2.79-dev",
-        "versionCode": 10279,
-        "sourceRevision": "9c9ef56cd3ef487b4fa19010ff9b8b5a68748445",
-        "apkSha256": "31c61aa8d38ea9f46074138e0cdd55bbbffac49e63320681954cd1a7e3576942",
-        "evidence": "docs/audits/2026-10-16/NATIVE-HEADROOM79-DELIVERY.json",
-        "evidenceSha256NormalizedLf": "e20f4bba0d343cf1ecc002d253761b6f5329fddcbecfb1c7fe7a6bb56e129b27",
-        "packageProofObservedAtUtc": "2026-10-16T13:15:20.663015+00:00",
-        "scope": "Exact installed package hash; finite PH011 checks and read-only PH030 observation are separate."
+        "version": "1.2.80-dev",
+        "versionCode": 10280,
+        "sourceRevision": "dd8146e828d3424224f12783c422f3253576d803",
+        "apkSha256": "7b8f8ec8ffab3804fcf00702834fb175fe702ff40f07e6e0f5bc4ea6df9f511b",
+        "evidence": "docs/audits/2026-10-16/AUTOMATION-INPUT80-DELIVERY.json",
+        "evidenceSha256NormalizedLf": "a170f4468607ac5f6bf05e0b6a1c080ac5c887478728e73b39a0cc7f6d241076",
+        "packageProofObservedAtUtc": "2026-10-16T16:26:25.264633+00:00",
+        "scope": "Exact installed package hash and completed OTA. Runtime multi-client acceptance is PH011 only."
       },
       {
         "device": "auto-ph-025",
         "deviceId": "b410464a-5f26-4803-a756-7840cc17b128",
-        "version": "1.2.79-dev",
-        "versionCode": 10279,
-        "sourceRevision": "9c9ef56cd3ef487b4fa19010ff9b8b5a68748445",
-        "apkSha256": "31c61aa8d38ea9f46074138e0cdd55bbbffac49e63320681954cd1a7e3576942",
-        "evidence": "docs/audits/2026-10-16/NATIVE-HEADROOM79-DELIVERY.json",
-        "evidenceSha256NormalizedLf": "e20f4bba0d343cf1ecc002d253761b6f5329fddcbecfb1c7fe7a6bb56e129b27",
-        "packageProofObservedAtUtc": "2026-10-16T13:15:20.663015+00:00",
-        "scope": "Exact installed package hash; finite PH011 checks and read-only PH030 observation are separate."
+        "version": "1.2.80-dev",
+        "versionCode": 10280,
+        "sourceRevision": "dd8146e828d3424224f12783c422f3253576d803",
+        "apkSha256": "7b8f8ec8ffab3804fcf00702834fb175fe702ff40f07e6e0f5bc4ea6df9f511b",
+        "evidence": "docs/audits/2026-10-16/AUTOMATION-INPUT80-DELIVERY.json",
+        "evidenceSha256NormalizedLf": "a170f4468607ac5f6bf05e0b6a1c080ac5c887478728e73b39a0cc7f6d241076",
+        "packageProofObservedAtUtc": "2026-10-16T16:26:25.264633+00:00",
+        "scope": "Exact installed package hash and completed OTA. Runtime multi-client acceptance is PH011 only."
       },
       {
         "device": "auto-ph-010",
         "deviceId": "5df4805e-fe64-4d39-960c-19ceab206cd6",
-        "version": "1.2.79-dev",
-        "versionCode": 10279,
-        "sourceRevision": "9c9ef56cd3ef487b4fa19010ff9b8b5a68748445",
-        "apkSha256": "31c61aa8d38ea9f46074138e0cdd55bbbffac49e63320681954cd1a7e3576942",
-        "evidence": "docs/audits/2026-10-16/NATIVE-HEADROOM79-DELIVERY.json",
-        "evidenceSha256NormalizedLf": "e20f4bba0d343cf1ecc002d253761b6f5329fddcbecfb1c7fe7a6bb56e129b27",
-        "packageProofObservedAtUtc": "2026-10-16T13:15:20.663015+00:00",
-        "scope": "Exact installed package hash; finite PH011 checks and read-only PH030 observation are separate."
+        "version": "1.2.80-dev",
+        "versionCode": 10280,
+        "sourceRevision": "dd8146e828d3424224f12783c422f3253576d803",
+        "apkSha256": "7b8f8ec8ffab3804fcf00702834fb175fe702ff40f07e6e0f5bc4ea6df9f511b",
+        "evidence": "docs/audits/2026-10-16/AUTOMATION-INPUT80-DELIVERY.json",
+        "evidenceSha256NormalizedLf": "a170f4468607ac5f6bf05e0b6a1c080ac5c887478728e73b39a0cc7f6d241076",
+        "packageProofObservedAtUtc": "2026-10-16T16:26:25.264633+00:00",
+        "scope": "Exact installed package hash and completed OTA. Runtime multi-client acceptance is PH011 only."
       }
     ],
     "fleetApkEvidence": {
-      "evidence": "docs/audits/2026-10-16/NATIVE-HEADROOM79-DELIVERY.json",
-      "evidenceSha256NormalizedLf": "e20f4bba0d343cf1ecc002d253761b6f5329fddcbecfb1c7fe7a6bb56e129b27",
+      "evidence": "docs/audits/2026-10-16/AUTOMATION-INPUT80-DELIVERY.json",
+      "evidenceSha256NormalizedLf": "a170f4468607ac5f6bf05e0b6a1c080ac5c887478728e73b39a0cc7f6d241076",
       "installedCount": 4,
-      "completedOtaCount": 4,
-      "offlineCount": 17,
-      "partialPackageProofCount": 0,
       "verifiedVersionCounts": {
-        "10279": 4
-      }
+        "10280": 4
+      },
+      "scope": "Actual installed package hashes and completed receipts; 17 offline excluded."
     },
-    "latestReadbackAtUtc": "2026-10-16T14:17:12.659672+00:00",
-    "latestReadbackEvidence": "docs/audits/2026-10-16/STUDIO-RECORDING-HANDOFF-DELIVERY.json",
-    "latestReadbackEvidenceSha256NormalizedLf": "f9a5d0d6c83c6d6aff7405ef37c7ea0bb383e74897e721bdfa850da301ac1294",
+    "latestReadbackAtUtc": "2026-10-16T16:26:25.264633+00:00",
+    "latestReadbackEvidence": "docs/audits/2026-10-16/AUTOMATION-INPUT80-DELIVERY.json",
+    "latestReadbackEvidenceSha256NormalizedLf": "a170f4468607ac5f6bf05e0b6a1c080ac5c887478728e73b39a0cc7f6d241076",
     "previousRuntimeObservation": {
       "ui": "ed9d54d090e2b5a5d471502335ddf6b8b86dbd35",
       "api": "ed9d54d090e2b5a5d471502335ddf6b8b86dbd35",
@@ -1251,6 +1249,63 @@
       "evidence": "docs/audits/2026-10-16/IDLE-PEER-REJOIN-DELIVERY.json",
       "evidenceSha256NormalizedLf": "c2a9c3a3c9c3a16adac7db37d8e7e8a3572f404a229c8d0dc5d2be9270ea4998",
       "lastObservedUtc": "2026-10-16T13:39:53.008964+00:00"
+    },
+    "previousObservationBeforeInput80": {
+      "ui": "f7b6f6c130e2a76bdbc1d065a861d3ed186edf42",
+      "api": "27f3a61fa5f2f3d2c1d8d56ed1dce7dbffe024a2",
+      "evidence": "docs/audits/2026-10-16/STUDIO-RECORDING-HANDOFF-DELIVERY.json",
+      "evidenceSha256NormalizedLf": "f9a5d0d6c83c6d6aff7405ef37c7ea0bb383e74897e721bdfa850da301ac1294",
+      "lastObservedUtc": "2026-10-16T14:17:12.659672+00:00",
+      "pilotApk": {
+        "device": "auto-ph-011",
+        "deviceId": "414ce0e9-4b93-4f96-b9ca-ee675f53835e",
+        "version": "1.2.79-dev",
+        "versionCode": 10279,
+        "sourceRevision": "9c9ef56cd3ef487b4fa19010ff9b8b5a68748445",
+        "apkSha256": "31c61aa8d38ea9f46074138e0cdd55bbbffac49e63320681954cd1a7e3576942",
+        "evidence": "docs/audits/2026-10-16/NATIVE-HEADROOM79-DELIVERY.json",
+        "evidenceSha256NormalizedLf": "e20f4bba0d343cf1ecc002d253761b6f5329fddcbecfb1c7fe7a6bb56e129b27",
+        "packageProofObservedAtUtc": "2026-10-16T13:15:20.663015+00:00",
+        "scope": "Exact installed package hash; finite PH011 checks and read-only PH030 observation are separate."
+      },
+      "additionalPilotApks": [
+        {
+          "device": "auto-ph-030",
+          "deviceId": "753fd530-2f19-4e5e-98ba-769863678141",
+          "version": "1.2.79-dev",
+          "versionCode": 10279,
+          "sourceRevision": "9c9ef56cd3ef487b4fa19010ff9b8b5a68748445",
+          "apkSha256": "31c61aa8d38ea9f46074138e0cdd55bbbffac49e63320681954cd1a7e3576942",
+          "evidence": "docs/audits/2026-10-16/NATIVE-HEADROOM79-DELIVERY.json",
+          "evidenceSha256NormalizedLf": "e20f4bba0d343cf1ecc002d253761b6f5329fddcbecfb1c7fe7a6bb56e129b27",
+          "packageProofObservedAtUtc": "2026-10-16T13:15:20.663015+00:00",
+          "scope": "Exact installed package hash; finite PH011 checks and read-only PH030 observation are separate."
+        },
+        {
+          "device": "auto-ph-025",
+          "deviceId": "b410464a-5f26-4803-a756-7840cc17b128",
+          "version": "1.2.79-dev",
+          "versionCode": 10279,
+          "sourceRevision": "9c9ef56cd3ef487b4fa19010ff9b8b5a68748445",
+          "apkSha256": "31c61aa8d38ea9f46074138e0cdd55bbbffac49e63320681954cd1a7e3576942",
+          "evidence": "docs/audits/2026-10-16/NATIVE-HEADROOM79-DELIVERY.json",
+          "evidenceSha256NormalizedLf": "e20f4bba0d343cf1ecc002d253761b6f5329fddcbecfb1c7fe7a6bb56e129b27",
+          "packageProofObservedAtUtc": "2026-10-16T13:15:20.663015+00:00",
+          "scope": "Exact installed package hash; finite PH011 checks and read-only PH030 observation are separate."
+        },
+        {
+          "device": "auto-ph-010",
+          "deviceId": "5df4805e-fe64-4d39-960c-19ceab206cd6",
+          "version": "1.2.79-dev",
+          "versionCode": 10279,
+          "sourceRevision": "9c9ef56cd3ef487b4fa19010ff9b8b5a68748445",
+          "apkSha256": "31c61aa8d38ea9f46074138e0cdd55bbbffac49e63320681954cd1a7e3576942",
+          "evidence": "docs/audits/2026-10-16/NATIVE-HEADROOM79-DELIVERY.json",
+          "evidenceSha256NormalizedLf": "e20f4bba0d343cf1ecc002d253761b6f5329fddcbecfb1c7fe7a6bb56e129b27",
+          "packageProofObservedAtUtc": "2026-10-16T13:15:20.663015+00:00",
+          "scope": "Exact installed package hash; finite PH011 checks and read-only PH030 observation are separate."
+        }
+      ]
     }
   },
   "pendingCorrections": [],
@@ -1580,8 +1635,8 @@
     "primaryVideoInstalled": true,
     "primaryVideoObserved": true,
     "productionAccepted": false,
-    "currentObservationEvidence": "docs/audits/2026-10-16/STUDIO-RECORDING-HANDOFF-DELIVERY.json",
-    "currentObservationEvidenceSha256NormalizedLf": "f9a5d0d6c83c6d6aff7405ef37c7ea0bb383e74897e721bdfa850da301ac1294",
+    "currentObservationEvidence": "docs/audits/2026-10-16/AUTOMATION-INPUT80-DELIVERY.json",
+    "currentObservationEvidenceSha256NormalizedLf": "a170f4468607ac5f6bf05e0b6a1c080ac5c887478728e73b39a0cc7f6d241076",
     "pilotEvidenceScope": "UI331/API983 installed on 3015/Tuna; frontend-only input promotion fix, backend code tree unchanged; signed APK60 installed hashes and completed OTA commands confirmed on15 online devices. PH010 ordinary Chrome direct video/native gestures, actual server fallback and recovery, and mixed legacy viewer accepted finitely. Closest routes, physical network switching, shared input and full display latency remain OPEN.",
     "historicalPrimaryFrames": 1804,
     "directInputCandidate": {
@@ -1692,14 +1747,14 @@
     "historicalResearchScope": "Reviewed API/UI522 installed on both origins and signed APK55 hash verified on all15 compatible online devices. Finite server fallback video/held reverse gestures accepted on PH010/PH011/PH025. Current direct ICE, direct input, nearest path, latency SLA and soak NOT accepted.",
     "directInputObservedFinite": true,
     "currentPrimaryNetworkObservation": {
-      "outcome": "FINITE_STUDIO_HANDOFF_ACCEPTED_WITH_TASK_CONFLICT_AND_ICE_RETRY_OPEN",
+      "outcome": "FINITE_MULTICLIENT_AUTOMATION_HANDOFF_ACCEPTED",
       "deviceId": "414ce0e9-4b93-4f96-b9ca-ee675f53835e",
       "directChannelEstablished": true,
       "rawCandidateAddressesPublished": false,
-      "evidence": "docs/audits/2026-10-16/STUDIO-RECORDING-HANDOFF-DELIVERY.json",
-      "evidenceSha256NormalizedLf": "f9a5d0d6c83c6d6aff7405ef37c7ea0bb383e74897e721bdfa850da301ac1294",
-      "observedAtUtc": "2026-10-16T14:17:12.659672+00:00",
-      "topology": "Owned Chrome on3015/Tuna; PH011 recording/task, four read-only wall viewers. Physical LAN/localhost and hotspot topology not inferred.",
+      "evidence": "docs/audits/2026-10-16/AUTOMATION-INPUT80-DELIVERY.json",
+      "evidenceSha256NormalizedLf": "a170f4468607ac5f6bf05e0b6a1c080ac5c887478728e73b39a0cc7f6d241076",
+      "observedAtUtc": "2026-10-16T16:26:25.264633+00:00",
+      "topology": "Owned Chrome on3015/Tuna with PH011; two controllers, late third viewer and held gesture. Physical topology not inferred.",
       "localhostRouteProven": false,
       "latencySlaAccepted": false,
       "physicalNetworkSwitchAccepted": false
@@ -2014,6 +2069,19 @@
       "evidenceSha256NormalizedLf": "c2a9c3a3c9c3a16adac7db37d8e7e8a3572f404a229c8d0dc5d2be9270ea4998",
       "observedAtUtc": "2026-10-16T13:39:53.008964+00:00",
       "topology": "Owned Chrome: controlled idle ACK/SCTP loss on3015/Tuna, two-client gestures/navigation via Tuna. Physical topology not inferred.",
+      "localhostRouteProven": false,
+      "latencySlaAccepted": false,
+      "physicalNetworkSwitchAccepted": false
+    },
+    "previousNetworkObservationBeforeInput80": {
+      "outcome": "FINITE_STUDIO_HANDOFF_ACCEPTED_WITH_TASK_CONFLICT_AND_ICE_RETRY_OPEN",
+      "deviceId": "414ce0e9-4b93-4f96-b9ca-ee675f53835e",
+      "directChannelEstablished": true,
+      "rawCandidateAddressesPublished": false,
+      "evidence": "docs/audits/2026-10-16/STUDIO-RECORDING-HANDOFF-DELIVERY.json",
+      "evidenceSha256NormalizedLf": "f9a5d0d6c83c6d6aff7405ef37c7ea0bb383e74897e721bdfa850da301ac1294",
+      "observedAtUtc": "2026-10-16T14:17:12.659672+00:00",
+      "topology": "Owned Chrome on3015/Tuna; PH011 recording/task, four read-only wall viewers. Physical LAN/localhost and hotspot topology not inferred.",
       "localhostRouteProven": false,
       "latencySlaAccepted": false,
       "physicalNetworkSwitchAccepted": false
@@ -3594,11 +3662,12 @@
         "EP-019"
       ],
       "acceptedScope": "Finite completed straight swipe and tap recording; known unsupported/interrupted gestures no longer stop the whole queue. Local-UP pause clock separated from ACK. Installed UI f7 on3015/Tuna, not full continuous path replay.",
-      "remaining": "Versioned gesture_path contract/native executor/capability gates; full keyboard/held state and rich context. Unknown outcomes remain fenced.",
+      "remaining": "One node per entire timed pointer path, slow/held/backtracking motion and explicit inter-gesture pauses; new capability-gated contract/executor. Rich XPath/pixel/crop recording remains open.",
       "evidence": [
         "docs/audits/2026-10-09/CHAT-CODE-RECONCILIATION.md",
         "docs/design/CLIENT-STUDIO-PLATFORM.md",
-        "docs/audits/2026-10-16/STUDIO-RECORDING-HANDOFF-DELIVERY.json"
+        "docs/audits/2026-10-16/STUDIO-RECORDING-HANDOFF-DELIVERY.json",
+        "docs/audits/2026-10-16/AUTOMATION-INPUT80-DELIVERY.json"
       ],
       "sourcePaths": [
         "frontend/components/sphere/DeviceStream.tsx",
@@ -4290,20 +4359,39 @@
     {
       "id": "CHAT-35",
       "title": "Сценарий при других управляющих direct клиентах",
-      "state": "OPEN",
+      "state": "PARTIAL",
       "productItems": [
         "EP-020",
         "EP-029"
       ],
-      "acceptedScope": "Requirement and source audit recorded; implementation not accepted.",
-      "remaining": "Device-wide automation lease and confirmed release, preserve all media peers, auto-resume manual admission; reproduced device_input_busy remains P0.",
+      "acceptedScope": "APK80/Web ed220169: finite PH011 2-client tasks on3015/Tuna, cancellation, held DOWN and late third viewer; same media peers, fresh manual READY and new native Home applied.",
+      "remaining": "20-client/multi-network/long soak and immediate cancellation across long actions are not accepted. Full trajectory action/executor remains separate.",
       "evidence": [
         "docs/design/CLIENT-STUDIO-PLATFORM.md",
-        "docs/audits/2026-10-16/STUDIO-RECORDING-HANDOFF-DELIVERY.json"
+        "docs/audits/2026-10-16/STUDIO-RECORDING-HANDOFF-DELIVERY.json",
+        "docs/audits/2026-10-16/AUTOMATION-INPUT80-DELIVERY.json"
       ],
       "sourcePaths": [
         "android/app/src/main/kotlin/com/sphereplatform/agent/commands/SharedDirectInputController.kt",
         "android/app/src/main/kotlin/com/sphereplatform/agent/commands/DagRunner.kt"
+      ],
+      "fleetAccepted": false
+    },
+    {
+      "id": "CHAT-36",
+      "title": "Имена, описания, группы нод и полнота параметров",
+      "state": "OPEN",
+      "productItems": [
+        "EP-017"
+      ],
+      "acceptedScope": "Source audit and CS-16/17/18 requirements recorded; implementation not accepted.",
+      "remaining": "Display names separate from routing IDs, persisted metadata/undo/export, visual groups versus versioned subgraphs, per-node capability/parameter coverage.",
+      "evidence": [
+        "docs/design/CLIENT-STUDIO-PLATFORM.md"
+      ],
+      "sourcePaths": [
+        "frontend/src/features/scripts/studio/NodeInspector.tsx",
+        "backend/schemas/dag.py"
       ],
       "fleetAccepted": false
     }
@@ -5386,7 +5474,7 @@
       "fullGateG02Accepted": false,
       "preInputStartupRecoveryInstalled": true,
       "originalRootReadyTimeoutCauseMeasured": false,
-      "currentWebSource": "f7b6f6c130e2a76bdbc1d065a861d3ed186edf42",
+      "currentWebSource": "ed220169d6f357b69be28f0c6001a6b53690644c",
       "webStartupEvidence": "docs/audits/2026-10-16/INPUT-STARTUP-WEB-DELIVERY.json",
       "webStartupEvidenceSha256NormalizedLf": "f21703be4b4eb45516dd4e45453cec49c0d6dbd5ef165763d6f867bf4f6783a5",
       "currentApkRuntimeEvidence": "docs/audits/2026-10-16/NATIVE-HEADROOM79-DELIVERY.json",

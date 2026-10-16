@@ -1,6 +1,8 @@
 # Работы, требования пользователя и границы приёмки
 
-**Проверенная установка:** UI `f7b6f6c1` / API `27f3a61f`.
+**Проверенная установка:** UI `ed220169` / API `27f3a61f`.
+
+**16 октября — общий ввод сценария и зрителей.** Веб ed220169 установлен на3015/Tuna; APK80 подтверждён package SHA/OTA на четырёх online устройствах,17 offline не обновлены. На PH011 прошли запуск с двумя клиентами, отмена, удерживаемое касание и третий зритель; direct media peers сохранены, ручной READY вернулся автоматически. 2546 frontend tests; по1231 Android test в dev/enterprise. Полная запись траекторий, rich evidence и общая production-приёмка открыты. API27 сохранён. [Поставка и границы](../audits/2026-10-16/AUTOMATION-INPUT80-DELIVERY.md).
 
 **16 октября — запись, handoff и видеостена.** UI f7b6f6c1 установлен на3015/Tuna;2529 локальных frontend tests. На PH011 записаны прямой свайп/клик; после пропуска кривого жеста запись продолжается, задача Home завершена без смены media peer. Кнопки закреплены, пустые слоты/меню миниатюр убраны. Конфликт другого управляющего клиента (`device_input_busy`), первый ICE timeout PH025, полные траектории и лёгкие превью остаются открытыми. API27/APK79 сохранены. [Поставка и границы](../audits/2026-10-16/STUDIO-RECORDING-HANDOFF-DELIVERY.md).
 
@@ -802,10 +804,23 @@ Requirement and source audit recorded; implementation not accepted.
 
 ### CHAT-35 · Сценарий при других управляющих direct клиентах
 
+**PARTIAL**
+
+APK80 и веб ed220169 прошли конечные PH011-проверки с двумя клиентами, отменой,
+удерживаемым касанием и третьим поздним зрителем. Видео сохраняет media peers;
+после задания подтверждён новый ручной READY и native Home.
+
+Остаётся: 20 клиентов, длительная нагрузка и разные физические сети, быстрый cancel
+внутри длинных действий. Полные траектории — отдельный открытый контракт.
+
+[Поставка и границы](../audits/2026-10-16/AUTOMATION-INPUT80-DELIVERY.md).
+
+### CHAT-36 · Имена, описания, группы нод и полнота параметров
+
 **OPEN**
 
-Requirement and source audit recorded; implementation not accepted.
+Зафиксированы требования CS-16/17/18: отображаемое имя отдельно от routing ID,
+сохраняемые метаданные, undo/export/import, визуальные группы и версионированные
+исполняемые блоки, аудит параметров и реализации всех типов нод. Не реализовано.
 
-Остаётся: Device-wide automation lease and confirmed release, preserve all media peers, auto-resume manual admission; reproduced device_input_busy remains P0.
-
-[Контракт, очередность и критерии](../design/CLIENT-STUDIO-PLATFORM.md).
+[Контракт и критерии](../design/CLIENT-STUDIO-PLATFORM.md).
