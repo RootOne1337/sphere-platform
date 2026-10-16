@@ -1,6 +1,8 @@
 # Работы, требования пользователя и границы приёмки
 
-**Проверенная установка:** UI `3a036170` / API `27f3a61f`.
+**Проверенная установка:** UI `f7b6f6c1` / API `27f3a61f`.
+
+**16 октября — запись, handoff и видеостена.** UI f7b6f6c1 установлен на3015/Tuna;2529 локальных frontend tests. На PH011 записаны прямой свайп/клик; после пропуска кривого жеста запись продолжается, задача Home завершена без смены media peer. Кнопки закреплены, пустые слоты/меню миниатюр убраны. Конфликт другого управляющего клиента (`device_input_busy`), первый ICE timeout PH025, полные траектории и лёгкие превью остаются открытыми. API27/APK79 сохранены. [Поставка и границы](../audits/2026-10-16/STUDIO-RECORDING-HANDOFF-DELIVERY.md).
 
 **16 октября — восстановление без лишнего viewer reconnect.** UI3a036170 установлен на3015/Tuna; API27/APK79 сохранены. Потеря только idle ACK перед закрытием SCTP теперь допускает первый новый direct peer с собственным native READY; UNKNOWN очистки и неопределённые действия сохраняют строгую блокировку. 2523 локальных frontend tests; контролируемое восстановление на обоих адресах (1.734 с (3015), 2.401 с (Tuna)), два клиента Tuna подтвердили касания и навигацию. PH030 post-OTA delay остаётся отдельной открытой проверкой. [Поставка и границы](../audits/2026-10-16/IDLE-PEER-REJOIN-DELIVERY.md).
 
@@ -475,7 +477,9 @@ PH011: четыре APK confirmed outcome в порядке записи, оче
 
 ### CHAT-06 · Запись непрерывной траектории жеста
 
-**OPEN** · EP-018, EP-019.
+**OPEN**
+
+16 октября: завершённые прямой свайп и клик записаны на3015/Tuna; неподдержанный кривой жест явно пропускается, запись продолжается. Паузы используют local UP отдельно от ACK. Полная кривая ещё не воспроизводится. [Конечная приёмка](../audits/2026-10-16/STUDIO-RECORDING-HANDOFF-DELIVERY.md). · EP-018, EP-019.
 
 Рекордер сохраняет завершённые дискретные swipe endpoints. recordingMode выбирает discrete transport.
 
@@ -568,7 +572,7 @@ resource soak/retention и RAM acceptance.
 
 ### CHAT-14 · Подключаемые VPN providers и AI
 
-**DEFERRED_DESIGN** · EP-045, EP-046.
+**OPEN** · EP-045, EP-046.
 
 Требования и границы будущего этапа записаны; интеграция не объявлена установленной.
 
@@ -741,7 +745,7 @@ Installed native fullscreen, accessible44px Android tray and explicit touch togg
 
 ### CHAT-29 · Android файловый менеджер: папки, upload/download, очередь и resume
 
-**DEFERRED_DESIGN** · Новый функциональный scope; готов [контракт](../design/ANDROID-FILE-MANAGER.md).
+**OPEN** · Новый функциональный scope; готов [контракт](../design/ANDROID-FILE-MANAGER.md).
 
 Текущий APK76 не содержит общего файлового протокола. Нужны Android provider/capabilities,API,explorer и фактическая приёмка transfer/resume/integrity/cleanup без регрессии стрима и управления. Это не поставленный файловый менеджер.
 
@@ -750,3 +754,58 @@ Installed native fullscreen, accessible44px Android tray and explicit touch togg
 **OPEN** · Сообщение PH025 getprop/device_input_busy сопоставлено с общим input ownership в shell.
 
 Read-only profile должен выполнять типизированное чтение в отдельном worker; новый запрос на PH025 не запускался и APK не обновлялся. Нужна фактическая параллельная проверка после исправления.
+
+
+### CHAT-31 · Все настройки UI синхронизируются по аккаунту
+
+**OPEN**
+
+Requirement and source audit recorded; implementation not accepted.
+
+Остаётся: Versioned server profile/ETag, identity-bound local cache, all preferences, conflict/offline/multi-browser acceptance.
+
+[Контракт, очередность и критерии](../design/CLIENT-STUDIO-PLATFORM.md).
+
+
+### CHAT-32 · Проверка неизменяемого несохранённого сценария на выбранном Android
+
+**OPEN**
+
+Requirement and source audit recorded; implementation not accepted.
+
+Остаётся: Immutable draft execution endpoint, server validation/RBAC/capability and input handoff; do not silently publish or mutate current script.
+
+[Контракт, очередность и критерии](../design/CLIENT-STUDIO-PLATFORM.md).
+
+
+### CHAT-33 · ИИ-конструктор: именованные ключи, полный контракт и визуальный proposal
+
+**OPEN**
+
+Requirement and source audit recorded; implementation not accepted.
+
+Остаётся: Encrypted named model connections, current contract/context assembly, strict proposals/diff and independent server validation; no actual inference accepted.
+
+[Контракт, очередность и критерии](../design/CLIENT-STUDIO-PLATFORM.md).
+
+
+### CHAT-34 · Динамические проекты и изолированные обновляемые плагины
+
+**OPEN**
+
+Requirement and source audit recorded; implementation not accepted.
+
+Остаётся: Project resources/revision/outbox without API restart; isolated versioned plugin SDK and lifecycle, migrations/rollback/drain. Python/DDL deployment is separate.
+
+[Контракт, очередность и критерии](../design/CLIENT-STUDIO-PLATFORM.md).
+
+
+### CHAT-35 · Сценарий при других управляющих direct клиентах
+
+**OPEN**
+
+Requirement and source audit recorded; implementation not accepted.
+
+Остаётся: Device-wide automation lease and confirmed release, preserve all media peers, auto-resume manual admission; reproduced device_input_busy remains P0.
+
+[Контракт, очередность и критерии](../design/CLIENT-STUDIO-PLATFORM.md).

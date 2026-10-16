@@ -1,8 +1,8 @@
 {
   "schemaVersion": 1,
-  "reviewedAtUtc": "2026-10-16T13:39:53.008964+00:00",
-  "sourceReviewed": "3a036170960e50559f16e34dd14077bb56a296ec",
-  "scope": "UI3a036170 installed on3015/Tuna: idle-only timeout followed by dead SCTP admits the first fresh direct peer with native READY; 2523 local frontend tests, finite controlled recovery on both origins and two-client Tuna input passed. API27/APK79 preserved; PH030 post-OTA delay, broad network/load SLA and full CI migration remain open.",
+  "reviewedAtUtc": "2026-10-16T14:17:12.659672+00:00",
+  "sourceReviewed": "f7b6f6c130e2a76bdbc1d065a861d3ed186edf42",
+  "scope": "UI f7b6f6c1 installed on3015/Tuna: finite recording/handoff on PH011 and wall UI accepted; 2529 local frontend tests. Second controlling client still causes device_input_busy; PH025 needed an ICE retry. Full paths, low-FPS previews and new platform capabilities remain open. API27/APK79 preserved.",
   "baseline": "docs/audits/2026-10-05/ENTERPRISE-PRODUCT-BACKLOG.json",
   "previousCrosscheck": "docs/audits/2026-10-09/CHAT-CODE-RECONCILIATION.json",
   "counts": {
@@ -11,11 +11,11 @@
     "open": 41
   },
   "installed": {
-    "lastObservedUtc": "2026-10-16T13:39:53.008964+00:00",
-    "ui": "3a036170960e50559f16e34dd14077bb56a296ec",
+    "lastObservedUtc": "2026-10-16T14:17:12.659672+00:00",
+    "ui": "f7b6f6c130e2a76bdbc1d065a861d3ed186edf42",
     "api": "27f3a61fa5f2f3d2c1d8d56ed1dce7dbffe024a2",
-    "evidence": "docs/audits/2026-10-16/IDLE-PEER-REJOIN-DELIVERY.json",
-    "observation": "UI3a036170 installed on3015/Tuna: idle-only timeout followed by dead SCTP admits the first fresh direct peer with native READY; 2523 local frontend tests, finite controlled recovery on both origins and two-client Tuna input passed. API27/APK79 preserved; PH030 post-OTA delay, broad network/load SLA and full CI migration remain open.",
+    "evidence": "docs/audits/2026-10-16/STUDIO-RECORDING-HANDOFF-DELIVERY.json",
+    "observation": "UI f7b6f6c1 installed on3015/Tuna: finite recording/handoff on PH011 and wall UI accepted; 2529 local frontend tests. Second controlling client still causes device_input_busy; PH025 needed an ICE retry. Full paths, low-FPS previews and new platform capabilities remain open. API27/APK79 preserved.",
     "pilotApk": {
       "device": "auto-ph-011",
       "deviceId": "414ce0e9-4b93-4f96-b9ca-ee675f53835e",
@@ -28,7 +28,7 @@
       "packageProofObservedAtUtc": "2026-10-16T13:15:20.663015+00:00",
       "scope": "Exact installed package hash; finite PH011 checks and read-only PH030 observation are separate."
     },
-    "evidenceSha256NormalizedLf": "c2a9c3a3c9c3a16adac7db37d8e7e8a3572f404a229c8d0dc5d2be9270ea4998",
+    "evidenceSha256NormalizedLf": "f9a5d0d6c83c6d6aff7405ef37c7ea0bb383e74897e721bdfa850da301ac1294",
     "additionalPilotApks": [
       {
         "device": "auto-ph-030",
@@ -78,9 +78,9 @@
         "10279": 4
       }
     },
-    "latestReadbackAtUtc": "2026-10-16T13:39:53.008964+00:00",
-    "latestReadbackEvidence": "docs/audits/2026-10-16/IDLE-PEER-REJOIN-DELIVERY.json",
-    "latestReadbackEvidenceSha256NormalizedLf": "c2a9c3a3c9c3a16adac7db37d8e7e8a3572f404a229c8d0dc5d2be9270ea4998",
+    "latestReadbackAtUtc": "2026-10-16T14:17:12.659672+00:00",
+    "latestReadbackEvidence": "docs/audits/2026-10-16/STUDIO-RECORDING-HANDOFF-DELIVERY.json",
+    "latestReadbackEvidenceSha256NormalizedLf": "f9a5d0d6c83c6d6aff7405ef37c7ea0bb383e74897e721bdfa850da301ac1294",
     "previousRuntimeObservation": {
       "ui": "ed9d54d090e2b5a5d471502335ddf6b8b86dbd35",
       "api": "ed9d54d090e2b5a5d471502335ddf6b8b86dbd35",
@@ -1244,6 +1244,13 @@
       ],
       "deviceCommandsSent": 0,
       "scope": "Read-only current inventory joined to earlier exact OTA/package proofs; offline update delivery is pending, not queued."
+    },
+    "previousObservationBeforeStudioHandoff": {
+      "ui": "3a036170960e50559f16e34dd14077bb56a296ec",
+      "api": "27f3a61fa5f2f3d2c1d8d56ed1dce7dbffe024a2",
+      "evidence": "docs/audits/2026-10-16/IDLE-PEER-REJOIN-DELIVERY.json",
+      "evidenceSha256NormalizedLf": "c2a9c3a3c9c3a16adac7db37d8e7e8a3572f404a229c8d0dc5d2be9270ea4998",
+      "lastObservedUtc": "2026-10-16T13:39:53.008964+00:00"
     }
   },
   "pendingCorrections": [],
@@ -1573,8 +1580,8 @@
     "primaryVideoInstalled": true,
     "primaryVideoObserved": true,
     "productionAccepted": false,
-    "currentObservationEvidence": "docs/audits/2026-10-16/IDLE-PEER-REJOIN-DELIVERY.json",
-    "currentObservationEvidenceSha256NormalizedLf": "c2a9c3a3c9c3a16adac7db37d8e7e8a3572f404a229c8d0dc5d2be9270ea4998",
+    "currentObservationEvidence": "docs/audits/2026-10-16/STUDIO-RECORDING-HANDOFF-DELIVERY.json",
+    "currentObservationEvidenceSha256NormalizedLf": "f9a5d0d6c83c6d6aff7405ef37c7ea0bb383e74897e721bdfa850da301ac1294",
     "pilotEvidenceScope": "UI331/API983 installed on 3015/Tuna; frontend-only input promotion fix, backend code tree unchanged; signed APK60 installed hashes and completed OTA commands confirmed on15 online devices. PH010 ordinary Chrome direct video/native gestures, actual server fallback and recovery, and mixed legacy viewer accepted finitely. Closest routes, physical network switching, shared input and full display latency remain OPEN.",
     "historicalPrimaryFrames": 1804,
     "directInputCandidate": {
@@ -1685,14 +1692,14 @@
     "historicalResearchScope": "Reviewed API/UI522 installed on both origins and signed APK55 hash verified on all15 compatible online devices. Finite server fallback video/held reverse gestures accepted on PH010/PH011/PH025. Current direct ICE, direct input, nearest path, latency SLA and soak NOT accepted.",
     "directInputObservedFinite": true,
     "currentPrimaryNetworkObservation": {
-      "outcome": "FINITE_IDLE_REJOIN_AND_TWO_CLIENT_INPUT_ACCEPTED",
+      "outcome": "FINITE_STUDIO_HANDOFF_ACCEPTED_WITH_TASK_CONFLICT_AND_ICE_RETRY_OPEN",
       "deviceId": "414ce0e9-4b93-4f96-b9ca-ee675f53835e",
       "directChannelEstablished": true,
       "rawCandidateAddressesPublished": false,
-      "evidence": "docs/audits/2026-10-16/IDLE-PEER-REJOIN-DELIVERY.json",
-      "evidenceSha256NormalizedLf": "c2a9c3a3c9c3a16adac7db37d8e7e8a3572f404a229c8d0dc5d2be9270ea4998",
-      "observedAtUtc": "2026-10-16T13:39:53.008964+00:00",
-      "topology": "Owned Chrome: controlled idle ACK/SCTP loss on3015/Tuna, two-client gestures/navigation via Tuna. Physical topology not inferred.",
+      "evidence": "docs/audits/2026-10-16/STUDIO-RECORDING-HANDOFF-DELIVERY.json",
+      "evidenceSha256NormalizedLf": "f9a5d0d6c83c6d6aff7405ef37c7ea0bb383e74897e721bdfa850da301ac1294",
+      "observedAtUtc": "2026-10-16T14:17:12.659672+00:00",
+      "topology": "Owned Chrome on3015/Tuna; PH011 recording/task, four read-only wall viewers. Physical LAN/localhost and hotspot topology not inferred.",
       "localhostRouteProven": false,
       "latencySlaAccepted": false,
       "physicalNetworkSwitchAccepted": false
@@ -1994,6 +2001,19 @@
       "evidenceSha256NormalizedLf": "e20f4bba0d343cf1ecc002d253761b6f5329fddcbecfb1c7fe7a6bb56e129b27",
       "observedAtUtc": "2026-10-16T13:18:40.979986+00:00",
       "topology": "PH011: two Chrome clients on3015/Tuna, five-minute tunnel soak. URL does not prove LAN topology.",
+      "localhostRouteProven": false,
+      "latencySlaAccepted": false,
+      "physicalNetworkSwitchAccepted": false
+    },
+    "previousNetworkObservationBeforeStudioHandoff": {
+      "outcome": "FINITE_IDLE_REJOIN_AND_TWO_CLIENT_INPUT_ACCEPTED",
+      "deviceId": "414ce0e9-4b93-4f96-b9ca-ee675f53835e",
+      "directChannelEstablished": true,
+      "rawCandidateAddressesPublished": false,
+      "evidence": "docs/audits/2026-10-16/IDLE-PEER-REJOIN-DELIVERY.json",
+      "evidenceSha256NormalizedLf": "c2a9c3a3c9c3a16adac7db37d8e7e8a3572f404a229c8d0dc5d2be9270ea4998",
+      "observedAtUtc": "2026-10-16T13:39:53.008964+00:00",
+      "topology": "Owned Chrome: controlled idle ACK/SCTP loss on3015/Tuna, two-client gestures/navigation via Tuna. Physical topology not inferred.",
       "localhostRouteProven": false,
       "latencySlaAccepted": false,
       "physicalNetworkSwitchAccepted": false
@@ -3573,10 +3593,12 @@
         "EP-018",
         "EP-019"
       ],
-      "acceptedScope": "Рекордер сохраняет завершённые дискретные swipe endpoints. recordingMode выбирает discrete transport.",
-      "remaining": "Долговечная MOVE trajectory, нормализация времени/геометрии, лимиты, отмена и точное воспроизведение ещё не приняты.",
+      "acceptedScope": "Finite completed straight swipe and tap recording; known unsupported/interrupted gestures no longer stop the whole queue. Local-UP pause clock separated from ACK. Installed UI f7 on3015/Tuna, not full continuous path replay.",
+      "remaining": "Versioned gesture_path contract/native executor/capability gates; full keyboard/held state and rich context. Unknown outcomes remain fenced.",
       "evidence": [
-        "docs/audits/2026-10-09/CHAT-CODE-RECONCILIATION.md"
+        "docs/audits/2026-10-09/CHAT-CODE-RECONCILIATION.md",
+        "docs/design/CLIENT-STUDIO-PLATFORM.md",
+        "docs/audits/2026-10-16/STUDIO-RECORDING-HANDOFF-DELIVERY.json"
       ],
       "sourcePaths": [
         "frontend/components/sphere/DeviceStream.tsx",
@@ -3615,7 +3637,8 @@
       "acceptedScope": "Можно явно добавить выбранный XPath-кандидат; отдельный native PNG работает в принятом scope.",
       "remaining": "Автоматического pre-action tree/crop/pixel bundle со связанными кадром, командой и snapshot IDs нет. Нужны freshness, quotas, TTL и экспорт.",
       "evidence": [
-        "docs/audits/2026-10-09/CHAT-CODE-RECONCILIATION.md"
+        "docs/audits/2026-10-09/CHAT-CODE-RECONCILIATION.md",
+        "docs/design/CLIENT-STUDIO-PLATFORM.md"
       ],
       "sourcePaths": [],
       "fleetAccepted": false
@@ -3662,10 +3685,12 @@
         "EP-031",
         "EP-047"
       ],
-      "acceptedScope": "Текущая /stream wall использует full DeviceStream; grid до 64.",
-      "remaining": "128 thumbnails по 5/10 s, shared capture/budgets и Connect all/synchronized input с partial outcome/Stop требуют отдельной реализации и приёмки.",
+      "acceptedScope": "Wall presentation has no empty slots or per-tile overlay buttons; expands without new peer allocations. Full-rate transport unchanged.",
+      "remaining": "Independent APK <=1FPS low-resolution previews, bounded fanout/backpressure, 16/64/128 resource tests; PH025 first ICE deadline still observed.",
       "evidence": [
-        "docs/audits/2026-10-09/CHAT-CODE-RECONCILIATION.md"
+        "docs/audits/2026-10-09/CHAT-CODE-RECONCILIATION.md",
+        "docs/design/CLIENT-STUDIO-PLATFORM.md",
+        "docs/audits/2026-10-16/STUDIO-RECORDING-HANDOFF-DELIVERY.json"
       ],
       "sourcePaths": [
         "frontend/app/(dashboard)/stream/page.tsx"
@@ -3709,7 +3734,8 @@
       "acceptedScope": "Сценарии, задания, orchestration и pipeline доступны как отдельные текущие сущности.",
       "remaining": "Общий workspace/references, универсальные project resources/connectors и semantic composition ещё не приняты.",
       "evidence": [
-        "docs/audits/2026-10-09/CHAT-CODE-RECONCILIATION.md"
+        "docs/audits/2026-10-09/CHAT-CODE-RECONCILIATION.md",
+        "docs/design/CLIENT-STUDIO-PLATFORM.md"
       ],
       "sourcePaths": [],
       "fleetAccepted": false
@@ -3717,7 +3743,7 @@
     {
       "id": "CHAT-14",
       "title": "Подключаемые VPN providers и AI",
-      "state": "DEFERRED_DESIGN",
+      "state": "OPEN",
       "productItems": [
         "EP-045",
         "EP-046"
@@ -3728,7 +3754,8 @@
         "docs/architecture/AI-READINESS.md",
         "docs/audits/2026-10-16/NITROGEN-READINESS.md",
         "docs/audits/2026-10-16/NITROGEN-READINESS.json",
-        "docs/audits/2026-10-09/CHAT-CODE-RECONCILIATION.md"
+        "docs/audits/2026-10-09/CHAT-CODE-RECONCILIATION.md",
+        "docs/design/CLIENT-STUDIO-PLATFORM.md"
       ],
       "sourcePaths": [],
       "fleetAccepted": false
@@ -3780,7 +3807,8 @@
         "docs/audits/2026-10-14/DIRECT-SYSTEM-INPUT72-OBSERVATION.json",
         "docs/audits/2026-10-14/KEYBOARD76-PARTIAL-OBSERVATION.json",
         "docs/audits/2026-10-15/DIRECT-KEYBOARD76-OBSERVATION.json",
-        "docs/audits/2026-10-15/PH025-REMOTE-USER-OBSERVATION.json"
+        "docs/audits/2026-10-15/PH025-REMOTE-USER-OBSERVATION.json",
+        "docs/design/CLIENT-STUDIO-PLATFORM.md"
       ],
       "sourcePaths": [
         "backend/websocket/direct_probe_protocol.py",
@@ -3878,7 +3906,8 @@
         "docs/audits/2026-10-14/SHARED-INPUT-FULLSCREEN-INSTALLED.json",
         "docs/audits/2026-10-14/DIRECT-SYSTEM-INPUT72-OBSERVATION.json",
         "docs/audits/2026-10-14/KEYBOARD76-PARTIAL-OBSERVATION.json",
-        "docs/audits/2026-10-15/DIRECT-KEYBOARD76-OBSERVATION.json"
+        "docs/audits/2026-10-15/DIRECT-KEYBOARD76-OBSERVATION.json",
+        "docs/design/CLIENT-STUDIO-PLATFORM.md"
       ],
       "sourcePaths": [
         "backend/websocket/continuous_runtime.py",
@@ -4147,13 +4176,14 @@
     {
       "id": "CHAT-29",
       "title": "Android файловый менеджер: папки, upload/download, очередь и resume",
-      "state": "DEFERRED_DESIGN",
+      "state": "OPEN",
       "productItems": [],
       "acceptedScope": "Design prepared for browser explorer, typed Android storage provider, resumable HTTPS fallback and later direct file transport; current APK76 does not implement the proposed file protocol.",
       "remaining": "Implement filesystem capability/API/APK, explorer, actual transfers with integrity/resume/cleanup/resource limits and stream-control regression acceptance.",
       "evidence": [
         "docs/design/ANDROID-FILE-MANAGER.md",
-        "docs/audits/2026-10-15/UI-UX-VISUAL-AUDIT.md"
+        "docs/audits/2026-10-15/UI-UX-VISUAL-AUDIT.md",
+        "docs/design/CLIENT-STUDIO-PLATFORM.md"
       ],
       "sourcePaths": [
         "android/app/src/main/kotlin/com/sphereplatform/agent/commands/CommandDispatcher.kt",
@@ -4175,6 +4205,105 @@
       "sourcePaths": [
         "frontend/src/features/devices/AndroidProfilePanel.tsx",
         "android/app/src/main/kotlin/com/sphereplatform/agent/commands/AdbActionExecutor.kt"
+      ],
+      "fleetAccepted": false
+    },
+    {
+      "id": "CHAT-31",
+      "title": "Все настройки UI синхронизируются по аккаунту",
+      "state": "OPEN",
+      "productItems": [
+        "EP-011",
+        "EP-013"
+      ],
+      "acceptedScope": "Requirement and source audit recorded; implementation not accepted.",
+      "remaining": "Versioned server profile/ETag, identity-bound local cache, all preferences, conflict/offline/multi-browser acceptance.",
+      "evidence": [
+        "docs/design/CLIENT-STUDIO-PLATFORM.md",
+        "docs/audits/2026-10-16/STUDIO-RECORDING-HANDOFF-DELIVERY.json"
+      ],
+      "sourcePaths": [
+        "frontend/src/shared/store/useUIStore.ts",
+        "backend/models/user.py"
+      ],
+      "fleetAccepted": false
+    },
+    {
+      "id": "CHAT-32",
+      "title": "Проверка неизменяемого несохранённого сценария на выбранном Android",
+      "state": "OPEN",
+      "productItems": [
+        "EP-015",
+        "EP-017",
+        "EP-020"
+      ],
+      "acceptedScope": "Requirement and source audit recorded; implementation not accepted.",
+      "remaining": "Immutable draft execution endpoint, server validation/RBAC/capability and input handoff; do not silently publish or mutate current script.",
+      "evidence": [
+        "docs/design/CLIENT-STUDIO-PLATFORM.md",
+        "docs/audits/2026-10-16/STUDIO-RECORDING-HANDOFF-DELIVERY.json"
+      ],
+      "sourcePaths": [
+        "frontend/src/features/scripts/studio/DeviceWorkbench.tsx",
+        "backend/models/task.py"
+      ],
+      "fleetAccepted": false
+    },
+    {
+      "id": "CHAT-33",
+      "title": "ИИ-конструктор: именованные ключи, полный контракт и визуальный proposal",
+      "state": "OPEN",
+      "productItems": [
+        "EP-046"
+      ],
+      "acceptedScope": "Requirement and source audit recorded; implementation not accepted.",
+      "remaining": "Encrypted named model connections, current contract/context assembly, strict proposals/diff and independent server validation; no actual inference accepted.",
+      "evidence": [
+        "docs/design/CLIENT-STUDIO-PLATFORM.md",
+        "docs/audits/2026-10-16/STUDIO-RECORDING-HANDOFF-DELIVERY.json"
+      ],
+      "sourcePaths": [
+        "backend/api/v1/scripts/router.py"
+      ],
+      "fleetAccepted": false
+    },
+    {
+      "id": "CHAT-34",
+      "title": "Динамические проекты и изолированные обновляемые плагины",
+      "state": "OPEN",
+      "productItems": [
+        "EP-026",
+        "EP-042",
+        "EP-045"
+      ],
+      "acceptedScope": "Requirement and source audit recorded; implementation not accepted.",
+      "remaining": "Project resources/revision/outbox without API restart; isolated versioned plugin SDK and lifecycle, migrations/rollback/drain. Python/DDL deployment is separate.",
+      "evidence": [
+        "docs/design/CLIENT-STUDIO-PLATFORM.md",
+        "docs/audits/2026-10-16/STUDIO-RECORDING-HANDOFF-DELIVERY.json"
+      ],
+      "sourcePaths": [
+        "backend/models/script.py"
+      ],
+      "fleetAccepted": false
+    },
+    {
+      "id": "CHAT-35",
+      "title": "Сценарий при других управляющих direct клиентах",
+      "state": "OPEN",
+      "productItems": [
+        "EP-020",
+        "EP-029"
+      ],
+      "acceptedScope": "Requirement and source audit recorded; implementation not accepted.",
+      "remaining": "Device-wide automation lease and confirmed release, preserve all media peers, auto-resume manual admission; reproduced device_input_busy remains P0.",
+      "evidence": [
+        "docs/design/CLIENT-STUDIO-PLATFORM.md",
+        "docs/audits/2026-10-16/STUDIO-RECORDING-HANDOFF-DELIVERY.json"
+      ],
+      "sourcePaths": [
+        "android/app/src/main/kotlin/com/sphereplatform/agent/commands/SharedDirectInputController.kt",
+        "android/app/src/main/kotlin/com/sphereplatform/agent/commands/DagRunner.kt"
       ],
       "fleetAccepted": false
     }
@@ -5257,7 +5386,7 @@
       "fullGateG02Accepted": false,
       "preInputStartupRecoveryInstalled": true,
       "originalRootReadyTimeoutCauseMeasured": false,
-      "currentWebSource": "3a036170960e50559f16e34dd14077bb56a296ec",
+      "currentWebSource": "f7b6f6c130e2a76bdbc1d065a861d3ed186edf42",
       "webStartupEvidence": "docs/audits/2026-10-16/INPUT-STARTUP-WEB-DELIVERY.json",
       "webStartupEvidenceSha256NormalizedLf": "f21703be4b4eb45516dd4e45453cec49c0d6dbd5ef165763d6f867bf4f6783a5",
       "currentApkRuntimeEvidence": "docs/audits/2026-10-16/NATIVE-HEADROOM79-DELIVERY.json",

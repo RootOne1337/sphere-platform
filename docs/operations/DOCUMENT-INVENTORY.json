@@ -1,12 +1,12 @@
 {
   "schemaVersion": 1,
-  "reviewedAtUtc": "2026-10-16T13:39:53.008964+00:00",
+  "reviewedAtUtc": "2026-10-16T14:17:12.659672+00:00",
   "scope": "All tracked Markdown classified; active local-link paths scanned. Not semantic attestation of every sentence, command execution, external-link or live acceptance.",
   "countsByRole": {
     "ADR": 6,
     "CURRENT_ENTRYPOINT": 8,
-    "DATED_EVIDENCE": 333,
-    "DESIGN_SPECIFICATION": 80,
+    "DATED_EVIDENCE": 334,
+    "DESIGN_SPECIFICATION": 81,
     "OPERATING_GUIDE": 66,
     "PROJECT_POLICY": 7,
     "SUPPORTING_DOCUMENT": 7
@@ -1477,6 +1477,10 @@
       "role": "DATED_EVIDENCE"
     },
     {
+      "file": "docs/audits/2026-10-16/STUDIO-RECORDING-HANDOFF-DELIVERY.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
       "file": "docs/audits/enterprise-audit-2026-02-23.md",
       "role": "DATED_EVIDENCE"
     },
@@ -1498,6 +1502,10 @@
     },
     {
       "file": "docs/design/BROWSER-DIRECT-TRANSPORT.md",
+      "role": "DESIGN_SPECIFICATION"
+    },
+    {
+      "file": "docs/design/CLIENT-STUDIO-PLATFORM.md",
       "role": "DESIGN_SPECIFICATION"
     },
     {
