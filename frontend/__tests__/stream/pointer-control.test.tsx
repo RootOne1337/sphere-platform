@@ -174,10 +174,50 @@ function readyContinuous() {
 }
 
 function directEndpoint(): DirectControlEndpoint {
+  const listeners = new Set<(message: unknown) => void>();
   return { readyState: 1, bufferedAmount: 0, session: 'a'.repeat(32), send: jest.fn(),
     capture: () => ({ captureEpoch: TOUCH_EPOCH, width: 1280, height: 720 }),
-    listen: listener => { mockDirectReceipt = listener; return () => { mockDirectReceipt = null; }; } };
+    listen: listener => { listeners.add(listener); mockDirectReceipt = message => { for (const fn of [...listeners]) fn(message); };
+      return () => { listeners.delete(listener); }; } };
 }
+
+it.each(['normal','early-manual','cleanup-unknown'])('keeps media while automation owns input and requires native release before resuming: %s',variant=>{
+  mockCapture={captureEpoch:TOUCH_EPOCH,frameWidth:1280,frameHeight:720};
+  mockInputAdmission={admissionKnown:true,admitted:true,sharedInput:true};
+  const endpoint={...directEndpoint(),sharedInput:true};
+  const view=readyWheel();
+  act(()=>view.socket.onmessage?.({data:JSON.stringify({type:'stream_session',schema_version:1,history_enabled:true,session_id:'1'.repeat(16),report_interval_seconds:10})}));
+  act(()=>{mockDirectObserve?.(endpoint);mockVideoObserve?.({admitted:true,admissionKnown:true,sharedInput:true,active:true,frames:1,lastFrameAt:Date.now(),attempts:1,result:null});});
+  const receive=(m:object)=>act(()=>mockDirectReceipt?.(m));
+  const identity={session_id:endpoint.session,owner:'b'.repeat(32),capture_epoch:TOUCH_EPOCH};
+  receive({type:'touch_session',...identity,frame_width:1280,frame_height:720});
+  receive({type:'shared_input_status',...identity,sequence:0,gesture:0,action:4,outcome:'ready',device_uptime_ms:100});
+  const availability=(revision:number,state:string)=>receive({type:'input_availability',schema_version:1,session_id:endpoint.session,capture_epoch:TOUCH_EPOCH,
+    revision,state,task_id:state==='manual'?null:'owned-task-1234'});
+  availability(1,'preparing');
+  expect(view.container.querySelector('canvas')).toHaveAttribute('aria-disabled','true');
+  expect(mockVideoEligible).toBe(true);
+  if(variant==='early-manual')availability(3,'manual');
+  view.down(1);view.up(1);
+  const commands=()=> (endpoint.send as jest.Mock).mock.calls.map(([raw])=>JSON.parse(raw));
+  expect(commands().filter(x=>x.type==='touch_open')).toHaveLength(1);
+  if(variant==='cleanup-unknown'){
+    availability(2,'cleanup_unknown');
+    availability(1,'manual'); // A stale snapshot cannot reopen native input.
+    expect(view.container).toHaveTextContent('освобождение после задания не подтверждено');
+  }else{
+    receive({type:'shared_input_status',...identity,sequence:0,gesture:0,action:3,outcome:'closed',device_uptime_ms:101});
+    if(variant!=='early-manual'){
+      availability(2,'automation');view.down(1);view.up(1);
+      expect(commands().filter(x=>x.type==='touch_open')).toHaveLength(1);
+      availability(3,'manual');
+    }
+    expect(commands().filter(x=>x.type==='touch_open')).toHaveLength(2);
+  }
+  expect(commands().filter(x=>x.type==='touch_event'&&x.action!==4)).toEqual([]);
+  expect(view.socket.close).not.toHaveBeenCalled();expect(MockSocket.instances).toHaveLength(1);expect(mockVideoEligible).toBe(true);
+  view.unmount();
+});
 
 it('retains the negotiated control channel through a temporary View lock without allowing input', () => {
   mockCapture = { captureEpoch: TOUCH_EPOCH, frameWidth: 1280, frameHeight: 720 };

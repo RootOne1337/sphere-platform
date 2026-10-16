@@ -9,6 +9,8 @@ export interface DirectControlEndpoint extends PointerTransport {
   readonly nativeKeys?: boolean;
   readonly keyboard?: boolean;
   capture(): DirectVideoBinding | null;
+  /** Latest availability snapshot only; pointer/keyboard execution receipts are never replayed. */
+  availability?(): unknown;
   listen(receipt: (message: unknown) => void): () => void;
 }
 

@@ -230,6 +230,37 @@ test('loss of primary input retires its exact peer so automatic video recovery c
   stop(); expect(peer.control.close).toHaveBeenCalledTimes(1); expect(jest.getTimerCount()).toBe(0);
 });
 
+test('multiple input observers receive current availability while late subscribers never receive old command receipts', async () => {
+  FakePeer.initialSdp = videoSdp;
+  let endpoint: DirectControlEndpoint | null = null;
+  const stop = startDirectVideoSession('wss://same-origin', 'access', () => {},
+    { onTrack: jest.fn(), controlSession: '1'.repeat(16), sharedInput: true, onControlChannel: value => { endpoint = value; } });
+  await flush(); const ws = FakeSocket.latest, peer = FakePeer.latest;
+  ws.onopen?.(); ws.onmessage?.({ data: JSON.stringify({ type: 'direct_probe_answer', session_id: sid, sdp: videoSdp.replace('recvonly', 'sendonly') }) });
+  await flush(); peer.channel.onopen?.(); peer.control.onopen?.();
+  peer.channel.onmessage?.({ data: `SV1 ${sid} ${epoch} 960 540` });
+  const handle = endpoint as unknown as DirectControlEndpoint;
+  const a = jest.fn(), b = jest.fn(), late = jest.fn();
+  const off = handle.listen(a); handle.listen(b);
+  const snapshot = { type: 'input_availability', schema_version: 1, session_id: sid, capture_epoch: epoch,
+    revision: 4, state: 'automation', task_id: 'task_automation_1234' };
+  peer.control.onmessage?.({ data: JSON.stringify(snapshot) });
+  peer.control.onmessage?.({ data: '{"type":"shared_input_status","sequence":9,"outcome":"applied"}' });
+  expect(a).toHaveBeenCalledTimes(2); expect(b).toHaveBeenCalledTimes(2);
+  off();
+  // A stale or foreign snapshot cannot replace the state replayed to a new observer.
+  for (const altered of [{ revision: 3, state: 'manual', task_id: null }, { session_id: 'b'.repeat(32) }, { capture_epoch: 'foreign' }]) {
+    peer.control.onmessage?.({ data: JSON.stringify({ ...snapshot, ...altered }) });
+  }
+  handle.listen(late);
+  expect(late.mock.calls).toEqual([[snapshot]]); expect(handle.availability?.()).toEqual(snapshot);
+  const manual = { ...snapshot, revision: 5, state: 'manual', task_id: null };
+  peer.control.onmessage?.({ data: JSON.stringify(manual) });
+  expect(a).toHaveBeenCalledTimes(2); expect(b).toHaveBeenLastCalledWith(manual);
+  expect(peer.close).not.toHaveBeenCalled(); expect(peer.control.send).not.toHaveBeenCalled();
+  stop(); expect(jest.getTimerCount()).toBe(0);
+});
+
 test.each(['error', 'oversized', 'binary', 'malformed'])('primary input %s retires the grant without replaying input', async failure => {
   FakePeer.initialSdp = videoSdp;
   const reports: DirectProbeResult[] = [], handles: (DirectControlEndpoint | null)[] = [];

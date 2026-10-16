@@ -6,6 +6,7 @@ import { parseVideoBinding, readonlyVideoSdp, type DirectVideoBinding } from './
 import { DirectVideoStatsSampler, preferLowVideoDelay, type DirectVideoStats } from './directVideoStats';
 import type { DirectControlEndpoint } from './directPointerTransport';
 import { h264ReceiverOffer } from './h264ReceiverOffer';
+import { parseInputAvailability } from './inputAvailability';
 
 export interface DirectProbeResult {
   state: 'gathering' | 'signaling' | 'connecting' | 'connected' | 'finished' | 'stopped' | 'failed';
@@ -85,7 +86,8 @@ function startDirectSession(
   let peer: RTCPeerConnection | null = null;
   let channel: RTCDataChannel | null = null;
   let controlChannel: RTCDataChannel | null = null;
-  let controlListener: ((message: unknown) => void) | null = null;
+  const controlListeners = new Set<(message: unknown) => void>();
+  let controlAvailability: unknown = null;
   let ws: WebSocket | null = null;
   let videoTrack: MediaStreamTrack | null = null;
   let session: string | null = null;
@@ -120,7 +122,7 @@ function startDirectSession(
     if (channel) { channel.onopen = null; channel.onmessage = null; channel.onerror = null; channel.onclose = null; }
     if (controlChannel) {
       controlChannel.onopen = null; controlChannel.onmessage = null; controlChannel.onerror = null; controlChannel.onclose = null;
-      options.onControlChannel?.(null); controlListener = null;
+      options.onControlChannel?.(null); controlListeners.clear(); controlAvailability = null;
     }
     if (ws) {
       ws.onopen = null; ws.onmessage = null; ws.onerror = null; ws.onclose = null;
@@ -268,7 +270,7 @@ function startDirectSession(
           if (retired) return;
           retired = true; clearTimeout(controlDeadline);
           controlState(reason === 'control_channel_closed' ? 'closed' : 'failed');
-          controlListener = null; options.onControlChannel?.(null);
+          controlListeners.clear(); controlAvailability = null; options.onControlChannel?.(null);
           // A closed SCTP channel cannot be reopened. Retire this exact media
           // grant so LiveDirectVideo negotiates a fresh peer/channel and the
           // server/native owner is released before another input OPEN.
@@ -285,11 +287,13 @@ function startDirectSession(
             get readyState() { return !stopped && !retired && direct.readyState === 'open' ? 1 : 0; },
             get bufferedAmount() { return direct.bufferedAmount; },
             capture: () => result.videoBinding ?? null,
+            availability: () => controlAvailability,
             send: data => { if (retired || stopped || direct.readyState !== 'open') throw Error('direct_input_closed'); direct.send(data); },
             listen: listener => {
               if (stopped || retired) return () => {};
-              controlListener = listener;
-              return () => { if (controlListener === listener) controlListener = null; };
+              controlListeners.add(listener);
+              if (controlAvailability) listener(controlAvailability);
+              return () => { controlListeners.delete(listener); };
             },
           });
         };
@@ -298,7 +302,17 @@ function startDirectSession(
           if (typeof event.data !== 'string' || new TextEncoder().encode(event.data).length > 1024) {
             retire('invalid_control_message'); return;
           }
-          try { controlListener?.(JSON.parse(event.data)); } catch { retire('invalid_control_message'); }
+          try {
+            const message = JSON.parse(event.data);
+            if (options.sharedInput && message?.type === 'input_availability' && session) {
+              const epoch = result.videoBinding?.captureEpoch ?? message.capture_epoch;
+              const next = parseInputAvailability(message, session, epoch);
+              const prior = parseInputAvailability(controlAvailability, session, epoch);
+              if (!next || prior && next.revision <= prior.revision) return;
+              controlAvailability = message;
+            }
+            for (const listener of [...controlListeners]) listener(message);
+          } catch { retire('invalid_control_message'); }
         };
         direct.onerror = () => retire('control_channel_failed');
         direct.onclose = () => retire('control_channel_closed');

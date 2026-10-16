@@ -13,7 +13,7 @@ import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
 
 class SharedDirectInputControllerTest {
-    private class Fixture {
+    private class Fixture(private val keyboard: RemoteKeyboardAdapter? = null) {
         val now = AtomicLong(1000)
         val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
         val capture = CaptureInputSession("00112233-4455-6677-8899-aabbccddeeff", 960, 540, 960, 540, 0)
@@ -22,6 +22,7 @@ class SharedDirectInputControllerTest {
         val closed = AtomicInteger()
         val keys = CopyOnWriteArrayList<Pair<Int, Int>>()
         var unknownCancel = false
+        var unknownClose = false
         var processingMs = 0L
         var startupCleanupUnknown = false
         var refusedOpens = 0
@@ -44,11 +45,12 @@ class SharedDirectInputControllerTest {
                 }
                 override suspend fun closeAndConfirm(): Boolean {
                     closed.incrementAndGet(); native.close(now.get())
-                    return native.cleanupExitCode() == 0
+                    return !unknownClose && native.cleanupExitCode() == 0
                 }
             }
-        }, { capture }, now::get)
+        }, { capture }, now::get, keyboard = keyboard)
         inner class Peer(val id: String) : DirectInputChannel {
+            override val keyboardSupported = keyboard != null
             override val session = id
             override val capture = this@Fixture.capture
             @Volatile var current = true
@@ -74,6 +76,92 @@ class SharedDirectInputControllerTest {
             eventually { "ready" in it.outcomes() }
         }
         fun finish() = scope.cancel()
+    }
+
+    private class Keyboard : RemoteKeyboardAdapter {
+        val owners = java.util.concurrent.ConcurrentHashMap.newKeySet<String>()
+        val enabling = CompletableDeferred<Unit>()
+        var enableGate: CompletableDeferred<Unit>? = null
+        var resetConfirmed = true
+        val resets = AtomicInteger()
+        override suspend fun enable(owner: String): Boolean {
+            enabling.complete(Unit); enableGate?.await(); owners.add(owner); return true
+        }
+        override suspend fun disable(owner: String): Boolean { owners.remove(owner); return true }
+        override suspend fun release(owner: String) = true
+        override suspend fun reset(): Boolean { resets.incrementAndGet(); owners.clear(); return resetConfirmed }
+        override fun state() = RemoteKeyboardAdapter.State(owners.isNotEmpty(), 1, false)
+        override suspend fun apply(owner: String, command: RemoteKeyboardCommand, current: () -> Boolean) = RemoteKeyboardAdapter.Result.ACCEPTED
+    }
+
+    @Test fun `automation waits for in flight keyboard activation and restores IME before task admission`() = runBlocking<Unit> {
+        val keyboard = Keyboard(); val gate = CompletableDeferred<Unit>(); keyboard.enableGate = gate
+        val f = Fixture(keyboard)
+        try {
+            val p = f.peer(1)
+            assertTrue(f.controller.message(p.id, buildJsonObject { put("type", "keyboard_mode"); put("enabled", true) }))
+            keyboard.enabling.await()
+            val lease = async { f.controller.acquireAutomation("task_keyboard_1234") }
+            eventually { p.messages.any { it["state"] == JsonPrimitive("preparing") } }
+            assertFalse(lease.isCompleted)
+            gate.complete(Unit)
+            val held = lease.await()
+            assertTrue(keyboard.owners.isEmpty()); assertTrue(keyboard.resets.get() > 0)
+            assertEquals(JsonPrimitive("automation"), p.messages.last()["state"])
+            held.close()
+            assertEquals(JsonPrimitive("manual"), p.messages.last()["state"])
+        } finally { gate.complete(Unit); f.finish() }
+    }
+
+    @Test fun `unconfirmed IME restore blocks automation even after touch release was confirmed`() = runBlocking<Unit> {
+        val keyboard = Keyboard(); keyboard.resetConfirmed = false
+        val f = Fixture(keyboard)
+        try {
+            val p = f.peer(1)
+            val result = runCatching { f.controller.acquireAutomation("task_keyboard_1234") }
+            assertTrue(result.exceptionOrNull() is InputAutomationCleanupUnknownException)
+            assertEquals(1, f.closed.get())
+            assertEquals(JsonPrimitive("cleanup_unknown"), p.messages.last()["state"])
+            assertTrue(f.controller.owns(p.id)); assertTrue(p.open())
+            assertEquals(1, f.opened.get())
+        } finally { f.finish() }
+    }
+
+    @Test fun `automation releases all manual participants without revoking their media grants and resumes on the same peers`() = runBlocking {
+        val f = Fixture()
+        try {
+            val peers = (1..10).map { f.peer(it) }
+            peers[0].event(1, 0); eventually { f.packets.any { it.action == 0 } }
+            val lease = f.controller.acquireAutomation("task_automation_1234")
+            assertEquals(1, f.closed.get())
+            assertTrue(peers.all { f.controller.owns(it.id) && "closed" in it.outcomes() })
+            assertTrue(peers.all { it.messages.last()["state"] == JsonPrimitive("automation") })
+            val count = f.packets.size
+            assertTrue(peers[0].event(2, 2)) // Explicit refusal snapshot, no execution and no grant revocation.
+            assertTrue(peers[0].open())
+            assertEquals(1, f.opened.get())
+            assertEquals(count, f.packets.size)
+            val late = f.Peer("c".repeat(32))
+            // The normal media capacity is still enforced; retiring input does not drop media grants.
+            assertFalse(f.controller.grant(late))
+            lease.close(); lease.close()
+            assertTrue(peers.all { it.messages.last()["state"] == JsonPrimitive("manual") })
+            assertTrue(peers[0].open()); eventually { f.opened.get() == 2 && peers[0].outcomes().count { it == "ready" } == 2 }
+            assertTrue(peers[0].event(1, 0, 1)); assertTrue(peers[0].event(2, 1, 1))
+            eventually { peers[0].outcomes().count { it == "applied" } >= 3 }
+        } finally { f.finish() }
+    }
+
+    @Test fun `unknown native close rejects automation and never advertises manual input as available`() = runBlocking {
+        val f = Fixture()
+        try {
+            val p = f.peer(1); f.unknownClose = true
+            assertTrue(runCatching { f.controller.acquireAutomation("task_automation_1234") }.exceptionOrNull() is InputAutomationCleanupUnknownException)
+            assertEquals(JsonPrimitive("cleanup_unknown"), p.messages.last()["state"])
+            assertTrue(f.controller.owns(p.id))
+            assertTrue(p.open()); assertFalse(p.outcomes().last() == "ready")
+            assertEquals(1, f.opened.get())
+        } finally { f.finish() }
     }
 
     @Test fun `no authenticated peer grant means no native process or input`() = runBlocking {

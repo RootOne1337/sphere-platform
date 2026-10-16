@@ -34,6 +34,7 @@ import { ServerLinkRtt } from '@/src/features/stream/serverLinkRtt';
 import { RemoteKeyboardCapture } from '@/src/features/stream/RemoteKeyboardCapture';
 import { StreamOverlayToolbar } from '@/src/features/stream/StreamOverlayToolbar';
 import { NativeGestureRecording, type NativeGestureRecordingEvent } from '@/src/features/stream/nativeGestureRecording';
+import { parseInputAvailability, type InputAvailability } from '@/src/features/stream/inputAvailability';
 
 interface DeviceStreamProps {
   deviceId: string;
@@ -188,6 +189,9 @@ export function DeviceStream({
   const continuousRef = useRef<ContinuousPointer | null>(null);
   const continuousDisposeRef = useRef<(() => void) | null>(null);
   const directControlRef = useRef<DirectControlEndpoint | null>(null);
+  const [directEndpoint, setDirectEndpoint] = useState<DirectControlEndpoint | null>(null);
+  const availabilityRef = useRef<{ endpoint: DirectControlEndpoint; value: InputAvailability } | null>(null);
+  const [inputAvailability, setInputAvailability] = useState<{ endpoint: DirectControlEndpoint; value: InputAvailability } | null>(null);
   const continuousRouteRef = useRef<DirectControlEndpoint | null>(null);
   const [directControlVersion, setDirectControlVersion] = useState(0);
   const [controlTransport, setControlTransport] = useState<'server_websocket' | 'direct_webrtc'>('server_websocket');
@@ -278,9 +282,10 @@ export function DeviceStream({
   const currentFrameOwned = hasRenderedFrame && !streamError
     && wsRef.current?.readyState === WebSocket.OPEN
     && renderedSocketRef.current === wsRef.current;
-  const canInteract = surfaceActive && taskHandoffId === undefined && !continuousFault && !idleRecovering && !discreteBusy && !inspection && !readOnly && currentFrameOwned && (connection === 'live'
+  const inputReserved = inputAvailability?.endpoint === directControlRef.current && inputAvailability.value.state !== 'manual';
+  const canInteract = surfaceActive && !inputReserved && taskHandoffId === undefined && !continuousFault && !idleRecovering && !discreteBusy && !inspection && !readOnly && currentFrameOwned && (connection === 'live'
     || (enableStaticInput && connection === 'stale'));
-  const canSelectElement = taskHandoffId === undefined && !!inspection && currentFrameOwned && (connection === 'live'
+  const canSelectElement = !inputReserved && taskHandoffId === undefined && !!inspection && currentFrameOwned && (connection === 'live'
     || (enableStaticInput && connection === 'stale'));
   const canSaveFrame = currentFrameOwned && connection === 'live';
   const continuousBusy = !['idle', 'probing', 'closed', 'destroyed'].includes(continuousState);
@@ -292,11 +297,11 @@ export function DeviceStream({
   continuousAllowedRef.current = canInteract && !waitingForDirectInput && continuousRequestedRef.current;
   // Age is not a disconnect: an idle ImageReader can retain its last picture.
   // A new socket/decoder still needs its own first frame before accepting input.
-  const canNavigate = surfaceActive && !waitingForDirectInput && taskHandoffId === undefined && !continuousFault && !idleRecovering && !inspection && !readOnly && hasRenderedFrame && !streamError
+  const canNavigate = surfaceActive && !inputReserved && !waitingForDirectInput && taskHandoffId === undefined && !continuousFault && !idleRecovering && !inspection && !readOnly && hasRenderedFrame && !streamError
     && (connection === 'live' || connection === 'stale')
     && renderedSocketRef.current === wsRef.current;
   idleRecoveryAllowedRef.current = enableNavigation && surfaceActive && currentFrameOwned
-    && !readOnly && !inspection && taskHandoffId === undefined && !discreteBusy && !continuousFault;
+    && !inputReserved && !readOnly && !inspection && taskHandoffId === undefined && !discreteBusy && !continuousFault;
   const onFrameDimensionsRef = useRef(onFrameDimensions);
   const lastFrameDimensionsRef = useRef<StreamFrameDimensions | null>(null);
   onFrameDimensionsRef.current = onFrameDimensions;
@@ -354,6 +359,7 @@ export function DeviceStream({
     if (diagnosticReporter.current?.sessionId !== session || directControlRef.current === endpoint) return;
     const previous = directControlRef.current;
     directControlRef.current = endpoint;
+    setDirectEndpoint(endpoint);
     if (endpoint?.readyState === 1 && !continuousRef.current && (endpoint.sharedInput || !continuousRequestedRef.current)) {
       // A late authenticated control channel may arrive after the first
       // capability deadline. There is no owner or touch to release here.
@@ -384,6 +390,34 @@ export function DeviceStream({
     }
     setDirectControlVersion(version => version + 1);
   }, []);
+  useEffect(() => {
+    if (!directEndpoint?.sharedInput) return;
+    const accept = (message: unknown) => {
+      if (directControlRef.current !== directEndpoint) return;
+      const value = parseInputAvailability(message, directEndpoint.session, serverCaptureRef.current?.captureEpoch ?? null);
+      if (!value) return;
+      const previous = availabilityRef.current;
+      if (previous?.endpoint === directEndpoint && value.revision <= previous.value.revision) return;
+      const next = { endpoint: directEndpoint, value }; availabilityRef.current = next; setInputAvailability(next);
+      if (value.state !== 'manual') {
+        continuousAllowedRef.current = false;
+        continuousRef.current?.close();
+      } else if (previous?.endpoint === directEndpoint && previous.value.state !== 'manual') {
+        // Availability never substitutes for native RELEASE. Only a closed
+        // controller may admit a fresh participant on this same media peer.
+        if (continuousRef.current?.state === 'closed') {
+          automaticProbeRef.current = null;
+          continuousFaultRef.current = false; setContinuousFault(false);
+          idleRecoveringRef.current = false; setIdleRecovering(false);
+          setContinuousReason(null); setContinuousFailureCode(null);
+          setDirectControlVersion(version => version + 1);
+        }
+      }
+    };
+    const detach = directEndpoint.listen(accept);
+    accept(directEndpoint.availability?.());
+    return detach;
+  }, [directEndpoint, currentFrameOwned]);
   const selectVideoDelivery = useCallback((peerSession: string | null, session: string) => {
     const socket = wsRef.current;
     if (!socket || socket.readyState !== WebSocket.OPEN || diagnosticReporter.current?.sessionId !== session) return;
@@ -433,6 +467,7 @@ export function DeviceStream({
     continuousDisposeRef.current = null;
     continuousRef.current = null;
     directControlRef.current = null;
+      setDirectEndpoint(null); availabilityRef.current = null; setInputAvailability(null);
     continuousRouteRef.current = null;
     setControlTransport('server_websocket');
     continuousRequestedRef.current = false;
@@ -1292,9 +1327,9 @@ export function DeviceStream({
   }, [recordingMode]);
   useEffect(() => {
     const controller = continuousRef.current;
-    onInspectionControlReady?.(!!inspection && currentFrameOwned && !discreteBusy
+    onInspectionControlReady?.(!!inspection && !inputReserved && currentFrameOwned && !discreteBusy
       && (!controller || controller.state === 'closed'));
-  }, [inspection, currentFrameOwned, discreteBusy, continuousState, onInspectionControlReady]);
+  }, [inspection, inputReserved, currentFrameOwned, discreteBusy, continuousState, onInspectionControlReady]);
   useEffect(() => {
     const controller = continuousRef.current;
     onRecordingControlReady?.(continuousRecording && canInteract && controller?.state === 'ready');
@@ -1302,10 +1337,10 @@ export function DeviceStream({
   useEffect(() => {
     if (taskHandoffId === undefined) return;
     const controller = continuousRef.current;
-    const state = continuousFault || !surfaceActive ? 'blocked'
+    const state = continuousFault || inputReserved || !surfaceActive ? 'blocked'
       : currentFrameOwned && !discreteBusy && (!controller || controller.state === 'closed') ? 'ready' : 'waiting';
     onTaskHandoffState?.(state, taskHandoffId);
-  }, [taskHandoffId, onTaskHandoffState, currentFrameOwned, discreteBusy, continuousFault, surfaceActive, continuousState]);
+  }, [taskHandoffId, onTaskHandoffState, inputReserved, currentFrameOwned, discreteBusy, continuousFault, surfaceActive, continuousState]);
   useEffect(() => {
     const controller = continuousRef.current;
     if (!(inspectionActive || taskHandoffId !== undefined) || !controller || controller.state === 'closed' || !currentFrameOwned) return;
@@ -1479,7 +1514,10 @@ export function DeviceStream({
       bitrate={directVideo.active ? directVideo.result?.videoStats?.bitrateBps ?? null : receiveRate} /></div>
     {enableNavigation && ((!inspection && !readOnly) || (inspection && continuousFault)) && <div data-control-state={continuousState} data-control-failure={continuousFailureCode ?? undefined} className={fullscreen.active ? continuousFault && continuousReason ? 'absolute bottom-16 left-2 z-20 max-w-[calc(100%-1rem)] rounded-xl border border-amber-300/30 bg-black/80 px-3 py-2 text-amber-100' : 'sr-only' : 'flex shrink-0 flex-wrap items-center gap-2 border-b border-border bg-card px-3 py-2 text-foreground'}>
       <span className={`h-2 w-2 shrink-0 rounded-full ${continuousState === 'ready' ? 'bg-emerald-500' : 'bg-muted-foreground'}`} aria-hidden />
-      <span role="status" className="min-w-0 flex-[1_1_16rem] truncate text-xs leading-relaxed">{continuousReason ?? (discreteBusy ? 'Клавиатура и навигация · ожидаем подтверждение Android' : continuousRecording && continuousState === 'ready' ? 'Запись · непрерывный ввод с подтверждением Android' : continuousState === 'ready'
+      <span role="status" className="min-w-0 flex-[1_1_16rem] truncate text-xs leading-relaxed">{inputReserved ? inputAvailability?.value.state === 'cleanup_unknown'
+        ? 'Ввод Android заблокирован: освобождение после задания не подтверждено. Видео продолжает работать.'
+        : inputAvailability?.value.state === 'preparing' ? 'Передаём ввод заданию · видео продолжает работать'
+        : 'Android управляет задание · ручной ввод вернётся автоматически' : continuousReason ?? (discreteBusy ? 'Клавиатура и навигация · ожидаем подтверждение Android' : continuousRecording && continuousState === 'ready' ? 'Запись · непрерывный ввод с подтверждением Android' : continuousState === 'ready'
         ? 'Непрерывное управление · зажмите и ведите мышь' : continuousState === 'opening' ? 'Подключаем управление Android…' : continuousState === 'probing' ? 'Определяем возможности APK…' : continuousState === 'closed' ? 'Касание Android освобождено'
         : continuousState === 'fenced' ? 'Управление приостановлено · ожидаем новую готовность Android' : 'Управление Android')}
       {continuousReceipt && continuousState === 'ready' && <span title={`Круговое время подтверждения Android №${continuousReceipt.sequence} ${controlTransport === 'direct_webrtc' ? 'напрямую по WebRTC DataChannel' : 'через серверный WebSocket'}, включая обработку на устройстве. Это не задержка изображения и не чистый сетевой RTT.`}>

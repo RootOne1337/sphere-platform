@@ -163,7 +163,7 @@ class AdbActionExecutor @Inject constructor(
     }
 
     /** Whole-task reservation; nested primitive reservations remain valid for its duration. */
-    fun claimInputForTask(): AutoCloseable = inputOwnership.claimDiscrete()
+    fun claimInputForTask(): AutoCloseable = inputOwnership.claimTask()
 
     /** A flush is not execution. Wait for a unique FIFO marker before opening another injector. */
     internal suspend fun prepareContinuousInput(owner: String) = withContext(Dispatchers.IO) {

@@ -8,6 +8,8 @@ import com.sphereplatform.agent.direct.DirectInputHandler
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.isActive
+import kotlinx.coroutines.NonCancellable
+import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.buildJsonObject
@@ -148,6 +150,14 @@ internal class ContinuousInputController(
         if (closing.compareAndSet(false, true)) scope.launch {
             try { supervisor.close() } finally { closing.set(false) }
         }
+    }
+
+    /** The coordinator has already fenced new helper admission. Never cancel an in-flight native write. */
+    suspend fun releaseForAutomation(): Boolean = withContext(NonCancellable) {
+        active.get()?.let { it.endReason.compareAndSet(null, TouchEndReason.OWNER_RETIRED); it.retired = true }
+        supervisorInvalidation()
+        supervisor.close()
+        !supervisor.needsReset()
     }
 
     private fun supervisorInvalidation(reason: TouchEndReason = TouchEndReason.OWNER_RETIRED) { supervisor.invalidate(reason) }

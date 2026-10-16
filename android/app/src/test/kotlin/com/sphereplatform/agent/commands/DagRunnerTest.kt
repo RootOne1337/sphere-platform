@@ -5,6 +5,7 @@ import com.sphereplatform.agent.lua.executeWithTimeout
 import com.sphereplatform.agent.ws.SphereWebSocketClient
 import io.mockk.*
 import kotlinx.coroutines.test.runTest
+import kotlinx.coroutines.async
 import kotlinx.serialization.json.*
 import okhttp3.OkHttpClient
 import org.junit.Assert.*
@@ -82,6 +83,23 @@ class DagRunnerTest {
     }
 
     // ── Линейный DAG ─────────────────────────────────────────────────────────
+
+    @Test fun `cancel while preparing input is terminal and never executes a node`() = runTest {
+        val entered = kotlinx.coroutines.CompletableDeferred<Unit>()
+        val release = kotlinx.coroutines.CompletableDeferred<Unit>()
+        var closed = 0
+        val result = async {
+            runner.execute("preparing-task", buildDag("start", node("start", "start", "tap"),
+                node("tap", "tap", "end") { put("x", 1); put("y", 2) }, node("end", "end")), prepareInput = {
+                entered.complete(Unit); release.await(); AutoCloseable { closed++ }
+            })
+        }
+        entered.await(); assertTrue(runner.requestCancel("preparing-task")); release.complete(Unit)
+        assertEquals(JsonPrimitive(true), result.await()["cancelled"])
+        assertEquals(1, closed)
+        verify(exactly = 0) { adbActions.claimInputForTask() }
+        verify(exactly = 0) { adbActions.tap(any(), any()) }
+    }
 
     @Test
     fun `линейный DAG start → tap → end`() = runTest {

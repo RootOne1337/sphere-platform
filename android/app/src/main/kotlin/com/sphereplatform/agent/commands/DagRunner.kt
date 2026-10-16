@@ -10,6 +10,8 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeout
+import kotlinx.coroutines.NonCancellable
+import kotlin.coroutines.EmptyCoroutineContext
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonObject
@@ -168,9 +170,8 @@ class DagRunner @Inject constructor(
      * @param timeoutMs  — таймаут исполнения из payload (приоритетнее DAG-поля timeout_ms).
      *                     Без явного значения: берётся из dagJson["timeout_ms"] или 300_000ms (5 мин).
      */
-    suspend fun execute(commandId: String, dagJson: JsonObject, timeoutMs: Long? = null): JsonObject {
-        val inputReservation = adbActions.claimInputForTask()
-        try {
+    suspend fun execute(commandId: String, dagJson: JsonObject, timeoutMs: Long? = null,
+                        prepareInput: (suspend () -> AutoCloseable)? = null): JsonObject {
             synchronized(executionLock) {
                 check(activeCommandId == null) { "device_execution_busy" }
                 cancelRequested = false
@@ -178,7 +179,7 @@ class DagRunner @Inject constructor(
                 activeCommandId = commandId
             }
             try {
-                return executeActive(commandId, dagJson, timeoutMs)
+                return executeActive(commandId, dagJson, timeoutMs, prepareInput)
             } finally {
                 synchronized(executionLock) {
                     activeCommandId = null
@@ -186,10 +187,10 @@ class DagRunner @Inject constructor(
                     pauseRequested = false
                 }
             }
-        } finally { inputReservation.close() }
     }
 
-    private suspend fun executeActive(commandId: String, dagJson: JsonObject, timeoutMs: Long?): JsonObject {
+    private suspend fun executeActive(commandId: String, dagJson: JsonObject, timeoutMs: Long?,
+                                      prepareInput: (suspend () -> AutoCloseable)?): JsonObject {
         val entryNodeId = dagJson["entry_node"]!!.jsonPrimitive.content
         val nodesArray = dagJson["nodes"]!!.jsonArray          // LIST, не map!
         // Приоритет: явный параметр → поле в DAG → дефолт 5 мин.
@@ -226,6 +227,14 @@ class DagRunner @Inject constructor(
 
         try {
         withTimeout(globalTimeoutMs) {
+            var manualReservation: AutoCloseable? = null
+            var inputReservation: AutoCloseable? = null
+            try {
+            awaitExecutionPermission()
+            manualReservation = prepareInput?.invoke()
+            awaitExecutionPermission()
+            inputReservation = adbActions.claimInputForTask()
+            withContext((inputReservation as? TaskInputReservation)?.context ?: EmptyCoroutineContext) {
             while (currentNodeId != null) {
                 // PERF: Проверка лимита маршрутных переходов
                 routingHops++
@@ -334,6 +343,12 @@ class DagRunner @Inject constructor(
                 if (!nodeSuccess && onFailure == null) {
                     // No error handler configured — surface error to caller
                     throw RuntimeException("DAG failed at node '$nodeId': $nodeError")
+                }
+            }
+            }
+            } finally {
+                withContext(NonCancellable) {
+                    try { inputReservation?.close() } finally { manualReservation?.close() }
                 }
             }
         }

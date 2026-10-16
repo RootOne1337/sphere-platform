@@ -104,6 +104,11 @@ class CommandDispatcher @Inject constructor(
             inputDiagnostics,
         )
     } else null
+    private val inputCoordinator = DeviceInputCoordinator(adbActions.inputOwnership,
+        releaseShared = { task -> sharedInput?.acquireAutomation(task) ?: AutoCloseable {} },
+        releaseFallback = { continuousInput?.releaseForAutomation() ?: true },
+        onUnknown = { sharedInput?.fenceForAutomation() },
+    )
     private val directProbe = com.sphereplatform.agent.direct.DirectProbeTransport(
         appContext, scope, wsClient::currentGeneration, wsClient::sendDirectProbeSignal, streamingManager,
         object : com.sphereplatform.agent.direct.DirectInputHandler {
@@ -602,7 +607,7 @@ class CommandDispatcher @Inject constructor(
                 dagRunner.requestCancel()
             }
             dagMutex.withLock {
-                dagRunner.execute(cmd.command_id, dagJson, timeoutMs)
+                dagRunner.execute(cmd.command_id, dagJson, timeoutMs) { inputCoordinator.acquire(cmd.command_id) }
             }
         }
 

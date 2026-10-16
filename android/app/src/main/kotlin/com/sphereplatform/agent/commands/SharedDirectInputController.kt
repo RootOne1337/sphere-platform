@@ -12,6 +12,10 @@ import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeoutOrNull
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.ensureActive
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.serialization.json.*
 import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap
@@ -42,6 +46,12 @@ internal class SharedDirectInputController(
     private val grants = ConcurrentHashMap<String, DirectInputChannel>()
     private val participants = ConcurrentHashMap<String, Participant>()
     private val admission = Any()
+    private val nativeLifecycle = Mutex()
+    private val keyboardLifecycle = Mutex()
+    private val keyboardOwners = ConcurrentHashMap.newKeySet<String>()
+    private class Automation(val taskId: String, var state: String = "preparing")
+    @Volatile private var automation: Automation? = null
+    private var availabilityRevision = 0L
     private val mailbox = SharedInputMailbox()
     private val wake = Channel<Unit>(Channel.CONFLATED)
     @Volatile private var resetRequired = false
@@ -62,14 +72,14 @@ internal class SharedDirectInputController(
                 while (isActive) {
                     if (participants.isEmpty()) wake.receive() else withTimeoutOrNull(10) { wake.receive() }
                     if (participants.isEmpty()) continue
-                    try { drain() } catch (failure: kotlinx.coroutines.CancellationException) { throw failure }
+                    try { nativeLifecycle.withLock { if (automation == null) drain() } } catch (failure: kotlinx.coroutines.CancellationException) { throw failure }
                     catch (failure: Exception) {
                         diagnostics.inputFailed(failure.message ?: "native_adapter_exception")
-                        retireGroup()
+                        nativeLifecycle.withLock { retireGroup() }
                     }
                 }
             } finally {
-                withContext(NonCancellable) { retireGroup(); keyboard?.reset() }
+                withContext(NonCancellable) { nativeLifecycle.withLock { retireGroup() }; keyboardLifecycle.withLock { keyboard?.reset() } }
                 grants.clear(); wake.close()
             }
         }
@@ -85,7 +95,77 @@ internal class SharedDirectInputController(
         if (prior != null) return prior.isCurrent() && prior.capture == channel.capture
         if (grants.size >= SharedPointerArbiter.MAX_PARTICIPANTS) return false
         grants[channel.session] = channel
+        availability(channel)
         true
+    }
+
+    /** Native cleanup is independent from browser cooperation; media grants remain current. */
+    suspend fun acquireAutomation(taskId: String): AutoCloseable {
+        require(taskId.matches(Regex("[A-Za-z0-9_-]{8,128}")))
+        val lease = synchronized(admission) {
+            if (automation != null) throw DeviceInputBusyException()
+            Automation(taskId).also {
+                automation = it
+                changedAvailability()
+                participants.values.forEach { p -> p.retiring = true }
+            }
+        }
+        try {
+            withContext(NonCancellable) {
+                nativeLifecycle.withLock {
+                    val pending = synchronized(admission) { participants.values.toList() }
+                    var confirmed = closePipe()
+                    keyboardLifecycle.withLock {
+                        for (owner in keyboardOwners.toList()) {
+                            if (!runCatching { keyboard?.release(owner) != false }.getOrDefault(false)) confirmed = false
+                        }
+                        if (!runCatching { keyboard?.reset() != false }.getOrDefault(false)) confirmed = false
+                        if (confirmed) keyboardOwners.clear()
+                    }
+                    if (!confirmed) resetRequired = true
+                    pending.forEach {
+                        it.keyboardRequested = false; it.keyboardEnabled = false
+                        remove(it)
+                        status(it, 0, 0, if (confirmed) 3 else 4, if (confirmed) "closed" else "unknown")
+                        diagnostics.record(if (confirmed) NativeInputDiagnostics.Event.RELEASE else NativeInputDiagnostics.Event.UNKNOWN_RELEASE,
+                            if (confirmed) null else NativeInputDiagnostics.Failure.CLEANUP_UNKNOWN)
+                    }
+                    mailbox.clear()
+                    if (!confirmed || resetRequired) throw InputAutomationCleanupUnknownException()
+                }
+            }
+            currentCoroutineContext().ensureActive()
+            synchronized(admission) { lease.state = "automation"; changedAvailability() }
+            return AutoCloseable { releaseAutomation(lease) }
+        } catch (failure: Throwable) {
+            releaseAutomation(lease)
+            throw failure
+        }
+    }
+
+    private fun releaseAutomation(lease: Automation) = synchronized(admission) {
+        if (automation === lease) { automation = null; changedAvailability(); wake.trySend(Unit) }
+    }
+
+    fun fenceForAutomation() = synchronized(admission) { resetRequired = true; changedAvailability() }
+
+    private fun changedAvailability() {
+        availabilityRevision++
+        timber.log.Timber.i("Input availability: %s revision=%d participants=%d task=%s",
+            if (resetRequired) "cleanup_unknown" else automation?.state ?: "manual",
+            availabilityRevision, participants.size, automation?.taskId ?: "none")
+        grants.values.forEach(::availability)
+    }
+
+    private fun availability(channel: DirectInputChannel) {
+        if (!current(channel)) return
+        runCatching { channel.send(buildJsonObject {
+            put("type", "input_availability"); put("schema_version", 1)
+            put("session_id", channel.session); put("capture_epoch", channel.capture.epoch)
+            put("revision", availabilityRevision)
+            put("state", if (resetRequired) "cleanup_unknown" else automation?.state ?: "manual")
+            put("task_id", automation?.let { JsonPrimitive(it.taskId) } ?: JsonNull)
+        }) }
     }
 
     fun message(session: String, message: JsonObject): Boolean {
@@ -93,6 +173,12 @@ internal class SharedDirectInputController(
         if (!current(channel)) { closed(session); return false }
         val type = (message["type"] as? JsonPrimitive)?.takeIf { it.isString }?.content
         if (type == "touch_open") return open(channel, message)
+        if ((automation != null || resetRequired) && type in setOf("touch_event", "touch_close", "key_event", "keyboard_event", "keyboard_mode")) {
+            // In-flight messages from the retiring participant cannot revoke its
+            // media grant or execute later. Availability explicitly explains refusal.
+            synchronized(admission) { availability(channel) }
+            return true
+        }
         val participant = participants[session] ?: return false
         if (type == "touch_close" && message.keys == setOf("type")) {
             retire(participant); return true
@@ -103,25 +189,26 @@ internal class SharedDirectInputController(
             if (requested == participant.keyboardRequested) { keyboardState(participant, "current"); return true }
             val start = synchronized(admission) {
                 participant.keyboardRequested = requested
+                if (requested) keyboardOwners.add(participant.owner)
                 participant.keyboardChanging.compareAndSet(false, true)
             }
             if (!start) return true
             scope.launch(Dispatchers.IO) {
                 var completed = false
                 try {
-                    while (isActive && !participant.retiring && current(channel)) {
+                    keyboardLifecycle.withLock {
+                    while (isActive && !participant.retiring && automation == null && current(channel)) {
                         val desired = participant.keyboardRequested
                         if (desired) {
                             val enabled = try { keyboard.enable(participant.owner) }
                                 catch (cancelled: kotlinx.coroutines.CancellationException) { throw cancelled }
                                 catch (_: Exception) { false }
                             participant.keyboardEnabled = enabled && participant.keyboardRequested && !participant.retiring && current(channel)
-                            if (!participant.keyboardEnabled) keyboard.disable(participant.owner)
+                            if (!participant.keyboardEnabled) cleanupKeyboard(participant.owner)
                             keyboardState(participant, if (participant.keyboardEnabled) "ready" else "unavailable")
                         } else {
-                            keyboard.release(participant.owner)
                             participant.keyboardEnabled = false
-                            keyboard.disable(participant.owner)
+                            cleanupKeyboard(participant.owner)
                             keyboardState(participant, "disabled")
                         }
                         completed = synchronized(admission) {
@@ -129,13 +216,14 @@ internal class SharedDirectInputController(
                         }
                         if (completed) break
                     }
+                    }
                 } finally {
                     if (!completed) {
                         participant.keyboardEnabled = false
-                        withContext(NonCancellable) {
-                            keyboard.disable(participant.owner)
+                        withContext(NonCancellable) { keyboardLifecycle.withLock {
+                            cleanupKeyboard(participant.owner)
                             keyboardState(participant, "disabled")
-                        }
+                        } }
                         participant.keyboardChanging.set(false)
                     }
                 }
@@ -211,10 +299,11 @@ internal class SharedDirectInputController(
             put("capture_epoch", channel.capture.epoch); put("frame_width", channel.capture.frameWidth)
             put("frame_height", channel.capture.frameHeight)
         })) retire(participant)
-        if (resetRequired || groupRetiring) {
+        if (resetRequired || groupRetiring || automation != null) {
             status(participant, 0, 0, 4, if (resetRequired) "unknown" else "denied")
             remove(participant)
             if (!resetRequired) status(participant, 0, 0, 3, "closed")
+            availability(channel)
             return true
         }
         wake.trySend(Unit)
@@ -228,6 +317,7 @@ internal class SharedDirectInputController(
     }
 
     private suspend fun drain() {
+        if (resetRequired) { retireGroup(); return }
         for (participant in participants.values) if (!current(participant.channel)) retire(participant)
         val candidate = participants.values.firstOrNull { !it.retiring }
         if (pipe == null && candidate != null) {
@@ -301,6 +391,7 @@ internal class SharedDirectInputController(
         }
         // A finite pass prevents a fast mouse from starving expiry/native heartbeat.
         repeat(SharedPointerArbiter.MAX_PARTICIPANTS * SharedInputMailbox.PER_PARTICIPANT) {
+            if (resetRequired) { retireGroup(); return }
             when (val work = mailbox.poll() ?: return@repeat) {
                 is SharedInputMailbox.Work.Close -> {
                     val p = participants.values.firstOrNull { it.owner == work.participant } ?: return@repeat
@@ -389,10 +480,17 @@ internal class SharedDirectInputController(
         if (participant.keyboardRequested || participant.keyboardEnabled) {
             participant.keyboardRequested = false; participant.keyboardEnabled = false
             scope.launch(Dispatchers.IO) {
-                keyboard?.release(participant.owner)
-                keyboard?.disable(participant.owner)
+                keyboardLifecycle.withLock { cleanupKeyboard(participant.owner) }
             }
         }
+    }
+
+    /** Caller holds keyboardLifecycle; a late enable cannot overtake automation's reset. */
+    private suspend fun cleanupKeyboard(owner: String) {
+        val released = runCatching { keyboard?.release(owner) != false }.getOrDefault(false)
+        val disabled = runCatching { keyboard?.disable(owner) != false }.getOrDefault(false)
+        if (released && disabled) keyboardOwners.remove(owner)
+        else synchronized(admission) { resetRequired = true; changedAvailability() }
     }
 
     private fun keyboardState(participant: Participant, reason: String) {

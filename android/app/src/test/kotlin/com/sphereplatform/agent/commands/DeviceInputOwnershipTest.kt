@@ -7,6 +7,34 @@ import org.junit.Assert.*
 import org.junit.Test
 
 class DeviceInputOwnershipTest {
+    @Test fun `task primitives inherit authority across dispatcher changes but outside commands do not`() = runBlocking {
+        val ownership = DeviceInputOwnership()
+        val lease = ownership.claimTask()
+        assertThrows(DeviceInputBusyException::class.java) { ownership.claimDiscrete() }
+        assertThrows(DeviceInputBusyException::class.java) { ownership.claimTask() }
+        assertFalse(ownership.claimContinuous("manual_owner_1234"))
+        kotlinx.coroutines.withContext(lease.context + kotlinx.coroutines.Dispatchers.IO) {
+            ownership.claimDiscrete().use {
+                kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Default) { ownership.claimDiscrete().close() }
+            }
+        }
+        lease.close(); lease.close()
+        ownership.claimDiscrete().close()
+        assertTrue(ownership.claimContinuous("manual_owner_1234"))
+    }
+
+    @Test fun `pausing admission lets the old owner clean up and blocks replacement until the task is finished`() {
+        val ownership = DeviceInputOwnership()
+        assertTrue(ownership.claimContinuous("old_owner_1234"))
+        val pause = ownership.pauseContinuous()
+        assertTrue(ownership.owns("old_owner_1234"))
+        ownership.release("old_owner_1234", true)
+        assertFalse(ownership.claimContinuous("new_owner_1234"))
+        val task = ownership.claimTask(); task.close()
+        assertFalse(ownership.claimContinuous("new_owner_1234"))
+        pause.close(); pause.close()
+        assertTrue(ownership.claimContinuous("new_owner_1234"))
+    }
     @Test fun `complete DAG reservation excludes continuous input including between nested actions`() {
         val ownership = DeviceInputOwnership()
         val dag = ownership.claimDiscrete()
