@@ -37,6 +37,8 @@ class HeadlessIntegrationTests(unittest.IsolatedAsyncioTestCase):
         self.availability_state = None
         self.no_pointer_ack = False
         self.after_down = asyncio.Event()
+        self.close_peer_on_goodbye = False
+        self.close_peer_after_down = False
         self.server = await serve(self.endpoint, "127.0.0.1", 0)
         self.url = f"http://127.0.0.1:{self.server.sockets[0].getsockname()[1]}"
 
@@ -208,6 +210,8 @@ class HeadlessIntegrationTests(unittest.IsolatedAsyncioTestCase):
                     elif d["type"] == "touch_event":
                         if d["action"] == 0:
                             self.after_down.set()
+                            if self.close_peer_after_down:
+                                asyncio.create_task(peer.close())
                         if d["action"] == 4 and not self.no_alive:
                             status("alive", d["sequence"], gesture=d["gesture"])
                         elif d["action"] != 4 and not self.no_pointer_ack:
@@ -233,6 +237,8 @@ class HeadlessIntegrationTests(unittest.IsolatedAsyncioTestCase):
             async for raw in ws:
                 d = json.loads(raw)
                 if d["type"] == "direct_probe_close":
+                    if self.close_peer_on_goodbye:
+                        await peer.close()
                     break
         except ConnectionClosedError:
             if not self.allow_cancel_close:
@@ -367,6 +373,26 @@ class HeadlessIntegrationTests(unittest.IsolatedAsyncioTestCase):
         self.assertTrue(report["control"]["participantClosedConfirmed"])
         self.assertFalse(report["pointerProbe"]["complete"])
         self.assertLess(report["durationObservedSeconds"], 2)
+
+    async def test_remote_peer_close_after_confirmed_release_and_goodbye_is_not_loss(self):
+        self.availability_state = "manual"
+        self.close_peer_on_goodbye = True
+        session = HeadlessSession(self.probe_config())
+        report = await session.run("fixture-token")
+        self.assertTrue(report["success"], report)
+        self.assertTrue(report["control"]["nativeActionAppliedVerified"])
+
+    async def test_unexpected_peer_close_while_holding_still_fails(self):
+        self.availability_state = "manual"
+        self.close_peer_after_down = True
+        session = HeadlessSession(self.probe_config())
+        report = await session.run("fixture-token")
+        self.assertFalse(report["success"])
+        self.assertIn(
+            report["failure"],
+            {"media_channel_closed", "control_channel_closed", "peer_disconnected"},
+        )
+        self.assertFalse(report["pointerProbe"]["complete"])
 
     async def test_lost_actor_receipt_fails_and_still_closes_participant(self):
         self.no_alive = True

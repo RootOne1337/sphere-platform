@@ -90,6 +90,7 @@ class HeadlessSession:
         self.failure: str | None = None
         self.failed = asyncio.Event()
         self.closing = False
+        self.retiring_transport = False
         self.tasks: list[asyncio.Task] = []
         self.pending_echo: tuple[str, float] | None = None
         self.echo_count = 0
@@ -128,6 +129,13 @@ class HeadlessSession:
             self.failure = reason
             self.failure_phase = self.phase
             self.failed.set()
+
+    def _transport_closed(self, reason: str) -> None:
+        # Remote peer close is expected only after the monitor has ended, the
+        # native participant's cleanup was attempted and background senders stopped.
+        # Cleanup errors themselves still go through fail(), preserving uncertainty.
+        if not self.retiring_transport:
+            self.fail(reason)
 
     def spawn(self, coroutine) -> None:
         async def guarded():
@@ -180,14 +188,14 @@ class HeadlessSession:
         if self.config.probe_control:
             self.control = self.peer.createDataChannel("sphere-control-v2", ordered=True)
             self.control.on("message", self._control_message)
-            self.control.on("close", lambda: self.fail("control_channel_closed"))
+            self.control.on("close", lambda: self._transport_closed("control_channel_closed"))
         self.media.on("message", self._media_message)
-        self.media.on("close", lambda: self.fail("media_channel_closed"))
+        self.media.on("close", lambda: self._transport_closed("media_channel_closed"))
 
         @self.peer.on("connectionstatechange")
         def connection_state():
             if self.peer.connectionState in {"failed", "closed"}:
-                self.fail("peer_disconnected")
+                self._transport_closed("peer_disconnected")
 
         @self.peer.on("track")
         def track_received(track):
@@ -302,6 +310,8 @@ class HeadlessSession:
                     # closes, including cancellation and application failures.
                     await self.close_control()
                     await self._stop_tasks()
+                self.phase = "retiring_transport"
+                self.retiring_transport = True
                 await ws.send('{"type":"direct_probe_close"}')
         except asyncio.CancelledError:
             self.fail("cancelled")
