@@ -56,7 +56,8 @@ async def application_phase(phase, state_file):
                 contract = await client.get("/api/v1/scripts/action-contract", headers=headers)
                 assert contract.status_code == 200 and contract.headers["cache-control"] == "no-store"
                 rules = contract.json()
-                assert rules["version"] == "1.0" and len(rules["contract"]["actions"]) == 32
+                assert rules["version"] == "1.0" and len(rules["contract"]["actions"]) == 33
+                assert "pointer_path" in rules["contract"]["actions"]
                 assert rules["device_execution_verified"] is False
                 assert rules["installed_apk_capabilities_verified"] is False
                 forbidden = await client.get("/api/v1/scripts/action-contract")
@@ -73,6 +74,16 @@ async def application_phase(phase, state_file):
                 dag["nodes"][0]["action"] = {"type": "tap"}
                 invalid = await client.post("/api/v1/scripts/validate", headers=headers, json={"dag": dag})
                 assert invalid.status_code == 422, "Packaged API accepted tap without coordinates"
+                dag["nodes"][0]["action"] = {"type": "pointer_path", "path": {
+                    "schema_version": 1, "frame_width": 960, "frame_height": 540,
+                    "points": [{"t_ms": 0, "action": 0, "x": 100, "y": 200},
+                               {"t_ms": 2000, "action": 2, "x": 300, "y": 100},
+                               {"t_ms": 4500, "action": 1, "x": 100, "y": 200}]}}
+                valid_path = await client.post("/api/v1/scripts/validate", headers=headers, json={"dag": dag})
+                assert valid_path.status_code == 200, "Packaged API rejected a bounded trajectory"
+                dag["nodes"][0]["action"]["path"]["points"][-1]["action"] = 2
+                invalid_path = await client.post("/api/v1/scripts/validate", headers=headers, json={"dag": dag})
+                assert invalid_path.status_code == 422, "Packaged API accepted a trajectory without UP"
                 print(f"IMAGE_RUNTIME_PHASE={phase}: ready/login/device-visible", flush=True)
                 print(f"IMAGE_ACTION_CONTRACT_PHASE={phase}: schema/auth/valid/invalid", flush=True)
     finally:
