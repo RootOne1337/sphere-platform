@@ -242,6 +242,42 @@ it('rejoins a fresh shared peer after hiding an idle tab loses the old CLOSE rec
   view.unmount();
 });
 
+it('admits the first replacement shared peer after idle timeout and channel loss without reopening the viewer', () => {
+  mockCapture = { captureEpoch: TOUCH_EPOCH, frameWidth: 1280, frameHeight: 720 };
+  mockInputAdmission = { admissionKnown: true, admitted: true, sharedInput: true };
+  const view = readyWheel(), oldEndpoint = { ...directEndpoint(), sharedInput: true };
+  const receive = (m: object) => act(() => view.socket.onmessage?.({ data: JSON.stringify(m) }));
+  receive({ type: 'stream_session', schema_version: 1, history_enabled: true, session_id: '1'.repeat(16), report_interval_seconds: 10 });
+  act(() => {
+    mockDirectObserve?.(oldEndpoint);
+    mockVideoObserve?.({ admitted: true, admissionKnown: true, sharedInput: true, active: true, frames: 1, lastFrameAt: Date.now(), attempts: 1, result: null });
+  });
+  const bind = (endpoint: DirectControlEndpoint) => {
+    act(() => mockDirectReceipt?.({ type: 'touch_session', session_id: endpoint.session, owner: 'b'.repeat(32),
+      capture_epoch: TOUCH_EPOCH, frame_width: 1280, frame_height: 720 }));
+    act(() => mockDirectReceipt?.({ type: 'shared_input_status', session_id: endpoint.session, owner: 'b'.repeat(32),
+      capture_epoch: TOUCH_EPOCH, sequence: 0, gesture: 0, action: 4, outcome: 'ready', device_uptime_ms: 100 }));
+  };
+  receive({ type: 'touch_capability', capture_epoch: TOUCH_EPOCH, frame_width: 1280, frame_height: 720 }); bind(oldEndpoint);
+  for (let i = 0; i < 7; i++) act(() => jest.advanceTimersByTime(250));
+  expect(view.container.querySelector('[data-control-state]')).toHaveAttribute('data-control-failure', 'idle_receipt_timeout');
+  Object.defineProperty(oldEndpoint, 'readyState', { value: 3 });
+  act(() => mockDirectObserve?.(null));
+  const nextEndpoint = { ...directEndpoint(), session: 'c'.repeat(32), sharedInput: true };
+  act(() => mockDirectObserve?.(nextEndpoint));
+  receive({ type: 'touch_capability', capture_epoch: TOUCH_EPOCH, frame_width: 1280, frame_height: 720 });
+  expect(view.container.querySelector('[data-control-state]')).toHaveAttribute('data-control-state', 'opening');
+  view.down(1); view.up(1);
+  expect((nextEndpoint.send as jest.Mock).mock.calls.map(([raw]) => JSON.parse(raw).type)).toEqual(['touch_open']);
+  bind(nextEndpoint);
+  expect(view.container.querySelector('[data-control-state]')).toHaveAttribute('data-control-state', 'ready');
+  expect(MockSocket.instances).toHaveLength(1);
+  expect(view.socket.close).not.toHaveBeenCalled();
+  expect(view.commands()).toEqual([]);
+  view.unmount();
+  expect(jest.getTimerCount()).toBe(0);
+});
+
 it.each([false,true])('promotes a late shared peer after exact fallback release without another signaling reconnect (endpoint first=%s)', endpointFirst => {
   mockCapture={captureEpoch:TOUCH_EPOCH,frameWidth:1280,frameHeight:720};
   mockInputAdmission={admissionKnown:true,admitted:false,sharedInput:false};

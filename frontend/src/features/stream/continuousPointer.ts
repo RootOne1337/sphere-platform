@@ -387,6 +387,11 @@ export class ContinuousPointer {
       return this.receive({ ...base, origin: 'admission', status: 5, stage: 'startup' });
     if (message.outcome === 'closed' && message.sequence === 0)
       return this.receive({ ...base, status: 3, stage: 'release' });
+    // Shared APK cleanup failure is sequence0/action4. It may arrive after an
+    // idle timeout already fenced this controller; retain its exact UNKNOWN.
+    if (message.outcome === 'unknown' && this.closeSent && message.sequence === 0
+      && message.gesture === 0 && message.action === 4)
+      return this.receive({ ...base, status: 6, stage: 'release' });
     if (message.outcome === 'applied' || message.outcome === 'alive') {
       const offered = this.pending.find(p => p.sequence === message.sequence) ??
         (this.terminal?.sequence === message.sequence ? this.terminal : null);
@@ -558,7 +563,14 @@ export class ContinuousPointer {
     if (this.stateValue === 'idle' || this.stateValue === 'closed' || this.stateValue === 'destroyed'
       || this.stateValue === 'closing' || this.stateValue === 'fenced') return;
     const cancelUnstarted = this.stateValue === 'opening' && !this.nativeStarted;
-    this.sharedTransportRetired = this.options.sharedInput === true && ['server_runtime_retry','capture_or_socket_lost'].includes(reason)
+    // An idle ACK can expire just before the dead SCTP channel reports closure.
+    // Preserve that no-action proof now: a later retire is intentionally a no-op.
+    // Only a closed old route and fresh native READY can admit its replacement.
+    const idleOnlyTimeout = reason === 'native_receipt_timeout' && this.stateValue === 'ready'
+      && this.pending.length > 0 && this.pointerOutcomeConfirmed
+      && this.keyReceipts.size === 0 && this.keyboardReceipts.size === 0;
+    this.sharedTransportRetired = this.options.sharedInput === true
+      && (['server_runtime_retry','capture_or_socket_lost'].includes(reason) || idleOnlyTimeout)
       && !this.nativeFailure && !this.releaseFailed;
     this.idleSharedSurfaceLoss = this.options.sharedInput === true && this.stateValue === 'ready'
       && ['surface_hidden', 'surface_blur', 'surface_control_lost', 'capture_or_socket_lost', 'server_runtime_retry'].includes(reason)

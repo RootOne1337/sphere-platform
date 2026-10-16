@@ -47,6 +47,16 @@ test('disabling mode waits for exact RESET receipt before IME restoration',async
   expect(messages().some(m=>m.type==='keyboard_mode'&&!m.enabled)).toBe(false);
   f.result(1);await promise;expect(messages().at(-1)).toEqual({type:'keyboard_mode',enabled:false});
 });
+
+test('an acknowledged held keyboard key is not an idle timeout replacement proof', async () => {
+  const f = fixture(); f.state();
+  const held = f.pointer.keyboard({ operation:'key_down', keycode:29, editor_generation:7, meta:0 });
+  f.result(1); await expect(held).resolves.toMatchObject({ outcome:'accepted' });
+  for (let i=0; i<7; i++) { f.now.value += 250; f.pointer.tick(); }
+  expect(f.pointer.state).toBe('fenced');
+  (f.direct as {readyState:number}).readyState=3;
+  expect(f.pointer.canRejoinRetiredSharedPeer).toBe(false);
+});
 test('old capabilities and malformed private fields cannot use text transport',async()=>{
   const f=fixture(false);expect(f.pointer.keyboardMode(true)).toBe(false);
   await expect(f.pointer.keyboard({operation:'commit',editor_generation:7,text:'text'})).resolves.toEqual({outcome:'not_sent'});

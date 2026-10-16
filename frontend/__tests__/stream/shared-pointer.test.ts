@@ -98,6 +98,44 @@ test('a hidden idle shared participant can rejoin a replaced peer without transf
   expect(f.pointer.down(1, { x: 10, y: 20 })).toBe(false);
   expect(f.server.send).not.toHaveBeenCalled();
 });
+
+test('an idle receipt fence can admit a fresh shared peer only after the old channel closes', () => {
+  const f = fixture(); f.receipt('ready');
+  for (let i = 0; i < 7; i++) { f.now.value += 250; f.pointer.tick(); }
+  expect(f.pointer.state).toBe('fenced');
+  expect(f.pointer.recoverableIdleReceiptLoss).toBe(true);
+  expect(f.pointer.canRejoinRetiredSharedPeer).toBe(false);
+  Object.defineProperty(f.direct, 'readyState', { value: 3 });
+  expect(f.pointer.canRejoinRetiredSharedPeer).toBe(true);
+  expect(f.pointer.down(1, { x: 10, y: 20 })).toBe(false);
+  expect(f.server.send).not.toHaveBeenCalled();
+});
+
+test.each(['held', 'pending_up', 'pending_key', 'unknown_cleanup', 'legacy'])('%s does not gain idle receipt peer replacement', mode => {
+  const f = fixture(mode !== 'legacy', true); f.receipt('ready');
+  if (mode === 'held' || mode === 'pending_up') {
+    f.pointer.down(1, { x: 10, y: 20 }); f.receipt('applied', 1, 0, 1);
+    if (mode === 'pending_up') f.pointer.up(1, { x: 10, y: 20 });
+  }
+  if (mode === 'pending_key') void f.pointer.keyTap(3);
+  for (let i = 0; i < 7; i++) { f.now.value += 250; f.pointer.tick(); }
+  if (mode === 'unknown_cleanup') f.receipt('unknown', 0, 4, 0);
+  Object.defineProperty(f.direct, 'readyState', { value: 3 });
+  expect(f.pointer.canRejoinRetiredSharedPeer).toBe(false);
+  if (mode === 'unknown_cleanup') {
+    expect(f.receipt('closed', 0, 3, 0)).toBe(false);
+    expect(f.pointer.state).toBe('fenced');
+  }
+});
+
+test.each([{ owner:'foreign_owner_1234' }, { capture_epoch:'ffffffff-ffff-ffff-ffff-ffffffffffff' },
+  { sequence:1 }, { gesture:1 }])('a mismatched cleanup result cannot poison idle-only replacement: %j', overrides => {
+  const f = fixture(); f.receipt('ready');
+  for (let i=0; i<7; i++) { f.now.value += 250; f.pointer.tick(); }
+  expect(f.receipt('unknown', 0, 4, 0, overrides)).toBe(false);
+  Object.defineProperty(f.direct, 'readyState', { value:3 });
+  expect(f.pointer.canRejoinRetiredSharedPeer).toBe(true);
+});
 test.each(['held', 'unacknowledged_up', 'pending_key', 'native_failure', 'unknown_cleanup'])('%s cannot use idle peer rejoin', mode => {
   const f = fixture(true,true); f.receipt('ready');
   if (mode === 'held' || mode === 'unacknowledged_up') {
