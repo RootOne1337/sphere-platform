@@ -1,5 +1,13 @@
 # Будущий AI-контур: готовность и границы интеграции
 
+**Текущая реализация 16 октября:** [API27f3a61f и APK77 поставлены](../audits/2026-10-16/MOTOR-TRANSPORT-DELIVERY.md).
+Headless0.2 получает прямые кадры без браузера и без server→client media с запуска;
+проверены native idle admission/CLOSE и два перекрывающихся клиента на PH011.
+Четыре online устройства завершили OTA, три installed SHA проверены, PH030 — частичная package-проверка;
+17 offline не обновлены. Модель не скачана, inference не запускался. Profile executor/multi-touch,
+LAN proof, source/action contract, worker identity, DAG delegation и GPU/gameplay остаются открытыми.
+Следующие разделы сохраняют исторические срезы исследования.
+
 **Второй транспортный этап, 16 октября:** [capture-only pilot](../audits/2026-10-16/MOTOR-CAPTURE-ONLY.md)
 исключил начальные server→headless media bytes на PH011 через отдельный API-кандидат.
 Worker0.2, native readiness и ограниченная аренда проверены; main API/APK пока не обновлены.

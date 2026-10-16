@@ -68,12 +68,12 @@ Backend ждёт completed native `stream_quality: get` с активным ис
 Стартовая аренда ограничена 40 секундами. Потерянная аренда закрывается без включения relay.
 Сам lifecycle socket не предоставляет разрешение на команды ввода.
 
-**Требуется backend с реализацией `3d427a13` или её потомком. Основной API969a7444 пока не обновлён.**
-Проверка PH011 прошла на временном API-кандидате, удалённом после прогона: с первого пакета
-server→headless media =0 байт. Команда с 3015 выше рассчитана на поставку обновлённого API.
-Прежний backend не поддерживает этот admission; клиент не подменяет его молчаливым relay fallback.
+**Требуется backend с реализацией `3d427a13` или её потомком. На 3015 и Tuna установлен API27f3a61f.**
+PH011 с APK77 прошёл одиночный и два перекрывающихся headless прогона на основной установке:
+server→headless media =0 байт с запуска. Команда с 3015 выше проверена на установленной системе.
+Прежний backend969a7444 не поддерживает этот admission; клиент не подменяет его relay fallback.
 Это не доказательство нулевого APK→server bootstrap-трафика: legacy suppression включается позже.
-[Прогон и точные границы](../audits/2026-10-16/MOTOR-CAPTURE-ONLY.md).
+[Поставка и точные границы](../audits/2026-10-16/MOTOR-TRANSPORT-DELIVERY.md).
 
 `--existing-capture` отключает lifecycle socket и требует, чтобы capture уже поддерживался другим
 авторизованным потребителем. Это специальный режим проверки, не способ обеспечить автономный запуск.
@@ -95,9 +95,9 @@ server→headless media =0 байт. Команда с 3015 выше рассч�
 в WebRTC146 после `setRemoteDescription`, до native input OPEN. После удаления объявлений
 несуществующего источника последующие конечные прогоны завершились успешно. Это локализованная
 совместимость нашего клиента; точное место abort в stripped C++ binary не символицировано.
-Backend и исходники Android теперь отвергают source-bearing recvonly offers до JNI; sendonly answers
-и session `msid-semantic` сохраняются. Android guard скомпилирован и проверен тремя unit-тестами,
-но новый APK не устанавливался. Защита от всех иных неподдерживаемых SDP не заявляется.
+Установленные backend27f3a61f и APK77 отвергают source-bearing recvonly offers до JNI; sendonly answers
+и session `msid-semantic` сохраняются. На APK77 прошли конечные browser/native и headless проверки.
+Защита от всех иных неподдерживаемых SDP не заявляется.
 Похожий upstream [issue GetStream #123](https://github.com/GetStream/webrtc-android/issues/123)
 содержит пользовательские наблюдения о codec factories; они не заменяют локальное воспроизведение.
 
@@ -136,9 +136,11 @@ Protocol tests не требуют media dependencies. Integration tests исп�
 lost ALIVE, video stall, cancellation, foreign capture binding и capture lifecycle handover.
 В обычном backend окружении integration tests явно skipped; такой skip не считается положительной media проверкой.
 
-Конечные device results, первоначальные отрицательные прогоны и ограничения —
+Текущая поставка и device results —
+[MOTOR-TRANSPORT-DELIVERY.json](../audits/2026-10-16/MOTOR-TRANSPORT-DELIVERY.json).
+Первоначальные отрицательные прогоны и отдельный кандидат —
 [MOTOR-CAPTURE-ONLY.json](../audits/2026-10-16/MOTOR-CAPTURE-ONLY.json).
 Предыдущая версия0.1 и её стартовая серверная копия — в архиве
 [HEADLESS-MOTOR-WORKER.json](../audits/2026-10-16/HEADLESS-MOTOR-WORKER.json).
-Следующие этапы: штатная локальная упаковка и rollout backend/APK guards,
-общий игровой profile executor, frame/clock contract и atomic DAG→episode delegation.
+Следующие этапы: общий игровой profile executor, frame/clock contract,
+worker service identity и atomic DAG→episode delegation. GPU/model/gameplay пока не приняты.
