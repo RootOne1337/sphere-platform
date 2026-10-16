@@ -330,6 +330,22 @@ class BackendInstallerTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "hash mismatch"):
                 installer.source_boundary(CURRENT, SOURCE, receipt | {"requirementsSha256": "0" * 64})
 
+    def test_pointer_path_update_is_schema_free_and_does_not_admit_other_task_sources(self):
+        payload = b"canonical unchanged dependencies\n"
+        digest = hashlib.sha256(payload).hexdigest()
+        receipt = {"requirementsSha256": digest, "actionContractSha256": digest}
+        paths = ["backend/schemas/pointer_path.py", "backend/services/task_service.py",
+                 "backend/schemas/action_parameters.py", "backend/schemas/action_contract.v1.json", "backend/schemas/dag.py"]
+        with patch.object(installer, "command", return_value="\n".join(paths)), \
+                patch.object(installer.subprocess, "run", return_value=subprocess.CompletedProcess([], 0, payload)):
+            self.assertEqual(installer.source_boundary(CURRENT, SOURCE, receipt), paths)
+        for additional in ("backend/services/task_dispatcher.py", "backend/models/task.py", "backend/requirements.txt", "alembic/versions/new.py"):
+            with self.subTest(additional=additional), patch.object(installer, "command", return_value="\n".join(paths + [additional])), \
+                    patch.object(installer.subprocess, "run") as canonical:
+                with self.assertRaisesRegex(ValueError, "Unreviewed packaged"):
+                    installer.source_boundary(CURRENT, SOURCE, receipt)
+                canonical.assert_not_called()
+
     def test_continuous_timing_update_preserves_dependency_and_unreviewed_source_fences(self):
         payload = b"unchanged canonical source\n"
         digest = hashlib.sha256(payload).hexdigest()
