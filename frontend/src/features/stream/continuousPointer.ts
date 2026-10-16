@@ -9,7 +9,13 @@ export const CONTINUOUS_POINTER_LIMITS = Object.freeze({
   // injector ACK each have a 500ms bound, before transport turnaround. The
   // browser must allow that bounded result to arrive without replaying input.
   sharedReceiptMs: 1250,
-  startupMs: 6000, schedulingGapMs: 500, bufferedBytes: 1024, pendingReceipts: 32,
+  // APK root READY may take 5s, followed by 2s cleanup and a 250ms reap.
+  // Opening has no admitted pointer/key input. Allow its refusal to arrive
+  // before retiring the peer, while keeping every wait and queue bounded.
+  // 500ms opening keepalives remain below the legacy APK's 1500ms lease and
+  // leave room for the first DOWN/UP after a late READY (at most 15 receipts).
+  startupMs: 8000, startupHeartbeatMs: 500,
+  schedulingGapMs: 500, bufferedBytes: 1024, pendingReceipts: 32,
   maxSequence: 2_147_483_647,
 });
 export type ContinuousPointerState = 'idle' | 'opening' | 'ready' | 'closing' | 'fenced' | 'closed' | 'destroyed';
@@ -540,7 +546,9 @@ export class ContinuousPointer {
       }
     }
     if (this.stateValue !== 'opening' && this.stateValue !== 'ready') return;
-    if (now - this.lastSentAt >= CONTINUOUS_POINTER_LIMITS.heartbeatMs) {
+    const heartbeatMs = this.stateValue === 'opening'
+      ? CONTINUOUS_POINTER_LIMITS.startupHeartbeatMs : CONTINUOUS_POINTER_LIMITS.heartbeatMs;
+    if (now - this.lastSentAt >= heartbeatMs) {
       this.event(4, this.held ?? { x: 0, y: 0 }, this.held?.gesture ?? 0);
     }
   }

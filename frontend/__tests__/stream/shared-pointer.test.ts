@@ -68,6 +68,29 @@ test('an explicit native refusal still retires shared input immediately', () => 
   expect(f.pointer.state).toBe('fenced');
   expect(f.onState).toHaveBeenLastCalledWith('fenced', 'native_input_rejected_or_unknown');
 });
+
+test('late shared READY has room for the first complete click without switching the media peer', () => {
+  const f = fixture();
+  for (let at = 250; at <= 7750; at += 250) { f.now.value = at; f.pointer.tick(); }
+  expect(f.pointer.state).toBe('opening');
+  expect(f.onFence).not.toHaveBeenCalled();
+  expect(f.pointer.pendingReceiptCount).toBe(15);
+  expect(f.pointer.down(1, { x: 10, y: 20 })).toBe(false);
+  expect(f.receipt('ready')).toBe(true);
+  expect(f.pointer.down(1, { x: 10, y: 20 })).toBe(true);
+  expect(f.pointer.up(1, { x: 10, y: 20 })).toBe(true);
+  expect(f.receipt('alive', 15)).toBe(true);
+  expect(f.receipt('applied', 16, 0, 1)).toBe(true);
+  expect(f.receipt('applied', 17, 1, 1)).toBe(true);
+  expect(f.pointer.pendingReceiptCount).toBe(0);
+  expect(f.pointer.state).toBe('ready');
+  f.now.value = 8000; f.pointer.tick();
+  expect(f.pointer.pendingReceiptCount).toBe(1); // Working keepalive is still 250ms.
+  expect(f.server.send).not.toHaveBeenCalled();
+  expect(f.onFence).not.toHaveBeenCalled();
+  expect((f.direct.send as jest.Mock).mock.calls.map(c => JSON.parse(c[0]))
+    .filter(m => m.type === 'touch_open')).toHaveLength(1);
+});
 test('a hidden idle shared participant can rejoin a replaced peer without transferring old authority', () => {
   const f = fixture(); f.receipt('ready');
   f.pointer.retire('surface_hidden');

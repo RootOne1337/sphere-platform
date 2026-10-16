@@ -46,7 +46,7 @@ it('classifies only a fresh STARTUP admission busy as retryable negotiation, wit
 
 it('discards pre-startup keepalives after native admission refusal without replay or readiness', () => {
   const f = fixture(false);
-  f.controller.open(CAPTURE); f.bind(); f.advance(LIMITS.heartbeatMs);
+  f.controller.open(CAPTURE); f.bind(); f.advance(LIMITS.startupHeartbeatMs);
   expect(f.events()).toEqual([expect.objectContaining({ action: 4 })]);
   f.status(0, 5, 'startup', { origin: 'admission' });
   const sent = f.sent.length;
@@ -60,7 +60,7 @@ it('discards pre-startup keepalives after native admission refusal without repla
 it.each(['surface_control_lost', 'surface_hidden', 'control_mode_changed'])(
   'a late exact pre-start refusal resolves retired %s without waiting for an owner that was not admitted', reason => {
     const f = fixture(false);
-    f.controller.open(CAPTURE); f.bind(); f.advance(LIMITS.heartbeatMs);
+    f.controller.open(CAPTURE); f.bind(); f.advance(LIMITS.startupHeartbeatMs);
     f.controller.retire(reason);
     expect(f.controller.state).toBe('fenced');
     f.status(0, 5, 'startup', { origin: 'admission' });
@@ -279,7 +279,7 @@ it('keeps cold-start send age distinct from the deadline age started at native R
   const f = fixture(false); f.controller.open(CAPTURE); f.bind();
   for (let i = 0; i < 5; i++) f.advance(250);
   f.status(0, 0, 'startup'); for (let n = 0; n < 5; n++) f.advance(250);
-  expect(f.onFence.mock.calls[0][0]).toMatchObject({ oldestAgeMs: 2250, oldestDeadlineAgeMs: 1250,
+  expect(f.onFence.mock.calls[0][0]).toMatchObject({ oldestAgeMs: 2000, oldestDeadlineAgeMs: 1250,
     oldestSequence: 1, phase: 'ready' });
 });
 
@@ -326,7 +326,7 @@ it('keeps cold startup alive without applying the ready receipt deadline to open
   f.controller.open(CAPTURE); f.bind();
   for (let n = 0; n < 6; n++) f.advance(250);
   expect(f.controller.state).toBe('opening');
-  expect(f.events()).toHaveLength(6);
+  expect(f.events()).toHaveLength(3);
   expect(f.events().every(event => event.action === 4)).toBe(true);
   expect(f.controller.down(1, POINT)).toBe(false);
   expect(f.status(0, 0, 'startup')).toBe(true);
@@ -340,7 +340,7 @@ it('keeps cold startup alive without applying the ready receipt deadline to open
 it('startup keepalive coalescing preserves actual RTT and still requires a native receipt after READY', () => {
   const f = fixture(false);
   f.controller.open(CAPTURE); f.bind();
-  for (let n = 0; n < 5; n++) f.advance(250);
+  for (let n = 0; n < 5; n++) f.advance(LIMITS.startupHeartbeatMs);
   f.status(0, 0, 'startup');
   f.advance(100);
   expect(f.status(5, 2)).toBe(true);
@@ -351,14 +351,49 @@ it('startup keepalive coalescing preserves actual RTT and still requires a nativ
   expect(f.controller.state).toBe('fenced');
 });
 
-it('cold startup remains bounded at six seconds and never sends a pointer action before STARTUP0', () => {
+it('cold startup remains bounded at eight seconds and never sends a pointer action before STARTUP0', () => {
   const f = fixture(false);
   f.controller.open(CAPTURE); f.bind();
-  for (let n = 0; n < 24; n++) f.advance(250);
+  for (let n = 0; n < 32; n++) f.advance(250);
   expect(f.controller.state).toBe('fenced');
   expect(f.events().every(event => event.action === 4)).toBe(true);
   expect(f.controller.pendingReceiptCount).toBe(0);
   expect(f.sent.filter(event => event.type === 'touch_close')).toHaveLength(1);
+});
+
+it('waits for a known root startup refusal after the full native READY and cleanup budgets', () => {
+  const f = fixture(false);
+  f.controller.open(CAPTURE); f.bind();
+  for (let n = 0; n < 29; n++) f.advance(250); // 5s READY + 2s cleanup + 250ms reap.
+  expect(f.controller.state).toBe('opening');
+  expect(f.onFence).not.toHaveBeenCalled();
+  expect(f.controller.down(1, POINT)).toBe(false);
+  f.status(0, 5, 'startup', { origin: 'admission' });
+  expect(f.controller.state).toBe('closed');
+  expect(f.onState).toHaveBeenLastCalledWith('closed', null);
+  expect(f.events().every(event => event.action === 4)).toBe(true);
+  expect(f.sent.filter(event => event.type === 'touch_close')).toHaveLength(1);
+});
+
+it('leaves receipt capacity for an immediate click after the latest allowed native READY', () => {
+  const f = fixture(false);
+  f.controller.open(CAPTURE); f.bind();
+  for (let n = 0; n < 31; n++) f.advance(250);
+  expect(f.controller.state).toBe('opening');
+  expect(f.controller.pendingReceiptCount).toBe(15);
+  expect(f.status(0, 0, 'startup')).toBe(true);
+  expect(f.controller.down(1, POINT)).toBe(true);
+  expect(f.controller.up(1, POINT)).toBe(true);
+  expect(f.controller.state).toBe('ready');
+  expect(f.controller.pendingReceiptCount).toBe(17);
+  // Sparse legacy ALIVE can clear preceding keepalives, but no click result is invented.
+  expect(f.status(15, 2)).toBe(true);
+  expect(f.controller.pendingReceiptCount).toBe(2);
+  f.advance(250); f.advance(250);
+  expect(f.controller.state).toBe('fenced');
+  expect(f.onFence).toHaveBeenLastCalledWith(expect.objectContaining({
+    reason: 'native_receipt_timeout', oldestAction: 0, oldestAgeMs: 500,
+  }));
 });
 
 it('server identity alone cannot authorize DOWN; only bound injector STARTUP0 enables it', () => {
