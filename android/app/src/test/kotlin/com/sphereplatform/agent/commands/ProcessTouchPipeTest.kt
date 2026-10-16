@@ -176,4 +176,60 @@ class ProcessTouchPipeTest {
         every { unknown.errorStream } returns ByteArrayInputStream("touch_adapter_failed private platform detail".toByteArray())
         assertNull(ProcessTouchPipe(unknown).startupDetail())
     }
+
+    @Test fun `cold startup timeout without any attempted packet is refused rather than input fenced`() = runBlocking {
+        val (process, output) = process(ByteArray(0), exit = 2)
+        val pipe = ProcessTouchPipe(process)
+        val failure = runCatching { awaitTouchPipeStartup(pipe, readyTimeoutMs = 0) }.exceptionOrNull()
+        assertTrue(failure is TouchStartupUnavailableException)
+        assertEquals(TouchStartupDetail.ROOT_READY_TIMEOUT, (failure as TouchStartupUnavailableException).detail)
+        assertEquals(0, output.size())
+        assertThrows(IllegalStateException::class.java) {
+            runBlocking { pipe.send(TouchSample(1, 1, RootTouchSession.DOWN, 20, 30, 1000)) }
+        }
+        Unit
+    }
+
+    @Test fun `retiring a never written helper separates no input proof from failed process cleanup`() = runBlocking {
+        val (process, output) = process(ByteArray(0), exit = 2)
+        val result = ProcessTouchPipe(process).retireBeforeHandoff()
+        assertTrue(result.noSampleAttempted)
+        assertFalse(result.processExitConfirmed)
+        assertEquals(0, output.size())
+        Unit
+    }
+
+    @Test fun `an attempted DOWN never gets pre input proof even when its write throws`() = runBlocking {
+        val (process, _) = process(ByteArray(0), exit = 2)
+        every { process.outputStream } returns object : OutputStream() {
+            override fun write(value: Int) { throw IOException("fixture uncertain write") }
+        }
+        val pipe = ProcessTouchPipe(process)
+        assertTrue(runCatching { pipe.send(TouchSample(1, 1, RootTouchSession.DOWN, 20, 30, 1000)) }.isFailure)
+        val result = pipe.retireBeforeHandoff()
+        assertFalse(result.noSampleAttempted)
+        assertFalse(result.processExitConfirmed)
+        Unit
+    }
+
+    @Test fun `attempted packet followed by startup wait failure retains unknown input cleanup`() = runBlocking {
+        val (process, _) = process(response(1, 1), exit = 2)
+        val pipe = ProcessTouchPipe(process)
+        pipe.send(TouchSample(1, 1, RootTouchSession.DOWN, 20, 30, 1000))
+        val failure = runCatching { awaitTouchPipeStartup(pipe, readyTimeoutMs = 0) }.exceptionOrNull()
+        assertTrue(failure is TouchPipeCleanupUnknownException)
+        assertEquals(TouchStartupDetail.ROOT_READY_TIMEOUT, (failure as TouchPipeCleanupUnknownException).startupDetail)
+        Unit
+    }
+
+    @Test fun `a sender cannot enter after pre handoff retirement has closed the pipe`() = runBlocking {
+        val (process, output) = process(ByteArray(0), exit = 0)
+        val pipe = ProcessTouchPipe(process)
+        assertTrue(pipe.retireBeforeHandoff().noSampleAttempted)
+        assertThrows(IllegalStateException::class.java) {
+            runBlocking { pipe.send(TouchSample(1, 0, RootTouchSession.HEARTBEAT, 0, 0, 1000)) }
+        }
+        assertEquals(0, output.size())
+        Unit
+    }
 }

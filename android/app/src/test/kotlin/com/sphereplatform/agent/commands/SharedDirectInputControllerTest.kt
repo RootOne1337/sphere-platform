@@ -25,10 +25,11 @@ class SharedDirectInputControllerTest {
         var processingMs = 0L
         var startupCleanupUnknown = false
         var refusedOpens = 0
+        var refusalDetail = TouchStartupDetail.ROOT_INPUT_BUSY
         val controller = SharedDirectInputController(scope, TouchPipeFactory {
             opened.incrementAndGet()
             if (startupCleanupUnknown) throw TouchPipeCleanupUnknownException(TouchStartupDetail.ROOT_READY_TIMEOUT)
-            if (refusedOpens > 0) { refusedOpens--; throw TouchStartupUnavailableException(TouchStartupDetail.ROOT_INPUT_BUSY) }
+            if (refusedOpens > 0) { refusedOpens--; throw TouchStartupUnavailableException(refusalDetail) }
             val native = RootTouchSession(960, 540, now.get(), { action, _, _, _, _ ->
                 !(unknownCancel && action == RootTouchSession.CANCEL)
             }, { true }, { action, code, _, _, _ -> keys += action to code; true })
@@ -104,6 +105,23 @@ class SharedDirectInputControllerTest {
             assertFalse("denied" in another.outcomes())
             assertFalse("closed" in another.outcomes())
             assertTrue(f.packets.isEmpty())
+        } finally { f.finish() }
+    }
+
+    @Test fun `proven pre input root timeout closes only the refused participant and fresh admission works`() = runBlocking {
+        val f = Fixture(); f.refusedOpens = 1; f.refusalDetail = TouchStartupDetail.ROOT_READY_TIMEOUT
+        try {
+            val cold = f.Peer("a".repeat(32))
+            assertTrue(f.controller.grant(cold)); assertTrue(cold.open())
+            eventually { "closed" in cold.outcomes() }
+            assertTrue("denied" in cold.outcomes()); assertFalse("unknown" in cold.outcomes())
+            assertFalse("ready" in cold.outcomes()); assertTrue(f.packets.isEmpty())
+            val fresh = f.peer(2)
+            assertTrue(fresh.event(1, RootTouchSession.DOWN))
+            eventually { "applied" in fresh.outcomes() }
+            assertTrue(fresh.event(2, RootTouchSession.UP))
+            eventually { fresh.outcomes().count { it == "applied" } == 2 }
+            assertEquals(2, f.opened.get())
         } finally { f.finish() }
     }
 

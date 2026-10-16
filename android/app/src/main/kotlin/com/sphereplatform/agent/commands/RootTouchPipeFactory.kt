@@ -36,35 +36,49 @@ internal class RootTouchPipeFactory(private val context: Context) : TouchPipeFac
             runCatching { process.destroyForcibly() }
             throw TouchPipeCleanupUnknownException()
         }
-        try {
-            val ready = pipe.awaitAck(5_000)
-            if (ready.sequence == 0 && ready.status == 5) {
-                val detail = pipe.startupDetail() ?: TouchStartupDetail.ROOT_HANDSHAKE
-                if (!pipe.closeStartupRefusal()) throw TouchPipeCleanupUnknownException(detail)
-                throw TouchStartupUnavailableException(detail)
-            }
-            if (ready.sequence != 0 || ready.status != 0) throw IOException("touch_ready_invalid")
-            pipe
-        } catch (failure: TouchStartupUnavailableException) {
-            // Exact refusal + owned exit3 proves that this helper admitted no input.
-            // It is separate from unknown execution/cleanup after READY.
-            Timber.w("Native touch startup refused: %s", failure.detail.name.lowercase())
-            throw failure
-        } catch (failure: Exception) {
-            val detail = pipe.startupDetail() ?: when (failure.message) {
-                "touch_process_exited", "touch_ack_eof" -> TouchStartupDetail.ROOT_PROCESS_EXITED
-                "touch_ack_timeout" -> TouchStartupDetail.ROOT_READY_TIMEOUT
-                else -> TouchStartupDetail.ROOT_HANDSHAKE
-            }
-            val confirmed = withContext(NonCancellable) { pipe.closeAndConfirm() }
-            Timber.w("Native touch startup failed: %s; cleanup confirmed: %s", detail.name.lowercase(), confirmed)
-            if (!confirmed) throw TouchPipeCleanupUnknownException(detail)
-            throw failure
+        awaitTouchPipeStartup(pipe)
+    }
+}
+
+/** The pipe is private to startup until this returns: no sample may be submitted by a caller. */
+internal suspend fun awaitTouchPipeStartup(pipe: ProcessTouchPipe, readyTimeoutMs: Long = 5_000): TouchPipe {
+    try {
+        val ready = pipe.awaitAck(readyTimeoutMs)
+        if (ready.sequence == 0 && ready.status == 5) {
+            val detail = pipe.startupDetail() ?: TouchStartupDetail.ROOT_HANDSHAKE
+            if (!pipe.closeStartupRefusal()) throw TouchPipeCleanupUnknownException(detail)
+            throw TouchStartupUnavailableException(detail)
         }
+        if (ready.sequence != 0 || ready.status != 0) throw IOException("touch_ready_invalid")
+        return pipe
+    } catch (failure: TouchStartupUnavailableException) {
+        // Exact refusal + owned exit3 proves that this helper admitted no input.
+        // It is separate from unknown execution/cleanup after READY.
+        Timber.w("Native touch startup refused: %s", failure.detail.name.lowercase())
+        throw failure
+    } catch (failure: Exception) {
+        val detail = pipe.startupDetail() ?: when (failure.message) {
+            "touch_process_exited", "touch_ack_eof" -> TouchStartupDetail.ROOT_PROCESS_EXITED
+            "touch_ack_timeout" -> TouchStartupDetail.ROOT_READY_TIMEOUT
+            else -> TouchStartupDetail.ROOT_HANDSHAKE
+        }
+        val retirement = withContext(NonCancellable) { pipe.retireBeforeHandoff() }
+        Timber.w("Native touch startup failed: %s; no sample attempted: %s; process cleanup confirmed: %s",
+            detail.name.lowercase(), retirement.noSampleAttempted, retirement.processExitConfirmed)
+        // READY alone cannot inject a touch. A private, now permanently closed
+        // pipe on which send() was never attempted cannot have submitted input,
+        // even when a cold app_process/su did not exit within the cleanup budget.
+        // Do not confuse that resource-cleanup uncertainty with an unknown DOWN.
+        // Cancellation and every attempted write retain the existing strict fence.
+        if (retirement.noSampleAttempted && failure !is kotlinx.coroutines.CancellationException)
+            throw TouchStartupUnavailableException(detail)
+        if (!retirement.processExitConfirmed) throw TouchPipeCleanupUnknownException(detail)
+        throw failure
     }
 }
 
 internal class ProcessTouchPipe(private val process: Process) : TouchPipe {
+    internal data class StartupRetirement(val noSampleAttempted: Boolean, val processExitConfirmed: Boolean)
     private var closed = false
     private var lastSequence = 0
     private var stderrBytes = 0
@@ -76,11 +90,15 @@ internal class ProcessTouchPipe(private val process: Process) : TouchPipe {
     private val stdin = process.outputStream
 
     override suspend fun send(sample: TouchSample): RootTouchWire.Ack {
-        check(!closed)
-        if (sample.sequence <= lastSequence) throw IOException("touch_sequence_invalid")
-        wroteSample = true // Before the write: a throwing write may already have been consumed.
+        synchronized(this) {
+            check(!closed)
+            if (sample.sequence <= lastSequence) throw IOException("touch_sequence_invalid")
+            // Reserve before writing, including a partial/throwing write. Retirement
+            // can never prove 'no input' once a sender has passed this boundary.
+            wroteSample = true
+            lastSequence = sample.sequence
+        }
         RootTouchWire.write(stdin, RootTouchWire.Packet(sample.sequence, sample.gesture, sample.action, sample.x, sample.y))
-        lastSequence = sample.sequence
         val ack = awaitAck(500)
         if (ack.sequence != sample.sequence || ack.status == 0) throw IOException("touch_ack_mismatch")
         val expected = when (sample.action) { RootTouchSession.HEARTBEAT -> 2; RootTouchSession.CANCEL -> 3; else -> 1 }
@@ -135,12 +153,20 @@ internal class ProcessTouchPipe(private val process: Process) : TouchPipe {
 
     internal suspend fun closeStartupRefusal(): Boolean = closeOwned(expectedExit = 3, startupRefusal = true)
 
+    internal suspend fun retireBeforeHandoff(): StartupRetirement {
+        val confirmed = closeAndConfirm()
+        // closeOwned atomically rejects all later send() calls before touching IO.
+        // This fact describes input only; it never attests a force-killed process's exit.
+        return synchronized(this) { StartupRetirement(closed && !wroteSample, confirmed) }
+    }
+
     override suspend fun closeAndConfirm(): Boolean = closeOwned(expectedExit = 0, startupRefusal = false)
 
     private suspend fun closeOwned(expectedExit: Int, startupRefusal: Boolean): Boolean = withContext(NonCancellable + Dispatchers.IO) {
-        if (startupRefusal && wroteSample) return@withContext false
-        if (closed) return@withContext false
-        closed = true
+        val firstClose = synchronized(this) {
+            if (closed || startupRefusal && wroteSample) false else { closed = true; true }
+        }
+        if (!firstClose) return@withContext false
         runCatching { stdin.close() }
         val deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(2)
         // EOF asks the helper to cancel before exiting. Force-kill is cleanup, not release confirmation.

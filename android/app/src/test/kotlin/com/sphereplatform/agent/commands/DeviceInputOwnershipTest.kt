@@ -108,6 +108,24 @@ class DeviceInputOwnershipTest {
         }
     }
 
+    @Test fun `proven pre input startup timeout releases ownership for a fresh admission`() = runBlocking {
+        val ownership = DeviceInputOwnership()
+        val process = io.mockk.mockk<Process>()
+        io.mockk.every { process.inputStream } returns java.io.ByteArrayInputStream(ByteArray(0))
+        io.mockk.every { process.errorStream } returns java.io.ByteArrayInputStream(ByteArray(0))
+        io.mockk.every { process.outputStream } returns java.io.ByteArrayOutputStream()
+        io.mockk.every { process.isAlive } returns false
+        io.mockk.every { process.exitValue() } returns 2
+        val factory = OwnedTouchPipeFactory(ownership, {}, TouchPipeFactory {
+            awaitTouchPipeStartup(ProcessTouchPipe(process), readyTimeoutMs = 0)
+        })
+        val failure = runCatching { factory.open(binding()) }.exceptionOrNull()
+        assertTrue(failure is TouchStartupUnavailableException)
+        ownership.claimDiscrete().close()
+        assertTrue(ownership.claimContinuous("fresh_owner_5678"))
+        Unit
+    }
+
     private fun binding() = TouchBinding("owner_1234", "epoch_1234", 960, 540, 0)
     private fun testPipe(confirmed: Boolean) = object : TouchPipe {
         override suspend fun send(sample: TouchSample) = ack(sample.sequence)
