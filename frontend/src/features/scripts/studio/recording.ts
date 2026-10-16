@@ -1,3 +1,4 @@
+import { validPointerPath } from '@/lib/dag/pointerPath';
 import type { DagNode } from '@/lib/dag/export';
 import { ANDROID_EDIT_KEYCODES, androidTextCommand, type AcknowledgedControl, type StreamInput } from '@/src/features/stream/controlObservation';
 import type { UiHierarchyNode, UiHierarchySnapshot } from '@/src/features/stream/uiHierarchy';
@@ -10,21 +11,25 @@ export type RecordedInput = (StreamInput | PlannedSelector) & { id: string; requ
 export const RECORDING_LIMIT = 200;
 export function appendRecording(entries: RecordedInput[], input: StreamInput, deviceId: string): RecordedInput[] {
   if (input.deviceId !== deviceId || !Number.isFinite(input.at) || ![input.dimensions.width, input.dimensions.height].every(value => Number.isInteger(value) && value >= 1 && value <= 16384)) throw new Error('Ввод относится к другому устройству или неверному кадру.');
-  if (input.endedAt !== undefined && (!['click', 'swipe'].includes(input.command.type)
+  if (input.endedAt !== undefined && (!['click', 'swipe', 'pointer_path'].includes(input.command.type)
     || !Number.isFinite(input.endedAt) || input.endedAt < input.at)) throw new Error('Некорректное время завершения жеста.');
   if (entries.length >= RECORDING_LIMIT) throw new Error('Достигнут лимит записи: 200 действий. Остановите и перенесите запись.');
-  if (!['click', 'swipe', 'key_event', 'type_text'].includes(input.command.type)) throw new Error('Неизвестный тип ввода.');
+  if (!['click', 'swipe', 'pointer_path', 'key_event', 'type_text'].includes(input.command.type)) throw new Error('Неизвестный тип ввода.');
   if (entries.length && input.at < entries[entries.length - 1].at) throw new Error('Запись нарушает порядок времени.');
   const coords = input.command.type === 'click' ? [input.command.x, input.command.y] : input.command.type === 'swipe' ? [input.command.x1, input.command.y1, input.command.x2, input.command.y2] : [];
   if (coords.some((coord, index) => !Number.isInteger(coord) || coord < 0 || coord >= (index % 2 ? input.dimensions.height : input.dimensions.width))) throw new Error('Координаты записи вне кадра.');
+  if (input.command.type === 'pointer_path' && (!validPointerPath(input.command.path)
+    || input.command.path.frame_width !== input.dimensions.width || input.command.path.frame_height !== input.dimensions.height
+    || input.endedAt === undefined || Math.round(input.endedAt-input.at) !== input.command.path.points.at(-1)!.t_ms))
+    throw new Error('Неполная траектория касания или неверное время завершения.');
   if (input.command.type === 'swipe' && (!Number.isInteger(input.command.duration_ms) || input.command.duration_ms < 0 || input.command.duration_ms > 2147483647)) throw new Error('Некорректная длительность свайпа.');
   if (input.command.type === 'key_event' && !ANDROID_EDIT_KEYCODES.has(input.command.keycode)) throw new Error('Клавиша не поддерживается записью.');
   if (input.command.type === 'type_text' && !androidTextCommand(input.command.text)) throw new Error('Текст не поддерживается установленным каналом Android.');
-  return [...entries, { ...input, dimensions: { ...input.dimensions }, command: { ...input.command }, id: crypto.randomUUID(), outcome: 'transport-submitted' }];
+  return [...entries, { ...input, dimensions: { ...input.dimensions }, command: JSON.parse(JSON.stringify(input.command)), id: crypto.randomUUID(), outcome: 'transport-submitted' }];
 }
 export function appendNativeRecording(entries: RecordedInput[], input: StreamInput, deviceId: string, requestId: string, completedAt: number): RecordedInput[] {
   if (!requestId || entries.some(entry => entry.requestId === requestId)
-    || !['click','swipe'].includes(input.command.type) || !Number.isFinite(completedAt) || completedAt < (input.endedAt ?? input.at))
+    || !['click','swipe','pointer_path'].includes(input.command.type) || !Number.isFinite(completedAt) || completedAt < (input.endedAt ?? input.at))
     throw new Error('Нативная запись не соответствует подтверждённому жесту.');
   const next = appendRecording(entries,input,deviceId);
   next[next.length-1] = {...next[next.length-1], requestId, completedAt, outcome:'android-confirmed'};
@@ -84,6 +89,10 @@ export function recordedAction(input: RecordedInput): DagNode['action'] {
     if (input.outcome !== 'android-confirmed') throw new Error('Команда Android не подтверждена.');
     return command.type === 'key_event' ? { type: 'key_event', keycode: command.keycode }
       : { type: 'type_text', text: command.text, clear_first: false };
+  }
+  if (command.type === 'pointer_path') {
+    if (input.outcome !== 'android-confirmed') throw new Error('Границы жеста не подтверждены Android.');
+    return {type:'pointer_path',path:JSON.parse(JSON.stringify(command.path))};
   }
   return command.type === 'click' ? { type: 'tap', x: x(command.x), y: y(command.y) }
     : { type: 'swipe', x1: x(command.x1), y1: y(command.y1), x2: x(command.x2), y2: y(command.y2), duration_ms: command.duration_ms };

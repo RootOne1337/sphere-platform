@@ -155,6 +155,23 @@ class DagRunnerTest {
 
     // ── Различные типы нод ───────────────────────────────────────────────────
 
+    @Test fun `one path has one result and reports native schedule lateness`() = runTest {
+        coEvery { adbActions.pointerPath(any(), any()) } returns TimedPointerPathPlayer.Result(3, 2500, 7)
+        val result = runner.execute("path-one", buildDag("n1", node("n1", "pointer_path") { put("path", buildJsonObject {}) }))
+        assertTrue(result["success"]!!.jsonPrimitive.boolean)
+        coVerify(exactly = 1) { adbActions.pointerPath(any(), any()) }
+        assertTrue(result.toString().contains("max_schedule_lateness_ms"))
+    }
+
+    @Test fun `partial native path never retries or follows on failure`() = runTest {
+        coEvery { adbActions.pointerPath(any(), any()) } throws PointerPathInterruptedException(2,"pointer_path_interrupted")
+        val dag = buildDag("n1", node("n1", "pointer_path", onFailure="next", retry=3) { put("path",buildJsonObject {}) },
+            node("next","tap") { put("x",1);put("y",2) })
+        assertThrows(PointerPathInterruptedException::class.java) { kotlinx.coroutines.runBlocking { runner.execute("path-partial",dag) } }
+        coVerify(exactly = 1) { adbActions.pointerPath(any(),any()) }
+        verify(exactly = 0) { adbActions.tap(any(),any()) }
+    }
+
     @Test
     fun `нода swipe`() = runTest {
         val dag = buildDag(

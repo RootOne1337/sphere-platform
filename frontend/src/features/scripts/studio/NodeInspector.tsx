@@ -8,6 +8,8 @@ import { defaultAction } from '@/lib/dag/studio';
 import { ACTION_TYPES, type DagNode } from '@/lib/dag/export';
 import { ActionContractCard } from './ActionContractCard';
 import { actionContract, fieldRule } from '@/lib/dag/actionParameters';
+import { validPointerPath } from '@/lib/dag/pointerPath';
+import { PointerPathPreview } from './PointerPathPreview';
 
 const choices: Record<string, string[]> = { strategy: ['xpath', 'id', 'text', 'desc', 'class'], direction: ['up', 'down', 'left', 'right'],
   method: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'HEAD'] };
@@ -41,6 +43,7 @@ export function NodeInspector({ source, onChange, nodes, writable, pending, appl
   }
   const inputStyle = 'h-9 w-full rounded-md border border-input bg-background px-2 text-xs outline-none focus:ring-2 focus:ring-ring';
   function field(key: string, value: unknown, path: string[], depth = 0): React.ReactNode {
+    if (key === 'path' && node?.action.type === 'pointer_path' && validPointerPath(value)) return <div key="pointer-path" className="space-y-2"><PointerPathPreview path={value} /><Button size="sm" variant="ghost" onClick={()=>setTab('json')}>Изменить точки и время в JSON</Button><p className="text-[11px] text-muted-foreground">APK 1.2.81+. Частичный жест не повторяется автоматически. Пауза задания отпускает палец и прерывает траекторию.</p></div>;
     const title = FIELD_LABELS[key] ?? key;
     const options = key === 'check' ? (node?.action.type === 'condition' ? ['element_exists', 'text_contains', 'battery_above'] : ['element_exists', 'element_gone', 'text_equals', 'text_contains', 'variable_equals', 'variable_contains', 'http_status']) : choices[key];
     if (value && typeof value === 'object' && !Array.isArray(value) && depth < 3) return <fieldset key={path.join('.')} className="space-y-3 rounded-lg border p-3"><legend className="px-1 text-xs font-medium">{title}</legend>{Object.entries(value).map(([name, nested]) => field(name, nested, [...path, name], depth + 1))}<Button size="sm" variant="ghost" onClick={() => setTab('json')}>Редактировать структуру в JSON</Button></fieldset>;

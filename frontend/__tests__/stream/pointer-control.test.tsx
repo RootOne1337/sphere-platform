@@ -1932,7 +1932,7 @@ it('starts recording on the same controller and cancels a preceding held finger 
   view.down(3);view.status(3,1);view.up(3);view.status(4,1);
   expect(view.commands()).toHaveLength(0);expect(observer).not.toHaveBeenCalled();
   expect(native.mock.calls.map(([e])=>e.phase)).toEqual(['started','finished']);
-  expect(native.mock.calls[1][0]).toMatchObject({outcome:'confirmed',input:{command:{type:'click'}}});
+  expect(native.mock.calls[1][0]).toMatchObject({outcome:'confirmed',input:{command:{type:'pointer_path',path:{points:[{action:0},{action:1}]}}}});
   view.unmount();
 });
 

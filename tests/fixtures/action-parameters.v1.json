@@ -4,6 +4,7 @@
     "end": {"type": "end", "status": "success"},
     "tap": {"type": "tap", "x": 0, "y": 540, "reference_width": 960},
     "swipe": {"type": "swipe", "x1": 0, "y1": 0, "x2": 959, "y2": 539, "duration_ms": 1000},
+    "pointer_path": {"type": "pointer_path", "path": {"schema_version": 1, "frame_width": 960, "frame_height": 540, "points": [{"t_ms": 0, "action": 0, "x": 100, "y": 300}, {"t_ms": 1500, "action": 2, "x": 300, "y": 200}, {"t_ms": 3000, "action": 2, "x": 100, "y": 300}, {"t_ms": 4500, "action": 1, "x": 100, "y": 300}]}},
     "type_text": {"type": "type_text", "text": "Пример 😀", "clear_first": false},
     "sleep": {"type": "sleep", "ms": 0},
     "key_event": {"type": "key_event", "keycode": 3},
@@ -75,6 +76,13 @@
     {"name": "empty shell", "action": {"type": "shell", "command": " "}, "errors": ["command:length"]},
     {"name": "timeout not boolean", "action": {"type": "find_element", "selector": "OK", "timeout_ms": false}, "errors": ["timeout_ms:integer"]},
     {"name": "APK loop not published", "action": {"type": "loop", "body": []}, "errors": ["type:type"]},
-    {"name": "prototype names not actions", "action": {"type": "__proto__"}, "errors": ["type:type"]}
+    {"name": "prototype names not actions", "action": {"type": "__proto__"}, "errors": ["type:type"]},
+    {"name": "path-version", "action": {"type": "pointer_path", "path": {"schema_version": 2, "frame_width": 960, "frame_height": 540, "points": [{"t_ms": 0, "action": 0, "x": 100, "y": 300}, {"t_ms": 1500, "action": 2, "x": 300, "y": 200}, {"t_ms": 3000, "action": 2, "x": 100, "y": 300}, {"t_ms": 4500, "action": 1, "x": 100, "y": 300}]}}, "errors": ["path:pointer_path"]},
+    {"name": "path-time-regression", "action": {"type": "pointer_path", "path": {"schema_version": 1, "frame_width": 960, "frame_height": 540, "points": [{"t_ms": 0, "action": 0, "x": 100, "y": 300}, {"t_ms": 1500, "action": 2, "x": 300, "y": 200}, {"t_ms": 1, "action": 2, "x": 100, "y": 300}, {"t_ms": 4500, "action": 1, "x": 100, "y": 300}]}}, "errors": ["path:pointer_path"]},
+    {"name": "path-outside-frame", "action": {"type": "pointer_path", "path": {"schema_version": 1, "frame_width": 960, "frame_height": 540, "points": [{"t_ms": 0, "action": 0, "x": 100, "y": 300}, {"t_ms": 1500, "action": 2, "x": 960, "y": 200}, {"t_ms": 3000, "action": 2, "x": 100, "y": 300}, {"t_ms": 4500, "action": 1, "x": 100, "y": 300}]}}, "errors": ["path:pointer_path"]},
+    {"name": "path-missing-up", "action": {"type": "pointer_path", "path": {"schema_version": 1, "frame_width": 960, "frame_height": 540, "points": [{"t_ms": 0, "action": 0, "x": 100, "y": 300}, {"t_ms": 1500, "action": 2, "x": 300, "y": 200}, {"t_ms": 3000, "action": 2, "x": 100, "y": 300}, {"t_ms": 4500, "action": 2, "x": 100, "y": 300}]}}, "errors": ["path:pointer_path"]},
+    {"name": "path-extra-private-key", "action": {"type": "pointer_path", "path": {"schema_version": 1, "frame_width": 960, "frame_height": 540, "points": [{"t_ms": 0, "action": 0, "x": 100, "y": 300}, {"t_ms": 1500, "action": 2, "x": 300, "y": 200, "PRIVATE": "PRIVATE"}, {"t_ms": 3000, "action": 2, "x": 100, "y": 300}, {"t_ms": 4500, "action": 1, "x": 100, "y": 300}]}}, "errors": ["path:pointer_path"]},
+    {"name": "path-too-long", "action": {"type": "pointer_path", "path": {"schema_version": 1, "frame_width": 960, "frame_height": 540, "points": [{"t_ms": 0, "action": 0, "x": 100, "y": 300}, {"t_ms": 1500, "action": 2, "x": 300, "y": 200}, {"t_ms": 3000, "action": 2, "x": 100, "y": 300}, {"t_ms": 60001, "action": 1, "x": 100, "y": 300}]}}, "errors": ["path:pointer_path"]},
+    {"name": "path-string-time", "action": {"type": "pointer_path", "path": {"schema_version": 1, "frame_width": 960, "frame_height": 540, "points": [{"t_ms": 0, "action": 0, "x": 100, "y": 300}, {"t_ms": "1500", "action": 2, "x": 300, "y": 200}, {"t_ms": 3000, "action": 2, "x": 100, "y": 300}, {"t_ms": 4500, "action": 1, "x": 100, "y": 300}]}}, "errors": ["path:pointer_path"]}
   ]
 }

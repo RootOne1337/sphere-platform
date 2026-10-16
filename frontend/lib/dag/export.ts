@@ -2,7 +2,7 @@ import { type Node, type Edge } from '@xyflow/react';
 
 // Wire contract: backend/schemas/dag.py. Canvas coordinates never enter the DAG.
 export const ACTION_TYPES = [
-  'tap', 'swipe', 'type_text', 'sleep', 'find_element', 'key_event', 'lua',
+  'tap', 'swipe', 'pointer_path', 'type_text', 'sleep', 'find_element', 'key_event', 'lua',
   'screenshot', 'condition', 'start', 'end', 'launch_app', 'stop_app',
   'clear_app_data', 'find_first_element', 'tap_first_visible', 'tap_element',
   'get_element_text', 'wait_for_element_gone', 'scroll_to', 'long_press',

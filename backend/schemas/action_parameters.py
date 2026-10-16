@@ -12,6 +12,8 @@ from pathlib import Path
 from typing import Any
 from urllib.parse import urlsplit
 
+from backend.schemas.pointer_path import valid_pointer_path
+
 CONTRACT: dict[str, Any] = json.loads(Path(__file__).with_name("action_contract.v1.json").read_text(encoding="utf-8"))
 ACTION_CONTRACT_VERSION: str = CONTRACT["version"]
 MAX_ERRORS = 100
@@ -72,6 +74,8 @@ def action_parameter_errors(nodes: list[dict]) -> list[dict]:
                 valid_url = False
             if not valid_url:
                 fail(path, "http_url")
+        if rule.get("format") == "pointer_path_v1" and not valid_pointer_path(value):
+            fail(path, "pointer_path")
         if kind == "array" and "items" in rule:
             for index, item in enumerate(value):
                 visit(item, rule["items"], [*path, index])

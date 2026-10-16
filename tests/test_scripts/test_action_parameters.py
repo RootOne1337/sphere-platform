@@ -17,7 +17,7 @@ def concise(errors):
 
 
 @pytest.mark.parametrize("action", list(FIXTURES["valid_actions"].values()), ids=FIXTURES["valid_actions"])
-def test_all_32_published_actions_have_a_valid_example_without_source_mutation(action):
+def test_all_published_actions_have_a_valid_example_without_source_mutation(action):
     original = deepcopy(action)
     assert action_parameter_errors([{"action": action}]) == []
     assert action == original

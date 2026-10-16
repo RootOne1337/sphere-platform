@@ -1,8 +1,9 @@
 import rawContract from './action-contract.v1.json';
+import { validPointerPath } from './pointerPath';
 
 type Rule = {
   ref?: string; required?: boolean; type?: string; min?: number; max?: number; nonblank?: boolean;
-  enum?: string[]; case?: 'upper'; pattern?: string; format?: 'http_url';
+  enum?: string[]; case?: 'upper'; pattern?: string; format?: 'http_url' | 'pointer_path_v1';
   fields?: Record<string, Rule>; items?: Rule; values?: Rule; key_pattern?: string;
 };
 export interface ActionSpec {
@@ -52,6 +53,7 @@ export function actionParameterErrors(nodes: { action: Record<string, unknown> }
       try { const url = new URL(value as string); if (!/^https?:\/\//.test(value as string) || !url.hostname || /\s/.test(value as string)) fail(path, 'http_url'); }
       catch { fail(path, 'http_url'); }
     }
+    if (rule.format === 'pointer_path_v1' && !validPointerPath(value)) fail(path, 'pointer_path');
     if (kind === 'array' && rule.items) (value as unknown[]).forEach((item, index) => visit(item, rule.items!, [...path, index]));
     if (kind === 'object') {
       const object = value as Record<string, unknown>;

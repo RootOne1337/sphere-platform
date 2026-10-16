@@ -31,6 +31,7 @@ from backend.models.game_account import GameAccount
 from backend.models.script import Script, ScriptVersion
 from backend.models.task import Task, TaskStatus
 from backend.models.task_batch import TaskBatch, TaskBatchStatus
+from backend.schemas.pointer_path import pointer_path_admission_error
 from backend.services.account_credentials import read_account_password
 from backend.services.task_queue import TaskQueue
 
@@ -382,6 +383,13 @@ class TaskService:
                     continue
                 script = await self.db.get(Script, task.script_id)
                 resolved_dag = version.dag
+                admission_error = pointer_path_admission_error(resolved_dag, getattr(presence, "agent_version_code", None))
+                if admission_error:
+                    task.status = TaskStatus.FAILED
+                    task.error_message = admission_error
+                    task.finished_at = now
+                    await self.db.commit()
+                    continue
                 account = await self._load_account_for_task(task)
                 if account is not None:
                     resolved_dag = self._resolve_dag_placeholders(

@@ -9,7 +9,7 @@ export const ANDROID_KEY_PRESETS = [
 ] as const;
 
 export const ACTION_GROUPS = [
-  { name: 'Управление экраном', types: ['tap', 'swipe', 'long_press', 'double_tap', 'scroll', 'key_event', 'type_text', 'input_clear'] },
+  { name: 'Управление экраном', types: ['tap', 'swipe', 'pointer_path', 'long_press', 'double_tap', 'scroll', 'key_event', 'type_text', 'input_clear'] },
   { name: 'Элементы и проверки', types: ['find_element', 'tap_element', 'find_first_element', 'tap_first_visible', 'get_element_text', 'wait_for_element_gone', 'scroll_to', 'assert'] },
   { name: 'Логика и данные', types: ['sleep', 'condition', 'set_variable', 'get_variable', 'increment_variable', 'lua', 'start', 'end'] },
   { name: 'Приложения и система', types: ['launch_app', 'stop_app', 'clear_app_data', 'screenshot', 'shell', 'http_request', 'open_url', 'get_device_info'] },
@@ -21,6 +21,7 @@ export function actionSummary(action: DagNode['action']): string {
   if (type === 'end') return 'Завершить выполнение';
   if (type === 'sleep') return `${action.ms ?? '—'} мс`;
   if (['tap', 'long_press', 'double_tap'].includes(type)) return `X ${action.x ?? '—'} · Y ${action.y ?? '—'}`;
+  if (type === 'pointer_path') { const p = action.path as {points?: {t_ms:number}[]} | undefined; return `${p?.points?.length ?? 0} точек · ${p?.points?.at(-1)?.t_ms ?? 0} мс · один жест`; }
   if (type === 'swipe') return `${action.x1}, ${action.y1} → ${action.x2}, ${action.y2}`;
   if (typeof action.selector === 'string') return action.selector;
   if (type === 'type_text') return 'Текст и очистка поля'; // Never expose private input on the canvas.
@@ -33,7 +34,7 @@ export function actionSummary(action: DagNode['action']): string {
 }
 
 export const FIELD_LABELS: Record<string, string> = {
-  retry: 'Повторы', node_id: 'Узел с HTTP-ответом',
+  path: 'Траектория · точки и время (APK 1.2.81+)', retry: 'Повторы', node_id: 'Узел с HTTP-ответом',
   x: 'Координата X', y: 'Координата Y', x1: 'Начало X', y1: 'Начало Y', x2: 'Конец X', y2: 'Конец Y',
   ms: 'Ожидание, мс', duration_ms: 'Длительность, мс', timeout_ms: 'Ожидание ответа, мс', delay_ms: 'После запуска, мс',
   keycode: 'Код клавиши Android', selector: 'Селектор элемента', strategy: 'Стратегия поиска', text: 'Текст',

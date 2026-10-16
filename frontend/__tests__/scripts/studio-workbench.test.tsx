@@ -28,7 +28,7 @@ let mockModeObserver: ((mode: 'control' | 'view' | 'inspect') => void) | undefin
 let mockHandoffId: number | undefined;
 let mockHandoffObserver: ((state: 'waiting' | 'ready' | 'blocked', id: number) => void) | undefined;
 jest.mock('@/lib/store', () => ({ useAuthStore: () => ({ accessToken: mockToken, sessionVersion: mockSessionVersion }) }));
-const mockDevice = { id: deviceId, name: 'PH025', model: 'LDPlayer', status: 'online', agent_version: '1.2.45', android_version: '9' };
+const mockDevice = { id: deviceId, name: 'PH025', model: 'LDPlayer', status: 'online', agent_version: '1.2.81', agent_version_code:10281, android_version: '9' };
 jest.mock('@/lib/hooks/useDevices', () => ({ useDevices: (_params: unknown, enabled?: boolean) => { mockReadAdmissions.devices=enabled; return { data: { items: [mockDevice], total: 1, pages: 1 }, isLoading: false, isError: false, isFetching: false, refetch: jest.fn() }; } }));
 jest.mock('@/lib/hooks/useDebounce', () => ({ useDebounce: (value: unknown) => value }));
 jest.mock('@/lib/hooks/useTasks', () => ({
@@ -652,7 +652,7 @@ it.each(['unknown','interrupted','unsupported','cancelled'] as const)('does not 
   act(()=>mockNativeObserver!({phase:'finished',requestId:'native-1',outcome,input:null,completedAt:1100}));
   expect(mockRecordingMode).toBe(outcome !== 'unknown');
   if(outcome==='unknown')expect(screen.getByRole('alert')).toBeInTheDocument();
-  else {expect(screen.queryByRole('alert')).not.toBeInTheDocument();expect(screen.getByText(/Он не (?:добавлен|заменён)/)).toBeInTheDocument();}
+  else {expect(screen.queryByRole('alert')).not.toBeInTheDocument();expect(screen.getByText(/(?:Неполная траектория не добавлена|Он не добавлен)/)).toBeInTheDocument();}
   expect(screen.getByRole('button',{name:'Вставить в граф'})).toBeDisabled();
   expect(view.onInsert).not.toHaveBeenCalled();
   act(()=>mockNativeObserver!({phase:'finished',requestId:'native-1',outcome:'confirmed',completedAt:1200,

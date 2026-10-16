@@ -17,6 +17,7 @@
     "pattern": "Некорректный формат.",
     "http_url": "Требуется абсолютный HTTP(S) URL с именем хоста.",
     "check": "Требуется поддерживаемая проверка или непустой Lua-код условия.",
+    "pointer_path": "Траектория: DOWN, MOVE, UP; 2–4096 точек, до 60 секунд, координаты внутри кадра и время по возрастанию.",
     "type": "Неизвестный опубликованный тип действия."
   },
   "definitions": {
@@ -45,6 +46,7 @@
     "end": {"effect": "flow", "fields": {}, "note": "При заданном on_success исполнение продолжается; имя узла не прекращает переходы."},
     "tap": {"effect": "control", "fields": {"x": {"ref": "coordinate", "required": true}, "y": {"ref": "coordinate", "required": true}}, "note": "Координаты должны соответствовать системе координат APK. Проверка параметров не проверяет границы экрана."},
     "swipe": {"effect": "control", "fields": {"x1": {"ref": "coordinate", "required": true}, "y1": {"ref": "coordinate", "required": true}, "x2": {"ref": "coordinate", "required": true}, "y2": {"ref": "coordinate", "required": true}, "duration_ms": {"ref": "duration"}}, "note": "Один завершённый прямой жест. Непрерывный DOWN/MOVE/UP этим действием не реализуется."},
+    "pointer_path": {"effect": "control", "fields": {"path": {"type": "object", "format": "pointer_path_v1", "required": true}}, "note": "Один непрерывный палец: траектория, удержания и паузы внутри жеста. APK 1.2.81+. Частично исполненный жест не повторяется; пауза задания прерывает его с отпусканием пальца."},
     "type_text": {"effect": "control", "fields": {"text": {"ref": "text", "required": true}, "clear_first": {"type": "boolean"}}, "note": "Ввод в текущее поле. Unicode/IME и очистка зависят от установленного APK; текст хранится в сценарии."},
     "sleep": {"effect": "flow", "fields": {"ms": {"ref": "delay", "required": true}}, "note": "Ожидание в пределах таймаута шага и графа; пауза не доказывает достижение состояния."},
     "key_event": {"effect": "control", "fields": {"keycode": {"type": "integer", "min": 0, "max": 2147483647, "required": true}}, "note": "Android keycode, не код клавиши браузера; результат зависит от поля и приложения."},

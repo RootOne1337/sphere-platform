@@ -1,4 +1,5 @@
 import type { StreamFrameDimensions } from './streamAspectRatio';
+import type { PointerPath } from '@/lib/dag/pointerPath';
 
 export type AndroidControlCommand = { type: 'key_event'; keycode: number }
   | { type: 'type_text'; text: string };
@@ -10,7 +11,8 @@ export type StreamInput = {
   endedAt?: number;
   dimensions: StreamFrameDimensions;
   command: AndroidControlCommand | { type: 'click'; x: number; y: number }
-    | { type: 'swipe'; x1: number; y1: number; x2: number; y2: number; duration_ms: number };
+    | { type: 'swipe'; x1: number; y1: number; x2: number; y2: number; duration_ms: number }
+    | { type: 'pointer_path'; path: PointerPath };
 };
 export type AcknowledgedControl = { requestId: string; input: StreamInput } & (
   { phase: 'submitted' } | { phase: 'confirmed' | 'unknown'; completedAt: number }

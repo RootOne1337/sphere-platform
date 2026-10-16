@@ -19,7 +19,7 @@ it('records a tap only after exact DOWN and UP receipts, retaining submission ti
   f.ack(99,1); expect(f.events).toHaveLength(1);
   f.ack(2,1);f.ack(2,1);
   expect(f.events).toHaveLength(2);
-  expect(f.events[1]).toMatchObject({phase:'finished',outcome:'confirmed',input:{at:0,endedAt:30,command:{type:'click',x:100,y:200}}});
+  expect(f.events[1]).toMatchObject({phase:'finished',outcome:'confirmed',input:{at:0,endedAt:30,command:{type:'pointer_path',path:{points:[{t_ms:0,action:0,x:100,y:200},{t_ms:30,action:1,x:100,y:200}]}}}});
 });
 it('retains the actual pause between gestures even when the first native receipt arrives late',()=>{
   const f=fixture(); f.offer(0); f.ack(1,0); f.offer(1,100,200,30,2);
@@ -31,7 +31,7 @@ it('retains the actual pause between gestures even when the first native receipt
     command:{type:'click',x:200,y:200}},'owned','second',120);
   expect(first[0]).toMatchObject({endedAt:30,completedAt:80});
   expect(recordingActions(second)).toEqual([
-    {type:'tap',x:133,y:266}, {type:'sleep',ms:50}, {type:'tap',x:266,y:266},
+    {type:'pointer_path',path:event.input.command.type==='pointer_path'?event.input.command.path:null}, {type:'sleep',ms:50}, {type:'tap',x:266,y:266},
   ]);
 });
 it.each([Number.NaN,Number.POSITIVE_INFINITY,-1,200])('rejects a terminal timestamp outside submission and native confirmation: %s',endedAt=>{
@@ -42,23 +42,23 @@ it('exports a confirmed straight swipe without adding ACK latency to replay paus
   const f=fixture();f.offer(0);f.ack(1,0);f.offer(2,200,200,100,2);f.offer(1,300,200,200,3);f.ack(3,1);
   const event=f.events[1];if(event.phase!=='finished'||!event.input)throw Error('missing terminal');
   const entries=appendNativeRecording([],event.input,'owned',event.requestId,event.completedAt);
-  expect(recordingActions(entries)).toEqual([{type:'swipe',x1:133,y1:266,x2:400,y2:266,duration_ms:200}]);
+  expect(recordingActions(entries)).toEqual([{type:'pointer_path',path:{schema_version:1,frame_width:960,frame_height:540,points:[{t_ms:0,action:0,x:100,y:200},{t_ms:100,action:2,x:200,y:200},{t_ms:200,action:1,x:300,y:200}]}}]);
   expect(entries[0].outcome).toBe('android-confirmed');
 });
 it('preserves a stationary hold as a duration-bearing gesture instead of a tap',()=>{
   const f=fixture();f.offer(0);f.ack(1,0);f.offer(1,101,200,500,2);f.ack(2,1);
-  expect(f.events[1]).toMatchObject({outcome:'confirmed',input:{command:{type:'swipe',x1:100,y1:200,x2:100,y2:200,duration_ms:500}}});
+  expect(f.events[1]).toMatchObject({outcome:'confirmed',input:{command:{type:'pointer_path',path:{points:[{t_ms:0,action:0,x:100,y:200},{t_ms:500,action:1,x:101,y:200}]}}}});
 });
-it.each(['curve','out-and-back','reversed-line'])('does not flatten %s into a replayable swipe',variant=>{
+it.each(['curve','out-and-back','reversed-line'])('preserves %s in a single path without flattening',variant=>{
   const f=fixture();f.offer(0);f.ack(1,0);
   f.offer(2,variant==='curve'?150:250,variant==='curve'?250:200,40,2);
   f.offer(1,variant==='out-and-back'?100:200,200,100,3);f.ack(3,1);
-  expect(f.events[1]).toMatchObject({outcome:'unsupported',input:null});
+  expect(f.events[1]).toMatchObject({outcome:'confirmed',input:{command:{type:'pointer_path'}}});
 });
 it.each(['points','duration'])('bounds recorder %s without altering native transport',limit=>{
   const f=fixture();f.offer(0);f.ack(1,0);
-  if(limit==='points')for(let i=0;i<1024;i++)f.offer(2,100,200,i+1,i+2);
-  f.offer(1,100,200,limit==='duration'?10001:1025,2000);f.ack(2000,1);
+  if(limit==='points')for(let i=0;i<4096;i++)f.offer(2,100,200,i+1,i+2);
+  f.offer(1,100,200,limit==='duration'?60001:4097,5000);f.ack(5000,1);
   expect(f.events[1]).toMatchObject({outcome:'unsupported',input:null});
 });
 it('drains an offered gesture after Stop but never starts another recording while disabled',()=>{
@@ -101,4 +101,11 @@ it('registers observation before synchronous native ACKs without changing the de
     {type:'touch_event',sequence:2,gesture:1,action:1,x:100,y:200},
   ]);
   expect(controller.state).toBe('ready');
+});
+
+it('retains a 30-second hold and late reversal as one path and one DAG node',()=>{
+  const f=fixture(); f.offer(0);f.ack(1,0);f.offer(2,300,400,30000,2);f.offer(2,100,200,45000,3);f.offer(1,100,200,55000,4);f.ack(4,1);
+  const event=f.events[1];if(event.phase!=='finished'||!event.input)throw Error('missing path');
+  const actions=recordingActions(appendNativeRecording([],event.input,'owned',event.requestId,event.completedAt));
+  expect(actions).toHaveLength(1);expect(actions[0]).toMatchObject({type:'pointer_path',path:{points:[{t_ms:0,action:0},{t_ms:30000,action:2},{t_ms:45000,action:2},{t_ms:55000,action:1}]}});
 });

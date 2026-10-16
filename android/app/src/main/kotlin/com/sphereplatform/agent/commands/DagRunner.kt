@@ -141,7 +141,7 @@ class DagRunner @Inject constructor(
 
     // A wire stop is a terminal DAG outcome, distinct from losing the coroutine.
     // It must escape retries and nested loop failure policies.
-    private class DagControlCancelledException : RuntimeException("cancelled_by_user")
+    private class DagControlCancelledException : RootCommandOutcomeUnknownException("cancelled_by_user")
 
     private suspend fun checkCancellation() {
         currentCoroutineContext().ensureActive()
@@ -262,6 +262,8 @@ class DagRunner @Inject constructor(
                 val nodeTimeoutMs = if (actionType == "sleep") {
                     val sleepMs = action["ms"]?.jsonPrimitive?.longOrNull ?: 0L
                     maxOf(rawTimeoutMs, sleepMs + 3_000L)
+                } else if (actionType == "pointer_path") {
+                    maxOf(rawTimeoutMs, 70_000L) // Bounded 60s path plus owned startup/cleanup.
                 } else {
                     rawTimeoutMs
                 }
@@ -434,6 +436,18 @@ class DagRunner @Inject constructor(
                 action["duration_ms"]?.jsonPrimitive?.intOrNull ?: 300,
             )
             null
+        }
+
+        "pointer_path" -> {
+            val result = adbActions.pointerPath(action["path"]!!.jsonObject) {
+                checkCancellation()
+                // Pausing a held finger indefinitely changes the gesture. Release and stop instead.
+                if (pauseRequested) throw PointerPathInterruptedException(0, "pointer_path_paused_and_released")
+            }
+            buildJsonObject {
+                put("points_applied", result.points); put("duration_ms", result.durationMs)
+                put("max_schedule_lateness_ms", result.maxScheduleLatenessMs)
+            }
         }
 
         "type_text" -> {

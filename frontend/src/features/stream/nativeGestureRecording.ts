@@ -8,12 +8,13 @@ export type NativeGestureRecordingEvent = { phase: 'started'; requestId: string 
 };
 type Gesture = { requestId: string; down: PointerInputObservation; points: PointerInputObservation[];
   terminal: PointerInputObservation | null; downConfirmed: boolean; overflow: boolean };
-const MAX_POINTS = 1024;
-const MAX_DURATION_MS = 10000;
+const MAX_POINTS = 4096;
+const MAX_DURATION_MS = 60000;
 
 /** One bounded, viewer-local gesture. It never sends input, schedules a move,
  * keeps wire ownership keys, or exports an arbitrary curve as a straight swipe.
- * Only exact native DOWN + terminal UP receipts can produce a replayable entry.
+ * Exact native DOWN + terminal UP confirm the gesture boundaries, not every MOVE.
+ * Path timestamps describe browser submission; APK MOVE coalescing is not an execution trace.
  */
 export class NativeGestureRecording {
   private gesture: Gesture | null = null;
@@ -60,22 +61,9 @@ export class NativeGestureRecording {
     const start = g.down, end = g.terminal!;
     const duration = Math.round(end.at - start.at);
     if (g.overflow || duration < 0 || duration > MAX_DURATION_MS) return null;
-    const dx = end.x - start.x, dy = end.y - start.y, distance = Math.hypot(dx,dy);
-    const tolerance = Math.max(2, Math.min(start.capture.frameWidth,start.capture.frameHeight) * .004);
-    const stationary = g.points.every(p => Math.hypot(p.x-start.x,p.y-start.y) <= tolerance);
-    if (!stationary) {
-      if (distance <= tolerance) return null; // Out-and-back is never a tap.
-      let progress = 0;
-      for (const p of g.points) {
-        const along = ((p.x-start.x)*dx+(p.y-start.y)*dy)/distance;
-        const deviation = Math.abs((p.x-start.x)*dy-(p.y-start.y)*dx)/distance;
-        if (deviation > tolerance || along < progress-tolerance || along > distance+tolerance) return null;
-        progress = Math.max(progress,along);
-      }
-    }
     return { deviceId:this.options.deviceId, at:start.at, endedAt:end.at,
       dimensions:{width:start.capture.frameWidth,height:start.capture.frameHeight},
-      command: stationary && duration < 250 ? {type:'click',x:start.x,y:start.y}
-        : {type:'swipe',x1:start.x,y1:start.y,x2:stationary?start.x:end.x,y2:stationary?start.y:end.y,duration_ms:Math.max(1,duration)} };
+      command: {type:'pointer_path',path:{schema_version:1,frame_width:start.capture.frameWidth,frame_height:start.capture.frameHeight,
+        points:g.points.map(p=>({t_ms:Math.round(p.at-start.at),action:p.action as 0|1|2,x:p.x,y:p.y}))}} };
   }
 }

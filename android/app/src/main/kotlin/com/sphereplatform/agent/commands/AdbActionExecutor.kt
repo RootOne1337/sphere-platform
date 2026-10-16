@@ -20,7 +20,7 @@ import javax.xml.xpath.XPathConstants
 import javax.xml.xpath.XPathFactory
 
 /** The shell may already have consumed the command; do not automatically retry. */
-class RootCommandOutcomeUnknownException(
+open class RootCommandOutcomeUnknownException(
     message: String = "Root command delivery outcome is unknown",
 ) : java.io.IOException(message)
 
@@ -168,6 +168,10 @@ class AdbActionExecutor @Inject constructor(
     /** A flush is not execution. Wait for a unique FIFO marker before opening another injector. */
     internal suspend fun prepareContinuousInput(owner: String) = withContext(Dispatchers.IO) {
         check(inputOwnership.owns(owner)) { "device_input_busy" }
+        drainRootInput()
+    }
+
+    private suspend fun drainRootInput() {
         val cancellation = kotlin.coroutines.coroutineContext
         synchronized(rootLock) {
             cancellation.ensureActive()
@@ -195,6 +199,25 @@ class AdbActionExecutor @Inject constructor(
             }
         }
     }
+
+    /** Task-only native path. One finger remains down throughout moves and recorded holds. */
+    internal suspend fun pointerPath(value: kotlinx.serialization.json.JsonObject, checkpoint: suspend () -> Unit): TimedPointerPathPlayer.Result =
+        withContext(Dispatchers.IO) {
+            val path = TimedPointerPath.parse(value) // Reject the complete path before asking for root.
+            inputOwnership.claimTaskPrimitive().use {
+                drainRootInput()
+                val display = (context.getSystemService(Context.WINDOW_SERVICE) as android.view.WindowManager).defaultDisplay
+                val size = physicalSize
+                val rotation = display.rotation
+                val token = java.util.UUID.randomUUID().toString()
+                val binding = TouchBinding(token, token, size.x, size.y, rotation)
+                TimedPointerPathPlayer(RootTouchPipeFactory(context), android.os.SystemClock::uptimeMillis,
+                    onCleanupUnknown = { inputOwnership.fence() }).play(path, binding, current = {
+                    val currentSize = physicalSize
+                    currentSize.x == size.x && currentSize.y == size.y && display.rotation == rotation
+                }, checkpoint = checkpoint)
+            }
+        }
 
     /** Закрыть root-сессию при уничтожении сервиса. */
     fun closeRootSession() {

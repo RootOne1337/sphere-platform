@@ -57,7 +57,7 @@ export function writeDraft(document: StudioDocument, resource: string, now = Dat
 
 type ActionType = typeof ACTION_TYPES[number];
 export const ACTION_LABELS: Record<ActionType, string> = {
-  start: 'Начало', end: 'Завершение', tap: 'Нажатие', swipe: 'Свайп', type_text: 'Ввод текста', sleep: 'Ожидание',
+  start: 'Начало', end: 'Завершение', tap: 'Нажатие', swipe: 'Свайп', pointer_path: 'Траектория касания', type_text: 'Ввод текста', sleep: 'Ожидание',
   find_element: 'Найти элемент', key_event: 'Клавиша Android', lua: 'Lua', screenshot: 'Снимок экрана', condition: 'Условие',
   launch_app: 'Открыть приложение', stop_app: 'Остановить приложение', clear_app_data: 'Очистить данные приложения',
   find_first_element: 'Первый найденный элемент', tap_first_visible: 'Нажать первый видимый', tap_element: 'Нажать по селектору',
@@ -69,6 +69,7 @@ export const ACTION_LABELS: Record<ActionType, string> = {
 const SELECTOR = { selector: '//*[@text="Настройки"]', strategy: 'xpath', timeout_ms: 5000 };
 const templates: Partial<Record<ActionType, Record<string, unknown>>> = {
   tap: { x: 100, y: 100 }, swipe: { x1: 100, y1: 400, x2: 100, y2: 100, duration_ms: 300 },
+  pointer_path: { path: {schema_version:1,frame_width:960,frame_height:540,points:[{t_ms:0,action:0,x:100,y:300},{t_ms:1000,action:2,x:200,y:200},{t_ms:1500,action:1,x:200,y:200}]} },
   type_text: { text: '', clear_first: false }, sleep: { ms: 1000 }, key_event: { keycode: 4 }, lua: { code: 'return true' },
   condition: { check: 'battery_above', params: { level: 20 } }, find_element: { ...SELECTOR, save_to: 'element' },
   tap_element: SELECTOR, get_element_text: { ...SELECTOR, attribute: 'text', save_to: 'text' }, wait_for_element_gone: SELECTOR,

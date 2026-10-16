@@ -39,6 +39,11 @@ internal class DeviceInputOwnership {
         return true
     }
 
+    @Synchronized fun claimTaskPrimitive(): AutoCloseable {
+        if (task == null || taskContext.get() !== task) throw DeviceInputBusyException()
+        return claimDiscrete()
+    }
+
     @Synchronized fun owns(candidate: String): Boolean = owner == candidate && !uncertain
 
     /** Fence new helpers before asking existing owners to release. Does not revoke their cleanup authority. */

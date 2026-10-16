@@ -21,7 +21,7 @@ from pydantic import BaseModel, Field, model_validator
 
 VALID_ACTION_TYPES: frozenset[str] = frozenset({
     # Базовые действия (были с v1)
-    "tap", "swipe", "type_text", "sleep", "find_element",
+    "tap", "swipe", "pointer_path", "type_text", "sleep", "find_element",
     "key_event", "lua", "screenshot", "condition", "start", "end",
     # Жизненный цикл приложений
     "launch_app", "stop_app", "clear_app_data",
