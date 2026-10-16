@@ -167,14 +167,22 @@ def freeze_compose(prefix: list[str], baseline: dict[str, Any], path: Path,
     return cmd
 
 
+def admit_candidate(artifact: Path, source: str, local_execution: bool) -> dict[str, Any]:
+    if local_execution:
+        from scripts.pilot.local_web_artifact import admit_local
+
+        return admit_local(artifact, source)
+    return admit(artifact, source)
+
+
 def execute(artifact: Path, source: str, expected_image_id: str, apply: bool,
-            *, allow_degraded_volume: bool = False) -> dict[str, Any]:
+            *, allow_degraded_volume: bool = False, local_execution: bool = False) -> dict[str, Any]:
     require(bool(re.fullmatch(r"sha256:[a-f0-9]{64}", expected_image_id)), "Expected independent CI image digest")
     artifact = private_path(artifact)
-    admitted = admit(artifact, source)
+    admitted = admit_candidate(artifact, source, local_execution)
     require(admitted["imageId"] == expected_image_id, "Archive image does not match independent CI admission")
-    receipt = bounded_json(artifact / "receipt.json", 256 * 1024)
-    check_ci(receipt)
+    if not local_execution:
+        check_ci(bounded_json(artifact / "receipt.json", 256 * 1024))
     host = collect(ROOT)
     findings = evaluate(host)
     admission_findings = admitted_findings(findings, allow_degraded_volume=allow_degraded_volume)
@@ -219,7 +227,8 @@ def execute(artifact: Path, source: str, expected_image_id: str, apply: bool,
             "applyRequested": apply, "onlyUiImageAndBuildRemovalDelta": True, "backendPreserved": True,
             "previousComposeFileCount": len(files), "candidateComposeFileCount": 2,
             "completeBaselineRoundtripVerified": True,
-            "otaCatalogSha256": ota_hash, "reportDirectory": str(output), "runtimeInstalled": False}
+            "otaCatalogSha256": ota_hash, "reportDirectory": str(output), "runtimeInstalled": False,
+            "admissionMode": "maintainer-local-executor" if local_execution else "hosted-actions"}
     write(output / "plan.json", plan)
     if not apply:
         return plan
@@ -227,9 +236,14 @@ def execute(artifact: Path, source: str, expected_image_id: str, apply: bool,
     require(not admitted_findings(evaluate(collect(ROOT)), allow_degraded_volume=allow_degraded_volume),
             "Host changed before image load")
     preserved(before, snapshot())
-    command(["docker", "image", "load", "--input", str(artifact / "image.tar.gz")], timeout=180)
+    if not local_execution:
+        command(["docker", "image", "load", "--input", str(artifact / "image.tar.gz")], timeout=180)
     image = json.loads(command(["docker", "image", "inspect", admitted["imageTag"]]))[0]
-    runtime_id = loaded_image_id(artifact, image, admitted["imageId"])
+    if local_execution:
+        require(image["Id"] == admitted["imageId"], "Local image changed before installation")
+        runtime_id = admitted["imageId"]
+    else:
+        runtime_id = loaded_image_id(artifact, image, admitted["imageId"])
     require(not admitted_findings(evaluate(collect(ROOT)), allow_degraded_volume=allow_degraded_volume),
             "Host changed before UI replacement")
     preserved(before, snapshot())
@@ -249,7 +263,8 @@ def execute(artifact: Path, source: str, expected_image_id: str, apply: bool,
         result = plan | {"runtimeInstalled": True, "loadedImageId": runtime_id, "installedUi": after[UI],
                          "otherContainersPreserved": len(before) - 1, "browserVerified": False}
         from scripts.pilot.reviewed_artifact_retention import post_install
-        result["cacheRetention"] = post_install(ROOT, source, before[UI]["imageId"])
+        result["cacheRetention"] = (post_install(ROOT, source, before[UI]["imageId"]) if not local_execution else
+                                    {"state": "not-run", "archivesCreated": 0, "previousImagePreserved": True})
         write(output / "installed.json", result)
         return result
     except Exception:
@@ -273,12 +288,14 @@ def main() -> int:
     parser.add_argument("--source", required=True)
     parser.add_argument("--expected-image-id", required=True, help="Image ID from authenticated CI logs/admission, not the downloaded receipt")
     parser.add_argument("--apply", action="store_true", help="Install the admitted UI image")
+    parser.add_argument("--local-execution", action="store_true",
+                        help="Admit an existing local image against full local CI and packaged probes; no Actions identity")
     parser.add_argument("--allow-degraded-volume", action="store_true",
                         help="Explicit operator exception for the measured volume warning only")
     args = parser.parse_args()
     try:
         print(json.dumps(execute(args.artifact, args.source, args.expected_image_id, args.apply,
-                                 allow_degraded_volume=args.allow_degraded_volume)))
+                                 allow_degraded_volume=args.allow_degraded_volume, local_execution=args.local_execution)))
     except (ValueError, OSError, subprocess.SubprocessError, KeyError, TypeError):
         print(json.dumps({"runtimeInstalled": None, "state": "not-admitted", "detail": "Review private plan/CI/host evidence"}))
         return 2
