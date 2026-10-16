@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Play, Pause, X, MonitorPlay, Activity, Cpu } from 'lucide-react';
+import { Play, Pause, X, MonitorPlay, Activity, Cpu, Maximize2, Minimize2 } from 'lucide-react';
 import { Device } from '@/lib/hooks/useDevices';
 import { isDeviceReachable } from '@/src/features/devices/deviceListFilters';
 import { getReportedDeviceModel } from './devicePresentation';
@@ -9,6 +9,7 @@ import { Badge } from '@/src/shared/ui/badge';
 import { Button } from '@/src/shared/ui/button';
 import { useStreamStore, GRID_SIZE_OPTIONS, gridColumns, gridLabel } from '@/src/shared/store/useStreamStore';
 import { DeviceStream } from '@/components/sphere/DeviceStream';
+import { useStreamFullscreen } from '@/src/features/stream/useStreamFullscreen';
 
 interface MultiStreamGridProps {
     devices: Device[];
@@ -28,9 +29,7 @@ export function MultiStreamGrid({ devices, selectedIds, onClose }: MultiStreamGr
 
     // Глобальный стейт вещания: стримы включаются только по кнопке
     const [broadcastActive, setBroadcastActive] = useState(false);
-
-    // Количество колонок по таблице gridColumns из стора
-    const columns = gridColumns(gridSize);
+    const fullscreen = useStreamFullscreen();
 
     // Если оператор выделил устройства в таблице, стримим именно их. Без
     // выделения сетка показывает начало текущего отфильтрованного списка.
@@ -39,6 +38,7 @@ export function MultiStreamGrid({ devices, selectedIds, onClose }: MultiStreamGr
         ? devices.filter((device) => selectedSet.has(device.id))
         : devices;
     const visibleDevices = streamCandidates.slice(0, gridSize);
+    const columns = Math.min(gridColumns(gridSize), Math.max(1, visibleDevices.length));
 
     const formatCpu = (value: number | null) => typeof value === 'number' && Number.isFinite(value) && value >= 0 && value <= 100 ? `${value.toLocaleString('ru-RU', { maximumFractionDigits: 1 })}%` : '—';
     const formatHeartbeatAge = (timestamp: string | null) => {
@@ -54,7 +54,7 @@ export function MultiStreamGrid({ devices, selectedIds, onClose }: MultiStreamGr
     };
 
     return (
-        <div className="stream-wall flex h-full min-h-0 min-w-0 flex-col rounded-xl border border-border bg-card">
+        <div ref={fullscreen.ref} className={`stream-wall flex min-h-0 min-w-0 flex-col border border-border bg-card ${fullscreen.active ? 'h-[100dvh] w-full' : 'h-full rounded-xl'}`}>
             <header className="shrink-0 space-y-3 border-b border-border bg-card p-3">
                 <div className="flex flex-wrap items-center justify-between gap-2">
                     <div className="flex min-w-0 items-center gap-2">
@@ -65,6 +65,9 @@ export function MultiStreamGrid({ devices, selectedIds, onClose }: MultiStreamGr
                         </Badge>
                     </div>
                     <div className="flex flex-wrap items-center gap-2">
+                        {fullscreen.available && <Button variant="ghost" size="sm" aria-label={fullscreen.active ? 'Свернуть видеостену' : 'Развернуть видеостену'} aria-pressed={fullscreen.active} onClick={() => void fullscreen.toggle()}>
+                            {fullscreen.active ? <Minimize2 className="size-3.5" aria-hidden /> : <Maximize2 className="size-3.5" aria-hidden />}<span className="hidden sm:inline">{fullscreen.active ? 'Свернуть' : 'Развернуть'}</span>
+                        </Button>}
                         <Button variant={broadcastActive ? 'secondary' : 'default'} size="sm"
                             onClick={() => setBroadcastActive(!broadcastActive)}
                             aria-label={broadcastActive ? 'Остановить вещание' : 'Запустить вещание'}>
@@ -89,6 +92,7 @@ export function MultiStreamGrid({ devices, selectedIds, onClose }: MultiStreamGr
                     </Button>
                 </div>
             </header>
+            {fullscreen.error && <p role="status" className="px-3 py-2 text-xs text-amber-600 dark:text-amber-400">{fullscreen.error}</p>}
             {streamCandidates.length > visibleDevices.length && (
                 <p role="status" className="shrink-0 border-b border-border bg-card px-3 py-2 text-xs text-muted-foreground">
                     Показаны первые {visibleDevices.length} из {streamCandidates.length} устройств. Увеличьте размер сетки или сузьте выбор, чтобы открыть остальные потоки.
@@ -110,7 +114,7 @@ export function MultiStreamGrid({ devices, selectedIds, onClose }: MultiStreamGr
                         >
                             {broadcastActive && reachable ? (
                                 /* Реальный видео-стрим через WebSocket H.264 */
-                                <DeviceStream compact readOnly deviceId={device.id} fit={objectFit} />
+                                <DeviceStream compact readOnly showOverlayTools={false} deviceId={device.id} fit={objectFit} />
                             ) : reachable ? (
                                 /* Онлайн, но стрим не включён — показываем готовность */
                                 <div className="stream-wall-placeholder flex h-full w-full flex-col items-center justify-center gap-2 bg-background text-muted-foreground">
@@ -149,12 +153,7 @@ export function MultiStreamGrid({ devices, selectedIds, onClose }: MultiStreamGr
                     );
                 })}
 
-                {/* Пустые слоты если устройств меньше чем ячеек сетки */}
-                {Array.from({ length: Math.max(0, gridSize - Math.min(visibleDevices.length, gridSize)) }).map((_, i) => (
-                    <div key={`empty-${i}`} className="flex aspect-video items-center justify-center rounded-xl border border-dashed border-border bg-muted/30">
-                        <span className="text-xs text-muted-foreground">Свободный слот</span>
-                    </div>
-                ))}
+                {!visibleDevices.length && <p className="col-span-full p-6 text-center text-sm text-muted-foreground">В выбранной области нет устройств. Измените фильтры или выбор.</p>}
 
             </div>
         </div>

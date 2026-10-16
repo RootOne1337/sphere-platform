@@ -52,6 +52,8 @@ interface DeviceStreamProps {
   onTaskHandoffState?: (state: TaskControlHandoffState, id: number) => void;
   /** Compact, non-wrapping video-wall chrome; transport and input are unchanged. */
   compact?: boolean;
+  /** Video-wall presentation only; does not throttle or replace the transport. */
+  showOverlayTools?: boolean;
   enableDiagnostics?: boolean;
   /** Diagnostic export of a decoded, potentially lossy H.264 frame, never an Android screenshot. */
   enableScreenshot?: boolean;
@@ -149,6 +151,7 @@ export function DeviceStream({
   taskHandoffId,
   onTaskHandoffState,
   compact = false,
+  showOverlayTools = true,
   enableDiagnostics = false,
   enableScreenshot = false,
   enableNavigation = false,
@@ -1562,7 +1565,7 @@ export function DeviceStream({
         </div>
       )
     )}
-    <StreamOverlayToolbar viewport={fullscreen.ref}>
+    {showOverlayTools && <StreamOverlayToolbar viewport={fullscreen.ref}>
       {enableScreenshot && <button type="button" aria-label="Сохранить кадр видео (PNG)" disabled={!canSaveFrame} onClick={saveFrame} title="Кадр видео (PNG), не оригинал Android" className="stream-tool-button"><Camera className="h-4 w-4" aria-hidden /></button>}
       <button type="button" aria-label={fullscreen.active ? 'Выйти из полноэкранного режима' : 'На весь экран'}
         title={fullscreen.available ? fullscreen.active ? 'Выйти из полноэкранного режима' : 'На весь экран' : 'Полноэкранный режим недоступен в этом браузере'}
@@ -1582,7 +1585,7 @@ export function DeviceStream({
         >
           <Activity className="h-4 w-4" aria-hidden />
         </button></>}
-    </StreamOverlayToolbar>
+    </StreamOverlayToolbar>}
     </div>
     {enableNavigation && <StreamControlsTray viewport={fullscreen.ref} overlay={fullscreen.active}>
       <RemoteKeyboardCapture key={`keyboard-${deviceId}`} viewport={fullscreen.ref}

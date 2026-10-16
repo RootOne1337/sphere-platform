@@ -44,11 +44,13 @@ export function DeviceWorkbench(props: Props) {
   const query = useDebounce(search.trim(), 300);
   const { data, isLoading, isError, isFetching, refetch } = useDevices({ page, page_size: 25, search: query || undefined }, access.can('device:read'));
   const [device, setDevice] = useState<Device | null>(null);
+  const scrollArea = useRef<HTMLDivElement>(null);
+  useEffect(() => { if (scrollArea.current) scrollArea.current.scrollTop = 0; }, [device?.id]);
   const closeGuard = useRef<((silent?: boolean) => boolean) | null>(null);
   return <section aria-label="Рабочее устройство" className="flex h-full min-h-0 min-w-0 flex-col bg-card">
     <header className="flex flex-wrap items-center justify-between gap-3 border-b px-4 py-3"><div className="min-w-0 flex-1"><h2 aria-label="Лаборатория устройства" className="flex min-w-0 items-center gap-2 text-sm font-semibold"><Monitor className="size-4 shrink-0 text-primary" /><span className="truncate sm:hidden" title={device?.name}>{device?.name ?? 'Устройство'}</span><span className="hidden sm:inline">Лаборатория устройства</span></h2><p className="mt-1 hidden text-xs text-muted-foreground sm:block">Живое видео · запись действий · XPath · проверка версии</p></div>
       {device && <div className="flex shrink-0 items-center gap-2"><Link href={`/devices/${device.id}`} aria-label="Карточка устройства" className="inline-flex size-11 items-center justify-center rounded-lg border sm:hidden"><ExternalLink className="size-4" aria-hidden /></Link><Button size="sm" variant="outline" aria-label="Сменить устройство" onClick={() => { if (!closeGuard.current || closeGuard.current()) setDevice(null); }}><span className="sm:hidden">Сменить</span><span className="hidden sm:inline">Сменить устройство</span></Button></div>}</header>
-    <div data-route-scroll="studio-device" className="min-h-0 flex-1 overflow-auto overscroll-contain p-3 sm:p-4">
+    <div ref={scrollArea} data-route-scroll="studio-device" className="min-h-0 flex-1 overflow-auto overscroll-contain p-3 sm:p-4">
       {!device ? <div className="space-y-4"><div className="rounded-xl border border-dashed bg-muted/30 p-5"><h3 className="font-semibold">Выберите тестовый Android</h3><p className="mt-2 text-xs leading-5 text-muted-foreground">Откроется один поток. Действия управления изменяют выбранный Android; добавление шагов и серверная проверка сценария его не запускают.</p></div>
         <div className="relative"><Search className="absolute left-3 top-3 size-4 text-muted-foreground" /><Input aria-label="Найти тестовое устройство" placeholder="Имя, Android ID или модель" className="pl-9" value={search} onChange={event => { setSearch(event.target.value); setPage(1); }} /></div>
         {isError ? <div role="alert">Не удалось загрузить устройства. <Button size="sm" variant="outline" onClick={() => void refetch()}>Повторить</Button></div> : isLoading ? <p role="status">Загружаем устройства…</p> : <>
