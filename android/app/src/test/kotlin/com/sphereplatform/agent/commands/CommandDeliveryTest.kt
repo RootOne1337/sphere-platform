@@ -462,7 +462,7 @@ class CommandDeliveryTest {
     }
 
     @Test fun failedDagIsReportedAsFailed() = runTest {
-        coEvery { dag.execute(any(), any(), any()) } returns buildJsonObject { put("success", false) }
+        coEvery { dag.execute(any(), any(), any(), any()) } returns buildJsonObject { put("success", false) }
         val dispatcher = dispatcher(backgroundScope)
         callback.captured!!(command())
         runCurrent()
@@ -472,7 +472,7 @@ class CommandDeliveryTest {
 
     @Test fun duplicateActiveDagDoesNotCancelOrExecuteAgain() = runTest {
         val finish = CompletableDeferred<JsonObject>()
-        coEvery { dag.execute(any(), any(), any()) } coAnswers { finish.await() }
+        coEvery { dag.execute(any(), any(), any(), any()) } coAnswers { finish.await() }
         val dispatcher = dispatcher(backgroundScope)
         callback.captured!!(command())
         runCurrent()
@@ -481,22 +481,22 @@ class CommandDeliveryTest {
         verify(exactly = 0) { dag.requestCancel() }
         finish.complete(buildJsonObject { put("success", true) })
         runCurrent()
-        coVerify(exactly = 1) { dag.execute(any(), any(), any()) }
+        coVerify(exactly = 1) { dag.execute(any(), any(), any(), any()) }
         dispatcher.stop()
     }
 
     @Test fun duplicateCompletedDagReplaysResultWithoutExecution() = runTest {
-        coEvery { dag.execute(any(), any(), any()) } returns buildJsonObject { put("success", true) }
+        coEvery { dag.execute(any(), any(), any(), any()) } returns buildJsonObject { put("success", true) }
         val dispatcher = dispatcher(backgroundScope)
         repeat(2) { callback.captured!!(command()); runCurrent() }
-        coVerify(exactly = 1) { dag.execute(any(), any(), any()) }
+        coVerify(exactly = 1) { dag.execute(any(), any(), any(), any()) }
         assertEquals("completed", messages.last()["status"]?.jsonPrimitive?.content)
         assertEquals("DAG requires backend result_ack", 1, journal().pending().size)
         dispatcher.stop()
     }
 
     @Test fun disconnectedTerminalResultSurvivesDispatcherRestart() = runTest {
-        coEvery { dag.execute(any(), any(), any()) } returns buildJsonObject { put("success", false) }
+        coEvery { dag.execute(any(), any(), any(), any()) } returns buildJsonObject { put("success", false) }
         val dispatcher = dispatcher(backgroundScope)
         every { ws.sendJson(any()) } returns false
         callback.captured!!(command())
@@ -511,7 +511,7 @@ class CommandDeliveryTest {
         val fresh = buildJsonObject { put("account", "current") }
         every { cache.get("script", "same-legacy-hash") } returns ScriptCacheManager.CacheResult.Hit(stale, 0)
         val executed = slot<JsonObject>()
-        coEvery { dag.execute(any(), capture(executed), any()) } returns buildJsonObject { put("success", true) }
+        coEvery { dag.execute(any(), capture(executed), any(), any()) } returns buildJsonObject { put("success", true) }
         val dispatcher = dispatcher(backgroundScope)
         val msg = JsonObject(command() + ("payload" to buildJsonObject {
             put("dag", fresh); put("dag_name", "script"); put("dag_hash", "same-legacy-hash")
@@ -523,10 +523,10 @@ class CommandDeliveryTest {
     }
 
     @Test fun uncertainDagOutcomeIsDurableAndDuplicateCannotRerunIt() = runTest {
-        coEvery { dag.execute(any(), any(), any()) } throws RootCommandOutcomeUnknownException()
+        coEvery { dag.execute(any(), any(), any(), any()) } throws RootCommandOutcomeUnknownException()
         val dispatcher = dispatcher(backgroundScope)
         repeat(2) { callback.captured!!(command()); runCurrent() }
-        coVerify(exactly = 1) { dag.execute(any(), any(), any()) }
+        coVerify(exactly = 1) { dag.execute(any(), any(), any(), any()) }
         val pending = journal().pending().single()
         assertEquals("failed", pending["status"]!!.jsonPrimitive.content)
         assertTrue(pending["error"]!!.jsonPrimitive.content.contains("unknown"))
@@ -585,7 +585,7 @@ class CommandDeliveryTest {
     }
 
     @Test fun failedAcknowledgementWriteKeepsResultAndDoesNotCrashApplicationScope() = runTest {
-        coEvery { dag.execute(any(), any(), any()) } returns buildJsonObject { put("success", true) }
+        coEvery { dag.execute(any(), any(), any(), any()) } returns buildJsonObject { put("success", true) }
         val dispatcher = dispatcher(backgroundScope)
         callback.captured!!(command())
         runCurrent()
@@ -619,7 +619,7 @@ class CommandDeliveryTest {
             assertTrue(warnings.none { it.contains("Cannot parse command") })
             assertEquals("keepalive_ack", messages.single()["type"]?.jsonPrimitive?.content)
             assertEquals(123.5, messages.single()["ts"]!!.jsonPrimitive.double, 0.0)
-            coVerify(exactly = 0) { dag.execute(any(), any(), any()) }
+            coVerify(exactly = 0) { dag.execute(any(), any(), any(), any()) }
             dispatcher.stop()
         } finally {
             Timber.uproot(tree)
