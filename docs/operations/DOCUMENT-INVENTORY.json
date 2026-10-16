@@ -1,11 +1,11 @@
 {
   "schemaVersion": 1,
-  "reviewedAtUtc": "2026-10-16T02:56:54.260939+00:00",
+  "reviewedAtUtc": "2026-10-16T13:18:40.979986+00:00",
   "scope": "All tracked Markdown classified; active local-link paths scanned. Not semantic attestation of every sentence, command execution, external-link or live acceptance.",
   "countsByRole": {
     "ADR": 6,
     "CURRENT_ENTRYPOINT": 8,
-    "DATED_EVIDENCE": 331,
+    "DATED_EVIDENCE": 332,
     "DESIGN_SPECIFICATION": 80,
     "OPERATING_GUIDE": 66,
     "PROJECT_POLICY": 7,
@@ -1450,6 +1450,10 @@
     },
     {
       "file": "docs/audits/2026-10-16/MOTOR-TRANSPORT-DELIVERY.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
+      "file": "docs/audits/2026-10-16/NATIVE-HEADROOM79-DELIVERY.md",
       "role": "DATED_EVIDENCE"
     },
     {
