@@ -2,6 +2,8 @@
 
 **Проверенная установка:** UI `15ce2b62` / API `15ce2b62`.
 
+**17 октября — общая временная шкала APK82.** APK82 установлен по сверенным хешам на четырёх включённых устройствах; веб/API15ce сохранены на3015/Tuna. На PH011/PH030 проверены запись и повтор двух жестов с общей временной шкалой, сохранением двух direct media peers и возвратом ручного управления. Нагрузочный и общий production SLA не приняты. [Поставка и границы](../audits/2026-10-16/POINTER-TIMELINE82-DELIVERY.md). Автозапуски hosted CI отключены; автоматическая локальная очередь ещё открыта. [Исправление сведений о CI](../audits/2026-10-16/HOSTED-ACTIONS-DISABLED.md).
+
 **16 октября — траектория APK81.** Веб/API15ce2b62 установлен на3015/Tuna; APK81 подтверждён package SHA/OTA на четырёх online устройствах,17 offline исключены. PH011: запись, одна нода и native replay 62 точек по14.732/13.297с, удержание/возврат и отмена с возвратом manual READY; два direct media peers сохранены. Полная точность серии жестов и production SLA открыты. [Поставка и границы](../audits/2026-10-16/POINTER-PATH81-DELIVERY.md).
 
 **Предыдущая поставка 16 октября — общий ввод сценария и зрителей.** Веб ed220169 установлен на3015/Tuna; APK80 подтверждён package SHA/OTA на четырёх online устройствах,17 offline не обновлены. На PH011 прошли запуск с двумя клиентами, отмена, удерживаемое касание и третий зритель; direct media peers сохранены, ручной READY вернулся автоматически. 2546 frontend tests; по1231 Android test в dev/enterprise. Полная запись траекторий, rich evidence и общая production-приёмка открыты. API27 сохранён. [Поставка и границы](../audits/2026-10-16/AUTOMATION-INPUT80-DELIVERY.md).
@@ -483,10 +485,9 @@ PH011: четыре APK confirmed outcome в порядке записи, оче
 
 **PARTIAL**
 
-16 октября, APK81 / UI и API15ce: один `pointer_path` на весь DOWN..UP, изгибы, удержания и возврат сохраняются с локальным временем. На PH011 прошли Chrome запись → одна нода → native replay с двумя viewers через3015/Tuna: 62 точки / 14.732 и13.297с, максимальное отставание перед native send4/3мс. Отмена вернула ручной READY без пересоздания direct media peers. [Поставка и границы](../audits/2026-10-16/POINTER-PATH81-DELIVERY.md). · EP-018, EP-019.
+APK82/UI15ce: one timed path per gesture; PH011/PH030 finite two-gesture recording/replay, native helper reuse and planned inter-gesture offset confirmed. PH011 held-path and idle-gap cancellation restore manual READY; media peers retained. Four installed package hashes. [Приёмка серии жестов](../audits/2026-10-16/POINTER-TIMELINE82-DELIVERY.md). · EP-018, EP-019.
 
-Остаётся: точное межжестовое расписание/task-scoped helper, точность под нагрузкой, доказательство применения каждого MOVE, мультитач, rich XPath/pixel/crop evidence и запись игровой клавиатуры. Подтверждение package SHA/OTA на четырёх устройствах не является приёмкой живой записи на каждом из них.
-
+Остаётся: Timing/jitter under load and other topologies, every MOVE execution proof, multitouch, rich XPath/pixel/crop evidence, keyboard recording and application-state equivalence remain open.
 
 ### CHAT-07 · Смешанная запись XPath → tap → системная кнопка
 
@@ -703,11 +704,9 @@ Latest signed canary APK76 downloaded fully on both origins with exact SHA/bytes
 
 **PARTIAL**
 
-Frontend2432tests/types,101 targeted backend routing/diagnostic tests and signed Android76 dev/enterprise1206tests per profile/lint/build ran locally with exact GitHub status readback. Hosted full frontend packaging, full Android and security/Linux gates remain; no all-workflow local migration claim.
+Eight active YAML workflows disabled; all nine repository YAML workflows inactive at readback; three current hosted runs cancelled, prior parallel hosted runs acknowledged. Local exact-source Android82 dev/enterprise1250 tests, previous unchanged UI/API15ce full suites and commit statuses recorded. [Остановка hosted CI и исправление прежнего утверждения](../audits/2026-10-16/HOSTED-ACTIONS-DISABLED.md).
 
-Остаётся: Полный перенос workflow/packaging, отсутствие hosted расходов, автономный запуск после reboot, trusted job routing и Linux parity ещё не приняты.
-
-[Текущий протокол](../audits/2026-10-15/DIRECT-KEYBOARD76-OBSERVATION.json).
+Остаётся: Automatic local per-push queue, reboot recovery, full release/deploy/security/Linux parity and durable artifact/log retention remain open. Earlier hosted consumption is not reversed; account billing is not accepted.
 
 ### CHAT-24 · Настройки качества, source FPS и краткая строка параметров
 

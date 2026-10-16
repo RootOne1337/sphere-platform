@@ -1060,3 +1060,5 @@ WebRTC badge, хороший synthetic FPS и отдельный удачный 
 
 
 Поставка APK81 добавила одну timed pointer_path ноду и нативный DOWN/MOVE/UP replay; конечная PH011-проверка с двумя viewers принята через3015/Tuna. Это фундамент моторного адаптера, не работа модели. [Приёмка и ограничения](../audits/2026-10-16/POINTER-PATH81-DELIVERY.md).
+
+APK82: общий task-scoped helper и абсолютное расписание последовательных pointer_path/sleep проверены на PH011/PH030. [Конечная приёмка](../audits/2026-10-16/POINTER-TIMELINE82-DELIVERY.md). Это replay готовой траектории; модель, игровые профили, мультикасания и closed-loop gameplay этим не реализованы.
