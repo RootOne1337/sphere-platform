@@ -1,5 +1,7 @@
 # Будущий AI-контур: готовность и границы интеграции
 
+**Текущий веб — UI3a036170:** [исправлено лишнее переподключение после idle ACK и SCTP loss](../audits/2026-10-16/IDLE-PEER-REJOIN-DELIVERY.md). API27/APK79 сохранены; модель не запускалась.
+
 **Текущий APK — 1.2.79-dev:** [поставка и конечные проверки](../audits/2026-10-16/NATIVE-HEADROOM79-DELIVERY.md). Модель и игровой исполнитель не запускались.
 
 **Предыдущий срез APK78:** [устранена постоянная startup-блокировка PH030](../audits/2026-10-16/PH030-STARTUP78-RECOVERY.md). API27f3a61f сохранён; [UI982b2240 поставлен](../audits/2026-10-16/INPUT-STARTUP-WEB-DELIVERY.md). Четыре completed OTA, три installed SHA, PH030 native READY140с с непроверенным package hash; 17 offline. Модель и игровой исполнитель ещё не запускались.

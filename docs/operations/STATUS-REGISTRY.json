@@ -1,8 +1,8 @@
 {
   "schemaVersion": 1,
-  "reviewedAtUtc": "2026-10-16T13:18:40.979986+00:00",
-  "sourceReviewed": "9c9ef56cd3ef487b4fa19010ff9b8b5a68748445",
-  "scope": "APK79 supported legacy SDK headroom mitigation installed on four online devices; two-client native input passed on3015/Tuna, including five-minute tunnel soak and unchanged APK process. UI982/API27 preserved; physical network/20-client/long-duration SLA and full CI migration remain open.",
+  "reviewedAtUtc": "2026-10-16T13:39:53.008964+00:00",
+  "sourceReviewed": "3a036170960e50559f16e34dd14077bb56a296ec",
+  "scope": "UI3a036170 installed on3015/Tuna: idle-only timeout followed by dead SCTP admits the first fresh direct peer with native READY; 2523 local frontend tests, finite controlled recovery on both origins and two-client Tuna input passed. API27/APK79 preserved; PH030 post-OTA delay, broad network/load SLA and full CI migration remain open.",
   "baseline": "docs/audits/2026-10-05/ENTERPRISE-PRODUCT-BACKLOG.json",
   "previousCrosscheck": "docs/audits/2026-10-09/CHAT-CODE-RECONCILIATION.json",
   "counts": {
@@ -11,11 +11,11 @@
     "open": 41
   },
   "installed": {
-    "lastObservedUtc": "2026-10-16T13:18:40.979986+00:00",
-    "ui": "982b22408d941d6db8e10927bcdd2dc17664ba3c",
+    "lastObservedUtc": "2026-10-16T13:39:53.008964+00:00",
+    "ui": "3a036170960e50559f16e34dd14077bb56a296ec",
     "api": "27f3a61fa5f2f3d2c1d8d56ed1dce7dbffe024a2",
-    "evidence": "docs/audits/2026-10-16/NATIVE-HEADROOM79-DELIVERY.json",
-    "observation": "APK79 supported legacy SDK headroom mitigation installed on four online devices; two-client native input passed on3015/Tuna, including five-minute tunnel soak and unchanged APK process. UI982/API27 preserved; physical network/20-client/long-duration SLA and full CI migration remain open.",
+    "evidence": "docs/audits/2026-10-16/IDLE-PEER-REJOIN-DELIVERY.json",
+    "observation": "UI3a036170 installed on3015/Tuna: idle-only timeout followed by dead SCTP admits the first fresh direct peer with native READY; 2523 local frontend tests, finite controlled recovery on both origins and two-client Tuna input passed. API27/APK79 preserved; PH030 post-OTA delay, broad network/load SLA and full CI migration remain open.",
     "pilotApk": {
       "device": "auto-ph-011",
       "deviceId": "414ce0e9-4b93-4f96-b9ca-ee675f53835e",
@@ -28,7 +28,7 @@
       "packageProofObservedAtUtc": "2026-10-16T13:15:20.663015+00:00",
       "scope": "Exact installed package hash; finite PH011 checks and read-only PH030 observation are separate."
     },
-    "evidenceSha256NormalizedLf": "e20f4bba0d343cf1ecc002d253761b6f5329fddcbecfb1c7fe7a6bb56e129b27",
+    "evidenceSha256NormalizedLf": "c2a9c3a3c9c3a16adac7db37d8e7e8a3572f404a229c8d0dc5d2be9270ea4998",
     "additionalPilotApks": [
       {
         "device": "auto-ph-030",
@@ -78,232 +78,15 @@
         "10279": 4
       }
     },
-    "latestReadbackAtUtc": "2026-10-16T13:18:40.979986+00:00",
-    "latestReadbackEvidence": "docs/audits/2026-10-16/NATIVE-HEADROOM79-DELIVERY.json",
-    "latestReadbackEvidenceSha256NormalizedLf": "e20f4bba0d343cf1ecc002d253761b6f5329fddcbecfb1c7fe7a6bb56e129b27",
+    "latestReadbackAtUtc": "2026-10-16T13:39:53.008964+00:00",
+    "latestReadbackEvidence": "docs/audits/2026-10-16/IDLE-PEER-REJOIN-DELIVERY.json",
+    "latestReadbackEvidenceSha256NormalizedLf": "c2a9c3a3c9c3a16adac7db37d8e7e8a3572f404a229c8d0dc5d2be9270ea4998",
     "previousRuntimeObservation": {
       "ui": "ed9d54d090e2b5a5d471502335ddf6b8b86dbd35",
       "api": "ed9d54d090e2b5a5d471502335ddf6b8b86dbd35",
       "evidence": "docs/audits/2026-10-12/APK-DOWNLOAD-AND-LOGIN-OBSERVATION.json",
       "evidenceSha256NormalizedLf": "76377dd99f12f21437782ce41f6c64bfd297dae0ef23d119256471c12378fbf4",
       "lastObservedUtc": "2026-10-12T12:36:18.186603+00:00"
-    },
-    "freshFleetReportedVersions": {
-      "observedAtUtc": "2026-10-14T22:13:04.795650+00:00",
-      "devices": [
-        {
-          "deviceId": "753fd530-2f19-4e5e-98ba-769863678141",
-          "device": "auto-ph-030",
-          "status": "online",
-          "reportedVersionCode": 10276,
-          "currentInstalledHashVerified": false,
-          "completed76Ota": true,
-          "pendingUpdate": false,
-          "newlyOnlineSinceBaseline": false
-        },
-        {
-          "deviceId": "867ec296-ca4a-4fb2-bb46-ce10b016bfdc",
-          "device": "auto-ph-029",
-          "status": "offline",
-          "reportedVersionCode": null,
-          "currentInstalledHashVerified": false,
-          "completed76Ota": false,
-          "pendingUpdate": true,
-          "newlyOnlineSinceBaseline": false
-        },
-        {
-          "deviceId": "4815b950-e5cf-4686-9d46-42d0df8d41f7",
-          "device": "auto-ph-028",
-          "status": "online",
-          "reportedVersionCode": 10276,
-          "currentInstalledHashVerified": true,
-          "completed76Ota": true,
-          "pendingUpdate": false,
-          "newlyOnlineSinceBaseline": false
-        },
-        {
-          "deviceId": "db32e00c-3ef4-4b21-acb4-84717737f2a8",
-          "device": "auto-ph-027",
-          "status": "offline",
-          "reportedVersionCode": null,
-          "currentInstalledHashVerified": false,
-          "completed76Ota": false,
-          "pendingUpdate": true,
-          "newlyOnlineSinceBaseline": false
-        },
-        {
-          "deviceId": "daef8a88-6c90-4a6b-bb3b-6b81126a8f45",
-          "device": "auto-ph-026",
-          "status": "offline",
-          "reportedVersionCode": null,
-          "currentInstalledHashVerified": false,
-          "completed76Ota": false,
-          "pendingUpdate": true,
-          "newlyOnlineSinceBaseline": false
-        },
-        {
-          "deviceId": "b410464a-5f26-4803-a756-7840cc17b128",
-          "device": "auto-ph-025",
-          "status": "online",
-          "reportedVersionCode": 10276,
-          "currentInstalledHashVerified": true,
-          "completed76Ota": true,
-          "pendingUpdate": false,
-          "newlyOnlineSinceBaseline": false
-        },
-        {
-          "deviceId": "dce1b4c3-cfd5-47c7-a948-78f572aea72c",
-          "device": "auto-ph-024",
-          "status": "offline",
-          "reportedVersionCode": null,
-          "currentInstalledHashVerified": false,
-          "completed76Ota": false,
-          "pendingUpdate": true,
-          "newlyOnlineSinceBaseline": false
-        },
-        {
-          "deviceId": "58c08910-5051-4e43-ab84-f84cd23c8a03",
-          "device": "auto-ph-023",
-          "status": "offline",
-          "reportedVersionCode": null,
-          "currentInstalledHashVerified": false,
-          "completed76Ota": false,
-          "pendingUpdate": true,
-          "newlyOnlineSinceBaseline": false
-        },
-        {
-          "deviceId": "d088c147-7ada-4b29-9e79-f991b20fcf91",
-          "device": "auto-ph-022",
-          "status": "online",
-          "reportedVersionCode": 10276,
-          "currentInstalledHashVerified": true,
-          "completed76Ota": true,
-          "pendingUpdate": false,
-          "newlyOnlineSinceBaseline": false
-        },
-        {
-          "deviceId": "91c4155d-31a0-4dc1-83e9-f197b3473d16",
-          "device": "auto-ph-021",
-          "status": "offline",
-          "reportedVersionCode": null,
-          "currentInstalledHashVerified": false,
-          "completed76Ota": false,
-          "pendingUpdate": true,
-          "newlyOnlineSinceBaseline": false
-        },
-        {
-          "deviceId": "75c29a32-2867-4b60-947c-003e712e538f",
-          "device": "auto-ph-020",
-          "status": "online",
-          "reportedVersionCode": 10276,
-          "currentInstalledHashVerified": true,
-          "completed76Ota": true,
-          "pendingUpdate": false,
-          "newlyOnlineSinceBaseline": false
-        },
-        {
-          "deviceId": "c37e687a-ee83-466d-846f-3f4b36047fa7",
-          "device": "auto-ph-019",
-          "status": "online",
-          "reportedVersionCode": 10276,
-          "currentInstalledHashVerified": true,
-          "completed76Ota": true,
-          "pendingUpdate": false,
-          "newlyOnlineSinceBaseline": false
-        },
-        {
-          "deviceId": "bafef86f-3ab4-469b-ae0c-cf2771b55813",
-          "device": "auto-ph-018",
-          "status": "online",
-          "reportedVersionCode": 10276,
-          "currentInstalledHashVerified": true,
-          "completed76Ota": true,
-          "pendingUpdate": false,
-          "newlyOnlineSinceBaseline": false
-        },
-        {
-          "deviceId": "1dd7e59c-b68f-406a-93cd-5f4e34fdea90",
-          "device": "auto-ph-017",
-          "status": "online",
-          "reportedVersionCode": 10276,
-          "currentInstalledHashVerified": true,
-          "completed76Ota": true,
-          "pendingUpdate": false,
-          "newlyOnlineSinceBaseline": false
-        },
-        {
-          "deviceId": "3c4c4218-27ba-4d8d-a7d2-4348c2f91c93",
-          "device": "auto-ph-016",
-          "status": "online",
-          "reportedVersionCode": 10276,
-          "currentInstalledHashVerified": true,
-          "completed76Ota": true,
-          "pendingUpdate": false,
-          "newlyOnlineSinceBaseline": false
-        },
-        {
-          "deviceId": "930a6505-b7ec-4eee-93fe-9aaa66517871",
-          "device": "auto-ph-015",
-          "status": "online",
-          "reportedVersionCode": 10276,
-          "currentInstalledHashVerified": true,
-          "completed76Ota": true,
-          "pendingUpdate": false,
-          "newlyOnlineSinceBaseline": false
-        },
-        {
-          "deviceId": "673d5774-24b1-4b57-8dfb-90c46f627ce3",
-          "device": "auto-ph-014",
-          "status": "online",
-          "reportedVersionCode": 10276,
-          "currentInstalledHashVerified": true,
-          "completed76Ota": true,
-          "pendingUpdate": false,
-          "newlyOnlineSinceBaseline": false
-        },
-        {
-          "deviceId": "6d830af5-b7cc-44b4-b7f5-5e0275aceb3b",
-          "device": "auto-ph-013",
-          "status": "online",
-          "reportedVersionCode": 10276,
-          "currentInstalledHashVerified": true,
-          "completed76Ota": true,
-          "pendingUpdate": false,
-          "newlyOnlineSinceBaseline": false
-        },
-        {
-          "deviceId": "8c187cfa-e5ea-4939-a137-07619437953d",
-          "device": "auto-ph-012",
-          "status": "online",
-          "reportedVersionCode": 10276,
-          "currentInstalledHashVerified": true,
-          "completed76Ota": true,
-          "pendingUpdate": false,
-          "newlyOnlineSinceBaseline": false
-        },
-        {
-          "deviceId": "414ce0e9-4b93-4f96-b9ca-ee675f53835e",
-          "device": "auto-ph-011",
-          "status": "online",
-          "reportedVersionCode": 10276,
-          "currentInstalledHashVerified": true,
-          "completed76Ota": true,
-          "pendingUpdate": false,
-          "newlyOnlineSinceBaseline": false
-        },
-        {
-          "deviceId": "5df4805e-fe64-4d39-960c-19ceab206cd6",
-          "device": "auto-ph-010",
-          "status": "online",
-          "reportedVersionCode": 10276,
-          "currentInstalledHashVerified": true,
-          "completed76Ota": true,
-          "pendingUpdate": false,
-          "newlyOnlineSinceBaseline": false
-        }
-      ],
-      "deviceCommandsSent": 0,
-      "scope": "Read-only current inventory joined to earlier exact OTA/package proofs; offline update delivery is pending, not queued."
     },
     "historicalPilotApkBindings": [
       {
@@ -1237,6 +1020,230 @@
       "evidence": "docs/audits/2026-10-16/INPUT-STARTUP-WEB-DELIVERY.json",
       "evidenceSha256NormalizedLf": "f21703be4b4eb45516dd4e45453cec49c0d6dbd5ef165763d6f867bf4f6783a5",
       "lastObservedUtc": "2026-10-16T02:56:54.260939+00:00"
+    },
+    "previousObservationBeforeIdlePeerRejoin": {
+      "ui": "982b22408d941d6db8e10927bcdd2dc17664ba3c",
+      "api": "27f3a61fa5f2f3d2c1d8d56ed1dce7dbffe024a2",
+      "evidence": "docs/audits/2026-10-16/NATIVE-HEADROOM79-DELIVERY.json",
+      "evidenceSha256NormalizedLf": "e20f4bba0d343cf1ecc002d253761b6f5329fddcbecfb1c7fe7a6bb56e129b27",
+      "lastObservedUtc": "2026-10-16T13:18:40.979986+00:00"
+    },
+    "historicalFleetReadback20261014": {
+      "observedAtUtc": "2026-10-14T22:13:04.795650+00:00",
+      "devices": [
+        {
+          "deviceId": "753fd530-2f19-4e5e-98ba-769863678141",
+          "device": "auto-ph-030",
+          "status": "online",
+          "reportedVersionCode": 10276,
+          "currentInstalledHashVerified": false,
+          "completed76Ota": true,
+          "pendingUpdate": false,
+          "newlyOnlineSinceBaseline": false
+        },
+        {
+          "deviceId": "867ec296-ca4a-4fb2-bb46-ce10b016bfdc",
+          "device": "auto-ph-029",
+          "status": "offline",
+          "reportedVersionCode": null,
+          "currentInstalledHashVerified": false,
+          "completed76Ota": false,
+          "pendingUpdate": true,
+          "newlyOnlineSinceBaseline": false
+        },
+        {
+          "deviceId": "4815b950-e5cf-4686-9d46-42d0df8d41f7",
+          "device": "auto-ph-028",
+          "status": "online",
+          "reportedVersionCode": 10276,
+          "currentInstalledHashVerified": true,
+          "completed76Ota": true,
+          "pendingUpdate": false,
+          "newlyOnlineSinceBaseline": false
+        },
+        {
+          "deviceId": "db32e00c-3ef4-4b21-acb4-84717737f2a8",
+          "device": "auto-ph-027",
+          "status": "offline",
+          "reportedVersionCode": null,
+          "currentInstalledHashVerified": false,
+          "completed76Ota": false,
+          "pendingUpdate": true,
+          "newlyOnlineSinceBaseline": false
+        },
+        {
+          "deviceId": "daef8a88-6c90-4a6b-bb3b-6b81126a8f45",
+          "device": "auto-ph-026",
+          "status": "offline",
+          "reportedVersionCode": null,
+          "currentInstalledHashVerified": false,
+          "completed76Ota": false,
+          "pendingUpdate": true,
+          "newlyOnlineSinceBaseline": false
+        },
+        {
+          "deviceId": "b410464a-5f26-4803-a756-7840cc17b128",
+          "device": "auto-ph-025",
+          "status": "online",
+          "reportedVersionCode": 10276,
+          "currentInstalledHashVerified": true,
+          "completed76Ota": true,
+          "pendingUpdate": false,
+          "newlyOnlineSinceBaseline": false
+        },
+        {
+          "deviceId": "dce1b4c3-cfd5-47c7-a948-78f572aea72c",
+          "device": "auto-ph-024",
+          "status": "offline",
+          "reportedVersionCode": null,
+          "currentInstalledHashVerified": false,
+          "completed76Ota": false,
+          "pendingUpdate": true,
+          "newlyOnlineSinceBaseline": false
+        },
+        {
+          "deviceId": "58c08910-5051-4e43-ab84-f84cd23c8a03",
+          "device": "auto-ph-023",
+          "status": "offline",
+          "reportedVersionCode": null,
+          "currentInstalledHashVerified": false,
+          "completed76Ota": false,
+          "pendingUpdate": true,
+          "newlyOnlineSinceBaseline": false
+        },
+        {
+          "deviceId": "d088c147-7ada-4b29-9e79-f991b20fcf91",
+          "device": "auto-ph-022",
+          "status": "online",
+          "reportedVersionCode": 10276,
+          "currentInstalledHashVerified": true,
+          "completed76Ota": true,
+          "pendingUpdate": false,
+          "newlyOnlineSinceBaseline": false
+        },
+        {
+          "deviceId": "91c4155d-31a0-4dc1-83e9-f197b3473d16",
+          "device": "auto-ph-021",
+          "status": "offline",
+          "reportedVersionCode": null,
+          "currentInstalledHashVerified": false,
+          "completed76Ota": false,
+          "pendingUpdate": true,
+          "newlyOnlineSinceBaseline": false
+        },
+        {
+          "deviceId": "75c29a32-2867-4b60-947c-003e712e538f",
+          "device": "auto-ph-020",
+          "status": "online",
+          "reportedVersionCode": 10276,
+          "currentInstalledHashVerified": true,
+          "completed76Ota": true,
+          "pendingUpdate": false,
+          "newlyOnlineSinceBaseline": false
+        },
+        {
+          "deviceId": "c37e687a-ee83-466d-846f-3f4b36047fa7",
+          "device": "auto-ph-019",
+          "status": "online",
+          "reportedVersionCode": 10276,
+          "currentInstalledHashVerified": true,
+          "completed76Ota": true,
+          "pendingUpdate": false,
+          "newlyOnlineSinceBaseline": false
+        },
+        {
+          "deviceId": "bafef86f-3ab4-469b-ae0c-cf2771b55813",
+          "device": "auto-ph-018",
+          "status": "online",
+          "reportedVersionCode": 10276,
+          "currentInstalledHashVerified": true,
+          "completed76Ota": true,
+          "pendingUpdate": false,
+          "newlyOnlineSinceBaseline": false
+        },
+        {
+          "deviceId": "1dd7e59c-b68f-406a-93cd-5f4e34fdea90",
+          "device": "auto-ph-017",
+          "status": "online",
+          "reportedVersionCode": 10276,
+          "currentInstalledHashVerified": true,
+          "completed76Ota": true,
+          "pendingUpdate": false,
+          "newlyOnlineSinceBaseline": false
+        },
+        {
+          "deviceId": "3c4c4218-27ba-4d8d-a7d2-4348c2f91c93",
+          "device": "auto-ph-016",
+          "status": "online",
+          "reportedVersionCode": 10276,
+          "currentInstalledHashVerified": true,
+          "completed76Ota": true,
+          "pendingUpdate": false,
+          "newlyOnlineSinceBaseline": false
+        },
+        {
+          "deviceId": "930a6505-b7ec-4eee-93fe-9aaa66517871",
+          "device": "auto-ph-015",
+          "status": "online",
+          "reportedVersionCode": 10276,
+          "currentInstalledHashVerified": true,
+          "completed76Ota": true,
+          "pendingUpdate": false,
+          "newlyOnlineSinceBaseline": false
+        },
+        {
+          "deviceId": "673d5774-24b1-4b57-8dfb-90c46f627ce3",
+          "device": "auto-ph-014",
+          "status": "online",
+          "reportedVersionCode": 10276,
+          "currentInstalledHashVerified": true,
+          "completed76Ota": true,
+          "pendingUpdate": false,
+          "newlyOnlineSinceBaseline": false
+        },
+        {
+          "deviceId": "6d830af5-b7cc-44b4-b7f5-5e0275aceb3b",
+          "device": "auto-ph-013",
+          "status": "online",
+          "reportedVersionCode": 10276,
+          "currentInstalledHashVerified": true,
+          "completed76Ota": true,
+          "pendingUpdate": false,
+          "newlyOnlineSinceBaseline": false
+        },
+        {
+          "deviceId": "8c187cfa-e5ea-4939-a137-07619437953d",
+          "device": "auto-ph-012",
+          "status": "online",
+          "reportedVersionCode": 10276,
+          "currentInstalledHashVerified": true,
+          "completed76Ota": true,
+          "pendingUpdate": false,
+          "newlyOnlineSinceBaseline": false
+        },
+        {
+          "deviceId": "414ce0e9-4b93-4f96-b9ca-ee675f53835e",
+          "device": "auto-ph-011",
+          "status": "online",
+          "reportedVersionCode": 10276,
+          "currentInstalledHashVerified": true,
+          "completed76Ota": true,
+          "pendingUpdate": false,
+          "newlyOnlineSinceBaseline": false
+        },
+        {
+          "deviceId": "5df4805e-fe64-4d39-960c-19ceab206cd6",
+          "device": "auto-ph-010",
+          "status": "online",
+          "reportedVersionCode": 10276,
+          "currentInstalledHashVerified": true,
+          "completed76Ota": true,
+          "pendingUpdate": false,
+          "newlyOnlineSinceBaseline": false
+        }
+      ],
+      "deviceCommandsSent": 0,
+      "scope": "Read-only current inventory joined to earlier exact OTA/package proofs; offline update delivery is pending, not queued."
     }
   },
   "pendingCorrections": [],
@@ -1566,8 +1573,8 @@
     "primaryVideoInstalled": true,
     "primaryVideoObserved": true,
     "productionAccepted": false,
-    "currentObservationEvidence": "docs/audits/2026-10-16/NATIVE-HEADROOM79-DELIVERY.json",
-    "currentObservationEvidenceSha256NormalizedLf": "e20f4bba0d343cf1ecc002d253761b6f5329fddcbecfb1c7fe7a6bb56e129b27",
+    "currentObservationEvidence": "docs/audits/2026-10-16/IDLE-PEER-REJOIN-DELIVERY.json",
+    "currentObservationEvidenceSha256NormalizedLf": "c2a9c3a3c9c3a16adac7db37d8e7e8a3572f404a229c8d0dc5d2be9270ea4998",
     "pilotEvidenceScope": "UI331/API983 installed on 3015/Tuna; frontend-only input promotion fix, backend code tree unchanged; signed APK60 installed hashes and completed OTA commands confirmed on15 online devices. PH010 ordinary Chrome direct video/native gestures, actual server fallback and recovery, and mixed legacy viewer accepted finitely. Closest routes, physical network switching, shared input and full display latency remain OPEN.",
     "historicalPrimaryFrames": 1804,
     "directInputCandidate": {
@@ -1624,11 +1631,11 @@
     "latestReadbackEvidence": "docs/audits/2026-10-15/DIRECT-KEYBOARD76-OBSERVATION.json",
     "latestReadbackEvidenceSha256NormalizedLf": "34cf2a66e9f42399404a6bbc8341392d2d0ebd7a828dfcccedcf27ddfb520aa8",
     "ordinaryBrowserObservation": {
-      "evidence": "docs/audits/2026-10-16/NATIVE-HEADROOM79-DELIVERY.json",
-      "evidenceSha256NormalizedLf": "e20f4bba0d343cf1ecc002d253761b6f5329fddcbecfb1c7fe7a6bb56e129b27",
-      "scope": "APK79: two-client gestures/navigation and five-minute tunnel soak; not gameplay/20-client acceptance.",
+      "evidence": "docs/audits/2026-10-16/IDLE-PEER-REJOIN-DELIVERY.json",
+      "evidenceSha256NormalizedLf": "c2a9c3a3c9c3a16adac7db37d8e7e8a3572f404a229c8d0dc5d2be9270ea4998",
+      "scope": "UI3a/API27/APK79: controlled idle peer rejoin on both origins, two-client Tuna gestures/navigation. PH030 user-tab source not verified.",
       "actualPh030Accepted": false,
-      "actualPh030LiveReadyObserved": true
+      "actualPh030LiveReadyObserved": false
     },
     "historicalIdle55LatestNetworkObservation": {
       "outcome": "ICE_CHECKS_WITHOUT_RESPONSES",
@@ -1678,14 +1685,14 @@
     "historicalResearchScope": "Reviewed API/UI522 installed on both origins and signed APK55 hash verified on all15 compatible online devices. Finite server fallback video/held reverse gestures accepted on PH010/PH011/PH025. Current direct ICE, direct input, nearest path, latency SLA and soak NOT accepted.",
     "directInputObservedFinite": true,
     "currentPrimaryNetworkObservation": {
-      "outcome": "FINITE_TWO_CLIENT_NATIVE79_ACCEPTED",
+      "outcome": "FINITE_IDLE_REJOIN_AND_TWO_CLIENT_INPUT_ACCEPTED",
       "deviceId": "414ce0e9-4b93-4f96-b9ca-ee675f53835e",
       "directChannelEstablished": true,
       "rawCandidateAddressesPublished": false,
-      "evidence": "docs/audits/2026-10-16/NATIVE-HEADROOM79-DELIVERY.json",
-      "evidenceSha256NormalizedLf": "e20f4bba0d343cf1ecc002d253761b6f5329fddcbecfb1c7fe7a6bb56e129b27",
-      "observedAtUtc": "2026-10-16T13:18:40.979986+00:00",
-      "topology": "PH011: two Chrome clients on3015/Tuna, five-minute tunnel soak. URL does not prove LAN topology.",
+      "evidence": "docs/audits/2026-10-16/IDLE-PEER-REJOIN-DELIVERY.json",
+      "evidenceSha256NormalizedLf": "c2a9c3a3c9c3a16adac7db37d8e7e8a3572f404a229c8d0dc5d2be9270ea4998",
+      "observedAtUtc": "2026-10-16T13:39:53.008964+00:00",
+      "topology": "Owned Chrome: controlled idle ACK/SCTP loss on3015/Tuna, two-client gestures/navigation via Tuna. Physical topology not inferred.",
       "localhostRouteProven": false,
       "latencySlaAccepted": false,
       "physicalNetworkSwitchAccepted": false
@@ -1720,11 +1727,11 @@
       "scope": "Current APK65: server fallback and idle input ready over one minute; direct ICE received no replies. No pointer action injected."
     },
     "directInputFiniteObservation": {
-      "evidence": "docs/audits/2026-10-16/NATIVE-HEADROOM79-DELIVERY.json",
-      "evidenceSha256NormalizedLf": "e20f4bba0d343cf1ecc002d253761b6f5329fddcbecfb1c7fe7a6bb56e129b27",
-      "scope": "APK79: two-client gestures/navigation and five-minute tunnel soak; not gameplay/20-client acceptance.",
+      "evidence": "docs/audits/2026-10-16/IDLE-PEER-REJOIN-DELIVERY.json",
+      "evidenceSha256NormalizedLf": "c2a9c3a3c9c3a16adac7db37d8e7e8a3572f404a229c8d0dc5d2be9270ea4998",
+      "scope": "UI3a/API27/APK79: controlled idle peer rejoin on both origins, two-client Tuna gestures/navigation. PH030 user-tab source not verified.",
       "actualPh030Accepted": false,
-      "actualPh030LiveReadyObserved": true
+      "actualPh030LiveReadyObserved": false
     },
     "historicalBeforeInputCancellationCurrentPrimaryNetworkObservation": {
       "outcome": "FINITE_DIRECT_VIDEO_NATIVE_INPUT_AND_AUTOMATIC_RECOVERY",
@@ -1974,6 +1981,19 @@
       "evidenceSha256NormalizedLf": "f21703be4b4eb45516dd4e45453cec49c0d6dbd5ef165763d6f867bf4f6783a5",
       "observedAtUtc": "2026-10-16T02:56:54.260939+00:00",
       "topology": "Two local Chrome clients PH011 passed; Tuna two-client soak failed with native APK78 abort. Delayed READY passed both origins; LAN topology unproven.",
+      "localhostRouteProven": false,
+      "latencySlaAccepted": false,
+      "physicalNetworkSwitchAccepted": false
+    },
+    "historicalNetworkBeforeIdlePeerRejoin": {
+      "outcome": "FINITE_TWO_CLIENT_NATIVE79_ACCEPTED",
+      "deviceId": "414ce0e9-4b93-4f96-b9ca-ee675f53835e",
+      "directChannelEstablished": true,
+      "rawCandidateAddressesPublished": false,
+      "evidence": "docs/audits/2026-10-16/NATIVE-HEADROOM79-DELIVERY.json",
+      "evidenceSha256NormalizedLf": "e20f4bba0d343cf1ecc002d253761b6f5329fddcbecfb1c7fe7a6bb56e129b27",
+      "observedAtUtc": "2026-10-16T13:18:40.979986+00:00",
+      "topology": "PH011: two Chrome clients on3015/Tuna, five-minute tunnel soak. URL does not prove LAN topology.",
       "localhostRouteProven": false,
       "latencySlaAccepted": false,
       "physicalNetworkSwitchAccepted": false
@@ -5215,8 +5235,8 @@
     "currentImplementation": {
       "state": "TRANSPORT_INSTALLED_GAME_ADAPTERS_REQUIRED",
       "observedAtUtc": "2026-10-16T13:18:40.979986+00:00",
-      "evidence": "docs/audits/2026-10-16/PH030-STARTUP78-RECOVERY.json",
-      "evidenceSha256NormalizedLf": "b9cd458b371b74c71fdedd382a23e1dc108d0e1e84ea5ad876746a213d5d3133",
+      "evidence": "docs/audits/2026-10-16/NATIVE-HEADROOM79-DELIVERY.json",
+      "evidenceSha256NormalizedLf": "e20f4bba0d343cf1ecc002d253761b6f5329fddcbecfb1c7fe7a6bb56e129b27",
       "headlessTransportImplemented": true,
       "headlessWorkerVersion": "0.2.0",
       "headlessActionExecutionImplemented": false,
@@ -5237,14 +5257,16 @@
       "fullGateG02Accepted": false,
       "preInputStartupRecoveryInstalled": true,
       "originalRootReadyTimeoutCauseMeasured": false,
-      "currentWebSource": "982b22408d941d6db8e10927bcdd2dc17664ba3c",
+      "currentWebSource": "3a036170960e50559f16e34dd14077bb56a296ec",
       "webStartupEvidence": "docs/audits/2026-10-16/INPUT-STARTUP-WEB-DELIVERY.json",
       "webStartupEvidenceSha256NormalizedLf": "f21703be4b4eb45516dd4e45453cec49c0d6dbd5ef165763d6f867bf4f6783a5",
       "currentApkRuntimeEvidence": "docs/audits/2026-10-16/NATIVE-HEADROOM79-DELIVERY.json",
       "currentApkRuntimeEvidenceSha256NormalizedLf": "e20f4bba0d343cf1ecc002d253761b6f5329fddcbecfb1c7fe7a6bb56e129b27",
       "headlessRuntimeRetestedOn79": true,
       "headless79TransportEvidence": "docs/audits/2026-10-16/NATIVE-HEADROOM79-DELIVERY.json",
-      "headless79TransportEvidenceSha256NormalizedLf": "e20f4bba0d343cf1ecc002d253761b6f5329fddcbecfb1c7fe7a6bb56e129b27"
+      "headless79TransportEvidenceSha256NormalizedLf": "e20f4bba0d343cf1ecc002d253761b6f5329fddcbecfb1c7fe7a6bb56e129b27",
+      "webRecoveryEvidence": "docs/audits/2026-10-16/IDLE-PEER-REJOIN-DELIVERY.json",
+      "webRecoveryEvidenceSha256NormalizedLf": "c2a9c3a3c9c3a16adac7db37d8e7e8a3572f404a229c8d0dc5d2be9270ea4998"
     }
   }
 }
