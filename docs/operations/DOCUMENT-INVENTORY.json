@@ -5,9 +5,9 @@
   "countsByRole": {
     "ADR": 6,
     "CURRENT_ENTRYPOINT": 8,
-    "DATED_EVIDENCE": 335,
+    "DATED_EVIDENCE": 336,
     "DESIGN_SPECIFICATION": 81,
-    "OPERATING_GUIDE": 66,
+    "OPERATING_GUIDE": 67,
     "PROJECT_POLICY": 7,
     "SUPPORTING_DOCUMENT": 7
   },
@@ -1481,6 +1481,10 @@
       "role": "DATED_EVIDENCE"
     },
     {
+      "file": "docs/audits/2026-10-16/POINTER-PATH81-DELIVERY.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
       "file": "docs/audits/2026-10-16/STUDIO-RECORDING-HANDOFF-DELIVERY.md",
       "role": "DATED_EVIDENCE"
     },
@@ -1650,6 +1654,10 @@
     },
     {
       "file": "docs/operations/PIPELINE-DEFINITIONS.md",
+      "role": "OPERATING_GUIDE"
+    },
+    {
+      "file": "docs/operations/POINTER-PATH-RECORDING.md",
       "role": "OPERATING_GUIDE"
     },
     {

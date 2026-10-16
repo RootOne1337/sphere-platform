@@ -468,7 +468,11 @@ class DocumentationStatusTests(unittest.TestCase):
 
     def test_human_chat_scope_cannot_report_trajectory_accepted(self) -> None:
         text = (ROOT / "docs/operations/WORK-STATUS.md").read_text(encoding="utf-8")
-        wrong = text.replace("### CHAT-06 · Запись непрерывной траектории жеста\n\n**OPEN**", "### CHAT-06 · Запись непрерывной траектории жеста\n\n**ACCEPTED_FINITE**")
+        requirement = next(item for item in self.registry["chatRequirements"] if item["id"] == "CHAT-06")
+        self.assertEqual(requirement["state"], "PARTIAL")
+        heading = "### CHAT-06 · Запись непрерывной траектории жеста\n\n"
+        wrong = text.replace(heading + "**PARTIAL**", heading + "**ACCEPTED_FINITE**")
+        self.assertNotEqual(wrong, text)
         self.assertIn("CHAT-06: WORK-STATUS requirement state missing or stale", validate_status_report(self.registry, wrong))
 
 
