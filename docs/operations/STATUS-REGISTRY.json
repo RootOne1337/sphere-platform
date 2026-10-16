@@ -1,8 +1,8 @@
 {
   "schemaVersion": 1,
-  "reviewedAtUtc": "2026-10-16T02:17:55.413786+00:00",
-  "sourceReviewed": "589c455df86b7069020d3f02cf83a228baac00f0",
-  "scope": "APK78 pre-input startup fence fix installed on four online devices; three installed hashes verified, PH030 completed OTA/current version and live native READY with package hash unverified. PH011 finite two-client input canary and headless probe passed; PH030 read-only direct READY observed for 140 seconds. First root READY timeout cause and transient browser startup timeout remain open. UI19c4272b/API27f3a61f unchanged; 17 offline devices, model/gameplay and production SLA remain open.",
+  "reviewedAtUtc": "2026-10-16T02:56:54.260939+00:00",
+  "sourceReviewed": "982b22408d941d6db8e10927bcdd2dc17664ba3c",
+  "scope": "UI982b2240 bounded input startup installed on3015/Tuna via trusted local frontend CI/image probes. 2511 Jest tests; finite local two-client input and delayed READY tests on both origins; Tuna two-client soak failed with APK78 native abort. API27f3a61f/APK78 unchanged; PH030 actual direct READY observed without forcing user-tab reload. Root cold-start cause, 17 offline APKs, full CI migration, model/gameplay and production SLA remain open.",
   "baseline": "docs/audits/2026-10-05/ENTERPRISE-PRODUCT-BACKLOG.json",
   "previousCrosscheck": "docs/audits/2026-10-09/CHAT-CODE-RECONCILIATION.json",
   "counts": {
@@ -11,11 +11,11 @@
     "open": 41
   },
   "installed": {
-    "lastObservedUtc": "2026-10-16T02:17:55.413786+00:00",
-    "ui": "19c4272b3fffa98fdf7a35bd56b09967ac036e24",
+    "lastObservedUtc": "2026-10-16T02:56:54.260939+00:00",
+    "ui": "982b22408d941d6db8e10927bcdd2dc17664ba3c",
     "api": "27f3a61fa5f2f3d2c1d8d56ed1dce7dbffe024a2",
-    "evidence": "docs/audits/2026-10-16/PH030-STARTUP78-RECOVERY.json",
-    "observation": "APK78 pre-input startup fence fix installed on four online devices; three installed hashes verified, PH030 completed OTA/current version and live native READY with package hash unverified. PH011 finite two-client input canary and headless probe passed; PH030 read-only direct READY observed for 140 seconds. First root READY timeout cause and transient browser startup timeout remain open. UI19c4272b/API27f3a61f unchanged; 17 offline devices, model/gameplay and production SLA remain open.",
+    "evidence": "docs/audits/2026-10-16/INPUT-STARTUP-WEB-DELIVERY.json",
+    "observation": "UI982b2240 bounded input startup installed on3015/Tuna via trusted local frontend CI/image probes. 2511 Jest tests; finite local two-client input and delayed READY tests on both origins; Tuna two-client soak failed with APK78 native abort. API27f3a61f/APK78 unchanged; PH030 actual direct READY observed without forcing user-tab reload. Root cold-start cause, 17 offline APKs, full CI migration, model/gameplay and production SLA remain open.",
     "pilotApk": {
       "device": "auto-ph-011",
       "deviceId": "414ce0e9-4b93-4f96-b9ca-ee675f53835e",
@@ -28,7 +28,7 @@
       "packageProofObservedAtUtc": "2026-10-16T02:13:29.955992+00:00",
       "scope": "Exact installed package hash; finite canary and read-only PH030 recovery are distinguished in receipt."
     },
-    "evidenceSha256NormalizedLf": "b9cd458b371b74c71fdedd382a23e1dc108d0e1e84ea5ad876746a213d5d3133",
+    "evidenceSha256NormalizedLf": "f21703be4b4eb45516dd4e45453cec49c0d6dbd5ef165763d6f867bf4f6783a5",
     "additionalPilotApks": [
       {
         "device": "auto-ph-025",
@@ -1211,6 +1211,13 @@
       "verifiedVersionCounts": {
         "10277": 3
       }
+    },
+    "previousUiObservationBeforeStartupBudget": {
+      "ui": "19c4272b3fffa98fdf7a35bd56b09967ac036e24",
+      "api": "27f3a61fa5f2f3d2c1d8d56ed1dce7dbffe024a2",
+      "evidence": "docs/audits/2026-10-16/PH030-STARTUP78-RECOVERY.json",
+      "evidenceSha256NormalizedLf": "b9cd458b371b74c71fdedd382a23e1dc108d0e1e84ea5ad876746a213d5d3133",
+      "lastObservedUtc": "2026-10-16T02:17:55.413786+00:00"
     }
   },
   "pendingCorrections": [],
@@ -1540,8 +1547,8 @@
     "primaryVideoInstalled": true,
     "primaryVideoObserved": true,
     "productionAccepted": false,
-    "currentObservationEvidence": "docs/audits/2026-10-16/PH030-STARTUP78-RECOVERY.json",
-    "currentObservationEvidenceSha256NormalizedLf": "b9cd458b371b74c71fdedd382a23e1dc108d0e1e84ea5ad876746a213d5d3133",
+    "currentObservationEvidence": "docs/audits/2026-10-16/INPUT-STARTUP-WEB-DELIVERY.json",
+    "currentObservationEvidenceSha256NormalizedLf": "f21703be4b4eb45516dd4e45453cec49c0d6dbd5ef165763d6f867bf4f6783a5",
     "pilotEvidenceScope": "UI331/API983 installed on 3015/Tuna; frontend-only input promotion fix, backend code tree unchanged; signed APK60 installed hashes and completed OTA commands confirmed on15 online devices. PH010 ordinary Chrome direct video/native gestures, actual server fallback and recovery, and mixed legacy viewer accepted finitely. Closest routes, physical network switching, shared input and full display latency remain OPEN.",
     "historicalPrimaryFrames": 1804,
     "directInputCandidate": {
@@ -1598,9 +1605,9 @@
     "latestReadbackEvidence": "docs/audits/2026-10-15/DIRECT-KEYBOARD76-OBSERVATION.json",
     "latestReadbackEvidenceSha256NormalizedLf": "34cf2a66e9f42399404a6bbc8341392d2d0ebd7a828dfcccedcf27ddfb520aa8",
     "ordinaryBrowserObservation": {
-      "evidence": "docs/audits/2026-10-16/PH030-STARTUP78-RECOVERY.json",
-      "evidenceSha256NormalizedLf": "b9cd458b371b74c71fdedd382a23e1dc108d0e1e84ea5ad876746a213d5d3133",
-      "scope": "APK78 PH011 two contexts3015:12 simultaneous rounds,4 native keys each,30s soak,survivor key. PH030 read-only140s READY; physical gestures not independently verified.",
+      "evidence": "docs/audits/2026-10-16/INPUT-STARTUP-WEB-DELIVERY.json",
+      "evidenceSha256NormalizedLf": "f21703be4b4eb45516dd4e45453cec49c0d6dbd5ef165763d6f867bf4f6783a5",
+      "scope": "Local two-client round/key/soak/survivor acceptance; delayed READY7250ms each origin. Tuna two-client soak failed due native APK78 SIGABRT.",
       "actualPh030Accepted": false,
       "actualPh030LiveReadyObserved": true,
       "legacyUplinkSuppressionRetested": false
@@ -1653,14 +1660,14 @@
     "historicalResearchScope": "Reviewed API/UI522 installed on both origins and signed APK55 hash verified on all15 compatible online devices. Finite server fallback video/held reverse gestures accepted on PH010/PH011/PH025. Current direct ICE, direct input, nearest path, latency SLA and soak NOT accepted.",
     "directInputObservedFinite": true,
     "currentPrimaryNetworkObservation": {
-      "outcome": "FINITE_INPUT_CANARY_AND_PH030_STARTUP_RECOVERY",
+      "outcome": "FINITE_LOCAL_INPUT_DELAYED_READY_AND_TUNA_NATIVE_FAILURE",
       "deviceId": "414ce0e9-4b93-4f96-b9ca-ee675f53835e",
       "directChannelEstablished": true,
       "rawCandidateAddressesPublished": false,
-      "evidence": "docs/audits/2026-10-16/PH030-STARTUP78-RECOVERY.json",
-      "evidenceSha256NormalizedLf": "b9cd458b371b74c71fdedd382a23e1dc108d0e1e84ea5ad876746a213d5d3133",
-      "observedAtUtc": "2026-10-16T02:17:55.413786+00:00",
-      "topology": "PH011 ordinary Chrome3015 two-client input; PH030 actual user direct READY140s; PH011 headless.",
+      "evidence": "docs/audits/2026-10-16/INPUT-STARTUP-WEB-DELIVERY.json",
+      "evidenceSha256NormalizedLf": "f21703be4b4eb45516dd4e45453cec49c0d6dbd5ef165763d6f867bf4f6783a5",
+      "observedAtUtc": "2026-10-16T02:56:54.260939+00:00",
+      "topology": "Two local Chrome clients PH011 passed; Tuna two-client soak failed with native APK78 abort. Delayed READY passed both origins; LAN topology unproven.",
       "localhostRouteProven": false,
       "latencySlaAccepted": false,
       "physicalNetworkSwitchAccepted": false
@@ -1695,9 +1702,9 @@
       "scope": "Current APK65: server fallback and idle input ready over one minute; direct ICE received no replies. No pointer action injected."
     },
     "directInputFiniteObservation": {
-      "evidence": "docs/audits/2026-10-16/PH030-STARTUP78-RECOVERY.json",
-      "evidenceSha256NormalizedLf": "b9cd458b371b74c71fdedd382a23e1dc108d0e1e84ea5ad876746a213d5d3133",
-      "scope": "APK78 native pointer/navigation canary PH011; PH030 no permanent pre-input cleanup fence after startup refusal. No unknown-input reset or replay.",
+      "evidence": "docs/audits/2026-10-16/INPUT-STARTUP-WEB-DELIVERY.json",
+      "evidenceSha256NormalizedLf": "f21703be4b4eb45516dd4e45453cec49c0d6dbd5ef165763d6f867bf4f6783a5",
+      "scope": "UI982/APK78 native shared clicks/navigation on one main peer, and bounded startup without command replay. Not a gameplay/20-client acceptance.",
       "actualPh030Accepted": false,
       "actualPh030LiveReadyObserved": true
     },
@@ -1923,6 +1930,19 @@
       "evidenceSha256NormalizedLf": "0320f530f97aa90110ff5c83acd673db27a19a1342c360f936baf0e08c871087",
       "observedAtUtc": "2026-10-16T01:29:38.463489+00:00",
       "topology": "Owned ordinary Chrome on3015/Tuna and PH011; separate headless probes on the same installed API/APK.",
+      "localhostRouteProven": false,
+      "latencySlaAccepted": false,
+      "physicalNetworkSwitchAccepted": false
+    },
+    "historicalNetworkBeforeWebStartupBudget": {
+      "outcome": "FINITE_INPUT_CANARY_AND_PH030_STARTUP_RECOVERY",
+      "deviceId": "414ce0e9-4b93-4f96-b9ca-ee675f53835e",
+      "directChannelEstablished": true,
+      "rawCandidateAddressesPublished": false,
+      "evidence": "docs/audits/2026-10-16/PH030-STARTUP78-RECOVERY.json",
+      "evidenceSha256NormalizedLf": "b9cd458b371b74c71fdedd382a23e1dc108d0e1e84ea5ad876746a213d5d3133",
+      "observedAtUtc": "2026-10-16T02:17:55.413786+00:00",
+      "topology": "PH011 ordinary Chrome3015 two-client input; PH030 actual user direct READY140s; PH011 headless.",
       "localhostRouteProven": false,
       "latencySlaAccepted": false,
       "physicalNetworkSwitchAccepted": false
@@ -5163,7 +5183,7 @@
     },
     "currentImplementation": {
       "state": "TRANSPORT_INSTALLED_GAME_ADAPTERS_REQUIRED",
-      "observedAtUtc": "2026-10-16T02:17:55.413786+00:00",
+      "observedAtUtc": "2026-10-16T02:56:54.260939+00:00",
       "evidence": "docs/audits/2026-10-16/PH030-STARTUP78-RECOVERY.json",
       "evidenceSha256NormalizedLf": "b9cd458b371b74c71fdedd382a23e1dc108d0e1e84ea5ad876746a213d5d3133",
       "headlessTransportImplemented": true,
@@ -5185,7 +5205,10 @@
       "gameplayAccepted": false,
       "fullGateG02Accepted": false,
       "preInputStartupRecoveryInstalled": true,
-      "originalRootReadyTimeoutCauseMeasured": false
+      "originalRootReadyTimeoutCauseMeasured": false,
+      "currentWebSource": "982b22408d941d6db8e10927bcdd2dc17664ba3c",
+      "webStartupEvidence": "docs/audits/2026-10-16/INPUT-STARTUP-WEB-DELIVERY.json",
+      "webStartupEvidenceSha256NormalizedLf": "f21703be4b4eb45516dd4e45453cec49c0d6dbd5ef165763d6f867bf4f6783a5"
     }
   }
 }

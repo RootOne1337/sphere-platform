@@ -1,6 +1,6 @@
 # Будущий AI-контур: готовность и границы интеграции
 
-**Текущий APK — 1.2.78-dev:** [устранена постоянная startup-блокировка PH030](../audits/2026-10-16/PH030-STARTUP78-RECOVERY.md). API27f3a61f/UI19c4272b сохранены. Четыре completed OTA, три installed SHA, PH030 native READY140с с непроверенным package hash; 17 offline. Модель и игровой исполнитель ещё не запускались.
+**Текущий APK — 1.2.78-dev:** [устранена постоянная startup-блокировка PH030](../audits/2026-10-16/PH030-STARTUP78-RECOVERY.md). API27f3a61f сохранён; [UI982b2240 поставлен](../audits/2026-10-16/INPUT-STARTUP-WEB-DELIVERY.md). Четыре completed OTA, три installed SHA, PH030 native READY140с с непроверенным package hash; 17 offline. Модель и игровой исполнитель ещё не запускались.
 
 **Предыдущий транспортный срез 16 октября:** [API27f3a61f и APK77 поставлены](../audits/2026-10-16/MOTOR-TRANSPORT-DELIVERY.md).
 Headless0.2 получает прямые кадры без браузера и без server→client media с запуска;

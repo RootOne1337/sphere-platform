@@ -1,7 +1,44 @@
 # Build provenance in the operator UI
 
-**Updated:** 30 September 2026<br>
+**Updated:** 16 October 2026<br>
 **Scope:** source/build traceability for the Sphere web frontend and backend API.
+
+## Trusted local frontend delivery
+
+The maintainer can now run frontend regressions, build a Linux runtime image and
+install that image locally without starting hosted Actions or exporting another
+`image.tar.gz`. This is an explicit local execution path; it never fabricates an
+Actions run ID. The default hosted archive admission remains separate.
+
+1. Commit and push the intended source to the existing trusted branch. Run
+   `python -m scripts.pilot.local_ci --sha <full-sha> --profiles frontend --node <node24-path> --publish`.
+   The executor checks a detached source snapshot, the installed dependency lock,
+   Jest results, transport/container probes and TypeScript. It posts
+   `Sphere Local / Frontend regressions` to that exact GitHub commit and reads the
+   status back. Production packaging is not implied by this status.
+2. Run `python -m scripts.pilot.package_local_web --source <full-sha> --execution <local-receipt-path>
+   --output <fresh-.local-pilot-directory> --node <node24-path>` on one line.
+   Packaging validates the successful local test report and its current GitHub
+   status, then builds from canonical Git bytes with Linux dependencies and a
+   pinned Node image. Windows native modules are not copied into the image.
+   The actual immutable image is tested through a read-only container on a
+   temporary loopback port; all static page routes and advertised JS/CSS assets
+   must pass. The probe removes its own container. No live UI is replaced here.
+3. Plan with `python -m scripts.pilot.install_reviewed_web --artifact <directory>
+   --source <full-sha> --expected-image-id <independently-checked-image-id> --local-execution`.
+   Use the same command with `--apply` only when installing. The installer rechecks
+   local evidence, image identity and complete Compose configuration, preserves
+   other containers, API and OTA catalog, and retains the prior UI image for
+   rollback. Local mode performs no Docker archive load/export or cache deletion.
+4. Check the real browser after installation. HTTP pages/assets do not prove
+   hydration, authentication, WebRTC or Android input. Publish a separately scoped
+   delivery result with the installed UI/API/APK revisions and runtime evidence.
+
+Local reports remain under `.local-pilot`; raw logs, credentials and browser
+sessions are not uploaded as public CI evidence. A result is attached to the
+commit actually tested, rather than copied to every subsequent documentation
+commit. This path does not yet claim migration of every workflow, automatic
+execution on every push, public fork support or complete cloud/Linux test parity.
 
 ## What the operator sees
 
@@ -58,7 +95,7 @@ uncommitted changes layered into a local image.
    time in the deployment receipt. A passing source test alone does not prove a
    deployment or an Android-device rollout.
 
-## Current rollout boundary
+## Historical rollout boundary: 30 September
 
 The local read-only frontend preview `3012` was rebuilt on 30 September with a
 known frontend SHA. Its pilot backend `40357ca` returns HTTP 404 for this metadata
