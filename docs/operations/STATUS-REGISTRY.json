@@ -5616,7 +5616,11 @@
       "finiteStickTrajectoryEvidenceSha256NormalizedLf": "baab1d52f59da226ffc62404e5a6879c239947e37832bf879ab1ecb61e6a0311",
       "stickAdapterSourceRevision": "3ad1dcd598ebaff14bb2b715b42d1323750bbcb7",
       "finiteVisualWaypointServoUserConfirmed": true,
-      "learnedModelGoalNavigationAccepted": false
+      "learnedModelGoalNavigationAccepted": false,
+      "recoverySupervisorImplemented": true,
+      "sequentialGestureHelpersImplemented": true,
+      "autonomousObstacleAvoidanceAccepted": false,
+      "nativeMultiContactImplemented": false
     },
     "initialAssessment": {
       "observedAtUtc": "2026-10-15T20:54:28.417950+00:00",
@@ -5827,6 +5831,19 @@
       "productionNavigationAccepted": false,
       "physicalEvents": 36,
       "nativeAppliedReceipts": 36
+    },
+    "navigationRecoveryPrimitives": {
+      "evidence": "docs/audits/2026-10-17/MOTOR-NAVIGATION-RECOVERY.json",
+      "evidenceSha256NormalizedLf": "3e32040498d807211ae8e3d3846d0df89f75af9fea4d9460f9493ec648228967",
+      "sourceRevision": "ff4eaf80d77e4593c43640ce351a11b688690aa4",
+      "motorTestsPassed": 122,
+      "recoverySupervisorImplemented": true,
+      "sequentialGestureHelpersImplemented": true,
+      "positiveLiveJumpCameraCalibration": false,
+      "autonomousObstacleAvoidanceAccepted": false,
+      "nativeMultiContactImplemented": false,
+      "recoveryActuatorIntegrated": false,
+      "liveGameWorldAvailable": false
     }
   }
 }

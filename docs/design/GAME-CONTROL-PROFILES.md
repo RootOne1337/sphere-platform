@@ -1,5 +1,7 @@
 # Профили игрового управления и прямой моторный клиент
 
+17 октября: добавлены pure held-stick/trajectory/WASD helpers и bounded sequential double tap/camera plan;122 motor tests прошли. Полный profile API, simultaneous contacts и integrated obstacle avoidance ещё не реализованы. Живая jump/camera calibration не принята. [Recovery evidence](../audits/2026-10-17/MOTOR-NAVIGATION-RECOVERY.md).
+
 Основная архитектура и порядок приёмки — [единый проект игрового AI-контура](MOTOR-AI-PLATFORM.md).
 Здесь сохранены подробности игрового профиля; реализация и передача владения DAG/эпизоду ещё требуются.
 

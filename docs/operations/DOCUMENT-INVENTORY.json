@@ -5,7 +5,7 @@
   "countsByRole": {
     "ADR": 6,
     "CURRENT_ENTRYPOINT": 8,
-    "DATED_EVIDENCE": 346,
+    "DATED_EVIDENCE": 347,
     "DESIGN_SPECIFICATION": 81,
     "OPERATING_GUIDE": 67,
     "PROJECT_POLICY": 7,
@@ -1502,6 +1502,10 @@
     },
     {
       "file": "docs/audits/2026-10-17/MOTOR-LEARNED-WALK-PILOT.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
+      "file": "docs/audits/2026-10-17/MOTOR-NAVIGATION-RECOVERY.md",
       "role": "DATED_EVIDENCE"
     },
     {

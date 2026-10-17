@@ -2,6 +2,8 @@
 
 **Проверенная установка:** UI `15ce2b62` / API `15ce2b62`.
 
+**17 октября — ограниченные recovery-примитивы.** В основной код добавлены supervisor прогресса/падения/unknown scene, finite double-tap/camera sequences и optional OpenCV sensor.122 motor tests и Ruff прошли. Это не готовый обход зданий: perception и dispatch recovery ещё требуют integration, native multi-touch отсутствует. PH011 после AFK отключения/двух перезапусков игры/одного Android reboot остаётся на подключении; read-only guard подтвердил прямые кадры/ALIVE/CLOSED без физических действий. Положительная jump/camera calibration не выполнена. [Код, evidence и блокер](../audits/2026-10-17/MOTOR-NAVIGATION-RECOVERY.md).
+
 **17 октября — пользователь подтвердил проход к метке.** Конечный CV visual servo на PH011:241→110→46→25м, затем метка/маршрут исчезли; пользователь подтвердил «добежала».296 наблюдений/5.126Гц,36/36 APPLIED, один непрерывный контакт и CLOSED. Без NitroGen/P2P; learned navigation и общий production SLA не приняты. [Квитанция и границы](../audits/2026-10-17/MOTOR-WAYPOINT-SERVO.md).
 
 **17 октября — удержание стика и временная траектория.** Устранён rapid UP/DOWN в новом contact adapter; последнее45-с испытание NitroGen8 дало235 решений/5.182Гц,571/571 APPLIED и один непрерывный контакт. Все свои participants/GPU children закрыты. Около70% модельных состояний neutral; метка241→241м. Goal navigation не принята. P2P запускался без text conditioning, поэтому его пригодность по этому опыту не отвергается. [Результаты и следующие условия](../audits/2026-10-17/MOTOR-STICK-CONTACT-LIVE.md).
