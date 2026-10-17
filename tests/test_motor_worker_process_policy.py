@@ -136,6 +136,7 @@ class ProcessPolicyTests(unittest.IsolatedAsyncioTestCase):
                 with self.assertRaises(ProtocolError):
                     await provider.predict(request())
                 self.assertEqual(provider.responses, 0)
+                self.assertIsNotNone(provider.report()["failure"])
                 self.assertTrue(provider.report()["cleanupConfirmed"])
                 with self.assertRaisesRegex(ProtocolError, "unavailable"):
                     await provider.predict(request(2))
@@ -150,6 +151,10 @@ class ProcessPolicyTests(unittest.IsolatedAsyncioTestCase):
             with self.assertRaises(asyncio.CancelledError if cancel else ProtocolError):
                 await task
             self.assertIsNotNone(provider.process.returncode)
+            self.assertEqual(
+                provider.report()["failure"],
+                "policy_process_request_cancelled" if cancel else "policy_process_request_timeout",
+            )
             self.assertTrue(provider.report()["cleanupConfirmed"])
 
     async def test_startup_wrong_version_flood_and_timeout_do_not_leak_child(self):

@@ -101,6 +101,7 @@ class ProcessPolicy:
         self.spawn_task: asyncio.Task | None = None
         self.read_lock = asyncio.Lock()
         self.samples: deque[dict] = deque(maxlen=64)
+        self.failure: str | None = None
 
     async def _read(self) -> dict:
         try:
@@ -146,6 +147,15 @@ class ProcessPolicy:
                 raise ProtocolError("policy_process_closed_during_startup")
             self.ready = True
         except BaseException as exc:
+            self.failure = (
+                str(exc)
+                if isinstance(exc, ProtocolError)
+                else "policy_process_start_cancelled"
+                if isinstance(exc, asyncio.CancelledError)
+                else "policy_process_start_timeout"
+                if isinstance(exc, TimeoutError)
+                else "policy_process_start_failed"
+            )
             if self.process is None:
                 try:
                     self.process = await asyncio.shield(spawn)
@@ -218,6 +228,17 @@ class ProcessPolicy:
                 request.request_id, frame.capture_epoch, frame.receiver_sequence, chunk
             )
         except BaseException as exc:
+            # These ProtocolErrors originate only in our fixed validators;
+            # never use child stdout/stderr/exception text as a reason code.
+            self.failure = (
+                str(exc)
+                if isinstance(exc, ProtocolError)
+                else "policy_process_request_cancelled"
+                if isinstance(exc, asyncio.CancelledError)
+                else "policy_process_request_timeout"
+                if isinstance(exc, TimeoutError)
+                else "policy_process_request_failed"
+            )
             # A half-written request, timeout or unknown reply cannot be retried.
             # Retire the child; its late GPU result must never service another frame.
             await self.close()
@@ -270,6 +291,7 @@ class ProcessPolicy:
         return {
             "protocol": PROTOCOL,
             "adapter": self.config.adapter,
+            "failure": self.failure,
             "responses": self.responses,
             "lastInferenceWallMs": self.last_inference_ms,
             "ready": self.ready,
