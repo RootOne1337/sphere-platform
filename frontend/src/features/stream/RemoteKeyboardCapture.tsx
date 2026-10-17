@@ -48,7 +48,10 @@ export function RemoteKeyboardCapture({ controller, available, viewport }: {
     };
     const pointer = (event: PointerEvent) => {
       const target = event.target;
-      if (target instanceof Element && !target.closest('button,input,textarea,select,a,summary,[role="dialog"]') && target.closest('canvas')) {
+      // The inspector itself is a dialog. Only controls within this stream,
+      // rather than its containing dialog, should prevent remote keyboard focus.
+      if (target instanceof Element && viewport.current?.contains(target)
+        && !target.closest('button,input,textarea,select,a,summary') && target.closest('canvas')) {
         touch = event.pointerType === 'touch' || event.pointerType === 'pen';
         if (touch) recentTouch = Date.now();
         focus(touch);

@@ -60,6 +60,22 @@ test('hardware mode is automatic; a touch on a game never requests a soft keyboa
   f.cleanup();
 });
 
+test('stream canvas in the device inspector dialog still focuses its own hardware input',()=>{
+  const f=fixture(false);const dialog=document.createElement('div');dialog.setAttribute('role','dialog');document.body.append(dialog);dialog.append(f.viewport);
+  const canvas=document.createElement('canvas');f.viewport.append(canvas);
+  act(()=>fireEvent.pointerUp(canvas,{pointerType:'mouse'}));
+  expect(f.input).toHaveFocus();expect(f.input).toHaveAttribute('inputmode','none');
+  f.cleanup();dialog.remove();
+});
+
+test('a different stream canvas does not steal keyboard focus',()=>{
+  const f=fixture(false);const outside=document.createElement('button');document.body.append(outside);outside.focus();
+  const other=document.createElement('canvas');document.body.append(other);
+  act(()=>fireEvent.pointerUp(other,{pointerType:'mouse'}));
+  expect(outside).toHaveFocus();
+  f.cleanup();outside.remove();other.remove();
+});
+
 test('soft keyboard action is offered only for an Android editor and remains outside hidden trays',()=>{
   const f=fixture();act(()=>jest.advanceTimersByTime(100));
   fireEvent.click(f.view.getByRole('button',{name:'Открыть экранную клавиатуру'}));
