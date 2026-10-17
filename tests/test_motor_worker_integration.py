@@ -353,6 +353,33 @@ class HeadlessIntegrationTests(unittest.IsolatedAsyncioTestCase):
             self.assertTrue(provider.report()["cleanupConfirmed"])
         self.assertFalse(any(d.get("type", "").startswith("touch_") for d in self.received))
 
+    async def test_slow_inference_does_not_freeze_an_old_rgb_frame_while_gpu_is_busy(self):
+        session = None
+        requests = []
+        offered_while_busy = []
+
+        class SlowGpu:
+            async def predict(self, request):
+                requests.append(request)
+                before = session.shadow.offered
+                await asyncio.sleep(0.35)
+                offered_while_busy.append(session.shadow.offered - before)
+                return await NeutralPolicy().predict(request)
+
+        session = HeadlessSession(
+            SessionConfig(self.url, DEVICE, duration=2, shadow_policy=True),
+            policy=SlowGpu(),
+            policy_timeout=0.75,
+            policy_max_receiver_age=1,
+        )
+        report = await session.run("fixture-token")
+        self.assertTrue(report["success"], report)
+        self.assertGreaterEqual(len(requests), 3)
+        self.assertEqual(offered_while_busy, [0] * len(offered_while_busy))
+        self.assertEqual(report["policyShadow"]["replacedPending"], 0)
+        self.assertGreater(report["decodedFrames"], 30)
+        self.assertFalse(report["control"]["requested"])
+
     async def test_current_apk_availability_before_admission_does_not_break_media(self):
         self.availability_state = "manual"
         session = HeadlessSession(SessionConfig(self.url, DEVICE, duration=1, probe_control=True))

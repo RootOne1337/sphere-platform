@@ -519,6 +519,12 @@ class HeadlessSession:
         next_at = time.perf_counter()
         while not self.closing:
             await asyncio.sleep(max(0, next_at - time.perf_counter()))
+            if self.shadow and self.shadow.task is not None:
+                # Do not freeze RGB while a slow GPU is busy. The decoder's
+                # one latest-frame slot keeps advancing; select it only when
+                # the next request can start. Never catch up old observations.
+                await asyncio.sleep(0.005)
+                continue
             before = time.perf_counter()
             item = self.frames.take(before) if self.binding else None
             if item:
