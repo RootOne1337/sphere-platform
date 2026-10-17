@@ -1,11 +1,11 @@
 {
   "schemaVersion": 1,
-  "reviewedAtUtc": "2026-10-17T10:08:10.787687+00:00",
+  "reviewedAtUtc": "2026-10-17T10:15:16.550454+00:00",
   "scope": "All tracked Markdown classified; active local-link paths scanned. Not semantic attestation of every sentence, command execution, external-link or live acceptance.",
   "countsByRole": {
     "ADR": 6,
     "CURRENT_ENTRYPOINT": 8,
-    "DATED_EVIDENCE": 343,
+    "DATED_EVIDENCE": 344,
     "DESIGN_SPECIFICATION": 81,
     "OPERATING_GUIDE": 67,
     "PROJECT_POLICY": 7,
@@ -1498,6 +1498,10 @@
     },
     {
       "file": "docs/audits/2026-10-17/MOTOR-AMD-LOCAL41.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
+      "file": "docs/audits/2026-10-17/MOTOR-LEARNED-WALK-PILOT.md",
       "role": "DATED_EVIDENCE"
     },
     {

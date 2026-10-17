@@ -1,6 +1,6 @@
 # Headless motor worker: транспорт и конечный ввод
 
-17 октября 2026 · версия модуля `0.5.1` · **транспорт, opt-in single-finger probe и изолированный shadow provider**. Есть общий локальный RGB pipe для NitroGen/P2P; загрузчики моделей и AMD preprocessing пока остаются отдельными пилотными адаптерами. Игрового executor нет. [Начальные AMD-измерения](../audits/2026-10-17/MOTOR-AMD-LOCAL41.md).
+17 октября 2026 · версия модуля `0.5.1` · **транспорт, opt-in single-finger probe и изолированный shadow provider**. Есть общий локальный RGB pipe для NitroGen/P2P; загрузчики моделей и AMD preprocessing пока остаются отдельными пилотными адаптерами. Поставляемого игрового executor нет; отдельный private12-секундный [learned WASD опыт](../audits/2026-10-17/MOTOR-LEARNED-WALK-PILOT.md) подтвердил15native событий. [Начальные AMD-измерения](../audits/2026-10-17/MOTOR-AMD-LOCAL41.md).
 
 Текущий этап — [process provider](../audits/2026-10-17/MOTOR-PROCESS-POLICY05.md) и [выбор свежего RGB0.5.1](../audits/2026-10-17/MOTOR-PROCESS-POLICY051.md); предыдущая физическая проверка — [готовность0.3](../audits/2026-10-17/MOTOR-WORKER03-READINESS.md). UI/API15ce2b62 и APK82 сохранены; обновлялся только локальный Python-клиент.
 

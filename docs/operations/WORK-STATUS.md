@@ -2,6 +2,8 @@
 
 **Проверенная установка:** UI `15ce2b62` / API `15ce2b62`.
 
+**17 октября — первый настоящий learned WASD тест.** Pixel2Play150M на RX9070:66решений,5,226Гц по последовательности; минимум5решений в полных1-с окнах.37ненулевых movement predictions,15/15native APPLIED; свой participant и GPU child закрыты. Только WASD, другие channels явно masked; это12-секундный private prototype, не навигация или production executor. [Результаты и ограничения](../audits/2026-10-17/MOTOR-LEARNED-WALK-PILOT.md).
+
 **17 октября — worker0.5.1, свежий RGB и гостевой игровой мир.** Убрано старение следующего RGB во время медленного inference;85 motor tests прошли. Гость вошёл на TYUMEN, короткий ручной direct drag уменьшил маркер8→7м; native PNG/XPath подтверждают tutorial world. NitroGen/P2P повторно проверены в learned shadow без модельных физических действий. Полный игровой executor/preprocessing и общий gameplay SLA открыты. UI/API15ce/APK82 сохранены. [Результаты и границы](../audits/2026-10-17/MOTOR-PROCESS-POLICY051.md).
 
 **17 октября — worker0.5 и общий локальный process provider.** NitroGen/P2P на RX9070 прошли direct PH011 shadow через versioned RGB pipe;84 motor tests прошли. Исправлен ложный отказ при закрытии GPU child; исходный отрицательный прогон сохранён. Загрузка Black Russia завершена, регистрация ждёт пользователя. Это экран регистрации, не gameplay; model loader/preprocessing, игровой профиль/multi-touch и отдельная GPU/LAN открыты. UI/API15ce/APK82 сохранены. [Код, результаты и границы](../audits/2026-10-17/MOTOR-PROCESS-POLICY05.md).

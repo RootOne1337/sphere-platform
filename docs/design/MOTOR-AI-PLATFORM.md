@@ -1,8 +1,8 @@
 # Игровой AI-контур Sphere: архитектура, модели и план реализации
 
-**Текущий срез · 17 октября 2026:** UI/API `15ce2b62`, APK82 сохранены. На локальной RX9070 реально запущены NitroGen и Open Pixel2Play150M через прямые кадры PH011/Sphere. Worker0.5.1 содержит общий изолированный process provider, исправление завершения GPU child и выбор свежего RGB после освобождения модели. Модельные ответы пока не исполняются. После отдельного входа гостем на TYUMEN вручную проверено короткое движение виртуальным стиком; это не модельное управление. Поставляемый model loader/preprocessing, игровые профили/multi-touch и episode delegation ещё нужны. [Последние результаты и границы](../audits/2026-10-17/MOTOR-PROCESS-POLICY051.md). [Исходный AMD-пилот](../audits/2026-10-17/MOTOR-AMD-LOCAL41.md). [Studio и расширяемость](CLIENT-STUDIO-PLATFORM.md).
+**Текущий срез · 17 октября 2026:** UI/API `15ce2b62`, APK82 сохранены. На локальной RX9070 реально запущены NitroGen и Open Pixel2Play150M через прямые кадры PH011/Sphere. Worker0.5.1 содержит общий изолированный process provider, исправление завершения GPU child и выбор свежего RGB после освобождения модели. После входа гостем на TYUMEN выполнен первый12-секундный learned WASD опыт: Pixel2Play66решений/5,226Гц,15/15native APPLIED, своё управление/GPU child закрыты. Камера/остальные channels явно masked; навигация и production gameplay не приняты. Поставляемый model loader/preprocessing, полноценные игровые профили/multi-touch и episode delegation ещё нужны. [Learned движение и границы](../audits/2026-10-17/MOTOR-LEARNED-WALK-PILOT.md). [Process provider](../audits/2026-10-17/MOTOR-PROCESS-POLICY051.md). [Исходный AMD-пилот](../audits/2026-10-17/MOTOR-AMD-LOCAL41.md). [Studio и расширяемость](CLIENT-STUDIO-PLATFORM.md).
 
-**Единый рабочий документ · 17 октября 2026 · версия 2.2.**
+**Единый рабочий документ · 17 октября 2026 · версия 2.3.**
 
 Назначение: подготовить реализацию отдельной GPU-станции, которая получает экран Android APK
 напрямую и управляет игрой без открытого браузера. Первый целевой сценарий — движение к метке

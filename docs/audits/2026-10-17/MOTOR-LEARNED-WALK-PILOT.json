@@ -1,0 +1,113 @@
+{
+  "schemaVersion": 1,
+  "kind": "FINITE_LEARNED_P2P_WASD_STICK_PROBE_NOT_NAVIGATION",
+  "observedAtUtc": "2026-10-17T10:15:16.550454+00:00",
+  "workerSourceRevision": "e7ec2d0de3df58f39ff847a1337836070dd0650e",
+  "checkoutAtRun": "2c806a46ee9769a90c2eee8f84a035ad572b9a7b",
+  "model": "elefantai/open-p2p150M",
+  "gpu": "AMD Radeon RX9070",
+  "modelProvenanceEvidence": "docs/audits/2026-10-17/MOTOR-AMD-LOCAL41.json",
+  "prerequisiteEvidence": "docs/audits/2026-10-17/MOTOR-PROCESS-POLICY051.json",
+  "privateRunner": ".local-pilot/motor-amd-20261017/learned-walk-probe.py",
+  "privateRunnerSha256": "5d1be20f0b18150bc3f7d3ba9274b521c9c602a9ee65875185fe157a93fc654d",
+  "rawEvidence": ".local-pilot/motor-amd-20261017/p2p-learned-walk-v1.json",
+  "rawEvidenceSha256": "7512705fe36e84c7579a64114897f052620c330559400469daa305bcf1c57d3f",
+  "finalDecodedPng": ".local-pilot/motor-amd-20261017/p2p-learned-walk-v1-after.png",
+  "finalDecodedPngSha256": "6beb374fd49df9d8b2b2c48edd62167f1a2ffe9025a3b4c04620c6d31b21e919",
+  "device": "auto-ph-011",
+  "server": "TYUMEN",
+  "guestCharacter": true,
+  "actionExecutionEnabled": true,
+  "channelMask": "WASD_to_one_virtual_stick_only",
+  "explicitlyMasked": [
+    "other_keyboard_keys",
+    "mouse_buttons",
+    "relative_mouse"
+  ],
+  "profile": {
+    "capture": [
+      960,
+      540
+    ],
+    "stickCenter": [
+      140,
+      430
+    ],
+    "radius": 60,
+    "maximumHoldReceiverAgeMs": 400,
+    "physicalEventBudget": 128
+  },
+  "durationMonitorSeconds": 12.029,
+  "decisionCountIncludingSetup": 66,
+  "decisionHzWholeSequence": 5.226364122034917,
+  "completeOneSecondBinsFromFirstDecision": [
+    6,
+    5,
+    5,
+    6,
+    5,
+    5,
+    5,
+    6,
+    5,
+    5,
+    5,
+    5
+  ],
+  "minimumCompleteOneSecondBin": 5,
+  "movementPredictions": 37,
+  "maskedPredictions": 57,
+  "decodedKeyCounts": {
+    "neutral": 29,
+    "w": 2,
+    "d+w": 1,
+    "d": 16,
+    "s": 2,
+    "a": 12,
+    "a+w": 4
+  },
+  "receiverToPredictionMs": {
+    "p50": 148.5570000077132,
+    "max": 239.2692999856081
+  },
+  "physicalEventsAttempted": 15,
+  "nativeAppliedReceipts": 15,
+  "eventCounts": {
+    "0": 4,
+    "2": 8,
+    "1": 3
+  },
+  "lastNativeActionRttMs": 13.054100010776892,
+  "nativeParticipantClosedConfirmed": true,
+  "gpuProcessClosedConfirmed": true,
+  "serverToWorkerVideoBytes": 0,
+  "route": {
+    "path": "nat",
+    "protocol": "udp",
+    "candidateTypes": [
+      "host",
+      "prflx"
+    ],
+    "addressScopes": [
+      "private",
+      "private"
+    ],
+    "evidence": "aiortc_1_15_nominated_pair_adapter",
+    "lanProven": false
+  },
+  "uiApiApkChanged": false,
+  "finiteLearnedWasdDispatchVerified": true,
+  "gameplayProductionAccepted": false,
+  "navigationAccepted": false,
+  "scriptedOrRandomMovementFallback": false,
+  "scope": "Real model RGB inference and bounded native WASD dispatch. Not autonomous goal-directed navigation or full action fidelity.",
+  "limitations": [
+    "Decisions include initial setup; rate is full decision sequence and complete1s bins, not a sustained production SLA.",
+    "Model other channels deliberately masked; camera, sprint/multi-touch, driving and text not exercised.",
+    "400ms receiver-age hold is an explicit experimental adaptation, not proof of20Hz policy equivalence.",
+    "APPLIED/CLOSED prove input dispatch/release; no source frame/action correlation or goal completion proof.",
+    "Legacy nested pointerProbe.expectedPoints=2 describes opt-in geometry stub, not the dynamic experiment. Actual15 events are separately counted.",
+    "Other authorized clients were not forcibly disconnected; not an isolated game-behavior benchmark.",
+    "Private prototype only; no packaged reusable game executor or500ms crash-stop acceptance."
+  ]
+}
