@@ -296,6 +296,29 @@ class PolicyLoopTests(unittest.IsolatedAsyncioTestCase):
             release.set()
             await asyncio.sleep(0)
 
+    async def test_confirmed_slow_process_retirement_is_not_the_fixture_cancel_deadline(self):
+        started = asyncio.Event()
+        retired = asyncio.Event()
+
+        class ProcessLike:
+            async def predict(self, req):
+                started.set()
+                try:
+                    await asyncio.Event().wait()
+                finally:
+                    await asyncio.sleep(0.15)
+                    retired.set()
+
+        loop = ShadowPolicyLoop(ProcessLike(), cleanup_timeout=0.5, clock=lambda: self.now)
+        loop.bind_epoch(EPOCH)
+        loop.offer(frame())
+        await loop.tick()
+        await started.wait()
+        await loop.close()
+        self.assertTrue(retired.is_set())
+        self.assertTrue(loop.report()["cleanupConfirmed"])
+        self.assertEqual(loop.submitted, 1)
+
     async def test_report_tail_is_bounded_and_does_not_contain_pixels(self):
         for i in range(1, 71):
             await self.launch(i)

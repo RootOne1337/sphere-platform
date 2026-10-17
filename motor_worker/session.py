@@ -156,6 +156,10 @@ class HeadlessSession:
                 policy if policy is not None else NeutralPolicy(),
                 timeout=policy_timeout,
                 max_receiver_age=policy_max_receiver_age,
+                # Owned process retirement has its own two-second bound. The
+                # fixture's 100ms coroutine cancellation budget cannot attest
+                # GPU-process cleanup. No new work runs while retirement waits.
+                cleanup_timeout=2.5 if type(policy) is ProcessPolicy else 0.1,
             )
             if config.shadow_policy
             else None

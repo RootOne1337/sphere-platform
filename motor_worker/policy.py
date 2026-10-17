@@ -274,9 +274,14 @@ class ShadowPolicyLoop:
         *,
         timeout: float = 0.25,
         max_receiver_age: float = 0.5,
+        cleanup_timeout: float = 0.1,
         clock: Callable[[], float] = time.perf_counter,
     ):
-        if not finite(timeout, 0.01, 2) or not finite(max_receiver_age, 0.01, 2):
+        if (
+            not finite(timeout, 0.01, 2)
+            or not finite(max_receiver_age, 0.01, 2)
+            or not finite(cleanup_timeout, 0.01, 3)
+        ):
             raise ProtocolError("invalid_policy_budget")
         self.provider, self.timeout, self.max_receiver_age, self.clock = (
             provider,
@@ -284,6 +289,7 @@ class ShadowPolicyLoop:
             max_receiver_age,
             clock,
         )
+        self.cleanup_timeout = cleanup_timeout
         self.epoch: str | None = None
         self.generation = 0
         self.active_generation = 0
@@ -324,7 +330,7 @@ class ShadowPolicyLoop:
         if self.task is None:
             return
         self.task.cancel()
-        done, _ = await asyncio.wait({self.task}, timeout=0.1)
+        done, _ = await asyncio.wait({self.task}, timeout=self.cleanup_timeout)
         if not done:
             self.closed, self.pending, self.last_chunk = True, None, None
             raise ProtocolError("policy_cleanup_unconfirmed")
@@ -429,6 +435,7 @@ class ShadowPolicyLoop:
             "activeRequestSlots": 1,
             "pendingFrameSlots": 1,
             "sampleTailLimit": 64,
+            "cleanupTimeoutSeconds": self.cleanup_timeout,
             "cleanupConfirmed": self.closed and self.task is None and self.pending is None,
             "inputTransform": "original_rgb24_no_model_preprocessing",
             "freshnessClock": "worker_receiver_not_source_capture",
