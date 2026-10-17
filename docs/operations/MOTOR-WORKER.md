@@ -1,8 +1,8 @@
 # Headless motor worker: транспорт и конечный ввод
 
-17 октября 2026 · версия модуля `0.3.0` · **транспорт и opt-in single-finger probe, без модели и игрового профиля**.
+17 октября 2026 · версия модуля `0.4.0` · **транспорт, opt-in single-finger probe и shadow policy, без модели и игрового профиля**.
 
-Текущий результат и открытые gates — [проверка готовности](../audits/2026-10-17/MOTOR-WORKER03-READINESS.md). UI/API15ce2b62 и APK82 сохранены; обновлялся только локальный Python-клиент.
+Текущий этап — [shadow policy и реальные проекты](../audits/2026-10-17/MOTOR-REALTIME-SHADOW04.md); предыдущая физическая проверка — [готовность0.3](../audits/2026-10-17/MOTOR-WORKER03-READINESS.md). UI/API15ce2b62 и APK82 сохранены; обновлялся только локальный Python-клиент.
 
 Основной план — [MOTOR-AI-PLATFORM](../design/MOTOR-AI-PLATFORM.md).
 Код — [motor_worker](../../motor_worker/session.py). Это реализация части P0-C/G02:
@@ -18,6 +18,7 @@
 - Различает video binding, открытый control data channel, APK `READY`, idle `ALIVE` и закрытие участника.
 - С `--probe-control` отправляет только `touch_open`, idle heartbeat action=4 и `touch_close`.
   При дополнительном явном `--pointer-probe` доступен ограниченный DOWN/MOVE/UP. Keys/text, игровой profile и model plan здесь не реализованы.
+- С `--shadow-policy neutral` передаёт исходный RGB нейтральной тестовой policy и проверяет асинхронный lifecycle без физических команд. Это не нейросеть и не model inference. С `--pointer-probe` этот режим несовместим.
 - Ограничивает setup, длительность прогона, собственные очереди, количество candidates и диагностический хвост.
   Внутренние decoder/thread buffers библиотеки требуют отдельной нагрузочной приёмки перед парком.
 - Сохраняет отчёт с фиксированными reason codes, не печатает token, SDP, owner или IP.
@@ -129,8 +130,8 @@ capture freshness, правильные цвета на всех устройс�
 ## Локальные проверки
 
 ```powershell
-.local-pilot/motor-worker-venv/Scripts/python.exe -m unittest tests.test_motor_worker_protocol tests.test_motor_worker_pointer_probe tests.test_motor_worker_integration
-.venv-audit/Scripts/ruff.exe check motor_worker tests/test_motor_worker_protocol.py tests/test_motor_worker_pointer_probe.py tests/test_motor_worker_integration.py
+.local-pilot/motor-worker-venv/Scripts/python.exe -m unittest tests.test_motor_worker_protocol tests.test_motor_worker_pointer_probe tests.test_motor_worker_policy tests.test_motor_worker_integration
+.venv-audit/Scripts/ruff.exe check motor_worker tests/test_motor_worker_protocol.py tests/test_motor_worker_pointer_probe.py tests/test_motor_worker_policy.py tests/test_motor_worker_integration.py
 ```
 
 Protocol tests не требуют media dependencies. Integration tests используют настоящий H.264/DTLS/SCTP
@@ -170,3 +171,19 @@ worker service identity и atomic DAG→episode delegation. GPU/model/gameplay �
 В отчёте `pointerProbe` разделяет attemptedPoints и appliedReceipts. `control.nativeActionAppliedVerified` означает точные receipts всех точек и подтверждённое закрытие, а не успешную игровую операцию. `pointerProbe.samples` хранит только bounded timing/counter tail, без координат/картинок. После конца monitoring и native cleanup отправляется goodbye; ожидаемое закрытие peer на этом этапе не считается потерей соединения. До этого этапа неожиданный close остаётся ошибкой.
 
 Далее нужны модельный adapter/RGB preprocessing, profile/multi-touch, сквозные source IDs/clocks и episode ownership. Этот probe не превращает статическую траекторию в управление по результатам inference.
+
+## Shadow policy ·0.4
+
+`--shadow-policy neutral` включает отдельный loop: один активный запрос и один последний ожидающий кадр, без input sink. В отчёте `policyShadow` содержит counters, сроки и подтверждение очистки. Ошибка provider или неподтверждённая отмена не скрывается; при такой отмене новые запросы не запускаются. Timeout250мс/receiver-age500мс — бюджеты проверки, не игровой SLA и не измеренная задержка GPU.
+
+Provider получает immutable bytes исходного RGB24 размера capture, максимум8Mi pixels, а не сжатое изображение из отчёта или RGB256 hash. Оригиналы не сохраняются. Это локальный Python-контракт; сетевой GPU API, checkpoint loader и preprocessing ещё не реализованы. [ActionChunk](../../motor_worker/policy.py) проверяет два стика и21 decoded button columns, до16состояний, с явно заданной частотой. Read-only preview не является физическим исполнением удержаний.
+
+```powershell
+.local-pilot/motor-worker-venv/Scripts/python.exe -m motor_worker `
+  --base-url http://127.0.0.1:3015 `
+  --device 414ce0e9-4b93-4f96-b9ca-ee675f53835e `
+  --seconds 15 --observation-hz 5 --shadow-policy neutral `
+  --output .local-pilot/my-policy-shadow.json
+```
+
+Без `--probe-control` native input participant не открывается. Отчёт различает `HEADLESS_POLICY_SHADOW_NOT_GAMEPLAY` и физический probe. Receiver freshness, model latency и source capture freshness — разные величины. Полная корреляция с часами Android остаётся открытой.
