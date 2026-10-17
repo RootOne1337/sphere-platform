@@ -1,6 +1,6 @@
 # Headless motor worker: транспорт и конечный ввод
 
-17 октября 2026 · версия модуля `0.4.0` · **транспорт, opt-in single-finger probe и shadow policy, без модели и игрового профиля**.
+17 октября 2026 · версия модуля `0.4.1` · **транспорт, opt-in single-finger probe и shadow policy**. Внешний локальный пилот NitroGen/P2P на RX9070 выполнен; production provider и игровой профиль в модуль не включены. [Измерения и ограничения](../audits/2026-10-17/MOTOR-AMD-LOCAL41.md).
 
 Текущий этап — [shadow policy и реальные проекты](../audits/2026-10-17/MOTOR-REALTIME-SHADOW04.md); предыдущая физическая проверка — [готовность0.3](../audits/2026-10-17/MOTOR-WORKER03-READINESS.md). UI/API15ce2b62 и APK82 сохранены; обновлялся только локальный Python-клиент.
 
@@ -20,6 +20,7 @@
   При дополнительном явном `--pointer-probe` доступен ограниченный DOWN/MOVE/UP. Keys/text, игровой profile и model plan здесь не реализованы.
 - С `--shadow-policy neutral` передаёт исходный RGB нейтральной тестовой policy и проверяет асинхронный lifecycle без физических команд. Это не нейросеть и не model inference. С `--pointer-probe` этот режим несовместим.
 - Ограничивает setup, длительность прогона, собственные очереди, количество candidates и диагностический хвост.
+  В0.4.1 guarded aiortc1.15 video receiver использует2048 RTP packet slots с prefetch0: stock128 терял крупные high-quality IDR. Счётчики `h264PacketBuffer` сохраняют превышения прежнего лимита, PLI и emitted frames.
   Внутренние decoder/thread buffers библиотеки требуют отдельной нагрузочной приёмки перед парком.
 - Сохраняет отчёт с фиксированными reason codes, не печатает token, SDP, owner или IP.
 

@@ -2,6 +2,8 @@
 
 **Проверенная установка:** UI `15ce2b62` / API `15ce2b62`.
 
+**17 октября — реальный локальный AMD inference.** NitroGen и Open Pixel2Play150M скачаны и запущены на RX9070 через прямые кадры PH011/Sphere. После исправления aiortc RTP buffer128→2048 прошли конечные86/233 inference responses; p50 decoded→reply246/146мс, server→worker video0. Исправленные прогоны видели disconnect renderer после inactivity, поэтому игровой executor/навигация не приняты.71 motor tests прошли. APK82/UI/API15ce сохранены; frontend keyboard focus fix проверен локально, ещё не установлен. [Среда, источники, задержки и отрицательные результаты](../audits/2026-10-17/MOTOR-AMD-LOCAL41.md).
+
 **17 октября — worker0.4 и асинхронная shadow policy.** На PH011 по 75 ответов нейтральной заглушки на исходные RGB-кадры через3015/Tuna, около5Гц, без физических команд и серверного видео; отдельно6/6 точек native ввода. Исправлена гонка ACK при закрытии,68 motor tests прошли. Проверены исходники NitroGen, Nexto, MineStudio и VPT. Модель/GPU, игровые профили и gameplay ещё не подключены. [Реализация, источники и границы](../audits/2026-10-17/MOTOR-REALTIME-SHADOW04.md).
 
 **17 октября — headless worker0.3 и конечный ввод.** На PH011 проверены прямые кадры без браузера и 6/6 native DOWN/MOVE/UP при локальном signaling и через Tuna; server→worker video0байт, RGB около5Гц. Исправлены ранняя availability APK и ложная ошибка штатного закрытия peer;46 motor tests прошли. Веб/API15ce и APK82 сохранены. Модель, игровые профили/multi-touch, отдельная GPU/LAN и gameplay ещё не готовы. [Готовность и следующие условия](../audits/2026-10-17/MOTOR-WORKER03-READINESS.md).
