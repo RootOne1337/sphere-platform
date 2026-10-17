@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "reviewedAtUtc": "2026-10-17T10:15:16.550454+00:00",
   "sourceReviewed": "e7ec2d0de3df58f39ff847a1337836070dd0650e",
-  "scope": "UI/API15ce preserved on3015/Tuna; APK82 exact installed hashes and completed OTA on four online devices. PH011/PH030 finite two-gesture recording and shared native timeline replay accepted; two direct media viewers retained, manual READY/Home restored. No universal timing or production SLA. Worker0.3 finite headless PH011 local/tunnel native dispatch verified separately; model/gameplay/GPU/LAN proof remain open. Installed runtime receipt unchanged. Worker0.4 real-RGB neutral shadow and finite pointer compatibility verified separately; no learned inference or gameplay. Local AMD RX9070 learned NitroGen/P2P inference verified separately; corrected runs used inactivity-disconnected game renderer, no model actions or gameplay accepted. UI/API/APK receipt unchanged. Worker0.5 bounded local process provider verified separately on PH011 registration screen; no game actions, runtime receipt unchanged.",
+  "scope": "UI/API15ce preserved on3015/Tuna; APK82 exact installed hashes and completed OTA on four online devices. PH011/PH030 finite two-gesture recording and shared native timeline replay accepted; two direct media viewers retained, manual READY/Home restored. No universal timing or production SLA. Worker0.3 finite headless PH011 local/tunnel native dispatch verified separately; model/gameplay/GPU/LAN proof remain open. Installed runtime receipt unchanged. Worker0.4 real-RGB neutral shadow and finite pointer compatibility verified separately; no learned inference or gameplay. Local AMD RX9070 learned NitroGen/P2P inference verified separately; corrected runs used inactivity-disconnected game renderer, no model actions or gameplay accepted. UI/API/APK receipt unchanged. Worker0.5 bounded local process provider verified separately on PH011 registration screen; no game actions, runtime receipt unchanged. Follow-up: finite learned stick contact/trajectory on PH011 verified; 571 native APPLIED, goal navigation not accepted. P2P text conditioning and source capture/action age remain open; installed runtime unchanged.",
   "baseline": "docs/audits/2026-10-05/ENTERPRISE-PRODUCT-BACKLOG.json",
   "previousCrosscheck": "docs/audits/2026-10-09/CHAT-CODE-RECONCILIATION.json",
   "counts": {
@@ -5586,7 +5586,7 @@
       "fleetCapacityBenchmarked": false,
       "gameplayAccepted": false,
       "fullGateG02Accepted": false,
-      "state": "LOCAL_PROCESS_POLICY_SHADOW_VERIFIED_GAME_EXECUTOR_REQUIRED",
+      "state": "FINITE_LEARNED_STICK_TRAJECTORY_VERIFIED_GOAL_NAVIGATION_OPEN",
       "observedAtUtc": "2026-10-17T10:08:10.787687+00:00",
       "workerSourceRevision": "e7ec2d0de3df58f39ff847a1337836070dd0650e",
       "headlessWorkerVersion": "0.5.1",
@@ -5607,7 +5607,14 @@
       "modelDrivenMovementAccepted": false,
       "finiteLearnedWasdDispatchVerified": true,
       "finiteLearnedWasdEvidence": "docs/audits/2026-10-17/MOTOR-LEARNED-WALK-PILOT.json",
-      "finiteLearnedWasdEvidenceSha256NormalizedLf": "c306a88efe217fee5917a99f9084e9354039ab7c4dda3a9dc0915c399c5b242c"
+      "finiteLearnedWasdEvidenceSha256NormalizedLf": "c306a88efe217fee5917a99f9084e9354039ab7c4dda3a9dc0915c399c5b242c",
+      "virtualStickContactPlannerImplemented": true,
+      "latestGamepadChunkTimelineImplemented": true,
+      "finiteLearnedStickDispatchVerified": true,
+      "goalNavigationAccepted": false,
+      "finiteStickTrajectoryEvidence": "docs/audits/2026-10-17/MOTOR-STICK-TRAJECTORY-LIVE.json",
+      "finiteStickTrajectoryEvidenceSha256NormalizedLf": "baab1d52f59da226ffc62404e5a6879c239947e37832bf879ab1ecb61e6a0311",
+      "stickAdapterSourceRevision": "3ad1dcd598ebaff14bb2b715b42d1323750bbcb7"
     },
     "initialAssessment": {
       "observedAtUtc": "2026-10-15T20:54:28.417950+00:00",
@@ -5794,6 +5801,21 @@
       "appliedReceipts": 15,
       "meanDecisionHz": 5.226364122034917,
       "minimumCompleteOneSecondBin": 5
+    },
+    "finiteStickTrajectoryPilot": {
+      "evidence": "docs/audits/2026-10-17/MOTOR-STICK-TRAJECTORY-LIVE.json",
+      "evidenceSha256NormalizedLf": "baab1d52f59da226ffc62404e5a6879c239947e37832bf879ab1ecb61e6a0311",
+      "singleContinuousContactVerified": true,
+      "finiteLearnedStickDispatchVerified": true,
+      "physicalEvents": 571,
+      "appliedReceipts": 571,
+      "meanDecisionHz": 5.182428986039937,
+      "goalNavigationAccepted": false,
+      "sourceCaptureAgeBoundImplemented": false,
+      "textConditionedP2pTested": false,
+      "adapterSourceRevision": "3ad1dcd598ebaff14bb2b715b42d1323750bbcb7",
+      "finalMotorUnitTestsPassed": 102,
+      "finalMotorUnitTestLogSha256": "e78f185c1e8628bdb191f04009112f4455be24412043ded369f1ba9bfb766b9d"
     }
   }
 }

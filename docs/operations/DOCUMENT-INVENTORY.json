@@ -5,7 +5,7 @@
   "countsByRole": {
     "ADR": 6,
     "CURRENT_ENTRYPOINT": 8,
-    "DATED_EVIDENCE": 344,
+    "DATED_EVIDENCE": 345,
     "DESIGN_SPECIFICATION": 81,
     "OPERATING_GUIDE": 67,
     "PROJECT_POLICY": 7,
@@ -1514,6 +1514,10 @@
     },
     {
       "file": "docs/audits/2026-10-17/MOTOR-REALTIME-SHADOW04.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
+      "file": "docs/audits/2026-10-17/MOTOR-STICK-CONTACT-LIVE.md",
       "role": "DATED_EVIDENCE"
     },
     {

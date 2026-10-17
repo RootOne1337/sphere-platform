@@ -1,8 +1,8 @@
 # Игровой AI-контур Sphere: архитектура, модели и план реализации
 
-**Текущий срез · 17 октября 2026:** UI/API `15ce2b62`, APK82 сохранены. На локальной RX9070 реально запущены NitroGen и Open Pixel2Play150M через прямые кадры PH011/Sphere. Worker0.5.1 содержит общий изолированный process provider, исправление завершения GPU child и выбор свежего RGB после освобождения модели. После входа гостем на TYUMEN выполнен первый12-секундный learned WASD опыт: Pixel2Play66решений/5,226Гц,15/15native APPLIED, своё управление/GPU child закрыты. Камера/остальные channels явно masked; навигация и production gameplay не приняты. Поставляемый model loader/preprocessing, полноценные игровые профили/multi-touch и episode delegation ещё нужны. [Learned движение и границы](../audits/2026-10-17/MOTOR-LEARNED-WALK-PILOT.md). [Process provider](../audits/2026-10-17/MOTOR-PROCESS-POLICY051.md). [Исходный AMD-пилот](../audits/2026-10-17/MOTOR-AMD-LOCAL41.md). [Studio и расширяемость](CLIENT-STUDIO-PLATFORM.md).
+**Текущий срез · 17 октября 2026:** UI/API `15ce2b62`, APK82 сохранены. NitroGen/P2P реально запущены на локальной RX9070 через direct PH011. Добавлены held-center stick contact, исполнение latest18-state gamepad trajectory и explicit WASD adapter. Последний45-с NitroGen8 опыт:235 решений/5.182Гц,571/571 native APPLIED, один непрерывный контакт и подтверждённое закрытие. Метка241→241м: навигация не принята. P2P150M проверялся без text conditioning; сравнение пригодности ещё открыто. [Факты, ограничения и goal-контур](../audits/2026-10-17/MOTOR-STICK-CONTACT-LIVE.md). Поставляемый model loader/preprocessing, камера/multi-touch, source capture/action clocks и отдельная GPU/LAN ещё нужны.
 
-**Единый рабочий документ · 17 октября 2026 · версия 2.3.**
+**Единый рабочий документ · 17 октября 2026 · версия 2.4.**
 
 Назначение: подготовить реализацию отдельной GPU-станции, которая получает экран Android APK
 напрямую и управляет игрой без открытого браузера. Первый целевой сценарий — движение к метке
