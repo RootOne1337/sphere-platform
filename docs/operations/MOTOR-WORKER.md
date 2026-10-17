@@ -1,8 +1,8 @@
 # Headless motor worker: транспорт и конечный ввод
 
-17 октября 2026 · версия модуля `0.4.1` · **транспорт, opt-in single-finger probe и shadow policy**. Внешний локальный пилот NitroGen/P2P на RX9070 выполнен; production provider и игровой профиль в модуль не включены. [Измерения и ограничения](../audits/2026-10-17/MOTOR-AMD-LOCAL41.md).
+17 октября 2026 · версия модуля `0.5.1` · **транспорт, opt-in single-finger probe и изолированный shadow provider**. Есть общий локальный RGB pipe для NitroGen/P2P; загрузчики моделей и AMD preprocessing пока остаются отдельными пилотными адаптерами. Игрового executor нет. [Начальные AMD-измерения](../audits/2026-10-17/MOTOR-AMD-LOCAL41.md).
 
-Текущий этап — [shadow policy и реальные проекты](../audits/2026-10-17/MOTOR-REALTIME-SHADOW04.md); предыдущая физическая проверка — [готовность0.3](../audits/2026-10-17/MOTOR-WORKER03-READINESS.md). UI/API15ce2b62 и APK82 сохранены; обновлялся только локальный Python-клиент.
+Текущий этап — [process provider](../audits/2026-10-17/MOTOR-PROCESS-POLICY05.md) и [выбор свежего RGB0.5.1](../audits/2026-10-17/MOTOR-PROCESS-POLICY051.md); предыдущая физическая проверка — [готовность0.3](../audits/2026-10-17/MOTOR-WORKER03-READINESS.md). UI/API15ce2b62 и APK82 сохранены; обновлялся только локальный Python-клиент.
 
 Основной план — [MOTOR-AI-PLATFORM](../design/MOTOR-AI-PLATFORM.md).
 Код — [motor_worker](../../motor_worker/session.py). Это реализация части P0-C/G02:
@@ -177,7 +177,7 @@ worker service identity и atomic DAG→episode delegation. GPU/model/gameplay �
 
 `--shadow-policy neutral` включает отдельный loop: один активный запрос и один последний ожидающий кадр, без input sink. В отчёте `policyShadow` содержит counters, сроки и подтверждение очистки. Ошибка provider или неподтверждённая отмена не скрывается; при такой отмене новые запросы не запускаются. Timeout250мс/receiver-age500мс — бюджеты проверки, не игровой SLA и не измеренная задержка GPU.
 
-Provider получает immutable bytes исходного RGB24 размера capture, максимум8Mi pixels, а не сжатое изображение из отчёта или RGB256 hash. Оригиналы не сохраняются. Это локальный Python-контракт; сетевой GPU API, checkpoint loader и preprocessing ещё не реализованы. [ActionChunk](../../motor_worker/policy.py) проверяет два стика и21 decoded button columns, до16состояний, с явно заданной частотой. Read-only preview не является физическим исполнением удержаний.
+Provider получает immutable bytes исходного RGB24 размера capture, максимум8Mi pixels, а не сжатое изображение из отчёта или RGB256 hash. Оригиналы не сохраняются. Сетевой GPU API и поставляемый checkpoint loader ещё не реализованы. [ActionChunk](../../motor_worker/policy.py) проверяет два стика и21 decoded button columns, до18состояний с явно заданной частотой. 16 denoising steps не являются горизонтом закреплённого NitroGen checkpoint. Read-only preview не является физическим исполнением удержаний.
 
 ```powershell
 .local-pilot/motor-worker-venv/Scripts/python.exe -m motor_worker `
@@ -188,3 +188,76 @@ Provider получает immutable bytes исходного RGB24 размер�
 ```
 
 Без `--probe-control` native input participant не открывается. Отчёт различает `HEADLESS_POLICY_SHADOW_NOT_GAMEPLAY` и физический probe. Receiver freshness, model latency и source capture freshness — разные величины. Полная корреляция с часами Android остаётся открытой.
+
+## Изолированный локальный provider ·0.5
+
+[ProcessPolicy](../../motor_worker/process_policy.py) запускает явно выбранный доверенный Python script
+в отдельном окружении; [model_stdio.serve](../../motor_worker/model_stdio.py) задаёт его протокол.
+Media worker не импортирует Torch. Shell не используется; parent Sphere/HF/cloud token environment
+не наследуется: передаётся только ограниченный набор OS/GPU переменных. Это разделение процессов,
+**не sandbox**: доверенный script всё ещё имеет обычные права пользователя и доступ к его файлам.
+
+Модель должна загрузиться и прогреться **до** `serve()`. Затем callback `predict(PolicyFrame)` получает
+исходный RGB24 без потери разрешения; адаптер отвечает plain JSON lists/scalars. Синхронизация GPU,
+checkpoint hash, exact preprocessing и значения model provenance — обязанность модельного адаптера.
+`reset()` вызывается перед первым кадром и при изменении capture epoch. Отдельного episode/task
+контракта здесь ещё нет. Child должен явно иметь доступ к Python-модулю `motor_worker`; скрытый
+`PYTHONPATH` родителя не используется.
+
+Контракт `sphere-policy-stdio-v1`: READY с точным adapter → JSON header с request/epoch/sequence/geometry
+→ ровно width×height×3 binary bytes → один JSON reply с теми же bindings, prediction и `inferenceWallMs`.
+Header до4KiB, ответ до32KiB, исходный кадр до8Mi pixels. Duplicate JSON keys, NaN, boolean IDs,
+чужие bindings, неизвестные prediction fields и переполнение vocabulary отвергаются без clipping.
+До6000 запросов на один child; новый запуск создаётся вызывающим кодом явно.
+
+Поддерживаются две разные схемы ответов:
+
+| Adapter | Ответ и время | Граница |
+| --- | --- | --- |
+| `nitrogen-decoded-v1` | До18 gamepad states,60 тиков/с | Стики и21 decoded binary button columns; не Android input |
+| `open-p2p-150m-decoded-v1` | Одно keyboard/mouse state,20 тиков/с | До4 keys из pinned vocabulary и2 mouse buttons, integer relative mouse; не Android keycodes |
+
+P2P state на20Гц покрывает50мс. Частота наблюдения5Гц сама по себе **не продлевает** его до200мс
+и не задаёт безопасное физическое удержание. Растяжение временной шкалы, модельная history и
+profile executor проверяются отдельно в игре. NitroGen chunk аналогично не перезапускается от
+начала на каждом позднем callback.
+
+Пример Python API после создания своего проверенного script (пути абсолютные):
+
+```python
+from pathlib import Path
+from motor_worker.process_policy import ProcessPolicy, ProcessPolicyConfig
+from motor_worker.session import HeadlessSession, SessionConfig
+
+async def shadow(token, base_url, device_id, model_python, model_script):
+    config = ProcessPolicyConfig(Path(model_python), Path(model_script), "nitrogen-decoded-v1")
+    async with ProcessPolicy(config) as provider:
+        session = HeadlessSession(
+            SessionConfig(base_url, device_id, duration=20, observation_hz=5, shadow_policy=True),
+            policy=provider, policy_timeout=0.75, policy_max_receiver_age=1,
+        )
+        result = await session.run(token)
+    result["policyProcessAfterCleanup"] = provider.report()
+    return result
+```
+
+Модельный процесс запускается до регистрации video viewer, поэтому прогрев не занимает input lease.
+Один запрос активен, capacity ожидающего RGB — один кадр. В0.5.1 media session во время inference
+держит последний декодированный кадр и переводит его в RGB только после освобождения provider;
+ранняя RGB-выборка больше не добавляет возраст к следующему inference. Generic shadow API по-прежнему
+ограничивает ожидающий RGB одним заменяемым slot. На timeout, partial write, чужой или неизвестный
+ответ child уничтожается и ожидается его завершение; поздний ответ не переиспользуется и кадр не
+повторяется. Неподтверждённая отмена блокирует новые inference. Известному `ProcessPolicy` shadow
+cancellation даёт2,5с вокруг двухсекундного retirement;100мс оставлены для других providers.
+Эти сроки не являются crash-stop SLA или гарантией закрытия произвольных grandchildren.
+
+`policyShadow` содержит receiver→result wall time и drops. `policyProcess` содержит counters и
+хвост64 samples с pipe RTT и **сообщённым моделью** callback time, без pixels/predictions/argv/paths.
+READY подтверждает protocol readiness, не загрузку конкретного checkpoint: `modelInstalled: null`
+при external provider и `modelWeightsVerifiedByBridge: false` сохраняют эту границу. `--shadow-policy neutral`
+по-прежнему явная заглушка CLI; внешний provider включается только через Python API.
+
+Проверки используют настоящий отдельный процесс, binary pipes и H.264/DTLS/SCTP fake APK.
+Проверены обе схемы, reset, no-token inheritance, timeout, cancel при spawn/predict,
+конкурентный close, неправильные bindings, stdout flood и завершение child.
+Это не подтверждает model/gameplay качество, стабильность нескольких GPU или парк50устройств.
