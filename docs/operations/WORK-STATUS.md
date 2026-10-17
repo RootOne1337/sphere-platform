@@ -2,6 +2,8 @@
 
 **Проверенная установка:** UI `15ce2b62` / API `15ce2b62`.
 
+**17 октября — пользователь подтвердил проход к метке.** Конечный CV visual servo на PH011:241→110→46→25м, затем метка/маршрут исчезли; пользователь подтвердил «добежала».296 наблюдений/5.126Гц,36/36 APPLIED, один непрерывный контакт и CLOSED. Без NitroGen/P2P; learned navigation и общий production SLA не приняты. [Квитанция и границы](../audits/2026-10-17/MOTOR-WAYPOINT-SERVO.md).
+
 **17 октября — удержание стика и временная траектория.** Устранён rapid UP/DOWN в новом contact adapter; последнее45-с испытание NitroGen8 дало235 решений/5.182Гц,571/571 APPLIED и один непрерывный контакт. Все свои participants/GPU children закрыты. Около70% модельных состояний neutral; метка241→241м. Goal navigation не принята. P2P запускался без text conditioning, поэтому его пригодность по этому опыту не отвергается. [Результаты и следующие условия](../audits/2026-10-17/MOTOR-STICK-CONTACT-LIVE.md).
 
 **17 октября — первый настоящий learned WASD тест.** Pixel2Play150M на RX9070:66решений,5,226Гц по последовательности; минимум5решений в полных1-с окнах.37ненулевых movement predictions,15/15native APPLIED; свой participant и GPU child закрыты. Только WASD, другие channels явно masked; это12-секундный private prototype, не навигация или production executor. [Результаты и ограничения](../audits/2026-10-17/MOTOR-LEARNED-WALK-PILOT.md).

@@ -2,6 +2,8 @@
 
 **Текущий срез · 17 октября 2026:** UI/API `15ce2b62`, APK82 сохранены. NitroGen/P2P реально запущены на локальной RX9070 через direct PH011. Добавлены held-center stick contact, исполнение latest18-state gamepad trajectory и explicit WASD adapter. Последний45-с NitroGen8 опыт:235 решений/5.182Гц,571/571 native APPLIED, один непрерывный контакт и подтверждённое закрытие. Метка241→241м: навигация не принята. P2P150M проверялся без text conditioning; сравнение пригодности ещё открыто. [Факты, ограничения и goal-контур](../audits/2026-10-17/MOTOR-STICK-CONTACT-LIVE.md). Поставляемый model loader/preprocessing, камера/multi-touch, source capture/action clocks и отдельная GPU/LAN ещё нужны.
 
+**Последующий goal-опыт:** отдельный5Гц CV visual servo довёл персонажа к пользовательской метке; прибытие подтверждено пользователем,36/36 native APPLIED и CLOSED. Нейросети не использовались, поэтому learned goal navigation остаётся открытой. [Результаты и пределы](../audits/2026-10-17/MOTOR-WAYPOINT-SERVO.md).
+
 **Единый рабочий документ · 17 октября 2026 · версия 2.4.**
 
 Назначение: подготовить реализацию отдельной GPU-станции, которая получает экран Android APK

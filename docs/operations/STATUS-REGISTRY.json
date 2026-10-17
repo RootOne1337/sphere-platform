@@ -5614,7 +5614,9 @@
       "goalNavigationAccepted": false,
       "finiteStickTrajectoryEvidence": "docs/audits/2026-10-17/MOTOR-STICK-TRAJECTORY-LIVE.json",
       "finiteStickTrajectoryEvidenceSha256NormalizedLf": "baab1d52f59da226ffc62404e5a6879c239947e37832bf879ab1ecb61e6a0311",
-      "stickAdapterSourceRevision": "3ad1dcd598ebaff14bb2b715b42d1323750bbcb7"
+      "stickAdapterSourceRevision": "3ad1dcd598ebaff14bb2b715b42d1323750bbcb7",
+      "finiteVisualWaypointServoUserConfirmed": true,
+      "learnedModelGoalNavigationAccepted": false
     },
     "initialAssessment": {
       "observedAtUtc": "2026-10-15T20:54:28.417950+00:00",
@@ -5816,6 +5818,15 @@
       "adapterSourceRevision": "3ad1dcd598ebaff14bb2b715b42d1323750bbcb7",
       "finalMotorUnitTestsPassed": 102,
       "finalMotorUnitTestLogSha256": "e78f185c1e8628bdb191f04009112f4455be24412043ded369f1ba9bfb766b9d"
+    },
+    "finiteVisualWaypointServo": {
+      "evidence": "docs/audits/2026-10-17/MOTOR-WAYPOINT-SERVO.json",
+      "evidenceSha256NormalizedLf": "abcf79ba2d49c8878362ffac856ea796993d9ceee3785c2494413cab9f2dd3b6",
+      "goalReachedUserConfirmed": true,
+      "learnedModelUsed": false,
+      "productionNavigationAccepted": false,
+      "physicalEvents": 36,
+      "nativeAppliedReceipts": 36
     }
   }
 }
