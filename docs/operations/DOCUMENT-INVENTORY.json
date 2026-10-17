@@ -1,11 +1,11 @@
 {
   "schemaVersion": 1,
-  "reviewedAtUtc": "2026-10-16T19:18:25.969381+00:00",
+  "reviewedAtUtc": "2026-10-17T07:43:27.499847+00:00",
   "scope": "All tracked Markdown classified; active local-link paths scanned. Not semantic attestation of every sentence, command execution, external-link or live acceptance.",
   "countsByRole": {
     "ADR": 6,
     "CURRENT_ENTRYPOINT": 8,
-    "DATED_EVIDENCE": 338,
+    "DATED_EVIDENCE": 339,
     "DESIGN_SPECIFICATION": 81,
     "OPERATING_GUIDE": 67,
     "PROJECT_POLICY": 7,
@@ -1494,6 +1494,10 @@
     },
     {
       "file": "docs/audits/2026-10-16/STUDIO-RECORDING-HANDOFF-DELIVERY.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
+      "file": "docs/audits/2026-10-17/MOTOR-WORKER03-READINESS.md",
       "role": "DATED_EVIDENCE"
     },
     {

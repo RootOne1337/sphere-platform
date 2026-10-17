@@ -1,0 +1,13 @@
+{
+  "schema_version": 1,
+  "frame_width": 960,
+  "frame_height": 540,
+  "points": [
+    {"t_ms": 0, "action": 0, "x": 480, "y": 15},
+    {"t_ms": 500, "action": 2, "x": 480, "y": 180},
+    {"t_ms": 1000, "action": 2, "x": 500, "y": 190},
+    {"t_ms": 2000, "action": 2, "x": 480, "y": 180},
+    {"t_ms": 2500, "action": 2, "x": 480, "y": 30},
+    {"t_ms": 3000, "action": 1, "x": 480, "y": 30}
+  ]
+}

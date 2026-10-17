@@ -1,6 +1,8 @@
-# Headless motor worker: первый транспортный этап
+# Headless motor worker: транспорт и конечный ввод
 
-16 октября 2026 · версия модуля `0.2.0` · **пилот транспорта, без модели и игрового ввода**.
+17 октября 2026 · версия модуля `0.3.0` · **транспорт и opt-in single-finger probe, без модели и игрового профиля**.
+
+Текущий результат и открытые gates — [проверка готовности](../audits/2026-10-17/MOTOR-WORKER03-READINESS.md). UI/API15ce2b62 и APK82 сохранены; обновлялся только локальный Python-клиент.
 
 Основной план — [MOTOR-AI-PLATFORM](../design/MOTOR-AI-PLATFORM.md).
 Код — [motor_worker](../../motor_worker/session.py). Это реализация части P0-C/G02:
@@ -15,7 +17,7 @@
   не принятый preprocessing конкретной модели. По умолчанию не записывает изображения/видео.
 - Различает video binding, открытый control data channel, APK `READY`, idle `ALIVE` и закрытие участника.
 - С `--probe-control` отправляет только `touch_open`, idle heartbeat action=4 и `touch_close`.
-  Tap, swipe, key, text и motor plan отсутствуют в этом этапе.
+  При дополнительном явном `--pointer-probe` доступен ограниченный DOWN/MOVE/UP. Keys/text, игровой profile и model plan здесь не реализованы.
 - Ограничивает setup, длительность прогона, собственные очереди, количество candidates и диагностический хвост.
   Внутренние decoder/thread buffers библиотеки требуют отдельной нагрузочной приёмки перед парком.
 - Сохраняет отчёт с фиксированными reason codes, не печатает token, SDP, owner или IP.
@@ -68,8 +70,8 @@ Backend ждёт completed native `stream_quality: get` с активным ис
 Стартовая аренда ограничена 40 секундами. Потерянная аренда закрывается без включения relay.
 Сам lifecycle socket не предоставляет разрешение на команды ввода.
 
-**Требуется backend с реализацией `3d427a13` или её потомком. На 3015 и Tuna установлен API27f3a61f.**
-PH011 с APK77 прошёл одиночный и два перекрывающихся headless прогона на основной установке:
+**Требуется backend с реализацией `3d427a13` или её потомком. На 3015 и Tuna установлен API15ce2b62.**
+Историческая проверка PH011 с APK77: одиночный и два перекрывающихся headless прогона на основной установке:
 server→headless media =0 байт с запуска. Команда с 3015 выше проверена на установленной системе.
 Прежний backend969a7444 не поддерживает этот admission; клиент не подменяет его relay fallback.
 Это не доказательство нулевого APK→server bootstrap-трафика: legacy suppression включается позже.
@@ -95,7 +97,7 @@ server→headless media =0 байт с запуска. Команда с 3015 в
 в WebRTC146 после `setRemoteDescription`, до native input OPEN. После удаления объявлений
 несуществующего источника последующие конечные прогоны завершились успешно. Это локализованная
 совместимость нашего клиента; точное место abort в stripped C++ binary не символицировано.
-Установленные backend27f3a61f и APK78 отвергают source-bearing recvonly offers до JNI; sendonly answers
+Защита, впервые установленная в backend27f3a61f и APK78, отвергает source-bearing recvonly offers до JNI; sendonly answers
 и session `msid-semantic` сохраняются. На APK77 прошли конечные browser/native и headless проверки.
 Защита от всех иных неподдерживаемых SDP не заявляется.
 Похожий upstream [issue GetStream #123](https://github.com/GetStream/webrtc-android/issues/123)
@@ -116,8 +118,8 @@ server→headless media =0 байт с запуска. Команда с 3015 в
 | `lanProven: false` | Даже private addresses/direct не доказывают отсутствие VPN |
 | `nativeAdmissionConfirmed` | APK прислал точный READY для владельца и capture |
 | `actorAliveReceipts` | Живость APK shared actor, не native tap/gesture execution |
-| `participantClosedConfirmed` | Подтверждено закрытие своего idle participant; не произвольный global release |
-| `nativeActionAppliedVerified: false` | Физические игровые действия этим этапом не проверялись |
+| `participantClosedConfirmed` | Подтверждено закрытие своего participant; не произвольный global release |
+| `nativeActionAppliedVerified` | По умолчанию false; в pointer probe — точные APPLIED всех точек и подтверждённое закрытие, не игровой результат |
 | `captureLifecycle` | Режим capture-only, source readiness, нулевые server bytes и продления привязанного peer |
 
 RTP PTS и receiver sequence показывают прогресс транспорта. Они не являются общим capture frame ID
@@ -127,8 +129,8 @@ capture freshness, правильные цвета на всех устройс�
 ## Локальные проверки
 
 ```powershell
-.local-pilot/motor-worker-venv/Scripts/python.exe -m unittest tests.test_motor_worker_protocol tests.test_motor_worker_integration
-.venv-audit/Scripts/ruff.exe check motor_worker tests/test_motor_worker_protocol.py tests/test_motor_worker_integration.py
+.local-pilot/motor-worker-venv/Scripts/python.exe -m unittest tests.test_motor_worker_protocol tests.test_motor_worker_pointer_probe tests.test_motor_worker_integration
+.venv-audit/Scripts/ruff.exe check motor_worker tests/test_motor_worker_protocol.py tests/test_motor_worker_pointer_probe.py tests/test_motor_worker_integration.py
 ```
 
 Protocol tests не требуют media dependencies. Integration tests используют настоящий H.264/DTLS/SCTP
@@ -136,12 +138,35 @@ Protocol tests не требуют media dependencies. Integration tests исп�
 lost ALIVE, video stall, cancellation, foreign capture binding и capture lifecycle handover.
 В обычном backend окружении integration tests явно skipped; такой skip не считается положительной media проверкой.
 
-Текущая поставка и device results —
+Историческая поставка APK78 и её device results —
 [PH030-STARTUP78-RECOVERY.json](../audits/2026-10-16/PH030-STARTUP78-RECOVERY.json).
-APK78: восстановление после startup-отказа до первого input packet; PH011 headless READY/ALIVE/CLOSE и 871 decoded frame за15с, server→worker video0байт. Игровой ввод не добавлен.
+APK78: восстановление после startup-отказа до первого input packet; PH011 headless READY/ALIVE/CLOSE и 871 decoded frame за15с, server→worker video0байт. В том этапе физический ввод ещё не был добавлен.
 Первоначальные отрицательные прогоны и отдельный кандидат —
 [MOTOR-CAPTURE-ONLY.json](../audits/2026-10-16/MOTOR-CAPTURE-ONLY.json).
 Предыдущая версия0.1 и её стартовая серверная копия — в архиве
 [HEADLESS-MOTOR-WORKER.json](../audits/2026-10-16/HEADLESS-MOTOR-WORKER.json).
 Следующие этапы: общий игровой profile executor, frame/clock contract,
 worker service identity и atomic DAG→episode delegation. GPU/model/gameplay пока не приняты.
+
+## Конечная проверка настоящего ввода ·0.3
+
+По умолчанию физических касаний нет. `--pointer-probe` явно включает настоящие действия выбранного Android:
+
+```powershell
+.local-pilot/motor-worker-venv/Scripts/python.exe -m motor_worker `
+  --base-url http://127.0.0.1:3015 `
+  --device 414ce0e9-4b93-4f96-b9ca-ee675f53835e `
+  --seconds 8 --observation-hz 5 --probe-control `
+  --pointer-probe examples/motor-pointer-probe.json `
+  --output .local-pilot/my-pointer-probe.json
+```
+
+Пример выполняет короткое движение в области верхней шторки на экране960×540. Это явный тест устройства, не игровой профиль. Для другой геометрии требуется собственный файл: несовпадение с подтверждённым capture отклоняется до touch_open. JSON использует pointer_path vocabulary, но бюджет probe строже: до64точек/5секунд/16KiB. Неизвестные поля, порядок не DOWN→MOVE→UP, выход за кадр и дробные/boolean числа отвергаются. Между точками палец остаётся удержанным; heartbeat не создаёт новые DOWN.
+
+Клиент связывает initial availability с session/capture, отдельно ждёт native READY и для каждого события требует точный sequence/gesture/action APPLIED. Отсутствующий/чужой ACK не вызывает повтора. Нет inference, модели, tap/key/text или мультикасания. Файл читается ограниченно до16KiB до открытия сети; output не перезаписывается.
+
+Перед отправкой и во время удержания нужен свежий decoder output не старше250мс на локальных часах worker. Просрочка плановой точки более100мс прерывает probe. Это receiver freshness и pre-send schedule, не source-capture age или полная задержка. Потеря видео, отмена, automation и прерывание другим участником завершают проверку с попыткой подтверждённого закрытия только своего participant. Ошибка cleanup сохраняет неопределённость. Аварийное падение самого процесса всё ещё зависит от native lease;500мс crash-stop SLA не принят.
+
+В отчёте `pointerProbe` разделяет attemptedPoints и appliedReceipts. `control.nativeActionAppliedVerified` означает точные receipts всех точек и подтверждённое закрытие, а не успешную игровую операцию. `pointerProbe.samples` хранит только bounded timing/counter tail, без координат/картинок. После конца monitoring и native cleanup отправляется goodbye; ожидаемое закрытие peer на этом этапе не считается потерей соединения. До этого этапа неожиданный close остаётся ошибкой.
+
+Далее нужны модельный adapter/RGB preprocessing, profile/multi-touch, сквозные source IDs/clocks и episode ownership. Этот probe не превращает статическую траекторию в управление по результатам inference.
