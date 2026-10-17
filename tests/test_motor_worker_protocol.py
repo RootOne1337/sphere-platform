@@ -270,6 +270,25 @@ class ProtocolTests(unittest.TestCase):
         self.assertTrue(p.closed)
         self.assertFalse(p.ready)
 
+    def test_exact_pending_alive_can_drain_after_close_begins_without_reopening(self):
+        p = ControlAdmission(SESSION, CAPTURE)
+        p.receive(identity(), 1)
+        p.receive(receipt("ready"), 1)
+        event = p.heartbeat(1.2)
+        p.close_message()
+        with self.assertRaises(ProtocolError):
+            p.receive(receipt("alive", event["sequence"] + 1), 1.25)
+        p.receive(receipt("alive", event["sequence"]), 1.3)
+        self.assertFalse(p.ready)
+        self.assertTrue(p.closing)
+        self.assertIsNone(p.pending)
+        self.assertIsNone(p.heartbeat(1.4))
+        p.receive(receipt("closed", action=3), 1.5)
+        self.assertTrue(p.closed)
+        with self.assertRaises(ProtocolError):
+            p.receive(receipt("alive", event["sequence"]), 1.6)
+        self.assertFalse(p.ready)
+
     def test_denied_unknown_and_expired_are_never_ready(self):
         for reason in ["denied", "unknown", "expired", "invalid", "busy"]:
             p = ControlAdmission(SESSION, CAPTURE)

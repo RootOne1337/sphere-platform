@@ -20,6 +20,7 @@ from importlib.metadata import version
 
 from motor_worker.observation import LatestFrame
 from motor_worker.pointer_probe import PointerProbe
+from motor_worker.policy import NeutralPolicy, PolicyFrame, ShadowPolicyLoop
 from motor_worker.protocol import (
     ControlAdmission,
     InputAvailability,
@@ -44,6 +45,7 @@ class SessionConfig:
     stun_url: str | None = None
     capture_lifecycle: bool = True
     pointer_probe: PointerProbe | None = None
+    shadow_policy: bool = False
 
     def __post_init__(self) -> None:
         signaling_url(self.base_url, self.device_id)
@@ -56,6 +58,12 @@ class SessionConfig:
                 raise ProtocolError("invalid_run_budget")
         if type(self.probe_control) is not bool or type(self.capture_lifecycle) is not bool:
             raise ProtocolError("invalid_control_option")
+        if (
+            type(self.shadow_policy) is not bool
+            or self.shadow_policy
+            and self.pointer_probe is not None
+        ):
+            raise ProtocolError("invalid_shadow_policy_option")
         if self.stun_url is not None and self.stun_url != "stun:stun.cloudflare.com:3478":
             raise ProtocolError("invalid_stun_option")
         if self.pointer_probe is not None and (
@@ -66,13 +74,23 @@ class SessionConfig:
             raise ProtocolError("invalid_pointer_probe_budget")
 
 
-def _rgb_sample(frame) -> dict:
+def _rgb_sample(frame, include_original: bool = False) -> tuple[dict, bytes | None]:
     # This is an explicitly named pilot transform, not a validated model adapter.
     rgb = frame.reformat(width=256, height=256, format="rgb24").to_ndarray()
-    return {
+    sampled = {
         "rgbSha256": hashlib.sha256(rgb.tobytes()).hexdigest(),
         "rgbMean": [round(float(v), 3) for v in rgb.mean(axis=(0, 1))],
     }
+    original = None
+    if include_original:
+        if (
+            not 1 <= frame.width <= 4096
+            or not 1 <= frame.height <= 4096
+            or frame.width * frame.height > 8 * 1024 * 1024
+        ):
+            raise ProtocolError("invalid_policy_frame")
+        original = frame.to_ndarray(format="rgb24").tobytes()
+    return sampled, original
 
 
 class HeadlessSession:
@@ -123,6 +141,7 @@ class HeadlessSession:
         self.probe_started_at: float | None = None
         self.probe_index = 0
         self.probe_samples: deque[dict] = deque(maxlen=64)
+        self.shadow = ShadowPolicyLoop(NeutralPolicy()) if config.shadow_policy else None
 
     def fail(self, reason: str) -> None:
         if not self.closing and self.failure is None:
@@ -295,6 +314,8 @@ class HeadlessSession:
                 self.spawn(self._signaling())
                 self.spawn(self._renew())
                 self.spawn(self._observe())
+                if self.shadow:
+                    self.spawn(self._shadow_policy())
                 self.phase = "monitoring"
                 try:
                     await self._monitor()
@@ -476,7 +497,22 @@ class HeadlessSession:
             before = time.perf_counter()
             item = self.frames.take(before) if self.binding else None
             if item:
-                sampled = await asyncio.to_thread(_rgb_sample, item.frame)
+                sampled, original = await asyncio.to_thread(
+                    _rgb_sample, item.frame, self.shadow is not None
+                )
+                if self.shadow:
+                    if self.shadow.epoch is None:
+                        self.shadow.bind_epoch(self.binding.epoch)
+                    self.shadow.offer(
+                        PolicyFrame(
+                            self.binding.epoch,
+                            item.receiver_sequence,
+                            item.received_at,
+                            item.frame.width,
+                            item.frame.height,
+                            original,
+                        )
+                    )
                 self.sample_count += 1
                 self.samples.append(
                     {
@@ -491,6 +527,11 @@ class HeadlessSession:
             next_at += period
             if next_at < time.perf_counter():
                 next_at = time.perf_counter() + period  # No catch-up bursts of old observations.
+
+    async def _shadow_policy(self) -> None:
+        while not self.closing:
+            await self.shadow.tick()
+            await asyncio.sleep(0.01)
 
     async def _monitor(self) -> None:
         started, active_at = time.perf_counter(), None
@@ -566,6 +607,8 @@ class HeadlessSession:
                 if self.frames.latest is None or now - self.frames.latest.received_at > 3:
                     raise ProtocolError("video_frame_deadline")
                 if self.monitor_seconds >= self.config.duration:
+                    if self.shadow and not self.shadow.accepted:
+                        raise ProtocolError("policy_shadow_unconfirmed")
                     if self.config.pointer_probe and not self._probe_complete():
                         raise ProtocolError("pointer_probe_incomplete")
                     if self.sample_count <= self.observations_at_start or self.echo_count < 1:
@@ -666,6 +709,11 @@ class HeadlessSession:
             task.cancel()
         await asyncio.gather(*self.tasks, return_exceptions=True)
         self.tasks.clear()
+        if self.shadow:
+            try:
+                await self.shadow.close()
+            except ProtocolError as exc:
+                self.fail(str(exc))
 
     async def close(self) -> None:
         if self.cleanup_finished:
@@ -703,7 +751,9 @@ class HeadlessSession:
         control = self.admission
         return {
             "schemaVersion": 1,
-            "kind": "HEADLESS_POINTER_PROBE_NOT_GAMEPLAY"
+            "kind": "HEADLESS_POLICY_SHADOW_NOT_GAMEPLAY"
+            if self.shadow
+            else "HEADLESS_POINTER_PROBE_NOT_GAMEPLAY"
             if self.config.pointer_probe
             else "HEADLESS_TRANSPORT_PILOT_NOT_GAMEPLAY",
             "deviceId": self.config.device_id,
@@ -771,6 +821,7 @@ class HeadlessSession:
                 "complete": self._probe_complete(),
                 "samples": list(self.probe_samples),
             },
+            "policyShadow": self.shadow.report() if self.shadow else {"enabled": False},
             "bounds": {"decodedFrameSlots": 1, "observationTailLimit": 64, "inputReplay": False},
             "limitations": [
                 "No source capture frame ID/clock mapping: receiver age is not capture age.",

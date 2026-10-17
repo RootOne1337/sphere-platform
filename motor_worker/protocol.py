@@ -338,7 +338,9 @@ class ControlAdmission:
             self.ready = self.ever_ready = True
         elif (
             outcome == "alive"
-            and self.ready
+            and (self.ready or self.closing)
+            and not self.closed
+            and not self.failure
             and self.pending
             and seq == self.pending[0]
             and self.pending_event is None
@@ -351,7 +353,9 @@ class ControlAdmission:
         elif (
             outcome == "applied"
             and self.allow_pointer
-            and self.ready
+            and (self.ready or self.closing)
+            and not self.closed
+            and not self.failure
             and self.pending
             and seq == self.pending[0]
             and self.pending_event == (data["gesture"], data["action"])

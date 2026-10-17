@@ -11,8 +11,10 @@ import secrets
 import time
 import unittest
 from fractions import Fraction
+from unittest.mock import patch
 
 from motor_worker.pointer_probe import PointerProbe, ProbePoint
+from motor_worker.policy import NeutralPolicy
 from motor_worker.session import HeadlessSession, SessionConfig
 
 AVAILABLE = all(importlib.util.find_spec(m) for m in ["aiortc", "av", "websockets", "numpy"])
@@ -273,6 +275,47 @@ class HeadlessIntegrationTests(unittest.IsolatedAsyncioTestCase):
         self.assertTrue(report["success"], report)
         self.assertFalse(report["control"]["requested"])
         self.assertFalse(any(d.get("type") == "touch_open" for d in self.received))
+
+    async def test_real_original_rgb_shadow_policy_has_no_physical_input(self):
+        checked = []
+        original = NeutralPolicy.predict
+
+        async def inspect_rgb(provider, req):
+            import numpy as np
+
+            self.assertEqual((req.frame.width, req.frame.height), (320, 180))
+            rgb = np.frombuffer(req.frame.rgb24, dtype=np.uint8).reshape(180, 320, 3)
+            self.assertTrue(np.all(np.abs(rgb.mean(axis=(0, 1)) - [32, 96, 160]) < 5))
+            checked.append(req.frame.receiver_sequence)
+            return await original(provider, req)
+
+        session = HeadlessSession(SessionConfig(self.url, DEVICE, duration=1, shadow_policy=True))
+        with patch.object(NeutralPolicy, "predict", inspect_rgb):
+            report = await session.run("fixture-token")
+        self.assertTrue(report["success"], report)
+        self.assertGreaterEqual(len(checked), 2)
+        self.assertEqual(report["kind"], "HEADLESS_POLICY_SHADOW_NOT_GAMEPLAY")
+        self.assertGreaterEqual(report["policyShadow"]["accepted"], 2)
+        self.assertTrue(report["policyShadow"]["cleanupConfirmed"])
+        self.assertFalse(report["control"]["requested"])
+        self.assertEqual(report["control"]["pointerKeyTextCommandsSent"], 0)
+        self.assertFalse(any(d.get("type", "").startswith("touch_") for d in self.received))
+
+    async def test_slow_shadow_policy_does_not_block_video_or_open_control(self):
+        original = NeutralPolicy.predict
+
+        async def slow(provider, req):
+            await asyncio.sleep(0.3)
+            return await original(provider, req)
+
+        session = HeadlessSession(SessionConfig(self.url, DEVICE, duration=1, shadow_policy=True))
+        with patch.object(NeutralPolicy, "predict", slow):
+            report = await session.run("fixture-token")
+        self.assertEqual(report["failure"], "policy_shadow_unconfirmed")
+        self.assertGreater(report["decodedFrames"], 15)
+        self.assertGreater(report["policyShadow"]["timedOut"], 0)
+        self.assertTrue(report["policyShadow"]["cleanupConfirmed"])
+        self.assertFalse(any(d.get("type", "").startswith("touch_") for d in self.received))
 
     async def test_current_apk_availability_before_admission_does_not_break_media(self):
         self.availability_state = "manual"

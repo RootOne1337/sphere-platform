@@ -60,6 +60,19 @@ class PointerProbeTests(unittest.TestCase):
             p.heartbeat(2.5)
         self.assertEqual(p.pointer_commands, 1)
 
+    def test_exact_inflight_pointer_ack_can_drain_during_close_but_cannot_send_more(self):
+        p = self.admission()
+        p.pointer(0, 100, 100, 2)
+        p.close_message()
+        p.receive(self.applied(1, 0), 2.1)
+        self.assertEqual(p.applied_receipts, 1)
+        self.assertFalse(p.ready)
+        with self.assertRaises(ProtocolError):
+            p.pointer(2, 110, 110, 2.2)
+        p.receive(receipt("closed", action=3), 2.3)
+        self.assertFalse(p.held)
+        self.assertTrue(p.closed)
+
     def test_parser_bounds_shape_time_order_and_coordinates_before_transport(self):
         base = dict(
             schema_version=1,

@@ -24,6 +24,11 @@ def main() -> int:
     parser.add_argument("--seconds", type=float, default=15)
     parser.add_argument("--observation-hz", type=float, default=5)
     parser.add_argument(
+        "--shadow-policy",
+        choices=["neutral"],
+        help="Test asynchronous policy boundary with real RGB and neutral fixture; sends no actions",
+    )
+    parser.add_argument(
         "--probe-control",
         action="store_true",
         help="Confirm native admission; idle only unless --pointer-probe is also supplied",
@@ -68,6 +73,7 @@ def main() -> int:
             args.stun,
             not args.existing_capture,
             probe,
+            args.shadow_policy is not None,
         )
         token = os.environ.get("SPHERE_ACCESS_TOKEN", "")
         if not token:
