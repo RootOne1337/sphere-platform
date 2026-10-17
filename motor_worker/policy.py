@@ -42,6 +42,30 @@ BUTTON_TOKENS = (
 )
 # ng.pt (HF584c8dde) predicts 18 actions; its 16 denoising steps are unrelated.
 MAX_ACTION_STATES = 18
+# elefant-ai/open-p2p a329d98c, data/action_mapping.py (150M defaults).
+P2P_KEYS = frozenset(
+    (
+        "Space",
+        "1",
+        "2",
+        "3",
+        "4",
+        "a",
+        "d",
+        "e",
+        "f",
+        "q",
+        "w",
+        "s",
+        "z",
+        "DownArrow",
+        "UpArrow",
+        "LeftArrow",
+        "RightArrow",
+        "LeftShift",
+        "RightShift",
+    )
+)
 
 
 def finite(value: object, low: float, high: float) -> bool:
@@ -81,15 +105,47 @@ class GamepadState:
 
 
 @dataclass(frozen=True)
+class KeyboardMouseState:
+    """Decoded P2P vocabulary, not Android keycodes or a physical input sink."""
+
+    keys: tuple[str, ...]
+    mouse_buttons: tuple[str, ...]
+    mouse_delta_x: int
+    mouse_delta_y: int
+
+    def __post_init__(self) -> None:
+        for values, allowed, limit in (
+            (self.keys, P2P_KEYS, 4),
+            (self.mouse_buttons, frozenset(("0", "1", "2")), 2),
+        ):
+            if (
+                type(values) is not tuple
+                or len(values) > limit
+                or any(type(v) is not str or v not in allowed for v in values)
+                or len(set(values)) != len(values)
+            ):
+                raise ProtocolError("invalid_policy_state")
+        # Pinned truncated_normal decoder rounds to integer pixels. The outer
+        # bins are +/-501, within this explicit envelope; never clip a reply.
+        if any(not integer(v, -1024, 1024) for v in (self.mouse_delta_x, self.mouse_delta_y)):
+            raise ProtocolError("invalid_policy_state")
+
+    @classmethod
+    def neutral(cls) -> KeyboardMouseState:
+        return cls((), (), 0, 0)
+
+
+@dataclass(frozen=True)
 class ActionChunk:
-    states: tuple[GamepadState, ...]
+    states: tuple[GamepadState | KeyboardMouseState, ...]
     ticks_per_second: float
 
     def __post_init__(self) -> None:
         if (
             type(self.states) is not tuple
             or not 1 <= len(self.states) <= MAX_ACTION_STATES
-            or any(type(s) is not GamepadState for s in self.states)
+            or any(type(s) not in (GamepadState, KeyboardMouseState) for s in self.states)
+            or any(type(s) is not type(self.states[0]) for s in self.states)
             or not finite(self.ticks_per_second, 5, 120)
             or len(self.states) / self.ticks_per_second > 2
         ):
@@ -120,12 +176,33 @@ class ActionChunk:
             states.append(GamepadState(tuple(a), tuple(b), tuple(c)))
         return cls(tuple(states), ticks_per_second)
 
-    def preview_at(self, elapsed: float) -> GamepadState:
+    @classmethod
+    def from_open_p2p(cls, prediction: object) -> ActionChunk:
+        if (
+            type(prediction) is not dict
+            or prediction.keys() != {"keys", "mouse_buttons", "mouse_delta_x", "mouse_delta_y"}
+            or type(prediction["keys"]) is not list
+            or type(prediction["mouse_buttons"]) is not list
+        ):
+            raise ProtocolError("invalid_policy_prediction")
+        return cls(
+            (
+                KeyboardMouseState(
+                    tuple(prediction["keys"]),
+                    tuple(prediction["mouse_buttons"]),
+                    prediction["mouse_delta_x"],
+                    prediction["mouse_delta_y"],
+                ),
+            ),
+            20,
+        )
+
+    def preview_at(self, elapsed: float) -> GamepadState | KeyboardMouseState:
         """Read-only state timeline: never restart the chunk on a late callback."""
         if not finite(elapsed, 0, 60):
             raise ProtocolError("invalid_policy_time")
         index = int(elapsed * self.ticks_per_second)
-        return self.states[index] if index < len(self.states) else GamepadState.neutral()
+        return self.states[index] if index < len(self.states) else type(self.states[0]).neutral()
 
 
 @dataclass(frozen=True)
@@ -337,7 +414,9 @@ class ShadowPolicyLoop:
     def report(self) -> dict:
         return {
             "enabled": True,
-            "kind": "neutral_fixture_shadow_not_model_inference",
+            "kind": "neutral_fixture_shadow_not_model_inference"
+            if type(self.provider) is NeutralPolicy
+            else "external_provider_shadow_not_gameplay",
             "physicalActionsSent": 0,
             "offered": self.offered,
             "submitted": self.submitted,

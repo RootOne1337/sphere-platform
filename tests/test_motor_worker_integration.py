@@ -8,13 +8,16 @@ import asyncio
 import importlib.util
 import json
 import secrets
+import sys
 import time
 import unittest
 from fractions import Fraction
+from pathlib import Path
 from unittest.mock import patch
 
 from motor_worker.pointer_probe import PointerProbe, ProbePoint
 from motor_worker.policy import NeutralPolicy
+from motor_worker.process_policy import ProcessPolicy, ProcessPolicyConfig
 from motor_worker.session import HeadlessSession, SessionConfig
 
 AVAILABLE = all(importlib.util.find_spec(m) for m in ["aiortc", "av", "websockets", "numpy"])
@@ -315,6 +318,39 @@ class HeadlessIntegrationTests(unittest.IsolatedAsyncioTestCase):
         self.assertGreater(report["decodedFrames"], 15)
         self.assertGreater(report["policyShadow"]["timedOut"], 0)
         self.assertTrue(report["policyShadow"]["cleanupConfirmed"])
+        self.assertFalse(any(d.get("type", "").startswith("touch_") for d in self.received))
+
+    async def test_h264_to_separate_process_preserves_shadow_only_and_closes_child(self):
+        for adapter in ("nitrogen-decoded-v1", "open-p2p-150m-decoded-v1"):
+            provider = ProcessPolicy(
+                ProcessPolicyConfig(
+                    Path(sys.executable).resolve(),
+                    Path(__file__).with_name("motor_policy_child.py").resolve(),
+                    adapter,
+                    ("valid", adapter),
+                )
+            )
+            await provider.start()
+            session = HeadlessSession(
+                SessionConfig(self.url, DEVICE, duration=1, shadow_policy=True),
+                policy=provider,
+                policy_timeout=0.75,
+                policy_max_receiver_age=1,
+            )
+            try:
+                report = await session.run("fixture-token")
+                self.assertTrue(report["success"], report)
+                self.assertGreater(report["policyShadow"]["accepted"], 0)
+                self.assertGreater(report["decodedFrames"], 10)
+                self.assertEqual(report["policyProcess"]["adapter"], adapter)
+                self.assertIsNone(report["modelInstalled"])
+                self.assertEqual(report["control"]["pointerKeyTextCommandsSent"], 0)
+                self.assertFalse(report["control"]["requested"])
+                self.assertEqual(report["captureLifecycle"]["serverBytesAfterHandover"], 0)
+                self.assertTrue(report["policyShadow"]["cleanupConfirmed"])
+            finally:
+                await provider.close()
+            self.assertTrue(provider.report()["cleanupConfirmed"])
         self.assertFalse(any(d.get("type", "").startswith("touch_") for d in self.received))
 
     async def test_current_apk_availability_before_admission_does_not_break_media(self):

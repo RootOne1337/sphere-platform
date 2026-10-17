@@ -20,7 +20,8 @@ from importlib.metadata import version
 
 from motor_worker.observation import LatestFrame
 from motor_worker.pointer_probe import PointerProbe
-from motor_worker.policy import NeutralPolicy, PolicyFrame, ShadowPolicyLoop
+from motor_worker.policy import NeutralPolicy, Policy, PolicyFrame, ShadowPolicyLoop
+from motor_worker.process_policy import ProcessPolicy
 from motor_worker.protocol import (
     ControlAdmission,
     InputAvailability,
@@ -94,7 +95,16 @@ def _rgb_sample(frame, include_original: bool = False) -> tuple[dict, bytes | No
 
 
 class HeadlessSession:
-    def __init__(self, config: SessionConfig):
+    def __init__(
+        self,
+        config: SessionConfig,
+        *,
+        policy: Policy | None = None,
+        policy_timeout: float = 0.25,
+        policy_max_receiver_age: float = 0.5,
+    ):
+        if policy is not None and not config.shadow_policy:
+            raise ProtocolError("external_policy_requires_shadow_mode")
         self.config = config
         self.peer = None
         self.ws = None
@@ -141,7 +151,15 @@ class HeadlessSession:
         self.probe_started_at: float | None = None
         self.probe_index = 0
         self.probe_samples: deque[dict] = deque(maxlen=64)
-        self.shadow = ShadowPolicyLoop(NeutralPolicy()) if config.shadow_policy else None
+        self.shadow = (
+            ShadowPolicyLoop(
+                policy if policy is not None else NeutralPolicy(),
+                timeout=policy_timeout,
+                max_receiver_age=policy_max_receiver_age,
+            )
+            if config.shadow_policy
+            else None
+        )
 
     def fail(self, reason: str) -> None:
         if not self.closing and self.failure is None:
@@ -825,6 +843,9 @@ class HeadlessSession:
                 "samples": list(self.probe_samples),
             },
             "policyShadow": self.shadow.report() if self.shadow else {"enabled": False},
+            "policyProcess": self.shadow.provider.report()
+            if self.shadow and type(self.shadow.provider) is ProcessPolicy
+            else None,
             "bounds": {"decodedFrameSlots": 1, "observationTailLimit": 64, "inputReplay": False},
             "limitations": [
                 "No source capture frame ID/clock mapping: receiver age is not capture age.",
@@ -833,7 +854,11 @@ class HeadlessSession:
                 "Idle ALIVE is actor liveness. Optional pointer ACKs prove dispatch, not game semantics or source-to-screen latency.",
                 "User JWT pilot only; service identity, task delegation and model integration remain open.",
             ],
-            "modelInstalled": False,
+            # The external bridge verifies messages, not model weights. Its READY
+            # is not proof of a learned model or correct RGB preprocessing.
+            "modelInstalled": None
+            if self.shadow and type(self.shadow.provider) is not NeutralPolicy
+            else False,
             "h264PacketBuffer": self.h264_packet_buffer.report()
             if hasattr(self, "h264_packet_buffer")
             else None,

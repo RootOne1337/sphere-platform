@@ -1,3 +1,3 @@
-"""Headless APK transport foundation. No model or gameplay executor yet."""
+"""Headless APK transport and isolated shadow policy; no gameplay executor."""
 
-__version__ = "0.4.1"
+__version__ = "0.5.0"
