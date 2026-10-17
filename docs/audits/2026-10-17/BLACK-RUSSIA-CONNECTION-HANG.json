@@ -1,0 +1,72 @@
+{
+  "schemaVersion": 1,
+  "observedAtUtc": "2026-10-17T16:32:13Z",
+  "deviceAlias": "auto-ph-011",
+  "package": "com.br.top",
+  "versionName": "16.110.18323",
+  "versionCode": 1571,
+  "readOnlyInvestigation": true,
+  "state": "loading_connecting_to_game_server",
+  "gameplayReady": false,
+  "rootCauseConfirmed": false,
+  "issueFixed": false,
+  "video": {
+    "direct": true,
+    "browserReportedFps": 33,
+    "selectedPathRttMs": 1,
+    "notGameConnectionEvidence": true
+  },
+  "clockSkewSecondsApprox": 0.6,
+  "dataFilesystemFreeKiB": 24272460,
+  "gameLog": {
+    "readThroughSphereRootShell": true,
+    "boundedTailRequestedLines": 1200,
+    "explicitCauseFound": false,
+    "missingContentFieldWarningsObserved": true,
+    "warningsProvenCausal": false
+  },
+  "socketSnapshot": {
+    "tablesReadable": true,
+    "rowsMatchingGamePackageUid": 0,
+    "packetCapturePerformed": false,
+    "doesNotProveServerUnreachable": true
+  },
+  "userReportedWorkaround": {
+    "rebootInsufficient": true,
+    "cacheAndAppDataResetHelped": true,
+    "cacheOnlyResetIsolated": false,
+    "repeatabilityIndependentlyEstablished": false
+  },
+  "actionsThisInvestigation": {
+    "cacheDeleted": false,
+    "appDataDeleted": false,
+    "gameFilesModified": false,
+    "gameReinstalled": false,
+    "gameRelaunched": false,
+    "emulatorRebooted": false,
+    "modelInputExecuted": false,
+    "thirdPartySupportMessageSent": false
+  },
+  "sources": [
+    {
+      "url": "https://t.me/br_lab/59",
+      "publisher": "BLACK RUSSIA technical team",
+      "publishedAtUtc": "2026-06-19T14:23:48Z",
+      "verifiedUsing": "public official-channel HTML",
+      "scope": "CUS resource/client update architecture; not a diagnosis of PH011"
+    },
+    {
+      "url": "https://helpshift.blackrussian.games/hc/ru/3-black-russia/faq/228-new-authorization-1790687248/",
+      "scope": "current official authentication documentation; not proof of guest-session failure"
+    },
+    {
+      "url": "https://t.me/s/br_dev/1072?q=%23UPD1710",
+      "scope": "historical official login/update advice; publication date not verified; not current outage evidence"
+    },
+    {
+      "url": "https://www.rustore.ru/catalog/app/com.launcher.brgame/reviews",
+      "scope": "firsthand download complaints and developer response, another distribution; not the same reproduced defect"
+    }
+  ],
+  "nextTest": "Separately authorized cache-only reset, followed by one launch and comparison with the preserved negative baseline; do not automatically clear app data."
+}

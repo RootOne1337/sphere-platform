@@ -1,0 +1,60 @@
+{
+  "revision": "f9cccbcee6daf83f47910392ec7b2cfea33aecc8",
+  "production_unmodified": true,
+  "suite": {
+    "name": "com.sphereplatform.agent.provisioning.RegistrationRecoveryTest",
+    "tests": "7",
+    "skipped": "0",
+    "failures": "5",
+    "errors": "0",
+    "timestamp": "2026-09-10T15:56:41",
+    "hostname": "NIFILIM1337",
+    "time": "17.453"
+  },
+  "cases": [
+    {
+      "name": "malformed response closes body and preserves stored state",
+      "failure": null
+    },
+    {
+      "name": "successful registration retains explicit routes and issued credentials",
+      "failure": null
+    },
+    {
+      "name": "registration has its own ten second deadline without changing shared WS timeouts",
+      "failure": {
+        "message": "java.lang.AssertionError: A stalled request must fail at its own HTTP deadline",
+        "type": "java.lang.AssertionError"
+      }
+    },
+    {
+      "name": "stopping registration cancels actual HTTP without waiting for headers",
+      "failure": {
+        "message": "java.lang.AssertionError: expected:<true> but was:<null>",
+        "type": "java.lang.AssertionError"
+      }
+    },
+    {
+      "name": "large valid JSON prefix is rejected before reading the entire response",
+      "failure": {
+        "message": "java.lang.AssertionError: Oversize cannot become a successful enrollment",
+        "type": "java.lang.AssertionError"
+      }
+    },
+    {
+      "name": "known HTTP failure does not wait for an unbounded error body",
+      "failure": {
+        "message": "java.lang.AssertionError: HTTP status must remain available without draining its body",
+        "type": "java.lang.AssertionError"
+      }
+    },
+    {
+      "name": "cancelled body read cannot persist a late registration reply",
+      "failure": {
+        "message": "java.lang.AssertionError: Late response must not write routes, identity or credentials",
+        "type": "java.lang.AssertionError"
+      }
+    }
+  ],
+  "boundaries": "Robolectric SDK28; actual OkHttp with held headers/bodies; memory preferences and device metadata doubles; no sockets."
+}

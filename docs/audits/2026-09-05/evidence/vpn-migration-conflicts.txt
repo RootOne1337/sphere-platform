@@ -1,0 +1,152 @@
+INFO  [alembic.runtime.migration] Context impl PostgresqlImpl.
+INFO  [alembic.runtime.migration] Will assume transactional DDL.
+INFO  [alembic.runtime.migration] Running upgrade 20260906_task_accounting -> 20260906_vpn_intents, Reserve global VPN addresses before provider effects; reject legacy conflicts.
+Traceback (most recent call last):
+  File "C:\Users\dimas\Documents\ChatGPT\sphere-platform\.venv-audit\Lib\site-packages\sqlalchemy\dialects\postgresql\asyncpg.py", line 538, in _prepare_and_execute
+    self._rows = await prepared_stmt.fetch(*parameters)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\dimas\Documents\ChatGPT\sphere-platform\.venv-audit\Lib\site-packages\asyncpg\prepared_stmt.py", line 176, in fetch
+    data = await self.__bind_execute(args, 0, timeout)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\dimas\Documents\ChatGPT\sphere-platform\.venv-audit\Lib\site-packages\asyncpg\prepared_stmt.py", line 241, in __bind_execute
+    data, status, _ = await self.__do_execute(
+                      ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\dimas\Documents\ChatGPT\sphere-platform\.venv-audit\Lib\site-packages\asyncpg\prepared_stmt.py", line 230, in __do_execute
+    return await executor(protocol)
+           ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "asyncpg\protocol\protocol.pyx", line 207, in bind_execute
+asyncpg.exceptions.UniqueViolationError: could not create unique index "uq_vpn_held_ip"
+DETAIL:  Key (tunnel_ip)=(10.200.0.2) is duplicated.
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "C:\Users\dimas\Documents\ChatGPT\sphere-platform\.venv-audit\Lib\site-packages\sqlalchemy\engine\base.py", line 1970, in _exec_single_context
+    self.dialect.do_execute(
+  File "C:\Users\dimas\Documents\ChatGPT\sphere-platform\.venv-audit\Lib\site-packages\sqlalchemy\engine\default.py", line 924, in do_execute
+    cursor.execute(statement, parameters)
+  File "C:\Users\dimas\Documents\ChatGPT\sphere-platform\.venv-audit\Lib\site-packages\sqlalchemy\dialects\postgresql\asyncpg.py", line 572, in execute
+    self._adapt_connection.await_(
+  File "C:\Users\dimas\Documents\ChatGPT\sphere-platform\.venv-audit\Lib\site-packages\sqlalchemy\util\_concurrency_py3k.py", line 127, in await_only
+    return current.driver.switch(awaitable)  # type: ignore[no-any-return]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\dimas\Documents\ChatGPT\sphere-platform\.venv-audit\Lib\site-packages\sqlalchemy\util\_concurrency_py3k.py", line 192, in greenlet_spawn
+    value = await result
+            ^^^^^^^^^^^^
+  File "C:\Users\dimas\Documents\ChatGPT\sphere-platform\.venv-audit\Lib\site-packages\sqlalchemy\dialects\postgresql\asyncpg.py", line 550, in _prepare_and_execute
+    self._handle_exception(error)
+  File "C:\Users\dimas\Documents\ChatGPT\sphere-platform\.venv-audit\Lib\site-packages\sqlalchemy\dialects\postgresql\asyncpg.py", line 501, in _handle_exception
+    self._adapt_connection._handle_exception(error)
+  File "C:\Users\dimas\Documents\ChatGPT\sphere-platform\.venv-audit\Lib\site-packages\sqlalchemy\dialects\postgresql\asyncpg.py", line 789, in _handle_exception
+    raise translated_error from error
+sqlalchemy.dialects.postgresql.asyncpg.AsyncAdapt_asyncpg_dbapi.IntegrityError: <class 'asyncpg.exceptions.UniqueViolationError'>: could not create unique index "uq_vpn_held_ip"
+DETAIL:  Key (tunnel_ip)=(10.200.0.2) is duplicated.
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "C:\Users\dimas\Documents\ChatGPT\sphere-platform\.venv-audit\Lib\site-packages\alembic\__main__.py", line 4, in <module>
+    main(prog="alembic")
+  File "C:\Users\dimas\Documents\ChatGPT\sphere-platform\.venv-audit\Lib\site-packages\alembic\config.py", line 641, in main
+    CommandLine(prog=prog).main(argv=argv)
+  File "C:\Users\dimas\Documents\ChatGPT\sphere-platform\.venv-audit\Lib\site-packages\alembic\config.py", line 631, in main
+    self.run_cmd(cfg, options)
+  File "C:\Users\dimas\Documents\ChatGPT\sphere-platform\.venv-audit\Lib\site-packages\alembic\config.py", line 608, in run_cmd
+    fn(
+  File "C:\Users\dimas\Documents\ChatGPT\sphere-platform\.venv-audit\Lib\site-packages\alembic\command.py", line 403, in upgrade
+    script.run_env()
+  File "C:\Users\dimas\Documents\ChatGPT\sphere-platform\.venv-audit\Lib\site-packages\alembic\script\base.py", line 583, in run_env
+    util.load_python_file(self.dir, "env.py")
+  File "C:\Users\dimas\Documents\ChatGPT\sphere-platform\.venv-audit\Lib\site-packages\alembic\util\pyfiles.py", line 95, in load_python_file
+    module = load_module_py(module_id, path)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\dimas\Documents\ChatGPT\sphere-platform\.venv-audit\Lib\site-packages\alembic\util\pyfiles.py", line 113, in load_module_py
+    spec.loader.exec_module(module)  # type: ignore
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<frozen importlib._bootstrap_external>", line 999, in exec_module
+  File "<frozen importlib._bootstrap>", line 488, in _call_with_frames_removed
+  File "C:\Users\dimas\Documents\ChatGPT\sphere-platform\alembic\env.py", line 90, in <module>
+    run_migrations_online()
+  File "C:\Users\dimas\Documents\ChatGPT\sphere-platform\alembic\env.py", line 84, in run_migrations_online
+    asyncio.run(run_async_migrations())
+  File "C:\Users\dimas\AppData\Roaming\uv\python\cpython-3.12.12-windows-x86_64-none\Lib\asyncio\runners.py", line 195, in run
+    return runner.run(main)
+           ^^^^^^^^^^^^^^^^
+  File "C:\Users\dimas\AppData\Roaming\uv\python\cpython-3.12.12-windows-x86_64-none\Lib\asyncio\runners.py", line 118, in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\dimas\AppData\Roaming\uv\python\cpython-3.12.12-windows-x86_64-none\Lib\asyncio\base_events.py", line 691, in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+  File "C:\Users\dimas\Documents\ChatGPT\sphere-platform\alembic\env.py", line 79, in run_async_migrations
+    await connection.run_sync(do_run_migrations)
+  File "C:\Users\dimas\Documents\ChatGPT\sphere-platform\.venv-audit\Lib\site-packages\sqlalchemy\ext\asyncio\engine.py", line 880, in run_sync
+    return await greenlet_spawn(fn, self._proxied, *arg, **kw)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\dimas\Documents\ChatGPT\sphere-platform\.venv-audit\Lib\site-packages\sqlalchemy\util\_concurrency_py3k.py", line 199, in greenlet_spawn
+    result = context.switch(value)
+             ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\dimas\Documents\ChatGPT\sphere-platform\alembic\env.py", line 68, in do_run_migrations
+    context.run_migrations()
+  File "<string>", line 8, in run_migrations
+  File "C:\Users\dimas\Documents\ChatGPT\sphere-platform\.venv-audit\Lib\site-packages\alembic\runtime\environment.py", line 948, in run_migrations
+    self.get_context().run_migrations(**kw)
+  File "C:\Users\dimas\Documents\ChatGPT\sphere-platform\.venv-audit\Lib\site-packages\alembic\runtime\migration.py", line 627, in run_migrations
+    step.migration_fn(**kw)
+  File "C:\Users\dimas\Documents\ChatGPT\sphere-platform\alembic\versions\20260906_vpn_intents.py", line 22, in upgrade
+    op.create_index("uq_vpn_held_ip", "vpn_peers", ["tunnel_ip"], unique=True,
+  File "<string>", line 8, in create_index
+  File "<string>", line 3, in create_index
+  File "C:\Users\dimas\Documents\ChatGPT\sphere-platform\.venv-audit\Lib\site-packages\alembic\operations\ops.py", line 999, in create_index
+    return operations.invoke(op)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\dimas\Documents\ChatGPT\sphere-platform\.venv-audit\Lib\site-packages\alembic\operations\base.py", line 445, in invoke
+    return fn(self, operation)
+           ^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\dimas\Documents\ChatGPT\sphere-platform\.venv-audit\Lib\site-packages\alembic\operations\toimpl.py", line 108, in create_index
+    operations.impl.create_index(idx, **kw)
+  File "C:\Users\dimas\Documents\ChatGPT\sphere-platform\.venv-audit\Lib\site-packages\alembic\ddl\postgresql.py", line 95, in create_index
+    self._exec(CreateIndex(index, **kw))
+  File "C:\Users\dimas\Documents\ChatGPT\sphere-platform\.venv-audit\Lib\site-packages\alembic\ddl\impl.py", line 207, in _exec
+    return conn.execute(construct, multiparams)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\dimas\Documents\ChatGPT\sphere-platform\.venv-audit\Lib\site-packages\sqlalchemy\engine\base.py", line 1421, in execute
+    return meth(
+           ^^^^^
+  File "C:\Users\dimas\Documents\ChatGPT\sphere-platform\.venv-audit\Lib\site-packages\sqlalchemy\sql\ddl.py", line 180, in _execute_on_connection
+    return connection._execute_ddl(
+           ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\dimas\Documents\ChatGPT\sphere-platform\.venv-audit\Lib\site-packages\sqlalchemy\engine\base.py", line 1532, in _execute_ddl
+    ret = self._execute_context(
+          ^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\dimas\Documents\ChatGPT\sphere-platform\.venv-audit\Lib\site-packages\sqlalchemy\engine\base.py", line 1849, in _execute_context
+    return self._exec_single_context(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\dimas\Documents\ChatGPT\sphere-platform\.venv-audit\Lib\site-packages\sqlalchemy\engine\base.py", line 1989, in _exec_single_context
+    self._handle_dbapi_exception(
+  File "C:\Users\dimas\Documents\ChatGPT\sphere-platform\.venv-audit\Lib\site-packages\sqlalchemy\engine\base.py", line 2356, in _handle_dbapi_exception
+    raise sqlalchemy_exception.with_traceback(exc_info[2]) from e
+  File "C:\Users\dimas\Documents\ChatGPT\sphere-platform\.venv-audit\Lib\site-packages\sqlalchemy\engine\base.py", line 1970, in _exec_single_context
+    self.dialect.do_execute(
+  File "C:\Users\dimas\Documents\ChatGPT\sphere-platform\.venv-audit\Lib\site-packages\sqlalchemy\engine\default.py", line 924, in do_execute
+    cursor.execute(statement, parameters)
+  File "C:\Users\dimas\Documents\ChatGPT\sphere-platform\.venv-audit\Lib\site-packages\sqlalchemy\dialects\postgresql\asyncpg.py", line 572, in execute
+    self._adapt_connection.await_(
+  File "C:\Users\dimas\Documents\ChatGPT\sphere-platform\.venv-audit\Lib\site-packages\sqlalchemy\util\_concurrency_py3k.py", line 127, in await_only
+    return current.driver.switch(awaitable)  # type: ignore[no-any-return]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\dimas\Documents\ChatGPT\sphere-platform\.venv-audit\Lib\site-packages\sqlalchemy\util\_concurrency_py3k.py", line 192, in greenlet_spawn
+    value = await result
+            ^^^^^^^^^^^^
+  File "C:\Users\dimas\Documents\ChatGPT\sphere-platform\.venv-audit\Lib\site-packages\sqlalchemy\dialects\postgresql\asyncpg.py", line 550, in _prepare_and_execute
+    self._handle_exception(error)
+  File "C:\Users\dimas\Documents\ChatGPT\sphere-platform\.venv-audit\Lib\site-packages\sqlalchemy\dialects\postgresql\asyncpg.py", line 501, in _handle_exception
+    self._adapt_connection._handle_exception(error)
+  File "C:\Users\dimas\Documents\ChatGPT\sphere-platform\.venv-audit\Lib\site-packages\sqlalchemy\dialects\postgresql\asyncpg.py", line 789, in _handle_exception
+    raise translated_error from error
+sqlalchemy.exc.IntegrityError: (sqlalchemy.dialects.postgresql.asyncpg.IntegrityError) <class 'asyncpg.exceptions.UniqueViolationError'>: could not create unique index "uq_vpn_held_ip"
+DETAIL:  Key (tunnel_ip)=(10.200.0.2) is duplicated.
+[SQL: CREATE UNIQUE INDEX uq_vpn_held_ip ON vpn_peers (tunnel_ip) WHERE status <> 'FREE']
+(Background on this error at: https://sqlalche.me/e/20/gkpj)

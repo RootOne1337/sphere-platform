@@ -1,0 +1,238 @@
+{
+  "schemaVersion": 1,
+  "kind": "MOTOR_PROCESS_POLICY051_FINITE_SHADOW_NOT_GAMEPLAY",
+  "observedAtUtc": "2026-10-17T10:08:10.787687+00:00",
+  "sourceRevision": "e7ec2d0de3df58f39ff847a1337836070dd0650e",
+  "headlessWorkerVersion": "0.5.1",
+  "sourceFilesSha256NormalizedLf": {
+    "motor_worker/process_policy.py": "d5d180be82018b2c7a7ab2dd29d4c867b5f395f2a39fb46946334c32ec6d8b7d",
+    "motor_worker/model_stdio.py": "12608c8278f5df10a7f20c099553a41be1deed9293b4931c944d668fa793c808",
+    "motor_worker/policy.py": "7d99d71d0edf538342787ff244825c35e143b3b7d69e4dd293b441f3ba0d8a93",
+    "motor_worker/session.py": "f16a7b60649975d4960f43c62e86ad0a7e5beab3582da1dd26167e0221118584",
+    "motor_worker/__init__.py": "513bb378ee70e11c52ab709c553707c6f0620cfcef08bdc571e64d353ff7bb7d",
+    "tests/motor_policy_child.py": "2c5e9ca719f870b47d8d04bf6f3749ec1795356eb9398934696f9c78a4e4bd0d",
+    "tests/test_motor_worker_process_policy.py": "4478431e370d6f618bf7a585c6647e29bacb36e47cfc61610ba6bec41eec5635",
+    "tests/test_motor_worker_integration.py": "ea026dee1f10e7970b5ad7618dd8fbc8f4db9d95cd596979f55071e7dd287fa2",
+    "tests/test_motor_worker_policy.py": "27bd0dd8127df03a0e41f50a0e6a05cd463c3e68566012c1969251652f6ab7bf"
+  },
+  "localAdapterFilesSha256NormalizedLf": {
+    ".local-pilot/motor-amd-20261017/model-stdio-v1.py": "32948fda11a4a5cdf87a668c584369d7a6816a7eb1f30d06b366476d4cba392f",
+    ".local-pilot/motor-amd-20261017/process-policy-pilot.py": "73ed94e26b49cfeb4ad8a31cc2092b2f0da967e4f278691e30a34f0cf3f7f8c2",
+    ".local-pilot/motor-amd-20261017/p2p-process.py": "a9732e14da7aa5984781b25716a65814bbb0f89581e1e85ac04832e4da909cb6",
+    ".local-pilot/motor-amd-20261017/nitrogen-process.py": "503a97ddf431ddda1f04fb9f3dd172fcead055be149e4efd49e6f709ccf464d1"
+  },
+  "modelCheckpointAndAmdPortEvidence": "docs/audits/2026-10-17/MOTOR-AMD-LOCAL41.json",
+  "modelCheckpointAndAmdPortEvidenceSha256NormalizedLf": "47c618e0ebd91b6d145ab90cf4d0e74ccaa6ef4cc9ab07eb21c1586d9c57753e",
+  "ui": "15ce2b623c4e4fdd0ae2b6b9435fda5a3ef42881",
+  "uiApiApkChanged": false,
+  "apkVersionCode": 10282,
+  "device": "auto-ph-011",
+  "gpu": "AMD Radeon RX9070",
+  "gameScreenDuringRuns": "Black Russia TYUMEN guest tutorial world; visual native PNG and quest XPath before/after, not model-driven gameplay",
+  "gameplayAccepted": false,
+  "actionExecutionEnabled": false,
+  "packagedModelLoaderImplemented": false,
+  "modelPreprocessingParityAccepted": false,
+  "processTransportImplemented": true,
+  "separateGpuLanTested": false,
+  "fullGateG02Accepted": false,
+  "verification": {
+    "motorUnitAndMediaTests": {
+      "passed": 85,
+      "skipped": 0,
+      "privateLog": ".local-pilot/motor-amd-20261017/process-policy-freshness-unit.private.log",
+      "privateLogSha256": "9fa0372944de4180574ca9c300bcd4f3a78de770733227904e71ad68f5c0f654"
+    },
+    "ruff": "passed for motor_worker, changed motor tests and child fixture",
+    "adversarialCoverage": [
+      "real_binary_rgb_pipe",
+      "both_response_vocabularies",
+      "epoch_reset",
+      "token_environment_not_inherited",
+      "wrong_lineage",
+      "duplicate_json_keys",
+      "oversize_stdout",
+      "invalid_prediction",
+      "startup_timeout",
+      "request_timeout",
+      "cancel_during_spawn",
+      "cancel_during_predict",
+      "concurrent_close",
+      "no_implicit_restart",
+      "real_h264_dtls_sctp_to_child_no_input"
+    ]
+  },
+  "runs": [
+    {
+      "model": "p2p",
+      "rawEvidence": ".local-pilot/motor-amd-20261017/p2p-world-v1-process-policy.json",
+      "rawEvidenceSha256": "3704f824ff742dabced1cc0bf8860d30f452900836f2bf7e7676a6e69b37f950",
+      "observedAtUtc": "2026-10-17T10:06:05.717715+00:00",
+      "startupWallMs": 10520.775,
+      "durationSeconds": 20.009,
+      "decodedFrames": 582,
+      "selectedRgbFrames": 100,
+      "observationHzDuringMonitor": 4.998,
+      "providerResponses": 99,
+      "acceptedResults": 99,
+      "replacedPending": 0,
+      "timedOut": 0,
+      "expiredResultsDropped": 0,
+      "foreignEpochResultsDropped": 0,
+      "lastEchoRttMs": 1.872299995739013,
+      "route": {
+        "path": "nat",
+        "protocol": "udp",
+        "candidateTypes": [
+          "host",
+          "prflx"
+        ],
+        "addressScopes": [
+          "private",
+          "private"
+        ],
+        "evidence": "aiortc_1_15_nominated_pair_adapter",
+        "lanProven": false
+      },
+      "packetLoss": 0,
+      "h264PacketBuffer": {
+        "packetCapacity": 2048,
+        "prefetchFrames": 0,
+        "maxConsecutiveTimestampPackets": 139,
+        "overLegacyCapacityFrames": 10,
+        "pliRequests": 0,
+        "emittedFrames": 584,
+        "evidence": "aiortc_1_15_h264_packet_buffer_adapter"
+      },
+      "serverToWorkerVideoBytes": 0,
+      "physicalCommandsSent": 0,
+      "processCleanupConfirmed": true,
+      "shadowCleanupConfirmed": true,
+      "timingScope": "bounded last64 samples, receiver clock, not capture-to-action",
+      "pipeRoundtripMs": {
+        "count": 64,
+        "p50": 134.368,
+        "max": 251.14
+      },
+      "modelReportedWallMs": {
+        "count": 64,
+        "p50": 133.131,
+        "max": 249.93
+      },
+      "decodedToResultMs": {
+        "count": 64,
+        "p50": 169.562,
+        "max": 324.615
+      }
+    },
+    {
+      "model": "nitrogen",
+      "rawEvidence": ".local-pilot/motor-amd-20261017/nitrogen-world-v1-process-policy.json",
+      "rawEvidenceSha256": "5a746268cab22b23824722fc13e4c8dacca8b596123a126321ae731b5402e641",
+      "observedAtUtc": "2026-10-17T10:06:37.825209+00:00",
+      "startupWallMs": 15919.092,
+      "durationSeconds": 20.015,
+      "decodedFrames": 545,
+      "selectedRgbFrames": 76,
+      "observationHzDuringMonitor": 3.797,
+      "providerResponses": 75,
+      "acceptedResults": 75,
+      "replacedPending": 0,
+      "timedOut": 0,
+      "expiredResultsDropped": 0,
+      "foreignEpochResultsDropped": 0,
+      "lastEchoRttMs": 1.2472000089474022,
+      "route": {
+        "path": "nat",
+        "protocol": "udp",
+        "candidateTypes": [
+          "host",
+          "prflx"
+        ],
+        "addressScopes": [
+          "private",
+          "private"
+        ],
+        "evidence": "aiortc_1_15_nominated_pair_adapter",
+        "lanProven": false
+      },
+      "packetLoss": 0,
+      "h264PacketBuffer": {
+        "packetCapacity": 2048,
+        "prefetchFrames": 0,
+        "maxConsecutiveTimestampPackets": 139,
+        "overLegacyCapacityFrames": 10,
+        "pliRequests": 0,
+        "emittedFrames": 548,
+        "evidence": "aiortc_1_15_h264_packet_buffer_adapter"
+      },
+      "serverToWorkerVideoBytes": 0,
+      "physicalCommandsSent": 0,
+      "processCleanupConfirmed": true,
+      "shadowCleanupConfirmed": true,
+      "timingScope": "bounded last64 samples, receiver clock, not capture-to-action",
+      "pipeRoundtripMs": {
+        "count": 64,
+        "p50": 243.749,
+        "max": 365.975
+      },
+      "modelReportedWallMs": {
+        "count": 64,
+        "p50": 242.449,
+        "max": 364.341
+      },
+      "decodedToResultMs": {
+        "count": 64,
+        "p50": 271.769,
+        "max": 397.246
+      }
+    }
+  ],
+  "negativeBeforeRetirementFix": {
+    "rawEvidence": ".local-pilot/motor-amd-20261017/nitrogen-final-v1-process-policy.json",
+    "rawEvidenceSha256": "307038909949d4ca68a318ab6acc0adbb6068e8baa4061eb5a41399e1e8edf8f",
+    "testedSourceRevision": "10f1993ff2ecaf57550caa890c2cb5520da05510",
+    "failure": "policy_cleanup_unconfirmed",
+    "providerResponses": 78,
+    "providerEventuallyClosedConfirmed": true,
+    "cause": "Shadow coroutine cancellation budget100ms was shorter than bounded GPU child retirement.",
+    "correction": "Owned ProcessPolicy has2.5s shadow cancellation budget around2s child retirement; unknown cleanup still fails closed."
+  },
+  "registration": {
+    "downloadMonitorStatus": "PAUSED",
+    "testNicknameProposal": "Orrin_Veymont",
+    "preferredServer": "TOMSK_not_selected",
+    "emailProvided": false,
+    "accountRegistered": false,
+    "termsAcceptedByAgent": false,
+    "blocker": null,
+    "guestModeAuthorized": true,
+    "guestCharacterCreated": true,
+    "selectedServer": "TYUMEN",
+    "manualForwardDragObserved": true,
+    "manualDistanceMarkerBeforeAfterMetres": [
+      8,
+      7
+    ],
+    "nativeScreenshot": ".local-pilot/motor-amd-20261017/ph011-20261017T100507Z.png",
+    "nativeScreenshotSha256": "a7da6aa22a2761392813e80009fc0516cdbc1b6060a685017e5c3ceb521b8dc6",
+    "xpathEvidence": ".local-pilot/motor-amd-20261017/ph011-20261017T100507Z.json",
+    "xpathEvidenceSha256": "8c235941a236de58964fb9b748dd75b02ef1dcf8b2dd84a64ec6a308bb69f750",
+    "xpathScope": "29 nodes including tutorial quest text; native joystick has no semantic XPath",
+    "nativeScreenshotAfterRuns": ".local-pilot/motor-amd-20261017/ph011-20261017T100740Z.png",
+    "nativeScreenshotAfterRunsSha256": "d10309d86eba971422db277da6b39d631323dd2bb7b4b1aecbdc29bbeafaebdb",
+    "xpathAfterRuns": ".local-pilot/motor-amd-20261017/ph011-20261017T100740Z.json",
+    "xpathAfterRunsSha256": "49589f11b6d95cd6802067fc3fc86fcfd3c2ffed4e6d6fdd2dc53eab98817004",
+    "xpathNodesAfterRuns": 18
+  },
+  "limitations": [
+    "Local trusted process is not an OS sandbox; no process-tree or 500ms crash-stop SLA.",
+    "READY validates protocol only, not checkpoint provenance or learned policy behavior.",
+    "Source capture clocks, Android profile, multi-touch and model action executor remain open.",
+    "5Hz observation does not stretch a 20Hz P2P action or preserve its trained temporal semantics.",
+    "Single local GPU shadow does not prove separate GPU/LAN, driving or 50-emulator capacity."
+  ],
+  "freshRgbSelectionAfterInference": true,
+  "previousProcessPolicyEvidence": "docs/audits/2026-10-17/MOTOR-PROCESS-POLICY05.json",
+  "previousProcessPolicyEvidenceSha256NormalizedLf": "b9ea6fcb4107a9e11bfdafc17c88db1a88bfc6fd89f42a0073652c1643557e9b"
+}

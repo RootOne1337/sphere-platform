@@ -1,0 +1,44 @@
+{
+  "schemaVersion": 1,
+  "observedAtUtc": "2026-10-14T22:26:43.053006+00:00",
+  "deviceId": "b410464a-5f26-4803-a756-7840cc17b128",
+  "versionCode": 10276,
+  "status": "online",
+  "userReportedTopology": "Browser on laptop; PH025 at another site, different network. User reports about 20 ms RTT and successful control after emulator restart. Physical topology is user-provided, not inferred from candidate IPs.",
+  "readOnlyAgentEvidence": {
+    "viewerOpenedByAgent": false,
+    "inputCommandsSent": 0,
+    "openedAt": "2026-10-14T22:26:12.295908+00:00",
+    "samples": [
+      {
+        "received_at": "2026-10-14T22:26:26.892132+00:00",
+        "transport": "direct_webrtc",
+        "control_transport": "direct_webrtc",
+        "control_state": "ready",
+        "control_rtt_ms": 26,
+        "direct_network_rtt_ms": 22,
+        "direct_attempts": 1,
+        "direct_frames": 540,
+        "direct_fps": 55.507863596071,
+        "control_failure_detail": null
+      },
+      {
+        "received_at": "2026-10-14T22:26:41.900389+00:00",
+        "transport": "direct_webrtc",
+        "control_transport": "direct_webrtc",
+        "control_state": "ready",
+        "control_rtt_ms": 25,
+        "direct_network_rtt_ms": 22,
+        "direct_attempts": 1,
+        "direct_frames": 1200,
+        "direct_fps": 55.103063809427,
+        "control_failure_detail": null
+      }
+    ]
+  },
+  "acceptedScope": "Finite user check corroborated by two READY direct video/control samples. Not long soak or removal of prior startup/management failures.",
+  "privacy": {
+    "noIpOrCandidateAddresses": true,
+    "noTokensOrInputContents": true
+  }
+}

@@ -8,14 +8,17 @@ export interface Script {
   name: string;
   description: string | null;
   is_archived: boolean;
-  node_count: number;
+  /** Legacy API count, absent from the current ScriptResponse schema. */
+  node_count?: number | null;
+  current_version_id?: string | null;
+  current_version?: ScriptVersion | number | null;
   created_at: string;
   updated_at: string;
 }
 
 export interface ScriptDetail extends Script {
-  dag: Record<string, unknown> | null;
-  current_version: number;
+  /** Legacy API field; current backend places DAG under current_version.dag. */
+  dag?: Record<string, unknown> | null;
   versions: ScriptVersion[];
 }
 
@@ -40,11 +43,11 @@ interface ScriptsResponse {
 // ── Запросы (Query) ─────────────────────────────────────────────────────────
 
 /** Список скриптов с пагинацией и поиском */
-export function useScripts(params?: { query?: string; page?: number; per_page?: number }) {
+export function useScripts(params?: { query?: string; page?: number; per_page?: number; state?: 'active' | 'archived' | 'all' }) {
   return useQuery<ScriptsResponse>({
     queryKey: ['scripts', params],
-    queryFn: async () => {
-      const { data } = await api.get('/scripts', { params });
+    queryFn: async ({ signal }) => {
+      const { data } = await api.get('/scripts', { params, signal });
       // Обратная совместимость: бекенд может вернуть массив или {items}
       if (Array.isArray(data)) return { items: data, total: data.length, page: 1, per_page: data.length };
       return data;
@@ -55,11 +58,13 @@ export function useScripts(params?: { query?: string; page?: number; per_page?: 
 
 /** Детали скрипта с текущим DAG и историей версий */
 export function useScript(scriptId: string, options?: { includeDag?: boolean }) {
+  const includeDag = options?.includeDag ?? true;
   return useQuery<ScriptDetail>({
-    queryKey: ['scripts', scriptId],
+    // The same resource has materially different payload shapes depending on include_dag.
+    queryKey: ['scripts', scriptId, { includeDag }],
     queryFn: async () => {
       const { data } = await api.get(`/scripts/${scriptId}`, {
-        params: { include_dag: options?.includeDag ?? true },
+        params: { include_dag: includeDag },
       });
       return data;
     },
@@ -69,11 +74,12 @@ export function useScript(scriptId: string, options?: { includeDag?: boolean }) 
 
 /** История версий скрипта */
 export function useScriptVersions(scriptId: string, options?: { includeDag?: boolean }) {
+  const includeDag = options?.includeDag ?? false;
   return useQuery<ScriptVersion[]>({
-    queryKey: ['scripts', scriptId, 'versions'],
+    queryKey: ['scripts', scriptId, 'versions', { includeDag }],
     queryFn: async () => {
       const { data } = await api.get(`/scripts/${scriptId}/versions`, {
-        params: { include_dag: options?.includeDag ?? false },
+        params: { include_dag: includeDag },
       });
       return data;
     },

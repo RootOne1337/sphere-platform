@@ -1,255 +1,83 @@
-# Runbook 01 — Backend API Outage
+# 01 — Backend недоступен или не готов
 
-**Severity:** P1  
-**Maintainer:** Backend Team  
-**Last Updated:** 2026-01-01  
+**Обновлено 10 сентября 2026.** Массовая потеря управления — эксплуатационный P0.
+[Общие правила и Compose selection](README.md) · [Fleet recovery](04-fleet-offline.md)
 
----
+## Диагностика
 
-## Overview
+1. Получите `config --services` и `ps --all` выбранного Compose project. Сравните
+   running/restarting/exited и времена последнего запуска с началом инцидента.
+2. Ограничьте backend/nginx logs интервалом инцидента; сохраните request ID,
+   device/task ID, exception/reason и code revision.
+3. Через **фактический настроенный ingress** проверьте
+   `GET /api/v1/health/healthz` (процесс отвечает) и
+   `GET /api/v1/health/readyz` (проверка PostgreSQL/Redis). Пути `/health` и
+   `/health/live` из старой версии runbook не являются этим контрактом.
+4. При failed readiness перейдите к [database guide](03-database-failure.md),
+   проверьте Redis connectivity с конфигурацией этой установки. Не подставляйте
+   неаутентифицированный `redis://redis:6379/0` в систему с паролем.
+5. Сравните proxy и backend результат. HTTP response не доказывает успешный WS auth
+   и доставку команды. Сбой только у WS требует отдельного handshake/close анализа.
 
-This runbook covers scenarios where the Sphere backend API becomes unresponsive,
-crashes, or returns 5xx errors to clients and the Android/PC agents.
+Для development recipe из корня:
 
----
-
-## Symptoms
-
-- Web UI shows "Unable to connect" or perpetual loading state
-- Android agents fail to establish WebSocket connection
-- Healthcheck probe returns non-200: `curl -f http://localhost:8000/health`
-- Grafana alert: **BackendDown** or **HighErrorRate** fires
-- `docker compose ps` shows backend container in `Exit` or `Restarting` state
-
----
-
-## Diagnosis
-
-### Step 1 — Check container state
-
-```bash
-docker compose ps backend celery_worker
+```powershell
+docker compose -f docker-compose.yml -f docker-compose.full.yml ps --all
+docker compose -f docker-compose.yml -f docker-compose.full.yml logs --since 15m --tail 200 --timestamps backend nginx postgres redis
 ```
 
-Expected: `Up (healthy)`. If `Exit` or `Restarting`, check exit code:
+Для конкретного container ID, полученного через Compose, смотрите ExitCode,
+OOMKilled, RestartCount и health state через `docker inspect`. Exit 137 сам по себе
+не доказывает OOM; нужен OOMKilled/host evidence. В отчёт достаточно этих полей,
+полный inspect содержит environment и не нужен.
 
-```bash
-docker inspect sphere_backend --format='{{.State.ExitCode}} {{.State.Error}}'
-```
+## Выбор восстановления
 
-| Exit Code | Meaning |
-|-----------|---------|
-| 0 | Clean shutdown (should not happen in production) |
-| 1 | Application error (import error, config error) |
-| 137 | OOM kill — processes exceeded memory limit |
-| 143 | SIGTERM — systemd/Docker forced shutdown |
+- Ошибка конфигурации/миграции: исправить конкретную причину по логам, затем
+  повторить readiness. Restart без исправления создаёт цикл той же ошибки.
+- Ресурсы/диск: подтвердить bottleneck и влияние на PostgreSQL/Redis; не повышать
+  workers/лимиты вслепую. Число pool connections умножается на workers.
+- Proxy/network: восстановить путь к тому же management service; не стирать APK
+  credentials и не публиковать новый endpoint, если старый просто временно не готов.
+- Однократный crash: контролируемый restart выбранного сервиса допустим после
+  сохранения evidence и проверки, что он не повторит внешние task effects.
 
-### Step 2 — Read logs
+Новая версия не требует автоматического restart/pull/redeploy по любому инциденту.
+Rollback кода также должен учитывать применённую схему и незавершённые intents.
 
-```bash
-# Last 100 lines
-docker compose logs --tail=100 backend
+## Критерий завершения
 
-# Filter for errors only (JSON logs)
-docker compose logs --no-log-prefix backend | jq 'select(.level == "error" or .level == "critical")'
+Readiness стабилен, устройство восстановило auth, одно тестовое задание получило
+подтверждённый result, duplicates/unknown outcomes сверены, парк возвращается без
+ручного enrollment. Сохраните время отказа/возврата и regression reproduction.
+Не объявляйте инцидент закрытым только по зелёному container status.
 
-# Look for startup crash
-docker compose logs backend 2>&1 | grep -E "(ERROR|CRITICAL|Traceback|ImportError)"
-```
+## Повторный запуск и пароль оператора
 
-### Step 3 — Check database connectivity
+Full-deploy больше не обновляет existing admin password (AUD-85). Найдите
+`SPHERE_ADMIN_BOOTSTRAP=existing`: используйте прежние credentials, не новый
+candidate из окружения. При `created` новый пароль показан сразу после commit;
+в Bash он также сохранён в `.admin-credentials`. Отказ enrollment после этого
+не отменяет уже созданного пользователя и не означает общий успешный запуск.
+Disabled/wrong-role/foreign-org — причины явного отказа; проверяйте выбранную identity.
+Для намеренного reset следуйте [admin startup contract](../operations/STARTUP.md).
+Не прикладывайте password или `.admin-credentials` к incident report. Неизвестный
+commit после потери процесса/ответа автоматически не разрешается.
 
-```bash
-# Backend can reach Postgres?
-docker compose exec backend python -c "
-import asyncio, sqlalchemy
-from backend.database.session import async_engine
-async def test():
-    async with async_engine.connect() as conn:
-        result = await conn.execute(sqlalchemy.text('SELECT 1'))
-        print('DB OK:', result.scalar())
-asyncio.run(test())
-"
-```
+## Settings не загружается на свежем full-deploy
 
-### Step 4 — Check Redis connectivity
+`DEV_SKIP_AUTH: bool_parsing, input_value=''` указывает на исправленный в AUD-86
+пустой default full overlay. Обновлённый Compose передаёт `false` при отсутствии/
+пустом значении; production также сохраняет false. Это не отказ PostgreSQL/Redis:
+импорт Settings останавливался до подключения к ним. Не включайте true для обхода
+ошибки и не прикладывайте полный rendered environment с credentials к инциденту.
 
-```bash
-docker compose exec backend python -c "
-import redis
-r = redis.from_url('redis://redis:6379/0')
-print('Redis ping:', r.ping())
-"
-```
+## PostgreSQL остановился при первом init: role sphere does not exist
 
-### Step 5 — Check for OOM
-
-```bash
-# System-level OOM
-dmesg | grep -i "oom" | tail -20
-journalctl -k | grep -i "killed process" | tail -20
-
-# Container memory usage
-docker stats --no-stream sphere_backend
-```
-
-### Step 6 — Check disk space
-
-```bash
-df -h /
-docker system df
-```
-
----
-
-## Remediation
-
-### Scenario A — Container crashed (OOM or exception)
-
-```bash
-# Restart container
-docker compose restart backend
-
-# Wait for health check
-watch -n2 'docker compose ps backend'
-
-# Verify endpoint
-curl -f http://localhost:8000/health && echo "RECOVERED"
-```
-
-If it crashes again within 5 minutes → proceed to Scenario B.
-
-### Scenario B — Application startup failure (bad config or migration)
-
-```bash
-# Check if migration is needed
-docker compose exec backend alembic current
-docker compose exec backend alembic heads
-
-# Run pending migrations
-docker compose exec backend alembic upgrade head
-
-# Restart
-docker compose restart backend
-```
-
-If migration fails, do not force it. Check migration output for:
-- `relation does not exist` → database restore needed (Runbook 03)
-- `column already exists` → migration was partially applied, see [Runbook 03](03-database-failure.md#partial-migration-recovery)
-
-### Scenario C — OOM kill (memory exhaustion)
-
-1. Check which process consumed memory:
-
-```bash
-docker compose logs --tail=50 backend | jq '.message' | grep -i "memory"
-```
-
-2. Increase memory limit (temporary):
-
-```yaml
-# docker-compose.override.yml
-services:
-  backend:
-    mem_limit: 2g        # was 512m or 1g
-    memswap_limit: 2g
-```
-
-```bash
-docker compose up -d backend
-```
-
-3. Investigate root cause after stabilization:
-   - Celery task memory leak
-   - Unbounded query result sets
-   - Large file upload held in memory
-
-### Scenario D — Disk full
-
-```bash
-# Free space immediately
-docker system prune -f              # remove stopped containers and dangling images
-docker volume prune -f              # WARNING: removes unused volumes (not db/redis)
-
-# Check Postgres WAL logs
-docker compose exec postgres du -sh /var/lib/postgresql/data/pg_wal
-# If >1GB, check for stuck replication slots
-docker compose exec postgres psql -U sphere_user -d sphere_db \
-  -c "SELECT slot_name, active, pg_wal_lsn_diff(pg_current_wal_lsn(), restart_lsn) AS lag FROM pg_replication_slots;"
-# Drop idle slots if no replica in use
-# docker compose exec postgres psql -U sphere_user -d sphere_db \
-#   -c "SELECT pg_drop_replication_slot('slot_name');"
-```
-
-### Scenario E — High CPU / slow responses (not down, but degraded)
-
-```bash
-# Which endpoints are slowest?
-docker compose logs --no-log-prefix backend | jq 'select(.duration_ms > 2000)' | tail -30
-
-# Check slow queries
-docker compose exec postgres psql -U sphere_user -d sphere_db -c "
-SELECT query, calls, mean_exec_time, max_exec_time
-FROM pg_stat_statements
-ORDER BY mean_exec_time DESC
-LIMIT 10;"
-
-# Check active DB connections
-docker compose exec postgres psql -U sphere_user -d sphere_db -c "
-SELECT count(*) FROM pg_stat_activity WHERE state = 'active';"
-```
-
----
-
-## Rollback Procedure
-
-If a recent deployment caused the outage:
-
-```bash
-# Identify previous image tag
-docker images sphere_backend --format "{{.Tag}} {{.CreatedAt}}" | head -10
-
-# Roll back to previous image
-docker compose stop backend
-docker tag sphere_backend:previous sphere_backend:current   # adjust tags
-docker compose up -d backend
-```
-
-Or, using Git to identify the last known-good commit and rebuild:
-
-```bash
-git log --oneline -10
-git checkout <last-good-sha> -- backend/
-docker compose build backend
-docker compose up -d backend
-```
-
----
-
-## Post-Incident
-
-### Immediate (within 2 hours)
-
-1. Confirm all services healthy: `docker compose ps`
-2. Confirm metrics returning to normal in Grafana
-3. Post incident summary in `#inc-*` channel
-
-### Within 24 hours
-
-1. Write a brief Post-Mortem:
-   - Timeline
-   - Root cause
-   - Impact (users affected, duration)
-   - Remediation
-   - Follow-up action items
-
-2. Create GitHub Issues for any action items with label `incident-followup`
-
-3. Update this runbook if new failure modes were discovered
-
----
-
-## Related Runbooks
-
-- [03-database-failure.md](03-database-failure.md) — If root cause is DB
-- [04-fleet-offline.md](04-fleet-offline.md) — Subsequent device reconnection
+При нестандартном POSTGRES_USER старая версия init.sql назначала владельцем n8n
+несуществующую роль sphere. AUD-87 исправляет свежие установки. Найдите в Docker
+logs ошибку `/docker-entrypoint-initdb.d/init.sql` и проверьте, дошёл ли entrypoint
+до завершения initialization. Повтор может запустить уже непустой кластер, пропустив
+оставшиеся init statements; running/pg_isready не доказывает наличие n8n/extensions.
+Проверьте pg_database/datdba и pg_extension перед repair. Не удаляйте existing volume
+с данными и не запускайте init.sql повторно вслепую. [Контракт](../operations/STARTUP.md).

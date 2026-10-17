@@ -1,0 +1,35 @@
+{
+  "state": "AUD-78 bootstrap candidate; login schema/default email/CLI validation unchanged from baseline",
+  "totals": {
+    "tests": 4,
+    "failures": 4,
+    "errors": 0,
+    "skipped": 0
+  },
+  "cases": [
+    {
+      "name": "test_admin_cli_rejects_credentials_that_login_cannot_accept_before_writing[email]",
+      "failure": {
+        "message": "AssertionError: assert 0 != 0\n +  where 0 = CompletedProcess(args=['C:\\\\Users\\\\dimas\\\\Documents\\\\ChatGPT\\\\sphere-platform\\\\.venv-audit\\\\dependency-upgrade\\\\Script..., returncode=0, stdout='Created user: invalid-pilot-fa6fa2f9f8d74437852620c9a9765958@sphere.local\\nDone.\\n', stderr='').returncode"
+      }
+    },
+    {
+      "name": "test_admin_cli_rejects_credentials_that_login_cannot_accept_before_writing[password]",
+      "failure": {
+        "message": "AssertionError: assert 0 != 0\n +  where 0 = CompletedProcess(args=['C:\\\\Users\\\\dimas\\\\Documents\\\\ChatGPT\\\\sphere-platform\\\\.venv-audit\\\\dependency-upgrade\\\\Script...], returncode=0, stdout='Created user: invalid-pilot-38a912c2dd7b490cbb3987459232ce4d@example.org\\nDone.\\n', stderr='').returncode"
+      }
+    },
+    {
+      "name": "test_default_bootstrap_email_can_pass_the_real_login_schema[powershell]",
+      "failure": {
+        "message": "pydantic_core._pydantic_core.ValidationError: 1 validation error for LoginRequest\nemail\n  value is not a valid email address: The part after the @-sign is a special-use or reserved name that cannot be used with email. [type=value_error, input_value='admin@sphere.local', input_type=str]"
+      }
+    },
+    {
+      "name": "test_default_bootstrap_email_can_pass_the_real_login_schema[bash]",
+      "failure": {
+        "message": "pydantic_core._pydantic_core.ValidationError: 1 validation error for LoginRequest\nemail\n  value is not a valid email address: The part after the @-sign is a special-use or reserved name that cannot be used with email. [type=value_error, input_value='admin@sphere.local', input_type=str]"
+      }
+    }
+  ]
+}

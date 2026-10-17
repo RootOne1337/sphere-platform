@@ -1,0 +1,50 @@
+{
+  "tests": 362,
+  "failures": 0,
+  "errors": 0,
+  "skipped": 0,
+  "suites": 29,
+  "scope": "EnterpriseDebug JVM; real OkHttp with synthetic interceptors/sources; no physical Android/network/fleet validation",
+  "regressions": [
+    {
+      "name": "malformed JSON from callback preserves retry and closes body",
+      "seconds": 0.02,
+      "passed": true
+    },
+    {
+      "name": "cancelling a mutex waiter leaves the active refresh and other callers intact",
+      "seconds": 0.025,
+      "passed": true
+    },
+    {
+      "name": "missing rotation token preserves retry and closes body",
+      "seconds": 0.007,
+      "passed": true
+    },
+    {
+      "name": "ten second deadline cancels HTTP and lets next refresh recover original intent",
+      "seconds": 10.009,
+      "passed": true
+    },
+    {
+      "name": "oversized callback response preserves retry and closes body",
+      "seconds": 0.007,
+      "passed": true
+    },
+    {
+      "name": "cancelled body read closes late response without changing credentials",
+      "seconds": 0.006,
+      "passed": true
+    },
+    {
+      "name": "stopping caller cancels HTTP and finishes without waiting for headers",
+      "seconds": 0.006,
+      "passed": true
+    },
+    {
+      "name": "caller deadline is not converted into a successful token fallback",
+      "seconds": 1.107,
+      "passed": true
+    }
+  ]
+}

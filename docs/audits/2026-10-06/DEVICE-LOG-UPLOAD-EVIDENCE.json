@@ -1,0 +1,171 @@
+{
+  "schemaVersion": 1,
+  "status": "PARTIAL_EP_033_UPLOAD_INTAKE_INSTALLED",
+  "source": "76596c394f5332bd0131a9fde7e3476ba7c00d52",
+  "uiSource": "5405d465fa456f78e16f5f691fabb2a909cef4f3",
+  "baselineSource": "12915dd7f09f433d5c4585ac15263e841d20ce5c",
+  "observedAt": "2026-10-05T20:48:15.102294+00:00",
+  "criterionClosed": false,
+  "ledger": {
+    "accepted": 9,
+    "open": 41,
+    "immutableBaselineRetained": true
+  },
+  "beforeEvidence": "evidence/log-upload-budget/before.json",
+  "beforeEvidenceSha256": "c17fbbaa7ccc479e64eb65817877df9645f3530ead6ab09c3c2af22d73abdf5c",
+  "previousEvidence": "DEVICE-LOG-READ-EVIDENCE.json",
+  "previousEvidenceSha256": "6e37dedafd1d27360afc3ba67945662238b173b4013d38b89705bd46ed8207c1",
+  "apiImage": {
+    "source": "76596c394f5332bd0131a9fde7e3476ba7c00d52",
+    "imageId": "sha256:485728529eb13daab946233306ac19e1f6f544ae491460a23ac4ba22a13dee8b",
+    "exit": 0,
+    "gitArchive": true,
+    "applicationSourceMounted": false,
+    "observedAt": "2026-10-05T20:32:37.703962+00:00"
+  },
+  "frontendTreeUnchanged": true,
+  "schemaChangesOnlyFourUploadResponses": true,
+  "sourceHashes": [
+    {
+      "source": "76596c394f5332bd0131a9fde7e3476ba7c00d52",
+      "file": "backend/api/v1/logs/router.py",
+      "sha256": "d39fbe5bacb664658cf505f7e9ce66e35cc62fa9ebfd9f484596273adeb8c166"
+    },
+    {
+      "source": "76596c394f5332bd0131a9fde7e3476ba7c00d52",
+      "file": "backend/services/device_log_upload.py",
+      "sha256": "92be1235a0e5af91b12c22ef787d0e6d906805682c45509f00269b94e481a17c"
+    },
+    {
+      "source": "76596c394f5332bd0131a9fde7e3476ba7c00d52",
+      "file": "backend/services/device_log_reader.py",
+      "sha256": "13b9a61f75a6a85b7d2ac5b79249ee40cda3d289365e56c3f532027e5d70741a"
+    },
+    {
+      "source": "76596c394f5332bd0131a9fde7e3476ba7c00d52",
+      "file": "tests/devices/test_log_upload_budget.py",
+      "sha256": "ec4e510c63e7e52f7bb470f3c086672e6a455579228303798fa93bde5472ef2b"
+    },
+    {
+      "source": "76596c394f5332bd0131a9fde7e3476ba7c00d52",
+      "file": "scripts/audit/probe_log_upload_budget.py",
+      "sha256": "84b04ca5038e3a04d096a3ba099d756f44bb07e80d22f8e0c592f36be497584c"
+    },
+    {
+      "source": "76596c394f5332bd0131a9fde7e3476ba7c00d52",
+      "file": "docs/openapi.json",
+      "sha256": "745ce0bfc514577ce2470559f3e93960c7701079496923de5287355a6965511e"
+    },
+    {
+      "source": "76596c394f5332bd0131a9fde7e3476ba7c00d52",
+      "file": "backend/requirements.txt",
+      "sha256": "f20fd1d2b641f26a2031dbe72cb7a83ab5fcfc82621c1a5ac821c841d0938d53"
+    },
+    {
+      "source": "76596c394f5332bd0131a9fde7e3476ba7c00d52",
+      "file": "backend/Dockerfile",
+      "sha256": "07da7d47b1910c8300f16ac13b9f775fbab55d3b0a22197426b81fe676972e31"
+    },
+    {
+      "source": "76596c394f5332bd0131a9fde7e3476ba7c00d52",
+      "file": "docker-compose.yml",
+      "sha256": "45d833b8f0e408ce8ea2360a71473a37d6f431613de1ea2108426b6d3def7297"
+    },
+    {
+      "source": "76596c394f5332bd0131a9fde7e3476ba7c00d52",
+      "file": "docker-compose.full.yml",
+      "sha256": "078b352a50db47ba13a71d546086f275516189bf38a61510a9b340dec8ba9fa5"
+    },
+    {
+      "source": "76596c394f5332bd0131a9fde7e3476ba7c00d52",
+      "file": "docker-compose.local-pilot.yml",
+      "sha256": "ecc522bd60cf89d7c4a00ef7c68862c7bad85a8a9c231ef69869f5e54bcfd47b"
+    },
+    {
+      "source": "76596c394f5332bd0131a9fde7e3476ba7c00d52",
+      "file": "docker-compose.production.yml",
+      "sha256": "343384bc920adddf8685892b144f92544aa4aec162cda243fccf81ea3f5ed5d2"
+    }
+  ],
+  "receipts": [
+    {
+      "file": "evidence/log-upload-budget/after.json",
+      "sha256": "2659c5e0097e8567fd95eaeea98f78de34fdae92a5597348f1f87566e1248301"
+    },
+    {
+      "file": "evidence/log-upload-budget/api-build.json",
+      "sha256": "11864f76b5a4464e61584a3f94742c1c88ca1bb576a86af34a31ed41de01ef16"
+    },
+    {
+      "file": "evidence/log-upload-budget/image-tests.json",
+      "sha256": "3b08fa42f0654a0a7c79295c1a35f156726fa7ec9c50b583d5ad4e2756f30c55"
+    },
+    {
+      "file": "evidence/log-upload-budget/image-tests.xml",
+      "sha256": "b92401c1db9b336d584b0fcc990d576475265135f9b10391fcba2597cfe13f7a"
+    },
+    {
+      "file": "evidence/log-upload-budget/resource-tests.json",
+      "sha256": "9ce02e2e3336a340a5d7cee63f21e8fbe54e58710834a153b3e682ca3b4078a3"
+    },
+    {
+      "file": "evidence/log-upload-budget/resource-tests.xml",
+      "sha256": "b79639cbc67dbcb93732b36f1328764b55676dd00a489cf484797fb138833b57"
+    },
+    {
+      "file": "evidence/log-upload-budget/mypy.json",
+      "sha256": "4425f02b36159fa7b8ba92a6a67abf3551b271323cb0984bebe20beffc079426"
+    },
+    {
+      "file": "evidence/log-upload-budget/ruff.json",
+      "sha256": "4425f02b36159fa7b8ba92a6a67abf3551b271323cb0984bebe20beffc079426"
+    },
+    {
+      "file": "evidence/log-upload-budget/api-schema-check.json",
+      "sha256": "4425f02b36159fa7b8ba92a6a67abf3551b271323cb0984bebe20beffc079426"
+    },
+    {
+      "file": "evidence/log-upload-budget/installed.json",
+      "sha256": "1b9664a0dd54f2783d46e13148711b3e0ed77428a945bc172e32cb1264496022"
+    },
+    {
+      "file": "evidence/log-upload-budget/live.json",
+      "sha256": "b8eae3d7d6ccf409797a482b005e64962b2914eaffbcbf764db875fc3258c7cf"
+    },
+    {
+      "file": "evidence/log-upload-budget/browser-observation.json",
+      "sha256": "ff7cfb2dbd9c4359d4e2baf120557956287e1c151632842d58aac4cec9dd7af8"
+    },
+    {
+      "file": "evidence/log-upload-budget/source-ci.json",
+      "sha256": "91766bd3840cefd0d8f8494799d7445b5e29beb3ed337e7a870346908e9a6315"
+    },
+    {
+      "file": "evidence/log-upload-budget/document-links.json",
+      "sha256": "bbfecb5370efe6a5f17799eb15d9b1d4b6a329ac68c8c5bf6cf9ab4561c03862"
+    }
+  ],
+  "screenshots": [
+    {
+      "file": "assets/log-upload-budget/installed.jpg",
+      "sha256": "b59c262f9d381031bee3a6991299abcb71a2da3b73d8164a66a08f2c5ef4ee4b",
+      "width": 1280,
+      "height": 720
+    }
+  ],
+  "budgets": {
+    "bodyBytes": 524288,
+    "intakeSeconds": 60,
+    "uploadsPerWorker": 4,
+    "workers": 4,
+    "globalSemaphore": false
+  },
+  "limits": [
+    "Global/org quota, independent retention, writer rotation/delete races and restore/load gates remain open",
+    "Fixture peak is Python allocations, not HTTP server buffers, whole RSS or host disk writer attribution",
+    "Actual HTTP rejection used an operator JWT; native received uploads are separate evidence",
+    "Server upload timestamp is not Android event timestamp; finite snapshots do not prove uptime",
+    "OS I/O cannot be force-cancelled safely; no new fsync, hard writer timeout or idempotency guarantee",
+    "CI source snapshot is finite; later docs head has separate checks"
+  ]
+}

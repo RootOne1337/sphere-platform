@@ -1,0 +1,66 @@
+#0 building with "desktop-linux" instance using docker driver
+
+#1 [internal] load build definition from Dockerfile
+#1 transferring dockerfile: 1.35kB done
+#1 DONE 0.0s
+
+#2 [internal] load metadata for docker.io/library/python:3.12-slim
+#2 DONE 0.0s
+
+#3 [internal] load .dockerignore
+#3 transferring context: 1.35kB done
+#3 DONE 0.0s
+
+#4 [internal] load build context
+#4 DONE 0.0s
+
+#5 [ 1/10] FROM docker.io/library/python:3.12-slim@sha256:9e01bf1ae5db7649a236da7be1e94ffbbbdd7a93f867dd0d8d5720d9e1f89fab
+#5 resolve docker.io/library/python:3.12-slim@sha256:9e01bf1ae5db7649a236da7be1e94ffbbbdd7a93f867dd0d8d5720d9e1f89fab 0.0s done
+#5 DONE 0.0s
+
+#4 [internal] load build context
+#4 transferring context: 43.88kB 0.0s done
+#4 DONE 0.0s
+
+#6 [ 4/10] COPY backend/requirements.txt /tmp/requirements.txt
+#6 CACHED
+
+#7 [ 2/10] WORKDIR /app
+#7 CACHED
+
+#8 [ 3/10] RUN apt-get update && apt-get install -y     libpq-dev     gcc     && rm -rf /var/lib/apt/lists/*
+#8 CACHED
+
+#9 [ 5/10] RUN pip install --no-cache-dir -r /tmp/requirements.txt
+#9 CACHED
+
+#10 [ 6/10] COPY backend/ ./backend/
+#10 DONE 0.1s
+
+#11 [ 7/10] COPY alembic/ ./alembic/
+#11 DONE 0.1s
+
+#12 [ 8/10] COPY agent-config/ ./agent-config/
+#12 DONE 0.1s
+
+#13 [ 9/10] COPY scripts/create_admin.py scripts/seed_enrollment_key.py ./scripts/
+#13 DONE 0.1s
+
+#14 [10/10] RUN useradd -r -u 1001 sphere
+#14 0.393 useradd warning: sphere's uid 1001 is greater than SYS_UID_MAX 999
+#14 DONE 0.5s
+
+#15 exporting to image
+#15 exporting layers
+#15 exporting layers 0.3s done
+#15 exporting manifest sha256:d233b034be6a3144c78b1fcdae889c5e589247ca1a58e1ffa41839ebbfa9c2fa 0.0s done
+#15 exporting config sha256:b266d2cbd2831ed2d805e7abe383bfdd0c380b13c8729f76cf9c76d2665ee58c 0.0s done
+#15 exporting attestation manifest sha256:9ff1b7f47686c6b76f407e84368e147e7ceed70736e6feee55ce3e5ccc08daab 0.0s done
+#15 exporting manifest list sha256:a6155082ae0dc9ce3c444db8c6967467a6dfe74bfbde527bd3aecaf7cdba252d
+#15 exporting manifest list sha256:a6155082ae0dc9ce3c444db8c6967467a6dfe74bfbde527bd3aecaf7cdba252d 0.0s done
+#15 naming to docker.io/library/sphere-audit-bootstrap:aud81-after done
+#15 unpacking to docker.io/library/sphere-audit-bootstrap:aud81-after
+#15 unpacking to docker.io/library/sphere-audit-bootstrap:aud81-after 0.2s done
+#15 DONE 0.7s
+
+View build details: docker-desktop://dashboard/build/desktop-linux/desktop-linux/dfkhimgqf7oonl822h4ezq9jb

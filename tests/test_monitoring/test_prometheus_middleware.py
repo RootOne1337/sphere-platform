@@ -153,13 +153,29 @@ def test_cleanup_stream_metrics_removes_series():
     from backend.metrics import (
         cleanup_stream_metrics,
         stream_bitrate_kbps,
+        stream_encoder_bytes_session,
+        stream_encoder_frames_session,
         stream_fps,
+        stream_ws_queue_accepted_bytes_session,
+        stream_ws_queue_accepted_session,
+        stream_ws_queue_attempts_session,
+        stream_ws_queue_rejected_session,
     )
     device_id = "test-device-cleanup-001"
 
     # Создаём series
     stream_fps.labels(device_id=device_id).set(30)
     stream_bitrate_kbps.labels(device_id=device_id).set(2000)
+    session_gauges = (
+        stream_encoder_bytes_session,
+        stream_encoder_frames_session,
+        stream_ws_queue_accepted_bytes_session,
+        stream_ws_queue_accepted_session,
+        stream_ws_queue_attempts_session,
+        stream_ws_queue_rejected_session,
+    )
+    for metric in session_gauges:
+        metric.labels(device_id=device_id).set(1)
 
     # Убедимся что series существуют
     samples_before = {
@@ -181,3 +197,4 @@ def test_cleanup_stream_metrics_removes_series():
         for s in m.samples
     }
     assert device_id not in samples_after
+    assert all((device_id,) not in metric._metrics for metric in session_gauges)

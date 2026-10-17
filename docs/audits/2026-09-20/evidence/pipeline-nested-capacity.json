@@ -1,0 +1,23 @@
+{
+  "finding": "F32-05 residual: waiting parents exhaust pipeline executor slots",
+  "status": "reproduced, fix pending",
+  "priority": "P0 / High before mixed orchestration Fleet32",
+  "source_commit": "d859a526c902aa96f1b2913965b107648be1b07e",
+  "observed_at": "2026-09-21T03:41:12+05:00",
+  "test": "test_nested_runs_progress_when_all_worker_slots_are_waiting",
+  "probe": "pipeline_nested_capacity_probe.py",
+  "result": {"tests": 1, "failed": 1, "errors": 0, "duration_seconds": 4.2},
+  "assertion": "parents_completed > 0",
+  "before_polls": {"active_coroutines": 10, "parents_running": 10, "children_queued": 10, "parents_completed": 0},
+  "after_eight_polls": {"active_coroutines": 10, "parents_running": 10, "children_queued": 10, "parents_completed": 0},
+  "root_cause": "sub_pipeline waits inside an admitted parent coroutine; every available slot is occupied by a parent, so QUEUED children cannot be claimed by this executor.",
+  "fix_contract": "Persist a waiting checkpoint and release execution capacity while retaining child identity, deadlines, cancellation and generation fences; resume only when due.",
+  "scope": [
+    "Real PostgreSQL and unchanged PipelineExecutor/StepHandlerRegistry code in a disposable loopback audit database.",
+    "One executor, ten parents, ten empty child pipelines; scoped random fixture tenant.",
+    "No mocked handler success, no device commands, no changes to pilot or old Docker projects.",
+    "Finite eight-poll observation; not a claim that children can never progress after a parent timeout or another worker is added.",
+    "Expected failure is outside standard tests; AUD-133 full backend result remains 1880 passing tests."
+  ],
+  "required_regressions": ["saturated parents and multi-level nesting", "waiting parent restart", "child result and deadline races", "cancel/pause/resume", "two workers and stale generation", "tenant isolation"]
+}

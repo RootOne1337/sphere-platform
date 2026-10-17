@@ -1,0 +1,480 @@
+{
+  "schemaVersion": 1,
+  "observedAtUtc": "2026-10-15T20:54:28.417950+00:00",
+  "assessmentDateLocal": "2026-10-16",
+  "verdict": "ADAPTERS_REQUIRED_NOT_READY_FOR_GAMEPLAY",
+  "scope": "Source and documentation readiness audit for separate GPU worker in LAN; not a model, game, GPU, network or fleet acceptance test.",
+  "requestedTopology": {
+    "emulators": "workstation A",
+    "inference": "separate GPU workstation B over LAN",
+    "examples": [
+      "GTA San Andreas",
+      "Black Rush"
+    ],
+    "targetGpu": "not supplied",
+    "targetEmulator": "not selected"
+  },
+  "platformSourceRevision": "aeade1a01abcb73eecf905dcc53a50313a54384c",
+  "installedBaselineReference": "docs/audits/2026-10-16/FALLBACK-ADMISSION-CURRENT.json",
+  "installedBaselineReprobedDuringThisAudit": false,
+  "upstream": {
+    "repository": "https://github.com/MineDojo/NitroGen",
+    "revision": "32608444660950ffda95e1e57c79632ad65bea10",
+    "committedAtUtc": "2026-01-25T21:05:37Z",
+    "sourceFiles": [
+      {
+        "file": "LICENSE",
+        "bytes": 4729,
+        "sha256": "564046abbef821cefd5c169d34ee1e96b3dfb72cf0be81de41ef8f4a1323c5a3",
+        "url": "https://raw.githubusercontent.com/MineDojo/NitroGen/32608444660950ffda95e1e57c79632ad65bea10/LICENSE"
+      },
+      {
+        "file": "README.md",
+        "bytes": 3063,
+        "sha256": "b8709f0e3997adf5da95141aa993f2c0b06a73834a7d79d4c41a2c2c20cf447b",
+        "url": "https://raw.githubusercontent.com/MineDojo/NitroGen/32608444660950ffda95e1e57c79632ad65bea10/README.md"
+      },
+      {
+        "file": "nitrogen/cfg.py",
+        "bytes": 1567,
+        "sha256": "6f1f29c42f902557bea3c183e07908c9f04ae3d4a7da6abf3ce48220d7a14fe5",
+        "url": "https://raw.githubusercontent.com/MineDojo/NitroGen/32608444660950ffda95e1e57c79632ad65bea10/nitrogen/cfg.py"
+      },
+      {
+        "file": "nitrogen/flow_matching_transformer/modules.py",
+        "bytes": 16726,
+        "sha256": "93fe4df063f4b1d2d284fdc65e1619bf81e0b7fbe278a25095a6c5c5e4ee21c8",
+        "url": "https://raw.githubusercontent.com/MineDojo/NitroGen/32608444660950ffda95e1e57c79632ad65bea10/nitrogen/flow_matching_transformer/modules.py"
+      },
+      {
+        "file": "nitrogen/flow_matching_transformer/nitrogen.py",
+        "bytes": 32151,
+        "sha256": "9c7b2af3165f3d7accf0c89eeeab48e1c752a17e6ac746b8d6b4b46521f62157",
+        "url": "https://raw.githubusercontent.com/MineDojo/NitroGen/32608444660950ffda95e1e57c79632ad65bea10/nitrogen/flow_matching_transformer/nitrogen.py"
+      },
+      {
+        "file": "nitrogen/game_env.py",
+        "bytes": 20468,
+        "sha256": "55525fc8fa4539260f874f6b437c40342858d772c238f124e23158e92617b663",
+        "url": "https://raw.githubusercontent.com/MineDojo/NitroGen/32608444660950ffda95e1e57c79632ad65bea10/nitrogen/game_env.py"
+      },
+      {
+        "file": "nitrogen/inference_client.py",
+        "bytes": 2730,
+        "sha256": "e11f3ec73e4145bcf3e8ae2341fc54b0d2e886e7005aa6e0b8cd1384d0d762c4",
+        "url": "https://raw.githubusercontent.com/MineDojo/NitroGen/32608444660950ffda95e1e57c79632ad65bea10/nitrogen/inference_client.py"
+      },
+      {
+        "file": "nitrogen/inference_session.py",
+        "bytes": 10664,
+        "sha256": "4a0115776b5c63b6694f2bd973d8baf713658fc2f51f47219260b6acea424363",
+        "url": "https://raw.githubusercontent.com/MineDojo/NitroGen/32608444660950ffda95e1e57c79632ad65bea10/nitrogen/inference_session.py"
+      },
+      {
+        "file": "nitrogen/inference_viz.py",
+        "bytes": 9468,
+        "sha256": "80b08c1d41d87380a3b8b97beac069a5cd34010fc0db029141b57da4e9f8c3f4",
+        "url": "https://raw.githubusercontent.com/MineDojo/NitroGen/32608444660950ffda95e1e57c79632ad65bea10/nitrogen/inference_viz.py"
+      },
+      {
+        "file": "nitrogen/mm_tokenizers.py",
+        "bytes": 12142,
+        "sha256": "4503c4b4a227ad5e8c21280b53acd3d0e0614b9beb9ffef208b87806b8f17e7c",
+        "url": "https://raw.githubusercontent.com/MineDojo/NitroGen/32608444660950ffda95e1e57c79632ad65bea10/nitrogen/mm_tokenizers.py"
+      },
+      {
+        "file": "nitrogen/shared.py",
+        "bytes": 387,
+        "sha256": "2094c335790ad2909ed8f6e5ead250b68decc57a0e439affa44a42411fb7370d",
+        "url": "https://raw.githubusercontent.com/MineDojo/NitroGen/32608444660950ffda95e1e57c79632ad65bea10/nitrogen/shared.py"
+      },
+      {
+        "file": "pyproject.toml",
+        "bytes": 1229,
+        "sha256": "261c8a7c834c328049ed013aac4742e65a627f727105833f4262c4bc6060e9d2",
+        "url": "https://raw.githubusercontent.com/MineDojo/NitroGen/32608444660950ffda95e1e57c79632ad65bea10/pyproject.toml"
+      },
+      {
+        "file": "scripts/play.py",
+        "bytes": 8239,
+        "sha256": "daf724c8f15b2a4839fefa168d98a88e2aa627031fda470f101f735fe7c04c4c",
+        "url": "https://raw.githubusercontent.com/MineDojo/NitroGen/32608444660950ffda95e1e57c79632ad65bea10/scripts/play.py"
+      },
+      {
+        "file": "scripts/serve.py",
+        "bytes": 2489,
+        "sha256": "7a67405a80dd366f344aa1e38b236d315642ea1d7a916a892b12d1cac50207f8",
+        "url": "https://raw.githubusercontent.com/MineDojo/NitroGen/32608444660950ffda95e1e57c79632ad65bea10/scripts/serve.py"
+      }
+    ],
+    "model": "nvidia/NitroGen",
+    "modelRevision": "584c8dded734d032f07a4bcc0ccb330e703298c4",
+    "checkpoint": {
+      "file": "ng.pt",
+      "bytes": 1974723762,
+      "sha256AdvertisedByLfs": "a266f5fb9c7dbdcdf97216558d2d82075a9a994b824cda69afa9fd3280260a81",
+      "downloaded": false,
+      "locallyHashVerified": false
+    },
+    "modelTextFiles": [
+      {
+        "file": "LICENSE",
+        "url": "https://huggingface.co/nvidia/NitroGen/resolve/584c8dded734d032f07a4bcc0ccb330e703298c4/LICENSE",
+        "bytes": 4729,
+        "sha256": "564046abbef821cefd5c169d34ee1e96b3dfb72cf0be81de41ef8f4a1323c5a3"
+      },
+      {
+        "file": "README.md",
+        "url": "https://huggingface.co/nvidia/NitroGen/resolve/584c8dded734d032f07a4bcc0ccb330e703298c4/README.md",
+        "bytes": 2970,
+        "sha256": "0256bde21b41eab833c0da676947fc6673906db2266517aabf51aa239e28edc3"
+      },
+      {
+        "file": "EXPLAINABILITY.md",
+        "url": "https://huggingface.co/nvidia/NitroGen/resolve/584c8dded734d032f07a4bcc0ccb330e703298c4/EXPLAINABILITY.md",
+        "bytes": 2430,
+        "sha256": "a9b8302921482ba6539d09074142bfce468ebc46ecca1eff6cffa631c2d80b39"
+      }
+    ],
+    "actionContract": {
+      "buttonTokensInOrder": [
+        "BACK",
+        "DPAD_DOWN",
+        "DPAD_LEFT",
+        "DPAD_RIGHT",
+        "DPAD_UP",
+        "EAST",
+        "GUIDE",
+        "LEFT_SHOULDER",
+        "LEFT_THUMB",
+        "LEFT_TRIGGER",
+        "NORTH",
+        "RIGHT_BOTTOM",
+        "RIGHT_LEFT",
+        "RIGHT_RIGHT",
+        "RIGHT_SHOULDER",
+        "RIGHT_THUMB",
+        "RIGHT_TRIGGER",
+        "RIGHT_UP",
+        "SOUTH",
+        "START",
+        "WEST"
+      ],
+      "buttonColumns": 21,
+      "stickColumns": 4,
+      "totalColumns": 25,
+      "outputs": [
+        "j_left",
+        "j_right",
+        "buttons"
+      ],
+      "paperActionHorizon": 16,
+      "checkpointShapeValidated": false,
+      "actionDownsampleRatioInPinnedLoader": 1
+    },
+    "communityDiscussionsRead": [
+      {
+        "issue": 24,
+        "url": "https://github.com/MineDojo/NitroGen/issues/24",
+        "title": "How much memory is required for the minimum deployment? 4090?",
+        "stateWhenRead": "open",
+        "commentProvenance": [
+          {
+            "url": "https://github.com/MineDojo/NitroGen/issues/24#issuecomment-3695011225",
+            "authorAssociation": "NONE",
+            "bodySha256Utf8": "a6220612a8058458419cc874b278bc0d3d44716a992a129ec8e9a47c92393166"
+          },
+          {
+            "url": "https://github.com/MineDojo/NitroGen/issues/24#issuecomment-3695068381",
+            "authorAssociation": "NONE",
+            "bodySha256Utf8": "f41a3689d4f3bdd140267757f5e4033744b5d3220f2fa91c934b6fb65f1c1b3d"
+          },
+          {
+            "url": "https://github.com/MineDojo/NitroGen/issues/24#issuecomment-3695221990",
+            "authorAssociation": "CONTRIBUTOR",
+            "bodySha256Utf8": "9c56cab3f062c025f59fec8f62780d7e76f8b09205b24d193d7ca37507c85a85"
+          },
+          {
+            "url": "https://github.com/MineDojo/NitroGen/issues/24#issuecomment-3695232503",
+            "authorAssociation": "NONE",
+            "bodySha256Utf8": "3eaa49f6d6f5540d6724726e319efdc755f048e36fc48831c659ff824a5b6f19"
+          },
+          {
+            "url": "https://github.com/MineDojo/NitroGen/issues/24#issuecomment-3696372675",
+            "authorAssociation": "NONE",
+            "bodySha256Utf8": "eb75538e6de44c47ed86c34a15d7370e0600c7a093e61149e8e2841a710da4be"
+          },
+          {
+            "url": "https://github.com/MineDojo/NitroGen/issues/24#issuecomment-3696458248",
+            "authorAssociation": "NONE",
+            "bodySha256Utf8": "e0f84912cf79b848748cf0673693b80df65bdc908cd600476cf193ecbe93a6fc"
+          },
+          {
+            "url": "https://github.com/MineDojo/NitroGen/issues/24#issuecomment-3696481796",
+            "authorAssociation": "NONE",
+            "bodySha256Utf8": "eaaaf4624b49fbad897cee0cd4d57b8d59b5726745cb15a70270cb379afbd2ba"
+          },
+          {
+            "url": "https://github.com/MineDojo/NitroGen/issues/24#issuecomment-3696627320",
+            "authorAssociation": "NONE",
+            "bodySha256Utf8": "68a33505ee1f0b3760668774d162b303b6b0ccdbb2aca149d9065589d731a974"
+          },
+          {
+            "url": "https://github.com/MineDojo/NitroGen/issues/24#issuecomment-3696905675",
+            "authorAssociation": "CONTRIBUTOR",
+            "bodySha256Utf8": "81ad2b63aade93e19a669639754cdca5709b3a4c0a94a9b84e888ac61b1be764"
+          },
+          {
+            "url": "https://github.com/MineDojo/NitroGen/issues/24#issuecomment-3697812464",
+            "authorAssociation": "NONE",
+            "bodySha256Utf8": "2802981baf478570fb2198cc3e89eb58152b4ea92ac762f920b15a07a87ec14d"
+          },
+          {
+            "url": "https://github.com/MineDojo/NitroGen/issues/24#issuecomment-3698479903",
+            "authorAssociation": "NONE",
+            "bodySha256Utf8": "65ae84c0f81041d1d25ad42982bf2bf96c243419bce07837ec20a8d6b91a82f8"
+          },
+          {
+            "url": "https://github.com/MineDojo/NitroGen/issues/24#issuecomment-3703523092",
+            "authorAssociation": "NONE",
+            "bodySha256Utf8": "99f8dc33c39deaf1b346b9aec0a1904865bde3edc338b5c3d1904855895604f6"
+          },
+          {
+            "url": "https://github.com/MineDojo/NitroGen/issues/24#issuecomment-3707152453",
+            "authorAssociation": "NONE",
+            "bodySha256Utf8": "541dbd617bbe2183fa6c067a4b233eebbe3a5e15c02e144263d4b69c6e573e23"
+          },
+          {
+            "url": "https://github.com/MineDojo/NitroGen/issues/24#issuecomment-3707320758",
+            "authorAssociation": "NONE",
+            "bodySha256Utf8": "d14e209133c8b36175a9d2cba1efd9a7d02dd2f1405ff294bd4f9ad75c12881d"
+          }
+        ]
+      },
+      {
+        "issue": 28,
+        "url": "https://github.com/MineDojo/NitroGen/issues/28",
+        "title": "We're only running at 20fps",
+        "stateWhenRead": "open",
+        "commentProvenance": [
+          {
+            "url": "https://github.com/MineDojo/NitroGen/issues/28#issuecomment-3696805781",
+            "authorAssociation": "NONE",
+            "bodySha256Utf8": "1cdbc45003506f0fb0506326342ef0d652c9dcf31e58198109e536999674025b"
+          },
+          {
+            "url": "https://github.com/MineDojo/NitroGen/issues/28#issuecomment-3704860695",
+            "authorAssociation": "NONE",
+            "bodySha256Utf8": "5403074a694ac7b6b73ac3a2818608b0fea679131ff89bb9f337a81e0cf3b5c7"
+          }
+        ]
+      },
+      {
+        "issue": 34,
+        "url": "https://github.com/MineDojo/NitroGen/issues/34",
+        "title": "Unable to get it working with emulators",
+        "stateWhenRead": "open",
+        "commentProvenance": []
+      },
+      {
+        "issue": 36,
+        "url": "https://github.com/MineDojo/NitroGen/issues/36",
+        "title": "Clarification needed: Is joystick Y-axis inverted? (Dataset description vs inference_viz.py)",
+        "stateWhenRead": "open",
+        "commentProvenance": [
+          {
+            "url": "https://github.com/MineDojo/NitroGen/issues/36#issuecomment-3742715397",
+            "authorAssociation": "NONE",
+            "bodySha256Utf8": "ae37edddfb7d03d7332fa5d2a54c683a228259566c2138d0e08b246722641a99"
+          }
+        ]
+      },
+      {
+        "issue": 43,
+        "url": "https://github.com/MineDojo/NitroGen/issues/43",
+        "title": "Action space mismatch across paper / dataset / code (20 vs 21 vs 24 vs 25)",
+        "stateWhenRead": "open",
+        "commentProvenance": [
+          {
+            "url": "https://github.com/MineDojo/NitroGen/issues/43#issuecomment-3872539521",
+            "authorAssociation": "COLLABORATOR",
+            "bodySha256Utf8": "1210b431ce021d3cc7d246e87a9e4c1a53e672ff350419a07ce6101b73efd795"
+          }
+        ]
+      },
+      {
+        "issue": 44,
+        "url": "https://github.com/MineDojo/NitroGen/issues/44",
+        "title": "Actions redirected to active window instead of game process",
+        "stateWhenRead": "open",
+        "commentProvenance": [
+          {
+            "url": "https://github.com/MineDojo/NitroGen/issues/44#issuecomment-3975152051",
+            "authorAssociation": "COLLABORATOR",
+            "bodySha256Utf8": "24586eed9d47e12a6bc9c18ca1b0450eaca2b19bb5519ec845df0c605ee90d8c"
+          }
+        ]
+      },
+      {
+        "issue": 45,
+        "url": "https://github.com/MineDojo/NitroGen/issues/45",
+        "title": "New DXcam release 2026 - Bug fixes & performance improvements",
+        "stateWhenRead": "open",
+        "commentProvenance": []
+      }
+    ]
+  },
+  "localHardware": {
+    "scope": "Current project PC only; does not describe future SSH/GPU workstation.",
+    "os": "Windows",
+    "architecture": "AMD64",
+    "displayControllers": [
+      {
+        "Name": "Parsec Virtual Display Adapter",
+        "DriverVersion": "0.45.0.0"
+      },
+      {
+        "Name": "AMD Radeon RX 9070",
+        "DriverVersion": "32.0.31041.1004"
+      },
+      {
+        "Name": "AMD Radeon(TM) Graphics",
+        "DriverVersion": "32.0.21045.5002"
+      }
+    ],
+    "nvidiaSmiFoundInPath": false,
+    "cudaRuntimeTested": false,
+    "actualVramBytes": null,
+    "pythonVersion": "3.12.12",
+    "moduleAvailabilityInAuditVenvOnly": {
+      "torch": false,
+      "transformers": false,
+      "zmq": false,
+      "aiortc": false,
+      "av": false,
+      "PyNvVideoCodec": false
+    },
+    "packagesImportedForGpuTest": false
+  },
+  "localSourceReceipts": [
+    {
+      "file": "android/app/src/main/kotlin/com/sphereplatform/agent/streaming/EncodedCaptureFrame.kt",
+      "sha256NormalizedLf": "688d6f79022f0c3bd9d419853b825978bead81f87cc2113f26ca3b068a8e0492"
+    },
+    {
+      "file": "android/app/src/main/kotlin/com/sphereplatform/agent/streaming/FramePackager.kt",
+      "sha256NormalizedLf": "0c29cb5928e1f866062e35455b063e23a8c6aafa15198b8e2d1dcbd857616a33"
+    },
+    {
+      "file": "android/app/src/main/java/com/sphereplatform/agent/commands/RootTouchSession.java",
+      "sha256NormalizedLf": "0f654b517ede36b223e56dc8789137fc2f6bc467c9e92a780bef6932e02b4bff"
+    },
+    {
+      "file": "android/app/src/main/java/com/sphereplatform/agent/commands/RootTouchBridge.java",
+      "sha256NormalizedLf": "ebdcf05cb0e8af18768e438c5306176256a481d0e83053d4e5730b8cfee141ea"
+    },
+    {
+      "file": "android/app/src/main/kotlin/com/sphereplatform/agent/commands/SharedPointerArbiter.kt",
+      "sha256NormalizedLf": "06190f199b2540e3586b7c2ce784f5a298bc811ef0ec038d4dd3af7d618fbab2"
+    },
+    {
+      "file": "android/app/src/directProbe/kotlin/com/sphereplatform/agent/direct/DirectProbeTransport.kt",
+      "sha256NormalizedLf": "b23dc689e1c622ac3ab307efe3b9db99dcb87d716e6ad2338db3272b0650a3a1"
+    },
+    {
+      "file": "frontend/src/features/stream/directProbe.ts",
+      "sha256NormalizedLf": "e3b5f0c6566b2ce9f7eb8644f896f4b7f8981777d0bf5006fff37f89a55cb550"
+    },
+    {
+      "file": "frontend/src/features/stream/remoteKeyboardProtocol.ts",
+      "sha256NormalizedLf": "03cd256ce35e25a231f15a97fea9fd1da3dc140ff8d1c57bef3a4706b8940f22"
+    },
+    {
+      "file": "backend/websocket/frames.py",
+      "sha256NormalizedLf": "4a927c635393cdbba6ffe2497683d6ae229ab9629b42c7c56b27782b9747b46c"
+    },
+    {
+      "file": "backend/api/ws/direct/router.py",
+      "sha256NormalizedLf": "be122894c463d5479785bc7d4661e1a0da6589fef5f3a6efc5092455244d447d"
+    },
+    {
+      "file": "pc-agent/requirements.txt",
+      "sha256NormalizedLf": "0e709cdcf7858c0454827287f0c4d9e2df122a68c843364ef9e3d9c5998d699a"
+    }
+  ],
+  "gates": [
+    {
+      "id": "NG-01",
+      "state": "PARTIAL",
+      "requirement": "Direct video and control foundation",
+      "evidence": "docs/audits/2026-10-16/MODE-TRANSPORT-AUTHORIZATION.md"
+    },
+    {
+      "id": "NG-02",
+      "state": "MISSING",
+      "requirement": "Headless machine-authorized WebRTC observation/action client"
+    },
+    {
+      "id": "NG-03",
+      "state": "MISSING",
+      "requirement": "Per-frame capture identity, clock mapping and maximum observation age"
+    },
+    {
+      "id": "NG-04",
+      "state": "OPEN_DEFECT",
+      "requirement": "RGB/color fidelity",
+      "evidence": "docs/audits/2026-10-16/MODE-TRANSPORT-AUTHORIZATION.md"
+    },
+    {
+      "id": "NG-05",
+      "state": "MISSING",
+      "requirement": "Game-specific gamepad or multi-touch adapter; current single finger is insufficient for simultaneous sticks and action"
+    },
+    {
+      "id": "NG-06",
+      "state": "MISSING",
+      "requirement": "Episode lease, AI-human arbitration and bounded action scheduler"
+    },
+    {
+      "id": "NG-07",
+      "state": "NOT_BENCHMARKED",
+      "requirement": "Target CUDA GPU, VRAM and inference latency"
+    },
+    {
+      "id": "NG-08",
+      "state": "MISSING",
+      "requirement": "Isolated multi-device model state and measured admission capacity"
+    },
+    {
+      "id": "NG-09",
+      "state": "OPEN_DEFECT",
+      "requirement": "Reconnect, idle input ACK and broker loss behavior",
+      "evidence": "docs/audits/2026-10-16/PH030-ROUTE-CONTROL-INCIDENT.json"
+    },
+    {
+      "id": "NG-10",
+      "state": "RESEARCH_LICENSE_ONLY_NOT_COMMERCIAL_CLEARANCE",
+      "requirement": "Compatible code and checkpoint use terms"
+    },
+    {
+      "id": "NG-11",
+      "state": "NOT_EVALUATED",
+      "requirement": "Actual game competence and repeatable supervised outcomes"
+    }
+  ],
+  "nonActions": {
+    "weightsDownloaded": false,
+    "thirdPartyCodeExecuted": false,
+    "dependenciesInstalled": false,
+    "inferenceStarted": false,
+    "gameInputSent": false,
+    "runtimeDeployed": false
+  },
+  "sourceValidation": {
+    "upstreamFileHashesChecked": 14,
+    "platformNormalizedFileHashesChecked": 11,
+    "codeAndModelLicenseTextIdentical": true,
+    "buttonTokenCountCheckedWithoutImport": 21,
+    "method": "Local SHA256/JSON/AST checks only; not inference or gameplay tests."
+  }
+}

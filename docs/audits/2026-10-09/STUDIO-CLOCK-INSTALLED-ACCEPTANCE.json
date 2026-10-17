@@ -1,0 +1,133 @@
+{
+  "schemaVersion": 1,
+  "observedAtUtc": "2026-10-09T02:37:05.617464+00:00",
+  "scope": "UI-only clock correction delivery and one finite PH011 mixed-input canary; not rich recording or fleet acceptance.",
+  "correction": {
+    "id": "RECORDER-CLOCK",
+    "sourceRevision": "1577e01e09dcf256efaed391941606bd2c400e8e"
+  },
+  "runtimeInstalled": true,
+  "runtime": {
+    "sourceRevision": "60be6ecd0b13e33715761b53b781ad190c1e3e6e",
+    "apiSourceRevision": "be803773037c16a113b50c1a2774793fffae8773",
+    "configImageId": "sha256:58746d6466feaa498c9e58e1e29bf63b54a32ec26e9e9d87ed7603cacae70e04",
+    "loadedManifestId": "sha256:70b7703d44e492d8d1df1422f217522ac09c2b2d11c51bc9eb16e4ab55814a7b",
+    "uiContainerId": "b3b2d7aca9757a353cf63565fec38fd24d3357babf6a3c2d84d35842c987db06",
+    "startedAtUtc": "2026-10-09T02:28:12.546797943Z",
+    "otherContainersPreserved": 45,
+    "otaCatalogSha256": "5d5dcb5521277b51f366ea5370a2f7df5fd62696de0d5b7b86a56b443b03af10",
+    "schemaChanged": false,
+    "apkChanged": false,
+    "pilotApk": {
+      "device": "PH011",
+      "version": "1.2.49-dev",
+      "versionCode": 10249
+    }
+  },
+  "artifact": {
+    "runId": 37859419940,
+    "artifactId": 11586170530,
+    "zipBytes": 120877495,
+    "zipSha256": "a90780efc43e131f8afecff7d3199ee0aac8ccf6db3c8c73443dcc97bf669b23",
+    "imageArchiveBytes": 120874544,
+    "independentCiLogImageId": "sha256:58746d6466feaa498c9e58e1e29bf63b54a32ec26e9e9d87ed7603cacae70e04",
+    "independentImageBindingVerified": true,
+    "locallyBuilt": false
+  },
+  "ci": {
+    "exactSource": "60be6ecd0b13e33715761b53b781ad190c1e3e6e",
+    "frontend": {
+      "runId": 37859419940,
+      "conclusion": "success",
+      "tests": 1938,
+      "suites": 139,
+      "pages": 26,
+      "assets": 73,
+      "typescript": "passed"
+    },
+    "backend": {
+      "runId": 37859419950,
+      "conclusion": "success"
+    },
+    "android": {
+      "runId": 37859419956,
+      "conclusion": "success"
+    },
+    "preview": {
+      "runId": 37859419968,
+      "conclusion": "success"
+    }
+  },
+  "browser": {
+    "finiteAccepted": true,
+    "device": "PH011",
+    "sequence": [
+      "tap",
+      "tap_element (planned XPath, not executed)",
+      "tap",
+      "key_event 4 (APK confirmed)"
+    ],
+    "recordedRows": 4,
+    "frame": {
+      "width": 960,
+      "height": 540
+    },
+    "hierarchyNodes": 46,
+    "homePreparationReceiptMs": 682,
+    "backReceiptMs": 469,
+    "receiptTimingScope": "Command response only, not input-to-frame latency",
+    "tapExecutionAckAvailable": false,
+    "xpathExecutionClaimed": false,
+    "lateAckAfterStopProvedLive": false,
+    "lateAckAfterStopFixturePassed": true,
+    "canonicalNodeCount": 9,
+    "canonicalSuccessEdges": 8,
+    "insertedActions": 6,
+    "preservedPausesMs": [
+      49298,
+      13110
+    ],
+    "sub100msGapOmitted": true,
+    "insertedQueueCleared": true,
+    "undoRestoredNodeCount": 3,
+    "undoRestoredSuccessEdges": 2,
+    "publishedVersion": 1,
+    "versionSaved": false,
+    "taskLaunched": false,
+    "consoleErrorCount": 0,
+    "cleanup": "Stopped recording, inserted queue explicitly, undid one test graph mutation, selected View, closed lab and agent-created tab. Clean original tab reloaded and reports UI60be6ecd/v1/3 nodes/2 edges/Undo0. No viewport override used."
+  },
+  "visual": {
+    "defaultViewport": {
+      "width": 1280,
+      "height": 720
+    },
+    "longChainOverviewReadability": "OPEN: nine-node whole-graph overview remains too small; clock acceptance does not close EP-048.",
+    "screenshotSha256": "c82c29f8165e63f9b6e5a8c87e8be9646fe8aee420f10334df1d4609507defd6",
+    "privateScreenshot": ".local-pilot/clock-delivery-20261009-60be6ecd/browser-graph.jpg"
+  },
+  "resources": {
+    "resourceGuardFindings": [],
+    "oneFreeDiskReadingBytes": 50305200128,
+    "scope": "Pre-delivery admission only; no rate, RAM soak or storage writer attribution. Archive retained in private bounded attempt directory."
+  },
+  "ledger": {
+    "productAccepted": 9,
+    "productOpen": 41,
+    "closedInThisBatch": [],
+    "chatFiniteAcceptedInThisBatch": [
+      "CHAT-07"
+    ],
+    "EP-018": "OPEN/PARTIAL",
+    "fleetAccepted": false
+  },
+  "remaining": [
+    "Continuous MOVE trajectory recording",
+    "Automatic XPath/zone/crop/pixel context bundle",
+    "Unicode/IME and all rotation/device cases",
+    "Idle native receipt timeout and cross-viewer/task/API/scheduler ownership",
+    "Whole-host writer/RAM soak and collector coverage",
+    "Long-chain whole-graph readability"
+  ],
+  "privateInstallReceipt": ".local-pilot/reviewed-web-install-60be6ecd0b13-d95d94b2/installed.json"
+}

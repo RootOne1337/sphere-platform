@@ -1,0 +1,40 @@
+name: 💬 Вопрос по настройке
+description: Помощь с запуском и использованием; без публичной передачи доступов.
+title: '[Question]: '
+labels:
+- question
+body:
+- type: markdown
+  attributes:
+    value: 'Спасибо за конкретное описание. Сначала проверьте [известные проблемы](https://github.com/RootOne1337/sphere-platform/blob/codex/enterprise-audit-20260905/docs/audits/2026-09-20/FLEET32-PREFLIGHT.md).
+      Репозиторий публичный: не прикладывайте пароли, tokens, cookies, `.env`, signing/enrollment keys и raw logs.
+      Уязвимости — через [приватный report](https://github.com/RootOne1337/sphere-platform/security/advisories/new).'
+- type: textarea
+  id: goal
+  attributes:
+    label: Что хотите сделать
+    description: Опишите цель и конкретный вопрос.
+  validations:
+    required: true
+- type: textarea
+  id: environment
+  attributes:
+    label: Версии и окружение
+    description: Backend/frontend commit или image, APK versionName/versionCode, Android/root/эмулятор, способ запуска.
+      Неизвестные версии так и отметьте. Без конфигураций с секретами.
+  validations:
+    required: true
+- type: textarea
+  id: attempts
+  attributes:
+    label: Что уже проверили
+    description: Инструкция, шаги и полученный результат. Если похоже на баг — приложите минимальное воспроизведение.
+  validations:
+    required: true
+- type: checkboxes
+  id: privacy
+  attributes:
+    label: Перед отправкой
+    options:
+    - label: 'Проверил описание и вложения: секреты и персональные данные удалены.'
+      required: true

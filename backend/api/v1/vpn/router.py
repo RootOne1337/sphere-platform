@@ -6,8 +6,11 @@
 # SPLIT-5: Full VPN REST API
 from __future__ import annotations
 
+import logging
 import uuid
+from collections.abc import Callable
 from datetime import datetime, timedelta, timezone
+from typing import Literal
 
 from cryptography.fernet import Fernet
 from fastapi import APIRouter, Depends, HTTPException, Query, status
@@ -15,9 +18,9 @@ from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.core.config import settings
-from backend.core.dependencies import require_permission, require_role
-from backend.database.engine import get_db
-from backend.database.redis_client import get_redis
+from backend.core.dependencies import require_permission
+from backend.database.engine import get_db, get_db_session
+from backend.models.device import Device
 from backend.models.vpn_peer import VPNPeer, VPNPeerStatus
 from backend.schemas.vpn import (
     KillSwitchRequest,
@@ -25,6 +28,9 @@ from backend.schemas.vpn import (
     RotateDetail,
     VPNAssignRequest,
     VPNAssignResponse,
+    VPNBulkRevokeItemResult,
+    VPNBulkRevokeRequest,
+    VPNBulkRevokeResponse,
     VPNBulkRotateRequest,
     VPNBulkRotateResponse,
     VPNPeerResponse,
@@ -37,13 +43,16 @@ from backend.schemas.vpn.config import (
     AWGObfuscationParamsSchema,
 )
 from backend.services.vpn.awg_config import AWGConfigBuilder, AWGObfuscationParams
+from backend.services.vpn.deferred_pool import DeferredVPNPoolService
 from backend.services.vpn.dependencies import get_awg_config_builder, get_key_cipher
 from backend.services.vpn.event_publisher import EventPublisher
+from backend.services.vpn.health_monitor import VPNHealthMonitor
 from backend.services.vpn.ip_pool import IPPoolAllocator
 from backend.services.vpn.killswitch_service import KillSwitchService
 from backend.services.vpn.pool_service import VPNPoolService
 
 router = APIRouter(prefix="/vpn", tags=["vpn"])
+logger = logging.getLogger(__name__)
 
 # Register background health loop (SPLIT-3) — side-effect on import
 import backend.tasks.vpn_health  # noqa: F401, E402
@@ -52,28 +61,29 @@ import backend.tasks.vpn_health  # noqa: F401, E402
 # DI factories for SPLIT-2..5
 # ---------------------------------------------------------------------------
 
-def get_ip_pool(redis=Depends(get_redis)) -> IPPoolAllocator:
-    return IPPoolAllocator(redis, subnet=settings.VPN_POOL_SUBNET)
+def get_ip_pool() -> IPPoolAllocator:
+    return IPPoolAllocator(None, subnet=settings.VPN_POOL_SUBNET)
+
+
+def get_key_cipher_factory() -> Callable[[], Fernet]:
+    return get_key_cipher
 
 
 async def get_pool_service(
-    db: AsyncSession = Depends(get_db),
     ip_pool: IPPoolAllocator = Depends(get_ip_pool),
     builder: AWGConfigBuilder = Depends(get_awg_config_builder),
-    cipher: Fernet = Depends(get_key_cipher),
+    cipher: Callable[[], Fernet] | Fernet = Depends(get_key_cipher_factory),
 ):
-    service = VPNPoolService(
-        db=db,
-        ip_pool=ip_pool,
-        config_builder=builder,
-        key_cipher=cipher,
-        wg_router_url=settings.WG_ROUTER_URL,
-        wg_router_api_key=settings.WG_ROUTER_API_KEY,
-    )
-    try:
-        yield service
-    finally:
-        await service.close()
+    # Lifecycle owns commits; keep it separate from HTTP/auth caller state.
+    async with get_db_session() as db:
+        service = DeferredVPNPoolService(lambda: VPNPoolService(
+            db=db, ip_pool=ip_pool, config_builder=builder, key_cipher=cipher() if callable(cipher) else cipher,
+            wg_router_url=settings.WG_ROUTER_URL, wg_router_api_key=settings.WG_ROUTER_API_KEY,
+        ))
+        try:
+            yield service
+        finally:
+            await service.close()
 
 
 def get_killswitch_service() -> KillSwitchService:
@@ -141,8 +151,7 @@ async def preview_config(
 )
 async def assign_vpn(
     req: VPNAssignRequest,
-    db: AsyncSession = Depends(get_db),
-    current_user=Depends(require_role("org_admin")),
+    current_user=require_permission("vpn:write"),
     pool_service: VPNPoolService = Depends(get_pool_service),
 ) -> VPNAssignResponse:
     try:
@@ -151,7 +160,6 @@ async def assign_vpn(
             org_id=current_user.org_id,
             split_tunnel=req.split_tunnel,
         )
-        await db.commit()
         return VPNAssignResponse(
             peer_id=uuid.UUID(assignment.peer_id),
             device_id=uuid.UUID(assignment.device_id),
@@ -162,8 +170,8 @@ async def assign_vpn(
         )
     except HTTPException:
         raise
-    except Exception as exc:
-        raise HTTPException(status_code=500, detail=f"VPN assignment failed: {exc}")
+    except Exception:
+        raise HTTPException(status_code=503, detail="VPN assignment unavailable; inspect operation state")
 
 
 @router.delete(
@@ -174,12 +182,59 @@ async def assign_vpn(
 )
 async def revoke_vpn(
     device_id: uuid.UUID,
-    db: AsyncSession = Depends(get_db),
-    current_user=Depends(require_role("org_admin")),
+    current_user=require_permission("vpn:write"),
     pool_service: VPNPoolService = Depends(get_pool_service),
 ):
-    await pool_service.revoke_vpn(str(device_id), current_user.org_id)
-    await db.commit()
+    try:
+        await pool_service.revoke_vpn(str(device_id), current_user.org_id)
+    except HTTPException:
+        raise
+    except Exception:
+        raise HTTPException(status_code=503, detail="VPN revocation unavailable; inspect operation state")
+
+
+@router.post(
+    "/revoke/bulk",
+    response_model=VPNBulkRevokeResponse,
+    summary="Revoke VPN peers for selected devices",
+)
+async def bulk_revoke_vpn(
+    req: VPNBulkRevokeRequest,
+    current_user=require_permission("vpn:mass_operation"),
+    pool_service: VPNPoolService = Depends(get_pool_service),
+) -> VPNBulkRevokeResponse:
+    """Revoke peers sequentially so one failed provider operation cannot corrupt a shared DB session."""
+    results: list[VPNBulkRevokeItemResult] = []
+    for device_id in req.device_ids:
+        try:
+            await pool_service.revoke_vpn(str(device_id), current_user.org_id)
+            results.append(VPNBulkRevokeItemResult(device_id=device_id, success=True))
+        except HTTPException as exc:
+            results.append(VPNBulkRevokeItemResult(
+                device_id=device_id,
+                success=False,
+                error=str(exc.detail),
+            ))
+        except Exception as exc:
+            logger.warning(
+                "Bulk VPN revoke failed for device %s in org %s (%s)",
+                device_id,
+                current_user.org_id,
+                type(exc).__name__,
+            )
+            results.append(VPNBulkRevokeItemResult(
+                device_id=device_id,
+                success=False,
+                error="VPN revocation unavailable; inspect operation state",
+            ))
+
+    succeeded = sum(1 for result in results if result.success)
+    return VPNBulkRevokeResponse(
+        total=len(results),
+        succeeded=succeeded,
+        failed=len(results) - succeeded,
+        results=results,
+    )
 
 
 @router.get(
@@ -203,7 +258,7 @@ async def vpn_health(
     summary="List VPN peers",
 )
 async def list_peers(
-    peer_status: str | None = Query(None, alias="status", description="free|assigned|error"),
+    peer_status: str | None = Query(None, alias="status", description="free|assigned|error|provisioning|revoking"),
     device_id: str | None = Query(None),
     db: AsyncSession = Depends(get_db),
     current_user=require_permission("vpn:read"),
@@ -219,20 +274,33 @@ async def list_peers(
         query = query.where(VPNPeer.device_id == uuid.UUID(device_id))
 
     result = await db.execute(query)
-    stale_threshold = datetime.now(timezone.utc) - timedelta(seconds=180)
+    observed_at = datetime.now(timezone.utc)
     return [
         VPNPeerResponse(
             id=p.id,
             device_id=p.device_id,
             assigned_ip=p.tunnel_ip,
             status=p.status.value if isinstance(p.status, VPNPeerStatus) else p.status,
-            is_active=bool(p.is_active and p.last_handshake_at and p.last_handshake_at > stale_threshold),
+            is_active=_has_recent_handshake(p, observed_at),
             public_key=p.public_key,
             last_handshake_at=p.last_handshake_at,
             created_at=p.created_at,
         )
         for p in result.scalars().all()
     ]
+
+
+def _has_recent_handshake(peer: VPNPeer, observed_at: datetime) -> bool:
+    """Read semantics match pool counts; this is not a live router/Android probe."""
+    if (not peer.is_active or peer.status != VPNPeerStatus.ASSIGNED
+            or peer.device_id is None or peer.last_handshake_at is None):
+        return False
+    # PostgreSQL returns an aware timestamptz; SQLite's test adapter drops tzinfo.
+    handshake = peer.last_handshake_at
+    if handshake.tzinfo is None:
+        handshake = handshake.replace(tzinfo=timezone.utc)
+    age = (observed_at - handshake).total_seconds()
+    return 0 <= age < VPNHealthMonitor.STALE_HANDSHAKE_THRESHOLD
 
 
 @router.get(
@@ -246,37 +314,37 @@ async def pool_stats(
     ip_pool: IPPoolAllocator = Depends(get_ip_pool),
 ) -> VPNPoolStats:
     org_id = current_user.org_id
-    free = await ip_pool.pool_size(str(org_id))
+    observed_at = datetime.now(timezone.utc)
+    stale_threshold = observed_at - timedelta(seconds=VPNHealthMonitor.STALE_HANDSHAKE_THRESHOLD)
+    total, free = await ip_pool.capacity(db)
 
-    allocated = await db.scalar(
-        select(func.count(VPNPeer.id)).where(
-            VPNPeer.org_id == org_id,
-            VPNPeer.status == VPNPeerStatus.ASSIGNED,
-        )
-    ) or 0
-
-    active = await db.scalar(
-        select(func.count(VPNPeer.id)).where(
-            VPNPeer.org_id == org_id,
-            VPNPeer.is_active == True,  # noqa: E712
-        )
-    ) or 0
-
-    stale_threshold = datetime.now(timezone.utc) - timedelta(seconds=180)
-    stale = await db.scalar(
-        select(func.count(VPNPeer.id)).where(
-            VPNPeer.org_id == org_id,
-            VPNPeer.status == VPNPeerStatus.ASSIGNED,
-            VPNPeer.last_handshake_at < stale_threshold,
-        )
-    ) or 0
+    # A retained is_active flag survives an unavailable router observation.
+    # Expire the advertised recent-handshake count at read time, independently
+    # of whether another health-loop cycle completed. Assignment is not activity.
+    # One SQL statement keeps these tenant counts in the same database snapshot.
+    counts = (await db.execute(select(
+        func.count(VPNPeer.id).filter(
+            VPNPeer.status != VPNPeerStatus.FREE,
+        ).label("allocated"),
+        func.count(VPNPeer.id).filter(
+            VPNPeer.status == VPNPeerStatus.ASSIGNED, VPNPeer.device_id.is_not(None),
+            VPNPeer.is_active.is_(True), VPNPeer.last_handshake_at > stale_threshold,
+            VPNPeer.last_handshake_at <= observed_at,
+        ).label("active"),
+        func.count(VPNPeer.id).filter(
+            VPNPeer.status == VPNPeerStatus.ASSIGNED, VPNPeer.device_id.is_not(None),
+            VPNPeer.last_handshake_at <= stale_threshold,
+        ).label("stale"),
+    ).where(VPNPeer.org_id == org_id))).one()
 
     return VPNPoolStats(
-        total_ips=free + allocated,
-        allocated=allocated,
+        total_ips=total,
+        allocated=counts.allocated,
         free=free,
-        active_tunnels=active,
-        stale_handshakes=stale,
+        active_tunnels=counts.active,
+        stale_handshakes=counts.stale,
+        observed_at=observed_at,
+        handshake_max_age_seconds=VPNHealthMonitor.STALE_HANDSHAKE_THRESHOLD,
     )
 
 
@@ -288,25 +356,19 @@ async def pool_stats(
 async def bulk_rotate(
     req: VPNBulkRotateRequest,
     db: AsyncSession = Depends(get_db),
-    current_user=Depends(require_role("org_admin")),
+    current_user=require_permission("vpn:mass_operation"),
     pool_service: VPNPoolService = Depends(get_pool_service),
 ) -> VPNBulkRotateResponse:
     device_ids: list[uuid.UUID] = list(req.device_ids)
-    if not device_ids:
-        result = await db.execute(
-            select(VPNPeer.device_id).where(
-                VPNPeer.org_id == current_user.org_id,
-                VPNPeer.status == VPNPeerStatus.ASSIGNED,
-                VPNPeer.device_id.isnot(None),
-            )
-        )
-        device_ids = [r[0] for r in result.all()]
+    await _require_owned_targets(db, device_ids, current_user.org_id)
 
     details: list[RotateDetail] = []
     success = 0
     failed = 0
 
     for dev_id in device_ids:
+        old_ip = None
+        revoke_confirmed = False
         try:
             peer = await db.scalar(
                 select(VPNPeer).where(
@@ -316,8 +378,14 @@ async def bulk_rotate(
                 )
             )
             old_ip = peer.tunnel_ip if peer else None
+            if peer is None:
+                details.append(RotateDetail(device_id=dev_id, old_ip=None, new_ip=None,
+                    error="Assigned VPN peer not found", outcome="rejected"))
+                failed += 1
+                continue
 
             await pool_service.revoke_vpn(str(dev_id), current_user.org_id)
+            revoke_confirmed = True
             assignment = await pool_service.assign_vpn(
                 str(dev_id), current_user.org_id, split_tunnel=True
             )
@@ -326,18 +394,23 @@ async def bulk_rotate(
                 old_ip=old_ip,
                 new_ip=assignment.assigned_ip,
                 error=None,
+                outcome="configured",
+                revoke_confirmed=True,
             ))
             success += 1
         except Exception as exc:
+            logger.warning("VPN rotation outcome unknown for %s in org %s (%s)",
+                           dev_id, current_user.org_id, type(exc).__name__)
             details.append(RotateDetail(
                 device_id=dev_id,
-                old_ip=None,
+                old_ip=old_ip,
                 new_ip=None,
-                error=str(exc),
+                error="VPN operation outcome unknown; inspect operation state before retry",
+                outcome="unknown",
+                revoke_confirmed=revoke_confirmed,
             ))
             failed += 1
 
-    await db.commit()
     return VPNBulkRotateResponse(
         total=len(device_ids),
         success=success,
@@ -353,22 +426,42 @@ async def bulk_rotate(
 )
 async def manage_killswitch(
     req: KillSwitchRequest,
-    current_user=Depends(require_role("org_admin")),
+    db: AsyncSession = Depends(get_db),
+    current_user=require_permission("vpn:mass_operation"),
     ks_service: KillSwitchService = Depends(get_killswitch_service),
 ) -> KillSwitchResponse:
-    if req.action not in ("enable", "disable"):
-        raise HTTPException(status_code=400, detail=f"Unknown action: {req.action}")
-
-    if req.action == "enable":
-        results = await ks_service.bulk_enable(
-            req.device_ids, settings.WG_SERVER_ENDPOINT, req.method
-        )
-    else:
-        results = await ks_service.bulk_disable(req.device_ids)
+    await _require_owned_targets(db, req.device_ids, current_user.org_id)
+    results: dict[str, bool] = {}
+    outcomes: dict[str, Literal["submitted", "not_sent", "unsupported", "unknown"]] = {}
+    for target in req.device_ids:
+        device_id = str(target)
+        results[device_id] = False
+        if not ks_service.supported:
+            outcomes[device_id] = "unsupported"
+            continue
+        try:
+            sent = (await ks_service.enable_killswitch(device_id, settings.WG_SERVER_ENDPOINT, req.method)
+                    if req.action == "enable" else await ks_service.disable_killswitch(device_id))
+            results[device_id] = sent
+            outcomes[device_id] = "submitted" if sent else "not_sent"
+        except Exception as exc:
+            logger.warning("VPN kill switch outcome unknown for %s in org %s (%s)",
+                           device_id, current_user.org_id, type(exc).__name__)
+            outcomes[device_id] = "unknown"
 
     return KillSwitchResponse(
         action=req.action,
         total=len(req.device_ids),
         success=sum(1 for v in results.values() if v),
         results=results,
+        outcomes=outcomes,
     )
+
+
+async def _require_owned_targets(db: AsyncSession, device_ids: list[uuid.UUID], org_id: uuid.UUID) -> None:
+    """Validate the entire selection before any remote/provider side effect."""
+    owned = set((await db.scalars(select(Device.id).where(
+        Device.org_id == org_id, Device.id.in_(device_ids), Device.is_active.is_(True),
+    ))).all())
+    if owned != set(device_ids):
+        raise HTTPException(status_code=404, detail="Device not found")

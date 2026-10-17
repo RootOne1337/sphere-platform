@@ -1,0 +1,1272 @@
+{
+  "observedAt": "2026-10-03T02:26:56.694957+00:00",
+  "status": "F33 PARTIAL; finite controlled addressed rollout accepted",
+  "installedApi": "8cd5cf023d27b59b39d8a4b2aa65f4d7dc3070a3",
+  "installedUi": "a2c4f02972d090b0707dc3f7ae48e803810a35be",
+  "artifactSource": "68155c1",
+  "artifact": {
+    "observedAt": "2026-10-03T02:11:32.951968+00:00",
+    "artifactHashVerified": true,
+    "artifactSize": 8465471,
+    "apkSignatureVerified": true,
+    "candidateBadging": "package: name='com.sphereplatform.agent.pilot.debug' versionCode='10240' versionName='1.2.40-dev' platformBuildVersionName='15' platformBuildVersionCode='35' compileSdkVersion='35' compileSdkVersionCodename='15'",
+    "candidateCertificateSha256": [
+      "3ab40797d26e4f52f9e440afc6fe69f197caef71a5a27c63c86735bb1801871f"
+    ],
+    "installedPackageReads": [
+      {
+        "selection": "remotePH028",
+        "id": "4815b950-e5cf-4686-9d46-42d0df8d41f7",
+        "packages": [
+          "com.sphereplatform.agent.pilot.debug"
+        ],
+        "reportedError": null,
+        "candidatePackagePresent": true
+      },
+      {
+        "selection": "localPH011",
+        "id": "414ce0e9-4b93-4f96-b9ca-ee675f53835e",
+        "packages": [
+          "com.sphereplatform.agent.pilot.debug"
+        ],
+        "reportedError": null,
+        "candidatePackagePresent": true
+      }
+    ],
+    "installedCertificateVerified": false,
+    "commands": [
+      "pm list packages com.sphereplatform"
+    ],
+    "hostAdbUsed": false,
+    "installationOrGrantWrites": false
+  },
+  "channelReadback": {
+    "observedAt": "2026-10-03T02:09:39.596802+00:00",
+    "catalogTotal": 19,
+    "releaseCount": 21,
+    "latestByChannel": {
+      "android-canary/dev": {
+        "versionCode": 10240,
+        "versionName": "1.2.40-dev",
+        "sha256": "c612fba1e4a537ab1a0d9951e520bbd4063c3548308a4ebc31b72b59fa735a70",
+        "managed": true,
+        "downloadHost": null,
+        "downloadPath": "/api/v1/updates/artifacts/c612fba1e4a537ab1a0d9951e520bbd4063c3548308a4ebc31b72b59fa735a70",
+        "mandatory": false
+      },
+      "android/dev": {
+        "versionCode": 10209,
+        "versionName": "1.2.9-dev",
+        "sha256": "b4bf3f319f92e1f3ac24b7d68dffdc6f6d93a113ad59b10b132ea8f60e641078",
+        "managed": true,
+        "downloadHost": null,
+        "downloadPath": "/api/v1/updates/artifacts/b4bf3f319f92e1f3ac24b7d68dffdc6f6d93a113ad59b10b132ea8f60e641078",
+        "mandatory": false
+      }
+    },
+    "onlineRecoveryReadback": [
+      {
+        "id": "4815b950-e5cf-4686-9d46-42d0df8d41f7",
+        "name": "auto-ph-028",
+        "agentVersion": "1.2.32-dev",
+        "agentVersionCode": 10232,
+        "status": "online",
+        "grantState": "none",
+        "grantVersionCode": null,
+        "lastResult": null
+      },
+      {
+        "id": "b410464a-5f26-4803-a756-7840cc17b128",
+        "name": "auto-ph-025",
+        "agentVersion": "1.2.40-dev",
+        "agentVersionCode": 10240,
+        "status": "online",
+        "grantState": "completed",
+        "grantVersionCode": null,
+        "lastResult": {
+          "status": "completed",
+          "version_code": 10240,
+          "installed_version_code": 10240,
+          "failure_code": null,
+          "recorded_at": "2026-10-01T12:49:23.746723+00:00"
+        }
+      },
+      {
+        "id": "d088c147-7ada-4b29-9e79-f991b20fcf91",
+        "name": "auto-ph-022",
+        "agentVersion": "1.2.22-dev",
+        "agentVersionCode": 10222,
+        "status": "online",
+        "grantState": "none",
+        "grantVersionCode": null,
+        "lastResult": null
+      },
+      {
+        "id": "75c29a32-2867-4b60-947c-003e712e538f",
+        "name": "auto-ph-020",
+        "agentVersion": "1.2.22-dev",
+        "agentVersionCode": 10222,
+        "status": "online",
+        "grantState": "none",
+        "grantVersionCode": null,
+        "lastResult": null
+      },
+      {
+        "id": "c37e687a-ee83-466d-846f-3f4b36047fa7",
+        "name": "auto-ph-019",
+        "agentVersion": "1.2.30-dev",
+        "agentVersionCode": 10230,
+        "status": "online",
+        "grantState": "none",
+        "grantVersionCode": null,
+        "lastResult": null
+      },
+      {
+        "id": "bafef86f-3ab4-469b-ae0c-cf2771b55813",
+        "name": "auto-ph-018",
+        "agentVersion": "1.2.34-dev",
+        "agentVersionCode": 10234,
+        "status": "online",
+        "grantState": "none",
+        "grantVersionCode": null,
+        "lastResult": null
+      },
+      {
+        "id": "1dd7e59c-b68f-406a-93cd-5f4e34fdea90",
+        "name": "auto-ph-017",
+        "agentVersion": "1.2.30-dev",
+        "agentVersionCode": 10230,
+        "status": "online",
+        "grantState": "failed",
+        "grantVersionCode": null,
+        "lastResult": {
+          "status": "failed",
+          "version_code": 10231,
+          "installed_version_code": null,
+          "failure_code": "timeout",
+          "recorded_at": "2026-09-27T05:48:06.307439+00:00"
+        }
+      },
+      {
+        "id": "3c4c4218-27ba-4d8d-a7d2-4348c2f91c93",
+        "name": "auto-ph-016",
+        "agentVersion": "1.2.22-dev",
+        "agentVersionCode": 10222,
+        "status": "online",
+        "grantState": "none",
+        "grantVersionCode": null,
+        "lastResult": null
+      },
+      {
+        "id": "930a6505-b7ec-4eee-93fe-9aaa66517871",
+        "name": "auto-ph-015",
+        "agentVersion": "1.2.34-dev",
+        "agentVersionCode": 10234,
+        "status": "online",
+        "grantState": "none",
+        "grantVersionCode": null,
+        "lastResult": null
+      },
+      {
+        "id": "673d5774-24b1-4b57-8dfb-90c46f627ce3",
+        "name": "auto-ph-014",
+        "agentVersion": "1.2.22-dev",
+        "agentVersionCode": 10222,
+        "status": "online",
+        "grantState": "none",
+        "grantVersionCode": null,
+        "lastResult": null
+      },
+      {
+        "id": "6d830af5-b7cc-44b4-b7f5-5e0275aceb3b",
+        "name": "auto-ph-013",
+        "agentVersion": "1.2.40-dev",
+        "agentVersionCode": 10240,
+        "status": "online",
+        "grantState": "completed",
+        "grantVersionCode": null,
+        "lastResult": {
+          "status": "completed",
+          "version_code": 10240,
+          "installed_version_code": 10240,
+          "failure_code": null,
+          "recorded_at": "2026-10-02T13:11:59.247893+00:00"
+        }
+      },
+      {
+        "id": "8c187cfa-e5ea-4939-a137-07619437953d",
+        "name": "auto-ph-012",
+        "agentVersion": "1.2.22-dev",
+        "agentVersionCode": 10222,
+        "status": "online",
+        "grantState": "none",
+        "grantVersionCode": null,
+        "lastResult": null
+      },
+      {
+        "id": "414ce0e9-4b93-4f96-b9ca-ee675f53835e",
+        "name": "auto-ph-011",
+        "agentVersion": "1.2.32-dev",
+        "agentVersionCode": 10232,
+        "status": "online",
+        "grantState": "none",
+        "grantVersionCode": null,
+        "lastResult": null
+      },
+      {
+        "id": "5df4805e-fe64-4d39-960c-19ceab206cd6",
+        "name": "auto-ph-010",
+        "agentVersion": "1.2.40-dev",
+        "agentVersionCode": 10240,
+        "status": "online",
+        "grantState": "completed",
+        "grantVersionCode": null,
+        "lastResult": {
+          "status": "completed",
+          "version_code": 10240,
+          "installed_version_code": 10240,
+          "failure_code": null,
+          "recorded_at": "2026-10-01T12:48:00.447320+00:00"
+        }
+      }
+    ],
+    "writes": false,
+    "deviceCommandsSent": false
+  },
+  "installedCertificateProof": {
+    "observedAt": "2026-10-03T02:12:46.203771+00:00",
+    "deviceId": "4815b950-e5cf-4686-9d46-42d0df8d41f7",
+    "name": "auto-ph-028",
+    "reportedVersionCode": 10232,
+    "installedApkSha256": "a1789e2ba7c51bf9546e882b09b238ad441e4efd6c9573d3dffaab610a434fd5",
+    "installedApkMatchesSignedLocalBaseline": true,
+    "candidateCertificateSha256": [
+      "3ab40797d26e4f52f9e440afc6fe69f197caef71a5a27c63c86735bb1801871f"
+    ],
+    "candidateSignerMatchesInstalledBaseline": true,
+    "readOnlyShellCommands": 2,
+    "hostAdbUsed": false,
+    "installationOrGrantWrites": false
+  },
+  "preflight": {
+    "observedAt": "2026-10-03T02:17:01.462771+00:00",
+    "catalogTotal": 19,
+    "targetCount": 10,
+    "eligibleCount": 10,
+    "devices": [
+      {
+        "deviceId": "d088c147-7ada-4b29-9e79-f991b20fcf91",
+        "name": "auto-ph-022",
+        "beforeVersionCode": 10222,
+        "eligible": true,
+        "installedApkSha256": "468bd6523220554581635eed86101b3d7b3b87b12beb37d1b7210ef3af74af0e",
+        "signerMatchesCandidate": true,
+        "package": "com.sphereplatform.agent.pilot.debug",
+        "previousRecoveryState": "none"
+      },
+      {
+        "deviceId": "75c29a32-2867-4b60-947c-003e712e538f",
+        "name": "auto-ph-020",
+        "beforeVersionCode": 10222,
+        "eligible": true,
+        "installedApkSha256": "468bd6523220554581635eed86101b3d7b3b87b12beb37d1b7210ef3af74af0e",
+        "signerMatchesCandidate": true,
+        "package": "com.sphereplatform.agent.pilot.debug",
+        "previousRecoveryState": "none"
+      },
+      {
+        "deviceId": "c37e687a-ee83-466d-846f-3f4b36047fa7",
+        "name": "auto-ph-019",
+        "beforeVersionCode": 10230,
+        "eligible": true,
+        "installedApkSha256": "525108a0e07962e8b76bb1aab33efa97f757682bda3f0f9d8fa21caeb2462498",
+        "signerMatchesCandidate": true,
+        "package": "com.sphereplatform.agent.pilot.debug",
+        "previousRecoveryState": "none"
+      },
+      {
+        "deviceId": "bafef86f-3ab4-469b-ae0c-cf2771b55813",
+        "name": "auto-ph-018",
+        "beforeVersionCode": 10234,
+        "eligible": true,
+        "installedApkSha256": "80280d4230206931e6a61d457ddc65fa218d482ae0acf48717cb233245a59832",
+        "signerMatchesCandidate": true,
+        "package": "com.sphereplatform.agent.pilot.debug",
+        "previousRecoveryState": "none"
+      },
+      {
+        "deviceId": "1dd7e59c-b68f-406a-93cd-5f4e34fdea90",
+        "name": "auto-ph-017",
+        "beforeVersionCode": 10230,
+        "eligible": true,
+        "installedApkSha256": "525108a0e07962e8b76bb1aab33efa97f757682bda3f0f9d8fa21caeb2462498",
+        "signerMatchesCandidate": true,
+        "package": "com.sphereplatform.agent.pilot.debug",
+        "previousRecoveryState": "failed"
+      },
+      {
+        "deviceId": "3c4c4218-27ba-4d8d-a7d2-4348c2f91c93",
+        "name": "auto-ph-016",
+        "beforeVersionCode": 10222,
+        "eligible": true,
+        "installedApkSha256": "468bd6523220554581635eed86101b3d7b3b87b12beb37d1b7210ef3af74af0e",
+        "signerMatchesCandidate": true,
+        "package": "com.sphereplatform.agent.pilot.debug",
+        "previousRecoveryState": "none"
+      },
+      {
+        "deviceId": "930a6505-b7ec-4eee-93fe-9aaa66517871",
+        "name": "auto-ph-015",
+        "beforeVersionCode": 10234,
+        "eligible": true,
+        "installedApkSha256": "80280d4230206931e6a61d457ddc65fa218d482ae0acf48717cb233245a59832",
+        "signerMatchesCandidate": true,
+        "package": "com.sphereplatform.agent.pilot.debug",
+        "previousRecoveryState": "none"
+      },
+      {
+        "deviceId": "673d5774-24b1-4b57-8dfb-90c46f627ce3",
+        "name": "auto-ph-014",
+        "beforeVersionCode": 10222,
+        "eligible": true,
+        "installedApkSha256": "468bd6523220554581635eed86101b3d7b3b87b12beb37d1b7210ef3af74af0e",
+        "signerMatchesCandidate": true,
+        "package": "com.sphereplatform.agent.pilot.debug",
+        "previousRecoveryState": "none"
+      },
+      {
+        "deviceId": "8c187cfa-e5ea-4939-a137-07619437953d",
+        "name": "auto-ph-012",
+        "beforeVersionCode": 10222,
+        "eligible": true,
+        "installedApkSha256": "468bd6523220554581635eed86101b3d7b3b87b12beb37d1b7210ef3af74af0e",
+        "signerMatchesCandidate": true,
+        "package": "com.sphereplatform.agent.pilot.debug",
+        "previousRecoveryState": "none"
+      },
+      {
+        "deviceId": "414ce0e9-4b93-4f96-b9ca-ee675f53835e",
+        "name": "auto-ph-011",
+        "beforeVersionCode": 10232,
+        "eligible": true,
+        "installedApkSha256": "a1789e2ba7c51bf9546e882b09b238ad441e4efd6c9573d3dffaab610a434fd5",
+        "signerMatchesCandidate": true,
+        "package": "com.sphereplatform.agent.pilot.debug",
+        "previousRecoveryState": "none"
+      }
+    ],
+    "baselines": {
+      "10222": {
+        "sha256": "468bd6523220554581635eed86101b3d7b3b87b12beb37d1b7210ef3af74af0e",
+        "certificateSha256": [
+          "3ab40797d26e4f52f9e440afc6fe69f197caef71a5a27c63c86735bb1801871f"
+        ]
+      },
+      "10230": {
+        "sha256": "525108a0e07962e8b76bb1aab33efa97f757682bda3f0f9d8fa21caeb2462498",
+        "certificateSha256": [
+          "3ab40797d26e4f52f9e440afc6fe69f197caef71a5a27c63c86735bb1801871f"
+        ]
+      },
+      "10232": {
+        "sha256": "a1789e2ba7c51bf9546e882b09b238ad441e4efd6c9573d3dffaab610a434fd5",
+        "certificateSha256": [
+          "3ab40797d26e4f52f9e440afc6fe69f197caef71a5a27c63c86735bb1801871f"
+        ]
+      },
+      "10234": {
+        "sha256": "80280d4230206931e6a61d457ddc65fa218d482ae0acf48717cb233245a59832",
+        "certificateSha256": [
+          "3ab40797d26e4f52f9e440afc6fe69f197caef71a5a27c63c86735bb1801871f"
+        ]
+      }
+    },
+    "candidateSha256": "c612fba1e4a537ab1a0d9951e520bbd4063c3548308a4ebc31b72b59fa735a70",
+    "targetVersionCode": 10240,
+    "hostAdbUsed": false,
+    "installationOrGrantWrites": false,
+    "shellReads": 20
+  },
+  "firstCanary": {
+    "startedAt": "2026-10-03T02:13:43.219628+00:00",
+    "target": "4815b950-e5cf-4686-9d46-42d0df8d41f7",
+    "name": "auto-ph-028",
+    "beforeVersionCode": 10232,
+    "targetVersionCode": 10240,
+    "artifactSha256": "c612fba1e4a537ab1a0d9951e520bbd4063c3548308a4ebc31b72b59fa735a70",
+    "normalChannelPromoted": false,
+    "manualReinstall": false,
+    "dataCleared": false,
+    "hostAdbUsed": false,
+    "attempts": 1,
+    "terminalReceipt": {
+      "command_id": "5aa9a134-89c4-4453-9beb-bb2dcde0be2e",
+      "sha256": "c612fba1e4a537ab1a0d9951e520bbd4063c3548308a4ebc31b72b59fa735a70",
+      "version_name": "1.2.40-dev",
+      "version_code": 10240,
+      "status": "completed",
+      "failure_code": null,
+      "installed_version_code": 10240,
+      "recovered_after_process_restart": true,
+      "recorded_at": "2026-10-03T02:13:48.323655+00:00"
+    },
+    "freshHeartbeatConfirmed": true,
+    "samples": [
+      {
+        "observedAt": "2026-10-03T02:13:43.310395+00:00",
+        "deviceStatus": "online",
+        "reportedVersionCode": 10232,
+        "lastHeartbeat": "2026-10-03T02:13:13.498247Z",
+        "grantState": "active"
+      }
+    ],
+    "grant": {
+      "command_id": "5aa9a134-89c4-4453-9beb-bb2dcde0be2e",
+      "created_at": 1790993623,
+      "expires_at": 1790994223,
+      "delivery_hint": "wake_published"
+    },
+    "finishedAt": "2026-10-03T02:15:21.379401+00:00",
+    "postInstallHeartbeat": "2026-10-03T02:15:19.047387Z",
+    "grantAutoClearedByTerminalReceipt": true,
+    "cleanupDeleteStatus": 409,
+    "cleanupHarnessCorrection": "DELETE conflicted because terminal handling had already cleared the grant; verified absence by GET. No grant or installation replay.",
+    "channelLatestUnchanged": true
+  },
+  "sequentialWave": {
+    "startedAt": "2026-10-03T02:18:07.180064+00:00",
+    "targetVersionCode": 10240,
+    "artifactSha256": "c612fba1e4a537ab1a0d9951e520bbd4063c3548308a4ebc31b72b59fa735a70",
+    "sequential": true,
+    "automaticRetry": false,
+    "normalChannelPromoted": false,
+    "hostAdbUsed": false,
+    "dataCleared": false,
+    "preflightDevices": 10,
+    "outcomes": [
+      {
+        "deviceId": "d088c147-7ada-4b29-9e79-f991b20fcf91",
+        "name": "auto-ph-022",
+        "beforeVersionCode": 10222,
+        "intentRecordedAt": "2026-10-03T02:18:07.180600+00:00",
+        "status": "completed_and_heartbeat",
+        "attempts": 1,
+        "commandId": "4a89518a-1bf0-4eab-9d46-2f34210e215e",
+        "deliveryHint": "wake_published",
+        "grantCreatedAt": 1790993887,
+        "lastReadback": {
+          "observedAt": "2026-10-03T02:18:12.316948+00:00",
+          "state": "completed",
+          "versionCode": 10222,
+          "deviceStatus": "offline"
+        },
+        "terminalReceipt": {
+          "command_id": "4a89518a-1bf0-4eab-9d46-2f34210e215e",
+          "sha256": "c612fba1e4a537ab1a0d9951e520bbd4063c3548308a4ebc31b72b59fa735a70",
+          "version_name": "1.2.40-dev",
+          "version_code": 10240,
+          "status": "completed",
+          "failure_code": null,
+          "installed_version_code": 10240,
+          "recovered_after_process_restart": true,
+          "recorded_at": "2026-10-03T02:18:12.257527+00:00"
+        },
+        "postInstallHeartbeat": "2026-10-03T02:18:13.007254Z",
+        "grantAutoCleared": true,
+        "acceptedAt": "2026-10-03T02:18:17.350351+00:00"
+      },
+      {
+        "deviceId": "75c29a32-2867-4b60-947c-003e712e538f",
+        "name": "auto-ph-020",
+        "beforeVersionCode": 10222,
+        "intentRecordedAt": "2026-10-03T02:18:17.350351+00:00",
+        "status": "completed_and_heartbeat",
+        "attempts": 1,
+        "commandId": "06d42e8e-40e4-4bd9-9091-663f524efcf8",
+        "deliveryHint": "wake_published",
+        "grantCreatedAt": 1790993897,
+        "lastReadback": {
+          "observedAt": "2026-10-03T02:18:22.488326+00:00",
+          "state": "active",
+          "versionCode": 10222,
+          "deviceStatus": "offline"
+        },
+        "terminalReceipt": {
+          "command_id": "06d42e8e-40e4-4bd9-9091-663f524efcf8",
+          "sha256": "c612fba1e4a537ab1a0d9951e520bbd4063c3548308a4ebc31b72b59fa735a70",
+          "version_name": "1.2.40-dev",
+          "version_code": 10240,
+          "status": "completed",
+          "failure_code": null,
+          "installed_version_code": 10240,
+          "recovered_after_process_restart": true,
+          "recorded_at": "2026-10-03T02:18:22.881107+00:00"
+        },
+        "postInstallHeartbeat": "2026-10-03T02:18:23.621367Z",
+        "grantAutoCleared": true,
+        "acceptedAt": "2026-10-03T02:18:27.523964+00:00"
+      },
+      {
+        "deviceId": "c37e687a-ee83-466d-846f-3f4b36047fa7",
+        "name": "auto-ph-019",
+        "beforeVersionCode": 10230,
+        "intentRecordedAt": "2026-10-03T02:18:27.524470+00:00",
+        "status": "completed_and_heartbeat",
+        "attempts": 1,
+        "commandId": "63db0e37-185e-4d14-92e6-e644777d94a9",
+        "deliveryHint": "wake_published",
+        "grantCreatedAt": 1790993907,
+        "lastReadback": {
+          "observedAt": "2026-10-03T02:18:32.649808+00:00",
+          "state": "active",
+          "versionCode": 10230,
+          "deviceStatus": "offline"
+        },
+        "terminalReceipt": {
+          "command_id": "63db0e37-185e-4d14-92e6-e644777d94a9",
+          "sha256": "c612fba1e4a537ab1a0d9951e520bbd4063c3548308a4ebc31b72b59fa735a70",
+          "version_name": "1.2.40-dev",
+          "version_code": 10240,
+          "status": "completed",
+          "failure_code": null,
+          "installed_version_code": 10240,
+          "recovered_after_process_restart": true,
+          "recorded_at": "2026-10-03T02:18:33.435559+00:00"
+        },
+        "postInstallHeartbeat": "2026-10-03T02:18:34.172129Z",
+        "grantAutoCleared": true,
+        "acceptedAt": "2026-10-03T02:18:37.686081+00:00"
+      },
+      {
+        "deviceId": "bafef86f-3ab4-469b-ae0c-cf2771b55813",
+        "name": "auto-ph-018",
+        "beforeVersionCode": 10234,
+        "intentRecordedAt": "2026-10-03T02:18:37.687111+00:00",
+        "status": "completed_and_heartbeat",
+        "attempts": 1,
+        "commandId": "0432542f-14cf-42e0-b85c-825dd0f850be",
+        "deliveryHint": "wake_published",
+        "grantCreatedAt": 1790993917,
+        "lastReadback": {
+          "observedAt": "2026-10-03T02:18:42.823894+00:00",
+          "state": "active",
+          "versionCode": 10234,
+          "deviceStatus": "offline"
+        },
+        "terminalReceipt": {
+          "command_id": "0432542f-14cf-42e0-b85c-825dd0f850be",
+          "sha256": "c612fba1e4a537ab1a0d9951e520bbd4063c3548308a4ebc31b72b59fa735a70",
+          "version_name": "1.2.40-dev",
+          "version_code": 10240,
+          "status": "completed",
+          "failure_code": null,
+          "installed_version_code": 10240,
+          "recovered_after_process_restart": true,
+          "recorded_at": "2026-10-03T02:18:44.223850+00:00"
+        },
+        "postInstallHeartbeat": "2026-10-03T02:18:44.960577Z",
+        "grantAutoCleared": true,
+        "acceptedAt": "2026-10-03T02:18:47.861405+00:00"
+      },
+      {
+        "deviceId": "1dd7e59c-b68f-406a-93cd-5f4e34fdea90",
+        "name": "auto-ph-017",
+        "beforeVersionCode": 10230,
+        "intentRecordedAt": "2026-10-03T02:18:47.862441+00:00",
+        "status": "completed_and_heartbeat",
+        "attempts": 1,
+        "commandId": "06618cfb-2846-45ca-b18b-db1f2817e8f6",
+        "deliveryHint": "wake_published",
+        "grantCreatedAt": 1790993927,
+        "lastReadback": {
+          "observedAt": "2026-10-03T02:18:52.996924+00:00",
+          "state": "active",
+          "versionCode": 10230,
+          "deviceStatus": "offline"
+        },
+        "terminalReceipt": {
+          "command_id": "06618cfb-2846-45ca-b18b-db1f2817e8f6",
+          "sha256": "c612fba1e4a537ab1a0d9951e520bbd4063c3548308a4ebc31b72b59fa735a70",
+          "version_name": "1.2.40-dev",
+          "version_code": 10240,
+          "status": "completed",
+          "failure_code": null,
+          "installed_version_code": 10240,
+          "recovered_after_process_restart": true,
+          "recorded_at": "2026-10-03T02:18:53.266698+00:00"
+        },
+        "postInstallHeartbeat": "2026-10-03T02:18:54.019163Z",
+        "grantAutoCleared": true,
+        "acceptedAt": "2026-10-03T02:18:58.033415+00:00"
+      },
+      {
+        "deviceId": "3c4c4218-27ba-4d8d-a7d2-4348c2f91c93",
+        "name": "auto-ph-016",
+        "beforeVersionCode": 10222,
+        "intentRecordedAt": "2026-10-03T02:18:58.034063+00:00",
+        "status": "completed_and_heartbeat",
+        "attempts": 1,
+        "commandId": "d2ec7255-7950-463b-99bb-e7cb2c162d56",
+        "deliveryHint": "wake_published",
+        "grantCreatedAt": 1790993938,
+        "lastReadback": {
+          "observedAt": "2026-10-03T02:19:03.162403+00:00",
+          "state": "active",
+          "versionCode": 10222,
+          "deviceStatus": "offline"
+        },
+        "terminalReceipt": {
+          "command_id": "d2ec7255-7950-463b-99bb-e7cb2c162d56",
+          "sha256": "c612fba1e4a537ab1a0d9951e520bbd4063c3548308a4ebc31b72b59fa735a70",
+          "version_name": "1.2.40-dev",
+          "version_code": 10240,
+          "status": "completed",
+          "failure_code": null,
+          "installed_version_code": 10240,
+          "recovered_after_process_restart": true,
+          "recorded_at": "2026-10-03T02:19:03.841853+00:00"
+        },
+        "postInstallHeartbeat": "2026-10-03T02:19:04.561811Z",
+        "grantAutoCleared": true,
+        "acceptedAt": "2026-10-03T02:19:08.190628+00:00"
+      },
+      {
+        "deviceId": "930a6505-b7ec-4eee-93fe-9aaa66517871",
+        "name": "auto-ph-015",
+        "beforeVersionCode": 10234,
+        "intentRecordedAt": "2026-10-03T02:19:08.192135+00:00",
+        "status": "completed_and_heartbeat",
+        "attempts": 1,
+        "commandId": "412c6588-2669-404c-8b04-d2243f358d6d",
+        "deliveryHint": "wake_published",
+        "grantCreatedAt": 1790993948,
+        "lastReadback": {
+          "observedAt": "2026-10-03T02:19:13.942094+00:00",
+          "state": "active",
+          "versionCode": 10234,
+          "deviceStatus": "offline"
+        },
+        "terminalReceipt": {
+          "command_id": "412c6588-2669-404c-8b04-d2243f358d6d",
+          "sha256": "c612fba1e4a537ab1a0d9951e520bbd4063c3548308a4ebc31b72b59fa735a70",
+          "version_name": "1.2.40-dev",
+          "version_code": 10240,
+          "status": "completed",
+          "failure_code": null,
+          "installed_version_code": 10240,
+          "recovered_after_process_restart": true,
+          "recorded_at": "2026-10-03T02:19:14.114889+00:00"
+        },
+        "postInstallHeartbeat": "2026-10-03T02:19:14.805680Z",
+        "grantAutoCleared": true,
+        "acceptedAt": "2026-10-03T02:19:18.970484+00:00"
+      },
+      {
+        "deviceId": "673d5774-24b1-4b57-8dfb-90c46f627ce3",
+        "name": "auto-ph-014",
+        "beforeVersionCode": 10222,
+        "intentRecordedAt": "2026-10-03T02:19:18.971013+00:00",
+        "status": "completed_and_heartbeat",
+        "attempts": 1,
+        "commandId": "8a3bf3fe-5747-45be-8b57-587ea43edb3e",
+        "deliveryHint": "wake_published",
+        "grantCreatedAt": 1790993959,
+        "lastReadback": {
+          "observedAt": "2026-10-03T02:19:24.102476+00:00",
+          "state": "active",
+          "versionCode": 10222,
+          "deviceStatus": "offline"
+        },
+        "terminalReceipt": {
+          "command_id": "8a3bf3fe-5747-45be-8b57-587ea43edb3e",
+          "sha256": "c612fba1e4a537ab1a0d9951e520bbd4063c3548308a4ebc31b72b59fa735a70",
+          "version_name": "1.2.40-dev",
+          "version_code": 10240,
+          "status": "completed",
+          "failure_code": null,
+          "installed_version_code": 10240,
+          "recovered_after_process_restart": true,
+          "recorded_at": "2026-10-03T02:19:24.437404+00:00"
+        },
+        "postInstallHeartbeat": "2026-10-03T02:19:25.178384Z",
+        "grantAutoCleared": true,
+        "acceptedAt": "2026-10-03T02:19:29.118438+00:00"
+      },
+      {
+        "deviceId": "8c187cfa-e5ea-4939-a137-07619437953d",
+        "name": "auto-ph-012",
+        "beforeVersionCode": 10222,
+        "intentRecordedAt": "2026-10-03T02:19:29.119479+00:00",
+        "status": "completed_and_heartbeat",
+        "attempts": 1,
+        "commandId": "069c9d16-6074-40ca-b63b-c5688c36a540",
+        "deliveryHint": "wake_published",
+        "grantCreatedAt": 1790993969,
+        "lastReadback": {
+          "observedAt": "2026-10-03T02:19:34.237602+00:00",
+          "state": "active",
+          "versionCode": 10222,
+          "deviceStatus": "offline"
+        },
+        "terminalReceipt": {
+          "command_id": "069c9d16-6074-40ca-b63b-c5688c36a540",
+          "sha256": "c612fba1e4a537ab1a0d9951e520bbd4063c3548308a4ebc31b72b59fa735a70",
+          "version_name": "1.2.40-dev",
+          "version_code": 10240,
+          "status": "completed",
+          "failure_code": null,
+          "installed_version_code": 10240,
+          "recovered_after_process_restart": true,
+          "recorded_at": "2026-10-03T02:19:34.952196+00:00"
+        },
+        "postInstallHeartbeat": "2026-10-03T02:19:35.673972Z",
+        "grantAutoCleared": true,
+        "acceptedAt": "2026-10-03T02:19:39.273656+00:00"
+      },
+      {
+        "deviceId": "414ce0e9-4b93-4f96-b9ca-ee675f53835e",
+        "name": "auto-ph-011",
+        "beforeVersionCode": 10232,
+        "intentRecordedAt": "2026-10-03T02:19:39.274695+00:00",
+        "status": "completed_and_heartbeat",
+        "attempts": 1,
+        "commandId": "abff3c8c-0feb-496e-9ce9-733b8cbcada2",
+        "deliveryHint": "wake_published",
+        "grantCreatedAt": 1790993979,
+        "lastReadback": {
+          "observedAt": "2026-10-03T02:19:44.416396+00:00",
+          "state": "active",
+          "versionCode": 10232,
+          "deviceStatus": "offline"
+        },
+        "terminalReceipt": {
+          "command_id": "abff3c8c-0feb-496e-9ce9-733b8cbcada2",
+          "sha256": "c612fba1e4a537ab1a0d9951e520bbd4063c3548308a4ebc31b72b59fa735a70",
+          "version_name": "1.2.40-dev",
+          "version_code": 10240,
+          "status": "completed",
+          "failure_code": null,
+          "installed_version_code": 10240,
+          "recovered_after_process_restart": true,
+          "recorded_at": "2026-10-03T02:19:47.628209+00:00"
+        },
+        "postInstallHeartbeat": "2026-10-03T02:19:48.920796Z",
+        "grantAutoCleared": true,
+        "acceptedAt": "2026-10-03T02:19:49.442909+00:00"
+      }
+    ],
+    "finishedAt": "2026-10-03T02:19:49.468385+00:00",
+    "completedDevices": 10,
+    "catalogTotal": 19,
+    "onlineVersions": {
+      "1.2.40-dev": 14
+    },
+    "releaseCatalogUnchanged": true
+  },
+  "newInstallations": 11,
+  "terminalReceipts": [
+    {
+      "command_id": "5aa9a134-89c4-4453-9beb-bb2dcde0be2e",
+      "sha256": "c612fba1e4a537ab1a0d9951e520bbd4063c3548308a4ebc31b72b59fa735a70",
+      "version_name": "1.2.40-dev",
+      "version_code": 10240,
+      "status": "completed",
+      "failure_code": null,
+      "installed_version_code": 10240,
+      "recovered_after_process_restart": true,
+      "recorded_at": "2026-10-03T02:13:48.323655+00:00"
+    },
+    {
+      "command_id": "4a89518a-1bf0-4eab-9d46-2f34210e215e",
+      "sha256": "c612fba1e4a537ab1a0d9951e520bbd4063c3548308a4ebc31b72b59fa735a70",
+      "version_name": "1.2.40-dev",
+      "version_code": 10240,
+      "status": "completed",
+      "failure_code": null,
+      "installed_version_code": 10240,
+      "recovered_after_process_restart": true,
+      "recorded_at": "2026-10-03T02:18:12.257527+00:00"
+    },
+    {
+      "command_id": "06d42e8e-40e4-4bd9-9091-663f524efcf8",
+      "sha256": "c612fba1e4a537ab1a0d9951e520bbd4063c3548308a4ebc31b72b59fa735a70",
+      "version_name": "1.2.40-dev",
+      "version_code": 10240,
+      "status": "completed",
+      "failure_code": null,
+      "installed_version_code": 10240,
+      "recovered_after_process_restart": true,
+      "recorded_at": "2026-10-03T02:18:22.881107+00:00"
+    },
+    {
+      "command_id": "63db0e37-185e-4d14-92e6-e644777d94a9",
+      "sha256": "c612fba1e4a537ab1a0d9951e520bbd4063c3548308a4ebc31b72b59fa735a70",
+      "version_name": "1.2.40-dev",
+      "version_code": 10240,
+      "status": "completed",
+      "failure_code": null,
+      "installed_version_code": 10240,
+      "recovered_after_process_restart": true,
+      "recorded_at": "2026-10-03T02:18:33.435559+00:00"
+    },
+    {
+      "command_id": "0432542f-14cf-42e0-b85c-825dd0f850be",
+      "sha256": "c612fba1e4a537ab1a0d9951e520bbd4063c3548308a4ebc31b72b59fa735a70",
+      "version_name": "1.2.40-dev",
+      "version_code": 10240,
+      "status": "completed",
+      "failure_code": null,
+      "installed_version_code": 10240,
+      "recovered_after_process_restart": true,
+      "recorded_at": "2026-10-03T02:18:44.223850+00:00"
+    },
+    {
+      "command_id": "06618cfb-2846-45ca-b18b-db1f2817e8f6",
+      "sha256": "c612fba1e4a537ab1a0d9951e520bbd4063c3548308a4ebc31b72b59fa735a70",
+      "version_name": "1.2.40-dev",
+      "version_code": 10240,
+      "status": "completed",
+      "failure_code": null,
+      "installed_version_code": 10240,
+      "recovered_after_process_restart": true,
+      "recorded_at": "2026-10-03T02:18:53.266698+00:00"
+    },
+    {
+      "command_id": "d2ec7255-7950-463b-99bb-e7cb2c162d56",
+      "sha256": "c612fba1e4a537ab1a0d9951e520bbd4063c3548308a4ebc31b72b59fa735a70",
+      "version_name": "1.2.40-dev",
+      "version_code": 10240,
+      "status": "completed",
+      "failure_code": null,
+      "installed_version_code": 10240,
+      "recovered_after_process_restart": true,
+      "recorded_at": "2026-10-03T02:19:03.841853+00:00"
+    },
+    {
+      "command_id": "412c6588-2669-404c-8b04-d2243f358d6d",
+      "sha256": "c612fba1e4a537ab1a0d9951e520bbd4063c3548308a4ebc31b72b59fa735a70",
+      "version_name": "1.2.40-dev",
+      "version_code": 10240,
+      "status": "completed",
+      "failure_code": null,
+      "installed_version_code": 10240,
+      "recovered_after_process_restart": true,
+      "recorded_at": "2026-10-03T02:19:14.114889+00:00"
+    },
+    {
+      "command_id": "8a3bf3fe-5747-45be-8b57-587ea43edb3e",
+      "sha256": "c612fba1e4a537ab1a0d9951e520bbd4063c3548308a4ebc31b72b59fa735a70",
+      "version_name": "1.2.40-dev",
+      "version_code": 10240,
+      "status": "completed",
+      "failure_code": null,
+      "installed_version_code": 10240,
+      "recovered_after_process_restart": true,
+      "recorded_at": "2026-10-03T02:19:24.437404+00:00"
+    },
+    {
+      "command_id": "069c9d16-6074-40ca-b63b-c5688c36a540",
+      "sha256": "c612fba1e4a537ab1a0d9951e520bbd4063c3548308a4ebc31b72b59fa735a70",
+      "version_name": "1.2.40-dev",
+      "version_code": 10240,
+      "status": "completed",
+      "failure_code": null,
+      "installed_version_code": 10240,
+      "recovered_after_process_restart": true,
+      "recorded_at": "2026-10-03T02:19:34.952196+00:00"
+    },
+    {
+      "command_id": "abff3c8c-0feb-496e-9ce9-733b8cbcada2",
+      "sha256": "c612fba1e4a537ab1a0d9951e520bbd4063c3548308a4ebc31b72b59fa735a70",
+      "version_name": "1.2.40-dev",
+      "version_code": 10240,
+      "status": "completed",
+      "failure_code": null,
+      "installed_version_code": 10240,
+      "recovered_after_process_restart": true,
+      "recorded_at": "2026-10-03T02:19:47.628209+00:00"
+    }
+  ],
+  "postProcessRestartReceipts": 11,
+  "finiteObservations": [
+    {
+      "observedAt": "2026-10-03T02:20:43.982726+00:00",
+      "total": 19,
+      "online": 14,
+      "latestOnline": 14,
+      "maxHeartbeatAgeSeconds": 29.314111
+    },
+    {
+      "observedAt": "2026-10-03T02:20:59.006576+00:00",
+      "total": 19,
+      "online": 14,
+      "latestOnline": 14,
+      "maxHeartbeatAgeSeconds": 27.707093
+    },
+    {
+      "observedAt": "2026-10-03T02:21:14.030981+00:00",
+      "total": 19,
+      "online": 14,
+      "latestOnline": 14,
+      "maxHeartbeatAgeSeconds": 29.362395
+    },
+    {
+      "observedAt": "2026-10-03T02:21:29.052781+00:00",
+      "total": 19,
+      "online": 14,
+      "latestOnline": 14,
+      "maxHeartbeatAgeSeconds": 27.756357
+    },
+    {
+      "observedAt": "2026-10-03T02:21:44.076093+00:00",
+      "total": 19,
+      "online": 14,
+      "latestOnline": 14,
+      "maxHeartbeatAgeSeconds": 29.407497
+    },
+    {
+      "observedAt": "2026-10-03T02:21:59.102198+00:00",
+      "total": 19,
+      "online": 14,
+      "latestOnline": 14,
+      "maxHeartbeatAgeSeconds": 27.805926
+    },
+    {
+      "observedAt": "2026-10-03T02:22:14.125644+00:00",
+      "total": 19,
+      "online": 14,
+      "latestOnline": 14,
+      "maxHeartbeatAgeSeconds": 29.460291
+    },
+    {
+      "observedAt": "2026-10-03T02:22:29.149159+00:00",
+      "total": 19,
+      "online": 14,
+      "latestOnline": 14,
+      "maxHeartbeatAgeSeconds": 27.851859
+    },
+    {
+      "observedAt": "2026-10-03T02:22:44.174963+00:00",
+      "total": 19,
+      "online": 14,
+      "latestOnline": 14,
+      "maxHeartbeatAgeSeconds": 29.509679
+    },
+    {
+      "observedAt": "2026-10-03T02:22:59.199143+00:00",
+      "total": 19,
+      "online": 14,
+      "latestOnline": 14,
+      "maxHeartbeatAgeSeconds": 27.905296
+    },
+    {
+      "observedAt": "2026-10-03T02:23:14.334514+00:00",
+      "total": 19,
+      "online": 14,
+      "latestOnline": 14,
+      "maxHeartbeatAgeSeconds": 29.667454
+    },
+    {
+      "observedAt": "2026-10-03T02:23:29.357564+00:00",
+      "total": 19,
+      "online": 14,
+      "latestOnline": 14,
+      "maxHeartbeatAgeSeconds": 28.067944
+    }
+  ],
+  "onlineCohortStableInObservedSamples": true,
+  "observedMaxHeartbeatAgeSeconds": 29.667454,
+  "epochReadbacks": {
+    "before": {
+      "observedAt": "2026-10-03T02:21:37.079641+00:00",
+      "phase": "before",
+      "catalogTotal": 19,
+      "online": [
+        {
+          "id": "4815b950-e5cf-4686-9d46-42d0df8d41f7",
+          "name": "auto-ph-028",
+          "connectedSince": "2026-10-03T02:13:49.071100Z",
+          "versionCode": 10240,
+          "lastHeartbeat": "2026-10-03T02:21:19.031872Z"
+        },
+        {
+          "id": "b410464a-5f26-4803-a756-7840cc17b128",
+          "name": "auto-ph-025",
+          "connectedSince": "2026-10-03T01:15:01.510260Z",
+          "versionCode": 10240,
+          "lastHeartbeat": "2026-10-03T02:21:31.296272Z"
+        },
+        {
+          "id": "d088c147-7ada-4b29-9e79-f991b20fcf91",
+          "name": "auto-ph-022",
+          "connectedSince": "2026-10-03T02:18:13.007254Z",
+          "versionCode": 10240,
+          "lastHeartbeat": "2026-10-03T02:21:12.978499Z"
+        },
+        {
+          "id": "75c29a32-2867-4b60-947c-003e712e538f",
+          "name": "auto-ph-020",
+          "connectedSince": "2026-10-03T02:18:23.621367Z",
+          "versionCode": 10240,
+          "lastHeartbeat": "2026-10-03T02:21:23.590110Z"
+        },
+        {
+          "id": "c37e687a-ee83-466d-846f-3f4b36047fa7",
+          "name": "auto-ph-019",
+          "connectedSince": "2026-10-03T02:18:34.172129Z",
+          "versionCode": 10240,
+          "lastHeartbeat": "2026-10-03T02:21:34.135524Z"
+        },
+        {
+          "id": "bafef86f-3ab4-469b-ae0c-cf2771b55813",
+          "name": "auto-ph-018",
+          "connectedSince": "2026-10-03T02:18:44.960577Z",
+          "versionCode": 10240,
+          "lastHeartbeat": "2026-10-03T02:21:14.934243Z"
+        },
+        {
+          "id": "1dd7e59c-b68f-406a-93cd-5f4e34fdea90",
+          "name": "auto-ph-017",
+          "connectedSince": "2026-10-03T02:18:54.019163Z",
+          "versionCode": 10240,
+          "lastHeartbeat": "2026-10-03T02:21:23.990980Z"
+        },
+        {
+          "id": "3c4c4218-27ba-4d8d-a7d2-4348c2f91c93",
+          "name": "auto-ph-016",
+          "connectedSince": "2026-10-03T02:19:04.561811Z",
+          "versionCode": 10240,
+          "lastHeartbeat": "2026-10-03T02:21:34.536573Z"
+        },
+        {
+          "id": "930a6505-b7ec-4eee-93fe-9aaa66517871",
+          "name": "auto-ph-015",
+          "connectedSince": "2026-10-03T02:19:14.805680Z",
+          "versionCode": 10240,
+          "lastHeartbeat": "2026-10-03T02:21:14.789247Z"
+        },
+        {
+          "id": "673d5774-24b1-4b57-8dfb-90c46f627ce3",
+          "name": "auto-ph-014",
+          "connectedSince": "2026-10-03T02:19:25.178384Z",
+          "versionCode": 10240,
+          "lastHeartbeat": "2026-10-03T02:21:25.149557Z"
+        },
+        {
+          "id": "6d830af5-b7cc-44b4-b7f5-5e0275aceb3b",
+          "name": "auto-ph-013",
+          "connectedSince": "2026-10-03T01:16:02.506639Z",
+          "versionCode": 10240,
+          "lastHeartbeat": "2026-10-03T02:21:32.296189Z"
+        },
+        {
+          "id": "8c187cfa-e5ea-4939-a137-07619437953d",
+          "name": "auto-ph-012",
+          "connectedSince": "2026-10-03T02:19:35.673972Z",
+          "versionCode": 10240,
+          "lastHeartbeat": "2026-10-03T02:21:35.655560Z"
+        },
+        {
+          "id": "414ce0e9-4b93-4f96-b9ca-ee675f53835e",
+          "name": "auto-ph-011",
+          "connectedSince": "2026-10-03T02:19:48.920796Z",
+          "versionCode": 10240,
+          "lastHeartbeat": "2026-10-03T02:21:18.873958Z"
+        },
+        {
+          "id": "5df4805e-fe64-4d39-960c-19ceab206cd6",
+          "name": "auto-ph-010",
+          "connectedSince": "2026-10-03T01:14:14.891062Z",
+          "versionCode": 10240,
+          "lastHeartbeat": "2026-10-03T02:21:14.668596Z"
+        }
+      ]
+    },
+    "after": {
+      "observedAt": "2026-10-03T02:24:34.838291+00:00",
+      "phase": "after",
+      "catalogTotal": 19,
+      "online": [
+        {
+          "id": "4815b950-e5cf-4686-9d46-42d0df8d41f7",
+          "name": "auto-ph-028",
+          "connectedSince": "2026-10-03T02:13:49.071100Z",
+          "versionCode": 10240,
+          "lastHeartbeat": "2026-10-03T02:24:19.021064Z"
+        },
+        {
+          "id": "b410464a-5f26-4803-a756-7840cc17b128",
+          "name": "auto-ph-025",
+          "connectedSince": "2026-10-03T01:15:01.510260Z",
+          "versionCode": 10240,
+          "lastHeartbeat": "2026-10-03T02:24:31.287520Z"
+        },
+        {
+          "id": "d088c147-7ada-4b29-9e79-f991b20fcf91",
+          "name": "auto-ph-022",
+          "connectedSince": "2026-10-03T02:18:13.007254Z",
+          "versionCode": 10240,
+          "lastHeartbeat": "2026-10-03T02:24:12.970521Z"
+        },
+        {
+          "id": "75c29a32-2867-4b60-947c-003e712e538f",
+          "name": "auto-ph-020",
+          "connectedSince": "2026-10-03T02:18:23.621367Z",
+          "versionCode": 10240,
+          "lastHeartbeat": "2026-10-03T02:24:23.583017Z"
+        },
+        {
+          "id": "c37e687a-ee83-466d-846f-3f4b36047fa7",
+          "name": "auto-ph-019",
+          "connectedSince": "2026-10-03T02:18:34.172129Z",
+          "versionCode": 10240,
+          "lastHeartbeat": "2026-10-03T02:24:34.124310Z"
+        },
+        {
+          "id": "bafef86f-3ab4-469b-ae0c-cf2771b55813",
+          "name": "auto-ph-018",
+          "connectedSince": "2026-10-03T02:18:44.960577Z",
+          "versionCode": 10240,
+          "lastHeartbeat": "2026-10-03T02:24:14.925022Z"
+        },
+        {
+          "id": "1dd7e59c-b68f-406a-93cd-5f4e34fdea90",
+          "name": "auto-ph-017",
+          "connectedSince": "2026-10-03T02:18:54.019163Z",
+          "versionCode": 10240,
+          "lastHeartbeat": "2026-10-03T02:24:23.983016Z"
+        },
+        {
+          "id": "3c4c4218-27ba-4d8d-a7d2-4348c2f91c93",
+          "name": "auto-ph-016",
+          "connectedSince": "2026-10-03T02:19:04.561811Z",
+          "versionCode": 10240,
+          "lastHeartbeat": "2026-10-03T02:24:34.527431Z"
+        },
+        {
+          "id": "930a6505-b7ec-4eee-93fe-9aaa66517871",
+          "name": "auto-ph-015",
+          "connectedSince": "2026-10-03T02:19:14.805680Z",
+          "versionCode": 10240,
+          "lastHeartbeat": "2026-10-03T02:24:14.780130Z"
+        },
+        {
+          "id": "673d5774-24b1-4b57-8dfb-90c46f627ce3",
+          "name": "auto-ph-014",
+          "connectedSince": "2026-10-03T02:19:25.178384Z",
+          "versionCode": 10240,
+          "lastHeartbeat": "2026-10-03T02:24:25.143257Z"
+        },
+        {
+          "id": "6d830af5-b7cc-44b4-b7f5-5e0275aceb3b",
+          "name": "auto-ph-013",
+          "connectedSince": "2026-10-03T01:16:02.506639Z",
+          "versionCode": 10240,
+          "lastHeartbeat": "2026-10-03T02:24:32.318303Z"
+        },
+        {
+          "id": "8c187cfa-e5ea-4939-a137-07619437953d",
+          "name": "auto-ph-012",
+          "connectedSince": "2026-10-03T02:19:35.673972Z",
+          "versionCode": 10240,
+          "lastHeartbeat": "2026-10-03T02:24:05.645322Z"
+        },
+        {
+          "id": "414ce0e9-4b93-4f96-b9ca-ee675f53835e",
+          "name": "auto-ph-011",
+          "connectedSince": "2026-10-03T02:19:48.920796Z",
+          "versionCode": 10240,
+          "lastHeartbeat": "2026-10-03T02:24:18.866470Z"
+        },
+        {
+          "id": "5df4805e-fe64-4d39-960c-19ceab206cd6",
+          "name": "auto-ph-010",
+          "connectedSince": "2026-10-03T01:14:14.891062Z",
+          "versionCode": 10240,
+          "lastHeartbeat": "2026-10-03T02:24:14.658675Z"
+        }
+      ],
+      "sameReportedEpochs": true,
+      "sameOnlineCohort": true,
+      "comparisonSeconds": 177.75865
+    }
+  },
+  "harnessCorrections": [
+    "PH028 cleanup DELETE409 after terminal handler auto-cleared grant; absence and retained receipt verified, no replay.",
+    "Observer connected_at field was absent; its false flag preserved. Separate real connected_since before/after snapshots match."
+  ],
+  "backendEventReadback": {
+    "observedAt": "2026-10-03T02:24:35.351301+00:00",
+    "since": "2026-10-03T02:19:49Z",
+    "matchedCounts": {
+      "Agent disconnected": 0,
+      "close_code=1005": 0,
+      "close_code=4009": 0,
+      "Agent connected": 0,
+      "Heartbeat established": 0
+    },
+    "isContinuousUptimeProof": false
+  },
+  "completedPublishedCi": {
+    "source": "6d5f280e478ca58d3d38a572c0a73f2404683cd3",
+    "observedAt": "2026-10-03T02:22:33.000702+00:00",
+    "allThreeWorkflowsSucceeded": true,
+    "backendTests": {
+      "passed": 2351,
+      "skipped": 16
+    },
+    "runs": {
+      "frontend": {
+        "conclusion": "success",
+        "headSha": "6d5f280e478ca58d3d38a572c0a73f2404683cd3",
+        "status": "completed",
+        "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/37088605294",
+        "runId": 37088605294
+      },
+      "backend": {
+        "conclusion": "success",
+        "headSha": "6d5f280e478ca58d3d38a572c0a73f2404683cd3",
+        "status": "completed",
+        "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/37088605285",
+        "runId": 37088605285
+      },
+      "android": {
+        "conclusion": "success",
+        "headSha": "6d5f280e478ca58d3d38a572c0a73f2404683cd3",
+        "status": "completed",
+        "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/37088605275",
+        "runId": 37088605275
+      }
+    }
+  },
+  "limits": [
+    "Only fourteen connected owned pilot devices; five offline are not accepted or updated by these receipts.",
+    "Manual exact-file package/signer compatibility proof is not a general verified artifact manifest API.",
+    "Normal android/dev remains10209; candidate10240 is android-canary/dev, no global promotion.",
+    "APK remains a debug planar canary; not a production-signed stable release.",
+    "Finite heartbeat/epoch observations are not SLA, long soak, remote FPS/input latency or combined stream+scripts acceptance.",
+    "Browser visual/keyboard/mobile remains OPEN_URL_POLICY_BLOCKED; no bypass.",
+    "F32/F33 PARTIAL, N01/N03/outbox and F34-F36/F39-F41 remain open."
+  ],
+  "privateReceiptDigests": {
+    "ota-channel-delivery-readback.json": "28d28b9361311a64fe24db9cd143cac0c0a9b3bc32e4c5acc2f15fc5280a9022",
+    "ota-package-compatibility-readback.json": "99ba93b25b3fa71ab09e0223460f3bfe4f0055fa5c1d2a4f0724815fb611fd9f",
+    "ota-installed-certificate-readback.json": "ff53f3c4c54e8282bc11fb486c72e8b5f17710a6352139c6cdd6b9cec41c4223",
+    "ph028-addressed-canary.json": "d6d887775f125bdce3cd478bf1b33a633d052d2c1992fdb8ce6ebb25afc94153",
+    "owned-pilot-rollout-preflight.json": "884a542e5fe9f810b676026cb4ec44adf7d579256c095c0ba8733f02e3538e97",
+    "owned-pilot-rollout.json": "9cd3f06cf3565793413354ca2277fe8f6156621b4c40cbf7cd4fce062d5a143e",
+    "owned-pilot-rollout-observation.json": "d2e3944ee20a5a7dd03c13d480de373b27bb3d5272bc22fba25ae823139a98f2",
+    "owned-pilot-rollout-epochs-before.json": "33f1571cfe13625eaef2be69906f6b2e1497f64c175abda3b0bf80045da32f6c",
+    "owned-pilot-rollout-epochs-after.json": "068669ee21a131ce9a592b95992ef0ebfd508fac8d45a80b73ead9279faf01f0",
+    "vpn-controls-final-ci.json": "827f8c96a7b65f3c4400dad86ac180d4fcaaf054ba2ec49b3a516bf5da650991"
+  },
+  "documentValidation": {
+    "documentsChecked": 17,
+    "relativeTargetsChecked": 663,
+    "findingAnchorsChecked": 41,
+    "missing": [],
+    "testCountsMatchRawLog": true,
+    "findingCountsMatchLedger": true,
+    "frozenAuditUnchanged": true
+  }
+}

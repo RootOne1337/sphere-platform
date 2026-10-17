@@ -1,0 +1,73 @@
+{
+  "scope": "PH025 static-screen reconnect; distinct from decoder configuration and continuous input",
+  "status": "source_validated_candidate_not_installed",
+  "installed_ui_source": "fcdc547627ea410e65d7ff79601dc71cdd25f343",
+  "installed_api_source": "a41c4e64bf569a7518d34606da0facbba32f77e6",
+  "ui_delivery": {
+    "image_config_sha256": "38a2ebee2b91642dbb806f2ffda0ad167b20350005a1c0d23a14adeb05cb6649",
+    "runtime_manifest_sha256": "4e3f93684178e1ca739e8568b60e1063b8dec524043ff76c8ef8a6bef8333202",
+    "other_containers_preserved": 45,
+    "ota_catalog_unchanged": true,
+    "hosted_frontend_tests": 1820,
+    "hosted_backend_passed": 3302,
+    "hosted_backend_skipped": 37,
+    "hosted_backend_subtests_passed": 229,
+    "all_four_exact_source_ci_successful": true
+  },
+  "initial_live_ui": {
+    "drawn_first": 11,
+    "drawn_after_recents": 32,
+    "drawn_after_home": 49,
+    "decode_errors": 0,
+    "action_receipt_ms": [574, 494],
+    "receipt_is_input_to_picture_latency": false
+  },
+  "static_reconnect_failure": {
+    "packets": 8,
+    "bytes": 244,
+    "sps": 4,
+    "pps": 4,
+    "idr": 0,
+    "delta": 0,
+    "decode_submitted": 0,
+    "drawn": 0,
+    "decode_errors": 0,
+    "first_frame_timeout_seconds": 10,
+    "android_capture_active": true
+  },
+  "temporary_recovery": {
+    "scope": "one addressed PH025 stop_stream/start_stream",
+    "capture_restarts_in_this_investigation": 3,
+    "drawn": 70,
+    "decode_errors": 0,
+    "permanent_fix_proven": false
+  },
+  "default_full_units_before_ordering_followup": {
+    "dev": {"tests": 981, "passed": 978, "skipped": 3, "failures": 0, "errors": 0, "suites": 83},
+    "enterprise": {"tests": 981, "passed": 978, "skipped": 3, "failures": 0, "errors": 0, "suites": 83},
+    "new_refresh_cases": 12
+  },
+  "latest_stream_leaf_including_ordering_followup": {
+    "dev": {"tests": 57, "failures": 0, "errors": 0, "skipped": 0},
+    "enterprise": {"tests": 57, "failures": 0, "errors": 0, "skipped": 0},
+    "new_ordering_cases": 1
+  },
+  "native_baseline": {
+    "installed_apk_version_code": 10247,
+    "adb_serial": "emulator-5554",
+    "registry_apk_hash_match_name": "auto-ph-011",
+    "source_raw_images": 1,
+    "initial_pictures": 1,
+    "refresh_accepted": [true, true],
+    "refresh_pictures": [0, 0],
+    "errors": 0,
+    "scope": "actual APK encoder classpath and real MediaCodec; synthetic RAW; not MediaProjection or live viewer",
+    "apk_installed_by_probe": false,
+    "screen_capture_permissions_requested": false,
+    "pixels_persisted": false
+  },
+  "candidate_version_code": 10248,
+  "candidate_installed": false,
+  "continuous_input_installed": false,
+  "open": ["source-pinned signed APK build", "native candidate output comparison", "single local canary", "single PH025 canary", "static live reconnect acceptance", "continuous-input full integration"]
+}

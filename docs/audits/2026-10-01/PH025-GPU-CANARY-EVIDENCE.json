@@ -1,0 +1,382 @@
+{
+  "observed_at_utc": "2026-09-30T21:29:44.931286+00:00",
+  "timezone": "Asia/Yekaterinburg",
+  "device": "auto-ph-025",
+  "android_version_reported": 9,
+  "artifact": {
+    "source_commit": "5118525fdff2e4d370782e82a123eedf77ce4740",
+    "file": "SphereAgent-pilot-candidate-1.2.36-dev-5118525.apk",
+    "sha256": "301097dc1382a966df29ff3a793fcc5e896478cd02de1d9f6743b7426ff52108",
+    "bytes": 8451575,
+    "package": "com.sphereplatform.agent.pilot.debug",
+    "version_name": "1.2.36-dev",
+    "version_code": 10236,
+    "certificate_sha256": "3ab40797d26e4f52f9e440afc6fe69f197caef71a5a27c63c86735bb1801871f",
+    "gpu_bridge_enabled": true,
+    "signed_discovery_manifest_version": 27
+  },
+  "ota": {
+    "new_command_ids": 1,
+    "terminal_status": "completed",
+    "installed_version_code": 10236,
+    "observed_at_utc": "2026-09-30T21:29:23.607167+00:00",
+    "global_channel_changed": false
+  },
+  "native_motion": {
+    "launch_count": 1,
+    "motion_confirmed": true,
+    "gpu_marker_found": true,
+    "gpu_fallback_found": false,
+    "elapsed_seconds": 52.0,
+    "packets": 67,
+    "bytes": 460618,
+    "motion_pictures": 44,
+    "motion_interval_seconds": 20.0,
+    "motion_windows": [
+      {
+        "from_seconds": 14,
+        "pictures": 0,
+        "bytes": 0
+      },
+      {
+        "from_seconds": 15,
+        "pictures": 0,
+        "bytes": 0
+      },
+      {
+        "from_seconds": 16,
+        "pictures": 0,
+        "bytes": 0
+      },
+      {
+        "from_seconds": 17,
+        "pictures": 4,
+        "bytes": 23705
+      },
+      {
+        "from_seconds": 18,
+        "pictures": 5,
+        "bytes": 22586
+      },
+      {
+        "from_seconds": 19,
+        "pictures": 2,
+        "bytes": 23170
+      },
+      {
+        "from_seconds": 20,
+        "pictures": 0,
+        "bytes": 0
+      },
+      {
+        "from_seconds": 21,
+        "pictures": 0,
+        "bytes": 0
+      },
+      {
+        "from_seconds": 22,
+        "pictures": 3,
+        "bytes": 13197
+      },
+      {
+        "from_seconds": 23,
+        "pictures": 5,
+        "bytes": 28791
+      },
+      {
+        "from_seconds": 24,
+        "pictures": 3,
+        "bytes": 11494
+      },
+      {
+        "from_seconds": 25,
+        "pictures": 1,
+        "bytes": 4214
+      },
+      {
+        "from_seconds": 26,
+        "pictures": 0,
+        "bytes": 0
+      },
+      {
+        "from_seconds": 27,
+        "pictures": 0,
+        "bytes": 0
+      },
+      {
+        "from_seconds": 28,
+        "pictures": 6,
+        "bytes": 63333
+      },
+      {
+        "from_seconds": 29,
+        "pictures": 5,
+        "bytes": 23868
+      },
+      {
+        "from_seconds": 30,
+        "pictures": 1,
+        "bytes": 4281
+      },
+      {
+        "from_seconds": 31,
+        "pictures": 0,
+        "bytes": 0
+      },
+      {
+        "from_seconds": 32,
+        "pictures": 0,
+        "bytes": 0
+      },
+      {
+        "from_seconds": 33,
+        "pictures": 4,
+        "bytes": 18550
+      }
+    ],
+    "saved_video_bytes": 0,
+    "browser_verified": false,
+    "global_stop_sent": false,
+    "android_ingress_changed": false
+  },
+  "display_comparison": [
+    {
+      "device": "auto-ph-010",
+      "status": "online",
+      "reported_modes_fps": [
+        "60.000004"
+      ]
+    },
+    {
+      "device": "auto-ph-011",
+      "status": "online",
+      "reported_modes_fps": [
+        "60.000004"
+      ]
+    },
+    {
+      "device": "auto-ph-022",
+      "status": "online",
+      "reported_modes_fps": [
+        "5.0"
+      ]
+    },
+    {
+      "device": "auto-ph-023",
+      "status": "offline"
+    },
+    {
+      "device": "auto-ph-025",
+      "status": "online",
+      "reported_modes_fps": [
+        "5.0"
+      ]
+    }
+  ],
+  "telemetry": [
+    {
+      "seconds": 3.078,
+      "state": "not_streaming",
+      "age_seconds": null,
+      "last_heartbeat": "2026-09-30T21:29:47.703065Z",
+      "telemetry": null
+    },
+    {
+      "seconds": 6.094,
+      "state": "not_streaming",
+      "age_seconds": null,
+      "last_heartbeat": "2026-09-30T21:29:47.703065Z",
+      "telemetry": null
+    },
+    {
+      "seconds": 9.109,
+      "state": "not_streaming",
+      "age_seconds": null,
+      "last_heartbeat": "2026-09-30T21:29:47.703065Z",
+      "telemetry": null
+    },
+    {
+      "seconds": 12.14,
+      "state": "not_streaming",
+      "age_seconds": null,
+      "last_heartbeat": "2026-09-30T21:29:47.703065Z",
+      "telemetry": null
+    },
+    {
+      "seconds": 15.172,
+      "state": "not_streaming",
+      "age_seconds": null,
+      "last_heartbeat": "2026-09-30T21:29:47.703065Z",
+      "telemetry": null
+    },
+    {
+      "seconds": 18.187,
+      "state": "not_streaming",
+      "age_seconds": null,
+      "last_heartbeat": "2026-09-30T21:29:47.703065Z",
+      "telemetry": null
+    },
+    {
+      "seconds": 21.219,
+      "state": "not_streaming",
+      "age_seconds": null,
+      "last_heartbeat": "2026-09-30T21:29:47.703065Z",
+      "telemetry": null
+    },
+    {
+      "seconds": 24.25,
+      "state": "not_streaming",
+      "age_seconds": null,
+      "last_heartbeat": "2026-09-30T21:29:47.703065Z",
+      "telemetry": null
+    },
+    {
+      "seconds": 27.265,
+      "state": "not_streaming",
+      "age_seconds": null,
+      "last_heartbeat": "2026-09-30T21:29:47.703065Z",
+      "telemetry": null
+    },
+    {
+      "seconds": 30.297,
+      "state": "not_streaming",
+      "age_seconds": null,
+      "last_heartbeat": "2026-09-30T21:29:47.703065Z",
+      "telemetry": null
+    },
+    {
+      "seconds": 33.312,
+      "state": "active_report",
+      "age_seconds": 3.011596,
+      "last_heartbeat": "2026-09-30T21:30:15.231810Z",
+      "telemetry": {
+        "schema_version": 2,
+        "active": true,
+        "stage": "capture_encoder_ws_queue",
+        "encoder_fps": 3,
+        "encoded_frames_total": 42,
+        "encoded_bytes_total": 266259,
+        "key_frame_ratio": 0.0476190485060215,
+        "ws_queue_attempts_total": 46,
+        "ws_queue_accepted_total": 46,
+        "ws_queue_rejected_total": 0,
+        "ws_queue_accepted_bytes_total": 266969,
+        "capture_fps": 3,
+        "render_fps": 3,
+        "capture_frames_total": 43,
+        "rendered_frames_total": 42,
+        "capture_read_failures_total": 0,
+        "render_failures_total": 0,
+        "encoder_errors_total": 0,
+        "frame_throttle_drops_total": 0
+      }
+    },
+    {
+      "seconds": 36.328,
+      "state": "active_report",
+      "age_seconds": 6.030911,
+      "last_heartbeat": "2026-09-30T21:30:15.231810Z",
+      "telemetry": {
+        "schema_version": 2,
+        "active": true,
+        "stage": "capture_encoder_ws_queue",
+        "encoder_fps": 3,
+        "encoded_frames_total": 42,
+        "encoded_bytes_total": 266259,
+        "key_frame_ratio": 0.0476190485060215,
+        "ws_queue_attempts_total": 46,
+        "ws_queue_accepted_total": 46,
+        "ws_queue_rejected_total": 0,
+        "ws_queue_accepted_bytes_total": 266969,
+        "capture_fps": 3,
+        "render_fps": 3,
+        "capture_frames_total": 43,
+        "rendered_frames_total": 42,
+        "capture_read_failures_total": 0,
+        "render_failures_total": 0,
+        "encoder_errors_total": 0,
+        "frame_throttle_drops_total": 0
+      }
+    },
+    {
+      "seconds": 39.359,
+      "state": "active_report",
+      "age_seconds": 9.048624,
+      "last_heartbeat": "2026-09-30T21:30:15.231810Z",
+      "telemetry": {
+        "schema_version": 2,
+        "active": true,
+        "stage": "capture_encoder_ws_queue",
+        "encoder_fps": 3,
+        "encoded_frames_total": 42,
+        "encoded_bytes_total": 266259,
+        "key_frame_ratio": 0.0476190485060215,
+        "ws_queue_attempts_total": 46,
+        "ws_queue_accepted_total": 46,
+        "ws_queue_rejected_total": 0,
+        "ws_queue_accepted_bytes_total": 266969,
+        "capture_fps": 3,
+        "render_fps": 3,
+        "capture_frames_total": 43,
+        "rendered_frames_total": 42,
+        "capture_read_failures_total": 0,
+        "render_failures_total": 0,
+        "encoder_errors_total": 0,
+        "frame_throttle_drops_total": 0
+      }
+    },
+    {
+      "seconds": 42.39,
+      "state": "active_report",
+      "age_seconds": 12.081321,
+      "last_heartbeat": "2026-09-30T21:30:15.231810Z",
+      "telemetry": {
+        "schema_version": 2,
+        "active": true,
+        "stage": "capture_encoder_ws_queue",
+        "encoder_fps": 3,
+        "encoded_frames_total": 42,
+        "encoded_bytes_total": 266259,
+        "key_frame_ratio": 0.0476190485060215,
+        "ws_queue_attempts_total": 46,
+        "ws_queue_accepted_total": 46,
+        "ws_queue_rejected_total": 0,
+        "ws_queue_accepted_bytes_total": 266969,
+        "capture_fps": 3,
+        "render_fps": 3,
+        "capture_frames_total": 43,
+        "rendered_frames_total": 42,
+        "capture_read_failures_total": 0,
+        "render_failures_total": 0,
+        "encoder_errors_total": 0,
+        "frame_throttle_drops_total": 0
+      }
+    }
+  ],
+  "gfxinfo": {
+    "scope": "accumulated process data, not isolated motion-only sample",
+    "total_frames": 59,
+    "janky_frames": 39,
+    "p50_ms": 200,
+    "p90_ms": 2950,
+    "p99_ms": 4100
+  },
+  "cpuinfo": {
+    "scope": "historical Android accounting window; not live host utilization",
+    "total_percent": 28,
+    "iowait_percent": 23,
+    "load_average": [
+      7.26,
+      6.85,
+      6.5
+    ]
+  },
+  "limitations": [
+    "reported display capability is not measured source animation rate",
+    "5 Hz source cannot prove 20-30 unique source pictures per second",
+    "additional long gaps are not localized by one heartbeat snapshot",
+    "wire timestamp is wall-clock callback packaging time, not MediaCodec producer PTS",
+    "no browser decoder/draw benchmark or legibility acceptance",
+    "no video pixels, credentials, raw system logs or signed recovery grants published"
+  ]
+}

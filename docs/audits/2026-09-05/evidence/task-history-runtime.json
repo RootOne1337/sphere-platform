@@ -1,0 +1,129 @@
+{
+  "source": "03b161e5faffda0a28d82eb2db94064e73b5360f",
+  "deployment": {
+    "at": "2026-09-19T13:35:50.022399+00:00",
+    "source": "03b161e5faffda0a28d82eb2db94064e73b5360f",
+    "images": {
+      "backend": {
+        "tag": "sphere-pilot-20260911-backend:03b161e",
+        "id": "sha256:d4f32f0e3c661434ac9f1f403af8cb80dd22730e138411b662f84eafe265477f"
+      },
+      "frontend": {
+        "tag": "sphere-pilot-20260911-frontend:03b161e",
+        "id": "sha256:9c76c1be6766d745e9bbdbf05494a67313cbd285b2e5108c0e4bff0bc58ecae7"
+      }
+    },
+    "only_new_backend_frontend_replaced": true,
+    "other_container_ids_images_start_times_preserved": true,
+    "ota_catalog_preserved": true,
+    "apk_download_hash_verified": true,
+    "task_total": 190,
+    "status_counts": {
+      "queued": 0,
+      "assigned": 0,
+      "running": 0,
+      "completed": 190,
+      "failed": 0,
+      "timeout": 0,
+      "cancelled": 0
+    },
+    "build_context": "git archive committed runtime files; no private environment or untracked files"
+  },
+  "api_acceptance": {
+    "at": "2026-09-19T21:41:06.175831+00:00",
+    "source": "03b161e5faffda0a28d82eb2db94064e73b5360f",
+    "total": 190,
+    "page_sizes": [
+      25,
+      25,
+      25,
+      25,
+      25,
+      25,
+      25,
+      15
+    ],
+    "status_counts": {
+      "queued": 0,
+      "assigned": 0,
+      "running": 0,
+      "completed": 190,
+      "failed": 0,
+      "timeout": 0,
+      "cancelled": 0
+    },
+    "oldest_task_id": "ef7e5d40-98ed-4f0b-895a-adcae28d7312",
+    "oldest_task_found": true,
+    "oldest_script_name": "Pilot overnight - safe Android system cycle",
+    "all_status_filters_matched": true,
+    "empty_search_is_zero": true,
+    "active_tasks": 0,
+    "active_pipelines": 0,
+    "devices": [
+      {
+        "serial": "emulator-5554",
+        "version_code": 10207,
+        "command_passed": true,
+        "pid": "2182"
+      },
+      {
+        "serial": "emulator-5556",
+        "version_code": 10207,
+        "command_passed": true,
+        "pid": "2187"
+      }
+    ],
+    "query_batch_seconds": 1.0,
+    "scope": "Existing pilot tasks, no SQL rows modified; echo only on Android. Query batch timing is not a benchmark."
+  },
+  "browser_acceptance": {
+    "startedAt": "2026-09-19T21:41:27.590Z",
+    "pages": [
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8
+    ],
+    "oldestSearchPassed": true,
+    "failedFilterZero": true,
+    "editorOpened": true,
+    "livePipeline": {
+      "runId": "68aeeda8-c9a3-4cb6-98a1-2cf40199e1f8",
+      "status": "RUNNING",
+      "step": "hold",
+      "visible": true
+    },
+    "pipelineRemovedAfterCancel": true,
+    "finishedAt": "2026-09-19T21:43:51.964Z"
+  },
+  "pipeline_fixture": {
+    "pipeline_id": "753dea0b-fac9-40ef-9dfb-332298525377",
+    "created_at": "2026-09-19T21:43:02.513827+00:00",
+    "delay_only": true,
+    "run_id": "68aeeda8-c9a3-4cb6-98a1-2cf40199e1f8",
+    "observed_status": "running",
+    "current_step_id": "hold",
+    "final_status": "cancelled",
+    "fixture_disabled": true,
+    "cleanup_at": "2026-09-19T21:43:41.128215+00:00"
+  },
+  "limits": [
+    "Two existing Android 9 APKs; no fleet capacity claim.",
+    "Task history contains 190 completed rows; the old failure case is covered by PostgreSQL and frontend regressions.",
+    "100% completed tasks does not imply the original overnight harness succeeded.",
+    "No continuous uptime or overnight acceptance inferred from the time between deployment and retest."
+  ],
+  "harness_corrections": [
+    "Initial deployment rolled back because Docker Mounts list order was compared literally. Two consecutive read-only inspect calls reproduced ordering differences. Sorting by Destination preserved the same ID/image/start/status/mount guard; repeat deployment passed.",
+    "Pipeline fixture cancellation succeeded; disable initially used PUT and returned 405. Correct PATCH disabled the fixture; no active fixture remains."
+  ],
+  "private_artifact_sha256": {
+    "remote/task-history-deploy.json": "8eaaa1fe0c476bea15f73cb30a650452597c94d3f7c7b79bfcf18becf2667752",
+    "remote/task-history-runtime.json": "568e144f5d181e8a1421c03a73222b59a54363414e5d21e4f6dc20aedea0f866",
+    "remote/task-history-browser.json": "92b2db14cf12a1ee989fbafab351e797ce72aa81f6b8dfea0de171ea044abb00",
+    "remote/task-history-pipeline.json": "5ae5cd2e5c0bd891b22dee2ecf6201359e3a7c9d24f84b086d04a9f0dc17cc99"
+  }
+}

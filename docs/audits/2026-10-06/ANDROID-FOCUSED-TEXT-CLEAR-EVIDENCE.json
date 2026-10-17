@@ -1,0 +1,138 @@
+{
+  "evidenceSchema": 1,
+  "sourceRevision": "6a9f570f2c0a4dc54a90b0be57a289dadc85d534",
+  "textDigestMode": "sha256-after-CRLF-to-LF",
+  "binaryDigestMode": "sha256-raw",
+  "secretsRawLogsPrivateConfigurationPublished": false,
+  "evidenceFiles": [
+    {
+      "file": "evidence/android-focused-text-clear/candidate-build.json",
+      "bytesNormalized": 4404,
+      "sha256": "bd0a4abb7bb07a00789a8124c9267448ee7c62aad91b8302615c3a1c45c01d71"
+    },
+    {
+      "file": "evidence/android-focused-text-clear/generated-class-corruption.json",
+      "bytesNormalized": 2261,
+      "sha256": "44a9ba189b7c97f9fefba867973318ad9890c251e8840301a8fe93075471d751"
+    },
+    {
+      "file": "evidence/android-focused-text-clear/native-helper.json",
+      "bytesNormalized": 1164,
+      "sha256": "554077dcca3439fefd7997e06f2d4eaf8c80ac4527d7f45fb38e0df00c0de40a"
+    },
+    {
+      "file": "evidence/android-focused-text-clear/source-ci.json",
+      "bytesNormalized": 4976,
+      "sha256": "8b3c71c3a1aa637d725b668b68f5733fcc02ae9f4c38829549145e978cbfd725"
+    },
+    {
+      "file": "evidence/android-focused-text-clear/source-tests.json",
+      "bytesNormalized": 2911,
+      "sha256": "cb8671f83fec498aaf2c0950ced2178613276a749ad6872d194180a7997025b7"
+    }
+  ],
+  "screenshots": [
+    {
+      "file": "assets/android-focused-text-clear/before.png",
+      "source": "6a9f570f2c0a4dc54a90b0be57a289dadc85d534",
+      "capture": "native-Android-adb-screencap-original-PNG",
+      "bytes": 17601,
+      "dimensions": [
+        960,
+        540
+      ],
+      "sha256": "9872829ea959fd5ceea28847ec97c6b91c243ddd0594475a2fa4c052f6fcc63c"
+    },
+    {
+      "file": "assets/android-focused-text-clear/after.png",
+      "source": "6a9f570f2c0a4dc54a90b0be57a289dadc85d534",
+      "capture": "native-Android-adb-screencap-original-PNG",
+      "bytes": 7689,
+      "dimensions": [
+        960,
+        540
+      ],
+      "sha256": "4ab2d33f6f5b9efab7731dd5874e01ae43785db9a17e2268d082f222c2ce5847"
+    }
+  ],
+  "sourceHashes": [
+    {
+      "source": "6a9f570f2c0a4dc54a90b0be57a289dadc85d534",
+      "file": "android/app/proguard-rules.pro",
+      "digestMode": "raw-git-blob",
+      "sha256": "a25b2ca154d368c6c437408ea0a7099876692c479453a362ebecf3c27728e413"
+    },
+    {
+      "source": "6a9f570f2c0a4dc54a90b0be57a289dadc85d534",
+      "file": "android/app/src/main/java/com/sphereplatform/agent/commands/RootInputBridge.java",
+      "digestMode": "raw-git-blob",
+      "sha256": "ea43f175c2b4453e7b56ca60628f7099396855925f6b555b31c19758c878aca0"
+    },
+    {
+      "source": "6a9f570f2c0a4dc54a90b0be57a289dadc85d534",
+      "file": "android/app/src/main/java/com/sphereplatform/agent/commands/RootTextClearSequence.java",
+      "digestMode": "raw-git-blob",
+      "sha256": "236a28fcb55ff04c64a8f6a4d5abe7cd9817cfd919c45fe4720e5f719f6c8cb8"
+    },
+    {
+      "source": "6a9f570f2c0a4dc54a90b0be57a289dadc85d534",
+      "file": "android/app/src/main/kotlin/com/sphereplatform/agent/commands/AdbActionExecutor.kt",
+      "digestMode": "raw-git-blob",
+      "sha256": "9b5a1d88442efd2d9ffe2c0567ca43f9ba3f016fce3e50b28f1e2cb22be8ef64"
+    },
+    {
+      "source": "6a9f570f2c0a4dc54a90b0be57a289dadc85d534",
+      "file": "android/app/src/main/kotlin/com/sphereplatform/agent/commands/DagRunner.kt",
+      "digestMode": "raw-git-blob",
+      "sha256": "2cd852161b2a105bf9ddc19620c230c78ced18b48de82c2fc04806e1796a01f2"
+    },
+    {
+      "source": "6a9f570f2c0a4dc54a90b0be57a289dadc85d534",
+      "file": "android/app/src/main/kotlin/com/sphereplatform/agent/commands/RootCommandAcknowledgement.kt",
+      "digestMode": "raw-git-blob",
+      "sha256": "ea51314e650a6c58a05fbf3822f4fc49779b5c6beab7446792aab97752f0e257"
+    },
+    {
+      "source": "6a9f570f2c0a4dc54a90b0be57a289dadc85d534",
+      "file": "android/app/src/test/kotlin/com/sphereplatform/agent/commands/AdbRootClearTest.kt",
+      "digestMode": "raw-git-blob",
+      "sha256": "ba99f3e91b3a2613789fe93d2d2572db54698152d7d609f264f91589876b10b2"
+    },
+    {
+      "source": "6a9f570f2c0a4dc54a90b0be57a289dadc85d534",
+      "file": "android/app/src/test/kotlin/com/sphereplatform/agent/commands/DagRunnerTest.kt",
+      "digestMode": "raw-git-blob",
+      "sha256": "613491158a3d747c743a33ad83c46d51880fe4999e994c7aa770d60ffac4796a"
+    },
+    {
+      "source": "6a9f570f2c0a4dc54a90b0be57a289dadc85d534",
+      "file": "android/app/src/test/kotlin/com/sphereplatform/agent/commands/RootCommandAcknowledgementTest.kt",
+      "digestMode": "raw-git-blob",
+      "sha256": "8a559de19c24721723b0a3b30710d623889456d133a51d96344a8a7a8b4ecece"
+    },
+    {
+      "source": "6a9f570f2c0a4dc54a90b0be57a289dadc85d534",
+      "file": "android/app/src/test/kotlin/com/sphereplatform/agent/commands/RootTextClearSequenceTest.kt",
+      "digestMode": "raw-git-blob",
+      "sha256": "24a9efcb4d724d75a2be653dca2f8d2d5d78eafe78f4730d2406aa084dce1161"
+    },
+    {
+      "source": "6a9f570f2c0a4dc54a90b0be57a289dadc85d534",
+      "file": "android/version.properties",
+      "digestMode": "raw-git-blob",
+      "sha256": "8ac74e367d8813fc8f0eb06843433b1c1e41636528512e1529df5d04ee60491c"
+    },
+    {
+      "source": "6a9f570f2c0a4dc54a90b0be57a289dadc85d534",
+      "file": "android/app/src/test/kotlin/com/sphereplatform/agent/provisioning/ConfigRecoveryTest.kt",
+      "digestMode": "raw-git-blob",
+      "sha256": "68db7aaca6035d43001f964be4c55cbf4b623f6f0f98373566eebcbfc9512b00"
+    }
+  ],
+  "scope": "candidate source/build and Android 9 helper only; no install or OTA",
+  "backlog": {
+    "accepted": 9,
+    "openCriteria": 41,
+    "wholeItemsClosedByThisStage": false
+  }
+}

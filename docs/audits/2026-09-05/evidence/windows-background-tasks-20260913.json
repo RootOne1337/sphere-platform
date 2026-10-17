@@ -1,0 +1,45 @@
+{
+  "at": "2026-09-13T02:11:56.950777+00:00",
+  "tasks": [
+    {
+      "name": "Sphere-LDPlayer-pilot-20260911",
+      "executable": "C:\\Users\\dimas\\Documents\\ChatGPT\\sphere-platform\\.venv-audit\\dependency-upgrade\\Scripts\\pythonw.exe",
+      "arguments": "-m scripts.ldplayer_watchdog --config \"C:\\Users\\dimas\\Documents\\ChatGPT\\sphere-platform\\.local-pilot\\station-network\\config.json\"",
+      "last_run": "2026-09-13T02:11:09.0000000Z",
+      "exit_code": 0,
+      "next_run": "2026-09-13T02:12:08.0000000Z"
+    },
+    {
+      "name": "Sphere-Publisher-pilot-20260911",
+      "executable": "C:\\Users\\dimas\\Documents\\ChatGPT\\sphere-platform\\.venv-audit\\dependency-upgrade\\Scripts\\pythonw.exe",
+      "arguments": "-m scripts.discovery_publisher --config \"C:\\Users\\dimas\\Documents\\ChatGPT\\sphere-platform\\.local-pilot\\remote\\publisher\\config.json\" --once",
+      "last_run": "2026-09-13T02:11:09.0000000Z",
+      "exit_code": 0,
+      "next_run": "2026-09-13T02:12:08.0000000Z"
+    }
+  ],
+  "status_files": [
+    {
+      "component": ".local-pilot",
+      "checked_at": 1789265469.496979,
+      "status": "ok"
+    },
+    {
+      "component": "publisher",
+      "checked_at": 1789265472,
+      "status": "ok"
+    }
+  ],
+  "windows_regressions": 97,
+  "native_console_handle_test": {
+    "gui_parent": 0,
+    "publisher_child": 0
+  },
+  "local_gradle_helpers_no_window": [
+    "build_signed_apk.py",
+    "full_android_after_cache.py",
+    "test_apk_log_tail.py",
+    "build_log_tail_apk.py"
+  ],
+  "limitation": "Observed no-console process boundary and successful current scheduled actions; original transient user window was not captured, so its exact PID is unknown."
+}

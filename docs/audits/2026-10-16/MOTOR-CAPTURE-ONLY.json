@@ -1,0 +1,265 @@
+{
+  "schemaVersion": 1,
+  "observedAtUtc": "2026-10-15T22:52:19.764827+00:00",
+  "implementationRevision": "3d427a13caf161801fff796c56a3e4e3d19a6435",
+  "scope": "Finite capture-only transport admission and SDP rejection. Not gameplay, fleet capacity, native action execution or main runtime rollout.",
+  "moduleVersion": "0.2.0",
+  "codeFiles": [
+    {
+      "file": "android/app/src/main/kotlin/com/sphereplatform/agent/direct/DirectVideoProtocol.kt",
+      "sha256NormalizedLf": "0ab382a9217a14b426e623053320849fa6d99fb489abec0a9bb5eef5b39026ef"
+    },
+    {
+      "file": "android/app/src/test/kotlin/com/sphereplatform/agent/direct/DirectVideoProtocolTest.kt",
+      "sha256NormalizedLf": "f6e5b305f9c6250986ab456604af5210265d880260c97f6110bb6f0af826ba99"
+    },
+    {
+      "file": "backend/api/v1/streaming/router.py",
+      "sha256NormalizedLf": "e5e85ddc62dc7ebd3fdba6403c05a5af6ba9f8752d305e29648e2384ecf00011"
+    },
+    {
+      "file": "backend/api/ws/stream/router.py",
+      "sha256NormalizedLf": "2f53bee46e660f8d9b758e34044b5e1f6e8567b56a9d8e9c71603dbf7a75313a"
+    },
+    {
+      "file": "backend/services/stream_quality.py",
+      "sha256NormalizedLf": "6159570477d7d95983a11988810cfffa3d5a2f6f2392a09c6da969871dbd88bb"
+    },
+    {
+      "file": "backend/websocket/capture_lifecycle.py",
+      "sha256NormalizedLf": "8afb780860ec2354dffd245404267608caed4895ec11a177e51f40f22006ef6c"
+    },
+    {
+      "file": "backend/websocket/direct_probe_protocol.py",
+      "sha256NormalizedLf": "6ccc020525e4e913b0c9e70ae05e98a6e48c7614881f10a0a3c7ee7947a2e6fd"
+    },
+    {
+      "file": "backend/websocket/stream_bridge.py",
+      "sha256NormalizedLf": "67382c6ca23c94dd64d13059b07627bbae4e2f40d8d86ff1c40f5f77b7053bab"
+    },
+    {
+      "file": "motor_worker/__init__.py",
+      "sha256NormalizedLf": "2fa3343dc0826fd3c2233632ca93d1ef21748a5bb94d044fc5952a694acf3d0b"
+    },
+    {
+      "file": "motor_worker/session.py",
+      "sha256NormalizedLf": "1cf33617f78e18295b7a387838df9804d2b3c854753e5d7f9d4b605e21fdfd97"
+    },
+    {
+      "file": "tests/production/test_stream_viewer_tenant_runtime.py",
+      "sha256NormalizedLf": "6af1f60c25753c9e9324e4c357b298ae4f3d22fcc0c89410499871f3bce11367"
+    },
+    {
+      "file": "tests/test_motor_worker_integration.py",
+      "sha256NormalizedLf": "26d5da1a9d58373ec925197b91028fe2d844e4d127f5ab9697c06ee31d147578"
+    },
+    {
+      "file": "tests/test_ws/test_capture_lifecycle.py",
+      "sha256NormalizedLf": "e6f10ed5ce60c911a621a5659e0314bed53f70e4046db25b5b92ccc0bb15fd66"
+    },
+    {
+      "file": "tests/test_ws/test_direct_probe.py",
+      "sha256NormalizedLf": "75ba16f44c966d43d33fad5d4e33eb41243debb1d44b3e10b1bfc8215e7ec0a3"
+    }
+  ],
+  "candidate": {
+    "sourceRevision": "3d427a13caf161801fff796c56a3e4e3d19a6435",
+    "parentImageId": "sha256:7830b6d17d689f13d323ccea274b764028adf112f015c17501674d53b2b0b650",
+    "imageId": "sha256:a54d1448a8151b255da31d997714552e9dce13069dc6cf9e7b634998e6240eba",
+    "imageTag": "sphere-local-motor-candidate:3d427a13caf161801fff796c56a3e4e3d19a6435",
+    "sourceMode": "git-archive-backend-from-commit",
+    "requirementsInstalled": false,
+    "buildNetwork": "none",
+    "parentLayersPreserved": true,
+    "candidateContainerRemoved": true,
+    "otherRuntimesPreserved": true,
+    "productionBackendReplaced": false
+  },
+  "candidateApiMode": "Temporary loopback API using shipped stream/direct routes, Redis command publisher and shared leases; no orchestration loops or Android agent reconnect to candidate.",
+  "finalDeviceRun": {
+    "schemaVersion": 1,
+    "kind": "HEADLESS_TRANSPORT_PILOT_NOT_GAMEPLAY",
+    "deviceId": "414ce0e9-4b93-4f96-b9ca-ee675f53835e",
+    "success": true,
+    "failure": null,
+    "failurePhase": null,
+    "taskFailure": null,
+    "durationObservedSeconds": 15.007,
+    "requestedObservationHz": 5,
+    "localTimingClock": "perf_counter",
+    "decodedFrames": 873,
+    "receiverStats": {
+      "packetsReceived": 9473,
+      "packetsLost": 0,
+      "jitter": 108
+    },
+    "h264ReceiveLevel": 42,
+    "duplicateOrReorderedPts": 0,
+    "rgbObservations": 75,
+    "rgbObservationsDuringMonitor": 75,
+    "observationHzDuringMonitor": 4.998,
+    "decodedFpsDuringMonitor": 57.507,
+    "capture": {
+      "epoch": "51669e4d-30ef-4db6-b1ee-1351b1c93016",
+      "width": 960,
+      "height": 540
+    },
+    "route": {
+      "path": "nat",
+      "protocol": "udp",
+      "candidateTypes": [
+        "host",
+        "prflx"
+      ],
+      "addressScopes": [
+        "private",
+        "private"
+      ],
+      "evidence": "aiortc_1_15_nominated_pair_adapter",
+      "lanProven": false
+    },
+    "videoEchoReceipts": 4,
+    "lastEchoRttMs": 2.5680000107968226,
+    "signalingRenewalsSent": 3,
+    "captureLifecycle": {
+      "requested": true,
+      "delivery": "capture_only",
+      "sourceReadinessConfirmed": true,
+      "directDeliveryAcks": 6,
+      "serverBootstrapBytesDiscarded": 0,
+      "serverBytesAfterHandover": 0,
+      "relayFramesDecoded": 0
+    },
+    "control": {
+      "requested": true,
+      "dataChannelOpened": true,
+      "nativeAdmissionConfirmed": true,
+      "actorAliveReceipts": 49,
+      "lastActorRttMs": 3.7570999993477017,
+      "participantClosedConfirmed": true,
+      "nativeActionAppliedVerified": false,
+      "pointerKeyTextCommandsSent": 0
+    },
+    "bounds": {
+      "decodedFrameSlots": 1,
+      "observationTailLimit": 64,
+      "inputReplay": false
+    },
+    "limitations": [
+      "No source capture frame ID/clock mapping: receiver age is not capture age.",
+      "Unique RTP PTS is transport progress, not proof of fresh Android source pixels.",
+      "Selected ICE pair proves a peer route, not LAN or VPN bypass.",
+      "Idle ALIVE is APK actor liveness; no native gameplay action was executed.",
+      "User JWT pilot only; service identity, task delegation and model integration remain open."
+    ],
+    "modelInstalled": false,
+    "gameplayReady": false,
+    "hardwareDecodeAssumed": false,
+    "rgbTransform": "pilot_resize_256_square_rgb24_not_validated_model_preprocessing",
+    "packages": {
+      "aiortc": "1.15.0",
+      "aioice": "0.10.2",
+      "av": "17.1.0",
+      "websockets": "17.2",
+      "numpy": "2.4.4"
+    }
+  },
+  "apkProcessAfterProbe": {
+    "device": "PH011",
+    "pid": 31355,
+    "sameAsPreviousSuccessfulPilot": true,
+    "apkCode": 10276,
+    "replacementPerformed": false
+  },
+  "verification": {
+    "websocketTests": 968,
+    "websocketSubtests": 44,
+    "streamQualityTests": 25,
+    "motorProtocolTests": 18,
+    "realSoftwareMediaIntegrationTests": 10,
+    "mediaTestsSkipped": 0,
+    "postgresRlsTests": 4,
+    "postgresRole": "NOSUPERUSER NOBYPASSRLS with row_security_active true",
+    "androidProtocolUnitTests": 3,
+    "androidTestsSkipped": 0,
+    "androidApkInstalled": false,
+    "ruff": "passed",
+    "mypyScoped": "passed",
+    "hostedActionsStarted": false,
+    "documentationTests": 41,
+    "junitEvidence": [
+      {
+        "localFile": ".local-pilot/capture-only-ws-20261016.xml",
+        "sha256": "e78203e910a667ff6c788e4438dc6667f1940eee33eb2fa1b5551e157a0c4bb8",
+        "tests": 1012,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "localFile": ".local-pilot/capture-only-quality-20261016.xml",
+        "sha256": "552b1efbddb7c7385d834f34da6dd600cb4f67fb246313350642516f8c4fe6cd",
+        "tests": 25,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "localFile": ".local-pilot/capture-only-rls-20261016/junit.xml",
+        "sha256": "8a0994bad9a655303ed9772c6a6107febf0474a8cead7bdee0d8b0666283ffef",
+        "tests": 4,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "localFile": ".local-pilot/capture-only-android-unit-20261016/build/app/test-results/testDevDebugUnitTest/TEST-com.sphereplatform.agent.direct.DirectVideoProtocolTest.xml",
+        "sha256": "999f5cfbd7e1da6be87c7d559440c43706537300e7b8612e3807a4b6632015d1",
+        "tests": 3,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    ]
+  },
+  "protocol": {
+    "admission": {
+      "token": "process secret; omitted",
+      "delivery": "capture_only"
+    },
+    "nativeReadiness": "live stream_quality get completed with active source; exact capture epoch bound later by SV1 over DTLS",
+    "sourceReadTimeoutSeconds": 10,
+    "maxInactiveReads": 40,
+    "inactiveReadIntervalSeconds": 0.25,
+    "captureSetupLeaseSeconds": 40,
+    "boundPeerLeaseSeconds": 10,
+    "renewalSeconds": 3,
+    "binaryPayloadsAccepted": false,
+    "socketInputGranted": false,
+    "relayOptInAllowed": false
+  },
+  "currentInstallation": {
+    "ui": "19c4272b3fffa98fdf7a35bd56b09967ac036e24",
+    "api": "969a74440d67e987be98f37cdb450f7c47817f68",
+    "apkVersionCode": 10276,
+    "changed": false
+  },
+  "boundaries": {
+    "zeroServerToHeadlessMediaFromStartupVerified": true,
+    "zeroApkToServerMediaFromStartupVerified": false,
+    "noServerDependencyClaimed": false,
+    "modelInstalled": false,
+    "gameplayAccepted": false,
+    "gpuCapacityMeasured": false,
+    "nativeSdpGuardInstalled": false,
+    "nativeSdpCrashCauseSymbolicated": false,
+    "allNativeSdpCrashesEliminated": false
+  },
+  "remaining": [
+    "Production local packaging/admission and controlled rollout of backend/native guards",
+    "Source frame identity/clock and fresh content guarantee",
+    "Bounded decoder internal backlog and fleet capacity",
+    "Shared game control profile, simultaneous actions, neutral release and task-episode delegation",
+    "Model adapter and supervised gameplay after GPU SSH access"
+  ]
+}

@@ -1,0 +1,332 @@
+{
+  "observedAt": "2026-10-04T05:11:57.194857+00:00",
+  "timezone": "Asia/Yekaterinburg",
+  "apiSource": "9716348018e60647dc749774acb00422d0f2cd08",
+  "uiSource": "9716348018e60647dc749774acb00422d0f2cd08",
+  "sourceCommits": [
+    "f8c063d0ffdc04f9b810d24aacbed4b354add47b",
+    "6dc5e7e",
+    "6d49a4c0e8906f36d215a5739cd1bd2acc99be01",
+    "5e80137eea605f671c6fda08e7e22d30ad0664ec",
+    "8468b209a7bde6f19b0f41691269f2a8c639dae5",
+    "9716348018e60647dc749774acb00422d0f2cd08"
+  ],
+  "scope": "selected-device controls, original native PNG, bounded manual guest profile; stage acceptance, not production/SLA",
+  "apk": {
+    "version": "1.2.44-dev",
+    "versionCode": 10244,
+    "changed": false,
+    "normalCatalogCode": 10209,
+    "canaryManaged": true
+  },
+  "installedApi": {
+    "source": "9716348018e60647dc749774acb00422d0f2cd08",
+    "previousSource": "5e80137eea605f671c6fda08e7e22d30ad0664ec",
+    "observedAt": "2026-10-04T05:01:30.377989+00:00",
+    "containerId": "f18eeebd54f574030d3feb83d02e16b69735dd0cb1be30bd52c3f071ebb0d454",
+    "imageId": "sha256:db5ac69f5ae5304b2b0dd6f5ab5a6c4bbffd6f88ff094ad48026fbc96314b7f7",
+    "ready": true,
+    "buildRevisionMatched": true,
+    "preservedContainers": 15,
+    "tunaPreserved": true,
+    "uiPreserved": true,
+    "apkChanged": false,
+    "otaCatalogPreserved": true,
+    "mountsPreserved": true,
+    "browserVerified": false
+  },
+  "installedUi": {
+    "source": "9716348018e60647dc749774acb00422d0f2cd08",
+    "previousSource": "6d49a4c0e8906f36d215a5739cd1bd2acc99be01",
+    "observedAt": "2026-10-04T05:04:21.395008+00:00",
+    "url": "http://127.0.0.1:3015",
+    "containerId": "21a30fbafb981a6a8bc6a90996ae79acbc12ac6f7a690bee62fef69424d6e426",
+    "imageId": "sha256:dbc512c5a657d418adc6b14aca72e460a3437b95ecae24fcd1f82a1f4780a287",
+    "ready": true,
+    "preservedContainers": 15,
+    "onlyUiImageAndBuildArgumentChanged": true,
+    "apiPreserved": true,
+    "tunaPreserved": true,
+    "otaCatalogPreserved": true,
+    "browserVerified": false
+  },
+  "checks": {
+    "focusedFrontendCases": 49,
+    "sourceApiCases": 140,
+    "frontendImageCases": 1117,
+    "frontendImageSuites": 113,
+    "apiImageCases": 140,
+    "isolatedPostgresRedis": true,
+    "mypyFiles": 229,
+    "nodeMajor": 24,
+    "applicationSourceMounted": false,
+    "schemaOperations": 178,
+    "schemaPaths": 140,
+    "typesBuildPassed": true,
+    "ruffPassed": true,
+    "mypyPassed": true,
+    "schemaPassed": true
+  },
+  "ci": [
+    {
+      "conclusion": "success",
+      "createdAt": "2026-10-04T02:09:46Z",
+      "databaseId": 37170197118,
+      "headSha": "9716348018e60647dc749774acb00422d0f2cd08",
+      "status": "completed",
+      "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/37170197118",
+      "workflowName": "CI — Android"
+    },
+    {
+      "conclusion": "success",
+      "createdAt": "2026-10-04T02:09:46Z",
+      "databaseId": 37170197117,
+      "headSha": "9716348018e60647dc749774acb00422d0f2cd08",
+      "status": "completed",
+      "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/37170197117",
+      "workflowName": "CI — Backend"
+    },
+    {
+      "conclusion": "success",
+      "createdAt": "2026-10-04T02:09:46Z",
+      "databaseId": 37170197114,
+      "headSha": "9716348018e60647dc749774acb00422d0f2cd08",
+      "status": "completed",
+      "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/37170197114",
+      "workflowName": "Preview — Deploy"
+    },
+    {
+      "conclusion": "success",
+      "createdAt": "2026-10-04T02:09:46Z",
+      "databaseId": 37170197126,
+      "headSha": "9716348018e60647dc749774acb00422d0f2cd08",
+      "status": "completed",
+      "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/37170197126",
+      "workflowName": "CI — Frontend"
+    }
+  ],
+  "userAcceptance": {
+    "xpathHighlightAndSidebar": true,
+    "downloadConfirmedForVideoFrame": true,
+    "downloadConfirmedForCurrentNativePng": false,
+    "wheelEditingConfirmation": "NOT_RECORDED",
+    "ownBrowserVisual": "OPEN_URL_POLICY_BLOCKED"
+  },
+  "nativeScreenshotFirstTrial": {
+    "startedAt": "2026-10-04T05:01:51.435982+00:00",
+    "apiSource": "9716348018e60647dc749774acb00422d0f2cd08",
+    "inputCommandsSent": false,
+    "noPcAgentOrAdb": true,
+    "cases": [
+      {
+        "device": "auto-ph-025",
+        "deviceId": "b410464a-5f26-4803-a756-7840cc17b128",
+        "requestedAt": "2026-10-04T05:01:51.450673+00:00",
+        "status": 504,
+        "accepted": false,
+        "durationSeconds": 16.072
+      },
+      {
+        "device": "auto-ph-010",
+        "deviceId": "5df4805e-fe64-4d39-960c-19ceab206cd6",
+        "requestedAt": "2026-10-04T05:02:07.523099+00:00",
+        "status": 200,
+        "accepted": true,
+        "nativeSize": [
+          960,
+          540
+        ],
+        "bytes": 231269,
+        "sha256": "475814de9ce1dc2ab8613dbec22434776e186698e0c8bc6eb1175908e09853d1",
+        "pillowFullDecodePassed": true,
+        "androidServerFileHashMatched": true,
+        "cleanupConfirmed": true,
+        "snapshotId": "5b6fde7bef484fbeb3b2e7fca3adbdd2",
+        "durationSeconds": 4.319
+      }
+    ],
+    "finishedAt": "2026-10-04T05:02:11.842222+00:00"
+  },
+  "nativeScreenshotSecondDiagnosticTrial": {
+    "startedAt": "2026-10-04T05:05:01.516020+00:00",
+    "apiSource": "9716348018e60647dc749774acb00422d0f2cd08",
+    "inputCommandsSent": false,
+    "noPcAgentOrAdb": true,
+    "cases": [
+      {
+        "device": "auto-ph-025",
+        "deviceId": "b410464a-5f26-4803-a756-7840cc17b128",
+        "requestedAt": "2026-10-04T05:05:01.530013+00:00",
+        "status": 200,
+        "accepted": true,
+        "nativeSize": [
+          960,
+          540
+        ],
+        "bytes": 218676,
+        "sha256": "099a0474cc3eedee40fb495495f19baf64df8f0a3371dabcf5766935ddaf6f82",
+        "pillowFullDecodePassed": true,
+        "androidServerFileHashMatched": true,
+        "cleanupConfirmed": true,
+        "snapshotId": "1b5805395002464388a240af8aba3e84",
+        "durationSeconds": 3.13
+      },
+      {
+        "device": "auto-ph-010",
+        "deviceId": "5df4805e-fe64-4d39-960c-19ceab206cd6",
+        "requestedAt": "2026-10-04T05:05:04.659496+00:00",
+        "status": 200,
+        "accepted": true,
+        "nativeSize": [
+          960,
+          540
+        ],
+        "bytes": 231280,
+        "sha256": "83fdc7c6945f762987dd826367122fc586d33e9a584a12bf09f87d6ecda84852",
+        "pillowFullDecodePassed": true,
+        "androidServerFileHashMatched": true,
+        "cleanupConfirmed": true,
+        "snapshotId": "415e92b6baa1464d9ceea33412e87d56",
+        "durationSeconds": 2.947
+      }
+    ],
+    "finishedAt": "2026-10-04T05:05:07.607206+00:00"
+  },
+  "transportIncident": {
+    "at": "2026-10-04T05:02:08.813827Z",
+    "lastAt": "2026-10-04T05:02:08.836993Z",
+    "disconnectCount": 7,
+    "code": 1005,
+    "includesRemotePh025": true,
+    "tunaWarningOrErrorLines": 0,
+    "rootCause": "UNDETERMINED",
+    "laterWmSizeHttp200Seconds": 0.335,
+    "notAutomaticReplay": true
+  },
+  "pngMetadata": [
+    {
+      "source": "video-frame",
+      "size": [
+        960,
+        540
+      ],
+      "bytes": 259400,
+      "pHYs": null,
+      "dpi": null,
+      "fullyDecoded": true
+    },
+    {
+      "source": "native-root-PNG",
+      "size": [
+        960,
+        540
+      ],
+      "bytes": 231150,
+      "pHYs": null,
+      "dpi": null,
+      "fullyDecoded": true
+    },
+    {
+      "source": "native-root-PNG",
+      "size": [
+        960,
+        540
+      ],
+      "bytes": 220881,
+      "pHYs": null,
+      "dpi": null,
+      "fullyDecoded": true
+    }
+  ],
+  "androidProfile": {
+    "apiSource": "5e80137eea605f671c6fda08e7e22d30ad0664ec",
+    "startedAt": "2026-10-04T01:51:18.361847Z",
+    "finishedAt": "2026-10-04T01:51:22.245311Z",
+    "actualReadOnlyReplies": 14,
+    "sourceParserAcceptanceCases": 30,
+    "remoteRows": 137,
+    "localRows": 148,
+    "inputSent": false,
+    "publicOrVpnEgressProven": false,
+    "hostHardwareProven": false
+  },
+  "fleetWindow": {
+    "startedAt": "2026-10-04T05:05:51.672130+00:00",
+    "uiSource": "9716348018e60647dc749774acb00422d0f2cd08",
+    "apiSource": "9716348018e60647dc749774acb00422d0f2cd08",
+    "browserVerified": false,
+    "inputCommandsSent": false,
+    "baselineCohortPreserved": true,
+    "postApiRestartEpochsPreserved": true,
+    "heartbeatUnder60Seconds": true,
+    "finishedAt": "2026-10-04T05:06:52.233411+00:00",
+    "cohortCount": 14,
+    "preservedNeighbours": 15,
+    "apkChanged": false,
+    "tunaPreserved": true,
+    "otaPreserved": true,
+    "fleetGate": "PASSED"
+  },
+  "cohortCounts": [
+    14,
+    14,
+    14,
+    14,
+    14,
+    14,
+    14
+  ],
+  "ledger": {
+    "sourceFixed": 34,
+    "unclosed": 7,
+    "partial": [
+      "F32",
+      "F33",
+      "F39"
+    ],
+    "open": [
+      "F34",
+      "F36",
+      "F40",
+      "F41"
+    ],
+    "nativePngDoesNotCloseN01ArtifactUpload": true
+  },
+  "historicalFailuresPreserved": {
+    "earlierFleetDropPh015": true,
+    "earlierHttp500And504": true,
+    "firstNativeScreenshotRemote504": true,
+    "firstHostExportSchemaMismatch6d49a4c": true,
+    "originalAuditFrozen": true
+  },
+  "limitations": [
+    "No embedded Appium UIAutomator2-server or nonroot adapter",
+    "No Unicode/emoji text bridge",
+    "Video and tree are independent",
+    "No full visual/browser/download/load/soak acceptance",
+    "Cleanup is best effort on broken Android channel",
+    "No automatic capture replay or blanket temporary-file sweep",
+    "No production-wide frontend promotion or new APK rollout"
+  ],
+  "privateEvidenceHashes": {
+    "api-build.json": "78e05336e0ece445d97385e6e5c880674e03335cd2d3e5fdcf606d78a885bac8",
+    "web-build.json": "f6849d461ed020d8f0dbbbf9e3984757a18ffa090c4ee6fc36416775aee91b35",
+    "image-tests.xml": "5cf6853dc439aa18ed6fb53097a809be60b2e92c6789b7480f4751c948890fce",
+    "web-image-tests.json": "d1e3f4bce85705c90fbf3d45c28177aaaebef99d7466a1aeedfeb3ea0298aea1",
+    "mypy.json": "9ed335f1f20cb59527d498dde107a27ad2f31ac5d8101ca70a19944e6b63286a",
+    "schema.json": "7429245316ebefa738ed741055fc21b373feea5f62f51916963ddbc757ebcfc5",
+    "ruff.json": "573ff3cf788432d7107cff638f1cc2e1ac8727a38c01b0a7a635c135f9fbfe9c",
+    "installed.json": "6bd941651983745fdb0d14fa7931131bc087fa4fd476618f93b4b13a05180b57",
+    "web-installed.json": "d189664c347080f46b135c8463d90bccfc6819f66d95572bdf2c50a9a31997b0",
+    "readback.json": "75d6941c5a9e60595f5a0f20be7c1e3db3b17be076e87c05f9fefb4176212acd",
+    "live-screenshots-first-failure.json": "ee834a7ea214023644f93319c2cb7174ea2f3ef5a464c3c9ad72c9c65d0647d8",
+    "live-screenshots.json": "366a13697d2e559f44e245e1b899e945991cda7a12fffddee3c3da4bbdf63fb4",
+    "png-metadata.json": "3f814412b4c25a131348d49fba94ee309fbe612ea9653be570944d24f68178bc",
+    "post-timeout-probe.json": "328e2aa61dd9fc40d3a4c0050c95efb422bd0616da5f518f24f0b219c283610b"
+  },
+  "profilePrivateProofHashes": {
+    "live-profile.json": "1480ebdf61dd4865c20274c3103f49c4f9b5eb57edddf3a4cc52b1f2fc9f4ebe",
+    "native-profile-parsed-counts.json": "b90a8ecba0e15c4ac379796a93bb99ba4de9cef54bdd57275330df18f0fd35b5"
+  },
+  "report": "DEVICE-CONTROL-AND-NATIVE-CAPTURE.md"
+}

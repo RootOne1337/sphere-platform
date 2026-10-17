@@ -1,0 +1,361 @@
+{
+  "evidenceSchema": 1,
+  "sourceRevision": "eb7a7c26c2e644f24eb3f785b3da1c29a65929be",
+  "assembledAt": "2026-10-06T11:25:02.408070+00:00",
+  "evidenceFiles": [
+    {
+      "file": "evidence/script-catalog/builds.json",
+      "bytesNormalized": 2501,
+      "sha256": "4b765637add483e03ddb395053a545695293b3f5bb3b0f1774fdf71c2ff3dc11"
+    },
+    {
+      "file": "evidence/script-catalog/exact-image-checks.json",
+      "bytesNormalized": 11094,
+      "sha256": "d7c050e119af18ced05e476d3cd0c25900c2d99a8f48b3c6fc7747e11efb3c87"
+    },
+    {
+      "file": "evidence/script-catalog/final-readonly.json",
+      "bytesNormalized": 2006,
+      "sha256": "3e56df8aa06366ee7d11072a84970fbcf755f3b88898e75a94b8a484c30b70a7"
+    },
+    {
+      "file": "evidence/script-catalog/fixture-budget.json",
+      "bytesNormalized": 1373,
+      "sha256": "7a9767ff4b7ad57a50bf391af933ecb6526ff26a1cae53b6aae892d370f57e69"
+    },
+    {
+      "file": "evidence/script-catalog/frontend-tests.json",
+      "bytesNormalized": 2059,
+      "sha256": "aa0de4dda04d33f30fc3715b60ab18a4bb228dd83a1b7bc8a4f34a2a82cbb616"
+    },
+    {
+      "file": "evidence/script-catalog/migration-backfill.json",
+      "bytesNormalized": 6062,
+      "sha256": "462268b6314780f13427087b71197567e9669a9c0d6c3ee73cc8dd5c9791c565"
+    },
+    {
+      "file": "evidence/script-catalog/native-ui.json",
+      "bytesNormalized": 2272,
+      "sha256": "bdb71aa6beb335bbe9b810a4974bf9215ccd6a057b0f752a3257f9173c2fcecf"
+    },
+    {
+      "file": "evidence/script-catalog/runtime-installation.json",
+      "bytesNormalized": 3973,
+      "sha256": "931ca96829a614abbeac0b9fcb58f877fd9fbeb49d46eb26c648bd5fffb5a43c"
+    },
+    {
+      "file": "evidence/script-catalog/source-ci.json",
+      "bytesNormalized": 4227,
+      "sha256": "047c59c9f64b3d7903d96ae70ab45ea316c70a0fc4c975ba5f7046f961b0c5b3"
+    },
+    {
+      "file": "evidence/script-catalog/source-tests.json",
+      "bytesNormalized": 5677,
+      "sha256": "79abe52044caa9fe371de67aa72fcdaeca4a593e5e5b902aeb2f98f7c9f7d9ce"
+    }
+  ],
+  "acceptedScope": [
+    "Metadata-only catalog source and installed contract",
+    "Scoped lazy version source",
+    "Additive migration and bounded per-tenant backfill",
+    "Pinned exact API/UI image checks"
+  ],
+  "acceptanceNotEstablished": [
+    "Deployed p95/CPU/RSS/query buffers",
+    "Browser heap/cache lifecycle at scale",
+    "Concurrent long soak or 1000-device behavior",
+    "Android recorder and frame-correlated replay",
+    "Cause of Windows disk/RAM growth",
+    "Whole enterprise backlog or production release readiness"
+  ],
+  "uniqueCrossRunTestTotalClaimed": false,
+  "previewDeploymentPerformed": false,
+  "backlog": {
+    "accepted": 9,
+    "openCriteria": 41,
+    "wholeItemsClosedByThisStage": false
+  },
+  "nativeBrowserQa": {
+    "status": "finite_visual_receipt_verified",
+    "file": "evidence/script-catalog/native-ui.json"
+  },
+  "finalFleetRecovery": {
+    "status": "finite_observation_received",
+    "file": "evidence/script-catalog/final-readonly.json"
+  },
+  "privateReceiptsReferencedByHashOnly": true,
+  "secretsSourceSnapshotsRawJunitHostPathsPublished": false,
+  "textDigestMode": "sha256-after-CRLF-to-LF",
+  "binaryDigestMode": "sha256-raw",
+  "screenshots": [
+    {
+      "file": "assets/script-catalog/run-dark-1280.jpg",
+      "source": "eb7a7c26c2e644f24eb3f785b3da1c29a65929be",
+      "capture": "native-codex-browser",
+      "bytes": 63422,
+      "dimensions": [
+        1280,
+        720
+      ],
+      "sha256": "5da9c4f619861bd85ad141f83738f19cea12fa010ddd232416b242db732c52e5"
+    },
+    {
+      "file": "assets/script-catalog/versions-dark-1280.jpg",
+      "source": "eb7a7c26c2e644f24eb3f785b3da1c29a65929be",
+      "capture": "native-codex-browser",
+      "bytes": 79865,
+      "dimensions": [
+        1280,
+        720
+      ],
+      "sha256": "de22e6d24ec396bdbc9f6fd3efee9ad71d59115fb5c0dfb6a25c7dd6a34b29ff"
+    },
+    {
+      "file": "assets/script-catalog/catalog-source-dark-1280.jpg",
+      "source": "eb7a7c26c2e644f24eb3f785b3da1c29a65929be",
+      "capture": "native-codex-browser",
+      "bytes": 86657,
+      "dimensions": [
+        1280,
+        720
+      ],
+      "sha256": "d5e967620aa415bda2596e4592e41ffb2e3a6dfdd501910f9030caf03bf6385a"
+    },
+    {
+      "file": "assets/script-catalog/catalog-source-light-1280.jpg",
+      "source": "eb7a7c26c2e644f24eb3f785b3da1c29a65929be",
+      "capture": "native-codex-browser",
+      "bytes": 88533,
+      "dimensions": [
+        1280,
+        720
+      ],
+      "sha256": "cf4902cf3b70dac25af36516f61fdc389ae97c798da324ff1280072bbb8382ce"
+    },
+    {
+      "file": "assets/script-catalog/catalog-light-724.jpg",
+      "source": "eb7a7c26c2e644f24eb3f785b3da1c29a65929be",
+      "capture": "native-codex-browser",
+      "bytes": 65438,
+      "dimensions": [
+        724,
+        884
+      ],
+      "sha256": "0eeafaf866890263bc2055239988380b0efeb46bf0ad01fe81f2d34453513ccc"
+    },
+    {
+      "file": "assets/script-catalog/run-light-390.jpg",
+      "source": "eb7a7c26c2e644f24eb3f785b3da1c29a65929be",
+      "capture": "native-codex-browser",
+      "bytes": 47205,
+      "dimensions": [
+        390,
+        844
+      ],
+      "sha256": "dbdc0ee3f13cda1f2fd35bdab788977040d9cf1a453875f10f19dbfbfa805a2f"
+    },
+    {
+      "file": "assets/script-catalog/settings-light-390.jpg",
+      "source": "eb7a7c26c2e644f24eb3f785b3da1c29a65929be",
+      "capture": "native-codex-browser",
+      "bytes": 33791,
+      "dimensions": [
+        390,
+        844
+      ],
+      "sha256": "6f6c4a3aac61aed781e4434232e35f4c3620a6a2a9b5b0a4d72a2658a530c9c6"
+    },
+    {
+      "file": "assets/script-catalog/editor-light-1280.jpg",
+      "source": "eb7a7c26c2e644f24eb3f785b3da1c29a65929be",
+      "capture": "native-codex-browser",
+      "bytes": 91812,
+      "dimensions": [
+        1280,
+        720
+      ],
+      "sha256": "6354133d67f8dfa2bb010a3b9faf741809fdfc52210f0a80b60d81828540ec1a"
+    },
+    {
+      "file": "assets/script-catalog/catalog-dark-1280.jpg",
+      "source": "eb7a7c26c2e644f24eb3f785b3da1c29a65929be",
+      "capture": "native-codex-browser",
+      "bytes": 83324,
+      "dimensions": [
+        1280,
+        720
+      ],
+      "sha256": "4a9c5ff2a056a4e094c1fc40b39a13063436ab775c36ab771cbaf6d7f42eef67"
+    }
+  ],
+  "sourceHashes": [
+    {
+      "file": "alembic/versions/20261006_script_catalog_metadata.py",
+      "source": "eb7a7c26c2e644f24eb3f785b3da1c29a65929be",
+      "sha256": "bbce55937c9dda21e61446137a854bf46792de6a8c3f79dc68a4758f602c9e73",
+      "digestMode": "raw-git-blob"
+    },
+    {
+      "file": "backend/Dockerfile",
+      "source": "eb7a7c26c2e644f24eb3f785b3da1c29a65929be",
+      "sha256": "d43b655146332c7bc083fc29d909988b69a354288589b85c72dc3a01b6bc8ddb",
+      "digestMode": "raw-git-blob"
+    },
+    {
+      "file": "backend/api/v1/scripts/router.py",
+      "source": "eb7a7c26c2e644f24eb3f785b3da1c29a65929be",
+      "sha256": "a36ca755413186f5e930c063b42f9b5ce9c374dd4b3df91e55d9cc8f30a5c29f",
+      "digestMode": "raw-git-blob"
+    },
+    {
+      "file": "backend/models/script.py",
+      "source": "eb7a7c26c2e644f24eb3f785b3da1c29a65929be",
+      "sha256": "9c6cee5a32024f7b88fa08209f0fcaba5f73fe9fa0782ff0e18ac614311a4a0e",
+      "digestMode": "raw-git-blob"
+    },
+    {
+      "file": "backend/schemas/script.py",
+      "source": "eb7a7c26c2e644f24eb3f785b3da1c29a65929be",
+      "sha256": "409324bb8d1a065c3128748df50754a4345f2ea0e23a4b553c5fe93a619147db",
+      "digestMode": "raw-git-blob"
+    },
+    {
+      "file": "backend/services/script_service.py",
+      "source": "eb7a7c26c2e644f24eb3f785b3da1c29a65929be",
+      "sha256": "f94087c81003f0df83a6d4c7e040d8624bc4cc0d6ccd47a7432677388ca53eef",
+      "digestMode": "raw-git-blob"
+    },
+    {
+      "file": "backend/services/script_version_admin.py",
+      "source": "eb7a7c26c2e644f24eb3f785b3da1c29a65929be",
+      "sha256": "80ceee8b9532dc4d5d9b5936df9e8cd8d41c585e284d0c7fbe833766ac3959e4",
+      "digestMode": "raw-git-blob"
+    },
+    {
+      "file": "frontend/__tests__/hooks/useScriptCatalog.test.ts",
+      "source": "eb7a7c26c2e644f24eb3f785b3da1c29a65929be",
+      "sha256": "0c1cff49192e15e442f315798e03866001d798efd74868a4b46acc66334ac794",
+      "digestMode": "raw-git-blob"
+    },
+    {
+      "file": "frontend/__tests__/scripts/catalog-fixtures.ts",
+      "source": "eb7a7c26c2e644f24eb3f785b3da1c29a65929be",
+      "sha256": "1086719a1942f861b37f27b3bc64851a7f9943f13ce4f5aed0cb549b71ac823c",
+      "digestMode": "raw-git-blob"
+    },
+    {
+      "file": "frontend/__tests__/scripts/catalog-pagination.test.tsx",
+      "source": "eb7a7c26c2e644f24eb3f785b3da1c29a65929be",
+      "sha256": "4a08303bdc5efa75f94254b3643cba2abe86722864ef43930efb32242b724712",
+      "digestMode": "raw-git-blob"
+    },
+    {
+      "file": "frontend/__tests__/scripts/page.test.tsx",
+      "source": "eb7a7c26c2e644f24eb3f785b3da1c29a65929be",
+      "sha256": "c78e5839d9f62b378b0db85e01c7a2c0e42d9a7dd2316e228a3e86bc6992c6ef",
+      "digestMode": "raw-git-blob"
+    },
+    {
+      "file": "frontend/__tests__/scripts/version-workflow.test.tsx",
+      "source": "eb7a7c26c2e644f24eb3f785b3da1c29a65929be",
+      "sha256": "2c9ade5d2644f80ff6391771303e9d4e1d4a39939b88741b20321a8578f62889",
+      "digestMode": "raw-git-blob"
+    },
+    {
+      "file": "frontend/app/(dashboard)/scripts/page.tsx",
+      "source": "eb7a7c26c2e644f24eb3f785b3da1c29a65929be",
+      "sha256": "88fefb8eebef3652df167bb83949e0e9e476b9ec9284d950a6d8cc6b62077d5b",
+      "digestMode": "raw-git-blob"
+    },
+    {
+      "file": "frontend/lib/hooks/useScriptCatalog.ts",
+      "source": "eb7a7c26c2e644f24eb3f785b3da1c29a65929be",
+      "sha256": "e8dc2a65902290a471a0da7de1aab5b2a8c916f5efc81afb95b85ec89a0bdbb3",
+      "digestMode": "raw-git-blob"
+    },
+    {
+      "file": "scripts/backfill_script_metadata.py",
+      "source": "eb7a7c26c2e644f24eb3f785b3da1c29a65929be",
+      "sha256": "b336a9985a3f1c17b0a08eb4af5b2c2abe01f1ae0be37f303450b8f2e335f48a",
+      "digestMode": "raw-git-blob"
+    },
+    {
+      "file": "scripts/build_reactive_dag.py",
+      "source": "eb7a7c26c2e644f24eb3f785b3da1c29a65929be",
+      "sha256": "082389a208d3c2b04834977934a86cccd07a8c740359a0881ab4e4af243e3430",
+      "digestMode": "raw-git-blob"
+    },
+    {
+      "file": "scripts/build_reactive_dag_v2.py",
+      "source": "eb7a7c26c2e644f24eb3f785b3da1c29a65929be",
+      "sha256": "2264ce9f7a9206abe85ba553806767418179d4b3e378a146d3a19f8ba825fe4d",
+      "digestMode": "raw-git-blob"
+    },
+    {
+      "file": "scripts/fix_dag_add_validate.sql",
+      "source": "eb7a7c26c2e644f24eb3f785b3da1c29a65929be",
+      "sha256": "66e04947b668c7742f18de0d375ceeefce37e8ec995a6a3ce7e5cf43f4685dd3",
+      "digestMode": "raw-git-blob"
+    },
+    {
+      "file": "scripts/fix_dag_v2.sql",
+      "source": "eb7a7c26c2e644f24eb3f785b3da1c29a65929be",
+      "sha256": "018241921113c1fdb346b3f570655d35be43252f6bdc74abac69d816caa425bb",
+      "digestMode": "raw-git-blob"
+    },
+    {
+      "file": "scripts/fix_sleep_wait.sql",
+      "source": "eb7a7c26c2e644f24eb3f785b3da1c29a65929be",
+      "sha256": "4be0e23a116ce4263a9d98917e995744f53bea2a3231bcc2d8a20e3ca0ffe74e",
+      "digestMode": "raw-git-blob"
+    },
+    {
+      "file": "scripts/publish_script_source.py",
+      "source": "eb7a7c26c2e644f24eb3f785b3da1c29a65929be",
+      "sha256": "bd0eca972f2ba1cc7c93d3e21d2bfb8f90e2e1c072bd0b43d6824d77bcb0e5a9",
+      "digestMode": "raw-git-blob"
+    },
+    {
+      "file": "scripts/seed_black_russia.py",
+      "source": "eb7a7c26c2e644f24eb3f785b3da1c29a65929be",
+      "sha256": "ce510ee115839e25c29114311985f4bc8c3b465d28b4d86d3f7ccc3d5681899f",
+      "digestMode": "raw-git-blob"
+    },
+    {
+      "file": "scripts/seed_farming_dags.py",
+      "source": "eb7a7c26c2e644f24eb3f785b3da1c29a65929be",
+      "sha256": "ca70ab530fa7144608d1b264fb5e9f7ff9b47c540b62c714bd13731d1f924f66",
+      "digestMode": "raw-git-blob"
+    },
+    {
+      "file": "tests/containers/backend_bootstrap_probe.py",
+      "source": "eb7a7c26c2e644f24eb3f785b3da1c29a65929be",
+      "sha256": "6c1bb79f18a4235228c777209ae63bc9fdaac79d9a24fb76eadc43eb79a3fb0f",
+      "digestMode": "raw-git-blob"
+    },
+    {
+      "file": "tests/production/test_script_catalog_budget.py",
+      "source": "eb7a7c26c2e644f24eb3f785b3da1c29a65929be",
+      "sha256": "72386fa668a8a179be7c6a6890735afab60d32a4de7424485b6143836b6e9851",
+      "digestMode": "raw-git-blob"
+    },
+    {
+      "file": "tests/production/test_script_catalog_maintenance.py",
+      "source": "eb7a7c26c2e644f24eb3f785b3da1c29a65929be",
+      "sha256": "c200e24bfe7b6e5971a2a98fcdbc73a9dcc637ea848627360aae27280a0570bc",
+      "digestMode": "raw-git-blob"
+    },
+    {
+      "file": "tests/production/test_script_catalog_metadata.py",
+      "source": "eb7a7c26c2e644f24eb3f785b3da1c29a65929be",
+      "sha256": "7ad4280d69f8438fd69f8abe7d4461aaf66c59ae7e11d880c4afd88e31d16633",
+      "digestMode": "raw-git-blob"
+    },
+    {
+      "file": "tests/test_script_catalog_contract.py",
+      "source": "eb7a7c26c2e644f24eb3f785b3da1c29a65929be",
+      "sha256": "1c92485130d8d0cf7f439193607bb9227d5c7b312c0ca34681825544c8bd934a",
+      "digestMode": "raw-git-blob"
+    }
+  ]
+}

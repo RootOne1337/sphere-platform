@@ -1,0 +1,51 @@
+FFFFF                                                                    [100%]
+================================== FAILURES ===================================
+_______ test_next_pong_recreates_evicted_presence_without_reconnecting ________
+tests\production\test_presence_recovery.py:33: in test_next_pong_recreates_evicted_presence_without_reconnecting
+    assert recovered is not None
+E   assert None is not None
+______ test_redis_outage_does_not_kill_heartbeat_and_next_pong_recovers _______
+tests\production\test_presence_recovery.py:45: in test_redis_outage_does_not_kill_heartbeat_and_next_pong_recovers
+    await heartbeat.handle_pong({"type": "pong", "ts": time.time()})
+backend\websocket\heartbeat.py:125: in handle_pong
+    current = await self.status_cache.get_status(self.device_id)
+backend\services\device_status_cache.py:47: in get_status
+    raw = await self.redis.get(self._key(device_id))
+..\..\..\AppData\Roaming\uv\python\cpython-3.12.12-windows-x86_64-none\Lib\unittest\mock.py:2291: in _execute_mock_call
+    raise effect
+E   ConnectionError: isolated Redis outage
+____ test_bad_latency_timestamp_cannot_prevent_valid_liveness_update[None] ____
+tests\production\test_presence_recovery.py:55: in test_bad_latency_timestamp_cannot_prevent_valid_liveness_update
+    await heartbeat.handle_pong({"type": "pong", "ts": timestamp, "battery": 80})
+backend\websocket\heartbeat.py:104: in handle_pong
+    server_latency_ms = round((time.time() - msg["ts"]) * 1000, 2)
+E   TypeError: unsupported operand type(s) for -: 'float' and 'NoneType'
+_ test_bad_latency_timestamp_cannot_prevent_valid_liveness_update[malformed] __
+tests\production\test_presence_recovery.py:55: in test_bad_latency_timestamp_cannot_prevent_valid_liveness_update
+    await heartbeat.handle_pong({"type": "pong", "ts": timestamp, "battery": 80})
+backend\websocket\heartbeat.py:104: in handle_pong
+    server_latency_ms = round((time.time() - msg["ts"]) * 1000, 2)
+E   TypeError: unsupported operand type(s) for -: 'float' and 'str'
+_ test_bad_latency_timestamp_cannot_prevent_valid_liveness_update[timestamp2] _
+tests\production\test_presence_recovery.py:55: in test_bad_latency_timestamp_cannot_prevent_valid_liveness_update
+    await heartbeat.handle_pong({"type": "pong", "ts": timestamp, "battery": 80})
+backend\websocket\heartbeat.py:104: in handle_pong
+    server_latency_ms = round((time.time() - msg["ts"]) * 1000, 2)
+E   TypeError: unsupported operand type(s) for -: 'float' and 'dict'
+============================== warnings summary ===============================
+.venv-audit\Lib\site-packages\pydantic\fields.py:754: 484 warnings
+  C:\Users\dimas\Documents\ChatGPT\sphere-platform\.venv-audit\Lib\site-packages\pydantic\fields.py:754: PydanticDeprecatedSince20: Using extra keyword arguments on `Field` is deprecated and will be removed. Use `json_schema_extra` instead. (Extra keys: 'deprecated'). Deprecated in Pydantic V2.0 to be removed in V3.0. See Pydantic V2 Migration Guide at https://errors.pydantic.dev/2.6/migration/
+    warn(
+
+backend\api\v1\game_accounts\router.py:94
+  C:\Users\dimas\Documents\ChatGPT\sphere-platform\backend\api\v1\game_accounts\router.py:94: DeprecationWarning: `regex` has been deprecated, please use `pattern` instead
+    sort_dir: str = Query("desc", regex="^(asc|desc)$", description="Направление сортировки"),
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ===========================
+FAILED tests/production/test_presence_recovery.py::test_next_pong_recreates_evicted_presence_without_reconnecting
+FAILED tests/production/test_presence_recovery.py::test_redis_outage_does_not_kill_heartbeat_and_next_pong_recovers
+FAILED tests/production/test_presence_recovery.py::test_bad_latency_timestamp_cannot_prevent_valid_liveness_update[None]
+FAILED tests/production/test_presence_recovery.py::test_bad_latency_timestamp_cannot_prevent_valid_liveness_update[malformed]
+FAILED tests/production/test_presence_recovery.py::test_bad_latency_timestamp_cannot_prevent_valid_liveness_update[timestamp2]
+5 failed, 485 warnings in 0.95s

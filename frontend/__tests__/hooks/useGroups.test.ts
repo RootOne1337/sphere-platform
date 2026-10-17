@@ -39,6 +39,18 @@ const MOCK_GROUP = {
 describe('useGroups', () => {
   beforeEach(() => jest.clearAllMocks());
 
+  it('does not read or poll groups until the caller admits access', async () => {
+    mockApi.get.mockResolvedValue({ data: [MOCK_GROUP] });
+    let enabled = false;
+    const view = renderQueryHook(() => useGroups(enabled));
+    expect(mockApi.get).not.toHaveBeenCalled();
+    enabled = true; view.rerender();
+    await waitFor(() => expect(view.result.current.isSuccess).toBe(true));
+    expect(mockApi.get).toHaveBeenCalledTimes(1);
+    enabled = false; view.rerender();
+    expect(view.result.current.fetchStatus).toBe('idle');
+  });
+
   it('загружает список групп', async () => {
     mockApi.get.mockResolvedValueOnce({ data: [MOCK_GROUP] });
 
@@ -73,7 +85,7 @@ describe('useUpdateGroup', () => {
   beforeEach(() => jest.clearAllMocks());
 
   it('обновляет группу PUT /groups/{id}', async () => {
-    mockApi.put.mockResolvedValueOnce({ data: { ...MOCK_GROUP, name: 'Beta' } });
+    mockApi.put.mockResolvedValueOnce({ data: { ...MOCK_GROUP, name: 'Beta', color: '#3b82f6' } });
 
     const { result } = renderQueryHook(() => useUpdateGroup());
 
@@ -87,7 +99,7 @@ describe('useUpdateGroup', () => {
   });
 
   it('обновляет parent_group_id (вложенные группы)', async () => {
-    mockApi.put.mockResolvedValueOnce({ data: MOCK_GROUP });
+    mockApi.put.mockResolvedValueOnce({ data: { ...MOCK_GROUP, id: 'grp-002', parent_group_id: 'grp-001' } });
 
     const { result } = renderQueryHook(() => useUpdateGroup());
 
@@ -104,7 +116,7 @@ describe('useDeleteGroup', () => {
   beforeEach(() => jest.clearAllMocks());
 
   it('удаляет группу DELETE /groups/{id}', async () => {
-    mockApi.delete.mockResolvedValueOnce({ data: null });
+    mockApi.delete.mockResolvedValueOnce({ status: 204, data: null });
 
     const { result } = renderQueryHook(() => useDeleteGroup());
 

@@ -1,0 +1,2044 @@
+import { act, fireEvent, render } from '@testing-library/react';
+import { DeviceStream } from '@/components/sphere/DeviceStream';
+import { api } from '@/lib/api';
+import { TextEncoder } from 'node:util';
+import type { DirectControlEndpoint } from '@/src/features/stream/directPointerTransport';
+import type { DirectVideoBinding } from '@/src/features/stream/directVideoProtocol';
+
+let mockRenderFrame: ((frame: VideoFrame) => void) | null = null;
+let mockDecoderStats: object | null = null;
+let mockCapture: { captureEpoch: string; frameWidth: number; frameHeight: number } | null = null;
+let mockAutomaticEligible = false;
+let mockDirectEndpoint: DirectControlEndpoint | null = null;
+let mockDirectReceipt: ((message: unknown) => void) | null = null;
+let mockDirectObserve: ((endpoint: DirectControlEndpoint | null) => void) | null = null;
+let mockVideoObserve: ((observation: object) => void) | null = null;
+let mockInputAdmission: { admissionKnown: boolean; admitted: boolean; sharedInput?: boolean } | null = null;
+let mockVideoEligible = false;
+let mockPresentDirectFrame: ((video: HTMLVideoElement, binding: DirectVideoBinding) => boolean) | null = null;
+
+const TOUCH_EPOCH = '00112233-4455-6677-8899-aabbccddeeff';
+
+jest.mock('@/lib/store', () => ({ useAuthStore: () => ({ accessToken: 'fixture-token' }) }));
+jest.mock('@/lib/api', () => ({ api: { get: jest.fn(), post: jest.fn() } }));
+// Keep control delivery independent of the separately tested probe admission request.
+jest.mock('@/src/features/stream/DirectProbeAccess', () => ({ DirectProbeAccess: () => null }));
+jest.mock('@/src/features/stream/StreamSessionHistoryPanel', () => ({ StreamSessionHistoryPanel: () => null }));
+jest.mock('@/src/features/stream/LiveDirectVideo', () => ({ LiveDirectVideo: ({ session, eligible, onObservation, onControlChannel, onFrame }: {
+  session: string; eligible: boolean; onObservation: (value: object) => void;
+  onControlChannel?: (endpoint: DirectControlEndpoint | null) => void;
+  onFrame: (video: HTMLVideoElement, binding: DirectVideoBinding) => boolean;
+}) => {
+  const React = jest.requireActual<typeof import('react')>('react');
+  const observation = React.useRef(onObservation);
+  const control = React.useRef(onControlChannel);
+  observation.current = onObservation;
+  control.current = onControlChannel;
+  mockDirectObserve = onControlChannel ?? null; mockVideoObserve = onObservation;
+  mockVideoEligible = eligible;
+  mockPresentDirectFrame = onFrame;
+  React.useEffect(() => {
+    observation.current({ admitted: !!mockDirectEndpoint, admissionKnown: true, active: !!mockDirectEndpoint,
+      frames: 0, lastFrameAt: null, attempts: 0, result: null, ...mockInputAdmission });
+    if (mockDirectEndpoint) control.current?.(mockDirectEndpoint);
+  }, [session]);
+  return null;
+} }));
+jest.mock('@/src/features/stream/AutomaticStreamDiagnostic', () => ({
+  AutomaticStreamDiagnostic: ({ eligible }: { eligible: boolean }) => { mockAutomaticEligible = eligible; return null; },
+}));
+jest.mock('@/lib/h264-decoder', () => ({
+  H264Decoder: class {
+    constructor(onFrame: (frame: VideoFrame, binding?: typeof mockCapture) => void) {
+      // The real decoder passes the current presented frame's capture binding,
+      // before exposing it through lastRenderedCapture. Preserve that contract.
+      mockRenderFrame = frame => onFrame(frame, mockCapture ? { ...mockCapture,
+        frameWidth: frame.displayWidth, frameHeight: frame.displayHeight } : undefined);
+    }
+    init() {}
+    destroy() {}
+    reset() {}
+    recoverCapture() {}
+    handleBinary() {}
+    get stats() { return mockDecoderStats; }
+    get lastRenderedCapture() { return mockCapture; }
+  },
+}));
+
+class MockSocket {
+  static CONNECTING = 0;
+  static OPEN = 1;
+  static CLOSING = 2;
+  static CLOSED = 3;
+  static instances: MockSocket[] = [];
+
+  readyState = MockSocket.CONNECTING;
+  bufferedAmount = 0;
+  binaryType = '';
+  onopen: ((event: Event) => void) | null = null;
+  onclose: ((event: { code: number }) => void) | null = null;
+  onerror: (() => void) | null = null;
+  onmessage: ((event: { data: string | ArrayBuffer }) => void) | null = null;
+  send = jest.fn();
+  close = jest.fn(() => { this.readyState = MockSocket.CLOSED; });
+
+  constructor() {
+    MockSocket.instances.push(this);
+  }
+}
+
+beforeEach(() => {
+  jest.useFakeTimers();
+  mockRenderFrame = null;
+  mockDecoderStats = null;
+  mockCapture = null;
+  mockAutomaticEligible = false;
+  mockDirectEndpoint = null; mockDirectReceipt = null; mockDirectObserve = null; mockVideoObserve = null; mockPresentDirectFrame = null;
+  mockInputAdmission = null;
+  Object.defineProperty(globalThis, 'TextEncoder', { configurable: true, value: TextEncoder });
+  jest.mocked(api.post).mockReset().mockResolvedValue({ data: { output: '' } });
+  MockSocket.instances = [];
+  Object.defineProperty(global, 'WebSocket', { configurable: true, value: MockSocket });
+  class TestPointerEvent extends MouseEvent {
+    readonly pointerId: number;
+    constructor(type: string, init: MouseEventInit & { pointerId?: number } = {}) {
+      super(type, init);
+      this.pointerId = init.pointerId ?? 1;
+    }
+  }
+  Object.defineProperty(window, 'PointerEvent', { configurable: true, value: TestPointerEvent });
+  jest.spyOn(HTMLCanvasElement.prototype, 'getContext').mockReturnValue({ drawImage: jest.fn() } as never);
+  Object.defineProperty(HTMLCanvasElement.prototype, 'setPointerCapture', {
+    configurable: true,
+    value: jest.fn(),
+  });
+});
+
+function readyGestureFixture(enableStaticInput = false, readOnly = false) {
+  const view = render(<DeviceStream deviceId="gesture-remote" fit="contain" enableStaticInput={enableStaticInput} readOnly={readOnly} />);
+  act(() => jest.advanceTimersByTime(0));
+  const socket = MockSocket.instances[0];
+  socket.readyState = MockSocket.OPEN;
+  act(() => socket.onopen?.(new Event('open')));
+  if (mockDirectEndpoint) act(() => socket.onmessage?.({ data: JSON.stringify({ type: 'stream_session',
+    schema_version: 1, history_enabled: true, session_id: '1'.repeat(16), report_interval_seconds: 10 }) }));
+  const canvas = view.container.querySelector('canvas')!;
+  jest.spyOn(canvas, 'getBoundingClientRect').mockReturnValue({
+    left: 0, top: 0, right: 100, bottom: 100, width: 100, height: 100, x: 0, y: 0,
+    toJSON: () => ({}),
+  });
+  act(() => mockRenderFrame?.({ displayWidth: 1280, displayHeight: 720 } as VideoFrame));
+  const commands = () => MockSocket.instances.flatMap(instance => instance.send.mock.calls)
+    .map(([message]) => JSON.parse(message as string))
+    .filter(({ type }) => type === 'click' || type === 'swipe');
+  const down = (pointerId: number, clientX = 50) => fireEvent.pointerDown(canvas, { clientX, clientY: 50, pointerId, button: 0 });
+  const up = (pointerId: number, clientX = 50) => fireEvent.pointerUp(canvas, { clientX, clientY: 50, pointerId, button: 0 });
+  return { ...view, canvas, socket, commands, down, up };
+}
+
+function readyWheel() {
+  const view = readyGestureFixture(true);
+  view.rerender(<DeviceStream deviceId="gesture-remote" fit="contain" enableStaticInput enableNavigation />);
+  const wheel = (deltaY = 80, options: Record<string, unknown> = {}) => fireEvent.wheel(view.canvas, { clientX: 50, clientY: 50, deltaY, ...options });
+  return { ...view, wheel };
+}
+
+test('passive server stream measures the authenticated link and clears it on socket retirement', () => {
+  const view = readyGestureFixture(false, true);
+  expect(view.container.querySelector('[aria-label="Сводка видеопотока"]')).toHaveTextContent('RTT сервера —');
+  act(() => view.socket.onmessage?.({ data: JSON.stringify({ type: 'stream_link_ready', schema_version: 1 }) }));
+  const probes = view.socket.send.mock.calls.map(([raw]) => JSON.parse(raw)).filter(m => m.type === 'stream_link_probe');
+  expect(probes).toEqual([{ type: 'stream_link_probe', sequence: 1 }]);
+  act(() => jest.advanceTimersByTime(25));
+  act(() => view.socket.onmessage?.({ data: JSON.stringify({ type: 'stream_link_result', sequence: 1 }) }));
+  expect(view.container.querySelector('[aria-label="Сводка видеопотока"]')).toHaveTextContent('RTT сервера 25 мс');
+  expect(probes.some(m => m.type === 'touch_event')).toBe(false);
+  act(() => view.socket.onclose?.({ code: 1000 }));
+  expect(view.container.querySelector('[aria-label="Сводка видеопотока"]')).toHaveTextContent('RTT сервера —');
+});
+
+function readyContinuous() {
+  mockCapture = { captureEpoch: TOUCH_EPOCH, frameWidth: 1280, frameHeight: 720 };
+  const view = readyWheel();
+  const receive = (message: object) => act(() => view.socket.onmessage?.({ data: JSON.stringify(message) }));
+  const sent = () => view.socket.send.mock.calls.map(([raw]) => JSON.parse(raw as string));
+  const status = (sequence: number, status: number, stage = 'input') => receive({ type: 'continuous_input_status',
+    session_id: 'viewer_session_fixture', owner: 'owner_session_fixture', capture_epoch: TOUCH_EPOCH,
+    sequence, status, stage, origin: 'injector', device_uptime_ms: 100 });
+  expect(sent().filter(x => x.type === 'touch_probe')).toHaveLength(1);
+  receive({ type: 'touch_capability', capture_epoch: TOUCH_EPOCH, frame_width: 1280, frame_height: 720 });
+  receive({ type: 'touch_session', session_id: 'viewer_session_fixture', owner: 'owner_session_fixture',
+    capture_epoch: TOUCH_EPOCH, frame_width: 1280, frame_height: 720 });
+  status(0, 0, 'startup');
+  return { ...view, receive, sent, status };
+}
+
+function directEndpoint(): DirectControlEndpoint {
+  const listeners = new Set<(message: unknown) => void>();
+  return { readyState: 1, bufferedAmount: 0, session: 'a'.repeat(32), send: jest.fn(),
+    capture: () => ({ captureEpoch: TOUCH_EPOCH, width: 1280, height: 720 }),
+    listen: listener => { listeners.add(listener); mockDirectReceipt = message => { for (const fn of [...listeners]) fn(message); };
+      return () => { listeners.delete(listener); }; } };
+}
+
+it.each(['normal','early-manual','cleanup-unknown'])('keeps media while automation owns input and requires native release before resuming: %s',variant=>{
+  mockCapture={captureEpoch:TOUCH_EPOCH,frameWidth:1280,frameHeight:720};
+  mockInputAdmission={admissionKnown:true,admitted:true,sharedInput:true};
+  const endpoint={...directEndpoint(),sharedInput:true};
+  const view=readyWheel();
+  act(()=>view.socket.onmessage?.({data:JSON.stringify({type:'stream_session',schema_version:1,history_enabled:true,session_id:'1'.repeat(16),report_interval_seconds:10})}));
+  act(()=>{mockDirectObserve?.(endpoint);mockVideoObserve?.({admitted:true,admissionKnown:true,sharedInput:true,active:true,frames:1,lastFrameAt:Date.now(),attempts:1,result:null});});
+  const receive=(m:object)=>act(()=>mockDirectReceipt?.(m));
+  const identity={session_id:endpoint.session,owner:'b'.repeat(32),capture_epoch:TOUCH_EPOCH};
+  receive({type:'touch_session',...identity,frame_width:1280,frame_height:720});
+  receive({type:'shared_input_status',...identity,sequence:0,gesture:0,action:4,outcome:'ready',device_uptime_ms:100});
+  const availability=(revision:number,state:string)=>receive({type:'input_availability',schema_version:1,session_id:endpoint.session,capture_epoch:TOUCH_EPOCH,
+    revision,state,task_id:state==='manual'?null:'owned-task-1234'});
+  availability(1,'preparing');
+  expect(view.container.querySelector('canvas')).toHaveAttribute('aria-disabled','true');
+  expect(mockVideoEligible).toBe(true);
+  if(variant==='early-manual')availability(3,'manual');
+  view.down(1);view.up(1);
+  const commands=()=> (endpoint.send as jest.Mock).mock.calls.map(([raw])=>JSON.parse(raw));
+  expect(commands().filter(x=>x.type==='touch_open')).toHaveLength(1);
+  if(variant==='cleanup-unknown'){
+    availability(2,'cleanup_unknown');
+    availability(1,'manual'); // A stale snapshot cannot reopen native input.
+    expect(view.container).toHaveTextContent('освобождение после задания не подтверждено');
+  }else{
+    receive({type:'shared_input_status',...identity,sequence:0,gesture:0,action:3,outcome:'closed',device_uptime_ms:101});
+    if(variant!=='early-manual'){
+      availability(2,'automation');view.down(1);view.up(1);
+      expect(commands().filter(x=>x.type==='touch_open')).toHaveLength(1);
+      availability(3,'manual');
+    }
+    expect(commands().filter(x=>x.type==='touch_open')).toHaveLength(2);
+  }
+  expect(commands().filter(x=>x.type==='touch_event'&&x.action!==4)).toEqual([]);
+  expect(view.socket.close).not.toHaveBeenCalled();expect(MockSocket.instances).toHaveLength(1);expect(mockVideoEligible).toBe(true);
+  view.unmount();
+});
+
+it('a viewer arriving during automation resumes without waiting for its earlier capability probe',()=>{
+  mockCapture={captureEpoch:TOUCH_EPOCH,frameWidth:1280,frameHeight:720};
+  mockInputAdmission={admissionKnown:true,admitted:true,sharedInput:true};
+  const snapshot={type:'input_availability',schema_version:1,session_id:'a'.repeat(32),capture_epoch:TOUCH_EPOCH,
+    revision:4,state:'automation',task_id:'owned-task-1234'};
+  const endpoint={...directEndpoint(),sharedInput:true,availability:()=>snapshot};
+  const view=readyWheel();
+  act(()=>view.socket.onmessage?.({data:JSON.stringify({type:'stream_session',schema_version:1,history_enabled:true,session_id:'1'.repeat(16),report_interval_seconds:10})}));
+  act(()=>{mockDirectObserve?.(endpoint);mockVideoObserve?.({admitted:true,admissionKnown:true,sharedInput:true,active:true,frames:1,lastFrameAt:Date.now(),attempts:1,result:null});});
+  const opens=()=> (endpoint.send as jest.Mock).mock.calls.map(([raw])=>JSON.parse(raw)).filter(x=>x.type==='touch_open');
+  expect(opens()).toHaveLength(0);expect(mockVideoEligible).toBe(true);
+  act(()=>mockDirectReceipt?.({...snapshot,revision:5,state:'manual',task_id:null}));
+  expect(opens()).toHaveLength(1);expect(view.socket.close).not.toHaveBeenCalled();
+  view.unmount();
+});
+
+it('retains the negotiated control channel through a temporary View lock without allowing input', () => {
+  mockCapture = { captureEpoch: TOUCH_EPOCH, frameWidth: 1280, frameHeight: 720 };
+  const view = readyGestureFixture(true);
+  mockDirectEndpoint = directEndpoint();
+  act(() => view.socket.onmessage?.({ data: JSON.stringify({ type: 'stream_session',
+    schema_version: 1, history_enabled: true, session_id: '1'.repeat(16), report_interval_seconds: 10 }) }));
+  expect(mockDirectObserve).not.toBeNull();
+  view.rerender(<DeviceStream deviceId="gesture-remote" fit="contain" enableStaticInput directControlAuthorized readOnly />);
+  expect(mockDirectObserve).not.toBeNull();
+  expect(mockVideoEligible).toBe(true);
+  view.down(1); view.up(1);
+  expect(mockDirectEndpoint.send).not.toHaveBeenCalled();
+  expect(view.commands()).toEqual([]);
+  view.rerender(<DeviceStream deviceId="gesture-remote" fit="contain" enableStaticInput directControlAuthorized />);
+  expect(mockDirectObserve).not.toBeNull();
+  view.rerender(<DeviceStream deviceId="gesture-remote" fit="contain" enableStaticInput directControlAuthorized={false} readOnly />);
+  expect(mockDirectObserve).toBeNull();
+  expect(view.commands()).toEqual([]);
+  view.unmount();
+});
+
+it('rejoins a fresh shared peer after hiding an idle tab loses the old CLOSE receipt', () => {
+  mockCapture = { captureEpoch: TOUCH_EPOCH, frameWidth: 1280, frameHeight: 720 };
+  const oldEndpoint = { ...directEndpoint(), sharedInput: true };
+  mockInputAdmission = { admissionKnown: true, admitted: true, sharedInput: true };
+  const view = readyWheel();
+  const receive = (message: object) => act(() => view.socket.onmessage?.({data:JSON.stringify(message)}));
+  receive({type:'stream_session',schema_version:1,history_enabled:true,session_id:'1'.repeat(16),report_interval_seconds:10});
+  act(() => {
+    mockDirectObserve?.(oldEndpoint);
+    mockVideoObserve?.({admitted:true,admissionKnown:true,sharedInput:true,active:true,
+      frames:1,lastFrameAt:Date.now(),attempts:1,result:null});
+  });
+  const bind = (endpoint: DirectControlEndpoint) => {
+    act(() => mockDirectReceipt?.({type:'touch_session',session_id:endpoint.session,owner:'b'.repeat(32),
+      capture_epoch:TOUCH_EPOCH,frame_width:1280,frame_height:720}));
+    act(() => mockDirectReceipt?.({type:'shared_input_status',session_id:endpoint.session,owner:'b'.repeat(32),
+      capture_epoch:TOUCH_EPOCH,sequence:0,gesture:0,action:4,outcome:'ready',device_uptime_ms:100}));
+  };
+  receive({type:'touch_capability',capture_epoch:TOUCH_EPOCH,frame_width:1280,frame_height:720}); bind(oldEndpoint);
+  expect(view.container.querySelector('[data-control-state]')).toHaveAttribute('data-control-state','ready');
+  const hidden = jest.spyOn(document,'hidden','get').mockReturnValue(true);
+  act(() => document.dispatchEvent(new Event('visibilitychange')));
+  expect(view.container.querySelector('[data-control-state]')).toHaveAttribute('data-control-state','fenced');
+  expect(view.container.querySelector('[aria-label="Сводка видеопотока"]')).toHaveTextContent('Видео напрямую');
+  expect(view.container.querySelector('[aria-label="Сводка видеопотока"]')).not.toHaveTextContent('видео и касания');
+  Object.defineProperty(oldEndpoint,'readyState',{value:3});
+  act(() => mockDirectObserve?.(null));
+  hidden.mockReturnValue(false);
+  act(() => document.dispatchEvent(new Event('visibilitychange')));
+  const nextEndpoint = {...directEndpoint(),session:'c'.repeat(32),sharedInput:true};
+  act(() => mockDirectObserve?.(nextEndpoint));
+  receive({type:'touch_capability',capture_epoch:TOUCH_EPOCH,frame_width:1280,frame_height:720});
+  expect(view.container.querySelector('[data-control-state]')).toHaveAttribute('data-control-state','opening');
+  expect((nextEndpoint.send as jest.Mock).mock.calls.map(([raw])=>JSON.parse(raw).type)).toEqual(['touch_open']);
+  bind(nextEndpoint);
+  expect(view.container.querySelector('[data-control-state]')).toHaveAttribute('data-control-state','ready');
+  expect(view.container.querySelector('[aria-label="Сводка видеопотока"]')).toHaveTextContent('Прямой канал · видео и касания');
+  expect(MockSocket.instances).toHaveLength(1);
+  expect(view.commands()).toEqual([]);
+  view.unmount();
+});
+
+it('admits the first replacement shared peer after idle timeout and channel loss without reopening the viewer', () => {
+  mockCapture = { captureEpoch: TOUCH_EPOCH, frameWidth: 1280, frameHeight: 720 };
+  mockInputAdmission = { admissionKnown: true, admitted: true, sharedInput: true };
+  const view = readyWheel(), oldEndpoint = { ...directEndpoint(), sharedInput: true };
+  const receive = (m: object) => act(() => view.socket.onmessage?.({ data: JSON.stringify(m) }));
+  receive({ type: 'stream_session', schema_version: 1, history_enabled: true, session_id: '1'.repeat(16), report_interval_seconds: 10 });
+  act(() => {
+    mockDirectObserve?.(oldEndpoint);
+    mockVideoObserve?.({ admitted: true, admissionKnown: true, sharedInput: true, active: true, frames: 1, lastFrameAt: Date.now(), attempts: 1, result: null });
+  });
+  const bind = (endpoint: DirectControlEndpoint) => {
+    act(() => mockDirectReceipt?.({ type: 'touch_session', session_id: endpoint.session, owner: 'b'.repeat(32),
+      capture_epoch: TOUCH_EPOCH, frame_width: 1280, frame_height: 720 }));
+    act(() => mockDirectReceipt?.({ type: 'shared_input_status', session_id: endpoint.session, owner: 'b'.repeat(32),
+      capture_epoch: TOUCH_EPOCH, sequence: 0, gesture: 0, action: 4, outcome: 'ready', device_uptime_ms: 100 }));
+  };
+  receive({ type: 'touch_capability', capture_epoch: TOUCH_EPOCH, frame_width: 1280, frame_height: 720 }); bind(oldEndpoint);
+  for (let i = 0; i < 7; i++) act(() => jest.advanceTimersByTime(250));
+  expect(view.container.querySelector('[data-control-state]')).toHaveAttribute('data-control-failure', 'idle_receipt_timeout');
+  Object.defineProperty(oldEndpoint, 'readyState', { value: 3 });
+  act(() => mockDirectObserve?.(null));
+  const nextEndpoint = { ...directEndpoint(), session: 'c'.repeat(32), sharedInput: true };
+  act(() => mockDirectObserve?.(nextEndpoint));
+  receive({ type: 'touch_capability', capture_epoch: TOUCH_EPOCH, frame_width: 1280, frame_height: 720 });
+  expect(view.container.querySelector('[data-control-state]')).toHaveAttribute('data-control-state', 'opening');
+  view.down(1); view.up(1);
+  expect((nextEndpoint.send as jest.Mock).mock.calls.map(([raw]) => JSON.parse(raw).type)).toEqual(['touch_open']);
+  bind(nextEndpoint);
+  expect(view.container.querySelector('[data-control-state]')).toHaveAttribute('data-control-state', 'ready');
+  expect(MockSocket.instances).toHaveLength(1);
+  expect(view.socket.close).not.toHaveBeenCalled();
+  expect(view.commands()).toEqual([]);
+  view.unmount();
+  expect(jest.getTimerCount()).toBe(0);
+});
+
+it.each([false,true])('promotes a late shared peer after exact fallback release without another signaling reconnect (endpoint first=%s)', endpointFirst => {
+  mockCapture={captureEpoch:TOUCH_EPOCH,frameWidth:1280,frameHeight:720};
+  mockInputAdmission={admissionKnown:true,admitted:false,sharedInput:false};
+  const view=readyWheel();
+  const receive=(m:object)=>act(()=>view.socket.onmessage?.({data:JSON.stringify(m)}));
+  receive({type:'stream_session',schema_version:1,history_enabled:true,session_id:'1'.repeat(16),report_interval_seconds:10});
+  receive({type:'touch_capability',capture_epoch:TOUCH_EPOCH,frame_width:1280,frame_height:720});
+  receive({type:'touch_session',session_id:'fallback_session',owner:'fallback_owner',capture_epoch:TOUCH_EPOCH,frame_width:1280,frame_height:720});
+  const endpoint={...directEndpoint(),sharedInput:true,session:'c'.repeat(32)};
+  const direct=()=>act(()=>{mockVideoObserve?.({admitted:true,admissionKnown:true,sharedInput:true,active:true,frames:1,lastFrameAt:Date.now(),attempts:2,result:null});mockDirectObserve?.(endpoint);});
+  if(endpointFirst)direct();
+  receive({type:'continuous_input_status',session_id:'fallback_session',owner:'fallback_owner',capture_epoch:TOUCH_EPOCH,
+    sequence:0,status:6,stage:'startup',origin:'injector',device_uptime_ms:100});
+  receive({type:'continuous_input_status',session_id:'fallback_session',owner:'fallback_owner',capture_epoch:TOUCH_EPOCH,
+    sequence:0,status:3,stage:'release',origin:'injector',device_uptime_ms:101});
+  if(!endpointFirst)direct();
+  expect((endpoint.send as jest.Mock).mock.calls.map(([raw])=>JSON.parse(raw).type)).toEqual(['touch_open']);
+  act(()=>mockDirectReceipt?.({type:'touch_session',session_id:endpoint.session,owner:'b'.repeat(32),capture_epoch:TOUCH_EPOCH,frame_width:1280,frame_height:720}));
+  act(()=>mockDirectReceipt?.({type:'shared_input_status',session_id:endpoint.session,owner:'b'.repeat(32),capture_epoch:TOUCH_EPOCH,
+    sequence:0,gesture:0,action:4,outcome:'ready',device_uptime_ms:102}));
+  expect(view.container.querySelector('[data-control-state]')).toHaveAttribute('data-control-state','ready');
+  expect(MockSocket.instances).toHaveLength(1);expect(view.commands()).toEqual([]);view.unmount();
+});
+
+it.each([false, true])('does not open exclusive input while shared admission is known=%s and the peer is connecting', known => {
+  mockCapture = { captureEpoch: TOUCH_EPOCH, frameWidth: 1280, frameHeight: 720 };
+  mockInputAdmission = { admissionKnown: known, admitted: known, sharedInput: known };
+  const view = readyWheel();
+  const receive = (message: object) => act(() => view.socket.onmessage?.({ data: JSON.stringify(message) }));
+  const sent = () => view.socket.send.mock.calls.map(([raw]) => JSON.parse(raw as string));
+  receive({ type: 'stream_session', schema_version: 1, history_enabled: true,
+    session_id: '1'.repeat(16), report_interval_seconds: 10 });
+  // A capability request can beat the REST admission. Its late reply grants no owner.
+  receive({ type: 'touch_capability', capture_epoch: TOUCH_EPOCH, frame_width: 1280, frame_height: 720 });
+  expect(sent().filter(row => ['touch_open', 'touch_direct_open'].includes(row.type))).toHaveLength(0);
+  view.down(1); view.up(1); view.wheel();
+  expect(view.commands()).toHaveLength(0);
+  expect(view.container.querySelector('[data-control-state]')).toHaveAttribute('data-control-state', 'probing');
+  const endpoint = { ...directEndpoint(), sharedInput: true };
+  act(() => {
+    mockDirectObserve?.(endpoint);
+    mockVideoObserve?.({ admitted: true, admissionKnown: true, sharedInput: true, active: true,
+      frames: 1, lastFrameAt: Date.now(), attempts: 1, result: null });
+  });
+  receive({ type: 'touch_capability', capture_epoch: TOUCH_EPOCH, frame_width: 1280, frame_height: 720 });
+  expect(sent().filter(row => ['touch_open', 'touch_direct_open'].includes(row.type))).toHaveLength(0);
+  expect((endpoint.send as jest.Mock).mock.calls.map(([raw]) => JSON.parse(raw).type)).toContain('touch_open');
+  view.unmount();
+});
+
+it('the authenticated shared endpoint opens native input without a server capability round trip', () => {
+  mockCapture={captureEpoch:TOUCH_EPOCH,frameWidth:1280,frameHeight:720};
+  mockInputAdmission={admissionKnown:true,admitted:true,sharedInput:true};
+  const view=readyWheel();
+  act(()=>view.socket.onmessage?.({data:JSON.stringify({type:'stream_session',schema_version:1,history_enabled:true,
+    session_id:'1'.repeat(16),report_interval_seconds:10})}));
+  const count=view.socket.send.mock.calls.filter(([raw])=>JSON.parse(raw).type==='touch_probe').length;
+  const endpoint={...directEndpoint(),sharedInput:true};
+  act(()=>{
+    mockDirectObserve?.(endpoint);
+    mockVideoObserve?.({admitted:true,admissionKnown:true,sharedInput:true,active:true,
+      frames:1,lastFrameAt:Date.now(),attempts:1,result:null});
+  });
+  expect((endpoint.send as jest.Mock).mock.calls.map(([raw])=>JSON.parse(raw))).toEqual([
+    {type:'touch_open',capture_epoch:TOUCH_EPOCH,frame_width:1280,frame_height:720}]);
+  expect(view.socket.send.mock.calls.filter(([raw])=>JSON.parse(raw).type==='touch_probe')).toHaveLength(count);
+  expect(view.container.querySelector('[data-control-state]')).toHaveAttribute('data-control-state','opening');
+  // Open SCTP is not native READY and must not admit an unconfirmed tap.
+  view.down(1);view.up(1);expect((endpoint.send as jest.Mock)).toHaveBeenCalledTimes(1);
+  view.unmount();
+});
+
+it('failed shared ICE rearms server input instead of leaving the live fallback video in probing', () => {
+  mockCapture={captureEpoch:TOUCH_EPOCH,frameWidth:1280,frameHeight:720};
+  mockInputAdmission={admissionKnown:true,admitted:true,sharedInput:true};
+  const view=readyWheel();
+  const receive=(message:object)=>act(()=>view.socket.onmessage?.({data:JSON.stringify(message)}));
+  receive({type:'stream_session',schema_version:1,history_enabled:true,session_id:'1'.repeat(16),report_interval_seconds:10});
+  receive({type:'touch_capability',capture_epoch:TOUCH_EPOCH,frame_width:1280,frame_height:720});
+  const sent=()=>view.socket.send.mock.calls.map(([raw])=>JSON.parse(raw));
+  expect(sent().filter(s=>s.type==='touch_open')).toHaveLength(0);
+  act(()=>mockVideoObserve?.({admitted:true,admissionKnown:true,sharedInput:true,active:false,
+    frames:0,lastFrameAt:null,attempts:1,result:{state:'failed',reason:'connection_deadline'}}));
+  receive({type:'touch_capability',capture_epoch:TOUCH_EPOCH,frame_width:1280,frame_height:720});
+  expect(sent().filter(s=>s.type==='touch_open')).toHaveLength(1);
+  expect(view.container.querySelector('[data-control-state]')).toHaveAttribute('data-control-state','opening');
+  view.down(1);view.up(1);expect(view.commands()).toEqual([]);
+  view.unmount();
+});
+
+it('a background ICE retry does not discard the fallback capability requested after the first failure', () => {
+  mockCapture={captureEpoch:TOUCH_EPOCH,frameWidth:1280,frameHeight:720};
+  mockInputAdmission={admissionKnown:true,admitted:true,sharedInput:true};
+  const view=readyWheel();
+  const receive=(message:object)=>act(()=>view.socket.onmessage?.({data:JSON.stringify(message)}));
+  const sent=()=>view.socket.send.mock.calls.map(([raw])=>JSON.parse(raw));
+  receive({type:'stream_session',schema_version:1,history_enabled:true,session_id:'1'.repeat(16),report_interval_seconds:10});
+  const base={admitted:true,admissionKnown:true,sharedInput:true,active:false,frames:0,lastFrameAt:null};
+  act(()=>mockVideoObserve?.({...base,attempts:1,result:{state:'failed',reason:'connection_deadline'}}));
+  // Real fallback capability can arrive after the one-second direct retry starts.
+  act(()=>mockVideoObserve?.({...base,attempts:2,result:{state:'connecting'}}));
+  receive({type:'touch_capability',capture_epoch:TOUCH_EPOCH,frame_width:1280,frame_height:720});
+  expect(sent().filter(s=>s.type==='touch_open')).toHaveLength(1);
+  receive({type:'touch_session',session_id:'fallback_session',owner:'fallback_owner',capture_epoch:TOUCH_EPOCH,frame_width:1280,frame_height:720});
+  receive({type:'continuous_input_status',session_id:'fallback_session',owner:'fallback_owner',capture_epoch:TOUCH_EPOCH,
+    sequence:0,status:0,stage:'startup',origin:'injector',device_uptime_ms:100});
+  expect(view.container.querySelector('[data-control-state]')).toHaveAttribute('data-control-state','ready');
+  expect(view.commands()).toEqual([]);
+  expect(MockSocket.instances).toHaveLength(1);
+  view.unmount();
+});
+
+it('canvas sends every live touch through its bound direct peer and revokes safely on peer loss', () => {
+  const view = readyContinuous();
+  mockDirectEndpoint = directEndpoint();
+  const endpoint = mockDirectEndpoint;
+  view.receive({ type: 'stream_session', schema_version: 1, history_enabled: true,
+    session_id: '1'.repeat(16), report_interval_seconds: 10 });
+  view.status(0, 3, 'release');
+  view.receive({ type: 'touch_capability', capture_epoch: TOUCH_EPOCH, frame_width: 1280, frame_height: 720 });
+  view.receive({ type: 'touch_session', session_id: 'viewer_session_fixture', owner: 'direct_owner_fixture',
+    capture_epoch: TOUCH_EPOCH, frame_width: 1280, frame_height: 720 });
+  view.receive({ type: 'continuous_input_status', session_id: 'viewer_session_fixture', owner: 'direct_owner_fixture',
+    capture_epoch: TOUCH_EPOCH, sequence: 0, status: 0, stage: 'startup', origin: 'injector', device_uptime_ms: 100 });
+  expect(view.sent().filter(row => row.type === 'touch_direct_open')).toHaveLength(1);
+  const ack = (sequence: number) => act(() => mockDirectReceipt?.({ type: 'continuous_input_status',
+    session_id: 'viewer_session_fixture', owner: 'direct_owner_fixture', capture_epoch: TOUCH_EPOCH,
+    sequence, status: 1, stage: 'input', origin: 'injector', device_uptime_ms: 100 }));
+  view.down(1, 40); ack(1);
+  fireEvent.pointerMove(view.canvas, { clientX: 60, clientY: 50, pointerId: 1, buttons: 1 });
+  act(() => jest.advanceTimersByTime(16)); ack(2); view.up(1, 60); ack(3);
+  expect((endpoint.send as jest.Mock).mock.calls.map(([raw]) => JSON.parse(raw).action)).toEqual([0, 2, 1]);
+  expect(view.sent().filter(row => row.type === 'touch_event')).toEqual([]);
+  expect(view.commands()).toEqual([]);
+  expect(view.getByText(/ACK действия напрямую с APK/)).toBeInTheDocument();
+  Object.defineProperty(endpoint, 'readyState', { value: 0 });
+  act(() => mockDirectObserve?.(null));
+  expect(view.sent().filter(row => row.type === 'touch_close')).toHaveLength(2);
+  view.down(2); view.up(2);
+  expect(view.sent().filter(row => row.type === 'touch_event')).toEqual([]);
+  expect(view.commands()).toEqual([]);
+  view.unmount();
+});
+
+it('an existing server owner is released before promoting an idle direct channel', () => {
+  const view = readyContinuous();
+  view.receive({ type: 'stream_session', schema_version: 1, history_enabled: true,
+    session_id: '1'.repeat(16), report_interval_seconds: 10 });
+  const endpoint = directEndpoint();
+  act(() => {
+    mockVideoObserve?.({ admitted: true, admissionKnown: true, active: true, frames: 1,
+      lastFrameAt: 1, attempts: 1, result: null });
+    mockDirectObserve?.(endpoint);
+  });
+  expect(view.sent().filter(row => row.type === 'touch_close')).toHaveLength(1);
+  expect(view.sent().filter(row => row.type === 'touch_direct_open')).toHaveLength(0);
+  view.status(0, 3, 'release');
+  view.receive({ type: 'touch_capability', capture_epoch: TOUCH_EPOCH, frame_width: 1280, frame_height: 720 });
+  expect(view.sent().filter(row => row.type === 'touch_direct_open')).toHaveLength(1);
+  expect(view.sent().filter(row => row.type === 'touch_event')).toEqual([]);
+  view.unmount();
+});
+
+it('pending idle heartbeats do not strand recovered direct input on a slower server route', () => {
+  const view = readyContinuous();
+  view.receive({ type: 'stream_session', schema_version: 1, history_enabled: true,
+    session_id: '1'.repeat(16), report_interval_seconds: 10 });
+  act(() => jest.advanceTimersByTime(288));
+  expect(view.sent().filter(row => row.type === 'touch_event').map(row => row.action)).toEqual([4]);
+  const endpoint = directEndpoint();
+  act(() => {
+    mockVideoObserve?.({ admitted: true, admissionKnown: true, active: true, frames: 1,
+      lastFrameAt: 1, attempts: 1, result: null });
+    mockDirectObserve?.(endpoint);
+  });
+  expect(view.sent().filter(row => row.type === 'touch_close')).toHaveLength(1);
+  expect(view.sent().filter(row => row.type === 'touch_direct_open')).toHaveLength(0);
+  view.down(1); view.up(1);
+  expect(view.sent().filter(row => row.type === 'touch_event').map(row => row.action)).toEqual([4]);
+  view.status(0, 3, 'release');
+  view.receive({ type: 'touch_capability', capture_epoch: TOUCH_EPOCH, frame_width: 1280, frame_height: 720 });
+  expect(view.sent().filter(row => row.type === 'touch_direct_open')).toHaveLength(1);
+  expect(endpoint.send).not.toHaveBeenCalled();
+  view.unmount();
+});
+
+it('direct promotion waits for a held gesture and its native UP while ignoring only idle heartbeats', () => {
+  const view = readyContinuous();
+  view.receive({ type: 'stream_session', schema_version: 1, history_enabled: true,
+    session_id: '1'.repeat(16), report_interval_seconds: 10 });
+  view.down(1); view.status(1, 1);
+  const endpoint = directEndpoint();
+  act(() => {
+    mockVideoObserve?.({ admitted: true, admissionKnown: true, active: true, frames: 1,
+      lastFrameAt: 1, attempts: 1, result: null });
+    mockDirectObserve?.(endpoint);
+  });
+  expect(view.sent().filter(row => row.type === 'touch_close')).toHaveLength(0);
+  view.up(1);
+  act(() => jest.advanceTimersByTime(288));
+  expect(view.sent().filter(row => row.type === 'touch_event').map(row => row.action)).toEqual([0, 1, 4]);
+  expect(view.sent().filter(row => row.type === 'touch_close')).toHaveLength(0);
+  view.status(2, 1);
+  expect(view.sent().filter(row => row.type === 'touch_close')).toHaveLength(1);
+  expect(view.sent().filter(row => row.type === 'touch_direct_open')).toHaveLength(0);
+  view.status(0, 3, 'release');
+  view.receive({ type: 'touch_capability', capture_epoch: TOUCH_EPOCH, frame_width: 1280, frame_height: 720 });
+  expect(view.sent().filter(row => row.type === 'touch_direct_open')).toHaveLength(1);
+  view.unmount();
+});
+
+it('installed canvas integration sends MOVE before UP without a second legacy swipe', () => {
+  const view = readyContinuous();
+  expect(view.queryByRole('button', { name: /непрерывные жесты/i })).not.toBeInTheDocument();
+  expect(view.getByText(/Непрерывное управление/)).toBeInTheDocument();
+  fireEvent.pointerDown(view.canvas, { clientX: 40, clientY: 50, pointerId: 1, button: 0, buttons: 1 });
+  view.status(1, 1);
+  fireEvent.pointerMove(view.canvas, { clientX: 60, clientY: 50, pointerId: 1, buttons: 1 });
+  act(() => jest.advanceTimersByTime(16));
+  view.status(2, 1);
+  expect(view.sent().filter(x => x.type === 'touch_event').map(x => x.action)).toEqual([0, 2]);
+  fireEvent.pointerUp(view.canvas, { clientX: 55, clientY: 50, pointerId: 1, button: 0 });
+  expect(view.sent().filter(x => x.type === 'touch_event').map(x => x.action)).toEqual([0, 2, 1]);
+  expect(view.commands()).toEqual([]);
+  expect(view.getByRole('button', { name: 'Домой' })).toBeEnabled();
+  view.unmount();
+});
+
+it('Home waits for native release and resumes continuous input only after the acknowledged key', async () => {
+  const view = readyContinuous();
+  fireEvent.click(view.getByRole('button', { name: 'Домой' }));
+  expect(view.sent().filter(x => x.type === 'touch_close')).toHaveLength(1);
+  expect(api.post).not.toHaveBeenCalled();
+  await act(async () => view.status(0, 3, 'release'));
+  expect(api.post).toHaveBeenCalledTimes(1);
+  expect(api.post).toHaveBeenCalledWith('/devices/gesture-remote/shell', { command: 'input keyevent 3' }, expect.anything());
+  expect(view.getByRole('button', { name: 'Домой' })).not.toBeDisabled();
+  expect(view.sent().filter(x => x.type === 'touch_probe')).toHaveLength(2);
+  expect(view.queryByText(/связь, фокус/)).not.toBeInTheDocument();
+  view.receive({ type: 'touch_capability', capture_epoch: TOUCH_EPOCH, frame_width: 1280, frame_height: 720 });
+  view.receive({ type: 'touch_session', session_id: 'viewer_session_fixture', owner: 'new_owner_session_fixture',
+    capture_epoch: TOUCH_EPOCH, frame_width: 1280, frame_height: 720 });
+  view.receive({ type: 'continuous_input_status', session_id: 'viewer_session_fixture', owner: 'new_owner_session_fixture',
+    capture_epoch: TOUCH_EPOCH, sequence: 0, status: 0, stage: 'startup', origin: 'injector', device_uptime_ms: 150 });
+  expect(view.getByText(/Непрерывное управление/)).toBeInTheDocument();
+  fireEvent.pointerDown(view.canvas, { clientX: 40, clientY: 50, pointerId: 2, button: 0, buttons: 1 });
+  expect(view.sent().filter(x => x.type === 'touch_event').map(x => x.action)).toEqual([0]);
+  view.unmount();
+});
+
+it('a confirmed navigation during capability negotiation rearms fresh readiness instead of stranding idle input', async () => {
+  const view = readyContinuous();
+  fireEvent.click(view.getByRole('button', { name: 'Домой' }));
+  await act(async () => view.status(0, 3, 'release'));
+  expect(view.sent().filter(x => x.type === 'touch_probe')).toHaveLength(2);
+  expect(view.container.querySelector('[data-control-state]')).toHaveAttribute('data-control-state', 'probing');
+  let confirm!: () => void;
+  jest.mocked(api.post).mockImplementationOnce(() => new Promise(resolve => { confirm = () => resolve({ data: { output: '' } }); }) as never);
+  fireEvent.click(view.getByRole('button', { name: 'Домой' }));
+  view.receive({ type: 'touch_capability', capture_epoch: TOUCH_EPOCH, frame_width: 1280, frame_height: 720 });
+  expect(view.sent().filter(x => x.type === 'touch_open')).toHaveLength(1);
+  await act(async () => confirm());
+  expect(api.post).toHaveBeenCalledTimes(2);
+  expect(view.sent().filter(x => x.type === 'touch_probe')).toHaveLength(3);
+  view.down(2); view.up(2, 65);
+  expect(view.commands()).toEqual([]);
+  view.receive({ type: 'touch_capability', capture_epoch: TOUCH_EPOCH, frame_width: 1280, frame_height: 720 });
+  view.receive({ type: 'touch_session', session_id: 'fresh_navigation_session', owner: 'fresh_navigation_owner',
+    capture_epoch: TOUCH_EPOCH, frame_width: 1280, frame_height: 720 });
+  view.down(3); view.up(3, 65);
+  expect(view.sent().filter(x => x.type === 'touch_event')).toEqual([]);
+  view.receive({ type: 'continuous_input_status', session_id: 'fresh_navigation_session', owner: 'fresh_navigation_owner',
+    capture_epoch: TOUCH_EPOCH, sequence: 0, status: 0, stage: 'startup', origin: 'injector', device_uptime_ms: 500 });
+  view.down(4); view.up(4, 65);
+  expect(view.sent().filter(x => x.type === 'touch_event').map(x => x.action)).toEqual([0, 1]);
+  expect(view.commands()).toEqual([]);
+  view.unmount();
+  // Flush promise-scheduled microtasks; the viewer's timers must still all be disposed.
+  act(() => jest.runAllTicks());
+  expect(jest.getTimerCount()).toBe(0);
+});
+
+it('a stale capability retries only input on the healthy viewer and still requires fresh native startup', async () => {
+  const view = readyContinuous();
+  fireEvent.click(view.getByRole('button', { name: 'Домой' }));
+  await act(async () => view.status(0, 3, 'release'));
+  view.receive({ type: 'touch_capability', capture_epoch: '11223344-5566-7788-99aa-bbccddeeff00', frame_width: 1280, frame_height: 720 });
+  expect(view.container.querySelector('[data-control-state]')).toHaveAttribute('data-control-state', 'closed');
+  view.down(2); view.up(2, 65);
+  expect(view.commands()).toEqual([]);
+  expect(view.sent().filter(x => x.type === 'touch_open')).toHaveLength(1);
+  expect(view.container.querySelector('[data-control-state]')).toHaveAttribute('data-control-failure', 'capability_changed');
+  expect(view.getByRole('button', { name: 'Домой' })).toBeDisabled();
+  const probes = view.sent().filter(x => x.type === 'touch_probe').length;
+  act(() => jest.advanceTimersByTime(750));
+  expect(view.sent().filter(x => x.type === 'touch_probe')).toHaveLength(probes + 1);
+  expect(view.socket.close).not.toHaveBeenCalled();
+  expect(MockSocket.instances).toHaveLength(1);
+  expect(view.sent().filter(x => x.type === 'touch_event')).toEqual([]);
+  view.receive({ type: 'touch_capability', capture_epoch: TOUCH_EPOCH, frame_width: 1280, frame_height: 720 });
+  view.receive({ type: 'touch_session', session_id: 'new_capture_session', owner: 'new_capture_owner',
+    capture_epoch: TOUCH_EPOCH, frame_width: 1280, frame_height: 720 });
+  view.down(3); view.up(3, 65);
+  expect(view.sent().filter(x => x.type === 'touch_event')).toEqual([]);
+  view.receive({ type: 'continuous_input_status', session_id: 'new_capture_session', owner: 'new_capture_owner',
+    capture_epoch: TOUCH_EPOCH, sequence: 0, status: 0, stage: 'startup', origin: 'injector', device_uptime_ms: 900 });
+  view.down(4); view.up(4, 65);
+  expect(view.sent().filter(x => x.type === 'touch_event').map(x => x.action)).toEqual([0, 1]);
+  view.unmount();
+  expect(jest.getTimerCount()).toBe(0);
+});
+
+it('a missing capability on a negotiated direct control channel retries without replacing video or sending input', () => {
+  mockCapture = { captureEpoch: TOUCH_EPOCH, frameWidth: 1280, frameHeight: 720 };
+  const view = readyWheel();
+  mockDirectEndpoint = directEndpoint();
+  act(() => view.socket.onmessage?.({ data: JSON.stringify({ type: 'stream_session', schema_version: 1,
+    history_enabled: true, session_id: '1'.repeat(16), report_interval_seconds: 10 }) }));
+  const sent = () => view.socket.send.mock.calls.map(([message]) => JSON.parse(message as string));
+  expect(sent().filter(x => x.type === 'touch_probe')).toHaveLength(1);
+  act(() => jest.advanceTimersByTime(6000));
+  expect(view.container.querySelector('[data-control-state]')).toHaveAttribute('data-control-failure', 'capability_timeout');
+  expect(view.container.querySelector('[data-control-state]')).toHaveAttribute('data-control-state', 'closed');
+  act(() => jest.advanceTimersByTime(750));
+  expect(sent().filter(x => x.type === 'touch_probe')).toHaveLength(2);
+  expect(sent().filter(x => ['touch_open', 'touch_direct_open', 'touch_event', 'click', 'swipe'].includes(x.type))).toEqual([]);
+  expect(view.socket.close).not.toHaveBeenCalled();
+  expect(MockSocket.instances).toHaveLength(1);
+  view.unmount(); expect(jest.getTimerCount()).toBe(0);
+});
+
+it('a late direct channel re-arms capability after the unknown-support deadline without replay', () => {
+  mockCapture = { captureEpoch: TOUCH_EPOCH, frameWidth: 1280, frameHeight: 720 };
+  const view = readyWheel();
+  const sent = () => view.socket.send.mock.calls.map(([message]) => JSON.parse(message as string));
+  act(() => view.socket.onmessage?.({ data: JSON.stringify({ type: 'stream_session', schema_version: 1,
+    history_enabled: true, session_id: '1'.repeat(16), report_interval_seconds: 10 }) }));
+  act(() => jest.advanceTimersByTime(6000));
+  expect(sent().filter(x => x.type === 'touch_probe')).toHaveLength(1);
+  act(() => mockDirectObserve?.(directEndpoint()));
+  expect(sent().filter(x => x.type === 'touch_probe')).toHaveLength(2);
+  expect(sent().filter(x => ['touch_open', 'touch_direct_open', 'touch_event', 'click', 'swipe'].includes(x.type))).toEqual([]);
+  expect(view.socket.close).not.toHaveBeenCalled();
+  view.unmount(); expect(jest.getTimerCount()).toBe(0);
+});
+
+it('blur cancels ownership and never falls back to replaying a legacy drag', () => {
+  const view = readyContinuous();
+  fireEvent.pointerDown(view.canvas, { clientX: 40, clientY: 50, pointerId: 1, button: 0, buttons: 1 });
+  fireEvent.blur(window);
+  fireEvent.pointerUp(view.canvas, { clientX: 65, clientY: 50, pointerId: 1, button: 0 });
+  expect(view.sent().filter(x => x.type === 'touch_close')).toHaveLength(1);
+  expect(view.commands()).toEqual([]);
+  expect(view.getByRole('button', { name: 'Домой' })).toBeDisabled();
+  view.unmount();
+});
+
+it('old APK probe timeout preserves video and does not invent readiness', () => {
+  mockCapture = { captureEpoch: TOUCH_EPOCH, frameWidth: 1280, frameHeight: 720 };
+  const view = readyWheel();
+  view.down(1); view.up(1, 65);
+  expect(view.commands()).toHaveLength(1);
+  act(() => jest.advanceTimersByTime(6000));
+  expect(view.getByText(/APK не подтвердил непрерывные жесты/)).toBeInTheDocument();
+  expect(view.queryByRole('button', { name: 'Непрерывные жесты' })).not.toBeInTheDocument();
+  expect(view.canvas.width).toBe(1280);
+  view.unmount();
+});
+
+it('recording does not silently turn live motion into a successful reusable swipe', () => {
+  const view = readyContinuous();
+  view.rerender(<DeviceStream deviceId="gesture-remote" fit="contain" enableStaticInput enableNavigation recordingMode onControlSent={jest.fn()} />);
+  expect(view.getByText(/Запись · непрерывный ввод с подтверждением Android/)).toBeInTheDocument();
+  expect(view.commands()).toHaveLength(0);
+  expect(view.sent().filter(x=>x.type==='touch_close')).toHaveLength(0);
+  view.unmount();
+});
+it('a delayed idle ACK does not restart video or disable the ready controller', () => {
+  const view = readyContinuous();
+  for (let i = 0; i < 4; i++) act(() => jest.advanceTimersByTime(250));
+  expect(view.getByText(/Непрерывное управление/)).toBeInTheDocument();
+  expect(view.sent().filter(x => x.type === 'touch_close')).toEqual([]);
+  expect(view.socket.close).not.toHaveBeenCalled();
+  view.status(3, 2);
+  view.down(1); view.up(1, 65);
+  expect(view.sent().filter(x => x.type === 'touch_event' && x.action !== 4).map(x => x.action)).toEqual([0, 1]);
+  view.unmount(); expect(jest.getTimerCount()).toBe(0);
+});
+
+it('automatically renegotiates repeated idle delays after native release with backoff and no replay', () => {
+  const view = readyContinuous();
+  for (let i = 0; i < 7; i++) act(() => jest.advanceTimersByTime(250));
+  expect(view.sent().filter(x => x.type === 'touch_close')).toHaveLength(1);
+  expect(view.sent().filter(x => x.type === 'touch_probe')).toHaveLength(1);
+  expect(view.commands()).toEqual([]);
+  view.status(0, 3, 'release');
+  expect(view.sent().filter(x => x.type === 'touch_probe')).toHaveLength(1);
+  act(() => jest.advanceTimersByTime(749));
+  expect(view.sent().filter(x => x.type === 'touch_probe')).toHaveLength(1);
+  act(() => jest.advanceTimersByTime(1));
+  expect(view.sent().filter(x => x.type === 'touch_probe')).toHaveLength(2);
+  view.receive({ type: 'touch_capability', capture_epoch: TOUCH_EPOCH, frame_width: 1280, frame_height: 720 });
+  view.receive({ type: 'touch_session', session_id: 'second_session_fixture', owner: 'second_owner_fixture',
+    capture_epoch: TOUCH_EPOCH, frame_width: 1280, frame_height: 720 });
+  view.receive({ type: 'continuous_input_status', session_id: 'second_session_fixture', owner: 'second_owner_fixture',
+    capture_epoch: TOUCH_EPOCH, sequence: 0, status: 0, stage: 'startup', origin: 'injector', device_uptime_ms: 200 });
+  expect(view.getByText(/Непрерывное управление/)).toBeInTheDocument();
+  for (let i = 0; i < 7; i++) act(() => jest.advanceTimersByTime(250));
+  expect(view.getByText(/Автоматически восстанавливаем управление/)).toBeInTheDocument();
+  expect(view.queryByText(/Android не подтвердил команду/)).not.toBeInTheDocument();
+  expect(view.container.querySelector('[data-control-state]')).toHaveAttribute('data-control-failure', 'idle_receipt_timeout');
+  expect(view.getByRole('button', { name: 'Домой' })).toBeDisabled();
+  const sentBeforeAttempt = view.sent().length;
+  view.down(1); view.up(1, 65);
+  expect(view.sent()).toHaveLength(sentBeforeAttempt);
+  view.receive({ type: 'continuous_input_status', session_id: 'second_session_fixture', owner: 'second_owner_fixture',
+    capture_epoch: TOUCH_EPOCH, sequence: 0, status: 3, stage: 'release', origin: 'injector', device_uptime_ms: 300 });
+  expect(view.sent().filter(x => x.type === 'touch_probe')).toHaveLength(2);
+  expect(view.queryByRole('button', { name: 'Восстановить управление' })).not.toBeInTheDocument();
+  act(() => jest.advanceTimersByTime(1499));
+  expect(view.sent().filter(x => x.type === 'touch_probe')).toHaveLength(2);
+  act(() => jest.advanceTimersByTime(1));
+  expect(view.sent().filter(x => x.type === 'touch_probe')).toHaveLength(3);
+  expect(view.sent().filter(x => x.type === 'touch_event').every(x => x.action === 4)).toBe(true);
+  expect(view.commands()).toEqual([]);
+  view.unmount();
+});
+
+it('a lost idle RELEASE restarts only its viewer socket, requires a new frame and sends no gesture', () => {
+  const view = readyContinuous();
+  const oldReceive = view.socket.onmessage;
+  jest.spyOn(Math, 'random').mockReturnValue(0.5);
+  for (let i = 0; i < 7; i++) act(() => jest.advanceTimersByTime(250));
+  const previousMessages = view.sent().length;
+  view.down(1); view.up(1, 65);
+  expect(view.sent()).toHaveLength(previousMessages);
+  act(() => jest.advanceTimersByTime(3000));
+  expect(view.socket.close).toHaveBeenCalledTimes(1);
+  act(() => jest.advanceTimersByTime(750));
+  expect(MockSocket.instances).toHaveLength(2);
+  const next = MockSocket.instances[1];
+  next.readyState = MockSocket.OPEN;
+  act(() => next.onopen?.(new Event('open')));
+  const sent = () => next.send.mock.calls.map(([raw]) => JSON.parse(raw as string));
+  expect(sent().filter(x => x.type === 'touch_probe')).toHaveLength(0);
+  view.down(2); view.up(2, 65);
+  expect(view.commands()).toEqual([]);
+  act(() => mockRenderFrame?.({ displayWidth: 1280, displayHeight: 720 } as VideoFrame));
+  expect(sent().filter(x => x.type === 'touch_probe')).toHaveLength(1);
+  view.down(3); view.up(3, 65);
+  expect(view.commands()).toEqual([]);
+  const receive = (message: object) => act(() => next.onmessage?.({ data: JSON.stringify(message) }));
+  receive({ type: 'touch_capability', capture_epoch: TOUCH_EPOCH, frame_width: 1280, frame_height: 720 });
+  receive({ type: 'touch_session', session_id: 'fresh_viewer_session', owner: 'fresh_owner_session',
+    capture_epoch: TOUCH_EPOCH, frame_width: 1280, frame_height: 720 });
+  view.down(4); view.up(4, 65);
+  expect(sent().filter(x => x.type === 'touch_event')).toHaveLength(0);
+  receive({ type: 'continuous_input_status', session_id: 'fresh_viewer_session', owner: 'fresh_owner_session',
+    capture_epoch: TOUCH_EPOCH, sequence: 0, status: 0, stage: 'startup', origin: 'injector', device_uptime_ms: 400 });
+  view.down(5); view.up(5, 65);
+  expect(sent().filter(x => x.type === 'touch_event').map(x => x.action)).toEqual([0, 1]);
+  expect(view.commands()).toEqual([]);
+  act(() => oldReceive?.({ data: JSON.stringify({ type: 'continuous_input_status', session_id: 'viewer_session_fixture',
+    owner: 'owner_session_fixture', capture_epoch: TOUCH_EPOCH, sequence: 0, status: 3,
+    stage: 'release', origin: 'injector', device_uptime_ms: 500 }) }));
+  expect(view.container.querySelector('[data-control-state]')).toHaveAttribute('data-control-state', 'ready');
+  view.unmount();
+  expect(jest.getTimerCount()).toBe(0);
+});
+
+it('a new-socket server denial stops recovery and cannot silently enable legacy input', () => {
+  const view = readyContinuous();
+  for (let i = 0; i < 7; i++) act(() => jest.advanceTimersByTime(250));
+  act(() => jest.advanceTimersByTime(3750));
+  const next = MockSocket.instances[1];
+  next.readyState = MockSocket.OPEN;
+  act(() => next.onopen?.(new Event('open')));
+  act(() => mockRenderFrame?.({ displayWidth: 1280, displayHeight: 720 } as VideoFrame));
+  act(() => next.onmessage?.({ data: JSON.stringify({ type: 'touch_error', error: 'control_revoked_or_unavailable' }) }));
+  expect(view.getByText(/Управление приостановлено сервером/)).toBeInTheDocument();
+  expect(view.getByRole('button', { name: 'Домой' })).toBeDisabled();
+  view.down(1); view.up(1, 65);
+  expect(view.commands()).toEqual([]);
+  act(() => jest.advanceTimersByTime(20_000));
+  expect(MockSocket.instances).toHaveLength(2);
+  view.unmount();
+});
+
+it('caps repeated idle recovery delays without giving up or accumulating timers', () => {
+  const view = readyContinuous();
+  let session = 'viewer_session_fixture', owner = 'owner_session_fixture';
+  const reply = (sequence: number, status: number, stage: string) => view.receive({ type: 'continuous_input_status',
+    session_id: session, owner, capture_epoch: TOUCH_EPOCH, sequence, status, stage,
+    origin: 'injector', device_uptime_ms: 100 });
+  for (const [index, delay] of [750, 1500, 3000, 6000, 12000, 15000, 15000].entries()) {
+    for (let i = 0; i < 7; i++) act(() => jest.advanceTimersByTime(250));
+    reply(0, 3, 'release');
+    const probes = view.sent().filter(x => x.type === 'touch_probe').length;
+    act(() => jest.advanceTimersByTime(delay - 1));
+    expect(view.sent().filter(x => x.type === 'touch_probe')).toHaveLength(probes);
+    act(() => jest.advanceTimersByTime(1));
+    expect(view.sent().filter(x => x.type === 'touch_probe')).toHaveLength(probes + 1);
+    view.receive({ type: 'touch_capability', capture_epoch: TOUCH_EPOCH, frame_width: 1280, frame_height: 720 });
+    session = `retry_session_fixture_${index}`; owner = `retry_owner_fixture_${index}`;
+    view.receive({ type: 'touch_session', session_id: session, owner, capture_epoch: TOUCH_EPOCH, frame_width: 1280, frame_height: 720 });
+    reply(0, 0, 'startup');
+  }
+  expect(view.queryByRole('button', { name: 'Восстановить управление' })).not.toBeInTheDocument();
+  expect(view.commands()).toEqual([]);
+  expect(MockSocket.instances).toHaveLength(1);
+  view.unmount();
+  expect(jest.getTimerCount()).toBe(0);
+});
+
+it('resets recovery backoff only after sustained native receipts', () => {
+  const view = readyContinuous();
+  for (let i = 0; i < 7; i++) act(() => jest.advanceTimersByTime(250));
+  view.status(0, 3, 'release');
+  act(() => jest.advanceTimersByTime(750));
+  view.receive({ type: 'touch_capability', capture_epoch: TOUCH_EPOCH, frame_width: 1280, frame_height: 720 });
+  view.receive({ type: 'touch_session', session_id: 'stable_session_fixture', owner: 'stable_owner_fixture',
+    capture_epoch: TOUCH_EPOCH, frame_width: 1280, frame_height: 720 });
+  const reply = (sequence: number, status: number, stage = 'input') => view.receive({ type: 'continuous_input_status',
+    session_id: 'stable_session_fixture', owner: 'stable_owner_fixture', capture_epoch: TOUCH_EPOCH,
+    sequence, status, stage, origin: 'injector', device_uptime_ms: 100 });
+  reply(0, 0, 'startup');
+  const newOwnerMessagesStart = view.sent().length;
+  for (let i = 0; i < 121; i++) {
+    act(() => jest.advanceTimersByTime(250));
+    const event = view.sent().slice(newOwnerMessagesStart).filter(x => x.type === 'touch_event').at(-1);
+    if (event) reply(event.sequence, 2);
+  }
+  for (let i = 0; i < 7; i++) act(() => jest.advanceTimersByTime(250));
+  reply(0, 3, 'release');
+  expect(view.sent().filter(x => x.type === 'touch_probe')).toHaveLength(2);
+  act(() => jest.advanceTimersByTime(750));
+  expect(view.sent().filter(x => x.type === 'touch_probe')).toHaveLength(3);
+  view.unmount();
+});
+
+it('recording after an idle release obtains fresh native READY on the same video socket', () => {
+  const view = readyContinuous();
+  for (let i = 0; i < 7; i++) act(() => jest.advanceTimersByTime(250));
+  view.status(0, 3, 'release');
+  const record = jest.fn(),native=jest.fn();
+  const ready = jest.fn();
+  view.rerender(<DeviceStream deviceId="gesture-remote" fit="contain" enableStaticInput enableNavigation
+    recordingMode onControlSent={record} onRecordingControlReady={ready} onGestureRecording={native} />);
+  expect(ready).toHaveBeenLastCalledWith(false);
+  act(()=>jest.advanceTimersByTime(750));
+  view.receive({type:'touch_capability',capture_epoch:TOUCH_EPOCH,frame_width:1280,frame_height:720});
+  view.receive({type:'touch_session',session_id:'viewer_session_fixture',owner:'owner_session_fixture',
+    capture_epoch:TOUCH_EPOCH,frame_width:1280,frame_height:720});view.status(0,0,'startup');
+  expect(ready).toHaveBeenLastCalledWith(true);
+  view.down(9);view.status(1,1);view.up(9);view.status(2,1);
+  expect(record).not.toHaveBeenCalled();expect(view.commands()).toHaveLength(0);
+  expect(native.mock.calls.at(-1)?.[0]).toMatchObject({outcome:'confirmed'});
+  expect(view.socket.close).not.toHaveBeenCalled();
+  expect(view.sent().filter(x => x.type === 'touch_probe')).toHaveLength(2);
+  view.unmount();
+});
+
+it('a server busy refusal before binding retries on the same video socket and admits a fresh owner', () => {
+  mockCapture = { captureEpoch: TOUCH_EPOCH, frameWidth: 1280, frameHeight: 720 };
+  const view = readyWheel();
+  const receive = (message: object) => act(() => view.socket.onmessage?.({ data: JSON.stringify(message) }));
+  const sent = () => view.socket.send.mock.calls.map(([raw]) => JSON.parse(raw as string));
+  receive({ type: 'touch_capability', capture_epoch: TOUCH_EPOCH, frame_width: 1280, frame_height: 720 });
+  receive({ type: 'touch_error', error: 'input_admission_rejected', reason: 'controller_busy', retryable: true, operation: 'touch_open' });
+  expect(view.getByText(/Устройством управляет другая вкладка/)).toBeInTheDocument();
+  expect(view.queryByRole('button', { name: 'Восстановить управление' })).not.toBeInTheDocument();
+  expect(view.getByRole('button', { name: 'Домой' })).toBeDisabled();
+  view.down(1); view.up(1, 65);
+  act(() => jest.advanceTimersByTime(749));
+  expect(sent().filter(x => x.type === 'touch_probe')).toHaveLength(1);
+  act(() => jest.advanceTimersByTime(1));
+  expect(sent().filter(x => x.type === 'touch_probe')).toHaveLength(2);
+  expect(view.socket.close).not.toHaveBeenCalled();
+  expect(MockSocket.instances).toHaveLength(1);
+  receive({ type: 'touch_capability', capture_epoch: TOUCH_EPOCH, frame_width: 1280, frame_height: 720 });
+  receive({ type: 'touch_session', session_id: 'fresh_server_session', owner: 'fresh_server_owner',
+    capture_epoch: TOUCH_EPOCH, frame_width: 1280, frame_height: 720 });
+  view.down(2); view.up(2, 65);
+  expect(sent().filter(x => x.type === 'touch_event')).toEqual([]);
+  receive({ type: 'continuous_input_status', session_id: 'fresh_server_session', owner: 'fresh_server_owner',
+    capture_epoch: TOUCH_EPOCH, sequence: 0, status: 0, stage: 'startup', origin: 'injector', device_uptime_ms: 500 });
+  expect(view.getByText(/Непрерывное управление/)).toBeInTheDocument();
+  view.down(3); view.up(3, 65);
+  expect(sent().filter(x => x.type === 'touch_event').map(x => x.action)).toEqual([0, 1]);
+  expect(view.commands()).toEqual([]);
+  view.unmount();
+  expect(jest.getTimerCount()).toBe(0);
+});
+
+it('backs off repeated pre-owner refusals without interrupting video or accumulating input', () => {
+  mockCapture = { captureEpoch: TOUCH_EPOCH, frameWidth: 1280, frameHeight: 720 };
+  const view = readyWheel();
+  const receive = (message: object) => act(() => view.socket.onmessage?.({ data: JSON.stringify(message) }));
+  const sent = () => view.socket.send.mock.calls.map(([raw]) => JSON.parse(raw as string));
+  for (const [i, delay] of [750, 1500, 3000, 6000, 12000, 15000, 15000].entries()) {
+    receive({ type: 'touch_capability', capture_epoch: TOUCH_EPOCH, frame_width: 1280, frame_height: 720 });
+    receive({ type: 'touch_error', error: 'input_admission_rejected', reason: 'controller_busy', retryable: true });
+    act(() => jest.advanceTimersByTime(delay - 1));
+    expect(sent().filter(x => x.type === 'touch_probe')).toHaveLength(i + 1);
+    act(() => jest.advanceTimersByTime(1));
+    expect(sent().filter(x => x.type === 'touch_probe')).toHaveLength(i + 2);
+  }
+  expect(sent().filter(x => x.type === 'touch_event')).toEqual([]);
+  expect(view.socket.close).not.toHaveBeenCalled();
+  view.unmount();
+  expect(jest.getTimerCount()).toBe(0);
+});
+
+it('recovers a temporary probe refusal before any controller exists without reopening video', () => {
+  mockCapture = { captureEpoch: TOUCH_EPOCH, frameWidth: 1280, frameHeight: 720 };
+  const view = readyWheel();
+  act(() => view.socket.onmessage?.({ data: JSON.stringify({ type: 'touch_error', error: 'input_temporarily_unavailable',
+    reason: 'runtime_unavailable', retryable: true, operation: 'touch_probe' }) }));
+  act(() => jest.advanceTimersByTime(750));
+  const sent = view.socket.send.mock.calls.map(([raw]) => JSON.parse(raw as string));
+  expect(sent.filter(x => x.type === 'touch_probe')).toHaveLength(2);
+  expect(sent.filter(x => x.type === 'touch_event')).toEqual([]);
+  expect(view.socket.close).not.toHaveBeenCalled();
+  view.unmount();
+});
+
+it('a stale owner error cannot cancel a replacement capability deadline', () => {
+  const view = readyContinuous();
+  for (let i = 0; i < 7; i++) act(() => jest.advanceTimersByTime(250));
+  view.status(0, 3, 'release');
+  act(() => jest.advanceTimersByTime(750));
+  view.receive({ type: 'touch_error', error: 'input_temporarily_unavailable', reason: 'runtime_unavailable',
+    retryable: true, operation: 'touch_close', owner: 'owner_session_fixture' });
+  act(() => jest.advanceTimersByTime(6000));
+  expect(view.container.querySelector('[data-control-state]')).toHaveAttribute('data-control-failure', 'capability_timeout');
+  expect(view.sent().filter(x => x.type === 'touch_event').every(x => x.action === 4)).toBe(true);
+  view.unmount();
+});
+
+it('a temporary server failure during a touch waits for native RELEASE and ignores stale owner errors', () => {
+  const view = readyContinuous();
+  view.down(1);
+  view.receive({ type: 'touch_error', error: 'input_temporarily_unavailable', reason: 'runtime_unavailable',
+    retryable: true, operation: 'touch_event', owner: 'owner_session_fixture' });
+  view.receive({ type: 'touch_error', error: 'input_temporarily_unavailable', reason: 'runtime_unavailable',
+    retryable: true, operation: 'touch_close', owner: 'owner_session_fixture' });
+  act(() => jest.advanceTimersByTime(1000));
+  expect(view.socket.close).not.toHaveBeenCalled();
+  expect(view.sent().filter(x => x.type === 'touch_probe')).toHaveLength(1);
+  view.status(0, 3, 'release');
+  act(() => jest.advanceTimersByTime(750));
+  expect(view.socket.close).toHaveBeenCalledTimes(1);
+  expect(view.sent().filter(x => x.type === 'touch_event').map(x => x.action)).toEqual([0]);
+  expect(view.commands()).toEqual([]);
+  view.unmount();
+});
+
+it.each([false, true])('does not turn a malformed or nonretryable admission error into an automatic grant (%s)', retryable => {
+  mockCapture = { captureEpoch: TOUCH_EPOCH, frameWidth: 1280, frameHeight: 720 };
+  const view = readyWheel();
+  act(() => view.socket.onmessage?.({ data: JSON.stringify({ type: 'touch_capability', capture_epoch: TOUCH_EPOCH,
+    frame_width: 1280, frame_height: 720 }) }));
+  act(() => view.socket.onmessage?.({ data: JSON.stringify({ type: 'touch_error', error: 'input_admission_rejected',
+    reason: retryable ? 'unknown_reason' : 'controller_busy', retryable }) }));
+  act(() => jest.advanceTimersByTime(20_000));
+  expect(view.socket.send.mock.calls.map(([raw]) => JSON.parse(raw as string)).filter(x => x.type === 'touch_probe')).toHaveLength(1);
+  expect(MockSocket.instances).toHaveLength(1);
+  view.unmount();
+});
+
+it('a busy admission before native STARTUP retries only input without restarting the healthy viewer', () => {
+  mockCapture = { captureEpoch: TOUCH_EPOCH, frameWidth: 1280, frameHeight: 720 };
+  const view = readyWheel();
+  const receive = (message: object) => act(() => view.socket.onmessage?.({ data: JSON.stringify(message) }));
+  receive({ type: 'touch_capability', capture_epoch: TOUCH_EPOCH, frame_width: 1280, frame_height: 720 });
+  receive({ type: 'touch_session', session_id: 'busy_session_fixture', owner: 'busy_owner_fixture',
+    capture_epoch: TOUCH_EPOCH, frame_width: 1280, frame_height: 720 });
+  receive({ type: 'continuous_input_status', session_id: 'busy_session_fixture', owner: 'busy_owner_fixture',
+    capture_epoch: TOUCH_EPOCH, sequence: 0, status: 5, stage: 'startup', origin: 'admission', device_uptime_ms: 400 });
+  expect(view.getByText(/Android завершает предыдущую сессию/)).toBeInTheDocument();
+  expect(view.queryByRole('button', { name: 'Восстановить управление' })).not.toBeInTheDocument();
+  view.down(1); view.up(1, 65);
+  expect(view.commands()).toEqual([]);
+  act(() => jest.advanceTimersByTime(3750));
+  expect(MockSocket.instances).toHaveLength(1);
+  expect(view.socket.close).not.toHaveBeenCalled();
+  expect(view.socket.send.mock.calls.filter(([raw]) => JSON.parse(raw).type === 'touch_probe')).toHaveLength(2);
+  view.unmount();
+});
+
+it.each(['readonly', 'handoff', 'inspection', 'hidden'])('pauses idle recovery while %s owns the surface', mode => {
+  const view = readyContinuous();
+  for (let i = 0; i < 7; i++) act(() => jest.advanceTimersByTime(250));
+  view.status(0, 3, 'release');
+  if (mode === 'hidden') {
+    jest.spyOn(document, 'hidden', 'get').mockReturnValue(true);
+    fireEvent(document, new Event('visibilitychange'));
+  }
+  else view.rerender(<DeviceStream deviceId="gesture-remote" enableNavigation enableStaticInput
+    readOnly={mode === 'readonly'} recordingMode={mode === 'recording'}
+    taskHandoffId={mode === 'handoff' ? 7 : undefined}
+    inspection={mode === 'inspection' ? { onPick: jest.fn(), bounds: null } : undefined} />);
+  act(() => jest.advanceTimersByTime(5000));
+  expect(view.sent().filter(x => x.type === 'touch_probe')).toHaveLength(1);
+  expect(view.commands()).toEqual([]);
+  expect(api.post).not.toHaveBeenCalled();
+  view.unmount();
+  expect(jest.getTimerCount()).toBe(0);
+});
+it.each(['readonly', 'handoff', 'inspection', 'hidden'])('pauses pointer recovery during %s and cannot bypass the fresh viewer requirement', mode => {
+  const view = readyContinuous();
+  view.down(1);
+  for (let i = 0; i < 4; i++) act(() => jest.advanceTimersByTime(250));
+  view.status(0, 3, 'release');
+  const recordingReady = jest.fn();
+  if (mode === 'hidden') {
+    jest.spyOn(document, 'hidden', 'get').mockReturnValue(true);
+    fireEvent(document, new Event('visibilitychange'));
+  }
+  else view.rerender(<DeviceStream deviceId="gesture-remote" enableNavigation enableStaticInput
+    readOnly={mode === 'readonly'} recordingMode={mode === 'recording'}
+    onRecordingControlReady={recordingReady} taskHandoffId={mode === 'handoff' ? 7 : undefined}
+    inspection={mode === 'inspection' ? { onPick: jest.fn(), bounds: null } : undefined} />);
+  act(() => jest.advanceTimersByTime(5000));
+  view.down(2); view.up(2, 65);
+  expect(view.socket.close).not.toHaveBeenCalled();
+  expect(MockSocket.instances).toHaveLength(1);
+  expect(view.sent().filter(x => x.type === 'touch_event' && x.action === 0)).toHaveLength(1);
+  expect(view.commands()).toEqual([]);
+  expect(api.post).not.toHaveBeenCalled();
+  if (mode === 'recording') expect(recordingReady).toHaveBeenLastCalledWith(false);
+  if (mode === 'hidden') {
+    jest.spyOn(document, 'hidden', 'get').mockReturnValue(false);
+    fireEvent(document, new Event('visibilitychange'));
+  }
+  else view.rerender(<DeviceStream deviceId="gesture-remote" enableNavigation enableStaticInput />);
+  act(() => jest.advanceTimersByTime(1500));
+  expect(view.socket.close).toHaveBeenCalledTimes(1);
+  expect(MockSocket.instances).toHaveLength(2);
+  expect(view.getByRole('button', { name: 'Домой' })).toBeDisabled();
+  view.unmount();
+  expect(jest.getTimerCount()).toBe(0);
+});
+
+it.each(['held', 'terminal'])('a %s touch timeout preserves unknown outcome and requires release plus a fresh viewer', phase => {
+  const view = readyContinuous();
+  view.down(1);
+  if (phase === 'terminal') {
+    view.status(1, 1);
+    view.up(1, 65);
+  }
+  for (let i = 0; i < 4; i++) act(() => jest.advanceTimersByTime(250));
+  expect(view.getByText(/Предыдущий жест не подтверждён полностью/)).toBeInTheDocument();
+  expect(view.queryByText(/подтверждение связи без касания/)).not.toBeInTheDocument();
+  expect(view.getByRole('button', { name: 'Домой' })).toBeDisabled();
+  view.status(0, 3, 'release');
+  act(() => jest.advanceTimersByTime(749));
+  expect(view.sent().filter(x => x.type === 'touch_probe')).toHaveLength(1);
+  expect(view.socket.close).not.toHaveBeenCalled();
+  act(() => jest.advanceTimersByTime(751));
+  expect(view.socket.close).toHaveBeenCalledTimes(1);
+  expect(MockSocket.instances).toHaveLength(2);
+  const next = MockSocket.instances[1];
+  next.readyState = MockSocket.OPEN;
+  act(() => next.onopen?.(new Event('open')));
+  const messages = () => next.send.mock.calls.map(([raw]) => JSON.parse(raw as string));
+  view.up(1, 65);
+  expect(messages().filter(x => x.type === 'touch_event')).toEqual([]);
+  expect(view.getByRole('button', { name: 'Домой' })).toBeDisabled();
+  act(() => mockRenderFrame?.({ displayWidth: 1280, displayHeight: 720 } as VideoFrame));
+  const receive = (message: object) => act(() => next.onmessage?.({ data: JSON.stringify(message) }));
+  receive({ type: 'touch_capability', capture_epoch: TOUCH_EPOCH, frame_width: 1280, frame_height: 720 });
+  receive({ type: 'touch_session', session_id: 'fresh_viewer_session', owner: 'fresh_owner_session',
+    capture_epoch: TOUCH_EPOCH, frame_width: 1280, frame_height: 720 });
+  view.down(2); view.up(2, 65);
+  expect(messages().filter(x => x.type === 'touch_event')).toEqual([]);
+  receive({ type: 'continuous_input_status', session_id: 'fresh_viewer_session', owner: 'fresh_owner_session',
+    capture_epoch: TOUCH_EPOCH, sequence: 0, status: 0, stage: 'startup', origin: 'injector', device_uptime_ms: 400 });
+  view.up(1, 65);
+  expect(messages().filter(x => x.type === 'touch_event')).toEqual([]);
+  view.down(3); view.up(3, 65);
+  expect(messages().filter(x => x.type === 'touch_event').map(x => x.action)).toEqual([0, 1]);
+  expect(view.getByText(/Предыдущий жест не подтверждён полностью/)).toBeInTheDocument();
+  expect(view.queryByRole('button', { name: 'Восстановить управление' })).not.toBeInTheDocument();
+  expect(view.commands()).toEqual([]);
+  view.unmount();
+  expect(jest.getTimerCount()).toBe(0);
+});
+
+it.each(['missing', 'unknown', 'foreign'])('an uncertain touch with %s RELEASE cannot restart or admit another touch', release => {
+  const view = readyContinuous();
+  view.down(1);
+  for (let i = 0; i < 4; i++) act(() => jest.advanceTimersByTime(250));
+  if (release === 'unknown') view.status(0, 4, 'release');
+  else if (release === 'foreign') view.receive({ type: 'continuous_input_status', session_id: 'foreign_session_fixture',
+    owner: 'foreign_owner_fixture', capture_epoch: TOUCH_EPOCH, sequence: 0, status: 3,
+    stage: 'release', origin: 'injector', device_uptime_ms: 150 });
+  act(() => jest.advanceTimersByTime(3000));
+  expect(view.getByRole('button', { name: 'Восстановить управление' })).toBeEnabled();
+  expect(view.socket.close).not.toHaveBeenCalled();
+  view.down(2); view.up(2);
+  expect(view.sent().filter(x => x.type === 'touch_event' && x.action === 0)).toHaveLength(1);
+  expect(view.commands()).toEqual([]);
+  expect(api.post).not.toHaveBeenCalled();
+  view.unmount();
+});
+it('shows the finite failed heartbeat snapshot after RELEASE and clears it on a new device', () => {
+  const view = readyContinuous();
+  view.rerender(<DeviceStream deviceId="gesture-remote" enableNavigation enableStaticInput enableDiagnostics />);
+  for (let i = 0; i < 7; i++) act(() => jest.advanceTimersByTime(250));
+  fireEvent.click(view.getByRole('button', { name: 'Показать инструменты стрима' }));
+  fireEvent.click(view.getByRole('button', { name: 'Диагностика' }));
+  expect(view.getByText(/Видео и управление идут через сервер/)).toBeInTheDocument();
+  expect(view.getByText(/Последний сбой управления · native_receipt_timeout/)).toBeInTheDocument();
+  expect(view.getByText(/№1 · HEARTBEAT/)).toBeInTheDocument();
+  expect(view.getByText(/Задержался только heartbeat без касания/)).toBeInTheDocument();
+  expect(view.getByText(/участок задержки ещё не определён/)).toBeInTheDocument();
+  view.status(0, 3, 'release');
+  expect(view.getByText(/Последний сбой управления/)).toBeInTheDocument();
+  expect(view.commands()).toEqual([]);
+  view.rerender(<DeviceStream deviceId="another-device" enableNavigation enableStaticInput enableDiagnostics />);
+  expect(view.queryByText(/Последний сбой управления/)).not.toBeInTheDocument();
+  view.unmount();
+});
+
+it('automatically reports the classified idle failure and its bounded pre-release snapshot to the current history', () => {
+  mockDecoderStats = { binaryMessagesReceived: 1, binaryBytesReceived: 100, renderedFrames: 1, decodedOutputs: 1,
+    invalidPackets: 0, decodeErrors: 0, renderErrors: 0, queueRecoveries: 0, staleOutputDrops: 0,
+    decoderQueueSize: 0, pendingOutputCount: 0, receivedPictureFps: 1, renderedFps: 1,
+    lastBinaryAtMs: null, lastRenderedAtMs: null };
+  const view = readyContinuous();
+  view.receive({ type: 'stream_session', schema_version: 1, history_enabled: true,
+    session_id: '1'.repeat(16), report_interval_seconds: 10 });
+  for (let i = 0; i < 7; i++) act(() => jest.advanceTimersByTime(250));
+  const failure = view.sent().filter(x => x.type === 'viewer_telemetry').at(-1)?.sample;
+  expect(failure).toMatchObject({ control_state: 'fenced', control_failure_detail: 'idle_receipt_timeout',
+    control_fence: {reason: 'native_receipt_timeout', phase: 'ready', pointer_held: false,
+      idle_heartbeat_only: true, oldest_action: 4, buffered_bytes: 0} });
+  expect(JSON.stringify(failure)).not.toContain('owner_session_fixture');
+  expect(JSON.stringify(failure)).not.toContain(TOUCH_EPOCH);
+  view.unmount();
+});
+
+it('records a direct attempt failure immediately without waiting for the watchdog or sending an Android action', () => {
+  mockDecoderStats = { binaryMessagesReceived: 1, binaryBytesReceived: 100, renderedFrames: 1, decodedOutputs: 1,
+    invalidPackets: 0, decodeErrors: 0, renderErrors: 0, queueRecoveries: 0, staleOutputDrops: 0,
+    decoderQueueSize: 0, pendingOutputCount: 0, receivedPictureFps: 1, renderedFps: 1,
+    lastBinaryAtMs: null, lastRenderedAtMs: null };
+  const view = readyContinuous();
+  view.receive({ type: 'stream_session', schema_version: 1, history_enabled: true,
+    session_id: '1'.repeat(16), report_interval_seconds: 10 });
+  const observation = { admitted: true, admissionKnown: true, active: false, frames: 0, lastFrameAt: null, attempts: 1,
+    result: { state: 'failed', reason: 'connection_deadline', path: 'unknown', protocol: null, samples: [],
+      iceState: 'checking', network: { localCandidates: 5, remoteCandidates: 2, pairs: 2, checkingPairs: 2,
+        failedPairs: 0, succeededPairs: 0, requestsSent: 143, responsesReceived: 0, dtlsState: 'new' } } };
+  const before = view.sent().length;
+  act(() => mockVideoObserve?.(observation));
+  const messages = view.sent().slice(before);
+  expect(messages).toHaveLength(1);
+  expect(messages[0]).toMatchObject({ type: 'viewer_telemetry', sample: {
+    direct_state: 'failed', direct_failure: 'connection_deadline', direct_network: { requests_sent: 143, responses_received: 0 },
+  } });
+  act(() => mockVideoObserve?.({ ...observation, result: { state: 'gathering', samples: [], path: 'unknown', protocol: null } }));
+  expect(messages[0].sample.direct_failure).toBe('connection_deadline');
+  expect(view.commands()).toHaveLength(0);
+  view.unmount();
+  act(() => mockVideoObserve?.(observation));
+  expect(view.sent().filter(x => x.type === 'viewer_telemetry' && x.sample.direct_failure)).toHaveLength(1);
+});
+
+it('normal inspection release does not replace a diagnostic failure with a mode-change notice', () => {
+  const view = readyContinuous();
+  view.rerender(<DeviceStream deviceId="gesture-remote" enableNavigation enableStaticInput enableDiagnostics
+    inspection={{ onPick: jest.fn(), bounds: null }} />);
+  view.status(0, 3, 'release');
+  fireEvent.click(view.getByRole('button', { name: 'Показать инструменты стрима' }));
+  fireEvent.click(view.getByRole('button', { name: 'Диагностика' }));
+  expect(view.queryByText(/Последний сбой управления/)).not.toBeInTheDocument();
+  view.unmount();
+});
+it('holds root inspection until this controller receives its native RELEASE3', () => {
+  const view = readyContinuous();
+  const inspectionReady = jest.fn();
+  view.rerender(<DeviceStream deviceId="gesture-remote" enableNavigation enableStaticInput
+    inspection={{ onPick: jest.fn(), bounds: null }} onInspectionControlReady={inspectionReady} />);
+  expect(inspectionReady).toHaveBeenLastCalledWith(false);
+  expect(view.sent().filter(x => x.type === 'touch_close')).toHaveLength(1);
+  view.status(0, 3, 'release');
+  expect(inspectionReady).toHaveBeenLastCalledWith(true);
+  act(() => jest.advanceTimersByTime(3000));
+  expect(view.queryByRole('button', { name: 'Восстановить управление' })).not.toBeInTheDocument();
+  expect(view.commands()).toEqual([]);
+});
+
+it('a native unknown release cannot unlock root inspection', () => {
+  const view = readyContinuous();
+  const inspectionReady = jest.fn();
+  view.rerender(<DeviceStream deviceId="gesture-remote" enableNavigation enableStaticInput
+    inspection={{ onPick: jest.fn(), bounds: null }} onInspectionControlReady={inspectionReady} />);
+  view.status(0, 4, 'release');
+  expect(inspectionReady).toHaveBeenLastCalledWith(false);
+  expect(inspectionReady).not.toHaveBeenCalledWith(true);
+});
+it('a missing inspection release stays fenced and exposes explicit recovery after a bounded wait', () => {
+  const view = readyContinuous();
+  const inspectionReady = jest.fn();
+  view.rerender(<DeviceStream deviceId="gesture-remote" enableNavigation enableStaticInput
+    inspection={{ onPick: jest.fn(), bounds: null }} onInspectionControlReady={inspectionReady} />);
+  act(() => jest.advanceTimersByTime(2000));
+  // A parent age/poll render creates a fresh inspection object; it must not
+  // postpone the original deadline indefinitely.
+  view.rerender(<DeviceStream deviceId="gesture-remote" enableNavigation enableStaticInput
+    inspection={{ onPick: jest.fn(), bounds: null }} onInspectionControlReady={inspectionReady} />);
+  act(() => jest.advanceTimersByTime(1000));
+  expect(inspectionReady).not.toHaveBeenCalledWith(true);
+  expect(view.getByRole('button', { name: 'Восстановить управление' })).toBeEnabled();
+  expect(view.container.querySelector('[data-control-state]')).toHaveAttribute('data-control-failure', 'inspection_release_unknown');
+  expect(view.sent().filter(x => x.type === 'touch_close')).toHaveLength(1);
+  expect(api.post).not.toHaveBeenCalled();
+});
+
+it('a capability arriving while hidden is negotiated again when the page becomes visible', () => {
+  mockCapture = { captureEpoch: TOUCH_EPOCH, frameWidth: 1280, frameHeight: 720 };
+  const view = readyWheel();
+  const probes = () => view.socket.send.mock.calls.map(([raw]) => JSON.parse(raw as string))
+    .filter(row => row.type === 'touch_probe');
+  expect(probes()).toHaveLength(1);
+  jest.spyOn(document, 'hidden', 'get').mockReturnValue(true);
+  fireEvent(document, new Event('visibilitychange'));
+  act(() => view.socket.onmessage?.({ data: JSON.stringify({ type: 'touch_capability', capture_epoch: TOUCH_EPOCH,
+    frame_width: 1280, frame_height: 720 }) }));
+  expect(probes()).toHaveLength(1);
+  jest.spyOn(document, 'hidden', 'get').mockReturnValue(false);
+  fireEvent(document, new Event('visibilitychange'));
+  expect(probes()).toHaveLength(2);
+  act(() => view.socket.onmessage?.({ data: JSON.stringify({ type: 'touch_capability', capture_epoch: TOUCH_EPOCH,
+    frame_width: 1280, frame_height: 720 }) }));
+  expect(view.socket.send.mock.calls.map(([raw]) => JSON.parse(raw as string)).filter(row => row.type === 'touch_open')).toHaveLength(1);
+  view.unmount();
+});
+
+it('a late capability cannot replace the path midway through an already held legacy gesture', () => {
+  mockCapture = { captureEpoch: TOUCH_EPOCH, frameWidth: 1280, frameHeight: 720 };
+  const view = readyWheel();
+  view.down(1);
+  act(() => view.socket.onmessage?.({ data: JSON.stringify({ type: 'touch_capability', capture_epoch: TOUCH_EPOCH, frame_width: 1280, frame_height: 720 }) }));
+  expect(view.socket.send.mock.calls.map(([raw]) => JSON.parse(raw as string)).filter(x => x.type === 'touch_probe')).toHaveLength(1);
+  view.up(1, 65);
+  expect(view.commands()).toHaveLength(1);
+  expect(view.socket.send.mock.calls.map(([raw]) => JSON.parse(raw as string)).filter(x => x.type === 'touch_open')).toHaveLength(0);
+  view.unmount();
+});
+
+it('wheel uses a bounded 180ms native gesture without legacy input or a second DOWN', () => {
+  const view = readyContinuous();
+  view.wheel();
+  view.status(1, 1);
+  act(() => jest.advanceTimersByTime(16)); view.status(2, 1);
+  fireEvent.pointerDown(view.canvas, { clientX: 30, clientY: 50, pointerId: 1, buttons: 1, button: 0 });
+  view.wheel();
+  expect(view.sent().filter(x => x.type === 'touch_event').map(x => x.action)).toEqual([0, 2]);
+  act(() => jest.advanceTimersByTime(164)); view.status(3, 1);
+  expect(view.sent().filter(x => x.type === 'touch_event').map(x => x.action)).toEqual([0, 2, 1]);
+  expect(view.sent().filter(x => x.type === 'touch_event').map(x => [x.x, x.y])).toEqual([[640,440],[640,280],[640,280]]);
+  expect(view.commands()).toEqual([]);
+  view.unmount();
+});
+
+it('losing focus cancels a pending wheel terminal rather than replaying it into a new session', () => {
+  const view = readyContinuous();
+  view.wheel(); view.status(1, 1);
+  fireEvent.blur(window);
+  act(() => jest.advanceTimersByTime(200));
+  expect(view.sent().filter(x => x.type === 'touch_event').map(x => x.action)).toEqual([0]);
+  expect(view.sent().filter(x => x.type === 'touch_close')).toHaveLength(1);
+  view.status(0, 3, 'release');
+  expect(view.sent().filter(x => x.type === 'touch_probe')).toHaveLength(2);
+  fireEvent.focus(window);
+  expect(view.sent().filter(x => x.type === 'touch_probe')).toHaveLength(2);
+  expect(view.sent().filter(x => x.type === 'touch_event').map(x => x.action)).toEqual([0]);
+  expect(MockSocket.instances).toHaveLength(1);
+  expect(view.commands()).toEqual([]);
+  view.unmount();
+});
+
+it('missing native release blocks Home, reports no dispatch and provides explicit recovery', async () => {
+  const view = readyContinuous();
+  fireEvent.click(view.getByRole('button', { name: 'Домой' }));
+  await act(async () => jest.advanceTimersByTime(3000));
+  expect(api.post).not.toHaveBeenCalled();
+  expect(view.getByRole('alert')).toHaveTextContent('команда не отправлена');
+  expect(view.getByRole('button', { name: 'Восстановить управление' })).toBeEnabled();
+  view.down(1); view.up(1,65);
+  expect(view.commands()).toEqual([]);
+  expect(view.sent().filter(x => x.type === 'touch_probe')).toHaveLength(1);
+  view.unmount();
+});
+
+it('unknown key completion does not reopen input or silently send a legacy gesture', async () => {
+  const view = readyContinuous();
+  jest.mocked(api.post).mockRejectedValueOnce(new Error('timeout'));
+  fireEvent.click(view.getByRole('button', { name: 'Домой' }));
+  await act(async () => view.status(0,3,'release'));
+  expect(api.post).toHaveBeenCalledTimes(1);
+  expect(view.getByRole('alert')).toHaveTextContent('результат не подтверждён');
+  expect(view.sent().filter(x => x.type === 'touch_probe')).toHaveLength(1);
+  view.down(1); view.up(1,65);
+  expect(view.commands()).toEqual([]);
+  expect(view.container.querySelector('[data-control-failure]')).toHaveAttribute('data-control-failure', 'discrete_result_unknown');
+  view.unmount();
+});
+
+it.each(['idle', 'held', 'terminal'])('a %s native failure waits for known release and a fresh viewer without replay', phase => {
+  const view = readyContinuous();
+  if (phase !== 'idle') view.down(1);
+  if (phase === 'terminal') { view.status(1, 1); view.up(1,65); }
+  view.status(0, 6, 'startup');
+  view.down(2); view.up(2,65);
+  expect(view.getByRole('button', { name: 'Домой' })).toBeDisabled();
+  expect(view.socket.close).not.toHaveBeenCalled();
+  expect(view.commands()).toEqual([]);
+  const oldEvents = view.sent().filter(x => x.type === 'touch_event');
+  view.status(0, 3, 'release');
+  expect(view.container.querySelector('[data-control-failure]')).toHaveAttribute('data-control-failure', 'native_input_rejected_or_unknown');
+  expect(view.queryByRole('button', { name: 'Восстановить управление' })).not.toBeInTheDocument();
+  expect(view.sent().filter(x => x.type === 'touch_probe')).toHaveLength(1);
+  act(() => jest.advanceTimersByTime(1500));
+  expect(view.socket.close).toHaveBeenCalledTimes(1);
+  expect(MockSocket.instances).toHaveLength(2);
+  expect(view.sent().filter(x => x.type === 'touch_event')).toEqual(oldEvents);
+  const next = MockSocket.instances[1];
+  next.readyState = MockSocket.OPEN;
+  act(() => next.onopen?.(new Event('open')));
+  act(() => mockRenderFrame?.({ displayWidth: 1280, displayHeight: 720 } as VideoFrame));
+  const receive = (message: object) => act(() => next.onmessage?.({ data: JSON.stringify(message) }));
+  receive({ type: 'touch_capability', capture_epoch: TOUCH_EPOCH, frame_width: 1280, frame_height: 720 });
+  receive({ type: 'touch_session', session_id: 'fresh_viewer_session', owner: 'fresh_owner_session',
+    capture_epoch: TOUCH_EPOCH, frame_width: 1280, frame_height: 720 });
+  view.down(3); view.up(3,65);
+  const events = () => next.send.mock.calls.map(([raw]) => JSON.parse(raw as string)).filter(x => x.type === 'touch_event');
+  expect(events()).toEqual([]);
+  receive({ type: 'continuous_input_status', session_id: 'fresh_viewer_session', owner: 'fresh_owner_session',
+    capture_epoch: TOUCH_EPOCH, sequence: 0, status: 0, stage: 'startup', origin: 'injector', device_uptime_ms: 400 });
+  view.up(1,65);
+  expect(events()).toEqual([]);
+  view.down(4); view.up(4,65);
+  expect(events().map(x => x.action)).toEqual([0,1]);
+  expect(api.post).not.toHaveBeenCalled();
+  view.unmount();
+  expect(jest.getTimerCount()).toBe(0);
+});
+
+it.each(['missing', 'unknown', 'foreign'])('a native failure with %s release cannot obtain a replacement owner', release => {
+  const view = readyContinuous();
+  view.down(1);
+  view.status(1, 4);
+  if (release === 'unknown') view.status(0, 4, 'release');
+  else if (release === 'foreign') view.receive({ type: 'continuous_input_status', session_id: 'foreign_session_fixture',
+    owner: 'foreign_owner_fixture', capture_epoch: TOUCH_EPOCH, sequence: 0, status: 3,
+    stage: 'release', origin: 'injector', device_uptime_ms: 150 });
+  act(() => jest.advanceTimersByTime(4000));
+  expect(MockSocket.instances).toHaveLength(1);
+  expect(view.socket.close).not.toHaveBeenCalled();
+  view.down(2); view.up(2,65);
+  expect(view.sent().filter(x => x.type === 'touch_event' && x.action === 0)).toHaveLength(1);
+  expect(view.getByRole('button', { name: 'Домой' })).toBeDisabled();
+  expect(api.post).not.toHaveBeenCalled();
+  view.unmount();
+  expect(jest.getTimerCount()).toBe(0);
+});
+
+it('a late exact RELEASE resumes automatic recovery after slow native teardown without replay', () => {
+  const view = readyContinuous();
+  view.down(1);
+  view.status(1, 4);
+  act(() => jest.advanceTimersByTime(4000));
+  expect(view.socket.close).not.toHaveBeenCalled();
+  expect(view.getByRole('button', { name: 'Домой' })).toBeDisabled();
+  view.status(0,3,'release');
+  expect(view.queryByRole('button', { name: 'Восстановить управление' })).not.toBeInTheDocument();
+  act(() => jest.advanceTimersByTime(1500));
+  expect(view.socket.close).toHaveBeenCalledTimes(1);
+  expect(MockSocket.instances).toHaveLength(2);
+  expect(view.sent().filter(x => x.type === 'touch_event' && x.action === 0)).toHaveLength(1);
+  expect(api.post).not.toHaveBeenCalled();
+  view.unmount();
+  expect(jest.getTimerCount()).toBe(0);
+});
+
+it('an explicitly unknown RELEASE stays fenced even if a later packet claims success', () => {
+  const view = readyContinuous();
+  view.down(1);
+  view.status(1,4);
+  view.status(0,4,'release');
+  view.status(0,3,'release');
+  act(() => jest.advanceTimersByTime(5000));
+  expect(view.socket.close).not.toHaveBeenCalled();
+  expect(MockSocket.instances).toHaveLength(1);
+  expect(view.getByRole('button', { name: 'Домой' })).toBeDisabled();
+  expect(api.post).not.toHaveBeenCalled();
+  view.unmount();
+  expect(jest.getTimerCount()).toBe(0);
+});
+
+it('fresh permission at the native release boundary prevents a now forbidden Home dispatch', async () => {
+  const view = readyContinuous();
+  fireEvent.click(view.getByRole('button', { name: 'Домой' }));
+  view.rerender(<DeviceStream deviceId="gesture-remote" fit="contain" enableStaticInput enableNavigation readOnly />);
+  await act(async () => view.status(0,3,'release'));
+  expect(api.post).not.toHaveBeenCalled();
+  expect(view.getByRole('alert')).toHaveTextContent('команда не отправлена');
+  expect(view.sent().filter(x => x.type === 'touch_probe')).toHaveLength(1);
+  view.unmount();
+});
+
+it('inspection releases native ownership and only returning to control negotiates again', () => {
+  const view = readyContinuous();
+  const pick = jest.fn();
+  view.rerender(<DeviceStream deviceId="gesture-remote" fit="contain" enableStaticInput enableNavigation inspection={{onPick:pick,bounds:null}} />);
+  expect(view.sent().filter(x => x.type === 'touch_close')).toHaveLength(1);
+  view.status(0,3,'release');
+  view.down(1); view.up(1);
+  expect(pick).toHaveBeenCalledWith(640, 360, { width: 1280, height: 720 });
+  expect(view.sent().filter(x => x.type === 'touch_probe')).toHaveLength(1);
+  view.rerender(<DeviceStream deviceId="gesture-remote" fit="contain" enableStaticInput enableNavigation />);
+  expect(view.sent().filter(x => x.type === 'touch_probe')).toHaveLength(2);
+  expect(view.commands()).toEqual([]);
+  view.unmount();
+});
+
+it('a view-mode change during startup waits for the late native release before enabling another owner', () => {
+  mockCapture = { captureEpoch: TOUCH_EPOCH, frameWidth: 1280, frameHeight: 720 };
+  const view = readyWheel();
+  const receive = (message: object) => act(() => view.socket.onmessage?.({ data: JSON.stringify(message) }));
+  const sent = () => view.socket.send.mock.calls.map(([raw]) => JSON.parse(raw as string));
+  receive({ type: 'touch_capability', capture_epoch: TOUCH_EPOCH, frame_width: 1280, frame_height: 720 });
+  view.rerender(<DeviceStream deviceId="gesture-remote" fit="contain" enableStaticInput enableNavigation readOnly />);
+  expect(sent().filter(row => row.type === 'touch_close')).toHaveLength(1);
+  view.rerender(<DeviceStream deviceId="gesture-remote" fit="contain" enableStaticInput enableNavigation />);
+  expect(sent().filter(row => row.type === 'touch_probe')).toHaveLength(1);
+  receive({ type: 'touch_session', session_id: 'viewer_session_fixture', owner: 'owner_session_fixture',
+    capture_epoch: TOUCH_EPOCH, frame_width: 1280, frame_height: 720 });
+  receive({ type: 'continuous_input_status', session_id: 'viewer_session_fixture', owner: 'owner_session_fixture',
+    capture_epoch: TOUCH_EPOCH, sequence: 0, status: 0, stage: 'startup', origin: 'injector', device_uptime_ms: 100 });
+  view.down(1); view.up(1);
+  expect(sent().filter(row => row.type === 'touch_event')).toEqual([]);
+  receive({ type: 'continuous_input_status', session_id: 'viewer_session_fixture', owner: 'owner_session_fixture',
+    capture_epoch: TOUCH_EPOCH, sequence: 0, status: 3, stage: 'release', origin: 'injector', device_uptime_ms: 110 });
+  expect(sent().filter(row => row.type === 'touch_probe')).toHaveLength(2);
+  expect(view.commands()).toEqual([]);
+  view.unmount();
+});
+
+it('a cancelled undelivered opening renegotiates input on the same video without waiting for nonexistent native release', () => {
+  mockCapture = { captureEpoch: TOUCH_EPOCH, frameWidth: 1280, frameHeight: 720 };
+  mockDecoderStats = { binaryMessagesReceived: 1, binaryBytesReceived: 100, renderedFrames: 1, decodedOutputs: 1,
+    invalidPackets: 0, decodeErrors: 0, renderErrors: 0, queueRecoveries: 0, staleOutputDrops: 0,
+    decoderQueueSize: 0, pendingOutputCount: 0, receivedPictureFps: 1, renderedFps: 1,
+    lastBinaryAtMs: null, lastRenderedAtMs: null };
+  const view = readyWheel();
+  const receive = (message: object) => act(() => view.socket.onmessage?.({ data: JSON.stringify(message) }));
+  const sent = () => view.socket.send.mock.calls.map(([raw]) => JSON.parse(raw as string));
+  receive({ type: 'stream_session', schema_version: 1, history_enabled: true,
+    session_id: '1'.repeat(16), report_interval_seconds: 10 });
+  act(() => jest.advanceTimersByTime(1100));
+  receive({ type: 'touch_capability', capture_epoch: TOUCH_EPOCH, frame_width: 1280, frame_height: 720 });
+  jest.spyOn(document, 'hidden', 'get').mockReturnValue(true);
+  fireEvent(document, new Event('visibilitychange'));
+  expect(sent().filter(row => row.type === 'touch_close')).toEqual([{type: 'touch_close', cancel_unstarted: true}]);
+  const fence = sent().filter(row => row.type === 'viewer_telemetry').at(-1)?.sample.control_fence;
+  expect(fence).toMatchObject({ reason: 'surface_hidden', phase: 'opening', offered_sequence: 0, pointer_held: false });
+  jest.spyOn(document, 'hidden', 'get').mockReturnValue(false);
+  fireEvent(document, new Event('visibilitychange'));
+  receive({ type: 'touch_session', session_id: 'viewer_session_fixture', owner: 'cancelled_owner_fixture',
+    capture_epoch: TOUCH_EPOCH, frame_width: 1280, frame_height: 720 });
+  receive({ type: 'touch_cancelled', session_id: 'viewer_session_fixture', owner: 'cancelled_owner_fixture',
+    capture_epoch: TOUCH_EPOCH, origin: 'admission' });
+  act(() => jest.advanceTimersByTime(1200));
+  expect(MockSocket.instances).toHaveLength(1);
+  expect(view.socket.close).not.toHaveBeenCalled();
+  expect(sent().filter(row => row.type === 'touch_probe')).toHaveLength(2);
+  receive({ type: 'touch_capability', capture_epoch: TOUCH_EPOCH, frame_width: 1280, frame_height: 720 });
+  receive({ type: 'touch_session', session_id: 'viewer_session_fixture', owner: 'replacement_owner_fixture',
+    capture_epoch: TOUCH_EPOCH, frame_width: 1280, frame_height: 720 });
+  view.down(1); view.up(1);
+  expect(sent().filter(row => row.type === 'touch_event')).toEqual([]);
+  receive({ type: 'continuous_input_status', session_id: 'viewer_session_fixture', owner: 'replacement_owner_fixture',
+    capture_epoch: TOUCH_EPOCH, sequence: 0, status: 0, stage: 'startup', origin: 'injector', device_uptime_ms: 100 });
+  expect(view.container.querySelector('[data-control-state]')).toHaveAttribute('data-control-state', 'ready');
+  expect(view.commands()).toEqual([]);
+  view.unmount();
+});
+
+it.each(['native_release', 'admission_cancel', 'permission_denied'])('old CLOSE errors preserve cleanup and permission boundaries: %s', (completion) => {
+  mockCapture = { captureEpoch: TOUCH_EPOCH, frameWidth: 1280, frameHeight: 720 };
+  const view = readyWheel();
+  const receive = (message: object) => act(() => view.socket.onmessage?.({ data: JSON.stringify(message) }));
+  const sent = () => view.socket.send.mock.calls.map(([raw]) => JSON.parse(raw as string));
+  receive({ type: 'touch_capability', capture_epoch: TOUCH_EPOCH, frame_width: 1280, frame_height: 720 });
+  receive({ type: 'touch_session', session_id: 'viewer_session_fixture', owner: 'retiring_owner_fixture',
+    capture_epoch: TOUCH_EPOCH, frame_width: 1280, frame_height: 720 });
+  jest.spyOn(document, 'hidden', 'get').mockReturnValue(true);
+  fireEvent(document, new Event('visibilitychange'));
+  expect(sent().filter(row => row.type === 'touch_close')).toHaveLength(1);
+  jest.spyOn(document, 'hidden', 'get').mockReturnValue(false);
+  fireEvent(document, new Event('visibilitychange'));
+  receive({ type: 'touch_error', operation: 'touch_close', owner: 'retiring_owner_fixture',
+    error: completion === 'permission_denied' ? 'control_denied' : 'input_rejected_or_unavailable' });
+  act(() => jest.advanceTimersByTime(1200));
+  expect(sent().filter(row => row.type === 'touch_probe')).toHaveLength(1);
+  if (completion !== 'admission_cancel') {
+    receive({ type: 'continuous_input_status', session_id: 'viewer_session_fixture', owner: 'retiring_owner_fixture',
+      capture_epoch: TOUCH_EPOCH, sequence: 0, status: 3, stage: 'release', origin: 'injector', device_uptime_ms: 100 });
+  } else {
+    receive({ type: 'touch_cancelled', session_id: 'viewer_session_fixture', owner: 'retiring_owner_fixture',
+      capture_epoch: TOUCH_EPOCH, origin: 'admission' });
+  }
+  act(() => jest.advanceTimersByTime(1200));
+  expect(sent().filter(row => row.type === 'touch_probe')).toHaveLength(completion === 'permission_denied' ? 1 : 2);
+  expect(sent().filter(row => row.type === 'touch_event')).toEqual([]);
+  expect(MockSocket.instances).toHaveLength(1);
+  expect(view.commands()).toEqual([]);
+  view.unmount();
+});
+
+it('records pointer and wheel ACKs without replacing a ready continuous session', () => {
+  const view = readyContinuous();
+  const record = jest.fn(), native=jest.fn();
+  view.rerender(<DeviceStream deviceId="gesture-remote" fit="contain" enableStaticInput enableNavigation recordingMode onControlSent={record} onGestureRecording={native} />);
+  view.down(1);view.status(1,1);view.up(1);view.status(2,1);
+  expect(native.mock.calls.at(-1)?.[0]).toMatchObject({outcome:'confirmed'});
+  expect(view.sent().filter(x => x.type === 'touch_probe')).toHaveLength(1);
+  view.wheel();
+  const down=view.sent().filter(x=>x.type==='touch_event'&&x.action===0).at(-1)!;
+  view.status(down.sequence,1);
+  act(()=>jest.advanceTimersByTime(180));
+  const up=view.sent().filter(x=>x.type==='touch_event'&&x.action===1).at(-1)!;view.status(up.sequence,1);
+  expect(native.mock.calls.filter(([e])=>e.phase==='finished'&&e.outcome==='confirmed')).toHaveLength(2);
+  expect(view.commands()).toHaveLength(0);expect(record).not.toHaveBeenCalled();
+  expect(view.sent().filter(x=>x.type==='touch_close')).toHaveLength(0);
+  view.unmount();
+});
+
+it('recording uses pending native capability but never falls back to an unacknowledged click before READY', () => {
+  mockCapture = { captureEpoch: TOUCH_EPOCH, frameWidth: 1280, frameHeight: 720 };
+  const view = readyWheel();
+  view.rerender(<DeviceStream deviceId="gesture-remote" fit="contain" enableStaticInput enableNavigation recordingMode onControlSent={jest.fn()} />);
+  act(() => view.socket.onmessage?.({ data: JSON.stringify({ type:'touch_capability',capture_epoch:TOUCH_EPOCH,frame_width:1280,frame_height:720 }) }));
+  expect(view.socket.send.mock.calls.map(([raw]) => JSON.parse(raw as string)).filter(x=>x.type==='touch_open')).toHaveLength(1);
+  view.down(1);view.up(1,65);
+  expect(view.commands()).toHaveLength(0);
+  view.unmount();
+});
+
+it('never completes a legacy drag that began before recording mode was enabled',()=>{
+  const view=readyWheel();view.down(1);
+  view.rerender(<DeviceStream deviceId="gesture-remote" fit="contain" enableStaticInput enableNavigation recordingMode/>);
+  view.up(1,65);expect(view.commands()).toHaveLength(0);view.unmount();
+});
+
+it('maps downward and upward wheel movements to bounded swipes at native video coordinates', () => {
+  const view = readyWheel();
+  // Native non-passive handler cancels page scrolling on an accepted gesture.
+  expect(view.wheel(80, { cancelable: true })).toBe(false);
+  expect(view.commands()).toEqual([{ type: 'swipe', x1: 640, y1: 440, x2: 640, y2: 280, duration_ms: 180 }]);
+  act(() => jest.advanceTimersByTime(250)); view.wheel(-80);
+  expect(view.commands()[1]).toEqual({ type: 'swipe', x1: 640, y1: 280, x2: 640, y2: 440, duration_ms: 180 });
+});
+it('bounds horizontal wheel gestures and throttles a wheel burst without deferred replay', () => {
+  const view = readyWheel(); view.wheel(0, { deltaX: 1000 }); view.wheel(80);
+  expect(view.commands()).toHaveLength(1);
+  expect(view.commands()[0]).toEqual({ type: 'swipe', x1: 760, y1: 360, x2: 520, y2: 360, duration_ms: 180 });
+  act(() => jest.advanceTimersByTime(500)); expect(view.commands()).toHaveLength(1);
+});
+it.each(['inspection', 'readonly', 'closed', 'zoom', 'letterbox', 'pressure'])('does not inject wheel gestures for %s', reason => {
+  const view = readyWheel();
+  if (reason === 'inspection') view.rerender(<DeviceStream deviceId="gesture-remote" fit="contain" enableStaticInput enableNavigation inspection={{ onPick: jest.fn(), bounds: null }} />);
+  if (reason === 'readonly') view.rerender(<DeviceStream deviceId="gesture-remote" fit="contain" enableStaticInput enableNavigation readOnly />);
+  if (reason === 'closed') view.socket.readyState = MockSocket.CLOSED;
+  if (reason === 'pressure') Object.assign(view.socket, { bufferedAmount: 65_537 });
+  view.wheel(80, reason === 'zoom' ? { ctrlKey: true } : reason === 'letterbox' ? { clientY: 0 } : {});
+  expect(view.commands()).toHaveLength(0);
+});
+
+it('read-only viewers render a picture without dispatching taps or swipes, including static frames', () => {
+  const { canvas, commands, down, up } = readyGestureFixture(true, true);
+  expect(canvas.width).toBe(1280);
+  expect(canvas).toHaveAttribute('aria-disabled', 'true');
+  down(1); up(1); down(2); up(2, 65);
+  act(() => jest.advanceTimersByTime(10_000));
+  down(3); up(3);
+  expect(commands()).toEqual([]);
+});
+
+it('inspection picks a node without dispatching Android tap, swipe or onTap', () => {
+  const view = readyGestureFixture(true);
+  const onPick = jest.fn();
+  const onTap = jest.fn();
+  view.rerender(<DeviceStream deviceId="gesture-remote" fit="contain" enableStaticInput onTap={onTap}
+    inspection={{ onPick, bounds: null }} />);
+  view.down(1); view.up(1); view.down(2); view.up(2, 65);
+  expect(onPick).toHaveBeenCalledWith(640, 360, { width: 1280, height: 720 });
+  expect(onPick).toHaveBeenCalledTimes(1);
+  expect(onTap).not.toHaveBeenCalled();
+  expect(view.commands()).toEqual([]);
+});
+
+it('a gesture started in inspection is never replayed as Android input after a mode change', () => {
+  const view = readyGestureFixture(true);
+  const onPick = jest.fn();
+  view.rerender(<DeviceStream deviceId="gesture-remote" fit="contain" enableStaticInput inspection={{ onPick, bounds: null }} />);
+  view.down(1);
+  view.rerender(<DeviceStream deviceId="gesture-remote" fit="contain" enableStaticInput />);
+  view.up(1);
+  expect(onPick).not.toHaveBeenCalled();
+  expect(view.commands()).toEqual([]);
+});
+
+it('revoking control cancels a gesture already held over the picture', () => {
+  const view = readyGestureFixture(true);
+  view.down(1);
+  view.rerender(<DeviceStream deviceId="gesture-remote" fit="contain" enableStaticInput readOnly />);
+  view.up(1);
+  expect(view.commands()).toEqual([]);
+});
+
+it.each(['invalid_parameter', 'unsupported_message'])('a rejected %s cancels the pending gesture but does not disable video or later explicit input', reason => {
+  const view = readyGestureFixture(true);
+  view.down(1);
+  act(() => view.socket.onmessage?.({ data: JSON.stringify({ type: 'error', error: 'stream_input_invalid', reason, private: 'must-not-be-shown' }) }));
+  view.up(1);
+  expect(view.commands()).toEqual([]);
+  expect(view.canvas).toHaveAttribute('aria-disabled', 'false');
+  expect(view.getByRole('status')).toHaveTextContent('Видеопоток продолжается');
+  expect(view.queryByText('must-not-be-shown')).not.toBeInTheDocument();
+  view.down(2); view.up(2);
+  expect(view.commands()).toEqual([{ type: 'click', x: 640, y: 360 }]);
+  expect(MockSocket.instances).toHaveLength(1);
+  fireEvent.click(view.getByRole('button', { name: 'Скрыть сообщение об управлении' }));
+  expect(view.queryByRole('status')).not.toBeInTheDocument();
+});
+
+it('changing the selected device clears a previous rejected-command notice', () => {
+  const view = readyGestureFixture(true);
+  act(() => view.socket.onmessage?.({ data: JSON.stringify({ type: 'error', error: 'stream_input_invalid' }) }));
+  expect(view.getByRole('status')).toHaveTextContent('Сервер отклонил некорректную команду');
+  view.rerender(<DeviceStream deviceId="other-device" fit="contain" enableStaticInput />);
+  expect(view.queryByText(/Сервер отклонил некорректную команду/)).not.toBeInTheDocument();
+});
+
+it('single-device static input accepts a new tap and swipe without inventing a fresh picture', () => {
+  const { canvas, commands, down, up } = readyGestureFixture(true);
+  act(() => jest.advanceTimersByTime(10_000));
+  expect(canvas).toHaveAttribute('aria-disabled', 'false');
+  expect(canvas).toHaveAttribute('aria-label', 'Экран устройства: управление по последнему кадру');
+  down(1); up(1);
+  down(2); up(2, 65);
+  expect(commands()).toEqual([
+    { type: 'click', x: 640, y: 360 },
+    { type: 'swipe', x1: 640, y1: 360, x2: 832, y2: 360, duration_ms: 154 },
+  ]);
+});
+
+it('static input cancels the held gesture at expiry and allows a distinct new gesture', () => {
+  const { commands, down, up } = readyGestureFixture(true);
+  down(1);
+  act(() => jest.advanceTimersByTime(10_000));
+  up(1);
+  expect(commands()).toHaveLength(0);
+  down(2); up(2);
+  expect(commands()).toEqual([{ type: 'click', x: 640, y: 360 }]);
+});
+
+it.each(['close', 'error', 'denied', 'timeout'])('static %s still blocks pointer input', reason => {
+  const { canvas, socket, commands, down, up } = readyGestureFixture(true);
+  act(() => jest.advanceTimersByTime(10_000));
+  act(() => {
+    if (reason === 'close') socket.onclose?.({ code: 1006 });
+    else if (reason === 'error') socket.onerror?.();
+    else if (reason === 'timeout') jest.advanceTimersByTime(20_000);
+    else socket.onmessage?.({ data: JSON.stringify({ type: 'error', error: 'stream_control_denied' }) });
+  });
+  down(1); up(1);
+  expect(commands()).toHaveLength(0);
+  expect(canvas).toHaveAttribute('aria-disabled', 'true');
+});
+
+it('static mode cannot use the old socket picture after reconnect until a new picture is drawn', () => {
+  const { socket, canvas, commands, down, up } = readyGestureFixture(true);
+  act(() => socket.onclose?.({ code: 1006 }));
+  act(() => jest.advanceTimersByTime(1500));
+  const recovered = MockSocket.instances[1];
+  recovered.readyState = MockSocket.OPEN;
+  act(() => recovered.onopen?.(new Event('open')));
+  act(() => jest.advanceTimersByTime(10_000));
+  down(1); up(1);
+  expect(commands()).toHaveLength(0);
+  expect(canvas).toHaveAttribute('aria-disabled', 'true');
+  act(() => mockRenderFrame?.({ displayWidth: 1280, displayHeight: 720 } as VideoFrame));
+  down(2); up(2);
+  expect(commands()).toEqual([{ type: 'click', x: 640, y: 360 }]);
+});
+
+it('an OPEN socket is checked again at release even before a close callback rerenders', () => {
+  const { socket, commands, down, up } = readyGestureFixture(true);
+  act(() => jest.advanceTimersByTime(10_000));
+  down(1);
+  socket.readyState = MockSocket.CLOSED;
+  up(1);
+  expect(commands()).toHaveLength(0);
+});
+
+it('cancels a captured gesture when the decoded frame changes dimensions', () => {
+  const { commands, down, up } = readyGestureFixture();
+  down(1);
+  act(() => mockRenderFrame?.({ displayWidth: 720, displayHeight: 1280 } as VideoFrame));
+  up(1);
+  expect(commands()).toHaveLength(0);
+  down(2);
+  up(2);
+  expect(commands()).toEqual([{ type: 'click', x: 360, y: 640 }]);
+});
+
+it('ignores a different pointer release without consuming the owning gesture', () => {
+  const { commands, down, up } = readyGestureFixture();
+  down(1);
+  up(2, 65);
+  expect(commands()).toHaveLength(0);
+  up(1);
+  expect(commands()).toEqual([{ type: 'click', x: 640, y: 360 }]);
+});
+
+it('a second pointer cannot replace the gesture start or its owner', () => {
+  const { commands, down, up } = readyGestureFixture();
+  down(1);
+  down(2, 65);
+  up(2, 65);
+  expect(commands()).toHaveLength(0);
+  up(1);
+  expect(commands()).toEqual([{ type: 'click', x: 640, y: 360 }]);
+});
+
+it('cancellation of another pointer cannot cancel the owning gesture', () => {
+  const { canvas, commands, down, up } = readyGestureFixture();
+  down(1);
+  fireEvent.pointerCancel(canvas, { pointerId: 2 });
+  up(1);
+  expect(commands()).toEqual([{ type: 'click', x: 640, y: 360 }]);
+});
+
+it('normal changing frames with the same dimensions retain a legitimate gesture', () => {
+  const { commands, down, up } = readyGestureFixture();
+  down(1);
+  act(() => mockRenderFrame?.({ displayWidth: 1280, displayHeight: 720 } as VideoFrame));
+  up(1);
+  expect(commands()).toEqual([{ type: 'click', x: 640, y: 360 }]);
+});
+
+it('loss of the owning pointer capture cancels input and permits a new gesture', () => {
+  const { canvas, commands, down, up } = readyGestureFixture();
+  down(1);
+  fireEvent.lostPointerCapture(canvas, { pointerId: 1 });
+  up(1);
+  expect(commands()).toHaveLength(0);
+  down(2);
+  up(2);
+  expect(commands()).toEqual([{ type: 'click', x: 640, y: 360 }]);
+});
+
+it('a stale frame followed by fresh video cannot revive the old held gesture', () => {
+  const { commands, down, up } = readyGestureFixture();
+  down(1);
+  act(() => jest.advanceTimersByTime(10_000));
+  act(() => mockRenderFrame?.({ displayWidth: 1280, displayHeight: 720 } as VideoFrame));
+  up(1);
+  expect(commands()).toHaveLength(0);
+  down(2);
+  up(2);
+  expect(commands()).toEqual([{ type: 'click', x: 640, y: 360 }]);
+});
+
+it('a reconnected socket with fresh video cannot receive a gesture begun in the old session', () => {
+  const { socket, commands, down, up } = readyGestureFixture();
+  down(1);
+  act(() => socket.onclose?.({ code: 1006 }));
+  act(() => jest.advanceTimersByTime(1500));
+  expect(MockSocket.instances).toHaveLength(2);
+  const recovered = MockSocket.instances[1];
+  recovered.readyState = MockSocket.OPEN;
+  act(() => recovered.onopen?.(new Event('open')));
+  act(() => mockRenderFrame?.({ displayWidth: 1280, displayHeight: 720 } as VideoFrame));
+  up(1);
+  expect(commands()).toHaveLength(0);
+  down(2);
+  up(2);
+  expect(commands()).toEqual([{ type: 'click', x: 640, y: 360 }]);
+});
+
+afterEach(() => {
+  jest.restoreAllMocks();
+  jest.useRealTimers();
+});
+
+it('keeps the visible client and passive diagnostics available beside the physical emulator after blur', () => {
+  const view = readyGestureFixture(true);
+  view.rerender(<DeviceStream deviceId="gesture-remote" enableStaticInput enableDiagnostics />);
+  act(() => view.socket.onmessage?.({ data: JSON.stringify({ type: 'stream_session', schema_version: 1,
+    history_enabled: true, session_id: '0123456789abcdef', report_interval_seconds: 10 }) }));
+  expect(mockAutomaticEligible).toBe(true);
+  fireEvent.blur(window);
+  expect(mockAutomaticEligible).toBe(true);
+  view.down(1); view.up(1);
+  expect(view.commands()).toEqual([{ type: 'click', x: 640, y: 360 }]);
+  view.rerender(<DeviceStream deviceId="gesture-remote" enableStaticInput enableDiagnostics recordingMode />);
+  expect(mockAutomaticEligible).toBe(false);
+});
+
+it('blocks remote input until a fresh frame, clamps captured drags, and blocks input after frames go stale', () => {
+  const view = render(<DeviceStream deviceId="remote-1" fit="contain" />);
+  act(() => jest.advanceTimersByTime(0));
+
+  const socket = MockSocket.instances[0];
+  socket.readyState = MockSocket.OPEN;
+  act(() => socket.onopen?.(new Event('open')));
+
+  const canvas = view.container.querySelector('canvas');
+  expect(canvas).not.toBeNull();
+  if (!canvas) throw new Error('Device stream canvas was not rendered');
+  jest.spyOn(canvas, 'getBoundingClientRect').mockReturnValue({
+    left: 10, top: 20, right: 110, bottom: 220, width: 100, height: 200, x: 10, y: 20,
+    toJSON: () => ({}),
+  });
+
+  const sendPointerGesture = (endX: number, endY: number) => {
+    fireEvent.pointerDown(canvas, { clientX: 60, clientY: 120, pointerId: 1, button: 0 });
+    fireEvent.pointerUp(canvas, { clientX: endX, clientY: endY, pointerId: 1, button: 0 });
+  };
+  const remoteCommands = () => socket.send.mock.calls
+    .map(([message]) => JSON.parse(message as string) as { type: string; [key: string]: unknown })
+    .filter(({ type }) => type === 'click' || type === 'swipe');
+
+  sendPointerGesture(200, 300);
+  expect(remoteCommands()).toHaveLength(0);
+
+  act(() => mockRenderFrame?.({ displayWidth: 900, displayHeight: 2000 } as VideoFrame));
+  expect(canvas).toHaveAttribute('aria-disabled', 'false');
+  fireEvent.pointerDown(canvas, { clientX: 11, clientY: 120, pointerId: 4, button: 0 });
+  fireEvent.pointerUp(canvas, { clientX: 11, clientY: 120, pointerId: 4, button: 0 });
+  expect(remoteCommands()).toHaveLength(0);
+
+  sendPointerGesture(200, 300);
+  expect(remoteCommands()).toEqual([{
+    type: 'swipe', x1: 450, y1: 1000, x2: 899, y2: 1999, duration_ms: 600,
+  }]);
+
+  fireEvent.pointerDown(canvas, { clientX: 60, clientY: 120, pointerId: 2, button: 2 });
+  fireEvent.pointerUp(canvas, { clientX: 60, clientY: 120, pointerId: 2, button: 2 });
+  expect(remoteCommands()).toHaveLength(1);
+  fireEvent.pointerDown(canvas, { clientX: 60, clientY: 120, pointerId: 3, button: 0 });
+  fireEvent.pointerUp(canvas, { clientX: 60, clientY: 120, pointerId: 3, button: 0 });
+  expect(remoteCommands()).toHaveLength(2);
+  expect(remoteCommands()[1]).toEqual({ type: 'click', x: 450, y: 1000 });
+  fireEvent.pointerDown(canvas, { clientX: 60, clientY: 120, pointerId: 5, button: 0 });
+  fireEvent.pointerCancel(canvas, { pointerId: 5, button: 0 });
+  fireEvent.pointerUp(canvas, { clientX: 200, clientY: 300, pointerId: 5, button: 0 });
+  expect(remoteCommands()).toHaveLength(2);
+
+  act(() => jest.advanceTimersByTime(10_000));
+  sendPointerGesture(60, 120);
+  expect(remoteCommands()).toHaveLength(2);
+  expect(canvas).toHaveAttribute('aria-disabled', 'true');
+});
+
+
+it('keeps normal continuous motion with permanent recorder receipt observers', () => {
+  const view = readyContinuous(), observer = jest.fn(), command = jest.fn();
+  view.rerender(<DeviceStream deviceId="gesture-remote" fit="contain" enableStaticInput enableNavigation onControlSent={observer} onControlCommand={command} />);
+  view.down(1,40); view.status(1,1);
+  fireEvent.pointerMove(view.canvas,{ clientX:60,clientY:50,pointerId:1,buttons:1 });
+  act(() => jest.advanceTimersByTime(16));
+  expect(view.sent().filter(x => x.type === 'touch_event').map(x => x.action)).toEqual([0,2]);
+  expect(view.commands()).toHaveLength(0);
+  expect(observer).not.toHaveBeenCalled();
+  view.status(2,1); view.up(1,60); view.status(3,1);
+  view.unmount();
+});
+
+it('starts recording on the same controller and cancels a preceding held finger without replay', () => {
+  const view = readyContinuous(), observer = jest.fn(), ready = jest.fn(), native = jest.fn();
+  view.down(1,40); view.status(1,1);
+  view.rerender(<DeviceStream deviceId="gesture-remote" fit="contain" enableStaticInput enableNavigation recordingMode onControlSent={observer} onRecordingControlReady={ready} onGestureRecording={native} />);
+  expect(view.sent().filter(x=>x.type==='touch_event').map(x=>x.action)).toEqual([0,3]);
+  expect(view.sent().filter(x=>x.type==='touch_close')).toHaveLength(0);
+  view.status(2,3); view.up(1,65);
+  expect(ready).toHaveBeenLastCalledWith(true);
+  view.down(3);view.status(3,1);view.up(3);view.status(4,1);
+  expect(view.commands()).toHaveLength(0);expect(observer).not.toHaveBeenCalled();
+  expect(native.mock.calls.map(([e])=>e.phase)).toEqual(['started','finished']);
+  expect(native.mock.calls[1][0]).toMatchObject({outcome:'confirmed',input:{command:{type:'pointer_path',path:{points:[{action:0},{action:1}]}}}});
+  view.unmount();
+});
+
+it.each(['missing','unknown'])('reports a %s native gesture result without legacy recording or replay', kind => {
+  const view = readyContinuous(), native = jest.fn();
+  view.rerender(<DeviceStream deviceId="gesture-remote" fit="contain" enableStaticInput enableNavigation recordingMode onGestureRecording={native} />);
+  view.down(1);view.status(1,1);view.up(1);
+  if(kind === 'unknown') view.status(2,6);else act(() => jest.advanceTimersByTime(520));
+  expect(native.mock.calls.at(-1)?.[0]).toMatchObject({phase:'finished',outcome:'unknown',input:null});
+  view.down(2);view.up(2,65);view.wheel();
+  expect(view.commands()).toHaveLength(0);
+  view.unmount();
+});
+
+it('stopping recording cancels its held gesture on the existing controller and drains its exact ACK', () => {
+  const observer=jest.fn(),native=jest.fn(),view=readyContinuous();
+  view.rerender(<DeviceStream deviceId="gesture-remote" fit="contain" enableStaticInput enableNavigation recordingMode onControlSent={observer} onGestureRecording={native} />);
+  view.down(2,40);view.status(1,1);
+  view.rerender(<DeviceStream deviceId="gesture-remote" fit="contain" enableStaticInput enableNavigation recordingMode={false} onControlSent={observer} onGestureRecording={native} />);
+  view.status(2,3);
+  view.up(2,65);
+  expect(view.commands()).toHaveLength(0);expect(observer).not.toHaveBeenCalled();
+  expect(view.sent().filter(x => x.type === 'touch_probe')).toHaveLength(1);
+  expect(view.sent().filter(x=>x.type==='touch_close')).toHaveLength(0);
+  expect(native.mock.calls.at(-1)?.[0]).toMatchObject({outcome:'cancelled'});
+  view.unmount();
+});
+
+it('locks a held touch for a task and signals only its known native release', () => {
+  const view = readyContinuous(), observed = jest.fn();
+  view.down(1, 40); view.status(1, 1);
+  view.rerender(<DeviceStream deviceId="gesture-remote" enableStaticInput enableNavigation taskHandoffId={7} onTaskHandoffState={observed} />);
+  expect(observed).toHaveBeenLastCalledWith('waiting', 7);
+  expect(view.sent().filter(x => x.type === 'touch_close')).toHaveLength(1);
+  view.up(1, 60); view.down(2); view.up(2, 60); view.wheel();
+  expect(view.commands()).toHaveLength(0);
+  view.status(0, 3, 'release');
+  expect(observed).toHaveBeenLastCalledWith('ready', 7);
+  view.down(3); view.up(3, 60); view.wheel();
+  expect(view.commands()).toHaveLength(0);
+  expect(view.sent().filter(x => x.type === 'touch_probe')).toHaveLength(1);
+  view.unmount();
+});
+
+it('keeps the direct media peer during task handoff until its native release can arrive', () => {
+  const view = readyContinuous(), observed = jest.fn();
+  view.receive({ type:'stream_session', schema_version:1, history_enabled:true, session_id:'1'.repeat(16), report_interval_seconds:10 });
+  expect(mockVideoEligible).toBe(true);
+  view.rerender(<DeviceStream deviceId="gesture-remote" enableStaticInput enableNavigation readOnly taskHandoffId={9} onTaskHandoffState={observed} />);
+  expect(mockVideoEligible).toBe(true);
+  expect(observed).toHaveBeenLastCalledWith('waiting',9);
+  view.status(0,3,'release');
+  expect(observed).toHaveBeenLastCalledWith('ready',9);
+  expect(mockVideoEligible).toBe(true);
+  expect(view.commands()).toEqual([]);
+  view.unmount();
+});
+
+it.each(['missing', 'unknown'])('blocks a task handoff for %s native release', kind => {
+  const view = readyContinuous(), observed = jest.fn();
+  view.rerender(<DeviceStream deviceId="gesture-remote" enableStaticInput enableNavigation readOnly taskHandoffId={8} onTaskHandoffState={observed} />);
+  if (kind === 'unknown') view.status(0, 4, 'release');
+  else act(() => jest.advanceTimersByTime(3000));
+  expect(observed).toHaveBeenLastCalledWith('blocked', 8);
+  expect(observed).not.toHaveBeenCalledWith('ready', 8);
+  view.down(2); view.up(2, 60); view.wheel();
+  expect(view.commands()).toHaveLength(0);
+  view.unmount();
+});
+
+it.each(['recording', 'xpath'])('keeps the direct video peer alive across %s native input mode', mode => {
+  const view = readyContinuous();
+  view.receive({ type: 'stream_session', schema_version: 1, history_enabled: true, session_id: '1'.repeat(16), report_interval_seconds: 10 });
+  const ready = jest.fn();
+  expect(mockVideoEligible).toBe(true);
+  view.rerender(<DeviceStream deviceId="gesture-remote" enableNavigation enableStaticInput recordingMode={mode === 'recording'}
+    onRecordingControlReady={mode === 'recording' ? ready : undefined} inspection={mode === 'xpath' ? { onPick: jest.fn(), bounds: null } : undefined} onInspectionControlReady={mode === 'xpath' ? ready : undefined} />);
+  expect(mockVideoEligible).toBe(true);
+  expect(ready).toHaveBeenLastCalledWith(mode==='recording');
+  if(mode==='xpath')view.status(0, 3, 'release');
+  expect(ready).toHaveBeenLastCalledWith(true);
+  expect(mockVideoEligible).toBe(true);
+  act(() => jest.advanceTimersByTime(3000));
+  expect(view.queryByText(/Освобождение управления Android не подтверждено/)).not.toBeInTheDocument();
+  view.unmount();
+});
+it.each(['direct','server'])('reports the first owned %s frame again after capture loss even with unchanged dimensions', source => {
+  mockCapture={captureEpoch:TOUCH_EPOCH,frameWidth:1280,frameHeight:720};
+  const view=readyWheel();const frame=jest.fn(),invalidated=jest.fn();
+  view.rerender(<DeviceStream deviceId="gesture-remote" fit="contain" enableStaticInput enableNavigation onFrameDimensions={frame} onInspectionInvalidated={invalidated}/>);
+  act(()=>view.socket.onmessage?.({data:JSON.stringify({type:'stream_session',schema_version:1,history_enabled:true,session_id:'1'.repeat(16),report_interval_seconds:10})}));
+  act(()=>mockVideoObserve?.({admitted:true,admissionKnown:true,active:true,frames:1,lastFrameAt:Date.now(),attempts:1,result:null}));
+  act(()=>mockVideoObserve?.({admitted:true,admissionKnown:true,active:false,frames:1,lastFrameAt:Date.now(),attempts:1,result:null}));
+  expect(invalidated).toHaveBeenCalled();frame.mockClear();
+  const present=()=> source==='direct'
+    ? mockPresentDirectFrame!(document.createElement('video'),{captureEpoch:TOUCH_EPOCH,width:1280,height:720})
+    : mockRenderFrame!({displayWidth:1280,displayHeight:720} as VideoFrame);
+  act(()=>{present();});
+  expect(frame).toHaveBeenCalledTimes(1);expect(frame).toHaveBeenCalledWith({width:1280,height:720});
+  act(()=>{present();});expect(frame).toHaveBeenCalledTimes(1);
+});
+it('never announces a direct frame whose capture was not admitted',()=>{
+  mockCapture={captureEpoch:TOUCH_EPOCH,frameWidth:1280,frameHeight:720};
+  const view=readyWheel();const frame=jest.fn();
+  view.rerender(<DeviceStream deviceId="gesture-remote" fit="contain" enableStaticInput enableNavigation onFrameDimensions={frame}/>);
+  act(()=>view.socket.onmessage?.({data:JSON.stringify({type:'stream_session',schema_version:1,history_enabled:true,session_id:'1'.repeat(16),report_interval_seconds:10})}));
+  act(()=>{expect(mockPresentDirectFrame!(document.createElement('video'),{captureEpoch:'different-capture',width:1280,height:720})).toBe(false);});
+  expect(frame).not.toHaveBeenCalled();
+});

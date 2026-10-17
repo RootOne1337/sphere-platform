@@ -1,0 +1,11 @@
+{
+  "version": "1.0", "entry_node": "start", "name": "Canonical contract fixture",
+  "description": "Native condition, failure route, retry and polling cycle", "timeout_ms": 90000,
+  "nodes": [
+    { "id": "start", "action": { "type": "start" }, "on_success": "tap", "on_failure": null, "retry": 0, "timeout_ms": 30000 },
+    { "id": "tap", "action": { "type": "tap", "x": 20, "y": 30, "description": "Preserve action extensions", "custom": { "nested": [1, true, "value"] } }, "on_success": "condition", "on_failure": "end", "retry": 2, "timeout_ms": 4000 },
+    { "id": "condition", "action": { "type": "condition", "check": "element_exists", "params": { "selector": "Settings", "strategy": "text", "timeout_ms": 1500 }, "on_true": "end", "on_false": "wait" }, "on_success": "end", "on_failure": "end", "retry": 1, "timeout_ms": 7000 },
+    { "id": "wait", "action": { "type": "sleep", "ms": 1200 }, "on_success": "condition", "on_failure": "end", "retry": 0, "timeout_ms": 3000 },
+    { "id": "end", "action": { "type": "end" }, "on_success": null, "on_failure": null, "retry": 0, "timeout_ms": 30000 }
+  ]
+}

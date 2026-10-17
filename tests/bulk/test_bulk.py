@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import uuid
+from unittest.mock import AsyncMock, Mock
 
 import pytest
 from pydantic import ValidationError
@@ -61,7 +62,13 @@ class TestBulkSchema:
 class TestBulkAction:
     """Integration tests: bulk action endpoint."""
 
-    async def test_bulk_reboot_succeeds_for_owned(self, bulk_client, bulk_devices):
+    async def test_bulk_reboot_succeeds_for_owned(self, bulk_client, bulk_devices, monkeypatch):
+        publisher = Mock()
+        publisher.send_command_wait_result = AsyncMock(return_value={"status": "received"})
+        monkeypatch.setattr(
+            "backend.websocket.pubsub_router.get_pubsub_publisher",
+            lambda: publisher,
+        )
         device_ids = [str(d.id) for d in bulk_devices]
         resp = await bulk_client.post(
             "/api/v1/devices/bulk/action",
@@ -72,11 +79,68 @@ class TestBulkAction:
         assert data["total"] == len(device_ids)
         assert data["succeeded"] == len(device_ids)
         assert data["failed"] == 0
+        assert publisher.send_command_wait_result.await_count == len(device_ids)
+        command = publisher.send_command_wait_result.await_args_list[0].args[1]
+        assert command["type"] == "REBOOT"
+        assert command["command_id"].startswith("interactive_")
+        assert publisher.send_command_wait_result.await_args_list[0].kwargs == {
+            "timeout": 10.0,
+            "live_only": True,
+            "accept_progress": True,
+        }
+
+    async def test_bulk_reboot_fails_explicitly_when_live_transport_is_unavailable(
+        self, bulk_client, bulk_devices, mock_redis, monkeypatch
+    ):
+        monkeypatch.setattr(
+            "backend.websocket.pubsub_router.get_pubsub_publisher",
+            lambda: None,
+        )
+        device_id = str(bulk_devices[0].id)
+
+        resp = await bulk_client.post(
+            "/api/v1/devices/bulk/action",
+            json={"action": "reboot", "device_ids": [device_id]},
+        )
+
+        assert resp.status_code == 200
+        result = resp.json()["results"][0]
+        assert result["success"] is False
+        assert result["error"] == "Device command transport is unavailable"
+        assert await mock_redis.get(f"cmd:reboot:{device_id}") is None
+
+    async def test_bulk_reboot_reports_agent_rejection_without_claiming_success(
+        self, bulk_client, bulk_devices, monkeypatch
+    ):
+        publisher = Mock()
+        publisher.send_command_wait_result = AsyncMock(
+            return_value={"status": "failed", "error": "agent rejected"}
+        )
+        monkeypatch.setattr(
+            "backend.websocket.pubsub_router.get_pubsub_publisher",
+            lambda: publisher,
+        )
+
+        resp = await bulk_client.post(
+            "/api/v1/devices/bulk/action",
+            json={"action": "reboot", "device_ids": [str(bulk_devices[0].id)]},
+        )
+
+        assert resp.status_code == 200
+        result = resp.json()["results"][0]
+        assert result["success"] is False
+        assert result["error"] == "Agent rejected reboot command"
 
     async def test_bulk_action_not_owned_device_fails_not_403(
-        self, bulk_client, bulk_devices
+        self, bulk_client, bulk_devices, monkeypatch
     ):
         """Devices from other orgs → success=False, not 403 on the whole request."""
+        publisher = Mock()
+        publisher.send_command_wait_result = AsyncMock(return_value={"status": "received"})
+        monkeypatch.setattr(
+            "backend.websocket.pubsub_router.get_pubsub_publisher",
+            lambda: publisher,
+        )
         other_id = str(uuid.uuid4())
         owned_ids = [str(bulk_devices[0].id)]
         resp = await bulk_client.post(
@@ -89,6 +153,7 @@ class TestBulkAction:
         assert results[other_id]["success"] is False
         assert results[other_id]["error"] == "Device not found"
         assert results[owned_ids[0]]["success"] is True
+        assert publisher.send_command_wait_result.await_count == 1
 
     async def test_bulk_connect_adb(self, bulk_client, bulk_devices):
         resp = await bulk_client.post(
@@ -187,6 +252,29 @@ class TestBulkDelete:
         )
         assert resp.status_code == 200
         assert resp.json()["deleted"] == 1  # only owned device deleted
+
+    async def test_bulk_delete_removes_devices_from_inventory_and_is_idempotent(
+        self, bulk_admin_client, bulk_devices
+    ):
+        device_ids = [str(device.id) for device in bulk_devices[:2]]
+        delete_url = "/api/v1/devices/bulk"
+
+        first = await bulk_admin_client.request(
+            "DELETE", delete_url, json={"device_ids": device_ids}
+        )
+        assert first.status_code == 200
+        assert first.json()["deleted"] == 2
+
+        inventory = await bulk_admin_client.get("/api/v1/devices?per_page=50")
+        assert inventory.status_code == 200
+        remaining_ids = {item["id"] for item in inventory.json()["items"]}
+        assert not (set(device_ids) & remaining_ids)
+
+        repeated = await bulk_admin_client.request(
+            "DELETE", delete_url, json={"device_ids": device_ids}
+        )
+        assert repeated.status_code == 200
+        assert repeated.json()["deleted"] == 0
 
     async def test_bulk_delete_empty_list_422(self, bulk_admin_client):
         resp = await bulk_admin_client.request(

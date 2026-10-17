@@ -1,0 +1,86 @@
+FFF                                                                      [100%]
+================================== FAILURES ===================================
+_ test_stop_ack_cannot_complete_a_task_after_cancellation_rollback[redis_release] _
+tests\production\test_cancellation_commands.py:45: in test_stop_ack_cannot_complete_a_task_after_cancellation_rollback
+    assert stored.status == TaskStatus.RUNNING, "Stop ACK forged a successful DAG outcome after rollback"
+E   AssertionError: Stop ACK forged a successful DAG outcome after rollback
+E   assert <TaskStatus.C...: 'completed'> == <TaskStatus.R...NG: 'running'>
+E     
+E     - running
+E     + completed
+---------------------------- Captured stdout call -----------------------------
+{"task_id": "ebed5ba2-05ba-4037-995e-dabdacee5a9d", "error": "'NoneType' object has no attribute 'eval'", "event": "task.result.queue_release_failed", "level": "warning", "logger": "backend.services.task_service", "timestamp": "2026-09-06T17:49:07.056282Z"}
+{"task_id": "ebed5ba2-05ba-4037-995e-dabdacee5a9d", "success": true, "device_id": "24c55d8e-0e88-4be6-8c01-10fac886dd17", "event": "task.completed", "level": "info", "logger": "backend.services.task_service", "timestamp": "2026-09-06T17:49:07.056282Z"}
+{"event_id": "6ba97c73-72b2-404f-8451-c6daebf2fa66", "event_type": "task.completed", "device_id": "24c55d8e-0e88-4be6-8c01-10fac886dd17", "account_id": null, "event": "event_reactor.event_saved", "level": "info", "logger": "backend.services.event_reactor", "timestamp": "2026-09-06T17:49:07.074263Z"}
+------------------------------ Captured log call ------------------------------
+WARNING  backend.services.task_service:task_service.py:373 {'task_id': 'ebed5ba2-05ba-4037-995e-dabdacee5a9d', 'error': "'NoneType' object has no attribute 'eval'", 'event': 'task.result.queue_release_failed', 'level': 'warning', 'logger': 'backend.services.task_service', 'timestamp': '2026-09-06T17:49:07.056282Z'}
+INFO     backend.services.task_service:task_service.py:415 {'task_id': 'ebed5ba2-05ba-4037-995e-dabdacee5a9d', 'success': True, 'device_id': '24c55d8e-0e88-4be6-8c01-10fac886dd17', 'event': 'task.completed', 'level': 'info', 'logger': 'backend.services.task_service', 'timestamp': '2026-09-06T17:49:07.056282Z'}
+INFO     backend.services.event_reactor:event_reactor.py:106 {'event_id': '6ba97c73-72b2-404f-8451-c6daebf2fa66', 'event_type': 'task.completed', 'device_id': '24c55d8e-0e88-4be6-8c01-10fac886dd17', 'account_id': None, 'event': 'event_reactor.event_saved', 'level': 'info', 'logger': 'backend.services.event_reactor', 'timestamp': '2026-09-06T17:49:07.074263Z'}
+_ test_stop_ack_cannot_complete_a_task_after_cancellation_rollback[sql_commit] _
+tests\production\test_cancellation_commands.py:45: in test_stop_ack_cannot_complete_a_task_after_cancellation_rollback
+    assert stored.status == TaskStatus.RUNNING, "Stop ACK forged a successful DAG outcome after rollback"
+E   AssertionError: Stop ACK forged a successful DAG outcome after rollback
+E   assert <TaskStatus.C...: 'completed'> == <TaskStatus.R...NG: 'running'>
+E     
+E     - running
+E     + completed
+---------------------------- Captured stdout call -----------------------------
+{"task_id": "6acd355b-2976-471b-b06b-74a6df224a52", "device_id": "d6868497-e1c3-4ee8-8cf0-cf4a8ede5f0a", "event": "task.force_stopped", "level": "info", "logger": "backend.services.task_service", "timestamp": "2026-09-06T17:49:07.661063Z"}
+{"task_id": "6acd355b-2976-471b-b06b-74a6df224a52", "error": "'NoneType' object has no attribute 'eval'", "event": "task.result.queue_release_failed", "level": "warning", "logger": "backend.services.task_service", "timestamp": "2026-09-06T17:49:07.713309Z"}
+{"task_id": "6acd355b-2976-471b-b06b-74a6df224a52", "success": true, "device_id": "d6868497-e1c3-4ee8-8cf0-cf4a8ede5f0a", "event": "task.completed", "level": "info", "logger": "backend.services.task_service", "timestamp": "2026-09-06T17:49:07.713856Z"}
+{"event_id": "147e250d-373d-41d5-9db4-7238777ad413", "event_type": "task.completed", "device_id": "d6868497-e1c3-4ee8-8cf0-cf4a8ede5f0a", "account_id": null, "event": "event_reactor.event_saved", "level": "info", "logger": "backend.services.event_reactor", "timestamp": "2026-09-06T17:49:07.724469Z"}
+------------------------------ Captured log call ------------------------------
+INFO     backend.services.task_service:task_service.py:587 {'task_id': '6acd355b-2976-471b-b06b-74a6df224a52', 'device_id': 'd6868497-e1c3-4ee8-8cf0-cf4a8ede5f0a', 'event': 'task.force_stopped', 'level': 'info', 'logger': 'backend.services.task_service', 'timestamp': '2026-09-06T17:49:07.661063Z'}
+WARNING  backend.services.task_service:task_service.py:373 {'task_id': '6acd355b-2976-471b-b06b-74a6df224a52', 'error': "'NoneType' object has no attribute 'eval'", 'event': 'task.result.queue_release_failed', 'level': 'warning', 'logger': 'backend.services.task_service', 'timestamp': '2026-09-06T17:49:07.713309Z'}
+INFO     backend.services.task_service:task_service.py:415 {'task_id': '6acd355b-2976-471b-b06b-74a6df224a52', 'success': True, 'device_id': 'd6868497-e1c3-4ee8-8cf0-cf4a8ede5f0a', 'event': 'task.completed', 'level': 'info', 'logger': 'backend.services.task_service', 'timestamp': '2026-09-06T17:49:07.713856Z'}
+INFO     backend.services.event_reactor:event_reactor.py:106 {'event_id': '147e250d-373d-41d5-9db4-7238777ad413', 'event_type': 'task.completed', 'device_id': 'd6868497-e1c3-4ee8-8cf0-cf4a8ede5f0a', 'account_id': None, 'event': 'event_reactor.event_saved', 'level': 'info', 'logger': 'backend.services.event_reactor', 'timestamp': '2026-09-06T17:49:07.724469Z'}
+_______ test_watchdog_stop_names_the_expired_task_after_timeout_commit ________
+tests\production\test_cancellation_commands.py:66: in test_watchdog_stop_names_the_expired_task_after_timeout_commit
+    assert sent[0].get("payload") == {"task_id": str(task.id)}, "Watchdog emits an untargeted device stop"
+E   AssertionError: Watchdog emits an untargeted device stop
+E   assert None == {'task_id': 'af3a4501-0a33-479f-9ff2-98346b638cf2'}
+E    +  where None = <built-in method get of dict object at 0x000001E079568340>('payload')
+E    +    where <built-in method get of dict object at 0x000001E079568340> = {'command_id': 'watchdog_cancel_af3a4501-0a33-479f-9ff2-98346b638cf2', 'signed_at': 1788716948, 'ttl_seconds': 30, 'type': 'CANCEL_DAG'}.get
+---------------------------- Captured stdout call -----------------------------
+{"task_id": "af3a4501-0a33-479f-9ff2-98346b638cf2", "device_id": "8461b407-55b6-40bc-a95e-c7ef232b9b61", "started_at": "2026-09-06T17:39:07.907609+00:00", "timeout_seconds": 60, "stale_after": "2026-09-06T17:45:07.907609+00:00", "event": "task.watchdog.running_timeout", "level": "warning", "logger": "backend.tasks.task_heartbeat_watchdog", "timestamp": "2026-09-06T17:49:08.026550Z"}
+{"task_id": "a1808e3c-9bde-4140-8fdc-d07fd70b0cf7", "device_id": "543f7d35-a330-41dd-9719-c43a746dee20", "age_minutes": 60.9, "event": "task.watchdog.queued_timeout", "level": "warning", "logger": "backend.tasks.task_heartbeat_watchdog", "timestamp": "2026-09-06T17:49:08.033528Z"}
+{"task_id": "374dc328-c8bb-4318-aea0-c797cb8cbaa7", "device_id": "9061d19c-e2ba-407e-a7db-45d515f2c815", "age_minutes": 60.8, "event": "task.watchdog.queued_timeout", "level": "warning", "logger": "backend.tasks.task_heartbeat_watchdog", "timestamp": "2026-09-06T17:49:08.033528Z"}
+{"task_id": "897b8487-d39c-4b33-9e98-532921af2f4c", "device_id": "1e9b83e3-5c84-4840-abc6-c1b429aa53f4", "age_minutes": 60.8, "event": "task.watchdog.queued_timeout", "level": "warning", "logger": "backend.tasks.task_heartbeat_watchdog", "timestamp": "2026-09-06T17:49:08.034078Z"}
+{"task_id": "58c75135-73e8-49be-9f58-c68e8fd52d23", "device_id": "6bff6c9b-2e03-4e06-b899-a35ece7154d4", "age_minutes": 60.8, "event": "task.watchdog.queued_timeout", "level": "warning", "logger": "backend.tasks.task_heartbeat_watchdog", "timestamp": "2026-09-06T17:49:08.034078Z"}
+{"task_id": "83be86b1-d71d-419d-89de-14a60d0e5c00", "device_id": "7f239eab-9ba0-43e3-bd96-21a222d32072", "age_minutes": 60.8, "event": "task.watchdog.queued_timeout", "level": "warning", "logger": "backend.tasks.task_heartbeat_watchdog", "timestamp": "2026-09-06T17:49:08.034078Z"}
+{"task_id": "9885177d-7938-4e9a-ae5e-8581ba1fe237", "device_id": "08b2a572-817f-4f70-80c0-28c4a3d72b10", "age_minutes": 60.8, "event": "task.watchdog.queued_timeout", "level": "warning", "logger": "backend.tasks.task_heartbeat_watchdog", "timestamp": "2026-09-06T17:49:08.034078Z"}
+{"task_id": "4465f163-29fb-4ce9-9323-d0154bfb8860", "device_id": "4597e331-03eb-4f4d-aa73-30c28bcc67bd", "age_minutes": 60.8, "event": "task.watchdog.queued_timeout", "level": "warning", "logger": "backend.tasks.task_heartbeat_watchdog", "timestamp": "2026-09-06T17:49:08.034078Z"}
+{"task_id": "e323e819-fa2b-47cb-a4ad-13ac450bae99", "device_id": "da6021fd-dc92-4dbb-8286-8e25f27f2fe9", "age_minutes": 60.8, "event": "task.watchdog.queued_timeout", "level": "warning", "logger": "backend.tasks.task_heartbeat_watchdog", "timestamp": "2026-09-06T17:49:08.034603Z"}
+{"task_id": "92ced339-cdfd-4c65-a8d3-1e2ac278ed88", "device_id": "ce80b42e-2fa4-46d4-98f1-2bcd82f4a5f5", "age_minutes": 60.8, "event": "task.watchdog.queued_timeout", "level": "warning", "logger": "backend.tasks.task_heartbeat_watchdog", "timestamp": "2026-09-06T17:49:08.034603Z"}
+{"task_id": "88369be7-12da-492f-817b-03c8754c2193", "device_id": "b6d85106-dfae-4f0d-b68b-9723c7908652", "age_minutes": 60.6, "event": "task.watchdog.queued_timeout", "level": "warning", "logger": "backend.tasks.task_heartbeat_watchdog", "timestamp": "2026-09-06T17:49:08.034603Z"}
+{"running_expired": 1, "queued_expired": 10, "total": 11, "event": "task.watchdog.cycle_done", "level": "info", "logger": "backend.tasks.task_heartbeat_watchdog", "timestamp": "2026-09-06T17:49:08.034603Z"}
+{"task_id": "af3a4501-0a33-479f-9ff2-98346b638cf2", "device_id": "8461b407-55b6-40bc-a95e-c7ef232b9b61", "event": "task.watchdog.cancel_dag_sent", "level": "info", "logger": "backend.tasks.task_heartbeat_watchdog", "timestamp": "2026-09-06T17:49:08.046695Z"}
+------------------------------ Captured log call ------------------------------
+WARNING  backend.tasks.task_heartbeat_watchdog:task_heartbeat_watchdog.py:128 {'task_id': 'af3a4501-0a33-479f-9ff2-98346b638cf2', 'device_id': '8461b407-55b6-40bc-a95e-c7ef232b9b61', 'started_at': '2026-09-06T17:39:07.907609+00:00', 'timeout_seconds': 60, 'stale_after': '2026-09-06T17:45:07.907609+00:00', 'event': 'task.watchdog.running_timeout', 'level': 'warning', 'logger': 'backend.tasks.task_heartbeat_watchdog', 'timestamp': '2026-09-06T17:49:08.026550Z'}
+WARNING  backend.tasks.task_heartbeat_watchdog:task_heartbeat_watchdog.py:167 {'task_id': 'a1808e3c-9bde-4140-8fdc-d07fd70b0cf7', 'device_id': '543f7d35-a330-41dd-9719-c43a746dee20', 'age_minutes': 60.9, 'event': 'task.watchdog.queued_timeout', 'level': 'warning', 'logger': 'backend.tasks.task_heartbeat_watchdog', 'timestamp': '2026-09-06T17:49:08.033528Z'}
+WARNING  backend.tasks.task_heartbeat_watchdog:task_heartbeat_watchdog.py:167 {'task_id': '374dc328-c8bb-4318-aea0-c797cb8cbaa7', 'device_id': '9061d19c-e2ba-407e-a7db-45d515f2c815', 'age_minutes': 60.8, 'event': 'task.watchdog.queued_timeout', 'level': 'warning', 'logger': 'backend.tasks.task_heartbeat_watchdog', 'timestamp': '2026-09-06T17:49:08.033528Z'}
+WARNING  backend.tasks.task_heartbeat_watchdog:task_heartbeat_watchdog.py:167 {'task_id': '897b8487-d39c-4b33-9e98-532921af2f4c', 'device_id': '1e9b83e3-5c84-4840-abc6-c1b429aa53f4', 'age_minutes': 60.8, 'event': 'task.watchdog.queued_timeout', 'level': 'warning', 'logger': 'backend.tasks.task_heartbeat_watchdog', 'timestamp': '2026-09-06T17:49:08.034078Z'}
+WARNING  backend.tasks.task_heartbeat_watchdog:task_heartbeat_watchdog.py:167 {'task_id': '58c75135-73e8-49be-9f58-c68e8fd52d23', 'device_id': '6bff6c9b-2e03-4e06-b899-a35ece7154d4', 'age_minutes': 60.8, 'event': 'task.watchdog.queued_timeout', 'level': 'warning', 'logger': 'backend.tasks.task_heartbeat_watchdog', 'timestamp': '2026-09-06T17:49:08.034078Z'}
+WARNING  backend.tasks.task_heartbeat_watchdog:task_heartbeat_watchdog.py:167 {'task_id': '83be86b1-d71d-419d-89de-14a60d0e5c00', 'device_id': '7f239eab-9ba0-43e3-bd96-21a222d32072', 'age_minutes': 60.8, 'event': 'task.watchdog.queued_timeout', 'level': 'warning', 'logger': 'backend.tasks.task_heartbeat_watchdog', 'timestamp': '2026-09-06T17:49:08.034078Z'}
+WARNING  backend.tasks.task_heartbeat_watchdog:task_heartbeat_watchdog.py:167 {'task_id': '9885177d-7938-4e9a-ae5e-8581ba1fe237', 'device_id': '08b2a572-817f-4f70-80c0-28c4a3d72b10', 'age_minutes': 60.8, 'event': 'task.watchdog.queued_timeout', 'level': 'warning', 'logger': 'backend.tasks.task_heartbeat_watchdog', 'timestamp': '2026-09-06T17:49:08.034078Z'}
+WARNING  backend.tasks.task_heartbeat_watchdog:task_heartbeat_watchdog.py:167 {'task_id': '4465f163-29fb-4ce9-9323-d0154bfb8860', 'device_id': '4597e331-03eb-4f4d-aa73-30c28bcc67bd', 'age_minutes': 60.8, 'event': 'task.watchdog.queued_timeout', 'level': 'warning', 'logger': 'backend.tasks.task_heartbeat_watchdog', 'timestamp': '2026-09-06T17:49:08.034078Z'}
+WARNING  backend.tasks.task_heartbeat_watchdog:task_heartbeat_watchdog.py:167 {'task_id': 'e323e819-fa2b-47cb-a4ad-13ac450bae99', 'device_id': 'da6021fd-dc92-4dbb-8286-8e25f27f2fe9', 'age_minutes': 60.8, 'event': 'task.watchdog.queued_timeout', 'level': 'warning', 'logger': 'backend.tasks.task_heartbeat_watchdog', 'timestamp': '2026-09-06T17:49:08.034603Z'}
+WARNING  backend.tasks.task_heartbeat_watchdog:task_heartbeat_watchdog.py:167 {'task_id': '92ced339-cdfd-4c65-a8d3-1e2ac278ed88', 'device_id': 'ce80b42e-2fa4-46d4-98f1-2bcd82f4a5f5', 'age_minutes': 60.8, 'event': 'task.watchdog.queued_timeout', 'level': 'warning', 'logger': 'backend.tasks.task_heartbeat_watchdog', 'timestamp': '2026-09-06T17:49:08.034603Z'}
+WARNING  backend.tasks.task_heartbeat_watchdog:task_heartbeat_watchdog.py:167 {'task_id': '88369be7-12da-492f-817b-03c8754c2193', 'device_id': 'b6d85106-dfae-4f0d-b68b-9723c7908652', 'age_minutes': 60.6, 'event': 'task.watchdog.queued_timeout', 'level': 'warning', 'logger': 'backend.tasks.task_heartbeat_watchdog', 'timestamp': '2026-09-06T17:49:08.034603Z'}
+INFO     backend.tasks.task_heartbeat_watchdog:task_heartbeat_watchdog.py:181 {'running_expired': 1, 'queued_expired': 10, 'total': 11, 'event': 'task.watchdog.cycle_done', 'level': 'info', 'logger': 'backend.tasks.task_heartbeat_watchdog', 'timestamp': '2026-09-06T17:49:08.034603Z'}
+INFO     backend.tasks.task_heartbeat_watchdog:task_heartbeat_watchdog.py:275 {'task_id': 'af3a4501-0a33-479f-9ff2-98346b638cf2', 'device_id': '8461b407-55b6-40bc-a95e-c7ef232b9b61', 'event': 'task.watchdog.cancel_dag_sent', 'level': 'info', 'logger': 'backend.tasks.task_heartbeat_watchdog', 'timestamp': '2026-09-06T17:49:08.046695Z'}
+============================== warnings summary ===============================
+.venv-audit\Lib\site-packages\pydantic\fields.py:754: 484 warnings
+  C:\Users\dimas\Documents\ChatGPT\sphere-platform\.venv-audit\Lib\site-packages\pydantic\fields.py:754: PydanticDeprecatedSince20: Using extra keyword arguments on `Field` is deprecated and will be removed. Use `json_schema_extra` instead. (Extra keys: 'deprecated'). Deprecated in Pydantic V2.0 to be removed in V3.0. See Pydantic V2 Migration Guide at https://errors.pydantic.dev/2.6/migration/
+    warn(
+
+backend\api\v1\game_accounts\router.py:95
+  C:\Users\dimas\Documents\ChatGPT\sphere-platform\backend\api\v1\game_accounts\router.py:95: DeprecationWarning: `regex` has been deprecated, please use `pattern` instead
+    sort_dir: str = Query("desc", regex="^(asc|desc)$", description="Направление сортировки"),
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ===========================
+FAILED tests/production/test_cancellation_commands.py::test_stop_ack_cannot_complete_a_task_after_cancellation_rollback[redis_release]
+FAILED tests/production/test_cancellation_commands.py::test_stop_ack_cannot_complete_a_task_after_cancellation_rollback[sql_commit]
+FAILED tests/production/test_cancellation_commands.py::test_watchdog_stop_names_the_expired_task_after_timeout_commit
+3 failed, 485 warnings in 1.60s

@@ -1,0 +1,40 @@
+{
+  "observedAt": "2026-10-05T20:48:13.454462+00:00",
+  "source": "76596c394f5332bd0131a9fde7e3476ba7c00d52",
+  "laterDocsHeadCiInherited": false,
+  "runs": [
+    {
+      "conclusion": "",
+      "databaseId": 37370521396,
+      "headSha": "76596c394f5332bd0131a9fde7e3476ba7c00d52",
+      "status": "queued",
+      "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/37370521396",
+      "workflowName": "CI \u2014 Frontend"
+    },
+    {
+      "conclusion": "",
+      "databaseId": 37370521592,
+      "headSha": "76596c394f5332bd0131a9fde7e3476ba7c00d52",
+      "status": "queued",
+      "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/37370521592",
+      "workflowName": "CI \u2014 Backend"
+    },
+    {
+      "conclusion": "success",
+      "databaseId": 37370521463,
+      "headSha": "76596c394f5332bd0131a9fde7e3476ba7c00d52",
+      "status": "completed",
+      "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/37370521463",
+      "workflowName": "Preview \u2014 Deploy"
+    },
+    {
+      "conclusion": "",
+      "databaseId": 37370521514,
+      "headSha": "76596c394f5332bd0131a9fde7e3476ba7c00d52",
+      "status": "in_progress",
+      "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/37370521514",
+      "workflowName": "CI \u2014 Android"
+    }
+  ],
+  "allSourceRunsPassed": false
+}

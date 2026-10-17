@@ -1,0 +1,26 @@
+{
+  "finding": "AUD-125",
+  "before": {
+    "tests": 2,
+    "failures": 2,
+    "errors": 0,
+    "skipped": 0
+  },
+  "after": {
+    "tests": 105,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  "before_evidence": [
+    "Real Redis with production socket_timeout=5 replaced named command connection 118 with 120 during 6.3 seconds idle.",
+    "Actual zero-subscriber PUBLISH left authenticated viewer open instead of closing with 1013."
+  ],
+  "fix": [
+    "Bounded get_message polling preserves healthy idle command subscriptions.",
+    "Rejected initial start_stream unregisters viewer and closes 1013 for existing client recovery."
+  ],
+  "validation_scope": "105 related tests, actual isolated Redis/PostgreSQL, routing, outages, tenant checks and stream lifecycle. No blind mutation retries or offline capture queue.",
+  "native_rollout": "not yet performed",
+  "raw_logs": "private .local-pilot only"
+}

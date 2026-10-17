@@ -1,0 +1,55 @@
+{
+  "source_commit": "8d93e48f2ed586cffe24fe055f9c77b90e42df3d",
+  "built_at_utc": "2026-09-13T12:15:37.539294+00:00",
+  "file": "SphereAgent-signed-discovery-8d93e48-dev-debug.apk",
+  "sha256": "34ee14cf3d14c4ccf68f8be45da96291a400ee2c8c8658c57c5ad8fdd8ac6aa1",
+  "bytes": 8382997,
+  "package": "com.sphereplatform.agent.pilot.debug",
+  "config_url": "https://raw.githubusercontent.com/RootOne1337/sphere-agent-config/codex/pilot-bootstrap-20260911/pilots/sphere-pilot-20260911/discovery.json",
+  "config_mirror_url": "https://conditions-nest-calendar-explanation.trycloudflare.com/bootstrap/agent.signed.json",
+  "discovery_key_id": "pilot-20260911-v1",
+  "installation_id": "ce58a96d-fd02-4f7c-ac86-111c4f7fa37e",
+  "baked_management_urls": [],
+  "signing": "Android Debug; v2 signature verified; same certificate as previous pilot",
+  "version_name": "1.2.2-dev",
+  "version_code": 10202,
+  "min_sdk": 26,
+  "target_sdk": 35,
+  "default_dev_suite": {
+    "tests": 533,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "suites": 39,
+    "seconds": 126.68
+  },
+  "signed_build_tests": {
+    "dev": {
+      "signed_discovery_tests": 19,
+      "file_logging_tests": 10,
+      "root_projection_tests": 8,
+      "native_boot_tests": 10,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "enterprise": {
+      "signed_discovery_tests": 19,
+      "file_logging_tests": 10,
+      "root_projection_tests": 8,
+      "native_boot_tests": 10,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    }
+  },
+  "installed_on_device": true,
+  "independent_fallback_verified": false,
+  "warning": "Signed bootstrap pilot; one temporary ingress. No fleet or independent provider acceptance.",
+  "installed_sha256": "34ee14cf3d14c4ccf68f8be45da96291a400ee2c8c8658c57c5ad8fdd8ac6aa1",
+  "native_cached_version": 9,
+  "native_signed_cache_verified": true,
+  "native_boot_recovery_verified": true,
+  "native_process_death_recovery_verified": true,
+  "ota_self_install_verified": false
+}

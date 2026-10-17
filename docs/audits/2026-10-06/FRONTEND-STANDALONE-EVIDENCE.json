@@ -1,0 +1,29 @@
+{
+  "observedDateUtc": "2026-10-06",
+  "sourceRevision": "e7f3ffbe547e7cf81b1b33feb9a10bd9d3ceeb31",
+  "runId": 37514629812,
+  "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/37514629812",
+  "conclusion": "success",
+  "completedAtUtc": "2026-10-06T18:54:29Z",
+  "frontendTestsPassed": 1686,
+  "frontendSuitesPassed": 133,
+  "negativeHttpTestsPassed": 18,
+  "typesPassed": true,
+  "productionBuildPassed": true,
+  "missingTraceCopyWarningCount": 0,
+  "standalone": {
+    "artifact": ".next/standalone",
+    "loopbackOnly": true,
+    "concretePagesVerified": 26,
+    "routes": ["/", "/accounts", "/audit", "/dashboard", "/devices", "/discovery", "/event-triggers", "/events", "/fleet", "/groups", "/locations", "/login", "/logs", "/monitoring", "/orchestration", "/pipeline-settings", "/scripts", "/scripts/builder", "/sessions", "/settings", "/stream", "/tasks", "/updates", "/users", "/vpn", "/webhooks"],
+    "root": {"status":200,"redirect":"next-flight","destination":"/dashboard"},
+    "otherPageStatus":200,
+    "clientAssetsVerified":73,
+    "browserHydrationVerified":false,
+    "backendExecutionVerified":false
+  },
+  "installedRuntimeUpdated":false,
+  "runtimeAdmission": {"accepted":9,"open":41},
+  "otherComponents": {"lastFullyPassedSource":"517d73b04553802326308aecabf6c348975800e0","freshBackendAndroidAtThisReceipt":"in_progress"},
+  "previousFailedProbe": {"source":"44af412c82dd561c6e1f2766b9e9b803758ef23c","runId":37513667851,"cause":"Probe incorrectly required an HTTP307/308 instead of verifying Next streamed redirect data in root200"}
+}

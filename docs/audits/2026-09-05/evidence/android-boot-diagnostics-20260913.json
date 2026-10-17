@@ -1,0 +1,18 @@
+{
+  "package_metadata": [
+    "versionCode=10201 minSdk=26 targetSdk=35",
+    "android.permission.RECEIVE_BOOT_COMPLETED: granted=true",
+    "User 0: ceDataInode=1051427 installed=true hidden=false suspended=false stopped=false notLaunched=false enabled=0 instant=false virtual=false",
+    "enabledComponents:",
+    "User 0:"
+  ],
+  "broadcasts": [],
+  "system_logs": [
+    "09-13 13:58:57.630  1849  1849 I VvmSimStateTracker: android.intent.action.BOOT_COMPLETED",
+    "09-13 13:58:58.483  2614  2634 I Finsky  : [118] RECEIVER_BOOT_COMPLETED#logWorkEndAndFinishGoAsync: SUCCESS",
+    "09-13 13:58:59.910  1518  2143 W BroadcastQueue: Permission Denial: receiving Intent { act=android.intent.action.BOOT_COMPLETED flg=0x9000010 (has extras) } to com.google.android.syncadapters.calendar/com.google.android.libraries.internal.growth.growthkit.inject.GrowthKitBootCompletedBroadcastReceiver requires android.permission.RECEIVE_BOOT_COMPLETED due to sender null (uid 1000)",
+    "09-13 13:59:00.570  1518  1535 I ActivityManager: Finished processing BOOT_COMPLETED for u0"
+  ],
+  "job_registration": [],
+  "pid": ""
+}

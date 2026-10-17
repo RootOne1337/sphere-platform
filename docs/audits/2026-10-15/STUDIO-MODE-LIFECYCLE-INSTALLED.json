@@ -1,0 +1,139 @@
+{
+  "schemaVersion": 1,
+  "observedAtUtc": "2026-10-15T17:04:50.697Z",
+  "runtimeInstalled": true,
+  "scope": "Finite Studio mode coordination, restored frame notification and portrait touch layout. Native input acceptance is reported separately from UI mode acceptance.",
+  "runtime": {
+    "sourceRevision": "92df9aafcc87c1e72f72762692dab37106a9e732",
+    "apiSourceRevision": "969a74440d67e987be98f37cdb450f7c47817f68",
+    "uiCiRunId": 38770475062,
+    "uiContainer": {
+      "sourceRevision": "92df9aafcc87c1e72f72762692dab37106a9e732",
+      "containerId": "8d5f209c0ffbf80ea8246c70323bc368715f668c41471f0d80bfa1f0eb51cd4f",
+      "imageId": "sha256:3c576bdfb1630e734d70ed103d0d9c202c8c5fcf63e738cf36a35b871bba9193",
+      "status": "running"
+    },
+    "apiContainer": {
+      "sourceRevision": "969a74440d67e987be98f37cdb450f7c47817f68",
+      "containerId": "78459c3b463af99586ce2c6ae711721f06ba55e7b82f11b88d924e4c21e30dc4",
+      "imageId": "sha256:7830b6d17d689f13d323ccea274b764028adf112f015c17501674d53b2b0b650",
+      "status": "running"
+    },
+    "artifactDigest": "1bc66507db5790126a902a9e78fa5ffe3249a639e1eef499498934cfc5a0d14c",
+    "githubDigestVerified": true,
+    "otherContainersPreservedPerInstall": 45,
+    "otaCatalogPreserved": true,
+    "schemaMigrationPerformed": false
+  },
+  "ci": {
+    "frontendSuites": 172,
+    "frontendTests": 2505,
+    "typecheck": true,
+    "build": true,
+    "packagedRuntimeProbes": true
+  },
+  "browser": {
+    "sourceRevision": "92df9aafcc87c1e72f72762692dab37106a9e732",
+    "recordedAtUtc": "2026-10-15T17:04:50.697Z",
+    "finiteAccepted": true,
+    "scope": "Finite UI mode transitions, portrait layout and grid visibility; recurring installed input failures are retained separately.",
+    "origins": [
+      {
+        "origin": "http://127.0.0.1:3015",
+        "gridReady": true,
+        "eventsConnected": true,
+        "buildStampObserved": true,
+        "pageErrorCount": 0
+      },
+      {
+        "origin": "https://sphere-agent-canary-20260927.ru.tuna.am",
+        "gridReady": true,
+        "eventsConnected": true,
+        "buildStampObserved": true,
+        "pageErrorCount": 0
+      }
+    ],
+    "uiTransitions": {
+      "startFromViewSelectsControl": true,
+      "xpathStopsRecording": true,
+      "startFromXPathSelectsControl": true,
+      "viewStopsRecording": true
+    },
+    "portrait": {
+      "width": 390,
+      "height": 844,
+      "coarse": true,
+      "overflow": false,
+      "videoWidth": 960,
+      "videoHeight": 540,
+      "canvas": {
+        "y": 572.5,
+        "height": 205.625,
+        "bottom": 778.125
+      },
+      "footerTop": 783,
+      "measuredAfterLiveFrame": true
+    },
+    "fleetTouch": {
+      "width": 390,
+      "height": 844,
+      "overflow": false,
+      "gridHeight": 503.796875,
+      "rowCount": "22",
+      "renderedRows": 19
+    },
+    "nativeInputAccepted": false,
+    "nativeCommands": [
+      {
+        "command": "Home",
+        "sent": true,
+        "confirmed": true,
+        "receiptRoundTripMs": 152,
+        "transport": "direct_webrtc",
+        "scope": "One native command acknowledgement, not continuous input reliability acceptance"
+      }
+    ],
+    "recordedGestureAccepted": false,
+    "stream": {
+      "device": "auto-ph-025",
+      "directFramesPresented": 2580,
+      "connectionsAtThatObservation": 4,
+      "controlAtHomeAcknowledgement": "ready",
+      "endControlState": "closed",
+      "endPrimaryRoute": "server_fallback",
+      "endFrames": 0,
+      "endConnections": 8,
+      "openFailure": "Recurring idle_receipt_timeout while direct video continued; later server fallback and recovery/probing",
+      "recoveryAttemptsObserved": 11,
+      "oldestUnconfirmedHeartbeatAgeMs": 1263,
+      "pendingHeartbeatReceiptsObserved": 5,
+      "pointerHeldAtFailure": false,
+      "rootCauseIsolated": false,
+      "commandsReplayed": false,
+      "multiClientScope": "Two own clients initially; mobile closed later; no causal isolation or shared-control acceptance"
+    },
+    "pageErrorCount": 0,
+    "limits": [
+      "No installed recording gesture acceptance in this run.",
+      "Physical phone/IME, landscape,20+ viewers,WAN/TURN,long soak not accepted.",
+      "One Home ACK does not establish transport stability."
+    ],
+    "productionAccepted": false,
+    "ordinaryChrome": true,
+    "transportOverrides": false,
+    "directFramesPresented": 2580
+  },
+  "sourceValidation": [
+    {
+      "file": "docs/audits/2026-10-15/STUDIO-MODE-LIFECYCLE-OBSERVATION.json",
+      "sha256NormalizedLf": "6234ff0ca9e9fd680237e8dfeb8fa48336a06d621112492cc32949fe445c085b"
+    }
+  ],
+  "apkBaselineEvidence": "docs/audits/2026-10-15/DIRECT-KEYBOARD76-OBSERVATION.json",
+  "limits": [
+    "Installed PH025 had recurring idle heartbeat receipt timeouts and route recovery. One native Home command was confirmed; continuous input/recording reliability is not accepted.",
+    "Physical phone/IME, landscape fit, enlarged text across themes,20+ viewers, WAN/TURN and long soak are not accepted.",
+    "Source preview had idle receipt failures; HMR preview is not a production transport acceptance result.",
+    "Arbitrary gesture_path and physical keyboard recording remain open. No commands replayed; no task executed."
+  ]
+}

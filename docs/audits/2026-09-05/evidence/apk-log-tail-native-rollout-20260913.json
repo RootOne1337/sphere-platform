@@ -1,0 +1,195 @@
+{
+  "at": "2026-09-13T00:45:14.658247+00:00",
+  "source_commit": "9618a572d4c2797a9926b784a125a9601e33603d",
+  "apk_sha256": "d6db04c6101349050913bd48582839e8be098b02660834603bfffd11b42151ea",
+  "upgrades": [
+    {
+      "index": 0,
+      "device_id": "85f2f935-7739-400e-9389-0d71227e8f0a",
+      "at": "2026-09-13T00:44:03.269638+00:00",
+      "source_commit": "9618a572d4c2797a9926b784a125a9601e33603d",
+      "sha256": "d6db04c6101349050913bd48582839e8be098b02660834603bfffd11b42151ea",
+      "install_in_place": true,
+      "manual_app_launch": false,
+      "app_data_reset": false,
+      "probes": [
+        {
+          "command": {
+            "index": 0,
+            "http_status": 503,
+            "expected_output": false,
+            "duration_seconds": 0.187
+          },
+          "other_agent": {
+            "index": 1,
+            "http_status": 200,
+            "expected_output": true,
+            "duration_seconds": 0.672
+          },
+          "since_install_start_seconds": 2.187
+        },
+        {
+          "command": {
+            "index": 0,
+            "http_status": 200,
+            "expected_output": true,
+            "duration_seconds": 0.625
+          },
+          "other_agent": {
+            "index": 1,
+            "http_status": 200,
+            "expected_output": true,
+            "duration_seconds": 0.594
+          },
+          "since_install_start_seconds": 8.406
+        }
+      ],
+      "passed": true,
+      "installed_hash_verified": true,
+      "other_app_pid_unchanged": true,
+      "cached_signature_valid": true,
+      "cached_version": 8,
+      "enrollment_events_current_process": 0
+    },
+    {
+      "index": 1,
+      "device_id": "ba1346c1-1581-452f-adee-451d36622aaf",
+      "at": "2026-09-13T00:43:15.880488+00:00",
+      "source_commit": "9618a572d4c2797a9926b784a125a9601e33603d",
+      "sha256": "d6db04c6101349050913bd48582839e8be098b02660834603bfffd11b42151ea",
+      "install_in_place": true,
+      "manual_app_launch": false,
+      "app_data_reset": false,
+      "probes": [
+        {
+          "command": {
+            "index": 1,
+            "http_status": 503,
+            "expected_output": false,
+            "duration_seconds": 0.172
+          },
+          "other_agent": {
+            "index": 0,
+            "http_status": 200,
+            "expected_output": true,
+            "duration_seconds": 0.657
+          },
+          "since_install_start_seconds": 1.672
+        },
+        {
+          "command": {
+            "index": 1,
+            "http_status": 200,
+            "expected_output": true,
+            "duration_seconds": 0.531
+          },
+          "other_agent": {
+            "index": 0,
+            "http_status": 200,
+            "expected_output": true,
+            "duration_seconds": 0.625
+          },
+          "since_install_start_seconds": 7.828
+        }
+      ],
+      "passed": true,
+      "installed_hash_verified": true,
+      "other_app_pid_unchanged": true,
+      "cached_signature_valid": true,
+      "cached_version": 8,
+      "enrollment_events_current_process": 0
+    }
+  ],
+  "parallel_commands": [
+    {
+      "index": 0,
+      "http_status": 200,
+      "expected_output": true,
+      "seconds": 0.547
+    },
+    {
+      "index": 1,
+      "http_status": 200,
+      "expected_output": true,
+      "seconds": 0.782
+    },
+    {
+      "index": 0,
+      "http_status": 200,
+      "expected_output": true,
+      "seconds": 0.5
+    },
+    {
+      "index": 1,
+      "http_status": 200,
+      "expected_output": true,
+      "seconds": 0.515
+    },
+    {
+      "index": 0,
+      "http_status": 200,
+      "expected_output": true,
+      "seconds": 0.5
+    },
+    {
+      "index": 1,
+      "http_status": 200,
+      "expected_output": true,
+      "seconds": 0.5
+    },
+    {
+      "index": 0,
+      "http_status": 200,
+      "expected_output": true,
+      "seconds": 0.5
+    },
+    {
+      "index": 1,
+      "http_status": 200,
+      "expected_output": true,
+      "seconds": 0.5
+    },
+    {
+      "index": 0,
+      "http_status": 200,
+      "expected_output": true,
+      "seconds": 0.516
+    },
+    {
+      "index": 1,
+      "http_status": 200,
+      "expected_output": true,
+      "seconds": 0.5
+    },
+    {
+      "index": 0,
+      "http_status": 200,
+      "expected_output": true,
+      "seconds": 0.484
+    },
+    {
+      "index": 1,
+      "http_status": 200,
+      "expected_output": true,
+      "seconds": 0.5
+    }
+  ],
+  "ordinary_log_responses": [
+    {
+      "index": 0,
+      "http_status": 200,
+      "utf8_bytes": 10067,
+      "lines": 100,
+      "synthetic_fixture_absent": true
+    },
+    {
+      "index": 1,
+      "http_status": 200,
+      "utf8_bytes": 10490,
+      "lines": 100,
+      "synthetic_fixture_absent": true
+    }
+  ],
+  "latest_alias_published_after_native_acceptance": true,
+  "both_installed_hashes_verified": true
+}

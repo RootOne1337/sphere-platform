@@ -1,0 +1,514 @@
+{
+  "sourceRevision": "3493eb68d05a1f37ed704c96f6d300b9772bc8c5",
+  "candidateSha256": "7481ca620f4cbea60807121ad5f00f1bb3e1cb9dc12098980346acfd527a8c69",
+  "deviceId": "414ce0e9-4b93-4f96-b9ca-ee675f53835e",
+  "agentVersionCode": 10247,
+  "startedAt": "2026-10-06T14:34:23.690577+00:00",
+  "status": "terminal-completed",
+  "scriptsCreated": 1,
+  "tasksCreated": 1,
+  "captureRequests": 10,
+  "automaticRetry": false,
+  "deviceActionRetries": 0,
+  "nodeCount": 14,
+  "cacheAbsentBefore": true,
+  "cacheDirectory": "/data/data/com.sphereplatform.agent.pilot.debug/cache/dag-screenshots-v1",
+  "scriptId": "0b06caa1-f1fd-4942-955a-1e4b55dab288",
+  "versionId": "37d7173d-b9b1-4daa-8078-c1593dfe838f",
+  "dagHash": "883c8374bb0b95c3519c170ad81809d8b66825f1a0b8d2857c6fadcaab5bb6d1",
+  "taskSentAt": "2026-10-06T14:34:23.756152+00:00",
+  "taskId": "b1d67f65-f7b9-4859-906a-77513017acfc",
+  "task": {
+    "id": "b1d67f65-f7b9-4859-906a-77513017acfc",
+    "org_id": "99057712-7db7-4fcb-8f07-030051c66b5e",
+    "script_id": "0b06caa1-f1fd-4942-955a-1e4b55dab288",
+    "device_id": "414ce0e9-4b93-4f96-b9ca-ee675f53835e",
+    "script_version_id": "37d7173d-b9b1-4daa-8078-c1593dfe838f",
+    "batch_id": null,
+    "status": "completed",
+    "priority": 5,
+    "started_at": "2026-10-06T14:34:24.383428Z",
+    "finished_at": "2026-10-06T14:34:27.284216Z",
+    "cancel_requested_at": null,
+    "timeout_requested_at": null,
+    "wave_index": null,
+    "created_at": "2026-10-06T14:34:23.772192Z",
+    "updated_at": "2026-10-06T14:34:27.281892Z",
+    "device_name": "auto-ph-011",
+    "script_name": "Bounded original PNG cache · PH011 · APK 1.2.47",
+    "result": {
+      "success": true,
+      "node_logs": [
+        {
+          "node_id": "start",
+          "success": true,
+          "action_type": "start",
+          "duration_ms": 0
+        },
+        {
+          "node_id": "home",
+          "success": true,
+          "action_type": "key_event",
+          "duration_ms": 0
+        },
+        {
+          "node_id": "settle",
+          "success": true,
+          "action_type": "sleep",
+          "duration_ms": 1000
+        },
+        {
+          "output": "{path=/data/data/com.sphereplatform.agent.pilot.debug/cache/dag-screenshots-v1/capture-d9b5e506-09ee-4be3-916b-61f5990a4535.png, format=png, storage=android-local-cache, server_artifact_available=false}",
+          "node_id": "capture_1",
+          "success": true,
+          "action_type": "screenshot",
+          "duration_ms": 279
+        },
+        {
+          "output": "{path=/data/data/com.sphereplatform.agent.pilot.debug/cache/dag-screenshots-v1/capture-3ebe5d60-c052-4860-9d94-41297d73d083.png, format=png, storage=android-local-cache, server_artifact_available=false}",
+          "node_id": "capture_2",
+          "success": true,
+          "action_type": "screenshot",
+          "duration_ms": 153
+        },
+        {
+          "output": "{path=/data/data/com.sphereplatform.agent.pilot.debug/cache/dag-screenshots-v1/capture-90ec762c-ba1e-4174-89ae-7471f35fcaad.png, format=png, storage=android-local-cache, server_artifact_available=false}",
+          "node_id": "capture_3",
+          "success": true,
+          "action_type": "screenshot",
+          "duration_ms": 186
+        },
+        {
+          "output": "{path=/data/data/com.sphereplatform.agent.pilot.debug/cache/dag-screenshots-v1/capture-05bcb0b5-114d-4a9b-830e-a3c7ee3a606a.png, format=png, storage=android-local-cache, server_artifact_available=false}",
+          "node_id": "capture_4",
+          "success": true,
+          "action_type": "screenshot",
+          "duration_ms": 207
+        },
+        {
+          "output": "{path=/data/data/com.sphereplatform.agent.pilot.debug/cache/dag-screenshots-v1/capture-162b4603-32f8-45f1-ab8f-402b75f64968.png, format=png, storage=android-local-cache, server_artifact_available=false}",
+          "node_id": "capture_5",
+          "success": true,
+          "action_type": "screenshot",
+          "duration_ms": 176
+        },
+        {
+          "output": "{path=/data/data/com.sphereplatform.agent.pilot.debug/cache/dag-screenshots-v1/capture-514df2a7-d595-4c3e-8f4a-e8b2f9730fac.png, format=png, storage=android-local-cache, server_artifact_available=false}",
+          "node_id": "capture_6",
+          "success": true,
+          "action_type": "screenshot",
+          "duration_ms": 165
+        },
+        {
+          "output": "{path=/data/data/com.sphereplatform.agent.pilot.debug/cache/dag-screenshots-v1/capture-5bf05176-2a74-476c-b481-61cb8c2ff5ee.png, format=png, storage=android-local-cache, server_artifact_available=false}",
+          "node_id": "capture_7",
+          "success": true,
+          "action_type": "screenshot",
+          "duration_ms": 162
+        },
+        {
+          "output": "{path=/data/data/com.sphereplatform.agent.pilot.debug/cache/dag-screenshots-v1/capture-19ecfca1-e613-400e-823f-2bafafcbcfae.png, format=png, storage=android-local-cache, server_artifact_available=false}",
+          "node_id": "capture_8",
+          "success": true,
+          "action_type": "screenshot",
+          "duration_ms": 155
+        },
+        {
+          "output": "{path=/data/data/com.sphereplatform.agent.pilot.debug/cache/dag-screenshots-v1/capture-7db2ed81-a917-4e65-9be3-e5d9ae42d1c3.png, format=png, storage=android-local-cache, server_artifact_available=false}",
+          "node_id": "capture_9",
+          "success": true,
+          "action_type": "screenshot",
+          "duration_ms": 155
+        },
+        {
+          "output": "{path=/data/data/com.sphereplatform.agent.pilot.debug/cache/dag-screenshots-v1/capture-6a631861-9865-4e13-9bd7-f146f1f3eb8f.png, format=png, storage=android-local-cache, server_artifact_available=false}",
+          "node_id": "capture_10",
+          "success": true,
+          "action_type": "screenshot",
+          "duration_ms": 154
+        },
+        {
+          "node_id": "end",
+          "success": true,
+          "action_type": "end",
+          "duration_ms": 0
+        }
+      ],
+      "nodes_executed": 14
+    },
+    "error_message": null,
+    "input_params": {
+      "priority": 5
+    }
+  },
+  "logs": [
+    {
+      "node_id": "start",
+      "action_type": "start",
+      "started_at": null,
+      "duration_ms": 0,
+      "success": true,
+      "error": null,
+      "output": null,
+      "screenshot_key": null
+    },
+    {
+      "node_id": "home",
+      "action_type": "key_event",
+      "started_at": null,
+      "duration_ms": 0,
+      "success": true,
+      "error": null,
+      "output": null,
+      "screenshot_key": null
+    },
+    {
+      "node_id": "settle",
+      "action_type": "sleep",
+      "started_at": null,
+      "duration_ms": 1000,
+      "success": true,
+      "error": null,
+      "output": null,
+      "screenshot_key": null
+    },
+    {
+      "node_id": "capture_1",
+      "action_type": "screenshot",
+      "started_at": null,
+      "duration_ms": 279,
+      "success": true,
+      "error": null,
+      "output": "{path=/data/data/com.sphereplatform.agent.pilot.debug/cache/dag-screenshots-v1/capture-d9b5e506-09ee-4be3-916b-61f5990a4535.png, format=png, storage=android-local-cache, server_artifact_available=false}",
+      "screenshot_key": null
+    },
+    {
+      "node_id": "capture_2",
+      "action_type": "screenshot",
+      "started_at": null,
+      "duration_ms": 153,
+      "success": true,
+      "error": null,
+      "output": "{path=/data/data/com.sphereplatform.agent.pilot.debug/cache/dag-screenshots-v1/capture-3ebe5d60-c052-4860-9d94-41297d73d083.png, format=png, storage=android-local-cache, server_artifact_available=false}",
+      "screenshot_key": null
+    },
+    {
+      "node_id": "capture_3",
+      "action_type": "screenshot",
+      "started_at": null,
+      "duration_ms": 186,
+      "success": true,
+      "error": null,
+      "output": "{path=/data/data/com.sphereplatform.agent.pilot.debug/cache/dag-screenshots-v1/capture-90ec762c-ba1e-4174-89ae-7471f35fcaad.png, format=png, storage=android-local-cache, server_artifact_available=false}",
+      "screenshot_key": null
+    },
+    {
+      "node_id": "capture_4",
+      "action_type": "screenshot",
+      "started_at": null,
+      "duration_ms": 207,
+      "success": true,
+      "error": null,
+      "output": "{path=/data/data/com.sphereplatform.agent.pilot.debug/cache/dag-screenshots-v1/capture-05bcb0b5-114d-4a9b-830e-a3c7ee3a606a.png, format=png, storage=android-local-cache, server_artifact_available=false}",
+      "screenshot_key": null
+    },
+    {
+      "node_id": "capture_5",
+      "action_type": "screenshot",
+      "started_at": null,
+      "duration_ms": 176,
+      "success": true,
+      "error": null,
+      "output": "{path=/data/data/com.sphereplatform.agent.pilot.debug/cache/dag-screenshots-v1/capture-162b4603-32f8-45f1-ab8f-402b75f64968.png, format=png, storage=android-local-cache, server_artifact_available=false}",
+      "screenshot_key": null
+    },
+    {
+      "node_id": "capture_6",
+      "action_type": "screenshot",
+      "started_at": null,
+      "duration_ms": 165,
+      "success": true,
+      "error": null,
+      "output": "{path=/data/data/com.sphereplatform.agent.pilot.debug/cache/dag-screenshots-v1/capture-514df2a7-d595-4c3e-8f4a-e8b2f9730fac.png, format=png, storage=android-local-cache, server_artifact_available=false}",
+      "screenshot_key": null
+    },
+    {
+      "node_id": "capture_7",
+      "action_type": "screenshot",
+      "started_at": null,
+      "duration_ms": 162,
+      "success": true,
+      "error": null,
+      "output": "{path=/data/data/com.sphereplatform.agent.pilot.debug/cache/dag-screenshots-v1/capture-5bf05176-2a74-476c-b481-61cb8c2ff5ee.png, format=png, storage=android-local-cache, server_artifact_available=false}",
+      "screenshot_key": null
+    },
+    {
+      "node_id": "capture_8",
+      "action_type": "screenshot",
+      "started_at": null,
+      "duration_ms": 155,
+      "success": true,
+      "error": null,
+      "output": "{path=/data/data/com.sphereplatform.agent.pilot.debug/cache/dag-screenshots-v1/capture-19ecfca1-e613-400e-823f-2bafafcbcfae.png, format=png, storage=android-local-cache, server_artifact_available=false}",
+      "screenshot_key": null
+    },
+    {
+      "node_id": "capture_9",
+      "action_type": "screenshot",
+      "started_at": null,
+      "duration_ms": 155,
+      "success": true,
+      "error": null,
+      "output": "{path=/data/data/com.sphereplatform.agent.pilot.debug/cache/dag-screenshots-v1/capture-7db2ed81-a917-4e65-9be3-e5d9ae42d1c3.png, format=png, storage=android-local-cache, server_artifact_available=false}",
+      "screenshot_key": null
+    },
+    {
+      "node_id": "capture_10",
+      "action_type": "screenshot",
+      "started_at": null,
+      "duration_ms": 154,
+      "success": true,
+      "error": null,
+      "output": "{path=/data/data/com.sphereplatform.agent.pilot.debug/cache/dag-screenshots-v1/capture-6a631861-9865-4e13-9bd7-f146f1f3eb8f.png, format=png, storage=android-local-cache, server_artifact_available=false}",
+      "screenshot_key": null
+    },
+    {
+      "node_id": "end",
+      "action_type": "end",
+      "started_at": null,
+      "duration_ms": 0,
+      "success": true,
+      "error": null,
+      "output": null,
+      "screenshot_key": null
+    }
+  ],
+  "finishedAt": "2026-10-06T14:34:27.851319+00:00",
+  "dag": {
+    "name": null,
+    "nodes": [
+      {
+        "id": "start",
+        "retry": 0,
+        "action": {
+          "type": "start"
+        },
+        "on_failure": null,
+        "on_success": "home",
+        "timeout_ms": 12000
+      },
+      {
+        "id": "home",
+        "retry": 0,
+        "action": {
+          "type": "key_event",
+          "keycode": 3
+        },
+        "on_failure": null,
+        "on_success": "settle",
+        "timeout_ms": 12000
+      },
+      {
+        "id": "settle",
+        "retry": 0,
+        "action": {
+          "ms": 1000,
+          "type": "sleep"
+        },
+        "on_failure": null,
+        "on_success": "capture_1",
+        "timeout_ms": 12000
+      },
+      {
+        "id": "capture_1",
+        "retry": 0,
+        "action": {
+          "type": "screenshot",
+          "save_to": "shot_1"
+        },
+        "on_failure": null,
+        "on_success": "capture_2",
+        "timeout_ms": 12000
+      },
+      {
+        "id": "capture_2",
+        "retry": 0,
+        "action": {
+          "type": "screenshot",
+          "save_to": "shot_2"
+        },
+        "on_failure": null,
+        "on_success": "capture_3",
+        "timeout_ms": 12000
+      },
+      {
+        "id": "capture_3",
+        "retry": 0,
+        "action": {
+          "type": "screenshot",
+          "save_to": "shot_3"
+        },
+        "on_failure": null,
+        "on_success": "capture_4",
+        "timeout_ms": 12000
+      },
+      {
+        "id": "capture_4",
+        "retry": 0,
+        "action": {
+          "type": "screenshot",
+          "save_to": "shot_4"
+        },
+        "on_failure": null,
+        "on_success": "capture_5",
+        "timeout_ms": 12000
+      },
+      {
+        "id": "capture_5",
+        "retry": 0,
+        "action": {
+          "type": "screenshot",
+          "save_to": "shot_5"
+        },
+        "on_failure": null,
+        "on_success": "capture_6",
+        "timeout_ms": 12000
+      },
+      {
+        "id": "capture_6",
+        "retry": 0,
+        "action": {
+          "type": "screenshot",
+          "save_to": "shot_6"
+        },
+        "on_failure": null,
+        "on_success": "capture_7",
+        "timeout_ms": 12000
+      },
+      {
+        "id": "capture_7",
+        "retry": 0,
+        "action": {
+          "type": "screenshot",
+          "save_to": "shot_7"
+        },
+        "on_failure": null,
+        "on_success": "capture_8",
+        "timeout_ms": 12000
+      },
+      {
+        "id": "capture_8",
+        "retry": 0,
+        "action": {
+          "type": "screenshot",
+          "save_to": "shot_8"
+        },
+        "on_failure": null,
+        "on_success": "capture_9",
+        "timeout_ms": 12000
+      },
+      {
+        "id": "capture_9",
+        "retry": 0,
+        "action": {
+          "type": "screenshot",
+          "save_to": "shot_9"
+        },
+        "on_failure": null,
+        "on_success": "capture_10",
+        "timeout_ms": 12000
+      },
+      {
+        "id": "capture_10",
+        "retry": 0,
+        "action": {
+          "type": "screenshot",
+          "save_to": "shot_10"
+        },
+        "on_failure": null,
+        "on_success": "end",
+        "timeout_ms": 12000
+      },
+      {
+        "id": "end",
+        "retry": 0,
+        "action": {
+          "type": "end"
+        },
+        "on_failure": null,
+        "on_success": null,
+        "timeout_ms": 12000
+      }
+    ],
+    "version": "1.0",
+    "entry_node": "start",
+    "timeout_ms": 120000,
+    "description": null
+  },
+  "cacheFiles": [
+    {
+      "path": "/data/data/com.sphereplatform.agent.pilot.debug/cache/dag-screenshots-v1/capture-7db2ed81-a917-4e65-9be3-e5d9ae42d1c3.png",
+      "bytes": 235038
+    },
+    {
+      "path": "/data/data/com.sphereplatform.agent.pilot.debug/cache/dag-screenshots-v1/capture-514df2a7-d595-4c3e-8f4a-e8b2f9730fac.png",
+      "bytes": 235038
+    },
+    {
+      "path": "/data/data/com.sphereplatform.agent.pilot.debug/cache/dag-screenshots-v1/capture-5bf05176-2a74-476c-b481-61cb8c2ff5ee.png",
+      "bytes": 235038
+    },
+    {
+      "path": "/data/data/com.sphereplatform.agent.pilot.debug/cache/dag-screenshots-v1/capture-05bcb0b5-114d-4a9b-830e-a3c7ee3a606a.png",
+      "bytes": 235038
+    },
+    {
+      "path": "/data/data/com.sphereplatform.agent.pilot.debug/cache/dag-screenshots-v1/capture-90ec762c-ba1e-4174-89ae-7471f35fcaad.png",
+      "bytes": 235038
+    },
+    {
+      "path": "/data/data/com.sphereplatform.agent.pilot.debug/cache/dag-screenshots-v1/capture-162b4603-32f8-45f1-ab8f-402b75f64968.png",
+      "bytes": 235038
+    },
+    {
+      "path": "/data/data/com.sphereplatform.agent.pilot.debug/cache/dag-screenshots-v1/capture-19ecfca1-e613-400e-823f-2bafafcbcfae.png",
+      "bytes": 235038
+    },
+    {
+      "path": "/data/data/com.sphereplatform.agent.pilot.debug/cache/dag-screenshots-v1/capture-6a631861-9865-4e13-9bd7-f146f1f3eb8f.png",
+      "bytes": 235038
+    }
+  ],
+  "cacheFileCount": 8,
+  "cacheBytes": 1880304,
+  "oldestTwoEvicted": true,
+  "noStagingFileReported": true,
+  "originalPng": {
+    "sha256": "1e69731a96544c0508552371e84e5e0fa1cccbb1c3f0b61086d4133476f61ade",
+    "bytes": 235038,
+    "dimensions": [
+      960,
+      540
+    ],
+    "pixelReencoded": false
+  },
+  "serverManifest": {
+    "task_id": "b1d67f65-f7b9-4859-906a-77513017acfc",
+    "screenshots": []
+  },
+  "localCachePreservedForRetentionObservation": true,
+  "nativePngRecovery": "addressed temporary root copy; ordinary adb pull correctly denied private path",
+  "ownedRecoveryTemporaryCleanupConfirmed": true,
+  "captureDurationsMs": [
+    279,
+    153,
+    186,
+    207,
+    176,
+    165,
+    162,
+    155,
+    155,
+    154
+  ]
+}

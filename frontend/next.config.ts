@@ -1,7 +1,21 @@
 import type { NextConfig } from 'next';
+if (process.env.NEXT_PUBLIC_DIRECT_PROBE_RELAY === 'true' &&
+    (process.env.NEXT_PUBLIC_DIRECT_TRANSPORT_CANARY !== 'true' || process.env.NEXT_PUBLIC_DIRECT_PROBE_STUN_URL)) {
+  throw new Error('Relay diagnostics require the canary gate and exclude the static STUN profile');
+}
+
+if (process.env.NEXT_PUBLIC_DIRECT_PROBE_STUN_URL && process.env.NEXT_PUBLIC_DIRECT_TRANSPORT_CANARY !== 'true') {
+  throw new Error('Diagnostic STUN requires NEXT_PUBLIC_DIRECT_TRANSPORT_CANARY=true');
+}
 
 const nextConfig: NextConfig = {
   output: 'standalone',
+  // API collections use a trailing slash. Let the upstream API own redirects;
+  // otherwise dev rewrites can loop between Next's /updates and FastAPI's /updates/.
+  skipTrailingSlashRedirect: true,
+  // Корень артефакта должен совпадать с приложением, даже если над checkout
+  // лежит посторонний package-lock.json.
+  outputFileTracingRoot: process.cwd(),
   typedRoutes: false,
   async rewrites() {
     // Прокси только в dev-окружении — в production используется NEXT_PUBLIC_API_BASE_URL
@@ -9,6 +23,10 @@ const nextConfig: NextConfig = {
       return [];
     }
     return [
+      {
+        source: '/api/:path*/',
+        destination: `${process.env.NEXT_PUBLIC_API_BASE_URL ?? 'http://localhost:8000'}/api/:path*/`,
+      },
       {
         source: '/api/:path*',
         destination: `${process.env.NEXT_PUBLIC_API_BASE_URL ?? 'http://localhost:8000'}/api/:path*`,

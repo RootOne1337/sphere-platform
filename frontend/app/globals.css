@@ -4,39 +4,156 @@
 
 @layer base {
   :root {
-    /* Dynamics: Variables injected via ThemeProvider */
-    /* Fallbacks during SSR / before hydration */
-    --background: 0 0% 4%;
-    --foreground: 0 0% 95%;
-    --card: 0 0% 7%;
-    --card-foreground: 0 0% 95%;
-    --popover: 0 0% 7%;
-    --popover-foreground: 0 0% 95%;
-    --primary: 217 91% 60%;
-    --primary-foreground: 0 0% 100%;
-    --secondary: 0 0% 10%;
-    --secondary-foreground: 0 0% 90%;
-    --muted: 0 0% 12%;
-    --muted-foreground: 0 0% 60%;
-    --accent: 217 32% 17%;
-    --accent-foreground: 0 0% 98%;
-    --destructive: 0 70% 40%;
+    /* First visit is dark; saved preferences are applied before paint. */
+    color-scheme: dark;
+    --background: 222 20% 5%;
+    --foreground: 210 20% 96%;
+    --card: 222 18% 7%;
+    --card-foreground: 210 20% 96%;
+    --popover: 222 18% 8%;
+    --popover-foreground: 210 20% 96%;
+    --primary: 160 65% 48%;
+    --primary-foreground: 164 70% 5%;
+    --secondary: 218 15% 12%;
+    --secondary-foreground: 210 20% 92%;
+    --muted: 218 15% 12%;
+    --muted-foreground: 217 12% 65%;
+    --accent: 160 20% 13%;
+    --accent-foreground: 158 65% 72%;
+    --border: 218 14% 17%;
+    --input: 218 14% 20%;
+    --ring: 160 65% 48%;
+    --success: 152 65% 48%;
+    --warning: 38 92% 58%;
+    --destructive: 0 84% 68%;
     --destructive-foreground: 0 0% 100%;
-    --warning: 45 93% 47%;
-    --success: 142 70% 40%;
-    --border: 0 0% 15%;
-    --input: 0 0% 15%;
-    --ring: 217 91% 60%;
 
     /* Configurable via ThemeProvider Density */
-    --radius: 0.125rem;
+    --radius: 0.625rem;
     --spacing-base: 1;
     --font-size-base: 100%;
+    --control-height: 2.375rem;
+    --control-sm-height: 2rem;
+    --control-lg-height: 2.75rem;
+    --control-icon-size: 2.375rem;
+    --control-padding: 1rem;
+    --row-padding-y: .75rem;
+    --row-padding-x: 1rem;
+    --page-gap: 1.5rem;
+    --page-padding-y: 1.5rem;
+    --page-padding-x: 1.5rem;
+    --panel-padding: 1.25rem;
+    --nav-height: 2.5rem;
   }
 }
 
 html {
   font-size: var(--font-size-base);
+}
+
+/* Material comes from the backdrop, never a reflection painted onto every card.
+   Content panels are denser than floating windows; nested surfaces share one blur. */
+.sphere-chrome, .sphere-material { background: hsl(var(--card)); }
+.sphere-workspace { background-color: hsl(var(--background)); }
+[data-surface="glass"] .sphere-workspace, [data-surface="glass"] .appearance-sample {
+  background-image: radial-gradient(ellipse at 0% 0%, hsl(var(--surface-tint) / var(--aura-opacity, .06)), transparent 68%);
+}
+.appearance-sample { background-color: hsl(var(--background)); }
+@supports (backdrop-filter: blur(1px)) {
+  [data-surface="glass"] .sphere-chrome, [data-surface="glass"] .sphere-material {
+    background: hsl(var(--card) / var(--glass-opacity, .62));
+    backdrop-filter: blur(var(--glass-blur, 28px)) saturate(1.12);
+    -webkit-backdrop-filter: blur(var(--glass-blur, 28px)) saturate(1.12);
+    border-color: hsl(var(--foreground) / .12);
+    box-shadow: 0 1px 3px rgb(0 0 0 / .06);
+  }
+  [data-surface="glass"] .sphere-panel { background: hsl(var(--card) / var(--glass-panel-opacity, .82)); }
+  [data-surface="glass"] .sphere-chrome { box-shadow: none; }
+  /* The window owns the blur. A second full-screen blur flattens its backdrop. */
+  [data-surface="glass"] .sphere-dialog-overlay { background: hsl(var(--background) / .18); backdrop-filter: none; -webkit-backdrop-filter: none; }
+  [data-surface="glass"] .sphere-dialog { box-shadow: 0 24px 80px rgb(0 0 0 / .28), 0 0 0 1px rgb(0 0 0 / .04); }
+  [data-surface="glass"] :is(.sphere-material, .sphere-chrome) .text-muted-foreground { color: hsl(var(--foreground) / .76); }
+  .dark[data-surface="glass"] :is(.sphere-material, .sphere-chrome) .text-muted-foreground { color: hsl(var(--foreground) / .94); }
+  /* Saturated green body text loses contrast on translucent backgrounds. */
+  [data-theme="matrix-green"][data-surface="glass"] :is(.sphere-material, .sphere-chrome) { --foreground: 120 45% 90%; --card-foreground: 120 45% 90%; --popover-foreground: 120 45% 90%; }
+  /* Inset panels retain hierarchy without extra backdrop filters or shine. */
+  [data-surface="glass"] .sphere-material .sphere-inset,
+  [data-surface="glass"] .sphere-dialog[data-layout="workspace"] [data-dialog-footer] {
+    background: hsl(var(--card) / .44); border-color: hsl(var(--foreground) / .09);
+    box-shadow: none;
+  }
+}
+[data-surface="solid"] .sphere-material { box-shadow: 0 1px 3px rgb(0 0 0 / .04); }
+[data-surface="solid"] .sphere-dialog { box-shadow: 0 24px 80px rgb(0 0 0 / .24); }
+@media (prefers-reduced-transparency: reduce) {
+  [data-surface="glass"] .sphere-chrome, [data-surface="glass"] .sphere-material { background: hsl(var(--card)); backdrop-filter: none; -webkit-backdrop-filter: none; }
+  [data-surface="glass"] .sphere-workspace, [data-surface="glass"] .appearance-sample { background-image: none; }
+  [data-surface="glass"] .sphere-material .sphere-inset { background: hsl(var(--card)); }
+  [data-surface="glass"] .sphere-dialog-overlay { background: hsl(var(--background) / .5); backdrop-filter: none; -webkit-backdrop-filter: none; }
+  [data-surface="glass"] .sphere-dialog[data-layout="workspace"] [data-dialog-footer] { background: hsl(var(--card)); }
+}
+
+/* Shared, short motion; geometry/stream counters never animate on polling. */
+@keyframes sphere-surface-enter { from { opacity: 0; scale: .985; translate: 0 6px; } to { opacity: 1; scale: 1; translate: 0 0; } }
+@keyframes sphere-surface-exit { from { opacity: 1; scale: 1; } to { opacity: 0; scale: .99; } }
+@keyframes sphere-panel-enter { from { opacity: 0; translate: 16px 0; } to { opacity: 1; translate: 0 0; } }
+@keyframes sphere-panel-exit { from { opacity: 1; translate: 0 0; } to { opacity: 0; translate: 12px 0; } }
+/* Fading a filtered element briefly reveals sharp backdrop text in Chromium.
+   Keep glass fully composited while its geometry enters or leaves. */
+@keyframes sphere-glass-enter { from { scale: .985; translate: 0 6px; } to { scale: 1; translate: 0 0; } }
+@keyframes sphere-glass-exit { from { scale: 1; } to { scale: .99; } }
+@keyframes sphere-glass-panel-enter { from { translate: 16px 0; } to { translate: 0 0; } }
+@keyframes sphere-glass-panel-exit { from { translate: 0 0; } to { translate: 12px 0; } }
+@keyframes sphere-overlay-enter { from { opacity: 0; } to { opacity: 1; } }
+@keyframes sphere-overlay-exit { from { opacity: 1; } to { opacity: 0; } }
+.sphere-dialog[data-state="open"] { animation: sphere-surface-enter 220ms cubic-bezier(.16,1,.3,1) both; }
+.sphere-dialog[data-state="closed"] { animation: sphere-surface-exit 130ms ease-in both; }
+.sphere-dialog[data-placement="right"][data-state="open"] { animation-name: sphere-panel-enter; }
+.sphere-dialog[data-placement="right"][data-state="closed"] { animation-name: sphere-panel-exit; }
+[data-surface="glass"] .sphere-dialog[data-state="open"] { animation-name: sphere-glass-enter; }
+[data-surface="glass"] .sphere-dialog[data-state="closed"] { animation-name: sphere-glass-exit; }
+[data-surface="glass"] .sphere-dialog[data-placement="right"][data-state="open"] { animation-name: sphere-glass-panel-enter; }
+[data-surface="glass"] .sphere-dialog[data-placement="right"][data-state="closed"] { animation-name: sphere-glass-panel-exit; }
+.sphere-dialog-overlay[data-state="open"] { animation: sphere-overlay-enter 160ms ease-out both; }
+.sphere-dialog-overlay[data-state="closed"] { animation: sphere-overlay-exit 130ms ease-in both; }
+.sphere-dialog[data-layout="workspace"] {
+  display: flex; flex-direction: column; gap: 0; padding: 0; overflow: hidden;
+  top: calc(var(--dialog-viewport-top, 0px) + var(--dialog-viewport-height, 100dvh) / 2);
+  max-height: calc(var(--dialog-viewport-height, 100dvh) - 2rem);
+}
+.sphere-dialog[data-layout="workspace"] > [data-dialog-header] { flex: none; padding: 1.25rem 3.25rem 1rem 1.5rem; border-bottom: 1px solid hsl(var(--border)); }
+.sphere-dialog-body { display: flex; min-width: 0; min-height: 0; flex: 1 1 auto; flex-direction: column; gap: 1rem; overflow-y: auto; overscroll-behavior: contain; padding: 1.25rem 1.5rem; scroll-padding-block: 1rem; }
+.sphere-dialog-body > * { flex-shrink: 0; }
+.sphere-dialog-form { display: flex; flex: 1 1 auto; min-height: 0; min-width: 0; flex-direction: column; overflow: hidden; }
+.sphere-dialog[data-layout="workspace"] [data-dialog-footer] { flex: none; margin: 0; padding: 1rem 1.5rem; border-top: 1px solid hsl(var(--border)); background: hsl(var(--card)); }
+.sphere-dialog[data-layout="workspace"] [data-dialog-footer] button { white-space: normal; height: auto; min-height: var(--control-height); overflow-wrap: anywhere; }
+.sphere-dialog[data-layout="workspace"] [data-dialog-body] :is(input, textarea, select) { scroll-margin-block: 1rem; }
+@media (max-width: 639px) {
+  .sphere-dialog[data-layout="workspace"] { left: 0; top: var(--dialog-viewport-top, 0px); transform: none; width: 100%; max-width: none; max-height: var(--dialog-viewport-height, 100dvh); border-radius: 0; }
+  .sphere-dialog[data-layout="workspace"] > [data-dialog-header] { padding: max(1rem, env(safe-area-inset-top)) 3.25rem 1rem max(1rem, env(safe-area-inset-left)); }
+  .sphere-dialog-body { padding: 1rem max(1rem, env(safe-area-inset-right)) 1rem max(1rem, env(safe-area-inset-left)); }
+  .sphere-dialog[data-layout="workspace"] [data-dialog-footer] { flex-direction: row; flex-wrap: wrap; padding: .75rem max(1rem, env(safe-area-inset-right)) max(.75rem, env(safe-area-inset-bottom)) max(1rem, env(safe-area-inset-left)); }
+  .sphere-dialog[data-layout="workspace"] [data-dialog-footer] > button { flex: 1 1 8rem; }
+  .sphere-dialog[data-layout="workspace"] [data-dialog-body] :is(input, textarea, select) { font-size: max(1rem, 16px); }
+}
+.sphere-tab-panel[data-state="active"] { animation: workspace-route-enter 140ms ease-out; }
+[data-ui="button"] { transition-property: background-color, border-color, color, box-shadow; transition-duration: 150ms; }
+html[data-motion="reduced"] *, html[data-motion="reduced"] *::before, html[data-motion="reduced"] *::after {
+  scroll-behavior: auto !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important;
+}
+.sphere-inspector { max-height: calc(100dvh - 3rem); width: min(1200px, calc(100vw - 3rem)); height: min(900px, calc(100dvh - 3rem)); border-radius: 1.125rem; left: 50%; top: 50%; transform: translate(-50%, -50%); }
+.sphere-inspector[data-placement="right"] { inset: 0 0 0 auto; transform: none; height: 100dvh; max-height: 100dvh; width: min(640px, 100vw); border-radius: 0; }
+.sphere-inspector-body { container-type: inline-size; }
+@container (min-width: 900px) { .sphere-inspector-body .device-inspector-metrics { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+@media (max-width: 639px) {
+  .sphere-inspector, .sphere-inspector[data-placement="right"] { inset: 0; width: 100vw; height: 100dvh; max-height: 100dvh; transform: none; border-radius: 0; }
+}
+@media (pointer: coarse) {
+  [data-ui="button"], [data-ui="input"], [data-ui="select"], [data-ui="menuitem"], .sphere-nav-link {
+    min-height: 44px;
+  }
+  [data-ui="button"] { min-width: 44px; }
+  [data-ui="input"], [data-ui="select"] { font-size: max(16px, 1rem); }
 }
 
 @layer base {
@@ -61,12 +178,12 @@ html {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: hsl(0 0% 20%);
+  background: hsl(var(--muted-foreground) / 0.28);
   border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: hsl(0 0% 30%);
+  background: hsl(var(--muted-foreground) / 0.45);
 }
 
 @keyframes indeterminate {
@@ -81,4 +198,125 @@ html {
 
 .animate-indeterminate {
   animation: indeterminate 1.5s ease-in-out infinite;
+}
+
+@keyframes workspace-route-enter {
+  from { opacity: 0.72; }
+  to { opacity: 1; }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .workspace-route-enter {
+    animation: workspace-route-enter 160ms ease-out both;
+  }
+}
+
+::selection {
+  color: hsl(var(--primary-foreground));
+  background: hsl(var(--primary) / 0.85);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* Existing feature pages contain a few dark-theme status utilities. Keep their
+   meaning while maintaining readable contrast in the light workspace. */
+.light-mode .text-red-300,
+.light-mode .text-red-400,
+.light-mode .text-red-500 { color: #b42318; }
+.light-mode .text-amber-200,
+.light-mode .text-amber-300,
+.light-mode .text-amber-400,
+.light-mode .text-amber-500,
+.light-mode .text-yellow-400 { color: #8a4b08; }
+.light-mode .text-emerald-300,
+.light-mode .text-emerald-400,
+.light-mode .text-green-300,
+.light-mode .text-green-400 { color: #087443; }
+.light-mode .text-blue-300,
+.light-mode .text-blue-400,
+.light-mode .text-cyan-100,
+.light-mode .text-cyan-300,
+.light-mode .text-cyan-400,
+.light-mode .text-sky-400 { color: #075985; }
+.light-mode .text-orange-400 { color: #9a3412; }
+.light-mode .text-purple-400,
+.light-mode .text-violet-400 { color: #6b21a8; }
+.light-mode .text-rose-400 { color: #9f1239; }
+.light-mode .bg-red-950 { background-color: #fef2f2; }
+.light-mode .bg-green-950,
+.light-mode .bg-emerald-950 { background-color: #ecfdf3; }
+.light-mode .bg-blue-950,
+.light-mode .bg-cyan-950 { background-color: #eff8ff; }
+.light-mode .bg-amber-950 { background-color: #fffaeb; }
+.light-mode .border-red-900,
+.light-mode .border-red-500 { border-color: #fda29b; }
+.light-mode .border-amber-500,
+.light-mode .border-amber-400 { border-color: #fec84b; }
+.light-mode .border-green-600,
+.light-mode .border-emerald-500 { border-color: #75e0a7; }
+.light-mode .border-blue-500,
+.light-mode .border-cyan-500 { border-color: #84caff; }
+
+/* Script Studio keeps graph controls legible in both operator themes. */
+.sphere-studio-flow .react-flow__controls { border: 1px solid hsl(var(--border)); border-radius: .5rem; overflow: hidden; box-shadow: none; }
+.sphere-studio-flow .react-flow__controls-button { width: 30px; height: 30px; background: hsl(var(--card)); color: hsl(var(--foreground)); border-bottom-color: hsl(var(--border)); }
+.sphere-studio-flow .react-flow__controls-button:hover { background: hsl(var(--muted)); }
+.sphere-studio-flow .react-flow__controls-button svg { fill: currentColor; }
+.sphere-studio-flow .react-flow__minimap { background: hsl(var(--card)); border: 1px solid hsl(var(--border)); border-radius: .5rem; }
+.sphere-studio-flow .react-flow__minimap-mask { fill: hsl(var(--muted)); fill-opacity: .5; }
+
+.sphere-studio-flow { background: hsl(var(--muted) / .28); }
+.studio-workflow-node { width: 256px; min-height: 132px; border: 1px solid hsl(var(--border)); border-radius: 14px; background: hsl(var(--card)); color: hsl(var(--foreground)); box-shadow: 0 3px 10px rgb(0 0 0 / .05); transition: border-color .15s, box-shadow .15s; }
+.studio-workflow-node.is-selected { border-color: hsl(var(--primary)); box-shadow: 0 0 0 3px hsl(var(--primary) / .12); }
+.studio-workflow-node.is-reported { border-color: #d97706; box-shadow: 0 0 0 3px rgb(217 119 6 / .12); }
+.studio-workflow-node.is-success { border-color: #10b981; }
+.studio-workflow-node.is-failed { border-color: #f43f5e; }
+.sphere-studio-flow .react-flow__edge.selected .react-flow__edge-path { stroke-width: 3; }
+.sphere-studio-flow .react-flow__attribution { border-radius: 5px 0 0 0; background: hsl(var(--card)); color: hsl(var(--muted-foreground)); font-size: 9px; }
+.sphere-studio-flow .react-flow__attribution a { color: inherit; }
+@media (max-width: 1023px) { .studio-device-workspace > :last-child { min-height: 540px; } }
+
+/* Adapt the wall to its own pane, including the narrow context inspector. */
+.stream-wall { container-type: inline-size; }
+.stream-wall-cells { grid-auto-rows: max-content; align-content: start; align-items: start; grid-template-columns: repeat(var(--stream-columns, 2), minmax(0, 1fr)); }
+@container (max-width: 640px) { .stream-wall-cells { grid-auto-rows: max-content; align-content: start; align-items: start; grid-template-columns: repeat(var(--stream-narrow-columns, 2), minmax(0, 1fr)); } }
+@container (max-width: 400px) { .stream-wall-cells { grid-auto-rows: max-content; align-content: start; align-items: start; grid-template-columns: minmax(0, 1fr); } }
+
+.sphere-fleet-grid .ag-cell-wrapper, .sphere-fleet-grid .ag-cell-value { height: 100%; width: 100%; }
+.sphere-fleet-grid .ag-cell { line-height: 1.4; }
+.sphere-fleet-grid .ag-cell-value > div { display: flex; align-items: center; }
+.sphere-fleet-grid .sphere-fleet-select { padding-inline: 0; }
+.sphere-fleet-grid .sphere-fleet-select .ag-header-cell-comp-wrapper { width: 100%; }
+.sphere-fleet-grid .ag-header-cell-resize:hover::after { background: hsl(var(--primary)); }
+.sphere-fleet-grid .ag-root-wrapper { border-radius: 0; flex: 1 1 auto; min-height: 240px; }
+
+.stream-wall-tile { container-type: inline-size; }
+.stream-wall-placeholder { padding: .75rem; text-align: center; }
+@container (max-width: 220px) { .stream-wall-placeholder .stream-wall-help { display: none; } .stream-wall-placeholder { padding: .375rem; gap: .25rem; } .stream-wall-placeholder svg { width: 18px; height: 18px; } }
+.stream-wall-tile .stream-wall-stage .stream-compact-status { position: absolute; inset: .375rem .375rem auto; z-index: 10; border: 1px solid rgb(255 255 255 / .12); border-radius: .375rem; background: rgb(0 0 0 / .7); color: #fff; padding: .25rem .375rem; font-size: 10px; }
+
+/* Stream tools are overlays, never layout rows or Android gesture interceptors. */
+.stream-tool-button { display:flex; width:44px; height:44px; align-items:center; justify-content:center; border-radius:.75rem; color:#fff; background:transparent; flex-shrink:0; }
+.stream-tool-button:hover { background:rgb(255 255 255 / .12); }
+.stream-tool-button:focus-visible { outline:2px solid white; outline-offset:-2px; }
+.stream-tool-button:disabled { opacity:.4; }
+
+body:has([data-stream-fullscreen="true"]) .mobile-menu-handle,
+body:has([role="dialog"][data-state="open"]) .mobile-menu-handle { display:none; }
+
+/* Nested cards use a plain fill, keeping one filtered layer per floating surface. */
+@supports (backdrop-filter: blur(1px)) {
+  [data-surface="glass"] .sphere-material .sphere-panel { backdrop-filter:none; -webkit-backdrop-filter:none; background:hsl(var(--card) / .44); box-shadow:none; }
+}
+@media (prefers-reduced-transparency: reduce) {
+  [data-surface="glass"] .sphere-material .sphere-panel { background:hsl(var(--card)); }
 }

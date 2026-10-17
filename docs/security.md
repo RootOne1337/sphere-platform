@@ -1,6 +1,7 @@
 # Security
 
-> **Sphere Platform v4.6** — Security Architecture & Hardening Guide
+> Security Architecture & Hardening Guide; прежняя метка v4.6 — историческая.
+> Реестр открытых gates: [READINESS](operations/READINESS.md); руководство не является production sign-off.
 
 ---
 

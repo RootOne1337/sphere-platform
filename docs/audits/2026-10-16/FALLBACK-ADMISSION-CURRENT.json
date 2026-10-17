@@ -1,0 +1,164 @@
+{
+  "schemaVersion": 1,
+  "observedAtUtc": "2026-10-15T20:41:40.790Z",
+  "runtimeInstalled": true,
+  "scope": "Finite fallback admission during background direct retries, actual native blank tap ACK, and a separate ordinary direct observation. Broad reliability remains open. Latest ordinary installed direct-frame counter read separately.",
+  "runtime": {
+    "sourceRevision": "19c4272b3fffa98fdf7a35bd56b09967ac036e24",
+    "apiSourceRevision": "969a74440d67e987be98f37cdb450f7c47817f68",
+    "uiCiRunId": 38801815635,
+    "uiContainer": {
+      "sourceRevision": "19c4272b3fffa98fdf7a35bd56b09967ac036e24",
+      "containerId": "4f46b34dd1f3b7e1ef2e1829a2ffb35e1d01b5e024a33f13dd5620d54a9d85f8",
+      "imageId": "sha256:f54a15e7b59213d8842c19af6bf77fa850afa168bfdff5506eaf1e5da86fd27e",
+      "status": "running"
+    },
+    "apiContainer": {
+      "sourceRevision": "969a74440d67e987be98f37cdb450f7c47817f68",
+      "containerId": "78459c3b463af99586ce2c6ae711721f06ba55e7b82f11b88d924e4c21e30dc4",
+      "imageId": "sha256:7830b6d17d689f13d323ccea274b764028adf112f015c17501674d53b2b0b650",
+      "status": "running"
+    },
+    "artifactDigest": "1ebd65539b5d92b81639450d3d73f0eaa611c3c6313c131b89c9eb99536bb73c",
+    "githubDigestVerified": true,
+    "otherContainersPreservedPerInstall": 45,
+    "otaCatalogPreserved": true,
+    "schemaMigrationPerformed": false,
+    "originsHealthyAndSameUiAssets": true
+  },
+  "ci": {
+    "frontendSuites": 172,
+    "frontendTests": 2508,
+    "typecheck": true,
+    "build": true,
+    "packagedRuntimeProbes": true,
+    "fullCiMigrationAccepted": false,
+    "unchangedAndroidBackendRunsCancelled": true
+  },
+  "browser": {
+    "observedAtUtc": "2026-10-15T20:38:36.018Z",
+    "sourceRevision": "19c4272b3fffa98fdf7a35bd56b09967ac036e24",
+    "finiteAccepted": true,
+    "scope": "Fault-injected diagnostic on installed PH025 browser; local rejection of direct signaling and1250ms delayed real fallback capability. Android receipts are forwarded unchanged.",
+    "directAttempts": 8,
+    "delayedCapabilities": [
+      {
+        "queuedAt": 1792096639114,
+        "atQueue": 1,
+        "deliveredAt": 1792096640366,
+        "atDelivery": 2
+      },
+      {
+        "queuedAt": 1792096644089,
+        "atQueue": 3,
+        "deliveredAt": 1792096645340,
+        "atDelivery": 3
+      }
+    ],
+    "fallbackOwnerOpenedDuringAttempt": 3,
+    "events": [
+      {
+        "at": 1792096638779,
+        "direction": "send",
+        "type": "touch_probe",
+        "attempts": 1
+      },
+      {
+        "at": 1792096643888,
+        "direction": "send",
+        "type": "touch_probe",
+        "attempts": 3
+      },
+      {
+        "at": 1792096645341,
+        "direction": "send",
+        "type": "touch_open",
+        "attempts": 3
+      },
+      {
+        "at": 1792096645777,
+        "direction": "receive",
+        "type": "continuous_input_status",
+        "stage": "startup",
+        "status": 0,
+        "attempts": 3
+      },
+      {
+        "at": 1792096693694,
+        "direction": "receive",
+        "type": "continuous_input_status",
+        "stage": "input",
+        "status": 1,
+        "attempts": 4
+      },
+      {
+        "at": 1792096693695,
+        "direction": "receive",
+        "type": "continuous_input_status",
+        "stage": "input",
+        "status": 1,
+        "attempts": 4
+      }
+    ],
+    "actualNativeAliveReceipts": 274,
+    "blankTap": {
+      "sentOnce": true,
+      "nativeAppliedReceipts": 2
+    },
+    "state": "ready",
+    "summary": "Через сервер\nRTT сервера 2.3 мс\n960 × 540\n54 FPS\n5.3 Мбит/с",
+    "pageErrorCount": 0,
+    "routeErrorCount": 0,
+    "ordinaryBrowser": {
+      "observedAtUtc": "2026-10-15T20:36:53.971Z",
+      "buildStampObserved": true,
+      "controlState": "ready",
+      "summary": "Прямой канал · видео и касания\nRTT 171 мс\n960 × 540\n42 FPS\n4.6 Мбит/с",
+      "home": "«Домой»: выполнение подтверждено · ответ команды 869 мс. Это не задержка появления кадра.",
+      "pageErrorCount": 0,
+      "transportOverrides": false
+    },
+    "productionAccepted": false,
+    "directFramesPresented": 690,
+    "latestOrdinaryDirectObservation": {
+      "observedAtUtc": "2026-10-15T20:41:40.790Z",
+      "sourceRevision": "19c4272b3fffa98fdf7a35bd56b09967ac036e24",
+      "buildStampObserved": true,
+      "controlState": "ready",
+      "directFramesPresented": 690,
+      "connectionAttempts": 1,
+      "recoveryAttempts": 0,
+      "directRouteObserved": true,
+      "transportOverrides": false
+    }
+  },
+  "relatedEvidence": [
+    {
+      "file": "docs/audits/2026-10-16/MODE-TRANSPORT-AUTHORIZATION-INSTALLED.json",
+      "sha256NormalizedLf": "6664edce7b68ec585ff99c0a951f380699542b041b6ebccac6304e1a2a95cd61"
+    },
+    {
+      "file": "docs/audits/2026-10-16/FALLBACK-ADMISSION-VALIDATION.json",
+      "sha256NormalizedLf": "e8bb0a7f24da9b048175f80e22539bde2e635e08732a94ab6312d546c66d4109"
+    },
+    {
+      "file": "docs/audits/2026-10-16/PH030-ROUTE-CONTROL-INCIDENT.json",
+      "sha256NormalizedLf": "f41f68a7e1dc9ab17691d827451485c6be605de5350e900266cf8ff4e8551e4e"
+    },
+    {
+      "file": "docs/audits/2026-10-16/PH030-TWO-VIEWER-OBSERVATION.json",
+      "sha256NormalizedLf": "27115b5421e37642930933d10f1ddc9bb9e94764e643f9399eefe45a9246eb37"
+    },
+    {
+      "file": "docs/audits/2026-10-16/FALLBACK-ADMISSION-INSTALLED.json",
+      "sha256NormalizedLf": "9557bbbdffc7c2bad3d8361a11b160344863a6344ae6b5dcac6ef47a271404c5"
+    }
+  ],
+  "limits": [
+    "Fault injection was restricted to the diagnostic browser; no Android receipts were fabricated.",
+    "Ordinary Home was sent while server fallback was displayed; later direct READY does not reclassify that command route.",
+    "PH030 earlier ICE failures and idle ACK expiry remain open despite a subsequent finite two-viewer observation.",
+    "Decoded-video color mismatch on PH025 remains open.",
+    "No physical phone/IME,20+ viewer,WAN/TURN or long reliability acceptance. APK76/API969 preserved."
+  ]
+}

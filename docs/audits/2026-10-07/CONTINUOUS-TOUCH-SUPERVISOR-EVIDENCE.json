@@ -1,0 +1,141 @@
+{
+  "schemaVersion": 1,
+  "observedDate": "2026-10-07",
+  "timezone": "Asia/Yekaterinburg",
+  "scope": "APK source foundation only; not routed or installed",
+  "sourceSha256": {
+    "android/app/src/main/kotlin/com/sphereplatform/agent/commands/ContinuousTouchMailbox.kt": "7548b46a28cb03af2c55d96c4ba4722fbedb924ba4f7d317fadcdb1fa4164116",
+    "android/app/src/main/kotlin/com/sphereplatform/agent/commands/ContinuousTouchSupervisor.kt": "f0d3e0a6be18f70f5fcf2ed385d6834d030d97b202747ce42107f1a4cf921576",
+    "android/app/src/main/kotlin/com/sphereplatform/agent/commands/RootTouchPipeFactory.kt": "16f6322e18f9970f9ae5dc81dd5e467292f78de02dc2d268fe96055d6057870e",
+    "android/app/src/test/kotlin/com/sphereplatform/agent/commands/ContinuousTouchMailboxTest.kt": "a244b787f9ef91bcfe36ec80453d3e62f6a8593538d3713a810df6270cbc0076",
+    "android/app/src/test/kotlin/com/sphereplatform/agent/commands/ContinuousTouchSupervisorTest.kt": "1d74a0594a84ae264a72074d28b3b9e64369eb5ef86b02a3e8b04c385b05c615",
+    "android/app/src/test/kotlin/com/sphereplatform/agent/commands/ProcessTouchPipeTest.kt": "0695c5738b6971c47f7585539fa833b09eb668f445859bb97ed5b17be6fa0c02"
+  },
+  "localUnitTests": {
+    "testDevDebugUnitTest": {
+      "suites": 77,
+      "totals": {
+        "tests": 928,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 3
+      },
+      "touch": {
+        "com.sphereplatform.agent.commands.ContinuousTouchMailboxTest": {
+          "tests": 12,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        "com.sphereplatform.agent.commands.ContinuousTouchSupervisorTest": {
+          "tests": 12,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        "com.sphereplatform.agent.commands.ProcessTouchPipeTest": {
+          "tests": 9,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        "com.sphereplatform.agent.commands.RootTouchSessionTest": {
+          "tests": 23,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        }
+      }
+    },
+    "testEnterpriseDebugUnitTest": {
+      "suites": 77,
+      "totals": {
+        "tests": 928,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 3
+      },
+      "touch": {
+        "com.sphereplatform.agent.commands.ContinuousTouchMailboxTest": {
+          "tests": 12,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        "com.sphereplatform.agent.commands.ContinuousTouchSupervisorTest": {
+          "tests": 12,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        "com.sphereplatform.agent.commands.ProcessTouchPipeTest": {
+          "tests": 9,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        "com.sphereplatform.agent.commands.RootTouchSessionTest": {
+          "tests": 23,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        }
+      }
+    }
+  },
+  "testLogSha256": "08cf25ac75d0d9b417177885466a59ae32d2044bfebe1db47de770ae293bfec3",
+  "preflight": {
+    "observedAt": "2026-10-07T17:36:34.057155+00:00",
+    "system": "Windows",
+    "freeDiskBytes": 63116976128,
+    "deviceCommandsSent": false,
+    "mutationsPerformed": false,
+    "availableRamBytes": 11364638720,
+    "totalRamBytes": 50668236800,
+    "committedBytes": 71173361664,
+    "commitLimitBytes": 101336473600,
+    "volumeHealthStatus": "Healthy",
+    "volumeOperationalStatus": [
+      "OK"
+    ],
+    "findings": [],
+    "buildAllowed": true
+  },
+  "limits": {
+    "pendingSamples": 4,
+    "nonTerminalPendingSamples": 3,
+    "pendingAgeMs": 500,
+    "leaseMs": 1500,
+    "startupAckDeadlineMs": 5000,
+    "inputAckDeadlineMs": 500,
+    "stderrLifetimeBytes": 4096,
+    "cleanupOutputBytes": 4096,
+    "normalCleanupWaitMs": 2000
+  },
+  "priorNativeCi": {
+    "sha": "1dccd0539ebbcbafd8ab34c4922fc1d5b2a20bf6",
+    "androidPush": 37632496375,
+    "androidPr": 37632506124,
+    "frontend": 37632506201,
+    "backend": 37632506071,
+    "conclusions": "success; these runs do not validate this newer source"
+  },
+  "installedRuntime": {
+    "ui": "af9054ecd0a12d0bc40112298c06178472b59eae",
+    "api": "a41c4e64bf569a7518d34606da0facbba32f77e6",
+    "canaryAgentVersion": "1.2.47-dev",
+    "canaryAgentVersionCode": 10247,
+    "continuousBrowserControlEnabled": false,
+    "newApkInstalled": false
+  },
+  "notAccepted": [
+    "Kotlin pipe/supervisor on real Android",
+    "CommandDispatcher lifecycle and DAG exclusion",
+    "Capture epoch to native geometry mapping",
+    "Authenticated multiworker server-issued owner lease",
+    "Browser pointermove and loss cleanup",
+    "Continuous recorder trajectory and uncertain result handling",
+    "SIGKILL/OS Binder stall and APK restart reset guarantees",
+    "End-to-end input-to-render latency and fleet load soak"
+  ]
+}

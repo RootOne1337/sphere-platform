@@ -1,0 +1,119 @@
+{
+  "schemaVersion": 1,
+  "observedAtUtc": "2026-10-08T07:15:00Z",
+  "sourceRevision": "a8945e43319c95827c0c49d075484eb0d57c78f3",
+  "frontendRunId": 37741085745,
+  "frontendPassed": 1869,
+  "frontendSuites": 138,
+  "localRegressionsPassed": 201,
+  "localSuites": 6,
+  "apiSourcePreserved": "961052334b99f9a27fa292f5217d5d0130dd6094",
+  "apkPreserved": 10249,
+  "runtime": {
+    "frontendImageConfig": "sha256:a9635442942c2437ee9d7b1145fb4404632d32bc3428987fb856dd13c9f80c68",
+    "frontendLoadedImage": "sha256:be702b576d30c92be328dafbd179bf3889d2daced3d6754ec1bdafdcb59be9d2",
+    "frontendContainer": "116e67cda127edbffc3a394abb41bae3aa995d6ff337abfb43e6a088a96a2442",
+    "healthy": true,
+    "otherContainersPreserved": 45,
+    "otaCatalogSha256": "5d5dcb5521277b51f366ea5370a2f7df5fd62696de0d5b7b86a56b443b03af10"
+  },
+  "device": "PH011",
+  "independentReceiver": {
+    "sha256": "87784dbb6ea25e43dab89d9b361d9ded798d4d51eb70e4760c82965fd991195e",
+    "bytes": 12631,
+    "beforeDrag": {
+      "down": 2,
+      "move": 2,
+      "up": 2,
+      "cancel": 0,
+      "firstDownUptimeMs": 28142087,
+      "lastMoveUptimeMs": 28142099,
+      "terminalUptimeMs": 28142278,
+      "x": 897,
+      "y": 451
+    },
+    "afterDrag": {
+      "state": {
+        "down": 3,
+        "move": 6,
+        "up": 3,
+        "cancel": 0,
+        "firstDownUptimeMs": 28186956,
+        "lastMoveUptimeMs": 28187082,
+        "terminalUptimeMs": 28187088,
+        "x": 564,
+        "y": 236
+      },
+      "delta": {
+        "down": 1,
+        "move": 4,
+        "up": 1,
+        "cancel": 0
+      }
+    },
+    "afterRecordedSwipe": {
+      "down": 4,
+      "move": 21,
+      "up": 4,
+      "cancel": 0,
+      "firstDownUptimeMs": 28247850,
+      "lastMoveUptimeMs": 28248099,
+      "terminalUptimeMs": 28248102,
+      "x": 564,
+      "y": 236
+    }
+  },
+  "browser": {
+    "ordinaryModeReady": true,
+    "normalGestureCreatedRecording": false,
+    "startPreparationObserved": true,
+    "recordedSwipeQueueEntries": 1,
+    "homeSubmittedBeforeStop": true,
+    "homePendingAfterStop": true,
+    "lateHomeAckUpdatedOriginalSlot": true,
+    "homeReceiptMs": 507,
+    "controlResumedReady": true,
+    "finalReviewedQueueEntries": 2,
+    "graphStepsPreserved": 3,
+    "graphEdgesPreserved": 2,
+    "desktopViewport": [
+      1440,
+      1000
+    ],
+    "mobileViewport": [
+      390,
+      844
+    ],
+    "mobileDocumentWidth": 390,
+    "mobileBodyWidth": 390
+  },
+  "cleanup": {
+    "disposableReceiverRemoved": true,
+    "launcherConfirmed": true,
+    "agentVersionCode": 10249,
+    "recordingCleared": true,
+    "dagChanged": false,
+    "taskCreated": false,
+    "viewportRestored": true
+  },
+  "notAccepted": [
+    "Task launch/native control handoff",
+    "Continuous trajectory recording",
+    "Native PNG XPath crop pixel evidence bundle",
+    "Frame atomic playback",
+    "Fleet soak",
+    "Historical native root exit 1 cause",
+    "Host storage attribution"
+  ],
+  "allSourceWorkflowsSucceeded": true,
+  "backendCi": {
+    "runId": 37741085461,
+    "passed": 3337,
+    "skipped": 37,
+    "warnings": 2,
+    "subtestsPassed": 229,
+    "seconds": 877.8
+  },
+  "androidRunId": 37741085651,
+  "previewRunId": 37741085559
+}

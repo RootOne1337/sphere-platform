@@ -1,0 +1,342 @@
+{
+  "schemaVersion": 1,
+  "observedAtUtc": "2026-10-16T14:17:12.659672+00:00",
+  "runtimeInstalled": true,
+  "scope": "Finite Studio recording/handoff and wall presentation; other controlling clients still block task execution; full paths and low-FPS preview remain open.",
+  "runtime": {
+    "sourceRevision": "f7b6f6c130e2a76bdbc1d065a861d3ed186edf42",
+    "apiSourceRevision": "27f3a61fa5f2f3d2c1d8d56ed1dce7dbffe024a2",
+    "apkSourceRevision": "9c9ef56cd3ef487b4fa19010ff9b8b5a68748445",
+    "apkReplacedForThisWebFix": false,
+    "health": [
+      {
+        "address": "http://127.0.0.1:3015",
+        "path": "/api/v1/health/ready",
+        "status": 200,
+        "payload": {
+          "status": "ready",
+          "checks": {
+            "postgres": "ok",
+            "redis": "ok"
+          }
+        }
+      },
+      {
+        "address": "http://127.0.0.1:3015",
+        "path": "/api/v1/health/build",
+        "status": 200,
+        "payload": {
+          "service": "backend-api",
+          "version": "4.0.0",
+          "revision": "27f3a61fa5f2f3d2c1d8d56ed1dce7dbffe024a2"
+        }
+      },
+      {
+        "address": "https://sphere-agent-canary-20260927.ru.tuna.am",
+        "path": "/api/v1/health/ready",
+        "status": 200,
+        "payload": {
+          "status": "ready",
+          "checks": {
+            "postgres": "ok",
+            "redis": "ok"
+          }
+        }
+      },
+      {
+        "address": "https://sphere-agent-canary-20260927.ru.tuna.am",
+        "path": "/api/v1/health/build",
+        "status": 200,
+        "payload": {
+          "service": "backend-api",
+          "version": "4.0.0",
+          "revision": "27f3a61fa5f2f3d2c1d8d56ed1dce7dbffe024a2"
+        }
+      }
+    ],
+    "uiContainer": {
+      "id": "1de17045d8e6bcc8fb6a6e427f593f056afe64ae7f9855cfb1672e91c0efa26e",
+      "imageId": "sha256:6b8cec02cae34a5e6f67f4bdaec78d05211c9470489605ca2d4ba1621acc8456",
+      "status": "running",
+      "health": "healthy"
+    },
+    "apiContainer": {
+      "id": "c587915e67f9c6d2f7b244592c9700f1dc088c911e24caae1df91f2c4f753ec1",
+      "imageId": "sha256:972f779f74376f2e0442828d0602e62ea7fff458310b0608a4fb693caeb7e3c8",
+      "status": "running",
+      "health": "healthy"
+    }
+  },
+  "sourceFix": {
+    "recordingAndHandoff": "f1a958add80211bf3ea635328449fd06d41dd7b1",
+    "layout": "f7b6f6c130e2a76bdbc1d065a861d3ed186edf42",
+    "preserveMediaDuringHandoff": true,
+    "skipKnownUnsupportedWithoutStopping": true,
+    "unknownOutcomeStillStops": true,
+    "pointerPauseUsesLocalUpNotAck": true,
+    "positivePauseFloorMs": 1,
+    "pauseCapMs": 60000,
+    "stickyRecordingToolbar": true,
+    "newDeviceResetsScroll": true,
+    "wallRemovesEmptySlotsAndOverlayTools": true,
+    "wallFullRateTransportChanged": false
+  },
+  "ci": {
+    "frontend": {
+      "tests": 2529,
+      "passed": 2529,
+      "failures": 0,
+      "failedSuites": 0,
+      "skipped": 0,
+      "suites": 172,
+      "success": true
+    },
+    "github": {
+      "id": 56528836454,
+      "context": "Sphere Local / Frontend regressions",
+      "state": "success",
+      "createdAt": "2026-10-16T14:09:20Z",
+      "readbackVerified": true,
+      "targetUrl": null
+    },
+    "receiptProof": {
+      "file": ".local-pilot/local-ci/runs/20261016T140714Z-fd2fc39f/receipt.json",
+      "sha256": "7c30a78f7d31aad1b24e778fc034d456b0367c92d2a782e31bf881f8e5b92aaa"
+    },
+    "packageProof": {
+      "file": ".local-pilot/local-web-studio-wall-f7b6f6c1/receipt.json",
+      "sha256": "14ee2485f49f3d1fcd1dfd6a55374fc060bf24dd8face19fe9dc77ea6d605f42"
+    },
+    "hostedActionsStarted": false,
+    "completeCiMigrationAccepted": false
+  },
+  "install": {
+    "otherContainersPreserved": 45,
+    "apiPreserved": true,
+    "otaCatalogPreserved": true,
+    "previousUiImagePreserved": true,
+    "archivesCreated": 0,
+    "privateProof": {
+      "file": ".local-pilot/reviewed-web-install-f7b6f6c130e2-57708f3b/installed.json",
+      "sha256": "6536da5f2851267fb8fe38a481ff5e6458571a9afcee0a54d226f08e8af51972"
+    }
+  },
+  "browser": {
+    "finiteAccepted": true,
+    "directFramesPresented": 2329,
+    "studio": [
+      {
+        "origin": "http://127.0.0.1:3015",
+        "observedAtUtc": "2026-10-16T14:13:07.342Z",
+        "confirmedRecordingEntries": 2,
+        "unsupportedCurveSkippedExplicitly": true,
+        "recordingContinuedAfterCurve": true,
+        "mainPeerBefore": 1,
+        "mainPeerAfter": 1,
+        "directVideoAfterTask": true,
+        "nativeReleaseConfirmed": true,
+        "taskStatus": "completed",
+        "taskNodeOutcomes": [
+          {
+            "node_id": "start",
+            "success": true,
+            "action_type": "start",
+            "duration_ms": 0
+          },
+          {
+            "node_id": "wait",
+            "success": true,
+            "action_type": "sleep",
+            "duration_ms": 1500
+          },
+          {
+            "node_id": "home",
+            "success": true,
+            "action_type": "key_event",
+            "duration_ms": 0
+          },
+          {
+            "node_id": "end",
+            "success": true,
+            "action_type": "end",
+            "duration_ms": 0
+          }
+        ],
+        "sticky": {
+          "toolbar": {
+            "x": 826.359375,
+            "y": 273,
+            "width": 601.640625,
+            "height": 103
+          },
+          "scroll": {
+            "x": 814.359375,
+            "y": 273,
+            "width": 625.640625,
+            "height": 690
+          }
+        },
+        "portrait": {
+          "overflow": false,
+          "toolbar": {
+            "top": 300,
+            "bottom": 403,
+            "width": 374
+          }
+        },
+        "privateProof": {
+          "file": ".local-pilot/studio-handoff-final-local.private.json",
+          "sha256": "c44e7e4c1e3c4fa7b0cb533d29d8b0f8a7f42c1d1ea9d0dc518f8e88d8770ead"
+        },
+        "pageErrors": 0,
+        "ownedContextClosed": true
+      },
+      {
+        "origin": "https://sphere-agent-canary-20260927.ru.tuna.am",
+        "observedAtUtc": "2026-10-16T14:14:22.496Z",
+        "confirmedRecordingEntries": 2,
+        "unsupportedCurveSkippedExplicitly": true,
+        "recordingContinuedAfterCurve": true,
+        "mainPeerBefore": 1,
+        "mainPeerAfter": 1,
+        "directVideoAfterTask": true,
+        "nativeReleaseConfirmed": true,
+        "taskStatus": "completed",
+        "taskNodeOutcomes": [
+          {
+            "node_id": "start",
+            "success": true,
+            "action_type": "start",
+            "duration_ms": 0
+          },
+          {
+            "node_id": "wait",
+            "success": true,
+            "action_type": "sleep",
+            "duration_ms": 1500
+          },
+          {
+            "node_id": "home",
+            "success": true,
+            "action_type": "key_event",
+            "duration_ms": 0
+          },
+          {
+            "node_id": "end",
+            "success": true,
+            "action_type": "end",
+            "duration_ms": 0
+          }
+        ],
+        "sticky": {
+          "toolbar": {
+            "x": 826.359375,
+            "y": 273,
+            "width": 601.640625,
+            "height": 103
+          },
+          "scroll": {
+            "x": 814.359375,
+            "y": 273,
+            "width": 625.640625,
+            "height": 690
+          }
+        },
+        "portrait": {
+          "overflow": false,
+          "toolbar": {
+            "top": 300,
+            "bottom": 403,
+            "width": 374
+          }
+        },
+        "privateProof": {
+          "file": ".local-pilot/studio-handoff-final-tunnel.private.json",
+          "sha256": "027aa4df62078bd9a3c12dc595610fc9254f10c8cf947dcfbf13673f4ae73552"
+        },
+        "pageErrors": 0,
+        "ownedContextClosed": true
+      }
+    ],
+    "wall": {
+      "origin": "http://127.0.0.1:3015",
+      "devices": 4,
+      "nativeControlOpens": 0,
+      "overlayButtons": 0,
+      "emptySlots": false,
+      "framesPresentedEach": [
+        688,
+        12,
+        849,
+        780
+      ],
+      "peersBeforeFullscreen": 5,
+      "peersAfterFullscreen": 5,
+      "fullscreenHeight": 1000,
+      "portrait": {
+        "overflow": false,
+        "gridWidth": 330,
+        "tiles": 4
+      },
+      "pageErrors": 0,
+      "ownedContextClosed": true,
+      "privateProof": {
+        "file": ".local-pilot/studio-handoff-wall.private.json",
+        "sha256": "e0462dcb6f6112f4a48e4e755f918edea2e7314ddfff912fb99ddec89808fbd0"
+      }
+    }
+  },
+  "unresolved": {
+    "otherControllingClient": {
+      "accepted": false,
+      "observedAtUtc": "2026-10-16T14:07:15.368Z",
+      "webRevision": "f1a958ad",
+      "taskStatus": "failed",
+      "error": "device_input_busy",
+      "bothVideosDirect": true,
+      "secondClientControl": "ready",
+      "privateProof": {
+        "file": ".local-pilot/studio-handoff-multi.private.json",
+        "sha256": "01022a7157369b9f1c4184f0339a99e4d20798187fb8c3f341d8625239eb6d6b"
+      }
+    },
+    "ph025FirstIceAttempt": {
+      "acceptedFirstAttempt": false,
+      "reason": "connection_deadline",
+      "requestsSent": 142,
+      "responsesReceived": 0,
+      "laterDirectVideoObserved": true,
+      "physicalCauseProven": false,
+      "privateProof": {
+        "file": ".local-pilot/studio-wall-route-readback.private.json",
+        "sha256": "62d77d71c16dd24ee3c9d618229e06abd53151904c014ea4dce8a3de8c43e50f"
+      }
+    },
+    "curvedGestureReplayImplemented": false,
+    "draftExecutionBeforeSaveImplemented": false,
+    "richRecorderBundleImplemented": false,
+    "accountPreferencesSyncImplemented": false,
+    "aiAuthoringGatewayImplemented": false,
+    "lowFpsDirectPreviewImplemented": false,
+    "completeFileTransferAccepted": false,
+    "vpnProviderUpgradeMatrixAccepted": false,
+    "hotPluginLifecycleImplemented": false,
+    "gameBindingsRemoved": false
+  },
+  "cleanup": {
+    "ownedFixturesArchived": 5,
+    "dataDeleted": false,
+    "privateProof": {
+      "file": ".local-pilot/studio-handoff-fixture-cleanup.private.json",
+      "sha256": "e71d62fcde9e4a1057abdf2c046c0ca3721ed504e0b369117304b652ce12733b"
+    }
+  },
+  "limits": [
+    "Curves and gestures outside recorder limits are explicitly skipped, not replayable paths.",
+    "Concurrent controlling viewer versus task remains a reproduced device_input_busy blocker. Read-only wall viewers never open native input.",
+    "Four wall videos became direct, but PH025 required a second ICE attempt; there were five media peers, not four.",
+    "Only wall presentation changed; <=1 FPS and independent low-resolution APK producer are not implemented.",
+    "Phone checks use resized Chrome viewport, not a physical phone/IME acceptance. No 20-client, long soak or universal network SLA.",
+    "APK79/API27 are preserved. Previous evidence confirms four installed package hashes; 17 offline devices were not updated in this delivery."
+  ]
+}

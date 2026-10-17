@@ -1,0 +1,38 @@
+FF                                                                       [100%]
+================================== FAILURES ===================================
+____________ test_accounting_preserves_terminal_task_and_runs_once ____________
+tests\production\test_orchestrator_results.py:29: in test_accounting_preserves_terminal_task_and_runs_once
+    assert task.status == TaskStatus.COMPLETED
+E   AssertionError: assert <TaskStatus.C...: 'cancelled'> == <TaskStatus.C...: 'completed'>
+E     
+E     - completed
+E     + cancelled
+---------------------------- Captured stdout call -----------------------------
+{"nick": null, "level": "info", "server": null, "event": "orchestration.farm_target_reached", "logger": "backend.services.orchestrator.orchestration_engine", "timestamp": "2026-09-06T09:42:39.088748Z"}
+------------------------------ Captured log call ------------------------------
+INFO     backend.services.orchestrator.orchestration_engine:orchestration_engine.py:467 {'nick': None, 'level': 'info', 'server': None, 'event': 'orchestration.farm_target_reached', 'logger': 'backend.services.orchestrator.orchestration_engine', 'timestamp': '2026-09-06T09:42:39.088748Z'}
+_________ test_task_cannot_update_an_account_in_another_organization __________
+tests\production\test_orchestrator_results.py:55: in test_task_cannot_update_an_account_in_another_organization
+    assert account.status == "in_use"
+E   AssertionError: assert <AccountStatus.free: 'free'> == 'in_use'
+E     
+E     - in_use
+E     + free
+---------------------------- Captured stdout call -----------------------------
+{"nick": null, "level": "info", "server": null, "event": "orchestration.farm_target_reached", "logger": "backend.services.orchestrator.orchestration_engine", "timestamp": "2026-09-06T09:42:39.674705Z"}
+------------------------------ Captured log call ------------------------------
+INFO     backend.services.orchestrator.orchestration_engine:orchestration_engine.py:467 {'nick': None, 'level': 'info', 'server': None, 'event': 'orchestration.farm_target_reached', 'logger': 'backend.services.orchestrator.orchestration_engine', 'timestamp': '2026-09-06T09:42:39.674705Z'}
+============================== warnings summary ===============================
+.venv-audit\Lib\site-packages\pydantic\fields.py:754: 484 warnings
+  C:\Users\dimas\Documents\ChatGPT\sphere-platform\.venv-audit\Lib\site-packages\pydantic\fields.py:754: PydanticDeprecatedSince20: Using extra keyword arguments on `Field` is deprecated and will be removed. Use `json_schema_extra` instead. (Extra keys: 'deprecated'). Deprecated in Pydantic V2.0 to be removed in V3.0. See Pydantic V2 Migration Guide at https://errors.pydantic.dev/2.6/migration/
+    warn(
+
+backend\api\v1\game_accounts\router.py:94
+  C:\Users\dimas\Documents\ChatGPT\sphere-platform\backend\api\v1\game_accounts\router.py:94: DeprecationWarning: `regex` has been deprecated, please use `pattern` instead
+    sort_dir: str = Query("desc", regex="^(asc|desc)$", description="Направление сортировки"),
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ===========================
+FAILED tests/production/test_orchestrator_results.py::test_accounting_preserves_terminal_task_and_runs_once
+FAILED tests/production/test_orchestrator_results.py::test_task_cannot_update_an_account_in_another_organization
+2 failed, 485 warnings in 1.05s

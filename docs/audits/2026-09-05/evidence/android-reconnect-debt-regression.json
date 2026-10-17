@@ -1,0 +1,41 @@
+{
+  "at": "2026-09-15T19:20:04.962082+00:00",
+  "finding": "AUD-124",
+  "version": "1.2.7 / 10207",
+  "baseline": {
+    "tests": 11,
+    "failures": 1,
+    "errors": 0,
+    "skipped": 0
+  },
+  "before_junit_sha256": "d6368e1e5376e5fa7e4e8de71a60beaf6544064dd13f9e64d26074f61f325ced",
+  "full_android_suites": {
+    "dev": {
+      "tests": 579,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "suites": 43,
+      "websocket_suites": {
+        "SavedRouteFailoverTest": 29,
+        "SphereWebSocketClientTest": 15,
+        "WebSocketAuthenticationTest": 16,
+        "WebSocketLifecycleTest": 11
+      }
+    },
+    "enterprise": {
+      "tests": 579,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 1,
+      "suites": 43,
+      "websocket_suites": {
+        "SavedRouteFailoverTest": 29,
+        "SphereWebSocketClientTest": 15,
+        "WebSocketAuthenticationTest": 16,
+        "WebSocketLifecycleTest": 11
+      }
+    }
+  },
+  "full_log_sha256": "63ce30da3f4bad2009235816f918ee84be87ed82f52bafff6690fbca39f66b01"
+}

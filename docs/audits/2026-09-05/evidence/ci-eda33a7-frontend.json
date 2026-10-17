@@ -1,0 +1,23 @@
+{
+  "attempt": 1,
+  "conclusion": "success",
+  "createdAt": "2026-09-09T17:28:33Z",
+  "databaseId": 34383128758,
+  "event": "pull_request",
+  "headBranch": "codex/enterprise-audit-20260905",
+  "headSha": "eda33a7d361558f5522de6ab6faea3f9dbe8b7b5",
+  "jobs": [
+    {
+      "completedAt": "2026-09-09T17:30:00Z",
+      "conclusion": "success",
+      "databaseId": 102572628737,
+      "name": "Frontend tests, types and build",
+      "startedAt": "2026-09-09T17:28:36Z",
+      "status": "completed",
+      "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/34383128758/job/102572628737"
+    }
+  ],
+  "status": "completed",
+  "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/34383128758",
+  "workflowName": "CI — Frontend"
+}

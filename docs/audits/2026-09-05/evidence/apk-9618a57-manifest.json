@@ -1,0 +1,50 @@
+{
+  "source_commit": "9618a572d4c2797a9926b784a125a9601e33603d",
+  "built_at_utc": "2026-09-13T00:42:48.466618+00:00",
+  "file": "SphereAgent-signed-discovery-9618a57-dev-debug.apk",
+  "sha256": "d6db04c6101349050913bd48582839e8be098b02660834603bfffd11b42151ea",
+  "bytes": 8444546,
+  "package": "com.sphereplatform.agent.pilot.debug",
+  "config_url": "https://raw.githubusercontent.com/RootOne1337/sphere-agent-config/codex/pilot-bootstrap-20260911/pilots/sphere-pilot-20260911/discovery.json",
+  "config_mirror_url": "https://reach-further-loads-ran.trycloudflare.com/bootstrap/agent.signed.json",
+  "discovery_key_id": "pilot-20260911-v1",
+  "installation_id": "ce58a96d-fd02-4f7c-ac86-111c4f7fa37e",
+  "baked_management_urls": [],
+  "signing": "Android Debug; v2 signature verified; same certificate as previous pilot",
+  "version_name": "1.2.0-dev",
+  "version_code": 10200,
+  "min_sdk": 26,
+  "target_sdk": 35,
+  "default_dev_suite": {
+    "tests": 515,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "suites": 37,
+    "seconds": 122.034,
+    "validation": "Local default dev flavor, full JVM suite after AUD-100 byte-tail fix"
+  },
+  "signed_build_tests": {
+    "dev": {
+      "signed_discovery_tests": 19,
+      "file_logging_tests": 10,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "enterprise": {
+      "signed_discovery_tests": 19,
+      "file_logging_tests": 10,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    }
+  },
+  "installed_on_device": true,
+  "independent_fallback_verified": false,
+  "warning": "Signed bootstrap pilot; one temporary ingress. No fleet or independent provider acceptance.",
+  "installed_sha256": "d6db04c6101349050913bd48582839e8be098b02660834603bfffd11b42151ea",
+  "native_cached_version": 8,
+  "native_signed_cache_verified": true,
+  "native_log_tail_verified": true
+}
