@@ -203,6 +203,9 @@ class HeadlessSession:
         # aiortc MAX_BUNDLE must allocate video before SCTP. Otherwise the
         # later video transport can be left without gathered local candidates.
         receiver = self.peer.addTransceiver("video", direction="recvonly")
+        from motor_worker.receiver import configure_h264_receiver
+
+        self.h264_packet_buffer = configure_h264_receiver(receiver.receiver)
         self.media = self.peer.createDataChannel("sphere-video-v1", ordered=True)
         if self.config.probe_control:
             self.control = self.peer.createDataChannel("sphere-control-v2", ordered=True)
@@ -831,6 +834,9 @@ class HeadlessSession:
                 "User JWT pilot only; service identity, task delegation and model integration remain open.",
             ],
             "modelInstalled": False,
+            "h264PacketBuffer": self.h264_packet_buffer.report()
+            if hasattr(self, "h264_packet_buffer")
+            else None,
             "gameplayReady": False,
             "hardwareDecodeAssumed": False,
             "rgbTransform": "pilot_resize_256_square_rgb24_not_validated_model_preprocessing",

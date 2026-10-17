@@ -58,7 +58,7 @@ class PolicyContractTests(unittest.TestCase):
     def test_invalid_model_columns_and_numeric_values_fail_without_clipping(self):
         invalid = [
             prediction(0),
-            prediction(17),
+            prediction(19),
             prediction() | {"extra": 1},
             prediction() | {"j_right": [[0.0, 0.0]]},
         ]
@@ -82,6 +82,13 @@ class PolicyContractTests(unittest.TestCase):
                 ActionChunk.from_nitrogen(prediction(), ticks_per_second=rate)
         with self.assertRaises(ProtocolError):
             ActionChunk.from_nitrogen(prediction(16), ticks_per_second=5)
+
+    def test_official_checkpoint_horizon_is_not_the_denoising_step_count(self):
+        data = prediction(18)
+        chunk = ActionChunk.from_nitrogen(data, ticks_per_second=60)
+        self.assertEqual(len(chunk.states), 18)
+        self.assertEqual(chunk.states[-1].buttons[18], 1)
+        self.assertEqual(chunk.preview_at(0.3), GamepadState.neutral())
 
     def test_hold_timeline_uses_explicit_rate_and_does_not_restart_late_chunk(self):
         state = ActionChunk.from_nitrogen(prediction(1), ticks_per_second=20).states[0]

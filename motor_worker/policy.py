@@ -40,6 +40,8 @@ BUTTON_TOKENS = (
     "START",
     "WEST",
 )
+# ng.pt (HF584c8dde) predicts 18 actions; its 16 denoising steps are unrelated.
+MAX_ACTION_STATES = 18
 
 
 def finite(value: object, low: float, high: float) -> bool:
@@ -86,7 +88,7 @@ class ActionChunk:
     def __post_init__(self) -> None:
         if (
             type(self.states) is not tuple
-            or not 1 <= len(self.states) <= 16
+            or not 1 <= len(self.states) <= MAX_ACTION_STATES
             or any(type(s) is not GamepadState for s in self.states)
             or not finite(self.ticks_per_second, 5, 120)
             or len(self.states) / self.ticks_per_second > 2
@@ -102,7 +104,7 @@ class ActionChunk:
         left, right, buttons = (prediction[k] for k in ("j_left", "j_right", "buttons"))
         if (
             any(type(v) is not list for v in (left, right, buttons))
-            or not 1 <= len(left) <= 16
+            or not 1 <= len(left) <= MAX_ACTION_STATES
             or len(left) != len(right)
             or len(left) != len(buttons)
         ):
