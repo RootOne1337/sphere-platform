@@ -325,6 +325,32 @@ class HeadlessIntegrationTests(unittest.IsolatedAsyncioTestCase):
         self.assertTrue(report["control"]["participantClosedConfirmed"])
         self.assertGreater(report["stickExecution"]["sceneRefusals"], 0)
 
+    async def test_inference_over_one_sample_period_does_not_halve_rate_or_reengage(self):
+        self.availability_state = "manual"
+
+        class SlightlySlowFixture:
+            async def predict(self, request):
+                await asyncio.sleep(.21)
+                state = GamepadState((0, 1), (0, 0), GamepadState.neutral().buttons)
+                return PolicyResult(request.request_id, request.frame.capture_epoch,
+                                    request.frame.receiver_sequence, ActionChunk((state,) * 18, 60))
+
+        session = StickPolicySession(
+            SessionConfig(self.url, DEVICE, duration=1.8, probe_control=True,
+                          capture_lifecycle=False, shadow_policy=True),
+            profile=StickProfile(StickGeometry(320, 180, 60, 130, 20), "gamepad_left"),
+            policy=SlightlySlowFixture(), scene_guard=lambda frame: True, execution_enabled=True,
+        )
+        report = await session.run("fixture-token")
+        self.assertTrue(report["success"], report)
+        actions = [d["action"] for d in self.received
+                   if d.get("type") == "touch_event" and d["action"] != 4]
+        self.assertEqual(actions, [0, 2])
+        self.assertGreaterEqual(report["stickExecution"]["acceptedResults"], 7)
+        self.assertTrue(report["control"]["participantClosedConfirmed"])
+        self.assertLessEqual(max(s["receiverAgeAtResultMs"]
+                                 for s in report["policyShadow"]["samples"]), 400)
+
     async def test_real_original_rgb_shadow_policy_has_no_physical_input(self):
         checked = []
         original = NeutralPolicy.predict

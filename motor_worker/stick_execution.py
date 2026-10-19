@@ -172,11 +172,13 @@ class StickPolicySession(HeadlessSession):
         return True
 
     async def _observe(self):
-        next_at = time.perf_counter()
+        period = 1 / self.config.observation_hz
+        next_scene = next_policy = time.perf_counter()
         while not self.closing:
-            await asyncio.sleep(max(0, next_at - time.perf_counter()))
             now = time.perf_counter()
-            item = self.frames.take(now, max_age=0.25) if self.binding else None
+            policy_due = now >= next_policy and self.shadow.task is None
+            due = now >= next_scene or policy_due
+            item = self.frames.take(now, max_age=0.25) if due and self.binding else None
             if item:
                 pixels = await asyncio.to_thread(
                     lambda: item.frame.to_ndarray(format="rgb24").tobytes()
@@ -193,10 +195,13 @@ class StickPolicySession(HeadlessSession):
                 self.execution.scene(frame, active, time.perf_counter())
                 self.scene_checks += 1
                 self.scene_refusals += int(not active)
-                if active and self.shadow.task is None:
+                if active and policy_due:
                     if self.shadow.epoch is None:
                         self.shadow.bind_epoch(self.binding.epoch)
                     self.shadow.offer(frame)
+                if policy_due:
+                    next_policy = time.perf_counter() + period
+                next_scene = time.perf_counter() + period
                 self.sample_count += 1
                 self.samples.append(
                     {
@@ -204,8 +209,12 @@ class StickPolicySession(HeadlessSession):
                         "decodedAgeAtSelectionMs": (now - item.received_at) * 1000,
                     }
                 )
-            # No catch-up observations; scene checks continue even while GPU is busy.
-            next_at = max(next_at + 1 / self.config.observation_hz, time.perf_counter())
+            # An overdue inference selects fresh pixels as soon as its slot is
+            # free. Rounding 201ms inference up to two 200ms scene ticks caused
+            # a 400ms result gap and released the stick. Scene checks retain
+            # their own deadline while the GPU is busy; no queued old frames or
+            # catch-up requests are needed.
+            await asyncio.sleep(0.005)
 
     def _tick_pointer_probe(self, now):
         if not self.availability or self.availability.state != "manual":
