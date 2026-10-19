@@ -275,6 +275,8 @@ class HeadlessIntegrationTests(unittest.IsolatedAsyncioTestCase):
             self.assertLess(abs(expected - actual), 5)
         self.assertEqual(session.peer.connectionState, "closed")
         self.assertFalse(session.tasks)
+        self.assertGreater(report["sctpTransport"]["dataChunksReceived"], 0)
+        self.assertFalse(report["sctpTransport"]["timersAndReliabilityChanged"])
 
     async def test_video_only_does_not_open_input(self):
         session = HeadlessSession(
@@ -304,11 +306,12 @@ class HeadlessIntegrationTests(unittest.IsolatedAsyncioTestCase):
         report = await session.run("fixture-token")
         self.assertTrue(report["success"], report)
         points = [d for d in self.received if d.get("type") == "touch_event" and d["action"] != 4]
-        self.assertEqual([d["action"] for d in points], [0, 2])
+        self.assertEqual([d["action"] for d in points], [0, 2, 1])
         self.assertTrue(report["control"]["participantClosedConfirmed"])
         self.assertTrue(report["control"]["nativeActionAppliedVerified"])
         self.assertEqual(report["stickExecution"]["nativeApplied"], len(points))
-        self.assertGreaterEqual(report["stickExecution"]["acceptedResults"], 4)
+        self.assertGreaterEqual(report["stickExecution"]["acceptedResults"], 3)
+        self.assertTrue(report["stickExecution"]["quiescing"])
         self.assertEqual(report["policyShadow"]["physicalActionsSent"], len(points))
 
     async def test_unknown_game_scene_never_executes_model_actions(self):
@@ -345,8 +348,8 @@ class HeadlessIntegrationTests(unittest.IsolatedAsyncioTestCase):
         self.assertTrue(report["success"], report)
         actions = [d["action"] for d in self.received
                    if d.get("type") == "touch_event" and d["action"] != 4]
-        self.assertEqual(actions, [0, 2])
-        self.assertGreaterEqual(report["stickExecution"]["acceptedResults"], 7)
+        self.assertEqual(actions, [0, 2, 1])
+        self.assertGreaterEqual(report["policyShadow"]["accepted"], 7)
         self.assertTrue(report["control"]["participantClosedConfirmed"])
         self.assertLessEqual(max(s["receiverAgeAtResultMs"]
                                  for s in report["policyShadow"]["samples"]), 400)

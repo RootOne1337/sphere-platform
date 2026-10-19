@@ -167,6 +167,7 @@ class StickPolicySession(HeadlessSession):
         self.scene_checks = self.scene_refusals = self.consumed_results = 0
         self.execution_events = deque(maxlen=64)
         self.physical_events = 0
+        self.quiescing = False
 
     def _pointer_enabled(self):
         return True
@@ -220,7 +221,13 @@ class StickPolicySession(HeadlessSession):
         if not self.availability or self.availability.state != "manual":
             self.execution.pause()
             return
-        if self.shadow.accepted != self.consumed_results:
+        if self.monitor_seconds >= self.config.duration - 0.6:
+            # Leave one physical deadline plus a scheduling margin to release
+            # the contact. Sampling may continue, but no new plan can restart
+            # movement while the finite run is draining its final receipt.
+            self.quiescing = True
+            self.execution.pause()
+        elif self.shadow.accepted != self.consumed_results:
             self.consumed_results = self.shadow.accepted
             accepted = self.shadow.last_accepted
             if accepted:
@@ -251,6 +258,7 @@ class StickPolicySession(HeadlessSession):
             and self.physical_events
             and self.admission
             and self.admission.pending_event is None
+            and not self.admission.held
             and self.admission.applied_receipts == self.physical_events
         )
 
@@ -277,5 +285,7 @@ class StickPolicySession(HeadlessSession):
             "buttonsAndCameraImplemented": False,
             "sourceCaptureAgeMeasured": False,
             "wasdHoldMs": 350 if self.execution.profile.source == "wasd" else None,
+            "completionDrainMs": 600,
+            "quiescing": self.quiescing,
         }
         return report

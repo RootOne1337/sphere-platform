@@ -155,6 +155,7 @@ class HeadlessSession:
         self.monitor_tick_count = 0
         self.monitor_max_gap_ms = 0.0
         self.monitor_last_tick = None
+        self.sctp_diagnostics = None
         self.shadow = (
             ShadowPolicyLoop(
                 policy if policy is not None else NeutralPolicy(),
@@ -233,6 +234,9 @@ class HeadlessSession:
 
         self.h264_packet_buffer = configure_h264_receiver(receiver.receiver)
         self.media = self.peer.createDataChannel("sphere-video-v1", ordered=True)
+        from motor_worker.sctp_diagnostics import observe_sctp
+
+        self.sctp_diagnostics = observe_sctp(self.peer.sctp)
         if self.config.probe_control:
             self.control = self.peer.createDataChannel("sphere-control-v2", ordered=True)
             self.control.on("message", self._control_message)
@@ -816,6 +820,7 @@ class HeadlessSession:
             "localTimingClock": "perf_counter",
             "decodedFrames": self.frames.decoded,
             "receiverStats": self.receiver_stats,
+            "sctpTransport": self.sctp_diagnostics.report() if self.sctp_diagnostics else None,
             "workerScheduler": {
                 "scope": "worker_monitor_event_loop_not_network_or_native",
                 "tickCount": self.monitor_tick_count,
@@ -854,6 +859,7 @@ class HeadlessSession:
             },
             "control": {
                 "requested": self.config.probe_control,
+                "dataChannelId": self.control.id if self.control else None,
                 "dataChannelOpened": self.control_open_at is not None,
                 "nativeAdmissionConfirmed": bool(control and control.ever_ready),
                 "actorAliveReceipts": control.alive_receipts if control else 0,
