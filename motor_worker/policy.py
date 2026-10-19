@@ -298,6 +298,7 @@ class ShadowPolicyLoop:
         self.request: PolicyRequest | None = None
         self.task: asyncio.Task | None = None
         self.last_chunk: ActionChunk | None = None
+        self.last_accepted: tuple[PolicyRequest, ActionChunk] | None = None
         self.last_chunk_deadline = 0.0
         self.closed = False
         self.offered = self.submitted = self.accepted = self.replaced = 0
@@ -311,6 +312,7 @@ class ShadowPolicyLoop:
         if self.epoch != epoch:
             self.generation += 1
             self.epoch, self.last_sequence, self.pending, self.last_chunk = epoch, 0, None, None
+            self.last_accepted = None
 
     def offer(self, frame: PolicyFrame) -> None:
         if self.closed or type(frame) is not PolicyFrame or frame.capture_epoch != self.epoch:
@@ -382,6 +384,9 @@ class ShadowPolicyLoop:
                 else:
                     self.accepted += 1
                     self.last_chunk = result.chunk
+                    # A subsequent request may start before the native actor's
+                    # next tick. Preserve the accepted frame/chunk as one binding.
+                    self.last_accepted = (req, result.chunk)
                     self.last_chunk_deadline = req.deadline
                     self.samples.append(
                         {
@@ -415,6 +420,7 @@ class ShadowPolicyLoop:
 
     async def close(self) -> None:
         self.closed, self.pending, self.last_chunk = True, None, None
+        self.last_accepted = None
         await self._cancel_active()
 
     def report(self) -> dict:
@@ -434,6 +440,7 @@ class ShadowPolicyLoop:
             "timedOut": self.timed_out,
             "activeRequestSlots": 1,
             "pendingFrameSlots": 1,
+            "acceptedFrameBindingSlots": 1,
             "sampleTailLimit": 64,
             "cleanupTimeoutSeconds": self.cleanup_timeout,
             "cleanupConfirmed": self.closed and self.task is None and self.pending is None,

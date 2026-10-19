@@ -16,9 +16,11 @@ from pathlib import Path
 from unittest.mock import patch
 
 from motor_worker.pointer_probe import PointerProbe, ProbePoint
-from motor_worker.policy import NeutralPolicy
+from motor_worker.policy import ActionChunk, GamepadState, NeutralPolicy, PolicyResult
 from motor_worker.process_policy import ProcessPolicy, ProcessPolicyConfig
 from motor_worker.session import HeadlessSession, SessionConfig
+from motor_worker.stick_execution import StickPolicySession, StickProfile
+from motor_worker.virtual_stick import StickGeometry
 
 AVAILABLE = all(importlib.util.find_spec(m) for m in ["aiortc", "av", "websockets", "numpy"])
 DEVICE = "753fd530-2f19-4e5e-98ba-769863678141"
@@ -263,6 +265,10 @@ class HeadlessIntegrationTests(unittest.IsolatedAsyncioTestCase):
         self.assertTrue(report["control"]["nativeAdmissionConfirmed"])
         self.assertTrue(report["control"]["participantClosedConfirmed"])
         self.assertFalse(report["control"]["nativeActionAppliedVerified"])
+        self.assertGreater(report["workerScheduler"]["tickCount"], 10)
+        self.assertGreater(report["workerScheduler"]["maxTickGapMs"], 0)
+        self.assertTrue(report["control"]["rttTail"])
+        self.assertEqual(report["control"]["rttTail"][0]["kind"], "alive")
         self.assertTrue(all(x.get("action", 4) == 4 for x in self.received))
         mean = report["observationTail"][-1]["rgbMean"]
         for expected, actual in zip([32, 96, 160], mean):
@@ -278,6 +284,46 @@ class HeadlessIntegrationTests(unittest.IsolatedAsyncioTestCase):
         self.assertTrue(report["success"], report)
         self.assertFalse(report["control"]["requested"])
         self.assertFalse(any(d.get("type") == "touch_open" for d in self.received))
+
+    async def test_learned_boundary_holds_one_native_contact_and_confirms_cleanup(self):
+        self.availability_state = "manual"
+
+        class ForwardFixture:
+            async def predict(self, request):
+                await asyncio.sleep(.03)
+                state = GamepadState((0, 1), (0, 0), GamepadState.neutral().buttons)
+                return PolicyResult(request.request_id, request.frame.capture_epoch,
+                                    request.frame.receiver_sequence, ActionChunk((state,) * 18, 60))
+
+        session = StickPolicySession(
+            SessionConfig(self.url, DEVICE, duration=1.4, probe_control=True,
+                          capture_lifecycle=False, shadow_policy=True),
+            profile=StickProfile(StickGeometry(320, 180, 60, 130, 20), "gamepad_left"),
+            policy=ForwardFixture(), scene_guard=lambda frame: True, execution_enabled=True,
+        )
+        report = await session.run("fixture-token")
+        self.assertTrue(report["success"], report)
+        points = [d for d in self.received if d.get("type") == "touch_event" and d["action"] != 4]
+        self.assertEqual([d["action"] for d in points], [0, 2])
+        self.assertTrue(report["control"]["participantClosedConfirmed"])
+        self.assertTrue(report["control"]["nativeActionAppliedVerified"])
+        self.assertEqual(report["stickExecution"]["nativeApplied"], len(points))
+        self.assertGreaterEqual(report["stickExecution"]["acceptedResults"], 4)
+        self.assertEqual(report["policyShadow"]["physicalActionsSent"], len(points))
+
+    async def test_unknown_game_scene_never_executes_model_actions(self):
+        self.availability_state = "manual"
+        session = StickPolicySession(
+            SessionConfig(self.url, DEVICE, duration=1, probe_control=True,
+                          capture_lifecycle=False, shadow_policy=True),
+            profile=StickProfile(StickGeometry(320, 180, 60, 130, 20), "gamepad_left"),
+            policy=NeutralPolicy(), scene_guard=lambda frame: False, execution_enabled=True,
+        )
+        report = await session.run("fixture-token")
+        self.assertFalse(report["success"])
+        self.assertEqual(report["stickExecution"]["physicalEvents"], 0)
+        self.assertTrue(report["control"]["participantClosedConfirmed"])
+        self.assertGreater(report["stickExecution"]["sceneRefusals"], 0)
 
     async def test_real_original_rgb_shadow_policy_has_no_physical_input(self):
         checked = []

@@ -174,6 +174,19 @@ class PolicyLoopTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(self.loop.replaced, 1)
         self.assertEqual(self.loop.report()["physicalActionsSent"], 0)
 
+    async def test_accepted_chunk_keeps_its_frame_when_next_request_has_already_started(self):
+        await self.launch()
+        first = self.provider.requests[0]
+        self.loop.offer(frame(2))
+        await self.finish(first)
+        self.assertEqual(self.loop.request.frame.receiver_sequence, 2)
+        accepted_request, accepted_chunk = self.loop.last_accepted
+        self.assertIs(accepted_request, first)
+        self.assertEqual(accepted_request.frame.receiver_sequence, 1)
+        self.assertIs(accepted_chunk, self.loop.last_chunk)
+        self.loop.bind_epoch("0b59dcba-444f-4daa-9a22-aa1b1294ed98")
+        self.assertIsNone(self.loop.last_accepted)
+
     async def test_finished_but_late_result_is_dropped(self):
         await self.launch()
         self.now += 0.3

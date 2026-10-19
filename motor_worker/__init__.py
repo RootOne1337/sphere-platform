@@ -1,3 +1,3 @@
-"""Headless APK transport and isolated shadow policy; no gameplay executor."""
+"""Headless APK transport, isolated inference and opt-in finite stick execution."""
 
-__version__ = "0.5.1"
+__version__ = "0.6.0"

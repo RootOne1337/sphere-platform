@@ -151,6 +151,10 @@ class HeadlessSession:
         self.probe_started_at: float | None = None
         self.probe_index = 0
         self.probe_samples: deque[dict] = deque(maxlen=64)
+        self.control_rtt_samples: deque[dict] = deque(maxlen=64)
+        self.monitor_tick_count = 0
+        self.monitor_max_gap_ms = 0.0
+        self.monitor_last_tick = None
         self.shadow = (
             ShadowPolicyLoop(
                 policy if policy is not None else NeutralPolicy(),
@@ -469,7 +473,12 @@ class HeadlessSession:
                 return
             if self.admission is None:
                 raise ProtocolError("unsolicited_control_message")
+            prior_alive, prior_applied = self.admission.alive_receipts, self.admission.applied_receipts
             self.admission.receive(raw, time.perf_counter())
+            if self.admission.alive_receipts > prior_alive:
+                self.control_rtt_samples.append({"kind": "alive", "rttMs": self.admission.last_actor_rtt_ms})
+            if self.admission.applied_receipts > prior_applied:
+                self.control_rtt_samples.append({"kind": "native_applied", "rttMs": self.admission.last_action_rtt_ms})
             if self.admission.failure:
                 self.fail(self.admission.failure)
             elif self.admission.closed and not self.admission.closing:
@@ -569,6 +578,10 @@ class HeadlessSession:
         heartbeat_at, echo_at, promote_at = 0.0, 0.0, 0.0
         while not self.failed.is_set():
             now = time.perf_counter()
+            if self.monitor_last_tick is not None:
+                self.monitor_max_gap_ms = max(self.monitor_max_gap_ms, (now - self.monitor_last_tick) * 1000)
+            self.monitor_last_tick = now
+            self.monitor_tick_count += 1
             self.route = selected_route(self.peer)
             if self.route["path"] == "relay":
                 raise ProtocolError("relay_not_admitted")
@@ -605,12 +618,12 @@ class HeadlessSession:
                 ):
                     raise ProtocolError("pointer_probe_geometry_mismatch")
                 self.admission = ControlAdmission(
-                    self.session, self.binding, allow_pointer=probe is not None
+                    self.session, self.binding, allow_pointer=self._pointer_enabled()
                 )
                 self.open_sent = True
                 self.control_open_at = now
                 self._send_control(self.admission.open_message())
-            if self.config.pointer_probe and self.admission and self.admission.ready:
+            if self._pointer_enabled() and self.admission and self.admission.ready:
                 self._tick_pointer_probe(now)
             if self.admission and self.admission.ready and now - heartbeat_at >= 0.3:
                 packet = self.admission.heartbeat(now)
@@ -640,7 +653,7 @@ class HeadlessSession:
                 if self.monitor_seconds >= self.config.duration:
                     if self.shadow and not self.shadow.accepted:
                         raise ProtocolError("policy_shadow_unconfirmed")
-                    if self.config.pointer_probe and not self._probe_complete():
+                    if self._pointer_enabled() and not self._probe_complete():
                         raise ProtocolError("pointer_probe_incomplete")
                     if self.sample_count <= self.observations_at_start or self.echo_count < 1:
                         raise ProtocolError("observation_or_echo_unconfirmed")
@@ -663,6 +676,10 @@ class HeadlessSession:
                 self.media.send(raw)
                 echo_at = now
             await asyncio.sleep(0.02)
+
+    def _pointer_enabled(self) -> bool:
+        """Physical input requires an explicit bounded executor, never a policy alone."""
+        return self.config.pointer_probe is not None
 
     def _probe_complete(self) -> bool:
         return bool(
@@ -799,6 +816,11 @@ class HeadlessSession:
             "localTimingClock": "perf_counter",
             "decodedFrames": self.frames.decoded,
             "receiverStats": self.receiver_stats,
+            "workerScheduler": {
+                "scope": "worker_monitor_event_loop_not_network_or_native",
+                "tickCount": self.monitor_tick_count,
+                "maxTickGapMs": round(self.monitor_max_gap_ms, 3),
+            },
             "h264ReceiveLevel": 42,
             "duplicateOrReorderedPts": self.frames.duplicate_or_reordered_pts,
             "rgbObservations": self.sample_count,
@@ -840,6 +862,8 @@ class HeadlessSession:
                 "nativeActionAppliedVerified": self._probe_complete() and self.release_confirmed,
                 "pointerKeyTextCommandsSent": control.pointer_commands if control else 0,
                 "availabilityState": self.availability.state if self.availability else None,
+                "rttTail": list(self.control_rtt_samples),
+                "rttTailLimit": 64,
             },
             "pointerProbe": {
                 "requested": self.config.pointer_probe is not None,

@@ -1,5 +1,6 @@
 """Identity, freshness and bounded lifecycle regressions; no network/codecs."""
 
+import json
 import unittest
 from fractions import Fraction
 from types import SimpleNamespace as NS
@@ -246,10 +247,23 @@ class ProtocolTests(unittest.TestCase):
         p.receive(receipt(), 1)
         p.heartbeat(2)
         self.assertIsNone(p.heartbeat(2.5))
+        self.assertIsNone(p.heartbeat(3.03))
         with self.assertRaisesRegex(ProtocolError, "control_alive_deadline"):
-            p.heartbeat(3)
+            p.heartbeat(3.25)
         with self.assertRaises(ProtocolError):
             p.receive(receipt("alive", 2), 3)
+
+    def test_held_contact_does_not_inherit_longer_idle_heartbeat_budget(self):
+        p = ControlAdmission(SESSION, CAPTURE, allow_pointer=True)
+        p.receive(identity(), 1)
+        p.receive(receipt(), 1)
+        down = p.pointer(0, 10, 10, 2)
+        applied = json.loads(receipt("applied", down["sequence"], action=0))
+        applied["gesture"] = down["gesture"]
+        p.receive(json.dumps(applied), 2.02)
+        p.heartbeat(2.1)
+        with self.assertRaisesRegex(ProtocolError, "control_alive_deadline"):
+            p.heartbeat(2.61)
 
     def test_unsolicited_applied_cannot_be_mistaken_for_idle_liveness(self):
         p = ControlAdmission(SESSION, CAPTURE)

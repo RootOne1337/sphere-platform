@@ -377,7 +377,12 @@ class ControlAdmission:
         if not self.ready or self.closing or self.closed or self.failure:
             return None
         if self.pending:
-            if now - self.pending[1] >= (0.5 if self.pending_event else 1):
+            # Idle retransmission near SCTP's1s boundary must not retire an
+            # otherwise healthy participant. Remain below APK's1.5s lease.
+            # A held finger or uncertain physical action keeps the strict500ms
+            # budget: extending idle tolerance must never extend movement.
+            deadline = 0.5 if self.pending_event or self.held else 1.25
+            if now - self.pending[1] >= deadline:
                 raise ProtocolError(
                     "control_action_deadline" if self.pending_event else "control_alive_deadline"
                 )
