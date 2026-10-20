@@ -261,6 +261,28 @@
       "evidenceClass": "primary_technical_docs",
       "finding": "Auxiliary route/loss observation, not game handshake or UDP proof.",
       "checkedAtUtc": "2026-10-20T20:45:26.570853+00:00"
+    },
+    {
+      "id": "android_tethering",
+      "url": "https://source.android.com/docs/core/ota/modular-system/tethering",
+      "evidenceClass": "primary_technical_docs",
+      "finding": "IPv4 NAT and IPv6 SLAAC tethering; same hotspot is not proof of identical game endpoint egress.",
+      "checkedAtUtc": "2026-10-20T20:59:57.911558+00:00"
+    },
+    {
+      "id": "android_clear_cache",
+      "url": "https://support.google.com/android/answer/7431795?hl=ru",
+      "evidenceClass": "official_platform_help",
+      "finding": "Clear cache and clear storage differ; reset result does not isolate the broken component.",
+      "checkedAtUtc": "2026-10-20T20:59:57.911558+00:00"
+    },
+    {
+      "id": "official_cus",
+      "url": "https://t.me/br_lab/59",
+      "evidenceClass": "official_developer_technical_publication",
+      "publicationDateUtc": "2026-06-19T14:23:48+00:00",
+      "finding": "CUS resource selection, consistency and fragment repair; not diagnosis of this incident.",
+      "checkedAtUtc": "2026-10-20T21:02:32.835874+00:00"
     }
   ],
   "tasks": [
@@ -369,20 +391,20 @@
   "privateArtifactsDirectory": ".local-pilot/motor-ph025-20261021",
   "rawLogsAddressesCredentialsPublished": false,
   "nextDiscriminatingChecks": [
-    "Capture exact phone disconnect reason, server and time.",
-    "Owner verifies email binding status; if incomplete, confirms privately and compares one unchanged manual session.",
-    "Owner-confirmed S24/MTS 15-20 minute baseline passed. Next: same emulator on mobile tether, then comparable home Ethernet session without changing account/server mid-run.",
-    "Compare devices/builds/accounts explicitly; guest account and distribution differences are confounders.",
-    "Prepare support packet with confirmed server/identity privately; no sending without authorization."
+    "Wait for owner download-complete signal; do not touch PH030 download.",
+    "Capture healthy post-download baseline first, no motor actions.",
+    "At first disconnect capture exact scene/code and process logs before another reset; one full restart only after capture and minimum interval.",
+    "Compare failed re-entry against baseline, distinguishing resources/auth/game handshake/native faults.",
+    "Do not interpret full reset recovery as proof of cache-only corruption or anti-cheat flag."
   ],
   "guide": "docs/audits/2026-10-21/BLACK-RUSSIA-PH025-CONNECTION.md",
   "previousEvidence": "docs/audits/2026-10-17/BLACK-RUSSIA-CONNECTION-HANG.json",
-  "updatedAtUtc": "2026-10-20T20:45:26.570853+00:00",
+  "updatedAtUtc": "2026-10-20T21:02:32.835874+00:00",
   "stableTestPlan": {
-    "phase": "PREPARED_PH030_INSTALLATION_USER_IN_PROGRESS",
+    "phase": "PH030_RECONNECT_REPRODUCED_BY_OWNER_RESOURCES_REDOWNLOADING",
     "ph030DeviceId": "753fd530-2f19-4e5e-98ba-769863678141",
-    "ph030GameInstalledConfirmed": false,
-    "ph030WorldEnteredConfirmed": false,
+    "ph030GameInstalledConfirmed": true,
+    "ph030WorldEnteredConfirmed": true,
     "ph030MobileStabilityAccepted": false,
     "userReportsLaptopMobileTethering": true,
     "manualBaselineMinutesTarget": 20,
@@ -404,6 +426,157 @@
       "physicalMtu": 1500,
       "wireguardMtu": 1376,
       "mtuFaultConfirmed": false
+    },
+    "ph030InitialWorldEntryEvidence": "Owner confirms initial entry on home Wi-Fi, then repeated disconnects; not a new instrumented session.",
+    "ph030WorldCurrentlyEntered": false,
+    "ph030NetworkSwitchRecovered": false,
+    "ph030ResetTypeConfirmed": true,
+    "gameResourcesRedownloadingUserReported": true,
+    "commandsSentToPh030AfterLatestUserReport": 0,
+    "resetScope": "Owner explicitly confirms cache and application data fully cleared; same emulator, game resources downloading on MTS.",
+    "firstPostDownloadLoginOwnerWillPerform": true,
+    "cacheOnlyTestIsolated": false
+  },
+  "latestPh030UserReport": {
+    "source": "owner_report",
+    "initialPh030OnHomeWifi": "Installed, test account registered, world entered, then repeated reconnects",
+    "afterSwitchToMtsTetheringAndFullGameRestart": "Infinite connecting to server",
+    "phoneOnMtsAtSameTime": "Enters promptly per owner",
+    "sameGameEndpointExternalIpProven": false,
+    "sameAccountServerDistributionProven": false,
+    "cacheOnlyVersusDataResetIsolated": false,
+    "redownloadInProgressReported": true,
+    "serverProtectionFlagConfirmed": false,
+    "clientPersistentFaultConfirmed": false,
+    "persistentClientStateHypothesis": "Plausible, not isolated from account/server state, resources, timing or host network differences",
+    "credentialsUsedOrRecordedInArtifacts": false,
+    "recordedAtUtc": "2026-10-20T21:02:32.835874+00:00",
+    "fullCacheAndStorageClearConfirmedByOwner": true,
+    "sameEmulatorConfirmed": true,
+    "redownloadNetwork": "MTS mobile tethering",
+    "firstNewLoginOwnerWillPerform": true
+  },
+  "staticOfficialApkReview": {
+    "kind": "STATIC_PUBLIC_APK_LITERAL_OBSERVATION_NOT_CAUSE_OR_CURRENT_PH030_PROOF",
+    "apkSha256": "130083a2b9f6cbe8364ae7b519d35d0e1e3ca519019d763fe55bb9e1c431ac14",
+    "apkBytes": 123990477,
+    "nativeAbis": [
+      "arm64-v8a",
+      "armeabi-v7a"
+    ],
+    "observations": [
+      {
+        "entry": "classes3.dex",
+        "bytes": 9998908,
+        "literalCounts": {
+          "reconnect": 14
+        }
+      },
+      {
+        "entry": "classes4.dex",
+        "bytes": 13210728,
+        "literalCounts": {
+          "state_monitor.sm": 3,
+          "patch_index.json": 1,
+          "Connection timed out": 1,
+          "reconnect": 2
+        }
+      },
+      {
+        "entry": "classes5.dex",
+        "bytes": 8477392,
+        "literalCounts": {
+          "reconnect": 1
+        }
+      },
+      {
+        "entry": "classes6.dex",
+        "bytes": 10133676,
+        "literalCounts": {
+          "reconnect": 15
+        }
+      },
+      {
+        "entry": "classes7.dex",
+        "bytes": 1724692,
+        "literalCounts": {
+          "reconnect": 1
+        }
+      },
+      {
+        "entry": "lib/armeabi-v7a/libblackrussia-client.so",
+        "bytes": 27643412,
+        "literalCounts": {
+          "Connection timed out": 1
+        }
+      },
+      {
+        "entry": "lib/armeabi-v7a/libupdate-manager.so",
+        "bytes": 5446020,
+        "literalCounts": {
+          "state_monitor.sm": 2,
+          "patch_index.json": 10,
+          "Connection timed out": 1
+        }
+      }
+    ],
+    "gameFilesModified": false,
+    "deviceCommandsSent": false,
+    "credentialsRead": false,
+    "source": "Previously downloaded official vendor APK, not inspected current PH030 installed package",
+    "evidenceScope": "Literal presence and ZIP ABI inventory only. No semantic proof of flag, anti-cheat, corrupted file, current execution path or emulator incompatibility."
+  },
+  "preparedDiagnosticDraft": {
+    "recordedAtUtc": "2026-10-20T20:58:42.719401+00:00",
+    "deviceIdIntended": "753fd530-2f19-4e5e-98ba-769863678141",
+    "scope": "Draft action validation only; does not create script/task or send commands to emulator. Intended for healthy/first-disconnect/hang comparison after user reports download complete.",
+    "draftValid": true,
+    "nodeCount": 13,
+    "actionTypes": [
+      "end",
+      "shell",
+      "start"
+    ],
+    "dagHash": "04857493e6beace186160c95ea5b93899733ff1f94b810fd3a8b9c60624b9870",
+    "scriptCreated": false,
+    "taskCreated": false,
+    "deviceCommandsSent": 0,
+    "retries": 0,
+    "appRestarted": false,
+    "dataCleared": false,
+    "downloadObservedOrInterrupted": false,
+    "loggingLimit": "Node outputs are bounded/clipped. Preserve private originals and do not use clipped absence as proof. PID and UID must be refreshed for any later process-specific stage.",
+    "rawResultsPublishAllowed": false
+  },
+  "additionalSearchReview": {
+    "officialClientMarkAfterReconnectMechanismFound": false,
+    "unverifiedSeoAndUserscriptTemplatesExcluded": true,
+    "thirdPartyScriptsExecuted": false,
+    "ph030DeviceCommandsSent": 0,
+    "staticApkModified": false
+  },
+  "officialResourceSystemFollowup": {
+    "source": "https://t.me/br_lab/59",
+    "publicationDates": [
+      "2026-06-19T14:23:48+00:00"
+    ],
+    "checkedAtUtc": "2026-10-20T21:02:32.835874+00:00",
+    "finding": "CUS chooses device/build resources, keeps client/resources consistent and repairs fragments; not proof of current hang cause.",
+    "vendorApkHead": {
+      "checkedAtUtc": "2026-10-20T21:01:25.857552+00:00",
+      "status": 200,
+      "contentLength": "123990477",
+      "lastModified": "Fri, 16 Oct 2026 11:45:42 GMT",
+      "etag": "\"6ad20e66-763f1cd\"",
+      "shaCompared": false,
+      "downloaded": false
     }
+  },
+  "cleanMobileTestLogic": {
+    "firstLogin": "Owner performs after download",
+    "secondLogin": "One complete stop/open on same MTS after healthy baseline, no return to Rostelecom",
+    "ifRepeatedFailure": "Historical Rostelecom IP is not necessary to reproduce; still distinguish session/server/resources/emulator/tether path.",
+    "ifSuccess": "Combined clean-data plus mobile condition works; network versus reset effects not isolated.",
+    "noResetBeforeFirstFailureEvidence": true
   }
 }

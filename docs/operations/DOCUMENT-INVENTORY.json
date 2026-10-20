@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "reviewedAtUtc": "2026-10-20T20:45:26.570853+00:00",
+  "reviewedAtUtc": "2026-10-20T21:02:32.835874+00:00",
   "scope": "All tracked Markdown classified; active local-link paths scanned. Not semantic attestation of every sentence, command execution, external-link or live acceptance.",
   "countsByRole": {
     "ADR": 6,
