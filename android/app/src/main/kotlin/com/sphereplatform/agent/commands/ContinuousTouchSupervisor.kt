@@ -19,6 +19,7 @@ internal class ContinuousTouchSupervisor(
     private val uptime: () -> Long,
     private val isCurrent: (TouchBinding) -> Boolean,
     private val onReceipt: (TouchBinding, Receipt) -> Unit,
+    private val dispatcher: kotlinx.coroutines.CoroutineDispatcher = Dispatchers.IO,
 ) {
     enum class Stage { STARTUP, INPUT, RELEASE }
     data class Receipt(val sequence: Int, val status: Int, val deviceUptimeMs: Long, val stage: Stage,
@@ -37,7 +38,7 @@ internal class ContinuousTouchSupervisor(
         if (resetRequired || !scope.isActive || !isCurrent(binding)) return@withLock false
         val mailbox = ContinuousTouchMailbox(binding, uptime())
         admitted.set(mailbox)
-        val job = scope.launch(Dispatchers.IO) {
+        val job = scope.launch(dispatcher) {
             var pipe: TouchPipe? = null
             var attemptedSequence = 0
             try {
@@ -75,7 +76,7 @@ internal class ContinuousTouchSupervisor(
             } finally {
                 mailbox.retire()
                 admitted.compareAndSet(mailbox, null)
-                withContext(NonCancellable + Dispatchers.IO) {
+                withContext(NonCancellable + dispatcher) {
                     val confirmed = (pipe?.let { runCatching { it.closeAndConfirm() }.getOrDefault(false) } ?: true) && !resetRequired
                     if (!confirmed) resetRequired = true
                     emit(binding, Receipt(0, if (confirmed) 3 else 6, uptime(), Stage.RELEASE,

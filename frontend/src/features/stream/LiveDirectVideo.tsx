@@ -10,6 +10,8 @@ import { startDirectVideoSession, type DirectProbeResult } from './directProbe';
 import type { DirectVideoBinding } from './directVideoProtocol';
 import type { DirectControlEndpoint } from './directPointerTransport';
 import { needsHigherH264ReceiveLevel } from './h264ReceiverOffer';
+import { directProbeIceConfig } from './directProbeIce';
+import { watchNetworkRoute } from './networkRouteWatch';
 
 export interface LiveVideoObservation {
   admitted: boolean; admissionKnown: boolean; active: boolean; frames: number; lastFrameAt: number | null;
@@ -100,6 +102,7 @@ export function LiveDirectVideo({ deviceId, session, eligible, fit, expectedCapt
     let frameWatchdog: ReturnType<typeof setInterval> | null = null;
     let deliveryRenewal: ReturnType<typeof setInterval> | null = null;
     let retry: ReturnType<typeof setTimeout> | null = null;
+    let routeWatch: ReturnType<typeof watchNetworkRoute> | null = null;
     const publish = () => {
       if (disposed) return;
       setActive(observation.active);
@@ -178,6 +181,7 @@ export function LiveDirectVideo({ deviceId, session, eligible, fit, expectedCapt
             firstFrame = null;
             const first = !observation.active;
             observation.frames++; observation.lastFrameAt = Date.now(); observation.active = true;
+            if (first) routeWatch?.check();
             // Frame delivery stays outside React; publish scalars at most once
             // per second, plus the first frame which activates this surface.
             if (first || observation.frames % 30 === 0) publish();
@@ -224,14 +228,15 @@ export function LiveDirectVideo({ deviceId, session, eligible, fit, expectedCapt
     // obsolete candidates. Coalesce duplicate browser notifications and start a
     // new authenticated attempt, even during the normal failure cooldown. Old
     // callbacks are fenced before teardown; no input is queued or transferred.
-    const networkChanged = () => {
+    const networkChanged = (reason = 'network_changed') => {
       if (disposed || document.hidden) return;
+      routeWatch?.reset();
       generation++;
       const old = cancel; cancel = null; old?.();
       clearRenderer(); releaseControl?.(null);
       observation.active = false;
       observation.result = { ...(observation.result ?? { samples: [], path: 'unknown', protocol: null }),
-        state: 'failed', reason: 'network_changed' };
+        state: 'failed', reason };
       publish();
       if (retry !== null) clearTimeout(retry);
       attemptsInWindow = 0;
@@ -245,17 +250,30 @@ export function LiveDirectVideo({ deviceId, session, eligible, fit, expectedCapt
       connectionType = nextType;
       // This event also reports new bandwidth/RTT estimates. Do not tear down a
       // working stream or held input just because a congestion estimate changed.
-      // Without a supported interface type, actual ICE loss still owns recovery.
-      if (observation.active && observation.result?.state === 'connected' && !interfaceChanged) return;
+      // VPN toggles often preserve connection.type (or it is absent entirely).
+      // Re-gather locally before disrupting a connected stream. Bandwidth/RTT
+      // noise alone cannot cause a reconnect; only a changed numeric topology can.
+      if (observation.active && observation.result?.state === 'connected' && !interfaceChanged) {
+        routeWatch?.check(); return;
+      }
       networkChanged();
     };
-    window.addEventListener('online', networkChanged);
+    const online = () => networkChanged();
+    const focus = () => routeWatch?.check();
+    routeWatch = watchNetworkRoute(directProbeIceConfig(stun).iceServers, {
+      active: () => !disposed && !document.hidden && observation.active && observation.result?.state === 'connected',
+      changed: () => networkChanged('network_route_changed'),
+    });
+    window.addEventListener('online', online);
+    window.addEventListener('focus', focus);
     connection?.addEventListener('change', connectionChanged);
     begin();
     return () => {
       disposed = true; generation++;
-      window.removeEventListener('online', networkChanged);
+      window.removeEventListener('online', online);
+      window.removeEventListener('focus', focus);
       connection?.removeEventListener('change', connectionChanged);
+      routeWatch?.close(); routeWatch = null;
       if (retry !== null) clearTimeout(retry);
       cancel?.(); clearRenderer();
       releaseControl?.(null);

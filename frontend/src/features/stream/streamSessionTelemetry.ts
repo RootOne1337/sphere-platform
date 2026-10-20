@@ -17,7 +17,7 @@ const reasons = new Set(['probe_deadline', 'gathering_deadline', 'signaling_dead
   'invalid_description', 'missing_binding', 'signaling_unavailable', 'invalid_ice_grant', 'invalid_answer',
   'invalid_signal', 'signaling_closed', 'webrtc_unavailable', 'invalid_video_track', 'video_track_ended',
   'video_renderer_failed', 'peer_disconnected', 'echo_timeout', 'channel_backpressure', 'echo_send_failed',
-  'invalid_video_binding', 'invalid_echo', 'channel_failed', 'channel_closed', 'offer_failed', 'network_changed',
+  'invalid_video_binding', 'invalid_echo', 'channel_failed', 'channel_closed', 'offer_failed', 'network_changed', 'network_route_changed',
   'control_channel_failed', 'control_channel_closed', 'control_channel_deadline', 'invalid_control_message', 'invalid_ice_candidate', 'candidate_limit',
   'video_access_rejected', 'video_first_frame_timeout', 'video_frame_timeout', 'video_renderer_unavailable', 'capture_changed', 'session_lifetime']);
 const directStates = new Set(['gathering', 'signaling', 'connecting', 'connected', 'finished', 'stopped', 'failed']);

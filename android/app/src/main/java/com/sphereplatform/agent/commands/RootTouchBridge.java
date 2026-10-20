@@ -28,6 +28,10 @@ public final class RootTouchBridge {
             if (android.os.Process.myUid() != 0 || args.length != 4 || !"touch-v1".equals(args[0])) {
                 throw new IllegalArgumentException("touch_privileged_adapter_required");
             }
+            // Keep the owned injector responsive while software video encoding
+            // is CPU-bound. No realtime policy, extra permission or global change.
+            try { android.os.Process.setThreadPriority(android.os.Process.THREAD_PRIORITY_DISPLAY); }
+            catch (SecurityException unavailable) { System.err.println("touch_priority_unavailable"); }
             startupDetail = "root_configuration";
             int width = Integer.parseInt(args[1]), height = Integer.parseInt(args[2]), rotation = Integer.parseInt(args[3]);
             if (width > 16384 || height > 16384 || rotation < 0 || rotation > 3) throw new IllegalArgumentException("touch_geometry_invalid");

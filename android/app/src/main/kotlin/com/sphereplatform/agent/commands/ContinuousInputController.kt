@@ -30,6 +30,7 @@ internal class ContinuousInputController(
     private val uptime: () -> Long,
     private val enabled: Boolean,
     private val diagnostics: NativeInputDiagnostics = NativeInputDiagnostics(uptime),
+    private val dispatcher: kotlinx.coroutines.CoroutineDispatcher = kotlinx.coroutines.Dispatchers.IO,
 ) : DirectInputHandler {
     @Volatile var directChannel: ((String) -> DirectInputChannel?)? = null
     private data class Owner(val binding: TouchBinding, val session: String, val generation: Long, val capture: CaptureInputSession,
@@ -43,6 +44,7 @@ internal class ContinuousInputController(
     private val active = AtomicReference<Owner?>()
     private val closing = AtomicBoolean(false)
     private val supervisor = ContinuousTouchSupervisor(scope, factory, uptime,
+        dispatcher = dispatcher,
         isCurrent = { binding ->
             val owner = active.get()
             owner?.binding == binding && current(owner)

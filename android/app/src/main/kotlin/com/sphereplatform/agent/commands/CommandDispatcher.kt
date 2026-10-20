@@ -87,6 +87,7 @@ class CommandDispatcher @Inject constructor(
     private var heartbeatJob: kotlinx.coroutines.Job? = null
     private val updateCheckQueuedForService = AtomicBoolean(false)
     private val inputDiagnostics = NativeInputDiagnostics(android.os.SystemClock::uptimeMillis)
+    private val nativeInputDispatcher = inputDispatcher(scope)
     private val touchFactory = OwnedTouchPipeFactory(adbActions.inputOwnership, adbActions::prepareContinuousInput, RootTouchPipeFactory(appContext))
     private val remoteKeyboard = if (BuildConfig.CONTINUOUS_INPUT_CANARY) AndroidRemoteKeyboard(appContext).also { adapter ->
         scope.launch(Dispatchers.IO) { adapter.recoverInterruptedLease() }
@@ -95,6 +96,7 @@ class CommandDispatcher @Inject constructor(
         scope, touchFactory, streamingManager::getInputSession, android.os.SystemClock::uptimeMillis,
         diagnostics = inputDiagnostics,
         keyboard = remoteKeyboard,
+        dispatcher = nativeInputDispatcher,
     ) else null
     private val continuousInput = if (BuildConfig.CONTINUOUS_INPUT_CANARY) {
         ContinuousInputController(scope,
@@ -102,6 +104,7 @@ class CommandDispatcher @Inject constructor(
             streamingManager, wsClient::currentGeneration, wsClient::sendInputReceipt,
             android.os.SystemClock::uptimeMillis, BuildConfig.CONTINUOUS_INPUT_CANARY,
             inputDiagnostics,
+            dispatcher = nativeInputDispatcher,
         )
     } else null
     private val inputCoordinator = DeviceInputCoordinator(adbActions.inputOwnership,

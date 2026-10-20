@@ -11,6 +11,12 @@ let mockReport: (result: DirectProbeResult) => void;
 let mockTrack: (track: MediaStreamTrack) => void;
 let mockFrame: VideoFrameRequestCallback;
 const mockStop = jest.fn();
+const mockRouteCheck = jest.fn(), mockRouteClose = jest.fn(), mockRouteReset = jest.fn();
+let mockRouteChanged: () => void;
+jest.mock('@/src/features/stream/networkRouteWatch', () => ({ watchNetworkRoute: (_servers: unknown, listener: { changed: () => void }) => {
+  mockRouteChanged = listener.changed;
+  return { check: mockRouteCheck, close: mockRouteClose, reset: mockRouteReset };
+} }));
 const mockStart = jest.fn((_url, _token, report, options) => {
   mockReport = report; mockTrack = options.onTrack;
   report({ state: 'gathering', samples: [], path: 'unknown', protocol: null });
@@ -42,6 +48,22 @@ function mount(onFrame = jest.fn(() => true), onObservation = jest.fn()) {
   return { ...view, onFrame, onObservation };
 }
 const present = () => mockFrame(1, { width: 960, height: 540 } as VideoFrameCallbackMetadata);
+
+test('a confirmed silent VPN topology change renews video and control together and rejects the old handle', async () => {
+  mockAdmission.data.input = true;
+  const onControl = jest.fn();
+  const view = render(<LiveDirectVideo deviceId="device" session={'1'.repeat(16)} eligible
+    expectedCapture={expected} onFrame={jest.fn(() => true)} onObservation={jest.fn()} onControlChannel={onControl} />);
+  act(() => { mockReport(connected); mockTrack({ kind: 'video' } as MediaStreamTrack); }); await act(async () => {});
+  act(present);
+  expect(mockRouteCheck).toHaveBeenCalled();
+  const oldControl = mockStart.mock.calls[0][3].onControlChannel;
+  act(() => mockRouteChanged());
+  expect(mockStop).toHaveBeenCalledTimes(1); expect(onControl).toHaveBeenLastCalledWith(null);
+  onControl.mockClear(); act(() => oldControl({})); expect(onControl).not.toHaveBeenCalled();
+  act(() => jest.advanceTimersByTime(500)); expect(mockStart).toHaveBeenCalledTimes(2);
+  view.unmount(); expect(mockRouteClose).toHaveBeenCalled(); expect(jest.getTimerCount()).toBe(0);
+});
 
 test('older source codecs retain their offer while a presented higher source enables receiver capability lookup', () => {
   const low = render(<LiveDirectVideo deviceId="device" session="viewer" eligible expectedCapture={expected}
