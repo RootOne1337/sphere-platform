@@ -1,5 +1,47 @@
 # Headless motor worker: транспорт и конечный ввод
 
+GPS-анализ — необязательный observer. Общие задачи без меток/миникарты и цели по
+изображению/ориентирам описаны в разделе24 [единого плана2.9](../design/MOTOR-AI-PLATFORM.md).
+Эти goal/skill contracts пока проектные: stdio-v1 не передаёт цель в NitroGen/P2P.
+Последний decoded frame хранится в RAM, PNG сохраняется только явно через `--snapshot`.
+
+**21 октября ·0.7.0:** добавлен bounded read-only анализ GPS-линии миникарты с отдельным
+JSON-профилем и штатным CLI.184 motor tests/Ruff прошли.20 сохранённых кадров:18 контуров
+без калиброванного heading,2 отказа. Свежий PH025 CLI:99 анализов/5.001Гц, минимум4 в полной
+секунде, native control не открывался. На экране поиск Android; gameplay этим не проверен.
+[Код, измерения и границы](../audits/2026-10-21/MOTOR-MINIMAP-ROUTE070.md).
+
+### Read-only анализ миникарты
+
+Установить существующий optional `requirements-motor-vision.txt`. Веса нейросетей не нужны.
+Пример [JSON-профиля](../../examples/motor-minimap-profile.json) надо сверить с исходным кадром:
+размер, ROI, center, circle/player radius, HSV и lookahead. Hue0–179; lower hue выше upper
+означает wraparound. Профиль UTF-8 v1,≤4096B, без неизвестных/повторных полей и NaN/Infinity.
+ROI≤256×256 и≤4096 подходящих пикселей. Нельзя калибровать координаты по CSS-размеру плеера.
+
+```powershell
+python -m motor_worker --base-url http://127.0.0.1:3015 --device DEVICE_UUID --seconds 20 --observation-hz 5 --shadow-policy minimap --minimap-profile examples/motor-minimap-profile.json --output output/minimap-report.json
+```
+
+Заменить `DEVICE_UUID`; `SPHERE_ACCESS_TOKEN` берётся только из существующего окружения.
+Файл output должен отсутствовать, родительская папка — существовать. Изображение сохраняется
+только с явным `--snapshot PATH`. `--goal-revision UUID` необязателен и маркирует анализ;
+он не задаёт цель нейросети. Без него создаётся новый UUID.
+
+`routeAnalysis` содержит фиксированные reasons, угол при известном heading, длину пути,
+число пикселей, CPU wall time и64 последних наблюдения. Сам `extract_route` возвращает
+ограниченную полилинию в координатах исходного кадра. Direction при `forward_degrees=null`
+отсутствует; это корректный default. Для player-up нужен проверенный rotating map, для
+другого режима — отдельный измеренный heading. Автоматического сенсора стрелки пока нет.
+
+Оба native-input флага запрещены, даже idle admission. Прямое создание HeadlessSession с
+этим provider и `probe_control=True` тоже отклоняется; StickPolicySession его не принимает.
+Это наблюдение локальной геометрии, не obstacle clearance, arrival или physical policy.
+Epoch/порядок кадров и250мс receiver/deadline проверяются; source clock неизвестен.
+Отмена ожидает реальный CPU job. При неизвестном retirement outer loop закрывается,
+новая перекрывающаяся работа не начинается. Общий процессный модельный provider остаётся
+отдельным API; здесь никаких GPU children нет.
+
 **20 октября ·0.6.1:** `policyShadow.acceptedResultTiming` разделяет принятую частоту,
 минимум ответов в полных1-с окнах, интервалы/тишину и возраст decoded receiver frame.
 Счётчики доступны также в opt-in stick session; они не являются native APPLIED или

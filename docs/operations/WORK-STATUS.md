@@ -2,6 +2,21 @@
 
 **Проверенная установка:** UI `5cbb4bba` / API `15ce2b62`.
 
+**21 октября — общий игровой AI-план2.9.** Перепроверен приложенный разбор по первичным
+публикациям/кодовым интерфейсам и пользовательским опытам. Уточнены цели без меток/миникарты,
+capabilities/goal/skill contracts, ограниченная visual memory и G1–G6. Исправлены обещания
+conditioning/latency/capacity и спецификация RX9070. Документ отделяет проектное от готового;
+новые модели не скачивались. Последние три PNG — явно сохранённые кадры17октября;
+24waypoint PNG=13.85MiB локально, не серверный архив. [Единый план](../design/MOTOR-AI-PLATFORM.md),
+[research receipt](../audits/2026-10-21/MOTOR-GENERAL-GOALS-REVIEW08.json).
+
+**21 октября — worker0.7.0, GPS-линия миникарты.** Реализованы отдельный bounded профиль,
+связный path-distance lookahead и read-only CLI.184 motor tests/Ruff прошли. На20 архивных
+изображениях получено18 контуров с неизвестным heading и2 отказа. Свежий PH025 CLI:
+99 анализов/5.001Гц, минимум4 в полной секунде, ноль native команд; виден поиск Android,
+не gameplay. A→B/проходимость/vehicle input/PH030 остаются открыты. Статус currentImplementation
+приведён к0.7; исторический срез0.5 сохранён. [Измерения и ограничения](../audits/2026-10-21/MOTOR-MINIMAP-ROUTE070.md).
+
 **20 октября — навигация A→B и worker0.6.1.** Обновлён единый AI-план2.7: GPS-route/
 obstacle/vehicle contracts, удержание между наблюдениями, latency budget, компактные VLM,
 границы VPN и порядок N1–N6. Добавлена bounded result-cadence telemetry;153 motor tests/Ruff
