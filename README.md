@@ -1,6 +1,8 @@
 <div align="center">
 
-**Проверенная установка:** UI `15ce2b62` / API `15ce2b62`.
+**Проверенная установка:** UI `5cbb4bba` / API `15ce2b62`.
+
+**20 октября — веб5cbb и APK83.** Добавлены общий локальный ICE topology observer и отдельный Android input dispatcher. 2569 frontend tests; Android dev/enterprise lint/build/unit suites — по1252 теста,3 skipped. APK83 завершил OTA на4 online устройствах:3 package SHA сверены,PH030 — completed OTA/версия без отдельного hash;17 offline не обновлены. На PH030 подтверждены кнопки и жест, но повторное подключение в проверочном браузере осталось на серверном видео без управления. Снижение latency и VPN/reconnect production-приёмка открыты. [Изменения, отрицательные проверки и следующие условия](docs/audits/2026-10-20/NETWORK-ROUTE-INPUT83-DELIVERY.md).
 
 **17 октября — worker0.4 и асинхронная shadow policy.** На PH011 по 75 ответов нейтральной заглушки на исходные RGB-кадры через3015/Tuna, около5Гц, без физических команд и серверного видео; отдельно6/6 точек native ввода. Исправлена гонка ACK при закрытии,68 motor tests прошли. Проверены исходники NitroGen, Nexto, MineStudio и VPT. Модель/GPU, игровые профили и gameplay ещё не подключены. [Реализация, источники и границы](docs/audits/2026-10-17/MOTOR-REALTIME-SHADOW04.md).
 

@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
-  "reviewedAtUtc": "2026-10-17T10:15:16.550454+00:00",
-  "sourceReviewed": "e7ec2d0de3df58f39ff847a1337836070dd0650e",
+  "reviewedAtUtc": "2026-10-20T15:21:22.957148+00:00",
+  "sourceReviewed": "5cbb4bba6229c433c1078742f81fddd4dcbd6bfa",
   "scope": "UI/API15ce preserved on3015/Tuna; APK82 exact installed hashes and completed OTA on four online devices. PH011/PH030 finite two-gesture recording and shared native timeline replay accepted; two direct media viewers retained, manual READY/Home restored. No universal timing or production SLA. Worker0.3 finite headless PH011 local/tunnel native dispatch verified separately; model/gameplay/GPU/LAN proof remain open. Installed runtime receipt unchanged. Worker0.4 real-RGB neutral shadow and finite pointer compatibility verified separately; no learned inference or gameplay. Local AMD RX9070 learned NitroGen/P2P inference verified separately; corrected runs used inactivity-disconnected game renderer, no model actions or gameplay accepted. UI/API/APK receipt unchanged. Worker0.5 bounded local process provider verified separately on PH011 registration screen; no game actions, runtime receipt unchanged. Follow-up: finite learned stick contact/trajectory on PH011 verified; 571 native APPLIED, goal navigation not accepted. P2P text conditioning and source capture/action age remain open; installed runtime unchanged.",
   "baseline": "docs/audits/2026-10-05/ENTERPRISE-PRODUCT-BACKLOG.json",
   "previousCrosscheck": "docs/audits/2026-10-09/CHAT-CODE-RECONCILIATION.json",
@@ -11,74 +11,62 @@
     "open": 41
   },
   "installed": {
-    "lastObservedUtc": "2026-10-16T19:18:25.969381+00:00",
-    "ui": "15ce2b623c4e4fdd0ae2b6b9435fda5a3ef42881",
+    "lastObservedUtc": "2026-10-20T15:21:22.957148+00:00",
+    "ui": "5cbb4bba6229c433c1078742f81fddd4dcbd6bfa",
     "api": "15ce2b623c4e4fdd0ae2b6b9435fda5a3ef42881",
-    "evidence": "docs/audits/2026-10-16/POINTER-TIMELINE82-DELIVERY.json",
-    "observation": "UI/API15ce preserved on3015/Tuna; APK82 exact installed hashes and completed OTA on four online devices. PH011/PH030 finite two-gesture recording and shared native timeline replay accepted; two direct media viewers retained, manual READY/Home restored. No universal timing or production SLA.",
+    "evidence": "docs/audits/2026-10-20/NETWORK-ROUTE-INPUT83-DELIVERY.json",
+    "observation": "Web5cbb installed; API15ce preserved. APK83 completed OTA on four online devices, three independent package hashes, PH030 completion/version only; 17 offline excluded. Finite controls passed; initial/repeated ICE/native-busy failures and latency remain open.",
     "pilotApk": {
       "device": "auto-ph-011",
       "deviceId": "414ce0e9-4b93-4f96-b9ca-ee675f53835e",
-      "version": "1.2.82-dev",
-      "versionCode": 10282,
-      "sourceRevision": "e3a34b2e04b31d95db3a0996168be5215170c043",
-      "apkSha256": "b812786f447137cb74664615ec80477ffbd5a9d36db309d34b4dd1c7eb15a1e5",
-      "evidence": "docs/audits/2026-10-16/POINTER-TIMELINE82-DELIVERY.json",
-      "evidenceSha256NormalizedLf": "068ce92b8353f33e636d117c6b6ecc64cab2712c6eba44fc8e7fa42597b783ee",
-      "packageProofObservedAtUtc": "2026-10-16T19:18:25.969381+00:00",
-      "scope": "Exact installed package hash plus completed addressed OTA. Live series replay acceptance is PH011/PH030 cases only."
+      "version": "1.2.83-dev",
+      "versionCode": 10283,
+      "sourceRevision": "0cedceb438b6368468ebc01cb5f531e6db4e3185",
+      "apkSha256": "61a22093a2edbadecebd563a874c4c4a80abb7c01000c9abd151659437f25e35",
+      "evidence": "docs/audits/2026-10-20/NETWORK-ROUTE-INPUT83-DELIVERY.json",
+      "evidenceSha256NormalizedLf": "ddb757de89e308bc1d3a72d6a0ad45e40cf534d4540aa524cc59420050d37a9e",
+      "packageProofObservedAtUtc": "2026-10-20T15:21:22.957148+00:00",
+      "scope": "Independent installed-package SHA plus completed addressed OTA; finite PH030 input and general performance are separate."
     },
-    "evidenceSha256NormalizedLf": "068ce92b8353f33e636d117c6b6ecc64cab2712c6eba44fc8e7fa42597b783ee",
+    "evidenceSha256NormalizedLf": "ddb757de89e308bc1d3a72d6a0ad45e40cf534d4540aa524cc59420050d37a9e",
     "additionalPilotApks": [
-      {
-        "device": "auto-ph-030",
-        "deviceId": "753fd530-2f19-4e5e-98ba-769863678141",
-        "version": "1.2.82-dev",
-        "versionCode": 10282,
-        "sourceRevision": "e3a34b2e04b31d95db3a0996168be5215170c043",
-        "apkSha256": "b812786f447137cb74664615ec80477ffbd5a9d36db309d34b4dd1c7eb15a1e5",
-        "evidence": "docs/audits/2026-10-16/POINTER-TIMELINE82-DELIVERY.json",
-        "evidenceSha256NormalizedLf": "068ce92b8353f33e636d117c6b6ecc64cab2712c6eba44fc8e7fa42597b783ee",
-        "packageProofObservedAtUtc": "2026-10-16T19:18:25.969381+00:00",
-        "scope": "Exact installed package hash plus completed addressed OTA. Live series replay acceptance is PH011/PH030 cases only."
-      },
       {
         "device": "auto-ph-025",
         "deviceId": "b410464a-5f26-4803-a756-7840cc17b128",
-        "version": "1.2.82-dev",
-        "versionCode": 10282,
-        "sourceRevision": "e3a34b2e04b31d95db3a0996168be5215170c043",
-        "apkSha256": "b812786f447137cb74664615ec80477ffbd5a9d36db309d34b4dd1c7eb15a1e5",
-        "evidence": "docs/audits/2026-10-16/POINTER-TIMELINE82-DELIVERY.json",
-        "evidenceSha256NormalizedLf": "068ce92b8353f33e636d117c6b6ecc64cab2712c6eba44fc8e7fa42597b783ee",
-        "packageProofObservedAtUtc": "2026-10-16T19:18:25.969381+00:00",
-        "scope": "Exact installed package hash plus completed addressed OTA. Live series replay acceptance is PH011/PH030 cases only."
+        "version": "1.2.83-dev",
+        "versionCode": 10283,
+        "sourceRevision": "0cedceb438b6368468ebc01cb5f531e6db4e3185",
+        "apkSha256": "61a22093a2edbadecebd563a874c4c4a80abb7c01000c9abd151659437f25e35",
+        "evidence": "docs/audits/2026-10-20/NETWORK-ROUTE-INPUT83-DELIVERY.json",
+        "evidenceSha256NormalizedLf": "ddb757de89e308bc1d3a72d6a0ad45e40cf534d4540aa524cc59420050d37a9e",
+        "packageProofObservedAtUtc": "2026-10-20T15:21:22.957148+00:00",
+        "scope": "Independent installed-package SHA plus completed addressed OTA; finite PH030 input and general performance are separate."
       },
       {
         "device": "auto-ph-010",
         "deviceId": "5df4805e-fe64-4d39-960c-19ceab206cd6",
-        "version": "1.2.82-dev",
-        "versionCode": 10282,
-        "sourceRevision": "e3a34b2e04b31d95db3a0996168be5215170c043",
-        "apkSha256": "b812786f447137cb74664615ec80477ffbd5a9d36db309d34b4dd1c7eb15a1e5",
-        "evidence": "docs/audits/2026-10-16/POINTER-TIMELINE82-DELIVERY.json",
-        "evidenceSha256NormalizedLf": "068ce92b8353f33e636d117c6b6ecc64cab2712c6eba44fc8e7fa42597b783ee",
-        "packageProofObservedAtUtc": "2026-10-16T19:18:25.969381+00:00",
-        "scope": "Exact installed package hash plus completed addressed OTA. Live series replay acceptance is PH011/PH030 cases only."
+        "version": "1.2.83-dev",
+        "versionCode": 10283,
+        "sourceRevision": "0cedceb438b6368468ebc01cb5f531e6db4e3185",
+        "apkSha256": "61a22093a2edbadecebd563a874c4c4a80abb7c01000c9abd151659437f25e35",
+        "evidence": "docs/audits/2026-10-20/NETWORK-ROUTE-INPUT83-DELIVERY.json",
+        "evidenceSha256NormalizedLf": "ddb757de89e308bc1d3a72d6a0ad45e40cf534d4540aa524cc59420050d37a9e",
+        "packageProofObservedAtUtc": "2026-10-20T15:21:22.957148+00:00",
+        "scope": "Independent installed-package SHA plus completed addressed OTA; finite PH030 input and general performance are separate."
       }
     ],
     "fleetApkEvidence": {
-      "evidence": "docs/audits/2026-10-16/POINTER-TIMELINE82-DELIVERY.json",
-      "evidenceSha256NormalizedLf": "068ce92b8353f33e636d117c6b6ecc64cab2712c6eba44fc8e7fa42597b783ee",
-      "installedCount": 4,
+      "evidence": "docs/audits/2026-10-20/NETWORK-ROUTE-INPUT83-DELIVERY.json",
+      "evidenceSha256NormalizedLf": "ddb757de89e308bc1d3a72d6a0ad45e40cf534d4540aa524cc59420050d37a9e",
+      "installedCount": 3,
       "verifiedVersionCounts": {
-        "10282": 4
+        "10283": 3
       },
-      "scope": "Exact installed package hashes plus completed receipts; offline devices excluded."
+      "scope": "Three independent package hashes. Four completed OTA commands; PH030 hash remains unverified; 17 offline excluded."
     },
-    "latestReadbackAtUtc": "2026-10-16T19:18:25.969381+00:00",
-    "latestReadbackEvidence": "docs/audits/2026-10-16/POINTER-TIMELINE82-DELIVERY.json",
-    "latestReadbackEvidenceSha256NormalizedLf": "068ce92b8353f33e636d117c6b6ecc64cab2712c6eba44fc8e7fa42597b783ee",
+    "latestReadbackAtUtc": "2026-10-20T15:21:22.957148+00:00",
+    "latestReadbackEvidence": "docs/audits/2026-10-20/NETWORK-ROUTE-INPUT83-DELIVERY.json",
+    "latestReadbackEvidenceSha256NormalizedLf": "ddb757de89e308bc1d3a72d6a0ad45e40cf534d4540aa524cc59420050d37a9e",
     "previousRuntimeObservation": {
       "ui": "ed9d54d090e2b5a5d471502335ddf6b8b86dbd35",
       "api": "ed9d54d090e2b5a5d471502335ddf6b8b86dbd35",
@@ -1036,10 +1024,10 @@
       {
         "deviceId": "753fd530-2f19-4e5e-98ba-769863678141",
         "name": "auto-ph-030",
-        "versionCode": 10278,
+        "versionCode": 10283,
         "installedPackageSha256": null,
         "reason": "native_input_busy",
-        "completedOtaCommandId": "192c866c-0f31-4fc7-a583-016e77e2e21b"
+        "completedOtaCommandId": "62762028-ca79-4db3-9042-0abde656e134"
       }
     ],
     "previousFleetObservationBeforeApk78": {
@@ -1421,7 +1409,73 @@
         "scope": "Actual installed package hashes and completed receipts; 17 offline excluded."
       }
     },
-    "scope": "Finite PH011 timed single-finger record/replay/cancel with two viewers via3015/Tuna; APK81 exact installed hashes on four online devices,17 offline excluded. Global timing and production SLA remain open."
+    "scope": "Finite managed delivery and PH030 native-input canary. No general shortest-route, VPN migration, low-latency or production acceptance.",
+    "previousObservationBeforeRoute83": {
+      "ui": "15ce2b623c4e4fdd0ae2b6b9435fda5a3ef42881",
+      "api": "15ce2b623c4e4fdd0ae2b6b9435fda5a3ef42881",
+      "evidence": "docs/audits/2026-10-16/POINTER-TIMELINE82-DELIVERY.json",
+      "evidenceSha256NormalizedLf": "068ce92b8353f33e636d117c6b6ecc64cab2712c6eba44fc8e7fa42597b783ee",
+      "lastObservedUtc": "2026-10-16T19:18:25.969381+00:00",
+      "pilotApk": {
+        "device": "auto-ph-011",
+        "deviceId": "414ce0e9-4b93-4f96-b9ca-ee675f53835e",
+        "version": "1.2.82-dev",
+        "versionCode": 10282,
+        "sourceRevision": "e3a34b2e04b31d95db3a0996168be5215170c043",
+        "apkSha256": "b812786f447137cb74664615ec80477ffbd5a9d36db309d34b4dd1c7eb15a1e5",
+        "evidence": "docs/audits/2026-10-16/POINTER-TIMELINE82-DELIVERY.json",
+        "evidenceSha256NormalizedLf": "068ce92b8353f33e636d117c6b6ecc64cab2712c6eba44fc8e7fa42597b783ee",
+        "packageProofObservedAtUtc": "2026-10-16T19:18:25.969381+00:00",
+        "scope": "Exact installed package hash plus completed addressed OTA. Live series replay acceptance is PH011/PH030 cases only."
+      },
+      "additionalPilotApks": [
+        {
+          "device": "auto-ph-030",
+          "deviceId": "753fd530-2f19-4e5e-98ba-769863678141",
+          "version": "1.2.82-dev",
+          "versionCode": 10282,
+          "sourceRevision": "e3a34b2e04b31d95db3a0996168be5215170c043",
+          "apkSha256": "b812786f447137cb74664615ec80477ffbd5a9d36db309d34b4dd1c7eb15a1e5",
+          "evidence": "docs/audits/2026-10-16/POINTER-TIMELINE82-DELIVERY.json",
+          "evidenceSha256NormalizedLf": "068ce92b8353f33e636d117c6b6ecc64cab2712c6eba44fc8e7fa42597b783ee",
+          "packageProofObservedAtUtc": "2026-10-16T19:18:25.969381+00:00",
+          "scope": "Exact installed package hash plus completed addressed OTA. Live series replay acceptance is PH011/PH030 cases only."
+        },
+        {
+          "device": "auto-ph-025",
+          "deviceId": "b410464a-5f26-4803-a756-7840cc17b128",
+          "version": "1.2.82-dev",
+          "versionCode": 10282,
+          "sourceRevision": "e3a34b2e04b31d95db3a0996168be5215170c043",
+          "apkSha256": "b812786f447137cb74664615ec80477ffbd5a9d36db309d34b4dd1c7eb15a1e5",
+          "evidence": "docs/audits/2026-10-16/POINTER-TIMELINE82-DELIVERY.json",
+          "evidenceSha256NormalizedLf": "068ce92b8353f33e636d117c6b6ecc64cab2712c6eba44fc8e7fa42597b783ee",
+          "packageProofObservedAtUtc": "2026-10-16T19:18:25.969381+00:00",
+          "scope": "Exact installed package hash plus completed addressed OTA. Live series replay acceptance is PH011/PH030 cases only."
+        },
+        {
+          "device": "auto-ph-010",
+          "deviceId": "5df4805e-fe64-4d39-960c-19ceab206cd6",
+          "version": "1.2.82-dev",
+          "versionCode": 10282,
+          "sourceRevision": "e3a34b2e04b31d95db3a0996168be5215170c043",
+          "apkSha256": "b812786f447137cb74664615ec80477ffbd5a9d36db309d34b4dd1c7eb15a1e5",
+          "evidence": "docs/audits/2026-10-16/POINTER-TIMELINE82-DELIVERY.json",
+          "evidenceSha256NormalizedLf": "068ce92b8353f33e636d117c6b6ecc64cab2712c6eba44fc8e7fa42597b783ee",
+          "packageProofObservedAtUtc": "2026-10-16T19:18:25.969381+00:00",
+          "scope": "Exact installed package hash plus completed addressed OTA. Live series replay acceptance is PH011/PH030 cases only."
+        }
+      ],
+      "fleetApkEvidence": {
+        "evidence": "docs/audits/2026-10-16/POINTER-TIMELINE82-DELIVERY.json",
+        "evidenceSha256NormalizedLf": "068ce92b8353f33e636d117c6b6ecc64cab2712c6eba44fc8e7fa42597b783ee",
+        "installedCount": 4,
+        "verifiedVersionCounts": {
+          "10282": 4
+        },
+        "scope": "Exact installed package hashes plus completed receipts; offline devices excluded."
+      }
+    }
   },
   "pendingCorrections": [],
   "storage": {
@@ -1750,9 +1804,9 @@
     "primaryVideoInstalled": true,
     "primaryVideoObserved": true,
     "productionAccepted": false,
-    "currentObservationEvidence": "docs/audits/2026-10-16/POINTER-TIMELINE82-DELIVERY.json",
-    "currentObservationEvidenceSha256NormalizedLf": "068ce92b8353f33e636d117c6b6ecc64cab2712c6eba44fc8e7fa42597b783ee",
-    "pilotEvidenceScope": "UI/API15ce preserved on3015/Tuna; APK82 exact installed hashes and completed OTA on four online devices. PH011/PH030 finite two-gesture recording and shared native timeline replay accepted; two direct media viewers retained, manual READY/Home restored. No universal timing or production SLA.",
+    "currentObservationEvidence": "docs/audits/2026-10-20/NETWORK-ROUTE-INPUT83-DELIVERY.json",
+    "currentObservationEvidenceSha256NormalizedLf": "ddb757de89e308bc1d3a72d6a0ad45e40cf534d4540aa524cc59420050d37a9e",
+    "pilotEvidenceScope": "Web5cbb installed; API15ce preserved. APK83 completed OTA on four online devices, three independent package hashes, PH030 completion/version only; 17 offline excluded. Finite controls passed; initial/repeated ICE/native-busy failures and latency remain open.",
     "historicalPrimaryFrames": 1804,
     "directInputCandidate": {
       "sourceRevision": "a3e61800a23e45ae028c01df9f29484b05b35ead",
@@ -5369,18 +5423,18 @@
     ]
   },
   "developmentState": {
-    "state": "MODE_AND_FALLBACK_CORRECTIONS_DELIVERED",
-    "recordedAtUtc": "2026-10-15T20:38:36.018Z",
+    "state": "ROUTE_OBSERVER_AND_APK83_DELIVERED_FOLLOWUP_OPEN",
+    "recordedAtUtc": "2026-10-20T15:21:22.957148+00:00",
     "reason": "User explicitly resumed implementation of web redesign and requested ready-made resizable/reorderable fleet table.",
     "guide": "docs/audits/2026-10-15/STREAM-CONTROL-FREEZE.md",
     "automationId": "enterprise",
     "automationStatus": "PAUSED",
     "newRuntimeInstallationsPaused": false,
     "workingRuntimeRemainsRunning": true,
-    "preparedNextVersion": "1.2.77",
-    "preparedNextVersionInstalled": false,
+    "preparedNextVersion": "1.2.83",
+    "preparedNextVersionInstalled": true,
     "scope": "Web UI refinement authorized. Stable stream/control baseline retained; APK77 not installed. Scheduled enterprise heartbeat remains paused.",
-    "latestUserWork": "UI19c4272b installed and finite native fallback fault test passed; PH030 saved incident and two-viewer packet loss recorded. Recurring heartbeat failures and color corruption need further localization. No APK/API update or broad production acceptance claimed; enterprise heartbeat remains paused."
+    "latestUserWork": "Web5cbb/APK83 delivered; direct/native input canary passed, repeated server-only/closed input and native busy remain open. See NETWORK-ROUTE-INPUT83-DELIVERY. No production readiness claimed."
   },
   "visualAudit": {
     "state": "AUDIT_AND_DESIGN_PREPARED_NOT_IMPLEMENTED",
@@ -5866,5 +5920,13 @@
       "boundedLateRetransmissionLossTestPassed": true,
       "nativeActionExpiryClockContractImplemented": false
     }
+  },
+  "networkRouteInput83": {
+    "state": "DELIVERED_FINITE_SCOPE_RECONNECT_AND_LATENCY_OPEN",
+    "observedAtUtc": "2026-10-20T15:21:22.957148+00:00",
+    "guide": "docs/audits/2026-10-20/NETWORK-ROUTE-INPUT83-DELIVERY.md",
+    "evidence": "docs/audits/2026-10-20/NETWORK-ROUTE-INPUT83-DELIVERY.json",
+    "evidenceSha256NormalizedLf": "ddb757de89e308bc1d3a72d6a0ad45e40cf534d4540aa524cc59420050d37a9e",
+    "completeReadinessAccepted": false
   }
 }

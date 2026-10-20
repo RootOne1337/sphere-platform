@@ -1,6 +1,8 @@
 <div align="center">
 
-**Проверенная установка:** UI `15ce2b62` / API `15ce2b62`.
+**Проверенная установка:** UI `5cbb4bba` / API `15ce2b62`.
+
+**20 октября — веб5cbb и APK83.** Добавлены общий локальный ICE topology observer и отдельный Android input dispatcher. 2569 frontend tests; Android dev/enterprise lint/build/unit suites — по1252 теста,3 skipped. APK83 завершил OTA на4 online устройствах:3 package SHA сверены,PH030 — completed OTA/версия без отдельного hash;17 offline не обновлены. На PH030 подтверждены кнопки и жест, но повторное подключение в проверочном браузере осталось на серверном видео без управления. Снижение latency и VPN/reconnect production-приёмка открыты. [Изменения, отрицательные проверки и следующие условия](audits/2026-10-20/NETWORK-ROUTE-INPUT83-DELIVERY.md).
 
 **17 октября — общая временная шкала APK82.** APK82 установлен по сверенным хешам на четырёх включённых устройствах; веб/API15ce сохранены на3015/Tuna. На PH011/PH030 проверены запись и повтор двух жестов с общей временной шкалой, сохранением двух direct media peers и возвратом ручного управления. Нагрузочный и общий production SLA не приняты. [Поставка и границы](audits/2026-10-16/POINTER-TIMELINE82-DELIVERY.md). Автозапуски hosted CI отключены; автоматическая локальная очередь ещё открыта. [Исправление сведений о CI](audits/2026-10-16/HOSTED-ACTIONS-DISABLED.md).
 
