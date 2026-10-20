@@ -29,7 +29,6 @@ const directFailureText: Record<string, string> = {
   video_frame_timeout: 'Прямые видеокадры перестали поступать',
   video_access_rejected: 'Доступ к прямому каналу отозван',
   network_changed: 'Сеть браузера изменилась',
-  network_route_changed: 'Изменились локальные ICE-адреса; маршрут согласуется заново',
 };
 
 type SessionRecord = { session_id: string; opened_at: string; state: 'active' | 'closed' | 'stale';

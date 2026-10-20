@@ -1,4 +1,4 @@
-import { NetworkRouteWatch, gatherLocalIceTopology, numericIceTopology } from '@/src/features/stream/networkRouteWatch';
+import { NetworkRouteWatch, gatherLocalIceTopology, numericIceTopology, watchNetworkRoute } from '@/src/features/stream/networkRouteWatch';
 
 const candidate = (address: string, port = 4000, type = 'host') =>
   ({ candidate: `candidate:random 1 udp 2113937151 ${address} ${port} typ ${type} generation 0 ufrag secret` });
@@ -72,4 +72,26 @@ test('local gather needs no remote description or input; always closes its tempo
   const value = await gatherLocalIceTopology([], new AbortController().signal);
   expect(value).toBe('host:10.1.1.1'); expect(remote).not.toHaveBeenCalled(); expect(close).toHaveBeenCalledTimes(1);
   expect(jest.getTimerCount()).toBe(0);
+});
+
+test('twenty viewers share one gather and the last subscriber owns cleanup', async () => {
+  const created = jest.fn();
+  Object.defineProperty(globalThis, 'RTCPeerConnection', { configurable: true, value: class {
+    onicecandidate: ((event: unknown) => void) | null = null;
+    constructor() { created(); }
+    createDataChannel = jest.fn();
+    createOffer = jest.fn(async () => ({ type: 'offer', sdp: 'local-only' }));
+    setLocalDescription = jest.fn(async () => {
+      this.onicecandidate?.({ candidate: { toJSON: () => candidate('10.1.1.1') } });
+      this.onicecandidate?.({ candidate: null });
+    });
+    close = jest.fn();
+  } });
+  const viewers = Array.from({length:20}, () => watchNetworkRoute([], { active: () => true, changed: jest.fn() }));
+  viewers.forEach(viewer => viewer.check());
+  jest.advanceTimersByTime(200); await flush();
+  expect(created).toHaveBeenCalledTimes(1);
+  viewers.slice(0,19).forEach(viewer => viewer.close());
+  expect(jest.getTimerCount()).toBe(1);
+  viewers[19].close(); expect(jest.getTimerCount()).toBe(0);
 });

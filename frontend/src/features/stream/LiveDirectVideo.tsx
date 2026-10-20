@@ -228,7 +228,7 @@ export function LiveDirectVideo({ deviceId, session, eligible, fit, expectedCapt
     // obsolete candidates. Coalesce duplicate browser notifications and start a
     // new authenticated attempt, even during the normal failure cooldown. Old
     // callbacks are fenced before teardown; no input is queued or transferred.
-    const networkChanged = (reason = 'network_changed') => {
+    const networkChanged = () => {
       if (disposed || document.hidden) return;
       routeWatch?.reset();
       generation++;
@@ -236,7 +236,7 @@ export function LiveDirectVideo({ deviceId, session, eligible, fit, expectedCapt
       clearRenderer(); releaseControl?.(null);
       observation.active = false;
       observation.result = { ...(observation.result ?? { samples: [], path: 'unknown', protocol: null }),
-        state: 'failed', reason };
+        state: 'failed', reason: 'network_changed' };
       publish();
       if (retry !== null) clearTimeout(retry);
       attemptsInWindow = 0;
@@ -262,7 +262,8 @@ export function LiveDirectVideo({ deviceId, session, eligible, fit, expectedCapt
     const focus = () => routeWatch?.check();
     routeWatch = watchNetworkRoute(directProbeIceConfig(stun).iceServers, {
       active: () => !disposed && !document.hidden && observation.active && observation.result?.state === 'connected',
-      changed: () => networkChanged('network_route_changed'),
+      // Reuse the existing diagnostic contract, including on older APIs.
+      changed: networkChanged,
     });
     window.addEventListener('online', online);
     window.addEventListener('focus', focus);
