@@ -12,6 +12,7 @@ test('numeric topology ignores transient ports, foundation, credentials and rota
   expect(first).not.toBe(numericIceTopology([candidate('192.168.1.2'), candidate('198.51.100.3', 7000, 'srflx')]));
   expect(numericIceTopology([candidate('one.local'), candidate('999.1.2.3')])).toBeNull();
   expect(first).not.toMatch(/secret|random|ufrag|local/);
+  expect(numericIceTopology([candidate('2001:0db8:0:0:0:0:0:1')])).toBe(numericIceTopology([candidate('2001:db8::1')]));
 });
 
 test('estimate events coalesce; stable addresses keep the stream, a VPN address change notifies each active viewer once', async () => {
@@ -68,6 +69,17 @@ test('one inconsistent STUN topology never resets a stable stream', async () => 
   jest.advanceTimersByTime(5000); await flush();
   expect(sample).toHaveBeenCalledTimes(3); expect(changed).not.toHaveBeenCalled();
   watch.close();
+});
+
+test('one failed viewer callback cannot prevent another viewer from renewing its route', async () => {
+  const sample = jest.fn().mockResolvedValueOnce('host:10.1.1.1').mockResolvedValue('host:10.2.2.2');
+  const changed = jest.fn(), watch = new NetworkRouteWatch([], sample);
+  watch.add({ active: () => true, changed: () => { throw Error('retired'); } });
+  watch.add({ active: () => true, changed });
+  watch.check(); jest.advanceTimersByTime(200); await flush();
+  watch.check(); jest.advanceTimersByTime(5000); await flush();
+  jest.advanceTimersByTime(5000); await flush();
+  expect(changed).toHaveBeenCalledTimes(1); watch.close();
 });
 
 test('local gather needs no remote description or input; always closes its temporary peer', async () => {

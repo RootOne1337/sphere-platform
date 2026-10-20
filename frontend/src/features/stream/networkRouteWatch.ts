@@ -12,11 +12,15 @@ export function numericIceTopology(candidates: readonly RTCIceCandidateInit[]): 
     const ipv4 = address.split('.');
     const valid4 = ipv4.length === 4 && ipv4.every(v => /^(0|[1-9]\d{0,2})$/.test(v) && +v <= 255);
     let valid6 = false;
+    let canonical = address;
     if (address.includes(':') && /^[a-f0-9:]{2,64}$/.test(address)) {
-      try { valid6 = new URL(`http://[${address}]/`).hostname.startsWith('['); } catch { /* Unknown. */ }
+      try {
+        const host = new URL(`http://[${address}]/`).hostname;
+        valid6 = host.startsWith('['); canonical = host.slice(1, -1);
+      } catch { /* Unknown. */ }
     }
     // mDNS names can rotate between peers. They cannot identify an interface change.
-    if (valid4 || valid6) entries.add(`${parts[7]}:${address}`);
+    if (valid4 || valid6) entries.add(`${parts[7]}:${canonical}`);
   }
   return entries.size ? [...entries].sort().join('|') : null;
 }
@@ -101,7 +105,9 @@ export class NetworkRouteWatch {
         this.suspected = topology; confirm = true;
       } else {
         this.baseline = topology; this.suspected = null;
-        if (changed) for (const listener of [...this.listeners]) if (listener.active()) listener.changed();
+        if (changed) for (const listener of [...this.listeners]) if (listener.active()) {
+          try { listener.changed(); } catch { /* One retired viewer cannot block another viewer's recovery. */ }
+        }
       }
     } catch { /* A failed local gather cannot tear down working video. */ }
     finally {
