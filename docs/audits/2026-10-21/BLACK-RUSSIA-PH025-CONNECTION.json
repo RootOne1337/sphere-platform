@@ -116,9 +116,16 @@
     "symptom": "session runs for minutes, disconnects, automatic about 15-second reconnect, repeats",
     "vpnOnAndOffBothFailReported": true,
     "unboundEmailWarningReported": true,
-    "sameNetworkVersusMobileComparison": "pending_user_clarification",
-    "serverAndDisconnectCode": "pending_user_clarification",
-    "sameRootCauseAsPh025Confirmed": false
+    "sameNetworkVersusMobileComparison": "User reports Wi-Fi drops with and without VPN; same phone/account/server on mobile MTS has no drop for several minutes so far. Preliminary, not a timed acceptance run.",
+    "serverAndDisconnectCode": "PENZA confirmed by user; exact disconnect code/text/PacketLoss/Ping remain unknown",
+    "sameRootCauseAsPh025Confirmed": false,
+    "server": "PENZA",
+    "wifiIsp": "Rostelecom",
+    "mobileIsp": "MTS",
+    "mobileObservationNoDisconnectReported": true,
+    "mobileStableLongSessionAccepted": false,
+    "ipBlacklistConfirmed": false,
+    "updatedAtUtc": "2026-10-20T20:28:18.488548+00:00"
   },
   "mutations": {
     "fullGameRestartCount": 1,
@@ -337,10 +344,11 @@
   "nextDiscriminatingChecks": [
     "Capture exact phone disconnect reason, server and time.",
     "Owner verifies email binding status; if incomplete, confirms privately and compares one unchanged manual session.",
-    "Same phone/account/server on Wi-Fi versus mobile with VPN off throughout, no mid-session network switches.",
+    "Continue timed 10-15 minute manual MTS session, then comparable Wi-Fi session with same activity/account/server; no mid-session switches, distinguish AFK.",
     "Compare devices/builds/accounts explicitly; guest account and distribution differences are confounders.",
     "Prepare support packet with confirmed server/identity privately; no sending without authorization."
   ],
   "guide": "docs/audits/2026-10-21/BLACK-RUSSIA-PH025-CONNECTION.md",
-  "previousEvidence": "docs/audits/2026-10-17/BLACK-RUSSIA-CONNECTION-HANG.json"
+  "previousEvidence": "docs/audits/2026-10-17/BLACK-RUSSIA-CONNECTION-HANG.json",
+  "updatedAtUtc": "2026-10-20T20:28:18.488548+00:00"
 }
