@@ -1,11 +1,11 @@
 {
   "schemaVersion": 1,
-  "reviewedAtUtc": "2026-10-20T19:51:17.527912+00:00",
+  "reviewedAtUtc": "2026-10-20T20:26:00.454159+00:00",
   "scope": "All tracked Markdown classified; active local-link paths scanned. Not semantic attestation of every sentence, command execution, external-link or live acceptance.",
   "countsByRole": {
     "ADR": 6,
     "CURRENT_ENTRYPOINT": 8,
-    "DATED_EVIDENCE": 352,
+    "DATED_EVIDENCE": 353,
     "DESIGN_SPECIFICATION": 81,
     "OPERATING_GUIDE": 67,
     "PROJECT_POLICY": 7,
@@ -1546,6 +1546,10 @@
     },
     {
       "file": "docs/audits/2026-10-20/NETWORK-ROUTE-INPUT83-DELIVERY.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
+      "file": "docs/audits/2026-10-21/BLACK-RUSSIA-PH025-CONNECTION.md",
       "role": "DATED_EVIDENCE"
     },
     {
