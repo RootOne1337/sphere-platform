@@ -46,6 +46,7 @@ class HeadlessIntegrationTests(unittest.IsolatedAsyncioTestCase):
         self.after_down = asyncio.Event()
         self.close_peer_on_goodbye = False
         self.close_peer_after_down = False
+        self.camera_overlay = None
         self.server = await serve(self.endpoint, "127.0.0.1", 0)
         self.url = f"http://127.0.0.1:{self.server.sockets[0].getsockname()[1]}"
 
@@ -127,6 +128,8 @@ class HeadlessIntegrationTests(unittest.IsolatedAsyncioTestCase):
                     await asyncio.sleep(30)
                 array = np.zeros((180, 320, 3), dtype=np.uint8)
                 array[:] = [32, 96, 160]
+                if fixture.camera_overlay:
+                    fixture.camera_overlay(array)
                 frame = VideoFrame.from_ndarray(array, format="rgb24")
                 frame.pts = self.index * 3000
                 frame.time_base = Fraction(1, 90000)
@@ -421,6 +424,34 @@ class HeadlessIntegrationTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(report["kind"], "HEADLESS_POLICY_SHADOW_NOT_GAMEPLAY")
         self.assertGreaterEqual(report["policyShadow"]["accepted"], 2)
         self.assertTrue(report["policyShadow"]["cleanupConfirmed"])
+        self.assertFalse(report["control"]["requested"])
+        self.assertEqual(report["control"]["pointerKeyTextCommandsSent"], 0)
+        self.assertFalse(any(d.get("type", "").startswith("touch_") for d in self.received))
+
+    @unittest.skipUnless(importlib.util.find_spec("cv2"), "optional motor vision required")
+    async def test_minimap_route_analysis_uses_decoded_video_and_never_opens_control(self):
+        import cv2
+
+        from motor_worker.minimap import MinimapProfile, MinimapRouteShadow
+
+        self.camera_overlay = lambda a: cv2.line(a, (60, 58), (60, 15), (230, 20, 230), 3)
+        observer = MinimapRouteShadow(
+            MinimapProfile(320, 180, (12, 10, 96, 96), (48, 48), 44, 6,
+                           (130, 110, 80), (170, 255, 255), forward_degrees=0),
+            goal_revision=DEVICE,
+        )
+        session = HeadlessSession(
+            SessionConfig(self.url, DEVICE, duration=1.2, shadow_policy=True), policy=observer,
+        )
+        try:
+            report = await session.run("fixture-token")
+        finally:
+            await observer.close()
+        self.assertTrue(report["success"], report)
+        self.assertEqual(report["kind"], "HEADLESS_MINIMAP_ROUTE_ANALYSIS_NOT_GAMEPLAY")
+        self.assertGreaterEqual(report["routeAnalysis"]["reasons"].get("route_observed", 0), 2)
+        self.assertTrue(report["routeAnalysis"]["backgroundJobRetired"])
+        self.assertFalse(report["modelInstalled"])
         self.assertFalse(report["control"]["requested"])
         self.assertEqual(report["control"]["pointerKeyTextCommandsSent"], 0)
         self.assertFalse(any(d.get("type", "").startswith("touch_") for d in self.received))

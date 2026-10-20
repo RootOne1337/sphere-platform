@@ -18,6 +18,7 @@ from contextlib import AsyncExitStack
 from dataclasses import dataclass
 from importlib.metadata import version
 
+from motor_worker.minimap import MinimapRouteShadow
 from motor_worker.observation import LatestFrame
 from motor_worker.pointer_probe import PointerProbe
 from motor_worker.policy import NeutralPolicy, Policy, PolicyFrame, ShadowPolicyLoop
@@ -105,6 +106,8 @@ class HeadlessSession:
     ):
         if policy is not None and not config.shadow_policy:
             raise ProtocolError("external_policy_requires_shadow_mode")
+        if isinstance(policy, MinimapRouteShadow) and config.probe_control:
+            raise ProtocolError("minimap_analysis_forbids_native_admission")
         self.config = config
         self.peer = None
         self.ws = None
@@ -809,7 +812,9 @@ class HeadlessSession:
         control = self.admission
         return {
             "schemaVersion": 1,
-            "kind": "HEADLESS_POLICY_SHADOW_NOT_GAMEPLAY"
+            "kind": "HEADLESS_MINIMAP_ROUTE_ANALYSIS_NOT_GAMEPLAY"
+            if self.shadow and isinstance(self.shadow.provider, MinimapRouteShadow)
+            else "HEADLESS_POLICY_SHADOW_NOT_GAMEPLAY"
             if self.shadow
             else "HEADLESS_POINTER_PROBE_NOT_GAMEPLAY"
             if self.config.pointer_probe
@@ -890,6 +895,9 @@ class HeadlessSession:
                 "samples": list(self.probe_samples),
             },
             "policyShadow": self.shadow.report() if self.shadow else {"enabled": False},
+            "routeAnalysis": self.shadow.provider.report()
+            if self.shadow and isinstance(self.shadow.provider, MinimapRouteShadow)
+            else None,
             "policyProcess": self.shadow.provider.report()
             if self.shadow and type(self.shadow.provider) is ProcessPolicy
             else None,
@@ -905,6 +913,7 @@ class HeadlessSession:
             # is not proof of a learned model or correct RGB preprocessing.
             "modelInstalled": None
             if self.shadow and type(self.shadow.provider) is not NeutralPolicy
+            and not isinstance(self.shadow.provider, MinimapRouteShadow)
             else False,
             "h264PacketBuffer": self.h264_packet_buffer.report()
             if hasattr(self, "h264_packet_buffer")

@@ -10,6 +10,7 @@ import time
 from collections import deque
 from dataclasses import dataclass
 
+from motor_worker.minimap import MinimapRouteShadow
 from motor_worker.policy import ActionChunk, GamepadState, KeyboardMouseState, PolicyFrame, finite
 from motor_worker.protocol import ProtocolError, integer
 from motor_worker.session import HeadlessSession, SessionConfig
@@ -159,6 +160,7 @@ class StickPolicySession(HeadlessSession):
             or config.observation_hz < 4
             or not callable(scene_guard)
             or policy is None
+            or isinstance(policy, MinimapRouteShadow)
         ):
             raise ProtocolError("explicit_stick_execution_required")
         super().__init__(config, policy=policy, policy_timeout=0.4, policy_max_receiver_age=0.4)

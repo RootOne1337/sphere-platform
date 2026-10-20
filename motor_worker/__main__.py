@@ -4,12 +4,15 @@ from __future__ import annotations
 
 import argparse
 import asyncio
+import importlib.util
 import json
 import logging
 import os
 import sys
+import uuid
 from pathlib import Path
 
+from motor_worker.minimap import MinimapProfile, MinimapRouteShadow
 from motor_worker.pointer_probe import PointerProbe
 from motor_worker.protocol import ProtocolError
 from motor_worker.session import HeadlessSession, SessionConfig
@@ -25,9 +28,11 @@ def main() -> int:
     parser.add_argument("--observation-hz", type=float, default=5)
     parser.add_argument(
         "--shadow-policy",
-        choices=["neutral"],
-        help="Test asynchronous policy boundary with real RGB and neutral fixture; sends no actions",
+        choices=["neutral", "minimap"],
+        help="Read-only neutral fixture or calibrated minimap analysis; sends no actions",
     )
+    parser.add_argument("--minimap-profile", type=Path, help="Version1 minimap profile JSON, max4096B")
+    parser.add_argument("--goal-revision", help="Optional UUID identifying this minimap analysis goal")
     parser.add_argument(
         "--probe-control",
         action="store_true",
@@ -53,6 +58,30 @@ def main() -> int:
     # emits only our finite structured report and fixed errors.
     logging.disable(logging.CRITICAL)
     try:
+        observer = None
+        if args.shadow_policy == "minimap":
+            if args.minimap_profile is None or args.probe_control or args.pointer_probe:
+                raise ProtocolError("invalid_minimap_shadow_options")
+            if any(importlib.util.find_spec(name) is None for name in ("cv2", "numpy")):
+                raise ProtocolError("motor_vision_dependencies_missing")
+            try:
+                # Load optional native libraries before starting the video clock.
+                importlib.import_module("cv2")
+                importlib.import_module("numpy")
+            except ImportError as exc:
+                raise ProtocolError("motor_vision_dependencies_missing") from exc
+            try:
+                with args.minimap_profile.open("rb") as source:
+                    raw_profile = source.read(4097)
+            except OSError as exc:
+                raise ProtocolError("minimap_profile_file_unavailable") from exc
+            try:
+                profile = MinimapProfile.parse(raw_profile.decode("utf-8"))
+            except UnicodeDecodeError as exc:
+                raise ProtocolError("invalid_minimap_profile_encoding") from exc
+            observer = MinimapRouteShadow(profile, goal_revision=args.goal_revision or str(uuid.uuid4()))
+        elif args.minimap_profile is not None or args.goal_revision is not None:
+            raise ProtocolError("invalid_minimap_shadow_options")
         probe = None
         if args.pointer_probe:
             try:
@@ -84,10 +113,18 @@ def main() -> int:
             snapshot = None
             if args.snapshot:
                 snapshot = args.snapshot.open("xb")
-            session = HeadlessSession(config)
+            session = HeadlessSession(config, policy=observer)
+
+            async def run_session():
+                try:
+                    return await session.run(token)
+                finally:
+                    if observer:
+                        await observer.close()
+
             try:
                 try:
-                    report = asyncio.run(session.run(token))
+                    report = asyncio.run(run_session())
                 except KeyboardInterrupt:
                     report = session.report()
                     report.update(success=False, failure="cancelled")

@@ -32,11 +32,16 @@ def _unique(pairs: list[tuple]) -> dict:
     return result
 
 
-def message(raw: object, limit: int = 36864) -> dict:
+def message(raw: object, limit: int = 36864, *, strict_numbers: bool = False) -> dict:
     if not isinstance(raw, str) or len(raw.encode()) > limit:
         raise ProtocolError("message_size_or_type")
+    def constant(_):
+        if strict_numbers:
+            raise ValueError("nonfinite_json_constant")
+        return None
+
     try:
-        data = json.loads(raw, object_pairs_hook=_unique, parse_constant=lambda _: None)
+        data = json.loads(raw, object_pairs_hook=_unique, parse_constant=constant)
     except (ValueError, RecursionError) as exc:
         raise ProtocolError("invalid_json") from exc
     if not isinstance(data, dict):
