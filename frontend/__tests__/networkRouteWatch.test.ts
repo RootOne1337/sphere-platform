@@ -16,7 +16,7 @@ test('numeric topology ignores transient ports, foundation, credentials and rota
 
 test('estimate events coalesce; stable addresses keep the stream, a VPN address change notifies each active viewer once', async () => {
   const sample = jest.fn().mockResolvedValueOnce('host:10.1.1.1').mockResolvedValueOnce('host:10.1.1.1')
-    .mockResolvedValueOnce('host:10.1.1.1|srflx:198.51.100.1');
+    .mockResolvedValue('host:10.1.1.1|srflx:198.51.100.1');
   const watch = new NetworkRouteWatch([], sample);
   const changed = jest.fn(), inactive = jest.fn();
   watch.add({ active: () => true, changed }); watch.add({ active: () => false, changed: inactive });
@@ -26,6 +26,8 @@ test('estimate events coalesce; stable addresses keep the stream, a VPN address 
   watch.check(); jest.advanceTimersByTime(5000); await flush();
   expect(changed).not.toHaveBeenCalled();
   watch.check(); jest.advanceTimersByTime(5000); await flush();
+  expect(changed).not.toHaveBeenCalled();
+  jest.advanceTimersByTime(5000); await flush();
   expect(changed).toHaveBeenCalledTimes(1); expect(inactive).not.toHaveBeenCalled();
   watch.close(); expect(jest.getTimerCount()).toBe(0);
 });
@@ -50,7 +52,21 @@ test('one silent network change is discovered by polling even without browser on
   watch.add({ active: () => true, changed });
   watch.check(); jest.advanceTimersByTime(200); await flush();
   jest.advanceTimersByTime(20000); await flush();
+  expect(changed).not.toHaveBeenCalled();
+  jest.advanceTimersByTime(5000); await flush();
   expect(changed).toHaveBeenCalledTimes(1);
+  watch.close();
+});
+
+test('one inconsistent STUN topology never resets a stable stream', async () => {
+  const sample = jest.fn().mockResolvedValueOnce('host:10.1.1.1').mockResolvedValueOnce('host:10.2.2.2')
+    .mockResolvedValue('host:10.1.1.1');
+  const changed = jest.fn(), watch = new NetworkRouteWatch([], sample);
+  watch.add({ active: () => true, changed });
+  watch.check(); jest.advanceTimersByTime(200); await flush();
+  watch.check(); jest.advanceTimersByTime(5000); await flush();
+  jest.advanceTimersByTime(5000); await flush();
+  expect(sample).toHaveBeenCalledTimes(3); expect(changed).not.toHaveBeenCalled();
   watch.close();
 });
 

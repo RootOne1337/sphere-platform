@@ -65,6 +65,7 @@ type Sampler = typeof gatherLocalIceTopology;
 export class NetworkRouteWatch {
   private listeners = new Set<Listener>();
   private baseline: string | null = null;
+  private suspected: string | null = null;
   private pending: AbortController | null = null;
   private timer: ReturnType<typeof setTimeout> | undefined;
   private periodic: ReturnType<typeof setInterval>;
@@ -76,7 +77,7 @@ export class NetworkRouteWatch {
   add(listener: Listener) { this.listeners.add(listener); }
   remove(listener: Listener) { this.listeners.delete(listener); return this.listeners.size; }
   reset() {
-    this.baseline = null; this.lastStarted = -Infinity;
+    this.baseline = this.suspected = null; this.lastStarted = -Infinity;
     this.pending?.abort(); this.pending = null;
     clearTimeout(this.timer); this.timer = undefined;
   }
@@ -89,19 +90,29 @@ export class NetworkRouteWatch {
     if (this.retired || ![...this.listeners].some(v => v.active())) return;
     const controller = this.pending = new AbortController();
     this.lastStarted = performance.now();
+    let confirm = false;
     try {
       const topology = await this.sample(this.servers, controller.signal);
       if (this.retired || controller.signal.aborted || !topology) return;
       const changed = this.baseline !== null && this.baseline !== topology;
-      this.baseline = topology;
-      if (changed) for (const listener of [...this.listeners]) if (listener.active()) listener.changed();
+      if (changed && this.suspected !== topology) {
+        // A transient STUN/CGNAT result must not reset twenty working streams.
+        // Confirm the same changed topology in a second bounded gather.
+        this.suspected = topology; confirm = true;
+      } else {
+        this.baseline = topology; this.suspected = null;
+        if (changed) for (const listener of [...this.listeners]) if (listener.active()) listener.changed();
+      }
     } catch { /* A failed local gather cannot tear down working video. */ }
-    finally { if (this.pending === controller) this.pending = null; }
+    finally {
+      if (this.pending === controller) this.pending = null;
+      if (confirm && !controller.signal.aborted) this.check();
+    }
   }
   close() {
     this.retired = true;
     clearInterval(this.periodic); clearTimeout(this.timer);
-    this.pending?.abort(); this.pending = null; this.listeners.clear(); this.baseline = null;
+    this.pending?.abort(); this.pending = null; this.listeners.clear(); this.baseline = this.suspected = null;
   }
 }
 
