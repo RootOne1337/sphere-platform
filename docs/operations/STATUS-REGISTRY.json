@@ -5919,6 +5919,25 @@
       "modelControlPacketLifeTimeMs": 200,
       "boundedLateRetransmissionLossTestPassed": true,
       "nativeActionExpiryClockContractImplemented": false
+    },
+    "latestNavigationReview": {
+      "evidence": "docs/audits/2026-10-20/MOTOR-NAVIGATION-REVIEW07.json",
+      "evidenceSha256NormalizedLf": "adb3b96ad757400e47b410a617a2d31e0ca50ed94d81f36db11bea0d0b1ee22c",
+      "sourceRevision": "3aded23738ffa8b7e762c23d6a1345eb35c95131",
+      "workerVersion": "0.6.1",
+      "guideVersion": "2.7",
+      "acceptedResultTimingImplemented": true,
+      "motorTestsPassed": 153,
+      "liveVideoOnlyModelsTested": 2,
+      "learnedGoalConditioningImplemented": false,
+      "learnedGoalNavigationAccepted": false,
+      "vehicleDrivingAccepted": false,
+      "strictFiveResultsEveryCompleteSecondAccepted": false,
+      "sourceCaptureAgeMeasured": false,
+      "separateGpuLanTested": false,
+      "otherGpusBenchmarked": false,
+      "inputCommandsSentInThisReview": 0,
+      "uiApiApkChanged": false
     }
   },
   "networkRouteInput83": {

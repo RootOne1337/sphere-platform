@@ -2,6 +2,14 @@
 
 **Проверенная установка:** UI `5cbb4bba` / API `15ce2b62`.
 
+**20 октября — навигация A→B и worker0.6.1.** Обновлён единый AI-план2.7: GPS-route/
+obstacle/vehicle contracts, удержание между наблюдениями, latency budget, компактные VLM,
+границы VPN и порядок N1–N6. Добавлена bounded result-cadence telemetry;153 motor tests/Ruff
+прошли. Настоящие PH025/RX9070 video-only опыты дали4.036/4.921Гц NitroGen16/P2P150M,
+минимумы3/4 ответа в полных1-с окнах. Сцена — game disconnect; native input не запрашивался.
+Цель в модели пока не передаётся; вождение/устойчивые5Гц/50 устройств не приняты.
+Установка UI/API/APK сохранена. [Факты и ограничения](../audits/2026-10-20/MOTOR-NAVIGATION-REVIEW07.md).
+
 **20 октября — веб5cbb и APK83.** Добавлены общий локальный ICE topology observer и отдельный Android input dispatcher. 2569 frontend tests; Android dev/enterprise lint/build/unit suites — по1252 теста,3 skipped. APK83 завершил OTA на4 online устройствах:3 package SHA сверены,PH030 — completed OTA/версия без отдельного hash;17 offline не обновлены. На PH030 подтверждены кнопки и жест, но повторное подключение в проверочном браузере осталось на серверном видео без управления. Снижение latency и VPN/reconnect production-приёмка открыты. [Изменения, отрицательные проверки и следующие условия](../audits/2026-10-20/NETWORK-ROUTE-INPUT83-DELIVERY.md).
 
 **20 октября — worker0.6 и PH025.** Реализован общий opt-in model→held-stick исполнитель,

@@ -1,5 +1,17 @@
 # Headless motor worker: транспорт и конечный ввод
 
+**20 октября ·0.6.1:** `policyShadow.acceptedResultTiming` разделяет принятую частоту,
+минимум ответов в полных1-с окнах, интервалы/тишину и возраст decoded receiver frame.
+Счётчики доступны также в opt-in stick session; они не являются native APPLIED или
+source capture latency. Измерение начинается с валидного offer и замораживается при
+закрытии до cleanup; процентили используют последние128 samples. Неполное окно не может
+подтвердить requested rate.153 motor tests/Ruff прошли. Свежие read-only PH025 замеры:
+NitroGen16 —4.036Гц, P2P150M без текста —4.921Гц; минимум3/4 результата в полной секунде.
+Игровой renderer показывал disconnect, поэтому gameplay не проверен.
+[Измерения и ограничения](../audits/2026-10-20/MOTOR-NAVIGATION-REVIEW07.md),
+[единая архитектура, раздел22](../design/MOTOR-AI-PLATFORM.md).
+Последняя проверенная платформа — UI5cbb4bba/API15ce2b62/APK83; старые записи ниже датированы.
+
 **20 октября ·0.6.0:** общий `StickPolicySession` с явным opt-in и calibrated scene guard,
 continuous held-center stick для NitroGen/WASD, точный request/result binding, bounded RTP
 stall recovery и телеметрия scheduler/ACK/SCTP.145 motor tests прошли. На PH025 выполнен
