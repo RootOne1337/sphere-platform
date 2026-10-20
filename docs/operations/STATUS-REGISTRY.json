@@ -5844,6 +5844,27 @@
       "nativeMultiContactImplemented": false,
       "recoveryActuatorIntegrated": false,
       "liveGameWorldAvailable": false
+    },
+    "finiteModelStickExecutor": {
+      "evidence": "docs/audits/2026-10-20/MOTOR-PH025-EXECUTION06.json",
+      "evidenceSha256NormalizedLf": "d36075af9c3c9fd68c853db6ae3e1a19772ab3db6c8a912e5e071aaa10035759",
+      "sourceRevision": "330ae5e8942f254739e9bf9512af2dd38639eda3",
+      "workerVersion": "0.6.0",
+      "motorTestsPassed": 145,
+      "finiteExecutorImplemented": true,
+      "sceneGuardRequired": true,
+      "lastAcceptedFrameBindingPreserved": true,
+      "directPh025TransportConfirmed": true,
+      "ph025VideoOnlyNitrogenResponses": 89,
+      "combinedLearnedControlAccepted": false,
+      "productionGameplayAccepted": false,
+      "colorParityAccepted": false,
+      "finitePh025MovementAccepted": true,
+      "nativeAppliedInFirstFiniteMovement": 62,
+      "sctpRetransmissionsObserved": true,
+      "modelControlPacketLifeTimeMs": 200,
+      "boundedLateRetransmissionLossTestPassed": true,
+      "nativeActionExpiryClockContractImplemented": false
     }
   }
 }

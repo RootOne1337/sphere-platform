@@ -1,12 +1,20 @@
 # Игровой AI-контур Sphere: архитектура, модели и план реализации
 
+**20 октября · worker0.6:** реализован общий finite `StickPolicySession`, а не только private
+movement runner; доступны scene/freshness guard, held-center WASD/gamepad и exact request binding.
+145 motor tests прошли. PH025: положительные direct transport/control опыты,89
+NitroGen video-only responses и finite learned movement61 responses/62 APPLIED за12с.
+Повторные запуски выявили ACK/lease failures и SCTP retransmissions с RTO1000мс.
+Black Russia установлена, гостевой персонаж находится в tutorial world. Полный gameplay, цвет/clock parity,
+камера/multi-touch и fleet SLA остаются открытыми. [Точный срез](../audits/2026-10-20/MOTOR-PH025-EXECUTION06.md).
+
 **Текущий срез · 17 октября 2026:** UI/API `15ce2b62`, APK82 сохранены. NitroGen/P2P реально запущены на локальной RX9070 через direct PH011. Добавлены held-center stick contact, исполнение latest18-state gamepad trajectory и explicit WASD adapter. Последний45-с NitroGen8 опыт:235 решений/5.182Гц,571/571 native APPLIED, один непрерывный контакт и подтверждённое закрытие. Метка241→241м: навигация не принята. P2P150M проверялся без text conditioning; сравнение пригодности ещё открыто. [Факты, ограничения и goal-контур](../audits/2026-10-17/MOTOR-STICK-CONTACT-LIVE.md). Поставляемый model loader/preprocessing, камера/multi-touch, source capture/action clocks и отдельная GPU/LAN ещё нужны.
 
 **Recovery этап:**122 motor tests подтвердили ограниченный supervisory layer прогресса/падения, at-most-once double tap/camera sequences и optional optical-flow sensor. Это не семантическое распознавание зданий и не integrated obstacle avoidance; native multi-touch открыт. Положительный live jump/camera test пока заблокирован подключением игры. [Срез и evidence](../audits/2026-10-17/MOTOR-NAVIGATION-RECOVERY.md).
 
 **Последующий goal-опыт:** отдельный5Гц CV visual servo довёл персонажа к пользовательской метке; прибытие подтверждено пользователем,36/36 native APPLIED и CLOSED. Нейросети не использовались, поэтому learned goal navigation остаётся открытой. [Результаты и пределы](../audits/2026-10-17/MOTOR-WAYPOINT-SERVO.md).
 
-**Единый рабочий документ · 17 октября 2026 · версия 2.5.**
+**Единый рабочий документ · 20 октября 2026 · версия 2.6.**
 
 Назначение: подготовить реализацию отдельной GPU-станции, которая получает экран Android APK
 напрямую и управляет игрой без открытого браузера. Первый целевой сценарий — движение к метке

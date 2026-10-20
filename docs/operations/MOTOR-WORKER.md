@@ -1,17 +1,54 @@
 # Headless motor worker: транспорт и конечный ввод
 
+**20 октября ·0.6.0:** общий `StickPolicySession` с явным opt-in и calibrated scene guard,
+continuous held-center stick для NitroGen/WASD, точный request/result binding, bounded RTP
+stall recovery и телеметрия scheduler/ACK/SCTP.145 motor tests прошли. На PH025 выполнен
+положительный12-секундный learned movement-only опыт:61 ответ NitroGen и62/62 APPLIED.
+Повторные запуски выявили SCTP retransmissions/RTO1000мс; устойчивый совместный gameplay
+не принят. [Испытания и открытые условия](../audits/2026-10-20/MOTOR-PH025-EXECUTION06.md).
+
+### Явный API исполнения стика
+
+`motor_worker.stick_execution.StickPolicySession` принимает `SessionConfig` с
+`probe_control=True`, `shadow_policy=True`, без static `pointer_probe`, а также
+`StickProfile(StickGeometry(...), source="gamepad_left" | "wasd")`, асинхронный `policy`,
+`scene_guard(frame: PolicyFrame) -> bool` и `execution_enabled=True`.
+Это API для доверенного локального адаптера; автоматического обнаружения игры и готового
+scene detector нет. Guard должен отличать рабочий HUD от меню/отключения/загрузки.
+Значение `True` по наличию одного видео не является калибровкой.
+
+Provider создаётся/прогревается до старта сессии через существующий `ProcessPolicy`.
+Жизненный цикл provider нужно закрывать в `finally`/`async with`; токен передаётся в
+`session.run` из существующего окружения, без записи в аргументы и отчёт.
+`mask_other_channels=False` по умолчанию отклоняет unmapped mouse/buttons/right stick.
+Явное `True` допускает только ограниченный movement-only опыт и считает masked results.
+Обычный CLI `python -m motor_worker` сохраняет транспортный/shadow режим без model execution.
+`stickExecution` в отчёте разделяет scene refusal, accepted/rejected results, физические
+события и APPLIED; успешная передача не подтверждает достижение игровой цели.
+Guard проверяется и при занятом GPU. Если inference занял немного больше одного периода,
+следующий запуск выбирает свежий кадр сразу после освобождения слота, без пропуска ещё200мс.
+Частота RGB guard checks и количество принятых model results — разные величины.
+Последние600мс finite run отведены на отпускание контакта и его подтверждение.
+`sctpTransport` наблюдает ретрансляции/T3/RTO без изменения таймеров и reliability;
+это диагностика всей association, включая закрытие. Отдельный retry команды не выполняется.
+Только этот opt-in executor создаёт ordered PR-SCTP control channel с
+`maxPacketLifeTime=200мс`; обычный HeadlessSession остаётся reliable. Просроченная
+ретрансляция не заменяет неизвестный ACK. Это не ограничивает задержку первоначального
+пакета в сети: APK-side action deadline с согласованными часами остаётся открытым условием.
+
 **Recovery-примитивы:** доступны bounded `NavigationSupervisor`, `PointerSequence` и optional background-motion sensor.122 tests прошли; obstacle perception, runtime integration и multi-touch ещё нужны. Живая калибровка jump/camera заблокирована loading самой игры. [Результаты и границы](../audits/2026-10-17/MOTOR-NAVIGATION-RECOVERY.md).
 
 **Новый конечный опыт:** NitroGen8 на PH011:235 решений/5.182Гц,571/571 native APPLIED, один непрерывный контакт, подтверждённое закрытие. Добавлены pure held-center contact, latest gamepad trajectory и explicit WASD adapter. Цель не передавалась; метка241→241м, навигация не принята. [Результаты, свежесть и goal conditioning](../audits/2026-10-17/MOTOR-STICK-CONTACT-LIVE.md).
 
-17 октября 2026 · версия модуля `0.5.1` · **транспорт, opt-in single-finger probe и изолированный shadow provider**. Есть общий локальный RGB pipe для NitroGen/P2P; загрузчики моделей и AMD preprocessing пока остаются отдельными пилотными адаптерами. Поставляемого игрового executor нет; отдельный private12-секундный [learned WASD опыт](../audits/2026-10-17/MOTOR-LEARNED-WALK-PILOT.md) подтвердил15native событий. [Начальные AMD-измерения](../audits/2026-10-17/MOTOR-AMD-LOCAL41.md).
+Исторический срез17 октября · версия модуля `0.5.1` · **транспорт, opt-in single-finger probe и изолированный shadow provider**. Общий локальный RGB pipe для NitroGen/P2P уже был; загрузчики моделей и AMD preprocessing остаются отдельными пилотными адаптерами. Тогда поставляемого игрового executor не было; отдельный private12-секундный [learned WASD опыт](../audits/2026-10-17/MOTOR-LEARNED-WALK-PILOT.md) подтвердил15native событий. [Начальные AMD-измерения](../audits/2026-10-17/MOTOR-AMD-LOCAL41.md).
 
-Текущий этап — [process provider](../audits/2026-10-17/MOTOR-PROCESS-POLICY05.md) и [выбор свежего RGB0.5.1](../audits/2026-10-17/MOTOR-PROCESS-POLICY051.md); предыдущая физическая проверка — [готовность0.3](../audits/2026-10-17/MOTOR-WORKER03-READINESS.md). UI/API15ce2b62 и APK82 сохранены; обновлялся только локальный Python-клиент.
+Предыдущие этапы — [process provider](../audits/2026-10-17/MOTOR-PROCESS-POLICY05.md), [выбор свежего RGB0.5.1](../audits/2026-10-17/MOTOR-PROCESS-POLICY051.md) и [готовность0.3](../audits/2026-10-17/MOTOR-WORKER03-READINESS.md). UI/API15ce2b62 и APK82 сохранены; обновлялся только локальный Python-клиент.
 
 Основной план — [MOTOR-AI-PLATFORM](../design/MOTOR-AI-PLATFORM.md).
 Код — [motor_worker](../../motor_worker/session.py). Это реализация части P0-C/G02:
 настоящий WebRTC receiver без браузера и отдельная проверка shared native admission.
-Игровой профиль, multi-touch, task delegation и autonomous model loop пока не реализованы.
+Общий finite model-stick loop доступен; поставляемый игровой профиль/scene detector,
+камера/multi-touch, task delegation и автономная навигация ещё нужны.
 
 ## Что делает модуль
 

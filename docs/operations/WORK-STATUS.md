@@ -2,6 +2,15 @@
 
 **Проверенная установка:** UI `15ce2b62` / API `15ce2b62`.
 
+**20 октября — worker0.6 и PH025.** Реализован общий opt-in model→held-stick исполнитель,
+исправлены request/result binding и cadence; добавлены RTP recovery и scheduler/ACK/SCTP telemetry.
+145 motor tests прошли. PH025: NitroGen/RX9070 в20-с video-only опыте дал89 ответов;
+finite12-с movement-only опыт —61 ответ и62/62 APPLIED. Повторы выявили ACK/lease failures
+и SCTP retransmissions с RTO1000мс. Для model executor ограничен срок ретрансляции200мс;
+устойчивый gameplay пока не принят. Black Russia установлена/скачана, гостевой персонаж в мире CHERRY.
+Цвета после нового capture восстановились, но причина прежнего искажения открыта. Данные
+не стирались, UI/API/APK82 сохранены. [Код, результаты и границы](../audits/2026-10-20/MOTOR-PH025-EXECUTION06.md).
+
 **17 октября — разобрано бесконечное подключение Black Russia.** На PH011 сама игра остаётся на загрузке при исправном прямом видео. Проверены версия16.110.18323, часы, свободное место, root-журнал и снимок сокетов; первопричина не подтверждена. Исследованы официальные описания CUS/авторизации и прежние ошибки входа. Пользовательский сброс кэша вместе с данными ещё не разделяет причины; в этой проверке данные не удалялись, игра/эмулятор не перезапускались, AI не запускался. [Факты, источники и контролируемая проверка](../audits/2026-10-17/BLACK-RUSSIA-CONNECTION-HANG.md).
 
 **17 октября — ограниченные recovery-примитивы.** В основной код добавлены supervisor прогресса/падения/unknown scene, finite double-tap/camera sequences и optional OpenCV sensor.122 motor tests и Ruff прошли. Это не готовый обход зданий: perception и dispatch recovery ещё требуют integration, native multi-touch отсутствует. PH011 после AFK отключения/двух перезапусков игры/одного Android reboot остаётся на подключении; read-only guard подтвердил прямые кадры/ALIVE/CLOSED без физических действий. Положительная jump/camera calibration не выполнена. [Код, evidence и блокер](../audits/2026-10-17/MOTOR-NAVIGATION-RECOVERY.md).
