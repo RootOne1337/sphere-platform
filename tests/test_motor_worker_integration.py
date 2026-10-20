@@ -379,7 +379,10 @@ class HeadlessIntegrationTests(unittest.IsolatedAsyncioTestCase):
                                     request.frame.receiver_sequence, ActionChunk((state,) * 18, 60))
 
         session = StickPolicySession(
-            SessionConfig(self.url, DEVICE, duration=1.8, probe_control=True,
+            # Allow DTLS/video startup variation on a shared Windows host.
+            # Eight results in 2.6s still exclude the old two-scene-tick rate;
+            # the steady result gap below checks the actual regression too.
+            SessionConfig(self.url, DEVICE, duration=2.6, probe_control=True,
                           capture_lifecycle=False, shadow_policy=True),
             profile=StickProfile(StickGeometry(320, 180, 60, 130, 20), "gamepad_left"),
             policy=SlightlySlowFixture(), scene_guard=lambda frame: True, execution_enabled=True,
@@ -389,7 +392,10 @@ class HeadlessIntegrationTests(unittest.IsolatedAsyncioTestCase):
         actions = [d["action"] for d in self.received
                    if d.get("type") == "touch_event" and d["action"] != 4]
         self.assertEqual(actions, [0, 2, 1])
-        self.assertGreaterEqual(report["policyShadow"]["accepted"], 7)
+        self.assertGreaterEqual(report["policyShadow"]["accepted"], 8)
+        timing = report["policyShadow"]["acceptedResultTiming"]
+        self.assertLess(timing["gapP50Ms"], 320)
+        self.assertEqual(timing["acceptedResults"], report["policyShadow"]["accepted"])
         self.assertTrue(report["control"]["participantClosedConfirmed"])
         self.assertLessEqual(max(s["receiverAgeAtResultMs"]
                                  for s in report["policyShadow"]["samples"]), 400)

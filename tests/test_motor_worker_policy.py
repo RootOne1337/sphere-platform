@@ -193,6 +193,7 @@ class PolicyLoopTests(unittest.IsolatedAsyncioTestCase):
         await self.finish(self.provider.requests[0])
         self.assertEqual(self.loop.expired_results, 1)
         self.assertEqual(self.loop.accepted, 0)
+        self.assertEqual(self.loop.report()["acceptedResultTiming"]["acceptedResults"], 0)
         self.assertIsNone(self.loop.last_chunk)
 
     async def test_timeout_cancels_active_before_launching_latest(self):
@@ -341,3 +342,19 @@ class PolicyLoopTests(unittest.IsolatedAsyncioTestCase):
         self.assertNotIn("rgb24", report)
         self.assertTrue(all("rgb24" not in sample for sample in report["samples"]))
         self.assertNotIn("buttons", str(report))
+
+    async def test_timing_starts_with_valid_frame_and_freezes_before_cleanup(self):
+        self.loop.offer(frame(1, self.now - 1))
+        self.assertFalse(self.loop.report()["acceptedResultTiming"]["measurementStarted"])
+        await self.launch(2)
+        self.now += 0.1
+        await self.finish(self.provider.requests[-1])
+        self.now += 1.0
+        await self.loop.close()
+        timing = self.loop.report()["acceptedResultTiming"]
+        self.assertEqual(timing["acceptedResults"], 1)
+        self.assertEqual(timing["receiverAgeAtResultMaxMs"], 100)
+        self.assertEqual(timing["maximumSilenceIncludingLeadingTrailingMs"], 1000)
+        self.now += 100
+        await self.loop.close()
+        self.assertEqual(self.loop.report()["acceptedResultTiming"], timing)

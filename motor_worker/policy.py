@@ -16,6 +16,7 @@ from dataclasses import dataclass
 from typing import Callable, Protocol
 
 from motor_worker.protocol import ProtocolError, integer
+from motor_worker.timing import ResultTiming
 
 BUTTON_TOKENS = (
     "BACK",
@@ -275,6 +276,7 @@ class ShadowPolicyLoop:
         timeout: float = 0.25,
         max_receiver_age: float = 0.5,
         cleanup_timeout: float = 0.1,
+        expected_hz: float | None = None,
         clock: Callable[[], float] = time.perf_counter,
     ):
         if (
@@ -305,6 +307,7 @@ class ShadowPolicyLoop:
         self.stale_frames = self.expired_results = self.foreign_results = self.timed_out = 0
         self.last_started_at = 0.0
         self.samples: deque[dict] = deque(maxlen=64)
+        self.result_timing = ResultTiming(expected_hz)
 
     def bind_epoch(self, epoch: str) -> None:
         if self.closed or not epoch_valid(epoch):
@@ -321,9 +324,11 @@ class ShadowPolicyLoop:
             raise ProtocolError("policy_frame_sequence_reused")
         self.last_sequence = frame.receiver_sequence
         self.offered += 1
-        if not 0 <= self.clock() - frame.received_at <= self.max_receiver_age:
+        now = self.clock()
+        if not 0 <= now - frame.received_at <= self.max_receiver_age:
             self.stale_frames += 1
             return
+        self.result_timing.start(now)
         if self.pending is not None:
             self.replaced += 1
         self.pending = frame
@@ -347,6 +352,7 @@ class ShadowPolicyLoop:
         if self.closed:
             return
         now = self.clock()
+        self.result_timing.advance(now)
         if now >= self.last_chunk_deadline:
             self.last_chunk = None
         if self.task is not None:
@@ -383,6 +389,7 @@ class ShadowPolicyLoop:
                     raise ProtocolError("policy_result_binding_mismatch")
                 else:
                     self.accepted += 1
+                    self.result_timing.accept(now, req.frame.received_at)
                     self.last_chunk = result.chunk
                     # A subsequent request may start before the native actor's
                     # next tick. Preserve the accepted frame/chunk as one binding.
@@ -419,6 +426,7 @@ class ShadowPolicyLoop:
             self.task = asyncio.create_task(self.provider.predict(self.request))
 
     async def close(self) -> None:
+        self.result_timing.close(self.clock())
         self.closed, self.pending, self.last_chunk = True, None, None
         self.last_accepted = None
         await self._cancel_active()
@@ -447,4 +455,5 @@ class ShadowPolicyLoop:
             "inputTransform": "original_rgb24_no_model_preprocessing",
             "freshnessClock": "worker_receiver_not_source_capture",
             "samples": list(self.samples),
+            "acceptedResultTiming": self.result_timing.report(),
         }
