@@ -312,6 +312,7 @@ class HeadlessIntegrationTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(report["stickExecution"]["nativeApplied"], len(points))
         self.assertGreaterEqual(report["stickExecution"]["acceptedResults"], 3)
         self.assertTrue(report["stickExecution"]["quiescing"])
+        self.assertEqual(report["control"]["maxPacketLifeTimeMs"], 200)
         self.assertEqual(report["policyShadow"]["physicalActionsSent"], len(points))
 
     async def test_unknown_game_scene_never_executes_model_actions(self):
@@ -327,6 +328,45 @@ class HeadlessIntegrationTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(report["stickExecution"]["physicalEvents"], 0)
         self.assertTrue(report["control"]["participantClosedConfirmed"])
         self.assertGreater(report["stickExecution"]["sceneRefusals"], 0)
+
+    async def test_lost_model_down_is_not_retransmitted_after_action_deadline(self):
+        from aiortc.rtcsctptransport import DataChunk
+
+        self.availability_state = "manual"
+        dropped = []
+
+        class LossySession(StickPolicySession):
+            def _send_control(inner, packet):
+                if packet.get("action") == 0 and not dropped:
+                    original = inner.peer.sctp._send_chunk
+
+                    async def lose_down(chunk):
+                        if isinstance(chunk, DataChunk) and chunk.stream_id == inner.control.id:
+                            try:
+                                data = json.loads(chunk.user_data)
+                            except (ValueError, UnicodeError):
+                                data = {}
+                            if data.get("action") == 0:
+                                dropped.append(chunk._sent_count)
+                                return
+                        return await original(chunk)
+
+                    inner.peer.sctp._send_chunk = lose_down
+                return super()._send_control(packet)
+
+        session = LossySession(
+            SessionConfig(self.url, DEVICE, duration=2, probe_control=True,
+                          capture_lifecycle=False, shadow_policy=True),
+            profile=StickProfile(StickGeometry(320, 180, 60, 130, 20), "gamepad_left"),
+            policy=NeutralPolicy(), scene_guard=lambda frame: True, execution_enabled=True,
+        )
+        report = await session.run("fixture-token")
+        self.assertFalse(report["success"])
+        self.assertEqual(report["failure"], "control_action_deadline")
+        self.assertEqual(dropped, [1])  # No second send after the one-second RTO.
+        self.assertFalse(any(d.get("action") == 0 for d in self.received))
+        self.assertEqual(report["stickExecution"]["nativeApplied"], 0)
+        self.assertTrue(report["control"]["participantClosedConfirmed"])
 
     async def test_inference_over_one_sample_period_does_not_halve_rate_or_reengage(self):
         self.availability_state = "manual"

@@ -238,7 +238,9 @@ class HeadlessSession:
 
         self.sctp_diagnostics = observe_sctp(self.peer.sctp)
         if self.config.probe_control:
-            self.control = self.peer.createDataChannel("sphere-control-v2", ordered=True)
+            self.control = self.peer.createDataChannel(
+                "sphere-control-v2", **self._control_channel_options()
+            )
             self.control.on("message", self._control_message)
             self.control.on("close", lambda: self._transport_closed("control_channel_closed"))
         self.media.on("message", self._media_message)
@@ -685,6 +687,9 @@ class HeadlessSession:
         """Physical input requires an explicit bounded executor, never a policy alone."""
         return self.config.pointer_probe is not None
 
+    def _control_channel_options(self):
+        return {"ordered": True}
+
     def _probe_complete(self) -> bool:
         return bool(
             self.config.pointer_probe
@@ -860,6 +865,7 @@ class HeadlessSession:
             "control": {
                 "requested": self.config.probe_control,
                 "dataChannelId": self.control.id if self.control else None,
+                "maxPacketLifeTimeMs": self.control.maxPacketLifeTime if self.control else None,
                 "dataChannelOpened": self.control_open_at is not None,
                 "nativeAdmissionConfirmed": bool(control and control.ever_ready),
                 "actorAliveReceipts": control.alive_receipts if control else 0,

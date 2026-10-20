@@ -172,6 +172,13 @@ class StickPolicySession(HeadlessSession):
     def _pointer_enabled(self):
         return True
 
+    def _control_channel_options(self):
+        # Standard PR-SCTP lifetime in both directions. A reliable retransmit
+        # after the500ms native-receipt deadline must not apply a stale model
+        # movement a second later. Loss still stops the session; it never
+        # authorizes replay or infers that an unconfirmed action was applied.
+        return {"ordered": True, "maxPacketLifeTime": 200}
+
     async def _observe(self):
         period = 1 / self.config.observation_hz
         next_scene = next_policy = time.perf_counter()
@@ -284,6 +291,7 @@ class StickPolicySession(HeadlessSession):
             "eventTailLimit": 64,
             "buttonsAndCameraImplemented": False,
             "sourceCaptureAgeMeasured": False,
+            "controlPacketLifeTimeMs": 200,
             "wasdHoldMs": 350 if self.execution.profile.source == "wasd" else None,
             "completionDrainMs": 600,
             "quiescing": self.quiescing,
