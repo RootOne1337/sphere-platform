@@ -245,6 +245,60 @@ class TestAndroidAgentPresenceEvents:
         # The only cache write is the initial connecting state.
         assert deps.status_cache.set_status.await_count == 1
 
+    @pytest.mark.parametrize("invalid", [False, True])
+    async def test_live_socket_routes_vpn_snapshot_with_authenticated_session(
+        self, route_dependencies, route_socket, invalid
+    ):
+        from datetime import datetime, timezone
+
+        deps = route_dependencies
+        deps.status_cache.merge_agent_status = AsyncMock(return_value=True)
+        snapshot = {
+            "requestId": "a27c2ce8-90fe-453e-b465-65f5efe5cd34",
+            "phase": "IDLE", "providerPid": 23901,
+            "sampledAtEpochMs": int(datetime.now(timezone.utc).timestamp() * 1000),
+        }
+        if invalid:
+            snapshot["config_text"] = "private-sentinel"
+        socket = route_socket([
+            {"type": "app_vpn_status", "schema_version": 1, "snapshot": snapshot},
+            {"type": "pong", "ts": 1},
+        ])
+
+        await deps.router.android_agent_ws(socket, str(deps.device.id))
+
+        # The production receive loop, not just the standalone helper, must
+        # admit bounded VPN metadata without disrupting transport heartbeats.
+        deps.heartbeat.handle_pong.assert_awaited_once()
+        if invalid:
+            deps.status_cache.merge_agent_status.assert_not_awaited()
+        else:
+            deps.status_cache.merge_agent_status.assert_awaited_once()
+            call = deps.status_cache.merge_agent_status.await_args
+            assert call.args[0] == str(deps.device.id)
+            assert call.kwargs == {"session_id": "unit-session"}
+            observation = call.args[1]["app_vpn"]
+            assert observation["ws_session_id"] == "unit-session"
+            assert observation["snapshot"]["requestId"] == snapshot["requestId"]
+            assert observation["snapshot"]["phase"] == "IDLE"
+            assert observation["snapshot"]["rxBytes"] is None
+
+    async def test_vpn_cache_outage_does_not_stop_live_socket_heartbeats(
+        self, route_dependencies, route_socket
+    ):
+        deps = route_dependencies
+        deps.status_cache.merge_agent_status = AsyncMock(side_effect=ConnectionError("private-sentinel"))
+
+        await deps.router.android_agent_ws(route_socket([
+            {"type": "app_vpn_status", "schema_version": 1, "snapshot": {
+                "phase": "IDLE", "providerPid": 23901, "sampledAtEpochMs": 1,
+            }},
+            {"type": "pong", "ts": 1},
+        ]), str(deps.device.id))
+
+        deps.status_cache.merge_agent_status.assert_awaited_once()
+        deps.heartbeat.handle_pong.assert_awaited_once()
+
 class TestHandleTelemetry:
     async def test_updates_battery(self, status_cache):
         initial = DeviceLiveStatus(device_id=DEVICE_ID, status="online", battery=50)

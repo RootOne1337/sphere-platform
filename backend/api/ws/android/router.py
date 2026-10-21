@@ -889,6 +889,11 @@ async def android_agent_ws(
                             heartbeat.note_transport_activity(msg)
                         case "telemetry":
                             await handle_telemetry(device_id, msg, status_cache, session_id=session_id)
+                        case "app_vpn_status":
+                            await handle_agent_message(
+                                device_id, org_id_str, msg, manager, status_cache,
+                                session_id=session_id,
+                            )
                         case "task_progress":
                             await handle_task_progress(device_id, org_id_str, msg)
                         case "command_result":
