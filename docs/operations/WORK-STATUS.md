@@ -2,6 +2,16 @@
 
 **Проверенная установка:** UI `5cbb4bba` / API `15ce2b62`.
 
+**21 октября — APK84: повторная локальная debug-сборка прошла.**
+Source `7f06701e`: Dev/Enterprise assemble и lint успешны; в каждом debug-варианте
+1275 tests, 0 failures/errors, 3 skipped. Подпись совпала с прежней pilot-подписью;
+native WG/AWG трёх ABI внутри APK сверены по SHA. Исправленная конфигурация test
+workers прошла оба полных debug-набора. Artifact version 10284, SHA
+`33916fa4f605afbbd62e2b76032b8c7b51184ef919afff50f9e3c2ce88c2b7b0`.
+Это локальный кандидат: полный Android CI/release/canary admission, OTA и реальный
+single-APK VPN pilot не подтверждены. UI/API/APK на устройствах не заменялись.
+[Квитанция сборки](../audits/2026-10-21/VPN-APK84-LOCAL-BUILD.json).
+
 **21 октября — VPN: квитанции назначения без config/QR в кэше веба.**
 Хук legacy assignment проверяет привязку device ID, сохраняет только метаданные
 назначения, очищает Axios error до HTTP status и запрещает автоматический retry.
