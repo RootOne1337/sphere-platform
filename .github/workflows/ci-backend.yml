@@ -169,7 +169,7 @@ jobs:
     timeout-minutes: 20
     services:
       postgres:
-        image: public.ecr.aws/docker/library/postgres@sha256:25d430274d8a31184f9435cc5b2f56aff254952065bbbcac0c51acedb5a1d1e7
+        image: docker.io/library/postgres@sha256:25d430274d8a31184f9435cc5b2f56aff254952065bbbcac0c51acedb5a1d1e7
         env:
           POSTGRES_DB: sphereplatform_audit_test
           POSTGRES_USER: sphere
@@ -182,7 +182,7 @@ jobs:
         ports:
           - 5432:5432
       redis:
-        image: public.ecr.aws/docker/library/redis@sha256:84bab713067f5494d94c24e99ae3fa3ae2388c037152edcbcf301f7cfaeb3048
+        image: docker.io/library/redis@sha256:84bab713067f5494d94c24e99ae3fa3ae2388c037152edcbcf301f7cfaeb3048
         options: >-
           --health-cmd "redis-cli ping"
           --health-interval 10s
@@ -251,7 +251,7 @@ jobs:
     needs: [test]
     services:
       postgres:
-        image: public.ecr.aws/docker/library/postgres@sha256:25d430274d8a31184f9435cc5b2f56aff254952065bbbcac0c51acedb5a1d1e7
+        image: docker.io/library/postgres@sha256:25d430274d8a31184f9435cc5b2f56aff254952065bbbcac0c51acedb5a1d1e7
         env:
           POSTGRES_DB: sphereplatform_test
           POSTGRES_USER: sphere
