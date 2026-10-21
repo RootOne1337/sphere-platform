@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Dialog, DialogBody, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { validSaveReceipt, type ProfileSaveReceipt, type SavedVpnProfile } from './profileTypes';
 import { profileFileHints } from './profileFileHints';
+import { profileIssueLabel } from './profileIssues';
 
 type Receipt = {
   schema_version: 1; config_valid: boolean; apply_allowed: false; persisted: false;
@@ -16,22 +17,7 @@ type Receipt = {
   blockers: string[];
 };
 
-const issueLabels: Record<string, string> = {
-  executable_or_routing_directive_forbidden: 'Команды и ручные изменения маршрутов запрещены',
-  unsupported_field_for_protocol_version: 'Поле не поддерживается выбранной версией протокола',
-  invalid_field_value: 'Некорректное значение поля',
-  duplicate_field: 'Поле повторяется', duplicate_section: 'Секция повторяется',
-  unknown_section: 'Неизвестная секция', invalid_entry: 'Некорректная строка',
-  invalid_line: 'Недопустимая или слишком длинная строка',
-  missing_awg_parameters: 'Не хватает обязательных параметров AWG',
-  awg_header_ranges_overlap: 'Диапазоны заголовков AWG пересекаются',
-  junk_size_range_inverted: 'Минимальный размер пакета больше максимального',
-  header_protection_requires_four_prefixes: 'Header Protection требует S1–S4 не менее 12 байт',
-  ipv6_config_conflicts_with_block_policy: 'IPv6 в конфигурации конфликтует с политикой блокировки',
-  ipv6_tunnel_address_and_default_route_required: 'Для IPv6 нужны адрес туннеля и маршрут ::/0',
-  selected_app_egress_requires_ipv4_default_route: 'Для выбранных приложений нужен маршрут IPv4 по умолчанию',
-  ipv4_tunnel_address_required: 'Нужен IPv4-адрес туннеля', config_too_large: 'Конфигурация больше 64 КиБ',
-};
+
 
 export function validProfileReceipt(value: unknown): value is Receipt {
   if (!value || typeof value !== 'object') return false;
@@ -210,7 +196,7 @@ export function VpnProfileInspector({ onClose, purpose = 'inspect', target, onSa
       {saved && <p role="status" className="rounded-xl border p-4 text-sm">Профиль сохранён · версия {saved.revision}. Ключи зашифрованы. VPN не подключался.</p>}
       {receipt && <div role="status" className="grid gap-3 rounded-xl border p-4 text-sm">
         <p className="font-medium">{receipt.config_valid ? 'Формат профиля прошёл проверку' : 'Профиль требует исправлений'}{filename ? ` · ${filename}` : ''}</p>
-        {receipt.issues.length > 0 && <ul className="list-inside list-disc space-y-1">{receipt.issues.map((i, n) => <li key={n}>{i.line ? `Строка ${i.line}: ` : ''}{issueLabels[i.code] ?? (i.code.startsWith('missing_') ? 'Не хватает обязательного поля конфигурации' : 'Некорректная конфигурация')}</li>)}</ul>}
+        {receipt.issues.length > 0 && <ul className="list-inside list-disc space-y-1">{receipt.issues.map((i, n) => <li key={n}>{i.line ? `Строка ${i.line}: ` : ''}{profileIssueLabel(i.code)}</li>)}</ul>}
         <p className="text-muted-foreground">Подключение пока недоступно: Android-адаптер WG/AWG проходит отдельную проверку изоляции приложений и восстановления. Успешный разбор файла не подтверждает работающий VPN.</p>
         <p className="text-xs text-muted-foreground">Для новой проверки выбери файл повторно. Ключи не включены в результат.</p>
       </div>}

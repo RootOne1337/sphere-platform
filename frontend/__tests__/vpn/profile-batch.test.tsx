@@ -92,7 +92,7 @@ it('brings failed files forward and allows returning to the whole package', asyn
     { request_id: items[1].request_id, config_valid: false, issues: [{ code: 'invalid_field_value', line: 8 }] }] } });
   const user = userEvent.setup(); render(<VpnProfileBatchImport onClose={jest.fn()} onSaved={jest.fn()} />);
   await load(user); await user.click(screen.getByRole('button', { name: 'Проверить пакет' }));
-  expect(await screen.findByText('Конфигурация не прошла проверку · строка 8')).toBeInTheDocument();
+  expect(await screen.findByText('Некорректное значение поля · строка 8')).toBeInTheDocument();
   expect(screen.queryByText('Exit 1')).not.toBeInTheDocument();
   expect(screen.getByRole('button', { name: 'Сохранить 2 профилей' })).toBeDisabled();
   await user.click(screen.getByRole('button', { name: 'Все профили' }));
