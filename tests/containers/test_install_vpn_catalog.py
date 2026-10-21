@@ -3,6 +3,7 @@
 import copy
 import hashlib
 import json
+import subprocess
 import tempfile
 from pathlib import Path
 from unittest.mock import patch
@@ -54,6 +55,27 @@ def test_only_two_exact_secret_values_can_be_added_to_the_existing_image_delta()
             install.validate_delta(old, bad, TAG, env)
     with pytest.raises(ValueError):
         install.validate_delta(old, new, TAG, env | {"POSTGRES_URL": "other"})
+
+
+def test_localized_windows_acl_output_is_not_decoded_and_exact_current_sid_is_used():
+    sid = b"S-1-5-21-123-456-789-1001"
+    owner = subprocess.CompletedProcess(
+        [], 0, stdout=b'"' + bytes([0xE0, 0xA1]) + b'","' + sid + b'"\r\n'
+    )
+    applied = subprocess.CompletedProcess([], 0, stdout=bytes([0xE0, 0xA1, 0x80]))
+    with patch.object(install.subprocess, "run", side_effect=[owner, applied]) as run:
+        install.restrict_private_directory(Path("private"))
+        assert run.call_args.args[0][-2:] == [
+            "*" + sid.decode() + ":(OI)(CI)F",
+            "*S-1-5-18:(OI)(CI)F",
+        ]
+    with (
+        patch.object(
+            install.subprocess, "run", return_value=subprocess.CompletedProcess([], 1, stdout=b"")
+        ),
+        pytest.raises(ValueError),
+    ):
+        install.restrict_private_directory(Path("private"))
 
 
 def test_secret_file_does_not_allow_existing_credential_replacement_or_another_database():

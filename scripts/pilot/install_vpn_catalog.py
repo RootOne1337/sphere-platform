@@ -31,6 +31,31 @@ ROOT = Path(__file__).resolve().parents[2]
 ENV_KEYS = {"VPN_PROFILE_ENCRYPTION_KEYS", "VPN_PROFILE_POSTGRES_URL"}
 
 
+def restrict_private_directory(path: Path) -> None:
+    # Windows native tools emit localized OEM text, not Docker's UTF-8. Parse
+    # only the ASCII SID; discard ACL output instead of decoding/displaying it.
+    identity = subprocess.run(
+        ["whoami", "/user", "/fo", "csv", "/nh"], capture_output=True, timeout=10, check=False
+    )
+    matches = re.findall(rb"S-1-[0-9-]+", identity.stdout)
+    require(identity.returncode == 0 and len(matches) == 1, "Current owner SID unavailable")
+    sid = matches[0].decode("ascii")
+    result = subprocess.run(
+        [
+            "icacls",
+            str(path),
+            "/inheritance:r",
+            "/grant:r",
+            "*" + sid + ":(OI)(CI)F",
+            "*S-1-5-18:(OI)(CI)F",
+        ],
+        capture_output=True,
+        timeout=10,
+        check=False,
+    )
+    require(result.returncode == 0, "Private release folder ACL not confirmed")
+
+
 def secrets_environment(path: Path, primary: dict) -> dict[str, str]:
     path = live.workspace_path(path, private=True)
     data = bounded_json(path, 8192)
@@ -288,17 +313,7 @@ def install(
         output = ROOT / ".local-pilot" / ("vpn-catalog-install-" + uuid4().hex[:12])
         output.mkdir()
         # Frozen Compose includes existing secrets, so restrict the new folder.
-        identity = command(["whoami"])
-        command(
-            [
-                "icacls",
-                str(output),
-                "/inheritance:r",
-                "/grant:r",
-                identity + ":(OI)(CI)F",
-                "*S-1-5-18:(OI)(CI)F",
-            ]
-        )
+        restrict_private_directory(output)
         frozen = freeze_compose(prefix, old, output / "baseline.json", runner=command)
         override = output / "candidate.yml"
         override.write_text(
