@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { FileCheck2, ShieldCheck } from 'lucide-react';
+import { FileKey2, ShieldCheck, Upload } from 'lucide-react';
 import { api } from '@/lib/api';
 import { useAuthStore } from '@/lib/store';
 import { Button } from '@/components/ui/button';
@@ -157,47 +157,53 @@ export function VpnProfileInspector({ onClose, purpose = 'inspect', target, onSa
   }
 
   return <Dialog open onOpenChange={open => { if (!open) onClose(); }}>
-    <DialogContent className="max-w-2xl" layout="workspace">
+    <DialogContent className="max-w-3xl" layout="workspace">
       <DialogHeader>
-        <DialogTitle className="flex items-center gap-2"><FileCheck2 className="h-5 w-5" /> {purpose === 'save' ? (target ? 'Новая версия VPN-профиля' : 'Импорт VPN-профиля') : 'Проверка VPN-профиля'}</DialogTitle>
+        <DialogTitle className="flex items-center gap-3"><span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-primary/20 bg-primary/10 text-primary"><FileKey2 className="h-5 w-5" /></span><span>{purpose === 'save' ? (target ? 'Новая версия VPN-профиля' : 'Импорт VPN-профиля') : 'Проверка VPN-профиля'}<span className="mt-1 block text-xs font-normal text-muted-foreground">WireGuard · AmneziaWG</span></span></DialogTitle>
         <DialogDescription>{purpose === 'save' ? 'Конфигурация сохранится в зашифрованном каталоге. Сохранение не подключает VPN и не меняет сеть устройства.' : 'Проверим формат и политику приложений. Проверка не сохраняет профиль и не меняет сеть устройства.'}</DialogDescription>
       </DialogHeader>
       <DialogBody>
-      <div className="flex items-start gap-3 rounded-xl border p-4 text-sm">
+      <div className="flex items-start gap-3 rounded-xl border border-primary/15 bg-primary/5 px-4 py-3 text-xs leading-relaxed">
         <ShieldCheck className="mt-0.5 h-5 w-5 shrink-0 text-primary" />
         <p>В VPN включаются только выбранные приложения. Для Sphere, видео и управления задан обход туннеля.</p>
       </div>
-      <fieldset disabled={pending || Boolean(unknownRequest)} className="grid min-w-0 gap-4 disabled:opacity-60">
+      <fieldset disabled={pending || Boolean(unknownRequest)} className="grid min-w-0 gap-4 sm:grid-cols-2 disabled:opacity-60">
         {purpose === 'save' && <>
-          <label className="grid gap-2 text-sm font-medium">Название профиля<input className="rounded-lg border bg-background p-2.5" value={name} maxLength={120} onChange={e => { setName(e.target.value); invalidate(); }} /></label>
-          <label className="grid gap-2 text-sm font-medium">Описание<input className="rounded-lg border bg-background p-2.5" value={description} maxLength={1000} onChange={e => { setDescription(e.target.value); invalidate(); }} /></label>
+          <label className="grid gap-2 text-sm font-medium">Название профиля<input className="rounded-lg border bg-background p-2.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring" value={name} maxLength={120} onChange={e => { setName(e.target.value); invalidate(); }} /></label>
+          <label className="grid gap-2 text-sm font-medium">Описание<input className="rounded-lg border bg-background p-2.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring" value={description} maxLength={1000} onChange={e => { setDescription(e.target.value); invalidate(); }} /></label>
           {target && <p className="text-xs text-muted-foreground">Ожидаемая версия: {target.current_revision}. Предыдущие версии сохранятся.</p>}
         </>}
-        <label className="grid gap-2 text-sm font-medium">Файл конфигурации
-          <input ref={fileInput} type="file" accept=".conf,text/plain" aria-label="Файл VPN-профиля" className="w-full min-w-0 rounded-lg border p-3 text-sm file:mr-3 file:rounded-md file:border-0 file:bg-muted file:px-3 file:py-2" onChange={e => void readFile(e.target.files?.[0])} />
+        <label className="grid gap-2 text-sm font-medium sm:col-span-2">Файл конфигурации
+          <span className="relative flex min-h-28 cursor-pointer flex-col items-center justify-center gap-2 rounded-2xl border border-dashed bg-muted/15 px-4 py-4 text-center transition-colors hover:border-primary/50 hover:bg-primary/5 focus-within:ring-2 focus-within:ring-ring">
+            <span className="flex h-10 w-10 items-center justify-center rounded-xl border bg-background text-primary"><Upload className="h-5 w-5" /></span>
+            <span className="max-w-full break-words text-sm">{loaded && filename ? filename : 'Выберите конфигурацию .conf'}</span>
+            <span className="text-xs font-normal text-muted-foreground">WireGuard или AmneziaWG · до 64 КБ</span>
+            <input ref={fileInput} type="file" accept=".conf,text/plain" aria-label="Файл VPN-профиля" className="absolute inset-0 h-full w-full cursor-pointer opacity-0" onChange={e => void readFile(e.target.files?.[0])} />
+          </span>
         </label>
-        {fileHint && <p className="rounded-lg bg-muted/40 px-3 py-2 text-xs text-muted-foreground">По структуре файла: {fileHint.protocol === 'wireguard' ? 'WireGuard' : 'AmneziaWG'}{fileHint.ipv6 === 'tunnel' ? ' · IPv6-адрес и маршрут ::/0' : ''}. {fileHint.partialIpv6 ? 'IPv6 настроен частично — проверь адрес и маршрут.' : fileHint.protocol === 'amneziawg' ? 'Версию AWG выбери по данным провайдера.' : 'Параметры можно изменить ниже.'} Окончательную проверку выполнит сервер.</p>}
-        <div className="grid gap-4 sm:grid-cols-2">
-          <label className="grid gap-2 text-sm font-medium">Протокол
-            <select className="rounded-lg border bg-background p-2.5" value={protocol} onChange={e => { setProtocol(e.target.value as typeof protocol); invalidate(); }}>
+        {fileHint && <p className="rounded-lg bg-muted/40 px-3 py-2 text-xs text-muted-foreground sm:col-span-2">По структуре файла: {fileHint.protocol === 'wireguard' ? 'WireGuard' : 'AmneziaWG'}{fileHint.ipv6 === 'tunnel' ? ' · IPv6-адрес и маршрут ::/0' : ''}. {fileHint.partialIpv6 ? 'IPv6 настроен частично — проверь адрес и маршрут.' : fileHint.protocol === 'amneziawg' ? 'Версию AWG выбери по данным провайдера.' : 'Параметры можно изменить ниже.'} Окончательную проверку выполнит сервер.</p>}
+        <div className="grid gap-4 sm:col-span-2 sm:grid-cols-3">
+          <label className="grid min-w-0 gap-2 text-sm font-medium">Протокол
+            <select className="w-full min-w-0 rounded-lg border bg-background p-2.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring" value={protocol} onChange={e => { setProtocol(e.target.value as typeof protocol); invalidate(); }}>
               <option value="amneziawg">AmneziaWG</option><option value="wireguard">WireGuard</option>
             </select>
           </label>
-          {protocol === 'amneziawg' && <label className="grid gap-2 text-sm font-medium">Версия конфигурации AWG
-            <select className="rounded-lg border bg-background p-2.5" value={version} onChange={e => { setVersion(e.target.value); invalidate(); }}>
+          {protocol === 'amneziawg' && <label className="grid min-w-0 gap-2 text-sm font-medium">Версия конфигурации AWG
+            <select className="w-full min-w-0 rounded-lg border bg-background p-2.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring" value={version} onChange={e => { setVersion(e.target.value); invalidate(); }}>
               {['1', '1.5', '2', '3.1'].map(v => <option key={v}>{v}</option>)}
             </select>
           </label>}
-        </div>
-        <label className="grid gap-2 text-sm font-medium">Приложения через VPN · package ID
-          <textarea rows={3} placeholder="org.example.application" autoComplete="off" spellCheck={false} className="w-full resize-y rounded-lg border bg-background p-3 font-mono text-sm" value={packages} onChange={e => { setPackages(e.target.value); invalidate(); }} />
-          <span className="text-xs font-normal text-muted-foreground">По одному ID на строку. Sphere добавлять нельзя; пустой список не допускается.</span>
-        </label>
-        <label className="grid gap-2 text-sm font-medium">IPv6 выбранных приложений
-          <select className="rounded-lg border bg-background p-2.5" value={ipv6} onChange={e => { setIpv6(e.target.value as typeof ipv6); invalidate(); }}>
+        <label className="grid min-w-0 gap-2 text-sm font-medium">IPv6 выбранных приложений
+          <select className="w-full min-w-0 rounded-lg border bg-background p-2.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring" value={ipv6} onChange={e => { setIpv6(e.target.value as typeof ipv6); invalidate(); }}>
             <option value="block">Блокировать вне туннеля</option><option value="tunnel">Передавать через туннель с IPv6</option>
           </select>
         </label>
+        </div>
+        <label className="grid gap-2 text-sm font-medium sm:col-span-2">Приложения через VPN · package ID
+          <textarea rows={2} placeholder="org.example.application" autoComplete="off" spellCheck={false} className="w-full resize-y rounded-lg border bg-background p-3 font-mono text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring" value={packages} onChange={e => { setPackages(e.target.value); invalidate(); }} />
+          <span className="text-xs font-normal text-muted-foreground">По одному ID на строку. Sphere добавлять нельзя; пустой список не допускается.</span>
+        </label>
+
       </fieldset>
       {error && <p role="alert" className="text-sm text-destructive">{error}</p>}
       {unknownRequest && <div className="grid gap-2 rounded-lg border p-3 text-sm"><p className="break-all font-mono text-xs">ID запроса: {unknownRequest}</p><Button disabled={pending} variant="outline" onClick={() => void checkImport()}>Проверить статус сохранения</Button><p className="text-xs text-muted-foreground">Сохрани ID, если закрываешь окно до получения результата.</p></div>}

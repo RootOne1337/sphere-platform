@@ -1,6 +1,6 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import VPNManagerPage from '@/app/(dashboard)/vpn/page';
+import { VpnRouterInfrastructure as VPNManagerPage } from '@/src/features/vpn/VpnRouterInfrastructure';
 import { useAssignVpn, usePoolStats, useVpnKillSwitch, useVpnPeers, useVpnRotate } from '@/lib/hooks/useVpn';
 import { useBulkAction, useDevices, type Device } from '@/lib/hooks/useDevices';
 import { useAuthStore } from '@/lib/store';
@@ -73,15 +73,15 @@ it('keeps VPN provisioning open after a rejected request and does not retry impl
   const user = userEvent.setup();
   render(<VPNManagerPage />);
 
-  await user.click(screen.getByRole('button', { name: 'Provision Node' }));
+  await user.click(screen.getByRole('button', { name: 'Назначить peer' }));
   await user.click(screen.getByRole('combobox', { name: 'Устройство' }));
   await user.click(await screen.findByRole('option', { name: /Remote Beta/ }));
-  await user.click(screen.getByRole('button', { name: 'Assign VPN' }));
+  await user.click(screen.getByRole('button', { name: 'Назначить адрес' }));
 
   expect(mockMutateAsync).toHaveBeenCalledTimes(1);
   expect(mockMutateAsync).toHaveBeenCalledWith({ device_id: 'device-2' });
   expect((await screen.findAllByRole('alert')).some(v => v.textContent?.includes('Результат неизвестен'))).toBe(true);
-  expect(screen.getByRole('heading', { name: 'Provision VPN Node' })).toBeVisible();
+  expect(screen.getByRole('heading', { name: 'Назначение адреса из пула' })).toBeVisible();
   expect(mockMutateAsync).toHaveBeenCalledTimes(1);
 });
 
@@ -105,9 +105,9 @@ it('renders the peer API handshake state and does not invent byte counters or la
   render(<VPNManagerPage />);
 
   expect(screen.getAllByText('ACTIVE').length).toBeGreaterThan(0);
-  expect(screen.getAllByText('No handshake reported').length).toBeGreaterThan(0);
-  expect(screen.getByText('Per-peer RX/TX bytes')).toBeInTheDocument();
-  expect(screen.getByText('Not exposed')).toBeInTheDocument();
+  expect(screen.getAllByText('Не сообщено').length).toBeGreaterThan(0);
+  expect(screen.getByText('Счётчики трафика пира')).toBeInTheDocument();
+  expect(screen.getByText('Не предоставляются')).toBeInTheDocument();
   expect(screen.queryByText('Aggregate Throughput')).not.toBeInTheDocument();
   expect(screen.queryByText(/Global Latency/)).not.toBeInTheDocument();
   expect(screen.queryByText('0 B')).not.toBeInTheDocument();
@@ -119,6 +119,6 @@ it('opens the Android log viewer with the exact device ID from the peer', async 
     is_active: true, last_handshake_at: null, public_key: 'test-public-key', created_at: '2026-10-01T00:00:00Z',
   }], isLoading: false, isError: false } as never);
   render(<VPNManagerPage />);
-  await userEvent.setup().click(screen.getByRole('button', { name: 'Logs' }));
+  await userEvent.setup().click(screen.getByRole('button', { name: 'Логи' }));
   expect(mockPush).toHaveBeenCalledWith('/logs?device_id=device%2Fremote%3Fone');
 });

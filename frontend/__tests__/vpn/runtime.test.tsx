@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { act, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { api } from '@/lib/api';
@@ -44,4 +44,19 @@ it('keeps API failure separate from an empty fleet', async () => {
   get.mockRejectedValue(new Error('unavailable')); show();
   expect(await screen.findByRole('alert')).toHaveTextContent('Состояние VPN недоступно');
   expect(screen.queryByText('Устройств по этому фильтру нет.')).not.toBeInTheDocument();
+});
+it('shows newly received evidence immediately between UI clock ticks', async () => {
+  const clock = jest.spyOn(Date, 'now').mockReturnValue(now);
+  let deliver!: (value: unknown) => void;
+  get.mockImplementation(async url => url === '/groups' ? { data: [] } : new Promise(resolve => { deliver = resolve; }));
+  try {
+    show();
+    const received = now + 500;
+    clock.mockReturnValue(received);
+    await act(async () => deliver({ data: { ...page, as_of: new Date(received).toISOString(), items: [{ ...row, observation: {
+      ...row.observation, received_at: new Date(received).toISOString(), snapshot: { ...row.observation.snapshot, sampledAtEpochMs: received },
+    } }] } }));
+    expect(await screen.findByText('Свежий отчёт')).toBeInTheDocument();
+    expect(screen.queryByText('Отчёт устарел')).not.toBeInTheDocument();
+  } finally { clock.mockRestore(); }
 });

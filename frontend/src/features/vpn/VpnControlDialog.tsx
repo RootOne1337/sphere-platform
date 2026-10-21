@@ -1,10 +1,11 @@
 'use client';
 import { useEffect, useRef, useState } from 'react';
+import { ShieldAlert } from 'lucide-react';
 import { useAuthStore } from '@/lib/store';
 import { useVpnKillSwitch, useVpnRotate } from '@/lib/hooks/useVpn';
 import { useBulkAction } from '@/lib/hooks/useDevices';
 import { Button } from '@/components/ui/button';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogBody, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { controlFailure, controlReceipt, type ControlOutcome, type VpnControl } from './controlReceipt';
 
 export const vpnActorScope = () => {
@@ -48,19 +49,23 @@ export function VpnControlDialog({ kind, ids, scope, fresh, reload, onOutcomes, 
     } finally { busy.current = false; if (live.current) setPending(false); }
   }
   return <Dialog open onOpenChange={open => { if (!open && !busy.current) onClose(); }}>
-    <DialogContent className="max-h-[85dvh] max-w-2xl overflow-y-auto">
-      <DialogHeader><DialogTitle>{titles[kind]}</DialogTitle><DialogDescription>Явный список устройств и результат по каждой цели. Отправка команды не означает завершение действия Android.</DialogDescription></DialogHeader>
-      <p className="rounded-lg border border-warning/40 p-3 text-sm">{kind === 'rotate' ? 'Прежний VPN peer будет отозван. Если новое назначение не завершится, связь через VPN может пропасть.'
+    <DialogContent className="max-w-2xl" layout="workspace">
+      <DialogHeader><DialogTitle className="flex items-center gap-3"><span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-warning/20 bg-warning/10 text-warning"><ShieldAlert className="h-5 w-5" /></span>{titles[kind]}</DialogTitle><DialogDescription>Явный список устройств и результат по каждой цели. Отправка команды не означает завершение действия Android.</DialogDescription></DialogHeader>
+      <DialogBody>
+      <p className="rounded-xl border border-warning/20 bg-warning/5 p-4 text-sm leading-relaxed">{kind === 'rotate' ? 'Прежний VPN peer будет отозван. Если новое назначение не завершится, связь через VPN может пропасть.'
         : kind === 'enable' ? 'Блокировка сетевого трафика может отключить удалённый доступ. Текущий legacy transport этой операции не подключён.'
           : kind === 'disable' ? 'После отключения блокировки трафик может идти вне VPN. Текущий legacy transport этой операции не подключён.'
             : 'Перезагрузка прервёт стрим и задания. Получение команды не подтверждает последующий запуск Android.'}</p>
-      <p className="text-sm">Выбрано: {targets.length} устройств</p><ul className="max-h-40 space-y-1 overflow-y-auto rounded-lg border p-3 text-xs">{targets.map(id => <li key={id} className="break-all font-mono">{id}</li>)}</ul>
+      <div className="flex items-center justify-between"><p className="text-sm font-medium">Целевые устройства</p><span className="rounded-full bg-muted px-2.5 py-1 text-xs tabular-nums">{targets.length}</span></div><ul className="max-h-40 space-y-2 overflow-y-auto rounded-xl border bg-muted/10 p-4 text-xs">{targets.map(id => <li key={id} className="break-all font-mono text-muted-foreground">{id}</li>)}</ul>
       {!fresh && <p role="alert">Каталог обновляется или недоступен. Отправка заблокирована.</p>}
       {error && <p role="alert" className="rounded-lg border border-destructive/40 p-3 text-sm">{error}</p>}
       {rows.length > 0 && <section aria-label="Результаты операции" className="space-y-3">{rows.map(row => <article key={row.deviceId} className="rounded-lg border p-3 text-sm"><p className="break-all font-mono text-xs">{row.deviceId}</p><p className="mt-1 font-semibold">{row.outcome}</p><p className="mt-1">{row.detail}</p></article>)}</section>}
-      {!done && <><label className="flex items-start gap-3 text-sm"><input type="checkbox" checked={confirmed} disabled={pending} onChange={e => setConfirmed(e.target.checked)} />Понимаю последствия для выбранных устройств</label><Button variant="destructive" disabled={pending || !confirmed || !fresh || !targets.length || targets.length > 500} onClick={() => { void submit(); }}>{pending ? 'Проверка и отправка…' : 'Подтвердить операцию'}</Button></>}
-      {done && rows.some(v => v.retryable) && <Button variant="outline" disabled={pending || !fresh} onClick={() => { setRetryIds(rows.filter(v => v.retryable).map(v => v.deviceId)); setDone(false); setConfirmed(false); setError(null); }}>Подготовить повтор только неотправленных</Button>}
+      {!done && <label className="flex items-start gap-3 rounded-xl border p-4 text-sm"><input type="checkbox" className="mt-1 accent-primary" checked={confirmed} disabled={pending} onChange={e => setConfirmed(e.target.checked)} />Понимаю последствия для выбранных устройств</label>}
+      </DialogBody><DialogFooter>
       <Button variant="outline" disabled={pending} onClick={onClose}>Закрыть результаты</Button>
+      {!done && <Button variant="destructive" disabled={pending || !confirmed || !fresh || !targets.length || targets.length > 500} onClick={() => { void submit(); }}>{pending ? 'Проверка и отправка…' : 'Подтвердить операцию'}</Button>}
+      {done && rows.some(v => v.retryable) && <Button variant="outline" disabled={pending || !fresh} onClick={() => { setRetryIds(rows.filter(v => v.retryable).map(v => v.deviceId)); setDone(false); setConfirmed(false); setError(null); }}>Подготовить повтор только неотправленных</Button>}
+      </DialogFooter>
     </DialogContent>
   </Dialog>;
 }
