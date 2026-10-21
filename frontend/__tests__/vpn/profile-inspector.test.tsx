@@ -49,6 +49,19 @@ it('rejects oversized files before sending any request', async () => {
   expect(post).not.toHaveBeenCalled();
 });
 
+it('selects WireGuard and complete IPv6 policy from the imported file without displaying keys', async () => {
+  post.mockResolvedValue({ data: receipt });
+  const user = userEvent.setup();
+  render(<VpnProfileInspector onClose={jest.fn()} />);
+  await load(user, '[Interface]\nPrivateKey=private-sentinel\nAddress=10.0.0.2/32,fd42::2/128\n[Peer]\nPublicKey=public-sentinel\nAllowedIPs=0.0.0.0/0,::/0');
+  expect(screen.getByLabelText('Протокол')).toHaveValue('wireguard');
+  expect(screen.getByLabelText('IPv6 выбранных приложений')).toHaveValue('tunnel');
+  expect(screen.queryByLabelText('Версия конфигурации AWG')).not.toBeInTheDocument();
+  expect(document.body.textContent).not.toContain('private-sentinel');
+  await user.click(screen.getByRole('button', { name: 'Проверить профиль' }));
+  expect(post.mock.calls[0][1]).toMatchObject({ protocol: 'wireguard', protocol_version: '1', traffic_policy: { ipv6: 'tunnel' } });
+});
+
 it('aborts a pending request on unmount and never exposes API error bodies', async () => {
   post.mockImplementation(() => new Promise(() => {}));
   const user = userEvent.setup();

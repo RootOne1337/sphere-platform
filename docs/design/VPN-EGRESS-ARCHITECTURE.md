@@ -1,6 +1,6 @@
 # VPN/egress Sphere: изоляция управления, сменяемые провайдеры и приёмка
 
-Версия 1.1 · 21 октября 2026. Решение и исходный код, **не приёмка установленного VPN**.
+Версия 1.2 · 21 октября 2026. Исходный кандидат и конечные диагностические опыты, **не приёмка установленного VPN-провайдера Sphere**.
 Заменяет предположения об интегрированном SDK в [ADR-002](../adr/ADR-002-amneziawg-vpn.md).
 Связанные контракты: [VPN control](../operations/VPN-CONTROL-OUTCOMES.md),
 [инциденты VPN](../runbooks/02-vpn-incident.md), [моторный ИИ](MOTOR-AI-PLATFORM.md).
@@ -22,8 +22,8 @@ Sphere APK, сигнализация, WebRTC, диагностика, доста
 | Root `VPN_CONNECT` / `VPN_RECONNECT` в APK | Заблокированы до изолированного провайдера |
 | Глобальный `KillSwitchManager.enable` | Заблокирован до любых firewall-изменений |
 | Старый disconnect/cleanup | Сохранён для восстановления, не принят как надёжный механизм |
-| Нативный AWG-кандидат | Закреплены исходники/Go/NDK, собраны три ABI; только диагностика, не AAR и не APK |
-| Android AWG SDK / `VpnService` / локальная защита UID | Ещё не интегрированы и не приняты |
+| Нативный AWG-кандидат | Три ABI с Go BOOTTIME overlay и JNI lifecycle patch; x86_64 загружен в отдельный диагностический APK, WG/AWG handshake и данные проверены |
+| Android AWG SDK / `VpnService` / локальная защита UID | Закреплённый SDK, проверка UID, kernel guard, кандидат сессии и Android Builder реализованы; основной APK пока не вызывает их и не объявляет новый VPN service |
 | Постоянные профили и секреты | Отдельный зашифрованный каталог/revision/RLS реализован и проверен на изолированном PostgreSQL; не развёрнут |
 | Аренды внешних выходов | Не реализованы; существующий peer pool не равен этому каталогу |
 | Ротация из UI/скрипта/триггера одним журналом | Спроектирована ниже; существующая router rotation не завершает этот путь |
@@ -35,6 +35,59 @@ Sphere APK, сигнализация, WebRTC, диагностика, доста
 `execution_confirmed` фиксированы в `false`. Успешное сохранение в каталоге возвращает
 `persisted=true`, но `apply_allowed=false` и `execution_confirmed=false`.
 Новые возможности нельзя включить параметром запроса.
+
+## Диагностический Android-этап 21 октября
+
+Подробная квитанция: [Android provider candidate](../audits/2026-10-21/VPN-ANDROID-PROVIDER-CANDIDATE.json).
+В `:awg-sdk` включены 15 неизменённых Java-файлов официального SDK, лицензия,
+JNI declarations и закреплённые SHA. Native libraries допускаются только в debug;
+release AAR содержит Java/parser, не экспериментальный `.so`.
+
+`AppScopedVpnSession` отделяет подготовку, подтверждение kernel guard, TUN,
+защиту UDP socket, разрешение маршрута и handshake. Наличие handle не выдаётся за
+работающий VPN. Ключи из native IPC не выводятся: наружу проектируются только
+handshake/RX/TX. При неопределённой root-операции журнал остаётся `UNKNOWN`;
+повторное включение/автоматическое снятие защиты запрещены.
+
+Guard использует собственные FILTER/MANGLE chains, UID rules, fwmark и отдельные
+таблицы IPv4/IPv6. В каждой таблице остаётся blackhole default. Разрешённый маршрут
+ядро связывает с ifindex; исчезновение TUN и повторное использование его имени не
+должны открыть обычную сеть. Проверяются именно owned rules и hooks, а не общий
+`iptables -F`; глобальные default/FORWARD/NAT и main routing table не меняются.
+На Android 9 одного MARK после первого route lookup оказалось недостаточно —
+добавлены адресные UID rules до lookup. Совместимость `devgroup` с ядром оказалась
+ложной несмотря на help userspace, этот механизм не используется.
+
+На PH011 отдельный процесс с нативным AWG получил HTTP echo от локального peer.
+При force-stop TUN исчез, выбранный UID потерял доступ, а контрольный UID Sphere
+сохранил TCP-доступ; явный release восстановил выбранный UID. Отдельный опыт
+проверяет повторное использование имени интерфейса с другим ifindex.
+
+На PH030 профиль WireGuard, предоставленный владельцем, прошёл preflight и
+расшифровался в тестовом APK: recipient RSA key создан в AndroidKeyStore;
+временная HTTPS-раздача содержала только APK/helpers и AES-GCM ciphertext с
+RSA-OAEP wrapped key. Секреты не включались в shell argv или публичные файлы.
+Подтверждены native handshake, DNS-ответ от настроенного resolver через выбранный
+UID, закрытие доступа после force-stop и сохранение доступа UID Sphere.
+Снятие owned guard подтверждено, тестовые APK/файлы/ссылка удалены.
+
+PH030 не предоставила диагностическому UID подтверждённую отдельную root-сессию.
+Финальный опыт использовал существующий авторизованный root-канал Sphere для
+выполнения точных планов fixture, с проверкой operation/nonce/marker.
+Это **не** приёмка прямого `su` из нового процесса основного APK.
+Частые root-вызовы диагностического опроса вызвали уведомления superuser; этот
+опрос завершён. Штатный health/status должен идти через native counters/events,
+а root использоваться при изменении owned guard, без root polling каждую секунду.
+
+Эти опыты используют root-created TUN вместо Android `VpnService`. Поэтому ещё
+не приняты consent/revoke/`protect()` в настоящем service, Android DNS routing,
+реальный IPv6 egress, sleep/resume/reboot, network switching, длительный независимый
+WS/media/input и работа игры. Нельзя объявлять их готовыми по одному handshake.
+До следующего service/journal/rollout этапа capability execution остаётся `false`.
+
+Один APK — целевой способ поставки: выбранный backend и Android SDK внутри APK,
+изолированный процесс VPN, единый управляемый lifecycle. Отдельные probe APK
+служат только диагностике и не являются предлагаемой пользователю архитектурой.
 
 ## Наблюдения по игровому подключению
 

@@ -129,17 +129,38 @@ permissive policy. Composite FK связывает org/profile, уникальн
 проверяет source SHA, ограничивает GOMAXPROCS и сначала выполняет host resource guard.
 
 ```powershell
-python scripts/build_awg_native.py --ndk-root '<NDK 26.3.11579264>' --go '<Go 1.25.4>' --output '.local-pilot/awg-native-build'
+python scripts/build_awg_native.py --ndk-root '<NDK 26.3.11579264>' --go '<Go 1.25.4>' --android-clock --harden-jni --output '.local-pilot/awg-native-build'
 ```
 
 Получены x86_64, arm64-v8a, armeabi-v7a: проверены ELF machine/class,
-шесть ожидаемых JNI exports и 16-КиБ LOAD alignment. Две x86_64 сборки совпали по SHA.
-Бинарники остаются локальными диагностическими артефактами, не добавляются в Git/APK.
-Не применён upstream Android suspend-clock Go patch; manifest всегда diagnostic-only.
-Не проверены загрузка библиотеки, sleep/resume, handshake или реальная маршрутизация.
+шесть JNI exports и 16-КиБ LOAD alignment. `--android-clock` применяет BOOTTIME
+через изолированный Go overlay, без изменения установленного GOROOT. SHA исходных
+ASM проверяются по lock. `--harden-jni` применяет закреплённый patch к отдельной
+копии JNI backend: сериализация handle map, корректное закрытие при ошибке,
+отключение filesystem UAPI. Изменённые/лишние исходники останавливают сборку.
+Manifest остаётся diagnostic-only; эти флаги не разрешают production rollout.
 
-Следующий этап — выпускаемый AAR/Android provider с согласованным runtime patch,
-точным Java/JNI contract, лицензиями, тестами Android 9 и UID/shared-UID/lockdown guard.
-После этого — изолированный пилот egress/DNS/IPv6/driver crash с независимыми
-Sphere WS/HTTP/video/input. Пока `VPN_CONNECT`/`VPN_RECONNECT` и глобальный kill switch
-в новом Android-коде остаются заблокированы; существующая установленная APK не менялась.
+`python -m scripts.sync_awg_sdk` проверяет 15 vendored Java sources и лицензию.
+`:awg-sdk` сверяет их при preBuild. Для debug JNI нужен `SPHERE_AWG_NATIVE_DIR`
+с этим manifest и точным набором трёх ABI; отдельный `:awg-smoke` допускает
+`-PsphereProbeAbi=x86_64` для уменьшения диагностического APK. Release AAR всегда
+без native `.so`, диагностические probe-модули не имеют release variant.
+
+На Android 9 x86_64 пройдены изолированные root-TUN опыты: PH011 native AWG/HTTP
+echo, PH030 native WireGuard/DNS по профилю владельца, crash/fail-closed и отдельный
+контрольный UID Sphere. Это не установленный VPN service. Подробности, отрицательные
+наблюдения и границы — в [квитанции](../audits/2026-10-21/VPN-ANDROID-PROVIDER-CANDIDATE.json)
+и [архитектуре 1.2](../design/VPN-EGRESS-ARCHITECTURE.md).
+
+Root-команды могут вызывать toast superuser. Не отключать глобальную защиту или
+уведомления root-менеджера ради маскировки опроса. Штатная телеметрия должна читать
+JNI counters и события; повторять `su` каждую секунду для статуса не нужно.
+`UNKNOWN` нельзя интерпретировать как отключённый/безопасный VPN. После сбоя
+сначала сверяются journal/UID/owned chains/routes, затем выполняется адресное
+восстановление. Не удалять приложение с оставшимися UID rules: UID может быть
+переиспользован системой.
+
+Остаются реальный `VpnService`/consent/revoke/socket protection, DNS/IPv6/boot,
+долговременный server operation journal, delivery и приёмка полного WS/media/input.
+`VPN_CONNECT`/`VPN_RECONNECT` и глобальный kill switch основного нового Android-кода
+пока заблокированы. Существующие установленные Sphere APK/API/веб этим этапом не менялись.

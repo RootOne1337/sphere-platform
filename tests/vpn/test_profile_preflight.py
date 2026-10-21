@@ -61,6 +61,17 @@ def test_valid_config_is_never_an_activation_or_secret_receipt(monkeypatch):
     assert result.endpoint == "vpn.example:51820"
 
 
+def test_ipv6_dns_cannot_implicitly_allow_a_blocked_address_family():
+    result = inspect(CONFIG.replace("DNS = 1.1.1.1", "DNS = 2606:4700:4700::1111"))
+    assert not result.config_valid and "ipv6_config_conflicts_with_block_policy" in codes(result)
+
+
+def test_ipv6_dns_is_allowed_with_explicit_ipv6_tunnel_address_and_default_route():
+    config = CONFIG.replace("DNS = 1.1.1.1", "DNS = 2606:4700:4700::1111").replace("Address = 10.100.0.2/32", "Address = 10.100.0.2/32, fd00::2/128").replace("AllowedIPs = 0.0.0.0/0", "AllowedIPs = 0.0.0.0/0, ::/0")
+    result = inspect(config, traffic_policy={"included_packages": ["org.example.game"], "ipv6": "tunnel"})
+    assert result.config_valid
+
+
 @pytest.mark.parametrize("version", ["1", "1.5", "2", "3.1"])
 def test_awg_versions_are_explicitly_recognized_without_claiming_runtime_support(version):
     result = awg(protocol_version=version)

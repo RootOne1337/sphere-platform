@@ -57,7 +57,9 @@ if (signedDiscovery) {
 
 // Never let a release-shaped Gradle task silently emit an unsigned APK/AAB.
 // Unit tests and debug builds remain runnable without the production signer.
-val requestedAndroidTasks = gradle.startParameter.taskNames.map { it.substringAfterLast(':') }
+val requestedAndroidTasks = gradle.startParameter.taskNames
+    .filter { it.substringBeforeLast(':', "").removePrefix(":") in setOf("", "app") }
+    .map { it.substringAfterLast(':') }
 val releaseArtifactRequested = requestedAndroidTasks.any { taskName ->
     taskName == "assemble" || taskName == "build" || taskName == "bundle" ||
         taskName.matches(Regex("(?i)^(assemble|bundle|package|install|build|sign).*Release$"))
@@ -234,6 +236,7 @@ android {
 }
 
 dependencies {
+    implementation(project(":awg-sdk"))
     if (directProbeCanary) implementation("io.getstream:stream-video-webrtc-android:146.7.0")
     // AndroidX
     implementation(libs.androidx.core.ktx)

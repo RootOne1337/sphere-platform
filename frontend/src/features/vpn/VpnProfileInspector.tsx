@@ -7,6 +7,7 @@ import { useAuthStore } from '@/lib/store';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogBody, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { validSaveReceipt, type ProfileSaveReceipt, type SavedVpnProfile } from './profileTypes';
+import { profileFileHints } from './profileFileHints';
 
 type Receipt = {
   schema_version: 1; config_valid: boolean; apply_allowed: false; persisted: false;
@@ -62,6 +63,7 @@ export function VpnProfileInspector({ onClose, purpose = 'inspect', target, onSa
   const [saved, setSaved] = useState<ProfileSaveReceipt | null>(null);
   const [unknownRequest, setUnknownRequest] = useState<string | null>(null);
   const [loaded, setLoaded] = useState(false);
+  const [fileHint, setFileHint] = useState<ReturnType<typeof profileFileHints>>(null);
   const [pending, setPending] = useState(false);
   const [receipt, setReceipt] = useState<Receipt | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -76,13 +78,18 @@ export function VpnProfileInspector({ onClose, purpose = 'inspect', target, onSa
   function invalidate() { setReceipt(null); setSaved(null); setError(null); }
   async function readFile(file: File | undefined) {
     const id = ++generation.current;
-    config.current = null; setLoaded(false); setFilename(''); invalidate();
+    config.current = null; setLoaded(false); setFilename(''); setFileHint(null); invalidate();
     if (!file) return;
     if (file.size < 1 || file.size > 65536) { setError('Выбери .conf размером до 64 КиБ.'); return; }
     try {
       const text = await file.text();
       if (id !== generation.current) return;
       config.current = text; setFilename(file.name); setLoaded(true);
+      const hint = profileFileHints(text); setFileHint(hint);
+      if (hint && !target) {
+        setProtocol(hint.protocol);
+        setIpv6(hint.ipv6);
+      }
     } catch { if (id === generation.current) setError('Не удалось прочитать файл.'); }
   }
 
@@ -169,6 +176,7 @@ export function VpnProfileInspector({ onClose, purpose = 'inspect', target, onSa
         <label className="grid gap-2 text-sm font-medium">Файл конфигурации
           <input ref={fileInput} type="file" accept=".conf,text/plain" aria-label="Файл VPN-профиля" className="w-full min-w-0 rounded-lg border p-3 text-sm file:mr-3 file:rounded-md file:border-0 file:bg-muted file:px-3 file:py-2" onChange={e => void readFile(e.target.files?.[0])} />
         </label>
+        {fileHint && <p className="rounded-lg bg-muted/40 px-3 py-2 text-xs text-muted-foreground">По структуре файла: {fileHint.protocol === 'wireguard' ? 'WireGuard' : 'AmneziaWG'}{fileHint.ipv6 === 'tunnel' ? ' · IPv6-адрес и маршрут ::/0' : ''}. {fileHint.partialIpv6 ? 'IPv6 настроен частично — проверь адрес и маршрут.' : fileHint.protocol === 'amneziawg' ? 'Версию AWG выбери по данным провайдера.' : 'Параметры можно изменить ниже.'} Окончательную проверку выполнит сервер.</p>}
         <div className="grid gap-4 sm:grid-cols-2">
           <label className="grid gap-2 text-sm font-medium">Протокол
             <select className="rounded-lg border bg-background p-2.5" value={protocol} onChange={e => { setProtocol(e.target.value as typeof protocol); invalidate(); }}>
@@ -197,7 +205,7 @@ export function VpnProfileInspector({ onClose, purpose = 'inspect', target, onSa
       {receipt && <div role="status" className="grid gap-3 rounded-xl border p-4 text-sm">
         <p className="font-medium">{receipt.config_valid ? 'Формат профиля прошёл проверку' : 'Профиль требует исправлений'}{filename ? ` · ${filename}` : ''}</p>
         {receipt.issues.length > 0 && <ul className="list-inside list-disc space-y-1">{receipt.issues.map((i, n) => <li key={n}>{i.line ? `Строка ${i.line}: ` : ''}{issueLabels[i.code] ?? (i.code.startsWith('missing_') ? 'Не хватает обязательного поля конфигурации' : 'Некорректная конфигурация')}</li>)}</ul>}
-        <p className="text-muted-foreground">Подключение пока недоступно: адаптер Android с изоляцией приложений ещё не интегрирован и не прошёл проверку. Успешный разбор файла не подтверждает работающий VPN.</p>
+        <p className="text-muted-foreground">Подключение пока недоступно: Android-адаптер WG/AWG проходит отдельную проверку изоляции приложений и восстановления. Успешный разбор файла не подтверждает работающий VPN.</p>
         <p className="text-xs text-muted-foreground">Для новой проверки выбери файл повторно. Ключи не включены в результат.</p>
       </div>}
       </DialogBody>

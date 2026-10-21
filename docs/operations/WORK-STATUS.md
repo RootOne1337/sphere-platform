@@ -2,6 +2,17 @@
 
 **Проверенная установка:** UI `5cbb4bba` / API `15ce2b62`.
 
+**21 октября — VPN: Android SDK, kernel guard и конечные WG/AWG опыты.**
+Закреплённый SDK, Go clock overlay и JNI lifecycle patch собраны для трёх ABI.
+PH011 подтвердил native AWG/HTTP echo, PH030 — WireGuard handshake/DNS по профилю
+владельца. В обоих опытах force-stop закрыл доступ выбранного тестового UID,
+контрольный UID Sphere сохранил доступ; release и очистка подтверждены. Частый
+root-опрос fixture завершён; его superuser toast учтён как дефект диагностического UX.
+Это отдельные probe APK/root TUN, не приёмка `VpnService` в основном Sphere APK.
+Единый service, журнал операций, scripts/orchestration и rollout остаются следующим
+этапом. [Квитанция и ограничения](../audits/2026-10-21/VPN-ANDROID-PROVIDER-CANDIDATE.json),
+[архитектура 1.2](../design/VPN-EGRESS-ARCHITECTURE.md).
+
 **21 октября — VPN: зашифрованный каталог и нативный кандидат.** В исходниках добавлены
 импорт, неизменяемые версии, поиск/архив, отдельный key ring и tenant RLS. Пройдены
 178 backend/RLS/native-builder tests, 9 настоящих PostgreSQL concurrency/RLS tests
@@ -681,13 +692,15 @@ resource soak/retention и RAM acceptance.
 
 **OPEN** · EP-045, EP-046.
 
-Проверены исходные preflight/app policy, зашифрованный каталог/revisions/RLS и UI;
-три native ABI собраны диагностически. Интеграция не объявлена установленной.
+Проверены исходные каталог/revisions/RLS/UI и закреплённый SDK. Собраны три
+hardened native ABI; пройдены конечные root-TUN AWG/HTTP на PH011 и WG/DNS на PH030,
+crash/UID isolation и контрольный UID Sphere. Основной VpnService не установлен.
 
-Остаётся: Выпускаемый AAR/Android provider, UID/lockdown guard, rollout, durable
-apply/rotation journal, внешние egress adapters и live fault acceptance; AI отдельно.
+Остаётся: Единый APK с VpnService/consent/revoke/protect, DNS/IPv6/boot/sleep/network
+acceptance, durable apply/rotation journal, scripts/orchestration и rollout; AI отдельно.
 
-Доказательства: [VPN-каталог и native candidate](../audits/2026-10-21/VPN-CATALOG-NATIVE-CANDIDATE.json),
+Доказательства: [Android candidate и PH030](../audits/2026-10-21/VPN-ANDROID-PROVIDER-CANDIDATE.json),
+[VPN-каталог](../audits/2026-10-21/VPN-CATALOG-NATIVE-CANDIDATE.json),
 [эксплуатация](VPN-PROFILES.md), [AI-READINESS](../architecture/AI-READINESS.md),
 [NitroGen/LAN — аудит 16 октября](../audits/2026-10-16/NITROGEN-READINESS.md).
 

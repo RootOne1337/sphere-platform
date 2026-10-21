@@ -162,6 +162,7 @@ def preflight_profile(request: VPNProfilePreflightRequest) -> VPNProfilePrefligh
 
     addresses = []
     routes = []
+    dns_servers = []
     headers: list[tuple[int, int]] = []
     endpoint = None
     for name, (value, number) in [*interface.items(), *peer.items()]:
@@ -173,8 +174,7 @@ def preflight_profile(request: VPNProfilePreflightRequest) -> VPNProfilePrefligh
             elif name == "allowedips":
                 routes = [ipaddress.ip_network(v.strip(), strict=False) for v in value.split(",")]
             elif name == "dns":
-                for item in value.split(","):
-                    ipaddress.ip_address(item.strip())
+                dns_servers = [ipaddress.ip_address(item.strip()) for item in value.split(",")]
             elif name == "endpoint":
                 endpoint = _endpoint(value)
             elif name in _CPS:
@@ -218,7 +218,8 @@ def preflight_profile(request: VPNProfilePreflightRequest) -> VPNProfilePrefligh
     has_ipv6 = any(a.version == 6 for a in addresses) and any(r.version == 6 and r.prefixlen == 0 for r in routes)
     if request.traffic_policy.ipv6 == "tunnel" and not has_ipv6:
         issue("ipv6_tunnel_address_and_default_route_required")
-    if request.traffic_policy.ipv6 == "block" and (any(a.version == 6 for a in addresses) or any(r.version == 6 for r in routes)):
+    if request.traffic_policy.ipv6 == "block" and (any(a.version == 6 for a in addresses) or any(r.version == 6 for r in routes)
+                                                  or any(d.version == 6 for d in dns_servers)):
         issue("ipv6_config_conflicts_with_block_policy")
 
     provider = next(p for p in provider_capabilities() if p.provider_id == request.provider_id)

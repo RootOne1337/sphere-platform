@@ -4,3 +4,8 @@ docs/api-endpoints.md linguist-generated=true
 # Bind-mounted Linux entrypoints must remain executable after Windows checkout.
 *.sh text eol=lf
 android/gradlew text eol=lf
+
+# Pinned upstream file is byte-verified; retain its existing blank-line spaces.
+android/awg-sdk/src/main/java/org/amnezia/awg/config/Interface.java whitespace=-blank-at-eol
+# Unified diff context needs its leading space before Go tabs and blank lines.
+android/awg-sdk/patches/*.patch text eol=lf whitespace=-blank-at-eol,-space-before-tab
