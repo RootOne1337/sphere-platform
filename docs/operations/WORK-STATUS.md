@@ -2,6 +2,23 @@
 
 **Проверенная установка:** UI `46dd02ff` / API `4a6ada92`.
 
+**22 октября — исправление доставки VPN-статуса прошло полный CI.** На PH011
+зафиксирован ответ основного APK84 `IDLE` с отдельным PID `:vpn`; API baseline
+сохранял `observation=null`. Исправлен пропуск `app_vpn_status` в реальном receive
+loop. 4428 passed, 107 skipped, 668 subtests, coverage 82,57%; шесть jobs успешны.
+Два прежних gateway tests падали из-за ECR data quota; canonical Docker Hub
+с тем же независимо проверенным digest восстановил проверки.
+Образ загружен/проверен, но первый допуск остановил замену API по commit headroom.
+Старый API healthy, его ID не поменялся; повторный импорт не требуется.
+[Build-only квитанция](../audits/2026-10-22/VPN-STATUS-ROUTING-CI.md).
+
+**22 октября — APK84 установлен на PH011.** Штатный адресный OTA завершён после
+перезапуска процесса, независимый SHA пакета совпал. Полный Android CI успешен;
+Android/native-builder source идентичен подписанному локальному артефакту.
+CI-подпись отличается и не устанавливалась. PH030 offline, его обновление не
+запускалось. Физическое применение VPN остаётся отдельной проверкой.
+[Точная поставка](../audits/2026-10-22/VPN-APK84-PH011-DELIVERY.md).
+
 **22 октября — пакетный импорт установлен, ответ после commit потерян и восстановлен.**
 API `4a6ada92` / UI `46dd02ff` получены из успешных hosted CI: 4422 backend tests,
 107 skipped, 668 subtests, 82,58% coverage; 2630 frontend tests / 183 suites.

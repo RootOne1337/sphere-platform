@@ -1,11 +1,11 @@
 {
   "schemaVersion": 1,
-  "reviewedAtUtc": "2026-10-21T21:06:23.161747+00:00",
+  "reviewedAtUtc": "2026-10-21T22:18:32.574373+00:00",
   "scope": "All tracked Markdown classified; active local-link paths scanned. Not semantic attestation of every sentence, command execution, external-link or live acceptance.",
   "countsByRole": {
     "ADR": 6,
     "CURRENT_ENTRYPOINT": 8,
-    "DATED_EVIDENCE": 358,
+    "DATED_EVIDENCE": 360,
     "DESIGN_SPECIFICATION": 83,
     "OPERATING_GUIDE": 69,
     "PROJECT_POLICY": 7,
@@ -1561,6 +1561,10 @@
       "role": "DATED_EVIDENCE"
     },
     {
+      "file": "docs/audits/2026-10-22/VPN-APK84-PH011-DELIVERY.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
       "file": "docs/audits/2026-10-22/VPN-BATCH-CI-VALIDATION.md",
       "role": "DATED_EVIDENCE"
     },
@@ -1574,6 +1578,10 @@
     },
     {
       "file": "docs/audits/2026-10-22/VPN-CATALOG-LIVE-DELIVERY.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
+      "file": "docs/audits/2026-10-22/VPN-STATUS-ROUTING-CI.md",
       "role": "DATED_EVIDENCE"
     },
     {
