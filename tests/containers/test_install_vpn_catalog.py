@@ -166,3 +166,49 @@ def test_restore_proof_requires_exact_backup_bytes_and_successful_same_source_mi
             backup.write_bytes(b"modified")
             with pytest.raises(ValueError, match="Backup bytes changed"):
                 install.recovery_evidence(backup, restored, "b" * 40)
+
+
+def test_resume_requires_positive_migration_receipt_and_original_api_container():
+    with tempfile.TemporaryDirectory() as tmp:
+        folder = Path(tmp)
+        source = "a" * 40
+        current = {"Id": "original-container", "Image": "original-image"}
+        recovery = {"backupSha256": "b" * 64, "restoreReceiptSha256": "c" * 64}
+        plan = {"sourceRevision": source, "applyRequested": True, **recovery}
+        intent = {
+            "sourceRevision": source,
+            "previousBackend": {"id": current["Id"], "imageId": current["Image"]},
+        }
+        migration = {
+            "state": "success",
+            "schemaHead": install.CATALOG_HEAD,
+            "actualLoginChecked": True,
+            "minimalGrantsApplied": True,
+            "legacyRoleChanged": False,
+            "workerSha256": hashlib.sha256(
+                (install.ROOT / "scripts/pilot/vpn_catalog_db_worker.py").read_bytes()
+            ).hexdigest(),
+        }
+        for name, data in [("plan", plan), ("intent", intent), ("migration", migration)]:
+            (folder / (name + ".json")).write_text(json.dumps(data))
+        with patch.object(live, "workspace_path", side_effect=lambda p, **kw: p):
+            assert "resumedMigrationReceiptSha256" in install.confirmed_migration(
+                folder, source, current, recovery
+            )
+            for key, value in [
+                ("state", "unknown"),
+                ("schemaHead", install.PREVIOUS_HEAD),
+                ("actualLoginChecked", False),
+                ("workerSha256", "0" * 64),
+            ]:
+                (folder / "migration.json").write_text(json.dumps(migration | {key: value}))
+                with pytest.raises(ValueError):
+                    install.confirmed_migration(folder, source, current, recovery)
+            (folder / "migration.json").write_text(json.dumps(migration))
+            with pytest.raises(ValueError):
+                install.confirmed_migration(
+                    folder, source, current | {"Id": "other-container"}, recovery
+                )
+            (folder / "installed.json").write_text("{}")
+            with pytest.raises(ValueError):
+                install.confirmed_migration(folder, source, current, recovery)

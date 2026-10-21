@@ -259,6 +259,44 @@ def prepare_database(image: str, current: dict, secret: Path, env: dict, output:
         command(["docker", "rm", "-f", container])
 
 
+def confirmed_migration(directory: Path, source: str, current: dict, recovery: dict) -> dict:
+    directory = live.workspace_path(directory, private=True)
+    require(
+        not (directory / "installed.json").exists() and not (directory / "rollback.json").exists(),
+        "Completed or rolled-back release requires a separate reviewed transition",
+    )
+    plan = bounded_json(directory / "plan.json", 32768)
+    intent = bounded_json(directory / "intent.json", 16384)
+    migration = bounded_json(directory / "migration.json", 16384)
+    require(
+        plan.get("sourceRevision") == source
+        and plan.get("applyRequested") is True
+        and plan.get("backupSha256") == recovery["backupSha256"]
+        and plan.get("restoreReceiptSha256") == recovery["restoreReceiptSha256"]
+        and intent.get("sourceRevision") == source
+        and intent.get("previousBackend", {}).get("id") == current["Id"]
+        and intent.get("previousBackend", {}).get("imageId") == current["Image"],
+        "Interrupted migration source/API/recovery binding changed",
+    )
+    require(
+        migration.get("state") == "success"
+        and migration.get("schemaHead") == CATALOG_HEAD
+        and migration.get("actualLoginChecked") is True
+        and migration.get("minimalGrantsApplied") is True
+        and migration.get("legacyRoleChanged") is False
+        and migration.get("workerSha256")
+        == hashlib.sha256(
+            (ROOT / "scripts/pilot/vpn_catalog_db_worker.py").read_bytes()
+        ).hexdigest(),
+        "Migration must be confirmed before resuming API replacement",
+    )
+    return {
+        "resumedMigrationReceiptSha256": hashlib.sha256(
+            (directory / "migration.json").read_bytes()
+        ).hexdigest()
+    }
+
+
 def install(
     artifact: Path,
     source: str,
@@ -268,6 +306,7 @@ def install(
     restored: Path,
     *,
     apply: bool = False,
+    resume_migration: Path | None = None,
 ) -> dict:
     with execution_lock(ROOT / ".local-pilot/vpn-catalog-install.lock"):
         artifact = live.workspace_path(artifact, private=True)
@@ -282,12 +321,17 @@ def install(
             and runtime_env.get("SPHERE_BUILD_SHA") == expected_current
             and receipt["parentImageId"] == current["Image"]
             and receipt["parentSource"] == expected_current
-            and live.schema_heads(current) == [PREVIOUS_HEAD],
+            and live.schema_heads(current) == [CATALOG_HEAD if resume_migration else PREVIOUS_HEAD],
             "Installed API/schema baseline changed",
         )
         secret = live.workspace_path(secret, private=True)
         env = secrets_environment(secret, runtime_env)
         recovery = recovery_evidence(backup, restored, source)
+        resumed = (
+            confirmed_migration(resume_migration, source, current, recovery)
+            if resume_migration
+            else {}
+        )
         labels = current["Config"]["Labels"]
         files = labels["com.docker.compose.project.config_files"].split(",")
         require(
@@ -337,6 +381,7 @@ def install(
             "reportDirectory": str(output),
             "resourceFindings": findings,
             **recovery,
+            **resumed,
             "schemaTransition": {"from": PREVIOUS_HEAD, "to": CATALOG_HEAD},
             "physicalVpnChanged": False,
         }
@@ -354,7 +399,8 @@ def install(
                 "databaseDowngradeAllowed": False,
             },
         )
-        prepare_database(admitted["imageId"], current, secret, env, output)
+        if not resume_migration:
+            prepare_database(admitted["imageId"], current, secret, env, output)
         require(live.schema_heads(current) == [CATALOG_HEAD], "Schema migration unconfirmed")
         require(
             not evaluate(collect(ROOT)),
@@ -441,6 +487,11 @@ def main() -> int:
     parser.add_argument("--source", required=True)
     parser.add_argument("--expected-current", required=True)
     parser.add_argument("--apply", action="store_true")
+    parser.add_argument(
+        "--resume-migration",
+        type=Path,
+        help="Explicit successful migration receipt directory; never reruns it",
+    )
     args = parser.parse_args()
     try:
         print(
@@ -453,6 +504,7 @@ def main() -> int:
                     args.backup,
                     args.restored,
                     apply=args.apply,
+                    resume_migration=args.resume_migration,
                 )
             )
         )
