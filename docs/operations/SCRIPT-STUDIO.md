@@ -1,6 +1,8 @@
 # Script Studio: инструкция по созданию и проверке сценариев
 
-**Проверенная установка:** UI `37926bd3` / API `7d2a6846`.
+**Проверенная установка:** UI `46dd02ff` / API `4a6ada92`.
+
+**22 октября — пакетный VPN-каталог установлен.** UI `46dd02ff` / API `4a6ada92`: проверены 100 файлов, поздний rollback и восстановление после потери ответа без повторной записи. Backend CI 4422 passed, frontend 2630; реальные desktop/mobile скриншоты и границы — в [квитанции поставки](../audits/2026-10-22/VPN-BATCH-LIVE-DELIVERY.md). Main-APK VPN, per-app accounting, proxy runtime и server journal/leases остаются отдельной приёмкой.
 
 **20 октября — веб5cbb и APK83.** Добавлены общий локальный ICE topology observer и отдельный Android input dispatcher. 2569 frontend tests; Android dev/enterprise lint/build/unit suites — по1252 теста,3 skipped. APK83 завершил OTA на4 online устройствах:3 package SHA сверены,PH030 — completed OTA/версия без отдельного hash;17 offline не обновлены. На PH030 подтверждены кнопки и жест, но повторное подключение в проверочном браузере осталось на серверном видео без управления. Снижение latency и VPN/reconnect production-приёмка открыты. [Изменения, отрицательные проверки и следующие условия](../audits/2026-10-20/NETWORK-ROUTE-INPUT83-DELIVERY.md).
 

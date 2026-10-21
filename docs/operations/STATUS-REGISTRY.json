@@ -1,8 +1,8 @@
 {
   "schemaVersion": 1,
-  "reviewedAtUtc": "2026-10-21T19:03:33.544514+00:00",
-  "sourceReviewed": "37926bd3309b6ddfd4e98028577806ff9ae9f527",
-  "scope": "Installed VPN workspace/catalog UI37926/API7d2a with dedicated catalog login and finite HTTP/browser review. APK83 package evidence retained. Historical media/input/model experiments remain separate; current direct route not retested after catalog rollout. APK84 physical VPN, unique client leases, durable journal, per-app metrics and proxy execution remain open.",
+  "reviewedAtUtc": "2026-10-21T21:06:23.161747+00:00",
+  "sourceReviewed": "46dd02fff711c1667b44520b85290226b7155287",
+  "scope": "Installed batch VPN catalog UI46dd/API4a6 with hosted CI and finite desktop/mobile recovery acceptance. APK83 package evidence preserved. Physical app-scoped VPN, journal/leases, per-app metrics, proxies and overall production readiness remain open.",
   "baseline": "docs/audits/2026-10-05/ENTERPRISE-PRODUCT-BACKLOG.json",
   "previousCrosscheck": "docs/audits/2026-10-09/CHAT-CODE-RECONCILIATION.json",
   "counts": {
@@ -11,11 +11,11 @@
     "open": 41
   },
   "installed": {
-    "lastObservedUtc": "2026-10-21T19:03:33.544514+00:00",
-    "ui": "37926bd3309b6ddfd4e98028577806ff9ae9f527",
-    "api": "7d2a684625c6f0620358ca20604fadcf6e82a6cb",
-    "evidence": "docs/audits/2026-10-22/VPN-CATALOG-RUNTIME-OBSERVATION.json",
-    "observation": "VPN workspace UI37926/API7d2a installed with additive catalog migration, dedicated catalog login and live HTTP/browser acceptance. APK84 not installed; prior APK83 evidence preserved. No physical VPN or game commands.",
+    "lastObservedUtc": "2026-10-21T21:06:23.161747+00:00",
+    "ui": "46dd02fff711c1667b44520b85290226b7155287",
+    "api": "4a6ada927e6297004b9f1b87faaf996fb282ff56",
+    "evidence": "docs/audits/2026-10-22/VPN-BATCH-RUNTIME-OBSERVATION.json",
+    "observation": "Finite real UI/API catalog acceptance. Tunnel rates are source/CI tested and shown unavailable on APK83; no physical VPN, media/input or game acceptance.",
     "pilotApk": {
       "device": "auto-ph-011",
       "deviceId": "414ce0e9-4b93-4f96-b9ca-ee675f53835e",
@@ -28,7 +28,7 @@
       "packageProofObservedAtUtc": "2026-10-20T15:21:22.957148+00:00",
       "scope": "Independent installed-package SHA plus completed addressed OTA; finite PH030 input and general performance are separate."
     },
-    "evidenceSha256NormalizedLf": "c640b9a9153e66e014f6de0897c9c69ea378362e5757f0a7e2ee6739a262c9ef",
+    "evidenceSha256NormalizedLf": "c2e1c04bcd5fe4d7e66df20282ccaa415b8d1f8272d7a4ce49af87c583ba9066",
     "additionalPilotApks": [
       {
         "device": "auto-ph-025",
@@ -64,9 +64,9 @@
       },
       "scope": "Three independent package hashes. Four completed OTA commands; PH030 hash remains unverified; 17 offline excluded."
     },
-    "latestReadbackAtUtc": "2026-10-21T19:03:33.544514+00:00",
-    "latestReadbackEvidence": "docs/audits/2026-10-22/VPN-CATALOG-LIVE-DELIVERY.json",
-    "latestReadbackEvidenceSha256NormalizedLf": "681e563a54231f55620b3701f1ca29192f79535cb8fa49845178e75ba12a8021",
+    "latestReadbackAtUtc": "2026-10-21T21:06:23.161747+00:00",
+    "latestReadbackEvidence": "docs/audits/2026-10-22/VPN-BATCH-LIVE-DELIVERY.json",
+    "latestReadbackEvidenceSha256NormalizedLf": "9f222bafb8bed101015b20565f8b78cdc8d6c5057ab3b105e5b2cf783de6fd96",
     "previousRuntimeObservation": {
       "ui": "ed9d54d090e2b5a5d471502335ddf6b8b86dbd35",
       "api": "ed9d54d090e2b5a5d471502335ddf6b8b86dbd35",
@@ -1804,8 +1804,8 @@
     "primaryVideoInstalled": true,
     "primaryVideoObserved": false,
     "productionAccepted": false,
-    "currentObservationEvidence": "docs/audits/2026-10-22/VPN-CATALOG-RUNTIME-OBSERVATION.json",
-    "currentObservationEvidenceSha256NormalizedLf": "c640b9a9153e66e014f6de0897c9c69ea378362e5757f0a7e2ee6739a262c9ef",
+    "currentObservationEvidence": "docs/audits/2026-10-22/VPN-BATCH-RUNTIME-OBSERVATION.json",
+    "currentObservationEvidenceSha256NormalizedLf": "c2e1c04bcd5fe4d7e66df20282ccaa415b8d1f8272d7a4ce49af87c583ba9066",
     "pilotEvidenceScope": "Web5cbb installed; API15ce preserved. APK83 completed OTA on four online devices, three independent package hashes, PH030 completion/version only; 17 offline excluded. Finite controls passed; initial/repeated ICE/native-busy failures and latency remain open.",
     "historicalPrimaryFrames": 1804,
     "directInputCandidate": {
@@ -6205,5 +6205,13 @@
     "desktopMobileBrowserReviewed": true,
     "deviceVpnChanged": false,
     "mainVpnServiceAccepted": false
+  },
+  "vpnBatchLiveDelivery": {
+    "evidence": "docs/audits/2026-10-22/VPN-BATCH-LIVE-DELIVERY.json",
+    "evidenceSha256NormalizedLf": "9f222bafb8bed101015b20565f8b78cdc8d6c5057ab3b105e5b2cf783de6fd96",
+    "webInstalled": true,
+    "apiInstalled": true,
+    "hundredFilePreflightAndRecoveryAccepted": true,
+    "physicalVpnAccepted": false
   }
 }

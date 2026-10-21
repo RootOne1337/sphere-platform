@@ -1,0 +1,53 @@
+{
+  "schemaVersion": 1,
+  "observedAtUtc": "2026-10-21T20:52:42.850364+00:00",
+  "scope": "Hosted CI and downloaded candidate image identity only. This receipt does not attest installation, live browser, APK delivery, VPN/proxy execution or production readiness.",
+  "components": [
+    {
+      "component": "backend",
+      "sourceRevision": "4a6ada927e6297004b9f1b87faaf996fb282ff56",
+      "runId": 39668292976,
+      "runAttempt": 1,
+      "workflow": ".github/workflows/ci-backend.yml",
+      "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/39668292976",
+      "conclusion": "success",
+      "passed": 4422,
+      "skipped": 107,
+      "imageId": "sha256:27e1f5659fa37e213f7bb8ad8d8bfefb740921c7b32a30b658cfdce388fcc2da",
+      "imageArchiveSha256": "5ab1e75825f42ff42c3a849795439a73ac16f04ca267712fc57f57f6bad2b52d",
+      "ciReceiptSha256NormalizedLf": "b1ef7249a17dab97a3bb148e9d242a16a734f456c86e2a3137ac270f77a676aa",
+      "subtestsPassed": 668,
+      "coveragePercent": 82.58,
+      "vpnBatchAndProductionCases": 25,
+      "vpnBatchAndProductionSkipped": 0
+    },
+    {
+      "component": "frontend",
+      "sourceRevision": "46dd02fff711c1667b44520b85290226b7155287",
+      "runId": 39670720957,
+      "runAttempt": 1,
+      "workflow": ".github/workflows/ci-frontend.yml",
+      "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/39670720957",
+      "conclusion": "success",
+      "passed": 2630,
+      "skipped": 0,
+      "imageId": "sha256:7fd4d52ec5402dae96b715d890f9f905e0ca1a4b5417423eb9de5f3ce0d238d0",
+      "imageArchiveSha256": "213ac95e9297d5f7332cf42bb845a1f96acc9d1e46ed25d50535a4dd7b406fae",
+      "ciReceiptSha256NormalizedLf": "40c0105c205a281c68d17fc79bccc1c445dbf87b55d1113641272277a5f7e4f3",
+      "testSuitesPassed": 183,
+      "packagedPages": 26,
+      "packagedClientAssets": 72
+    }
+  ],
+  "runtimeInstallationAttested": false,
+  "physicalVpnAccepted": false,
+  "secretsPublished": false,
+  "deviceCommandsSent": 0,
+  "productionAccepted": false,
+  "limits": [
+    "UID/per-application accounting not implemented",
+    "server operation journal/active leases remain open",
+    "SOCKS/HTTP TUN execution and provider integration remain open",
+    "tunnel rates use two Android wall-clock samples; not instantaneous or per-app accounting"
+  ]
+}
