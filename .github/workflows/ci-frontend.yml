@@ -1,6 +1,7 @@
 name: CI — Frontend
 
 on:
+  workflow_dispatch:
   push:
     branches: [main, develop, "stage/*"]
   pull_request:
