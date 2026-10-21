@@ -20,13 +20,20 @@ HASHES = {
 
 
 def run_boundary(
-    *, changes=None, migration_status=None, dependency_changed=False, migration_changed=False
+    *,
+    changes=None,
+    migration_status=None,
+    dependency_changed=False,
+    migration_changed=False,
+    runtime_changed=False,
 ):
     def command(args):
         if "--name-only" in args:
             return "\n".join(changes or sorted(release.CATALOG_PATHS))
         if "--name-status" in args:
             return migration_status if migration_status is not None else "A\t" + release.MIGRATION
+        if args[-1] == "backend/Dockerfile":
+            return "changed" if runtime_changed else ""
         return "changed" if dependency_changed else ""
 
     def git_blob(args, **kwargs):
@@ -81,6 +88,8 @@ def test_modified_historical_or_additional_migrations_cannot_use_catalog_boundar
 
 
 def test_migration_bytes_and_dependencies_must_match_reviewed_source():
+    with pytest.raises(ValueError, match="parent runtime recipe"):
+        run_boundary(runtime_changed=True)
     with pytest.raises(ValueError, match="may not change dependencies"):
         run_boundary(dependency_changed=True)
     with pytest.raises(ValueError, match="migration changed"):

@@ -50,6 +50,10 @@ def source_boundary(current: str, source: str, hashes: dict) -> list[str]:
         set(changes) <= installer.APPROVED_PATHS | CATALOG_PATHS,
         "Unreviewed VPN catalog packaged change",
     )
+    require(
+        not command(["git", "diff", current, source, "--", "backend/Dockerfile"]),
+        "Catalog update may not change the parent runtime recipe",
+    )
     # Keep the ordinary schema-free check unchanged. It separately verifies the
     # dependency/contract hashes; filter only the explicitly reviewed additions.
     for name, key in [
