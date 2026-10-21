@@ -3,13 +3,15 @@
 import copy
 import hashlib
 import subprocess
+import tempfile
+from pathlib import Path
 from unittest.mock import patch
 
 import pytest
 
 from scripts.pilot import install_reviewed_backend as installer
 from scripts.pilot import vpn_catalog_release as release
-from scripts.pilot.package_local_backend import build_spec
+from scripts.pilot.package_local_backend import build_spec, validate_resume_context
 
 OLD, NEW = "a" * 40, "b" * 40
 CONTENT = b"canonical fixture"
@@ -125,3 +127,34 @@ def test_transition_cannot_claim_live_migration_or_another_schema_head():
         with patch.object(release, "source_boundary") as boundary, pytest.raises(ValueError):
             release.validate_transition(row)
         boundary.assert_not_called()
+
+
+def test_interrupted_context_requires_original_files_recipe_and_no_partial_next_probe():
+    with tempfile.TemporaryDirectory() as temp:
+        root = Path(temp).resolve()
+        private = root / ".local-pilot"
+        folder = private / "candidate"
+        source = folder / "context/source/backend"
+        source.mkdir(parents=True)
+        (folder / "runtime").mkdir()
+        for log in ["build.private.log", "runtime.private.log"]:
+            (folder / log).write_bytes(b"success")
+        recipe = "FROM pinned\nCOPY source/ /app/\n"
+        (folder / "context/Dockerfile.local").write_bytes(recipe.replace("\n", "\r\n").encode())
+        page = source / "main.py"
+        page.write_bytes(CONTENT)
+        expected = {"backend/main.py": hashlib.sha256(CONTENT).hexdigest()}
+        with patch.object(installer, "ROOT", root), patch.object(installer, "PRIVATE", private):
+            validate_resume_context(folder, expected, recipe)
+            for extra in ["receipt.json", "metrics.private.log", "unexpected"]:
+                path = folder / extra
+                path.touch()
+                with pytest.raises(ValueError, match="no later files"):
+                    validate_resume_context(folder, expected, recipe)
+                path.unlink()
+            page.write_bytes(CONTENT + b"changed")
+            with pytest.raises(ValueError, match="context changed"):
+                validate_resume_context(folder, expected, recipe)
+            page.write_bytes(CONTENT)
+            with pytest.raises(ValueError, match="recipe changed"):
+                validate_resume_context(folder, expected, recipe + "RUN something\n")

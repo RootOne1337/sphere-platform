@@ -136,12 +136,16 @@ def verify_image_source(image: str, expected: dict[str, str]) -> None:
     require(actual == expected, "Image files differ from exact Git source")
 
 
-def check_packaged_probes(runtime: dict, metrics: dict, image: str) -> None:
+def check_runtime_probe(runtime: dict, image: str) -> None:
     require(runtime.get("image_id") == image and type(runtime.get("exit_code")) is int and runtime["exit_code"] == 0
             and all(runtime.get(k) is True for k in ("containers_removed", "action_contract_verified", "network_internal"))
             and runtime.get("host_ports") == [] and runtime.get("source_mount") is False
             and runtime.get("api_listener") is False and runtime.get("environment") == "development",
             "Packaged runtime probe not admitted")
+
+
+def check_packaged_probes(runtime: dict, metrics: dict, image: str) -> None:
+    check_runtime_probe(runtime, image)
     require(metrics.get("image_id") == image and metrics.get("passed") is True
             and metrics.get("container_removed") is True and metrics.get("host_ports") == []
             and metrics.get("network") == "none" and metrics.get("backend_source_mount") is False
