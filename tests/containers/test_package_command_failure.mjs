@@ -21,6 +21,14 @@ test('unknown process errors retain no environment, stdout or private message', 
   assert.equal(packageCommandFailure(result), 'unclassified');
 });
 
+test('archive admission reports a bounded rule code without reflecting arbitrary output', () => {
+  const verdict = { archiveAdmitted: false, runtimeInstalled: false, reasonCode: 'image_config_digest_mismatch' };
+  assert.equal(packageCommandFailure({ stdout: JSON.stringify(verdict) }), 'archive_admission:image_config_digest_mismatch');
+  for (const changed of [{ ...verdict, reasonCode: 'raw private text\n' }, { ...verdict, runtimeInstalled: true }]) {
+    assert.equal(packageCommandFailure({ stdout: JSON.stringify(changed) }), 'unclassified');
+  }
+});
+
 test('a registry quota refusal uses the identical pinned official image once', () => {
   const calls = [];
   const result = buildReviewedWebImage(['--label', 'source=fixed', '/tested-output'], (program, args) => {

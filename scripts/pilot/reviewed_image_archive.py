@@ -11,9 +11,13 @@ from pathlib import Path, PurePosixPath
 from typing import Any
 
 
+class AdmissionRuleError(ValueError):
+    """Only fixed rule text from this verifier, never parser/native input."""
+
+
 def require(condition: bool, reason: str) -> None:
     if not condition:
-        raise ValueError(reason)
+        raise AdmissionRuleError(reason)
 
 
 def bounded_json(path: Path, limit: int) -> Any:
