@@ -179,7 +179,9 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          sdkmanager 'ndk;26.3.11579264'
+          sdkmanager="$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager"
+          test -x "$sdkmanager"
+          "$sdkmanager" --sdk_root="$ANDROID_HOME" --install 'ndk;26.3.11579264'
           python scripts/build_awg_native.py \
             --ndk-root "$ANDROID_HOME/ndk/26.3.11579264" \
             --android-clock --harden-jni \
