@@ -35,6 +35,7 @@ CATALOG_PATHS = {
     "backend/schemas/vpn/runtime.py",
     "backend/services/device_status_cache.py",
     "backend/services/vpn/profile_catalog.py",
+    "backend/services/vpn/catalog_database.py",
     "backend/services/vpn/profile_delivery.py",
     "backend/services/vpn/profile_preflight.py",
     "backend/services/vpn/profile_secrets.py",

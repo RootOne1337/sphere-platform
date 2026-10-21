@@ -131,6 +131,10 @@ async def world():
             yield session
 
     app.dependency_overrides[get_db] = override_db
+    # Most worlds test catalog service semantics on the disposable owner DB.
+    # Dedicated catalog-login tests remove this override and use runtime_db.
+    from backend.services.vpn.catalog_database import get_vpn_catalog_db
+    app.dependency_overrides[get_vpn_catalog_db] = override_db
 
     def auth(user):
         token, _ = create_access_token(

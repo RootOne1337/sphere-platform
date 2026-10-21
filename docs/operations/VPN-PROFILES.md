@@ -108,17 +108,58 @@ permissive policy. Composite FK связывает org/profile, уникальн
 в организации и номер revision в профиле. Администратор/владелец таблицы может обходить
 обычный RLS; это не защита от администратора БД.
 
+Каталог теперь имеет собственный pool и secret `VPN_PROFILE_POSTGRES_URL`.
+Пустое значение отключает HTTP каталога с 503; fallback на `POSTGRES_URL` запрещён.
+Нужен `postgresql+asyncpg` URL с отдельным именем пользователя, паролем и той же
+парой host/port/database, что у основного API. Query-параметры URL не принимаются.
+Это не меняет старые миграционные credentials, стрим и фоновые задачи всего проекта.
+Новый pool создаётся лениво: максимум два соединения на API worker, без overflow;
+pool timeout 3 с, statement timeout 10 с, lock timeout 3 с. Вместе с основным pool
+число подключений надо учитывать при расчёте лимита PostgreSQL.
+
+На каждом запросе после JWT/RBAC и установки tenant context проверяются фактическая
+роль соединения, RLS обеих таблиц и audit log, tenant и необходимые grants. Superuser,
+BYPASSRLS/CREATEROLE, владелец с неактивным RLS, отсутствующая миграция или права не
+дают работать каталогу. Проверка не кешируется как вечный признак «безопасной роли».
+503 имеет ограниченный код `vpn_catalog_database_unavailable` либо
+`vpn_catalog_database_policy_unavailable`; DSN, SQL и driver error не возвращаются.
+Отдельный pool закрывается shutdown hook, SQL parameters не логируются.
+
+Для выделенной роли без членства в административных/owner ролях нужны CONNECT на
+этой БД и USAGE на public, а из таблиц только:
+
+| Объект | Права |
+| --- | --- |
+| `vpn_profiles` | SELECT, INSERT, UPDATE |
+| `vpn_profile_revisions` | SELECT, INSERT |
+| `audit_logs` | INSERT и SELECT только колонок `id`, `created_at` для ORM RETURNING |
+
+Не выдавать TRUNCATE, DELETE, DDL или чтение остальных audit payload/пользователей/
+устройств. RLS должен оставаться активным; пароль поставляется через secret store.
+Права и пароль не создаются API автоматически. Отдельный PostgreSQL тест прошёл
+полный HTTP import/replay/list/append/archive именно с этими минимальными grants;
+тот же endpoint отверг owner connection до первой записи. Это проверка временной
+БД, не подтверждение перенастройки рабочей роли. Основание поведения owner/BYPASSRLS —
+[документация PostgreSQL](https://www.postgresql.org/docs/15/ddl-rowsecurity.html).
+
 Создание head/revision/audit происходит атомарно. Append использует row lock,
 `expected_revision` и условное обновление head. Savepoint убирает спекулятивную запись
 при конкурентном повторе UUID. Конкурентные архив и append не могут оба успешно
 изменить одну ожидаемую revision. Число строк и страница читаются одним SQL snapshot,
 в том числе для пустой/вышедшей за диапазон страницы.
 
-Порядок будущего rollout: backup и key-store recovery check → проверка runtime роли →
+Порядок будущего rollout: backup и key-store recovery check → выделенная catalog роль →
 миграция штатным release-процессом → API с ключами → read/write smoke на синтетическом
 профиле → веб. Если миграция или crypto не готовы, не показывать это как пустой каталог
 или рабочий VPN. Рабочая БД/процессы этим этапом не менялись: полная миграция и девять
 конкурентных/RLS интеграционных тестов запускались в собственных временных PG/Redis.
+
+Для локального пакета добавлен явный `package_local_backend --vpn-catalog`: он
+допускает только неизменённую `20261021_vpn_profiles` после точного предыдущего head,
+без изменения зависимостей или action contract. Копирует весь проверяемый packaged
+source, включая Alembic, и запускает прежние изолированные runtime/metrics probes.
+Обычный schema-free installer по-прежнему отвергает этот переход. Упаковка не
+мигрирует рабочую БД, не добавляет ключи и не устанавливает API.
 
 ## Нативный AmneziaWG-кандидат
 

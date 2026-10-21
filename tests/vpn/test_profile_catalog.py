@@ -46,6 +46,7 @@ async def profile_http(db_session, test_org, test_user, profile_key):
     from backend.core.dependencies import get_current_user
     from backend.database.engine import get_db
     from backend.main import app
+    from backend.services.vpn.catalog_database import get_vpn_catalog_db
 
     principal = SimpleNamespace(id=test_user.id, org_id=test_org.id, role="org_admin", email="test@example.org")
     previous = dict(app.dependency_overrides)
@@ -54,6 +55,7 @@ async def profile_http(db_session, test_org, test_user, profile_key):
         yield db_session
 
     app.dependency_overrides[get_db] = session
+    app.dependency_overrides[get_vpn_catalog_db] = session
     app.dependency_overrides[get_current_user] = lambda: principal
     try:
         async with AsyncClient(transport=ASGITransport(app=app), base_url="http://testserver") as client:

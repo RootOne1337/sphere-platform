@@ -205,12 +205,12 @@ for tested behavior and remaining limits.
 | `GET` | `/api/v1/vpn/peers` | vpn | 200, 422 | List VPN peers |
 | `GET` | `/api/v1/vpn/pool/stats` | vpn | 200 | VPN pool statistics |
 | `POST` | `/api/v1/vpn/profile-preflight` | vpn | 200, 401, 403, 413, 422 | Inspect a VPN profile without saving or changing networking |
-| `GET` | `/api/v1/vpn/profiles` | vpn | 200, 422 | List Profiles |
+| `GET` | `/api/v1/vpn/profiles` | vpn | 200, 422, 503 | List Profiles |
 | `POST` | `/api/v1/vpn/profiles` | vpn | 200, 401, 403, 404, 409, 413, 422, 503 | Save an encrypted VPN profile without applying it |
-| `GET` | `/api/v1/vpn/profiles/imports/{request_id}` | vpn | 200, 404, 422 | Import Status |
-| `GET` | `/api/v1/vpn/profiles/{profile_id}` | vpn | 200, 404, 422 | Get Profile |
+| `GET` | `/api/v1/vpn/profiles/imports/{request_id}` | vpn | 200, 404, 422, 503 | Import Status |
+| `GET` | `/api/v1/vpn/profiles/{profile_id}` | vpn | 200, 404, 422, 503 | Get Profile |
 | `POST` | `/api/v1/vpn/profiles/{profile_id}/archive` | vpn | 200, 401, 403, 404, 409, 413, 422, 503 | Archive Profile |
-| `GET` | `/api/v1/vpn/profiles/{profile_id}/revisions` | vpn | 200, 404, 422 | Profile Revisions |
+| `GET` | `/api/v1/vpn/profiles/{profile_id}/revisions` | vpn | 200, 404, 422, 503 | Profile Revisions |
 | `POST` | `/api/v1/vpn/profiles/{profile_id}/revisions` | vpn | 200, 401, 403, 404, 409, 413, 422, 503 | Append Revision |
 | `GET` | `/api/v1/vpn/providers` | vpn | 200, 401, 403 | Vpn Providers |
 | `POST` | `/api/v1/vpn/revoke/bulk` | vpn | 200, 422 | Revoke VPN peers for selected devices |

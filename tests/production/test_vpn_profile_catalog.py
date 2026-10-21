@@ -141,3 +141,59 @@ async def test_literal_search_and_out_of_range_total_are_owned(world, profile_cr
     assert response.json()["total"] == 1 and response.json()["items"] == []
     response = await world.client.get("/api/v1/vpn/profiles", headers=world.auth(world.users["foreign"]))
     assert response.json()["total"] == 0 and response.json()["items"] == []
+
+
+@pytest.mark.parametrize("restricted", [False, True])
+async def test_http_uses_dedicated_login_and_refuses_owner_connection(world, runtime_db, profile_crypto, monkeypatch, restricted):
+    from backend.main import app
+    from backend.services.vpn import catalog_database
+
+    dependency = catalog_database.get_vpn_catalog_db
+    override = app.dependency_overrides.pop(dependency)
+    sessions = runtime_db.sessions if restricted else world.sessions
+    monkeypatch.setattr(catalog_database, "catalog_sessions", lambda: sessions)
+    try:
+        if restricted:
+            # Prove the catalog does not depend on broad legacy CRUD privileges
+            # or access to users/devices. Only RETURNING's two audit columns
+            # require SELECT; the audit payload itself remains unreadable.
+            from backend.database.engine import Base
+            tables = ", ".join(f'public."{table}"' for table in sorted(Base.metadata.tables))
+            async with world.engine.begin() as db:
+                await db.execute(text(f'REVOKE ALL PRIVILEGES ON {tables} FROM "{runtime_db.role}"'))
+                await db.execute(text(f'GRANT SELECT, INSERT, UPDATE ON vpn_profiles TO "{runtime_db.role}"'))
+                await db.execute(text(f'GRANT SELECT, INSERT ON vpn_profile_revisions TO "{runtime_db.role}"'))
+                await db.execute(text(f'GRANT INSERT ON audit_logs TO "{runtime_db.role}"'))
+                await db.execute(text(f'GRANT SELECT (id, created_at) ON audit_logs TO "{runtime_db.role}"'))
+        headers = world.auth(world.users["org_admin"])
+        body = import_payload()
+        saved = await world.client.post("/api/v1/vpn/profiles", json=body, headers=headers)
+        if not restricted:
+            assert saved.status_code == 503
+            assert saved.json()["detail"] == "vpn_catalog_database_policy_unavailable"
+            async with world.sessions() as db:
+                assert await db.scalar(select(func.count()).select_from(VPNProfileRevision).where(
+                    VPNProfileRevision.org_id == world.org_a.id)) == 0
+            return
+        assert saved.status_code == 200, saved.text
+        receipt = saved.json()
+        repeated = await world.client.post("/api/v1/vpn/profiles", json=body, headers=headers)
+        assert repeated.json() == receipt
+        owned = await world.client.get("/api/v1/vpn/profiles", headers=headers)
+        foreign = await world.client.get("/api/v1/vpn/profiles", headers=world.auth(world.users["foreign"]))
+        assert owned.json()["total"] == 1 and foreign.json()["total"] == 0
+        appended = await world.client.post(f'/api/v1/vpn/profiles/{receipt["profile_id"]}/revisions',
+            json=import_payload(expected_revision=1, name="Restricted login revision"), headers=headers)
+        assert appended.status_code == 200 and appended.json()["revision"] == 2
+        archived = await world.client.post(f'/api/v1/vpn/profiles/{receipt["profile_id"]}/archive',
+            json={"expected_revision": 2}, headers=headers)
+        assert archived.status_code == 200 and archived.json()["is_archived"] is True
+        async with runtime_db.sessions() as db:
+            await bind_tenant_context(db, str(world.org_a.id))
+            assert await db.scalar(select(func.count()).select_from(VPNProfileRevision).where(
+                VPNProfileRevision.profile_id == uuid.UUID(receipt["profile_id"]))) == 2
+    finally:
+        app.dependency_overrides[dependency] = override
+        if restricted:
+            async with world.engine.begin() as db:
+                await db.execute(text(f'REVOKE SELECT (id, created_at) ON audit_logs FROM "{runtime_db.role}"'))

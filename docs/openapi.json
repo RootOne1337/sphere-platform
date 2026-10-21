@@ -9859,6 +9859,9 @@
               }
             }
           },
+          "503": {
+            "description": "Profile encryption or isolated catalog database unavailable"
+          },
           "422": {
             "description": "Validation Error",
             "content": {
@@ -9912,7 +9915,7 @@
             "description": "Invalid request/config, without secret echo"
           },
           "503": {
-            "description": "Profile encryption unavailable"
+            "description": "Profile encryption or isolated catalog database unavailable"
           }
         },
         "requestBody": {
@@ -10103,6 +10106,9 @@
           "404": {
             "description": "Owned profile/import not found"
           },
+          "503": {
+            "description": "Profile encryption or isolated catalog database unavailable"
+          },
           "422": {
             "description": "Validation Error",
             "content": {
@@ -10153,6 +10159,9 @@
           },
           "404": {
             "description": "Owned profile/import not found"
+          },
+          "503": {
+            "description": "Profile encryption or isolated catalog database unavailable"
           },
           "422": {
             "description": "Validation Error",
@@ -10229,6 +10238,9 @@
           "404": {
             "description": "Owned profile/import not found"
           },
+          "503": {
+            "description": "Profile encryption or isolated catalog database unavailable"
+          },
           "422": {
             "description": "Validation Error",
             "content": {
@@ -10294,7 +10306,7 @@
             "description": "Invalid request/config, without secret echo"
           },
           "503": {
-            "description": "Profile encryption unavailable"
+            "description": "Profile encryption or isolated catalog database unavailable"
           }
         },
         "requestBody": {
@@ -10508,7 +10520,7 @@
             "description": "Invalid request/config, without secret echo"
           },
           "503": {
-            "description": "Profile encryption unavailable"
+            "description": "Profile encryption or isolated catalog database unavailable"
           }
         },
         "requestBody": {
