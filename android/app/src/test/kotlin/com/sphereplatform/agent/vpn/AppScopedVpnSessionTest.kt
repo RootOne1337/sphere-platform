@@ -106,4 +106,42 @@ class AppScopedVpnSessionTest {
         session.disconnect(id)
         Unit
     }
+    @Test fun `pause preserves the guard and resume protects fresh sockets before readmission`() = runBlocking {
+        val session = runtime(); val config = prepared(); session.connect(id, config)
+        calls.clear()
+        assertEquals("PAUSED_GUARD_HELD", session.pause(id).phase)
+        assertEquals("PAUSED_GUARD_HELD", session.observe().phase)
+        assertEquals(listOf("BLOCKING", "native-stop", "close-tun"), calls)
+        session.pause(id)
+        assertEquals(3, calls.size)
+        denied("vpn_session_reconciliation_required") { session.resume(id, prepared()) }
+        assertEquals("TRANSPORT_READY", session.resume(id, config).phase)
+        assertTrue(calls.lastIndexOf("protect:21") < calls.lastIndexOf("ALLOWING"))
+        assertFalse(calls.contains("RELEASING")); assertFalse(calls.contains("INTENT"))
+        assertEquals("DISCONNECTED_CONFIRMED", session.disconnect(id).phase)
+    }
+    @Test fun `unconfirmed pause never releases or permits resuming a live engine`() = runBlocking {
+        val session = runtime(); val config = prepared(); session.connect(id, config); stopOk = false
+        denied("vpn_pause_unknown_guard_held") { session.pause(id) }
+        assertEquals("UNKNOWN_GUARD_HELD", session.observe().phase)
+        denied("vpn_session_reconciliation_required") { session.resume(id, config) }
+        assertFalse(calls.contains("RELEASING"))
+        assertTrue(calls.contains("close-tun"))
+    }
+    @Test fun `rotation holds the original guard throughout replacement and allows only the same UID policy`() = runBlocking {
+        val session = runtime(); session.connect(id, prepared())
+        calls.clear()
+        assertEquals("TRANSPORT_READY", session.rotate(id, prepared()).phase)
+        assertEquals(1, calls.count { it == "BLOCKING" })
+        assertEquals(1, calls.count { it == "ALLOWING" })
+        assertTrue(calls.indexOf("close-tun") < calls.indexOf("native-start"))
+        assertFalse(calls.contains("INTENT")); assertFalse(calls.contains("RELEASING"))
+        val different = prepared().let { PreparedAppScopedConfig(it.nativeConfig,
+            ResolvedAppSelection(listOf("org.example.other"), setOf(10004), "block")) }
+        calls.clear()
+        denied("vpn_rotation_policy_change_requires_disconnect") { session.rotate(id, different) }
+        assertTrue(calls.isEmpty())
+        session.disconnect(id)
+        Unit
+    }
 }

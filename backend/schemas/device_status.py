@@ -8,6 +8,8 @@ from typing import Literal
 
 from pydantic import BaseModel, Field
 
+from backend.schemas.vpn.runtime import AppVpnObservation
+
 VPN_OBSERVATION_MAX_AGE_SECONDS = 120
 
 
@@ -20,6 +22,7 @@ class DeviceLiveStatus(BaseModel):
     ram_usage_mb: int | None = None
     screen_on: bool | None = None
     vpn_active: bool | None = Field(default=None, strict=True)
+    app_vpn: AppVpnObservation | None = None
     vpn_observed_at: datetime | None = Field(default=None, description="Server receipt time of an explicit Android VPN report; independent of heartbeat")
     vpn_observed_session_id: str | None = Field(default=None, max_length=100)
     vpn_observation_state: Literal["fresh", "stale", "unknown"] = "unknown"

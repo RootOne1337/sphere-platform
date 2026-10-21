@@ -128,6 +128,8 @@ internal class AppScopedVpnSession(private val platform: ScopedTunPlatform, priv
     private var uncertain = false
     private var guardConfirmed = false
     private var failureReason: String? = null
+    private var paused = false
+    private var configuration: PreparedAppScopedConfig? = null
 
     suspend fun connect(id: UUID, config: PreparedAppScopedConfig): AppTunnelReceipt = lock.withLock {
         if (operation != null) throw VpnPreparationException("vpn_session_reconciliation_required")
@@ -137,6 +139,7 @@ internal class AppScopedVpnSession(private val platform: ScopedTunPlatform, priv
         if (endpoint.resolved.isEmpty) throw VpnPreparationException("vpn_endpoint_resolution_failed")
         val userspace = config.nativeConfig.toAwgUserspaceString()
         operation = id
+        configuration = config
         try {
             guard.block(id, config.apps, platform.ownerUid)
             guardConfirmed = true
@@ -161,9 +164,68 @@ internal class AppScopedVpnSession(private val platform: ScopedTunPlatform, priv
     }
     suspend fun observe(): AppTunnelReceipt = lock.withLock {
         val id = operation ?: throw VpnPreparationException("vpn_session_not_found")
+        if (uncertain) return@withLock AppTunnelReceipt(id.toString(), "UNKNOWN_GUARD_HELD", version, reason = failureReason)
+        if (paused) return AppTunnelReceipt(id.toString(), "PAUSED_GUARD_HELD", version)
         if (handle < 0 || !allowed) return@withLock AppTunnelReceipt(id.toString(), if (guardConfirmed) "FAILED_GUARD_HELD" else "GUARD_UNCONFIRMED", version, reason = failureReason)
         val stats = engine.stats(handle)
         AppTunnelReceipt(id.toString(), if (stats.handshakeEpochSeconds > 0) "HANDSHAKE_CONFIRMED" else "AWAITING_HANDSHAKE", version, stats)
+    }
+    suspend fun pause(id: UUID): AppTunnelReceipt = lock.withLock { pauseLocked(id) }
+    private suspend fun pauseLocked(id: UUID): AppTunnelReceipt {
+        if (operation != id || uncertain || !guardConfirmed || (!allowed && !paused)) throw VpnPreparationException("vpn_session_reconciliation_required")
+        if (paused) return AppTunnelReceipt(id.toString(), "PAUSED_GUARD_HELD", version)
+        return withContext(NonCancellable + Dispatchers.IO) {
+            // Failures never release the guard. Complete resource closure even
+            // when the root pause proof fails; the vanished TUN has no fallback.
+            if (allowed) runCatching { guard.pause(id) }.onSuccess { allowed = false }.onFailure { uncertain = true }
+            if (handle >= 0) runCatching { engine.stop(handle) }.onFailure { uncertain = true }
+            handle = -1
+            runCatching { tun?.close() }.onFailure { uncertain = true }; tun = null
+            if (uncertain) throw VpnPreparationException("vpn_pause_unknown_guard_held")
+            paused = true
+            AppTunnelReceipt(id.toString(), "PAUSED_GUARD_HELD", version)
+        }
+    }
+    suspend fun resume(id: UUID, config: PreparedAppScopedConfig): AppTunnelReceipt = lock.withLock { resumeLocked(id, config) }
+    private suspend fun resumeLocked(id: UUID, config: PreparedAppScopedConfig): AppTunnelReceipt {
+        if (operation != id || uncertain || !guardConfirmed || !paused || configuration !== config) throw VpnPreparationException("vpn_session_reconciliation_required")
+        platform.assertReady(config)
+        return try {
+            val endpoint = config.nativeConfig.peers.single().endpoint.get()
+            if (endpoint.resolved.isEmpty) throw VpnPreparationException("vpn_endpoint_resolution_failed")
+            tun = platform.establish(config)
+            handle = engine.start(tun!!.name, tun!!.duplicateForNative(), config.nativeConfig.toAwgUserspaceString())
+            if (handle < 0) throw VpnPreparationException("vpn_native_activation_rejected")
+            val sockets = engine.sockets(handle)
+            if (sockets.isEmpty() || sockets.any { !platform.protect(it) }) throw VpnPreparationException("vpn_transport_protection_failed")
+            guard.allow(id, tun!!.name, tun!!.index)
+            allowed = true; paused = false; failureReason = null
+            AppTunnelReceipt(id.toString(), "TRANSPORT_READY", version)
+        } catch (failure: Exception) {
+            failureReason = (failure as? VpnPreparationException)?.reason ?: "vpn_native_or_platform_failure"
+            withContext(NonCancellable + Dispatchers.IO) {
+                if (handle >= 0) runCatching { engine.stop(handle) }.onFailure { uncertain = true }
+                handle = -1
+                runCatching { tun?.close() }.onFailure { uncertain = true }; tun = null
+            }
+            // A failed allow can have mutated the journal to UNKNOWN. Do not
+            // represent that condition as a confirmed paused state.
+            paused = false
+            configuration = null
+            if (failure is CancellationException) throw failure
+            throw VpnPreparationException("vpn_resume_failed_guard_held")
+        }
+    }
+    /** Switch peers with the same selected UID policy while the guard remains
+     * installed. Rotation never means direct egress or a disconnected interval.
+     */
+    suspend fun rotate(id: UUID, config: PreparedAppScopedConfig): AppTunnelReceipt = lock.withLock {
+        val previous = configuration ?: throw VpnPreparationException("vpn_profile_memory_unavailable")
+        if (operation != id || previous.apps.uids != config.apps.uids || previous.apps.packages.toSet() != config.apps.packages.toSet()
+            || previous.apps.ipv6 != config.apps.ipv6) throw VpnPreparationException("vpn_rotation_policy_change_requires_disconnect")
+        pauseLocked(id)
+        configuration = config
+        resumeLocked(id, config)
     }
     suspend fun disconnect(id: UUID): AppTunnelReceipt = lock.withLock {
         if (operation != id) throw VpnPreparationException("vpn_session_reconciliation_required")
@@ -176,6 +238,8 @@ internal class AppScopedVpnSession(private val platform: ScopedTunPlatform, priv
             guard.release(id)
             operation = null
             guardConfirmed = false
+            paused = false
+            configuration = null
             AppTunnelReceipt(id.toString(), "DISCONNECTED_CONFIRMED", version)
         }
     }

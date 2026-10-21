@@ -143,6 +143,17 @@ async def handle_agent_message(
     msg_type = msg.get("type")
     if msg_type == "telemetry":
         await handle_telemetry(device_id, msg, status_cache, session_id=session_id)
+    elif msg_type == "app_vpn_status":
+        from datetime import datetime, timezone
+
+        from backend.schemas.vpn.runtime import AppVpnObservation, parse_app_vpn_report
+        snapshot = parse_app_vpn_report(msg)
+        if snapshot is not None and session_id:
+            observation = AppVpnObservation(snapshot=snapshot, received_at=datetime.now(timezone.utc), ws_session_id=session_id)
+            try:
+                await status_cache.merge_agent_status(device_id, {"app_vpn": observation.model_dump(mode="json")}, session_id=session_id)
+            except Exception:
+                logger.warning("VPN observation cache unavailable", device_id=device_id)
     elif msg_type == "task_progress":
         await handle_task_progress(device_id, org_id, msg)
     elif msg_type == "command_result":

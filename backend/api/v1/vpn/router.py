@@ -19,6 +19,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.api.v1.vpn.profile_input import profile_request_schema, read_profile_request
 from backend.api.v1.vpn.profile_router import router as profile_router
+from backend.api.v1.vpn.runtime_router import router as runtime_router
 from backend.core.config import settings
 from backend.core.dependencies import require_permission
 from backend.database.engine import get_db, get_db_session
@@ -62,6 +63,7 @@ from backend.services.vpn.profile_preflight import preflight_profile
 
 router = APIRouter(prefix="/vpn", tags=["vpn"])
 router.include_router(profile_router)
+router.include_router(runtime_router)
 logger = logging.getLogger(__name__)
 
 # Register background health loop (SPLIT-3) — side-effect on import

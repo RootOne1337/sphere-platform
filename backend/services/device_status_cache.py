@@ -119,7 +119,7 @@ class DeviceStatusCache:
 
         updates = {key: value for key, value in updates.items() if key in {
             "battery", "cpu_usage", "ram_usage_mb", "screen_on", "vpn_active",
-            "agent_version", "agent_version_code",
+            "agent_version", "agent_version_code", "app_vpn",
         }}
         # Strict booleans only: "true" / 1 must never mint a new observation.
         if "vpn_active" in updates and updates["vpn_active"] is not None and not isinstance(updates["vpn_active"], bool):
@@ -154,6 +154,7 @@ class DeviceStatusCache:
                             current.vpn_active = None
                             current.vpn_observed_at = None
                             current.vpn_observed_session_id = None
+                            current.app_vpn = None
                         current.status = "busy" if current.status == "busy" else "online"
                         current.ws_session_id = session_id
                         current.last_heartbeat = heartbeat_at

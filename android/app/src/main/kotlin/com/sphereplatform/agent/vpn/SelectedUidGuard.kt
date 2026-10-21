@@ -9,6 +9,7 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.Required
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 
@@ -23,6 +24,7 @@ internal data class UidGuardRecord(
     val ipv6: String = "block",
     val allowRules: Boolean = phase in setOf("ALLOWING", "ALLOWED"),
     val lastMutation: String? = null,
+    @Required val planVersion: Int = 3,
 )
 
 /** Only identifiers/state, never tunnel config or keys. One guard per APK. */
@@ -55,7 +57,7 @@ internal class UidGuardJournal(file: File) {
     }
 }
 
-/** Private UID-only FILTER/MANGLE chains and a fresh fwmark routing table.
+/** Private UID-only FILTER/MANGLE chains and a fresh UID routing table.
  * The table keeps an unreachable default after the TUN route disappears. Kernel
  * routes bind to interface indices, so a reused tun0 name cannot inherit access.
  * No global default policy, main-table route, FORWARD or NAT is changed.
@@ -77,10 +79,9 @@ internal class UidGuardPlan private constructor(val record: UidGuardRecord, val 
         "test \"$(printf '%s\\n' \"\$rules\" | grep -c -- 'lookup $table' || :)\" = '0'",
     ) } + families.flatMap { tool ->
         listOf("${ip(tool)} route add blackhole default table $table metric 32760",
-            "${ip(tool)} rule add pref $priority fwmark $mark/0xffffffff lookup $table",
         ) + record.selectedUids.map { "${ip(tool)} rule add pref $priority uidrange $it-$it lookup $table" } + listOf(
             command(tool, "-N $chain"), command(tool, "-A $chain -j DROP"),
-            command(tool, "-N $mangle", "mangle"), command(tool, "-A $mangle -j MARK --set-xmark $mark/0xffffffff", "mangle"),
+            command(tool, "-N $mangle", "mangle"), command(tool, "-A $mangle -j MARK --set-xmark $mark/0x1fe00000", "mangle"),
             // ACCEPT stops this mangle pass; normal FILTER processing remains.
             command(tool, "-A $mangle -j ACCEPT", "mangle")) +
             record.selectedUids.flatMap { listOf(command(tool, "-I OUTPUT 1 -m owner --uid-owner $it -j $chain"),
@@ -97,7 +98,7 @@ internal class UidGuardPlan private constructor(val record: UidGuardRecord, val 
             if (tool == "ip6tables" && record.ipv6 == "block") emptyList() else listOf(
                 "${ip(tool)} route add default dev $name table $table metric 10",
                 "test \"$(cat /sys/class/net/$name/ifindex)\" = '$index'",
-                command(tool, "-I $chain 1 -o $name -m mark --mark $mark/0xffffffff -j RETURN"))
+                command(tool, "-I $chain 1 -o $name -m mark --mark $mark/0x1fe00000 -j RETURN"))
         } + proof(allowed = true) + linkProof())
     }
 
@@ -112,7 +113,7 @@ internal class UidGuardPlan private constructor(val record: UidGuardRecord, val 
             listOf("else") + proof(allowed = true) + listOf("fi")
         val changes = families.flatMap { tool ->
             if (tool == "ip6tables" && record.ipv6 == "block") emptyList() else listOf(
-                command(tool, "-D $chain -o $name -m mark --mark $mark/0xffffffff -j RETURN"),
+                command(tool, "-D $chain -o $name -m mark --mark $mark/0x1fe00000 -j RETURN"),
                 "routes=$(${ip(tool)} route show table $table)",
                 "if test \"$(printf '%s\\n' \"\$routes\" | grep -c .)\" = '2'; then",
                 "test \"$(cat /sys/class/net/$name/ifindex)\" = '$index'",
@@ -136,7 +137,7 @@ internal class UidGuardPlan private constructor(val record: UidGuardRecord, val 
             record.selectedUids.flatMap { listOf(command(tool, "-D OUTPUT -m owner --uid-owner $it -j $chain"),
                 command(tool, "-D OUTPUT -m owner --uid-owner $it -j $mangle", "mangle")) } +
                 listOf(command(tool, "-F $chain"), command(tool, "-X $chain"), command(tool, "-F $mangle", "mangle"), command(tool, "-X $mangle", "mangle"),
-                    "${ip(tool)} rule del pref $priority fwmark $mark/0xffffffff lookup $table") +
+                    ) +
                 record.selectedUids.map { "${ip(tool)} rule del pref $priority uidrange $it-$it lookup $table" } + listOf(
                     "${ip(tool)} route del blackhole default table $table metric 32760",
                     // Successful listing also proves the table is readable.
@@ -152,14 +153,13 @@ internal class UidGuardPlan private constructor(val record: UidGuardRecord, val 
 
     private fun proof(allowed: Boolean, closed: Boolean = false): List<String> = families.flatMap { tool ->
         val familyAllowed = allowed && (tool == "iptables" || record.ipv6 == "tunnel")
-        listOf(command(tool, "-C $chain -j DROP"), command(tool, "-C $mangle -j MARK --set-xmark $mark/0xffffffff", "mangle"),
+        listOf(command(tool, "-C $chain -j DROP"), command(tool, "-C $mangle -j MARK --set-xmark $mark/0x1fe00000", "mangle"),
             command(tool, "-C $mangle -j ACCEPT", "mangle"),
             "routes=$(${ip(tool)} route show table $table)",
             "test \"$(printf '%s\\n' \"\$routes\" | grep -c -- '^blackhole default.*metric 32760')\" = '1'",
             "test \"$(printf '%s\\n' \"\$routes\" | grep -c .)\" = '${if (familyAllowed && !closed) 2 else 1}'",
             "rules=$(${ip(tool)} rule show)",
-            "test \"$(printf '%s\\n' \"\$rules\" | grep -c -- 'lookup $table')\" = '${1 + record.selectedUids.size}'",
-            "test \"$(printf '%s\\n' \"\$rules\" | grep -Ec -- '^$priority:.*fwmark 0x${mark.toString(16)}(/0xffffffff)? .*lookup $table([[:space:]]|$)')\" = '1'") +
+            "test \"$(printf '%s\\n' \"\$rules\" | grep -c -- 'lookup $table')\" = '${record.selectedUids.size}'") +
             record.selectedUids.map { "test \"$(printf '%s\\n' \"\$rules\" | grep -Ec -- '^$priority:.*uidrange $it-$it .*lookup $table([[:space:]]|$)')\" = '1'" } +
             record.selectedUids.flatMap { listOf(command(tool, "-C OUTPUT -m owner --uid-owner $it -j $chain"), command(tool, "-C OUTPUT -m owner --uid-owner $it -j $mangle", "mangle")) } +
             listOf(
@@ -173,11 +173,12 @@ internal class UidGuardPlan private constructor(val record: UidGuardRecord, val 
                 "test \"$(printf '%s\\n' \"\$rules\" | tail -n 1)\" = '-A $mangle -j ACCEPT'",
                 "rules=$(${command(tool, "-S OUTPUT", "mangle")})",
                 "test \"$(printf '%s\\n' \"\$rules\" | grep -c -- '-j $mangle')\" = '${record.selectedUids.size}'",
-            ) + if (familyAllowed) listOf(command(tool, "-C $chain -o ${record.interfaceName} -m mark --mark $mark/0xffffffff -j RETURN")) else emptyList()
+            ) + if (familyAllowed) listOf(command(tool, "-C $chain -o ${record.interfaceName} -m mark --mark $mark/0x1fe00000 -j RETURN")) else emptyList()
     }
 
     companion object {
         fun from(record: UidGuardRecord): UidGuardPlan {
+            require(record.planVersion == 3)
             val id = UUID.fromString(record.operationId)
             require(id.toString() == record.operationId)
             require(record.ownerUid >= 10000 && record.selectedUids.size in 1..64 && record.selectedUids.toSet().size == record.selectedUids.size)
@@ -191,7 +192,11 @@ internal class UidGuardPlan private constructor(val record: UidGuardRecord, val 
             }
             require(record.phase !in setOf("ALLOWING", "ALLOWED", "BLOCKING") || record.interfaceName != null)
             require(record.phase !in setOf("ALLOWING", "ALLOWED", "BLOCKING") || record.allowRules)
-            val mark = 0x5a000000L or (id.leastSignificantBits and 0xffffff)
+            // AOSP reserves bits 21..28. Preserve netId, protectedFromVpn,
+            // permission, accounting, vendor and ingress-wakeup bits. The mark
+            // is only checked inside UID-owned chains; it installs no global
+            // mark route that could redirect another application's packets.
+            val mark = ((id.leastSignificantBits and 0xff).coerceAtLeast(1)) shl 21
             val table = 2000000 + ((id.mostSignificantBits xor id.leastSignificantBits) and 0xfffff).toInt()
             return UidGuardPlan(record.copy(selectedUids = Collections.unmodifiableList(record.selectedUids.toList())), "SPV2F_" + id.toString().replace("-", "").take(20), mark, table)
         }

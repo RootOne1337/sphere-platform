@@ -160,6 +160,14 @@ JNI counters и события; повторять `su` каждую секун�
 восстановление. Не удалять приложение с оставшимися UID rules: UID может быть
 переиспользован системой.
 
+Исходный APK84 добавляет service `:vpn` в то же приложение за debug-canary gate;
+Android consent, private IPC и sealed device commands описаны в
+[архитектуре 1.3](../design/VPN-EGRESS-ARCHITECTURE.md). Постоянный root polling не
+используется. Новый `/vpn/runtime` читает отдельный отчёт текущего WS-соединения,
+не смешивает его с peer assignment и не возвращает plaintext профиля. Состояние
+старше 15 секунд в вебе считается устаревшим, даже если heartbeat продолжает идти.
+Эти исходники пока не являются установленным main-APK или приёмкой media/control.
+
 Остаются реальный `VpnService`/consent/revoke/socket protection, DNS/IPv6/boot,
 долговременный server operation journal, delivery и приёмка полного WS/media/input.
 `VPN_CONNECT`/`VPN_RECONNECT` и глобальный kill switch основного нового Android-кода

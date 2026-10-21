@@ -5,7 +5,7 @@ Regenerate with `python -m scripts.export_api_docs`; verify with `--check`.
 Use the FastAPI/Pydantic versions pinned in `backend/requirements.txt`.
 The exporter does not run startup hooks or send HTTP requests.
 
-**197 HTTP operations across 156 paths.**
+**198 HTTP operations across 157 paths.**
 
 Full parameters, request bodies, response schemas and declared security schemes:
 [OpenAPI JSON](openapi.json). Manual explanations:
@@ -216,3 +216,4 @@ for tested behavior and remaining limits.
 | `POST` | `/api/v1/vpn/revoke/bulk` | vpn | 200, 422 | Revoke VPN peers for selected devices |
 | `DELETE` | `/api/v1/vpn/revoke/{device_id}` | vpn | 204, 422 | Revoke VPN peer of device |
 | `POST` | `/api/v1/vpn/rotate` | vpn | 200, 422 | Bulk rotate VPN IPs |
+| `GET` | `/api/v1/vpn/runtime` | vpn | 200, 422 | App Vpn Devices |

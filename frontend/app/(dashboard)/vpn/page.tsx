@@ -21,6 +21,7 @@ import { useAuthStore } from '@/lib/store';
 import { VpnControlDialog, vpnActorScope } from '@/src/features/vpn/VpnControlDialog';
 import { VpnProfileInspector } from '@/src/features/vpn/VpnProfileInspector';
 import { VpnProfileCatalog } from '@/src/features/vpn/VpnProfileCatalog';
+import { AppVpnRuntimePanel } from '@/src/features/vpn/AppVpnRuntimePanel';
 import { controlFailure, type ControlOutcome, type VpnControl } from '@/src/features/vpn/controlReceipt';
 
 interface Tunnel {
@@ -143,12 +144,13 @@ export default function VPNManagerPage() {
       </div>
 
       <div className="p-6 flex-1 overflow-auto">
+        <AppVpnRuntimePanel key={`runtime:${scope}`} />
         <div className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-xl border p-4">
           <div className="min-w-0 text-sm"><p className="font-medium">Профили AmneziaWG и WireGuard</p><p className="text-muted-foreground">Проверка формата, версии протокола и списка приложений перед интеграцией Android.</p></div>
           {canVpn && <Button variant="outline" onClick={() => setProfileInspectorOpen(true)}>Проверить VPN-профиль</Button>}
         </div>
         {profileInspectorOpen && canVpn && <VpnProfileInspector key={scope} onClose={() => setProfileInspectorOpen(false)} />}
-        <VpnProfileCatalog key={scope} canWrite={canVpn} />
+        <VpnProfileCatalog key={`catalog:${scope}`} canWrite={canVpn} />
         <p className="mb-4 rounded-lg border border-warning/40 p-3 text-sm">VPN peer на router и VPN на Android — разные этапы. Legacy kill switch transport не подключён; автоматическая доставка VPN-конфигурации в APK этой страницей не подтверждается.</p>
         {unresolved.size > 0 && <p role="alert" className="mb-4 rounded-lg border border-destructive/40 p-3 text-sm">{unresolved.size} устройств с неизвестным результатом. Новые операции для них заблокированы в этой сессии страницы; нужна сверка состояния.</p>}
         {outcomes.scope === scope && outcomes.rows.length > 0 && <section aria-label="Последние результаты VPN" className="mb-4 grid gap-3 md:grid-cols-2">{outcomes.rows.map(row => <article key={row.deviceId} className="rounded-lg border p-3 text-sm"><p className="break-all font-mono text-xs">{row.deviceId}</p><p>{row.outcome} · {row.detail}</p></article>)}</section>}

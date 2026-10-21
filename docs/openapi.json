@@ -10536,6 +10536,96 @@
         }
       }
     },
+    "/api/v1/vpn/runtime": {
+      "get": {
+        "tags": [
+          "vpn"
+        ],
+        "summary": "App Vpn Devices",
+        "operationId": "app_vpn_devices_api_v1_vpn_runtime_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 10000,
+              "minimum": 1,
+              "default": 1,
+              "title": "Page"
+            }
+          },
+          {
+            "name": "page_size",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1,
+              "default": 25,
+              "title": "Page Size"
+            }
+          },
+          {
+            "name": "search",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "maxLength": 120,
+              "default": "",
+              "title": "Search"
+            }
+          },
+          {
+            "name": "group_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Group Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AppVpnDevicePage"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/vpn/providers": {
       "get": {
         "tags": [
@@ -12450,6 +12540,306 @@
           "included_packages"
         ],
         "title": "AppTrafficPolicy"
+      },
+      "AppVpnDevice": {
+        "properties": {
+          "device_id": {
+            "type": "string",
+            "title": "Device Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "model": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Model"
+          },
+          "android_version": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Android Version"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "agent_version": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Agent Version"
+          },
+          "last_heartbeat": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Heartbeat"
+          },
+          "observation": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/AppVpnObservation"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "freshness": {
+            "type": "string",
+            "enum": [
+              "unknown",
+              "fresh",
+              "stale"
+            ],
+            "title": "Freshness"
+          }
+        },
+        "type": "object",
+        "required": [
+          "device_id",
+          "name",
+          "model",
+          "android_version",
+          "status",
+          "agent_version",
+          "last_heartbeat",
+          "observation",
+          "freshness"
+        ],
+        "title": "AppVpnDevice"
+      },
+      "AppVpnDevicePage": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/AppVpnDevice"
+            },
+            "type": "array",
+            "title": "Items"
+          },
+          "total": {
+            "type": "integer",
+            "title": "Total"
+          },
+          "page": {
+            "type": "integer",
+            "title": "Page"
+          },
+          "page_size": {
+            "type": "integer",
+            "title": "Page Size"
+          },
+          "as_of": {
+            "type": "string",
+            "format": "date-time",
+            "title": "As Of"
+          }
+        },
+        "type": "object",
+        "required": [
+          "items",
+          "total",
+          "page",
+          "page_size",
+          "as_of"
+        ],
+        "title": "AppVpnDevicePage"
+      },
+      "AppVpnObservation": {
+        "properties": {
+          "snapshot": {
+            "$ref": "#/components/schemas/AppVpnSnapshot"
+          },
+          "received_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Received At"
+          },
+          "ws_session_id": {
+            "type": "string",
+            "maxLength": 100,
+            "minLength": 1,
+            "title": "Ws Session Id"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "snapshot",
+          "received_at",
+          "ws_session_id"
+        ],
+        "title": "AppVpnObservation"
+      },
+      "AppVpnSnapshot": {
+        "properties": {
+          "requestId": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Requestid"
+          },
+          "sessionId": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sessionid"
+          },
+          "profileRevisionId": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Profilerevisionid"
+          },
+          "phase": {
+            "type": "string",
+            "enum": [
+              "IDLE",
+              "APPLYING",
+              "TRANSPORT_READY",
+              "AWAITING_HANDSHAKE",
+              "HANDSHAKE_CONFIRMED",
+              "PAUSED_GUARD_HELD",
+              "UNKNOWN_GUARD_HELD",
+              "FAILED_GUARD_HELD",
+              "GUARD_UNCONFIRMED",
+              "DISCONNECTED_CONFIRMED",
+              "REVOKED_GUARD_HELD",
+              "RECONCILIATION_REQUIRED",
+              "STATUS_UNKNOWN",
+              "OPERATION_REJECTED",
+              "OUTCOME_UNKNOWN",
+              "CONSENT_REQUIRED"
+            ],
+            "title": "Phase",
+            "default": "IDLE"
+          },
+          "reason": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 128,
+                "pattern": "^[a-z][a-z0-9_]+$"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reason"
+          },
+          "nativeVersion": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 128,
+                "pattern": "^[a-zA-Z0-9_.+\\-]+$"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Nativeversion"
+          },
+          "handshakeEpochSeconds": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "maximum": 9007199254740991.0,
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Handshakeepochseconds"
+          },
+          "rxBytes": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "maximum": 9007199254740991.0,
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rxbytes"
+          },
+          "txBytes": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "maximum": 9007199254740991.0,
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Txbytes"
+          },
+          "sampledAtEpochMs": {
+            "type": "integer",
+            "maximum": 9007199254740991.0,
+            "minimum": 0.0,
+            "title": "Sampledatepochms"
+          },
+          "providerPid": {
+            "type": "integer",
+            "maximum": 2147483647.0,
+            "minimum": 1.0,
+            "title": "Providerpid"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "sampledAtEpochMs",
+          "providerPid"
+        ],
+        "title": "AppVpnSnapshot"
       },
       "AssignAccountRequest": {
         "properties": {
@@ -14917,6 +15307,16 @@
               }
             ],
             "title": "Vpn Active"
+          },
+          "app_vpn": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/AppVpnObservation"
+              },
+              {
+                "type": "null"
+              }
+            ]
           },
           "vpn_observed_at": {
             "anyOf": [

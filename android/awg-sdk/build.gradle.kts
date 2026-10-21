@@ -8,6 +8,7 @@ fun digest(bytes: ByteArray) = MessageDigest.getInstance("SHA-256").digest(bytes
 
 // Vendored source is reviewed/pinned, not downloaded during Gradle configuration.
 val verifyUpstream by tasks.registering {
+    notCompatibleWithConfigurationCache("Pinned inventory verifier resolves repository files at task execution")
     inputs.file("upstream.lock.json")
     inputs.dir("src/main/java")
     inputs.file("COPYING")
@@ -26,6 +27,7 @@ val verifyUpstream by tasks.registering {
 
 val nativeDirectory = providers.environmentVariable("SPHERE_AWG_NATIVE_DIR").orNull?.let { file(it).canonicalFile }
 val verifyNative by tasks.registering {
+    notCompatibleWithConfigurationCache("Native artifact verifier resolves the source-pinned manifest at task execution")
     if (nativeDirectory != null) {
         inputs.file(nativeDirectory.resolve("manifest.json"))
         inputs.dir(nativeDirectory.resolve("jniLibs"))

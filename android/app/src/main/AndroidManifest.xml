@@ -67,6 +67,20 @@
 
         <!-- ─── Screen Capture Service (TZ-05 Streaming) ────────────────── -->
         <service
+            android:name=".vpn.AppScopedVpnService"
+            android:enabled="${appScopedVpnEnabled}"
+            android:permission="android.permission.BIND_VPN_SERVICE"
+            android:foregroundServiceType="specialUse"
+            android:process=":vpn"
+            android:exported="true"
+            android:stopWithTask="false">
+            <intent-filter><action android:name="android.net.VpnService" /></intent-filter>
+            <property android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE" android:value="selected_application_vpn_with_independent_management_bypass" />
+        </service>
+
+        <activity android:name=".vpn.AppVpnConsentActivity" android:exported="false" android:enabled="${appScopedVpnEnabled}" android:theme="@style/Theme.SphereAgent.Transparent" />
+
+        <service
             android:name=".streaming.ScreenCaptureService"
             android:foregroundServiceType="mediaProjection"
             android:exported="false" />

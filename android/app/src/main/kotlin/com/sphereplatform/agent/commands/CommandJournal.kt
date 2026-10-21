@@ -27,7 +27,7 @@ class CommandJournal @Inject constructor(
         data class Existing(val response: JsonObject) : Claim()
     }
 
-    private val active = mutableSetOf<String>()
+    private val active = mutableMapOf<String, String>()
     // A corrupt journal fails closed. Silently resetting it would repeat actions.
     private val records = prefs.getString(KEY, null)?.let {
         Json.parseToJsonElement(it).jsonObject.toMutableMap()
@@ -37,7 +37,10 @@ class CommandJournal @Inject constructor(
         id: String,
         acknowledgeWhenQueued: Boolean = false,
         otaTargetVersionCode: Int? = null,
+        executionDomain: String = "device",
     ): Claim {
+        require(executionDomain in setOf("device", "vpn", "exclusive")) { "invalid_execution_domain" }
+        val domain = if (otaTargetVersionCode != null) "exclusive" else executionDomain
         migrateOtaReceiptMarkers()
         migrateAcknowledged()
         receipts.prune(System.currentTimeMillis())
@@ -48,7 +51,7 @@ class CommandJournal @Inject constructor(
             return Claim.Existing(complete(id, "failed", "execution_outcome_unknown_after_restart", null))
         }
         receipts.find(id)?.let { return Claim.Existing(response(id, it)) }
-        check(active.isEmpty()) { "device_execution_busy" }
+        check(active.values.none { it == "exclusive" || it == domain } && (domain != "exclusive" || active.isEmpty())) { "device_execution_busy" }
         val now = System.currentTimeMillis()
         require(otaTargetVersionCode == null || (acknowledgeWhenQueued && otaTargetVersionCode > 0)) {
             "invalid_ota_target_version_code"
@@ -57,11 +60,12 @@ class CommandJournal @Inject constructor(
         check(next.size < MAX_ENTRIES) { "command_journal_capacity_exhausted" }
         next[id] = buildJsonObject {
             put("created_at", now)
+            put("execution_domain", domain)
             if (acknowledgeWhenQueued) put("acknowledge_when_queued", true)
             otaTargetVersionCode?.let { put("ota_target_version_code", it) }
         }
-        persist(next, reserveResult = true) // Confirm durable receipt before any device action.
-        active.add(id)
+        persist(next) // Confirm durable receipt and reserve all terminal results before any action.
+        active[id] = domain
         return Claim.Started
     }
 
@@ -81,6 +85,7 @@ class CommandJournal @Inject constructor(
         next[id] = buildJsonObject {
             put("created_at", entry.getValue("created_at"))
             entry["acknowledge_when_queued"]?.let { put("acknowledge_when_queued", it) }
+            entry["execution_domain"]?.let { put("execution_domain", it) }
             put("response", payload)
             put("acknowledged", false)
         }
@@ -102,7 +107,7 @@ class CommandJournal @Inject constructor(
             check(records.size < MAX_ENTRIES) { "command_journal_capacity_exhausted" }
             val next = records.toMutableMap()
             next[id] = buildJsonObject { put("created_at", System.currentTimeMillis()) }
-            persist(next, reserveResult = true)
+            persist(next)
             return complete(id, "failed", "cancelled_by_user", buildJsonObject {
                 put("success", false); put("cancelled", true); put("cancelled_before_start", true)
             })
@@ -110,7 +115,7 @@ class CommandJournal @Inject constructor(
         if (id !in active) return complete(id, "failed", "execution_outcome_unknown_after_restart", null)
         val next = records.toMutableMap()
         next[id] = JsonObject(existing + ("cancel_requested" to JsonPrimitive(true)))
-        persist(next, reserveResult = true)
+        persist(next)
         return null
     }
 
@@ -232,11 +237,12 @@ class CommandJournal @Inject constructor(
         if (changed) persist(next)
     }
 
-    private fun persist(next: MutableMap<String, JsonElement>, reserveResult: Boolean = false,
-                        legacyRemaining: Set<String>? = null) {
+    private fun persist(next: MutableMap<String, JsonElement>, legacyRemaining: Set<String>? = null) {
         val encoded = JsonObject(next).toString()
-        // Reserve enough room to persist a terminal result for every active DAG.
-        check(encoded.toByteArray(Charsets.UTF_8).size <= MAX_BYTES - if (reserveResult) MAX_RESULT_BYTES else 0) {
+        // Device and VPN work may overlap. Every unfinished intent needs its own
+        // terminal-result reservation, including after another domain completes.
+        val reservations = next.values.count { it.jsonObject["response"] == null }.toLong() * MAX_RESULT_BYTES
+        check(encoded.toByteArray(Charsets.UTF_8).size.toLong() <= MAX_BYTES - reservations) {
             "command_journal_capacity_exhausted"
         }
         val editor = prefs.edit().putString(KEY, encoded)

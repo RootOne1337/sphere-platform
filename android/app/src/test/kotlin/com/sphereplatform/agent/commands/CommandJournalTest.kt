@@ -8,6 +8,34 @@ import org.junit.Assert.*
 import org.junit.Test
 
 class CommandJournalTest {
+    @Test fun vpnAndDeviceClaimsHaveSeparateAdmissionButOtaRemainsExclusive() {
+        val journal = journal()
+        assertTrue(journal.claim("dag") is CommandJournal.Claim.Started)
+        assertTrue(journal.claim("vpn", executionDomain = "vpn") is CommandJournal.Claim.Started)
+        assertThrows(IllegalStateException::class.java) { journal.claim("another-vpn", executionDomain = "vpn") }
+        assertThrows(IllegalStateException::class.java) { journal.claim("ota", true, 10284) }
+        journal.complete("dag", "completed", null, null)
+        assertThrows(IllegalStateException::class.java) { journal.claim("ota", true, 10284) }
+        journal.complete("vpn", "completed", null, null)
+        assertTrue(journal.claim("ota", true, 10284) is CommandJournal.Claim.Started)
+        assertThrows(IllegalStateException::class.java) { journal.claim("late-vpn", executionDomain = "vpn") }
+        assertThrows(IllegalStateException::class.java) { journal.claim("late-dag") }
+    }
+    @Test fun anInterruptedVpnClaimIsUnknownAfterRestartAndNeverRunsAgain() {
+        journal().claim("vpn-operation", executionDomain = "vpn")
+        val recovered = (journal().claim("vpn-operation", executionDomain = "vpn") as CommandJournal.Claim.Existing).response
+        assertEquals("execution_outcome_unknown_after_restart", recovered["error"]!!.jsonPrimitive.content)
+        assertThrows(IllegalArgumentException::class.java) { journal().claim("untrusted", executionDomain = "anything") }
+    }
+    @Test fun concurrentDomainsReserveBothResultsBeforeAdmittingAnotherMutation() {
+        val journal = journal()
+        val result = buildJsonObject { put("output", "x".repeat(59000)) }
+        repeat(16) { journal.claim("filled-$it"); journal.complete("filled-$it", "completed", null, result) }
+        assertTrue(journal.claim("dag-last") is CommandJournal.Claim.Started)
+        assertThrows(IllegalStateException::class.java) { journal.claim("vpn-last", executionDomain = "vpn") }
+        val terminal = journal.complete("dag-last", "completed", null, result)
+        assertEquals(59000, terminal["result"]!!.jsonObject["output"]!!.jsonPrimitive.content.length)
+    }
     @Test fun oversizedCancelledResultStillCarriesPhysicalStopConfirmation() {
         val instance = journal()
         instance.claim("large-cancelled")

@@ -2,6 +2,18 @@
 
 **Проверенная установка:** UI `5cbb4bba` / API `15ce2b62`.
 
+**21 октября — VPN: единый APK и состояние по устройствам, исходный этап.**
+Добавлены private Binder, изолированный процесс `:vpn`, pause/resume/rotate с сохранением
+UID guard, durable device receipts и encrypted envelope. В новом VPN-процессе отключены
+повторные startup root/worker/enrollment; монитор читает JNI без периодического `su`.
+Исправлены Android fwmark/UID routing и обязательные PID/sample time в IPC.
+Kernel fixture плана v3 подтвердил блокировку/reused TUN name/control UID/release,
+cleanup завершён. API текущего WS-session и веб-диагностика реализованы; отдельные
+серверные leases/journal, общий UI/script/orchestration execution и real-service pilot
+остаются открыты. APK84 объявлен исходным кандидатом, не установленной версией.
+Наличие исходников не меняет проверенную установку выше.
+[Архитектура 1.3](../design/VPN-EGRESS-ARCHITECTURE.md).
+
 **21 октября — VPN: Android SDK, kernel guard и конечные WG/AWG опыты.**
 Закреплённый SDK, Go clock overlay и JNI lifecycle patch собраны для трёх ABI.
 PH011 подтвердил native AWG/HTTP echo, PH030 — WireGuard handshake/DNS по профилю

@@ -4004,7 +4004,7 @@
         "EP-046"
       ],
       "acceptedScope": "Исходный каталог/revisions/RLS/UI и закреплённый SDK проверены. Три hardened native ABI собраны; PH011 root-TUN AWG/HTTP echo, PH030 root-TUN WG/DNS, crash/selected-UID fail-closed и контрольный UID Sphere прошли конечные опыты. Основной VpnService и production rollout не приняты.",
-      "remaining": "Единый APK с изолированным VpnService/consent/revoke/protect, DNS/IPv6/boot/sleep/network fault acceptance, durable apply/rotation journal, scripts/orchestration и rollout; AI plugins/navigation отдельно.",
+      "remaining": "Исходный единый APK с процессом :vpn и pause/resume/rotate реализован за debug gate; нужны real-service/consent/revoke/protect и DNS/IPv6/boot/sleep/network fault acceptance, server journal/unique-key leases, scripts/orchestration и rollout; AI plugins/navigation отдельно.",
       "evidence": [
         "docs/architecture/AI-READINESS.md",
         "docs/audits/2026-10-16/NITROGEN-READINESS.md",

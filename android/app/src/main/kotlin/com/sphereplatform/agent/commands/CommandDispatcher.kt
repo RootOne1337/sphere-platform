@@ -24,6 +24,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.serialization.encodeToString
@@ -63,6 +64,7 @@ class CommandDispatcher @Inject constructor(
     @ApplicationContext private val appContext: Context,
     private val commandJournal: CommandJournal,
     private val updateCheckScheduler: UpdateCheckScheduler,
+    private val scopedVpnClient: com.sphereplatform.agent.vpn.AppScopedVpnClient = com.sphereplatform.agent.vpn.AppScopedVpnClient(appContext),
 ) {
     private companion object {
         /** Let the signed route-change receipt enter OkHttp's queue before closing its socket. */
@@ -86,6 +88,7 @@ class CommandDispatcher @Inject constructor(
     /** FIX D1: Job heartbeat watchdog — отменяется в stop(). */
     private var heartbeatJob: kotlinx.coroutines.Job? = null
     private val updateCheckQueuedForService = AtomicBoolean(false)
+    private var vpnStateJob: kotlinx.coroutines.Job? = null
     private val inputDiagnostics = NativeInputDiagnostics(android.os.SystemClock::uptimeMillis)
     private val nativeInputDispatcher = inputDispatcher(scope)
     private val touchFactory = OwnedTouchPipeFactory(adbActions.inputOwnership, adbActions::prepareContinuousInput, RootTouchPipeFactory(appContext))
@@ -126,6 +129,15 @@ class CommandDispatcher @Inject constructor(
 
     fun start() {
         updateCheckQueuedForService.set(false)
+        vpnStateJob?.cancel()
+        if (BuildConfig.APP_SCOPED_VPN_CANARY) vpnStateJob = scope.launch {
+            scopedVpnClient.snapshots.collect { snapshot ->
+                if (snapshot != null) wsClient.sendJson(buildJsonObject {
+                    put("type", "app_vpn_status"); put("schema_version", 1)
+                    put("snapshot", com.sphereplatform.agent.vpn.AppVpnWire.json.encodeToJsonElement(snapshot))
+                })
+            }
+        }
         continuousInput?.let {
             streamingManager.setInputInvalidationListener { it.invalidate(); sharedInput?.invalidate() }
             it.directChannel = directProbe::inputChannel
@@ -183,6 +195,8 @@ class CommandDispatcher @Inject constructor(
      * Вызывается из SphereAgentService.onDestroy() перед отменой serviceScope.
      */
     fun stop() {
+        vpnStateJob?.cancel(); vpnStateJob = null
+        scope.launch(Dispatchers.IO) { scopedVpnClient.close() }
         sharedInput?.invalidate()
         directProbe.invalidate()
         continuousInput?.let {
@@ -449,7 +463,7 @@ class CommandDispatcher @Inject constructor(
         // not start a second download/install with the same command ID. Each
         // cloned Android instance has its own journal after cloning, so the
         // shared recovery grant can still reach every copy.
-        if (cmd.type == CommandType.EXECUTE_DAG || cmd.type == CommandType.OTA_UPDATE) {
+        if (cmd.type in setOf(CommandType.EXECUTE_DAG, CommandType.OTA_UPDATE, CommandType.VPN_APP_OPERATION, CommandType.VPN_APP_CONSENT)) {
             try {
                 commandJournal.reconcileCompletedOtaInstalls(BuildConfig.VERSION_CODE)
                 when (val claim = commandJournal.claim(
@@ -457,6 +471,7 @@ class CommandDispatcher @Inject constructor(
                     otaTargetVersionCode = if (cmd.type == CommandType.OTA_UPDATE) {
                         cmd.payload["version_code"]?.jsonPrimitive?.intOrNull
                     } else null,
+                    executionDomain = if (cmd.type in setOf(CommandType.VPN_APP_OPERATION, CommandType.VPN_APP_CONSENT)) "vpn" else "device",
                 )) {
                     is CommandJournal.Claim.Existing -> {
                         queueDurableResult(claim.response)
@@ -493,7 +508,7 @@ class CommandDispatcher @Inject constructor(
     }
 
     private fun terminalAck(cmd: IncomingCommand, status: String, error: String? = null, result: JsonObject? = null) {
-        if (cmd.type == CommandType.EXECUTE_DAG || cmd.type == CommandType.OTA_UPDATE) {
+        if (cmd.type in setOf(CommandType.EXECUTE_DAG, CommandType.OTA_UPDATE, CommandType.VPN_APP_OPERATION, CommandType.VPN_APP_CONSENT)) {
             val receipt = commandJournal.complete(cmd.command_id, status, error, result)
             queueDurableResult(receipt)
         } else ack(cmd.command_id, status, error, result)
@@ -631,6 +646,43 @@ class CommandDispatcher @Inject constructor(
         CommandType.VPN_RECONNECT -> {
             vpnManager.reconnect()
             null
+        }
+
+        CommandType.VPN_APP_OPERATION, CommandType.VPN_APP_STATUS -> {
+            val body = if (cmd.payload.keys == setOf("envelope")) {
+                require(cmd.type == CommandType.VPN_APP_OPERATION && BuildConfig.APP_SCOPED_VPN_CANARY) { "vpn_provider_not_enabled" }
+                val plain = com.sphereplatform.agent.vpn.AppVpnEnvelope.open(java.util.UUID.fromString(cmd.command_id), cmd.payload.getValue("envelope").toString())
+                try { Json.parseToJsonElement(plain.toString(Charsets.UTF_8)).jsonObject } finally { plain.fill(0) }
+            } else {
+                require(cmd.payload.keys == setOf("schema_version", "request_id", "session_id", "action")) { "vpn_sealed_profile_required" }
+                cmd.payload
+            }
+            val request = com.sphereplatform.agent.vpn.AppVpnCommand.parse(body.toString())
+            require(request.requestId.toString() == cmd.command_id && (request.action == "status") == (cmd.type == CommandType.VPN_APP_STATUS)) { "vpn_request_identity_invalid" }
+            val snapshot = scopedVpnClient.request(body)
+            buildJsonObject {
+                put("success", snapshot.phase !in setOf("CONSENT_REQUIRED", "OPERATION_REJECTED", "OUTCOME_UNKNOWN", "RECONCILIATION_REQUIRED", "STATUS_UNKNOWN"))
+                put("vpn", com.sphereplatform.agent.vpn.AppVpnWire.json.encodeToJsonElement(snapshot))
+            }
+        }
+        CommandType.VPN_APP_CONSENT -> {
+            require(BuildConfig.APP_SCOPED_VPN_CANARY && cmd.payload.isEmpty()) { "vpn_provider_not_enabled" }
+            val ready = android.net.VpnService.prepare(appContext) == null
+            if (!ready) appContext.startActivity(Intent(appContext, com.sphereplatform.agent.vpn.AppVpnConsentActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_SINGLE_TOP))
+            buildJsonObject { put("success", true); put("consent_ready", ready); put("user_action_required", !ready); put("network_changed", false) }
+        }
+        CommandType.VPN_APP_RECIPIENT -> {
+            require(BuildConfig.APP_SCOPED_VPN_CANARY && cmd.payload.keys == setOf("operation_id")) { "vpn_provider_not_enabled" }
+            val text = cmd.payload.getValue("operation_id").jsonPrimitive.content
+            val operation = java.util.UUID.fromString(text)
+            require(operation.toString() == text) { "vpn_request_identity_invalid" }
+            val publicKey = com.sphereplatform.agent.vpn.AppVpnEnvelope.recipient(operation)
+            buildJsonObject {
+                put("operation_id", text)
+                put("public_key_der", android.util.Base64.encodeToString(publicKey, android.util.Base64.NO_WRAP))
+                put("algorithm", "RSA-OAEP-SHA256-MGF1-SHA1+A256GCM")
+                put("expires_at_epoch_ms", com.sphereplatform.agent.vpn.AppVpnEnvelope.expiresAt(operation))
+            }
         }
 
         CommandType.WAKE_SCREEN -> {

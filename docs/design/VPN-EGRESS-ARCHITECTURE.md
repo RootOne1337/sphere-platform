@@ -1,6 +1,6 @@
 # VPN/egress Sphere: изоляция управления, сменяемые провайдеры и приёмка
 
-Версия 1.2 · 21 октября 2026. Исходный кандидат и конечные диагностические опыты, **не приёмка установленного VPN-провайдера Sphere**.
+Версия 1.3 · 21 октября 2026. Исходный кандидат и конечные диагностические опыты, **не приёмка установленного VPN-провайдера Sphere**.
 Заменяет предположения об интегрированном SDK в [ADR-002](../adr/ADR-002-amneziawg-vpn.md).
 Связанные контракты: [VPN control](../operations/VPN-CONTROL-OUTCOMES.md),
 [инциденты VPN](../runbooks/02-vpn-incident.md), [моторный ИИ](MOTOR-AI-PLATFORM.md).
@@ -23,10 +23,10 @@ Sphere APK, сигнализация, WebRTC, диагностика, доста
 | Глобальный `KillSwitchManager.enable` | Заблокирован до любых firewall-изменений |
 | Старый disconnect/cleanup | Сохранён для восстановления, не принят как надёжный механизм |
 | Нативный AWG-кандидат | Три ABI с Go BOOTTIME overlay и JNI lifecycle patch; x86_64 загружен в отдельный диагностический APK, WG/AWG handshake и данные проверены |
-| Android AWG SDK / `VpnService` / локальная защита UID | Закреплённый SDK, проверка UID, kernel guard, кандидат сессии и Android Builder реализованы; основной APK пока не вызывает их и не объявляет новый VPN service |
+| Android AWG SDK / `VpnService` / локальная защита UID | Закреплённый SDK, guard и отдельный `:vpn` процесс основного APK реализованы; включаются только флагом debug canary с проверенным native manifest. Реальный основной APK/consent/revoke ещё не принят |
 | Постоянные профили и секреты | Отдельный зашифрованный каталог/revision/RLS реализован и проверен на изолированном PostgreSQL; не развёрнут |
 | Аренды внешних выходов | Не реализованы; существующий peer pool не равен этому каталогу |
-| Ротация из UI/скрипта/триггера одним журналом | Спроектирована ниже; существующая router rotation не завершает этот путь |
+| Ротация из UI/скрипта/триггера одним журналом | Android pause/resume/rotate и durable device receipts реализованы; общий server operation journal/leases и узлы ещё не завершены |
 | Установленные API/веб/APK | Не менялись этим этапом; проверять по [реестру](../operations/STATUS-REGISTRY.json) |
 
 Успешный preflight означает прохождение **нашего ограниченного контракта импорта**.
@@ -37,6 +37,51 @@ Sphere APK, сигнализация, WebRTC, диагностика, доста
 Новые возможности нельзя включить параметром запроса.
 
 ## Диагностический Android-этап 21 октября
+
+### Следующий исходный этап: сервис в одном APK
+
+`AppScopedVpnService` объявлен в отдельном процессе `:vpn` основного APK; дополнительное
+приложение Amnezia/WireGuard ему не требуется. `SphereApp` не запускает в этом процессе
+повторные enrollment, workers, WebSocket, root startup. Собственный Binder разрешён
+только UID этого APK; Android consent остаётся системным, отдельное разрешение не
+означает автоматическое включение туннеля. Release artifact с canary-флагом запрещён.
+
+На APK выполняются отдельные durable-команды `VPN_APP_OPERATION`, `VPN_APP_CONSENT`,
+read-only `VPN_APP_STATUS` и подготовка одноразового recipient `VPN_APP_RECIPIENT`.
+Профиль по WebSocket допускается только в AES-GCM/RSA-OAEP envelope с AndroidKeyStore
+recipient, TTL пять минут и AAD операции. Стандартный журнал хранит intent/result,
+не plaintext профиля. Device/DAG и VPN имеют отдельные execution domains; OTA
+эксклюзивен для обоих. Ёмкость журнала резервируется для каждого незавершённого результата.
+
+Пауза сначала закрывает разрешающий маршрут, затем native/TUN, сохраняя UID guard.
+Ротация меняет профиль внутри одного mutex с сохранённым guard; она допускает только
+тот же набор packages/UID и IPv6 policy. Смена состава приложений пока требует явного
+disconnect. Возобновление после неизвестного исхода запрещено. После смерти процесса
+нет слепого auto-reapply; явный disconnect требует проверки owned kernel state.
+
+План guard версии 3 больше не устанавливает общую fwmark route. Маршруты ограничены
+UID; MARK меняет только reserved AOSP bits 21–28, сохраняя netId/protected/permission,
+accounting, vendor и ingress-wakeup. Старый journal без версии не переинтерпретируется
+новым кодом для cleanup. Android 9 kernel fixture повторно подтвердил блокировку,
+отсутствие fallback после переиспользования TUN name, независимый UID Sphere и явный
+release. Это не переносит приёмку старых root-TUN опытов на настоящий VpnService.
+[Раскладка Android fwmark](https://android.googlesource.com/platform/system/netd/+/refs/heads/main/include/Fwmark.h).
+
+Состояние опрашивается каждые две секунды через JNI counters, **без `su` в цикле**.
+PID провайдера и время native-снимка сериализуются явно, чтобы другой процесс не
+подставлял свой PID и новое время при чтении. Неизмеренные счётчики — `null`, не нули.
+Backend принимает только bounded metadata текущего authenticated WS session; heartbeat
+не продлевает native evidence. `/vpn/runtime` сначала ограничивает устройства tenant,
+затем читает binary Redis. Веб показывает поиск/группу/страницы/детали; свежесть истекает
+через 15 секунд, включая retained query data при сетевой ошибке. Счётчик свежих отчётов
+относится к текущей странице, а не выдаётся за итог всего парка.
+
+Открыты real-service pilot, внешний IP/DNS/IPv6/boot, защита полного media/input пути,
+server operation journal, уникальные client-key leases, доставка из UI и общие
+script/orchestration nodes. Один WG client key нельзя раздавать всей группе:
+сервер запоминает endpoint последнего аутентифицированного peer packet. Нужен пул
+отдельных профилей либо создание server-side peers через provider API; смена профиля
+не гарантирует смену публичного IP. [WireGuard protocol](https://www.wireguard.com/papers/wireguard.pdf).
 
 Подробная квитанция: [Android provider candidate](../audits/2026-10-21/VPN-ANDROID-PROVIDER-CANDIDATE.json).
 В `:awg-sdk` включены 15 неизменённых Java-файлов официального SDK, лицензия,

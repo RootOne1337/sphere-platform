@@ -64,6 +64,13 @@ val releaseArtifactRequested = requestedAndroidTasks.any { taskName ->
     taskName == "assemble" || taskName == "build" || taskName == "bundle" ||
         taskName.matches(Regex("(?i)^(assemble|bundle|package|install|build|sign).*Release$"))
 }
+val appScopedVpnCanary = System.getenv("SPHERE_APP_SCOPED_VPN_CANARY") == "true"
+require(!appScopedVpnCanary || System.getenv("SPHERE_AWG_NATIVE_DIR")?.let { file(it).resolve("manifest.json").isFile } == true) {
+    "App-scoped VPN canary requires the verified three-ABI native provider manifest"
+}
+require(!appScopedVpnCanary || !releaseArtifactRequested) {
+    "App-scoped VPN is a debug canary until isolated service and lifecycle acceptance"
+}
 require(System.getenv("SPHERE_STREAM_GPU_BRIDGE") != "true" || !releaseArtifactRequested) {
     "GPU bridge is a debug canary; native acceptance is required before release builds"
 }
@@ -148,6 +155,8 @@ android {
         buildConfigField("boolean", "STREAM_GPU_BRIDGE", (System.getenv("SPHERE_STREAM_GPU_BRIDGE") == "true").toString())
         buildConfigField("boolean", "STREAM_PLANAR_INPUT", (System.getenv("SPHERE_STREAM_PLANAR_INPUT") == "true").toString())
         buildConfigField("boolean", "CONTINUOUS_INPUT_CANARY", (System.getenv("SPHERE_CONTINUOUS_INPUT_CANARY") == "true").toString())
+        buildConfigField("boolean", "APP_SCOPED_VPN_CANARY", appScopedVpnCanary.toString())
+        manifestPlaceholders["appScopedVpnEnabled"] = appScopedVpnCanary.toString()
         buildConfigField("String", "DIRECT_PROBE_STUN_URL", javaString(directProbeStunUrl))
         buildConfigField("String", "BUILD_TIME", "\"${System.currentTimeMillis()}\"")
         buildConfigField("String", "DEFAULT_FALLBACK_SERVER_URL", "\"${System.getenv("SPHERE_FALLBACK_SERVER_URL") ?: ""}\"")

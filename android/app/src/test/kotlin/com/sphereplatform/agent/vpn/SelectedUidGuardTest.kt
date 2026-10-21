@@ -95,4 +95,23 @@ class SelectedUidGuardTest {
         file.writeText("x".repeat(16385))
         denied("vpn_guard_journal_unreadable") { UidGuardJournal(file).read() }
     }
+    @Test fun `guard preserves Android netId protection accounting and vendor mark bits`() {
+        val plan = UidGuardPlan.from(UidGuardRecord(operation.toString(), listOf(10002), 10001, "INTENT"))
+        val mask = 0x1fe00000L
+        val androidMark = 0xe017abcdL
+        val marked = (androidMark and mask.inv()) xor plan.mark
+        assertEquals(androidMark and mask.inv(), marked and mask.inv())
+        assertEquals(plan.mark, marked and mask)
+        val script = plan.block()
+        assertTrue(script.contains("--set-xmark ${plan.mark}/0x1fe00000"))
+        assertFalse(script.contains("fwmark"))
+        assertFalse(script.contains("0xffffffff"))
+        assertTrue(script.contains("uidrange 10002-10002"))
+    }
+    @Test fun `older journal plans cannot be silently reinterpreted for cleanup`() {
+        file.writeText("""{"operationId":"$operation","selectedUids":[10002],"ownerUid":10001,"phase":"BLOCKED"}""")
+        denied("vpn_guard_journal_unreadable") { UidGuardJournal(file).read() }
+        try { UidGuardPlan.from(UidGuardRecord(operation.toString(), listOf(10002), 10001, "BLOCKED", planVersion = 2)); fail() }
+        catch (_: IllegalArgumentException) { }
+    }
 }

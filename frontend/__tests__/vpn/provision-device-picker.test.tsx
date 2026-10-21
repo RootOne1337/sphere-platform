@@ -18,6 +18,7 @@ const mockUseDevices = jest.mocked(useDevices);
 jest.mock('next/navigation', () => ({ useRouter: () => ({ push: mockPush }) }));
 jest.mock('@/src/features/vpn/VPNMap', () => ({ VPNMap: () => null }));
 jest.mock('@/src/features/vpn/VpnProfileCatalog', () => ({ VpnProfileCatalog: () => null }));
+jest.mock('@/src/features/vpn/AppVpnRuntimePanel', () => ({ AppVpnRuntimePanel: () => null }));
 jest.mock('@/src/features/vpn/ThroughputChart', () => ({ ThroughputChart: () => null }));
 jest.mock('@/lib/hooks/useVpn', () => ({
   useAssignVpn: jest.fn(),
