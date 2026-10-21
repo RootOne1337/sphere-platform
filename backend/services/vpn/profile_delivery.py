@@ -115,7 +115,8 @@ def seal_revision(
         encrypted = AESGCM(key).encrypt(nonce, plaintext, str(operation_id).encode())
         # AndroidKeyStore OAEP historically uses SHA-1 for MGF1 even when OAEP
         # digest is SHA-256. Match the explicit Android recipient contract.
-        wrapped = recipient.key.encrypt(key, padding.OAEP(mgf=padding.MGF1(hashes.SHA1()), algorithm=hashes.SHA256(), label=None))
+        # developer.android.com/privacy-and-security/cryptography#oaep-mgf1-message-digest
+        wrapped = recipient.key.encrypt(key, padding.OAEP(mgf=padding.MGF1(hashes.SHA1()), algorithm=hashes.SHA256(), label=None))  # nosec B303
         encode = lambda value: base64.b64encode(value).decode("ascii")  # noqa: E731
         return {"envelope": {"operationId": str(operation_id), "wrappedKey": encode(wrapped),
                              "nonce": encode(nonce), "ciphertext": encode(encrypted)}}

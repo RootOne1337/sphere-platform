@@ -10,7 +10,12 @@ from pathlib import Path
 from typing import Any
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
-from scripts.pilot.reviewed_image_archive import AdmissionRuleError, admit_archive, bounded_json, require  # noqa: E402
+from scripts.pilot.reviewed_image_archive import (  # noqa: E402
+    AdmissionRuleError,
+    admit_archive,
+    bounded_json,
+    require,
+)
 
 COMPRESSED_LIMIT = 300 * 1024 * 1024
 EXPANDED_LIMIT = 1024 * 1024 * 1024

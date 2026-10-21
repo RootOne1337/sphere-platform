@@ -39,6 +39,7 @@ it('checks each file then saves once with stable per-item IDs and no secret in t
   post.mockResolvedValueOnce({ data: check }).mockResolvedValueOnce({ data: saved });
   const user = userEvent.setup(); const changed = jest.fn();
   render(<VpnProfileBatchImport onClose={jest.fn()} onSaved={changed} />);
+  expect(screen.getByRole('dialog', { name: 'Массовый импорт профилей' })).toBeInTheDocument();
   await load(user);
   expect(screen.getByRole('button', { name: 'Сохранить 2 профилей' })).toBeDisabled();
   await user.click(screen.getByRole('button', { name: 'Проверить пакет' }));
@@ -74,6 +75,7 @@ it('invalidates the check after changing the common app policy', async () => {
   const user = userEvent.setup(); render(<VpnProfileBatchImport onClose={jest.fn()} onSaved={jest.fn()} />);
   await load(user); await user.click(screen.getByRole('button', { name: 'Проверить пакет' }));
   await waitFor(() => expect(screen.getByRole('button', { name: 'Сохранить 2 профилей' })).toBeEnabled());
+  await user.click(screen.getByRole('button', { name: 'Параметры пакета' }));
   await user.type(screen.getByLabelText(/Приложения через VPN/), '\norg.example.second');
   expect(screen.getByRole('button', { name: 'Сохранить 2 профилей' })).toBeDisabled();
 });
@@ -83,6 +85,18 @@ it('rejects over 100 files before reading or sending secrets', async () => {
   fireEvent.change(screen.getByLabelText('Файлы VPN-профилей'), { target: { files: Array.from({ length: 101 }, () => file()) } });
   expect(await screen.findByRole('alert')).toHaveTextContent('до 100 файлов');
   expect(post).not.toHaveBeenCalled();
+});
+
+it('brings failed files forward and allows returning to the whole package', async () => {
+  post.mockResolvedValueOnce({ data: { ...check, config_valid: false, items: [check.items[0],
+    { request_id: items[1].request_id, config_valid: false, issues: [{ code: 'invalid_field_value', line: 8 }] }] } });
+  const user = userEvent.setup(); render(<VpnProfileBatchImport onClose={jest.fn()} onSaved={jest.fn()} />);
+  await load(user); await user.click(screen.getByRole('button', { name: 'Проверить пакет' }));
+  expect(await screen.findByText('Конфигурация не прошла проверку · строка 8')).toBeInTheDocument();
+  expect(screen.queryByText('Exit 1')).not.toBeInTheDocument();
+  expect(screen.getByRole('button', { name: 'Сохранить 2 профилей' })).toBeDisabled();
+  await user.click(screen.getByRole('button', { name: 'Все профили' }));
+  expect(screen.getByText('Exit 1')).toBeInTheDocument();
 });
 
 it('discards a response after account/session change', async () => {

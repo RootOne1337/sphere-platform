@@ -122,6 +122,10 @@ def test_volume_path_uses_environment_instead_of_powershell_interpolation(monkey
     path = tmp_path / "path with 'quote and $variable"
     path.mkdir()
     monkeypatch.setattr(guard.platform, "system", lambda: "Windows")
+    # This tests quoting/transport, not the free disk of a shared CI runner.
+    # Real resource thresholds remain covered separately and unchanged.
+    from types import SimpleNamespace
+    monkeypatch.setattr(guard.shutil, "disk_usage", lambda _: SimpleNamespace(free=30 * guard.GIB))
     def reply(command, **kwargs):
         assert str(path) == kwargs["env"]["SPHERE_RESOURCE_GUARD_PATH"]
         assert str(path) not in command[-1]

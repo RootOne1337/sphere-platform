@@ -60,6 +60,21 @@ jobs:
             --security-opt no-new-privileges --tmpfs /tmp:rw,nosuid,nodev,size=16m \
             --mount "type=bind,source=${{ github.workspace }}/tests/containers/backend_bootstrap_probe.py,target=/tmp/backend_bootstrap_probe.py,readonly" \
             "$SPHERE_REVIEW_IMAGE" python /tmp/backend_bootstrap_probe.py 2>&1 | tee image-bootstrap-probe.txt
+      - name: Pull exact audit service images with a bounded registry fallback
+        shell: bash
+        run: |
+          set -euo pipefail
+          for spec in \
+            'POSTGRES postgres sha256:25d430274d8a31184f9435cc5b2f56aff254952065bbbcac0c51acedb5a1d1e7' \
+            'REDIS redis sha256:84bab713067f5494d94c24e99ae3fa3ae2388c037152edcbcf301f7cfaeb3048'; do
+            read -r kind repository digest <<< "$spec"
+            image="public.ecr.aws/docker/library/$repository@$digest"
+            if ! docker pull --platform linux/amd64 "$image"; then
+              image="docker.io/library/$repository@$digest"
+              docker pull --platform linux/amd64 "$image"
+            fi
+            echo "SPHERE_AUDIT_${kind}_IMAGE=$image" >> "$GITHUB_ENV"
+          done
       - name: Fresh packaged SQL bootstrap and application process restart
         run: >-
           python tests/containers/run_backend_runtime_probe.py

@@ -297,7 +297,7 @@ def execute(artifact: Path, source: str, expected_image_id: str, expected_curren
             readonly_video_probe: bool = False, live_video: bool = False,
             direct_probe_devices: tuple[str, ...] | None = None, direct_input: bool = False,
             mdns_config_file: Path | None = None, *, allow_degraded_volume: bool = False,
-            local_artifact: bool = False) -> dict[str, Any]:
+            local_artifact: bool = False, _vpn_catalog_batch: bool = False) -> dict[str, Any]:
     admitted_env = probe_environment(direct_probe_device, disable_direct_probe, readonly_video_probe, live_video, direct_probe_devices, direct_input)
     admitted_env.update(mdns_environment(mdns_config_file))
     require(bool(re.fullmatch(r"sha256:[a-f0-9]{64}", expected_image_id)), "Expected independent CI image ID")
@@ -319,7 +319,14 @@ def execute(artifact: Path, source: str, expected_image_id: str, expected_curren
     if local_artifact:
         require(receipt.get("parentImageId") == current["Image"] and receipt.get("parentSource") == expected_current,
                 "Local artifact was not built from this installed backend")
-    changes = source_boundary(expected_current, source, receipt)
+    require(type(_vpn_catalog_batch) is bool, "Explicit catalog batch scope required")
+    if _vpn_catalog_batch:
+        from scripts.pilot.vpn_catalog_batch_release import (
+            source_boundary as catalog_batch_boundary,
+        )
+        changes = catalog_batch_boundary(expected_current, source, receipt)
+    else:
+        changes = source_boundary(expected_current, source, receipt)
     heads = schema_heads(current)
     require(heads == receipt["migrationHeads"], "Schema migration is not admitted by this installer")
     files = labels.get("com.docker.compose.project.config_files", "").split(",")
@@ -352,6 +359,7 @@ def execute(artifact: Path, source: str, expected_image_id: str, expected_curren
     findings = evaluate(collect(ROOT))
     admission_findings = admitted_findings(findings, allow_degraded_volume=allow_degraded_volume)
     plan = {"sourceRevision": source, "runId": admitted["runId"], "imageId": admitted["imageId"],
+        "sourceScope": "vpn-catalog-batch-20261022" if _vpn_catalog_batch else "ordinary-schema-free",
         "provenance": "maintainer-local-executor" if local_artifact else "github-hosted-ci",
         "archiveBytes": admitted["archiveBytes"], "previousBackend": before[BACKEND], "sourceChanges": changes,
         "schemaHeads": heads, "schemaMigrationPerformed": False, "resourceFindings": findings,
