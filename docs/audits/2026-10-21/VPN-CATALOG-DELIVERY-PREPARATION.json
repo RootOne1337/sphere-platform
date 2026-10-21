@@ -1,0 +1,128 @@
+{
+  "schemaVersion": 1,
+  "observedAtUtc": "2026-10-21T18:43:49.497347+00:00",
+  "sourceReviewed": "1d39324654c4d91f42ae5410866500269fc1b9fe",
+  "runtimeChanged": false,
+  "liveMigrationPerformed": false,
+  "deviceCommandsSent": 0,
+  "physicalVpnChanged": false,
+  "installed": {
+    "ui": "5cbb4bba6229c433c1078742f81fddd4dcbd6bfa",
+    "api": "15ce2b623c4e4fdd0ae2b6b9435fda5a3ef42881",
+    "schemaHeads": [
+      "20261006_script_catalog_metadata"
+    ],
+    "apk84Installed": false
+  },
+  "webPackage": {
+    "source": "37926bd3309b6ddfd4e98028577806ff9ae9f527",
+    "imageId": "sha256:525bde2e68917606b80ced820136eb99c4f4e0c6bfbaf4a62ac366b09b0c2589",
+    "admitted": true,
+    "httpPages": 26,
+    "clientAssets": 72,
+    "browserHydrationVerified": false,
+    "installed": false,
+    "receiptSha256": "aa422111fcfabd92ee87f13ccaeb9db38a0f848d579e9b05ac528201acd2af65"
+  },
+  "apiPackage": {
+    "source": "7d2a684625c6f0620358ca20604fadcf6e82a6cb",
+    "imageId": "sha256:072800c175c26dcf2f73a8e0ca4c0a21521fdcc3d9f7087300c1a089ab38fc2c",
+    "admitted": true,
+    "schemaTransition": {
+      "from": [
+        "20261006_script_catalog_metadata"
+      ],
+      "to": [
+        "20261021_vpn_profiles"
+      ],
+      "migration": "alembic/versions/20261021_vpn_profiles.py",
+      "migrationSha256": "40f8696745da07733011a0e732ef229506b9d3148a18272a1abe5a2851d656d7",
+      "liveMigrationPerformed": false
+    },
+    "runtimeProbePassed": true,
+    "metricsProbePassed": true,
+    "installed": false,
+    "receiptSha256": "9c6eb1c822a4741d8532bbc5fddfc109229b01aebd50cf5ca7b35f3936fc7e81"
+  },
+  "fullBackendRegression": {
+    "source": "7d2a684625c6f0620358ca20604fadcf6e82a6cb",
+    "run": "20261021T181403Z-c437d978",
+    "passed": 4440,
+    "skipped": 63,
+    "subtestsPassed": 659,
+    "coveragePercent": 82.49,
+    "github": {
+      "id": 56918711103,
+      "context": "Sphere Local / Backend regressions",
+      "state": "success",
+      "createdAt": "2026-10-21T18:30:58Z",
+      "readbackVerified": true,
+      "targetUrl": null
+    },
+    "isolatedServicesRemoved": true,
+    "receiptSha256": "e16cc32165b881aa933fa72e90118926b089718c482461d3a28087bb2a965918"
+  },
+  "catalogDatabaseIsolation": {
+    "dedicatedLoginImplemented": true,
+    "missingConfigurationFailsClosed": true,
+    "actualConnectionRoleAndRlsCheckedPerRequest": true,
+    "primaryRoleChanged": false,
+    "poolPerWorker": 2,
+    "overflow": 0,
+    "minimumGrantHttpLifecyclePassed": true,
+    "targetedRealDatabaseTestsPassed": 45,
+    "vpnAndPackagingTestsPassed": 299
+  },
+  "backupRecovery": {
+    "customArchiveBytes": 2308449,
+    "isolatedFullRestorePassed": true,
+    "migrationOnRestoredCopyPassed": true,
+    "minimumGrantHttpLifecyclePassed": true,
+    "legacyRowCountsPreserved": true,
+    "checkedLegacyTables": [
+      "devices",
+      "users",
+      "organizations",
+      "scripts",
+      "script_versions",
+      "tasks"
+    ],
+    "isolatedServicesRemoved": true,
+    "exactNewMigrationWorkerAcceptance": false,
+    "backupOrSqlCommitted": false
+  },
+  "stagedSecrets": {
+    "independentKeys": true,
+    "freshProcessReadback": true,
+    "keyRoundtrip": true,
+    "activated": false,
+    "offHostRecoveryVerified": false,
+    "secretValuesInDocument": false
+  },
+  "resourceObservation": {
+    "observedAt": "2026-10-21T18:43:46.602756+00:00",
+    "system": "Windows",
+    "freeDiskBytes": 83965059072,
+    "deviceCommandsSent": false,
+    "mutationsPerformed": false,
+    "availableRamBytes": 4400381952,
+    "totalRamBytes": 50668236800,
+    "committedBytes": 86057041920,
+    "commitLimitBytes": 101336473600,
+    "volumeHealthStatus": "Healthy",
+    "volumeOperationalStatus": [
+      "OK"
+    ],
+    "findings": []
+  },
+  "open": [
+    "exact migration worker on restored copy with sufficient host resources",
+    "bounded catalog migration and live API/web installation",
+    "APK84 full Android CI/release admission and single-APK fault pilot",
+    "durable server operation journal, unique client leases and shared UI/DAG/orchestration dispatch"
+  ],
+  "sources": [
+    "https://www.postgresql.org/docs/15/ddl-rowsecurity.html",
+    "https://www.postgresql.org/docs/15/app-pgdump.html"
+  ]
+}

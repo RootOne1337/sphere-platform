@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
-  "reviewedAtUtc": "2026-10-21T16:24:33.963498+00:00",
-  "sourceReviewed": "5cbb4bba6229c433c1078742f81fddd4dcbd6bfa",
+  "reviewedAtUtc": "2026-10-21T19:03:33.544514+00:00",
+  "sourceReviewed": "37926bd3309b6ddfd4e98028577806ff9ae9f527",
   "scope": "UI/API15ce preserved on3015/Tuna; APK82 exact installed hashes and completed OTA on four online devices. PH011/PH030 finite two-gesture recording and shared native timeline replay accepted; two direct media viewers retained, manual READY/Home restored. No universal timing or production SLA. Worker0.3 finite headless PH011 local/tunnel native dispatch verified separately; model/gameplay/GPU/LAN proof remain open. Installed runtime receipt unchanged. Worker0.4 real-RGB neutral shadow and finite pointer compatibility verified separately; no learned inference or gameplay. Local AMD RX9070 learned NitroGen/P2P inference verified separately; corrected runs used inactivity-disconnected game renderer, no model actions or gameplay accepted. UI/API/APK receipt unchanged. Worker0.5 bounded local process provider verified separately on PH011 registration screen; no game actions, runtime receipt unchanged. Follow-up: finite learned stick contact/trajectory on PH011 verified; 571 native APPLIED, goal navigation not accepted. P2P text conditioning and source capture/action age remain open; installed runtime unchanged.",
   "baseline": "docs/audits/2026-10-05/ENTERPRISE-PRODUCT-BACKLOG.json",
   "previousCrosscheck": "docs/audits/2026-10-09/CHAT-CODE-RECONCILIATION.json",
@@ -11,11 +11,11 @@
     "open": 41
   },
   "installed": {
-    "lastObservedUtc": "2026-10-20T15:21:22.957148+00:00",
-    "ui": "5cbb4bba6229c433c1078742f81fddd4dcbd6bfa",
-    "api": "15ce2b623c4e4fdd0ae2b6b9435fda5a3ef42881",
-    "evidence": "docs/audits/2026-10-20/NETWORK-ROUTE-INPUT83-DELIVERY.json",
-    "observation": "Web5cbb installed; API15ce preserved. APK83 completed OTA on four online devices, three independent package hashes, PH030 completion/version only; 17 offline excluded. Finite controls passed; initial/repeated ICE/native-busy failures and latency remain open.",
+    "lastObservedUtc": "2026-10-21T19:03:33.544514+00:00",
+    "ui": "37926bd3309b6ddfd4e98028577806ff9ae9f527",
+    "api": "7d2a684625c6f0620358ca20604fadcf6e82a6cb",
+    "evidence": "docs/audits/2026-10-22/VPN-CATALOG-LIVE-DELIVERY.json",
+    "observation": "VPN workspace UI37926/API7d2a installed with additive catalog migration, dedicated catalog login and live HTTP/browser acceptance. APK84 not installed; prior APK83 evidence preserved. No physical VPN or game commands.",
     "pilotApk": {
       "device": "auto-ph-011",
       "deviceId": "414ce0e9-4b93-4f96-b9ca-ee675f53835e",
@@ -28,7 +28,7 @@
       "packageProofObservedAtUtc": "2026-10-20T15:21:22.957148+00:00",
       "scope": "Independent installed-package SHA plus completed addressed OTA; finite PH030 input and general performance are separate."
     },
-    "evidenceSha256NormalizedLf": "ddb757de89e308bc1d3a72d6a0ad45e40cf534d4540aa524cc59420050d37a9e",
+    "evidenceSha256NormalizedLf": "681e563a54231f55620b3701f1ca29192f79535cb8fa49845178e75ba12a8021",
     "additionalPilotApks": [
       {
         "device": "auto-ph-025",
@@ -64,9 +64,9 @@
       },
       "scope": "Three independent package hashes. Four completed OTA commands; PH030 hash remains unverified; 17 offline excluded."
     },
-    "latestReadbackAtUtc": "2026-10-20T15:21:22.957148+00:00",
-    "latestReadbackEvidence": "docs/audits/2026-10-20/NETWORK-ROUTE-INPUT83-DELIVERY.json",
-    "latestReadbackEvidenceSha256NormalizedLf": "ddb757de89e308bc1d3a72d6a0ad45e40cf534d4540aa524cc59420050d37a9e",
+    "latestReadbackAtUtc": "2026-10-21T19:03:33.544514+00:00",
+    "latestReadbackEvidence": "docs/audits/2026-10-22/VPN-CATALOG-LIVE-DELIVERY.json",
+    "latestReadbackEvidenceSha256NormalizedLf": "681e563a54231f55620b3701f1ca29192f79535cb8fa49845178e75ba12a8021",
     "previousRuntimeObservation": {
       "ui": "ed9d54d090e2b5a5d471502335ddf6b8b86dbd35",
       "api": "ed9d54d090e2b5a5d471502335ddf6b8b86dbd35",
@@ -6176,6 +6176,30 @@
     "webImageBuilt": true,
     "webImageAdmitted": false,
     "installedRuntimeChanged": false,
+    "mainVpnServiceAccepted": false
+  },
+  "vpnCatalogDeliveryPreparation": {
+    "evidence": "docs/audits/2026-10-21/VPN-CATALOG-DELIVERY-PREPARATION.json",
+    "evidenceSha256NormalizedLf": "225188d1c475f96e4ed4620bde682574d9d74770792a31d2abbc7850e83566e8",
+    "webImageAdmitted": true,
+    "apiImageAdmitted": true,
+    "fullBackendPassed": 4440,
+    "fullBackendSkipped": 63,
+    "catalogDedicatedRoleImplemented": true,
+    "backupRestoreTestPassed": true,
+    "runtimeChanged": false,
+    "liveMigrationPerformed": false,
+    "mainVpnServiceAccepted": false
+  },
+  "vpnCatalogLiveDelivery": {
+    "evidence": "docs/audits/2026-10-22/VPN-CATALOG-LIVE-DELIVERY.json",
+    "evidenceSha256NormalizedLf": "681e563a54231f55620b3701f1ca29192f79535cb8fa49845178e75ba12a8021",
+    "webInstalled": true,
+    "apiInstalled": true,
+    "catalogMigrationPerformed": true,
+    "catalogLiveHttpAccepted": true,
+    "desktopMobileBrowserReviewed": true,
+    "deviceVpnChanged": false,
     "mainVpnServiceAccepted": false
   }
 }
