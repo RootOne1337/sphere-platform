@@ -202,6 +202,9 @@ def admit_local(directory: Path, source: str) -> dict:
         "python", "-m", "alembic", "-c", "alembic/alembic.ini", "heads"])
     require(re.findall(r"^([A-Za-z0-9_]+) (?:\([^)]+\) )*\(head\)$", output, re.M) == heads,
             "Local image migration head mismatch")
+    if "schemaTransition" in receipt:
+        from scripts.pilot.vpn_catalog_release import validate_transition
+        validate_transition(receipt)
     return {"sourceRevision": source, "imageId": image["id"], "imageTag": tag,
             "archiveBytes": 0, "runId": run, "runAttempt": None, "migrationHeads": heads,
             "localArtifact": True, "runtimeInstalled": False}

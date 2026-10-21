@@ -38,15 +38,16 @@ def evidence(path: Path) -> dict:
             "sha256": hashlib.sha256(resolved.read_bytes()).hexdigest()}
 
 
-def build_spec(parent_tag: str, source: str, run: str) -> str:
+def build_spec(parent_tag: str, source: str, run: str, *, catalog: bool = False) -> str:
     # parent_tag is generated from an admitted image ID, never user shell text.
-    return (f"FROM {parent_tag}\nCOPY --chown=sphere:sphere backend/ /app/backend/\n"
+    copy = "source/ /app/" if catalog else "backend/ /app/backend/"
+    return (f"FROM {parent_tag}\nCOPY --chown=sphere:sphere {copy}\n"
             f"ENV SPHERE_BUILD_SHA={source}\nLABEL org.opencontainers.image.revision=\"{source}\" "
             f"io.sphere.local.run=\"{run}\" io.sphere.ci.run=\"\" io.sphere.ci.attempt=\"\"\n")
 
 
 def package(source: str, expected_current: str, execution: Path, output: Path,
-            *, allow_degraded_volume: bool = False) -> dict:
+            *, allow_degraded_volume: bool = False, catalog: bool = False) -> dict:
     validate_source(ROOT, source, "refs/heads/codex/enterprise-audit-20260905")
     execution_binding = evidence(execution)
     run = check_local_run(execution_binding, source)
@@ -66,21 +67,31 @@ def package(source: str, expected_current: str, execution: Path, output: Path,
         expected = source_files(raw)
         hashes = {"requirementsSha256": expected["backend/requirements.txt"],
                   "actionContractSha256": expected["backend/schemas/action_contract.v1.json"]}
-        installer.source_boundary(expected_current, source, hashes)
+        transition = None
+        if catalog:
+            from scripts.pilot import vpn_catalog_release
+            vpn_catalog_release.source_boundary(expected_current, source, hashes)
+            transition = vpn_catalog_release.transition()
+            require(installer.schema_heads(base) == transition["from"],
+                    "Catalog migration baseline changed")
+        else:
+            installer.source_boundary(expected_current, source, hashes)
         require(not command(["git", "diff", "--name-only", "--diff-filter=D", expected_current, source, "--", "backend"]),
                 "Source deletions need a fresh full image build")
         verify_image_source(base["Image"], source_files(source_archive(expected_current)))
         output.mkdir(exist_ok=False)
         context = output / "context"
         context.mkdir()
+        source_dir = context / "source" if catalog else context
+        source_dir.mkdir(exist_ok=True)
         with tarfile.open(fileobj=io.BytesIO(raw)) as archive:
-            archive.extractall(context, filter="data")
+            archive.extractall(source_dir, filter="data")
         parent_tag = "sphere-local-backend-parent:" + base["Image"].split(":")[1]
         if not command(["docker", "image", "ls", "-q", "--filter", f"reference={parent_tag}"]):
             command(["docker", "tag", base["Image"], parent_tag])
         require(json.loads(command(["docker", "image", "inspect", parent_tag]))[0]["Id"] == base["Image"],
                 "Parent tag identity mismatch")
-        (context / "Dockerfile.local").write_text(build_spec(parent_tag, source, run), encoding="utf-8")
+        (context / "Dockerfile.local").write_text(build_spec(parent_tag, source, run, catalog=catalog), encoding="utf-8")
         tag = f"sphere-reviewed-backend:{source}"
         require(not command(["docker", "image", "ls", "-q", "--filter", f"reference={tag}"]),
                 "Candidate tag already exists; never overwrite an admitted artifact")
@@ -107,7 +118,10 @@ def package(source: str, expected_current: str, execution: Path, output: Path,
                     "--image", image["Id"], "--evidence-dir", str(output / folder), *extra],
                     cwd=ROOT, env=probe_env, stdout=log, stderr=subprocess.STDOUT, timeout=300, check=False)
             require(result.returncode == 0, "Packaged probe failed; private evidence retained")
-        heads = installer.schema_heads(base)
+        live_heads = installer.schema_heads(base)
+        if transition:
+            require(live_heads == transition["from"], "Installed schema changed during packaging")
+        heads = transition["to"] if transition else live_heads
         receipt = {"schemaVersion": 1, "kind": "sphere-local-backend", "sourceRevision": source,
             "repository": "RootOne1337/sphere-platform", "runtimeInstalled": False,
             "observedAtUtc": datetime.now(timezone.utc).isoformat(),
@@ -116,6 +130,8 @@ def package(source: str, expected_current: str, execution: Path, output: Path,
             "metricsProbe": evidence(output / "metrics/summary.json"), "migrationHeads": heads,
             "parentImageId": base["Image"], "parentSource": expected_current,
             "dependencyInstallPerformed": False, "buildNetwork": "none", "archivesCreated": 0, **hashes}
+        if transition:
+            receipt["schemaTransition"] = transition
         (output / "receipt.json").write_text(json.dumps(receipt, indent=2) + "\n", encoding="utf-8")
         admitted = admit_local(output, source)
         installer.preserved(before, installer.snapshot())
@@ -130,10 +146,11 @@ def main() -> int:
     parser.add_argument("--execution", required=True, type=Path)
     parser.add_argument("--output", required=True, type=Path)
     parser.add_argument("--allow-degraded-volume", action="store_true")
+    parser.add_argument("--vpn-catalog", action="store_true", help="Package the one reviewed additive VPN migration; never applies it")
     args = parser.parse_args()
     try:
         result = package(args.source, args.expected_current_source, args.execution, args.output,
-                         allow_degraded_volume=args.allow_degraded_volume)
+                         allow_degraded_volume=args.allow_degraded_volume, catalog=args.vpn_catalog)
     except (ValueError, OSError, subprocess.SubprocessError, KeyError, TypeError):
         print(json.dumps({"state": "not-admitted", "runtimeInstalled": False,
                           "detail": "Review local executor and private packaged evidence"}))
