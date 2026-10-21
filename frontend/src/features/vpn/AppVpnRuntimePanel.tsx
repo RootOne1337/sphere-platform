@@ -10,6 +10,7 @@ import { useAuthStore } from '@/lib/store';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogBody, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { parseVpnRuntimePage, runtimeFreshness, vpnPhaseLabels, type VpnRuntimeDevice } from './runtimeTypes';
+import { currentVpnRate, observeVpnRates, type VpnRate, type VpnRateHistory } from './runtimeRates';
 
 function time(value: string | number | null | undefined) {
   if (!value) return 'Не сообщено';
@@ -18,7 +19,7 @@ function time(value: string | number | null | undefined) {
 }
 function bytes(value: number | null | undefined) {
   if (value === undefined || value === null) return '—';
-  if (value < 1024) return `${value} Б`;
+  if (value < 1024) return `${value.toLocaleString('ru-RU', { maximumFractionDigits: 1 })} Б`;
   if (value < 1024 ** 2) return `${(value / 1024).toFixed(1)} КБ`;
   return `${(value / 1024 ** 2).toFixed(1)} МБ`;
 }
@@ -47,11 +48,19 @@ export function AppVpnRuntimePanel() {
     return parseVpnRuntimePage(data, page);
   }, refetchInterval: 5000, retry: false, enabled: Boolean(actor) });
   const data = query.data;
+  const rateScope = JSON.stringify([scope, filter, group, page]);
+  const [rateState, setRateState] = useState<{ scope: string; history: VpnRateHistory }>({ scope: '', history: new Map() });
+  useEffect(() => {
+    setRateState(previous => ({ scope: rateScope, history: data && !query.isError
+      ? observeVpnRates(previous.scope === rateScope ? previous.history : new Map(), data, Date.now()) : new Map() }));
+  }, [data, query.isError, rateScope]);
   const chosen = data?.items.find(d => d.device_id === selected);
   // A query can complete between clock ticks. Use its render time immediately;
   // the interval still makes retained data expire when no response arrives.
   const renderedAt = Math.max(now, Date.now());
   const fresh = (row: VpnRuntimeDevice) => data ? runtimeFreshness(row, data.as_of, renderedAt) : 'unknown';
+  const rate = (row: VpnRuntimeDevice) => data && !query.isError && rateState.scope === rateScope
+    ? currentVpnRate(rateState.history, row, data.as_of, renderedAt) : null;
   const confirmed = data?.items.filter(row => fresh(row) === 'fresh').length ?? 0;
   return <section aria-label="VPN на устройствах Android" className="sphere-panel mb-6 overflow-hidden rounded-2xl border bg-card/60">
     <header className="flex items-start justify-between gap-4 border-b p-4 sm:p-5">
@@ -72,19 +81,19 @@ export function AppVpnRuntimePanel() {
     {query.isError && <p role="alert" className="px-4 pb-4 text-sm text-destructive">Состояние VPN недоступно. Предыдущие данные не подтверждают текущее подключение.</p>}
     {data && !data.items.length && <p className="px-4 pb-5 text-sm text-muted-foreground">Устройств по этому фильтру нет.</p>}
     {!!data?.items.length && <div className={`overflow-x-auto ${query.isError ? 'opacity-50' : ''}`}><table className="block w-full text-left text-sm md:table"><thead className="hidden border-y bg-muted/20 text-xs text-muted-foreground md:table-header-group"><tr><th className="px-5 py-3 font-medium">Устройство</th><th className="px-5 py-3 font-medium">Android VPN</th><th className="hidden px-5 py-3 font-medium lg:table-cell">Последний handshake</th><th className="hidden px-5 py-3 font-medium xl:table-cell">Принято / отправлено</th><th className="w-20 px-5 py-3 font-medium"><span className="sr-only">Подробности</span></th></tr></thead>
-      <tbody className="block md:table-row-group">{data.items.map(row => { const state = fresh(row); const sample = row.observation?.snapshot; return <tr key={row.device_id} className="group grid grid-cols-[minmax(0,1fr)_2.5rem] gap-x-2 gap-y-3 border-b px-4 py-4 last:border-0 hover:bg-muted/20 motion-safe:transition-colors md:table-row md:p-0">
+      <tbody className="block md:table-row-group">{data.items.map(row => { const state = fresh(row); const sample = row.observation?.snapshot; const speed = rate(row); return <tr key={row.device_id} className="group grid grid-cols-[minmax(0,1fr)_2.5rem] gap-x-2 gap-y-3 border-b px-4 py-4 last:border-0 hover:bg-muted/20 motion-safe:transition-colors md:table-row md:p-0">
         <td className="col-start-1 row-start-1 min-w-0 md:max-w-64 md:px-5 md:py-4"><div className="flex min-w-0 items-center gap-3"><span className="hidden h-10 w-10 shrink-0 items-center justify-center rounded-xl border bg-muted/30 text-muted-foreground lg:flex"><Smartphone className="h-4 w-4" /></span><div className="min-w-0"><p className="break-words font-medium">{row.name}</p><p className="mt-1 text-xs text-muted-foreground">{row.model || 'Модель не сообщена'} · {row.status === 'offline' ? 'Не в сети' : row.status === 'connecting' ? 'Подключается' : row.status === 'error' ? 'Ошибка связи' : 'На связи'}</p></div></div></td>
         <td className="col-start-1 row-start-2 min-w-0 md:max-w-72 md:px-5 md:py-4"><p className={`inline-flex items-center gap-1.5 rounded-full px-2 py-1 text-xs font-medium ${phaseStyle(row, state === 'fresh' && !query.isError)}`}><span className="h-1.5 w-1.5 shrink-0 rounded-full bg-current" />{sample ? vpnPhaseLabels[sample.phase] : 'Нет отчёта от сервиса'}</p><p className="mt-1.5 flex items-center gap-1 text-xs text-muted-foreground"><Clock3 className="h-3 w-3 shrink-0" />{query.isError ? 'Связь с API потеряна' : state === 'fresh' ? 'Свежий отчёт' : state === 'stale' ? 'Отчёт устарел' : 'Текущее состояние не подтверждено'}</p></td>
         <td className="hidden px-4 py-3 text-xs text-muted-foreground lg:table-cell">{time(sample?.handshakeEpochSeconds ? sample.handshakeEpochSeconds * 1000 : null)}</td>
-        <td className="hidden px-4 py-3 font-mono text-xs xl:table-cell">{bytes(sample?.rxBytes)} / {bytes(sample?.txBytes)}</td>
+        <td className="hidden px-4 py-3 font-mono text-xs xl:table-cell"><p>{bytes(sample?.rxBytes)} / {bytes(sample?.txBytes)}</p><p className="mt-1.5 text-muted-foreground">{speed ? `↓ ${bytes(speed.rx)}/с · ↑ ${bytes(speed.tx)}/с` : 'Скорость: нет пары замеров'}</p></td>
         <td className="col-start-2 row-span-2 row-start-1 self-start md:px-4 md:py-3"><Button size="sm" variant="ghost" className="h-10 w-10 rounded-xl p-0 text-muted-foreground hover:text-primary" aria-label={`Диагностика VPN ${row.name}`} onClick={() => setSelected(row.device_id)}><ArrowUpRight className="h-4 w-4" /></Button></td>
       </tr>; })}</tbody></table></div>}
     <footer className="flex flex-wrap items-center justify-between gap-2 border-t p-3 text-xs text-muted-foreground"><span>Страница {page}{data ? ` · показано ${data.items.length} из ${data.total}` : ''} · опрос 5 с</span><div className="flex gap-2"><Button size="sm" variant="outline" aria-label="Предыдущие устройства VPN" disabled={query.isFetching || page <= 1} onClick={() => setPage(p => p - 1)}><ChevronLeft className="h-4 w-4" /></Button><Button size="sm" variant="outline" aria-label="Следующие устройства VPN" disabled={query.isFetching || !data || page * data.page_size >= data.total} onClick={() => setPage(p => p + 1)}><ChevronRight className="h-4 w-4" /></Button></div></footer>
-    {chosen && <RuntimeDetails row={chosen} currentFreshness={query.isError ? 'unknown' : fresh(chosen)} onClose={() => setSelected(null)} />}
+    {chosen && <RuntimeDetails row={chosen} rate={rate(chosen)} currentFreshness={query.isError ? 'unknown' : fresh(chosen)} onClose={() => setSelected(null)} />}
   </section>;
 }
 
-function RuntimeDetails({ row, currentFreshness, onClose }: { row: VpnRuntimeDevice; currentFreshness: string; onClose: () => void }) {
+function RuntimeDetails({ row, rate, currentFreshness, onClose }: { row: VpnRuntimeDevice; rate: VpnRate | null; currentFreshness: string; onClose: () => void }) {
   const observation = row.observation; const sample = observation?.snapshot;
   const fields = [
     ['Сервис', sample ? vpnPhaseLabels[sample.phase] : 'Отчёт не получен'], ['Свежесть', currentFreshness === 'fresh' ? 'Подтверждён свежий отчёт' : 'Текущее состояние не подтверждено'],
@@ -97,7 +106,8 @@ function RuntimeDetails({ row, currentFreshness, onClose }: { row: VpnRuntimeDev
   ];
   return <Dialog open onOpenChange={open => { if (!open) onClose(); }}><DialogContent className="max-w-3xl" layout="workspace"><DialogHeader><DialogTitle className="flex items-center gap-3"><span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border bg-primary/10 text-primary"><Smartphone className="h-5 w-5" /></span><span className="min-w-0 break-words">{row.name}<span className="mt-1 block text-xs font-normal text-muted-foreground">Соединение VPN · диагностика устройства</span></span></DialogTitle><DialogDescription>Диагностика встроенного сервиса. Handshake сам по себе не подтверждает доступность игры или внешний IP.</DialogDescription></DialogHeader><DialogBody>
     <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border bg-muted/20 px-4 py-3"><div><p className="text-sm font-medium">{sample ? vpnPhaseLabels[sample.phase] : 'Нет отчёта от VPN-сервиса'}</p><p className="mt-1 text-xs text-muted-foreground">{row.model ?? 'Модель не сообщена'} · Android {row.android_version ?? '—'}</p></div><span className={`rounded-full px-2.5 py-1 text-xs font-medium ${currentFreshness === 'fresh' ? 'bg-primary/10 text-primary' : 'bg-warning/10 text-warning'}`}>{currentFreshness === 'fresh' ? 'Свежий отчёт' : 'Требуется обновление'}</span></div>
-    <div className="grid grid-cols-2 gap-3"><div className="rounded-xl border bg-muted/10 p-4"><p className="flex items-center gap-2 text-xs text-muted-foreground"><ArrowDown className="h-4 w-4 text-primary" />Принято туннелем</p><p className="mt-2 text-2xl font-semibold tracking-tight tabular-nums">{bytes(sample?.rxBytes)}</p></div><div className="rounded-xl border bg-muted/10 p-4"><p className="flex items-center gap-2 text-xs text-muted-foreground"><ArrowUp className="h-4 w-4 text-primary" />Отправлено туннелем</p><p className="mt-2 text-2xl font-semibold tracking-tight tabular-nums">{bytes(sample?.txBytes)}</p></div></div>
+    <div className="grid grid-cols-2 gap-3"><div className="rounded-xl border bg-muted/10 p-4"><p className="flex items-center gap-2 text-xs text-muted-foreground"><ArrowDown className="h-4 w-4 text-primary" />Принято туннелем</p><p className="mt-2 text-2xl font-semibold tracking-tight tabular-nums">{bytes(sample?.rxBytes)}</p><p className="mt-2 text-xs text-muted-foreground">{rate ? `${bytes(rate.rx)}/с` : 'Скорость пока не измерена'}</p></div><div className="rounded-xl border bg-muted/10 p-4"><p className="flex items-center gap-2 text-xs text-muted-foreground"><ArrowUp className="h-4 w-4 text-primary" />Отправлено туннелем</p><p className="mt-2 text-2xl font-semibold tracking-tight tabular-nums">{bytes(sample?.txBytes)}</p><p className="mt-2 text-xs text-muted-foreground">{rate ? `${bytes(rate.tx)}/с` : 'Скорость пока не измерена'}</p></div></div>
+    <p className="text-xs leading-relaxed text-muted-foreground">{rate ? `Средняя скорость между двумя замерами Android за ${(rate.intervalMs / 1000).toLocaleString('ru-RU')} с. Это трафик туннеля целиком.` : 'Для скорости нужны два свежих замера одного туннеля. После переподключения, паузы или сброса счётчиков измерение начинается заново.'}</p>
     <Tabs defaultValue="connection"><TabsList className="mb-3 grid w-full grid-cols-2"><TabsTrigger value="connection">Соединение</TabsTrigger><TabsTrigger value="identifiers">Идентификаторы</TabsTrigger></TabsList><TabsContent value="connection"><dl className="divide-y rounded-xl border px-4">{fields.slice(2, 10).map(([label, value]) => <div key={label} className="grid min-w-0 grid-cols-[minmax(0,1fr)_minmax(0,1.2fr)] gap-4 py-3"><dt className="text-xs leading-relaxed text-muted-foreground">{label}</dt><dd className="break-words text-right text-sm [overflow-wrap:anywhere]">{value}</dd></div>)}</dl></TabsContent><TabsContent value="identifiers"><dl className="space-y-4 rounded-xl border p-4">{fields.slice(10).map(([label, value]) => <div key={label} className="min-w-0"><dt className="text-xs text-muted-foreground">{label}</dt><dd className="mt-1 break-words font-mono text-xs leading-relaxed [overflow-wrap:anywhere]">{value}</dd></div>)}</dl></TabsContent></Tabs>
     <p className="text-xs leading-relaxed text-muted-foreground">Счётчики относятся к текущему туннелю. При его замене они могут сброситься. Внешний IP и доступность приложений проверяются отдельно.</p>
   </DialogBody><DialogFooter><Button variant="outline" onClick={onClose}>Готово</Button><Button asChild><Link href={`/devices/${row.device_id}`}><ExternalLink className="mr-2 h-4 w-4" />Открыть устройство</Link></Button></DialogFooter></DialogContent></Dialog>;

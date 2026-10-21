@@ -1,4 +1,4 @@
-import { act, render, screen } from '@testing-library/react';
+import { act, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { api } from '@/lib/api';
@@ -58,5 +58,29 @@ it('shows newly received evidence immediately between UI clock ticks', async () 
     } }] } }));
     expect(await screen.findByText('Свежий отчёт')).toBeInTheDocument();
     expect(screen.queryByText('Отчёт устарел')).not.toBeInTheDocument();
+  } finally { clock.mockRestore(); }
+});
+
+it('shows rates only after two native samples, then clears them on API failure', async () => {
+  const clock = jest.spyOn(Date, 'now').mockReturnValue(now);
+  let offset = 0; let fail = false;
+  get.mockImplementation(async url => {
+    if (url === '/groups') return { data: [] };
+    if (fail) throw new Error('offline');
+    return { data: { ...page, as_of: new Date(now + offset).toISOString(), items: [{ ...row, observation: {
+      ...row.observation, received_at: new Date(now + offset).toISOString(), snapshot: { ...row.observation.snapshot,
+        profileRevisionId: id, sampledAtEpochMs: now + offset, rxBytes: 100 + offset * 2.048, txBytes: 200 + offset * 1.024 },
+    } }] } };
+  });
+  try {
+    show(); const user = userEvent.setup();
+    expect(await screen.findByText('Скорость: нет пары замеров')).toBeInTheDocument();
+    offset = 5000; clock.mockReturnValue(now + offset);
+    await user.click(screen.getByRole('button', { name: 'Обновить состояние' }));
+    expect(await screen.findByText('↓ 2.0 КБ/с · ↑ 1.0 КБ/с')).toBeInTheDocument();
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Обновить состояние' })).toBeEnabled());
+    fail = true; await user.click(screen.getByRole('button', { name: 'Обновить состояние' }));
+    expect(await screen.findByRole('alert')).toHaveTextContent('Состояние VPN недоступно');
+    expect(screen.queryByText('↓ 2.0 КБ/с · ↑ 1.0 КБ/с')).not.toBeInTheDocument();
   } finally { clock.mockRestore(); }
 });
