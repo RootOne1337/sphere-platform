@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "reviewedAtUtc": "2026-10-21T19:03:33.544514+00:00",
   "sourceReviewed": "37926bd3309b6ddfd4e98028577806ff9ae9f527",
-  "scope": "UI/API15ce preserved on3015/Tuna; APK82 exact installed hashes and completed OTA on four online devices. PH011/PH030 finite two-gesture recording and shared native timeline replay accepted; two direct media viewers retained, manual READY/Home restored. No universal timing or production SLA. Worker0.3 finite headless PH011 local/tunnel native dispatch verified separately; model/gameplay/GPU/LAN proof remain open. Installed runtime receipt unchanged. Worker0.4 real-RGB neutral shadow and finite pointer compatibility verified separately; no learned inference or gameplay. Local AMD RX9070 learned NitroGen/P2P inference verified separately; corrected runs used inactivity-disconnected game renderer, no model actions or gameplay accepted. UI/API/APK receipt unchanged. Worker0.5 bounded local process provider verified separately on PH011 registration screen; no game actions, runtime receipt unchanged. Follow-up: finite learned stick contact/trajectory on PH011 verified; 571 native APPLIED, goal navigation not accepted. P2P text conditioning and source capture/action age remain open; installed runtime unchanged.",
+  "scope": "Installed VPN workspace/catalog UI37926/API7d2a with dedicated catalog login and finite HTTP/browser review. APK83 package evidence retained. Historical media/input/model experiments remain separate; current direct route not retested after catalog rollout. APK84 physical VPN, unique client leases, durable journal, per-app metrics and proxy execution remain open.",
   "baseline": "docs/audits/2026-10-05/ENTERPRISE-PRODUCT-BACKLOG.json",
   "previousCrosscheck": "docs/audits/2026-10-09/CHAT-CODE-RECONCILIATION.json",
   "counts": {
@@ -14,7 +14,7 @@
     "lastObservedUtc": "2026-10-21T19:03:33.544514+00:00",
     "ui": "37926bd3309b6ddfd4e98028577806ff9ae9f527",
     "api": "7d2a684625c6f0620358ca20604fadcf6e82a6cb",
-    "evidence": "docs/audits/2026-10-22/VPN-CATALOG-LIVE-DELIVERY.json",
+    "evidence": "docs/audits/2026-10-22/VPN-CATALOG-RUNTIME-OBSERVATION.json",
     "observation": "VPN workspace UI37926/API7d2a installed with additive catalog migration, dedicated catalog login and live HTTP/browser acceptance. APK84 not installed; prior APK83 evidence preserved. No physical VPN or game commands.",
     "pilotApk": {
       "device": "auto-ph-011",
@@ -28,7 +28,7 @@
       "packageProofObservedAtUtc": "2026-10-20T15:21:22.957148+00:00",
       "scope": "Independent installed-package SHA plus completed addressed OTA; finite PH030 input and general performance are separate."
     },
-    "evidenceSha256NormalizedLf": "681e563a54231f55620b3701f1ca29192f79535cb8fa49845178e75ba12a8021",
+    "evidenceSha256NormalizedLf": "c640b9a9153e66e014f6de0897c9c69ea378362e5757f0a7e2ee6739a262c9ef",
     "additionalPilotApks": [
       {
         "device": "auto-ph-025",
@@ -1802,10 +1802,10 @@
       "scope": "One completed targeted OTA with installed package hash. HTTP video admission true; real RTP/direct input not accepted."
     },
     "primaryVideoInstalled": true,
-    "primaryVideoObserved": true,
+    "primaryVideoObserved": false,
     "productionAccepted": false,
-    "currentObservationEvidence": "docs/audits/2026-10-20/NETWORK-ROUTE-INPUT83-DELIVERY.json",
-    "currentObservationEvidenceSha256NormalizedLf": "ddb757de89e308bc1d3a72d6a0ad45e40cf534d4540aa524cc59420050d37a9e",
+    "currentObservationEvidence": "docs/audits/2026-10-22/VPN-CATALOG-RUNTIME-OBSERVATION.json",
+    "currentObservationEvidenceSha256NormalizedLf": "c640b9a9153e66e014f6de0897c9c69ea378362e5757f0a7e2ee6739a262c9ef",
     "pilotEvidenceScope": "Web5cbb installed; API15ce preserved. APK83 completed OTA on four online devices, three independent package hashes, PH030 completion/version only; 17 offline excluded. Finite controls passed; initial/repeated ICE/native-busy failures and latency remain open.",
     "historicalPrimaryFrames": 1804,
     "directInputCandidate": {
@@ -1915,19 +1915,6 @@
     },
     "historicalResearchScope": "Reviewed API/UI522 installed on both origins and signed APK55 hash verified on all15 compatible online devices. Finite server fallback video/held reverse gestures accepted on PH010/PH011/PH025. Current direct ICE, direct input, nearest path, latency SLA and soak NOT accepted.",
     "directInputObservedFinite": true,
-    "currentPrimaryNetworkObservation": {
-      "outcome": "FINITE_MULTICLIENT_AUTOMATION_HANDOFF_ACCEPTED",
-      "deviceId": "414ce0e9-4b93-4f96-b9ca-ee675f53835e",
-      "directChannelEstablished": true,
-      "rawCandidateAddressesPublished": false,
-      "evidence": "docs/audits/2026-10-16/AUTOMATION-INPUT80-DELIVERY.json",
-      "evidenceSha256NormalizedLf": "a170f4468607ac5f6bf05e0b6a1c080ac5c887478728e73b39a0cc7f6d241076",
-      "observedAtUtc": "2026-10-16T16:26:25.264633+00:00",
-      "topology": "Owned Chrome on3015/Tuna with PH011; two controllers, late third viewer and held gesture. Physical topology not inferred.",
-      "localhostRouteProven": false,
-      "latencySlaAccepted": false,
-      "physicalNetworkSwitchAccepted": false
-    },
     "remoteNetworkObservation": {
       "evidence": "docs/audits/2026-10-13/DIRECT-INPUT-RECOVERY-OBSERVATION.json",
       "evidenceSha256NormalizedLf": "a6cbf3a2c160dadf9f151594f53e7f55937ef2b2f9eaee1702128def6087ace1",
@@ -2254,6 +2241,23 @@
       "localhostRouteProven": false,
       "latencySlaAccepted": false,
       "physicalNetworkSwitchAccepted": false
+    },
+    "previousRuntimeObservation": {
+      "currentObservationEvidence": "docs/audits/2026-10-20/NETWORK-ROUTE-INPUT83-DELIVERY.json",
+      "currentObservationEvidenceSha256NormalizedLf": "ddb757de89e308bc1d3a72d6a0ad45e40cf534d4540aa524cc59420050d37a9e",
+      "currentPrimaryNetworkObservation": {
+        "outcome": "FINITE_MULTICLIENT_AUTOMATION_HANDOFF_ACCEPTED",
+        "deviceId": "414ce0e9-4b93-4f96-b9ca-ee675f53835e",
+        "directChannelEstablished": true,
+        "rawCandidateAddressesPublished": false,
+        "evidence": "docs/audits/2026-10-16/AUTOMATION-INPUT80-DELIVERY.json",
+        "evidenceSha256NormalizedLf": "a170f4468607ac5f6bf05e0b6a1c080ac5c887478728e73b39a0cc7f6d241076",
+        "observedAtUtc": "2026-10-16T16:26:25.264633+00:00",
+        "topology": "Owned Chrome on3015/Tuna with PH011; two controllers, late third viewer and held gesture. Physical topology not inferred.",
+        "localhostRouteProven": false,
+        "latencySlaAccepted": false,
+        "physicalNetworkSwitchAccepted": false
+      }
     }
   },
   "items": [

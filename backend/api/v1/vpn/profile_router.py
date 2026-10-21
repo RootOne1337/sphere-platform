@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import uuid
+from typing import Any
 
 from fastapi import APIRouter, Depends, Query, Request
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -28,7 +29,7 @@ from backend.services.vpn.profile_batch import batch_status, inspect_batch, save
 from backend.services.vpn.profile_catalog import VPNProfileCatalog
 
 router = APIRouter(prefix="/profiles")
-_ERRORS = {401: {"description": "Authentication required"}, 403: {"description": "VPN permission required"},
+_ERRORS: dict[int | str, dict[str, Any]] = {401: {"description": "Authentication required"}, 403: {"description": "VPN permission required"},
            404: {"description": "Owned profile/import not found"}, 409: {"description": "Revision, archive or request ID conflict"},
            413: {"description": "Request exceeds 96 KiB"}, 422: {"description": "Invalid request/config, without secret echo"},
            503: {"description": "Profile encryption or isolated catalog database unavailable"}}

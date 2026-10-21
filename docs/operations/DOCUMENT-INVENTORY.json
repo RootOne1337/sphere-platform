@@ -1,13 +1,13 @@
 {
   "schemaVersion": 1,
-  "reviewedAtUtc": "2026-10-21T13:11:51.317114+00:00",
+  "reviewedAtUtc": "2026-10-21T19:03:33.544514+00:00",
   "scope": "All tracked Markdown classified; active local-link paths scanned. Not semantic attestation of every sentence, command execution, external-link or live acceptance.",
   "countsByRole": {
     "ADR": 6,
     "CURRENT_ENTRYPOINT": 8,
-    "DATED_EVIDENCE": 353,
-    "DESIGN_SPECIFICATION": 82,
-    "OPERATING_GUIDE": 68,
+    "DATED_EVIDENCE": 355,
+    "DESIGN_SPECIFICATION": 83,
+    "OPERATING_GUIDE": 69,
     "PROJECT_POLICY": 7,
     "SUPPORTING_DOCUMENT": 7
   },
@@ -1557,6 +1557,14 @@
       "role": "DATED_EVIDENCE"
     },
     {
+      "file": "docs/audits/2026-10-21/VPN-WORKSPACE-REDESIGN.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
+      "file": "docs/audits/2026-10-22/VPN-CATALOG-LIVE-DELIVERY.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
       "file": "docs/audits/enterprise-audit-2026-02-23.md",
       "role": "DATED_EVIDENCE"
     },
@@ -1601,6 +1609,10 @@
       "role": "DESIGN_SPECIFICATION"
     },
     {
+      "file": "docs/design/VPN-FLEET-CONTROL.md",
+      "role": "DESIGN_SPECIFICATION"
+    },
+    {
       "file": "docs/design/WEB-DESIGN-CONCEPTS-2026-09-28.md",
       "role": "DESIGN_SPECIFICATION"
     },
@@ -1618,6 +1630,10 @@
     },
     {
       "file": "docs/development.md",
+      "role": "OPERATING_GUIDE"
+    },
+    {
+      "file": "docs/history/README-20261022.md",
       "role": "OPERATING_GUIDE"
     },
     {

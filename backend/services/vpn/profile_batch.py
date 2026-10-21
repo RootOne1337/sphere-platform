@@ -7,8 +7,10 @@ from sqlalchemy import select
 from backend.models.vpn_profile import VPNProfileRevision
 from backend.schemas.vpn.bulk_profiles import (
     VPNProfileBatchInspection,
+    VPNProfileBatchInspectionItem,
     VPNProfileBatchRequest,
     VPNProfileBatchSaveResponse,
+    VPNProfileBatchStatusItem,
     VPNProfileBatchStatusRequest,
     VPNProfileBatchStatusResponse,
 )
@@ -21,8 +23,8 @@ def inspect_batch(request: VPNProfileBatchRequest) -> VPNProfileBatchInspection:
     items = []
     for item in request.items:
         result = preflight_profile(item.profile)
-        items.append({"request_id": item.request_id, "config_valid": result.config_valid, "issues": result.issues})
-    return VPNProfileBatchInspection(items=items, config_valid=all(item["config_valid"] for item in items))
+        items.append(VPNProfileBatchInspectionItem(request_id=item.request_id, config_valid=result.config_valid, issues=result.issues))
+    return VPNProfileBatchInspection(items=items, config_valid=all(item.config_valid for item in items))
 
 
 async def save_batch(catalog: VPNProfileCatalog, request: VPNProfileBatchRequest) -> VPNProfileBatchSaveResponse:
@@ -45,4 +47,4 @@ async def batch_status(catalog: VPNProfileCatalog, request: VPNProfileBatchStatu
     ).where(VPNProfileRevision.org_id == catalog.org_id, VPNProfileRevision.request_id.in_(request.request_ids)))).mappings().all()
     observed = {row["request_id"]: VPNProfileSaveResponse(**row) for row in rows}
     # Null means unobserved in this snapshot, never cancelled/failed. No auto-resubmit.
-    return VPNProfileBatchStatusResponse(items=[{"request_id": item, "receipt": observed.get(item)} for item in request.request_ids])
+    return VPNProfileBatchStatusResponse(items=[VPNProfileBatchStatusItem(request_id=item, receipt=observed.get(item)) for item in request.request_ids])

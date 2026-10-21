@@ -46,6 +46,6 @@ async def app_vpn_devices(
             device_id=str(device.id), name=device.name, model=device.model, android_version=device.android_version,
             status=status.status if status and (online or status.status in ("connecting", "error")) else "offline", agent_version=status.agent_version if status else None,
             last_heartbeat=status.last_heartbeat if status else None, observation=observed,
-            freshness=observed.freshness(status.ws_session_id, online, now) if observed else "unknown",
+            freshness=observed.freshness(status.ws_session_id, online, now) if observed and status else "unknown",
         ))
     return AppVpnDevicePage(items=items, total=total or 0, page=page, page_size=page_size, as_of=now)

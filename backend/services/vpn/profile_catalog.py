@@ -19,6 +19,7 @@ from backend.schemas.vpn.catalog import (
     VPNProfilePage,
     VPNProfileResponse,
     VPNProfileRevisionPage,
+    VPNProfileRevisionResponse,
     VPNProfileSaveResponse,
 )
 from backend.services.vpn.profile_preflight import preflight_profile
@@ -95,6 +96,8 @@ class VPNProfileCatalog:
                                          description=request.description, current_revision=1, is_archived=False)
                     number = 1
                 else:
+                    if not isinstance(request, VPNProfileAppendRequest):
+                        raise HTTPException(422, "vpn_profile_expected_revision_required")
                     profile = await self._owned(profile_id, lock=True)
                     # A concurrent identical request may have committed while
                     # we waited for the profile lock.
@@ -122,6 +125,7 @@ class VPNProfileCatalog:
                     self.db.add(profile)
                     await self.db.flush()
                 else:
+                    assert isinstance(request, VPNProfileAppendRequest)  # Validated before acquiring the profile lock.
                     changed = await self.db.execute(update(VPNProfile).where(
                         VPNProfile.id == profile.id, VPNProfile.org_id == self.org_id,
                         VPNProfile.current_revision == request.expected_revision, VPNProfile.is_archived.is_(False),
@@ -186,7 +190,7 @@ class VPNProfileCatalog:
             *(getattr(VPNProfileRevision, name) for name in _META),
         ).where(VPNProfileRevision.org_id == self.org_id, VPNProfileRevision.profile_id == profile_id)
         rows, total = await self._page(statement, page, page_size, ("revision",))
-        return VPNProfileRevisionPage(items=[{k: v for k, v in row.items() if k != "_total"} for row in rows], total=total, page=page, page_size=page_size)
+        return VPNProfileRevisionPage(items=[VPNProfileRevisionResponse(**{k: v for k, v in row.items() if k != "_total"}) for row in rows], total=total, page=page, page_size=page_size)
 
     async def archive(self, profile_id: uuid.UUID, expected_revision: int) -> VPNProfileResponse:
         profile = await self._owned(profile_id, lock=True)

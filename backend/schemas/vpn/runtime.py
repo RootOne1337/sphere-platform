@@ -45,7 +45,7 @@ class AppVpnObservation(BaseModel):
     received_at: datetime
     ws_session_id: str = Field(min_length=1, max_length=100)
 
-    def freshness(self, current_session: str | None, online: bool, now: datetime | None = None) -> str:
+    def freshness(self, current_session: str | None, online: bool, now: datetime | None = None) -> Literal["unknown", "fresh", "stale"]:
         now = now or datetime.now(timezone.utc)
         if not online or current_session != self.ws_session_id:
             return "unknown"
