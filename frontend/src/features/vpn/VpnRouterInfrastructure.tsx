@@ -372,7 +372,7 @@ export function VpnRouterInfrastructure() {
                   const response = await assignVpn.mutateAsync({ device_id: provisionDeviceId });
                   if (scope !== vpnActorScope()) return;
                   const data = response.data;
-                  if (!data || data.device_id !== provisionDeviceId || typeof data.peer_id !== 'string' || !data.peer_id || typeof data.assigned_ip !== 'string' || !data.assigned_ip || typeof data.config !== 'string' || typeof data.qr_code !== 'string') throw new Error('Invalid assignment receipt');
+                  if (!data || data.device_id !== provisionDeviceId || typeof data.peer_id !== 'string' || !data.peer_id || typeof data.assigned_ip !== 'string' || !data.assigned_ip) throw new Error('Invalid assignment receipt');
                   setProvisionDone(true);
                   setProvisionNotice(`Router assignment: ${data.peer_id}, ${data.assigned_ip}. Применение конфигурации APK и handshake ещё не подтверждены.`);
                 } catch (error) {

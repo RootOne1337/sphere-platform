@@ -4,7 +4,7 @@
  * useVpnRotate, useVpnKillSwitch.
  */
 import { waitFor } from '@testing-library/react';
-import { renderQueryHook } from '../helpers';
+import { createTestQueryClient, renderQueryHook } from '../helpers';
 import {
   useVpnPeers,
   usePoolStats,
@@ -132,7 +132,7 @@ describe('useAssignVpn', () => {
   beforeEach(() => jest.clearAllMocks());
 
   it('назначает VPN устройству с POST /vpn/assign', async () => {
-    mockApi.post.mockResolvedValueOnce({ data: MOCK_PEERS[0] });
+    mockApi.post.mockResolvedValueOnce({ data: { peer_id: 'vpn-001', device_id: 'dev-001', assigned_ip: '10.8.0.2', config: 'private-config-fixture', qr_code: 'private-qr-fixture' } });
 
     const { result } = renderQueryHook(() => useAssignVpn());
 
@@ -146,7 +146,7 @@ describe('useAssignVpn', () => {
   });
 
   it('назначает VPN без split_tunnel (опциональный параметр)', async () => {
-    mockApi.post.mockResolvedValueOnce({ data: MOCK_PEERS[0] });
+    mockApi.post.mockResolvedValueOnce({ data: { peer_id: 'vpn-001', device_id: 'dev-001', assigned_ip: '10.8.0.2' } });
 
     const { result } = renderQueryHook(() => useAssignVpn());
 
@@ -154,6 +154,39 @@ describe('useAssignVpn', () => {
 
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
     expect(mockApi.post).toHaveBeenCalledWith('/vpn/assign', { device_id: 'dev-001' });
+  });
+
+  it('keeps only assignment metadata in mutation data and cache', async () => {
+    const queryClient = createTestQueryClient();
+    mockApi.post.mockResolvedValueOnce({ data: { peer_id: 'vpn-001', device_id: 'dev-001', assigned_ip: '10.8.0.2', config: 'private-config-fixture', qr_code: 'private-qr-fixture' }, headers: { secret: 'private-header-fixture' } });
+    const { result } = renderQueryHook(() => useAssignVpn(), { queryClient });
+    result.current.mutate({ device_id: 'dev-001' });
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+    const expected = { data: { peer_id: 'vpn-001', device_id: 'dev-001', assigned_ip: '10.8.0.2' } };
+    expect(result.current.data).toEqual(expected);
+    expect(queryClient.getMutationCache().getAll()[0].state.data).toEqual(expected);
+  });
+
+  it('rejects another device receipt without retrying physical assignment', async () => {
+    mockApi.post.mockResolvedValueOnce({ data: { peer_id: 'vpn-001', device_id: 'other-device', assigned_ip: '10.8.0.2', config: 'private-config-fixture' } });
+    const { result } = renderQueryHook(() => useAssignVpn());
+    result.current.mutate({ device_id: 'dev-001' });
+    await waitFor(() => expect(result.current.isError).toBe(true));
+    expect(result.current.data).toBeUndefined();
+    expect(mockApi.post).toHaveBeenCalledTimes(1);
+    expect(result.current.error?.message).toBe('VPN assignment result not confirmed');
+  });
+
+  it('retains rejection status without caching the server body or Axios request', async () => {
+    const queryClient = createTestQueryClient();
+    mockApi.post.mockRejectedValueOnce({ response: { status: 403, data: { detail: 'private-response-fixture' } }, config: { headers: { authorization: 'private-token-fixture' } } });
+    const { result } = renderQueryHook(() => useAssignVpn(), { queryClient });
+    result.current.mutate({ device_id: 'dev-001' });
+    await waitFor(() => expect(result.current.isError).toBe(true));
+    const error = queryClient.getMutationCache().getAll()[0].state.error;
+    expect(error).toMatchObject({ message: 'VPN assignment result not confirmed', response: { status: 403 } });
+    expect(JSON.stringify(error)).not.toContain('private-');
+    expect(mockApi.post).toHaveBeenCalledTimes(1);
   });
 });
 

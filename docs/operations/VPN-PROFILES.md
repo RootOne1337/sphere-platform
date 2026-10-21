@@ -178,6 +178,14 @@ Android consent, private IPC и sealed device commands описаны в
 Скриншоты исходных компонентов на двух темах и ширинах — в
 [визуальном отчёте](../audits/2026-10-21/VPN-WORKSPACE-REDESIGN.md).
 
+Legacy `/vpn/assign` всё ещё может возвращать plaintext config/QR для прежних
+клиентов. Веб-хук назначения теперь проверяет device binding и возвращает только
+`device_id`, `peer_id`, `assigned_ip`: config, QR, headers и Axios request не попадают
+в React Query mutation data. Ошибка сохраняет только HTTP status для консервативной
+обработки исхода; автоматического повтора назначения нет. Это не меняет старый HTTP
+контракт и не делает его end-to-end encrypted. Три отдельные проверки подтверждают
+ограниченный состав кэша, отказ при другом device ID и очистку error body.
+
 Внутренний `profile_delivery.py` подготавливает encrypted envelope под одноразовый
 Android recipient: RSA-OAEP SHA-256/MGF1-SHA1 и AES-256-GCM с operation UUID в AAD.
 Tenant проверяется до decrypt; ограничены формат/размер RSA-ключа, срок получателя,

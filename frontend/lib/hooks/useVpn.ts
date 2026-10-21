@@ -92,8 +92,28 @@ export function useVpnHealth() {
 export function useAssignVpn(options: { invalidateOnSuccess?: boolean } = {}) {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (params: { device_id: string; split_tunnel?: boolean }) =>
-      api.post('/vpn/assign', params),
+    mutationFn: async (params: { device_id: string; split_tunnel?: boolean }) => {
+      try {
+        const { data } = await api.post('/vpn/assign', params);
+        if (!data || data.device_id !== params.device_id
+          || typeof data.peer_id !== 'string' || !data.peer_id || data.peer_id.length > 128
+          || typeof data.assigned_ip !== 'string' || !data.assigned_ip || data.assigned_ip.length > 64) {
+          throw new Error('Invalid assignment receipt');
+        }
+        // The legacy response also carries a private config and QR code. Neither
+        // belongs in React Query's mutation cache or this metadata-only UI.
+        return { data: { device_id: data.device_id as string, peer_id: data.peer_id as string, assigned_ip: data.assigned_ip as string } };
+      } catch (error) {
+        // Preserve only the HTTP status used for conservative outcome handling;
+        // an Axios error may retain the entire response body and request object.
+        const status = (error as { response?: { status?: unknown } })?.response?.status;
+        const failure = new Error('VPN assignment result not confirmed') as Error & { response?: { status: number } };
+        if (typeof status === 'number' && Number.isInteger(status) && status >= 100 && status <= 599) failure.response = { status };
+        throw failure;
+      }
+    },
+    retry: false,
+    gcTime: 0,
     onSuccess: () => {
       if (options.invalidateOnSuccess === false) return;
       qc.invalidateQueries({ queryKey: ['vpn'] });
