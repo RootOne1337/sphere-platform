@@ -75,8 +75,34 @@ class IncomingCommandTest {
     }
 
     @Test
-    fun `число CommandType — 21 тип`() {
-        assertEquals(21, CommandType.entries.size)
+    fun `команды прежних APK сохраняют wire имена`() {
+        val legacy = setOf(
+            "WAKE_SCREEN", "LOCK_SCREEN", "REBOOT", "SHELL", "TAP", "SWIPE",
+            "TYPE_TEXT", "KEY_EVENT", "SCREENSHOT", "EXECUTE_DAG", "PAUSE_DAG",
+            "RESUME_DAG", "VPN_CONNECT", "VPN_DISCONNECT", "VPN_RECONNECT",
+            "OTA_UPDATE", "PING", "UPDATE_CONFIG", "REQUEST_STATUS", "REQUEST_LOGS",
+            "UPLOAD_LOGCAT",
+        )
+        val names = CommandType.entries.map { it.name }.toSet()
+        assertTrue("An existing server command was removed or renamed", names.containsAll(legacy))
+    }
+
+    @Test
+    fun `app VPN команды совместимы с JSON протоколом сервера`() {
+        val commands = mapOf(
+            "VPN_APP_OPERATION" to CommandType.VPN_APP_OPERATION,
+            "VPN_APP_STATUS" to CommandType.VPN_APP_STATUS,
+            "VPN_APP_CONSENT" to CommandType.VPN_APP_CONSENT,
+            "VPN_APP_RECIPIENT" to CommandType.VPN_APP_RECIPIENT,
+        )
+        for ((wireName, expected) in commands) {
+            val decoded = json.decodeFromString<IncomingCommand>(
+                """{"command_id":"vpn-operation","type":"$wireName","signed_at":0}""",
+            )
+            assertEquals(expected, decoded.type)
+            val encoded = json.parseToJsonElement(json.encodeToString(decoded)) as JsonObject
+            assertEquals(kotlinx.serialization.json.JsonPrimitive(wireName), encoded["type"])
+        }
     }
 
     @Test

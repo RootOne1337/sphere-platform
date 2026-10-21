@@ -14,6 +14,14 @@ plugins {
     alias(libs.plugins.kotlin.serialization)
 }
 
+// MockK/Robolectric instrumentation retains class-scoped state in long suites.
+// Recycle a bounded, serial worker rather than growing an unlimited test heap.
+tasks.withType<org.gradle.api.tasks.testing.Test>().configureEach {
+    maxParallelForks = 1
+    maxHeapSize = "768m"
+    forkEvery = 40
+}
+
 // ── Version management ────────────────────────────────────────────────────
 val versionProps = Properties()
 val versionFile = rootProject.file("version.properties")
