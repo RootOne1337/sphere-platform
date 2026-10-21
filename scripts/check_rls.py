@@ -14,6 +14,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 MIGRATION = ROOT / "alembic/versions/20260908_tenant_policies.py"
+MIGRATIONS = (MIGRATION, ROOT / "alembic/versions/20261021_vpn_profiles.py")
 
 
 def model_tables(directory: Path) -> set[str]:
@@ -60,11 +61,11 @@ def migration_tables(path: Path) -> set[str]:
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--models", type=Path, default=ROOT / "backend/models")
-    parser.add_argument("--migration", type=Path, default=MIGRATION)
+    parser.add_argument("--migration", type=Path, action="append", help="Policy migration; repeat for multiple inventories")
     args = parser.parse_args()
     try:
         required = model_tables(args.models)
-        covered = migration_tables(args.migration)
+        covered = set().union(*(migration_tables(path) for path in (args.migration or MIGRATIONS)))
     except (OSError, SyntaxError, ValueError) as exc:
         print(f"RLS inventory check failed: {exc}")
         return 1

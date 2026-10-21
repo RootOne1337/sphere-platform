@@ -63,6 +63,9 @@ class Settings(BaseSettings):
     WG_SERVER_ENDPOINT: str = "vpn.example.com:51820"    # WG endpoint для клиентов
     WG_PSK_ENABLED: bool = True                           # Pre-Shared Key
     VPN_KEY_ENCRYPTION_KEY: str = ""                      # Fernet key (Fernet.generate_key())
+    # Dedicated profile key ring: first encrypts, all decrypt. No plaintext or
+    # randomly generated fallback. Previous keys must remain until re-encryption.
+    VPN_PROFILE_ENCRYPTION_KEYS: SecretStr = SecretStr("")
     VPN_POOL_SUBNET: str = "10.100.0.0/16"                # Подсеть для пула IP
 
     # Cookie

@@ -4,13 +4,14 @@ import sys
 
 import pytest
 
-from scripts.check_rls import MIGRATION, ROOT, main, migration_tables, model_tables
+from scripts.check_rls import MIGRATIONS, ROOT, main, migration_tables, model_tables
 
 
 def test_migration_covers_complete_mapped_metadata():
     from backend.database.engine import Base
 
-    assert migration_tables(MIGRATION) == model_tables(ROOT / "backend/models") == set(Base.metadata.tables)
+    covered = set().union(*(migration_tables(path) for path in MIGRATIONS))
+    assert covered == model_tables(ROOT / "backend/models") == set(Base.metadata.tables)
 
 
 def test_new_association_without_org_id_fails_ci_inventory(tmp_path, monkeypatch, capsys):

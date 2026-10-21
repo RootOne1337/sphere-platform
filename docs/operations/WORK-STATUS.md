@@ -2,6 +2,17 @@
 
 **Проверенная установка:** UI `5cbb4bba` / API `15ce2b62`.
 
+**21 октября — VPN: зашифрованный каталог и нативный кандидат.** В исходниках добавлены
+импорт, неизменяемые версии, поиск/архив, отдельный key ring и tenant RLS. Пройдены
+178 backend/RLS/native-builder tests, 9 настоящих PostgreSQL concurrency/RLS tests
+и 46 VPN frontend tests; TypeScript/Ruff прошли. UI визуально проверен на синтетической
+странице 1440×900 и 390×844, у импорта закреплены заголовок/кнопки. Закреплённый AWG
+собран для трёх ABI, x86_64 повторился по SHA; без Android suspend-clock patch это
+только диагностические `.so`, не готовый SDK. Рабочая БД, UI/API/APK, VPN и игры
+не менялись. Нужны release AAR/provider, UID guard, журнал применения и live fault pilot.
+[Эксплуатация каталога](VPN-PROFILES.md),
+[проверки и ограничения](../audits/2026-10-21/VPN-CATALOG-NATIVE-CANDIDATE.json).
+
 **21 октября — VPN: изоляция управления и первый исходный этап.** Добавлены проверка
 профиля WG/AWG1–3.1, явная политика выбранных приложений, capability API и окно
 проверки на `/vpn`. Root-подключение/reconnect и глобальный kill switch в новой
@@ -514,7 +525,7 @@ Baseline [5 октября](../audits/2026-10-05/ENTERPRISE-PRODUCT-BACKLOG.json
 | EP-042 | P2 | XL | OPEN / OPEN | Generic resources вместо game domain assumptions |
 | EP-043 | P2 | XL | OPEN / OPEN | Разделить account session и universal run |
 | EP-044 | P1 | L | OPEN / PARTIAL | VPN assigned/applied/handshake/egress outcomes |
-| EP-045 | P2 | XL | OPEN / DEFERRED_DESIGN | Versioned VPN provider adapters и rotation |
+| EP-045 | P2 | XL | OPEN / PARTIAL | Versioned VPN provider adapters и rotation |
 | EP-046 | P2 | XL | OPEN / DEFERRED_DESIGN | AI-ready schemas/runbooks и scoped artifacts |
 | EP-047 | P1 | XL | OPEN / PARTIAL | Общая matrix500/1000 иresource leak gates |
 | EP-048 | P1 | L | OPEN / PARTIAL | Тесты всех меню/форм/ролей иvisual states |
@@ -670,11 +681,15 @@ resource soak/retention и RAM acceptance.
 
 **OPEN** · EP-045, EP-046.
 
-Требования и границы будущего этапа записаны; интеграция не объявлена установленной.
+Проверены исходные preflight/app policy, зашифрованный каталог/revisions/RLS и UI;
+три native ABI собраны диагностически. Интеграция не объявлена установленной.
 
-Остаётся: Нужны отдельные contracts/versioning/secrets/ownership/deadlines/rollback и подтверждённые результаты, прежде чем давать управление.
+Остаётся: Выпускаемый AAR/Android provider, UID/lockdown guard, rollout, durable
+apply/rotation journal, внешние egress adapters и live fault acceptance; AI отдельно.
 
-Доказательства: [AI-READINESS](../architecture/AI-READINESS.md), [NitroGen/LAN — аудит 16 октября](../audits/2026-10-16/NITROGEN-READINESS.md), [CHAT-CODE-RECONCILIATION](../audits/2026-10-09/CHAT-CODE-RECONCILIATION.md).
+Доказательства: [VPN-каталог и native candidate](../audits/2026-10-21/VPN-CATALOG-NATIVE-CANDIDATE.json),
+[эксплуатация](VPN-PROFILES.md), [AI-READINESS](../architecture/AI-READINESS.md),
+[NitroGen/LAN — аудит 16 октября](../audits/2026-10-16/NITROGEN-READINESS.md).
 
 ### CHAT-15 · Прямой browser ↔ Android transport
 

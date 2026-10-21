@@ -1,0 +1,191 @@
+{
+  "schemaVersion": 1,
+  "recordedAtUtc": "2026-10-21T09:58:06.835528+00:00",
+  "state": "SOURCE_CATALOG_TESTED_NATIVE_DIAGNOSTIC_ONLY_NOT_DEPLOYED",
+  "parentRevision": "95b9d5ba4d843eadf8a3a3013961012071d9ae7e",
+  "scope": "Encrypted profile catalog and diagnostic native builds. No live VPN/route/device/network deployment or universal production acceptance.",
+  "implementation": {
+    "namedEncryptedProfileCatalog": true,
+    "immutableRevisions": true,
+    "archiveWithoutNetworkEffects": true,
+    "tenantRlsMigration": "20261021_vpn_profiles",
+    "dedicatedKeyRing": "VPN_PROFILE_ENCRYPTION_KEYS",
+    "encryption": "authenticated Fernet, metadata-bound identity; not KMS envelope encryption",
+    "publicMetadataQueriesSelectCiphertext": false,
+    "httpPlaintextExportAdded": false,
+    "atomicAuditAndRevision": true,
+    "requestUuidIdempotency": "org-scoped exact intent",
+    "unknownStatus404IsCancellation": false,
+    "durableUiPendingRequestAcrossReload": false,
+    "physicalVpnOperationJournalImplemented": false,
+    "androidProviderIntegrated": false,
+    "vpnConnectCapabilityEnabled": false,
+    "liveVpnIsolationAccepted": false
+  },
+  "validation": {
+    "backendVpnRlsNativeBuilder": {
+      "tests": 178,
+      "errors": 0,
+      "failures": 0,
+      "skipped": 0
+    },
+    "postgresCatalogIntegration": {
+      "tests": 9,
+      "errors": 0,
+      "failures": 0,
+      "skipped": 0
+    },
+    "postgresCoverage": [
+      "concurrent same-request create",
+      "same/different request append race",
+      "archive/append race",
+      "nonowner tenant isolation",
+      "append-only even with extra permissive policy",
+      "ciphertext-free metadata SQL",
+      "wrong tenant before missing crypto key",
+      "literal search and empty-page total"
+    ],
+    "frontendVpn": {
+      "suites": 5,
+      "tests": 46,
+      "failures": 0
+    },
+    "finalCatalogRetestAfterDateAndLayoutPolish": {
+      "tests": 7,
+      "failures": 0
+    },
+    "typescriptNoEmit": "passed",
+    "ruffChangedPythonFiles": "passed",
+    "apiExportCheck": "passed",
+    "staticRlsInventory": {
+      "tables": 30,
+      "result": "passed"
+    },
+    "migrationAppliedTo": "owned disposable local PostgreSQL only; entire Alembic chain upgraded",
+    "isolatedContainersCreated": 2,
+    "productionDatabaseMigrated": false
+  },
+  "nativeCandidate": {
+    "manifest": {
+      "schema_version": 1,
+      "upstream_commit": "5c16489e2cd9ed3a0a7a27c7445bba5238132f86",
+      "release": "v3.1.20260814",
+      "go": "go version go1.25.4 windows/amd64",
+      "ndk": "26.3.11579264",
+      "diagnostic_only": true,
+      "runtime_sleep_clock_patch_applied": false,
+      "native_library_loaded_on_device": false,
+      "apk_built_or_installed": false,
+      "artifacts": [
+        {
+          "abi": "x86_64",
+          "sha256": "b9a8eb2efa0ec93bd895c10915e52436a29351dfa690ed1f98ceaab16d7e6677",
+          "size": 7458352,
+          "jni_exports_verified": true,
+          "load_alignment_16k_verified": true
+        },
+        {
+          "abi": "arm64-v8a",
+          "sha256": "fa430bab46dcd01abd0e980d39a6b9adc6376684436d6e59f2e2c5791ce6ed4a",
+          "size": 7217216,
+          "jni_exports_verified": true,
+          "load_alignment_16k_verified": true
+        },
+        {
+          "abi": "armeabi-v7a",
+          "sha256": "906fcf4d7c28cd67ce984d48c82f1a37add1a945cafef6afed33656fe3914a3c",
+          "size": 6889992,
+          "jni_exports_verified": true,
+          "load_alignment_16k_verified": true
+        }
+      ]
+    },
+    "x86Repeatability": "Two separate output trees on this Windows host/toolchain produced the same SHA256. Other ABI repeatability and cross-host reproducibility not tested.",
+    "runtimeBlockers": [
+      "upstream Android suspend-clock Go patch not applied",
+      "no AAR/Java SDK integration",
+      "no device library load or handshake",
+      "no selected UID/DNS/IPv6/crash isolation acceptance"
+    ],
+    "license": "Pinned upstream COPYING retained with local downloaded sources; no native binary distributed in this commit."
+  },
+  "visual": {
+    "scope": "Actual source components/global CSS with synthetic axios data, standalone loopback fixture; not installed app/backend acceptance.",
+    "viewports": [
+      {
+        "width": 1440,
+        "height": 900
+      },
+      {
+        "width": 390,
+        "height": 844
+      }
+    ],
+    "importMobileMeasurement": {
+      "horizontalOverflowPx": 0,
+      "footerBottomPx": 843,
+      "viewportHeightPx": 844,
+      "bodyScrolls": true
+    },
+    "artifacts": [
+      {
+        "localPath": "output/playwright/vpn-catalog-20261021/catalog-desktop-final.png",
+        "sha256": "2ad6dc9a1a0ada120eef30cbb2260e7e5bfe4f89319a13c3aa91e8dded151362"
+      },
+      {
+        "localPath": "output/playwright/vpn-catalog-20261021/import-desktop-final.png",
+        "sha256": "49d3fc1a9c46bf53ec0465c2c692ad54b9f2a824e488da273196dfb0f67be515"
+      },
+      {
+        "localPath": "output/playwright/vpn-catalog-20261021/catalog-mobile-final.png",
+        "sha256": "c5dd31f6639e544e4ce133688307bcdba0552dde3c1d345e4154d9c3f50034c8"
+      },
+      {
+        "localPath": "output/playwright/vpn-catalog-20261021/import-mobile-final.png",
+        "sha256": "fdd73861bacadf2e3fef4977d2a8afa604d20cc603c2443332d6503ae54423d9"
+      },
+      {
+        "localPath": "output/playwright/vpn-catalog-20261021/history-mobile-final.png",
+        "sha256": "a24ae3b3b56d0463a7e5e73eeaf59a5dc2beceec1003fa36d584a60b101800b2"
+      }
+    ]
+  },
+  "noLiveChanges": {
+    "uiApiApkInstalled": false,
+    "deviceCommandsSent": 0,
+    "gamesRestarted": 0,
+    "hostRoutingFirewallChanged": false,
+    "vpnConfiguredOrStarted": false,
+    "externalServicesPurchased": false
+  },
+  "guides": [
+    "docs/design/VPN-EGRESS-ARCHITECTURE.md",
+    "docs/operations/VPN-PROFILES.md"
+  ],
+  "sourceSha256NormalizedLf": {
+    ".env.example": "ed790c3f2a0abea9a88a6dabe8f94e94e56ba35f4a06429d65ff9b94cfd9d218",
+    "alembic/versions/20261021_vpn_profiles.py": "40f8696745da07733011a0e732ef229506b9d3148a18272a1abe5a2851d656d7",
+    "android/awg-native.lock.json": "cc559b8ed677439d545bcf15cf14a75ad5d495f62af5db2e0570e40d9be72854",
+    "backend/api/v1/vpn/profile_input.py": "b724a148fcb376edc8e7fc6bbe8f30e575989d3408d3eac6fefd3c75e3a994fe",
+    "backend/api/v1/vpn/profile_router.py": "8ab15aa934bb52d1237ffe72670f64886781352da1e3fd5b0fa73b9be038c77d",
+    "backend/api/v1/vpn/router.py": "edc6c684db095e338c969d6fbfda139a5a9074724bc503ca545aec91a471fa6a",
+    "backend/core/config.py": "dee8339daffec0ca443b39a60352339d90399eeda92ec9a103e65ecfdce356f7",
+    "backend/models/__init__.py": "48039bdd0e11a1c8c35048b616cf7445f6d4b9fc2e9b694d78d24b6743c37e2b",
+    "backend/models/vpn_profile.py": "f0d4548f368000d47a4fb181e85df0815ba1469757ae2551c09d6d724b765af6",
+    "backend/schemas/vpn/catalog.py": "f290cc649162311263dc37a3bf40f308103c02c22e83762b9d59c7d550a09ebe",
+    "backend/services/vpn/profile_catalog.py": "369abb3ad450ff353fe23838ab4cd9bedbf70826c961ee16fd0a3eb3c157816a",
+    "backend/services/vpn/profile_secrets.py": "292d473a415cecff69f8419f4bbd6bde9b14b0d73c6962353d67edb3cab97feb",
+    "frontend/__tests__/vpn/profile-catalog.test.tsx": "ec1e083c58a71f371d6a3c5ce3af32df2e64db46e49f7df2f31587bbd90feda2",
+    "frontend/__tests__/vpn/provision-device-picker.test.tsx": "ccba0f938dddba9f6e5c3833aa2c42dedaaad25aa6c229bd4969a8837909c62e",
+    "frontend/app/(dashboard)/vpn/page.tsx": "e1875f2581fef437f25bb162906f0cf89178aa4b9c8d7dc24a6b05e8bd6bb1d2",
+    "frontend/src/features/vpn/VpnProfileCatalog.tsx": "dbb69c6ff2ff67256e56b6a85235b46bd78322aec84ce0c266114c1023c1ff93",
+    "frontend/src/features/vpn/VpnProfileInspector.tsx": "b7a7f5597dd643ed7b461b7f7c966511e9ff2be18ddab74744cbfaf763a4b8f0",
+    "frontend/src/features/vpn/profileTypes.ts": "8950c96d4fa232f5d51f4b750f11e68738c1f4abe8c644783f5bb9934e64a1cb",
+    "scripts/build_awg_native.py": "a9c4d2cc7b38d544a00a0ff25d0e774cd2761e19f493012eb6418cd5e9221554",
+    "scripts/check_rls.py": "ed570f210591e8e272b873fa126bde6f7c3eee1bab85ad7ccadc7f73c6d3ee59",
+    "tests/production/test_vpn_profile_catalog.py": "b96728741bdabce8439250bebcd4dc5509fa21ed13b99b08271962c1194f2ac7",
+    "tests/test_awg_native_builder.py": "3ff1193b9f6d5a084fcfc690113a6c454d949c27f505b3ac0c30b29d80bb284f",
+    "tests/test_rls_coverage.py": "f51bc864b68de03fa9fe23faca5b22c17f2e3fb92593a62eaebffc977aaf8110",
+    "tests/vpn/test_profile_catalog.py": "bcd7c0ecd29f2ec5aa2cc36247c37936fa02a0f9845cb4dc7b2f61f952f6aba8"
+  }
+}

@@ -14,10 +14,11 @@ from typing import Literal
 
 from cryptography.fernet import Fernet
 from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
-from pydantic import ValidationError
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from backend.api.v1.vpn.profile_input import profile_request_schema, read_profile_request
+from backend.api.v1.vpn.profile_router import router as profile_router
 from backend.core.config import settings
 from backend.core.dependencies import require_permission
 from backend.database.engine import get_db, get_db_session
@@ -60,6 +61,7 @@ from backend.services.vpn.pool_service import VPNPoolService
 from backend.services.vpn.profile_preflight import preflight_profile
 
 router = APIRouter(prefix="/vpn", tags=["vpn"])
+router.include_router(profile_router)
 logger = logging.getLogger(__name__)
 
 # Register background health loop (SPLIT-3) — side-effect on import
@@ -105,10 +107,6 @@ async def vpn_providers(current_user=require_permission("vpn:read")):
     return provider_capabilities()
 
 
-_profile_request_schema = VPNProfilePreflightRequest.model_json_schema()
-_profile_request_schema["properties"]["traffic_policy"] = _profile_request_schema.pop("$defs")["AppTrafficPolicy"]
-
-
 @router.post(
     "/profile-preflight",
     response_model=VPNProfilePreflightResponse,
@@ -119,24 +117,10 @@ _profile_request_schema["properties"]["traffic_policy"] = _profile_request_schem
         413: {"description": "Request body exceeds 96 KiB"},
         422: {"description": "Invalid request; imported secrets are never echoed"},
     },
-    openapi_extra={"requestBody": {"required": True, "content": {"application/json": {
-        "schema": _profile_request_schema,
-    }}}},
+    openapi_extra={"requestBody": profile_request_schema(VPNProfilePreflightRequest)},
 )
 async def vpn_profile_preflight(request: Request, current_user=require_permission("vpn:write")):
-    # Read a bounded body ourselves: default FastAPI validation errors include
-    # input values, which would echo imported private keys on malformed input.
-    body = bytearray()
-    async for chunk in request.stream():
-        if len(body) + len(chunk) > 98304:
-            raise HTTPException(status_code=413, detail="vpn_profile_body_too_large")
-        body.extend(chunk)
-    try:
-        profile = VPNProfilePreflightRequest.model_validate_json(body)
-    except ValidationError:
-        raise HTTPException(status_code=422, detail="invalid_vpn_profile_request") from None
-    finally:
-        body.clear()
+    profile = await read_profile_request(request, VPNProfilePreflightRequest)
     return preflight_profile(profile)
 
 

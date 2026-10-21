@@ -9789,6 +9789,753 @@
         }
       }
     },
+    "/api/v1/vpn/profiles": {
+      "get": {
+        "tags": [
+          "vpn"
+        ],
+        "summary": "List Profiles",
+        "operationId": "list_profiles_api_v1_vpn_profiles_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 10000,
+              "minimum": 1,
+              "default": 1,
+              "title": "Page"
+            }
+          },
+          {
+            "name": "page_size",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1,
+              "default": 25,
+              "title": "Page Size"
+            }
+          },
+          {
+            "name": "include_archived",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": false,
+              "title": "Include Archived"
+            }
+          },
+          {
+            "name": "search",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "maxLength": 120,
+              "default": "",
+              "title": "Search"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VPNProfilePage"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "vpn"
+        ],
+        "summary": "Save an encrypted VPN profile without applying it",
+        "operationId": "import_profile_api_v1_vpn_profiles_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VPNProfileSaveResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "403": {
+            "description": "VPN permission required"
+          },
+          "404": {
+            "description": "Owned profile/import not found"
+          },
+          "409": {
+            "description": "Revision, archive or request ID conflict"
+          },
+          "413": {
+            "description": "Request exceeds 96 KiB"
+          },
+          "422": {
+            "description": "Invalid request/config, without secret echo"
+          },
+          "503": {
+            "description": "Profile encryption unavailable"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "additionalProperties": false,
+                "properties": {
+                  "request_id": {
+                    "format": "uuid",
+                    "title": "Request Id",
+                    "type": "string"
+                  },
+                  "name": {
+                    "maxLength": 120,
+                    "minLength": 1,
+                    "title": "Name",
+                    "type": "string"
+                  },
+                  "description": {
+                    "default": "",
+                    "maxLength": 1000,
+                    "title": "Description",
+                    "type": "string"
+                  },
+                  "profile": {
+                    "additionalProperties": false,
+                    "properties": {
+                      "schema_version": {
+                        "const": 1,
+                        "default": 1,
+                        "enum": [
+                          1
+                        ],
+                        "title": "Schema Version",
+                        "type": "integer"
+                      },
+                      "provider_id": {
+                        "default": "android-amneziawg",
+                        "enum": [
+                          "android-amneziawg",
+                          "legacy-root"
+                        ],
+                        "title": "Provider Id",
+                        "type": "string"
+                      },
+                      "protocol": {
+                        "enum": [
+                          "wireguard",
+                          "amneziawg"
+                        ],
+                        "title": "Protocol",
+                        "type": "string"
+                      },
+                      "protocol_version": {
+                        "enum": [
+                          "1",
+                          "1.5",
+                          "2",
+                          "3.1"
+                        ],
+                        "title": "Protocol Version",
+                        "type": "string"
+                      },
+                      "config_text": {
+                        "format": "password",
+                        "maxLength": 65536,
+                        "minLength": 1,
+                        "title": "Config Text",
+                        "type": "string",
+                        "writeOnly": true
+                      },
+                      "traffic_policy": {
+                        "additionalProperties": false,
+                        "properties": {
+                          "mode": {
+                            "const": "selected_apps",
+                            "default": "selected_apps",
+                            "enum": [
+                              "selected_apps"
+                            ],
+                            "title": "Mode",
+                            "type": "string"
+                          },
+                          "included_packages": {
+                            "items": {
+                              "type": "string"
+                            },
+                            "maxItems": 64,
+                            "minItems": 1,
+                            "title": "Included Packages",
+                            "type": "array"
+                          },
+                          "control_plane": {
+                            "const": "bypass",
+                            "default": "bypass",
+                            "enum": [
+                              "bypass"
+                            ],
+                            "title": "Control Plane",
+                            "type": "string"
+                          },
+                          "kill_switch": {
+                            "const": "selected_apps",
+                            "default": "selected_apps",
+                            "enum": [
+                              "selected_apps"
+                            ],
+                            "title": "Kill Switch",
+                            "type": "string"
+                          },
+                          "ipv6": {
+                            "default": "block",
+                            "enum": [
+                              "block",
+                              "tunnel"
+                            ],
+                            "title": "Ipv6",
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "included_packages"
+                        ],
+                        "title": "AppTrafficPolicy",
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "protocol",
+                      "protocol_version",
+                      "config_text",
+                      "traffic_policy"
+                    ],
+                    "title": "VPNProfilePreflightRequest",
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "request_id",
+                  "name",
+                  "profile"
+                ],
+                "title": "VPNProfileImportRequest",
+                "type": "object"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/vpn/profiles/imports/{request_id}": {
+      "get": {
+        "tags": [
+          "vpn"
+        ],
+        "summary": "Import Status",
+        "operationId": "import_status_api_v1_vpn_profiles_imports__request_id__get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "request_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Request Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VPNProfileSaveResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Owned profile/import not found"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/vpn/profiles/{profile_id}": {
+      "get": {
+        "tags": [
+          "vpn"
+        ],
+        "summary": "Get Profile",
+        "operationId": "get_profile_api_v1_vpn_profiles__profile_id__get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "profile_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Profile Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VPNProfileResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Owned profile/import not found"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/vpn/profiles/{profile_id}/revisions": {
+      "get": {
+        "tags": [
+          "vpn"
+        ],
+        "summary": "Profile Revisions",
+        "operationId": "profile_revisions_api_v1_vpn_profiles__profile_id__revisions_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "profile_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Profile Id"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 10000,
+              "minimum": 1,
+              "default": 1,
+              "title": "Page"
+            }
+          },
+          {
+            "name": "page_size",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1,
+              "default": 25,
+              "title": "Page Size"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VPNProfileRevisionPage"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Owned profile/import not found"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "vpn"
+        ],
+        "summary": "Append Revision",
+        "operationId": "append_revision_api_v1_vpn_profiles__profile_id__revisions_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "profile_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Profile Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VPNProfileSaveResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "403": {
+            "description": "VPN permission required"
+          },
+          "404": {
+            "description": "Owned profile/import not found"
+          },
+          "409": {
+            "description": "Revision, archive or request ID conflict"
+          },
+          "413": {
+            "description": "Request exceeds 96 KiB"
+          },
+          "422": {
+            "description": "Invalid request/config, without secret echo"
+          },
+          "503": {
+            "description": "Profile encryption unavailable"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "additionalProperties": false,
+                "properties": {
+                  "request_id": {
+                    "format": "uuid",
+                    "title": "Request Id",
+                    "type": "string"
+                  },
+                  "name": {
+                    "maxLength": 120,
+                    "minLength": 1,
+                    "title": "Name",
+                    "type": "string"
+                  },
+                  "description": {
+                    "default": "",
+                    "maxLength": 1000,
+                    "title": "Description",
+                    "type": "string"
+                  },
+                  "profile": {
+                    "additionalProperties": false,
+                    "properties": {
+                      "schema_version": {
+                        "const": 1,
+                        "default": 1,
+                        "enum": [
+                          1
+                        ],
+                        "title": "Schema Version",
+                        "type": "integer"
+                      },
+                      "provider_id": {
+                        "default": "android-amneziawg",
+                        "enum": [
+                          "android-amneziawg",
+                          "legacy-root"
+                        ],
+                        "title": "Provider Id",
+                        "type": "string"
+                      },
+                      "protocol": {
+                        "enum": [
+                          "wireguard",
+                          "amneziawg"
+                        ],
+                        "title": "Protocol",
+                        "type": "string"
+                      },
+                      "protocol_version": {
+                        "enum": [
+                          "1",
+                          "1.5",
+                          "2",
+                          "3.1"
+                        ],
+                        "title": "Protocol Version",
+                        "type": "string"
+                      },
+                      "config_text": {
+                        "format": "password",
+                        "maxLength": 65536,
+                        "minLength": 1,
+                        "title": "Config Text",
+                        "type": "string",
+                        "writeOnly": true
+                      },
+                      "traffic_policy": {
+                        "additionalProperties": false,
+                        "properties": {
+                          "mode": {
+                            "const": "selected_apps",
+                            "default": "selected_apps",
+                            "enum": [
+                              "selected_apps"
+                            ],
+                            "title": "Mode",
+                            "type": "string"
+                          },
+                          "included_packages": {
+                            "items": {
+                              "type": "string"
+                            },
+                            "maxItems": 64,
+                            "minItems": 1,
+                            "title": "Included Packages",
+                            "type": "array"
+                          },
+                          "control_plane": {
+                            "const": "bypass",
+                            "default": "bypass",
+                            "enum": [
+                              "bypass"
+                            ],
+                            "title": "Control Plane",
+                            "type": "string"
+                          },
+                          "kill_switch": {
+                            "const": "selected_apps",
+                            "default": "selected_apps",
+                            "enum": [
+                              "selected_apps"
+                            ],
+                            "title": "Kill Switch",
+                            "type": "string"
+                          },
+                          "ipv6": {
+                            "default": "block",
+                            "enum": [
+                              "block",
+                              "tunnel"
+                            ],
+                            "title": "Ipv6",
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "included_packages"
+                        ],
+                        "title": "AppTrafficPolicy",
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "protocol",
+                      "protocol_version",
+                      "config_text",
+                      "traffic_policy"
+                    ],
+                    "title": "VPNProfilePreflightRequest",
+                    "type": "object"
+                  },
+                  "expected_revision": {
+                    "maximum": 2147483646,
+                    "minimum": 1,
+                    "title": "Expected Revision",
+                    "type": "integer"
+                  }
+                },
+                "required": [
+                  "request_id",
+                  "name",
+                  "profile",
+                  "expected_revision"
+                ],
+                "title": "VPNProfileAppendRequest",
+                "type": "object"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/vpn/profiles/{profile_id}/archive": {
+      "post": {
+        "tags": [
+          "vpn"
+        ],
+        "summary": "Archive Profile",
+        "operationId": "archive_profile_api_v1_vpn_profiles__profile_id__archive_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "profile_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Profile Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VPNProfileResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "403": {
+            "description": "VPN permission required"
+          },
+          "404": {
+            "description": "Owned profile/import not found"
+          },
+          "409": {
+            "description": "Revision, archive or request ID conflict"
+          },
+          "413": {
+            "description": "Request exceeds 96 KiB"
+          },
+          "422": {
+            "description": "Invalid request/config, without secret echo"
+          },
+          "503": {
+            "description": "Profile encryption unavailable"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "additionalProperties": false,
+                "properties": {
+                  "expected_revision": {
+                    "maximum": 2147483647,
+                    "minimum": 1,
+                    "title": "Expected Revision",
+                    "type": "integer"
+                  }
+                },
+                "required": [
+                  "expected_revision"
+                ],
+                "title": "VPNProfileArchiveRequest",
+                "type": "object"
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/vpn/providers": {
       "get": {
         "tags": [
@@ -22906,6 +23653,37 @@
         ],
         "title": "VPNProfileIssue"
       },
+      "VPNProfilePage": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/VPNProfileResponse"
+            },
+            "type": "array",
+            "title": "Items"
+          },
+          "total": {
+            "type": "integer",
+            "title": "Total"
+          },
+          "page": {
+            "type": "integer",
+            "title": "Page"
+          },
+          "page_size": {
+            "type": "integer",
+            "title": "Page Size"
+          }
+        },
+        "type": "object",
+        "required": [
+          "items",
+          "total",
+          "page",
+          "page_size"
+        ],
+        "title": "VPNProfilePage"
+      },
       "VPNProfilePreflightResponse": {
         "properties": {
           "schema_version": {
@@ -23007,6 +23785,286 @@
           "blockers"
         ],
         "title": "VPNProfilePreflightResponse"
+      },
+      "VPNProfileResponse": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "description": {
+            "type": "string",
+            "title": "Description"
+          },
+          "provider_id": {
+            "type": "string",
+            "title": "Provider Id"
+          },
+          "protocol": {
+            "type": "string",
+            "title": "Protocol"
+          },
+          "protocol_version": {
+            "type": "string",
+            "title": "Protocol Version"
+          },
+          "schema_version": {
+            "type": "integer",
+            "title": "Schema Version"
+          },
+          "traffic_policy": {
+            "$ref": "#/components/schemas/AppTrafficPolicy"
+          },
+          "endpoint": {
+            "type": "string",
+            "title": "Endpoint"
+          },
+          "features": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Features"
+          },
+          "apply_allowed": {
+            "type": "boolean",
+            "enum": [
+              false
+            ],
+            "const": false,
+            "title": "Apply Allowed",
+            "default": false
+          },
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "revision_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Revision Id"
+          },
+          "current_revision": {
+            "type": "integer",
+            "title": "Current Revision"
+          },
+          "is_archived": {
+            "type": "boolean",
+            "title": "Is Archived"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Updated At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "name",
+          "description",
+          "provider_id",
+          "protocol",
+          "protocol_version",
+          "schema_version",
+          "traffic_policy",
+          "endpoint",
+          "features",
+          "id",
+          "revision_id",
+          "current_revision",
+          "is_archived",
+          "created_at",
+          "updated_at"
+        ],
+        "title": "VPNProfileResponse"
+      },
+      "VPNProfileRevisionPage": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/VPNProfileRevisionResponse"
+            },
+            "type": "array",
+            "title": "Items"
+          },
+          "total": {
+            "type": "integer",
+            "title": "Total"
+          },
+          "page": {
+            "type": "integer",
+            "title": "Page"
+          },
+          "page_size": {
+            "type": "integer",
+            "title": "Page Size"
+          }
+        },
+        "type": "object",
+        "required": [
+          "items",
+          "total",
+          "page",
+          "page_size"
+        ],
+        "title": "VPNProfileRevisionPage"
+      },
+      "VPNProfileRevisionResponse": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "description": {
+            "type": "string",
+            "title": "Description"
+          },
+          "provider_id": {
+            "type": "string",
+            "title": "Provider Id"
+          },
+          "protocol": {
+            "type": "string",
+            "title": "Protocol"
+          },
+          "protocol_version": {
+            "type": "string",
+            "title": "Protocol Version"
+          },
+          "schema_version": {
+            "type": "integer",
+            "title": "Schema Version"
+          },
+          "traffic_policy": {
+            "$ref": "#/components/schemas/AppTrafficPolicy"
+          },
+          "endpoint": {
+            "type": "string",
+            "title": "Endpoint"
+          },
+          "features": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Features"
+          },
+          "apply_allowed": {
+            "type": "boolean",
+            "enum": [
+              false
+            ],
+            "const": false,
+            "title": "Apply Allowed",
+            "default": false
+          },
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "profile_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Profile Id"
+          },
+          "revision": {
+            "type": "integer",
+            "title": "Revision"
+          },
+          "request_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Request Id"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "name",
+          "description",
+          "provider_id",
+          "protocol",
+          "protocol_version",
+          "schema_version",
+          "traffic_policy",
+          "endpoint",
+          "features",
+          "id",
+          "profile_id",
+          "revision",
+          "request_id",
+          "created_at"
+        ],
+        "title": "VPNProfileRevisionResponse"
+      },
+      "VPNProfileSaveResponse": {
+        "properties": {
+          "profile_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Profile Id"
+          },
+          "revision_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Revision Id"
+          },
+          "revision": {
+            "type": "integer",
+            "title": "Revision"
+          },
+          "request_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Request Id"
+          },
+          "persisted": {
+            "type": "boolean",
+            "enum": [
+              true
+            ],
+            "const": true,
+            "title": "Persisted",
+            "default": true
+          },
+          "apply_allowed": {
+            "type": "boolean",
+            "enum": [
+              false
+            ],
+            "const": false,
+            "title": "Apply Allowed",
+            "default": false
+          },
+          "execution_confirmed": {
+            "type": "boolean",
+            "enum": [
+              false
+            ],
+            "const": false,
+            "title": "Execution Confirmed",
+            "default": false
+          }
+        },
+        "type": "object",
+        "required": [
+          "profile_id",
+          "revision_id",
+          "revision",
+          "request_id"
+        ],
+        "title": "VPNProfileSaveResponse"
       },
       "VPNProviderCapability": {
         "properties": {

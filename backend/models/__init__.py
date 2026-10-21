@@ -58,6 +58,7 @@ from backend.models.user import User  # noqa: F401
 
 # --- VPN (TZ-06) ---
 from backend.models.vpn_peer import VPNPeer, VPNPeerStatus  # noqa: F401
+from backend.models.vpn_profile import VPNProfile, VPNProfileRevision  # noqa: F401
 
 # --- n8n Integration (TZ-09) ---
 from backend.models.webhook import Webhook  # noqa: F401
@@ -87,6 +88,8 @@ __all__ = [
     "TaskStatus",
     "VPNPeer",
     "VPNPeerStatus",
+    "VPNProfile",
+    "VPNProfileRevision",
     "Workstation",
     "LDPlayerInstance",
     "Webhook",
