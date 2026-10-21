@@ -1,30 +1,35 @@
 name: CI — Android
 
 on:
+  workflow_dispatch:
   push:
     paths:
       - "android/**"
       - ".github/workflows/ci-android.yml"
       - ".github/workflows/release.yml"
+      - "scripts/build_awg_native.py"
+      - "scripts/pilot/resource_guard.py"
   pull_request:
     branches: [main]
     paths:
       - "android/**"
       - ".github/workflows/ci-android.yml"
       - ".github/workflows/release.yml"
+      - "scripts/build_awg_native.py"
+      - "scripts/pilot/resource_guard.py"
 
 permissions:
   contents: read
 
 concurrency:
-  group: android-${{ github.event.pull_request.number || github.ref }}
+  group: android-${{ github.event.pull_request.head.ref || github.ref_name }}
   cancel-in-progress: true
 
 jobs:
   build:
     name: Android tests and signed release smoke build
     runs-on: ubuntu-latest
-    timeout-minutes: 40
+    timeout-minutes: 75
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-java@v6
@@ -82,9 +87,9 @@ jobs:
           assert apks
           for apk in apks:
               with zipfile.ZipFile(apk) as archive:
-                  assert not any(name.endswith('libjingle_peerconnection_so.so') for name in archive.namelist()), apk
+                  assert not any(name.endswith(('libjingle_peerconnection_so.so', 'libwg-go.so')) for name in archive.namelist()), apk
                   assert not any(b'Lorg/webrtc/' in archive.read(name) for name in archive.namelist() if name.endswith('.dex')), apk
-          print('WebRTC JNI absent from all ordinary debug/release APKs')
+          print('Experimental WebRTC and WG/AWG JNI absent from ordinary APKs')
           PY
 
       - name: Compile and test isolated direct-transport debug canary
@@ -164,3 +169,72 @@ jobs:
             android/app/build/test-results/testDevDebugUnitTest/**/*.xml
           if-no-files-found: error
           retention-days: 3
+
+      - uses: actions/setup-go@v6
+        with:
+          go-version: "1.25.4"
+          cache: false
+
+      - name: Build the pinned three-ABI WG/AWG provider
+        shell: bash
+        run: |
+          set -euo pipefail
+          sdkmanager 'ndk;26.3.11579264'
+          python scripts/build_awg_native.py \
+            --ndk-root "$ANDROID_HOME/ndk/26.3.11579264" \
+            --android-clock --harden-jni \
+            --output "$RUNNER_TEMP/sphere-awg-native"
+
+      - name: Test the single-APK VPN and direct-control candidate
+        working-directory: android
+        env:
+          SPHERE_APP_SCOPED_VPN_CANARY: "true"
+          SPHERE_AWG_NATIVE_DIR: ${{ runner.temp }}/sphere-awg-native
+          SPHERE_DIRECT_TRANSPORT_CANARY: "true"
+          SPHERE_DIRECT_PROBE_STUN_URL: "stun:stun.cloudflare.com:3478"
+          SPHERE_STREAM_GPU_BRIDGE: "false"
+          SPHERE_STREAM_PLANAR_INPUT: "true"
+          SPHERE_CONTINUOUS_INPUT_CANARY: "true"
+          SPHERE_DEV_APPLICATION_ID_SUFFIX: ".pilot"
+          GIT_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: ./gradlew --max-workers=2 testDevDebugUnitTest testEnterpriseDebugUnitTest lintDevDebug lintEnterpriseDebug assembleDevDebug assembleEnterpriseDebug
+
+      - name: Verify single-APK native contents and VPN release denial
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import hashlib, json, os, pathlib, zipfile
+          native = pathlib.Path(os.environ['RUNNER_TEMP']) / 'sphere-awg-native'
+          manifest = json.loads((native / 'manifest.json').read_text())
+          assert manifest['runtime_sleep_clock_patch_applied'] is True
+          assert manifest['jni_lifecycle_hardened'] is True
+          assert {row['abi'] for row in manifest['artifacts']} == {'x86_64', 'arm64-v8a', 'armeabi-v7a'}
+          for variant in ('dev', 'enterprise'):
+              apk = pathlib.Path(f'android/app/build/outputs/apk/{variant}/debug/app-{variant}-debug.apk')
+              with zipfile.ZipFile(apk) as archive:
+                  actual = {p for p in archive.namelist() if p.endswith('/libwg-go.so')}
+                  expected = {f"lib/{row['abi']}/libwg-go.so" for row in manifest['artifacts']}
+                  assert actual == expected, variant
+                  for row in manifest['artifacts']:
+                      assert hashlib.sha256(archive.read(f"lib/{row['abi']}/libwg-go.so")).hexdigest() == row['sha256'], variant
+          print('Dev/Enterprise VPN APKs contain the verified three-ABI provider')
+          PY
+          if SPHERE_APP_SCOPED_VPN_CANARY=true SPHERE_AWG_NATIVE_DIR="$RUNNER_TEMP/sphere-awg-native" \
+            android/gradlew -p android assembleDevRelease > "$RUNNER_TEMP/app-vpn-release-denial.log" 2>&1; then
+            echo 'VPN canary unexpectedly allowed a release APK' >&2
+            exit 1
+          fi
+          grep -q 'App-scoped VPN is a debug canary' "$RUNNER_TEMP/app-vpn-release-denial.log"
+
+      - name: Upload single-APK VPN candidate and native evidence
+        uses: actions/upload-artifact@v6
+        with:
+          name: android-app-vpn-candidate-${{ github.event.pull_request.head.sha || github.sha }}
+          path: |
+            android/app/build/outputs/apk/*/debug/*.apk
+            android/app/build/test-results/test*DebugUnitTest/**/*.xml
+            android/app/build/reports/lint-results-*.xml
+            ${{ runner.temp }}/sphere-awg-native/manifest.json
+          if-no-files-found: error
+          retention-days: 7
