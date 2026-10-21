@@ -10,11 +10,11 @@ from pydantic import BaseModel, ValidationError
 T = TypeVar("T", bound=BaseModel)
 
 
-async def read_profile_request(request: Request, model: type[T]) -> T:
+async def read_profile_request(request: Request, model: type[T], *, max_bytes: int = 98304) -> T:
     body = bytearray()
     try:
         async for chunk in request.stream():
-            if len(body) + len(chunk) > 98304:
+            if len(body) + len(chunk) > max_bytes:
                 raise HTTPException(413, "vpn_profile_body_too_large")
             body.extend(chunk)
         return model.model_validate_json(body)

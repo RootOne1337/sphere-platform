@@ -192,8 +192,41 @@ async def test_http_uses_dedicated_login_and_refuses_owner_connection(world, run
             await bind_tenant_context(db, str(world.org_a.id))
             assert await db.scalar(select(func.count()).select_from(VPNProfileRevision).where(
                 VPNProfileRevision.profile_id == uuid.UUID(receipt["profile_id"]))) == 2
+        batch = {"items": [import_payload(name=f"Restricted batch {n}") for n in range(100)]}
+        imported = await world.client.post('/api/v1/vpn/profiles/batch', json=batch, headers=headers)
+        assert imported.status_code == 200 and len(imported.json()["items"]) == 100
+        query = {"request_ids": [item["request_id"] for item in batch["items"]]}
+        recovered = await world.client.post('/api/v1/vpn/profiles/batch/status', json=query, headers=headers)
+        assert [item["receipt"] for item in recovered.json()["items"]] == imported.json()["items"]
+        foreign = await world.client.post('/api/v1/vpn/profiles/batch/status', json=query, headers=world.auth(world.users["foreign"]))
+        assert all(item["receipt"] is None for item in foreign.json()["items"])
     finally:
         app.dependency_overrides[dependency] = override
         if restricted:
             async with world.engine.begin() as db:
                 await db.execute(text(f'REVOKE SELECT (id, created_at) ON audit_logs FROM "{runtime_db.role}"'))
+
+
+async def test_overlapping_batches_with_reversed_order_replay_without_deadlock(world, profile_crypto):
+    items = [import_payload(name=f"Concurrent batch {i}") for i in range(8)]
+    headers = world.auth(world.users["org_admin"])
+    responses = await asyncio.gather(*(
+        world.client.post('/api/v1/vpn/profiles/batch', json={"items": order}, headers=headers)
+        for order in (items, list(reversed(items)))
+    ))
+    assert [r.status_code for r in responses] == [200, 200], [r.text for r in responses]
+    assert responses[0].json()["items"] == list(reversed(responses[1].json()["items"]))
+    async with world.sessions() as db:
+        assert await db.scalar(select(func.count()).select_from(VPNProfile).where(VPNProfile.org_id == world.org_a.id)) == 8
+
+
+async def test_batch_http_conflict_rolls_back_new_rows_in_postgres(world, profile_crypto):
+    headers = world.auth(world.users["org_admin"])
+    existing = import_payload(request_id=str(uuid.UUID(int=100)))
+    await create(world, existing)
+    result = await world.client.post('/api/v1/vpn/profiles/batch', headers=headers, json={"items": [
+        import_payload(request_id=str(uuid.UUID(int=1))), {**existing, "name": "Changed intent"},
+    ]})
+    assert result.status_code == 409
+    async with world.sessions() as db:
+        assert await db.scalar(select(func.count()).select_from(VPNProfile).where(VPNProfile.org_id == world.org_a.id)) == 1

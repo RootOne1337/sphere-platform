@@ -6,6 +6,7 @@ import { api } from '@/lib/api';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogBody, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { VpnProfileInspector } from './VpnProfileInspector';
+import { VpnProfileBatchImport } from './VpnProfileBatchImport';
 import { parseProfilePage, type SavedVpnProfile } from './profileTypes';
 
 interface Version { id: string; revision: number; name: string; protocol_version: string; created_at: string }
@@ -18,6 +19,7 @@ export function VpnProfileCatalog({ canWrite }: { canWrite: boolean }) {
   const [importing, setImporting] = useState<{ target?: SavedVpnProfile } | null>(null);
   const [history, setHistory] = useState<SavedVpnProfile | null>(null);
   const [archive, setArchive] = useState<SavedVpnProfile | null>(null);
+  const [batchImport, setBatchImport] = useState(false);
   const generation = useRef(0);
   const fresh = !loading && !error;
   useEffect(() => {
@@ -35,7 +37,7 @@ export function VpnProfileCatalog({ canWrite }: { canWrite: boolean }) {
   return <section aria-label="Каталог VPN-профилей" className="sphere-panel mb-6 overflow-hidden rounded-2xl border bg-card/60">
     <div className="flex flex-wrap items-start justify-between gap-4 border-b p-5">
       <div><h2 className="text-lg font-semibold tracking-tight">Библиотека профилей</h2><p className="mt-1 max-w-xl text-sm leading-relaxed text-muted-foreground">Конфигурации подключений с историей версий и отдельной политикой приложений.</p></div>
-      <div className="flex flex-wrap gap-2"><Button size="sm" variant="outline" aria-label="Обновить профили" disabled={loading} onClick={() => setReload(v => v + 1)}><RefreshCw className={`h-4 w-4 ${loading ? 'motion-safe:animate-spin' : ''}`} /></Button>{canWrite && <Button size="sm" onClick={() => setImporting({})}><Plus className="mr-2 h-4 w-4" />Импорт профиля</Button>}</div>
+      <div className="flex flex-wrap gap-2"><Button size="sm" variant="outline" aria-label="Обновить профили" disabled={loading} onClick={() => setReload(v => v + 1)}><RefreshCw className={`h-4 w-4 ${loading ? 'motion-safe:animate-spin' : ''}`} /></Button>{canWrite && <><Button size="sm" variant="outline" onClick={() => setBatchImport(true)}>Импорт пакета</Button><Button size="sm" onClick={() => setImporting({})}><Plus className="mr-2 h-4 w-4" />Импорт профиля</Button></>}</div>
     </div>
     <div className="flex flex-wrap items-center gap-3 p-4 sm:p-5">
       <div className="relative min-w-0 flex-1"><Search className="pointer-events-none absolute left-3 top-3 h-4 w-4 text-muted-foreground" /><input aria-label="Поиск VPN-профилей" placeholder="Найти профиль по названию" value={search} maxLength={120} className="h-10 w-full rounded-xl border bg-background/60 py-2 pl-9 pr-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring" onChange={e => { setSearch(e.target.value); setPage(1); }} /></div>
@@ -51,6 +53,7 @@ export function VpnProfileCatalog({ canWrite }: { canWrite: boolean }) {
     </article>)}</div>}
     <div className="flex flex-wrap items-center justify-between gap-3 border-t px-5 py-3 text-xs text-muted-foreground"><span>{fresh ? `Всего ${data.total} · страница ${page}` : 'Состояние обновляется'}</span><div className="flex gap-2"><Button size="sm" variant="outline" disabled={!fresh || page <= 1} onClick={() => setPage(p => p - 1)}>Назад</Button><Button size="sm" variant="outline" disabled={!fresh || page * 10 >= data.total} onClick={() => setPage(p => p + 1)}>Далее</Button></div></div>
     {importing && canWrite && <VpnProfileInspector purpose="save" target={importing.target} onSaved={() => setReload(v => v + 1)} onClose={() => setImporting(null)} />}
+    {batchImport && canWrite && <VpnProfileBatchImport onSaved={() => setReload(v => v + 1)} onClose={() => setBatchImport(false)} />}
     {history && <ProfileVersions profile={history} onClose={() => setHistory(null)} />}
     {archive && canWrite && <ArchiveProfile profile={archive} onChanged={() => setReload(v => v + 1)} onClose={() => setArchive(null)} />}
   </section>;

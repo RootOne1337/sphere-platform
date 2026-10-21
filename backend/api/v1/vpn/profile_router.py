@@ -7,6 +7,13 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.api.v1.vpn.profile_input import profile_request_schema, read_profile_request
 from backend.core.dependencies import require_permission
+from backend.schemas.vpn.bulk_profiles import (
+    VPNProfileBatchInspection,
+    VPNProfileBatchRequest,
+    VPNProfileBatchSaveResponse,
+    VPNProfileBatchStatusRequest,
+    VPNProfileBatchStatusResponse,
+)
 from backend.schemas.vpn.catalog import (
     VPNProfileAppendRequest,
     VPNProfileArchiveRequest,
@@ -17,6 +24,7 @@ from backend.schemas.vpn.catalog import (
     VPNProfileSaveResponse,
 )
 from backend.services.vpn.catalog_database import get_vpn_catalog_db
+from backend.services.vpn.profile_batch import batch_status, inspect_batch, save_batch
 from backend.services.vpn.profile_catalog import VPNProfileCatalog
 
 router = APIRouter(prefix="/profiles")
@@ -50,6 +58,34 @@ async def import_profile(request: Request, user=require_permission("vpn:write"),
 @router.get("/imports/{request_id}", response_model=VPNProfileSaveResponse, responses={404: _ERRORS[404], 503: _ERRORS[503]})
 async def import_status(request_id: uuid.UUID, user=require_permission("vpn:read"), db: AsyncSession = Depends(get_vpn_catalog_db)):
     return await VPNProfileCatalog(db, user.org_id, user.id).import_status(request_id)
+
+
+@router.post("/batch/preflight", response_model=VPNProfileBatchInspection,
+             responses={**_ERRORS, 413: {"description": "Batch exceeds 4 MiB"}},
+             summary="Inspect up to 100 profiles without saving or applying them",
+             openapi_extra={"requestBody": profile_request_schema(VPNProfileBatchRequest)})
+async def inspect_profiles(request: Request, user=require_permission("vpn:write")):
+    body = await read_profile_request(request, VPNProfileBatchRequest, max_bytes=4 * 1024 * 1024)
+    return inspect_batch(body)
+
+
+@router.post("/batch", response_model=VPNProfileBatchSaveResponse,
+             responses={**_ERRORS, 413: {"description": "Batch exceeds 4 MiB"}},
+             summary="Atomically save up to 100 encrypted profiles; per-item request IDs are replay-safe",
+             openapi_extra={"requestBody": profile_request_schema(VPNProfileBatchRequest)})
+async def import_profiles(request: Request, user=require_permission("vpn:write"), db: AsyncSession = Depends(get_vpn_catalog_db)):
+    body = await read_profile_request(request, VPNProfileBatchRequest, max_bytes=4 * 1024 * 1024)
+    result = await save_batch(VPNProfileCatalog(db, user.org_id, user.id), body)
+    await db.commit()
+    return result
+
+
+@router.post("/batch/status", response_model=VPNProfileBatchStatusResponse, responses=_ERRORS,
+             summary="Read observed per-item receipts; null never means cancelled",
+             openapi_extra={"requestBody": profile_request_schema(VPNProfileBatchStatusRequest)})
+async def profiles_import_status(request: Request, user=require_permission("vpn:read"), db: AsyncSession = Depends(get_vpn_catalog_db)):
+    body = await read_profile_request(request, VPNProfileBatchStatusRequest)
+    return await batch_status(VPNProfileCatalog(db, user.org_id, user.id), body)
 
 
 @router.get("/{profile_id}", response_model=VPNProfileResponse, responses={404: _ERRORS[404], 503: _ERRORS[503]})

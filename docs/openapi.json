@@ -10122,6 +10122,502 @@
         }
       }
     },
+    "/api/v1/vpn/profiles/batch/preflight": {
+      "post": {
+        "tags": [
+          "vpn"
+        ],
+        "summary": "Inspect up to 100 profiles without saving or applying them",
+        "operationId": "inspect_profiles_api_v1_vpn_profiles_batch_preflight_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "items": {
+                    "items": {
+                      "properties": {
+                        "request_id": {
+                          "type": "string",
+                          "format": "uuid",
+                          "title": "Request Id"
+                        },
+                        "name": {
+                          "type": "string",
+                          "maxLength": 120,
+                          "minLength": 1,
+                          "title": "Name"
+                        },
+                        "description": {
+                          "type": "string",
+                          "maxLength": 1000,
+                          "title": "Description",
+                          "default": ""
+                        },
+                        "profile": {
+                          "properties": {
+                            "schema_version": {
+                              "type": "integer",
+                              "enum": [
+                                1
+                              ],
+                              "const": 1,
+                              "title": "Schema Version",
+                              "default": 1
+                            },
+                            "provider_id": {
+                              "type": "string",
+                              "enum": [
+                                "android-amneziawg",
+                                "legacy-root"
+                              ],
+                              "title": "Provider Id",
+                              "default": "android-amneziawg"
+                            },
+                            "protocol": {
+                              "type": "string",
+                              "enum": [
+                                "wireguard",
+                                "amneziawg"
+                              ],
+                              "title": "Protocol"
+                            },
+                            "protocol_version": {
+                              "type": "string",
+                              "enum": [
+                                "1",
+                                "1.5",
+                                "2",
+                                "3.1"
+                              ],
+                              "title": "Protocol Version"
+                            },
+                            "config_text": {
+                              "type": "string",
+                              "maxLength": 65536,
+                              "minLength": 1,
+                              "format": "password",
+                              "title": "Config Text",
+                              "writeOnly": true
+                            },
+                            "traffic_policy": {
+                              "properties": {
+                                "mode": {
+                                  "type": "string",
+                                  "enum": [
+                                    "selected_apps"
+                                  ],
+                                  "const": "selected_apps",
+                                  "title": "Mode",
+                                  "default": "selected_apps"
+                                },
+                                "included_packages": {
+                                  "items": {
+                                    "type": "string"
+                                  },
+                                  "type": "array",
+                                  "maxItems": 64,
+                                  "minItems": 1,
+                                  "title": "Included Packages"
+                                },
+                                "control_plane": {
+                                  "type": "string",
+                                  "enum": [
+                                    "bypass"
+                                  ],
+                                  "const": "bypass",
+                                  "title": "Control Plane",
+                                  "default": "bypass"
+                                },
+                                "kill_switch": {
+                                  "type": "string",
+                                  "enum": [
+                                    "selected_apps"
+                                  ],
+                                  "const": "selected_apps",
+                                  "title": "Kill Switch",
+                                  "default": "selected_apps"
+                                },
+                                "ipv6": {
+                                  "type": "string",
+                                  "enum": [
+                                    "block",
+                                    "tunnel"
+                                  ],
+                                  "title": "Ipv6",
+                                  "default": "block"
+                                }
+                              },
+                              "additionalProperties": false,
+                              "type": "object",
+                              "required": [
+                                "included_packages"
+                              ],
+                              "title": "AppTrafficPolicy"
+                            }
+                          },
+                          "additionalProperties": false,
+                          "type": "object",
+                          "required": [
+                            "protocol",
+                            "protocol_version",
+                            "config_text",
+                            "traffic_policy"
+                          ],
+                          "title": "VPNProfilePreflightRequest"
+                        }
+                      },
+                      "additionalProperties": false,
+                      "type": "object",
+                      "required": [
+                        "request_id",
+                        "name",
+                        "profile"
+                      ],
+                      "title": "VPNProfileImportRequest"
+                    },
+                    "type": "array",
+                    "maxItems": 100,
+                    "minItems": 1,
+                    "title": "Items"
+                  }
+                },
+                "additionalProperties": false,
+                "type": "object",
+                "required": [
+                  "items"
+                ],
+                "title": "VPNProfileBatchRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VPNProfileBatchInspection"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "403": {
+            "description": "VPN permission required"
+          },
+          "404": {
+            "description": "Owned profile/import not found"
+          },
+          "409": {
+            "description": "Revision, archive or request ID conflict"
+          },
+          "413": {
+            "description": "Batch exceeds 4 MiB"
+          },
+          "422": {
+            "description": "Invalid request/config, without secret echo"
+          },
+          "503": {
+            "description": "Profile encryption or isolated catalog database unavailable"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/vpn/profiles/batch": {
+      "post": {
+        "tags": [
+          "vpn"
+        ],
+        "summary": "Atomically save up to 100 encrypted profiles; per-item request IDs are replay-safe",
+        "operationId": "import_profiles_api_v1_vpn_profiles_batch_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "items": {
+                    "items": {
+                      "properties": {
+                        "request_id": {
+                          "type": "string",
+                          "format": "uuid",
+                          "title": "Request Id"
+                        },
+                        "name": {
+                          "type": "string",
+                          "maxLength": 120,
+                          "minLength": 1,
+                          "title": "Name"
+                        },
+                        "description": {
+                          "type": "string",
+                          "maxLength": 1000,
+                          "title": "Description",
+                          "default": ""
+                        },
+                        "profile": {
+                          "properties": {
+                            "schema_version": {
+                              "type": "integer",
+                              "enum": [
+                                1
+                              ],
+                              "const": 1,
+                              "title": "Schema Version",
+                              "default": 1
+                            },
+                            "provider_id": {
+                              "type": "string",
+                              "enum": [
+                                "android-amneziawg",
+                                "legacy-root"
+                              ],
+                              "title": "Provider Id",
+                              "default": "android-amneziawg"
+                            },
+                            "protocol": {
+                              "type": "string",
+                              "enum": [
+                                "wireguard",
+                                "amneziawg"
+                              ],
+                              "title": "Protocol"
+                            },
+                            "protocol_version": {
+                              "type": "string",
+                              "enum": [
+                                "1",
+                                "1.5",
+                                "2",
+                                "3.1"
+                              ],
+                              "title": "Protocol Version"
+                            },
+                            "config_text": {
+                              "type": "string",
+                              "maxLength": 65536,
+                              "minLength": 1,
+                              "format": "password",
+                              "title": "Config Text",
+                              "writeOnly": true
+                            },
+                            "traffic_policy": {
+                              "properties": {
+                                "mode": {
+                                  "type": "string",
+                                  "enum": [
+                                    "selected_apps"
+                                  ],
+                                  "const": "selected_apps",
+                                  "title": "Mode",
+                                  "default": "selected_apps"
+                                },
+                                "included_packages": {
+                                  "items": {
+                                    "type": "string"
+                                  },
+                                  "type": "array",
+                                  "maxItems": 64,
+                                  "minItems": 1,
+                                  "title": "Included Packages"
+                                },
+                                "control_plane": {
+                                  "type": "string",
+                                  "enum": [
+                                    "bypass"
+                                  ],
+                                  "const": "bypass",
+                                  "title": "Control Plane",
+                                  "default": "bypass"
+                                },
+                                "kill_switch": {
+                                  "type": "string",
+                                  "enum": [
+                                    "selected_apps"
+                                  ],
+                                  "const": "selected_apps",
+                                  "title": "Kill Switch",
+                                  "default": "selected_apps"
+                                },
+                                "ipv6": {
+                                  "type": "string",
+                                  "enum": [
+                                    "block",
+                                    "tunnel"
+                                  ],
+                                  "title": "Ipv6",
+                                  "default": "block"
+                                }
+                              },
+                              "additionalProperties": false,
+                              "type": "object",
+                              "required": [
+                                "included_packages"
+                              ],
+                              "title": "AppTrafficPolicy"
+                            }
+                          },
+                          "additionalProperties": false,
+                          "type": "object",
+                          "required": [
+                            "protocol",
+                            "protocol_version",
+                            "config_text",
+                            "traffic_policy"
+                          ],
+                          "title": "VPNProfilePreflightRequest"
+                        }
+                      },
+                      "additionalProperties": false,
+                      "type": "object",
+                      "required": [
+                        "request_id",
+                        "name",
+                        "profile"
+                      ],
+                      "title": "VPNProfileImportRequest"
+                    },
+                    "type": "array",
+                    "maxItems": 100,
+                    "minItems": 1,
+                    "title": "Items"
+                  }
+                },
+                "additionalProperties": false,
+                "type": "object",
+                "required": [
+                  "items"
+                ],
+                "title": "VPNProfileBatchRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VPNProfileBatchSaveResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "403": {
+            "description": "VPN permission required"
+          },
+          "404": {
+            "description": "Owned profile/import not found"
+          },
+          "409": {
+            "description": "Revision, archive or request ID conflict"
+          },
+          "413": {
+            "description": "Batch exceeds 4 MiB"
+          },
+          "422": {
+            "description": "Invalid request/config, without secret echo"
+          },
+          "503": {
+            "description": "Profile encryption or isolated catalog database unavailable"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/vpn/profiles/batch/status": {
+      "post": {
+        "tags": [
+          "vpn"
+        ],
+        "summary": "Read observed per-item receipts; null never means cancelled",
+        "operationId": "profiles_import_status_api_v1_vpn_profiles_batch_status_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "request_ids": {
+                    "items": {
+                      "type": "string",
+                      "format": "uuid"
+                    },
+                    "type": "array",
+                    "maxItems": 100,
+                    "minItems": 1,
+                    "title": "Request Ids"
+                  }
+                },
+                "additionalProperties": false,
+                "type": "object",
+                "required": [
+                  "request_ids"
+                ],
+                "title": "VPNProfileBatchStatusRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VPNProfileBatchStatusResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "403": {
+            "description": "VPN permission required"
+          },
+          "404": {
+            "description": "Owned profile/import not found"
+          },
+          "409": {
+            "description": "Revision, archive or request ID conflict"
+          },
+          "413": {
+            "description": "Request exceeds 96 KiB"
+          },
+          "422": {
+            "description": "Invalid request/config, without secret echo"
+          },
+          "503": {
+            "description": "Profile encryption or isolated catalog database unavailable"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
     "/api/v1/vpn/profiles/{profile_id}": {
       "get": {
         "tags": [
@@ -24040,6 +24536,165 @@
           "stale_handshakes"
         ],
         "title": "VPNPoolStats"
+      },
+      "VPNProfileBatchInspection": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/VPNProfileBatchInspectionItem"
+            },
+            "type": "array",
+            "title": "Items"
+          },
+          "config_valid": {
+            "type": "boolean",
+            "title": "Config Valid"
+          },
+          "persisted": {
+            "type": "boolean",
+            "enum": [
+              false
+            ],
+            "const": false,
+            "title": "Persisted",
+            "default": false
+          },
+          "apply_allowed": {
+            "type": "boolean",
+            "enum": [
+              false
+            ],
+            "const": false,
+            "title": "Apply Allowed",
+            "default": false
+          },
+          "execution_confirmed": {
+            "type": "boolean",
+            "enum": [
+              false
+            ],
+            "const": false,
+            "title": "Execution Confirmed",
+            "default": false
+          }
+        },
+        "type": "object",
+        "required": [
+          "items",
+          "config_valid"
+        ],
+        "title": "VPNProfileBatchInspection"
+      },
+      "VPNProfileBatchInspectionItem": {
+        "properties": {
+          "request_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Request Id"
+          },
+          "config_valid": {
+            "type": "boolean",
+            "title": "Config Valid"
+          },
+          "issues": {
+            "items": {
+              "$ref": "#/components/schemas/VPNProfileIssue"
+            },
+            "type": "array",
+            "title": "Issues"
+          }
+        },
+        "type": "object",
+        "required": [
+          "request_id",
+          "config_valid",
+          "issues"
+        ],
+        "title": "VPNProfileBatchInspectionItem"
+      },
+      "VPNProfileBatchSaveResponse": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/VPNProfileSaveResponse"
+            },
+            "type": "array",
+            "title": "Items"
+          },
+          "persisted": {
+            "type": "boolean",
+            "enum": [
+              true
+            ],
+            "const": true,
+            "title": "Persisted",
+            "default": true
+          },
+          "apply_allowed": {
+            "type": "boolean",
+            "enum": [
+              false
+            ],
+            "const": false,
+            "title": "Apply Allowed",
+            "default": false
+          },
+          "execution_confirmed": {
+            "type": "boolean",
+            "enum": [
+              false
+            ],
+            "const": false,
+            "title": "Execution Confirmed",
+            "default": false
+          }
+        },
+        "type": "object",
+        "required": [
+          "items"
+        ],
+        "title": "VPNProfileBatchSaveResponse"
+      },
+      "VPNProfileBatchStatusItem": {
+        "properties": {
+          "request_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Request Id"
+          },
+          "receipt": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/VPNProfileSaveResponse"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "type": "object",
+        "required": [
+          "request_id",
+          "receipt"
+        ],
+        "title": "VPNProfileBatchStatusItem"
+      },
+      "VPNProfileBatchStatusResponse": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/VPNProfileBatchStatusItem"
+            },
+            "type": "array",
+            "title": "Items"
+          }
+        },
+        "type": "object",
+        "required": [
+          "items"
+        ],
+        "title": "VPNProfileBatchStatusResponse"
       },
       "VPNProfileIssue": {
         "properties": {

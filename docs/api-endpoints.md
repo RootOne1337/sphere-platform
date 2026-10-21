@@ -5,7 +5,7 @@ Regenerate with `python -m scripts.export_api_docs`; verify with `--check`.
 Use the FastAPI/Pydantic versions pinned in `backend/requirements.txt`.
 The exporter does not run startup hooks or send HTTP requests.
 
-**198 HTTP operations across 157 paths.**
+**201 HTTP operations across 160 paths.**
 
 Full parameters, request bodies, response schemas and declared security schemes:
 [OpenAPI JSON](openapi.json). Manual explanations:
@@ -207,6 +207,9 @@ for tested behavior and remaining limits.
 | `POST` | `/api/v1/vpn/profile-preflight` | vpn | 200, 401, 403, 413, 422 | Inspect a VPN profile without saving or changing networking |
 | `GET` | `/api/v1/vpn/profiles` | vpn | 200, 422, 503 | List Profiles |
 | `POST` | `/api/v1/vpn/profiles` | vpn | 200, 401, 403, 404, 409, 413, 422, 503 | Save an encrypted VPN profile without applying it |
+| `POST` | `/api/v1/vpn/profiles/batch` | vpn | 200, 401, 403, 404, 409, 413, 422, 503 | Atomically save up to 100 encrypted profiles; per-item request IDs are replay-safe |
+| `POST` | `/api/v1/vpn/profiles/batch/preflight` | vpn | 200, 401, 403, 404, 409, 413, 422, 503 | Inspect up to 100 profiles without saving or applying them |
+| `POST` | `/api/v1/vpn/profiles/batch/status` | vpn | 200, 401, 403, 404, 409, 413, 422, 503 | Read observed per-item receipts; null never means cancelled |
 | `GET` | `/api/v1/vpn/profiles/imports/{request_id}` | vpn | 200, 404, 422, 503 | Import Status |
 | `GET` | `/api/v1/vpn/profiles/{profile_id}` | vpn | 200, 404, 422, 503 | Get Profile |
 | `POST` | `/api/v1/vpn/profiles/{profile_id}/archive` | vpn | 200, 401, 403, 404, 409, 413, 422, 503 | Archive Profile |
