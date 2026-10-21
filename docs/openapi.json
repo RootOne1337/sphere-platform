@@ -9789,6 +9789,199 @@
         }
       }
     },
+    "/api/v1/vpn/providers": {
+      "get": {
+        "tags": [
+          "vpn"
+        ],
+        "summary": "Vpn Providers",
+        "operationId": "vpn_providers_api_v1_vpn_providers_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/VPNProviderCapability"
+                  },
+                  "type": "array",
+                  "title": "Response Vpn Providers Api V1 Vpn Providers Get"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "403": {
+            "description": "VPN read permission required"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/vpn/profile-preflight": {
+      "post": {
+        "tags": [
+          "vpn"
+        ],
+        "summary": "Inspect a VPN profile without saving or changing networking",
+        "operationId": "vpn_profile_preflight_api_v1_vpn_profile_preflight_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "schema_version": {
+                    "type": "integer",
+                    "enum": [
+                      1
+                    ],
+                    "const": 1,
+                    "title": "Schema Version",
+                    "default": 1
+                  },
+                  "provider_id": {
+                    "type": "string",
+                    "enum": [
+                      "android-amneziawg",
+                      "legacy-root"
+                    ],
+                    "title": "Provider Id",
+                    "default": "android-amneziawg"
+                  },
+                  "protocol": {
+                    "type": "string",
+                    "enum": [
+                      "wireguard",
+                      "amneziawg"
+                    ],
+                    "title": "Protocol"
+                  },
+                  "protocol_version": {
+                    "type": "string",
+                    "enum": [
+                      "1",
+                      "1.5",
+                      "2",
+                      "3.1"
+                    ],
+                    "title": "Protocol Version"
+                  },
+                  "config_text": {
+                    "type": "string",
+                    "maxLength": 65536,
+                    "minLength": 1,
+                    "format": "password",
+                    "title": "Config Text",
+                    "writeOnly": true
+                  },
+                  "traffic_policy": {
+                    "properties": {
+                      "mode": {
+                        "type": "string",
+                        "enum": [
+                          "selected_apps"
+                        ],
+                        "const": "selected_apps",
+                        "title": "Mode",
+                        "default": "selected_apps"
+                      },
+                      "included_packages": {
+                        "items": {
+                          "type": "string"
+                        },
+                        "type": "array",
+                        "maxItems": 64,
+                        "minItems": 1,
+                        "title": "Included Packages"
+                      },
+                      "control_plane": {
+                        "type": "string",
+                        "enum": [
+                          "bypass"
+                        ],
+                        "const": "bypass",
+                        "title": "Control Plane",
+                        "default": "bypass"
+                      },
+                      "kill_switch": {
+                        "type": "string",
+                        "enum": [
+                          "selected_apps"
+                        ],
+                        "const": "selected_apps",
+                        "title": "Kill Switch",
+                        "default": "selected_apps"
+                      },
+                      "ipv6": {
+                        "type": "string",
+                        "enum": [
+                          "block",
+                          "tunnel"
+                        ],
+                        "title": "Ipv6",
+                        "default": "block"
+                      }
+                    },
+                    "additionalProperties": false,
+                    "type": "object",
+                    "required": [
+                      "included_packages"
+                    ],
+                    "title": "AppTrafficPolicy"
+                  }
+                },
+                "additionalProperties": false,
+                "type": "object",
+                "required": [
+                  "protocol",
+                  "protocol_version",
+                  "config_text",
+                  "traffic_policy"
+                ],
+                "title": "VPNProfilePreflightRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VPNProfilePreflightResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "403": {
+            "description": "VPN write permission required"
+          },
+          "413": {
+            "description": "Request body exceeds 96 KiB"
+          },
+          "422": {
+            "description": "Invalid request; imported secrets are never echoed"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
     "/api/v1/vpn/admin/keypair": {
       "post": {
         "tags": [
@@ -11455,6 +11648,61 @@
         },
         "type": "object",
         "title": "AlertmanagerPayload"
+      },
+      "AppTrafficPolicy": {
+        "properties": {
+          "mode": {
+            "type": "string",
+            "enum": [
+              "selected_apps"
+            ],
+            "const": "selected_apps",
+            "title": "Mode",
+            "default": "selected_apps"
+          },
+          "included_packages": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "maxItems": 64,
+            "minItems": 1,
+            "title": "Included Packages"
+          },
+          "control_plane": {
+            "type": "string",
+            "enum": [
+              "bypass"
+            ],
+            "const": "bypass",
+            "title": "Control Plane",
+            "default": "bypass"
+          },
+          "kill_switch": {
+            "type": "string",
+            "enum": [
+              "selected_apps"
+            ],
+            "const": "selected_apps",
+            "title": "Kill Switch",
+            "default": "selected_apps"
+          },
+          "ipv6": {
+            "type": "string",
+            "enum": [
+              "block",
+              "tunnel"
+            ],
+            "title": "Ipv6",
+            "default": "block"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "included_packages"
+        ],
+        "title": "AppTrafficPolicy"
       },
       "AssignAccountRequest": {
         "properties": {
@@ -22633,6 +22881,177 @@
           "stale_handshakes"
         ],
         "title": "VPNPoolStats"
+      },
+      "VPNProfileIssue": {
+        "properties": {
+          "code": {
+            "type": "string",
+            "title": "Code"
+          },
+          "line": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Line"
+          }
+        },
+        "type": "object",
+        "required": [
+          "code"
+        ],
+        "title": "VPNProfileIssue"
+      },
+      "VPNProfilePreflightResponse": {
+        "properties": {
+          "schema_version": {
+            "type": "integer",
+            "enum": [
+              1
+            ],
+            "const": 1,
+            "title": "Schema Version",
+            "default": 1
+          },
+          "config_valid": {
+            "type": "boolean",
+            "title": "Config Valid"
+          },
+          "apply_allowed": {
+            "type": "boolean",
+            "enum": [
+              false
+            ],
+            "const": false,
+            "title": "Apply Allowed",
+            "default": false
+          },
+          "persisted": {
+            "type": "boolean",
+            "enum": [
+              false
+            ],
+            "const": false,
+            "title": "Persisted",
+            "default": false
+          },
+          "execution_confirmed": {
+            "type": "boolean",
+            "enum": [
+              false
+            ],
+            "const": false,
+            "title": "Execution Confirmed",
+            "default": false
+          },
+          "provider": {
+            "$ref": "#/components/schemas/VPNProviderCapability"
+          },
+          "protocol": {
+            "type": "string",
+            "title": "Protocol"
+          },
+          "protocol_version": {
+            "type": "string",
+            "title": "Protocol Version"
+          },
+          "traffic_policy": {
+            "$ref": "#/components/schemas/AppTrafficPolicy"
+          },
+          "endpoint": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Endpoint"
+          },
+          "features": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Features"
+          },
+          "issues": {
+            "items": {
+              "$ref": "#/components/schemas/VPNProfileIssue"
+            },
+            "type": "array",
+            "title": "Issues"
+          },
+          "blockers": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Blockers"
+          }
+        },
+        "type": "object",
+        "required": [
+          "config_valid",
+          "provider",
+          "protocol",
+          "protocol_version",
+          "traffic_policy",
+          "features",
+          "issues",
+          "blockers"
+        ],
+        "title": "VPNProfilePreflightResponse"
+      },
+      "VPNProviderCapability": {
+        "properties": {
+          "provider_id": {
+            "type": "string",
+            "title": "Provider Id"
+          },
+          "contract_version": {
+            "type": "integer",
+            "enum": [
+              1
+            ],
+            "const": 1,
+            "title": "Contract Version",
+            "default": 1
+          },
+          "execution_available": {
+            "type": "boolean",
+            "title": "Execution Available"
+          },
+          "app_isolation_available": {
+            "type": "boolean",
+            "title": "App Isolation Available"
+          },
+          "supported_protocol_versions": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Supported Protocol Versions"
+          },
+          "reason": {
+            "type": "string",
+            "title": "Reason"
+          }
+        },
+        "type": "object",
+        "required": [
+          "provider_id",
+          "execution_available",
+          "app_isolation_available",
+          "supported_protocol_versions",
+          "reason"
+        ],
+        "title": "VPNProviderCapability"
       },
       "ValidateScriptRequest": {
         "properties": {

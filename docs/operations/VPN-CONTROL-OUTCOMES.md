@@ -1,6 +1,11 @@
 # VPN control: targets, receipts and recovery
 
-Updated: 2026-10-03. Scope: the existing `/vpn` page and REST control contracts.
+Updated: 2026-10-21. Scope: the existing `/vpn` page and REST control contracts.
+The new [app-scoped VPN design](../design/VPN-EGRESS-ARCHITECTURE.md) adds a bounded
+profile inspector and truthful provider capabilities in source. Android root
+activation/reconnect and global firewall enable are quarantined before side effects.
+The inspected format is not an installed driver; live routing remains unaccepted.
+
 This work does not introduce a VPN provider, install Amnezia, or change the
 Android connection/tunnel configuration. The Android + server architecture stays
 the same; no Windows agent or host ADB is required by these controls.
@@ -63,7 +68,8 @@ publisher would not establish protocol compatibility or execution receipts.
 no-op publisher has that capability set to false. Owned requests receive one
 `unsupported` outcome per target, and no envelope is sent. There is no claim
 that this control is production ready. Actual Android VPN integration remains
-separate work, consistent with the user's instruction to defer it.
+separate work. The user has now authorized that work; the 21 October source
+preflight/quarantine step begins it without claiming an installed VPN provider.
 
 ## Rotation is a two-stage provider operation
 

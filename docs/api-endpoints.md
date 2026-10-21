@@ -5,7 +5,7 @@ Regenerate with `python -m scripts.export_api_docs`; verify with `--check`.
 Use the FastAPI/Pydantic versions pinned in `backend/requirements.txt`.
 The exporter does not run startup hooks or send HTTP requests.
 
-**188 HTTP operations across 149 paths.**
+**190 HTTP operations across 151 paths.**
 
 Full parameters, request bodies, response schemas and declared security schemes:
 [OpenAPI JSON](openapi.json). Manual explanations:
@@ -204,6 +204,8 @@ for tested behavior and remaining limits.
 | `POST` | `/api/v1/vpn/killswitch` | vpn | 200, 422 | Enable/disable Kill Switch on devices |
 | `GET` | `/api/v1/vpn/peers` | vpn | 200, 422 | List VPN peers |
 | `GET` | `/api/v1/vpn/pool/stats` | vpn | 200 | VPN pool statistics |
+| `POST` | `/api/v1/vpn/profile-preflight` | vpn | 200, 401, 403, 413, 422 | Inspect a VPN profile without saving or changing networking |
+| `GET` | `/api/v1/vpn/providers` | vpn | 200, 401, 403 | Vpn Providers |
 | `POST` | `/api/v1/vpn/revoke/bulk` | vpn | 200, 422 | Revoke VPN peers for selected devices |
 | `DELETE` | `/api/v1/vpn/revoke/{device_id}` | vpn | 204, 422 | Revoke VPN peer of device |
 | `POST` | `/api/v1/vpn/rotate` | vpn | 200, 422 | Bulk rotate VPN IPs |

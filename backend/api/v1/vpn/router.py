@@ -13,7 +13,8 @@ from datetime import datetime, timedelta, timezone
 from typing import Literal
 
 from cryptography.fernet import Fernet
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
+from pydantic import ValidationError
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -42,6 +43,12 @@ from backend.schemas.vpn.config import (
     AWGKeypairResponse,
     AWGObfuscationParamsSchema,
 )
+from backend.schemas.vpn.profile import (
+    VPNProfilePreflightRequest,
+    VPNProfilePreflightResponse,
+    VPNProviderCapability,
+    provider_capabilities,
+)
 from backend.services.vpn.awg_config import AWGConfigBuilder, AWGObfuscationParams
 from backend.services.vpn.deferred_pool import DeferredVPNPoolService
 from backend.services.vpn.dependencies import get_awg_config_builder, get_key_cipher
@@ -50,6 +57,7 @@ from backend.services.vpn.health_monitor import VPNHealthMonitor
 from backend.services.vpn.ip_pool import IPPoolAllocator
 from backend.services.vpn.killswitch_service import KillSwitchService
 from backend.services.vpn.pool_service import VPNPoolService
+from backend.services.vpn.profile_preflight import preflight_profile
 
 router = APIRouter(prefix="/vpn", tags=["vpn"])
 logger = logging.getLogger(__name__)
@@ -88,6 +96,48 @@ async def get_pool_service(
 
 def get_killswitch_service() -> KillSwitchService:
     return KillSwitchService(EventPublisher())
+
+
+@router.get("/providers", response_model=list[VPNProviderCapability], responses={
+    401: {"description": "Authentication required"}, 403: {"description": "VPN read permission required"},
+})
+async def vpn_providers(current_user=require_permission("vpn:read")):
+    return provider_capabilities()
+
+
+_profile_request_schema = VPNProfilePreflightRequest.model_json_schema()
+_profile_request_schema["properties"]["traffic_policy"] = _profile_request_schema.pop("$defs")["AppTrafficPolicy"]
+
+
+@router.post(
+    "/profile-preflight",
+    response_model=VPNProfilePreflightResponse,
+    summary="Inspect a VPN profile without saving or changing networking",
+    responses={
+        401: {"description": "Authentication required"},
+        403: {"description": "VPN write permission required"},
+        413: {"description": "Request body exceeds 96 KiB"},
+        422: {"description": "Invalid request; imported secrets are never echoed"},
+    },
+    openapi_extra={"requestBody": {"required": True, "content": {"application/json": {
+        "schema": _profile_request_schema,
+    }}}},
+)
+async def vpn_profile_preflight(request: Request, current_user=require_permission("vpn:write")):
+    # Read a bounded body ourselves: default FastAPI validation errors include
+    # input values, which would echo imported private keys on malformed input.
+    body = bytearray()
+    async for chunk in request.stream():
+        if len(body) + len(chunk) > 98304:
+            raise HTTPException(status_code=413, detail="vpn_profile_body_too_large")
+        body.extend(chunk)
+    try:
+        profile = VPNProfilePreflightRequest.model_validate_json(body)
+    except ValidationError:
+        raise HTTPException(status_code=422, detail="invalid_vpn_profile_request") from None
+    finally:
+        body.clear()
+    return preflight_profile(profile)
 
 
 # ---------------------------------------------------------------------------

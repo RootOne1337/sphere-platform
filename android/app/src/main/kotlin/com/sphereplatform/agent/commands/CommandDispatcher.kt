@@ -617,14 +617,8 @@ class CommandDispatcher @Inject constructor(
         CommandType.VPN_CONNECT -> {
             val config = cmd.payload["config"]!!.jsonPrimitive.content
             vpnManager.connect(config)
-            // Enable kill switch with management server carve-out
-            val vpnEndpoint = cmd.payload["endpoint"]?.jsonPrimitive?.content
-            if (vpnEndpoint != null) {
-                val mgmtHost = authStore.getServerUrl()
-                    .removePrefix("https://").removePrefix("http://")
-                    .substringBefore("/").substringBefore(":")
-                killSwitchManager.enable(vpnEndpoint, listOf(mgmtHost))
-            }
+            // App isolation/fail-closed belongs to the accepted VPN provider.
+            // Never enable a device-wide firewall based on a remote endpoint.
             null
         }
 
