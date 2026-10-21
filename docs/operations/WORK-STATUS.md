@@ -2,6 +2,19 @@
 
 **Проверенная установка:** UI `5cbb4bba` / API `15ce2b62`.
 
+**21 октября — VPN workspace: полный повторный CI успешен, rollout открыт.**
+Source `37926bd3`, run `20261021T155852Z-b40e9952`: frontend 2606/180 suites,
+backend 4399 passed, 63 skipped и 645 subtests; coverage 82,46%. Миграции проверены
+в изолированных сервисах, после прогона они удалены. Прежнее performance failure
+не повторилось, лимит 200 мс не менялся. GitHub local CI statuses опубликованы.
+Веб Linux image собран, но не допущен: перед packaged HTTP probe запас commit
+памяти снова превысил существующий порог. Первая попытка сохранена, повтор через
+build cache дал тот же image ID. Guard не ослаблялся; UI/API/APK не установлены.
+Полный Android CI требует 12 GiB свободной RAM; запрос владельцу об освобождении
+памяти остаётся открытым. Каталог/API migration/key recovery, runtime DB role,
+main-APK VPN pilot и общий operation journal остаются следующим этапом.
+[Квитанция итогового прогона](../audits/2026-10-21/VPN-WORKSPACE-REGRESSION.json).
+
 **21 октября — APK84: повторная локальная debug-сборка прошла.**
 Source `7f06701e`: Dev/Enterprise assemble и lint успешны; в каждом debug-варианте
 1275 tests, 0 failures/errors, 3 skipped. Подпись совпала с прежней pilot-подписью;
