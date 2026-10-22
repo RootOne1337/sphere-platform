@@ -72,6 +72,11 @@ APPROVED_PATHS = {
     "backend/websocket/video_transport.py", "backend/websocket/video_queue.py",
     "backend/websocket/stream_bridge.py",
     "backend/Dockerfile",
+    # Reviewed profile v1/v2 input/serialization only. No catalog/model/DB or
+    # executor changes are admitted by adding this schema-free contract delta.
+    "backend/api/v1/vpn/profile_input.py", "backend/schemas/vpn/profile.py",
+    "backend/schemas/vpn/runtime.py", "backend/services/vpn/profile_delivery.py",
+    "backend/services/vpn/profile_preflight.py",
 }
 PACKAGED_PATHS = ["backend", "alembic", "agent-config", "scripts/create_admin.py",
     "scripts/seed_enrollment_key.py", "scripts/backfill_script_metadata.py", "scripts/publish_script_source.py"]

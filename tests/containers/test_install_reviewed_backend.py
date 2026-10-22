@@ -40,6 +40,23 @@ def candidate(old):
 
 
 class BackendInstallerTests(unittest.TestCase):
+    def test_vpn_scope_contract_delta_does_not_admit_catalog_database_or_dispatch_changes(self):
+        payload = b"reviewed-dependency"
+        digest = hashlib.sha256(payload).hexdigest()
+        receipt = {"requirementsSha256": digest, "actionContractSha256": digest}
+        paths = ["backend/api/v1/vpn/profile_input.py", "backend/schemas/vpn/profile.py",
+                 "backend/schemas/vpn/runtime.py", "backend/services/vpn/profile_delivery.py",
+                 "backend/services/vpn/profile_preflight.py"]
+        with patch.object(installer, "command", return_value="\n".join(paths)), \
+                patch.object(installer.subprocess, "run", return_value=subprocess.CompletedProcess([], 0, payload, b"")):
+            self.assertEqual(installer.source_boundary(CURRENT, SOURCE, receipt), paths)
+        for extra in ("backend/services/vpn/profile_catalog.py", "backend/services/vpn/catalog_database.py",
+                      "backend/models/vpn_profile.py", "backend/services/task_dispatcher.py",
+                      "backend/requirements.txt", "alembic/versions/vpn_scope.py"):
+            with self.subTest(extra=extra), patch.object(installer, "command", return_value="\n".join(paths + [extra])):
+                with self.assertRaises(ValueError):
+                    installer.source_boundary(CURRENT, SOURCE, receipt)
+
     def test_exact_already_loaded_image_is_reused_without_another_archive_import(self):
         admitted = {"imageId": IMAGE, "imageTag": TAG}
         with patch.object(installer, "command", side_effect=[IMAGE, json.dumps([{"Id": IMAGE}])]) as command:
