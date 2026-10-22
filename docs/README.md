@@ -2,6 +2,8 @@
 
 **Проверенная установка:** UI `a239baa2` / API `1afdc529`.
 
+**23 октября — PH030: AWG2 через LAN-шлюз.** VPN-IP, HTTPS/DNS, исключение Sphere и блокировка при потере пути проверены; сетевое наблюдение 15 минут прошло. Прямой Android WAN и независимость от ПК не приняты. При подключении телефона в той же LAN выявлены ICE без ответов и `root_handoff_unknown`; APK87 только кандидат в CI, ещё не установлен. [Квитанция и ограничения](audits/2026-10-23/PH030-AWG2-LAN-GATEWAY-CANARY.md).
+
 **22 октября — APK85 на четырёх online устройствах.** PH010/PH011/PH025/PH030 завершили OTA, установленный SHA проверен на каждом; 17 offline не обновлены. Полный Android CI и настроенная облачная сборка успешны. Локальный AWG1 опыт основного APK подтвердил 17 HTTP-ответов, pause/resume и crash isolation; внешний WG/DNS, production journal/leases и общая VPN-приёмка остаются открытыми. [Поставка и реальные экраны](audits/2026-10-22/VPN-APK85-CLOUD-AND-ADDRESSED-DELIVERY.md) · [Физическая проверка](audits/2026-10-22/VPN-APK85-MAIN-CANARY.md).
 
 **22 октября — пакетный VPN-каталог установлен.** UI `46dd02ff` / API `4a6ada92`: проверены 100 файлов, поздний rollback и восстановление после потери ответа без повторной записи. Backend CI 4422 passed, frontend 2630; реальные desktop/mobile скриншоты и границы — в [квитанции поставки](audits/2026-10-22/VPN-BATCH-LIVE-DELIVERY.md). Main-APK VPN, per-app accounting, proxy runtime и server journal/leases остаются отдельной приёмкой.
