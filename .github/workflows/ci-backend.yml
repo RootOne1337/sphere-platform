@@ -16,7 +16,7 @@ permissions:
   contents: read
 
 concurrency:
-  group: backend-${{ github.event.pull_request.number || github.ref }}
+  group: backend-${{ github.event.pull_request.number || github.ref }}${{ inputs.netstack_probe_only && '-netstack-probe' || '' }}
   cancel-in-progress: true
 
 jobs:
