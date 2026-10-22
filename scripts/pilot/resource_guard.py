@@ -59,10 +59,15 @@ def windows_memory() -> dict[str, int]:
     info.cb = ctypes.sizeof(info)
     if not query(ctypes.byref(info), info.cb) or not info.PageSize:
         raise OSError('Windows memory counters unavailable')
-    return {name: int(getattr(info, field)) * info.PageSize for name, field in (
+    counters = {name: int(getattr(info, field)) * info.PageSize for name, field in (
         ('availableRamBytes', 'PhysicalAvailable'), ('totalRamBytes', 'PhysicalTotal'),
         ('committedBytes', 'CommitTotal'), ('commitLimitBytes', 'CommitLimit'),
+        ('kernelPagedBytes', 'KernelPaged'), ('kernelNonpagedBytes', 'KernelNonpaged'),
     )}
+    # Diagnostics only: paged pool is not all resident, and commit is not RAM.
+    # Do not sum these overlapping/scoped counters or use them to waive admission.
+    counters.update(processCount=int(info.ProcessCount), handleCount=int(info.HandleCount))
+    return counters
 
 
 def integer(value: object) -> bool:

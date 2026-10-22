@@ -193,7 +193,9 @@ def test_native_memory_converts_pointer_sized_pages_to_bytes(monkeypatch):
     from unittest.mock import Mock
 
     values = {"CommitTotal": 2**33, "CommitLimit": 2**34,
-              "PhysicalAvailable": 2**32, "PhysicalTotal": 2**33, "PageSize": 4096}
+              "PhysicalAvailable": 2**32, "PhysicalTotal": 2**33, "PageSize": 4096,
+              "KernelPaged": 2**31, "KernelNonpaged": 2**30,
+              "ProcessCount": 513, "HandleCount": 600123}
 
     def query(pointer, size):
         info = guard.ctypes.cast(pointer, guard.ctypes.POINTER(guard.WindowsPerformanceInfo)).contents
@@ -208,7 +210,16 @@ def test_native_memory_converts_pointer_sized_pages_to_bytes(monkeypatch):
 
     monkeypatch.setattr(guard.ctypes, "WinDLL", load, raising=False)
     assert guard.windows_memory() == {"committedBytes": 2**33 * 4096, "commitLimitBytes": 2**34 * 4096,
-                                       "availableRamBytes": 2**32 * 4096, "totalRamBytes": 2**33 * 4096}
+                                       "availableRamBytes": 2**32 * 4096, "totalRamBytes": 2**33 * 4096,
+                                       "kernelPagedBytes": 2**31 * 4096, "kernelNonpagedBytes": 2**30 * 4096,
+                                       "processCount": 513, "handleCount": 600123}
+
+
+def test_large_diagnostic_pools_neither_waive_nor_create_build_admission():
+    diagnostic = {"kernelPagedBytes": 10 * guard.GIB, "kernelNonpagedBytes": 6 * guard.GIB,
+                  "processCount": 600, "handleCount": 900000}
+    assert guard.evaluate(healthy() | diagnostic) == []
+    assert guard.evaluate(healthy() | diagnostic | {"availableRamBytes": guard.GIB}) == ["ram_headroom_low"]
 
 
 def test_missing_native_export_is_unavailable_without_exception_detail(monkeypatch, tmp_path):

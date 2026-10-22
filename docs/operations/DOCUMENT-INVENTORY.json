@@ -1,11 +1,11 @@
 {
   "schemaVersion": 1,
-  "reviewedAtUtc": "2026-10-22T19:36:54.516096+00:00",
+  "reviewedAtUtc": "2026-10-22T20:24:47.751929+00:00",
   "scope": "All tracked Markdown classified; active local-link paths scanned. Not semantic attestation of every sentence, command execution, external-link or live acceptance.",
   "countsByRole": {
     "ADR": 6,
     "CURRENT_ENTRYPOINT": 8,
-    "DATED_EVIDENCE": 370,
+    "DATED_EVIDENCE": 371,
     "DESIGN_SPECIFICATION": 85,
     "OPERATING_GUIDE": 71,
     "PROJECT_POLICY": 7,
@@ -1614,6 +1614,10 @@
     },
     {
       "file": "docs/audits/2026-10-22/VPN-STATUS-ROUTING-LIVE-DELIVERY.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
+      "file": "docs/audits/2026-10-23/HOST-MEMORY-DIAGNOSIS.md",
       "role": "DATED_EVIDENCE"
     },
     {

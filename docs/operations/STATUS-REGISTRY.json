@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "reviewedAtUtc": "2026-10-22T19:36:54.516096+00:00",
+  "reviewedAtUtc": "2026-10-22T20:24:47.751929+00:00",
   "sourceReviewed": "10d7d334e7a0cc440d498a6531ed79da83aff26e",
   "scope": "PH030 APK86: active AWG2 via bounded private-LAN ciphertext gateway, all-apps-except-Sphere. HTTPS/DNS, separate egress, pause/loss fail-closed and finite 15-minute network observation verified. Direct Android WAN and production VPN remain open. UI/API unchanged.",
   "baseline": "docs/audits/2026-10-05/ENTERPRISE-PRODUCT-BACKLOG.json",
@@ -6408,6 +6408,25 @@
     "nativeInputAccepted": false,
     "diagnosticShellTimeoutFencedInput": true,
     "apk87Installed": false,
-    "ciRunId": 39841457086
+    "ciRunId": 39844420660,
+    "initialQueuedDispatchId": 39841457086
+  },
+  "hostMemoryDiagnosis": {
+    "evidence": "docs/audits/2026-10-23/HOST-MEMORY-DIAGNOSIS.json",
+    "evidenceSha256NormalizedLf": "34574a2d2746647877e8e4f4eb1bbf2fd8ee9c1e573e2f53c004a51e5af69e29",
+    "specificDriverLeakProven": false,
+    "processesStopped": 0,
+    "rebootPerformed": false,
+    "resourceGuardThresholdsUnchanged": true,
+    "unitTestsPassed": 49
+  },
+  "vpnAwgLanGatewayRecovery": {
+    "evidence": "docs/audits/2026-10-23/PH030-AWG2-GATEWAY-RECOVERY.json",
+    "evidenceSha256NormalizedLf": "6e59d8ff61f5894cbb761614915716c2b90ceb7176dd0616a008ac7ead0e2624",
+    "priorFileWasStale": true,
+    "listenerRestored": true,
+    "sameAndroidControlSession": true,
+    "freshHttpsAccepted": false,
+    "productionAccepted": false
   }
 }

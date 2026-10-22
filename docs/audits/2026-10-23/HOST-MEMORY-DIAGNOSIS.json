@@ -1,0 +1,215 @@
+{
+  "schemaVersion": 1,
+  "observedAtUtc": "2026-10-22T20:20:13.5890898+00:00",
+  "scope": "Finite read-only host memory diagnosis after user stopped local emulators; no leak attribution accepted.",
+  "os": {
+    "LastBootUpTime": "2026-10-14T19:38:32.5+05:00",
+    "TotalVisibleMemorySize": 49480700,
+    "FreePhysicalMemory": 10440288,
+    "BuildNumber": "26200",
+    "Version": "10.0.26200"
+  },
+  "memory": {
+    "AvailableMBytes": 10197,
+    "CommittedBytes": 78985326592,
+    "CommitLimit": 101336473600,
+    "PoolPagedBytes": 10031345664,
+    "PoolPagedResidentBytes": 5553967104,
+    "PoolNonpagedBytes": 5668663296,
+    "CacheBytes": 1415892992,
+    "PagesInputPersec": 0,
+    "PagesOutputPersec": 0
+  },
+  "pagefileMiB": {
+    "AllocatedBaseSize": 48320,
+    "CurrentUsage": 222,
+    "PeakUsage": 389
+  },
+  "memoryCompressionProcess": {
+    "count": 1,
+    "workingSetBytes": 10766381056,
+    "privateBytes": 28438528
+  },
+  "wslProcess": {
+    "count": 1,
+    "workingSetBytes": 2564911104,
+    "privateBytes": 22515187712
+  },
+  "containerCount": 14,
+  "containerReportedUsedBytesApprox": 2140360671,
+  "wslMeminfo": {
+    "MemTotalBytes": 24773996544,
+    "MemAvailableBytes": 20462485504,
+    "BuffersBytes": 2365083648,
+    "CachedBytes": 14011006976,
+    "AnonPagesBytes": 3193393152,
+    "SlabBytes": 1737715712,
+    "SReclaimableBytes": 1553952768
+  },
+  "wslConfigPresent": false,
+  "poolSamples": {
+    "count": 3,
+    "firstAtUtc": "2026-10-22T20:14:28.671891+00:00",
+    "lastAtUtc": "2026-10-22T20:15:48.726068+00:00",
+    "topTagsLast": [
+      {
+        "tag": "FMfn",
+        "pagedBytes": 3435811072,
+        "nonpagedBytes": 2736,
+        "pagedOutstanding": 9224799,
+        "nonpagedOutstanding": 9,
+        "pagedDeltaBytes": 365600,
+        "nonpagedDeltaBytes": 304
+      },
+      {
+        "tag": "Toke",
+        "pagedBytes": 1532687616,
+        "nonpagedBytes": 0,
+        "pagedOutstanding": 704734,
+        "nonpagedOutstanding": 0,
+        "pagedDeltaBytes": 160320,
+        "nonpagedDeltaBytes": 0
+      },
+      {
+        "tag": "AleS",
+        "pagedBytes": 0,
+        "nonpagedBytes": 1242851440,
+        "pagedOutstanding": 0,
+        "nonpagedOutstanding": 323415,
+        "pagedDeltaBytes": 0,
+        "nonpagedDeltaBytes": 57600
+      },
+      {
+        "tag": "File",
+        "pagedBytes": 0,
+        "nonpagedBytes": 1016502880,
+        "pagedOutstanding": 0,
+        "nonpagedOutstanding": 2541378,
+        "pagedDeltaBytes": 0,
+        "nonpagedDeltaBytes": 100368
+      },
+      {
+        "tag": "003D",
+        "pagedBytes": 566722560,
+        "nonpagedBytes": 0,
+        "pagedOutstanding": 120,
+        "nonpagedOutstanding": 0,
+        "pagedDeltaBytes": 0,
+        "nonpagedDeltaBytes": 0
+      },
+      {
+        "tag": "SW03",
+        "pagedBytes": 69632,
+        "nonpagedBytes": 541456144,
+        "pagedOutstanding": 1,
+        "nonpagedOutstanding": 16,
+        "pagedDeltaBytes": 0,
+        "nonpagedDeltaBytes": 0
+      },
+      {
+        "tag": "SQSF",
+        "pagedBytes": 0,
+        "nonpagedBytes": 395638864,
+        "pagedOutstanding": 0,
+        "nonpagedOutstanding": 2472630,
+        "pagedDeltaBytes": 0,
+        "nonpagedDeltaBytes": 36640
+      },
+      {
+        "tag": "Ntfc",
+        "pagedBytes": 394678560,
+        "nonpagedBytes": 1440,
+        "pagedOutstanding": 2466741,
+        "nonpagedOutstanding": 9,
+        "pagedDeltaBytes": 35040,
+        "nonpagedDeltaBytes": 0
+      },
+      {
+        "tag": "IoNm",
+        "pagedBytes": 345269952,
+        "nonpagedBytes": 0,
+        "pagedOutstanding": 2494356,
+        "nonpagedOutstanding": 0,
+        "pagedDeltaBytes": 40320,
+        "nonpagedDeltaBytes": 0
+      },
+      {
+        "tag": "DAL3",
+        "pagedBytes": 0,
+        "nonpagedBytes": 325496144,
+        "pagedOutstanding": 0,
+        "nonpagedOutstanding": 2367,
+        "pagedDeltaBytes": 0,
+        "nonpagedDeltaBytes": 0
+      },
+      {
+        "tag": "SeAt",
+        "pagedBytes": 272393472,
+        "nonpagedBytes": 0,
+        "pagedOutstanding": 2830035,
+        "nonpagedOutstanding": 0,
+        "pagedDeltaBytes": 29888,
+        "nonpagedDeltaBytes": 0
+      },
+      {
+        "tag": "MmSt",
+        "pagedBytes": 271461376,
+        "nonpagedBytes": 0,
+        "pagedOutstanding": 105754,
+        "nonpagedOutstanding": 0,
+        "pagedDeltaBytes": 1099488,
+        "nonpagedDeltaBytes": 0
+      }
+    ]
+  },
+  "resourceGuard": {
+    "observedAt": "2026-10-22T20:20:17.241821+00:00",
+    "system": "Windows",
+    "freeDiskBytes": 69265747968,
+    "deviceCommandsSent": false,
+    "mutationsPerformed": false,
+    "volumeHealthStatus": "Healthy",
+    "volumeOperationalStatus": [
+      "OK"
+    ],
+    "availableRamBytes": 10654445568,
+    "totalRamBytes": 50668236800,
+    "committedBytes": 79016284160,
+    "commitLimitBytes": 101336473600,
+    "kernelPagedBytes": 10032234496,
+    "kernelNonpagedBytes": 5670899712,
+    "processCount": 461,
+    "handleCount": 983335,
+    "memoryMeasurement": "GetPerformanceInfo",
+    "findings": [
+      "ram_headroom_low"
+    ],
+    "admissionFindings": [
+      "ram_headroom_low"
+    ],
+    "volumeExceptionRequested": false,
+    "volumeExceptionApplied": false,
+    "buildAllowed": false
+  },
+  "interpretation": {
+    "privateBytesAreResidentRam": false,
+    "commitIsResidentRam": false,
+    "pagedPoolAllResident": false,
+    "wslCacheEqualsAdditionalHostResidentRam": false,
+    "tagIdentifiesTriggeringApplication": false,
+    "specificDriverLeakProven": false
+  },
+  "rebootPerformed": false,
+  "processesStopped": 0,
+  "memoryTrimmingPerformed": false,
+  "pagefileOrWslConfigChanged": false,
+  "emulatorsStarted": false,
+  "checks": {
+    "resourceGuardUnitTests": 49,
+    "ruff": "passed"
+  },
+  "privateEvidenceHashes": {
+    "snapshot.private.json": "7eb0617dcf376e4c57bd7db989091404b87637e458f4196941709c2a40c801a8",
+    "trend.json": "7214cac03c71791a2fdfb3333017ee3a6cb022ab339617491ed6b65514ace134"
+  }
+}
