@@ -203,6 +203,13 @@ def validate_full_job(jobs: dict) -> None:
     )
 
 
+def validation_jobs_path(run_id: int, run: dict) -> str:
+    """Bind admission to the successful run attempt, not an aggregate job list."""
+    attempt = run.get("run_attempt")
+    require(type(run_id) is int and run_id > 0 and type(attempt) is int and 1 <= attempt <= 10000)
+    return f"/actions/runs/{run_id}/attempts/{attempt}/jobs?per_page=100"
+
+
 def download_archive(repo: str, artifact: dict, token: str) -> bytes:
     require(bool(re.fullmatch(r"[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+", repo)))
     require(
@@ -455,7 +462,7 @@ def main() -> None:
         run = api_json(repo, f"/actions/runs/{args.run_id}", token)
         tested, head = validate_run(root, args.run_id, repo, run)
         clean_components(root)
-        validate_full_job(api_json(repo, f"/actions/runs/{args.run_id}/jobs?per_page=100", token))
+        validate_full_job(api_json(repo, validation_jobs_path(args.run_id, run), token))
         artifacts = api_json(repo, f"/actions/runs/{args.run_id}/artifacts?per_page=100", token)
         require(artifacts.get("total_count", 101) <= 100)
         matches = [

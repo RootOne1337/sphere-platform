@@ -135,6 +135,13 @@ class AndroidCloudPackageTests(unittest.TestCase):
             with self.assertRaises(ValueError):
                 delivery.validate_run(Path("."), 123, "owner/repo", run)
 
+    def test_validation_job_lookup_is_pinned_to_the_exact_run_attempt(self):
+        self.assertEqual(delivery.validation_jobs_path(123, {"run_attempt": 2}),
+                         "/actions/runs/123/attempts/2/jobs?per_page=100")
+        for attempt in (None, True, 0, -1, "2", 1.0, 10001):
+            with self.subTest(attempt=attempt), self.assertRaises(ValueError):
+                delivery.validation_jobs_path(123, {"run_attempt": attempt})
+
     def test_packaging_only_success_cannot_substitute_for_full_ci(self):
         job = {
             "name": "Android tests and signed release smoke build",
