@@ -1,0 +1,60 @@
+{
+  "schemaVersion": 1,
+  "observedAtUtc": "2026-10-22T10:41:52.227211+00:00",
+  "runtimeInstalled": true,
+  "runtime": {
+    "sourceRevision": "46dd02fff711c1667b44520b85290226b7155287",
+    "apiSourceRevision": "cd2431e2ae0c719959147626981b00ac8f9703f5",
+    "uiImageId": "sha256:7fd4d52ec5402dae96b715d890f9f905e0ca1a4b5417423eb9de5f3ce0d238d0",
+    "apiImageId": "sha256:cf84467ff9fe581f18cc67ecdb3a28a128466fd670d7de1737e26995d4f3f3b3"
+  },
+  "browser": {
+    "finiteAccepted": true,
+    "scope": "Actual installed VPN diagnostics/list after confirmed disconnect; no media, input, game or physical VPN acceptance.",
+    "origin": "http://127.0.0.1:3015",
+    "viewports": [
+      [
+        1440,
+        1000
+      ],
+      [
+        390,
+        844
+      ]
+    ],
+    "mobileDocumentWidth": 390,
+    "mobileDialogWidth": 390,
+    "mobileHorizontalOverflow": false,
+    "apkVersionDisplayed": "1.2.84-dev",
+    "providerPidDisplayed": 22801,
+    "staleSnapshotNotRefreshedByStatusRead": true,
+    "identifiersReachable": true,
+    "footerReachable": true,
+    "screenshots": [
+      {
+        "file": "docs/audits/2026-10-22/assets/vpn-status84-live/desktop-diagnostics.png",
+        "sha256": "e73dda5104e1952f76a420c0e39760161e0a513a299c276990a9b6c280a1779d"
+      },
+      {
+        "file": "docs/audits/2026-10-22/assets/vpn-status84-live/mobile-diagnostics.png",
+        "sha256": "af17cff3254efff9fa22240532f9dd0c2b231f1081549ffc20c18e86d7e8ed59"
+      },
+      {
+        "file": "docs/audits/2026-10-22/assets/vpn-status84-live/mobile-identifiers.png",
+        "sha256": "8d6633b621e5de533453872311cd6a6cb3cc7cef551106831b74c66f43d407c9"
+      },
+      {
+        "file": "docs/audits/2026-10-22/assets/vpn-status84-live/mobile-list.png",
+        "sha256": "dc8e2272bdc7edb282cbc075e1ab4b45db3e4e6a43b9aeb294d2925ebbf04bb7"
+      }
+    ],
+    "browserClosed": true,
+    "expectedPreLogin401": true,
+    "consoleCleanlinessClaimed": false,
+    "directFramesPresented": 0
+  },
+  "deliveryEvidence": "docs/audits/2026-10-22/VPN-STATUS-ROUTING-LIVE-DELIVERY.json",
+  "deliveryEvidenceSha256NormalizedLf": "d4d0cc605da7a0b47a4cbc8a1efbb2313ff193cec894f12a625924a3a86470cc",
+  "physicalVpnAccepted": false,
+  "productionAccepted": false
+}

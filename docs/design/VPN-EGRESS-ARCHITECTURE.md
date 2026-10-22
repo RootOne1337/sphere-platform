@@ -5,10 +5,13 @@
 Связанные контракты: [VPN control](../operations/VPN-CONTROL-OUTCOMES.md),
 [инциденты VPN](../runbooks/02-vpn-incident.md), [моторный ИИ](MOTOR-AI-PLATFORM.md).
 
-Обновление текущего статуса: UI `46dd02ff`, API `4a6ada92`, добавочная миграция,
+Обновление текущего статуса: UI `46dd02ff`, API `cd2431e2`, добавочная миграция,
 отдельный catalog DB-login/key ring и live HTTP/browser проверка установлены.
 APK84 установлен только на PH011; остальные устройства этим OTA не затронуты.
 Физический app-scoped VPN не принят.
+Живой опыт APK84 выявил несовместимость mark на PH011; guard снят штатно.
+APK85 без изменения packet mark находится на этапе CI, не установлен.
+[Опыт и исправление](../audits/2026-10-22/VPN-APK84-MAIN-CANARY.md).
 [Android-квитанция](../audits/2026-10-22/VPN-APK84-PH011-DELIVERY.md).
 Массовый импорт до 100 профилей установлен и проверен вживую; пулы/аренды,
 proxy adapters, UID metrics и общий исполнитель подробно определены в
