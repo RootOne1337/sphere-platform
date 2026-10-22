@@ -1,8 +1,8 @@
 {
   "schemaVersion": 1,
-  "reviewedAtUtc": "2026-10-22T15:05:57.660563+00:00",
+  "reviewedAtUtc": "2026-10-22T16:02:39.197650+00:00",
   "sourceReviewed": "3b437ee8c5a0067f3cfb792b25e8b383e739fc88",
-  "scope": "UI46dd/APIcd243 and APK85 on four online devices. PH030 user WG reaches TCP/TLS but stalls; paused with selected Black Russia UID blocked in both families, Sphere preserved. All-apps mode, external data reliability, 17 offline devices and production executor/leases remain open.",
+  "scope": "Installed UI46dd/APIcd243 and APK85 unchanged. All-apps v2 source implemented; cloud frontend passed, backend tests passed but API docs correction requires new CI, Android CI pending. Exactly one WG1 peer created and independently passed HTTPS/DNS on host; Android all-apps acceptance remains open. PH030 retained paused game guard.",
   "baseline": "docs/audits/2026-10-05/ENTERPRISE-PRODUCT-BACKLOG.json",
   "previousCrosscheck": "docs/audits/2026-10-09/CHAT-CODE-RECONCILIATION.json",
   "counts": {
@@ -6366,6 +6366,14 @@
     "rootCauseConfirmed": false,
     "allAppsExceptControlImplemented": false,
     "webSourceChangeInstalled": false,
+    "productionAccepted": false
+  },
+  "vpnAllAppsV2Implementation": {
+    "evidence": "docs/audits/2026-10-22/VPN-ALL-APPS-V2-IMPLEMENTATION.json",
+    "evidenceSha256NormalizedLf": "c2a5d5144b9ef196c76fa2f373f73807ca2f2e2f3782a80bd707132eac8deb37",
+    "candidateVersionCode": 10286,
+    "sourceImplemented": true,
+    "candidateInstalled": false,
     "productionAccepted": false
   }
 }

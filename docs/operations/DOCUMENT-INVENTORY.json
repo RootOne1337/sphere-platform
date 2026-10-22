@@ -1,11 +1,11 @@
 {
   "schemaVersion": 1,
-  "reviewedAtUtc": "2026-10-22T15:05:57.660563+00:00",
+  "reviewedAtUtc": "2026-10-22T16:02:39.197650+00:00",
   "scope": "All tracked Markdown classified; active local-link paths scanned. Not semantic attestation of every sentence, command execution, external-link or live acceptance.",
   "countsByRole": {
     "ADR": 6,
     "CURRENT_ENTRYPOINT": 8,
-    "DATED_EVIDENCE": 365,
+    "DATED_EVIDENCE": 366,
     "DESIGN_SPECIFICATION": 84,
     "OPERATING_GUIDE": 70,
     "PROJECT_POLICY": 7,
@@ -1562,6 +1562,10 @@
     },
     {
       "file": "docs/audits/2026-10-22/PH030-WG85-PATH-INVESTIGATION.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
+      "file": "docs/audits/2026-10-22/VPN-ALL-APPS-V2-IMPLEMENTATION.md",
       "role": "DATED_EVIDENCE"
     },
     {

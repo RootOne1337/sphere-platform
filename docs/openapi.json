@@ -9946,10 +9946,10 @@
                     "additionalProperties": false,
                     "properties": {
                       "schema_version": {
-                        "const": 1,
                         "default": 1,
                         "enum": [
-                          1
+                          1,
+                          2
                         ],
                         "title": "Schema Version",
                         "type": "integer"
@@ -9990,59 +9990,110 @@
                         "writeOnly": true
                       },
                       "traffic_policy": {
-                        "additionalProperties": false,
-                        "properties": {
-                          "mode": {
-                            "const": "selected_apps",
-                            "default": "selected_apps",
-                            "enum": [
-                              "selected_apps"
-                            ],
-                            "title": "Mode",
-                            "type": "string"
-                          },
-                          "included_packages": {
-                            "items": {
-                              "type": "string"
+                        "oneOf": [
+                          {
+                            "additionalProperties": false,
+                            "properties": {
+                              "mode": {
+                                "const": "selected_apps",
+                                "default": "selected_apps",
+                                "enum": [
+                                  "selected_apps"
+                                ],
+                                "title": "Mode",
+                                "type": "string"
+                              },
+                              "included_packages": {
+                                "items": {
+                                  "type": "string"
+                                },
+                                "maxItems": 64,
+                                "minItems": 1,
+                                "title": "Included Packages",
+                                "type": "array"
+                              },
+                              "control_plane": {
+                                "const": "bypass",
+                                "default": "bypass",
+                                "enum": [
+                                  "bypass"
+                                ],
+                                "title": "Control Plane",
+                                "type": "string"
+                              },
+                              "kill_switch": {
+                                "const": "selected_apps",
+                                "default": "selected_apps",
+                                "enum": [
+                                  "selected_apps"
+                                ],
+                                "title": "Kill Switch",
+                                "type": "string"
+                              },
+                              "ipv6": {
+                                "default": "block",
+                                "enum": [
+                                  "block",
+                                  "tunnel"
+                                ],
+                                "title": "Ipv6",
+                                "type": "string"
+                              }
                             },
-                            "maxItems": 64,
-                            "minItems": 1,
-                            "title": "Included Packages",
-                            "type": "array"
-                          },
-                          "control_plane": {
-                            "const": "bypass",
-                            "default": "bypass",
-                            "enum": [
-                              "bypass"
+                            "required": [
+                              "included_packages"
                             ],
-                            "title": "Control Plane",
-                            "type": "string"
+                            "title": "SelectedAppTrafficPolicy",
+                            "type": "object"
                           },
-                          "kill_switch": {
-                            "const": "selected_apps",
-                            "default": "selected_apps",
-                            "enum": [
-                              "selected_apps"
+                          {
+                            "additionalProperties": false,
+                            "description": "Current Android user applications; no caller-supplied bypass packages/UIDs.",
+                            "properties": {
+                              "mode": {
+                                "const": "all_apps_except_control",
+                                "enum": [
+                                  "all_apps_except_control"
+                                ],
+                                "title": "Mode",
+                                "type": "string"
+                              },
+                              "control_plane": {
+                                "const": "bypass",
+                                "default": "bypass",
+                                "enum": [
+                                  "bypass"
+                                ],
+                                "title": "Control Plane",
+                                "type": "string"
+                              },
+                              "kill_switch": {
+                                "const": "all_apps_except_control",
+                                "enum": [
+                                  "all_apps_except_control"
+                                ],
+                                "title": "Kill Switch",
+                                "type": "string"
+                              },
+                              "ipv6": {
+                                "default": "block",
+                                "enum": [
+                                  "block",
+                                  "tunnel"
+                                ],
+                                "title": "Ipv6",
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "mode",
+                              "kill_switch"
                             ],
-                            "title": "Kill Switch",
-                            "type": "string"
-                          },
-                          "ipv6": {
-                            "default": "block",
-                            "enum": [
-                              "block",
-                              "tunnel"
-                            ],
-                            "title": "Ipv6",
-                            "type": "string"
+                            "title": "AllAppsExceptControlPolicy",
+                            "type": "object"
                           }
-                        },
-                        "required": [
-                          "included_packages"
                         ],
-                        "title": "AppTrafficPolicy",
-                        "type": "object"
+                        "title": "Traffic Policy"
                       }
                     },
                     "required": [
@@ -10159,9 +10210,9 @@
                             "schema_version": {
                               "type": "integer",
                               "enum": [
-                                1
+                                1,
+                                2
                               ],
-                              "const": 1,
                               "title": "Schema Version",
                               "default": 1
                             },
@@ -10201,59 +10252,110 @@
                               "writeOnly": true
                             },
                             "traffic_policy": {
-                              "properties": {
-                                "mode": {
-                                  "type": "string",
-                                  "enum": [
-                                    "selected_apps"
-                                  ],
-                                  "const": "selected_apps",
-                                  "title": "Mode",
-                                  "default": "selected_apps"
-                                },
-                                "included_packages": {
-                                  "items": {
-                                    "type": "string"
+                              "oneOf": [
+                                {
+                                  "properties": {
+                                    "mode": {
+                                      "type": "string",
+                                      "enum": [
+                                        "selected_apps"
+                                      ],
+                                      "const": "selected_apps",
+                                      "title": "Mode",
+                                      "default": "selected_apps"
+                                    },
+                                    "included_packages": {
+                                      "items": {
+                                        "type": "string"
+                                      },
+                                      "type": "array",
+                                      "maxItems": 64,
+                                      "minItems": 1,
+                                      "title": "Included Packages"
+                                    },
+                                    "control_plane": {
+                                      "type": "string",
+                                      "enum": [
+                                        "bypass"
+                                      ],
+                                      "const": "bypass",
+                                      "title": "Control Plane",
+                                      "default": "bypass"
+                                    },
+                                    "kill_switch": {
+                                      "type": "string",
+                                      "enum": [
+                                        "selected_apps"
+                                      ],
+                                      "const": "selected_apps",
+                                      "title": "Kill Switch",
+                                      "default": "selected_apps"
+                                    },
+                                    "ipv6": {
+                                      "type": "string",
+                                      "enum": [
+                                        "block",
+                                        "tunnel"
+                                      ],
+                                      "title": "Ipv6",
+                                      "default": "block"
+                                    }
                                   },
-                                  "type": "array",
-                                  "maxItems": 64,
-                                  "minItems": 1,
-                                  "title": "Included Packages"
-                                },
-                                "control_plane": {
-                                  "type": "string",
-                                  "enum": [
-                                    "bypass"
+                                  "additionalProperties": false,
+                                  "type": "object",
+                                  "required": [
+                                    "included_packages"
                                   ],
-                                  "const": "bypass",
-                                  "title": "Control Plane",
-                                  "default": "bypass"
+                                  "title": "SelectedAppTrafficPolicy"
                                 },
-                                "kill_switch": {
-                                  "type": "string",
-                                  "enum": [
-                                    "selected_apps"
+                                {
+                                  "properties": {
+                                    "mode": {
+                                      "type": "string",
+                                      "enum": [
+                                        "all_apps_except_control"
+                                      ],
+                                      "const": "all_apps_except_control",
+                                      "title": "Mode"
+                                    },
+                                    "control_plane": {
+                                      "type": "string",
+                                      "enum": [
+                                        "bypass"
+                                      ],
+                                      "const": "bypass",
+                                      "title": "Control Plane",
+                                      "default": "bypass"
+                                    },
+                                    "kill_switch": {
+                                      "type": "string",
+                                      "enum": [
+                                        "all_apps_except_control"
+                                      ],
+                                      "const": "all_apps_except_control",
+                                      "title": "Kill Switch"
+                                    },
+                                    "ipv6": {
+                                      "type": "string",
+                                      "enum": [
+                                        "block",
+                                        "tunnel"
+                                      ],
+                                      "title": "Ipv6",
+                                      "default": "block"
+                                    }
+                                  },
+                                  "additionalProperties": false,
+                                  "type": "object",
+                                  "required": [
+                                    "mode",
+                                    "kill_switch"
                                   ],
-                                  "const": "selected_apps",
-                                  "title": "Kill Switch",
-                                  "default": "selected_apps"
-                                },
-                                "ipv6": {
-                                  "type": "string",
-                                  "enum": [
-                                    "block",
-                                    "tunnel"
-                                  ],
-                                  "title": "Ipv6",
-                                  "default": "block"
+                                  "title": "AllAppsExceptControlPolicy",
+                                  "description": "Current Android user applications; no caller-supplied bypass packages/UIDs."
                                 }
-                              },
-                              "additionalProperties": false,
-                              "type": "object",
-                              "required": [
-                                "included_packages"
                               ],
-                              "title": "AppTrafficPolicy"
+                              "title": "Traffic Policy"
                             }
                           },
                           "additionalProperties": false,
@@ -10370,9 +10472,9 @@
                             "schema_version": {
                               "type": "integer",
                               "enum": [
-                                1
+                                1,
+                                2
                               ],
-                              "const": 1,
                               "title": "Schema Version",
                               "default": 1
                             },
@@ -10412,59 +10514,110 @@
                               "writeOnly": true
                             },
                             "traffic_policy": {
-                              "properties": {
-                                "mode": {
-                                  "type": "string",
-                                  "enum": [
-                                    "selected_apps"
-                                  ],
-                                  "const": "selected_apps",
-                                  "title": "Mode",
-                                  "default": "selected_apps"
-                                },
-                                "included_packages": {
-                                  "items": {
-                                    "type": "string"
+                              "oneOf": [
+                                {
+                                  "properties": {
+                                    "mode": {
+                                      "type": "string",
+                                      "enum": [
+                                        "selected_apps"
+                                      ],
+                                      "const": "selected_apps",
+                                      "title": "Mode",
+                                      "default": "selected_apps"
+                                    },
+                                    "included_packages": {
+                                      "items": {
+                                        "type": "string"
+                                      },
+                                      "type": "array",
+                                      "maxItems": 64,
+                                      "minItems": 1,
+                                      "title": "Included Packages"
+                                    },
+                                    "control_plane": {
+                                      "type": "string",
+                                      "enum": [
+                                        "bypass"
+                                      ],
+                                      "const": "bypass",
+                                      "title": "Control Plane",
+                                      "default": "bypass"
+                                    },
+                                    "kill_switch": {
+                                      "type": "string",
+                                      "enum": [
+                                        "selected_apps"
+                                      ],
+                                      "const": "selected_apps",
+                                      "title": "Kill Switch",
+                                      "default": "selected_apps"
+                                    },
+                                    "ipv6": {
+                                      "type": "string",
+                                      "enum": [
+                                        "block",
+                                        "tunnel"
+                                      ],
+                                      "title": "Ipv6",
+                                      "default": "block"
+                                    }
                                   },
-                                  "type": "array",
-                                  "maxItems": 64,
-                                  "minItems": 1,
-                                  "title": "Included Packages"
-                                },
-                                "control_plane": {
-                                  "type": "string",
-                                  "enum": [
-                                    "bypass"
+                                  "additionalProperties": false,
+                                  "type": "object",
+                                  "required": [
+                                    "included_packages"
                                   ],
-                                  "const": "bypass",
-                                  "title": "Control Plane",
-                                  "default": "bypass"
+                                  "title": "SelectedAppTrafficPolicy"
                                 },
-                                "kill_switch": {
-                                  "type": "string",
-                                  "enum": [
-                                    "selected_apps"
+                                {
+                                  "properties": {
+                                    "mode": {
+                                      "type": "string",
+                                      "enum": [
+                                        "all_apps_except_control"
+                                      ],
+                                      "const": "all_apps_except_control",
+                                      "title": "Mode"
+                                    },
+                                    "control_plane": {
+                                      "type": "string",
+                                      "enum": [
+                                        "bypass"
+                                      ],
+                                      "const": "bypass",
+                                      "title": "Control Plane",
+                                      "default": "bypass"
+                                    },
+                                    "kill_switch": {
+                                      "type": "string",
+                                      "enum": [
+                                        "all_apps_except_control"
+                                      ],
+                                      "const": "all_apps_except_control",
+                                      "title": "Kill Switch"
+                                    },
+                                    "ipv6": {
+                                      "type": "string",
+                                      "enum": [
+                                        "block",
+                                        "tunnel"
+                                      ],
+                                      "title": "Ipv6",
+                                      "default": "block"
+                                    }
+                                  },
+                                  "additionalProperties": false,
+                                  "type": "object",
+                                  "required": [
+                                    "mode",
+                                    "kill_switch"
                                   ],
-                                  "const": "selected_apps",
-                                  "title": "Kill Switch",
-                                  "default": "selected_apps"
-                                },
-                                "ipv6": {
-                                  "type": "string",
-                                  "enum": [
-                                    "block",
-                                    "tunnel"
-                                  ],
-                                  "title": "Ipv6",
-                                  "default": "block"
+                                  "title": "AllAppsExceptControlPolicy",
+                                  "description": "Current Android user applications; no caller-supplied bypass packages/UIDs."
                                 }
-                              },
-                              "additionalProperties": false,
-                              "type": "object",
-                              "required": [
-                                "included_packages"
                               ],
-                              "title": "AppTrafficPolicy"
+                              "title": "Traffic Policy"
                             }
                           },
                           "additionalProperties": false,
@@ -10833,10 +10986,10 @@
                     "additionalProperties": false,
                     "properties": {
                       "schema_version": {
-                        "const": 1,
                         "default": 1,
                         "enum": [
-                          1
+                          1,
+                          2
                         ],
                         "title": "Schema Version",
                         "type": "integer"
@@ -10877,59 +11030,110 @@
                         "writeOnly": true
                       },
                       "traffic_policy": {
-                        "additionalProperties": false,
-                        "properties": {
-                          "mode": {
-                            "const": "selected_apps",
-                            "default": "selected_apps",
-                            "enum": [
-                              "selected_apps"
-                            ],
-                            "title": "Mode",
-                            "type": "string"
-                          },
-                          "included_packages": {
-                            "items": {
-                              "type": "string"
+                        "oneOf": [
+                          {
+                            "additionalProperties": false,
+                            "properties": {
+                              "mode": {
+                                "const": "selected_apps",
+                                "default": "selected_apps",
+                                "enum": [
+                                  "selected_apps"
+                                ],
+                                "title": "Mode",
+                                "type": "string"
+                              },
+                              "included_packages": {
+                                "items": {
+                                  "type": "string"
+                                },
+                                "maxItems": 64,
+                                "minItems": 1,
+                                "title": "Included Packages",
+                                "type": "array"
+                              },
+                              "control_plane": {
+                                "const": "bypass",
+                                "default": "bypass",
+                                "enum": [
+                                  "bypass"
+                                ],
+                                "title": "Control Plane",
+                                "type": "string"
+                              },
+                              "kill_switch": {
+                                "const": "selected_apps",
+                                "default": "selected_apps",
+                                "enum": [
+                                  "selected_apps"
+                                ],
+                                "title": "Kill Switch",
+                                "type": "string"
+                              },
+                              "ipv6": {
+                                "default": "block",
+                                "enum": [
+                                  "block",
+                                  "tunnel"
+                                ],
+                                "title": "Ipv6",
+                                "type": "string"
+                              }
                             },
-                            "maxItems": 64,
-                            "minItems": 1,
-                            "title": "Included Packages",
-                            "type": "array"
-                          },
-                          "control_plane": {
-                            "const": "bypass",
-                            "default": "bypass",
-                            "enum": [
-                              "bypass"
+                            "required": [
+                              "included_packages"
                             ],
-                            "title": "Control Plane",
-                            "type": "string"
+                            "title": "SelectedAppTrafficPolicy",
+                            "type": "object"
                           },
-                          "kill_switch": {
-                            "const": "selected_apps",
-                            "default": "selected_apps",
-                            "enum": [
-                              "selected_apps"
+                          {
+                            "additionalProperties": false,
+                            "description": "Current Android user applications; no caller-supplied bypass packages/UIDs.",
+                            "properties": {
+                              "mode": {
+                                "const": "all_apps_except_control",
+                                "enum": [
+                                  "all_apps_except_control"
+                                ],
+                                "title": "Mode",
+                                "type": "string"
+                              },
+                              "control_plane": {
+                                "const": "bypass",
+                                "default": "bypass",
+                                "enum": [
+                                  "bypass"
+                                ],
+                                "title": "Control Plane",
+                                "type": "string"
+                              },
+                              "kill_switch": {
+                                "const": "all_apps_except_control",
+                                "enum": [
+                                  "all_apps_except_control"
+                                ],
+                                "title": "Kill Switch",
+                                "type": "string"
+                              },
+                              "ipv6": {
+                                "default": "block",
+                                "enum": [
+                                  "block",
+                                  "tunnel"
+                                ],
+                                "title": "Ipv6",
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "mode",
+                              "kill_switch"
                             ],
-                            "title": "Kill Switch",
-                            "type": "string"
-                          },
-                          "ipv6": {
-                            "default": "block",
-                            "enum": [
-                              "block",
-                              "tunnel"
-                            ],
-                            "title": "Ipv6",
-                            "type": "string"
+                            "title": "AllAppsExceptControlPolicy",
+                            "type": "object"
                           }
-                        },
-                        "required": [
-                          "included_packages"
                         ],
-                        "title": "AppTrafficPolicy",
-                        "type": "object"
+                        "title": "Traffic Policy"
                       }
                     },
                     "required": [
@@ -11185,9 +11389,9 @@
                   "schema_version": {
                     "type": "integer",
                     "enum": [
-                      1
+                      1,
+                      2
                     ],
-                    "const": 1,
                     "title": "Schema Version",
                     "default": 1
                   },
@@ -11227,59 +11431,110 @@
                     "writeOnly": true
                   },
                   "traffic_policy": {
-                    "properties": {
-                      "mode": {
-                        "type": "string",
-                        "enum": [
-                          "selected_apps"
-                        ],
-                        "const": "selected_apps",
-                        "title": "Mode",
-                        "default": "selected_apps"
-                      },
-                      "included_packages": {
-                        "items": {
-                          "type": "string"
+                    "oneOf": [
+                      {
+                        "properties": {
+                          "mode": {
+                            "type": "string",
+                            "enum": [
+                              "selected_apps"
+                            ],
+                            "const": "selected_apps",
+                            "title": "Mode",
+                            "default": "selected_apps"
+                          },
+                          "included_packages": {
+                            "items": {
+                              "type": "string"
+                            },
+                            "type": "array",
+                            "maxItems": 64,
+                            "minItems": 1,
+                            "title": "Included Packages"
+                          },
+                          "control_plane": {
+                            "type": "string",
+                            "enum": [
+                              "bypass"
+                            ],
+                            "const": "bypass",
+                            "title": "Control Plane",
+                            "default": "bypass"
+                          },
+                          "kill_switch": {
+                            "type": "string",
+                            "enum": [
+                              "selected_apps"
+                            ],
+                            "const": "selected_apps",
+                            "title": "Kill Switch",
+                            "default": "selected_apps"
+                          },
+                          "ipv6": {
+                            "type": "string",
+                            "enum": [
+                              "block",
+                              "tunnel"
+                            ],
+                            "title": "Ipv6",
+                            "default": "block"
+                          }
                         },
-                        "type": "array",
-                        "maxItems": 64,
-                        "minItems": 1,
-                        "title": "Included Packages"
-                      },
-                      "control_plane": {
-                        "type": "string",
-                        "enum": [
-                          "bypass"
+                        "additionalProperties": false,
+                        "type": "object",
+                        "required": [
+                          "included_packages"
                         ],
-                        "const": "bypass",
-                        "title": "Control Plane",
-                        "default": "bypass"
+                        "title": "SelectedAppTrafficPolicy"
                       },
-                      "kill_switch": {
-                        "type": "string",
-                        "enum": [
-                          "selected_apps"
+                      {
+                        "properties": {
+                          "mode": {
+                            "type": "string",
+                            "enum": [
+                              "all_apps_except_control"
+                            ],
+                            "const": "all_apps_except_control",
+                            "title": "Mode"
+                          },
+                          "control_plane": {
+                            "type": "string",
+                            "enum": [
+                              "bypass"
+                            ],
+                            "const": "bypass",
+                            "title": "Control Plane",
+                            "default": "bypass"
+                          },
+                          "kill_switch": {
+                            "type": "string",
+                            "enum": [
+                              "all_apps_except_control"
+                            ],
+                            "const": "all_apps_except_control",
+                            "title": "Kill Switch"
+                          },
+                          "ipv6": {
+                            "type": "string",
+                            "enum": [
+                              "block",
+                              "tunnel"
+                            ],
+                            "title": "Ipv6",
+                            "default": "block"
+                          }
+                        },
+                        "additionalProperties": false,
+                        "type": "object",
+                        "required": [
+                          "mode",
+                          "kill_switch"
                         ],
-                        "const": "selected_apps",
-                        "title": "Kill Switch",
-                        "default": "selected_apps"
-                      },
-                      "ipv6": {
-                        "type": "string",
-                        "enum": [
-                          "block",
-                          "tunnel"
-                        ],
-                        "title": "Ipv6",
-                        "default": "block"
+                        "title": "AllAppsExceptControlPolicy",
+                        "description": "Current Android user applications; no caller-supplied bypass packages/UIDs."
                       }
-                    },
-                    "additionalProperties": false,
-                    "type": "object",
-                    "required": [
-                      "included_packages"
                     ],
-                    "title": "AppTrafficPolicy"
+                    "title": "Traffic Policy"
                   }
                 },
                 "additionalProperties": false,
@@ -12994,25 +13249,15 @@
         "type": "object",
         "title": "AlertmanagerPayload"
       },
-      "AppTrafficPolicy": {
+      "AllAppsExceptControlPolicy": {
         "properties": {
           "mode": {
             "type": "string",
             "enum": [
-              "selected_apps"
+              "all_apps_except_control"
             ],
-            "const": "selected_apps",
-            "title": "Mode",
-            "default": "selected_apps"
-          },
-          "included_packages": {
-            "items": {
-              "type": "string"
-            },
-            "type": "array",
-            "maxItems": 64,
-            "minItems": 1,
-            "title": "Included Packages"
+            "const": "all_apps_except_control",
+            "title": "Mode"
           },
           "control_plane": {
             "type": "string",
@@ -13026,11 +13271,10 @@
           "kill_switch": {
             "type": "string",
             "enum": [
-              "selected_apps"
+              "all_apps_except_control"
             ],
-            "const": "selected_apps",
-            "title": "Kill Switch",
-            "default": "selected_apps"
+            "const": "all_apps_except_control",
+            "title": "Kill Switch"
           },
           "ipv6": {
             "type": "string",
@@ -13045,9 +13289,11 @@
         "additionalProperties": false,
         "type": "object",
         "required": [
-          "included_packages"
+          "mode",
+          "kill_switch"
         ],
-        "title": "AppTrafficPolicy"
+        "title": "AllAppsExceptControlPolicy",
+        "description": "Current Android user applications; no caller-supplied bypass packages/UIDs."
       },
       "AppVpnDevice": {
         "properties": {
@@ -13339,6 +13585,21 @@
             "maximum": 2147483647.0,
             "minimum": 1.0,
             "title": "Providerpid"
+          },
+          "trafficMode": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "selected_apps",
+                  "all_apps_except_control"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Trafficmode"
           }
         },
         "additionalProperties": false,
@@ -21602,6 +21863,61 @@
         ],
         "title": "ScriptVersionResponse"
       },
+      "SelectedAppTrafficPolicy": {
+        "properties": {
+          "mode": {
+            "type": "string",
+            "enum": [
+              "selected_apps"
+            ],
+            "const": "selected_apps",
+            "title": "Mode",
+            "default": "selected_apps"
+          },
+          "included_packages": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "maxItems": 64,
+            "minItems": 1,
+            "title": "Included Packages"
+          },
+          "control_plane": {
+            "type": "string",
+            "enum": [
+              "bypass"
+            ],
+            "const": "bypass",
+            "title": "Control Plane",
+            "default": "bypass"
+          },
+          "kill_switch": {
+            "type": "string",
+            "enum": [
+              "selected_apps"
+            ],
+            "const": "selected_apps",
+            "title": "Kill Switch",
+            "default": "selected_apps"
+          },
+          "ipv6": {
+            "type": "string",
+            "enum": [
+              "block",
+              "tunnel"
+            ],
+            "title": "Ipv6",
+            "default": "block"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "included_packages"
+        ],
+        "title": "SelectedAppTrafficPolicy"
+      },
       "ServerListResponse": {
         "properties": {
           "servers": {
@@ -24756,9 +25072,9 @@
           "schema_version": {
             "type": "integer",
             "enum": [
-              1
+              1,
+              2
             ],
-            "const": 1,
             "title": "Schema Version",
             "default": 1
           },
@@ -24805,7 +25121,22 @@
             "title": "Protocol Version"
           },
           "traffic_policy": {
-            "$ref": "#/components/schemas/AppTrafficPolicy"
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/SelectedAppTrafficPolicy"
+              },
+              {
+                "$ref": "#/components/schemas/AllAppsExceptControlPolicy"
+              }
+            ],
+            "title": "Traffic Policy",
+            "discriminator": {
+              "propertyName": "mode",
+              "mapping": {
+                "all_apps_except_control": "#/components/schemas/AllAppsExceptControlPolicy",
+                "selected_apps": "#/components/schemas/SelectedAppTrafficPolicy"
+              }
+            }
           },
           "endpoint": {
             "anyOf": [
@@ -24880,7 +25211,22 @@
             "title": "Schema Version"
           },
           "traffic_policy": {
-            "$ref": "#/components/schemas/AppTrafficPolicy"
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/SelectedAppTrafficPolicy"
+              },
+              {
+                "$ref": "#/components/schemas/AllAppsExceptControlPolicy"
+              }
+            ],
+            "title": "Traffic Policy",
+            "discriminator": {
+              "propertyName": "mode",
+              "mapping": {
+                "all_apps_except_control": "#/components/schemas/AllAppsExceptControlPolicy",
+                "selected_apps": "#/components/schemas/SelectedAppTrafficPolicy"
+              }
+            }
           },
           "endpoint": {
             "type": "string",
@@ -25009,7 +25355,22 @@
             "title": "Schema Version"
           },
           "traffic_policy": {
-            "$ref": "#/components/schemas/AppTrafficPolicy"
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/SelectedAppTrafficPolicy"
+              },
+              {
+                "$ref": "#/components/schemas/AllAppsExceptControlPolicy"
+              }
+            ],
+            "title": "Traffic Policy",
+            "discriminator": {
+              "propertyName": "mode",
+              "mapping": {
+                "all_apps_except_control": "#/components/schemas/AllAppsExceptControlPolicy",
+                "selected_apps": "#/components/schemas/SelectedAppTrafficPolicy"
+              }
+            }
           },
           "endpoint": {
             "type": "string",
