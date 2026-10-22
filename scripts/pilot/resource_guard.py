@@ -6,6 +6,7 @@ Linux commit accounting differs from Windows; do not compare it to a Windows lim
 from __future__ import annotations
 
 import argparse
+import ctypes
 import json
 import math
 import os
@@ -18,21 +19,50 @@ from pathlib import Path
 from scripts.pilot.atomic_json import write_json
 
 GIB = 1024 ** 3
-WINDOWS_MEMORY_COMMAND = """
+WINDOWS_VOLUME_COMMAND = """
 $ErrorActionPreference = 'Stop'
-$osInfo = Get-CimInstance Win32_OperatingSystem
-$memoryInfo = Get-CimInstance Win32_PerfFormattedData_PerfOS_Memory
 $volumeInfo = @(Get-Volume -FilePath $env:SPHERE_RESOURCE_GUARD_PATH -ErrorAction Stop)
 if ($volumeInfo.Count -ne 1) { throw 'Workspace must resolve to exactly one volume.' }
 [pscustomobject]@{
- availableRamBytes=[long]$osInfo.FreePhysicalMemory*1024
- totalRamBytes=[long]$osInfo.TotalVisibleMemorySize*1024
- committedBytes=[long]$memoryInfo.CommittedBytes
- commitLimitBytes=[long]$memoryInfo.CommitLimit
  volumeHealthStatus=[string]$volumeInfo[0].HealthStatus
  volumeOperationalStatus=@($volumeInfo[0].OperationalStatus | ForEach-Object { $_.ToString() })
 } | ConvertTo-Json -Compress
 """
+
+
+class WindowsPerformanceInfo(ctypes.Structure):
+    """Win32 PERFORMANCE_INFORMATION: DWORD is 32 bits, SIZE_T pointer-sized."""
+
+    _fields_ = ([('cb', ctypes.c_uint32)] + [
+        (name, ctypes.c_size_t) for name in (
+            'CommitTotal', 'CommitLimit', 'CommitPeak', 'PhysicalTotal',
+            'PhysicalAvailable', 'SystemCache', 'KernelTotal', 'KernelPaged',
+            'KernelNonpaged', 'PageSize',
+        )
+    ] + [(name, ctypes.c_uint32) for name in ('HandleCount', 'ProcessCount', 'ThreadCount')])
+
+
+def windows_memory() -> dict[str, int]:
+    """Read system-wide counters without launching another measurement process.
+
+    Microsoft maps CommitTotal/CommitLimit to Committed Bytes/Commit Limit.
+    All memory fields are pages, converted using the returned PageSize.
+    learn.microsoft.com/windows/win32/memory/memory-performance-information
+    """
+    try:
+        query = ctypes.WinDLL('psapi.dll', use_last_error=True, winmode=0x800).GetPerformanceInfo
+    except (OSError, AttributeError):
+        raise OSError('Windows memory counters unavailable') from None
+    query.argtypes = [ctypes.POINTER(WindowsPerformanceInfo), ctypes.c_uint32]
+    query.restype = ctypes.c_int
+    info = WindowsPerformanceInfo()
+    info.cb = ctypes.sizeof(info)
+    if not query(ctypes.byref(info), info.cb) or not info.PageSize:
+        raise OSError('Windows memory counters unavailable')
+    return {name: int(getattr(info, field)) * info.PageSize for name, field in (
+        ('availableRamBytes', 'PhysicalAvailable'), ('totalRamBytes', 'PhysicalTotal'),
+        ('committedBytes', 'CommitTotal'), ('commitLimitBytes', 'CommitLimit'),
+    )}
 
 
 def integer(value: object) -> bool:
@@ -96,7 +126,7 @@ def collect(path: Path) -> dict:
     try:
         if snapshot["system"] == "Windows":
             response = subprocess.run(["powershell.exe", "-NoProfile", "-NonInteractive",
-                                       "-Command", WINDOWS_MEMORY_COMMAND], check=True,
+                                       "-Command", WINDOWS_VOLUME_COMMAND], check=True,
                                       capture_output=True, text=True, timeout=10,
                                       env=os.environ | {"SPHERE_RESOURCE_GUARD_PATH": str(path)})
             if len(response.stdout) > 8192:
@@ -104,8 +134,12 @@ def collect(path: Path) -> dict:
             data = json.loads(response.stdout.lstrip("\ufeff"))
             if not isinstance(data, dict):
                 raise ValueError("Invalid memory response")
-            snapshot.update({key: data.get(key) for key in ["availableRamBytes", "totalRamBytes",
-                            "committedBytes", "commitLimitBytes", "volumeHealthStatus", "volumeOperationalStatus"]})
+            snapshot.update({key: data.get(key) for key in ["volumeHealthStatus", "volumeOperationalStatus"]})
+            # Measure once, after the short-lived volume probe exits. Measuring
+            # inside its CIM/PowerShell process includes avoidable probe overhead.
+            # A failed native read remains unavailable; never reuse old values.
+            snapshot.update(windows_memory())
+            snapshot['memoryMeasurement'] = 'GetPerformanceInfo'
         elif snapshot["system"] == "Linux":
             values = {}
             for line in Path("/proc/meminfo").read_text().splitlines():

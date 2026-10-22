@@ -132,6 +132,93 @@ def test_volume_path_uses_environment_instead_of_powershell_interpolation(monkey
         assert "Get-Volume -FilePath $env:SPHERE_RESOURCE_GUARD_PATH" in command[-1]
         return subprocess.CompletedProcess(command, 0, json.dumps(healthy()), "")
     monkeypatch.setattr(guard.subprocess, "run", reply)
+    monkeypatch.setattr(guard, "windows_memory", lambda: {k: v for k, v in healthy().items()
+                        if k in {"availableRamBytes", "totalRamBytes", "committedBytes", "commitLimitBytes"}})
     snapshot = guard.collect(path)
     assert guard.evaluate(snapshot) == []
     assert not snapshot["deviceCommandsSent"] and not snapshot["mutationsPerformed"]
+
+
+def test_windows_memory_sample_follows_volume_process_exit(monkeypatch, tmp_path):
+    import json
+    from types import SimpleNamespace
+
+    finished = False
+    monkeypatch.setattr(guard.platform, "system", lambda: "Windows")
+    monkeypatch.setattr(guard.shutil, "disk_usage", lambda _: SimpleNamespace(free=30 * guard.GIB))
+
+    def volume(command, **_kwargs):
+        nonlocal finished
+        assert "Get-CimInstance" not in command[-1]
+        finished = True
+        # A subprocess must not supply stale or differently scoped RAM values.
+        return subprocess.CompletedProcess(command, 0, json.dumps(healthy() | {"committedBytes": 0}), "")
+
+    def memory():
+        assert finished
+        return {k: v for k, v in healthy().items()
+                if k in {"availableRamBytes", "totalRamBytes", "committedBytes", "commitLimitBytes"}}
+
+    monkeypatch.setattr(guard.subprocess, "run", volume)
+    monkeypatch.setattr(guard, "windows_memory", memory)
+    sample = guard.collect(tmp_path)
+    assert sample["committedBytes"] == healthy()["committedBytes"]
+    assert sample["memoryMeasurement"] == "GetPerformanceInfo"
+    assert guard.evaluate(sample) == []
+
+
+@pytest.mark.parametrize("success,page_size", [(False, 4096), (True, 0)])
+def test_native_memory_failure_never_falls_back_to_subprocess_counters(monkeypatch, tmp_path, success, page_size):
+    import json
+    from types import SimpleNamespace
+    from unittest.mock import Mock
+
+    def query(pointer, size):
+        info = guard.ctypes.cast(pointer, guard.ctypes.POINTER(guard.WindowsPerformanceInfo)).contents
+        assert info.cb == size == guard.ctypes.sizeof(info)
+        info.PageSize = page_size
+        return success
+
+    monkeypatch.setattr(guard.ctypes, "WinDLL", lambda *_a, **_k: SimpleNamespace(GetPerformanceInfo=Mock(side_effect=query)), raising=False)
+    monkeypatch.setattr(guard.platform, "system", lambda: "Windows")
+    monkeypatch.setattr(guard.subprocess, "run", lambda *_a, **_k: SimpleNamespace(stdout=json.dumps(healthy())))
+    sample = guard.collect(tmp_path)
+    assert sample["collectionError"] == "OSError"
+    assert {"memory_measurement_unavailable", "commit_measurement_unavailable"} <= set(guard.evaluate(sample))
+    assert "memoryMeasurement" not in sample
+
+
+def test_native_memory_converts_pointer_sized_pages_to_bytes(monkeypatch):
+    from types import SimpleNamespace
+    from unittest.mock import Mock
+
+    values = {"CommitTotal": 2**33, "CommitLimit": 2**34,
+              "PhysicalAvailable": 2**32, "PhysicalTotal": 2**33, "PageSize": 4096}
+
+    def query(pointer, size):
+        info = guard.ctypes.cast(pointer, guard.ctypes.POINTER(guard.WindowsPerformanceInfo)).contents
+        assert info.cb == size == guard.ctypes.sizeof(info)
+        for field, value in values.items():
+            setattr(info, field, value)
+        return True
+
+    def load(name, **kwargs):
+        assert name == "psapi.dll" and kwargs == {"use_last_error": True, "winmode": 0x800}
+        return SimpleNamespace(GetPerformanceInfo=Mock(side_effect=query))
+
+    monkeypatch.setattr(guard.ctypes, "WinDLL", load, raising=False)
+    assert guard.windows_memory() == {"committedBytes": 2**33 * 4096, "commitLimitBytes": 2**34 * 4096,
+                                       "availableRamBytes": 2**32 * 4096, "totalRamBytes": 2**33 * 4096}
+
+
+def test_missing_native_export_is_unavailable_without_exception_detail(monkeypatch, tmp_path):
+    import json
+    from types import SimpleNamespace
+
+    monkeypatch.setattr(guard.ctypes, "WinDLL", lambda *_a, **_k: SimpleNamespace(), raising=False)
+    monkeypatch.setattr(guard.platform, "system", lambda: "Windows")
+    monkeypatch.setattr(guard.subprocess, "run", lambda *_a, **_k: SimpleNamespace(stdout=json.dumps(healthy())))
+    sample = guard.collect(tmp_path)
+    assert sample["collectionError"] == "OSError"
+    assert "committedBytes" not in sample and "availableRamBytes" not in sample
+    assert "commit_measurement_unavailable" in guard.evaluate(sample)
