@@ -2,6 +2,11 @@ name: CI — Backend
 
 on:
   workflow_dispatch:
+    inputs:
+      netstack_probe_only:
+        description: Build the independent driverless WG/AWG diagnostic only
+        type: boolean
+        default: false
   push:
     branches: [main, develop, "stage/*"]
   pull_request:
@@ -16,6 +21,7 @@ concurrency:
 
 jobs:
   image-bootstrap:
+    if: ${{ github.event_name != 'workflow_dispatch' || !inputs.netstack_probe_only }}
     name: Production image bootstrap
     runs-on: ubuntu-latest
     timeout-minutes: 20
@@ -111,6 +117,7 @@ jobs:
           if-no-files-found: warn
 
   lint:
+    if: ${{ github.event_name != 'workflow_dispatch' || !inputs.netstack_probe_only }}
     name: Lint (ruff + mypy)
     runs-on: ubuntu-latest
     steps:
@@ -135,6 +142,7 @@ jobs:
       - run: mypy backend/ --ignore-missing-imports
 
   security:
+    if: ${{ github.event_name != 'workflow_dispatch' || !inputs.netstack_probe_only }}
     name: Security (bandit + pip-audit)
     runs-on: ubuntu-latest
     steps:
@@ -151,6 +159,7 @@ jobs:
       - run: pip-audit -r backend/requirements.txt -r pc-agent/requirements.txt
 
   rls-check:
+    if: ${{ github.event_name != 'workflow_dispatch' || !inputs.netstack_probe_only }}
     name: RLS Policy Coverage
     runs-on: ubuntu-latest
     steps:
@@ -164,6 +173,7 @@ jobs:
       - run: python scripts/check_rls.py
 
   test:
+    if: ${{ github.event_name != 'workflow_dispatch' || !inputs.netstack_probe_only }}
     name: Tests
     runs-on: ubuntu-latest
     timeout-minutes: 20
@@ -246,6 +256,7 @@ jobs:
           file: ./coverage.xml
 
   alembic-check:
+    if: ${{ github.event_name != 'workflow_dispatch' || !inputs.netstack_probe_only }}
     name: Alembic Single Head
     runs-on: ubuntu-latest
     timeout-minutes: 10
@@ -289,3 +300,7 @@ jobs:
       - run: make alembic-check
         env:
           PYTHONPATH: "."
+
+  independent-netstack-probe:
+    if: ${{ github.event_name == 'workflow_dispatch' && inputs.netstack_probe_only }}
+    uses: ./.github/workflows/vpn-netstack-probe.yml
