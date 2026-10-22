@@ -19,12 +19,12 @@ internal class AppVpnCommand private constructor(
         val config = profile ?: throw VpnPreparationException("vpn_profile_required")
         val policy = config["traffic_policy"] as JsonObject
         val apps = AppTrafficSelectionResolver.resolve(AppTrafficSelection(
-            policy.getValue("included_packages").jsonArray.map { it.jsonPrimitive.content },
+            policy["included_packages"]?.jsonArray?.map { it.jsonPrimitive.content } ?: emptyList(),
             mode = policy.getValue("mode").jsonPrimitive.content,
             controlPlane = policy.getValue("control_plane").jsonPrimitive.content,
             killSwitch = policy.getValue("kill_switch").jsonPrimitive.content,
             ipv6 = policy.getValue("ipv6").jsonPrimitive.content,
-        ), ownPackage, ownerUid, source)
+        ), ownPackage, ownerUid, source, android.os.Build.VERSION.SDK_INT)
         return AppScopedConfigPreparation.prepare(config.getValue("config_text").jsonPrimitive.content,
             config.getValue("protocol").jsonPrimitive.content, config.getValue("protocol_version").jsonPrimitive.content, apps)
     }
@@ -35,7 +35,8 @@ internal class AppVpnCommand private constructor(
                 require(text.toByteArray(Charsets.UTF_8).size in 1..98304)
                 val body = Json.parseToJsonElement(text) as JsonObject
                 require(body.keys == setOf("schema_version", "request_id", "session_id", "action") || body.keys == setOf("schema_version", "request_id", "session_id", "action", "profile_revision_id", "profile"))
-                require((body["schema_version"] as? JsonPrimitive)?.intOrNull == 1)
+                val version = (body["schema_version"] as? JsonPrimitive)?.takeUnless { it.isString }?.intOrNull
+                require(version in setOf(1, 2))
                 val action = body.getValue("action").jsonPrimitive.content
                 require(action in setOf("apply", "pause", "resume", "disconnect", "status", "rotate"))
                 val profile = body["profile"] as? JsonObject
@@ -43,9 +44,19 @@ internal class AppVpnCommand private constructor(
                 if (profile != null) {
                     require(profile.keys == setOf("protocol", "protocol_version", "config_text", "traffic_policy"))
                     val policy = profile.getValue("traffic_policy") as JsonObject
-                    require(policy.keys == setOf("mode", "included_packages", "control_plane", "kill_switch", "ipv6"))
-                    require(policy.getValue("included_packages").jsonArray.size in 1..64)
-                }
+                    val mode = policy.getValue("mode").jsonPrimitive.content
+                    if (version == 2) {
+                        require(mode == "all_apps_except_control")
+                        require(policy.keys == setOf("mode", "control_plane", "kill_switch", "ipv6"))
+                    } else {
+                        require(mode == "selected_apps")
+                        require(policy.keys == setOf("mode", "included_packages", "control_plane", "kill_switch", "ipv6"))
+                        require(policy.getValue("included_packages").jsonArray.size in 1..64)
+                    }
+                    require(policy.getValue("control_plane").jsonPrimitive.content == "bypass")
+                    require(policy.getValue("kill_switch").jsonPrimitive.content == mode)
+                    require(policy.getValue("ipv6").jsonPrimitive.content in setOf("block", "tunnel"))
+                } else require(version == 1)
                 return AppVpnCommand(id(body.getValue("request_id").jsonPrimitive.content), id(body.getValue("session_id").jsonPrimitive.content), action,
                     body["profile_revision_id"]?.jsonPrimitive?.content?.let(::id), profile)
             } catch (_: Exception) { throw VpnPreparationException("vpn_ipc_request_invalid") }
@@ -66,6 +77,7 @@ internal data class AppVpnSnapshot(
     val txBytes: Long? = null,
     val sampledAtEpochMs: Long = System.currentTimeMillis(),
     val providerPid: Int = android.os.Process.myPid(),
+    val trafficMode: String? = null,
 )
 
 /** Process identity and sample time must be explicit on the wire. Omitting

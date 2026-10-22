@@ -23,6 +23,15 @@ beforeEach(() => {
   get.mockImplementation(async url => ({ data: url === '/groups' ? [{ id, name: 'Лаборатория' }] : page }));
 });
 function show() { const qc = new QueryClient({ defaultOptions: { queries: { retry: false, gcTime: 0 } } }); return render(<QueryClientProvider client={qc}><AppVpnRuntimePanel /></QueryClientProvider>); }
+it('accepts legacy unknown scope and explicit modes while rejecting unrecognized scope', () => {
+  expect(parseVpnRuntimePage(page, 1).items[0].observation?.snapshot.trafficMode).toBeUndefined();
+  for (const trafficMode of [null, 'selected_apps', 'all_apps_except_control']) {
+    const current = { ...page, items: [{ ...row, observation: { ...row.observation, snapshot: { ...row.observation.snapshot, trafficMode } } }] };
+    expect(parseVpnRuntimePage(current, 1).items[0].observation?.snapshot.trafficMode).toBe(trafficMode);
+  }
+  const invalid = { ...page, items: [{ ...row, observation: { ...row.observation, snapshot: { ...row.observation.snapshot, trafficMode: 'all' } } }] };
+  expect(() => parseVpnRuntimePage(invalid, 1)).toThrow();
+});
 it('never turns a ready transport or missing handshake into a connected tunnel', async () => {
   show();
   expect(await screen.findByText('auto-ph-030')).toBeInTheDocument();

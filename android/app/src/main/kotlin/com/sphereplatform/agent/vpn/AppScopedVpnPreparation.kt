@@ -38,7 +38,8 @@ internal class AndroidAppIdentitySource(private val manager: PackageManager) : A
     } catch (_: SecurityException) { null }
 }
 
-internal class ResolvedAppSelection(packages: List<String>, uids: Set<Int>, val ipv6: String) {
+internal class ResolvedAppSelection(packages: List<String>, uids: Set<Int>, val ipv6: String,
+    val mode: String = "selected_apps", val excludedPackage: String? = null) {
     val packages: List<String> = Collections.unmodifiableList(packages.toList())
     val uids: Set<Int> = Collections.unmodifiableSet(uids.toSet())
 }
@@ -50,12 +51,21 @@ internal object AppTrafficSelectionResolver {
     private const val SPHERE = "com.sphereplatform.agent"
     private val packageId = Regex("[A-Za-z][A-Za-z0-9_]*(?:\\.[A-Za-z][A-Za-z0-9_]*)+")
 
-    fun resolve(policy: AppTrafficSelection, ownPackage: String, ownUid: Int, source: AppIdentitySource): ResolvedAppSelection {
+    fun resolve(policy: AppTrafficSelection, ownPackage: String, ownUid: Int, source: AppIdentitySource,
+        apiLevel: Int = 28): ResolvedAppSelection {
         fun fail(reason: String): Nothing = throw VpnPreparationException(reason)
-        if (policy.mode != "selected_apps" || policy.controlPlane != "bypass" || policy.killSwitch != "selected_apps"
+        if (policy.mode !in setOf("selected_apps", "all_apps_except_control") || policy.controlPlane != "bypass" || policy.killSwitch != policy.mode
             || policy.ipv6 !in setOf("block", "tunnel")) fail("vpn_traffic_policy_unsupported")
-        if (policy.packages.size !in 1..64 || policy.packages.toSet().size != policy.packages.size) fail("vpn_selected_apps_invalid")
         if (ownUid < 10000 || source.uid(ownPackage) != ownUid) fail("vpn_control_uid_unverified")
+        if (policy.mode == "all_apps_except_control") {
+            if (policy.packages.isNotEmpty()) fail("vpn_all_apps_packages_forbidden")
+            // First acceptance target is the emulator's primary user on Android
+            // 8-12. Do not guess SDK-sandbox mapping or cross-profile isolation.
+            if (ownUid !in 10000..19999 || apiLevel !in 26..32) fail("vpn_all_apps_platform_unsupported")
+            if (source.packagesForUid(ownUid) != setOf(ownPackage)) fail("vpn_control_shared_uid_unverified")
+            return ResolvedAppSelection(emptyList(), emptySet(), policy.ipv6, policy.mode, ownPackage)
+        }
+        if (policy.packages.size !in 1..64 || policy.packages.toSet().size != policy.packages.size) fail("vpn_selected_apps_invalid")
         val selected = policy.packages.toSet()
         val uids = linkedSetOf<Int>()
         for (pkg in selected) {

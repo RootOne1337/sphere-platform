@@ -6,12 +6,13 @@ import { api } from '@/lib/api';
 import { useAuthStore } from '@/lib/store';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogBody, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { validSaveReceipt, type ProfileSaveReceipt, type SavedVpnProfile } from './profileTypes';
+import { trafficPolicy, validSaveReceipt, type VpnScopeMode, type ProfileSaveReceipt, type SavedVpnProfile } from './profileTypes';
+import { VpnTrafficScope } from './VpnTrafficScope';
 import { profileFileHints } from './profileFileHints';
 import { profileIssueLabel } from './profileIssues';
 
 type Receipt = {
-  schema_version: 1; config_valid: boolean; apply_allowed: false; persisted: false;
+  schema_version: 1 | 2; config_valid: boolean; apply_allowed: false; persisted: false;
   execution_confirmed: false;
   issues: { code: string; line: number | null }[];
   blockers: string[];
@@ -19,10 +20,10 @@ type Receipt = {
 
 
 
-export function validProfileReceipt(value: unknown): value is Receipt {
+export function validProfileReceipt(value: unknown, expectedVersion: 1 | 2 = 1): value is Receipt {
   if (!value || typeof value !== 'object') return false;
   const r = value as Receipt;
-  return r.schema_version === 1 && typeof r.config_valid === 'boolean'
+  return r.schema_version === expectedVersion && typeof r.config_valid === 'boolean'
     && r.apply_allowed === false && r.persisted === false && r.execution_confirmed === false
     && Array.isArray(r.issues) && r.issues.length <= 64
     && r.issues.every(i => i && typeof i.code === 'string' && i.code.length <= 128
@@ -42,7 +43,8 @@ export function VpnProfileInspector({ onClose, purpose = 'inspect', target, onSa
   const [filename, setFilename] = useState('');
   const [protocol, setProtocol] = useState<'wireguard' | 'amneziawg'>(target?.protocol ?? 'amneziawg');
   const [version, setVersion] = useState(target?.protocol_version ?? '3.1');
-  const [packages, setPackages] = useState(target?.traffic_policy.included_packages.join('\n') ?? '');
+  const [scopeMode, setScopeMode] = useState<VpnScopeMode>(target?.traffic_policy.mode ?? 'selected_apps');
+  const [packages, setPackages] = useState(target?.traffic_policy.mode === 'selected_apps' ? target.traffic_policy.included_packages.join('\n') : '');
   const [ipv6, setIpv6] = useState<'block' | 'tunnel'>(target?.traffic_policy.ipv6 ?? 'block');
   const [name, setName] = useState(target?.name ?? '');
   const [description, setDescription] = useState(target?.description ?? '');
@@ -82,17 +84,18 @@ export function VpnProfileInspector({ onClose, purpose = 'inspect', target, onSa
   async function inspect() {
     if (!config.current || controller.current || unknownRequest || useAuthStore.getState().sessionVersion !== initialScope.current) return;
     const included = packages.split(/[\s,;]+/).filter(Boolean);
-    if (!included.length) { setError('Укажи package ID приложений для VPN.'); return; }
+    if (scopeMode === 'selected_apps' && !included.length) { setError('Укажи package ID приложений для VPN.'); return; }
+    const schemaVersion = scopeMode === 'all_apps_except_control' ? 2 : 1;
     const id = ++generation.current;
     const abort = new AbortController(); controller.current = abort;
     setPending(true); invalidate();
     let requestId: string | null = null;
     try {
       const profile = {
-        schema_version: 1, provider_id: target?.provider_id ?? 'android-amneziawg', protocol,
+        schema_version: schemaVersion, provider_id: target?.provider_id ?? 'android-amneziawg', protocol,
         protocol_version: protocol === 'wireguard' ? '1' : version,
         config_text: config.current,
-        traffic_policy: { mode: 'selected_apps', included_packages: included, control_plane: 'bypass', kill_switch: 'selected_apps', ipv6 },
+        traffic_policy: trafficPolicy(scopeMode, included, ipv6),
       };
       if (purpose === 'save') {
         requestId = crypto.randomUUID();
@@ -106,7 +109,7 @@ export function VpnProfileInspector({ onClose, purpose = 'inspect', target, onSa
       }
       const { data } = await api.post('/vpn/profile-preflight', profile, { signal: abort.signal });
       if (id !== generation.current || useAuthStore.getState().sessionVersion !== initialScope.current) return;
-      if (!validProfileReceipt(data)) throw new Error('invalid_receipt');
+      if (!validProfileReceipt(data, schemaVersion)) throw new Error('invalid_receipt');
       setReceipt(data);
     } catch (failure) {
       if (id === generation.current && !abort.signal.aborted) {
@@ -151,7 +154,7 @@ export function VpnProfileInspector({ onClose, purpose = 'inspect', target, onSa
       <DialogBody>
       <div className="flex items-start gap-3 rounded-xl border border-primary/15 bg-primary/5 px-4 py-3 text-xs leading-relaxed">
         <ShieldCheck className="mt-0.5 h-5 w-5 shrink-0 text-primary" />
-        <p>В VPN включаются только выбранные приложения. Для Sphere, видео и управления задан обход туннеля.</p>
+        <p>Область VPN выбирается ниже. Для Sphere, видео и управления задан обход туннеля.</p>
       </div>
       <fieldset disabled={pending || Boolean(unknownRequest)} className="grid min-w-0 gap-4 sm:grid-cols-2 disabled:opacity-60">
         {purpose === 'save' && <>
@@ -185,10 +188,11 @@ export function VpnProfileInspector({ onClose, purpose = 'inspect', target, onSa
           </select>
         </label>
         </div>
-        <label className="grid gap-2 text-sm font-medium sm:col-span-2">Приложения через VPN · package ID
+        <VpnTrafficScope value={scopeMode} onChange={mode => { setScopeMode(mode); invalidate(); }} />
+        {scopeMode === 'selected_apps' && <label className="grid gap-2 text-sm font-medium sm:col-span-2">Приложения через VPN · package ID
           <textarea rows={2} placeholder="org.example.application" autoComplete="off" spellCheck={false} className="w-full resize-y rounded-lg border bg-background p-3 font-mono text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring" value={packages} onChange={e => { setPackages(e.target.value); invalidate(); }} />
           <span className="text-xs font-normal text-muted-foreground">По одному ID на строку. Sphere добавлять нельзя; пустой список не допускается.</span>
-        </label>
+        </label>}
 
       </fieldset>
       {error && <p role="alert" className="text-sm text-destructive">{error}</p>}
@@ -203,7 +207,7 @@ export function VpnProfileInspector({ onClose, purpose = 'inspect', target, onSa
       </DialogBody>
       <DialogFooter>
         <Button variant="outline" onClick={onClose}>Закрыть</Button>
-        <Button disabled={pending || Boolean(unknownRequest) || !loaded || !packages.trim() || (purpose === 'save' && !name.trim())} onClick={() => void inspect()}>{pending ? 'Обрабатываем…' : purpose === 'save' ? 'Проверить и сохранить' : 'Проверить профиль'}</Button>
+        <Button disabled={pending || Boolean(unknownRequest) || !loaded || (scopeMode === 'selected_apps' && !packages.trim()) || (purpose === 'save' && !name.trim())} onClick={() => void inspect()}>{pending ? 'Обрабатываем…' : purpose === 'save' ? 'Проверить и сохранить' : 'Проверить профиль'}</Button>
       </DialogFooter>
     </DialogContent>
   </Dialog>;

@@ -103,7 +103,7 @@ def seal_revision(
         })
         if revision.provider_id != "android-amneziawg" or not preflight_profile(profile).config_valid:
             raise ValueError()
-        body = {"schema_version": 1, "request_id": str(operation_id), "session_id": str(session_id),
+        body = {"schema_version": profile.schema_version, "request_id": str(operation_id), "session_id": str(session_id),
                 "action": action, "profile_revision_id": str(revision.id), "profile": {
                     "protocol": revision.protocol, "protocol_version": revision.protocol_version,
                     "traffic_policy": profile.traffic_policy.model_dump(), "config_text": config,

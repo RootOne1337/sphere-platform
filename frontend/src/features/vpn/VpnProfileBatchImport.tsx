@@ -8,6 +8,8 @@ import { Button } from '@/components/ui/button';
 import { Dialog, DialogBody, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { profileFileHints } from './profileFileHints';
 import { profileIssueLabel } from './profileIssues';
+import { trafficPolicy, type VpnScopeMode } from './profileTypes';
+import { VpnTrafficScope } from './VpnTrafficScope';
 import { parseBatchCheck, parseBatchSaved, parseBatchStatus, type BatchCheck, type BatchItem } from './profileBatchTypes';
 
 type Source = BatchItem & { text: string; protocol: 'wireguard' | 'amneziawg'; ipv6: 'block' | 'tunnel' };
@@ -23,6 +25,7 @@ export function VpnProfileBatchImport({ onClose, onSaved }: { onClose: () => voi
   const [items, setItems] = useState<BatchItem[]>([]); const [checks, setChecks] = useState<BatchCheck[]>([]);
   const [phase, setPhase] = useState<Phase>('empty'); const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null); const [packages, setPackages] = useState('');
+  const [scopeMode, setScopeMode] = useState<VpnScopeMode>('selected_apps');
   const [version, setVersion] = useState('3.1'); const [observed, setObserved] = useState(0);
   const [settingsOpen, setSettingsOpen] = useState(true);
   const [onlyErrors, setOnlyErrors] = useState(false);
@@ -57,11 +60,11 @@ export function VpnProfileBatchImport({ onClose, onSaved }: { onClose: () => voi
 
   function body() {
     const included = packages.split(/[\s,;]+/).filter(Boolean);
-    if (!included.length || included.length > 64) throw new Error('packages_required');
+    if (scopeMode === 'selected_apps' && (!included.length || included.length > 64)) throw new Error('packages_required');
     const result = { items: sources.current.map(source => ({ request_id: source.request_id, name: source.name, description: '', profile: {
-      schema_version: 1, provider_id: 'android-amneziawg', protocol: source.protocol,
+      schema_version: scopeMode === 'all_apps_except_control' ? 2 : 1, provider_id: 'android-amneziawg', protocol: source.protocol,
       protocol_version: source.protocol === 'wireguard' ? '1' : version, config_text: source.text,
-      traffic_policy: { mode: 'selected_apps', included_packages: included, control_plane: 'bypass', kill_switch: 'selected_apps', ipv6: source.ipv6 },
+      traffic_policy: trafficPolicy(scopeMode, included, source.ipv6),
     } })) };
     if (new TextEncoder().encode(JSON.stringify(result)).byteLength > 4 * 1024 * 1024) throw new Error('body_too_large');
     return result;
@@ -118,10 +121,11 @@ export function VpnProfileBatchImport({ onClose, onSaved }: { onClose: () => voi
       <DialogHeader><DialogTitle className="flex items-center gap-3"><span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border bg-primary/10 text-primary"><Files className="h-5 w-5" /></span>Массовый импорт профилей</DialogTitle><DialogDescription>До 100 конфигураций за один проход. Сначала проверка каждого файла, затем сохранение всего пакета одной транзакцией.</DialogDescription></DialogHeader>
       <DialogBody ref={bodyRef}>
         <div className="flex items-start gap-3 rounded-xl border border-primary/15 bg-primary/5 p-4 text-sm"><ShieldCheck className="mt-0.5 h-5 w-5 shrink-0 text-primary" /><p>Ключи попадут в зашифрованный каталог. Сохранение профилей не назначает VPN устройствам.</p></div>
-        {!settingsOpen && <div className="flex items-center justify-between gap-3 rounded-xl border bg-muted/20 p-3"><p className="text-xs leading-relaxed text-muted-foreground">Файлов: {items.length} · приложений: {packages.split(/[\s,;]+/).filter(Boolean).length}<span className="mt-1 block">WG / AWG {version} · Sphere вне VPN</span></p><Button size="sm" variant="outline" disabled={pending || frozen} onClick={() => setSettingsOpen(true)}>Параметры пакета</Button></div>}
+        {!settingsOpen && <div className="flex items-center justify-between gap-3 rounded-xl border bg-muted/20 p-3"><p className="text-xs leading-relaxed text-muted-foreground">Файлов: {items.length} · {scopeMode === 'all_apps_except_control' ? 'Все приложения, кроме Sphere' : `приложений: ${packages.split(/[\s,;]+/).filter(Boolean).length}`}<span className="mt-1 block">WG / AWG {version} · Sphere вне VPN</span></p><Button size="sm" variant="outline" disabled={pending || frozen} onClick={() => setSettingsOpen(true)}>Параметры пакета</Button></div>}
         <fieldset hidden={!settingsOpen} disabled={pending || frozen} className={`${settingsOpen ? 'grid' : 'hidden'} min-w-0 gap-4 sm:grid-cols-2 disabled:opacity-60`}>
           <label className="relative col-span-full flex min-h-28 cursor-pointer flex-col items-center justify-center gap-2 rounded-2xl border border-dashed bg-muted/15 p-4 text-center focus-within:ring-2 focus-within:ring-ring"><Upload className="h-5 w-5 text-primary" /><span className="text-sm font-medium">Выбрать несколько файлов .conf</span><span className="text-xs text-muted-foreground">До 64 КиБ каждый · до 3 МиБ вместе</span><input ref={input} aria-label="Файлы VPN-профилей" type="file" accept=".conf" multiple className="absolute inset-0 h-full w-full cursor-pointer opacity-0" onChange={e => void readFiles(e.target.files)} /></label>
-          <label className="grid gap-2 text-sm font-medium">Приложения через VPN<textarea rows={3} className={field} value={packages} maxLength={16400} placeholder="org.example.application" onChange={e => { setPackages(e.target.value); invalidate(); }} /><span className="text-xs font-normal text-muted-foreground">Общая политика для пакета. По одному package ID на строку.</span></label>
+          <VpnTrafficScope value={scopeMode} onChange={mode => { setScopeMode(mode); invalidate(); }} />
+          {scopeMode === 'selected_apps' && <label className="grid gap-2 text-sm font-medium">Приложения через VPN<textarea rows={3} className={field} value={packages} maxLength={16400} placeholder="org.example.application" onChange={e => { setPackages(e.target.value); invalidate(); }} /><span className="text-xs font-normal text-muted-foreground">Общая политика для пакета. По одному package ID на строку.</span></label>}
           <label className="grid content-start gap-2 text-sm font-medium">Версия AmneziaWG<select className={field} value={version} onChange={e => { setVersion(e.target.value); invalidate(); }}><option value="3.1">3.1</option><option value="2">2.0</option><option value="1.5">1.5</option><option value="1">1.0</option></select><span className="text-xs font-normal leading-relaxed text-muted-foreground">WG определяется по структуре файла. Версию AWG укажи по данным провайдера. IPv6 проверяется отдельно для каждого файла.</span></label>
         </fieldset>
         {items.length > 0 && <div className="overflow-hidden rounded-xl border"><div className="flex flex-wrap items-center justify-between gap-2 bg-muted/25 px-4 py-3 text-xs text-muted-foreground"><span>Выбрано {items.length}</span><span>{phase === 'saved' ? `Сохранено ${observed}` : `Проверено ${checks.length}${checks.length ? ` · ошибок ${failures}` : ''}`}</span>{failures > 0 && <Button size="sm" variant="outline" onClick={() => setOnlyErrors(v => !v)}>{onlyErrors ? 'Все профили' : 'Только ошибки'}</Button>}</div><ol aria-label="Результаты проверки пакета" className={`${settingsOpen ? 'max-h-72' : 'max-h-[min(55dvh,32rem)]'} divide-y overflow-y-auto`}>{items.map((item, i) => ({ item, i })).filter(({ i }) => !onlyErrors || checks[i]?.config_valid === false).map(({ item, i }) => <li key={item.request_id} className="flex min-w-0 items-start gap-3 px-4 py-3 text-sm"><span className="w-6 shrink-0 text-xs text-muted-foreground">{i + 1}</span><div className="min-w-0 flex-1"><p className="break-words font-medium">{item.name}</p>{checks[i]?.issues.map((issue, n) => <p key={n} className="mt-1 text-xs text-destructive">{profileIssueLabel(issue.code)}{issue.line ? ` · строка ${issue.line}` : ''}</p>)}</div><span className="shrink-0 text-xs text-muted-foreground">{phase === 'saved' ? 'Сохранён' : checks[i] ? checks[i].config_valid ? 'Проверен' : 'Ошибка' : 'Ожидает'}</span></li>)}</ol></div>}

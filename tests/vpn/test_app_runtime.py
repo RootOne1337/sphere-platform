@@ -39,6 +39,14 @@ def test_not_observed_counters_remain_unknown_and_handshake_is_not_invented():
     assert parse_app_vpn_report(report() | {"device_id": "forged"}) is None
 
 
+def test_runtime_scope_is_explicit_and_legacy_samples_remain_unknown():
+    assert parse_app_vpn_report(report()).trafficMode is None
+    for mode in ("selected_apps", "all_apps_except_control"):
+        assert parse_app_vpn_report(report(trafficMode=mode)).trafficMode == mode
+    for mode in ("all", {}, True, "com.sphereplatform.agent"):
+        assert parse_app_vpn_report(report(trafficMode=mode)) is None
+
+
 @pytest.mark.parametrize("sample_age,receipt_age,session,online,expected", [
     (0, 0, "current", True, "fresh"), (16, 0, "current", True, "stale"),
     (0, 16, "current", True, "stale"), (-10, 0, "current", True, "stale"),

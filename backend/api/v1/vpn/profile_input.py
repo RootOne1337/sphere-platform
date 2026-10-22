@@ -38,7 +38,9 @@ def profile_request_schema(model: type[BaseModel]) -> dict:
                     raise ValueError("Non-local profile schema reference")
                 node = {**deepcopy(definitions[reference.removeprefix("#/$defs/")]),
                         **{k: v for k, v in node.items() if k != "$ref"}}
-            return {key: inline(value) for key, value in node.items()}
+            # Inlined oneOf branches retain their mode consts. A discriminator
+            # mapping would point at removed $defs; omit that optional hint.
+            return {key: inline(value) for key, value in node.items() if key != "discriminator"}
         return node
 
     return {"required": True, "content": {"application/json": {"schema": inline(schema)}}}

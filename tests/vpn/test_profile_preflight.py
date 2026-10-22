@@ -213,3 +213,33 @@ def test_openapi_request_schema_has_no_unresolved_local_refs():
     schema = app.openapi()["paths"]["/api/v1/vpn/profile-preflight"]["post"]["requestBody"]
     assert "#/$defs/" not in json.dumps(schema)
     assert schema["content"]["application/json"]["schema"]["properties"]["config_text"]["writeOnly"]
+
+
+def test_all_apps_policy_is_a_separate_closed_v2_contract_without_package_inventory():
+    policy = {"mode": "all_apps_except_control", "kill_switch": "all_apps_except_control", "ipv6": "block"}
+    request = VPNProfilePreflightRequest.model_validate(payload(schema_version=2, traffic_policy=policy))
+    result = preflight_profile(request)
+    assert result.config_valid and result.schema_version == 2
+    assert "included_packages" not in result.traffic_policy.model_dump()
+    assert result.traffic_policy.control_plane == "bypass"
+    assert not result.apply_allowed and not result.provider.execution_available
+    assert KEY not in result.model_dump_json()
+    for change in ({"schema_version": 1}, {"provider_id": "legacy-root"},
+                   {"traffic_policy": policy | {"included_packages": []}},
+                   {"traffic_policy": policy | {"excluded_packages": ["org.example.game"]}},
+                   {"traffic_policy": policy | {"excluded_uids": [0]}},
+                   {"traffic_policy": policy | {"kill_switch": "selected_apps"}},
+                   {"traffic_policy": policy | {"control_plane": "tunnel"}}):
+        with pytest.raises(ValidationError):
+            VPNProfilePreflightRequest.model_validate(payload(schema_version=2, traffic_policy=policy) | change)
+    with pytest.raises(ValidationError):
+        VPNProfilePreflightRequest.model_validate(payload(schema_version=2))
+
+
+def test_openapi_v2_retains_both_closed_scope_variants_after_inlining():
+    from backend.api.v1.vpn.profile_input import profile_request_schema
+    schema = profile_request_schema(VPNProfilePreflightRequest)
+    branches = schema["content"]["application/json"]["schema"]["properties"]["traffic_policy"]["oneOf"]
+    assert {b["properties"]["mode"]["const"] for b in branches} == {"selected_apps", "all_apps_except_control"}
+    assert all(b["additionalProperties"] is False for b in branches)
+    assert "#/$defs/" not in json.dumps(schema)

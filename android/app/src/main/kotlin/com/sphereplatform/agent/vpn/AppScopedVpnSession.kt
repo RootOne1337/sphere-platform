@@ -41,14 +41,18 @@ internal class AndroidScopedTunPlatform(private val service: VpnService) : Scope
         if (lockdown) throw VpnPreparationException("vpn_lockdown_conflicts_with_control_bypass")
         val manager = service.getSystemService(ConnectivityManager::class.java)
         if (manager.allNetworks.any { manager.getNetworkCapabilities(it)?.hasTransport(NetworkCapabilities.TRANSPORT_VPN) == true }) throw VpnPreparationException("vpn_other_network_active")
-        val fresh = AppTrafficSelectionResolver.resolve(AppTrafficSelection(config.apps.packages, ipv6 = config.apps.ipv6), service.packageName, ownerUid, AndroidAppIdentitySource(service.packageManager))
-        if (fresh.uids != config.apps.uids) throw VpnPreparationException("vpn_package_identity_changed")
+        val fresh = AppTrafficSelectionResolver.resolve(AppTrafficSelection(config.apps.packages,
+            mode = config.apps.mode, killSwitch = config.apps.mode, ipv6 = config.apps.ipv6),
+            service.packageName, ownerUid, AndroidAppIdentitySource(service.packageManager), Build.VERSION.SDK_INT)
+        if (fresh.uids != config.apps.uids || fresh.excludedPackage != config.apps.excludedPackage) throw VpnPreparationException("vpn_package_identity_changed")
         if (config.nativeConfig.`interface`.dnsServers.isEmpty()) throw VpnPreparationException("vpn_explicit_dns_required")
     }
     override fun establish(config: PreparedAppScopedConfig): HeldAppTun {
         assertReady(config)
         val builder = service.Builder().setSession("Sphere app-scoped VPN").setBlocking(true)
-        config.apps.packages.forEach { builder.addAllowedApplication(it) }
+        if (config.apps.mode == "all_apps_except_control") {
+            builder.addDisallowedApplication(service.packageName)
+        } else config.apps.packages.forEach { builder.addAllowedApplication(it) }
         config.nativeConfig.`interface`.addresses.forEach { builder.addAddress(it.address, it.mask) }
         config.nativeConfig.`interface`.dnsServers.forEach { builder.addDnsServer(it) }
         config.nativeConfig.peers.single().allowedIps.forEach { builder.addRoute(it.address, it.mask) }
@@ -222,7 +226,8 @@ internal class AppScopedVpnSession(private val platform: ScopedTunPlatform, priv
     suspend fun rotate(id: UUID, config: PreparedAppScopedConfig): AppTunnelReceipt = lock.withLock {
         val previous = configuration ?: throw VpnPreparationException("vpn_profile_memory_unavailable")
         if (operation != id || previous.apps.uids != config.apps.uids || previous.apps.packages.toSet() != config.apps.packages.toSet()
-            || previous.apps.ipv6 != config.apps.ipv6) throw VpnPreparationException("vpn_rotation_policy_change_requires_disconnect")
+            || previous.apps.ipv6 != config.apps.ipv6 || previous.apps.mode != config.apps.mode
+            || previous.apps.excludedPackage != config.apps.excludedPackage) throw VpnPreparationException("vpn_rotation_policy_change_requires_disconnect")
         pauseLocked(id)
         configuration = config
         resumeLocked(id, config)

@@ -23,6 +23,26 @@ from tests.vpn.test_profile_preflight import CONFIG, KEY
 NOW = 1800000000000
 
 
+def test_wide_scope_cannot_be_delivered_as_a_v1_selected_app_command(monkeypatch, recipient):
+    private, operation, payload = recipient
+    org = uuid.uuid4()
+    policy = {"mode": "all_apps_except_control", "kill_switch": "all_apps_except_control", "control_plane": "bypass", "ipv6": "block"}
+    revision = SimpleNamespace(org_id=org, id=uuid.uuid4(), schema_version=2, provider_id="android-amneziawg",
+                               protocol="wireguard", protocol_version="1", traffic_policy=policy)
+    monkeypatch.setattr("backend.services.vpn.profile_delivery.decrypt_revision", lambda _: (CONFIG, "private-fingerprint"))
+    command = seal_revision(revision, org_id=org, operation_id=operation, session_id=uuid.uuid4(), action="apply",
+                            recipient=DeviceRecipient.parse(payload, operation, NOW), now_epoch_ms=NOW)
+    envelope = command["envelope"]
+    key = private.decrypt(base64.b64decode(envelope["wrappedKey"]), padding.OAEP(mgf=padding.MGF1(hashes.SHA1()), algorithm=hashes.SHA256(), label=None))
+    body = json.loads(AESGCM(key).decrypt(base64.b64decode(envelope["nonce"]), base64.b64decode(envelope["ciphertext"]), str(operation).encode()))
+    assert body["schema_version"] == 2 and body["profile"]["traffic_policy"] == policy
+    assert KEY not in json.dumps(command)
+    revision.schema_version = 1
+    with pytest.raises(ProfileDeliveryRejected):
+        seal_revision(revision, org_id=org, operation_id=operation, session_id=uuid.uuid4(), action="apply",
+                      recipient=DeviceRecipient.parse(payload, operation, NOW), now_epoch_ms=NOW)
+
+
 @pytest.fixture
 def recipient():
     private = rsa.generate_private_key(public_exponent=65537, key_size=2048)

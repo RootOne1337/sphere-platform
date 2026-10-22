@@ -14,6 +14,20 @@ import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 
 @Serializable
+internal data class GuardUidRange(val first: Int, val last: Int)
+
+/** App/sandbox/isolated UID space of primary user on the accepted API range.
+ * System network services (0..9999) are NOT covered by this runtime guard.
+ */
+internal fun allAppUidRanges(ownerUid: Int): List<GuardUidRange> {
+    require(ownerUid in 10000..19999)
+    return listOfNotNull(
+        if (ownerUid > 10000) GuardUidRange(10000, ownerUid - 1) else null,
+        GuardUidRange(ownerUid + 1, 99999),
+    )
+}
+
+@Serializable
 internal data class UidGuardRecord(
     val operationId: String,
     val selectedUids: List<Int>,
@@ -25,6 +39,7 @@ internal data class UidGuardRecord(
     val allowRules: Boolean = phase in setOf("ALLOWING", "ALLOWED"),
     val lastMutation: String? = null,
     @Required val planVersion: Int = 4,
+    val uidRanges: List<GuardUidRange> = emptyList(),
 )
 
 /** Only identifiers/state, never tunnel config or keys. One guard per APK. */
@@ -69,6 +84,9 @@ internal class UidGuardPlan private constructor(val record: UidGuardRecord, val 
     // Version 3 is retained only to verify/release its exact persisted rules.
     // Even nominally unused fwmark bits break egress on some Android kernels.
     private val legacyMarks = record.planVersion == 3
+    private val ranges = if (record.planVersion == 5) record.uidRanges else record.selectedUids.map { GuardUidRange(it, it) }
+    private fun routeUid(range: GuardUidRange) = "${range.first}-${range.last}"
+    private fun ownerUid(range: GuardUidRange) = if (range.first == range.last) "${range.first}" else routeUid(range)
     private fun legacy(lines: List<String>) = if (legacyMarks) lines else emptyList()
     private fun allowRule(name: String) = "-o $name" + (if (legacyMarks) " -m mark --mark $mark/0x1fe00000" else "") + " -j RETURN"
     private fun command(tool: String, args: String, tableName: String = "filter") = "$tool -w 2 -t $tableName $args"
@@ -86,9 +104,9 @@ internal class UidGuardPlan private constructor(val record: UidGuardRecord, val 
             "test \"$(printf '%s\\n' \"\$rules\" | grep -c -- 'lookup $table' || :)\" = '0'",
         ) } + families.flatMap { tool ->
             listOf("${ip(tool)} route add blackhole default table $table metric 32760") +
-                record.selectedUids.map { "${ip(tool)} rule add pref $priority uidrange $it-$it lookup $table" } +
+                ranges.map { "${ip(tool)} rule add pref $priority uidrange ${routeUid(it)} lookup $table" } +
                 listOf(command(tool, "-N $chain"), command(tool, "-A $chain -j DROP")) +
-                record.selectedUids.map { command(tool, "-I OUTPUT 1 -m owner --uid-owner $it -j $chain") }
+                ranges.map { command(tool, "-I OUTPUT 1 -m owner --uid-owner ${ownerUid(it)} -j $chain") }
         } + proof(allowed = false))
     }
 
@@ -140,11 +158,11 @@ internal class UidGuardPlan private constructor(val record: UidGuardRecord, val 
             "if test -e /sys/class/net/${record.interfaceName}/ifindex; then test \"$(cat /sys/class/net/${record.interfaceName}/ifindex)\" != '${record.interfaceIndex}'; fi",
         )
         return script(closedCheck + proof(allowed = record.allowRules, closed = true) + families.flatMap { tool ->
-            record.selectedUids.flatMap { listOf(command(tool, "-D OUTPUT -m owner --uid-owner $it -j $chain")) +
-                legacy(listOf(command(tool, "-D OUTPUT -m owner --uid-owner $it -j $mangle", "mangle"))) } +
+            ranges.flatMap { listOf(command(tool, "-D OUTPUT -m owner --uid-owner ${ownerUid(it)} -j $chain")) +
+                legacy(listOf(command(tool, "-D OUTPUT -m owner --uid-owner ${ownerUid(it)} -j $mangle", "mangle"))) } +
                 listOf(command(tool, "-F $chain"), command(tool, "-X $chain")) +
                 legacy(listOf(command(tool, "-F $mangle", "mangle"), command(tool, "-X $mangle", "mangle"))) +
-                record.selectedUids.map { "${ip(tool)} rule del pref $priority uidrange $it-$it lookup $table" } + listOf(
+                ranges.map { "${ip(tool)} rule del pref $priority uidrange ${routeUid(it)} lookup $table" } + listOf(
                     "${ip(tool)} route del blackhole default table $table metric 32760",
                     // Successful listing also proves the table is readable.
                     "rules=$(${command(tool, "-S OUTPUT")})",
@@ -169,30 +187,36 @@ internal class UidGuardPlan private constructor(val record: UidGuardRecord, val 
             "test \"$(printf '%s\\n' \"\$routes\" | grep -Ec -- '^default dev ${record.interfaceName}([[:space:]].*)? metric 10([[:space:]]|$)')\" = '1'",
         ) else emptyList()) + listOf(
             "rules=$(${ip(tool)} rule show)",
-            "test \"$(printf '%s\\n' \"\$rules\" | grep -c -- 'lookup $table')\" = '${record.selectedUids.size}'") +
-            record.selectedUids.map { "test \"$(printf '%s\\n' \"\$rules\" | grep -Ec -- '^$priority:.*uidrange $it-$it .*lookup $table([[:space:]]|$)')\" = '1'" } +
-            record.selectedUids.flatMap { listOf(command(tool, "-C OUTPUT -m owner --uid-owner $it -j $chain")) +
-                legacy(listOf(command(tool, "-C OUTPUT -m owner --uid-owner $it -j $mangle", "mangle"))) } +
+            "test \"$(printf '%s\\n' \"\$rules\" | grep -c -- 'lookup $table')\" = '${ranges.size}'") +
+            ranges.map { "test \"$(printf '%s\\n' \"\$rules\" | grep -Ec -- '^$priority:.*uidrange ${routeUid(it)} .*lookup $table([[:space:]]|$)')\" = '1'" } +
+            ranges.flatMap { listOf(command(tool, "-C OUTPUT -m owner --uid-owner ${ownerUid(it)} -j $chain")) +
+                legacy(listOf(command(tool, "-C OUTPUT -m owner --uid-owner ${ownerUid(it)} -j $mangle", "mangle"))) } +
             listOf(
                 "rules=$(${command(tool, "-S $chain")})",
                 "test \"$(printf '%s\\n' \"\$rules\" | grep -c -- '^-A $chain ')\" = '${if (familyAllowed) 2 else 1}'",
                 "test \"$(printf '%s\\n' \"\$rules\" | tail -n 1)\" = '-A $chain -j DROP'",
                 "rules=$(${command(tool, "-S OUTPUT")})",
-                "test \"$(printf '%s\\n' \"\$rules\" | grep -c -- '-j $chain')\" = '${record.selectedUids.size}'",
+                "test \"$(printf '%s\\n' \"\$rules\" | grep -c -- '-j $chain')\" = '${ranges.size}'",
             ) + legacy(listOf("rules=$(${command(tool, "-S $mangle", "mangle")})",
                 "test \"$(printf '%s\\n' \"\$rules\" | grep -c -- '^-A $mangle ')\" = '2'",
                 "test \"$(printf '%s\\n' \"\$rules\" | tail -n 1)\" = '-A $mangle -j ACCEPT'",
                 "rules=$(${command(tool, "-S OUTPUT", "mangle")})",
-                "test \"$(printf '%s\\n' \"\$rules\" | grep -c -- '-j $mangle')\" = '${record.selectedUids.size}'",
+                "test \"$(printf '%s\\n' \"\$rules\" | grep -c -- '-j $mangle')\" = '${ranges.size}'",
             )) + if (familyAllowed) listOf(command(tool, "-C $chain ${allowRule(record.interfaceName!!)}")) else emptyList()
     }
 
     companion object {
         fun from(record: UidGuardRecord): UidGuardPlan {
-            require(record.planVersion in setOf(3, 4))
+            require(record.planVersion in setOf(3, 4, 5))
             val id = UUID.fromString(record.operationId)
             require(id.toString() == record.operationId)
-            require(record.ownerUid >= 10000 && record.selectedUids.size in 1..64 && record.selectedUids.toSet().size == record.selectedUids.size)
+            require(record.ownerUid >= 10000)
+            if (record.planVersion == 5) {
+                require(record.selectedUids.isEmpty() && record.uidRanges == allAppUidRanges(record.ownerUid))
+            } else {
+                require(record.uidRanges.isEmpty())
+                require(record.selectedUids.size in 1..64 && record.selectedUids.toSet().size == record.selectedUids.size)
+            }
             require(record.selectedUids.all { it > 0 && it % 100000 >= 10000 && it != record.ownerUid })
             require(record.phase in setOf("INTENT", "BLOCKED", "ALLOWING", "ALLOWED", "BLOCKING", "RELEASING", "RELEASED", "UNKNOWN"))
             require(record.lastMutation == null || record.lastMutation in setOf("INTENT", "ALLOWING", "BLOCKING", "RELEASING"))
@@ -207,7 +231,8 @@ internal class UidGuardPlan private constructor(val record: UidGuardRecord, val 
             // Version 4 never reads, writes or installs any fwmark rules.
             val mark = ((id.leastSignificantBits and 0xff).coerceAtLeast(1)) shl 21
             val table = 2000000 + ((id.mostSignificantBits xor id.leastSignificantBits) and 0xfffff).toInt()
-            return UidGuardPlan(record.copy(selectedUids = Collections.unmodifiableList(record.selectedUids.toList())), "SPV2F_" + id.toString().replace("-", "").take(20), mark, table)
+            return UidGuardPlan(record.copy(selectedUids = Collections.unmodifiableList(record.selectedUids.toList()),
+                uidRanges = Collections.unmodifiableList(record.uidRanges.toList())), "SPV2F_" + id.toString().replace("-", "").take(20), mark, table)
         }
     }
 }
@@ -256,7 +281,10 @@ internal class SelectedUidGuard(private val journal: UidGuardJournal, private va
         val previous = journal.read()
         if (previous?.phase?.let { it != "RELEASED" } == true) throw VpnPreparationException("vpn_guard_reconciliation_required")
         if (previous?.operationId == operation.toString()) throw VpnPreparationException("vpn_guard_operation_id_reused")
-        val intent = UidGuardRecord(operation.toString(), apps.uids.sorted(), ownerUid, "INTENT", ipv6 = apps.ipv6)
+        require(apps.mode in setOf("selected_apps", "all_apps_except_control"))
+        val broad = apps.mode == "all_apps_except_control"
+        val intent = UidGuardRecord(operation.toString(), apps.uids.sorted(), ownerUid, "INTENT", ipv6 = apps.ipv6,
+            planVersion = if (broad) 5 else 4, uidRanges = if (broad) allAppUidRanges(ownerUid) else emptyList())
         mutate(intent, "BLOCKED") { it.block() }
     }
     suspend fun allow(operation: UUID, interfaceName: String, index: Int): UidGuardRecord = lock.withLock {

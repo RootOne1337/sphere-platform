@@ -80,6 +80,25 @@ it('invalidates the check after changing the common app policy', async () => {
   expect(screen.getByRole('button', { name: 'Сохранить 2 профилей' })).toBeDisabled();
 });
 
+it('applies the same explicit wide scope to every file and invalidates earlier checks', async () => {
+  post.mockResolvedValue({ data: check });
+  const user = userEvent.setup(); render(<VpnProfileBatchImport onClose={jest.fn()} onSaved={jest.fn()} />);
+  await load(user);
+  await user.selectOptions(screen.getByLabelText('Область VPN'), 'all_apps_except_control');
+  await user.click(screen.getByRole('button', { name: 'Проверить пакет' }));
+  await waitFor(() => expect(screen.getByRole('button', { name: 'Сохранить 2 профилей' })).toBeEnabled());
+  const sent = post.mock.calls[0][1] as { items: { profile: { schema_version: number; traffic_policy: object } }[] };
+  expect(sent.items).toHaveLength(2);
+  sent.items.forEach(({ profile }) => {
+    expect(profile.schema_version).toBe(2);
+    expect(profile.traffic_policy).toMatchObject({ mode: 'all_apps_except_control', kill_switch: 'all_apps_except_control', control_plane: 'bypass' });
+    expect(profile.traffic_policy).not.toHaveProperty('included_packages');
+  });
+  await user.click(screen.getByRole('button', { name: 'Параметры пакета' }));
+  await user.selectOptions(screen.getByLabelText('Область VPN'), 'selected_apps');
+  expect(screen.getByRole('button', { name: 'Сохранить 2 профилей' })).toBeDisabled();
+});
+
 it('rejects over 100 files before reading or sending secrets', async () => {
   render(<VpnProfileBatchImport onClose={jest.fn()} onSaved={jest.fn()} />);
   fireEvent.change(screen.getByLabelText('Файлы VPN-профилей'), { target: { files: Array.from({ length: 101 }, () => file()) } });

@@ -49,6 +49,23 @@ it('rejects oversized files before sending any request', async () => {
   expect(post).not.toHaveBeenCalled();
 });
 
+it('sends the wide scope as v2 without retaining a hidden selected-package list', async () => {
+  post.mockResolvedValue({ data: { ...receipt, schema_version: 2 } });
+  const user = userEvent.setup();
+  render(<VpnProfileInspector onClose={jest.fn()} />);
+  await load(user);
+  await user.selectOptions(screen.getByLabelText('Область VPN'), 'all_apps_except_control');
+  expect(screen.queryByLabelText(/Приложения через VPN/)).not.toBeInTheDocument();
+  await user.click(screen.getByRole('button', { name: 'Проверить профиль' }));
+  expect(await screen.findByRole('status')).toHaveTextContent('Формат профиля прошёл проверку');
+  expect(post.mock.calls[0][1]).toMatchObject({ schema_version: 2, traffic_policy: {
+    mode: 'all_apps_except_control', kill_switch: 'all_apps_except_control', control_plane: 'bypass', ipv6: 'block',
+  } });
+  expect((post.mock.calls[0][1] as { traffic_policy: object }).traffic_policy).not.toHaveProperty('included_packages');
+  expect(document.body.textContent).not.toContain('private-sentinel');
+  expect(validProfileReceipt(receipt, 2)).toBe(false);
+});
+
 it('selects WireGuard and complete IPv6 policy from the imported file without displaying keys', async () => {
   post.mockResolvedValue({ data: receipt });
   const user = userEvent.setup();

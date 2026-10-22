@@ -71,7 +71,7 @@ export function AppVpnRuntimePanel() {
     <div className="grid grid-cols-2 gap-4 border-b bg-muted/15 p-4 sm:grid-cols-3 sm:p-5">
       <div className="flex items-center gap-3"><span className="hidden h-10 w-10 shrink-0 items-center justify-center rounded-xl border bg-background/60 sm:flex"><Smartphone className="h-4 w-4 text-muted-foreground" /></span><div><p className="text-xs text-muted-foreground">Устройств по фильтру</p><p className="mt-1 text-2xl font-semibold tracking-tight tabular-nums">{data?.total ?? '—'}</p></div></div>
       <div className="flex items-center gap-3"><span className="hidden h-10 w-10 shrink-0 items-center justify-center rounded-xl border bg-background/60 sm:flex"><Activity className="h-4 w-4 text-primary" /></span><div><p className="text-xs text-muted-foreground">Свежих отчётов на странице</p><p className="mt-1 text-2xl font-semibold tracking-tight tabular-nums">{data ? confirmed : '—'}{data && <span className="ml-1 text-sm font-normal text-muted-foreground">/ {data.items.length}</span>}</p></div></div>
-      <div className="col-span-2 flex items-center gap-2 text-xs text-muted-foreground sm:col-span-1"><ShieldCheck className="h-4 w-4 shrink-0 text-primary" /><p>VPN и блокировка при сбое — для выбранных приложений.<br /> Остальные приложения и Sphere работают напрямую.</p></div>
+      <div className="col-span-2 flex items-center gap-2 text-xs text-muted-foreground sm:col-span-1"><ShieldCheck className="h-4 w-4 shrink-0 text-primary" /><p>Sphere, видео и управление — напрямую.<br /> Область VPN — в диагностике устройства.</p></div>
     </div>
     <div className="flex gap-2 p-4 sm:gap-3">
       <div className="relative min-w-0 flex-1"><Search className="pointer-events-none absolute left-3 top-3 h-4 w-4 text-muted-foreground" /><input aria-label="Поиск устройств VPN" placeholder="Найти устройство по имени" value={search} maxLength={120} onChange={e => { setSearch(e.target.value); setPage(1); }} className="h-10 w-full min-w-0 rounded-xl border bg-background/60 py-2 pl-9 pr-3 text-sm transition-shadow focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring" /></div>
@@ -97,6 +97,7 @@ function RuntimeDetails({ row, rate, currentFreshness, onClose }: { row: VpnRunt
   const observation = row.observation; const sample = observation?.snapshot;
   const fields = [
     ['Сервис', sample ? vpnPhaseLabels[sample.phase] : 'Отчёт не получен'], ['Свежесть', currentFreshness === 'fresh' ? 'Подтверждён свежий отчёт' : 'Текущее состояние не подтверждено'],
+    ['Область VPN', sample?.trafficMode === 'all_apps_except_control' ? 'Все приложения, кроме Sphere' : sample?.trafficMode === 'selected_apps' ? 'Выбранные приложения' : 'Не сообщено агентом'],
     ['Agent', row.agent_version ?? 'Не сообщено'], ['Android', row.android_version ?? 'Не сообщено'],
     ['Снимок состояния на устройстве', time(sample?.sampledAtEpochMs)], ['Получено сервером', time(observation?.received_at)],
     ['Последний handshake', time(sample?.handshakeEpochSeconds ? sample.handshakeEpochSeconds * 1000 : null)], ['Последний heartbeat Sphere', time(row.last_heartbeat)],

@@ -30,6 +30,7 @@ class AppVpnSnapshot(BaseModel):
     txBytes: Counter | None = None
     sampledAtEpochMs: Counter
     providerPid: int = Field(strict=True, ge=1, le=2**31 - 1)
+    trafficMode: Literal["selected_apps", "all_apps_except_control"] | None = None
 
     @field_validator("requestId", "sessionId", "profileRevisionId")
     @classmethod

@@ -224,6 +224,7 @@ def preflight_profile(request: VPNProfilePreflightRequest) -> VPNProfilePrefligh
 
     provider = next(p for p in provider_capabilities() if p.provider_id == request.provider_id)
     return VPNProfilePreflightResponse(
+        schema_version=request.schema_version,
         config_valid=not issues, provider=provider, protocol=request.protocol,
         protocol_version=request.protocol_version, traffic_policy=request.traffic_policy,
         endpoint=endpoint if not issues else None,

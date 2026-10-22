@@ -58,7 +58,8 @@ class AppScopedVpnService : VpnService() {
         guard = SelectedUidGuard(journal, BoundedGuardRootExecutor(File(directory, "scripts")))
         try {
             journal.read()?.takeIf { it.phase != "RELEASED" }?.let {
-                snapshot.set(AppVpnSnapshot(sessionId = it.operationId, phase = "RECONCILIATION_REQUIRED", reason = "vpn_previous_process_ended_guard_retained"))
+                snapshot.set(AppVpnSnapshot(sessionId = it.operationId, phase = "RECONCILIATION_REQUIRED", reason = "vpn_previous_process_ended_guard_retained",
+                    trafficMode = if (it.planVersion == 5) "all_apps_except_control" else "selected_apps"))
             }
         } catch (_: Exception) { snapshot.set(AppVpnSnapshot(phase = "RECONCILIATION_REQUIRED", reason = "vpn_guard_journal_unreadable")) }
         work.launch {
@@ -141,7 +142,8 @@ class AppScopedVpnService : VpnService() {
 
     private suspend fun operate(command: AppVpnCommand): AppVpnSnapshot {
         val initial = AppVpnSnapshot(command.requestId.toString(), command.sessionId.toString(),
-            command.profileRevisionId?.toString() ?: snapshot.get().profileRevisionId, phase = "APPLYING")
+            command.profileRevisionId?.toString() ?: snapshot.get().profileRevisionId, phase = "APPLYING",
+            trafficMode = prepared?.apps?.mode ?: snapshot.get().trafficMode)
         var mutating = false
         fun beginMutation() { mutating = true; mutationGeneration.incrementAndGet(); publish(initial) }
         return try {
@@ -165,7 +167,8 @@ class AppScopedVpnService : VpnService() {
                     val config = command.prepare(packageName, Process.myUid(), AndroidAppIdentitySource(packageManager))
                     val previous = prepared ?: throw VpnPreparationException("vpn_profile_memory_unavailable")
                     if (previous.apps.uids != config.apps.uids || previous.apps.packages.toSet() != config.apps.packages.toSet()
-                        || previous.apps.ipv6 != config.apps.ipv6) throw VpnPreparationException("vpn_rotation_policy_change_requires_disconnect")
+                        || previous.apps.ipv6 != config.apps.ipv6 || previous.apps.mode != config.apps.mode
+                        || previous.apps.excludedPackage != config.apps.excludedPackage) throw VpnPreparationException("vpn_rotation_policy_change_requires_disconnect")
                     beginMutation()
                     it.rotate(command.sessionId, config).also { prepared = config }
                 }
@@ -186,7 +189,9 @@ class AppScopedVpnService : VpnService() {
                 }
                 else -> throw VpnPreparationException("vpn_action_unsupported")
             }
-            initial.copy(phase = receipt.phase, reason = receipt.reason, nativeVersion = receipt.nativeVersion, sampledAtEpochMs = System.currentTimeMillis()).also(::publish)
+            initial.copy(phase = receipt.phase, reason = receipt.reason, nativeVersion = receipt.nativeVersion,
+                trafficMode = if (receipt.phase == "DISCONNECTED_CONFIRMED") null else prepared?.apps?.mode ?: initial.trafficMode,
+                sampledAtEpochMs = System.currentTimeMillis()).also(::publish)
         } catch (failure: Exception) {
             val reason = (failure as? VpnPreparationException)?.reason ?: "vpn_provider_operation_unconfirmed"
             // Loading a missing ABI or resolving an endpoint can fail before

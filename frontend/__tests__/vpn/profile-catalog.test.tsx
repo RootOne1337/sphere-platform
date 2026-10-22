@@ -17,6 +17,14 @@ const row = { id, revision_id: revisionId, name: 'Local egress', description: 'T
 const page = { items: [row], total: 1, page: 1, page_size: 10 };
 const saved = { profile_id: id, revision_id: revisionId, revision: 1, request_id: requestId, persisted: true, apply_allowed: false, execution_confirmed: false };
 
+it('reads a wide scope without inventing an app count or accepting arbitrary exclusions', () => {
+  const wide = { ...row, traffic_policy: { mode: 'all_apps_except_control', kill_switch: 'all_apps_except_control', control_plane: 'bypass', ipv6: 'block' } };
+  expect(parseProfilePage({ ...page, items: [wide] }, 1).items[0].traffic_policy).toEqual(wide.traffic_policy);
+  for (const extra of [{ included_packages: [] }, { excluded_uids: [1000] }, { kill_switch: 'selected_apps' }]) {
+    expect(() => parseProfilePage({ ...page, items: [{ ...wide, traffic_policy: { ...wide.traffic_policy, ...extra } }] }, 1)).toThrow();
+  }
+});
+
 beforeEach(() => {
   jest.resetAllMocks();
   useAuthStore.setState({ user: { id: 'actor', org_id: 'org', role: 'org_admin', email: 'test@example.org' }, sessionVersion: 1 });

@@ -4,6 +4,7 @@ interface Snapshot {
   requestId: string | null; sessionId: string | null; profileRevisionId: string | null; phase: Phase;
   reason: string | null; nativeVersion: string | null; handshakeEpochSeconds: number | null; rxBytes: number | null; txBytes: number | null;
   sampledAtEpochMs: number; providerPid: number;
+  trafficMode?: 'selected_apps' | 'all_apps_except_control' | null;
 }
 export interface VpnRuntimeDevice {
   device_id: string; name: string; model: string | null; android_version: string | null; status: string; agent_version: string | null;
@@ -31,7 +32,10 @@ export function parseVpnRuntimePage(value: unknown, expectedPage: number): VpnRu
     if (row.observation !== null) {
       const observed = object(row.observation, ['snapshot', 'received_at', 'ws_session_id']);
       if (!date(observed.received_at) || typeof observed.ws_session_id !== 'string' || !observed.ws_session_id || observed.ws_session_id.length > 100) throw new Error('vpn_runtime_observation_invalid');
-      const sample = object(observed.snapshot, ['requestId', 'sessionId', 'profileRevisionId', 'phase', 'reason', 'nativeVersion', 'handshakeEpochSeconds', 'rxBytes', 'txBytes', 'sampledAtEpochMs', 'providerPid']);
+      const keys = ['requestId', 'sessionId', 'profileRevisionId', 'phase', 'reason', 'nativeVersion', 'handshakeEpochSeconds', 'rxBytes', 'txBytes', 'sampledAtEpochMs', 'providerPid'];
+      if (observed.snapshot && typeof observed.snapshot === 'object' && 'trafficMode' in observed.snapshot) keys.push('trafficMode');
+      const sample = object(observed.snapshot, keys);
+      if ('trafficMode' in sample && !nullable(sample.trafficMode, v => v === 'selected_apps' || v === 'all_apps_except_control')) throw new Error('vpn_runtime_scope_invalid');
       if (!nullable(sample.requestId, uuid) || !nullable(sample.sessionId, uuid) || !nullable(sample.profileRevisionId, uuid) || !phases.includes(sample.phase as Phase) || !nullable(sample.reason, text) || !nullable(sample.nativeVersion, text) || !['handshakeEpochSeconds', 'rxBytes', 'txBytes'].every(k => nullable(sample[k], count)) || !count(sample.sampledAtEpochMs) || !count(sample.providerPid) || sample.providerPid < 1) throw new Error('vpn_runtime_snapshot_invalid');
     } else if (row.freshness !== 'unknown') throw new Error('vpn_runtime_missing_observation');
   }
