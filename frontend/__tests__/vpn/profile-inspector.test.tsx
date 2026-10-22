@@ -72,7 +72,7 @@ it('selects WireGuard and complete IPv6 policy from the imported file without di
   render(<VpnProfileInspector onClose={jest.fn()} />);
   await load(user, '[Interface]\nPrivateKey=private-sentinel\nAddress=10.0.0.2/32,fd42::2/128\n[Peer]\nPublicKey=public-sentinel\nAllowedIPs=0.0.0.0/0,::/0');
   expect(screen.getByLabelText('Протокол')).toHaveValue('wireguard');
-  expect(screen.getByLabelText('IPv6 выбранных приложений')).toHaveValue('tunnel');
+  expect(screen.getByLabelText('IPv6 приложений')).toHaveValue('tunnel');
   expect(screen.queryByLabelText('Версия конфигурации AWG')).not.toBeInTheDocument();
   expect(document.body.textContent).not.toContain('private-sentinel');
   await user.click(screen.getByRole('button', { name: 'Проверить профиль' }));

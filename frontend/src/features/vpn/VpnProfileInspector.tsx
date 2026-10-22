@@ -182,7 +182,7 @@ export function VpnProfileInspector({ onClose, purpose = 'inspect', target, onSa
               {['1', '1.5', '2', '3.1'].map(v => <option key={v}>{v}</option>)}
             </select>
           </label>}
-        <label className="grid min-w-0 gap-2 text-sm font-medium">IPv6 выбранных приложений
+        <label className="grid min-w-0 gap-2 text-sm font-medium">IPv6 приложений
           <select className="w-full min-w-0 rounded-lg border bg-background p-2.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring" value={ipv6} onChange={e => { setIpv6(e.target.value as typeof ipv6); invalidate(); }}>
             <option value="block">Блокировать вне туннеля</option><option value="tunnel">Передавать через туннель с IPv6</option>
           </select>
