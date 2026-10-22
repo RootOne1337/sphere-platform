@@ -53,7 +53,9 @@ class SelectedUidGuardTest {
         assertEquals("ALLOWED", allowed.phase)
         assertTrue(scripts.last().contains("/sys/class/net/tun0/ifindex"))
         assertTrue(scripts.last().contains("route add default dev tun0 table"))
-        assertTrue(scripts.last().contains("-o tun0 -m mark --mark"))
+        assertTrue(scripts.last().contains("-o tun0 -j RETURN"))
+        assertTrue(scripts.last().contains("'^default dev tun0"))
+        assertFalse(scripts.last().contains("--mark"))
         assertTrue(scripts.first().contains("route add blackhole default table"))
         assertEquals(7, allowed.interfaceIndex)
         val closed = guard.release(operation)
@@ -95,18 +97,52 @@ class SelectedUidGuardTest {
         file.writeText("x".repeat(16385))
         denied("vpn_guard_journal_unreadable") { UidGuardJournal(file).read() }
     }
-    @Test fun `guard preserves Android netId protection accounting and vendor mark bits`() {
+    @Test fun `new guard never alters any Android packet marks in any lifecycle stage`() {
         val plan = UidGuardPlan.from(UidGuardRecord(operation.toString(), listOf(10002), 10001, "INTENT"))
-        val mask = 0x1fe00000L
-        val androidMark = 0xe017abcdL
-        val marked = (androidMark and mask.inv()) xor plan.mark
-        assertEquals(androidMark and mask.inv(), marked and mask.inv())
-        assertEquals(plan.mark, marked and mask)
-        val script = plan.block()
-        assertTrue(script.contains("--set-xmark ${plan.mark}/0x1fe00000"))
-        assertFalse(script.contains("fwmark"))
-        assertFalse(script.contains("0xffffffff"))
-        assertTrue(script.contains("uidrange 10002-10002"))
+        assertEquals(4, plan.record.planVersion)
+        val record = plan.record.copy(interfaceName = "tun0", interfaceIndex = 7, allowRules = true)
+        for (ipv6 in listOf("block", "tunnel")) {
+            val selected = record.copy(ipv6 = ipv6)
+            val scripts = listOf(plan.block(),
+                UidGuardPlan.from(selected.copy(phase = "ALLOWING")).allow(),
+                UidGuardPlan.from(selected.copy(phase = "ALLOWED")).verify(true),
+                UidGuardPlan.from(selected.copy(phase = "BLOCKING")).pause(),
+                UidGuardPlan.from(selected.copy(phase = "RELEASING")).release())
+            scripts.forEach { script ->
+                assertFalse(script.contains("MARK")); assertFalse(script.contains("--mark"))
+                assertFalse(script.contains("mangle")); assertFalse(script.contains("SPV2M_"))
+                assertFalse(script.contains("fwmark")); assertFalse(script.contains("0xffffffff"))
+                assertTrue(script.contains("uidrange 10002-10002"))
+            }
+        }
+    }
+    @Test fun `version three journals are released with their original exact mark rules only`() = runBlocking {
+        val record = UidGuardRecord(operation.toString(), listOf(10002), 10001, "ALLOWED", "tun0", 7, planVersion = 3)
+        val journal = UidGuardJournal(file); journal.write(record)
+        val scripts = mutableListOf<String>()
+        val guard = SelectedUidGuard(journal, GuardRootExecutor { script, _ -> scripts.add(script) })
+        val released = guard.release(operation)
+        assertEquals(3, released.planVersion); assertEquals("RELEASED", released.phase)
+        val script = scripts.single()
+        assertTrue(script.contains("-C ${UidGuardPlan.from(record).chain} -o tun0 -m mark --mark"))
+        assertTrue(script.contains("-t mangle -D OUTPUT -m owner --uid-owner 10002"))
+        assertTrue(script.contains("--set-xmark ${UidGuardPlan.from(record).mark}/0x1fe00000"))
+        assertTrue(script.contains("!= '7'"))
+        guard.block(UUID.randomUUID(), apps, 10001)
+        assertEquals(4, journal.read()!!.planVersion)
+        assertFalse(scripts.last().contains("mangle"))
+    }
+    @Test fun `version three plans cannot create or reopen a tunnel`() {
+        val legacy = UidGuardRecord(operation.toString(), listOf(10002), 10001, "INTENT", planVersion = 3)
+        val actions = listOf<() -> Unit>(
+            { UidGuardPlan.from(legacy).block() },
+            { UidGuardPlan.from(legacy.copy(phase = "ALLOWING", interfaceName = "tun0", interfaceIndex = 7, allowRules = true)).allow() },
+            { UidGuardPlan.from(legacy.copy(phase = "BLOCKING", interfaceName = "tun0", interfaceIndex = 7, allowRules = true)).pause() },
+        )
+        actions.forEach { action ->
+            try { action(); fail("Legacy activation accepted") }
+            catch (error: IllegalArgumentException) { assertEquals("vpn_legacy_guard_cleanup_only", error.message) }
+        }
     }
     @Test fun `older journal plans cannot be silently reinterpreted for cleanup`() {
         file.writeText("""{"operationId":"$operation","selectedUids":[10002],"ownerUid":10001,"phase":"BLOCKED"}""")

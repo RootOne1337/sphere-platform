@@ -24,7 +24,7 @@ internal data class UidGuardRecord(
     val ipv6: String = "block",
     val allowRules: Boolean = phase in setOf("ALLOWING", "ALLOWED"),
     val lastMutation: String? = null,
-    @Required val planVersion: Int = 3,
+    @Required val planVersion: Int = 4,
 )
 
 /** Only identifiers/state, never tunnel config or keys. One guard per APK. */
@@ -57,7 +57,7 @@ internal class UidGuardJournal(file: File) {
     }
 }
 
-/** Private UID-only FILTER/MANGLE chains and a fresh UID routing table.
+/** Private UID-only FILTER chains and a fresh UID routing table.
  * The table keeps an unreachable default after the TUN route disappears. Kernel
  * routes bind to interface indices, so a reused tun0 name cannot inherit access.
  * No global default policy, main-table route, FORWARD or NAT is changed.
@@ -66,29 +66,34 @@ internal class UidGuardPlan private constructor(val record: UidGuardRecord, val 
     private val families = listOf("iptables", "ip6tables")
     private val mangle = chain.replace("SPV2F_", "SPV2M_")
     private val priority = 9000 + table % 1000
+    // Version 3 is retained only to verify/release its exact persisted rules.
+    // Even nominally unused fwmark bits break egress on some Android kernels.
+    private val legacyMarks = record.planVersion == 3
+    private fun legacy(lines: List<String>) = if (legacyMarks) lines else emptyList()
+    private fun allowRule(name: String) = "-o $name" + (if (legacyMarks) " -m mark --mark $mark/0x1fe00000" else "") + " -j RETURN"
     private fun command(tool: String, args: String, tableName: String = "filter") = "$tool -w 2 -t $tableName $args"
     private fun ip(tool: String) = if (tool == "iptables") "ip -4" else "ip -6"
     private fun marker() = "SPHERE_UID_GUARD_${record.operationId}_${record.phase}"
     private fun script(lines: List<String>) = (listOf("set -eu") + lines + "printf '%s\\n' '${marker()}'").joinToString("\n")
     fun expectedMarker() = marker()
 
-    fun block(): String = script(families.flatMap { tool -> listOf(
-        "routes=$(${ip(tool)} route show table $table)",
-        "test -z \"\$routes\"",
-        "rules=$(${ip(tool)} rule show)",
-        "test \"$(printf '%s\\n' \"\$rules\" | grep -c -- 'lookup $table' || :)\" = '0'",
-    ) } + families.flatMap { tool ->
-        listOf("${ip(tool)} route add blackhole default table $table metric 32760",
-        ) + record.selectedUids.map { "${ip(tool)} rule add pref $priority uidrange $it-$it lookup $table" } + listOf(
-            command(tool, "-N $chain"), command(tool, "-A $chain -j DROP"),
-            command(tool, "-N $mangle", "mangle"), command(tool, "-A $mangle -j MARK --set-xmark $mark/0x1fe00000", "mangle"),
-            // ACCEPT stops this mangle pass; normal FILTER processing remains.
-            command(tool, "-A $mangle -j ACCEPT", "mangle")) +
-            record.selectedUids.flatMap { listOf(command(tool, "-I OUTPUT 1 -m owner --uid-owner $it -j $chain"),
-                command(tool, "-I OUTPUT 1 -m owner --uid-owner $it -j $mangle", "mangle")) }
-    } + proof(allowed = false))
+    fun block(): String {
+        require(!legacyMarks) { "vpn_legacy_guard_cleanup_only" }
+        return script(families.flatMap { tool -> listOf(
+            "routes=$(${ip(tool)} route show table $table)",
+            "test -z \"\$routes\"",
+            "rules=$(${ip(tool)} rule show)",
+            "test \"$(printf '%s\\n' \"\$rules\" | grep -c -- 'lookup $table' || :)\" = '0'",
+        ) } + families.flatMap { tool ->
+            listOf("${ip(tool)} route add blackhole default table $table metric 32760") +
+                record.selectedUids.map { "${ip(tool)} rule add pref $priority uidrange $it-$it lookup $table" } +
+                listOf(command(tool, "-N $chain"), command(tool, "-A $chain -j DROP")) +
+                record.selectedUids.map { command(tool, "-I OUTPUT 1 -m owner --uid-owner $it -j $chain") }
+        } + proof(allowed = false))
+    }
 
     fun allow(): String {
+        require(!legacyMarks) { "vpn_legacy_guard_cleanup_only" }
         require(record.phase == "ALLOWING")
         val name = record.interfaceName!!
         val index = record.interfaceIndex!!
@@ -98,13 +103,14 @@ internal class UidGuardPlan private constructor(val record: UidGuardRecord, val 
             if (tool == "ip6tables" && record.ipv6 == "block") emptyList() else listOf(
                 "${ip(tool)} route add default dev $name table $table metric 10",
                 "test \"$(cat /sys/class/net/$name/ifindex)\" = '$index'",
-                command(tool, "-I $chain 1 -o $name -m mark --mark $mark/0x1fe00000 -j RETURN"))
+                command(tool, "-I $chain 1 ${allowRule(name)}"))
         } + proof(allowed = true) + linkProof())
     }
 
     fun verify(allowed: Boolean): String = script(proof(allowed) + if (allowed) linkProof() else emptyList())
 
     fun pause(): String {
+        require(!legacyMarks) { "vpn_legacy_guard_cleanup_only" }
         require(record.phase == "BLOCKING" && record.allowRules)
         val name = record.interfaceName!!
         val index = record.interfaceIndex!!
@@ -113,7 +119,7 @@ internal class UidGuardPlan private constructor(val record: UidGuardRecord, val 
             listOf("else") + proof(allowed = true) + listOf("fi")
         val changes = families.flatMap { tool ->
             if (tool == "ip6tables" && record.ipv6 == "block") emptyList() else listOf(
-                command(tool, "-D $chain -o $name -m mark --mark $mark/0x1fe00000 -j RETURN"),
+                command(tool, "-D $chain ${allowRule(name)}"),
                 "routes=$(${ip(tool)} route show table $table)",
                 "if test \"$(printf '%s\\n' \"\$routes\" | grep -c .)\" = '2'; then",
                 "test \"$(cat /sys/class/net/$name/ifindex)\" = '$index'",
@@ -134,17 +140,17 @@ internal class UidGuardPlan private constructor(val record: UidGuardRecord, val 
             "if test -e /sys/class/net/${record.interfaceName}/ifindex; then test \"$(cat /sys/class/net/${record.interfaceName}/ifindex)\" != '${record.interfaceIndex}'; fi",
         )
         return script(closedCheck + proof(allowed = record.allowRules, closed = true) + families.flatMap { tool ->
-            record.selectedUids.flatMap { listOf(command(tool, "-D OUTPUT -m owner --uid-owner $it -j $chain"),
-                command(tool, "-D OUTPUT -m owner --uid-owner $it -j $mangle", "mangle")) } +
-                listOf(command(tool, "-F $chain"), command(tool, "-X $chain"), command(tool, "-F $mangle", "mangle"), command(tool, "-X $mangle", "mangle"),
-                    ) +
+            record.selectedUids.flatMap { listOf(command(tool, "-D OUTPUT -m owner --uid-owner $it -j $chain")) +
+                legacy(listOf(command(tool, "-D OUTPUT -m owner --uid-owner $it -j $mangle", "mangle"))) } +
+                listOf(command(tool, "-F $chain"), command(tool, "-X $chain")) +
+                legacy(listOf(command(tool, "-F $mangle", "mangle"), command(tool, "-X $mangle", "mangle"))) +
                 record.selectedUids.map { "${ip(tool)} rule del pref $priority uidrange $it-$it lookup $table" } + listOf(
                     "${ip(tool)} route del blackhole default table $table metric 32760",
                     // Successful listing also proves the table is readable.
                     "rules=$(${command(tool, "-S OUTPUT")})",
                     "test \"$(printf '%s\\n' \"\$rules\" | grep -c -- '-j $chain' || :)\" = '0'",
-                    "rules=$(${command(tool, "-S OUTPUT", "mangle")})",
-                    "test \"$(printf '%s\\n' \"\$rules\" | grep -c -- '-j $mangle' || :)\" = '0'",
+                ) + legacy(listOf("rules=$(${command(tool, "-S OUTPUT", "mangle")})",
+                    "test \"$(printf '%s\\n' \"\$rules\" | grep -c -- '-j $mangle' || :)\" = '0'")) + listOf(
                     "rules=$(${ip(tool)} rule show)",
                     "test \"$(printf '%s\\n' \"\$rules\" | grep -c -- 'lookup $table' || :)\" = '0'",
                     "routes=$(${ip(tool)} route show table $table)", "test -z \"\$routes\"")
@@ -153,32 +159,37 @@ internal class UidGuardPlan private constructor(val record: UidGuardRecord, val 
 
     private fun proof(allowed: Boolean, closed: Boolean = false): List<String> = families.flatMap { tool ->
         val familyAllowed = allowed && (tool == "iptables" || record.ipv6 == "tunnel")
-        listOf(command(tool, "-C $chain -j DROP"), command(tool, "-C $mangle -j MARK --set-xmark $mark/0x1fe00000", "mangle"),
-            command(tool, "-C $mangle -j ACCEPT", "mangle"),
+        listOf(command(tool, "-C $chain -j DROP")) + legacy(listOf(
+            command(tool, "-C $mangle -j MARK --set-xmark $mark/0x1fe00000", "mangle"),
+            command(tool, "-C $mangle -j ACCEPT", "mangle"))) + listOf(
             "routes=$(${ip(tool)} route show table $table)",
             "test \"$(printf '%s\\n' \"\$routes\" | grep -c -- '^blackhole default.*metric 32760')\" = '1'",
             "test \"$(printf '%s\\n' \"\$routes\" | grep -c .)\" = '${if (familyAllowed && !closed) 2 else 1}'",
+        ) + (if (familyAllowed && !closed) listOf(
+            "test \"$(printf '%s\\n' \"\$routes\" | grep -Ec -- '^default dev ${record.interfaceName}([[:space:]].*)? metric 10([[:space:]]|$)')\" = '1'",
+        ) else emptyList()) + listOf(
             "rules=$(${ip(tool)} rule show)",
             "test \"$(printf '%s\\n' \"\$rules\" | grep -c -- 'lookup $table')\" = '${record.selectedUids.size}'") +
             record.selectedUids.map { "test \"$(printf '%s\\n' \"\$rules\" | grep -Ec -- '^$priority:.*uidrange $it-$it .*lookup $table([[:space:]]|$)')\" = '1'" } +
-            record.selectedUids.flatMap { listOf(command(tool, "-C OUTPUT -m owner --uid-owner $it -j $chain"), command(tool, "-C OUTPUT -m owner --uid-owner $it -j $mangle", "mangle")) } +
+            record.selectedUids.flatMap { listOf(command(tool, "-C OUTPUT -m owner --uid-owner $it -j $chain")) +
+                legacy(listOf(command(tool, "-C OUTPUT -m owner --uid-owner $it -j $mangle", "mangle"))) } +
             listOf(
                 "rules=$(${command(tool, "-S $chain")})",
                 "test \"$(printf '%s\\n' \"\$rules\" | grep -c -- '^-A $chain ')\" = '${if (familyAllowed) 2 else 1}'",
                 "test \"$(printf '%s\\n' \"\$rules\" | tail -n 1)\" = '-A $chain -j DROP'",
                 "rules=$(${command(tool, "-S OUTPUT")})",
                 "test \"$(printf '%s\\n' \"\$rules\" | grep -c -- '-j $chain')\" = '${record.selectedUids.size}'",
-                "rules=$(${command(tool, "-S $mangle", "mangle")})",
+            ) + legacy(listOf("rules=$(${command(tool, "-S $mangle", "mangle")})",
                 "test \"$(printf '%s\\n' \"\$rules\" | grep -c -- '^-A $mangle ')\" = '2'",
                 "test \"$(printf '%s\\n' \"\$rules\" | tail -n 1)\" = '-A $mangle -j ACCEPT'",
                 "rules=$(${command(tool, "-S OUTPUT", "mangle")})",
                 "test \"$(printf '%s\\n' \"\$rules\" | grep -c -- '-j $mangle')\" = '${record.selectedUids.size}'",
-            ) + if (familyAllowed) listOf(command(tool, "-C $chain -o ${record.interfaceName} -m mark --mark $mark/0x1fe00000 -j RETURN")) else emptyList()
+            )) + if (familyAllowed) listOf(command(tool, "-C $chain ${allowRule(record.interfaceName!!)}")) else emptyList()
     }
 
     companion object {
         fun from(record: UidGuardRecord): UidGuardPlan {
-            require(record.planVersion == 3)
+            require(record.planVersion in setOf(3, 4))
             val id = UUID.fromString(record.operationId)
             require(id.toString() == record.operationId)
             require(record.ownerUid >= 10000 && record.selectedUids.size in 1..64 && record.selectedUids.toSet().size == record.selectedUids.size)
@@ -192,10 +203,8 @@ internal class UidGuardPlan private constructor(val record: UidGuardRecord, val 
             }
             require(record.phase !in setOf("ALLOWING", "ALLOWED", "BLOCKING") || record.interfaceName != null)
             require(record.phase !in setOf("ALLOWING", "ALLOWED", "BLOCKING") || record.allowRules)
-            // AOSP reserves bits 21..28. Preserve netId, protectedFromVpn,
-            // permission, accounting, vendor and ingress-wakeup bits. The mark
-            // is only checked inside UID-owned chains; it installs no global
-            // mark route that could redirect another application's packets.
+            // Preserve the exact version 3 mark for explicit cleanup only.
+            // Version 4 never reads, writes or installs any fwmark rules.
             val mark = ((id.leastSignificantBits and 0xff).coerceAtLeast(1)) shl 21
             val table = 2000000 + ((id.mostSignificantBits xor id.leastSignificantBits) and 0xfffff).toInt()
             return UidGuardPlan(record.copy(selectedUids = Collections.unmodifiableList(record.selectedUids.toList())), "SPV2F_" + id.toString().replace("-", "").take(20), mark, table)
