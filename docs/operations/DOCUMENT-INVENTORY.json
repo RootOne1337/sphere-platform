@@ -1,11 +1,11 @@
 {
   "schemaVersion": 1,
-  "reviewedAtUtc": "2026-10-22T17:17:12.560377+00:00",
+  "reviewedAtUtc": "2026-10-22T18:05:35.653308+00:00",
   "scope": "All tracked Markdown classified; active local-link paths scanned. Not semantic attestation of every sentence, command execution, external-link or live acceptance.",
   "countsByRole": {
     "ADR": 6,
     "CURRENT_ENTRYPOINT": 8,
-    "DATED_EVIDENCE": 367,
+    "DATED_EVIDENCE": 368,
     "DESIGN_SPECIFICATION": 85,
     "OPERATING_GUIDE": 70,
     "PROJECT_POLICY": 7,
@@ -1582,6 +1582,10 @@
     },
     {
       "file": "docs/audits/2026-10-22/VPN-APK85-MAIN-CANARY.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
+      "file": "docs/audits/2026-10-22/VPN-APK86-ALLAPPS-PH030-CANARY.md",
       "role": "DATED_EVIDENCE"
     },
     {

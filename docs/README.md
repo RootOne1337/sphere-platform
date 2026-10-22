@@ -1,6 +1,6 @@
 <div align="center">
 
-**Проверенная установка:** UI `a239baa2` / API `cd2431e2`.
+**Проверенная установка:** UI `a239baa2` / API `1afdc529`.
 
 **22 октября — APK85 на четырёх online устройствах.** PH010/PH011/PH025/PH030 завершили OTA, установленный SHA проверен на каждом; 17 offline не обновлены. Полный Android CI и настроенная облачная сборка успешны. Локальный AWG1 опыт основного APK подтвердил 17 HTTP-ответов, pause/resume и crash isolation; внешний WG/DNS, production journal/leases и общая VPN-приёмка остаются открытыми. [Поставка и реальные экраны](audits/2026-10-22/VPN-APK85-CLOUD-AND-ADDRESSED-DELIVERY.md) · [Физическая проверка](audits/2026-10-22/VPN-APK85-MAIN-CANARY.md).
 
