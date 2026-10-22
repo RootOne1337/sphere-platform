@@ -2,6 +2,20 @@
 
 **Проверенная установка:** UI `46dd02ff` / API `cd2431e2`.
 
+**22 октября — APK85 установлен на всех четырёх online pilot-устройствах.**
+PH010/PH011/PH025/PH030 завершили OTA, независимый SHA установленного пакета
+проверен на каждом. 17 offline не обновлены. Полный hosted CI: 1277 тестов
+на debug-вариант, 0 failures/errors, 1 skip; настроенный APK также собран в GitHub
+с зашифрованным artifact и переподписан локально без изменения 936 payload entries.
+WG-профиль/закрытые ключи подписи не уходили в CI; одноразовый secret удалён.
+На PH011 plan 4 прошёл 12+5 HTTP-ответов с отдельным локальным AWG1 peer,
+pause/resume, crash isolation, явный disconnect и kernel cleanup. Основной Sphere
+сохранял связь; тестовые профили архивированы, оснастка удалена. Внешний WG остаётся
+нестабильным после первых TCP, DNS не принят. Production journal/leases, IPv6,
+длинная нагрузка и общий executor остаются открытыми.
+[Поставка и экраны](../audits/2026-10-22/VPN-APK85-CLOUD-AND-ADDRESSED-DELIVERY.md) ·
+[Физическая проверка](../audits/2026-10-22/VPN-APK85-MAIN-CANARY.md).
+
 **22 октября — API исправлен в установке; PH011 выявил mark-дефект APK84.**
 Повторный ресурсный допуск прошёл; API `cd2431e2` установлен без schema/OTA
 изменений. RPC snapshot совпал с `/vpn/runtime`, проверены реальные desktop/mobile

@@ -8,11 +8,12 @@ Android kill switch, прокси, внешний allocator или оркест�
 
 Установлены UI `46dd02ff`, API `cd2431e2`, зашифрованный каталог и миграция
 `20261021_vpn_profiles`. Каталог использует отдельный nonowner DB-login; основная
-роль API по-прежнему привилегированная. APK84 установлен адресным OTA на PH011;
-пакет проверен независимо. Живой опыт выявил дефект packet mark на PH011;
-туннель отключён и очищен. APK85 с guard plan 4 без mark проходит CI, ещё не установлен.
-Физический provider пока не принят.
-[Поставка Android](../audits/2026-10-22/VPN-APK84-PH011-DELIVERY.md).
+роль API по-прежнему привилегированная. APK85 установлен адресным OTA на четырёх
+online pilot-устройствах; каждый пакет проверен независимо, 17 offline не обновлены.
+Guard plan 4 прошёл конечный локальный AWG1 HTTP/pause/crash/release опыт на PH011.
+Внешние повторные TCP/DNS нестабильны; общий физический provider пока не принят.
+[Поставка Android](../audits/2026-10-22/VPN-APK85-CLOUD-AND-ADDRESSED-DELIVERY.md) ·
+[Физическая приёмка и границы](../audits/2026-10-22/VPN-APK85-MAIN-CANARY.md).
 [Физический опыт и исправление](../audits/2026-10-22/VPN-APK84-MAIN-CANARY.md).
 Точная поставка каталога и реальные экраны:
 [пакетный импорт и live delivery](../audits/2026-10-22/VPN-BATCH-LIVE-DELIVERY.md).

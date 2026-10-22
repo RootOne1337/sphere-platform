@@ -3,7 +3,8 @@
 22 октября 2026 · каталог установлен локально: UI `46dd02ff`, API `cd2431e2`,
 миграция `20261021_vpn_profiles`, отдельные DB-login/key ring. Проверены live HTTP
 операции и интерфейс на desktop/mobile. Туннель этим каталогом не применяется;
-APK84 и общий физический исполнитель пока не приняты.
+Общий физический исполнитель пока не принят; текущий APK85 установлен на четырёх
+online устройствах и имеет ограниченную локальную физическую приёмку.
 Точная [квитанция доставки](../audits/2026-10-22/VPN-BATCH-LIVE-DELIVERY.json) и
 [скриншоты](../audits/2026-10-22/VPN-BATCH-LIVE-DELIVERY.md).
 Связанные документы: [архитектура и этапы](../design/VPN-EGRESS-ARCHITECTURE.md),
@@ -14,7 +15,11 @@ APK84 установлен адресно на PH011; отдельный `:vpn` 
 подтверждены после установки исправления receive loop. Физический опыт нашёл
 несовместимость дополнительной packet mark: handshake есть, TCP/DNS нет; A/B без
 mark восстановил трафик. Guard штатно снят, профиль архивирован. APK85 с plan 4
-без mark проходит CI; общий executor/leases и физическая приёмка остаются открытыми.
+без mark прошёл hosted CI и установлен на PH010/PH011/PH025/PH030. На PH011
+подтверждены 17 HTTP-ответов локального AWG1 peer, pause/resume и crash isolation.
+Внешние повторные TCP/DNS всё ещё нестабильны; общий executor/leases остаётся открытым.
+[Поставка APK85](../audits/2026-10-22/VPN-APK85-CLOUD-AND-ADDRESSED-DELIVERY.md) ·
+[Физический scope](../audits/2026-10-22/VPN-APK85-MAIN-CANARY.md).
 [Доставка API](../audits/2026-10-22/VPN-STATUS-ROUTING-LIVE-DELIVERY.md) ·
 [Физический опыт и исправление](../audits/2026-10-22/VPN-APK84-MAIN-CANARY.md).
 

@@ -3,6 +3,11 @@
 Это дополнительный ручной путь, когда локально нельзя запускать тяжёлую Android
 сборку. Он не продвигает обычный OTA-канал и не объявляет VPN принятым.
 
+22 октября путь выполнен для APK85: full CI `39764211758`, configured package
+`39771397160`, зашифрованный artifact, локальная переподпись и независимые package
+SHA на четырёх online устройствах. Одноразовый secret удалён. Точные source/tree,
+сертификаты, SHA и границы: [квитанция поставки](../audits/2026-10-22/VPN-APK85-CLOUD-AND-ADDRESSED-DELIVERY.md).
+
 Полный `.github/workflows/ci-android.yml` по умолчанию работает как прежде.
 Режим `workflow_dispatch` с `package_only=true` и `validation_run=<run id>` вызывает
 отдельный reusable workflow упаковки. Проверенный полный прогон должен уже иметь

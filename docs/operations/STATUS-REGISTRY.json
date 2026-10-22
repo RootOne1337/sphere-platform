@@ -1,8 +1,8 @@
 {
   "schemaVersion": 1,
-  "reviewedAtUtc": "2026-10-22T10:41:52.227211+00:00",
-  "sourceReviewed": "79ba84f980f987d8d3429dbc082b07bf39bb2834",
-  "scope": "UI46dd/APIcd243 installed and actual desktop/mobile native telemetry accepted. APK84 PH011 physical test exposed a mark compatibility defect; disconnected and cleaned up. APK85 source/CI pending; fleet rollout, journals/leases and production remain open.",
+  "reviewedAtUtc": "2026-10-22T12:08:42.323204+00:00",
+  "sourceReviewed": "3b437ee8c5a0067f3cfb792b25e8b383e739fc88",
+  "scope": "UI46dd/APIcd243 remain installed; hosted APK85 independently verified on four online pilot devices. Finite local AWG1 HTTP/pause/crash isolation passed. External WG repeated TCP/DNS reliability, 17 offline devices, production operation journals/leases and broader VPN acceptance remain open.",
   "baseline": "docs/audits/2026-10-05/ENTERPRISE-PRODUCT-BACKLOG.json",
   "previousCrosscheck": "docs/audits/2026-10-09/CHAT-CODE-RECONCILIATION.json",
   "counts": {
@@ -11,62 +11,74 @@
     "open": 41
   },
   "installed": {
-    "lastObservedUtc": "2026-10-22T10:41:52.227211+00:00",
+    "lastObservedUtc": "2026-10-22T12:08:42.323204+00:00",
     "ui": "46dd02fff711c1667b44520b85290226b7155287",
     "api": "cd2431e2ae0c719959147626981b00ac8f9703f5",
-    "evidence": "docs/audits/2026-10-22/VPN-STATUS-ROUTING-RUNTIME-OBSERVATION.json",
-    "observation": "Actual installed VPN diagnostics/list after confirmed disconnect; no media, input, game or physical VPN acceptance.",
+    "evidence": "docs/audits/2026-10-22/VPN-APK85-RUNTIME-OBSERVATION.json",
+    "observation": "Installed VPN diagnostics after explicit disconnect; no media/input/game acceptance.",
     "pilotApk": {
       "device": "auto-ph-011",
       "deviceId": "414ce0e9-4b93-4f96-b9ca-ee675f53835e",
-      "version": "1.2.84-dev",
-      "versionCode": 10284,
-      "sourceRevision": "7f06701ed6f1a0fd66a0d7d5f50234160e5324cd",
-      "apkSha256": "33916fa4f605afbbd62e2b76032b8c7b51184ef919afff50f9e3c2ce88c2b7b0",
-      "evidence": "docs/audits/2026-10-22/VPN-APK84-PH011-DELIVERY.json",
-      "evidenceSha256NormalizedLf": "bbeecba9b49c1a2a605e2d6086495e26a4efa6c10b17c51c50e5bffa58161556",
-      "packageProofObservedAtUtc": "2026-10-21T21:19:44.815923+00:00",
-      "scope": "One addressed PH011 main-APK canary installation; source/CI binding is separate from physical VPN acceptance. PH030 was offline and received no APK84 grant."
+      "version": "1.2.85-dev",
+      "versionCode": 10285,
+      "sourceRevision": "3b437ee8c5a0067f3cfb792b25e8b383e739fc88",
+      "apkSha256": "9f2bdbe7e7040a0013b5636088426d01a8b8cae99dcfefb0dddd1400868a9180",
+      "evidence": "docs/audits/2026-10-22/VPN-APK85-CLOUD-AND-ADDRESSED-DELIVERY.json",
+      "evidenceSha256NormalizedLf": "3291d747154f8bbdadd41e3c386e930d5f882e5ceda175d03ce07da523e83f13",
+      "packageProofObservedAtUtc": "2026-10-22T12:04:38.101328+00:00",
+      "scope": "Completed addressed OTA plus independent installed package hash; VPN physical scope is separate."
     },
-    "evidenceSha256NormalizedLf": "feac03012f8a8a5e803baa0d8abb41aa14be020203a31f52c2112a6f8eee086f",
+    "evidenceSha256NormalizedLf": "382197fd57e6ba4cf4e97636dddd63ac7d9b4ba910ad1bf41363fbc14245a08f",
     "additionalPilotApks": [
-      {
-        "device": "auto-ph-025",
-        "deviceId": "b410464a-5f26-4803-a756-7840cc17b128",
-        "version": "1.2.83-dev",
-        "versionCode": 10283,
-        "sourceRevision": "0cedceb438b6368468ebc01cb5f531e6db4e3185",
-        "apkSha256": "61a22093a2edbadecebd563a874c4c4a80abb7c01000c9abd151659437f25e35",
-        "evidence": "docs/audits/2026-10-20/NETWORK-ROUTE-INPUT83-DELIVERY.json",
-        "evidenceSha256NormalizedLf": "ddb757de89e308bc1d3a72d6a0ad45e40cf534d4540aa524cc59420050d37a9e",
-        "packageProofObservedAtUtc": "2026-10-20T15:21:22.957148+00:00",
-        "scope": "Independent installed-package SHA plus completed addressed OTA; finite PH030 input and general performance are separate."
-      },
       {
         "device": "auto-ph-010",
         "deviceId": "5df4805e-fe64-4d39-960c-19ceab206cd6",
-        "version": "1.2.83-dev",
-        "versionCode": 10283,
-        "sourceRevision": "0cedceb438b6368468ebc01cb5f531e6db4e3185",
-        "apkSha256": "61a22093a2edbadecebd563a874c4c4a80abb7c01000c9abd151659437f25e35",
-        "evidence": "docs/audits/2026-10-20/NETWORK-ROUTE-INPUT83-DELIVERY.json",
-        "evidenceSha256NormalizedLf": "ddb757de89e308bc1d3a72d6a0ad45e40cf534d4540aa524cc59420050d37a9e",
-        "packageProofObservedAtUtc": "2026-10-20T15:21:22.957148+00:00",
-        "scope": "Independent installed-package SHA plus completed addressed OTA; finite PH030 input and general performance are separate."
+        "version": "1.2.85-dev",
+        "versionCode": 10285,
+        "sourceRevision": "3b437ee8c5a0067f3cfb792b25e8b383e739fc88",
+        "apkSha256": "9f2bdbe7e7040a0013b5636088426d01a8b8cae99dcfefb0dddd1400868a9180",
+        "evidence": "docs/audits/2026-10-22/VPN-APK85-CLOUD-AND-ADDRESSED-DELIVERY.json",
+        "evidenceSha256NormalizedLf": "3291d747154f8bbdadd41e3c386e930d5f882e5ceda175d03ce07da523e83f13",
+        "packageProofObservedAtUtc": "2026-10-22T12:04:30.867863+00:00",
+        "scope": "Completed addressed OTA plus independent installed package hash; VPN physical scope is separate."
+      },
+      {
+        "device": "auto-ph-025",
+        "deviceId": "b410464a-5f26-4803-a756-7840cc17b128",
+        "version": "1.2.85-dev",
+        "versionCode": 10285,
+        "sourceRevision": "3b437ee8c5a0067f3cfb792b25e8b383e739fc88",
+        "apkSha256": "9f2bdbe7e7040a0013b5636088426d01a8b8cae99dcfefb0dddd1400868a9180",
+        "evidence": "docs/audits/2026-10-22/VPN-APK85-CLOUD-AND-ADDRESSED-DELIVERY.json",
+        "evidenceSha256NormalizedLf": "3291d747154f8bbdadd41e3c386e930d5f882e5ceda175d03ce07da523e83f13",
+        "packageProofObservedAtUtc": "2026-10-22T12:04:34.316120+00:00",
+        "scope": "Completed addressed OTA plus independent installed package hash; VPN physical scope is separate."
+      },
+      {
+        "device": "auto-ph-030",
+        "deviceId": "753fd530-2f19-4e5e-98ba-769863678141",
+        "version": "1.2.85-dev",
+        "versionCode": 10285,
+        "sourceRevision": "3b437ee8c5a0067f3cfb792b25e8b383e739fc88",
+        "apkSha256": "9f2bdbe7e7040a0013b5636088426d01a8b8cae99dcfefb0dddd1400868a9180",
+        "evidence": "docs/audits/2026-10-22/VPN-APK85-CLOUD-AND-ADDRESSED-DELIVERY.json",
+        "evidenceSha256NormalizedLf": "3291d747154f8bbdadd41e3c386e930d5f882e5ceda175d03ce07da523e83f13",
+        "packageProofObservedAtUtc": "2026-10-22T12:04:27.366235+00:00",
+        "scope": "Completed addressed OTA plus independent installed package hash; VPN physical scope is separate."
       }
     ],
     "fleetApkEvidence": {
-      "evidence": "docs/audits/2026-10-22/VPN-APK84-PH011-DELIVERY.json",
-      "evidenceSha256NormalizedLf": "bbeecba9b49c1a2a605e2d6086495e26a4efa6c10b17c51c50e5bffa58161556",
-      "installedCount": 1,
+      "evidence": "docs/audits/2026-10-22/VPN-APK85-CLOUD-AND-ADDRESSED-DELIVERY.json",
+      "evidenceSha256NormalizedLf": "3291d747154f8bbdadd41e3c386e930d5f882e5ceda175d03ce07da523e83f13",
+      "installedCount": 4,
       "verifiedVersionCounts": {
-        "10284": 1
+        "10285": 4
       },
-      "scope": "Only PH011 package was freshly verified in this addressed delivery. PH010/PH025 retain separate historical APK83 package receipts; PH030 was offline."
+      "scope": "All four online pilot devices; 17 offline unmodified. Ordinary update channel unchanged."
     },
-    "latestReadbackAtUtc": "2026-10-22T10:41:52.227211+00:00",
-    "latestReadbackEvidence": "docs/audits/2026-10-22/VPN-STATUS-ROUTING-LIVE-DELIVERY.json",
-    "latestReadbackEvidenceSha256NormalizedLf": "d4d0cc605da7a0b47a4cbc8a1efbb2313ff193cec894f12a625924a3a86470cc",
+    "latestReadbackAtUtc": "2026-10-22T12:08:42.323204+00:00",
+    "latestReadbackEvidence": "docs/audits/2026-10-22/VPN-APK85-CLOUD-AND-ADDRESSED-DELIVERY.json",
+    "latestReadbackEvidenceSha256NormalizedLf": "3291d747154f8bbdadd41e3c386e930d5f882e5ceda175d03ce07da523e83f13",
     "previousRuntimeObservation": {
       "ui": "ed9d54d090e2b5a5d471502335ddf6b8b86dbd35",
       "api": "ed9d54d090e2b5a5d471502335ddf6b8b86dbd35",
@@ -170,6 +182,42 @@
       {
         "device": "auto-ph-011",
         "deviceId": "414ce0e9-4b93-4f96-b9ca-ee675f53835e",
+        "version": "1.2.83-dev",
+        "versionCode": 10283,
+        "sourceRevision": "0cedceb438b6368468ebc01cb5f531e6db4e3185",
+        "apkSha256": "61a22093a2edbadecebd563a874c4c4a80abb7c01000c9abd151659437f25e35",
+        "evidence": "docs/audits/2026-10-20/NETWORK-ROUTE-INPUT83-DELIVERY.json",
+        "evidenceSha256NormalizedLf": "ddb757de89e308bc1d3a72d6a0ad45e40cf534d4540aa524cc59420050d37a9e",
+        "packageProofObservedAtUtc": "2026-10-20T15:21:22.957148+00:00",
+        "scope": "Independent installed-package SHA plus completed addressed OTA; finite PH030 input and general performance are separate."
+      },
+      {
+        "device": "auto-ph-011",
+        "deviceId": "414ce0e9-4b93-4f96-b9ca-ee675f53835e",
+        "version": "1.2.84-dev",
+        "versionCode": 10284,
+        "sourceRevision": "7f06701ed6f1a0fd66a0d7d5f50234160e5324cd",
+        "apkSha256": "33916fa4f605afbbd62e2b76032b8c7b51184ef919afff50f9e3c2ce88c2b7b0",
+        "evidence": "docs/audits/2026-10-22/VPN-APK84-PH011-DELIVERY.json",
+        "evidenceSha256NormalizedLf": "bbeecba9b49c1a2a605e2d6086495e26a4efa6c10b17c51c50e5bffa58161556",
+        "packageProofObservedAtUtc": "2026-10-21T21:19:44.815923+00:00",
+        "scope": "One addressed PH011 main-APK canary installation; source/CI binding is separate from physical VPN acceptance. PH030 was offline and received no APK84 grant."
+      },
+      {
+        "device": "auto-ph-025",
+        "deviceId": "b410464a-5f26-4803-a756-7840cc17b128",
+        "version": "1.2.83-dev",
+        "versionCode": 10283,
+        "sourceRevision": "0cedceb438b6368468ebc01cb5f531e6db4e3185",
+        "apkSha256": "61a22093a2edbadecebd563a874c4c4a80abb7c01000c9abd151659437f25e35",
+        "evidence": "docs/audits/2026-10-20/NETWORK-ROUTE-INPUT83-DELIVERY.json",
+        "evidenceSha256NormalizedLf": "ddb757de89e308bc1d3a72d6a0ad45e40cf534d4540aa524cc59420050d37a9e",
+        "packageProofObservedAtUtc": "2026-10-20T15:21:22.957148+00:00",
+        "scope": "Independent installed-package SHA plus completed addressed OTA; finite PH030 input and general performance are separate."
+      },
+      {
+        "device": "auto-ph-010",
+        "deviceId": "5df4805e-fe64-4d39-960c-19ceab206cd6",
         "version": "1.2.83-dev",
         "versionCode": 10283,
         "sourceRevision": "0cedceb438b6368468ebc01cb5f531e6db4e3185",
@@ -1825,8 +1873,8 @@
     "primaryVideoInstalled": true,
     "primaryVideoObserved": false,
     "productionAccepted": false,
-    "currentObservationEvidence": "docs/audits/2026-10-22/VPN-STATUS-ROUTING-RUNTIME-OBSERVATION.json",
-    "currentObservationEvidenceSha256NormalizedLf": "feac03012f8a8a5e803baa0d8abb41aa14be020203a31f52c2112a6f8eee086f",
+    "currentObservationEvidence": "docs/audits/2026-10-22/VPN-APK85-RUNTIME-OBSERVATION.json",
+    "currentObservationEvidenceSha256NormalizedLf": "382197fd57e6ba4cf4e97636dddd63ac7d9b4ba910ad1bf41363fbc14245a08f",
     "pilotEvidenceScope": "Web5cbb installed; API15ce preserved. APK83 completed OTA on four online devices, three independent package hashes, PH030 completion/version only; 17 offline excluded. Finite controls passed; initial/repeated ICE/native-busy failures and latency remain open.",
     "historicalPrimaryFrames": 1804,
     "directInputCandidate": {
@@ -6287,5 +6335,23 @@
     "apk85Source": "79ba84f980f987d8d3429dbc082b07bf39bb2834",
     "apk85CiRunId": 39764211758,
     "apk85Installed": false
+  },
+  "vpnApk85CloudDelivery": {
+    "evidence": "docs/audits/2026-10-22/VPN-APK85-CLOUD-AND-ADDRESSED-DELIVERY.json",
+    "evidenceSha256NormalizedLf": "3291d747154f8bbdadd41e3c386e930d5f882e5ceda175d03ce07da523e83f13",
+    "installedDevices": 4,
+    "versionCode": 10285,
+    "fullAndroidCiAccepted": true,
+    "apkBuiltByHostedCi": true,
+    "ordinaryChannelChanged": false,
+    "productionAccepted": false
+  },
+  "vpnApk85MainCanary": {
+    "evidence": "docs/audits/2026-10-22/VPN-APK85-MAIN-CANARY.json",
+    "evidenceSha256NormalizedLf": "0bed6e10c30858e715d53f758abd336b5055dc64eb3303e0ad5954b2ecf0310b",
+    "localAwg1FiniteAccepted": true,
+    "publicProviderDataReliabilityAccepted": false,
+    "cleanupConfirmed": true,
+    "productionAccepted": false
   }
 }

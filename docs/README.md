@@ -2,6 +2,8 @@
 
 **Проверенная установка:** UI `46dd02ff` / API `cd2431e2`.
 
+**22 октября — APK85 на четырёх online устройствах.** PH010/PH011/PH025/PH030 завершили OTA, установленный SHA проверен на каждом; 17 offline не обновлены. Полный Android CI и настроенная облачная сборка успешны. Локальный AWG1 опыт основного APK подтвердил 17 HTTP-ответов, pause/resume и crash isolation; внешний WG/DNS, production journal/leases и общая VPN-приёмка остаются открытыми. [Поставка и реальные экраны](audits/2026-10-22/VPN-APK85-CLOUD-AND-ADDRESSED-DELIVERY.md) · [Физическая проверка](audits/2026-10-22/VPN-APK85-MAIN-CANARY.md).
+
 **22 октября — пакетный VPN-каталог установлен.** UI `46dd02ff` / API `4a6ada92`: проверены 100 файлов, поздний rollback и восстановление после потери ответа без повторной записи. Backend CI 4422 passed, frontend 2630; реальные desktop/mobile скриншоты и границы — в [квитанции поставки](audits/2026-10-22/VPN-BATCH-LIVE-DELIVERY.md). Main-APK VPN, per-app accounting, proxy runtime и server journal/leases остаются отдельной приёмкой.
 
 **20 октября — веб5cbb и APK83.** Добавлены общий локальный ICE topology observer и отдельный Android input dispatcher. 2569 frontend tests; Android dev/enterprise lint/build/unit suites — по1252 теста,3 skipped. APK83 завершил OTA на4 online устройствах:3 package SHA сверены,PH030 — completed OTA/версия без отдельного hash;17 offline не обновлены. На PH030 подтверждены кнопки и жест, но повторное подключение в проверочном браузере осталось на серверном видео без управления. Снижение latency и VPN/reconnect production-приёмка открыты. [Изменения, отрицательные проверки и следующие условия](audits/2026-10-20/NETWORK-ROUTE-INPUT83-DELIVERY.md).
