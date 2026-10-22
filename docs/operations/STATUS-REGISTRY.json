@@ -1,8 +1,8 @@
 {
   "schemaVersion": 1,
-  "reviewedAtUtc": "2026-10-22T16:02:39.197650+00:00",
-  "sourceReviewed": "3b437ee8c5a0067f3cfb792b25e8b383e739fc88",
-  "scope": "Installed UI46dd/APIcd243 and APK85 unchanged. All-apps v2 source implemented; cloud frontend passed, backend tests passed but API docs correction requires new CI, Android CI pending. Exactly one WG1 peer created and independently passed HTTPS/DNS on host; Android all-apps acceptance remains open. PH030 retained paused game guard.",
+  "reviewedAtUtc": "2026-10-22T17:17:12.560377+00:00",
+  "sourceReviewed": "10d7d334e7a0cc440d498a6531ed79da83aff26e",
+  "scope": "UI a239 installed and read-only browser checked. Full backend, frontend, Android validation and configured APK86 passed hosted CI. API remains cd243 and four agents remain APK85: backend replacement/Android all-apps canary not admitted by local RAM/commit guard. One WG1 peer only; PH030 old guard retained paused.",
   "baseline": "docs/audits/2026-10-05/ENTERPRISE-PRODUCT-BACKLOG.json",
   "previousCrosscheck": "docs/audits/2026-10-09/CHAT-CODE-RECONCILIATION.json",
   "counts": {
@@ -11,10 +11,10 @@
     "open": 41
   },
   "installed": {
-    "lastObservedUtc": "2026-10-22T12:08:42.323204+00:00",
-    "ui": "46dd02fff711c1667b44520b85290226b7155287",
+    "lastObservedUtc": "2026-10-22T17:17:12.560377+00:00",
+    "ui": "a239baa26c5d945a4e3b09f4596b94d4db0cada2",
     "api": "cd2431e2ae0c719959147626981b00ac8f9703f5",
-    "evidence": "docs/audits/2026-10-22/VPN-APK85-RUNTIME-OBSERVATION.json",
+    "evidence": "docs/audits/2026-10-22/VPN-SCOPE-V2-DELIVERY-CHECKPOINT.json",
     "observation": "Installed VPN diagnostics after explicit disconnect; no media/input/game acceptance.",
     "pilotApk": {
       "device": "auto-ph-011",
@@ -28,7 +28,7 @@
       "packageProofObservedAtUtc": "2026-10-22T12:04:38.101328+00:00",
       "scope": "Completed addressed OTA plus independent installed package hash; VPN physical scope is separate."
     },
-    "evidenceSha256NormalizedLf": "382197fd57e6ba4cf4e97636dddd63ac7d9b4ba910ad1bf41363fbc14245a08f",
+    "evidenceSha256NormalizedLf": "aa815971a4e0ce484363b35efd274eb1391bd54678127ca01e41658298cd260b",
     "additionalPilotApks": [
       {
         "device": "auto-ph-010",
@@ -1873,8 +1873,8 @@
     "primaryVideoInstalled": true,
     "primaryVideoObserved": false,
     "productionAccepted": false,
-    "currentObservationEvidence": "docs/audits/2026-10-22/VPN-APK85-RUNTIME-OBSERVATION.json",
-    "currentObservationEvidenceSha256NormalizedLf": "382197fd57e6ba4cf4e97636dddd63ac7d9b4ba910ad1bf41363fbc14245a08f",
+    "currentObservationEvidence": "docs/audits/2026-10-22/VPN-SCOPE-V2-DELIVERY-CHECKPOINT.json",
+    "currentObservationEvidenceSha256NormalizedLf": "aa815971a4e0ce484363b35efd274eb1391bd54678127ca01e41658298cd260b",
     "pilotEvidenceScope": "Web5cbb installed; API15ce preserved. APK83 completed OTA on four online devices, three independent package hashes, PH030 completion/version only; 17 offline excluded. Finite controls passed; initial/repeated ICE/native-busy failures and latency remain open.",
     "historicalPrimaryFrames": 1804,
     "directInputCandidate": {
@@ -6375,5 +6375,11 @@
     "sourceImplemented": true,
     "candidateInstalled": false,
     "productionAccepted": false
+  },
+  "vpnScopeV2DeliveryCheckpoint": {
+    "evidence": "docs/audits/2026-10-22/VPN-SCOPE-V2-DELIVERY-CHECKPOINT.json",
+    "evidenceSha256NormalizedLf": "aa815971a4e0ce484363b35efd274eb1391bd54678127ca01e41658298cd260b",
+    "apk86Installed": false,
+    "androidAllAppsAccepted": false
   }
 }

@@ -1,6 +1,6 @@
 # Актуальность документации
 
-**Проверенная установка:** UI `46dd02ff` / API `cd2431e2`.
+**Проверенная установка:** UI `a239baa2` / API `cd2431e2`.
 
 **22 октября — пакетный VPN-каталог установлен.** UI `46dd02ff` / API `4a6ada92`: проверены 100 файлов, поздний rollback и восстановление после потери ответа без повторной записи. Backend CI 4422 passed, frontend 2630; реальные desktop/mobile скриншоты и границы — в [квитанции поставки](audits/2026-10-22/VPN-BATCH-LIVE-DELIVERY.md). Main-APK VPN, per-app accounting, proxy runtime и server journal/leases остаются отдельной приёмкой.
 

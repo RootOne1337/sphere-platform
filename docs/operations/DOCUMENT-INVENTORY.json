@@ -1,12 +1,12 @@
 {
   "schemaVersion": 1,
-  "reviewedAtUtc": "2026-10-22T16:02:39.197650+00:00",
+  "reviewedAtUtc": "2026-10-22T17:17:12.560377+00:00",
   "scope": "All tracked Markdown classified; active local-link paths scanned. Not semantic attestation of every sentence, command execution, external-link or live acceptance.",
   "countsByRole": {
     "ADR": 6,
     "CURRENT_ENTRYPOINT": 8,
-    "DATED_EVIDENCE": 366,
-    "DESIGN_SPECIFICATION": 84,
+    "DATED_EVIDENCE": 367,
+    "DESIGN_SPECIFICATION": 85,
     "OPERATING_GUIDE": 70,
     "PROJECT_POLICY": 7,
     "SUPPORTING_DOCUMENT": 7
@@ -1601,6 +1601,10 @@
       "role": "DATED_EVIDENCE"
     },
     {
+      "file": "docs/audits/2026-10-22/VPN-SCOPE-V2-DELIVERY-CHECKPOINT.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
       "file": "docs/audits/2026-10-22/VPN-STATUS-ROUTING-CI.md",
       "role": "DATED_EVIDENCE"
     },
@@ -1662,6 +1666,10 @@
     },
     {
       "file": "docs/design/WEB-DESIGN-CONCEPTS-2026-09-28.md",
+      "role": "DESIGN_SPECIFICATION"
+    },
+    {
+      "file": "docs/design/WG-ROUTER-PROVIDER-INTEGRATION.md",
       "role": "DESIGN_SPECIFICATION"
     },
     {
