@@ -6399,5 +6399,15 @@
     "gatewayExpiresAtUtc": "2026-10-23T19:08:06+00:00",
     "pendingProviderPermissionChoice": false,
     "oneAwgPeerCreatedWithUserAuthorization": true
+  },
+  "vpnStreamIncident": {
+    "evidence": "docs/audits/2026-10-23/PH030-STREAM-VPN-INCIDENT.json",
+    "evidenceSha256NormalizedLf": "9cad8ef9ad62a1294d11d48acb0a576c497e82165f7a996461dc2d45c06fda56",
+    "phoneStreamAccepted": false,
+    "pcCaptureOnlyFiniteAccepted": true,
+    "nativeInputAccepted": false,
+    "diagnosticShellTimeoutFencedInput": true,
+    "apk87Installed": false,
+    "ciRunId": 39841457086
   }
 }
