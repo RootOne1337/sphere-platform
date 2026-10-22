@@ -178,6 +178,10 @@ class AdbActionExecutor @Inject constructor(
         synchronized(rootLock) {
             cancellation.ensureActive()
             if (rootInputOutcomeUnknown) throw RootCommandOutcomeUnknownException("input_handoff_unknown")
+            // Screenshots can create this shell without submitting any input.
+            // Only an outstanding input write needs a FIFO handoff receipt.
+            // Never use this fast path to clear an already unknown outcome.
+            if (!rootInputPending) return@synchronized
             val process = rootProcess ?: return@synchronized
             if (!process.isAlive) {
                 if (rootInputPending) {

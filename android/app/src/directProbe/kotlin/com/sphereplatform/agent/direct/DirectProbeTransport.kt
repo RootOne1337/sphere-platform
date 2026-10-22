@@ -229,6 +229,11 @@ class DirectProbeTransport(
                 // rather than relying only on deprecated process initialization.
                 val builder = PeerConnectionFactory.builder()
                     .setFieldTrials(DirectEncodedVideoSource.FIELD_TRIALS)
+                    // Sphere's media/control plane must not enumerate the app
+                    // VPN as a usable ICE network. Android can still report it
+                    // to NetworkMonitor even when this package UID is excluded.
+                    // Keep the physical network monitor for Wi-Fi/LAN changes.
+                    .setOptions(DirectControlNetworkPolicy.factoryOptions())
                 p.video?.let { builder.setVideoEncoderFactory(it.encoderFactory) }
                 p.factory = builder.createPeerConnectionFactory()
             }

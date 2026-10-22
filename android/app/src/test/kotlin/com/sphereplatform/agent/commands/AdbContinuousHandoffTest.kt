@@ -33,6 +33,18 @@ class AdbContinuousHandoffTest {
         try { executor.shell("input keyevent 4"); fail("Shell must not run") } catch (_: DeviceInputBusyException) {}
     }
 
+    @Test fun `a shell created only for a screenshot needs no input handoff write`() = runBlocking {
+        val executor = AdbActionExecutor(mockk<Context>())
+        val process = mockk<Process>(relaxed = true)
+        val stream = mockk<DataOutputStream>(relaxed = true)
+        set(executor, "rootProcess", process); set(executor, "rootStream", stream)
+        assertTrue(executor.inputOwnership.claimContinuous("owner_1234"))
+        executor.prepareContinuousInput("owner_1234")
+        verify(exactly = 0) { process.isAlive }
+        verify(exactly = 0) { stream.writeBytes(any()) }
+        verify(exactly = 0) { stream.flush() }
+    }
+
     @Test fun `old input is drained by an owned FIFO acknowledgement not merely a successful flush`() = runBlocking {
         val executor = AdbActionExecutor(mockk<Context>())
         var reply = ByteArrayInputStream(byteArrayOf())
