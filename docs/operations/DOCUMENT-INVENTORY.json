@@ -1,12 +1,12 @@
 {
   "schemaVersion": 1,
-  "reviewedAtUtc": "2026-10-22T12:08:42.323204+00:00",
+  "reviewedAtUtc": "2026-10-22T15:05:57.660563+00:00",
   "scope": "All tracked Markdown classified; active local-link paths scanned. Not semantic attestation of every sentence, command execution, external-link or live acceptance.",
   "countsByRole": {
     "ADR": 6,
     "CURRENT_ENTRYPOINT": 8,
-    "DATED_EVIDENCE": 364,
-    "DESIGN_SPECIFICATION": 83,
+    "DATED_EVIDENCE": 365,
+    "DESIGN_SPECIFICATION": 84,
     "OPERATING_GUIDE": 70,
     "PROJECT_POLICY": 7,
     "SUPPORTING_DOCUMENT": 7
@@ -1561,6 +1561,10 @@
       "role": "DATED_EVIDENCE"
     },
     {
+      "file": "docs/audits/2026-10-22/PH030-WG85-PATH-INVESTIGATION.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
       "file": "docs/audits/2026-10-22/VPN-APK84-MAIN-CANARY.md",
       "role": "DATED_EVIDENCE"
     },
@@ -1638,6 +1642,10 @@
     },
     {
       "file": "docs/design/MOTOR-AI-PLATFORM.md",
+      "role": "DESIGN_SPECIFICATION"
+    },
+    {
+      "file": "docs/design/VPN-ALL-EXCEPT-SPHERE.md",
       "role": "DESIGN_SPECIFICATION"
     },
     {

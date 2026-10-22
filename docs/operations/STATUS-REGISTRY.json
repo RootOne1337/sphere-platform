@@ -1,8 +1,8 @@
 {
   "schemaVersion": 1,
-  "reviewedAtUtc": "2026-10-22T12:08:42.323204+00:00",
+  "reviewedAtUtc": "2026-10-22T15:05:57.660563+00:00",
   "sourceReviewed": "3b437ee8c5a0067f3cfb792b25e8b383e739fc88",
-  "scope": "UI46dd/APIcd243 remain installed; hosted APK85 independently verified on four online pilot devices. Finite local AWG1 HTTP/pause/crash isolation passed. External WG repeated TCP/DNS reliability, 17 offline devices, production operation journals/leases and broader VPN acceptance remain open.",
+  "scope": "UI46dd/APIcd243 and APK85 on four online devices. PH030 user WG reaches TCP/TLS but stalls; paused with selected Black Russia UID blocked in both families, Sphere preserved. All-apps mode, external data reliability, 17 offline devices and production executor/leases remain open.",
   "baseline": "docs/audits/2026-10-05/ENTERPRISE-PRODUCT-BACKLOG.json",
   "previousCrosscheck": "docs/audits/2026-10-09/CHAT-CODE-RECONCILIATION.json",
   "counts": {
@@ -6352,6 +6352,20 @@
     "localAwg1FiniteAccepted": true,
     "publicProviderDataReliabilityAccepted": false,
     "cleanupConfirmed": true,
+    "productionAccepted": false
+  },
+  "vpnPh030UserProfileInvestigation": {
+    "evidence": "docs/audits/2026-10-22/PH030-WG85-PATH-INVESTIGATION.json",
+    "evidenceSha256NormalizedLf": "f3894b7fd81cabf58b41b5745ed830db62308401115a8b82d608053a08e2642d",
+    "observedAtUtc": "2026-10-22T15:05:57.660563+00:00",
+    "deviceId": "753fd530-2f19-4e5e-98ba-769863678141",
+    "currentPhase": "PAUSED_GUARD_HELD",
+    "selectedPackage": "com.br.top",
+    "guardReleased": false,
+    "wholeDeviceVpn": false,
+    "rootCauseConfirmed": false,
+    "allAppsExceptControlImplemented": false,
+    "webSourceChangeInstalled": false,
     "productionAccepted": false
   }
 }
