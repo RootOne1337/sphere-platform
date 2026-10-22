@@ -5,7 +5,7 @@
   "countsByRole": {
     "ADR": 6,
     "CURRENT_ENTRYPOINT": 8,
-    "DATED_EVIDENCE": 362,
+    "DATED_EVIDENCE": 364,
     "DESIGN_SPECIFICATION": 83,
     "OPERATING_GUIDE": 70,
     "PROJECT_POLICY": 7,
@@ -1566,6 +1566,14 @@
     },
     {
       "file": "docs/audits/2026-10-22/VPN-APK84-PH011-DELIVERY.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
+      "file": "docs/audits/2026-10-22/VPN-APK85-CLOUD-AND-ADDRESSED-DELIVERY.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
+      "file": "docs/audits/2026-10-22/VPN-APK85-MAIN-CANARY.md",
       "role": "DATED_EVIDENCE"
     },
     {
