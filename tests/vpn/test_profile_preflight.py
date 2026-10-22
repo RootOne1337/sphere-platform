@@ -243,3 +243,9 @@ def test_openapi_v2_retains_both_closed_scope_variants_after_inlining():
     assert {b["properties"]["mode"]["const"] for b in branches} == {"selected_apps", "all_apps_except_control"}
     assert all(b["additionalProperties"] is False for b in branches)
     assert "#/$defs/" not in json.dumps(schema)
+
+
+@pytest.mark.parametrize("version", [True, 1.0, 2.0, "1", "2"])
+def test_profile_version_does_not_coerce_booleans_floats_or_strings(version):
+    with pytest.raises(ValidationError):
+        VPNProfilePreflightRequest.model_validate(payload(schema_version=version))

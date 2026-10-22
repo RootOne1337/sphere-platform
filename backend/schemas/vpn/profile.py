@@ -58,6 +58,13 @@ class VPNProfilePreflightRequest(BaseModel):
     config_text: SecretStr = Field(min_length=1, max_length=65536, repr=False)
     traffic_policy: AppTrafficPolicy
 
+    @field_validator("schema_version", mode="before")
+    @classmethod
+    def exact_schema_integer(cls, value: object) -> object:
+        if type(value) is not int:
+            raise ValueError("vpn_schema_version_invalid")
+        return value
+
     @model_validator(mode="before")
     @classmethod
     def legacy_selected_scope(cls, value: object) -> object:

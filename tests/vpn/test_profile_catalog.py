@@ -102,6 +102,19 @@ async def test_retry_id_must_bind_the_exact_request(catalog):
 
 
 @pytest.mark.asyncio
+async def test_v2_scope_survives_encryption_catalog_and_replay_without_a_package_snapshot(catalog):
+    policy = {"mode": "all_apps_except_control", "control_plane": "bypass", "kill_switch": "all_apps_except_control", "ipv6": "block"}
+    request = import_request(profile=payload(schema_version=2, traffic_policy=policy))
+    receipt = await catalog.save(request)
+    stored = await catalog.db.get(VPNProfileRevision, receipt.revision_id)
+    assert stored.schema_version == 2 and stored.traffic_policy == policy
+    assert decrypt_revision(stored)[0] == CONFIG and KEY.encode() not in stored.config_ciphertext
+    assert (await catalog.get(receipt.profile_id)).traffic_policy.model_dump() == policy
+    assert await catalog.save(request) == receipt
+    assert not receipt.apply_allowed and not receipt.execution_confirmed
+
+
+@pytest.mark.asyncio
 async def test_stale_revision_and_archive_do_not_overwrite(catalog):
     first = await catalog.save(import_request())
     request = VPNProfileAppendRequest.model_validate_json(json.dumps(import_payload(expected_revision=1)))
