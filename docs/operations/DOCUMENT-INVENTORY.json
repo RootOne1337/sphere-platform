@@ -7,7 +7,7 @@
     "CURRENT_ENTRYPOINT": 8,
     "DATED_EVIDENCE": 362,
     "DESIGN_SPECIFICATION": 83,
-    "OPERATING_GUIDE": 69,
+    "OPERATING_GUIDE": 70,
     "PROJECT_POLICY": 7,
     "SUPPORTING_DOCUMENT": 7
   },
@@ -1679,6 +1679,10 @@
     {
       "file": "docs/load-test/04-EXECUTION-REPORT.md",
       "role": "DATED_EVIDENCE"
+    },
+    {
+      "file": "docs/operations/ANDROID-CLOUD-PILOT.md",
+      "role": "OPERATING_GUIDE"
     },
     {
       "file": "docs/operations/ANDROID-NAVIGATION.md",

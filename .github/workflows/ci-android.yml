@@ -2,6 +2,15 @@ name: CI — Android
 
 on:
   workflow_dispatch:
+    inputs:
+      package_only:
+        description: Package an encrypted configured pilot using a previously successful full Android CI
+        type: boolean
+        default: false
+      validation_run:
+        description: Full Android CI run ID (required only for package_only)
+        type: string
+        default: ""
   push:
     paths:
       - "android/**"
@@ -27,6 +36,7 @@ concurrency:
 
 jobs:
   build:
+    if: ${{ github.event_name != 'workflow_dispatch' || !inputs.package_only }}
     name: Android tests and signed release smoke build
     runs-on: ubuntu-latest
     timeout-minutes: 75
@@ -240,3 +250,14 @@ jobs:
             ${{ runner.temp }}/sphere-awg-native/manifest.json
           if-no-files-found: error
           retention-days: 7
+
+  configured-pilot:
+    if: ${{ github.event_name == 'workflow_dispatch' && inputs.package_only }}
+    permissions:
+      contents: read
+      actions: read
+    uses: ./.github/workflows/package-android-pilot.yml
+    with:
+      validation_run: ${{ inputs.validation_run }}
+    secrets:
+      SPHERE_PILOT_PACKAGE_ONCE: ${{ secrets.SPHERE_PILOT_PACKAGE_ONCE }}
