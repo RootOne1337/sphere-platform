@@ -407,6 +407,15 @@ commit <85%, здоровый том и ≥20 GiB свободного мест�
 `39844420660` и настроенная упаковка `39853338701` завершились успешно;
 подпись пакета выполнена на локальном ПК. Новые GitHub dispatch/rerun не требуются.
 
+Последующий APK88 source `6ad0df5f` действительно собран **локально**: один worker,
+heap 1536 MiB, свежие output directories, четыре ordinary unit-варианта и два
+configured debug unit/lint/assemble. 7684 исполнения тестов, 18 skipped,
+0 failures/errors. Существующий native artifact переиспользован после проверки
+digest, manifest, неизменности native source и библиотек внутри APK; новых
+GitHub jobs нет. Общий и полный 12 GiB guards не ослаблялись. Это конечная
+debug-проверка и адресная установка PH030, **не** полный release/denial CI.
+[Квитанция локальной сборки и установки](../audits/2026-10-23/PH030-APK88-LOCAL-AUTOSTART.md).
+
 ## Измерения без изменения состояния
 
 ```powershell
