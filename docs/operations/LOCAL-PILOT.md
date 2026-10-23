@@ -2,6 +2,15 @@
 
 **Проверенная установка:** UI `a239baa2` / API `1afdc529`.
 
+**23 октября — worker0.7.5:** shared immutable RGB + bounded visual reference
+на CPU; persisted features распознаны50/50 раз в новом capture epoch. Concurrent
+P2P shadow:74 ответа за~15с, native input0.263 tests/Ruff прошли; все5 finite runs
+вышли штатно. Один ранний observer дал gap1,02с. Gameplay после AFK, маршруты,
+препятствия, исходный capture latency и fleet capacity этим не приняты.
+Перед настоящим прогоном после disconnect закрыть/открыть игру, соблюдать20с
+между подключениями и восстановить GPS-маршрут через карту, если профиль его использует.
+[Измерения и границы](../audits/2026-10-23/MOTOR-ROUTE-VIEWS075.md).
+
 **23 октября — perception0.7.4:** read-only YOLOE-26s FP32 прошёл5-Гц direct-stream
 throughput, но obstacle/free-space qualification не пройдена. FP16 отклонён по
 реальному расхождению с FP32.241 motor tests; Android input0, APK/VPN не менялись.

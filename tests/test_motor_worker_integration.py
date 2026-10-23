@@ -290,6 +290,29 @@ class HeadlessIntegrationTests(unittest.IsolatedAsyncioTestCase):
         self.assertFalse(report["control"]["requested"])
         self.assertFalse(any(d.get("type") == "touch_open" for d in self.received))
 
+    async def test_shared_rgb_is_exported_once_and_cleared_after_real_peer_close(self):
+        session = HeadlessSession(
+            SessionConfig(self.url, DEVICE, duration=1, capture_lifecycle=False, publish_rgb=True)
+        )
+        task = asyncio.create_task(session.run("fixture-token"))
+        frames = []
+        sequence = 0
+        while not task.done():
+            frame = session.read_rgb(after_sequence=sequence)
+            if frame:
+                self.assertIs(session.read_rgb(after_sequence=sequence), frame)
+                sequence = frame.receiver_sequence
+                frames.append(frame)
+            await asyncio.sleep(0.02)
+        report = await task
+        self.assertTrue(report["success"], report)
+        self.assertGreaterEqual(len(frames), 4)
+        self.assertTrue(all(len(f.rgb24) == f.width * f.height * 3 for f in frames))
+        self.assertIsNone(session.latest_rgb)
+        self.assertEqual(report["bounds"]["immutableRgbFrameSlots"], 1)
+        self.assertFalse(report["control"]["requested"])
+        self.assertFalse(any(d.get("type") == "touch_open" for d in self.received))
+
     async def test_learned_boundary_holds_one_native_contact_and_confirms_cleanup(self):
         self.availability_state = "manual"
 

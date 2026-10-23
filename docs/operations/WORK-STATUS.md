@@ -2,6 +2,18 @@
 
 **Проверенная установка:** UI `a239baa2` / API `1afdc529`.
 
+**23 октября — worker0.7.5: shared RGB и visual checkpoint primitive.** Один
+immutable RGB безопасно разделяется независимыми потребителями; закрытие/epoch
+инвалидируют слот. CPU ORB/RANSAC хранит ограниченные признаки без RGB. Явный
+reference107010B прочитан в новой сессии:50/50 matches; совместный P2P shadow:
+74 ответа за~15с, receiver-age p95=198,084мс. Это не capture→APPLIED latency.
+263 motor tests/Ruff прошли, finite clean exits подтверждены. Ранний observer
+имел gap1,02с/min1, причина не установлена. Ни graph/pose/free-space, ни goal-conditioned
+движение/объезд/прибытие/fleet не приняты. AFK-экран может совпадать с reference:
+перед физическим тестом требуется отдельный gameplay/goal preflight; после перезахода
+маршрут ставится заново. APK/VPN/API/UI и guard не менялись, новых CI jobs нет.
+[Квитанция и следующий физический допуск](../audits/2026-10-23/MOTOR-ROUTE-VIEWS075.md).
+
 **23 октября — worker0.7.4, generic perception boundary.** Direct FP32 object
 observer PH011:125/75 свежих результатов за25/15с, минимум5 в полной секунде,
 receiver-age p95 около104/115мс. На6 fixtures FP32 GPU близок CPU, FP16 этого
@@ -11,7 +23,7 @@ obstacle/free-space provider к управлению.241 tests/Ruff прошли
 не дают free side. Один завершённый pilot потребовал scoped outer-process cleanup;
 отдельный receiver получил setup deadline без кадра. Shutdown/reconnect открыты.
 [Доказательства и полный список gap](../audits/2026-10-23/MOTOR-PERCEPTION074.md).
-Опциональная visual route memory проработана в разделе26 плана3.2, пока не реализована.
+На момент0.7.4 visual route memory была проектной; частичный view-компонент0.7.5 описан выше.
 APK/VPN/UI/API не менялись, новых GitHub jobs нет; product acceptance не повышена.
 
 **23 октября, поздний срез — память и neural inference восстановлены.**

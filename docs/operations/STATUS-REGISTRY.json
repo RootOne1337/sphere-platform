@@ -6516,6 +6516,26 @@
     "cleanShutdownAccepted": false,
     "scope": "Read-only YOLOE26 FP32 direct throughput, CPU comparison and fail-closed exact-RGB/pipeline contract. FP16 rejected; obstacle quality, geometry, route/recovery, fleet and shutdown/reconnect remain open."
   },
+  "motorRouteViews075": {
+    "evidence": "docs/audits/2026-10-23/MOTOR-ROUTE-VIEWS075.json",
+    "evidenceSha256NormalizedLf": "2b77a88bca505d9ecb69647000a53d110e9780cf7c2357364d5c289bb5d74fae",
+    "workerVersion": "0.7.5",
+    "motorTestsPassed": 263,
+    "sharedImmutableRgbImplemented": true,
+    "visualCheckpointPrimitiveImplemented": true,
+    "persistedReferenceReloadMatches": 50,
+    "jointP2pResults": 74,
+    "physicalActions": 0,
+    "allObservationWindows5Hz": false,
+    "gameplayPreflightImplemented": false,
+    "routeGraphImplemented": false,
+    "worldPoseAccepted": false,
+    "autonomousNavigationAccepted": false,
+    "sourceCaptureToActionLatencyAccepted": false,
+    "fleetAccepted": false,
+    "productionAccepted": false,
+    "scope": "Shared fresh RGB and bounded CPU view memory; saved features matched across capture epochs with concurrent P2P shadow. Early1.02s gap unresolved; AFK/gameplay/goal preflight, route execution, obstacles, arrival and fleet remain open."
+  },
   "motorMemoryRecovery073": {
     "evidence": "docs/audits/2026-10-23/MOTOR-MEMORY-RECOVERY073.json",
     "evidenceSha256NormalizedLf": "8fa9d8b7a3f091442194dcfb2cba1b40e2fab96a77fd0a11cd7eb2ccd94ddae3",

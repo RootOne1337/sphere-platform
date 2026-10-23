@@ -21,7 +21,7 @@ from importlib.metadata import version
 from motor_worker.minimap import MinimapRouteShadow
 from motor_worker.observation import LatestFrame
 from motor_worker.pointer_probe import PointerProbe
-from motor_worker.policy import NeutralPolicy, Policy, PolicyFrame, ShadowPolicyLoop
+from motor_worker.policy import NeutralPolicy, Policy, PolicyFrame, ShadowPolicyLoop, finite
 from motor_worker.process_policy import ProcessPolicy
 from motor_worker.protocol import (
     ControlAdmission,
@@ -48,6 +48,7 @@ class SessionConfig:
     capture_lifecycle: bool = True
     pointer_probe: PointerProbe | None = None
     shadow_policy: bool = False
+    publish_rgb: bool = False
 
     def __post_init__(self) -> None:
         signaling_url(self.base_url, self.device_id)
@@ -58,7 +59,11 @@ class SessionConfig:
                 or not low <= value <= high
             ):
                 raise ProtocolError("invalid_run_budget")
-        if type(self.probe_control) is not bool or type(self.capture_lifecycle) is not bool:
+        if (
+            type(self.probe_control) is not bool
+            or type(self.capture_lifecycle) is not bool
+            or type(self.publish_rgb) is not bool
+        ):
             raise ProtocolError("invalid_control_option")
         if (
             type(self.shadow_policy) is not bool
@@ -118,6 +123,8 @@ class HeadlessSession:
         self.admission: ControlAdmission | None = None
         self.availability: InputAvailability | None = None
         self.frames = LatestFrame()
+        # Consumers share bytes, not the mutable reformatter of a native frame.
+        self.latest_rgb: PolicyFrame | None = None
         self.failure: str | None = None
         self.failed = asyncio.Event()
         self.closing = False
@@ -545,24 +552,26 @@ class HeadlessSession:
                 await asyncio.sleep(0.005)
                 continue
             before = time.perf_counter()
-            item = self.frames.take(before) if self.binding else None
+            binding = self.binding
+            item = self.frames.take(before) if binding else None
             if item:
                 sampled, original = await asyncio.to_thread(
-                    _rgb_sample, item.frame, self.shadow is not None
+                    _rgb_sample, item.frame, self.shadow is not None or self.config.publish_rgb
                 )
+                if self.closing or self.failure or self.binding != binding:
+                    continue
+                rgb = None
+                if original is not None:
+                    rgb = PolicyFrame(
+                        binding.epoch, item.receiver_sequence, item.received_at,
+                        item.frame.width, item.frame.height, original,
+                    )
+                    if self.config.publish_rgb:
+                        self.latest_rgb = rgb
                 if self.shadow:
                     if self.shadow.epoch is None:
-                        self.shadow.bind_epoch(self.binding.epoch)
-                    self.shadow.offer(
-                        PolicyFrame(
-                            self.binding.epoch,
-                            item.receiver_sequence,
-                            item.received_at,
-                            item.frame.width,
-                            item.frame.height,
-                            original,
-                        )
-                    )
+                        self.shadow.bind_epoch(binding.epoch)
+                    self.shadow.offer(rgb)
                 self.sample_count += 1
                 self.samples.append(
                     {
@@ -577,6 +586,31 @@ class HeadlessSession:
             next_at += period
             if next_at < time.perf_counter():
                 next_at = time.perf_counter() + period  # No catch-up bursts of old observations.
+
+    def read_rgb(self, *, after_sequence=0, max_age=0.25) -> PolicyFrame | None:
+        """Share fresh immutable RGB; no transform, queue, disk write or input.
+
+        Each consumer tracks its own sequence. A read does not consume the slot,
+        so a motor and a perception worker can use the same frame safely.
+        Receiver age is not an Android capture timestamp.
+        """
+        if not integer(after_sequence, 0, 2**53 - 1) or not finite(max_age, 0.05, 0.5):
+            raise ProtocolError("invalid_rgb_read_budget")
+        frame = self.latest_rgb
+        if (
+            not self.config.publish_rgb
+            or self.closing
+            or self.retiring_transport
+            or self.failure is not None
+            or self.binding is None
+            or frame is None
+            or frame.capture_epoch != self.binding.epoch
+            or (frame.width, frame.height) != (self.binding.width, self.binding.height)
+            or frame.receiver_sequence <= after_sequence
+            or not 0 <= time.perf_counter() - frame.received_at <= max_age
+        ):
+            return None
+        return frame
 
     async def _shadow_policy(self) -> None:
         while not self.closing:
@@ -783,6 +817,7 @@ class HeadlessSession:
             await self.close_control()
         finally:
             self.closing = True
+            self.latest_rgb = None
             await self._stop_tasks()
             if self.peer:
                 try:
@@ -830,6 +865,11 @@ class HeadlessSession:
             "requestedObservationHz": self.config.observation_hz,
             "localTimingClock": "perf_counter",
             "decodedFrames": self.frames.decoded,
+            "decodedArrivalGaps": {
+                "scope": "unique_frame_recv_return_clock_not_android_capture",
+                "maxGapMs": round(self.frames.max_unique_arrival_gap_ms, 3),
+                "gapsOver250ms": self.frames.unique_arrival_gaps_over_250ms,
+            },
             "receiverStats": self.receiver_stats,
             "sctpTransport": self.sctp_diagnostics.report() if self.sctp_diagnostics else None,
             "workerScheduler": {
@@ -901,7 +941,12 @@ class HeadlessSession:
             "policyProcess": self.shadow.provider.report()
             if self.shadow and type(self.shadow.provider) is ProcessPolicy
             else None,
-            "bounds": {"decodedFrameSlots": 1, "observationTailLimit": 64, "inputReplay": False},
+            "bounds": {
+                "decodedFrameSlots": 1,
+                "immutableRgbFrameSlots": int(self.config.publish_rgb),
+                "observationTailLimit": 64,
+                "inputReplay": False,
+            },
             "limitations": [
                 "No source capture frame ID/clock mapping: receiver age is not capture age.",
                 "Unique RTP PTS is transport progress, not proof of fresh Android source pixels.",

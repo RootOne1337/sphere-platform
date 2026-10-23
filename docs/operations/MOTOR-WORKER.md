@@ -1,9 +1,29 @@
 # Headless motor worker: транспорт и конечный ввод
 
 GPS-анализ — необязательный observer. Общие задачи без меток/миникарты и цели по
-изображению/ориентирам описаны в разделах24–26 [единого плана3.2](../design/MOTOR-AI-PLATFORM.md).
+изображению/ориентирам описаны в разделах24–26 [единого плана3.3](../design/MOTOR-AI-PLATFORM.md).
 Эти goal/skill contracts пока проектные: stdio-v1 не передаёт цель в NitroGen/P2P.
 Последний decoded frame хранится в RAM, PNG сохраняется только явно через `--snapshot`.
+
+**23 октября ·0.7.5:** opt-in `SessionConfig.publish_rgb=True` и
+`HeadlessSession.read_rgb(after_sequence=..., max_age=0.25)` дают нескольким
+потребителям один immutable `PolicyFrame`. Read не потребляет общий слот; каждый
+consumer хранит свой sequence. Binding/размер/возраст/retirement/failure/close
+проверяются, epoch во время transform не переназначает старые pixels новой сессии.
+`decodedArrivalGaps` измеряет unique recv clocks, не Android capture freshness.
+
+`RouteViewProfile`/`RouteKeyframe`/`RouteViewMatcher` в `motor_worker.landmarks`
+дают CPU ORB/RANSAC image resemblance, без OCR/обучения/Android input. До1500
+признаков,1–16 references,≤250мс receiver age до/после CPU. Профиль должен явно
+маскировать HUD/avatar; matching не означает world pose/clearance/gameplay.
+Строгие `.encode()`/`.parse()` экспортируют features, не RGB; автоархива/графа/CLI
+для исполнения маршрута нет. После AFK нужна отдельная проверка входа и новой цели.
+
+Persisted reference107010B распознан50/50 раз в новом capture epoch. Совместный
+P2P150M shadow:74 ответа за~15с, receiver-age p95=198,084мс; goal conditioning0,
+native input0. Ранний observer дал gap1,02с/min1; причина не разрешена.263 motor
+tests/Ruff прошли,5 finite clean exits подтверждены. A→B/объезд/fleet и полный
+latency budget остаются открытыми. [Доказательства](../audits/2026-10-23/MOTOR-ROUTE-VIEWS075.md).
 
 **23 октября ·0.7.4:** `ObjectObservation`/`inspect_obstacles` связывают точный RGB
 с epoch/sequence/time, моделью, профилем и pipeline fingerprint. Precision/backend/

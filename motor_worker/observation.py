@@ -24,6 +24,9 @@ class LatestFrame:
         self.last_time_base = None
         self.selected_sequence = 0
         self.observations = 0
+        self.max_unique_arrival_gap_ms = 0.0
+        self.unique_arrival_gaps_over_250ms = 0
+        self.last_unique_arrival_at = None
 
     def put(self, frame: Any, now: float) -> bool:
         self.decoded += 1
@@ -37,6 +40,11 @@ class LatestFrame:
         ):
             self.duplicate_or_reordered_pts += 1
             return False
+        if self.last_unique_arrival_at is not None:
+            gap_ms = (now - self.last_unique_arrival_at) * 1000
+            self.max_unique_arrival_gap_ms = max(self.max_unique_arrival_gap_ms, gap_ms)
+            self.unique_arrival_gaps_over_250ms += int(gap_ms > 250)
+        self.last_unique_arrival_at = now
         self.last_pts, self.last_time_base = frame.pts, frame.time_base
         self.latest = Observation(self.decoded, now, frame.pts, frame.time_base, frame)
         return True
