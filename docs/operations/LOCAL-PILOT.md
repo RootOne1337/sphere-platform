@@ -2,7 +2,15 @@
 
 **Проверенная установка:** UI `a239baa2` / API `1afdc529`.
 
-**24 октября — worker0.8.0:** opt-in original H.264 recorder и отдельная localhost
+**24 октября — worker0.8.1:** read-only keymap inspector;303 tests/Ruff прошли.
+Реальная `.smp` ссылка указывает на recommended layout26 bindings; override пуст.
+Полный keyboard teaching заблокирован текущим single-pointer capability, не
+недостатком записи H.264. Сначала native multi-contact/keymapper/journal tests на
+текущих540p160DPI, затем master1080p320DPI/100% render. Настройки не менялись,
+физических действий0;3D reconstruction/viewer не включены.
+[Точные данные и следующие шаги](../audits/2026-10-24/LDPLAYER-KEYMAP-READINESS081.md).
+
+**Предыдущий этап24 октября — worker0.8.0:** opt-in original H.264 recorder и отдельная localhost
 human teaching console; собственный native journal, strict import, ordered route
 features и offline quality check.295 motor tests/Ruff прошли. Real PH011137/137
 decoded в финальном5-секундном read-only run; браузерные2 APPLIED проверены только

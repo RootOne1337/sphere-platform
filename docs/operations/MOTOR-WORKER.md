@@ -1,9 +1,20 @@
 # Headless motor worker: транспорт и конечный ввод
 
 GPS-анализ — необязательный observer. Общие задачи без меток/миникарты и цели по
-изображению/ориентирам описаны в разделах24–26 [единого плана3.5](../design/MOTOR-AI-PLATFORM.md).
+изображению/ориентирам описаны в разделах24–26 [единого плана3.6](../design/MOTOR-AI-PLATFORM.md).
 Эти goal/skill contracts пока проектные: stdio-v1 не передаёт цель в NitroGen/P2P.
 Последний decoded frame хранится в RAM, PNG сохраняется только явно через `--snapshot`.
+
+**24 октября ·0.8.1:** `python -m motor_worker.keymap_inspect --file PATH` читает
+ограниченные `.kmp/.smp` данные; references не открываются автоматически, macros
+не исполняются/не печатаются. Получен реальный referenced recommended profile:
+26 mappings,7 macros; присланный override пуст.303 tests/Ruff passed.
+Это inspector, не исполняемый keymapper. Current native wire имеет один pointer;
+WASD+camera+jump одновременно требуют новой версии multi-contact actor и journal.
+Full keyboard teaching пока не начинать. Рекордер0.8.0 остаётся готов в своей узкой
+single-pointer области. Для будущего master:1080p320DPI/render100%; для повторения
+540p160DPI/render50%.3D/viewer пока проектные, карта из raw video автоматически
+не появляется. [Файлы, объяснение DPI,3D и следующий допуск](../audits/2026-10-24/LDPLAYER-KEYMAP-READINESS081.md).
 
 **24 октября ·0.8.0:** `python -m motor_worker.teach` предоставляет отдельные
 `record`/`operator`/`inspect`/`compile`/`quality`. Это opt-in запись original H.264

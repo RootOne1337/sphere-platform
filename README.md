@@ -15,7 +15,14 @@ VPN и диагностика в одном рабочем месте. Android A
 [Работы и ограничения](docs/operations/WORK-STATUS.md) ·
 [HTTP API](docs/api-endpoints.md)
 
-**24 октября — worker0.8.0: запись обучающего прохода.** Добавлены исходный H.264,
+**24 октября — worker0.8.1: подготовка keyboard teaching.** Read-only `.smp/.kmp`
+inspector нашёл26 bindings в referenced profile; macros не исполняются.303 motor
+tests/Ruff passed. Нынешний actor single-pointer: полный WASD+camera+jump ещё не
+готов. Уточнены1080p/320DPI,100% teach render и отдельная3D reconstruction/viewer.
+[Настройки, управление и границы визуализации](docs/audits/2026-10-24/LDPLAYER-KEYMAP-READINESS081.md) ·
+[План3.6](docs/design/MOTOR-AI-PLATFORM.md#268-клавиатурный-teach-run-dpi-и-честная-визуализация).
+
+**Предыдущий этап24 октября — worker0.8.0: запись обучающего прохода.** Добавлены исходный H.264,
 журнал собственного ручного ввода, временная локальная панель и проверяемые пакеты
 последовательных ориентиров.295 motor tests/Ruff прошли; на PH011 все137 frames
 финального5-секундного read-only теста декодированы. На PH011 также подтверждены

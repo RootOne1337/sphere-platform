@@ -1,0 +1,163 @@
+{
+  "schemaVersion": 1,
+  "observedAtUtc": "2026-10-23T19:35:33.264322+00:00",
+  "scope": "Read-only inspection of user-supplied LDPlayer metadata and explicitly referenced recommended layout; teaching density/control/visualization plan. No executable mapping, native input,3D reconstruction or runtime acceptance.",
+  "baseRevision": "e712b6c932606c11a0ab2226cb1c1d73d06adc34",
+  "workerVersion": "0.8.1",
+  "motorTestsPassed": 303,
+  "testSeconds": 76.96,
+  "ruffPassed": true,
+  "testLogSha256NormalizedLf": "c8f7942c315fdebe7f90e3ade2c51e118c8b0ead05bc3e6795c74c835b2c30c4",
+  "sourceArtifacts": {
+    "motor_worker/__init__.py": "5c46b364f3b4098699d04a416796577be2d015982d8e872b498a5315ef56c036",
+    "motor_worker/keymap_inspect.py": "beff0e71240a9e87c340dc6b1438cb587d96b105d402af8739954a44262a6db0",
+    "tests/test_motor_keymap_inspect.py": "5c660ad69712f3027919e3b1a7c72a146b56a4809391d46cc5e9ee44e7b425da"
+  },
+  "inspectedFiles": [
+    {
+      "kind": "READ_ONLY_LDPLAYER_INSPECTION_NOT_EXECUTABLE",
+      "executable": false,
+      "input_sent": false,
+      "coordinate_model": "OBSERVED_0_TO10000_REQUIRES_CALIBRATION",
+      "native_multitouch_supported_by_inspector": false,
+      "format": "smp_references_only",
+      "references": [
+        {
+          "width": 960,
+          "height": 540,
+          "keyboardId": "Black Russia.kmp",
+          "joystickId": ""
+        }
+      ],
+      "references_followed": false,
+      "source_bytes": 485,
+      "source_sha256": "0c51fab88d87d5f09b947a848b8b09c0aa79f8112640075a66c924f2fbc0bd2f",
+      "relativePath": "customizeConfigs/com.br.top.smp",
+      "sourceUnchanged": true
+    },
+    {
+      "kind": "READ_ONLY_LDPLAYER_INSPECTION_NOT_EXECUTABLE",
+      "executable": false,
+      "input_sent": false,
+      "coordinate_model": "OBSERVED_0_TO10000_REQUIRES_CALIBRATION",
+      "native_multitouch_supported_by_inspector": false,
+      "format": "kmp",
+      "source_geometry": {
+        "width": 1600,
+        "height": 900
+      },
+      "mappings": 0,
+      "classes": {},
+      "opaque_bindings": 0,
+      "complete_for_execution": false,
+      "source_bytes": 843,
+      "source_sha256": "7a42b7306600662af98000d88c3c2e392f5dbbf0196b658122c0c7783d35a225",
+      "relativePath": "customizeConfigs/com.br.top_960x540.kmp",
+      "sourceUnchanged": true
+    },
+    {
+      "kind": "READ_ONLY_LDPLAYER_INSPECTION_NOT_EXECUTABLE",
+      "executable": false,
+      "input_sent": false,
+      "coordinate_model": "OBSERVED_0_TO10000_REQUIRES_CALIBRATION",
+      "native_multitouch_supported_by_inspector": false,
+      "format": "smp_references_only",
+      "references": [
+        {
+          "width": 960,
+          "height": 540,
+          "keyboardId": "",
+          "joystickId": ""
+        }
+      ],
+      "references_followed": false,
+      "source_bytes": 477,
+      "source_sha256": "51e2a8a112d58c65a5de6002a11e3a4628a274380905cc13466a4123e826543a",
+      "relativePath": "customizeConfigs/com.android.vending.smp",
+      "sourceUnchanged": true
+    },
+    {
+      "kind": "READ_ONLY_LDPLAYER_INSPECTION_NOT_EXECUTABLE",
+      "executable": false,
+      "input_sent": false,
+      "coordinate_model": "OBSERVED_0_TO10000_REQUIRES_CALIBRATION",
+      "native_multitouch_supported_by_inspector": false,
+      "format": "kmp",
+      "source_geometry": {
+        "width": 1600,
+        "height": 900
+      },
+      "mappings": 26,
+      "classes": {
+        "ClassKeyboardDisc": 1,
+        "ClassKeyboardCurve": 16,
+        "ClassMouseTrigger": 1,
+        "ClassKeyboardMacros": 7,
+        "ClassMouseDrag": 1
+      },
+      "opaque_bindings": 7,
+      "complete_for_execution": false,
+      "source_bytes": 20160,
+      "source_sha256": "f7efd38960e369ebcac096924ca694addb0a9d15fc28b77ae4fecdf321e38b48",
+      "relativePath": "recommendConfigs/Black Russia.kmp",
+      "sourceUnchanged": true
+    }
+  ],
+  "nativeSourceEvidence": {
+    "file": "android/app/src/main/kotlin/com/sphereplatform/agent/commands/ContinuousInputController.kt",
+    "sha256NormalizedLf": "3e8ce5d98485ed2ec824324145e53425986250d7a0af2eda3748d06377299523",
+    "advertisedMaxPointers": 1,
+    "sharedWireHasContactId": false
+  },
+  "planning": {
+    "currentTestResolution": [
+      960,
+      540
+    ],
+    "currentTestDpi": 160,
+    "proposedTeachResolution": [
+      1920,
+      1080
+    ],
+    "proposedTeachDpi": 320,
+    "dpi280PreservesAndroidDp": false,
+    "gameHudCalibrationRequired": true,
+    "proposedTeachRenderPercent": 100,
+    "proposedTeachFpsTarget": 60,
+    "repeatResolution": [
+      960,
+      540
+    ],
+    "repeatDpi": 160,
+    "repeatRenderPercent": 50
+  },
+  "implementation": {
+    "readOnlyInspector": true,
+    "automaticReferenceFollowing": false,
+    "sourceMacrosExecuted": false,
+    "keyboardTouchMapper": false,
+    "multiContactNativeActor": false,
+    "visualizationViewer": false,
+    "monocular3dReconstruction": false
+  },
+  "acceptance": {
+    "fullKeyboardTeachingReady": false,
+    "simultaneousStickCameraActionReady": false,
+    "lidarEquivalentGeometry": false,
+    "worldPoseAccepted": false,
+    "overlayGoalConditioningAccepted": false,
+    "autonomousRouteAccepted": false,
+    "fleetAccepted": false,
+    "productionAccepted": false
+  },
+  "physicalActionsThisStage": 0,
+  "emulatorSettingsChanged": false,
+  "ldplayerConfigsChanged": false,
+  "apkChanged": false,
+  "apiChanged": false,
+  "installedWebChanged": false,
+  "vpnChanged": false,
+  "modelsDownloaded": 0,
+  "resourceGuardsChanged": false,
+  "githubJobsStarted": 0
+}

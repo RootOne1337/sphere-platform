@@ -1,6 +1,12 @@
 # Игровой AI-контур Sphere: архитектура, модели и план реализации
 
-**24 октября · версия3.5, worker0.8.0:** реализованы original H.264 recorder,
+**24 октября · версия3.6, worker0.8.1:** проверены реальные `.smp`/`.kmp`, добавлен
+read-only inspector без исполнения macros;303 tests/Ruff passed. Найдено ограничение
+single-pointer: полноценный WASD+camera+jump teach-run пока не готов. Раздел26.8
+уточняет multi-contact actor,1080p320DPI/100% render и независимый low-quality repeat,
+а также2D debug viewer против отдельной3D реконструкции. [Разбор и допуск](../audits/2026-10-24/LDPLAYER-KEYMAP-READINESS081.md).
+
+**Предыдущий этап24 октября · версия3.5, worker0.8.0:** реализованы original H.264 recorder,
 own pointer journal, временная localhost teaching console, ordered view bundles,
 sequential observation и offline quality experiment.295 tests/Ruff прошли;
 финальный real PH011 read-only137/137 frames decoded. Позднее на real PH011
@@ -2058,3 +2064,40 @@ settings. Offline downscale/JPEG помогает найти слабые landma
 повторов; затем20/50-device load. Обязательность neural motor на каждом шаге не
 вводится: overlay/goal interface NitroGen/P2P ещё требует opposite-goal доказательства.
 Модели/веса/GPU requirements этим recorder не расширялись. [Формат и CLI](../audits/2026-10-24/MOTOR-TEACHING080.md).
+
+### 26.8. Клавиатурный teach-run, DPI и честная визуализация
+
+У переданного `.kmp` пустой mappings; `.smp` ссылается на recommended `Black Russia.kmp`.
+Явно прочитанный recommended file содержит26 mappings, включая WASD/camera и7 macros.
+Новый `python -m motor_worker.keymap_inspect` только извлекает bounded данные,
+не следует ссылкам и не запускает scripts.303 motor tests/Ruff passed. Файл
+с суффиксом960x540 внутри объявляет1600×900 — filename не задаёт geometry.
+
+Android/native/shared wire сейчас single-pointer. Для удержания movement,
+одновременной camera и jump нужен следующий capability actor с несколькими
+стабильными pointer IDs, корректными Android transitions, одним pending receipt
+и подтверждённым cancel-all. Только JS keyboard layer не делает этот actor
+multi-touch. Blur/hidden/неопределённость/смена capture/automation освобождают все
+contacts; старый APK должен явно отказать, не заменять одновременный ввод tap-ами.
+Raw `.kmp` macros не исполняются: из них можно готовить проверенные declarative bindings.
+
+Поэтому предыдущий допуск recorder к конечному capture trial не является допуском
+полного человеческого маршрута с клавиатурой. Сначала keymapper/native/journal
+tests на960×540/160DPI, затем качественная демонстрация. При удвоении pixel resolution
+1920×1080/320DPI сохраняют исходные960×540 Android dp;280DPI меняют dp layout.
+Сама игра может масштабировать HUD независимо — обязательна калибровка кадром.
+Teach rendering100%,target60FPS с измерением реальных unique source frames.
+Production repeat остаётся960×540/160DPI/render50% и требует отдельного опыта.
+
+Для начала viewer должен показывать проверяемые2D кадры/landmarks/миникарту/цель,
+выбранный checkpoint, input states, receiver gaps и причины unknown/stop. Rerun
+подходит для связанного2D/3D/time представления, но не создаёт глубину автоматически.
+Current route bundle — features видов, не LiDAR/metric map.3D требует отдельного
+SfM/SLAM/reconstruction pipeline, camera model/poses, masks и проверки scale/drift.
+COLMAP и современный ABot-Recon рассматриваются как offline кандидаты, не
+квалифицированные для нашей игры/AMD и не часть5Гц hot loop. Не скачивались.
+
+Линия на кадре показывает planner/debug информацию; её правильная3D проекция
+и использование моторной моделью как цели — отдельные доказательства. Это не
+замена world localization/obstacle avoidance/arrival. [Источники, точные файлы,
+следующий protocol contract и CLI](../audits/2026-10-24/LDPLAYER-KEYMAP-READINESS081.md).

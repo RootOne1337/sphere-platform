@@ -1,11 +1,11 @@
 {
   "schemaVersion": 1,
-  "reviewedAtUtc": "2026-10-23T19:12:19.847377+00:00",
+  "reviewedAtUtc": "2026-10-23T19:35:33.264322+00:00",
   "scope": "All tracked Markdown classified; active local-link paths scanned. Not semantic attestation of every sentence, command execution, external-link or live acceptance.",
   "countsByRole": {
     "ADR": 6,
     "CURRENT_ENTRYPOINT": 8,
-    "DATED_EVIDENCE": 379,
+    "DATED_EVIDENCE": 380,
     "DESIGN_SPECIFICATION": 85,
     "OPERATING_GUIDE": 71,
     "PROJECT_POLICY": 7,
@@ -1654,6 +1654,10 @@
     },
     {
       "file": "docs/audits/2026-10-23/PH030-STREAM-VPN-INCIDENT.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
+      "file": "docs/audits/2026-10-24/LDPLAYER-KEYMAP-READINESS081.md",
       "role": "DATED_EVIDENCE"
     },
     {

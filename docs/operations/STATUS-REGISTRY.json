@@ -1,8 +1,8 @@
 {
   "schemaVersion": 1,
-  "reviewedAtUtc": "2026-10-23T19:12:19.847377+00:00",
-  "sourceReviewed": "1f2baa1953d6030b22fa2ee896c9e350e832b3ce",
-  "scope": "Opt-in direct encoded teaching recorder, own native journal, ordered view bundles and conservative observation-only progress. Physical teaching gesture, source clock mapping, autonomous navigation and fleet remain unaccepted; installed APK88/UI/API bindings retained.",
+  "reviewedAtUtc": "2026-10-23T19:35:33.264322+00:00",
+  "sourceReviewed": "e712b6c932606c11a0ab2226cb1c1d73d06adc34",
+  "scope": "Read-only LDPlayer metadata inspector and revised teaching readiness: current actor single-pointer; full keyboard/multitouch teaching and3D visualization unimplemented. Recorder/native single-pointer proof retained; no emulator settings/runtime install changes or acceptance promotion.",
   "baseline": "docs/audits/2026-10-05/ENTERPRISE-PRODUCT-BACKLOG.json",
   "previousCrosscheck": "docs/audits/2026-10-09/CHAT-CODE-RECONCILIATION.json",
   "counts": {
@@ -6577,5 +6577,22 @@
     "physicalNativeJournalConfirmed": true,
     "nativeSlowGestureDurationMs": 3016,
     "controlledHighQualityRecordingTrialPrepared": true
+  },
+  "motorKeymap081": {
+    "evidence": "docs/audits/2026-10-24/LDPLAYER-KEYMAP-READINESS081.json",
+    "evidenceSha256NormalizedLf": "b0e9fc78c41ca0f434502011597a27dc780097cd2b4d6db2eef296ad845f76a9",
+    "workerVersion": "0.8.1",
+    "motorTestsPassed": 303,
+    "readOnlyInspectorImplemented": true,
+    "filesInspected": 4,
+    "recommendedBindings": 26,
+    "rawMacrosExecuted": 0,
+    "physicalActions": 0,
+    "nativeSinglePointerOnly": true,
+    "fullKeyboardTeachingAccepted": false,
+    "multiContactActorImplemented": false,
+    "visualizationViewerImplemented": false,
+    "monocular3dReconstructionAccepted": false,
+    "productionAccepted": false
   }
 }

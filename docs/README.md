@@ -2,7 +2,12 @@
 
 **Проверенная установка:** UI `a239baa2` / API `1afdc529`.
 
-**24 октября — worker0.8.0:** explicit H.264 teaching recorder, own pointer journal,
+**24 октября — worker0.8.1:** read-only LDPlayer `.smp/.kmp` inspector,303 tests/Ruff.
+Полный keyboard teaching требует следующего native multi-contact actor; current
+console single-pointer. Уточнены1080p320DPI/render100% и2D viewer против отдельного
+3D reconstruction. [Результаты и порядок работы](audits/2026-10-24/LDPLAYER-KEYMAP-READINESS081.md).
+
+**Предыдущий этап24 октября — worker0.8.0:** explicit H.264 teaching recorder, own pointer journal,
 локальная ручная панель, offline route bundle/quality и sequential observation.
 295 motor tests/Ruff passed; финальный PH011 read-only137/137 decoded. Дополнение:
 два real gestures/14 APPLIED,один3с; disconnected game. Gameplay teaching,

@@ -2,7 +2,16 @@
 
 **Проверенная установка:** UI `a239baa2` / API `1afdc529`.
 
-**24 октября — worker0.8.0: первый исполнимый teaching pipeline.** Исходный H.264,
+**24 октября — worker0.8.1: уточнение keyboard teach readiness.** Добавлен bounded
+read-only inspector LDPlayer metadata, macros остаются данными. Найден referenced
+recommended profile26 bindings вместо пустого override.303 tests/Ruff passed.
+Нынешний native input single-pointer; полному WASD+camera+jump нужен следующий
+multi-contact actor/keymapper/journal. Это не отказ H.264 recorder и не готовое
+полное ручное управление. Plan3.6 уточняет DPI320 при1080p,100% render для teach,
+независимый low-quality repeat и2D debug/отдельную3D реконструкцию. Физических
+действий0, APK/UI/API/VPN/настройки не менялись. [Данные и допуски](../audits/2026-10-24/LDPLAYER-KEYMAP-READINESS081.md).
+
+**Предыдущий этап24 октября — worker0.8.0: первый исполнимый teaching pipeline.** Исходный H.264,
 own native pointer journal, strict dataset/COMPLETE, локальная ручная панель,
 ordered feature bundle/temporal progress и offline degraded-quality experiment.
 295 tests/Ruff passed. Final real PH011137/137 decoded, max receive gap93,791мс;
