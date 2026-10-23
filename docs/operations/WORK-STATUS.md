@@ -2,6 +2,12 @@
 
 **Проверенная установка:** UI `a239baa2` / API `1afdc529`.
 
+**23 октября — исследование навигации и обучающей записи.** План3.4 сопоставляет
+teach-and-repeat, миникарту/дорожный граф, локальные controllers и свежие препятствия.
+Предложен device video + input journal/clock mapping; native30FPS master отдельно
+от5Гц runtime. Это design/research, recorder и новые physical policies не включены,
+product acceptance не повышена. [Источники, capture gap и условия испытаний](../audits/2026-10-23/NAVIGATION-METHODS-CAPTURE-RESEARCH.md).
+
 **23 октября — worker0.7.5: shared RGB и visual checkpoint primitive.** Один
 immutable RGB безопасно разделяется независимыми потребителями; закрытие/epoch
 инвалидируют слот. CPU ORB/RANSAC хранит ограниченные признаки без RGB. Явный

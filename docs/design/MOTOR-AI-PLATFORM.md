@@ -1,6 +1,11 @@
 # Игровой AI-контур Sphere: архитектура, модели и план реализации
 
-**23 октября · версия3.3, worker0.7.5:** реализованы общий immutable RGB и ограниченная
+**23 октября · версия3.4, исследование методов и capture:** сопоставлены teach-and-repeat,
+mini→map localization, path following и динамический объезд. Добавлен раздел26.6
+и [разбор с первичными источниками](../audits/2026-10-23/NAVIGATION-METHODS-CAPTURE-RESEARCH.md).
+Это проектные рекомендации; новый recorder/controller не включён, runtime остаётся0.7.5.
+
+**Предыдущий срез23 октября · версия3.3, worker0.7.5:** реализованы общий immutable RGB и ограниченная
 память видов ORB/RANSAC. В новом capture epoch сохранённый ориентир узнан50/50 раз;
 совместный P2P shadow дал74 ответа за~15с. Физического ввода0, маршрута/объезда ещё
 нет. Раздел26.5 разделяет этот компонент, следующий teach-and-repeat опыт и preflight
@@ -1966,3 +1971,39 @@ capture→decode→перцепция/решение→доставка→native
 только receiver clock. Для десятков машин нужны joint load, очереди без устаревших
 кадров, admission по худшему окну и реальная оценка пропускной способности GPU.
 Из одного быстрого клиента capacity парка не выводится.
+
+### 26.6. Карта/миникарта, альтернативные controllers и качество демонстрации
+
+[Исследование23 октября](../audits/2026-10-23/NAVIGATION-METHODS-CAPTURE-RESEARCH.md)
+отделяет реальные robotics/game demonstrations от неподтверждённых claims.
+BearNav/QVPR/GuideNav подтверждают семейство teach-and-repeat, но нуждаются в адаптации
+камеры/одометрии/управления. Cradle показывает mini-map composite skills, при этом
+пауза для LMM не подходит unpaused online-клиенту. DriveNet checkpoints/action accuracy
+не являются доказательством надёжного прибытия Android-агента.
+
+Предлагаемый набор: общая карта дорожных связей + live mini-map localization,
+последовательная visual route memory + sparse optional world-coordinate anchors,
+локальный path follower и свежая obstacle/unknown оценка, bounded stop/recovery.
+Pure Pursuit-подобный baseline снимает обязательность нейросети на каждом шаге,
+но требует pose/path/кинематики; сам RGB их не предоставляет. Динамический объезд
+нужно проверять отдельно от точного следования пути. Overlay остаётся экспериментом
+с paired opposite-direction probes, а не заранее принятым goal interface.
+
+Координаты0…1000 по большой карте — map units, не гарантированные метры. Требуются
+масштаб/rotation/zoom transforms, uncertainty и корректные road connections для
+мостов/тоннелей. Screen touch coordinates, map coordinates и world pose различаются.
+Команда координат игры — adapter для редких anchors; автоматического poller нет.
+
+Для первого teach master предложены нативное разрешение и30 уникальных FPS,
+все input state changes/native receipts и единый измеренный timeline.60FPS сравнить
+для быстрых движений,120FPS не нужен по умолчанию. Runtime policy может получать5
+свежих кадров/с; мастер не нужно непрерывно записывать на всех исполнителях.
+Снижение внутреннего rendering scale необратимо теряет детали; апскейл не восстановит
+их. Конкретное качество надо сравнить на целевых mini-map/landmarks и rollout.
+
+В Android уже есть encoded frame metadata/PTS и device input times, однако полный
+dataset sink и end-to-end clock mapping не реализованы. Целевая запись — исходный
+encoded stream + event journal + manifest; она не открывает скрытую3D-геометрию игры.
+Внешние LDPlayer-нажатия не появляются в собственном actor Sphere автоматически.
+Демонстрацию проще сначала проводить через Sphere. Исследование не меняло APK,
+VPN, поток, игру, модели или ресурсные пороги; физических проверок здесь нет.

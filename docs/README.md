@@ -7,7 +7,8 @@
 P2P shadow дал74 ответа за~15с.263 tests/Ruff прошли. Ввод0; ранний gap1,02с,
 preflight после AFK, физический маршрут, препятствия и fleet SLA остаются открытыми.
 [Квитанция](audits/2026-10-23/MOTOR-ROUTE-VIEWS075.md) ·
-[План3.3](design/MOTOR-AI-PLATFORM.md#265-первый-компонент075-и-короткий-практический-путь).
+[План3.4](design/MOTOR-AI-PLATFORM.md#265-первый-компонент075-и-короткий-практический-путь) ·
+[Исследование карты, teach-and-repeat и capture](audits/2026-10-23/NAVIGATION-METHODS-CAPTURE-RESEARCH.md).
 
 **23 октября — perception0.7.4:** direct FP32 object inference выдержал5 результатов
 в каждой полной секунде, без Android input. FP16 отклонён; free-space/навигация

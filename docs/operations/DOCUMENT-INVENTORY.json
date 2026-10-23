@@ -5,7 +5,7 @@
   "countsByRole": {
     "ADR": 6,
     "CURRENT_ENTRYPOINT": 8,
-    "DATED_EVIDENCE": 377,
+    "DATED_EVIDENCE": 378,
     "DESIGN_SPECIFICATION": 85,
     "OPERATING_GUIDE": 71,
     "PROJECT_POLICY": 7,
@@ -1630,6 +1630,10 @@
     },
     {
       "file": "docs/audits/2026-10-23/MOTOR-ROUTE-VIEWS075.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
+      "file": "docs/audits/2026-10-23/NAVIGATION-METHODS-CAPTURE-RESEARCH.md",
       "role": "DATED_EVIDENCE"
     },
     {
