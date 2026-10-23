@@ -69,3 +69,27 @@ Product9accepted/41open/50 не изменяется.
 Инструкция оператора и формат:
 [TEACHING-WEB](../../operations/TEACHING-WEB.md). Новый режим не меняет VPN,
 игровые файлы, серверные аккаунты, настройки разрешения эмулятора или старые записи.
+
+
+## Дополнение: настоящая browser encoded-transform проверка
+
+После host reboot resource guard пропустил сборку (available22597459968bytes,
+C:Healthy/OK; health/ready/login200; Gitfsck0 и HEAD98bd7457 совпадал с remote до
+нового commit). Запущена полная локальная Android проверка; окончательные
+результаты/пакет/доставка фиксируются отдельно после завершения, а не заранее.
+
+Synthetic browser loopback в реальном IAB проверил worker на настоящих H264
+encoded frames, OPFS и WebCrypto. Первый опыт корректно не создал COMPLETE,
+потому что Chromium выставляет width/height0 для delta frames. Исправлено:
+только уже установленная геометрия SPS/IDR может наследоваться нулевым delta;
+изменённые явные размеры, keyframe без геометрии или новый SSRC отказывают.
+Новые unit tests покрывают эти случаи и heartbeat, пересекающий первый IDR.
+Подтверждение CLOSED сохраняется также после отказа видео.
+
+Повторный synthetic опыт:90 кадров,685995bytes,270270ticks/90000=3.003с,
+COMPLETE=true, manifest/index hashes; последняя delta geometry_reported=false,
+первый IDR=true. Приёмник/диск были настоящими browser API; вход CLOSED был
+**синтетическим**. Ни Android/multitouch, ни gameplay этим не доказаны. Private
+proof `.local-pilot/teaching89-delivery/browser-h264-synthetic-proof.txt` иPNG.
+Локальная библиотека теперь разделена по org/account namespace; серверной
+синхронизации всё ещё нет.

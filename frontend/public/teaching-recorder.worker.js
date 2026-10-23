@@ -29,7 +29,11 @@ function frame(value) {
   if (!r?.accept) return;
   if (stamp() - r.at > 120000 || r.frames >= 7200) { failure(r, 'recording_duration_limit'); return; }
   const meta = value.getMetadata();
-  if (meta.mimeType?.toLowerCase() !== 'video/h264' || meta.width !== r.config.width || meta.height !== r.config.height) {
+  const knownGeometry = meta.width === r.config.width && meta.height === r.config.height;
+  // Chromium reports 0x0 for delta frames. Only an already bound SPS/IDR may
+  // establish geometry; a newly reported size or keyframe must still match.
+  const omittedGeometry = (meta.width === 0 || meta.width === undefined) && (meta.height === 0 || meta.height === undefined);
+  if (meta.mimeType?.toLowerCase() !== 'video/h264' || !knownGeometry && (!r.started || !omittedGeometry)) {
     failure(r, 'encoded_geometry_or_codec_changed'); return;
   }
   const timestamp = meta.rtpTimestamp;
@@ -38,12 +42,16 @@ function frame(value) {
   if (!size || size > 2 * 1024 * 1024 || r.bytes + size > 512 * 1024 * 1024) { failure(r, 'recording_byte_limit'); return; }
   const view = new Uint8Array(value.data), types = nalTypes(view);
   if (!types.size) { failure(r, 'annex_b_required'); return; }
+  if (omittedGeometry && (types.has(5) || types.has(7) || types.has(8))) { failure(r, 'keyframe_geometry_unavailable'); return; }
+  if (!Number.isInteger(meta.synchronizationSource) || r.started && meta.synchronizationSource !== r.ssrc) {
+    failure(r, 'rtp_source_changed'); return;
+  }
   if (!r.started) {
     if (!(types.has(5) && types.has(7) && types.has(8))) {
       if (stamp() - r.at > 10000) failure(r, 'idr_headers_timeout');
       return;
     }
-    r.started = true; r.firstRtp = r.lastRtp = timestamp; r.ticks = 0;
+    r.started = true; r.ssrc = meta.synchronizationSource; r.firstRtp = r.lastRtp = timestamp; r.ticks = 0;
     postMessage({ type: 'recording', id: r.id });
   } else {
     const delta = (timestamp - r.lastRtp + 0x100000000) % 0x100000000;
@@ -52,7 +60,7 @@ function frame(value) {
   }
   const data = value.data.slice(0), offset = r.bytes;
   const index = { index: r.frames, offset, bytes: size, rtp_timestamp: timestamp, relative_ticks_90k: r.ticks,
-    worker_observed_at_ms: stamp(), key: types.has(5), sha256: null };
+    worker_observed_at_ms: stamp(), geometry_reported: knownGeometry, key: types.has(5), sha256: null };
   if (!enqueue(r, size, async () => {
     index.sha256 = await hash(data); await r.video.write(data);
     await r.index.write(encode.encode(JSON.stringify(index) + '\n'));
@@ -85,7 +93,7 @@ async function arm(config) {
 }
 function input(event) {
   const r = recording;
-  if (!r?.accept) return;
+  if (!r || r.stopping) return;
   if (!event || !['submitted','receipt','closed'].includes(event.stage) || !Number.isFinite(event.at_ms)
     || !Number.isSafeInteger(event.sequence) || !Number.isSafeInteger(event.gesture)
     || !Number.isSafeInteger(event.action) || !Number.isSafeInteger(event.pointer_id)) { failure(r, 'invalid_input_journal'); return; }

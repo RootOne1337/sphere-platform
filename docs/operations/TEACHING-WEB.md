@@ -96,4 +96,5 @@ Browser schema `sphere-browser-teaching-v1` явно отличается от w
 [sendKeyFrameRequest](https://developer.mozilla.org/en-US/docs/Web/API/RTCRtpScriptTransformer/sendKeyFrameRequest)
 не гарантирует фактическую отправку IDR при исполнении promise, поэтому запись
 проверяет наличие SPS/PPS/IDR в реальных байтах. Реализация требует H264 AnnexB и
-доступных width/height/rtpTimestamp; отсутствие данных — отказ, не догадка.
+доступных width/height/rtpTimestamp; SPS/IDR должен подтверждать размер. Chromium delta0×0 наследует только уже
+подтверждённую геометрию при том же SSRC; смена явных размеров/источника — отказ.

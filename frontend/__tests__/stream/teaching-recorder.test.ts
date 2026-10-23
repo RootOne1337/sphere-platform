@@ -28,8 +28,8 @@ function fixture(){
   vm.runInContext(fs.readFileSync(path.join(process.cwd(),'public/teaching-recorder.worker.js'),'utf8'),context);
   vm.runInContext('transformer={sendKeyFrameRequest:()=>Promise.resolve()}',context);
   const config={id:'a'.repeat(32),storage_scope:'b'.repeat(32),width:960,height:540};
-  const frame=(ticks:number,key=true)=>context.frame({data:Uint8Array.from(key?[0,0,0,1,103,66,0,31,0,0,1,104,1,0,0,1,101,9]:[0,0,0,1,65,9]).buffer,
-    getMetadata:()=>({mimeType:'video/H264',width:960,height:540,rtpTimestamp:ticks})});
+  const frame=(ticks:number,key=true,metadata:Record<string,unknown>={})=>context.frame({data:Uint8Array.from(key?[0,0,0,1,103,66,0,31,0,0,1,104,1,0,0,1,101,9]:[0,0,0,1,65,9]).buffer,
+    getMetadata:()=>({mimeType:'video/H264',width:960,height:540,rtpTimestamp:ticks,synchronizationSource:777,...metadata})});
   const folder=async()=>root.getDirectoryHandle('sphere-teaching-'+config.storage_scope).then(f=>f.getDirectoryHandle(config.id));
   return{root,messages,context,config,frame,folder,advance:()=>{at+=200;}};
 }
@@ -66,4 +66,12 @@ test('heartbeat crossing first IDR keeps its submission and matching receipt in 
   f.context.input({...event,stage:'receipt',outcome:'alive',device_uptime_ms:1000});
   f.context.input({stage:'closed',at_ms:1001000,sequence:0,gesture:0,action:3,pointer_id:-1,outcome:'closed'});
   await f.context.stop(true,null);expect((await f.folder()).entries.has('COMPLETE')).toBe(true);
+});
+test('Chromium zero delta dimensions inherit bound IDR but a changed source or explicit geometry is rejected',async()=>{
+  for(const metadata of [{width:0,height:0},{width:480,height:270},{synchronizationSource:778}]) {
+    const f=fixture();await f.context.arm(f.config);f.frame(90000);f.frame(93000,false,metadata);
+    f.context.input({stage:'closed',at_ms:1001000,sequence:0,gesture:0,action:3,pointer_id:-1,outcome:'closed'});
+    await f.context.stop(true,null);const manifest=JSON.parse(((await f.folder()).entries.get('manifest.json') as MemoryFile).data.toString());
+    expect(manifest.complete).toBe(metadata.width===0);expect(manifest.release_confirmed).toBe(true);
+  }
 });
