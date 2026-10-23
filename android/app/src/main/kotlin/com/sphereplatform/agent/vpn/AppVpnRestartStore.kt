@@ -125,10 +125,12 @@ internal class AppVpnRestartStore(private val directory: File, private val ciphe
 internal object AppVpnAutoStart {
     const val RESTORE = "com.sphereplatform.agent.vpn.RESTORE_AFTER_BOOT"
     fun hasState(context: Context): Boolean {
-        if (!BuildConfig.APP_SCOPED_VPN_CANARY || VpnProcessIdentity.isVpnProcess(context)) return false
-        val directory = File(context.filesDir, "app-vpn-v1")
-        if (File(directory, "restart.disabled").exists() || File(directory, "restart.disabled.bak").exists()) return false
-        return File(directory, "restart.enc").exists() || File(directory, "restart.enc.bak").exists()
+        return try {
+            if (!BuildConfig.APP_SCOPED_VPN_CANARY || VpnProcessIdentity.isVpnProcess(context)) return false
+            val directory = File(context.filesDir, "app-vpn-v1")
+            if (File(directory, "restart.disabled").exists() || File(directory, "restart.disabled.bak").exists()) return false
+            File(directory, "restart.enc").exists() || File(directory, "restart.enc.bak").exists()
+        } catch (_: Exception) { false } // VPN storage must never prevent management startup.
     }
     fun start(context: Context) {
         if (!hasState(context)) return
