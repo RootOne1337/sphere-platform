@@ -17,6 +17,8 @@ const active = (phase: Phase) => ['opening','arming','recording','stopping'].inc
 
 export function TeachingWorkbench({ deviceId, readOnly }: { deviceId: string; readOnly: boolean }) {
   const token = useAuthStore(s => s.accessToken), sessionVersion = useAuthStore(s => s.sessionVersion);
+  const user = useAuthStore(s => s.user);
+  const [storageScope, setStorageScope] = useState<string | null>(null);
   const [phase, setPhase] = useState<Phase>('idle'); const phaseRef = useRef<Phase>('idle');
   const [notice, setNotice] = useState('Подключите прямой поток, проверьте экран и настройте зоны управления.');
   const [native, setNative] = useState('Не открыт'); const [result, setResult] = useState<DirectProbeResult | null>(null);
@@ -35,6 +37,15 @@ export function TeachingWorkbench({ deviceId, readOnly }: { deviceId: string; re
   const armSent = useRef(false);
   const stopCallback = useRef<(reason?: string) => Promise<void>>(async () => {});
   const change = (value: Phase) => { phaseRef.current = value; setPhase(value); };
+  useEffect(() => {
+    let retired = false; setStorageScope(null);
+    if (user?.id && user.org_id && crypto.subtle) {
+      void crypto.subtle.digest('SHA-256', new TextEncoder().encode(JSON.stringify([user.org_id,user.id])))
+        .then(bytes => { if(!retired)setStorageScope(Array.from(new Uint8Array(bytes).slice(0,16),v=>v.toString(16).padStart(2,'0')).join('')); })
+        .catch(() => { if(!retired)setNotice('Локальное хранилище для текущего аккаунта недоступно.'); });
+    }
+    return () => { retired = true; };
+  }, [user?.id,user?.org_id]);
 
   const stop = (reason?: string): Promise<void> => {
     if (stopPromise.current) return stopPromise.current;
@@ -83,7 +94,7 @@ export function TeachingWorkbench({ deviceId, readOnly }: { deviceId: string; re
   useEffect(() => { if (readOnly) void stopCallback.current('control_permission_removed'); }, [readOnly]);
 
   const connect = async () => {
-    if (!token || readOnly || phaseRef.current === 'connecting') return;
+    if (!token || !storageScope || readOnly || phaseRef.current === 'connecting') return;
     await disconnect(); stopPromise.current = null; setClip(null); setResult(null); change('connecting');
     setNative('Не открыт'); setNotice('Подключаем один прямой поток. Ввод ещё выключен.');
     const request = new AbortController(); abort.current = request;
@@ -111,7 +122,7 @@ export function TeachingWorkbench({ deviceId, readOnly }: { deviceId: string; re
   };
   const record = async () => {
     const conn = connection.current, binding = conn?.binding(), endpoint = conn?.endpoint();
-    if (readOnly || phaseRef.current !== 'preview' || !conn?.fresh() || !binding || !endpoint || !attached.current) return;
+    if (readOnly || !storageScope || phaseRef.current !== 'preview' || !conn?.fresh() || !binding || !endpoint || !attached.current) return;
     change('opening');
     let storage: StorageEstimate;
     try { storage = await navigator.storage.estimate(); } catch { change('preview'); setNotice('Не удалось проверить квоту браузера.'); return; }
@@ -123,7 +134,7 @@ export function TeachingWorkbench({ deviceId, readOnly }: { deviceId: string; re
       change('preview'); setNotice('Зона стика выходит за экран. Уменьшите радиус или измените центр.'); return;
     }
     const id = newId(); setProgress({ frames: 0, bytes: 0, seconds: 0 }); stopPromise.current = null;
-    recordConfig.current = { id, device_id: deviceId, width: binding.width, height: binding.height,
+    recordConfig.current = { id, storage_scope: storageScope, device_id: deviceId, width: binding.width, height: binding.height,
       capture_epoch: binding.captureEpoch, title: title.trim().slice(0,128) || 'Маршрут', profile: p,
       source: 'direct_webrtc_h264', target_fps: 60, actual_fps_unverified: true };
     change('opening'); setNotice('Открываем три контакта. Требуется APK 1.2.89 или новее с contact_protocol=1.');
@@ -208,12 +219,12 @@ export function TeachingWorkbench({ deviceId, readOnly }: { deviceId: string; re
       </aside>
     </div>
     <div className="sticky bottom-3 z-20 flex flex-wrap items-center gap-3 rounded-2xl border border-border bg-card/95 p-3 shadow-xl backdrop-blur">
-      <Button variant="outline" disabled={readOnly || active(phase) || phase === 'connecting'} onClick={() => { void connect(); }}>{phase === 'idle' ? 'Подключить поток' : 'Подключить заново'}</Button>
+      <Button variant="outline" disabled={readOnly || !storageScope || active(phase) || phase === 'connecting'} onClick={() => { void connect(); }}>{phase === 'idle' ? 'Подключить поток' : 'Подключить заново'}</Button>
       <Button disabled={readOnly || phase !== 'preview' || !ready || !!calibrate} onClick={() => { void record(); }}><Circle size={15} className="mr-2 text-red-500" />Записать маршрут</Button>
       <Button variant="destructive" disabled={!active(phase) || phase === 'stopping'} onClick={() => { void stop(); }}><Square size={15} className="mr-2" />{phase === 'stopping' ? 'Освобождение и сохранение…' : 'Остановить · Esc'}</Button>
       <p role="status" className="min-w-[220px] flex-1 text-xs leading-5 text-muted-foreground">{readOnly ? 'Для записи требуется право stream:control.' : notice}</p>
     </div>
-    <TeachingReview selected={clip} refresh={refresh} onSelect={setClip} />
+    <TeachingReview key={storageScope} storageScope={storageScope} selected={clip} refresh={refresh} onSelect={setClip} />
     <p className="flex items-center gap-2 text-xs text-muted-foreground"><Download size={14} />Материал содержит только явно записанный проход. Он ещё не доказывает повторение маршрута ИИ.</p>
   </div>;
 }

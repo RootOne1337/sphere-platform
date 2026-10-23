@@ -14,7 +14,7 @@ export function h264Codec(data: Uint8Array): string | null {
   }
   return null;
 }
-export function TeachingReview({ selected, refresh, onSelect }: { selected: string | null; refresh: number; onSelect: (id: string | null) => void }) {
+export function TeachingReview({ selected, refresh, onSelect, storageScope }: { selected: string | null; refresh: number; onSelect: (id: string | null) => void; storageScope: string | null }) {
   const [clips,setClips]=useState<Clip[]>([]),[error,setError]=useState<string|null>(null);
   const [rows,setRows]=useState<Row[]>([]),[inputs,setInputs]=useState<Record<string,unknown>[]>([]),[position,setPosition]=useState(0);
   const [localRefresh,setLocalRefresh]=useState(0),[decoding,setDecoding]=useState(false);
@@ -23,10 +23,10 @@ export function TeachingReview({ selected, refresh, onSelect }: { selected: stri
   useEffect(()=>{
     let retired=false;
     void(async()=>{
-      if(!navigator.storage?.getDirectory) return;
+      if(!navigator.storage?.getDirectory || !storageScope || !/^[0-9a-f]{32}$/.test(storageScope)) return;
       const root=await navigator.storage.getDirectory();
       let library:FileSystemDirectoryHandle;
-      try {library=await root.getDirectoryHandle('sphere-teaching');} catch {return;}
+      try {library=await root.getDirectoryHandle('sphere-teaching-'+storageScope);} catch {return;}
       const found:Clip[]=[];let examined=0;
       const iterable=library as FileSystemDirectoryHandle & { values(): AsyncIterableIterator<FileSystemHandle> };
       for await(const entry of iterable.values()) {
@@ -44,12 +44,12 @@ export function TeachingReview({ selected, refresh, onSelect }: { selected: stri
       if(!retired)setClips(found.slice(-20).reverse());
     })().catch(()=>{if(!retired)setError('Не удалось прочитать локальную библиотеку браузера.');});
     return()=>{retired=true;};
-  },[refresh,localRefresh]);
+  },[refresh,localRefresh,storageScope]);
   useEffect(()=>{
     const current=++generation.current; setRows([]);setInputs([]);setPosition(0);directory.current=null;setError(null);
-    if(!selected||!/^[0-9a-f]{32}$/.test(selected))return;
+    if(!selected||!/^[0-9a-f]{32}$/.test(selected)||!storageScope||!/^[0-9a-f]{32}$/.test(storageScope))return;
     void(async()=>{
-      const root=await navigator.storage.getDirectory(),library=await root.getDirectoryHandle('sphere-teaching');
+      const root=await navigator.storage.getDirectory(),library=await root.getDirectoryHandle('sphere-teaching-'+storageScope);
       const folder=await library.getDirectoryHandle(selected);
       const read=async(name:string,max:number)=>{const file=await(await folder.getFileHandle(name)).getFile();if(file.size>max)throw Error('Размер индекса превышает предел.');return file;};
       const manifestFile=await read('manifest.json',65536),manifest=JSON.parse(await manifestFile.text());
@@ -71,7 +71,7 @@ export function TeachingReview({ selected, refresh, onSelect }: { selected: stri
       if(current===generation.current){directory.current=folder;setRows(entries);setInputs(journal);}
     })().catch(e=>{if(current===generation.current)setError(e instanceof Error?e.message:'Материал не прочитан.');});
     return()=>{generation.current++;};
-  },[selected,refresh]);
+  },[selected,refresh,storageScope]);
   useEffect(()=>{
     if(!directory.current||!rows.length||!canvas.current)return;
     let retired=false;let decoder:VideoDecoder|undefined;setDecoding(true);
@@ -116,7 +116,7 @@ export function TeachingReview({ selected, refresh, onSelect }: { selected: stri
     {selected&&<div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_280px]"><div className="space-y-3"><canvas ref={canvas} className="aspect-video w-full rounded-xl bg-black object-contain" aria-label="Записанный видеокадр" />
       <label className="block text-sm">Кадр {position+1} / {rows.length} · {((rows[position]?.relative_ticks_90k??0)/90000).toFixed(3)} с {decoding?'· декодирование':''}<input aria-label="Время записанного прохода" type="range" min={0} max={Math.max(0,rows.length-1)} value={position} className="mt-2 w-full" onChange={e=>setPosition(Number(e.target.value))} /></label></div>
       <div className="space-y-3"><h4 className="text-sm font-medium">Подтверждения рядом с кадром</h4><div className="max-h-56 space-y-1 overflow-auto font-mono text-xs">{nearby.length?nearby.map((i,n)=><p key={n}>#{String(i.sequence)} · палец {String(i.pointer_id)} · {String(i.outcome)} · {String(i.device_uptime_ms??'')} мс</p>):<p className="text-muted-foreground">В этом интервале нет подтверждений.</p>}</div><div className="flex flex-wrap gap-2">{names.map(name=><Button size="sm" variant="outline" key={name} onClick={()=>{void download(name);}}>{name}</Button>)}</div>
-        <Button variant="ghost" className="text-destructive" onClick={()=>{void(async()=>{const root=await navigator.storage.getDirectory();const library=await root.getDirectoryHandle('sphere-teaching');await library.removeEntry(selected,{recursive:true});onSelect(null);setLocalRefresh(v=>v+1);})().catch(()=>setError('Удаление не подтверждено.'));}}>Удалить выбранный локальный материал</Button>
+        <Button variant="ghost" className="text-destructive" onClick={()=>{void(async()=>{if(!storageScope||!/^[0-9a-f]{32}$/.test(storageScope))throw Error();const root=await navigator.storage.getDirectory();const library=await root.getDirectoryHandle('sphere-teaching-'+storageScope);await library.removeEntry(selected,{recursive:true});onSelect(null);setLocalRefresh(v=>v+1);})().catch(()=>setError('Удаление не подтверждено.'));}}>Удалить выбранный локальный материал</Button>
       </div></div>}
   </section>;
 }

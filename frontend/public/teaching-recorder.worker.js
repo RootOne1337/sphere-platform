@@ -62,10 +62,11 @@ function frame(value) {
 }
 async function arm(config) {
   if (!transformer || recording) throw Error('recorder_already_used');
-  if (!config || !/^[0-9a-f]{32}$/.test(config.id) || !Number.isInteger(config.width) || !Number.isInteger(config.height)
+  if (!config || !/^[0-9a-f]{32}$/.test(config.id) || !/^[0-9a-f]{32}$/.test(config.storage_scope)
+    || !Number.isInteger(config.width) || !Number.isInteger(config.height)
     || config.width < 1 || config.height < 1 || config.width > 8192 || config.height > 8192) throw Error('invalid_recording_config');
   const root = await navigator.storage.getDirectory();
-  const library = await root.getDirectoryHandle('sphere-teaching', { create: true });
+  const library = await root.getDirectoryHandle('sphere-teaching-' + config.storage_scope, { create: true });
   let count = 0;
   for await (const entry of library.values()) {
     if (entry.kind === 'directory' && ++count >= 20) throw Error('recording_library_limit');

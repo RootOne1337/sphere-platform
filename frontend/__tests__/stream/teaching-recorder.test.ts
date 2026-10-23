@@ -27,10 +27,10 @@ function fixture(){
     postMessage:(m:Record<string,unknown>)=>messages.push(m),self:{}});
   vm.runInContext(fs.readFileSync(path.join(process.cwd(),'public/teaching-recorder.worker.js'),'utf8'),context);
   vm.runInContext('transformer={sendKeyFrameRequest:()=>Promise.resolve()}',context);
-  const config={id:'a'.repeat(32),width:960,height:540};
+  const config={id:'a'.repeat(32),storage_scope:'b'.repeat(32),width:960,height:540};
   const frame=(ticks:number,key=true)=>context.frame({data:Uint8Array.from(key?[0,0,0,1,103,66,0,31,0,0,1,104,1,0,0,1,101,9]:[0,0,0,1,65,9]).buffer,
     getMetadata:()=>({mimeType:'video/H264',width:960,height:540,rtpTimestamp:ticks})});
-  const folder=async()=>root.getDirectoryHandle('sphere-teaching').then(f=>f.getDirectoryHandle(config.id));
+  const folder=async()=>root.getDirectoryHandle('sphere-teaching-'+config.storage_scope).then(f=>f.getDirectoryHandle(config.id));
   return{root,messages,context,config,frame,folder,advance:()=>{at+=200;}};
 }
 test('does not save frames before explicit start; stores original H264 and 90k clock with completion proof',async()=>{
