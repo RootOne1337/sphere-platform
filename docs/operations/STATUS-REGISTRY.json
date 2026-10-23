@@ -1,8 +1,8 @@
 {
   "schemaVersion": 1,
-  "reviewedAtUtc": "2026-10-23T12:57:16.663012+00:00",
-  "sourceReviewed": "4fe45153566a05ae65db17df0094832a735295e7",
-  "scope": "PH011 addressed APK88/AWG2 and finite supervised GPS/CV walking; current learned inference resource-blocked. Prior PH030 real reboot proof remains separate.",
+  "reviewedAtUtc": "2026-10-23T15:30:02.348427+00:00",
+  "sourceReviewed": "3f57b3d9690247ddfd16fe9de6fb0dba682e0d3c",
+  "scope": "Measured WSL cache/commit recovery without restarting services; actual P2P5Hz PH011 shadow and negative Qwen0.8B/2B qualification. Navigation remains unaccepted; APK88 installation bindings retained.",
   "baseline": "docs/audits/2026-10-05/ENTERPRISE-PRODUCT-BACKLOG.json",
   "previousCrosscheck": "docs/audits/2026-10-09/CHAT-CODE-RECONCILIATION.json",
   "counts": {
@@ -6500,5 +6500,20 @@
     "currentModelPredictions": 0,
     "productionAccepted": false,
     "scope": "Fresh PH011 APK88 and AWG2 guard; bounded operator detour and8s GPS/CV walking; learned inference blocked by unchanged Windows commit guard. Jump, autonomous obstacle avoidance, arrival, vehicle and fleet capacity remain open."
+  },
+  "motorMemoryRecovery073": {
+    "evidence": "docs/audits/2026-10-23/MOTOR-MEMORY-RECOVERY073.json",
+    "evidenceSha256NormalizedLf": "8fa9d8b7a3f091442194dcfb2cba1b40e2fab96a77fd0a11cd7eb2ccd94ddae3",
+    "observedAtUtc": "2026-10-23T15:30:02.348427+00:00",
+    "workerSourceRevision": "3f57b3d9690247ddfd16fe9de6fb0dba682e0d3c",
+    "workerVersion": "0.7.3",
+    "motorTestsPassed": 231,
+    "p2pWorldResults": 124,
+    "minimumAcceptedInCompleteSecond": 5,
+    "physicalNeuralActions": 0,
+    "resourceGuardThresholdChanged": false,
+    "goalNavigationAccepted": false,
+    "vlmObstacleProviderAccepted": false,
+    "scope": "One clean WSL pagecache reclaim returned commit reserve; existing container/VM identities retained. P2P125 menu/124 world shadow; Qwen coordinate and obstacle qualification failed. No model left resident, no fleet/GPU scaling acceptance."
   }
 }

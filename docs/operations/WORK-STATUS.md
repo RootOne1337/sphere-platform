@@ -2,6 +2,18 @@
 
 **Проверенная установка:** UI `a239baa2` / API `1afdc529`.
 
+**23 октября, поздний срез — память и neural inference восстановлены.**
+Один measured clean-pagecache reclaim WSL, без рестартов/сброса dirty/anonymous,
+дал80,00→65,82GiB Windows commit после отложенного возврата памяти. Это не14GiB
+освободившейся физической RAM. Все14 контейнеров сохранили start/health, guard85%
+сохранён. На игровом PH011 P2P150M дала124 shadow results за~25с, минимум5 в полном
+секундном окне; receiver-age-at-result p95=232,931мс. Ввод0 и goal conditioning0.
+Qwen0.8B/2B действительно запущены, но не прошли opposite-goal grounding;2B
+ошиблась на ограде/отсутствующем изображении. К управлению не допущены. Worker0.7.3
+валидирует semantic refusal, lineage/active goal/deadline;231 tests/Ruff прошли.
+Аutonomous A→B/recovery/arrival и fleet capacity остаются открытыми. APK88/API/UI
+сохранены; новых GitHub jobs/Android builds нет. [Факты и следующий допуск](../audits/2026-10-23/MOTOR-MEMORY-RECOVERY073.md).
+
 **23 октября — PH011 APK88/AWG2; worker0.7.2 и конечная ходьба.**
 Адресная OTA и свежий package SHA10288 подтверждены. Уникальный AWG2 peer,
 provider endpoint без дополнительного PC relay; kernel proof исключает Sphere UID10082

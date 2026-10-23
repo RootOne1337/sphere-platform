@@ -1,9 +1,18 @@
 # Headless motor worker: транспорт и конечный ввод
 
 GPS-анализ — необязательный observer. Общие задачи без меток/миникарты и цели по
-изображению/ориентирам описаны в разделах24–25 [единого плана3.0](../design/MOTOR-AI-PLATFORM.md).
+изображению/ориентирам описаны в разделах24–25 [единого плана3.1](../design/MOTOR-AI-PLATFORM.md).
 Эти goal/skill contracts пока проектные: stdio-v1 не передаёт цель в NitroGen/P2P.
 Последний decoded frame хранится в RAM, PNG сохраняется только явно через `--snapshot`.
+
+**23 октября ·0.7.3:** добавлен bounded parser `VisualWaypoint` и проверка lineage/age
+для visual reply. Refusal с координатами, truncation, лишние поля и ответ по старой
+цели не принимаются. Это не автоматический VLM provider или физический executor.
+После однократного измеренного WSL clean-cache reclaim ресурсный guard прошёл:
+P2P150M в игровом мире дала124 shadow results, минимум5 в полном секундном окне.
+Ввод0, без text/goal conditioning. Qwen0.8B/2B получили реальные ответы, но не прошли
+coordinate/obstacle qualification; быстрые кешированные ответы не означают5Гц новых
+кадров.231 motor tests/Ruff прошли. [Новый срез и все ограничения](../audits/2026-10-23/MOTOR-MEMORY-RECOVERY073.md).
 
 **23 октября ·0.7.2:** `WalkingSteering` регулирует аналоговую силу стика, а
 `NavigationSupervisor` останавливает при разрыве наблюдений более500мс. Flow sensor

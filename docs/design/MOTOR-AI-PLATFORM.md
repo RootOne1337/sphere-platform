@@ -38,7 +38,7 @@ Black Russia установлена, гостевой персонаж нахо�
 
 **Последующий goal-опыт:** отдельный5Гц CV visual servo довёл персонажа к пользовательской метке; прибытие подтверждено пользователем,36/36 native APPLIED и CLOSED. Нейросети не использовались, поэтому learned goal navigation остаётся открытой. [Результаты и пределы](../audits/2026-10-17/MOTOR-WAYPOINT-SERVO.md).
 
-**Единый рабочий документ · 23 октября 2026 · версия 3.0.**
+**Единый рабочий документ · 23 октября 2026 · версия 3.1.**
 
 Назначение: подготовить реализацию отдельной GPU-станции, которая получает экран Android APK
 напрямую и управляет игрой без открытого браузера. Первый ограниченный опыт — движение к метке
@@ -1732,7 +1732,7 @@ Android-навигации. [Cradle](https://github.com/BAAI-Agents/Cradle) по
 измерены arrival, recovery, препятствия и перенос на новую сцену, ни внешний
 ролик, ни downloaded checkpoint, ни полученные APPLIED не закрывают A→Б.
 
-### 25.6. Фактический PH011 pilot и границы motor readiness
+### 25.6. PH011 pilot до12:57 UTC и границы motor readiness этого среза
 
 [23 октября: APK88, AWG2 и ходьба](../audits/2026-10-23/PH011-APK88-MOTOR-CALIBRATION.md)
 обновляет текущую установку PH011 до10288 с независимым package SHA. Уникальный
@@ -1769,3 +1769,34 @@ budget, а не доказательство нехватки16GB VRAM. Снач
 на5Гц с finite goal lifetime, скоростью по clearance и подтверждённым stop при
 потере восприятия. Никакие “дорисованные стрелки” и поворот камеры сами по себе
 не учат motor model соблюдать маршрут или обходить забор.
+
+### 25.7. Возврат памяти и настоящие model predictions после15:07 UTC
+
+[Новый срез worker0.7.3](../audits/2026-10-23/MOTOR-MEMORY-RECOVERY073.md)
+снимает прежнюю ресурсную блокировку. Однократный диагностический clean-pagecache
+reclaim WSL и последующее возвращение памяти хосту дали80,00→65,82GiB Windows
+commit. Это не14GiB физической RAM. Все14 контейнеров и WSL сохранили boot/start
+identity, guard85% не менялся. Автоматическая очистка кешей не вводилась; большой
+kernel pool и его причина этим не исправлены.
+
+P2P150M выдала125 shadow results на выборе персонажа и124 в игровом мире примерно
+за25с. Минимум5 в каждом полном секундном окне; на игровом кадре4,999Гц average,
+receiver-age-at-result p95=232,931мс. Native actions0, goal conditioning выключен.
+Это подтверждает свежий neural inference одного worker, не learned A→B и не полный
+source-capture→action SLA. Model input192×192, source decode остаётся около33FPS.
+
+Qwen0.8B/2B с1024 vision tokens работают медленнее: subsecond ответы получены
+на том же изображении с кешем, новые prompt/image запросы занимали секунды. 2B
+описала строение, но обе модели не прошли opposite-goal coordinate grounding.
+Дополнительная2B классификация ошиблась на ограде и negative case без изображения.
+Обе не квалифицированы как obstacle/clearance provider; downloaded weights и
+положительная caption не дают такого допуска. Новых моделей после этого сравнения
+не загружалось. Matching2B projector668MB входит в общий вес1,949GB; нельзя заменить
+его меньшим projector0.8B с другим hidden space.
+
+`visual_waypoint.py` отклоняет противоречивые refusal+coordinates, extra/duplicate
+поля, truncation, старый frame/deadline и ответ после смены цели.231 motor tests
+прошли. Slow planner proposal требует нового fresh scene/geometry подтверждения;
+полученная от VLM координата ещё не является безопасным направлением Android stick.
+Следующий этап — квалификация perception и recovery, затем замкнутый A→B. Подмена
+их случайным image-only motor output не закрывает задачу.
