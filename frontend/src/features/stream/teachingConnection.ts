@@ -94,7 +94,10 @@ export async function connectTeaching(deviceId: string, token: string, video: HT
             void video.play().catch(() => fault('video_play_failed'));
           },
         });
-      } else if (value.type === 'ping') { socket.send(JSON.stringify({ type: 'pong' })); }
+      // This is a server liveness notice, not an application request. The
+      // capture-only socket rejects client pong messages; WebSocket ping/pong
+      // control frames are handled by the browser/network stack separately.
+      } else if (value.type === 'ping') { /* no application reply */ }
       else if (!['stream_link_ready','video_delivery_ack'].includes(value.type)) throw Error();
     } catch { fault('invalid_capture_message'); }
   };
