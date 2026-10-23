@@ -4,11 +4,12 @@ import socket
 import struct
 import threading
 import time
+from pathlib import Path
 from types import SimpleNamespace
 
 import pytest
 
-from tools.vpn_lan_relay import ClientGate, PacketBudget, arguments, run
+from tools.vpn_lan_relay import ClientGate, PacketBudget, arguments, run, write_state
 
 
 def handshake(header=12345, padding=32):
@@ -63,9 +64,24 @@ def test_cli_rejects_unbounded_or_non_lan_configuration(tmp_path, override):
         arguments(argv + override)
 
 
-def test_real_socket_forwarding_preserves_bytes_and_stop_closes_both_sockets(tmp_path):
+@pytest.mark.parametrize("reader_denials", [0, 2])
+def test_real_socket_forwarding_preserves_bytes_and_stop_closes_both_sockets(tmp_path, monkeypatch, reader_denials):
     # Exercise the transport library entirely on loopback; the CLI separately
     # rejects loopback deployment. No external service or host routing is used.
+    replace = Path.replace
+    attempts = 0
+
+    def transient_reader_lock(path, target):
+        nonlocal attempts
+        if Path(target) == tmp_path / "state.json":
+            attempts += 1
+            if attempts <= reader_denials:
+                error = PermissionError("Windows status reader holds delete sharing")
+                error.winerror = 5
+                raise error
+        return replace(path, target)
+
+    monkeypatch.setattr(Path, "replace", transient_reader_lock)
     with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as reserve:
         reserve.bind(("127.0.0.1", 0))
         relay_port = reserve.getsockname()[1]
@@ -109,6 +125,29 @@ def test_real_socket_forwarding_preserves_bytes_and_stop_closes_both_sockets(tmp
         assert "127.0.0.1" not in args.state.read_text()
         with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as released:
             released.bind(("127.0.0.1", relay_port))
+
+
+@pytest.mark.parametrize("winerror", [5, 32, 33, None])
+def test_permanent_status_denial_is_bounded_and_preserves_complete_previous_snapshot(tmp_path, monkeypatch, winerror):
+    path = tmp_path / "state.json"
+    path.write_text('{"state":"previous"}')
+    delays = []
+    attempts = []
+
+    def denied_replace(*args):
+        attempts.append(True)
+        error = PermissionError("status replace denied")
+        if winerror is not None:
+            error.winerror = winerror
+        raise error
+
+    monkeypatch.setattr(Path, "replace", denied_replace)
+    monkeypatch.setattr("tools.vpn_lan_relay.time.sleep", delays.append)
+    with pytest.raises(PermissionError):
+        write_state(path, {"state": "next"})
+    assert len(attempts) == (6 if winerror is not None else 1)
+    assert sum(delays) <= .311
+    assert json.loads(path.read_text()) == {"state": "previous"}
 
 
 def test_lease_expiry_stops_without_a_stop_file_and_releases_the_port(tmp_path):

@@ -95,6 +95,24 @@ def arguments(argv: list[str] | None = None) -> argparse.Namespace:
     return args
 
 
+def write_state(path: Path, value: dict) -> None:
+    """Keep complete snapshots visible despite brief Windows reader locks.
+
+    Only replacing the local status file is retried. Socket traffic, peer
+    selection, lease deadlines and network actions are never replayed.
+    """
+    temporary = path.with_suffix(path.suffix + ".tmp")
+    temporary.write_text(json.dumps(value, indent=2) + "\n", encoding="utf-8")
+    for attempt in range(6):
+        try:
+            temporary.replace(path)
+            return
+        except PermissionError as error:
+            if getattr(error, "winerror", None) not in {5, 32, 33} or attempt == 5:
+                raise
+            time.sleep(.01 * 2**attempt)
+
+
 def run(args: argparse.Namespace) -> None:
     gate = ClientGate(args.network, args.h1, args.s1)
     started = time.monotonic()
@@ -111,9 +129,7 @@ def run(args: argparse.Namespace) -> None:
                  "expiresAtEpochSeconds": int(expires), "ciphertextOnly": True,
                  "containsVpnKeys": False, "osRoutesModified": False, "firewallModified": False,
                  "rebindings": gate.rebindings, **counters}
-        temp = args.state.with_suffix(args.state.suffix + ".tmp")
-        temp.write_text(json.dumps(value, indent=2) + "\n", encoding="utf-8")
-        temp.replace(args.state)
+        write_state(args.state, value)
 
     with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as lan, socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as wan:
         lan.bind((args.bind, args.port))
