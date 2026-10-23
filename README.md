@@ -15,6 +15,14 @@ VPN и диагностика в одном рабочем месте. Android A
 [Работы и ограничения](docs/operations/WORK-STATUS.md) ·
 [HTTP API](docs/api-endpoints.md)
 
+**24 октября — web teaching / кандидат APK89.** Реализован интегрированный режим
+записи из карточки/потока: WASD, независимая камера/кнопка, original H264+native
+journal, локальная библиотека и покадровый viewer. Multi-contact opt-in требует
+новой APK; source/runtime acceptance различаются. После перезагрузки host guard
+прошёл (~21GiB available), выполняется локальная проверка/упаковка. Предыдущие
+runtime88/UI/API не выдаются за обновлённые. [Инструкция](docs/operations/TEACHING-WEB.md) ·
+[Проверки и открытые допуски](docs/audits/2026-10-24/WEB-TEACHING-CONTACTS.md).
+
 **24 октября — worker0.8.1: подготовка keyboard teaching.** Read-only `.smp/.kmp`
 inspector нашёл26 bindings в referenced profile; macros не исполняются.303 motor
 tests/Ruff passed. Нынешний actor single-pointer: полный WASD+camera+jump ещё не

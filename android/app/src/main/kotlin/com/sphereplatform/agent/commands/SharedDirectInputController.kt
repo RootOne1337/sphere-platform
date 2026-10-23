@@ -34,7 +34,7 @@ internal class SharedDirectInputController(
     private val diagnostics: NativeInputDiagnostics = NativeInputDiagnostics(uptime),
     private val keyboard: RemoteKeyboardAdapter? = null,
 ) {
-    private class Participant(val channel: DirectInputChannel, val owner: String) {
+    private class Participant(val channel: DirectInputChannel, val owner: String, val contacts: Boolean = false) {
         @Volatile var ready = false
         @Volatile var retiring = false
         @Volatile var keyboardRequested = false
@@ -173,7 +173,7 @@ internal class SharedDirectInputController(
         if (!current(channel)) { closed(session); return false }
         val type = (message["type"] as? JsonPrimitive)?.takeIf { it.isString }?.content
         if (type == "touch_open") return open(channel, message)
-        if ((automation != null || resetRequired) && type in setOf("touch_event", "touch_close", "key_event", "keyboard_event", "keyboard_mode")) {
+        if ((automation != null || resetRequired) && type in setOf("touch_event", "touch_contact_event", "touch_close", "key_event", "keyboard_event", "keyboard_mode")) {
             // In-flight messages from the retiring participant cannot revoke its
             // media grant or execute later. Availability explicitly explains refusal.
             synchronized(admission) { availability(channel) }
@@ -182,6 +182,9 @@ internal class SharedDirectInputController(
         val participant = participants[session] ?: return false
         if (type == "touch_close" && message.keys == setOf("type")) {
             retire(participant); return true
+        }
+        if (participant.contacts && type !in setOf("touch_contact_event", "touch_event")) {
+            retire(participant); return false
         }
         if (type == "keyboard_mode" && message.keys == setOf("type", "enabled") && message["enabled"] in setOf(JsonPrimitive(true), JsonPrimitive(false))) {
             if (!channel.keyboardSupported || keyboard == null || !participant.ready || participant.retiring) return false
@@ -235,17 +238,24 @@ internal class SharedDirectInputController(
             retire(participant); return true
         }
         val key = type == "key_event" && message.keys == setOf("type", "sequence", "keycode")
-        if (!key && keyboardCommand == null && (type != "touch_event" || message.keys != setOf("type", "sequence", "gesture", "action", "x", "y"))) {
+        val contact = type == "touch_contact_event" && participant.contacts
+            && message.keys == setOf("type", "sequence", "gesture", "action", "pointer_id", "x", "y")
+        if (!contact && !key && keyboardCommand == null && (type != "touch_event" || message.keys != setOf("type", "sequence", "gesture", "action", "x", "y"))) {
             retire(participant); return false
         }
         val sequence = integer(message, "sequence")
         val gesture = if (key || keyboardCommand != null) 0L else number(message, "gesture")
-        val action = if (keyboardCommand != null) RemoteKeyboardCommand.ACTION else if (key) RootTouchSession.KEY_TAP else integer(message, "action")
+        val rawAction = integer(message, "action")
+        val pointerId = integer(message, "pointer_id")
+        val action = if (contact) {
+            if (pointerId == null || rawAction == null) null else RootContactState.encode(pointerId, rawAction).takeIf { it >= 0 }
+        } else if (keyboardCommand != null) RemoteKeyboardCommand.ACTION else if (key) RootTouchSession.KEY_TAP else rawAction
         val keyCode = if (key) integer(message, "keycode") else null
         val x = integer(message, "x"); val y = integer(message, "y")
         val mapped = if (x != null && y != null) channel.capture.map(channel.capture.epoch,
             channel.capture.frameWidth, channel.capture.frameHeight, StreamPoint(x, y)) else null
         if (sequence == null || gesture == null || action == null
+            || participant.contacts && !contact && action != RootTouchSession.HEARTBEAT
             || (if (keyboardCommand != null) false else if (key) keyCode == null || !RootTouchSession.supportedKey(keyCode) else mapped == null) || participant.retiring
             || !participant.ready && action != RootTouchSession.HEARTBEAT) {
             retire(participant); return true
@@ -285,12 +295,14 @@ internal class SharedDirectInputController(
         grants[channel.session] === channel && channel.isCurrent() && channel.capture == capture()
 
     private fun open(channel: DirectInputChannel, message: JsonObject): Boolean = synchronized(admission) {
-        if (message.keys != setOf("type", "capture_epoch", "frame_width", "frame_height")
+        val contacts = message.containsKey("contact_protocol")
+        if (message.keys != setOf("type", "capture_epoch", "frame_width", "frame_height") + (if (contacts) setOf("contact_protocol") else emptySet())
+            || contacts && integer(message, "contact_protocol") != 1
             || message["capture_epoch"] != JsonPrimitive(channel.capture.epoch)
             || integer(message, "frame_width") != channel.capture.frameWidth
             || integer(message, "frame_height") != channel.capture.frameHeight || !current(channel)
             || participants.containsKey(channel.session) || participants.size >= SharedPointerArbiter.MAX_PARTICIPANTS) return false
-        val participant = Participant(channel, UUID.randomUUID().toString().replace("-", ""))
+        val participant = Participant(channel, UUID.randomUUID().toString().replace("-", ""), contacts)
         diagnostics.record(NativeInputDiagnostics.Event.OPEN_ATTEMPT)
         if (!mailbox.register(participant.owner)) return false
         participants[channel.session] = participant
@@ -298,6 +310,7 @@ internal class SharedDirectInputController(
             put("type", "touch_session"); put("session_id", channel.session); put("owner", participant.owner)
             put("capture_epoch", channel.capture.epoch); put("frame_width", channel.capture.frameWidth)
             put("frame_height", channel.capture.frameHeight)
+            if (contacts) { put("contact_protocol", 1); put("max_pointers", RootContactState.MAX_CONTACTS) }
         })) retire(participant)
         if (resetRequired || groupRetiring || automation != null) {
             status(participant, 0, 0, 4, if (resetRequired) "unknown" else "denied")
@@ -370,7 +383,7 @@ internal class SharedDirectInputController(
                     if (ack.status >= 4) diagnostics.inputFailed(when (ack.status) {
                         4 -> "native_expired"; 5 -> "native_rejected"; else -> "native_unknown"
                     })
-                    ack.sequence == nativeSequence && ack.status == (if (action.action == RootTouchSession.CANCEL) 3 else 1)
+                    ack.sequence == nativeSequence && ack.status == (if (action.action == RootTouchSession.CANCEL || action.action == RootContactState.CANCEL_ALL) 3 else 1)
                     }
                 }
             }
@@ -382,8 +395,9 @@ internal class SharedDirectInputController(
                 if (!current(participant.channel) || binding?.captureEpoch != participant.channel.capture.epoch) {
                     retire(participant); continue
                 }
-                if (!currentArbiter.attach(participant.owner, uptime() + SharedPointerArbiter.MAX_GRANT_MS, true)) {
-                    status(participant, 0, 0, 4, "denied"); remove(participant); continue
+                if (!currentArbiter.attach(participant.owner, uptime() + SharedPointerArbiter.MAX_GRANT_MS, true, participant.contacts)) {
+                    status(participant, 0, 0, 4, "denied"); remove(participant)
+                    status(participant, 0, 0, 3, "closed"); continue
                 }
                 participant.ready = true
                 status(participant, 0, 0, 4, "ready")
@@ -465,7 +479,13 @@ internal class SharedDirectInputController(
         if (!send(participant, buildJsonObject {
             put("type", "shared_input_status"); put("session_id", participant.channel.session)
             put("owner", participant.owner); put("capture_epoch", participant.channel.capture.epoch)
-            put("sequence", sequence); put("gesture", gesture); put("action", action); put("outcome", outcome)
+            put("sequence", sequence); put("gesture", gesture)
+            put("action", if (participant.contacts && RootContactState.event(action)) RootContactState.action(action) else action)
+            if (participant.contacts) {
+                put("contact_protocol", 1); put("max_pointers", RootContactState.MAX_CONTACTS)
+                put("pointer_id", RootContactState.id(action))
+            }
+            put("outcome", outcome)
             put("device_uptime_ms", if (outcome == "applied") nativeAt else uptime())
         })) retire(participant)
     }

@@ -1,6 +1,6 @@
 package com.sphereplatform.agent.commands;
 
-/** One private pipe owns one single-finger gesture. No Android dependency in the state machine. */
+/** One private pipe owns a gesture; explicit contact mode supports three stable IDs. */
 public final class RootTouchSession {
     public static final int DOWN = 0, UP = 1, MOVE = 2, CANCEL = 3, HEARTBEAT = 4;
     public static final int KEY_TAP = 5, KEY_RELEASE = -1;
@@ -22,6 +22,7 @@ public final class RootTouchSession {
 
     private final Injector injector;
     private final KeyInjector keyInjector;
+    private final RootContactState contacts;
     private final Geometry geometry;
     private final int width, height;
     private int sequence;
@@ -38,11 +39,17 @@ public final class RootTouchSession {
     }
 
     public RootTouchSession(int width, int height, long now, Injector injector, Geometry geometry, KeyInjector keyInjector) {
+        this(width, height, now, injector, geometry, keyInjector, null);
+    }
+
+    public RootTouchSession(int width, int height, long now, Injector injector, Geometry geometry,
+                            KeyInjector keyInjector, RootContactState.Injector contactInjector) {
         if (width < 1 || height < 1 || now < 0) throw new IllegalArgumentException("touch_configuration_invalid");
         this.width = width;
         this.height = height;
         this.injector = injector;
         this.keyInjector = keyInjector;
+        this.contacts = contactInjector == null ? null : new RootContactState(contactInjector);
         this.geometry = geometry;
         lastActivity = lastTime = now;
     }
@@ -51,13 +58,15 @@ public final class RootTouchSession {
         if (closed) return Result.REJECTED;
         Result expiry = tick(now);
         if (expiry != null) return expiry;
+        if (RootContactState.event(action) || action == RootContactState.CANCEL_ALL)
+            return contact(nextSequence, nextGesture, action, nextX, nextY, now);
         if (action == KEY_TAP) return keyTap(nextSequence, nextGesture, nextX, nextY, now);
         if (action >= KEY_DOWN && action <= KEY_RESET) return keyboard(nextSequence, nextGesture, action, nextX, nextY, now);
         // Gaps are permitted when MOVE is coalesced; duplicates/reordering are not.
         if (nextSequence <= sequence || nextSequence < 1 || action < DOWN || action > HEARTBEAT
                 || nextX < 0 || nextX >= width || nextY < 0 || nextY >= height
-                || (action == DOWN ? held || nextGesture <= lastGesture
-                    : action == HEARTBEAT ? nextGesture != (held ? gesture : 0)
+                || (action == DOWN ? isHeld() || nextGesture <= lastGesture
+                    : action == HEARTBEAT ? nextGesture != (isHeld() ? gesture : 0)
                     : !held || nextGesture != gesture)) {
             return fail(now, Result.REJECTED);
         }
@@ -84,6 +93,19 @@ public final class RootTouchSession {
         }
     }
 
+    private Result contact(int nextSequence, long nextGesture, int action, int nextX, int nextY, long now) {
+        if (contacts == null || held || keyHeld || !keyboardHeld.isEmpty() || nextSequence < 1
+                || nextSequence <= sequence || nextX < 0 || nextX >= width || nextY < 0 || nextY >= height
+                || !contacts.valid(action) || (contacts.held() ? nextGesture != gesture : nextGesture <= lastGesture))
+            return fail(now, Result.REJECTED);
+        sequence = nextSequence; lastActivity = lastTime = now;
+        if (!contacts.held()) gesture = lastGesture = nextGesture;
+        try {
+            if (!contacts.apply(action, nextX, nextY, now)) return fail(now, Result.UNKNOWN);
+            return action == RootContactState.CANCEL_ALL ? Result.CANCELLED : Result.DISPATCHER_ACCEPTED;
+        } catch (Exception failure) { return fail(now, Result.UNKNOWN); }
+    }
+
     /** A finite Android navigation/edit key, on the same ordered native pipe as touch. */
     public static boolean supportedKey(int code) {
         switch (code) {
@@ -106,7 +128,7 @@ public final class RootTouchSession {
     public static boolean supportedMeta(int meta) { return meta >= 0 && (meta & ~KEY_META_MASK) == 0; }
 
     private Result keyboard(int nextSequence, long nextGesture, int action, int code, int meta, long now) {
-        if (keyInjector == null || nextSequence < 1 || nextSequence <= sequence || nextGesture != 0
+        if (keyInjector == null || contacts != null && contacts.held() || nextSequence < 1 || nextSequence <= sequence || nextGesture != 0
                 || !supportedMeta(meta) || (action == KEY_RESET ? code != 0 || meta != 0 : !supportedHardwareKey(code)))
             return fail(now, Result.REJECTED);
         sequence = nextSequence; lastActivity = lastTime = now;
@@ -141,7 +163,7 @@ public final class RootTouchSession {
     }
 
     private Result keyTap(int nextSequence, long nextGesture, int code, int meta, long now) {
-        if (keyInjector == null || held || keyHeld || nextSequence < 1 || nextSequence <= sequence
+        if (keyInjector == null || isHeld() || keyHeld || nextSequence < 1 || nextSequence <= sequence
                 || nextGesture != 0 || !supportedKey(code) || meta != 0) return fail(now, Result.REJECTED);
         sequence = nextSequence;
         lastActivity = lastTime = now;
@@ -176,7 +198,7 @@ public final class RootTouchSession {
 
     /** Normal termination proves release, even when the owner expired or its input was rejected. */
     public synchronized int cleanupExitCode() {
-        return closed && !held && !keyHeld && keyboardHeld.isEmpty() && !releaseUnknown ? 0 : 2;
+        return closed && !isHeld() && !keyHeld && keyboardHeld.isEmpty() && !releaseUnknown ? 0 : 2;
     }
 
     private Result fail(long now, Result result) {
@@ -186,6 +208,7 @@ public final class RootTouchSession {
 
     private boolean release(long now) {
         releaseKeyboard(now);
+        if (contacts != null) releaseUnknown |= !contacts.cancel(now);
         if (keyHeld) {
             keyHeld = false;
             try { releaseUnknown |= !keyInjector.inject(KEY_RELEASE, heldKey, heldMeta, keyDownTime, now); }
@@ -200,5 +223,5 @@ public final class RootTouchSession {
     }
 
     public synchronized boolean isClosed() { return closed; }
-    public synchronized boolean isHeld() { return held; }
+    public synchronized boolean isHeld() { return held || contacts != null && contacts.held(); }
 }

@@ -107,6 +107,7 @@ export function DeviceInspectorDetail({ deviceId, fullPage = false }: { deviceId
             {!canWrite && <p role="status" className="text-xs text-muted-foreground">Роль не разрешает терминал, shell-скрипты и перезагрузку. Просмотр доступен согласно правам API.</p>}
             <div className="flex flex-wrap gap-2">
               <Button disabled={!canViewStream} onClick={() => setView('stream')}><MonitorPlay className="h-4 w-4" aria-hidden />Видеопоток</Button>
+              {canViewStream && access.can('stream:control') && <Button asChild variant="outline"><Link href={`/stream/${encodeURIComponent(deviceId)}?teach=1`}><Camera className="mr-2 h-4 w-4" aria-hidden />Записать маршрут</Link></Button>}
               <Button variant="outline" disabled={!isReachable || !canWrite} onClick={() => setView('terminal')}><Terminal className="mr-2 h-4 w-4" aria-hidden />Терминал</Button>
               <Button variant="outline" disabled={!isReachable || !access.can('device:read')} onClick={() => setView('logcat')}><FileText className="mr-2 h-4 w-4" aria-hidden />Logcat</Button>
               <Button variant="outline" disabled={!isReachable || !canWrite} onClick={() => setView('script')}><Code2 className="mr-2 h-4 w-4" aria-hidden />Shell-скрипт</Button>

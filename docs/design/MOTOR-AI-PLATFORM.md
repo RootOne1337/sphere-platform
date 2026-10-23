@@ -1,5 +1,10 @@
 # Игровой AI-контур Sphere: архитектура, модели и план реализации
 
+**24 октября · версия3.7, web teaching + кандидат APK89:** реализованы три контакта,
+интегрированный workbench/OPFS/2D timeline; локальная Android-сборка и runtime
+допуск пока в работе. Worker остаётся0.8.1. [Новый режим](../operations/TEACHING-WEB.md).
+
+
 **24 октября · версия3.6, worker0.8.1:** проверены реальные `.smp`/`.kmp`, добавлен
 read-only inspector без исполнения macros;303 tests/Ruff passed. Найдено ограничение
 single-pointer: полноценный WASD+camera+jump teach-run пока не готов. Раздел26.8
@@ -2101,3 +2106,20 @@ COLMAP и современный ABot-Recon рассматриваются ка�
 и использование моторной моделью как цели — отдельные доказательства. Это не
 замена world localization/obstacle avoidance/arrival. [Источники, точные файлы,
 следующий protocol contract и CLI](../audits/2026-10-24/LDPLAYER-KEYMAP-READINESS081.md).
+
+
+## 26.9 Интегрированный web teaching и три контакта
+
+Вместо копии потока в отдельном headless relay используется один capture-only
+presence и один shared-input WebRTC peer. Encoded Transform сохраняет исходный
+H264 в OPFS; browser-driver пишет submitted/APPLIED/CLOSED и удерживает до трёх
+контактов. Карточка/поток открывают `/stream/UUID?teach=1`. Start/Stop явные;
+потеря focus/epoch/freshness останавливает ввод без replay/reconnect.
+
+[Инструкция и схема](../operations/TEACHING-WEB.md) и
+[квитанция](../audits/2026-10-24/WEB-TEACHING-CONTACTS.md) уточняют границы:
+account library и browser→worker importer не реализованы; 2D viewer не является
+LiDAR/метрической3D картой. Сначала реальный подтверждённый human master, затем
+независимый low-render repeat, только после этого route/controller acceptance.
+APK89 и обновлённая UI пока кандидаты; предыдущий runtime88 не поддерживает
+новое contact_protocol1. Не принимать эту реализацию за автономный A→B.

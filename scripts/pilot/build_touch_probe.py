@@ -22,7 +22,7 @@ def main() -> None:
     args = parser.parse_args()
     root = Path(__file__).resolve().parents[2]
     native = root / "android/app/src/main/java/com/sphereplatform/agent/commands"
-    sources = [native / f"{name}.java" for name in ("RootTouchSession", "RootTouchWire", "RootTouchBridge")]
+    sources = [native / f"{name}.java" for name in ("RootContactState", "RootTouchSession", "RootTouchWire", "RootTouchBridge")]
     if args.receiver:
         # The receiver must be independent of the injector being verified.
         sources = [Path(__file__).resolve().parent / "android/TouchCanaryActivity.java"]

@@ -34,7 +34,7 @@ internal class SharedInputMailbox {
         val slot = slots[event.participant] ?: return Admission.UNREGISTERED
         if (slot.closeOrder != null) return Admission.RETIRED
         if (event.sequence < 1 || event.sequence <= slot.sequence || event.gesture !in 0..Int.MAX_VALUE.toLong()
-            || event.action !in setOf(0, 1, 2, 3, 4, 5, RemoteKeyboardCommand.ACTION) || event.receivedAtMs < 0
+            || event.action !in setOf(0, 1, 2, 3, 4, 5, RemoteKeyboardCommand.ACTION) && !RootContactState.event(event.action) || event.receivedAtMs < 0
             || (if (event.action == RemoteKeyboardCommand.ACTION) event.keyboard == null || event.gesture != 0L
                 else if (event.action == RootTouchSession.KEY_TAP) event.gesture != 0L
                 || !RootTouchSession.supportedKey(event.x) || event.y != 0
@@ -44,11 +44,13 @@ internal class SharedInputMailbox {
         }
         val tail = slot.pending.lastOrNull()
         val replaceable = tail?.event?.action == event.action && tail.event.gesture == event.gesture
-            && event.action in setOf(RootTouchSession.MOVE, RootTouchSession.HEARTBEAT)
+            && (event.action in setOf(RootTouchSession.MOVE, RootTouchSession.HEARTBEAT)
+                || RootContactState.action(event.action) == RootTouchSession.MOVE)
         val keyboard = event.action == RemoteKeyboardCommand.ACTION
         val terminal = if (keyboard) event.keyboard?.operation in setOf(RemoteKeyboardCommand.Operation.KEY_UP,
             RemoteKeyboardCommand.Operation.RESET, RemoteKeyboardCommand.Operation.FINISH)
             else event.action == RootTouchSession.UP || event.action == RootTouchSession.CANCEL
+                || RootContactState.action(event.action) == RootTouchSession.UP
         val sizeAfterReplacement = slot.pending.count { (it.event.action == RemoteKeyboardCommand.ACTION) == keyboard }
             - if (replaceable) 1 else 0
         val budget = if (keyboard) KEYBOARD_PENDING else PER_PARTICIPANT

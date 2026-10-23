@@ -1,5 +1,14 @@
 # Работы, требования пользователя и границы приёмки
 
+**24 октября — web teaching / кандидат APK89.** Реализован интегрированный режим
+записи из карточки/потока: WASD, независимая камера/кнопка, original H264+native
+journal, локальная библиотека и покадровый viewer. Multi-contact opt-in требует
+новой APK; source/runtime acceptance различаются. После перезагрузки host guard
+прошёл (~21GiB available), выполняется локальная проверка/упаковка. Предыдущие
+runtime88/UI/API не выдаются за обновлённые. [Инструкция](TEACHING-WEB.md) ·
+[Проверки и открытые допуски](../audits/2026-10-24/WEB-TEACHING-CONTACTS.md).
+
+
 **Проверенная установка:** UI `a239baa2` / API `1afdc529`.
 
 **24 октября — worker0.8.1: уточнение keyboard teach readiness.** Добавлен bounded

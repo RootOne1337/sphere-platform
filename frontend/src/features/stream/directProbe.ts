@@ -61,6 +61,7 @@ export function startDirectVideoSession(
   url: string, token: string, report: (value: DirectProbeResult) => void,
   options: { controlledStunUrl?: string; onTrack: (track: MediaStreamTrack) => void;
     receiverSize?: { width: number; height: number };
+    onReceiver?: (receiver: RTCRtpReceiver) => void;
     historySession?: string; controlSession?: string; sharedInput?: boolean; nativeKeys?: boolean; keyboard?: boolean; trickleIce?: boolean; onControlChannel?: (channel: DirectControlEndpoint | null) => void;
     /** Actual recent presentation, independently bounded by the renderer watchdog. */
     hasRecentVideoFrame?: () => boolean },
@@ -73,6 +74,7 @@ function startDirectSession(
   options: { controlledStunUrl?: string; relayGrant?: boolean; controlSession?: string; historySession?: string; sharedInput?: boolean; nativeKeys?: boolean; keyboard?: boolean; trickleIce?: boolean;
     onControlChannel?: (channel: DirectControlEndpoint | null) => void;
     receiverSize?: { width: number; height: number };
+    onReceiver?: (receiver: RTCRtpReceiver) => void;
     hasRecentVideoFrame?: () => boolean }, onVideoTrack?: (track: MediaStreamTrack) => void, live = false,
 ): () => void {
   const video = !!onVideoTrack;
@@ -325,7 +327,7 @@ function startDirectSession(
           videoTrack = event.track;
           if (live && event.receiver) preferLowVideoDelay(event.receiver);
           videoTrack.onended = () => stop('video_track_ended');
-          try { onVideoTrack?.(videoTrack); } catch { stop('video_renderer_failed'); }
+          try { options.onReceiver?.(event.receiver); onVideoTrack?.(videoTrack); } catch { stop('video_renderer_failed'); }
         };
       }
     }

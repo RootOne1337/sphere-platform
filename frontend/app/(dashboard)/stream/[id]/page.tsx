@@ -2,32 +2,35 @@
 
 import { use } from 'react';
 import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
 import { ArrowLeft, Monitor } from 'lucide-react';
 import { DeviceStream } from '@/components/sphere/DeviceStream';
 import { Button } from '@/components/ui/button';
 import { PageFrame, PageHeading } from '@/src/shared/ui/page-layout';
 import { useCapabilities } from '@/src/features/access/Capabilities';
+import { TeachingWorkbench } from '@/src/features/stream/TeachingWorkbench';
 
 interface Props { params: Promise<{ id: string }>; }
 
 export default function DeviceStreamPage({ params }: Props) {
   const { id } = use(params);
   const access = useCapabilities();
+  const teaching = useSearchParams().get('teach') === '1';
 
   return (
     <PageFrame className="max-w-[1800px]">
       <PageHeading
         eyebrow="Просмотр устройства"
-        title="Видеопоток"
+        title={teaching ? 'Запись маршрута' : 'Видеопоток'}
         description={`Устройство ${id} · экран и диагностические счётчики браузера и Android-агента.`}
-        actions={<Button asChild variant="outline"><Link href={`/devices/${encodeURIComponent(id)}`}><ArrowLeft className="mr-2 h-4 w-4" aria-hidden="true" />Карточка устройства</Link></Button>}
+        actions={<div className="flex flex-wrap gap-2"><Button asChild variant="outline"><Link href={`/stream/${encodeURIComponent(id)}${teaching ? '' : '?teach=1'}`}>{teaching ? 'Обычный поток' : 'Записать маршрут'}</Link></Button><Button asChild variant="outline"><Link href={`/devices/${encodeURIComponent(id)}`}><ArrowLeft className="mr-2 h-4 w-4" aria-hidden="true" />Карточка устройства</Link></Button></div>}
       />
-      <section aria-label={`Видеопоток устройства ${id}`} className="overflow-hidden rounded-2xl border border-border bg-card p-2 shadow-soft sm:p-3">
+      {teaching ? <TeachingWorkbench key={id} deviceId={id} readOnly={!access.can('stream:control')} /> : <section aria-label={`Видеопоток устройства ${id}`} className="overflow-hidden rounded-2xl border border-border bg-card p-2 shadow-soft sm:p-3">
         <div className="mb-3 flex items-center gap-2 px-1 text-xs text-muted-foreground"><Monitor className="h-3.5 w-3.5" aria-hidden="true" /><span className="font-mono">{id}</span><span className="ml-auto">Поток подключается отдельно от статуса heartbeat</span></div>
         <div className="mx-auto w-full max-w-[1100px] overflow-hidden rounded-xl border border-border bg-black">
           <DeviceStream deviceId={id} enableDiagnostics enableScreenshot enableNavigation enableStaticInput readOnly={!access.can('stream:control')} />
         </div>
-      </section>
+      </section>}
     </PageFrame>
   );
 }

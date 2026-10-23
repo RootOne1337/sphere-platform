@@ -1,8 +1,8 @@
 {
   "schemaVersion": 1,
-  "reviewedAtUtc": "2026-10-23T19:35:33.264322+00:00",
+  "reviewedAtUtc": "2026-10-23T20:38:38.626637+00:00",
   "sourceReviewed": "e712b6c932606c11a0ab2226cb1c1d73d06adc34",
-  "scope": "Read-only LDPlayer metadata inspector and revised teaching readiness: current actor single-pointer; full keyboard/multitouch teaching and3D visualization unimplemented. Recorder/native single-pointer proof retained; no emulator settings/runtime install changes or acceptance promotion.",
+  "scope": "Web teaching and explicit three-contact candidate implemented; post-reboot resource guard passed. Local Android/frontend validation and delivery pending; no runtime or navigation acceptance promotion.",
   "baseline": "docs/audits/2026-10-05/ENTERPRISE-PRODUCT-BACKLOG.json",
   "previousCrosscheck": "docs/audits/2026-10-09/CHAT-CODE-RECONCILIATION.json",
   "counts": {
@@ -6593,6 +6593,23 @@
     "multiContactActorImplemented": false,
     "visualizationViewerImplemented": false,
     "monocular3dReconstructionAccepted": false,
+    "productionAccepted": false
+  },
+  "webTeaching089": {
+    "evidence": "docs/audits/2026-10-24/WEB-TEACHING-CONTACTS.md",
+    "workerVersion": "0.8.1",
+    "candidateVersionCode": 10289,
+    "nativeContactsImplemented": 3,
+    "browserWorkbenchImplemented": true,
+    "originalH264RecorderImplemented": true,
+    "localOpfsLibraryImplemented": true,
+    "twoDimensionalFrameViewerImplemented": true,
+    "accountLibraryImplemented": false,
+    "workerImporterImplemented": false,
+    "scopedNativeTestsPassed": 107,
+    "candidateApkInstalled": false,
+    "physicalThreeContactsAccepted": false,
+    "gameplayRecordingAccepted": false,
     "productionAccepted": false
   }
 }

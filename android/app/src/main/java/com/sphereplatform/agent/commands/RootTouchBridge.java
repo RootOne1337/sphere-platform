@@ -86,6 +86,21 @@ public final class RootTouchBridge {
                 // as remote-control input, preserving order and exact pipe ACK.
                 // ACK means native submission, never application completion.
                 return Boolean.TRUE.equals(inject.invoke(manager, event, 0));
+            }, (action, ids, xs, ys, down, now) -> {
+                MotionEvent.PointerProperties[] fingers = new MotionEvent.PointerProperties[ids.length];
+                MotionEvent.PointerCoords[] points = new MotionEvent.PointerCoords[ids.length];
+                int masked = action & 255, lifted = action >> 8;
+                for (int i = 0; i < ids.length; i++) {
+                    fingers[i] = new MotionEvent.PointerProperties();
+                    fingers[i].id = ids[i]; fingers[i].toolType = MotionEvent.TOOL_TYPE_FINGER;
+                    points[i] = new MotionEvent.PointerCoords();
+                    points[i].x = xs[i]; points[i].y = ys[i]; points[i].size = 1f;
+                    points[i].pressure = masked == 1 || masked == 3 || masked == 6 && i == lifted ? 0f : 1f;
+                }
+                MotionEvent event = MotionEvent.obtain(down, now, action, ids.length, fingers, points,
+                        0, 0, 1f, 1f, 0, 0, InputDevice.SOURCE_TOUCHSCREEN, 0);
+                try { return Boolean.TRUE.equals(inject.invoke(manager, event, 0)); }
+                finally { event.recycle(); }
             });
             RootTouchSession owned = session;
             watchdog = Executors.newSingleThreadScheduledExecutor();

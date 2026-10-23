@@ -1,5 +1,14 @@
 # Headless motor worker: транспорт и конечный ввод
 
+**24 октября — web teaching / кандидат APK89.** Реализован интегрированный режим
+записи из карточки/потока: WASD, независимая камера/кнопка, original H264+native
+journal, локальная библиотека и покадровый viewer. Multi-contact opt-in требует
+новой APK; source/runtime acceptance различаются. После перезагрузки host guard
+прошёл (~21GiB available), выполняется локальная проверка/упаковка. Предыдущие
+runtime88/UI/API не выдаются за обновлённые. [Инструкция](TEACHING-WEB.md) ·
+[Проверки и открытые допуски](../audits/2026-10-24/WEB-TEACHING-CONTACTS.md).
+
+
 GPS-анализ — необязательный observer. Общие задачи без меток/миникарты и цели по
 изображению/ориентирам описаны в разделах24–26 [единого плана3.6](../design/MOTOR-AI-PLATFORM.md).
 Эти goal/skill contracts пока проектные: stdio-v1 не передаёт цель в NitroGen/P2P.

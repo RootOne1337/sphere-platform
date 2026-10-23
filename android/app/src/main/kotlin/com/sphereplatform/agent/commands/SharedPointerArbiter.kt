@@ -24,16 +24,18 @@ internal class SharedPointerArbiter(
                      val keyboard: RemoteKeyboardCommand? = null)
     data class NativeAction(val action: Int, val gesture: Long, val x: Int, val y: Int,
                             val keyboard: RemoteKeyboardCommand? = null, val participant: String? = null)
-    private class Participant(val id: String, val expiresAtMs: Long, val control: Boolean, now: Long) {
+    private class Participant(val id: String, val expiresAtMs: Long, val control: Boolean, now: Long, val contacts: Boolean) {
         var sequence = 0
         var lastGesture = 0L
         var gesture: Long? = null
         var interruptedGesture: Long? = null
         var lastSeenMs = now
     }
-    private data class Held(val participant: Participant, val gesture: Long, val nativeGesture: Long, var x: Int, var y: Int)
+    private data class Held(val participant: Participant, val gesture: Long, val nativeGesture: Long, var x: Int, var y: Int,
+                            val contacts: MutableSet<Int>? = null)
     private val participants = LinkedHashMap<String, Participant>()
     private var held: Held? = null
+    private var contactOwner: Participant? = null
     private var keyboardOwner: Participant? = null
     private val heldKeys = mutableSetOf<Int>()
     private var keyboardInterruption: Notice? = null
@@ -50,15 +52,18 @@ internal class SharedPointerArbiter(
     init { require(width in 1..16384 && height in 1..16384) }
 
     /** Admission does not acquire the pointer, replace another participant or revive an old grant. */
-    fun attach(participant: String, expiresAtMs: Long, control: Boolean): Boolean {
+    fun attach(participant: String, expiresAtMs: Long, control: Boolean, contacts: Boolean = false): Boolean {
         val now = uptime()
         if (fenced || operating) return false
         if (now < lastTime) { fenceAll(); return false }
         if (!participant.matches(Regex("[A-Za-z0-9_-]{8,128}"))
             || expiresAtMs <= now || expiresAtMs - now > MAX_GRANT_MS
-            || participant in participants || participants.size >= MAX_PARTICIPANTS) return false
+            || participant in participants || participants.size >= MAX_PARTICIPANTS
+            || contacts && (!control || contactOwner != null || held != null || keyboardOwner != null)) return false
         lastTime = now
-        participants[participant] = Participant(participant, expiresAtMs, control, now)
+        val added = Participant(participant, expiresAtMs, control, now, contacts)
+        participants[participant] = added
+        if (contacts) contactOwner = added
         return true
     }
 
@@ -73,8 +78,12 @@ internal class SharedPointerArbiter(
                 return removeInternal(participant, Outcome.EXPIRED)
             if (event.receivedAtMs > now || now - event.receivedAtMs >= MAX_EVENT_AGE_MS)
                 return reject(participant, event, Outcome.EXPIRED)
+            if (contactOwner != null && contactOwner !== participant && event.action != RootTouchSession.HEARTBEAT)
+                return listOf(event.notice(Outcome.BUSY))
             if (event.sequence < 1 || event.sequence <= participant.sequence || event.gesture !in 0..Int.MAX_VALUE.toLong()
-                || event.action !in setOf(0, 1, 2, 3, 4, 5, RemoteKeyboardCommand.ACTION)
+                || event.action !in setOf(0, 1, 2, 3, 4, 5, RemoteKeyboardCommand.ACTION) && !RootContactState.event(event.action)
+                || participant.contacts && event.action != RootTouchSession.HEARTBEAT && !RootContactState.event(event.action)
+                || !participant.contacts && RootContactState.event(event.action)
                 || (if (event.action == RemoteKeyboardCommand.ACTION) event.keyboard == null || event.gesture != 0L
                     else if (event.action == RootTouchSession.KEY_TAP) event.gesture != 0L
                     || !RootTouchSession.supportedKey(event.x) || event.y != 0
@@ -82,6 +91,7 @@ internal class SharedPointerArbiter(
                 return reject(participant, event, Outcome.INVALID)
             participant.sequence = event.sequence
             participant.lastSeenMs = now
+            if (RootContactState.event(event.action)) return offerContact(participant, event)
             if (event.action == RemoteKeyboardCommand.ACTION) {
                 val command = checkNotNull(event.keyboard)
                 if (command.operation == RemoteKeyboardCommand.Operation.KEY_DOWN && keyboardOwner === participant
@@ -93,7 +103,7 @@ internal class SharedPointerArbiter(
                         listOf(event.notice(Outcome.APPLIED)) else fenceAll()
                 val notices = mutableListOf<Notice>()
                 held?.takeIf { it.participant !== participant }?.let { previous ->
-                    if (!dispatch(NativeAction(RootTouchSession.CANCEL, previous.nativeGesture, previous.x, previous.y))) return fenceAll()
+                    if (!cancelHeld(previous)) return fenceAll()
                     previous.participant.gesture = null; previous.participant.interruptedGesture = previous.gesture; held = null
                     notices += Notice(previous.participant.id, previous.participant.sequence, previous.gesture, Outcome.INTERRUPTED)
                 }
@@ -117,7 +127,7 @@ internal class SharedPointerArbiter(
                 if (!resetKeyboard()) return fenceAll()
                 val notices = mutableListOf<Notice>()
                 held?.let { previous ->
-                    if (!dispatch(NativeAction(RootTouchSession.CANCEL, previous.nativeGesture, previous.x, previous.y))) return fenceAll()
+                    if (!cancelHeld(previous)) return fenceAll()
                     previous.participant.gesture = null
                     previous.participant.interruptedGesture = previous.gesture
                     held = null
@@ -142,7 +152,7 @@ internal class SharedPointerArbiter(
                 val notices = mutableListOf<Notice>()
                 val previous = held
                 if (previous != null) {
-                    if (!dispatch(NativeAction(RootTouchSession.CANCEL, previous.nativeGesture, previous.x, previous.y))) return fenceAll()
+                    if (!cancelHeld(previous)) return fenceAll()
                     previous.participant.gesture = null
                     previous.participant.interruptedGesture = previous.gesture
                     held = null
@@ -173,6 +183,35 @@ internal class SharedPointerArbiter(
             }
             return listOf(event.notice(Outcome.APPLIED))
         } finally { operating = false }
+    }
+
+    private suspend fun cancelHeld(value: Held): Boolean = dispatch(NativeAction(
+        if (value.contacts == null) RootTouchSession.CANCEL else RootContactState.CANCEL_ALL,
+        value.nativeGesture, value.x, value.y))
+
+    private suspend fun offerContact(participant: Participant, event: Event): List<Notice> {
+        val id = RootContactState.id(event.action)
+        val action = RootContactState.action(event.action)
+        val current = held
+        if (current == null) {
+            if (action != 0 || event.gesture <= participant.lastGesture || nativeGesture == Long.MAX_VALUE)
+                return reject(participant, event, Outcome.INVALID)
+            val next = ++nativeGesture
+            if (!dispatch(NativeAction(event.action, next, event.x, event.y))) return fenceAll()
+            participant.gesture = event.gesture; participant.lastGesture = event.gesture
+            held = Held(participant, event.gesture, next, event.x, event.y, mutableSetOf(id))
+        } else {
+            val ids = current.contacts
+            if (current.participant !== participant || current.gesture != event.gesture || ids == null
+                || (if (action == 0) id in ids || ids.size >= RootContactState.MAX_CONTACTS else id !in ids))
+                return reject(participant, event, Outcome.INVALID)
+            if (!dispatch(NativeAction(event.action, current.nativeGesture, event.x, event.y))) return fenceAll()
+            current.x = event.x; current.y = event.y
+            if (action == 0) ids += id
+            if (action == 1) ids -= id
+            if (ids.isEmpty()) { held = null; participant.gesture = null }
+        }
+        return listOf(event.notice(Outcome.APPLIED))
     }
 
     /** Expiry/close isolates one peer. An uncertain native CANCEL fences the shared injector. */
@@ -209,10 +248,11 @@ internal class SharedPointerArbiter(
         if (keyboardOwner === participant && !resetKeyboard()) return fenceAll()
         val current = held
         if (current?.participant === participant) {
-            if (!dispatch(NativeAction(RootTouchSession.CANCEL, current.nativeGesture, current.x, current.y))) return fenceAll()
+            if (!cancelHeld(current)) return fenceAll()
             held = null
         }
         participants.remove(participant.id)
+        if (contactOwner === participant) contactOwner = null
         return listOf(Notice(participant.id, participant.sequence, participant.gesture ?: 0L, outcome))
     }
 
@@ -234,7 +274,7 @@ internal class SharedPointerArbiter(
         fenced = true
         // Only confirmed external pipe teardown may reset this object; UNKNOWN is never APPLIED.
         return participants.values.map { Notice(it.id, it.sequence, it.gesture ?: 0L, Outcome.UNKNOWN) }.also {
-            participants.clear(); held = null; heldKeys.clear(); keyboardOwner = null; keyboardInterruption = null
+            participants.clear(); held = null; contactOwner = null; heldKeys.clear(); keyboardOwner = null; keyboardInterruption = null
         }
     }
     private fun Event.notice(outcome: Outcome) = Notice(participant, sequence, gesture, outcome)

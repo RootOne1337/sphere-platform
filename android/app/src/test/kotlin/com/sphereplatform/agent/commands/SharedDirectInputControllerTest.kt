@@ -33,7 +33,8 @@ class SharedDirectInputControllerTest {
             if (refusedOpens > 0) { refusedOpens--; throw TouchStartupUnavailableException(refusalDetail) }
             val native = RootTouchSession(960, 540, now.get(), { action, _, _, _, _ ->
                 !(unknownCancel && action == RootTouchSession.CANCEL)
-            }, { true }, { action, code, _, _, _ -> keys += action to code; true })
+            }, { true }, { action, code, _, _, _ -> keys += action to code; true },
+                { action, _, _, _, _, _ -> !(unknownCancel && action == RootTouchSession.CANCEL) })
             object : TouchPipe {
                 override suspend fun send(sample: TouchSample): RootTouchWire.Ack {
                     packets += sample
@@ -63,9 +64,14 @@ class SharedDirectInputControllerTest {
                 put("type", "touch_event"); put("sequence", sequence); put("gesture", gesture)
                 put("action", action); put("x", 20); put("y", 30)
             })
-            fun open() = controller.message(id, buildJsonObject {
+            fun open(contacts: Boolean = false) = controller.message(id, buildJsonObject {
                 put("type", "touch_open"); put("capture_epoch", capture.epoch)
                 put("frame_width", 960); put("frame_height", 540)
+                if (contacts) put("contact_protocol", 1)
+            })
+            fun contact(sequence: Int, id: Int, action: Int) = controller.message(this.id, buildJsonObject {
+                put("type", "touch_contact_event"); put("sequence", sequence); put("gesture", 1)
+                put("pointer_id", id); put("action", action); put("x", 20 + id * 100); put("y", 30)
             })
             fun key(sequence: Int, code: Int) = controller.message(id, buildJsonObject {
                 put("type", "key_event"); put("sequence", sequence); put("keycode", code)
@@ -76,6 +82,38 @@ class SharedDirectInputControllerTest {
             eventually { "ready" in it.outcomes() }
         }
         fun finish() = scope.cancel()
+    }
+
+    @Test fun `explicit contacts negotiate three pointers and close all before releasing reservation`() = runBlocking<Unit> {
+        val f = Fixture()
+        try {
+            val p = f.Peer("a".repeat(32)); assertTrue(f.controller.grant(p)); assertTrue(p.open(true))
+            eventually { "ready" in p.outcomes() }
+            assertEquals(JsonPrimitive(1), p.messages.first { it["type"] == JsonPrimitive("touch_session") }["contact_protocol"])
+            for (id in 0..2) {
+                assertTrue(p.contact(id+1,id,0)); eventually { p.messages.any { it["sequence"] == JsonPrimitive(id+1) && it["outcome"] == JsonPrimitive("applied") } }
+            }
+            assertEquals(listOf(16,20,24), f.packets.filter { RootContactState.event(it.action) }.map { it.action })
+            val peer = f.peer(2); assertTrue(peer.event(1,0))
+            eventually { "busy" in peer.outcomes() }
+            assertTrue(f.controller.message(p.id, buildJsonObject { put("type", "touch_close") }))
+            eventually { "closed" in p.outcomes() }
+            assertTrue(f.packets.any { it.action == RootContactState.CANCEL_ALL })
+            assertTrue(peer.event(2,0)); eventually { "applied" in peer.outcomes() }
+        } finally { f.finish() }
+    }
+
+    @Test fun `legacy participant cannot inject contact actions and malformed contacts retire without input`() = runBlocking<Unit> {
+        for (legacy in listOf(true,false)) {
+            val f = Fixture()
+            try {
+                val p = f.Peer("a".repeat(32)); f.controller.grant(p); p.open(!legacy)
+                eventually { "ready" in p.outcomes() }
+                p.contact(1,if(legacy) 0 else 3,0)
+                eventually { "closed" in p.outcomes() }
+                assertTrue(f.packets.none { RootContactState.event(it.action) })
+            } finally { f.finish() }
+        }
     }
 
     private class Keyboard : RemoteKeyboardAdapter {

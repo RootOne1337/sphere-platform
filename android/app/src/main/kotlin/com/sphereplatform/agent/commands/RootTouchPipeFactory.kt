@@ -101,7 +101,11 @@ internal class ProcessTouchPipe(private val process: Process) : TouchPipe {
         RootTouchWire.write(stdin, RootTouchWire.Packet(sample.sequence, sample.gesture, sample.action, sample.x, sample.y))
         val ack = awaitAck(500)
         if (ack.sequence != sample.sequence || ack.status == 0) throw IOException("touch_ack_mismatch")
-        val expected = when (sample.action) { RootTouchSession.HEARTBEAT -> 2; RootTouchSession.CANCEL -> 3; else -> 1 }
+        val expected = when (sample.action) {
+            RootTouchSession.HEARTBEAT -> 2
+            RootTouchSession.CANCEL, RootContactState.CANCEL_ALL -> 3
+            else -> 1
+        }
         if (ack.status in 1..3 && ack.status != expected) throw IOException("touch_ack_action_mismatch")
         // A false or unknown reply is never retried. The supervisor retires the owner.
         return ack
