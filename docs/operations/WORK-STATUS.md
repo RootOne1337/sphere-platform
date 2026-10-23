@@ -2,6 +2,20 @@
 
 **Проверенная установка:** UI `a239baa2` / API `1afdc529`.
 
+**23 октября — PH011 APK88/AWG2; worker0.7.2 и конечная ходьба.**
+Адресная OTA и свежий package SHA10288 подтверждены. Уникальный AWG2 peer,
+provider endpoint без дополнительного PC relay; kernel proof исключает Sphere UID10082
+из app UID ranges, IPv6 приложений заблокирован. PH011 reboot/system UIDs/полный
+VPN soak не приняты. Парк: APK85×2,APK88×2;17 offline не обновлены.
+Первый20-с GPS runner упёрся в ограду; остановка была по времени. Конечный
+операторский обход вывел персонажа на траву. Исправленный flow/аналоговый стик:
+590→582м за8с,5,125Гц,max gap214,334мс,8/8 APPLIED/CLOSED. Autonomous obstacle
+avoidance, jump/camera integration и arrival открыты.221 motor tests/Ruff прошли.
+Qwen3.5-0.8B скачана и загружена в Vulkan/CPU, P2P150M прошла startup; все текущие
+inference остановлены неизменным85% commit guard, predictions0. Чужие процессы
+не остановлены, новых GitHub jobs/Android builds нет. Это CV, не neural navigation.
+[Факты, скриншоты и следующие проверки](../audits/2026-10-23/PH011-APK88-MOTOR-CALIBRATION.md).
+
 **23 октября — APK88 установлен; автоматический VPN restore проверен реальным reboot.**
 Локальная последовательная сборка source `6ad0df5f`, lint и шесть unit-вариантов
 прошли: 7684 исполнения, 18 skipped, 0 failures/errors. Полный release/denial CI

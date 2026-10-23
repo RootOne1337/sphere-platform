@@ -1,9 +1,19 @@
 # Headless motor worker: транспорт и конечный ввод
 
 GPS-анализ — необязательный observer. Общие задачи без меток/миникарты и цели по
-изображению/ориентирам описаны в разделе24 [единого плана2.9](../design/MOTOR-AI-PLATFORM.md).
+изображению/ориентирам описаны в разделах24–25 [единого плана3.0](../design/MOTOR-AI-PLATFORM.md).
 Эти goal/skill contracts пока проектные: stdio-v1 не передаёт цель в NitroGen/P2P.
 Последний decoded frame хранится в RAM, PNG сохраняется только явно через `--snapshot`.
+
+**23 октября ·0.7.2:** `WalkingSteering` регулирует аналоговую силу стика, а
+`NavigationSupervisor` останавливает при разрыве наблюдений более500мс. Flow sensor
+исключает HUD/персонажа, использует распределённые признаки и forward/backward check;
+единичный выброс не маскирует3с неподвижного фона. Это не obstacle detector.
+221 motor tests/Ruff прошли. Конечный PH011 GPS/CV runner после операторского
+обхода прошёл590→582м на5,125Гц,8/8 native APPLIED/CLOSED. Common GPS CLI остаётся
+read-only; autonomous recovery, jump и arrival не приняты. P2P/Qwen загрузились,
+но текущие inference остановлены штатным commit guard до первого prediction.
+[Доказательства, отрицательные результаты и ограничения](../audits/2026-10-23/PH011-APK88-MOTOR-CALIBRATION.md).
 
 **23 октября ·0.7.1:** добавлен opt-in `GoalBoundPolicy` в
 [`goals.py`](../../motor_worker/goals.py). Provider должен явно поддерживать `text`

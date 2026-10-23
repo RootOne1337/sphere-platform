@@ -2,6 +2,13 @@
 
 **Проверенная установка:** UI `a239baa2` / API `1afdc529`.
 
+**23 октября, поздний срез — APK88 на PH011 и PH030.** PH030 real reboot описан
+в [квитанции автозапуска](../audits/2026-10-23/PH030-APK88-LOCAL-AUTOSTART.md).
+PH011 получил отдельный AWG2 peer и package hash proof; конечная GPS/CV ходьба
+прошла590→582м на5,125Гц. Neural inference заблокирован commit guard; autonomous
+navigation не принята. [PH011: факты и ограничения](../audits/2026-10-23/PH011-APK88-MOTOR-CALIBRATION.md).
+Следующие записи отражают предыдущие датированные состояния.
+
 **23 октября — PH030: AWG2 через LAN-шлюз.** VPN-IP, HTTPS/DNS, исключение Sphere и блокировка при потере пути проверены; сетевое наблюдение 15 минут прошло. Прямой Android WAN и независимость от ПК не приняты. При подключении телефона в той же LAN выявлены ICE без ответов и `root_handoff_unknown`; APK87 только кандидат в CI, ещё не установлен. [Квитанция и ограничения](../audits/2026-10-23/PH030-AWG2-LAN-GATEWAY-CANARY.md).
 
 **20 октября — веб5cbb и APK83.** Добавлены общий локальный ICE topology observer и отдельный Android input dispatcher. 2569 frontend tests; Android dev/enterprise lint/build/unit suites — по1252 теста,3 skipped. APK83 завершил OTA на4 online устройствах:3 package SHA сверены,PH030 — completed OTA/версия без отдельного hash;17 offline не обновлены. На PH030 подтверждены кнопки и жест, но повторное подключение в проверочном браузере осталось на серверном видео без управления. Снижение latency и VPN/reconnect production-приёмка открыты. [Изменения, отрицательные проверки и следующие условия](../audits/2026-10-20/NETWORK-ROUTE-INPUT83-DELIVERY.md).
