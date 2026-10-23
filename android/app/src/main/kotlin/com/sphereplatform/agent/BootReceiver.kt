@@ -41,6 +41,7 @@ class BootReceiver : BroadcastReceiver() {
 
             // ── Планируем AlarmManager watchdog (дополнительный слой, 5 мин) ────
             ServiceWatchdog.schedule(context)
+            com.sphereplatform.agent.vpn.AppVpnAutoStart.start(context)
 
             // ── Запуск сервиса / enrollment ────────────────────────────────────
             if (ServiceWatchdog.isEnrolled(context)) {

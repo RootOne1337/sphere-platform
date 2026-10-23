@@ -46,6 +46,7 @@ class SphereApp : Application(), Configuration.Provider {
         // Native VPN has an independent process. It must never enroll, schedule
         // workers, open another control channel or repeat root startup probes.
         if (com.sphereplatform.agent.vpn.VpnProcessIdentity.isVpnProcess(this)) return
+        com.sphereplatform.agent.vpn.AppVpnAutoStart.start(this)
         // Always plant file tree first so logs are never lost
         Timber.plant(fileLoggingTree)
         if (BuildConfig.DEBUG) {

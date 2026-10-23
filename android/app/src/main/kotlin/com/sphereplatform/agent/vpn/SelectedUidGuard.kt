@@ -40,6 +40,7 @@ internal data class UidGuardRecord(
     val lastMutation: String? = null,
     @Required val planVersion: Int = 4,
     val uidRanges: List<GuardUidRange> = emptyList(),
+    val bootId: String? = null,
 )
 
 /** Only identifiers/state, never tunnel config or keys. One guard per APK. */
@@ -97,7 +98,26 @@ internal class UidGuardPlan private constructor(val record: UidGuardRecord, val 
 
     fun block(): String {
         require(!legacyMarks) { "vpn_legacy_guard_cleanup_only" }
-        return script(families.flatMap { tool -> listOf(
+        return script(blockLines())
+    }
+
+    /** A different, kernel-attested boot is required. Never repair a partial
+     * same-boot mutation or borrow rules from a reused TUN name. */
+    fun blockAfterBoot(previousBootId: String, previousInterface: String?): String {
+        require(!legacyMarks && record.bootId != null && record.bootId != previousBootId)
+        require(UUID.fromString(previousBootId).toString() == previousBootId)
+        require(previousInterface == null || Regex("tun[0-9]{1,4}").matches(previousInterface))
+        return script(listOf(
+            "test \"$(cat /proc/sys/kernel/random/boot_id)\" = '${record.bootId}'",
+        ) + (previousInterface?.let { listOf("test ! -e /sys/class/net/$it/ifindex") } ?: emptyList()) +
+            families.flatMap { tool -> listOf(
+                "rules=$(${command(tool, "-S")})",
+                "test \"$(printf '%s\\n' \"\$rules\" | grep -Ec -- '^(-N|-A) $chain([[:space:]]|$)' || :)\" = '0'",
+                "test \"$(printf '%s\\n' \"\$rules\" | grep -c -- '-j $chain' || :)\" = '0'",
+            ) } + blockLines())
+    }
+
+    private fun blockLines(): List<String> = families.flatMap { tool -> listOf(
             "routes=$(${ip(tool)} route show table $table)",
             "test -z \"\$routes\"",
             "rules=$(${ip(tool)} rule show)",
@@ -107,8 +127,7 @@ internal class UidGuardPlan private constructor(val record: UidGuardRecord, val 
                 ranges.map { "${ip(tool)} rule add pref $priority uidrange ${routeUid(it)} lookup $table" } +
                 listOf(command(tool, "-N $chain"), command(tool, "-A $chain -j DROP")) +
                 ranges.map { command(tool, "-I OUTPUT 1 -m owner --uid-owner ${ownerUid(it)} -j $chain") }
-        } + proof(allowed = false))
-    }
+        } + proof(allowed = false)
 
     fun allow(): String {
         require(!legacyMarks) { "vpn_legacy_guard_cleanup_only" }
@@ -221,6 +240,7 @@ internal class UidGuardPlan private constructor(val record: UidGuardRecord, val 
             require(record.phase in setOf("INTENT", "BLOCKED", "ALLOWING", "ALLOWED", "BLOCKING", "RELEASING", "RELEASED", "UNKNOWN"))
             require(record.lastMutation == null || record.lastMutation in setOf("INTENT", "ALLOWING", "BLOCKING", "RELEASING"))
             require(record.ipv6 in setOf("block", "tunnel"))
+            require(record.bootId == null || UUID.fromString(record.bootId).toString() == record.bootId)
             require((record.interfaceName == null) == (record.interfaceIndex == null))
             if (record.interfaceName != null) {
                 require(Regex("tun[0-9]{1,4}").matches(record.interfaceName) && record.interfaceIndex!! > 0)
@@ -275,7 +295,8 @@ internal class BoundedGuardRootExecutor(private val privateDirectory: File, priv
 /** A failed/timeout mutation is durable UNKNOWN, never automatically cleared.
  * This is the device guard journal, not the server's apply/rotate operation log.
  */
-internal class SelectedUidGuard(private val journal: UidGuardJournal, private val root: GuardRootExecutor) {
+internal class SelectedUidGuard(private val journal: UidGuardJournal, private val root: GuardRootExecutor,
+    private val bootIdentity: () -> String? = { null }) {
     private val lock = Mutex()
     suspend fun block(operation: UUID, apps: ResolvedAppSelection, ownerUid: Int): UidGuardRecord = lock.withLock {
         val previous = journal.read()
@@ -284,8 +305,22 @@ internal class SelectedUidGuard(private val journal: UidGuardJournal, private va
         require(apps.mode in setOf("selected_apps", "all_apps_except_control"))
         val broad = apps.mode == "all_apps_except_control"
         val intent = UidGuardRecord(operation.toString(), apps.uids.sorted(), ownerUid, "INTENT", ipv6 = apps.ipv6,
-            planVersion = if (broad) 5 else 4, uidRanges = if (broad) allAppUidRanges(ownerUid) else emptyList())
+            planVersion = if (broad) 5 else 4, uidRanges = if (broad) allAppUidRanges(ownerUid) else emptyList(), bootId = bootIdentity())
         mutate(intent, "BLOCKED") { it.block() }
+    }
+    suspend fun restoreAfterBoot(operation: UUID, apps: ResolvedAppSelection, ownerUid: Int): UidGuardRecord = lock.withLock {
+        val previous = journal.read() ?: throw VpnPreparationException("vpn_guard_not_found")
+        val currentBoot = bootIdentity() ?: throw VpnPreparationException("vpn_boot_identity_unavailable")
+        val broad = apps.mode == "all_apps_except_control"
+        if (previous.operationId != operation.toString() || previous.phase !in setOf("BLOCKED", "ALLOWED")
+            || previous.bootId == null || previous.bootId == currentBoot || previous.ownerUid != ownerUid
+            || previous.planVersion != (if (broad) 5 else 4) || previous.selectedUids != apps.uids.sorted()
+            || previous.uidRanges != (if (broad) allAppUidRanges(ownerUid) else emptyList()) || previous.ipv6 != apps.ipv6) {
+            throw VpnPreparationException("vpn_boot_reconciliation_required")
+        }
+        val intent = previous.copy(phase = "INTENT", interfaceName = null, interfaceIndex = null,
+            allowRules = false, bootId = currentBoot)
+        mutate(intent, "BLOCKED") { it.blockAfterBoot(previous.bootId, previous.interfaceName) }
     }
     suspend fun allow(operation: UUID, interfaceName: String, index: Int): UidGuardRecord = lock.withLock {
         val previous = owned(operation, "BLOCKED")

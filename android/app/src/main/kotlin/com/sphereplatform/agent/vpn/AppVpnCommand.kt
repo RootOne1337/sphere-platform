@@ -15,6 +15,14 @@ internal class AppVpnCommand private constructor(
     val profileRevisionId: UUID?, private val profile: JsonObject?,
 ) {
     override fun toString() = "AppVpnCommand(requestId=$requestId, sessionId=$sessionId, action=$action, profile=[redacted])"
+    internal fun restartPayload(): JsonObject {
+        val value = profile ?: throw VpnPreparationException("vpn_profile_required")
+        val version = if ((value.getValue("traffic_policy") as JsonObject).getValue("mode").jsonPrimitive.content == "all_apps_except_control") 2 else 1
+        return JsonObject(mapOf("schema_version" to JsonPrimitive(version), "request_id" to JsonPrimitive(requestId.toString()),
+            "session_id" to JsonPrimitive(sessionId.toString()), "action" to JsonPrimitive("apply"),
+            "profile_revision_id" to JsonPrimitive(profileRevisionId?.toString() ?: throw VpnPreparationException("vpn_profile_revision_required")),
+            "profile" to value))
+    }
     fun prepare(ownPackage: String, ownerUid: Int, source: AppIdentitySource): PreparedAppScopedConfig {
         val config = profile ?: throw VpnPreparationException("vpn_profile_required")
         val policy = config["traffic_policy"] as JsonObject

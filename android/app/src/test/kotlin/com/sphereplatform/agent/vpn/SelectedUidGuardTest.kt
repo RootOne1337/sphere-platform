@@ -21,6 +21,35 @@ class SelectedUidGuardTest {
     private fun denied(reason: String, block: suspend () -> Unit) = runBlocking {
         try { block(); fail("Mutation was accepted") } catch (error: VpnPreparationException) { assertEquals(reason, error.reason) }
     }
+    @Test fun `different boot restores a blocked guard with all absence proofs before mutation`() = runBlocking {
+        val before = "41029e4e-1ed6-4cd9-b9fb-3f759bbf45f8"
+        val after = "f8740495-23fa-48b0-96f0-1ec49c3f4f1d"
+        val journal = UidGuardJournal(file)
+        journal.write(UidGuardRecord(operation.toString(), apps.uids.sorted(), 10001, "ALLOWED", "tun0", 7, bootId = before))
+        var script = ""
+        val guard = SelectedUidGuard(journal, GuardRootExecutor { text, _ ->
+            script = text; assertEquals("INTENT", journal.read()!!.phase); assertEquals(after, journal.read()!!.bootId)
+        }, { after })
+        assertEquals("BLOCKED", guard.restoreAfterBoot(operation, apps, 10001).phase)
+        assertTrue(script.contains("/proc/sys/kernel/random/boot_id")); assertTrue(script.contains(after))
+        assertTrue(script.contains("test ! -e /sys/class/net/tun0/ifindex"))
+        assertTrue(script.indexOf("iptables -w 2 -t filter -S") < script.indexOf("route add blackhole"))
+        assertTrue(script.contains("ip6tables")); assertFalse(script.contains("-P "))
+        assertFalse(script.contains("route del")); assertFalse(script.contains("-D OUTPUT"))
+    }
+    @Test fun `same boot unknown legacy or changed uid policy never auto restores`() = runBlocking {
+        val before = "41029e4e-1ed6-4cd9-b9fb-3f759bbf45f8"
+        val after = "f8740495-23fa-48b0-96f0-1ec49c3f4f1d"
+        val baseline = UidGuardRecord(operation.toString(), apps.uids.sorted(), 10001, "BLOCKED", bootId = before)
+        val journal = UidGuardJournal(file)
+        val guard = SelectedUidGuard(journal, GuardRootExecutor { _, _ -> fail("Unsafe recovery reached root") }, { after })
+        for (record in listOf(baseline.copy(bootId = after), baseline.copy(bootId = null), baseline.copy(phase = "UNKNOWN"),
+            baseline.copy(phase = "INTENT"), baseline.copy(ownerUid = 10004), baseline.copy(selectedUids = listOf(10002)))) {
+            journal.write(record)
+            denied("vpn_boot_reconciliation_required") { guard.restoreAfterBoot(operation, apps, 10001) }
+            assertEquals(record, journal.read())
+        }
+    }
     @Test fun `write ahead intent is durable before the root process starts`() = runBlocking {
         val journal = UidGuardJournal(file)
         var roots = 0

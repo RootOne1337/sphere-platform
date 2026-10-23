@@ -46,6 +46,9 @@ class AppScopedVpnService : VpnService() {
     private val mutationGeneration = AtomicLong()
     private lateinit var journal: UidGuardJournal
     private lateinit var guard: SelectedUidGuard
+    private lateinit var restart: AppVpnRestartStore
+    private var preparedCommand: AppVpnCommand? = null
+    private var restoreAttempted = false
     @Volatile private var runtime: AppScopedVpnSession? = null
     private var prepared: PreparedAppScopedConfig? = null
     @Volatile private var activeId: UUID? = null
@@ -55,7 +58,8 @@ class AppScopedVpnService : VpnService() {
         check(VpnProcessIdentity.isVpnProcess(this)) { "vpn_process_isolation_required" }
         val directory = File(filesDir, "app-vpn-v1")
         journal = UidGuardJournal(File(directory, "guard.json"))
-        guard = SelectedUidGuard(journal, BoundedGuardRootExecutor(File(directory, "scripts")))
+        guard = SelectedUidGuard(journal, BoundedGuardRootExecutor(File(directory, "scripts")), ::currentVpnBootId)
+        restart = AppVpnRestartStore(directory, AndroidVpnRestartCipher(packageName))
         try {
             journal.read()?.takeIf { it.phase != "RELEASED" }?.let {
                 snapshot.set(AppVpnSnapshot(sessionId = it.operationId, phase = "RECONCILIATION_REQUIRED", reason = "vpn_previous_process_ended_guard_retained",
@@ -92,7 +96,40 @@ class AppScopedVpnService : VpnService() {
             .setOngoing(true).setOnlyAlertOnce(true).build()
         if (Build.VERSION.SDK_INT >= 34) startForeground(NOTIFICATION, notification, ServiceInfo.FOREGROUND_SERVICE_TYPE_SPECIAL_USE)
         else startForeground(NOTIFICATION, notification)
+        if (intent == null || intent.action in setOf(AppVpnAutoStart.RESTORE, SERVICE_INTERFACE)) restoreAfterBoot()
         return START_NOT_STICKY // No blind restart/reapply after an uncertain native outcome.
+    }
+
+    private fun restoreAfterBoot() = work.launch {
+        if (!admission.tryLock()) return@launch
+        var mutating = false
+        try {
+            if (restoreAttempted || runtime != null || activeId != null) return@launch
+            restoreAttempted = true
+            val saved = restart.read() ?: return@launch
+            val boot = currentVpnBootId()
+            if (saved.bootId == boot) return@launch
+            val previous = journal.read() ?: throw VpnPreparationException("vpn_guard_not_found")
+            if (previous.bootId != saved.bootId || previous.operationId != saved.command.sessionId.toString()
+                || previous.phase !in setOf("BLOCKED", "ALLOWED")) throw VpnPreparationException("vpn_boot_reconciliation_required")
+            val config = saved.command.prepare(packageName, Process.myUid(), AndroidAppIdentitySource(packageManager))
+            AndroidScopedTunPlatform(this@AppScopedVpnService).assertReady(config)
+            mutating = true; mutationGeneration.incrementAndGet()
+            publish(AppVpnSnapshot(sessionId = previous.operationId, profileRevisionId = saved.command.profileRevisionId?.toString(),
+                phase = "BOOT_RESTORING", trafficMode = config.apps.mode))
+            val session = AppScopedVpnSession(AndroidScopedTunPlatform(this@AppScopedVpnService), JniScopedAwgEngine(), guard)
+            runtime = session; prepared = config; preparedCommand = saved.command; activeId = saved.command.sessionId
+            val receipt = session.restoreAfterBoot(saved.command.sessionId, config, saved.paused)
+            restart.save(saved.command, boot, saved.paused)
+            publish(snapshot.get().copy(phase = receipt.phase, reason = receipt.reason, nativeVersion = receipt.nativeVersion,
+                sampledAtEpochMs = System.currentTimeMillis()))
+        } catch (failure: Exception) {
+            val reason = (failure as? VpnPreparationException)?.reason ?: "vpn_boot_restore_unconfirmed"
+            publish(snapshot.get().copy(phase = "RECONCILIATION_REQUIRED", reason = reason, sampledAtEpochMs = System.currentTimeMillis()))
+        } finally {
+            if (mutating) mutationGeneration.incrementAndGet()
+            admission.unlock()
+        }
     }
 
     private val control = object : Binder() {
@@ -153,14 +190,19 @@ class AppScopedVpnService : VpnService() {
                     val config = command.prepare(packageName, Process.myUid(), AndroidAppIdentitySource(packageManager))
                     // Consent and other VPN/lockdown checks happen before any guard mutation.
                     AndroidScopedTunPlatform(this).assertReady(config)
+                    restart.save(command, currentVpnBootId(), paused = false, enableAfterStop = true)
                     val session = AppScopedVpnSession(AndroidScopedTunPlatform(this), JniScopedAwgEngine(), guard)
                     beginMutation()
-                    runtime = session; prepared = config; activeId = command.sessionId
+                    runtime = session; prepared = config; preparedCommand = command; activeId = command.sessionId
                     session.connect(command.sessionId, config)
                 }
-                "pause" -> owned(command.sessionId).let { beginMutation(); it.pause(command.sessionId) }
+                "pause" -> owned(command.sessionId).let {
+                    restart.save(preparedCommand ?: throw VpnPreparationException("vpn_profile_memory_unavailable"), currentVpnBootId(), paused = true)
+                    beginMutation(); it.pause(command.sessionId)
+                }
                 "resume" -> owned(command.sessionId).let {
                     val config = prepared ?: throw VpnPreparationException("vpn_profile_memory_unavailable")
+                    restart.save(preparedCommand ?: throw VpnPreparationException("vpn_profile_memory_unavailable"), currentVpnBootId(), paused = false)
                     beginMutation(); it.resume(command.sessionId, config)
                 }
                 "rotate" -> owned(command.sessionId).let {
@@ -169,21 +211,23 @@ class AppScopedVpnService : VpnService() {
                     if (previous.apps.uids != config.apps.uids || previous.apps.packages.toSet() != config.apps.packages.toSet()
                         || previous.apps.ipv6 != config.apps.ipv6 || previous.apps.mode != config.apps.mode
                         || previous.apps.excludedPackage != config.apps.excludedPackage) throw VpnPreparationException("vpn_rotation_policy_change_requires_disconnect")
+                    restart.save(command, currentVpnBootId(), paused = false)
                     beginMutation()
-                    it.rotate(command.sessionId, config).also { prepared = config }
+                    it.rotate(command.sessionId, config).also { prepared = config; preparedCommand = command }
                 }
                 "disconnect" -> {
                     val session = runtime
-                    val state = if (session != null) owned(command.sessionId).let { beginMutation(); it.disconnect(command.sessionId) } else {
+                    val state = if (session != null) owned(command.sessionId).let { restart.disable(); beginMutation(); it.disconnect(command.sessionId) } else {
                         // Explicit recovery after process death: kernel proof must
                         // confirm that the previous TUN is closed before release.
                         val record = journal.read() ?: throw VpnPreparationException("vpn_session_not_found")
                         if (record.operationId != command.sessionId.toString()) throw VpnPreparationException("vpn_session_reconciliation_required")
+                        restart.disable()
                         beginMutation()
                         guard.release(command.sessionId)
                         AppTunnelReceipt(command.sessionId.toString(), "DISCONNECTED_CONFIRMED", null)
                     }
-                    runtime = null; prepared = null; activeId = null
+                    runtime = null; prepared = null; preparedCommand = null; activeId = null
                     stopForeground(STOP_FOREGROUND_REMOVE); stopSelf()
                     state
                 }
@@ -221,6 +265,7 @@ class AppScopedVpnService : VpnService() {
     } catch (_: Exception) { false }
 
     override fun onRevoke() {
+        runCatching { restart.disable() }
         publish(snapshot.get().copy(phase = "REVOKED_GUARD_HELD", reason = "vpn_android_consent_revoked"))
         // Process death closes every native FD while the UID blackhole survives.
         // It must never terminate the management/control process.

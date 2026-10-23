@@ -174,6 +174,23 @@ internal class AppScopedVpnSession(private val platform: ScopedTunPlatform, priv
         val stats = engine.stats(handle)
         AppTunnelReceipt(id.toString(), if (stats.handshakeEpochSeconds > 0) "HANDSHAKE_CONFIRMED" else "AWAITING_HANDSHAKE", version, stats)
     }
+    /** Only a proven different boot may reconstruct the vanished kernel guard.
+     * Same-boot death/UNKNOWN still require explicit reconciliation. */
+    suspend fun restoreAfterBoot(id: UUID, config: PreparedAppScopedConfig, stayPaused: Boolean): AppTunnelReceipt = lock.withLock {
+        if (operation != null) throw VpnPreparationException("vpn_session_reconciliation_required")
+        platform.assertReady(config)
+        guard.restoreAfterBoot(id, config.apps, platform.ownerUid)
+        operation = id; configuration = config; guardConfirmed = true; paused = true
+        if (stayPaused) return@withLock AppTunnelReceipt(id.toString(), "PAUSED_GUARD_HELD", null)
+        try {
+            version = engine.load()
+            resumeLocked(id, config)
+        } catch (failure: Exception) {
+            paused = false
+            failureReason = (failure as? VpnPreparationException)?.reason ?: "vpn_boot_restore_failed_guard_held"
+            throw failure
+        }
+    }
     suspend fun pause(id: UUID): AppTunnelReceipt = lock.withLock { pauseLocked(id) }
     private suspend fun pauseLocked(id: UUID): AppTunnelReceipt {
         if (operation != id || uncertain || !guardConfirmed || (!allowed && !paused)) throw VpnPreparationException("vpn_session_reconciliation_required")

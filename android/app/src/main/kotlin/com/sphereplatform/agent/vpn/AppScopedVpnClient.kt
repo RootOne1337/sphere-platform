@@ -18,16 +18,21 @@ import java.util.concurrent.atomic.AtomicLong
 import javax.inject.Inject
 import javax.inject.Singleton
 import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeout
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.JsonPrimitive
+import java.util.UUID
 
 /** Management process facade. A timeout is unknown; it never retries a mutation.
  * CommandDispatcher's durable journal must claim mutation IDs before this facade.
@@ -56,6 +61,13 @@ class AppScopedVpnClient @Inject constructor(@ApplicationContext private val con
         } catch (_: Exception) { /* Never log IPC contents or parser context. */ }
         true
     }) }
+    // Register the management process for restored native snapshots. This is a
+    // read-only subscription, never a retry of apply/resume/rotate.
+    private val startupObserver = if (AppVpnAutoStart.hasState(context)) CoroutineScope(SupervisorJob() + Dispatchers.IO).launch {
+        runCatching { request(JsonObject(mapOf("schema_version" to JsonPrimitive(1),
+            "request_id" to JsonPrimitive(UUID.randomUUID().toString()), "session_id" to JsonPrimitive(UUID.randomUUID().toString()),
+            "action" to JsonPrimitive("status")))) }
+    } else null
 
     internal suspend fun request(payload: JsonObject): AppVpnSnapshot = withContext(Dispatchers.IO) {
         if (!BuildConfig.APP_SCOPED_VPN_CANARY || VpnProcessIdentity.isVpnProcess(context)) throw VpnPreparationException("vpn_provider_not_enabled")
@@ -122,6 +134,7 @@ class AppScopedVpnClient @Inject constructor(@ApplicationContext private val con
     }
 
     internal suspend fun close() = lock.withLock {
+        startupObserver?.cancel()
         generation.incrementAndGet()
         connection?.let { runCatching { context.unbindService(it) } }
         connection = null; remote = null; readiness = null
