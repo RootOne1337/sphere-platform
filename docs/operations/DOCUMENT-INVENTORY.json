@@ -1,11 +1,11 @@
 {
   "schemaVersion": 1,
-  "reviewedAtUtc": "2026-10-22T20:24:47.751929+00:00",
+  "reviewedAtUtc": "2026-10-23T10:10:42.688557+00:00",
   "scope": "All tracked Markdown classified; active local-link paths scanned. Not semantic attestation of every sentence, command execution, external-link or live acceptance.",
   "countsByRole": {
     "ADR": 6,
     "CURRENT_ENTRYPOINT": 8,
-    "DATED_EVIDENCE": 371,
+    "DATED_EVIDENCE": 372,
     "DESIGN_SPECIFICATION": 85,
     "OPERATING_GUIDE": 71,
     "PROJECT_POLICY": 7,
@@ -1618,6 +1618,10 @@
     },
     {
       "file": "docs/audits/2026-10-23/HOST-MEMORY-DIAGNOSIS.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
+      "file": "docs/audits/2026-10-23/PH030-APK87-DELIVERY-AND-REBOOT.md",
       "role": "DATED_EVIDENCE"
     },
     {

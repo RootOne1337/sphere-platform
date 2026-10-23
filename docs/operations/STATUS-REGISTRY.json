@@ -1,8 +1,8 @@
 {
   "schemaVersion": 1,
-  "reviewedAtUtc": "2026-10-22T20:24:47.751929+00:00",
+  "reviewedAtUtc": "2026-10-23T10:10:42.688557+00:00",
   "sourceReviewed": "10d7d334e7a0cc440d498a6531ed79da83aff26e",
-  "scope": "PH030 APK86: active AWG2 via bounded private-LAN ciphertext gateway, all-apps-except-Sphere. HTTPS/DNS, separate egress, pause/loss fail-closed and finite 15-minute network observation verified. Direct Android WAN and production VPN remain open. UI/API unchanged.",
+  "scope": "PH030 APK87 addressed install, actual emulator reboot defect, finite guarded recovery and PC direct input/video acceptance. APK88 boot restoration is an uninstalled local candidate.",
   "baseline": "docs/audits/2026-10-05/ENTERPRISE-PRODUCT-BACKLOG.json",
   "previousCrosscheck": "docs/audits/2026-10-09/CHAT-CODE-RECONCILIATION.json",
   "counts": {
@@ -11,7 +11,7 @@
     "open": 41
   },
   "installed": {
-    "lastObservedUtc": "2026-10-22T19:36:54.516096+00:00",
+    "lastObservedUtc": "2026-10-23T10:10:42.688557+00:00",
     "ui": "a239baa26c5d945a4e3b09f4596b94d4db0cada2",
     "api": "1afdc529e18cd34b5d8ee0919f217076a8592846",
     "evidence": "docs/audits/2026-10-23/PH030-AWG2-LAN-GATEWAY-CANARY.json",
@@ -19,14 +19,14 @@
     "pilotApk": {
       "device": "auto-ph-030",
       "deviceId": "753fd530-2f19-4e5e-98ba-769863678141",
-      "version": "1.2.86-dev",
-      "versionCode": 10286,
-      "sourceRevision": "10d7d334e7a0cc440d498a6531ed79da83aff26e",
-      "apkSha256": "174f1f68afc37c90450e16a2142616869f5632f07b027cd4adaba0820c4b4229",
-      "evidence": "docs/audits/2026-10-23/PH030-AWG2-LAN-GATEWAY-CANARY.json",
-      "evidenceSha256NormalizedLf": "169f06173c1f27a9568e1a19d35b540270f7c99804a621611f7beb0eeae06914",
-      "packageProofObservedAtUtc": "2026-10-22T17:36:07.538095+00:00",
-      "scope": "APK86 installed package hash retained from dated proof; active AWG2 LAN-gateway canary now verified separately. No new APK install."
+      "version": "1.2.87-dev",
+      "versionCode": 10287,
+      "sourceRevision": "e82e66db6acfb0f99396e6c29c13d9e98914a880",
+      "apkSha256": "d1210d31de31474dcfabb3d8500520fe492322c9e3708a9f00831927ecae1476",
+      "evidence": "docs/audits/2026-10-23/PH030-APK87-DELIVERY-AND-REBOOT.json",
+      "evidenceSha256NormalizedLf": "cd6275611805c2633850a2901de4fe757f3cd6dc2ed5c319442dbad5dee7443d",
+      "packageProofObservedAtUtc": "2026-10-23T10:10:42.688557+00:00",
+      "scope": "Exact addressed install/package hash; finite PC direct gesture and VPN restoration after actual user reboot. No automatic VPN reboot acceptance."
     },
     "evidenceSha256NormalizedLf": "169f06173c1f27a9568e1a19d35b540270f7c99804a621611f7beb0eeae06914",
     "additionalPilotApks": [
@@ -68,18 +68,18 @@
       }
     ],
     "fleetApkEvidence": {
-      "evidence": "docs/audits/2026-10-23/PH030-AWG2-LAN-GATEWAY-CANARY.json",
-      "evidenceSha256NormalizedLf": "169f06173c1f27a9568e1a19d35b540270f7c99804a621611f7beb0eeae06914",
+      "evidence": "docs/audits/2026-10-23/PH030-APK87-DELIVERY-AND-REBOOT.json",
+      "evidenceSha256NormalizedLf": "cd6275611805c2633850a2901de4fe757f3cd6dc2ed5c319442dbad5dee7443d",
       "installedCount": 4,
       "verifiedVersionCounts": {
         "10285": 3,
-        "10286": 1
+        "10287": 1
       },
-      "scope": "Mixed pilot versions. Historical package proofs for PH010/011/025 retained; PH030 newly verified. Seventeen offline unmodified."
+      "scope": "PH030 newly hash-verified APK87. Three earlier APK85 bindings retained, seventeen offline untouched."
     },
-    "latestReadbackAtUtc": "2026-10-22T19:36:54.516096+00:00",
-    "latestReadbackEvidence": "docs/audits/2026-10-23/PH030-AWG2-LAN-GATEWAY-CANARY.json",
-    "latestReadbackEvidenceSha256NormalizedLf": "169f06173c1f27a9568e1a19d35b540270f7c99804a621611f7beb0eeae06914",
+    "latestReadbackAtUtc": "2026-10-23T10:10:42.688557+00:00",
+    "latestReadbackEvidence": "docs/audits/2026-10-23/PH030-APK87-DELIVERY-AND-REBOOT.json",
+    "latestReadbackEvidenceSha256NormalizedLf": "cd6275611805c2633850a2901de4fe757f3cd6dc2ed5c319442dbad5dee7443d",
     "previousRuntimeObservation": {
       "ui": "ed9d54d090e2b5a5d471502335ddf6b8b86dbd35",
       "api": "ed9d54d090e2b5a5d471502335ddf6b8b86dbd35",
@@ -227,6 +227,18 @@
         "evidenceSha256NormalizedLf": "ddb757de89e308bc1d3a72d6a0ad45e40cf534d4540aa524cc59420050d37a9e",
         "packageProofObservedAtUtc": "2026-10-20T15:21:22.957148+00:00",
         "scope": "Independent installed-package SHA plus completed addressed OTA; finite PH030 input and general performance are separate."
+      },
+      {
+        "device": "auto-ph-030",
+        "deviceId": "753fd530-2f19-4e5e-98ba-769863678141",
+        "version": "1.2.86-dev",
+        "versionCode": 10286,
+        "sourceRevision": "10d7d334e7a0cc440d498a6531ed79da83aff26e",
+        "apkSha256": "174f1f68afc37c90450e16a2142616869f5632f07b027cd4adaba0820c4b4229",
+        "evidence": "docs/audits/2026-10-23/PH030-AWG2-LAN-GATEWAY-CANARY.json",
+        "evidenceSha256NormalizedLf": "169f06173c1f27a9568e1a19d35b540270f7c99804a621611f7beb0eeae06914",
+        "packageProofObservedAtUtc": "2026-10-22T17:36:07.538095+00:00",
+        "scope": "APK86 installed package hash retained from dated proof; active AWG2 LAN-gateway canary now verified separately. No new APK install."
       }
     ],
     "historicalFleetApkEvidence": {
@@ -6409,7 +6421,8 @@
     "diagnosticShellTimeoutFencedInput": true,
     "apk87Installed": false,
     "ciRunId": 39844420660,
-    "initialQueuedDispatchId": 39841457086
+    "initialQueuedDispatchId": 39841457086,
+    "historicalSupersededBy": "docs/audits/2026-10-23/PH030-APK87-DELIVERY-AND-REBOOT.json"
   },
   "hostMemoryDiagnosis": {
     "evidence": "docs/audits/2026-10-23/HOST-MEMORY-DIAGNOSIS.json",
@@ -6427,6 +6440,17 @@
     "listenerRestored": true,
     "sameAndroidControlSession": true,
     "freshHttpsAccepted": false,
+    "productionAccepted": false
+  },
+  "vpnApk87DeliveryAndReboot": {
+    "evidence": "docs/audits/2026-10-23/PH030-APK87-DELIVERY-AND-REBOOT.json",
+    "evidenceSha256NormalizedLf": "cd6275611805c2633850a2901de4fe757f3cd6dc2ed5c319442dbad5dee7443d",
+    "apk87Installed": true,
+    "pcNativeGestureFiniteAccepted": true,
+    "phoneBrowserAccepted": false,
+    "vpnRestoredManually": true,
+    "automaticVpnRebootAccepted": false,
+    "apk88CandidateInstalled": false,
     "productionAccepted": false
   }
 }
