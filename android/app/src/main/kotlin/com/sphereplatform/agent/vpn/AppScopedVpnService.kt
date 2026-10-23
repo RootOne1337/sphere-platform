@@ -116,7 +116,7 @@ class AppScopedVpnService : VpnService() {
             AndroidScopedTunPlatform(this@AppScopedVpnService).assertReady(config)
             mutating = true; mutationGeneration.incrementAndGet()
             publish(AppVpnSnapshot(sessionId = previous.operationId, profileRevisionId = saved.command.profileRevisionId?.toString(),
-                phase = "BOOT_RESTORING", trafficMode = config.apps.mode))
+                phase = "APPLYING", reason = "vpn_restoring_after_boot", trafficMode = config.apps.mode))
             val session = AppScopedVpnSession(AndroidScopedTunPlatform(this@AppScopedVpnService), JniScopedAwgEngine(), guard)
             runtime = session; prepared = config; preparedCommand = saved.command; activeId = saved.command.sessionId
             val receipt = session.restoreAfterBoot(saved.command.sessionId, config, saved.paused)
