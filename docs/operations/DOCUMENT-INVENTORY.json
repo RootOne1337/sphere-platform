@@ -5,7 +5,7 @@
   "countsByRole": {
     "ADR": 6,
     "CURRENT_ENTRYPOINT": 8,
-    "DATED_EVIDENCE": 375,
+    "DATED_EVIDENCE": 376,
     "DESIGN_SPECIFICATION": 85,
     "OPERATING_GUIDE": 71,
     "PROJECT_POLICY": 7,
@@ -1622,6 +1622,10 @@
     },
     {
       "file": "docs/audits/2026-10-23/MOTOR-MEMORY-RECOVERY073.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
+      "file": "docs/audits/2026-10-23/MOTOR-PERCEPTION074.md",
       "role": "DATED_EVIDENCE"
     },
     {

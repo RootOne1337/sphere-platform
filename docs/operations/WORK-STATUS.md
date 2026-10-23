@@ -2,6 +2,18 @@
 
 **Проверенная установка:** UI `a239baa2` / API `1afdc529`.
 
+**23 октября — worker0.7.4, generic perception boundary.** Direct FP32 object
+observer PH011:125/75 свежих результатов за25/15с, минимум5 в полной секунде,
+receiver-age p95 около104/115мс. На6 fixtures FP32 GPU близок CPU, FP16 этого
+pipeline отклонён. Слабая ограда и ложные launcher detections не допускают
+obstacle/free-space provider к управлению.241 tests/Ruff прошли; physical actions0.
+Добавлены exact-RGB/runtime fingerprint checks; ни unknown, ни пустые detections
+не дают free side. Один завершённый pilot потребовал scoped outer-process cleanup;
+отдельный receiver получил setup deadline без кадра. Shutdown/reconnect открыты.
+[Доказательства и полный список gap](../audits/2026-10-23/MOTOR-PERCEPTION074.md).
+Опциональная visual route memory проработана в разделе26 плана3.2, пока не реализована.
+APK/VPN/UI/API не менялись, новых GitHub jobs нет; product acceptance не повышена.
+
 **23 октября, поздний срез — память и neural inference восстановлены.**
 Один measured clean-pagecache reclaim WSL, без рестартов/сброса dirty/anonymous,
 дал80,00→65,82GiB Windows commit после отложенного возврата памяти. Это не14GiB

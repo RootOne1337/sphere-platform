@@ -1,9 +1,20 @@
 # Headless motor worker: транспорт и конечный ввод
 
 GPS-анализ — необязательный observer. Общие задачи без меток/миникарты и цели по
-изображению/ориентирам описаны в разделах24–25 [единого плана3.1](../design/MOTOR-AI-PLATFORM.md).
+изображению/ориентирам описаны в разделах24–26 [единого плана3.2](../design/MOTOR-AI-PLATFORM.md).
 Эти goal/skill contracts пока проектные: stdio-v1 не передаёт цель в NitroGen/P2P.
 Последний decoded frame хранится в RAM, PNG сохраняется только явно через `--snapshot`.
+
+**23 октября ·0.7.4:** `ObjectObservation`/`inspect_obstacles` связывают точный RGB
+с epoch/sequence/time, моделью, профилем и pipeline fingerprint. Precision/backend/
+encoder/preprocess должны входить в fingerprint; одинаковые веса не разрешают
+сменить FP32 на неквалифицированный FP16. Только suspected obstacle/unknown,
+без free side, направления объезда и Android input. Это contract, не подключённый
+автопилот.241 tests/Ruff прошли. Private YOLOE-26s FP32 observer дал125/75 fresh
+results за25/15с,5 в каждом полном секундном окне, но obstacle quality не принята.
+FP16 не прошёл сравнение, у FP32 слабая ограда и false launcher boxes. Незавершённый
+самостоятельно outer exit одного pilot и один setup deadline требуют проверки.
+[Методика, численная точность и границы](../audits/2026-10-23/MOTOR-PERCEPTION074.md).
 
 **23 октября ·0.7.3:** добавлен bounded parser `VisualWaypoint` и проверка lineage/age
 для visual reply. Refusal с координатами, truncation, лишние поля и ответ по старой
@@ -21,7 +32,7 @@ coordinate/obstacle qualification; быстрые кешированные от�
 221 motor tests/Ruff прошли. Конечный PH011 GPS/CV runner после операторского
 обхода прошёл590→582м на5,125Гц,8/8 native APPLIED/CLOSED. Common GPS CLI остаётся
 read-only; autonomous recovery, jump и arrival не приняты. P2P/Qwen загрузились,
-но текущие inference остановлены штатным commit guard до первого prediction.
+но inference в том раннем срезе остановлены штатным commit guard до первого prediction.
 [Доказательства, отрицательные результаты и ограничения](../audits/2026-10-23/PH011-APK88-MOTOR-CALIBRATION.md).
 
 **23 октября ·0.7.1:** добавлен opt-in `GoalBoundPolicy` в

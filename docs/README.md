@@ -2,6 +2,11 @@
 
 **Проверенная установка:** UI `a239baa2` / API `1afdc529`.
 
+**23 октября — perception0.7.4:** direct FP32 object inference выдержал5 результатов
+в каждой полной секунде, без Android input. FP16 отклонён; free-space/навигация
+не приняты.241 motor tests/Ruff прошли. [Квитанция](audits/2026-10-23/MOTOR-PERCEPTION074.md) ·
+[План3.2, опциональная память маршрутов](design/MOTOR-AI-PLATFORM.md#26-опциональная-память-маршрутов-вместо-магической-стрелки).
+
 **23 октября, поздний срез — neural inference разблокирован.** Однократный clean-cache
 reclaim WSL вернул резерв commit без перезапуска14 контейнеров. P2P150M:124 ответа
 на игровом потоке, минимум5 в полном секундном окне; native input0. Qwen0.8B/2B
@@ -10,10 +15,10 @@ reclaim WSL вернул резерв commit без перезапуска14 к�
 
 **23 октября — PH011: APK88/AWG2 и ходьба по GPS.** Отдельный VPN peer, исключение
 Sphere UID10082 и package SHA проверены. Конечный CV-контроллер после операторского
-обхода прошёл590→582м на5,125Гц;221 motor tests прошли. Neural inference сейчас
-блокирует commit guard; arrival, automatic recovery и прыжки не приняты.
+обхода прошёл590→582м на5,125Гц;221 motor tests прошли. В том раннем срезе neural
+inference блокировал commit guard; arrival, automatic recovery и прыжки не приняты.
 [Квитанция и реальные экраны](audits/2026-10-23/PH011-APK88-MOTOR-CALIBRATION.md) ·
-[План motor AI3.1](design/MOTOR-AI-PLATFORM.md).
+[План motor AI3.2](design/MOTOR-AI-PLATFORM.md).
 
 **23 октября — локальный APK88 установлен на PH030.** Настоящая перезагрузка
 подтвердила автоматическое восстановление VPN, действующие kernel rules и HTTPS

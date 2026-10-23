@@ -2,6 +2,12 @@
 
 **Проверенная установка:** UI `a239baa2` / API `1afdc529`.
 
+**23 октября — perception0.7.4:** read-only YOLOE-26s FP32 прошёл5-Гц direct-stream
+throughput, но obstacle/free-space qualification не пройдена. FP16 отклонён по
+реальному расхождению с FP32.241 motor tests; Android input0, APK/VPN не менялись.
+Один observer потребовал scoped outer cleanup после отчёта; последующий receiver
+не получил кадра до setup deadline. [Факты и открытые проверки](../audits/2026-10-23/MOTOR-PERCEPTION074.md).
+
 **23 октября, после15:07 UTC — память вернулась, neural shadow прошёл.**
 P2P150M на игровом PH011 дала124 результата, минимум5 в каждом полном секундном
 окне; ввод выключен. Qwen0.8B/2B не прошли grounding/obstacle qualification.
@@ -11,7 +17,7 @@ memory-blocked срез ниже. [Подробная квитанция](../aud
 **23 октября, поздний срез — APK88 на PH011 и PH030.** PH030 real reboot описан
 в [квитанции автозапуска](../audits/2026-10-23/PH030-APK88-LOCAL-AUTOSTART.md).
 PH011 получил отдельный AWG2 peer и package hash proof; конечная GPS/CV ходьба
-прошла590→582м на5,125Гц. Neural inference заблокирован commit guard; autonomous
+прошла590→582м на5,125Гц. В том раннем срезе neural inference блокировал commit guard; autonomous
 navigation не принята. [PH011: факты и ограничения](../audits/2026-10-23/PH011-APK88-MOTOR-CALIBRATION.md).
 Следующие записи отражают предыдущие датированные состояния.
 

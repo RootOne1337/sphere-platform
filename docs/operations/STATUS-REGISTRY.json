@@ -6501,6 +6501,21 @@
     "productionAccepted": false,
     "scope": "Fresh PH011 APK88 and AWG2 guard; bounded operator detour and8s GPS/CV walking; learned inference blocked by unchanged Windows commit guard. Jump, autonomous obstacle avoidance, arrival, vehicle and fleet capacity remain open."
   },
+  "motorPerception074": {
+    "evidence": "docs/audits/2026-10-23/MOTOR-PERCEPTION074.json",
+    "evidenceSha256NormalizedLf": "e5f377f822116780dbdeba45fda301e8bbb55ffa7788cd21b5b4ef8ddf6f5180",
+    "workerVersion": "0.7.4",
+    "motorTestsPassed": 241,
+    "minimumResultsInCompleteSecond": 5,
+    "physicalActions": 0,
+    "fp16PipelineAccepted": false,
+    "obstacleProviderAccepted": false,
+    "freeSpaceAccepted": false,
+    "routeMemoryImplemented": false,
+    "autonomousNavigationAccepted": false,
+    "cleanShutdownAccepted": false,
+    "scope": "Read-only YOLOE26 FP32 direct throughput, CPU comparison and fail-closed exact-RGB/pipeline contract. FP16 rejected; obstacle quality, geometry, route/recovery, fleet and shutdown/reconnect remain open."
+  },
   "motorMemoryRecovery073": {
     "evidence": "docs/audits/2026-10-23/MOTOR-MEMORY-RECOVERY073.json",
     "evidenceSha256NormalizedLf": "8fa9d8b7a3f091442194dcfb2cba1b40e2fab96a77fd0a11cd7eb2ccd94ddae3",
