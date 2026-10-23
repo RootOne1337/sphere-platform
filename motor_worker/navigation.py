@@ -78,6 +78,7 @@ class NavigationSupervisor:
         self.terminal_reason = None
         self.fallen_at = None
         self.jump_used = False
+        self.last_received_at = None
 
     def _stop(self, reason, terminal=False):
         self.samples.clear()
@@ -92,7 +93,11 @@ class NavigationSupervisor:
         o = observation
         if o.sequence <= self.last_sequence or self.last_now is not None and o.now < self.last_now:
             return self._stop("observation_order", terminal=True)
+        if self.last_received_at is not None and o.received_at <= self.last_received_at:
+            return self._stop("observation_clock_order", terminal=True)
+        gap = self.last_received_at is not None and o.received_at - self.last_received_at > 0.5
         self.last_sequence, self.last_now = o.sequence, o.now
+        self.last_received_at = o.received_at
         if self.terminal_reason:
             return RecoveryDirective("stop", self.terminal_reason)
         if self.epoch is None:
@@ -101,6 +106,13 @@ class NavigationSupervisor:
             return self._stop("capture_epoch_changed", terminal=True)
         if o.now - o.received_at > 0.25:
             return self._stop("receiver_frame_stale")
+        # A new fresh frame after a long blind interval is not evidence of
+        # continuous progress or a continuously stalled character. Stop first;
+        # collecting a new progress window must not erase an in-flight action.
+        if gap:
+            if self.pending:
+                return self._stop("recovery_observation_gap", terminal=True)
+            return self._stop("progress_observation_gap")
         if not o.control_ready:
             return self._stop("native_control_not_ready")
         if o.scene == "disconnected":
@@ -140,7 +152,15 @@ class NavigationSupervisor:
             motion = [s.background_motion_px for s in self.samples]
             if any(v is None for v in motion):
                 return self._stop("progress_evidence_missing")
-            stalled = max(motion) < 0.35
+            # One animation/feature-tracking outlier must not renew a whole
+            # three-second movement window. Weight intervals, not frame count;
+            # camera motion can still make this sensor inconclusive.
+            quiet_seconds = sum(
+                b.now - a.now
+                for a, b in zip(self.samples, list(self.samples)[1:])
+                if b.background_motion_px < 0.35
+            )
+            stalled = quiet_seconds / (o.now - first.now) >= 0.85
         if not stalled:
             self.samples.clear()
             self.samples.append(o)
@@ -205,16 +225,42 @@ def background_motion(previous_rgb, current_rgb):
     mask = np.zeros(before.shape, dtype=np.uint8)
     mask[160:420, 180:800] = 255
     mask[180:540, 350:620] = 0
-    points = cv2.goodFeaturesToTrack(
-        before, maxCorners=100, qualityLevel=0.04, minDistance=9, mask=mask
-    )
-    if points is None or len(points) < 12:
+    # Select per background cell: a handful of bright fence corners otherwise
+    # suppress every usable low-contrast grass/tree feature in the whole frame.
+    groups = []
+    for top in (160, 290):
+        for left in (180, 335, 490, 645):
+            cell = before[top : top + 130, left : left + 155]
+            selected = cv2.goodFeaturesToTrack(
+                cell, maxCorners=12, qualityLevel=0.01, minDistance=9,
+                mask=mask[top : top + 130, left : left + 155],
+            )
+            if selected is not None:
+                groups.append(selected + np.float32([left, top]))
+    if not groups:
+        return None
+    points = np.concatenate(groups)
+    if len(points) < 12:
         return None
     next_points, status, _ = cv2.calcOpticalFlowPyrLK(before, after, points, None)
     if next_points is None or status is None:
         return None
-    valid = status.reshape(-1) == 1
+    returned, reverse_status, _ = cv2.calcOpticalFlowPyrLK(after, before, next_points, None)
+    if returned is None or reverse_status is None:
+        return None
+    valid = (
+        (status.reshape(-1) == 1)
+        & (reverse_status.reshape(-1) == 1)
+        & np.isfinite(next_points).all(axis=(1, 2))
+        & (np.linalg.norm((returned - points).reshape(-1, 2), axis=1) <= 1.0)
+    )
     if int(valid.sum()) < 12:
+        return None
+    # Do not call one animated local patch world movement. Require features
+    # spread across at least three background cells, with the avatar excluded.
+    original = points.reshape(-1, 2)[valid]
+    cells = {(int(x) // 160, int(y) // 130) for x, y in original}
+    if len(cells) < 3:
         return None
     shift = np.linalg.norm((next_points - points).reshape(-1, 2)[valid], axis=1)
     return float(np.median(shift))

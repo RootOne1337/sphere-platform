@@ -119,6 +119,37 @@ class NavigationTests(unittest.TestCase):
             with self.assertRaises(ProtocolError):
                 replace(self.observation(1), **changes)
 
+    def test_fresh_frame_after_blind_gap_cannot_authorize_recovery(self):
+        guard = NavigationSupervisor()
+        guard.observe(self.observation(1, distance_m=100))
+        result = guard.observe(self.observation(20, distance_m=100))
+        self.assertEqual((result.action, result.reason), ("stop", "progress_observation_gap"))
+        self.assertEqual(guard.recoveries, 0)
+        self.assertEqual(guard.observe(self.observation(21, distance_m=100)).action, "follow")
+
+    def test_recovery_does_not_survive_blind_gap_or_duplicate_capture_clock(self):
+        guard = NavigationSupervisor()
+        self.stall(guard, distance_m=100)
+        result = guard.observe(self.observation(20, distance_m=100))
+        self.assertEqual(result.reason, "recovery_observation_gap")
+        guard = NavigationSupervisor()
+        previous = self.observation(1)
+        guard.observe(previous)
+        result = guard.observe(replace(self.observation(2), received_at=previous.received_at))
+        self.assertEqual(result.reason, "observation_clock_order")
+
+    def test_one_animation_outlier_does_not_mask_three_seconds_of_no_world_motion(self):
+        guard = NavigationSupervisor()
+        for i in range(1, 14):
+            result = guard.observe(self.observation(i, background_motion_px=12 if i == 7 else 0.1))
+        self.assertEqual((result.action, result.reason), ("inspect_camera", "goal_progress_stalled"))
+
+    def test_intermittent_real_motion_does_not_trigger_an_obstacle_manoeuvre(self):
+        guard = NavigationSupervisor()
+        for i in range(1, 14):
+            result = guard.observe(self.observation(i, background_motion_px=2 if i % 2 else 0.1))
+        self.assertEqual(result.action, "follow")
+
 
 class BackgroundMotionTests(unittest.TestCase):
     def setUp(self):
@@ -143,3 +174,14 @@ class BackgroundMotionTests(unittest.TestCase):
         self.assertIsNone(background_motion(blank, blank))
         with self.assertRaises(ProtocolError):
             background_motion(blank[:100], blank[:100])
+
+    def test_dim_background_features_survive_a_few_bright_corners(self):
+        frame = self.frame // 6
+        frame[180:195, 200:215] = 255
+        moved = self.cv2.warpAffine(frame, self.np.float32([[1, 0, 5], [0, 1, 0]]), (960, 540))
+        self.assertAlmostEqual(background_motion(frame, moved), 5, delta=0.8)
+
+    def test_isolated_animated_patch_is_not_world_progress(self):
+        frame = self.np.zeros_like(self.frame)
+        frame[200:240, 210:250] = self.frame[200:240, 210:250]
+        self.assertIsNone(background_motion(frame, frame))
