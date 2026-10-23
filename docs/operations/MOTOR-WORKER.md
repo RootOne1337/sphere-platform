@@ -1,9 +1,33 @@
 # Headless motor worker: транспорт и конечный ввод
 
 GPS-анализ — необязательный observer. Общие задачи без меток/миникарты и цели по
-изображению/ориентирам описаны в разделах24–26 [единого плана3.4](../design/MOTOR-AI-PLATFORM.md).
+изображению/ориентирам описаны в разделах24–26 [единого плана3.5](../design/MOTOR-AI-PLATFORM.md).
 Эти goal/skill contracts пока проектные: stdio-v1 не передаёт цель в NitroGen/P2P.
 Последний decoded frame хранится в RAM, PNG сохраняется только явно через `--snapshot`.
+
+**24 октября ·0.8.0:** `python -m motor_worker.teach` предоставляет отдельные
+`record`/`operator`/`inspect`/`compile`/`quality`. Это opt-in запись original H.264
+с source RTP timeline и собственным input journal; по умолчанию архива нет.
+`operator --allow-native-input` открывает конечную localhost-панель одного пальца;
+native READY+manual, frame age/heartbeat/command deadline и подтверждённое закрытие
+обязательны. Input извне LDPlayer/другого зрителя не записывается автоматически.
+Master video не ограничивается5Гц preview; исходные clocks пока не синхронизированы
+с Android input. Journal не превращает один жест в набор нод и не исполняется при импорте.
+
+`TaughtRoute` сохраняет2–64 ordered view checkpoints и source-manifest digest;
+`RouteProgress` требует3 соседних temporal matches, первый view, active scene,
+тот же episode/goal/epoch. Это observation API без Android authority. `end_view`
+не является arrival. `quality` исключает reference frames, явно маркирует ту же
+демонстрацию и simulated degradation; реальные540p/50% renderer надо проверить
+отдельным повтором. Stationary dataset не становится маршрутом.
+
+295 tests/Ruff passed; direct PH011137/137 frames decoded в финальном read-only
+run. Real native idle admission/close прошли;2 browser APPLIED — **fake Android**.
+Позднее два real PH011 gestures/14 APPLIED подтвердили native journal, один с
+удержанием3016мс; всё видео декодировано. Game disconnected за AFK. Gameplay
+teaching/реальный1080p60/controller/объезд/arrival/fleet не приняты.
+Это SDK-консоль, основной веб/APK/API не обновлялись. [Формат, лимиты, команды и
+допуск к1080p](../audits/2026-10-24/MOTOR-TEACHING080.md).
 
 **23 октября ·0.7.5:** opt-in `SessionConfig.publish_rgb=True` и
 `HeadlessSession.read_rgb(after_sequence=..., max_age=0.25)` дают нескольким

@@ -9,6 +9,7 @@ import importlib.util
 import json
 import secrets
 import sys
+import tempfile
 import time
 import unittest
 from fractions import Fraction
@@ -20,6 +21,9 @@ from motor_worker.policy import ActionChunk, GamepadState, NeutralPolicy, Policy
 from motor_worker.process_policy import ProcessPolicy, ProcessPolicyConfig
 from motor_worker.session import HeadlessSession, SessionConfig
 from motor_worker.stick_execution import StickPolicySession, StickProfile
+from motor_worker.teach import inspect_capture
+from motor_worker.teach_capture import TeachCapture
+from motor_worker.teach_operator import LoopbackOperator, ManualTeachSession
 from motor_worker.virtual_stick import StickGeometry
 
 AVAILABLE = all(importlib.util.find_spec(m) for m in ["aiortc", "av", "websockets", "numpy"])
@@ -312,6 +316,132 @@ class HeadlessIntegrationTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(report["bounds"]["immutableRgbFrameSlots"], 1)
         self.assertFalse(report["control"]["requested"])
         self.assertFalse(any(d.get("type") == "touch_open" for d in self.received))
+
+    async def test_direct_h264_capture_is_importable_without_native_input(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory).resolve()/"teaching"
+            sink = TeachCapture(root, device_id=DEVICE, episode_id=DEVICE, profile_revision=DEVICE)
+            session = HeadlessSession(
+                SessionConfig(self.url, DEVICE, duration=2, capture_lifecycle=False), recording=sink
+            )
+            report = await session.run("fixture-token")
+            self.assertTrue(report["success"], report)
+            self.assertTrue(report["teachingCapture"]["writer_retired"])
+            inspected = await asyncio.to_thread(inspect_capture, root)
+            self.assertGreaterEqual(inspected["frames"], 30)
+            self.assertEqual(inspected["purpose"], "video_only")
+            self.assertFalse(report["control"]["requested"])
+            self.assertFalse(any(d.get("type") == "touch_open" for d in self.received))
+
+    async def test_own_native_pointer_demonstration_has_complete_input_journal(self):
+        self.availability_state = "manual"
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory).resolve()/"teaching"
+            sink = TeachCapture(root, device_id=DEVICE, episode_id=DEVICE, profile_revision=DEVICE)
+            probe = PointerProbe(320, 180, (ProbePoint(0, 0, 120, 80),
+                                          ProbePoint(250, 2, 140, 80), ProbePoint(500, 1, 140, 80)))
+            session = HeadlessSession(SessionConfig(self.url, DEVICE, duration=2, probe_control=True,
+                                                     capture_lifecycle=False, pointer_probe=probe), recording=sink)
+            report = await session.run("fixture-token")
+            self.assertTrue(report["success"], report)
+            inspected = await asyncio.to_thread(inspect_capture, root)
+            self.assertEqual(inspected["purpose"], "video_and_own_inputs")
+            self.assertEqual(inspected["inputs"], dict(commands=3, applied=3, complete=True))
+            self.assertTrue(report["control"]["participantClosedConfirmed"])
+
+    async def manual_fixture(self, directory, *, lose_heartbeat=False, lose_video=False):
+        self.availability_state = "manual"
+        import urllib.request
+
+        from websockets.asyncio.client import connect
+        from websockets.exceptions import ConnectionClosed
+
+        root = Path(directory).resolve()/"teaching"
+        sink = TeachCapture(root, device_id=DEVICE, episode_id=DEVICE, profile_revision=DEVICE)
+        config = SessionConfig(self.url, DEVICE, duration=3, capture_lifecycle=False,
+                               probe_control=True, publish_rgb=True)
+        session = ManualTeachSession(config, recording=sink, native_input_enabled=True)
+        async with LoopbackOperator(session) as console:
+            def cookie():
+                with urllib.request.urlopen(console.url, timeout=2) as response:
+                    return response.headers["Set-Cookie"].split(";", 1)[0]
+            auth = await asyncio.to_thread(cookie)
+            task = asyncio.create_task(session.run("fixture-token"))
+            try:
+                async with connect(console.url.replace("http:", "ws:")+"/control", origin=console.url,
+                                   additional_headers={"Cookie": auth}) as ws:
+                    sequence = 0
+
+                    async def send(data):
+                        nonlocal sequence
+                        sequence += 1
+                        await ws.send(json.dumps(data | dict(sequence=sequence)))
+
+                    ready = image = False
+                    async with asyncio.timeout(5):
+                        while not (ready and image):
+                            await send(dict(type="heartbeat"))
+                            raw = await ws.recv()
+                            if isinstance(raw, bytes):
+                                image = True
+                            else:
+                                state = json.loads(raw)
+                                ready = state["ready"]
+                            await asyncio.sleep(.02)
+                    await send(dict(type="pointer", capture_epoch=session.binding.epoch, action=0, x=120, y=80))
+                    if lose_video:
+                        self.stop_video = True
+                        async with asyncio.timeout(3):
+                            while not task.done():
+                                await send(dict(type="heartbeat"))
+                                await asyncio.sleep(.08)
+                    elif not lose_heartbeat:
+                        for _ in range(3):
+                            await asyncio.sleep(.08)
+                            await send(dict(type="heartbeat"))
+                        await send(dict(type="pointer", capture_epoch=session.binding.epoch, action=1, x=120, y=80))
+                        for _ in range(3):
+                            await asyncio.sleep(.08)
+                            await send(dict(type="heartbeat"))
+                        await send(dict(type="stop"))
+                    await asyncio.wait_for(asyncio.shield(task), 5)
+            except ConnectionClosed:
+                pass  # The task report, not a socket close, determines test success.
+            finally:
+                if not task.done():
+                    try:
+                        await asyncio.wait_for(asyncio.shield(task), 5)
+                    except BaseException:
+                        task.cancel()
+                        await asyncio.gather(task, return_exceptions=True)
+                        raise
+            report = await task
+        return report, root
+
+    async def test_manual_teaching_ui_records_own_input_and_stops_cleanly(self):
+        with tempfile.TemporaryDirectory() as directory:
+            report, root = await self.manual_fixture(directory)
+            self.assertTrue(report["success"], report)
+            self.assertEqual(report["operator"]["native_events"], 2)
+            self.assertTrue(report["control"]["nativeActionAppliedVerified"])
+            self.assertEqual((await asyncio.to_thread(inspect_capture, root))["inputs"]["applied"], 2)
+
+    async def test_manual_operator_heartbeat_loss_releases_held_native_input(self):
+        with tempfile.TemporaryDirectory() as directory:
+            report, root = await self.manual_fixture(directory, lose_heartbeat=True)
+            self.assertFalse(report["success"])
+            self.assertEqual(report["failure"], "operator_heartbeat_deadline")
+            self.assertTrue(report["control"]["participantClosedConfirmed"])
+            self.assertFalse((root/"COMPLETE").exists())
+
+    async def test_manual_held_input_stops_on_video_loss_even_with_live_operator_heartbeats(self):
+        with tempfile.TemporaryDirectory() as directory:
+            report, root = await self.manual_fixture(directory, lose_video=True)
+            self.assertFalse(report["success"])
+            self.assertEqual(report["failure"], "operator_video_stale")
+            self.assertTrue(report["control"]["participantClosedConfirmed"])
+            self.assertLess(report["durationObservedSeconds"], 2)
+            self.assertFalse((root/"COMPLETE").exists())
 
     async def test_learned_boundary_holds_one_native_contact_and_confirms_cleanup(self):
         self.availability_state = "manual"

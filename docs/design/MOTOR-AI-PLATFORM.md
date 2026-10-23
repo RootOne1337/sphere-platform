@@ -1,6 +1,15 @@
 # Игровой AI-контур Sphere: архитектура, модели и план реализации
 
-**23 октября · версия3.4, исследование методов и capture:** сопоставлены teach-and-repeat,
+**24 октября · версия3.5, worker0.8.0:** реализованы original H.264 recorder,
+own pointer journal, временная localhost teaching console, ordered view bundles,
+sequential observation и offline quality experiment.295 tests/Ruff прошли;
+финальный real PH011 read-only137/137 frames decoded. Позднее на real PH011
+подтверждены два native gestures/14 APPLIED,один3с; game disconnected. Gameplay teaching,
+реальный1080p60, минимальный rendering repeat, controller/объезд/arrival/fleet
+ещё не приняты. [Полная квитанция и следующий допуск](../audits/2026-10-24/MOTOR-TEACHING080.md).
+Раздел26.7 имеет приоритет над историческим состоянием recorder в26.6.
+
+**Предыдущий этап23 октября · версия3.4, исследование методов и capture:** сопоставлены teach-and-repeat,
 mini→map localization, path following и динамический объезд. Добавлен раздел26.6
 и [разбор с первичными источниками](../audits/2026-10-23/NAVIGATION-METHODS-CAPTURE-RESEARCH.md).
 Это проектные рекомендации; новый recorder/controller не включён, runtime остаётся0.7.5.
@@ -2007,3 +2016,45 @@ encoded stream + event journal + manifest; она не открывает скр
 Внешние LDPlayer-нажатия не появляются в собственном actor Sphere автоматически.
 Демонстрацию проще сначала проводить через Sphere. Исследование не меняло APK,
 VPN, поток, игру, модели или ресурсные пороги; физических проверок здесь нет.
+
+### 26.7. Реализация0.8.0 и допуск обучающей записи
+
+`TeachCapture` подключается к direct H.264 до декодирования, без re-encode; пишет
+encoded access units/RTP index/own input journal с отдельными clock domains.
+Это не3D lidar, odometry или измеренный capture→native timeline. Полный
+source-clock mapping ещё открыт. Явный manifest/COMPLETE, hashes, geometry/epoch,
+очереди и quotas делают импорт проверяемым; аварийная запись не становится успешной.
+
+`ManualTeachSession` и одноразовая loopback-панель дают ручной однопальцевый
+teach run через собственный actor. Удержание продолжается между MOVE; native
+READY/availability,250мс frame age,350мс UI heartbeat и200мс command age проверяются.
+Потеря ввода/видео/владельца останавливает с подтверждённым native close. Это не
+захват LDPlayer keymapper, не основная веб-страница и не multitouch vehicle adapter.
+
+CLI компилирует исходное видео в2–64 ordered views с явно выбранным runtime
+feature profile; одинаковый неподвижный вид не образует маршрут. `RouteProgress`
+подтверждает3 последовательных соседних совпадения только в той же active scene/
+episode/goal/capture. Модуль не выдаёт pose, не исполняет input и не считает
+последний вид arrival. Дорожные разветвления и свободная геометрия остаются отдельными.
+
+На real PH011 проверен source recording960×540 и offline decode:276/276 и137/137
+frames. У первого run max receiver gap367мс, у финального94мс; SLA всего пути
+не принят. В исходной квитанции физических pointer actions0; позднее дополнение
+подтвердило real PH011 browser drag и3-с finite gesture,14/14 APPLIED с COMPLETE/
+CLOSED и decode1396/1396 frames. Игра явно disconnected за AFK, не navigation.
+Current console также прошла браузерный fake
+Android тест с2 APPLIED/CLOSED;295 motor tests/Ruff passed. Синтетический120-frame
+1080p60 format test не заменяет настоящий Android encoder test.
+
+Journal/release transport gate теперь пройден. Дальше: пользователь может поднять
+только teaching emulator/game до native1080p для контролируемого опыта; нужен
+свежий вход в мир и человеческий finite маршрут. Для опыта использовать1080p
+и100% внутреннего rendering. Начать с30 уникальных FPS,60 сравнить на поворотах;
+не менять весь парк. Независимый repeat записать на настоящих production540p/50%
+settings. Offline downscale/JPEG помогает найти слабые landmarks, но не доказывает
+качество renderer или прохождения. При unknown — останов, не blind recorded replay.
+
+После записи — калибровка локального path follower, stop/обход/возврат/arrival и10
+повторов; затем20/50-device load. Обязательность neural motor на каждом шаге не
+вводится: overlay/goal interface NitroGen/P2P ещё требует opposite-goal доказательства.
+Модели/веса/GPU requirements этим recorder не расширялись. [Формат и CLI](../audits/2026-10-24/MOTOR-TEACHING080.md).

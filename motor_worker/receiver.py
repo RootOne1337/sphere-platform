@@ -12,7 +12,9 @@ from motor_worker.protocol import ProtocolError
 H264_PACKET_CAPACITY = 2048
 
 
-def configure_h264_receiver(receiver, *, clock=time.perf_counter):
+def configure_h264_receiver(receiver, *, clock=time.perf_counter, encoded_observer=None):
+    if encoded_observer is not None and not callable(encoded_observer):
+        raise ProtocolError("invalid_encoded_observer")
     if version("aiortc") != "1.15.0":
         raise ProtocolError("unsupported_h264_receiver_version")
     from aiortc.jitterbuffer import JitterBuffer
@@ -76,6 +78,8 @@ def configure_h264_receiver(receiver, *, clock=time.perf_counter):
                 self.stall_recoveries += 1
             self.pli_requests += int(pli)
             self.emitted_frames += int(frame is not None)
+            if encoded_observer is not None and (frame is not None or pli):
+                encoded_observer(frame.data if frame else None, frame.timestamp if frame else None, now, pli)
             return pli, frame
 
         def report(self):

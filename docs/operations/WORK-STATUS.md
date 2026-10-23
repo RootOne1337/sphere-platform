@@ -2,7 +2,19 @@
 
 **Проверенная установка:** UI `a239baa2` / API `1afdc529`.
 
-**23 октября — исследование навигации и обучающей записи.** План3.4 сопоставляет
+**24 октября — worker0.8.0: первый исполнимый teaching pipeline.** Исходный H.264,
+own native pointer journal, strict dataset/COMPLETE, локальная ручная панель,
+ordered feature bundle/temporal progress и offline degraded-quality experiment.
+295 tests/Ruff passed. Final real PH011137/137 decoded, max receive gap93,791мс;
+ранний276-frame run имел gap367,097мс и не исключён из результатов.2 fake APPLIED
+и safe Stop проверены браузером на fake Android. Позднее на реальном PH011 прошли
+два жеста/14 APPLIED,один3016мс, COMPLETE/CLOSED; game disconnected. Ни gameplay
+teaching, ни Android1080p60,
+ни независимый low-render repeat, ни controller/объезд/arrival/fleet не приняты.
+Plan3.5; product9/41/50 неизменён. APK88/API/UI/VPN/guards сохранены; новых CI jobs
+нет. [Код, доказательства, команды и следующий допуск](../audits/2026-10-24/MOTOR-TEACHING080.md).
+
+**Предыдущий этап23 октября — исследование навигации и обучающей записи.** План3.4 сопоставляет
 teach-and-repeat, миникарту/дорожный граф, локальные controllers и свежие препятствия.
 Предложен device video + input journal/clock mapping; native30FPS master отдельно
 от5Гц runtime. Это design/research, recorder и новые physical policies не включены,

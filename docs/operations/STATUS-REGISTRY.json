@@ -1,8 +1,8 @@
 {
   "schemaVersion": 1,
-  "reviewedAtUtc": "2026-10-23T15:30:02.348427+00:00",
-  "sourceReviewed": "3f57b3d9690247ddfd16fe9de6fb0dba682e0d3c",
-  "scope": "Measured WSL cache/commit recovery without restarting services; actual P2P5Hz PH011 shadow and negative Qwen0.8B/2B qualification. Navigation remains unaccepted; APK88 installation bindings retained.",
+  "reviewedAtUtc": "2026-10-23T19:12:19.847377+00:00",
+  "sourceReviewed": "1f2baa1953d6030b22fa2ee896c9e350e832b3ce",
+  "scope": "Opt-in direct encoded teaching recorder, own native journal, ordered view bundles and conservative observation-only progress. Physical teaching gesture, source clock mapping, autonomous navigation and fleet remain unaccepted; installed APK88/UI/API bindings retained.",
   "baseline": "docs/audits/2026-10-05/ENTERPRISE-PRODUCT-BACKLOG.json",
   "previousCrosscheck": "docs/audits/2026-10-09/CHAT-CODE-RECONCILIATION.json",
   "counts": {
@@ -6550,5 +6550,32 @@
     "goalNavigationAccepted": false,
     "vlmObstacleProviderAccepted": false,
     "scope": "One clean WSL pagecache reclaim returned commit reserve; existing container/VM identities retained. P2P125 menu/124 world shadow; Qwen coordinate and obstacle qualification failed. No model left resident, no fleet/GPU scaling acceptance."
+  },
+  "motorTeaching080": {
+    "evidence": "docs/audits/2026-10-24/MOTOR-TEACHING080.json",
+    "evidenceSha256NormalizedLf": "0cf7f59673170333c430777e4fb59ba87e961a811a95b58a22989778f28a3650",
+    "workerVersion": "0.8.0",
+    "motorTestsPassed": 295,
+    "encodedRecorderImplemented": true,
+    "ownInputJournalImplemented": true,
+    "manualLoopbackConsoleImplemented": true,
+    "orderedViewBundleImplemented": true,
+    "sequentialObservationImplemented": true,
+    "physicalAndroidPointerActions": 14,
+    "physicalHumanTeachingConfirmed": false,
+    "android1080p60Accepted": false,
+    "realLowRenderRepeatAccepted": false,
+    "sourceCaptureToActionLatencyAccepted": false,
+    "autonomousNavigationAccepted": false,
+    "dynamicObstacleAvoidanceAccepted": false,
+    "fleetAccepted": false,
+    "productionAccepted": false,
+    "scope": "Real PH011 encoded capture/decode, browser drag and3s native gesture journal14/14 APPLIED/CLOSED. Game disconnected for inactivity: no gameplay route. Final295 tests/Ruff pass; retained367ms receiver gap. Main-web teaching module, source clock mapping, world pose, graph, controller/avoidance/arrival/fleet remain open.",
+    "nativeEvidence": "docs/audits/2026-10-24/MOTOR-TEACHING080-NATIVE.json",
+    "nativeEvidenceSha256NormalizedLf": "bcef9ae39eecf19b1bf0ca268ae26e004ddfc0f746c33d6085252c5fc1da737b",
+    "physicalNativeGestures": 2,
+    "physicalNativeJournalConfirmed": true,
+    "nativeSlowGestureDurationMs": 3016,
+    "controlledHighQualityRecordingTrialPrepared": true
   }
 }

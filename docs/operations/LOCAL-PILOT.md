@@ -2,7 +2,16 @@
 
 **Проверенная установка:** UI `a239baa2` / API `1afdc529`.
 
-**23 октября — worker0.7.5:** shared immutable RGB + bounded visual reference
+**24 октября — worker0.8.0:** opt-in original H.264 recorder и отдельная localhost
+human teaching console; собственный native journal, strict import, ordered route
+features и offline quality check.295 motor tests/Ruff прошли. Real PH011137/137
+decoded в финальном5-секундном read-only run; браузерные2 APPLIED проверены только
+на fake Android. Позднее на настоящем PH011 подтверждены14/14 APPLIED двух жестов,
+один удерживался3с; COMPLETE/CLOSED и decode всех1396 frames. Игра отключена за AFK,
+не навигация. Теперь можно готовить1080p60 для контролируемого capture trial. APK/VPN/UI/API
+сохранены; CI jobs не запускались. [Допуск, CLI и границы](../audits/2026-10-24/MOTOR-TEACHING080.md).
+
+**Предыдущий срез23 октября — worker0.7.5:** shared immutable RGB + bounded visual reference
 на CPU; persisted features распознаны50/50 раз в новом capture epoch. Concurrent
 P2P shadow:74 ответа за~15с, native input0.263 tests/Ruff прошли; все5 finite runs
 вышли штатно. Один ранний observer дал gap1,02с. Gameplay после AFK, маршруты,

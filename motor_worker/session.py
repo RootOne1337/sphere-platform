@@ -108,12 +108,18 @@ class HeadlessSession:
         policy: Policy | None = None,
         policy_timeout: float = 0.25,
         policy_max_receiver_age: float = 0.5,
+        recording=None,
     ):
+        if recording is not None:
+            from motor_worker.teach_capture import TeachCapture
+            if type(recording) is not TeachCapture or recording.identity["device_id"] != config.device_id:
+                raise ProtocolError("invalid_teach_capture_sink")
         if policy is not None and not config.shadow_policy:
             raise ProtocolError("external_policy_requires_shadow_mode")
         if isinstance(policy, MinimapRouteShadow) and config.probe_control:
             raise ProtocolError("minimap_analysis_forbids_native_admission")
         self.config = config
+        self.recording, self.recording_summary = recording, None
         self.peer = None
         self.ws = None
         self.media = None
@@ -243,7 +249,9 @@ class HeadlessSession:
         receiver = self.peer.addTransceiver("video", direction="recvonly")
         from motor_worker.receiver import configure_h264_receiver
 
-        self.h264_packet_buffer = configure_h264_receiver(receiver.receiver)
+        self.h264_packet_buffer = configure_h264_receiver(
+            receiver.receiver, encoded_observer=self._record_encoded if self.recording else None
+        )
         self.media = self.peer.createDataChannel("sphere-video-v1", ordered=True)
         from motor_worker.sctp_diagnostics import observe_sctp
 
@@ -391,6 +399,15 @@ class HeadlessSession:
             self.fail("transport_unavailable")
         finally:
             await self.close()
+            if self.recording:
+                self.recording_summary = await asyncio.to_thread(
+                    self.recording.finish,
+                    transport_success=self.failure is None and self.cleanup_finished
+                    and self.monitor_seconds >= self.config.duration,
+                    input_released=self.release_confirmed,
+                )
+                if not self.recording_summary["complete"] and self.failure is None:
+                    self.failure, self.failure_phase = self.recording_summary["failure"], "teach_finalize"
         return self.report()
 
     async def _capture_messages(self) -> None:
@@ -454,12 +471,26 @@ class HeadlessSession:
                 raise ProtocolError("video_dimensions_changed")
             self.frames.put(frame, time.perf_counter())
 
+    def _record_encoded(self, data, timestamp, now, discontinuity):
+        if not self.recording or self.closing or self.retiring_transport or not self.binding:
+            return
+        if discontinuity and self.recording.frames:
+            self.recording.abort("teach_packet_discontinuity")
+        elif data is not None:
+            self.recording.offer_access_unit(data, timestamp, now)
+        if self.recording.failure:
+            self.fail(self.recording.failure)
+
     def _media_message(self, raw: object) -> None:
         try:
             if self.session is None:
                 raise ProtocolError("missing_session_binding")
             if self.binding is None:
                 self.binding = VideoBinding.parse(raw, self.session)
+                if self.recording:
+                    self.recording.bind(self.binding)
+                    if self.recording.failure:
+                        raise ProtocolError(self.recording.failure)
                 if self.availability:
                     self.availability.bind(self.binding.epoch)
                 if self.capture_dimensions is not None and self.capture_dimensions != (
@@ -492,6 +523,10 @@ class HeadlessSession:
                 raise ProtocolError("unsolicited_control_message")
             prior_alive, prior_applied = self.admission.alive_receipts, self.admission.applied_receipts
             self.admission.receive(raw, time.perf_counter())
+            if self.recording:
+                self.recording.receipt(data, time.perf_counter())
+                if self.recording.failure:
+                    raise ProtocolError(self.recording.failure)
             if self.admission.alive_receipts > prior_alive:
                 self.control_rtt_samples.append({"kind": "alive", "rttMs": self.admission.last_actor_rtt_ms})
             if self.admission.applied_receipts > prior_applied:
@@ -784,6 +819,8 @@ class HeadlessSession:
         ):
             raise ProtocolError("control_unavailable")
         self.control.send(json.dumps(packet, separators=(",", ":")))
+        if self.recording and not self.recording.command(packet, time.perf_counter()):
+            raise ProtocolError(self.recording.failure)
 
     async def close_control(self) -> None:
         if self.admission and self.admission.closed:
@@ -847,6 +884,7 @@ class HeadlessSession:
         control = self.admission
         return {
             "schemaVersion": 1,
+            "teachingCapture": self.recording_summary,
             "kind": "HEADLESS_MINIMAP_ROUTE_ANALYSIS_NOT_GAMEPLAY"
             if self.shadow and isinstance(self.shadow.provider, MinimapRouteShadow)
             else "HEADLESS_POLICY_SHADOW_NOT_GAMEPLAY"

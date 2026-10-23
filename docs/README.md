@@ -2,7 +2,15 @@
 
 **Проверенная установка:** UI `a239baa2` / API `1afdc529`.
 
-**23 октября — worker0.7.5:** общий immutable RGB и CPU-память вида ORB/RANSAC.
+**24 октября — worker0.8.0:** explicit H.264 teaching recorder, own pointer journal,
+локальная ручная панель, offline route bundle/quality и sequential observation.
+295 motor tests/Ruff passed; финальный PH011 read-only137/137 decoded. Дополнение:
+два real gestures/14 APPLIED,один3с; disconnected game. Gameplay teaching,
+реальный1080p60/low-render repeat, controller/объезд/arrival
+и fleet остаются открытыми. [Квитанция и команды](audits/2026-10-24/MOTOR-TEACHING080.md) ·
+[План3.5](design/MOTOR-AI-PLATFORM.md#267-реализация080-и-допуск-обучающей-записи).
+
+**Предыдущий срез23 октября — worker0.7.5:** общий immutable RGB и CPU-память вида ORB/RANSAC.
 Сохранённый feature-файл107KB, без RGB, узнан50/50 раз в новой сессии; совместный
 P2P shadow дал74 ответа за~15с.263 tests/Ruff прошли. Ввод0; ранний gap1,02с,
 preflight после AFK, физический маршрут, препятствия и fleet SLA остаются открытыми.
