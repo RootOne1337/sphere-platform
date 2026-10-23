@@ -33,7 +33,8 @@ function frame(value) {
   // Chromium reports 0x0 for delta frames. Only an already bound SPS/IDR may
   // establish geometry; a newly reported size or keyframe must still match.
   const omittedGeometry = (meta.width === 0 || meta.width === undefined) && (meta.height === 0 || meta.height === undefined);
-  if (meta.mimeType?.toLowerCase() !== 'video/h264' || !knownGeometry && (!r.started || !omittedGeometry)) {
+  if (meta.mimeType?.toLowerCase() !== 'video/h264'
+    || !knownGeometry && !(omittedGeometry && (r.started || value.type === 'delta'))) {
     failure(r, 'encoded_geometry_or_codec_changed'); return;
   }
   const timestamp = meta.rtpTimestamp;

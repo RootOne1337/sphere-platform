@@ -28,7 +28,7 @@ function fixture(){
   vm.runInContext(fs.readFileSync(path.join(process.cwd(),'public/teaching-recorder.worker.js'),'utf8'),context);
   vm.runInContext('transformer={sendKeyFrameRequest:()=>Promise.resolve()}',context);
   const config={id:'a'.repeat(32),storage_scope:'b'.repeat(32),width:960,height:540};
-  const frame=(ticks:number,key=true,metadata:Record<string,unknown>={})=>context.frame({data:Uint8Array.from(key?[0,0,0,1,103,66,0,31,0,0,1,104,1,0,0,1,101,9]:[0,0,0,1,65,9]).buffer,
+  const frame=(ticks:number,key=true,metadata:Record<string,unknown>={})=>context.frame({type:key?'key':'delta',data:Uint8Array.from(key?[0,0,0,1,103,66,0,31,0,0,1,104,1,0,0,1,101,9]:[0,0,0,1,65,9]).buffer,
     getMetadata:()=>({mimeType:'video/H264',width:960,height:540,rtpTimestamp:ticks,synchronizationSource:777,...metadata})});
   const folder=async()=>root.getDirectoryHandle('sphere-teaching-'+config.storage_scope).then(f=>f.getDirectoryHandle(config.id));
   return{root,messages,context,config,frame,folder,advance:()=>{at+=200;}};
@@ -74,4 +74,10 @@ test('Chromium zero delta dimensions inherit bound IDR but a changed source or e
     await f.context.stop(true,null);const manifest=JSON.parse(((await f.folder()).entries.get('manifest.json') as MemoryFile).data.toString());
     expect(manifest.complete).toBe(metadata.width===0);expect(manifest.release_confirmed).toBe(true);
   }
+});
+test('starting mid-stream skips zero-geometry deltas until a real matching SPS PPS IDR arrives',async()=>{
+  const f=fixture();await f.context.arm(f.config);f.frame(87000,false,{width:0,height:0});f.frame(90000);
+  f.context.input({stage:'closed',at_ms:1001000,sequence:0,gesture:0,action:3,pointer_id:-1,outcome:'closed'});
+  await f.context.stop(true,null);const manifest=JSON.parse(((await f.folder()).entries.get('manifest.json') as MemoryFile).data.toString());
+  expect(manifest.complete).toBe(true);expect(manifest.frames).toBe(1);
 });
