@@ -1,6 +1,6 @@
 /* Original received H264 only. This worker never modifies or delays decoded delivery for disk IO. */
 'use strict';
-let transformer, recording = null, command = Promise.resolve();
+let transformer, recording = null, command = Promise.resolve(), observedFrames = 0;
 const encode = new TextEncoder();
 const stamp = () => performance.timeOrigin + performance.now();
 const hash = async bytes => Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256', bytes)), b => b.toString(16).padStart(2, '0')).join('');
@@ -25,6 +25,13 @@ function enqueue(r, bytes, write) {
   return true;
 }
 function frame(value) {
+  observedFrames++;
+  if (observedFrames === 1 || observedFrames % 60 === 0) {
+    const meta = value.getMetadata();
+    postMessage({ type: 'encoded_status', frames: observedFrames, kind: value.type,
+      nal_types: [...nalTypes(new Uint8Array(value.data))], width: meta.width ?? null,
+      height: meta.height ?? null, codec: meta.mimeType ?? null });
+  }
   const r = recording;
   if (!r?.accept) return;
   if (stamp() - r.at > 120000 || r.frames >= 7200) { failure(r, 'recording_duration_limit'); return; }
@@ -127,6 +134,7 @@ async function stop(confirmed, reason) {
   files['video.h264'] = { bytes: (await read('video.h264')).size, integrity: 'sha256_per_access_unit_in_frames_jsonl' };
   const manifest = { schema: 'sphere-browser-teaching-v1', id: r.id, config: r.config,
     started_at_ms: r.at, finalized_at_ms: stamp(), frames: r.frames, events: r.events, files,
+    observed_encoded_frames: observedFrames,
     clock: { media: 'rtp_90000_relative', browser: 'performance_timeOrigin_plus_now',
       native: 'android_uptime_ms_in_receipts', android_to_browser_mapping: null },
     complete: !r.failure, failure: r.failure, release_confirmed: confirmed && r.closed };

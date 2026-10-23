@@ -24,6 +24,7 @@ export async function connectTeaching(deviceId: string, token: string, video: HT
   let session: string | null = null, dimensions: { width: number; height: number } | null = null;
   let binding: DirectVideoBinding | null = null, endpoint: DirectControlEndpoint | null = null;
   let cancel: (() => void) | null = null, disposed = false, attached = false;
+  let peerSession: string | null = null, lastRenew = -Infinity, renewPendingAt: number | null = null;
   let lastFrame = 0, frameId: number | null = null;
   const close = () => {
     if (disposed) return;
@@ -47,6 +48,12 @@ export async function connectTeaching(deviceId: string, token: string, video: HT
     if (disposed) return;
     if (lastFrame && performance.now() - lastFrame > 1000) fault('video_stalled');
     if (document.hidden) fault('page_hidden');
+    const now = performance.now();
+    if (renewPendingAt !== null && now - renewPendingAt > 5000) fault('capture_renewal_unconfirmed');
+    if (fresh() && peerSession && renewPendingAt === null && now - lastRenew >= 3000 && socket.readyState === 1) {
+      lastRenew = now; renewPendingAt = now;
+      socket.send(JSON.stringify({ type: 'video_delivery', mode: 'direct', peer_session: peerSession }));
+    }
   }, 100);
   signal.addEventListener('abort', close, { once: true });
   worker.onmessage = event => {
@@ -72,6 +79,7 @@ export async function connectTeaching(deviceId: string, token: string, video: HT
         dimensions = { width: value.width, height: value.height };
         cancel = startDirectVideoSession(`${base}/ws/direct-probe/${encodeURIComponent(deviceId)}`, token, result => {
           if (disposed) return;
+          if (result.session && /^[0-9a-f]{32}$/.test(result.session)) peerSession = result.session;
           if (result.videoBinding) {
             const next = result.videoBinding;
             if (next.width !== dimensions!.width || next.height !== dimensions!.height
@@ -98,7 +106,10 @@ export async function connectTeaching(deviceId: string, token: string, video: HT
       // capture-only socket rejects client pong messages; WebSocket ping/pong
       // control frames are handled by the browser/network stack separately.
       } else if (value.type === 'ping') { /* no application reply */ }
-      else if (!['stream_link_ready','video_delivery_ack'].includes(value.type)) throw Error();
+      else if (value.type === 'video_delivery_ack') {
+        if (value.mode !== 'direct' || renewPendingAt === null) throw Error();
+        renewPendingAt = null;
+      } else if (value.type !== 'stream_link_ready') throw Error();
     } catch { fault('invalid_capture_message'); }
   };
   return { close, fresh, binding: () => binding, endpoint: () => endpoint, worker };

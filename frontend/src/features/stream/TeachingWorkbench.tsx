@@ -26,6 +26,7 @@ export function TeachingWorkbench({ deviceId, readOnly }: { deviceId: string; re
   const [calibrate, setCalibrate] = useState<'stick' | 'action' | null>(null);
   const [title, setTitle] = useState('Маршрут 01');
   const [progress, setProgress] = useState({ frames: 0, bytes: 0, seconds: 0 });
+  const [encoded, setEncoded] = useState('Encoded-приём ожидается');
   const [ready, setReady] = useState(false); const [clip, setClip] = useState<string | null>(null);
   const [refresh, setRefresh] = useState(0);
   const video = useRef<HTMLVideoElement>(null); const host = useRef<HTMLDivElement>(null);
@@ -107,6 +108,7 @@ export function TeachingWorkbench({ deviceId, readOnly }: { deviceId: string; re
           if (message.type === 'attached') attached.current = true;
           if (message.type === 'recording') { change('recording'); setNotice('Идёт запись оригинального видео и подтверждённых действий.'); video.current?.focus(); }
           if (message.type === 'progress') setProgress({ frames: Number(message.frames), bytes: Number(message.bytes), seconds: Number(message.seconds) });
+          if (message.type === 'encoded_status') setEncoded(`Encoded ${Number(message.frames)} · ${String(message.kind)} · NAL ${Array.isArray(message.nal_types) ? message.nal_types.join('/') : '?'} · ${String(message.width)}×${String(message.height)}`);
           if (message.type === 'failed') { setNotice(`Ошибка записи: ${String(message.reason)}`); void stopCallback.current(String(message.reason)); }
           if (message.type === 'finalized') {
             setClip(typeof message.id === 'string' && /^[0-9a-f]{32}$/.test(message.id) ? message.id : null); setRefresh(v => v + 1);
@@ -206,7 +208,7 @@ export function TeachingWorkbench({ deviceId, readOnly }: { deviceId: string; re
           onPointerUp={e => { if (mouse.current === e.pointerId) { mouse.current = null; controller.current?.set(1,null); e.currentTarget.releasePointerCapture(e.pointerId); } }}
           onPointerCancel={() => { void stop('pointer_cancelled'); }}
           onLostPointerCapture={e => { if (mouse.current === e.pointerId) void stop('pointer_capture_lost'); }} />
-        <div className="flex flex-wrap gap-2 border-t border-border p-3 text-xs text-muted-foreground"><span className="rounded-md bg-muted px-2 py-1">WASD · стик</span><span className="rounded-md bg-muted px-2 py-1">Shift · 40% скорости</span><span className="rounded-md bg-muted px-2 py-1">ЛКМ + движение · камера</span><span className="rounded-md bg-muted px-2 py-1">Пробел · удержание кнопки</span></div>
+        <div className="flex flex-wrap gap-2 border-t border-border p-3 text-xs text-muted-foreground"><span className="rounded-md bg-muted px-2 py-1">WASD · стик</span><span className="rounded-md bg-muted px-2 py-1">Shift · 40% скорости</span><span className="rounded-md bg-muted px-2 py-1">ЛКМ + движение · камера</span><span className="rounded-md bg-muted px-2 py-1">Пробел · удержание кнопки</span><span>{encoded}</span></div>
       </section>
       <aside className="space-y-4 rounded-2xl border border-border bg-card p-4">
         <h3 className="font-semibold">Подготовка маршрута</h3>
