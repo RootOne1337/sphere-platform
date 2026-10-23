@@ -24,6 +24,29 @@ class MotorBudgetTests(unittest.TestCase):
         self.assertEqual(result["maximumBatchMsForThisRoundBudget"], 20)
         self.assertFalse(result["inferenceArithmeticFitsBudget"])
 
+    def test_two_gpus_do_not_make_fifty_agents_free(self):
+        result = plan_budget(50, 5, gpus=2)
+        self.assertEqual(result["aggregateObservationsPerSecond"], 250)
+        self.assertEqual(result["maximumDevicesPerGpuAssumed"], 25)
+        self.assertEqual(result["maximumObservationsPerSecondPerGpu"], 125)
+        self.assertAlmostEqual(result["maximumBatchMsForThisRoundBudget"], 5.6)
+        self.assertFalse(result["gameplayReady"])
+
+    def test_uneven_gpu_assignment_and_partial_batches_both_cost(self):
+        result = plan_budget(5, 5, gpus=2, batch_size=2, batch_ms=71)
+        self.assertEqual(result["maximumDevicesPerGpuAssumed"], 3)
+        self.assertEqual(result["maximumBatchesPerGpuPerRound"], 2)
+        self.assertEqual(result["roundServiceMsAtSuppliedCost"], 142)
+        self.assertFalse(result["inferenceArithmeticFitsBudget"])
+        extra = plan_budget(1, 5, gpus=2, batch_ms=100)
+        self.assertEqual(extra["roundServiceMsAtSuppliedCost"], 100)
+        self.assertTrue(extra["inferenceArithmeticFitsBudget"])
+
+    def test_invalid_gpu_count_refused(self):
+        for count in (0, -1, True, 1.5, 257):
+            with self.subTest(gpus=count), self.assertRaises(ValueError):
+                plan_budget(50, 5, gpus=count)
+
     def test_budget_boundary_does_not_certify_gameplay(self):
         result = plan_budget(50, 5, batch_size=8, batch_ms=20)
         self.assertTrue(result["inferenceArithmeticFitsBudget"])

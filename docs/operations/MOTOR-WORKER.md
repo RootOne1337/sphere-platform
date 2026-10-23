@@ -5,6 +5,19 @@ GPS-анализ — необязательный observer. Общие зада�
 Эти goal/skill contracts пока проектные: stdio-v1 не передаёт цель в NitroGen/P2P.
 Последний decoded frame хранится в RAM, PNG сохраняется только явно через `--snapshot`.
 
+**23 октября ·0.7.1:** добавлен opt-in `GoalBoundPolicy` в
+[`goals.py`](../../motor_worker/goals.py). Provider должен явно поддерживать `text`
+или `image_point` и реализовать `predict_goal`; image-only NitroGen и прежний
+stdio-v1 этим контрактом автоматически не расширяются. Цель связана с task/revision,
+profile revision, capture epoch и monotonic expiry. Смена/очистка или невалидная
+замена цели инвалидирует outstanding result; второй inference одновременно не
+запускается. Проверяются request/frame/goal binding и deadline перед возвратом chunk.
+Это допуск результата, не планировщик, физический stop, retirement provider или
+доказательство навыка навигации. Общий CLI и Android executor не включают новый
+provider автоматически. 209 motor tests и Ruff прошли; физический A→Б этим не принят.
+Offline `motor_budget --gpus N` теперь учитывает наиболее занятую GPU и стоимость
+последнего неполного batch; распределение и batch throughput остаются допущениями.
+
 **21 октября ·0.7.0:** добавлен bounded read-only анализ GPS-линии миникарты с отдельным
 JSON-профилем и штатным CLI.184 motor tests/Ruff прошли.20 сохранённых кадров:18 контуров
 без калиброванного heading,2 отказа. Свежий PH025 CLI:99 анализов/5.001Гц, минимум4 в полной

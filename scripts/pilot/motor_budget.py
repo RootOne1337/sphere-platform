@@ -23,6 +23,7 @@ def plan_budget(
     observation_hz: float,
     *,
     batch_size: int = 1,
+    gpus: int = 1,
     batch_ms: float | None = None,
     utilization: float = 0.7,
     source_fps: float | None = None,
@@ -30,6 +31,8 @@ def plan_budget(
 ) -> dict:
     if isinstance(devices, bool) or not isinstance(devices, int) or not 1 <= devices <= 10000:
         raise ValueError("devices must be an integer from 1 to 10000")
+    if isinstance(gpus, bool) or not isinstance(gpus, int) or not 1 <= gpus <= 256:
+        raise ValueError("gpus must be an integer from 1 to 256")
     if (
         isinstance(batch_size, bool)
         or not isinstance(batch_size, int)
@@ -50,8 +53,12 @@ def plan_budget(
     if not math.isfinite(period_ms) or period_ms <= 0:
         raise ValueError("observation_hz produces an unrepresentable period")
     batches = math.ceil(devices / batch_size)
+    # Optimistic independent, identical GPU assignment. The most loaded GPU
+    # still pays for its final partial batch; idle cards cannot merge VRAM.
+    max_devices_per_gpu = math.ceil(devices / gpus)
+    batches_per_gpu = math.ceil(max_devices_per_gpu / batch_size)
     observations = devices * observation_hz
-    round_ms = None if batch_ms is None else batches * batch_ms
+    round_ms = None if batch_ms is None else batches_per_gpu * batch_ms
     derived = [observations, period_ms * utilization, observations * 256 * 256 * 3 * 8 / 1_000_000]
     if round_ms is not None:
         derived.extend([round_ms, round_ms / period_ms])
@@ -64,13 +71,17 @@ def plan_budget(
     return {
         "kind": "CALCULATION_NOT_A_BENCHMARK",
         "devices": devices,
+        "gpusAssumed": gpus,
+        "maximumDevicesPerGpuAssumed": max_devices_per_gpu,
+        "maximumObservationsPerSecondPerGpu": max_devices_per_gpu * observation_hz,
         "observationHzPerDevice": observation_hz,
         "aggregateObservationsPerSecond": observations,
         "observationPeriodMs": period_ms,
         "batchSizeAssumed": batch_size,
         "batchesPerSynchronizedRound": batches,
+        "maximumBatchesPerGpuPerRound": batches_per_gpu,
         "utilizationBudget": utilization,
-        "maximumBatchMsForThisRoundBudget": period_ms * utilization / batches,
+        "maximumBatchMsForThisRoundBudget": period_ms * utilization / batches_per_gpu,
         "batchMsSupplied": batch_ms,
         "roundServiceMsAtSuppliedCost": round_ms,
         "roundDutyAtSuppliedCost": None if round_ms is None else round_ms / period_ms,
@@ -89,6 +100,7 @@ def plan_budget(
         "rawRgb256ObservationPayloadMbps": derived[2],
         "assumptions": [
             "One latest observation per device per synchronized round; final partial batch costs a full batch.",
+            "GPUs assumed identical and independent with balanced assignment; VRAM is not pooled. This is not a measured multi-GPU scheduler.",
             "Supplied batch time must include preprocessing/model/postprocessing allocated to the worker; values are not measured here.",
             "Batching is a proposed adapter capability; upstream InferenceSession server is not a fleet batch scheduler.",
             "Decode, network, queue tails, other GPU work, VRAM and game competence are not certified by a fit result.",
@@ -104,6 +116,7 @@ def main() -> None:
     parser.add_argument("--devices", type=int, required=True)
     parser.add_argument("--observation-hz", type=float, required=True)
     parser.add_argument("--batch-size", type=int, default=1)
+    parser.add_argument("--gpus", type=int, default=1)
     parser.add_argument("--batch-ms", type=float)
     parser.add_argument("--utilization", type=float, default=0.7)
     parser.add_argument("--source-fps", type=float)
