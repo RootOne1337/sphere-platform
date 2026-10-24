@@ -23,6 +23,7 @@ from urllib.parse import parse_qs, urlsplit
 SOURCE = "3d835ec1a5802d64a8b8b15f817a1ab54809bfe4"
 WEIGHTS = "364492e38a3a06d221ac75da7f6621ada3f2361cd24fde11ba79091e9f40efcf"
 MAX_BODY = 512 * 1024
+MAX_SESSION_SECONDS = 900  # Warm-up plus a full ten-minute teaching recording.
 
 
 def unproject(depth, confidence, intrinsics, extrinsics, rgb):
@@ -87,9 +88,9 @@ class Geometry:
         self.root, self.device, self.np, self.rr, self.torch = root, device, np, rr, torch
         self.processor = InputProcessor()
         self.blueprint = rrb.Blueprint(rrb.Horizontal(
-            rrb.Spatial3DView(origin="world", name="Relative two-view geometry"),
-            rrb.Vertical(rrb.Spatial2DView(origin="world/camera0", name="Previous view"),
-                         rrb.Spatial2DView(origin="world/camera1", name="Current view")), column_shares=[2, 1]),
+            rrb.Spatial3DView(origin="world", name="Geometry · uncalibrated units"),
+            rrb.Vertical(rrb.Spatial2DView(origin="views/previous", name="Previous view"),
+                         rrb.Spatial2DView(origin="views/current", name="Current view")), column_shares=[2, 1]),
             collapse_panels=True)
         self.previous = None
         self.windows = 0
@@ -146,6 +147,8 @@ class Geometry:
             rr.log(f"world/camera{i}", rr.Transform3D(translation=-rotation @ ext[:3, 3], mat3x3=rotation))
             rr.log(f"world/camera{i}", rr.Pinhole(image_from_camera=arrays["intrinsics"][i], resolution=[colors[i].shape[1], colors[i].shape[0]], camera_xyz=rr.ViewCoordinates.RDF, image_plane_distance=0.15))
             rr.log(f"world/camera{i}/image", rr.Image(colors[i]))
+            # Flat image views must not inherit a moving 3D camera transform.
+            rr.log("views/previous" if i == 0 else "views/current", rr.Image(colors[i]))
         self.previous = current
         self.windows += 1
         return {"windows": self.windows, "points": count, "inference_ms": round(elapsed, 2), "frame_sequence": sequence, "state": "relative_window_not_map"}
@@ -170,17 +173,17 @@ class Handler(BaseHTTPRequestHandler):
 
     def respond(self, status, value):
         data = json.dumps(value).encode()
-        self.send_response(status)
-        self.send_header("Content-Type", "application/json")
-        self.send_header("Content-Length", str(len(data)))
-        self.send_header("Cache-Control", "no-store")
-        if self.headers.get("Origin") == self.server.origin:
-            self.send_header("Access-Control-Allow-Origin", self.server.origin)
-            self.send_header("Vary", "Origin")
-        self.end_headers()
         try:
+            self.send_response(status)
+            self.send_header("Content-Type", "application/json")
+            self.send_header("Content-Length", str(len(data)))
+            self.send_header("Cache-Control", "no-store")
+            if self.headers.get("Origin") == self.server.origin:
+                self.send_header("Access-Control-Allow-Origin", self.server.origin)
+                self.send_header("Vary", "Origin")
+            self.end_headers()
             self.wfile.write(data)
-        except (BrokenPipeError, ConnectionResetError):
+        except (ConnectionError, TimeoutError):
             pass
 
     def trusted(self):
@@ -204,6 +207,8 @@ class Handler(BaseHTTPRequestHandler):
             return self.respond(409, {"error": "busy_no_queue"})
         try:
             self.handle_post()
+        except (ConnectionError, TimeoutError):
+            pass  # A browser closing its socket is not a geometry/model failure.
         except (ValueError, KeyError, TypeError):
             self.respond(400, {"error": "invalid_request"})
         except Exception:
@@ -217,7 +222,8 @@ class Handler(BaseHTTPRequestHandler):
         path = urlsplit(self.path)
         now = time.monotonic()
         session = self.server.session
-        if session and (now - session["last"] > 20 or now - session["born"] > 600):
+        expired = bool(session and (now - session["last"] > 20 or now - session["born"] > MAX_SESSION_SECONDS))
+        if expired:
             self.server.session = session = None
             self.server.geometry.previous = None
         if path.path == "/session":
@@ -233,6 +239,8 @@ class Handler(BaseHTTPRequestHandler):
             self.server.geometry.reset(session["id"])
             self.server.session = session
             return self.respond(200, {key: session[key] for key in ("id", "key")})
+        if expired:
+            return self.respond(410, {"error": "preview_expired"})
         if not session or not hmac.compare_digest(self.headers.get("X-Scene-Session", ""), session["id"]) or not hmac.compare_digest(self.headers.get("X-Scene-Key", ""), session["key"]):
             return self.respond(403, {"error": "session_denied"})
         if path.path == "/stop":
@@ -253,6 +261,7 @@ class Handler(BaseHTTPRequestHandler):
             raise ValueError()
         result = self.server.geometry.frame(data, sequence)
         session.update(sequence=sequence, last=time.monotonic())
+        result["expires_in_seconds"] = max(0, int(MAX_SESSION_SECONDS - (time.monotonic() - session["born"])))
         self.respond(200, result)
 
 
