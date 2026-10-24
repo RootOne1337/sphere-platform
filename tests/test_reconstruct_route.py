@@ -3,7 +3,12 @@ import hashlib
 
 import pytest
 
-from scripts.pilot.reconstruct_route import masked_inputs
+from scripts.pilot.reconstruct_route import (
+    brush_dataset,
+    masked_inputs,
+    preserve_checkpoint,
+    validate_splats,
+)
 
 
 def test_separate_masks_preserve_source_and_exclude_avatar(tmp_path):
@@ -21,3 +26,62 @@ def test_separate_masks_preserve_source_and_exclude_avatar(tmp_path):
         assert mask.getpixel((480, 400)) == 0
         assert mask.getpixel((300, 300)) == 255
     assert hashlib.sha256(source.read_bytes()).hexdigest() == before
+
+
+def ply(path, *, nan=False):
+    import struct
+
+    fields = ['x', 'y', 'z', 'opacity', 'scale_0', 'scale_1', 'scale_2',
+              'rot_0', 'rot_1', 'rot_2', 'rot_3', 'f_dc_0', 'f_dc_1', 'f_dc_2']
+    header = 'ply\nformat binary_little_endian 1.0\nelement vertex 400\n'
+    header += ''.join('property float ' + name + '\n' for name in fields) + 'end_header\n'
+    values = [1.] * (400 * len(fields))
+    if nan:
+        values[-1] = float('nan')
+    path.write_bytes(header.encode() + struct.pack('<' + 'f' * len(values), *values))
+
+
+def test_all_exported_floats_are_validated(tmp_path):
+    pytest.importorskip('numpy')
+    path = tmp_path / 'scene.ply'
+    ply(path)
+    assert validate_splats(path)['vertices'] == 400
+    ply(path, nan=True)
+    with pytest.raises(RuntimeError, match='nonfinite'):
+        validate_splats(path)
+    ply(path)
+    path.write_bytes(path.read_bytes()[:-4])
+    with pytest.raises(RuntimeError, match='invalid_layout'):
+        validate_splats(path)
+
+
+def test_failed_training_preserves_latest_valid_checkpoint_without_complete(tmp_path):
+    import json
+
+    pytest.importorskip('numpy')
+    (tmp_path / 'dense').mkdir()
+    ply(tmp_path / 'dense/scene_1000.ply')
+    ply(tmp_path / 'dense/scene_2000.ply', nan=True)
+    preserve_checkpoint(tmp_path, 5000)
+    checkpoint = json.loads((tmp_path / 'checkpoint.json').read_text())
+    assert checkpoint['steps'] == 1000 and checkpoint['partial'] is True
+    assert not (tmp_path / 'COMPLETE').exists()
+
+
+def test_brush_receives_only_one_model_and_only_its_registered_images(tmp_path):
+    prepared = tmp_path / 'prepared'
+    (prepared / 'images').mkdir(parents=True)
+    (prepared / 'sparse/0').mkdir(parents=True)
+    (prepared / 'models/1').mkdir(parents=True)
+    (prepared / 'masks').mkdir()
+    for name in ('cameras.bin', 'images.bin', 'points3D.bin'):
+        (prepared / 'sparse/0' / name).write_bytes(b'selected')
+        (prepared / 'models/1' / name).write_bytes(b'wrong-component')
+    for name in ('00000001.png', '00000002.png'):
+        (prepared / 'images' / name).write_bytes(b'RGB')
+        (prepared / 'masks' / name).write_bytes(b'mask')
+    folder = brush_dataset(tmp_path, prepared, ['00000001.png'])
+    assert len(list(folder.rglob('points3D.bin'))) == 1
+    assert (folder / 'sparse/0/points3D.bin').read_bytes() == b'selected'
+    assert [path.name for path in (folder / 'images').iterdir()] == ['00000001.png']
+    assert not (folder / 'models').exists()

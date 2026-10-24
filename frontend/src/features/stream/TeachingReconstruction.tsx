@@ -7,6 +7,7 @@ import {reconstructionRequest,terminalReconstruction,uploadReconstruction,type R
 const Scene=dynamic(()=>import('./ReconstructedScene'),{ssr:false,loading:()=> <p>Загружаем 3D-просмотр…</p>});
 const phases:Record<string,string>={uploading:'Передача сохранённой записи',starting:'Запуск обработчика',verifying:'Проверка исходника и освобождения ввода',extracting:'Извлечение кадров в исходном разрешении',features:'Поиск устойчивых визуальных признаков',matching:'Сопоставление соседних ракурсов',cameras:'Восстановление связанных камер',training:'Построение плотной Gaussian-сцены на GPU',complete:'Плотная сцена готова',failed:'Обработка остановлена',cancelled:'Задание отменено'};
 const reasons:Record<string,string>={no_connected_cameras_need_translation_and_overlap:'Не удалось связать камеры. Нужен проход с перемещением, перекрывающимися ракурсами и неподвижными деталями.',camera_quality_gate_failed:'Камеры восстановлены лишь частично или с большой ошибкой. Результат не принят как цельная сцена.',resource_guard:'Недостаточно ресурсов для безопасного продолжения.',worker_service_restarted:'Сервис был перезапущен. Исходная запись сохранена.',brush_failed_see_local_log:'Плотный рендер завершился с ошибкой. Камеры можно проверить отдельно.'};
+reasons.brush_timing_overflow='Brush завершился с ошибкой измерения времени GPU. Камеры и проверенные промежуточные результаты сохранены.';
 export function TeachingReconstruction({clip,scope,folder,complete,onBusyChange}:{clip:string;scope:string;folder:()=>FileSystemDirectoryHandle|null;complete:boolean;onBusyChange:(busy:boolean)=>void}) {
   const [job,setJob]=useState<ReconstructionJob|null>(null),[status,setStatus]=useState<ReconstructionState|null>(null),[error,setError]=useState<string|null>(null);
   const [mask,setMask]=useState('game'),[steps,setSteps]=useState(5000),[progress,setProgress]=useState('');
@@ -19,20 +20,21 @@ export function TeachingReconstruction({clip,scope,folder,complete,onBusyChange}
   useEffect(()=>{
     if(!job)return;let retired=false;let timer:ReturnType<typeof setTimeout>;const abort=new AbortController();
     const poll=async()=>{try{const next=await(await reconstructionRequest(`/jobs/${job.id}`,job,{signal:abort.signal})).json();if(retired)return;setStatus(next);setError(null);if(!terminalReconstruction(next))timer=setTimeout(()=>{void poll();},2500);}
-      catch(e){if(!retired){setError(`Локальный обработчик не ответил: ${e instanceof Error?e.message:'ошибка'}. Задание не повторялось.`);timer=setTimeout(()=>{void poll();},10000);}}};
+      catch(e){if(!retired){setError(e instanceof Error&&e.message==='job_not_found'?'Создание задания ещё не подтверждено. Можно продолжить подготовку с тем же идентификатором; обучение повторно не запускается.':`Локальный обработчик не ответил: ${e instanceof Error?e.message:'ошибка'}. Задание не повторялось.`);timer=setTimeout(()=>{void poll();},10000);}}};
     void poll();return()=>{retired=true;abort.abort();clearTimeout(timer);};
   },[job]);
   const start=async()=>{
     const source=folder();if(!source||uploadAbort.current)return;
     const controller=new AbortController();uploadAbort.current=controller;setUploading(true);setError(null);
+    let pending:ReconstructionJob|null=job;
     try{
       const next=job??{id:crypto.randomUUID().replaceAll('-',''),key:Array.from(crypto.getRandomValues(new Uint8Array(32)),v=>v.toString(16).padStart(2,'0')).join('')};
-      sessionStorage.setItem(storageKey,JSON.stringify(next));setJob(next);
-      const created=await(await reconstructionRequest('/jobs',null,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({...next,mask,steps}),signal:controller.signal})).json();setStatus(created);
+      pending=next;sessionStorage.setItem(storageKey,JSON.stringify(next));
+      const created=await(await reconstructionRequest('/jobs',null,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({...next,mask,steps}),signal:controller.signal})).json();setStatus(created);setJob(next);
       if(created.phase!=='uploading')return;
       await uploadReconstruction(source,next,(bytes,total)=>setProgress(`${(bytes/1048576).toFixed(1)} / ${(total/1048576).toFixed(1)} МБ`),controller.signal);
       const started=await(await reconstructionRequest(`/jobs/${next.id}/start`,next,{method:'POST',body:'{}',signal:controller.signal})).json();setStatus(started);
-    }catch(e){setError(`Запуск не подтверждён: ${e instanceof Error?e.message:'нет ответа'}. Проверяем существующее задание; повторного запуска нет.`);}
+    }catch(e){if(pending)setJob(pending);setError(`Запуск не подтверждён: ${e instanceof Error?e.message:'нет ответа'}. Проверяем существующее задание; повторного запуска нет.`);}
     finally{uploadAbort.current=null;setUploading(false);}
   };
   const cancel=async()=>{
@@ -53,6 +55,7 @@ export function TeachingReconstruction({clip,scope,folder,complete,onBusyChange}
     </div>}
     {error&&<p role="alert" className="text-sm text-destructive">{error}</p>}
     {status?.error&&<p role="alert" className="text-sm text-destructive">{reasons[status.error]??status.error} Исходное видео не изменено.</p>}
+    {status?.dense_partial_available&&status.checkpoint&&<p role="status" className="rounded-lg border border-amber-500/30 bg-amber-500/10 p-3 text-sm">Доступна проверенная промежуточная сцена: {status.checkpoint.steps} / {status.checkpoint.target_steps} итераций. Обработка не завершена успешно; это не окончательный результат.</p>}
     {status?.quality&&<p className="text-xs text-muted-foreground">Камеры {status.quality.registered}/{status.quality.selected} · покрытие {(status.quality.coverage*100).toFixed(0)}% · ошибка {status.quality.mean_reprojection_px.toFixed(2)} px</p>}
     {job&&status?.geometry_available&&<Scene job={job} status={status}/>}
     <p className="text-xs leading-5 text-muted-foreground">Маска применяется до поиска признаков; она не распознаёт все движущиеся машины и игроков. Плотная сцена — визуальная реконструкция, а не готовая карта коллизий. Масштаб в метрах требует отдельного известного расстояния. При нехватке связных ракурсов обработка остановится с объяснением.</p>

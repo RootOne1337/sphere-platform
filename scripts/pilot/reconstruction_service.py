@@ -73,9 +73,33 @@ class Jobs:
             result['quality'] = json.loads((job / 'quality.json').read_text('utf-8'))
         result['geometry_available'] = (job / 'geometry.json').is_file()
         result['dense_available'] = result['phase'] == 'complete' and (job / 'COMPLETE').is_file()
+        partial = self.partial(job) if result['phase'] == 'failed' else None
+        result['dense_partial_available'] = partial is not None
+        if partial:
+            result['checkpoint'] = partial
         return result
 
+    def partial(self, job):
+        path = job / 'checkpoint.json'
+        if not path.is_file() or path.stat().st_size > 4096:
+            return None
+        item = json.loads(path.read_text('utf-8'))
+        if (item.get('partial') is not True or not re.fullmatch(r'dense(?:-attempt-[12])?/scene_[0-9]+\.ply', item.get('file', ''))
+                or not re.fullmatch(r'[0-9a-f]{64}', item.get('sha256', ''))
+                or type(item.get('steps')) is not int or type(item.get('target_steps')) is not int
+                or not 0 < item['steps'] < item['target_steps']):
+            return None
+        file = job / item['file']
+        quality = json.loads((job / 'quality.json').read_text('utf-8'))
+        if type(item.get('vertices')) is not int or item['vertices'] < max(300, int(quality['points'] * .25)):
+            return None
+        if file.is_symlink() or not file.is_file() or not 1024 < file.stat().st_size <= 256 * 1024**2:
+            return None
+        return item
+
     def authorize(self, job, key):
+        if not (job / 'control.json').is_file():
+            raise ValueError('job_not_found')
         control = json.loads((job / 'control.json').read_text('utf-8'))
         if not hmac.compare_digest(control['key_sha256'], hashlib.sha256(key.encode()).hexdigest()):
             raise PermissionError('job_capability_required')
@@ -275,9 +299,22 @@ def handler(jobs, origin, port):
                         self.reply(200, jobs.status(job))
                     elif method == 'GET' and parts[2:] in (['geometry'], ['scene']):
                         scene = parts[2] == 'scene'
-                        if scene and not jobs.status(job)['dense_available']:
+                        current = jobs.status(job)
+                        if scene and not current['dense_available'] and not current['dense_partial_available']:
                             raise ValueError('dense_scene_not_complete')
                         path = job / 'dense/scene.ply' if scene else job / 'geometry.json'
+                        if scene and current['dense_available']:
+                            result = json.loads((job / 'result.json').read_text('utf-8'))
+                            name = result.get('scene_file', 'dense/scene.ply')
+                            if not re.fullmatch(r'dense(?:-attempt-[12])?/scene\.ply', name):
+                                raise ValueError('invalid_scene_result_path')
+                            path = job / name
+                        if scene and not current['dense_available']:
+                            partial = current['checkpoint']
+                            path = job / partial['file']
+                            with path.open('rb') as file:
+                                if hashlib.file_digest(file, 'sha256').hexdigest() != partial['sha256']:
+                                    raise ValueError('partial_scene_hash_changed')
                         maximum = 256 * 1024**2 if scene else 16 * 1024**2
                         if path.stat().st_size > maximum:
                             raise ValueError('output_byte_quota')
@@ -298,9 +335,12 @@ def handler(jobs, origin, port):
                         raise ValueError('unknown_endpoint')
             except PermissionError:
                 self.reply(403, {'error': 'capability_or_origin_denied'})
-            except (ValueError, FileNotFoundError, FileExistsError) as error:
+            except (ValueError, FileExistsError) as error:
                 self.close_connection = True
                 self.reply(409, {'error': str(error)[:200]})
+            except FileNotFoundError:
+                self.close_connection = True
+                self.reply(409, {'error': 'job_file_unavailable'})
             except (BrokenPipeError, ConnectionResetError, TimeoutError):
                 self.close_connection = True
             except Exception:

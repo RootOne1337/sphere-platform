@@ -1,4 +1,4 @@
-import {render,waitFor} from '@testing-library/react';
+import {fireEvent,render,screen,waitFor} from '@testing-library/react';
 import {TeachingReconstruction} from '@/src/features/stream/TeachingReconstruction';
 import {reconstructionRequest} from '@/src/features/stream/reconstructionClient';
 jest.mock('next/dynamic',()=>()=>function Placeholder(){return null;});
@@ -16,5 +16,23 @@ test('a recovered job blocks new control until its state is actually confirmed',
   await waitFor(()=>expect(busy).toHaveBeenLastCalledWith(true));
   confirm({json:async()=>({phase:'failed',error:'worker_service_restarted'})});
   await waitFor(()=>expect(busy).toHaveBeenLastCalledWith(false));
+  view.unmount();
+});
+
+test('a fresh job is not polled before POST creation is acknowledged',async()=>{
+  Object.defineProperty(crypto,'randomUUID',{configurable:true,value:()=> 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa'});
+  let confirm:(value:unknown)=>void=()=>{};
+  (reconstructionRequest as jest.Mock).mockImplementation((path:string, _job:unknown, init?:RequestInit)=>{
+    if(path==='/jobs')return new Promise(resolve=>{confirm=resolve;});
+    if(init?.method==='POST')return Promise.resolve({json:async()=>({phase:'failed'})});
+    return Promise.resolve({json:async()=>({phase:'uploading'})});
+  });
+  const busy=jest.fn(),folder={} as FileSystemDirectoryHandle;
+  const view=render(<TeachingReconstruction clip={'c'.repeat(32)} scope={'d'.repeat(32)} folder={()=>folder} complete onBusyChange={busy}/>);
+  fireEvent.click(screen.getByRole('button',{name:'Построить 3D-сцену'}));
+  await waitFor(()=>expect(reconstructionRequest).toHaveBeenCalledTimes(1));
+  expect((reconstructionRequest as jest.Mock).mock.calls[0][0]).toBe('/jobs');
+  confirm({json:async()=>({phase:'uploading'})});
+  await waitFor(()=>expect((reconstructionRequest as jest.Mock).mock.calls.some(([path])=>path==='/jobs/'+'a'.repeat(32))).toBe(true));
   view.unmount();
 });

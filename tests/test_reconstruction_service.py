@@ -95,6 +95,10 @@ def test_http_origin_host_capability_and_cors(jobs):
         assert exc.value.code == 403
         with urllib.request.urlopen(request('/jobs/' + job.name, **{'X-Job-Key': 'b' * 64})) as response:
             assert json.load(response)['phase'] == 'uploading'
+        with pytest.raises(urllib.error.HTTPError) as exc:
+            urllib.request.urlopen(request('/jobs/' + 'c' * 32, **{'X-Job-Key': 'b' * 64}))
+        assert exc.value.code == 409
+        assert json.load(exc.value) == {'error': 'job_not_found'}
     finally:
         server.shutdown()
         server.server_close()

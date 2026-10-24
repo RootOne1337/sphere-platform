@@ -38,18 +38,18 @@ export default function ReconstructedScene({job,status}:{job:ReconstructionJob;s
       renderer.setAnimationLoop(()=>{controls.update();renderer.render(scene,camera);});
       dispose=()=>{observer.disconnect();renderer.setAnimationLoop(null);controls.dispose();for(const object of objects)object.dispose();renderer.dispose();renderer.domElement.remove();};
       setDetails(`${geometry.cameras.length} камер · ${points.length.toLocaleString('ru')} опорных точек · путь камеры ${geometry.camera_path_units.toFixed(2)} усл. ед.`);
-      if(status.dense_available){
+      if(status.dense_available||status.dense_partial_available){
         const {SparkRenderer,SplatMesh}=await import('@sparkjsdev/spark');
         if(retired)return;
         const spark=new SparkRenderer({renderer});scene.add(spark);objects.push(spark);
         const splat=new SplatMesh({url:`http://127.0.0.1:3342/jobs/${job.id}/scene`,requestHeader:{'X-Sphere-Reconstruction':'1','X-Job-Key':job.key},maxSplats:750000,lod:false});
         objects.push(splat);await splat.initialized;
         if(retired)return;scene.add(splat);
-        setDetails(`${geometry.cameras.length} камер · плотная Gaussian-сцена · путь камеры ${geometry.camera_path_units.toFixed(2)} усл. ед.`);
+        setDetails(`${geometry.cameras.length} камер · ${status.dense_partial_available?'промежуточная':'плотная'} Gaussian-сцена · путь камеры ${geometry.camera_path_units.toFixed(2)} усл. ед.`);
       }
     })().catch(e=>{if(!retired)setError(e instanceof Error?e.message:'Не удалось открыть сцену.');});
     return()=>{retired=true;abort.abort();dispose();};
-  },[job,status.dense_available]);
+  },[job,status.dense_available,status.dense_partial_available]);
   return <div className="overflow-hidden rounded-xl border border-border bg-background">
     <div className="flex flex-wrap items-center justify-between gap-2 px-4 py-3"><p className="text-xs text-muted-foreground">{details}</p><Button size="sm" variant="outline" onClick={()=>reset.current()}>Вписать сцену</Button></div>
     <div ref={host} className="h-[480px] w-full" aria-label="Восстановленная 3D-сцена" />
