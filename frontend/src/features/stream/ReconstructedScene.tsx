@@ -2,10 +2,10 @@
 import {useEffect,useRef,useState} from 'react';
 import {Button} from '@/components/ui/button';
 import {reconstructionRequest,type ReconstructionJob,type ReconstructionState} from './reconstructionClient';
-type Geometry={cameras:{center:number[];ticks_90k:number}[];points:number[][];camera_path_units:number;metric_scale:null};
+type Geometry={cameras:{center:number[];ticks_90k:number;camera_to_world?:number[][]}[];points:number[][];camera_path_units:number;metric_scale:null};
 
 export default function ReconstructedScene({job,status}:{job:ReconstructionJob;status:ReconstructionState}) {
-  const host=useRef<HTMLDivElement>(null),reset=useRef<()=>void>(()=>{});
+  const host=useRef<HTMLDivElement>(null),reset=useRef<()=>void>(()=>{}),recordedView=useRef<()=>void>(()=>{});
   const [error,setError]=useState<string|null>(null),[details,setDetails]=useState('Загружаем восстановленные камеры…');
   useEffect(()=>{
     let retired=false,dispose=()=>{};const abort=new AbortController();setError(null);
@@ -13,7 +13,7 @@ export default function ReconstructedScene({job,status}:{job:ReconstructionJob;s
       const [THREE,{OrbitControls}]=await Promise.all([import('three'),import('three/addons/controls/OrbitControls.js')]);
       const geometry=await(await reconstructionRequest(`/jobs/${job.id}/geometry`,job,{signal:abort.signal})).json() as Geometry;
       if(!Array.isArray(geometry.cameras)||geometry.cameras.length>240||!Array.isArray(geometry.points)||geometry.points.length>60000
-        ||geometry.cameras.some(c=>c.center.length!==3||c.center.some(n=>!Number.isFinite(n)))
+        ||geometry.cameras.some(c=>c.center.length!==3||c.center.some(n=>!Number.isFinite(n))||c.camera_to_world&&(c.camera_to_world.length!==3||c.camera_to_world.some(row=>row.length!==4||row.some(n=>!Number.isFinite(n)))))
         ||geometry.points.some(p=>p.length!==6||p.some(n=>!Number.isFinite(n))))throw Error('Повреждена геометрия результата.');
       if(retired||!host.current)return;
       const element=host.current,scene=new THREE.Scene();scene.background=new THREE.Color('#080c17');
@@ -32,7 +32,13 @@ export default function ReconstructedScene({job,status}:{job:ReconstructionJob;s
       const line=new THREE.Line(lineGeometry,lineMaterial);line.renderOrder=10;scene.add(line);objects.push(lineGeometry,lineMaterial);
       const bounds=new THREE.Box3().setFromPoints([...centers,...points.filter((_,i)=>i%20===0).map(p=>new THREE.Vector3(...p.slice(0,3) as [number,number,number]))]);
       const center=bounds.getCenter(new THREE.Vector3()),radius=Math.max(bounds.getSize(new THREE.Vector3()).length()*.45,.1);
-      const frame=()=>{controls.target.copy(center);camera.position.copy(center).add(new THREE.Vector3(radius,-radius*.6,-radius));controls.update();};reset.current=frame;frame();
+      const frame=()=>{camera.up.set(0,-1,0);controls.target.copy(center);camera.position.copy(center).add(new THREE.Vector3(radius,-radius*.6,-radius));controls.update();};reset.current=frame;
+      const fromRecording=()=>{
+        const first=geometry.cameras[0],pose=first?.camera_to_world;if(!pose){frame();return;}
+        const distance=Math.max(new THREE.Box3().setFromPoints(centers).getSize(new THREE.Vector3()).length()*.15,.05);
+        camera.position.set(...first.center as [number,number,number]);camera.up.set(-pose[0][1],-pose[1][1],-pose[2][1]);
+        controls.target.copy(camera.position).add(new THREE.Vector3(pose[0][2],pose[1][2],pose[2][2]).multiplyScalar(distance));controls.update();
+      };recordedView.current=fromRecording;fromRecording();
       const resize=()=>{const width=element.clientWidth,height=element.clientHeight;renderer.setSize(width,height);camera.aspect=width/height;camera.updateProjectionMatrix();};
       const observer=new ResizeObserver(resize);observer.observe(element);resize();
       renderer.setAnimationLoop(()=>{controls.update();renderer.render(scene,camera);});
@@ -51,7 +57,7 @@ export default function ReconstructedScene({job,status}:{job:ReconstructionJob;s
     return()=>{retired=true;abort.abort();dispose();};
   },[job,status.dense_available,status.dense_partial_available]);
   return <div className="overflow-hidden rounded-xl border border-border bg-background">
-    <div className="flex flex-wrap items-center justify-between gap-2 px-4 py-3"><p className="text-xs text-muted-foreground">{details}</p><Button size="sm" variant="outline" onClick={()=>reset.current()}>Вписать сцену</Button></div>
+    <div className="flex flex-wrap items-center justify-between gap-2 px-4 py-3"><p className="text-xs text-muted-foreground">{details}</p><div className="flex gap-2"><Button size="sm" variant="outline" onClick={()=>recordedView.current()}>Камера прохода</Button><Button size="sm" variant="outline" onClick={()=>reset.current()}>Вписать сцену</Button></div></div>
     <div ref={host} className="h-[480px] w-full" aria-label="Восстановленная 3D-сцена" />
     {error&&<p role="alert" className="px-4 py-2 text-sm text-destructive">{error}</p>}
     <p className="px-4 py-3 text-xs text-muted-foreground">Левая кнопка — вращать · правая — перемещать · колесо — приближать. Зелёная линия — восстановленный путь камеры. Масштаб в метрах и проходимость не подтверждены.</p>
