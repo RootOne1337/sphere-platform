@@ -371,7 +371,7 @@ def retry_dense(job, attempt):
     """One explicit maintainer retry; never repeats capture, upload, SfM or input."""
     checkpoint(job)
     previous = json.loads((job / 'state.json').read_text('utf-8'))
-    if previous.get('phase') != 'failed' or previous.get('error') not in {'brush_failed_see_local_log', 'brush_timing_overflow'}:
+    if previous.get('phase') != 'failed' or previous.get('error') not in {'brush_failed_see_local_log', 'brush_timing_overflow', 'brush_system_timing_build_required'}:
         raise RuntimeError('dense_retry_requires_confirmed_brush_failure')
     capture = validate_browser(job / 'input')
     for _ in browser_units(capture):

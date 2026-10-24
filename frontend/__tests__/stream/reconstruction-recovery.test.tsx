@@ -2,6 +2,7 @@ import {fireEvent,render,screen,waitFor} from '@testing-library/react';
 import {TeachingReconstruction} from '@/src/features/stream/TeachingReconstruction';
 import {reconstructionRequest} from '@/src/features/stream/reconstructionClient';
 jest.mock('next/dynamic',()=>()=>function Placeholder(){return null;});
+jest.mock('@/src/features/stream/reconstructionLink',()=>({readReconstructionLink:jest.fn(async()=>null),saveReconstructionLink:jest.fn(async()=>{}),validReconstructionJob:(value:unknown)=>!!value}));
 jest.mock('@/src/features/stream/reconstructionClient',()=>({
   reconstructionRequest:jest.fn(),terminalReconstruction:(state:{phase:string})=>['failed','cancelled','complete'].includes(state.phase),uploadReconstruction:jest.fn(),
 }));
@@ -14,6 +15,7 @@ test('a recovered job blocks new control until its state is actually confirmed',
   const busy=jest.fn();
   const view=render(<TeachingReconstruction clip={clip} scope={scope} folder={()=>null} complete onBusyChange={busy}/>);
   await waitFor(()=>expect(busy).toHaveBeenLastCalledWith(true));
+  await waitFor(()=>expect(reconstructionRequest).toHaveBeenCalled());
   confirm({json:async()=>({phase:'failed',error:'worker_service_restarted'})});
   await waitFor(()=>expect(busy).toHaveBeenLastCalledWith(false));
   view.unmount();
@@ -29,6 +31,7 @@ test('a fresh job is not polled before POST creation is acknowledged',async()=>{
   });
   const busy=jest.fn(),folder={} as FileSystemDirectoryHandle;
   const view=render(<TeachingReconstruction clip={'c'.repeat(32)} scope={'d'.repeat(32)} folder={()=>folder} complete onBusyChange={busy}/>);
+  await waitFor(()=>expect(screen.getByRole('button',{name:'Построить 3D-сцену'})).toBeEnabled());
   fireEvent.click(screen.getByRole('button',{name:'Построить 3D-сцену'}));
   await waitFor(()=>expect(reconstructionRequest).toHaveBeenCalledTimes(1));
   expect((reconstructionRequest as jest.Mock).mock.calls[0][0]).toBe('/jobs');
