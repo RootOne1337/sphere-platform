@@ -88,6 +88,8 @@
         <activity
             android:name=".streaming.ScreenCaptureRequestActivity"
             android:theme="@style/Theme.SphereAgent.Transparent"
+            android:taskAffinity="${applicationId}.screen_capture"
+            android:excludeFromRecents="true"
             android:exported="false" />
 
         <!-- ─── Boot Receiver ────────────────────────────────────────────── -->
