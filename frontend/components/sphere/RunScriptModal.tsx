@@ -1,11 +1,11 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { Loader2, Play, Users, Monitor, ListChecks } from 'lucide-react';
 
-import { api } from '@/lib/api';
 import { useGroups } from '@/lib/hooks/useGroups';
 import { useDevices, type Device } from '@/lib/hooks/useDevices';
 import { useCreateTask } from '@/lib/hooks/useTasks';
@@ -15,9 +15,11 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
   DialogFooter,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import {
@@ -32,12 +34,20 @@ import { Badge } from '@/components/ui/badge';
 // ─── Types ──────────────────────────────────────────────────────────────────
 
 type TargetMode = 'all' | 'group' | 'select';
+const MAX_BATCH_TARGETS = 1000;
+const MAX_BATCH_NAME_CODEPOINTS = 255;
+const BATCH_NAME_SUFFIX = ' — batch';
 
 interface RunScriptModalProps {
   scriptId: string;
   scriptName: string;
   open: boolean;
   onClose: () => void;
+  expectedVersion?: { id: string; version: number; dag_hash: string | null };
+  requireVersion?: boolean;
+  initialTargetMode?: TargetMode;
+  /** Keep pending/unknown results in memory while retiring all portalled UI. */
+  suspended?: boolean;
 }
 
 // ─── Component ──────────────────────────────────────────────────────────────
@@ -47,14 +57,20 @@ export function RunScriptModal({
   scriptName,
   open,
   onClose,
+  expectedVersion,
+  requireVersion = false,
+  initialTargetMode = 'all',
+  suspended = false,
 }: RunScriptModalProps) {
   const router = useRouter();
   const qc = useQueryClient();
 
   // Target selection state
-  const [targetMode, setTargetMode] = useState<TargetMode>('all');
+  const [targetMode, setTargetMode] = useState<TargetMode>(initialTargetMode);
   const [selectedGroupId, setSelectedGroupId] = useState<string>('');
   const [selectedDeviceIds, setSelectedDeviceIds] = useState<Set<string>>(new Set());
+  const [deviceSearch, setDeviceSearch] = useState('');
+  const [debouncedDeviceSearch, setDebouncedDeviceSearch] = useState('');
 
   // Options state
   const [priority, setPriority] = useState(5);
@@ -63,13 +79,27 @@ export function RunScriptModal({
 
   // Result state
   const [error, setError] = useState<string | null>(null);
+  const [pending, setPending] = useState(false);
+  const [uncertain, setUncertain] = useState(false);
+  const busy = useRef(false);
+  const suspendedRef = useRef(suspended); suspendedRef.current = suspended;
+  const [completedDestination, setCompletedDestination] = useState<string | null>(null);
+  const live = useRef(true);
+  useEffect(() => { live.current = true; return () => { live.current = false; }; }, []);
+  const versionUnavailable = requireVersion && (!expectedVersion?.id || !expectedVersion.dag_hash);
+
+  useEffect(() => {
+    const timeout = window.setTimeout(() => setDebouncedDeviceSearch(deviceSearch.trim()), 300);
+    return () => window.clearTimeout(timeout);
+  }, [deviceSearch]);
 
   // Data fetching
-  const { data: groups } = useGroups();
-  const { data: allDevicesData, isLoading: devicesLoading } = useDevices({
-    page_size: 5000,
+  const { data: groups } = useGroups(open && !suspended);
+  const { data: allDevicesData, isLoading: devicesLoading, isError: devicesLoadError } = useDevices({
+    page_size: MAX_BATCH_TARGETS,
     group_id: targetMode === 'group' && selectedGroupId ? selectedGroupId : undefined,
-  });
+    search: targetMode === 'select' && debouncedDeviceSearch ? debouncedDeviceSearch : undefined,
+  }, open && !suspended);
   const allDevices: Device[] = allDevicesData?.items ?? [];
 
   const createTask = useCreateTask();
@@ -85,8 +115,16 @@ export function RunScriptModal({
 
   function getTargetCount(): number {
     if (targetMode === 'select') return selectedDeviceIds.size;
-    return allDevices.length;
+    if (targetMode === 'group' && !selectedGroupId) return 0;
+    return allDevicesData?.total ?? allDevices.length;
   }
+
+  const targetCount = getTargetCount();
+  const hasResolvedScope = targetMode === 'all' || (targetMode === 'group' && Boolean(selectedGroupId));
+  const scopeIsIncomplete = hasResolvedScope && Boolean(allDevicesData) && (
+    targetCount > MAX_BATCH_TARGETS || (allDevicesData?.items.length ?? 0) < targetCount
+  );
+  const scopeOverBatchLimit = hasResolvedScope && targetCount > MAX_BATCH_TARGETS;
 
   function toggleDevice(id: string) {
     setSelectedDeviceIds((prev) => {
@@ -100,7 +138,16 @@ export function RunScriptModal({
   // ── Submit ───────────────────────────────────────────────────────────────
 
   async function handleRun() {
+    if (suspendedRef.current || busy.current || uncertain || completedDestination || versionUnavailable) return;
     setError(null);
+    if (devicesLoading || devicesLoadError || scopeIsIncomplete) {
+      setError('Список устройств неполный или недоступен. Уточните цель и повторите после загрузки полного списка.');
+      return;
+    }
+    if (targetCount > MAX_BATCH_TARGETS) {
+      setError(`За один запуск поддерживается не более ${MAX_BATCH_TARGETS} устройств.`);
+      return;
+    }
     const deviceIds = getTargetDeviceIds();
 
     if (deviceIds.length === 0) {
@@ -108,6 +155,7 @@ export function RunScriptModal({
       return;
     }
 
+    busy.current = true; setPending(true);
     try {
       if (deviceIds.length === 1) {
         // Single device → create direct task
@@ -115,7 +163,11 @@ export function RunScriptModal({
           script_id: scriptId,
           device_id: deviceIds[0],
           priority,
+          ...(expectedVersion ? { expected_current_version_id: expectedVersion.id } : {}),
         });
+        if (expectedVersion && (task?.script_version_id !== expectedVersion.id || task.script_id !== scriptId || task.device_id !== deviceIds[0])) throw new Error('Unconfirmed task receipt');
+        if (!live.current) return;
+        if (suspendedRef.current) { setCompletedDestination(`/tasks/${task.id}`); return; }
         qc.invalidateQueries({ queryKey: ['tasks'] });
         onClose();
         router.push(`/tasks/${task.id}`);
@@ -127,36 +179,60 @@ export function RunScriptModal({
           wave_size: waveSize,
           wave_delay_ms: waveDelayMs,
           priority,
-          name: `${scriptName} — batch`,
+          // Pydantic limits Unicode characters, not UTF-16 code units. Preserve
+          // complete characters and reserve room for the generated suffix.
+          name: `${Array.from(scriptName).slice(0, MAX_BATCH_NAME_CODEPOINTS - Array.from(BATCH_NAME_SUFFIX).length).join('')}${BATCH_NAME_SUFFIX}`,
+          ...(expectedVersion ? { expected_current_version_id: expectedVersion.id } : {}),
         });
+        if (expectedVersion && (batch.script_version_id !== expectedVersion.id || batch.script_id !== scriptId || batch.total !== deviceIds.length)) throw new Error('Unconfirmed batch receipt');
+        if (!live.current) return;
+        if (suspendedRef.current) { setCompletedDestination(`/tasks?batch_id=${batch.id}`); return; }
         qc.invalidateQueries({ queryKey: ['tasks'] });
         onClose();
         router.push(`/tasks?batch_id=${batch.id}`);
       }
     } catch (err: unknown) {
+      if (!live.current) return;
+      if (requireVersion) {
+        const status = (err as { response?: { status?: number } })?.response?.status;
+        if (status === 409) setError('Версия сценария изменилась или устройство занято. Закройте окно, обновите каталог и подтвердите запуск заново.');
+        else if (status && status >= 400 && status < 500) setError('Сервер отклонил запуск. Проверьте доступ, сценарий и выбранные устройства.');
+        else { setUncertain(true); setError('Результат запуска неизвестен. Проверьте журнал заданий перед новым запуском.'); }
+        return;
+      }
       const msg =
         (err as { response?: { data?: { detail?: string } } })?.response?.data?.detail ??
         'Ошибка запуска скрипта';
       setError(typeof msg === 'string' ? msg : JSON.stringify(msg));
+    } finally {
+      busy.current = false;
+      if (live.current) setPending(false);
     }
   }
 
-  const isSubmitting = createTask.isPending || startBatch.isPending;
-  const targetCount = getTargetCount();
+  const isSubmitting = pending || createTask.isPending || startBatch.isPending;
+  const listIsPartial = Boolean(allDevicesData && allDevicesData.items.length < allDevicesData.total);
 
   // ── Render ───────────────────────────────────────────────────────────────
 
   return (
-    <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
+    <Dialog open={open && !suspended} onOpenChange={(v) => { if (!v && !suspendedRef.current && !busy.current) onClose(); }}>
       <DialogContent className="max-w-xl">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <Play className="w-4 h-4 text-green-500" />
-            Запустить: {scriptName}
+          <DialogTitle className="flex min-w-0 items-start gap-2">
+            <Play className="mt-0.5 h-4 w-4 shrink-0 text-primary" aria-hidden="true" />
+            <span className="min-w-0 break-words leading-6 [overflow-wrap:anywhere]">Запустить: {scriptName}</span>
           </DialogTitle>
+          <DialogDescription>
+            Выберите полный набор устройств. Массовый запуск ограничен сервером максимумом в {MAX_BATCH_TARGETS} целей.
+          </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-5">
+          {expectedVersion && <div className="space-y-1 rounded-lg border bg-muted/30 p-3 text-sm"><p className="font-medium">Версия для запуска: v{expectedVersion.version}</p><p className="break-all font-mono text-xs">SHA-256: {expectedVersion.dag_hash ?? 'Не сообщён'}</p><p className="text-xs text-muted-foreground">Сервер проверит эту версию до создания заданий. При изменении сценария запуск будет отклонён.</p></div>}
+          {versionUnavailable && <p role="alert" className="text-sm text-destructive">Версия сценария не подтверждена. Обновите каталог перед запуском.</p>}
+          {uncertain && <Link className="text-sm text-primary underline" href="/tasks">Открыть журнал заданий</Link>}
+          {completedDestination && <div role="status" className="space-y-2 rounded-lg border border-emerald-500/30 p-3 text-sm"><p>Запуск подтверждён сервером во время проверки доступа. Повторная отправка заблокирована.</p><Link className="text-primary underline" href={completedDestination}>Открыть созданное задание</Link></div>}
           {/* ── Target mode ─────────────────────────────────────────── */}
           <div className="space-y-2">
             <Label className="text-sm font-medium">Целевые устройства</Label>
@@ -170,6 +246,7 @@ export function RunScriptModal({
               ).map(({ value, label, Icon }) => (
                 <button
                   key={value}
+                  aria-pressed={targetMode === value}
                   onClick={() => {
                     setTargetMode(value);
                     setSelectedDeviceIds(new Set());
@@ -221,8 +298,18 @@ export function RunScriptModal({
                   <Badge variant="secondary">{selectedDeviceIds.size} выбрано</Badge>
                 )}
               </div>
+              <Input
+                aria-label="Поиск устройств"
+                value={deviceSearch}
+                onChange={(event) => setDeviceSearch(event.target.value)}
+                placeholder="Имя, Android ID или модель"
+              />
               {devicesLoading ? (
                 <p className="text-xs text-muted-foreground py-2">Загрузка…</p>
+              ) : devicesLoadError ? (
+                <p role="alert" className="text-xs text-destructive py-2">
+                  Не удалось загрузить каталог устройств. Запуск заблокирован.
+                </p>
               ) : (
                 <div className="max-h-52 overflow-y-auto rounded border divide-y">
                   {allDevices.length === 0 ? (
@@ -254,7 +341,26 @@ export function RunScriptModal({
                   )}
                 </div>
               )}
+              {listIsPartial && !devicesLoadError && (
+                <p role="status" className="text-xs text-muted-foreground">
+                  Показаны первые {allDevices.length} из {allDevicesData?.total}. Уточните поиск; запуск включает только отмеченные устройства.
+                </p>
+              )}
             </div>
+          )}
+
+          {scopeIsIncomplete && (
+            <p role="alert" className="text-sm text-destructive rounded border border-destructive/40 bg-destructive/10 px-3 py-2">
+              {scopeOverBatchLimit
+                ? `В выбранной области ${targetCount} устройств, а один запуск поддерживает максимум ${MAX_BATCH_TARGETS}. Ничего не отправлено: сузьте область или выберите до ${MAX_BATCH_TARGETS} устройств вручную.`
+                : `API вернул неполный список для области из ${targetCount} устройств. Ничего не отправлено; обновите каталог и повторите.`}
+            </p>
+          )}
+
+          {devicesLoadError && targetMode !== 'select' && (
+            <p role="alert" className="text-sm text-destructive rounded border border-destructive/40 bg-destructive/10 px-3 py-2">
+              Не удалось загрузить каталог устройств. Запуск заблокирован.
+            </p>
           )}
 
           {/* ── Options ──────────────────────────────────────────────── */}
@@ -304,7 +410,7 @@ export function RunScriptModal({
 
           {/* ── Error ────────────────────────────────────────────────── */}
           {error && (
-            <p className="text-sm text-destructive rounded border border-destructive/40 bg-destructive/10 px-3 py-2">
+            <p role="alert" className="text-sm text-destructive rounded border border-destructive/40 bg-destructive/10 px-3 py-2">
               {error}
             </p>
           )}
@@ -317,10 +423,14 @@ export function RunScriptModal({
           <Button
             onClick={handleRun}
             disabled={
-              isSubmitting ||
+              suspended || isSubmitting || uncertain || Boolean(completedDestination) || versionUnavailable ||
               (targetMode === 'group' && !selectedGroupId) ||
               (targetMode === 'select' && selectedDeviceIds.size === 0) ||
-              devicesLoading
+              devicesLoading ||
+              devicesLoadError ||
+              scopeIsIncomplete ||
+              targetCount > MAX_BATCH_TARGETS ||
+              (hasResolvedScope && targetCount === 0)
             }
             className="gap-2"
           >

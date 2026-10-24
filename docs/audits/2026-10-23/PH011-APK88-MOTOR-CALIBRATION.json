@@ -1,0 +1,439 @@
+{
+  "schemaVersion": 1,
+  "observedAtUtc": "2026-10-23T12:57:16.663012+00:00",
+  "localDate": "2026-10-23",
+  "timezone": "Asia/Yekaterinburg",
+  "scope": "PH011 APK88 addressed install, unique AWG2 peer, kernel bypass and finite supervised GPS/CV walking; current model attempts resource-blocked.",
+  "runtimeInstalled": true,
+  "productionAccepted": false,
+  "apk": {
+    "artifacts": [
+      {
+        "version": "1.2.85-dev",
+        "versionCode": 10285,
+        "sourceRevision": "3b437ee8c5a0067f3cfb792b25e8b383e739fc88",
+        "sha256": "9f2bdbe7e7040a0013b5636088426d01a8b8cae99dcfefb0dddd1400868a9180",
+        "androidTree": "e46c0b42dc23fee4261b779f6db84095c6dc16be",
+        "package": "com.sphereplatform.agent.pilot.debug",
+        "bytes": 73217607,
+        "certificateSha256": "3ab40797d26e4f52f9e440afc6fe69f197caef71a5a27c63c86735bb1801871f",
+        "hostedCertificateSha256": "70e67b0395df3cf30feb1d10f06303a7598b8453e5d965db06a4d00defdbc3e7",
+        "cloudApkSha256": "7b98a6dffff8cb8b91a08d527b9fb131b0d69971ec18736365760db86668cc6c",
+        "builtByHostedCi": true,
+        "onlySignatureChangedLocally": true,
+        "unchangedPayloadEntries": 936
+      },
+      {
+        "version": "1.2.88-dev",
+        "versionCode": 10288,
+        "sourceRevision": "6ad0df5fbcc3590ae9c63fe6922db178b45aeee1",
+        "sha256": "355af6f5ecc6697bd8fee66ff9f085bdbf9841e80bb201f8d48515a1ac7e9bca",
+        "certificateSha256": "3ab40797d26e4f52f9e440afc6fe69f197caef71a5a27c63c86735bb1801871f",
+        "package": "com.sphereplatform.agent.pilot.debug",
+        "builtLocally": true,
+        "builtByHostedCi": false
+      }
+    ],
+    "installedDevices": [
+      {
+        "deviceId": "5df4805e-fe64-4d39-960c-19ceab206cd6",
+        "device": "auto-ph-010",
+        "versionCode": 10285,
+        "installedPackageSha256": "9f2bdbe7e7040a0013b5636088426d01a8b8cae99dcfefb0dddd1400868a9180",
+        "packageProofObservedAtUtc": "2026-10-22T12:04:30.867863+00:00",
+        "completedAddressedOta": true,
+        "commandId": "74bd69d1-5b6c-42b5-b102-b3059be7dfaa",
+        "dataClears": 0,
+        "proofScope": "Historical earlier package proof; device not updated or rehashed by APK87 delivery."
+      },
+      {
+        "deviceId": "414ce0e9-4b93-4f96-b9ca-ee675f53835e",
+        "device": "auto-ph-011",
+        "versionCode": 10288,
+        "installedPackageSha256": "355af6f5ecc6697bd8fee66ff9f085bdbf9841e80bb201f8d48515a1ac7e9bca",
+        "packageProofObservedAtUtc": "2026-10-23T12:57:16.663012+00:00",
+        "completedAddressedOta": true,
+        "dataClears": 0,
+        "proofScope": "PH011 addressed OTA and independent fresh package hash; other rows retain their dated historical proofs."
+      },
+      {
+        "deviceId": "b410464a-5f26-4803-a756-7840cc17b128",
+        "device": "auto-ph-025",
+        "versionCode": 10285,
+        "installedPackageSha256": "9f2bdbe7e7040a0013b5636088426d01a8b8cae99dcfefb0dddd1400868a9180",
+        "packageProofObservedAtUtc": "2026-10-22T12:04:34.316120+00:00",
+        "completedAddressedOta": true,
+        "commandId": "6ab684dc-0ebc-46e4-ac7e-278ae9294098",
+        "dataClears": 0,
+        "proofScope": "Historical earlier package proof; device not updated or rehashed by APK87 delivery."
+      },
+      {
+        "deviceId": "753fd530-2f19-4e5e-98ba-769863678141",
+        "device": "auto-ph-030",
+        "versionCode": 10288,
+        "installedPackageSha256": "355af6f5ecc6697bd8fee66ff9f085bdbf9841e80bb201f8d48515a1ac7e9bca",
+        "verifiedAtUtc": "2026-10-23T11:12:19.981238+00:00",
+        "addressedOtaCompleted": true
+      }
+    ]
+  },
+  "worker": {
+    "version": "0.7.2",
+    "sourceRevision": "4fe45153566a05ae65db17df0094832a735295e7",
+    "goalBoundaryRevision": "185553f9082403567c3df6bb0dff9b0ae068c29d",
+    "motorTestsPassed": 221,
+    "ruffPassed": true,
+    "publicGpsPhysicalExecutionEnabled": false
+  },
+  "vpn": {
+    "profileId": "3239c141-bc90-48c3-bf4e-8b6cda2cfce6",
+    "sessionId": "e9425d54-af8f-4746-9dbe-f2cd5d6070a4",
+    "uniqueAdditionalPeer": 1,
+    "previousDeviceKeyReused": false,
+    "providerProtocol": "AmneziaWG2",
+    "directProviderEndpoint": true,
+    "additionalPcRelayCreated": false,
+    "mainPcHostVpnStillUnderlay": true,
+    "sphereUidExcluded": 10082,
+    "guardedPrimaryUserAppUidRanges": [
+      "10000-10081",
+      "10083-99999"
+    ],
+    "ipv6Blocked": true,
+    "kernelRulesPassed": true,
+    "kernelObservedAtUtc": "2026-10-23T12:56:46.988264+00:00",
+    "kernelProofSha256": "f882348bca342ff6003bc964ab54b0bf4ffbb9cdeedf462756cbd2ec70578b34",
+    "rebootTested": false,
+    "systemUidsGuarded": false,
+    "httpsExitIpIndependentlyMeasured": false,
+    "gameUpdateDownloadedAndWorldEntered": true,
+    "ordinaryChannelChanged": false,
+    "newBuilds": 0,
+    "newGithubJobs": 0
+  },
+  "physicalTrials": {
+    "initialGps20s": {
+      "privateReceiptSha256": "4043dc491693c473d3d439b1dd28bcb982b54faf9d0ad38eec54af18746d69e6",
+      "finishReason": "finite_calibration_completed",
+      "failure": null,
+      "learnedModelUsed": false,
+      "decisions": 104,
+      "nativeEvents": 46,
+      "nativeApplied": 46,
+      "participantClosed": true,
+      "receiverObservationHz": 5.147,
+      "maxDecisionGapMs": 209.855,
+      "fullSecondWindowAnchor": "first accepted calibration observation",
+      "observationsPerFullSecond": [
+        6,
+        5,
+        5,
+        5,
+        5,
+        5,
+        5,
+        5,
+        5,
+        5,
+        6,
+        5,
+        5,
+        5,
+        6,
+        5,
+        5,
+        5,
+        5,
+        5
+      ],
+      "durationObservedSeconds": 20.007,
+      "route": {
+        "path": "nat",
+        "protocol": "udp",
+        "candidateTypes": [
+          "host",
+          "prflx"
+        ],
+        "addressScopes": [
+          "private",
+          "private"
+        ],
+        "lanProven": false
+      },
+      "serverBytesAfterHandover": 0,
+      "relayFramesDecoded": 0,
+      "nativeEventsByAction": {
+        "0": 1,
+        "1": 0,
+        "2": 45
+      },
+      "sctpRetransmissions": 0,
+      "clockScope": "receiver only; not Android capture-to-model latency",
+      "outcome": "hit fence/pillar; time-budget stop, not obstacle recognition or arrival"
+    },
+    "initialRunnerFailure": {
+      "privateReceiptSha256": "80d802070393f735172b14d4062ea0d263bbe764e535fc4d189809c568b66198",
+      "finishReason": "finite_calibration_completed",
+      "failure": "worker_task_failed",
+      "learnedModelUsed": false,
+      "decisions": 0,
+      "nativeEvents": 0,
+      "nativeApplied": 0,
+      "participantClosed": true,
+      "durationObservedSeconds": 0.0,
+      "route": {
+        "path": "nat",
+        "protocol": "udp",
+        "candidateTypes": [
+          "host",
+          "prflx"
+        ],
+        "addressScopes": [
+          "private",
+          "private"
+        ],
+        "lanProven": false
+      },
+      "serverBytesAfterHandover": 0,
+      "relayFramesDecoded": 0,
+      "nativeEventsByAction": {
+        "0": 0,
+        "1": 0,
+        "2": 0
+      },
+      "sctpRetransmissions": 0,
+      "clockScope": "receiver only; not Android capture-to-model latency"
+    },
+    "operatorClearance": {
+      "finiteHoldSeconds": 1.2,
+      "direction": "back-right",
+      "learnedModelUsed": false,
+      "source": "fresh operator-assessed grass beside pillar; scene comparison before input",
+      "nativeApplied": 3,
+      "expected": 3,
+      "closed": true,
+      "distanceBeforeM": 595,
+      "distanceAfterM": 593,
+      "autonomousRecovery": false
+    },
+    "flowV3": {
+      "privateReceiptSha256": "d3a0c520bd1558bc2c8a70802e189bbd333e6f53b8eb362569251470e791a92d",
+      "finishReason": "supervisor_progress_evidence_missing",
+      "failure": null,
+      "learnedModelUsed": false,
+      "decisions": 18,
+      "nativeEvents": 5,
+      "nativeApplied": 5,
+      "participantClosed": true,
+      "receiverObservationHz": 5.084,
+      "maxDecisionGapMs": 211.944,
+      "fullSecondWindowAnchor": "first accepted calibration observation",
+      "observationsPerFullSecond": [
+        6,
+        5,
+        5
+      ],
+      "durationObservedSeconds": 3.367,
+      "route": {
+        "path": "nat",
+        "protocol": "udp",
+        "candidateTypes": [
+          "host",
+          "prflx"
+        ],
+        "addressScopes": [
+          "private",
+          "private"
+        ],
+        "lanProven": false
+      },
+      "serverBytesAfterHandover": 0,
+      "relayFramesDecoded": 0,
+      "nativeEventsByAction": {
+        "0": 1,
+        "1": 0,
+        "2": 4
+      },
+      "sctpRetransmissions": 0,
+      "clockScope": "receiver only; not Android capture-to-model latency",
+      "distanceBeforeM": 593,
+      "distanceAfterM": 590,
+      "outcome": "stopped when the first optical-flow filter had insufficient low-light features"
+    },
+    "flowV4": {
+      "privateReceiptSha256": "646f71124f92c37696034fff8cd2f4391598f9cee73b39e66e8f2f6238c0bd6e",
+      "finishReason": "finite_calibration_completed",
+      "failure": null,
+      "learnedModelUsed": false,
+      "decisions": 43,
+      "nativeEvents": 8,
+      "nativeApplied": 8,
+      "participantClosed": true,
+      "receiverObservationHz": 5.125,
+      "maxDecisionGapMs": 214.334,
+      "fullSecondWindowAnchor": "first accepted calibration observation",
+      "observationsPerFullSecond": [
+        6,
+        5,
+        5,
+        5,
+        5,
+        5,
+        5,
+        6
+      ],
+      "durationObservedSeconds": 8.009,
+      "route": {
+        "path": "nat",
+        "protocol": "udp",
+        "candidateTypes": [
+          "host",
+          "prflx"
+        ],
+        "addressScopes": [
+          "private",
+          "private"
+        ],
+        "lanProven": false
+      },
+      "serverBytesAfterHandover": 0,
+      "relayFramesDecoded": 0,
+      "nativeEventsByAction": {
+        "0": 1,
+        "1": 0,
+        "2": 7
+      },
+      "sctpRetransmissions": 0,
+      "clockScope": "receiver only; not Android capture-to-model latency",
+      "distanceBeforeM": 590,
+      "distanceAfterM": 582,
+      "deflectionCap": 0.25,
+      "outcome": "finite cautious walking beside fence; goal not reached; no obstacle encountered after detour"
+    }
+  },
+  "models": [
+    {
+      "model": "Qwen3.5-0.8B",
+      "runtime": "llama.cpp b11836 Vulkan",
+      "precision": "Q4_K_M + F16 vision projector",
+      "before": {
+        "availableRamBytes": 9989337088,
+        "committedBytes": 85503918080,
+        "commitLimitBytes": 101336473600,
+        "freeDiskBytes": 66422562816
+      },
+      "afterLoad": {
+        "availableRamBytes": 8083701760,
+        "committedBytes": 87802667008,
+        "commitLimitBytes": 101336473600,
+        "freeDiskBytes": 66422001664
+      },
+      "postLoadFindings": [
+        "commit_headroom_low"
+      ],
+      "completed": false,
+      "ownedServerCleanupConfirmed": true,
+      "predictions": 0,
+      "physicalActions": 0,
+      "loaded": true,
+      "inferenceAdmitted": false
+    },
+    {
+      "model": "Qwen3.5-0.8B",
+      "runtime": "llama.cpp b11836 CPU",
+      "precision": "Q4_K_M + F16 vision projector",
+      "before": {
+        "availableRamBytes": 8232919040,
+        "committedBytes": 85799399424,
+        "commitLimitBytes": 101336473600,
+        "freeDiskBytes": 66421260288
+      },
+      "afterLoad": {
+        "availableRamBytes": 7132045312,
+        "committedBytes": 86990139392,
+        "commitLimitBytes": 101336473600,
+        "freeDiskBytes": 66421248000
+      },
+      "postLoadFindings": [
+        "commit_headroom_low"
+      ],
+      "completed": false,
+      "ownedServerCleanupConfirmed": true,
+      "predictions": 0,
+      "physicalActions": 0,
+      "loaded": true,
+      "inferenceAdmitted": false
+    },
+    {
+      "model": "P2P150M bounded BF16 experiment",
+      "textConditioning": false,
+      "warmupSeconds": 8.072620199993253,
+      "postWarmupFindings": [
+        "commit_headroom_low"
+      ],
+      "predictions": 0,
+      "physicalActions": 0,
+      "fullNumericalEquivalenceAccepted": false
+    }
+  ],
+  "acceptance": {
+    "arrival": false,
+    "learnedGoalNavigation": false,
+    "autonomousObstacleAvoidance": false,
+    "jumpCalibration": false,
+    "cameraActuatorIntegration": false,
+    "sourceClockLatency": false,
+    "fleetCapacity": false,
+    "heldInputAndFiniteClose": true
+  },
+  "frameStorage": {
+    "default": "one latest decoded frame in RAM; no server-side continuous frame archive enabled by this test",
+    "publishedEvidenceScreenshots": 3,
+    "privateTrialHistoryBounded": true
+  },
+  "screenshots": [
+    {
+      "file": "docs/audits/2026-10-23/assets/ph011-motor072/fence.png",
+      "bytes": 331697,
+      "sha256": "d74dd188e861d37ef137ccb5527215558cc09a011c3f6036a0881b4a0b0192d2"
+    },
+    {
+      "file": "docs/audits/2026-10-23/assets/ph011-motor072/clearance.png",
+      "bytes": 400470,
+      "sha256": "f28a95b9302f77f1a5875027e82ced199f591ff0298d7d3132b74a4587bdaa0e"
+    },
+    {
+      "file": "docs/audits/2026-10-23/assets/ph011-motor072/gps-walk.png",
+      "bytes": 434574,
+      "sha256": "ab9637cacce04d95b3d9b7b04413d047459413bb78f537fdbd1e654f9efde740"
+    }
+  ],
+  "modelAssetDownloadReceipt": {
+    "modelAuthor": "Qwen",
+    "quantizationPublisher": "unsloth",
+    "runtimeAuthor": "ggml-org",
+    "modelRevision": "6ab461498e2023f6e3c1baea90a8f0fe38ab64d0",
+    "assets": [
+      {
+        "file": "llama-b11836-vulkan.zip",
+        "url": "https://github.com/ggml-org/llama.cpp/releases/download/b11836/llama-b11836-bin-win-vulkan-x64.zip",
+        "bytes": 36881686,
+        "sha256": "cd79abc3f25bce0086918d43f7b5562dc760d9809429f1a9037941185bc7cdf4"
+      },
+      {
+        "file": "Qwen3.5-0.8B-Q4_K_M.gguf",
+        "url": "https://huggingface.co/unsloth/Qwen3.5-0.8B-GGUF/resolve/6ab461498e2023f6e3c1baea90a8f0fe38ab64d0/Qwen3.5-0.8B-Q4_K_M.gguf",
+        "bytes": 532517120,
+        "sha256": "bd258782e35f7f458f8aced1adc053e6e92e89bc735ba3be89d38a06121dc517"
+      },
+      {
+        "file": "mmproj-F16.gguf",
+        "url": "https://huggingface.co/unsloth/Qwen3.5-0.8B-GGUF/resolve/6ab461498e2023f6e3c1baea90a8f0fe38ab64d0/mmproj-F16.gguf",
+        "bytes": 204987232,
+        "sha256": "56e4c6cfe73b0c82e3e82bc518d7591997e61d81f723fc41a586f4fa69ea2453"
+      }
+    ],
+    "modelLaunched": false,
+    "scope": "asset verification completed before the later model load attempts"
+  }
+}

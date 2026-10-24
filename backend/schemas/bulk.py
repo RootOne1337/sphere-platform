@@ -50,4 +50,6 @@ class BulkDeleteRequest(BaseModel):
 
 
 class BulkDeleteResponse(BaseModel):
-    deleted: int
+    deleted: int = Field(
+        description="Устройства, убранные из активного каталога; история и ссылки в задачах сохраняются.",
+    )

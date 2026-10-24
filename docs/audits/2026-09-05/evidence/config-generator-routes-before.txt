@@ -1,0 +1,31 @@
+.F                                                                       [100%]
+================================== FAILURES ===================================
+_ test_config_generator_preserves_optional_fallback[https://secondary.invalid] _
+
+fallback = 'https://secondary.invalid'
+
+    @pytest.mark.parametrize("fallback", [None, "https://secondary.invalid"])
+    def test_config_generator_preserves_optional_fallback(fallback):
+        path = Path(__file__).resolve().parents[1] / "agent-config/scripts/generate_device_config.py"
+        spec = importlib.util.spec_from_file_location("route_config_generator", path)
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+        env = {"config_version": 1, "server_url": "https://primary.invalid", "enrollment_api_key": "sphr_isolated"}
+        if fallback is not None:
+            env["fallback_server_url"] = fallback
+        config = module.generate_single_config(env, workstation_id="isolated", instance_index=1)
+>       assert config.get("fallback_server_url") == fallback
+E       AssertionError: assert None == 'https://secondary.invalid'
+E        +  where None = <built-in method get of dict object at 0x0000022EE9E1AD40>('fallback_server_url')
+E        +    where <built-in method get of dict object at 0x0000022EE9E1AD40> = {'config_poll_interval_seconds': 86400, 'config_version': 1, 'device_id': None, 'enrollment_api_key': 'sphr_isolated', ...}.get
+
+tests\test_agent_config_routes.py:18: AssertionError
+============================== warnings summary ===============================
+backend\api\v1\game_accounts\router.py:95
+  C:\Users\dimas\Documents\ChatGPT\sphere-platform\backend\api\v1\game_accounts\router.py:95: FastAPIDeprecationWarning: `regex` has been deprecated, please use `pattern` instead
+    sort_dir: str = Query("desc", regex="^(asc|desc)$", description="����������� ����������"),
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ===========================
+FAILED tests/test_agent_config_routes.py::test_config_generator_preserves_optional_fallback[https://secondary.invalid]
+1 failed, 1 passed, 1 warning in 0.31s

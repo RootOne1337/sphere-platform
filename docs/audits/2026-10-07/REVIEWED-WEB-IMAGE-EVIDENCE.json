@@ -1,0 +1,38 @@
+{
+  "observedDateLocal": "2026-10-07",
+  "timezone": "Asia/Yekaterinburg",
+  "sourceRevision": "99af20d9933e4f4f5f227595e19d2f47d5be7e94",
+  "runId": 37517925456,
+  "runUrl": "https://github.com/RootOne1337/sphere-platform/actions/runs/37517925456",
+  "frontendConclusion": "success",
+  "packagingLogTimestampUtc": "2026-10-06T19:20:22.2417441Z",
+  "imageId": "sha256:0cacff12806aed75a5b40a77b2bc59598f1b585a25d5a9e44e99b5c5f39986f9",
+  "compressedImageBytes": 120839622,
+  "pagesVerifiedInsideImage": 26,
+  "assetsVerifiedInsideImage": 73,
+  "archiveAdmissionPassedInHostedCi": true,
+  "artifact": {
+    "id": 11438406747,
+    "name": "sphere-reviewed-web-99af20d9933e4f4f5f227595e19d2f47d5be7e94",
+    "zipBytes": 120842573,
+    "zipDigest": "sha256:b0c4d9435898075c3c1cf50a102b2b54b1e091437b06b037da9ab92beeb7a15f",
+    "createdAtUtc": "2026-10-06T19:20:24Z",
+    "expiredAtObservation": false,
+    "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/37517925456/artifacts/11438406747"
+  },
+  "localImageDownloadedOrLoaded": false,
+  "localReadOnlyComposePreflight": {
+    "passed": true,
+    "delta": "review-ui image replacement and removal of its stale build recipe",
+    "currentUiContainerPreserved": true,
+    "commands": ["inspect", "compose config"],
+    "candidateSource": "99af20d9933e4f4f5f227595e19d2f47d5be7e94"
+  },
+  "installerLocalUnitTestMethods": 7,
+  "combinedArchiveInstallerLocalUnitTestMethods": 18,
+  "installerApplyExercisedAgainstRealDocker": false,
+  "browserHydrationVerified": false,
+  "runtimeInstalled": false,
+  "hostGate": "Warning / Full Repair Needed; postboot acceptance pending",
+  "backendAndroidAtImageReceipt": "in_progress; ce6e377 remains the last fully admitted baseline"
+}

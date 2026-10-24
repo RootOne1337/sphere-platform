@@ -22,8 +22,7 @@ generate_device_config.py — генератор sphere-agent-config.json для
   # Для физического устройства
   python generate_device_config.py \
     --env production \
-    --location fra-dc-2 \
-    --template physical-device
+    --location fra-dc-2
 """
 from __future__ import annotations
 
@@ -31,7 +30,6 @@ import argparse
 import json
 import sys
 from pathlib import Path
-
 
 # Корень agent-config относительно скрипта
 CONFIG_ROOT = Path(__file__).resolve().parent.parent
@@ -81,6 +79,7 @@ def generate_single_config(
     config = {
         "config_version": env_config["config_version"],
         "server_url": env_config["server_url"],
+        "fallback_server_url": env_config.get("fallback_server_url"),
         "ws_path": env_config.get("ws_path", "/ws/android"),
         "enrollment_api_key": env_config["enrollment_api_key"],
         "device_id": None,

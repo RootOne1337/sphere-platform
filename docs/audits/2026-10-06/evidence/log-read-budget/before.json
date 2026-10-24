@@ -1,0 +1,16 @@
+{
+  "observedAt": "2026-10-05T19:25:34.239244+00:00",
+  "source": "32c97b8edb930d716b21ccc016e69d4cb16e7677",
+  "fixtureBytes": 25165824,
+  "files": 3,
+  "requestedLines": 1000,
+  "returnedLines": 1000,
+  "pythonTracedPeakBytes": 48271208,
+  "wholeFileReadBytes": 25165824,
+  "linesSha256": "ac031c501fa8a9623896c0b34d8637a33dafb031a710b6707d30d9fcdea00b7a",
+  "readMetadata": null,
+  "liveServicesContacted": false,
+  "authorizationProven": false,
+  "temporaryFilesRemoved": true,
+  "hostDiskWriterIdentified": false
+}

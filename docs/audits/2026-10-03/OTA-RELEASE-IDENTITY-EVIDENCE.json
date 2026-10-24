@@ -1,0 +1,1191 @@
+{
+  "observedAt": "2026-10-03T03:17:58.138904+00:00",
+  "timezone": "Asia/Yekaterinburg",
+  "source": "facba9a4b56f9b121f028bc371d24b94a08364de",
+  "reviewSource": "77fca37847590bef526ae5becdf7b1986d5b15ea",
+  "commits": {
+    "backend": "73bfa9af33fbf0453676136f78dc26810affc8b8",
+    "web": "77fca37847590bef526ae5becdf7b1986d5b15ea",
+    "android": "facba9a4b56f9b121f028bc371d24b94a08364de",
+    "schemaRepair": "5bb36ca"
+  },
+  "finding": "F33",
+  "status": "PARTIAL",
+  "artifact": {
+    "source_commit": "facba9a4b56f9b121f028bc371d24b94a08364de",
+    "file": "SphereAgent-pilot-candidate-1.2.41-dev-facba9a.apk",
+    "sha256": "5222d948a1a9f81e575955cc300f24dba41296b88d4993ef8acb033c323c6532",
+    "bytes": 8467827,
+    "package": "com.sphereplatform.agent.pilot.debug",
+    "version_name": "1.2.41-dev",
+    "version_code": 10241,
+    "certificate_sha256": "3ab40797d26e4f52f9e440afc6fe69f197caef71a5a27c63c86735bb1801871f",
+    "signer_matches_local_pilot_baseline": true,
+    "tests": {
+      "dev": {
+        "tests": 819,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 1
+      },
+      "enterprise": {
+        "tests": 819,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 1
+      }
+    },
+    "signed_discovery_manifest_version": 27,
+    "baked_management_urls": [],
+    "gpu_bridge_enabled": false,
+    "planar_input_enabled": true,
+    "debug_video_probe": true,
+    "built_at": "2026-10-03T03:02:00.016881+00:00"
+  },
+  "artifactBuildFlagsAreBuildTimeSnapshot": true,
+  "publication": {
+    "observedAt": "2026-10-03T03:04:55.858478+00:00",
+    "status": "published_and_read_back",
+    "receipt": {
+      "id": "d2d67dc0-bdd3-4b7e-8d3a-aac89a5ed427",
+      "platform": "android-canary",
+      "flavor": "dev",
+      "version_code": 10241,
+      "version_name": "1.2.41-dev",
+      "download_url": "/api/v1/updates/artifacts/5222d948a1a9f81e575955cc300f24dba41296b88d4993ef8acb033c323c6532",
+      "sha256": "5222d948a1a9f81e575955cc300f24dba41296b88d4993ef8acb033c323c6532",
+      "mandatory": false,
+      "changelog": "Pilot candidate: verify downloaded APK package/version/SDK/current signer before either installer; bounded rejection diagnostics. Debug planar profile retained; production stable acceptance remains open.",
+      "created_at": "2026-10-03T03:04:55.831082+00:00"
+    },
+    "releaseCount": 22,
+    "normalCatalogUnchanged": true,
+    "normalChannelPromoted": false,
+    "automaticRetry": false
+  },
+  "preflight": {
+    "canary": {
+      "observedAt": "2026-10-03T03:05:49.784258+00:00",
+      "targetCount": 1,
+      "eligibleCount": 1,
+      "candidateSha256": "5222d948a1a9f81e575955cc300f24dba41296b88d4993ef8acb033c323c6532",
+      "candidatePackage": "com.sphereplatform.agent.pilot.debug",
+      "candidateCertificateSha256": "3ab40797d26e4f52f9e440afc6fe69f197caef71a5a27c63c86735bb1801871f",
+      "installedPackageAndSignerVerifiedByExactBaselineHash": true,
+      "readOnlyAndroidCommands": 2,
+      "hostAdbUsed": false,
+      "devices": [
+        {
+          "deviceId": "4815b950-e5cf-4686-9d46-42d0df8d41f7",
+          "name": "auto-ph-028",
+          "beforeVersionCode": 10240,
+          "installedSha256": "c612fba1e4a537ab1a0d9951e520bbd4063c3548308a4ebc31b72b59fa735a70"
+        }
+      ]
+    },
+    "wave": {
+      "observedAt": "2026-10-03T03:08:01.768316+00:00",
+      "targetCount": 13,
+      "eligibleCount": 13,
+      "candidateSha256": "5222d948a1a9f81e575955cc300f24dba41296b88d4993ef8acb033c323c6532",
+      "candidatePackage": "com.sphereplatform.agent.pilot.debug",
+      "candidateCertificateSha256": "3ab40797d26e4f52f9e440afc6fe69f197caef71a5a27c63c86735bb1801871f",
+      "installedPackageAndSignerVerifiedByExactBaselineHash": true,
+      "readOnlyAndroidCommands": 26,
+      "hostAdbUsed": false,
+      "devices": [
+        {
+          "deviceId": "b410464a-5f26-4803-a756-7840cc17b128",
+          "name": "auto-ph-025",
+          "beforeVersionCode": 10240,
+          "installedSha256": "c612fba1e4a537ab1a0d9951e520bbd4063c3548308a4ebc31b72b59fa735a70"
+        },
+        {
+          "deviceId": "d088c147-7ada-4b29-9e79-f991b20fcf91",
+          "name": "auto-ph-022",
+          "beforeVersionCode": 10240,
+          "installedSha256": "c612fba1e4a537ab1a0d9951e520bbd4063c3548308a4ebc31b72b59fa735a70"
+        },
+        {
+          "deviceId": "75c29a32-2867-4b60-947c-003e712e538f",
+          "name": "auto-ph-020",
+          "beforeVersionCode": 10240,
+          "installedSha256": "c612fba1e4a537ab1a0d9951e520bbd4063c3548308a4ebc31b72b59fa735a70"
+        },
+        {
+          "deviceId": "c37e687a-ee83-466d-846f-3f4b36047fa7",
+          "name": "auto-ph-019",
+          "beforeVersionCode": 10240,
+          "installedSha256": "c612fba1e4a537ab1a0d9951e520bbd4063c3548308a4ebc31b72b59fa735a70"
+        },
+        {
+          "deviceId": "bafef86f-3ab4-469b-ae0c-cf2771b55813",
+          "name": "auto-ph-018",
+          "beforeVersionCode": 10240,
+          "installedSha256": "c612fba1e4a537ab1a0d9951e520bbd4063c3548308a4ebc31b72b59fa735a70"
+        },
+        {
+          "deviceId": "1dd7e59c-b68f-406a-93cd-5f4e34fdea90",
+          "name": "auto-ph-017",
+          "beforeVersionCode": 10240,
+          "installedSha256": "c612fba1e4a537ab1a0d9951e520bbd4063c3548308a4ebc31b72b59fa735a70"
+        },
+        {
+          "deviceId": "3c4c4218-27ba-4d8d-a7d2-4348c2f91c93",
+          "name": "auto-ph-016",
+          "beforeVersionCode": 10240,
+          "installedSha256": "c612fba1e4a537ab1a0d9951e520bbd4063c3548308a4ebc31b72b59fa735a70"
+        },
+        {
+          "deviceId": "930a6505-b7ec-4eee-93fe-9aaa66517871",
+          "name": "auto-ph-015",
+          "beforeVersionCode": 10240,
+          "installedSha256": "c612fba1e4a537ab1a0d9951e520bbd4063c3548308a4ebc31b72b59fa735a70"
+        },
+        {
+          "deviceId": "673d5774-24b1-4b57-8dfb-90c46f627ce3",
+          "name": "auto-ph-014",
+          "beforeVersionCode": 10240,
+          "installedSha256": "c612fba1e4a537ab1a0d9951e520bbd4063c3548308a4ebc31b72b59fa735a70"
+        },
+        {
+          "deviceId": "6d830af5-b7cc-44b4-b7f5-5e0275aceb3b",
+          "name": "auto-ph-013",
+          "beforeVersionCode": 10240,
+          "installedSha256": "c612fba1e4a537ab1a0d9951e520bbd4063c3548308a4ebc31b72b59fa735a70"
+        },
+        {
+          "deviceId": "8c187cfa-e5ea-4939-a137-07619437953d",
+          "name": "auto-ph-012",
+          "beforeVersionCode": 10240,
+          "installedSha256": "c612fba1e4a537ab1a0d9951e520bbd4063c3548308a4ebc31b72b59fa735a70"
+        },
+        {
+          "deviceId": "414ce0e9-4b93-4f96-b9ca-ee675f53835e",
+          "name": "auto-ph-011",
+          "beforeVersionCode": 10240,
+          "installedSha256": "c612fba1e4a537ab1a0d9951e520bbd4063c3548308a4ebc31b72b59fa735a70"
+        },
+        {
+          "deviceId": "5df4805e-fe64-4d39-960c-19ceab206cd6",
+          "name": "auto-ph-010",
+          "beforeVersionCode": 10240,
+          "installedSha256": "c612fba1e4a537ab1a0d9951e520bbd4063c3548308a4ebc31b72b59fa735a70"
+        }
+      ]
+    }
+  },
+  "installs": [
+    {
+      "deviceId": "4815b950-e5cf-4686-9d46-42d0df8d41f7",
+      "name": "auto-ph-028",
+      "beforeVersionCode": 10240,
+      "status": "completed_and_heartbeat",
+      "attempts": 1,
+      "commandId": "e9726d9a-09bc-4f64-999b-435e79c4126e",
+      "terminalReceipt": {
+        "command_id": "e9726d9a-09bc-4f64-999b-435e79c4126e",
+        "sha256": "5222d948a1a9f81e575955cc300f24dba41296b88d4993ef8acb033c323c6532",
+        "version_name": "1.2.41-dev",
+        "version_code": 10241,
+        "status": "completed",
+        "failure_code": null,
+        "installed_version_code": 10241,
+        "recovered_after_process_restart": true,
+        "recorded_at": "2026-10-03T03:06:16.550662+00:00"
+      },
+      "postInstallHeartbeat": "2026-10-03T03:06:17.273835Z",
+      "grantAutoCleared": true,
+      "acceptedAt": "2026-10-03T03:06:20.705681+00:00"
+    },
+    {
+      "deviceId": "b410464a-5f26-4803-a756-7840cc17b128",
+      "name": "auto-ph-025",
+      "beforeVersionCode": 10240,
+      "status": "completed_and_heartbeat",
+      "attempts": 1,
+      "commandId": "5b3db229-8ed3-46ef-9ab5-78a1439c6d00",
+      "terminalReceipt": {
+        "command_id": "5b3db229-8ed3-46ef-9ab5-78a1439c6d00",
+        "sha256": "5222d948a1a9f81e575955cc300f24dba41296b88d4993ef8acb033c323c6532",
+        "version_name": "1.2.41-dev",
+        "version_code": 10241,
+        "status": "completed",
+        "failure_code": null,
+        "installed_version_code": 10241,
+        "recovered_after_process_restart": true,
+        "recorded_at": "2026-10-03T03:08:23.928861+00:00"
+      },
+      "postInstallHeartbeat": "2026-10-03T03:08:24.674930Z",
+      "grantAutoCleared": true,
+      "acceptedAt": "2026-10-03T03:08:28.583664+00:00"
+    },
+    {
+      "deviceId": "d088c147-7ada-4b29-9e79-f991b20fcf91",
+      "name": "auto-ph-022",
+      "beforeVersionCode": 10240,
+      "status": "completed_and_heartbeat",
+      "attempts": 1,
+      "commandId": "9f3700e4-e6d9-4bfa-a930-21ea2aefb4c8",
+      "terminalReceipt": {
+        "command_id": "9f3700e4-e6d9-4bfa-a930-21ea2aefb4c8",
+        "sha256": "5222d948a1a9f81e575955cc300f24dba41296b88d4993ef8acb033c323c6532",
+        "version_name": "1.2.41-dev",
+        "version_code": 10241,
+        "status": "completed",
+        "failure_code": null,
+        "installed_version_code": 10241,
+        "recovered_after_process_restart": true,
+        "recorded_at": "2026-10-03T03:08:33.979424+00:00"
+      },
+      "postInstallHeartbeat": "2026-10-03T03:08:33.983739Z",
+      "grantAutoCleared": true,
+      "acceptedAt": "2026-10-03T03:08:38.747165+00:00"
+    },
+    {
+      "deviceId": "75c29a32-2867-4b60-947c-003e712e538f",
+      "name": "auto-ph-020",
+      "beforeVersionCode": 10240,
+      "status": "completed_and_heartbeat",
+      "attempts": 1,
+      "commandId": "887a7ba4-0a08-4ffb-83be-9e0747c6ca77",
+      "terminalReceipt": {
+        "command_id": "887a7ba4-0a08-4ffb-83be-9e0747c6ca77",
+        "sha256": "5222d948a1a9f81e575955cc300f24dba41296b88d4993ef8acb033c323c6532",
+        "version_name": "1.2.41-dev",
+        "version_code": 10241,
+        "status": "completed",
+        "failure_code": null,
+        "installed_version_code": 10241,
+        "recovered_after_process_restart": true,
+        "recorded_at": "2026-10-03T03:08:45.788573+00:00"
+      },
+      "postInstallHeartbeat": "2026-10-03T03:09:15.765384Z",
+      "grantAutoCleared": true,
+      "acceptedAt": "2026-10-03T03:09:19.105831+00:00"
+    },
+    {
+      "deviceId": "c37e687a-ee83-466d-846f-3f4b36047fa7",
+      "name": "auto-ph-019",
+      "beforeVersionCode": 10240,
+      "status": "completed_and_heartbeat",
+      "attempts": 1,
+      "commandId": "91df03fd-c26b-49c0-a92d-8555e2e936f3",
+      "terminalReceipt": {
+        "command_id": "91df03fd-c26b-49c0-a92d-8555e2e936f3",
+        "sha256": "5222d948a1a9f81e575955cc300f24dba41296b88d4993ef8acb033c323c6532",
+        "version_name": "1.2.41-dev",
+        "version_code": 10241,
+        "status": "completed",
+        "failure_code": null,
+        "installed_version_code": 10241,
+        "recovered_after_process_restart": true,
+        "recorded_at": "2026-10-03T03:09:24.526578+00:00"
+      },
+      "postInstallHeartbeat": "2026-10-03T03:09:24.531790Z",
+      "grantAutoCleared": true,
+      "acceptedAt": "2026-10-03T03:09:29.279511+00:00"
+    },
+    {
+      "deviceId": "bafef86f-3ab4-469b-ae0c-cf2771b55813",
+      "name": "auto-ph-018",
+      "beforeVersionCode": 10240,
+      "status": "completed_and_heartbeat",
+      "attempts": 1,
+      "commandId": "4c689829-2055-4714-a274-5e9d51e4fa82",
+      "terminalReceipt": {
+        "command_id": "4c689829-2055-4714-a274-5e9d51e4fa82",
+        "sha256": "5222d948a1a9f81e575955cc300f24dba41296b88d4993ef8acb033c323c6532",
+        "version_name": "1.2.41-dev",
+        "version_code": 10241,
+        "status": "completed",
+        "failure_code": null,
+        "installed_version_code": 10241,
+        "recovered_after_process_restart": true,
+        "recorded_at": "2026-10-03T03:09:34.540495+00:00"
+      },
+      "postInstallHeartbeat": "2026-10-03T03:09:34.543197Z",
+      "grantAutoCleared": true,
+      "acceptedAt": "2026-10-03T03:09:39.451344+00:00"
+    },
+    {
+      "deviceId": "1dd7e59c-b68f-406a-93cd-5f4e34fdea90",
+      "name": "auto-ph-017",
+      "beforeVersionCode": 10240,
+      "status": "completed_and_heartbeat",
+      "attempts": 1,
+      "commandId": "736cc302-26ce-4691-b288-6ac6c721d093",
+      "terminalReceipt": {
+        "command_id": "736cc302-26ce-4691-b288-6ac6c721d093",
+        "sha256": "5222d948a1a9f81e575955cc300f24dba41296b88d4993ef8acb033c323c6532",
+        "version_name": "1.2.41-dev",
+        "version_code": 10241,
+        "status": "completed",
+        "failure_code": null,
+        "installed_version_code": 10241,
+        "recovered_after_process_restart": true,
+        "recorded_at": "2026-10-03T03:09:44.728786+00:00"
+      },
+      "postInstallHeartbeat": "2026-10-03T03:10:14.702930Z",
+      "grantAutoCleared": true,
+      "acceptedAt": "2026-10-03T03:10:14.778129+00:00"
+    },
+    {
+      "deviceId": "3c4c4218-27ba-4d8d-a7d2-4348c2f91c93",
+      "name": "auto-ph-016",
+      "beforeVersionCode": 10240,
+      "status": "completed_and_heartbeat",
+      "attempts": 1,
+      "commandId": "ec206ddf-cf26-4709-96ba-e9544576805d",
+      "terminalReceipt": {
+        "command_id": "ec206ddf-cf26-4709-96ba-e9544576805d",
+        "sha256": "5222d948a1a9f81e575955cc300f24dba41296b88d4993ef8acb033c323c6532",
+        "version_name": "1.2.41-dev",
+        "version_code": 10241,
+        "status": "completed",
+        "failure_code": null,
+        "installed_version_code": 10241,
+        "recovered_after_process_restart": true,
+        "recorded_at": "2026-10-03T03:10:21.348192+00:00"
+      },
+      "postInstallHeartbeat": "2026-10-03T03:10:22.093449Z",
+      "grantAutoCleared": true,
+      "acceptedAt": "2026-10-03T03:10:24.985502+00:00"
+    },
+    {
+      "deviceId": "930a6505-b7ec-4eee-93fe-9aaa66517871",
+      "name": "auto-ph-015",
+      "beforeVersionCode": 10240,
+      "status": "completed_and_heartbeat",
+      "attempts": 1,
+      "commandId": "76d1015d-ac96-46d2-b20a-5bfb450cb716",
+      "terminalReceipt": {
+        "command_id": "76d1015d-ac96-46d2-b20a-5bfb450cb716",
+        "sha256": "5222d948a1a9f81e575955cc300f24dba41296b88d4993ef8acb033c323c6532",
+        "version_name": "1.2.41-dev",
+        "version_code": 10241,
+        "status": "completed",
+        "failure_code": null,
+        "installed_version_code": 10241,
+        "recovered_after_process_restart": true,
+        "recorded_at": "2026-10-03T03:10:30.425538+00:00"
+      },
+      "postInstallHeartbeat": "2026-10-03T03:10:31.174141Z",
+      "grantAutoCleared": true,
+      "acceptedAt": "2026-10-03T03:10:35.148809+00:00"
+    },
+    {
+      "deviceId": "673d5774-24b1-4b57-8dfb-90c46f627ce3",
+      "name": "auto-ph-014",
+      "beforeVersionCode": 10240,
+      "status": "completed_and_heartbeat",
+      "attempts": 1,
+      "commandId": "cd9dcb9c-f8d2-48a4-a6c3-bdd21614bda3",
+      "terminalReceipt": {
+        "command_id": "cd9dcb9c-f8d2-48a4-a6c3-bdd21614bda3",
+        "sha256": "5222d948a1a9f81e575955cc300f24dba41296b88d4993ef8acb033c323c6532",
+        "version_name": "1.2.41-dev",
+        "version_code": 10241,
+        "status": "completed",
+        "failure_code": null,
+        "installed_version_code": 10241,
+        "recovered_after_process_restart": true,
+        "recorded_at": "2026-10-03T03:10:40.320247+00:00"
+      },
+      "postInstallHeartbeat": "2026-10-03T03:10:41.056458Z",
+      "grantAutoCleared": true,
+      "acceptedAt": "2026-10-03T03:10:45.349414+00:00"
+    },
+    {
+      "deviceId": "6d830af5-b7cc-44b4-b7f5-5e0275aceb3b",
+      "name": "auto-ph-013",
+      "beforeVersionCode": 10240,
+      "status": "completed_and_heartbeat",
+      "attempts": 1,
+      "commandId": "d38a5690-2487-446e-8045-5f5e9578e03d",
+      "terminalReceipt": {
+        "command_id": "d38a5690-2487-446e-8045-5f5e9578e03d",
+        "sha256": "5222d948a1a9f81e575955cc300f24dba41296b88d4993ef8acb033c323c6532",
+        "version_name": "1.2.41-dev",
+        "version_code": 10241,
+        "status": "completed",
+        "failure_code": null,
+        "installed_version_code": 10241,
+        "recovered_after_process_restart": true,
+        "recorded_at": "2026-10-03T03:10:51.119290+00:00"
+      },
+      "postInstallHeartbeat": "2026-10-03T03:10:51.124692Z",
+      "grantAutoCleared": true,
+      "acceptedAt": "2026-10-03T03:10:55.515182+00:00"
+    },
+    {
+      "deviceId": "8c187cfa-e5ea-4939-a137-07619437953d",
+      "name": "auto-ph-012",
+      "beforeVersionCode": 10240,
+      "status": "completed_and_heartbeat",
+      "attempts": 1,
+      "commandId": "e9987e6a-538d-410b-be69-12e486c390f7",
+      "terminalReceipt": {
+        "command_id": "e9987e6a-538d-410b-be69-12e486c390f7",
+        "sha256": "5222d948a1a9f81e575955cc300f24dba41296b88d4993ef8acb033c323c6532",
+        "version_name": "1.2.41-dev",
+        "version_code": 10241,
+        "status": "completed",
+        "failure_code": null,
+        "installed_version_code": 10241,
+        "recovered_after_process_restart": true,
+        "recorded_at": "2026-10-03T03:11:00.971272+00:00"
+      },
+      "postInstallHeartbeat": "2026-10-03T03:11:00.981362Z",
+      "grantAutoCleared": true,
+      "acceptedAt": "2026-10-03T03:11:05.684077+00:00"
+    },
+    {
+      "deviceId": "414ce0e9-4b93-4f96-b9ca-ee675f53835e",
+      "name": "auto-ph-011",
+      "beforeVersionCode": 10240,
+      "status": "completed_and_heartbeat",
+      "attempts": 1,
+      "commandId": "cacd29bb-a122-45cf-9866-a1beb455ac35",
+      "terminalReceipt": {
+        "command_id": "cacd29bb-a122-45cf-9866-a1beb455ac35",
+        "sha256": "5222d948a1a9f81e575955cc300f24dba41296b88d4993ef8acb033c323c6532",
+        "version_name": "1.2.41-dev",
+        "version_code": 10241,
+        "status": "completed",
+        "failure_code": null,
+        "installed_version_code": 10241,
+        "recovered_after_process_restart": true,
+        "recorded_at": "2026-10-03T03:11:12.651944+00:00"
+      },
+      "postInstallHeartbeat": "2026-10-03T03:11:13.937010Z",
+      "grantAutoCleared": true,
+      "acceptedAt": "2026-10-03T03:11:15.855905+00:00"
+    },
+    {
+      "deviceId": "5df4805e-fe64-4d39-960c-19ceab206cd6",
+      "name": "auto-ph-010",
+      "beforeVersionCode": 10240,
+      "status": "completed_and_heartbeat",
+      "attempts": 1,
+      "commandId": "49cfdca7-ef18-4331-b57e-53a8f342cb64",
+      "terminalReceipt": {
+        "command_id": "49cfdca7-ef18-4331-b57e-53a8f342cb64",
+        "sha256": "5222d948a1a9f81e575955cc300f24dba41296b88d4993ef8acb033c323c6532",
+        "version_name": "1.2.41-dev",
+        "version_code": 10241,
+        "status": "completed",
+        "failure_code": null,
+        "installed_version_code": 10241,
+        "recovered_after_process_restart": true,
+        "recorded_at": "2026-10-03T03:11:23.817330+00:00"
+      },
+      "postInstallHeartbeat": "2026-10-03T03:11:25.187422Z",
+      "grantAutoCleared": true,
+      "acceptedAt": "2026-10-03T03:11:26.032292+00:00"
+    }
+  ],
+  "rollout": {
+    "completedDevices": 14,
+    "canaryStartedAt": "2026-10-03T03:06:10.517748+00:00",
+    "waveStartedAt": "2026-10-03T03:08:18.407805+00:00",
+    "finishedAt": "2026-10-03T03:11:26.057006+00:00",
+    "sequential": true,
+    "automaticRetry": false,
+    "dataCleared": false,
+    "hostAdbUsed": false,
+    "catalogTotal": 19,
+    "onlineVersions": {
+      "1.2.41-dev": 14
+    },
+    "offlineOutsideAcceptance": 5
+  },
+  "finiteObservation": {
+    "startedAt": "2026-10-03T03:14:44.787794+00:00",
+    "sampleCount": 12,
+    "intervalSeconds": 10,
+    "writes": false,
+    "samples": [
+      {
+        "observedAt": "2026-10-03T03:14:44.809763+00:00",
+        "onlineCount": 14,
+        "sameCohort": true,
+        "allOn10241": true,
+        "sameEpochs": true,
+        "maxHeartbeatAgeSeconds": 29.060769,
+        "reportedEpochs": {
+          "4815b950-e5cf-4686-9d46-42d0df8d41f7": "2026-10-03T03:06:17.273835Z",
+          "b410464a-5f26-4803-a756-7840cc17b128": "2026-10-03T03:08:24.674930Z",
+          "d088c147-7ada-4b29-9e79-f991b20fcf91": "2026-10-03T03:08:33.983739Z",
+          "75c29a32-2867-4b60-947c-003e712e538f": "2026-10-03T03:08:45.782777Z",
+          "c37e687a-ee83-466d-846f-3f4b36047fa7": "2026-10-03T03:09:24.531790Z",
+          "bafef86f-3ab4-469b-ae0c-cf2771b55813": "2026-10-03T03:09:34.543197Z",
+          "1dd7e59c-b68f-406a-93cd-5f4e34fdea90": "2026-10-03T03:09:44.722735Z",
+          "3c4c4218-27ba-4d8d-a7d2-4348c2f91c93": "2026-10-03T03:10:22.093449Z",
+          "930a6505-b7ec-4eee-93fe-9aaa66517871": "2026-10-03T03:10:31.174141Z",
+          "673d5774-24b1-4b57-8dfb-90c46f627ce3": "2026-10-03T03:10:41.056458Z",
+          "6d830af5-b7cc-44b4-b7f5-5e0275aceb3b": "2026-10-03T03:10:51.124692Z",
+          "8c187cfa-e5ea-4939-a137-07619437953d": "2026-10-03T03:11:00.981362Z",
+          "414ce0e9-4b93-4f96-b9ca-ee675f53835e": "2026-10-03T03:11:13.937010Z",
+          "5df4805e-fe64-4d39-960c-19ceab206cd6": "2026-10-03T03:11:25.187422Z"
+        }
+      },
+      {
+        "observedAt": "2026-10-03T03:14:54.833844+00:00",
+        "onlineCount": 14,
+        "sameCohort": true,
+        "allOn10241": true,
+        "sameEpochs": true,
+        "maxHeartbeatAgeSeconds": 29.655418,
+        "reportedEpochs": {
+          "4815b950-e5cf-4686-9d46-42d0df8d41f7": "2026-10-03T03:06:17.273835Z",
+          "b410464a-5f26-4803-a756-7840cc17b128": "2026-10-03T03:08:24.674930Z",
+          "d088c147-7ada-4b29-9e79-f991b20fcf91": "2026-10-03T03:08:33.983739Z",
+          "75c29a32-2867-4b60-947c-003e712e538f": "2026-10-03T03:08:45.782777Z",
+          "c37e687a-ee83-466d-846f-3f4b36047fa7": "2026-10-03T03:09:24.531790Z",
+          "bafef86f-3ab4-469b-ae0c-cf2771b55813": "2026-10-03T03:09:34.543197Z",
+          "1dd7e59c-b68f-406a-93cd-5f4e34fdea90": "2026-10-03T03:09:44.722735Z",
+          "3c4c4218-27ba-4d8d-a7d2-4348c2f91c93": "2026-10-03T03:10:22.093449Z",
+          "930a6505-b7ec-4eee-93fe-9aaa66517871": "2026-10-03T03:10:31.174141Z",
+          "673d5774-24b1-4b57-8dfb-90c46f627ce3": "2026-10-03T03:10:41.056458Z",
+          "6d830af5-b7cc-44b4-b7f5-5e0275aceb3b": "2026-10-03T03:10:51.124692Z",
+          "8c187cfa-e5ea-4939-a137-07619437953d": "2026-10-03T03:11:00.981362Z",
+          "414ce0e9-4b93-4f96-b9ca-ee675f53835e": "2026-10-03T03:11:13.937010Z",
+          "5df4805e-fe64-4d39-960c-19ceab206cd6": "2026-10-03T03:11:25.187422Z"
+        }
+      },
+      {
+        "observedAt": "2026-10-03T03:15:04.857121+00:00",
+        "onlineCount": 14,
+        "sameCohort": true,
+        "allOn10241": true,
+        "sameEpochs": true,
+        "maxHeartbeatAgeSeconds": 23.827988,
+        "reportedEpochs": {
+          "4815b950-e5cf-4686-9d46-42d0df8d41f7": "2026-10-03T03:06:17.273835Z",
+          "b410464a-5f26-4803-a756-7840cc17b128": "2026-10-03T03:08:24.674930Z",
+          "d088c147-7ada-4b29-9e79-f991b20fcf91": "2026-10-03T03:08:33.983739Z",
+          "75c29a32-2867-4b60-947c-003e712e538f": "2026-10-03T03:08:45.782777Z",
+          "c37e687a-ee83-466d-846f-3f4b36047fa7": "2026-10-03T03:09:24.531790Z",
+          "bafef86f-3ab4-469b-ae0c-cf2771b55813": "2026-10-03T03:09:34.543197Z",
+          "1dd7e59c-b68f-406a-93cd-5f4e34fdea90": "2026-10-03T03:09:44.722735Z",
+          "3c4c4218-27ba-4d8d-a7d2-4348c2f91c93": "2026-10-03T03:10:22.093449Z",
+          "930a6505-b7ec-4eee-93fe-9aaa66517871": "2026-10-03T03:10:31.174141Z",
+          "673d5774-24b1-4b57-8dfb-90c46f627ce3": "2026-10-03T03:10:41.056458Z",
+          "6d830af5-b7cc-44b4-b7f5-5e0275aceb3b": "2026-10-03T03:10:51.124692Z",
+          "8c187cfa-e5ea-4939-a137-07619437953d": "2026-10-03T03:11:00.981362Z",
+          "414ce0e9-4b93-4f96-b9ca-ee675f53835e": "2026-10-03T03:11:13.937010Z",
+          "5df4805e-fe64-4d39-960c-19ceab206cd6": "2026-10-03T03:11:25.187422Z"
+        }
+      },
+      {
+        "observedAt": "2026-10-03T03:15:14.874665+00:00",
+        "onlineCount": 14,
+        "sameCohort": true,
+        "allOn10241": true,
+        "sameEpochs": true,
+        "maxHeartbeatAgeSeconds": 29.131776,
+        "reportedEpochs": {
+          "4815b950-e5cf-4686-9d46-42d0df8d41f7": "2026-10-03T03:06:17.273835Z",
+          "b410464a-5f26-4803-a756-7840cc17b128": "2026-10-03T03:08:24.674930Z",
+          "d088c147-7ada-4b29-9e79-f991b20fcf91": "2026-10-03T03:08:33.983739Z",
+          "75c29a32-2867-4b60-947c-003e712e538f": "2026-10-03T03:08:45.782777Z",
+          "c37e687a-ee83-466d-846f-3f4b36047fa7": "2026-10-03T03:09:24.531790Z",
+          "bafef86f-3ab4-469b-ae0c-cf2771b55813": "2026-10-03T03:09:34.543197Z",
+          "1dd7e59c-b68f-406a-93cd-5f4e34fdea90": "2026-10-03T03:09:44.722735Z",
+          "3c4c4218-27ba-4d8d-a7d2-4348c2f91c93": "2026-10-03T03:10:22.093449Z",
+          "930a6505-b7ec-4eee-93fe-9aaa66517871": "2026-10-03T03:10:31.174141Z",
+          "673d5774-24b1-4b57-8dfb-90c46f627ce3": "2026-10-03T03:10:41.056458Z",
+          "6d830af5-b7cc-44b4-b7f5-5e0275aceb3b": "2026-10-03T03:10:51.124692Z",
+          "8c187cfa-e5ea-4939-a137-07619437953d": "2026-10-03T03:11:00.981362Z",
+          "414ce0e9-4b93-4f96-b9ca-ee675f53835e": "2026-10-03T03:11:13.937010Z",
+          "5df4805e-fe64-4d39-960c-19ceab206cd6": "2026-10-03T03:11:25.187422Z"
+        }
+      },
+      {
+        "observedAt": "2026-10-03T03:15:24.898073+00:00",
+        "onlineCount": 14,
+        "sameCohort": true,
+        "allOn10241": true,
+        "sameEpochs": true,
+        "maxHeartbeatAgeSeconds": 29.721026,
+        "reportedEpochs": {
+          "4815b950-e5cf-4686-9d46-42d0df8d41f7": "2026-10-03T03:06:17.273835Z",
+          "b410464a-5f26-4803-a756-7840cc17b128": "2026-10-03T03:08:24.674930Z",
+          "d088c147-7ada-4b29-9e79-f991b20fcf91": "2026-10-03T03:08:33.983739Z",
+          "75c29a32-2867-4b60-947c-003e712e538f": "2026-10-03T03:08:45.782777Z",
+          "c37e687a-ee83-466d-846f-3f4b36047fa7": "2026-10-03T03:09:24.531790Z",
+          "bafef86f-3ab4-469b-ae0c-cf2771b55813": "2026-10-03T03:09:34.543197Z",
+          "1dd7e59c-b68f-406a-93cd-5f4e34fdea90": "2026-10-03T03:09:44.722735Z",
+          "3c4c4218-27ba-4d8d-a7d2-4348c2f91c93": "2026-10-03T03:10:22.093449Z",
+          "930a6505-b7ec-4eee-93fe-9aaa66517871": "2026-10-03T03:10:31.174141Z",
+          "673d5774-24b1-4b57-8dfb-90c46f627ce3": "2026-10-03T03:10:41.056458Z",
+          "6d830af5-b7cc-44b4-b7f5-5e0275aceb3b": "2026-10-03T03:10:51.124692Z",
+          "8c187cfa-e5ea-4939-a137-07619437953d": "2026-10-03T03:11:00.981362Z",
+          "414ce0e9-4b93-4f96-b9ca-ee675f53835e": "2026-10-03T03:11:13.937010Z",
+          "5df4805e-fe64-4d39-960c-19ceab206cd6": "2026-10-03T03:11:25.187422Z"
+        }
+      },
+      {
+        "observedAt": "2026-10-03T03:15:34.920861+00:00",
+        "onlineCount": 14,
+        "sameCohort": true,
+        "allOn10241": true,
+        "sameEpochs": true,
+        "maxHeartbeatAgeSeconds": 23.890867,
+        "reportedEpochs": {
+          "4815b950-e5cf-4686-9d46-42d0df8d41f7": "2026-10-03T03:06:17.273835Z",
+          "b410464a-5f26-4803-a756-7840cc17b128": "2026-10-03T03:08:24.674930Z",
+          "d088c147-7ada-4b29-9e79-f991b20fcf91": "2026-10-03T03:08:33.983739Z",
+          "75c29a32-2867-4b60-947c-003e712e538f": "2026-10-03T03:08:45.782777Z",
+          "c37e687a-ee83-466d-846f-3f4b36047fa7": "2026-10-03T03:09:24.531790Z",
+          "bafef86f-3ab4-469b-ae0c-cf2771b55813": "2026-10-03T03:09:34.543197Z",
+          "1dd7e59c-b68f-406a-93cd-5f4e34fdea90": "2026-10-03T03:09:44.722735Z",
+          "3c4c4218-27ba-4d8d-a7d2-4348c2f91c93": "2026-10-03T03:10:22.093449Z",
+          "930a6505-b7ec-4eee-93fe-9aaa66517871": "2026-10-03T03:10:31.174141Z",
+          "673d5774-24b1-4b57-8dfb-90c46f627ce3": "2026-10-03T03:10:41.056458Z",
+          "6d830af5-b7cc-44b4-b7f5-5e0275aceb3b": "2026-10-03T03:10:51.124692Z",
+          "8c187cfa-e5ea-4939-a137-07619437953d": "2026-10-03T03:11:00.981362Z",
+          "414ce0e9-4b93-4f96-b9ca-ee675f53835e": "2026-10-03T03:11:13.937010Z",
+          "5df4805e-fe64-4d39-960c-19ceab206cd6": "2026-10-03T03:11:25.187422Z"
+        }
+      },
+      {
+        "observedAt": "2026-10-03T03:15:44.944332+00:00",
+        "onlineCount": 14,
+        "sameCohort": true,
+        "allOn10241": true,
+        "sameEpochs": true,
+        "maxHeartbeatAgeSeconds": 29.198324,
+        "reportedEpochs": {
+          "4815b950-e5cf-4686-9d46-42d0df8d41f7": "2026-10-03T03:06:17.273835Z",
+          "b410464a-5f26-4803-a756-7840cc17b128": "2026-10-03T03:08:24.674930Z",
+          "d088c147-7ada-4b29-9e79-f991b20fcf91": "2026-10-03T03:08:33.983739Z",
+          "75c29a32-2867-4b60-947c-003e712e538f": "2026-10-03T03:08:45.782777Z",
+          "c37e687a-ee83-466d-846f-3f4b36047fa7": "2026-10-03T03:09:24.531790Z",
+          "bafef86f-3ab4-469b-ae0c-cf2771b55813": "2026-10-03T03:09:34.543197Z",
+          "1dd7e59c-b68f-406a-93cd-5f4e34fdea90": "2026-10-03T03:09:44.722735Z",
+          "3c4c4218-27ba-4d8d-a7d2-4348c2f91c93": "2026-10-03T03:10:22.093449Z",
+          "930a6505-b7ec-4eee-93fe-9aaa66517871": "2026-10-03T03:10:31.174141Z",
+          "673d5774-24b1-4b57-8dfb-90c46f627ce3": "2026-10-03T03:10:41.056458Z",
+          "6d830af5-b7cc-44b4-b7f5-5e0275aceb3b": "2026-10-03T03:10:51.124692Z",
+          "8c187cfa-e5ea-4939-a137-07619437953d": "2026-10-03T03:11:00.981362Z",
+          "414ce0e9-4b93-4f96-b9ca-ee675f53835e": "2026-10-03T03:11:13.937010Z",
+          "5df4805e-fe64-4d39-960c-19ceab206cd6": "2026-10-03T03:11:25.187422Z"
+        }
+      },
+      {
+        "observedAt": "2026-10-03T03:15:54.976382+00:00",
+        "onlineCount": 14,
+        "sameCohort": true,
+        "allOn10241": true,
+        "sameEpochs": true,
+        "maxHeartbeatAgeSeconds": 29.801637,
+        "reportedEpochs": {
+          "4815b950-e5cf-4686-9d46-42d0df8d41f7": "2026-10-03T03:06:17.273835Z",
+          "b410464a-5f26-4803-a756-7840cc17b128": "2026-10-03T03:08:24.674930Z",
+          "d088c147-7ada-4b29-9e79-f991b20fcf91": "2026-10-03T03:08:33.983739Z",
+          "75c29a32-2867-4b60-947c-003e712e538f": "2026-10-03T03:08:45.782777Z",
+          "c37e687a-ee83-466d-846f-3f4b36047fa7": "2026-10-03T03:09:24.531790Z",
+          "bafef86f-3ab4-469b-ae0c-cf2771b55813": "2026-10-03T03:09:34.543197Z",
+          "1dd7e59c-b68f-406a-93cd-5f4e34fdea90": "2026-10-03T03:09:44.722735Z",
+          "3c4c4218-27ba-4d8d-a7d2-4348c2f91c93": "2026-10-03T03:10:22.093449Z",
+          "930a6505-b7ec-4eee-93fe-9aaa66517871": "2026-10-03T03:10:31.174141Z",
+          "673d5774-24b1-4b57-8dfb-90c46f627ce3": "2026-10-03T03:10:41.056458Z",
+          "6d830af5-b7cc-44b4-b7f5-5e0275aceb3b": "2026-10-03T03:10:51.124692Z",
+          "8c187cfa-e5ea-4939-a137-07619437953d": "2026-10-03T03:11:00.981362Z",
+          "414ce0e9-4b93-4f96-b9ca-ee675f53835e": "2026-10-03T03:11:13.937010Z",
+          "5df4805e-fe64-4d39-960c-19ceab206cd6": "2026-10-03T03:11:25.187422Z"
+        }
+      },
+      {
+        "observedAt": "2026-10-03T03:16:05.007099+00:00",
+        "onlineCount": 14,
+        "sameCohort": true,
+        "allOn10241": true,
+        "sameEpochs": true,
+        "maxHeartbeatAgeSeconds": 23.853694,
+        "reportedEpochs": {
+          "4815b950-e5cf-4686-9d46-42d0df8d41f7": "2026-10-03T03:06:17.273835Z",
+          "b410464a-5f26-4803-a756-7840cc17b128": "2026-10-03T03:08:24.674930Z",
+          "d088c147-7ada-4b29-9e79-f991b20fcf91": "2026-10-03T03:08:33.983739Z",
+          "75c29a32-2867-4b60-947c-003e712e538f": "2026-10-03T03:08:45.782777Z",
+          "c37e687a-ee83-466d-846f-3f4b36047fa7": "2026-10-03T03:09:24.531790Z",
+          "bafef86f-3ab4-469b-ae0c-cf2771b55813": "2026-10-03T03:09:34.543197Z",
+          "1dd7e59c-b68f-406a-93cd-5f4e34fdea90": "2026-10-03T03:09:44.722735Z",
+          "3c4c4218-27ba-4d8d-a7d2-4348c2f91c93": "2026-10-03T03:10:22.093449Z",
+          "930a6505-b7ec-4eee-93fe-9aaa66517871": "2026-10-03T03:10:31.174141Z",
+          "673d5774-24b1-4b57-8dfb-90c46f627ce3": "2026-10-03T03:10:41.056458Z",
+          "6d830af5-b7cc-44b4-b7f5-5e0275aceb3b": "2026-10-03T03:10:51.124692Z",
+          "8c187cfa-e5ea-4939-a137-07619437953d": "2026-10-03T03:11:00.981362Z",
+          "414ce0e9-4b93-4f96-b9ca-ee675f53835e": "2026-10-03T03:11:13.937010Z",
+          "5df4805e-fe64-4d39-960c-19ceab206cd6": "2026-10-03T03:11:25.187422Z"
+        }
+      },
+      {
+        "observedAt": "2026-10-03T03:16:15.033446+00:00",
+        "onlineCount": 14,
+        "sameCohort": true,
+        "allOn10241": true,
+        "sameEpochs": true,
+        "maxHeartbeatAgeSeconds": 29.292431,
+        "reportedEpochs": {
+          "4815b950-e5cf-4686-9d46-42d0df8d41f7": "2026-10-03T03:06:17.273835Z",
+          "b410464a-5f26-4803-a756-7840cc17b128": "2026-10-03T03:08:24.674930Z",
+          "d088c147-7ada-4b29-9e79-f991b20fcf91": "2026-10-03T03:08:33.983739Z",
+          "75c29a32-2867-4b60-947c-003e712e538f": "2026-10-03T03:08:45.782777Z",
+          "c37e687a-ee83-466d-846f-3f4b36047fa7": "2026-10-03T03:09:24.531790Z",
+          "bafef86f-3ab4-469b-ae0c-cf2771b55813": "2026-10-03T03:09:34.543197Z",
+          "1dd7e59c-b68f-406a-93cd-5f4e34fdea90": "2026-10-03T03:09:44.722735Z",
+          "3c4c4218-27ba-4d8d-a7d2-4348c2f91c93": "2026-10-03T03:10:22.093449Z",
+          "930a6505-b7ec-4eee-93fe-9aaa66517871": "2026-10-03T03:10:31.174141Z",
+          "673d5774-24b1-4b57-8dfb-90c46f627ce3": "2026-10-03T03:10:41.056458Z",
+          "6d830af5-b7cc-44b4-b7f5-5e0275aceb3b": "2026-10-03T03:10:51.124692Z",
+          "8c187cfa-e5ea-4939-a137-07619437953d": "2026-10-03T03:11:00.981362Z",
+          "414ce0e9-4b93-4f96-b9ca-ee675f53835e": "2026-10-03T03:11:13.937010Z",
+          "5df4805e-fe64-4d39-960c-19ceab206cd6": "2026-10-03T03:11:25.187422Z"
+        }
+      },
+      {
+        "observedAt": "2026-10-03T03:16:25.061155+00:00",
+        "onlineCount": 14,
+        "sameCohort": true,
+        "allOn10241": true,
+        "sameEpochs": true,
+        "maxHeartbeatAgeSeconds": 29.886396,
+        "reportedEpochs": {
+          "4815b950-e5cf-4686-9d46-42d0df8d41f7": "2026-10-03T03:06:17.273835Z",
+          "b410464a-5f26-4803-a756-7840cc17b128": "2026-10-03T03:08:24.674930Z",
+          "d088c147-7ada-4b29-9e79-f991b20fcf91": "2026-10-03T03:08:33.983739Z",
+          "75c29a32-2867-4b60-947c-003e712e538f": "2026-10-03T03:08:45.782777Z",
+          "c37e687a-ee83-466d-846f-3f4b36047fa7": "2026-10-03T03:09:24.531790Z",
+          "bafef86f-3ab4-469b-ae0c-cf2771b55813": "2026-10-03T03:09:34.543197Z",
+          "1dd7e59c-b68f-406a-93cd-5f4e34fdea90": "2026-10-03T03:09:44.722735Z",
+          "3c4c4218-27ba-4d8d-a7d2-4348c2f91c93": "2026-10-03T03:10:22.093449Z",
+          "930a6505-b7ec-4eee-93fe-9aaa66517871": "2026-10-03T03:10:31.174141Z",
+          "673d5774-24b1-4b57-8dfb-90c46f627ce3": "2026-10-03T03:10:41.056458Z",
+          "6d830af5-b7cc-44b4-b7f5-5e0275aceb3b": "2026-10-03T03:10:51.124692Z",
+          "8c187cfa-e5ea-4939-a137-07619437953d": "2026-10-03T03:11:00.981362Z",
+          "414ce0e9-4b93-4f96-b9ca-ee675f53835e": "2026-10-03T03:11:13.937010Z",
+          "5df4805e-fe64-4d39-960c-19ceab206cd6": "2026-10-03T03:11:25.187422Z"
+        }
+      },
+      {
+        "observedAt": "2026-10-03T03:16:35.089199+00:00",
+        "onlineCount": 14,
+        "sameCohort": true,
+        "allOn10241": true,
+        "sameEpochs": true,
+        "maxHeartbeatAgeSeconds": 24.041726,
+        "reportedEpochs": {
+          "4815b950-e5cf-4686-9d46-42d0df8d41f7": "2026-10-03T03:06:17.273835Z",
+          "b410464a-5f26-4803-a756-7840cc17b128": "2026-10-03T03:08:24.674930Z",
+          "d088c147-7ada-4b29-9e79-f991b20fcf91": "2026-10-03T03:08:33.983739Z",
+          "75c29a32-2867-4b60-947c-003e712e538f": "2026-10-03T03:08:45.782777Z",
+          "c37e687a-ee83-466d-846f-3f4b36047fa7": "2026-10-03T03:09:24.531790Z",
+          "bafef86f-3ab4-469b-ae0c-cf2771b55813": "2026-10-03T03:09:34.543197Z",
+          "1dd7e59c-b68f-406a-93cd-5f4e34fdea90": "2026-10-03T03:09:44.722735Z",
+          "3c4c4218-27ba-4d8d-a7d2-4348c2f91c93": "2026-10-03T03:10:22.093449Z",
+          "930a6505-b7ec-4eee-93fe-9aaa66517871": "2026-10-03T03:10:31.174141Z",
+          "673d5774-24b1-4b57-8dfb-90c46f627ce3": "2026-10-03T03:10:41.056458Z",
+          "6d830af5-b7cc-44b4-b7f5-5e0275aceb3b": "2026-10-03T03:10:51.124692Z",
+          "8c187cfa-e5ea-4939-a137-07619437953d": "2026-10-03T03:11:00.981362Z",
+          "414ce0e9-4b93-4f96-b9ca-ee675f53835e": "2026-10-03T03:11:13.937010Z",
+          "5df4805e-fe64-4d39-960c-19ceab206cd6": "2026-10-03T03:11:25.187422Z"
+        }
+      }
+    ],
+    "finishedAt": "2026-10-03T03:16:35.090397+00:00",
+    "allSamplesAccepted": true
+  },
+  "maxHeartbeatAgeSeconds": 29.886396,
+  "runtime": {
+    "observedAt": "2026-10-03T03:17:58.138904+00:00",
+    "phase": "post-identity-wave",
+    "url": "http://127.0.0.1:3015",
+    "reviewSource": "77fca37847590bef526ae5becdf7b1986d5b15ea",
+    "backendSource": "facba9a4b56f9b121f028bc371d24b94a08364de",
+    "loginPassed": true,
+    "sameOriginApiPassed": true,
+    "uiCompiledStampPassed": true,
+    "staticAssetPassed": true,
+    "unauthorizedObservabilityStatus": 401,
+    "prometheusApiPassed": true,
+    "grafanaSessionAndHealthPassed": true,
+    "wsUpgradeSnapshotAndPongPassed": true,
+    "catalogTotal": 19,
+    "reportedStatuses": {
+      "online": 14,
+      "offline": 5
+    },
+    "nodeRuntime": "v24.21.0",
+    "containers": [
+      {
+        "name": "sphere-review-20261002-review-ui-1",
+        "id": "b842a01b6187ebfe800a797654c3ec5672146206035c1d274e8f6169269b79ed",
+        "imageId": "sha256:264aaa341c32e37153e4c19eff0c3db418cf3b066c834a76d4794b79a704c6fa",
+        "image": "sphere-review-frontend:77fca37847590bef526ae5becdf7b1986d5b15ea",
+        "health": "healthy",
+        "startedAt": "2026-10-03T03:00:14.649785176Z",
+        "readOnly": true,
+        "restart": "unless-stopped",
+        "ports": {}
+      },
+      {
+        "name": "sphere-review-20261002-review-gateway-1",
+        "id": "83fa3baddd2d4fa5c8d5ccad3879b6dd3ba0b1f02353375d8844c442b92d2d2f",
+        "imageId": "sha256:1d13701a5f9f3fb01aaa88cef2344d65b6b5bf6b7d9fa4cf0dca557a8d7702ba",
+        "image": "nginx:alpine",
+        "health": "healthy",
+        "startedAt": "2026-10-03T03:00:20.5550634Z",
+        "readOnly": true,
+        "restart": "unless-stopped",
+        "ports": {
+          "8080/tcp": [
+            {
+              "HostIp": "127.0.0.1",
+              "HostPort": "3015"
+            }
+          ]
+        }
+      }
+    ],
+    "remoteCommandsSent": false,
+    "browserVisualAcceptance": "OPEN_URL_POLICY_BLOCKED"
+  },
+  "backendInstalled": {
+    "source": "facba9a4b56f9b121f028bc371d24b94a08364de",
+    "previousSource": "8cd5cf023d27b59b39d8a4b2aa65f4d7dc3070a3",
+    "containerId": "bbf609a90ff89db865ffd5b238864d311a8a89d432ed5e409eeccb361663a694",
+    "imageId": "sha256:9e65ff07fe884391ccf4d67ebc8f83cbcf6d2aecb59f75987e9caf136c927d8a",
+    "observedAt": "2026-10-03T03:01:23.598854+00:00",
+    "ready": true,
+    "healthRevisionMatched": true,
+    "routes": {
+      "/api/v1/updates/": [
+        "get",
+        "post"
+      ],
+      "/api/v1/updates/latest": [
+        "get"
+      ]
+    },
+    "onlyBackendReplaced": true,
+    "screenshotStorageConfigured": false,
+    "apkOtaTunnelsPreserved": true,
+    "browserVerified": false
+  },
+  "livePublicationBoundary": {
+    "observedAt": "2026-10-03T03:02:54.605224+00:00",
+    "publicationCases": [
+      {
+        "case": "same_channel_version",
+        "status": 409,
+        "expectedStatus": 409,
+        "accepted": true
+      },
+      {
+        "case": "unknown_field",
+        "status": 422,
+        "expectedStatus": 422,
+        "accepted": true
+      },
+      {
+        "case": "boolean_version",
+        "status": 422,
+        "expectedStatus": 422,
+        "accepted": true
+      },
+      {
+        "case": "invalid_digest",
+        "status": 422,
+        "expectedStatus": 422,
+        "accepted": true
+      },
+      {
+        "case": "credentials_url",
+        "status": 422,
+        "expectedStatus": 422,
+        "accepted": true
+      }
+    ],
+    "catalogUnchanged": true,
+    "releaseCount": 21,
+    "neighborsPreserved": 13,
+    "deviceCommandsSent": false,
+    "publicUiAndTunnelsPreserved": true
+  },
+  "validation": {
+    "backend": {
+      "releaseIdentityBefore": {
+        "tests": 20,
+        "failures": 18,
+        "errors": 0,
+        "skipped": 0
+      },
+      "releaseIdentityAfter": {
+        "tests": 25,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      "relatedBackend": {
+        "tests": 130,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      "immutableImagePostgres": {
+        "tests": 130,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    "frontend": {
+      "observedAt": "2026-10-03T02:58:03.237533+00:00",
+      "source": "77fca37847590bef526ae5becdf7b1986d5b15ea",
+      "exitCode": 0,
+      "testArchive": true,
+      "network": "none",
+      "imageId": "sha256:a43c913349448d7ac990b4a593657d220bef8cafd0f1f549994842f5e7330e07",
+      "nodeVersion": "v24.21.0",
+      "tests": {
+        "numPassedTestSuites": 104,
+        "numFailedTestSuites": 0,
+        "numPassedTests": 946,
+        "numFailedTests": 0,
+        "numPendingTests": 0
+      }
+    },
+    "android": {
+      "dev": {
+        "tests": 819,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 1
+      },
+      "enterprise": {
+        "tests": 819,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 1
+      }
+    },
+    "androidSkippedCases": {
+      "dev": [
+        {
+          "suite": "com.sphereplatform.agent.provisioning.ConfigRecoveryTest",
+          "test": "public discovery of baked route retains locally provisioned enrollment credential"
+        }
+      ],
+      "enterprise": [
+        {
+          "suite": "com.sphereplatform.agent.provisioning.ConfigRecoveryTest",
+          "test": "public discovery of baked route retains locally provisioned enrollment credential"
+        }
+      ]
+    },
+    "mypySourceFiles": 225,
+    "openapi": {
+      "source": "facba9a4b56f9b121f028bc371d24b94a08364de",
+      "network": "none",
+      "backendSourceMount": false,
+      "startupHooksRun": false,
+      "httpRequestsSent": false,
+      "beforeExit": 1,
+      "generatedExit": 0,
+      "afterExit": 0,
+      "paths": 137,
+      "operations": 175
+    }
+  },
+  "publishedSourceCi": {
+    "source": "facba9a4b56f9b121f028bc371d24b94a08364de",
+    "observedAt": "2026-10-03T03:16:51.154104+00:00",
+    "runs": [
+      {
+        "conclusion": "success",
+        "databaseId": 37091604204,
+        "headSha": "facba9a4b56f9b121f028bc371d24b94a08364de",
+        "status": "completed",
+        "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/37091604204",
+        "workflowName": "Preview — Deploy"
+      },
+      {
+        "conclusion": "success",
+        "databaseId": 37091604163,
+        "headSha": "facba9a4b56f9b121f028bc371d24b94a08364de",
+        "status": "completed",
+        "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/37091604163",
+        "workflowName": "CI — Frontend"
+      },
+      {
+        "conclusion": "success",
+        "databaseId": 37091604171,
+        "headSha": "facba9a4b56f9b121f028bc371d24b94a08364de",
+        "status": "completed",
+        "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/37091604171",
+        "workflowName": "CI — Android"
+      },
+      {
+        "conclusion": "failure",
+        "databaseId": 37091604170,
+        "headSha": "facba9a4b56f9b121f028bc371d24b94a08364de",
+        "status": "completed",
+        "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/37091604170",
+        "workflowName": "CI — Backend"
+      },
+      {
+        "conclusion": "success",
+        "databaseId": 37091600688,
+        "headSha": "facba9a4b56f9b121f028bc371d24b94a08364de",
+        "status": "completed",
+        "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/37091600688",
+        "workflowName": "CI — Android"
+      }
+    ],
+    "frontendSummary": [
+      "2026-10-03T02:59:37.7714216Z Test Suites: 104 passed, 104 total",
+      "2026-10-03T02:59:37.7714917Z Tests:       946 passed, 946 total"
+    ],
+    "backendSummary": [
+      "=========== 2381 passed, 16 skipped, 1 warning in 761.54s (0:12:41) ============"
+    ],
+    "backendFailure": [
+      "2026-10-03T03:12:17.9409862Z Stale API documentation: docs/openapi.json"
+    ]
+  },
+  "limits": [
+    "Five offline catalog records were not updated or accepted; fourteen online owned pilot devices only.",
+    "Normal android/dev remains10209;10241 is android-canary/dev. No normal/global promotion.",
+    "Debug planar=true/GPU=false pilot artifact, not a production-signed stable release.",
+    "The10240->10241 installs used the10240 installer. The new10241 native guard still requires a future live upgrade canary.",
+    "Exact current signer set is required; signing-key rotation intentionally unsupported by this guard.",
+    "Manual baseline hash/package/signer preflight is not a generic verified artifact manifest API or upload UI.",
+    "Release uniqueness is only for the active catalog; deletion/republication is not immutable history.",
+    "Web unknown outcome is retained only in the mounted page/session; reload and cross-tab durable reconciliation open.",
+    "Finite heartbeat/epoch samples are not long soak, SLA, remote FPS/input latency or combined stream+scripts acceptance.",
+    "Browser visual/keyboard/mobile remains OPEN_URL_POLICY_BLOCKED; no bypass or invented screenshots.",
+    "F32/F33 PARTIAL, F34-F36/F39-F41, N01/N03 and durable audit outbox remain open.",
+    "facba9a backend workflow failed on stale OpenAPI after2381 tests; schema-only repair5bb36ca subsequently passed all three CI workflows."
+  ],
+  "privateReceiptDigests": {
+    "ota-release-identity-before.xml": "25226959c9b1e727e2b2dda1cb55fd9a35941535db1a0a6281777f3523008171",
+    "ota-release-identity-before.log": "9fb90e34c42cf2ea9b1908a9c6d36b1a7323d0daac3510e1b8cbffab0158f754",
+    "ota-release-identity-after.xml": "931bb6996c0525f127607044e40bd4f567f4faac25eb974bb6c94c0f1e5eb093",
+    "ota-release-identity-after.log": "544e2e42563eceeafbf69b692046d2638de6fdfa3fc7474162fad81818d370ed",
+    "ota-archive-before.log": "53432a47f4f7d2c2b6e7f054b2c8262de3b0ef8682fce14b29f9f4c0018a451e",
+    "ota-archive-after-final.log": "f68df200c52d0a28018263a5134c3df6e4b39b0eec5e12a7cea1df130b4b9969",
+    "ota-publication-related.xml": "10649f9d875e683b787bfba5a6aa33804025f9b3a38ddc6b30c8fd0723d3afad",
+    "ota-identity-image-postgres.xml": "15b5dcae9ab191c3ce42639a732194abd093599353682eb650929dab9f2bc4a0",
+    "ota-identity-image-postgres.log": "f8683a80aaea8093ca859f717495b3378dc33d6a649544dbee262df0b2c0dce3",
+    "ota-publication-node24.log": "7b1c6500f02a82f410cbba0b1cf1379c99611f60c0be2094709a6239eb7c664e",
+    "ota-publication-node24-receipt.json": "d8bc795a44e1b9e5998534a530c4f472b4be497fe560d0219bef8097f1696cff",
+    "ota-mypy.log": "66b3a65a7552f7b271ac4b732692ee72a08b045bd64739c90351d324ce1b54b9",
+    "ota-publication-live.json": "b60fa0591abfe6268f1416c77103fd3eae98dc94d82c2469ef922d948200a45c",
+    "ota-identity-publication.json": "59e4db7ebb2434e1a68c532da2c1a19243ca73fabaf782f49ed8dffdda7d237e",
+    "ota-identity-canary-preflight.json": "430fb138071831ffceb01c27df335018a23cc8e4d7077f780e17165aceab702a",
+    "ota-identity-canary.json": "897ad69444e218060d04d20b544dfe0926d245f07b389377e021971bff15f404",
+    "ota-identity-wave-preflight.json": "9ff6c98bcee9d7faa4248519e8e6f1fe854b889cbe38d3c72f69296a95745645",
+    "ota-identity-wave.json": "8185bb4db5eee9aac9bf80ce068c123da61b5fea376fdaf41edb5ff641b741ee",
+    "ota-identity-observation.json": "edec338bb4ae4d182d539b2ca7eb36aca7ca5cb35c91f02bcca601090d5e96d9",
+    "ota-identity-ci.json": "d77fc058b0340b94d0fa374b1519d54404afd331511fc41bbcc1d196f274ad7e",
+    "ota-identity-openapi.json": "5e8228cb3065e7db41ef74ea5134497084e53ece1746c143f8e6c62866a688d7",
+    "apk-build.log": "d74c58ebc98a65858fc1da0a58362f9745adad4733498f4b24ae0fa8e1cef540",
+    "verify-post-identity-wave.json": "ed01f3ffdcc6c5252a78ceec434002fe1687bcd19502739409c59437d27c6acd",
+    "ota-schema-repair-ci.json": "1224d99d67589317441b00695869fffb4781d0b651a17f6de1d4a4eec02a0c84",
+    "ota-schema-repair-backend-ci.log": "2092681adfd96efcea6fa67c28e8a42774b9e679dec98c257c27b9640e0a60fa",
+    "ota-identity-followup.json": "e9c8d8c3c3e857f78c3ae7f42ed320caa887340b03636319d57888dc01b77054"
+  },
+  "documentValidation": {
+    "observedAt": "2026-10-03T03:34:10.229861+00:00",
+    "documentsChecked": 19,
+    "relativeTargetsChecked": 696,
+    "findingAnchorsChecked": 41,
+    "missing": [],
+    "testCountsMatchRawLog": true,
+    "findingCountsMatchLedger": true,
+    "frozenAuditUnchanged": true,
+    "currentVersionClaimsMatchReceipts": true,
+    "historical10240SnapshotPreserved": true
+  },
+  "completedSchemaRepairCi": {
+    "source": "5bb36caa8663da097738d5ea8b8e339cbee42b2c",
+    "observedAt": "2026-10-03T03:32:51.501739+00:00",
+    "allThreeWorkflowsSucceeded": true,
+    "runs": [
+      {
+        "conclusion": "success",
+        "databaseId": 37092694029,
+        "headSha": "5bb36caa8663da097738d5ea8b8e339cbee42b2c",
+        "status": "completed",
+        "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/37092694029",
+        "workflowName": "Preview — Deploy"
+      },
+      {
+        "conclusion": "success",
+        "databaseId": 37092694000,
+        "headSha": "5bb36caa8663da097738d5ea8b8e339cbee42b2c",
+        "status": "completed",
+        "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/37092694000",
+        "workflowName": "CI — Frontend"
+      },
+      {
+        "conclusion": "success",
+        "databaseId": 37092694003,
+        "headSha": "5bb36caa8663da097738d5ea8b8e339cbee42b2c",
+        "status": "completed",
+        "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/37092694003",
+        "workflowName": "CI — Backend"
+      },
+      {
+        "conclusion": "success",
+        "databaseId": 37092694001,
+        "headSha": "5bb36caa8663da097738d5ea8b8e339cbee42b2c",
+        "status": "completed",
+        "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/37092694001",
+        "workflowName": "CI — Android"
+      }
+    ],
+    "backendTests": {
+      "passed": 2381,
+      "skipped": 16
+    },
+    "backendSummary": "=========== 2381 passed, 16 skipped, 1 warning in 538.52s (0:08:58) ============",
+    "generatedOpenapiCheckPassed": true,
+    "previewSuccessIsDeploymentProof": false
+  },
+  "readOnlyFollowup": {
+    "observedAt": "2026-10-03T03:31:16.217239+00:00",
+    "referenceObservedAt": "2026-10-03T03:14:44.809763+00:00",
+    "comparisonSeconds": 991.407476,
+    "catalogTotal": 19,
+    "onlineCount": 14,
+    "allOn10241": true,
+    "sameReportedEpochs": true,
+    "sameOnlineCohort": true,
+    "maxHeartbeatAgeSeconds": 29.030753,
+    "releaseCount": 22,
+    "normalDevVersionCode": 10209,
+    "canaryDevVersionCode": 10241,
+    "deviceCommandsSent": false,
+    "reportedEpochs": {
+      "4815b950-e5cf-4686-9d46-42d0df8d41f7": "2026-10-03T03:06:17.273835Z",
+      "b410464a-5f26-4803-a756-7840cc17b128": "2026-10-03T03:08:24.674930Z",
+      "d088c147-7ada-4b29-9e79-f991b20fcf91": "2026-10-03T03:08:33.983739Z",
+      "75c29a32-2867-4b60-947c-003e712e538f": "2026-10-03T03:08:45.782777Z",
+      "c37e687a-ee83-466d-846f-3f4b36047fa7": "2026-10-03T03:09:24.531790Z",
+      "bafef86f-3ab4-469b-ae0c-cf2771b55813": "2026-10-03T03:09:34.543197Z",
+      "1dd7e59c-b68f-406a-93cd-5f4e34fdea90": "2026-10-03T03:09:44.722735Z",
+      "3c4c4218-27ba-4d8d-a7d2-4348c2f91c93": "2026-10-03T03:10:22.093449Z",
+      "930a6505-b7ec-4eee-93fe-9aaa66517871": "2026-10-03T03:10:31.174141Z",
+      "673d5774-24b1-4b57-8dfb-90c46f627ce3": "2026-10-03T03:10:41.056458Z",
+      "6d830af5-b7cc-44b4-b7f5-5e0275aceb3b": "2026-10-03T03:10:51.124692Z",
+      "8c187cfa-e5ea-4939-a137-07619437953d": "2026-10-03T03:11:00.981362Z",
+      "414ce0e9-4b93-4f96-b9ca-ee675f53835e": "2026-10-03T03:11:13.937010Z",
+      "5df4805e-fe64-4d39-960c-19ceab206cd6": "2026-10-03T03:11:25.187422Z"
+    },
+    "isContinuousUptimeProof": false
+  }
+}

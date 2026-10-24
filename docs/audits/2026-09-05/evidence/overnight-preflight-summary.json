@@ -1,0 +1,203 @@
+{
+  "findings": [
+    "AUD-115",
+    "AUD-116"
+  ],
+  "before": {
+    "script_create": "native POST 500 after commit, MissingGreenlet current_version",
+    "script_mutation_regressions": {
+      "failed": 1,
+      "passed": 2
+    },
+    "pipeline_pause": "native POST 500 after committed paused state, MissingGreenlet updated_at",
+    "pipeline_mutation_regressions": {
+      "failed": 5,
+      "passed": 0
+    }
+  },
+  "after": {
+    "combined_local_tests_passed": 92,
+    "harness_tests_included": 13,
+    "targeted_ruff": "passed"
+  },
+  "backend_deployments": [
+    {
+      "at": "2026-09-13T23:46:29.845269+00:00",
+      "source_commit": "625741a1bc87c898bde44a287855972edcf63c1e",
+      "image_id": "sha256:307f980e74e5b3f6e54d499b4b0762b1ced4a589f0702c9bb155c66659d39df5",
+      "tag": "sphere-pilot-20260911-backend:625741a",
+      "route_sha256": "2a3ff9d7b87b690320ecd8e97133d2523199001843c0e59e7dc61541246c16d0",
+      "context": "git archive tracked backend/alembic/agent-config/bootstrap scripts only",
+      "previous_backend_id": "5c989c4847db04a2ecb63e9aa6349aa0b8fb1ab7b628865e5ce43017fee3f03a",
+      "backend_id": "21d51b9dae809610dbf03a356319654c6d69d5698604560183f1a0aaa89310bf",
+      "artifact_verification_attempts": [
+        {
+          "attempt": 1,
+          "passed": true
+        }
+      ],
+      "only_new_backend_recreated": true,
+      "catalog_bytes_preserved": true,
+      "latest_apk_download_hash_preserved": true,
+      "old_sphere_inspect_preserved": true
+    },
+    {
+      "at": "2026-09-13T23:59:28.315829+00:00",
+      "source_commit": "12249b1dd9221ca72a83498f296c1f507cfe75a7",
+      "image_id": "sha256:d298394dd621057f8a471a527113a731391bbe1ca125487fb88113509579c2f6",
+      "tag": "sphere-pilot-20260911-backend:12249b1",
+      "route_sha256": "eecd86bfd53491408aad35c6d2a86662181634f8e83639a0f84ea343a3c9ce60",
+      "context": "git archive tracked backend/alembic/agent-config/bootstrap scripts only",
+      "previous_backend_id": "21d51b9dae809610dbf03a356319654c6d69d5698604560183f1a0aaa89310bf",
+      "backend_id": "0c8758850ba799acace44d8bd3bf422ea37f56b5c57a9e12d56995c80a59447b",
+      "artifact_verification_attempts": [
+        {
+          "attempt": 1,
+          "passed": true
+        }
+      ],
+      "only_new_backend_recreated": true,
+      "catalog_bytes_preserved": true,
+      "latest_apk_download_hash_preserved": true,
+      "old_sphere_inspect_preserved": true
+    }
+  ],
+  "native_script_creation": {
+    "status": 201,
+    "batch_completed": true,
+    "devices_succeeded": 2,
+    "native_nodes_each": 13
+  },
+  "pipeline_control_preflight": [
+    {
+      "run_id": "c0c3037f-fcfb-482e-ba6a-29a08ec99d28",
+      "action": "pause_resume",
+      "device": "85f2f935-7739-400e-9389-0d71227e8f0a",
+      "passed": true
+    },
+    {
+      "run_id": "3c58532a-4b33-4f96-a50d-983a27bafa0b",
+      "action": "cancel",
+      "device": "ba1346c1-1581-452f-adee-451d36622aaf",
+      "passed": true
+    }
+  ],
+  "integrated_preflight": {
+    "status": {
+      "run_id": "preflight-integrated-20260914",
+      "status": "completed",
+      "started_at": "2026-09-14T00:02:43.955152+00:00",
+      "planned_seconds": 120,
+      "pid": 19452,
+      "cycles_passed": 1,
+      "tasks_passed": 2,
+      "commands_passed": 30,
+      "samples": 6,
+      "pipeline_controls_passed": 2,
+      "devices": [
+        "85f2f935-7739-400e-9389-0d71227e8f0a",
+        "ba1346c1-1581-452f-adee-451d36622aaf"
+      ],
+      "script_id": "352a0685-c694-4f11-a160-eb2b0e4337dc",
+      "script_version_id": "2804f56c-a70a-4abf-9633-aad64c2fcdfc",
+      "failure": null,
+      "expected_end": "2026-09-14T00:04:43.955152+00:00",
+      "updated_at": "2026-09-14T00:04:53.485024+00:00",
+      "active_batch": null,
+      "finished_at": "2026-09-14T00:04:53.485024+00:00",
+      "elapsed_seconds": 129.531
+    },
+    "command_seconds": {
+      "count": 30,
+      "min": 0.453,
+      "max": 0.891,
+      "p50": 0.531,
+      "p95": 0.657
+    },
+    "first_frame_seconds": {
+      "count": 2,
+      "min": 0.797,
+      "max": 0.844,
+      "p50": 0.797,
+      "p95": 0.844
+    },
+    "devices": {
+      "85f2f935-7739-400e-9389-0d71227e8f0a": {
+        "observed_pids": [
+          "31803"
+        ],
+        "memory_pss_kib_by_phase": {
+          "stream": {
+            "count": 1,
+            "min": 62747,
+            "max": 62747,
+            "p50": 62747,
+            "p95": 62747
+          },
+          "baseline": {
+            "count": 1,
+            "min": 57214,
+            "max": 57214,
+            "p50": 57214,
+            "p95": 57214
+          },
+          "after_viewer_close": {
+            "count": 1,
+            "min": 57550,
+            "max": 57550,
+            "p50": 57550,
+            "p95": 57550
+          }
+        },
+        "projection_active_after_own_viewers_closed": 0
+      },
+      "ba1346c1-1581-452f-adee-451d36622aaf": {
+        "observed_pids": [
+          "386"
+        ],
+        "memory_pss_kib_by_phase": {
+          "stream": {
+            "count": 1,
+            "min": 67949,
+            "max": 67949,
+            "p50": 67949,
+            "p95": 67949
+          },
+          "baseline": {
+            "count": 1,
+            "min": 61511,
+            "max": 61511,
+            "p50": 61511,
+            "p95": 61511
+          },
+          "after_viewer_close": {
+            "count": 1,
+            "min": 61629,
+            "max": 61629,
+            "p50": 61629,
+            "p95": 61629
+          }
+        },
+        "projection_active_after_own_viewers_closed": 0
+      }
+    },
+    "incidents": [],
+    "incomplete_event_lines": 0,
+    "scope": "Observed explicit pilot devices only; nearest-rank percentiles. Running is not passed. Other operator viewers can keep projection active. Raw logs retain additional evidence."
+  },
+  "night_run": {
+    "status": "running",
+    "source": "9023dce",
+    "planned_seconds": 28800,
+    "started_at": "2026-09-14T00:05:57.000178+00:00",
+    "run_id": "night-20260914-001",
+    "evidence_private": ".local-pilot/soak/night-20260914-001",
+    "note": "Launch evidence only. No overnight success claim until completed data reviewed."
+  },
+  "limitations": [
+    "Two rooted Android 9 devices; no fleet claim",
+    "Frame structure and arrival are checked, decoding separately",
+    "Pipeline pause/cancel accepted at step boundaries only",
+    "No native network/DB fault injection in overnight profile"
+  ]
+}

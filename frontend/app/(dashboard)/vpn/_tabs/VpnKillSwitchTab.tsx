@@ -51,7 +51,7 @@ export function VpnKillSwitchTab() {
     });
   };
 
-  const activePeers = peers?.filter((p) => p.device_id) ?? [];
+  const activePeers = peers?.filter((p) => p.status === 'assigned' && p.device_id !== null) ?? [];
 
   return (
     <div className="space-y-4 pt-4">
@@ -93,7 +93,7 @@ export function VpnKillSwitchTab() {
                     checked={selectedIds.size === activePeers.length && activePeers.length > 0}
                     onChange={() => {
                       if (selectedIds.size === activePeers.length) setSelectedIds(new Set());
-                      else setSelectedIds(new Set(activePeers.map((p) => p.device_id)));
+                      else setSelectedIds(new Set(activePeers.map((p) => p.device_id!)));
                     }}
                   />
                 </th>
@@ -108,12 +108,12 @@ export function VpnKillSwitchTab() {
                   <td className="p-3">
                     <input
                       type="checkbox"
-                      checked={selectedIds.has(peer.device_id)}
-                      onChange={() => toggleSelect(peer.device_id)}
+                      checked={selectedIds.has(peer.device_id!)}
+                      onChange={() => toggleSelect(peer.device_id!)}
                     />
                   </td>
-                  <td className="p-3 font-mono text-xs">{peer.device_id.slice(0, 12)}…</td>
-                  <td className="p-3 font-mono text-xs">{peer.assigned_ip}</td>
+                  <td className="p-3 font-mono text-xs">{peer.device_id!.slice(0, 12)}…</td>
+                  <td className="p-3 font-mono text-xs">{peer.assigned_ip ?? '—'}</td>
                   <td className="p-3">
                     <Badge variant="outline">{peer.status}</Badge>
                   </td>

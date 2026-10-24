@@ -1,0 +1,99 @@
+{
+  "source": "d656b579a77a2997ea7012c9aad7fb3425e07edd",
+  "observedAt": "2026-10-05T16:31:38.537931+00:00",
+  "runs": [
+    {
+      "conclusion": "success",
+      "databaseId": 37338164145,
+      "headSha": "d656b579a77a2997ea7012c9aad7fb3425e07edd",
+      "status": "completed",
+      "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/37338164145",
+      "workflowName": "Preview — Deploy"
+    },
+    {
+      "conclusion": "success",
+      "databaseId": 37338164232,
+      "headSha": "d656b579a77a2997ea7012c9aad7fb3425e07edd",
+      "status": "completed",
+      "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/37338164232",
+      "workflowName": "CI — Frontend"
+    },
+    {
+      "conclusion": "success",
+      "databaseId": 37338164321,
+      "headSha": "d656b579a77a2997ea7012c9aad7fb3425e07edd",
+      "status": "completed",
+      "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/37338164321",
+      "workflowName": "CI — Android"
+    },
+    {
+      "conclusion": "success",
+      "databaseId": 37338164228,
+      "headSha": "d656b579a77a2997ea7012c9aad7fb3425e07edd",
+      "status": "completed",
+      "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/37338164228",
+      "workflowName": "CI — Backend"
+    }
+  ],
+  "backendJobs": [
+    {
+      "name": "RLS Policy Coverage",
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/37338164228/job/111858122178",
+      "startedAt": "2026-10-05T16:06:06Z",
+      "completedAt": "2026-10-05T16:06:15Z"
+    },
+    {
+      "name": "Production image bootstrap",
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/37338164228/job/111858122324",
+      "startedAt": "2026-10-05T16:06:06Z",
+      "completedAt": "2026-10-05T16:07:57Z"
+    },
+    {
+      "name": "Security (bandit + pip-audit)",
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/37338164228/job/111858122337",
+      "startedAt": "2026-10-05T16:06:06Z",
+      "completedAt": "2026-10-05T16:06:40Z"
+    },
+    {
+      "name": "Lint (ruff + mypy)",
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/37338164228/job/111858122397",
+      "startedAt": "2026-10-05T16:06:06Z",
+      "completedAt": "2026-10-05T16:06:54Z"
+    },
+    {
+      "name": "Tests",
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/37338164228/job/111858122418",
+      "startedAt": "2026-10-05T16:06:06Z",
+      "completedAt": "2026-10-05T16:21:20Z"
+    },
+    {
+      "name": "Alembic Single Head",
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/37338164228/job/111864989398",
+      "startedAt": "2026-10-05T16:21:23Z",
+      "completedAt": "2026-10-05T16:22:10Z"
+    }
+  ],
+  "unitAndRealService": {
+    "passed": 2722,
+    "skipped": 30,
+    "warnings": 1,
+    "coveragePercent": 79.78
+  },
+  "productionOwnershipCases": [
+    "Tests\tUnit and real-service regression tests\t2026-10-05T16:14:10.2945785Z tests/production/test_presence_recovery.py::test_old_observation_cannot_overwrite_replacement_in_real_redis[pong] PASSED [ 36%]",
+    "Tests\tUnit and real-service regression tests\t2026-10-05T16:14:10.4531859Z tests/production/test_presence_recovery.py::test_old_observation_cannot_overwrite_replacement_in_real_redis[telemetry] PASSED [ 36%]"
+  ],
+  "laterDocsHeadCiInherited": false
+}

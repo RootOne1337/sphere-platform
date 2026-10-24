@@ -1,0 +1,5011 @@
+{
+  "date": "2026-10-01",
+  "timezone": "Asia/Yekaterinburg",
+  "artifact": {
+    "source_commit": "68155c17af0b9f97116e2f8d2e92ab16fa8e190c",
+    "file": "SphereAgent-pilot-candidate-1.2.40-dev-68155c1.apk",
+    "sha256": "c612fba1e4a537ab1a0d9951e520bbd4063c3548308a4ebc31b72b59fa735a70",
+    "bytes": 8465471,
+    "package": "com.sphereplatform.agent.pilot.debug",
+    "version_name": "1.2.40-dev",
+    "version_code": 10240,
+    "certificate_sha256": "3ab40797d26e4f52f9e440afc6fe69f197caef71a5a27c63c86735bb1801871f",
+    "signer_matches_local_pilot_baseline": true,
+    "tests": {
+      "dev": {
+        "tests": 783,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 1
+      },
+      "enterprise": {
+        "tests": 783,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 1
+      }
+    },
+    "gpu_bridge_enabled": false,
+    "planar_input_enabled": true,
+    "built_at": "2026-10-01T12:37:18.517771+00:00"
+  },
+  "canaries": [
+    {
+      "device": "auto-ph-010",
+      "operator_network_class": "local",
+      "ota_at": "2026-10-01T12:47:52.917387+00:00",
+      "ota_state": "installed_version_heartbeat_confirmed",
+      "command_count": 1,
+      "installed_version_code": 10240,
+      "installed_presence": "online",
+      "terminal_results": [
+        {
+          "status": "completed",
+          "installed_version_code": 10240,
+          "recovered_after_process_restart": true,
+          "recorded_at": "2026-10-01T12:48:00.447320+00:00"
+        }
+      ],
+      "trial_at": "2026-10-01T12:49:38.271776+00:00",
+      "trial_state": "finite_stage_trial_recorded",
+      "source_display_hz": 60.000004,
+      "launch_attempts": 1,
+      "input_events": 0,
+      "owned_viewer_closed": true,
+      "global_stop_sent": false,
+      "elapsed_seconds": 44.0,
+      "first_picture_seconds": 0.86,
+      "pictures_total": 868,
+      "pictures_3_13_seconds": 299,
+      "window_includes_startup": true,
+      "wire_errors": 0,
+      "picture_metadata": [
+        {
+          "seconds": 0.86,
+          "pts_ms": 325,
+          "bytes": 13656
+        },
+        {
+          "seconds": 0.891,
+          "pts_ms": 356,
+          "bytes": 1653
+        },
+        {
+          "seconds": 0.953,
+          "pts_ms": 362,
+          "bytes": 1212
+        },
+        {
+          "seconds": 0.953,
+          "pts_ms": 419,
+          "bytes": 1421
+        },
+        {
+          "seconds": 0.985,
+          "pts_ms": 420,
+          "bytes": 1461
+        },
+        {
+          "seconds": 0.985,
+          "pts_ms": 452,
+          "bytes": 3229
+        },
+        {
+          "seconds": 1.016,
+          "pts_ms": 484,
+          "bytes": 6456
+        },
+        {
+          "seconds": 1.047,
+          "pts_ms": 519,
+          "bytes": 1343
+        },
+        {
+          "seconds": 1.078,
+          "pts_ms": 552,
+          "bytes": 8183
+        },
+        {
+          "seconds": 1.11,
+          "pts_ms": 586,
+          "bytes": 897
+        },
+        {
+          "seconds": 1.188,
+          "pts_ms": 618,
+          "bytes": 1877
+        },
+        {
+          "seconds": 1.188,
+          "pts_ms": 652,
+          "bytes": 1817
+        },
+        {
+          "seconds": 1.25,
+          "pts_ms": 686,
+          "bytes": 2254
+        },
+        {
+          "seconds": 1.25,
+          "pts_ms": 718,
+          "bytes": 1456
+        },
+        {
+          "seconds": 1.281,
+          "pts_ms": 754,
+          "bytes": 4092
+        },
+        {
+          "seconds": 1.313,
+          "pts_ms": 786,
+          "bytes": 4723
+        },
+        {
+          "seconds": 1.344,
+          "pts_ms": 819,
+          "bytes": 3347
+        },
+        {
+          "seconds": 1.375,
+          "pts_ms": 853,
+          "bytes": 3397
+        },
+        {
+          "seconds": 1.422,
+          "pts_ms": 886,
+          "bytes": 2661
+        },
+        {
+          "seconds": 1.453,
+          "pts_ms": 919,
+          "bytes": 2784
+        },
+        {
+          "seconds": 1.485,
+          "pts_ms": 954,
+          "bytes": 2827
+        },
+        {
+          "seconds": 1.516,
+          "pts_ms": 987,
+          "bytes": 2559
+        },
+        {
+          "seconds": 1.578,
+          "pts_ms": 1020,
+          "bytes": 2632
+        },
+        {
+          "seconds": 1.578,
+          "pts_ms": 1053,
+          "bytes": 2812
+        },
+        {
+          "seconds": 1.61,
+          "pts_ms": 1086,
+          "bytes": 2940
+        },
+        {
+          "seconds": 1.641,
+          "pts_ms": 1119,
+          "bytes": 3512
+        },
+        {
+          "seconds": 1.688,
+          "pts_ms": 1154,
+          "bytes": 3149
+        },
+        {
+          "seconds": 1.719,
+          "pts_ms": 1187,
+          "bytes": 3461
+        },
+        {
+          "seconds": 1.75,
+          "pts_ms": 1219,
+          "bytes": 3445
+        },
+        {
+          "seconds": 1.781,
+          "pts_ms": 1260,
+          "bytes": 3831
+        },
+        {
+          "seconds": 1.828,
+          "pts_ms": 1289,
+          "bytes": 28416
+        },
+        {
+          "seconds": 1.844,
+          "pts_ms": 1320,
+          "bytes": 4944
+        },
+        {
+          "seconds": 1.922,
+          "pts_ms": 1354,
+          "bytes": 4673
+        },
+        {
+          "seconds": 1.922,
+          "pts_ms": 1390,
+          "bytes": 4477
+        },
+        {
+          "seconds": 1.953,
+          "pts_ms": 1421,
+          "bytes": 4012
+        },
+        {
+          "seconds": 2.016,
+          "pts_ms": 1454,
+          "bytes": 3406
+        },
+        {
+          "seconds": 2.047,
+          "pts_ms": 1489,
+          "bytes": 3419
+        },
+        {
+          "seconds": 2.047,
+          "pts_ms": 1521,
+          "bytes": 3126
+        },
+        {
+          "seconds": 2.11,
+          "pts_ms": 1553,
+          "bytes": 3124
+        },
+        {
+          "seconds": 2.11,
+          "pts_ms": 1586,
+          "bytes": 2993
+        },
+        {
+          "seconds": 2.188,
+          "pts_ms": 1620,
+          "bytes": 2949
+        },
+        {
+          "seconds": 2.188,
+          "pts_ms": 1654,
+          "bytes": 2846
+        },
+        {
+          "seconds": 2.25,
+          "pts_ms": 1689,
+          "bytes": 2796
+        },
+        {
+          "seconds": 2.25,
+          "pts_ms": 1720,
+          "bytes": 3047
+        },
+        {
+          "seconds": 2.281,
+          "pts_ms": 1755,
+          "bytes": 3388
+        },
+        {
+          "seconds": 2.313,
+          "pts_ms": 1787,
+          "bytes": 3255
+        },
+        {
+          "seconds": 2.391,
+          "pts_ms": 1825,
+          "bytes": 2824
+        },
+        {
+          "seconds": 2.391,
+          "pts_ms": 1854,
+          "bytes": 2634
+        },
+        {
+          "seconds": 2.453,
+          "pts_ms": 1888,
+          "bytes": 2715
+        },
+        {
+          "seconds": 2.453,
+          "pts_ms": 1922,
+          "bytes": 2866
+        },
+        {
+          "seconds": 2.516,
+          "pts_ms": 1955,
+          "bytes": 2780
+        },
+        {
+          "seconds": 2.656,
+          "pts_ms": 1989,
+          "bytes": 3181
+        },
+        {
+          "seconds": 2.656,
+          "pts_ms": 2020,
+          "bytes": 3331
+        },
+        {
+          "seconds": 2.656,
+          "pts_ms": 2056,
+          "bytes": 2836
+        },
+        {
+          "seconds": 2.656,
+          "pts_ms": 2088,
+          "bytes": 2686
+        },
+        {
+          "seconds": 2.688,
+          "pts_ms": 2125,
+          "bytes": 2848
+        },
+        {
+          "seconds": 2.688,
+          "pts_ms": 2160,
+          "bytes": 2815
+        },
+        {
+          "seconds": 2.766,
+          "pts_ms": 2192,
+          "bytes": 2845
+        },
+        {
+          "seconds": 2.797,
+          "pts_ms": 2237,
+          "bytes": 2815
+        },
+        {
+          "seconds": 2.797,
+          "pts_ms": 2268,
+          "bytes": 2905
+        },
+        {
+          "seconds": 2.828,
+          "pts_ms": 2296,
+          "bytes": 25839
+        },
+        {
+          "seconds": 2.86,
+          "pts_ms": 2328,
+          "bytes": 3920
+        },
+        {
+          "seconds": 2.922,
+          "pts_ms": 2359,
+          "bytes": 3809
+        },
+        {
+          "seconds": 2.922,
+          "pts_ms": 2396,
+          "bytes": 4061
+        },
+        {
+          "seconds": 3.0,
+          "pts_ms": 2428,
+          "bytes": 3808
+        },
+        {
+          "seconds": 3.0,
+          "pts_ms": 2466,
+          "bytes": 3796
+        },
+        {
+          "seconds": 3.031,
+          "pts_ms": 2497,
+          "bytes": 3814
+        },
+        {
+          "seconds": 3.094,
+          "pts_ms": 2562,
+          "bytes": 3859
+        },
+        {
+          "seconds": 3.094,
+          "pts_ms": 2563,
+          "bytes": 3706
+        },
+        {
+          "seconds": 3.156,
+          "pts_ms": 2592,
+          "bytes": 3754
+        },
+        {
+          "seconds": 3.156,
+          "pts_ms": 2625,
+          "bytes": 3747
+        },
+        {
+          "seconds": 3.219,
+          "pts_ms": 2659,
+          "bytes": 3965
+        },
+        {
+          "seconds": 3.219,
+          "pts_ms": 2690,
+          "bytes": 3702
+        },
+        {
+          "seconds": 3.266,
+          "pts_ms": 2723,
+          "bytes": 3455
+        },
+        {
+          "seconds": 3.281,
+          "pts_ms": 2757,
+          "bytes": 5732
+        },
+        {
+          "seconds": 3.328,
+          "pts_ms": 2791,
+          "bytes": 5872
+        },
+        {
+          "seconds": 3.36,
+          "pts_ms": 2824,
+          "bytes": 5350
+        },
+        {
+          "seconds": 3.391,
+          "pts_ms": 2857,
+          "bytes": 4588
+        },
+        {
+          "seconds": 3.453,
+          "pts_ms": 2893,
+          "bytes": 5032
+        },
+        {
+          "seconds": 3.453,
+          "pts_ms": 2925,
+          "bytes": 4520
+        },
+        {
+          "seconds": 3.485,
+          "pts_ms": 2957,
+          "bytes": 4642
+        },
+        {
+          "seconds": 3.516,
+          "pts_ms": 2991,
+          "bytes": 4752
+        },
+        {
+          "seconds": 3.547,
+          "pts_ms": 3024,
+          "bytes": 4849
+        },
+        {
+          "seconds": 3.625,
+          "pts_ms": 3058,
+          "bytes": 4232
+        },
+        {
+          "seconds": 3.625,
+          "pts_ms": 3092,
+          "bytes": 4895
+        },
+        {
+          "seconds": 3.656,
+          "pts_ms": 3124,
+          "bytes": 4783
+        },
+        {
+          "seconds": 3.719,
+          "pts_ms": 3159,
+          "bytes": 4298
+        },
+        {
+          "seconds": 3.719,
+          "pts_ms": 3191,
+          "bytes": 3943
+        },
+        {
+          "seconds": 3.766,
+          "pts_ms": 3224,
+          "bytes": 5445
+        },
+        {
+          "seconds": 3.781,
+          "pts_ms": 3258,
+          "bytes": 4823
+        },
+        {
+          "seconds": 3.828,
+          "pts_ms": 3293,
+          "bytes": 28091
+        },
+        {
+          "seconds": 3.86,
+          "pts_ms": 3324,
+          "bytes": 4348
+        },
+        {
+          "seconds": 3.891,
+          "pts_ms": 3359,
+          "bytes": 5059
+        },
+        {
+          "seconds": 3.953,
+          "pts_ms": 3394,
+          "bytes": 4307
+        },
+        {
+          "seconds": 3.953,
+          "pts_ms": 3425,
+          "bytes": 4266
+        },
+        {
+          "seconds": 4.016,
+          "pts_ms": 3459,
+          "bytes": 3238
+        },
+        {
+          "seconds": 4.047,
+          "pts_ms": 3492,
+          "bytes": 3273
+        },
+        {
+          "seconds": 4.047,
+          "pts_ms": 3524,
+          "bytes": 3060
+        },
+        {
+          "seconds": 4.125,
+          "pts_ms": 3558,
+          "bytes": 3173
+        },
+        {
+          "seconds": 4.125,
+          "pts_ms": 3592,
+          "bytes": 3050
+        },
+        {
+          "seconds": 4.188,
+          "pts_ms": 3625,
+          "bytes": 3037
+        },
+        {
+          "seconds": 4.188,
+          "pts_ms": 3660,
+          "bytes": 2892
+        },
+        {
+          "seconds": 4.25,
+          "pts_ms": 3694,
+          "bytes": 2800
+        },
+        {
+          "seconds": 4.25,
+          "pts_ms": 3724,
+          "bytes": 2984
+        },
+        {
+          "seconds": 4.281,
+          "pts_ms": 3759,
+          "bytes": 3338
+        },
+        {
+          "seconds": 4.328,
+          "pts_ms": 3791,
+          "bytes": 3048
+        },
+        {
+          "seconds": 4.36,
+          "pts_ms": 3826,
+          "bytes": 2655
+        },
+        {
+          "seconds": 4.422,
+          "pts_ms": 3864,
+          "bytes": 2497
+        },
+        {
+          "seconds": 4.422,
+          "pts_ms": 3894,
+          "bytes": 2439
+        },
+        {
+          "seconds": 4.485,
+          "pts_ms": 3928,
+          "bytes": 2314
+        },
+        {
+          "seconds": 4.485,
+          "pts_ms": 3960,
+          "bytes": 2461
+        },
+        {
+          "seconds": 4.516,
+          "pts_ms": 3995,
+          "bytes": 2160
+        },
+        {
+          "seconds": 4.594,
+          "pts_ms": 4026,
+          "bytes": 2698
+        },
+        {
+          "seconds": 4.594,
+          "pts_ms": 4059,
+          "bytes": 2263
+        },
+        {
+          "seconds": 4.672,
+          "pts_ms": 4093,
+          "bytes": 2215
+        },
+        {
+          "seconds": 4.672,
+          "pts_ms": 4129,
+          "bytes": 2294
+        },
+        {
+          "seconds": 4.781,
+          "pts_ms": 4160,
+          "bytes": 2811
+        },
+        {
+          "seconds": 4.781,
+          "pts_ms": 4194,
+          "bytes": 2309
+        },
+        {
+          "seconds": 4.781,
+          "pts_ms": 4227,
+          "bytes": 2106
+        },
+        {
+          "seconds": 4.875,
+          "pts_ms": 4262,
+          "bytes": 2350
+        },
+        {
+          "seconds": 4.875,
+          "pts_ms": 4295,
+          "bytes": 25757
+        },
+        {
+          "seconds": 4.891,
+          "pts_ms": 4325,
+          "bytes": 3789
+        },
+        {
+          "seconds": 4.891,
+          "pts_ms": 4361,
+          "bytes": 3675
+        },
+        {
+          "seconds": 4.969,
+          "pts_ms": 4395,
+          "bytes": 3654
+        },
+        {
+          "seconds": 4.969,
+          "pts_ms": 4430,
+          "bytes": 3643
+        },
+        {
+          "seconds": 5.078,
+          "pts_ms": 4461,
+          "bytes": 3652
+        },
+        {
+          "seconds": 5.078,
+          "pts_ms": 4495,
+          "bytes": 3735
+        },
+        {
+          "seconds": 5.078,
+          "pts_ms": 4528,
+          "bytes": 3647
+        },
+        {
+          "seconds": 5.172,
+          "pts_ms": 4561,
+          "bytes": 3999
+        },
+        {
+          "seconds": 5.172,
+          "pts_ms": 4594,
+          "bytes": 3612
+        },
+        {
+          "seconds": 5.188,
+          "pts_ms": 4629,
+          "bytes": 3670
+        },
+        {
+          "seconds": 5.188,
+          "pts_ms": 4663,
+          "bytes": 3682
+        },
+        {
+          "seconds": 5.281,
+          "pts_ms": 4696,
+          "bytes": 3670
+        },
+        {
+          "seconds": 5.281,
+          "pts_ms": 4727,
+          "bytes": 3482
+        },
+        {
+          "seconds": 5.297,
+          "pts_ms": 4764,
+          "bytes": 5906
+        },
+        {
+          "seconds": 5.328,
+          "pts_ms": 4795,
+          "bytes": 6201
+        },
+        {
+          "seconds": 5.375,
+          "pts_ms": 4828,
+          "bytes": 5288
+        },
+        {
+          "seconds": 5.422,
+          "pts_ms": 4862,
+          "bytes": 4594
+        },
+        {
+          "seconds": 5.422,
+          "pts_ms": 4896,
+          "bytes": 4868
+        },
+        {
+          "seconds": 5.485,
+          "pts_ms": 4929,
+          "bytes": 4377
+        },
+        {
+          "seconds": 5.485,
+          "pts_ms": 4962,
+          "bytes": 4965
+        },
+        {
+          "seconds": 5.516,
+          "pts_ms": 4995,
+          "bytes": 4943
+        },
+        {
+          "seconds": 5.594,
+          "pts_ms": 5029,
+          "bytes": 5370
+        },
+        {
+          "seconds": 5.594,
+          "pts_ms": 5062,
+          "bytes": 4724
+        },
+        {
+          "seconds": 5.625,
+          "pts_ms": 5096,
+          "bytes": 5057
+        },
+        {
+          "seconds": 5.688,
+          "pts_ms": 5129,
+          "bytes": 4563
+        },
+        {
+          "seconds": 5.688,
+          "pts_ms": 5164,
+          "bytes": 4757
+        },
+        {
+          "seconds": 5.766,
+          "pts_ms": 5196,
+          "bytes": 4193
+        },
+        {
+          "seconds": 5.766,
+          "pts_ms": 5230,
+          "bytes": 4906
+        },
+        {
+          "seconds": 5.797,
+          "pts_ms": 5263,
+          "bytes": 4726
+        },
+        {
+          "seconds": 5.828,
+          "pts_ms": 5296,
+          "bytes": 27545
+        },
+        {
+          "seconds": 5.891,
+          "pts_ms": 5330,
+          "bytes": 3922
+        },
+        {
+          "seconds": 5.891,
+          "pts_ms": 5364,
+          "bytes": 4602
+        },
+        {
+          "seconds": 5.953,
+          "pts_ms": 5397,
+          "bytes": 4079
+        },
+        {
+          "seconds": 5.953,
+          "pts_ms": 5430,
+          "bytes": 4141
+        },
+        {
+          "seconds": 6.016,
+          "pts_ms": 5465,
+          "bytes": 3307
+        },
+        {
+          "seconds": 6.063,
+          "pts_ms": 5501,
+          "bytes": 3467
+        },
+        {
+          "seconds": 6.063,
+          "pts_ms": 5536,
+          "bytes": 3079
+        },
+        {
+          "seconds": 6.125,
+          "pts_ms": 5568,
+          "bytes": 3185
+        },
+        {
+          "seconds": 6.125,
+          "pts_ms": 5599,
+          "bytes": 2978
+        },
+        {
+          "seconds": 6.203,
+          "pts_ms": 5631,
+          "bytes": 3002
+        },
+        {
+          "seconds": 6.203,
+          "pts_ms": 5667,
+          "bytes": 3419
+        },
+        {
+          "seconds": 6.266,
+          "pts_ms": 5698,
+          "bytes": 2875
+        },
+        {
+          "seconds": 6.266,
+          "pts_ms": 5731,
+          "bytes": 3031
+        },
+        {
+          "seconds": 6.297,
+          "pts_ms": 5764,
+          "bytes": 3352
+        },
+        {
+          "seconds": 6.328,
+          "pts_ms": 5797,
+          "bytes": 2920
+        },
+        {
+          "seconds": 6.391,
+          "pts_ms": 5830,
+          "bytes": 2279
+        },
+        {
+          "seconds": 6.391,
+          "pts_ms": 5865,
+          "bytes": 2285
+        },
+        {
+          "seconds": 6.453,
+          "pts_ms": 5899,
+          "bytes": 2532
+        },
+        {
+          "seconds": 6.453,
+          "pts_ms": 5930,
+          "bytes": 2189
+        },
+        {
+          "seconds": 6.516,
+          "pts_ms": 5965,
+          "bytes": 2014
+        },
+        {
+          "seconds": 6.563,
+          "pts_ms": 5998,
+          "bytes": 2182
+        },
+        {
+          "seconds": 6.563,
+          "pts_ms": 6033,
+          "bytes": 2196
+        },
+        {
+          "seconds": 6.625,
+          "pts_ms": 6065,
+          "bytes": 2027
+        },
+        {
+          "seconds": 6.625,
+          "pts_ms": 6098,
+          "bytes": 2248
+        },
+        {
+          "seconds": 6.688,
+          "pts_ms": 6132,
+          "bytes": 2223
+        },
+        {
+          "seconds": 6.688,
+          "pts_ms": 6163,
+          "bytes": 2548
+        },
+        {
+          "seconds": 6.766,
+          "pts_ms": 6197,
+          "bytes": 2671
+        },
+        {
+          "seconds": 6.766,
+          "pts_ms": 6232,
+          "bytes": 2200
+        },
+        {
+          "seconds": 6.797,
+          "pts_ms": 6264,
+          "bytes": 2120
+        },
+        {
+          "seconds": 6.828,
+          "pts_ms": 6300,
+          "bytes": 25822
+        },
+        {
+          "seconds": 6.86,
+          "pts_ms": 6332,
+          "bytes": 4640
+        },
+        {
+          "seconds": 6.922,
+          "pts_ms": 6366,
+          "bytes": 3530
+        },
+        {
+          "seconds": 6.922,
+          "pts_ms": 6399,
+          "bytes": 3520
+        },
+        {
+          "seconds": 7.0,
+          "pts_ms": 6432,
+          "bytes": 3885
+        },
+        {
+          "seconds": 7.0,
+          "pts_ms": 6466,
+          "bytes": 3689
+        },
+        {
+          "seconds": 7.031,
+          "pts_ms": 6499,
+          "bytes": 3659
+        },
+        {
+          "seconds": 7.094,
+          "pts_ms": 6532,
+          "bytes": 3714
+        },
+        {
+          "seconds": 7.094,
+          "pts_ms": 6566,
+          "bytes": 3967
+        },
+        {
+          "seconds": 7.156,
+          "pts_ms": 6599,
+          "bytes": 3741
+        },
+        {
+          "seconds": 7.156,
+          "pts_ms": 6633,
+          "bytes": 3751
+        },
+        {
+          "seconds": 7.235,
+          "pts_ms": 6667,
+          "bytes": 3774
+        },
+        {
+          "seconds": 7.235,
+          "pts_ms": 6700,
+          "bytes": 3697
+        },
+        {
+          "seconds": 7.328,
+          "pts_ms": 6734,
+          "bytes": 3550
+        },
+        {
+          "seconds": 7.328,
+          "pts_ms": 6766,
+          "bytes": 6000
+        },
+        {
+          "seconds": 7.328,
+          "pts_ms": 6800,
+          "bytes": 5477
+        },
+        {
+          "seconds": 7.391,
+          "pts_ms": 6833,
+          "bytes": 3887
+        },
+        {
+          "seconds": 7.391,
+          "pts_ms": 6867,
+          "bytes": 4575
+        },
+        {
+          "seconds": 7.438,
+          "pts_ms": 6900,
+          "bytes": 4953
+        },
+        {
+          "seconds": 7.469,
+          "pts_ms": 6933,
+          "bytes": 4248
+        },
+        {
+          "seconds": 7.5,
+          "pts_ms": 6972,
+          "bytes": 4420
+        },
+        {
+          "seconds": 7.531,
+          "pts_ms": 7000,
+          "bytes": 4331
+        },
+        {
+          "seconds": 7.563,
+          "pts_ms": 7033,
+          "bytes": 4648
+        },
+        {
+          "seconds": 7.594,
+          "pts_ms": 7066,
+          "bytes": 4661
+        },
+        {
+          "seconds": 7.656,
+          "pts_ms": 7100,
+          "bytes": 4197
+        },
+        {
+          "seconds": 7.656,
+          "pts_ms": 7133,
+          "bytes": 4695
+        },
+        {
+          "seconds": 7.703,
+          "pts_ms": 7168,
+          "bytes": 4803
+        },
+        {
+          "seconds": 7.766,
+          "pts_ms": 7200,
+          "bytes": 4723
+        },
+        {
+          "seconds": 7.766,
+          "pts_ms": 7234,
+          "bytes": 4693
+        },
+        {
+          "seconds": 7.797,
+          "pts_ms": 7267,
+          "bytes": 4556
+        },
+        {
+          "seconds": 7.844,
+          "pts_ms": 7305,
+          "bytes": 27812
+        },
+        {
+          "seconds": 7.86,
+          "pts_ms": 7335,
+          "bytes": 4428
+        },
+        {
+          "seconds": 7.938,
+          "pts_ms": 7369,
+          "bytes": 3920
+        },
+        {
+          "seconds": 7.938,
+          "pts_ms": 7401,
+          "bytes": 3799
+        },
+        {
+          "seconds": 8.0,
+          "pts_ms": 7435,
+          "bytes": 3318
+        },
+        {
+          "seconds": 8.0,
+          "pts_ms": 7467,
+          "bytes": 3411
+        },
+        {
+          "seconds": 8.031,
+          "pts_ms": 7502,
+          "bytes": 3094
+        },
+        {
+          "seconds": 8.094,
+          "pts_ms": 7534,
+          "bytes": 3158
+        },
+        {
+          "seconds": 8.094,
+          "pts_ms": 7572,
+          "bytes": 3027
+        },
+        {
+          "seconds": 8.172,
+          "pts_ms": 7603,
+          "bytes": 3050
+        },
+        {
+          "seconds": 8.172,
+          "pts_ms": 7635,
+          "bytes": 2973
+        },
+        {
+          "seconds": 8.235,
+          "pts_ms": 7672,
+          "bytes": 2773
+        },
+        {
+          "seconds": 8.235,
+          "pts_ms": 7703,
+          "bytes": 2805
+        },
+        {
+          "seconds": 8.281,
+          "pts_ms": 7737,
+          "bytes": 3241
+        },
+        {
+          "seconds": 8.297,
+          "pts_ms": 7769,
+          "bytes": 3277
+        },
+        {
+          "seconds": 8.36,
+          "pts_ms": 7803,
+          "bytes": 2918
+        },
+        {
+          "seconds": 8.36,
+          "pts_ms": 7837,
+          "bytes": 2375
+        },
+        {
+          "seconds": 8.438,
+          "pts_ms": 7868,
+          "bytes": 2368
+        },
+        {
+          "seconds": 8.438,
+          "pts_ms": 7904,
+          "bytes": 2303
+        },
+        {
+          "seconds": 8.5,
+          "pts_ms": 7936,
+          "bytes": 2252
+        },
+        {
+          "seconds": 8.5,
+          "pts_ms": 7968,
+          "bytes": 2177
+        },
+        {
+          "seconds": 8.531,
+          "pts_ms": 8002,
+          "bytes": 2151
+        },
+        {
+          "seconds": 8.594,
+          "pts_ms": 8035,
+          "bytes": 2314
+        },
+        {
+          "seconds": 8.594,
+          "pts_ms": 8071,
+          "bytes": 2111
+        },
+        {
+          "seconds": 8.672,
+          "pts_ms": 8103,
+          "bytes": 2169
+        },
+        {
+          "seconds": 8.672,
+          "pts_ms": 8136,
+          "bytes": 2193
+        },
+        {
+          "seconds": 8.735,
+          "pts_ms": 8169,
+          "bytes": 2163
+        },
+        {
+          "seconds": 8.735,
+          "pts_ms": 8202,
+          "bytes": 2162
+        },
+        {
+          "seconds": 8.781,
+          "pts_ms": 8237,
+          "bytes": 2238
+        },
+        {
+          "seconds": 8.906,
+          "pts_ms": 8271,
+          "bytes": 2182
+        },
+        {
+          "seconds": 8.906,
+          "pts_ms": 8306,
+          "bytes": 25755
+        },
+        {
+          "seconds": 8.906,
+          "pts_ms": 8338,
+          "bytes": 3618
+        },
+        {
+          "seconds": 8.906,
+          "pts_ms": 8372,
+          "bytes": 3613
+        },
+        {
+          "seconds": 8.969,
+          "pts_ms": 8406,
+          "bytes": 3738
+        },
+        {
+          "seconds": 8.969,
+          "pts_ms": 8439,
+          "bytes": 3938
+        },
+        {
+          "seconds": 9.031,
+          "pts_ms": 8472,
+          "bytes": 4617
+        },
+        {
+          "seconds": 9.063,
+          "pts_ms": 8503,
+          "bytes": 3607
+        },
+        {
+          "seconds": 9.063,
+          "pts_ms": 8537,
+          "bytes": 3493
+        },
+        {
+          "seconds": 9.141,
+          "pts_ms": 8571,
+          "bytes": 3670
+        },
+        {
+          "seconds": 9.141,
+          "pts_ms": 8604,
+          "bytes": 3572
+        },
+        {
+          "seconds": 9.203,
+          "pts_ms": 8638,
+          "bytes": 3613
+        },
+        {
+          "seconds": 9.203,
+          "pts_ms": 8671,
+          "bytes": 3616
+        },
+        {
+          "seconds": 9.281,
+          "pts_ms": 8705,
+          "bytes": 3521
+        },
+        {
+          "seconds": 9.281,
+          "pts_ms": 8737,
+          "bytes": 3344
+        },
+        {
+          "seconds": 9.297,
+          "pts_ms": 8772,
+          "bytes": 6166
+        },
+        {
+          "seconds": 9.406,
+          "pts_ms": 8804,
+          "bytes": 6477
+        },
+        {
+          "seconds": 9.406,
+          "pts_ms": 8841,
+          "bytes": 4634
+        },
+        {
+          "seconds": 9.406,
+          "pts_ms": 8870,
+          "bytes": 5121
+        },
+        {
+          "seconds": 9.469,
+          "pts_ms": 8904,
+          "bytes": 4197
+        },
+        {
+          "seconds": 9.469,
+          "pts_ms": 8938,
+          "bytes": 4630
+        },
+        {
+          "seconds": 9.5,
+          "pts_ms": 8974,
+          "bytes": 4035
+        },
+        {
+          "seconds": 9.531,
+          "pts_ms": 9004,
+          "bytes": 4865
+        },
+        {
+          "seconds": 9.563,
+          "pts_ms": 9038,
+          "bytes": 4905
+        },
+        {
+          "seconds": 9.594,
+          "pts_ms": 9072,
+          "bytes": 5389
+        },
+        {
+          "seconds": 9.641,
+          "pts_ms": 9105,
+          "bytes": 4318
+        },
+        {
+          "seconds": 9.672,
+          "pts_ms": 9137,
+          "bytes": 4928
+        },
+        {
+          "seconds": 9.703,
+          "pts_ms": 9172,
+          "bytes": 4644
+        },
+        {
+          "seconds": 9.735,
+          "pts_ms": 9206,
+          "bytes": 4899
+        },
+        {
+          "seconds": 9.766,
+          "pts_ms": 9238,
+          "bytes": 4360
+        },
+        {
+          "seconds": 9.813,
+          "pts_ms": 9276,
+          "bytes": 5097
+        },
+        {
+          "seconds": 9.844,
+          "pts_ms": 9307,
+          "bytes": 27933
+        },
+        {
+          "seconds": 9.875,
+          "pts_ms": 9340,
+          "bytes": 5310
+        },
+        {
+          "seconds": 9.906,
+          "pts_ms": 9373,
+          "bytes": 4089
+        },
+        {
+          "seconds": 9.969,
+          "pts_ms": 9406,
+          "bytes": 4250
+        },
+        {
+          "seconds": 9.969,
+          "pts_ms": 9439,
+          "bytes": 3301
+        },
+        {
+          "seconds": 10.031,
+          "pts_ms": 9472,
+          "bytes": 3382
+        },
+        {
+          "seconds": 10.063,
+          "pts_ms": 9506,
+          "bytes": 3101
+        },
+        {
+          "seconds": 10.063,
+          "pts_ms": 9541,
+          "bytes": 3903
+        },
+        {
+          "seconds": 10.141,
+          "pts_ms": 9574,
+          "bytes": 2886
+        },
+        {
+          "seconds": 10.141,
+          "pts_ms": 9608,
+          "bytes": 2755
+        },
+        {
+          "seconds": 10.203,
+          "pts_ms": 9642,
+          "bytes": 2860
+        },
+        {
+          "seconds": 10.203,
+          "pts_ms": 9678,
+          "bytes": 3077
+        },
+        {
+          "seconds": 10.281,
+          "pts_ms": 9712,
+          "bytes": 2913
+        },
+        {
+          "seconds": 10.281,
+          "pts_ms": 9744,
+          "bytes": 3331
+        },
+        {
+          "seconds": 10.313,
+          "pts_ms": 9777,
+          "bytes": 3334
+        },
+        {
+          "seconds": 10.344,
+          "pts_ms": 9814,
+          "bytes": 3047
+        },
+        {
+          "seconds": 10.406,
+          "pts_ms": 9845,
+          "bytes": 2365
+        },
+        {
+          "seconds": 10.406,
+          "pts_ms": 9879,
+          "bytes": 2318
+        },
+        {
+          "seconds": 10.469,
+          "pts_ms": 9914,
+          "bytes": 2279
+        },
+        {
+          "seconds": 10.469,
+          "pts_ms": 9940,
+          "bytes": 2272
+        },
+        {
+          "seconds": 10.531,
+          "pts_ms": 9974,
+          "bytes": 2131
+        },
+        {
+          "seconds": 10.531,
+          "pts_ms": 10007,
+          "bytes": 2146
+        },
+        {
+          "seconds": 10.563,
+          "pts_ms": 10040,
+          "bytes": 2212
+        },
+        {
+          "seconds": 10.641,
+          "pts_ms": 10073,
+          "bytes": 2079
+        },
+        {
+          "seconds": 10.641,
+          "pts_ms": 10106,
+          "bytes": 2177
+        },
+        {
+          "seconds": 10.703,
+          "pts_ms": 10139,
+          "bytes": 2113
+        },
+        {
+          "seconds": 10.703,
+          "pts_ms": 10173,
+          "bytes": 2169
+        },
+        {
+          "seconds": 10.766,
+          "pts_ms": 10207,
+          "bytes": 2140
+        },
+        {
+          "seconds": 10.766,
+          "pts_ms": 10241,
+          "bytes": 2703
+        },
+        {
+          "seconds": 10.797,
+          "pts_ms": 10274,
+          "bytes": 2137
+        },
+        {
+          "seconds": 10.844,
+          "pts_ms": 10309,
+          "bytes": 25848
+        },
+        {
+          "seconds": 10.875,
+          "pts_ms": 10342,
+          "bytes": 3661
+        },
+        {
+          "seconds": 10.938,
+          "pts_ms": 10375,
+          "bytes": 3650
+        },
+        {
+          "seconds": 10.938,
+          "pts_ms": 10409,
+          "bytes": 3690
+        },
+        {
+          "seconds": 11.0,
+          "pts_ms": 10443,
+          "bytes": 3673
+        },
+        {
+          "seconds": 11.0,
+          "pts_ms": 10474,
+          "bytes": 4038
+        },
+        {
+          "seconds": 11.031,
+          "pts_ms": 10509,
+          "bytes": 3686
+        },
+        {
+          "seconds": 11.11,
+          "pts_ms": 10541,
+          "bytes": 3627
+        },
+        {
+          "seconds": 11.11,
+          "pts_ms": 10576,
+          "bytes": 3685
+        },
+        {
+          "seconds": 11.172,
+          "pts_ms": 10607,
+          "bytes": 4055
+        },
+        {
+          "seconds": 11.172,
+          "pts_ms": 10643,
+          "bytes": 4131
+        },
+        {
+          "seconds": 11.266,
+          "pts_ms": 10676,
+          "bytes": 3543
+        },
+        {
+          "seconds": 11.266,
+          "pts_ms": 10711,
+          "bytes": 3374
+        },
+        {
+          "seconds": 11.266,
+          "pts_ms": 10741,
+          "bytes": 3449
+        },
+        {
+          "seconds": 11.313,
+          "pts_ms": 10775,
+          "bytes": 7419
+        },
+        {
+          "seconds": 11.344,
+          "pts_ms": 10809,
+          "bytes": 5382
+        },
+        {
+          "seconds": 11.375,
+          "pts_ms": 10843,
+          "bytes": 4006
+        },
+        {
+          "seconds": 11.406,
+          "pts_ms": 10877,
+          "bytes": 4650
+        },
+        {
+          "seconds": 11.438,
+          "pts_ms": 10910,
+          "bytes": 4452
+        },
+        {
+          "seconds": 11.516,
+          "pts_ms": 10958,
+          "bytes": 5077
+        },
+        {
+          "seconds": 11.516,
+          "pts_ms": 10991,
+          "bytes": 4436
+        },
+        {
+          "seconds": 11.547,
+          "pts_ms": 11023,
+          "bytes": 4764
+        },
+        {
+          "seconds": 11.578,
+          "pts_ms": 11055,
+          "bytes": 4478
+        },
+        {
+          "seconds": 11.61,
+          "pts_ms": 11084,
+          "bytes": 5029
+        },
+        {
+          "seconds": 11.641,
+          "pts_ms": 11117,
+          "bytes": 4574
+        },
+        {
+          "seconds": 11.688,
+          "pts_ms": 11151,
+          "bytes": 5041
+        },
+        {
+          "seconds": 11.719,
+          "pts_ms": 11184,
+          "bytes": 5037
+        },
+        {
+          "seconds": 11.75,
+          "pts_ms": 11219,
+          "bytes": 5605
+        },
+        {
+          "seconds": 11.781,
+          "pts_ms": 11251,
+          "bytes": 4873
+        },
+        {
+          "seconds": 11.922,
+          "pts_ms": 11284,
+          "bytes": 5099
+        },
+        {
+          "seconds": 11.922,
+          "pts_ms": 11350,
+          "bytes": 27804
+        },
+        {
+          "seconds": 11.922,
+          "pts_ms": 11355,
+          "bytes": 4880
+        },
+        {
+          "seconds": 11.969,
+          "pts_ms": 11403,
+          "bytes": 4048
+        },
+        {
+          "seconds": 11.969,
+          "pts_ms": 11440,
+          "bytes": 4265
+        },
+        {
+          "seconds": 12.031,
+          "pts_ms": 11470,
+          "bytes": 3399
+        },
+        {
+          "seconds": 12.031,
+          "pts_ms": 11502,
+          "bytes": 3334
+        },
+        {
+          "seconds": 12.063,
+          "pts_ms": 11535,
+          "bytes": 3186
+        },
+        {
+          "seconds": 12.125,
+          "pts_ms": 11563,
+          "bytes": 3300
+        },
+        {
+          "seconds": 12.125,
+          "pts_ms": 11593,
+          "bytes": 2989
+        },
+        {
+          "seconds": 12.188,
+          "pts_ms": 11626,
+          "bytes": 2941
+        },
+        {
+          "seconds": 12.188,
+          "pts_ms": 11660,
+          "bytes": 2716
+        },
+        {
+          "seconds": 12.25,
+          "pts_ms": 11694,
+          "bytes": 3200
+        },
+        {
+          "seconds": 12.25,
+          "pts_ms": 11726,
+          "bytes": 2975
+        },
+        {
+          "seconds": 12.297,
+          "pts_ms": 11761,
+          "bytes": 3202
+        },
+        {
+          "seconds": 12.328,
+          "pts_ms": 11795,
+          "bytes": 2973
+        },
+        {
+          "seconds": 12.391,
+          "pts_ms": 11830,
+          "bytes": 2786
+        },
+        {
+          "seconds": 12.391,
+          "pts_ms": 11862,
+          "bytes": 2278
+        },
+        {
+          "seconds": 12.453,
+          "pts_ms": 11895,
+          "bytes": 2250
+        },
+        {
+          "seconds": 12.453,
+          "pts_ms": 11929,
+          "bytes": 2251
+        },
+        {
+          "seconds": 12.516,
+          "pts_ms": 11964,
+          "bytes": 2132
+        },
+        {
+          "seconds": 12.516,
+          "pts_ms": 11995,
+          "bytes": 2255
+        },
+        {
+          "seconds": 12.563,
+          "pts_ms": 12028,
+          "bytes": 2408
+        },
+        {
+          "seconds": 12.625,
+          "pts_ms": 12063,
+          "bytes": 2378
+        },
+        {
+          "seconds": 12.625,
+          "pts_ms": 12095,
+          "bytes": 2421
+        },
+        {
+          "seconds": 12.688,
+          "pts_ms": 12134,
+          "bytes": 2375
+        },
+        {
+          "seconds": 12.688,
+          "pts_ms": 12165,
+          "bytes": 2348
+        },
+        {
+          "seconds": 12.766,
+          "pts_ms": 12199,
+          "bytes": 2336
+        },
+        {
+          "seconds": 12.766,
+          "pts_ms": 12235,
+          "bytes": 2657
+        },
+        {
+          "seconds": 12.797,
+          "pts_ms": 12265,
+          "bytes": 2252
+        },
+        {
+          "seconds": 12.86,
+          "pts_ms": 12300,
+          "bytes": 2152
+        },
+        {
+          "seconds": 12.875,
+          "pts_ms": 12336,
+          "bytes": 25786
+        },
+        {
+          "seconds": 12.969,
+          "pts_ms": 12365,
+          "bytes": 4088
+        },
+        {
+          "seconds": 12.969,
+          "pts_ms": 12432,
+          "bytes": 3746
+        },
+        {
+          "seconds": 13.031,
+          "pts_ms": 12436,
+          "bytes": 3572
+        },
+        {
+          "seconds": 13.031,
+          "pts_ms": 12470,
+          "bytes": 3532
+        },
+        {
+          "seconds": 13.031,
+          "pts_ms": 12502,
+          "bytes": 3696
+        },
+        {
+          "seconds": 13.063,
+          "pts_ms": 12537,
+          "bytes": 3568
+        },
+        {
+          "seconds": 13.125,
+          "pts_ms": 12565,
+          "bytes": 3569
+        },
+        {
+          "seconds": 13.125,
+          "pts_ms": 12599,
+          "bytes": 3657
+        },
+        {
+          "seconds": 13.188,
+          "pts_ms": 12632,
+          "bytes": 4133
+        },
+        {
+          "seconds": 13.188,
+          "pts_ms": 12663,
+          "bytes": 4242
+        },
+        {
+          "seconds": 13.297,
+          "pts_ms": 12697,
+          "bytes": 3717
+        },
+        {
+          "seconds": 13.297,
+          "pts_ms": 12729,
+          "bytes": 3353
+        },
+        {
+          "seconds": 13.297,
+          "pts_ms": 12764,
+          "bytes": 6206
+        },
+        {
+          "seconds": 13.328,
+          "pts_ms": 12797,
+          "bytes": 6401
+        },
+        {
+          "seconds": 13.36,
+          "pts_ms": 12830,
+          "bytes": 5617
+        },
+        {
+          "seconds": 13.391,
+          "pts_ms": 12866,
+          "bytes": 4677
+        },
+        {
+          "seconds": 13.422,
+          "pts_ms": 12899,
+          "bytes": 5205
+        },
+        {
+          "seconds": 13.469,
+          "pts_ms": 12932,
+          "bytes": 4632
+        },
+        {
+          "seconds": 13.531,
+          "pts_ms": 12966,
+          "bytes": 4828
+        },
+        {
+          "seconds": 13.531,
+          "pts_ms": 12998,
+          "bytes": 4419
+        },
+        {
+          "seconds": 13.563,
+          "pts_ms": 13031,
+          "bytes": 4811
+        },
+        {
+          "seconds": 13.594,
+          "pts_ms": 13064,
+          "bytes": 5081
+        },
+        {
+          "seconds": 13.625,
+          "pts_ms": 13098,
+          "bytes": 5274
+        },
+        {
+          "seconds": 13.656,
+          "pts_ms": 13132,
+          "bytes": 4633
+        },
+        {
+          "seconds": 13.688,
+          "pts_ms": 13164,
+          "bytes": 5019
+        },
+        {
+          "seconds": 13.766,
+          "pts_ms": 13198,
+          "bytes": 4543
+        },
+        {
+          "seconds": 13.766,
+          "pts_ms": 13230,
+          "bytes": 5096
+        },
+        {
+          "seconds": 13.797,
+          "pts_ms": 13265,
+          "bytes": 4135
+        },
+        {
+          "seconds": 13.828,
+          "pts_ms": 13298,
+          "bytes": 4742
+        },
+        {
+          "seconds": 13.875,
+          "pts_ms": 13332,
+          "bytes": 27704
+        },
+        {
+          "seconds": 13.891,
+          "pts_ms": 13365,
+          "bytes": 3686
+        },
+        {
+          "seconds": 14.0,
+          "pts_ms": 13398,
+          "bytes": 3702
+        },
+        {
+          "seconds": 14.0,
+          "pts_ms": 13432,
+          "bytes": 3982
+        },
+        {
+          "seconds": 14.031,
+          "pts_ms": 13466,
+          "bytes": 3221
+        },
+        {
+          "seconds": 14.031,
+          "pts_ms": 13499,
+          "bytes": 3230
+        },
+        {
+          "seconds": 14.063,
+          "pts_ms": 13533,
+          "bytes": 3048
+        },
+        {
+          "seconds": 14.141,
+          "pts_ms": 13566,
+          "bytes": 3184
+        },
+        {
+          "seconds": 14.141,
+          "pts_ms": 13600,
+          "bytes": 2884
+        },
+        {
+          "seconds": 14.203,
+          "pts_ms": 13632,
+          "bytes": 2835
+        },
+        {
+          "seconds": 14.203,
+          "pts_ms": 13667,
+          "bytes": 2728
+        },
+        {
+          "seconds": 14.266,
+          "pts_ms": 13698,
+          "bytes": 2933
+        },
+        {
+          "seconds": 14.297,
+          "pts_ms": 13732,
+          "bytes": 3936
+        },
+        {
+          "seconds": 14.313,
+          "pts_ms": 13764,
+          "bytes": 3329
+        },
+        {
+          "seconds": 14.328,
+          "pts_ms": 13801,
+          "bytes": 3060
+        },
+        {
+          "seconds": 14.406,
+          "pts_ms": 13832,
+          "bytes": 2441
+        },
+        {
+          "seconds": 14.406,
+          "pts_ms": 13870,
+          "bytes": 2313
+        },
+        {
+          "seconds": 14.469,
+          "pts_ms": 13901,
+          "bytes": 2196
+        },
+        {
+          "seconds": 14.469,
+          "pts_ms": 13933,
+          "bytes": 2150
+        },
+        {
+          "seconds": 14.531,
+          "pts_ms": 13966,
+          "bytes": 2019
+        },
+        {
+          "seconds": 14.531,
+          "pts_ms": 14000,
+          "bytes": 2041
+        },
+        {
+          "seconds": 14.563,
+          "pts_ms": 14033,
+          "bytes": 2066
+        },
+        {
+          "seconds": 14.641,
+          "pts_ms": 14067,
+          "bytes": 2066
+        },
+        {
+          "seconds": 14.641,
+          "pts_ms": 14102,
+          "bytes": 2028
+        },
+        {
+          "seconds": 14.735,
+          "pts_ms": 14133,
+          "bytes": 2020
+        },
+        {
+          "seconds": 14.735,
+          "pts_ms": 14166,
+          "bytes": 2056
+        },
+        {
+          "seconds": 14.735,
+          "pts_ms": 14202,
+          "bytes": 2022
+        },
+        {
+          "seconds": 14.797,
+          "pts_ms": 14234,
+          "bytes": 2374
+        },
+        {
+          "seconds": 14.797,
+          "pts_ms": 14267,
+          "bytes": 2023
+        },
+        {
+          "seconds": 14.828,
+          "pts_ms": 14301,
+          "bytes": 2063
+        },
+        {
+          "seconds": 15.016,
+          "pts_ms": 14337,
+          "bytes": 25738
+        },
+        {
+          "seconds": 15.016,
+          "pts_ms": 14369,
+          "bytes": 4198
+        },
+        {
+          "seconds": 15.031,
+          "pts_ms": 14401,
+          "bytes": 4575
+        },
+        {
+          "seconds": 15.031,
+          "pts_ms": 14435,
+          "bytes": 3567
+        },
+        {
+          "seconds": 15.047,
+          "pts_ms": 14466,
+          "bytes": 3519
+        },
+        {
+          "seconds": 15.047,
+          "pts_ms": 14500,
+          "bytes": 3577
+        },
+        {
+          "seconds": 15.094,
+          "pts_ms": 14534,
+          "bytes": 3705
+        },
+        {
+          "seconds": 15.094,
+          "pts_ms": 14568,
+          "bytes": 3678
+        },
+        {
+          "seconds": 15.188,
+          "pts_ms": 14608,
+          "bytes": 3642
+        },
+        {
+          "seconds": 15.188,
+          "pts_ms": 14649,
+          "bytes": 3759
+        },
+        {
+          "seconds": 15.235,
+          "pts_ms": 14675,
+          "bytes": 3729
+        },
+        {
+          "seconds": 15.235,
+          "pts_ms": 14703,
+          "bytes": 3794
+        },
+        {
+          "seconds": 15.297,
+          "pts_ms": 14737,
+          "bytes": 3443
+        },
+        {
+          "seconds": 15.297,
+          "pts_ms": 14768,
+          "bytes": 6310
+        },
+        {
+          "seconds": 15.328,
+          "pts_ms": 14802,
+          "bytes": 5852
+        },
+        {
+          "seconds": 15.36,
+          "pts_ms": 14836,
+          "bytes": 4827
+        },
+        {
+          "seconds": 15.391,
+          "pts_ms": 14869,
+          "bytes": 4762
+        },
+        {
+          "seconds": 15.438,
+          "pts_ms": 14904,
+          "bytes": 4453
+        },
+        {
+          "seconds": 15.5,
+          "pts_ms": 14936,
+          "bytes": 5148
+        },
+        {
+          "seconds": 15.516,
+          "pts_ms": 14969,
+          "bytes": 5453
+        },
+        {
+          "seconds": 15.547,
+          "pts_ms": 15003,
+          "bytes": 5199
+        },
+        {
+          "seconds": 15.563,
+          "pts_ms": 15038,
+          "bytes": 4974
+        },
+        {
+          "seconds": 15.594,
+          "pts_ms": 15070,
+          "bytes": 4856
+        },
+        {
+          "seconds": 15.641,
+          "pts_ms": 15104,
+          "bytes": 5328
+        },
+        {
+          "seconds": 15.672,
+          "pts_ms": 15137,
+          "bytes": 5248
+        },
+        {
+          "seconds": 15.735,
+          "pts_ms": 15171,
+          "bytes": 4667
+        },
+        {
+          "seconds": 15.735,
+          "pts_ms": 15205,
+          "bytes": 5342
+        },
+        {
+          "seconds": 15.766,
+          "pts_ms": 15239,
+          "bytes": 5303
+        },
+        {
+          "seconds": 15.797,
+          "pts_ms": 15269,
+          "bytes": 5379
+        },
+        {
+          "seconds": 15.906,
+          "pts_ms": 15303,
+          "bytes": 5131
+        },
+        {
+          "seconds": 15.969,
+          "pts_ms": 15336,
+          "bytes": 27807
+        },
+        {
+          "seconds": 15.969,
+          "pts_ms": 15370,
+          "bytes": 4132
+        },
+        {
+          "seconds": 15.985,
+          "pts_ms": 15405,
+          "bytes": 3958
+        },
+        {
+          "seconds": 16.0,
+          "pts_ms": 15437,
+          "bytes": 3521
+        },
+        {
+          "seconds": 16.0,
+          "pts_ms": 15470,
+          "bytes": 3351
+        },
+        {
+          "seconds": 16.047,
+          "pts_ms": 15505,
+          "bytes": 3211
+        },
+        {
+          "seconds": 16.094,
+          "pts_ms": 15540,
+          "bytes": 3037
+        },
+        {
+          "seconds": 16.094,
+          "pts_ms": 15570,
+          "bytes": 3214
+        },
+        {
+          "seconds": 16.172,
+          "pts_ms": 15602,
+          "bytes": 2931
+        },
+        {
+          "seconds": 16.172,
+          "pts_ms": 15636,
+          "bytes": 2923
+        },
+        {
+          "seconds": 16.235,
+          "pts_ms": 15670,
+          "bytes": 2859
+        },
+        {
+          "seconds": 16.235,
+          "pts_ms": 15704,
+          "bytes": 3025
+        },
+        {
+          "seconds": 16.266,
+          "pts_ms": 15739,
+          "bytes": 3475
+        },
+        {
+          "seconds": 16.297,
+          "pts_ms": 15769,
+          "bytes": 3454
+        },
+        {
+          "seconds": 16.328,
+          "pts_ms": 15804,
+          "bytes": 3196
+        },
+        {
+          "seconds": 16.406,
+          "pts_ms": 15838,
+          "bytes": 2693
+        },
+        {
+          "seconds": 16.406,
+          "pts_ms": 15871,
+          "bytes": 2997
+        },
+        {
+          "seconds": 16.469,
+          "pts_ms": 15906,
+          "bytes": 2375
+        },
+        {
+          "seconds": 16.469,
+          "pts_ms": 15937,
+          "bytes": 2297
+        },
+        {
+          "seconds": 16.531,
+          "pts_ms": 15973,
+          "bytes": 2145
+        },
+        {
+          "seconds": 16.531,
+          "pts_ms": 16008,
+          "bytes": 2311
+        },
+        {
+          "seconds": 16.563,
+          "pts_ms": 16039,
+          "bytes": 2184
+        },
+        {
+          "seconds": 16.641,
+          "pts_ms": 16073,
+          "bytes": 2182
+        },
+        {
+          "seconds": 16.641,
+          "pts_ms": 16105,
+          "bytes": 2300
+        },
+        {
+          "seconds": 16.703,
+          "pts_ms": 16138,
+          "bytes": 2658
+        },
+        {
+          "seconds": 16.703,
+          "pts_ms": 16171,
+          "bytes": 2435
+        },
+        {
+          "seconds": 16.766,
+          "pts_ms": 16204,
+          "bytes": 2204
+        },
+        {
+          "seconds": 16.766,
+          "pts_ms": 16237,
+          "bytes": 2228
+        },
+        {
+          "seconds": 16.797,
+          "pts_ms": 16272,
+          "bytes": 2268
+        },
+        {
+          "seconds": 16.875,
+          "pts_ms": 16304,
+          "bytes": 2347
+        },
+        {
+          "seconds": 16.953,
+          "pts_ms": 16339,
+          "bytes": 25823
+        },
+        {
+          "seconds": 16.953,
+          "pts_ms": 16373,
+          "bytes": 3747
+        },
+        {
+          "seconds": 16.953,
+          "pts_ms": 16406,
+          "bytes": 4098
+        },
+        {
+          "seconds": 17.0,
+          "pts_ms": 16439,
+          "bytes": 3629
+        },
+        {
+          "seconds": 17.0,
+          "pts_ms": 16474,
+          "bytes": 3635
+        },
+        {
+          "seconds": 17.047,
+          "pts_ms": 16507,
+          "bytes": 3709
+        },
+        {
+          "seconds": 17.11,
+          "pts_ms": 16539,
+          "bytes": 4128
+        },
+        {
+          "seconds": 17.11,
+          "pts_ms": 16574,
+          "bytes": 3560
+        },
+        {
+          "seconds": 17.172,
+          "pts_ms": 16606,
+          "bytes": 3484
+        },
+        {
+          "seconds": 17.172,
+          "pts_ms": 16638,
+          "bytes": 3742
+        },
+        {
+          "seconds": 17.235,
+          "pts_ms": 16673,
+          "bytes": 3717
+        },
+        {
+          "seconds": 17.235,
+          "pts_ms": 16707,
+          "bytes": 3544
+        },
+        {
+          "seconds": 17.313,
+          "pts_ms": 16740,
+          "bytes": 3311
+        },
+        {
+          "seconds": 17.313,
+          "pts_ms": 16772,
+          "bytes": 6355
+        },
+        {
+          "seconds": 17.344,
+          "pts_ms": 16806,
+          "bytes": 6460
+        },
+        {
+          "seconds": 17.406,
+          "pts_ms": 16839,
+          "bytes": 4490
+        },
+        {
+          "seconds": 17.406,
+          "pts_ms": 16873,
+          "bytes": 4826
+        },
+        {
+          "seconds": 17.469,
+          "pts_ms": 16907,
+          "bytes": 4136
+        },
+        {
+          "seconds": 17.469,
+          "pts_ms": 16939,
+          "bytes": 4676
+        },
+        {
+          "seconds": 17.5,
+          "pts_ms": 16973,
+          "bytes": 4452
+        },
+        {
+          "seconds": 17.531,
+          "pts_ms": 17006,
+          "bytes": 4785
+        },
+        {
+          "seconds": 17.578,
+          "pts_ms": 17041,
+          "bytes": 4276
+        },
+        {
+          "seconds": 17.61,
+          "pts_ms": 17074,
+          "bytes": 5320
+        },
+        {
+          "seconds": 17.641,
+          "pts_ms": 17107,
+          "bytes": 5346
+        },
+        {
+          "seconds": 17.672,
+          "pts_ms": 17141,
+          "bytes": 5820
+        },
+        {
+          "seconds": 17.703,
+          "pts_ms": 17174,
+          "bytes": 4844
+        },
+        {
+          "seconds": 17.735,
+          "pts_ms": 17208,
+          "bytes": 5410
+        },
+        {
+          "seconds": 17.766,
+          "pts_ms": 17241,
+          "bytes": 5083
+        },
+        {
+          "seconds": 17.813,
+          "pts_ms": 17275,
+          "bytes": 5340
+        },
+        {
+          "seconds": 17.875,
+          "pts_ms": 17308,
+          "bytes": 4713
+        },
+        {
+          "seconds": 17.953,
+          "pts_ms": 17344,
+          "bytes": 27916
+        },
+        {
+          "seconds": 17.953,
+          "pts_ms": 17377,
+          "bytes": 4288
+        },
+        {
+          "seconds": 17.953,
+          "pts_ms": 17411,
+          "bytes": 4422
+        },
+        {
+          "seconds": 17.969,
+          "pts_ms": 17442,
+          "bytes": 3387
+        },
+        {
+          "seconds": 18.047,
+          "pts_ms": 17476,
+          "bytes": 3845
+        },
+        {
+          "seconds": 18.047,
+          "pts_ms": 17509,
+          "bytes": 3313
+        },
+        {
+          "seconds": 18.078,
+          "pts_ms": 17542,
+          "bytes": 3233
+        },
+        {
+          "seconds": 18.141,
+          "pts_ms": 17575,
+          "bytes": 3140
+        },
+        {
+          "seconds": 18.172,
+          "pts_ms": 17608,
+          "bytes": 3410
+        },
+        {
+          "seconds": 18.203,
+          "pts_ms": 17643,
+          "bytes": 3443
+        },
+        {
+          "seconds": 18.203,
+          "pts_ms": 17676,
+          "bytes": 2730
+        },
+        {
+          "seconds": 18.266,
+          "pts_ms": 17709,
+          "bytes": 2904
+        },
+        {
+          "seconds": 18.266,
+          "pts_ms": 17743,
+          "bytes": 3847
+        },
+        {
+          "seconds": 18.297,
+          "pts_ms": 17775,
+          "bytes": 3653
+        },
+        {
+          "seconds": 18.344,
+          "pts_ms": 17808,
+          "bytes": 3033
+        },
+        {
+          "seconds": 18.406,
+          "pts_ms": 17842,
+          "bytes": 2488
+        },
+        {
+          "seconds": 18.406,
+          "pts_ms": 17876,
+          "bytes": 2531
+        },
+        {
+          "seconds": 18.469,
+          "pts_ms": 17910,
+          "bytes": 2366
+        },
+        {
+          "seconds": 18.469,
+          "pts_ms": 17944,
+          "bytes": 2368
+        },
+        {
+          "seconds": 18.547,
+          "pts_ms": 17977,
+          "bytes": 2278
+        },
+        {
+          "seconds": 18.547,
+          "pts_ms": 18012,
+          "bytes": 2261
+        },
+        {
+          "seconds": 18.578,
+          "pts_ms": 18046,
+          "bytes": 2745
+        },
+        {
+          "seconds": 18.641,
+          "pts_ms": 18077,
+          "bytes": 2394
+        },
+        {
+          "seconds": 18.641,
+          "pts_ms": 18110,
+          "bytes": 2260
+        },
+        {
+          "seconds": 18.703,
+          "pts_ms": 18146,
+          "bytes": 2340
+        },
+        {
+          "seconds": 18.703,
+          "pts_ms": 18177,
+          "bytes": 2262
+        },
+        {
+          "seconds": 18.766,
+          "pts_ms": 18210,
+          "bytes": 2389
+        },
+        {
+          "seconds": 18.766,
+          "pts_ms": 18243,
+          "bytes": 2288
+        },
+        {
+          "seconds": 18.813,
+          "pts_ms": 18276,
+          "bytes": 2226
+        },
+        {
+          "seconds": 18.875,
+          "pts_ms": 18310,
+          "bytes": 2234
+        },
+        {
+          "seconds": 18.969,
+          "pts_ms": 18346,
+          "bytes": 25842
+        },
+        {
+          "seconds": 18.969,
+          "pts_ms": 18377,
+          "bytes": 3617
+        },
+        {
+          "seconds": 18.969,
+          "pts_ms": 18411,
+          "bytes": 3750
+        },
+        {
+          "seconds": 18.969,
+          "pts_ms": 18446,
+          "bytes": 3654
+        },
+        {
+          "seconds": 19.047,
+          "pts_ms": 18477,
+          "bytes": 3682
+        },
+        {
+          "seconds": 19.047,
+          "pts_ms": 18511,
+          "bytes": 3656
+        },
+        {
+          "seconds": 19.078,
+          "pts_ms": 18545,
+          "bytes": 3667
+        },
+        {
+          "seconds": 19.141,
+          "pts_ms": 18577,
+          "bytes": 4218
+        },
+        {
+          "seconds": 19.141,
+          "pts_ms": 18610,
+          "bytes": 3743
+        },
+        {
+          "seconds": 19.203,
+          "pts_ms": 18646,
+          "bytes": 3744
+        },
+        {
+          "seconds": 19.203,
+          "pts_ms": 18678,
+          "bytes": 4018
+        },
+        {
+          "seconds": 19.281,
+          "pts_ms": 18712,
+          "bytes": 4571
+        },
+        {
+          "seconds": 19.281,
+          "pts_ms": 18745,
+          "bytes": 4916
+        },
+        {
+          "seconds": 19.313,
+          "pts_ms": 18777,
+          "bytes": 4678
+        },
+        {
+          "seconds": 19.344,
+          "pts_ms": 18811,
+          "bytes": 5773
+        },
+        {
+          "seconds": 19.375,
+          "pts_ms": 18846,
+          "bytes": 5189
+        },
+        {
+          "seconds": 19.406,
+          "pts_ms": 18879,
+          "bytes": 5298
+        },
+        {
+          "seconds": 19.485,
+          "pts_ms": 18911,
+          "bytes": 4748
+        },
+        {
+          "seconds": 19.485,
+          "pts_ms": 18947,
+          "bytes": 5087
+        },
+        {
+          "seconds": 19.516,
+          "pts_ms": 18979,
+          "bytes": 4991
+        },
+        {
+          "seconds": 19.547,
+          "pts_ms": 19011,
+          "bytes": 5310
+        },
+        {
+          "seconds": 19.578,
+          "pts_ms": 19046,
+          "bytes": 4729
+        },
+        {
+          "seconds": 19.61,
+          "pts_ms": 19078,
+          "bytes": 5099
+        },
+        {
+          "seconds": 19.641,
+          "pts_ms": 19112,
+          "bytes": 4352
+        },
+        {
+          "seconds": 19.672,
+          "pts_ms": 19145,
+          "bytes": 4875
+        },
+        {
+          "seconds": 19.703,
+          "pts_ms": 19179,
+          "bytes": 4533
+        },
+        {
+          "seconds": 19.735,
+          "pts_ms": 19212,
+          "bytes": 4702
+        },
+        {
+          "seconds": 19.781,
+          "pts_ms": 19246,
+          "bytes": 4866
+        },
+        {
+          "seconds": 19.813,
+          "pts_ms": 19280,
+          "bytes": 5616
+        },
+        {
+          "seconds": 19.844,
+          "pts_ms": 19312,
+          "bytes": 4662
+        },
+        {
+          "seconds": 19.938,
+          "pts_ms": 19350,
+          "bytes": 28384
+        },
+        {
+          "seconds": 19.953,
+          "pts_ms": 19380,
+          "bytes": 4003
+        },
+        {
+          "seconds": 19.969,
+          "pts_ms": 19413,
+          "bytes": 4304
+        },
+        {
+          "seconds": 19.969,
+          "pts_ms": 19445,
+          "bytes": 3422
+        },
+        {
+          "seconds": 20.047,
+          "pts_ms": 19480,
+          "bytes": 3488
+        },
+        {
+          "seconds": 20.047,
+          "pts_ms": 19512,
+          "bytes": 3206
+        },
+        {
+          "seconds": 20.078,
+          "pts_ms": 19546,
+          "bytes": 3129
+        },
+        {
+          "seconds": 20.141,
+          "pts_ms": 19579,
+          "bytes": 3108
+        },
+        {
+          "seconds": 20.141,
+          "pts_ms": 19614,
+          "bytes": 3220
+        },
+        {
+          "seconds": 20.219,
+          "pts_ms": 19648,
+          "bytes": 2836
+        },
+        {
+          "seconds": 20.219,
+          "pts_ms": 19686,
+          "bytes": 2869
+        },
+        {
+          "seconds": 20.281,
+          "pts_ms": 19719,
+          "bytes": 2997
+        },
+        {
+          "seconds": 20.281,
+          "pts_ms": 19752,
+          "bytes": 3718
+        },
+        {
+          "seconds": 20.328,
+          "pts_ms": 19791,
+          "bytes": 3493
+        },
+        {
+          "seconds": 20.344,
+          "pts_ms": 19818,
+          "bytes": 2598
+        },
+        {
+          "seconds": 20.406,
+          "pts_ms": 19849,
+          "bytes": 2434
+        },
+        {
+          "seconds": 20.406,
+          "pts_ms": 19883,
+          "bytes": 2483
+        },
+        {
+          "seconds": 20.485,
+          "pts_ms": 19915,
+          "bytes": 2575
+        },
+        {
+          "seconds": 20.485,
+          "pts_ms": 19948,
+          "bytes": 2437
+        },
+        {
+          "seconds": 20.547,
+          "pts_ms": 19980,
+          "bytes": 2403
+        },
+        {
+          "seconds": 20.547,
+          "pts_ms": 20014,
+          "bytes": 2354
+        },
+        {
+          "seconds": 20.578,
+          "pts_ms": 20048,
+          "bytes": 2412
+        },
+        {
+          "seconds": 20.641,
+          "pts_ms": 20080,
+          "bytes": 2493
+        },
+        {
+          "seconds": 20.641,
+          "pts_ms": 20115,
+          "bytes": 2442
+        },
+        {
+          "seconds": 20.703,
+          "pts_ms": 20148,
+          "bytes": 2722
+        },
+        {
+          "seconds": 20.703,
+          "pts_ms": 20180,
+          "bytes": 3015
+        },
+        {
+          "seconds": 20.781,
+          "pts_ms": 20216,
+          "bytes": 2523
+        },
+        {
+          "seconds": 20.781,
+          "pts_ms": 20248,
+          "bytes": 2535
+        },
+        {
+          "seconds": 20.813,
+          "pts_ms": 20282,
+          "bytes": 2297
+        },
+        {
+          "seconds": 20.875,
+          "pts_ms": 20314,
+          "bytes": 2552
+        },
+        {
+          "seconds": 20.938,
+          "pts_ms": 20349,
+          "bytes": 25879
+        },
+        {
+          "seconds": 20.938,
+          "pts_ms": 20382,
+          "bytes": 3826
+        },
+        {
+          "seconds": 20.938,
+          "pts_ms": 20415,
+          "bytes": 4081
+        },
+        {
+          "seconds": 21.016,
+          "pts_ms": 20448,
+          "bytes": 3826
+        },
+        {
+          "seconds": 21.016,
+          "pts_ms": 20482,
+          "bytes": 3865
+        },
+        {
+          "seconds": 21.063,
+          "pts_ms": 20515,
+          "bytes": 3884
+        },
+        {
+          "seconds": 21.11,
+          "pts_ms": 20548,
+          "bytes": 4040
+        },
+        {
+          "seconds": 21.11,
+          "pts_ms": 20581,
+          "bytes": 3821
+        },
+        {
+          "seconds": 21.188,
+          "pts_ms": 20615,
+          "bytes": 3994
+        },
+        {
+          "seconds": 21.188,
+          "pts_ms": 20648,
+          "bytes": 3907
+        },
+        {
+          "seconds": 21.25,
+          "pts_ms": 20682,
+          "bytes": 4116
+        },
+        {
+          "seconds": 21.25,
+          "pts_ms": 20715,
+          "bytes": 4243
+        },
+        {
+          "seconds": 21.281,
+          "pts_ms": 20750,
+          "bytes": 6498
+        },
+        {
+          "seconds": 21.313,
+          "pts_ms": 20782,
+          "bytes": 6441
+        },
+        {
+          "seconds": 21.344,
+          "pts_ms": 20817,
+          "bytes": 5013
+        },
+        {
+          "seconds": 21.375,
+          "pts_ms": 20849,
+          "bytes": 5369
+        },
+        {
+          "seconds": 21.406,
+          "pts_ms": 20883,
+          "bytes": 5330
+        },
+        {
+          "seconds": 21.453,
+          "pts_ms": 20917,
+          "bytes": 4904
+        },
+        {
+          "seconds": 21.516,
+          "pts_ms": 20950,
+          "bytes": 4595
+        },
+        {
+          "seconds": 21.516,
+          "pts_ms": 20984,
+          "bytes": 5618
+        },
+        {
+          "seconds": 21.547,
+          "pts_ms": 21017,
+          "bytes": 5827
+        },
+        {
+          "seconds": 21.578,
+          "pts_ms": 21049,
+          "bytes": 5418
+        },
+        {
+          "seconds": 21.61,
+          "pts_ms": 21084,
+          "bytes": 4876
+        },
+        {
+          "seconds": 21.641,
+          "pts_ms": 21118,
+          "bytes": 5589
+        },
+        {
+          "seconds": 21.672,
+          "pts_ms": 21151,
+          "bytes": 5391
+        },
+        {
+          "seconds": 21.719,
+          "pts_ms": 21186,
+          "bytes": 5874
+        },
+        {
+          "seconds": 21.75,
+          "pts_ms": 21217,
+          "bytes": 5163
+        },
+        {
+          "seconds": 21.781,
+          "pts_ms": 21250,
+          "bytes": 5613
+        },
+        {
+          "seconds": 21.813,
+          "pts_ms": 21285,
+          "bytes": 5546
+        },
+        {
+          "seconds": 21.844,
+          "pts_ms": 21320,
+          "bytes": 5987
+        },
+        {
+          "seconds": 21.953,
+          "pts_ms": 21354,
+          "bytes": 27998
+        },
+        {
+          "seconds": 21.969,
+          "pts_ms": 21387,
+          "bytes": 4586
+        },
+        {
+          "seconds": 21.969,
+          "pts_ms": 21417,
+          "bytes": 4394
+        },
+        {
+          "seconds": 22.016,
+          "pts_ms": 21450,
+          "bytes": 3464
+        },
+        {
+          "seconds": 22.016,
+          "pts_ms": 21484,
+          "bytes": 3515
+        },
+        {
+          "seconds": 22.078,
+          "pts_ms": 21518,
+          "bytes": 3242
+        },
+        {
+          "seconds": 22.11,
+          "pts_ms": 21551,
+          "bytes": 3127
+        },
+        {
+          "seconds": 22.11,
+          "pts_ms": 21585,
+          "bytes": 3168
+        },
+        {
+          "seconds": 22.188,
+          "pts_ms": 21616,
+          "bytes": 3085
+        },
+        {
+          "seconds": 22.188,
+          "pts_ms": 21651,
+          "bytes": 2978
+        },
+        {
+          "seconds": 22.25,
+          "pts_ms": 21684,
+          "bytes": 2907
+        },
+        {
+          "seconds": 22.25,
+          "pts_ms": 21718,
+          "bytes": 3097
+        },
+        {
+          "seconds": 22.281,
+          "pts_ms": 21752,
+          "bytes": 3317
+        },
+        {
+          "seconds": 22.313,
+          "pts_ms": 21784,
+          "bytes": 3118
+        },
+        {
+          "seconds": 22.344,
+          "pts_ms": 21820,
+          "bytes": 2773
+        },
+        {
+          "seconds": 22.406,
+          "pts_ms": 21852,
+          "bytes": 2503
+        },
+        {
+          "seconds": 22.406,
+          "pts_ms": 21884,
+          "bytes": 2380
+        },
+        {
+          "seconds": 22.485,
+          "pts_ms": 21918,
+          "bytes": 2820
+        },
+        {
+          "seconds": 22.485,
+          "pts_ms": 21952,
+          "bytes": 2310
+        },
+        {
+          "seconds": 22.547,
+          "pts_ms": 21987,
+          "bytes": 2151
+        },
+        {
+          "seconds": 22.547,
+          "pts_ms": 22020,
+          "bytes": 2383
+        },
+        {
+          "seconds": 22.578,
+          "pts_ms": 22053,
+          "bytes": 2250
+        },
+        {
+          "seconds": 22.656,
+          "pts_ms": 22086,
+          "bytes": 2333
+        },
+        {
+          "seconds": 22.656,
+          "pts_ms": 22122,
+          "bytes": 2187
+        },
+        {
+          "seconds": 22.719,
+          "pts_ms": 22157,
+          "bytes": 2151
+        },
+        {
+          "seconds": 22.719,
+          "pts_ms": 22191,
+          "bytes": 2186
+        },
+        {
+          "seconds": 22.781,
+          "pts_ms": 22223,
+          "bytes": 2197
+        },
+        {
+          "seconds": 22.781,
+          "pts_ms": 22257,
+          "bytes": 2182
+        },
+        {
+          "seconds": 22.828,
+          "pts_ms": 22289,
+          "bytes": 2335
+        },
+        {
+          "seconds": 22.891,
+          "pts_ms": 22322,
+          "bytes": 2770
+        },
+        {
+          "seconds": 22.938,
+          "pts_ms": 22355,
+          "bytes": 25761
+        },
+        {
+          "seconds": 22.953,
+          "pts_ms": 22392,
+          "bytes": 3833
+        },
+        {
+          "seconds": 22.953,
+          "pts_ms": 22426,
+          "bytes": 3860
+        },
+        {
+          "seconds": 23.016,
+          "pts_ms": 22459,
+          "bytes": 3902
+        },
+        {
+          "seconds": 23.016,
+          "pts_ms": 22490,
+          "bytes": 3815
+        },
+        {
+          "seconds": 23.078,
+          "pts_ms": 22526,
+          "bytes": 3793
+        },
+        {
+          "seconds": 23.125,
+          "pts_ms": 22556,
+          "bytes": 3795
+        },
+        {
+          "seconds": 23.125,
+          "pts_ms": 22588,
+          "bytes": 4278
+        },
+        {
+          "seconds": 23.188,
+          "pts_ms": 22621,
+          "bytes": 3827
+        },
+        {
+          "seconds": 23.188,
+          "pts_ms": 22654,
+          "bytes": 3691
+        },
+        {
+          "seconds": 23.297,
+          "pts_ms": 22687,
+          "bytes": 3734
+        },
+        {
+          "seconds": 23.297,
+          "pts_ms": 22721,
+          "bytes": 3420
+        },
+        {
+          "seconds": 23.297,
+          "pts_ms": 22754,
+          "bytes": 6656
+        },
+        {
+          "seconds": 23.328,
+          "pts_ms": 22787,
+          "bytes": 7114
+        },
+        {
+          "seconds": 23.344,
+          "pts_ms": 22820,
+          "bytes": 5727
+        },
+        {
+          "seconds": 23.422,
+          "pts_ms": 22856,
+          "bytes": 5586
+        },
+        {
+          "seconds": 23.422,
+          "pts_ms": 22888,
+          "bytes": 5397
+        },
+        {
+          "seconds": 23.453,
+          "pts_ms": 22921,
+          "bytes": 5524
+        },
+        {
+          "seconds": 23.516,
+          "pts_ms": 22954,
+          "bytes": 4719
+        },
+        {
+          "seconds": 23.516,
+          "pts_ms": 22988,
+          "bytes": 5496
+        },
+        {
+          "seconds": 23.547,
+          "pts_ms": 23020,
+          "bytes": 5639
+        },
+        {
+          "seconds": 23.578,
+          "pts_ms": 23054,
+          "bytes": 4023
+        },
+        {
+          "seconds": 23.656,
+          "pts_ms": 23088,
+          "bytes": 4550
+        },
+        {
+          "seconds": 23.656,
+          "pts_ms": 23121,
+          "bytes": 5116
+        },
+        {
+          "seconds": 23.688,
+          "pts_ms": 23155,
+          "bytes": 5251
+        },
+        {
+          "seconds": 23.719,
+          "pts_ms": 23189,
+          "bytes": 5060
+        },
+        {
+          "seconds": 23.797,
+          "pts_ms": 23223,
+          "bytes": 4362
+        },
+        {
+          "seconds": 23.797,
+          "pts_ms": 23256,
+          "bytes": 4869
+        },
+        {
+          "seconds": 23.813,
+          "pts_ms": 23289,
+          "bytes": 4959
+        },
+        {
+          "seconds": 23.86,
+          "pts_ms": 23323,
+          "bytes": 5375
+        },
+        {
+          "seconds": 23.938,
+          "pts_ms": 23357,
+          "bytes": 28507
+        },
+        {
+          "seconds": 23.938,
+          "pts_ms": 23391,
+          "bytes": 4418
+        },
+        {
+          "seconds": 23.953,
+          "pts_ms": 23426,
+          "bytes": 4167
+        },
+        {
+          "seconds": 24.016,
+          "pts_ms": 23458,
+          "bytes": 3440
+        },
+        {
+          "seconds": 24.016,
+          "pts_ms": 23488,
+          "bytes": 3393
+        },
+        {
+          "seconds": 24.078,
+          "pts_ms": 23522,
+          "bytes": 3395
+        },
+        {
+          "seconds": 24.125,
+          "pts_ms": 23556,
+          "bytes": 3445
+        },
+        {
+          "seconds": 24.125,
+          "pts_ms": 23590,
+          "bytes": 3204
+        },
+        {
+          "seconds": 24.188,
+          "pts_ms": 23621,
+          "bytes": 3101
+        },
+        {
+          "seconds": 24.188,
+          "pts_ms": 23657,
+          "bytes": 2955
+        },
+        {
+          "seconds": 24.25,
+          "pts_ms": 23689,
+          "bytes": 3447
+        },
+        {
+          "seconds": 24.25,
+          "pts_ms": 23722,
+          "bytes": 3014
+        },
+        {
+          "seconds": 24.281,
+          "pts_ms": 23756,
+          "bytes": 3342
+        },
+        {
+          "seconds": 24.328,
+          "pts_ms": 23789,
+          "bytes": 3367
+        },
+        {
+          "seconds": 24.391,
+          "pts_ms": 23823,
+          "bytes": 2658
+        },
+        {
+          "seconds": 24.391,
+          "pts_ms": 23860,
+          "bytes": 2441
+        },
+        {
+          "seconds": 24.453,
+          "pts_ms": 23891,
+          "bytes": 2444
+        },
+        {
+          "seconds": 24.453,
+          "pts_ms": 23923,
+          "bytes": 2713
+        },
+        {
+          "seconds": 24.516,
+          "pts_ms": 23957,
+          "bytes": 2869
+        },
+        {
+          "seconds": 24.516,
+          "pts_ms": 23990,
+          "bytes": 2439
+        },
+        {
+          "seconds": 24.578,
+          "pts_ms": 24024,
+          "bytes": 2264
+        },
+        {
+          "seconds": 24.625,
+          "pts_ms": 24057,
+          "bytes": 2288
+        },
+        {
+          "seconds": 24.625,
+          "pts_ms": 24092,
+          "bytes": 2195
+        },
+        {
+          "seconds": 24.688,
+          "pts_ms": 24125,
+          "bytes": 2156
+        },
+        {
+          "seconds": 24.688,
+          "pts_ms": 24157,
+          "bytes": 2122
+        },
+        {
+          "seconds": 24.75,
+          "pts_ms": 24194,
+          "bytes": 2339
+        },
+        {
+          "seconds": 24.75,
+          "pts_ms": 24227,
+          "bytes": 2790
+        },
+        {
+          "seconds": 24.828,
+          "pts_ms": 24259,
+          "bytes": 2253
+        },
+        {
+          "seconds": 24.828,
+          "pts_ms": 24291,
+          "bytes": 2351
+        },
+        {
+          "seconds": 24.86,
+          "pts_ms": 24325,
+          "bytes": 2628
+        },
+        {
+          "seconds": 24.922,
+          "pts_ms": 24359,
+          "bytes": 25880
+        },
+        {
+          "seconds": 24.922,
+          "pts_ms": 24391,
+          "bytes": 3722
+        },
+        {
+          "seconds": 24.985,
+          "pts_ms": 24425,
+          "bytes": 3726
+        },
+        {
+          "seconds": 24.985,
+          "pts_ms": 24458,
+          "bytes": 3976
+        },
+        {
+          "seconds": 25.047,
+          "pts_ms": 24491,
+          "bytes": 4236
+        },
+        {
+          "seconds": 25.047,
+          "pts_ms": 24525,
+          "bytes": 3757
+        },
+        {
+          "seconds": 25.094,
+          "pts_ms": 24559,
+          "bytes": 3724
+        },
+        {
+          "seconds": 25.156,
+          "pts_ms": 24591,
+          "bytes": 3678
+        },
+        {
+          "seconds": 25.156,
+          "pts_ms": 24624,
+          "bytes": 3785
+        },
+        {
+          "seconds": 25.219,
+          "pts_ms": 24659,
+          "bytes": 3696
+        },
+        {
+          "seconds": 25.219,
+          "pts_ms": 24691,
+          "bytes": 3679
+        },
+        {
+          "seconds": 25.297,
+          "pts_ms": 24725,
+          "bytes": 3420
+        },
+        {
+          "seconds": 25.297,
+          "pts_ms": 24758,
+          "bytes": 6542
+        },
+        {
+          "seconds": 25.328,
+          "pts_ms": 24792,
+          "bytes": 6040
+        },
+        {
+          "seconds": 25.36,
+          "pts_ms": 24825,
+          "bytes": 4643
+        },
+        {
+          "seconds": 25.422,
+          "pts_ms": 24859,
+          "bytes": 4232
+        },
+        {
+          "seconds": 25.422,
+          "pts_ms": 24893,
+          "bytes": 4642
+        },
+        {
+          "seconds": 25.485,
+          "pts_ms": 24928,
+          "bytes": 4966
+        },
+        {
+          "seconds": 25.485,
+          "pts_ms": 24960,
+          "bytes": 4491
+        },
+        {
+          "seconds": 25.516,
+          "pts_ms": 24992,
+          "bytes": 4844
+        },
+        {
+          "seconds": 25.578,
+          "pts_ms": 25025,
+          "bytes": 4532
+        },
+        {
+          "seconds": 25.594,
+          "pts_ms": 25059,
+          "bytes": 4854
+        },
+        {
+          "seconds": 25.625,
+          "pts_ms": 25092,
+          "bytes": 4466
+        },
+        {
+          "seconds": 25.688,
+          "pts_ms": 25126,
+          "bytes": 4046
+        },
+        {
+          "seconds": 25.688,
+          "pts_ms": 25161,
+          "bytes": 4561
+        },
+        {
+          "seconds": 25.75,
+          "pts_ms": 25192,
+          "bytes": 4485
+        },
+        {
+          "seconds": 25.75,
+          "pts_ms": 25229,
+          "bytes": 4326
+        },
+        {
+          "seconds": 25.828,
+          "pts_ms": 25261,
+          "bytes": 4164
+        },
+        {
+          "seconds": 25.828,
+          "pts_ms": 25295,
+          "bytes": 4452
+        },
+        {
+          "seconds": 25.86,
+          "pts_ms": 25327,
+          "bytes": 4544
+        },
+        {
+          "seconds": 25.922,
+          "pts_ms": 25360,
+          "bytes": 27729
+        },
+        {
+          "seconds": 25.922,
+          "pts_ms": 25394,
+          "bytes": 3946
+        },
+        {
+          "seconds": 25.985,
+          "pts_ms": 25427,
+          "bytes": 4050
+        },
+        {
+          "seconds": 26.0,
+          "pts_ms": 25463,
+          "bytes": 3345
+        },
+        {
+          "seconds": 26.063,
+          "pts_ms": 25493,
+          "bytes": 3322
+        },
+        {
+          "seconds": 26.063,
+          "pts_ms": 25526,
+          "bytes": 3367
+        },
+        {
+          "seconds": 26.094,
+          "pts_ms": 25561,
+          "bytes": 3240
+        },
+        {
+          "seconds": 26.156,
+          "pts_ms": 25594,
+          "bytes": 3084
+        },
+        {
+          "seconds": 26.156,
+          "pts_ms": 25627,
+          "bytes": 3003
+        },
+        {
+          "seconds": 26.219,
+          "pts_ms": 25660,
+          "bytes": 2728
+        },
+        {
+          "seconds": 26.219,
+          "pts_ms": 25693,
+          "bytes": 2818
+        },
+        {
+          "seconds": 26.297,
+          "pts_ms": 25727,
+          "bytes": 2996
+        },
+        {
+          "seconds": 26.297,
+          "pts_ms": 25762,
+          "bytes": 3197
+        },
+        {
+          "seconds": 26.344,
+          "pts_ms": 25794,
+          "bytes": 3185
+        },
+        {
+          "seconds": 26.391,
+          "pts_ms": 25827,
+          "bytes": 2315
+        },
+        {
+          "seconds": 26.391,
+          "pts_ms": 25860,
+          "bytes": 2252
+        },
+        {
+          "seconds": 26.485,
+          "pts_ms": 25896,
+          "bytes": 2174
+        },
+        {
+          "seconds": 26.485,
+          "pts_ms": 25929,
+          "bytes": 2130
+        },
+        {
+          "seconds": 26.485,
+          "pts_ms": 25961,
+          "bytes": 2213
+        },
+        {
+          "seconds": 26.563,
+          "pts_ms": 25994,
+          "bytes": 2106
+        },
+        {
+          "seconds": 26.563,
+          "pts_ms": 26027,
+          "bytes": 2232
+        },
+        {
+          "seconds": 26.594,
+          "pts_ms": 26061,
+          "bytes": 2239
+        },
+        {
+          "seconds": 26.656,
+          "pts_ms": 26094,
+          "bytes": 2583
+        },
+        {
+          "seconds": 26.656,
+          "pts_ms": 26129,
+          "bytes": 2043
+        },
+        {
+          "seconds": 26.719,
+          "pts_ms": 26162,
+          "bytes": 2104
+        },
+        {
+          "seconds": 26.719,
+          "pts_ms": 26194,
+          "bytes": 2508
+        },
+        {
+          "seconds": 26.797,
+          "pts_ms": 26229,
+          "bytes": 3050
+        },
+        {
+          "seconds": 26.797,
+          "pts_ms": 26263,
+          "bytes": 2302
+        },
+        {
+          "seconds": 26.844,
+          "pts_ms": 26295,
+          "bytes": 2007
+        },
+        {
+          "seconds": 26.891,
+          "pts_ms": 26329,
+          "bytes": 2157
+        },
+        {
+          "seconds": 26.938,
+          "pts_ms": 26363,
+          "bytes": 25822
+        },
+        {
+          "seconds": 26.953,
+          "pts_ms": 26395,
+          "bytes": 3626
+        },
+        {
+          "seconds": 26.953,
+          "pts_ms": 26430,
+          "bytes": 3601
+        },
+        {
+          "seconds": 27.031,
+          "pts_ms": 26463,
+          "bytes": 3692
+        },
+        {
+          "seconds": 27.031,
+          "pts_ms": 26496,
+          "bytes": 3720
+        },
+        {
+          "seconds": 27.094,
+          "pts_ms": 26532,
+          "bytes": 3706
+        },
+        {
+          "seconds": 27.125,
+          "pts_ms": 26564,
+          "bytes": 3663
+        },
+        {
+          "seconds": 27.125,
+          "pts_ms": 26598,
+          "bytes": 3820
+        },
+        {
+          "seconds": 27.188,
+          "pts_ms": 26630,
+          "bytes": 3616
+        },
+        {
+          "seconds": 27.188,
+          "pts_ms": 26663,
+          "bytes": 3617
+        },
+        {
+          "seconds": 27.297,
+          "pts_ms": 26697,
+          "bytes": 3631
+        },
+        {
+          "seconds": 27.297,
+          "pts_ms": 26730,
+          "bytes": 3484
+        },
+        {
+          "seconds": 27.297,
+          "pts_ms": 26763,
+          "bytes": 6310
+        },
+        {
+          "seconds": 27.328,
+          "pts_ms": 26797,
+          "bytes": 5670
+        },
+        {
+          "seconds": 27.36,
+          "pts_ms": 26830,
+          "bytes": 4892
+        },
+        {
+          "seconds": 27.391,
+          "pts_ms": 26863,
+          "bytes": 3720
+        },
+        {
+          "seconds": 27.422,
+          "pts_ms": 26896,
+          "bytes": 4429
+        },
+        {
+          "seconds": 27.453,
+          "pts_ms": 26931,
+          "bytes": 4254
+        },
+        {
+          "seconds": 27.5,
+          "pts_ms": 26964,
+          "bytes": 4658
+        },
+        {
+          "seconds": 27.563,
+          "pts_ms": 26996,
+          "bytes": 3974
+        },
+        {
+          "seconds": 27.563,
+          "pts_ms": 27030,
+          "bytes": 4713
+        },
+        {
+          "seconds": 27.594,
+          "pts_ms": 27063,
+          "bytes": 4710
+        },
+        {
+          "seconds": 27.625,
+          "pts_ms": 27097,
+          "bytes": 5287
+        },
+        {
+          "seconds": 27.688,
+          "pts_ms": 27133,
+          "bytes": 4534
+        },
+        {
+          "seconds": 27.688,
+          "pts_ms": 27164,
+          "bytes": 4950
+        },
+        {
+          "seconds": 27.735,
+          "pts_ms": 27198,
+          "bytes": 4818
+        },
+        {
+          "seconds": 27.766,
+          "pts_ms": 27230,
+          "bytes": 4942
+        },
+        {
+          "seconds": 27.828,
+          "pts_ms": 27264,
+          "bytes": 4563
+        },
+        {
+          "seconds": 27.828,
+          "pts_ms": 27299,
+          "bytes": 5523
+        },
+        {
+          "seconds": 27.86,
+          "pts_ms": 27331,
+          "bytes": 5196
+        },
+        {
+          "seconds": 27.938,
+          "pts_ms": 27365,
+          "bytes": 27084
+        },
+        {
+          "seconds": 27.938,
+          "pts_ms": 27399,
+          "bytes": 3660
+        },
+        {
+          "seconds": 27.969,
+          "pts_ms": 27432,
+          "bytes": 4030
+        },
+        {
+          "seconds": 28.031,
+          "pts_ms": 27465,
+          "bytes": 3289
+        },
+        {
+          "seconds": 28.031,
+          "pts_ms": 27499,
+          "bytes": 3311
+        },
+        {
+          "seconds": 28.094,
+          "pts_ms": 27531,
+          "bytes": 3055
+        },
+        {
+          "seconds": 28.125,
+          "pts_ms": 27565,
+          "bytes": 3091
+        },
+        {
+          "seconds": 28.125,
+          "pts_ms": 27599,
+          "bytes": 2902
+        },
+        {
+          "seconds": 28.188,
+          "pts_ms": 27631,
+          "bytes": 2843
+        },
+        {
+          "seconds": 28.188,
+          "pts_ms": 27664,
+          "bytes": 2723
+        },
+        {
+          "seconds": 28.266,
+          "pts_ms": 27701,
+          "bytes": 3228
+        },
+        {
+          "seconds": 28.266,
+          "pts_ms": 27733,
+          "bytes": 3411
+        },
+        {
+          "seconds": 28.297,
+          "pts_ms": 27767,
+          "bytes": 3305
+        },
+        {
+          "seconds": 28.344,
+          "pts_ms": 27799,
+          "bytes": 3002
+        },
+        {
+          "seconds": 28.391,
+          "pts_ms": 27832,
+          "bytes": 2512
+        },
+        {
+          "seconds": 28.391,
+          "pts_ms": 27865,
+          "bytes": 2300
+        },
+        {
+          "seconds": 28.5,
+          "pts_ms": 27898,
+          "bytes": 2150
+        },
+        {
+          "seconds": 28.5,
+          "pts_ms": 27933,
+          "bytes": 2135
+        },
+        {
+          "seconds": 28.5,
+          "pts_ms": 27966,
+          "bytes": 2498
+        },
+        {
+          "seconds": 28.563,
+          "pts_ms": 27999,
+          "bytes": 2158
+        },
+        {
+          "seconds": 28.563,
+          "pts_ms": 28032,
+          "bytes": 2183
+        },
+        {
+          "seconds": 28.594,
+          "pts_ms": 28066,
+          "bytes": 1963
+        },
+        {
+          "seconds": 28.656,
+          "pts_ms": 28098,
+          "bytes": 2422
+        },
+        {
+          "seconds": 28.656,
+          "pts_ms": 28133,
+          "bytes": 2025
+        },
+        {
+          "seconds": 28.766,
+          "pts_ms": 28166,
+          "bytes": 2015
+        },
+        {
+          "seconds": 28.766,
+          "pts_ms": 28199,
+          "bytes": 2039
+        },
+        {
+          "seconds": 28.766,
+          "pts_ms": 28233,
+          "bytes": 2402
+        },
+        {
+          "seconds": 28.828,
+          "pts_ms": 28266,
+          "bytes": 2564
+        },
+        {
+          "seconds": 28.828,
+          "pts_ms": 28300,
+          "bytes": 1993
+        },
+        {
+          "seconds": 28.86,
+          "pts_ms": 28335,
+          "bytes": 2091
+        },
+        {
+          "seconds": 28.938,
+          "pts_ms": 28370,
+          "bytes": 25723
+        },
+        {
+          "seconds": 28.938,
+          "pts_ms": 28404,
+          "bytes": 4738
+        },
+        {
+          "seconds": 29.0,
+          "pts_ms": 28436,
+          "bytes": 3491
+        },
+        {
+          "seconds": 29.0,
+          "pts_ms": 28469,
+          "bytes": 3429
+        },
+        {
+          "seconds": 29.063,
+          "pts_ms": 28501,
+          "bytes": 3506
+        },
+        {
+          "seconds": 29.063,
+          "pts_ms": 28534,
+          "bytes": 3538
+        },
+        {
+          "seconds": 29.094,
+          "pts_ms": 28568,
+          "bytes": 3534
+        },
+        {
+          "seconds": 29.203,
+          "pts_ms": 28602,
+          "bytes": 3484
+        },
+        {
+          "seconds": 29.203,
+          "pts_ms": 28634,
+          "bytes": 3558
+        },
+        {
+          "seconds": 29.203,
+          "pts_ms": 28669,
+          "bytes": 3642
+        },
+        {
+          "seconds": 29.297,
+          "pts_ms": 28701,
+          "bytes": 3507
+        },
+        {
+          "seconds": 29.297,
+          "pts_ms": 28734,
+          "bytes": 3312
+        },
+        {
+          "seconds": 29.297,
+          "pts_ms": 28768,
+          "bytes": 6220
+        },
+        {
+          "seconds": 29.328,
+          "pts_ms": 28801,
+          "bytes": 6230
+        },
+        {
+          "seconds": 29.36,
+          "pts_ms": 28834,
+          "bytes": 4809
+        },
+        {
+          "seconds": 29.438,
+          "pts_ms": 28869,
+          "bytes": 4421
+        },
+        {
+          "seconds": 29.438,
+          "pts_ms": 28901,
+          "bytes": 5063
+        },
+        {
+          "seconds": 29.469,
+          "pts_ms": 28935,
+          "bytes": 5037
+        },
+        {
+          "seconds": 29.5,
+          "pts_ms": 28968,
+          "bytes": 5639
+        },
+        {
+          "seconds": 29.563,
+          "pts_ms": 29003,
+          "bytes": 4871
+        },
+        {
+          "seconds": 29.563,
+          "pts_ms": 29035,
+          "bytes": 5066
+        },
+        {
+          "seconds": 29.594,
+          "pts_ms": 29070,
+          "bytes": 4800
+        },
+        {
+          "seconds": 29.656,
+          "pts_ms": 29119,
+          "bytes": 5211
+        },
+        {
+          "seconds": 29.781,
+          "pts_ms": 29216,
+          "bytes": 3636
+        },
+        {
+          "seconds": 29.781,
+          "pts_ms": 29253,
+          "bytes": 3631
+        },
+        {
+          "seconds": 29.828,
+          "pts_ms": 29257,
+          "bytes": 21794
+        },
+        {
+          "seconds": 30.375,
+          "pts_ms": 29302,
+          "bytes": 62332
+        },
+        {
+          "seconds": 30.375,
+          "pts_ms": 29720,
+          "bytes": 438
+        }
+      ],
+      "snapshot_samples": [
+        {
+          "seconds": 10.031,
+          "state": "not_streaming",
+          "age_seconds": null,
+          "last_heartbeat": "2026-10-01T12:49:31.454666Z",
+          "observed_at": null,
+          "telemetry": null
+        },
+        {
+          "seconds": 25.016,
+          "state": "active_report",
+          "age_seconds": 3.162316,
+          "last_heartbeat": "2026-10-01T12:50:01.302369Z",
+          "observed_at": "2026-10-01T12:50:01.303359Z",
+          "telemetry": {
+            "capture_fps": 60,
+            "render_fps": 30,
+            "encoder_fps": 29,
+            "capture_frames_total": 1252,
+            "rendered_frames_total": 630,
+            "encoded_frames_total": 629,
+            "capture_throttle_drops_total": 622,
+            "encoder_input_drops_total": 0,
+            "frame_throttle_drops_total": 0,
+            "ws_queue_attempts_total": 631,
+            "ws_queue_rejected_total": 0,
+            "encoder_errors_total": 0
+          }
+        },
+        {
+          "seconds": 40.016,
+          "state": "active_report",
+          "age_seconds": 18.175128,
+          "last_heartbeat": "2026-10-01T12:50:01.302369Z",
+          "observed_at": "2026-10-01T12:50:01.303359Z",
+          "telemetry": {
+            "capture_fps": 60,
+            "render_fps": 30,
+            "encoder_fps": 29,
+            "capture_frames_total": 1252,
+            "rendered_frames_total": 630,
+            "encoded_frames_total": 629,
+            "capture_throttle_drops_total": 622,
+            "encoder_input_drops_total": 0,
+            "frame_throttle_drops_total": 0,
+            "ws_queue_attempts_total": 631,
+            "ws_queue_rejected_total": 0,
+            "encoder_errors_total": 0
+          }
+        }
+      ]
+    },
+    {
+      "device": "auto-ph-025",
+      "operator_network_class": "remote",
+      "ota_at": "2026-10-01T12:49:02.723587+00:00",
+      "ota_state": "installed_version_heartbeat_confirmed",
+      "command_count": 1,
+      "installed_version_code": 10240,
+      "installed_presence": "online",
+      "terminal_results": [
+        {
+          "status": "completed",
+          "installed_version_code": 10240,
+          "recovered_after_process_restart": true,
+          "recorded_at": "2026-10-01T12:49:23.746723+00:00"
+        }
+      ],
+      "trial_at": "2026-10-01T12:50:31.422243+00:00",
+      "trial_state": "finite_stage_trial_recorded",
+      "source_display_hz": 5.0,
+      "launch_attempts": 1,
+      "input_events": 0,
+      "owned_viewer_closed": true,
+      "global_stop_sent": false,
+      "elapsed_seconds": 44.0,
+      "first_picture_seconds": 9.844,
+      "pictures_total": 43,
+      "pictures_3_13_seconds": 4,
+      "window_includes_startup": true,
+      "wire_errors": 0,
+      "picture_metadata": [
+        {
+          "seconds": 9.844,
+          "pts_ms": 685,
+          "bytes": 17389
+        },
+        {
+          "seconds": 10.0,
+          "pts_ms": 850,
+          "bytes": 2196
+        },
+        {
+          "seconds": 10.141,
+          "pts_ms": 995,
+          "bytes": 1863
+        },
+        {
+          "seconds": 10.328,
+          "pts_ms": 1192,
+          "bytes": 2437
+        },
+        {
+          "seconds": 14.25,
+          "pts_ms": 5103,
+          "bytes": 1811
+        },
+        {
+          "seconds": 14.266,
+          "pts_ms": 5121,
+          "bytes": 7405
+        },
+        {
+          "seconds": 14.36,
+          "pts_ms": 5210,
+          "bytes": 3988
+        },
+        {
+          "seconds": 14.547,
+          "pts_ms": 5396,
+          "bytes": 5613
+        },
+        {
+          "seconds": 14.75,
+          "pts_ms": 5595,
+          "bytes": 5858
+        },
+        {
+          "seconds": 14.938,
+          "pts_ms": 5790,
+          "bytes": 5794
+        },
+        {
+          "seconds": 15.156,
+          "pts_ms": 5993,
+          "bytes": 12090
+        },
+        {
+          "seconds": 15.344,
+          "pts_ms": 6191,
+          "bytes": 5212
+        },
+        {
+          "seconds": 15.531,
+          "pts_ms": 6392,
+          "bytes": 3638
+        },
+        {
+          "seconds": 15.75,
+          "pts_ms": 6594,
+          "bytes": 12287
+        },
+        {
+          "seconds": 16.469,
+          "pts_ms": 7327,
+          "bytes": 2552
+        },
+        {
+          "seconds": 19.625,
+          "pts_ms": 10477,
+          "bytes": 5004
+        },
+        {
+          "seconds": 19.641,
+          "pts_ms": 10494,
+          "bytes": 5704
+        },
+        {
+          "seconds": 19.735,
+          "pts_ms": 10589,
+          "bytes": 6336
+        },
+        {
+          "seconds": 19.985,
+          "pts_ms": 10841,
+          "bytes": 3257
+        },
+        {
+          "seconds": 20.125,
+          "pts_ms": 10987,
+          "bytes": 3537
+        },
+        {
+          "seconds": 20.328,
+          "pts_ms": 11187,
+          "bytes": 3631
+        },
+        {
+          "seconds": 20.625,
+          "pts_ms": 11479,
+          "bytes": 3355
+        },
+        {
+          "seconds": 20.735,
+          "pts_ms": 11588,
+          "bytes": 2655
+        },
+        {
+          "seconds": 21.516,
+          "pts_ms": 12369,
+          "bytes": 6291
+        },
+        {
+          "seconds": 21.516,
+          "pts_ms": 12379,
+          "bytes": 5600
+        },
+        {
+          "seconds": 24.641,
+          "pts_ms": 15489,
+          "bytes": 5847
+        },
+        {
+          "seconds": 24.656,
+          "pts_ms": 15505,
+          "bytes": 3147
+        },
+        {
+          "seconds": 24.735,
+          "pts_ms": 15592,
+          "bytes": 3710
+        },
+        {
+          "seconds": 24.938,
+          "pts_ms": 15800,
+          "bytes": 5685
+        },
+        {
+          "seconds": 25.125,
+          "pts_ms": 15989,
+          "bytes": 5379
+        },
+        {
+          "seconds": 25.36,
+          "pts_ms": 16190,
+          "bytes": 28077
+        },
+        {
+          "seconds": 25.531,
+          "pts_ms": 16387,
+          "bytes": 4416
+        },
+        {
+          "seconds": 25.735,
+          "pts_ms": 16588,
+          "bytes": 4048
+        },
+        {
+          "seconds": 25.938,
+          "pts_ms": 16790,
+          "bytes": 3913
+        },
+        {
+          "seconds": 26.672,
+          "pts_ms": 17533,
+          "bytes": 4209
+        },
+        {
+          "seconds": 29.766,
+          "pts_ms": 20623,
+          "bytes": 4596
+        },
+        {
+          "seconds": 29.828,
+          "pts_ms": 20682,
+          "bytes": 6383
+        },
+        {
+          "seconds": 34.891,
+          "pts_ms": 25742,
+          "bytes": 6310
+        },
+        {
+          "seconds": 35.156,
+          "pts_ms": 26014,
+          "bytes": 2815
+        },
+        {
+          "seconds": 35.156,
+          "pts_ms": 26016,
+          "bytes": 8764
+        },
+        {
+          "seconds": 35.391,
+          "pts_ms": 26246,
+          "bytes": 277
+        },
+        {
+          "seconds": 35.641,
+          "pts_ms": 26400,
+          "bytes": 62222
+        },
+        {
+          "seconds": 36.375,
+          "pts_ms": 27238,
+          "bytes": 1151
+        }
+      ],
+      "snapshot_samples": [
+        {
+          "seconds": 10.016,
+          "state": "not_streaming",
+          "age_seconds": null,
+          "last_heartbeat": "2026-10-01T12:50:24.557288Z",
+          "observed_at": null,
+          "telemetry": null
+        },
+        {
+          "seconds": 25.031,
+          "state": "active_report",
+          "age_seconds": 4.853382,
+          "last_heartbeat": "2026-10-01T12:50:54.131867Z",
+          "observed_at": "2026-10-01T12:50:54.132472Z",
+          "telemetry": {
+            "capture_fps": 4,
+            "render_fps": 5,
+            "encoder_fps": 5,
+            "capture_frames_total": 21,
+            "rendered_frames_total": 20,
+            "encoded_frames_total": 20,
+            "capture_throttle_drops_total": 1,
+            "encoder_input_drops_total": 0,
+            "frame_throttle_drops_total": 0,
+            "ws_queue_attempts_total": 22,
+            "ws_queue_rejected_total": 0,
+            "encoder_errors_total": 0
+          }
+        },
+        {
+          "seconds": 40.031,
+          "state": "active_report",
+          "age_seconds": 19.849841,
+          "last_heartbeat": "2026-10-01T12:50:54.131867Z",
+          "observed_at": "2026-10-01T12:50:54.132472Z",
+          "telemetry": {
+            "capture_fps": 4,
+            "render_fps": 5,
+            "encoder_fps": 5,
+            "capture_frames_total": 21,
+            "rendered_frames_total": 20,
+            "encoded_frames_total": 20,
+            "capture_throttle_drops_total": 1,
+            "encoder_input_drops_total": 0,
+            "frame_throttle_drops_total": 0,
+            "ws_queue_attempts_total": 22,
+            "ws_queue_rejected_total": 0,
+            "encoder_errors_total": 0
+          }
+        }
+      ]
+    }
+  ],
+  "limits": {
+    "browser_verified": false,
+    "absolute_input_latency_measured": false,
+    "global_ota_promoted": false,
+    "source_picture_fps_is_not_browser_draw_fps": true
+  },
+  "runtime": {
+    "web": {
+      "source": "8f615c69155728b66e707bb7e88cf9d56d5ab045",
+      "observedAt": "2026-10-01T12:28:52.3559379+00:00",
+      "port": 3015,
+      "uiPort": 3023,
+      "previousNextPreserved": true,
+      "ready": true,
+      "browserVerified": false
+    },
+    "backend": {
+      "revision": "8d64ca453e1028f37923c877523dbfe85acaad21",
+      "image_id": "sha256:2cd185cf39a91cb753416384663a1d0b17741ca43932b4e9b688c112934e5025",
+      "healthy": true,
+      "build_verified": true,
+      "db_head_unchanged": true,
+      "neighbours_unchanged": true,
+      "ota_catalog_and_artifacts_unchanged": true,
+      "at": "2026-10-01T13:04:04.427532+00:00"
+    },
+    "database_head": "20260921_watchdog_stop",
+    "initial_readback": {
+      "recorded_at": "2026-10-01T13:05:42.968643+00:00",
+      "total": 19,
+      "status_counts": {
+        "offline": 6,
+        "online": 13
+      },
+      "online_aliases": [
+        "auto-ph-010",
+        "auto-ph-011",
+        "auto-ph-012",
+        "auto-ph-013",
+        "auto-ph-014",
+        "auto-ph-015",
+        "auto-ph-016",
+        "auto-ph-017",
+        "auto-ph-018",
+        "auto-ph-019",
+        "auto-ph-020",
+        "auto-ph-022",
+        "auto-ph-025"
+      ],
+      "same_online_set_as_pre_rollout": false,
+      "canary_versions": [
+        {
+          "alias": "auto-ph-025",
+          "status": "online",
+          "agent_version_code": 10240
+        },
+        {
+          "alias": "auto-ph-010",
+          "status": "online",
+          "agent_version_code": 10240
+        }
+      ]
+    },
+    "recovery_readbacks": [
+      {
+        "recorded_at": "2026-10-01T13:10:41.136217+00:00",
+        "total": 19,
+        "status_counts": {
+          "offline": 5,
+          "online": 14
+        },
+        "online_aliases": [
+          "auto-ph-010",
+          "auto-ph-011",
+          "auto-ph-012",
+          "auto-ph-013",
+          "auto-ph-014",
+          "auto-ph-015",
+          "auto-ph-016",
+          "auto-ph-017",
+          "auto-ph-018",
+          "auto-ph-019",
+          "auto-ph-020",
+          "auto-ph-022",
+          "auto-ph-025",
+          "auto-ph-028"
+        ],
+        "same_online_set_as_pre_rollout": true,
+        "canary_versions": [
+          {
+            "alias": "auto-ph-025",
+            "status": "online",
+            "agent_version_code": 10240
+          },
+          {
+            "alias": "auto-ph-010",
+            "status": "online",
+            "agent_version_code": 10240
+          }
+        ]
+      },
+      {
+        "recorded_at": "2026-10-01T13:10:51.160283+00:00",
+        "total": 19,
+        "status_counts": {
+          "offline": 5,
+          "online": 14
+        },
+        "online_aliases": [
+          "auto-ph-010",
+          "auto-ph-011",
+          "auto-ph-012",
+          "auto-ph-013",
+          "auto-ph-014",
+          "auto-ph-015",
+          "auto-ph-016",
+          "auto-ph-017",
+          "auto-ph-018",
+          "auto-ph-019",
+          "auto-ph-020",
+          "auto-ph-022",
+          "auto-ph-025",
+          "auto-ph-028"
+        ],
+        "same_online_set_as_pre_rollout": true,
+        "canary_versions": [
+          {
+            "alias": "auto-ph-025",
+            "status": "online",
+            "agent_version_code": 10240
+          },
+          {
+            "alias": "auto-ph-010",
+            "status": "online",
+            "agent_version_code": 10240
+          }
+        ]
+      },
+      {
+        "recorded_at": "2026-10-01T13:11:01.184248+00:00",
+        "total": 19,
+        "status_counts": {
+          "offline": 5,
+          "online": 14
+        },
+        "online_aliases": [
+          "auto-ph-010",
+          "auto-ph-011",
+          "auto-ph-012",
+          "auto-ph-013",
+          "auto-ph-014",
+          "auto-ph-015",
+          "auto-ph-016",
+          "auto-ph-017",
+          "auto-ph-018",
+          "auto-ph-019",
+          "auto-ph-020",
+          "auto-ph-022",
+          "auto-ph-025",
+          "auto-ph-028"
+        ],
+        "same_online_set_as_pre_rollout": true,
+        "canary_versions": [
+          {
+            "alias": "auto-ph-025",
+            "status": "online",
+            "agent_version_code": 10240
+          },
+          {
+            "alias": "auto-ph-010",
+            "status": "online",
+            "agent_version_code": 10240
+          }
+        ]
+      }
+    ],
+    "canary_cleanup": [
+      {
+        "alias": "auto-ph-010",
+        "status": "online",
+        "version_code": 10240,
+        "stream_state": "not_streaming",
+        "launcher_resumed": true
+      },
+      {
+        "alias": "auto-ph-025",
+        "status": "online",
+        "version_code": 10240,
+        "stream_state": "not_streaming",
+        "launcher_resumed": true
+      }
+    ],
+    "ph028_connection_events": [
+      {
+        "timestamp": "2026-10-01T13:03:59.980541Z",
+        "event": "Agent heartbeat established",
+        "level": "info",
+        "agent_version_code": 10232
+      },
+      {
+        "timestamp": "2026-10-01T13:03:59.980726Z",
+        "event": "android_ws.previous_failure",
+        "level": "info",
+        "close_code": 1012
+      },
+      {
+        "timestamp": "2026-10-01T13:04:39.588624Z",
+        "event": "android_ws.disconnected",
+        "level": "info",
+        "close_code": 1005
+      },
+      {
+        "timestamp": "2026-10-01T13:05:46.969013Z",
+        "event": "Agent heartbeat established",
+        "level": "info",
+        "agent_version_code": 10232
+      },
+      {
+        "timestamp": "2026-10-01T13:05:46.969211Z",
+        "event": "android_ws.previous_failure",
+        "level": "info"
+      }
+    ],
+    "ph028_followup_disconnect_cause": "unresolved",
+    "finite_recovery_not_uptime_sla": true,
+    "global_stop_sent": false
+  },
+  "ci": {
+    "accepted_code_head": "8d64ca453e1028f37923c877523dbfe85acaad21",
+    "backend": {
+      "run": 36864314898,
+      "status": "success",
+      "passed": 2140,
+      "skipped": 15
+    },
+    "frontend": {
+      "run": 36864314913,
+      "status": "success",
+      "local_suites": 73,
+      "local_tests": 582
+    },
+    "android": {
+      "run": 36864314903,
+      "status": "success"
+    },
+    "preview_deployment": "skipped",
+    "retained_intermediate_backend_failure": {
+      "run": 36862349316,
+      "passed": 2139,
+      "skipped": 15,
+      "failed": 1,
+      "cause": "stale RLS test hook"
+    }
+  }
+}

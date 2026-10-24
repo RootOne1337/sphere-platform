@@ -1,0 +1,208 @@
+{
+  "observedAt": "2026-10-07T23:04:17.715290+00:00",
+  "status": "reproduced_static_reconnect_path_fixed_on_two_selected_pilots",
+  "apkSource": "c62ded63639a4096fd091ea3f43e285f80a82734",
+  "uiSource": "fcdc547627ea410e65d7ff79601dc71cdd25f343",
+  "apiSource": "a41c4e64bf569a7518d34606da0facbba32f77e6",
+  "artifact": {
+    "file": "SphereAgent-pilot-candidate-1.2.48-dev-c62ded6.apk",
+    "sha256": "a1ad28af34ba17a962cd7db5da7a3ce372262a2ea8115fc82278ceed2f9d461a",
+    "bytes": 8534475,
+    "package": "com.sphereplatform.agent.pilot.debug",
+    "version_name": "1.2.48-dev",
+    "version_code": 10248,
+    "certificate_sha256": "3ab40797d26e4f52f9e440afc6fe69f197caef71a5a27c63c86735bb1801871f",
+    "signer_matches_local_pilot_baseline": true,
+    "tests": {
+      "dev": {
+        "tests": 982,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 3
+      },
+      "enterprise": {
+        "tests": 982,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 3
+      }
+    },
+    "gpu_bridge_enabled": false,
+    "planar_input_enabled": true,
+    "continuous_input_enabled": false
+  },
+  "nativeBaseline": {
+    "sourceRawImages": 1,
+    "initialPictures": 1,
+    "refreshAccepted": [
+      true,
+      true
+    ],
+    "refreshPictures": [
+      0,
+      0
+    ],
+    "totalPictures": 1,
+    "totalIdrs": 1,
+    "errors": 0,
+    "capturePermissionsRequested": false,
+    "pixelsPersisted": false,
+    "device": "emulator-5554",
+    "scope": "APK classpath real MediaCodec, synthetic RAW source"
+  },
+  "nativeCandidate": {
+    "sourceRawImages": 1,
+    "initialPictures": 1,
+    "refreshAccepted": [
+      true,
+      true
+    ],
+    "refreshPictures": [
+      1,
+      1
+    ],
+    "totalPictures": 3,
+    "totalIdrs": 3,
+    "errors": 0,
+    "capturePermissionsRequested": false,
+    "pixelsPersisted": false,
+    "device": "emulator-5554",
+    "scope": "APK classpath real MediaCodec, synthetic RAW source"
+  },
+  "nativeProbeJarSha256": "3b3c331b0b883bf97149b49b64c6dd1ad9bdc4e22d7f3dae9cfc4c8f3db055b8",
+  "ci": [
+    {
+      "id": 37698011637,
+      "name": "CI — Frontend",
+      "event": "pull_request",
+      "conclusion": "success",
+      "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/37698011637"
+    },
+    {
+      "id": 37698011757,
+      "name": "Preview — Deploy",
+      "event": "pull_request",
+      "conclusion": "success",
+      "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/37698011757"
+    },
+    {
+      "id": 37698011686,
+      "name": "CI — Android",
+      "event": "pull_request",
+      "conclusion": "success",
+      "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/37698011686"
+    },
+    {
+      "id": 37698011792,
+      "name": "CI — Backend",
+      "event": "pull_request",
+      "conclusion": "success",
+      "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/37698011792"
+    },
+    {
+      "id": 37698004584,
+      "name": "CI — Android",
+      "event": "push",
+      "conclusion": "success",
+      "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/37698004584"
+    }
+  ],
+  "liveViews": {
+    "localReconnect1": {
+      "drawn": 6,
+      "idr": 4,
+      "decodeErrors": 0,
+      "renderErrors": 0,
+      "evidenceSha256": "6a6ad8bbc0714e51b93402514355e09baf1bdcc8b9feac63f1e73d7b9b8cd868"
+    },
+    "localReconnect2": {
+      "drawn": 12,
+      "idr": 4,
+      "decodeErrors": 0,
+      "renderErrors": 0,
+      "evidenceSha256": "da717535fdabd5a477506e7ed8083c9506dd868445c8e31e4c3307cb11bc428e"
+    },
+    "remoteReconnect1": {
+      "drawn": 6,
+      "idr": 3,
+      "decodeErrors": 0,
+      "renderErrors": 0,
+      "evidenceSha256": "11a4e9b8c79c3fb13debe83da72bc78548161faa4d2a8d01e69c4a2551d38522"
+    },
+    "remoteReconnect2": {
+      "drawn": 4,
+      "idr": 1,
+      "decodeErrors": 0,
+      "renderErrors": 0,
+      "evidenceSha256": "bca08318d5de3c8648ae1ed93dab8f585da672b0d6d18f0559d2e05564dd6af5"
+    },
+    "remoteSecondViewer": {
+      "drawn": 3,
+      "idr": 3,
+      "decodeErrors": 0,
+      "renderErrors": 0,
+      "evidenceSha256": "3de0e5b6568b16e14acd625337426e4a9134038582052672a6bab73d4d8aba1d"
+    }
+  },
+  "disconnectReopenMs": {
+    "local": [
+      884,
+      785
+    ],
+    "remote": [
+      1456,
+      1829
+    ]
+  },
+  "twoSimultaneousRemoteSubscribersObserved": true,
+  "installs": [
+    {
+      "deviceId": "414ce0e9-4b93-4f96-b9ca-ee675f53835e",
+      "name": "auto-ph-011",
+      "beforeVersionCode": 10247,
+      "artifactSha256": "a1ad28af34ba17a962cd7db5da7a3ce372262a2ea8115fc82278ceed2f9d461a",
+      "status": "completed_and_heartbeat",
+      "attempts": 1,
+      "commandId": "b3d0c37c-1db6-4940-aa3a-c31652333af7",
+      "postInstallHeartbeat": "2026-10-07T22:51:21.348906Z",
+      "grantAutoCleared": true,
+      "dataCleared": false,
+      "finishedAt": "2026-10-07T22:51:21.723341+00:00"
+    },
+    {
+      "deviceId": "b410464a-5f26-4803-a756-7840cc17b128",
+      "name": "auto-ph-025",
+      "beforeVersionCode": 10245,
+      "artifactSha256": "a1ad28af34ba17a962cd7db5da7a3ce372262a2ea8115fc82278ceed2f9d461a",
+      "status": "completed_and_heartbeat",
+      "attempts": 1,
+      "commandId": "87e1c934-a51a-425e-8c2f-aed0315a3a59",
+      "postInstallHeartbeat": "2026-10-07T22:54:03.846926Z",
+      "grantAutoCleared": true,
+      "dataCleared": false,
+      "finishedAt": "2026-10-07T22:54:06.650054+00:00"
+    }
+  ],
+  "normalChannelPromoted": false,
+  "navigation": {
+    "remoteRecentsReceiptMs": 600,
+    "recentsSceneVisuallyVerified": true,
+    "homeRestored": true,
+    "receiptIsInputToPictureLatency": false,
+    "remoteHomeReceiptMs": 480,
+    "homeSnapshotSha256": "1a49cb977d7a67ed56de20252321eae2536d8411be9da5467ef9f15ac4ae93a8"
+  },
+  "scopeLimits": [
+    "Finite acceptance, not an overnight or fleet-wide soak",
+    "Static raw refresh is not new physical capture",
+    "Continuous gesture routes and Recorder integration remain open",
+    "PH010 and other fleet APKs were not updated"
+  ],
+  "finalScreenshot": {
+    "file": "ph025-final-working.jpg",
+    "sha256": "7d405151fdae9ca17d1d3c04e01c7cbe400253ea7dc23b7e20b791a389e1dd8e",
+    "bytes": 55715,
+    "scope": "actual 3015 PH025 launcher and device card, agent screenshot"
+  },
+  "finalEvidenceAt": "2026-10-07T23:11:40.955554+00:00"
+}

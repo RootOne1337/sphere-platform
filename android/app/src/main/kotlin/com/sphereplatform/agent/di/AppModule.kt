@@ -18,6 +18,7 @@ import kotlinx.serialization.json.Json
 import okhttp3.CertificatePinner
 import okhttp3.ConnectionPool
 import okhttp3.OkHttpClient
+import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import java.util.concurrent.TimeUnit
 import javax.inject.Singleton
 
@@ -52,31 +53,47 @@ object AppModule {
             // VirtualBox NAT блокирует UDP/53 → системный DNS не работает.
             // FallbackDns: System DNS → DoH (Cloudflare/Google) → UDP DNS → exception
             .dns(FallbackDns())
-            // FIX AUDIT-1.1: readTimeout=60s вместо бесконечного.
-            // OkHttp WS ping (15s) + readTimeout(60s) = детектирование мёртвого
-            // соединения за ~60с. Раньше при readTimeout=0 зависшие WS жили часами.
+            // Bounded HTTP reads; the management WebSocket has a separate
+            // application heartbeat watchdog and route-specific ping policy.
             .readTimeout(60, TimeUnit.SECONDS)
             .writeTimeout(30, TimeUnit.SECONDS)
             // FIX AUDIT-1.1: Один idle connection, 30s keep-alive.
             // Агент использует только одно WS-соединение, лишние TCP в пуле — waste.
             .connectionPool(ConnectionPool(1, 30, TimeUnit.SECONDS))
-            // FIX-PING: WebSocket-level RFC 6455 ping каждые 15 секунд.
-            // Cloudflare/nginx прозрачно пропускают WS ping/pong фреймы.
-            // Это держит TCP-соединение живым через все прокси и NAT,
-            // а также быстро детектирует мёртвые соединения (OkHttp закроет WS
-            // если pong не придёт в течение readTimeout, который у нас infinite →
-            // значит при потере связи WS умрёт по TCP keepalive/OS timeout).
+            // Other WebSockets retain RFC 6455 ping. Management WebSocket
+            // explicitly disables it because remote pilot connections repeatedly
+            // lost control pong despite authenticated application heartbeats.
             .pingInterval(15, TimeUnit.SECONDS)
             .addInterceptor { chain ->
-                val token = lazyAuthStore.get().getToken()
                 val requestBuilder = chain.request().newBuilder()
                     // FIX: Accept: application/json — обход Serveo free-tier interstitial.
                     // Без этого заголовка Serveo отдаёт HTML-страницу вместо API-ответа.
                     .addHeader("Accept", "application/json")
-                if (token != null) {
-                    requestBuilder.addHeader("Authorization", "Bearer $token")
-                }
                 chain.proceed(requestBuilder.build())
+            }
+            .addNetworkInterceptor { chain ->
+                // Runs for each redirect too. DAG HTTP requests share this client
+                // but must never receive the device's management credential.
+                val auth = lazyAuthStore.get()
+                val token = auth.getToken()
+                val server = auth.getServerUrl().toHttpUrlOrNull()
+                val request = chain.request()
+                val sameOrigin = server != null && server.scheme == request.url.scheme &&
+                    server.host == request.url.host && server.port == request.url.port
+                val builder = request.newBuilder()
+                // Enrollment authenticates with the scoped X-API-Key. A golden-image
+                // clone may still hold the master's bearer until rebind succeeds;
+                // never attach that copied device credential to the registration call.
+                val isDeviceEnrollment = request.method == "POST" &&
+                    request.url.encodedPath.endsWith("/api/v1/devices/register")
+                if (isDeviceEnrollment) {
+                    builder.removeHeader("Authorization")
+                } else if (token != null && sameOrigin) {
+                    builder.header("Authorization", "Bearer $token")
+                } else if (token != null && request.header("Authorization") == "Bearer $token") {
+                    builder.removeHeader("Authorization")
+                }
+                chain.proceed(builder.build())
             }
 
         // Certificate pinning — loaded from res/raw/pinned_certs.txt

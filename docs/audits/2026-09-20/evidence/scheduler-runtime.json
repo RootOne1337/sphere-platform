@@ -1,0 +1,76 @@
+{
+  "finding": "AUD-136 / F32-25 scheduled work under RLS and atomic firing",
+  "source_base": "57f2730a21cc2d1fb021f5092baf24e06bedbdc1",
+  "recorded_at": "2026-09-21T03:24:08.047989+00:00",
+  "source_scope": "Working tree in same commit as evidence; SHA-256 normalizes UTF-8 LF.",
+  "source_sha256": {
+    "backend/services/scheduler/scheduler_engine.py": "b9115cbb62b2e6bdbc7f30d13c20c456d6680aeafbcbd4f35db85ccf5bf64a76",
+    "alembic/versions/20260921_schedule_work.py": "80dad6ee5faef1f92b20235f4a40fbb4990d98269e75a9d1b60282c69df8dd96",
+    "tests/production/test_scheduler_runtime.py": "65494970020cf94b04388addcb927a2ddf4948e2a9dada7c0c3cf72d9d93488f",
+    "tests/production/test_schedule_work_migration.py": "c0ab781762355e6676adda5d666113a9b3da842ca89a890ab8c8c8b06e051be0"
+  },
+  "severity": "High / P0 before runtime-role rollout",
+  "before_regressions": {
+    "tests": 7,
+    "failures": 7,
+    "errors": 0,
+    "skipped": 0,
+    "passed": 0,
+    "duration_seconds": 3.928
+  },
+  "before_outcomes": [
+    "Unscoped RLS tick leaves due exhausted schedule active",
+    "Unscoped RLS tick creates no SCRIPT child or execution receipt",
+    "Unscoped RLS tick creates no PIPELINE child or execution receipt",
+    "Handler exception after flush still commits child, receipt and run count",
+    "Missing Redis creates only_online work without known online presence",
+    "Previous-task conflict check fails building make_interval keyword expression",
+    "Successful SKIP still leaves overdue interval next_fire_at in the past"
+  ],
+  "after_related": {
+    "tests": 86,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "passed": 86,
+    "duration_seconds": 52.424
+  },
+  "after_full_backend": {
+    "tests": 1929,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "passed": 1929,
+    "duration_seconds": 542.395
+  },
+  "new_regressions": 22,
+  "verification": [
+    "Actual non-owner/NOBYPASSRLS login, two organizations, one pooled SQL connection",
+    "Two workers plus independent SQL row lock create exactly one one-shot firing",
+    "Partial SQL writes and SQL error roll back one firing while other schedule commits",
+    "Failure before commit and lost response after actual commit both yield one persisted firing",
+    "pg_terminate_backend targets only own disposable audit connection after child flush; next tick recovers",
+    "Actual pg_sleep(5) interrupted at discovery and after handler flush; no partial receipts",
+    "Absent Redis and presence exception/timeout defer firing; batched presence recovers",
+    "Presence failure after CANCEL_PREVIOUS rolls back cancellation intent",
+    "50 deferred SQL schedules do not starve the 51st candidate",
+    "SQL dispatcher sends committed scheduler task without legacy Redis enqueue",
+    "Migration ACL, search_path, active/due filters, pagination and down/up preserve rows"
+  ],
+  "validation": {
+    "ruff": "pass",
+    "mypy_scoped_runtime_modules": 1,
+    "isolated_migration_upgrade": "pass",
+    "openapi_export": "pass; no generated contract changes",
+    "previous_head_ci": "../../2026-09-05/evidence/ci-57f2730-summary.json"
+  },
+  "limitations": [
+    "Source only; no pilot/APK or old Docker changes",
+    "No physical Android actions; presence/transport doubles in delivery cases",
+    "SQL connection termination is not server crash or OS worker kill",
+    "Full pytest excludes tests/load; native 32/64 performance and fault soak unproven",
+    "Worker migration and explicit function grant required; HTTP readyz insufficient",
+    "Watchdog RLS independently reproduced and still open; other worker and physical timeout/stop paths need review",
+    "Group targeting, legacy helper callers, quotas and large per-schedule fan-out remain open"
+  ]
+}

@@ -1,0 +1,110 @@
+{
+  "schemaVersion": 1,
+  "atUtc": "2026-10-09T14:56:09.535595+00:00",
+  "sourceBaseRevision": "caceeb34b63422a3c7d869b19c14e7d5ffaf51a7",
+  "sourceWorktreeNormalizedLfSha256": {
+    "backend/metrics.py": "73a3de29825e0d19c956624977cb81f5508a2b4de9bc8d0dff3ab6d1583de45e",
+    "backend/websocket/continuous_observability.py": "0de6ebc5f30033af86e5a6d7624ecb2a90f2cc20d659c4e47cfd04994d3229b2",
+    "backend/websocket/continuous_lease.py": "13aa5e727060a728bd9534eab7256e120179bc8fd37f446ed67c7cae72566c3d",
+    "backend/websocket/continuous_runtime.py": "fc1bf05403e96f2cff9bc7c5ab94e96b1f3f19865d4e45183360e82fcf48ff1e",
+    "backend/websocket/continuous_delivery.py": "cd22a761bb1506664f27882c9fca24c49940bfcfa3fbe44c49169b2044d0ccdd",
+    "backend/websocket/continuous_receipts.py": "d8a7f2ec8a3a62efbdd98a2b7aaa8195f3ca5da0de9ca887248f96bc987f4bea",
+    "tests/test_ws/test_continuous_observability.py": "7e0cf72559c00ae13563c53f27755f1f8e19c9d70cb1afbf335799e60cc63149",
+    "tests/test_ws/test_continuous_runtime.py": "027e7067910444a9b0bf03e773e5b201a1563e30a28efa1617a749af8fc2d963",
+    "tests/test_monitoring/fixtures/multiprocess_worker.py": "f720da64425dda837b4b317bb0822ed9a98242e046980ab20d5b461234e99df3",
+    "tests/test_monitoring/test_multiprocess_metrics.py": "46a7aee89d6ecb2b46b3e9c706fa50e95e165f6d3395b17d3a880175eea5d83b"
+  },
+  "state": "SOURCE_VALIDATED_CI_INSTALL_LIVE_PENDING",
+  "runtimeInstalled": false,
+  "existingRuntime": {
+    "ui": "86354350638650215717658b9395b2751326af6c",
+    "api": "be803773037c16a113b50c1a2774793fffae8773",
+    "containersRestarted": 0,
+    "apkChanged": false
+  },
+  "metric": {
+    "name": "sphere_continuous_stage_duration_seconds",
+    "stages": [
+      "viewer_admission",
+      "redis_lease_operation",
+      "pubsub_dispatch",
+      "agent_delivery",
+      "agent_reply_relay",
+      "viewer_receipt_validation",
+      "viewer_socket_send"
+    ],
+    "outcomes": [
+      "returned",
+      "raised",
+      "cancelled"
+    ],
+    "maximumLabelCombinationsPerWorker": 21,
+    "bucketsSeconds": [
+      0.001,
+      0.01,
+      0.025,
+      0.05,
+      0.1,
+      0.25,
+      0.4,
+      0.5,
+      1.0
+    ],
+    "privatePayloadOrIdentifiers": false,
+    "perMoveLogs": false,
+    "extraRedisSubscriptions": 0,
+    "extraRedisCommands": 0,
+    "newTasksOrQueues": 0,
+    "nestedInclusiveDurationsCannotBeSummed": true,
+    "returnedDoesNotMeanNativeExecution": true
+  },
+  "localValidation": {
+    "focusedPassed": 175,
+    "wsAndMonitoringPassed": 560,
+    "subtestsPassed": 44,
+    "fourProcessFinalPassed": 2,
+    "fourProcessFixtureAllLabelPairs": 21,
+    "fourProcessInitialRegistryMaximumFiles": 16,
+    "fourProcessInitialRegistryMaximumBytes": 1048576,
+    "earlierOversizedHistogramFixtureBytes": 1310720,
+    "scopedRuff": "passed",
+    "scopedMypyFiveFiles": "passed",
+    "fullMypy": {
+      "state": "failed",
+      "checkedFiles": 246,
+      "errors": 1,
+      "file": "backend/schemas/game_accounts.py",
+      "line": 61,
+      "message": "Field default_factory typing",
+      "fileChanged": false
+    },
+    "actionContract": "passed",
+    "luaFixtureDependency": {
+      "missingInitially": true,
+      "isolatedTestOnlyVersion": "2.8",
+      "workingRedisOrPostgresUsed": false
+    }
+  },
+  "resourceObserverHealthAtSourceReview": {
+    "state": "running",
+    "lastSampleUtc": "2026-10-09T14:54:57.052434+00:00",
+    "samplesWritten": 67,
+    "reportBytes": 897738,
+    "dueUtc": "2026-10-10T12:42:57.051894+00:00",
+    "freeDiskBytes": 60664496128,
+    "launchMode": "limited-unprivileged"
+  },
+  "limits": [
+    "No new backend image admitted or installed",
+    "Not a correction or closure of idle native_receipt_timeout",
+    "No concrete sequence or viewer correlation",
+    "No PubSub pre-dispatch wait, network, APK or native execution timing",
+    "Not input-to-picture, fleet/SLA, memory-leak or retention acceptance",
+    "Per-worker bounded series; cumulative worker history still follows existing master lifecycle"
+  ],
+  "ledger": {
+    "accepted": 9,
+    "open": 41,
+    "legacyUnclosed": 7
+  }
+}

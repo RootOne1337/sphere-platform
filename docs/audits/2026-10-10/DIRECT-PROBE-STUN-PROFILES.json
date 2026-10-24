@@ -1,0 +1,185 @@
+{
+  "schemaVersion": 1,
+  "observedAtUtc": "2026-10-10T01:13:19.000972+00:00",
+  "state": "SOURCE_CHECKED_NETWORK_PREREQUISITES_ONLY",
+  "sourceBaseRevision": "e70b530ce043ba5713be80665f71c510bc628142",
+  "sourceFilesSha256NormalizedLf": {
+    ".github/workflows/ci-android.yml": "c35fc710964e7393f6538cf95713f61809c1e5e729ce78734dce2368d9d1e0e7",
+    "android/app/build.gradle.kts": "94134618fa541926178e76279addb53cb1dde9fcf6c3e71e9d2b5f98702ed443",
+    "android/app/src/directProbe/kotlin/com/sphereplatform/agent/direct/DirectProbeTransport.kt": "aeaba0848878a81604de9ba9c81b9f9958621d809a584277b4ad9c74640f1ec8",
+    "android/app/src/main/kotlin/com/sphereplatform/agent/direct/DirectProbeIceProfile.kt": "d07fa9b5f69ef6dbd3869aa3b5eeb863f78e364cb14cd74aaf529b696e68a993",
+    "android/app/src/test/kotlin/com/sphereplatform/agent/direct/DirectProbeIceProfileTest.kt": "adce3ba488c1f1f7d6acb1412e88d09114239be979bdddee887afcc2d624e956",
+    "frontend/.env.example": "b5846422767affaae3c91423cba7d30ac124a3d17b575dd2d886b2cc259f0bf8",
+    "frontend/next.config.ts": "23438e92d07fa08470b05b481b146737acf9e0e7c8b12c0b4f8ad54ce6502cff",
+    "frontend/src/features/stream/directProbe.ts": "2b896a7d8f8954a8a11d019bd3b6d387c8229c58c94cfbbc1b7184f794de482b",
+    "frontend/src/features/stream/directProbeIce.ts": "a399b1d4efabe8b7d7626f4c84cba5988385bb65e8f5baf096624b74e04c8bf6",
+    "frontend/src/features/stream/DirectProbeDiagnostics.tsx": "158d8bb0cf33141bbf626a013f8b40f007f2e8c43d52037cd74b829f79b2f4e5",
+    "frontend/__tests__/directProbe.test.ts": "ab62c130dc55f3dda471cf7fbc979ef805a38cc374c2be115522ea081aeba283",
+    "frontend/__tests__/directProbeIce.test.ts": "f2ee42895c518c1e8d8eba787a2398bf1bb1dedaffc90fc3a765246135ca6736",
+    "frontend/__tests__/directProbeBuild.test.ts": "589cd1fe5cf832ec0120e1b2ca2038d42f30b273445ab34f03b1c16c74fa9e65",
+    "frontend/__tests__/stream/direct-probe-diagnostics.test.tsx": "815f08b7c18562521b9ffe0d1de57b71b107cbc992591075c431ee56fa519bed"
+  },
+  "runtimeInstalled": false,
+  "directChannelAccepted": false,
+  "mediaControlAccepted": false,
+  "profiles": {
+    "default": "host",
+    "local": "canonical RFC1918 numeric IPv4, single port1024..65535",
+    "public": "stun:stun.cloudflare.com:3478, explicit diagnostic selection only"
+  },
+  "deadlinesMs": {
+    "gathering": 8000,
+    "signaling": 8000,
+    "connectionAfterAnswer": 12000,
+    "overallUnextended": 30000
+  },
+  "tests": {
+    "frontendFinal": {
+      "suites": 144,
+      "tests": 2047,
+      "failed": 0
+    },
+    "frontendFocused": {
+      "suites": 5,
+      "tests": 67,
+      "failed": 0
+    },
+    "typescript": "PASS",
+    "scopedLint": "PASS",
+    "androidPublicFinalTargeted": {
+      "tests": 12,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "suites": 3
+    },
+    "androidOrdinaryFinalTargeted": {
+      "tests": 12,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "suites": 3
+    },
+    "androidEarlierLocalFull": {
+      "suites": 86,
+      "tests": 993,
+      "failed": 0,
+      "errors": 0,
+      "skipped": 3,
+      "scope": "Intermediate local-only profile before public profile addition; not a final APK acceptance"
+    },
+    "androidBuildDenials": [
+      {
+        "case": "local-requires-canary",
+        "exit": 1,
+        "expectedDenialFound": true,
+        "denied": true
+      },
+      {
+        "case": "public-requires-canary",
+        "exit": 1,
+        "expectedDenialFound": true,
+        "denied": true
+      },
+      {
+        "case": "arbitrary-dns-denied",
+        "exit": 1,
+        "expectedDenialFound": true,
+        "denied": true
+      },
+      {
+        "case": "noncanonical-ip-denied",
+        "exit": 1,
+        "expectedDenialFound": true,
+        "denied": true
+      },
+      {
+        "case": "public-release-denied",
+        "exit": 1,
+        "expectedDenialFound": true,
+        "denied": true
+      }
+    ],
+    "hostedExactSourceCi": "PENDING_FOR_NEW_COMMIT"
+  },
+  "network": {
+    "hostAlias": {
+      "observedAtUtc": "2026-10-10T00:45:43.313752+00:00",
+      "result": "one socket timeout, no Windows request observed"
+    },
+    "physicalLan": {
+      "observedAtUtc": "2026-10-10T00:47:08.751129+00:00",
+      "result": "one socket timeout, no Windows request observed"
+    },
+    "actualGuestGateway": {
+      "observedAtUtc": "2026-10-10T00:48:13.943095+00:00",
+      "exit": 137,
+      "result": "Same helper PID logcat confirms PortUnreachableException/ECONNREFUSED; not Sphere APK crash"
+    },
+    "publicStun": {
+      "observedAtUtc": "2026-10-10T01:04:10.944687+00:00",
+      "finishedAtUtc": "2026-10-10T01:04:12.532552+00:00",
+      "endpointOwner": "Cloudflare",
+      "endpoint": "stun:stun.cloudflare.com:3478",
+      "providerDocumentation": "https://developers.cloudflare.com/realtime/sfu/get-started/connection-patterns/",
+      "windows": {
+        "bindingConfirmed": true,
+        "responseBytes": 32
+      },
+      "android": {
+        "bindingConfirmed": true,
+        "responseBytes": 32,
+        "fingerprintValid": null
+      },
+      "androidExit": 0,
+      "attemptsPerHost": 1,
+      "requestBytesPerHost": 20,
+      "receiveTimeoutSeconds": 2,
+      "androidUidScope": "adb shell, not APK application UID",
+      "dnsResolutionOn": "Windows; same single numeric answer used by both probes",
+      "dexBytes": 3868,
+      "dexSha256": "69b61b062df6ca813bad30e57776499c2d167ba01fa3976e7d05a233d9221300",
+      "sourceSha256": "b9b12a35f0e1cac8fd09d7c9f8f0d784216a2990855811775734893446eb2c24",
+      "temporaryDexRetained": true,
+      "apkChanged": false,
+      "firewallChanged": false,
+      "routesChanged": false,
+      "deviceInputSent": false,
+      "credentialsOrApplicationDataSent": false,
+      "directWebRtcAccepted": false,
+      "windowsValidationScope": "success header, length, cookie and matching transaction only; no mapped-address parsing",
+      "apkUidReachabilityConfirmed": false,
+      "webRtcGatheringConfirmed": false
+    },
+    "localFailureCause": "UNKNOWN",
+    "udpBlanketBanProven": false
+  },
+  "installedObservation": {
+    "ui": "639b6ad52fe3651579499659ded46ff73027f313",
+    "api": "369654a0be4bded35e299062badc9bfe95101f1e",
+    "imageIdsMatchFrozenReceipt": true,
+    "directProbeEnabled": false,
+    "allowlist": [],
+    "apkInstallCommandsPerformed": false,
+    "reference": "docs/audits/2026-10-10/CONTINUOUS-AUTO-RECOVERY-INSTALLED.json"
+  },
+  "storageObservation": {
+    "observedAtUtc": "2026-10-10T01:13:19.000972+00:00",
+    "pid": 32064,
+    "creationUtc": "2026-10-10T00:14:44.8920620Z",
+    "commandAndEpochMatched": true,
+    "samplesWritten": 30,
+    "lastSampleUtc": "2026-10-10T01:12:45.083818+00:00",
+    "freeDiskBytes": 44429377536,
+    "reportBytes": 402921,
+    "dueUtc": "2026-10-10T12:34:45.083321+00:00",
+    "globalWriterAttributionConfirmed": false,
+    "futureCoverageGuaranteed": false
+  },
+  "remaining": [
+    "Exact-source hosted CI and signed artifact admission",
+    "One-PH011 browser/native STUN gathering, selected pair and echo RTT canary",
+    "APK UID/DNS/network matrix and controlled TURN fallback",
+    "Direct media/control, latency/resource/reconnect/fleet and APK1.3 acceptance"
+  ]
+}

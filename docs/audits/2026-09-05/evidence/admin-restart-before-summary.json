@@ -1,0 +1,71 @@
+{
+  "baseline_sha": "508b1ccc590c30c52b5bbd81efdd3e07595478f2",
+  "state": "admin-restart-before",
+  "totals": {
+    "tests": 13,
+    "failures": 9,
+    "errors": 0,
+    "skipped": 0
+  },
+  "groups": {
+    "tests.production": 13,
+    "tests.deployment": 0
+  },
+  "failures": [
+    {
+      "name": "test_full_deploy_repeat_preserves_the_working_operator_login[powershell]",
+      "failure": {
+        "message": "AssertionError: Working operator password was replaced\nassert 401 == 200\n +  where 401 = <Response [401 Unauthorized]>.status_code"
+      }
+    },
+    {
+      "name": "test_full_deploy_repeat_preserves_the_working_operator_login[bash]",
+      "failure": {
+        "message": "AssertionError: Working operator password was replaced\nassert 401 == 200\n +  where 401 = <Response [401 Unauthorized]>.status_code"
+      }
+    },
+    {
+      "name": "test_created_login_remains_recoverable_when_enrollment_fails[powershell]",
+      "failure": {
+        "message": "AssertionError: Committed admin credentials were never presented\nassert 'isolated-new-candidate-password' in '\\n\u2550\u2550\u2550 \u0428\u0430\u0433 6/8 \u2014 \u0418\u043d\u0438\u0446\u0438\u0430\u043b\u0438\u0437\u0430\u0446\u0438\u044f \u0434\u0430\u043d\u043d\u044b\u0445 \u2550\u2550\u2550\\n[\u2713] \u0421\u043e\u0437\u0434\u0430\u043d\u0438\u0435 \u0430\u0434\u043c\u0438\u043d\u0438\u0441\u0442\u0440\u0430\u0442\u043e\u0440\u0430 (bootstrap-restart-0059f380a932427390232ed1a249...m --no-deps -T -e SPHERE_BOOTSTRAP_ORG_SLUG backend python -m scripts.seed_enrollment_key \u043f\u0440\u043e\u0432\u0430\u043b\u0438\u043b\u0441\u044f (exit code: 17)\\n'\n +  where '\\n\u2550\u2550\u2550 \u0428\u0430\u0433 6/8 \u2014 \u0418\u043d\u0438\u0446\u0438\u0430\u043b\u0438\u0437\u0430\u0446\u0438\u044f \u0434\u0430\u043d\u043d\u044b\u0445 \u2550\u2550\u2550\\n[\u2713] \u0421\u043e\u0437\u0434\u0430\u043d\u0438\u0435 \u0430\u0434\u043c\u0438\u043d\u0438\u0441\u0442\u0440\u0430\u0442\u043e\u0440\u0430 (bootstrap-restart-0059f380a932427390232ed1a249...m --no-deps -T -e SPHERE_BOOTSTRAP_ORG_SLUG backend python -m scripts.seed_enrollment_key \u043f\u0440\u043e\u0432\u0430\u043b\u0438\u043b\u0441\u044f (exit code: 17)\\n' = CompletedProcess(args=['C:\\\\Users\\\\dimas\\\\.cache\\\\codex-runtimes\\\\codex-primary-runtime\\\\dependencies\\\\native\\\\powersh...G backend python -m scripts.seed_enrollment_key \u043f\u0440\u043e\u0432\u0430\u043b\u0438\u043b\u0441\u044f (exit code: 17)\\n', stderr='Synthetic enrollment failure\\n').stdout"
+      }
+    },
+    {
+      "name": "test_created_login_remains_recoverable_when_enrollment_fails[bash]",
+      "failure": {
+        "message": "AssertionError: Committed admin credentials were never presented\nassert 'isolated-new-candidate-password' in '\\n\\x1b[0;36m\\x1b[1m\u2550\u2550\u2550 \u0428\u0430\u0433 6/8 \u2014 \u0418\u043d\u0438\u0446\u0438\u0430\u043b\u0438\u0437\u0430\u0446\u0438\u044f \u0434\u0430\u043d\u043d\u044b\u0445 \u2550\u2550\u2550\\x1b[0m\\n\\x1b[0;32m[\u2713]\\x1b[0m \u0421\u043e\u0437\u0434\u0430\u043d\u0438\u0435 \u0430\u0434\u043c\u0438\u043d\u0438\u0441\u0442\u0440\u0430\u0442\u043e\u0440\u0430 (boots...1e72401ccf27ba0@example.org\\nDone.\\n\\x1b[0;32m[\u2713]\\x1b[0m \u0413\u0435\u043d\u0435\u0440\u0430\u0446\u0438\u044f enrollment-\u043a\u043b\u044e\u0447\u0430...\\nSynthetic enrollment failure\\n'\n +  where '\\n\\x1b[0;36m\\x1b[1m\u2550\u2550\u2550 \u0428\u0430\u0433 6/8 \u2014 \u0418\u043d\u0438\u0446\u0438\u0430\u043b\u0438\u0437\u0430\u0446\u0438\u044f \u0434\u0430\u043d\u043d\u044b\u0445 \u2550\u2550\u2550\\x1b[0m\\n\\x1b[0;32m[\u2713]\\x1b[0m \u0421\u043e\u0437\u0434\u0430\u043d\u0438\u0435 \u0430\u0434\u043c\u0438\u043d\u0438\u0441\u0442\u0440\u0430\u0442\u043e\u0440\u0430 (boots...1e72401ccf27ba0@example.org\\nDone.\\n\\x1b[0;32m[\u2713]\\x1b[0m \u0413\u0435\u043d\u0435\u0440\u0430\u0446\u0438\u044f enrollment-\u043a\u043b\u044e\u0447\u0430...\\nSynthetic enrollment failure\\n' = CompletedProcess(args=['C:\\\\Program Files\\\\Git\\\\bin\\\\bash.exe', 'C:/Users/dimas/AppData/Local/Temp/pytest-of-dimas/pyt...ba0@example.org\\nDone.\\n\\x1b[0;32m[\u2713]\\x1b[0m \u0413\u0435\u043d\u0435\u0440\u0430\u0446\u0438\u044f enrollment-\u043a\u043b\u044e\u0447\u0430...\\nSynthetic enrollment failure\\n', stderr='').stdout"
+      }
+    },
+    {
+      "name": "test_create_only_does_not_reset_existing_admin_state[change0]",
+      "failure": {
+        "message": "AssertionError: assert (UUID('50f3cc..., True, False) == (UUID('50f3cc... False, False)\n  \n  At index 2 diff: '$2b$12$qpzKZV3iIvvZQXeWY2UdWu.hkUWgnNMXbZfi97VJkBNRC2ur1eXa6' != '$2b$12$l/ogIZ.p9MCYEyrZpYY7NOuELwt/fNWxGPK8w.U4aZdQj8JVohgK2'\n  Use -v to get more diff"
+      }
+    },
+    {
+      "name": "test_create_only_does_not_reset_existing_admin_state[change1]",
+      "failure": {
+        "message": "AssertionError: assert (UUID('e36c09..., True, False) == (UUID('e36c09..., True, False)\n  \n  At index 2 diff: '$2b$12$yQ5zIZqYEhBv2tKph7fFzesrfp6jzv5RDEXMATwEDNcR3FNIjEisa' != '$2b$12$BGHvBH4P2JlfLdNkl9LaLOUP.h7DEOIVxE7r7jlWWevrzOfHwBE/e'\n  Use -v to get more diff"
+      }
+    },
+    {
+      "name": "test_create_only_does_not_reset_existing_admin_state[change2]",
+      "failure": {
+        "message": "AssertionError: assert (UUID('b34c94...', True, True) == (UUID('b34c94...', True, True)\n  \n  At index 2 diff: '$2b$12$cT.weFLt.0VMyxbEgR2l1e/FxrBMu7Qr/g9xcRkern0aI.BWKWQD.' != '$2b$12$2CYSi83/Vo53CZuvfcU6fu56CSCBc7xaQC69qlIdH8E1Xq8uvKkjC'\n  Use -v to get more diff"
+      }
+    },
+    {
+      "name": "test_concurrent_create_only_commands_converge_without_resetting_the_winner[False]",
+      "failure": {
+        "message": "AssertionError: ['Traceback (most recent call last):\n    File \"C:\\\\Users\\\\dimas\\\\Documents\\\\ChatGPT\\\\sphere-platform\\\\.venv-audit\\\\depe...ojAhYxflF5sJEOEu3Qn.lffeTOyZB46.hVgow4Otn/Lyy\\')]\n  (Background on this error at: https://sqlalche.me/e/20/gkpj)\n  ', '']\nassert False\n +  where False = all(<generator object test_concurrent_create_only_commands_converge_without_resetting_the_winner.<locals>.<genexpr> at 0x000001AD5B02E4D0>)"
+      }
+    },
+    {
+      "name": "test_concurrent_create_only_commands_converge_without_resetting_the_winner[True]",
+      "failure": {
+        "message": "AssertionError: ['Traceback (most recent call last):\n    File \"C:\\\\Users\\\\dimas\\\\Documents\\\\ChatGPT\\\\sphere-platform\\\\.venv-audit\\\\depe... \\'bootstrap-new-3f99012e3b574b44833960da95567c54\\')]\n  (Background on this error at: https://sqlalche.me/e/20/gkpj)\n  ']\nassert False\n +  where False = all(<generator object test_concurrent_create_only_commands_converge_without_resetting_the_winner.<locals>.<genexpr> at 0x000001AD5B037E00>)"
+      }
+    }
+  ],
+  "boundary": "Actual PS/Bash bootstrap functions invoke the real admin CLI through a native Docker boundary; real disposable PostgreSQL and ASGI login. Enrollment outcome is a process double. CLI concurrency uses three processes; deferred test-only SQL trigger rejects COMMIT and is removed in finally. No Docker app startup, API listener or installed APK."
+}

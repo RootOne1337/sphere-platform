@@ -1,0 +1,71 @@
+{
+  "schemaVersion": 1,
+  "observedAtUtc": "2026-10-21T15:58:18.360608+00:00",
+  "stage": "local-debug-build-not-installed",
+  "artifact": {
+    "file": "SphereAgent-app-vpn-canary-1.2.84-dev-7f06701.apk",
+    "source_commit": "7f06701ed6f1a0fd66a0d7d5f50234160e5324cd",
+    "android_tree": "7eee3c47c047928ce6ed82d1b950aa0a4bd37e35",
+    "sha256": "33916fa4f605afbbd62e2b76032b8c7b51184ef919afff50f9e3c2ce88c2b7b0",
+    "bytes": 79230662,
+    "package": "com.sphereplatform.agent.pilot.debug",
+    "version_name": "1.2.84-dev",
+    "version_code": 10284,
+    "certificate_sha256": "3ab40797d26e4f52f9e440afc6fe69f197caef71a5a27c63c86735bb1801871f",
+    "signer_matches_local_pilot_baseline": true,
+    "tests": {
+      "dev": {
+        "tests": 1275,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 3
+      },
+      "enterprise": {
+        "tests": 1275,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 3
+      }
+    },
+    "built_at": "2026-10-21T15:55:04.408125+00:00"
+  },
+  "nativeLibraries": {
+    "lib/arm64-v8a/libwg-go.so": "aa5d61ab6ae01d0aa82e52efb0f85a53f79ed9d3f38b1dd3b34c3514389e3ce7",
+    "lib/armeabi-v7a/libwg-go.so": "ae3d7ca265694303f90b380f6abde33b2ae42d76e38788af8155c7b93f4a48d8",
+    "lib/x86_64/libwg-go.so": "0f2af2c887f33996660b5a93c24cd46370d0b1d8e97fbdcbe65774e19b7590aa"
+  },
+  "lintDevAndEnterprise": "passed",
+  "cleanOutputBuild": true,
+  "deviceCommandsSent": false,
+  "installed": false,
+  "publishedToOta": false,
+  "completeAndroidCiAccepted": false,
+  "mainVpnServiceAccepted": false,
+  "previousAttempt": {
+    "source": "61df572960724dacf9b2cf20d1befaab0d72a8aa",
+    "outcome": "failed; no candidate admitted",
+    "observedProblems": [
+      "obsolete command-type count assertion",
+      "512 MiB unit worker OutOfMemoryError"
+    ],
+    "reportedBeforeWorkerStopped": {
+      "tests": 1262,
+      "failures": 3,
+      "skipped": 4
+    },
+    "workerStoppedAfterOom": true
+  },
+  "testWorkerRepair": {
+    "maxParallelForks": 1,
+    "maxHeapMiB": 768,
+    "forkEveryClasses": 40,
+    "ignoreFailures": false,
+    "source": "android/app/build.gradle.kts"
+  },
+  "remaining": [
+    "Full four-variant and canary Android CI before OTA",
+    "Catalog release migration, encryption key recovery and runtime DB role",
+    "Finite single-main-APK consent/selected-UID egress/protect/revoke pilot",
+    "Server journal, unique client-key leases and shared UI/script/orchestration execution"
+  ]
+}

@@ -1,0 +1,265 @@
+{
+  "schemaVersion": 1,
+  "observedDateLocal": "2026-10-07",
+  "timezone": "Asia/Yekaterinburg",
+  "sourceRevision": "439f910b81aa8d909fe0baf8e84352a4b9f68322",
+  "frontendRunId": 37529847405,
+  "frontendConclusion": "success",
+  "frontendTests": 1690,
+  "frontendSuites": 133,
+  "archiveInstallerMethods": 22,
+  "httpProbeTests": 18,
+  "freshTypesBuildPassed": true,
+  "image": {
+    "tag": "sphere-review-frontend:439f910b81aa8d909fe0baf8e84352a4b9f68322",
+    "id": "sha256:6391b830faa99020e4df80a20057b2f60a36a3017668660ca4b0b91291bc7f58",
+    "os": "linux",
+    "architecture": "amd64"
+  },
+  "archive": {
+    "file": "image.tar.gz",
+    "bytes": 120836603,
+    "sha256": "8653eb43aa27a38bd6d8d0bd11ec30288ca3a0547e92275fd50d3657e45a0f4f",
+    "maxExpandedBytes": 1073741824
+  },
+  "runtimeManifestId": "sha256:98c08360e19e6e25470936f8b276103c9c7bcf8f86d2ee6a2951df4b95d37141",
+  "runtimeStartedAtUtc": "2026-10-06T20:59:01.817488942Z",
+  "runtimeInstalled": true,
+  "otherContainersPreserved": 45,
+  "apiRevision": "eb7a7c26c2e644f24eb3f785b3da1c29a65929be",
+  "apkChanged": false,
+  "otaCatalogSha256": "c22124909f08d2df6fd98048eb1c359da5d5c4ee73f0e1f9cc7427988e27d4d4",
+  "resourceFindingsAtInstall": [],
+  "responsiveHeader": [
+    {
+      "actions": [
+        {
+          "label": "РџСЂРѕРІРµСЂРёС‚СЊ РЅР° СЃРµСЂРІРµСЂРµ",
+          "rect": {
+            "bottom": 186,
+            "height": 36,
+            "left": 132.21875,
+            "right": 315.21875,
+            "top": 150,
+            "width": 183,
+            "x": 132.21875,
+            "y": 150
+          }
+        },
+        {
+          "label": "РЎРѕР·РґР°С‚СЊ СЃС†РµРЅР°СЂРёР№",
+          "rect": {
+            "bottom": 230,
+            "height": 36,
+            "left": 16,
+            "right": 171.421875,
+            "top": 194,
+            "width": 155.421875,
+            "x": 16,
+            "y": 194
+          }
+        }
+      ],
+      "clientWidth": 390,
+      "scrollWidth": 390,
+      "title": {
+        "bottom": 138,
+        "height": 32,
+        "left": 68,
+        "right": 368,
+        "top": 106,
+        "width": 300,
+        "x": 68,
+        "y": 106
+      },
+      "viewport": {
+        "height": 844,
+        "width": 390
+      }
+    },
+    {
+      "actions": [
+        {
+          "label": "РџСЂРѕРІРµСЂРёС‚СЊ РЅР° СЃРµСЂРІРµСЂРµ",
+          "rect": {
+            "bottom": 186,
+            "height": 36,
+            "left": 132.21875,
+            "right": 315.21875,
+            "top": 150,
+            "width": 183,
+            "x": 132.21875,
+            "y": 150
+          }
+        },
+        {
+          "label": "РЎРѕР·РґР°С‚СЊ СЃС†РµРЅР°СЂРёР№",
+          "rect": {
+            "bottom": 186,
+            "height": 36,
+            "left": 323.21875,
+            "right": 478.640625,
+            "top": 150,
+            "width": 155.421875,
+            "x": 323.21875,
+            "y": 150
+          }
+        }
+      ],
+      "clientWidth": 637,
+      "scrollWidth": 637,
+      "title": {
+        "bottom": 138,
+        "height": 32,
+        "left": 68,
+        "right": 615,
+        "top": 106,
+        "width": 547,
+        "x": 68,
+        "y": 106
+      },
+      "viewport": {
+        "height": 884,
+        "width": 637
+      }
+    },
+    {
+      "actions": [
+        {
+          "label": "РџСЂРѕРІРµСЂРёС‚СЊ РЅР° СЃРµСЂРІРµСЂРµ",
+          "rect": {
+            "bottom": 125,
+            "height": 36,
+            "left": 917.578125,
+            "right": 1100.578125,
+            "top": 89,
+            "width": 183,
+            "x": 917.578125,
+            "y": 89
+          }
+        },
+        {
+          "label": "РЎРѕР·РґР°С‚СЊ СЃС†РµРЅР°СЂРёР№",
+          "rect": {
+            "bottom": 125,
+            "height": 36,
+            "left": 1108.578125,
+            "right": 1264,
+            "top": 89,
+            "width": 155.421875,
+            "x": 1108.578125,
+            "y": 89
+          }
+        }
+      ],
+      "clientWidth": 1280,
+      "scrollWidth": 1280,
+      "title": {
+        "bottom": 138,
+        "height": 32,
+        "left": 332,
+        "right": 789.359375,
+        "top": 106,
+        "width": 457.359375,
+        "x": 332,
+        "y": 106
+      },
+      "viewport": {
+        "height": 800,
+        "width": 1280
+      }
+    }
+  ],
+  "browser": {
+    "authenticatedOn3015": true,
+    "scriptPublished": false,
+    "taskExecuted": false,
+    "afterInsert": {
+      "nodes": 3,
+      "edges": 2,
+      "route": "start -> sleep -> end",
+      "pairwiseOverlap": false
+    },
+    "elkVerticalAndHorizontalLayout": true,
+    "jsonRouteRoundtrip": true,
+    "edgeDelete": {
+      "nodes": 3,
+      "edges": 1
+    },
+    "undoRestores": {
+      "nodes": 3,
+      "edges": 2
+    },
+    "apiValidation": {
+      "nodeCount": 3,
+      "hash": "1ace3b70037e7fc23c43000a5152c9d4863c04d04e81302a5c638a413e7350ca",
+      "actionParametersVerified": false,
+      "androidExecutionVerified": false
+    },
+    "resizeOverviewAccepted": false
+  },
+  "baselineRecorderCanary": {
+    "uiRevision": "99af20d9933e4f4f5f227595e19d2f47d5be7e94",
+    "device": "PH010",
+    "apk": "1.2.45-dev",
+    "command": "HOME",
+    "apkConfirmed": true,
+    "commandAckMs": 482,
+    "notInputToFrameLatency": true,
+    "xpathNodes": 45,
+    "xpathOnlyPlanned": true,
+    "insertedOrder": [
+      "key_event:3",
+      "sleep:60000",
+      "tap_element"
+    ],
+    "scriptPublished": false,
+    "taskExecuted": false
+  },
+  "backendCi": {
+    "runId": 37529847401,
+    "attempt1": "failure",
+    "passed": 3036,
+    "skipped": 37,
+    "failure": "PowerShell preservation fixture process exceeded 20s",
+    "coveragePercent": 80.38,
+    "attempt2": "pending at receipt"
+  },
+  "androidCi": {
+    "runId": 37529847402,
+    "conclusion": "success"
+  },
+  "ledger": {
+    "accepted": 9,
+    "open": 41
+  },
+  "open": [
+    "canvas resize overview candidate eb598a5",
+    "continuous pointer protocol",
+    "correlated rich recorder",
+    "full Android/fleet acceptance",
+    "host storage growth and corruption root cause"
+  ],
+  "screenshots": [
+    {
+      "path": "assets/studio-validation/chain-no-overlap-1920.png",
+      "sha256": "f8af3697c96b3a966b51c8c1010c4dda7b945083b436aa6f2d2e72d26591be8d"
+    },
+    {
+      "path": "assets/studio-validation/studio-1920-after.png",
+      "sha256": "c5cb18790d4a2c2f1a80a924b7e61532052a2e8c265bb158135c4ffa3b9293c8"
+    },
+    {
+      "path": "assets/studio-validation/header-390-after.png",
+      "sha256": "5193cbe8907ed66a30ba84bcffb623441fe2ac9bd0e43bc3832a6d13bc7284b5"
+    },
+    {
+      "path": "assets/studio-validation/header-637-after.png",
+      "sha256": "d9c8eb0ab2c463ca971c91bdc7859bb20bb72fbf6d5efb77150d37a9b51464e7"
+    },
+    {
+      "path": "assets/studio-validation/header-1280-after.png",
+      "sha256": "be258b03ab036380763e8559ca1b3a9e3ba3682e0a6d305f55f8e69db0a65c0a"
+    }
+  ]
+}

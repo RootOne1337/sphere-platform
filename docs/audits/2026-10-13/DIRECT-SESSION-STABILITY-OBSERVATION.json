@@ -1,0 +1,3331 @@
+{
+  "schemaVersion": 1,
+  "observedAtUtc": "2026-10-13T06:35:03.047826+00:00",
+  "runtimeInstalled": true,
+  "scope": "Finite direct video and pointer evidence; actual PH030 stability, shared users, WAN and production SLA remain unaccepted.",
+  "runtime": {
+    "sourceRevision": "73419abea2261052bccf19efdcc691d9384563f9",
+    "apiSourceRevision": "b65b0b5469510f9c0c94d5242234bdba43570c77",
+    "web": {
+      "observedAtUtc": "2026-10-13T01:03:06.600709+00:00",
+      "runId": 38328799538,
+      "loadedImageId": "sha256:47560c297056b19c901dea81c84e69a7836f7da8706594c82d52429f8d418811",
+      "installedUi": {
+        "id": "ef7d7d0d8d6b4da11becbd4abfdaaf28634da49cc15c514296447606b641a074",
+        "imageId": "sha256:47560c297056b19c901dea81c84e69a7836f7da8706594c82d52429f8d418811",
+        "imageTag": "sphere-review-frontend:73419abea2261052bccf19efdcc691d9384563f9",
+        "startedAt": "2026-10-13T01:03:39.183751171Z",
+        "status": "running"
+      },
+      "otherContainersPreserved": 45
+    },
+    "backend": {
+      "observedAtUtc": "2026-10-13T02:45:44.116956+00:00",
+      "runId": 38336478530,
+      "loadedImageId": "sha256:6f767f45cf82530c2fdad0458986f3c19c8e996c1d99e39a8d925d2d8fa75dcb",
+      "installedBackend": {
+        "id": "3a1c0d6a7eb4f09b0315f73a2f2f4b7fa255a00b96501ecb56994e0723456743",
+        "imageId": "sha256:6f767f45cf82530c2fdad0458986f3c19c8e996c1d99e39a8d925d2d8fa75dcb",
+        "imageTag": "sphere-reviewed-backend:b65b0b5469510f9c0c94d5242234bdba43570c77",
+        "startedAt": "2026-10-13T02:46:56.043970209Z",
+        "status": "running"
+      },
+      "otherContainersPreserved": 45,
+      "schemaHeads": [
+        "20261006_script_catalog_metadata"
+      ],
+      "schemaMigrationPerformed": false
+    },
+    "volumeExceptionApplied": true,
+    "origins": {
+      "observations": [
+        {
+          "origin": "http://127.0.0.1:3015",
+          "observedAtUtc": "2026-10-13T06:03:57.492673+00:00",
+          "sourceRevision": "73419abea2261052bccf19efdcc691d9384563f9",
+          "apiSourceRevision": "b65b0b5469510f9c0c94d5242234bdba43570c77",
+          "ready": true,
+          "rootStatus": 307,
+          "rootLocation": "/dashboard",
+          "assets": {
+            "/_next/static/chunks/1255-7783d2635cd63343.js": "96dee89aaaa2dd3c48add536d4fc9bee2f5c2067b6c1fecbf82a9718c1832fe5",
+            "/_next/static/chunks/2454-d80d28eff7b10127.js": "0187298047f83536b40ee274577081fe5c918ad697fe9110b42c085541139a08",
+            "/_next/static/chunks/2619-04bc32f026a0d946.js": "a9b6c2213ea787a015c0169d198b4a90d7a44a0cc17abb0d132e8362d3016ced",
+            "/_next/static/chunks/3148-952a6ed4d3b537cd.js": "249a836009021cbb097257a716850615e86e573aba9419157407fc3988f4acba",
+            "/_next/static/chunks/317-0f8cf7b0659f53a3.js": "1b98c6d311ae76b320ef15b41ee47af4b74969eb481d1599a947aafe6c131024",
+            "/_next/static/chunks/4193-a6ee8a8bd3560102.js": "07de32e049cba61fb3d97233c561e3866a7ef900e756a303d384c5ef6cf33691",
+            "/_next/static/chunks/4249-23c879e685d3e739.js": "216701859446d2b71fd9cb9c71bfe9e9886a0e173509c0ad768191a548a8d50c",
+            "/_next/static/chunks/4250-6d0becbc38d5d87f.js": "5f79e75e31fd061f0261d337c63286b51a92447ca7168f38276f6eaa33cc6113",
+            "/_next/static/chunks/4545-753eca0214cc2f1e.js": "74994250e81f0f13014c6191a409eee997ccecd0cbc0036a7ea46f41163c73dd",
+            "/_next/static/chunks/4bd1b696-100b9d70ed4e49c1.js": "5421e13a91a9389517b66179f3b4b5eaa0d95245438066d4d7b19ac30aeb809b",
+            "/_next/static/chunks/5642-499ffb0973eb98d5.js": "3bd6d1bd5ee08d3b8f8d3cbcdbff04c9d1bb6ceefa0db26f946a800d1a15f2bc",
+            "/_next/static/chunks/5718-16651f0353cbc87c.js": "d57e36d081d510e605b625463639db89d1f306021f878714cf2f0c0b2f440c15",
+            "/_next/static/chunks/5776-04ef09d5a87e6710.js": "390740518086c4ed38333b87ba5e03a22cd562d23424b7836a64dd0e3905448a",
+            "/_next/static/chunks/643-ac6cb88a22cb81ec.js": "ca821c0c816ed855a8b730a3bcbfbe9fa7ea64cbf7a6208c7cf83097ffb58c21",
+            "/_next/static/chunks/7037-aa1baea7dba9b9e6.js": "f6bac0b3ca4f2f91b913ef48465eddde2b7791e2706d2918f79704f98cc88336",
+            "/_next/static/chunks/7668-40b3a41946c6ce9a.js": "593f88aeb9a3d54531d5114a5563bfc9aa588683a1d10e6340a6fb9ae745b3e6",
+            "/_next/static/chunks/8720-c9ee040177c11cae.js": "5c5e3504935a574ca8219d40d3860ca39e02ac7e68b07024f6749f9aeac3826b",
+            "/_next/static/chunks/9187-22ef097a4c39bfbf.js": "e88724fc4f31bdfad2498870c3f47eded222dac2540d135eed134e0b31c8fab0",
+            "/_next/static/chunks/9690-9143cea5293c9bcc.js": "d309b0bddb398527336cdfeb8e53a56eaaa337f9ad3ee6980584806ec27773f1",
+            "/_next/static/chunks/app/(dashboard)/layout-db82b18fe971b73d.js": "a29e0fe244f96b4762d685a2a9b4722a49fab1d9cd26a8869fa92660b6e98711",
+            "/_next/static/chunks/app/(dashboard)/stream/page-ab51d2295ea7d6cf.js": "3c65812e03cd55c7a8b8eb914eccd3982997eee4ce9a2b454d09cec997c6129d",
+            "/_next/static/chunks/app/layout-db491bcd0cf2c0d3.js": "a43960bd65effe9513fda30eae465d1e1e7f91799c4c3ac334be25e06e1da069",
+            "/_next/static/chunks/e868780c-91a04c9ad30f5ebf.js": "76344805bf5565619687fac87845103751b88c6c1def9d0c9c6c6efb209f0d22",
+            "/_next/static/chunks/main-app-51acae7907d4f0ba.js": "be53511dbfec95b02aa1cbd3f64fe6684b82b7deb96958aa8a108fafe68d28e0",
+            "/_next/static/chunks/polyfills-42372ed130431b0a.js": "0973c1d64c88adc8e3c950410cb58b288f72118d5965b78049438deb8f2f9683",
+            "/_next/static/chunks/webpack-063896ccdf8e8196.js": "9e3105d43f0dd1ade90392e4206bfbc2d6f0e41997528c9e75401f680521074b",
+            "/_next/static/css/343d268372e978c3.css": "060dd6d743cf8de3061f78412d14a6b74012e094c8d58be23cfdd5fc9d6561e8",
+            "/_next/static/css/c03ea5251d6514bc.css": "c6bc3d4f096964a05207476b1e54011adb36cf61384ffd827687b24baabbc2b9",
+            "/_next/static/css/ee1c600aa5123b7f.css": "0c00dd01ddab4118a3300ac9fc8894072af371b3d9118ae9c3a8d95aa6eea855"
+          },
+          "anonymousHistoryStatus": 401,
+          "authenticatedHistoryPrivateNoStore": true,
+          "sessionLimit": 10
+        },
+        {
+          "origin": "https://sphere-agent-canary-20260927.ru.tuna.am",
+          "observedAtUtc": "2026-10-13T06:04:04.191789+00:00",
+          "sourceRevision": "73419abea2261052bccf19efdcc691d9384563f9",
+          "apiSourceRevision": "b65b0b5469510f9c0c94d5242234bdba43570c77",
+          "ready": true,
+          "rootStatus": 307,
+          "rootLocation": "/dashboard",
+          "assets": {
+            "/_next/static/chunks/1255-7783d2635cd63343.js": "96dee89aaaa2dd3c48add536d4fc9bee2f5c2067b6c1fecbf82a9718c1832fe5",
+            "/_next/static/chunks/2454-d80d28eff7b10127.js": "0187298047f83536b40ee274577081fe5c918ad697fe9110b42c085541139a08",
+            "/_next/static/chunks/2619-04bc32f026a0d946.js": "a9b6c2213ea787a015c0169d198b4a90d7a44a0cc17abb0d132e8362d3016ced",
+            "/_next/static/chunks/3148-952a6ed4d3b537cd.js": "249a836009021cbb097257a716850615e86e573aba9419157407fc3988f4acba",
+            "/_next/static/chunks/317-0f8cf7b0659f53a3.js": "1b98c6d311ae76b320ef15b41ee47af4b74969eb481d1599a947aafe6c131024",
+            "/_next/static/chunks/4193-a6ee8a8bd3560102.js": "07de32e049cba61fb3d97233c561e3866a7ef900e756a303d384c5ef6cf33691",
+            "/_next/static/chunks/4249-23c879e685d3e739.js": "216701859446d2b71fd9cb9c71bfe9e9886a0e173509c0ad768191a548a8d50c",
+            "/_next/static/chunks/4250-6d0becbc38d5d87f.js": "5f79e75e31fd061f0261d337c63286b51a92447ca7168f38276f6eaa33cc6113",
+            "/_next/static/chunks/4545-753eca0214cc2f1e.js": "74994250e81f0f13014c6191a409eee997ccecd0cbc0036a7ea46f41163c73dd",
+            "/_next/static/chunks/4bd1b696-100b9d70ed4e49c1.js": "5421e13a91a9389517b66179f3b4b5eaa0d95245438066d4d7b19ac30aeb809b",
+            "/_next/static/chunks/5642-499ffb0973eb98d5.js": "3bd6d1bd5ee08d3b8f8d3cbcdbff04c9d1bb6ceefa0db26f946a800d1a15f2bc",
+            "/_next/static/chunks/5718-16651f0353cbc87c.js": "d57e36d081d510e605b625463639db89d1f306021f878714cf2f0c0b2f440c15",
+            "/_next/static/chunks/5776-04ef09d5a87e6710.js": "390740518086c4ed38333b87ba5e03a22cd562d23424b7836a64dd0e3905448a",
+            "/_next/static/chunks/643-ac6cb88a22cb81ec.js": "ca821c0c816ed855a8b730a3bcbfbe9fa7ea64cbf7a6208c7cf83097ffb58c21",
+            "/_next/static/chunks/7037-aa1baea7dba9b9e6.js": "f6bac0b3ca4f2f91b913ef48465eddde2b7791e2706d2918f79704f98cc88336",
+            "/_next/static/chunks/7668-40b3a41946c6ce9a.js": "593f88aeb9a3d54531d5114a5563bfc9aa588683a1d10e6340a6fb9ae745b3e6",
+            "/_next/static/chunks/8720-c9ee040177c11cae.js": "5c5e3504935a574ca8219d40d3860ca39e02ac7e68b07024f6749f9aeac3826b",
+            "/_next/static/chunks/9187-22ef097a4c39bfbf.js": "e88724fc4f31bdfad2498870c3f47eded222dac2540d135eed134e0b31c8fab0",
+            "/_next/static/chunks/9690-9143cea5293c9bcc.js": "d309b0bddb398527336cdfeb8e53a56eaaa337f9ad3ee6980584806ec27773f1",
+            "/_next/static/chunks/app/(dashboard)/layout-db82b18fe971b73d.js": "a29e0fe244f96b4762d685a2a9b4722a49fab1d9cd26a8869fa92660b6e98711",
+            "/_next/static/chunks/app/(dashboard)/stream/page-ab51d2295ea7d6cf.js": "3c65812e03cd55c7a8b8eb914eccd3982997eee4ce9a2b454d09cec997c6129d",
+            "/_next/static/chunks/app/layout-db491bcd0cf2c0d3.js": "a43960bd65effe9513fda30eae465d1e1e7f91799c4c3ac334be25e06e1da069",
+            "/_next/static/chunks/e868780c-91a04c9ad30f5ebf.js": "76344805bf5565619687fac87845103751b88c6c1def9d0c9c6c6efb209f0d22",
+            "/_next/static/chunks/main-app-51acae7907d4f0ba.js": "be53511dbfec95b02aa1cbd3f64fe6684b82b7deb96958aa8a108fafe68d28e0",
+            "/_next/static/chunks/polyfills-42372ed130431b0a.js": "0973c1d64c88adc8e3c950410cb58b288f72118d5965b78049438deb8f2f9683",
+            "/_next/static/chunks/webpack-063896ccdf8e8196.js": "9e3105d43f0dd1ade90392e4206bfbc2d6f0e41997528c9e75401f680521074b",
+            "/_next/static/css/343d268372e978c3.css": "060dd6d743cf8de3061f78412d14a6b74012e094c8d58be23cfdd5fc9d6561e8",
+            "/_next/static/css/c03ea5251d6514bc.css": "c6bc3d4f096964a05207476b1e54011adb36cf61384ffd827687b24baabbc2b9",
+            "/_next/static/css/ee1c600aa5123b7f.css": "0c00dd01ddab4118a3300ac9fc8894072af371b3d9118ae9c3a8d95aa6eea855"
+          },
+          "anonymousHistoryStatus": 401,
+          "authenticatedHistoryPrivateNoStore": true,
+          "sessionLimit": 10
+        }
+      ],
+      "assetsIdentical": true
+    },
+    "schema": {
+      "paths": 147,
+      "operations": 185,
+      "canonicalSha256": "fcf5c3c4e2bb26da5e2604560298166453f6ac6c865221f73bedc2768eaa54a0",
+      "sourceRevision": "b65b0b5469510f9c0c94d5242234bdba43570c77",
+      "source": "Installed app.openapi; no application lifespan hooks",
+      "observedAtUtc": "2026-10-13T06:01:36.597793+00:00",
+      "sameAsCommittedCanonicalJson": true
+    }
+  },
+  "apk": {
+    "artifacts": [
+      {
+        "version": "1.2.64-dev",
+        "versionCode": 10264,
+        "sourceRevision": "05af64f71439a4f58433acfb0dfac629fc618dc7",
+        "sha256": "27c6fddb8365f338bf7b0df544f59950574442ff937cf875f1e6ee97f4936e5c",
+        "bytes": 57720820,
+        "signerSha256": "3ab40797d26e4f52f9e440afc6fe69f197caef71a5a27c63c86735bb1801871f",
+        "tests": {
+          "dev": {
+            "tests": 1077,
+            "failures": 0,
+            "errors": 0,
+            "skipped": 3
+          },
+          "enterprise": {
+            "tests": 1077,
+            "failures": 0,
+            "errors": 0,
+            "skipped": 3
+          }
+        }
+      },
+      {
+        "version": "1.2.65-dev",
+        "versionCode": 10265,
+        "sourceRevision": "0e8d7bbdd7269778944b36ccbba7a6ba3ede9c20",
+        "sha256": "7a620e7a57ca6b1440adb2637d068ad8e800ee2d11bbaa3c0c073a69ae37b7c1",
+        "bytes": 57720820,
+        "signerSha256": "3ab40797d26e4f52f9e440afc6fe69f197caef71a5a27c63c86735bb1801871f",
+        "tests": {
+          "dev": {
+            "tests": 1082,
+            "failures": 0,
+            "errors": 0,
+            "skipped": 3
+          },
+          "enterprise": {
+            "tests": 1082,
+            "failures": 0,
+            "errors": 0,
+            "skipped": 3
+          }
+        }
+      }
+    ],
+    "installedDevices": [
+      {
+        "deviceId": "5df4805e-fe64-4d39-960c-19ceab206cd6",
+        "device": "auto-ph-010",
+        "versionCode": 10265,
+        "installedPackageSha256": "7a620e7a57ca6b1440adb2637d068ad8e800ee2d11bbaa3c0c073a69ae37b7c1",
+        "otaResult": {
+          "command_id": "e23a64de-8b03-4b7f-af9a-c9f0a24e8447",
+          "status": "completed",
+          "installed_version_code": 10265,
+          "recorded_at": "2026-10-13T02:27:37.282964+00:00"
+        }
+      },
+      {
+        "deviceId": "4815b950-e5cf-4686-9d46-42d0df8d41f7",
+        "device": "auto-ph-028",
+        "versionCode": 10265,
+        "installedPackageSha256": "7a620e7a57ca6b1440adb2637d068ad8e800ee2d11bbaa3c0c073a69ae37b7c1",
+        "otaResult": {
+          "command_id": "e5eea426-de44-48e2-8b7b-3b9901a412b3",
+          "status": "completed",
+          "installed_version_code": 10265,
+          "recorded_at": "2026-10-13T06:06:26.567152+00:00"
+        }
+      },
+      {
+        "deviceId": "b410464a-5f26-4803-a756-7840cc17b128",
+        "device": "auto-ph-025",
+        "versionCode": 10265,
+        "installedPackageSha256": "7a620e7a57ca6b1440adb2637d068ad8e800ee2d11bbaa3c0c073a69ae37b7c1",
+        "otaResult": {
+          "command_id": "3b214797-9045-45d2-aa39-c5adebb6233e",
+          "status": "completed",
+          "installed_version_code": 10265,
+          "recorded_at": "2026-10-13T06:07:05.785150+00:00"
+        }
+      },
+      {
+        "deviceId": "d088c147-7ada-4b29-9e79-f991b20fcf91",
+        "device": "auto-ph-022",
+        "versionCode": 10265,
+        "installedPackageSha256": "7a620e7a57ca6b1440adb2637d068ad8e800ee2d11bbaa3c0c073a69ae37b7c1",
+        "otaResult": {
+          "command_id": "04df2541-8eac-40b0-bb7b-998b98b8ff50",
+          "status": "completed",
+          "installed_version_code": 10265,
+          "recorded_at": "2026-10-13T06:07:19.709805+00:00"
+        }
+      },
+      {
+        "deviceId": "75c29a32-2867-4b60-947c-003e712e538f",
+        "device": "auto-ph-020",
+        "versionCode": 10265,
+        "installedPackageSha256": "7a620e7a57ca6b1440adb2637d068ad8e800ee2d11bbaa3c0c073a69ae37b7c1",
+        "otaResult": {
+          "command_id": "3eb837e3-fd4e-460a-acba-b5ec661a0792",
+          "status": "completed",
+          "installed_version_code": 10265,
+          "recorded_at": "2026-10-13T06:07:26.644033+00:00"
+        }
+      },
+      {
+        "deviceId": "c37e687a-ee83-466d-846f-3f4b36047fa7",
+        "device": "auto-ph-019",
+        "versionCode": 10265,
+        "installedPackageSha256": "7a620e7a57ca6b1440adb2637d068ad8e800ee2d11bbaa3c0c073a69ae37b7c1",
+        "otaResult": {
+          "command_id": "b9ad9e3f-4963-4c14-ab20-1a5f9e5e9f89",
+          "status": "completed",
+          "installed_version_code": 10265,
+          "recorded_at": "2026-10-13T06:07:34.059441+00:00"
+        }
+      },
+      {
+        "deviceId": "bafef86f-3ab4-469b-ae0c-cf2771b55813",
+        "device": "auto-ph-018",
+        "versionCode": 10265,
+        "installedPackageSha256": "7a620e7a57ca6b1440adb2637d068ad8e800ee2d11bbaa3c0c073a69ae37b7c1",
+        "otaResult": {
+          "command_id": "3489b042-0564-488f-8d1c-088c9d6007e5",
+          "status": "completed",
+          "installed_version_code": 10265,
+          "recorded_at": "2026-10-13T06:07:38.989975+00:00"
+        }
+      },
+      {
+        "deviceId": "1dd7e59c-b68f-406a-93cd-5f4e34fdea90",
+        "device": "auto-ph-017",
+        "versionCode": 10265,
+        "installedPackageSha256": "7a620e7a57ca6b1440adb2637d068ad8e800ee2d11bbaa3c0c073a69ae37b7c1",
+        "otaResult": {
+          "command_id": "d69402e0-e065-4e40-9550-692024aa09bb",
+          "status": "completed",
+          "installed_version_code": 10265,
+          "recorded_at": "2026-10-13T06:07:45.415184+00:00"
+        }
+      },
+      {
+        "deviceId": "3c4c4218-27ba-4d8d-a7d2-4348c2f91c93",
+        "device": "auto-ph-016",
+        "versionCode": 10265,
+        "installedPackageSha256": "7a620e7a57ca6b1440adb2637d068ad8e800ee2d11bbaa3c0c073a69ae37b7c1",
+        "otaResult": {
+          "command_id": "2df76e97-6715-4f71-a105-c86c26196fca",
+          "status": "completed",
+          "installed_version_code": 10265,
+          "recorded_at": "2026-10-13T06:07:47.748588+00:00"
+        }
+      },
+      {
+        "deviceId": "930a6505-b7ec-4eee-93fe-9aaa66517871",
+        "device": "auto-ph-015",
+        "versionCode": 10265,
+        "installedPackageSha256": "7a620e7a57ca6b1440adb2637d068ad8e800ee2d11bbaa3c0c073a69ae37b7c1",
+        "otaResult": {
+          "command_id": "21cb2dab-d7cd-4c76-869a-0c03bf6ce62b",
+          "status": "completed",
+          "installed_version_code": 10265,
+          "recorded_at": "2026-10-13T06:07:48.582554+00:00"
+        }
+      },
+      {
+        "deviceId": "673d5774-24b1-4b57-8dfb-90c46f627ce3",
+        "device": "auto-ph-014",
+        "versionCode": 10265,
+        "installedPackageSha256": "7a620e7a57ca6b1440adb2637d068ad8e800ee2d11bbaa3c0c073a69ae37b7c1",
+        "otaResult": {
+          "command_id": "ee9e4fea-4a61-48c4-950c-04a3b6da1b50",
+          "status": "completed",
+          "installed_version_code": 10265,
+          "recorded_at": "2026-10-13T06:07:50.308084+00:00"
+        }
+      },
+      {
+        "deviceId": "6d830af5-b7cc-44b4-b7f5-5e0275aceb3b",
+        "device": "auto-ph-013",
+        "versionCode": 10265,
+        "installedPackageSha256": "7a620e7a57ca6b1440adb2637d068ad8e800ee2d11bbaa3c0c073a69ae37b7c1",
+        "otaResult": {
+          "command_id": "6aa88196-0c55-41af-92f7-efa9d2e89cdd",
+          "status": "completed",
+          "installed_version_code": 10265,
+          "recorded_at": "2026-10-13T06:07:53.145713+00:00"
+        }
+      },
+      {
+        "deviceId": "8c187cfa-e5ea-4939-a137-07619437953d",
+        "device": "auto-ph-012",
+        "versionCode": 10265,
+        "installedPackageSha256": "7a620e7a57ca6b1440adb2637d068ad8e800ee2d11bbaa3c0c073a69ae37b7c1",
+        "otaResult": {
+          "command_id": "576baec1-3c7a-4e19-bb1e-d6dfd4e33ccb",
+          "status": "completed",
+          "installed_version_code": 10265,
+          "recorded_at": "2026-10-13T06:07:53.142356+00:00"
+        }
+      },
+      {
+        "deviceId": "414ce0e9-4b93-4f96-b9ca-ee675f53835e",
+        "device": "auto-ph-011",
+        "versionCode": 10265,
+        "installedPackageSha256": "7a620e7a57ca6b1440adb2637d068ad8e800ee2d11bbaa3c0c073a69ae37b7c1",
+        "otaResult": {
+          "command_id": "ab01d3d9-a9d0-4347-839a-7db55c5fc1d3",
+          "status": "completed",
+          "installed_version_code": 10265,
+          "recorded_at": "2026-10-13T06:07:51.475085+00:00"
+        }
+      }
+    ],
+    "installedCount": 14,
+    "reportedButPackageHashUnverified": [
+      {
+        "deviceId": "753fd530-2f19-4e5e-98ba-769863678141",
+        "device": "auto-ph-030",
+        "versionCode": 10265,
+        "currentReportedVersionCode": null,
+        "currentlyOnline": false,
+        "state": "completed_ota_current_package_hash_unverified_offline",
+        "installedPackageHashConfirmed": false,
+        "otaResult": {
+          "command_id": "1dfd7080-bca7-4b12-abab-86bac80b5f4b",
+          "status": "completed",
+          "installed_version_code": 10265,
+          "recorded_at": "2026-10-13T02:30:59.629694+00:00"
+        }
+      }
+    ],
+    "verifiedVersionCounts": {
+      "10265": 14
+    },
+    "offlineCount": 6,
+    "ordinaryChannelUnchanged": true,
+    "adbInstalls": 0,
+    "dataClears": 0
+  },
+  "browser": {
+    "finiteAccepted": true,
+    "scope": "Current UI/API with APK65: PH010 finite ordinary-Chrome acceptance; separately labelled APK64 observations are historical.",
+    "login": {
+      "observedAt": "2026-10-13T06:20:19.899Z",
+      "samples": [
+        {
+          "origin": "http://127.0.0.1:3015",
+          "shape": "desktop",
+          "layout": {
+            "width": 1440,
+            "documentWidth": 1440,
+            "bodyWidth": 1440,
+            "dark": true,
+            "inputCount": 2
+          },
+          "screenshot": "output/playwright/delivery-20261013-local-login-desktop.png"
+        },
+        {
+          "origin": "http://127.0.0.1:3015",
+          "shape": "phone",
+          "layout": {
+            "width": 390,
+            "documentWidth": 390,
+            "bodyWidth": 390,
+            "dark": true,
+            "inputCount": 2
+          },
+          "screenshot": "output/playwright/delivery-20261013-local-login-phone.png"
+        },
+        {
+          "origin": "http://127.0.0.1:3015",
+          "backendRevision": "b65b0b5469510f9c0c94d5242234bdba43570c77",
+          "readyStatus": 200
+        },
+        {
+          "origin": "https://sphere-agent-canary-20260927.ru.tuna.am",
+          "shape": "desktop",
+          "layout": {
+            "width": 1440,
+            "documentWidth": 1440,
+            "bodyWidth": 1440,
+            "dark": true,
+            "inputCount": 2
+          },
+          "screenshot": "output/playwright/delivery-20261013-tunnel-login-desktop.png"
+        },
+        {
+          "origin": "https://sphere-agent-canary-20260927.ru.tuna.am",
+          "shape": "phone",
+          "layout": {
+            "width": 390,
+            "documentWidth": 390,
+            "bodyWidth": 390,
+            "dark": true,
+            "inputCount": 2
+          },
+          "screenshot": "output/playwright/delivery-20261013-tunnel-login-phone.png"
+        },
+        {
+          "origin": "https://sphere-agent-canary-20260927.ru.tuna.am",
+          "backendRevision": "b65b0b5469510f9c0c94d5242234bdba43570c77",
+          "readyStatus": 200
+        }
+      ],
+      "pageErrors": [],
+      "authenticated": false
+    },
+    "loginScreenshots": [
+      {
+        "path": "docs/audits/2026-10-13/screenshots/direct-session-login-desktop.png",
+        "sha256": "21e51c90db7553ffa7acfc7757093e6eb3e120fc48d270c84db39df75d63ea82",
+        "bytes": 129347
+      },
+      {
+        "path": "docs/audits/2026-10-13/screenshots/direct-session-login-phone.png",
+        "sha256": "347d0b41e0ac28ea53fa8f65f72dcdd8215028015ec195d72626abad2011d768",
+        "bytes": 49619
+      }
+    ],
+    "directFramesPresented": 1502,
+    "localOneMinute": {
+      "evidenceLabel": "apk64-local-stream.json",
+      "observedAtUtc": "2026-10-13T01:17:38.845Z",
+      "deviceId": "5df4805e-fe64-4d39-960c-19ceab206cd6",
+      "origin": "http://127.0.0.1:3015",
+      "ordinaryChrome": true,
+      "before": {
+        "at": "2026-10-13T01:16:38.354Z",
+        "binaryPackets": 78,
+        "binaryBytes": 618880
+      },
+      "after": {
+        "at": "2026-10-13T01:17:38.366Z",
+        "binaryPackets": 78,
+        "binaryBytes": 618880
+      },
+      "decodedFramesBefore": 178,
+      "decodedFramesAfter": 1920,
+      "decodedFrameDelta": 1742,
+      "presentationCallbacks": 1594,
+      "finalRtp": {
+        "framesPerSecond": 28,
+        "packetsLost": 0,
+        "freezeCount": 0
+      },
+      "gesture": {
+        "sentEvents": 13,
+        "nativeInputReceipts": 13,
+        "nativeDownConfirmed": true,
+        "nativeMoveReceipts": 11,
+        "nativeUpConfirmed": true,
+        "serverTouchEvents": 0
+      },
+      "pageErrors": [],
+      "commandsReplayed": false,
+      "viewerClosedByNavigation": true
+    },
+    "tunnelOneMinute": {
+      "evidenceLabel": "apk64-tunnel-stream.json",
+      "observedAtUtc": "2026-10-13T01:30:21.693Z",
+      "deviceId": "5df4805e-fe64-4d39-960c-19ceab206cd6",
+      "origin": "https://sphere-agent-canary-20260927.ru.tuna.am",
+      "ordinaryChrome": true,
+      "before": {
+        "at": "2026-10-13T01:29:21.027Z",
+        "binaryPackets": 99,
+        "binaryBytes": 774971
+      },
+      "after": {
+        "at": "2026-10-13T01:30:21.040Z",
+        "binaryPackets": 99,
+        "binaryBytes": 774971
+      },
+      "decodedFramesBefore": 137,
+      "decodedFramesAfter": 1887,
+      "decodedFrameDelta": 1750,
+      "presentationCallbacks": 1505,
+      "finalRtp": {
+        "framesPerSecond": 30,
+        "packetsLost": 0,
+        "freezeCount": 0
+      },
+      "gesture": {
+        "sentEvents": 15,
+        "nativeInputReceipts": 15,
+        "nativeDownConfirmed": true,
+        "nativeMoveReceipts": 13,
+        "nativeUpConfirmed": true,
+        "serverTouchEvents": 0
+      },
+      "pageErrors": [],
+      "commandsReplayed": false,
+      "viewerClosedByNavigation": true
+    },
+    "tunnelThreeMinutes": {
+      "evidenceLabel": "apk64-tunnel-three-minute.json",
+      "observedAtUtc": "2026-10-13T01:41:27.272Z",
+      "deviceId": "5df4805e-fe64-4d39-960c-19ceab206cd6",
+      "origin": "https://sphere-agent-canary-20260927.ru.tuna.am",
+      "ordinaryChrome": true,
+      "before": {
+        "at": "2026-10-13T01:38:26.570Z",
+        "binaryPackets": 57,
+        "binaryBytes": 474928,
+        "peersCreated": 1,
+        "controlState": "ready",
+        "controlFailure": null
+      },
+      "after": {
+        "at": "2026-10-13T01:41:26.607Z",
+        "binaryPackets": 57,
+        "binaryBytes": 474928,
+        "peersCreated": 1,
+        "controlState": "ready",
+        "controlFailure": null
+      },
+      "decodedFramesBefore": 151,
+      "decodedFramesAfter": 5373,
+      "decodedFrameDelta": 5222,
+      "presentationCallbacks": 4466,
+      "finalRtp": {
+        "framesPerSecond": 30,
+        "packetsLost": 0,
+        "freezeCount": 0
+      },
+      "gesture": {
+        "sentEvents": 13,
+        "nativeInputReceipts": 13,
+        "nativeDownConfirmed": true,
+        "nativeMoveReceipts": 11,
+        "nativeUpConfirmed": true,
+        "serverTouchEvents": 0
+      },
+      "pageErrors": [],
+      "commandsReplayed": false,
+      "viewerClosedByNavigation": true
+    },
+    "freshViewerCycles": [
+      {
+        "origin": "http://127.0.0.1:3015",
+        "kind": "fresh viewer close/open, not forced network failure",
+        "observedAtUtc": "2026-10-13T01:21:03.178Z",
+        "cycles": [
+          {
+            "cycle": 0,
+            "ready": true,
+            "at": "2026-10-13T01:20:39.559Z",
+            "state": "ready",
+            "failure": null,
+            "directVideoActive": true,
+            "gesture": {
+              "sent": 10,
+              "confirmed": 10,
+              "down": true,
+              "up": true,
+              "moves": 8,
+              "serverTouches": 0,
+              "nativeAckRoundTripMs": [
+                15.199999988079071,
+                5.5,
+                15.400000005960464,
+                9.300000011920929,
+                8.5,
+                6,
+                11.099999994039536,
+                11.300000011920929,
+                6.5,
+                13.299999997019768
+              ]
+            }
+          },
+          {
+            "cycle": 1,
+            "ready": true,
+            "at": "2026-10-13T01:20:43.993Z",
+            "state": "ready",
+            "failure": null,
+            "directVideoActive": true,
+            "gesture": {
+              "sent": 9,
+              "confirmed": 9,
+              "down": true,
+              "up": true,
+              "moves": 7,
+              "serverTouches": 0,
+              "nativeAckRoundTripMs": [
+                15.599999994039536,
+                19.69999998807907,
+                6.299999997019768,
+                4.5,
+                18.099999994039536,
+                5.9000000059604645,
+                11.399999991059303,
+                6.5999999940395355,
+                15
+              ]
+            }
+          },
+          {
+            "cycle": 2,
+            "ready": true,
+            "at": "2026-10-13T01:20:48.609Z",
+            "state": "ready",
+            "failure": null,
+            "directVideoActive": true,
+            "gesture": {
+              "sent": 9,
+              "confirmed": 8,
+              "down": true,
+              "up": true,
+              "moves": 6,
+              "serverTouches": 0,
+              "nativeAckRoundTripMs": [
+                16.100000008940697,
+                16.5,
+                20,
+                22.400000005960464,
+                13,
+                19.700000002980232,
+                6.9000000059604645,
+                15.099999994039536
+              ]
+            }
+          },
+          {
+            "cycle": 3,
+            "ready": true,
+            "at": "2026-10-13T01:20:53.160Z",
+            "state": "ready",
+            "failure": null,
+            "directVideoActive": true,
+            "gesture": {
+              "sent": 9,
+              "confirmed": 9,
+              "down": true,
+              "up": true,
+              "moves": 7,
+              "serverTouches": 0,
+              "nativeAckRoundTripMs": [
+                15.400000005960464,
+                11.299999997019768,
+                8.799999997019768,
+                6.200000002980232,
+                17.100000008940697,
+                14.5,
+                7.4000000059604645,
+                20.80000001192093,
+                15.200000002980232
+              ]
+            }
+          },
+          {
+            "cycle": 4,
+            "ready": true,
+            "at": "2026-10-13T01:20:57.609Z",
+            "state": "ready",
+            "failure": null,
+            "directVideoActive": true,
+            "gesture": {
+              "sent": 10,
+              "confirmed": 10,
+              "down": true,
+              "up": true,
+              "moves": 8,
+              "serverTouches": 0,
+              "nativeAckRoundTripMs": [
+                15.900000005960464,
+                15.700000002980232,
+                8,
+                7.799999997019768,
+                5.0999999940395355,
+                9.5,
+                12.299999997019768,
+                10.299999997019768,
+                18.299999997019768,
+                16.799999997019768
+              ]
+            }
+          },
+          {
+            "cycle": 5,
+            "ready": true,
+            "at": "2026-10-13T01:21:02.110Z",
+            "state": "ready",
+            "failure": null,
+            "directVideoActive": true,
+            "gesture": {
+              "sent": 8,
+              "confirmed": 8,
+              "down": true,
+              "up": true,
+              "moves": 6,
+              "serverTouches": 0,
+              "nativeAckRoundTripMs": [
+                15.699999988079071,
+                14.800000011920929,
+                12.899999991059303,
+                4.5,
+                12.799999997019768,
+                16.600000008940697,
+                9.300000011920929,
+                16
+              ]
+            }
+          }
+        ]
+      },
+      {
+        "origin": "https://sphere-agent-canary-20260927.ru.tuna.am",
+        "kind": "fresh viewer close/open, not forced network failure",
+        "observedAtUtc": "2026-10-13T01:31:35.383Z",
+        "cycles": [
+          {
+            "cycle": 0,
+            "ready": true,
+            "at": "2026-10-13T01:30:54.712Z",
+            "state": "ready",
+            "failure": null,
+            "directVideoActive": true,
+            "gesture": {
+              "sent": 9,
+              "confirmed": 9,
+              "down": true,
+              "up": true,
+              "moves": 7,
+              "serverTouches": 0,
+              "nativeAckRoundTripMs": [
+                16.799999997019768,
+                10.5,
+                10.799999997019768,
+                13,
+                17.799999997019768,
+                15.399999991059303,
+                11,
+                23.799999997019768,
+                17.899999991059303
+              ]
+            }
+          },
+          {
+            "cycle": 1,
+            "ready": true,
+            "at": "2026-10-13T01:31:02.997Z",
+            "state": "ready",
+            "failure": null,
+            "directVideoActive": true,
+            "gesture": {
+              "sent": 9,
+              "confirmed": 9,
+              "down": true,
+              "up": true,
+              "moves": 7,
+              "serverTouches": 0,
+              "nativeAckRoundTripMs": [
+                16.399999991059303,
+                13.600000008940697,
+                7.5,
+                7.100000008940697,
+                19.900000005960464,
+                11.799999997019768,
+                13.399999991059303,
+                6,
+                16.400000005960464
+              ]
+            }
+          },
+          {
+            "cycle": 2,
+            "ready": true,
+            "at": "2026-10-13T01:31:10.622Z",
+            "state": "ready",
+            "failure": null,
+            "directVideoActive": true,
+            "gesture": {
+              "sent": 8,
+              "confirmed": 8,
+              "down": true,
+              "up": true,
+              "moves": 6,
+              "serverTouches": 0,
+              "nativeAckRoundTripMs": [
+                16.100000008940697,
+                10.599999994039536,
+                13.800000011920929,
+                12.799999997019768,
+                4.799999997019768,
+                7.799999997019768,
+                23.099999994039536,
+                16.399999991059303
+              ]
+            }
+          },
+          {
+            "cycle": 3,
+            "ready": true,
+            "at": "2026-10-13T01:31:18.640Z",
+            "state": "ready",
+            "failure": null,
+            "directVideoActive": true,
+            "gesture": {
+              "sent": 8,
+              "confirmed": 8,
+              "down": true,
+              "up": true,
+              "moves": 6,
+              "serverTouches": 0,
+              "nativeAckRoundTripMs": [
+                13.700000002980232,
+                14,
+                10.5,
+                15.099999994039536,
+                8.899999991059303,
+                13.099999994039536,
+                9,
+                16.30000001192093
+              ]
+            }
+          },
+          {
+            "cycle": 4,
+            "ready": true,
+            "at": "2026-10-13T01:31:26.338Z",
+            "state": "ready",
+            "failure": null,
+            "directVideoActive": true,
+            "gesture": {
+              "sent": 8,
+              "confirmed": 8,
+              "down": true,
+              "up": true,
+              "moves": 6,
+              "serverTouches": 0,
+              "nativeAckRoundTripMs": [
+                16.899999991059303,
+                7.5,
+                17,
+                9.900000005960464,
+                14.199999988079071,
+                11.799999997019768,
+                13.700000002980232,
+                16.600000008940697
+              ]
+            }
+          },
+          {
+            "cycle": 5,
+            "ready": true,
+            "at": "2026-10-13T01:31:33.998Z",
+            "state": "ready",
+            "failure": null,
+            "directVideoActive": true,
+            "gesture": {
+              "sent": 9,
+              "confirmed": 9,
+              "down": true,
+              "up": true,
+              "moves": 7,
+              "serverTouches": 0,
+              "nativeAckRoundTripMs": [
+                16.69999998807907,
+                11.799999997019768,
+                11,
+                12.599999994039536,
+                3.6000000089406967,
+                11.199999988079071,
+                9.600000008940697,
+                25.900000005960464,
+                16.299999997019768
+              ]
+            }
+          }
+        ]
+      }
+    ],
+    "lateDiagnosticEcho": {
+      "observedAtUtc": "2026-10-13T01:32:50.320Z",
+      "fault": "Only one incoming diagnostic SL1 echo was delivered to its original product handler 12500ms late; real RTP, input ACKs, authorization grants and signaling untouched.",
+      "accepted": true,
+      "before": {
+        "at": "2026-10-13T01:32:20.303Z",
+        "peerState": "connected",
+        "channelState": "open",
+        "peersCreated": 1,
+        "binaryPackets": 52,
+        "directDeliveryErrors": 0,
+        "controlState": "ready",
+        "controlFailure": null,
+        "frameAgeMs": null,
+        "presented": 0,
+        "echoSends": 0,
+        "held": 0,
+        "delivered": 0,
+        "lateTurnaroundMs": null,
+        "video": {
+          "framesDecoded": 30,
+          "packetsLost": 0,
+          "freezeCount": 0
+        }
+      },
+      "after": {
+        "at": "2026-10-13T01:32:50.319Z",
+        "peerState": "connected",
+        "channelState": "open",
+        "peersCreated": 1,
+        "binaryPackets": 52,
+        "directDeliveryErrors": 0,
+        "controlState": "ready",
+        "controlFailure": null,
+        "frameAgeMs": 34.29999999701977,
+        "presented": 752,
+        "echoSends": 4,
+        "held": 1,
+        "delivered": 1,
+        "lateTurnaroundMs": 12511.5,
+        "video": {
+          "framesDecoded": 907,
+          "packetsLost": 0,
+          "freezeCount": 0
+        }
+      }
+    },
+    "apkDownloads": [
+      {
+        "observedAt": "2026-10-13T02:00:45.976Z",
+        "origin": "http://127.0.0.1:3015",
+        "channel": "android-canary/dev",
+        "officialLink": "https://www.ldplayer.net/",
+        "status": 200,
+        "elapsedMs": 1130,
+        "fullFileHashVerified": true,
+        "downloadedSha256": "27c6fddb8365f338bf7b0df544f59950574442ff937cf875f1e6ee97f4936e5c",
+        "saveMessageVisible": true,
+        "pageErrors": [],
+        "staticAssetFailures": []
+      },
+      {
+        "observedAt": "2026-10-13T01:52:33.439Z",
+        "origin": "https://sphere-agent-canary-20260927.ru.tuna.am",
+        "channel": "android-canary/dev",
+        "officialLink": "https://www.ldplayer.net/",
+        "status": 200,
+        "elapsedMs": 9179,
+        "fullFileHashVerified": true,
+        "downloadedSha256": "27c6fddb8365f338bf7b0df544f59950574442ff937cf875f1e6ee97f4936e5c",
+        "saveMessageVisible": true,
+        "pageErrors": [],
+        "staticAssetFailures": []
+      },
+      {
+        "observedAt": "2026-10-13T06:14:48.732Z",
+        "origin": "http://127.0.0.1:3015",
+        "channel": "android-canary/dev",
+        "officialLink": "https://www.ldplayer.net/",
+        "status": 200,
+        "elapsedMs": 1076,
+        "fullFileHashVerified": true,
+        "downloadedSha256": "7a620e7a57ca6b1440adb2637d068ad8e800ee2d11bbaa3c0c073a69ae37b7c1",
+        "saveMessageVisible": true,
+        "pageErrors": [],
+        "staticAssetFailures": []
+      },
+      {
+        "observedAt": "2026-10-13T06:11:17.075Z",
+        "origin": "https://sphere-agent-canary-20260927.ru.tuna.am",
+        "channel": "android-canary/dev",
+        "officialLink": "https://www.ldplayer.net/",
+        "status": 200,
+        "elapsedMs": 8572,
+        "fullFileHashVerified": true,
+        "downloadedSha256": "7a620e7a57ca6b1440adb2637d068ad8e800ee2d11bbaa3c0c073a69ae37b7c1",
+        "saveMessageVisible": true,
+        "pageErrors": [],
+        "staticAssetFailures": []
+      }
+    ],
+    "currentRuntimeOneMinute": {
+      "evidenceLabel": "apk65-api-b65-local-stream.json",
+      "observedAtUtc": "2026-10-13T06:04:34.098Z",
+      "deviceId": "5df4805e-fe64-4d39-960c-19ceab206cd6",
+      "origin": "http://127.0.0.1:3015",
+      "ordinaryChrome": true,
+      "before": {
+        "at": "2026-10-13T06:03:33.608Z",
+        "binaryPackets": 67,
+        "binaryBytes": 571445
+      },
+      "after": {
+        "at": "2026-10-13T06:04:33.620Z",
+        "binaryPackets": 67,
+        "binaryBytes": 571445
+      },
+      "decodedFramesBefore": 133,
+      "decodedFramesAfter": 1880,
+      "decodedFrameDelta": 1747,
+      "presentationCallbacks": 1502,
+      "finalRtp": {
+        "framesPerSecond": 30,
+        "packetsLost": 0,
+        "freezeCount": 0
+      },
+      "gesture": {
+        "sentEvents": 12,
+        "nativeInputReceipts": 12,
+        "nativeDownConfirmed": true,
+        "nativeMoveReceipts": 10,
+        "nativeUpConfirmed": true,
+        "serverTouchEvents": 0
+      },
+      "pageErrors": [],
+      "commandsReplayed": false,
+      "viewerClosedByNavigation": true
+    },
+    "currentRuntimeTunnelOneMinute": {
+      "evidenceLabel": "apk65-api-b65-tunnel-stream.json",
+      "observedAtUtc": "2026-10-13T06:09:38.638Z",
+      "deviceId": "5df4805e-fe64-4d39-960c-19ceab206cd6",
+      "origin": "https://sphere-agent-canary-20260927.ru.tuna.am",
+      "ordinaryChrome": true,
+      "before": {
+        "at": "2026-10-13T06:08:37.987Z",
+        "binaryPackets": 92,
+        "binaryBytes": 724249
+      },
+      "after": {
+        "at": "2026-10-13T06:09:38.003Z",
+        "binaryPackets": 92,
+        "binaryBytes": 724249
+      },
+      "decodedFramesBefore": 137,
+      "decodedFramesAfter": 1875,
+      "decodedFrameDelta": 1738,
+      "presentationCallbacks": 1519,
+      "finalRtp": {
+        "framesPerSecond": 30,
+        "packetsLost": 0,
+        "freezeCount": 0
+      },
+      "gesture": {
+        "sentEvents": 14,
+        "nativeInputReceipts": 14,
+        "nativeDownConfirmed": true,
+        "nativeMoveReceipts": 12,
+        "nativeUpConfirmed": true,
+        "serverTouchEvents": 0
+      },
+      "pageErrors": [],
+      "commandsReplayed": false,
+      "viewerClosedByNavigation": true
+    },
+    "currentNativeTelemetry": {
+      "observedAtUtc": "2026-10-13T06:05:36.320399+00:00",
+      "device": "PH010",
+      "secondViewerOpened": false,
+      "reportedVersionCode": 10265,
+      "sessions": [
+        {
+          "opened_at": "2026-10-13T06:03:26.108310+00:00",
+          "state": "closed",
+          "browser": [
+            {
+              "direct_network_rtt_ms": 7,
+              "received_at": "2026-10-13T06:04:26.105156+00:00",
+              "direct_path": "nat",
+              "control_state": "ready",
+              "direct_protocol": "udp",
+              "control_rtt_ms": 12,
+              "direct_frame_age_ms": 32,
+              "control_transport": "direct_webrtc",
+              "recovery_attempts": 0,
+              "rendered_frames": 2,
+              "direct_fps": 28.950085133976,
+              "control_failure": "none",
+              "direct_ice_state": "connected",
+              "direct_network": {
+                "local_candidates": 5,
+                "checking_pairs": 0,
+                "pairs": 1,
+                "remote_candidates": 1,
+                "requests_sent": 24,
+                "succeeded_pairs": 1,
+                "responses_received": 24,
+                "failed_pairs": 0
+              },
+              "direct_decode_ms": 0.27366896551724,
+              "direct_attempts": 1,
+              "control_fence": {
+                "offered_sequence": 0,
+                "oldest_action": null,
+                "last_receipt_rtt_ms": null,
+                "reason": "surface_control_lost",
+                "age_ms": 57560,
+                "buffered_bytes": 0,
+                "acknowledged_sequence": 0,
+                "pending_count": 0,
+                "socket_state": 1,
+                "last_receipt_age_ms": null,
+                "pointer_held": false,
+                "tick_gap_ms": 18.09999999404,
+                "idle_heartbeat_only": false,
+                "phase": "opening",
+                "last_send_age_ms": 18.09999999404,
+                "terminal_age_ms": null,
+                "oldest_deadline_age_ms": null,
+                "oldest_age_ms": null
+              },
+              "direct_jitter_buffer_ms": 37.482406896552,
+              "render_errors": 0,
+              "decode_errors": 0,
+              "direct_dtls_state": "connected",
+              "direct_frames": 1410,
+              "direct_state": "connected",
+              "transport": "direct_webrtc"
+            },
+            {
+              "direct_network_rtt_ms": 0,
+              "received_at": "2026-10-13T06:04:34.080431+00:00",
+              "control_fence": {
+                "offered_sequence": 263,
+                "oldest_action": null,
+                "last_receipt_rtt_ms": 16.59999999404,
+                "reason": "surface_hidden",
+                "oldest_age_ms": null,
+                "buffered_bytes": 0,
+                "acknowledged_sequence": 263,
+                "last_send_age_ms": 54.09999999404,
+                "socket_state": 1,
+                "last_receipt_age_ms": 37.5,
+                "phase": "ready",
+                "tick_gap_ms": 5.2999999970198,
+                "oldest_deadline_age_ms": null,
+                "age_ms": 1,
+                "pending_count": 0,
+                "terminal_age_ms": null,
+                "pointer_held": false,
+                "idle_heartbeat_only": false
+              },
+              "direct_path": "nat",
+              "direct_protocol": "udp",
+              "control_rtt_ms": 17,
+              "direct_frame_age_ms": 4,
+              "control_transport": "direct_webrtc",
+              "recovery_attempts": 0,
+              "rendered_frames": 2,
+              "direct_fps": 28.750043990944,
+              "control_failure": "other",
+              "direct_ice_state": "connected",
+              "direct_network": {
+                "local_candidates": 5,
+                "checking_pairs": 0,
+                "pairs": 1,
+                "remote_candidates": 1,
+                "requests_sent": 27,
+                "succeeded_pairs": 1,
+                "responses_received": 27,
+                "failed_pairs": 0
+              },
+              "direct_attempts": 1,
+              "direct_decode_ms": 0.282,
+              "control_failure_detail": "surface_hidden",
+              "direct_state": "connected",
+              "direct_frames": 1620,
+              "direct_jitter_buffer_ms": 36.224124137931,
+              "decode_errors": 0,
+              "control_state": "fenced",
+              "direct_dtls_state": "connected",
+              "render_errors": 0,
+              "transport": "direct_webrtc"
+            }
+          ],
+          "native": [
+            {
+              "network": {
+                "local_candidates": 1,
+                "responses_received": 24,
+                "pairs": 1,
+                "succeeded_pairs": 1,
+                "requests_received": 22,
+                "checking_pairs": 0,
+                "remote_candidates": 1,
+                "requests_sent": 24,
+                "dtls_state": "connected",
+                "responses_sent": 22,
+                "failed_pairs": 0
+              },
+              "elapsed_ms": 51968,
+              "received_at": "2026-10-13T06:04:20.818607+00:00",
+              "stage": "channel_open"
+            },
+            {
+              "elapsed_ms": 62008,
+              "received_at": "2026-10-13T06:04:30.864733+00:00",
+              "stage": "channel_open",
+              "network": {
+                "local_candidates": 1,
+                "responses_received": 28,
+                "pairs": 1,
+                "succeeded_pairs": 1,
+                "requests_received": 26,
+                "checking_pairs": 0,
+                "remote_candidates": 1,
+                "requests_sent": 28,
+                "dtls_state": "connected",
+                "responses_sent": 26,
+                "failed_pairs": 0
+              }
+            }
+          ],
+          "agent": [
+            {
+              "received_at": "2026-10-13T06:04:16.134891+00:00",
+              "observed_at": "2026-10-13T06:03:46.453922+00:00",
+              "current_agent_session": true,
+              "heartbeat_at": "2026-10-13T06:03:46.452817+00:00",
+              "available": true,
+              "version_code": 10265,
+              "nativeInput": {
+                "scope": "agent_process",
+                "open_rejections_total": 0,
+                "schema_version": 1,
+                "open_attempts_total": 4,
+                "state": "ready",
+                "last_release_age_ms": 17581,
+                "releases_total": 3,
+                "input_failures_total": 0,
+                "startups_total": 2,
+                "startup_failures_total": 0,
+                "last_release_reason": "viewer_closed",
+                "unknown_releases_total": 0
+              }
+            },
+            {
+              "received_at": "2026-10-13T06:04:26.138734+00:00",
+              "observed_at": "2026-10-13T06:04:16.450369+00:00",
+              "current_agent_session": true,
+              "heartbeat_at": "2026-10-13T06:04:16.449297+00:00",
+              "available": true,
+              "version_code": 10265,
+              "nativeInput": {
+                "scope": "agent_process",
+                "open_rejections_total": 0,
+                "schema_version": 1,
+                "open_attempts_total": 4,
+                "state": "ready",
+                "last_release_age_ms": 47579,
+                "releases_total": 3,
+                "input_failures_total": 0,
+                "startups_total": 2,
+                "startup_failures_total": 0,
+                "last_release_reason": "viewer_closed",
+                "unknown_releases_total": 0
+              }
+            }
+          ],
+          "controlEvents": [],
+          "browserSummary": {
+            "reports": 8,
+            "max_decode_errors": 0,
+            "last_control_fence_received_at": "2026-10-13T06:04:34.080431+00:00",
+            "max_control_rtt_ms": 17,
+            "last_control_failure_detail": "surface_hidden",
+            "last_control_fence": {
+              "offered_sequence": 263,
+              "oldest_action": null,
+              "last_receipt_rtt_ms": 16.59999999404,
+              "reason": "surface_hidden",
+              "oldest_age_ms": null,
+              "buffered_bytes": 0,
+              "acknowledged_sequence": 263,
+              "last_send_age_ms": 54.09999999404,
+              "socket_state": 1,
+              "last_receipt_age_ms": 37.5,
+              "phase": "ready",
+              "tick_gap_ms": 5.2999999970198,
+              "oldest_deadline_age_ms": null,
+              "age_ms": 1,
+              "pending_count": 0,
+              "terminal_age_ms": null,
+              "pointer_held": false,
+              "idle_heartbeat_only": false
+            },
+            "last_control_failure_at": "2026-10-13T06:04:34.080431+00:00",
+            "max_render_errors": 0
+          }
+        }
+      ]
+    }
+  },
+  "actualPh030": {
+    "accepted": false,
+    "beforeCauseTelemetry": {
+      "observedAtUtc": "2026-10-13T02:17:43.891455+00:00",
+      "device": "PH030",
+      "secondViewerOpened": false,
+      "reportedVersionCode": 10264,
+      "sessions": [
+        {
+          "opened_at": "2026-10-13T02:12:27.186464+00:00",
+          "state": "active",
+          "browser": [
+            {
+              "direct_network_rtt_ms": 3,
+              "received_at": "2026-10-13T02:17:17.198922+00:00",
+              "direct_path": "nat",
+              "direct_protocol": "udp",
+              "control_rtt_ms": 13,
+              "direct_frame_age_ms": 57,
+              "control_transport": "direct_webrtc",
+              "recovery_attempts": 0,
+              "rendered_frames": 123,
+              "direct_fps": 28.325612074229,
+              "control_failure": "none",
+              "direct_ice_state": "connected",
+              "direct_network": {
+                "local_candidates": 6,
+                "checking_pairs": 0,
+                "pairs": 1,
+                "remote_candidates": 1,
+                "requests_sent": 109,
+                "succeeded_pairs": 1,
+                "responses_received": 109,
+                "failed_pairs": 0
+              },
+              "direct_decode_ms": 1.0638591549296,
+              "direct_attempts": 1,
+              "control_state": "ready",
+              "direct_jitter_buffer_ms": 39.061197183099,
+              "render_errors": 0,
+              "decode_errors": 0,
+              "direct_dtls_state": "connected",
+              "direct_frames": 7320,
+              "direct_state": "connected",
+              "transport": "direct_webrtc"
+            },
+            {
+              "direct_network_rtt_ms": 2,
+              "received_at": "2026-10-13T02:17:31.945703+00:00",
+              "direct_path": "nat",
+              "direct_protocol": "udp",
+              "control_rtt_ms": 18,
+              "direct_frame_age_ms": 13,
+              "control_transport": "direct_webrtc",
+              "recovery_attempts": 0,
+              "rendered_frames": 123,
+              "direct_fps": 28.241148235515,
+              "control_failure": "none",
+              "direct_ice_state": "connected",
+              "direct_network": {
+                "local_candidates": 6,
+                "checking_pairs": 0,
+                "pairs": 1,
+                "remote_candidates": 1,
+                "requests_sent": 114,
+                "succeeded_pairs": 1,
+                "responses_received": 114,
+                "failed_pairs": 0
+              },
+              "direct_decode_ms": 1.0838936170213,
+              "direct_attempts": 1,
+              "control_state": "ready",
+              "direct_jitter_buffer_ms": 40.481602836879,
+              "render_errors": 0,
+              "decode_errors": 0,
+              "direct_dtls_state": "connected",
+              "direct_frames": 7710,
+              "direct_state": "connected",
+              "transport": "direct_webrtc"
+            },
+            {
+              "direct_network_rtt_ms": 2,
+              "received_at": "2026-10-13T02:17:41.884171+00:00",
+              "direct_path": "nat",
+              "control_state": "ready",
+              "direct_protocol": "udp",
+              "control_rtt_ms": 13,
+              "direct_frame_age_ms": 20,
+              "control_transport": "direct_webrtc",
+              "recovery_attempts": 0,
+              "rendered_frames": 123,
+              "direct_fps": 28.431228539355,
+              "control_failure": "none",
+              "direct_ice_state": "connected",
+              "direct_network": {
+                "local_candidates": 6,
+                "checking_pairs": 0,
+                "pairs": 1,
+                "remote_candidates": 1,
+                "requests_sent": 118,
+                "succeeded_pairs": 1,
+                "responses_received": 118,
+                "failed_pairs": 0
+              },
+              "direct_decode_ms": 1.0748098591549,
+              "direct_attempts": 1,
+              "direct_jitter_buffer_ms": 39.446838028169,
+              "direct_state": "connected",
+              "direct_frames": 7953,
+              "decode_errors": 0,
+              "direct_dtls_state": "connected",
+              "render_errors": 0,
+              "transport": "direct_webrtc"
+            }
+          ],
+          "native": [
+            {
+              "elapsed_ms": 293332,
+              "received_at": "2026-10-13T02:17:23.469273+00:00",
+              "stage": "channel_open",
+              "network": {
+                "local_candidates": 3,
+                "responses_received": 120,
+                "pairs": 1,
+                "succeeded_pairs": 1,
+                "requests_received": 112,
+                "checking_pairs": 0,
+                "remote_candidates": 1,
+                "requests_sent": 120,
+                "dtls_state": "connected",
+                "responses_sent": 112,
+                "failed_pairs": 0
+              }
+            },
+            {
+              "elapsed_ms": 303419,
+              "network": {
+                "local_candidates": 3,
+                "responses_received": 124,
+                "pairs": 1,
+                "succeeded_pairs": 1,
+                "requests_received": 115,
+                "checking_pairs": 0,
+                "remote_candidates": 1,
+                "requests_sent": 124,
+                "dtls_state": "connected",
+                "responses_sent": 115,
+                "failed_pairs": 0
+              },
+              "received_at": "2026-10-13T02:17:34.117091+00:00",
+              "stage": "channel_open"
+            },
+            {
+              "network": {
+                "local_candidates": 3,
+                "responses_received": 128,
+                "pairs": 1,
+                "succeeded_pairs": 1,
+                "requests_received": 119,
+                "checking_pairs": 0,
+                "remote_candidates": 1,
+                "requests_sent": 128,
+                "dtls_state": "connected",
+                "responses_sent": 119,
+                "failed_pairs": 0
+              },
+              "elapsed_ms": 313430,
+              "received_at": "2026-10-13T02:17:43.516392+00:00",
+              "stage": "channel_open"
+            }
+          ],
+          "agent": [
+            {
+              "received_at": "2026-10-13T02:17:17.355806+00:00",
+              "observed_at": "2026-10-13T02:16:49.501526+00:00",
+              "current_agent_session": true,
+              "heartbeat_at": "2026-10-13T02:16:49.500531+00:00",
+              "available": true,
+              "version_code": 10264,
+              "nativeInput": {
+                "scope": "agent_process",
+                "open_rejections_total": 0,
+                "schema_version": 1,
+                "last_failure": "input_rejected",
+                "state": "ready",
+                "open_attempts_total": 217,
+                "input_failures_total": 1,
+                "last_failure_age_ms": 292710,
+                "startups_total": 217,
+                "startup_failures_total": 0,
+                "releases_total": 216,
+                "unknown_releases_total": 0
+              }
+            },
+            {
+              "received_at": "2026-10-13T02:17:27.361221+00:00",
+              "observed_at": "2026-10-13T02:17:19.472876+00:00",
+              "current_agent_session": true,
+              "heartbeat_at": "2026-10-13T02:17:19.471779+00:00",
+              "available": true,
+              "version_code": 10264,
+              "nativeInput": {
+                "scope": "agent_process",
+                "open_rejections_total": 0,
+                "schema_version": 1,
+                "last_failure": "input_rejected",
+                "state": "ready",
+                "open_attempts_total": 219,
+                "input_failures_total": 1,
+                "last_failure_age_ms": 322680,
+                "startups_total": 219,
+                "startup_failures_total": 0,
+                "releases_total": 218,
+                "unknown_releases_total": 0
+              }
+            },
+            {
+              "received_at": "2026-10-13T02:17:37.381136+00:00",
+              "observed_at": "2026-10-13T02:17:19.472876+00:00",
+              "current_agent_session": true,
+              "heartbeat_at": "2026-10-13T02:17:19.471779+00:00",
+              "available": true,
+              "version_code": 10264,
+              "nativeInput": {
+                "scope": "agent_process",
+                "open_rejections_total": 0,
+                "schema_version": 1,
+                "unknown_releases_total": 0,
+                "state": "ready",
+                "releases_total": 218,
+                "input_failures_total": 1,
+                "last_failure_age_ms": 322680,
+                "startups_total": 219,
+                "startup_failures_total": 0,
+                "open_attempts_total": 219,
+                "last_failure": "input_rejected"
+              }
+            }
+          ],
+          "controlEvents": [
+            {
+              "received_at": "2026-10-13T02:12:47.952990+00:00",
+              "error": "input_rejected_or_unavailable",
+              "operation": "touch_probe",
+              "owner_bound": true,
+              "retryable": false,
+              "reason": null
+            },
+            {
+              "received_at": "2026-10-13T02:14:59.989246+00:00",
+              "error": "input_rejected_or_unavailable",
+              "operation": "touch_probe",
+              "owner_bound": true,
+              "retryable": false,
+              "reason": null
+            }
+          ],
+          "browserSummary": {
+            "reports": 26,
+            "max_decode_errors": 0,
+            "max_control_rtt_ms": 41,
+            "last_control_failure_detail": "server_admission_retry",
+            "last_control_failure_at": "2026-10-13T02:15:05.996533+00:00",
+            "max_render_errors": 0
+          }
+        }
+      ]
+    },
+    "latest": {
+      "observedAtUtc": "2026-10-13T06:35:02.903656+00:00",
+      "device": "PH030",
+      "secondViewerOpened": false,
+      "reportedVersionCode": null,
+      "sessions": [
+        {
+          "opened_at": "2026-10-13T02:31:17.909463+00:00",
+          "state": "closed",
+          "browser": [
+            {
+              "direct_network_rtt_ms": 1,
+              "received_at": "2026-10-13T02:45:37.934864+00:00",
+              "control_fence": {
+                "offered_sequence": 1,
+                "oldest_action": 4,
+                "last_receipt_rtt_ms": null,
+                "reason": "server_runtime_retry",
+                "oldest_deadline_age_ms": 48.69999999553,
+                "buffered_bytes": 0,
+                "acknowledged_sequence": 0,
+                "pending_count": 1,
+                "socket_state": 0,
+                "last_receipt_age_ms": null,
+                "phase": "opening",
+                "tick_gap_ms": 1.1999999955297,
+                "idle_heartbeat_only": false,
+                "pointer_held": false,
+                "last_send_age_ms": 48.69999999553,
+                "terminal_age_ms": null,
+                "oldest_age_ms": 48.69999999553,
+                "age_ms": 266586
+              },
+              "direct_state": "connected",
+              "control_state": "ready",
+              "direct_protocol": "udp",
+              "control_rtt_ms": 27,
+              "direct_frame_age_ms": 9,
+              "control_transport": "direct_webrtc",
+              "recovery_attempts": 5,
+              "rendered_frames": 301,
+              "direct_fps": 28.244903604319,
+              "control_failure": "none",
+              "direct_ice_state": "connected",
+              "direct_network": {
+                "local_candidates": 6,
+                "checking_pairs": 0,
+                "pairs": 1,
+                "remote_candidates": 1,
+                "requests_sent": 99,
+                "succeeded_pairs": 1,
+                "responses_received": 99,
+                "failed_pairs": 0
+              },
+              "direct_decode_ms": 1.1314964539007,
+              "direct_attempts": 2,
+              "direct_jitter_buffer_ms": 50.01945,
+              "render_errors": 0,
+              "decode_errors": 0,
+              "direct_dtls_state": "connected",
+              "direct_frames": 22020,
+              "direct_path": "nat",
+              "transport": "direct_webrtc"
+            },
+            {
+              "direct_network_rtt_ms": 1,
+              "received_at": "2026-10-13T02:45:47.681215+00:00",
+              "direct_state": "connected",
+              "direct_protocol": "udp",
+              "control_rtt_ms": 32,
+              "direct_frame_age_ms": 16,
+              "control_transport": "direct_webrtc",
+              "recovery_attempts": 5,
+              "rendered_frames": 301,
+              "direct_fps": 28.246340272794,
+              "control_failure": "none",
+              "direct_ice_state": "connected",
+              "direct_network": {
+                "local_candidates": 6,
+                "checking_pairs": 0,
+                "pairs": 1,
+                "remote_candidates": 1,
+                "requests_sent": 103,
+                "succeeded_pairs": 1,
+                "responses_received": 103,
+                "failed_pairs": 0
+              },
+              "direct_decode_ms": 1.1210141843972,
+              "direct_attempts": 2,
+              "control_state": "ready",
+              "direct_path": "nat",
+              "direct_jitter_buffer_ms": 47.56180141844,
+              "direct_frames": 22290,
+              "decode_errors": 0,
+              "direct_dtls_state": "connected",
+              "render_errors": 0,
+              "control_fence": {
+                "offered_sequence": 1,
+                "oldest_action": 4,
+                "last_receipt_rtt_ms": null,
+                "reason": "server_runtime_retry",
+                "age_ms": 276593,
+                "buffered_bytes": 0,
+                "acknowledged_sequence": 0,
+                "last_send_age_ms": 48.69999999553,
+                "socket_state": 0,
+                "last_receipt_age_ms": null,
+                "pointer_held": false,
+                "tick_gap_ms": 1.1999999955297,
+                "oldest_age_ms": 48.69999999553,
+                "oldest_deadline_age_ms": 48.69999999553,
+                "pending_count": 1,
+                "terminal_age_ms": null,
+                "phase": "opening",
+                "idle_heartbeat_only": false
+              },
+              "transport": "direct_webrtc"
+            },
+            {
+              "direct_network_rtt_ms": 7,
+              "received_at": "2026-10-13T02:46:02.650324+00:00",
+              "direct_state": "connected",
+              "direct_protocol": "udp",
+              "control_rtt_ms": 31,
+              "direct_frame_age_ms": 6,
+              "control_transport": "direct_webrtc",
+              "recovery_attempts": 5,
+              "rendered_frames": 301,
+              "direct_fps": 28.667937973712,
+              "control_failure": "none",
+              "direct_ice_state": "connected",
+              "direct_network": {
+                "local_candidates": 6,
+                "checking_pairs": 0,
+                "pairs": 1,
+                "remote_candidates": 1,
+                "requests_sent": 109,
+                "succeeded_pairs": 1,
+                "responses_received": 109,
+                "failed_pairs": 0
+              },
+              "direct_decode_ms": 1.0432517482518,
+              "direct_attempts": 2,
+              "control_state": "ready",
+              "direct_path": "nat",
+              "direct_jitter_buffer_ms": 45.508755244756,
+              "direct_frames": 22680,
+              "decode_errors": 0,
+              "direct_dtls_state": "connected",
+              "render_errors": 0,
+              "control_fence": {
+                "offered_sequence": 1,
+                "oldest_action": 4,
+                "last_receipt_rtt_ms": null,
+                "reason": "server_runtime_retry",
+                "oldest_age_ms": 48.69999999553,
+                "buffered_bytes": 0,
+                "acknowledged_sequence": 0,
+                "last_send_age_ms": 48.69999999553,
+                "socket_state": 0,
+                "last_receipt_age_ms": null,
+                "pointer_held": false,
+                "tick_gap_ms": 1.1999999955297,
+                "oldest_deadline_age_ms": 48.69999999553,
+                "age_ms": 291583,
+                "pending_count": 1,
+                "terminal_age_ms": null,
+                "phase": "opening",
+                "idle_heartbeat_only": false
+              },
+              "transport": "direct_webrtc"
+            },
+            {
+              "direct_network_rtt_ms": 1,
+              "received_at": "2026-10-13T02:46:12.662832+00:00",
+              "direct_state": "connected",
+              "direct_protocol": "udp",
+              "direct_frame_age_ms": 32,
+              "control_transport": "direct_webrtc",
+              "recovery_attempts": 5,
+              "rendered_frames": 301,
+              "direct_fps": 28.648405733985,
+              "control_failure": "none",
+              "direct_ice_state": "connected",
+              "direct_network": {
+                "local_candidates": 6,
+                "checking_pairs": 0,
+                "pairs": 1,
+                "remote_candidates": 1,
+                "requests_sent": 112,
+                "succeeded_pairs": 1,
+                "responses_received": 112,
+                "failed_pairs": 0
+              },
+              "direct_decode_ms": 1.1141888111888,
+              "direct_attempts": 2,
+              "control_state": "opening",
+              "direct_path": "nat",
+              "direct_jitter_buffer_ms": 49.354622377622,
+              "render_errors": 0,
+              "control_fence": {
+                "offered_sequence": 1,
+                "oldest_action": 4,
+                "last_receipt_rtt_ms": null,
+                "reason": "server_runtime_retry",
+                "age_ms": 301592,
+                "buffered_bytes": 0,
+                "acknowledged_sequence": 0,
+                "pending_count": 1,
+                "socket_state": 0,
+                "last_receipt_age_ms": null,
+                "pointer_held": false,
+                "tick_gap_ms": 1.1999999955297,
+                "idle_heartbeat_only": false,
+                "phase": "opening",
+                "last_send_age_ms": 48.69999999553,
+                "terminal_age_ms": null,
+                "oldest_deadline_age_ms": 48.69999999553,
+                "oldest_age_ms": 48.69999999553
+              },
+              "decode_errors": 0,
+              "direct_dtls_state": "connected",
+              "direct_frames": 22920,
+              "transport": "direct_webrtc"
+            },
+            {
+              "direct_network_rtt_ms": 9,
+              "received_at": "2026-10-13T02:46:22.679792+00:00",
+              "control_fence": {
+                "offered_sequence": 1,
+                "oldest_action": 4,
+                "last_receipt_rtt_ms": null,
+                "reason": "server_runtime_retry",
+                "oldest_age_ms": 48.69999999553,
+                "buffered_bytes": 0,
+                "acknowledged_sequence": 0,
+                "last_send_age_ms": 48.69999999553,
+                "socket_state": 0,
+                "last_receipt_age_ms": null,
+                "phase": "opening",
+                "tick_gap_ms": 1.1999999955297,
+                "oldest_deadline_age_ms": 48.69999999553,
+                "age_ms": 311593,
+                "pending_count": 1,
+                "terminal_age_ms": null,
+                "pointer_held": false,
+                "idle_heartbeat_only": false
+              },
+              "direct_path": "nat",
+              "direct_protocol": "udp",
+              "control_rtt_ms": 21,
+              "direct_frame_age_ms": 15,
+              "control_transport": "direct_webrtc",
+              "recovery_attempts": 5,
+              "rendered_frames": 301,
+              "direct_fps": 28.149527402551,
+              "control_failure": "none",
+              "direct_ice_state": "connected",
+              "direct_network": {
+                "local_candidates": 6,
+                "checking_pairs": 0,
+                "pairs": 1,
+                "remote_candidates": 1,
+                "requests_sent": 116,
+                "succeeded_pairs": 1,
+                "responses_received": 116,
+                "failed_pairs": 0
+              },
+              "direct_decode_ms": 1.1121489361702,
+              "direct_attempts": 2,
+              "control_state": "ready",
+              "direct_state": "connected",
+              "direct_jitter_buffer_ms": 49.011794326241,
+              "direct_frames": 23190,
+              "decode_errors": 0,
+              "direct_dtls_state": "connected",
+              "render_errors": 0,
+              "transport": "direct_webrtc"
+            }
+          ],
+          "native": [
+            {
+              "elapsed_ms": 263490,
+              "network": {
+                "local_candidates": 3,
+                "responses_received": 108,
+                "pairs": 1,
+                "succeeded_pairs": 1,
+                "requests_received": 100,
+                "checking_pairs": 0,
+                "remote_candidates": 1,
+                "requests_sent": 108,
+                "dtls_state": "connected",
+                "responses_sent": 100,
+                "failed_pairs": 0
+              },
+              "received_at": "2026-10-13T02:45:36.623815+00:00",
+              "stage": "channel_open"
+            },
+            {
+              "network": {
+                "local_candidates": 3,
+                "responses_received": 112,
+                "pairs": 1,
+                "succeeded_pairs": 1,
+                "requests_received": 104,
+                "checking_pairs": 0,
+                "remote_candidates": 1,
+                "requests_sent": 112,
+                "dtls_state": "connected",
+                "responses_sent": 104,
+                "failed_pairs": 0
+              },
+              "elapsed_ms": 273516,
+              "received_at": "2026-10-13T02:45:46.632092+00:00",
+              "stage": "channel_open"
+            },
+            {
+              "network": {
+                "local_candidates": 3,
+                "responses_received": 116,
+                "pairs": 1,
+                "succeeded_pairs": 1,
+                "requests_received": 108,
+                "checking_pairs": 0,
+                "remote_candidates": 1,
+                "requests_sent": 116,
+                "dtls_state": "connected",
+                "responses_sent": 108,
+                "failed_pairs": 0
+              },
+              "elapsed_ms": 283572,
+              "received_at": "2026-10-13T02:45:58.079198+00:00",
+              "stage": "channel_open"
+            },
+            {
+              "elapsed_ms": 293602,
+              "received_at": "2026-10-13T02:46:06.740490+00:00",
+              "stage": "channel_open",
+              "network": {
+                "local_candidates": 3,
+                "responses_received": 120,
+                "pairs": 1,
+                "succeeded_pairs": 1,
+                "requests_received": 111,
+                "checking_pairs": 0,
+                "remote_candidates": 1,
+                "requests_sent": 120,
+                "dtls_state": "connected",
+                "responses_sent": 111,
+                "failed_pairs": 0
+              }
+            },
+            {
+              "elapsed_ms": 303617,
+              "network": {
+                "local_candidates": 3,
+                "responses_received": 124,
+                "pairs": 1,
+                "succeeded_pairs": 1,
+                "requests_received": 115,
+                "checking_pairs": 0,
+                "remote_candidates": 1,
+                "requests_sent": 124,
+                "dtls_state": "connected",
+                "responses_sent": 115,
+                "failed_pairs": 0
+              },
+              "received_at": "2026-10-13T02:46:16.740471+00:00",
+              "stage": "channel_open"
+            }
+          ],
+          "agent": [
+            {
+              "received_at": "2026-10-13T02:45:38.321504+00:00",
+              "observed_at": "2026-10-13T02:45:31.297957+00:00",
+              "current_agent_session": true,
+              "heartbeat_at": "2026-10-13T02:45:31.296504+00:00",
+              "available": true,
+              "version_code": 10265,
+              "nativeInput": {
+                "open_attempts_total": 66,
+                "open_rejections_total": 0,
+                "schema_version": 1,
+                "state": "ready",
+                "scope": "agent_process",
+                "input_failures_total": 0,
+                "startups_total": 64,
+                "startup_failures_total": 0,
+                "releases_total": 65,
+                "unknown_releases_total": 0
+              }
+            },
+            {
+              "received_at": "2026-10-13T02:45:48.327053+00:00",
+              "observed_at": "2026-10-13T02:45:31.297957+00:00",
+              "current_agent_session": true,
+              "heartbeat_at": "2026-10-13T02:45:31.296504+00:00",
+              "available": true,
+              "version_code": 10265,
+              "nativeInput": {
+                "scope": "agent_process",
+                "open_rejections_total": 0,
+                "schema_version": 1,
+                "state": "ready",
+                "open_attempts_total": 66,
+                "releases_total": 65,
+                "startups_total": 64,
+                "startup_failures_total": 0,
+                "input_failures_total": 0,
+                "unknown_releases_total": 0
+              }
+            },
+            {
+              "received_at": "2026-10-13T02:45:58.330875+00:00",
+              "observed_at": "2026-10-13T02:45:31.297957+00:00",
+              "current_agent_session": true,
+              "heartbeat_at": "2026-10-13T02:45:31.296504+00:00",
+              "available": true,
+              "version_code": 10265,
+              "nativeInput": {
+                "scope": "agent_process",
+                "open_rejections_total": 0,
+                "schema_version": 1,
+                "state": "ready",
+                "open_attempts_total": 66,
+                "releases_total": 65,
+                "startups_total": 64,
+                "startup_failures_total": 0,
+                "input_failures_total": 0,
+                "unknown_releases_total": 0
+              }
+            },
+            {
+              "received_at": "2026-10-13T02:46:08.337528+00:00",
+              "observed_at": "2026-10-13T02:46:00.306024+00:00",
+              "current_agent_session": true,
+              "heartbeat_at": "2026-10-13T02:46:00.304927+00:00",
+              "available": true,
+              "version_code": 10265,
+              "nativeInput": {
+                "open_attempts_total": 69,
+                "open_rejections_total": 0,
+                "schema_version": 1,
+                "state": "ready",
+                "scope": "agent_process",
+                "input_failures_total": 0,
+                "startups_total": 67,
+                "startup_failures_total": 0,
+                "releases_total": 68,
+                "unknown_releases_total": 0
+              }
+            },
+            {
+              "received_at": "2026-10-13T02:46:18.344010+00:00",
+              "observed_at": "2026-10-13T02:46:00.306024+00:00",
+              "current_agent_session": true,
+              "heartbeat_at": "2026-10-13T02:46:00.304927+00:00",
+              "available": true,
+              "version_code": 10265,
+              "nativeInput": {
+                "scope": "agent_process",
+                "open_rejections_total": 0,
+                "schema_version": 1,
+                "state": "ready",
+                "open_attempts_total": 69,
+                "releases_total": 68,
+                "startups_total": 67,
+                "startup_failures_total": 0,
+                "input_failures_total": 0,
+                "unknown_releases_total": 0
+              }
+            }
+          ],
+          "controlEvents": [
+            {
+              "received_at": "2026-10-13T02:31:24.302252+00:00",
+              "retryable": false,
+              "operation": "touch_probe",
+              "owner_bound": true,
+              "error": "input_rejected_or_unavailable",
+              "reason": null
+            },
+            {
+              "received_at": "2026-10-13T02:34:29.839077+00:00",
+              "error": "input_rejected_or_unavailable",
+              "operation": "touch_probe",
+              "owner_bound": true,
+              "retryable": false,
+              "reason": null
+            },
+            {
+              "received_at": "2026-10-13T02:35:31.651525+00:00",
+              "error": "input_rejected_or_unavailable",
+              "operation": "touch_probe",
+              "owner_bound": true,
+              "retryable": false,
+              "reason": null
+            },
+            {
+              "received_at": "2026-10-13T02:38:01.092305+00:00",
+              "retryable": false,
+              "operation": "touch_probe",
+              "owner_bound": true,
+              "error": "input_rejected_or_unavailable",
+              "reason": null
+            },
+            {
+              "received_at": "2026-10-13T02:40:50.338685+00:00",
+              "retryable": false,
+              "operation": "touch_probe",
+              "owner_bound": true,
+              "error": "input_rejected_or_unavailable",
+              "reason": null
+            },
+            {
+              "received_at": "2026-10-13T02:42:07.799608+00:00",
+              "error": "input_rejected_or_unavailable",
+              "operation": "touch_probe",
+              "owner_bound": true,
+              "retryable": false,
+              "reason": null
+            },
+            {
+              "received_at": "2026-10-13T02:42:34.748684+00:00",
+              "error": "input_rejected_or_unavailable",
+              "operation": "touch_probe",
+              "owner_bound": true,
+              "retryable": false,
+              "reason": null
+            },
+            {
+              "received_at": "2026-10-13T02:43:48.078863+00:00",
+              "error": "input_rejected_or_unavailable",
+              "operation": "touch_probe",
+              "owner_bound": true,
+              "retryable": false,
+              "reason": null
+            }
+          ],
+          "browserSummary": {
+            "last_control_fence_received_at": "2026-10-13T02:46:22.679792+00:00",
+            "max_decode_errors": 0,
+            "last_direct_failure": {
+              "network_age_at_stop_ms": 116.5,
+              "network": {
+                "local_candidates": 6,
+                "checking_pairs": 0,
+                "pairs": 1,
+                "remote_candidates": 1,
+                "requests_sent": 222,
+                "succeeded_pairs": 1,
+                "responses_received": 222,
+                "failed_pairs": 0
+              },
+              "network_sample_elapsed_ms": 591930.40000001,
+              "attempt": 1,
+              "reason": "channel_failed",
+              "ice_state": "connected",
+              "received_at": "2026-10-13T02:41:11.074678+00:00",
+              "dtls_state": "connected",
+              "transport": "server_websocket"
+            },
+            "last_control_failure_at": "2026-10-13T02:43:54.651481+00:00",
+            "max_render_errors": 0,
+            "last_control_failure_detail": "server_admission_retry",
+            "last_control_fence": {
+              "offered_sequence": 1,
+              "oldest_action": 4,
+              "last_receipt_rtt_ms": null,
+              "reason": "server_runtime_retry",
+              "oldest_age_ms": 48.69999999553,
+              "buffered_bytes": 0,
+              "acknowledged_sequence": 0,
+              "last_send_age_ms": 48.69999999553,
+              "socket_state": 0,
+              "last_receipt_age_ms": null,
+              "phase": "opening",
+              "tick_gap_ms": 1.1999999955297,
+              "oldest_deadline_age_ms": 48.69999999553,
+              "age_ms": 311593,
+              "pending_count": 1,
+              "terminal_age_ms": null,
+              "pointer_held": false,
+              "idle_heartbeat_only": false
+            },
+            "max_control_rtt_ms": 83,
+            "reports": 74
+          }
+        },
+        {
+          "opened_at": "2026-10-13T02:31:06.208787+00:00",
+          "state": "closed",
+          "browser": [
+            {
+              "rendered_frames": 145,
+              "control_failure": "none",
+              "transport": "server_websocket",
+              "received_at": "2026-10-13T02:31:06.314330+00:00",
+              "direct_path": "unknown",
+              "direct_attempts": 0,
+              "direct_frames": 0,
+              "control_state": "idle",
+              "control_transport": "server_websocket",
+              "recovery_attempts": 1,
+              "render_errors": 0,
+              "decode_errors": 0
+            },
+            {
+              "direct_network_rtt_ms": 2,
+              "received_at": "2026-10-13T02:31:13.116116+00:00",
+              "control_fence": {
+                "offered_sequence": 19,
+                "oldest_action": 4,
+                "last_receipt_rtt_ms": null,
+                "reason": "server_runtime_retry",
+                "oldest_deadline_age_ms": 4767.3000000045,
+                "buffered_bytes": 0,
+                "acknowledged_sequence": 0,
+                "last_send_age_ms": 160.5,
+                "socket_state": 1,
+                "last_receipt_age_ms": null,
+                "pointer_held": false,
+                "tick_gap_ms": 0.20000000298023,
+                "age_ms": 0,
+                "oldest_age_ms": 4767.3000000045,
+                "pending_count": 19,
+                "terminal_age_ms": null,
+                "phase": "opening",
+                "idle_heartbeat_only": false
+              },
+              "direct_state": "connected",
+              "direct_protocol": "udp",
+              "direct_frame_age_ms": 45,
+              "control_transport": "server_websocket",
+              "recovery_attempts": 1,
+              "rendered_frames": 212,
+              "control_failure": "runtime_retry",
+              "direct_ice_state": "connected",
+              "direct_network": {
+                "local_candidates": 6,
+                "checking_pairs": 0,
+                "pairs": 5,
+                "remote_candidates": 5,
+                "requests_sent": 1,
+                "succeeded_pairs": 1,
+                "responses_received": 1,
+                "failed_pairs": 0
+              },
+              "direct_attempts": 1,
+              "control_failure_detail": "server_runtime_retry",
+              "direct_frames": 90,
+              "decode_errors": 0,
+              "direct_path": "nat",
+              "control_state": "fenced",
+              "direct_dtls_state": "connected",
+              "render_errors": 0,
+              "transport": "direct_webrtc"
+            }
+          ],
+          "native": [
+            {
+              "elapsed_ms": 35,
+              "received_at": "2026-10-13T02:31:08.932113+00:00",
+              "stage": "offer_received",
+              "network": null
+            },
+            {
+              "network": {
+                "local_candidates": 7,
+                "responses_received": 3,
+                "pairs": 4,
+                "succeeded_pairs": 1,
+                "requests_received": 3,
+                "checking_pairs": 3,
+                "remote_candidates": 4,
+                "requests_sent": 12,
+                "dtls_state": "connected",
+                "responses_sent": 3,
+                "failed_pairs": 0
+              },
+              "elapsed_ms": 1060,
+              "received_at": "2026-10-13T02:31:09.986468+00:00",
+              "stage": "channel_open"
+            },
+            {
+              "network": {
+                "local_candidates": 7,
+                "responses_received": 4,
+                "pairs": 4,
+                "succeeded_pairs": 1,
+                "requests_received": 4,
+                "checking_pairs": 3,
+                "remote_candidates": 4,
+                "requests_sent": 14,
+                "dtls_state": "connected",
+                "responses_sent": 4,
+                "failed_pairs": 0
+              },
+              "elapsed_ms": 2087,
+              "received_at": "2026-10-13T02:31:10.970999+00:00",
+              "stage": "channel_open"
+            },
+            {
+              "elapsed_ms": 3106,
+              "received_at": "2026-10-13T02:31:14.441048+00:00",
+              "stage": "channel_open",
+              "network": {
+                "local_candidates": 7,
+                "responses_received": 5,
+                "pairs": 4,
+                "succeeded_pairs": 1,
+                "requests_received": 5,
+                "checking_pairs": 3,
+                "remote_candidates": 4,
+                "requests_sent": 16,
+                "dtls_state": "connected",
+                "responses_sent": 5,
+                "failed_pairs": 0
+              }
+            },
+            {
+              "network": {
+                "local_candidates": 7,
+                "responses_received": 5,
+                "pairs": 4,
+                "succeeded_pairs": 1,
+                "requests_received": 5,
+                "checking_pairs": 3,
+                "remote_candidates": 4,
+                "requests_sent": 18,
+                "dtls_state": "connected",
+                "responses_sent": 5,
+                "failed_pairs": 0
+              },
+              "elapsed_ms": 4133,
+              "received_at": "2026-10-13T02:31:15.287426+00:00",
+              "stage": "channel_open"
+            }
+          ],
+          "agent": [
+            {
+              "received_at": "2026-10-13T02:31:06.214573+00:00",
+              "observed_at": null,
+              "current_agent_session": null,
+              "heartbeat_at": "2026-10-13T02:31:00.369293+00:00",
+              "available": false,
+              "version_code": 10265,
+              "nativeInput": {}
+            }
+          ],
+          "controlEvents": [],
+          "browserSummary": {
+            "last_control_fence_received_at": "2026-10-13T02:31:13.116116+00:00",
+            "max_decode_errors": 0,
+            "reports": 2,
+            "last_control_failure_detail": "server_runtime_retry",
+            "last_control_fence": {
+              "offered_sequence": 19,
+              "oldest_action": 4,
+              "last_receipt_rtt_ms": null,
+              "reason": "server_runtime_retry",
+              "oldest_deadline_age_ms": 4767.3000000045,
+              "buffered_bytes": 0,
+              "acknowledged_sequence": 0,
+              "last_send_age_ms": 160.5,
+              "socket_state": 1,
+              "last_receipt_age_ms": null,
+              "pointer_held": false,
+              "tick_gap_ms": 0.20000000298023,
+              "age_ms": 0,
+              "oldest_age_ms": 4767.3000000045,
+              "pending_count": 19,
+              "terminal_age_ms": null,
+              "phase": "opening",
+              "idle_heartbeat_only": false
+            },
+            "last_control_failure_at": "2026-10-13T02:31:13.116116+00:00",
+            "max_render_errors": 0
+          }
+        }
+      ]
+    },
+    "browserAcceptanceAfterNewApi": false,
+    "reason": "Laptop offline at readback; its latest viewer closed before the API65 installation completed."
+  },
+  "actualPh025": {
+    "accepted": false,
+    "browser": {
+      "observedAt": "2026-10-13T06:17:24.239Z",
+      "deviceId": "b410464a-5f26-4803-a756-7840cc17b128",
+      "origin": "http://127.0.0.1:3015",
+      "ordinaryChrome": true,
+      "transportOverrides": false,
+      "inputInjected": false,
+      "commandsReplayed": false,
+      "viewerClosedByNavigation": true,
+      "samples": [
+        {
+          "at": "2026-10-13T06:16:39.194Z",
+          "binaryPackets": 389,
+          "binaryBytes": 2681101,
+          "controlState": "ready",
+          "peers": [
+            {
+              "connection": "connecting",
+              "ice": "checking",
+              "video": [],
+              "pairs": [
+                {
+                  "state": "in-progress",
+                  "nominated": false,
+                  "requestsSent": 85,
+                  "responsesReceived": 0
+                },
+                {
+                  "state": "in-progress",
+                  "nominated": false,
+                  "requestsSent": 85,
+                  "responsesReceived": 0
+                }
+              ],
+              "dtls": "new"
+            }
+          ]
+        },
+        {
+          "at": "2026-10-13T06:16:54.196Z",
+          "binaryPackets": 813,
+          "binaryBytes": 6201954,
+          "controlState": "ready",
+          "peers": [
+            {
+              "connection": "closed",
+              "ice": "closed",
+              "video": [],
+              "pairs": []
+            },
+            {
+              "connection": "closed",
+              "ice": "closed",
+              "video": [],
+              "pairs": []
+            }
+          ]
+        },
+        {
+          "at": "2026-10-13T06:17:09.197Z",
+          "binaryPackets": 1239,
+          "binaryBytes": 11003158,
+          "controlState": "ready",
+          "peers": [
+            {
+              "connection": "closed",
+              "ice": "closed",
+              "video": [],
+              "pairs": []
+            },
+            {
+              "connection": "closed",
+              "ice": "closed",
+              "video": [],
+              "pairs": []
+            },
+            {
+              "connection": "closed",
+              "ice": "closed",
+              "video": [],
+              "pairs": []
+            }
+          ]
+        },
+        {
+          "at": "2026-10-13T06:17:24.200Z",
+          "binaryPackets": 1664,
+          "binaryBytes": 16593980,
+          "controlState": "ready",
+          "peers": [
+            {
+              "connection": "closed",
+              "ice": "closed",
+              "video": [],
+              "pairs": []
+            },
+            {
+              "connection": "closed",
+              "ice": "closed",
+              "video": [],
+              "pairs": []
+            },
+            {
+              "connection": "closed",
+              "ice": "closed",
+              "video": [],
+              "pairs": []
+            },
+            {
+              "connection": "connecting",
+              "ice": "checking",
+              "video": [],
+              "pairs": [
+                {
+                  "state": "in-progress",
+                  "nominated": false,
+                  "requestsSent": 84,
+                  "responsesReceived": 0
+                },
+                {
+                  "state": "in-progress",
+                  "nominated": false,
+                  "requestsSent": 84,
+                  "responsesReceived": 0
+                }
+              ],
+              "dtls": "new"
+            }
+          ]
+        }
+      ],
+      "pageErrors": []
+    },
+    "telemetry": {
+      "observedAtUtc": "2026-10-13T06:18:49.748999+00:00",
+      "device": "PH025",
+      "secondViewerOpened": false,
+      "reportedVersionCode": 10265,
+      "sessions": [
+        {
+          "opened_at": "2026-10-13T06:16:24.207394+00:00",
+          "state": "closed",
+          "browser": [
+            {
+              "received_at": "2026-10-13T06:16:53.377986+00:00",
+              "direct_path": "unknown",
+              "control_rtt_ms": 80,
+              "recovery_attempts": 0,
+              "rendered_frames": 711,
+              "control_failure": "none",
+              "direct_ice_state": "checking",
+              "direct_network": {
+                "local_candidates": 5,
+                "checking_pairs": 2,
+                "pairs": 2,
+                "remote_candidates": 2,
+                "requests_sent": 148,
+                "succeeded_pairs": 0,
+                "responses_received": 0,
+                "failed_pairs": 0
+              },
+              "direct_attempts": 2,
+              "control_transport": "server_websocket",
+              "direct_failure": "connection_deadline",
+              "control_fence": {
+                "offered_sequence": 0,
+                "oldest_action": null,
+                "last_receipt_rtt_ms": null,
+                "reason": "surface_control_lost",
+                "oldest_deadline_age_ms": null,
+                "buffered_bytes": 0,
+                "acknowledged_sequence": 0,
+                "pending_count": 0,
+                "socket_state": 1,
+                "last_receipt_age_ms": null,
+                "pointer_held": false,
+                "tick_gap_ms": 18.29999999702,
+                "idle_heartbeat_only": false,
+                "phase": "opening",
+                "last_send_age_ms": 18.29999999702,
+                "terminal_age_ms": null,
+                "oldest_age_ms": null,
+                "age_ms": 26290
+              },
+              "render_errors": 0,
+              "direct_state": "failed",
+              "decode_errors": 0,
+              "direct_dtls_state": "new",
+              "direct_frames": 0,
+              "control_state": "ready",
+              "transport": "server_websocket"
+            },
+            {
+              "received_at": "2026-10-13T06:17:04.208204+00:00",
+              "control_fence": {
+                "offered_sequence": 0,
+                "oldest_action": null,
+                "last_receipt_rtt_ms": null,
+                "reason": "surface_control_lost",
+                "age_ms": 37120,
+                "buffered_bytes": 0,
+                "acknowledged_sequence": 0,
+                "pending_count": 0,
+                "socket_state": 1,
+                "last_receipt_age_ms": null,
+                "phase": "opening",
+                "tick_gap_ms": 18.29999999702,
+                "idle_heartbeat_only": false,
+                "pointer_held": false,
+                "last_send_age_ms": 18.29999999702,
+                "terminal_age_ms": null,
+                "oldest_deadline_age_ms": null,
+                "oldest_age_ms": null
+              },
+              "direct_state": "connecting",
+              "control_rtt_ms": 82,
+              "control_transport": "server_websocket",
+              "recovery_attempts": 0,
+              "rendered_frames": 1018,
+              "control_failure": "none",
+              "direct_ice_state": "checking",
+              "direct_network": {
+                "local_candidates": 5,
+                "checking_pairs": 2,
+                "pairs": 2,
+                "remote_candidates": 2,
+                "requests_sent": 75,
+                "succeeded_pairs": 0,
+                "responses_received": 0,
+                "failed_pairs": 0
+              },
+              "direct_attempts": 3,
+              "control_state": "ready",
+              "render_errors": 0,
+              "direct_path": "unknown",
+              "direct_dtls_state": "new",
+              "direct_frames": 0,
+              "decode_errors": 0,
+              "transport": "server_websocket"
+            },
+            {
+              "received_at": "2026-10-13T06:17:08.035806+00:00",
+              "direct_path": "unknown",
+              "control_rtt_ms": 76,
+              "recovery_attempts": 0,
+              "rendered_frames": 1126,
+              "control_failure": "none",
+              "direct_ice_state": "checking",
+              "direct_network": {
+                "local_candidates": 5,
+                "checking_pairs": 2,
+                "pairs": 2,
+                "remote_candidates": 2,
+                "requests_sent": 149,
+                "succeeded_pairs": 0,
+                "responses_received": 0,
+                "failed_pairs": 0
+              },
+              "direct_attempts": 3,
+              "control_transport": "server_websocket",
+              "direct_failure": "connection_deadline",
+              "control_fence": {
+                "offered_sequence": 0,
+                "oldest_action": null,
+                "last_receipt_rtt_ms": null,
+                "reason": "surface_control_lost",
+                "age_ms": 40946,
+                "buffered_bytes": 0,
+                "acknowledged_sequence": 0,
+                "pending_count": 0,
+                "socket_state": 1,
+                "last_receipt_age_ms": null,
+                "pointer_held": false,
+                "tick_gap_ms": 18.29999999702,
+                "idle_heartbeat_only": false,
+                "phase": "opening",
+                "last_send_age_ms": 18.29999999702,
+                "terminal_age_ms": null,
+                "oldest_deadline_age_ms": null,
+                "oldest_age_ms": null
+              },
+              "render_errors": 0,
+              "direct_state": "failed",
+              "decode_errors": 0,
+              "direct_dtls_state": "new",
+              "direct_frames": 0,
+              "control_state": "ready",
+              "transport": "server_websocket"
+            },
+            {
+              "received_at": "2026-10-13T06:17:19.202838+00:00",
+              "control_fence": {
+                "offered_sequence": 0,
+                "oldest_action": null,
+                "last_receipt_rtt_ms": null,
+                "reason": "surface_control_lost",
+                "oldest_age_ms": null,
+                "buffered_bytes": 0,
+                "acknowledged_sequence": 0,
+                "last_send_age_ms": 18.29999999702,
+                "socket_state": 1,
+                "last_receipt_age_ms": null,
+                "pointer_held": false,
+                "tick_gap_ms": 18.29999999702,
+                "oldest_deadline_age_ms": null,
+                "age_ms": 52114,
+                "pending_count": 0,
+                "terminal_age_ms": null,
+                "phase": "opening",
+                "idle_heartbeat_only": false
+              },
+              "direct_state": "connecting",
+              "control_state": "ready",
+              "control_rtt_ms": 83,
+              "recovery_attempts": 0,
+              "rendered_frames": 1444,
+              "control_failure": "none",
+              "direct_ice_state": "checking",
+              "direct_network": {
+                "local_candidates": 5,
+                "checking_pairs": 2,
+                "pairs": 2,
+                "remote_candidates": 2,
+                "requests_sent": 72,
+                "succeeded_pairs": 0,
+                "responses_received": 0,
+                "failed_pairs": 0
+              },
+              "direct_attempts": 4,
+              "control_transport": "server_websocket",
+              "decode_errors": 0,
+              "direct_frames": 0,
+              "direct_path": "unknown",
+              "direct_dtls_state": "new",
+              "render_errors": 0,
+              "transport": "server_websocket"
+            },
+            {
+              "received_at": "2026-10-13T06:17:24.216692+00:00",
+              "control_fence": {
+                "offered_sequence": 218,
+                "oldest_action": 4,
+                "last_receipt_rtt_ms": 75.90000000596,
+                "reason": "surface_hidden",
+                "oldest_age_ms": 53.79999999702,
+                "buffered_bytes": 0,
+                "acknowledged_sequence": 217,
+                "last_send_age_ms": 53.79999999702,
+                "socket_state": 1,
+                "last_receipt_age_ms": 234.5,
+                "phase": "ready",
+                "tick_gap_ms": 5.5,
+                "oldest_deadline_age_ms": 53.79999999702,
+                "age_ms": 0,
+                "pending_count": 1,
+                "terminal_age_ms": null,
+                "pointer_held": false,
+                "idle_heartbeat_only": false
+              },
+              "direct_state": "connecting",
+              "control_rtt_ms": 83,
+              "recovery_attempts": 0,
+              "rendered_frames": 1585,
+              "control_failure": "other",
+              "direct_ice_state": "checking",
+              "direct_network": {
+                "local_candidates": 5,
+                "checking_pairs": 2,
+                "pairs": 2,
+                "remote_candidates": 2,
+                "requests_sent": 145,
+                "succeeded_pairs": 0,
+                "responses_received": 0,
+                "failed_pairs": 0
+              },
+              "control_failure_detail": "surface_hidden",
+              "control_state": "fenced",
+              "control_transport": "server_websocket",
+              "direct_frames": 0,
+              "decode_errors": 0,
+              "direct_path": "unknown",
+              "direct_dtls_state": "new",
+              "render_errors": 0,
+              "direct_attempts": 4,
+              "transport": "server_websocket"
+            }
+          ],
+          "native": [
+            {
+              "elapsed_ms": 7193,
+              "received_at": "2026-10-13T06:17:19.478466+00:00",
+              "stage": "answer_sent",
+              "network": {
+                "local_candidates": 3,
+                "responses_received": 0,
+                "pairs": 3,
+                "succeeded_pairs": 0,
+                "requests_received": 0,
+                "checking_pairs": 3,
+                "remote_candidates": 3,
+                "requests_sent": 142,
+                "dtls_state": "new",
+                "responses_sent": 0,
+                "failed_pairs": 0
+              }
+            },
+            {
+              "network": {
+                "local_candidates": 3,
+                "responses_received": 0,
+                "pairs": 3,
+                "succeeded_pairs": 0,
+                "requests_received": 0,
+                "checking_pairs": 3,
+                "remote_candidates": 3,
+                "requests_sent": 163,
+                "dtls_state": "new",
+                "responses_sent": 0,
+                "failed_pairs": 0
+              },
+              "elapsed_ms": 8213,
+              "received_at": "2026-10-13T06:17:20.500002+00:00",
+              "stage": "answer_sent"
+            },
+            {
+              "network": {
+                "local_candidates": 3,
+                "responses_received": 0,
+                "pairs": 3,
+                "succeeded_pairs": 0,
+                "requests_received": 0,
+                "checking_pairs": 3,
+                "remote_candidates": 3,
+                "requests_sent": 183,
+                "dtls_state": "new",
+                "responses_sent": 0,
+                "failed_pairs": 0
+              },
+              "elapsed_ms": 9231,
+              "received_at": "2026-10-13T06:17:21.517156+00:00",
+              "stage": "answer_sent"
+            },
+            {
+              "elapsed_ms": 10249,
+              "network": {
+                "local_candidates": 3,
+                "responses_received": 0,
+                "pairs": 3,
+                "succeeded_pairs": 0,
+                "requests_received": 0,
+                "checking_pairs": 3,
+                "remote_candidates": 3,
+                "requests_sent": 203,
+                "dtls_state": "new",
+                "responses_sent": 0,
+                "failed_pairs": 0
+              },
+              "received_at": "2026-10-13T06:17:22.535338+00:00",
+              "stage": "answer_sent"
+            },
+            {
+              "elapsed_ms": 11261,
+              "received_at": "2026-10-13T06:17:23.547710+00:00",
+              "stage": "answer_sent",
+              "network": {
+                "local_candidates": 3,
+                "responses_received": 0,
+                "pairs": 3,
+                "succeeded_pairs": 0,
+                "requests_received": 0,
+                "checking_pairs": 3,
+                "remote_candidates": 3,
+                "requests_sent": 223,
+                "dtls_state": "new",
+                "responses_sent": 0,
+                "failed_pairs": 0
+              }
+            }
+          ],
+          "agent": [
+            {
+              "received_at": "2026-10-13T06:16:34.215335+00:00",
+              "observed_at": null,
+              "current_agent_session": null,
+              "heartbeat_at": "2026-10-13T06:16:11.884055+00:00",
+              "available": false,
+              "version_code": 10265,
+              "nativeInput": {}
+            },
+            {
+              "received_at": "2026-10-13T06:16:44.219723+00:00",
+              "observed_at": "2026-10-13T06:16:41.902603+00:00",
+              "current_agent_session": true,
+              "heartbeat_at": "2026-10-13T06:16:41.901491+00:00",
+              "available": true,
+              "version_code": 10265,
+              "nativeInput": {
+                "scope": "agent_process",
+                "open_rejections_total": 0,
+                "schema_version": 1,
+                "open_attempts_total": 2,
+                "state": "ready",
+                "last_release_age_ms": 14735,
+                "releases_total": 1,
+                "input_failures_total": 0,
+                "startups_total": 1,
+                "startup_failures_total": 0,
+                "last_release_reason": "viewer_closed",
+                "unknown_releases_total": 0
+              }
+            },
+            {
+              "received_at": "2026-10-13T06:16:54.222189+00:00",
+              "observed_at": "2026-10-13T06:16:41.902603+00:00",
+              "current_agent_session": true,
+              "heartbeat_at": "2026-10-13T06:16:41.901491+00:00",
+              "available": true,
+              "version_code": 10265,
+              "nativeInput": {
+                "scope": "agent_process",
+                "open_rejections_total": 0,
+                "schema_version": 1,
+                "open_attempts_total": 2,
+                "state": "ready",
+                "last_release_age_ms": 14735,
+                "releases_total": 1,
+                "input_failures_total": 0,
+                "startups_total": 1,
+                "startup_failures_total": 0,
+                "last_release_reason": "viewer_closed",
+                "unknown_releases_total": 0
+              }
+            },
+            {
+              "received_at": "2026-10-13T06:17:04.225812+00:00",
+              "observed_at": "2026-10-13T06:16:41.902603+00:00",
+              "current_agent_session": true,
+              "heartbeat_at": "2026-10-13T06:16:41.901491+00:00",
+              "available": true,
+              "version_code": 10265,
+              "nativeInput": {
+                "scope": "agent_process",
+                "open_rejections_total": 0,
+                "schema_version": 1,
+                "open_attempts_total": 2,
+                "state": "ready",
+                "last_release_age_ms": 14735,
+                "releases_total": 1,
+                "input_failures_total": 0,
+                "startups_total": 1,
+                "startup_failures_total": 0,
+                "last_release_reason": "viewer_closed",
+                "unknown_releases_total": 0
+              }
+            },
+            {
+              "received_at": "2026-10-13T06:17:14.229874+00:00",
+              "observed_at": "2026-10-13T06:17:11.882852+00:00",
+              "current_agent_session": true,
+              "heartbeat_at": "2026-10-13T06:17:11.882168+00:00",
+              "available": true,
+              "version_code": 10265,
+              "nativeInput": {
+                "scope": "agent_process",
+                "open_rejections_total": 0,
+                "schema_version": 1,
+                "open_attempts_total": 2,
+                "state": "ready",
+                "last_release_age_ms": 44713,
+                "releases_total": 1,
+                "input_failures_total": 0,
+                "startups_total": 1,
+                "startup_failures_total": 0,
+                "last_release_reason": "viewer_closed",
+                "unknown_releases_total": 0
+              }
+            }
+          ],
+          "controlEvents": [],
+          "browserSummary": {
+            "reports": 9,
+            "max_decode_errors": 0,
+            "last_direct_failure": {
+              "dtls_state": "new",
+              "network": {
+                "local_candidates": 5,
+                "checking_pairs": 2,
+                "pairs": 2,
+                "remote_candidates": 2,
+                "requests_sent": 149,
+                "succeeded_pairs": 0,
+                "responses_received": 0,
+                "failed_pairs": 0
+              },
+              "network_sample_elapsed_ms": 10639.600000009,
+              "attempt": 3,
+              "reason": "connection_deadline",
+              "ice_state": "checking",
+              "received_at": "2026-10-13T06:17:08.035806+00:00",
+              "network_age_at_stop_ms": 2001.5,
+              "transport": "server_websocket"
+            },
+            "last_control_failure_at": "2026-10-13T06:17:24.216692+00:00",
+            "max_render_errors": 0,
+            "max_control_rtt_ms": 85,
+            "last_control_fence": {
+              "offered_sequence": 218,
+              "oldest_action": 4,
+              "last_receipt_rtt_ms": 75.90000000596,
+              "reason": "surface_hidden",
+              "oldest_age_ms": 53.79999999702,
+              "buffered_bytes": 0,
+              "acknowledged_sequence": 217,
+              "last_send_age_ms": 53.79999999702,
+              "socket_state": 1,
+              "last_receipt_age_ms": 234.5,
+              "phase": "ready",
+              "tick_gap_ms": 5.5,
+              "oldest_deadline_age_ms": 53.79999999702,
+              "age_ms": 0,
+              "pending_count": 1,
+              "terminal_age_ms": null,
+              "pointer_held": false,
+              "idle_heartbeat_only": false
+            },
+            "last_control_fence_received_at": "2026-10-13T06:17:24.216692+00:00",
+            "last_control_failure_detail": "surface_hidden"
+          }
+        }
+      ]
+    },
+    "scope": "Current APK65: server fallback and idle input ready over one minute; direct ICE received no replies. No pointer action injected."
+  },
+  "localCi": {
+    "executions": [
+      {
+        "runId": "20261013T011936Z-c7062cf8",
+        "sourceRevision": "f23845ceb9a1a53e14946ebc4ece14a57a892523",
+        "profile": "frontend",
+        "state": "success",
+        "tests": {
+          "tests": 2295,
+          "passed": 2295,
+          "failures": 0,
+          "failedSuites": 0,
+          "skipped": 0,
+          "suites": 157,
+          "success": true
+        },
+        "ordinaryTests": null,
+        "github": {
+          "id": 56185939468,
+          "context": "Sphere Local / Frontend regressions",
+          "state": "success",
+          "createdAt": "2026-10-13T01:21:28Z",
+          "readbackVerified": true,
+          "targetUrl": "https://github.com/RootOne1337/sphere-platform/commit/f23845ceb9a1a53e14946ebc4ece14a57a892523"
+        },
+        "packagingVerified": false,
+        "elapsedSeconds": 106.269,
+        "executorWrapperExitCode": 0,
+        "retentionAfterRun": {
+          "retainedRuns": 5,
+          "retainedBytes": 5208314,
+          "removedRuns": [],
+          "maxRuns": 10,
+          "maxBytes": 268435456
+        }
+      },
+      {
+        "runId": "20261013T012858Z-4795bb79",
+        "sourceRevision": "f23845ceb9a1a53e14946ebc4ece14a57a892523",
+        "profile": "backend",
+        "state": "success",
+        "tests": {
+          "tests": 3922,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 1
+        },
+        "ordinaryTests": null,
+        "github": {
+          "id": 56186841866,
+          "context": "Sphere Local / Backend regressions",
+          "state": "success",
+          "createdAt": "2026-10-13T01:43:40Z",
+          "readbackVerified": true,
+          "targetUrl": null
+        },
+        "packagingVerified": false,
+        "elapsedSeconds": 877.533,
+        "executorWrapperExitCode": 0,
+        "retentionAfterRun": {
+          "retainedRuns": 6,
+          "retainedBytes": 6686922,
+          "removedRuns": [],
+          "maxRuns": 10,
+          "maxBytes": 268435456
+        }
+      },
+      {
+        "runId": "20261013T014716Z-158965fb",
+        "sourceRevision": "f23845ceb9a1a53e14946ebc4ece14a57a892523",
+        "profile": "android",
+        "state": "success",
+        "tests": {
+          "tests": 2154,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 6
+        },
+        "ordinaryTests": {
+          "tests": 4276,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 12
+        },
+        "github": {
+          "id": 56187894327,
+          "context": "Sphere Local / Android unit tests",
+          "state": "success",
+          "createdAt": "2026-10-13T02:09:46Z",
+          "readbackVerified": true,
+          "targetUrl": null
+        },
+        "packagingVerified": false,
+        "elapsedSeconds": 1344.997,
+        "executorWrapperExitCode": 1,
+        "retentionAfterRun": null
+      },
+      {
+        "runId": "20261013T022707Z-146f707d",
+        "sourceRevision": "b65b0b5469510f9c0c94d5242234bdba43570c77",
+        "profile": "backend",
+        "state": "success",
+        "tests": {
+          "tests": 3959,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 1
+        },
+        "ordinaryTests": null,
+        "github": {
+          "id": 56189163452,
+          "context": "Sphere Local / Backend regressions",
+          "state": "success",
+          "createdAt": "2026-10-13T02:41:33Z",
+          "readbackVerified": true,
+          "targetUrl": null
+        },
+        "packagingVerified": false,
+        "elapsedSeconds": 861.454,
+        "executorWrapperExitCode": 0,
+        "retentionAfterRun": {
+          "retainedRuns": 8,
+          "retainedBytes": 8552296,
+          "removedRuns": [],
+          "maxRuns": 10,
+          "maxBytes": 268435456
+        }
+      },
+      {
+        "runId": "20261013T060457Z-89f762f6",
+        "sourceRevision": "b65b0b5469510f9c0c94d5242234bdba43570c77",
+        "profile": "android",
+        "state": "success",
+        "tests": {
+          "tests": 2164,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 6
+        },
+        "ordinaryTests": {
+          "tests": 4296,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 12
+        },
+        "github": {
+          "id": 56198699854,
+          "context": "Sphere Local / Android unit tests",
+          "state": "success",
+          "createdAt": "2026-10-13T06:27:42Z",
+          "readbackVerified": true,
+          "targetUrl": null
+        },
+        "packagingVerified": false,
+        "elapsedSeconds": 1356.875,
+        "executorWrapperExitCode": 0,
+        "retentionAfterRun": {
+          "retainedRuns": 9,
+          "retainedBytes": 8932701,
+          "removedRuns": [],
+          "maxRuns": 10,
+          "maxBytes": 268435456
+        }
+      },
+      {
+        "runId": "20261013T062919Z-842ad4f7",
+        "sourceRevision": "b65b0b5469510f9c0c94d5242234bdba43570c77",
+        "profile": "frontend",
+        "state": "success",
+        "tests": {
+          "tests": 2295,
+          "passed": 2295,
+          "failures": 0,
+          "failedSuites": 0,
+          "skipped": 0,
+          "suites": 157,
+          "success": true
+        },
+        "ordinaryTests": null,
+        "github": {
+          "id": 56198870795,
+          "context": "Sphere Local / Frontend regressions",
+          "state": "success",
+          "createdAt": "2026-10-13T06:31:05Z",
+          "readbackVerified": true,
+          "targetUrl": null
+        },
+        "packagingVerified": false,
+        "elapsedSeconds": 100.21,
+        "executorWrapperExitCode": 0,
+        "retentionAfterRun": {
+          "retainedRuns": 10,
+          "retainedBytes": 10008898,
+          "removedRuns": [],
+          "maxRuns": 10,
+          "maxBytes": 268435456
+        }
+      }
+    ],
+    "cloudWorkflowsDisabled": false,
+    "fullMigrationAccepted": false,
+    "selfHostedRunnersRegistered": 0,
+    "androidCleanupReconciliation": {
+      "observedAtUtc": "2026-10-13T02:15:11.550321+00:00",
+      "runId": "20261013T014716Z-158965fb",
+      "originalReceiptSha256": "51979280c950ab6322f0e2188fe7bf532f15225d3343ba1767bff1a0eb68e361",
+      "profilePassedBeforeCleanupRepair": true,
+      "githubStatusId": 56187894327,
+      "retention": {
+        "retainedRuns": 7,
+        "retainedBytes": 7066718,
+        "removedRuns": [],
+        "maxRuns": 10,
+        "maxBytes": 268435456
+      },
+      "androidOutputCleanup": {
+        "removedDirectories": [
+          "android-build",
+          "gradle-project-cache"
+        ],
+        "finalReportsArchived": true
+      }
+    },
+    "currentAndroidCleanupReadback": {
+      "runId": "20261013T060457Z-89f762f6",
+      "wrapperExitCode": 0,
+      "bothDerivedDirectoriesAbsent": true,
+      "finalJUnitArchiveSha256": "03f742ac4eb42846ee4301759f2a1ef203251f053a120c977597fd6f959d4eef",
+      "archiveBytes": 342587
+    },
+    "trustedQueue": {
+      "observedAtUtc": "2026-10-13T06:34:01.697095+00:00",
+      "watchLockHeld": true,
+      "state": {
+        "schemaVersion": 1,
+        "observedAt": "2026-10-13T06:33:20.582083+00:00",
+        "queueState": "idle",
+        "completedSha": "b65b0b5469510f9c0c94d5242234bdba43570c77",
+        "lastRunState": "success",
+        "lastRunIds": {
+          "frontend": "20261013T062919Z-842ad4f7",
+          "backend": "20261013T022707Z-146f707d",
+          "android": "20261013T060457Z-89f762f6"
+        },
+        "trustedRef": "refs/heads/codex/enterprise-audit-20260905",
+        "publicForkJobsAccepted": false,
+        "seededFromVerifiedExactShaReceipts": true
+      },
+      "pollSeconds": 60,
+      "profiles": [
+        "frontend",
+        "backend",
+        "android"
+      ],
+      "autostartConfigured": false,
+      "independentLifetimeGuaranteed": false
+    }
+  },
+  "storage": {
+    "limitedCollector": {
+      "state": "running",
+      "pid": 6492,
+      "administrator": false,
+      "launchMode": "limited-unprivileged",
+      "vssAccessGuaranteed": false,
+      "startedUtc": "2026-10-12T22:02:29.998174+00:00",
+      "dueUtc": "2026-10-13T22:02:29.998174+00:00",
+      "samplesLimit": 721,
+      "samplesWritten": 257,
+      "intervalSeconds": 120,
+      "dockerEverySamples": 8,
+      "reportBudgetBytes": 16777216,
+      "sampleLimitBytes": 131072,
+      "reportBytes": 3395774,
+      "cleanupPerformed": false,
+      "deviceCommandsSent": false,
+      "autostartConfigured": false,
+      "fullDirectoryScans": false,
+      "processIoIsWriterAttribution": false,
+      "sourceSha256": "3a6bf900a04051dd624ee762cffa60e697b887a893cfb23e969ee968787b853d",
+      "lastSampleUtc": "2026-10-13T06:34:27.669333+00:00",
+      "freeDiskBytes": 156695961600
+    },
+    "dailyFullScanConfigured": false,
+    "cleanupEvidence": {
+      "observedAt": "2026-10-12T23:47:34.380811+00:00",
+      "apply": true,
+      "archiveBytes": 8238194303,
+      "freeHostBytesBefore": 19519545344,
+      "freeHostBytesAfter": 27492614144,
+      "dockerGlobalPrune": false,
+      "volumesTouched": false,
+      "physicalVhdCompactionPerformed": false,
+      "removedArchiveCount": 50,
+      "removedImageCount": 77
+    },
+    "volume": "Full Repair Needed",
+    "humanAuthorizedWorkingWithoutRepair": true,
+    "independentBackupAvailable": false,
+    "rootCauseEstablished": false
+  },
+  "boundaries": {
+    "homeBackRecentsMenu": "server HTTP shell, not direct DataChannel",
+    "sharedInputAccepted": false,
+    "serverIndependentAuthorization": false,
+    "turnEnabled": false,
+    "fullDisplayLatencyMeasured": false,
+    "fps60Accepted": false,
+    "zeroLatencyClaimed": false
+  }
+}

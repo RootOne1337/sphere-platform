@@ -1,0 +1,185 @@
+FFFFFFFFFFF                                                              [100%]
+================================== FAILURES ===================================
+____________ test_terminal_batch_cannot_admit_new_wave[cancelled] _____________
+tests\production\test_batch_wave_cancellation.py:37: in test_terminal_batch_cannot_admit_new_wave
+    assert await db.scalar(select(Task.id).where(Task.batch_id == batch.id)) is None
+E   AssertionError: assert UUID('ad45bf39-bcc9-4d6d-b176-f5fccf42405d') is None
+---------------------------- Captured stdout call -----------------------------
+{"batch_id": "baed6df4-330e-416b-a545-63e60896c9b4", "wave": "1/1", "devices": 1, "event": "batch.wave.start", "level": "info", "logger": "backend.services.batch_service", "timestamp": "2026-09-07T14:19:52.354966Z"}
+{"task_id": "ad45bf39-bcc9-4d6d-b176-f5fccf42405d", "device_id": "b948e417-9b77-40fb-bc26-45c4311fbb6b", "priority": 5, "event": "task.created", "level": "info", "logger": "backend.services.task_service", "timestamp": "2026-09-07T14:19:52.420641Z"}
+{"batch_id": "baed6df4-330e-416b-a545-63e60896c9b4", "waves": 1, "event": "batch.waves_submitted", "level": "info", "logger": "backend.services.batch_service", "timestamp": "2026-09-07T14:19:52.426779Z"}
+------------------------------ Captured log call ------------------------------
+INFO     backend.services.batch_service:batch_service.py:199 {'batch_id': 'baed6df4-330e-416b-a545-63e60896c9b4', 'wave': '1/1', 'devices': 1, 'event': 'batch.wave.start', 'level': 'info', 'logger': 'backend.services.batch_service', 'timestamp': '2026-09-07T14:19:52.354966Z'}
+INFO     backend.services.task_service:task_service.py:238 {'task_id': 'ad45bf39-bcc9-4d6d-b176-f5fccf42405d', 'device_id': 'b948e417-9b77-40fb-bc26-45c4311fbb6b', 'priority': 5, 'event': 'task.created', 'level': 'info', 'logger': 'backend.services.task_service', 'timestamp': '2026-09-07T14:19:52.420641Z'}
+INFO     backend.services.batch_service:batch_service.py:245 {'batch_id': 'baed6df4-330e-416b-a545-63e60896c9b4', 'waves': 1, 'event': 'batch.waves_submitted', 'level': 'info', 'logger': 'backend.services.batch_service', 'timestamp': '2026-09-07T14:19:52.426779Z'}
+____________ test_terminal_batch_cannot_admit_new_wave[completed] _____________
+tests\production\test_batch_wave_cancellation.py:37: in test_terminal_batch_cannot_admit_new_wave
+    assert await db.scalar(select(Task.id).where(Task.batch_id == batch.id)) is None
+E   AssertionError: assert UUID('92d9edd7-c943-4e7a-a35c-1633f78d34e6') is None
+---------------------------- Captured stdout call -----------------------------
+{"batch_id": "ed1a81f6-89be-4362-a840-4d0db508267b", "wave": "1/1", "devices": 1, "event": "batch.wave.start", "level": "info", "logger": "backend.services.batch_service", "timestamp": "2026-09-07T14:19:52.955213Z"}
+{"task_id": "92d9edd7-c943-4e7a-a35c-1633f78d34e6", "device_id": "5767faf2-7db6-41f6-a78c-d4d70bcdbd49", "priority": 5, "event": "task.created", "level": "info", "logger": "backend.services.task_service", "timestamp": "2026-09-07T14:19:53.039080Z"}
+{"batch_id": "ed1a81f6-89be-4362-a840-4d0db508267b", "waves": 1, "event": "batch.waves_submitted", "level": "info", "logger": "backend.services.batch_service", "timestamp": "2026-09-07T14:19:53.046377Z"}
+------------------------------ Captured log call ------------------------------
+INFO     backend.services.batch_service:batch_service.py:199 {'batch_id': 'ed1a81f6-89be-4362-a840-4d0db508267b', 'wave': '1/1', 'devices': 1, 'event': 'batch.wave.start', 'level': 'info', 'logger': 'backend.services.batch_service', 'timestamp': '2026-09-07T14:19:52.955213Z'}
+INFO     backend.services.task_service:task_service.py:238 {'task_id': '92d9edd7-c943-4e7a-a35c-1633f78d34e6', 'device_id': '5767faf2-7db6-41f6-a78c-d4d70bcdbd49', 'priority': 5, 'event': 'task.created', 'level': 'info', 'logger': 'backend.services.task_service', 'timestamp': '2026-09-07T14:19:53.039080Z'}
+INFO     backend.services.batch_service:batch_service.py:245 {'batch_id': 'ed1a81f6-89be-4362-a840-4d0db508267b', 'waves': 1, 'event': 'batch.waves_submitted', 'level': 'info', 'logger': 'backend.services.batch_service', 'timestamp': '2026-09-07T14:19:53.046377Z'}
+______________ test_terminal_batch_cannot_admit_new_wave[failed] ______________
+tests\production\test_batch_wave_cancellation.py:37: in test_terminal_batch_cannot_admit_new_wave
+    assert await db.scalar(select(Task.id).where(Task.batch_id == batch.id)) is None
+E   AssertionError: assert UUID('80884a87-2bb9-4411-bdc8-c82f536d364c') is None
+---------------------------- Captured stdout call -----------------------------
+{"batch_id": "06b55627-a4c1-43b6-9290-b7f90d330834", "wave": "1/1", "devices": 1, "event": "batch.wave.start", "level": "info", "logger": "backend.services.batch_service", "timestamp": "2026-09-07T14:19:53.366479Z"}
+{"task_id": "80884a87-2bb9-4411-bdc8-c82f536d364c", "device_id": "a16437b1-2545-415d-8acd-03335647a028", "priority": 5, "event": "task.created", "level": "info", "logger": "backend.services.task_service", "timestamp": "2026-09-07T14:19:53.436758Z"}
+{"batch_id": "06b55627-a4c1-43b6-9290-b7f90d330834", "waves": 1, "event": "batch.waves_submitted", "level": "info", "logger": "backend.services.batch_service", "timestamp": "2026-09-07T14:19:53.442997Z"}
+------------------------------ Captured log call ------------------------------
+INFO     backend.services.batch_service:batch_service.py:199 {'batch_id': '06b55627-a4c1-43b6-9290-b7f90d330834', 'wave': '1/1', 'devices': 1, 'event': 'batch.wave.start', 'level': 'info', 'logger': 'backend.services.batch_service', 'timestamp': '2026-09-07T14:19:53.366479Z'}
+INFO     backend.services.task_service:task_service.py:238 {'task_id': '80884a87-2bb9-4411-bdc8-c82f536d364c', 'device_id': 'a16437b1-2545-415d-8acd-03335647a028', 'priority': 5, 'event': 'task.created', 'level': 'info', 'logger': 'backend.services.task_service', 'timestamp': '2026-09-07T14:19:53.436758Z'}
+INFO     backend.services.batch_service:batch_service.py:245 {'batch_id': '06b55627-a4c1-43b6-9290-b7f90d330834', 'waves': 1, 'event': 'batch.waves_submitted', 'level': 'info', 'logger': 'backend.services.batch_service', 'timestamp': '2026-09-07T14:19:53.442997Z'}
+_____________ test_terminal_batch_cannot_admit_new_wave[partial] ______________
+tests\production\test_batch_wave_cancellation.py:37: in test_terminal_batch_cannot_admit_new_wave
+    assert await db.scalar(select(Task.id).where(Task.batch_id == batch.id)) is None
+E   AssertionError: assert UUID('30a893b5-a019-4bcc-8ea2-89c55eeb30a1') is None
+---------------------------- Captured stdout call -----------------------------
+{"batch_id": "5a304306-9b84-4833-a829-72d7ac94e25c", "wave": "1/1", "devices": 1, "event": "batch.wave.start", "level": "info", "logger": "backend.services.batch_service", "timestamp": "2026-09-07T14:19:53.761813Z"}
+{"task_id": "30a893b5-a019-4bcc-8ea2-89c55eeb30a1", "device_id": "0d292880-be22-411f-80ec-354cb1857845", "priority": 5, "event": "task.created", "level": "info", "logger": "backend.services.task_service", "timestamp": "2026-09-07T14:19:53.831572Z"}
+{"batch_id": "5a304306-9b84-4833-a829-72d7ac94e25c", "waves": 1, "event": "batch.waves_submitted", "level": "info", "logger": "backend.services.batch_service", "timestamp": "2026-09-07T14:19:53.836872Z"}
+------------------------------ Captured log call ------------------------------
+INFO     backend.services.batch_service:batch_service.py:199 {'batch_id': '5a304306-9b84-4833-a829-72d7ac94e25c', 'wave': '1/1', 'devices': 1, 'event': 'batch.wave.start', 'level': 'info', 'logger': 'backend.services.batch_service', 'timestamp': '2026-09-07T14:19:53.761813Z'}
+INFO     backend.services.task_service:task_service.py:238 {'task_id': '30a893b5-a019-4bcc-8ea2-89c55eeb30a1', 'device_id': '0d292880-be22-411f-80ec-354cb1857845', 'priority': 5, 'event': 'task.created', 'level': 'info', 'logger': 'backend.services.task_service', 'timestamp': '2026-09-07T14:19:53.831572Z'}
+INFO     backend.services.batch_service:batch_service.py:245 {'batch_id': '5a304306-9b84-4833-a829-72d7ac94e25c', 'waves': 1, 'event': 'batch.waves_submitted', 'level': 'info', 'logger': 'backend.services.batch_service', 'timestamp': '2026-09-07T14:19:53.836872Z'}
+__________ test_cancel_between_waves_prevents_next_device_admission ___________
+tests\production\test_batch_wave_cancellation.py:69: in test_cancel_between_waves_prevents_next_device_admission
+    assert [(task.device_id, task.status) for task in tasks] == [(world.dev_a.id, TaskStatus.CANCELLED)]
+E   AssertionError: assert [(UUID('f2816...D: 'queued'>)] == [(UUID('f2816...'cancelled'>)]
+E
+E     Left contains one more item: (UUID('1ac48d82-be77-4558-ad57-12f56dbdc3de'), <TaskStatus.QUEUED: 'queued'>)
+E     Use -v to get more diff
+---------------------------- Captured stdout call -----------------------------
+{"batch_id": "cc84592c-7ae4-4654-a8e9-613109dcd88a", "wave": "1/2", "devices": 1, "event": "batch.wave.start", "level": "info", "logger": "backend.services.batch_service", "timestamp": "2026-09-07T14:19:54.049135Z"}
+{"task_id": "b22239f2-91f7-43a8-87fc-ff24fb1ddb9e", "device_id": "f281604c-f7f0-4003-bc6d-925608e008a9", "priority": 5, "event": "task.created", "level": "info", "logger": "backend.services.task_service", "timestamp": "2026-09-07T14:19:54.122562Z"}
+{"batch_id": "cc84592c-7ae4-4654-a8e9-613109dcd88a", "tasks_cancelled": 1, "event": "batch.cancelled", "level": "info", "logger": "backend.services.batch_service", "timestamp": "2026-09-07T14:19:54.276012Z"}
+{"batch_id": "cc84592c-7ae4-4654-a8e9-613109dcd88a", "wave": "2/2", "devices": 1, "event": "batch.wave.start", "level": "info", "logger": "backend.services.batch_service", "timestamp": "2026-09-07T14:19:54.284003Z"}
+{"task_id": "dd582595-36e6-4782-8e72-75aa179d2382", "device_id": "1ac48d82-be77-4558-ad57-12f56dbdc3de", "priority": 5, "event": "task.created", "level": "info", "logger": "backend.services.task_service", "timestamp": "2026-09-07T14:19:54.344236Z"}
+{"batch_id": "cc84592c-7ae4-4654-a8e9-613109dcd88a", "waves": 2, "event": "batch.waves_submitted", "level": "info", "logger": "backend.services.batch_service", "timestamp": "2026-09-07T14:19:54.348413Z"}
+------------------------------ Captured log call ------------------------------
+INFO     backend.services.batch_service:batch_service.py:199 {'batch_id': 'cc84592c-7ae4-4654-a8e9-613109dcd88a', 'wave': '1/2', 'devices': 1, 'event': 'batch.wave.start', 'level': 'info', 'logger': 'backend.services.batch_service', 'timestamp': '2026-09-07T14:19:54.049135Z'}
+INFO     backend.services.task_service:task_service.py:238 {'task_id': 'b22239f2-91f7-43a8-87fc-ff24fb1ddb9e', 'device_id': 'f281604c-f7f0-4003-bc6d-925608e008a9', 'priority': 5, 'event': 'task.created', 'level': 'info', 'logger': 'backend.services.task_service', 'timestamp': '2026-09-07T14:19:54.122562Z'}
+INFO     backend.services.batch_service:batch_service.py:332 {'batch_id': 'cc84592c-7ae4-4654-a8e9-613109dcd88a', 'tasks_cancelled': 1, 'event': 'batch.cancelled', 'level': 'info', 'logger': 'backend.services.batch_service', 'timestamp': '2026-09-07T14:19:54.276012Z'}
+INFO     backend.services.batch_service:batch_service.py:199 {'batch_id': 'cc84592c-7ae4-4654-a8e9-613109dcd88a', 'wave': '2/2', 'devices': 1, 'event': 'batch.wave.start', 'level': 'info', 'logger': 'backend.services.batch_service', 'timestamp': '2026-09-07T14:19:54.284003Z'}
+INFO     backend.services.task_service:task_service.py:238 {'task_id': 'dd582595-36e6-4782-8e72-75aa179d2382', 'device_id': '1ac48d82-be77-4558-ad57-12f56dbdc3de', 'priority': 5, 'event': 'task.created', 'level': 'info', 'logger': 'backend.services.task_service', 'timestamp': '2026-09-07T14:19:54.344236Z'}
+INFO     backend.services.batch_service:batch_service.py:245 {'batch_id': 'cc84592c-7ae4-4654-a8e9-613109dcd88a', 'waves': 2, 'event': 'batch.waves_submitted', 'level': 'info', 'logger': 'backend.services.batch_service', 'timestamp': '2026-09-07T14:19:54.348413Z'}
+____ test_cancel_waits_for_inflight_wave_then_cancels_its_committed_tasks _____
+tests\production\test_batch_wave_cancellation.py:112: in test_cancel_waits_for_inflight_wave_then_cancels_its_committed_tasks
+    assert task.status == TaskStatus.CANCELLED
+E   AssertionError: assert <TaskStatus.QUEUED: 'queued'> == <TaskStatus.C...: 'cancelled'>
+E
+E     - cancelled
+E     + queued
+---------------------------- Captured stdout call -----------------------------
+{"batch_id": "96272032-73bd-421c-b20e-64d8b813157e", "wave": "1/1", "devices": 1, "event": "batch.wave.start", "level": "info", "logger": "backend.services.batch_service", "timestamp": "2026-09-07T14:19:54.616782Z"}
+{"task_id": "e50d1003-bf97-4975-b93a-ad4603620617", "device_id": "322d0481-fe66-40e1-a5fe-eba3dffe63c5", "priority": 5, "event": "task.created", "level": "info", "logger": "backend.services.task_service", "timestamp": "2026-09-07T14:19:54.683428Z"}
+{"batch_id": "96272032-73bd-421c-b20e-64d8b813157e", "tasks_cancelled": 0, "event": "batch.cancelled", "level": "info", "logger": "backend.services.batch_service", "timestamp": "2026-09-07T14:19:54.764913Z"}
+{"batch_id": "96272032-73bd-421c-b20e-64d8b813157e", "waves": 1, "event": "batch.waves_submitted", "level": "info", "logger": "backend.services.batch_service", "timestamp": "2026-09-07T14:19:54.768110Z"}
+------------------------------ Captured log call ------------------------------
+INFO     backend.services.batch_service:batch_service.py:199 {'batch_id': '96272032-73bd-421c-b20e-64d8b813157e', 'wave': '1/1', 'devices': 1, 'event': 'batch.wave.start', 'level': 'info', 'logger': 'backend.services.batch_service', 'timestamp': '2026-09-07T14:19:54.616782Z'}
+INFO     backend.services.task_service:task_service.py:238 {'task_id': 'e50d1003-bf97-4975-b93a-ad4603620617', 'device_id': '322d0481-fe66-40e1-a5fe-eba3dffe63c5', 'priority': 5, 'event': 'task.created', 'level': 'info', 'logger': 'backend.services.task_service', 'timestamp': '2026-09-07T14:19:54.683428Z'}
+INFO     backend.services.batch_service:batch_service.py:332 {'batch_id': '96272032-73bd-421c-b20e-64d8b813157e', 'tasks_cancelled': 0, 'event': 'batch.cancelled', 'level': 'info', 'logger': 'backend.services.batch_service', 'timestamp': '2026-09-07T14:19:54.764913Z'}
+INFO     backend.services.batch_service:batch_service.py:245 {'batch_id': '96272032-73bd-421c-b20e-64d8b813157e', 'waves': 1, 'event': 'batch.waves_submitted', 'level': 'info', 'logger': 'backend.services.batch_service', 'timestamp': '2026-09-07T14:19:54.768110Z'}
+___________ test_wave_waits_for_cancel_commit_before_task_creation ____________
+tests\production\test_batch_wave_cancellation.py:152: in test_wave_waits_for_cancel_commit_before_task_creation
+    assert not early_effect
+E   assert not True
+---------------------------- Captured stdout call -----------------------------
+{"batch_id": "630c25f0-f20b-427f-930a-cc7bdd29e456", "tasks_cancelled": 0, "event": "batch.cancelled", "level": "info", "logger": "backend.services.batch_service", "timestamp": "2026-09-07T14:19:55.044931Z"}
+{"batch_id": "630c25f0-f20b-427f-930a-cc7bdd29e456", "wave": "1/1", "devices": 1, "event": "batch.wave.start", "level": "info", "logger": "backend.services.batch_service", "timestamp": "2026-09-07T14:19:55.085213Z"}
+{"task_id": "0bb5bdee-e70d-45f4-ac01-048ced946160", "device_id": "370ae00c-b9aa-47d4-9cdc-19754f5ddb8c", "priority": 5, "event": "task.created", "level": "info", "logger": "backend.services.task_service", "timestamp": "2026-09-07T14:19:55.114523Z"}
+{"batch_id": "630c25f0-f20b-427f-930a-cc7bdd29e456", "waves": 1, "event": "batch.waves_submitted", "level": "info", "logger": "backend.services.batch_service", "timestamp": "2026-09-07T14:19:55.119325Z"}
+------------------------------ Captured log call ------------------------------
+INFO     backend.services.batch_service:batch_service.py:332 {'batch_id': '630c25f0-f20b-427f-930a-cc7bdd29e456', 'tasks_cancelled': 0, 'event': 'batch.cancelled', 'level': 'info', 'logger': 'backend.services.batch_service', 'timestamp': '2026-09-07T14:19:55.044931Z'}
+INFO     backend.services.batch_service:batch_service.py:199 {'batch_id': '630c25f0-f20b-427f-930a-cc7bdd29e456', 'wave': '1/1', 'devices': 1, 'event': 'batch.wave.start', 'level': 'info', 'logger': 'backend.services.batch_service', 'timestamp': '2026-09-07T14:19:55.085213Z'}
+INFO     backend.services.task_service:task_service.py:238 {'task_id': '0bb5bdee-e70d-45f4-ac01-048ced946160', 'device_id': '370ae00c-b9aa-47d4-9cdc-19754f5ddb8c', 'priority': 5, 'event': 'task.created', 'level': 'info', 'logger': 'backend.services.task_service', 'timestamp': '2026-09-07T14:19:55.114523Z'}
+INFO     backend.services.batch_service:batch_service.py:245 {'batch_id': '630c25f0-f20b-427f-930a-cc7bdd29e456', 'waves': 1, 'event': 'batch.waves_submitted', 'level': 'info', 'logger': 'backend.services.batch_service', 'timestamp': '2026-09-07T14:19:55.119325Z'}
+______ test_running_task_outcome_cannot_reopen_cancelled_batch[success] _______
+tests\production\test_batch_wave_cancellation.py:180: in test_running_task_outcome_cannot_reopen_cancelled_batch
+    assert stored.status == TaskBatchStatus.CANCELLED
+E   AssertionError: assert <TaskBatchSta...: 'completed'> == <TaskBatchSta...: 'cancelled'>
+E
+E     - cancelled
+E     + completed
+---------------------------- Captured stdout call -----------------------------
+{"batch_id": "ba95fcff-199b-4dc3-8c51-1209f0c7e207", "tasks_cancelled": 0, "event": "batch.cancelled", "level": "info", "logger": "backend.services.batch_service", "timestamp": "2026-09-07T14:19:55.394631Z"}
+{"task_id": "262b7798-8959-4be1-a2ef-db98bc8a3d03", "success": true, "device_id": "a92e420f-8ad3-4f3f-ada1-b957936037a8", "event": "task.completed", "level": "info", "logger": "backend.services.task_service", "timestamp": "2026-09-07T14:19:55.446768Z"}
+{"event_id": "7ede9e60-fbf4-4975-9746-1938eb5a848d", "event_type": "task.completed", "device_id": "a92e420f-8ad3-4f3f-ada1-b957936037a8", "account_id": null, "event": "event_reactor.event_saved", "level": "info", "logger": "backend.services.event_reactor", "timestamp": "2026-09-07T14:19:55.458967Z"}
+{"batch_id": "ba95fcff-199b-4dc3-8c51-1209f0c7e207", "status": "completed", "succeeded": 1, "failed": 0, "event": "batch.auto_aggregated", "level": "info", "logger": "backend.services.task_service", "timestamp": "2026-09-07T14:19:55.470793Z"}
+------------------------------ Captured log call ------------------------------
+INFO     backend.services.batch_service:batch_service.py:332 {'batch_id': 'ba95fcff-199b-4dc3-8c51-1209f0c7e207', 'tasks_cancelled': 0, 'event': 'batch.cancelled', 'level': 'info', 'logger': 'backend.services.batch_service', 'timestamp': '2026-09-07T14:19:55.394631Z'}
+INFO     backend.services.task_service:task_service.py:415 {'task_id': '262b7798-8959-4be1-a2ef-db98bc8a3d03', 'success': True, 'device_id': 'a92e420f-8ad3-4f3f-ada1-b957936037a8', 'event': 'task.completed', 'level': 'info', 'logger': 'backend.services.task_service', 'timestamp': '2026-09-07T14:19:55.446768Z'}
+INFO     backend.services.event_reactor:event_reactor.py:106 {'event_id': '7ede9e60-fbf4-4975-9746-1938eb5a848d', 'event_type': 'task.completed', 'device_id': 'a92e420f-8ad3-4f3f-ada1-b957936037a8', 'account_id': None, 'event': 'event_reactor.event_saved', 'level': 'info', 'logger': 'backend.services.event_reactor', 'timestamp': '2026-09-07T14:19:55.458967Z'}
+INFO     backend.services.task_service:task_service.py:506 {'batch_id': 'ba95fcff-199b-4dc3-8c51-1209f0c7e207', 'status': <TaskBatchStatus.COMPLETED: 'completed'>, 'succeeded': 1, 'failed': 0, 'event': 'batch.auto_aggregated', 'level': 'info', 'logger': 'backend.services.task_service', 'timestamp': '2026-09-07T14:19:55.470793Z'}
+______ test_running_task_outcome_cannot_reopen_cancelled_batch[failure] _______
+tests\production\test_batch_wave_cancellation.py:180: in test_running_task_outcome_cannot_reopen_cancelled_batch
+    assert stored.status == TaskBatchStatus.CANCELLED
+E   AssertionError: assert <TaskBatchSta...LED: 'failed'> == <TaskBatchSta...: 'cancelled'>
+E
+E     - cancelled
+E     + failed
+---------------------------- Captured stdout call -----------------------------
+{"batch_id": "eb65ff00-d301-4be2-858b-d067742756ef", "tasks_cancelled": 0, "event": "batch.cancelled", "level": "info", "logger": "backend.services.batch_service", "timestamp": "2026-09-07T14:19:55.813692Z"}
+{"task_id": "68cf7dfd-936c-484a-8d33-d68a4983fa29", "success": false, "device_id": "e6010a71-d154-4e02-a6b9-9d676f20feee", "event": "task.completed", "level": "info", "logger": "backend.services.task_service", "timestamp": "2026-09-07T14:19:55.864182Z"}
+{"event_id": "eec28b77-be52-40bb-8cc7-5ec6d3f145b2", "event_type": "task.failed", "device_id": "e6010a71-d154-4e02-a6b9-9d676f20feee", "account_id": null, "event": "event_reactor.event_saved", "level": "info", "logger": "backend.services.event_reactor", "timestamp": "2026-09-07T14:19:55.874791Z"}
+{"batch_id": "eb65ff00-d301-4be2-858b-d067742756ef", "status": "failed", "succeeded": 0, "failed": 1, "event": "batch.auto_aggregated", "level": "info", "logger": "backend.services.task_service", "timestamp": "2026-09-07T14:19:55.887093Z"}
+------------------------------ Captured log call ------------------------------
+INFO     backend.services.batch_service:batch_service.py:332 {'batch_id': 'eb65ff00-d301-4be2-858b-d067742756ef', 'tasks_cancelled': 0, 'event': 'batch.cancelled', 'level': 'info', 'logger': 'backend.services.batch_service', 'timestamp': '2026-09-07T14:19:55.813692Z'}
+INFO     backend.services.task_service:task_service.py:415 {'task_id': '68cf7dfd-936c-484a-8d33-d68a4983fa29', 'success': False, 'device_id': 'e6010a71-d154-4e02-a6b9-9d676f20feee', 'event': 'task.completed', 'level': 'info', 'logger': 'backend.services.task_service', 'timestamp': '2026-09-07T14:19:55.864182Z'}
+INFO     backend.services.event_reactor:event_reactor.py:106 {'event_id': 'eec28b77-be52-40bb-8cc7-5ec6d3f145b2', 'event_type': 'task.failed', 'device_id': 'e6010a71-d154-4e02-a6b9-9d676f20feee', 'account_id': None, 'event': 'event_reactor.event_saved', 'level': 'info', 'logger': 'backend.services.event_reactor', 'timestamp': '2026-09-07T14:19:55.874791Z'}
+INFO     backend.services.task_service:task_service.py:506 {'batch_id': 'eb65ff00-d301-4be2-858b-d067742756ef', 'status': <TaskBatchStatus.FAILED: 'failed'>, 'succeeded': 0, 'failed': 1, 'event': 'batch.auto_aggregated', 'level': 'info', 'logger': 'backend.services.task_service', 'timestamp': '2026-09-07T14:19:55.887093Z'}
+______ test_running_task_outcome_cannot_reopen_cancelled_batch[timeout] _______
+tests\production\test_batch_wave_cancellation.py:180: in test_running_task_outcome_cannot_reopen_cancelled_batch
+    assert stored.status == TaskBatchStatus.CANCELLED
+E   AssertionError: assert <TaskBatchSta...LED: 'failed'> == <TaskBatchSta...: 'cancelled'>
+E
+E     - cancelled
+E     + failed
+---------------------------- Captured stdout call -----------------------------
+{"batch_id": "9f4554c4-e97d-43cf-87ad-2218d2249936", "tasks_cancelled": 0, "event": "batch.cancelled", "level": "info", "logger": "backend.services.batch_service", "timestamp": "2026-09-07T14:19:56.212355Z"}
+{"batch_id": "9f4554c4-e97d-43cf-87ad-2218d2249936", "status": "failed", "succeeded": 0, "failed": 1, "total": 1, "event": "task.watchdog.batch_finalized", "level": "info", "logger": "backend.tasks.task_heartbeat_watchdog", "timestamp": "2026-09-07T14:19:56.272559Z"}
+------------------------------ Captured log call ------------------------------
+INFO     backend.services.batch_service:batch_service.py:332 {'batch_id': '9f4554c4-e97d-43cf-87ad-2218d2249936', 'tasks_cancelled': 0, 'event': 'batch.cancelled', 'level': 'info', 'logger': 'backend.services.batch_service', 'timestamp': '2026-09-07T14:19:56.212355Z'}
+INFO     backend.tasks.task_heartbeat_watchdog:task_heartbeat_watchdog.py:347 {'batch_id': '9f4554c4-e97d-43cf-87ad-2218d2249936', 'status': <TaskBatchStatus.FAILED: 'failed'>, 'succeeded': 0, 'failed': 1, 'total': 1, 'event': 'task.watchdog.batch_finalized', 'level': 'info', 'logger': 'backend.tasks.task_heartbeat_watchdog', 'timestamp': '2026-09-07T14:19:56.272559Z'}
+___________ test_foreign_worker_context_cannot_modify_batch_counts ____________
+tests\production\test_batch_wave_cancellation.py:192: in test_foreign_worker_context_cannot_modify_batch_counts
+    assert (stored.status, stored.succeeded, stored.failed) == (TaskBatchStatus.RUNNING, 0, 0)
+E   AssertionError: assert (<TaskBatchSt...ailed'>, 0, 1) == (<TaskBatchSt...nning'>, 0, 0)
+E
+E     At index 0 diff: <TaskBatchStatus.FAILED: 'failed'> != <TaskBatchStatus.RUNNING: 'running'>
+E     Use -v to get more diff
+---------------------------- Captured stdout call -----------------------------
+{"batch_id": "1ad60024-34db-492e-ae4c-4d7ca9680640", "wave": "1/1", "devices": 1, "event": "batch.wave.start", "level": "info", "logger": "backend.services.batch_service", "timestamp": "2026-09-07T14:19:56.497371Z"}
+{"device_id": "7ba952ba-9666-4d23-8570-4859f578edbd", "error": "404: Script not found", "event": "batch.wave.task_create_failed", "level": "warning", "logger": "backend.services.batch_service", "timestamp": "2026-09-07T14:19:56.534399Z"}
+{"batch_id": "1ad60024-34db-492e-ae4c-4d7ca9680640", "status": "failed", "succeeded": 0, "failed": 1, "event": "batch.auto_aggregated", "level": "info", "logger": "backend.services.task_service", "timestamp": "2026-09-07T14:19:56.550160Z"}
+{"batch_id": "1ad60024-34db-492e-ae4c-4d7ca9680640", "waves": 1, "event": "batch.waves_submitted", "level": "info", "logger": "backend.services.batch_service", "timestamp": "2026-09-07T14:19:56.556585Z"}
+------------------------------ Captured log call ------------------------------
+INFO     backend.services.batch_service:batch_service.py:199 {'batch_id': '1ad60024-34db-492e-ae4c-4d7ca9680640', 'wave': '1/1', 'devices': 1, 'event': 'batch.wave.start', 'level': 'info', 'logger': 'backend.services.batch_service', 'timestamp': '2026-09-07T14:19:56.497371Z'}
+WARNING  backend.services.batch_service:batch_service.py:220 {'device_id': '7ba952ba-9666-4d23-8570-4859f578edbd', 'error': '404: Script not found', 'event': 'batch.wave.task_create_failed', 'level': 'warning', 'logger': 'backend.services.batch_service', 'timestamp': '2026-09-07T14:19:56.534399Z'}
+INFO     backend.services.task_service:task_service.py:506 {'batch_id': '1ad60024-34db-492e-ae4c-4d7ca9680640', 'status': <TaskBatchStatus.FAILED: 'failed'>, 'succeeded': 0, 'failed': 1, 'event': 'batch.auto_aggregated', 'level': 'info', 'logger': 'backend.services.task_service', 'timestamp': '2026-09-07T14:19:56.550160Z'}
+INFO     backend.services.batch_service:batch_service.py:245 {'batch_id': '1ad60024-34db-492e-ae4c-4d7ca9680640', 'waves': 1, 'event': 'batch.waves_submitted', 'level': 'info', 'logger': 'backend.services.batch_service', 'timestamp': '2026-09-07T14:19:56.556585Z'}
+============================== warnings summary ===============================
+backend\api\v1\game_accounts\router.py:95
+  C:\Users\dimas\Documents\ChatGPT\sphere-platform\backend\api\v1\game_accounts\router.py:95: FastAPIDeprecationWarning: `regex` has been deprecated, please use `pattern` instead
+    sort_dir: str = Query("desc", regex="^(asc|desc)$", description="Направление сортировки"),
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ===========================
+FAILED tests/production/test_batch_wave_cancellation.py::test_terminal_batch_cannot_admit_new_wave[cancelled]
+FAILED tests/production/test_batch_wave_cancellation.py::test_terminal_batch_cannot_admit_new_wave[completed]
+FAILED tests/production/test_batch_wave_cancellation.py::test_terminal_batch_cannot_admit_new_wave[failed]
+FAILED tests/production/test_batch_wave_cancellation.py::test_terminal_batch_cannot_admit_new_wave[partial]
+FAILED tests/production/test_batch_wave_cancellation.py::test_cancel_between_waves_prevents_next_device_admission
+FAILED tests/production/test_batch_wave_cancellation.py::test_cancel_waits_for_inflight_wave_then_cancels_its_committed_tasks
+FAILED tests/production/test_batch_wave_cancellation.py::test_wave_waits_for_cancel_commit_before_task_creation
+FAILED tests/production/test_batch_wave_cancellation.py::test_running_task_outcome_cannot_reopen_cancelled_batch[success]
+FAILED tests/production/test_batch_wave_cancellation.py::test_running_task_outcome_cannot_reopen_cancelled_batch[failure]
+FAILED tests/production/test_batch_wave_cancellation.py::test_running_task_outcome_cannot_reopen_cancelled_batch[timeout]
+FAILED tests/production/test_batch_wave_cancellation.py::test_foreign_worker_context_cannot_modify_batch_counts
+11 failed, 1 warning in 4.58s

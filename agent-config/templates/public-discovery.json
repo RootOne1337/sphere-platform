@@ -1,0 +1,9 @@
+{
+  "installation_id": "00000000-0000-0000-0000-000000000000",
+  "config_version": 1,
+  "server_url": "https://primary.example.invalid",
+  "fallback_server_url": "https://secondary.example.invalid",
+  "environment": "development",
+  "features": { "auto_register": true },
+  "ws_path": "/ws/android"
+}

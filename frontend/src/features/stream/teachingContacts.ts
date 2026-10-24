@@ -1,0 +1,158 @@
+import type { DirectControlEndpoint } from './directPointerTransport';
+import type { DirectVideoBinding } from './directVideoProtocol';
+
+export type TeachingPoint = { x: number; y: number };
+export type TeachingInput = { stage: 'submitted' | 'receipt' | 'closed'; at_ms: number;
+  sequence: number; gesture: number; action: number; pointer_id: number; x?: number; y?: number;
+  outcome?: string; device_uptime_ms?: number; cancelled_pointers?: number[] };
+type Edge = { id: number; action: number; point: TeachingPoint; at: number };
+const object = (v: unknown): v is Record<string, unknown> => !!v && typeof v === 'object' && !Array.isArray(v);
+
+/** Explicit three-contact protocol. Never falls back to taps, WebSocket or a second owner. */
+export class TeachingContacts {
+  private sequence = 0;
+  private gesture = 0;
+  private owner: string | null = null;
+  private ready = false;
+  private closing = false;
+  private ended = false;
+  private closedConfirmed = false;
+  private queue: Edge[] = [];
+  private desired = new Map<number, TeachingPoint>();
+  private held = new Set<number>();
+  private pending: TeachingInput | null = null;
+  private pendingAt = 0;
+  private openedAt = performance.now();
+  private lastSend = this.openedAt;
+  private remove: () => void = () => {};
+  private timer: ReturnType<typeof setInterval>;
+  private finishClose: ((confirmed: boolean) => void) | null = null;
+  private closePromise: Promise<boolean> | null = null;
+  private closeAt = 0;
+  constructor(private endpoint: DirectControlEndpoint, private binding: DirectVideoBinding,
+    private fresh: () => boolean, private journal: (event: TeachingInput) => void,
+    private state: (state: 'opening' | 'ready' | 'closing' | 'closed' | 'failed', reason?: string) => void) {
+    if (!endpoint.sharedInput || endpoint.readyState !== 1) throw Error('shared_input_required');
+    this.timer = setInterval(() => this.tick(), 25);
+    this.remove = endpoint.listen(value => this.receipt(value));
+    if (this.closing || this.ended) return;
+    this.state('opening');
+    try { this.send({ type: 'touch_open', capture_epoch: binding.captureEpoch,
+      frame_width: binding.width, frame_height: binding.height, contact_protocol: 1 }); }
+    catch { this.fail('contact_open_failed'); }
+  }
+  get isReady() { return this.ready && !this.closing && !this.ended; }
+  get isNeutral() { return !this.desired.size && !this.held.size && !this.pending && !this.queue.length; }
+  hasContact(id: number) { return this.desired.has(id); }
+  set(id: number, point: TeachingPoint | null) {
+    if (!this.isReady) return;
+    if (!Number.isInteger(id) || id < 0 || id > 2 || point && (!Number.isInteger(point.x)
+      || !Number.isInteger(point.y) || point.x < 0 || point.y < 0 || point.x >= this.binding.width || point.y >= this.binding.height)) {
+      this.fail('invalid_contact'); return;
+    }
+    const before = this.desired.get(id);
+    if (!before && !point || before && point && before.x === point.x && before.y === point.y) return;
+    if (point) this.desired.set(id, point); else this.desired.delete(id);
+    const edge: Edge = { id, action: point ? before ? 2 : 0 : 1, point: point ?? before!, at: performance.now() };
+    const previous = this.queue.at(-1);
+    if (edge.action === 2 && previous?.action === 2 && previous.id === id) this.queue[this.queue.length - 1] = edge;
+    else this.queue.push(edge);
+    if (this.queue.length > 8) { this.fail('contact_queue_full'); return; }
+    this.pump();
+  }
+  private send(value: object) {
+    const current = this.endpoint.capture();
+    if (this.endpoint.readyState !== 1 || this.endpoint.bufferedAmount > 1024
+      || !current || current.captureEpoch !== this.binding.captureEpoch
+      || current.width !== this.binding.width || current.height !== this.binding.height) throw Error('contact_transport_changed');
+    this.endpoint.send(JSON.stringify(value)); this.lastSend = performance.now();
+  }
+  private pump() {
+    if (!this.isReady || this.pending) return;
+    const edge = this.queue.shift();
+    if (!edge) return;
+    if (!this.fresh() || performance.now() - edge.at >= 200) { this.fail('stale_contact'); return; }
+    if (edge.action === 0 && !this.held.size) this.gesture++;
+    if (edge.action === 0) this.held.add(edge.id);
+    const event: TeachingInput = { stage: 'submitted', at_ms: performance.timeOrigin + performance.now(),
+      sequence: ++this.sequence, gesture: this.gesture, action: edge.action, pointer_id: edge.id, ...edge.point };
+    this.pending = event; this.pendingAt = performance.now();
+    try { this.journal(event); this.send({ type: 'touch_contact_event', sequence: event.sequence,
+      gesture: event.gesture, action: event.action, pointer_id: event.pointer_id, ...edge.point }); }
+    catch { this.fail('contact_send_unknown'); }
+  }
+  private receipt(value: unknown) {
+    if (this.ended || !object(value)) return;
+    if (value.type === 'input_availability' && value.state !== 'manual') { this.fail('input_reserved'); return; }
+    if (value.type !== 'touch_session' && value.type !== 'shared_input_status') return;
+    if (value.session_id !== this.endpoint.session || value.capture_epoch !== this.binding.captureEpoch
+      || value.contact_protocol !== 1 || value.max_pointers !== 3 || typeof value.owner !== 'string'
+      || !/^[0-9a-f]{32}$/.test(value.owner) || this.owner && value.owner !== this.owner) { this.fail('contact_protocol_required'); return; }
+    if (value.type === 'touch_session') {
+      if (this.owner || value.frame_width !== this.binding.width || value.frame_height !== this.binding.height) {
+        this.fail('contact_binding_invalid'); return;
+      }
+      this.owner = value.owner; return;
+    }
+    if (!this.owner || !Number.isSafeInteger(value.device_uptime_ms) || (value.device_uptime_ms as number) < 0) {
+      this.fail('contact_receipt_invalid'); return;
+    }
+    if (value.outcome === 'closed' && value.sequence === 0 && value.gesture === 0 && value.action === 3 && value.pointer_id === -1) { this.finish(true,value.device_uptime_ms as number); return; }
+    if (this.closing && !this.pending) return;
+    if (value.outcome === 'ready' && value.sequence === 0 && value.gesture === 0 && value.action === 4 && value.pointer_id === -1 && !this.ready) {
+      this.ready = true; this.state('ready'); return;
+    }
+    const pending = this.pending;
+    if (!pending || value.sequence !== pending.sequence || value.gesture !== pending.gesture
+      || value.action !== pending.action || value.pointer_id !== pending.pointer_id
+      || value.outcome !== (pending.action === 4 ? 'alive' : 'applied')) { this.fail('contact_receipt_unknown'); return; }
+    try { this.journal({ ...pending, stage: 'receipt', at_ms: performance.timeOrigin + performance.now(),
+      outcome: value.outcome as string, device_uptime_ms: value.device_uptime_ms as number }); }
+    catch { this.fail('contact_journal_failed'); return; }
+    if (pending.action === 1) this.held.delete(pending.pointer_id);
+    this.pending = null; this.pump();
+  }
+  private tick() {
+    const now = performance.now();
+    if (this.closing) { if (now - this.closeAt >= 2500) this.finish(false); return; }
+    if (this.ended) return;
+    if (!this.fresh()) { this.fail('contact_video_stale'); return; }
+    if (this.endpoint.readyState !== 1) { this.fail('contact_channel_closed'); return; }
+    if (this.pending && now - this.pendingAt >= 500) { this.fail('contact_ack_timeout'); return; }
+    if (!this.ready && now - this.openedAt >= 6000) { this.fail('contact_ready_timeout'); return; }
+    if (!this.isReady || this.pending || now - this.lastSend < 300) return;
+    const event: TeachingInput = { stage: 'submitted', at_ms: performance.timeOrigin + now,
+      sequence: ++this.sequence, gesture: this.held.size ? this.gesture : 0, action: 4, pointer_id: -1 };
+    this.pending = event; this.pendingAt = now;
+    try { this.journal(event); this.send({ type: 'touch_event', sequence: event.sequence,
+      gesture: event.gesture, action: 4, x: 0, y: 0 }); } catch { this.fail('heartbeat_unknown'); }
+  }
+  private fail(reason: string) { if (!this.ended && !this.closing) { this.state('failed', reason); void this.close(); } }
+  close(): Promise<boolean> {
+    if (this.closePromise) return this.closePromise;
+    if (this.ended) return Promise.resolve(this.closedConfirmed);
+    this.closing = true; this.ready = false; this.queue = []; this.desired.clear(); this.closeAt = performance.now();
+    this.closePromise = new Promise(resolve => { this.finishClose = resolve; });
+    this.state('closing');
+    try { this.send({ type: 'touch_close' }); } catch { this.finish(false); }
+    return this.closePromise;
+  }
+  private finish(confirmed: boolean, deviceUptime?: number) {
+    if (this.ended) return;
+    this.ended = true; this.ready = false; clearInterval(this.timer); this.remove();
+    try { this.journal({ stage: 'closed', at_ms: performance.timeOrigin + performance.now(), sequence: 0,
+      gesture: 0, action: 3, pointer_id: -1, outcome: confirmed ? 'closed' : 'unknown',
+      ...(confirmed?{device_uptime_ms:deviceUptime,cancelled_pointers:[...this.held].sort()}: {}) }); } catch { confirmed = false; }
+    this.closedConfirmed=confirmed;
+    this.state(confirmed ? 'closed' : 'failed', confirmed ? undefined : 'release_unknown');
+    this.finishClose?.(confirmed);
+  }
+}
+
+export function stickPoint(keys: ReadonlySet<string>, center: TeachingPoint, radius: number, slow = false): TeachingPoint | null {
+  const x = Number(keys.has('KeyD')) - Number(keys.has('KeyA'));
+  const y = Number(keys.has('KeyS')) - Number(keys.has('KeyW'));
+  if (!x && !y) return null;
+  const scale = radius * (slow ? 0.4 : 1) / Math.hypot(x, y);
+  return { x: Math.round(center.x + x * scale), y: Math.round(center.y + y * scale) };
+}

@@ -1,0 +1,5 @@
+Backend run 34529567946, head ac7a11ffae46cd6d553679803d9764309a9b16b4, attempt 1
+Full suite with isolated PostgreSQL/Redis and fresh Alembic migrations in Linux CI.
+
+2026-09-10T21:03:55.6608254Z Required test coverage of 65% reached. Total coverage: 69.37%
+2026-09-10T21:03:55.6608586Z ================= 1417 passed, 4 warnings in 228.42s (0:03:48) =================

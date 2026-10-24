@@ -1,0 +1,168 @@
+{
+  "schemaVersion": 1,
+  "observedAtUtc": "2026-10-15T20:16:01.827Z",
+  "runtimeInstalled": true,
+  "scope": "Finite View/record/XPath/record input and peer preservation; no broad transport reliability acceptance.",
+  "runtime": {
+    "sourceRevision": "fc7cdad4bbae51da8b86e6c12d5ba5c13dff6e64",
+    "apiSourceRevision": "969a74440d67e987be98f37cdb450f7c47817f68",
+    "uiCiRunId": 38794901325,
+    "uiContainer": {
+      "sourceRevision": "fc7cdad4bbae51da8b86e6c12d5ba5c13dff6e64",
+      "containerId": "080608bac3495ad6c5022659134eb4bea1cac9f7e1cbbc5585563fa4f7b7f7fc",
+      "imageId": "sha256:6d78b67a10353fdce3ce85e397b6ac39a78888a3850600b97419865c9c2d3dd6",
+      "status": "running"
+    },
+    "apiContainer": {
+      "sourceRevision": "969a74440d67e987be98f37cdb450f7c47817f68",
+      "containerId": "78459c3b463af99586ce2c6ae711721f06ba55e7b82f11b88d924e4c21e30dc4",
+      "imageId": "sha256:7830b6d17d689f13d323ccea274b764028adf112f015c17501674d53b2b0b650",
+      "status": "running"
+    },
+    "artifactDigest": "9a7f02cb66714b7127ec12d454a29e092de7a6a7acc77693fd2488b52b941c40",
+    "githubDigestVerified": true,
+    "otherContainersPreservedPerInstall": 45,
+    "otaCatalogPreserved": true,
+    "schemaMigrationPerformed": false
+  },
+  "ci": {
+    "frontendSuites": 172,
+    "frontendTests": 2507,
+    "typecheck": true,
+    "build": true,
+    "packagedRuntimeProbes": true,
+    "unchangedAndroidBackendRunsCancelled": true
+  },
+  "browser": {
+    "sourceRevision": "fc7cdad4bbae51da8b86e6c12d5ba5c13dff6e64",
+    "recordedAtUtc": "2026-10-15T20:16:01.827Z",
+    "finiteModeCycleAccepted": true,
+    "sameChannelsAcrossModes": true,
+    "confirmedRecordedTaps": 2,
+    "viewDisablesHome": true,
+    "treeReadAfterOtherControllerClosed": true,
+    "rootInspectionWhileOtherControls": "native_input_busy; another participant was not revoked",
+    "nativeInputAccepted": true,
+    "transportReliabilityAccepted": false,
+    "primaryControlState": "ready",
+    "directFramesPresented": 7661,
+    "directAttempts": 1,
+    "recoveryAttempts": 0,
+    "tunnelHome": "«Домой»: выполнение подтверждено · ответ команды 211 мс. Это не задержка появления кадра.",
+    "channelsBefore": [
+      {
+        "index": 1,
+        "label": "sphere-video-v1",
+        "state": "open"
+      },
+      {
+        "index": 2,
+        "label": "sphere-control-v2",
+        "state": "open"
+      }
+    ],
+    "channelsAfter": [
+      {
+        "index": 1,
+        "label": "sphere-video-v1",
+        "state": "open",
+        "sent": 28,
+        "received": 28,
+        "heartbeatDelayAlerts": 0
+      },
+      {
+        "index": 2,
+        "label": "sphere-control-v2",
+        "state": "open",
+        "sent": 1401,
+        "received": 1403,
+        "heartbeatDelayAlerts": 2
+      }
+    ],
+    "ordinaryChrome": {
+      "origin": "http://127.0.0.1:3015",
+      "buildStampObserved": true,
+      "durationMs": 53374,
+      "home": "«Домой»: выполнение подтверждено · ответ команды 223 мс. Это не задержка появления кадра.",
+      "controlReadyAtEnd": true,
+      "directVideoObserved": true,
+      "pageErrorCount": 0,
+      "transportOverrides": false
+    },
+    "tunnel": {
+      "origin": "https://sphere-agent-canary-20260927.ru.tuna.am",
+      "buildStampObserved": true,
+      "channelInstrumentation": true,
+      "transportOverrides": false,
+      "pageErrorCount": 0
+    },
+    "portrait": {
+      "width": 390,
+      "height": 844,
+      "coarse": false,
+      "overflow": false,
+      "canvas": {
+        "y": 532.5,
+        "height": 205.625,
+        "bottom": 738.125,
+        "width": 364
+      }
+    },
+    "fullscreen": {
+      "nativeFullscreenEntered": true,
+      "statusBandsHiddenInReviewedScreenshot": true,
+      "physicalPhoneAccepted": false
+    },
+    "pageErrorCount": 0,
+    "colorComparison": {
+      "nativePng": [
+        33,
+        36,
+        39,
+        255
+      ],
+      "decodedVideo": [
+        128,
+        35,
+        133,
+        255
+      ],
+      "renderedCanvas": [
+        128,
+        35,
+        133,
+        255
+      ],
+      "videoPresent": true,
+      "canvasSize": {
+        "width": 960,
+        "height": 540
+      },
+      "visibleMismatch": true,
+      "causalStageIdentified": false,
+      "cssOnlyCauseExcludedByDecodedPixels": true,
+      "nativeScreenshotHashVerifiedInBrowser": true
+    },
+    "limits": [
+      "Finite native Home and two recorded taps do not establish reliable multi-client transport.",
+      "Ordinary client and instrumented channel observations are separate.",
+      "PNG versus decoded video color mismatch is observed and remains open.",
+      "No task executed, no script persisted, no commands replayed."
+    ],
+    "productionAccepted": false
+  },
+  "sourceValidation": [
+    {
+      "file": "docs/audits/2026-10-16/MODE-TRANSPORT-AUTHORIZATION-SOURCE.json",
+      "sha256NormalizedLf": "3b881665b82c0f79a7753a1050c98e9bc9a99e72361b5b9b0d413627c188eff0"
+    }
+  ],
+  "apkBaselineEvidence": "docs/audits/2026-10-15/DIRECT-KEYBOARD76-OBSERVATION.json",
+  "limits": [
+    "Recurring idle receipt timeouts observed before this change remain open; removing mode-induced peer churn does not prove their cause fixed.",
+    "Native PNG and decoded direct video show different colors on PH025; CSS-only origin is excluded by decoded pixels, but the causal capture/codec stage remains unidentified.",
+    "Instrumented channel observations are kept separate from ordinary Chrome command checks.",
+    "Root UI inspection can be refused while a different viewer retains native control; this participant does not revoke that viewer.",
+    "No physical phone/IME,20+ viewer,WAN/TURN,long soak,arbitrary trajectory recording acceptance. No user commands replayed."
+  ]
+}

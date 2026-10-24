@@ -1,0 +1,280 @@
+{
+  "schemaVersion": 1,
+  "observedAtUtc": "2026-10-23T11:12:19.981238+00:00",
+  "localDate": "2026-10-23",
+  "timezone": "Asia/Yekaterinburg",
+  "scope": "PH030 APK88 local serial build, addressed OTA and one actual ACTIVE VPN boot restoration; direct PC gesture/video and browser HTTPS after boot.",
+  "productionAccepted": false,
+  "runtimeInstalled": true,
+  "deviceId": "753fd530-2f19-4e5e-98ba-769863678141",
+  "apk": {
+    "artifacts": [
+      {
+        "version": "1.2.85-dev",
+        "versionCode": 10285,
+        "sourceRevision": "3b437ee8c5a0067f3cfb792b25e8b383e739fc88",
+        "sha256": "9f2bdbe7e7040a0013b5636088426d01a8b8cae99dcfefb0dddd1400868a9180",
+        "androidTree": "e46c0b42dc23fee4261b779f6db84095c6dc16be",
+        "package": "com.sphereplatform.agent.pilot.debug",
+        "bytes": 73217607,
+        "certificateSha256": "3ab40797d26e4f52f9e440afc6fe69f197caef71a5a27c63c86735bb1801871f",
+        "hostedCertificateSha256": "70e67b0395df3cf30feb1d10f06303a7598b8453e5d965db06a4d00defdbc3e7",
+        "cloudApkSha256": "7b98a6dffff8cb8b91a08d527b9fb131b0d69971ec18736365760db86668cc6c",
+        "builtByHostedCi": true,
+        "onlySignatureChangedLocally": true,
+        "unchangedPayloadEntries": 936
+      },
+      {
+        "version": "1.2.88-dev",
+        "versionCode": 10288,
+        "sourceRevision": "6ad0df5fbcc3590ae9c63fe6922db178b45aeee1",
+        "sha256": "355af6f5ecc6697bd8fee66ff9f085bdbf9841e80bb201f8d48515a1ac7e9bca",
+        "certificateSha256": "3ab40797d26e4f52f9e440afc6fe69f197caef71a5a27c63c86735bb1801871f",
+        "package": "com.sphereplatform.agent.pilot.debug",
+        "builtLocally": true,
+        "builtByHostedCi": false
+      }
+    ],
+    "installedDevices": [
+      {
+        "deviceId": "5df4805e-fe64-4d39-960c-19ceab206cd6",
+        "device": "auto-ph-010",
+        "versionCode": 10285,
+        "installedPackageSha256": "9f2bdbe7e7040a0013b5636088426d01a8b8cae99dcfefb0dddd1400868a9180",
+        "packageProofObservedAtUtc": "2026-10-22T12:04:30.867863+00:00",
+        "completedAddressedOta": true,
+        "commandId": "74bd69d1-5b6c-42b5-b102-b3059be7dfaa",
+        "dataClears": 0,
+        "proofScope": "Historical earlier package proof; device not updated or rehashed by APK87 delivery."
+      },
+      {
+        "deviceId": "414ce0e9-4b93-4f96-b9ca-ee675f53835e",
+        "device": "auto-ph-011",
+        "versionCode": 10285,
+        "installedPackageSha256": "9f2bdbe7e7040a0013b5636088426d01a8b8cae99dcfefb0dddd1400868a9180",
+        "packageProofObservedAtUtc": "2026-10-22T12:04:38.101328+00:00",
+        "completedAddressedOta": true,
+        "commandId": "256a6674-b9ad-47e3-ab04-f7d38d523330",
+        "dataClears": 0,
+        "proofScope": "Historical earlier package proof; device not updated or rehashed by APK87 delivery."
+      },
+      {
+        "deviceId": "b410464a-5f26-4803-a756-7840cc17b128",
+        "device": "auto-ph-025",
+        "versionCode": 10285,
+        "installedPackageSha256": "9f2bdbe7e7040a0013b5636088426d01a8b8cae99dcfefb0dddd1400868a9180",
+        "packageProofObservedAtUtc": "2026-10-22T12:04:34.316120+00:00",
+        "completedAddressedOta": true,
+        "commandId": "6ab684dc-0ebc-46e4-ac7e-278ae9294098",
+        "dataClears": 0,
+        "proofScope": "Historical earlier package proof; device not updated or rehashed by APK87 delivery."
+      },
+      {
+        "deviceId": "753fd530-2f19-4e5e-98ba-769863678141",
+        "device": "auto-ph-030",
+        "versionCode": 10288,
+        "installedPackageSha256": "355af6f5ecc6697bd8fee66ff9f085bdbf9841e80bb201f8d48515a1ac7e9bca",
+        "verifiedAtUtc": "2026-10-23T11:12:19.981238+00:00",
+        "addressedOtaCompleted": true
+      }
+    ]
+  },
+  "localBuild": {
+    "source": "6ad0df5fbcc3590ae9c63fe6922db178b45aeee1",
+    "androidTree": "e031835e19062180063dde4e34f0ead29f16f3ce",
+    "ordinaryUnitVariants": {
+      ":app:testDevDebugUnitTest": {
+        "tests": 1276,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 3
+      },
+      ":app:testDevReleaseUnitTest": {
+        "tests": 1276,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 3
+      },
+      ":app:testEnterpriseDebugUnitTest": {
+        "tests": 1276,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 3
+      },
+      ":app:testEnterpriseReleaseUnitTest": {
+        "tests": 1276,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 3
+      }
+    },
+    "configuredDebugTests": {
+      "dev": {
+        "tests": 1290,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 3
+      },
+      "enterprise": {
+        "tests": 1290,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 3
+      }
+    },
+    "lintDevDebugPassed": true,
+    "lintEnterpriseDebugPassed": true,
+    "assembleDevDebugPassed": true,
+    "assembleEnterpriseDebugPassed": true,
+    "workerLimit": 1,
+    "javaHeapMiB": 1536,
+    "generalResourceGuardUnchanged": true,
+    "fullAndroidCi12GiBPolicyUnchanged": true,
+    "fullAndroidCiAcceptedForNewTree": false,
+    "releasePackagingAndDenialSuiteClaimed": false,
+    "nativeArtifactReused": {
+      "native": {
+        "nativeManifestSha256": "fb748c203c73dedfe65531648539b8d035243fe500b7abdbc2510e6edde45ea3",
+        "nativeAbis": [
+          "arm64-v8a",
+          "armeabi-v7a",
+          "x86_64"
+        ]
+      },
+      "artifactId": 12458170692,
+      "artifactDigest": "sha256:f420050f1a7c5a6cb7dc6905d0b3ee98a829761b800cc459623f079bcbee4e84",
+      "nativeSourceUnchanged": true,
+      "newGithubBuilds": 0
+    },
+    "newGithubJobs": 0,
+    "initialAttemptSource": "b1daf2b108c82907e00243c21d485c0dca884e23",
+    "initialAttemptStoppedBeforePackaging": true
+  },
+  "delivery": {
+    "ordinaryChannelChanged": false,
+    "fleetRollout": false,
+    "dataClears": 0,
+    "adbInstalls": 0,
+    "oldGuardRetainedAcrossUpgrade": true,
+    "independentDropHeldDuringGuardHandover": true,
+    "temporaryGuardRemoved": true,
+    "journalEdited": false,
+    "unknownCleared": false
+  },
+  "automaticBoot": {
+    "accepted": true,
+    "actualKernelBootsTested": 1,
+    "testDesiredState": "active",
+    "beforeBootId": "4e63c9ed-89b7-49f4-ab69-53a5447ef855",
+    "afterBootId": "26c1be72-ffd3-4bfb-82e1-04e554e5ae08",
+    "sameVpnSession": true,
+    "vpnSessionId": "f02763df-59d7-4aff-8544-b2cc0b6bfd9d",
+    "guardBoundToNewBoot": true,
+    "encryptedStateRefreshed": true,
+    "restartFileBytes": 1046,
+    "restartFileMode": "0600",
+    "restartFileOwnerUid": 10060,
+    "nativeApplyOrNewRecipientAfterBoot": false,
+    "hostRebooted": false,
+    "otherDevicesRebooted": false,
+    "afterBootNativePhase": "HANDSHAKE_CONFIRMED",
+    "runtimeFreshness": "fresh",
+    "newNativePid": 2411,
+    "pausedAndDisabledPhysicalBootAccepted": false
+  },
+  "network": {
+    "postBootKernelProof": true,
+    "guardPlanVersion": 5,
+    "sphereUidExcluded": 10060,
+    "appUidRanges": [
+      {
+        "first": 10000,
+        "last": 10059
+      },
+      {
+        "first": 10061,
+        "last": 99999
+      }
+    ],
+    "ipv6": "block",
+    "bothFamilyBlackholesVerified": true,
+    "tunIndexVerified": true,
+    "freshRuntimePhase": "HANDSHAKE_CONFIRMED",
+    "httpsBrowserAfterBoot": true,
+    "freshBrowserQuery": "sphere_probe=apk88_real_boot",
+    "browserExitIp": "64.145.94.74",
+    "browserScreenshotSha256": "df1809f75a8b33c55ab6fea15f0189b3e5a000dc97d0c12547df2032568715a3",
+    "systemUids0To9999Guarded": false,
+    "earlyPowerOnBarrierAccepted": false,
+    "directAndroidWanAccepted": false
+  },
+  "directAfterBoot": {
+    "durationSeconds": 20.005,
+    "decodedFrames": 1121,
+    "decodedFps": 55.087,
+    "rgbObservations": 101,
+    "observationHz": 4.999,
+    "receiverSelectionAgeP95Ms": 21.832,
+    "receiverSelectionAgeMaxMs": 36.664,
+    "route": {
+      "path": "nat",
+      "protocol": "udp",
+      "candidateTypes": [
+        "host",
+        "prflx"
+      ],
+      "addressScopes": [
+        "private",
+        "private"
+      ],
+      "evidence": "aiortc_1_15_nominated_pair_adapter",
+      "lanProven": false
+    },
+    "sctpTransport": {
+      "evidence": "aiortc_1_15_observation_only_adapter",
+      "dataChunksSent": 80,
+      "dataChunksReceived": 83,
+      "dataChunksRetransmitted": 0,
+      "duplicatePeerDataChunks": 0,
+      "t3Expiries": 0,
+      "rtoMs": 1000,
+      "smoothedRttMs": 6.063,
+      "eventTail": [],
+      "eventTailLimit": 64,
+      "duplicateWindowChunks": 2048,
+      "timersAndReliabilityChanged": false,
+      "applicationCommandReplay": false
+    },
+    "serverBootstrapBytes": 0,
+    "serverBytesAfterHandover": 0
+  },
+  "inputAfterBoot": {
+    "nativeAdmissionConfirmed": true,
+    "gestureDurationMs": 3000,
+    "nativeEventsConfirmed": 6,
+    "participantClosedConfirmed": true,
+    "nativeActionAppliedVerified": true,
+    "lastActionAckRttMs": 15.154399909079075,
+    "scheduleLatenessMaxMs": 15.783,
+    "modelLaunched": false,
+    "sourceCaptureAgeProven": false,
+    "phoneBrowserAccepted": false
+  },
+  "temporaryGateway": {
+    "source": "ec81121f",
+    "sourceSha256": "bd367ddcdbababd52a64ed0ee92050c176b6029c35f82fb068ae33221d177d6d",
+    "socketPidObserved": 25056,
+    "expiresAtUtc": "2026-10-23T19:08:05Z",
+    "expiresAtLocal": "2026-10-24T00:08:05+05:00",
+    "leaseExtended": false,
+    "newProviderPeers": 0,
+    "pcDependent": true
+  },
+  "limitations": [
+    "One ACTIVE reboot accepted; paused/disabled cases have unit coverage but no separate real boot acceptance.",
+    "Same-boot process death and UNKNOWN still require explicit reconciliation.",
+    "Before CE unlock/agent startup there is no accepted early fail-closed barrier; system UIDs0..9999 are outside custom guard.",
+    "Receiver frame age and ACK RTT are not full capture-to-model/action-to-image latency.",
+    "Phone browser, universal game navigation, direct Android WAN and production VPN SLA remain open."
+  ]
+}

@@ -1,0 +1,92 @@
+{
+  "schemaVersion": 1,
+  "observedAtUtc": "2026-10-22T19:49:27.291279+00:00",
+  "device": "auto-ph-030",
+  "versionCode": 10286,
+  "runtimeUi": "a239baa26c5d945a4e3b09f4596b94d4db0cada2",
+  "runtimeApi": "1afdc529e18cd34b5d8ee0919f217076a8592846",
+  "phone": {
+    "sameLanAsEmulatorHostConfirmedByUser": true,
+    "hostVpnDisabledReportedByUser": true,
+    "directAccepted": false,
+    "videoFallback": "server_websocket",
+    "inputAccepted": false,
+    "iceState": "checking",
+    "iceResponsesReceived": 0,
+    "nativeInputState": "cleanup_unknown",
+    "nativeStartupDetail": "root_handoff_unknown"
+  },
+  "rootCauseEvidence": {
+    "operation": "owned packet-observation diagnostic through generic SHELL",
+    "failure": "Root command result unavailable: execution_read_timeout",
+    "failedAtUtc": "2026-10-22T18:24:36.778309+00:00",
+    "privateResponseSha256": "eccf1746ad57d668e38b03d529af971b7a1a7878392880b3be924e2018753553",
+    "persistentUnknownFlagInGenericShellPath": true,
+    "continuousPrepareRejectsKnownUnknownFlag": true,
+    "unsafeAutomaticFenceResetPerformed": false,
+    "specificUnknownSideEffectNotClaimedAsExecutedInput": true
+  },
+  "independentCaptureOnly": {
+    "success": true,
+    "durationObservedSeconds": 15.014,
+    "decodedFrames": 780,
+    "rgbObservationsDuringMonitor": 75,
+    "observationHzDuringMonitor": 4.995,
+    "decodedFpsDuringMonitor": 51.751,
+    "receiverStats": {
+      "packetsReceived": 2334,
+      "packetsLost": 0,
+      "jitter": 400
+    }
+  },
+  "network": {
+    "path": "nat",
+    "protocol": "udp",
+    "candidateTypes": [
+      "host",
+      "prflx"
+    ],
+    "addressScopes": [
+      "private",
+      "private"
+    ],
+    "evidence": "aiortc_1_15_nominated_pair_adapter",
+    "lanProven": false
+  },
+  "sctp": {
+    "smoothedRttMs": 3.52,
+    "applicationCommandReplay": false
+  },
+  "captureOnlySafety": {
+    "nativeAdmissionRequested": false,
+    "inputCommands": 0,
+    "modelStarted": false,
+    "serverMediaFallback": false,
+    "continuousFrameArchive": false
+  },
+  "candidate": {
+    "versionCode": 10287,
+    "source": "001fd1a306ff342e94ef172bb9ec5c5f9d01dafb",
+    "installed": false,
+    "ciRunId": 39841457086,
+    "ciLastObserved": "queued_without_jobs",
+    "vpnIceAdaptersExcludedInSource": true,
+    "physicalNetworkMonitorRetained": true,
+    "unneededNoInputShellHandoffSkipped": true,
+    "realUnknownFenceStillHeld": true
+  },
+  "localBuild": {
+    "admitted": false,
+    "findings": [
+      "ram_headroom_low",
+      "commit_headroom_low"
+    ],
+    "guardWaived": false
+  },
+  "open": [
+    "Phone direct ICE with active VPN",
+    "Recovery and fresh native input receipt",
+    "APK87 hosted CI, packaging and addressed install",
+    "Remove three owned diagnostic fixtures after input recovery"
+  ]
+}

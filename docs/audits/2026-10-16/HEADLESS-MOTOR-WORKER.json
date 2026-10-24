@@ -1,0 +1,1252 @@
+{
+  "schemaVersion": 1,
+  "observedAtUtc": "2026-10-15T22:35:57.070450+00:00",
+  "sourceBaseRevision": "88f6abcecaa9adeb3078d5fd86a516381099d49c",
+  "scope": "Headless transport foundation and idle shared admission. Not motor inference, input actuation, gameplay, fleet capacity or production reliability acceptance.",
+  "moduleVersion": "0.1.0",
+  "guide": "docs/operations/MOTOR-WORKER.md",
+  "codeFiles": [
+    {
+      "file": "motor_worker/observation.py",
+      "sha256NormalizedLf": "1a9141b3f515a2a40b505c232e555bb0868fcef9b774699f4aa7582833ef621a"
+    },
+    {
+      "file": "motor_worker/protocol.py",
+      "sha256NormalizedLf": "38669c04bbdb90fcc026e0199da6826ca4a961ff49083da0dc2acc9d770f1146"
+    },
+    {
+      "file": "motor_worker/session.py",
+      "sha256NormalizedLf": "aa3d1a945bd2cda3cd389cf691332fdc1151269cb9a6dc14ac632eafcf489b96"
+    },
+    {
+      "file": "motor_worker/__init__.py",
+      "sha256NormalizedLf": "cd64ddf774dbe16e282a861e8f4f1d2bbaae2a41521c166053328a7a93af27ae"
+    },
+    {
+      "file": "motor_worker/__main__.py",
+      "sha256NormalizedLf": "f6b2b7c3b6c77514c527c17a953e6666089be88f0203aa0b383017ec2531fff4"
+    },
+    {
+      "file": "requirements-motor-worker.txt",
+      "sha256NormalizedLf": "e765017b8d5cdf761dc549d3f51b24a4e60c6d5594c90470d0dea803dccdca34"
+    },
+    {
+      "file": "tests/test_motor_worker_protocol.py",
+      "sha256NormalizedLf": "d14deb65c9420dc985a0182c4955fd36e6d365c924597ae30cd8a7b539c5eb1d"
+    },
+    {
+      "file": "tests/test_motor_worker_integration.py",
+      "sha256NormalizedLf": "b2d768da0060cfc9e9f383143bfba61a1c9381be4f90c1883efa018885fe5f02"
+    }
+  ],
+  "finalRunSourceHashesMatchWorkingTree": true,
+  "finalDeviceRun": {
+    "schemaVersion": 1,
+    "kind": "HEADLESS_TRANSPORT_PILOT_NOT_GAMEPLAY",
+    "deviceId": "414ce0e9-4b93-4f96-b9ca-ee675f53835e",
+    "success": true,
+    "failure": null,
+    "failurePhase": null,
+    "taskFailure": null,
+    "durationObservedSeconds": 15.013,
+    "requestedObservationHz": 5,
+    "localTimingClock": "perf_counter",
+    "decodedFrames": 867,
+    "receiverStats": {
+      "packetsReceived": 9426,
+      "packetsLost": 0,
+      "jitter": 131
+    },
+    "h264ReceiveLevel": 42,
+    "duplicateOrReorderedPts": 0,
+    "rgbObservations": 75,
+    "rgbObservationsDuringMonitor": 75,
+    "observationHzDuringMonitor": 4.996,
+    "decodedFpsDuringMonitor": 57.151,
+    "observationTail": [
+      {
+        "receiverSequence": 138,
+        "rtpPts": 215730,
+        "rtpTimeBase": "1/90000",
+        "decodedAgeAtSelectionMs": 16.859,
+        "transformMs": 4.894,
+        "rgbSha256": "2fd91d8ba66d41bbe8a4320e8de24486bb6ade6a6b69ac55ec56a7c293143ab9",
+        "rgbMean": [
+          34.491,
+          35.904,
+          37.61
+        ]
+      },
+      {
+        "receiverSequence": 149,
+        "rtpPts": 232830,
+        "rtpTimeBase": "1/90000",
+        "decodedAgeAtSelectionMs": 17.149,
+        "transformMs": 5.112,
+        "rgbSha256": "2fd91d8ba66d41bbe8a4320e8de24486bb6ade6a6b69ac55ec56a7c293143ab9",
+        "rgbMean": [
+          34.491,
+          35.904,
+          37.61
+        ]
+      },
+      {
+        "receiverSequence": 160,
+        "rtpPts": 251370,
+        "rtpTimeBase": "1/90000",
+        "decodedAgeAtSelectionMs": 16.146,
+        "transformMs": 6.819,
+        "rgbSha256": "2fd91d8ba66d41bbe8a4320e8de24486bb6ade6a6b69ac55ec56a7c293143ab9",
+        "rgbMean": [
+          34.491,
+          35.904,
+          37.61
+        ]
+      },
+      {
+        "receiverSequence": 172,
+        "rtpPts": 270180,
+        "rtpTimeBase": "1/90000",
+        "decodedAgeAtSelectionMs": 15.894,
+        "transformMs": 6.162,
+        "rgbSha256": "2fd91d8ba66d41bbe8a4320e8de24486bb6ade6a6b69ac55ec56a7c293143ab9",
+        "rgbMean": [
+          34.491,
+          35.904,
+          37.61
+        ]
+      },
+      {
+        "receiverSequence": 183,
+        "rtpPts": 287370,
+        "rtpTimeBase": "1/90000",
+        "decodedAgeAtSelectionMs": 17.304,
+        "transformMs": 4.893,
+        "rgbSha256": "1aebb9ee5b8eea3d452bcbbf97e389c243a8b588e706ae8ad32ab5232983e2ed",
+        "rgbMean": [
+          34.491,
+          35.904,
+          37.61
+        ]
+      },
+      {
+        "receiverSequence": 194,
+        "rtpPts": 306090,
+        "rtpTimeBase": "1/90000",
+        "decodedAgeAtSelectionMs": 16.312,
+        "transformMs": 5.185,
+        "rgbSha256": "2fd91d8ba66d41bbe8a4320e8de24486bb6ade6a6b69ac55ec56a7c293143ab9",
+        "rgbMean": [
+          34.491,
+          35.904,
+          37.61
+        ]
+      },
+      {
+        "receiverSequence": 205,
+        "rtpPts": 323370,
+        "rtpTimeBase": "1/90000",
+        "decodedAgeAtSelectionMs": 15.201,
+        "transformMs": 4.928,
+        "rgbSha256": "2fd91d8ba66d41bbe8a4320e8de24486bb6ade6a6b69ac55ec56a7c293143ab9",
+        "rgbMean": [
+          34.491,
+          35.904,
+          37.61
+        ]
+      },
+      {
+        "receiverSequence": 217,
+        "rtpPts": 342180,
+        "rtpTimeBase": "1/90000",
+        "decodedAgeAtSelectionMs": 16.706,
+        "transformMs": 5.044,
+        "rgbSha256": "2fd91d8ba66d41bbe8a4320e8de24486bb6ade6a6b69ac55ec56a7c293143ab9",
+        "rgbMean": [
+          34.491,
+          35.904,
+          37.61
+        ]
+      },
+      {
+        "receiverSequence": 228,
+        "rtpPts": 359460,
+        "rtpTimeBase": "1/90000",
+        "decodedAgeAtSelectionMs": 16.891,
+        "transformMs": 4.661,
+        "rgbSha256": "2fd91d8ba66d41bbe8a4320e8de24486bb6ade6a6b69ac55ec56a7c293143ab9",
+        "rgbMean": [
+          34.491,
+          35.904,
+          37.61
+        ]
+      },
+      {
+        "receiverSequence": 240,
+        "rtpPts": 378180,
+        "rtpTimeBase": "1/90000",
+        "decodedAgeAtSelectionMs": 6.867,
+        "transformMs": 4.977,
+        "rgbSha256": "2fd91d8ba66d41bbe8a4320e8de24486bb6ade6a6b69ac55ec56a7c293143ab9",
+        "rgbMean": [
+          34.491,
+          35.904,
+          37.61
+        ]
+      },
+      {
+        "receiverSequence": 252,
+        "rtpPts": 396990,
+        "rtpTimeBase": "1/90000",
+        "decodedAgeAtSelectionMs": 15.217,
+        "transformMs": 5.199,
+        "rgbSha256": "2fd91d8ba66d41bbe8a4320e8de24486bb6ade6a6b69ac55ec56a7c293143ab9",
+        "rgbMean": [
+          34.491,
+          35.904,
+          37.61
+        ]
+      },
+      {
+        "receiverSequence": 263,
+        "rtpPts": 414270,
+        "rtpTimeBase": "1/90000",
+        "decodedAgeAtSelectionMs": 16.65,
+        "transformMs": 4.818,
+        "rgbSha256": "2fd91d8ba66d41bbe8a4320e8de24486bb6ade6a6b69ac55ec56a7c293143ab9",
+        "rgbMean": [
+          34.491,
+          35.904,
+          37.61
+        ]
+      },
+      {
+        "receiverSequence": 274,
+        "rtpPts": 431370,
+        "rtpTimeBase": "1/90000",
+        "decodedAgeAtSelectionMs": 16.141,
+        "transformMs": 5.44,
+        "rgbSha256": "2fd91d8ba66d41bbe8a4320e8de24486bb6ade6a6b69ac55ec56a7c293143ab9",
+        "rgbMean": [
+          34.491,
+          35.904,
+          37.61
+        ]
+      },
+      {
+        "receiverSequence": 286,
+        "rtpPts": 450090,
+        "rtpTimeBase": "1/90000",
+        "decodedAgeAtSelectionMs": 17.563,
+        "transformMs": 4.643,
+        "rgbSha256": "2fd91d8ba66d41bbe8a4320e8de24486bb6ade6a6b69ac55ec56a7c293143ab9",
+        "rgbMean": [
+          34.491,
+          35.904,
+          37.61
+        ]
+      },
+      {
+        "receiverSequence": 297,
+        "rtpPts": 467100,
+        "rtpTimeBase": "1/90000",
+        "decodedAgeAtSelectionMs": 16.399,
+        "transformMs": 5.179,
+        "rgbSha256": "2fd91d8ba66d41bbe8a4320e8de24486bb6ade6a6b69ac55ec56a7c293143ab9",
+        "rgbMean": [
+          34.491,
+          35.904,
+          37.61
+        ]
+      },
+      {
+        "receiverSequence": 309,
+        "rtpPts": 485730,
+        "rtpTimeBase": "1/90000",
+        "decodedAgeAtSelectionMs": 17.642,
+        "transformMs": 4.654,
+        "rgbSha256": "2fd91d8ba66d41bbe8a4320e8de24486bb6ade6a6b69ac55ec56a7c293143ab9",
+        "rgbMean": [
+          34.491,
+          35.904,
+          37.61
+        ]
+      },
+      {
+        "receiverSequence": 320,
+        "rtpPts": 503010,
+        "rtpTimeBase": "1/90000",
+        "decodedAgeAtSelectionMs": 16.591,
+        "transformMs": 6.259,
+        "rgbSha256": "2fd91d8ba66d41bbe8a4320e8de24486bb6ade6a6b69ac55ec56a7c293143ab9",
+        "rgbMean": [
+          34.491,
+          35.904,
+          37.61
+        ]
+      },
+      {
+        "receiverSequence": 332,
+        "rtpPts": 521910,
+        "rtpTimeBase": "1/90000",
+        "decodedAgeAtSelectionMs": 15.778,
+        "transformMs": 5.611,
+        "rgbSha256": "2fd91d8ba66d41bbe8a4320e8de24486bb6ade6a6b69ac55ec56a7c293143ab9",
+        "rgbMean": [
+          34.491,
+          35.904,
+          37.61
+        ]
+      },
+      {
+        "receiverSequence": 343,
+        "rtpPts": 539190,
+        "rtpTimeBase": "1/90000",
+        "decodedAgeAtSelectionMs": 18.214,
+        "transformMs": 5.839,
+        "rgbSha256": "2fd91d8ba66d41bbe8a4320e8de24486bb6ade6a6b69ac55ec56a7c293143ab9",
+        "rgbMean": [
+          34.491,
+          35.904,
+          37.61
+        ]
+      },
+      {
+        "receiverSequence": 355,
+        "rtpPts": 558000,
+        "rtpTimeBase": "1/90000",
+        "decodedAgeAtSelectionMs": 16.005,
+        "transformMs": 5.119,
+        "rgbSha256": "2fd91d8ba66d41bbe8a4320e8de24486bb6ade6a6b69ac55ec56a7c293143ab9",
+        "rgbMean": [
+          34.491,
+          35.904,
+          37.61
+        ]
+      },
+      {
+        "receiverSequence": 366,
+        "rtpPts": 575100,
+        "rtpTimeBase": "1/90000",
+        "decodedAgeAtSelectionMs": 16.045,
+        "transformMs": 4.992,
+        "rgbSha256": "2fd91d8ba66d41bbe8a4320e8de24486bb6ade6a6b69ac55ec56a7c293143ab9",
+        "rgbMean": [
+          34.491,
+          35.904,
+          37.61
+        ]
+      },
+      {
+        "receiverSequence": 378,
+        "rtpPts": 593640,
+        "rtpTimeBase": "1/90000",
+        "decodedAgeAtSelectionMs": 16.835,
+        "transformMs": 4.873,
+        "rgbSha256": "2fd91d8ba66d41bbe8a4320e8de24486bb6ade6a6b69ac55ec56a7c293143ab9",
+        "rgbMean": [
+          34.491,
+          35.904,
+          37.61
+        ]
+      },
+      {
+        "receiverSequence": 390,
+        "rtpPts": 612270,
+        "rtpTimeBase": "1/90000",
+        "decodedAgeAtSelectionMs": 17.047,
+        "transformMs": 4.545,
+        "rgbSha256": "2fd91d8ba66d41bbe8a4320e8de24486bb6ade6a6b69ac55ec56a7c293143ab9",
+        "rgbMean": [
+          34.491,
+          35.904,
+          37.61
+        ]
+      },
+      {
+        "receiverSequence": 401,
+        "rtpPts": 629460,
+        "rtpTimeBase": "1/90000",
+        "decodedAgeAtSelectionMs": 16.021,
+        "transformMs": 4.65,
+        "rgbSha256": "2fd91d8ba66d41bbe8a4320e8de24486bb6ade6a6b69ac55ec56a7c293143ab9",
+        "rgbMean": [
+          34.491,
+          35.904,
+          37.61
+        ]
+      },
+      {
+        "receiverSequence": 413,
+        "rtpPts": 648090,
+        "rtpTimeBase": "1/90000",
+        "decodedAgeAtSelectionMs": 16.102,
+        "transformMs": 5.397,
+        "rgbSha256": "2fd91d8ba66d41bbe8a4320e8de24486bb6ade6a6b69ac55ec56a7c293143ab9",
+        "rgbMean": [
+          34.491,
+          35.904,
+          37.61
+        ]
+      },
+      {
+        "receiverSequence": 424,
+        "rtpPts": 665190,
+        "rtpTimeBase": "1/90000",
+        "decodedAgeAtSelectionMs": 16.839,
+        "transformMs": 4.456,
+        "rgbSha256": "2fd91d8ba66d41bbe8a4320e8de24486bb6ade6a6b69ac55ec56a7c293143ab9",
+        "rgbMean": [
+          34.491,
+          35.904,
+          37.61
+        ]
+      },
+      {
+        "receiverSequence": 436,
+        "rtpPts": 683820,
+        "rtpTimeBase": "1/90000",
+        "decodedAgeAtSelectionMs": 10.618,
+        "transformMs": 4.414,
+        "rgbSha256": "2fd91d8ba66d41bbe8a4320e8de24486bb6ade6a6b69ac55ec56a7c293143ab9",
+        "rgbMean": [
+          34.491,
+          35.904,
+          37.61
+        ]
+      },
+      {
+        "receiverSequence": 447,
+        "rtpPts": 700920,
+        "rtpTimeBase": "1/90000",
+        "decodedAgeAtSelectionMs": 17.001,
+        "transformMs": 4.919,
+        "rgbSha256": "2fd91d8ba66d41bbe8a4320e8de24486bb6ade6a6b69ac55ec56a7c293143ab9",
+        "rgbMean": [
+          34.491,
+          35.904,
+          37.61
+        ]
+      },
+      {
+        "receiverSequence": 458,
+        "rtpPts": 718110,
+        "rtpTimeBase": "1/90000",
+        "decodedAgeAtSelectionMs": 30.504,
+        "transformMs": 5.021,
+        "rgbSha256": "2fd91d8ba66d41bbe8a4320e8de24486bb6ade6a6b69ac55ec56a7c293143ab9",
+        "rgbMean": [
+          34.491,
+          35.904,
+          37.61
+        ]
+      },
+      {
+        "receiverSequence": 470,
+        "rtpPts": 738360,
+        "rtpTimeBase": "1/90000",
+        "decodedAgeAtSelectionMs": 16.499,
+        "transformMs": 4.799,
+        "rgbSha256": "2fd91d8ba66d41bbe8a4320e8de24486bb6ade6a6b69ac55ec56a7c293143ab9",
+        "rgbMean": [
+          34.491,
+          35.904,
+          37.61
+        ]
+      },
+      {
+        "receiverSequence": 480,
+        "rtpPts": 755460,
+        "rtpTimeBase": "1/90000",
+        "decodedAgeAtSelectionMs": 3.515,
+        "transformMs": 4.763,
+        "rgbSha256": "2fd91d8ba66d41bbe8a4320e8de24486bb6ade6a6b69ac55ec56a7c293143ab9",
+        "rgbMean": [
+          34.491,
+          35.904,
+          37.61
+        ]
+      },
+      {
+        "receiverSequence": 491,
+        "rtpPts": 772650,
+        "rtpTimeBase": "1/90000",
+        "decodedAgeAtSelectionMs": 17.251,
+        "transformMs": 5.384,
+        "rgbSha256": "2fd91d8ba66d41bbe8a4320e8de24486bb6ade6a6b69ac55ec56a7c293143ab9",
+        "rgbMean": [
+          34.491,
+          35.904,
+          37.61
+        ]
+      },
+      {
+        "receiverSequence": 502,
+        "rtpPts": 791280,
+        "rtpTimeBase": "1/90000",
+        "decodedAgeAtSelectionMs": 16.372,
+        "transformMs": 5.41,
+        "rgbSha256": "2fd91d8ba66d41bbe8a4320e8de24486bb6ade6a6b69ac55ec56a7c293143ab9",
+        "rgbMean": [
+          34.491,
+          35.904,
+          37.61
+        ]
+      },
+      {
+        "receiverSequence": 514,
+        "rtpPts": 810090,
+        "rtpTimeBase": "1/90000",
+        "decodedAgeAtSelectionMs": 15.925,
+        "transformMs": 5.1,
+        "rgbSha256": "2fd91d8ba66d41bbe8a4320e8de24486bb6ade6a6b69ac55ec56a7c293143ab9",
+        "rgbMean": [
+          34.491,
+          35.904,
+          37.61
+        ]
+      },
+      {
+        "receiverSequence": 525,
+        "rtpPts": 827370,
+        "rtpTimeBase": "1/90000",
+        "decodedAgeAtSelectionMs": 17.195,
+        "transformMs": 5.764,
+        "rgbSha256": "2fd91d8ba66d41bbe8a4320e8de24486bb6ade6a6b69ac55ec56a7c293143ab9",
+        "rgbMean": [
+          34.491,
+          35.904,
+          37.61
+        ]
+      },
+      {
+        "receiverSequence": 537,
+        "rtpPts": 846180,
+        "rtpTimeBase": "1/90000",
+        "decodedAgeAtSelectionMs": 16.86,
+        "transformMs": 5.577,
+        "rgbSha256": "2fd91d8ba66d41bbe8a4320e8de24486bb6ade6a6b69ac55ec56a7c293143ab9",
+        "rgbMean": [
+          34.491,
+          35.904,
+          37.61
+        ]
+      },
+      {
+        "receiverSequence": 548,
+        "rtpPts": 863370,
+        "rtpTimeBase": "1/90000",
+        "decodedAgeAtSelectionMs": 16.516,
+        "transformMs": 5.697,
+        "rgbSha256": "2fd91d8ba66d41bbe8a4320e8de24486bb6ade6a6b69ac55ec56a7c293143ab9",
+        "rgbMean": [
+          34.491,
+          35.904,
+          37.61
+        ]
+      },
+      {
+        "receiverSequence": 560,
+        "rtpPts": 882090,
+        "rtpTimeBase": "1/90000",
+        "decodedAgeAtSelectionMs": 16.52,
+        "transformMs": 5.585,
+        "rgbSha256": "2fd91d8ba66d41bbe8a4320e8de24486bb6ade6a6b69ac55ec56a7c293143ab9",
+        "rgbMean": [
+          34.491,
+          35.904,
+          37.61
+        ]
+      },
+      {
+        "receiverSequence": 570,
+        "rtpPts": 899280,
+        "rtpTimeBase": "1/90000",
+        "decodedAgeAtSelectionMs": 17.173,
+        "transformMs": 6.144,
+        "rgbSha256": "2fd91d8ba66d41bbe8a4320e8de24486bb6ade6a6b69ac55ec56a7c293143ab9",
+        "rgbMean": [
+          34.491,
+          35.904,
+          37.61
+        ]
+      },
+      {
+        "receiverSequence": 582,
+        "rtpPts": 918000,
+        "rtpTimeBase": "1/90000",
+        "decodedAgeAtSelectionMs": 17.113,
+        "transformMs": 5.685,
+        "rgbSha256": "2fd91d8ba66d41bbe8a4320e8de24486bb6ade6a6b69ac55ec56a7c293143ab9",
+        "rgbMean": [
+          34.491,
+          35.904,
+          37.61
+        ]
+      },
+      {
+        "receiverSequence": 593,
+        "rtpPts": 935100,
+        "rtpTimeBase": "1/90000",
+        "decodedAgeAtSelectionMs": 18.059,
+        "transformMs": 5.783,
+        "rgbSha256": "2fd91d8ba66d41bbe8a4320e8de24486bb6ade6a6b69ac55ec56a7c293143ab9",
+        "rgbMean": [
+          34.491,
+          35.904,
+          37.61
+        ]
+      },
+      {
+        "receiverSequence": 606,
+        "rtpPts": 955440,
+        "rtpTimeBase": "1/90000",
+        "decodedAgeAtSelectionMs": 16.238,
+        "transformMs": 4.924,
+        "rgbSha256": "2fd91d8ba66d41bbe8a4320e8de24486bb6ade6a6b69ac55ec56a7c293143ab9",
+        "rgbMean": [
+          34.491,
+          35.904,
+          37.61
+        ]
+      },
+      {
+        "receiverSequence": 616,
+        "rtpPts": 970920,
+        "rtpTimeBase": "1/90000",
+        "decodedAgeAtSelectionMs": 17.003,
+        "transformMs": 5.598,
+        "rgbSha256": "2fd91d8ba66d41bbe8a4320e8de24486bb6ade6a6b69ac55ec56a7c293143ab9",
+        "rgbMean": [
+          34.491,
+          35.904,
+          37.61
+        ]
+      },
+      {
+        "receiverSequence": 627,
+        "rtpPts": 989550,
+        "rtpTimeBase": "1/90000",
+        "decodedAgeAtSelectionMs": 16.364,
+        "transformMs": 5.816,
+        "rgbSha256": "2fd91d8ba66d41bbe8a4320e8de24486bb6ade6a6b69ac55ec56a7c293143ab9",
+        "rgbMean": [
+          34.491,
+          35.904,
+          37.61
+        ]
+      },
+      {
+        "receiverSequence": 639,
+        "rtpPts": 1008270,
+        "rtpTimeBase": "1/90000",
+        "decodedAgeAtSelectionMs": 15.491,
+        "transformMs": 4.843,
+        "rgbSha256": "2fd91d8ba66d41bbe8a4320e8de24486bb6ade6a6b69ac55ec56a7c293143ab9",
+        "rgbMean": [
+          34.491,
+          35.904,
+          37.61
+        ]
+      },
+      {
+        "receiverSequence": 650,
+        "rtpPts": 1025460,
+        "rtpTimeBase": "1/90000",
+        "decodedAgeAtSelectionMs": 17.29,
+        "transformMs": 5.495,
+        "rgbSha256": "2fd91d8ba66d41bbe8a4320e8de24486bb6ade6a6b69ac55ec56a7c293143ab9",
+        "rgbMean": [
+          34.491,
+          35.904,
+          37.61
+        ]
+      },
+      {
+        "receiverSequence": 662,
+        "rtpPts": 1044270,
+        "rtpTimeBase": "1/90000",
+        "decodedAgeAtSelectionMs": 17.06,
+        "transformMs": 7.843,
+        "rgbSha256": "ff96e4dab44a50299799cdaac98d13264df92a3d92da611b4271a8a5cf56cf22",
+        "rgbMean": [
+          34.491,
+          35.905,
+          37.612
+        ]
+      },
+      {
+        "receiverSequence": 673,
+        "rtpPts": 1061550,
+        "rtpTimeBase": "1/90000",
+        "decodedAgeAtSelectionMs": 13.579,
+        "transformMs": 5.444,
+        "rgbSha256": "2fd91d8ba66d41bbe8a4320e8de24486bb6ade6a6b69ac55ec56a7c293143ab9",
+        "rgbMean": [
+          34.491,
+          35.904,
+          37.61
+        ]
+      },
+      {
+        "receiverSequence": 685,
+        "rtpPts": 1080180,
+        "rtpTimeBase": "1/90000",
+        "decodedAgeAtSelectionMs": 7.005,
+        "transformMs": 5.448,
+        "rgbSha256": "2fd91d8ba66d41bbe8a4320e8de24486bb6ade6a6b69ac55ec56a7c293143ab9",
+        "rgbMean": [
+          34.491,
+          35.904,
+          37.61
+        ]
+      },
+      {
+        "receiverSequence": 697,
+        "rtpPts": 1098810,
+        "rtpTimeBase": "1/90000",
+        "decodedAgeAtSelectionMs": 16.404,
+        "transformMs": 5.08,
+        "rgbSha256": "2fd91d8ba66d41bbe8a4320e8de24486bb6ade6a6b69ac55ec56a7c293143ab9",
+        "rgbMean": [
+          34.491,
+          35.904,
+          37.61
+        ]
+      },
+      {
+        "receiverSequence": 708,
+        "rtpPts": 1115910,
+        "rtpTimeBase": "1/90000",
+        "decodedAgeAtSelectionMs": 14.841,
+        "transformMs": 4.482,
+        "rgbSha256": "2fd91d8ba66d41bbe8a4320e8de24486bb6ade6a6b69ac55ec56a7c293143ab9",
+        "rgbMean": [
+          34.491,
+          35.904,
+          37.61
+        ]
+      },
+      {
+        "receiverSequence": 719,
+        "rtpPts": 1133010,
+        "rtpTimeBase": "1/90000",
+        "decodedAgeAtSelectionMs": 18.207,
+        "transformMs": 5.406,
+        "rgbSha256": "2fd91d8ba66d41bbe8a4320e8de24486bb6ade6a6b69ac55ec56a7c293143ab9",
+        "rgbMean": [
+          34.491,
+          35.904,
+          37.61
+        ]
+      },
+      {
+        "receiverSequence": 731,
+        "rtpPts": 1151820,
+        "rtpTimeBase": "1/90000",
+        "decodedAgeAtSelectionMs": 15.907,
+        "transformMs": 6.447,
+        "rgbSha256": "2fd91d8ba66d41bbe8a4320e8de24486bb6ade6a6b69ac55ec56a7c293143ab9",
+        "rgbMean": [
+          34.491,
+          35.904,
+          37.61
+        ]
+      },
+      {
+        "receiverSequence": 743,
+        "rtpPts": 1170630,
+        "rtpTimeBase": "1/90000",
+        "decodedAgeAtSelectionMs": 18.669,
+        "transformMs": 6.332,
+        "rgbSha256": "2fd91d8ba66d41bbe8a4320e8de24486bb6ade6a6b69ac55ec56a7c293143ab9",
+        "rgbMean": [
+          34.491,
+          35.904,
+          37.61
+        ]
+      },
+      {
+        "receiverSequence": 754,
+        "rtpPts": 1187910,
+        "rtpTimeBase": "1/90000",
+        "decodedAgeAtSelectionMs": 16.912,
+        "transformMs": 5.723,
+        "rgbSha256": "2fd91d8ba66d41bbe8a4320e8de24486bb6ade6a6b69ac55ec56a7c293143ab9",
+        "rgbMean": [
+          34.491,
+          35.904,
+          37.61
+        ]
+      },
+      {
+        "receiverSequence": 765,
+        "rtpPts": 1205100,
+        "rtpTimeBase": "1/90000",
+        "decodedAgeAtSelectionMs": 16.831,
+        "transformMs": 5.477,
+        "rgbSha256": "2fd91d8ba66d41bbe8a4320e8de24486bb6ade6a6b69ac55ec56a7c293143ab9",
+        "rgbMean": [
+          34.491,
+          35.904,
+          37.61
+        ]
+      },
+      {
+        "receiverSequence": 777,
+        "rtpPts": 1223820,
+        "rtpTimeBase": "1/90000",
+        "decodedAgeAtSelectionMs": 17.052,
+        "transformMs": 6.148,
+        "rgbSha256": "2fd91d8ba66d41bbe8a4320e8de24486bb6ade6a6b69ac55ec56a7c293143ab9",
+        "rgbMean": [
+          34.491,
+          35.904,
+          37.61
+        ]
+      },
+      {
+        "receiverSequence": 788,
+        "rtpPts": 1241010,
+        "rtpTimeBase": "1/90000",
+        "decodedAgeAtSelectionMs": 16.257,
+        "transformMs": 5.177,
+        "rgbSha256": "2fd91d8ba66d41bbe8a4320e8de24486bb6ade6a6b69ac55ec56a7c293143ab9",
+        "rgbMean": [
+          34.491,
+          35.904,
+          37.61
+        ]
+      },
+      {
+        "receiverSequence": 800,
+        "rtpPts": 1259820,
+        "rtpTimeBase": "1/90000",
+        "decodedAgeAtSelectionMs": 15.824,
+        "transformMs": 5.256,
+        "rgbSha256": "2fd91d8ba66d41bbe8a4320e8de24486bb6ade6a6b69ac55ec56a7c293143ab9",
+        "rgbMean": [
+          34.491,
+          35.904,
+          37.61
+        ]
+      },
+      {
+        "receiverSequence": 811,
+        "rtpPts": 1276830,
+        "rtpTimeBase": "1/90000",
+        "decodedAgeAtSelectionMs": 16.379,
+        "transformMs": 4.675,
+        "rgbSha256": "2fd91d8ba66d41bbe8a4320e8de24486bb6ade6a6b69ac55ec56a7c293143ab9",
+        "rgbMean": [
+          34.491,
+          35.904,
+          37.61
+        ]
+      },
+      {
+        "receiverSequence": 823,
+        "rtpPts": 1295460,
+        "rtpTimeBase": "1/90000",
+        "decodedAgeAtSelectionMs": 16.606,
+        "transformMs": 5.128,
+        "rgbSha256": "2fd91d8ba66d41bbe8a4320e8de24486bb6ade6a6b69ac55ec56a7c293143ab9",
+        "rgbMean": [
+          34.491,
+          35.904,
+          37.61
+        ]
+      },
+      {
+        "receiverSequence": 835,
+        "rtpPts": 1314090,
+        "rtpTimeBase": "1/90000",
+        "decodedAgeAtSelectionMs": 17.498,
+        "transformMs": 5.502,
+        "rgbSha256": "2fd91d8ba66d41bbe8a4320e8de24486bb6ade6a6b69ac55ec56a7c293143ab9",
+        "rgbMean": [
+          34.491,
+          35.904,
+          37.61
+        ]
+      },
+      {
+        "receiverSequence": 845,
+        "rtpPts": 1331100,
+        "rtpTimeBase": "1/90000",
+        "decodedAgeAtSelectionMs": 16.617,
+        "transformMs": 4.848,
+        "rgbSha256": "2fd91d8ba66d41bbe8a4320e8de24486bb6ade6a6b69ac55ec56a7c293143ab9",
+        "rgbMean": [
+          34.491,
+          35.904,
+          37.61
+        ]
+      },
+      {
+        "receiverSequence": 857,
+        "rtpPts": 1349820,
+        "rtpTimeBase": "1/90000",
+        "decodedAgeAtSelectionMs": 15.109,
+        "transformMs": 4.905,
+        "rgbSha256": "2fd91d8ba66d41bbe8a4320e8de24486bb6ade6a6b69ac55ec56a7c293143ab9",
+        "rgbMean": [
+          34.491,
+          35.904,
+          37.61
+        ]
+      }
+    ],
+    "capture": {
+      "epoch": "692c1a56-fc50-4769-9902-eeaa7a79b434",
+      "width": 960,
+      "height": 540
+    },
+    "route": {
+      "path": "nat",
+      "protocol": "udp",
+      "candidateTypes": [
+        "host",
+        "prflx"
+      ],
+      "addressScopes": [
+        "private",
+        "private"
+      ],
+      "evidence": "aiortc_1_15_nominated_pair_adapter",
+      "lanProven": false
+    },
+    "videoEchoReceipts": 4,
+    "lastEchoRttMs": 2.038199992966838,
+    "signalingRenewalsSent": 3,
+    "captureLifecycle": {
+      "requested": true,
+      "directDeliveryAcks": 6,
+      "serverBootstrapBytesDiscarded": 411770,
+      "serverBytesAfterHandover": 0,
+      "relayFramesDecoded": 0
+    },
+    "control": {
+      "requested": true,
+      "dataChannelOpened": true,
+      "nativeAdmissionConfirmed": true,
+      "actorAliveReceipts": 49,
+      "lastActorRttMs": 3.064999997150153,
+      "participantClosedConfirmed": true,
+      "nativeActionAppliedVerified": false,
+      "pointerKeyTextCommandsSent": 0
+    },
+    "bounds": {
+      "decodedFrameSlots": 1,
+      "observationTailLimit": 64,
+      "inputReplay": false
+    },
+    "limitations": [
+      "No source capture frame ID/clock mapping: receiver age is not capture age.",
+      "Unique RTP PTS is transport progress, not proof of fresh Android source pixels.",
+      "Selected ICE pair proves a peer route, not LAN or VPN bypass.",
+      "Idle ALIVE is APK actor liveness; no native gameplay action was executed.",
+      "User JWT pilot only; service identity, task delegation and model integration remain open."
+    ],
+    "modelInstalled": false,
+    "gameplayReady": false,
+    "hardwareDecodeAssumed": false,
+    "rgbTransform": "pilot_resize_256_square_rgb24_not_validated_model_preprocessing",
+    "packages": {
+      "aiortc": "1.15.0",
+      "aioice": "0.10.2",
+      "av": "17.1.0",
+      "websockets": "17.2",
+      "numpy": "2.4.4"
+    }
+  },
+  "finalPrivateReportSha256NormalizedLf": "9aa538b1f953a936bbbc71e4e676a6c8eb820fbb242f7a281d7e5f6690e6ba1c",
+  "snapshot": {
+    "sha256": "f0caf5ff55c9b08924a9935fc6c6af133d012dc8eb39d0f20c6fc310707d05ba",
+    "bytes": 164645,
+    "fileName": "motor-headless-ph011-20261015T223416Z.png",
+    "privateWorkspaceArtifact": true,
+    "visuallyInspectedComparablePrecedingRun": "motor-headless-ph011-20261015T223140Z.png",
+    "scope": "Decoded launcher proof; not native pixel comparison or gameplay."
+  },
+  "overlappingParticipants": [
+    {
+      "label": "short",
+      "privateReportSha256NormalizedLf": "aac0eef83dca9f94c690cc9ef59e69bf97a6345ea4fc8fea6d337415b9a763eb",
+      "success": true,
+      "failure": null,
+      "durationObservedSeconds": 12.0,
+      "decodedFrames": 693,
+      "rgbObservations": 64,
+      "control": {
+        "requested": true,
+        "dataChannelOpened": true,
+        "nativeAdmissionConfirmed": true,
+        "actorAliveReceipts": 39,
+        "lastActorRttMs": 0,
+        "participantClosedConfirmed": true,
+        "nativeActionAppliedVerified": false,
+        "pointerKeyTextCommandsSent": 0
+      },
+      "captureLifecycle": {
+        "requested": true,
+        "directDeliveryAcks": 5,
+        "serverBootstrapBytesDiscarded": 757170,
+        "serverBytesAfterHandover": 0,
+        "relayFramesDecoded": 0
+      },
+      "route": {
+        "path": "nat",
+        "protocol": "udp",
+        "candidateTypes": [
+          "host",
+          "prflx"
+        ],
+        "addressScopes": [
+          "private",
+          "private"
+        ],
+        "evidence": "aiortc_1_15_nominated_pair_adapter",
+        "lanProven": false
+      },
+      "scope": "Same PH011; overlapping idle participants. Before final perf_counter cadence change. No native actions."
+    },
+    {
+      "label": "long",
+      "privateReportSha256NormalizedLf": "cf74f4023713f1972bcfbd84605cda3562922999a2a72ea59c2b9dcdfdd92c9b",
+      "success": true,
+      "failure": null,
+      "durationObservedSeconds": 25.0,
+      "decodedFrames": 1448,
+      "rgbObservations": 134,
+      "control": {
+        "requested": true,
+        "dataChannelOpened": true,
+        "nativeAdmissionConfirmed": true,
+        "actorAliveReceipts": 80,
+        "lastActorRttMs": 0,
+        "participantClosedConfirmed": true,
+        "nativeActionAppliedVerified": false,
+        "pointerKeyTextCommandsSent": 0
+      },
+      "captureLifecycle": {
+        "requested": true,
+        "directDeliveryAcks": 9,
+        "serverBootstrapBytesDiscarded": 235974,
+        "serverBytesAfterHandover": 0,
+        "relayFramesDecoded": 0
+      },
+      "route": {
+        "path": "nat",
+        "protocol": "udp",
+        "candidateTypes": [
+          "host",
+          "prflx"
+        ],
+        "addressScopes": [
+          "private",
+          "private"
+        ],
+        "evidence": "aiortc_1_15_nominated_pair_adapter",
+        "lanProven": false
+      },
+      "scope": "Same PH011; overlapping idle participants. Before final perf_counter cadence change. No native actions."
+    }
+  ],
+  "negativePreliminaryRuns": [
+    {
+      "timeLabelUtc": "20261015T222039Z",
+      "privateReportSha256NormalizedLf": "9e13be16e0f808c18bb9dff908b3aa1094f43ad3da1ffc095673d9552fa8303c",
+      "success": false,
+      "failure": "setup_deadline",
+      "failurePhase": null,
+      "decodedFrames": 0,
+      "pointerKeyTextCommandsSent": 0,
+      "retainedAsNegativeEvidence": true
+    },
+    {
+      "timeLabelUtc": "20261015T222326Z",
+      "privateReportSha256NormalizedLf": "42d7bd5247db02e4c865aee26a6e4386d6684edc75ca5db9a0496287144fb5a1",
+      "success": false,
+      "failure": "capture_bootstrap_byte_budget",
+      "failurePhase": "signaling_answer",
+      "decodedFrames": 0,
+      "pointerKeyTextCommandsSent": 0,
+      "retainedAsNegativeEvidence": true
+    },
+    {
+      "timeLabelUtc": "20261015T222449Z",
+      "privateReportSha256NormalizedLf": "88fcb499a53a20f5b588fbb8c17eac752df4d41d8bc27a299779b4e6bda867c3",
+      "success": false,
+      "failure": "worker_task_failed",
+      "failurePhase": "signaling_answer",
+      "decodedFrames": 0,
+      "pointerKeyTextCommandsSent": 0,
+      "retainedAsNegativeEvidence": true
+    },
+    {
+      "timeLabelUtc": "20261015T222506Z",
+      "privateReportSha256NormalizedLf": "04016e4ad7639284ca60947dbdc7c2da49aced925b7955c8553f2a92da4c5ac1",
+      "success": false,
+      "failure": "worker_task_failed",
+      "failurePhase": "signaling_answer",
+      "decodedFrames": 0,
+      "pointerKeyTextCommandsSent": 0,
+      "retainedAsNegativeEvidence": true
+    }
+  ],
+  "nativeCrash": {
+    "observed": true,
+    "device": "auto-ph-011",
+    "package": "com.sphereplatform.agent.pilot.debug",
+    "signal": "SIGABRT",
+    "library": "libjingle_peerconnection_so.so, WebRTC146.7.0",
+    "assertion": "front() called on an empty vector",
+    "stage": "setRemoteDescription, before control OPEN",
+    "logEvidenceSha256NormalizedLf": "d8fc5c561278f12d82db6dade153688eadda18d719a9e8825d67e491d4dd438b",
+    "symbolicated": false,
+    "rootCauseProvenInCpp": false,
+    "clientCompatibilityChange": "Recvonly offer omits nonexistent sender SSRC/MSID; later finite runs succeed on same APK.",
+    "apkGenericSdpHardeningImplemented": false,
+    "otherDevicesReceivedExperimentalOffer": false,
+    "recovery": {
+      "setupActivityStarted": true,
+      "adbBackKeyevents": 1,
+      "appDataCleared": false,
+      "successfulPidReadAfterRecovery": "31355",
+      "launcherWithoutCrashDialogObserved": true
+    }
+  },
+  "dependencies": {
+    "environment": "Isolated .local-pilot/motor-worker-venv, Windows Python3.12.12",
+    "separateFromBackendEnvironment": true,
+    "packages": [
+      {
+        "name": "aiortc",
+        "version": "1.15.0",
+        "installedWheelSha256": "4e1e54bff31a9c2cb654c7b7edc068085a7df53365e5df24a5cb24168e3f95f7"
+      },
+      {
+        "name": "websockets",
+        "version": "17.2",
+        "installedWheelSha256": "faa763b677e96f1beccc6b4d7e8c079dfeed2f249f57a19debc321b519ee64ec"
+      },
+      {
+        "name": "numpy",
+        "version": "2.4.4",
+        "installedWheelSha256": "b5f0362dc928a6ecd9db58868fca5e48485205e3855957bdedea308f8672ea4a"
+      },
+      {
+        "name": "pillow",
+        "version": "12.2.0",
+        "installedWheelSha256": "7f84204dee22a783350679a0333981df803dac21a0190d706a50475e361c93f5"
+      },
+      {
+        "name": "aioice",
+        "version": "0.10.2",
+        "installedWheelSha256": "14911c15ab12d096dd14d372ebb4aecbb7420b52c9b76fdfcf54375dec17fcbf"
+      },
+      {
+        "name": "av",
+        "version": "17.1.0",
+        "installedWheelSha256": "5df5c1172ef1cf65a1529d612f7da7798ce2cf82c1ff7212466b538a6cc7214c"
+      },
+      {
+        "name": "cryptography",
+        "version": "50.0.2",
+        "installedWheelSha256": "7afa5a6602a9f29af1f3a2965f831bae7c9d5d597b7cbb716d41ab3b7d89879c"
+      },
+      {
+        "name": "google-crc32c",
+        "version": "1.9.0",
+        "installedWheelSha256": "fb63a8d7fa2e95dcff1ca16af2f4d88b526fa5ff72d1696285884ac2d49b6963"
+      },
+      {
+        "name": "pyee",
+        "version": "14.0.0",
+        "installedWheelSha256": "3ac2d3229a9677f7de2c33d7f52fe25b638a46b19c413fea2edc8c6d0a644e4d"
+      },
+      {
+        "name": "pylibsrtp",
+        "version": "1.0.0",
+        "installedWheelSha256": "8d6527c4a78a39a8d397f8862a8b7cdad4701ee866faf9de4ab8c70be61fd34d"
+      },
+      {
+        "name": "pyOpenSSL",
+        "version": "26.4.0",
+        "installedWheelSha256": "f0eb0cb2d581d3ad2b9c489468485e7f2ab6727d08401bcf9d824c3caddf3c1c"
+      },
+      {
+        "name": "cffi",
+        "version": "2.1.1",
+        "installedWheelSha256": "f53e442b08449d42821fa4a4fba000095af9f62742a500f978a9f557ec44339a"
+      },
+      {
+        "name": "dnspython",
+        "version": "2.9.0",
+        "installedWheelSha256": "9a4aedb833c3c1b49214d04d44d3032ab7a9135f7c1d29a549b4ff78fd82fda9"
+      },
+      {
+        "name": "ifaddr",
+        "version": "0.2.0",
+        "installedWheelSha256": "085e0305cfe6f16ab12d72e2024030f5d52674afad6911bb1eee207177b8a748"
+      },
+      {
+        "name": "typing_extensions",
+        "version": "4.16.0",
+        "installedWheelSha256": "481caa481374e813c1b176ada14e97f1f67a4539ce9cfeb3f350d78d6370c2e8"
+      },
+      {
+        "name": "pycparser",
+        "version": "3.11",
+        "installedWheelSha256": "51d5a8ba2be0bbe440b99d2112604c95bbbc3c2748a64260186c541e1729cd80"
+      }
+    ],
+    "pipCheck": "PASS",
+    "modelWeightsDownloaded": false,
+    "gpuFrameworkInstalled": false
+  },
+  "checks": {
+    "protocolUnitTestsPassed": 18,
+    "realLocalMediaIntegrationTestsPassed": 8,
+    "integrationTestsSkippedInValidatedMotorEnvironment": 0,
+    "documentationTestsPassed": 41,
+    "budgetTestsPassed": 9,
+    "ruffCheck": "PASS",
+    "ruffFormat": "PASS",
+    "documentationInventory": {
+      "state": "PASS",
+      "trackedMarkdownDocuments": 499,
+      "localLinkErrors": []
+    }
+  },
+  "installedBaseline": {
+    "ui": "19c4272b3fffa98fdf7a35bd56b09967ac036e24",
+    "api": "969a74440d67e987be98f37cdb450f7c47817f68",
+    "apkVersion": "1.2.76-dev",
+    "apkVersionCode": 10276,
+    "newUiApiApkInstalled": false,
+    "newStandaloneWorkerModuleImplemented": true
+  },
+  "gateProgress": {
+    "G02HeadlessDirectVideoAndIdleAdmissionFinite": true,
+    "G02StrictNoServerMediaFromFirstPacket": false,
+    "G02LanOrVpnBypassProven": false,
+    "G03NativeGameplayControlsAccepted": false,
+    "G04CaptureClockAndFrameCorrelationAccepted": false,
+    "G05DagEpisodeDelegationImplemented": false,
+    "G07MotorModelIntegrated": false,
+    "G08GameplayAccepted": false,
+    "G09FiftyDevicesMeasured": false
+  },
+  "remaining": [
+    "Capture-only server admission without initial relay bytes.",
+    "Native APK SDP hardening for other non-Chromium offers; C++ abort location not proven.",
+    "Independent frame IDs, clock mapping and color/capture verification including PH025.",
+    "Game profile, multi-touch/gamepad, action plans and atomic DAG delegation.",
+    "Service identity, offline grant, model inference and fleet admission/decode load limits."
+  ],
+  "guideSha256NormalizedLf": "9e7afa33006115bbaf0d1b0dc18c434046a1a8ab0abf175e244041c1e44acf02",
+  "resultGuideSha256NormalizedLf": "f0d4891e52b85293ac1e460f562f81e1da72e33889ec95ac04ac29253f8386c2",
+  "limitationsOnMemoryBound": "Application latest-frame slot and tail are bounded; aiortc internal decode/thread queues require fleet load acceptance."
+}

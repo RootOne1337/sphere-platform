@@ -1,0 +1,178 @@
+FF...FFF.....FFFFF                                                       [100%]
+================================== FAILURES ===================================
+____________ test_runtime_login_me_refresh_logout_chain[org_admin] ____________
+tests\production\test_user_bootstrap_runtime.py:73: in test_runtime_login_me_refresh_logout_chain
+    assert login.status_code == 200, login.text
+E   AssertionError: {"detail":"Invalid email or password"}
+E   assert 401 == 200
+E    +  where 401 = <Response [401 Unauthorized]>.status_code
+_____________ test_runtime_login_me_refresh_logout_chain[foreign] _____________
+tests\production\test_user_bootstrap_runtime.py:73: in test_runtime_login_me_refresh_logout_chain
+    assert login.status_code == 200, login.text
+E   AssertionError: {"detail":"Invalid email or password"}
+E   assert 401 == 200
+E    +  where 401 = <Response [401 Unauthorized]>.status_code
+____________ test_runtime_refresh_opaque_sources_and_child[cookie] ____________
+tests\production\test_user_bootstrap_runtime.py:123: in test_runtime_refresh_opaque_sources_and_child
+    assert response.status_code == 200, response.text
+E   AssertionError: {"detail":"Refresh token not found"}
+E   assert 401 == 200
+E    +  where 401 = <Response [401 Unauthorized]>.status_code
+____________ test_runtime_refresh_opaque_sources_and_child[header] ____________
+tests\production\test_user_bootstrap_runtime.py:123: in test_runtime_refresh_opaque_sources_and_child
+    assert response.status_code == 200, response.text
+E   AssertionError: {"detail":"Refresh token not found"}
+E   assert 401 == 200
+E    +  where 401 = <Response [401 Unauthorized]>.status_code
+_____________ test_runtime_refresh_opaque_sources_and_child[json] _____________
+tests\production\test_user_bootstrap_runtime.py:123: in test_runtime_refresh_opaque_sources_and_child
+    assert response.status_code == 200, response.text
+E   AssertionError: {"detail":"Refresh token not found"}
+E   assert 401 == 200
+E    +  where 401 = <Response [401 Unauthorized]>.status_code
+____________ test_runtime_logout_really_revokes_sql_token[cookie] _____________
+tests\production\test_user_bootstrap_runtime.py:166: in test_runtime_logout_really_revokes_sql_token
+    assert rt.revoked and rt.revoked_at is not None
+E   assert (False)
+E    +  where False = <backend.models.refresh_token.RefreshToken object at 0x000001AEEDCF2DE0>.revoked
+____________ test_runtime_logout_really_revokes_sql_token[header] _____________
+tests\production\test_user_bootstrap_runtime.py:166: in test_runtime_logout_really_revokes_sql_token
+    assert rt.revoked and rt.revoked_at is not None
+E   assert (False)
+E    +  where False = <backend.models.refresh_token.RefreshToken object at 0x000001AEEDD4F4D0>.revoked
+____________________ test_runtime_mfa_login_consumes_once _____________________
+tests\production\test_user_bootstrap_runtime.py:174: in test_runtime_mfa_login_consumes_once
+    assert login.status_code == 200, login.text
+E   AssertionError: {"detail":"Invalid email or password"}
+E   assert 401 == 200
+E    +  where 401 = <Response [401 Unauthorized]>.status_code
+_____________ test_runtime_mfa_issued_by_another_request_session ______________
+tests\production\test_user_bootstrap_runtime.py:195: in test_runtime_mfa_issued_by_another_request_session
+    assert response.status_code == 200, response.text
+E   AssertionError: {"detail":"Invalid MFA code or session expired"}
+E   assert 401 == 200
+E    +  where 401 = <Response [401 Unauthorized]>.status_code
+________________ test_runtime_parallel_refresh_has_one_winner _________________
+..\..\..\AppData\Roaming\uv\python\cpython-3.12.12-windows-x86_64-none\Lib\asyncio\tasks.py:520: in wait_for
+    return await fut
+           ^^^^^^^^^
+tests\production\test_device_bootstrap_runtime.py:49: in observe
+    count = await db.scalar(text(
+.venv-audit\dependency-upgrade\Lib\site-packages\sqlalchemy\ext\asyncio\session.py:508: in scalar
+    return await greenlet_spawn(
+.venv-audit\dependency-upgrade\Lib\site-packages\sqlalchemy\util\_concurrency_py3k.py:197: in greenlet_spawn
+    result = context.throw(*sys.exc_info())
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv-audit\dependency-upgrade\Lib\site-packages\sqlalchemy\orm\session.py:2354: in scalar
+    return self._execute_internal(
+.venv-audit\dependency-upgrade\Lib\site-packages\sqlalchemy\orm\session.py:2181: in _execute_internal
+    conn = self._connection_for_bind(bind)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv-audit\dependency-upgrade\Lib\site-packages\sqlalchemy\orm\session.py:2050: in _connection_for_bind
+    return trans._connection_for_bind(engine, execution_options)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv-audit\dependency-upgrade\Lib\site-packages\sqlalchemy\orm\state_changes.py:139: in _go
+    ret_value = fn(self, *arg, **kw)
+                ^^^^^^^^^^^^^^^^^^^^
+.venv-audit\dependency-upgrade\Lib\site-packages\sqlalchemy\orm\session.py:1144: in _connection_for_bind
+    conn = bind.connect()
+           ^^^^^^^^^^^^^^
+.venv-audit\dependency-upgrade\Lib\site-packages\sqlalchemy\engine\base.py:3279: in connect
+    return self._connection_cls(self)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv-audit\dependency-upgrade\Lib\site-packages\sqlalchemy\engine\base.py:145: in __init__
+    self._dbapi_connection = engine.raw_connection()
+                             ^^^^^^^^^^^^^^^^^^^^^^^
+.venv-audit\dependency-upgrade\Lib\site-packages\sqlalchemy\engine\base.py:3303: in raw_connection
+    return self.pool.connect()
+           ^^^^^^^^^^^^^^^^^^^
+.venv-audit\dependency-upgrade\Lib\site-packages\sqlalchemy\pool\base.py:449: in connect
+    return _ConnectionFairy._checkout(self)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv-audit\dependency-upgrade\Lib\site-packages\sqlalchemy\pool\base.py:1263: in _checkout
+    fairy = _ConnectionRecord.checkout(pool)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv-audit\dependency-upgrade\Lib\site-packages\sqlalchemy\pool\base.py:712: in checkout
+    rec = pool._do_get()
+          ^^^^^^^^^^^^^^
+.venv-audit\dependency-upgrade\Lib\site-packages\sqlalchemy\pool\impl.py:308: in _do_get
+    return self._create_connection()
+           ^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv-audit\dependency-upgrade\Lib\site-packages\sqlalchemy\pool\base.py:390: in _create_connection
+    return _ConnectionRecord(self)
+           ^^^^^^^^^^^^^^^^^^^^^^^
+.venv-audit\dependency-upgrade\Lib\site-packages\sqlalchemy\pool\base.py:674: in __init__
+    self.__connect()
+.venv-audit\dependency-upgrade\Lib\site-packages\sqlalchemy\pool\base.py:900: in __connect
+    with util.safe_reraise():
+         ^^^^^^^^^^^^^^^^^^^
+.venv-audit\dependency-upgrade\Lib\site-packages\sqlalchemy\util\langhelpers.py:146: in __exit__
+    raise exc_value.with_traceback(exc_tb)
+.venv-audit\dependency-upgrade\Lib\site-packages\sqlalchemy\pool\base.py:896: in __connect
+    self.dbapi_connection = connection = pool._invoke_creator(self)
+                                         ^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv-audit\dependency-upgrade\Lib\site-packages\sqlalchemy\engine\create.py:643: in connect
+    return dialect.connect(*cargs, **cparams)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv-audit\dependency-upgrade\Lib\site-packages\sqlalchemy\engine\default.py:616: in connect
+    return self.loaded_dbapi.connect(*cargs, **cparams)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv-audit\dependency-upgrade\Lib\site-packages\sqlalchemy\dialects\postgresql\asyncpg.py:937: in connect
+    await_only(creator_fn(*arg, **kw)),
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv-audit\dependency-upgrade\Lib\site-packages\sqlalchemy\util\_concurrency_py3k.py:127: in await_only
+    return current.driver.switch(awaitable)  # type: ignore[no-any-return]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv-audit\dependency-upgrade\Lib\site-packages\sqlalchemy\util\_concurrency_py3k.py:192: in greenlet_spawn
+    value = await result
+            ^^^^^^^^^^^^
+.venv-audit\dependency-upgrade\Lib\site-packages\asyncpg\connection.py:2329: in connect
+    return await connect_utils._connect(
+.venv-audit\dependency-upgrade\Lib\site-packages\asyncpg\connect_utils.py:991: in _connect
+    conn = await _connect_addr(
+.venv-audit\dependency-upgrade\Lib\site-packages\asyncpg\connect_utils.py:828: in _connect_addr
+    return await __connect_addr(params, True, *args)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv-audit\dependency-upgrade\Lib\site-packages\asyncpg\connect_utils.py:873: in __connect_addr
+    tr, pr = await connector
+             ^^^^^^^^^^^^^^^
+.venv-audit\dependency-upgrade\Lib\site-packages\asyncpg\connect_utils.py:744: in _create_ssl_connection
+    tr, pr = await loop.create_connection(
+..\..\..\AppData\Roaming\uv\python\cpython-3.12.12-windows-x86_64-none\Lib\asyncio\base_events.py:1107: in create_connection
+    sock = await self._connect_sock(
+..\..\..\AppData\Roaming\uv\python\cpython-3.12.12-windows-x86_64-none\Lib\asyncio\base_events.py:1010: in _connect_sock
+    await self.sock_connect(sock, address)
+..\..\..\AppData\Roaming\uv\python\cpython-3.12.12-windows-x86_64-none\Lib\asyncio\proactor_events.py:729: in sock_connect
+    return await self._proactor.connect(sock, address)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   asyncio.exceptions.CancelledError
+
+The above exception was the direct cause of the following exception:
+tests\production\test_user_bootstrap_runtime.py:210: in test_runtime_parallel_refresh_has_one_winner
+    await wait_for_two_runtime_locks(r)
+tests\production\test_device_bootstrap_runtime.py:55: in wait_for_two_runtime_locks
+    await asyncio.wait_for(observe(), 5)
+..\..\..\AppData\Roaming\uv\python\cpython-3.12.12-windows-x86_64-none\Lib\asyncio\tasks.py:519: in wait_for
+    async with timeouts.timeout(timeout):
+               ^^^^^^^^^^^^^^^^^^^^^^^^^
+..\..\..\AppData\Roaming\uv\python\cpython-3.12.12-windows-x86_64-none\Lib\asyncio\timeouts.py:115: in __aexit__
+    raise TimeoutError from exc_val
+E   TimeoutError
+============================== warnings summary ===============================
+backend\api\v1\game_accounts\router.py:95
+  C:\Users\dimas\Documents\ChatGPT\sphere-platform\backend\api\v1\game_accounts\router.py:95: FastAPIDeprecationWarning: `regex` has been deprecated, please use `pattern` instead
+    sort_dir: str = Query("desc", regex="^(asc|desc)$", description="Направление сортировки"),
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ===========================
+FAILED tests/production/test_user_bootstrap_runtime.py::test_runtime_login_me_refresh_logout_chain[org_admin]
+FAILED tests/production/test_user_bootstrap_runtime.py::test_runtime_login_me_refresh_logout_chain[foreign]
+FAILED tests/production/test_user_bootstrap_runtime.py::test_runtime_refresh_opaque_sources_and_child[cookie]
+FAILED tests/production/test_user_bootstrap_runtime.py::test_runtime_refresh_opaque_sources_and_child[header]
+FAILED tests/production/test_user_bootstrap_runtime.py::test_runtime_refresh_opaque_sources_and_child[json]
+FAILED tests/production/test_user_bootstrap_runtime.py::test_runtime_logout_really_revokes_sql_token[cookie]
+FAILED tests/production/test_user_bootstrap_runtime.py::test_runtime_logout_really_revokes_sql_token[header]
+FAILED tests/production/test_user_bootstrap_runtime.py::test_runtime_mfa_login_consumes_once
+FAILED tests/production/test_user_bootstrap_runtime.py::test_runtime_mfa_issued_by_another_request_session
+FAILED tests/production/test_user_bootstrap_runtime.py::test_runtime_parallel_refresh_has_one_winner
+10 failed, 8 passed, 1 warning in 14.23s

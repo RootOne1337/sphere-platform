@@ -1,0 +1,88 @@
+{
+  "observedAt": "2026-10-05T15:29:21.992925+00:00",
+  "samples": [
+    {
+      "observedAt": "2026-10-05T15:29:06.842079Z",
+      "total": 19,
+      "statusCounts": {
+        "online": 14,
+        "busy": 0,
+        "connecting": 0,
+        "offline": 5,
+        "issues": 0
+      },
+      "presenceAvailable": true
+    },
+    {
+      "observedAt": "2026-10-05T15:29:09.856526Z",
+      "total": 19,
+      "statusCounts": {
+        "online": 14,
+        "busy": 0,
+        "connecting": 0,
+        "offline": 5,
+        "issues": 0
+      },
+      "presenceAvailable": true
+    },
+    {
+      "observedAt": "2026-10-05T15:29:12.867401Z",
+      "total": 19,
+      "statusCounts": {
+        "online": 14,
+        "busy": 0,
+        "connecting": 0,
+        "offline": 5,
+        "issues": 0
+      },
+      "presenceAvailable": true
+    },
+    {
+      "observedAt": "2026-10-05T15:29:15.903252Z",
+      "total": 19,
+      "statusCounts": {
+        "online": 14,
+        "busy": 0,
+        "connecting": 0,
+        "offline": 5,
+        "issues": 0
+      },
+      "presenceAvailable": true
+    },
+    {
+      "observedAt": "2026-10-05T15:29:18.925797Z",
+      "total": 19,
+      "statusCounts": {
+        "online": 14,
+        "busy": 0,
+        "connecting": 0,
+        "offline": 5,
+        "issues": 0
+      },
+      "presenceAvailable": true
+    },
+    {
+      "observedAt": "2026-10-05T15:29:21.938098Z",
+      "total": 19,
+      "statusCounts": {
+        "online": 14,
+        "busy": 0,
+        "connecting": 0,
+        "offline": 5,
+        "issues": 0
+      },
+      "presenceAvailable": true
+    }
+  ],
+  "resourceStates": {
+    "cpu": "ready",
+    "cpuQuota": "empty",
+    "memory": "ready",
+    "memoryLimit": "ready"
+  },
+  "httpRequestSucceeded": true,
+  "continuousUptimeClaimed": false,
+  "deviceCommandsSent": false,
+  "ownLogout": 204,
+  "revokedRead": 401
+}

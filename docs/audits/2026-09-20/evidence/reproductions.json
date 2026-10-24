@@ -1,0 +1,60 @@
+{
+  "source_head": "1c93cf0a04b07e6a005627d45be511364efe111d",
+  "status": "OPEN findings reproduced; these are expected failing diagnostic assertions, not passing regression tests",
+  "backend_probe": {
+    "cases": 7,
+    "failed": 7,
+    "errors": 0,
+    "duration_seconds": 2.461,
+    "test_names": [
+      "test_pipeline_claim_does_not_exceed_execution_capacity",
+      "test_restarted_executor_reconciles_old_running_intent",
+      "test_delay_step_does_not_hold_idle_sql_transaction",
+      "test_interrupted_batch_preserves_unsubmitted_device_plan",
+      "test_force_stop_does_not_claim_cancelled_when_delivery_failed",
+      "test_pipeline_cancel_reconciles_current_child_task",
+      "test_ota_catalog_preserves_concurrent_publications"
+    ],
+    "isolation": "Disposable loopback audit PostgreSQL/Redis, per-test random organizations; OTA uses tmp_path only",
+    "scope_notes": [
+      "Pipeline candidate query restricted to this test organization; admission/execution logic unchanged",
+      "Restart reproduction is a fresh executor polling persisted state, not an OS kill",
+      "Batch reproduction cancels the producer between waves; no pilot worker is killed",
+      "Delay observation replaces only the delay handler sleep with an event; actual SQL connection remains observable",
+      "Force stop publisher returns False deliberately; SQL service code and persistence are real",
+      "OTA interleaving is deterministic read/read/write/write, without live catalog access"
+    ],
+    "observations": {
+      "pipeline_executing": 10,
+      "pipeline_claimed_running": 32,
+      "pipeline_background_tasks": 32,
+      "orphan_age_hours": 25,
+      "orphan_status_after_fresh_poll": "running",
+      "orphan_claimed_tasks": 0,
+      "idle_sql_transactions_during_delay": 1,
+      "batch_targets_requested": 2,
+      "batch_targets_admitted": 1,
+      "batch_status": "running",
+      "missing_target_plan_persisted": false,
+      "cancel_delivery_accepted": false,
+      "task_status_after_failed_cancel_delivery": "cancelled",
+      "device_lock_release_called": true,
+      "cancelled_pipeline_child_status": "running",
+      "ota_publications_attempted": 2,
+      "ota_publications_retained": 1
+    },
+    "retained_probe_recheck": {
+      "path": "docs/audits/2026-09-20/evidence/sql_probes.py",
+      "failed": 7,
+      "errors": 0,
+      "duration_seconds": 2.533,
+      "all_failures_are_contract_assertions": true
+    }
+  },
+  "no_runtime_fix_or_deployment_in_this_audit": true,
+  "no_32_device_acceptance_claimed": true,
+  "probe_sha256_lf_normalized": {
+    "sql_probes.py": "fbd33f82ef89c40969011fcf2793acfcc054fff71251d5499b6422a6308557fa",
+    "decoder_probe.cjs": "248b7fb1b5677af544a338ec0dc40009eae151e0c788395d51e8536ed9660b46"
+  }
+}

@@ -1,0 +1,100 @@
+{
+  "schemaVersion": 1,
+  "observedAt": "2026-10-05T00:01:44.207434+00:00",
+  "source": "02b5084f8166751a5719fc465e6f9639dc732a34",
+  "acceptance": "RUNNING_NOT_SOAK_ACCEPTED",
+  "night": {
+    "state": "running",
+    "administrator": true,
+    "startedUtc": "2026-10-04T23:58:34.373829+00:00",
+    "dueUtc": "2026-10-05T07:58:34.373829+00:00",
+    "samplesLimit": 241,
+    "samplesWritten": 2,
+    "intervalSeconds": 120,
+    "dockerEverySamples": 8,
+    "reportBudgetBytes": 16777216,
+    "sampleLimitBytes": 131072,
+    "reportBytes": 81166,
+    "cleanupPerformed": false,
+    "deviceCommandsSent": false,
+    "autostartConfigured": false,
+    "fullDirectoryScans": false,
+    "sourceSha256": "3b8a44e164ccb75d712b196ec98e061bd81978481230b9a9a808ee2055a76bf3"
+  },
+  "baseline": {
+    "observedAt": "2026-10-04T23:58:34.375346+00:00",
+    "freeCBytes": 63238893568,
+    "availableRamBytes": 17396490240,
+    "committedBytes": 65264529408,
+    "commitLimitBytes": 95153381376,
+    "vssRowsCount": 1,
+    "vssAllocatedBytes": 0,
+    "vssMaxBytes": 8589934592,
+    "watchedNamedFiles": 97
+  },
+  "cacheCleanup": {
+    "startedUtc": "2026-10-04T23:52:00.011446+00:00",
+    "finishedUtc": "2026-10-04T23:54:27.942001+00:00",
+    "state": "complete",
+    "builder": "desktop-linux",
+    "reviewedIds": 130,
+    "nativeInvocations": 118,
+    "cacheRecordsBefore": 795,
+    "cacheRecordsAfter": 768,
+    "imagesBefore": 186,
+    "imagesAfter": 186,
+    "containers": 46,
+    "volumes": 67,
+    "containersPreserved": true,
+    "volumesPreserved": true,
+    "guestUsedBytesBefore": 199318523904,
+    "guestUsedBytesAfter": 198172246016,
+    "guestFreedBytes": 1146277888,
+    "vhdAllocatedBytesBefore": 234731077632,
+    "vhdAllocatedBytesAfter": 234731077632,
+    "windowsReclaimFromCompaction": false,
+    "filters": "exact reviewed ID; until=48h; private immutable reclaimable preflight; no --all"
+  },
+  "runtime": {
+    "observedAt": "2026-10-04T23:56:58.736833+00:00",
+    "apiHealth": {
+      "status": "ready",
+      "checks": {
+        "postgres": "ok",
+        "redis": "ok"
+      }
+    },
+    "totalDevices": 19,
+    "onlineDevices": 14,
+    "onlineVersions": {
+      "10244": 12,
+      "10245": 2
+    },
+    "apiUiSource": "c1a6e79",
+    "apkRedeployedInThisStage": false
+  },
+  "validation": {
+    "diagnosticTestsPassed": 68,
+    "diagnosticTestsSkipped": 0,
+    "ruffPilotScope": "passed; one existing import group normalized",
+    "nightFinished": false
+  },
+  "limits": [
+    "No global write journal or full directory scan",
+    "Process IO includes non-file traffic",
+    "Docker df images/cache overlap; displayed units are rounded",
+    "Historical disk loss and long RAM soak remain unaccepted",
+    "An earlier short setup observation was replaced; it is not spliced into the final window",
+    "No automatic deletion or VHD compaction in recorder"
+  ],
+  "privateEvidenceSha256": {
+    "cache-cleanup-before.json": "1737442c11e47931cbea39a6260d93ddee9d2f766df74802f8987ff11381ea97",
+    "cache-cleanup-after.json": "376ab3f9b963e3345b0dec3e9e312685c6c713259445394204efbc689b9e736b",
+    "cache-cleanup-receipt.json": "20eda02403e9c173d5f0912cc139b9083f975b1bde1c3bb991c3c9d92a4c70f6",
+    "night-watch-start-receipt.json": "ae365474652aed084a34c5ad6d027f950895f07c7818fb5a5c5dd4c5141fa25b",
+    "night-watch-replacement-receipt.json": "fdf105fe6a0e006cd3b4b2849cca3af1d7d73d75f9d15358e08ecd315e7da84c",
+    "night-watch-first-launch-refused.json": "0f301709bc6231158b5d22150ddc549d0eee439344358fe21e1c6d24fd12ac09",
+    "night-watch-fleet.json": "8445a88e1cf42e2cb4123ced8d39c5fcdfdd506aa8b7dda3c09cec6595c2ba8d",
+    "night-watch-api-health.json": "62edc3863dba10aafa5a0f0b82c236011b63b7ca4e7a8149809a951f8f26c6e2"
+  }
+}

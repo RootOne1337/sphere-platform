@@ -1,0 +1,7 @@
+AmneziaWG configuration/crypto/JNI declarations, unmodified subset of:
+https://github.com/amnezia-vpn/amneziawg-android
+commit 5c16489e2cd9ed3a0a7a27c7445bba5238132f86 (v3.1.20260814).
+Copyright notices are retained in the source files; Apache-2.0 text is in COPYING.
+This module does not include upstream GoBackend VPN lifecycle, root tools or UI.
+Sphere's Gradle integration, validation and lifecycle code are separate from the
+unmodified upstream files. See upstream.lock.json for the source inventory.

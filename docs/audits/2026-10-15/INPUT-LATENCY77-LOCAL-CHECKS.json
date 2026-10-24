@@ -1,0 +1,67 @@
+{
+  "schemaVersion": 1,
+  "recordedAtUtc": "2026-10-14T22:34:35.379790+00:00",
+  "sourceRevision": "3e605183345848f815e115d3510223d7f9d52717",
+  "parentSourceRevision": "58999b3b915446933fa4e4b0056fe4e6d9824ad4",
+  "scope": "Prepared 1.2.77 source, no pilot signed APK build, OTA, container replacement or production latency acceptance.",
+  "android": {
+    "commandScope": ":app:testDevDebugUnitTest, three explicitly selected classes, offline Gradle",
+    "exitCode": 0,
+    "tests": [
+      {
+        "className": "SharedInputTimingTest",
+        "tests": 3,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "privateJUnitSha256NormalizedLf": "2fa2fd3a591c434f9d6572bbb687b71bb9570c4fc750c890df2f6740f33f7d8a"
+      },
+      {
+        "className": "SharedDirectInputControllerTest",
+        "tests": 11,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "privateJUnitSha256NormalizedLf": "3d669295546c1fde7432b007c2a8f459e179fdbe1b28a10a7008e734496437aa"
+      },
+      {
+        "className": "NativeInputDiagnosticsTest",
+        "tests": 5,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "privateJUnitSha256NormalizedLf": "36aa008415af82a230872f57fb4a72714301d5a6d1e99a8c306c0f1508738492"
+      }
+    ],
+    "sourceFiles": [
+      {
+        "path": "android/app/src/main/kotlin/com/sphereplatform/agent/commands/SharedDirectInputController.kt",
+        "sha256NormalizedLf": "1668fc676fc4ebfac058009f92fba8847efeb6caa8da8857069db5f04c9a5549"
+      },
+      {
+        "path": "android/app/src/test/kotlin/com/sphereplatform/agent/commands/SharedDirectInputControllerTest.kt",
+        "sha256NormalizedLf": "91087208fa5bf2e42569f263aa7218013ff552f0ea9fe2af7dff913c409e4b26"
+      }
+    ]
+  },
+  "priorSourceChecksReused": {
+    "sourceRevision": "58999b3b915446933fa4e4b0056fe4e6d9824ad4",
+    "frontend": {
+      "tests": 2439,
+      "suites": 168,
+      "failures": 0,
+      "typeScriptPassed": true
+    },
+    "backend": {
+      "targetedTelemetryHistoryTests": 140,
+      "failures": 0
+    },
+    "scope": "Previously completed local checks on the unchanged frontend/backend source; not rerun after the Android-only classification fix."
+  },
+  "runtimeInstalled": false,
+  "canaryPublished": false,
+  "privacy": {
+    "noTypedTextOrInputKeys": true,
+    "noRawTestOutputOrSecrets": true
+  }
+}

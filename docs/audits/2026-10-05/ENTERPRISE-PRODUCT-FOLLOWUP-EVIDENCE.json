@@ -1,0 +1,551 @@
+{
+  "schemaVersion": 1,
+  "recordedAt": "2026-10-05T06:48:13.866471+00:00",
+  "auditSource": "c3937a1abf55eca73662bdc720699eb29b6653a6",
+  "previousEvidence": "ENTERPRISE-PRODUCT-IMPLEMENTATION-EVIDENCE.json",
+  "previousEvidenceSha256": "0fa6d46d8dae17bde3f530ff8ce0598f2fef09d2324a314e5b2af95a6f9e9771",
+  "sources": {
+    "api": "51ccaa36f6fc81f725bf01f705d907b01ba56ccb",
+    "ui": "6b7de0ccee60fb22f2ccdc4b5eac97f5462c4838",
+    "topology": "52403b4c75e43f6283b04fe5f8e5ff204a037fc2",
+    "canaryProbe": "030f09cbf0d3d19ec7ef4215be2f8e68dd157c17"
+  },
+  "gitBlobHashes": [
+    {
+      "file": "backend/services/webhook_service.py",
+      "revision": "51ccaa36f6fc81f725bf01f705d907b01ba56ccb",
+      "sha256": "1c4d736b4e72a142e20a2e3074a9743b3c700dfc775a89d41fcf4b0d2c85f133"
+    },
+    {
+      "file": "tests/test_services/test_webhook_service.py",
+      "revision": "51ccaa36f6fc81f725bf01f705d907b01ba56ccb",
+      "sha256": "2b0c41289b0687f3e872bdda4c3fc89a46626d3e376e96291af17eace7d68de0"
+    },
+    {
+      "file": "backend/services/task_service.py",
+      "revision": "51ccaa36f6fc81f725bf01f705d907b01ba56ccb",
+      "sha256": "9a10c34db127d24d13ad16cddc5f11d6739b5844bdcef8038b39e4170e25bf01"
+    },
+    {
+      "file": "backend/services/batch_service.py",
+      "revision": "51ccaa36f6fc81f725bf01f705d907b01ba56ccb",
+      "sha256": "92de9eb20db3b79c80ca8a8a520f1487023eed27605865521a520018d761051b"
+    },
+    {
+      "file": "backend/services/n8n_webhook_service.py",
+      "revision": "51ccaa36f6fc81f725bf01f705d907b01ba56ccb",
+      "sha256": "b3fc6073bc64a49310040e3d82d1f30b05ec848ca0cef3376d76cd31d383fdf1"
+    },
+    {
+      "file": "frontend/lib/server/observability.ts",
+      "revision": "6b7de0ccee60fb22f2ccdc4b5eac97f5462c4838",
+      "sha256": "07c82cc6fac58cdaf90966864c21751ac40000fbaa05cd9d052a2d30352fd2b5"
+    },
+    {
+      "file": "frontend/__tests__/monitoring/observability-server.test.ts",
+      "revision": "6b7de0ccee60fb22f2ccdc4b5eac97f5462c4838",
+      "sha256": "f92367ae974c33e7eca617d8e1f3ca5a2ec6c9aca8eaba5b9242800c56602721"
+    },
+    {
+      "file": "infrastructure/monitoring/docker-compose.review-observability.yml",
+      "revision": "6b7de0ccee60fb22f2ccdc4b5eac97f5462c4838",
+      "sha256": "77b4323e344debb794a96c27913ed4224f60b3dacf8682c0694fd4b4231e1b14"
+    },
+    {
+      "file": "infrastructure/monitoring/docker-compose.observability.yml",
+      "revision": "52403b4c75e43f6283b04fe5f8e5ff204a037fc2",
+      "sha256": "950ab25a252244b2c6b940b9767b45be76c03e8c7405d2981a36174e68aa7235"
+    },
+    {
+      "file": "scripts/audit/probe_webhook_delivery.py",
+      "revision": "030f09cbf0d3d19ec7ef4215be2f8e68dd157c17",
+      "sha256": "2190add7e80e600e82ec5e623b8d05289ed758db68798e8b47da35bf67e26fdb"
+    }
+  ],
+  "builds": {
+    "api": {
+      "source": "51ccaa36f6fc81f725bf01f705d907b01ba56ccb",
+      "exit": 0,
+      "image": "sphere-pilot-20260911-backend:51ccaa36f6fc81f725bf01f705d907b01ba56ccb",
+      "imageId": "sha256:af35c680b9e5cdee7a2c60d520311336e02d6b79e4f10cd55a3d80f8642df5f1",
+      "gitArchive": true
+    },
+    "ui": {
+      "source": "6b7de0ccee60fb22f2ccdc4b5eac97f5462c4838",
+      "exit": 0,
+      "image": "sphere-review-frontend:6b7de0ccee60fb22f2ccdc4b5eac97f5462c4838",
+      "imageId": "sha256:5a64aa26df8cb51e36dee29b8886631f75e1e52d899ff769a6e7de333df2e06c",
+      "gitArchive": true
+    }
+  },
+  "tests": {
+    "frontend": {
+      "numTotalTestSuites": 116,
+      "numPassedTestSuites": 116,
+      "numTotalTests": 1196,
+      "numPassedTests": 1196,
+      "numFailedTests": 0,
+      "numPendingTests": 0,
+      "success": true
+    },
+    "frontendHttpAndAndroidMocked": true,
+    "frontendTypeScriptPassed": true,
+    "backendImage": {
+      "source": "51ccaa36f6fc81f725bf01f705d907b01ba56ccb",
+      "exit": 0,
+      "network": "none",
+      "applicationSourceMounted": false,
+      "memoryLimitBytes": 805306368,
+      "counts": {
+        "tests": 70,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      "suites": [
+        "webhook service",
+        "batch service",
+        "n8n API"
+      ],
+      "testSourceMounted": true,
+      "externalNetworkDisabled": true
+    },
+    "backendMypy": {
+      "source": "51ccaa36f6fc81f725bf01f705d907b01ba56ccb",
+      "exit": 0,
+      "network": "none",
+      "applicationSourceMounted": false,
+      "sourceFiles": 229,
+      "incrementalCacheDisabled": true
+    },
+    "backendRuff": {
+      "source": "51ccaa36f6fc81f725bf01f705d907b01ba56ccb",
+      "exit": 0,
+      "network": "none",
+      "applicationSourceMounted": false,
+      "canonicalPyprojectMounted": true
+    },
+    "openApiCatalog": {
+      "source": "51ccaa36f6fc81f725bf01f705d907b01ba56ccb",
+      "exit": 0,
+      "network": "none",
+      "applicationSourceMounted": false
+    },
+    "existingWarnings": [
+      "React act warnings",
+      "Node localStorage warning",
+      "FastAPI regex deprecation"
+    ],
+    "setupCorrections": [
+      "Initial mypy cache exhausted 64MiB tmpfs; rerun with --no-incremental --cache-dir=/dev/null passed.",
+      "Initial Ruff run omitted canonical pyproject; mounting it resolved forward-reference false positives."
+    ]
+  },
+  "installation": {
+    "api": {
+      "source": "51ccaa36f6fc81f725bf01f705d907b01ba56ccb",
+      "observedAt": "2026-10-05T03:14:47.980233+00:00",
+      "ready": true,
+      "otherContainersPreserved": 45,
+      "mountsPreserved": true,
+      "logRotationPreserved": true,
+      "beforeFleet": {
+        "observedAt": "2026-10-05T03:14:39.624973+00:00",
+        "total": 19,
+        "statusCounts": {
+          "online": 7,
+          "busy": 0,
+          "connecting": 0,
+          "offline": 12,
+          "issues": 0
+        },
+        "presenceAvailable": true
+      },
+      "afterFleet": {
+        "observedAt": "2026-10-05T03:14:47.980233+00:00",
+        "total": 19,
+        "statusCounts": {
+          "online": 4,
+          "busy": 0,
+          "connecting": 0,
+          "offline": 15,
+          "issues": 0
+        },
+        "presenceAvailable": true
+      },
+      "apkChanged": false,
+      "tunnelsChanged": false
+    },
+    "observability": {
+      "observedAt": "2026-10-05T03:18:08.170659+00:00",
+      "uiSource": "6b7de0ccee60fb22f2ccdc4b5eac97f5462c4838",
+      "topologySource": "52403b4c75e43f6283b04fe5f8e5ff204a037fc2",
+      "changedContainers": [
+        "sphere-observability-20260930-grafana-1",
+        "sphere-observability-20260930-prometheus-1",
+        "sphere-review-20261002-review-ui-1"
+      ],
+      "otherContainersPreserved": 43,
+      "proxyIp": "172.29.0.3",
+      "staticProxyVerified": true,
+      "dynamicPool": "172.29.0.128/25",
+      "grafanaWhitelistMatches": true,
+      "grafanaPrometheusVolumesPreserved": true,
+      "newContainersHealthy": true,
+      "apiApkTunnelsUnchanged": true
+    },
+    "guardRollbacks": {
+      "apiAttempts": 3,
+      "apiRollbacks": 2,
+      "backendRecreations": 5,
+      "observabilityAttempts": 2,
+      "observabilityRollbacks": 1,
+      "normalization": [
+        "mount ordering sorted by destination",
+        "Windows bind path and Docker Desktop /run/desktop/mnt/host path normalized"
+      ],
+      "firstApiFailureExactFieldNotArchived": true,
+      "secondApiFailureConfirmedMountOrderingOnly": true,
+      "firstObservabilityFailureConfirmedEquivalentBindPaths": true,
+      "rawFailureReceiptsRetainedPrivately": true,
+      "zeroDowntimeClaimed": false
+    },
+    "publicUi18080Updated": false,
+    "apkRebuiltOrInstalled": false,
+    "databasesAndTunnelsChanged": false,
+    "oldImagesNetworkAndConfigRetainedForRollback": true
+  },
+  "liveHttp": {
+    "observedAt": "2026-10-05T03:19:27.524240+00:00",
+    "url": "http://127.0.0.1:3015/monitoring",
+    "apiSource": "51ccaa36f6fc81f725bf01f705d907b01ba56ccb",
+    "uiSource": "6b7de0ccee60fb22f2ccdc4b5eac97f5462c4838",
+    "grafanaProfileStatus": 200,
+    "grafanaOrgId": 1,
+    "grafanaRole": "Viewer",
+    "grafanaAdmin": false,
+    "dashboardUid": "sphere-collection",
+    "dashboardCanEdit": false,
+    "dashboardPanels": 5,
+    "dashboardHtmlStatus": 200,
+    "grafanaQueryStatus": 200,
+    "grafanaQueryFrames": 1,
+    "featureReadStatus": 200,
+    "anonymousStatus": 401,
+    "tamperedStatus": 401,
+    "mutationStatus": 405,
+    "directSpoofedHeaderStatus": 401,
+    "sphereLogoutStatus": 204,
+    "revokedTicketStatus": 401,
+    "revokedRenewalStatus": 401,
+    "secondsAfterMintAtRevocation": 0.39,
+    "logoutOnlyOwnedCanarySession": true,
+    "historyPoints": [
+      241
+    ],
+    "fleet": {
+      "total": 19,
+      "statusCounts": {
+        "online": 14,
+        "busy": 0,
+        "connecting": 0,
+        "offline": 5,
+        "issues": 0
+      },
+      "observedAt": "2026-10-05T03:19:27.488920Z"
+    },
+    "deviceCommandsSent": false
+  },
+  "liveHttpRecheck": {
+    "observedAt": "2026-10-05T06:47:14.909503+00:00",
+    "url": "http://127.0.0.1:3015/monitoring",
+    "apiSource": "51ccaa36f6fc81f725bf01f705d907b01ba56ccb",
+    "uiSource": "6b7de0ccee60fb22f2ccdc4b5eac97f5462c4838",
+    "grafanaProfileStatus": 200,
+    "grafanaOrgId": 1,
+    "grafanaRole": "Viewer",
+    "grafanaAdmin": false,
+    "dashboardUid": "sphere-collection",
+    "dashboardCanEdit": false,
+    "dashboardPanels": 5,
+    "dashboardHtmlStatus": 200,
+    "grafanaQueryStatus": 200,
+    "grafanaQueryFrames": 1,
+    "featureReadStatus": 200,
+    "anonymousStatus": 401,
+    "tamperedStatus": 401,
+    "mutationStatus": 405,
+    "directSpoofedHeaderStatus": 401,
+    "sphereLogoutStatus": 204,
+    "revokedTicketStatus": 401,
+    "revokedRenewalStatus": 401,
+    "secondsAfterMintAtRevocation": 0.17,
+    "logoutOnlyOwnedCanarySession": true,
+    "historyPoints": [
+      241
+    ],
+    "fleet": {
+      "total": 19,
+      "statusCounts": {
+        "online": 14,
+        "busy": 0,
+        "connecting": 0,
+        "offline": 5,
+        "issues": 0
+      },
+      "observedAt": "2026-10-05T06:47:14.884002Z"
+    },
+    "deviceCommandsSent": false
+  },
+  "webhookCanary": {
+    "observedAt": "2026-10-05T03:21:55.519640+00:00",
+    "transport": "real loopback HTTP",
+    "retrySleepsOmitted": true,
+    "externalRequests": false,
+    "sphereTasksCreated": false,
+    "receiverClosed": true,
+    "cases": [
+      {
+        "case": "acknowledged",
+        "httpStatuses": [
+          204
+        ],
+        "attempts": 1,
+        "retryDelaysSeconds": [],
+        "transportZeroYields": 6,
+        "signatureValid": true,
+        "stableDeliveryId": true,
+        "events": [
+          {
+            "delivery_id": "8e49735715bcc327",
+            "event_type": "audit.callback",
+            "attempt": 0,
+            "status": 204,
+            "outcome": "delivered",
+            "event": "webhook.delivered",
+            "log_level": "info"
+          }
+        ]
+      },
+      {
+        "case": "forbidden",
+        "httpStatuses": [
+          403
+        ],
+        "attempts": 1,
+        "retryDelaysSeconds": [],
+        "transportZeroYields": 0,
+        "signatureValid": true,
+        "stableDeliveryId": true,
+        "events": [
+          {
+            "delivery_id": "dec47757c5216efb",
+            "event_type": "audit.callback",
+            "attempt": 0,
+            "status": 403,
+            "retryable": false,
+            "retry_in_seconds": null,
+            "event": "webhook.rejected",
+            "log_level": "warning"
+          },
+          {
+            "delivery_id": "dec47757c5216efb",
+            "event_type": "audit.callback",
+            "attempts": 1,
+            "status": 403,
+            "outcome": "rejected",
+            "event": "webhook.delivery_failed",
+            "log_level": "error"
+          }
+        ]
+      },
+      {
+        "case": "rate_limit_recovery",
+        "httpStatuses": [
+          429,
+          204
+        ],
+        "attempts": 2,
+        "retryDelaysSeconds": [
+          7.0
+        ],
+        "transportZeroYields": 0,
+        "signatureValid": true,
+        "stableDeliveryId": true,
+        "events": [
+          {
+            "delivery_id": "12e2b537d9256e9d",
+            "event_type": "audit.callback",
+            "attempt": 0,
+            "status": 429,
+            "retryable": true,
+            "retry_in_seconds": 7.0,
+            "event": "webhook.rate_limited",
+            "log_level": "warning"
+          },
+          {
+            "delivery_id": "12e2b537d9256e9d",
+            "event_type": "audit.callback",
+            "attempt": 1,
+            "status": 204,
+            "outcome": "delivered",
+            "event": "webhook.delivered",
+            "log_level": "info"
+          }
+        ]
+      },
+      {
+        "case": "server_recovery",
+        "httpStatuses": [
+          503,
+          204
+        ],
+        "attempts": 2,
+        "retryDelaysSeconds": [
+          5
+        ],
+        "transportZeroYields": 0,
+        "signatureValid": true,
+        "stableDeliveryId": true,
+        "events": [
+          {
+            "delivery_id": "0c9f86fffbc02f95",
+            "event_type": "audit.callback",
+            "attempt": 0,
+            "status": 503,
+            "retryable": true,
+            "retry_in_seconds": 5,
+            "event": "webhook.server_error",
+            "log_level": "warning"
+          },
+          {
+            "delivery_id": "0c9f86fffbc02f95",
+            "event_type": "audit.callback",
+            "attempt": 1,
+            "status": 204,
+            "outcome": "delivered",
+            "event": "webhook.delivered",
+            "log_level": "info"
+          }
+        ]
+      },
+      {
+        "case": "server_exhaustion",
+        "httpStatuses": [
+          503,
+          503,
+          503,
+          503
+        ],
+        "attempts": 4,
+        "retryDelaysSeconds": [
+          5,
+          30,
+          120
+        ],
+        "transportZeroYields": 0,
+        "signatureValid": true,
+        "stableDeliveryId": true,
+        "events": [
+          {
+            "delivery_id": "7e73a1e7335ef5ce",
+            "event_type": "audit.callback",
+            "attempt": 0,
+            "status": 503,
+            "retryable": true,
+            "retry_in_seconds": 5,
+            "event": "webhook.server_error",
+            "log_level": "warning"
+          },
+          {
+            "delivery_id": "7e73a1e7335ef5ce",
+            "event_type": "audit.callback",
+            "attempt": 1,
+            "status": 503,
+            "retryable": true,
+            "retry_in_seconds": 30,
+            "event": "webhook.server_error",
+            "log_level": "warning"
+          },
+          {
+            "delivery_id": "7e73a1e7335ef5ce",
+            "event_type": "audit.callback",
+            "attempt": 2,
+            "status": 503,
+            "retryable": true,
+            "retry_in_seconds": 120,
+            "event": "webhook.server_error",
+            "log_level": "warning"
+          },
+          {
+            "delivery_id": "7e73a1e7335ef5ce",
+            "event_type": "audit.callback",
+            "attempt": 3,
+            "status": 503,
+            "retryable": true,
+            "retry_in_seconds": null,
+            "event": "webhook.server_error",
+            "log_level": "warning"
+          },
+          {
+            "delivery_id": "7e73a1e7335ef5ce",
+            "event_type": "audit.callback",
+            "attempts": 4,
+            "status": 503,
+            "outcome": "server_error",
+            "event": "webhook.delivery_failed",
+            "log_level": "error"
+          }
+        ]
+      }
+    ]
+  },
+  "browser": {
+    "url": "http://127.0.0.1:3015/monitoring",
+    "actualBrowser": "Codex in-app browser",
+    "observedUiRevision": "6b7de0cc",
+    "observedApiRevision": "51ccaa36",
+    "dashboardTitle": "Sphere metrics collection",
+    "welcomeInsteadOfDashboard": false,
+    "realDataGraphsVisuallyReviewed": true,
+    "restartGapVisibleInHistory": true,
+    "mobileLayoutNotRecheckedInThisBatch": true,
+    "matchingRevisionsRequiredForCompatibility": false,
+    "screenshot": {
+      "file": "docs/audits/2026-10-05/assets/product-audit/grafana-fixed-live.jpg",
+      "bytes": 138902,
+      "sha256": "28b09333ec411b6d023e90d09090517dcbce0cfbfa4cdda7d6c1747a36a81fa2",
+      "visuallyReviewed": true,
+      "width": 1440,
+      "height": 1000
+    }
+  },
+  "ledger": {
+    "originalItems": 50,
+    "closedInPreviousBatch": [
+      "EP-001",
+      "EP-002",
+      "EP-003",
+      "EP-004",
+      "EP-005"
+    ],
+    "closedInThisBatch": [
+      "EP-006",
+      "EP-007"
+    ],
+    "totalClosed": 7,
+    "itemsWithOpenCriteria": 43,
+    "baselineNotRewritten": true,
+    "closedScope": "Recorded item acceptance only, not total platform production readiness"
+  },
+  "limits": [
+    "No task/batch callback sent to an external production receiver.",
+    "Retry wall-clock delays omitted in finite HTTP canary; not a wall-clock latency test.",
+    "No new durable webhook delivery database or history UI.",
+    "Grafana availability/query success does not prove Android stream/script execution.",
+    "RPS, p95, endpoint drilldown and process/container/host history remain OPEN.",
+    "Five offline devices remain outside this acceptance; no device commands sent.",
+    "Storage watch running; disk growth/RAM soak not resolved by this batch.",
+    "Fresh-head CI tracked separately; prior backend Codecov upload failure retained."
+  ]
+}

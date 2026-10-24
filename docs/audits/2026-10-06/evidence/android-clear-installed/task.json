@@ -1,0 +1,23 @@
+{
+  "sourceRevision": "6a9f570f2c0a4dc54a90b0be57a289dadc85d534",
+  "deviceId": "414ce0e9-4b93-4f96-b9ca-ee675f53835e",
+  "expectedVersionCode": 10246,
+  "startedAt": "2026-10-06T13:48:36.810745+00:00",
+  "status": "terminal-completed",
+  "scriptsCreated": 1,
+  "tasksCreated": 1,
+  "automaticRetry": false,
+  "deviceActionsRetries": 0,
+  "scriptId": "47856351-7854-44f8-b6bb-a63712968409",
+  "versionId": "064a0cd9-cbe0-4412-8d99-385c9d40d6a7",
+  "dagHash": "eb8864d121f89e3717374d2dda13c11e26d7d076507e2eed94ce4d196784315e",
+  "taskId": "043e6a3e-e68e-4967-9cd1-104685145adf",
+  "nodeCount": 25,
+  "allNodeReportsSuccessful": true,
+  "exactReplacementTextReported": true,
+  "clearFirstAndStandaloneClearVerifiedByFollowingXpathAssertions": true,
+  "screenshots": {
+    "task_id": "043e6a3e-e68e-4967-9cd1-104685145adf",
+    "screenshots": []
+  }
+}

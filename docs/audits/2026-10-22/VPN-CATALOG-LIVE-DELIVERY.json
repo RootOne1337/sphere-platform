@@ -1,0 +1,165 @@
+{
+  "schemaVersion": 1,
+  "observedAtUtc": "2026-10-21T19:03:33.544514+00:00",
+  "localDate": "2026-10-22",
+  "timezone": "Asia/Yekaterinburg",
+  "sourceReviewed": "20cd31b7b4aacb6418a4e2c3c3df45b317f49934",
+  "installed": {
+    "ui": "37926bd3309b6ddfd4e98028577806ff9ae9f527",
+    "api": "7d2a684625c6f0620358ca20604fadcf6e82a6cb",
+    "uiImageId": "sha256:525bde2e68917606b80ced820136eb99c4f4e0c6bfbaf4a62ac366b09b0c2589",
+    "apiImageId": "sha256:072800c175c26dcf2f73a8e0ca4c0a21521fdcc3d9f7087300c1a089ab38fc2c",
+    "schemaHeads": [
+      "20261021_vpn_profiles"
+    ],
+    "healthReady": true,
+    "previousImagesPreserved": true,
+    "apk84Installed": false
+  },
+  "uiReceiptSha256": "a1c396ac0bf7f1deaa0395a1a043b91d3d7447bf31d610d771ab9b3c4cce4dc8",
+  "apiReceiptSha256": "2aed95c932e8764ba029550cf13430defeaaac2297112d16bfd82215b789402f",
+  "catalogMigration": {
+    "performed": true,
+    "previousSchemaHead": "20261006_script_catalog_metadata",
+    "newSchemaHead": "20261021_vpn_profiles",
+    "workerSha256": "30c726452472f7407cc872f8ed8968eed38a7e5f88cd9aa774897d9290dfda5c",
+    "actualCatalogLoginChecked": true,
+    "legacyApiRoleChanged": false,
+    "existingTablesDeleted": false,
+    "backupRestoredInIsolation": true,
+    "restoreReceiptSha256": "a440a0c9223e93143ffd4b27bcf98ffa4e72f3c70bbbcf5a7d75da8b3a4b726a",
+    "legacyRowCountsPreservedInRestore": true,
+    "duplicateMigrationOnResume": false
+  },
+  "liveHttpAcceptance": {
+    "observedAtUtc": "2026-10-21T18:52:45.720641+00:00",
+    "state": "success",
+    "deviceCommandsSent": 0,
+    "physicalVpnApplied": false,
+    "source": "7d2a684625c6f0620358ca20604fadcf6e82a6cb",
+    "importReplayConfirmed": true,
+    "importStatusConfirmed": true,
+    "revisionAndHistoryConfirmed": true,
+    "archived": true,
+    "publicMetadataContainsNoConfig": true,
+    "runtimeInventoryAvailable": true
+  },
+  "testProfile": {
+    "profileId": "4b97c9ad-0fa2-4f61-941a-fb5621fb2e92",
+    "archived": true,
+    "synthetic": true,
+    "deviceAssigned": false
+  },
+  "browserAcceptance": {
+    "actualInstalledSite": true,
+    "origin": "http://127.0.0.1:3015",
+    "sourceHarnessUsed": false,
+    "desktopViewport": [
+      1440,
+      900
+    ],
+    "mobileViewport": [
+      390,
+      844
+    ],
+    "mobileDocumentWidth": 390,
+    "mobileDialogWidth": 390,
+    "consoleErrorsDuringAuthenticatedVpnReview": 0,
+    "consoleWarningsDuringAuthenticatedVpnReview": 0,
+    "deviceServiceStatus": "APK83 has no app-VPN report; unknown/update-required displayed",
+    "tabsReviewed": [
+      "connections",
+      "profiles",
+      "infrastructure",
+      "traffic-policy"
+    ],
+    "dialogsReviewed": [
+      "import",
+      "device-diagnostics",
+      "revision-history"
+    ],
+    "realTouchHardwareTested": false,
+    "qaBrowserClosed": true,
+    "screenshots": [
+      {
+        "file": "docs/audits/2026-10-22/assets/vpn-live/desktop-connections.png",
+        "sha256": "de5d9798d51dc02d39e424a6ebb626b17bae02e6fb7611d8004ba30793b95534"
+      },
+      {
+        "file": "docs/audits/2026-10-22/assets/vpn-live/desktop-profiles.png",
+        "sha256": "b636453fa046cbc27032707db59b2c619c558dd23874e55c13e5d71125c212c9"
+      },
+      {
+        "file": "docs/audits/2026-10-22/assets/vpn-live/desktop-infrastructure.png",
+        "sha256": "070d739a0bc586cc124881031ebc1cd992b344f94396cb54995bbbe0fb408617"
+      },
+      {
+        "file": "docs/audits/2026-10-22/assets/vpn-live/desktop-policy.png",
+        "sha256": "40fa618dc4720a72071e11dab408fd95e05d1815c0eb1376bcfb95a5298fd178"
+      },
+      {
+        "file": "docs/audits/2026-10-22/assets/vpn-live/desktop-versions.png",
+        "sha256": "f723ef3b703dbfad2dac3d2218ffd92c2a78be9c7f4a22e76f17c974b1eb2242"
+      },
+      {
+        "file": "docs/audits/2026-10-22/assets/vpn-live/mobile-connections.png",
+        "sha256": "53aa8bc73ee74a317a5178416374fa16ee50446d98ed644d2474fd5b95616170"
+      },
+      {
+        "file": "docs/audits/2026-10-22/assets/vpn-live/mobile-import.png",
+        "sha256": "f23221c19f54c99cdc4553abdf196adf6456cb45d3888f3ac374d0677e893158"
+      },
+      {
+        "file": "docs/audits/2026-10-22/assets/vpn-live/mobile-diagnostics.png",
+        "sha256": "08a0f9ebf1465a1784676b0be7a720b83d42a1d08533446a24bc0e9bda9b1356"
+      }
+    ]
+  },
+  "regressions": {
+    "frontendSource": "37926bd3309b6ddfd4e98028577806ff9ae9f527",
+    "frontendPassed": 2606,
+    "backendSource": "7d2a684625c6f0620358ca20604fadcf6e82a6cb",
+    "backendPassed": 4440,
+    "backendSkipped": 63,
+    "backendSubtestsPassed": 659,
+    "backendCoveragePercent": 82.49
+  },
+  "secrets": {
+    "dedicatedKeyAndDatabaseLoginConfigured": true,
+    "valuesPublished": false,
+    "freshProcessRecoveryReadbackPassed": true,
+    "offHostRecoveryVerified": false
+  },
+  "deviceCommandsSent": 0,
+  "physicalVpnChanged": false,
+  "gamesChanged": false,
+  "otaCatalogChanged": false,
+  "resourceObservation": {
+    "observedAt": "2026-10-21T19:03:29.272804+00:00",
+    "system": "Windows",
+    "freeDiskBytes": 83692998656,
+    "deviceCommandsSent": false,
+    "mutationsPerformed": false,
+    "availableRamBytes": 6687592448,
+    "totalRamBytes": 50668236800,
+    "committedBytes": 86478774272,
+    "commitLimitBytes": 101336473600,
+    "volumeHealthStatus": "Healthy",
+    "volumeOperationalStatus": [
+      "OK"
+    ],
+    "findings": [
+      "commit_headroom_low"
+    ]
+  },
+  "open": [
+    "APK84 full Android CI and OTA admission",
+    "main-APK selected-app VPN/fault pilot",
+    "server durable operation journal and unique client lease",
+    "shared UI/script/orchestration physical execution"
+  ],
+  "sources": [
+    "https://www.postgresql.org/docs/15/ddl-rowsecurity.html",
+    "https://www.postgresql.org/docs/15/app-pgdump.html"
+  ]
+}

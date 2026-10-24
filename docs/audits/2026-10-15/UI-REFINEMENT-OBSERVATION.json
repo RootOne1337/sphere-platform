@@ -1,0 +1,130 @@
+{
+  "schemaVersion": 1,
+  "recordedAtUtc": "2026-10-15T00:28:30.182541+00:00",
+  "sourceBase": "aeb8661040bf0b0813a614e9e580bb9e59a14ffe",
+  "state": "SOURCE_VALIDATED_NOT_INSTALLED",
+  "runtimeInstalled": false,
+  "grid": {
+    "package": "ag-grid-community + ag-grid-react",
+    "version": "36.2.0",
+    "license": "MIT Community",
+    "serverPaginationUnchanged": true,
+    "sortingScope": "loaded API page",
+    "mobileLazyGridLoaded": false
+  },
+  "tests": {
+    "suites": 169,
+    "tests": 2455,
+    "failed": 0,
+    "typeCheckExitCode": 0,
+    "fullJestLogSha256": "7c3e4ad282ab8c23b165fe6495db0bc303d098c0ec5b6c7e145729f7a4607019"
+  },
+  "browser": {
+    "functionalChecks": [
+      {
+        "check": "density changes actual shared button",
+        "compact": 32,
+        "spacious": 44,
+        "passed": true
+      },
+      {
+        "check": "AG Grid mouse column resize",
+        "before": 323,
+        "after": 399,
+        "passed": true
+      },
+      {
+        "check": "AG Grid mouse column reorder",
+        "order": [
+          "name",
+          "status",
+          "agent_version",
+          "battery_level",
+          "network",
+          "server_name",
+          "tags",
+          "last_seen",
+          "android_id",
+          "cpu_usage",
+          "ram_usage_mb"
+        ],
+        "passed": true
+      },
+      {
+        "check": "size and pinning survive F5",
+        "width": 340,
+        "pinned": true,
+        "passed": true
+      },
+      {
+        "check": "auto sidebar hover and leave",
+        "railWidth": 83.5625,
+        "passed": true
+      },
+      {
+        "check": "phone accounts create action within viewport",
+        "bounds": {
+          "x": 235.703125,
+          "y": 146,
+          "width": 97.1875,
+          "height": 44
+        },
+        "passed": true
+      },
+      {
+        "check": "mobile navigation Escape and focus return",
+        "passed": true
+      },
+      {
+        "check": "appearance preserves manually panned builder viewport",
+        "passed": true
+      },
+      {
+        "check": "browser Back restores lazy AG Grid vertical position",
+        "before": 480,
+        "after": 480,
+        "passed": true
+      },
+      {
+        "check": "blue accent preserved between dark palettes",
+        "before": "213 93% 70%",
+        "after": "213 93% 70%",
+        "passed": true
+      }
+    ],
+    "errorsAfterFinalReload": [],
+    "correctedProbes": [
+      "Legacy pinning selector did not match AG36; F5 with correct header class passed.",
+      "Accent differs between light/dark for contrast; identical dark-palette persistence passed."
+    ],
+    "limitations": [
+      "Chromium phone emulation; no physical OS keyboard.",
+      "Dev events WebSocket unsupported; production origin checked separately.",
+      "No Android input, capture start, script save or business record creation in visual QA."
+    ],
+    "screenshots": [
+      {
+        "path": "docs/audits/2026-10-15/assets/ui-refinement/desktop-fleet.png",
+        "sha256": "b243c57b93d6d3a33a86b58fdb4126dcb058f05269fdc537318498d59e54a6d9"
+      },
+      {
+        "path": "docs/audits/2026-10-15/assets/ui-refinement/phone-fleet.png",
+        "sha256": "cf24189cc431bbda10c801da9cbbc028f423785b646a8004532bfc108e3a9750"
+      },
+      {
+        "path": "docs/audits/2026-10-15/assets/ui-refinement/laptop-light.png",
+        "sha256": "4b1d1496e96138ce5dfc1b627713f3c4a33c9dafda6bbc4268a67da0baf73cc3"
+      },
+      {
+        "path": "docs/audits/2026-10-15/assets/ui-refinement/phone-landscape.png",
+        "sha256": "c783016035b0527219b9814ce0e407af1a4aec8413dbc09f370157f2b7cd064f"
+      }
+    ]
+  },
+  "limits": [
+    "No claim of all audit findings resolved.",
+    "No APK or backend delivery in this UI wave.",
+    "Contrast matrix tests opaque semantic pairs; not every state on every page.",
+    "Physical phone keyboard and long performance soak not accepted."
+  ]
+}

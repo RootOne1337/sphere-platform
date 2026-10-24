@@ -1,5 +1,12 @@
 # ТЗ ЧАСТЬ 1: АРХИТЕКТУРА СИНТЕТИЧЕСКОГО НАГРУЗОЧНОГО ТЕСТА
 
+**Актуализация 23 сентября:** ниже сохранено проектное ТЗ от марта, не подтверждение
+пропускной способности. План `maxmemory 2gb` не является текущим dataset budget.
+Source Compose задаёт [Redis contract](../operations/REDIS-MEMORY.md) 512 MiB dataset /
+2048 MiB container после OOM на 1536 MiB; изолированный CI probe прошёл, но cgroup
+peak достиг нового ceiling и pilot не обновлялся. Это не stream capacity. Массовый native допуск описан в
+[Fleet32](../audits/2026-09-20/FLEET32-PREFLIGHT.md).
+
 > **Sphere Platform — Synthetic Fleet Load Test**
 > **Версия:** 1.0 | **Дата:** 2026-03-04
 > **Тип:** Синтетический нагрузочный тест (Synthetic Load / Stress Test)

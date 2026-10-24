@@ -1,0 +1,16 @@
+{
+  "baseline_sha": "508b1ccc590c30c52b5bbd81efdd3e07595478f2",
+  "state": "admin-restart-full",
+  "totals": {
+    "tests": 1498,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  "groups": {
+    "tests.production": 538,
+    "tests.deployment": 85
+  },
+  "failures": [],
+  "boundary": "Actual PS/Bash bootstrap functions invoke the real admin CLI through a native Docker boundary; real disposable PostgreSQL and ASGI login. Enrollment outcome is a process double. CLI concurrency uses three processes; deferred test-only SQL trigger rejects COMMIT and is removed in finally. No Docker app startup, API listener or installed APK."
+}

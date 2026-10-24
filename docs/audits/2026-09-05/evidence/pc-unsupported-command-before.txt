@@ -1,0 +1,43 @@
+..........FFF                                                            [100%]
+================================== FAILURES ===================================
+___ test_unsupported_pc_command_reports_failure_without_execution[ld_lauch] ___
+tests\production\test_pc_result_protocol.py:127: in test_unsupported_pc_command_reports_failure_without_execution
+    assert reply["status"] == "failed", "An unsupported operation reached the subscriber as completed"
+E   AssertionError: An unsupported operation reached the subscriber as completed
+E   assert 'completed' == 'failed'
+E
+E     - failed
+E     + completed
+---------------------------- Captured stderr call -----------------------------
+2026-09-09 23:00:16.872 | WARNING  | agent.dispatcher:_handle:141 - Неизвестный тип команды: 'ld_lauch'
+___ test_unsupported_pc_command_reports_failure_without_execution[adb_exec] ___
+tests\production\test_pc_result_protocol.py:127: in test_unsupported_pc_command_reports_failure_without_execution
+    assert reply["status"] == "failed", "An unsupported operation reached the subscriber as completed"
+E   AssertionError: An unsupported operation reached the subscriber as completed
+E   assert 'completed' == 'failed'
+E
+E     - failed
+E     + completed
+---------------------------- Captured stderr call -----------------------------
+2026-09-09 23:00:17.654 | WARNING  | agent.dispatcher:_handle:141 - Неизвестный тип команды: 'adb_exec'
+_ test_unsupported_pc_command_reports_failure_without_execution[unsupported_future_command] _
+tests\production\test_pc_result_protocol.py:127: in test_unsupported_pc_command_reports_failure_without_execution
+    assert reply["status"] == "failed", "An unsupported operation reached the subscriber as completed"
+E   AssertionError: An unsupported operation reached the subscriber as completed
+E   assert 'completed' == 'failed'
+E
+E     - failed
+E     + completed
+---------------------------- Captured stderr call -----------------------------
+2026-09-09 23:00:18.012 | WARNING  | agent.dispatcher:_handle:141 - Неизвестный тип команды: 'unsupported_future_command'
+============================== warnings summary ===============================
+backend\api\v1\game_accounts\router.py:95
+  C:\Users\dimas\Documents\ChatGPT\sphere-platform\backend\api\v1\game_accounts\router.py:95: FastAPIDeprecationWarning: `regex` has been deprecated, please use `pattern` instead
+    sort_dir: str = Query("desc", regex="^(asc|desc)$", description="Направление сортировки"),
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ===========================
+FAILED tests/production/test_pc_result_protocol.py::test_unsupported_pc_command_reports_failure_without_execution[ld_lauch]
+FAILED tests/production/test_pc_result_protocol.py::test_unsupported_pc_command_reports_failure_without_execution[adb_exec]
+FAILED tests/production/test_pc_result_protocol.py::test_unsupported_pc_command_reports_failure_without_execution[unsupported_future_command]
+3 failed, 10 passed, 1 warning in 5.82s

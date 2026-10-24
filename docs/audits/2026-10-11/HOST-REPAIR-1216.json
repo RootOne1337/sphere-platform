@@ -1,0 +1,136 @@
+{
+  "schemaVersion": 1,
+  "observedAtUtc": "2026-10-11T12:28:48.532065+00:00",
+  "scope": "Verified recovery preparation and actual host metadata; no repaired volume, Git repair, runtime install or OTA acceptance.",
+  "scan": {
+    "administrator": true,
+    "startedAtUtc": "2026-10-11T11:47:48.3194270Z",
+    "finishedAtUtc": "2026-10-11T11:55:15.2174998Z",
+    "result": "ScanErrorsFoundNeedSpotFix",
+    "volumeAfter": {
+      "DriveLetter": "C",
+      "FileSystemType": "NTFS",
+      "HealthStatus": "Warning",
+      "OperationalStatus": "Spot Fix Needed",
+      "SizeRemaining": 31069368320,
+      "Size": 1023141736448
+    },
+    "privateReportSha256": "ae9e2a3044b20941604d21fc7df728d692a3ad912ecf4f0c5c4fcaaf01b27da2",
+    "repairPerformed": false
+  },
+  "latestPreflight": {
+    "observedAt": "2026-10-11T12:28:47.112409+00:00",
+    "system": "Windows",
+    "freeDiskBytes": 31017959424,
+    "deviceCommandsSent": false,
+    "mutationsPerformed": false,
+    "availableRamBytes": 13690818560,
+    "totalRamBytes": 50668236800,
+    "committedBytes": 65307353088,
+    "commitLimitBytes": 101336473600,
+    "volumeHealthStatus": "Warning",
+    "volumeOperationalStatus": [
+      "Full Repair Needed"
+    ],
+    "findings": [
+      "volume_not_ready"
+    ],
+    "buildAllowed": false
+  },
+  "git": {
+    "fsckPassed": false,
+    "exitCode": 3,
+    "corruptObjectCount": 10,
+    "corruptCurrentSourceBlobCount": 4,
+    "repaired": false,
+    "objectsDeleted": false,
+    "causeEstablished": false
+  },
+  "recoveryCopy": {
+    "sourceRevision": "b47d4882ee4cf3b870a2ee79a0aea71243a148c3",
+    "remoteSourceMatches": true,
+    "sourceGitTree": "f7cbe1783f0850eab822507f5c2abcf4c1898bf2",
+    "allSourceBlobHashesVerified": true,
+    "sourceBlobCount": 3089,
+    "files": 26,
+    "bytes": 24026089,
+    "independentBackupAvailable": false,
+    "backupOnAffectedPhysicalDisk": true,
+    "postgresDatabaseBytes": 17456487,
+    "postgresDumpBytes": 782401,
+    "postgresFullArchiveDecodedToNull": true,
+    "postgresRestoreIntoDatabaseTested": false,
+    "notBackedUp": [
+      "personal-files",
+      "full-ssd-image",
+      "minio-objects",
+      "redis-volume",
+      "other-application-volumes",
+      "untracked-files-except-selected-markdown-and-uv-lock",
+      "signing-keys-except-pilot-debug-and-discovery",
+      "all-local-git-reflogs-and-unpushed-branches"
+    ]
+  },
+  "bootRepair": {
+    "state": "boot-check-confirmed; repair-pending-restart",
+    "completedAtUtc": "2026-10-11T12:16:08.3152525Z",
+    "command": "chkdsk.exe C: /f",
+    "nativeExitCode": 3,
+    "explicitBootCheckForC": true,
+    "bootExecuteAfter": [
+      "autocheck autochk /p \\??\\C:",
+      "autocheck autochk *"
+    ],
+    "repairHelperSha256": "9f832325e9f2e396d9dfc1f6484aab700ba8761edb95ca26412bdae03a669314",
+    "privateRequestSha256": "a5f3f5c74abd45a092ad0db78aef43c08a968e6c07e95cfda0f3d84ced360b74",
+    "repairCompleted": false,
+    "rebootPerformed": false,
+    "servicesStopped": false
+  },
+  "storage": {
+    "previousWorkerPid": 43984,
+    "previousWorkerPresent": false,
+    "previousLastSampleUtc": "2026-10-11T11:35:33.931769+00:00",
+    "previousSamples": 241,
+    "fullCollectorGapEndsUtc": "2026-10-11T12:24:25.488849+00:00",
+    "gapCovered": false,
+    "newWorkerPid": 13708,
+    "newLauncherPid": 37352,
+    "administrator": true,
+    "sourceSha256": "3a6bf900a04051dd624ee762cffa60e697b887a893cfb23e969ee968787b853d",
+    "startUtc": "2026-10-11T12:24:25.488849+00:00",
+    "dueUtc": "2026-10-12T12:24:25.488849+00:00",
+    "samplesWritten": 3,
+    "lastSampleUtc": "2026-10-11T12:28:25.492094+00:00",
+    "watchFiles": 24,
+    "sampleLimit": 721,
+    "intervalSeconds": 120,
+    "reportBudgetBytes": 16777216,
+    "nativeVssWorkerPid": 13732,
+    "nativeVssDueUtc": "2026-10-11T13:02:12.7969515Z",
+    "hostState": "measured",
+    "coreProcessCount": 32,
+    "exactVss": {
+      "usedBytes": 19724959744,
+      "allocatedBytes": 20246953984,
+      "maxBytes": 20461912064
+    },
+    "previousApprovedVssMaxBytes": 8589934592,
+    "vssLimitDriftConfirmed": true,
+    "vssLimitWriterEstablished": false,
+    "vssLimitChangedByThisWork": false,
+    "autostartConfigured": false,
+    "writerAttributionEstablished": false
+  },
+  "preparedChanges": {
+    "reviewedRuntimeSource": "4ce2c6d6ef5e9d3abbe267b29f5d266d86d59946",
+    "allThreeSourceCiPassed": true,
+    "apk55BuiltSignedOrInstalled": false,
+    "newRuntimeInstalled": false,
+    "otaSent": false,
+    "installerTestsPassed": 61,
+    "installerSubtestsPassed": 69,
+    "hostCollectorAndRepairTestsPassed": 41,
+    "actualInstalledUiApi": "6ee80c1fedf6ea0c656b0d4dc599b87f6bfac135"
+  }
+}

@@ -4,11 +4,8 @@ import android.content.Context
 import android.net.ConnectivityManager
 import android.net.NetworkCapabilities
 import dagger.hilt.android.qualifiers.ApplicationContext
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
-import kotlinx.coroutines.withContext
 import timber.log.Timber
 import java.io.File
 import java.util.concurrent.TimeUnit
@@ -16,11 +13,9 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 /**
- * SphereVpnManager — AmneziaWG VPN tunnel management (TZ-06).
- *
- * Manages WireGuard-compatible tunnels via `wg-quick` userspace tool
- * (requires root or VpnService fallback). Stores config in app-private dir,
- * monitors tunnel state via interface check, supports auto-reconnect.
+ * Legacy root tunnel lifecycle. New connections are quarantined: wg-quick
+ * provides neither app-scoped routing nor control-plane isolation. There is
+ * currently no VpnService fallback. Retain disconnect for legacy recovery.
  */
 @Singleton
 class SphereVpnManager @Inject constructor(
@@ -39,35 +34,10 @@ class SphereVpnManager @Inject constructor(
         configDir.mkdirs()
     }
 
-    /**
-     * Activates VPN tunnel with the given WireGuard config text.
-     * Config is written to app-private storage, then wg-quick is invoked.
-     */
-    suspend fun connect(config: String) = mutex.withLock {
-        withContext(Dispatchers.IO) {
-            try {
-                // Tear down existing tunnel if any
-                bringDownTunnel()
-
-                // Write config to disk
-                val configFile = File(configDir, CONFIG_FILE)
-                configFile.writeText(config)
-                configFile.setReadable(false, false)
-                configFile.setReadable(true, true)
-
-                // Bring up tunnel
-                bringUpTunnel(configFile)
-
-                activeTunnelName = TUNNEL_NAME
-                tunnelActive = true
-                Timber.i("VPN tunnel $TUNNEL_NAME connected")
-            } catch (e: Exception) {
-                tunnelActive = false
-                activeTunnelName = null
-                Timber.e(e, "VPN connect failed")
-                throw e
-            }
-        }
+    /** No config is saved or executed without an accepted app-scoped provider. */
+    @Suppress("UNUSED_PARAMETER")
+    suspend fun connect(config: String): Unit = mutex.withLock {
+        VpnExecutionPolicy.requireAppScopedProvider()
     }
 
     fun disconnect() {
@@ -83,29 +53,9 @@ class SphereVpnManager @Inject constructor(
         }
     }
 
-    /**
-     * Reconnect with exponential backoff. Used when stale handshake detected.
-     */
-    suspend fun reconnect() {
-        val configFile = File(configDir, CONFIG_FILE)
-        if (!configFile.exists()) {
-            Timber.w("Cannot reconnect: no saved config")
-            return
-        }
-        val config = configFile.readText().take(MAX_CONFIG_CHARS)
-        var attempt = 0
-        while (attempt < MAX_RECONNECT_ATTEMPTS) {
-            try {
-                connect(config)
-                return
-            } catch (e: Exception) {
-                attempt++
-                val delayMs = RECONNECT_BASE_DELAY_MS * (1L shl attempt.coerceAtMost(4))
-                Timber.w("VPN reconnect attempt $attempt failed, retrying in ${delayMs}ms")
-                delay(delayMs)
-            }
-        }
-        Timber.e("VPN reconnect failed after $MAX_RECONNECT_ATTEMPTS attempts")
+    /** Reconnect must pass the same gate as initial activation. */
+    suspend fun reconnect(): Unit = mutex.withLock {
+        VpnExecutionPolicy.requireAppScopedProvider()
     }
 
     /**
@@ -115,13 +65,6 @@ class SphereVpnManager @Inject constructor(
     fun isActive(): Boolean {
         if (!tunnelActive) return false
         return checkTunnelInterface()
-    }
-
-    private fun bringUpTunnel(configFile: File) {
-        val result = executeRoot("wg-quick up ${configFile.absolutePath}")
-        if (result.exitCode != 0) {
-            throw VpnException("wg-quick up failed (exit=${result.exitCode}): ${result.stderr}")
-        }
     }
 
     private fun bringDownTunnel() {
@@ -156,10 +99,6 @@ class SphereVpnManager @Inject constructor(
     private companion object {
         const val TUNNEL_NAME = "sphere0"
         const val CONFIG_FILE = "sphere0.conf"
-        const val MAX_RECONNECT_ATTEMPTS = 5
-        const val RECONNECT_BASE_DELAY_MS = 2000L
-        /** FIX E4: Лимит на размер конфига — защита от OOM при повреждённом файле. */
-        const val MAX_CONFIG_CHARS = 64 * 1024
         /** Таймаут на root-команду (wg-quick). На слабых эмуляторах может зависнуть. */
         const val ROOT_CMD_TIMEOUT_SECONDS = 60L
         /** Максимальный размер stdout/stderr для чтения (защита от OOM). */

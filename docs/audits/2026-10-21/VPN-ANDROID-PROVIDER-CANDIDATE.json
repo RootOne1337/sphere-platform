@@ -1,0 +1,352 @@
+{
+  "schemaVersion": 1,
+  "kind": "VPN_ANDROID_SOURCE_CANDIDATE_AND_FINITE_ROOT_TUN_DIAGNOSTICS_NOT_PRODUCTION_ACCEPTANCE",
+  "recordedAtUtc": "2026-10-21T13:11:51.317114+00:00",
+  "designVersion": "1.2",
+  "mainSphereRuntimeReplaced": false,
+  "productionDatabaseMigrated": false,
+  "upstream": {
+    "repository": "https://github.com/amnezia-vpn/amneziawg-android",
+    "commit": "5c16489e2cd9ed3a0a7a27c7445bba5238132f86",
+    "release": "v3.1.20260814",
+    "vendoredJavaSources": 15,
+    "license": "Apache-2.0, upstream notices retained"
+  },
+  "native": {
+    "diagnosticOnly": true,
+    "androidClockOverlayApplied": true,
+    "globalGorootModified": false,
+    "jniLifecycleHardened": true,
+    "jniPatchSha256": "ef4c7bcf938822253601b2788719ce180888afac085ac58056194921e1538f41",
+    "artifacts": [
+      {
+        "abi": "x86_64",
+        "sha256": "0f2af2c887f33996660b5a93c24cd46370d0b1d8e97fbdcbe65774e19b7590aa",
+        "size": 7334576,
+        "jni_exports_verified": true,
+        "load_alignment_16k_verified": true
+      },
+      {
+        "abi": "arm64-v8a",
+        "sha256": "aa5d61ab6ae01d0aa82e52efb0f85a53f79ed9d3f38b1dd3b34c3514389e3ce7",
+        "size": 7096480,
+        "jni_exports_verified": true,
+        "load_alignment_16k_verified": true
+      },
+      {
+        "abi": "armeabi-v7a",
+        "sha256": "ae3d7ca265694303f90b380f6abde33b2ae42d76e38788af8155c7b93f4a48d8",
+        "size": 6774696,
+        "jni_exports_verified": true,
+        "load_alignment_16k_verified": true
+      }
+    ],
+    "androidRuntimeTestedAbis": [
+      "x86_64"
+    ],
+    "armNativeRuntimeAccepted": false,
+    "releaseAarContainsNativeLibraries": false
+  },
+  "checks": {
+    "backendVpnBuilderAndRlsTests": 182,
+    "frontendVpnAndHooksTests": 63,
+    "androidDevFullUnit": {
+      "tests": 1249,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 3
+    },
+    "androidEnterpriseVpnUnit": {
+      "tests": 31,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "typeScriptPassed": true,
+    "ruffPassed": true,
+    "appSdkFixtureLintPassed": true,
+    "unsignedAppReleaseRefused": true,
+    "sdkSourceLockVerified": true,
+    "initialLintFailure": "Diagnostic manifest lacked ACCESS_NETWORK_STATE for copied Android platform class; fixed and lint rerun passed."
+  },
+  "localAwg": {
+    "operationId": "f1bc9368-186e-4610-86e9-8e8b2b9c9549",
+    "baseline": {
+      "selected": {
+        "uid": 10105,
+        "connected": true,
+        "socketError": 0
+      },
+      "control": {
+        "uid": 10082,
+        "connected": true,
+        "socketError": 0
+      }
+    },
+    "nativeReceipt": {
+      "operationId": "f1bc9368-186e-4610-86e9-8e8b2b9c9549",
+      "phase": "HANDSHAKE_CONFIRMED",
+      "handshakeEpochSeconds": 1792587791,
+      "reason": null,
+      "ownerUid": 10104
+    },
+    "peerEcho": {
+      "uid": 10105,
+      "connected": true,
+      "echoed": true,
+      "socketError": 0
+    },
+    "activeControl": {
+      "uid": 10082,
+      "connected": true,
+      "socketError": 0
+    },
+    "crash": {
+      "selected": {
+        "uid": 10105,
+        "connected": false,
+        "socketError": 110
+      },
+      "control": {
+        "uid": 10082,
+        "connected": true,
+        "socketError": 0
+      },
+      "tunAbsent": true
+    },
+    "releaseReceipt": {
+      "operationId": "f1bc9368-186e-4610-86e9-8e8b2b9c9549",
+      "phase": "DISCONNECTED_CONFIRMED",
+      "handshakeEpochSeconds": 0,
+      "reason": null,
+      "ownerUid": 10104
+    },
+    "released": {
+      "selected": {
+        "uid": 10105,
+        "connected": true,
+        "socketError": 0
+      },
+      "control": {
+        "uid": 10082,
+        "connected": true,
+        "socketError": 0
+      }
+    },
+    "passed": true,
+    "cleanupRequired": false
+  },
+  "kernelGuard": {
+    "operationId": "53f26405-c6b5-4fbf-ac50-4c1ff79086e0",
+    "baseline": {
+      "selected": {
+        "uid": 10106,
+        "connected": true,
+        "socketError": 0,
+        "exitCode": 0
+      },
+      "control": {
+        "uid": 10082,
+        "connected": true,
+        "socketError": 0,
+        "exitCode": 0
+      },
+      "ipv6": {
+        "uid": 10106,
+        "connected": false,
+        "socketError": 111,
+        "exitCode": 0
+      }
+    },
+    "blocked": {
+      "selected": {
+        "uid": 10106,
+        "connected": false,
+        "socketError": 110,
+        "exitCode": 0
+      },
+      "control": {
+        "uid": 10082,
+        "connected": true,
+        "socketError": 0,
+        "exitCode": 0
+      },
+      "ipv6": {
+        "uid": 10106,
+        "connected": false,
+        "socketError": 110,
+        "exitCode": 0
+      }
+    },
+    "allowedDummy": {
+      "ifindex": 14,
+      "mark": 1519421152,
+      "table": 2379231,
+      "route": "198.18.0.1 dev tun9999 table 2379231 src 198.18.99.1 mark 0x5a9086e0 uid 0 \n    cache",
+      "selected": {
+        "uid": 10106,
+        "connected": false,
+        "socketError": 110,
+        "exitCode": 0
+      },
+      "control": {
+        "uid": 10082,
+        "connected": true,
+        "socketError": 0,
+        "exitCode": 0
+      }
+    },
+    "reusedName": {
+      "oldIfindex": 14,
+      "newIfindex": 15,
+      "routeStatus": 2,
+      "route": "",
+      "selected": {
+        "uid": 10106,
+        "connected": false,
+        "socketError": 110,
+        "exitCode": 0
+      },
+      "control": {
+        "uid": 10082,
+        "connected": true,
+        "socketError": 0,
+        "exitCode": 0
+      }
+    },
+    "privateTablesAfterRelease": {
+      "4": "",
+      "6": ""
+    },
+    "released": {
+      "selected": {
+        "uid": 10106,
+        "connected": true,
+        "socketError": 0,
+        "exitCode": 0
+      },
+      "control": {
+        "uid": 10082,
+        "connected": true,
+        "socketError": 0,
+        "exitCode": 0
+      }
+    },
+    "passed": true,
+    "cleanupRequired": false
+  },
+  "ph030WireGuard": {
+    "operationId": "98f43d4d-5ee0-472a-aaa0-d3f6e5a5904f",
+    "deviceId": "753fd530-2f19-4e5e-98ba-769863678141",
+    "preflight": {
+      "configValid": true,
+      "issueCodes": []
+    },
+    "baseline": {
+      "selected": {
+        "uid": 10067,
+        "connected": true,
+        "socketError": 0
+      },
+      "control": {
+        "uid": 10060,
+        "connected": true,
+        "socketError": 0
+      }
+    },
+    "nativeStart": {
+      "operationId": "98f43d4d-5ee0-472a-aaa0-d3f6e5a5904f",
+      "phase": "AWAITING_HANDSHAKE",
+      "handshakeEpochSeconds": 0,
+      "reason": null,
+      "ownerUid": 10066
+    },
+    "dnsProbe": {
+      "uid": 10067,
+      "answerConfirmed": true,
+      "socketError": 0
+    },
+    "handshake": {
+      "operationId": "98f43d4d-5ee0-472a-aaa0-d3f6e5a5904f",
+      "phase": "HANDSHAKE_CONFIRMED",
+      "handshakeEpochSeconds": 1792587552,
+      "reason": null,
+      "ownerUid": 10066
+    },
+    "activeControl": {
+      "uid": 10060,
+      "connected": true,
+      "socketError": 0
+    },
+    "crash": {
+      "selected": {
+        "uid": 10067,
+        "connected": false,
+        "socketError": 22
+      },
+      "control": {
+        "uid": 10060,
+        "connected": true,
+        "socketError": 0
+      },
+      "tunAbsent": true
+    },
+    "release": {
+      "operationId": "98f43d4d-5ee0-472a-aaa0-d3f6e5a5904f",
+      "phase": "DISCONNECTED_CONFIRMED",
+      "handshakeEpochSeconds": 0,
+      "reason": null,
+      "ownerUid": 10066
+    },
+    "passed": true,
+    "cleanupRequired": false,
+    "relayRestored": true
+  },
+  "secretDelivery": {
+    "plaintextProfileInShellCommands": false,
+    "plaintextProfileInPublicRelay": false,
+    "profileOrKeysInRepository": false,
+    "recipientGeneratedOnDevice": true,
+    "recipient": "AndroidKeyStore RSA-2048 OAEP SHA-256/MGF1-SHA1",
+    "envelope": "AES-256-GCM, operation UUID as AAD",
+    "temporaryCiphertextRelayRemoved": true
+  },
+  "negativeObservations": [
+    "Kernel xt_devgroup matcher unavailable despite userspace help; replaced with private UID/fwmark routing and blackhole tables.",
+    "Emulator su rejected a 4776-byte command argument; executor now uses an app-private bounded script file and short argv.",
+    "MARK-only routing fixture confirmed a handshake but dropped application TCP traffic; UID routing rules fixed initial route lookup.",
+    "PH030 diagnostic UID did not confirm its own root invocation. Successful remote fixture used exact plans through existing authorized Sphere root channel.",
+    "Frequent diagnostic shell polling caused superuser toasts. Polling ended; production telemetry must use native counters/events, not repeated su.",
+    "One ADB diagnostic read timed out after a successful local run. Reconciled read-only; a later complete run passed cleanup."
+  ],
+  "notAccepted": [
+    "Main APK VpnService lifecycle and consent/revoke/protect",
+    "Android DNS routing and IPv6 internet egress",
+    "Boot persistence and startup ordering",
+    "Physical network switching, sleep/resume and long soak",
+    "Full independent WS/video/input under VPN failure",
+    "Game traffic or reconnect recovery through VPN",
+    "Durable server apply/rotate journal and scripts/orchestration integration",
+    "Unified production APK/API/UI rollout"
+  ],
+  "sourcesSha256NormalizedLf": {
+    "android/app/src/main/kotlin/com/sphereplatform/agent/vpn/AppScopedVpnPreparation.kt": "57745b6b50d144b7b6af169613815b65b20ef33f65245472911a32ce5a15325e",
+    "android/app/src/main/kotlin/com/sphereplatform/agent/vpn/AppScopedVpnSession.kt": "9317c925262c0a489645f27db5100b90eaa97496b8251de12b927e3e93ab0cde",
+    "android/app/src/main/kotlin/com/sphereplatform/agent/vpn/SelectedUidGuard.kt": "a409ee6ab3dcc4cb20dc578b59e5eabf2a6f52247ac2b1144621bdc1fb433c20",
+    "scripts/build_awg_native.py": "e9ad0e824fd6ee0d2eb46204fbc45c0b69b2801bffb4ed1f2884454a9cb1bd90",
+    "scripts/sync_awg_sdk.py": "c2d2d28d765345f7ec606c57880174d18cb099c270d06cf39a7276aa6d5109b5",
+    "android/awg-native.lock.json": "30064e884dc6398e569bc3a295c4c6efa372830aa160939c6c74ce70c7374f09",
+    "android/awg-sdk/upstream.lock.json": "d0d2020f68ac63dbc70179ce1522908c0854e8c47555f7272b88ef123a06566d",
+    "android/awg-sdk/build.gradle.kts": "e663fe9fdd8d87423e390380c56111b9a0b5e91c0795d95b797433ae23580ccb",
+    "android/awg-sdk/patches/android-jni-lifecycle.patch": "ef4c7bcf938822253601b2788719ce180888afac085ac58056194921e1538f41",
+    "frontend/src/features/vpn/VpnProfileInspector.tsx": "f44c8cf13af2e211f72d728290f799d260571168959ee9df8933127625200c97",
+    "frontend/src/features/vpn/profileFileHints.ts": "1410965fbd1dd378e7ed4520fe07446fbf43ba103b3d04885308eda53da65069",
+    "backend/services/vpn/profile_preflight.py": "8b1060a36df55ec3ca724887805ee9c0ae11706d342393fc8f70ae04f3ba1a61"
+  },
+  "sources": [
+    "https://developer.android.com/develop/connectivity/vpn",
+    "https://developer.android.com/reference/android/net/VpnService",
+    "https://developer.android.com/reference/android/security/keystore/KeyGenParameterSpec",
+    "https://github.com/amnezia-vpn/amneziawg-android/tree/5c16489e2cd9ed3a0a7a27c7445bba5238132f86"
+  ]
+}

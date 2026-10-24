@@ -107,6 +107,8 @@ class TestDevicesCRUD:
         assert body["page"] == 1
         assert "per_page" in body
         assert "pages" in body
+        assert body["scope_total"] == 0
+        assert body["presence_available"] in {True, False}
 
     async def test_create_device_success(self, device_client: AsyncClient):
         """POST /devices → 201 с корректным телом."""
@@ -204,7 +206,7 @@ class TestDevicesCRUD:
     async def test_delete_device(
         self, device_client: AsyncClient, admin_client: AsyncClient
     ):
-        """DELETE /devices/{id} → 204, затем GET → 404.
+        """DELETE /devices/{id} archives the record and removes it from inventory.
         device_manager не имеет device:delete, поэтому удаление выполняет org_admin.
         """
         create_r = await device_client.post(
@@ -216,7 +218,12 @@ class TestDevicesCRUD:
         assert del_r.status_code == 204
 
         get_r = await device_client.get(f"/api/v1/devices/{device_id}")
-        assert get_r.status_code == 404
+        assert get_r.status_code == 200
+        assert get_r.json()["is_active"] is False
+
+        inventory = await device_client.get("/api/v1/devices")
+        assert inventory.status_code == 200
+        assert device_id not in {item["id"] for item in inventory.json()["items"]}
 
     async def test_list_devices_pagination(self, device_client: AsyncClient):
         """GET /devices?page=1&per_page=2 → корректная пагинация."""
@@ -231,6 +238,119 @@ class TestDevicesCRUD:
         body = r.json()
         assert len(body["items"]) <= 2
         assert body["per_page"] == 2
+        assert body["scope_total"] == 3
+        counts = body["status_counts"]
+        assert counts["online"] + counts["connecting"] + counts["offline"] + counts["issues"] == 3
+
+    async def test_list_marks_live_state_unknown_when_redis_is_unavailable(
+        self, device_client: AsyncClient
+    ):
+        """A missing status backend must not turn stale DB state into online/offline."""
+        from backend.api.v1.devices.router import get_status_cache
+        from backend.main import app
+        from backend.services.device_status_cache import DeviceStatusCache
+
+        created = await device_client.post("/api/v1/devices", json={"name": "Unknown presence"})
+        device_id = created.json()["id"]
+
+        async def _get_status_cache():
+            return DeviceStatusCache(None)
+
+        app.dependency_overrides[get_status_cache] = _get_status_cache
+        try:
+            response = await device_client.get("/api/v1/devices")
+            assert response.status_code == 200
+            body = response.json()
+            assert body["presence_available"] is False
+            assert body["status_counts"]["issues"] == 1
+            assert body["items"][0]["id"] == device_id
+            assert body["items"][0]["status"] == "unknown"
+        finally:
+            app.dependency_overrides.pop(get_status_cache, None)
+
+    async def test_list_marks_live_state_unknown_when_redis_read_fails(
+        self, device_client: AsyncClient
+    ):
+        """A configured but unreachable Redis instance is not live presence."""
+        from unittest.mock import AsyncMock
+
+        from redis.exceptions import ConnectionError as RedisConnectionError
+
+        from backend.api.v1.devices.router import get_status_cache
+        from backend.main import app
+        from backend.services.device_status_cache import DeviceStatusCache
+
+        created = await device_client.post("/api/v1/devices", json={"name": "Redis outage"})
+        device_id = created.json()["id"]
+
+        async def _get_status_cache():
+            cache = DeviceStatusCache(object())
+            cache.bulk_get_status = AsyncMock(side_effect=RedisConnectionError("unavailable"))
+            return cache
+
+        app.dependency_overrides[get_status_cache] = _get_status_cache
+        try:
+            response = await device_client.get("/api/v1/devices")
+            assert response.status_code == 200
+            body = response.json()
+            assert body["presence_available"] is False
+            assert body["items"][0]["id"] == device_id
+            assert body["items"][0]["status"] == "unknown"
+            assert body["status_counts"]["issues"] == 1
+        finally:
+            app.dependency_overrides.pop(get_status_cache, None)
+
+    async def test_list_devices_live_status_filter_keeps_scope_counts_and_pages(
+        self, device_client: AsyncClient
+    ):
+        """Live status filtering must paginate Redis presence, not stale DB status."""
+        from fakeredis.aioredis import FakeRedis
+
+        from backend.api.v1.devices.router import get_status_cache
+        from backend.main import app
+        from backend.schemas.device_status import DeviceLiveStatus
+        from backend.services.device_status_cache import DeviceStatusCache
+
+        device_ids = []
+        for name in ("Live online", "Live busy", "Live connecting", "No presence"):
+            created = await device_client.post("/api/v1/devices", json={"name": name})
+            assert created.status_code == 201
+            device_ids.append(created.json()["id"])
+
+        binary_redis = FakeRedis(decode_responses=False)
+        cache = DeviceStatusCache(binary_redis)
+
+        async def _get_status_cache():
+            return cache
+
+        app.dependency_overrides[get_status_cache] = _get_status_cache
+        try:
+            for device_id, live_status in zip(device_ids[:3], ("online", "busy", "connecting")):
+                await cache.set_status(device_id, DeviceLiveStatus(device_id=device_id, status=live_status))
+
+            first = await device_client.get("/api/v1/devices?live_status=online&per_page=1&page=1")
+            second = await device_client.get("/api/v1/devices?live_status=online&per_page=1&page=2")
+            connecting = await device_client.get("/api/v1/devices?live_status=connecting&per_page=10")
+
+            assert first.status_code == second.status_code == connecting.status_code == 200
+            first_body, second_body = first.json(), second.json()
+            assert first_body["total"] == second_body["total"] == 2
+            assert first_body["scope_total"] == 4
+            assert first_body["status_counts"] == {
+                "online": 2,
+                "busy": 1,
+                "connecting": 1,
+                "offline": 1,
+                "issues": 0,
+            }
+            assert len(first_body["items"]) == len(second_body["items"]) == 1
+            assert first_body["items"][0]["id"] != second_body["items"][0]["id"]
+            assert all(row["status"] in {"online", "busy"} for row in first_body["items"] + second_body["items"])
+            assert connecting.json()["total"] == 1
+            assert connecting.json()["items"][0]["status"] == "connecting"
+        finally:
+            app.dependency_overrides.pop(get_status_cache, None)
+            await binary_redis.aclose()
 
     async def test_list_devices_search(self, device_client: AsyncClient):
         """GET /devices?search= → фильтрует по name и serial."""
@@ -240,12 +360,56 @@ class TestDevicesCRUD:
         await device_client.post(
             "/api/v1/devices", json={"name": "AnotherOne", "serial": "srch-002"}
         )
+        await device_client.post(
+            "/api/v1/devices",
+            json={"name": "ModelSearch", "serial": "srch-003", "device_model": "Galaxy Emulator"},
+        )
 
         r = await device_client.get("/api/v1/devices?search=Searchable")
         assert r.status_code == 200
         body = r.json()
         names = [d["name"] for d in body["items"]]
         assert any("Searchable" in n for n in names)
+
+        by_model = await device_client.get("/api/v1/devices?search=Galaxy")
+        assert [d["name"] for d in by_model.json()["items"]] == ["ModelSearch"]
+
+    async def test_list_devices_location_filter_is_applied_before_pagination(
+        self, device_client: AsyncClient
+    ):
+        inside = await device_client.post("/api/v1/devices", json={"name": "In location"})
+        outside = await device_client.post("/api/v1/devices", json={"name": "Outside location"})
+        location = await device_client.post("/api/v1/locations", json={"name": "Remote station"})
+        assert inside.status_code == outside.status_code == location.status_code == 201
+
+        assigned = await device_client.post(
+            f"/api/v1/locations/{location.json()['id']}/devices",
+            json={"device_ids": [inside.json()["id"]]},
+        )
+        assert assigned.status_code == 200
+        assert assigned.json()["assigned"] == 1
+
+        response = await device_client.get(
+            f"/api/v1/devices?location_id={location.json()['id']}&per_page=1"
+        )
+        assert response.status_code == 200
+        body = response.json()
+        assert body["scope_total"] == body["total"] == 1
+        assert [device["id"] for device in body["items"]] == [inside.json()["id"]]
+
+    async def test_list_devices_type_filter_is_not_ignored(self, device_client: AsyncClient):
+        await device_client.post(
+            "/api/v1/devices", json={"name": "LD device", "type": "ldplayer"}
+        )
+        physical = await device_client.post(
+            "/api/v1/devices", json={"name": "Physical phone", "type": "physical"}
+        )
+
+        response = await device_client.get("/api/v1/devices?type=physical")
+        assert response.status_code == 200
+        body = response.json()
+        assert body["scope_total"] == 1
+        assert [device["id"] for device in body["items"]] == [physical.json()["id"]]
 
     async def test_viewer_can_read_devices(
         self, viewer_client: AsyncClient, device_client: AsyncClient
@@ -311,6 +475,44 @@ class TestDeviceStatusEndpoint:
         r = await device_client.get(f"/api/v1/devices/{device_id}/status")
         assert r.status_code == 200
         assert r.json()["live"] == "online"
+
+    async def test_device_list_and_detail_expose_live_agent_version(self, device_client: AsyncClient):
+        from fakeredis.aioredis import FakeRedis
+
+        from backend.api.v1.devices.router import get_status_cache
+        from backend.main import app
+        from backend.schemas.device_status import DeviceLiveStatus
+        from backend.services.device_status_cache import DeviceStatusCache
+
+        created = await device_client.post(
+            "/api/v1/devices", json={"name": "Versioned agent", "serial": "versioned-agent"}
+        )
+        device_id = created.json()["id"]
+        binary_redis = FakeRedis(decode_responses=False)
+        cache = DeviceStatusCache(binary_redis)
+
+        async def _get_status_cache():
+            return cache
+
+        app.dependency_overrides[get_status_cache] = _get_status_cache
+        await cache.set_status(device_id, DeviceLiveStatus(
+            device_id=device_id,
+            status="online",
+            agent_version="1.2.20-dev",
+            agent_version_code=10220,
+        ))
+        try:
+            listed = await device_client.get("/api/v1/devices?per_page=100")
+            row = next(item for item in listed.json()["items"] if item["id"] == device_id)
+            assert row["agent_version"] == "1.2.20-dev"
+            assert row["agent_version_code"] == 10220
+
+            detailed = await device_client.get(f"/api/v1/devices/{device_id}")
+            assert detailed.json()["agent_version"] == "1.2.20-dev"
+            assert detailed.json()["agent_version_code"] == 10220
+        finally:
+            app.dependency_overrides.pop(get_status_cache, None)
+            await binary_redis.aclose()
 
     async def test_status_device_from_other_org_404(
         self,

@@ -1,0 +1,60 @@
+{
+  "conclusion": "success",
+  "createdAt": "2026-09-08T21:51:08Z",
+  "databaseId": 34282838423,
+  "event": "pull_request",
+  "headBranch": "codex/enterprise-audit-20260905",
+  "headSha": "d828a62843991f89e833df1c034e455876446c98",
+  "jobs": [
+    {
+      "databaseId": 102252943631,
+      "name": "Tests",
+      "status": "completed",
+      "conclusion": "success",
+      "startedAt": "2026-09-08T21:56:35Z",
+      "completedAt": "2026-09-08T22:00:32Z",
+      "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/34282838423/job/102252943631"
+    },
+    {
+      "databaseId": 102252945329,
+      "name": "RLS Policy Coverage",
+      "status": "completed",
+      "conclusion": "success",
+      "startedAt": "2026-09-08T21:51:11Z",
+      "completedAt": "2026-09-08T21:51:15Z",
+      "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/34282838423/job/102252945329"
+    },
+    {
+      "databaseId": 102252974040,
+      "name": "Security (bandit + pip-audit)",
+      "status": "completed",
+      "conclusion": "success",
+      "startedAt": "2026-09-08T21:51:11Z",
+      "completedAt": "2026-09-08T21:51:41Z",
+      "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/34282838423/job/102252974040"
+    },
+    {
+      "databaseId": 102252976017,
+      "name": "Lint (ruff + mypy)",
+      "status": "completed",
+      "conclusion": "success",
+      "startedAt": "2026-09-08T21:51:11Z",
+      "completedAt": "2026-09-08T21:51:22Z",
+      "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/34282838423/job/102252976017"
+    },
+    {
+      "databaseId": 102254056961,
+      "name": "Alembic Single Head",
+      "status": "completed",
+      "conclusion": "success",
+      "startedAt": "2026-09-08T22:00:34Z",
+      "completedAt": "2026-09-08T22:01:23Z",
+      "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/34282838423/job/102254056961"
+    }
+  ],
+  "status": "completed",
+  "updatedAt": "2026-09-08T22:01:24Z",
+  "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/34282838423",
+  "workflowName": "CI — Backend",
+  "runAttempt": 2
+}

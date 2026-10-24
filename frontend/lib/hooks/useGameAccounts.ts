@@ -177,6 +177,7 @@ export function useCreateGameAccount() {
       target_level?: number;
       balance_rub?: number;
       balance_bc?: number;
+      lawfulness?: number;
       meta?: Record<string, unknown>;
     }) => {
       const { data } = await api.post('/game-accounts', body);

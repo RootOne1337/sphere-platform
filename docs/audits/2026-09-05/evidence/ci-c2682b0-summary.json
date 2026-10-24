@@ -1,0 +1,59 @@
+{
+  "sha": "c2682b06a0375ad005673fb1d03bd9ff647c09b6",
+  "verified_at": "2026-09-12T18:28:48.976867+00:00",
+  "checks": [
+    {
+      "name": "Alembic Single Head",
+      "conclusion": "success",
+      "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/34710817323/job/103600214456"
+    },
+    {
+      "name": "deploy",
+      "conclusion": "skipped",
+      "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/34710817328/job/103599181999"
+    },
+    {
+      "name": "RLS Policy Coverage",
+      "conclusion": "success",
+      "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/34710817323/job/103599170848"
+    },
+    {
+      "name": "Tests",
+      "conclusion": "success",
+      "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/34710817323/job/103599170820"
+    },
+    {
+      "name": "Production image bootstrap",
+      "conclusion": "success",
+      "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/34710817323/job/103599170804"
+    },
+    {
+      "name": "Security (bandit + pip-audit)",
+      "conclusion": "success",
+      "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/34710817323/job/103599170792"
+    },
+    {
+      "name": "Build APK",
+      "conclusion": "success",
+      "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/34710817334/job/103599170733"
+    },
+    {
+      "name": "Lint (ruff + mypy)",
+      "conclusion": "success",
+      "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/34710817323/job/103599170727"
+    },
+    {
+      "name": "guard",
+      "conclusion": "success",
+      "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/34710817328/job/103599170705"
+    },
+    {
+      "name": "Frontend tests, types and build",
+      "conclusion": "success",
+      "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/34710817252/job/103599170266"
+    }
+  ],
+  "backend_test_summary": [
+    "================= 1586 passed, 4 warnings in 390.79s (0:06:30) ================="
+  ]
+}

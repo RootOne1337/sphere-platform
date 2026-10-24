@@ -1,0 +1,194 @@
+{
+  "schemaVersion": 1,
+  "observedAtUtc": "2026-10-23T19:12:19.847377+00:00",
+  "workerVersion": "0.8.0",
+  "scope": "Addendum after initial0.8.0 snapshot: one real browser drag and one3s continuous finite native gesture with own recording. Game explicitly disconnected for inactivity; no route/gameplay/arrival claim.",
+  "sourceEvidence": "docs/audits/2026-10-24/MOTOR-TEACHING080.json",
+  "sourceEvidenceSha256NormalizedLf": "0cf7f59673170333c430777e4fb59ba87e961a811a95b58a22989778f28a3650",
+  "sourceUnchanged": true,
+  "motorTestsPassed": 295,
+  "ruffPassed": true,
+  "physicalGestures": 2,
+  "physicalPointerChanges": 14,
+  "rows": [
+    {
+      "kind": "REAL_PH011_NATIVE_JOURNAL_ON_DISCONNECTED_GAME_NOT_NAVIGATION",
+      "test": "browser_operator_drag",
+      "reportSha256NormalizedLf": "c2f157248e584cb8175aa9e41124897320f48ee519fa9fd38ed4f2e733a5fa66",
+      "manifestSha256NormalizedLf": "d24f14ffcf0f45203a67f83ea8989e5de74394499959e1e48e8750fac6c343a3",
+      "inspection": {
+        "complete": true,
+        "frames": 1259,
+        "media_seconds": 45.656,
+        "mean_frame_hz": 27.553881198528124,
+        "max_receiver_gap_ms": 234.42510003224015,
+        "inputs": {
+          "commands": 7,
+          "applied": 7,
+          "complete": true
+        },
+        "purpose": "video_and_own_inputs",
+        "geometry": [
+          960,
+          540
+        ],
+        "source_capture_clock_mapping_known": false,
+        "execution_qualified": false
+      },
+      "allRecordedFramesDecoded": 1259,
+      "actions": [
+        0,
+        2,
+        2,
+        2,
+        2,
+        2,
+        1
+      ],
+      "gestureCount": 1,
+      "workerRelativeSubmittedMs": [
+        0.0,
+        44.675,
+        74.17,
+        79.269,
+        93.378,
+        127.03,
+        159.493
+      ],
+      "nativeRelativeAppliedMs": [
+        0,
+        38,
+        67,
+        76,
+        87,
+        125,
+        153
+      ],
+      "admissionReady": true,
+      "availability": "manual",
+      "nativeReleaseConfirmed": true,
+      "writerRetired": true,
+      "route": {
+        "path": "nat",
+        "protocol": "udp",
+        "candidateTypes": [
+          "host",
+          "prflx"
+        ],
+        "addressScopes": [
+          "private",
+          "private"
+        ],
+        "evidence": "aiortc_1_15_nominated_pair_adapter",
+        "lanProven": false
+      },
+      "sourceCaptureToActionLatencyKnown": false
+    },
+    {
+      "kind": "REAL_PH011_NATIVE_JOURNAL_ON_DISCONNECTED_GAME_NOT_NAVIGATION",
+      "test": "finite3s_native_probe",
+      "reportSha256NormalizedLf": "0f5be27aa355189338afec0cc9a1e57e304e1d976dff41ef52fd3ebbc0ee907b",
+      "manifestSha256NormalizedLf": "56c669e897f15e90a826a9b08da763b6e1c1d1169728c032fcabe5fd1f07653e",
+      "inspection": {
+        "complete": true,
+        "frames": 137,
+        "media_seconds": 5.341,
+        "mean_frame_hz": 25.4633963677214,
+        "max_receiver_gap_ms": 213.48589996341616,
+        "inputs": {
+          "commands": 7,
+          "applied": 7,
+          "complete": true
+        },
+        "purpose": "video_and_own_inputs",
+        "geometry": [
+          960,
+          540
+        ],
+        "source_capture_clock_mapping_known": false,
+        "execution_qualified": false
+      },
+      "allRecordedFramesDecoded": 137,
+      "actions": [
+        0,
+        2,
+        2,
+        2,
+        2,
+        2,
+        1
+      ],
+      "gestureCount": 1,
+      "workerRelativeSubmittedMs": [
+        0.0,
+        527.635,
+        1016.049,
+        1509.005,
+        2000.739,
+        2517.567,
+        3018.365
+      ],
+      "nativeRelativeAppliedMs": [
+        0,
+        526,
+        1013,
+        1507,
+        1998,
+        2516,
+        3016
+      ],
+      "admissionReady": true,
+      "availability": "manual",
+      "nativeReleaseConfirmed": true,
+      "writerRetired": true,
+      "route": {
+        "path": "nat",
+        "protocol": "udp",
+        "candidateTypes": [
+          "host",
+          "prflx"
+        ],
+        "addressScopes": [
+          "private",
+          "private"
+        ],
+        "evidence": "aiortc_1_15_nominated_pair_adapter",
+        "lanProven": false
+      },
+      "sourceCaptureToActionLatencyKnown": false
+    }
+  ],
+  "nativeSlowGestureJournalConfirmed": true,
+  "operatorBrowserNativeJournalConfirmed": true,
+  "gameScene": "disconnected_for_inactivity_visible_on_fresh_screen",
+  "gameRestarted": false,
+  "gameServerConnectionAttempts": 0,
+  "gameAccountChanges": 0,
+  "liveGameplayTeachingConfirmed": false,
+  "android1080p60Confirmed": false,
+  "independentLowRenderRepeatConfirmed": false,
+  "autonomousNavigationAccepted": false,
+  "arrivalAccepted": false,
+  "fleetAccepted": false,
+  "sourceCaptureToActionLatencyAccepted": false,
+  "productionAccepted": false,
+  "readyForControlledHighQualityRecordingTrial": true,
+  "stoppedScreenshotSha256": "041451a7c26945cead7e5a44d8ca063b93bd2c15c1b6487b3e1483099a358f47",
+  "processCleanup": {
+    "browser": {
+      "asyncioRunReturned": true,
+      "threads": [
+        "MainThread"
+      ]
+    },
+    "finiteProbe": [
+      "MainThread"
+    ]
+  },
+  "installedApkChanged": false,
+  "vpnChanged": false,
+  "apiChanged": false,
+  "installedWebChanged": false,
+  "resourceGuardsChanged": false,
+  "githubJobsStarted": 0
+}

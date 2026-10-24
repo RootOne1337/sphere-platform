@@ -1,0 +1,248 @@
+{
+  "task": ":app:testEnterpriseDebugUnitTest",
+  "baseline_revision": "334b3e71e3d383167d930ab829bed0c12600ebef",
+  "working_tree": "AUD-75 candidate; runtime commit recorded separately in report",
+  "gradle_elapsed": "1m 53s",
+  "new_cases": 24,
+  "suite_count": 33,
+  "totals": {
+    "tests": 450,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  "suites": [
+    {
+      "name": "com.sphereplatform.agent.commands.AdbCredentialLoggingTest",
+      "tests": 2,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.sphereplatform.agent.commands.AdbRootDeliveryTest",
+      "tests": 5,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.sphereplatform.agent.commands.CommandDeliveryTest",
+      "tests": 8,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.sphereplatform.agent.commands.CommandDispatcherTest",
+      "tests": 16,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.sphereplatform.agent.commands.CommandJournalTest",
+      "tests": 9,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.sphereplatform.agent.commands.ControlCommandTargetTest",
+      "tests": 13,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.sphereplatform.agent.commands.DagLoopExecutionTest",
+      "tests": 5,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.sphereplatform.agent.commands.DagRunnerTest",
+      "tests": 30,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.sphereplatform.agent.commands.model.IncomingCommandTest",
+      "tests": 12,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.sphereplatform.agent.commands.ScriptCacheManagerTest",
+      "tests": 11,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.sphereplatform.agent.logging.FileLoggingTreeTest",
+      "tests": 17,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.sphereplatform.agent.lua.LuaEngineTest",
+      "tests": 57,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.sphereplatform.agent.network.FallbackDnsTest",
+      "tests": 7,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.sphereplatform.agent.network.ServerCredentialScopeTest",
+      "tests": 4,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.sphereplatform.agent.ota.OtaUpdatePayloadTest",
+      "tests": 6,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.sphereplatform.agent.ota.OtaUpdateServiceSecurityTest",
+      "tests": 13,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.sphereplatform.agent.providers.DeviceStatusProviderTest",
+      "tests": 9,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.sphereplatform.agent.provisioning.CloneDetectorTest",
+      "tests": 15,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.sphereplatform.agent.provisioning.ConfigRecoveryTest",
+      "tests": 21,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.sphereplatform.agent.root.RootAutoStartTest",
+      "tests": 2,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.sphereplatform.agent.store.AuthTokenStoreTest",
+      "tests": 18,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.sphereplatform.agent.store.RefreshCancellationTest",
+      "tests": 8,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.sphereplatform.agent.store.RefreshRecoveryTest",
+      "tests": 7,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.sphereplatform.agent.streaming.AdaptiveBitrateControllerTest",
+      "tests": 12,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.sphereplatform.agent.streaming.FrameThrottleTest",
+      "tests": 15,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.sphereplatform.agent.streaming.StreamQualityMonitorTest",
+      "tests": 10,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.sphereplatform.agent.vpn.KillSwitchManagerTest",
+      "tests": 21,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.sphereplatform.agent.workers.BackgroundEnrollmentTest",
+      "tests": 22,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.sphereplatform.agent.workers.KeepAliveWorkerTest",
+      "tests": 6,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.sphereplatform.agent.ws.SavedRouteFailoverTest",
+      "tests": 29,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.sphereplatform.agent.ws.SphereWebSocketClientTest",
+      "tests": 15,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.sphereplatform.agent.ws.WebSocketAuthenticationTest",
+      "tests": 16,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "com.sphereplatform.agent.ws.WebSocketLifecycleTest",
+      "tests": 9,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    }
+  ],
+  "boundaries": "Robolectric SDK28; synthetic HTTP/WS, preferences and Android OS boundaries. No installed APK, sockets or fleet capacity proof."
+}

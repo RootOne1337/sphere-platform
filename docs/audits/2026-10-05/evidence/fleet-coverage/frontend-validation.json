@@ -1,0 +1,11 @@
+{
+  "source": "9ad0a69e729f9b4960bf8aea529a88e25e4f73cf",
+  "passed": 1298,
+  "suites": 121,
+  "failed": 0,
+  "skipped": 0,
+  "productionNodeMajor": 24,
+  "productionBuildIncludesTypes": true,
+  "warningFreeBuildClaimed": false,
+  "uiTreeUnchangedInCorrection": true
+}

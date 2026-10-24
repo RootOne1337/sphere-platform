@@ -1,0 +1,26 @@
+FF.                                                                      [100%]
+================================== FAILURES ===================================
+___ test_background_worker_observes_committed_parent_without_caller_commit ____
+tests\production\test_batch_startup.py:47: in test_background_worker_observes_committed_parent_without_caller_commit
+    assert observed == [batch.id]
+E   AssertionError: assert [None] == [UUID('b13f06...0b587cd268a')]
+E
+E     At index 0 diff: None != UUID('b13f0674-924e-4283-8a47-40b587cd268a')
+E     Use -v to get more diff
+_____________ test_commit_failure_does_not_launch_background_work _____________
+tests\production\test_batch_startup.py:65: in test_commit_failure_does_not_launch_background_work
+    assert launches == []
+E   AssertionError: assert [<Task finish...3170586752'>>] == []
+E
+E     Left contains one more item: <Task finished name='batch_waves_52a8c046-df0d-482b-bcc9-93c7d42be5e1' coro=<AsyncMockMixin._execute_mock_call() done,...Roaming\uv\python\cpython-3.12.12-windows-x86_64-none\Lib\unittest\mock.py:2279> result=<AsyncMock na...373170586752'>>
+E     Use -v to get more diff
+============================== warnings summary ===============================
+backend\api\v1\game_accounts\router.py:95
+  C:\Users\dimas\Documents\ChatGPT\sphere-platform\backend\api\v1\game_accounts\router.py:95: FastAPIDeprecationWarning: `regex` has been deprecated, please use `pattern` instead
+    sort_dir: str = Query("desc", regex="^(asc|desc)$", description="Направление сортировки"),
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ===========================
+FAILED tests/production/test_batch_startup.py::test_background_worker_observes_committed_parent_without_caller_commit
+FAILED tests/production/test_batch_startup.py::test_commit_failure_does_not_launch_background_work
+2 failed, 1 passed, 1 warning in 0.79s

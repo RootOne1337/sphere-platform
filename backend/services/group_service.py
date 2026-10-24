@@ -2,10 +2,11 @@
 # ВЛАДЕЛЕЦ: TZ-02 SPLIT-2. Device Group & Tags management.
 from __future__ import annotations
 
+import hashlib
 import uuid
 
 from fastapi import HTTPException
-from sqlalchemy import case, func, select
+from sqlalchemy import case, func, select, text
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
@@ -38,16 +39,56 @@ class GroupService:
         )
 
     async def _get_group(self, group_id: uuid.UUID, org_id: uuid.UUID) -> DeviceGroup:
-        group = await self.db.get(DeviceGroup, group_id)
-        if not group or group.org_id != org_id:
+        group = await self.db.scalar(
+            select(DeviceGroup).where(DeviceGroup.id == group_id, DeviceGroup.org_id == org_id)
+            .execution_options(populate_existing=True)
+        )
+        if not group:
             raise HTTPException(status_code=404, detail="Group not found")
         return group
+
+    async def _fence_writes(self, org_id: uuid.UUID) -> None:
+        """Serialize group writes through commit, without waiting or device IO.
+
+        All API writers use this same transaction-scoped key. SQLite is only the
+        unit-test adapter; concurrency acceptance requires actual PostgreSQL.
+        """
+        if self.db.get_bind().dialect.name == "postgresql":
+            key = int.from_bytes(hashlib.sha256(
+                f"sphere:group-writes:v1:{org_id}".encode()
+            ).digest()[:8], "big", signed=True)
+            acquired = await self.db.scalar(text("SELECT pg_try_advisory_xact_lock(:key)"), {"key": key})
+            if not acquired:
+                raise HTTPException(status_code=409, detail="Groups are being modified; refresh and retry")
+
+    async def _validate_parent(
+        self, org_id: uuid.UUID, parent_id: uuid.UUID | None, group_id: uuid.UUID | None = None,
+    ) -> None:
+        if parent_id is None:
+            return  # Explicit clearing also repairs a pre-existing corrupt chain.
+        if parent_id == group_id:
+            raise HTTPException(status_code=400, detail="Group cannot be its own parent")
+        # Scalar projection avoids stale ORM ancestry and one query per ancestor.
+        rows = (await self.db.execute(select(DeviceGroup.id, DeviceGroup.parent_group_id)
+                                      .where(DeviceGroup.org_id == org_id))).all()
+        parents: dict[uuid.UUID, uuid.UUID | None] = {row.id: row.parent_group_id for row in rows}
+        if parent_id not in parents:
+            raise HTTPException(status_code=404, detail="Parent group not found")
+        visited: set[uuid.UUID] = set()
+        current: uuid.UUID | None = parent_id
+        while current is not None:
+            if current == group_id or current in visited or current not in parents:
+                raise HTTPException(status_code=400, detail="Parent would create or inherit an invalid group hierarchy")
+            visited.add(current)
+            current = parents[current]
 
     # ── Create ───────────────────────────────────────────────────────────────
 
     async def create_group(
         self, org_id: uuid.UUID, data: CreateGroupRequest
     ) -> GroupResponse:
+        await self._fence_writes(org_id)
+        await self._validate_parent(org_id, data.parent_group_id)
         # Check name uniqueness within org
         dup = (
             await self.db.execute(
@@ -61,12 +102,6 @@ class GroupService:
                 status_code=409,
                 detail=f"Group '{data.name}' already exists in this organisation",
             )
-
-        # Validate parent
-        if data.parent_group_id:
-            parent = await self.db.get(DeviceGroup, data.parent_group_id)
-            if not parent or parent.org_id != org_id:
-                raise HTTPException(status_code=404, detail="Parent group not found")
 
         group = DeviceGroup(
             org_id=org_id,
@@ -136,7 +171,11 @@ class GroupService:
         org_id: uuid.UUID,
         data: UpdateGroupRequest,
     ) -> GroupResponse:
+        await self._get_group(group_id, org_id)  # Do not expose contention for a foreign target.
+        await self._fence_writes(org_id)
         group = await self._get_group(group_id, org_id)
+        if "parent_group_id" in data.model_fields_set:
+            await self._validate_parent(org_id, data.parent_group_id, group_id)
 
         if data.name is not None and data.name != group.name:
             dup = (
@@ -155,18 +194,11 @@ class GroupService:
                 )
             group.name = data.name
 
-        if data.description is not None:
+        if "description" in data.model_fields_set:
             group.description = data.description
-        if data.color is not None:
+        if "color" in data.model_fields_set:
             group.color = data.color
-        if data.parent_group_id is not None:
-            if data.parent_group_id == group_id:
-                raise HTTPException(
-                    status_code=400, detail="Group cannot be its own parent"
-                )
-            parent = await self.db.get(DeviceGroup, data.parent_group_id)
-            if not parent or parent.org_id != org_id:
-                raise HTTPException(status_code=404, detail="Parent group not found")
+        if "parent_group_id" in data.model_fields_set:
             group.parent_group_id = data.parent_group_id
 
         await self.db.flush()
@@ -175,6 +207,8 @@ class GroupService:
     # ── Delete ───────────────────────────────────────────────────────────────
 
     async def delete_group(self, group_id: uuid.UUID, org_id: uuid.UUID) -> None:
+        await self._get_group(group_id, org_id)
+        await self._fence_writes(org_id)
         group = await self._get_group(group_id, org_id)
         await self.db.delete(group)
 

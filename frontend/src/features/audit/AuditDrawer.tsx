@@ -1,117 +1,81 @@
 'use client';
 
-import { Shield, X, Code2, Play, AlertTriangle } from 'lucide-react';
+import { CalendarClock, Code2, Fingerprint, Globe2, Shield } from 'lucide-react';
+import type { AuditEvent } from '@/src/features/audit/types';
 import { Badge } from '@/src/shared/ui/badge';
+import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@/components/ui/dialog';
 
 interface AuditDrawerProps {
-    event: any | null; // В будущем строгая типизация
-    onClose: () => void;
+  event: AuditEvent | null;
+  onClose: () => void;
+}
+
+const VISIBLE_META_FIELDS = ['status', 'http_status', 'duration_ms', 'request_id', 'trace_id'] as const;
+
+function displayValue(value: unknown) {
+  if (typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean') return String(value);
+  return '—';
 }
 
 export function AuditDrawer({ event, onClose }: AuditDrawerProps) {
-    if (!event) return null;
+  if (!event) return null;
+  const metadata = VISIBLE_META_FIELDS
+    .filter((key) => event.meta[key] !== undefined && event.meta[key] !== null)
+    .map((key) => ({ key, value: displayValue(event.meta[key]) }));
 
-    // Mock JSON Data generator based on action
-    const getMockDetails = (action: string) => {
-        if (action?.includes('CONFIG')) {
-            return {
-                previous: { "vpn_mode": "split", "max_retries": 3 },
-                new: { "vpn_mode": "full", "max_retries": 5 },
-                diff: { "vpn_mode": "split -> full", "max_retries": "3 -> 5" }
-            };
-        }
-        if (action?.includes('LOGIN')) {
-            return {
-                "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
-                "timestamp": event.timestamp,
-                "auth_method": "OAUTH2_AZURE_AD",
-                "ip": event.ip,
-                "mfa_passed": true
-            };
-        }
-        return {
-            "raw_request": `POST /api/v1/system/action\nHost: sphereadb.local\nAuthorization: Bearer ***\n\n{"action":"${action}","target":"${event.resource}"}`
-        };
-    };
-
-    const details = getMockDetails(event.action);
-
-    return (
-        <div className="absolute top-0 right-0 w-[500px] h-full bg-card border-l border-border shadow-2xl z-40 flex flex-col transform transition-transform duration-300">
-
-            {/* Drawer Header */}
-            <div className="px-5 py-4 border-b border-border bg-muted flex items-center justify-between shrink-0">
-                <div className="flex items-center gap-3">
-                    <div className="p-2 bg-primary/10 rounded-sm">
-                        <Shield className="w-4 h-4 text-primary" />
-                    </div>
-                    <div>
-                        <h2 className="text-sm font-bold font-mono tracking-widest uppercase text-foreground">Event Inspector</h2>
-                        <p className="text-[10px] text-muted-foreground font-mono mt-0.5">{event.id}</p>
-                    </div>
-                </div>
-                <button onClick={onClose} className="p-1.5 text-muted-foreground hover:text-foreground hover:bg-border rounded-sm transition-colors">
-                    <X className="w-4 h-4" />
-                </button>
+  return (
+    <Dialog open onOpenChange={(open) => { if (!open) onClose(); }}>
+      <DialogContent className="!fixed !left-auto !right-0 !top-0 !h-dvh !max-h-dvh !w-full !max-w-xl !translate-x-0 !translate-y-0 grid-rows-[auto_1fr] gap-0 rounded-none border-l p-0 sm:rounded-none">
+        <header className="flex items-start justify-between gap-4 border-b border-border px-5 py-4 sm:px-6">
+          <div className="flex min-w-0 items-start gap-3">
+            <span className="rounded-xl bg-primary/10 p-2.5 text-primary"><Shield className="h-5 w-5" aria-hidden="true" /></span>
+            <div className="min-w-0">
+              <p className="text-xs font-medium uppercase tracking-[0.12em] text-muted-foreground">Событие аудита</p>
+              <DialogTitle className="mt-1 break-all text-base font-semibold">{event.action}</DialogTitle>
+              <DialogDescription className="sr-only">Детали события из журнала аудита, полученные от backend.</DialogDescription>
+              <p className="mt-1 break-all font-mono text-xs text-muted-foreground">{event.id}</p>
             </div>
+          </div>
+        </header>
 
-            {/* Drawer Body */}
-            <div className="flex-1 overflow-auto custom-scrollbar p-5 space-y-6">
-
-                {/* Metadata Section */}
-                <div className="grid grid-cols-2 gap-4 border border-border rounded-sm p-4 bg-background">
-                    <div>
-                        <span className="text-[10px] uppercase font-bold tracking-widest text-muted-foreground/60 block mb-1">Actor (User)</span>
-                        <span className="text-sm font-mono text-primary/80">{event.user}</span>
-                    </div>
-                    <div>
-                        <span className="text-[10px] uppercase font-bold tracking-widest text-muted-foreground/60 block mb-1">Timestamp</span>
-                        <span className="text-sm font-mono text-muted-foreground">{new Date(event.timestamp).toLocaleString()}</span>
-                    </div>
-                    <div>
-                        <span className="text-[10px] uppercase font-bold tracking-widest text-muted-foreground/60 block mb-1">Action Triggered</span>
-                        <Badge variant="outline" className="text-[10px] border-border mt-1">{event.action}</Badge>
-                    </div>
-                    <div>
-                        <span className="text-[10px] uppercase font-bold tracking-widest text-muted-foreground/60 block mb-1">Source IP</span>
-                        <span className="text-sm font-mono text-muted-foreground">{event.ip}</span>
-                    </div>
-                </div>
-
-                {/* Alert Box for FAILED/WARNING */}
-                {event.status !== 'SUCCESS' && (
-                    <div className={`p-3 rounded-sm border flex gap-3 ${event.status === 'FAILED' ? 'bg-destructive/10 border-destructive/30' : 'bg-warning/10 border-warning/30'}`}>
-                        <AlertTriangle className={`w-4 h-4 shrink-0 mt-0.5 ${event.status === 'FAILED' ? 'text-destructive' : 'text-warning'}`} />
-                        <div>
-                            <h4 className={`text-xs font-bold uppercase tracking-widest ${event.status === 'FAILED' ? 'text-destructive' : 'text-warning'}`}>{event.status}</h4>
-                            <p className="text-[11px] font-mono text-muted-foreground mt-1">
-                                System detected an anomaly during this event execution. Requires manual review.
-                            </p>
-                        </div>
-                    </div>
-                )}
-
-                {/* JSON Payload Section */}
-                <div>
-                    <div className="flex items-center gap-2 mb-3">
-                        <Code2 className="w-4 h-4 text-muted-foreground/60" />
-                        <span className="text-xs uppercase font-bold tracking-widest text-muted-foreground">JSON Payload & Metadata</span>
-                    </div>
-
-                    <div className="bg-muted border border-border rounded-sm p-4 overflow-x-auto relative group">
-                        <pre className="text-[11px] font-mono leading-relaxed text-success/80">
-                            {JSON.stringify(details, null, 2)}
-                        </pre>
-
-                        {/* Decorative Play button */}
-                        <button className="absolute top-2 right-2 p-1.5 bg-primary/20 hover:bg-primary/40 text-primary rounded-sm opacity-0 group-hover:opacity-100 transition-opacity" title="Replay Event (Mock)">
-                            <Play className="w-3 h-3" />
-                        </button>
-                    </div>
-                </div>
-
+        <div className="flex-1 space-y-5 overflow-y-auto p-5 sm:p-6">
+          <section className="grid gap-3 sm:grid-cols-2" aria-label="Данные события">
+            <div className="rounded-xl border border-border bg-muted/30 p-4">
+              <div className="flex items-center gap-2 text-xs font-medium text-muted-foreground"><CalendarClock className="h-4 w-4" />Время сервера</div>
+              <p className="mt-2 break-words text-sm font-medium">{new Date(event.timestamp).toLocaleString('ru-RU', { dateStyle: 'medium', timeStyle: 'medium' })}</p>
             </div>
+            <div className="rounded-xl border border-border bg-muted/30 p-4">
+              <div className="flex items-center gap-2 text-xs font-medium text-muted-foreground"><Fingerprint className="h-4 w-4" />Результат</div>
+              <Badge variant={event.status === 'FAILED' ? 'destructive' : event.status === 'WARNING' ? 'warning' : event.status === 'UNKNOWN' ? 'secondary' : 'success'} className="mt-2">{event.status === 'UNKNOWN' ? 'Не указано' : event.status === 'FAILED' ? 'Ошибка' : event.status === 'WARNING' ? 'Предупреждение' : 'Успешно'}</Badge>
+            </div>
+            <div className="rounded-xl border border-border bg-muted/30 p-4">
+              <div className="flex items-center gap-2 text-xs font-medium text-muted-foreground"><Fingerprint className="h-4 w-4" />Пользователь</div>
+              <p className="mt-2 break-all font-mono text-sm">{event.user || 'system'}</p>
+            </div>
+            <div className="rounded-xl border border-border bg-muted/30 p-4">
+              <div className="flex items-center gap-2 text-xs font-medium text-muted-foreground"><Globe2 className="h-4 w-4" />IP-адрес</div>
+              <p className="mt-2 font-mono text-sm">{event.ip || '—'}</p>
+            </div>
+            <div className="rounded-xl border border-border bg-muted/30 p-4 sm:col-span-2">
+              <div className="text-xs font-medium text-muted-foreground">Ресурс</div>
+              <p className="mt-2 break-all text-sm">{event.resource}</p>
+            </div>
+          </section>
 
+          {metadata.length > 0 && (
+            <section className="overflow-hidden rounded-xl border border-border" aria-labelledby="audit-meta-heading">
+              <div className="flex items-center gap-2 border-b border-border bg-muted/40 px-4 py-3"><Code2 className="h-4 w-4 text-muted-foreground" /><h3 id="audit-meta-heading" className="text-sm font-semibold">Метаданные backend</h3></div>
+              <dl className="divide-y divide-border px-4">
+                {metadata.map(({ key, value }) => <div key={key} className="flex items-start justify-between gap-4 py-3 text-sm"><dt className="font-mono text-muted-foreground">{key}</dt><dd className="break-all text-right font-medium">{value}</dd></div>)}
+              </dl>
+            </section>
+          )}
+
+          <p className="rounded-xl border border-border bg-muted/25 p-4 text-sm leading-6 text-muted-foreground">
+            Здесь показаны поля, которые фактически вернул endpoint журнала аудита. Повторное выполнение операции из записи аудита недоступно.
+          </p>
         </div>
-    );
+      </DialogContent>
+    </Dialog>
+  );
 }

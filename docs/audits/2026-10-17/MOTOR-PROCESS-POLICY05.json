@@ -1,0 +1,222 @@
+{
+  "schemaVersion": 1,
+  "kind": "MOTOR_PROCESS_POLICY05_FINITE_SHADOW_NOT_GAMEPLAY",
+  "observedAtUtc": "2026-10-17T09:58:06.811840+00:00",
+  "sourceRevision": "9ffeccef216b03f02f9f1087b69bc19781a14b92",
+  "headlessWorkerVersion": "0.5.0",
+  "sourceFilesSha256NormalizedLf": {
+    "motor_worker/process_policy.py": "d5d180be82018b2c7a7ab2dd29d4c867b5f395f2a39fb46946334c32ec6d8b7d",
+    "motor_worker/model_stdio.py": "12608c8278f5df10a7f20c099553a41be1deed9293b4931c944d668fa793c808",
+    "motor_worker/policy.py": "7d99d71d0edf538342787ff244825c35e143b3b7d69e4dd293b441f3ba0d8a93",
+    "motor_worker/session.py": "4db60ab46f967815f172e73aa926fcbf2ec5a9ffd692390456b712a77865b01d",
+    "motor_worker/__init__.py": "b49b2813498581a8b9139e9f92a485233844fbb2576c3c9d144f47d0fd2fe47c",
+    "tests/motor_policy_child.py": "2c5e9ca719f870b47d8d04bf6f3749ec1795356eb9398934696f9c78a4e4bd0d",
+    "tests/test_motor_worker_process_policy.py": "4478431e370d6f618bf7a585c6647e29bacb36e47cfc61610ba6bec41eec5635",
+    "tests/test_motor_worker_integration.py": "9297e984fbb5b8bb69184d87fdff926f3624a01979fa12198f2866f9d6a1d1b8",
+    "tests/test_motor_worker_policy.py": "27bd0dd8127df03a0e41f50a0e6a05cd463c3e68566012c1969251652f6ab7bf"
+  },
+  "localAdapterFilesSha256NormalizedLf": {
+    ".local-pilot/motor-amd-20261017/model-stdio-v1.py": "32948fda11a4a5cdf87a668c584369d7a6816a7eb1f30d06b366476d4cba392f",
+    ".local-pilot/motor-amd-20261017/process-policy-pilot.py": "73ed94e26b49cfeb4ad8a31cc2092b2f0da967e4f278691e30a34f0cf3f7f8c2",
+    ".local-pilot/motor-amd-20261017/p2p-process.py": "a9732e14da7aa5984781b25716a65814bbb0f89581e1e85ac04832e4da909cb6",
+    ".local-pilot/motor-amd-20261017/nitrogen-process.py": "503a97ddf431ddda1f04fb9f3dd172fcead055be149e4efd49e6f709ccf464d1"
+  },
+  "modelCheckpointAndAmdPortEvidence": "docs/audits/2026-10-17/MOTOR-AMD-LOCAL41.json",
+  "modelCheckpointAndAmdPortEvidenceSha256NormalizedLf": "47c618e0ebd91b6d145ab90cf4d0e74ccaa6ef4cc9ab07eb21c1586d9c57753e",
+  "ui": "15ce2b623c4e4fdd0ae2b6b9435fda5a3ef42881",
+  "uiApiApkChanged": false,
+  "apkVersionCode": 10282,
+  "device": "auto-ph-011",
+  "gpu": "AMD Radeon RX9070",
+  "gameScreenDuringRuns": "Black Russia email registration, game download completed; not active game world",
+  "gameplayAccepted": false,
+  "actionExecutionEnabled": false,
+  "packagedModelLoaderImplemented": false,
+  "modelPreprocessingParityAccepted": false,
+  "processTransportImplemented": true,
+  "separateGpuLanTested": false,
+  "fullGateG02Accepted": false,
+  "verification": {
+    "motorUnitAndMediaTests": {
+      "passed": 84,
+      "skipped": 0,
+      "privateLog": ".local-pilot/motor-amd-20261017/process-policy-retirement-unit.private.log",
+      "privateLogSha256": "f13c3528076a2c6af12b80dcd5251d13c76b8b71f734fc197add588c7cd0ef5c"
+    },
+    "ruff": "passed for motor_worker, changed motor tests and child fixture",
+    "adversarialCoverage": [
+      "real_binary_rgb_pipe",
+      "both_response_vocabularies",
+      "epoch_reset",
+      "token_environment_not_inherited",
+      "wrong_lineage",
+      "duplicate_json_keys",
+      "oversize_stdout",
+      "invalid_prediction",
+      "startup_timeout",
+      "request_timeout",
+      "cancel_during_spawn",
+      "cancel_during_predict",
+      "concurrent_close",
+      "no_implicit_restart",
+      "real_h264_dtls_sctp_to_child_no_input"
+    ]
+  },
+  "runs": [
+    {
+      "model": "p2p",
+      "rawEvidence": ".local-pilot/motor-amd-20261017/p2p-retirement-v1-process-policy.json",
+      "rawEvidenceSha256": "1fb95f07f378f43e65d0c817e4784ddd10d208a20d3d1ab85987e53d3d747c81",
+      "observedAtUtc": "2026-10-17T09:56:44.655825+00:00",
+      "startupWallMs": 9887.925,
+      "durationSeconds": 20.007,
+      "decodedFrames": 620,
+      "selectedRgbFrames": 94,
+      "observationHzDuringMonitor": 4.698,
+      "providerResponses": 94,
+      "acceptedResults": 94,
+      "replacedPending": 0,
+      "timedOut": 0,
+      "expiredResultsDropped": 0,
+      "foreignEpochResultsDropped": 0,
+      "lastEchoRttMs": 1.2297999928705394,
+      "route": {
+        "path": "nat",
+        "protocol": "udp",
+        "candidateTypes": [
+          "host",
+          "prflx"
+        ],
+        "addressScopes": [
+          "private",
+          "private"
+        ],
+        "evidence": "aiortc_1_15_nominated_pair_adapter",
+        "lanProven": false
+      },
+      "packetLoss": 0,
+      "h264PacketBuffer": {
+        "packetCapacity": 2048,
+        "prefetchFrames": 0,
+        "maxConsecutiveTimestampPackets": 123,
+        "overLegacyCapacityFrames": 0,
+        "pliRequests": 0,
+        "emittedFrames": 621,
+        "evidence": "aiortc_1_15_h264_packet_buffer_adapter"
+      },
+      "serverToWorkerVideoBytes": 0,
+      "physicalCommandsSent": 0,
+      "processCleanupConfirmed": true,
+      "shadowCleanupConfirmed": true,
+      "timingScope": "bounded last64 samples, receiver clock, not capture-to-action",
+      "pipeRoundtripMs": {
+        "count": 64,
+        "p50": 114.477,
+        "max": 231.741
+      },
+      "modelReportedWallMs": {
+        "count": 64,
+        "p50": 113.535,
+        "max": 230.549
+      },
+      "decodedToResultMs": {
+        "count": 64,
+        "p50": 149.519,
+        "max": 321.864
+      }
+    },
+    {
+      "model": "nitrogen",
+      "rawEvidence": ".local-pilot/motor-amd-20261017/nitrogen-retirement-v1-process-policy.json",
+      "rawEvidenceSha256": "180a7b35efbaaf3828ac97aecb4e555a79b741a6d38df08a4cc13cd8306d717b",
+      "observedAtUtc": "2026-10-17T09:57:15.878578+00:00",
+      "startupWallMs": 15231.647,
+      "durationSeconds": 20.017,
+      "decodedFrames": 567,
+      "selectedRgbFrames": 100,
+      "observationHzDuringMonitor": 4.996,
+      "providerResponses": 83,
+      "acceptedResults": 83,
+      "replacedPending": 16,
+      "timedOut": 0,
+      "expiredResultsDropped": 0,
+      "foreignEpochResultsDropped": 0,
+      "lastEchoRttMs": 0.9476000268477947,
+      "route": {
+        "path": "nat",
+        "protocol": "udp",
+        "candidateTypes": [
+          "host",
+          "prflx"
+        ],
+        "addressScopes": [
+          "private",
+          "private"
+        ],
+        "evidence": "aiortc_1_15_nominated_pair_adapter",
+        "lanProven": false
+      },
+      "packetLoss": 0,
+      "h264PacketBuffer": {
+        "packetCapacity": 2048,
+        "prefetchFrames": 0,
+        "maxConsecutiveTimestampPackets": 123,
+        "overLegacyCapacityFrames": 0,
+        "pliRequests": 0,
+        "emittedFrames": 569,
+        "evidence": "aiortc_1_15_h264_packet_buffer_adapter"
+      },
+      "serverToWorkerVideoBytes": 0,
+      "physicalCommandsSent": 0,
+      "processCleanupConfirmed": true,
+      "shadowCleanupConfirmed": true,
+      "timingScope": "bounded last64 samples, receiver clock, not capture-to-action",
+      "pipeRoundtripMs": {
+        "count": 64,
+        "p50": 228.338,
+        "max": 345.71
+      },
+      "modelReportedWallMs": {
+        "count": 64,
+        "p50": 227.182,
+        "max": 343.061
+      },
+      "decodedToResultMs": {
+        "count": 64,
+        "p50": 382.193,
+        "max": 580.102
+      }
+    }
+  ],
+  "negativeBeforeRetirementFix": {
+    "rawEvidence": ".local-pilot/motor-amd-20261017/nitrogen-final-v1-process-policy.json",
+    "rawEvidenceSha256": "307038909949d4ca68a318ab6acc0adbb6068e8baa4061eb5a41399e1e8edf8f",
+    "testedSourceRevision": "10f1993ff2ecaf57550caa890c2cb5520da05510",
+    "failure": "policy_cleanup_unconfirmed",
+    "providerResponses": 78,
+    "providerEventuallyClosedConfirmed": true,
+    "cause": "Shadow coroutine cancellation budget100ms was shorter than bounded GPU child retirement.",
+    "correction": "Owned ProcessPolicy has2.5s shadow cancellation budget around2s child retirement; unknown cleanup still fails closed."
+  },
+  "registration": {
+    "downloadMonitorStatus": "PAUSED",
+    "testNicknameProposal": "Orrin_Veymont",
+    "preferredServer": "TOMSK_not_selected",
+    "emailProvided": false,
+    "accountRegistered": false,
+    "termsAcceptedByAgent": false,
+    "blocker": "User email/new-credential entry and agreement acceptance required",
+    "nativeScreenshot": ".local-pilot/motor-amd-20261017/ph011-20261017T093939Z.png",
+    "nativeScreenshotSha256": "bb6a436032f600434791f438bf9b4d697fb46a616aa2db3d67d5091c993ca656",
+    "xpathEvidence": ".local-pilot/motor-amd-20261017/ph011-20261017T093939Z.json",
+    "xpathEvidenceSha256": "701d96d624c4fe649410c96b0b9645473e77cb057972c943ea5d46e023003d68",
+    "xpathScope": "14 wrapper/WebView nodes, no semantic game form controls"
+  },
+  "limitations": [
+    "Local trusted process is not an OS sandbox; no process-tree or 500ms crash-stop SLA.",
+    "READY validates protocol only, not checkpoint provenance or learned policy behavior.",
+    "Source capture clocks, Android profile, multi-touch and model action executor remain open.",
+    "5Hz observation does not stretch a 20Hz P2P action or preserve its trained temporal semantics.",
+    "Single local GPU shadow does not prove separate GPU/LAN, driving or 50-emulator capacity."
+  ]
+}

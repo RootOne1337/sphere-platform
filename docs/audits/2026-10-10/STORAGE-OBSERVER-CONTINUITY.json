@@ -1,0 +1,39 @@
+{
+  "schemaVersion": 1,
+  "observedAtUtc": "2026-10-09T21:14:26.196860+00:00",
+  "state": "RUNNING_FINITE_LIMITED_OBSERVATION",
+  "process": {
+    "pid": 30568,
+    "creationUtc": "2026-10-09T21:09:30.4218520Z",
+    "commandBindingVerified": true
+  },
+  "sourceSha256": "d71e5c7a9fa028f91098d47c224ce53ba11723d06f03f0ee1b248dc4ce5c4bc6",
+  "privateReportDirectory": ".local-pilot/host-storage-limited-20261009T210930Z",
+  "startedUtc": "2026-10-09T21:09:30.623143+00:00",
+  "dueUtc": "2026-10-10T12:41:30.623143+00:00",
+  "samplesLimit": 467,
+  "intervalSeconds": 120,
+  "reportBudgetBytes": 16777216,
+  "completeSamplesVerified": 3,
+  "prefixBytes": 48970,
+  "prefixSha256": "be34f67cc2ef889bc4c0d890bce900bb716d18af6af190cb82fc2384555451af",
+  "lastSampleUtc": "2026-10-09T21:13:30.623803+00:00",
+  "oneFreeDiskReadingBytes": 52831019008,
+  "watchFileCount": 24,
+  "previous": {
+    "privateReportDirectory": ".local-pilot/host-storage-limited-20261009T124256Z",
+    "lastSampleUtc": "2026-10-09T20:06:57.052546+00:00",
+    "samplesWritten": 223,
+    "statusFileStillSaysRunning": true,
+    "processGone": true,
+    "reason": "UNKNOWN",
+    "previousGapCovered": false
+  },
+  "administrator": false,
+  "vssState": "unavailable",
+  "autostartConfigured": false,
+  "fullDirectoryScans": false,
+  "cleanupPerformed": false,
+  "deviceCommandsSent": false,
+  "writerAttribution": "UNDETERMINED"
+}

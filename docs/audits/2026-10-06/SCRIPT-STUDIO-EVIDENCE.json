@@ -1,0 +1,323 @@
+{
+  "schemaVersion": 1,
+  "status": "PARTIAL_STUDIO_FOUNDATION_INSTALLED",
+  "apiSource": "c2b91e3202948860e4d99b3f35cbe441d2842538",
+  "uiSource": "952b5e2f6ed6bde8a4bcbbbdff28be24f302b15c",
+  "criterionClosed": false,
+  "testFollowupSource": "2dbe82e799d817b6bdec31536eb3f50f5182a200",
+  "observedAt": "2026-10-05T22:17:17.698938+00:00",
+  "textHashFormat": "UTF-8 bytes with CRLF normalized to LF; binary screenshots exact bytes",
+  "ledger": {
+    "accepted": 9,
+    "open": 41,
+    "immutableBaselineRetained": true
+  },
+  "backlog": "../2026-10-05/ENTERPRISE-PRODUCT-BACKLOG.json",
+  "backlogSha256": "8ea6e56d57af1570baab08cb0d4aac4e52b0029f95067b19d8f6391eeac9f915",
+  "previousEvidence": "DEVICE-LOG-UPLOAD-EVIDENCE.json",
+  "previousEvidenceSha256": "ca58203794b7493eeb0176d1c0d9f24ae7408d21b1c87fccfbcf98591eaa3144",
+  "openStudioItems": [
+    "EP-014",
+    "EP-015",
+    "EP-016",
+    "EP-017",
+    "EP-018",
+    "EP-019",
+    "EP-020"
+  ],
+  "recorderReplayImplemented": false,
+  "apkChanged": false,
+  "tunnelsChanged": false,
+  "wireVersion": "1.0",
+  "validationScope": "structure-routes-lua-safety",
+  "sourceHashes": [
+    {
+      "source": "c2b91e3202948860e4d99b3f35cbe441d2842538",
+      "file": "backend/schemas/dag.py",
+      "sha256": "324954ef26d12b042525b72527a928a7cd0c527136e59594d7c37e23c455238e"
+    },
+    {
+      "source": "c2b91e3202948860e4d99b3f35cbe441d2842538",
+      "file": "backend/schemas/script.py",
+      "sha256": "23e8c9f23115cf59cbc441fafa5679e111e19bc549fe6a250c9488d05dabaec3"
+    },
+    {
+      "source": "c2b91e3202948860e4d99b3f35cbe441d2842538",
+      "file": "backend/api/v1/scripts/router.py",
+      "sha256": "d1f4ead65d760ff0040917d59ff58ac1f3f84e2df2a75aef0a6fca8bd54ace76"
+    },
+    {
+      "source": "c2b91e3202948860e4d99b3f35cbe441d2842538",
+      "file": "backend/services/script_service.py",
+      "sha256": "745c1919ef5d7c38f41cf63185b7af506aa374773454275c9332f398d72fe148"
+    },
+    {
+      "source": "c2b91e3202948860e4d99b3f35cbe441d2842538",
+      "file": "tests/test_scripts/test_draft_validation.py",
+      "sha256": "4a3f59808908e8bc40924484fe6478be7219e4e15ab8dca5fc36d8934157a288"
+    },
+    {
+      "source": "c2b91e3202948860e4d99b3f35cbe441d2842538",
+      "file": "tests/test_scripts/test_dag_schema.py",
+      "sha256": "5f272e61db8f9fb2ebb660bf0ea1e4e01f7b61f7cf04c14e70a928c7c61c78e8"
+    },
+    {
+      "source": "c2b91e3202948860e4d99b3f35cbe441d2842538",
+      "file": "tests/test_scripts/test_script_service.py",
+      "sha256": "83639bc43349e546c6f52e23873d37a742e2071f370d7b3642a2fdaa5883bb43"
+    },
+    {
+      "source": "c2b91e3202948860e4d99b3f35cbe441d2842538",
+      "file": "android/app/src/main/kotlin/com/sphereplatform/agent/commands/DagRunner.kt",
+      "sha256": "5c72cedcb65ab261310f55c9646bfc440e2b1145e4f8ee01d207c4c0d6dc1039"
+    },
+    {
+      "source": "c2b91e3202948860e4d99b3f35cbe441d2842538",
+      "file": "android/app/src/main/kotlin/com/sphereplatform/agent/commands/AdbActionExecutor.kt",
+      "sha256": "5adb5db16d8ab4b68b1ae7b59d94ded9eeab4b244be17a80f28dc680d47ad6ab"
+    },
+    {
+      "source": "c2b91e3202948860e4d99b3f35cbe441d2842538",
+      "file": "docs/openapi.json",
+      "sha256": "fbfde4831377d4b00e0706acee9d46c14b1eab8514d8c20e3c1c4c6c798a3c95"
+    },
+    {
+      "source": "c2b91e3202948860e4d99b3f35cbe441d2842538",
+      "file": "docs/api-endpoints.md",
+      "sha256": "ef95ddd8d4900ebe26c88c1637a098d4d49ad874dc3685ffe3ada052de9b56fa"
+    },
+    {
+      "source": "952b5e2f6ed6bde8a4bcbbbdff28be24f302b15c",
+      "file": "frontend/lib/dag/studio.ts",
+      "sha256": "ee6c5c9cf2dfacb1aea1dedcd0710af8586c175f294e045c99ab367688937bc7"
+    },
+    {
+      "source": "952b5e2f6ed6bde8a4bcbbbdff28be24f302b15c",
+      "file": "frontend/lib/dag/export.ts",
+      "sha256": "ae107131936663804dea0eb944ba11d4cdcf1eb9f614e734eb8007279553fcbd"
+    },
+    {
+      "source": "952b5e2f6ed6bde8a4bcbbbdff28be24f302b15c",
+      "file": "frontend/app/(dashboard)/scripts/builder/page.tsx",
+      "sha256": "1e27575a1a68db49d130d52fae418478a6c6d5f3470e5282386ced433ea3b6a8"
+    },
+    {
+      "source": "952b5e2f6ed6bde8a4bcbbbdff28be24f302b15c",
+      "file": "frontend/components/sphere/RunScriptModal.tsx",
+      "sha256": "58edea6e075754ff1f42e1f5e339da2c962114914ed1eedf1dfe50cc9b04b761"
+    },
+    {
+      "source": "952b5e2f6ed6bde8a4bcbbbdff28be24f302b15c",
+      "file": "frontend/app/globals.css",
+      "sha256": "5c39b6892450b248cbc8fc2619bdc63c49416911998e7c73d6ec4506e0d12528"
+    },
+    {
+      "source": "952b5e2f6ed6bde8a4bcbbbdff28be24f302b15c",
+      "file": "frontend/__tests__/scripts/studio-model.test.ts",
+      "sha256": "de868ec26bcb5b1241d8941f0b3ed7851c5d300588cd7b4d76e2fd6328a0af75"
+    },
+    {
+      "source": "952b5e2f6ed6bde8a4bcbbbdff28be24f302b15c",
+      "file": "frontend/__tests__/scripts/builder-load.test.tsx",
+      "sha256": "34af77010bc29f0f9783d9d36444f511caee7ed5552d95e4ecf7a028c0734aa0"
+    },
+    {
+      "source": "952b5e2f6ed6bde8a4bcbbbdff28be24f302b15c",
+      "file": "frontend/package-lock.json",
+      "sha256": "76d8a732c9338e0c33bf4338f9bc92480a73cbfff2830b6d1573ebb21d246dad"
+    },
+    {
+      "source": "2dbe82e799d817b6bdec31536eb3f50f5182a200",
+      "file": "tests/production/test_pipeline_recovery.py",
+      "sha256": "5dbcb6fd656c89dabfb8d578442f62eff66636f40d2e10f62376935f2f2e78f1"
+    }
+  ],
+  "receipts": [
+    {
+      "name": "api-build",
+      "file": "evidence/script-studio/api-build.json",
+      "sha256": "8527def7bdd5d52464c83e6ec19ecbe6fa03ad277ec03f4a727ff9c61bed21cb"
+    },
+    {
+      "name": "ui-build",
+      "file": "evidence/script-studio/ui-build.json",
+      "sha256": "49227087013a840b9be9a0f12ab5adf134a07e78ac0da851e0072c0929386629"
+    },
+    {
+      "name": "api-installed",
+      "file": "evidence/script-studio/api-installed.json",
+      "sha256": "a4520591453ecdb72b5dcba6b8398f283b0e9bb9cce013f29d2f0914753ad165"
+    },
+    {
+      "name": "ui-initial-installed",
+      "file": "evidence/script-studio/ui-initial-installed.json",
+      "sha256": "04a465da3ac148f10df8ecdd95d5b254b4fafa533b8630d9a66e37103d4e8674"
+    },
+    {
+      "name": "ui-layout-installed",
+      "file": "evidence/script-studio/ui-layout-installed.json",
+      "sha256": "bb5a2d11f36634990ce10b17557cc9cecc9db4d6e40202935b7dddf0640cdeea"
+    },
+    {
+      "name": "ui-installed",
+      "file": "evidence/script-studio/ui-installed.json",
+      "sha256": "7b4a8aedeebad65f45c7fa9189834d36c6d04787c0be4e1de5bac4356f2e6ced"
+    },
+    {
+      "name": "api-preflight",
+      "file": "evidence/script-studio/api-preflight.json",
+      "sha256": "6aca3b02872fe20dbcf3ea0511bd7fd3ddede5124fef7937e06d8a3d14853d3b"
+    },
+    {
+      "name": "ui-preflight",
+      "file": "evidence/script-studio/ui-preflight.json",
+      "sha256": "cb48c8b9c477df90ea25d8938670a3492acc2e059afd61debd833269e9ff4434"
+    },
+    {
+      "name": "api-tests",
+      "file": "evidence/script-studio/api-tests.json",
+      "sha256": "16afc90c7572ee4dd4be3fdbce7965e826d385c6924c2f3746ebf0e75c297232"
+    },
+    {
+      "name": "resource-tests",
+      "file": "evidence/script-studio/resource-tests.json",
+      "sha256": "cce98fe3bb56f87b0b48a5b542c52193c09adee6784d1be09096b3bb2340f1f4"
+    },
+    {
+      "name": "mypy",
+      "file": "evidence/script-studio/mypy.json",
+      "sha256": "298b22b1e1a9148ead63b7677b00f86f05fa0efe7aee023c7a0c9e956dcb8638"
+    },
+    {
+      "name": "ruff",
+      "file": "evidence/script-studio/ruff.json",
+      "sha256": "20d38c9285eb2db472bea23a41f25b3dbf4a6c0b683293277eefe8be8da20b0b"
+    },
+    {
+      "name": "schema",
+      "file": "evidence/script-studio/schema.json",
+      "sha256": "298b22b1e1a9148ead63b7677b00f86f05fa0efe7aee023c7a0c9e956dcb8638"
+    },
+    {
+      "name": "draft-api-live",
+      "file": "evidence/script-studio/draft-api-live.json",
+      "sha256": "1cb762ef1a688500a74d1559c275c96de67cfc8e4d6f99c2f5c2e87a9d90a60d"
+    },
+    {
+      "name": "canary-live",
+      "file": "evidence/script-studio/canary-live.json",
+      "sha256": "d6912b48eee09bed0f3b02eb467cf9b698417a31aaef63d151050acc2a3afd26"
+    },
+    {
+      "name": "browser-live",
+      "file": "evidence/script-studio/browser-live.json",
+      "sha256": "4f7cf8edb6ee072fc43207cba04a3fda910cc8e07dd1ec9f7b6c108e957376b1"
+    },
+    {
+      "name": "export-file",
+      "file": "evidence/script-studio/export-file.json",
+      "sha256": "22e7a6ee16fa5978855ccf5649047c36e026b4d66c55c989dff305f51068cd3b"
+    },
+    {
+      "name": "document-links",
+      "file": "evidence/script-studio/document-links.json",
+      "sha256": "b2a7ccf9d73efadbe51db46072f321f8a76043f521dbe169b64f26242b1efc7e"
+    },
+    {
+      "name": "action-contract",
+      "file": "evidence/script-studio/action-contract.json",
+      "sha256": "a352315f52c7a7f96bba789b1ad96ff7a8b12ad948567e95af1462ee00a3004d"
+    },
+    {
+      "name": "pipeline-regression",
+      "file": "evidence/script-studio/pipeline-regression.json",
+      "sha256": "6509283d87df60d252c749d7be7ce651c5cc5fc72460f7c43055d855cbcd4478"
+    },
+    {
+      "name": "frontend-tests",
+      "file": "evidence/script-studio/frontend-tests.json",
+      "sha256": "92c4283bca9b2748a669579660abef7074f8d64679fc26a4385bebaeee87cdd4"
+    },
+    {
+      "name": "source-ci",
+      "file": "evidence/script-studio/source-ci.json",
+      "sha256": "1fe9a5348d3c283695825c0e5f700dab206b0335032a89ce3f271ad0b9a1d49f"
+    },
+    {
+      "name": "followup-ci",
+      "file": "evidence/script-studio/followup-ci.json",
+      "sha256": "eb27ee3d773882afd6a3b246cb9ac4f974ab137972d49250a42a3fc600b0eec1"
+    }
+  ],
+  "junit": [
+    {
+      "name": "api",
+      "file": "evidence/script-studio/api-tests.xml",
+      "sha256": "fc85ff3c7a009bc83e1ca0661e95da23e17df218fe8523382e56c73f333b37d2",
+      "rawReportSha256": "ef71d8875252ef09a3a381126ec50c2e1c66295d96c4f7d0d81e83207bedf101",
+      "sanitization": "test counters, names and timings only; no stdout/properties/hostnames"
+    },
+    {
+      "name": "resource",
+      "file": "evidence/script-studio/resource-tests.xml",
+      "sha256": "ad7fe41e158dc40e95019bd063255759530a1d687739126184224e1918e3ca45",
+      "rawReportSha256": "45784471139bc09fe59b72fcf771c0a6b8dcf1d935ff09ad1a9429868b9baff6",
+      "sanitization": "test counters, names and timings only; no stdout/properties/hostnames"
+    }
+  ],
+  "screenshots": [
+    {
+      "file": "assets/script-studio/before.jpg",
+      "sha256": "206f3d3ded97b4e15cd3a44878e34e0c891a42b2dc1d05695eeb00ddf8935e03",
+      "width": 1280,
+      "height": 720,
+      "uiSource": "5405d465fa456f78e16f5f691fabb2a909cef4f3",
+      "purpose": "baseline before implementation; audit source 15aede54",
+      "nativeBrowser": true
+    },
+    {
+      "file": "assets/script-studio/canary-completed.jpg",
+      "sha256": "d37ba04db1b438a76c65bb074314f6b6b99e81d5f8186405e1190e35b057ebe3",
+      "width": 1280,
+      "height": 720,
+      "uiSource": "c2b91e3202948860e4d99b3f35cbe441d2842538",
+      "purpose": "real remote task completion before visual-only fixes",
+      "nativeBrowser": true
+    },
+    {
+      "file": "assets/script-studio/desktop-dark.jpg",
+      "sha256": "6ed02d2616d33b6574aebb8409cd60b8fa50d01f0c099428905e1a04e1b3d10a",
+      "width": 1280,
+      "height": 720,
+      "uiSource": "952b5e2f6ed6bde8a4bcbbbdff28be24f302b15c",
+      "purpose": "final editor, dark theme, server validation",
+      "nativeBrowser": true
+    },
+    {
+      "file": "assets/script-studio/desktop-light.jpg",
+      "sha256": "a5f51dfd25cbfa7d1e0a2b82845a59ab0f2ed070cee8b922c94375c3e0c589a2",
+      "width": 1280,
+      "height": 720,
+      "uiSource": "952b5e2f6ed6bde8a4bcbbbdff28be24f302b15c",
+      "purpose": "final editor, light theme",
+      "nativeBrowser": true
+    },
+    {
+      "file": "assets/script-studio/mobile-light.jpg",
+      "sha256": "dffc554f06640b0694cc6dfde8f5c5c66f8d73670d6d9ba6af69c7f8d0e84c03",
+      "width": 390,
+      "height": 844,
+      "uiSource": "952b5e2f6ed6bde8a4bcbbbdff28be24f302b15c",
+      "purpose": "390px stacked editor with visible 380px canvas",
+      "nativeBrowser": true
+    }
+  ],
+  "pipelineRegressionJUnit": {
+    "file": "evidence/script-studio/pipeline-regression.xml",
+    "sha256": "c0b83aaee2c72968147918ba61c249ed45565caf40431d262c4c78acb4105662"
+  },
+  "liveFleetSlaProven": false,
+  "storageWriterIdentified": false,
+  "fleetLoadOrSoakPerformed": false,
+  "finiteRemoteCanaryOnly": true
+}

@@ -1,0 +1,910 @@
+{
+  "finding": "F35",
+  "status": "source_fixed_installed_live_android_api_accepted_visual_open",
+  "implementationCommits": [
+    "0b3518999573a25320e0171686e323f2fd581ad0",
+    "35ef83f58b1870d03e72339815ec82175657e202"
+  ],
+  "observedAt": "2026-10-04T00:09:34.007600+00:00",
+  "before": {
+    "observedAt": "2026-10-03T23:52:43.133894+00:00",
+    "source": "37bb436ae5fb9f27eda6c7549bb46a83bf3df510",
+    "requests": [
+      {
+        "deviceId": "b410464a-5f26-4803-a756-7840cc17b128",
+        "name": "auto-ph-025",
+        "httpStatus": 404
+      },
+      {
+        "deviceId": "5df4805e-fe64-4d39-960c-19ceab206cd6",
+        "name": "auto-ph-010",
+        "httpStatus": 404
+      }
+    ],
+    "androidCommandsSent": false
+  },
+  "firstInstalledFailure": {
+    "cases": {
+      "startedAt": "2026-10-03T23:56:20.698505+00:00",
+      "apiSource": "0b3518999573a25320e0171686e323f2fd581ad0",
+      "cases": [
+        {
+          "deviceId": "b410464a-5f26-4803-a756-7840cc17b128",
+          "name": "auto-ph-025",
+          "apkCode": 10244,
+          "observedAt": "2026-10-03T23:56:20.699022+00:00",
+          "httpStatus": 500,
+          "detail": "Internal server error",
+          "durationSeconds": 0.031
+        },
+        {
+          "deviceId": "5df4805e-fe64-4d39-960c-19ceab206cd6",
+          "name": "auto-ph-010",
+          "apkCode": 10244,
+          "observedAt": "2026-10-03T23:56:20.740767+00:00",
+          "httpStatus": 500,
+          "detail": "Internal server error",
+          "durationSeconds": 0.047
+        }
+      ],
+      "androidInputCommandsSent": false,
+      "xmlLoggedOrPublished": false,
+      "browserVerified": false,
+      "finishedAt": "2026-10-03T23:56:20.783804+00:00"
+    },
+    "cause": "standard logging keyword arguments in cleanup replaced the original offline error with HTTP 500",
+    "reproducedRegression": {
+      "tests": 1,
+      "failures": 1,
+      "errors": 0,
+      "skipped": 0,
+      "passed": 0
+    },
+    "repairedBy": "35ef83f58b1870d03e72339815ec82175657e202"
+  },
+  "checks": {
+    "frontendSource": {
+      "numPassedTestSuites": 109,
+      "numPassedTests": 1035,
+      "numFailedTests": 0,
+      "numRuntimeErrorTestSuites": 0
+    },
+    "frontendBuilderImage": {
+      "numPassedTestSuites": 109,
+      "numPassedTests": 1035,
+      "numFailedTests": 0,
+      "numRuntimeErrorTestSuites": 0
+    },
+    "nodeMajor": 24,
+    "typesPassed": true,
+    "productionBuildPassed": true,
+    "noFrontendApplicationSourceMountInImageTests": true,
+    "apiSource": {
+      "tests": 108,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "passed": 108
+    },
+    "apiImage": {
+      "tests": 108,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "passed": 108
+    },
+    "realIsolatedPostgresRedis": true,
+    "noBackendSourceMountInImageTests": true,
+    "changedPythonRuffPassed": true,
+    "newParserCases": 16,
+    "newHttpCases": 11,
+    "newFrontendCases": 22,
+    "generatedSchema": {
+      "imageSource": "35ef83f58b1870d03e72339815ec82175657e202",
+      "network": "none",
+      "lifespanStarted": false,
+      "operations": 177,
+      "paths": 139,
+      "checkPassed": true
+    }
+  },
+  "installed": {
+    "api": {
+      "source": "35ef83f58b1870d03e72339815ec82175657e202",
+      "previousSource": "0b3518999573a25320e0171686e323f2fd581ad0",
+      "observedAt": "2026-10-04T00:04:48.950448+00:00",
+      "containerId": "b98bdf695d3e71a8b330a9beb2d55ef6f7734dc31c84dcd392482415da54f8f4",
+      "imageId": "sha256:4e9a9e9bd2fd3f48688bd13bec9b92cf36de55cd00f9eb6dfdfea64692efb83f",
+      "ready": true,
+      "buildRevisionMatched": true,
+      "preservedContainers": 15,
+      "tunaPreserved": true,
+      "uiPreserved": true,
+      "apkChanged": false,
+      "otaCatalogPreserved": true,
+      "mountsPreserved": true,
+      "browserVerified": false
+    },
+    "ui": {
+      "source": "35ef83f58b1870d03e72339815ec82175657e202",
+      "previousSource": "922f479d29d5eee833e8b66ddfc4aea2401e0e9d",
+      "observedAt": "2026-10-04T00:07:36.509353+00:00",
+      "url": "http://127.0.0.1:3015",
+      "containerId": "c54df3cc44b7a4223c3dd70561cf7357e64a406318e3027003345b65798c189d",
+      "imageId": "sha256:d4d8c44dbd58356b09749b2ce625d77f925ff410deb420977a1e5847e93da3fa",
+      "ready": true,
+      "preservedContainers": 15,
+      "onlyUiImageAndBuildArgumentChanged": true,
+      "apiPreserved": true,
+      "tunaPreserved": true,
+      "otaCatalogPreserved": true,
+      "browserVerified": false
+    },
+    "apiBuild": {
+      "source": "35ef83f58b1870d03e72339815ec82175657e202",
+      "image": "sphere-pilot-20260911-backend:35ef83f58b1870d03e72339815ec82175657e202",
+      "imageId": "sha256:4e9a9e9bd2fd3f48688bd13bec9b92cf36de55cd00f9eb6dfdfea64692efb83f",
+      "gitArchive": true
+    },
+    "webBuild": {
+      "source": "35ef83f58b1870d03e72339815ec82175657e202",
+      "gitArchive": true,
+      "nodeMajor": 24,
+      "images": {
+        "builder": {
+          "name": "sphere-ui-inspection-recovery-web-tests:35ef83f58b1870d03e72339815ec82175657e202",
+          "id": "sha256:3747308f97f6bbb0db0d01a673ce93feebba8ca832319f8169b590287070e4f3"
+        },
+        "runner": {
+          "name": "sphere-review-frontend:35ef83f58b1870d03e72339815ec82175657e202",
+          "id": "sha256:d4d8c44dbd58356b09749b2ce625d77f925ff410deb420977a1e5847e93da3fa"
+        }
+      }
+    }
+  },
+  "liveAndroid": {
+    "firstFinalSourceAttempt": {
+      "startedAt": "2026-10-04T00:05:25.597582+00:00",
+      "apiSource": "35ef83f58b1870d03e72339815ec82175657e202",
+      "cases": [
+        {
+          "deviceId": "b410464a-5f26-4803-a756-7840cc17b128",
+          "name": "auto-ph-025",
+          "apkCode": 10244,
+          "observedAt": "2026-10-04T00:05:25.597582+00:00",
+          "httpStatus": 504,
+          "detail": "Command timeout after 8.0s",
+          "durationSeconds": 8.063
+        },
+        {
+          "deviceId": "5df4805e-fe64-4d39-960c-19ceab206cd6",
+          "name": "auto-ph-010",
+          "apkCode": 10244,
+          "observedAt": "2026-10-04T00:05:33.654148+00:00",
+          "httpStatus": 200,
+          "snapshotId": "90bfffb624614596ad0e2ccc1fae1dfd",
+          "width": 960,
+          "height": 540,
+          "rotation": 0,
+          "nodeCount": 45,
+          "cleanupConfirmed": true,
+          "attributeKeys": [
+            "NAF",
+            "bounds",
+            "checkable",
+            "checked",
+            "class",
+            "clickable",
+            "content-desc",
+            "enabled",
+            "focusable",
+            "focused",
+            "index",
+            "long-clickable",
+            "package",
+            "password",
+            "resource-id",
+            "scrollable",
+            "selected",
+            "text"
+          ],
+          "snapshotSha256": "c80b96d64f2d63560983c82f2954e4daebef2f3a7a11846742a61647e0ccf114",
+          "durationSeconds": 3.344
+        }
+      ],
+      "androidInputCommandsSent": false,
+      "xmlLoggedOrPublished": false,
+      "browserVerified": false,
+      "finishedAt": "2026-10-04T00:05:37.004507+00:00"
+    },
+    "explicitRemoteRepeat": {
+      "startedAt": "2026-10-04T00:08:33.379891+00:00",
+      "apiSource": "35ef83f58b1870d03e72339815ec82175657e202",
+      "cases": [
+        {
+          "deviceId": "b410464a-5f26-4803-a756-7840cc17b128",
+          "name": "auto-ph-025",
+          "apkCode": 10244,
+          "observedAt": "2026-10-04T00:08:33.380828+00:00",
+          "httpStatus": 200,
+          "snapshotId": "629a3c32ddcf40be829c2a5f1d0413c8",
+          "width": 960,
+          "height": 540,
+          "rotation": 0,
+          "nodeCount": 49,
+          "cleanupConfirmed": true,
+          "attributeKeys": [
+            "NAF",
+            "bounds",
+            "checkable",
+            "checked",
+            "class",
+            "clickable",
+            "content-desc",
+            "enabled",
+            "focusable",
+            "focused",
+            "index",
+            "long-clickable",
+            "package",
+            "password",
+            "resource-id",
+            "scrollable",
+            "selected",
+            "text"
+          ],
+          "snapshotSha256": "5d11f521005b27efe3081459af30b921fd9f8a18cabcc959957e384d8b5997f2",
+          "durationSeconds": 2.734
+        }
+      ],
+      "androidInputCommandsSent": false,
+      "xmlLoggedOrPublished": false,
+      "browserVerified": false,
+      "finishedAt": "2026-10-04T00:08:36.102892+00:00"
+    },
+    "automaticRetry": false,
+    "rawXmlOrAttributeValuesPublished": false,
+    "androidInputCommandsSent": false,
+    "rootRequired": true,
+    "atomicFrameAndTreeSnapshot": false
+  },
+  "fleetReadback": {
+    "startedAt": "2026-10-04T00:08:33.493993+00:00",
+    "apiSource": "35ef83f58b1870d03e72339815ec82175657e202",
+    "uiSource": "35ef83f58b1870d03e72339815ec82175657e202",
+    "capabilityContract": {
+      "status": 200,
+      "schema": 1,
+      "role": "super_admin",
+      "permissionsCount": 31,
+      "identityMatched": true,
+      "permissionMatrixMatched": true,
+      "cacheControl": "no-store",
+      "anonymousStatus": 401
+    },
+    "deviceCommandsSent": true,
+    "commandScope": "read-only UI Automator canaries and UUID-owned cleanup; no input/reboot/VPN/OTA",
+    "savedVideoBytes": 0,
+    "browserVerified": false,
+    "cohortPreserved": true,
+    "allOnlineApk44": true,
+    "heartbeatUnder60Seconds": true,
+    "samePostRolloutEpochs": true,
+    "baselineEpochsPreserved": false,
+    "finishedAt": "2026-10-04T00:09:34.007600+00:00",
+    "apiReady": true,
+    "prometheusBackendUp": true,
+    "neighboursPreserved": 14,
+    "tunaPreserved": true,
+    "otaCatalogPreserved": true,
+    "installedBuildsMatched": true,
+    "samplesCount": 7
+  },
+  "samples": [
+    {
+      "observedAt": "2026-10-04T00:08:33.520809+00:00",
+      "catalog": 19,
+      "online": 14,
+      "versionCodes": [
+        10244
+      ],
+      "maxHeartbeatAgeSeconds": 26.069277
+    },
+    {
+      "observedAt": "2026-10-04T00:08:43.546949+00:00",
+      "catalog": 19,
+      "online": 14,
+      "versionCodes": [
+        10244
+      ],
+      "maxHeartbeatAgeSeconds": 28.066423
+    },
+    {
+      "observedAt": "2026-10-04T00:08:53.571371+00:00",
+      "catalog": 19,
+      "online": 14,
+      "versionCodes": [
+        10244
+      ],
+      "maxHeartbeatAgeSeconds": 29.266211
+    },
+    {
+      "observedAt": "2026-10-04T00:09:03.585950+00:00",
+      "catalog": 19,
+      "online": 14,
+      "versionCodes": [
+        10244
+      ],
+      "maxHeartbeatAgeSeconds": 26.1379
+    },
+    {
+      "observedAt": "2026-10-04T00:09:13.602007+00:00",
+      "catalog": 19,
+      "online": 14,
+      "versionCodes": [
+        10244
+      ],
+      "maxHeartbeatAgeSeconds": 28.122458
+    },
+    {
+      "observedAt": "2026-10-04T00:09:23.630377+00:00",
+      "catalog": 19,
+      "online": 14,
+      "versionCodes": [
+        10244
+      ],
+      "maxHeartbeatAgeSeconds": 29.326498
+    },
+    {
+      "observedAt": "2026-10-04T00:09:33.654305+00:00",
+      "catalog": 19,
+      "online": 14,
+      "versionCodes": [
+        10244
+      ],
+      "maxHeartbeatAgeSeconds": 26.204478
+    }
+  ],
+  "sourceCiObservedAt": "2026-10-04T00:19:12.686074+00:00",
+  "sourceCi": [
+    {
+      "conclusion": "success",
+      "databaseId": 37163634285,
+      "name": "Preview — Deploy",
+      "status": "completed",
+      "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/37163634285"
+    },
+    {
+      "conclusion": "success",
+      "databaseId": 37163634314,
+      "name": "CI — Frontend",
+      "status": "completed",
+      "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/37163634314"
+    },
+    {
+      "conclusion": "success",
+      "databaseId": 37163634282,
+      "name": "CI — Android",
+      "status": "completed",
+      "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/37163634282"
+    },
+    {
+      "conclusion": "failure",
+      "databaseId": 37163634293,
+      "name": "CI — Backend",
+      "status": "completed",
+      "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/37163634293"
+    }
+  ],
+  "auditLedger": {
+    "sourceFixed": 34,
+    "unclosed": 7,
+    "partial": [
+      "F32",
+      "F33",
+      "F39"
+    ],
+    "open": [
+      "F34",
+      "F36",
+      "F40",
+      "F41"
+    ],
+    "originalFindings": 41
+  },
+  "acceptanceLimits": {
+    "browser": "OPEN_URL_POLICY_BLOCKED",
+    "renderedHighlightVerified": false,
+    "nativeNonRootInspection": false,
+    "fpsOrInputLatencyAccepted": false,
+    "twentyToThirtyDeviceAcceptance": false,
+    "soak": false,
+    "offlineDevicesOutsideAcceptance": 5,
+    "apkChanged": false,
+    "stableOrNormalOtaPromoted": false,
+    "remoteTimeoutRootCauseEstablished": false
+  },
+  "references": [
+    "https://developer.android.com/training/testing/other-components/ui-automator-legacy",
+    "https://developer.android.com/reference/androidx/test/uiautomator/UiDevice",
+    "https://docs.python.org/3/library/xml.html"
+  ],
+  "sourceCiFailureDetails": {
+    "source": "35ef83f58b1870d03e72339815ec82175657e202",
+    "backendUnitAndRealServicePassed": 2485,
+    "backendSkipped": 16,
+    "failedGates": [
+      "stale docs/openapi.json and docs/api-endpoints.md",
+      "18 mypy union-attr errors in UI hierarchy parser"
+    ],
+    "repairedBy": [
+      "176dfca3ebd4f8efb2c0eda14f10ce26acbc8133",
+      "9274e507ab59b60f911af239d6b0fc71eaae28f3"
+    ]
+  },
+  "finalTypeSchemaRepair": {
+    "source": "9274e507ab59b60f911af239d6b0fc71eaae28f3",
+    "installedApi": {
+      "source": "9274e507ab59b60f911af239d6b0fc71eaae28f3",
+      "previousSource": "35ef83f58b1870d03e72339815ec82175657e202",
+      "observedAt": "2026-10-04T00:27:57.111729+00:00",
+      "containerId": "0f7f90934a8aed5b9fa823d60956708dd00cba57391dac63435fb5d7df2f7327",
+      "imageId": "sha256:59749263367b7e142f12d3b26e31803e95f499dffea6ed3dccc239bfa39a6978",
+      "ready": true,
+      "buildRevisionMatched": true,
+      "preservedContainers": 15,
+      "tunaPreserved": true,
+      "uiPreserved": true,
+      "apkChanged": false,
+      "otaCatalogPreserved": true,
+      "mountsPreserved": true,
+      "browserVerified": false
+    },
+    "uiSourcePreserved": "35ef83f58b1870d03e72339815ec82175657e202",
+    "apiBuild": {
+      "source": "9274e507ab59b60f911af239d6b0fc71eaae28f3",
+      "image": "sphere-pilot-20260911-backend:9274e507ab59b60f911af239d6b0fc71eaae28f3",
+      "imageId": "sha256:59749263367b7e142f12d3b26e31803e95f499dffea6ed3dccc239bfa39a6978",
+      "gitArchive": true
+    },
+    "apiImagePassed": 108,
+    "imageChecks": {
+      "mypy": {
+        "source": "9274e507ab59b60f911af239d6b0fc71eaae28f3",
+        "kind": "mypy",
+        "exit": 0,
+        "observedAt": "2026-10-04T00:27:09.371367+00:00",
+        "network": "none",
+        "applicationSourceMounted": false
+      },
+      "schema": {
+        "source": "9274e507ab59b60f911af239d6b0fc71eaae28f3",
+        "kind": "schema",
+        "exit": 0,
+        "observedAt": "2026-10-04T00:27:01.406202+00:00",
+        "network": "none",
+        "applicationSourceMounted": false
+      },
+      "ruff": {
+        "source": "9274e507ab59b60f911af239d6b0fc71eaae28f3",
+        "kind": "ruff",
+        "exit": 0,
+        "observedAt": "2026-10-04T00:27:29.006670+00:00",
+        "network": "none",
+        "applicationSourceMounted": false
+      }
+    },
+    "mypyCheckedFiles": 228,
+    "mypyShippedVersion": "2.3.1",
+    "mypyHostVersion": "1.8.0",
+    "mypyHostPassed": true,
+    "applicationSourceMountedForImageChecks": false,
+    "canary": {
+      "startedAt": "2026-10-04T00:29:07.671995+00:00",
+      "apiSource": "9274e507ab59b60f911af239d6b0fc71eaae28f3",
+      "cases": [
+        {
+          "deviceId": "b410464a-5f26-4803-a756-7840cc17b128",
+          "name": "auto-ph-025",
+          "apkCode": 10244,
+          "observedAt": "2026-10-04T00:29:07.671995+00:00",
+          "httpStatus": 200,
+          "snapshotId": "8ff2bba51f80425580465a61af6e5a28",
+          "width": 960,
+          "height": 540,
+          "rotation": 0,
+          "nodeCount": 49,
+          "cleanupConfirmed": true,
+          "attributeKeys": [
+            "NAF",
+            "bounds",
+            "checkable",
+            "checked",
+            "class",
+            "clickable",
+            "content-desc",
+            "enabled",
+            "focusable",
+            "focused",
+            "index",
+            "long-clickable",
+            "package",
+            "password",
+            "resource-id",
+            "scrollable",
+            "selected",
+            "text"
+          ],
+          "snapshotSha256": "4e9e6c1ac5978d8698d6edf80de242505456fec5f4fe567c7629f825aba0eb27",
+          "durationSeconds": 2.563
+        },
+        {
+          "deviceId": "5df4805e-fe64-4d39-960c-19ceab206cd6",
+          "name": "auto-ph-010",
+          "apkCode": 10244,
+          "observedAt": "2026-10-04T00:29:10.233094+00:00",
+          "httpStatus": 200,
+          "snapshotId": "8c15b8b7331b412aab4e6c7385ddf5f1",
+          "width": 960,
+          "height": 540,
+          "rotation": 0,
+          "nodeCount": 45,
+          "cleanupConfirmed": true,
+          "attributeKeys": [
+            "NAF",
+            "bounds",
+            "checkable",
+            "checked",
+            "class",
+            "clickable",
+            "content-desc",
+            "enabled",
+            "focusable",
+            "focused",
+            "index",
+            "long-clickable",
+            "package",
+            "password",
+            "resource-id",
+            "scrollable",
+            "selected",
+            "text"
+          ],
+          "snapshotSha256": "03d7f167509d859d7a8c482da1d52d7b8aba2c3b40a0b247ce0d429a516bab08",
+          "durationSeconds": 2.937
+        }
+      ],
+      "androidInputCommandsSent": false,
+      "xmlLoggedOrPublished": false,
+      "browserVerified": false,
+      "finishedAt": "2026-10-04T00:29:13.171176+00:00"
+    },
+    "fleetReadback": {
+      "startedAt": "2026-10-04T00:29:21.361233+00:00",
+      "apiSource": "9274e507ab59b60f911af239d6b0fc71eaae28f3",
+      "uiSource": "35ef83f58b1870d03e72339815ec82175657e202",
+      "capabilityContract": {
+        "status": 200,
+        "schema": 1,
+        "role": "super_admin",
+        "permissionsCount": 31,
+        "identityMatched": true,
+        "permissionMatrixMatched": true,
+        "cacheControl": "no-store",
+        "anonymousStatus": 401
+      },
+      "deviceCommandsSent": true,
+      "commandScope": "Fixed UI Automator read and UUID cleanup canaries; no Android input/reboot/VPN/OTA",
+      "savedVideoBytes": 0,
+      "browserVerified": false,
+      "cohortPreserved": false,
+      "allOnlineApk44": true,
+      "heartbeatUnder60Seconds": true,
+      "samePostRolloutEpochs": false,
+      "baselineEpochsPreserved": false,
+      "finishedAt": "2026-10-04T00:30:21.886988+00:00",
+      "apiReady": true,
+      "prometheusBackendUp": true,
+      "neighboursPreserved": 15,
+      "tunaPreserved": true,
+      "otaCatalogPreserved": true,
+      "installedBuildsMatched": true
+    },
+    "fleetGate": "FAILED_COHORT_AND_EPOCHS",
+    "missingInFinalSample": [
+      "auto-ph-015"
+    ],
+    "samples": [
+      {
+        "observedAt": "2026-10-04T00:29:21.387816+00:00",
+        "catalog": 19,
+        "online": 14,
+        "maxHeartbeatAgeSeconds": 37.429521
+      },
+      {
+        "observedAt": "2026-10-04T00:29:31.406019+00:00",
+        "catalog": 19,
+        "online": 14,
+        "maxHeartbeatAgeSeconds": 47.447724
+      },
+      {
+        "observedAt": "2026-10-04T00:29:41.429072+00:00",
+        "catalog": 19,
+        "online": 13,
+        "maxHeartbeatAgeSeconds": 20.373764
+      },
+      {
+        "observedAt": "2026-10-04T00:29:51.454464+00:00",
+        "catalog": 19,
+        "online": 13,
+        "maxHeartbeatAgeSeconds": 24.576017
+      },
+      {
+        "observedAt": "2026-10-04T00:30:01.469119+00:00",
+        "catalog": 19,
+        "online": 13,
+        "maxHeartbeatAgeSeconds": 24.462736
+      },
+      {
+        "observedAt": "2026-10-04T00:30:11.492608+00:00",
+        "catalog": 19,
+        "online": 13,
+        "maxHeartbeatAgeSeconds": 20.439332
+      },
+      {
+        "observedAt": "2026-10-04T00:30:21.508804+00:00",
+        "catalog": 19,
+        "online": 13,
+        "maxHeartbeatAgeSeconds": 24.630982
+      }
+    ],
+    "sourceCiObservedAt": "2026-10-04T00:46:25.469930+00:00",
+    "sourceCi": [
+      {
+        "conclusion": "success",
+        "databaseId": 37164921406,
+        "name": "Preview — Deploy",
+        "status": "completed",
+        "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/37164921406"
+      },
+      {
+        "conclusion": "success",
+        "databaseId": 37164921425,
+        "name": "CI — Frontend",
+        "status": "completed",
+        "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/37164921425"
+      },
+      {
+        "conclusion": "success",
+        "databaseId": 37164921429,
+        "name": "CI — Android",
+        "status": "completed",
+        "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/37164921429"
+      },
+      {
+        "conclusion": "success",
+        "databaseId": 37164921506,
+        "name": "CI — Backend",
+        "status": "completed",
+        "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/37164921506"
+      }
+    ],
+    "uninstalledIntermediateImage": "176dfca3ebd4f8efb2c0eda14f10ce26acbc8133",
+    "intermediateCheckerResult": "host1.8 passed; image2.3.1 found two remaining tuple/annotation errors; final9274e50 fixed both",
+    "toolingCacheFailure": "non-root image denies /app caches; final mypy uses /tmp and Ruff --no-cache, no user privilege change"
+  },
+  "latestInstalledApiSource": "9274e507ab59b60f911af239d6b0fc71eaae28f3",
+  "latestObservedAt": "2026-10-04T00:55:18.652149+00:00",
+  "liveWorkflowFollowup": {
+    "source": "84750e3731dfbe18dfe81b5c1b62dc13c8bf7ea9",
+    "previousInstalledUi": "35ef83f58b1870d03e72339815ec82175657e202",
+    "userReportedFailure": "Enabling XPath mode then clicking Android produced no highlight or sidebar attributes.",
+    "reproducedSourceGaps": [
+      "mode entry required a separate manual tree request",
+      "pick before tree arrival silently returned"
+    ],
+    "before": {
+      "numFailedTests": 5,
+      "numPassedTests": 0,
+      "numPassedTestSuites": 0,
+      "numRuntimeErrorTestSuites": 0,
+      "success": false
+    },
+    "sourceFull": {
+      "numFailedTests": 0,
+      "numPassedTests": 1043,
+      "numPassedTestSuites": 110,
+      "numRuntimeErrorTestSuites": 0,
+      "success": true
+    },
+    "stream": {
+      "numFailedTests": 0,
+      "numPassedTests": 152,
+      "numPassedTestSuites": 12,
+      "numRuntimeErrorTestSuites": 0,
+      "success": true
+    },
+    "imageFull": {
+      "numFailedTests": 0,
+      "numPassedTests": 1043,
+      "numPassedTestSuites": 110,
+      "numRuntimeErrorTestSuites": 0,
+      "success": true
+    },
+    "integratedPointerCases": 8,
+    "integrationTestScope": "Actual SingleDeviceStream and DeviceStream pointer handlers; mocked API, WebSocket and H264 renderer. No real-browser/native screenshot acceptance.",
+    "caseNames": [
+      "loads on mode entry and selects through the actual canvas pointer chain without another button",
+      "waits for a picture before starting the automatic tree read",
+      "keeps the latest pick while the initial read is pending instead of silently losing it",
+      "refreshes while active and keeps the selected element visible during the request",
+      "pauses after a failed refresh rather than repeatedly executing root reads",
+      "does not start another read while one is pending and waits five seconds after completion",
+      "suspends periodic reads in a hidden document and refreshes when returning",
+      "reports a miss and also supports explicit selection from the returned tree"
+    ],
+    "installedUi": {
+      "source": "84750e3731dfbe18dfe81b5c1b62dc13c8bf7ea9",
+      "previousSource": "35ef83f58b1870d03e72339815ec82175657e202",
+      "observedAt": "2026-10-04T00:50:32.107889+00:00",
+      "url": "http://127.0.0.1:3015",
+      "containerId": "d491adb66e40c1f5e70d04aea4b6e1f15fb634c136af137cbc748711e5712b4f",
+      "imageId": "sha256:752a7f8cba2cef61d4813de1dfcd2e3b127b121f30c41d59f7109f96bc42cfd2",
+      "ready": true,
+      "preservedContainers": 15,
+      "onlyUiImageAndBuildArgumentChanged": true,
+      "apiPreserved": true,
+      "tunaPreserved": true,
+      "otaCatalogPreserved": true,
+      "browserVerified": false
+    },
+    "webBuild": {
+      "source": "84750e3731dfbe18dfe81b5c1b62dc13c8bf7ea9",
+      "gitArchive": true,
+      "nodeMajor": 24,
+      "images": {
+        "builder": {
+          "name": "sphere-ui-inspection-recovery-web-tests:84750e3731dfbe18dfe81b5c1b62dc13c8bf7ea9",
+          "id": "sha256:963e572776200f45e07f84aba6afc6cc077312f526696f40730a22862c3b013e"
+        },
+        "runner": {
+          "name": "sphere-review-frontend:84750e3731dfbe18dfe81b5c1b62dc13c8bf7ea9",
+          "id": "sha256:752a7f8cba2cef61d4813de1dfcd2e3b127b121f30c41d59f7109f96bc42cfd2"
+        }
+      }
+    },
+    "applicationSourceMountedForImageTests": false,
+    "behaviour": {
+      "loadOnModeEntryAfterOwnedFrame": true,
+      "latestPendingPickPreserved": true,
+      "refreshDelayAfterCompletionSeconds": 5,
+      "onlyVisibleActiveInspector": true,
+      "oneInflightRead": true,
+      "errorPausesAutomaticRefresh": true,
+      "treePaginationSize": 200,
+      "snapshotLifetimeFromRequestStartSeconds": 30,
+      "androidInputSentByInspection": false,
+      "treeFrameAtomicity": false,
+      "engine": "android_uiautomator_root",
+      "fullAppiumUiAutomator2ServerEmbedded": false
+    },
+    "fleetReadback": {
+      "startedAt": "2026-10-04T00:54:18.113593+00:00",
+      "uiSource": "84750e3731dfbe18dfe81b5c1b62dc13c8bf7ea9",
+      "apiSource": "9274e507ab59b60f911af239d6b0fc71eaae28f3",
+      "browserVerified": false,
+      "deviceCommandsSent": false,
+      "baselineCohortPreserved": true,
+      "baselineEpochsPreserved": true,
+      "heartbeatUnder60Seconds": true,
+      "allOnlineApk44": true,
+      "finishedAt": "2026-10-04T00:55:18.652149+00:00",
+      "preservedNeighbours": 15,
+      "apiPreserved": true,
+      "tunaPreserved": true,
+      "otaPreserved": true,
+      "cohortCount": 14,
+      "baselineOnline": 14,
+      "fleetGate": "PASSED"
+    },
+    "samples": [
+      {
+        "observedAt": "2026-10-04T00:54:18.145233+00:00",
+        "catalog": 19,
+        "online": 14,
+        "maxHeartbeatAgeSeconds": 27.088006
+      },
+      {
+        "observedAt": "2026-10-04T00:54:28.169099+00:00",
+        "catalog": 19,
+        "online": 14,
+        "maxHeartbeatAgeSeconds": 25.875525
+      },
+      {
+        "observedAt": "2026-10-04T00:54:38.193672+00:00",
+        "catalog": 19,
+        "online": 14,
+        "maxHeartbeatAgeSeconds": 29.876647
+      },
+      {
+        "observedAt": "2026-10-04T00:54:48.217692+00:00",
+        "catalog": 19,
+        "online": 14,
+        "maxHeartbeatAgeSeconds": 27.235258
+      },
+      {
+        "observedAt": "2026-10-04T00:54:58.240352+00:00",
+        "catalog": 19,
+        "online": 14,
+        "maxHeartbeatAgeSeconds": 25.948997
+      },
+      {
+        "observedAt": "2026-10-04T00:55:08.266391+00:00",
+        "catalog": 19,
+        "online": 14,
+        "maxHeartbeatAgeSeconds": 29.953513
+      },
+      {
+        "observedAt": "2026-10-04T00:55:18.292478+00:00",
+        "catalog": 19,
+        "online": 14,
+        "maxHeartbeatAgeSeconds": 27.311369
+      }
+    ],
+    "earlierFailedFleetGatePreserved": true,
+    "sourceCiObservedAt": "2026-10-04T01:00:49.582566+00:00",
+    "sourceCi": [
+      {
+        "conclusion": "success",
+        "databaseId": 37165894295,
+        "name": "CI — Frontend",
+        "status": "completed",
+        "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/37165894295"
+      },
+      {
+        "conclusion": "success",
+        "databaseId": 37165894296,
+        "name": "Preview — Deploy",
+        "status": "completed",
+        "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/37165894296"
+      },
+      {
+        "conclusion": "success",
+        "databaseId": 37165894432,
+        "name": "CI — Android",
+        "status": "completed",
+        "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/37165894432"
+      },
+      {
+        "conclusion": "success",
+        "databaseId": 37165894339,
+        "name": "CI — Backend",
+        "status": "completed",
+        "url": "https://github.com/RootOne1337/sphere-platform/actions/runs/37165894339"
+      }
+    ],
+    "userVisualAcceptance": {
+      "recordedAt": "2026-10-04T01:02:33.199728+00:00",
+      "source": "84750e3731dfbe18dfe81b5c1b62dc13c8bf7ea9",
+      "reportedBy": "human operator in this task after UI installation",
+      "passed": [
+        "Clicking Android elements highlights them",
+        "Sidebar shows element information"
+      ],
+      "notIndependentlyVerified": [
+        "full browser screenshot/CSS audit",
+        "tree-list to video selection",
+        "keyboard/mobile",
+        "all devices",
+        "latency/FPS/soak"
+      ],
+      "followupRequested": [
+        "faster/richer hierarchy",
+        "full remote control and text/wheel",
+        "original lossless screenshots",
+        "logs/terminal/telemetry audit"
+      ]
+    }
+  },
+  "latestInstalledUiSource": "84750e3731dfbe18dfe81b5c1b62dc13c8bf7ea9"
+}

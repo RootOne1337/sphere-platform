@@ -18,6 +18,10 @@ class AgentConfigResponse(BaseModel):
     server_url: str = Field(
         description="Актуальный URL бэкенда. Агент использует для WS-подключения.",
     )
+    fallback_server_url: str | None = Field(
+        default=None,
+        description="Опциональный резервный URL той же установки Sphere; сохраняется APK для WS и refresh.",
+    )
     ws_path: str = Field(
         default="/ws/android",
         description="Путь WebSocket эндпоинта.",
