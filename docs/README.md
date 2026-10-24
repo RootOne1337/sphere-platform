@@ -9,7 +9,7 @@ runtime88/UI/API не выдаются за обновлённые. [Инстр�
 [Проверки и открытые допуски](audits/2026-10-24/WEB-TEACHING-CONTACTS.md).
 
 
-**Проверенная установка:** UI `a239baa2` / API `1afdc529`.
+**Проверенная установка:** UI `56605338` / API `1afdc529`.
 
 **24 октября — worker0.8.1:** read-only LDPlayer `.smp/.kmp` inspector,303 tests/Ruff.
 Полный keyboard teaching требует следующего native multi-contact actor; current

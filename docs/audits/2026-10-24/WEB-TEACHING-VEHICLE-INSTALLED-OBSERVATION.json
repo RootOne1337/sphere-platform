@@ -1,0 +1,112 @@
+{
+  "schemaVersion": 1,
+  "observedAtUtc": "2026-10-24T18:22:45.551677+00:00",
+  "runtimeInstalled": true,
+  "scope": "Vehicle held-input Android fixture, verified original recording and UI delivery; not gameplay navigation",
+  "productionAccepted": false,
+  "runtime": {
+    "sourceRevision": "566053388ff79437c8f777fefbf361bda5eed792",
+    "apiSourceRevision": "1afdc529e18cd34b5d8ee0919f217076a8592846",
+    "imageId": "sha256:c4aeb70e88dfae2d8896902e21c0eff4112e3e4d38cefc595454f29957d448b7",
+    "backendHealthyAtReadback": true
+  },
+  "browser": {
+    "finiteAccepted": true,
+    "scope": "Finite803-frame Android fixture with held transport contacts; not game navigation",
+    "directFramesPresented": 803,
+    "decodedFramesIndependentlyVerified": 803,
+    "sourceCaptureClockMappingKnown": false
+  },
+  "apk": {
+    "artifacts": [
+      {
+        "version": "1.2.85-dev",
+        "versionCode": 10285,
+        "sourceRevision": "3b437ee8c5a0067f3cfb792b25e8b383e739fc88",
+        "sha256": "9f2bdbe7e7040a0013b5636088426d01a8b8cae99dcfefb0dddd1400868a9180",
+        "androidTree": "e46c0b42dc23fee4261b779f6db84095c6dc16be",
+        "package": "com.sphereplatform.agent.pilot.debug",
+        "bytes": 73217607,
+        "certificateSha256": "3ab40797d26e4f52f9e440afc6fe69f197caef71a5a27c63c86735bb1801871f",
+        "hostedCertificateSha256": "70e67b0395df3cf30feb1d10f06303a7598b8453e5d965db06a4d00defdbc3e7",
+        "cloudApkSha256": "7b98a6dffff8cb8b91a08d527b9fb131b0d69971ec18736365760db86668cc6c",
+        "builtByHostedCi": true,
+        "onlySignatureChangedLocally": true,
+        "unchangedPayloadEntries": 936
+      },
+      {
+        "version": "1.2.88-dev",
+        "versionCode": 10288,
+        "sourceRevision": "6ad0df5fbcc3590ae9c63fe6922db178b45aeee1",
+        "sha256": "355af6f5ecc6697bd8fee66ff9f085bdbf9841e80bb201f8d48515a1ac7e9bca",
+        "certificateSha256": "3ab40797d26e4f52f9e440afc6fe69f197caef71a5a27c63c86735bb1801871f",
+        "package": "com.sphereplatform.agent.pilot.debug",
+        "builtLocally": true,
+        "builtByHostedCi": false
+      },
+      {
+        "version": "1.2.90-dev",
+        "versionCode": 10290,
+        "sourceRevision": "d62088094abcc136c1d29beea834dd4486d874e2",
+        "sha256": "51e2f6df58a73a10e730d8494e264f72ce1431ca86df8e3704887bea26ee70cc",
+        "certificateSha256": "3ab40797d26e4f52f9e440afc6fe69f197caef71a5a27c63c86735bb1801871f"
+      }
+    ],
+    "installedDevices": [
+      {
+        "deviceId": "753fd530-2f19-4e5e-98ba-769863678141",
+        "device": "auto-ph-030",
+        "versionCode": 10288,
+        "installedPackageSha256": "355af6f5ecc6697bd8fee66ff9f085bdbf9841e80bb201f8d48515a1ac7e9bca",
+        "verifiedAtUtc": "2026-10-23T11:12:19.981238+00:00",
+        "addressedOtaCompleted": true
+      },
+      {
+        "deviceId": "5df4805e-fe64-4d39-960c-19ceab206cd6",
+        "device": "auto-ph-010",
+        "versionCode": 10285,
+        "installedPackageSha256": "9f2bdbe7e7040a0013b5636088426d01a8b8cae99dcfefb0dddd1400868a9180",
+        "packageProofObservedAtUtc": "2026-10-22T12:04:30.867863+00:00",
+        "completedAddressedOta": true,
+        "commandId": "74bd69d1-5b6c-42b5-b102-b3059be7dfaa",
+        "dataClears": 0,
+        "proofScope": "Historical earlier package proof; device not updated or rehashed by APK87 delivery."
+      },
+      {
+        "deviceId": "414ce0e9-4b93-4f96-b9ca-ee675f53835e",
+        "device": "auto-ph-011",
+        "versionCode": 10290,
+        "installedPackageSha256": "51e2f6df58a73a10e730d8494e264f72ce1431ca86df8e3704887bea26ee70cc",
+        "packageProofObservedAtUtc": "2026-10-24T17:05:24.962887+00:00",
+        "proofScope": "Dated independent APK90 install/hash proof; not a fresh package rehash"
+      },
+      {
+        "deviceId": "b410464a-5f26-4803-a756-7840cc17b128",
+        "device": "auto-ph-025",
+        "versionCode": 10285,
+        "installedPackageSha256": "9f2bdbe7e7040a0013b5636088426d01a8b8cae99dcfefb0dddd1400868a9180",
+        "packageProofObservedAtUtc": "2026-10-22T12:04:34.316120+00:00",
+        "completedAddressedOta": true,
+        "commandId": "6ab684dc-0ebc-46e4-ac7e-278ae9294098",
+        "dataClears": 0,
+        "proofScope": "Historical earlier package proof; device not updated or rehashed by APK87 delivery."
+      }
+    ],
+    "observation": "Dated mixed-version package evidence, not a simultaneous fresh fleet scan"
+  },
+  "provenance": [
+    {
+      "file": "docs/audits/2026-10-24/WEB-TEACHING-VEHICLE-FOLLOWUP.json",
+      "sha256NormalizedLf": "39d7b55613239951f7107747bafbbd4ad8870fc92e88e86067e1a1498671cd88"
+    },
+    {
+      "file": "docs/audits/2026-10-24/WEB-TEACHING-DELIVERY.json",
+      "sha256NormalizedLf": "dc265ca4f22a0d15488222f139915d9e08733b0bed0ae2892ef1c3f71096791e"
+    },
+    {
+      "file": "docs/audits/2026-10-23/PH030-APK88-LOCAL-AUTOSTART.json",
+      "sha256NormalizedLf": "59bb838fa6b2db988069937b0b006d919720eb6f28cb80d51e68132b04107033"
+    }
+  ],
+  "autonomousNavigationAccepted": false
+}

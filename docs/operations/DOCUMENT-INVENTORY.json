@@ -1,13 +1,13 @@
 {
   "schemaVersion": 1,
-  "reviewedAtUtc": "2026-10-23T19:35:33.264322+00:00",
+  "reviewedAtUtc": "2026-10-24T18:22:45.551677+00:00",
   "scope": "All tracked Markdown classified; active local-link paths scanned. Not semantic attestation of every sentence, command execution, external-link or live acceptance.",
   "countsByRole": {
     "ADR": 6,
     "CURRENT_ENTRYPOINT": 8,
-    "DATED_EVIDENCE": 380,
-    "DESIGN_SPECIFICATION": 85,
-    "OPERATING_GUIDE": 71,
+    "DATED_EVIDENCE": 382,
+    "DESIGN_SPECIFICATION": 86,
+    "OPERATING_GUIDE": 72,
     "PROJECT_POLICY": 7,
     "SUPPORTING_DOCUMENT": 7
   },
@@ -1665,6 +1665,14 @@
       "role": "DATED_EVIDENCE"
     },
     {
+      "file": "docs/audits/2026-10-24/NAVIGATION-30-QUESTIONS.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
+      "file": "docs/audits/2026-10-24/WEB-TEACHING-CONTACTS.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
       "file": "docs/audits/enterprise-audit-2026-02-23.md",
       "role": "DATED_EVIDENCE"
     },
@@ -1698,6 +1706,10 @@
     },
     {
       "file": "docs/design/GAME-CONTROL-PROFILES.md",
+      "role": "DESIGN_SPECIFICATION"
+    },
+    {
+      "file": "docs/design/LIVE-ROUTE-RECONSTRUCTION.md",
       "role": "DESIGN_SPECIFICATION"
     },
     {
@@ -1894,6 +1906,10 @@
     },
     {
       "file": "docs/operations/STATIC-STREAM-INPUT.md",
+      "role": "OPERATING_GUIDE"
+    },
+    {
+      "file": "docs/operations/TEACHING-WEB.md",
       "role": "OPERATING_GUIDE"
     },
     {

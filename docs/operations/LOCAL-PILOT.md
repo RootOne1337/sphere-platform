@@ -1,6 +1,6 @@
 # Локальный стенд для совместного тестирования
 
-**Проверенная установка:** UI `a239baa2` / API `1afdc529`.
+**Проверенная установка:** UI `56605338` / API `1afdc529`.
 
 **24 октября — worker0.8.1:** read-only keymap inspector;303 tests/Ruff прошли.
 Реальная `.smp` ссылка указывает на recommended layout26 bindings; override пуст.
