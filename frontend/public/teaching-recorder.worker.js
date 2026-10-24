@@ -115,6 +115,10 @@ function input(event) {
   if (!event || !['submitted','receipt','closed'].includes(event.stage) || !Number.isFinite(event.at_ms)
     || !Number.isSafeInteger(event.sequence) || !Number.isSafeInteger(event.gesture)
     || !Number.isSafeInteger(event.action) || !Number.isSafeInteger(event.pointer_id)) { failure(r, 'invalid_input_journal'); return; }
+  if (event.cancelled_pointers !== undefined && (event.stage !== 'closed' || !Array.isArray(event.cancelled_pointers)
+    || event.cancelled_pointers.length > 3 || new Set(event.cancelled_pointers).size !== event.cancelled_pointers.length
+    || event.cancelled_pointers.some(id => !Number.isInteger(id) || id < 0 || id > 2)
+    || !Number.isSafeInteger(event.device_uptime_ms) || event.device_uptime_ms < 0)) { failure(r, 'invalid_native_cancel_journal'); return; }
   if (event.stage === 'submitted') {
     if (r.pending.has(event.sequence) || r.pending.size > 1) { failure(r, 'input_order_invalid'); return; }
     r.pending.set(event.sequence, event);

@@ -36,6 +36,20 @@ test('heartbeat extends hold without another DOWN and native release is required
   f.receipt({sequence:0,gesture:0,action:3,pointer_id:-1,outcome:'closed'});
   await expect(close).resolves.toBe(true);expect(f.journal.at(-1)?.outcome).toBe('closed');
 });
+
+test('closing a held control records native CANCEL time and preserves confirmed release on subsequent close',async()=>{
+  const f=fixture();f.ready();f.driver.set(0,{x:100,y:350});f.ack();
+  const close=f.driver.close();f.receipt({sequence:0,gesture:0,action:3,pointer_id:-1,outcome:'closed',device_uptime_ms:2500});
+  await expect(close).resolves.toBe(true);await expect(f.driver.close()).resolves.toBe(true);
+  expect(f.journal.at(-1)).toMatchObject({stage:'closed',outcome:'closed',device_uptime_ms:2500,cancelled_pointers:[0]});
+});
+
+test('unsolicited native CLOSED remains authoritative and never reopens a contact',async()=>{
+  const f=fixture();f.ready();f.driver.set(0,{x:100,y:350});f.ack();
+  f.receipt({sequence:0,gesture:0,action:3,pointer_id:-1,outcome:'closed',device_uptime_ms:3500});
+  expect(f.driver.isReady).toBe(false);await expect(f.driver.close()).resolves.toBe(true);
+  f.driver.set(0,{x:120,y:350});expect(f.sent.filter(e=>e.action===0)).toHaveLength(1);
+});
 test('lost frames revoke all contacts; unanswered close stays unknown and is never replayed',async()=>{
   const f=fixture();f.ready();f.driver.set(0,{x:100,y:350});f.ack();f.stale();jest.advanceTimersByTime(25);
   expect(f.states).toContain('contact_video_stale');const close=f.driver.close();jest.advanceTimersByTime(2600);

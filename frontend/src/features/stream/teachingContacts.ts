@@ -4,7 +4,7 @@ import type { DirectVideoBinding } from './directVideoProtocol';
 export type TeachingPoint = { x: number; y: number };
 export type TeachingInput = { stage: 'submitted' | 'receipt' | 'closed'; at_ms: number;
   sequence: number; gesture: number; action: number; pointer_id: number; x?: number; y?: number;
-  outcome?: string; device_uptime_ms?: number };
+  outcome?: string; device_uptime_ms?: number; cancelled_pointers?: number[] };
 type Edge = { id: number; action: number; point: TeachingPoint; at: number };
 const object = (v: unknown): v is Record<string, unknown> => !!v && typeof v === 'object' && !Array.isArray(v);
 
@@ -16,6 +16,7 @@ export class TeachingContacts {
   private ready = false;
   private closing = false;
   private ended = false;
+  private closedConfirmed = false;
   private queue: Edge[] = [];
   private desired = new Map<number, TeachingPoint>();
   private held = new Set<number>();
@@ -96,7 +97,7 @@ export class TeachingContacts {
     if (!this.owner || !Number.isSafeInteger(value.device_uptime_ms) || (value.device_uptime_ms as number) < 0) {
       this.fail('contact_receipt_invalid'); return;
     }
-    if (value.outcome === 'closed' && value.sequence === 0 && value.gesture === 0 && value.action === 3 && value.pointer_id === -1) { this.finish(true); return; }
+    if (value.outcome === 'closed' && value.sequence === 0 && value.gesture === 0 && value.action === 3 && value.pointer_id === -1) { this.finish(true,value.device_uptime_ms as number); return; }
     if (this.closing && !this.pending) return;
     if (value.outcome === 'ready' && value.sequence === 0 && value.gesture === 0 && value.action === 4 && value.pointer_id === -1 && !this.ready) {
       this.ready = true; this.state('ready'); return;
@@ -129,18 +130,20 @@ export class TeachingContacts {
   private fail(reason: string) { if (!this.ended && !this.closing) { this.state('failed', reason); void this.close(); } }
   close(): Promise<boolean> {
     if (this.closePromise) return this.closePromise;
-    if (this.ended) return Promise.resolve(false);
+    if (this.ended) return Promise.resolve(this.closedConfirmed);
     this.closing = true; this.ready = false; this.queue = []; this.desired.clear(); this.closeAt = performance.now();
     this.closePromise = new Promise(resolve => { this.finishClose = resolve; });
     this.state('closing');
     try { this.send({ type: 'touch_close' }); } catch { this.finish(false); }
     return this.closePromise;
   }
-  private finish(confirmed: boolean) {
+  private finish(confirmed: boolean, deviceUptime?: number) {
     if (this.ended) return;
     this.ended = true; this.ready = false; clearInterval(this.timer); this.remove();
     try { this.journal({ stage: 'closed', at_ms: performance.timeOrigin + performance.now(), sequence: 0,
-      gesture: 0, action: 3, pointer_id: -1, outcome: confirmed ? 'closed' : 'unknown' }); } catch { confirmed = false; }
+      gesture: 0, action: 3, pointer_id: -1, outcome: confirmed ? 'closed' : 'unknown',
+      ...(confirmed?{device_uptime_ms:deviceUptime,cancelled_pointers:[...this.held].sort()}: {}) }); } catch { confirmed = false; }
+    this.closedConfirmed=confirmed;
     this.state(confirmed ? 'closed' : 'failed', confirmed ? undefined : 'release_unknown');
     this.finishClose?.(confirmed);
   }

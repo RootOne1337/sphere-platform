@@ -10,12 +10,14 @@ jest.mock('@/src/features/stream/teachingConnection',()=>({connectTeaching:jest.
 let mockAuth: Record<string,unknown> = {accessToken:null,sessionVersion:1};
 const mockSet = jest.fn(), mockClose = jest.fn(async()=>true);
 const mockControllers: unknown[]=[];
+const mockStateCallbacks: Array<(state:string,reason?:string)=>void>=[];
 jest.mock('@/lib/store',()=>({useAuthStore:(select:(s:unknown)=>unknown)=>select(mockAuth)}));
 jest.mock('@/src/features/stream/teachingContacts',()=>({...jest.requireActual('@/src/features/stream/teachingContacts'),TeachingContacts:jest.fn().mockImplementation((_e,_b,_f,_j,state)=>{
   const controller={set:mockSet,close:mockClose,hasContact:()=>false,isNeutral:true};mockControllers.push(controller);
+  mockStateCallbacks.push(state);
   queueMicrotask(()=>state('ready'));return controller;
 })}));
-beforeEach(()=>{mockAuth={accessToken:null,sessionVersion:1};mockSet.mockClear();mockClose.mockClear();mockControllers.length=0;jest.mocked(connectTeaching).mockClear();});
+beforeEach(()=>{mockAuth={accessToken:null,sessionVersion:1};mockSet.mockClear();mockClose.mockClear();mockControllers.length=0;mockStateCallbacks.length=0;jest.mocked(connectTeaching).mockClear();});
 test('read-only workbench exposes setup and emergency stop without opening media or native input',()=>{
   render(<TeachingWorkbench deviceId="test-device" readOnly />);
   expect(screen.getByRole('button',{name:'Подключить поток'})).toBeDisabled();
@@ -55,7 +57,7 @@ test('operator can use held WASD before recording, then closes that owner before
   expect(screen.getByRole('button',{name:'Подключить 3D-просмотр'})).toBeDisabled();
   const video=screen.getByLabelText('Игровой экран: WASD, мышь, пробел, Shift; Escape — остановить запись');
   fireEvent.keyDown(video,{code:'KeyW'});fireEvent.keyUp(video,{code:'KeyW'});
-  expect(mockSet).toHaveBeenCalledWith(0,{x:144,y:443});expect(mockSet).toHaveBeenCalledWith(0,null);
+  expect(mockSet).toHaveBeenCalledWith(0,{x:144,y:442});expect(mockSet).toHaveBeenCalledWith(0,null);
   expect(postMessage).not.toHaveBeenCalledWith(expect.objectContaining({type:'arm'}));
   fireEvent.click(screen.getByRole('button',{name:'Записать маршрут'}));
   await waitFor(()=>expect(postMessage).toHaveBeenCalledWith(expect.objectContaining({type:'arm',config:expect.objectContaining({max_duration_ms:600000})})));
@@ -78,4 +80,40 @@ test('the operator sees the separate 3D section and a ten-minute recording optio
   expect(screen.getByLabelText('Живая 3D-реконструкция')).toBeInTheDocument();
   expect(screen.getByRole('button',{name:'Подключить 3D-просмотр'})).toBeDisabled();
   expect(screen.getByRole('combobox',{name:'Предел записи'})).toHaveValue('10');
+});
+
+test('vehicle mode exposes four explicit calibration targets and never enables example coordinates',()=>{
+  render(<TeachingWorkbench deviceId="test-device" readOnly={false}/>);
+  fireEvent.change(screen.getByRole('combobox',{name:'Схема управления'}),{target:{value:'vehicle_buttons'}});
+  expect(screen.getByRole('button',{name:/газ \/ вперёд/})).toBeDisabled();
+  expect(screen.getByRole('button',{name:/тормоз \/ назад/})).toBeDisabled();
+  expect(screen.getByRole('button',{name:/поворот влево/})).toBeDisabled();
+  expect(screen.getByRole('button',{name:/поворот вправо/})).toBeDisabled();
+  expect(screen.getByRole('button',{name:'Включить управление'})).toBeDisabled();
+  expect(screen.getByLabelText('Панель записи')).toHaveClass('sticky','top-16');
+});
+
+test('an unsolicited Android close ends control and stops a recording instead of leaving dead keys active',async()=>{
+  mockAuth={accessToken:'test',sessionVersion:1,user:{id:'user',org_id:'org'}};
+  Object.defineProperty(globalThis,'TextEncoder',{configurable:true,value:TextEncoder});
+  Object.defineProperty(crypto,'subtle',{configurable:true,value:{digest:async()=>new Uint8Array(32).buffer}});
+  Object.defineProperty(navigator,'storage',{configurable:true,value:{estimate:async()=>({quota:4*1024**3,usage:0})}});
+  const postMessage=jest.fn();let emit:(message:Record<string,unknown>)=>void=()=>{};
+  jest.mocked(connectTeaching).mockImplementation(async(_d,_t,_v,_s,_r,_f,onMessage)=>{
+    emit=onMessage;emit({type:'attached'});
+    return {fresh:()=>true,binding:()=>({captureEpoch:'test',width:960,height:540}),endpoint:()=>({}),worker:{postMessage,terminate:jest.fn()},close:jest.fn()} as never;
+  });
+  render(<TeachingWorkbench deviceId="test-device" readOnly={false}/>);
+  const connect=screen.getByRole('button',{name:'Подключить поток'});await waitFor(()=>expect(connect).toBeEnabled());fireEvent.click(connect);
+  const control=screen.getByRole('button',{name:'Включить управление'});await waitFor(()=>expect(control).toBeEnabled());fireEvent.click(control);
+  await screen.findByText('Управление включено · фокус на экране');
+  act(()=>mockStateCallbacks.at(-1)!('closed'));
+  await screen.findByText(/Android завершил сеанс ввода/);expect(control).toBeEnabled();
+  expect(postMessage).not.toHaveBeenCalledWith(expect.objectContaining({type:'arm'}));
+  fireEvent.click(screen.getByRole('button',{name:'Записать маршрут'}));
+  await waitFor(()=>expect(postMessage).toHaveBeenCalledWith(expect.objectContaining({type:'arm'})));
+  act(()=>emit({type:'recording'}));act(()=>mockStateCallbacks.at(-1)!('closed'));
+  await waitFor(()=>expect(postMessage).toHaveBeenCalledWith({type:'stop',confirmed:true,reason:'native_closed_unexpectedly'}));
+  act(()=>emit({type:'finalized',id:null,manifest:{complete:false,failure:'native_closed_unexpectedly'}}));
+  await waitFor(()=>expect(screen.getByRole('button',{name:'Включить управление'})).toBeDisabled());
 });
