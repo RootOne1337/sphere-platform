@@ -18,6 +18,10 @@ function failure(r, reason) {
   r.failure = reason; r.accept = false;
   postMessage({ type: 'failed', reason });
 }
+function limit(r, reason) {
+  r.accept = false; r.limit = reason;
+  postMessage({ type: 'limit_reached', reason });
+}
 function enqueue(r, bytes, write) {
   if (r.queuedBytes + bytes > 8 * 1024 * 1024 || r.queued >= 32) { failure(r, 'disk_queue_budget'); return false; }
   r.queuedBytes += bytes; r.queued++;
@@ -34,7 +38,7 @@ function frame(value) {
   }
   const r = recording;
   if (!r?.accept) return;
-  if (stamp() - r.at > 120000 || r.frames >= 7200) { failure(r, 'recording_duration_limit'); return; }
+  if (r.started && stamp() - r.startedAt >= r.config.max_duration_ms || r.frames >= r.config.max_frames) { limit(r, 'duration_or_frame_limit'); return; }
   const meta = value.getMetadata();
   const knownGeometry = meta.width === r.config.width && meta.height === r.config.height;
   // Chromium reports 0x0 for delta frames. Only an already bound SPS/IDR may
@@ -47,7 +51,8 @@ function frame(value) {
   const timestamp = meta.rtpTimestamp;
   if (!Number.isInteger(timestamp) || timestamp < 0 || timestamp > 0xffffffff) { failure(r, 'rtp_clock_unavailable'); return; }
   const size = value.data.byteLength;
-  if (!size || size > 2 * 1024 * 1024 || r.bytes + size > 512 * 1024 * 1024) { failure(r, 'recording_byte_limit'); return; }
+  if (!size || size > 2 * 1024 * 1024) { failure(r, 'invalid_access_unit_size'); return; }
+  if (r.bytes + size > r.config.max_bytes) { limit(r, 'byte_limit'); return; }
   const view = new Uint8Array(value.data), types = nalTypes(view);
   if (!types.size) { failure(r, 'annex_b_required'); return; }
   if (omittedGeometry && (types.has(5) || types.has(7) || types.has(8))) { failure(r, 'keyframe_geometry_unavailable'); return; }
@@ -59,7 +64,7 @@ function frame(value) {
       if (stamp() - r.at > 10000) failure(r, 'idr_headers_timeout');
       return;
     }
-    r.started = true; r.ssrc = meta.synchronizationSource; r.firstRtp = r.lastRtp = timestamp; r.ticks = 0;
+    r.started = true; r.startedAt = stamp(); r.ssrc = meta.synchronizationSource; r.firstRtp = r.lastRtp = timestamp; r.ticks = 0;
     postMessage({ type: 'recording', id: r.id });
   } else {
     const delta = (timestamp - r.lastRtp + 0x100000000) % 0x100000000;
@@ -81,6 +86,10 @@ async function arm(config) {
   if (!config || !/^[0-9a-f]{32}$/.test(config.id) || !/^[0-9a-f]{32}$/.test(config.storage_scope)
     || !Number.isInteger(config.width) || !Number.isInteger(config.height)
     || config.width < 1 || config.height < 1 || config.width > 8192 || config.height > 8192) throw Error('invalid_recording_config');
+  config = { ...config, max_duration_ms: config.max_duration_ms ?? 120000, max_bytes: config.max_bytes ?? 512*1024*1024, max_frames: config.max_frames ?? 7200 };
+  if (!Number.isInteger(config.max_duration_ms) || config.max_duration_ms < 1000 || config.max_duration_ms > 600000
+    || !Number.isInteger(config.max_bytes) || config.max_bytes < 1024 || config.max_bytes > 2*1024*1024*1024
+    || !Number.isInteger(config.max_frames) || config.max_frames < 1 || config.max_frames > 36000) throw Error('invalid_recording_budget');
   const root = await navigator.storage.getDirectory();
   const library = await root.getDirectoryHandle('sphere-teaching-' + config.storage_scope, { create: true });
   let count = 0;
@@ -132,8 +141,9 @@ async function stop(confirmed, reason) {
     const file = await read(name); files[name] = { bytes: file.size, sha256: await hash(await file.arrayBuffer()) };
   }
   files['video.h264'] = { bytes: (await read('video.h264')).size, integrity: 'sha256_per_access_unit_in_frames_jsonl' };
-  const manifest = { schema: 'sphere-browser-teaching-v1', id: r.id, config: r.config,
+  const manifest = { schema: 'sphere-browser-teaching-v2', id: r.id, config: r.config,
     started_at_ms: r.at, finalized_at_ms: stamp(), frames: r.frames, events: r.events, files,
+    media_duration_ticks_90k: r.ticks ?? 0, ended_at_limit: r.limit ?? null,
     observed_encoded_frames: observedFrames,
     clock: { media: 'rtp_90000_relative', browser: 'performance_timeOrigin_plus_now',
       native: 'android_uptime_ms_in_receipts', android_to_browser_mapping: null },

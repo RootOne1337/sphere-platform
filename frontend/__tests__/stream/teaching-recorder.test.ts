@@ -81,3 +81,26 @@ test('starting mid-stream skips zero-geometry deltas until a real matching SPS P
   await f.context.stop(true,null);const manifest=JSON.parse(((await f.folder()).entries.get('manifest.json') as MemoryFile).data.toString());
   expect(manifest.complete).toBe(true);expect(manifest.frames).toBe(1);
 });
+
+test('chosen duration limit stops intake and still completes after confirmed native release',async()=>{
+  const f=fixture();await f.context.arm({...f.config,max_duration_ms:1000});f.frame(90000);
+  for(let i=0;i<6;i++)f.advance();f.frame(93000,false);
+  expect(f.messages).toContainEqual({type:'limit_reached',reason:'duration_or_frame_limit'});
+  expect(f.messages.some(m=>m.type==='failed')).toBe(false);
+  f.context.input({stage:'closed',at_ms:1002200,sequence:0,gesture:0,action:3,pointer_id:-1,outcome:'closed'});
+  await f.context.stop(true,null);const dir=await f.folder();expect(dir.entries.has('COMPLETE')).toBe(true);
+  const manifest=JSON.parse((dir.entries.get('manifest.json') as MemoryFile).data.toString());
+  expect(manifest.ended_at_limit).toBe('duration_or_frame_limit');expect(manifest.frames).toBe(1);
+});
+
+test('configured ten-minute budget accepts frames beyond the old two-minute cutoff',async()=>{
+  const f=fixture();await f.context.arm({...f.config,max_duration_ms:600000,max_frames:36000,max_bytes:2*1024**3});f.frame(90000);
+  for(let i=0;i<605;i++)f.advance();f.frame(93000,false);
+  f.context.input({stage:'closed',at_ms:1122000,sequence:0,gesture:0,action:3,pointer_id:-1,outcome:'closed'});
+  await f.context.stop(true,null);const manifest=JSON.parse(((await f.folder()).entries.get('manifest.json') as MemoryFile).data.toString());
+  expect(manifest.complete).toBe(true);expect(manifest.frames).toBe(2);expect(manifest.media_duration_ticks_90k).toBe(3000);
+});
+
+test.each([{max_duration_ms:600001},{max_bytes:2*1024**3+1},{max_frames:36001}])('rejects unbounded recording budget %p before writing files',async budget=>{
+  const f=fixture();await expect(f.context.arm({...f.config,...budget})).rejects.toThrow('invalid_recording_budget');expect(f.root.entries.size).toBe(0);
+});

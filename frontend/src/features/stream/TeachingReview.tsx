@@ -36,7 +36,7 @@ export function TeachingReview({ selected, refresh, onSelect, storageScope }: { 
         try {
           const file=await(await folder.getFileHandle('manifest.json')).getFile();if(file.size>65536)continue;
           const manifest=JSON.parse(await file.text());
-          if(manifest.schema!=='sphere-browser-teaching-v1'||manifest.id!==entry.name)continue;
+          if(!['sphere-browser-teaching-v1','sphere-browser-teaching-v2'].includes(manifest.schema)||manifest.id!==entry.name)continue;
           found.push({id:entry.name,title:String(manifest.config?.title??'Маршрут').slice(0,128),complete:manifest.complete===true,
             frames:Number(manifest.frames),failure:manifest.failure});
         } catch { found.push({id:entry.name,title:'Прерванная запись',complete:false,frames:0,failure:'manifest_missing'}); }
@@ -53,17 +53,18 @@ export function TeachingReview({ selected, refresh, onSelect, storageScope }: { 
       const folder=await library.getDirectoryHandle(selected);
       const read=async(name:string,max:number)=>{const file=await(await folder.getFileHandle(name)).getFile();if(file.size>max)throw Error('Размер индекса превышает предел.');return file;};
       const manifestFile=await read('manifest.json',65536),manifest=JSON.parse(await manifestFile.text());
-      const indexFile=await read('frames.jsonl',8*1024*1024),inputFile=await read('inputs.jsonl',8*1024*1024);
+      if(!['sphere-browser-teaching-v1','sphere-browser-teaching-v2'].includes(manifest.schema)||manifest.id!==selected)throw Error('Формат материала не поддерживается.');
+      const indexFile=await read('frames.jsonl',16*1024*1024),inputFile=await read('inputs.jsonl',8*1024*1024);
       if(await digest(await indexFile.arrayBuffer())!==manifest.files?.['frames.jsonl']?.sha256
         ||await digest(await inputFile.arrayBuffer())!==manifest.files?.['inputs.jsonl']?.sha256)throw Error('Контрольная сумма журнала не совпала.');
       if(manifest.complete===true){const marker=JSON.parse(await(await read('COMPLETE',1024)).text());
         if(marker.manifest_sha256!==await digest(await manifestFile.arrayBuffer()))throw Error('Маркер завершения не прошёл проверку.');}
       const entries:Row[]=(await indexFile.text()).trim().split('\n').filter(Boolean).map(line=>JSON.parse(line));
-      if(entries.length>7200||entries.some((r,i)=>r.index!==i||!Number.isInteger(r.offset)||r.offset<0
+      if(entries.length>(manifest.schema==='sphere-browser-teaching-v2'?36000:7200)||entries.some((r,i)=>r.index!==i||!Number.isInteger(r.offset)||r.offset<0
         ||!Number.isInteger(r.bytes)||r.bytes<1||r.bytes>2*1024*1024||!Number.isFinite(r.relative_ticks_90k)
         ||r.relative_ticks_90k<0||typeof r.key!=='boolean'||!/^[0-9a-f]{64}$/.test(r.sha256)
         || i>0&&(r.offset!==entries[i-1].offset+entries[i-1].bytes||r.relative_ticks_90k<=entries[i-1].relative_ticks_90k)))throw Error('Индекс видео некорректен.');
-      const video=await read('video.h264',512*1024*1024);
+      const video=await read('video.h264',manifest.schema==='sphere-browser-teaching-v2'?2*1024*1024*1024:512*1024*1024);
       if(video.size!==manifest.files?.['video.h264']?.bytes||entries.length
         && entries.at(-1)!.offset+entries.at(-1)!.bytes!==video.size)throw Error('Размер видео не соответствует индексу.');
       const journal=(await inputFile.text()).trim().split('\n').filter(Boolean).map(line=>JSON.parse(line));
