@@ -82,7 +82,17 @@ export function TeachingWorkbench({ deviceId, readOnly }: { deviceId: string; re
   useEffect(() => {
     const timer = setInterval(() => setReady(connection.current?.fresh() === true && attached.current), 200);
     const hidden = () => { if (document.hidden) void stopCallback.current('page_hidden'); };
-    const blur = () => { if (active(phaseRef.current)) void stopCallback.current('window_focus_lost'); };
+    const blur = () => {
+      if(!active(phaseRef.current))return;
+      if(keys.current.size || mouse.current !== null) { void stopCallback.current('window_focus_lost'); return; }
+      // Embedded Rerun focuses its canvas at startup. Moving between documents
+      // inside the same focused page is not leaving the app. Held input is never exempt.
+      queueMicrotask(()=>{
+        const target=document.activeElement;
+        if(document.hasFocus() && target?.tagName==='IFRAME' && target.getAttribute('title')==='3D-сцена маршрута Rerun')return;
+        if(active(phaseRef.current))void stopCallback.current('window_focus_lost');
+      });
+    };
     document.addEventListener('visibilitychange', hidden); window.addEventListener('blur', blur);
     return () => {
       clearInterval(timer); document.removeEventListener('visibilitychange', hidden); window.removeEventListener('blur', blur);

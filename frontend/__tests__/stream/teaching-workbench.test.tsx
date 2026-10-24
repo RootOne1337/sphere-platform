@@ -61,10 +61,15 @@ test('operator can use held WASD before recording, then closes that owner before
   expect(mockClose).toHaveBeenCalledTimes(1);expect(mockControllers).toHaveLength(2);
   act(()=>emit({type:'recording'}));fireEvent.keyDown(video,{code:'Space'});fireEvent.keyUp(video,{code:'Space'});
   expect(mockSet).toHaveBeenCalledWith(2,null);
-  fireEvent.click(screen.getByRole('button',{name:'Остановить · Esc'}));
+  const scene=document.createElement('iframe');scene.title='3D-сцена маршрута Rerun';document.body.appendChild(scene);scene.focus();
+  const focus=jest.spyOn(document,'hasFocus').mockReturnValue(true);
+  await act(async()=>{fireEvent.blur(window);await Promise.resolve();});
+  expect(mockClose).toHaveBeenCalledTimes(1);
+  focus.mockReturnValue(false);await act(async()=>{fireEvent.blur(window);await Promise.resolve();});
   await waitFor(()=>expect(postMessage).toHaveBeenCalledWith(expect.objectContaining({type:'stop',confirmed:true})));
   act(()=>emit({type:'finalized',id:null,manifest:{complete:true,frames:0,media_duration_ticks_90k:0}}));
-  await screen.findByText('Материал сохранён. Видео и журнал готовы к просмотру.');
+  await screen.findByText('Остановлено: окно потеряло фокус. Проверьте статус материала.');
+  focus.mockRestore();scene.remove();
 });
 
 test('the operator sees the separate 3D section and a ten-minute recording option',()=>{
