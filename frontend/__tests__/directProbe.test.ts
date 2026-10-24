@@ -26,7 +26,8 @@ class FakePeer {
   ontrack: ((event: { track: MediaStreamTrack }) => void) | null = null;
   constructor(readonly configuration: RTCConfiguration) { FakePeer.latest = this; FakePeer.constructions++; }
   createDataChannel = jest.fn((label: string) => label.startsWith('sphere-control-') ? this.control : this.channel);
-  addTransceiver = jest.fn();
+  receiver = {};
+  addTransceiver = jest.fn(() => ({ receiver: this.receiver }));
   createOffer = jest.fn(async () => ({ type: 'offer', sdp: 'v=0\r\n' }));
   setLocalDescription = jest.fn(async () => {});
   setRemoteDescription = jest.fn(async () => {});
@@ -74,6 +75,19 @@ const appSdp = 'v=0\r\na=fingerprint:sha-256 ' + Array(32).fill('AB').join(':')
   + '\r\nm=application 9 UDP/DTLS/SCTP webrtc-datachannel\r\n';
 const videoSdp = appSdp + 'm=video 9 UDP/TLS/RTP/SAVPF 96\r\na=recvonly\r\na=rtpmap:96 H264/90000\r\n';
 const epoch = '12345678-1234-4234-8234-123456789abc';
+
+test('encoded receiver consumer is installed before SDP and does not wait for ontrack', async () => {
+  FakePeer.initialSdp = videoSdp;
+  const onReceiver = jest.fn(receiver => {
+    expect(receiver).toBe(FakePeer.latest.receiver);
+    expect(FakePeer.latest.createOffer).not.toHaveBeenCalled();
+    expect(FakePeer.latest.setRemoteDescription).not.toHaveBeenCalled();
+  });
+  const stop = startDirectVideoSession('wss://same-origin', 'access', () => {}, { onTrack: jest.fn(), onReceiver });
+  await flush();
+  expect(onReceiver).toHaveBeenCalledTimes(1);
+  stop();
+});
 test('history correlation is read-only and never creates the control channel', async () => {
   FakePeer.initialSdp = videoSdp;
   const stop = startDirectVideoSession('wss://same-origin', 'access', () => {},

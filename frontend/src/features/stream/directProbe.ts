@@ -320,14 +320,18 @@ function startDirectSession(
         direct.onclose = () => retire('control_channel_closed');
       }
       if (video) {
-        peer.addTransceiver('video', { direction: 'recvonly' });
+        const transceiver = peer.addTransceiver('video', { direction: 'recvonly' });
+        // Install an encoded consumer before offer/answer starts the receiver.
+        // Assigning it from ontrack can leave Chromium's already-created native
+        // decoder path playing while the worker sees no encoded frames.
+        if (options.onReceiver) options.onReceiver(transceiver.receiver);
         peer.ontrack = event => {
           if (stopped) { event.track.stop(); return; }
           if (videoTrack || event.track.kind !== 'video') { event.track.stop(); return stop('invalid_video_track'); }
           videoTrack = event.track;
           if (live && event.receiver) preferLowVideoDelay(event.receiver);
           videoTrack.onended = () => stop('video_track_ended');
-          try { options.onReceiver?.(event.receiver); onVideoTrack?.(videoTrack); } catch { stop('video_renderer_failed'); }
+          try { onVideoTrack?.(videoTrack); } catch { stop('video_renderer_failed'); }
         };
       }
     }
