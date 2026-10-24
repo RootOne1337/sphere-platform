@@ -7,7 +7,7 @@
     "CURRENT_ENTRYPOINT": 8,
     "DATED_EVIDENCE": 382,
     "DESIGN_SPECIFICATION": 86,
-    "OPERATING_GUIDE": 72,
+    "OPERATING_GUIDE": 73,
     "PROJECT_POLICY": 7,
     "SUPPORTING_DOCUMENT": 7
   },
@@ -1906,6 +1906,10 @@
     },
     {
       "file": "docs/operations/STATIC-STREAM-INPUT.md",
+      "role": "OPERATING_GUIDE"
+    },
+    {
+      "file": "docs/operations/TEACHING-DENSE-RECONSTRUCTION.md",
       "role": "OPERATING_GUIDE"
     },
     {
