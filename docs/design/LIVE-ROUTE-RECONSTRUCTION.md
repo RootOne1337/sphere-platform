@@ -215,6 +215,12 @@ segmentation/tracking, но требует инициализации объек
 Оригинальное H264 пишется отдельно и не ограничено process_res280: качественный
 master можно позднее обработать заново, не повторяя запись из-за preview.
 
+Первый offline вход в этот pipeline реализован в `motor_worker.browser_teach`:
+browser v1/v2 SHA/decode/native journal validation и PNG в исходном разрешении.
+Реальный старый клип6026кадров подготовлен в188изображений960×540. Это ещё не
+keyframe-quality selection, camera reconstruction или готовый Brush input с poses.
+[Команды и границы](../operations/TEACHING-WEB.md#offline-подготовка-веб-записи-для-реконструкции).
+
 ### Три разных результата, которые стоит показывать честно
 
 | Результат | Что видит оператор | Ограничение |

@@ -6657,5 +6657,21 @@
     "vehicleFollowupEvidence": "docs/audits/2026-10-24/WEB-TEACHING-VEHICLE-FOLLOWUP.json",
     "vehicleFollowupEvidenceSha256NormalizedLf": "39d7b55613239951f7107747bafbbd4ad8870fc92e88e86067e1a1498671cd88",
     "browserFolderPickerQualified": false
+  },
+  "browserReconstructionInput": {
+    "evidence": "docs/audits/2026-10-24/BROWSER-RECONSTRUCTION-INPUT.json",
+    "evidenceSha256NormalizedLf": "630422ffc1cd512bbec8b4d872dec6f946198e8fe7dc48c8f9d3107cb319b7f9",
+    "readerImplemented": true,
+    "fullResolutionPreparationImplemented": true,
+    "sourceFramesVerified": 6026,
+    "preparedImages": 188,
+    "sourceGeometry": [
+      960,
+      540
+    ],
+    "masksImplemented": false,
+    "cameraReconstructionImplemented": false,
+    "workerRouteCompilerImporterImplemented": false,
+    "autonomousNavigationAccepted": false
   }
 }

@@ -137,6 +137,45 @@ Browser schema `sphere-browser-teaching-v2` добавляет выбранны�
 независимый low-render повтор, затем общий importer/route compiler.
 Успешная запись не доказывает локализацию, объезд динамических объектов или arrival.
 
+### Offline-подготовка веб-записи для реконструкции
+
+`motor_worker.browser_teach` читает завершённый browser v1/v2 пакет из отдельной
+папки с пятью исходными файлами. Команда `inspect` проверяет COMPLETE/manifest,
+индексы, размеры, хеш каждого H264 access unit и полностью декодирует видео.
+RTP wrap проверяется отдельно от часов браузера; submitted/receipt должны
+совпадать по команде, координатам, контакту и порядку. Для завершения с удержанием
+нужны подтверждённый native CANCEL uptime и соответствующий список контактов.
+Старый CLOSED без uptime допускается только при отсутствии удержаний.
+
+```powershell
+.local-pilot/motor-worker-venv/Scripts/python.exe -m motor_worker.browser_teach inspect --directory C:/route-export
+.local-pilot/motor-worker-venv/Scripts/python.exe -m motor_worker.browser_teach prepare --directory C:/route-export --output C:/route-prepared --interval 1 --max-images 256 --max-mib 1024
+```
+
+Пути приведены как примеры существующей папки экспорта и **новой** папки результата.
+`prepare` повторно проверяет весь видеоматериал, сохраняет lossless PNG в исходных
+размерах и `reconstruction-input.json` с точными source index/PTS/SHA, а также
+оригинальные manifest/index/input journals в `source/`. Тяжёлое исходное видео не
+дублируется; оно остаётся в исходной папке. Результат не является полной резервной
+копией видеоматериала. Оригинальный export нужно сохранить отдельно.
+
+Вход до2GiB/36000frames/40000events, H264 unit≤2MiB; decoder pending≤32 и один
+последний декодированный кадр для конечной выборки. Предел выбранных изображений
+и выходных байтов строгий; существующая папка не перезаписывается, при ошибке
+остаётся незапечатанный результат без корневого COMPLETE. CLI сохраняет общий
+resource guard перед подготовкой. Никаких GPU models, Android input или сети.
+
+Выборка пока идёт по media interval плюс последний кадр, **не** по оценке sharpness,
+параллакса или стабильности scene. `cameras`, `metric_scale` и camera/body transform
+остаются неизвестными. Это подготовленные изображения, а не готовый COLMAP model
+или Brush dataset с poses. Masks пока не применяются. Профиль касаний сохраняется
+в исходном manifest; неизвестные FOV/render/DPI не подменяются догадкой.
+
+Проверка на старом игровом материалеc7aa48d8:6026/6026кадров,190,215с;188PNG
+сохранены в960×540 без уменьшения. Это не новый1080p master, не сшитая карта и
+не квалификация вождения. Следующие шаги — masks/quality keyframe selection,
+оценка камер, связность и только затем плотная сцена/маршрутный compiler.
+
 ## Локальная живая 3D-панель
 
 На этой же странице отдельная кнопка **Подключить 3D-просмотр**. Подключать её

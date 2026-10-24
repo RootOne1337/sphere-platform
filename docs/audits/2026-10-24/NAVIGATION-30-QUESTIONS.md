@@ -548,6 +548,7 @@ translation явно нормируется до длины1. Комментар
 |---|---|---|
 | `TeachingWorkbench`, worker, contacts | Original H264 и подтверждённый ввод, транспортная калибровка, предел2/5/10мин | Квалифицировать настоящий master1080p, экспорт/восстановление в целевом браузере, camera/render metadata |
 | `motor_worker/teach.py` | Строгий собственный worker bundle и offline compile | Импорт browser teaching v1/v2 с сохранением происхождения; форматы не взаимозаменяемы автоматически |
+| `motor_worker/browser_teach.py` | Добавлен отдельный offline reader v1/v2, полная SHA/decode/input проверка и full-resolution PNG preparation; камер/масок нет | Quality keyframes, masks и pose backend. Этот reader не подключает browser пакет к `teach compile` автоматически |
 | `motor_worker/landmarks.py` | Ограниченный ORB/homography matcher | Сравнить с learned features, retrieval и geometric pose; homography не выдавать за pose |
 | `motor_worker/route_memory.py` | До64views, source ticks≤300с, три согласованных последовательных наблюдения; `end_view`, не arrival | Масштабирование/сегментация длинного маршрута, глобальная relocalization, версия карты и неопределённость |
 | `scripts/pilot/teaching_scene.py` | Две картинки, process_res280, относительная геометрия пары; окна очищаются | Mask-aware pose frontend, совместимость камер, stitching/optimization/export только после benchmark |
