@@ -119,6 +119,9 @@ export function TeachingWorkbench({ deviceId, readOnly }: { deviceId: string; re
 
   const connect = async () => {
     if (!token || !storageScope || readOnly || phaseRef.current === 'connecting') return;
+    // Chromium may suspend presentation callbacks for a video outside the viewport.
+    // Bring the operator's screen into view before qualifying fresh frames.
+    video.current?.scrollIntoView?.({block:'center',behavior:'auto'});
     await disconnect(); stopPromise.current = null; setClip(null); setResult(null); change('connecting');
     setNative('Не открыт'); setNotice('Подключаем один прямой поток. Ввод ещё выключен.');
     const request = new AbortController(); abort.current = request;
