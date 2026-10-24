@@ -115,8 +115,10 @@ export class TeachingContacts {
     const now = performance.now();
     if (this.closing) { if (now - this.closeAt >= 2500) this.finish(false); return; }
     if (this.ended) return;
-    if (!this.fresh() || this.endpoint.readyState !== 1 || this.pending && now - this.pendingAt >= 500
-      || !this.ready && now - this.openedAt >= 6000) { this.fail('contact_watchdog'); return; }
+    if (!this.fresh()) { this.fail('contact_video_stale'); return; }
+    if (this.endpoint.readyState !== 1) { this.fail('contact_channel_closed'); return; }
+    if (this.pending && now - this.pendingAt >= 500) { this.fail('contact_ack_timeout'); return; }
+    if (!this.ready && now - this.openedAt >= 6000) { this.fail('contact_ready_timeout'); return; }
     if (!this.isReady || this.pending || now - this.lastSend < 300) return;
     const event: TeachingInput = { stage: 'submitted', at_ms: performance.timeOrigin + now,
       sequence: ++this.sequence, gesture: this.held.size ? this.gesture : 0, action: 4, pointer_id: -1 };

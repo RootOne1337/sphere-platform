@@ -17,6 +17,7 @@ const newId = () => crypto.randomUUID().replaceAll('-', '');
 const active = (phase: Phase) => ['opening','controlling','arming','recording','stopping'].includes(phase);
 const inputEnabled = (phase: Phase) => phase === 'controlling' || phase === 'recording';
 const stopReasons: Record<string,string> = { page_hidden: 'страница скрыта', window_focus_lost: 'окно потеряло фокус', input_focus_lost: 'фокус управления потерян при удержании', connection_closed: 'соединение закрыто', video_stalled: 'нет свежих кадров', pointer_cancelled: 'касание отменено', keyframe_start_timeout: 'ключевой кадр не получен за 12 секунд' };
+Object.assign(stopReasons,{contact_video_stale:'ввод остановлен: видеокадр старше 250 мс',contact_channel_closed:'канал ввода закрыт',contact_ack_timeout:'Android не подтвердил команду за 500 мс',contact_ready_timeout:'Android не подтвердил готовность ввода за 6 секунд'});
 
 export function TeachingWorkbench({ deviceId, readOnly }: { deviceId: string; readOnly: boolean }) {
   const token = useAuthStore(s => s.accessToken), sessionVersion = useAuthStore(s => s.sessionVersion);

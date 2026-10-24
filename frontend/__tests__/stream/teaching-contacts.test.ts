@@ -38,7 +38,7 @@ test('heartbeat extends hold without another DOWN and native release is required
 });
 test('lost frames revoke all contacts; unanswered close stays unknown and is never replayed',async()=>{
   const f=fixture();f.ready();f.driver.set(0,{x:100,y:350});f.ack();f.stale();jest.advanceTimersByTime(25);
-  expect(f.states).toContain('contact_watchdog');const close=f.driver.close();jest.advanceTimersByTime(2600);
+  expect(f.states).toContain('contact_video_stale');const close=f.driver.close();jest.advanceTimersByTime(2600);
   await expect(close).resolves.toBe(false);expect(f.journal.at(-1)?.outcome).toBe('unknown');
   f.driver.set(0,{x:100,y:350});expect(f.sent.filter(e=>e.action===0)).toHaveLength(1);
 });
@@ -46,6 +46,16 @@ test('legacy ready cannot masquerade as three-contact support',()=>{
   const f=fixture();f.receipt({sequence:0,outcome:'ready',contact_protocol:undefined});
   expect(f.states).toContain('contact_protocol_required');expect(f.driver.isReady).toBe(false);
   expect(f.sent.filter(e=>e.type==='touch_contact_event')).toHaveLength(0);
+});
+
+test('unanswered applied receipt keeps its 500ms fence and reports ACK timeout separately',()=>{
+  const f=fixture();f.ready();f.driver.set(0,{x:100,y:350});jest.advanceTimersByTime(500);
+  expect(f.states).toContain('contact_ack_timeout');expect(f.sent.at(-1)?.type).toBe('touch_close');
+});
+
+test('missing READY keeps its six-second fence and does not pretend video was stale',()=>{
+  const f=fixture();jest.advanceTimersByTime(6000);
+  expect(f.states).toContain('contact_ready_timeout');expect(f.states).not.toContain('contact_video_stale');
 });
 test('wrong pointer receipt retires owner; no queued correction runs after uncertainty',()=>{
   const f=fixture();f.ready();f.driver.set(0,{x:100,y:350});f.driver.set(0,{x:120,y:350});
