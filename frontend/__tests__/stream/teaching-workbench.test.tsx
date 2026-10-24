@@ -52,6 +52,7 @@ test('operator can use held WASD before recording, then closes that owner before
   const connect=screen.getByRole('button',{name:'Подключить поток'});await waitFor(()=>expect(connect).toBeEnabled());fireEvent.click(connect);
   const control=screen.getByRole('button',{name:'Включить управление'});await waitFor(()=>expect(control).toBeEnabled());fireEvent.click(control);
   await screen.findByText('Управление включено · фокус на экране');
+  expect(screen.getByRole('button',{name:'Подключить 3D-просмотр'})).toBeDisabled();
   const video=screen.getByLabelText('Игровой экран: WASD, мышь, пробел, Shift; Escape — остановить запись');
   fireEvent.keyDown(video,{code:'KeyW'});fireEvent.keyUp(video,{code:'KeyW'});
   expect(mockSet).toHaveBeenCalledWith(0,{x:144,y:443});expect(mockSet).toHaveBeenCalledWith(0,null);

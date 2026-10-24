@@ -269,7 +269,7 @@ export function TeachingWorkbench({ deviceId, readOnly }: { deviceId: string; re
       <Button variant="destructive" disabled={!active(phase) || phase === 'stopping'} onClick={() => { void stop(); }}><Square size={15} className="mr-2" />{phase === 'stopping' ? 'Освобождение и сохранение…' : 'Остановить · Esc'}</Button>
       <p role="status" className="min-w-[220px] flex-1 text-xs leading-5 text-muted-foreground">{readOnly ? 'Для записи требуется право stream:control.' : notice}</p>
     </div>
-    <TeachingScenePreview video={video} deviceId={deviceId} ready={ready} />
+    <TeachingScenePreview video={video} deviceId={deviceId} ready={ready} controlActive={active(phase)} />
     <TeachingReview key={storageScope} storageScope={storageScope} selected={clip} refresh={refresh} onSelect={setClip} />
     <p className="flex items-center gap-2 text-xs text-muted-foreground"><Download size={14} />Материал содержит только явно записанный проход. Он ещё не доказывает повторение маршрута ИИ.</p>
   </div>;
