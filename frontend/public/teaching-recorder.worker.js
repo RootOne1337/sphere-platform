@@ -73,12 +73,13 @@ function frame(value) {
   }
   const data = value.data.slice(0), offset = r.bytes;
   const index = { index: r.frames, offset, bytes: size, rtp_timestamp: timestamp, relative_ticks_90k: r.ticks,
-    worker_observed_at_ms: stamp(), geometry_reported: knownGeometry, key: types.has(5), sha256: null };
+    worker_observed_at_ms: stamp(), geometry_reported: knownGeometry, key: types.has(5), seekable: types.has(5) && types.has(7) && types.has(8), sha256: null };
   if (!enqueue(r, size, async () => {
     index.sha256 = await hash(data); await r.video.write(data);
     await r.index.write(encode.encode(JSON.stringify(index) + '\n'));
   })) return;
   r.bytes += size; r.frames++;
+  if (r.frames % 300 === 0) void transformer.sendKeyFrameRequest().catch(() => {});
   if (r.frames % 30 === 0) postMessage({ type: 'progress', frames: r.frames, bytes: r.bytes, seconds: r.ticks / 90000 });
 }
 async function arm(config) {

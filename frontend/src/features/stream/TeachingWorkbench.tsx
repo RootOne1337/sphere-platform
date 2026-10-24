@@ -111,7 +111,7 @@ export function TeachingWorkbench({ deviceId, readOnly }: { deviceId: string; re
         }); }, message => {
           if (request.signal.aborted) return;
           if (message.type === 'attached') attached.current = true;
-          if (message.type === 'recording') { change('recording'); setNotice('Идёт запись оригинального видео и подтверждённых действий.'); video.current?.focus(); }
+          if (message.type === 'recording') { change('recording'); setNotice('Идёт запись оригинального видео и подтверждённых действий.'); video.current?.focus({preventScroll:true}); }
           if (message.type === 'progress') setProgress({ frames: Number(message.frames), bytes: Number(message.bytes), seconds: Number(message.seconds) });
           if (message.type === 'limit_reached') { setNotice('Достигнут выбранный предел. Освобождаем ввод и сохраняем запись.'); void stopCallback.current(); }
           if (message.type === 'encoded_status') setEncoded(`Encoded ${Number(message.frames)} · ${String(message.kind)} · NAL ${Array.isArray(message.nal_types) ? message.nal_types.join('/') : '?'} · ${String(message.width)}×${String(message.height)}`);

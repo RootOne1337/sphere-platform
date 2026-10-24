@@ -2,7 +2,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { Button } from '@/components/ui/button';
 
-type Row = { index: number; offset: number; bytes: number; relative_ticks_90k: number; key: boolean; sha256: string; worker_observed_at_ms: number };
+type Row = { index: number; offset: number; bytes: number; relative_ticks_90k: number; key: boolean; seekable?: boolean; sha256: string; worker_observed_at_ms: number };
 type Clip = { id: string; title: string; complete: boolean; frames: number; failure: string | null };
 const names = ['video.h264','frames.jsonl','inputs.jsonl','manifest.json','COMPLETE'];
 const digest = async (buffer: ArrayBuffer) => Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',buffer)), v => v.toString(16).padStart(2,'0')).join('');
@@ -75,12 +75,12 @@ export function TeachingReview({ selected, refresh, onSelect, storageScope }: { 
   },[selected,refresh,storageScope]);
   useEffect(()=>{
     if(!directory.current||!rows.length||!canvas.current)return;
-    let retired=false;let decoder:VideoDecoder|undefined;setDecoding(true);
+    let retired=false;let decoder:VideoDecoder|undefined;setDecoding(true);setError(null);
     void(async()=>{
       if(typeof VideoDecoder==='undefined')throw Error('В браузере нет WebCodecs для просмотра исходного H264. Экспортируйте видео.');
       const file=await(await directory.current!.getFileHandle('video.h264')).getFile();
-      let first=position;while(first>0&&!rows[first].key)first--;
-      if(!rows[first].key||position-first>600)throw Error('Нет близкого ключевого кадра для просмотра.');
+      let first=position;while(first>0&&!(rows[first].seekable??rows[first].key))first--;
+      if(!rows[first].key)throw Error('Нет ключевого кадра для просмотра.');
       const bytes=await file.slice(rows[first].offset,rows[first].offset+rows[first].bytes).arrayBuffer();
       const codec=h264Codec(new Uint8Array(bytes));if(!codec)throw Error('Не найден SPS H264.');
       const support=await VideoDecoder.isConfigSupported({codec});if(!support.supported)throw Error('Профиль H264 не поддерживается декодером.');
