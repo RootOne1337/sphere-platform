@@ -1,8 +1,8 @@
 {
   "schemaVersion": 1,
-  "reviewedAtUtc": "2026-10-23T20:38:38.626637+00:00",
-  "sourceReviewed": "e712b6c932606c11a0ab2226cb1c1d73d06adc34",
-  "scope": "Web teaching and explicit three-contact candidate implemented; post-reboot resource guard passed. Local Android/frontend validation and delivery pending; no runtime or navigation acceptance promotion.",
+  "reviewedAtUtc": "2026-10-24T17:25:26.842528+00:00",
+  "sourceReviewed": "8e752e14e0862113c6052c07452b814eb444cad6",
+  "scope": "PH011 APK90 addressed install and guarded VPN handover;190s real browser recording/three contact roles and live relative3D preview. Human route, global map, strict5Hz SLA and autonomous navigation remain open.",
   "baseline": "docs/audits/2026-10-05/ENTERPRISE-PRODUCT-BACKLOG.json",
   "previousCrosscheck": "docs/audits/2026-10-09/CHAT-CODE-RECONCILIATION.json",
   "counts": {
@@ -11,11 +11,11 @@
     "open": 41
   },
   "installed": {
-    "lastObservedUtc": "2026-10-23T11:12:19.981238+00:00",
-    "ui": "a239baa26c5d945a4e3b09f4596b94d4db0cada2",
+    "lastObservedUtc": "2026-10-24T17:25:26.842528+00:00",
+    "ui": "8e752e14e0862113c6052c07452b814eb444cad6",
     "api": "1afdc529e18cd34b5d8ee0919f217076a8592846",
-    "evidence": "docs/audits/2026-10-23/PH030-AWG2-LAN-GATEWAY-CANARY.json",
-    "observation": "UI/API binding retains the earlier VPN page/dialog receipt. Latest readback records PH011 APK88/AWG2 and supervised CV walking; PH030 actual reboot proof is separate. Neural navigation not accepted.",
+    "evidence": "docs/audits/2026-10-24/WEB-TEACHING-DELIVERY.json",
+    "observation": "PH011 APK90 addressed install and guarded VPN handover;190s real browser recording/three contact roles and live relative3D preview. Human route, global map, strict5Hz SLA and autonomous navigation remain open.",
     "pilotApk": {
       "device": "auto-ph-030",
       "deviceId": "753fd530-2f19-4e5e-98ba-769863678141",
@@ -28,7 +28,7 @@
       "packageProofObservedAtUtc": "2026-10-23T11:12:19.981238+00:00",
       "scope": "Locally built/signed APK; addressed install/hash, one real ACTIVE boot restore and finite post-boot PC gesture/HTTPS. Not early boot barrier or production SLA."
     },
-    "evidenceSha256NormalizedLf": "169f06173c1f27a9568e1a19d35b540270f7c99804a621611f7beb0eeae06914",
+    "evidenceSha256NormalizedLf": "dc265ca4f22a0d15488222f139915d9e08733b0bed0ae2892ef1c3f71096791e",
     "additionalPilotApks": [
       {
         "device": "auto-ph-010",
@@ -45,14 +45,14 @@
       {
         "device": "auto-ph-011",
         "deviceId": "414ce0e9-4b93-4f96-b9ca-ee675f53835e",
-        "version": "1.2.88-dev",
-        "versionCode": 10288,
-        "sourceRevision": "6ad0df5fbcc3590ae9c63fe6922db178b45aeee1",
-        "apkSha256": "355af6f5ecc6697bd8fee66ff9f085bdbf9841e80bb201f8d48515a1ac7e9bca",
-        "evidence": "docs/audits/2026-10-23/PH011-APK88-MOTOR-CALIBRATION.json",
-        "evidenceSha256NormalizedLf": "faf7f29dc4d0e786ab4d69c39db5b4330ec0ddcd5a1762614a1ad4e52c5447d1",
-        "packageProofObservedAtUtc": "2026-10-23T12:57:16.663012+00:00",
-        "scope": "PH011 addressed install/hash, unique AWG2 kernel bypass and finite supervised CV walking; no learned navigation/arrival acceptance."
+        "version": "1.2.90-dev",
+        "versionCode": 10290,
+        "sourceRevision": "d62088094abcc136c1d29beea834dd4486d874e2",
+        "apkSha256": "51e2f6df58a73a10e730d8494e264f72ce1431ca86df8e3704887bea26ee70cc",
+        "evidence": "docs/audits/2026-10-24/WEB-TEACHING-DELIVERY.json",
+        "evidenceSha256NormalizedLf": "dc265ca4f22a0d15488222f139915d9e08733b0bed0ae2892ef1c3f71096791e",
+        "packageProofObservedAtUtc": "2026-10-24T17:05:24.962887+00:00",
+        "scope": "PH011 only, original signature/hash and preserved both-family VPN guard; real190s browser recording and live relative3D. No autonomous route acceptance."
       },
       {
         "device": "auto-ph-025",
@@ -68,18 +68,19 @@
       }
     ],
     "fleetApkEvidence": {
-      "evidence": "docs/audits/2026-10-23/PH011-APK88-MOTOR-CALIBRATION.json",
-      "evidenceSha256NormalizedLf": "faf7f29dc4d0e786ab4d69c39db5b4330ec0ddcd5a1762614a1ad4e52c5447d1",
+      "evidence": "docs/audits/2026-10-24/WEB-TEACHING-DELIVERY.json",
+      "evidenceSha256NormalizedLf": "dc265ca4f22a0d15488222f139915d9e08733b0bed0ae2892ef1c3f71096791e",
       "installedCount": 4,
       "verifiedVersionCounts": {
         "10285": 2,
-        "10288": 2
+        "10288": 1,
+        "10290": 1
       },
-      "scope": "PH011 fresh APK88 hash; previous dated PH030 APK88 and PH010/PH025 APK85 proofs retained;17 offline untouched."
+      "scope": "Dated package evidence: PH01190, PH03088, PH010/02585. No fleet rollout and no claim all devices currently online."
     },
-    "latestReadbackAtUtc": "2026-10-23T12:57:16.663012+00:00",
-    "latestReadbackEvidence": "docs/audits/2026-10-23/PH011-APK88-MOTOR-CALIBRATION.json",
-    "latestReadbackEvidenceSha256NormalizedLf": "faf7f29dc4d0e786ab4d69c39db5b4330ec0ddcd5a1762614a1ad4e52c5447d1",
+    "latestReadbackAtUtc": "2026-10-24T17:05:24.962887+00:00",
+    "latestReadbackEvidence": "docs/audits/2026-10-24/WEB-TEACHING-DELIVERY.json",
+    "latestReadbackEvidenceSha256NormalizedLf": "dc265ca4f22a0d15488222f139915d9e08733b0bed0ae2892ef1c3f71096791e",
     "previousRuntimeObservation": {
       "ui": "ed9d54d090e2b5a5d471502335ddf6b8b86dbd35",
       "api": "ed9d54d090e2b5a5d471502335ddf6b8b86dbd35",
@@ -263,6 +264,30 @@
         "evidenceSha256NormalizedLf": "3291d747154f8bbdadd41e3c386e930d5f882e5ceda175d03ce07da523e83f13",
         "packageProofObservedAtUtc": "2026-10-22T12:04:38.101328+00:00",
         "scope": "Completed addressed OTA plus independent installed package hash; VPN physical scope is separate."
+      },
+      {
+        "device": "auto-ph-011",
+        "deviceId": "414ce0e9-4b93-4f96-b9ca-ee675f53835e",
+        "version": "1.2.88-dev",
+        "versionCode": 10288,
+        "sourceRevision": "6ad0df5fbcc3590ae9c63fe6922db178b45aeee1",
+        "apkSha256": "355af6f5ecc6697bd8fee66ff9f085bdbf9841e80bb201f8d48515a1ac7e9bca",
+        "evidence": "docs/audits/2026-10-23/PH011-APK88-MOTOR-CALIBRATION.json",
+        "evidenceSha256NormalizedLf": "faf7f29dc4d0e786ab4d69c39db5b4330ec0ddcd5a1762614a1ad4e52c5447d1",
+        "packageProofObservedAtUtc": "2026-10-23T12:57:16.663012+00:00",
+        "scope": "PH011 addressed install/hash, unique AWG2 kernel bypass and finite supervised CV walking; no learned navigation/arrival acceptance."
+      },
+      {
+        "device": "auto-ph-011",
+        "deviceId": "414ce0e9-4b93-4f96-b9ca-ee675f53835e",
+        "version": "1.2.89-dev",
+        "versionCode": 10289,
+        "sourceRevision": "94bf59a3c84f1828fa360b7bbdf0796beb00494a",
+        "apkSha256": "4367c3b7a6a25c9ac99212028b3af9ca1360d345c14ddb210b6692cc19863b0a",
+        "evidence": "docs/audits/2026-10-24/WEB-TEACHING-DELIVERY.json",
+        "evidenceSha256NormalizedLf": "dc265ca4f22a0d15488222f139915d9e08733b0bed0ae2892ef1c3f71096791e",
+        "packageProofObservedAtUtc": "2026-10-23T21:19:05.768641+00:00",
+        "scope": "Superseded by90; native three-contact canary and earlier browser fixture records."
       }
     ],
     "historicalFleetApkEvidence": {
@@ -6596,7 +6621,7 @@
     "productionAccepted": false
   },
   "webTeaching089": {
-    "evidence": "docs/audits/2026-10-24/WEB-TEACHING-CONTACTS.md",
+    "evidence": "docs/audits/2026-10-24/WEB-TEACHING-DELIVERY.json",
     "workerVersion": "0.8.1",
     "candidateVersionCode": 10289,
     "nativeContactsImplemented": 3,
@@ -6607,9 +6632,27 @@
     "accountLibraryImplemented": false,
     "workerImporterImplemented": false,
     "scopedNativeTestsPassed": 107,
-    "candidateApkInstalled": false,
-    "physicalThreeContactsAccepted": false,
+    "candidateApkInstalled": true,
+    "physicalThreeContactsAccepted": true,
     "gameplayRecordingAccepted": false,
+    "productionAccepted": false,
+    "candidateApkSupersededBy": 10290
+  },
+  "webTeaching090": {
+    "evidence": "docs/audits/2026-10-24/WEB-TEACHING-DELIVERY.json",
+    "evidenceSha256NormalizedLf": "dc265ca4f22a0d15488222f139915d9e08733b0bed0ae2892ef1c3f71096791e",
+    "installedVersionCode": 10290,
+    "installedUi": "8e752e14e0862113c6052c07452b814eb444cad6",
+    "captureForegroundPreserved": true,
+    "browserVideoDecodedFrames": 6026,
+    "completeAndClosedVerified": true,
+    "liveRelative3DPreview": true,
+    "gameplayRecordingAccepted": "finite supervised190s; not a human route master",
+    "vehicleKeymapImplemented": false,
+    "workerImporterImplemented": false,
+    "globalMapImplemented": false,
+    "metricScaleCalibrated": false,
+    "autonomousNavigationAccepted": false,
     "productionAccepted": false
   }
 }

@@ -1,11 +1,10 @@
 # Игровой AI-контур Sphere: архитектура, модели и план реализации
 
-**24 октября · версия3.7, web teaching + кандидат APK89:** реализованы три контакта,
-интегрированный workbench/OPFS/2D timeline; локальная Android-сборка и runtime
-допуск пока в работе. Worker остаётся0.8.1. [Новый режим](../operations/TEACHING-WEB.md).
+**Актуальный runtime24 октября:** PH011 обновлена до APK90/10290, веб `8e752e14`, API `1afdc529`. Проверены190,215с реальной игровой записи:6026/6026кадров,31,67FPS, все SHA/COMPLETE и CLOSED, W1200мс, действие502мс, камера134мс. 3D preview работал параллельно после прогрева; карта/масштаб/автономный повтор ещё не приняты. [Доказательства](../audits/2026-10-24/WEB-TEACHING-DELIVERY.json).
 
+**24 октября · версия3.8:** APK89 установлена PH011, original H264 и нативные удержания проверены реальным браузером. В workbench добавлены управление до записи, предел2/5/10минут и DA3/Rerun двухракурсный3D preview. Global map/SLAM и автономная навигация не приняты. Worker остаётся0.8.1. [Квитанция](../audits/2026-10-24/WEB-TEACHING-DELIVERY.json) · [Инструкция](../operations/TEACHING-WEB.md).
 
-**24 октября · версия3.6, worker0.8.1:** проверены реальные `.smp`/`.kmp`, добавлен
+**Предыдущий этап24 октября · версия3.6, worker0.8.1:** проверены реальные `.smp`/`.kmp`, добавлен
 read-only inspector без исполнения macros;303 tests/Ruff passed. Найдено ограничение
 single-pointer: полноценный WASD+camera+jump teach-run пока не готов. Раздел26.8
 уточняет multi-contact actor,1080p320DPI/100% render и независимый low-quality repeat,
@@ -2121,5 +2120,32 @@ H264 в OPFS; browser-driver пишет submitted/APPLIED/CLOSED и удержи
 account library и browser→worker importer не реализованы; 2D viewer не является
 LiDAR/метрической3D картой. Сначала реальный подтверждённый human master, затем
 независимый low-render repeat, только после этого route/controller acceptance.
-APK89 и обновлённая UI пока кандидаты; предыдущий runtime88 не поддерживает
+Исторический source-only срез3.7: APK89 и UI были кандидатами; runtime88 не поддерживал
 новое contact_protocol1. Не принимать эту реализацию за автономный A→B.
+
+## 26.10 Локальный DA3/Rerun preview и подготовительное управление
+
+APK89 установлена PH011; реальная browser-запись/native удержания приняты на
+launcher/debug fixture. Перед записью можно включить ввод отдельно, подготовить
+игру, затем с подтверждённым CLOSED сменить владельца/журнал. До Start файлы
+не создаются. Предел2/5/10минут завершает запись штатно только при известном вводе.
+Просмотр больше не ограничен600кадрами от IDR; периодический keyframe request
+остаётся запросом, а не гарантией появления SPS/PPS/IDR.
+
+Отдельный локальный процесс DA3-SMALL/Rerun0.40 принимает уменьшенные свежие RGB
+из того же browser video. Дополнительного WebRTC peer нет. Уменьшенный JPEG нужен
+только3D preview, оригинальный teaching H264 сохраняется без повторного кодирования.
+Слушатели только loopback, один временный владелец, один inference одновременно,
+ограничены размер/возраст сессии/RAM history. Реконструктор не получает Android
+credentials и не имеет полномочий ввода.
+
+Проверены реальные две камеры/цветные точки из исторических игровых ракурсов,
+затем живые кадры PH011. Это окна относительной геометрии, не stitched route map.
+Global alignment, dynamic masks, loop closure/relocalization, independent low-render
+repeat и arrival остаются отдельными допусками. Первую GPU inference нельзя
+выдавать за steady-state latency или Android→model latency. Текущий полный3D
+HTTP цикл существенно медленнее моторных5Hz; горячий моторный цикл независим.
+
+[Rationale и закреплённые модели](LIVE-ROUTE-RECONSTRUCTION.md) ·
+[Запуск/формат/границы](../operations/TEACHING-WEB.md) ·
+[Проверенная доставка](../audits/2026-10-24/WEB-TEACHING-DELIVERY.json).

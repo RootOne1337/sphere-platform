@@ -1,20 +1,13 @@
 # Работы, требования пользователя и границы приёмки
 
-**24 октября — web teaching / кандидат APK89.** Реализован интегрированный режим
-записи из карточки/потока: WASD, независимая камера/кнопка, original H264+native
-journal, локальная библиотека и покадровый viewer. Multi-contact opt-in требует
-новой APK; source/runtime acceptance различаются. После перезагрузки host guard
-прошёл (~21GiB available), выполняется локальная проверка/упаковка. Предыдущие
-runtime88/UI/API не выдаются за обновлённые. [Инструкция](TEACHING-WEB.md) ·
-[Проверки и открытые допуски](../audits/2026-10-24/WEB-TEACHING-CONTACTS.md).
+**Актуальный runtime24 октября:** PH011 обновлена до APK90/10290, веб `8e752e14`, API `1afdc529`. Проверены190,215с реальной игровой записи:6026/6026кадров,31,67FPS, все SHA/COMPLETE и CLOSED, W1200мс, действие502мс, камера134мс. 3D preview работал параллельно после прогрева; карта/масштаб/автономный повтор ещё не приняты. [Доказательства](../audits/2026-10-24/WEB-TEACHING-DELIVERY.json).
 
+**Предыдущий этап24 октября — APK89 и запись маршрута.** APK1.2.89/10289 установлена только на PH011, хеш пакета проверен. Реальная browser-запись:1205/1205кадров,21,144с,56,94FPS; WASD удержан1206мс одним DOWN/UP, камера и кнопка независимы, CLOSED подтверждён. Это Android debug fixture, не игровой маршрут. Исправлены управление до записи и лимит2/5/10минут; подготовлен локальный DA3/Rerun3D preview. Единая карта, importer и автономный A→B ещё не приняты. [Инструкция](../operations/TEACHING-WEB.md) · [Квитанция](../audits/2026-10-24/WEB-TEACHING-DELIVERY.json).
 
-**Проверенная установка:** UI `a239baa2` / API `1afdc529`.
-
-**24 октября — worker0.8.1: уточнение keyboard teach readiness.** Добавлен bounded
+**Предыдущий этап24 октября — worker0.8.1: уточнение keyboard teach readiness.** Добавлен bounded
 read-only inspector LDPlayer metadata, macros остаются данными. Найден referenced
 recommended profile26 bindings вместо пустого override.303 tests/Ruff passed.
-Нынешний native input single-pointer; полному WASD+camera+jump нужен следующий
+На том этапе native input single-pointer; полному WASD+camera+jump нужен следующий
 multi-contact actor/keymapper/journal. Это не отказ H.264 recorder и не готовое
 полное ручное управление. Plan3.6 уточняет DPI320 при1080p,100% render для teach,
 независимый low-quality repeat и2D debug/отдельную3D реконструкцию. Физических
