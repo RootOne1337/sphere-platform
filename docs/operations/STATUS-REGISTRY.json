@@ -6673,5 +6673,18 @@
     "cameraReconstructionImplemented": false,
     "workerRouteCompilerImporterImplemented": false,
     "autonomousNavigationAccepted": false
+  },
+  "currentDeployedRuntimePendingAcceptance": {
+    "observedAtUtc": "2026-10-24T19:15:31.504740+00:00",
+    "ui": "8efe43f4e91dae2044bcd06e954c31b943b7027b",
+    "api": "1afdc529e18cd34b5d8ee0919f217076a8592846",
+    "imageId": "sha256:f8e33ede67b5a5500b436a279e9c377300d3405a8f130831dc32745c97cc9ca2",
+    "runtimeInstalled": true,
+    "healthy": true,
+    "browserFiniteAccepted": false,
+    "reason": "Local browser use is disabled in Work settings",
+    "evidence": "docs/audits/2026-10-25/DENSE-RECONSTRUCTION-LOCAL-DELIVERY.json",
+    "evidenceSha256NormalizedLf": "bf596d2cc1fca403e23a324b4d7405c48e2d76fa6acb359f87c37bc358ae5a3f",
+    "scope": "Local reconstruction delivery. installed section retains the last browser-accepted observation; no new route/dense-scene acceptance."
   }
 }
