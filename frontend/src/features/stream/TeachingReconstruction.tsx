@@ -12,7 +12,7 @@ export function TeachingReconstruction({clip,scope,folder,complete,onBusyChange}
   const [mask,setMask]=useState('game'),[steps,setSteps]=useState(5000),[progress,setProgress]=useState('');
   const [uploading,setUploading]=useState(false);const uploadAbort=useRef<AbortController|null>(null);
   const storageKey=`sphere-reconstruction-${scope}-${clip}`;
-  const busy=uploading||!!status&&!terminalReconstruction(status);
+  const busy=uploading||!!job&&(!status||!terminalReconstruction(status));
   useEffect(()=>{onBusyChange(busy);},[busy,onBusyChange]);
   useEffect(()=>()=>{uploadAbort.current?.abort();onBusyChange(false);},[onBusyChange]);
   useEffect(()=>{try{const saved=JSON.parse(sessionStorage.getItem(storageKey)??'null');if(saved&&/^[0-9a-f]{32}$/.test(saved.id)&&/^[0-9a-f]{64}$/.test(saved.key))setJob(saved);}catch{}},[storageKey]);
