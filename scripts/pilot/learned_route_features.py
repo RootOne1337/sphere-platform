@@ -48,19 +48,16 @@ def verify_pairs(database, pair_file, token):
     p.verify_matches(database, pair_file, options=options, cancellation_token=token)
 
 
-def extract_and_match(root, prepared, database, reader, token, check):
+def load_matcher(root, memory_fraction=.65):
+    """Load the locally verified weights, never the upstream download path."""
     source, weights = validate_assets(root)
-    import cv2
-    import numpy as np
-    import pycolmap as p
     import torch
 
     if not torch.cuda.is_available():
         raise RuntimeError('lightglue_gpu_unavailable')
-    cv2.setNumThreads(4)
     torch.set_num_threads(4)
     torch.manual_seed(17)
-    torch.cuda.set_per_process_memory_fraction(.65)
+    torch.cuda.set_per_process_memory_fraction(memory_fraction)
     spec = importlib.util.spec_from_file_location('_sphere_pinned_lightglue', source / 'lightglue/lightglue.py')
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
@@ -73,6 +70,17 @@ def extract_and_match(root, prepared, database, reader, token, check):
     state.setdefault('confidence_thresholds', matcher.confidence_thresholds)
     matcher.load_state_dict(state, strict=True)
     matcher.to('cuda')
+    return matcher
+
+
+def extract_and_match(root, prepared, database, reader, token, check):
+    import cv2
+    import numpy as np
+    import pycolmap as p
+    import torch
+
+    matcher = load_matcher(root)
+    cv2.setNumThreads(4)
     p.Database.open(database).close()
     p.import_images(database, prepared / 'images', camera_mode=p.CameraMode.SINGLE, options=reader)
     sift = cv2.SIFT_create(nfeatures=4096, contrastThreshold=.0066667, edgeThreshold=10)

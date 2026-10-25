@@ -30,6 +30,7 @@ from scripts.pilot.reconstruction_quality import (
     sparse_condition,
 )
 from scripts.pilot.resource_guard import collect, evaluate
+from scripts.pilot.route_loop_completion import complete_partial
 
 ROOT = Path(__file__).resolve().parents[2]
 TOOLS = ROOT / '.local-pilot/reconstruction-tools'
@@ -44,7 +45,11 @@ def digest(path):
 def checkpoint(job):
     if (job / 'CANCEL').exists():
         raise RuntimeError('cancelled')
-    if evaluate(collect(ROOT)):
+    snapshot = collect(ROOT)
+    findings = evaluate(snapshot)
+    if findings:
+        if job.is_dir():
+            write_json(job / 'resource-refusal.json', dict(snapshot=snapshot, findings=findings))
         raise RuntimeError('resource_guard')
 
 
@@ -190,6 +195,13 @@ def reconstruct(job, mask, steps):
     if not models:
         raise RuntimeError('no_connected_cameras_need_translation_and_overlap')
     rec = max(models.values(), key=lambda model: model.num_reg_images())
+    if learned and .7 <= rec.num_reg_images() / len(images) < 1 and rec.num_points3D() >= 300:
+        initial_condition = sparse_condition(
+            [image.cam_from_world().inverse().translation for image in rec.images.values() if image.has_pose],
+            [point.xyz for point in rec.points3D.values()])
+        if initial_condition['passed']:
+            state(job, 'matching', selected_views=len(images), method='anchored-loop-completion')
+            rec = complete_partial(ROOT, prepared, database, rec, lambda: checkpoint(job))
     geometry = model_geometry(rec, prepared)
     write_json(job / 'geometry.json', geometry)
     coverage = rec.num_reg_images() / len(images)
@@ -366,6 +378,14 @@ def train_dense(job, prepared, geometry, quality, mask, steps, attempt=0):
                 reason = ('brush_timing_overflow' if 'cannot convert float seconds to Duration' in text
                           else 'brush_failed_see_local_log')
                 raise RuntimeError(reason)
+        except Exception:
+            # A resource/cancellation refusal is also a failed training run.
+            # Stop the writer before inspecting its last complete export.
+            if process.poll() is None:
+                process.kill()
+                process.wait(10)
+            preserve_checkpoint(job, steps, export)
+            raise
         finally:
             if process.poll() is None:
                 process.kill()
