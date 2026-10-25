@@ -56,8 +56,14 @@ def tools_available():
     return os.name == 'nt' and all((folder / name).is_file() for name in BINARIES)
 
 
-def reconstruct(job):
-    output = job / 'surface'
+def surface_output(job, fragment=None):
+    if fragment is not None and not re.fullmatch(r'[0-9a-f]{32}', fragment):
+        raise ValueError('surface_fragment_id_invalid')
+    return job / 'fragments' / fragment if fragment else job / 'surface'
+
+
+def reconstruct(job, fragment=None):
+    output = surface_output(job, fragment)
     if not (output / 'START').is_file() or (output / 'result.json').exists():
         raise ValueError('surface_exclusive_intent_required')
     started, next_resource = time.monotonic(), 0.
@@ -205,8 +211,9 @@ def reconstruct(job):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--job', required=True, type=Path)
+    parser.add_argument('--fragment')
     args = parser.parse_args()
-    reconstruct(args.job.resolve(strict=True))
+    reconstruct(args.job.resolve(strict=True), args.fragment)
 
 
 if __name__ == '__main__':

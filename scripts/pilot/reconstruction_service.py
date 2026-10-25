@@ -22,6 +22,7 @@ from scripts.pilot.reconstruct_surface import (
     SURFACE_TERMINAL,
     source_model,
     surface_options,
+    surface_output,
     tools_available,
 )
 from scripts.pilot.reconstruction_quality import export_interval
@@ -69,7 +70,7 @@ class Jobs:
         for path in folder.glob('*/state.json'):
             if json.loads(path.read_text('utf-8'))['phase'] not in TERMINAL:
                 write_json(path, dict(phase='failed', error='worker_service_restarted', updated_at=time.time()))
-        for path in folder.glob('*/surface/state.json'):
+        for path in [*folder.glob('*/surface/state.json'), *folder.glob('*/fragments/*/state.json')]:
             if json.loads(path.read_text('utf-8'))['phase'] not in SURFACE_TERMINAL:
                 (path.parent / 'CANCEL').touch(exist_ok=True)
                 write_json(path, dict(phase='failed', error='surface_service_restarted', updated_at=time.time()))
@@ -102,14 +103,21 @@ class Jobs:
         if partial:
             result['checkpoint'] = partial
         result['surface'] = self.surface_status(job)
+        result['fragments'] = [self.surface_status(job, p.name) for p in sorted((job / 'fragments').glob('*'))
+                               if p.is_dir() and IDENTITY.fullmatch(p.name)][:24]
+        result['fragments'] = [item for item in result['fragments'] if item]
         result['surface_supported'] = tools_available()
         return result
 
-    def surface_status(self, job):
-        folder = job / 'surface'
+    def surface_status(self, job, fragment=None):
+        folder = surface_output(job, fragment)
         if not (folder / 'state.json').is_file():
             return None
         state = json.loads((folder / 'state.json').read_text('utf-8'))
+        if fragment:
+            state['id'] = fragment
+        if (folder / 'options.json').is_file():
+            state['fragment'] = json.loads((folder / 'options.json').read_text('utf-8'))
         if (folder / 'CANCEL').exists() and state['phase'] in {'ready', 'review_required'}:
             return dict(phase='cancelled', error='surface_cancelled_before_admission', available=False)
         if state['phase'] in {'ready', 'review_required'}:
@@ -138,14 +146,14 @@ class Jobs:
 
     def active(self, job):
         state = self.status(job)
-        return (state['phase'] not in TERMINAL or bool(state['surface']
-                and state['surface']['phase'] not in SURFACE_TERMINAL))
+        return (state['phase'] not in TERMINAL or any(item['phase'] not in SURFACE_TERMINAL
+                for item in [state['surface'], *state['fragments']] if item))
 
-    def surface_asset(self, job):
-        status = self.surface_status(job)
+    def surface_asset(self, job, fragment=None):
+        status = self.surface_status(job, fragment)
         if not status or not status.get('available'):
             raise ValueError('surface_not_ready')
-        path = job / 'surface/scene.glb'
+        path = surface_output(job, fragment) / 'scene.glb'
         if (path.is_symlink() or path.parent.is_symlink() or not path.resolve().is_relative_to(job.resolve())
                 or path.stat().st_size != status['result']['bytes']):
             raise ValueError('surface_asset_changed')
@@ -155,9 +163,9 @@ class Jobs:
         validate_glb(body)
         return body
 
-    def start_surface(self, job, body=None):
+    def start_surface(self, job, body=None, fragment=None):
         status = self.status(job)
-        if status['surface']:
+        if self.surface_status(job, fragment):
             return status  # Re-read an existing intent; never repeat ambiguous work.
         if status['phase'] not in TERMINAL or not status['geometry_available']:
             raise ValueError('surface_completed_source_required')
@@ -166,13 +174,19 @@ class Jobs:
             raise ValueError('surface_fragment_range_invalid')
         geometry = json.loads((job / 'geometry.json').read_text('utf-8'))
         options = surface_options(body or {}, len(geometry['cameras']))
+        for item in [status['surface'], *status['fragments']]:
+            if item and item.get('fragment') == options:
+                return status
+        if fragment and len(list((job / 'fragments').glob('*'))) >= 24:
+            raise ValueError('surface_fragment_quota')
         if not tools_available():
             raise ValueError('surface_openmvs_cpu_not_installed')
         if any(self.active(p) for p in self.folder.iterdir() if p.is_dir()):
             raise ValueError('one_active_job_only')
         if evaluate(collect(ROOT)):
             raise ValueError('resource_guard')
-        folder = job / 'surface'
+        folder = surface_output(job, fragment)
+        folder.parent.mkdir(exist_ok=True)
         folder.mkdir()
         with (folder / 'START').open('x') as file:
             file.write(str(time.time()))
@@ -181,19 +195,19 @@ class Jobs:
         log = (folder / 'worker.log').open('xb')
         try:
             process = subprocess.Popen([str(self.python), '-m', 'scripts.pilot.reconstruct_surface',
-                '--job', str(job)], cwd=ROOT, stdout=log, stderr=subprocess.STDOUT,
+                '--job', str(job), *(['--fragment', fragment] if fragment else [])], cwd=ROOT, stdout=log, stderr=subprocess.STDOUT,
                 creationflags=getattr(subprocess, 'CREATE_NO_WINDOW', 0))
         except Exception:
             write_json(folder / 'state.json', dict(phase='failed', error='surface_start_not_confirmed'))
             raise
         finally:
             log.close()
-        self.processes[job.name + ':surface'] = process
-        threading.Thread(target=self.monitor_surface, args=(job, process), daemon=True).start()
+        self.processes[job.name + ':surface:' + (fragment or 'legacy')] = process
+        threading.Thread(target=self.monitor_surface, args=(job, process, fragment), daemon=True).start()
         return self.status(job)
 
-    def monitor_surface(self, job, process):
-        folder, deadline = job / 'surface', time.monotonic() + 1830
+    def monitor_surface(self, job, process, fragment=None):
+        folder, deadline = surface_output(job, fragment), time.monotonic() + 1830
         while process.poll() is None:
             time.sleep(3)
             reason = ('cancelled' if (folder / 'CANCEL').exists() else
@@ -211,7 +225,7 @@ class Jobs:
                 write_json(folder / 'state.json', dict(phase='cancelled' if reason == 'cancelled' else 'failed', error=reason))
                 return
         with self.lock:
-            if self.surface_status(job)['phase'] not in SURFACE_TERMINAL:
+            if self.surface_status(job, fragment)['phase'] not in SURFACE_TERMINAL:
                 write_json(folder / 'state.json', dict(phase='failed', error='surface_worker_exited_without_completion'))
 
     def appearance(self, job):
@@ -492,6 +506,18 @@ def handler(jobs, origin, port):
                         self.reply(200, jobs.status(job))
                     elif method == 'GET' and parts[2:] == ['surface']:
                         self.reply(200, jobs.surface_asset(job), 'model/gltf-binary')
+                    elif method == 'POST' and len(parts) == 5 and parts[2] == 'fragments' and parts[4] == 'start':
+                        if not IDENTITY.fullmatch(parts[3]):
+                            raise ValueError('surface_fragment_id_invalid')
+                        self.reply(200, jobs.start_surface(job, json.loads(self.body(1024)), parts[3]))
+                    elif method == 'POST' and len(parts) == 5 and parts[2] == 'fragments' and parts[4] == 'cancel':
+                        self.body(1024)
+                        surface = jobs.surface_status(job, parts[3])
+                        if surface and surface['phase'] not in SURFACE_TERMINAL:
+                            (surface_output(job, parts[3]) / 'CANCEL').touch(exist_ok=True)
+                        self.reply(200, jobs.status(job))
+                    elif method == 'GET' and len(parts) == 4 and parts[2] == 'fragments':
+                        self.reply(200, jobs.surface_asset(job, parts[3]), 'model/gltf-binary')
                     elif method == 'GET' and len(parts) == 5 and parts[2] == 'reference':
                         if not re.fullmatch(r'[0-8]', parts[3]):
                             raise ValueError('reference_image_unavailable')

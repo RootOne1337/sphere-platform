@@ -169,6 +169,43 @@ def test_existing_surface_intent_is_not_repeated(ready_job, monkeypatch):
     assert jobs.start_surface(job)['surface']['phase'] == 'failed'
 
 
+def test_multiple_fragments_keep_the_original_and_have_separate_cancellation(ready_job):
+    jobs, job, body = ready_job
+    identity = 'c' * 32
+    folder = job / 'fragments' / identity
+    folder.parent.mkdir()
+    # A known source copy is a test fixture, not another native job.
+    import shutil
+    shutil.copytree(job / 'surface', folder)
+    write_json(folder / 'options.json', dict(first_view=0, view_count=3))
+    assert jobs.status(job)['surface']['available']
+    assert jobs.status(job)['fragments'][0]['id'] == identity
+    assert jobs.surface_asset(job, identity) == body
+    (folder / 'CANCEL').touch()
+    assert not jobs.surface_status(job, identity)['available']
+    assert jobs.surface_asset(job) == body
+
+
+def test_fragment_restart_blocks_late_result_and_global_admission(ready_job):
+    jobs, job, _ = ready_job
+    folder = job / 'fragments' / ('c' * 32)
+    folder.mkdir(parents=True)
+    write_json(folder / 'state.json', dict(phase='densifying'))
+    with pytest.raises(ValueError, match='one_active'):
+        jobs.create(dict(id='d' * 32, key='e' * 64, steps=3000, mask='none'))
+    service.Jobs(jobs.folder, jobs.python)
+    assert json.loads((folder / 'state.json').read_text())['phase'] == 'failed'
+    assert (folder / 'CANCEL').exists()
+    assert jobs.surface_asset(job)
+
+
+@pytest.mark.parametrize('identity', ['../escape', 'x' * 32, '', 'a' * 33])
+def test_fragment_paths_never_escape_the_job(ready_job, identity):
+    jobs, job, _ = ready_job
+    with pytest.raises(ValueError, match='fragment_id'):
+        jobs.surface_asset(job, identity)
+
+
 def test_surface_http_uses_same_capability_and_embedded_binary_type(ready_job):
     import threading
     import urllib.error
