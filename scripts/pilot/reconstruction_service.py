@@ -115,6 +115,7 @@ class Jobs:
             try:
                 motion = audit_camera_motion(json.loads(geometry.read_text('utf-8')))
                 result['camera_motion'] = dict(warning=motion['warning'], rapid_reversals=len(motion['rapid_reversals']),
+                    speed_outliers=len(motion['speed_outliers']),
                     heuristic_only=True, navigation_qualified=False)
             except (KeyError, TypeError, ValueError):
                 result['camera_motion'] = dict(warning='camera_motion_unverified', navigation_qualified=False)

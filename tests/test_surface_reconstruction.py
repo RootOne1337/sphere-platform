@@ -248,6 +248,18 @@ def test_camera_motion_warning_never_accepts_navigation(ready_job):
     assert motion['navigation_qualified'] is False
 
 
+def test_forward_camera_jump_is_visible_in_job_diagnostics(ready_job):
+    jobs, job, _ = ready_job
+    geometry = dict(cameras=[dict(image=f'{i:08}.png', ticks_90k=i * 45000, center=[x, 0, 0])
+        for i, x in enumerate([0, 1, 2, 3, 4, 34, 35, 36])])
+    write_json(job / 'geometry.json', geometry)
+    motion = jobs.status(job)['camera_motion']
+    assert motion['warning'] == 'poses_require_temporal_review'
+    assert motion['rapid_reversals'] == 0
+    assert motion['speed_outliers'] == 1
+    assert motion['navigation_qualified'] is False
+
+
 def test_surface_http_uses_same_capability_and_embedded_binary_type(ready_job):
     import threading
     import urllib.error
