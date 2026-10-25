@@ -6,7 +6,7 @@
     "ADR": 6,
     "CURRENT_ENTRYPOINT": 8,
     "DATED_EVIDENCE": 382,
-    "DESIGN_SPECIFICATION": 86,
+    "DESIGN_SPECIFICATION": 87,
     "OPERATING_GUIDE": 73,
     "PROJECT_POLICY": 7,
     "SUPPORTING_DOCUMENT": 7
@@ -1714,6 +1714,10 @@
     },
     {
       "file": "docs/design/MOTOR-AI-PLATFORM.md",
+      "role": "DESIGN_SPECIFICATION"
+    },
+    {
+      "file": "docs/design/RECORDED-ROUTE-SPATIAL-MAP.md",
       "role": "DESIGN_SPECIFICATION"
     },
     {
