@@ -2,11 +2,14 @@
 import hashlib
 import json
 import struct
+import sys
+from types import SimpleNamespace
 
 import numpy as np
 import pytest
 from PIL import Image
 
+from scripts.pilot import reconstruct_surface as pipeline
 from scripts.pilot import reconstruction_service as service
 from scripts.pilot.atomic_json import write_json
 from scripts.pilot.reconstruct_surface import surface_options
@@ -100,6 +103,62 @@ def test_mesh_rejects_truncated_payload(baked, tmp_path):
     target.write_bytes((baked[0] / 'mesh.ply').read_bytes()[:-1])
     with pytest.raises(ValueError, match='count_quota'):
         read_mesh(target)
+
+
+@pytest.mark.parametrize('failure', ['missing_cloud', 'empty_cloud', 'missing_mesh'])
+def test_successful_native_exit_without_geometry_stops_before_bake(baked, tmp_path, monkeypatch, failure):
+    job = tmp_path / 'job'
+    output = job / 'surface'
+    images = job / 'prepared/images'
+    output.mkdir(parents=True)
+    images.mkdir(parents=True)
+    (output / 'START').touch()
+    write_json(output / 'options.json', dict(first_view=0, view_count=3))
+    pose = np.column_stack([np.eye(3), np.zeros(3)])
+    calibration = np.array([[40, 0, 32], [0, 40, 18], [0, 0, 1]])
+    cameras, recovered, provenance = [], {}, []
+    for i in range(3):
+        name = f'{i:08}.png'
+        body = (baked[0] / name).read_bytes()
+        (images / name).write_bytes(body)
+        cameras.append(dict(image=name, camera_to_world=pose.tolist(),
+            intrinsics=dict(width=64, height=36, fx=40, fy=40, cx=32, cy=18)))
+        recovered[i] = SimpleNamespace(name=name, camera_id=1,
+            cam_from_world=lambda: SimpleNamespace(inverse=lambda: SimpleNamespace(matrix=lambda: pose)))
+        provenance.append(dict(image=f'images/{name}', png_sha256=hashlib.sha256(body).hexdigest()))
+    write_json(job / 'geometry.json', dict(cameras=cameras))
+    write_json(job / 'prepared/reconstruction-input.json', dict(source_manifest_sha256='test', images=provenance))
+    rec = SimpleNamespace(images=recovered, cameras={1: SimpleNamespace(calibration_matrix=lambda: calibration)},
+        points3D={}, write=lambda _: None)
+    monkeypatch.setitem(sys.modules, 'pycolmap', SimpleNamespace(__version__='4.2.1', Reconstruction=lambda _: rec))
+    monkeypatch.setattr(pipeline, 'source_model', lambda _: (job / 'prepared/sparse/0',
+        dict(source_manifest_sha256='test', geometry_sha256='test')))
+    monkeypatch.setattr(pipeline, 'tools_available', lambda: True)
+    monkeypatch.setattr(pipeline, 'checkpoint', lambda _: None)
+    monkeypatch.setattr(pipeline, 'BINARIES', {})
+    monkeypatch.setattr(pipeline, 'bake', lambda *_a, **_k: pytest.fail('bake after empty native output'))
+    calls = []
+
+    def native(args, **_):
+        name = str(args[0]).replace('\\', '/').rsplit('/', 1)[-1]
+        calls.append(name)
+        if name == 'InterfaceCOLMAP.exe':
+            (output / 'scene.mvs').write_bytes(b'model fixture')
+        elif name == 'DensifyPointCloud.exe':
+            (output / 'scene_dense.mvs').write_bytes(b'model with no fused geometry')
+            if failure != 'missing_cloud':
+                vertices = 0 if failure == 'empty_cloud' else 3
+                (output / 'scene_dense.ply').write_bytes(f'ply\nformat binary_little_endian 1.0\nelement vertex {vertices}\nend_header\n'.encode())
+        return SimpleNamespace(returncode=0, poll=lambda: 0)
+
+    monkeypatch.setattr(pipeline.subprocess, 'Popen', native)
+    error = 'surface_mesh_empty' if failure == 'missing_mesh' else 'surface_depth_fusion_empty'
+    with pytest.raises(RuntimeError, match=error):
+        pipeline.reconstruct(job)
+    state = json.loads((output / 'state.json').read_text())
+    assert state['phase'] == 'failed' and state['error'] == error
+    assert len(calls) == (3 if failure == 'missing_mesh' else 2)
+    assert not (output / 'result.json').exists()
 
 
 @pytest.mark.parametrize('scale', [1, 4])

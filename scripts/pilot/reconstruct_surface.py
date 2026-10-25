@@ -62,6 +62,20 @@ def surface_output(job, fragment=None):
     return job / 'fragments' / fragment if fragment else job / 'surface'
 
 
+def require_native_output(folder, name, error, *, cloud=False):
+    """OpenMVS can return zero while producing no fused points or mesh."""
+    path = folder / name
+    if path.is_symlink() or not path.is_file() or path.stat().st_size == 0:
+        raise RuntimeError(error)
+    if cloud:
+        with path.open('rb') as file:
+            header = file.read(8192)
+        vertices = re.search(br'^element vertex ([0-9]+)\r?$', header, re.M)
+        if (not header.startswith(b'ply\n') and not header.startswith(b'ply\r\n')
+                or b'end_header' not in header or vertices is None or int(vertices[1]) < 3):
+            raise RuntimeError(error)
+
+
 def reconstruct(job, fragment=None):
     output = surface_output(job, fragment)
     if not (output / 'START').is_file() or (output / 'result.json').exists():
@@ -176,12 +190,15 @@ def reconstruct(job, fragment=None):
 
         run('InterfaceCOLMAP.exe', ['-i', dataset, '-o', output / 'scene.mvs',
             '--image-folder', images], 'preparing')
+        require_native_output(output, 'scene.mvs', 'surface_camera_conversion_empty')
         run('DensifyPointCloud.exe', [output / 'scene.mvs', '-o', output / 'scene_dense.mvs',
             '--resolution-level', '1', '--max-resolution', '960', '--min-resolution', '640',
             '--number-views', '5', '--number-views-fuse', '3', '--ignore-mask-label', '0',
             '--geometric-iters', '2', '--estimate-roi', '0'], 'densifying')
+        require_native_output(output, 'scene_dense.ply', 'surface_depth_fusion_empty', cloud=True)
         run('ReconstructMesh.exe', [output / 'scene_dense.mvs', '-o', output / 'scene_mesh.mvs',
             '--close-holes', '0', '--smooth', '0', '--target-face-num', '330000'], 'meshing')
+        require_native_output(output, 'scene_mesh.ply', 'surface_mesh_empty')
         state('baking', views=0, total_views=len(cameras))
         counts = bake(output / 'scene_mesh.ply', cameras, images, output / 'scene.glb', check,
                       lambda done, total: state('baking', views=done, total_views=total))
