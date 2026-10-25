@@ -6675,16 +6675,16 @@
     "autonomousNavigationAccepted": false
   },
   "currentDeployedRuntimePendingAcceptance": {
-    "observedAtUtc": "2026-10-25T11:59:37.374197+00:00",
-    "ui": "544901af0a8ff561be8fe795f41bb7798fa1f4dd",
+    "observedAtUtc": "2026-10-25T13:01:34.678068+00:00",
+    "ui": "91c30eca9e3ffca572fb0fa2a4f751fe6166409a",
     "api": "1afdc529e18cd34b5d8ee0919f217076a8592846",
-    "imageId": "sha256:e2b69476c9dcd39d23167f5bec11a806997daec4f3ea3e26a5d377652c1546d2",
+    "imageId": "sha256:78ff7270de70d24a8be28a0faf520e873cd75a58547304ac06a01ddb08deeb4c",
     "runtimeInstalled": true,
     "healthy": true,
     "browserFiniteAccepted": false,
-    "reason": "Final account-profile scene-page acceptance remains pending after physical Escape stopped Computer Use; finite Spark diagnostic comparison and native reference renders were verified.",
-    "evidence": "docs/audits/2026-10-25/DENSE-RECONSTRUCTION-QUALITY-REPAIR-LOCAL-DELIVERY.json",
-    "evidenceSha256NormalizedLf": "172880bd1b52812604a72b8b151f38dd9ec4dd5cb7ddea53857cbdd2e5c8cd4d",
-    "scope": "Verified partial reconstruction 70/81 cameras; installed section retains last accepted UI observation; no metric map or autonomous route acceptance."
+    "reason": "Native full-route/reference and independent-frame comparisons verified; current Local browser use is disabled in Work settings.",
+    "evidence": "docs/audits/2026-10-25/DENSE-RECONSTRUCTION-FULL-DETAIL-LOCAL-DELIVERY.json",
+    "evidenceSha256NormalizedLf": "f63c424ae4b17650f845e04d360683ee4b7d41b11b30e5d163e130f42f1e81da",
+    "scope": "Full selected-view reconstruction 81/81, detailed export; final scene-page visual acceptance remains pending; no metric map or autonomous route acceptance."
   }
 }
