@@ -5,7 +5,7 @@
   "countsByRole": {
     "ADR": 6,
     "CURRENT_ENTRYPOINT": 8,
-    "DATED_EVIDENCE": 382,
+    "DATED_EVIDENCE": 383,
     "DESIGN_SPECIFICATION": 88,
     "OPERATING_GUIDE": 74,
     "PROJECT_POLICY": 7,
@@ -1670,6 +1670,10 @@
     },
     {
       "file": "docs/audits/2026-10-24/WEB-TEACHING-CONTACTS.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
+      "file": "docs/audits/2026-10-25/NEURAL-CAMERA-REFINEMENT.md",
       "role": "DATED_EVIDENCE"
     },
     {
