@@ -222,6 +222,7 @@ class DirectProbeTransport(
                         PeerConnectionFactory.initialize(PeerConnectionFactory.InitializationOptions.builder(context)
                             .setFieldTrials(DirectEncodedVideoSource.FIELD_TRIALS)
                             .setEnableInternalTracer(false).createInitializationOptions())
+                        com.sphereplatform.agent.streaming.NativeRgbaToI420.activate()
                     } catch (error: Exception) { initialized.set(false); throw error }
                 }
                 // Modern WebRTC factories own their Environment/field trials.

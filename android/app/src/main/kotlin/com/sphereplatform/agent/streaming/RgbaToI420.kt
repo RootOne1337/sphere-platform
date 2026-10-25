@@ -2,8 +2,15 @@ package com.sphereplatform.agent.streaming
 
 import java.nio.ByteBuffer
 
-/** Owned reusable RGBA -> planar YUV420, BT.601 limited range; no frame allocation. */
-internal class RgbaToI420(private val width: Int, private val height: Int) {
+internal interface NativeRgbaConversion {
+    val available: Boolean
+    fun convert(source: ByteBuffer, rowStride: Int, width: Int, height: Int, output: ByteBuffer): Boolean
+}
+
+/** Owned reusable RGBA -> planar YUV420, BT.601 limited range; no pixel-array allocation per frame. */
+internal class RgbaToI420(private val width: Int, private val height: Int,
+    private val native: NativeRgbaConversion = NativeRgbaToI420,
+) {
     init {
         require(width in 2..4096 && height in 2..4096 && width % 2 == 0 && height % 2 == 0)
     }
@@ -12,11 +19,15 @@ internal class RgbaToI420(private val width: Int, private val height: Int) {
     val outputSize = ySize + 2 * cSize
     private var rgba = ByteArray(0)
     private val i420 = ByteArray(outputSize)
+    private var nativeOutput: ByteBuffer? = null
+    private var lastWasNative = false
 
     /** Caller owns capture lifetime and proves a prior successful submission. */
     fun copyLastConverted(destination: ByteBuffer) {
         require(!destination.isReadOnly && destination.capacity() >= outputSize)
-        destination.clear(); destination.put(i420)
+        destination.clear()
+        if (lastWasNative) destination.put(checkNotNull(nativeOutput).duplicate().apply { clear(); limit(outputSize) })
+        else destination.put(i420)
     }
 
     fun convert(source: ByteBuffer, rowStride: Int, pixelStride: Int, destination: ByteBuffer) {
@@ -24,6 +35,19 @@ internal class RgbaToI420(private val width: Int, private val height: Int) {
         val required = (height - 1L) * rowStride + (width - 1L) * pixelStride + 4
         require(required in 1..Int.MAX_VALUE.toLong() && source.limit().toLong() >= required)
         require(!destination.isReadOnly && destination.capacity() >= outputSize)
+        // ImageReader exposes direct RGBA planes. The existing WebRTC library
+        // supplies libyuv once its normal initialization and color self-test pass.
+        // A failed optional conversion touches only owned scratch, never a codec
+        // input already queued for delivery. Fallback overwrites the whole frame.
+        if (pixelStride == 4 && source.isDirect && native.available) {
+            val scratch = nativeOutput ?: ByteBuffer.allocateDirect(outputSize).also { nativeOutput = it }
+            if (native.convert(source.duplicate().apply { position(0) }, rowStride, width, height, scratch)) {
+                lastWasNative = true
+                destination.clear(); destination.put(scratch.duplicate().apply { clear(); limit(outputSize) })
+                return
+            }
+        }
+        lastWasNative = false
         if (rgba.size != required.toInt()) rgba = ByteArray(required.toInt())
         // The last plane row need not expose its trailing padding. Do not consume
         // the caller's buffer position or copy an assumed rowStride * height.

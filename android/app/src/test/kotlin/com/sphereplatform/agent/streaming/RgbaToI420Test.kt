@@ -78,4 +78,57 @@ class RgbaToI420Test {
             assertThrows(IllegalArgumentException::class.java) { RgbaToI420(width,height) }
         }
     }
+    @Test fun `native direct conversion preserves source position and owns the idle refresh pixels`() {
+        var calls = 0
+        val fast = object : NativeRgbaConversion {
+            override val available = true
+            override fun convert(source: ByteBuffer, rowStride: Int, width: Int, height: Int, output: ByteBuffer): Boolean {
+                calls++
+                assertEquals(0,source.position()); assertEquals(8,rowStride)
+                assertEquals(2,width); assertEquals(2,height)
+                output.clear(); output.put(byteArrayOf(41,41,41,41,240.toByte(),110))
+                return true
+            }
+        }
+        val converter = RgbaToI420(2,2,fast)
+        val source = ByteBuffer.allocateDirect(16).apply { position(13) }
+        val output = ByteBuffer.allocate(6)
+        converter.convert(source,8,4,output)
+        assertEquals(13,source.position()); assertEquals(6,output.position()); assertEquals(1,calls)
+        val refresh = ByteBuffer.allocate(6)
+        converter.copyLastConverted(refresh)
+        assertArrayEquals(output.array(),refresh.array())
+    }
+    @Test fun `a refused native conversion overwrites partial scratch and updates the refresh cache`() {
+        var calls = 0
+        val fast = object : NativeRgbaConversion {
+            override val available = true
+            override fun convert(source: ByteBuffer, rowStride: Int, width: Int, height: Int, output: ByteBuffer): Boolean {
+                calls++; output.clear(); output.put(ByteArray(6) { 99 })
+                return calls == 1
+            }
+        }
+        val converter = RgbaToI420(2,2,fast)
+        val source = ByteBuffer.allocateDirect(16)
+        val output = ByteBuffer.allocate(6)
+        converter.convert(source,8,4,output)
+        assertArrayEquals(ByteArray(6) { 99 },output.array())
+        for (i in 0..3) {source.put(i*4+2,255.toByte());source.put(i*4+3,255.toByte())}
+        converter.convert(source,8,4,output)
+        assertEquals(listOf(41,41,41,41,240,110),output.array().map { it.toInt() and 255 })
+        val refresh = ByteBuffer.allocate(6);converter.copyLastConverted(refresh)
+        assertArrayEquals(output.array(),refresh.array())
+    }
+    @Test fun `heap or pixel padded source stays on scalar path and invalid input never reaches JNI`() {
+        var calls = 0
+        val fast = object : NativeRgbaConversion {
+            override val available = true
+            override fun convert(source: ByteBuffer, rowStride: Int, width: Int, height: Int, output: ByteBuffer): Boolean {calls++;return false}
+        }
+        val converter = RgbaToI420(2,2,fast)
+        converter.convert(color(255,0,0),8,4,ByteBuffer.allocate(6))
+        converter.convert(ByteBuffer.allocateDirect(36),24,8,ByteBuffer.allocate(6))
+        assertThrows(IllegalArgumentException::class.java) {converter.convert(ByteBuffer.allocateDirect(15),8,4,ByteBuffer.allocate(6))}
+        assertEquals(0,calls)
+    }
 }
