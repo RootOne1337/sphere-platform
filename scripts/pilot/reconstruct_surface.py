@@ -24,7 +24,15 @@ BINARIES = {
     'DensifyPointCloud.exe': 'baa34151aa66ca5b909645330fdb79c271087f08759872dd2d474717dc901d77',
     'ReconstructMesh.exe': 'bb84317e4881effed587a560a80c574c1e22fc3dd9b1d9655127944f66b8abcc',
 }
-SURFACE_TERMINAL = {'ready', 'failed', 'cancelled'}
+SURFACE_TERMINAL = {'ready', 'review_required', 'failed', 'cancelled'}
+
+
+def surface_options(body, total):
+    first, count = body.get('first_view', 0), body.get('view_count', min(18, total))
+    if (set(body) - {'first_view', 'view_count'} or type(first) is not int or type(count) is not int
+            or first < 0 or not 3 <= count <= 24 or first + count > total):
+        raise ValueError('surface_fragment_range_invalid')
+    return dict(first_view=first, view_count=count)
 
 
 def source_model(job):
@@ -87,7 +95,7 @@ def reconstruct(job):
         rec = p.Reconstruction(model)
         geometry = json.loads((job / 'geometry.json').read_text('utf-8'))
         cameras = geometry['cameras']
-        if not 3 <= len(cameras) <= 96 or {c['image'] for c in cameras} != {im.name for im in rec.images.values()}:
+        if not 3 <= len(cameras) <= 240 or {c['image'] for c in cameras} != {im.name for im in rec.images.values()}:
             raise ValueError('surface_view_limit_or_camera_binding')
         import numpy as np
 
@@ -99,6 +107,15 @@ def reconstruct(job):
             if (not np.allclose(image.cam_from_world().inverse().matrix(), camera['camera_to_world'], atol=1e-7, rtol=1e-7)
                     or not np.allclose(calibration, [[k['fx'], 0, k['cx']], [0, k['fy'], k['cy']], [0, 0, 1]], atol=1e-7, rtol=1e-7)):
                 raise ValueError('surface_calibration_binding_changed')
+        options = surface_options(json.loads((output / 'options.json').read_text('utf-8')), len(cameras))
+        cameras = cameras[options['first_view']:options['first_view'] + options['view_count']]
+        selected = {camera['image'] for camera in cameras}
+        for image in list(rec.images.values()):
+            if image.name not in selected:
+                rec.deregister_frame(image.frame_id)
+        for point_id in list(rec.points3D):
+            if rec.points3D[point_id].track.length() < 2:
+                rec.delete_point3D(point_id)
         provenance = json.loads((job / 'prepared/reconstruction-input.json').read_text('utf-8'))
         if provenance['source_manifest_sha256'] != result['source_manifest_sha256']:
             raise ValueError('surface_source_binding_changed')
@@ -131,7 +148,8 @@ def reconstruct(job):
             source_masks_sha256=mask_hashes,
             camera_model_sha256={f.name: digest(f) for f in model.glob('*.bin')},
             tool_tag='v2.4.0', native_binaries=BINARIES, cpu_threads=4,
-            max_geometry_resolution=960, max_texture_pixels=64 * 1024**2)
+            max_geometry_resolution=960, max_texture_pixels=64 * 1024**2,
+            fragment=options, total_registered_views=len(geometry['cameras']))
         write_json(output / 'provenance.json', binding)
 
         def run(binary, args, phase):
@@ -176,7 +194,7 @@ def reconstruct(job):
             geometric_accuracy_accepted=False, unseen_surfaces_filled=False,
             seconds=round(time.monotonic() - started, 2))
         write_json(output / 'result.json', receipt)
-        state('ready')
+        state('review_required')
         return receipt
     except Exception as error:
         write_json(output / 'state.json', dict(phase='cancelled' if str(error) == 'cancelled' else 'failed',

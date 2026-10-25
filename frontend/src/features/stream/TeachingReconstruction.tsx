@@ -29,6 +29,7 @@ export function TeachingReconstruction({clip,scope,folder,complete,onBusyChange}
   const [uploading,setUploading]=useState(false);const uploadAbort=useRef<AbortController|null>(null);
   const [recovering,setRecovering]=useState(true);const folderRef=useRef(folder);folderRef.current=folder;
   const [refresh,setRefresh]=useState(0),[surfaceStarting,setSurfaceStarting]=useState(false);
+  const [firstView,setFirstView]=useState(0),[viewCount,setViewCount]=useState(18);
   const storageKey=`sphere-reconstruction-${scope}-${clip}`;
   const busy=recovering||uploading||surfaceStarting||!!job&&(!status||!terminalReconstruction(status));
   useEffect(()=>{onBusyChange(busy);},[busy,onBusyChange]);
@@ -68,11 +69,11 @@ export function TeachingReconstruction({clip,scope,folder,complete,onBusyChange}
   };
   const startSurface=async()=>{
     if(!job||surfaceStarting)return;setSurfaceStarting(true);setError(null);
-    try{setStatus(await(await reconstructionRequest(`/jobs/${job.id}/surface/start`,job,{method:'POST',body:'{}'})).json());}
+    try{setStatus(await(await reconstructionRequest(`/jobs/${job.id}/surface/start`,job,{method:'POST',body:JSON.stringify({first_view:firstView,view_count:Math.min(viewCount,(status?.quality?.registered??18)-firstView)})})).json());}
     catch(e){setError(`Построение поверхностей не подтверждено: ${e instanceof Error?e.message:'нет ответа'}. Проверяем то же задание.`);}
     finally{setSurfaceStarting(false);setRefresh(n=>n+1);}
   };
-  const surfaceLabels:Record<string,string>={starting:'Подготовка 3D-модели',preparing:'Проверка камер и оригинальных кадров',densifying:'Многовидовое восстановление глубины',meshing:'Построение треугольных поверхностей',baking:'Проекция фотографий на видимые поверхности',ready:'Текстурированная 3D-модель сохранена',failed:'Построение модели остановлено',cancelled:'Построение модели отменено'};
+  const surfaceLabels:Record<string,string>={starting:'Подготовка 3D-модели',preparing:'Проверка камер и оригинальных кадров',densifying:'Многовидовое восстановление глубины',meshing:'Построение треугольных поверхностей',baking:'Проекция фотографий на видимые поверхности',ready:'Текстурированная 3D-модель сохранена',review_required:'Пробная модель сохранена · проверьте поверхности визуально',failed:'Построение модели остановлено',cancelled:'Построение модели отменено'};
   return <section aria-label="Построение плотной 3D-сцены" className="space-y-4 rounded-2xl border border-emerald-500/20 bg-gradient-to-br from-emerald-500/5 via-card to-sky-500/5 p-5">
     <div className="flex items-start gap-3"><Box className="mt-1 text-emerald-400" size={24}/><div><h4 className="text-lg font-semibold">Сцена из записанного прохода</h4><p className="mt-1 max-w-3xl text-sm leading-6 text-muted-foreground">Оригинальные кадры → связанные камеры → визуальная сцена и отдельная модель поверхностей. Сохранённый результат можно вращать, изучать в каркасе и смотреть из ракурсов прохода. Обработка идёт на этом ПК, отдельно от Android.</p></div></div>
     {!status&&<div className="flex flex-wrap items-end gap-4">
@@ -93,7 +94,9 @@ export function TeachingReconstruction({clip,scope,folder,complete,onBusyChange}
     {job&&status?.geometry_available&&<div className="space-y-3 rounded-xl border border-sky-500/25 bg-sky-500/5 p-4">
       <div className="flex flex-wrap items-center justify-between gap-3"><div><h5 className="font-medium">3D-модель поверхностей</h5><p className="mt-1 text-xs leading-5 text-muted-foreground">Треугольная сетка с фотографическими текстурами. Невидимые участки остаются пустыми; исходная сцена сохраняется отдельно.</p></div>
       {!status.surface&&<Button variant="outline" disabled={busy||!status.surface_supported||!terminalReconstruction(status)} onClick={()=>{void startSurface();}}>Построить поверхности</Button>}</div>
+      {!status.surface&&<div className="flex flex-wrap items-end gap-4 text-xs"><label>Начальный ракурс<input aria-label="Начальный ракурс фрагмента" className="mt-1 block w-28 rounded-md border bg-background p-2" type="number" min={1} max={Math.max(1,(status.quality?.registered??18)-2)} value={firstView+1} onChange={e=>setFirstView(Math.max(0,Math.min((status.quality?.registered??18)-3,Number(e.target.value)-1)))}/></label><label>Длина фрагмента<select className="ml-2 rounded-md border bg-background p-2" value={viewCount} onChange={e=>setViewCount(Number(e.target.value))}><option value={12}>12 ракурсов</option><option value={18}>18 ракурсов</option><option value={24}>24 ракурса</option></select></label><p className="max-w-xl text-muted-foreground">Короткий связный участок уменьшает ложные перемычки. Это фрагмент записи; непросмотренные поверхности не считаются достоверными.</p></div>}
       {status.surface&&<p role="status" className="text-sm">{surfaceLabels[status.surface.phase]??status.surface.phase}{status.surface.total_views?` · ${status.surface.views}/${status.surface.total_views} ракурсов`:''}</p>}
+      {status.surface?.phase==='review_required'&&<p className="text-xs leading-5 text-amber-500">Осмотрите модель из нескольких ракурсов: ложные перемычки и разрывы возможны. Готовность файла не означает точную геометрию или допуск навигации.</p>}
       {status.surface?.error&&<p role="alert" className="text-sm text-destructive">{reasons[status.surface.error]??status.surface.error}. Исходные материалы и предыдущая сцена сохранены.</p>}
       {status.surface?.available&&status.surface.result&&<p className="text-xs text-muted-foreground">{status.surface.result.triangles.toLocaleString('ru')} треугольников · {status.surface.result.textures} фотографий · {(status.surface.result.bytes/1048576).toFixed(1)} МБ · исключено без видимого покрытия: {status.surface.result.unknown_faces.toLocaleString('ru')} граней</p>}
       {!status.surface_supported&&!status.surface&&<p className="text-xs text-muted-foreground">Локальный инструмент OpenMVS CPU ещё не подготовлен.</p>}

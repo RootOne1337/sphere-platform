@@ -4,7 +4,7 @@ export type ReconstructionJob = {id:string; key:string};
 export type SceneAppearance = {state:'unverified'|'passed'|'rejected';mean_psnr?:number;mean_ssim?:number;min_psnr?:number;min_ssim?:number;views?:{image:string;psnr:number;ssim:number}[]};
 export type SurfaceState = {phase:string;error?:string;available?:boolean;views?:number;total_views?:number;result?:{sha256:string;bytes:number;triangles:number;vertices:number;textures:number;texture_pixels:number;source_images:string[];mesh_faces:number;unknown_faces:number;seconds:number}};
 export type ReconstructionState = {phase:string; error?:string; geometry_available?:boolean; dense_available?:boolean; dense_partial_available?:boolean; surface?:SurfaceState|null; surface_supported?:boolean; appearance?:SceneAppearance; checkpoint?:{steps:number;target_steps:number;partial:true}; quality?:{registered:number; selected:number; coverage:number; points:number; mean_reprojection_px:number}; result?:{ply_sha256:string; ply_bytes:number}};
-export const activeSurface = (state:ReconstructionState) => !!state.surface&&!['ready','failed','cancelled'].includes(state.surface.phase);
+export const activeSurface = (state:ReconstructionState) => !!state.surface&&!['ready','review_required','failed','cancelled'].includes(state.surface.phase);
 export const terminalReconstruction = (state:ReconstructionState) => ['complete','failed','cancelled','quality_rejected','review_required','partial_scene'].includes(state.phase)&&!activeSurface(state);
 export async function reconstructionRequest(path:string, job:ReconstructionJob|null, init:RequestInit = {}) {
   const headers = new Headers(init.headers);

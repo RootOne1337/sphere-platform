@@ -9,8 +9,20 @@ from PIL import Image
 
 from scripts.pilot import reconstruction_service as service
 from scripts.pilot.atomic_json import write_json
+from scripts.pilot.reconstruct_surface import surface_options
 from scripts.pilot.surface_asset import validate_glb
 from scripts.pilot.surface_bake import bake, depth_map, read_mesh
+
+
+@pytest.mark.parametrize('body', [{'first_view': -1}, {'view_count': 25}, {'view_count': True},
+    {'first_view': 80, 'view_count': 3}, {'extra': 'command'}, {'first_view': 1.5}])
+def test_fragment_options_are_bounded_before_native_work(body):
+    with pytest.raises(ValueError, match='fragment_range'):
+        surface_options(body, 81)
+
+
+def test_fragment_has_an_explicit_recording_interval():
+    assert surface_options({'first_view': 20, 'view_count': 18}, 81) == dict(first_view=20, view_count=18)
 
 
 def pack(model, binary):

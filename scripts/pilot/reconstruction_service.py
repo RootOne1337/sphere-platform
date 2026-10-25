@@ -18,7 +18,12 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 
 from scripts.pilot.atomic_json import write_json
-from scripts.pilot.reconstruct_surface import SURFACE_TERMINAL, source_model, tools_available
+from scripts.pilot.reconstruct_surface import (
+    SURFACE_TERMINAL,
+    source_model,
+    surface_options,
+    tools_available,
+)
 from scripts.pilot.reconstruction_quality import export_interval
 from scripts.pilot.resource_guard import collect, evaluate
 from scripts.pilot.surface_asset import MAX_BYTES, MAX_FACES, validate_glb
@@ -105,9 +110,9 @@ class Jobs:
         if not (folder / 'state.json').is_file():
             return None
         state = json.loads((folder / 'state.json').read_text('utf-8'))
-        if (folder / 'CANCEL').exists() and state['phase'] == 'ready':
+        if (folder / 'CANCEL').exists() and state['phase'] in {'ready', 'review_required'}:
             return dict(phase='cancelled', error='surface_cancelled_before_admission', available=False)
-        if state['phase'] == 'ready':
+        if state['phase'] in {'ready', 'review_required'}:
             try:
                 receipt = folder / 'result.json'
                 if receipt.is_symlink() or receipt.stat().st_size > 65536:
@@ -150,13 +155,17 @@ class Jobs:
         validate_glb(body)
         return body
 
-    def start_surface(self, job):
+    def start_surface(self, job, body=None):
         status = self.status(job)
         if status['surface']:
             return status  # Re-read an existing intent; never repeat ambiguous work.
         if status['phase'] not in TERMINAL or not status['geometry_available']:
             raise ValueError('surface_completed_source_required')
         source_model(job)
+        if not isinstance(body if body is not None else {}, dict):
+            raise ValueError('surface_fragment_range_invalid')
+        geometry = json.loads((job / 'geometry.json').read_text('utf-8'))
+        options = surface_options(body or {}, len(geometry['cameras']))
         if not tools_available():
             raise ValueError('surface_openmvs_cpu_not_installed')
         if any(self.active(p) for p in self.folder.iterdir() if p.is_dir()):
@@ -167,6 +176,7 @@ class Jobs:
         folder.mkdir()
         with (folder / 'START').open('x') as file:
             file.write(str(time.time()))
+        write_json(folder / 'options.json', options)
         write_json(folder / 'state.json', dict(phase='starting', updated_at=time.time()))
         log = (folder / 'worker.log').open('xb')
         try:
@@ -472,8 +482,8 @@ def handler(jobs, origin, port):
                             write_json(job / 'state.json', dict(phase='cancelled'))
                         self.reply(200, jobs.status(job))
                     elif method == 'POST' and parts[2:] == ['surface', 'start']:
-                        self.body(1024)
-                        self.reply(200, jobs.start_surface(job))
+                        body = json.loads(self.body(1024))
+                        self.reply(200, jobs.start_surface(job, body))
                     elif method == 'POST' and parts[2:] == ['surface', 'cancel']:
                         self.body(1024)
                         surface = jobs.surface_status(job)
