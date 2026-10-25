@@ -18,8 +18,10 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 
 from scripts.pilot.atomic_json import write_json
+from scripts.pilot.reconstruct_surface import SURFACE_TERMINAL, source_model, tools_available
 from scripts.pilot.reconstruction_quality import export_interval
 from scripts.pilot.resource_guard import collect, evaluate
+from scripts.pilot.surface_asset import MAX_BYTES, MAX_FACES, validate_glb
 
 ROOT = Path(__file__).resolve().parents[2]
 LIMITS = {'manifest.json': 65536, 'frames.jsonl': 16 * 1024**2,
@@ -62,6 +64,10 @@ class Jobs:
         for path in folder.glob('*/state.json'):
             if json.loads(path.read_text('utf-8'))['phase'] not in TERMINAL:
                 write_json(path, dict(phase='failed', error='worker_service_restarted', updated_at=time.time()))
+        for path in folder.glob('*/surface/state.json'):
+            if json.loads(path.read_text('utf-8'))['phase'] not in SURFACE_TERMINAL:
+                (path.parent / 'CANCEL').touch(exist_ok=True)
+                write_json(path, dict(phase='failed', error='surface_service_restarted', updated_at=time.time()))
 
     def path(self, identity):
         if not IDENTITY.fullmatch(identity):
@@ -90,7 +96,113 @@ class Jobs:
         result['dense_partial_available'] = partial is not None
         if partial:
             result['checkpoint'] = partial
+        result['surface'] = self.surface_status(job)
+        result['surface_supported'] = tools_available()
         return result
+
+    def surface_status(self, job):
+        folder = job / 'surface'
+        if not (folder / 'state.json').is_file():
+            return None
+        state = json.loads((folder / 'state.json').read_text('utf-8'))
+        if (folder / 'CANCEL').exists() and state['phase'] == 'ready':
+            return dict(phase='cancelled', error='surface_cancelled_before_admission', available=False)
+        if state['phase'] == 'ready':
+            try:
+                receipt = folder / 'result.json'
+                if receipt.is_symlink() or receipt.stat().st_size > 65536:
+                    raise ValueError('surface_result_invalid')
+                item = json.loads(receipt.read_text('utf-8'))
+                if (item['schema'] != 'sphere-observed-surface-v1' or item['file'] != 'scene.glb'
+                        or not re.fullmatch(r'[0-9a-f]{64}', item['sha256'])
+                        or type(item['bytes']) is not int or not 0 < item['bytes'] <= MAX_BYTES
+                        or type(item['triangles']) is not int or not 0 < item['triangles'] <= MAX_FACES
+                        or item['metric_scale'] is not None or item['navigation_qualified'] is not False
+                        or item['geometry_sha256'] != hashlib.sha256((job / 'geometry.json').read_bytes()).hexdigest()
+                        or item['source_manifest_sha256'] != hashlib.sha256((job / 'input/manifest.json').read_bytes()).hexdigest()
+                        or not 3 <= len(item['source_images']) <= 96
+                        or len(set(item['source_images'])) != len(item['source_images'])
+                        or any(not re.fullmatch(r'[0-9]{8}\.png', name) for name in item['source_images'])):
+                    raise ValueError('surface_result_invalid')
+                state['result'] = {key: item[key] for key in ('sha256', 'bytes', 'triangles', 'vertices',
+                    'textures', 'texture_pixels', 'source_images', 'mesh_faces', 'unknown_faces', 'seconds')}
+                state['available'] = True
+            except (OSError, KeyError, TypeError, ValueError):
+                return dict(phase='failed', error='surface_result_binding_changed', available=False)
+        return state
+
+    def active(self, job):
+        state = self.status(job)
+        return (state['phase'] not in TERMINAL or bool(state['surface']
+                and state['surface']['phase'] not in SURFACE_TERMINAL))
+
+    def surface_asset(self, job):
+        status = self.surface_status(job)
+        if not status or not status.get('available'):
+            raise ValueError('surface_not_ready')
+        path = job / 'surface/scene.glb'
+        if (path.is_symlink() or path.parent.is_symlink() or not path.resolve().is_relative_to(job.resolve())
+                or path.stat().st_size != status['result']['bytes']):
+            raise ValueError('surface_asset_changed')
+        body = path.read_bytes()
+        if hashlib.sha256(body).hexdigest() != status['result']['sha256']:
+            raise ValueError('surface_asset_changed')
+        validate_glb(body)
+        return body
+
+    def start_surface(self, job):
+        status = self.status(job)
+        if status['surface']:
+            return status  # Re-read an existing intent; never repeat ambiguous work.
+        if status['phase'] not in TERMINAL or not status['geometry_available']:
+            raise ValueError('surface_completed_source_required')
+        source_model(job)
+        if not tools_available():
+            raise ValueError('surface_openmvs_cpu_not_installed')
+        if any(self.active(p) for p in self.folder.iterdir() if p.is_dir()):
+            raise ValueError('one_active_job_only')
+        if evaluate(collect(ROOT)):
+            raise ValueError('resource_guard')
+        folder = job / 'surface'
+        folder.mkdir()
+        with (folder / 'START').open('x') as file:
+            file.write(str(time.time()))
+        write_json(folder / 'state.json', dict(phase='starting', updated_at=time.time()))
+        log = (folder / 'worker.log').open('xb')
+        try:
+            process = subprocess.Popen([str(self.python), '-m', 'scripts.pilot.reconstruct_surface',
+                '--job', str(job)], cwd=ROOT, stdout=log, stderr=subprocess.STDOUT,
+                creationflags=getattr(subprocess, 'CREATE_NO_WINDOW', 0))
+        except Exception:
+            write_json(folder / 'state.json', dict(phase='failed', error='surface_start_not_confirmed'))
+            raise
+        finally:
+            log.close()
+        self.processes[job.name + ':surface'] = process
+        threading.Thread(target=self.monitor_surface, args=(job, process), daemon=True).start()
+        return self.status(job)
+
+    def monitor_surface(self, job, process):
+        folder, deadline = job / 'surface', time.monotonic() + 1830
+        while process.poll() is None:
+            time.sleep(3)
+            reason = ('cancelled' if (folder / 'CANCEL').exists() else
+                      'surface_time_budget' if time.monotonic() > deadline else
+                      'surface_log_quota' if (folder / 'worker.log').stat().st_size > 32 * 1024**2 else
+                      'resource_guard' if evaluate(collect(ROOT)) else None)
+            if reason:
+                (folder / 'CANCEL').touch(exist_ok=True)
+                if os.name == 'nt':
+                    subprocess.run(['taskkill', '/PID', str(process.pid), '/T', '/F'],
+                                   capture_output=True, timeout=15, check=False)
+                else:
+                    process.kill()
+                process.wait(15)
+                write_json(folder / 'state.json', dict(phase='cancelled' if reason == 'cancelled' else 'failed', error=reason))
+                return
+        with self.lock:
+            if self.surface_status(job)['phase'] not in SURFACE_TERMINAL:
+                write_json(folder / 'state.json', dict(phase='failed', error='surface_worker_exited_without_completion'))
 
     def appearance(self, job):
         from scripts.pilot.reconstruction_quality import reference_quality
@@ -188,7 +300,7 @@ class Jobs:
                            + [(path / 'control.json').stat().st_mtime])
             if time.time() - activity > 1800:
                 write_json(path / 'state.json', dict(phase='failed', error='upload_idle_30_minutes'))
-        if any(self.status(p)['phase'] not in TERMINAL for p in self.folder.iterdir() if p.is_dir()):
+        if any(self.active(p) for p in self.folder.iterdir() if p.is_dir()):
             raise ValueError('one_active_job_only')
         if evaluate(collect(ROOT)):
             raise ValueError('resource_guard')
@@ -359,6 +471,17 @@ def handler(jobs, origin, port):
                         if jobs.status(job)['phase'] == 'uploading':
                             write_json(job / 'state.json', dict(phase='cancelled'))
                         self.reply(200, jobs.status(job))
+                    elif method == 'POST' and parts[2:] == ['surface', 'start']:
+                        self.body(1024)
+                        self.reply(200, jobs.start_surface(job))
+                    elif method == 'POST' and parts[2:] == ['surface', 'cancel']:
+                        self.body(1024)
+                        surface = jobs.surface_status(job)
+                        if surface and surface['phase'] not in SURFACE_TERMINAL:
+                            (job / 'surface/CANCEL').touch(exist_ok=True)
+                        self.reply(200, jobs.status(job))
+                    elif method == 'GET' and parts[2:] == ['surface']:
+                        self.reply(200, jobs.surface_asset(job), 'model/gltf-binary')
                     elif method == 'GET' and len(parts) == 5 and parts[2] == 'reference':
                         if not re.fullmatch(r'[0-8]', parts[3]):
                             raise ValueError('reference_image_unavailable')

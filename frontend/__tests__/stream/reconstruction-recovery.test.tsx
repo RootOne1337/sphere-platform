@@ -4,7 +4,7 @@ import {reconstructionRequest} from '@/src/features/stream/reconstructionClient'
 jest.mock('next/dynamic',()=>()=>function Placeholder(){return null;});
 jest.mock('@/src/features/stream/reconstructionLink',()=>({readReconstructionLink:jest.fn(async()=>null),saveReconstructionLink:jest.fn(async()=>{}),validReconstructionJob:(value:unknown)=>!!value}));
 jest.mock('@/src/features/stream/reconstructionClient',()=>({
-  reconstructionRequest:jest.fn(),terminalReconstruction:(state:{phase:string})=>['failed','cancelled','complete'].includes(state.phase),uploadReconstruction:jest.fn(),
+  ...jest.requireActual('@/src/features/stream/reconstructionClient'),reconstructionRequest:jest.fn(),uploadReconstruction:jest.fn(),
 }));
 afterEach(()=>{sessionStorage.clear();jest.clearAllMocks();});
 test('a recovered job blocks new control until its state is actually confirmed',async()=>{
@@ -37,5 +37,26 @@ test('a fresh job is not polled before POST creation is acknowledged',async()=>{
   expect((reconstructionRequest as jest.Mock).mock.calls[0][0]).toBe('/jobs');
   confirm({json:async()=>({phase:'uploading'})});
   await waitFor(()=>expect((reconstructionRequest as jest.Mock).mock.calls.some(([path])=>path==='/jobs/'+'a'.repeat(32))).toBe(true));
+  view.unmount();
+});
+
+test('surface construction stays with the saved job, blocks recording and cancels only its own stage',async()=>{
+  const clip='c'.repeat(32),scope='d'.repeat(32),job={id:'a'.repeat(32),key:'b'.repeat(64)};
+  sessionStorage.setItem(`sphere-reconstruction-${scope}-${clip}`,JSON.stringify(job));
+  let current={phase:'complete',geometry_available:true,surface_supported:true,surface:null as unknown};
+  (reconstructionRequest as jest.Mock).mockImplementation(async(path:string)=>{
+    if(path.endsWith('/surface/start'))current={...current,surface:{phase:'densifying'}};
+    if(path.endsWith('/surface/cancel'))current={...current,surface:{phase:'cancelled'}};
+    return {json:async()=>current};
+  });
+  const busy=jest.fn();const view=render(<TeachingReconstruction clip={clip} scope={scope} folder={()=>null} complete onBusyChange={busy}/>);
+  await waitFor(()=>expect(screen.getByRole('button',{name:'Построить поверхности'})).toBeEnabled());
+  fireEvent.click(screen.getByRole('button',{name:'Построить поверхности'}));
+  await waitFor(()=>expect(busy).toHaveBeenLastCalledWith(true));
+  await screen.findByText('Многовидовое восстановление глубины');
+  fireEvent.click(screen.getByRole('button',{name:'Отменить обработку'}));
+  await waitFor(()=>expect(busy).toHaveBeenLastCalledWith(false));
+  const mutations=(reconstructionRequest as jest.Mock).mock.calls.filter(([, , init])=>init?.method==='POST').map(([path])=>path);
+  expect(mutations).toEqual([`/jobs/${job.id}/surface/start`,`/jobs/${job.id}/surface/cancel`]);
   view.unmount();
 });

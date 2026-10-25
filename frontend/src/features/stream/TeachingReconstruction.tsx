@@ -3,7 +3,7 @@ import dynamic from 'next/dynamic';
 import {useEffect,useRef,useState} from 'react';
 import {Box,Loader2} from 'lucide-react';
 import {Button} from '@/components/ui/button';
-import {reconstructionRequest,terminalReconstruction,uploadReconstruction,type ReconstructionJob,type ReconstructionState} from './reconstructionClient';
+import {activeSurface,reconstructionRequest,terminalReconstruction,uploadReconstruction,type ReconstructionJob,type ReconstructionState} from './reconstructionClient';
 import {readReconstructionLink,saveReconstructionLink,validReconstructionJob} from './reconstructionLink';
 import ReferenceComparison from './ReferenceComparison';
 const Scene=dynamic(()=>import('./ReconstructedScene'),{ssr:false,loading:()=> <p>Загружаем 3D-просмотр…</p>});
@@ -28,8 +28,9 @@ export function TeachingReconstruction({clip,scope,folder,complete,onBusyChange}
   const [mask,setMask]=useState('game'),[steps,setSteps]=useState(5000),[progress,setProgress]=useState('');
   const [uploading,setUploading]=useState(false);const uploadAbort=useRef<AbortController|null>(null);
   const [recovering,setRecovering]=useState(true);const folderRef=useRef(folder);folderRef.current=folder;
+  const [refresh,setRefresh]=useState(0),[surfaceStarting,setSurfaceStarting]=useState(false);
   const storageKey=`sphere-reconstruction-${scope}-${clip}`;
-  const busy=recovering||uploading||!!job&&(!status||!terminalReconstruction(status));
+  const busy=recovering||uploading||surfaceStarting||!!job&&(!status||!terminalReconstruction(status));
   useEffect(()=>{onBusyChange(busy);},[busy,onBusyChange]);
   useEffect(()=>()=>{uploadAbort.current?.abort();onBusyChange(false);},[onBusyChange]);
   useEffect(()=>{
@@ -46,7 +47,7 @@ export function TeachingReconstruction({clip,scope,folder,complete,onBusyChange}
     const poll=async()=>{try{const next=await(await reconstructionRequest(`/jobs/${job.id}`,job,{signal:abort.signal})).json();if(retired)return;setStatus(next);setError(null);if(!terminalReconstruction(next))timer=setTimeout(()=>{void poll();},2500);}
       catch(e){if(!retired){setError(e instanceof Error&&e.message==='job_not_found'?'Создание задания ещё не подтверждено. Можно продолжить подготовку с тем же идентификатором; обучение повторно не запускается.':`Локальный обработчик не ответил: ${e instanceof Error?e.message:'ошибка'}. Задание не повторялось.`);timer=setTimeout(()=>{void poll();},10000);}}};
     void poll();return()=>{retired=true;abort.abort();clearTimeout(timer);};
-  },[job]);
+  },[job,refresh]);
   const start=async()=>{
     const source=folder();if(!source||uploadAbort.current)return;
     const controller=new AbortController();uploadAbort.current=controller;setUploading(true);setError(null);
@@ -63,10 +64,17 @@ export function TeachingReconstruction({clip,scope,folder,complete,onBusyChange}
   };
   const cancel=async()=>{
     uploadAbort.current?.abort();if(!job)return;
-    try{setStatus(await(await reconstructionRequest(`/jobs/${job.id}/cancel`,job,{method:'POST',body:'{}'})).json());}catch{setError('Отмена не подтверждена. Состояние проверяется; управление остаётся заблокировано.');}
+    try{setStatus(await(await reconstructionRequest(`/jobs/${job.id}/${status&&activeSurface(status)?'surface/cancel':'cancel'}`,job,{method:'POST',body:'{}'})).json());setRefresh(n=>n+1);}catch{setError('Отмена не подтверждена. Состояние проверяется; управление остаётся заблокировано.');setRefresh(n=>n+1);}
   };
+  const startSurface=async()=>{
+    if(!job||surfaceStarting)return;setSurfaceStarting(true);setError(null);
+    try{setStatus(await(await reconstructionRequest(`/jobs/${job.id}/surface/start`,job,{method:'POST',body:'{}'})).json());}
+    catch(e){setError(`Построение поверхностей не подтверждено: ${e instanceof Error?e.message:'нет ответа'}. Проверяем то же задание.`);}
+    finally{setSurfaceStarting(false);setRefresh(n=>n+1);}
+  };
+  const surfaceLabels:Record<string,string>={starting:'Подготовка 3D-модели',preparing:'Проверка камер и оригинальных кадров',densifying:'Многовидовое восстановление глубины',meshing:'Построение треугольных поверхностей',baking:'Проекция фотографий на видимые поверхности',ready:'Текстурированная 3D-модель сохранена',failed:'Построение модели остановлено',cancelled:'Построение модели отменено'};
   return <section aria-label="Построение плотной 3D-сцены" className="space-y-4 rounded-2xl border border-emerald-500/20 bg-gradient-to-br from-emerald-500/5 via-card to-sky-500/5 p-5">
-    <div className="flex items-start gap-3"><Box className="mt-1 text-emerald-400" size={24}/><div><h4 className="text-lg font-semibold">Сцена из записанного прохода</h4><p className="mt-1 max-w-3xl text-sm leading-6 text-muted-foreground">После остановки: оригинальные кадры → связанные камеры COLMAP → плотный рендер Brush → просмотр с траекторией. Обработка идёт на этом ПК, отдельно от Android. Первая проверка — 20–60 секунд спокойного прохода.</p></div></div>
+    <div className="flex items-start gap-3"><Box className="mt-1 text-emerald-400" size={24}/><div><h4 className="text-lg font-semibold">Сцена из записанного прохода</h4><p className="mt-1 max-w-3xl text-sm leading-6 text-muted-foreground">Оригинальные кадры → связанные камеры → визуальная сцена и отдельная модель поверхностей. Сохранённый результат можно вращать, изучать в каркасе и смотреть из ракурсов прохода. Обработка идёт на этом ПК, отдельно от Android.</p></div></div>
     {!status&&<div className="flex flex-wrap items-end gap-4">
       <label className="text-sm">Маска записи<select className="mt-1 block rounded-lg border border-input bg-background p-2" value={mask} onChange={e=>setMask(e.target.value)}><option value="game">HUD и персонаж в центре</option><option value="none">Без маски (чистый кадр)</option></select></label>
       <label className="text-sm">Качество обработки<select className="mt-1 block rounded-lg border border-input bg-background p-2" value={steps} onChange={e=>setSteps(Number(e.target.value))}><option value={3000}>Проба · 3 000 шагов</option><option value={5000}>Стандарт · 5 000 шагов</option><option value={10000}>Детальнее · 10 000 шагов</option><option value={30000}>Высокая детализация · 30 000 шагов</option></select></label>
@@ -82,6 +90,14 @@ export function TeachingReconstruction({clip,scope,folder,complete,onBusyChange}
     {status?.error&&<p role="alert" className="text-sm text-destructive">{reasons[status.error]??status.error} Исходное видео не изменено.</p>}
     {status?.dense_partial_available&&status.checkpoint&&<p role="status" className="rounded-lg border border-amber-500/30 bg-amber-500/10 p-3 text-sm">Доступна проверенная промежуточная сцена: {status.checkpoint.steps} / {status.checkpoint.target_steps} итераций. Обработка не завершена успешно; это не окончательный результат.</p>}
     {status?.quality&&<p className="text-xs text-muted-foreground">Камеры {status.quality.registered}/{status.quality.selected} · покрытие {(status.quality.coverage*100).toFixed(0)}% · ошибка {status.quality.mean_reprojection_px.toFixed(2)} px</p>}
+    {job&&status?.geometry_available&&<div className="space-y-3 rounded-xl border border-sky-500/25 bg-sky-500/5 p-4">
+      <div className="flex flex-wrap items-center justify-between gap-3"><div><h5 className="font-medium">3D-модель поверхностей</h5><p className="mt-1 text-xs leading-5 text-muted-foreground">Треугольная сетка с фотографическими текстурами. Невидимые участки остаются пустыми; исходная сцена сохраняется отдельно.</p></div>
+      {!status.surface&&<Button variant="outline" disabled={busy||!status.surface_supported||!terminalReconstruction(status)} onClick={()=>{void startSurface();}}>Построить поверхности</Button>}</div>
+      {status.surface&&<p role="status" className="text-sm">{surfaceLabels[status.surface.phase]??status.surface.phase}{status.surface.total_views?` · ${status.surface.views}/${status.surface.total_views} ракурсов`:''}</p>}
+      {status.surface?.error&&<p role="alert" className="text-sm text-destructive">{reasons[status.surface.error]??status.surface.error}. Исходные материалы и предыдущая сцена сохранены.</p>}
+      {status.surface?.available&&status.surface.result&&<p className="text-xs text-muted-foreground">{status.surface.result.triangles.toLocaleString('ru')} треугольников · {status.surface.result.textures} фотографий · {(status.surface.result.bytes/1048576).toFixed(1)} МБ · исключено без видимого покрытия: {status.surface.result.unknown_faces.toLocaleString('ru')} граней</p>}
+      {!status.surface_supported&&!status.surface&&<p className="text-xs text-muted-foreground">Локальный инструмент OpenMVS CPU ещё не подготовлен.</p>}
+    </div>}
     {job&&status?.dense_available&&<ReferenceComparison job={job} appearance={status.appearance}/>}
     {job&&status?.geometry_available&&<Scene job={job} status={status}/>}
     <p className="text-xs text-muted-foreground">Ссылка на результат сохранена рядом с записью в библиотеке этого браузера и аккаунта. Выберите этот проход снова, чтобы открыть готовую сцену. Сохранённая сцена остаётся на локальном ПК.</p>
