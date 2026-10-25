@@ -1,13 +1,21 @@
 """Preview geometry and request-boundary tests; no GPU, download or Android."""
+import io
 import json
 import threading
+from email.message import Message
 from http.client import HTTPConnection
 from types import SimpleNamespace
 
 import numpy as np
 import pytest
 
-from scripts.pilot.teaching_scene import MAX_SESSION_SECONDS, Handler, PreviewServer, unproject
+from scripts.pilot.teaching_scene import (
+    MAX_BODY,
+    MAX_SESSION_SECONDS,
+    Handler,
+    PreviewServer,
+    unproject,
+)
 
 
 def test_unproject_world_to_camera_and_filter_invalid_depth():
@@ -66,10 +74,50 @@ def test_origin_and_session_ownership_are_required(service):
 def test_busy_request_is_rejected_without_an_inference_queue(service):
     service.lock.acquire()
     try:
-        status, data = post(service, {"Origin": service.origin, "X-Sphere-Preview": "1"})
-        assert status == 409 and data["error"] == "busy_no_queue"
+        for _ in range(8):
+            status, data = post(service, {"Origin": service.origin, "X-Sphere-Preview": "1"}, body=b"x"*16384)
+            assert status == 409 and data["error"] == "busy_no_queue"
     finally:
         service.lock.release()
+
+
+def test_busy_reply_consumes_bounded_body_without_waiting_for_inference():
+    handler = Handler.__new__(Handler)
+    handler.server = SimpleNamespace(origin="http://127.0.0.1:3015", lock=threading.Lock())
+    handler.server.lock.acquire()
+    handler.connection = SimpleNamespace(settimeout=lambda _: None)
+    handler.headers = Message()
+    for key, value in {"Origin": handler.server.origin, "Host": "127.0.0.1:3332",
+                       "X-Sphere-Preview": "1", "Content-Length": "16384"}.items():
+        handler.headers[key] = value
+    handler.rfile = io.BytesIO(b"x"*16384)
+    results = []
+
+    def respond(status, data):
+        assert handler.rfile.tell() == 16384
+        results.append((status, data))
+
+    handler.respond = respond
+    handler.do_POST()
+    assert results == [(409, {"error": "busy_no_queue"})]
+    assert handler.server.lock.locked()
+
+
+@pytest.mark.parametrize("lengths,transfer", [([str(MAX_BODY+1)], None), (["2", "2"], None),
+                                           (["-1"], None), (["2"], "chunked")])
+def test_body_budget_or_ambiguous_framing_never_reads_payload(lengths, transfer):
+    handler = Handler.__new__(Handler)
+    handler.connection = SimpleNamespace(settimeout=lambda _: None)
+    handler.headers = Message()
+    for value in lengths:
+        handler.headers["Content-Length"] = value
+    if transfer:
+        handler.headers["Transfer-Encoding"] = transfer
+    handler.rfile = io.BytesIO(b"xx")
+    results = []
+    handler.respond = lambda status, _: results.append(status)
+    handler.do_POST()
+    assert results == [400] and handler.rfile.tell() == 0
 
 
 @pytest.mark.parametrize("stage", ["headers", "body"])

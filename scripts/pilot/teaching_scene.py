@@ -201,6 +201,27 @@ class Handler(BaseHTTPRequestHandler):
 
     def do_POST(self):
         self.connection.settimeout(12)
+        # HTTP/1.0 closes after each reply. Closing with unread POST bytes can
+        # reset the TCP stream on Windows and hide a valid 409/410 from fetch.
+        # Consume one bounded body before any early reply; never decode it or
+        # wait for the inference lock. Chunked/ambiguous lengths are unsupported.
+        try:
+            lengths = self.headers.get_all("Content-Length", [])
+            if len(lengths) > 1 or self.headers.get("Transfer-Encoding"):
+                raise ValueError()
+            length = lengths[0] if lengths else "0"
+            if not length.isascii() or not length.isdecimal():
+                raise ValueError()
+            size = int(length)
+            if size > MAX_BODY:
+                raise ValueError()
+            self.payload = self.rfile.read(size)
+            if len(self.payload) != size:
+                raise ValueError()
+        except (ConnectionError, TimeoutError):
+            return
+        except ValueError:
+            return self.respond(400, {"error": "invalid_request"})
         if not self.trusted() or self.headers.get("X-Sphere-Preview") != "1":
             return self.respond(403, {"error": "origin_denied"})
         if not self.server.lock.acquire(blocking=False):
@@ -229,10 +250,10 @@ class Handler(BaseHTTPRequestHandler):
         if path.path == "/session":
             if session:
                 return self.respond(409, {"error": "preview_already_owned"})
-            size = int(self.headers.get("Content-Length", "0"))
+            size = len(self.payload)
             if size < 1 or size > 256 or self.headers.get("Content-Type") != "application/json":
                 raise ValueError()
-            body = json.loads(self.rfile.read(size))
+            body = json.loads(self.payload)
             import uuid
             uuid.UUID(body["device_id"])
             session = {"id": secrets.token_hex(16), "key": secrets.token_hex(32), "born": now, "last": now, "sequence": -1}
@@ -253,13 +274,10 @@ class Handler(BaseHTTPRequestHandler):
         sequence = int(parse_qs(path.query)["sequence"][0])
         if not session["sequence"] < sequence < 10**9:
             raise ValueError()
-        size = int(self.headers.get("Content-Length", "0"))
+        size = len(self.payload)
         if not 1 <= size <= MAX_BODY or self.headers.get("Content-Type") != "image/jpeg":
             raise ValueError()
-        data = self.rfile.read(size)
-        if len(data) != size:
-            raise ValueError()
-        result = self.server.geometry.frame(data, sequence)
+        result = self.server.geometry.frame(self.payload, sequence)
         session.update(sequence=sequence, last=time.monotonic())
         result["expires_in_seconds"] = max(0, int(MAX_SESSION_SECONDS - (time.monotonic() - session["born"])))
         self.respond(200, result)

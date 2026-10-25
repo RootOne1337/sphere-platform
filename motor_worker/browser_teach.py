@@ -11,7 +11,9 @@ import argparse
 import hashlib
 import io
 import json
+import math
 import stat
+import statistics
 from dataclasses import dataclass
 from fractions import Fraction
 from pathlib import Path
@@ -252,14 +254,37 @@ def decoded_browser(capture):
 
 def inspect_browser(directory):
     capture = validate_browser(directory)
-    decoded = sum(1 for _ in decoded_browser(capture))
+    decoded, repeated, previous_rgb, unique_rgb = 0, 0, None, set()
+    for _, frame in decoded_browser(capture):
+        rgb_hash = sha(frame.to_ndarray(format="rgb24").tobytes())
+        repeated += rgb_hash == previous_rgb
+        unique_rgb.add(rgb_hash)
+        previous_rgb = rgb_hash
+        decoded += 1
     ticks = capture.frames[-1]["relative_ticks_90k"]
+    gaps = [(b["relative_ticks_90k"]-a["relative_ticks_90k"])/90
+            for a, b in zip(capture.frames, capture.frames[1:])]
+    # Media spacing is not Android capture age. No native-to-browser clock map
+    # or engine camera/depth exists in this format, even if config claims one.
+    target = capture.manifest["config"].get("target_fps")
+    target = target if finite(target, 1, 240) else None
+    spacing = dict(intervals=len(gaps), median_ms=statistics.median(gaps) if gaps else None,
+                   p95_ms=sorted(gaps)[math.ceil(.95*len(gaps))-1] if gaps else None,
+                   max_ms=max(gaps) if gaps else None,
+                   gaps_over_200ms=sum(gap > 200 for gap in gaps),
+                   gaps_over_500ms=sum(gap > 500 for gap in gaps))
     return dict(schema=capture.manifest["schema"], clip=capture.manifest["id"],
                 frames=decoded, seconds=ticks/90000,
                 media_fps=(decoded-1)*90000/ticks if ticks else 0,
                 geometry=capture.geometry, complete_verified=True, input_release_verified=True,
                 source_capture_clock_mapping_known=False, reconstruction_qualified=False,
-                execution_qualified=False, source_manifest_sha256=sha(capture.originals["manifest.json"]))
+                execution_qualified=False, source_manifest_sha256=sha(capture.originals["manifest.json"]),
+                observability=dict(schema="sphere-capture-observability-v1", declared_target_fps=target,
+                    media_spacing=spacing, unique_decoded_rgb=len(unique_rgb),
+                    consecutive_identical_rgb=repeated, video_bytes=capture.manifest["files"]["video.h264"]["bytes"],
+                    measured_depth=False, engine_camera_poses=False, calibrated_intrinsics=False,
+                    metric_scale=None, capture_to_receive_latency_ms=None,
+                    exact_rgb_repeats_are_not_a_disconnect_verdict=True))
 
 
 def prepare_browser(directory, output, *, interval=1.0, max_images=256, max_bytes=1024*MIB):

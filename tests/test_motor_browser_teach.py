@@ -99,6 +99,72 @@ class BrowserTeachTests(unittest.TestCase):
         self.assertFalse(report["execution_qualified"])
         self.assertAlmostEqual(report["media_fps"], 30)
 
+    def test_observability_reports_real_media_gaps_without_trusting_claimed_engine_data(self):
+        self.manifest["config"].update(target_fps=60, measured_depth=True, camera_poses=[1, 2, 3])
+        for i, row in enumerate(self.frames):
+            ticks = i*3000+(45000 if i >= 8 else 0)
+            row.update(relative_ticks_90k=ticks, rtp_timestamp=(2**32-3000+ticks) % 2**32)
+        self.manifest["media_duration_ticks_90k"] = self.frames[-1]["relative_ticks_90k"]
+        self.seal()
+        before = {p.name: digest(p.read_bytes()) for p in self.source.iterdir()}
+        report = inspect_browser(self.source)
+        quality = report["observability"]
+        self.assertEqual(quality["declared_target_fps"], 60)
+        self.assertAlmostEqual(report["media_fps"], 15)
+        self.assertAlmostEqual(quality["media_spacing"]["median_ms"], 1000/30)
+        self.assertAlmostEqual(quality["media_spacing"]["p95_ms"], 1600/3)
+        self.assertEqual(quality["media_spacing"]["gaps_over_500ms"], 1)
+        self.assertIsNone(quality["capture_to_receive_latency_ms"])
+        self.assertIsNone(quality["metric_scale"])
+        self.assertFalse(quality["measured_depth"])
+        self.assertFalse(quality["engine_camera_poses"])
+        self.assertFalse(quality["calibrated_intrinsics"])
+        self.assertEqual(before, {p.name: digest(p.read_bytes()) for p in self.source.iterdir()})
+
+    def test_single_frame_has_no_fabricated_spacing_or_latency(self):
+        self.frames = self.frames[:1]
+        path = self.source/"video.h264"
+        path.write_bytes(path.read_bytes()[:self.frames[0]["bytes"]])
+        self.manifest.update(frames=1, media_duration_ticks_90k=0)
+        self.manifest["config"]["target_fps"] = True
+        self.seal()
+        report = inspect_browser(self.source)
+        quality = report["observability"]
+        self.assertIsNone(quality["declared_target_fps"])
+        self.assertEqual(quality["unique_decoded_rgb"], 1)
+        self.assertEqual(quality["consecutive_identical_rgb"], 0)
+        self.assertEqual(quality["media_spacing"]["intervals"], 0)
+        self.assertIsNone(quality["media_spacing"]["p95_ms"])
+        self.assertIsNone(quality["media_spacing"]["max_ms"])
+        self.assertEqual(report["media_fps"], 0)
+
+    def test_static_rgb_is_reported_without_fabricating_a_game_disconnect(self):
+        codec = av.CodecContext.create("libx264", "w")
+        codec.width, codec.height, codec.pix_fmt = 96, 64, "yuv420p"
+        codec.time_base = Fraction(1, 30)
+        codec.options = {"preset": "ultrafast", "tune": "zerolatency", "crf": "0"}
+        packets = []
+        for i in range(16):
+            frame = av.VideoFrame.from_ndarray(np.zeros((64, 96, 3), dtype=np.uint8), format="rgb24")
+            frame.pts = i
+            packets.extend(codec.encode(frame))
+        packets.extend(codec.encode(None))
+        video = bytearray()
+        self.assertEqual(len(packets), len(self.frames))
+        for row, packet in zip(self.frames, packets):
+            data = bytes(packet)
+            types = set(nal_types(data))
+            row.update(offset=len(video), bytes=len(data), key=5 in types,
+                       seekable={5, 7, 8}.issubset(types), sha256=digest(data))
+            video.extend(data)
+        (self.source/"video.h264").write_bytes(video)
+        self.seal()
+        report = inspect_browser(self.source)
+        self.assertEqual(report["observability"]["unique_decoded_rgb"], 1)
+        self.assertEqual(report["observability"]["consecutive_identical_rgb"], 15)
+        self.assertTrue(report["observability"]["exact_rgb_repeats_are_not_a_disconnect_verdict"])
+        self.assertFalse(report["execution_qualified"])
+
     def test_v1_legacy_closed_without_native_clock_remains_readable(self):
         self.manifest["schema"] = "sphere-browser-teaching-v1"
         self.manifest.pop("media_duration_ticks_90k")

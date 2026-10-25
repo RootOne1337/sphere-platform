@@ -5,8 +5,8 @@
   "countsByRole": {
     "ADR": 6,
     "CURRENT_ENTRYPOINT": 8,
-    "DATED_EVIDENCE": 383,
-    "DESIGN_SPECIFICATION": 88,
+    "DATED_EVIDENCE": 384,
+    "DESIGN_SPECIFICATION": 89,
     "OPERATING_GUIDE": 74,
     "PROJECT_POLICY": 7,
     "SUPPORTING_DOCUMENT": 7
@@ -1677,6 +1677,10 @@
       "role": "DATED_EVIDENCE"
     },
     {
+      "file": "docs/audits/2026-10-25/SPIRULA-TURNKEY-TRIAL.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
       "file": "docs/audits/enterprise-audit-2026-02-23.md",
       "role": "DATED_EVIDENCE"
     },
@@ -1687,6 +1691,10 @@
     {
       "file": "docs/deployment.md",
       "role": "OPERATING_GUIDE"
+    },
+    {
+      "file": "docs/design/ANDROID-CAPTURE-AND-NAVIGATION-EVIDENCE.md",
+      "role": "DESIGN_SPECIFICATION"
     },
     {
       "file": "docs/design/ANDROID-FILE-MANAGER.md",
