@@ -3,6 +3,19 @@ from __future__ import annotations
 
 import math
 
+TRAINING_STEPS = (3000, 5000, 10000, 30000)
+
+
+def export_interval(steps):
+    """Keep detail runs within the existing cumulative checkpoint disk budget.
+
+    Thirty full-size exports can exceed 2 GiB at the admitted splat limit.
+    Six exports retain recovery checkpoints without weakening resource guards.
+    """
+    if type(steps) is not int or steps not in TRAINING_STEPS:
+        raise ValueError('invalid_processing_options')
+    return 5000 if steps == 30000 else 1000
+
 
 def sparse_condition(camera_centers, points):
     """Detect points collapsed onto camera centers, invariant to SfM scale/origin.

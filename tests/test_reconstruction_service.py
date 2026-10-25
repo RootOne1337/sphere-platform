@@ -32,6 +32,21 @@ def test_creation_is_idempotent_and_only_one_active(jobs):
     assert 'b' * 64 not in (job / 'control.json').read_text()
 
 
+def test_detail_profile_is_preserved_and_does_not_relax_exclusive_execution(jobs):
+    request = dict(id='a' * 32, key='b' * 64, mask='none', steps=30000)
+    jobs.create(request)
+    assert jobs.authorize(jobs.path(request['id']), request['key'])['steps'] == 30000
+    with pytest.raises(ValueError, match='one_active'):
+        create(jobs, 'c' * 32)
+
+
+@pytest.mark.parametrize('steps', [True, 30000.0, '30000', 30001, None])
+def test_non_admitted_training_budget_is_refused_before_job_creation(jobs, steps):
+    with pytest.raises(ValueError, match='invalid_processing_options'):
+        jobs.create(dict(id='a' * 32, key='b' * 64, mask='none', steps=steps))
+    assert not jobs.path('a' * 32).exists()
+
+
 def test_upload_does_not_repeat_unknown_chunk_or_escape(jobs):
     job = create(jobs)
     assert jobs.upload(job, 'video.h264', 0, b'first')['offset'] == 5

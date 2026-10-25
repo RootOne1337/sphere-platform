@@ -18,6 +18,7 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 
 from scripts.pilot.atomic_json import write_json
+from scripts.pilot.reconstruction_quality import export_interval
 from scripts.pilot.resource_guard import collect, evaluate
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -175,8 +176,9 @@ class Jobs:
         if job.exists():
             self.authorize(job, key)
             return self.status(job)  # Same creation intent is read back, never repeated.
-        if body.get('mask') not in {'none', 'game'} or body.get('steps') not in {3000, 5000, 10000}:
+        if body.get('mask') not in {'none', 'game'}:
             raise ValueError('invalid_processing_options')
+        export_interval(body.get('steps'))
         if len(list(self.folder.iterdir())) >= 12:
             raise ValueError('retained_job_quota_export_or_archive_locally_first')
         for path in self.folder.iterdir():

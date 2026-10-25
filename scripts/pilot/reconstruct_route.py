@@ -23,7 +23,12 @@ from motor_worker.browser_teach import browser_units, prepare_browser, validate_
 from scripts.pilot.atomic_json import write_json
 from scripts.pilot.learned_route_features import available as learned_features_available
 from scripts.pilot.learned_route_features import extract_and_match
-from scripts.pilot.reconstruction_quality import reference_quality, sparse_condition
+from scripts.pilot.reconstruction_quality import (
+    TRAINING_STEPS,
+    export_interval,
+    reference_quality,
+    sparse_condition,
+)
 from scripts.pilot.resource_guard import collect, evaluate
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -300,6 +305,7 @@ def brush_dataset(job, prepared, names, name='brush-dataset'):
 
 
 def train_dense(job, prepared, geometry, quality, mask, steps, attempt=0):
+    interval = export_interval(steps)
     checkpoint(job)
     archive = TOOLS / 'brush-app-v0.3.0-windows.zip'
     if digest(archive) != BRUSH_SHA:
@@ -330,7 +336,7 @@ def train_dense(job, prepared, geometry, quality, mask, steps, attempt=0):
     state(job, 'training', quality=quality, total_steps=steps)
     command = [str(binary), str(dataset), '--total-steps', str(steps), '--max-splats', '750000',
                '--max-resolution', '1920', '--sh-degree', '2', '--seed', '17',
-               '--export-every', '1000', '--export-path', str(export), '--export-name', 'scene_{iter}.ply']
+               '--export-every', str(interval), '--export-path', str(export), '--export-name', 'scene_{iter}.ply']
     log_name = f'brush-retry-{attempt}.log' if attempt else 'brush.log'
     environment = dict(os.environ, CUBECL_AUTOTUNE_LEVEL='balanced', RUST_BACKTRACE='1')
     binding_checked = False
@@ -383,7 +389,7 @@ def train_dense(job, prepared, geometry, quality, mask, steps, attempt=0):
                   metric_scale=None, masks=mask, dynamic_objects_removed=False,
                   collision_map=False, execution_qualified=False,
                   tools=dict(pycolmap='4.2.1', brush='0.3.0'), training_steps=steps,
-                  autotune='balanced', engine=engine, periodic_export_steps=1000,
+                  autotune='balanced', engine=engine, periodic_export_steps=interval,
                   appearance=appearance['summary'])
     features_path = prepared / 'features.json'
     if features_path.is_file():
@@ -494,7 +500,7 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--job', type=Path, required=True)
     parser.add_argument('--mask', choices=['none', 'game'], default='game')
-    parser.add_argument('--steps', type=int, choices=[3000, 5000, 10000], default=5000)
+    parser.add_argument('--steps', type=int, choices=TRAINING_STEPS, default=5000)
     parser.add_argument('--retry-dense', action='store_true')
     parser.add_argument('--retry-attempt', type=int, choices=[1, 2], default=1)
     args = parser.parse_args()

@@ -55,6 +55,16 @@ def test_all_exported_floats_are_validated(tmp_path):
         validate_splats(path)
 
 
+def test_detail_checkpoints_fit_existing_disk_budget_at_full_splat_capacity():
+    from scripts.pilot.reconstruction_quality import export_interval
+
+    # The current degree-2 native PLY uses 38 float32 properties per splat.
+    # Include a conservative 64 KiB header for each worst-case checkpoint.
+    bytes_per_export = 750000 * 38 * 4 + 65536
+    assert (30000 // export_interval(30000)) * bytes_per_export <= 2**31
+    assert (30000 // 1000) * bytes_per_export > 2**31
+
+
 def test_failed_training_preserves_latest_valid_checkpoint_without_complete(tmp_path):
     import json
 
