@@ -244,6 +244,7 @@ export function TeachingWorkbench({ deviceId, readOnly }: { deviceId: string; re
     return x >= 0 && y >= 0 && x < b.width && y < b.height ? { x: Math.floor(x), y: Math.floor(y) } : null;
   };
   const field = 'w-full rounded-lg border border-input bg-background px-3 py-2 text-sm';
+  const toolbarButton = 'h-auto min-h-9 whitespace-normal px-2 py-2 text-xs sm:text-sm';
   const binding=connection.current?.binding(), mappingIssue=binding?profileIssue(profile,binding):null;
   const calibrationMarkers=binding?(profile.mode==='vehicle_buttons'
     ?vehicleButtons.filter(target=>calibrated(profile,binding,target)).map(target=>({...fromPercent(profile.vehicle[target],binding),label:({forward:'W',reverse:'S',left:'A',right:'D'})[target]}))
@@ -251,11 +252,14 @@ export function TeachingWorkbench({ deviceId, readOnly }: { deviceId: string; re
   if(binding&&calibrated(profile,binding,'action'))calibrationMarkers.push({...fromPercent({x:profile.action_x,y:profile.action_y},binding),label:'Space'});
   const chooseCalibration=(target:CalibrationTarget)=>{setCalibrate(target);video.current?.scrollIntoView({block:'center',behavior:'smooth'});};
   return <div ref={host} className="space-y-4" aria-label="Запись учебного маршрута">
+    <div className="space-y-4">
     <div aria-label="Панель записи" className="sticky top-16 z-30 flex flex-wrap items-center gap-2 rounded-2xl border border-border bg-card/95 p-3 shadow-xl backdrop-blur">
-      <Button variant="outline" disabled={readOnly || exportBusy || !storageScope || active(phase) || phase === 'connecting'} onClick={() => { void connect(); }}>{phase === 'idle' ? 'Подключить поток' : 'Подключить заново'}</Button>
-      <Button variant="outline" disabled={readOnly || exportBusy || phase !== 'preview' || !ready || !!calibrate || !!mappingIssue} onClick={enableControl}><Keyboard size={15} className="mr-2" />Включить управление</Button>
-      <Button disabled={readOnly || exportBusy || !['preview','controlling'].includes(phase) || !ready || !!calibrate || !!mappingIssue} onClick={() => { void record(); }}><Circle size={15} className="mr-2 text-red-500" />Записать маршрут</Button>
-      <Button variant="destructive" disabled={!active(phase) || phase === 'stopping'} onClick={() => { void stop(); }}><Square size={15} className="mr-2" />{phase === 'stopping' ? 'Освобождение и сохранение…' : 'Остановить · Esc'}</Button>
+      <div className="grid w-full grid-cols-2 gap-2 lg:flex lg:w-auto lg:flex-wrap">
+      <Button className={toolbarButton} variant="outline" disabled={readOnly || exportBusy || !storageScope || active(phase) || phase === 'connecting'} onClick={() => { void connect(); }}>{phase === 'idle' ? 'Подключить поток' : 'Подключить заново'}</Button>
+      <Button className={toolbarButton} variant="outline" disabled={readOnly || exportBusy || phase !== 'preview' || !ready || !!calibrate || !!mappingIssue} onClick={enableControl}><Keyboard size={15} className="mr-2 shrink-0" />Включить управление</Button>
+      <Button className={toolbarButton} disabled={readOnly || exportBusy || !['preview','controlling'].includes(phase) || !ready || !!calibrate || !!mappingIssue} onClick={() => { void record(); }}><Circle size={15} className="mr-2 shrink-0 text-red-500" />Записать маршрут</Button>
+      <Button className={toolbarButton} variant="destructive" disabled={!active(phase) || phase === 'stopping'} onClick={() => { void stop(); }}><Square size={15} className="mr-2 shrink-0" />{phase === 'stopping' ? 'Освобождение и сохранение…' : 'Остановить · Esc'}</Button>
+      </div>
       {(phase==='recording'||phase==='finished')&&<span className="rounded-lg bg-muted px-2 py-1 font-mono text-xs tabular-nums">{progress.seconds.toFixed(1)} с · {progress.frames} кадров{progress.seconds>0?` · ${(progress.frames/progress.seconds).toFixed(1)} средних FPS`:''}</span>}
       <p role="status" className="min-w-[220px] flex-1 text-xs leading-5 text-muted-foreground">{readOnly ? 'Для записи требуется право stream:control.' : exportBusy?'Обрабатываем сохранённый материал. Дождитесь завершения перед новым управлением.':calibrate ? `Укажите ${calibrationNames[calibrate]} на экране. Касание в игру не отправляется.` : mappingIssue ?? notice}</p>
     </div>
@@ -308,12 +312,13 @@ export function TeachingWorkbench({ deviceId, readOnly }: { deviceId: string; re
         </div>
         <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={hudHidden} disabled={active(phase)} onChange={e=>setHudHidden(e.target.checked)} />HUD скрыт в игре</label>
         <p className="text-xs leading-5 text-muted-foreground">Кнопки калибруйте до отключения HUD. Флажок сохраняет пометку в материале; он не скрывает интерфейс игры и не вырезает надписи из видео.</p>
-        <p className="text-xs leading-5 text-muted-foreground">Перед качественным проходом: 1920 × 1080, DPI 320, рендер игры 100%, цель 60 FPS. Кнопка «Качество» задаёт предел кодека; фактическую частоту проверяем по записи.</p>
+        <p className="text-xs leading-5 text-muted-foreground">Перед качественным проходом: 1920 × 1080, DPI 320, рендер игры 100%. Сначала проверьте устойчивые 30 FPS; 60 FPS — после проверки ресурсов. Кнопка «Качество» задаёт предел кодека; фактическую частоту проверяем по записи.</p>
         <label className="block space-y-1 text-sm"><span>Предел записи</span><select className={field} value={minutes} disabled={active(phase)} onChange={e=>setMinutes(Number(e.target.value))}><option value={2}>2 минуты · до 512 МБ</option><option value={5}>5 минут · до 2 ГБ</option><option value={10}>10 минут · до 2 ГБ</option></select></label>
         <p className="text-xs leading-5 text-muted-foreground">При достижении предела запись сохраняется с освобождением ввода. До 20 материалов в этом браузере. Экспортируйте нужные записи перед очисткой данных браузера.</p>
       </aside>
     </div>
     <TeachingScenePreview video={video} deviceId={deviceId} ready={ready} controlActive={active(phase)} />
+    </div>
     <fieldset disabled={active(phase)} className="min-w-0 border-0 p-0"><TeachingReview key={storageScope} storageScope={storageScope} selected={clip} refresh={refresh} onSelect={setClip} onBusyChange={setExportBusy} /></fieldset>
     <p className="flex items-center gap-2 text-xs text-muted-foreground"><Download size={14} />Материал содержит только явно записанный проход. Он ещё не доказывает повторение маршрута ИИ.</p>
   </div>;
