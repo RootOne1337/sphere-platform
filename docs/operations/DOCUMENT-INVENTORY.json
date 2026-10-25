@@ -5,8 +5,8 @@
   "countsByRole": {
     "ADR": 6,
     "CURRENT_ENTRYPOINT": 8,
-    "DATED_EVIDENCE": 384,
-    "DESIGN_SPECIFICATION": 89,
+    "DATED_EVIDENCE": 385,
+    "DESIGN_SPECIFICATION": 90,
     "OPERATING_GUIDE": 74,
     "PROJECT_POLICY": 7,
     "SUPPORTING_DOCUMENT": 7
@@ -1677,6 +1677,10 @@
       "role": "DATED_EVIDENCE"
     },
     {
+      "file": "docs/audits/2026-10-25/ROUTE-RELOCALIZATION-ADMISSION.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
       "file": "docs/audits/2026-10-25/SPIRULA-TURNKEY-TRIAL.md",
       "role": "DATED_EVIDENCE"
     },
@@ -1734,6 +1738,10 @@
     },
     {
       "file": "docs/design/RECORDED-ROUTE-SPATIAL-MAP.md",
+      "role": "DESIGN_SPECIFICATION"
+    },
+    {
+      "file": "docs/design/VISUAL-ROUTE-RELOCALIZATION.md",
       "role": "DESIGN_SPECIFICATION"
     },
     {
