@@ -206,6 +206,48 @@ def test_fragment_paths_never_escape_the_job(ready_job, identity):
         jobs.surface_asset(job, identity)
 
 
+def test_original_frame_preview_checks_hash_and_preserves_pixels(ready_job, baked, monkeypatch):
+    jobs, job, _ = ready_job
+    name = '00000000.png'
+    folder = job / 'prepared/images'
+    folder.mkdir(parents=True)
+    raw = (baked[0] / name).read_bytes()
+    (folder / name).write_bytes(raw)
+    write_json(job / 'prepared/reconstruction-input.json', dict(images=[dict(image='images/' + name, png_sha256=hashlib.sha256(raw).hexdigest())]))
+    calls = []
+    monkeypatch.setattr(service, 'source_model', lambda target: calls.append(target))
+    jpeg = jobs.source_preview(job, name)
+    assert jpeg.startswith(b'\xff\xd8') and calls == [job]
+    assert (folder / name).read_bytes() == raw
+    (folder / name).write_bytes(raw + b'changed')
+    with pytest.raises(ValueError, match='preview_changed'):
+        jobs.source_preview(job, name)
+    for invalid in ('../control.json', '00000000.jpg', 'http://example.com'):
+        with pytest.raises(ValueError, match='preview_invalid'):
+            jobs.source_preview(job, invalid)
+
+
+def test_visual_review_cannot_attach_to_a_different_asset(ready_job):
+    jobs, job, body = ready_job
+    review = dict(schema='sphere-surface-visual-review-v1', asset_sha256='0' * 64,
+                  state='issues_found', issues=['holes', 'occluding_surfaces'])
+    write_json(job / 'surface/visual-review.json', review)
+    assert 'visual_review' not in jobs.surface_status(job)
+    review['asset_sha256'] = hashlib.sha256(body).hexdigest()
+    write_json(job / 'surface/visual-review.json', review)
+    assert jobs.surface_status(job)['visual_review']['issues'] == ['holes', 'occluding_surfaces']
+
+
+def test_camera_motion_warning_never_accepts_navigation(ready_job):
+    jobs, job, _ = ready_job
+    geometry = dict(cameras=[dict(image=f'{i:08}.png', ticks_90k=i * 45000, center=[i % 2, 0, 0]) for i in range(7)])
+    write_json(job / 'geometry.json', geometry)
+    motion = jobs.status(job)['camera_motion']
+    assert motion['warning'] == 'poses_require_temporal_review'
+    assert motion['rapid_reversals'] == 5
+    assert motion['navigation_qualified'] is False
+
+
 def test_surface_http_uses_same_capability_and_embedded_binary_type(ready_job):
     import threading
     import urllib.error

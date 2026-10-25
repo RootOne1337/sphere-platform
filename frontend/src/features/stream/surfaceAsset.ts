@@ -25,7 +25,8 @@ export function surfaceMetadata(buffer:ArrayBuffer) {
 export async function loadSurface(job:ReconstructionJob,state:SurfaceState,signal?:AbortSignal) {
   const receipt=state.result;
   if(!state.available||!receipt||!Number.isSafeInteger(receipt.bytes)||receipt.bytes>64*1048576||!/^[0-9a-f]{64}$/.test(receipt.sha256))throw Error('3D-модель ещё не подтверждена.');
-  const response=await reconstructionRequest(`/jobs/${job.id}/surface`,job,{signal});
+  if(state.id&&!/^[0-9a-f]{32}$/.test(state.id))throw Error('Неверный идентификатор фрагмента.');
+  const response=await reconstructionRequest(`/jobs/${job.id}/${state.id?`fragments/${state.id}`:'surface'}`,job,{signal});
   if(Number(response.headers.get('Content-Length'))!==receipt.bytes)throw Error('Размер результата изменился.');
   const buffer=await response.arrayBuffer();
   if(buffer.byteLength!==receipt.bytes)throw Error('3D-модель получена не полностью.');

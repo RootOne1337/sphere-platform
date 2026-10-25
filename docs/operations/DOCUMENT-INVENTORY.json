@@ -6,7 +6,7 @@
     "ADR": 6,
     "CURRENT_ENTRYPOINT": 8,
     "DATED_EVIDENCE": 382,
-    "DESIGN_SPECIFICATION": 87,
+    "DESIGN_SPECIFICATION": 88,
     "OPERATING_GUIDE": 74,
     "PROJECT_POLICY": 7,
     "SUPPORTING_DOCUMENT": 7
@@ -1710,6 +1710,10 @@
     },
     {
       "file": "docs/design/LIVE-ROUTE-RECONSTRUCTION.md",
+      "role": "DESIGN_SPECIFICATION"
+    },
+    {
+      "file": "docs/design/LONG-ROUTE-TEACH-REPEAT.md",
       "role": "DESIGN_SPECIFICATION"
     },
     {

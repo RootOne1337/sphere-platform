@@ -35,3 +35,14 @@ test('a changed hash is rejected before the renderer parses any asset',async()=>
   await expect(loadSurface({id:'a'.repeat(32),key:'b'.repeat(64)},state)).rejects.toThrow('Контрольная сумма');
   expect(fetcher).toHaveBeenCalledTimes(1);
 });
+
+test('a saved fragment uses its own authenticated endpoint',async()=>{
+  const body=payload();const digest=Buffer.from(await webcrypto.subtle.digest('SHA-256',body)).toString('hex');
+  const fetcher=jest.spyOn(globalThis,'fetch').mockResolvedValue(new Response(body,{headers:{'Content-Length':String(body.byteLength)}}));
+  const state={id:'c'.repeat(32),phase:'review_required',available:true,result:{bytes:body.byteLength,sha256:digest}} as SurfaceState;
+  expect(await loadSurface({id:'a'.repeat(32),key:'b'.repeat(64)},state)).toEqual(body);
+  expect(fetcher.mock.calls[0][0]).toBe(`http://127.0.0.1:3342/jobs/${'a'.repeat(32)}/fragments/${'c'.repeat(32)}`);
+  expect((fetcher.mock.calls[0][1]?.headers as Headers).get('X-Job-Key')).toBe('b'.repeat(64));
+  await expect(loadSurface({id:'a'.repeat(32),key:'b'.repeat(64)},{...state,id:'../escape'})).rejects.toThrow('идентификатор');
+  expect(fetcher).toHaveBeenCalledTimes(1);
+});

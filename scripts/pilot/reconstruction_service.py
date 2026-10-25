@@ -8,6 +8,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import hmac
+import io
 import json
 import os
 import re
@@ -27,6 +28,7 @@ from scripts.pilot.reconstruct_surface import (
 )
 from scripts.pilot.reconstruction_quality import export_interval
 from scripts.pilot.resource_guard import collect, evaluate
+from scripts.pilot.route_motion_audit import audit as audit_camera_motion
 from scripts.pilot.surface_asset import MAX_BYTES, MAX_FACES, validate_glb
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -106,20 +108,34 @@ class Jobs:
         result['fragments'] = [self.surface_status(job, p.name) for p in sorted((job / 'fragments').glob('*'))
                                if p.is_dir() and IDENTITY.fullmatch(p.name)][:24]
         result['fragments'] = [item for item in result['fragments'] if item]
+        result['fragments'].sort(key=lambda item: (item.get('fragment', {}).get('first_view', 0), item['id']))
         result['surface_supported'] = tools_available()
+        geometry = job / 'geometry.json'
+        if geometry.is_file() and not geometry.is_symlink() and geometry.stat().st_size <= 16 * 1024**2:
+            try:
+                motion = audit_camera_motion(json.loads(geometry.read_text('utf-8')))
+                result['camera_motion'] = dict(warning=motion['warning'], rapid_reversals=len(motion['rapid_reversals']),
+                    heuristic_only=True, navigation_qualified=False)
+            except (KeyError, TypeError, ValueError):
+                result['camera_motion'] = dict(warning='camera_motion_unverified', navigation_qualified=False)
         return result
 
     def surface_status(self, job, fragment=None):
         folder = surface_output(job, fragment)
+        identity = dict(id=fragment) if fragment else {}
+        if folder.is_symlink() or folder.parent.is_symlink() or not folder.resolve().is_relative_to(job.resolve()):
+            raise ValueError('surface_fragment_path_invalid')
         if not (folder / 'state.json').is_file():
             return None
         state = json.loads((folder / 'state.json').read_text('utf-8'))
         if fragment:
             state['id'] = fragment
         if (folder / 'options.json').is_file():
+            if (folder / 'options.json').stat().st_size > 1024:
+                raise ValueError('surface_options_quota')
             state['fragment'] = json.loads((folder / 'options.json').read_text('utf-8'))
         if (folder / 'CANCEL').exists() and state['phase'] in {'ready', 'review_required'}:
-            return dict(phase='cancelled', error='surface_cancelled_before_admission', available=False)
+            return dict(**identity, phase='cancelled', error='surface_cancelled_before_admission', available=False)
         if state['phase'] in {'ready', 'review_required'}:
             try:
                 receipt = folder / 'result.json'
@@ -140,9 +156,45 @@ class Jobs:
                 state['result'] = {key: item[key] for key in ('sha256', 'bytes', 'triangles', 'vertices',
                     'textures', 'texture_pixels', 'source_images', 'mesh_faces', 'unknown_faces', 'seconds')}
                 state['available'] = True
+                review_file = folder / 'visual-review.json'
+                if review_file.is_file() and not review_file.is_symlink() and review_file.stat().st_size <= 8192:
+                    review = json.loads(review_file.read_text('utf-8'))
+                    if (review.get('schema') == 'sphere-surface-visual-review-v1'
+                            and review.get('asset_sha256') == item['sha256']
+                            and review.get('state') in {'issues_found', 'limited_preview'}
+                            and isinstance(review.get('issues'), list)
+                            and set(review['issues']) <= {'holes', 'occluding_surfaces', 'stretched_triangles', 'pose_inconsistency'}):
+                        state['visual_review'] = dict(state=review['state'], issues=review['issues'])
             except (OSError, KeyError, TypeError, ValueError):
-                return dict(phase='failed', error='surface_result_binding_changed', available=False)
+                return dict(**identity, phase='failed', error='surface_result_binding_changed', available=False)
         return state
+
+    def source_preview(self, job, name):
+        from PIL import Image
+
+        if not re.fullmatch(r'[0-9]{8}\.png', name):
+            raise ValueError('source_preview_invalid')
+        provenance = job / 'prepared/reconstruction-input.json'
+        if provenance.is_symlink() or provenance.stat().st_size > 1024**2:
+            raise ValueError('source_preview_invalid')
+        source_model(job)  # Bind the source and camera geometry before showing a comparison.
+        records = json.loads(provenance.read_text('utf-8'))['images']
+        entry = next((row for row in records if row['image'] == 'images/' + name), None)
+        path = job / 'prepared/images' / name
+        if (not entry or path.is_symlink() or not path.resolve().is_relative_to(job.resolve())
+                or not 0 < path.stat().st_size <= 8 * 1024**2):
+            raise ValueError('source_preview_invalid')
+        body = path.read_bytes()
+        if hashlib.sha256(body).hexdigest() != entry['png_sha256']:
+            raise ValueError('source_preview_changed')
+        with Image.open(io.BytesIO(body)) as source:
+            if source.width * source.height > 8 * 1024**2:
+                raise ValueError('source_preview_pixel_quota')
+            image = source.convert('RGB')
+        image.thumbnail((960, 960), Image.Resampling.LANCZOS)
+        out = io.BytesIO()
+        image.save(out, format='JPEG', quality=88)
+        return out.getvalue()
 
     def active(self, job):
         state = self.status(job)
@@ -506,6 +558,8 @@ def handler(jobs, origin, port):
                         self.reply(200, jobs.status(job))
                     elif method == 'GET' and parts[2:] == ['surface']:
                         self.reply(200, jobs.surface_asset(job), 'model/gltf-binary')
+                    elif method == 'GET' and len(parts) == 4 and parts[2] == 'frame':
+                        self.reply(200, jobs.source_preview(job, parts[3]), 'image/jpeg')
                     elif method == 'POST' and len(parts) == 5 and parts[2] == 'fragments' and parts[4] == 'start':
                         if not IDENTITY.fullmatch(parts[3]):
                             raise ValueError('surface_fragment_id_invalid')

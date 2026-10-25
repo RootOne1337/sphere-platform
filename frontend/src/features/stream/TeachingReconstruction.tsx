@@ -3,7 +3,7 @@ import dynamic from 'next/dynamic';
 import {useEffect,useRef,useState} from 'react';
 import {Box,Loader2} from 'lucide-react';
 import {Button} from '@/components/ui/button';
-import {activeSurface,reconstructionRequest,terminalReconstruction,uploadReconstruction,type ReconstructionJob,type ReconstructionState} from './reconstructionClient';
+import {processingSurface,reconstructionRequest,terminalReconstruction,uploadReconstruction,type ReconstructionJob,type ReconstructionState} from './reconstructionClient';
 import {readReconstructionLink,saveReconstructionLink,validReconstructionJob} from './reconstructionLink';
 import ReferenceComparison from './ReferenceComparison';
 const Scene=dynamic(()=>import('./ReconstructedScene'),{ssr:false,loading:()=> <p>Загружаем 3D-просмотр…</p>});
@@ -30,6 +30,10 @@ export function TeachingReconstruction({clip,scope,folder,complete,onBusyChange}
   const [recovering,setRecovering]=useState(true);const folderRef=useRef(folder);folderRef.current=folder;
   const [refresh,setRefresh]=useState(0),[surfaceStarting,setSurfaceStarting]=useState(false);
   const [firstView,setFirstView]=useState(0),[viewCount,setViewCount]=useState(18);
+  const [selectedFragment,setSelectedFragment]=useState('legacy');
+  const models=[...(status?.surface?[status.surface]:[]),...status?.fragments??[]].sort((a,b)=>(a.fragment?.first_view??0)-(b.fragment?.first_view??0));
+  const selectedModel=models.find(item=>(item.id??'legacy')===selectedFragment&&item.available)??models.find(item=>item.available);
+  const workingSurface=status?processingSurface(status):undefined;
   const storageKey=`sphere-reconstruction-${scope}-${clip}`;
   const busy=recovering||uploading||surfaceStarting||!!job&&(!status||!terminalReconstruction(status));
   useEffect(()=>{onBusyChange(busy);},[busy,onBusyChange]);
@@ -65,11 +69,12 @@ export function TeachingReconstruction({clip,scope,folder,complete,onBusyChange}
   };
   const cancel=async()=>{
     uploadAbort.current?.abort();if(!job)return;
-    try{setStatus(await(await reconstructionRequest(`/jobs/${job.id}/${status&&activeSurface(status)?'surface/cancel':'cancel'}`,job,{method:'POST',body:'{}'})).json());setRefresh(n=>n+1);}catch{setError('Отмена не подтверждена. Состояние проверяется; управление остаётся заблокировано.');setRefresh(n=>n+1);}
+    const surface=status?processingSurface(status):undefined;
+    try{setStatus(await(await reconstructionRequest(`/jobs/${job.id}/${surface?(surface.id?`fragments/${surface.id}/cancel`:'surface/cancel'):'cancel'}`,job,{method:'POST',body:'{}'})).json());setRefresh(n=>n+1);}catch{setError('Отмена не подтверждена. Состояние проверяется; управление остаётся заблокировано.');setRefresh(n=>n+1);}
   };
   const startSurface=async()=>{
     if(!job||surfaceStarting)return;setSurfaceStarting(true);setError(null);
-    try{setStatus(await(await reconstructionRequest(`/jobs/${job.id}/surface/start`,job,{method:'POST',body:JSON.stringify({first_view:firstView,view_count:Math.min(viewCount,(status?.quality?.registered??18)-firstView)})})).json());}
+    try{const id=crypto.randomUUID().replaceAll('-','');setStatus(await(await reconstructionRequest(`/jobs/${job.id}/fragments/${id}/start`,job,{method:'POST',body:JSON.stringify({first_view:firstView,view_count:Math.min(viewCount,(status?.quality?.registered??18)-firstView)})})).json());}
     catch(e){setError(`Построение поверхностей не подтверждено: ${e instanceof Error?e.message:'нет ответа'}. Проверяем то же задание.`);}
     finally{setSurfaceStarting(false);setRefresh(n=>n+1);}
   };
@@ -91,18 +96,21 @@ export function TeachingReconstruction({clip,scope,folder,complete,onBusyChange}
     {status?.error&&<p role="alert" className="text-sm text-destructive">{reasons[status.error]??status.error} Исходное видео не изменено.</p>}
     {status?.dense_partial_available&&status.checkpoint&&<p role="status" className="rounded-lg border border-amber-500/30 bg-amber-500/10 p-3 text-sm">Доступна проверенная промежуточная сцена: {status.checkpoint.steps} / {status.checkpoint.target_steps} итераций. Обработка не завершена успешно; это не окончательный результат.</p>}
     {status?.quality&&<p className="text-xs text-muted-foreground">Камеры {status.quality.registered}/{status.quality.selected} · покрытие {(status.quality.coverage*100).toFixed(0)}% · ошибка {status.quality.mean_reprojection_px.toFixed(2)} px</p>}
+    {status?.camera_motion?.warning&&<p role="status" className="rounded-lg border border-amber-500/30 bg-amber-500/5 p-3 text-xs leading-5 text-amber-500">Траектория камер требует проверки{status.camera_motion.rapid_reversals?`: ${status.camera_motion.rapid_reversals} резких смен направления за короткое время`:''}. Это может быть движение игровой камеры или ошибка восстановления. Путь не принят для управления; метры по нему не вычисляются.</p>}
     {job&&status?.geometry_available&&<div className="space-y-3 rounded-xl border border-sky-500/25 bg-sky-500/5 p-4">
       <div className="flex flex-wrap items-center justify-between gap-3"><div><h5 className="font-medium">3D-модель поверхностей</h5><p className="mt-1 text-xs leading-5 text-muted-foreground">Треугольная сетка с фотографическими текстурами. Невидимые участки остаются пустыми; исходная сцена сохраняется отдельно.</p></div>
-      {!status.surface&&<Button variant="outline" disabled={busy||!status.surface_supported||!terminalReconstruction(status)} onClick={()=>{void startSurface();}}>Построить поверхности</Button>}</div>
-      {!status.surface&&<div className="flex flex-wrap items-end gap-4 text-xs"><label>Начальный ракурс<input aria-label="Начальный ракурс фрагмента" className="mt-1 block w-28 rounded-md border bg-background p-2" type="number" min={1} max={Math.max(1,(status.quality?.registered??18)-2)} value={firstView+1} onChange={e=>setFirstView(Math.max(0,Math.min((status.quality?.registered??18)-3,Number(e.target.value)-1)))}/></label><label>Длина фрагмента<select className="ml-2 rounded-md border bg-background p-2" value={viewCount} onChange={e=>setViewCount(Number(e.target.value))}><option value={12}>12 ракурсов</option><option value={18}>18 ракурсов</option><option value={24}>24 ракурса</option></select></label><p className="max-w-xl text-muted-foreground">Короткий связный участок уменьшает ложные перемычки. Это фрагмент записи; непросмотренные поверхности не считаются достоверными.</p></div>}
-      {status.surface&&<p role="status" className="text-sm">{surfaceLabels[status.surface.phase]??status.surface.phase}{status.surface.total_views?` · ${status.surface.views}/${status.surface.total_views} ракурсов`:''}</p>}
-      {status.surface?.phase==='review_required'&&<p className="text-xs leading-5 text-amber-500">Осмотрите модель из нескольких ракурсов: ложные перемычки и разрывы возможны. Готовность файла не означает точную геометрию или допуск навигации.</p>}
-      {status.surface?.error&&<p role="alert" className="text-sm text-destructive">{reasons[status.surface.error]??status.surface.error}. Исходные материалы и предыдущая сцена сохранены.</p>}
-      {status.surface?.available&&status.surface.result&&<p className="text-xs text-muted-foreground">{status.surface.result.triangles.toLocaleString('ru')} треугольников · {status.surface.result.textures} фотографий · {(status.surface.result.bytes/1048576).toFixed(1)} МБ · исключено без видимого покрытия: {status.surface.result.unknown_faces.toLocaleString('ru')} граней</p>}
+      <Button variant="outline" disabled={busy||!status.surface_supported||!terminalReconstruction(status)} onClick={()=>{void startSurface();}}>{models.length?'Построить другой фрагмент':'Построить поверхности'}</Button></div>
+      <div className="flex flex-wrap items-end gap-4 text-xs"><label>Начальный ракурс<input disabled={busy} aria-label="Начальный ракурс фрагмента" className="mt-1 block w-28 rounded-md border bg-background p-2" type="number" min={1} max={Math.max(1,(status.quality?.registered??18)-2)} value={firstView+1} onChange={e=>setFirstView(Math.max(0,Math.min((status.quality?.registered??18)-3,Number(e.target.value)-1)))}/></label><label>Длина фрагмента<select disabled={busy} className="ml-2 rounded-md border bg-background p-2" value={viewCount} onChange={e=>setViewCount(Number(e.target.value))}><option value={12}>12 ракурсов</option><option value={18}>18 ракурсов</option><option value={24}>24 ракурса</option></select></label><p className="max-w-xl text-muted-foreground">Каждый участок сохраняется отдельно в этом маршруте. Повторно восстанавливать все камеры не требуется; модели не сшиваются автоматически.</p></div>
+      {models.length>0&&<label className="block text-sm">Сохранённые участки<select aria-label="Сохранённый фрагмент маршрута" className="mt-2 block w-full rounded-lg border bg-background p-2" value={selectedModel?.id??'legacy'} onChange={e=>setSelectedFragment(e.target.value)}>{models.map((item,index)=><option key={item.id??'legacy'} value={item.id??'legacy'} disabled={!item.available}>Участок {index+1}{item.fragment?` · ракурсы ${item.fragment.first_view+1}–${item.fragment.first_view+item.fragment.view_count}`:''} · {surfaceLabels[item.phase]??item.phase}</option>)}</select></label>}
+      {workingSurface&&<p role="status" className="text-sm">{surfaceLabels[workingSurface.phase]??workingSurface.phase}{workingSurface.total_views?` · ${workingSurface.views}/${workingSurface.total_views} ракурсов`:''}</p>}
+      {selectedModel?.phase==='review_required'&&<p className="text-xs leading-5 text-amber-500">Осмотрите модель из нескольких ракурсов: ложные перемычки и разрывы возможны. Готовность файла не означает точную геометрию или допуск навигации.</p>}
+      {selectedModel?.visual_review?.state==='issues_found'&&<p role="status" className="rounded-lg border border-amber-500/30 p-3 text-xs leading-5 text-amber-500">В проверенных ракурсах этого участка найдены дефекты: {selectedModel.visual_review.issues.map(issue=>({holes:'пропуски поверхностей',occluding_surfaces:'ложные перекрытия',stretched_triangles:'растянутые треугольники',pose_inconsistency:'сомнительное положение камер'})[issue]??issue).join(', ')}. Он доступен для диагностики и не считается качественной картой.</p>}
+      {models.filter(item=>item.error).map(item=><p key={item.id??'legacy'} role="alert" className="text-sm text-destructive">{reasons[item.error!]??item.error}. Исходные материалы и предыдущая сцена сохранены.</p>)}
+      {selectedModel?.result&&<p className="text-xs text-muted-foreground">{selectedModel.result.triangles.toLocaleString('ru')} треугольников · {selectedModel.result.textures} фотографий · {(selectedModel.result.bytes/1048576).toFixed(1)} МБ · исключено без видимого покрытия: {selectedModel.result.unknown_faces.toLocaleString('ru')} граней</p>}
       {!status.surface_supported&&!status.surface&&<p className="text-xs text-muted-foreground">Локальный инструмент OpenMVS CPU ещё не подготовлен.</p>}
     </div>}
     {job&&status?.dense_available&&<ReferenceComparison job={job} appearance={status.appearance}/>}
-    {job&&status?.geometry_available&&<Scene job={job} status={status}/>}
+    {job&&status?.geometry_available&&<Scene job={job} status={{...status,surface:selectedModel??status.surface}}/>}
     <p className="text-xs text-muted-foreground">Ссылка на результат сохранена рядом с записью в библиотеке этого браузера и аккаунта. Выберите этот проход снова, чтобы открыть готовую сцену. Сохранённая сцена остаётся на локальном ПК.</p>
     <p className="text-xs leading-5 text-muted-foreground">Маска применяется до поиска признаков; она не распознаёт все движущиеся машины и игроков. Плотная сцена — визуальная реконструкция, а не готовая карта коллизий. Масштаб в метрах требует отдельного известного расстояния. При нехватке связных ракурсов обработка остановится с объяснением.</p>
   </section>;
