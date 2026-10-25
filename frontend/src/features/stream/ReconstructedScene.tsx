@@ -5,9 +5,10 @@ import {reconstructionRequest,type ReconstructionJob,type ReconstructionState} f
 type Geometry={cameras:{center:number[];ticks_90k:number;camera_to_world?:number[][];intrinsics?:{width:number;height:number;fx:number;fy:number;cx:number;cy:number}}[];points:number[][];camera_path_units:number;metric_scale:null};
 
 export default function ReconstructedScene({job,status}:{job:ReconstructionJob;status:ReconstructionState}) {
-  const host=useRef<HTMLDivElement>(null),reset=useRef<()=>void>(()=>{}),recordedView=useRef<()=>void>(()=>{});
+  const host=useRef<HTMLDivElement>(null),reset=useRef<()=>void>(()=>{}),recordedView=useRef<(index:number)=>void>(()=>{});
   const pointObject=useRef<{visible:boolean}|null>(null),lineObject=useRef<{visible:boolean}|null>(null);
   const [showPoints,setShowPoints]=useState(false),[showPath,setShowPath]=useState(false);
+  const [recordedIndex,setRecordedIndex]=useState(0),[cameraCount,setCameraCount]=useState(0),[recordedSeconds,setRecordedSeconds]=useState(0);
   const options=useRef({points:false,path:false});options.current={points:showPoints,path:showPath};
   const [error,setError]=useState<string|null>(null),[details,setDetails]=useState('Загружаем восстановленные камеры…');
   useEffect(()=>{
@@ -37,15 +38,16 @@ export default function ReconstructedScene({job,status}:{job:ReconstructionJob;s
       const line=new THREE.Line(lineGeometry,lineMaterial);line.visible=options.current.path;lineObject.current=line;line.renderOrder=10;scene.add(line);objects.push(lineGeometry,lineMaterial);
       const bounds=new THREE.Box3().setFromPoints([...centers,...points.filter((_,i)=>i%20===0).map(p=>new THREE.Vector3(...p.slice(0,3) as [number,number,number]))]);
       const center=bounds.getCenter(new THREE.Vector3()),radius=Math.max(bounds.getSize(new THREE.Vector3()).length()*.45,.1);
-      let referenceProjection=false;
-      const project=()=>{const k=geometry.cameras[0]?.intrinsics;if(referenceProjection&&k){const n=camera.near;camera.projectionMatrix.makePerspective(-k.cx*n/k.fx,(k.width-k.cx)*n/k.fx,k.cy*n/k.fy,-(k.height-k.cy)*n/k.fy,n,camera.far);camera.projectionMatrixInverse.copy(camera.projectionMatrix).invert();}else camera.updateProjectionMatrix();};
+      let referenceProjection=false,projectionCamera=geometry.cameras[0];
+      const project=()=>{const k=projectionCamera?.intrinsics;if(referenceProjection&&k){const n=camera.near;camera.projectionMatrix.makePerspective(-k.cx*n/k.fx,(k.width-k.cx)*n/k.fx,k.cy*n/k.fy,-(k.height-k.cy)*n/k.fy,n,camera.far);camera.projectionMatrixInverse.copy(camera.projectionMatrix).invert();}else camera.updateProjectionMatrix();};
       const frame=()=>{referenceProjection=false;project();camera.up.set(0,-1,0);controls.target.copy(center);camera.position.copy(center).add(new THREE.Vector3(radius,-radius*.6,-radius));controls.update();};reset.current=frame;
-      const fromRecording=()=>{
-        const first=geometry.cameras[0],pose=first?.camera_to_world;if(!pose){frame();return;}
+      const fromRecording=(index:number)=>{
+        const first=geometry.cameras[Math.max(0,Math.min(index,geometry.cameras.length-1))],pose=first?.camera_to_world;if(!pose){frame();return;}
+        projectionCamera=first;setRecordedSeconds(first.ticks_90k/90000);
         const distance=Math.max(new THREE.Box3().setFromPoints(centers).getSize(new THREE.Vector3()).length()*.15,.05);
         referenceProjection=true;project();camera.position.set(...first.center as [number,number,number]);camera.up.set(-pose[0][1],-pose[1][1],-pose[2][1]);
         controls.target.copy(camera.position).add(new THREE.Vector3(pose[0][2],pose[1][2],pose[2][2]).multiplyScalar(distance));controls.update();
-      };recordedView.current=fromRecording;fromRecording();
+      };recordedView.current=fromRecording;setCameraCount(geometry.cameras.length);setRecordedIndex(0);fromRecording(0);
       const resize=()=>{const k=geometry.cameras[0]?.intrinsics,aspect=k?k.width/k.height:16/9;const width=Math.min(element.clientWidth,element.clientHeight*aspect),height=width/aspect;renderer.setSize(width,height);camera.aspect=aspect;project();};
       const observer=new ResizeObserver(resize);observer.observe(element);resize();
       renderer.setAnimationLoop(()=>{controls.update();renderer.render(scene,camera);});
@@ -64,7 +66,8 @@ export default function ReconstructedScene({job,status}:{job:ReconstructionJob;s
     return()=>{retired=true;abort.abort();dispose();};
   },[job,status.dense_available,status.dense_partial_available]);
   return <div className="overflow-hidden rounded-xl border border-border bg-background">
-    <div className="flex flex-wrap items-center justify-between gap-2 px-4 py-3"><p className="text-xs text-muted-foreground">{details}</p><div className="flex gap-2"><Button size="sm" variant="outline" onClick={()=>recordedView.current()}>Камера прохода</Button><Button size="sm" variant="outline" onClick={()=>reset.current()}>Вписать сцену</Button></div></div>
+    <div className="flex flex-wrap items-center justify-between gap-2 px-4 py-3"><p className="text-xs text-muted-foreground">{details}</p><div className="flex gap-2"><Button size="sm" variant="outline" onClick={()=>recordedView.current(recordedIndex)}>Камера прохода</Button><Button size="sm" variant="outline" onClick={()=>reset.current()}>Вписать сцену</Button></div></div>
+    {cameraCount>0&&<label className="flex flex-wrap items-center gap-3 border-t border-border px-4 py-3 text-xs text-muted-foreground"><span>Ракурс прохода {recordedIndex+1}/{cameraCount} · {recordedSeconds.toFixed(1)} с</span><input className="min-w-40 flex-1 accent-emerald-500" aria-label="Ракурс записанного прохода" type="range" min={0} max={cameraCount-1} step={1} value={recordedIndex} onChange={e=>{const index=Number(e.target.value);setRecordedIndex(index);recordedView.current(index);}}/></label>}
     <div className="flex flex-wrap gap-4 border-t border-border px-4 py-2 text-xs text-muted-foreground"><label className="flex items-center gap-2"><input type="checkbox" checked={showPoints} onChange={e=>{setShowPoints(e.target.checked);if(pointObject.current)pointObject.current.visible=e.target.checked;}}/>Опорные точки поверх сцены</label><label className="flex items-center gap-2"><input type="checkbox" checked={showPath} onChange={e=>{setShowPath(e.target.checked);if(lineObject.current)lineObject.current.visible=e.target.checked;}}/>Траектория камеры</label></div>
     <div ref={host} className="flex h-[480px] w-full items-center justify-center bg-black" aria-label="Восстановленная 3D-сцена" />
     {error&&<p role="alert" className="px-4 py-2 text-sm text-destructive">{error}</p>}

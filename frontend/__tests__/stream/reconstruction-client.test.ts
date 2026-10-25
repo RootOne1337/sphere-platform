@@ -6,6 +6,7 @@ afterEach(()=>jest.restoreAllMocks());
 test('quality review ends processing without claiming a successful reconstruction',()=>{
   expect(terminalReconstruction({phase:'quality_rejected'})).toBe(true);
   expect(terminalReconstruction({phase:'review_required'})).toBe(true);
+  expect(terminalReconstruction({phase:'partial_scene'})).toBe(true);
   expect(terminalReconstruction({phase:'evaluating'})).toBe(false);
 });
 

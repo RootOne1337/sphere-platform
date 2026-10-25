@@ -106,6 +106,14 @@ def test_rejected_reference_views_are_bound_and_images_cannot_escape(jobs):
     service.write_json(job / 'appearance.json', receipt)
     assert jobs.status(job)['phase'] == 'quality_rejected'
     assert jobs.reference_image(job, 0, 'render') == b'verified-image'
+    for row in rows:
+        row.update(psnr=24., ssim=.8)
+    receipt['summary'] = reference_quality(dict(schema='sphere-reference-render-evaluation-v1', training=False,
+        held_out=False, resolution_limit=960, views=rows))
+    service.write_json(job / 'appearance.json', receipt)
+    service.write_json(job / 'quality.json', dict(registered=2, selected=3))
+    assert jobs.status(job)['phase'] == 'partial_scene'
+    assert jobs.status(job)['dense_available']
     (job / rows[0]['render']['file']).write_bytes(b'tampered-image')
     with pytest.raises(ValueError, match='changed'):
         jobs.reference_image(job, 0, 'render')

@@ -23,7 +23,7 @@ from scripts.pilot.resource_guard import collect, evaluate
 ROOT = Path(__file__).resolve().parents[2]
 LIMITS = {'manifest.json': 65536, 'frames.jsonl': 16 * 1024**2,
           'inputs.jsonl': 8 * 1024**2, 'COMPLETE': 1024, 'video.h264': 2**31}
-TERMINAL = {'complete', 'failed', 'cancelled', 'quality_rejected', 'review_required'}
+TERMINAL = {'complete', 'failed', 'cancelled', 'quality_rejected', 'review_required', 'partial_scene'}
 IDENTITY = re.compile(r'^[0-9a-f]{32}$')
 
 
@@ -72,7 +72,7 @@ class Jobs:
         if (job / 'quality.json').is_file():
             result['quality'] = json.loads((job / 'quality.json').read_text('utf-8'))
         result['geometry_available'] = (job / 'geometry.json').is_file()
-        result['dense_available'] = result['phase'] in {'complete', 'quality_rejected', 'review_required'} and (job / 'COMPLETE').is_file()
+        result['dense_available'] = result['phase'] in {'complete', 'quality_rejected', 'review_required', 'partial_scene'} and (job / 'COMPLETE').is_file()
         if result['dense_available']:
             appearance = self.appearance(job)
             result['appearance'] = ({**appearance['summary'], 'views': [
@@ -83,6 +83,8 @@ class Jobs:
             elif appearance['summary']['state'] == 'rejected':
                 result['phase'] = 'quality_rejected'
                 result['error'] = 'dense_visual_quality_gate_failed'
+            elif result.get('quality', {}).get('registered', 0) < result.get('quality', {}).get('selected', 0):
+                result['phase'] = 'partial_scene'
         partial = self.partial(job) if result['phase'] == 'failed' else None
         result['dense_partial_available'] = partial is not None
         if partial:

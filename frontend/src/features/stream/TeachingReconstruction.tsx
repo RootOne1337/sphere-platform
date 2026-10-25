@@ -15,8 +15,14 @@ phases.complete='Реконструкция рассчитана · базова
 phases.evaluating='Сравнение рендера с исходными ракурсами';
 phases.quality_rejected='Реконструкция не прошла проверку качества';
 phases.review_required='Расчёт завершён · качество ещё не проверено';
-reasons.camera_geometry_degenerate='Опорные точки выродились в центрах камер. Маленькая ошибка проекции здесь не подтверждает геометрию; плотный этап остановлен.';
+phases.partial_scene='Построен фрагмент сцены · часть ракурсов не связана';
+reasons.camera_geometry_degenerate='Геометрия не прошла проверку вырождения или сильных выбросов камер. Маленькая ошибка проекции здесь недостаточна; плотный этап остановлен.';
 reasons.dense_visual_quality_gate_failed='Рендер недостаточно совпадает с исходными ракурсами. Эта сцена не принята как качественный результат.';
+reasons.lightglue_weights_mismatch='Файл модели сопоставления не прошёл проверку целостности. Обработка остановлена.';
+reasons.lightglue_source_mismatch='Версия локального инструмента сопоставления не совпадает с проверенной.';
+reasons.lightglue_gpu_unavailable='GPU для сопоставления ракурсов недоступен. Запись сохранена.';
+reasons.learned_matching_timeout='Сопоставление ракурсов достигло лимита времени. Промежуточные материалы сохранены.';
+reasons.reference_evaluation_failed='Не удалось завершить проверку рендера по исходным ракурсам. Качество не подтверждено.';
 export function TeachingReconstruction({clip,scope,folder,complete,onBusyChange}:{clip:string;scope:string;folder:()=>FileSystemDirectoryHandle|null;complete:boolean;onBusyChange:(busy:boolean)=>void}) {
   const [job,setJob]=useState<ReconstructionJob|null>(null),[status,setStatus]=useState<ReconstructionState|null>(null),[error,setError]=useState<string|null>(null);
   const [mask,setMask]=useState('game'),[steps,setSteps]=useState(5000),[progress,setProgress]=useState('');

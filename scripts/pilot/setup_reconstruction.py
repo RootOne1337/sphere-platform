@@ -44,6 +44,8 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--python', type=Path, default=ROOT / '.local-pilot/motor-amd-venv/Scripts/python.exe')
     parser.add_argument('--uv', default=shutil.which('uv'))
+    parser.add_argument('--learned-matching', action='store_true',
+                        help='Install only the pinned optional LightGlue source/weights; GPU Python runtime stays unchanged')
     args = parser.parse_args()
     if not args.uv or evaluate(collect(ROOT)):
         raise RuntimeError('uv_or_resource_guard')
@@ -81,6 +83,25 @@ def main():
         receipt = dict(pycolmap='4.2.1', pycolmap_sha256=WHEEL_SHA, av='16.1.0',
                        av_sha256=av_wheel['digests']['sha256'], brush='0.3.0',
                        brush_sha256=BRUSH_SHA, system_packages_changed=False)
+        if args.learned_matching:
+            from scripts.pilot.learned_route_features import SOURCE, WEIGHTS, paths, validate_assets
+
+            source, weights = paths(ROOT)
+            if not source.exists():
+                source.mkdir()
+                for command in (["git", "init", str(source)],
+                                ["git", "-C", str(source), "remote", "add", "origin", "https://github.com/cvg/LightGlue.git"],
+                                ["git", "-C", str(source), "fetch", "--depth", "1", "origin", SOURCE],
+                                ["git", "-C", str(source), "checkout", "--detach", "FETCH_HEAD"]):
+                    if evaluate(collect(ROOT)):
+                        raise RuntimeError('resource_guard')
+                    subprocess.run(command, check=True, timeout=180,
+                                   creationflags=getattr(subprocess, 'CREATE_NO_WINDOW', 0))
+            weights.parent.mkdir(parents=True, exist_ok=True)
+            download(client, 'https://github.com/cvg/LightGlue/releases/download/v0.1_arxiv/sift_lightglue.pth',
+                     weights, WEIGHTS, 60 * 1024**2)
+            validate_assets(ROOT)
+            receipt['lightglue'] = dict(source=SOURCE, weights_sha256=WEIGHTS, gpu_runtime_modified=False)
         write_json(folder / 'pinned-delivery.json', receipt)
         print(json.dumps(receipt))
 

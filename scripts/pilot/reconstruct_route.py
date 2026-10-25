@@ -21,6 +21,8 @@ from pathlib import Path
 
 from motor_worker.browser_teach import browser_units, prepare_browser, validate_browser
 from scripts.pilot.atomic_json import write_json
+from scripts.pilot.learned_route_features import available as learned_features_available
+from scripts.pilot.learned_route_features import extract_and_match
 from scripts.pilot.reconstruction_quality import reference_quality, sparse_condition
 from scripts.pilot.resource_guard import collect, evaluate
 
@@ -146,25 +148,32 @@ def reconstruct(job, mask, steps):
         reader = p.ImageReaderOptions(camera_model='PINHOLE')
         if masks:
             reader.mask_path = str(masks)
-        features = p.FeatureExtractionOptions(num_threads=4, use_gpu=False, max_image_size=1920)
-        features.sift.max_num_features = 8192
-        state(job, 'features', selected_views=len(images), masks=mask)
         database = prepared / 'database.db'
-        p.extract_features(database, prepared / 'images', camera_mode=p.CameraMode.SINGLE,
-                           reader_options=reader, extraction_options=features,
-                           device=p.Device.cpu, cancellation_token=token)
-        checkpoint(job)
-        state(job, 'matching', selected_views=len(images))
-        pairing = p.SequentialPairingOptions(overlap=12, loop_detection=False, num_threads=4)
-        matching = p.FeatureMatchingOptions(num_threads=4, use_gpu=False)
-        p.match_sequential(database, matching_options=matching, pairing_options=pairing,
-                           device=p.Device.cpu, cancellation_token=token)
+        learned = learned_features_available(ROOT)
+        state(job, 'features', selected_views=len(images), masks=mask,
+              method='opencv-rootsift-lightglue' if learned else 'classical-sift')
+        if learned:
+            extract_and_match(ROOT, prepared, database, reader, token, lambda: checkpoint(job))
+        else:
+            features = p.FeatureExtractionOptions(num_threads=4, use_gpu=False, max_image_size=1920)
+            features.sift.max_num_features = 8192
+            p.extract_features(database, prepared / 'images', camera_mode=p.CameraMode.SINGLE,
+                               reader_options=reader, extraction_options=features,
+                               device=p.Device.cpu, cancellation_token=token)
+            checkpoint(job)
+            state(job, 'matching', selected_views=len(images))
+            pairing = p.SequentialPairingOptions(overlap=12, loop_detection=False, num_threads=4)
+            matching = p.FeatureMatchingOptions(num_threads=4, use_gpu=False)
+            p.match_sequential(database, matching_options=matching, pairing_options=pairing,
+                               device=p.Device.cpu, cancellation_token=token)
         checkpoint(job)
         state(job, 'cameras', selected_views=len(images))
         sparse = prepared / 'models'
         sparse.mkdir()
         options = p.IncrementalPipelineOptions(num_threads=4, random_seed=17,
-                                               max_runtime_seconds=600, max_num_models=4)
+                                               max_runtime_seconds=600, max_num_models=4,
+                                               structure_less_registration_fallback=False,
+                                               ba_refine_sensor_from_rig=False)
         models = p.incremental_mapping(database, prepared / 'images', sparse,
                                        options=options, cancellation_token=token)
     finally:
@@ -376,9 +385,13 @@ def train_dense(job, prepared, geometry, quality, mask, steps, attempt=0):
                   tools=dict(pycolmap='4.2.1', brush='0.3.0'), training_steps=steps,
                   autotune='balanced', engine=engine, periodic_export_steps=1000,
                   appearance=appearance['summary'])
+    features_path = prepared / 'features.json'
+    if features_path.is_file():
+        result['feature_matching'] = json.loads(features_path.read_text('utf-8'))
     write_json(job / 'result.json', result)
     (job / 'COMPLETE').write_text(digest(job / 'result.json') + '\n', encoding='ascii')
-    state(job, 'complete' if appearance['summary']['state'] == 'passed' else 'quality_rejected',
+    accepted_phase = 'partial_scene' if quality['registered'] < quality['selected'] else 'complete'
+    state(job, accepted_phase if appearance['summary']['state'] == 'passed' else 'quality_rejected',
           result=result, **({} if appearance['summary']['state'] == 'passed'
                            else dict(error='dense_visual_quality_gate_failed')))
 
