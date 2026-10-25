@@ -4,7 +4,7 @@ import { directProbeIceConfig, type DirectProbeIceProfile } from './directProbeI
 import { parseTurnReady } from './directProbeTurn';
 import { parseVideoBinding, readonlyVideoSdp, type DirectVideoBinding } from './directVideoProtocol';
 import { DirectVideoStatsSampler, preferLowVideoDelay, type DirectVideoStats } from './directVideoStats';
-import type { DirectControlEndpoint } from './directPointerTransport';
+import { DIRECT_CONTROL_PACKET_LIFETIME_MS, type DirectControlEndpoint } from './directPointerTransport';
 import { h264ReceiverOffer } from './h264ReceiverOffer';
 import { parseInputAvailability } from './inputAvailability';
 
@@ -261,7 +261,8 @@ function startDirectSession(
       channel = peer.createDataChannel(live ? 'sphere-video-v1' : video ? 'sphere-video-probe-v1' : 'sphere-probe-v1', { ordered: true });
       if (live && options.controlSession && options.onControlChannel) {
         if (!/^[0-9a-f]{16}$/.test(options.controlSession)) throw Error('invalid_control_session');
-        const direct = peer.createDataChannel(options.sharedInput ? 'sphere-control-v2' : 'sphere-control-v1', { ordered: true });
+        const direct = peer.createDataChannel(options.sharedInput ? 'sphere-control-v2' : 'sphere-control-v1',
+          { ordered: true, maxPacketLifeTime: DIRECT_CONTROL_PACKET_LIFETIME_MS });
         controlChannel = direct;
         const controlState = (state: NonNullable<DirectProbeResult['controlChannelState']>) => {
           result = { ...result, controlChannelState: state, controlChannelElapsedMs: Math.max(0, performance.now() - startedAt) };

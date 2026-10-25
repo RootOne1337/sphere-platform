@@ -65,3 +65,26 @@ test('cancel during copying leaves the source and an unsealed destination',async
   await expect(exportTeachingFolder(handle(f.source),f.id,async()=>handle(f.root),p=>{if(p.stage==='copy')abort.abort();},abort.signal,f.exportId)).rejects.toMatchObject({name:'AbortError'});
   expect([...f.root.folders.values()][0].files.has('COMPLETE')).toBe(false);expect(f.source.files.has('COMPLETE')).toBe(true);
 });
+
+test('a renamed route exports its manifest-bound label without resealing or rewriting the source',async()=>{
+  const f=await fixture();
+  const manifest=f.source.files.get('manifest.json')!.data;
+  const label=encode({schema:'sphere-teaching-label-v1',id:f.id,
+    manifest_sha256:await digest(manifest),title:'Переулок — второй проход',updated_at_ms:42});
+  f.source.files.set('label.json',new MemoryFile('label.json',label,f.source.log));
+  const result=await f.run(),target=f.root.folders.get(result.folder)!;
+  expect(result.labelCopied).toBe(true);
+  expect(target.files.get('label.json')!.data).toEqual(label);
+  expect(target.files.get('manifest.json')!.data).toEqual(manifest);
+  expect(target.files.get('COMPLETE')!.data).toEqual(f.source.files.get('COMPLETE')!.data);
+  expect(target.log.at(-1)).toBe('COMPLETE');expect(f.source.log).toEqual([]);
+});
+
+test('a label from another clip is rejected before any export directory is created',async()=>{
+  const f=await fixture();
+  const label=encode({schema:'sphere-teaching-label-v1',id:'c'.repeat(32),
+    manifest_sha256:await digest(f.source.files.get('manifest.json')!.data),title:'Чужая запись',updated_at_ms:42});
+  f.source.files.set('label.json',new MemoryFile('label.json',label,f.source.log));
+  await expect(f.run()).rejects.toThrow('Название маршрута не соответствует');
+  expect(f.root.folders.size).toBe(0);expect(f.source.log).toEqual([]);
+});

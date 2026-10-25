@@ -10,6 +10,7 @@ import { connectTeaching, type TeachingConnection } from './teachingConnection';
 import type { DirectProbeResult } from './directProbe';
 import { TeachingReview } from './TeachingReview';
 import { TeachingScenePreview } from './TeachingScenePreview';
+import { teachingTitle } from './teachingMetadata';
 
 type Phase = 'idle' | 'connecting' | 'preview' | 'opening' | 'controlling' | 'arming' | 'recording' | 'stopping' | 'finished';
 const newId = () => crypto.randomUUID().replaceAll('-', '');
@@ -26,11 +27,12 @@ export function TeachingWorkbench({ deviceId, readOnly }: { deviceId: string; re
   const [phase, setPhase] = useState<Phase>('idle'); const phaseRef = useRef<Phase>('idle');
   const [notice, setNotice] = useState('Подключите прямой поток, проверьте экран и настройте зоны управления.');
   const [native, setNative] = useState('Не открыт'); const [result, setResult] = useState<DirectProbeResult | null>(null);
+  const [inputRtt,setInputRtt]=useState<number|null>(null);
   const [profile, setProfile] = useState<TeachingProfile>(defaultTeachingProfile); const profileRef = useRef(profile); profileRef.current = profile;
   const [calibrate, setCalibrate] = useState<CalibrationTarget | null>(null);
   const [hudHidden, setHudHidden] = useState(false);
   const [exportBusy,setExportBusy] = useState(false);
-  const [title, setTitle] = useState('Маршрут 01');
+  const [title, setTitle] = useState('');
   const [minutes, setMinutes] = useState(10);
   const [progress, setProgress] = useState({ frames: 0, bytes: 0, seconds: 0 });
   const [encoded, setEncoded] = useState('Encoded-приём ожидается');
@@ -87,7 +89,8 @@ export function TeachingWorkbench({ deviceId, readOnly }: { deviceId: string; re
     controller.current = null; attached.current = false; armSent.current = false; setReady(false); change('idle');
   };
   useEffect(() => {
-    const timer = setInterval(() => setReady(connection.current?.fresh() === true && attached.current), 200);
+    const timer = setInterval(() => {setReady(connection.current?.fresh() === true && attached.current);
+      setInputRtt(connection.current?.controlRttMs?.()??null);}, 200);
     const hidden = () => { if (document.hidden) void stopCallback.current('page_hidden'); };
     const blur = () => {
       if(!active(phaseRef.current))return;
@@ -157,6 +160,7 @@ export function TeachingWorkbench({ deviceId, readOnly }: { deviceId: string; re
     controller.current = new TeachingContacts(endpoint, binding, conn.fresh,
       (event: TeachingInput) => { if(armSent.current)conn.worker.postMessage({ type: 'input', event }); }, (state, reason) => {
         if(generation!==ownerGeneration.current || connection.current!==conn)return;
+        conn.observeControl?.(state==='failed'?'fenced':state,reason);
         setNative(state === 'ready' ? 'READY · 3 контакта' : state === 'closed' ? 'CLOSED · освобождено' : state);
         if (state === 'ready' && phaseRef.current === 'opening') {
           if(mode === 'control') { change('controlling'); setNotice('Управление включено без записи. Щёлкните по экрану: WASD, мышь, пробел.'); video.current?.focus({preventScroll:true}); }
@@ -168,7 +172,7 @@ export function TeachingWorkbench({ deviceId, readOnly }: { deviceId: string; re
         }
         if (state === 'failed') void stopCallback.current(reason ?? 'native_input_failed');
         if (state === 'closed' && active(phaseRef.current) && phaseRef.current!=='stopping' && !expectedOwnerClose.current) void stopCallback.current('native_closed_unexpectedly');
-      });
+      },rtt=>conn.observeControl?.('ready',undefined,rtt));
   };
   const enableControl = () => {
     const conn = connection.current;
@@ -198,7 +202,7 @@ export function TeachingWorkbench({ deviceId, readOnly }: { deviceId: string; re
     if(issue){change('preview');setNotice(issue);return;}
     const id = newId(); setProgress({ frames: 0, bytes: 0, seconds: 0 }); stopPromise.current = null;
     recordConfig.current = { id, storage_scope: storageScope, device_id: deviceId, width: binding.width, height: binding.height,
-      capture_epoch: binding.captureEpoch, title: title.trim().slice(0,128) || 'Маршрут', profile: p,
+      capture_epoch: binding.captureEpoch, title: teachingTitle(title,id,Date.now()), profile: p,
       source: 'direct_webrtc_h264', target_fps: 60, actual_fps_unverified: true,
       hud_hidden_declared: hudHidden, contact_roles: p.mode==='stick'?['stick','camera','action']:['throttle_or_brake','steering','camera_or_action'],
       max_duration_ms: minutes*60000, max_bytes: maxBytes, max_frames: minutes*3600 };
@@ -257,7 +261,8 @@ export function TeachingWorkbench({ deviceId, readOnly }: { deviceId: string; re
     </div>
     <section className="rounded-2xl border border-border bg-card p-4 sm:p-5">
       <div className="flex flex-wrap items-start justify-between gap-3"><div><p className="text-xs font-semibold uppercase tracking-widest text-primary">Обучение маршруту</p><h2 className="mt-1 text-xl font-semibold">Покажите путь один раз</h2><p className="mt-2 max-w-3xl text-sm text-muted-foreground">Подготовьте игру с клавиатуры, включите запись и покажите маршрут. Видео и подтверждённые касания сохраняются вместе; локальный 3D-просмотр помогает оценить геометрию.</p></div><StreamQualityControl deviceId={deviceId} readOnly={readOnly || active(phase)} /></div>
-      <div className="mt-4 grid gap-3 sm:grid-cols-3"><Metric icon={<Wifi size={15} />} label="Транспорт" value={result ? `${result.path} · ${result.state}` : 'Не подключён'} /><Metric icon={<Keyboard size={15} />} label="Нативный ввод" value={native} /><Metric icon={<Video size={15} />} label="Записано" value={`${progress.seconds.toFixed(1)} с · ${progress.frames} кадров · ${(progress.bytes/1048576).toFixed(1)} МБ`} /></div>
+      <div className="mt-4 grid gap-3 sm:grid-cols-3"><Metric icon={<Wifi size={15} />} label="Транспорт" value={result ? `${result.path==='host'||result.path==='nat'?'Напрямую':result.path==='relay'?'Ретранслятор':'Путь уточняется'} · ${result.state}` : 'Не подключён'} /><Metric icon={<Keyboard size={15} />} label="Нативный ввод" value={`${native}${inputRtt===null?'':` · ACK ${inputRtt.toFixed(1)} мс`}`} /><Metric icon={<Video size={15} />} label="Записано" value={`${progress.seconds.toFixed(1)} с · ${progress.frames} кадров · ${(progress.bytes/1048576).toFixed(1)} МБ`} /></div>
+      {result?.videoStats&&<div aria-label="Фактические параметры приёма" className="mt-3 flex flex-wrap gap-x-5 gap-y-1 text-xs text-muted-foreground"><span>{result.videoStats.width??'—'} × {result.videoStats.height??'—'}</span><span>{result.videoStats.fps?.toFixed(1)??'—'} FPS приёма</span><span>{result.videoStats.bitrateBps==null?'—':(result.videoStats.bitrateBps/1e6).toFixed(2)} Мбит/с</span><span>RTC RTT {result.videoStats.networkRttMs?.toFixed(1)??'—'} мс</span><span>Буфер видео {result.videoStats.jitterBufferMs?.toFixed(1)??'—'} мс</span><span>Декодирование {result.videoStats.decodeMs?.toFixed(1)??'—'} мс</span></div>}
     </section>
     <div className="grid items-start gap-4 xl:grid-cols-[minmax(0,1fr)_300px]">
       <section className="overflow-hidden rounded-2xl border border-border bg-card">
@@ -291,7 +296,7 @@ export function TeachingWorkbench({ deviceId, readOnly }: { deviceId: string; re
       </section>
       <aside className="space-y-4 rounded-2xl border border-border bg-card p-4">
         <h3 className="font-semibold">Подготовка маршрута</h3>
-        <label className="block space-y-1 text-sm"><span>Название</span><input className={field} value={title} maxLength={128} disabled={active(phase)} onChange={e => setTitle(e.target.value)} /></label>
+        <label className="block space-y-1 text-sm"><span>Название</span><input className={field} value={title} placeholder="Автоматически: дата, время и номер записи" maxLength={128} disabled={active(phase)} onChange={e => setTitle(e.target.value)} /></label>
         <label className="block space-y-1 text-sm"><span>Схема управления</span><select className={field} value={profile.mode} disabled={active(phase)} onChange={e=>{setCalibrate(null);setProfile(p=>({...p,mode:e.target.value as TeachingProfile['mode']}));}}><option value="stick">Стик · ходьба / аналоговое управление</option><option value="vehicle_buttons">Транспорт · газ, тормоз, левый и правый руль</option></select></label>
         <div className="space-y-2"><p className="text-sm font-medium">Калибровка касаний</p>
           {profile.mode==='stick'?<><Button variant="outline" className="w-full justify-start" disabled={!ready || active(phase)} onClick={() => chooseCalibration('stick')}><MousePointer2 size={15} className="mr-2" />Центр стика · {profile.stick_x.toFixed(1)} / {profile.stick_y.toFixed(1)}%</Button>

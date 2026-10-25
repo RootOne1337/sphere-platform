@@ -1,4 +1,4 @@
-import { browserStreamSample, directDiagnosticSample, StreamSessionReporter, directFailure } from '@/src/features/stream/streamSessionTelemetry';
+import { browserStreamSample, directDiagnosticSample, StreamSessionReporter, directFailure, teachingStreamSample } from '@/src/features/stream/streamSessionTelemetry';
 import type { StreamDecoderStats } from '@/lib/h264-decoder';
 import type { PointerFenceObservation } from '@/src/features/stream/continuousPointer';
 
@@ -7,6 +7,12 @@ const stats = { binaryMessagesReceived: 20, binaryBytesReceived: 300, renderedFr
   decoderQueueSize: 0, pendingOutputCount: 0, receivedPictureFps: 15, renderedFps: 15,
   lastBinaryAtMs: 900, lastRenderedAtMs: 800, lastDecodeError: 'private native exception' } as StreamDecoderStats;
 const sample = () => browserStreamSample(stats, { state: 'ready', failure: null, rtt: 25, attempts: 1 }, 1000);
+
+test('teaching keeps direct media transport before presentation and maps timeout into the deployed schema',()=>{
+  const value=teachingStreamSample(null,0,null,'fenced','contact_ack_timeout',null,1000);
+  expect(value).toMatchObject({transport:'direct_webrtc',control_transport:'direct_webrtc',received_bytes:0,
+    control_state:'fenced',control_failure:'timeout',control_failure_detail:'native_receipt_timeout'});
+});
 test('server echo and Android receipt retain separate scalar values and a missing echo stays unknown', () => {
   const result = browserStreamSample(stats, { state: 'ready', failure: null, rtt: 140, attempts: 0 }, 1000,
     undefined, { rttMs: 34, ageMs: 20 });
@@ -50,6 +56,17 @@ test('a bad fence field remains unknown and a missing fence cannot inherit the p
 
 beforeEach(() => jest.useFakeTimers());
 afterEach(() => jest.useRealTimers());
+
+test('an early native failure has one bounded history sample independent of the regular cadence',()=>{
+  const ws=socket();let failed=false;
+  const reporter=new StreamSessionReporter(ws,()=>failed
+    ?teachingStreamSample(null,0,null,'fenced','contact_ack_timeout',null,1000):sample());
+  reporter.accept(session);expect(ws.send).toHaveBeenCalledTimes(1);
+  failed=true;reporter.reportControlFailure();reporter.reportControlFailure();
+  expect(ws.send).toHaveBeenCalledTimes(2);
+  jest.advanceTimersByTime(2000);reporter.reportControlFailure();expect(ws.send).toHaveBeenCalledTimes(2);
+  reporter.reportControlFailure(false);reporter.reportControlFailure();expect(ws.send).toHaveBeenCalledTimes(3);
+});
 
 test.each(['control_channel_closed', 'control_channel_failed', 'control_channel_deadline', 'invalid_control_message', 'invalid_ice_candidate'])('direct input recovery keeps its bounded cause in history: %s', reason => {
   expect(directFailure(reason)).toBe(reason);

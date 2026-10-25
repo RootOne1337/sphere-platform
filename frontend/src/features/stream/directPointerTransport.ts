@@ -2,6 +2,10 @@ import type { PointerTransport } from './continuousPointer';
 import type { DirectVideoBinding } from './directVideoProtocol';
 import { validKeyboardCommand } from './remoteKeyboardProtocol';
 
+// Keep SCTP ordering, but never retransmit an interactive command for seconds.
+// Missing/expired commands still retire the native owner; they are not replayed.
+export const DIRECT_CONTROL_PACKET_LIFETIME_MS = 200;
+
 /** The peer comes from authenticated signaling. This handle cannot grant native ownership. */
 export interface DirectControlEndpoint extends PointerTransport {
   readonly session: string;

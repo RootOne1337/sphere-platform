@@ -8,11 +8,13 @@ jest.mock('../../src/features/stream/directProbe', () => ({ startDirectVideoSess
 
 class Socket {
   static current: Socket;
+  static OPEN = 1;
   onopen: (() => void) | null = null;
   onmessage: ((event: { data: string }) => void) | null = null;
   onerror = null; onclose = null;
   send = jest.fn(); close = jest.fn();
   readyState = 1;
+  bufferedAmount = 0;
   constructor() { Socket.current = this; }
   receive(value: unknown) { this.onmessage?.({ data: JSON.stringify(value) }); }
 }
@@ -64,6 +66,41 @@ describe('teaching capture-only liveness', () => {
     socket.receive({ type: 'ping' });
     expect(startDirectVideoSession).toHaveBeenCalledTimes(1);
     expect(failed).not.toHaveBeenCalled(); connection.close();
+  });
+  it('reports teaching receiver and native ACK scalars through the admitted history socket',async()=>{
+    const {connection,socket}=await setup();
+    socket.receive({type:'stream_session',schema_version:1,delivery:'capture_only',session_id:'1234567890abcdef',
+      history_enabled:true,report_interval_seconds:10});
+    socket.receive({type:'capture_ready',schema_version:1,session_id:'1234567890abcdef',width:960,height:540});
+    const call=(startDirectVideoSession as jest.Mock).mock.calls[0];
+    call[2]({state:'connected',samples:[],path:'host',protocol:'udp',session:'a'.repeat(32),
+      videoBinding:{captureEpoch:'private-epoch',width:960,height:540},
+      videoStats:{fps:10,decoded:25,networkRttMs:2,jitterBufferMs:4,decodeMs:3}});
+    connection.observeControl?.('ready',undefined,7);
+    jest.advanceTimersByTime(10000);
+    const samples=socket.send.mock.calls.map(([raw])=>JSON.parse(raw)).filter(v=>v.type==='viewer_telemetry');
+    expect(samples.at(-1)?.sample).toMatchObject({transport:'direct_webrtc',control_transport:'direct_webrtc',
+      direct_path:'host',direct_fps:10,control_state:'ready',control_rtt_ms:7,received_bytes:0});
+    expect(JSON.stringify(samples)).not.toMatch(/test-only-token|private-epoch/);
+    connection.observeControl?.('fenced','contact_ack_timeout');
+    connection.observeControl?.('closing');
+    const failedSample=socket.send.mock.calls.map(([raw])=>JSON.parse(raw)).filter(v=>v.type==='viewer_telemetry').at(-1)?.sample;
+    expect(failedSample).toMatchObject({control_state:'fenced',control_failure:'timeout',control_failure_detail:'native_receipt_timeout'});
+    connection.close();
+    const closedSample=socket.send.mock.calls.map(([raw])=>JSON.parse(raw)).filter(v=>v.type==='viewer_telemetry').at(-1)?.sample;
+    expect(closedSample.control_failure_detail).toBe('native_receipt_timeout');
+  });
+  it('a terminal failure stays fenced even if later media or peer messages arrive',async()=>{
+    const {connection,socket,failed}=await setup();
+    socket.receive({type:'stream_session',schema_version:1,delivery:'capture_only',session_id:'1234567890abcdef'});
+    socket.receive({type:'capture_ready',schema_version:1,session_id:'1234567890abcdef',width:960,height:540});
+    const call=(startDirectVideoSession as jest.Mock).mock.calls[0];
+    call[2]({state:'connected',samples:[],path:'host',videoBinding:{captureEpoch:'epoch',width:960,height:540}});
+    socket.receive({type:'unexpected'});
+    call[2]({state:'connected',samples:[],path:'host',videoBinding:{captureEpoch:'epoch',width:960,height:540}});
+    socket.receive({type:'unexpected'});
+    expect(failed).toHaveBeenCalledTimes(1);expect(connection.fresh()).toBe(false);
+    expect(startDirectVideoSession).toHaveBeenCalledTimes(1);connection.close();
   });
   it('renews capture presence only for the bound peer with fresh presented video', async () => {
     const failed = jest.fn(); let present: ((at: number, frame: object) => void) | undefined;

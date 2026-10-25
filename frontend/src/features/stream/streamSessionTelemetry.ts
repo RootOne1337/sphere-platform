@@ -112,12 +112,41 @@ export function directDiagnosticSample(result: DirectProbeResult, frames: number
     dtls_state: dtls && ['new', 'connecting', 'connected', 'closed', 'failed'].includes(dtls) ? dtls : null };
 }
 
+/** Capture-only teaching has no WebSocket media fallback. Report the actual
+ * receiver/control scalars through the existing bounded history schema. */
+export function teachingStreamSample(result: DirectProbeResult | null, presented: number, lastFrameAt: number | null,
+  state: ControlObservation['state'], failure: string | null, rtt: number | null, now = Date.now()) {
+  // Keep the deployed server's bounded shared vocabulary. The teaching UI
+  // retains its precise local cause; no new free-text fields leave the browser.
+  const aliases:Record<string,string>={contact_ack_timeout:'native_receipt_timeout',
+    contact_ready_timeout:'native_receipt_timeout',stale_contact:'scheduler_gap',
+    contact_video_stale:'surface_control_lost',contact_channel_closed:'capture_or_socket_lost',
+    contact_send_unknown:'socket_send_failed',heartbeat_unknown:'socket_send_failed',
+    contact_open_failed:'socket_send_failed'};
+  const detail=failure ? aliases[failure]??failure : null;
+  const video = result?.videoStats;
+  const stats: StreamDecoderStats = {
+    receivedPictureFps: video?.fps ?? 0, renderedFps: video?.fps ?? 0,
+    receivedPictureFpsCapped:false, renderedFpsCapped:false,
+    binaryMessagesReceived:0,binaryBytesReceived:0,validPackets:0,invalidPackets:0,
+    spsUnits:0,ppsUnits:0,idrUnits:0,deltaUnits:0,decodeSubmitted:0,
+    decodedOutputs:video?.decoded ?? 0,renderedFrames:presented,decodeErrors:0,lastDecodeError:null,
+    renderErrors:0,queueRecoveries:0,staleOutputDrops:0,framesDroppedBeforeConfiguration:0,
+    decoderQueueSize:0,pendingOutputCount:0,lastBinaryAtMs:null,lastRenderedAtMs:lastFrameAt,
+  };
+  const sample=browserStreamSample(stats,{state,failure:detail,rtt,attempts:1,transport:'direct_webrtc'},now,
+    {admitted:true,admissionKnown:true,active:presented>0,frames:presented,lastFrameAt,attempts:1,result});
+  return {...sample,transport:'direct_webrtc' as const};
+}
+
 /** No timers, queues or retries. Reuses the existing viewer watchdog cadence. */
 export class StreamSessionReporter {
   private session: string | null = null;
   private lastSent = -Infinity;
   private lastFailureSent = -Infinity;
   private lastFailureKey: string | null = null;
+  private lastControlFailureSent = -Infinity;
+  private lastControlFailureKey: string | null = null;
   constructor(private socket: WebSocket, private snapshot: () => ReturnType<typeof browserStreamSample> | null) {}
   get sessionId() { return this.session; }
   accept(value: unknown): boolean {
@@ -164,6 +193,23 @@ export class StreamSessionReporter {
         this.lastFailureSent = this.lastSent = now;
       }
     } catch { /* Failure diagnostics cannot interrupt fallback or input release. */ }
+  }
+  /** Preserve one input failure even if it precedes the regular ten-second
+   * sample. A following CLOSED cannot erase it; no input/journal is transmitted. */
+  reportControlFailure(failed = true): void {
+    if(!failed){this.lastControlFailureKey=null;return;}
+    if(!this.session)return;
+    const now=performance.now();
+    if(now-this.lastControlFailureSent<1000)return;
+    try {
+      const sample=this.snapshot();
+      if(!sample||sample.control_state!=='fenced'||sample.control_failure==='none')return;
+      const key=sample.control_failure_detail??sample.control_failure;
+      if(key===this.lastControlFailureKey)return;
+      if(this.send('viewer_telemetry',sample)){
+        this.lastControlFailureKey=key;this.lastControlFailureSent=this.lastSent=now;
+      }
+    }catch{ /* Optional history cannot delay native release. */ }
   }
   direct(sample: ReturnType<typeof directDiagnosticSample>, session: string): boolean {
     return session === this.session && this.send('viewer_direct_result', sample);

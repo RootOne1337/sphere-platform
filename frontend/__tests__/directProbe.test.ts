@@ -221,7 +221,7 @@ test('loss of primary input retires its exact peer so automatic video recovery c
   expect(JSON.parse(ws.send.mock.calls[0][0])).toEqual({ token: 'access', protocol: 'sphere-video-v1', control_session: '1'.repeat(16) });
   ws.onmessage?.({ data: JSON.stringify({ type: 'direct_probe_answer', session_id: sid, sdp: videoSdp.replace('recvonly', 'sendonly') }) });
   await flush(); peer.channel.onopen?.(); peer.control.onopen?.();
-  expect(peer.createDataChannel).toHaveBeenCalledWith('sphere-control-v1', { ordered: true });
+  expect(peer.createDataChannel).toHaveBeenCalledWith('sphere-control-v1', { ordered: true, maxPacketLifeTime: 200 });
   const endpoint = handles.at(-1)!;
   expect(endpoint.session).toBe(sid); expect(endpoint.capture()).toBeNull();
   peer.channel.onmessage?.({ data: `SV1 ${sid} ${epoch} 960 540` });

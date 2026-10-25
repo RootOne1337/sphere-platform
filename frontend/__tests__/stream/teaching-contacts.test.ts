@@ -2,12 +2,12 @@ import { TeachingContacts, stickPoint, type TeachingInput } from '@/src/features
 import type { DirectControlEndpoint } from '@/src/features/stream/directPointerTransport';
 
 const binding={captureEpoch:'00112233-4455-6677-8899-aabbccddeeff',width:960,height:540};
-function fixture() {
+function fixture(observedRtt?: (milliseconds:number)=>void) {
   const sent: Record<string,unknown>[]=[],journal:TeachingInput[]=[],states:string[]=[];
   let listener:(v:unknown)=>void=()=>{};let fresh=true;
   const endpoint:DirectControlEndpoint={session:'a'.repeat(32),sharedInput:true,readyState:1,bufferedAmount:0,
     capture:()=>binding,send:raw=>sent.push(JSON.parse(raw)),listen:fn=>{listener=fn;return()=>{};}};
-  const driver=new TeachingContacts(endpoint,binding,()=>fresh,event=>journal.push(event),(state,reason)=>states.push(reason??state));
+  const driver=new TeachingContacts(endpoint,binding,()=>fresh,event=>journal.push(event),(state,reason)=>states.push(reason??state),observedRtt);
   const envelope={session_id:endpoint.session,capture_epoch:binding.captureEpoch,contact_protocol:1,max_pointers:3,owner:'b'.repeat(32)};
   const receipt=(fields:Record<string,unknown>)=>listener({type:'shared_input_status',...envelope,device_uptime_ms:1000,...fields});
   const ready=()=>{listener({type:'touch_session',...envelope,frame_width:960,frame_height:540});receipt({sequence:0,gesture:0,action:4,pointer_id:-1,outcome:'ready'});};
@@ -80,6 +80,29 @@ test('wrong pointer receipt retires owner; no queued correction runs after uncer
 test('old input queue is rejected rather than executed late',()=>{
   const f=fixture();f.ready();f.driver.set(0,{x:100,y:350});f.driver.set(1,{x:700,y:200});jest.advanceTimersByTime(225);f.ack();
   expect(f.states).toContain('stale_contact');expect(f.sent.at(-1)?.type).toBe('touch_close');
+});
+
+test('a late ACK delivered before an overdue timer cannot authorize queued movement',()=>{
+  const observe=jest.fn(),f=fixture(observe);f.ready();
+  f.driver.set(0,{x:100,y:350});f.driver.set(0,{x:120,y:350});
+  const now=jest.spyOn(performance,'now').mockReturnValue(600);
+  try {
+    f.ack();
+    expect(f.states).toContain('contact_ack_timeout');
+    expect(f.sent.at(-1)?.type).toBe('touch_close');
+    expect(f.sent.filter(e=>e.action===2)).toHaveLength(0);
+    expect(observe).not.toHaveBeenCalled();
+  } finally { now.mockRestore(); }
+});
+
+test('RTT telemetry is measured from the command and cannot interrupt an applied receipt',()=>{
+  const observe=jest.fn(()=>{throw Error('optional_observer_failed');}),f=fixture(observe);f.ready();
+  f.driver.set(0,{x:100,y:350});jest.advanceTimersByTime(12);f.ack();
+  expect(f.driver.lastReceiptRttMs).toBe(12);expect(observe).toHaveBeenCalledWith(12);
+  f.driver.set(0,{x:120,y:350});f.ack();
+  expect(f.sent.at(-1)).toMatchObject({action:2,x:120});
+  expect(f.states).not.toContain('contact_ack_timeout');
+  expect(f.journal.filter(e=>e.stage==='receipt')).toHaveLength(2);
 });
 test('analog stick normalizes diagonal and Shift reduces amplitude without releasing',()=>{
   expect(stickPoint(new Set(['KeyW']),{x:100,y:300},50)).toEqual({x:100,y:250});

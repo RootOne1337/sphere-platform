@@ -3,9 +3,12 @@ import { parseProbeAdmission } from './DirectProbeAccess';
 import { startDirectVideoSession, type DirectProbeResult } from './directProbe';
 import type { DirectControlEndpoint } from './directPointerTransport';
 import type { DirectVideoBinding } from './directVideoProtocol';
+import { StreamSessionReporter, teachingStreamSample } from './streamSessionTelemetry';
 
 export type TeachingConnection = { close(): void; fresh(): boolean; binding(): DirectVideoBinding | null;
-  endpoint(): DirectControlEndpoint | null; worker: Worker };
+  endpoint(): DirectControlEndpoint | null; worker: Worker;
+  observeControl?(state:'idle'|'opening'|'ready'|'closing'|'closed'|'fenced',reason?:string,rtt?:number):void;
+  controlRttMs?():number|null };
 
 /** One explicit capture-only presence and one direct peer. No media relay or automatic retry. */
 export async function connectTeaching(deviceId: string, token: string, video: HTMLVideoElement,
@@ -23,11 +26,17 @@ export async function connectTeaching(deviceId: string, token: string, video: HT
   const worker = new Worker('/teaching-recorder.worker.js');
   let session: string | null = null, dimensions: { width: number; height: number } | null = null;
   let binding: DirectVideoBinding | null = null, endpoint: DirectControlEndpoint | null = null;
-  let cancel: (() => void) | null = null, disposed = false, attached = false;
+  let cancel: (() => void) | null = null, disposed = false, attached = false, faulted = false;
   let peerSession: string | null = null, lastRenew = -Infinity, renewPendingAt: number | null = null;
   let lastFrame = 0, frameId: number | null = null;
+  let presented = 0, latest:DirectProbeResult|null = null;
+  let controlState:'idle'|'opening'|'ready'|'closing'|'closed'|'fenced'='idle',controlFailure:string|null=null,controlRtt:number|null=null;
+  const reporter = new StreamSessionReporter(socket,()=>teachingStreamSample(latest,presented,
+    lastFrame ? Date.now()-(performance.now()-lastFrame) : null,controlState,controlFailure,controlRtt));
   const close = () => {
     if (disposed) return;
+    if(!faulted && latest)latest={...latest,state:'stopped',reason:null};
+    reporter.report(true);
     disposed = true; clearTimeout(deadline); clearInterval(watchdog); signal.removeEventListener('abort', close);
     socket.onopen = socket.onmessage = socket.onerror = socket.onclose = null;
     socket.close(); cancel?.(); endpoint = null;
@@ -35,17 +44,22 @@ export async function connectTeaching(deviceId: string, token: string, video: HT
     video.pause(); video.srcObject = null;
     // Caller finalizes files before terminating the separate recorder worker.
   };
-  const fault = (reason: string) => { if (!disposed) failed(reason); };
-  const fresh = () => !disposed && !!binding && !!lastFrame && performance.now() - lastFrame < 250 && !document.hidden;
+  const fault = (reason: string) => { if (!disposed && !faulted) {
+    faulted=true;
+    if(latest)latest={...latest,state:'failed',reason:reason==='video_stalled'?'video_frame_timeout':reason};
+    reporter.reportFailure();failed(reason);
+  } };
+  const fresh = () => !disposed && !faulted && !!binding && !!lastFrame && performance.now() - lastFrame < 250 && !document.hidden;
   const present = () => { frameId = video.requestVideoFrameCallback((_at, frame) => {
     if (disposed) return;
     if (!binding) { present(); return; }
     if (frame.width !== binding.width || frame.height !== binding.height) { fault('display_capture_changed'); return; }
-    lastFrame = performance.now(); clearTimeout(deadline); present();
+    lastFrame = performance.now(); presented++; clearTimeout(deadline); present();
   }); };
   const deadline = setTimeout(() => fault('teaching_connection_timeout'), 30000);
   const watchdog = setInterval(() => {
     if (disposed) return;
+    reporter.report();
     if (lastFrame && performance.now() - lastFrame > 1000) fault('video_stalled');
     if (document.hidden) fault('page_hidden');
     const now = performance.now();
@@ -72,13 +86,15 @@ export async function connectTeaching(deviceId: string, token: string, video: HT
         if (session || value.schema_version !== 1 || value.delivery !== 'capture_only'
           || typeof value.session_id !== 'string' || !/^[0-9a-f]{16}$/.test(value.session_id)) throw Error();
         session = value.session_id;
+        reporter.accept(value);
       } else if (value.type === 'capture_ready') {
         if (dimensions || !session || value.session_id !== session || value.schema_version !== 1
           || !Number.isInteger(value.width) || !Number.isInteger(value.height)
           || value.width < 1 || value.height < 1 || value.width > 8192 || value.height > 8192) throw Error();
         dimensions = { width: value.width, height: value.height };
         cancel = startDirectVideoSession(`${base}/ws/direct-probe/${encodeURIComponent(deviceId)}`, token, result => {
-          if (disposed) return;
+          if (disposed || faulted) return;
+          latest=result;
           if (result.session && /^[0-9a-f]{32}$/.test(result.session)) peerSession = result.session;
           if (result.videoBinding) {
             const next = result.videoBinding;
@@ -112,5 +128,12 @@ export async function connectTeaching(deviceId: string, token: string, video: HT
       } else if (value.type !== 'stream_link_ready') throw Error();
     } catch { fault('invalid_capture_message'); }
   };
-  return { close, fresh, binding: () => binding, endpoint: () => endpoint, worker };
+  return { close, fresh, binding: () => binding, endpoint: () => endpoint, worker,
+    controlRttMs:()=>controlRtt,
+    observeControl:(state,reason,rtt)=>{controlState=state;
+      if(state==='opening'){controlFailure=null;controlRtt=null;reporter.reportControlFailure(false);}
+      else if(reason)controlFailure=reason;
+      if(rtt!==undefined && Number.isFinite(rtt) && rtt>=0 && rtt<=10000)controlRtt=rtt;
+      if(state==='fenced')reporter.reportControlFailure();
+      reporter.report();}, };
 }

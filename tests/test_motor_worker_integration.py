@@ -37,6 +37,7 @@ class HeadlessIntegrationTests(unittest.IsolatedAsyncioTestCase):
 
         self.peers = []
         self.received = []
+        self.channel_settings = []
         self.no_ready = False
         self.no_closed = False
         self.no_alive = False
@@ -144,6 +145,7 @@ class HeadlessIntegrationTests(unittest.IsolatedAsyncioTestCase):
 
         @peer.on("datachannel")
         def onchannel(channel):
+            self.channel_settings.append((channel.label, channel.ordered, channel.maxPacketLifeTime, channel.maxRetransmits))
             if channel.label == "sphere-video-v1":
 
                 def opened():
@@ -277,6 +279,8 @@ class HeadlessIntegrationTests(unittest.IsolatedAsyncioTestCase):
         self.assertTrue(report["control"]["rttTail"])
         self.assertEqual(report["control"]["rttTail"][0]["kind"], "alive")
         self.assertTrue(all(x.get("action", 4) == 4 for x in self.received))
+        self.assertIn(("sphere-video-v1", True, None, None), self.channel_settings)
+        self.assertIn(("sphere-control-v2", True, 200, None), self.channel_settings)
         mean = report["observationTail"][-1]["rgbMean"]
         for expected, actual in zip([32, 96, 160], mean):
             self.assertLess(abs(expected - actual), 5)

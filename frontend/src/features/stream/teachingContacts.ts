@@ -29,9 +29,11 @@ export class TeachingContacts {
   private finishClose: ((confirmed: boolean) => void) | null = null;
   private closePromise: Promise<boolean> | null = null;
   private closeAt = 0;
+  private receiptRtt: number | null = null;
   constructor(private endpoint: DirectControlEndpoint, private binding: DirectVideoBinding,
     private fresh: () => boolean, private journal: (event: TeachingInput) => void,
-    private state: (state: 'opening' | 'ready' | 'closing' | 'closed' | 'failed', reason?: string) => void) {
+    private state: (state: 'opening' | 'ready' | 'closing' | 'closed' | 'failed', reason?: string) => void,
+    private observedRtt?: (milliseconds: number) => void) {
     if (!endpoint.sharedInput || endpoint.readyState !== 1) throw Error('shared_input_required');
     this.timer = setInterval(() => this.tick(), 25);
     this.remove = endpoint.listen(value => this.receipt(value));
@@ -42,6 +44,7 @@ export class TeachingContacts {
     catch { this.fail('contact_open_failed'); }
   }
   get isReady() { return this.ready && !this.closing && !this.ended; }
+  get lastReceiptRttMs() { return this.receiptRtt; }
   get isNeutral() { return !this.desired.size && !this.held.size && !this.pending && !this.queue.length; }
   hasContact(id: number) { return this.desired.has(id); }
   set(id: number, point: TeachingPoint | null) {
@@ -103,9 +106,14 @@ export class TeachingContacts {
       this.ready = true; this.state('ready'); return;
     }
     const pending = this.pending;
+    // A busy browser may deliver a late message before its overdue timer tick.
+    // Such an ACK cannot authorize another queued command or seal a recording.
+    if (pending && performance.now()-this.pendingAt >= 500) { this.fail('contact_ack_timeout'); return; }
     if (!pending || value.sequence !== pending.sequence || value.gesture !== pending.gesture
       || value.action !== pending.action || value.pointer_id !== pending.pointer_id
       || value.outcome !== (pending.action === 4 ? 'alive' : 'applied')) { this.fail('contact_receipt_unknown'); return; }
+    this.receiptRtt = Math.max(0,performance.now()-this.pendingAt);
+    try { this.observedRtt?.(this.receiptRtt); } catch { /* Scalar telemetry cannot interrupt control. */ }
     try { this.journal({ ...pending, stage: 'receipt', at_ms: performance.timeOrigin + performance.now(),
       outcome: value.outcome as string, device_uptime_ms: value.device_uptime_ms as number }); }
     catch { this.fail('contact_journal_failed'); return; }

@@ -3,9 +3,10 @@ import { useEffect, useRef, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { exportTeachingFolder, type ExportProgress } from './teachingExport';
 import { TeachingReconstruction } from './TeachingReconstruction';
+import { readTeachingLabel, renameTeachingLabel, seekTeachingSecond, teachingDate } from './teachingMetadata';
 
 type Row = { index: number; offset: number; bytes: number; relative_ticks_90k: number; key: boolean; seekable?: boolean; sha256: string; worker_observed_at_ms: number };
-type Clip = { id: string; title: string; complete: boolean; frames: number; failure: string | null };
+type Clip = { id: string; title: string; createdAt: number; complete: boolean; frames: number; failure: string | null };
 const names = ['video.h264','frames.jsonl','inputs.jsonl','manifest.json','COMPLETE'];
 const digest = async (buffer: ArrayBuffer) => Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',buffer)), v => v.toString(16).padStart(2,'0')).join('');
 export function h264Codec(data: Uint8Array): string | null {
@@ -22,11 +23,21 @@ export function TeachingReview({ selected, refresh, onSelect, storageScope, onBu
   const [localRefresh,setLocalRefresh]=useState(0),[decoding,setDecoding]=useState(false);
   const [exporting,setExporting]=useState(false),[exportProgress,setExportProgress]=useState<ExportProgress|null>(null),[exportNotice,setExportNotice]=useState<string|null>(null);
   const [processing,setProcessing]=useState(false);
+  const [label,setLabel]=useState(''),[renaming,setRenaming]=useState(false);
+  const [playing,setPlaying]=useState(false),[zoom,setZoom]=useState(1);
+  const view=useRef<HTMLDivElement>(null);
   const exportAbort=useRef<AbortController|null>(null);
   const canvas=useRef<HTMLCanvasElement>(null), directory=useRef<FileSystemDirectoryHandle|null>(null);
   const generation=useRef(0);
   useEffect(()=>()=>{exportAbort.current?.abort();onBusyChange?.(false);},[onBusyChange]);
-  useEffect(()=>{onBusyChange?.(exporting||processing);},[exporting,processing,onBusyChange]);
+  useEffect(()=>{onBusyChange?.(exporting||processing||renaming||playing);},[exporting,processing,renaming,playing,onBusyChange]);
+  useEffect(()=>{setPlaying(false);setZoom(1);},[selected]);
+  useEffect(()=>{
+    if(!playing||decoding)return;
+    if(position>=rows.length-1){setPlaying(false);return;}
+    const timer=setTimeout(()=>setPosition(at=>seekTeachingSecond(rows,at,.2)),200);
+    return()=>clearTimeout(timer);
+  },[playing,decoding,position,rows]);
   useEffect(()=>{
     let retired=false;
     void(async()=>{
@@ -42,16 +53,17 @@ export function TeachingReview({ selected, refresh, onSelect, storageScope, onBu
         const folder=await library.getDirectoryHandle(entry.name);
         try {
           const file=await(await folder.getFileHandle('manifest.json')).getFile();if(file.size>65536)continue;
-          const manifest=JSON.parse(await file.text());
+          const bytes=await file.arrayBuffer(),manifest=JSON.parse(new TextDecoder().decode(bytes));
           if(!['sphere-browser-teaching-v1','sphere-browser-teaching-v2'].includes(manifest.schema)||manifest.id!==entry.name)continue;
-          found.push({id:entry.name,title:String(manifest.config?.title??'Маршрут').slice(0,128),complete:manifest.complete===true,
+          found.push({id:entry.name,title:await readTeachingLabel(folder,entry.name,bytes)??String(manifest.config?.title??'Маршрут').slice(0,128),createdAt:Number(manifest.started_at_ms)||0,complete:manifest.complete===true,
             frames:Number(manifest.frames),failure:manifest.failure});
-        } catch { found.push({id:entry.name,title:'Прерванная запись',complete:false,frames:0,failure:'manifest_missing'}); }
+        } catch { found.push({id:entry.name,title:'Прерванная запись',createdAt:0,complete:false,frames:0,failure:'manifest_missing'}); }
       }
-      if(!retired)setClips(found.slice(-20).reverse());
+      if(!retired)setClips(found.sort((a,b)=>b.createdAt-a.createdAt||a.id.localeCompare(b.id)).slice(0,20));
     })().catch(()=>{if(!retired)setError('Не удалось прочитать локальную библиотеку браузера.');});
     return()=>{retired=true;};
   },[refresh,localRefresh,storageScope]);
+  useEffect(()=>{setLabel(clips.find(c=>c.id===selected)?.title??'');},[clips,selected]);
   useEffect(()=>{
     const current=++generation.current; setRows([]);setInputs([]);setPosition(0);directory.current=null;setError(null);
     if(!selected||!/^[0-9a-f]{32}$/.test(selected)||!storageScope||!/^[0-9a-f]{32}$/.test(storageScope))return;
@@ -81,7 +93,7 @@ export function TeachingReview({ selected, refresh, onSelect, storageScope, onBu
     return()=>{generation.current++;};
   },[selected,refresh,storageScope]);
   useEffect(()=>{
-    if(!directory.current||!rows.length||!canvas.current)return;
+    if(!directory.current||!rows.length||!canvas.current){setDecoding(false);return;}
     let retired=false;let decoder:VideoDecoder|undefined;setDecoding(true);setError(null);
     void(async()=>{
       if(typeof VideoDecoder==='undefined')throw Error('В браузере нет WebCodecs для просмотра исходного H264. Экспортируйте видео.');
@@ -108,7 +120,7 @@ export function TeachingReview({ selected, refresh, onSelect, storageScope, onBu
         });
       }
       if(!retired)await decoder.flush();if(decodeError)throw Error('Декодер отклонил материал.');
-    })().catch(e=>{if(!retired)setError(e instanceof Error?e.message:'Просмотр не готов.');}).finally(()=>{if(!retired)setDecoding(false);try{decoder?.close();}catch{}});
+    })().catch(e=>{if(!retired){setPlaying(false);setError(e instanceof Error?e.message:'Просмотр не готов.');}}).finally(()=>{if(!retired)setDecoding(false);try{decoder?.close();}catch{}});
     return()=>{retired=true;try{decoder?.close();}catch{}};
   },[rows,position]);
   const download=async(name:string)=>{
@@ -117,6 +129,7 @@ export function TeachingReview({ selected, refresh, onSelect, storageScope, onBu
   };
   const exportFolder=async()=>{
     if(exportAbort.current||!directory.current||!selected)return;
+    setPlaying(false);
     const picker=(window as Window & {showDirectoryPicker?:(options:{id:string;mode:'readwrite'})=>Promise<FileSystemDirectoryHandle>}).showDirectoryPicker;
     if(!picker){setExportNotice('Браузер не поддерживает выбор папки. Скачайте отдельные файлы ниже; для экспорта папкой используйте Chrome или Edge.');return;}
     const request=new AbortController();exportAbort.current=request;setExporting(true);onBusyChange?.(true);setExportProgress(null);setExportNotice(null);
@@ -130,11 +143,13 @@ export function TeachingReview({ selected, refresh, onSelect, storageScope, onBu
     &&Math.abs(i.at_ms-rows[position].worker_observed_at_ms)<500).slice(0,12):[];
   return <section aria-label="Просмотр записанных маршрутов" className="space-y-4 rounded-2xl border border-border bg-card p-4 sm:p-5">
     <div><h3 className="text-lg font-semibold">Записанные проходы</h3><p className="mt-1 text-sm text-muted-foreground">Локальная библиотека этого браузера. Кадры проверяются по SHA-256; время получения кадра не равно времени его захвата Android.</p></div>
-    {!clips.length?<p className="text-sm text-muted-foreground">Завершённых материалов пока нет.</p>:<div className="flex flex-wrap gap-2">{clips.map(c=><Button key={c.id} disabled={exporting||processing} variant={selected===c.id?'default':'outline'} onClick={()=>onSelect(c.id)}>{c.title} · {c.complete?'Готов':'Неполный'} · {c.frames} кадров</Button>)}</div>}
+    {!clips.length?<p className="text-sm text-muted-foreground">Завершённых материалов пока нет.</p>:<div className="flex flex-wrap gap-2">{clips.map(c=><Button key={c.id} className="h-auto max-w-full flex-col items-start gap-1 whitespace-normal py-3 text-left" disabled={exporting||processing||renaming} variant={selected===c.id?'default':'outline'} onClick={()=>onSelect(c.id)}><span>{c.title}</span><span className="text-xs opacity-75">{teachingDate(c.createdAt)} · {c.id.slice(0,8)} · {c.complete?'Готов':'Неполный'} · {c.frames} кадров</span></Button>)}</div>}
     {error&&<p role="alert" className="text-sm text-destructive">{error}</p>}
-    {selected&&<div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_280px]"><div className="space-y-3"><canvas ref={canvas} className="aspect-video w-full rounded-xl bg-black object-contain" aria-label="Записанный видеокадр" />
+    {selected&&<div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_280px]"><div className="min-w-0 space-y-3"><div ref={view} className="max-h-[75dvh] overflow-auto rounded-xl bg-black"><canvas ref={canvas} className="block h-auto max-w-none" style={{width:`${zoom*100}%`}} aria-label="Записанный видеокадр" /></div>
+      <div aria-label="Просмотр маршрута по исходным кадрам" className="flex flex-wrap gap-2"><Button variant="outline" disabled={!rows.length||decoding||exporting||processing||position===0} onClick={()=>{setPlaying(false);setPosition(at=>seekTeachingSecond(rows,at,-1));}}>← Назад 1 с</Button><Button variant="outline" disabled={!rows.length||exporting||processing} onClick={()=>{if(position>=rows.length-1)setPosition(0);setPlaying(value=>!value);}}>{playing?'Приостановить просмотр':'Пройти по записи'}</Button><Button variant="outline" disabled={!rows.length||decoding||exporting||processing||position>=rows.length-1} onClick={()=>{setPlaying(false);setPosition(at=>seekTeachingSecond(rows,at,1));}}>Вперёд 1 с →</Button><select aria-label="Увеличение исходного кадра" value={zoom} className="rounded-lg border border-input bg-background px-2 text-sm" onChange={e=>setZoom(Number(e.target.value))}><option value={1}>Вписать</option><option value={1.5}>150%</option><option value={2}>200%</option><option value={3}>300%</option></select><Button variant="outline" onClick={()=>{const promise=view.current?.requestFullscreen?.();promise?.catch(()=>setError('Полноэкранный просмотр недоступен.'));}}>На весь экран</Button></div>
+      <p className="text-xs text-muted-foreground">Исходные ракурсы записанного пути. Можно двигаться по времени и увеличивать детали; невидимые стороны и 360° этим не дорисовываются.</p>
       <label className="block text-sm">Кадр {position+1} / {rows.length} · {((rows[position]?.relative_ticks_90k??0)/90000).toFixed(3)} с {decoding?'· декодирование':''}<input aria-label="Время записанного прохода" type="range" min={0} max={Math.max(0,rows.length-1)} value={position} disabled={exporting} className="mt-2 w-full" onChange={e=>setPosition(Number(e.target.value))} /></label></div>
-      <div className="space-y-3"><h4 className="text-sm font-medium">Подтверждения рядом с кадром</h4><div className="max-h-56 space-y-1 overflow-auto font-mono text-xs">{nearby.length?nearby.map((i,n)=><p key={n}>#{String(i.sequence)} · палец {String(i.pointer_id)} · {String(i.outcome)} · {String(i.device_uptime_ms??'')} мс</p>):<p className="text-muted-foreground">В этом интервале нет подтверждений.</p>}</div>
+      <div className="space-y-3"><label className="block space-y-1 text-sm"><span>Название сохранённого маршрута</span><input className="w-full rounded-lg border border-input bg-background px-3 py-2" value={label} maxLength={128} disabled={renaming||exporting||processing} onChange={e=>setLabel(e.target.value)} /></label><Button variant="outline" disabled={renaming||exporting||processing||!directory.current||!label.trim()} onClick={()=>{void(async()=>{const folder=directory.current;if(!folder||!selected)return;setRenaming(true);try{await renameTeachingLabel(folder,selected,label);setLocalRefresh(n=>n+1);}catch(e){setError(e instanceof Error?e.message:'Название не сохранено.');}finally{setRenaming(false);}})();}}>Сохранить название</Button><h4 className="text-sm font-medium">Подтверждения рядом с кадром</h4><div className="max-h-56 space-y-1 overflow-auto font-mono text-xs">{nearby.length?nearby.map((i,n)=><p key={n}>#{String(i.sequence)} · палец {String(i.pointer_id)} · {String(i.outcome)} · {String(i.device_uptime_ms??'')} мс</p>):<p className="text-muted-foreground">В этом интервале нет подтверждений.</p>}</div>
         <Button className="w-full" disabled={exporting||processing||!directory.current||!clips.find(c=>c.id===selected)?.complete} onClick={()=>{void exportFolder();}}>Сохранить пакет в папку</Button>
         {exporting&&<Button variant="outline" onClick={()=>exportAbort.current?.abort()}>Отменить экспорт</Button>}
         {exporting&&exportProgress&&<p role="status" className="text-xs text-muted-foreground">{exportProgress.stage==='verify'?'Проверка сохранённого видео':'Копирование видео'} · {(exportProgress.bytes/1048576).toFixed(1)} / {(exportProgress.total/1048576).toFixed(1)} МБ</p>}

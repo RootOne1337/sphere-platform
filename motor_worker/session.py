@@ -761,7 +761,9 @@ class HeadlessSession:
         return self.config.pointer_probe is not None
 
     def _control_channel_options(self):
-        return {"ordered": True}
+        # Same bounded interactive lifetime as the browser and stick executor.
+        # Expiration is uncertainty, never permission to replay an action.
+        return {"ordered": True, "maxPacketLifeTime": 200}
 
     def _probe_complete(self) -> bool:
         return bool(

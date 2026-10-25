@@ -1,4 +1,5 @@
 /** Export a verified, completed local clip without materializing its video as a Blob. */
+import { parseTeachingLabel } from './teachingMetadata';
 export type ExportProgress = { stage:'copy'|'verify'|'complete'; bytes:number; total:number; folder:string };
 export type DirectoryPicker = () => Promise<FileSystemDirectoryHandle>;
 type Frame = { index:number; offset:number; bytes:number; sha256:string };
@@ -24,6 +25,14 @@ export async function exportTeachingFolder(source:FileSystemDirectoryHandle, id:
     if(file.size!==manifest.files?.[name]?.bytes||await hash(data)!==manifest.files?.[name]?.sha256)throw Error('Контрольная сумма журнала не совпала.');
     small.set(name,data);
   }
+  // Human labels are optional sidecars bound to the sealed manifest. Preserve
+  // the exact bytes; do not rewrite media, checksums or the COMPLETE marker.
+  try {
+    const labelFile=await read('label.json',2048),bytes=await labelFile.arrayBuffer();
+    if(!parseTeachingLabel(new TextDecoder().decode(bytes),id,await hash(manifestBytes)))
+      throw Error('Название маршрута не соответствует выбранной записи. Сохраните название заново.');
+    small.set('label.json',bytes);
+  } catch(error) { if(!(error instanceof Error)||error.name!=='NotFoundError')throw error; }
   const frames:Frame[]=new TextDecoder().decode(small.get('frames.jsonl')!).trim().split('\n').filter(Boolean).map(line=>JSON.parse(line));
   const video=await read('video.h264',manifest.schema==='sphere-browser-teaching-v2'?2*1024**3:512*1024**2);
   if(!frames.length||frames.length!==manifest.frames||frames.length>(manifest.schema==='sphere-browser-teaching-v2'?36000:7200)||video.size!==manifest.files?.['video.h264']?.bytes
@@ -62,5 +71,5 @@ export async function exportTeachingFolder(source:FileSystemDirectoryHandle, id:
   await writeSmall('manifest.json',manifestBytes);
   // An interrupted export has no COMPLETE; never delete or overwrite another folder.
   await writeSmall('COMPLETE',markerBytes);report('complete',video.size);
-  return {folder:name,videoBytes:video.size,frames:frames.length};
+  return {folder:name,videoBytes:video.size,frames:frames.length,labelCopied:small.has('label.json')};
 }
