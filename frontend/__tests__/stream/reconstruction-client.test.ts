@@ -1,7 +1,13 @@
 /** @jest-environment node */
-import {reconstructionFiles,reconstructionRequest,uploadReconstruction} from '@/src/features/stream/reconstructionClient';
+import {reconstructionFiles,reconstructionRequest,terminalReconstruction,uploadReconstruction} from '@/src/features/stream/reconstructionClient';
 const job={id:'a'.repeat(32),key:'b'.repeat(64)};
 afterEach(()=>jest.restoreAllMocks());
+
+test('quality review ends processing without claiming a successful reconstruction',()=>{
+  expect(terminalReconstruction({phase:'quality_rejected'})).toBe(true);
+  expect(terminalReconstruction({phase:'review_required'})).toBe(true);
+  expect(terminalReconstruction({phase:'evaluating'})).toBe(false);
+});
 
 function source(){
   const files=Object.fromEntries(reconstructionFiles.map(name=>[name,new File([new Uint8Array(name==='video.h264'?2*1048576+7:20)],name)]));

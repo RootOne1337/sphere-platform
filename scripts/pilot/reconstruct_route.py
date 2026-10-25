@@ -21,6 +21,7 @@ from pathlib import Path
 
 from motor_worker.browser_teach import browser_units, prepare_browser, validate_browser
 from scripts.pilot.atomic_json import write_json
+from scripts.pilot.reconstruction_quality import reference_quality, sparse_condition
 from scripts.pilot.resource_guard import collect, evaluate
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -81,8 +82,13 @@ def model_geometry(rec, prepared):
         pose = image.cam_from_world().inverse().matrix()
         if not np.isfinite(pose).all():
             raise RuntimeError('nonfinite_camera_pose')
+        camera = rec.cameras[image.camera_id]
+        calibration = camera.calibration_matrix()
         cameras.append(dict(image=image.name, center=pose[:, 3].tolist(),
                             camera_to_world=pose.tolist(),
+                            intrinsics=dict(width=camera.width, height=camera.height,
+                                            fx=float(calibration[0, 0]), fy=float(calibration[1, 1]),
+                                            cx=float(calibration[0, 2]), cy=float(calibration[1, 2])),
                             ticks_90k=order[image.name]['relative_ticks_90k']))
     cameras.sort(key=lambda camera: camera['ticks_90k'])
     points = []
@@ -176,9 +182,14 @@ def reconstruct(job, mask, steps):
     error = rec.compute_mean_reprojection_error()
     quality = dict(registered=rec.num_reg_images(), selected=len(images), coverage=coverage,
                    points=rec.num_points3D(), mean_reprojection_px=error, components=len(models))
+    quality['conditioning'] = sparse_condition(
+        [camera['center'] for camera in geometry['cameras']],
+        [point.xyz for point in rec.points3D.values()])
     write_json(job / 'quality.json', quality)
     if rec.num_reg_images() < 10 or coverage < .7 or rec.num_points3D() < 300 or not math.isfinite(error) or error > 3:
         raise RuntimeError('camera_quality_gate_failed')
+    if not quality['conditioning']['passed']:
+        raise RuntimeError('camera_geometry_degenerate')
     # A largest component is not a claim that discarded views are connected.
     target = prepared / 'sparse' / '0'
     target.mkdir(parents=True)
@@ -353,6 +364,8 @@ def train_dense(job, prepared, geometry, quality, mask, steps, attempt=0):
     with final.open('xb') as output, ply.open('rb') as source:
         while chunk := source.read(1024**2):
             output.write(chunk)
+    state(job, 'evaluating', quality=quality)
+    appearance = evaluate_dense(job, dataset, final, attempt=attempt)
     result = dict(schema='sphere-dense-reconstruction-v1', quality=quality,
                   source_manifest_sha256=geometry['source_manifest_sha256'],
                   ply_sha256=splats['sha256'], ply_bytes=splats['bytes'], vertices=splats['vertices'],
@@ -361,10 +374,66 @@ def train_dense(job, prepared, geometry, quality, mask, steps, attempt=0):
                   metric_scale=None, masks=mask, dynamic_objects_removed=False,
                   collision_map=False, execution_qualified=False,
                   tools=dict(pycolmap='4.2.1', brush='0.3.0'), training_steps=steps,
-                  autotune='balanced', engine=engine, periodic_export_steps=1000)
+                  autotune='balanced', engine=engine, periodic_export_steps=1000,
+                  appearance=appearance['summary'])
     write_json(job / 'result.json', result)
     (job / 'COMPLETE').write_text(digest(job / 'result.json') + '\n', encoding='ascii')
-    state(job, 'complete', result=result)
+    state(job, 'complete' if appearance['summary']['state'] == 'passed' else 'quality_rejected',
+          result=result, **({} if appearance['summary']['state'] == 'passed'
+                           else dict(error='dense_visual_quality_gate_failed')))
+
+
+def appearance_receipt(job, ply, folder):
+    """Bind reference comparisons to the exact geometry and exported candidate."""
+    metrics = json.loads((folder / 'metrics.json').read_text('utf-8'))
+    summary = reference_quality(metrics)
+    views = []
+    for row in metrics['views']:
+        name = row['image'].replace('\\', '/').split('/')[-1]
+        if not re.fullmatch(r'[0-9]{8}\.png', name):
+            raise RuntimeError('reference_image_name_invalid')
+        files = {}
+        for kind in ('source', 'render'):
+            path = folder / f'{name[:-4]}-{kind}.png'
+            if path.is_symlink() or not path.is_file() or not 0 < path.stat().st_size <= 4 * 1024**2:
+                raise RuntimeError('reference_image_invalid')
+            files[kind] = dict(file=path.relative_to(job).as_posix(), sha256=digest(path), bytes=path.stat().st_size)
+        views.append(dict(image=name, psnr=row['psnr'], ssim=row['ssim'], **files))
+    if len({view['image'] for view in views}) != len(views):
+        raise RuntimeError('reference_image_duplicate')
+    receipt = dict(schema='sphere-scene-appearance-v1', summary=summary, views=views,
+                   ply_sha256=digest(ply), geometry_sha256=digest(job / 'geometry.json'))
+    write_json(job / 'appearance.json', receipt)
+    return receipt
+
+
+def evaluate_dense(job, dataset, ply, attempt=0):
+    package = TOOLS / 'brush-reference-evaluator'
+    receipt = json.loads((package / 'receipt.json').read_text('utf-8'))
+    binary = package / 'brush_evaluate.exe'
+    if (receipt.get('entry_sha256') != digest(ROOT / 'scripts/pilot/brush_evaluate.rs')
+            or receipt.get('binary_sha256') != digest(binary)
+            or receipt.get('brush_tree') != '3edecbb2fe79d3e2c87eeab85b15e0b1dd10d486'):
+        raise RuntimeError('reference_evaluator_receipt_mismatch')
+    folder = job / (f'reference-evaluation-attempt-{attempt}' if attempt else 'reference-evaluation')
+    with (job / (folder.name + '.log')).open('xb') as log:
+        process = subprocess.Popen([str(binary), str(dataset), str(ply), str(folder)],
+                                   stdout=log, stderr=subprocess.STDOUT,
+                                   creationflags=getattr(subprocess, 'CREATE_NO_WINDOW', 0))
+        deadline = time.monotonic() + 180
+        try:
+            while process.poll() is None:
+                checkpoint(job)
+                if time.monotonic() > deadline or log.tell() > 20 * 1024**2:
+                    raise RuntimeError('reference_evaluation_budget')
+                time.sleep(2)
+            if process.returncode:
+                raise RuntimeError('reference_evaluation_failed')
+        finally:
+            if process.poll() is None:
+                process.kill()
+                process.wait(10)
+    return appearance_receipt(job, ply, folder)
 
 
 def retry_dense(job, attempt):
@@ -397,6 +466,10 @@ def retry_dense(job, attempt):
             or not np.allclose([c['camera_to_world'] for c in recovered['cameras']],
                                [c['camera_to_world'] for c in geometry['cameras']], rtol=1e-7, atol=1e-7)):
         raise RuntimeError('dense_retry_camera_map_changed')
+    condition = sparse_condition([camera['center'] for camera in recovered['cameras']],
+                                 [point.xyz for point in rec.points3D.values()])
+    if not condition['passed']:
+        raise RuntimeError('camera_geometry_degenerate')
     control = json.loads((job / 'control.json').read_text('utf-8'))
     with (job / f'DENSE-RETRY-{attempt}.json').open('x', encoding='utf-8') as file:
         json.dump(dict(previous_state=previous, source_manifest_sha256=source['source_manifest_sha256'],

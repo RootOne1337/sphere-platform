@@ -73,6 +73,49 @@ def test_restart_fails_interrupted_and_preserves_input(jobs):
     assert (job / 'input/video.h264').read_bytes() == b'raw'
 
 
+def test_old_complete_export_is_not_automatically_a_verified_scene(jobs):
+    job = create(jobs)
+    service.write_json(job / 'state.json', dict(phase='complete'))
+    (job / 'COMPLETE').touch()
+    result = jobs.status(job)
+    assert result['phase'] == 'review_required'
+    assert result['appearance']['state'] == 'unverified'
+    assert result['dense_available']
+
+
+def test_rejected_reference_views_are_bound_and_images_cannot_escape(jobs):
+    from scripts.pilot.reconstruction_quality import reference_quality
+
+    job = create(jobs)
+    service.write_json(job / 'state.json', dict(phase='complete'))
+    (job / 'COMPLETE').touch()
+    service.write_json(job / 'result.json', dict(ply_sha256='c' * 64, geometry_sha256='d' * 64))
+    (job / 'reference-evaluation').mkdir()
+    rows = []
+    for i in range(3):
+        row = dict(image=f'{i:08}.png', psnr=13., ssim=.6)
+        for kind in ('source', 'render'):
+            name = f'reference-evaluation/{i:08}-{kind}.png'
+            (job / name).write_bytes(b'verified-image')
+            row[kind] = dict(file=name, bytes=14, sha256=hashlib.sha256(b'verified-image').hexdigest())
+        rows.append(row)
+    summary = reference_quality(dict(schema='sphere-reference-render-evaluation-v1', training=False,
+                                     held_out=False, resolution_limit=960, views=rows))
+    receipt = dict(schema='sphere-scene-appearance-v1', summary=summary, views=rows,
+                   ply_sha256='c' * 64, geometry_sha256='d' * 64)
+    service.write_json(job / 'appearance.json', receipt)
+    assert jobs.status(job)['phase'] == 'quality_rejected'
+    assert jobs.reference_image(job, 0, 'render') == b'verified-image'
+    (job / rows[0]['render']['file']).write_bytes(b'tampered-image')
+    with pytest.raises(ValueError, match='changed'):
+        jobs.reference_image(job, 0, 'render')
+    rows[0]['source']['file'] = '../private.png'
+    service.write_json(job / 'appearance.json', receipt)
+    assert jobs.status(job)['appearance']['state'] == 'unverified'
+    with pytest.raises(ValueError, match='unavailable'):
+        jobs.reference_image(job, 0, 'source')
+
+
 def test_http_origin_host_capability_and_cors(jobs):
     job = create(jobs)
     server = ThreadingHTTPServer(('127.0.0.1', 0), service.handler(jobs, 'http://127.0.0.1:3015', 3342))

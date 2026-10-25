@@ -1,8 +1,9 @@
 export const reconstructionBase = 'http://127.0.0.1:3342';
 export const reconstructionFiles = ['manifest.json','frames.jsonl','inputs.jsonl','video.h264','COMPLETE'] as const;
 export type ReconstructionJob = {id:string; key:string};
-export type ReconstructionState = {phase:string; error?:string; geometry_available?:boolean; dense_available?:boolean; dense_partial_available?:boolean; checkpoint?:{steps:number;target_steps:number;partial:true}; quality?:{registered:number; selected:number; coverage:number; points:number; mean_reprojection_px:number}; result?:{ply_sha256:string; ply_bytes:number}};
-export const terminalReconstruction = (state:ReconstructionState) => ['complete','failed','cancelled'].includes(state.phase);
+export type SceneAppearance = {state:'unverified'|'passed'|'rejected';mean_psnr?:number;mean_ssim?:number;min_psnr?:number;min_ssim?:number;views?:{image:string;psnr:number;ssim:number}[]};
+export type ReconstructionState = {phase:string; error?:string; geometry_available?:boolean; dense_available?:boolean; dense_partial_available?:boolean; appearance?:SceneAppearance; checkpoint?:{steps:number;target_steps:number;partial:true}; quality?:{registered:number; selected:number; coverage:number; points:number; mean_reprojection_px:number}; result?:{ply_sha256:string; ply_bytes:number}};
+export const terminalReconstruction = (state:ReconstructionState) => ['complete','failed','cancelled','quality_rejected','review_required'].includes(state.phase);
 export async function reconstructionRequest(path:string, job:ReconstructionJob|null, init:RequestInit = {}) {
   const headers = new Headers(init.headers);
   headers.set('X-Sphere-Reconstruction','1');

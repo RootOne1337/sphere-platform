@@ -5,11 +5,18 @@ import {Box,Loader2} from 'lucide-react';
 import {Button} from '@/components/ui/button';
 import {reconstructionRequest,terminalReconstruction,uploadReconstruction,type ReconstructionJob,type ReconstructionState} from './reconstructionClient';
 import {readReconstructionLink,saveReconstructionLink,validReconstructionJob} from './reconstructionLink';
+import ReferenceComparison from './ReferenceComparison';
 const Scene=dynamic(()=>import('./ReconstructedScene'),{ssr:false,loading:()=> <p>Загружаем 3D-просмотр…</p>});
 const phases:Record<string,string>={uploading:'Передача сохранённой записи',starting:'Запуск обработчика',verifying:'Проверка исходника и освобождения ввода',extracting:'Извлечение кадров в исходном разрешении',features:'Поиск устойчивых визуальных признаков',matching:'Сопоставление соседних ракурсов',cameras:'Восстановление связанных камер',training:'Построение плотной Gaussian-сцены на GPU',complete:'Плотная сцена готова',failed:'Обработка остановлена',cancelled:'Задание отменено'};
 const reasons:Record<string,string>={no_connected_cameras_need_translation_and_overlap:'Не удалось связать камеры. Нужен проход с перемещением, перекрывающимися ракурсами и неподвижными деталями.',camera_quality_gate_failed:'Камеры восстановлены лишь частично или с большой ошибкой. Результат не принят как цельная сцена.',resource_guard:'Недостаточно ресурсов для безопасного продолжения.',worker_service_restarted:'Сервис был перезапущен. Исходная запись сохранена.',brush_failed_see_local_log:'Плотный рендер завершился с ошибкой. Камеры можно проверить отдельно.'};
 reasons.brush_timing_overflow='Brush завершился с ошибкой измерения времени GPU. Камеры и проверенные промежуточные результаты сохранены.';
 reasons.brush_system_timing_build_required='Совместимый локальный движок плотной сцены ещё не подготовлен. Запись и восстановленные камеры сохранены.';
+phases.complete='Реконструкция рассчитана · базовая проверка ракурсов пройдена';
+phases.evaluating='Сравнение рендера с исходными ракурсами';
+phases.quality_rejected='Реконструкция не прошла проверку качества';
+phases.review_required='Расчёт завершён · качество ещё не проверено';
+reasons.camera_geometry_degenerate='Опорные точки выродились в центрах камер. Маленькая ошибка проекции здесь не подтверждает геометрию; плотный этап остановлен.';
+reasons.dense_visual_quality_gate_failed='Рендер недостаточно совпадает с исходными ракурсами. Эта сцена не принята как качественный результат.';
 export function TeachingReconstruction({clip,scope,folder,complete,onBusyChange}:{clip:string;scope:string;folder:()=>FileSystemDirectoryHandle|null;complete:boolean;onBusyChange:(busy:boolean)=>void}) {
   const [job,setJob]=useState<ReconstructionJob|null>(null),[status,setStatus]=useState<ReconstructionState|null>(null),[error,setError]=useState<string|null>(null);
   const [mask,setMask]=useState('game'),[steps,setSteps]=useState(5000),[progress,setProgress]=useState('');
@@ -68,6 +75,7 @@ export function TeachingReconstruction({clip,scope,folder,complete,onBusyChange}
     {status?.error&&<p role="alert" className="text-sm text-destructive">{reasons[status.error]??status.error} Исходное видео не изменено.</p>}
     {status?.dense_partial_available&&status.checkpoint&&<p role="status" className="rounded-lg border border-amber-500/30 bg-amber-500/10 p-3 text-sm">Доступна проверенная промежуточная сцена: {status.checkpoint.steps} / {status.checkpoint.target_steps} итераций. Обработка не завершена успешно; это не окончательный результат.</p>}
     {status?.quality&&<p className="text-xs text-muted-foreground">Камеры {status.quality.registered}/{status.quality.selected} · покрытие {(status.quality.coverage*100).toFixed(0)}% · ошибка {status.quality.mean_reprojection_px.toFixed(2)} px</p>}
+    {job&&status?.dense_available&&<ReferenceComparison job={job} appearance={status.appearance}/>}
     {job&&status?.geometry_available&&<Scene job={job} status={status}/>}
     <p className="text-xs text-muted-foreground">Ссылка на результат сохранена рядом с записью в библиотеке этого браузера и аккаунта. Выберите этот проход снова, чтобы открыть готовую сцену. Сохранённая сцена остаётся на локальном ПК.</p>
     <p className="text-xs leading-5 text-muted-foreground">Маска применяется до поиска признаков; она не распознаёт все движущиеся машины и игроков. Плотная сцена — визуальная реконструкция, а не готовая карта коллизий. Масштаб в метрах требует отдельного известного расстояния. При нехватке связных ракурсов обработка остановится с объяснением.</p>

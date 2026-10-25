@@ -23,7 +23,7 @@ from scripts.pilot.resource_guard import collect, evaluate
 ROOT = Path(__file__).resolve().parents[2]
 LIMITS = {'manifest.json': 65536, 'frames.jsonl': 16 * 1024**2,
           'inputs.jsonl': 8 * 1024**2, 'COMPLETE': 1024, 'video.h264': 2**31}
-TERMINAL = {'complete', 'failed', 'cancelled'}
+TERMINAL = {'complete', 'failed', 'cancelled', 'quality_rejected', 'review_required'}
 IDENTITY = re.compile(r'^[0-9a-f]{32}$')
 
 
@@ -72,12 +72,70 @@ class Jobs:
         if (job / 'quality.json').is_file():
             result['quality'] = json.loads((job / 'quality.json').read_text('utf-8'))
         result['geometry_available'] = (job / 'geometry.json').is_file()
-        result['dense_available'] = result['phase'] == 'complete' and (job / 'COMPLETE').is_file()
+        result['dense_available'] = result['phase'] in {'complete', 'quality_rejected', 'review_required'} and (job / 'COMPLETE').is_file()
+        if result['dense_available']:
+            appearance = self.appearance(job)
+            result['appearance'] = ({**appearance['summary'], 'views': [
+                dict(image=view['image'], psnr=view['psnr'], ssim=view['ssim']) for view in appearance['views']]}
+                if appearance else dict(state='unverified'))
+            if not appearance:
+                result['phase'] = 'review_required'
+            elif appearance['summary']['state'] == 'rejected':
+                result['phase'] = 'quality_rejected'
+                result['error'] = 'dense_visual_quality_gate_failed'
         partial = self.partial(job) if result['phase'] == 'failed' else None
         result['dense_partial_available'] = partial is not None
         if partial:
             result['checkpoint'] = partial
         return result
+
+    def appearance(self, job):
+        from scripts.pilot.reconstruction_quality import reference_quality
+
+        path = job / 'appearance.json'
+        if not path.is_file() or path.is_symlink() or path.stat().st_size > 16384:
+            return None
+        try:
+            data = json.loads(path.read_text('utf-8'))
+            result = json.loads((job / 'result.json').read_text('utf-8'))
+            if (data.get('schema') != 'sphere-scene-appearance-v1'
+                    or data.get('ply_sha256') != result['ply_sha256']
+                    or data.get('geometry_sha256') != result['geometry_sha256']):
+                return None
+            views = data['views']
+            if len({view['image'] for view in views}) != len(views):
+                return None
+            expected = reference_quality(dict(schema='sphere-reference-render-evaluation-v1',
+                training=False, held_out=False, resolution_limit=960, views=views))
+            if data['summary'] != expected:
+                return None
+            for view in views:
+                if not re.fullmatch(r'[0-9]{8}\.png', view['image']):
+                    return None
+                for kind in ('source', 'render'):
+                    entry = view[kind]
+                    if (not re.fullmatch(r'reference-evaluation(?:-attempt-[12])?/[0-9]{8}-' + kind + r'\.png', entry['file'])
+                            or Path(entry['file']).name != view['image'][:-4] + '-' + kind + '.png'
+                            or not re.fullmatch(r'[0-9a-f]{64}', entry['sha256'])
+                            or type(entry['bytes']) is not int or not 0 < entry['bytes'] <= 4 * 1024**2):
+                        return None
+            return data
+        except (KeyError, TypeError, ValueError, OSError):
+            return None
+
+    def reference_image(self, job, index, kind):
+        data = self.appearance(job)
+        if data is None or kind not in {'source', 'render'} or not 0 <= index < len(data['views']):
+            raise ValueError('reference_image_unavailable')
+        entry = data['views'][index][kind]
+        path = job / entry['file']
+        if (path.is_symlink() or path.parent.is_symlink() or not path.resolve().is_relative_to(job.resolve())
+                or path.stat().st_size != entry['bytes']):
+            raise ValueError('reference_image_changed')
+        body = path.read_bytes()
+        if hashlib.sha256(body).hexdigest() != entry['sha256']:
+            raise ValueError('reference_image_changed')
+        return body
 
     def partial(self, job):
         path = job / 'checkpoint.json'
@@ -297,6 +355,10 @@ def handler(jobs, origin, port):
                         if jobs.status(job)['phase'] == 'uploading':
                             write_json(job / 'state.json', dict(phase='cancelled'))
                         self.reply(200, jobs.status(job))
+                    elif method == 'GET' and len(parts) == 5 and parts[2] == 'reference':
+                        if not re.fullmatch(r'[0-8]', parts[3]):
+                            raise ValueError('reference_image_unavailable')
+                        self.reply(200, jobs.reference_image(job, int(parts[3]), parts[4]), 'image/png')
                     elif method == 'GET' and parts[2:] in (['geometry'], ['scene']):
                         scene = parts[2] == 'scene'
                         current = jobs.status(job)
