@@ -65,6 +65,23 @@ def test_detail_checkpoints_fit_existing_disk_budget_at_full_splat_capacity():
     assert (30000 // 1000) * bytes_per_export > 2**31
 
 
+def test_resource_refusal_retains_measurement_and_does_not_modify_input(tmp_path, monkeypatch):
+    import json
+
+    from scripts.pilot import reconstruct_route as route
+
+    source = tmp_path / 'original.h264'
+    source.write_bytes(b'original capture')
+    snapshot = dict(availableRamBytes=2 * 1024**3, measurement='test fixture')
+    monkeypatch.setattr(route, 'collect', lambda _: snapshot)
+    monkeypatch.setattr(route, 'evaluate', lambda measured: ['ram_headroom_low'])
+    with pytest.raises(RuntimeError, match='resource_guard'):
+        route.checkpoint(tmp_path)
+    receipt = json.loads((tmp_path / 'resource-refusal.json').read_text())
+    assert receipt == dict(snapshot=snapshot, findings=['ram_headroom_low'])
+    assert source.read_bytes() == b'original capture'
+
+
 def test_failed_training_preserves_latest_valid_checkpoint_without_complete(tmp_path):
     import json
 
