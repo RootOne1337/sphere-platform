@@ -6675,16 +6675,16 @@
     "autonomousNavigationAccepted": false
   },
   "currentDeployedRuntimePendingAcceptance": {
-    "observedAtUtc": "2026-10-24T19:15:31.504740+00:00",
-    "ui": "8efe43f4e91dae2044bcd06e954c31b943b7027b",
+    "observedAtUtc": "2026-10-25T11:59:37.374197+00:00",
+    "ui": "544901af0a8ff561be8fe795f41bb7798fa1f4dd",
     "api": "1afdc529e18cd34b5d8ee0919f217076a8592846",
-    "imageId": "sha256:f8e33ede67b5a5500b436a279e9c377300d3405a8f130831dc32745c97cc9ca2",
+    "imageId": "sha256:e2b69476c9dcd39d23167f5bec11a806997daec4f3ea3e26a5d377652c1546d2",
     "runtimeInstalled": true,
     "healthy": true,
     "browserFiniteAccepted": false,
-    "reason": "Local browser use is disabled in Work settings",
-    "evidence": "docs/audits/2026-10-25/DENSE-RECONSTRUCTION-LOCAL-DELIVERY.json",
-    "evidenceSha256NormalizedLf": "bf596d2cc1fca403e23a324b4d7405c48e2d76fa6acb359f87c37bc358ae5a3f",
-    "scope": "Local reconstruction delivery. installed section retains the last browser-accepted observation; no new route/dense-scene acceptance."
+    "reason": "Final account-profile scene-page acceptance remains pending after physical Escape stopped Computer Use; finite Spark diagnostic comparison and native reference renders were verified.",
+    "evidence": "docs/audits/2026-10-25/DENSE-RECONSTRUCTION-QUALITY-REPAIR-LOCAL-DELIVERY.json",
+    "evidenceSha256NormalizedLf": "172880bd1b52812604a72b8b151f38dd9ec4dd5cb7ddea53857cbdd2e5c8cd4d",
+    "scope": "Verified partial reconstruction 70/81 cameras; installed section retains last accepted UI observation; no metric map or autonomous route acceptance."
   }
 }
