@@ -5,7 +5,7 @@
   "countsByRole": {
     "ADR": 6,
     "CURRENT_ENTRYPOINT": 8,
-    "DATED_EVIDENCE": 387,
+    "DATED_EVIDENCE": 388,
     "DESIGN_SPECIFICATION": 90,
     "OPERATING_GUIDE": 74,
     "PROJECT_POLICY": 7,
@@ -1690,6 +1690,10 @@
     },
     {
       "file": "docs/audits/2026-10-26/ROUTE-011321-QUALITY-AND-NAVIGATION.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
+      "file": "docs/audits/2026-10-26/TEACHING-WEB-STABILITY-AND-CAPTURE-BOTTLENECK.md",
       "role": "DATED_EVIDENCE"
     },
     {
