@@ -10,6 +10,11 @@ internal class GpuFramePump(
     private val lock = Any()
 
     fun frame(timestampNs: Long, render: () -> Unit) {
+        frameAccepted(timestampNs) { render(); true }
+    }
+
+    /** A busy planar codec is a raw-input drop, never a rendered/encoded picture. */
+    fun frameAccepted(timestampNs: Long, render: () -> Boolean) {
         synchronized(lock) {
             if (closed || timestampNs <= lastTimestamp) return
             lastTimestamp = timestampNs
@@ -22,8 +27,10 @@ internal class GpuFramePump(
             }
         }
         try {
-            render()
-            synchronized(lock) { if (!closed) quality.recordRenderedFrame() }
+            val accepted = render()
+            synchronized(lock) { if (!closed) {
+                if (accepted) quality.recordRenderedFrame() else quality.recordEncoderInputDrop()
+            } }
         } catch (error: Exception) {
             synchronized(lock) { if (!closed) quality.recordRenderFailure() }
             throw error

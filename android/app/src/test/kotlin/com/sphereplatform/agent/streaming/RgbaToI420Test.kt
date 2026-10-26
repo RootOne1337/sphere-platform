@@ -80,18 +80,21 @@ class RgbaToI420Test {
     }
     @Test fun `native direct conversion preserves source position and owns the idle refresh pixels`() {
         var calls = 0
+        val original = ByteBuffer.allocateDirect(16)
         val fast = object : NativeRgbaConversion {
             override val available = true
             override fun convert(source: ByteBuffer, rowStride: Int, width: Int, height: Int, output: ByteBuffer): Boolean {
                 calls++
                 assertEquals(0,source.position()); assertEquals(8,rowStride)
                 assertEquals(2,width); assertEquals(2,height)
+                source.put(0,99)
+                assertEquals(0,original.get(0).toInt()) // The mapped producer never becomes writable native scratch.
                 output.clear(); output.put(byteArrayOf(41,41,41,41,240.toByte(),110))
                 return true
             }
         }
         val converter = RgbaToI420(2,2,fast)
-        val source = ByteBuffer.allocateDirect(16).apply { position(13) }
+        val source = original.apply { position(13) }
         val output = ByteBuffer.allocate(6)
         converter.convert(source,8,4,output)
         assertEquals(13,source.position()); assertEquals(6,output.position()); assertEquals(1,calls)
@@ -130,5 +133,41 @@ class RgbaToI420Test {
         converter.convert(ByteBuffer.allocateDirect(36),24,8,ByteBuffer.allocate(6))
         assertThrows(IllegalArgumentException::class.java) {converter.convert(ByteBuffer.allocateDirect(15),8,4,ByteBuffer.allocate(6))}
         assertEquals(0,calls)
+    }
+
+    @Test fun `borrowed GPU planes copy only valid pixels and own the idle cache`() {
+        val y = ByteBuffer.wrap(byteArrayOf(16, 41, 99, 82, 235.toByte())).apply { position(1) }
+        val u = ByteBuffer.wrap(byteArrayOf(90)).asReadOnlyBuffer()
+        val v = ByteBuffer.wrap(byteArrayOf(240.toByte()))
+        val converter = RgbaToI420(2,2)
+        val output = ByteBuffer.allocate(6)
+        converter.copyFromPlanar(I420Planes(2,2,y,3,u,1,v,1),output)
+        assertArrayEquals(byteArrayOf(16,41,82,235.toByte(),90,240.toByte()),output.array())
+        assertEquals(1,y.position()); assertEquals(0,u.position()); assertEquals(0,v.position())
+        y.put(0,99); v.put(0,99)
+        val refreshed = ByteBuffer.allocate(6); converter.copyLastConverted(refreshed)
+        assertArrayEquals(output.array(),refreshed.array())
+    }
+
+    @Test fun `invalid last chroma plane preserves both destination and prior cached frame`() {
+        val converter = RgbaToI420(2,2)
+        val output = ByteBuffer.allocate(6)
+        converter.convert(color(255,0,0),8,4,output)
+        val before = output.array().clone()
+        val invalid = I420Planes(2,2,ByteBuffer.allocate(4),2,ByteBuffer.allocate(1),1,ByteBuffer.allocate(0),1)
+        assertThrows(IllegalArgumentException::class.java) { converter.copyFromPlanar(invalid,output) }
+        assertArrayEquals(before,output.array())
+        converter.copyLastConverted(output); assertArrayEquals(before,output.array())
+        assertThrows(IllegalArgumentException::class.java) { converter.copyFromPlanar(invalid.copy(width=4),output) }
+    }
+
+    @Test fun `GPU packed chroma rows with full-width stride become compact I420 planes`() {
+        val y = ByteArray(16) { it.toByte() }
+        val planes = I420Planes(4,4,ByteBuffer.wrap(y),4,
+            ByteBuffer.wrap(byteArrayOf(10,20,99,99,30,40)),4,
+            ByteBuffer.wrap(byteArrayOf(50,60,99,99,70,80)),4)
+        val output = ByteBuffer.allocate(24)
+        RgbaToI420(4,4).copyFromPlanar(planes,output)
+        assertArrayEquals(y + byteArrayOf(10,20,30,40,50,60,70,80),output.array())
     }
 }

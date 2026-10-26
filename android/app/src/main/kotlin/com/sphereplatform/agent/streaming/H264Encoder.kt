@@ -208,6 +208,12 @@ class H264Encoder(
 
     /** Nonblocking admission: skip a RAW image if the codec has no free input. */
     internal fun submitPlanarFrame(rgba: ByteBuffer, rowStride: Int, pixelStride: Int, ptsUs: Long): Boolean =
+        submitPlanar(ptsUs) { converter, buffer -> converter.convert(rgba, rowStride, pixelStride, buffer) }
+
+    internal fun submitI420Frame(planes: I420Planes, ptsUs: Long): Boolean =
+        submitPlanar(ptsUs) { converter, buffer -> converter.copyFromPlanar(planes, buffer) }
+
+    private fun submitPlanar(ptsUs: Long, fill: (RgbaToI420, ByteBuffer) -> Unit): Boolean =
         synchronized(inputLock) {
             val owned = codec ?: return@synchronized false
             if (callbackErrorReported) return@synchronized false
@@ -219,7 +225,7 @@ class H264Encoder(
             try {
                 val buffer = checkNotNull(owned.getInputBuffer(index))
                 val started = System.nanoTime()
-                converter.convert(rgba, rowStride, pixelStride, buffer)
+                fill(converter, buffer)
                 val converted = System.nanoTime()
                 queueAttempted = true
                 val timestamp = maxOf(ptsUs, Math.addExact(planarLastPtsUs, 1L))

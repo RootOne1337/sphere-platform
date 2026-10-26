@@ -44,6 +44,8 @@ class StreamingManagerImpl @Inject constructor(
     private var imageReaderThread: HandlerThread? = null
     private var imageReaderHandler: Handler? = null
     private var gpuBridge: SurfaceTextureEncoderBridge? = null
+    private var planarGpuBridge: PlanarGpuSource? = null
+    internal var planarGpuFactory: (PlanarGpuRequest) -> PlanarGpuSource? = NativePlanarGpuSource::create
     internal var gpuBridgeEnabled = BuildConfig.STREAM_GPU_BRIDGE
     internal var planarInputEnabled = BuildConfig.STREAM_PLANAR_INPUT
     internal var qualityProfilesEnabled = BuildConfig.CONTINUOUS_INPUT_CANARY
@@ -210,6 +212,41 @@ class StreamingManagerImpl @Inject constructor(
         } else enc.start()
         encoder = enc
         enc.adjustFrameRate(plan?.maxFps ?: encoderConfig.fps)
+
+        if (gpuBridgeEnabled && usePlanar) {
+            val source = planarGpuFactory(PlanarGpuRequest(context, captureConfig.width, captureConfig.height,
+                frameThrottle, qualityMonitor, { streaming && captureSession === session },
+                { planes, ptsUs -> streaming && captureSession === session && enc.submitI420Frame(planes, ptsUs) },
+                { enc.refreshIdleFrame(); Unit }, enc.frameIntervalMs, { error ->
+                    Timber.e(error, "GPU planar capture failed; stopping this session")
+                    Handler(context.mainLooper).post { if (encoder === enc) stop() }
+                }))
+            if (source != null) {
+                planarGpuBridge = source
+                try {
+                    val surface = source.start()
+                    val vdm = retainedDisplay ?: VirtualDisplayManager(context, projection)
+                    virtualDisplayManager = vdm
+                    streaming = true
+                    if (retainedDisplay == null) vdm.createDisplay(captureConfig, surface)
+                    else vdm.reconfigureDisplay(captureConfig, surface)
+                    watchDisplay(session)
+                    getStreamQuality()
+                    viewerKeyFrameCoordinator.markEncoderReady { requestKeyFrameNow() }
+                    Timber.i("StreamingManagerImpl: started GPU planar YuvConverter bridge")
+                    return
+                } catch (error: PlanarGpuSource.InitializationFailed) {
+                    // No VirtualDisplay consumed a projection token. The retired
+                    // source owns no codec Surface; retain the planar fallback.
+                    source.close()
+                    planarGpuBridge = null
+                    Timber.w(error, "GPU planar unavailable at startup; using RGBA planar input")
+                } catch (error: Exception) {
+                    if (retainedDisplay == null) stopInternal()
+                    throw error // Never fall back/reuse a consumed display token.
+                }
+            }
+        }
 
         if (gpuBridgeEnabled && !usePlanar) {
             val bridge = SurfaceTextureEncoderBridge(checkNotNull(encoderSurface), captureConfig.width,
@@ -777,7 +814,11 @@ class StreamingManagerImpl @Inject constructor(
         }
         val ownedEncoder = encoder
         val bridge = gpuBridge
-        if (bridge != null) {
+        val planarBridge = planarGpuBridge
+        if (planarBridge != null) {
+            // All submitted planes/cache copies finish on the GL owner first.
+            planarBridge.close { ownedEncoder?.stop() }
+        } else if (bridge != null) {
             // Never destroy the codec Surface concurrently with eglSwapBuffers.
             bridge.close { ownedEncoder?.stop() }
         } else {
@@ -786,6 +827,7 @@ class StreamingManagerImpl @Inject constructor(
             }
         }
         gpuBridge = null
+        planarGpuBridge = null
         virtualDisplayManager = null
         imageReader = null
         imageReaderThread = null

@@ -16,7 +16,6 @@ import java.nio.ByteBuffer
 import java.net.Inet4Address
 import java.net.NetworkInterface
 import java.util.concurrent.atomic.AtomicLong
-import java.util.concurrent.atomic.AtomicBoolean
 
 /** Ten independently owned peers, bounded callbacks and exact monotonic/generation fences. */
 class DirectProbeTransport(
@@ -25,7 +24,6 @@ class DirectProbeTransport(
     private val streaming: com.sphereplatform.agent.streaming.StreamingManager,
     private val input: DirectInputHandler? = null,
 ) {
-    private companion object { val initialized = AtomicBoolean(false) }
     private val fence = AtomicLong(0)
     private val queue = Channel<() -> Unit>(128)
     private val peers = java.util.concurrent.ConcurrentHashMap<String, Probe>()
@@ -217,14 +215,7 @@ class DirectProbeTransport(
             progress(p, ProbeStage.OFFER_RECEIVED)
             publishTelemetry(p, p.telemetry.report(ProbeStage.OFFER_RECEIVED, p.iceProfile, false, SystemClock.elapsedRealtime()))
             if (p.factory == null) {
-                if (initialized.compareAndSet(false, true)) {
-                    try {
-                        PeerConnectionFactory.initialize(PeerConnectionFactory.InitializationOptions.builder(context)
-                            .setFieldTrials(DirectEncodedVideoSource.FIELD_TRIALS)
-                            .setEnableInternalTracer(false).createInitializationOptions())
-                        com.sphereplatform.agent.streaming.NativeRgbaToI420.activate()
-                    } catch (error: Exception) { initialized.set(false); throw error }
-                }
+                com.sphereplatform.agent.streaming.NativeWebRtcRuntime.ensure(context)
                 // Modern WebRTC factories own their Environment/field trials.
                 // Apply the coded-reference policy to every rebuilt factory,
                 // rather than relying only on deprecated process initialization.

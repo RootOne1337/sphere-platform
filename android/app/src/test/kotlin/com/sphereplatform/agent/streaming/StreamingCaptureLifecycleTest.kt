@@ -80,6 +80,64 @@ class StreamingCaptureLifecycleTest {
         unmockkAll()
     }
 
+    @Test fun `GPU planar retirement fences source and defers codec stop until GL owner releases`() {
+        manager.gpuBridgeEnabled = true; manager.planarInputEnabled = true
+        every { anyConstructed<H264Encoder>().startPlanar() } just Runs
+        lateinit var request: PlanarGpuRequest
+        var release: (() -> Unit)? = null
+        manager.planarGpuFactory = {
+            request = it
+            object : PlanarGpuSource {
+                override fun start() = encoderSurface
+                override fun close(afterRelease: () -> Unit) { release = afterRelease }
+            }
+        }
+        manager.start(projection)
+        assertTrue(request.valid())
+        verify(exactly=0) { ImageReader.newInstance(any(),any(),any(),any()) }
+        manager.stop()
+        assertFalse(request.valid())
+        val planes = I420Planes(2,2,ByteBuffer.allocate(4),2,ByteBuffer.allocate(1),1,ByteBuffer.allocate(1),1)
+        assertFalse(request.submit(planes,1L))
+        verify(exactly=0) { anyConstructed<H264Encoder>().stop() }
+        checkNotNull(release).invoke()
+        verify(exactly=1) { anyConstructed<H264Encoder>().stop() }
+    }
+
+    @Test fun `GPU planar init refusal falls back before a display token is consumed`() {
+        manager.gpuBridgeEnabled = true; manager.planarInputEnabled = true
+        every { anyConstructed<H264Encoder>().startPlanar() } just Runs
+        var closed = 0
+        manager.planarGpuFactory = {
+            object : PlanarGpuSource {
+                override fun start(): Surface = throw PlanarGpuSource.InitializationFailed(IllegalStateException("fixture"))
+                override fun close(afterRelease: () -> Unit) { closed++; afterRelease() }
+            }
+        }
+        manager.start(projection)
+        assertTrue(manager.isActive()); assertEquals(1,closed)
+        verify(exactly=1) { ImageReader.newInstance(any(),any(),any(),any()) }
+        verify(exactly=1) { anyConstructed<VirtualDisplayManager>().createDisplay(any(),any()) }
+        verify(exactly=0) { anyConstructed<H264Encoder>().stop() }
+    }
+
+    @Test fun `GPU planar display failure is terminal and never reuses projection for a fallback`() {
+        manager.gpuBridgeEnabled = true; manager.planarInputEnabled = true
+        every { anyConstructed<H264Encoder>().startPlanar() } just Runs
+        every { anyConstructed<VirtualDisplayManager>().createDisplay(any(),any()) } throws IllegalStateException("fixture")
+        var closed = 0
+        manager.planarGpuFactory = {
+            object : PlanarGpuSource {
+                override fun start() = encoderSurface
+                override fun close(afterRelease: () -> Unit) { closed++; afterRelease() }
+            }
+        }
+        assertThrows(IllegalStateException::class.java) { manager.start(projection) }
+        assertFalse(manager.isActive()); assertNull(manager.getInputSession()); assertEquals(1,closed)
+        verify(exactly=1) { anyConstructed<VirtualDisplayManager>().createDisplay(any(),any()) }
+        verify(exactly=0) { ImageReader.newInstance(any(),any(),any(),any()) }
+    }
+
     @Test fun `quality change persists without replacing capture or retiring its direct subscriber`() {
         manager.qualityProfilesEnabled = true
         manager.codecSource = { w, h, _, _ -> StreamQualityPolicy.Source(w, h, 60f) }

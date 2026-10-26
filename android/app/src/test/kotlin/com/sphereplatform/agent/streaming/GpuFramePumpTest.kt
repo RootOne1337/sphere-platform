@@ -54,6 +54,14 @@ class GpuFramePumpTest {
         assertEquals(0L, quality.getStats().renderedFramesTotal)
     }
 
+    @Test fun `busy planar codec records an input drop without claiming a rendered picture`() {
+        pump.frameAccepted(1L) { false }
+        assertEquals(1L,quality.getStats().captureFramesTotal)
+        assertEquals(0L,quality.getStats().renderedFramesTotal)
+        assertEquals(1L,quality.getStats().encoderInputDropsTotal)
+        assertEquals(0L,quality.getStats().renderFailuresTotal)
+    }
+
     @Test fun `close fences callbacks and does not block an in-flight native draw`() {
         val entered = CountDownLatch(1)
         val release = CountDownLatch(1)

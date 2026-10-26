@@ -20,6 +20,7 @@ internal class RgbaToI420(private val width: Int, private val height: Int,
     private var rgba = ByteArray(0)
     private val i420 = ByteArray(outputSize)
     private var nativeOutput: ByteBuffer? = null
+    private var nativeSource: ByteBuffer? = null
     private var lastWasNative = false
 
     /** Caller owns capture lifetime and proves a prior successful submission. */
@@ -41,7 +42,13 @@ internal class RgbaToI420(private val width: Int, private val height: Int,
         // input already queued for delivery. Fallback overwrites the whole frame.
         if (pixelStride == 4 && source.isDirect && native.available) {
             val scratch = nativeOutput ?: ByteBuffer.allocateDirect(outputSize).also { nativeOutput = it }
-            if (native.convert(source.duplicate().apply { position(0) }, rowStride, width, height, scratch)) {
+            // GPU-mapped ImageReader reads are expensive on some emulator grallocs.
+            // A measured bulk read into owned RAM is faster than libyuv's multiple
+            // source passes. This remains a fallback to the GPU planar source.
+            val staged = nativeSource?.takeIf { it.capacity() == required.toInt() }
+                ?: ByteBuffer.allocateDirect(required.toInt()).also { nativeSource = it }
+            staged.clear(); staged.put(source.duplicate().apply { position(0); limit(required.toInt()) }); staged.clear()
+            if (native.convert(staged, rowStride, width, height, scratch)) {
                 lastWasNative = true
                 destination.clear(); destination.put(scratch.duplicate().apply { clear(); limit(outputSize) })
                 return
@@ -73,6 +80,29 @@ internal class RgbaToI420(private val width: Int, private val height: Int,
                 i420[ySize + cSize + chroma] = (((112 * r - 94 * g - 18 * b + 128) shr 8) + 128).toByte()
             }
         }
+        destination.clear(); destination.put(i420)
+    }
+
+    /** Cache compact GPU-produced I420 before its refcounted source is released. */
+    fun copyFromPlanar(planes: I420Planes, destination: ByteBuffer) {
+        require(planes.width == width && planes.height == height)
+        require(!destination.isReadOnly && destination.capacity() >= outputSize)
+        fun validate(source: ByteBuffer, stride: Int, columns: Int, rows: Int) {
+            require(stride >= columns && source.limit().toLong() >= (rows - 1L) * stride + columns)
+        }
+        validate(planes.y, planes.strideY, width, height)
+        validate(planes.u, planes.strideU, width / 2, height / 2)
+        validate(planes.v, planes.strideV, width / 2, height / 2)
+        fun copy(source: ByteBuffer, stride: Int, columns: Int, rows: Int, at: Int) {
+            val view = source.duplicate()
+            for (row in 0 until rows) {
+                view.position(row * stride); view.get(i420, at + row * columns, columns)
+            }
+        }
+        copy(planes.y, planes.strideY, width, height, 0)
+        copy(planes.u, planes.strideU, width / 2, height / 2, ySize)
+        copy(planes.v, planes.strideV, width / 2, height / 2, ySize + cSize)
+        lastWasNative = false
         destination.clear(); destination.put(i420)
     }
 }
