@@ -80,6 +80,7 @@ function QualityPanel({ deviceId, readOnly, compact = false }: { deviceId: strin
           {[
             { label: 'Авто', profile: 'auto' as const, fps: '', mbps: '' },
             { label: 'Текст', profile: 'detail' as const, fps: '30', mbps: '8' },
+            { label: 'Скан · 30 FPS', profile: 'detail' as const, fps: '30', mbps: '24' },
             { label: 'LAN · 60 FPS', profile: 'detail' as const, fps: '60', mbps: '24' },
             { label: 'Экономия', profile: 'economy' as const, fps: '30', mbps: '1' },
           ].map(preset => <button key={preset.label} type="button" disabled={busy || readOnly}

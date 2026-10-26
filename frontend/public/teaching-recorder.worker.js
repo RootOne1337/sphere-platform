@@ -25,7 +25,8 @@ function limit(r, reason) {
 function enqueue(r, bytes, write) {
   if (r.queuedBytes + bytes > 8 * 1024 * 1024 || r.queued >= 32) { failure(r, 'disk_queue_budget'); return false; }
   r.queuedBytes += bytes; r.queued++;
-  r.tail = r.tail.then(write).catch(() => failure(r, 'recording_write_failed')).finally(() => { r.queuedBytes -= bytes; r.queued--; });
+  r.queueHighWater = Math.max(r.queueHighWater,r.queuedBytes);
+  r.tail = r.tail.then(async()=>{const began=stamp();await write();r.maxWriteMs=Math.max(r.maxWriteMs,stamp()-began);}).catch(() => failure(r, 'recording_write_failed')).finally(() => { r.queuedBytes -= bytes; r.queued--; });
   return true;
 }
 function frame(value) {
@@ -69,6 +70,7 @@ function frame(value) {
   } else {
     const delta = (timestamp - r.lastRtp + 0x100000000) % 0x100000000;
     if (!delta || delta > 90000) { failure(r, 'rtp_discontinuity'); return; }
+    r.maxGapTicks=Math.max(r.maxGapTicks,delta);r.gaps200+=Number(delta>18000);r.gaps500+=Number(delta>45000);
     r.ticks += delta; r.lastRtp = timestamp;
   }
   const data = value.data.slice(0), offset = r.bytes;
@@ -80,7 +82,19 @@ function frame(value) {
   })) return;
   r.bytes += size; r.frames++;
   if (r.frames % 300 === 0) void transformer.sendKeyFrameRequest().catch(() => {});
-  if (r.frames % 30 === 0) postMessage({ type: 'progress', frames: r.frames, bytes: r.bytes, seconds: r.ticks / 90000 });
+  if (r.frames % 30 === 0 || stamp()-r.lastProgressAt>=1000) {
+    r.lastProgressAt=stamp();postMessage({ type: 'progress', frames: r.frames, bytes: r.bytes, seconds: r.ticks / 90000,
+      capture_quality:quality(r) });
+  }
+}
+function quality(r) {
+  const seconds=(r.ticks??0)/90000,fps=seconds>0?Math.max(0,r.frames-1)/seconds:null;
+  return {received_encoded_fps:fps,target_fps:r.config.target_fps??null,measured_seconds:seconds,
+    received_bitrate_bps:seconds>0?r.bytes*8/seconds:null,max_media_gap_ms:r.maxGapTicks/90,
+    gaps_over_200ms:r.gaps200,gaps_over_500ms:r.gaps500,disk_queue_high_water_bytes:r.queueHighWater,
+    max_disk_write_ms:r.maxWriteMs,transcoding:false,synthetic_frames:0,
+    cadence_30fps_confirmed:seconds>=3&&fps>=28.5&&r.gaps200===0,
+    source_render_quality_verified:false,android_capture_latency_known:false};
 }
 async function arm(config) {
   if (!transformer || recording) throw Error('recorder_already_used');
@@ -102,7 +116,8 @@ async function arm(config) {
   const directory = await library.getDirectoryHandle(config.id, { create: true });
   const r = recording = { id: config.id, config, directory, at: stamp(), accept: false, started: false,
     frames: 0, bytes: 0, events: 0, inputBytes: 0, pending: new Map(), closed: false,
-    queued: 0, queuedBytes: 0, tail: Promise.resolve(), failure: null };
+    queued: 0, queuedBytes: 0, queueHighWater:0,maxWriteMs:0,maxGapTicks:0,gaps200:0,gaps500:0,lastProgressAt:0,
+    tail: Promise.resolve(), failure: null };
   const create = async name => (await directory.getFileHandle(name, { create: true })).createWritable();
   r.video = await create('video.h264'); r.index = await create('frames.jsonl'); r.input = await create('inputs.jsonl');
   r.accept = true;
@@ -150,6 +165,7 @@ async function stop(confirmed, reason) {
     started_at_ms: r.at, finalized_at_ms: stamp(), frames: r.frames, events: r.events, files,
     media_duration_ticks_90k: r.ticks ?? 0, ended_at_limit: r.limit ?? null,
     observed_encoded_frames: observedFrames,
+    capture_quality:quality(r),
     clock: { media: 'rtp_90000_relative', browser: 'performance_timeOrigin_plus_now',
       native: 'android_uptime_ms_in_receipts', android_to_browser_mapping: null },
     complete: !r.failure, failure: r.failure, release_confirmed: confirmed && r.closed };

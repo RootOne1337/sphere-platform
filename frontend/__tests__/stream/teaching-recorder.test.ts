@@ -43,6 +43,19 @@ test('does not save frames before explicit start; stores original H264 and 90k c
   expect(lines.map(l=>l.relative_ticks_90k)).toEqual([0,18000]);expect(lines[0].sha256).toMatch(/^[0-9a-f]{64}$/);
   expect((dir.entries.get('video.h264') as MemoryFile).data.length).toBe(lines.reduce((n,l)=>n+l.bytes,0));
 });
+
+test('quality uses actual RTP cadence, never the declared target or synthetic frame duplication',async()=>{
+  const f=fixture();await f.context.arm({...f.config,target_fps:30});
+  for(let i=0;i<41;i++){f.frame(90000+i*9000,i===0);await vm.runInContext('recording.tail',f.context);}
+  f.context.input({stage:'closed',at_ms:1001000,sequence:0,gesture:0,action:3,pointer_id:-1,outcome:'closed'});
+  await f.context.stop(true,null);const dir=await f.folder();
+  const manifest=JSON.parse((dir.entries.get('manifest.json') as MemoryFile).data.toString());
+  expect(manifest.complete).toBe(true);expect(manifest.capture_quality.received_encoded_fps).toBe(10);
+  expect(manifest.capture_quality.cadence_30fps_confirmed).toBe(false);
+  expect(manifest.capture_quality.max_media_gap_ms).toBe(100);
+  expect(manifest.capture_quality.transcoding).toBe(false);expect(manifest.capture_quality.synthetic_frames).toBe(0);
+  expect(manifest.capture_quality.disk_queue_high_water_bytes).toBeGreaterThan(0);
+});
 test.each(['pending','unknown','clock'])('never writes COMPLETE after %s uncertainty',async mode=>{
   const f=fixture();await f.context.arm(f.config);f.frame(90000);
   if(mode==='pending')f.context.input({stage:'submitted',at_ms:1001000,sequence:1,gesture:1,action:0,pointer_id:0,x:100,y:300});

@@ -1,5 +1,5 @@
 'use client';
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Circle, Download, Keyboard, MousePointer2, Square, Video, Wifi } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAuthStore } from '@/lib/store';
@@ -12,6 +12,9 @@ import type { DirectProbeResult } from './directProbe';
 import { TeachingReview } from './TeachingReview';
 import { TeachingScenePreview } from './TeachingScenePreview';
 import { teachingTitle } from './teachingMetadata';
+import {TeachingCaptureSetup,type CaptureQuality} from './TeachingCaptureSetup';
+import {TeachingNavigation} from './TeachingNavigation';
+import type {ReconstructionJob} from './reconstructionClient';
 
 type Phase = 'idle' | 'connecting' | 'preview' | 'opening' | 'controlling' | 'arming' | 'recording' | 'stopping' | 'finished';
 const newId = () => crypto.randomUUID().replaceAll('-', '');
@@ -40,6 +43,10 @@ export function TeachingWorkbench({ deviceId, readOnly }: { deviceId: string; re
   const [encoded, setEncoded] = useState('Encoded-приём ожидается');
   const [ready, setReady] = useState(false); const [clip, setClip] = useState<string | null>(null);
   const [refresh, setRefresh] = useState(0);
+  const [workspaceMode,setWorkspaceMode]=useState<'capture'|'review'|'live'>('capture');
+  const [captureQuality,setCaptureQuality]=useState<CaptureQuality|null>(null);
+  const [navigationJob,setNavigationJob]=useState<ReconstructionJob|null>(null);
+  const routeChanged=useCallback((job:ReconstructionJob|null)=>setNavigationJob(job),[]);
   const video = useRef<HTMLVideoElement>(null); const host = useRef<HTMLDivElement>(null);
   const connection = useRef<TeachingConnection | null>(null), controller = useRef<TeachingContacts | null>(null);
   const abort = useRef<AbortController | null>(null), stopPromise = useRef<Promise<void> | null>(null);
@@ -88,7 +95,7 @@ export function TeachingWorkbench({ deviceId, readOnly }: { deviceId: string; re
     await stopCallback.current('connection_closed');
     abort.current?.abort(); abort.current = null;
     connection.current?.close(); connection.current?.worker.terminate(); connection.current = null;
-    controller.current = null; attached.current = false; armSent.current = false; setReady(false); change('idle');
+    controller.current = null; attached.current = false; armSent.current = false; setReady(false); setResult(null); change('idle');
   };
   useEffect(() => {
     const timer = setInterval(() => {setReady(connection.current?.fresh() === true && attached.current);
@@ -127,7 +134,7 @@ export function TeachingWorkbench({ deviceId, readOnly }: { deviceId: string; re
     // Chromium may suspend presentation callbacks for a video outside the viewport.
     // Bring the operator's screen into view before qualifying fresh frames.
     video.current?.scrollIntoView?.({block:'center',behavior:'auto'});
-    await disconnect(); stopPromise.current = null; setClip(null); setResult(null); change('connecting');
+    await disconnect(); stopPromise.current = null; setResult(null); setCaptureQuality(null); change('connecting');
     setNative('Не открыт'); setNotice('Подключаем один прямой поток. Ввод ещё выключен.');
     const request = new AbortController(); abort.current = request;
     try {
@@ -139,12 +146,14 @@ export function TeachingWorkbench({ deviceId, readOnly }: { deviceId: string; re
           if (message.type === 'attached') attached.current = true;
           if (message.type === 'recording') { change('recording'); setNotice('Идёт запись оригинального видео и подтверждённых действий.'); video.current?.focus({preventScroll:true}); }
           if (message.type === 'progress') setProgress({ frames: Number(message.frames), bytes: Number(message.bytes), seconds: Number(message.seconds) });
+          if (message.type==='progress'&&message.capture_quality)setCaptureQuality(message.capture_quality as CaptureQuality);
           if (message.type === 'limit_reached') { setNotice('Достигнут выбранный предел. Освобождаем ввод и сохраняем запись.'); void stopCallback.current(); }
           if (message.type === 'encoded_status') setEncoded(`Encoded ${Number(message.frames)} · ${String(message.kind)} · NAL ${Array.isArray(message.nal_types) ? message.nal_types.join('/') : '?'} · ${String(message.width)}×${String(message.height)}`);
           if (message.type === 'failed') { setNotice(`Ошибка записи: ${String(message.reason)}`); void stopCallback.current(String(message.reason)); }
           if (message.type === 'finalized') {
             setClip(typeof message.id === 'string' && /^[0-9a-f]{32}$/.test(message.id) ? message.id : null); setRefresh(v => v + 1);
-            const manifest = message.manifest as { complete?: boolean; failure?: string; frames?: number; media_duration_ticks_90k?: number; files?: Record<string,{bytes:number}> };
+            const manifest = message.manifest as { complete?: boolean; failure?: string; frames?: number; media_duration_ticks_90k?: number; files?: Record<string,{bytes:number}>;capture_quality?:CaptureQuality };
+            if(manifest.capture_quality)setCaptureQuality(manifest.capture_quality);
             if(typeof manifest.frames === 'number')setProgress({ frames: manifest.frames, bytes: manifest.files?.['video.h264']?.bytes ?? 0, seconds: (manifest.media_duration_ticks_90k ?? 0)/90000 });
             setNotice(manifest.complete ? 'Материал сохранён. Видео и журнал готовы к просмотру.' : `Материал неполный: ${manifest.failure ?? 'нет подтверждения'}. Для повторения маршрута не допущен.`);
             finalize.current?.();
@@ -202,10 +211,10 @@ export function TeachingWorkbench({ deviceId, readOnly }: { deviceId: string; re
     if ((storage.quota ?? 0) - (storage.usage ?? 0) < maxBytes + 100*1024*1024) { change('preview'); setNotice(`Нужно ${minutes === 2 ? '612 МБ' : '2,1 ГБ'} свободной квоты браузера. Выберите меньший предел или экспортируйте старые материалы.`); return; }
     const p = profileRef.current, issue=profileIssue(p,binding);
     if(issue){change('preview');setNotice(issue);return;}
-    const id = newId(); setProgress({ frames: 0, bytes: 0, seconds: 0 }); stopPromise.current = null;
+    const id = newId(); setProgress({ frames: 0, bytes: 0, seconds: 0 });setCaptureQuality(null); stopPromise.current = null;
     recordConfig.current = { id, storage_scope: storageScope, device_id: deviceId, width: binding.width, height: binding.height,
       capture_epoch: binding.captureEpoch, title: teachingTitle(title,id,Date.now()), profile: p,
-      source: 'direct_webrtc_h264', target_fps: 60, actual_fps_unverified: true,
+      source: 'direct_webrtc_h264', target_fps: 30, actual_fps_unverified: true,
       hud_hidden_declared: hudHidden, contact_roles: p.mode==='stick'?['stick','camera','action']:['throttle_or_brake','steering','camera_or_action'],
       max_duration_ms: minutes*60000, max_bytes: maxBytes, max_frames: minutes*3600 };
     change('opening'); setNotice('Открываем три контакта. Требуется APK 1.2.89 или новее с contact_protocol=1.');
@@ -249,29 +258,37 @@ export function TeachingWorkbench({ deviceId, readOnly }: { deviceId: string; re
   const field = 'w-full rounded-lg border border-input bg-background px-3 py-2 text-sm';
   const toolbarButton = 'h-auto min-h-9 whitespace-normal px-2 py-2 text-xs sm:text-sm';
   const binding=connection.current?.binding(), mappingIssue=binding?profileIssue(profile,binding):null, mappedKeys=teachingKeys(profile);
+  const switchMode=async(next:'capture'|'review'|'live')=>{
+    if(active(phaseRef.current)||exportBusy||phaseRef.current==='connecting')return;
+    if(next==='review')await disconnect();
+    setWorkspaceMode(next);
+  };
   const calibrationMarkers=binding?(profile.mode==='vehicle_buttons'
     ?vehicleButtons.filter(target=>calibrated(profile,binding,target)).map(target=>({...fromPercent(profile.vehicle[target],binding),label:keyLabel(mappedKeys[target])}))
     :calibrated(profile,binding,'stick')?[{...fromPercent({x:profile.stick_x,y:profile.stick_y},binding),label:['forward','left','reverse','right'].map(role=>keyLabel(mappedKeys[role as keyof typeof mappedKeys])).join('')}]:[]):[];
   if(binding&&calibrated(profile,binding,'action'))calibrationMarkers.push({...fromPercent({x:profile.action_x,y:profile.action_y},binding),label:keyLabel(mappedKeys.action)});
   const chooseCalibration=(target:CalibrationTarget)=>{setBindingTarget(null);setCalibrate(target);video.current?.scrollIntoView({block:'center',behavior:'smooth'});};
   return <div ref={host} className="space-y-4" aria-label="Запись учебного маршрута">
+    <section className="rounded-2xl border border-border bg-gradient-to-br from-primary/10 via-card to-cyan-500/5 p-4 sm:p-5"><p className="text-[10px] font-semibold uppercase tracking-[.22em] text-primary">Route studio</p><div className="mt-2 flex flex-wrap items-end justify-between gap-4"><div><h2 className="text-2xl font-semibold tracking-tight">Записать. Восстановить. Проверить направление.</h2><p className="mt-2 max-w-3xl text-sm leading-6 text-muted-foreground">Качественный проход → сохранённая сцена и ориентиры → проверка положения на свежих кадрах. Моторная модель подключается отдельным этапом.</p></div><nav aria-label="Режим студии маршрутов" className="grid w-full grid-cols-3 gap-1 rounded-xl border border-border bg-background/60 p-1 sm:w-auto">{([['capture','1 · Запись'],['review','2 · Сцена'],['live','3 · Направление']] as const).map(([mode,label])=><Button key={mode} size="sm" variant={workspaceMode===mode?'default':'ghost'} aria-pressed={workspaceMode===mode} disabled={active(phase)||exportBusy||phase==='connecting'} onClick={()=>{void switchMode(mode);}}>{label}</Button>)}</nav></div></section>
     <div className="space-y-4">
     <div aria-label="Панель записи" className="sticky top-16 z-30 flex flex-wrap items-center gap-2 rounded-2xl border border-border bg-card/95 p-3 shadow-xl backdrop-blur">
       <div className="grid w-full grid-cols-2 gap-2 lg:flex lg:w-auto lg:flex-wrap">
-      <Button className={toolbarButton} variant="outline" disabled={readOnly || exportBusy || !storageScope || active(phase) || phase === 'connecting'} onClick={() => { void connect(); }}>{phase === 'idle' ? 'Подключить поток' : 'Подключить заново'}</Button>
+      <Button className={toolbarButton} variant="outline" disabled={readOnly || exportBusy || !storageScope || active(phase) || phase === 'connecting'} onClick={() => { if(workspaceMode==='review')setWorkspaceMode('capture');void connect(); }}>{phase === 'idle' ? 'Подключить поток' : 'Подключить заново'}</Button>
       <Button className={toolbarButton} variant="outline" disabled={readOnly || exportBusy || phase !== 'preview' || !ready || !!calibrate || !!bindingTarget || !!mappingIssue} onClick={enableControl}><Keyboard size={15} className="mr-2 shrink-0" />Включить управление</Button>
-      <Button className={toolbarButton} disabled={readOnly || exportBusy || !['preview','controlling'].includes(phase) || !ready || !!calibrate || !!bindingTarget || !!mappingIssue} onClick={() => { void record(); }}><Circle size={15} className="mr-2 shrink-0 text-red-500" />Записать маршрут</Button>
+      <Button className={toolbarButton} disabled={workspaceMode!=='capture'||readOnly || exportBusy || !['preview','controlling'].includes(phase) || !ready || !!calibrate || !!bindingTarget || !!mappingIssue} onClick={() => { void record(); }}><Circle size={15} className="mr-2 shrink-0 text-red-500" />Записать маршрут</Button>
       <Button className={toolbarButton} variant="destructive" disabled={!active(phase) || phase === 'stopping'} onClick={() => { void stop(); }}><Square size={15} className="mr-2 shrink-0" />{phase === 'stopping' ? 'Освобождение и сохранение…' : 'Остановить · Esc'}</Button>
       </div>
       {(phase==='recording'||phase==='finished')&&<span className="rounded-lg bg-muted px-2 py-1 font-mono text-xs tabular-nums">{progress.seconds.toFixed(1)} с · {progress.frames} кадров{progress.seconds>0?` · ${(progress.frames/progress.seconds).toFixed(1)} средних FPS`:''}</span>}
       <p role="status" className="min-w-[220px] flex-1 text-xs leading-5 text-muted-foreground">{readOnly ? 'Для записи требуется право stream:control.' : exportBusy?'Обрабатываем сохранённый материал. Дождитесь завершения перед новым управлением.':calibrate ? `Укажите ${calibrationNames[calibrate]} на экране. Касание в игру не отправляется.` : mappingIssue ?? notice}</p>
     </div>
+    <div hidden={workspaceMode==='review'} className="space-y-4">
+    {workspaceMode==='capture'&&<TeachingCaptureSetup key={`${deviceId}:${sessionVersion}`} deviceId={deviceId} disabled={readOnly||active(phase)||exportBusy} quality={captureQuality}/>}
     <section className="rounded-2xl border border-border bg-card p-4 sm:p-5">
       <div className="flex flex-wrap items-start justify-between gap-3"><div><p className="text-xs font-semibold uppercase tracking-widest text-primary">Обучение маршруту</p><h2 className="mt-1 text-xl font-semibold">Покажите путь один раз</h2><p className="mt-2 max-w-3xl text-sm text-muted-foreground">Подготовьте игру с клавиатуры, включите запись и покажите маршрут. Видео и подтверждённые касания сохраняются вместе; локальный 3D-просмотр помогает оценить геометрию.</p></div><StreamQualityControl deviceId={deviceId} readOnly={readOnly || active(phase)} /></div>
       <div className="mt-4 grid gap-3 sm:grid-cols-3"><Metric icon={<Wifi size={15} />} label="Транспорт" value={result ? `${result.path==='host'||result.path==='nat'?'Напрямую':result.path==='relay'?'Ретранслятор':'Путь уточняется'} · ${result.state}` : 'Не подключён'} /><Metric icon={<Keyboard size={15} />} label="Нативный ввод" value={`${native}${inputRtt===null?'':` · ACK ${inputRtt.toFixed(1)} мс`}`} /><Metric icon={<Video size={15} />} label="Записано" value={`${progress.seconds.toFixed(1)} с · ${progress.frames} кадров · ${(progress.bytes/1048576).toFixed(1)} МБ`} /></div>
       {result?.videoStats&&<div aria-label="Фактические параметры приёма" className="mt-3 flex flex-wrap gap-x-5 gap-y-1 text-xs text-muted-foreground"><span>{result.videoStats.width??'—'} × {result.videoStats.height??'—'}</span><span>{result.videoStats.fps?.toFixed(1)??'—'} FPS приёма</span><span>{result.videoStats.bitrateBps==null?'—':(result.videoStats.bitrateBps/1e6).toFixed(2)} Мбит/с</span><span>RTC RTT {result.videoStats.networkRttMs?.toFixed(1)??'—'} мс</span><span>Буфер видео {result.videoStats.jitterBufferMs?.toFixed(1)??'—'} мс</span><span>Декодирование {result.videoStats.decodeMs?.toFixed(1)??'—'} мс</span></div>}
     </section>
-    <div className="grid items-start gap-4 xl:grid-cols-[minmax(0,1fr)_300px]">
+    <div className={workspaceMode==='live'?'grid items-start gap-4 xl:grid-cols-2':'grid items-start gap-4 xl:grid-cols-[minmax(0,1fr)_300px]'}>
       <section className="overflow-hidden rounded-2xl border border-border bg-card">
         <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border px-4 py-3 text-sm"><span className="font-medium">{phase === 'recording' ? '● Запись' : 'Прямой экран Android'}</span><span className="text-xs text-muted-foreground">{connection.current?.binding() ? `${connection.current.binding()!.width} × ${connection.current.binding()!.height}` : 'Размер ожидается'}</span></div>
         <div className="relative">
@@ -301,7 +318,8 @@ export function TeachingWorkbench({ deviceId, readOnly }: { deviceId: string; re
         <div className="flex flex-wrap gap-2 border-t border-border p-3 text-xs text-muted-foreground"><span className={`rounded-md px-2 py-1 ${inputEnabled(phase) ? 'bg-primary/15 text-primary' : 'bg-muted'}`}>{inputEnabled(phase) ? 'Управление включено · фокус на экране' : 'Управление выключено'}</span><span className="rounded-md bg-muted px-2 py-1">{profile.mode==='stick'?`${keyLabel(mappedKeys.forward)}/${keyLabel(mappedKeys.left)}/${keyLabel(mappedKeys.reverse)}/${keyLabel(mappedKeys.right)} · стик`:`${keyLabel(mappedKeys.forward)}/${keyLabel(mappedKeys.reverse)} · газ и тормоз · ${keyLabel(mappedKeys.left)}/${keyLabel(mappedKeys.right)} · руль`}</span>{profile.mode==='stick'&&<span className="rounded-md bg-muted px-2 py-1">{keyLabel(mappedKeys.slow)} · 40% скорости</span>}<span className="rounded-md bg-muted px-2 py-1">ЛКМ + движение · камера</span><span className="rounded-md bg-muted px-2 py-1">{keyLabel(mappedKeys.action)} · удержание кнопки</span></div>
         <details className="px-4 pb-3 text-xs text-muted-foreground"><summary>Диагностика приёма видео</summary>{encoded}</details>
       </section>
-      <aside className="space-y-4 rounded-2xl border border-border bg-card p-4">
+      {workspaceMode==='live'&&<TeachingNavigation key={navigationJob?.id??'none'} job={navigationJob} video={video} ready={ready} binding={binding??null}/>}
+      <aside className={workspaceMode==='live'?'space-y-4 rounded-2xl border border-border bg-card p-4 xl:col-span-2':'space-y-4 rounded-2xl border border-border bg-card p-4'}>
         <h3 className="font-semibold">Подготовка маршрута</h3>
         <label className="block space-y-1 text-sm"><span>Название</span><input className={field} value={title} placeholder="Автоматически: дата, время и номер записи" maxLength={128} disabled={active(phase)} onChange={e => setTitle(e.target.value)} /></label>
         <label className="block space-y-1 text-sm"><span>Схема управления</span><select className={field} value={profile.mode} disabled={active(phase)} onChange={e=>{setBindingTarget(null);setCalibrate(null);setProfile(p=>({...p,mode:e.target.value as TeachingProfile['mode']}));}}><option value="stick">Стик · ходьба / аналоговое управление</option><option value="vehicle_buttons">Транспорт · газ, тормоз, левый и правый руль</option></select></label>
@@ -316,14 +334,15 @@ export function TeachingWorkbench({ deviceId, readOnly }: { deviceId: string; re
         </div>
         <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={hudHidden} disabled={active(phase)} onChange={e=>setHudHidden(e.target.checked)} />HUD скрыт в игре</label>
         <p className="text-xs leading-5 text-muted-foreground">Кнопки калибруйте до отключения HUD. Флажок сохраняет пометку в материале; он не скрывает интерфейс игры и не вырезает надписи из видео.</p>
-        <p className="text-xs leading-5 text-muted-foreground">Перед качественным проходом: 1920 × 1080, DPI 320, рендер игры 100%. Сначала проверьте устойчивые 30 FPS; 60 FPS — после проверки ресурсов. Кнопка «Качество» задаёт предел кодека; фактическую частоту проверяем по записи.</p>
+        <p className="text-xs leading-5 text-muted-foreground">Перед качественным проходом: 1920 × 1080, рендер игры100%, стабильная камера. Сохраните одинаковые FOV и режим камеры для записи и повторения; DPI сам по себе не улучшает3D. Сначала подтвердите реальные30 FPS по записи.</p>
         <label className="block space-y-1 text-sm"><span>Предел записи</span><select className={field} value={minutes} disabled={active(phase)} onChange={e=>setMinutes(Number(e.target.value))}><option value={2}>2 минуты · до 512 МБ</option><option value={5}>5 минут · до 2 ГБ</option><option value={10}>10 минут · до 2 ГБ</option></select></label>
         <p className="text-xs leading-5 text-muted-foreground">При достижении предела запись сохраняется с освобождением ввода. До 20 материалов в этом браузере. Экспортируйте нужные записи перед очисткой данных браузера.</p>
       </aside>
     </div>
-    <TeachingScenePreview video={video} deviceId={deviceId} ready={ready} controlActive={active(phase)} />
+    {workspaceMode==='capture'&&<TeachingScenePreview video={video} deviceId={deviceId} ready={ready} controlActive={active(phase)} />}
     </div>
-    <fieldset disabled={active(phase)} className="min-w-0 border-0 p-0"><TeachingReview key={storageScope} storageScope={storageScope} selected={clip} refresh={refresh} onSelect={setClip} onBusyChange={setExportBusy} /></fieldset>
+    </div>
+    <fieldset hidden={workspaceMode!=='review'} disabled={active(phase)} className="min-w-0 border-0 p-0"><TeachingReview key={storageScope} storageScope={storageScope} selected={clip} refresh={refresh} onSelect={setClip} onBusyChange={setExportBusy} onRouteChange={routeChanged} visible={workspaceMode==='review'}/></fieldset>
     <p className="flex items-center gap-2 text-xs text-muted-foreground"><Download size={14} />Материал содержит только явно записанный проход. Он ещё не доказывает повторение маршрута ИИ.</p>
   </div>;
 }

@@ -23,9 +23,10 @@ reasons.lightglue_source_mismatch='Версия локального инстр�
 reasons.lightglue_gpu_unavailable='GPU для сопоставления ракурсов недоступен. Запись сохранена.';
 reasons.learned_matching_timeout='Сопоставление ракурсов достигло лимита времени. Промежуточные материалы сохранены.';
 reasons.reference_evaluation_failed='Не удалось завершить проверку рендера по исходным ракурсам. Качество не подтверждено.';
-export function TeachingReconstruction({clip,scope,folder,complete,onBusyChange}:{clip:string;scope:string;folder:()=>FileSystemDirectoryHandle|null;complete:boolean;onBusyChange:(busy:boolean)=>void}) {
+export function TeachingReconstruction({clip,scope,folder,complete,onBusyChange,onRouteChange,visible=true}:{clip:string;scope:string;folder:()=>FileSystemDirectoryHandle|null;complete:boolean;onBusyChange:(busy:boolean)=>void;onRouteChange?:(job:ReconstructionJob|null)=>void;visible?:boolean}) {
   const [job,setJob]=useState<ReconstructionJob|null>(null),[status,setStatus]=useState<ReconstructionState|null>(null),[error,setError]=useState<string|null>(null);
-  const [mask,setMask]=useState('game'),[steps,setSteps]=useState(5000),[progress,setProgress]=useState('');
+  const [mask,setMask]=useState('game'),[steps,setSteps]=useState(30000),[progress,setProgress]=useState('');
+  const routeIntent=useRef<string|null>(null);
   const [uploading,setUploading]=useState(false);const uploadAbort=useRef<AbortController|null>(null);
   const [recovering,setRecovering]=useState(true);const folderRef=useRef(folder);folderRef.current=folder;
   const [refresh,setRefresh]=useState(0),[surfaceStarting,setSurfaceStarting]=useState(false);
@@ -37,6 +38,7 @@ export function TeachingReconstruction({clip,scope,folder,complete,onBusyChange}
   const storageKey=`sphere-reconstruction-${scope}-${clip}`;
   const busy=recovering||uploading||surfaceStarting||!!job&&(!status||!terminalReconstruction(status));
   useEffect(()=>{onBusyChange(busy);},[busy,onBusyChange]);
+  useEffect(()=>{onRouteChange?.(job);},[job,onRouteChange]);
   useEffect(()=>()=>{uploadAbort.current?.abort();onBusyChange(false);},[onBusyChange]);
   useEffect(()=>{
     let retired=false;setRecovering(true);
@@ -60,7 +62,7 @@ export function TeachingReconstruction({clip,scope,folder,complete,onBusyChange}
     try{
       const next=job??{id:crypto.randomUUID().replaceAll('-',''),key:Array.from(crypto.getRandomValues(new Uint8Array(32)),v=>v.toString(16).padStart(2,'0')).join('')};
       pending=next;await saveReconstructionLink(source,clip,next);sessionStorage.setItem(storageKey,JSON.stringify(next));
-      const created=await(await reconstructionRequest('/jobs',null,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({...next,mask,steps}),signal:controller.signal})).json();setStatus(created);setJob(next);
+      const created=await(await reconstructionRequest('/jobs',null,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({...next,mask,steps,prepare_route:true}),signal:controller.signal})).json();setStatus(created);setJob(next);
       if(created.phase!=='uploading')return;
       await uploadReconstruction(source,next,(bytes,total)=>setProgress(`${(bytes/1048576).toFixed(1)} / ${(total/1048576).toFixed(1)} МБ`),controller.signal);
       const started=await(await reconstructionRequest(`/jobs/${next.id}/start`,next,{method:'POST',body:'{}',signal:controller.signal})).json();setStatus(started);
@@ -76,6 +78,16 @@ export function TeachingReconstruction({clip,scope,folder,complete,onBusyChange}
     if(!job||surfaceStarting)return;setSurfaceStarting(true);setError(null);
     try{const id=crypto.randomUUID().replaceAll('-','');setStatus(await(await reconstructionRequest(`/jobs/${job.id}/fragments/${id}/start`,job,{method:'POST',body:JSON.stringify({first_view:firstView,view_count:Math.min(viewCount,(status?.quality?.registered??18)-firstView)})})).json());}
     catch(e){setError(`Построение поверхностей не подтверждено: ${e instanceof Error?e.message:'нет ответа'}. Проверяем то же задание.`);}
+    finally{setSurfaceStarting(false);setRefresh(n=>n+1);}
+  };
+  const prepareRoute=async()=>{
+    if(!job||busy)return;setSurfaceStarting(true);setError(null);
+    const intentKey=storageKey+':route-intent',saved=sessionStorage.getItem(intentKey);
+    const id=routeIntent.current??(saved&&/^[0-9a-f]{32}$/.test(saved)?saved:crypto.randomUUID().replaceAll('-',''));routeIntent.current=id;
+    sessionStorage.setItem(intentKey,id);
+    try{const navigation=await(await reconstructionRequest(`/jobs/${job.id}/navigation/prepare`,job,{method:'POST',body:JSON.stringify({id})})).json();
+      setStatus(current=>current?{...current,navigation}:current);if(['ready','failed','rejected','cancelled'].includes(navigation.phase)){routeIntent.current=null;sessionStorage.removeItem(intentKey);}
+    }catch{setError('Подготовка маршрута не подтверждена. Проверяем то же задание; нового запуска нет.');}
     finally{setSurfaceStarting(false);setRefresh(n=>n+1);}
   };
   const surfaceLabels:Record<string,string>={starting:'Подготовка 3D-модели',preparing:'Проверка камер и оригинальных кадров',densifying:'Многовидовое восстановление глубины',meshing:'Построение треугольных поверхностей',baking:'Проекция фотографий на видимые поверхности',ready:'Текстурированная 3D-модель сохранена',review_required:'Пробная модель сохранена · проверьте поверхности визуально',failed:'Построение модели остановлено',cancelled:'Построение модели отменено'};
@@ -109,8 +121,9 @@ export function TeachingReconstruction({clip,scope,folder,complete,onBusyChange}
       {selectedModel?.result&&<p className="text-xs text-muted-foreground">{selectedModel.result.triangles.toLocaleString('ru')} треугольников · {selectedModel.result.textures} фотографий · {(selectedModel.result.bytes/1048576).toFixed(1)} МБ · исключено без видимого покрытия: {selectedModel.result.unknown_faces.toLocaleString('ru')} граней</p>}
       {!status.surface_supported&&!status.surface&&<p className="text-xs text-muted-foreground">Локальный инструмент OpenMVS CPU ещё не подготовлен.</p>}
     </div>}
-    {job&&status?.dense_available&&<ReferenceComparison job={job} appearance={status.appearance}/>}
-    {job&&status?.geometry_available&&<Scene job={job} status={{...status,surface:selectedModel??status.surface}}/>}
+    {visible&&job&&status?.dense_available&&<ReferenceComparison job={job} appearance={status.appearance}/>}
+    {job&&status?.geometry_available&&<div className="space-y-3 rounded-xl border border-cyan-500/25 bg-cyan-500/5 p-4"><div className="flex flex-wrap items-center justify-between gap-3"><div><h5 className="font-medium">Карта ориентиров для живой проверки</h5><p className="mt-1 text-xs leading-5 text-muted-foreground">Сохранённые камеры и реальные3D-опоры → определение положения по свежему кадру. Воспроизведение нажатий не используется.</p></div><Button variant="outline" disabled={busy||status.navigation?.phase==='ready'} onClick={()=>{void prepareRoute();}}>{status.navigation?.phase==='ready'?'Карта подготовлена':'Подготовить маршрут'}</Button></div><p role="status" className="text-xs">{status.navigation?.phase==='ready'?`Готово для ручной проверки · ${status.navigation.summary?.cameras??'—'} камер · ${status.navigation.summary?.landmarks??'—'} ориентиров`:status.navigation?.phase??'Ещё не подготовлена'}{status.navigation?.error?` · ${status.navigation.error}`:''}</p><p className="text-xs leading-5 text-muted-foreground">После подготовки откройте режим «Направление» наверху страницы. Это ещё не допуск автономной поездки: поверхность дороги, препятствия и моторная модель проверяются отдельно.</p></div>}
+    {visible&&job&&status?.geometry_available&&<Scene job={job} status={{...status,surface:selectedModel??status.surface}}/>}
     <p className="text-xs text-muted-foreground">Ссылка на результат сохранена рядом с записью в библиотеке этого браузера и аккаунта. Выберите этот проход снова, чтобы открыть готовую сцену. Сохранённая сцена остаётся на локальном ПК.</p>
     <p className="text-xs leading-5 text-muted-foreground">Маска применяется до поиска признаков; она не распознаёт все движущиеся машины и игроков. Плотная сцена — визуальная реконструкция, а не готовая карта коллизий. Масштаб в метрах требует отдельного известного расстояния. При нехватке связных ракурсов обработка остановится с объяснением.</p>
   </section>;

@@ -34,7 +34,7 @@ def _digest(path):
         return hashlib.file_digest(file, "sha256").hexdigest()
 
 
-def export(model, provenance, images, output, *, profile, world_revision):
+def export(model, provenance, images, output, *, profile, world_revision, checkpoint_fn=None):
     import cv2
     import numpy as np
     import pycolmap
@@ -47,7 +47,7 @@ def export(model, provenance, images, output, *, profile, world_revision):
     def bounded():
         if time.monotonic()-started > 300:
             raise ProtocolError("sparse_export_time_quota")
-        checkpoint(Path(output).resolve().parent)
+        (checkpoint if checkpoint_fn is None else checkpoint_fn)(Path(output).resolve().parent)
 
     if Path(output).exists():
         raise FileExistsError(output)

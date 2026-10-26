@@ -29,6 +29,7 @@ from scripts.pilot.reconstruct_surface import (
 from scripts.pilot.reconstruction_quality import export_interval
 from scripts.pilot.resource_guard import collect, evaluate
 from scripts.pilot.route_motion_audit import audit as audit_camera_motion
+from scripts.pilot.route_workspace import RouteWorkspaces
 from scripts.pilot.surface_asset import MAX_BYTES, MAX_FACES, validate_glb
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -68,6 +69,7 @@ class Jobs:
         folder.mkdir(parents=True, exist_ok=True)
         self.lock = threading.Lock()
         self.processes = {}
+        self.navigation = RouteWorkspaces(folder, python)
         # An interrupted job cannot be silently resumed or retrained on restart.
         for path in folder.glob('*/state.json'):
             if json.loads(path.read_text('utf-8'))['phase'] not in TERMINAL:
@@ -110,6 +112,7 @@ class Jobs:
         result['fragments'] = [item for item in result['fragments'] if item]
         result['fragments'].sort(key=lambda item: (item.get('fragment', {}).get('first_view', 0), item['id']))
         result['surface_supported'] = tools_available()
+        result['navigation'] = self.navigation.status(job)
         geometry = job / 'geometry.json'
         if geometry.is_file() and not geometry.is_symlink() and geometry.stat().st_size <= 16 * 1024**2:
             try:
@@ -199,8 +202,10 @@ class Jobs:
 
     def active(self, job):
         state = self.status(job)
+        live = self.navigation.live_status()
         return (state['phase'] not in TERMINAL or any(item['phase'] not in SURFACE_TERMINAL
-                for item in [state['surface'], *state['fragments']] if item))
+                for item in [state['surface'], *state['fragments']] if item)
+                or self.navigation.preparing(job) or live.get('job') == job.name)
 
     def surface_asset(self, job, fragment=None):
         status = self.surface_status(job, fragment)
@@ -367,8 +372,10 @@ class Jobs:
             return self.status(job)  # Same creation intent is read back, never repeated.
         if body.get('mask') not in {'none', 'game'}:
             raise ValueError('invalid_processing_options')
+        if type(body.get('prepare_route', False)) is not bool:
+            raise ValueError('invalid_route_pipeline_option')
         export_interval(body.get('steps'))
-        if len(list(self.folder.iterdir())) >= 12:
+        if len(list(self.folder.iterdir())) >= 32:
             raise ValueError('retained_job_quota_export_or_archive_locally_first')
         for path in self.folder.iterdir():
             if not path.is_dir() or self.status(path)['phase'] != 'uploading':
@@ -384,7 +391,7 @@ class Jobs:
         job.mkdir()
         (job / 'input').mkdir()
         write_json(job / 'control.json', dict(key_sha256=hashlib.sha256(key.encode()).hexdigest(),
-                   mask=body['mask'], steps=body['steps'], created_at=time.time()))
+                   mask=body['mask'], steps=body['steps'], prepare_route=body.get('prepare_route', False), created_at=time.time()))
         write_json(job / 'state.json', dict(phase='uploading', updated_at=time.time()))
         return self.status(job)
 
@@ -455,6 +462,15 @@ class Jobs:
                 return
         if self.status(job)['phase'] not in TERMINAL:
             write_json(job / 'state.json', dict(phase='failed', error='worker_exited_without_completion'))
+        control = json.loads((job/'control.json').read_text('utf-8'))
+        if control.get('prepare_route') is True and self.status(job)['phase'] == 'complete':
+            with self.lock:
+                if not any(self.active(p) for p in self.folder.iterdir() if p.is_dir()):
+                    identity = hashlib.sha256((job.name+':initial-route').encode()).hexdigest()[:32]
+                    try:
+                        self.navigation.prepare(job, dict(id=identity))
+                    except (ValueError, RuntimeError):
+                        write_json(job/'route-pipeline-refusal.json', dict(error='route_preparation_not_started'))
 
 
 def handler(jobs, origin, port):
@@ -537,6 +553,26 @@ def handler(jobs, origin, port):
                         self.reply(200, jobs.status(job))
                     elif method == 'GET' and parts[2:] == ['offsets']:
                         self.reply(200, {name: (job / 'input' / name).stat().st_size if (job / 'input' / name).exists() else 0 for name in LIMITS})
+                    elif method == 'GET' and parts[2:] == ['navigation']:
+                        self.reply(200, jobs.navigation.status(job))
+                    elif method == 'POST' and parts[2:] == ['navigation', 'prepare']:
+                        body = json.loads(self.body(1024))
+                        current = jobs.navigation.current(job)
+                        same = type(body) is dict and current is not None and current.name == body.get('id')
+                        if not same and any(jobs.active(p) for p in jobs.folder.iterdir() if p.is_dir()):
+                            raise ValueError('one_active_job_only')
+                        self.reply(200, jobs.navigation.prepare(job, body))
+                    elif method == 'POST' and parts[2:] == ['navigation', 'start']:
+                        body = json.loads(self.body(1024))
+                        live = jobs.navigation.live_status()
+                        same = type(body) is dict and live.get('id') == body.get('id') and live.get('job') == job.name
+                        if not same and any(jobs.active(p) for p in jobs.folder.iterdir() if p.is_dir()):
+                            raise ValueError('one_active_job_only')
+                        self.reply(200, jobs.navigation.start_live(job, body))
+                    elif method == 'POST' and parts[2:] == ['navigation', 'observe']:
+                        self.reply(200, jobs.navigation.observe(job, json.loads(self.body(768*1024))))
+                    elif method == 'POST' and parts[2:] == ['navigation', 'stop']:
+                        self.reply(200, jobs.navigation.stop_live(job, json.loads(self.body(1024))))
                     elif method == 'PUT' and len(parts) == 4 and parts[2] == 'input':
                         self.reply(200, jobs.upload(job, parts[3], int(self.headers.get('X-Upload-Offset', '-1')), self.body(1024**2)))
                     elif method == 'POST' and parts[2:] == ['start']:
