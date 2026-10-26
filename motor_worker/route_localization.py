@@ -302,7 +302,7 @@ class RouteLocalizer:
         return best
 
     def _solve_subset(self, pixels, descriptors, indices):
-        cv, np = self.cv, self.np
+        cv = self.cv
         if len(indices) < 24:
             return None
         pairs = cv.BFMatcher(cv.NORM_L2).knnMatch(descriptors, self.descriptors[indices], k=2)
@@ -311,8 +311,23 @@ class RouteLocalizer:
         matches = list({m.trainIdx: m for m in sorted(matches, key=lambda m: m.distance, reverse=True)}.values())
         if len(matches) < 24:
             return None
-        world = self.xyz[indices[[m.trainIdx for m in matches]]]
+        ids = indices[[m.trainIdx for m in matches]]
+        world = self.xyz[ids]
         image = pixels[[m.queryIdx for m in matches]]
+        verified = self._verify_correspondences(world, image)
+        if verified is None:
+            return None
+        center, rotation, count, error, mask = verified
+        # Retain only verified 2D -> existing 3D correspondences. A temporal
+        # diagnostic may track these, but must run the same PnP checks again.
+        return center, rotation, count, error, ids[mask], image[mask]
+
+    def _verify_correspondences(self, world, image):
+        cv, np = self.cv, self.np
+        if len(world) < 24 or len(world) != len(image):
+            return None
+        if not np.isfinite(world).all() or not np.isfinite(image).all():
+            return None
         singular = np.linalg.svd(world-world.mean(axis=0), compute_uv=False)
         if singular[0] <= 0 or singular[2]/singular[0] < 1e-4:
             return None  # Repeated/planar structure is insufficient for this experiment.
@@ -333,7 +348,7 @@ class RouteLocalizer:
                 or int(mask.sum()) < 20 or mask.mean() < .5 or coverage < 4
                 or float(np.median(error[mask])) > 2):
             return None
-        return center, rotation, int(mask.sum()), float(np.median(error[mask]))
+        return center, rotation, int(mask.sum()), float(np.median(error[mask])), mask
 
     def _nearest(self, center):
         np = self.np
@@ -398,7 +413,7 @@ class RouteLocalizer:
             return result("route_frame_expired_during_localization")
         if solved is None:
             return result("route_pose_not_verified")
-        center, rotation, inliers, error = solved
+        center, rotation, inliers, error = solved[:4]
         nearest = self._nearest(center)
         if nearest is None:
             return result("route_progress_ambiguous")

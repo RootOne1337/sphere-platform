@@ -42,6 +42,9 @@ class LatestPreviewTests(unittest.TestCase):
                 with self.assertRaises(ValueError):
                     observer.start(5)
             self.assertFalse(observer.used)
+            with self.assertRaises(ValueError):
+                observer.start(5, "unrecognized")
+            self.assertFalse(observer.used)
             with (
                 patch("scripts.pilot.live_route_observer.collect", return_value={}),
                 patch("scripts.pilot.live_route_observer.evaluate", return_value=[]),

@@ -16,6 +16,7 @@ import secrets
 import threading
 import time
 import uuid
+from collections import Counter
 from http.server import BaseHTTPRequestHandler
 from pathlib import Path
 
@@ -117,14 +118,17 @@ class Observer:
         self.used = False
         self.thread = None
         self.phase = "waiting_for_manual_start"
+        self.tracker_kind = "descriptor"
 
-    def start(self, hz):
+    def start(self, hz, tracker_kind="descriptor"):
         with self.lock:
-            if self.used or type(hz) is not int or not 1 <= hz <= 10:
+            if (self.used or type(hz) is not int or not 1 <= hz <= 10
+                    or type(tracker_kind) is not str or tracker_kind not in {"descriptor", "anchored_flow"}):
                 raise ValueError("observer_already_started_or_rate_invalid")
             if evaluate(collect(ROOT), min_ram_gib=12):
                 raise ValueError("observer_resource_guard")
             self.used = True
+            self.tracker_kind = tracker_kind
             self.phase = "connecting"
             self.thread = threading.Thread(
                 target=lambda: asyncio.run(self.observe(hz)), daemon=True
@@ -147,7 +151,8 @@ class Observer:
         running = asyncio.create_task(session.run(self.token))
         tracker = None
         sequence = 0
-        counts, timings = {}, []
+        counts, timings, methods, reasons = {}, [], Counter(), Counter()
+        published, dropped = 0, 0
         episode, goal = str(uuid.uuid4()), str(uuid.uuid4())
         error = None
         try:
@@ -157,7 +162,12 @@ class Observer:
                     await asyncio.sleep(0.01)
                     continue
                 if tracker is None or tracker.epoch != frame.capture_epoch:
-                    tracker = RouteLocalizer(
+                    tracker_class = RouteLocalizer
+                    if self.tracker_kind == "anchored_flow":
+                        from motor_worker.route_tracking import AnchoredRouteLocalizer
+
+                        tracker_class = AnchoredRouteLocalizer
+                    tracker = tracker_class(
                         self.route,
                         capture_epoch=frame.capture_epoch,
                         episode_id=episode,
@@ -171,9 +181,19 @@ class Observer:
                 )
                 elapsed = (time.perf_counter() - before) * 1000
                 counts[pose.state] = counts.get(pose.state, 0) + 1
+                reason = pose.reason if type(pose.reason) is str else "unspecified"
+                reasons[reason] += 1
+                method = getattr(tracker, "last_diagnostic", {}).get("method", "descriptor_pnp")
+                if type(method) is not str:
+                    method = "unspecified"
+                methods[method] += 1
                 timings.append(elapsed)
                 rendered = await asyncio.to_thread(encode_preview, frame, pose, elapsed)
-                self.preview.publish(frame, rendered)
+                rendered["method"] = method
+                if self.preview.publish(frame, rendered):
+                    published += 1
+                else:
+                    dropped += 1
                 self.phase = "observing_without_input"
             if not running.done():
                 running.cancel()
@@ -196,6 +216,11 @@ class Observer:
             result = dict(
                 scope="LIVE_ROUTE_OBSERVER_NOT_MOTOR_NAVIGATION",
                 counts=counts,
+                trackerKind=self.tracker_kind,
+                methods=dict(methods),
+                reasons=dict(reasons),
+                previewsPublished=published,
+                previewsExpiredOrSuperseded=dropped,
                 computeMedianMs=sorted(timings)[len(timings) // 2] if timings else None,
                 physicalActions=0,
                 nativeInputChannelCreated=session.control is not None,
@@ -259,7 +284,8 @@ def serve(observer, port, state, seconds=1800):
                 self.reply(
                     200,
                     dict(
-                        phase=observer.phase, sample=value, physicalActions=0, oneShot=observer.used
+                        phase=observer.phase, sample=value, physicalActions=0, oneShot=observer.used,
+                        trackersAvailable=["descriptor", "anchored_flow"], trackerKind=observer.tracker_kind,
                     ),
                 )
             else:
@@ -283,9 +309,10 @@ def serve(observer, port, state, seconds=1800):
                         raise ValueError("invalid_stop")
                     observer.stop.set()
                 else:
-                    if set(data) != {"hz", "sceneConfirmed"} or data["sceneConfirmed"] is not True:
+                    if (set(data) not in ({"hz", "sceneConfirmed"}, {"hz", "sceneConfirmed", "tracker"})
+                            or data["sceneConfirmed"] is not True):
                         raise ValueError("operator_scene_confirmation_required")
-                    observer.start(data["hz"])
+                    observer.start(data["hz"], data.get("tracker", "descriptor"))
                 self.reply(200, dict(phase=observer.phase))
             except (ValueError, TypeError, KeyError):
                 self.reply(409, dict(error="observer_start_refused"))
@@ -315,10 +342,14 @@ def main():
     for name in ("map", "sha256", "device", "state", "output"):
         parser.add_argument("--" + name, required=True)
     parser.add_argument("--port", type=int, default=3350)
+    parser.add_argument("--opencv-threads", type=int, default=4)
     args = parser.parse_args()
     token = os.environ.get("SPHERE_ACCESS_TOKEN", "")
-    if not token or Path(args.output).exists():
+    if (not token or Path(args.output).exists() or not 1 <= args.opencv_threads <= 8):
         raise ValueError("observer_token_missing_or_output_exists")
+    import cv2
+
+    cv2.setNumThreads(args.opencv_threads)
     route = SparseRoute.load(args.map, sha256=args.sha256)
     logging.disable(logging.CRITICAL)
     serve(Observer(route, args.device, token, Path(args.output)), args.port, Path(args.state))

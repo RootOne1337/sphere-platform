@@ -28,14 +28,16 @@ from scripts.pilot.atomic_json import write_json
 from scripts.pilot.reconstruct_route import checkpoint
 
 
-def check(capture_dir, route, output, *, start=0., end=600.):
+def check(capture_dir, route, output, *, start=0., end=600., tracker_kind="descriptor", checkpoint_fn=None):
     import cv2 as cv
     import numpy as np
 
-    if type(route) is not SparseRoute or not finite(start, 0, 600) or not finite(end, start, 600):
+    if (type(route) is not SparseRoute or not finite(start, 0, 600) or not finite(end, start, 600)
+            or tracker_kind not in {"descriptor", "anchored_flow"}):
         raise ProtocolError("invalid_localization_probe")
     output = Path(output)
-    checkpoint(output)
+    guard = checkpoint if checkpoint_fn is None else checkpoint_fn
+    guard(output)
     output.mkdir(exist_ok=False)
     write_json(output/"intent.json", dict(scope="OFFLINE_RECORDING_ONLY", physical_actions=0,
                                          route_id=route.id, start=start, end=end))
@@ -44,8 +46,13 @@ def check(capture_dir, route, output, *, start=0., end=600.):
     taught_indices = set(route.source_frame_indices) if capture_sha == route.source_capture_sha256 else set()
     now = 0.
     epoch, episode, goal = (str(uuid.uuid4()) for _ in range(3))
-    tracker = RouteLocalizer(route, capture_epoch=epoch, episode_id=episode, goal_revision=goal, clock=lambda: now,
-                             diagnostic_partial_map=True)
+    tracker_class = RouteLocalizer
+    if tracker_kind == "anchored_flow":
+        from motor_worker.route_tracking import AnchoredRouteLocalizer
+
+        tracker_class = AnchoredRouteLocalizer
+    tracker = tracker_class(route, capture_epoch=epoch, episode_id=episode, goal_revision=goal, clock=lambda: now,
+                            diagnostic_partial_map=True)
     samples, elapsed, counts, excluded, proofs = [], [], Counter(), 0, 0
     index_excluded = 0
     references = set(route.reference_rgb_sha256)
@@ -70,13 +77,15 @@ def check(capture_dir, route, output, *, start=0., end=600.):
         if len(samples) >= 3000:
             raise ProtocolError("localization_probe_sample_quota")
         if len(samples) % 30 == 0:
-            checkpoint(output)
+            guard(output)
         frame = PolicyFrame(epoch, row["index"]+1, now, profile.width, profile.height, rgb.tobytes())
         started = time.perf_counter()
         pose = tracker.observe(frame, episode_id=episode, goal_revision=goal, scene="active")
         # 'active' is an offline experiment assumption, never a game-world check.
         elapsed.append((time.perf_counter()-started)*1000)
         sample = dict(source_index=row["index"], media_seconds=seconds, compute_ms=elapsed[-1], pose=asdict(pose))
+        if tracker_kind == "anchored_flow":
+            sample["tracking"] = dict(tracker.last_diagnostic)
         if pose.state == "localized" and pose.polyline_px and proofs < 4:
             name = f"overlay-{proofs+1}.png"
             drawn = np.frombuffer(render_guidance(frame, pose, clock=lambda: now), np.uint8).reshape(rgb.shape).copy()
@@ -87,6 +96,7 @@ def check(capture_dir, route, output, *, start=0., end=600.):
         samples.append(sample)
         counts[pose.state] += 1
     report = dict(schema="sphere-route-localization-quality-v1", offline_media_clock=True,
+        tracker_kind=tracker_kind,
         samples=samples, counts=dict(counts), reference_rgb_excluded=excluded,
         reference_indices_excluded=index_excluded, same_capture=capture_sha == route.source_capture_sha256,
         compute_ms=None if not elapsed else dict(p50=float(np.median(elapsed)),
@@ -104,9 +114,10 @@ def main():
         parser.add_argument("--"+name, required=True)
     parser.add_argument("--start", type=float, default=0.)
     parser.add_argument("--end", type=float, default=600.)
+    parser.add_argument("--tracker", choices=("descriptor", "anchored_flow"), default="descriptor")
     args = parser.parse_args()
     print(json.dumps(check(args.capture, SparseRoute.load(args.route, sha256=args.sha256), args.output,
-                           start=args.start, end=args.end), indent=2))
+                           start=args.start, end=args.end, tracker_kind=args.tracker), indent=2))
 
 
 if __name__ == "__main__":
