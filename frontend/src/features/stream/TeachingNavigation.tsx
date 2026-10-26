@@ -8,6 +8,7 @@ type Binding={captureEpoch:string;width:number;height:number};
 const identity=()=>crypto.randomUUID().replaceAll('-','');
 export function TeachingNavigation({job,video,ready,binding}:{job:ReconstructionJob|null;video:RefObject<HTMLVideoElement|null>;ready:boolean;binding:Binding|null}) {
   const [assets,setAssets]=useState<NavigationState|null>(null),[notice,setNotice]=useState('Выберите сохранённый маршрут во вкладке «Сцена».');
+  const [assetError,setAssetError]=useState(false),[assetRefresh,setAssetRefresh]=useState(0);
   const [confirmed,setConfirmed]=useState(false),[running,setRunning]=useState(false),[busy,setBusy]=useState(false),[hz,setHz]=useState(5);
   const [metrics,setMetrics]=useState({observations:0,known:0,unknown:0,late:0,age:0,compute:0,inliers:0,segment:null as number|null});
   const output=useRef<HTMLCanvasElement>(null),generation=useRef(0),session=useRef<string|null>(null),abort=useRef<AbortController|null>(null);
@@ -28,14 +29,16 @@ export function TeachingNavigation({job,video,ready,binding}:{job:Reconstruction
   stopRef.current=stop;
   useEffect(()=>()=>stopRef.current(),[]);
   useEffect(()=>{
-    if(!job)return;let retired=false,timer:ReturnType<typeof setTimeout>;const request=new AbortController();
+    if(!job){setAssets(null);setAssetError(false);return;}let retired=false,timer:ReturnType<typeof setTimeout>;const request=new AbortController();
+    setAssets(null);setAssetError(false);
     const poll=async()=>{try{
       const data=await(await reconstructionRequest(`/jobs/${job.id}/navigation`,job,{signal:request.signal})).json() as NavigationState;
-      if(retired)return;setAssets(data);
+      if(retired)return;setAssets(data);setAssetError(false);
+      if(data.phase==='ready')setNotice('Карта ориентиров готова. Подключите поток и подтвердите участок для ручной проверки.');
       if(!['ready','rejected','failed','not_prepared','cancelled'].includes(data.phase))timer=setTimeout(()=>{void poll();},2000);
-    }catch{if(!retired)setNotice('Локальный обработчик недоступен. Запись и сохранённая сцена не изменены.');}};
+    }catch{if(!retired){setAssets(null);setAssetError(true);setNotice('Локальный обработчик недоступен. Запись и сохранённая сцена не изменены; повторная проверка состояния не запускает обработку.');timer=setTimeout(()=>{void poll();},10000);}}};
     void poll();return()=>{retired=true;request.abort();clearTimeout(timer);};
-  },[job]);
+  },[job,assetRefresh]);
   useEffect(()=>{
     const element=video.current;if(!element?.requestVideoFrameCallback)return;
     let retired=false,callback=0;
@@ -100,7 +103,7 @@ export function TeachingNavigation({job,video,ready,binding}:{job:Reconstruction
     <p role="status" className="min-h-10 text-sm leading-5">{notice}</p>
     <div className="grid grid-cols-3 gap-2 text-xs tabular-nums">{[['Привязка',`${metrics.known} / ${metrics.observations}`],['Расчёт',`${metrics.compute.toFixed(1)} мс`],['Кадр → ответ',`${metrics.age.toFixed(1)} мс`],['3D-опоры',String(metrics.inliers)],['Не определено',String(metrics.unknown)],['Опоздало',String(metrics.late)]].map(([label,value])=><div key={label} className="rounded-lg border border-border p-2"><p className="text-muted-foreground">{label}</p><p className="mt-1 font-medium">{value}</p></div>)}</div>
     <p className="text-xs text-muted-foreground">Маршрут: {job?job.id.slice(0,8):'не выбран'} · карта: {assets?.phase??'не прочитана'}{metrics.segment===null?'':` · участок ${metrics.segment+1}`}</p>
-    {assets?.phase!=='ready'&&<p className="flex items-start gap-2 text-xs text-amber-500"><Route size={15} className="shrink-0"/>Сначала выберите проход во вкладке «Сцена» и подготовьте карту ориентиров.{assets?.error?` ${assets.error}`:''}</p>}
+    {assets?.phase!=='ready'&&<div className="rounded-xl border border-amber-500/25 bg-amber-500/5 p-3 text-xs text-amber-500"><p className="flex items-start gap-2"><Route size={15} className="shrink-0"/>{assetError?'Локальный обработчик должен быть запущен на этом компьютере.':!job?'Выберите проход во вкладке «Сцена».':'Подготовьте карту ориентиров во вкладке «Сцена».'}{assets?.error?` ${assets.error}`:''}</p>{assetError&&<Button className="mt-2" size="sm" variant="outline" onClick={()=>setAssetRefresh(n=>n+1)}>Проверить обработчик снова</Button>}</div>}
     <label className="flex items-start gap-2 text-xs"><input type="checkbox" checked={confirmed} disabled={running||busy} onChange={e=>setConfirmed(e.target.checked)}/>На экране игровой мир и записанный участок; камера и FOV соответствуют записи</label>
     <div className="flex flex-wrap items-center gap-2"><select aria-label="Частота проверки направления" className="rounded-lg border bg-background p-2 text-xs" value={hz} disabled={running||busy} onChange={e=>setHz(Number(e.target.value))}><option value={3}>3 проверки/с</option><option value={5}>5 проверок/с</option><option value={10}>10 проверок/с</option></select>
     <Button size="sm" disabled={!job||!confirmed||!ready||assets?.phase!=='ready'||running||busy} onClick={()=>{void start();}}>Проверить направление · 120 с</Button><Button variant="outline" size="sm" disabled={!running&&!busy} onClick={()=>{stop();setNotice('Наблюдение остановлено. Сохранённая карта не изменена.');}}><Square size={13} className="mr-1"/>Стоп</Button></div>

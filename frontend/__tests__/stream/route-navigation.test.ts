@@ -21,6 +21,11 @@ test('recording cadence is derived from real frame intervals, not a 30 or 60 FPS
   expect(teachingCaptureMetrics(rows(9000))).toMatchObject({fps:10,cadence30Confirmed:false,maxGapMs:100});
   expect(teachingCaptureMetrics(rows(3000))).toMatchObject({fps:30,cadence30Confirmed:true});
   expect(teachingCaptureMetrics(rows(3103))?.cadence30Confirmed).toBe(false);
+  const stalled=rows(3000).map((row,i)=>({...row,relative_ticks_90k:row.relative_ticks_90k+90000+(i>=50?135000:0)}));
+  expect(teachingCaptureMetrics(stalled)).toMatchObject({gaps200:1,gaps1000:1,maxGapMs:1533.3333333333333,cadence30Confirmed:false});
+  const long=Array.from({length:301},(_,i)=>({relative_ticks_90k:i*3000+(i>=52?135000:0),bytes:1000}));
+  expect(Math.max(...teachingCaptureMetrics(long)!.chart)).toBeGreaterThan(1500);
+  expect(teachingCaptureMetrics(rows(3000).map(row=>({...row,relative_ticks_90k:row.relative_ticks_90k+90000})))?.fps).toBe(30);
   const bad=rows(3000);bad[80].relative_ticks_90k=bad[79].relative_ticks_90k;
   expect(teachingCaptureMetrics(bad)).toBeNull();
 });

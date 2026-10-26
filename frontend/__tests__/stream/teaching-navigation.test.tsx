@@ -33,3 +33,12 @@ test('unmount closes the same uncertain start intent and a late acknowledgement 
   expect(posts.map(c=>c[0].split('/').at(-1))).toEqual(['start','stop']);
   expect(JSON.parse(String(posts[1][2]?.body))).toEqual({id:'c'.repeat(32)});
 });
+test('a failed read can be checked again without starting a session or retaining stale readiness',async()=>{
+  jest.mocked(reconstructionRequest).mockRejectedValueOnce(Error('offline')).mockResolvedValue({json:async()=>({phase:'ready'})} as Response);
+  render(<TeachingNavigation job={job} video={{current:null}} ready binding={{captureEpoch:'e'.repeat(32),width:1920,height:1080}}/>);
+  const retry=await screen.findByRole('button',{name:'Проверить обработчик снова'});
+  expect(screen.getByRole('button',{name:'Проверить направление · 120 с'})).toBeDisabled();
+  fireEvent.click(retry);
+  await screen.findByText(/Карта ориентиров готова/);
+  expect(jest.mocked(reconstructionRequest).mock.calls.every(call=>call[2]?.method!=='POST')).toBe(true);
+});

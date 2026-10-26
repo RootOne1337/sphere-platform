@@ -37,10 +37,11 @@ async function library() {
         close:async()=>{files.set(name,bytes);},abort:async()=>{}};
     }};
   }};
-  const clips={values:async function*(){yield {kind:'directory',name:id};},getDirectoryHandle:async(name:string)=>{if(name!==id)throw missing();return folder;}};
+  const remove=jest.fn(async()=>{});
+  const clips={values:async function*(){yield {kind:'directory',name:id};},getDirectoryHandle:async(name:string)=>{if(name!==id)throw missing();return folder;},removeEntry:remove};
   const root={getDirectoryHandle:async(name:string)=>{if(name!=='sphere-teaching-'+scope)throw missing();return clips;}};
   Object.defineProperty(navigator,'storage',{configurable:true,value:{getDirectory:async()=>root}});
-  return {files,manifest};
+  return {files,manifest,remove};
 }
 
 beforeEach(()=>{
@@ -56,6 +57,23 @@ beforeEach(()=>{
     configure(){}close(){}async flush(){}
     decode(chunk:{timestamp:number}){this.callbacks.output({timestamp:chunk.timestamp,displayWidth:960,displayHeight:540,close:jest.fn()});}
   }});
+});
+
+test('search filters the local list and deletion requires an explicit second action',async()=>{
+  const {remove}=await library();const onSelect=jest.fn();
+  render(<TeachingReview selected={id} refresh={0} onSelect={onSelect} storageScope={scope}/>);
+  await screen.findByRole('button',{name:/Маршрут 011321.*aaaaaaaa/});
+  fireEvent.change(screen.getByLabelText('Поиск по названию или идентификатору'),{target:{value:'нет такого'}});
+  expect(screen.getByText('По этому запросу записи не найдены.')).toBeInTheDocument();
+  fireEvent.change(screen.getByLabelText('Поиск по названию или идентификатору'),{target:{value:'011321'}});
+  expect(screen.getByRole('button',{name:/Маршрут 011321.*aaaaaaaa/})).toBeInTheDocument();
+  await waitFor(()=>expect(screen.getByRole('button',{name:'Удалить выбранный локальный материал'})).toBeEnabled());
+  fireEvent.click(screen.getByRole('button',{name:'Удалить выбранный локальный материал'}));
+  expect(remove).not.toHaveBeenCalled();
+  fireEvent.click(screen.getByRole('button',{name:'Удалить навсегда'}));
+  await waitFor(()=>expect(remove).toHaveBeenCalledTimes(1));
+  expect(remove).toHaveBeenCalledWith(id,{recursive:true});
+  expect(onSelect).toHaveBeenCalledWith(null);
 });
 afterEach(()=>{jest.restoreAllMocks();});
 

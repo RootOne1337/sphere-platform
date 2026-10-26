@@ -22,3 +22,12 @@ test('an uncertain application disables repeat until an explicit readback succee
   fireEvent.click(screen.getByRole('button',{name:'Проверить настройки съёмки'}));
   await waitFor(()=>expect(preset).toBeEnabled());expect(api.post).toHaveBeenCalledTimes(1);expect(api.get).toHaveBeenCalledTimes(1);
 });
+test('the accepted request does not hide a lower active codec limit',async()=>{
+  jest.mocked(api.post).mockResolvedValue({data:{...snapshot,active:{...snapshot.active,codec_max_fps:30,max_bitrate_bps:12000000,target_bitrate_bps:8400000}}});
+  render(<TeachingCaptureSetup deviceId="one" disabled={false} quality={null}/>);
+  fireEvent.click(screen.getByRole('button',{name:'Съёмка · 30 FPS / 24 Мбит'}));
+  await screen.findByText(/активный предел — 12\.0/);
+  expect(screen.getByText('до 30 FPS')).toBeInTheDocument();
+  expect(screen.getByText('8.4 Мбит/с')).toBeInTheDocument();
+  expect(screen.queryByText(/фактических FPS/)).not.toBeInTheDocument();
+});
