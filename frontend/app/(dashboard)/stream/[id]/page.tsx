@@ -22,7 +22,7 @@ export default function DeviceStreamPage({ params }: Props) {
       <PageHeading
         eyebrow="Просмотр устройства"
         title={teaching ? 'Запись маршрута' : 'Видеопоток'}
-        description={`Устройство ${id} · экран и диагностические счётчики браузера и Android-агента.`}
+        description={teaching ? `Устройство ${id}` : `Устройство ${id} · экран и диагностические счётчики браузера и Android-агента.`}
         actions={<div className="flex flex-wrap gap-2"><Button asChild variant="outline"><Link href={`/stream/${encodeURIComponent(id)}${teaching ? '' : '?teach=1'}`}>{teaching ? 'Обычный поток' : 'Записать маршрут'}</Link></Button><Button asChild variant="outline"><Link href={`/devices/${encodeURIComponent(id)}`}><ArrowLeft className="mr-2 h-4 w-4" aria-hidden="true" />Карточка устройства</Link></Button></div>}
       />
       {teaching ? <TeachingWorkbench key={id} deviceId={id} readOnly={!access.can('stream:control')} /> : <section aria-label={`Видеопоток устройства ${id}`} className="overflow-hidden rounded-2xl border border-border bg-card p-2 shadow-soft sm:p-3">

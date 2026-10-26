@@ -7,6 +7,7 @@ import { TextEncoder } from 'node:util';
 import { TeachingWorkbench } from '@/src/features/stream/TeachingWorkbench';
 import { connectTeaching } from '@/src/features/stream/teachingConnection';
 jest.mock('@/src/features/stream/teachingConnection',()=>({connectTeaching:jest.fn()}));
+jest.mock('@/src/features/stream/TeachingLocalWorker',()=>({TeachingLocalWorker:()=>null}));
 let mockAuth: Record<string,unknown> = {accessToken:null,sessionVersion:1};
 const mockSet = jest.fn(), mockClose = jest.fn(async()=>true);
 const mockControllers: unknown[]=[];
