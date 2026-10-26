@@ -90,3 +90,19 @@ test('review decodes and navigates the sealed source, then renames without chang
   expect(JSON.parse(new TextDecoder().decode(files.get('label.json'))).title).toBe('Переулок · ночь');
   expect(files.get('manifest.json')).toBe(manifest);expect(files.get('COMPLETE')).toBe(marker);expect(files.get('video.h264')).toBe(video);
 });
+
+test('search can find a recording older than the newest twenty without deleting it',async()=>{
+  const items=Array.from({length:25},(_,n)=>({id:n.toString(16).padStart(32,'0'),title:`Маршрут ${n}`,at:1000+n}));
+  const root={getDirectoryHandle:async()=>({
+    values:async function*(){for(const item of items)yield {kind:'directory',name:item.id};},
+    getDirectoryHandle:async(name:string)=>{const item=items.find(row=>row.id===name)!;return {getFileHandle:async(fileName:string)=>{
+      if(fileName!=='manifest.json')throw missing();
+      return {getFile:async()=>file(encode({schema:'sphere-browser-teaching-v2',id:item.id,started_at_ms:item.at,complete:true,frames:10,config:{title:item.title}}))};
+    }};},
+  })};
+  Object.defineProperty(navigator,'storage',{configurable:true,value:{getDirectory:async()=>root}});
+  render(<TeachingReview selected={null} refresh={0} onSelect={jest.fn()} storageScope={scope}/>);
+  await screen.findByText('Показано 25 из 25');
+  fireEvent.change(screen.getByLabelText('Поиск по названию или идентификатору'),{target:{value:'Маршрут 0'}});
+  expect(screen.getByRole('button',{name:/Маршрут 0.*Готов/})).toBeInTheDocument();
+});

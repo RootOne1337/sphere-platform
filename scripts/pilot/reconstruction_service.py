@@ -672,6 +672,12 @@ def handler(jobs, origin, port):
             except (ValueError, FileExistsError) as error:
                 self.close_connection = True
                 self.reply(409, {'error': str(error)[:200]})
+            except RuntimeError as error:
+                self.close_connection = True
+                if str(error) in {'resource_guard', 'cancelled'}:
+                    self.reply(409, {'error': str(error)})
+                else:
+                    self.reply(500, {'error': 'local_operation_not_confirmed_inspect_job_status'})
             except FileNotFoundError:
                 self.close_connection = True
                 self.reply(409, {'error': 'job_file_unavailable'})

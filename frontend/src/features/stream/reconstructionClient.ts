@@ -4,7 +4,10 @@ export type ReconstructionJob = {id:string; key:string};
 export type NavigationState = {phase:string;id?:string;error?:string|null;executionQualified?:false;summary?:{cameras:number;landmarks:number;camera_trace_only:true;map_support:{all_reference_neighborhoods_supported:boolean}}};
 export type SceneAppearance = {state:'unverified'|'passed'|'rejected';mean_psnr?:number;mean_ssim?:number;min_psnr?:number;min_ssim?:number;views?:{image:string;psnr:number;ssim:number}[]};
 export type SurfaceState = {visual_review?:{state:'issues_found'|'limited_preview';issues:string[]};id?:string;fragment?:{first_view:number;view_count:number};phase:string;error?:string;available?:boolean;views?:number;total_views?:number;result?:{sha256:string;bytes:number;triangles:number;vertices:number;textures:number;texture_pixels:number;source_images:string[];mesh_faces:number;unknown_faces:number;seconds:number}};
-export type ReconstructionState = {navigation?:NavigationState;camera_motion?:{warning:string|null;rapid_reversals?:number;heuristic_only?:boolean;navigation_qualified:false};phase:string; error?:string; geometry_available?:boolean; dense_available?:boolean; dense_partial_available?:boolean; surface?:SurfaceState|null; fragments?:SurfaceState[]; surface_supported?:boolean; appearance?:SceneAppearance; checkpoint?:{steps:number;target_steps:number;partial:true}; quality?:{registered:number; selected:number; coverage:number; points:number; mean_reprojection_px:number}; result?:{ply_sha256:string; ply_bytes:number}};
+export type ReconstructionState = {navigation?:NavigationState;camera_motion?:{warning:string|null;rapid_reversals?:number;heuristic_only?:boolean;navigation_qualified:false};phase:string; error?:string; geometry_available?:boolean; dense_available?:boolean; dense_partial_available?:boolean; surface?:SurfaceState|null; fragments?:SurfaceState[]; surface_supported?:boolean; appearance?:SceneAppearance; checkpoint?:{steps:number;target_steps:number;partial:true}; quality?:{registered:number; selected:number; coverage:number; points:number; mean_reprojection_px:number; components?:number}; result?:{ply_sha256:string; ply_bytes:number}};
+export class ReconstructionResponseError extends Error {
+  constructor(public readonly status:number, code:string){super(code);this.name='ReconstructionResponseError';}
+}
 export const processingSurface = (state:ReconstructionState) => [state.surface,...state.fragments??[]].find(item=>item&&!['ready','review_required','failed','cancelled'].includes(item.phase));
 export const activeSurface = (state:ReconstructionState) => !!processingSurface(state);
 export const terminalReconstruction = (state:ReconstructionState) => ['complete','failed','cancelled','quality_rejected','review_required','partial_scene'].includes(state.phase)&&!activeSurface(state)
@@ -17,7 +20,7 @@ export async function reconstructionRequest(path:string, job:ReconstructionJob|n
   const response=await fetch(reconstructionBase+path,{...init,headers,credentials:'omit',cache:'no-store',signal:init.signal?AbortSignal.any([init.signal,timeout]):timeout});
   if(!response.ok) {
     const error=await response.json().catch(()=>({error:'local_worker_unavailable'}));
-    throw Error(String(error.error??response.status).slice(0,200));
+    throw new ReconstructionResponseError(response.status,String(error.error??response.status).slice(0,200));
   }
   return response;
 }

@@ -2,12 +2,15 @@
 import {useCallback,useEffect,useRef,useState,type RefObject} from 'react';
 import {Navigation,Route,Square} from 'lucide-react';
 import {Button} from '@/components/ui/button';
-import {reconstructionRequest,type NavigationState,type ReconstructionJob} from './reconstructionClient';
+import {reconstructionRequest,type NavigationState,type ReconstructionJob,type ReconstructionState} from './reconstructionClient';
 import {freshNavigationFrame,navigationReply,paintNavigation} from './routeNavigation';
+import {prepareRoute,preparationError} from './routePreparation';
+import type {TeachingClipChoice} from './TeachingReview';
 type Binding={captureEpoch:string;width:number;height:number};
 const identity=()=>crypto.randomUUID().replaceAll('-','');
-export function TeachingNavigation({job,video,ready,binding}:{job:ReconstructionJob|null;video:RefObject<HTMLVideoElement|null>;ready:boolean;binding:Binding|null}) {
+export function TeachingNavigation({job,video,ready,binding,clips=[],clip=null,scope=null,onSelectClip,selectionDisabled=false}:{job:ReconstructionJob|null;video:RefObject<HTMLVideoElement|null>;ready:boolean;binding:Binding|null;clips?:TeachingClipChoice[];clip?:string|null;scope?:string|null;onSelectClip?:(id:string|null)=>void;selectionDisabled?:boolean}) {
   const [assets,setAssets]=useState<NavigationState|null>(null),[notice,setNotice]=useState('Выберите сохранённый маршрут во вкладке «Сцена».');
+  const [source,setSource]=useState<ReconstructionState|null>(null),[preparing,setPreparing]=useState(false),[prepareNotice,setPrepareNotice]=useState<string|null>(null);
   const [assetError,setAssetError]=useState(false),[assetRefresh,setAssetRefresh]=useState(0);
   const [confirmed,setConfirmed]=useState(false),[running,setRunning]=useState(false),[busy,setBusy]=useState(false),[hz,setHz]=useState(5);
   const [metrics,setMetrics]=useState({observations:0,known:0,unknown:0,late:0,age:0,compute:0,inliers:0,segment:null as number|null});
@@ -29,16 +32,26 @@ export function TeachingNavigation({job,video,ready,binding}:{job:Reconstruction
   stopRef.current=stop;
   useEffect(()=>()=>stopRef.current(),[]);
   useEffect(()=>{
-    if(!job){setAssets(null);setAssetError(false);return;}let retired=false,timer:ReturnType<typeof setTimeout>;const request=new AbortController();
-    setAssets(null);setAssetError(false);
+    if(!job){setAssets(null);setSource(null);setAssetError(false);return;}let retired=false,timer:ReturnType<typeof setTimeout>;const request=new AbortController();
+    setAssets(null);setSource(null);setAssetError(false);
     const poll=async()=>{try{
-      const data=await(await reconstructionRequest(`/jobs/${job.id}/navigation`,job,{signal:request.signal})).json() as NavigationState;
-      if(retired)return;setAssets(data);setAssetError(false);
-      if(data.phase==='ready')setNotice('Карта ориентиров готова. Подключите поток и подтвердите участок для ручной проверки.');
-      if(!['ready','rejected','failed','not_prepared','cancelled'].includes(data.phase))timer=setTimeout(()=>{void poll();},2000);
-    }catch{if(!retired){setAssets(null);setAssetError(true);setNotice('Локальный обработчик недоступен. Запись и сохранённая сцена не изменены; повторная проверка состояния не запускает обработку.');timer=setTimeout(()=>{void poll();},10000);}}};
+      const data=await(await reconstructionRequest(`/jobs/${job.id}`,job,{signal:request.signal})).json() as ReconstructionState;
+      const navigation=data.navigation??{phase:'not_prepared'};
+      if(retired)return;setSource(data);setAssets(navigation);setAssetError(false);
+      if(navigation.phase==='ready')setNotice('Карта ориентиров готова. Подключите поток и подтвердите участок для ручной проверки.');
+      else if(data.error==='camera_quality_gate_failed')setNotice('Камеры связаны не полностью. Сначала восстановите сцену; исходная запись сохранена.');
+      else setNotice('Проверьте состояние выбранной записи и подготовьте ориентиры.');
+      if(!['ready','rejected','failed','not_prepared','cancelled'].includes(navigation.phase))timer=setTimeout(()=>{void poll();},2000);
+    }catch{if(!retired){setAssets(null);setSource(null);setAssetError(true);setNotice('Локальный обработчик недоступен. Запись и сохранённая сцена не изменены; повторная проверка состояния не запускает обработку.');timer=setTimeout(()=>{void poll();},10000);}}};
     void poll();return()=>{retired=true;request.abort();clearTimeout(timer);};
   },[job,assetRefresh]);
+  const prepare=async()=>{
+    if(!job||!scope||!clip||preparing||!source?.dense_available)return;
+    setPreparing(true);setPrepareNotice(null);
+    try{const result=await prepareRoute(job,scope,clip);setAssets(result);setAssetRefresh(n=>n+1);}
+    catch(error){setPrepareNotice(preparationError(error));setAssetRefresh(n=>n+1);}
+    finally{setPreparing(false);}
+  };
   useEffect(()=>{
     const element=video.current;if(!element?.requestVideoFrameCallback)return;
     let retired=false,callback=0;
@@ -99,11 +112,12 @@ export function TeachingNavigation({job,video,ready,binding}:{job:Reconstruction
   return <section aria-label="Живая проверка направления" className="min-w-0 space-y-3 rounded-2xl border border-cyan-500/25 bg-gradient-to-br from-cyan-500/5 via-card to-card p-4">
     <div className="flex items-center gap-2"><Navigation className="text-cyan-400" size={20}/><h3 className="font-semibold">Направление на свежем кадре</h3><span className="ml-auto rounded-full border px-2 py-1 text-[10px] uppercase tracking-wider">Без ввода ИИ</span></div>
     <p className="text-xs leading-5 text-muted-foreground">Тот же прямой видеопоток. Одна обработка за раз, без очереди старых кадров. Линия пока описывает путь камеры, а не проверенную полосу движения.</p>
+    {onSelectClip&&<label className="block space-y-1 text-xs"><span>Сохранённый проход</span><select aria-label="Сохранённый проход для направления" value={clip??''} disabled={selectionDisabled||running||busy||preparing} onChange={e=>onSelectClip(e.target.value||null)} className="w-full rounded-lg border bg-background p-2 text-sm"><option value="">Выберите запись</option>{clips.map(item=><option key={item.id} value={item.id}>{item.title} · {item.id.slice(0,8)}{item.complete?'':' · неполная'}</option>)}</select><span className="block text-muted-foreground">Записи принадлежат этому браузеру и аккаунту; выбор не отправляет команды в игру.</span></label>}
     <canvas ref={output} width={960} height={540} aria-label="Свежий кадр с направлением маршрута" className="aspect-video w-full rounded-xl border border-border bg-black"/>
     <p role="status" className="min-h-10 text-sm leading-5">{notice}</p>
     <div className="grid grid-cols-3 gap-2 text-xs tabular-nums">{[['Привязка',`${metrics.known} / ${metrics.observations}`],['Расчёт',`${metrics.compute.toFixed(1)} мс`],['Кадр → ответ',`${metrics.age.toFixed(1)} мс`],['3D-опоры',String(metrics.inliers)],['Не определено',String(metrics.unknown)],['Опоздало',String(metrics.late)]].map(([label,value])=><div key={label} className="rounded-lg border border-border p-2"><p className="text-muted-foreground">{label}</p><p className="mt-1 font-medium">{value}</p></div>)}</div>
     <p className="text-xs text-muted-foreground">Маршрут: {job?job.id.slice(0,8):'не выбран'} · карта: {assets?.phase??'не прочитана'}{metrics.segment===null?'':` · участок ${metrics.segment+1}`}</p>
-    {assets?.phase!=='ready'&&<div className="rounded-xl border border-amber-500/25 bg-amber-500/5 p-3 text-xs text-amber-500"><p className="flex items-start gap-2"><Route size={15} className="shrink-0"/>{assetError?'Локальный обработчик должен быть запущен на этом компьютере.':!job?'Выберите проход во вкладке «Сцена».':'Подготовьте карту ориентиров во вкладке «Сцена».'}{assets?.error?` ${assets.error}`:''}</p>{assetError&&<Button className="mt-2" size="sm" variant="outline" onClick={()=>setAssetRefresh(n=>n+1)}>Проверить обработчик снова</Button>}</div>}
+    {assets?.phase!=='ready'&&<div className="space-y-2 rounded-xl border border-amber-500/25 bg-amber-500/5 p-3 text-xs text-amber-500"><p className="flex items-start gap-2"><Route size={15} className="shrink-0"/>{assetError?'Локальный обработчик должен быть запущен на этом компьютере.':!job?(clip?'Для выбранного прохода ещё нет связанной сцены. Откройте «Сцена» и постройте её.':'Выберите сохранённый проход.'):source?.error==='camera_quality_gate_failed'?`Камеры связаны частично${source.quality?`: ${source.quality.registered} из ${source.quality.selected}`:''}. Ориентиры нельзя подготовить, пока сцена не восстановлена.`:!source?.dense_available?'Реконструкция ещё не завершена или не прошла проверку. Откройте «Сцена» для подробностей.':assets?.phase==='pending_auto_prepare'?'Подготовка ориентиров ожидается автоматически.':'Подготовьте карту ориентиров для выбранного прохода.'}</p>{prepareNotice&&<p role="alert">{prepareNotice}</p>}{assets?.error&&<p>Состояние подготовки: {assets.error}</p>}{assetError&&<Button size="sm" variant="outline" onClick={()=>setAssetRefresh(n=>n+1)}>Проверить обработчик снова</Button>}{job&&source?.dense_available&&!assetError&&['not_prepared','failed','rejected','cancelled'].includes(assets?.phase??'')&&<Button size="sm" variant="outline" disabled={preparing||selectionDisabled||!scope||!clip} onClick={()=>{void prepare();}}>{preparing?'Подготавливаем…':'Подготовить ориентиры'}</Button>}</div>}
     <label className="flex items-start gap-2 text-xs"><input type="checkbox" checked={confirmed} disabled={running||busy} onChange={e=>setConfirmed(e.target.checked)}/>На экране игровой мир и записанный участок; камера и FOV соответствуют записи</label>
     <div className="flex flex-wrap items-center gap-2"><select aria-label="Частота проверки направления" className="rounded-lg border bg-background p-2 text-xs" value={hz} disabled={running||busy} onChange={e=>setHz(Number(e.target.value))}><option value={3}>3 проверки/с</option><option value={5}>5 проверок/с</option><option value={10}>10 проверок/с</option></select>
     <Button size="sm" disabled={!job||!confirmed||!ready||assets?.phase!=='ready'||running||busy} onClick={()=>{void start();}}>Проверить направление · 120 с</Button><Button variant="outline" size="sm" disabled={!running&&!busy} onClick={()=>{stop();setNotice('Наблюдение остановлено. Сохранённая карта не изменена.');}}><Square size={13} className="mr-1"/>Стоп</Button></div>

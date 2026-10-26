@@ -113,6 +113,32 @@ def test_old_complete_export_is_not_automatically_a_verified_scene(jobs):
     assert result['dense_available']
 
 
+def test_route_resource_refusal_is_an_explicit_preflight_error(jobs, monkeypatch):
+    job = create(jobs)
+    service.write_json(job / 'state.json', dict(phase='failed', error='camera_quality_gate_failed'))
+    def refuse(*_args):
+        raise RuntimeError('resource_guard')
+    monkeypatch.setattr(jobs.navigation, 'prepare', refuse)
+    server = ThreadingHTTPServer(('127.0.0.1', 0), service.handler(jobs, 'http://127.0.0.1:3015', 3342))
+    thread = threading.Thread(target=server.serve_forever, daemon=True)
+    thread.start()
+    try:
+        request = urllib.request.Request(
+            f'http://127.0.0.1:{server.server_port}/jobs/{job.name}/navigation/prepare',
+            data=json.dumps({'id': 'd' * 32}).encode(), method='POST',
+            headers={'Host': '127.0.0.1:3342', 'Origin': 'http://127.0.0.1:3015',
+                     'X-Sphere-Reconstruction': '1', 'X-Job-Key': 'b' * 64})
+        with pytest.raises(urllib.error.HTTPError) as exc:
+            urllib.request.urlopen(request)
+        assert exc.value.code == 409
+        assert json.load(exc.value) == {'error': 'resource_guard'}
+        assert not (job / 'navigation/active.json').exists()
+    finally:
+        server.shutdown()
+        server.server_close()
+        thread.join()
+
+
 def test_rejected_reference_views_are_bound_and_images_cannot_escape(jobs):
     from scripts.pilot.reconstruction_quality import reference_quality
 

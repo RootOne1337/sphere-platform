@@ -51,7 +51,7 @@ test('surface construction stays with the saved job, blocks recording and cancel
   const clip='c'.repeat(32),scope='d'.repeat(32),job={id:'a'.repeat(32),key:'b'.repeat(64)};
   sessionStorage.setItem(`sphere-reconstruction-${scope}-${clip}`,JSON.stringify(job));
   Object.defineProperty(crypto,'randomUUID',{configurable:true,value:()=> 'cccccccc-cccc-cccc-cccc-cccccccccccc'});
-  let current={phase:'complete',geometry_available:true,surface_supported:true,fragments:[] as unknown[]};
+  let current={phase:'complete',geometry_available:true,dense_available:true,surface_supported:true,fragments:[] as unknown[]};
   (reconstructionRequest as jest.Mock).mockImplementation(async(path:string)=>{
     if(path.endsWith('/start'))current={...current,fragments:[{id:'c'.repeat(32),phase:'densifying'}]};
     if(path.endsWith('/cancel'))current={...current,fragments:[{id:'c'.repeat(32),phase:'cancelled'}]};

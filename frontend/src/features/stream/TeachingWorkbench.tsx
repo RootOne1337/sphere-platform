@@ -9,7 +9,7 @@ import { calibrated, calibrateProfile, calibrationNames, cameraContact, defaultT
 import { TeachingKeyBindings } from './TeachingKeyBindings';
 import { connectTeaching, type TeachingConnection } from './teachingConnection';
 import type { DirectProbeResult } from './directProbe';
-import { TeachingReview } from './TeachingReview';
+import { TeachingReview, type TeachingClipChoice } from './TeachingReview';
 import { TeachingScenePreview } from './TeachingScenePreview';
 import { teachingTitle } from './teachingMetadata';
 import {TeachingCaptureSetup,type CaptureQuality} from './TeachingCaptureSetup';
@@ -46,8 +46,11 @@ export function TeachingWorkbench({ deviceId, readOnly }: { deviceId: string; re
   const [refresh, setRefresh] = useState(0);
   const [workspaceMode,setWorkspaceMode]=useState<'capture'|'review'|'live'>('capture');
   const [captureQuality,setCaptureQuality]=useState<CaptureQuality|null>(null);
-  const [navigationJob,setNavigationJob]=useState<ReconstructionJob|null>(null);
-  const routeChanged=useCallback((job:ReconstructionJob|null)=>setNavigationJob(job),[]);
+  const [navigationBinding,setNavigationBinding]=useState<{job:ReconstructionJob;clip:string;scope:string}|null>(null);
+  const [clipChoices,setClipChoices]=useState<TeachingClipChoice[]>([]);
+  const routeChanged=useCallback((job:ReconstructionJob|null,sourceClip:string|null,scope:string|null)=>setNavigationBinding(job&&sourceClip&&scope?{job,clip:sourceClip,scope}:null),[]);
+  const clipsChanged=useCallback((items:TeachingClipChoice[])=>setClipChoices(items),[]);
+  const navigationJob=navigationBinding?.clip===clip&&navigationBinding.scope===storageScope?navigationBinding.job:null;
   const video = useRef<HTMLVideoElement>(null); const host = useRef<HTMLDivElement>(null);
   const connection = useRef<TeachingConnection | null>(null), controller = useRef<TeachingContacts | null>(null);
   const abort = useRef<AbortController | null>(null), stopPromise = useRef<Promise<void> | null>(null);
@@ -320,7 +323,7 @@ export function TeachingWorkbench({ deviceId, readOnly }: { deviceId: string; re
         <div className="flex flex-wrap gap-2 border-t border-border p-3 text-xs text-muted-foreground"><span className={`rounded-md px-2 py-1 ${inputEnabled(phase) ? 'bg-primary/15 text-primary' : 'bg-muted'}`}>{inputEnabled(phase) ? 'Управление включено · фокус на экране' : 'Управление выключено'}</span><span className="rounded-md bg-muted px-2 py-1">{profile.mode==='stick'?`${keyLabel(mappedKeys.forward)}/${keyLabel(mappedKeys.left)}/${keyLabel(mappedKeys.reverse)}/${keyLabel(mappedKeys.right)} · стик`:`${keyLabel(mappedKeys.forward)}/${keyLabel(mappedKeys.reverse)} · газ и тормоз · ${keyLabel(mappedKeys.left)}/${keyLabel(mappedKeys.right)} · руль`}</span>{profile.mode==='stick'&&<span className="rounded-md bg-muted px-2 py-1">{keyLabel(mappedKeys.slow)} · 40% скорости</span>}<span className="rounded-md bg-muted px-2 py-1">ЛКМ + движение · камера</span><span className="rounded-md bg-muted px-2 py-1">{keyLabel(mappedKeys.action)} · удержание кнопки</span></div>
         <details className="px-4 pb-3 text-xs text-muted-foreground"><summary>Диагностика приёма видео</summary>{encoded}</details>
       </section>
-      {workspaceMode==='live'&&<TeachingNavigation key={navigationJob?.id??'none'} job={navigationJob} video={video} ready={ready} binding={binding??null}/>}
+      {workspaceMode==='live'&&<TeachingNavigation key={navigationJob?.id??'none'} job={navigationJob} video={video} ready={ready} binding={binding??null} clips={clipChoices} clip={clip} scope={storageScope} onSelectClip={setClip} selectionDisabled={active(phase)||exportBusy||phase==='connecting'}/>}
       <aside className={workspaceMode==='live'?'space-y-4 rounded-2xl border border-border bg-card p-4 xl:col-span-2':'space-y-4 rounded-2xl border border-border bg-card p-4'}>
         <h3 className="font-semibold">Подготовка маршрута</h3>
         <label className="block space-y-1 text-sm"><span>Название</span><input className={field} value={title} placeholder="Автоматически: дата, время и номер записи" maxLength={128} disabled={active(phase)} onChange={e => setTitle(e.target.value)} /></label>
@@ -344,7 +347,7 @@ export function TeachingWorkbench({ deviceId, readOnly }: { deviceId: string; re
     {workspaceMode==='capture'&&<TeachingScenePreview video={video} deviceId={deviceId} ready={ready} controlActive={active(phase)} />}
     </div>
     </div>
-    <fieldset hidden={workspaceMode!=='review'} disabled={active(phase)} className="min-w-0 border-0 p-0"><TeachingReview key={storageScope} storageScope={storageScope} selected={clip} refresh={refresh} onSelect={setClip} onBusyChange={setExportBusy} onRouteChange={routeChanged} visible={workspaceMode==='review'}/></fieldset>
+    <fieldset hidden={workspaceMode!=='review'} disabled={active(phase)} className="min-w-0 border-0 p-0"><TeachingReview key={storageScope} storageScope={storageScope} selected={clip} refresh={refresh} onSelect={setClip} onBusyChange={setExportBusy} onRouteChange={routeChanged} onClipsChange={clipsChanged} visible={workspaceMode==='review'}/></fieldset>
     <p className="flex items-center gap-2 text-xs text-muted-foreground"><Download size={14} />Материал содержит только явно записанный проход. Он ещё не доказывает повторение маршрута ИИ.</p>
   </div>;
 }

@@ -1,5 +1,5 @@
 'use client';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { exportTeachingFolder, type ExportProgress } from './teachingExport';
 import { TeachingReconstruction } from './TeachingReconstruction';
@@ -9,6 +9,7 @@ import { readTeachingLabel, renameTeachingLabel, seekTeachingSecond, teachingDat
 
 type Row = { index: number; offset: number; bytes: number; relative_ticks_90k: number; key: boolean; seekable?: boolean; sha256: string; worker_observed_at_ms: number };
 type Clip = { id: string; title: string; createdAt: number; complete: boolean; frames: number; failure: string | null; hudHidden:boolean };
+export type TeachingClipChoice = Pick<Clip,'id'|'title'|'complete'|'frames'>;
 const names = ['video.h264','frames.jsonl','inputs.jsonl','manifest.json','COMPLETE'];
 const digest = async (buffer: ArrayBuffer) => Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',buffer)), v => v.toString(16).padStart(2,'0')).join('');
 export function h264Codec(data: Uint8Array): string | null {
@@ -19,9 +20,12 @@ export function h264Codec(data: Uint8Array): string | null {
   }
   return null;
 }
-export function TeachingReview({ selected, refresh, onSelect, storageScope, onBusyChange,onRouteChange,visible=true }: { selected: string | null; refresh: number; onSelect: (id: string | null) => void; storageScope: string | null; onBusyChange?: (busy:boolean)=>void;onRouteChange?:(job:ReconstructionJob|null)=>void;visible?:boolean }) {
-  useEffect(()=>{onRouteChange?.(null);},[selected,storageScope,onRouteChange]);
+export function TeachingReview({ selected, refresh, onSelect, storageScope, onBusyChange,onRouteChange,onClipsChange,visible=true }: { selected: string | null; refresh: number; onSelect: (id: string | null) => void; storageScope: string | null; onBusyChange?: (busy:boolean)=>void;onRouteChange?:(job:ReconstructionJob|null,clip:string|null,scope:string|null)=>void;onClipsChange?:(clips:TeachingClipChoice[])=>void;visible?:boolean }) {
+  useEffect(()=>{onRouteChange?.(null,selected,storageScope);},[selected,storageScope,onRouteChange]);
+  const routeChanged=useCallback((job:ReconstructionJob|null)=>onRouteChange?.(job,selected,storageScope),[onRouteChange,selected,storageScope]);
   const [clips,setClips]=useState<Clip[]>([]),[error,setError]=useState<string|null>(null);
+  const [libraryTruncated,setLibraryTruncated]=useState(false);
+  useEffect(()=>{onClipsChange?.(clips);},[clips,onClipsChange]);
   const [rows,setRows]=useState<Row[]>([]),[inputs,setInputs]=useState<Record<string,unknown>[]>([]),[position,setPosition]=useState(0);
   const [localRefresh,setLocalRefresh]=useState(0),[decoding,setDecoding]=useState(false);
   const [search,setSearch]=useState(''),[deleteConfirm,setDeleteConfirm]=useState(false),[deleting,setDeleting]=useState(false);
@@ -53,8 +57,9 @@ export function TeachingReview({ selected, refresh, onSelect, storageScope, onBu
       try {library=await root.getDirectoryHandle('sphere-teaching-'+storageScope);} catch {return;}
       const found:Clip[]=[];let examined=0;
       const iterable=library as FileSystemDirectoryHandle & { values(): AsyncIterableIterator<FileSystemHandle> };
+      let truncated=false;
       for await(const entry of iterable.values()) {
-        if(++examined>100) break;
+        if(++examined>100) {truncated=true;break;}
         if(entry.kind!=='directory'||!/^[0-9a-f]{32}$/.test(entry.name)) continue;
         const folder=await library.getDirectoryHandle(entry.name);
         try {
@@ -65,7 +70,7 @@ export function TeachingReview({ selected, refresh, onSelect, storageScope, onBu
             frames:Number(manifest.frames),failure:manifest.failure,hudHidden:manifest.config?.hud_hidden_declared===true});
         } catch { found.push({id:entry.name,title:'Прерванная запись',createdAt:0,complete:false,frames:0,failure:'manifest_missing',hudHidden:false}); }
       }
-      if(!retired)setClips(found.sort((a,b)=>b.createdAt-a.createdAt||a.id.localeCompare(b.id)).slice(0,20));
+      if(!retired){setClips(found.sort((a,b)=>b.createdAt-a.createdAt||a.id.localeCompare(b.id)));setLibraryTruncated(truncated);}
     })().catch(()=>{if(!retired)setError('Не удалось прочитать локальную библиотеку браузера.');});
     return()=>{retired=true;};
   },[refresh,localRefresh,storageScope]);
@@ -153,6 +158,7 @@ export function TeachingReview({ selected, refresh, onSelect, storageScope, onBu
   return <section aria-label="Просмотр записанных маршрутов" className="space-y-4 rounded-2xl border border-border bg-card p-4 sm:p-5">
     <div><h3 className="text-lg font-semibold">Записанные проходы</h3><p className="mt-1 text-sm text-muted-foreground">Локальная библиотека этого браузера. Кадры проверяются по SHA-256; время получения кадра не равно времени его захвата Android.</p></div>
     {!clips.length?<p className="text-sm text-muted-foreground">Сохранённых материалов пока нет.</p>:<div className="space-y-2"><div className="flex flex-wrap items-end justify-between gap-2"><label className="block min-w-0 flex-1 space-y-1 text-xs text-muted-foreground"><span>Поиск по названию или идентификатору</span><input className="w-full max-w-md rounded-lg border border-input bg-background px-3 py-2 text-sm text-foreground" value={search} onChange={e=>setSearch(e.target.value)} /></label><span className="text-xs text-muted-foreground">Показано {shown.length} из {clips.length}</span></div>{shown.length?<div className="grid max-h-72 gap-2 overflow-auto sm:grid-cols-2 xl:grid-cols-3">{shown.map(c=><Button key={c.id} aria-pressed={selected===c.id} className="h-auto min-w-0 flex-col items-start gap-1 whitespace-normal py-3 text-left" disabled={exporting||processing||renaming||deleting} variant={selected===c.id?'default':'outline'} onClick={()=>onSelect(c.id)}><span className="max-w-full break-words">{c.title}</span><span className="text-xs opacity-75">{teachingDate(c.createdAt)} · {c.id.slice(0,8)} · {c.complete?'Готов':'Неполный'} · {c.frames} кадров</span></Button>)}</div>:<p className="text-sm text-muted-foreground">По этому запросу записи не найдены.</p>}</div>}
+    {libraryTruncated&&<p role="status" className="text-xs text-amber-500">Проверены первые 100 элементов библиотеки. Часть записей может не отображаться; исходные материалы не удалены.</p>}
     {error&&<p role="alert" className="text-sm text-destructive">{error}</p>}
     {capture&&rows.length>0&&<div aria-label="Измеренное качество сохранённой записи" className="grid gap-4 rounded-xl border border-border bg-muted/20 p-4 sm:grid-cols-[1fr_240px]"><div className="flex flex-wrap gap-x-6 gap-y-2 text-xs tabular-nums"><strong className={capture.cadence30Confirmed?'text-emerald-500':'text-amber-500'}>{capture.fps?.toFixed(2)??'—'} средних FPS</strong><span>{capture.bitrateBps==null?'—':(capture.bitrateBps/1e6).toFixed(2)} Мбит/с</span><span>Интервалы p95 {capture.p95GapMs?.toFixed(1)??'—'} мс · max {capture.maxGapMs?.toFixed(1)??'—'} мс</span><span>Интервалы &gt;200 мс: {capture.gaps200} · &gt;1 с: {capture.gaps1000}</span><p className="w-full text-muted-foreground">{capture.cadence30Confirmed?'Средняя частота записи достигла 30 FPS с допуском 0,5 FPS, интервалов длиннее 200 мс нет.':'Целевой режим 30 FPS не подтверждён. Для восстановления используются только реально записанные кадры.'} Качество рендера игры и полная задержка Android по этим данным неизвестны.</p></div><div><p className="mb-1 text-[10px] text-muted-foreground">Интервалы кадров по ходу записи, мс · график ограничен 100 мс</p><svg viewBox="0 0 240 60" className="h-16 w-full" role="img" aria-label="График интервалов видеокадров"><line x1={0} y1={50} x2={240} y2={50} stroke="currentColor" opacity={.2}/><polyline fill="none" stroke="currentColor" className="text-cyan-500" strokeWidth={1.5} points={capture.chart.map((n,i)=>`${i*240/Math.max(1,capture.chart.length-1)},${55-Math.min(100,n)*.5}`).join(' ')}/></svg></div></div>}
     {selected&&<div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_280px]"><div className="min-w-0 space-y-3"><div ref={view} className="max-h-[75dvh] overflow-auto rounded-xl bg-black"><canvas ref={canvas} className="block h-auto max-w-none" style={{width:`${zoom*100}%`}} aria-label="Записанный видеокадр" /></div>
@@ -167,6 +173,6 @@ export function TeachingReview({ selected, refresh, onSelect, storageScope, onBu
         <details><summary className="cursor-pointer text-sm">Отдельные файлы и диагностика</summary><div className="mt-2 flex flex-wrap gap-2">{names.map(name=><Button disabled={exporting||deleting} size="sm" variant="outline" key={name} onClick={()=>{void download(name);}}>{name}</Button>)}</div></details>
         {!deleteConfirm?<Button disabled={exporting||processing||deleting} variant="ghost" className="text-destructive" onClick={()=>setDeleteConfirm(true)}>Удалить выбранный локальный материал</Button>:<div role="group" aria-label="Подтверждение удаления записи" className="space-y-2 rounded-lg border border-destructive/40 bg-destructive/5 p-3"><p className="text-xs leading-5 text-muted-foreground">Локальная запись и связанные с ней ссылки будут удалены из этого браузера. Если нужен архив, сначала сохраните пакет в папку.</p><div className="flex flex-wrap gap-2"><Button size="sm" variant="destructive" disabled={deleting} onClick={()=>{void(async()=>{if(deleteInFlight.current)return;deleteInFlight.current=true;setDeleting(true);try{if(!storageScope||!/^[0-9a-f]{32}$/.test(storageScope)||!/^[0-9a-f]{32}$/.test(selected))throw Error();const root=await navigator.storage.getDirectory();const library=await root.getDirectoryHandle('sphere-teaching-'+storageScope);await library.removeEntry(selected,{recursive:true});onSelect(null);setLocalRefresh(v=>v+1);}catch{setError('Удаление не подтверждено. Проверьте библиотеку перед повтором.');}finally{deleteInFlight.current=false;setDeleting(false);setDeleteConfirm(false);}})();}}>{deleting?'Удаление…':'Удалить навсегда'}</Button><Button size="sm" variant="outline" disabled={deleting} onClick={()=>setDeleteConfirm(false)}>Отмена</Button></div></div>}
       </div></div>}
-    {selected&&storageScope&&rows.length>0&&clips.some(c=>c.id===selected)&&<TeachingReconstruction key={selected} clip={selected} scope={storageScope} folder={()=>directory.current} complete={!exporting&&!deleting&&!!clips.find(c=>c.id===selected)?.complete} hudHidden={clips.find(c=>c.id===selected)?.hudHidden} onBusyChange={setProcessing} onRouteChange={onRouteChange} visible={visible}/>}
+    {selected&&storageScope&&rows.length>0&&clips.some(c=>c.id===selected)&&<TeachingReconstruction key={selected} clip={selected} scope={storageScope} folder={()=>directory.current} complete={!exporting&&!deleting&&!!clips.find(c=>c.id===selected)?.complete} hudHidden={clips.find(c=>c.id===selected)?.hudHidden} onBusyChange={setProcessing} onRouteChange={routeChanged} visible={visible}/>}
   </section>;
 }
