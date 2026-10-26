@@ -23,14 +23,14 @@ test('read-only workbench exposes setup and emergency stop without opening media
   expect(screen.getByRole('button',{name:'Подключить поток'})).toBeDisabled();
   expect(screen.getByRole('button',{name:'Записать маршрут'})).toBeDisabled();
   expect(screen.getByRole('button',{name:'Остановить · Esc'})).toBeDisabled();
-  expect(screen.getByLabelText('Игровой экран: WASD, мышь, пробел, Shift; Escape — остановить запись')).toBeInTheDocument();
+  expect(screen.getByLabelText('Игровой экран: назначенные клавиши и мышь; Escape — остановить запись')).toBeInTheDocument();
   expect(screen.getByText('Для записи требуется право stream:control.')).toBeInTheDocument();
   expect(connectTeaching).not.toHaveBeenCalled();
 });
 test('initial operator view does not record until explicit authenticated connection and start',()=>{
   render(<TeachingWorkbench deviceId="test-device" readOnly={false} />);
   expect(screen.getByRole('button',{name:'Записать маршрут'})).toBeDisabled();
-  expect(screen.getByText('WASD · стик')).toBeInTheDocument();
+  expect(screen.getByText('W/A/S/D · стик')).toBeInTheDocument();
   expect(connectTeaching).not.toHaveBeenCalled();
 });
 test('produce static layout fixture for browser review without impersonating a live device',()=>{
@@ -52,15 +52,19 @@ test('operator can use held WASD before recording, then closes that owner before
   });
   render(<TeachingWorkbench deviceId="test-device" readOnly={false} />);
   const connect=screen.getByRole('button',{name:'Подключить поток'});await waitFor(()=>expect(connect).toBeEnabled());fireEvent.click(connect);
-  const control=screen.getByRole('button',{name:'Включить управление'});await waitFor(()=>expect(control).toBeEnabled());fireEvent.click(control);
+  const control=screen.getByRole('button',{name:'Включить управление'});await waitFor(()=>expect(control).toBeEnabled());
+  const forwardKey=screen.getByRole('button',{name:'Клавиша: Вперёд / газ'});fireEvent.click(forwardKey);
+  expect(control).toBeDisabled();expect(screen.getByRole('button',{name:'Записать маршрут'})).toBeDisabled();
+  fireEvent.keyDown(forwardKey,{code:'ArrowUp'});fireEvent.click(control);
   await screen.findByText('Управление включено · фокус на экране');
   expect(screen.getByRole('button',{name:'Подключить 3D-просмотр'})).toBeDisabled();
-  const video=screen.getByLabelText('Игровой экран: WASD, мышь, пробел, Shift; Escape — остановить запись');
-  fireEvent.keyDown(video,{code:'KeyW'});fireEvent.keyUp(video,{code:'KeyW'});
+  const video=screen.getByLabelText('Игровой экран: назначенные клавиши и мышь; Escape — остановить запись');
+  fireEvent.keyDown(video,{code:'KeyW'});expect(mockSet).not.toHaveBeenCalled();
+  fireEvent.keyDown(video,{code:'ArrowUp'});fireEvent.keyUp(video,{code:'ArrowUp'});
   expect(mockSet).toHaveBeenCalledWith(0,{x:144,y:442});expect(mockSet).toHaveBeenCalledWith(0,null);
   expect(postMessage).not.toHaveBeenCalledWith(expect.objectContaining({type:'arm'}));
   fireEvent.click(screen.getByRole('button',{name:'Записать маршрут'}));
-  await waitFor(()=>expect(postMessage).toHaveBeenCalledWith(expect.objectContaining({type:'arm',config:expect.objectContaining({max_duration_ms:600000})})));
+  await waitFor(()=>expect(postMessage).toHaveBeenCalledWith(expect.objectContaining({type:'arm',config:expect.objectContaining({max_duration_ms:600000,profile:expect.objectContaining({keys:expect.objectContaining({forward:'ArrowUp'})})})})));
   expect(mockClose).toHaveBeenCalledTimes(1);expect(mockControllers).toHaveLength(2);
   act(()=>emit({type:'recording'}));fireEvent.keyDown(video,{code:'Space'});fireEvent.keyUp(video,{code:'Space'});
   expect(mockSet).toHaveBeenCalledWith(2,null);

@@ -3,13 +3,45 @@ import { stickPoint, type TeachingPoint } from './teachingContacts';
 export type VehicleButton = 'forward' | 'reverse' | 'left' | 'right';
 export type CalibrationTarget = 'stick' | 'action' | VehicleButton;
 export type PercentPoint = { x: number; y: number };
+export const keyRoles = ['forward','reverse','left','right','action','slow'] as const;
+export type TeachingKeyRole = typeof keyRoles[number];
+export type TeachingKeys = Record<TeachingKeyRole,string>;
+export const defaultTeachingKeys: TeachingKeys = {forward:'KeyW',reverse:'KeyS',left:'KeyA',right:'KeyD',action:'Space',slow:'ShiftLeft'};
+export const keyRoleNames: Record<TeachingKeyRole,string> = {forward:'Вперёд / газ',reverse:'Назад / тормоз',left:'Влево',right:'Вправо',action:'Действие',slow:'Медленный ход'};
 export type TeachingProfile = {
   schema: 'sphere-touch-keymap-v1';
   mode: 'stick' | 'vehicle_buttons';
   stick_x: number; stick_y: number; radius: number; action_x: number; action_y: number;
   vehicle: Record<VehicleButton, PercentPoint>;
   calibration: { width: number; height: number; buttons: CalibrationTarget[] } | null;
+  /** Optional physical keyboard mapping; recorded contacts remain Android coordinates. */
+  keys?: TeachingKeys;
 };
+export const teachingKeys = (profile: TeachingProfile): TeachingKeys => profile.keys ?? defaultTeachingKeys;
+export function keyLabel(code: string): string {
+  return ({Space:'Пробел',ShiftLeft:'Левый Shift',ShiftRight:'Правый Shift',ArrowUp:'↑',ArrowDown:'↓',ArrowLeft:'←',ArrowRight:'→'} as Record<string,string>)[code] ?? code.replace(/^(Key|Digit)/,'');
+}
+export function keyBindingIssue(keys: TeachingKeys): string | null {
+  if(!keys || Object.keys(keys).length!==keyRoles.length || keyRoles.some(role=>typeof keys[role]!=='string'||! /^(Key[A-Z]|Digit[0-9]|Arrow(Up|Down|Left|Right)|Space|Shift(Left|Right))$/.test(keys[role])))return 'Выберите букву, цифру, стрелку, пробел или Shift. Escape всегда останавливает ввод.';
+  if(new Set(Object.values(keys)).size!==keyRoles.length)return 'Одна клавиша уже назначена другому действию. Выберите свободную клавишу.';
+  return null;
+}
+export function bindTeachingKey(profile: TeachingProfile, role: TeachingKeyRole, code: string): TeachingProfile {
+  const keys={...teachingKeys(profile),[role]:code};
+  const issue=keyBindingIssue(keys);if(issue)throw Error(issue);
+  return {...profile,keys};
+}
+export function teachingRole(code: string, profile: TeachingProfile): TeachingKeyRole | null {
+  const keys=teachingKeys(profile);
+  // Preserve the original two-Shift default without making explicit mappings ambiguous.
+  if(!profile.keys&&code==='ShiftRight')return 'slow';
+  return keyRoles.find(role=>keys[role]===code)??null;
+}
+function canonicalKeys(physical: ReadonlySet<string>, profile: TeachingProfile): Set<string> {
+  const result=new Set<string>();
+  physical.forEach(code=>{const role=teachingRole(code,profile);if(role)result.add(defaultTeachingKeys[role]);});
+  return result;
+}
 export const vehicleButtons: VehicleButton[] = ['forward','reverse','left','right'];
 export const calibrationNames: Record<CalibrationTarget,string> = {
   stick:'центр стика',action:'кнопку действия',forward:'газ / вперёд',reverse:'тормоз / назад',left:'поворот влево',right:'поворот вправо',
@@ -33,6 +65,7 @@ export function calibrateProfile(profile: TeachingProfile, geometry: Geometry, t
     :{...profile,vehicle:{...profile.vehicle,[target]:{x,y}},calibration};
 }
 export function profileIssue(profile: TeachingProfile, geometry: Geometry): string | null {
+  const keysIssue=keyBindingIssue(teachingKeys(profile));if(keysIssue)return keysIssue;
   if(profile.mode==='stick') {
     const center=fromPercent({x:profile.stick_x,y:profile.stick_y},geometry),radius=profile.radius/100*Math.min(geometry.width,geometry.height);
     return center.x-radius<0||center.y-radius<0||center.x+radius>=geometry.width||center.y+radius>=geometry.height?'Зона стика выходит за экран. Уменьшите радиус или измените центр.':null;
@@ -44,6 +77,7 @@ export function profileIssue(profile: TeachingProfile, geometry: Geometry): stri
 }
 /** A repeated desired state is a hold. The contact driver suppresses duplicate edges. */
 export function movementTargets(keys: ReadonlySet<string>, profile: TeachingProfile, geometry: Geometry): {stick?:TeachingPoint; primary:TeachingPoint|null; secondary?:TeachingPoint|null} {
+  keys=canonicalKeys(keys,profile);
   if(profile.mode==='stick') {
     const stick=fromPercent({x:profile.stick_x,y:profile.stick_y},geometry);
     return {stick,primary:stickPoint(keys,stick,profile.radius*Math.min(geometry.width,geometry.height)/100,keys.has('ShiftLeft')||keys.has('ShiftRight'))};

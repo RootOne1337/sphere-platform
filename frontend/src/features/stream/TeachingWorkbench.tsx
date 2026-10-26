@@ -5,7 +5,8 @@ import { Button } from '@/components/ui/button';
 import { useAuthStore } from '@/lib/store';
 import { StreamQualityControl } from './StreamQualityControl';
 import { TeachingContacts, type TeachingInput, type TeachingPoint } from './teachingContacts';
-import { calibrated, calibrateProfile, calibrationNames, cameraContact, defaultTeachingProfile, fromPercent, movementTargets, profileIssue, vehicleButtons, type CalibrationTarget, type TeachingProfile } from './teachingKeymap';
+import { calibrated, calibrateProfile, calibrationNames, cameraContact, defaultTeachingProfile, fromPercent, keyLabel, movementTargets, profileIssue, teachingKeys, teachingRole, vehicleButtons, type CalibrationTarget, type TeachingKeyRole, type TeachingProfile } from './teachingKeymap';
+import { TeachingKeyBindings } from './TeachingKeyBindings';
 import { connectTeaching, type TeachingConnection } from './teachingConnection';
 import type { DirectProbeResult } from './directProbe';
 import { TeachingReview } from './TeachingReview';
@@ -30,6 +31,7 @@ export function TeachingWorkbench({ deviceId, readOnly }: { deviceId: string; re
   const [inputRtt,setInputRtt]=useState<number|null>(null);
   const [profile, setProfile] = useState<TeachingProfile>(defaultTeachingProfile); const profileRef = useRef(profile); profileRef.current = profile;
   const [calibrate, setCalibrate] = useState<CalibrationTarget | null>(null);
+  const [bindingTarget,setBindingTarget]=useState<TeachingKeyRole|null>(null);
   const [hudHidden, setHudHidden] = useState(false);
   const [exportBusy,setExportBusy] = useState(false);
   const [title, setTitle] = useState('');
@@ -163,7 +165,7 @@ export function TeachingWorkbench({ deviceId, readOnly }: { deviceId: string; re
         conn.observeControl?.(state==='failed'?'fenced':state,reason);
         setNative(state === 'ready' ? 'READY · 3 контакта' : state === 'closed' ? 'CLOSED · освобождено' : state);
         if (state === 'ready' && phaseRef.current === 'opening') {
-          if(mode === 'control') { change('controlling'); setNotice('Управление включено без записи. Щёлкните по экрану: WASD, мышь, пробел.'); video.current?.focus({preventScroll:true}); }
+          if(mode === 'control') { change('controlling'); setNotice('Управление включено без записи. Щёлкните по экрану: назначенные клавиши и мышь.'); video.current?.focus({preventScroll:true}); }
           else {
             change('arming'); armSent.current = true; conn.worker.postMessage({ type: 'arm', config: recordConfig.current });
             setNotice('Ждём ключевой H264-кадр. Не удерживайте клавиши до начала записи.');
@@ -223,15 +225,16 @@ export function TeachingWorkbench({ deviceId, readOnly }: { deviceId: string; re
   };
   const key = (event: React.KeyboardEvent, down: boolean) => {
     if (event.code === 'Escape') { event.preventDefault(); void stop(); return; }
-    if (!inputEnabled(phaseRef.current) || !['KeyW','KeyA','KeyS','KeyD','Space','ShiftLeft','ShiftRight'].includes(event.code)) return;
+    const role=teachingRole(event.code,profileRef.current);
+    if (!inputEnabled(phaseRef.current) || !role) return;
     event.preventDefault(); if (event.repeat || keys.current.has(event.code) === down) return;
     const binding=connection.current?.binding(), mapping=profileRef.current;
-    if(event.code==='Space'&&down&&mapping.mode==='vehicle_buttons') {
+    if(role==='action'&&down&&mapping.mode==='vehicle_buttons') {
       if(mouse.current!==null){setNotice('Отпустите мышь, чтобы использовать дополнительное действие.');return;}
-      if(!binding||!calibrated(mapping,binding,'action')){setNotice('Сначала укажите дополнительную кнопку транспорта для пробела.');return;}
+      if(!binding||!calibrated(mapping,binding,'action')){setNotice('Сначала укажите экранную зону дополнительного действия транспорта.');return;}
     }
     if (down) keys.current.add(event.code); else keys.current.delete(event.code);
-    if (event.code === 'Space') {
+    if (role === 'action') {
       const b = connection.current?.binding(), p = profileRef.current;
       if (b) controller.current?.set(2, down ? fromPercent({x:p.action_x,y:p.action_y},b) : null);
     } else updateStick();
@@ -245,19 +248,19 @@ export function TeachingWorkbench({ deviceId, readOnly }: { deviceId: string; re
   };
   const field = 'w-full rounded-lg border border-input bg-background px-3 py-2 text-sm';
   const toolbarButton = 'h-auto min-h-9 whitespace-normal px-2 py-2 text-xs sm:text-sm';
-  const binding=connection.current?.binding(), mappingIssue=binding?profileIssue(profile,binding):null;
+  const binding=connection.current?.binding(), mappingIssue=binding?profileIssue(profile,binding):null, mappedKeys=teachingKeys(profile);
   const calibrationMarkers=binding?(profile.mode==='vehicle_buttons'
-    ?vehicleButtons.filter(target=>calibrated(profile,binding,target)).map(target=>({...fromPercent(profile.vehicle[target],binding),label:({forward:'W',reverse:'S',left:'A',right:'D'})[target]}))
-    :calibrated(profile,binding,'stick')?[{...fromPercent({x:profile.stick_x,y:profile.stick_y},binding),label:'WASD'}]:[]):[];
-  if(binding&&calibrated(profile,binding,'action'))calibrationMarkers.push({...fromPercent({x:profile.action_x,y:profile.action_y},binding),label:'Space'});
-  const chooseCalibration=(target:CalibrationTarget)=>{setCalibrate(target);video.current?.scrollIntoView({block:'center',behavior:'smooth'});};
+    ?vehicleButtons.filter(target=>calibrated(profile,binding,target)).map(target=>({...fromPercent(profile.vehicle[target],binding),label:keyLabel(mappedKeys[target])}))
+    :calibrated(profile,binding,'stick')?[{...fromPercent({x:profile.stick_x,y:profile.stick_y},binding),label:['forward','left','reverse','right'].map(role=>keyLabel(mappedKeys[role as keyof typeof mappedKeys])).join('')}]:[]):[];
+  if(binding&&calibrated(profile,binding,'action'))calibrationMarkers.push({...fromPercent({x:profile.action_x,y:profile.action_y},binding),label:keyLabel(mappedKeys.action)});
+  const chooseCalibration=(target:CalibrationTarget)=>{setBindingTarget(null);setCalibrate(target);video.current?.scrollIntoView({block:'center',behavior:'smooth'});};
   return <div ref={host} className="space-y-4" aria-label="Запись учебного маршрута">
     <div className="space-y-4">
     <div aria-label="Панель записи" className="sticky top-16 z-30 flex flex-wrap items-center gap-2 rounded-2xl border border-border bg-card/95 p-3 shadow-xl backdrop-blur">
       <div className="grid w-full grid-cols-2 gap-2 lg:flex lg:w-auto lg:flex-wrap">
       <Button className={toolbarButton} variant="outline" disabled={readOnly || exportBusy || !storageScope || active(phase) || phase === 'connecting'} onClick={() => { void connect(); }}>{phase === 'idle' ? 'Подключить поток' : 'Подключить заново'}</Button>
-      <Button className={toolbarButton} variant="outline" disabled={readOnly || exportBusy || phase !== 'preview' || !ready || !!calibrate || !!mappingIssue} onClick={enableControl}><Keyboard size={15} className="mr-2 shrink-0" />Включить управление</Button>
-      <Button className={toolbarButton} disabled={readOnly || exportBusy || !['preview','controlling'].includes(phase) || !ready || !!calibrate || !!mappingIssue} onClick={() => { void record(); }}><Circle size={15} className="mr-2 shrink-0 text-red-500" />Записать маршрут</Button>
+      <Button className={toolbarButton} variant="outline" disabled={readOnly || exportBusy || phase !== 'preview' || !ready || !!calibrate || !!bindingTarget || !!mappingIssue} onClick={enableControl}><Keyboard size={15} className="mr-2 shrink-0" />Включить управление</Button>
+      <Button className={toolbarButton} disabled={readOnly || exportBusy || !['preview','controlling'].includes(phase) || !ready || !!calibrate || !!bindingTarget || !!mappingIssue} onClick={() => { void record(); }}><Circle size={15} className="mr-2 shrink-0 text-red-500" />Записать маршрут</Button>
       <Button className={toolbarButton} variant="destructive" disabled={!active(phase) || phase === 'stopping'} onClick={() => { void stop(); }}><Square size={15} className="mr-2 shrink-0" />{phase === 'stopping' ? 'Освобождение и сохранение…' : 'Остановить · Esc'}</Button>
       </div>
       {(phase==='recording'||phase==='finished')&&<span className="rounded-lg bg-muted px-2 py-1 font-mono text-xs tabular-nums">{progress.seconds.toFixed(1)} с · {progress.frames} кадров{progress.seconds>0?` · ${(progress.frames/progress.seconds).toFixed(1)} средних FPS`:''}</span>}
@@ -272,7 +275,7 @@ export function TeachingWorkbench({ deviceId, readOnly }: { deviceId: string; re
       <section className="overflow-hidden rounded-2xl border border-border bg-card">
         <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border px-4 py-3 text-sm"><span className="font-medium">{phase === 'recording' ? '● Запись' : 'Прямой экран Android'}</span><span className="text-xs text-muted-foreground">{connection.current?.binding() ? `${connection.current.binding()!.width} × ${connection.current.binding()!.height}` : 'Размер ожидается'}</span></div>
         <div className="relative">
-        <video ref={video} muted playsInline tabIndex={0} aria-label="Игровой экран: WASD, мышь, пробел, Shift; Escape — остановить запись"
+        <video ref={video} muted playsInline tabIndex={0} aria-label="Игровой экран: назначенные клавиши и мышь; Escape — остановить запись"
           className="aspect-video max-h-[calc(100dvh-14rem)] w-full scroll-mt-56 touch-none bg-black object-contain outline-none focus-visible:ring-2 focus-visible:ring-primary"
           onKeyDown={e => key(e,true)} onKeyUp={e => key(e,false)} onContextMenu={e => e.preventDefault()}
           onBlur={() => { if (keys.current.size || mouse.current !== null) void stop('input_focus_lost'); }}
@@ -282,7 +285,7 @@ export function TeachingWorkbench({ deviceId, readOnly }: { deviceId: string; re
               setProfile(p => calibrateProfile(p,b,calibrate,pos)); setCalibrate(null); return;
             }
             if (!inputEnabled(phaseRef.current) || mouse.current !== null || e.button !== 0) return;
-            if(profileRef.current.mode==='vehicle_buttons'&&keys.current.has('Space')){setNotice('Отпустите пробел, чтобы двигать камеру мышью.');return;}
+            if(profileRef.current.mode==='vehicle_buttons'&&[...keys.current].some(code=>teachingRole(code,profileRef.current)==='action')){setNotice(`Отпустите ${keyLabel(teachingKeys(profileRef.current).action)}, чтобы двигать камеру мышью.`);return;}
             e.preventDefault(); e.currentTarget.focus(); e.currentTarget.setPointerCapture(e.pointerId);
             mouse.current = e.pointerId; mouseContact.current=cameraContact(profileRef.current);controller.current?.set(mouseContact.current,pos);
           }}
@@ -295,19 +298,20 @@ export function TeachingWorkbench({ deviceId, readOnly }: { deviceId: string; re
         </svg>}
         {calibrate&&<p className="pointer-events-none absolute left-2 right-2 top-2 rounded-lg bg-background/95 px-3 py-2 text-sm text-primary">Укажите {calibrationNames[calibrate]}. Это только калибровка.</p>}
         </div>
-        <div className="flex flex-wrap gap-2 border-t border-border p-3 text-xs text-muted-foreground"><span className={`rounded-md px-2 py-1 ${inputEnabled(phase) ? 'bg-primary/15 text-primary' : 'bg-muted'}`}>{inputEnabled(phase) ? 'Управление включено · фокус на экране' : 'Управление выключено'}</span><span className="rounded-md bg-muted px-2 py-1">{profile.mode==='stick'?'WASD · стик':'W/S · газ и тормоз · A/D · руль'}</span>{profile.mode==='stick'&&<span className="rounded-md bg-muted px-2 py-1">Shift · 40% скорости</span>}<span className="rounded-md bg-muted px-2 py-1">ЛКМ + движение · камера</span><span className="rounded-md bg-muted px-2 py-1">Пробел · удержание кнопки</span></div>
+        <div className="flex flex-wrap gap-2 border-t border-border p-3 text-xs text-muted-foreground"><span className={`rounded-md px-2 py-1 ${inputEnabled(phase) ? 'bg-primary/15 text-primary' : 'bg-muted'}`}>{inputEnabled(phase) ? 'Управление включено · фокус на экране' : 'Управление выключено'}</span><span className="rounded-md bg-muted px-2 py-1">{profile.mode==='stick'?`${keyLabel(mappedKeys.forward)}/${keyLabel(mappedKeys.left)}/${keyLabel(mappedKeys.reverse)}/${keyLabel(mappedKeys.right)} · стик`:`${keyLabel(mappedKeys.forward)}/${keyLabel(mappedKeys.reverse)} · газ и тормоз · ${keyLabel(mappedKeys.left)}/${keyLabel(mappedKeys.right)} · руль`}</span>{profile.mode==='stick'&&<span className="rounded-md bg-muted px-2 py-1">{keyLabel(mappedKeys.slow)} · 40% скорости</span>}<span className="rounded-md bg-muted px-2 py-1">ЛКМ + движение · камера</span><span className="rounded-md bg-muted px-2 py-1">{keyLabel(mappedKeys.action)} · удержание кнопки</span></div>
         <details className="px-4 pb-3 text-xs text-muted-foreground"><summary>Диагностика приёма видео</summary>{encoded}</details>
       </section>
       <aside className="space-y-4 rounded-2xl border border-border bg-card p-4">
         <h3 className="font-semibold">Подготовка маршрута</h3>
         <label className="block space-y-1 text-sm"><span>Название</span><input className={field} value={title} placeholder="Автоматически: дата, время и номер записи" maxLength={128} disabled={active(phase)} onChange={e => setTitle(e.target.value)} /></label>
-        <label className="block space-y-1 text-sm"><span>Схема управления</span><select className={field} value={profile.mode} disabled={active(phase)} onChange={e=>{setCalibrate(null);setProfile(p=>({...p,mode:e.target.value as TeachingProfile['mode']}));}}><option value="stick">Стик · ходьба / аналоговое управление</option><option value="vehicle_buttons">Транспорт · газ, тормоз, левый и правый руль</option></select></label>
+        <label className="block space-y-1 text-sm"><span>Схема управления</span><select className={field} value={profile.mode} disabled={active(phase)} onChange={e=>{setBindingTarget(null);setCalibrate(null);setProfile(p=>({...p,mode:e.target.value as TeachingProfile['mode']}));}}><option value="stick">Стик · ходьба / аналоговое управление</option><option value="vehicle_buttons">Транспорт · газ, тормоз, левый и правый руль</option></select></label>
+        <TeachingKeyBindings profile={profile} disabled={readOnly||active(phase)} editing={bindingTarget} onEditingChange={role=>{setBindingTarget(role);if(role)setCalibrate(null);}} onChange={setProfile}/>
         <div className="space-y-2"><p className="text-sm font-medium">Калибровка касаний</p>
           {profile.mode==='stick'?<><Button variant="outline" className="w-full justify-start" disabled={!ready || active(phase)} onClick={() => chooseCalibration('stick')}><MousePointer2 size={15} className="mr-2" />Центр стика · {profile.stick_x.toFixed(1)} / {profile.stick_y.toFixed(1)}%</Button>
             <label className="block space-y-1 text-sm"><span>Радиус стика · % короткой стороны</span><input className={field} type="number" min={1} max={20} step={0.5} value={profile.radius} disabled={active(phase)} onChange={e => { const n = Number(e.target.value); if(n>=1&&n<=20) setProfile(p => ({...p,radius:n})); }} /></label></>
             :<>{vehicleButtons.map(target=><Button key={target} variant="outline" className="w-full justify-start" disabled={!ready||active(phase)} onClick={()=>chooseCalibration(target)}>{calibrationNames[target]} · {profile.vehicle[target].x.toFixed(1)} / {profile.vehicle[target].y.toFixed(1)}% {binding&&calibrated(profile,binding,target)?'✓':'· указать'}</Button>)}
-              <p className="text-xs leading-5 text-muted-foreground">Сначала сядьте в транспорт и укажите четыре экранные кнопки. Координаты-примеры не включают управление. W/S — газ/тормоз, A/D — поворот; мышь и пробел используются по очереди.</p></>}
-          <Button variant="outline" className="w-full justify-start" disabled={!ready || active(phase)} onClick={() => chooseCalibration('action')}>{profile.mode==='vehicle_buttons'?'Доп. действие · пробел':'Кнопка действия'} · {profile.action_x.toFixed(1)} / {profile.action_y.toFixed(1)}%</Button>
+              <p className="text-xs leading-5 text-muted-foreground">Сначала сядьте в транспорт и укажите четыре экранные кнопки. Координаты-примеры не включают управление. Клавиши указаны выше; камера мышью и дополнительное действие используются по очереди.</p></>}
+          <Button variant="outline" className="w-full justify-start" disabled={!ready || active(phase)} onClick={() => chooseCalibration('action')}>{profile.mode==='vehicle_buttons'?`Доп. действие · ${keyLabel(mappedKeys.action)}`:'Кнопка действия'} · {profile.action_x.toFixed(1)} / {profile.action_y.toFixed(1)}%</Button>
           {calibrate&&<Button size="sm" variant="ghost" onClick={()=>setCalibrate(null)}>Отменить калибровку</Button>}
         </div>
         <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={hudHidden} disabled={active(phase)} onChange={e=>setHudHidden(e.target.checked)} />HUD скрыт в игре</label>

@@ -1,4 +1,4 @@
-import { calibrated, calibrateProfile, defaultTeachingProfile, fromPercent, movementTargets, profileIssue, vehicleButtons, type TeachingProfile } from '@/src/features/stream/teachingKeymap';
+import { bindTeachingKey, calibrated, calibrateProfile, defaultTeachingProfile, fromPercent, movementTargets, profileIssue, teachingRole, vehicleButtons, type TeachingProfile } from '@/src/features/stream/teachingKeymap';
 const geometry={width:960,height:540};
 function vehicle():TeachingProfile {
   let profile:TeachingProfile={...defaultTeachingProfile,mode:'vehicle_buttons'};
@@ -25,4 +25,24 @@ test('held throttle and steering are independent targets, opposite keys release 
 test('action calibration is optional for driving, duplicate movement buttons are rejected',()=>{
   let profile=vehicle();expect(calibrated(profile,geometry,'action')).toBe(false);expect(profileIssue(profile,geometry)).toBeNull();
   profile=calibrateProfile(profile,geometry,'reverse',{x:100,y:450});expect(profileIssue(profile,geometry)).toContain('одну точку');
+});
+
+test('physical remapping preserves analog direction and hold semantics without replaying default keys',()=>{
+  let profile=bindTeachingKey(defaultTeachingProfile,'forward','ArrowUp');
+  profile=bindTeachingKey(profile,'right','ArrowRight');
+  profile=bindTeachingKey(profile,'slow','ShiftRight');
+  expect(movementTargets(new Set(['ArrowUp','ArrowRight','ShiftRight']),profile,geometry))
+    .toEqual(movementTargets(new Set(['KeyW','KeyD','ShiftLeft']),defaultTeachingProfile,geometry));
+  expect(movementTargets(new Set(['KeyW']),profile,geometry).primary).toBeNull();
+  expect(teachingRole('ShiftRight',defaultTeachingProfile)).toBe('slow');
+  expect(teachingRole('ShiftLeft',profile)).toBeNull();
+});
+
+test('duplicate and reserved keys cannot change an existing calibrated profile',()=>{
+  const profile=vehicle(),before=JSON.stringify(profile);
+  for(const code of ['KeyA','Escape','F5','Tab','ControlLeft'])expect(()=>bindTeachingKey(profile,'forward',code)).toThrow();
+  expect(JSON.stringify(profile)).toBe(before);
+  const custom=bindTeachingKey(profile,'forward','KeyI');
+  expect(custom.calibration).toEqual(profile.calibration);
+  expect(movementTargets(new Set(['KeyI','KeyS']),custom,geometry).primary).toBeNull();
 });
