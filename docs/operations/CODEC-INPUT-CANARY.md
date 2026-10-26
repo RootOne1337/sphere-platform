@@ -10,8 +10,9 @@ draw/input-to-visible acceptance ещё открыты.
 
 ## 26 октября: отдельный GPU→I420 кандидат
 
-На PH011 установлен APK91; Full HD RGBA ImageReader readback остаётся медленным.
-[Измерения и границы приёмки](../audits/2026-10-26/PH011-APK91-CAPTURE-AND-GPU-BENCHMARK.md).
+На PH011 установлен APK92/10292. На игровом экране1920×1080 проверены25,929 decoded FPS
+и4,996 RGB/s; прежний медленный RGBA путь APK91 сохранён как baseline.
+[Установка, реальные измерения и границы](../audits/2026-10-26/PH011-APK92-GPU-PLANAR-CAPTURE.md).
 В коде APK92 добавлен отдельный debug opt-in `SPHERE_STREAM_GPU_PLANAR_INPUT=true`.
 Ему требуются `SPHERE_STREAM_PLANAR_INPUT=true`, `SPHERE_DIRECT_TRANSPORT_CANARY=true`
 и **выключенный** `SPHERE_STREAM_GPU_BRIDGE`. Последний флаг обозначает старый
@@ -22,7 +23,9 @@ Release-сборки с новым режимом отклоняются.
 прежний planar encoder. До захвата проверяются цвета; после передачи плоскостей
 кодек владеет своим cache. Флаг не доказывает работоспособность: нужны реальные
 native logs, новый decode/кадры, ориентация, cadence и подтверждённое освобождение.
-До завершения configured-сборки/OTA новый режим не считается установленным.
+Configured lint/assemble/tests и PH011-only OTA завершены; SHA установленного
+пакета сверён. Новая browser-приёмка, полная capture→модель задержка и автономный
+маршрут остаются открытыми. Обычные release-сборки этим опытом не допущены.
 
 ## Исторический lifecycle follow-up 1 октября: APK 1.2.40
 

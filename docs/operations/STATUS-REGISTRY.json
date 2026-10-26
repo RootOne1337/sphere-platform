@@ -45,14 +45,14 @@
       {
         "device": "auto-ph-011",
         "deviceId": "414ce0e9-4b93-4f96-b9ca-ee675f53835e",
-        "version": "1.2.91-dev",
-        "versionCode": 10291,
-        "sourceRevision": "b26adc72a6caaf5fbafc415e61cc289b45360745",
-        "apkSha256": "2dd205c82785c14499edb52008988b8b1c8d78c31063e6da4521300e04d0daae",
-        "evidence": "docs/audits/2026-10-26/native91/delivery.json",
-        "evidenceSha256NormalizedLf": "6d7fdc1cfcdb1b634f488a64b6998a29877b1bbdef862d8b6a61c3a535966dbf",
-        "packageProofObservedAtUtc": "2026-10-25T22:52:09.124536+00:00",
-        "scope": "PH011-only local APK91 install/hash and preserved all-app dual-family VPN guard; finite4.797Hz RGB and native idle READY/CLOSED. Capture speed optimization and gameplay navigation not accepted."
+        "version": "1.2.92-dev",
+        "versionCode": 10292,
+        "sourceRevision": "ef69ee25342c9f59ed6fd137f03e38295a38b1fa",
+        "apkSha256": "a124f61920f09aa6ba5ae7becb14dcd267d05ad6365556478cd968a39c07e0b9",
+        "evidence": "docs/audits/2026-10-26/native92/delivery.json",
+        "evidenceSha256NormalizedLf": "d9a1758cf4ab483c9a2107ace0b2dfdea0f25aaf4ce3ca3f0c6bfe856e3959dc",
+        "packageProofObservedAtUtc": "2026-10-26T15:55:02.270793+00:00",
+        "scope": "PH011 addressed APK92/hash, guarded VPN,1920x1080 direct game-scene capture25.929FPS/4.996Hz RGB and finite native held contact. No new browser or gameplay navigation acceptance."
       },
       {
         "device": "auto-ph-025",
@@ -68,15 +68,16 @@
       }
     ],
     "fleetApkEvidence": {
-      "evidence": "docs/audits/2026-10-26/native91/delivery.json",
-      "evidenceSha256NormalizedLf": "6d7fdc1cfcdb1b634f488a64b6998a29877b1bbdef862d8b6a61c3a535966dbf",
+      "evidence": "docs/audits/2026-10-26/native92/delivery.json",
+      "evidenceSha256NormalizedLf": "d9a1758cf4ab483c9a2107ace0b2dfdea0f25aaf4ce3ca3f0c6bfe856e3959dc",
       "installedCount": 4,
       "verifiedVersionCounts": {
         "10288": 1,
         "10285": 2,
-        "10291": 1
+        "10292": 1
       },
-      "scope": "Dated mixed package evidence: PH01191, PH03088, PH010/02585; only PH011 freshly updated, not a live fleet scan."
+      "scope": "Mixed dated snapshot; only PH011 freshly updated/hash checked. Other three package bindings are historical, not a new live fleet scan.",
+      "observedAtUtc": "2026-10-26T16:09:27.853816+00:00"
     },
     "latestReadbackAtUtc": "2026-10-24T17:05:24.962887+00:00",
     "latestReadbackEvidence": "docs/audits/2026-10-24/WEB-TEACHING-DELIVERY.json",
@@ -6704,17 +6705,17 @@
     "autonomousNavigationAccepted": false
   },
   "currentDeployedRuntimePendingAcceptance": {
-    "observedAtUtc": "2026-10-26T09:33:25.639677+00:00",
+    "observedAtUtc": "2026-10-26T16:09:27.853816+00:00",
     "ui": "b1e897979538791a1829c7b8dde77b5186ba3bc4",
     "api": "1afdc529e18cd34b5d8ee0919f217076a8592846",
     "imageId": "sha256:188e0fb09b291b1d4560c9e30a2a6aaa4ce48509d0094157f1d07e2020cfb6cc",
     "runtimeInstalled": true,
     "healthy": true,
-    "browserFiniteAccepted": true,
-    "reason": "APK91 installed on PH011 with guarded VPN and finite direct RGB/idle control; Full-HD performance improvement and independent route navigation remain unaccepted.",
-    "evidence": "docs/audits/2026-10-26/native91/delivery.json",
-    "evidenceSha256NormalizedLf": "6d7fdc1cfcdb1b634f488a64b6998a29877b1bbdef862d8b6a61c3a535966dbf",
-    "scope": "Current Web review and PH011 APK91 finite checks. GPU YuvConverter is only an isolated synthetic candidate, not installed."
+    "browserFiniteAccepted": false,
+    "reason": "PH011 APK92 finite capture/held-input/VPN verified. New browser UI check blocked by JavaScript kernel-assets initialization; navigation and end-to-end latency remain open.",
+    "evidence": "docs/audits/2026-10-26/native92/delivery.json",
+    "evidenceSha256NormalizedLf": "d9a1758cf4ab483c9a2107ace0b2dfdea0f25aaf4ce3ca3f0c6bfe856e3959dc",
+    "scope": "Unchanged Web/API revisions; PH011-only native upgrade, not production SLA or autonomous gameplay."
   },
   "teachingWebStability20261026": {
     "evidence": "docs/audits/2026-10-26/teaching-web-stability/delivery.json",
@@ -6734,6 +6735,21 @@
     "performanceAccepted": false,
     "gameplayNavigationAccepted": false,
     "rootCauseEvidence": "Native YUV fast on owned RAM, slow on GPU ImageReader mapping; ART sample and independent synthetic GPU experiment.",
-    "next": "Integrate measured WebRTC GPU YuvConverter to planar OMX as a separate guarded candidate."
+    "next": "Integrate measured WebRTC GPU YuvConverter to planar OMX as a separate guarded candidate.",
+    "supersededByEvidence": "docs/audits/2026-10-26/native92/delivery.json"
+  },
+  "native92Capture20261026": {
+    "evidence": "docs/audits/2026-10-26/native92/delivery.json",
+    "evidenceSha256NormalizedLf": "d9a1758cf4ab483c9a2107ace0b2dfdea0f25aaf4ce3ca3f0c6bfe856e3959dc",
+    "installed": true,
+    "device": "auto-ph-011",
+    "finitePerformanceAccepted": true,
+    "decodedFps": 25.929,
+    "rgbHz": 4.996,
+    "newRenderedFps": 26.459,
+    "heldContactNativeAccepted": true,
+    "newBrowserAccepted": false,
+    "fullAndroidToModelLatencyMeasured": false,
+    "gameplayNavigationAccepted": false
   }
 }
