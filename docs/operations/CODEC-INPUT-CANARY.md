@@ -8,7 +8,23 @@ draw/input-to-visible acceptance ещё открыты.
 [Synthetic measurements](../audits/2026-10-01/PH010-CODEC-INPUT-EVIDENCE.json) ·
 [Real capture / OTA / decode evidence](../audits/2026-10-01/PH010-PH025-PLANAR-CAPTURE-EVIDENCE.json)
 
-## Последний lifecycle follow-up: APK 1.2.40
+## 26 октября: отдельный GPU→I420 кандидат
+
+На PH011 установлен APK91; Full HD RGBA ImageReader readback остаётся медленным.
+[Измерения и границы приёмки](../audits/2026-10-26/PH011-APK91-CAPTURE-AND-GPU-BENCHMARK.md).
+В коде APK92 добавлен отдельный debug opt-in `SPHERE_STREAM_GPU_PLANAR_INPUT=true`.
+Ему требуются `SPHERE_STREAM_PLANAR_INPUT=true`, `SPHERE_DIRECT_TRANSPORT_CANARY=true`
+и **выключенный** `SPHERE_STREAM_GPU_BRIDGE`. Последний флаг обозначает старый
+EGL→OMX Surface путь. Прежний запрет смешивать Surface bridge и planar сохранён.
+Release-сборки с новым режимом отклоняются.
+
+Новый путь использует OES texture→WebRTC YuvConverter→компактные I420 planes→
+прежний planar encoder. До захвата проверяются цвета; после передачи плоскостей
+кодек владеет своим cache. Флаг не доказывает работоспособность: нужны реальные
+native logs, новый decode/кадры, ориентация, cadence и подтверждённое освобождение.
+До завершения configured-сборки/OTA новый режим не считается установленным.
+
+## Исторический lifecycle follow-up 1 октября: APK 1.2.40
 
 Подписанный configured source 68155c1 установлен адресными OTA на PH010/PH025:
 completed, installed 10240 и process-restart recovery подтверждены. Исправлены

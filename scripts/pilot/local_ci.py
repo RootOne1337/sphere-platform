@@ -596,6 +596,7 @@ def run_profile(root: Path, work: Path, run_dir: Path, profile: str, args, recei
             canary = {"SPHERE_DIRECT_TRANSPORT_CANARY": "true",
                       "SPHERE_DIRECT_PROBE_STUN_URL": "stun:stun.cloudflare.com:3478",
                       "SPHERE_STREAM_GPU_BRIDGE": "false", "SPHERE_STREAM_PLANAR_INPUT": "true",
+                      "SPHERE_STREAM_GPU_PLANAR_INPUT": "true",
                       "SPHERE_CONTINUOUS_INPUT_CANARY": "true", "SPHERE_DEV_APPLICATION_ID_SUFFIX": ".pilot"}
             direct = [ordinary[0], ordinary[2]]
             step("direct-planar-continuous-unit-variants", [gradle, *flags,

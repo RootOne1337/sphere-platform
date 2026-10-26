@@ -47,6 +47,7 @@ class StreamingManagerImpl @Inject constructor(
     private var planarGpuBridge: PlanarGpuSource? = null
     internal var planarGpuFactory: (PlanarGpuRequest) -> PlanarGpuSource? = NativePlanarGpuSource::create
     internal var gpuBridgeEnabled = BuildConfig.STREAM_GPU_BRIDGE
+    internal var gpuPlanarInputEnabled = BuildConfig.STREAM_GPU_PLANAR_INPUT
     internal var planarInputEnabled = BuildConfig.STREAM_PLANAR_INPUT
     internal var qualityProfilesEnabled = BuildConfig.CONTINUOUS_INPUT_CANARY
     internal var codecSource: (Int, Int, Float, Boolean) -> StreamQualityPolicy.Source = StreamCodecCapability::source
@@ -213,7 +214,7 @@ class StreamingManagerImpl @Inject constructor(
         encoder = enc
         enc.adjustFrameRate(plan?.maxFps ?: encoderConfig.fps)
 
-        if (gpuBridgeEnabled && usePlanar) {
+        if (gpuPlanarInputEnabled && usePlanar) {
             val source = planarGpuFactory(PlanarGpuRequest(context, captureConfig.width, captureConfig.height,
                 frameThrottle, qualityMonitor, { streaming && captureSession === session },
                 { planes, ptsUs -> streaming && captureSession === session && enc.submitI420Frame(planes, ptsUs) },

@@ -68,6 +68,7 @@ class StreamingCaptureLifecycleTest {
         manager = StreamingManagerImpl(RuntimeEnvironment.getApplication(), wsClient,
             frameThrottle, qualityMonitor)
         manager.gpuBridgeEnabled = false // CPU fixture is independent of canary build flags.
+        manager.gpuPlanarInputEnabled = false
         manager.planarInputEnabled = false
         manager.qualityProfilesEnabled = false
         every { anyConstructed<H264Encoder>().adjustFrameRate(any()) } just Runs
@@ -81,7 +82,7 @@ class StreamingCaptureLifecycleTest {
     }
 
     @Test fun `GPU planar retirement fences source and defers codec stop until GL owner releases`() {
-        manager.gpuBridgeEnabled = true; manager.planarInputEnabled = true
+        manager.gpuPlanarInputEnabled = true; manager.planarInputEnabled = true
         every { anyConstructed<H264Encoder>().startPlanar() } just Runs
         lateinit var request: PlanarGpuRequest
         var release: (() -> Unit)? = null
@@ -105,7 +106,7 @@ class StreamingCaptureLifecycleTest {
     }
 
     @Test fun `GPU planar init refusal falls back before a display token is consumed`() {
-        manager.gpuBridgeEnabled = true; manager.planarInputEnabled = true
+        manager.gpuPlanarInputEnabled = true; manager.planarInputEnabled = true
         every { anyConstructed<H264Encoder>().startPlanar() } just Runs
         var closed = 0
         manager.planarGpuFactory = {
@@ -122,7 +123,7 @@ class StreamingCaptureLifecycleTest {
     }
 
     @Test fun `GPU planar display failure is terminal and never reuses projection for a fallback`() {
-        manager.gpuBridgeEnabled = true; manager.planarInputEnabled = true
+        manager.gpuPlanarInputEnabled = true; manager.planarInputEnabled = true
         every { anyConstructed<H264Encoder>().startPlanar() } just Runs
         every { anyConstructed<VirtualDisplayManager>().createDisplay(any(),any()) } throws IllegalStateException("fixture")
         var closed = 0

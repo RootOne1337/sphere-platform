@@ -89,6 +89,11 @@ require(System.getenv("SPHERE_CONTINUOUS_INPUT_CANARY") != "true" || !releaseArt
     "Continuous input is a debug canary; server/browser ownership and native lifecycle acceptance are required before release"
 }
 val directProbeCanary = System.getenv("SPHERE_DIRECT_TRANSPORT_CANARY") == "true"
+val gpuPlanarInputCanary = System.getenv("SPHERE_STREAM_GPU_PLANAR_INPUT") == "true"
+require(!gpuPlanarInputCanary || (!releaseArtifactRequested && directProbeCanary &&
+    System.getenv("SPHERE_STREAM_PLANAR_INPUT") == "true" && System.getenv("SPHERE_STREAM_GPU_BRIDGE") != "true")) {
+    "GPU planar capture requires debug direct transport and planar input without the GPU Surface bridge"
+}
 require(!directProbeCanary || !releaseArtifactRequested) {
     "Direct transport is a diagnostic debug canary; release builds require media/control acceptance"
 }
@@ -162,6 +167,7 @@ android {
         // Canary-only until native EGL/codec cadence and cleanup are accepted.
         buildConfigField("boolean", "STREAM_GPU_BRIDGE", (System.getenv("SPHERE_STREAM_GPU_BRIDGE") == "true").toString())
         buildConfigField("boolean", "STREAM_PLANAR_INPUT", (System.getenv("SPHERE_STREAM_PLANAR_INPUT") == "true").toString())
+        buildConfigField("boolean", "STREAM_GPU_PLANAR_INPUT", gpuPlanarInputCanary.toString())
         buildConfigField("boolean", "CONTINUOUS_INPUT_CANARY", (System.getenv("SPHERE_CONTINUOUS_INPUT_CANARY") == "true").toString())
         buildConfigField("boolean", "APP_SCOPED_VPN_CANARY", appScopedVpnCanary.toString())
         manifestPlaceholders["appScopedVpnEnabled"] = appScopedVpnCanary.toString()
