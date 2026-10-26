@@ -212,7 +212,7 @@ def summarize(rows: list[dict]) -> dict:
     )
 
 
-async def run(args) -> dict:
+async def run(args, *, renderer=overlay) -> dict:
     import cv2
 
     if (
@@ -251,7 +251,9 @@ async def run(args) -> dict:
         )
         for style in args.style:
             for variant in VARIANTS:
-                data = overlay(rgb, args.size, variant, style)
+                data = renderer(rgb, args.size, variant, style)
+                if type(data) is not bytes or len(data) != args.size*args.size*3:
+                    raise ValueError('overlay_renderer_output_bound')
                 source["variants"][(style, variant)] = data
                 # Inspectable exact probe input; the raw source file remains untouched.
                 import numpy as np
