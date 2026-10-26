@@ -287,11 +287,16 @@ def inspect_browser(directory):
                     exact_rgb_repeats_are_not_a_disconnect_verdict=True))
 
 
-def prepare_browser(directory, output, *, interval=1.0, max_images=256, max_bytes=1024*MIB):
+def prepare_browser(directory, output, *, interval=1.0, max_images=256, max_bytes=1024*MIB,
+                    excluded_indices=frozenset()):
     """Lossless PNG at captured size. Unknown cameras stay unknown, never identity poses."""
     if not finite(interval, .2, 10) or not integer(max_images, 2, 1000) or not integer(max_bytes, MIB, 2**31):
         raise ProtocolError("browser_teach_preparation_budget")
     capture = validate_browser(directory)
+    if (type(excluded_indices) is not frozenset or len(excluded_indices) > 1000
+            or any(not integer(i, 0, len(capture.frames)-1) for i in excluded_indices)
+            or len(capture.frames)-len(excluded_indices) < 2):
+        raise ProtocolError('browser_teach_invalid_heldout_indices')
     if len(capture.frames) < 2:
         raise ProtocolError("browser_teach_insufficient_source_views")
     output = Path(output)
@@ -341,6 +346,8 @@ def prepare_browser(directory, output, *, interval=1.0, max_images=256, max_byte
                              source_access_unit_sha256=row["sha256"], png_sha256=digest, bytes=size))
 
     for row, frame in decoded_browser(capture):
+        if row['index'] in excluded_indices:
+            continue
         last = row, frame
         if row["relative_ticks_90k"] >= next_tick:
             save(row, frame)
@@ -356,6 +363,8 @@ def prepare_browser(directory, output, *, interval=1.0, max_images=256, max_byte
                   cameras=None, metric_scale=None, camera_body_transform=None,
                   reconstruction_qualified=False, execution_qualified=False,
                   masks_applied=False, prepared_bytes=used)
+    if excluded_indices:
+        result['excluded_source_indices'] = sorted(excluded_indices)
     raw = (json.dumps(result, indent=2, allow_nan=False)+"\n").encode()
     if used+len(raw)+65 > max_bytes:
         raise ProtocolError("browser_teach_preparation_byte_quota")

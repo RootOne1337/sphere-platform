@@ -35,6 +35,23 @@ def encode(value):
 
 
 class BrowserTeachTests(unittest.TestCase):
+    def test_heldout_indices_never_enter_preparation_including_the_last_frame(self):
+        before={p.name:digest(p.read_bytes()) for p in self.source.iterdir()}
+        output=self.parent/'heldout-prepare'
+        prepare_browser(self.source,output,interval=.2,excluded_indices=frozenset({0,6,15}))
+        provenance=json.loads((output/'reconstruction-input.json').read_bytes())
+        selected={row['source_index'] for row in provenance['images']}
+        self.assertFalse(selected & {0,6,15})
+        self.assertEqual(provenance['excluded_source_indices'],[0,6,15])
+        self.assertIn(14,selected)
+        self.assertEqual(before,{p.name:digest(p.read_bytes()) for p in self.source.iterdir()})
+
+    def test_invalid_or_exhaustive_heldout_sets_are_refused_before_output(self):
+        for indices in ({0},frozenset({True}),frozenset({99}),frozenset(range(16))):
+            with self.subTest(indices=indices),self.assertRaises(ProtocolError):
+                prepare_browser(self.source,self.parent/'invalid',excluded_indices=indices)
+            self.assertFalse((self.parent/'invalid').exists())
+
     def setUp(self):
         self.temp = tempfile.TemporaryDirectory()
         self.addCleanup(self.temp.cleanup)
