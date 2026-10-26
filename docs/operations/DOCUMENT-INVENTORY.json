@@ -5,7 +5,7 @@
   "countsByRole": {
     "ADR": 6,
     "CURRENT_ENTRYPOINT": 8,
-    "DATED_EVIDENCE": 388,
+    "DATED_EVIDENCE": 389,
     "DESIGN_SPECIFICATION": 90,
     "OPERATING_GUIDE": 74,
     "PROJECT_POLICY": 7,
@@ -1682,6 +1682,10 @@
     },
     {
       "file": "docs/audits/2026-10-25/SPIRULA-TURNKEY-TRIAL.md",
+      "role": "DATED_EVIDENCE"
+    },
+    {
+      "file": "docs/audits/2026-10-26/PH011-APK91-CAPTURE-AND-GPU-BENCHMARK.md",
       "role": "DATED_EVIDENCE"
     },
     {

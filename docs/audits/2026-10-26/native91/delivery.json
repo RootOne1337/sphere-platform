@@ -1,0 +1,216 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-10-26",
+  "observedAtUtc": "2026-10-26T09:33:25.639677+00:00",
+  "runtimeInstalled": true,
+  "productionAccepted": false,
+  "scope": "PH011-only APK91 install, guarded VPN handover, finite direct RGB/idle control and capture bottleneck research. No real gameplay input or motor navigation.",
+  "runtime": {
+    "sourceRevision": "b1e897979538791a1829c7b8dde77b5186ba3bc4",
+    "apiSourceRevision": "1afdc529e18cd34b5d8ee0919f217076a8592846"
+  },
+  "browser": {
+    "finiteAccepted": true,
+    "scope": "Readonly PH011 game frame at1920x1080, direct/NAT UDP RTT about1ms, receive about8FPS; capture closed by page reload. No control or route recording.",
+    "screenshot": "direct-browser.jpg",
+    "fullCaptureToModelLatencyMeasured": false,
+    "observedAtUtc": "2026-10-26T09:35:35.780847+00:00"
+  },
+  "apk": {
+    "artifacts": [
+      {
+        "version": "1.2.85-dev",
+        "versionCode": 10285,
+        "sourceRevision": "3b437ee8c5a0067f3cfb792b25e8b383e739fc88",
+        "sha256": "9f2bdbe7e7040a0013b5636088426d01a8b8cae99dcfefb0dddd1400868a9180",
+        "androidTree": "e46c0b42dc23fee4261b779f6db84095c6dc16be",
+        "package": "com.sphereplatform.agent.pilot.debug",
+        "bytes": 73217607,
+        "certificateSha256": "3ab40797d26e4f52f9e440afc6fe69f197caef71a5a27c63c86735bb1801871f",
+        "hostedCertificateSha256": "70e67b0395df3cf30feb1d10f06303a7598b8453e5d965db06a4d00defdbc3e7",
+        "cloudApkSha256": "7b98a6dffff8cb8b91a08d527b9fb131b0d69971ec18736365760db86668cc6c",
+        "builtByHostedCi": true,
+        "onlySignatureChangedLocally": true,
+        "unchangedPayloadEntries": 936
+      },
+      {
+        "version": "1.2.88-dev",
+        "versionCode": 10288,
+        "sourceRevision": "6ad0df5fbcc3590ae9c63fe6922db178b45aeee1",
+        "sha256": "355af6f5ecc6697bd8fee66ff9f085bdbf9841e80bb201f8d48515a1ac7e9bca",
+        "certificateSha256": "3ab40797d26e4f52f9e440afc6fe69f197caef71a5a27c63c86735bb1801871f",
+        "package": "com.sphereplatform.agent.pilot.debug",
+        "builtLocally": true,
+        "builtByHostedCi": false
+      },
+      {
+        "version": "1.2.90-dev",
+        "versionCode": 10290,
+        "sourceRevision": "d62088094abcc136c1d29beea834dd4486d874e2",
+        "sha256": "51e2f6df58a73a10e730d8494e264f72ce1431ca86df8e3704887bea26ee70cc",
+        "certificateSha256": "3ab40797d26e4f52f9e440afc6fe69f197caef71a5a27c63c86735bb1801871f"
+      },
+      {
+        "version": "1.2.91-dev",
+        "versionCode": 10291,
+        "sourceRevision": "b26adc72a6caaf5fbafc415e61cc289b45360745",
+        "sha256": "2dd205c82785c14499edb52008988b8b1c8d78c31063e6da4521300e04d0daae",
+        "certificateSha256": "3ab40797d26e4f52f9e440afc6fe69f197caef71a5a27c63c86735bb1801871f"
+      }
+    ],
+    "installedDevices": [
+      {
+        "deviceId": "753fd530-2f19-4e5e-98ba-769863678141",
+        "device": "auto-ph-030",
+        "versionCode": 10288,
+        "installedPackageSha256": "355af6f5ecc6697bd8fee66ff9f085bdbf9841e80bb201f8d48515a1ac7e9bca",
+        "verifiedAtUtc": "2026-10-23T11:12:19.981238+00:00",
+        "addressedOtaCompleted": true
+      },
+      {
+        "deviceId": "5df4805e-fe64-4d39-960c-19ceab206cd6",
+        "device": "auto-ph-010",
+        "versionCode": 10285,
+        "installedPackageSha256": "9f2bdbe7e7040a0013b5636088426d01a8b8cae99dcfefb0dddd1400868a9180",
+        "packageProofObservedAtUtc": "2026-10-22T12:04:30.867863+00:00",
+        "completedAddressedOta": true,
+        "commandId": "74bd69d1-5b6c-42b5-b102-b3059be7dfaa",
+        "dataClears": 0,
+        "proofScope": "Historical earlier package proof; device not updated or rehashed by APK87 delivery."
+      },
+      {
+        "deviceId": "414ce0e9-4b93-4f96-b9ca-ee675f53835e",
+        "device": "auto-ph-011",
+        "versionCode": 10291,
+        "installedPackageSha256": "2dd205c82785c14499edb52008988b8b1c8d78c31063e6da4521300e04d0daae",
+        "packageProofObservedAtUtc": "2026-10-25T22:52:09.124536+00:00",
+        "proofScope": "Addressed APK91 OTA and independent installed package hash; finite capture and idle control only."
+      },
+      {
+        "deviceId": "b410464a-5f26-4803-a756-7840cc17b128",
+        "device": "auto-ph-025",
+        "versionCode": 10285,
+        "installedPackageSha256": "9f2bdbe7e7040a0013b5636088426d01a8b8cae99dcfefb0dddd1400868a9180",
+        "packageProofObservedAtUtc": "2026-10-22T12:04:34.316120+00:00",
+        "completedAddressedOta": true,
+        "commandId": "6ab684dc-0ebc-46e4-ac7e-278ae9294098",
+        "dataClears": 0,
+        "proofScope": "Historical earlier package proof; device not updated or rehashed by APK87 delivery."
+      }
+    ],
+    "source": "b26adc72a6caaf5fbafc415e61cc289b45360745",
+    "versionCode": 10291,
+    "sha256": "2dd205c82785c14499edb52008988b8b1c8d78c31063e6da4521300e04d0daae",
+    "originalCertificateVerified": true,
+    "allSevenNativeLibrariesUnchanged": true,
+    "localConfiguredTests": {
+      "dev": {
+        "tests": 1303,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 3
+      },
+      "enterprise": {
+        "tests": 1303,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 3
+      }
+    },
+    "localGate": {
+      "ordinaryTests": {
+        "tests": 5156,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 12
+      },
+      "tests": {
+        "tests": 2606,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 6
+      },
+      "github": {
+        "id": 57220022072,
+        "context": "Sphere Local / Android unit tests",
+        "state": "success",
+        "createdAt": "2026-10-25T22:38:31Z",
+        "readbackVerified": true,
+        "targetUrl": "https://github.com/RootOne1337/sphere-platform/tree/b26adc72a6caaf5fbafc415e61cc289b45360745/android"
+      }
+    },
+    "ordinaryOtaChannelUnchanged": true,
+    "githubJobsStarted": 0,
+    "adbInstalls": 0,
+    "dataClears": 0
+  },
+  "vpn": {
+    "dualFamilyTemporaryGuardVerified": true,
+    "oldGuardReleasedOnlyUnderTemporaryGuard": true,
+    "newGuardAndRoutesVerifiedBeforeTemporaryRemoval": true,
+    "temporaryGuardRemoved": true,
+    "originalIpWindowOpened": false,
+    "sphereUidExcluded": 10082,
+    "allOtherApplicationUidsGuarded": true,
+    "ipv6": "blocked",
+    "providerPeersCreated": 0,
+    "profileRevisionChanged": false,
+    "httpsAllConfirmed": true,
+    "sphereBypassDifferentEgress": true,
+    "gameDnsConfirmed": true,
+    "claims": "Finite HTTPS UID probes; no raw IP in public summary."
+  },
+  "rgb": {
+    "seconds": 20.014,
+    "decodedFrames": 176,
+    "decodedFps": 8.744,
+    "rgbObservations": 96,
+    "observationHz": 4.797,
+    "route": {
+      "path": "nat",
+      "protocol": "udp",
+      "candidateTypes": [
+        "host",
+        "prflx"
+      ],
+      "addressScopes": [
+        "private",
+        "private"
+      ],
+      "evidence": "aiortc_1_15_nominated_pair_adapter",
+      "lanProven": false
+    },
+    "receiver": {
+      "packetsReceived": 2224,
+      "packetsLost": 0,
+      "jitter": 970
+    },
+    "arrivalGaps": {
+      "scope": "unique_frame_recv_return_clock_not_android_capture",
+      "maxGapMs": 278.457,
+      "gapsOver250ms": 1
+    },
+    "fullAndroidToModelLatencyMeasured": false,
+    "queue": "latest decoded frame, no historical FIFO"
+  },
+  "control": {
+    "requested": true,
+    "maxPacketLifeTimeMs": 200,
+    "nativeAdmissionConfirmed": true,
+    "actorAliveReceipts": 33,
+    "participantClosedConfirmed": true,
+    "nativeActionAppliedVerified": false,
+    "pointerKeyTextCommandsSent": 0,
+    "rttMedianMs": 3.66850002319552,
+    "rttMaxMs": 90.91800000169314
+  },
+  "optimization": {
+    "nativeSelfTestPassed": true,
+    "performanceAccepted": false,
+    "measuredFullHdConversionMedianMs": 110.1765,
+    "explanation": "libyuv fast on owned memory but slow on GPU ImageReader mapping. Confirmed with sampled ART and independent synthetic ImageReader comparisons.",
+    "nextCandidate": "WebRTC GPU YuvConverter to planar OMX input; synthetic16-30ms after warmup, not installed or live-capture accepted."
+  },
+  "autonomousNavigationAccepted": false,
+  "installedPackageProofObservedAtUtc": "2026-10-25T22:52:09.124536+00:00"
+}
