@@ -5113,6 +5113,16 @@
       "deliveryEvidence": "docs/audits/2026-10-12/DIRECT-VIDEO-HANDOVER-OBSERVATION.json",
       "deliveryEvidenceSha256NormalizedLf": "4486ac4a61700b764feae27f94550325934f7a5a44f6da5af20e741653c08e0d",
       "scope": "UI331/API983 installed on 3015/Tuna; frontend-only input promotion fix, backend code tree unchanged; signed APK60 installed hashes and completed OTA commands confirmed on15 online devices. PH010 ordinary Chrome direct video/native gestures, actual server fallback and recovery, and mixed legacy viewer accepted finitely. Closest routes, physical network switching, shared input and full display latency remain OPEN."
+    },
+    {
+      "id": "TEACHING_PHYSICAL_KEYS_20261026",
+      "sourceRevision": "60c0dc7a56e3d027becdc5863ce979c8d09495a6",
+      "installedRevision": "60c0dc7a56e3d027becdc5863ce979c8d09495a6",
+      "installed": true,
+      "runtimeAccepted": false,
+      "deliveryEvidence": "docs/audits/2026-10-26/motor-overlay/web-delivery.json",
+      "deliveryEvidenceSha256NormalizedLf": "3dee4e44b012276e972ef53693d71a2d9cd1d54e048a5bae9bfb34f8c6426616",
+      "scope": "Physical key remapping to existing calibrated control roles; not gameplay or browser acceptance"
     }
   ],
   "runtimeFollowup": {
