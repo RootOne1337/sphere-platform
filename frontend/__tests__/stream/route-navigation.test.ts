@@ -20,6 +20,7 @@ test('recording cadence is derived from real frame intervals, not a 30 or 60 FPS
   const rows=(delta:number)=>Array.from({length:101},(_,i)=>({relative_ticks_90k:i*delta,bytes:1000}));
   expect(teachingCaptureMetrics(rows(9000))).toMatchObject({fps:10,cadence30Confirmed:false,maxGapMs:100});
   expect(teachingCaptureMetrics(rows(3000))).toMatchObject({fps:30,cadence30Confirmed:true});
+  expect(teachingCaptureMetrics(rows(3103))?.cadence30Confirmed).toBe(false);
   const bad=rows(3000);bad[80].relative_ticks_90k=bad[79].relative_ticks_90k;
   expect(teachingCaptureMetrics(bad)).toBeNull();
 });

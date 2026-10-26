@@ -93,7 +93,7 @@ function quality(r) {
     received_bitrate_bps:seconds>0?r.bytes*8/seconds:null,max_media_gap_ms:r.maxGapTicks/90,
     gaps_over_200ms:r.gaps200,gaps_over_500ms:r.gaps500,disk_queue_high_water_bytes:r.queueHighWater,
     max_disk_write_ms:r.maxWriteMs,transcoding:false,synthetic_frames:0,
-    cadence_30fps_confirmed:seconds>=3&&fps>=28.5&&r.gaps200===0,
+    cadence_30fps_confirmed:seconds>=3&&fps>=29.5&&r.gaps200===0,
     source_render_quality_verified:false,android_capture_latency_known:false};
 }
 async function arm(config) {

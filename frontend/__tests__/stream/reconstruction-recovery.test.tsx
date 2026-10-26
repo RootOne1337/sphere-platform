@@ -7,6 +7,13 @@ jest.mock('@/src/features/stream/reconstructionClient',()=>({
   ...jest.requireActual('@/src/features/stream/reconstructionClient'),reconstructionRequest:jest.fn(),uploadReconstruction:jest.fn(),
 }));
 afterEach(()=>{sessionStorage.clear();jest.clearAllMocks();});
+test('a recording marked HUD-free defaults to no HUD mask and 30000 iterations',async()=>{
+  const view=render(<TeachingReconstruction clip={'c'.repeat(32)} scope={'d'.repeat(32)} folder={()=>null} complete hudHidden onBusyChange={()=>{}}/>);
+  await waitFor(()=>expect(screen.getByRole('button',{name:'Построить 3D-сцену'})).toBeEnabled());
+  expect(screen.getByRole('combobox',{name:/Маска/i})).toHaveValue('none');
+  expect(screen.getByRole('combobox',{name:'Качество обработки'})).toHaveValue('30000');
+  view.unmount();
+});
 test('a recovered job blocks new control until its state is actually confirmed',async()=>{
   const clip='c'.repeat(32),scope='d'.repeat(32),job={id:'a'.repeat(32),key:'b'.repeat(64)};
   sessionStorage.setItem(`sphere-reconstruction-${scope}-${clip}`,JSON.stringify(job));

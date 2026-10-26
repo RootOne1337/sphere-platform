@@ -55,7 +55,7 @@ class RouteWorkspaces:
     def __init__(self, folder, python, *, clock=time.perf_counter):
         self.folder, self.python, self.clock = folder, python, clock
         self.live = None
-        self.retired = set()
+        self.retired = {}
         for state in folder.glob('*/navigation/*/state.json'):
             if checked_json(state)['phase'] not in TERMINAL:
                 write_json(state, dict(phase='failed', error='route_service_restarted'))
@@ -139,8 +139,10 @@ class RouteWorkspaces:
             write_json(folder/'state.json', dict(phase='failed', error='route_export_not_confirmed'))
 
     def _expire(self):
+        now = self.clock()
+        self.retired = {identity: deadline for identity, deadline in self.retired.items() if deadline > now}
         if self.live and self.clock() >= self.live['deadline']:
-            self.retired.add(self.live['id'])
+            self.retired[self.live['id']] = now + 600
             self.live = None
 
     def live_status(self):
@@ -166,7 +168,7 @@ class RouteWorkspaces:
             if self.live['id'] == body['id'] and self.live['job'] == job.name and self.live['binding'] == body:
                 return self.live_status()
             raise ValueError('one_live_route_observer_only')
-        if body['id'] in self.retired or len(self.retired) >= 64:
+        if body['id'] in self.retired or len(self.retired) >= 2048:
             raise ValueError('route_session_retired_or_quota')
         if self.status(job)['phase'] != 'ready':
             raise ValueError('route_assets_not_ready')
@@ -192,9 +194,10 @@ class RouteWorkspaces:
         if type(body) is not dict or set(body) != {'id'} or not isinstance(body['id'], str) or not ID.fullmatch(body['id']):
             raise ValueError('route_session_id')
         self._expire()
-        self.retired.add(body['id'])  # A late start with this intent must stay stopped.
+        if body['id'] not in self.retired and len(self.retired) >= 2048:
+            raise ValueError('route_session_retirement_quota')
+        self.retired[body['id']] = self.clock() + 600  # Fence a delayed start.
         if self.live and self.live['id'] == body['id'] and self.live['job'] == job.name:
-            self.retired.add(body['id'])
             self.live = None
         return dict(phase='closed', physicalActions=0)
 
@@ -228,7 +231,7 @@ class RouteWorkspaces:
         session['sequence'] = body['sequence']
         session['observations'] += 1
         if session['observations'] > 1200:
-            self.retired.add(session['id'])
+            self.retired[session['id']] = self.clock() + 600
             self.live = None
             raise ValueError('route_live_observation_quota')
         frame = PolicyFrame(session['epoch'], body['sequence'], now, 960, 540, rgb)

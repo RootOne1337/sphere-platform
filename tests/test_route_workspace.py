@@ -48,6 +48,15 @@ class RouteWorkspaceTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError,'retired'):
             self.workspace.start_live(self.job,dict(id=self.identity,captureEpoch='e'*32,width=1920,height=1080,sceneConfirmed=True))
 
+    def test_retired_intents_are_bounded_and_eventually_expire(self):
+        self.workspace.stop_live(self.job,dict(id=self.identity))
+        self.now += 599
+        self.workspace._expire()
+        self.assertIn(self.identity, self.workspace.retired)
+        self.now += 2
+        self.workspace._expire()
+        self.assertNotIn(self.identity, self.workspace.retired)
+
     def test_scene_confirmation_and_unknown_body_fields_do_not_consume_an_intent(self):
         for extra in ({'sceneConfirmed':False},{'remoteUrl':'https://example.com'}):
             body=dict(id=self.identity,captureEpoch='e'*32,width=1920,height=1080,sceneConfirmed=True)

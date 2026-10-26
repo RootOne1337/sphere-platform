@@ -7,6 +7,6 @@ export function teachingCaptureMetrics(rows:{relative_ticks_90k:number;bytes:num
   const bytes=rows.reduce((sum,row)=>sum+row.bytes,0);
   return {frames:rows.length,seconds,fps,bitrateBps:seconds>0?bytes*8/seconds:null,maxGapMs:sorted.at(-1)??null,
     p50GapMs:percentile(.5),p95GapMs:percentile(.95),gaps200:intervals.filter(n=>n>200).length,
-    cadence30Confirmed:seconds>=3&&fps!==null&&fps>=28.5&&!intervals.some(n=>n>200),
+    cadence30Confirmed:seconds>=3&&fps!==null&&fps>=29.5&&!intervals.some(n=>n>200),
     chart:intervals.filter((_,i)=>i%Math.max(1,Math.ceil(intervals.length/100))===0)};
 }

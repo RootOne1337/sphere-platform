@@ -88,6 +88,21 @@ def test_restart_fails_interrupted_and_preserves_input(jobs):
     assert (job / 'input/video.h264').read_bytes() == b'raw'
 
 
+def test_automatic_route_preparation_is_observable_and_restart_does_not_repeat(jobs, monkeypatch):
+    jobs.create(dict(id='a' * 32, key='b' * 64, mask='none', steps=30000, prepare_route=True))
+    job = jobs.path('a' * 32)
+    service.write_json(job / 'state.json', {'phase': 'complete'})
+    (job / 'COMPLETE').touch()
+    monkeypatch.setattr(jobs, 'appearance', lambda _: {'summary': {'state': 'passed'}, 'views': []})
+    assert jobs.status(job)['navigation']['phase'] == 'pending_auto_prepare'
+    restarted = service.Jobs(jobs.folder, jobs.python)
+    monkeypatch.setattr(restarted, 'appearance', lambda _: {'summary': {'state': 'passed'}, 'views': []})
+    result = restarted.status(job)['navigation']
+    assert result['phase'] == 'not_prepared'
+    assert result['error'] == 'route_preparation_interrupted'
+    assert not (job / 'navigation/active.json').exists()
+
+
 def test_old_complete_export_is_not_automatically_a_verified_scene(jobs):
     job = create(jobs)
     service.write_json(job / 'state.json', dict(phase='complete'))

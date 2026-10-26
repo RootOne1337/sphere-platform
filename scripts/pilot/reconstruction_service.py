@@ -78,6 +78,14 @@ class Jobs:
             if json.loads(path.read_text('utf-8'))['phase'] not in SURFACE_TERMINAL:
                 (path.parent / 'CANCEL').touch(exist_ok=True)
                 write_json(path, dict(phase='failed', error='surface_service_restarted', updated_at=time.time()))
+        for control_path in folder.glob('*/control.json'):
+            control = json.loads(control_path.read_text('utf-8'))
+            job = control_path.parent
+            if (control.get('prepare_route') is True and (job / 'state.json').is_file()
+                    and json.loads((job / 'state.json').read_text('utf-8'))['phase'] == 'complete'
+                    and not (job / 'navigation/active.json').exists()
+                    and not (job / 'route-pipeline-refusal.json').exists()):
+                write_json(job / 'route-pipeline-refusal.json', dict(error='route_preparation_interrupted'))
 
     def path(self, identity):
         if not IDENTITY.fullmatch(identity):
@@ -113,6 +121,14 @@ class Jobs:
         result['fragments'].sort(key=lambda item: (item.get('fragment', {}).get('first_view', 0), item['id']))
         result['surface_supported'] = tools_available()
         result['navigation'] = self.navigation.status(job)
+        if result['phase'] == 'complete' and result['navigation']['phase'] == 'not_prepared':
+            control = json.loads((job / 'control.json').read_text('utf-8'))
+            if control.get('prepare_route') is True:
+                refusal = job / 'route-pipeline-refusal.json'
+                if refusal.is_file():
+                    result['navigation']['error'] = json.loads(refusal.read_text('utf-8'))['error']
+                else:
+                    result['navigation']['phase'] = 'pending_auto_prepare'
         geometry = job / 'geometry.json'
         if geometry.is_file() and not geometry.is_symlink() and geometry.stat().st_size <= 16 * 1024**2:
             try:
@@ -471,6 +487,8 @@ class Jobs:
                         self.navigation.prepare(job, dict(id=identity))
                     except (ValueError, RuntimeError):
                         write_json(job/'route-pipeline-refusal.json', dict(error='route_preparation_not_started'))
+                else:
+                    write_json(job/'route-pipeline-refusal.json', dict(error='route_preparation_busy'))
 
 
 def handler(jobs, origin, port):
