@@ -48,6 +48,8 @@ test('direction shows the failed camera gate for the chosen recording without of
   render(<TeachingNavigation job={job} clip={'d'.repeat(32)} scope={'e'.repeat(32)} clips={[{id:'d'.repeat(32),title:'test228',frames:1311,complete:true}]} onSelectClip={select} video={{current:null}} ready binding={{captureEpoch:'e'.repeat(32),width:1920,height:1080}}/>);
   expect(screen.getByRole('combobox',{name:'Сохранённый проход для направления'})).toHaveDisplayValue(/test228/);
   await screen.findByText(/Камеры связаны частично: 65 из 99/);
+  expect(screen.getByText(/карта: не подготовлена/)).toBeInTheDocument();
+  expect(screen.queryByText(/not_prepared/)).not.toBeInTheDocument();
   expect(screen.queryByRole('button',{name:'Подготовить ориентиры'})).not.toBeInTheDocument();
   expect(screen.getByRole('button',{name:'Проверить направление · 120 с'})).toBeDisabled();
   expect(jest.mocked(reconstructionRequest).mock.calls.every(call=>call[2]?.method!=='POST')).toBe(true);
