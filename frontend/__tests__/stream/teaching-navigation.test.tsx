@@ -1,6 +1,7 @@
 import {act,fireEvent,render,screen,waitFor} from '@testing-library/react';
 import {TeachingNavigation} from '@/src/features/stream/TeachingNavigation';
-import {reconstructionRequest} from '@/src/features/stream/reconstructionClient';
+import {reconstructionRequest,ReconstructionResponseError} from '@/src/features/stream/reconstructionClient';
+import {preparationError} from '@/src/features/stream/routePreparation';
 jest.mock('@/src/features/stream/reconstructionClient',()=>({...jest.requireActual('@/src/features/stream/reconstructionClient'),reconstructionRequest:jest.fn()}));
 const job={id:'a'.repeat(32),key:'b'.repeat(64)};
 beforeEach(()=>{
@@ -67,4 +68,16 @@ test('a completed scene can prepare its own map directly without starting an obs
   await waitFor(()=>expect(jest.mocked(reconstructionRequest).mock.calls.some(c=>c[0].endsWith('/navigation/prepare'))).toBe(true));
   const posts=jest.mocked(reconstructionRequest).mock.calls.filter(c=>c[2]?.method==='POST');
   expect(posts.map(c=>c[0])).toEqual([`/jobs/${job.id}/navigation/prepare`]);
+});
+test('a motion-rejected scene explains the obstruction instead of repeatedly creating attempts',async()=>{
+  jest.mocked(reconstructionRequest).mockResolvedValue({json:async()=>({phase:'complete',dense_available:true,
+    camera_motion:{warning:'poses_require_temporal_review',rapid_reversals:17},
+    navigation:{phase:'failed',error:'route_camera_motion_requires_review'}})} as Response);
+  render(<TeachingNavigation job={job} clip={'d'.repeat(32)} scope={'e'.repeat(32)} video={{current:null}} ready binding={{captureEpoch:'e'.repeat(32),width:1920,height:1080}}/>);
+  await screen.findByText(/Траекторию камер нужно проверить/);
+  expect(screen.queryByRole('button',{name:'Подготовить ориентиры'})).not.toBeInTheDocument();
+  expect(jest.mocked(reconstructionRequest).mock.calls.every(call=>call[2]?.method!=='POST')).toBe(true);
+});
+test('the attempt quota is explained as a confirmed rejection, not a missing response',()=>{
+  expect(preparationError(new ReconstructionResponseError(409,'route_preparation_attempt_quota'))).toMatch(/Исчерпан лимит попыток/);
 });

@@ -4,7 +4,7 @@ import {useEffect,useRef,useState} from 'react';
 import {Box,Loader2} from 'lucide-react';
 import {Button} from '@/components/ui/button';
 import {processingSurface,reconstructionRequest,terminalReconstruction,uploadReconstruction,type ReconstructionJob,type ReconstructionState} from './reconstructionClient';
-import {readReconstructionLink,saveReconstructionLink,validReconstructionJob} from './reconstructionLink';
+import {listReconstructionLinks,readReconstructionLink,saveReconstructionLink,validReconstructionJob} from './reconstructionLink';
 import ReferenceComparison from './ReferenceComparison';
 import {navigationErrorLabel,navigationPhaseLabel,prepareRoute as prepareRouteIntent,preparationError} from './routePreparation';
 const Scene=dynamic(()=>import('./ReconstructedScene'),{ssr:false,loading:()=> <p>Загружаем 3D-просмотр…</p>});
@@ -26,6 +26,7 @@ reasons.learned_matching_timeout='Сопоставление ракурсов д
 reasons.reference_evaluation_failed='Не удалось завершить проверку рендера по исходным ракурсам. Качество не подтверждено.';
 export function TeachingReconstruction({clip,scope,folder,complete,hudHidden=false,onBusyChange,onRouteChange,visible=true}:{clip:string;scope:string;folder:()=>FileSystemDirectoryHandle|null;complete:boolean;hudHidden?:boolean;onBusyChange:(busy:boolean)=>void;onRouteChange?:(job:ReconstructionJob|null)=>void;visible?:boolean}) {
   const [job,setJob]=useState<ReconstructionJob|null>(null),[status,setStatus]=useState<ReconstructionState|null>(null),[error,setError]=useState<string|null>(null);
+  const [attempts,setAttempts]=useState<ReconstructionJob[]>([]),[switchingAttempt,setSwitchingAttempt]=useState(false);
   const [mask,setMask]=useState(hudHidden?'none':'game'),[steps,setSteps]=useState(30000),[progress,setProgress]=useState('');
   const [uploading,setUploading]=useState(false);const uploadAbort=useRef<AbortController|null>(null);
   const [recovering,setRecovering]=useState(true);const folderRef=useRef(folder);folderRef.current=folder;
@@ -36,7 +37,7 @@ export function TeachingReconstruction({clip,scope,folder,complete,hudHidden=fal
   const selectedModel=models.find(item=>(item.id??'legacy')===selectedFragment&&item.available)??models.find(item=>item.available);
   const workingSurface=status?processingSurface(status):undefined;
   const storageKey=`sphere-reconstruction-${scope}-${clip}`;
-  const busy=recovering||uploading||surfaceStarting||!!job&&(!status||!terminalReconstruction(status));
+  const busy=recovering||uploading||surfaceStarting||switchingAttempt||!!job&&(!status||!terminalReconstruction(status));
   useEffect(()=>{onBusyChange(busy);},[busy,onBusyChange]);
   useEffect(()=>{onRouteChange?.(job);},[job,onRouteChange]);
   useEffect(()=>()=>{uploadAbort.current?.abort();onBusyChange(false);},[onBusyChange]);
@@ -45,7 +46,8 @@ export function TeachingReconstruction({clip,scope,folder,complete,hudHidden=fal
     void(async()=>{
       const source=folderRef.current();let saved=source?await readReconstructionLink(source,clip):null;
       if(!saved){const previous=JSON.parse(sessionStorage.getItem(storageKey)??'null');if(validReconstructionJob(previous)){saved=previous;if(source)await saveReconstructionLink(source,clip,saved);}}
-      if(!retired){if(saved)setJob(current=>current??saved);setRecovering(false);}
+      const available=source?await listReconstructionLinks(source,clip):saved?[saved]:[];
+      if(!retired){setAttempts(available);if(saved)setJob(current=>current??saved);setRecovering(false);}
     })().catch(()=>{if(!retired){setError('Не удалось восстановить локальную ссылку на сцену. Исходная запись сохранена.');setRecovering(false);}});
     return()=>{retired=true;};
   },[storageKey,clip]);
@@ -61,13 +63,24 @@ export function TeachingReconstruction({clip,scope,folder,complete,hudHidden=fal
     let pending:ReconstructionJob|null=job;
     try{
       const next=job??{id:crypto.randomUUID().replaceAll('-',''),key:Array.from(crypto.getRandomValues(new Uint8Array(32)),v=>v.toString(16).padStart(2,'0')).join('')};
-      pending=next;await saveReconstructionLink(source,clip,next);sessionStorage.setItem(storageKey,JSON.stringify(next));
+      await saveReconstructionLink(source,clip,next);pending=next;setAttempts(await listReconstructionLinks(source,clip));sessionStorage.setItem(storageKey,JSON.stringify(next));
       const created=await(await reconstructionRequest('/jobs',null,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({...next,mask,steps,prepare_route:true}),signal:controller.signal})).json();setStatus(created);setJob(next);
       if(created.phase!=='uploading')return;
       await uploadReconstruction(source,next,(bytes,total)=>setProgress(`${(bytes/1048576).toFixed(1)} / ${(total/1048576).toFixed(1)} МБ`),controller.signal);
       const started=await(await reconstructionRequest(`/jobs/${next.id}/start`,next,{method:'POST',body:'{}',signal:controller.signal})).json();setStatus(started);
-    }catch(e){if(pending)setJob(pending);setError(`Запуск не подтверждён: ${e instanceof Error?e.message:'нет ответа'}. Проверяем существующее задание; повторного запуска нет.`);}
+    }catch(e){if(pending){setJob(pending);setError(`Запуск не подтверждён: ${e instanceof Error?e.message:'нет ответа'}. Проверяем существующее задание; повторного запуска нет.`);}else setError('Не удалось сохранить ссылку на новое задание. Обработка не запускалась; прежняя попытка и исходная запись сохранены.');}
     finally{uploadAbort.current=null;setUploading(false);}
+  };
+  const selectAttempt=async(id:string)=>{
+    const source=folder(),selected=attempts.find(item=>item.id===id);
+    if(!source||!selected||busy||id===job?.id)return;
+    setSwitchingAttempt(true);setError(null);
+    try{
+      await saveReconstructionLink(source,clip,selected);
+      sessionStorage.setItem(storageKey,JSON.stringify(selected));
+      setStatus(null);setJob(selected);
+    }catch{setError('Не удалось выбрать сохранённую попытку. Предыдущие ссылки и исходная запись сохранены.');}
+    finally{setSwitchingAttempt(false);}
   };
   const cancel=async()=>{
     uploadAbort.current?.abort();if(!job)return;
@@ -90,6 +103,7 @@ export function TeachingReconstruction({clip,scope,folder,complete,hudHidden=fal
   const surfaceLabels:Record<string,string>={starting:'Подготовка 3D-модели',preparing:'Проверка камер и оригинальных кадров',densifying:'Многовидовое восстановление глубины',meshing:'Построение треугольных поверхностей',baking:'Проекция фотографий на видимые поверхности',ready:'Текстурированная 3D-модель сохранена',review_required:'Пробная модель сохранена · проверьте поверхности визуально',failed:'Построение модели остановлено',cancelled:'Построение модели отменено'};
   return <section aria-label="Построение плотной 3D-сцены" className="space-y-4 rounded-2xl border border-emerald-500/20 bg-gradient-to-br from-emerald-500/5 via-card to-sky-500/5 p-5">
     <div className="flex items-start gap-3"><Box className="mt-1 text-emerald-400" size={24}/><div><h4 className="text-lg font-semibold">Сцена из записанного прохода</h4><p className="mt-1 max-w-3xl text-sm leading-6 text-muted-foreground">Оригинальные кадры → связанные камеры → визуальная сцена и отдельная модель поверхностей. Сохранённый результат можно вращать, изучать в каркасе и смотреть из ракурсов прохода. Обработка идёт на этом ПК, отдельно от Android.</p></div></div>
+    {(attempts.length>1||!job&&attempts.length>0)&&<label className="block max-w-lg text-sm">Сохранённые попытки реконструкции<select aria-label="Сохранённая попытка реконструкции" className="mt-1 block w-full rounded-lg border border-input bg-background p-2" value={job?.id??''} disabled={busy||!folder()} onChange={e=>{void selectAttempt(e.target.value);}}>{!job&&<option value="">Новое задание</option>}{attempts.map((item,index)=><option key={item.id} value={item.id}>Попытка {index+1} · {item.id.slice(0,8)}</option>)}</select><span className="mt-1 block text-xs text-muted-foreground">Выбор открывает сохранённый результат без повторной обработки.</span></label>}
     {!status&&<div className="flex flex-wrap items-end gap-4">
       <label className="text-sm">Маска записи<select className="mt-1 block rounded-lg border border-input bg-background p-2" value={mask} onChange={e=>setMask(e.target.value)}><option value="game">HUD и персонаж в центре</option><option value="none">Без маски (чистый кадр)</option></select></label>
       <label className="text-sm">Качество обработки<select className="mt-1 block rounded-lg border border-input bg-background p-2" value={steps} onChange={e=>setSteps(Number(e.target.value))}><option value={3000}>Проба · 3 000 шагов</option><option value={5000}>Стандарт · 5 000 шагов</option><option value={10000}>Детальнее · 10 000 шагов</option><option value={30000}>Высокая детализация · 30 000 шагов</option></select></label>
@@ -119,7 +133,7 @@ export function TeachingReconstruction({clip,scope,folder,complete,hudHidden=fal
       {!status.surface_supported&&!status.surface&&<p className="text-xs text-muted-foreground">Локальный инструмент OpenMVS CPU ещё не подготовлен.</p>}
     </div>}
     {visible&&job&&status?.dense_available&&<ReferenceComparison job={job} appearance={status.appearance}/>}
-    {job&&status?.geometry_available&&<div className="space-y-3 rounded-xl border border-cyan-500/25 bg-cyan-500/5 p-4"><div className="flex flex-wrap items-center justify-between gap-3"><div><h5 className="font-medium">Карта ориентиров для живой проверки</h5><p className="mt-1 text-xs leading-5 text-muted-foreground">Сохранённые камеры и реальные3D-опоры → определение положения по свежему кадру. Воспроизведение нажатий не используется.</p></div><Button variant="outline" disabled={busy||!status.dense_available||status.navigation?.phase==='ready'} onClick={()=>{void prepareRoute();}}>{status.navigation?.phase==='ready'?'Карта подготовлена':'Подготовить маршрут'}</Button></div><p role="status" className="text-xs">{status.navigation?.phase==='ready'?`Готово для ручной проверки · ${status.navigation.summary?.cameras??'—'} камер · ${status.navigation.summary?.landmarks??'—'} ориентиров`:!status.dense_available?'Камеры или обработка сцены не прошли проверку; ориентиры пока не подготовить.':navigationPhaseLabel(status.navigation?.phase)}{status.navigation?.error?` · ${navigationErrorLabel(status.navigation.error)}`:''}</p><p className="text-xs leading-5 text-muted-foreground">После подготовки откройте режим «Направление» наверху страницы. Это ещё не допуск автономной поездки: поверхность дороги, препятствия и моторная модель проверяются отдельно.</p></div>}
+    {job&&status?.geometry_available&&<div className="space-y-3 rounded-xl border border-cyan-500/25 bg-cyan-500/5 p-4"><div className="flex flex-wrap items-center justify-between gap-3"><div><h5 className="font-medium">Карта ориентиров для живой проверки</h5><p className="mt-1 text-xs leading-5 text-muted-foreground">Сохранённые камеры и реальные 3D-опоры → определение положения по свежему кадру. Воспроизведение нажатий не используется.</p></div><Button variant="outline" disabled={busy||!status.dense_available||!!status.camera_motion?.warning||status.navigation?.error==='route_camera_motion_requires_review'||status.navigation?.phase==='ready'} onClick={()=>{void prepareRoute();}}>{status.navigation?.phase==='ready'?'Карта подготовлена':'Подготовить маршрут'}</Button></div><p role="status" className="text-xs">{status.navigation?.phase==='ready'?`Готово для ручной проверки · ${status.navigation.summary?.cameras??'—'} камер · ${status.navigation.summary?.landmarks??'—'} ориентиров`:!status.dense_available?'Камеры или обработка сцены не прошли проверку; ориентиры пока не подготовить.':status.camera_motion?.warning?'Траектория камер требует проверки; повторная подготовка не исправит её.':navigationPhaseLabel(status.navigation?.phase)}{status.navigation?.error?` · ${navigationErrorLabel(status.navigation.error)}`:''}</p><p className="text-xs leading-5 text-muted-foreground">После подготовки откройте режим «Направление» наверху страницы. Это ещё не допуск автономной поездки: поверхность дороги, препятствия и моторная модель проверяются отдельно.</p></div>}
     {visible&&job&&status?.geometry_available&&<Scene job={job} status={{...status,surface:selectedModel??status.surface}}/>}
     <p className="text-xs text-muted-foreground">Ссылка на результат сохранена рядом с записью в библиотеке этого браузера и аккаунта. Выберите этот проход снова, чтобы открыть готовую сцену. Сохранённая сцена остаётся на локальном ПК.</p>
     <p className="text-xs leading-5 text-muted-foreground">Маска применяется до поиска признаков; она не распознаёт все движущиеся машины и игроков. Плотная сцена — визуальная реконструкция, а не готовая карта коллизий. Масштаб в метрах требует отдельного известного расстояния. При нехватке связных ракурсов обработка остановится с объяснением.</p>
