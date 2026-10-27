@@ -3,7 +3,7 @@ import {reconstructionRequest,ReconstructionResponseError,type NavigationState,t
 const idPattern=/^[0-9a-f]{32}$/;
 const terminal=new Set(['ready','failed','rejected','cancelled']);
 const phaseLabels:Record<string,string>={not_prepared:'не подготовлена',pending_auto_prepare:'ожидается подготовка',preparing:'подготовка',features:'поиск ориентиров',ready:'готова к проверке',failed:'ошибка подготовки',rejected:'не прошла проверку',cancelled:'отменена'};
-const errorLabels:Record<string,string>={route_preparation_interrupted:'обработка прервалась при остановке сервиса',route_preparation_not_started:'автоматический запуск не подтверждён',route_camera_motion_requires_review:'траекторию камеры нужно проверить',route_preparation_attempt_quota:'исчерпан лимит попыток подготовки этой сцены',route_map_has_unobserved_sections:'не хватает ориентиров на части пути',resource_guard:'недостаточно свободных ресурсов'};
+const errorLabels:Record<string,string>={route_preparation_interrupted:'обработка прервалась при остановке сервиса',route_preparation_not_started:'автоматический запуск не подтверждён',route_camera_motion_requires_review:'траекторию камеры нужно проверить',camera_intrinsics_degenerate:'некорректные параметры восстановленной камеры',route_preparation_attempt_quota:'исчерпан лимит попыток подготовки этой сцены',route_map_has_unobserved_sections:'не хватает ориентиров на части пути',resource_guard:'недостаточно свободных ресурсов'};
 export const navigationPhaseLabel=(phase:string|null|undefined)=>phase?(phaseLabels[phase]??'состояние уточняется'):'не прочитана';
 export const navigationErrorLabel=(code:string)=>errorLabels[code]??'причину можно проверить в диагностике';
 

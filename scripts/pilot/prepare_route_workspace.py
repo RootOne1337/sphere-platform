@@ -64,7 +64,8 @@ def main():
     except Exception as exc:
         # Keep fixed error names; never include arbitrary local paths/records.
         allowed = {'resource_guard', 'cancelled', 'route_camera_motion_requires_review',
-                   'route_map_has_unobserved_sections', 'sparse_export_time_quota', 'route_source_changed'}
+                   'route_map_has_unobserved_sections', 'sparse_export_time_quota', 'route_source_changed',
+                   'camera_intrinsics_degenerate'}
         reason = str(exc) if str(exc) in allowed else 'route_preparation_failed_inspect_local_log'
         write_json(job/'navigation'/args.attempt/'state.json', dict(phase='failed', error=reason))
         raise

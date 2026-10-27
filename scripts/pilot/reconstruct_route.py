@@ -26,6 +26,7 @@ from scripts.pilot.learned_route_features import extract_and_match
 from scripts.pilot.reconstruction_quality import (
     TRAINING_STEPS,
     export_interval,
+    pinhole_condition,
     reference_quality,
     sparse_condition,
 )
@@ -211,11 +212,16 @@ def reconstruct(job, mask, steps):
     quality['conditioning'] = sparse_condition(
         [camera['center'] for camera in geometry['cameras']],
         [point.xyz for point in rec.points3D.values()])
+    intrinsics = geometry['cameras'][0]['intrinsics']
+    quality['intrinsics_condition'] = pinhole_condition(intrinsics['width'], intrinsics['height'],
+                                                        intrinsics['fx'], intrinsics['fy'])
     write_json(job / 'quality.json', quality)
     if rec.num_reg_images() < 10 or coverage < .7 or rec.num_points3D() < 300 or not math.isfinite(error) or error > 3:
         raise RuntimeError('camera_quality_gate_failed')
     if not quality['conditioning']['passed']:
         raise RuntimeError('camera_geometry_degenerate')
+    if not quality['intrinsics_condition']['passed']:
+        raise RuntimeError('camera_intrinsics_degenerate')
     # A largest component is not a claim that discarded views are connected.
     target = prepared / 'sparse' / '0'
     target.mkdir(parents=True)
@@ -509,6 +515,9 @@ def retry_dense(job, attempt):
                                  [point.xyz for point in rec.points3D.values()])
     if not condition['passed']:
         raise RuntimeError('camera_geometry_degenerate')
+    intrinsic = recovered['cameras'][0]['intrinsics']
+    if not pinhole_condition(intrinsic['width'], intrinsic['height'], intrinsic['fx'], intrinsic['fy'])['passed']:
+        raise RuntimeError('camera_intrinsics_degenerate')
     control = json.loads((job / 'control.json').read_text('utf-8'))
     with (job / f'DENSE-RETRY-{attempt}.json').open('x', encoding='utf-8') as file:
         json.dump(dict(previous_state=previous, source_manifest_sha256=source['source_manifest_sha256'],

@@ -41,6 +41,7 @@ def export(model, provenance, images, output, *, profile, world_revision, checkp
 
     from scripts.pilot.reconstruct_route import checkpoint
     from scripts.pilot.route_landmark_builder import build
+    from scripts.pilot.reconstruction_quality import pinhole_condition
 
     started = time.monotonic()
 
@@ -64,7 +65,10 @@ def export(model, provenance, images, output, *, profile, world_revision, checkp
     camera = next(iter(rec.cameras.values()))
     if camera.model_name not in {"PINHOLE", "SIMPLE_PINHOLE"} or camera.width*SIZE[1] != camera.height*SIZE[0]:
         raise ProtocolError("sparse_export_requires_pinhole")
-    K = np.diag([SIZE[0]/camera.width, SIZE[1]/camera.height, 1.]) @ camera.calibration_matrix()
+    original_K = camera.calibration_matrix()
+    if not pinhole_condition(camera.width, camera.height, float(original_K[0, 0]), float(original_K[1, 1]))['passed']:
+        raise ProtocolError("camera_intrinsics_degenerate")
+    K = np.diag([SIZE[0]/camera.width, SIZE[1]/camera.height, 1.]) @ original_K
     source = json.loads(provenance.read_text(encoding="utf-8"))
     # Existing capture provenance binds selected PNGs to original media ticks.
     rows = {Path(row["image"]).name: row for row in source["images"]}

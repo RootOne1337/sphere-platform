@@ -6,6 +6,27 @@ import math
 TRAINING_STEPS = (3000, 5000, 10000, 30000)
 
 
+def pinhole_condition(width, height, fx, fy):
+    """Catch extreme camera calibration degeneracy, not certify the lens or pose.
+
+    These broad bounds only apply to our PINHOLE model of ordinary square-pixel
+    screen captures. Distorted/anamorphic recordings require another explicit
+    model, not a silent relaxation of these checks.
+    """
+    values = (width, height, fx, fy)
+    if (any(isinstance(value, bool) or not isinstance(value, (int, float))
+            or not math.isfinite(value) for value in values)
+            or width <= 0 or height <= 0 or fx <= 0 or fy <= 0):
+        raise ValueError('camera_intrinsics_invalid')
+    ratio = fx / fy
+    horizontal_fov = math.degrees(2 * math.atan2(width, 2 * fx))
+    vertical_fov = math.degrees(2 * math.atan2(height, 2 * fy))
+    passed = (math.isfinite(ratio) and .25 <= ratio <= 4
+              and 3 <= horizontal_fov <= 178 and 3 <= vertical_fov <= 178)
+    return dict(passed=passed, focal_ratio=ratio if math.isfinite(ratio) else None, horizontal_fov_degrees=horizontal_fov,
+                vertical_fov_degrees=vertical_fov, physical_calibration_verified=False)
+
+
 def export_interval(steps):
     """Keep detail runs within the existing cumulative checkpoint disk budget.
 
