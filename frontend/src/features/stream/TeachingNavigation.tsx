@@ -4,7 +4,7 @@ import {Navigation,Route,Square} from 'lucide-react';
 import {Button} from '@/components/ui/button';
 import {reconstructionRequest,type NavigationState,type ReconstructionJob,type ReconstructionState} from './reconstructionClient';
 import {freshNavigationFrame,navigationReply,paintNavigation} from './routeNavigation';
-import {navigationErrorLabel,navigationPhaseLabel,prepareRoute,preparationError} from './routePreparation';
+import {navigationErrorLabel,navigationPhaseLabel,prepareRoute,preparationError,preparationQuotaReached} from './routePreparation';
 import type {TeachingClipChoice} from './TeachingReview';
 type Binding={captureEpoch:string;width:number;height:number};
 const identity=()=>crypto.randomUUID().replaceAll('-','');
@@ -12,6 +12,7 @@ export function TeachingNavigation({job,video,ready,binding,clips=[],clip=null,s
   const [assets,setAssets]=useState<NavigationState|null>(null),[notice,setNotice]=useState('Выберите сохранённый маршрут во вкладке «Сцена».');
   const [source,setSource]=useState<ReconstructionState|null>(null),[preparing,setPreparing]=useState(false),[prepareNotice,setPrepareNotice]=useState<string|null>(null);
   const [assetError,setAssetError]=useState(false),[assetRefresh,setAssetRefresh]=useState(0);
+  const [quotaJob,setQuotaJob]=useState<string|null>(null);
   const [confirmed,setConfirmed]=useState(false),[running,setRunning]=useState(false),[busy,setBusy]=useState(false),[hz,setHz]=useState(5);
   const [metrics,setMetrics]=useState({observations:0,known:0,unknown:0,late:0,age:0,compute:0,inliers:0,segment:null as number|null});
   const output=useRef<HTMLCanvasElement>(null),generation=useRef(0),session=useRef<string|null>(null),abort=useRef<AbortController|null>(null);
@@ -31,6 +32,7 @@ export function TeachingNavigation({job,video,ready,binding,clips=[],clip=null,s
   };
   stopRef.current=stop;
   useEffect(()=>()=>stopRef.current(),[]);
+  useEffect(()=>{setPrepareNotice(null);},[job?.id]);
   useEffect(()=>{
     if(!job){setAssets(null);setSource(null);setAssetError(false);return;}let retired=false,timer:ReturnType<typeof setTimeout>;const request=new AbortController();
     setAssets(null);setSource(null);setAssetError(false);
@@ -49,7 +51,7 @@ export function TeachingNavigation({job,video,ready,binding,clips=[],clip=null,s
     if(!job||!scope||!clip||preparing||!source?.dense_available)return;
     setPreparing(true);setPrepareNotice(null);
     try{const result=await prepareRoute(job,scope,clip);setAssets(result);setAssetRefresh(n=>n+1);}
-    catch(error){setPrepareNotice(preparationError(error));setAssetRefresh(n=>n+1);}
+    catch(error){setPrepareNotice(preparationError(error));if(preparationQuotaReached(error))setQuotaJob(job.id);setAssetRefresh(n=>n+1);}
     finally{setPreparing(false);}
   };
   useEffect(()=>{
@@ -117,7 +119,7 @@ export function TeachingNavigation({job,video,ready,binding,clips=[],clip=null,s
     <p role="status" className="min-h-10 text-sm leading-5">{notice}</p>
     <div className="grid grid-cols-3 gap-2 text-xs tabular-nums">{[['Привязка',`${metrics.known} / ${metrics.observations}`],['Расчёт',`${metrics.compute.toFixed(1)} мс`],['Кадр → ответ',`${metrics.age.toFixed(1)} мс`],['3D-опоры',String(metrics.inliers)],['Не определено',String(metrics.unknown)],['Опоздало',String(metrics.late)]].map(([label,value])=><div key={label} className="rounded-lg border border-border p-2"><p className="text-muted-foreground">{label}</p><p className="mt-1 font-medium">{value}</p></div>)}</div>
     <p className="text-xs text-muted-foreground">Реконструкция: {job?job.id.slice(0,8):'не выбрана'} · карта: {navigationPhaseLabel(assets?.phase)}{metrics.segment===null?'':` · участок ${metrics.segment+1}`}</p>
-    {assets?.phase!=='ready'&&<div className="space-y-2 rounded-xl border border-amber-500/25 bg-amber-500/5 p-3 text-xs text-amber-500"><p className="flex items-start gap-2"><Route size={15} className="shrink-0"/>{assetError?'Локальный обработчик должен быть запущен на этом компьютере.':!job?(clip?'Для выбранного прохода ещё нет связанной сцены. Откройте «Сцена» и постройте её.':'Выберите сохранённый проход.'):source?.error==='camera_quality_gate_failed'?`Камеры связаны частично${source.quality?`: ${source.quality.registered} из ${source.quality.selected}`:''}. Ориентиры нельзя подготовить, пока сцена не восстановлена.`:!source?.dense_available?'Реконструкция ещё не завершена или не прошла проверку. Откройте «Сцена» для подробностей.':source?.camera_motion?.warning||assets?.error==='route_camera_motion_requires_review'?'Траекторию камер нужно проверить: ориентиры для живого направления ещё не подготовлены. Откройте «Сцена» для диагностики.':assets?.phase==='pending_auto_prepare'?'Подготовка ориентиров ожидается автоматически.':'Подготовьте карту ориентиров для выбранного прохода.'}</p>{prepareNotice&&<p role="alert">{prepareNotice}</p>}{assets?.error&&<p>Состояние подготовки: {navigationErrorLabel(assets.error)}</p>}{assetError&&<Button size="sm" variant="outline" onClick={()=>setAssetRefresh(n=>n+1)}>Проверить обработчик снова</Button>}{job&&source?.dense_available&&!source?.camera_motion?.warning&&assets?.error!=='route_camera_motion_requires_review'&&!assetError&&['not_prepared','failed','rejected','cancelled'].includes(assets?.phase??'')&&<Button size="sm" variant="outline" disabled={preparing||selectionDisabled||!scope||!clip} onClick={()=>{void prepare();}}>{preparing?'Подготавливаем…':'Подготовить ориентиры'}</Button>}</div>}
+    {assets?.phase!=='ready'&&<div className="space-y-2 rounded-xl border border-amber-500/25 bg-amber-500/5 p-3 text-xs text-amber-500"><p className="flex items-start gap-2"><Route size={15} className="shrink-0"/>{assetError?'Локальный обработчик должен быть запущен на этом компьютере.':!job?(clip?'Для выбранного прохода ещё нет связанной сцены. Откройте «Сцена» и постройте её.':'Выберите сохранённый проход.'):source?.error==='camera_quality_gate_failed'?`Камеры связаны частично${source.quality?`: ${source.quality.registered} из ${source.quality.selected}`:''}. Ориентиры нельзя подготовить, пока сцена не восстановлена.`:!source?.dense_available?'Реконструкция ещё не завершена или не прошла проверку. Откройте «Сцена» для подробностей.':source?.camera_motion?.warning||assets?.error==='route_camera_motion_requires_review'?'Траекторию камер нужно проверить: ориентиры для живого направления ещё не подготовлены. Откройте «Сцена» для диагностики.':assets?.phase==='pending_auto_prepare'?'Подготовка ориентиров ожидается автоматически.':'Подготовьте карту ориентиров для выбранного прохода.'}</p>{prepareNotice&&<p role="alert">{prepareNotice}</p>}{assets?.error&&<p>Состояние подготовки: {navigationErrorLabel(assets.error)}</p>}{assetError&&<Button size="sm" variant="outline" onClick={()=>setAssetRefresh(n=>n+1)}>Проверить обработчик снова</Button>}{job&&source?.dense_available&&!source?.camera_motion?.warning&&assets?.error!=='route_camera_motion_requires_review'&&assets?.error!=='route_preparation_attempt_quota'&&quotaJob!==job.id&&!assetError&&['not_prepared','failed','rejected','cancelled'].includes(assets?.phase??'')&&<Button size="sm" variant="outline" disabled={preparing||selectionDisabled||!scope||!clip} onClick={()=>{void prepare();}}>{preparing?'Подготавливаем…':'Подготовить ориентиры'}</Button>}</div>}
     <label className="flex items-start gap-2 text-xs"><input type="checkbox" checked={confirmed} disabled={running||busy} onChange={e=>setConfirmed(e.target.checked)}/>На экране игровой мир и записанный участок; камера и FOV соответствуют записи</label>
     <div className="flex flex-wrap items-center gap-2"><select aria-label="Частота проверки направления" className="rounded-lg border bg-background p-2 text-xs" value={hz} disabled={running||busy} onChange={e=>setHz(Number(e.target.value))}><option value={3}>3 проверки/с</option><option value={5}>5 проверок/с</option><option value={10}>10 проверок/с</option></select>
     <Button size="sm" disabled={!job||!confirmed||!ready||assets?.phase!=='ready'||running||busy} onClick={()=>{void start();}}>Проверить направление · 120 с</Button><Button variant="outline" size="sm" disabled={!running&&!busy} onClick={()=>{stop();setNotice('Наблюдение остановлено. Сохранённая карта не изменена.');}}><Square size={13} className="mr-1"/>Стоп</Button></div>

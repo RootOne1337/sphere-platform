@@ -81,3 +81,17 @@ test('a motion-rejected scene explains the obstruction instead of repeatedly cre
 test('the attempt quota is explained as a confirmed rejection, not a missing response',()=>{
   expect(preparationError(new ReconstructionResponseError(409,'route_preparation_attempt_quota'))).toMatch(/Исчерпан лимит попыток/);
 });
+test('confirmed attempt quota remains visible after refresh and prevents another POST',async()=>{
+  sessionStorage.clear();
+  jest.mocked(reconstructionRequest).mockImplementation(async(_path,_job,init)=>{
+    if(init?.method==='POST')throw new ReconstructionResponseError(409,'route_preparation_attempt_quota');
+    return {json:async()=>({phase:'complete',dense_available:true,navigation:{phase:'failed'}})} as Response;
+  });
+  render(<TeachingNavigation job={job} clip={'d'.repeat(32)} scope={'e'.repeat(32)} video={{current:null}} ready binding={{captureEpoch:'e'.repeat(32),width:1920,height:1080}}/>);
+  fireEvent.click(await screen.findByRole('button',{name:'Подготовить ориентиры'}));
+  await screen.findByText(/Исчерпан лимит попыток для этой сцены/);
+  await waitFor(()=>expect(jest.mocked(reconstructionRequest).mock.calls.filter(c=>c[2]?.method!=='POST').length).toBeGreaterThanOrEqual(2));
+  expect(screen.getByText(/Исчерпан лимит попыток для этой сцены/)).toBeInTheDocument();
+  expect(screen.queryByRole('button',{name:'Подготовить ориентиры'})).not.toBeInTheDocument();
+  expect(jest.mocked(reconstructionRequest).mock.calls.filter(c=>c[2]?.method==='POST')).toHaveLength(1);
+});

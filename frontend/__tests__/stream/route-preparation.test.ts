@@ -1,4 +1,4 @@
-import {prepareRoute,preparationError} from '@/src/features/stream/routePreparation';
+import {prepareRoute,preparationError,preparationQuotaReached} from '@/src/features/stream/routePreparation';
 import {reconstructionRequest,ReconstructionResponseError} from '@/src/features/stream/reconstructionClient';
 jest.mock('@/src/features/stream/reconstructionClient',()=>({...jest.requireActual('@/src/features/stream/reconstructionClient'),reconstructionRequest:jest.fn()}));
 
@@ -19,4 +19,9 @@ test('unknown preparation outcome is reconciled with the same intent',async()=>{
 test('a confirmed memory refusal is not presented as an unknown execution',()=>{
   expect(preparationError(new ReconstructionResponseError(409,'resource_guard'))).toMatch(/Не хватает ресурсов/);
   expect(preparationError(Error('network_result_unknown'))).toMatch(/Ответ не подтверждён/);
+});
+test('only the worker confirmed quota rejection blocks another attempt',()=>{
+  expect(preparationQuotaReached(new ReconstructionResponseError(409,'route_preparation_attempt_quota'))).toBe(true);
+  expect(preparationQuotaReached(new ReconstructionResponseError(500,'route_preparation_attempt_quota'))).toBe(false);
+  expect(preparationError(new ReconstructionResponseError(500,'route_preparation_attempt_quota'))).toMatch(/Ответ не подтверждён/);
 });

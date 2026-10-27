@@ -1,6 +1,6 @@
 import {fireEvent,render,screen,waitFor} from '@testing-library/react';
 import {TeachingReconstruction} from '@/src/features/stream/TeachingReconstruction';
-import {reconstructionRequest} from '@/src/features/stream/reconstructionClient';
+import {reconstructionRequest,ReconstructionResponseError} from '@/src/features/stream/reconstructionClient';
 import {listReconstructionLinks,readReconstructionLink,saveReconstructionLink} from '@/src/features/stream/reconstructionLink';
 jest.mock('next/dynamic',()=>()=>function Placeholder(){return null;});
 jest.mock('@/src/features/stream/reconstructionLink',()=>({readReconstructionLink:jest.fn(async()=>null),listReconstructionLinks:jest.fn(async()=>[]),saveReconstructionLink:jest.fn(async()=>{}),validReconstructionJob:(value:unknown)=>!!value}));
@@ -129,5 +129,23 @@ test('camera-motion rejection disables repeated route preparation on the scene p
   expect(await screen.findByRole('button',{name:'Подготовить маршрут'})).toBeDisabled();
   expect(screen.getByText(/повторная подготовка не исправит/)).toBeInTheDocument();
   expect((reconstructionRequest as jest.Mock).mock.calls.every(([, , init])=>init?.method!=='POST')).toBe(true);
+  view.unmount();
+});
+test('scene retains confirmed route preparation refusal after a status poll',async()=>{
+  const clip='c'.repeat(32),scope='d'.repeat(32),job={id:'a'.repeat(32),key:'b'.repeat(64)};
+  sessionStorage.setItem(`sphere-reconstruction-${scope}-${clip}`,JSON.stringify(job));
+  Object.defineProperty(crypto,'randomUUID',{configurable:true,value:()=> 'eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee'});
+  (reconstructionRequest as jest.Mock).mockImplementation(async(_path:string,_job:unknown,init?:RequestInit)=>{
+    if(init?.method==='POST')throw new ReconstructionResponseError(409,'route_preparation_attempt_quota');
+    return {json:async()=>({phase:'complete',geometry_available:true,dense_available:true,navigation:{phase:'failed'}})};
+  });
+  const view=render(<TeachingReconstruction clip={clip} scope={scope} folder={()=>null} complete onBusyChange={()=>{}}/>);
+  const button=await screen.findByRole('button',{name:'Подготовить маршрут'});
+  await waitFor(()=>expect(button).toBeEnabled());fireEvent.click(button);
+  await screen.findByText(/Исчерпан лимит попыток для этой сцены/);
+  await waitFor(()=>expect((reconstructionRequest as jest.Mock).mock.calls.filter(([, , init])=>init?.method!=='POST').length).toBeGreaterThanOrEqual(2));
+  expect(screen.getByText(/Исчерпан лимит попыток для этой сцены/)).toBeInTheDocument();
+  expect(button).toBeDisabled();
+  expect((reconstructionRequest as jest.Mock).mock.calls.filter(([, , init])=>init?.method==='POST')).toHaveLength(1);
   view.unmount();
 });
