@@ -4,8 +4,13 @@ const idPattern=/^[0-9a-f]{32}$/;
 const terminal=new Set(['ready','failed','rejected','cancelled']);
 const phaseLabels:Record<string,string>={not_prepared:'не подготовлена',pending_auto_prepare:'ожидается подготовка',preparing:'подготовка',features:'поиск ориентиров',ready:'готова к проверке',failed:'ошибка подготовки',rejected:'не прошла проверку',cancelled:'отменена'};
 const errorLabels:Record<string,string>={route_preparation_interrupted:'обработка прервалась при остановке сервиса',route_preparation_not_started:'автоматический запуск не подтверждён',route_camera_motion_requires_review:'траекторию камеры нужно проверить',camera_intrinsics_degenerate:'некорректные параметры восстановленной камеры',route_preparation_attempt_quota:'исчерпан лимит попыток подготовки этой сцены',route_map_has_unobserved_sections:'не хватает ориентиров на части пути',resource_guard:'недостаточно свободных ресурсов'};
+Object.assign(errorLabels,{sparse_receipt_invalid:'не подтверждена квитанция геометрии',sparse_source_changed:'файлы геометрии изменились после подготовки',sparse_source_missing_or_symlink:'файлы геометрии недоступны или перемещены',sparse_quality_gate_failed:'камеры не прошли проверку качества'});
 export const navigationPhaseLabel=(phase:string|null|undefined)=>phase?(phaseLabels[phase]??'состояние уточняется'):'не прочитана';
 export const navigationErrorLabel=(code:string)=>errorLabels[code]??'причину можно проверить в диагностике';
+/** Preparation rejects even one temporal reversal; mirror that stricter gate. */
+export function cameraMotionRequiresReview(motion:{warning:string|null;rapid_reversals?:number;speed_outliers?:number}|null|undefined):boolean {
+  return !!motion&&(!!motion.warning||(motion.rapid_reversals??0)>0||(motion.speed_outliers??0)>0);
+}
 /** A confirmed quota rejection cannot be fixed by submitting another intent. */
 export const preparationQuotaReached=(error:unknown)=>error instanceof ReconstructionResponseError&&error.status===409&&error.message==='route_preparation_attempt_quota';
 

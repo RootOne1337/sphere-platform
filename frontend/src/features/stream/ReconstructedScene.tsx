@@ -1,23 +1,28 @@
 'use client';
-import {useEffect,useRef,useState} from 'react';
+import {useEffect,useRef,useState,type ReactNode} from 'react';
 import {Button} from '@/components/ui/button';
 import {reconstructionRequest,type ReconstructionJob,type ReconstructionState} from './reconstructionClient';
 import type {BufferGeometry,Material,Mesh,Texture} from 'three';
 import {loadSurface} from './surfaceAsset';
 import {routeCoverage,type RecordedCamera} from './routeCoverage';
 import RecordedSourceFrame from './RecordedSourceFrame';
+import RouteGeometryMap from './RouteGeometryMap';
+import {routeSourceMatches} from './routeMapProjection';
+import {cameraMotionRequiresReview} from './routePreparation';
 
 type SurfaceStyle='texture'|'solid'|'normal'|'wire';
-type Geometry={cameras:{center:number[];ticks_90k:number;camera_to_world?:number[][];intrinsics?:{width:number;height:number;fx:number;fy:number;cx:number;cy:number}}[];points:number[][];camera_path_units:number;metric_scale:null};
+type Geometry={cameras:{center:number[];ticks_90k:number;camera_to_world?:number[][];intrinsics?:{width:number;height:number;fx:number;fy:number;cx:number;cy:number}}[];points:number[][];camera_path_units:number;metric_scale:null;source_manifest_sha256?:string};
 
-export default function ReconstructedScene({job,status}:{job:ReconstructionJob;status:ReconstructionState}) {
+export default function ReconstructedScene({job,status,sourceManifestSha=null,selectedTicks=null,onSeekCamera,validTicks,sourcePreview,showGeometryMap=true}:{job:ReconstructionJob;status:ReconstructionState;sourceManifestSha?:string|null;selectedTicks?:number|null;onSeekCamera?:(ticks:number)=>void;validTicks?:ReadonlySet<number>;sourcePreview?:ReactNode;showGeometryMap?:boolean}) {
   const host=useRef<HTMLDivElement>(null),reset=useRef<()=>void>(()=>{}),recordedView=useRef<(index:number)=>void>(()=>{});
   const wholeRoute=useRef<()=>void>(()=>{});
   const [coverage,setCoverage]=useState<ReturnType<typeof routeCoverage>>(null),[recordedImage,setRecordedImage]=useState(''),[compareSource,setCompareSource]=useState(false);
+  const [mapGeometry,setMapGeometry]=useState<Pick<Geometry,'cameras'|'points'|'source_manifest_sha256'>|null>(null);
   const panel=useRef<HTMLDivElement>(null),[expanded,setExpanded]=useState(false);
   useEffect(()=>{const update=()=>setExpanded(document.fullscreenElement===panel.current);document.addEventListener('fullscreenchange',update);return()=>document.removeEventListener('fullscreenchange',update);},[]);
   const pointObject=useRef<{visible:boolean}|null>(null),lineObject=useRef<{visible:boolean}|null>(null);
-  const [showPoints,setShowPoints]=useState(false),[showPath,setShowPath]=useState(false);
+  const sparseOnly=!status.dense_available&&!status.dense_partial_available&&!status.surface?.available;
+  const [showPoints,setShowPoints]=useState(sparseOnly),[showPath,setShowPath]=useState(sparseOnly);
   const [recordedIndex,setRecordedIndex]=useState(0),[cameraCount,setCameraCount]=useState(0),[recordedSeconds,setRecordedSeconds]=useState(0);
   const [representation,setRepresentation]=useState<'surface'|'gaussian'>(status.surface?.available?'surface':'gaussian');
   const [surfaceStyle,setSurfaceStyle]=useState<SurfaceStyle>('texture'),[downloading,setDownloading]=useState(false);
@@ -26,10 +31,10 @@ export default function ReconstructedScene({job,status}:{job:ReconstructionJob;s
   const surfaceIdentity=status.surface?.id;
   const latestStatus=useRef(status);latestStatus.current=status;
   useEffect(()=>{if(surfaceReady)setRepresentation('surface');},[surfaceReady]);
-  const options=useRef({points:false,path:false});options.current={points:showPoints,path:showPath};
+  const options=useRef({points:sparseOnly,path:sparseOnly});options.current={points:showPoints,path:showPath};
   const [error,setError]=useState<string|null>(null),[details,setDetails]=useState('Загружаем восстановленные камеры…');
   useEffect(()=>{
-    let retired=false,dispose=()=>{};const abort=new AbortController();setError(null);
+    let retired=false,dispose=()=>{};const abort=new AbortController();setError(null);setMapGeometry(null);
     void(async()=>{
       const [THREE,{OrbitControls}]=await Promise.all([import('three'),import('three/addons/controls/OrbitControls.js')]);
       const geometry=await(await reconstructionRequest(`/jobs/${job.id}/geometry`,job,{signal:abort.signal})).json() as Geometry;
@@ -38,6 +43,7 @@ export default function ReconstructedScene({job,status}:{job:ReconstructionJob;s
           ||c.intrinsics&&(!Object.values(c.intrinsics).every(Number.isFinite)||c.intrinsics.width<=0||c.intrinsics.height<=0||c.intrinsics.fx<=0||c.intrinsics.fy<=0))
         ||geometry.points.some(p=>p.length!==6||p.some(n=>!Number.isFinite(n))))throw Error('Повреждена геометрия результата.');
       const allCameras=geometry.cameras as (typeof geometry.cameras[number]&RecordedCamera)[];
+      if(!retired)setMapGeometry({cameras:allCameras,points:geometry.points,source_manifest_sha256:geometry.source_manifest_sha256});
       setCoverage(routeCoverage(allCameras,representation==='surface'&&latestStatus.current.surface?.result?latestStatus.current.surface.result.source_images:allCameras.map(c=>c.image)));
       if(representation==='surface'&&latestStatus.current.surface?.result){
         const included=new Set(latestStatus.current.surface.result.source_images);geometry.cameras=geometry.cameras.filter(c=>included.has((c as typeof c&{image:string}).image));
@@ -57,10 +63,14 @@ export default function ReconstructedScene({job,status}:{job:ReconstructionJob;s
         scene.add(cloud);objects.push(buffer,material);
       }
       const centers=geometry.cameras.map(c=>new THREE.Vector3(...c.center as [number,number,number]));
-      const lineGeometry=new THREE.BufferGeometry().setFromPoints(centers),lineMaterial=new THREE.LineBasicMaterial({color:'#47e6b1',depthTest:false});
-      const line=new THREE.Line(lineGeometry,lineMaterial);line.renderOrder=10;
-      const contextGeometry=new THREE.BufferGeometry().setFromPoints(allCameras.map(c=>new THREE.Vector3(...c.center as [number,number,number]))),contextMaterial=new THREE.LineBasicMaterial({color:'#72859d',depthTest:false,transparent:true,opacity:.55});
-      const pathGroup=new THREE.Group();pathGroup.add(new THREE.Line(contextGeometry,contextMaterial),line);pathGroup.visible=options.current.path;lineObject.current=pathGroup;scene.add(pathGroup);objects.push(lineGeometry,lineMaterial,contextGeometry,contextMaterial);
+      const segments=(cameras:Geometry['cameras'])=>cameras.flatMap((camera,index)=>{
+        if(!index)return [];const previous=cameras[index-1],dt=(camera.ticks_90k-previous.ticks_90k)/90000;
+        return dt>0&&dt<=1?[new THREE.Vector3(...previous.center as [number,number,number]),new THREE.Vector3(...camera.center as [number,number,number])]:[];
+      });
+      const lineGeometry=new THREE.BufferGeometry().setFromPoints(segments(geometry.cameras)),lineMaterial=new THREE.LineBasicMaterial({color:'#47e6b1',depthTest:false});
+      const line=new THREE.LineSegments(lineGeometry,lineMaterial);line.renderOrder=10;
+      const contextGeometry=new THREE.BufferGeometry().setFromPoints(segments(allCameras)),contextMaterial=new THREE.LineBasicMaterial({color:'#72859d',depthTest:false,transparent:true,opacity:.55});
+      const pathGroup=new THREE.Group();pathGroup.add(new THREE.LineSegments(contextGeometry,contextMaterial),line);pathGroup.visible=options.current.path;lineObject.current=pathGroup;scene.add(pathGroup);objects.push(lineGeometry,lineMaterial,contextGeometry,contextMaterial);
       const bounds=new THREE.Box3().setFromPoints([...centers,...points.filter((_,i)=>i%20===0).map(p=>new THREE.Vector3(...p.slice(0,3) as [number,number,number]))]);
       const center=bounds.getCenter(new THREE.Vector3());let radius=Math.max(bounds.getSize(new THREE.Vector3()).length()*.45,.1);
       const fullBounds=new THREE.Box3().setFromPoints(allCameras.map(c=>new THREE.Vector3(...c.center as [number,number,number]))),fullCenter=fullBounds.getCenter(new THREE.Vector3()),fullRadius=Math.max(fullBounds.getSize(new THREE.Vector3()).length()*.6,.1);
@@ -117,7 +127,7 @@ export default function ReconstructedScene({job,status}:{job:ReconstructionJob;s
   const fullscreen=async()=>{try{if(document.fullscreenElement===panel.current)await document.exitFullscreen();else if(panel.current?.requestFullscreen)await panel.current.requestFullscreen();else setError('Полноэкранный просмотр в этом браузере недоступен.');}catch{setError('Не удалось открыть полноэкранный просмотр.');}};
   return <div ref={panel} className={`overflow-hidden rounded-xl border border-border bg-background ${expanded?'flex h-full flex-col':''}`}>
     <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border bg-gradient-to-r from-sky-500/10 to-emerald-500/5 px-4 py-3">
-      <div className="flex flex-wrap gap-2" role="group" aria-label="Представление сцены"><Button size="sm" variant={representation==='surface'?'default':'outline'} disabled={!surfaceReady} onClick={()=>setRepresentation('surface')}>3D-модель</Button><Button size="sm" variant={representation==='gaussian'?'default':'outline'} onClick={()=>setRepresentation('gaussian')}>Визуальная сцена</Button></div>
+      <div className="flex flex-wrap gap-2" role="group" aria-label="Представление сцены"><Button size="sm" variant={representation==='surface'?'default':'outline'} disabled={!surfaceReady} onClick={()=>setRepresentation('surface')}>3D-модель</Button><Button size="sm" variant={representation==='gaussian'?'default':'outline'} onClick={()=>setRepresentation('gaussian')}>{sparseOnly?'Камеры и точки':'Визуальная сцена'}</Button></div>
       <div className="flex gap-2"><Button size="sm" variant="outline" onClick={()=>{void fullscreen();}}>{expanded?'Свернуть':'Развернуть'}</Button>{surfaceReady&&<Button size="sm" variant="outline" disabled={downloading} onClick={()=>{void download();}}>{downloading?'Проверка…':'Скачать GLB'}</Button>}</div>
     </div>
     {representation==='surface'&&<div className="flex flex-wrap gap-2 border-b border-border px-4 py-2" role="group" aria-label="Отображение поверхностей">{([['texture','Текстуры'],['solid','Поверхности'],['normal','Нормали'],['wire','Каркас']] as const).map(([value,label])=><Button key={value} size="sm" variant={surfaceStyle===value?'secondary':'ghost'} aria-pressed={surfaceStyle===value} onClick={()=>{setSurfaceStyle(value);styleRef.current(value);}}>{label}</Button>)}</div>}
@@ -126,8 +136,9 @@ export default function ReconstructedScene({job,status}:{job:ReconstructionJob;s
     {cameraCount>0&&<label className="flex flex-wrap items-center gap-3 border-t border-border px-4 py-3 text-xs text-muted-foreground"><span>Ракурс прохода {recordedIndex+1}/{cameraCount} · {recordedSeconds.toFixed(1)} с</span><input className="min-w-40 flex-1 accent-emerald-500" aria-label="Ракурс записанного прохода" type="range" min={0} max={cameraCount-1} step={1} value={recordedIndex} onChange={e=>{const index=Number(e.target.value);setRecordedIndex(index);recordedView.current(index);}}/></label>}
     <div className="flex flex-wrap gap-4 border-t border-border px-4 py-2 text-xs text-muted-foreground"><label className="flex items-center gap-2"><input type="checkbox" checked={showPoints} onChange={e=>{setShowPoints(e.target.checked);if(pointObject.current)pointObject.current.visible=e.target.checked;}}/>Опорные точки поверх сцены</label><label className="flex items-center gap-2"><input type="checkbox" checked={showPath} onChange={e=>{setShowPath(e.target.checked);if(lineObject.current)lineObject.current.visible=e.target.checked;}}/>Траектория камеры</label></div>
     <div ref={host} className={`flex w-full items-center justify-center bg-black ${expanded?'min-h-0 flex-1':'h-[480px]'}`} aria-label="Восстановленная 3D-сцена" />
+    {showGeometryMap&&mapGeometry&&<RouteGeometryMap cameras={mapGeometry.cameras} points={mapGeometry.points} motionWarning={cameraMotionRequiresReview(status.camera_motion)} selectedTicks={selectedTicks} validTicks={routeSourceMatches(sourceManifestSha,mapGeometry.source_manifest_sha256)?validTicks:undefined} onSeekCamera={routeSourceMatches(sourceManifestSha,mapGeometry.source_manifest_sha256)?onSeekCamera:undefined} sourcePreview={sourcePreview}/>}
     {recordedImage&&<details className="border-t border-border" open={compareSource} onToggle={event=>setCompareSource(event.currentTarget.open)}><summary className="cursor-pointer px-4 py-3 text-xs">Сравнить с исходным кадром текущего ракурса · {recordedSeconds.toFixed(1)} с</summary>{compareSource&&<RecordedSourceFrame job={job} image={recordedImage}/>}</details>}
     {error&&<p role="alert" className="px-4 py-2 text-sm text-destructive">{error}</p>}
-    <p className="px-4 py-3 text-xs leading-5 text-muted-foreground">Левая кнопка — вращать · правая — перемещать · колесо — приближать. Зелёная линия — восстановленный путь камеры. {representation==='surface'&&'Чёрные области не наблюдались достаточно надёжно и не достроены. '}Масштаб в метрах и проходимость не подтверждены.</p>
+    <p className="px-4 py-3 text-xs leading-5 text-muted-foreground">Левая кнопка — вращать · правая — перемещать · колесо — приближать. Зелёная линия — восстановленный путь камеры; разрывы больше секунды не соединяются. {representation==='surface'&&'Чёрные области не наблюдались достаточно надёжно и не достроены. '}Масштаб в метрах и проходимость не подтверждены.</p>
   </div>;
 }

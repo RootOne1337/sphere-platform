@@ -87,6 +87,31 @@ test('the operator sees the separate 3D section and a ten-minute recording optio
   expect(screen.getByRole('combobox',{name:'Предел записи'})).toHaveValue('10');
 });
 
+test('workflow switches to a focused live view without losing capture setup',()=>{
+  render(<TeachingWorkbench deviceId="test-device" readOnly={false}/>);
+  fireEvent.change(screen.getByLabelText('Название'),{target:{value:'Ночной маршрут'}});
+  const live=screen.getByRole('button',{name:/3 · Направление/});
+  fireEvent.click(live);
+  expect(live).toHaveAttribute('aria-current','step');
+  expect(screen.getByRole('heading',{name:'Сверка с живым экраном'})).toBeInTheDocument();
+  expect(screen.getByLabelText('Живая проверка направления')).toBeInTheDocument();
+  expect(screen.queryByRole('heading',{name:'Подготовка маршрута'})).not.toBeInTheDocument();
+  expect(screen.getByText('Проверка без автовождения')).toBeInTheDocument();
+  fireEvent.click(screen.getByRole('button',{name:/1 · Запись/}));
+  expect(screen.getByLabelText('Название')).toHaveValue('Ночной маршрут');
+  expect(screen.getByRole('heading',{name:'Подготовка маршрута'})).toBeInTheDocument();
+});
+
+test('capture quality controls remain discoverable without occupying the main workspace',()=>{
+  render(<TeachingWorkbench deviceId="test-device" readOnly={false}/>);
+  const summary=screen.getByText('Качество исходной записи');
+  const details=summary.closest('details');
+  expect(details).not.toHaveAttribute('open');
+  fireEvent.click(summary);
+  expect(details).toHaveAttribute('open');
+  expect(screen.getByRole('button',{name:'Съёмка · 30 FPS / 24 Мбит'})).toBeEnabled();
+});
+
 test('vehicle mode exposes four explicit calibration targets and never enables example coordinates',()=>{
   render(<TeachingWorkbench deviceId="test-device" readOnly={false}/>);
   fireEvent.change(screen.getByRole('combobox',{name:'Схема управления'}),{target:{value:'vehicle_buttons'}});
@@ -121,4 +146,39 @@ test('an unsolicited Android close ends control and stops a recording instead of
   await waitFor(()=>expect(postMessage).toHaveBeenCalledWith({type:'stop',confirmed:true,reason:'native_closed_unexpectedly'}));
   act(()=>emit({type:'finalized',id:null,manifest:{complete:false,failure:'native_closed_unexpectedly'}}));
   await waitFor(()=>expect(screen.getByRole('button',{name:'Включить управление'})).toBeDisabled());
+});
+
+test('external recording survives focus loss, fences browser controls and marks input provenance',async()=>{
+  mockAuth={accessToken:'test',sessionVersion:1,user:{id:'user',org_id:'org'}};
+  Object.defineProperty(globalThis,'TextEncoder',{configurable:true,value:TextEncoder});
+  Object.defineProperty(crypto,'subtle',{configurable:true,value:{digest:async()=>new Uint8Array(32).buffer}});
+  Object.defineProperty(navigator,'storage',{configurable:true,value:{estimate:async()=>({quota:4*1024**3,usage:0})}});
+  const postMessage=jest.fn(),setExternalCapture=jest.fn();let emit:(message:Record<string,unknown>)=>void=()=>{};
+  jest.mocked(connectTeaching).mockImplementation(async(_d,_t,_v,_s,_r,_f,onMessage)=>{
+    emit=onMessage;emit({type:'attached'});
+    return {fresh:()=>true,binding:()=>({captureEpoch:'test',width:960,height:540}),endpoint:()=>({}),worker:{postMessage,terminate:jest.fn()},close:jest.fn(),setExternalCapture} as never;
+  });
+  render(<TeachingWorkbench deviceId="test-device" readOnly={false}/>);
+  const connect=screen.getByRole('button',{name:'Подключить поток'});await waitFor(()=>expect(connect).toBeEnabled());fireEvent.click(connect);
+  await waitFor(()=>expect(screen.getByRole('button',{name:'Записать маршрут'})).toBeEnabled());
+  fireEvent.click(screen.getByRole('checkbox',{name:/Управляю в эмуляторе/}));
+  fireEvent.click(screen.getByRole('button',{name:'Записать маршрут'}));
+  await waitFor(()=>expect(postMessage).toHaveBeenCalledWith(expect.objectContaining({type:'arm',config:expect.objectContaining({input_capture:'external_unobserved'})})));
+  expect(setExternalCapture).toHaveBeenCalledWith(true);
+  act(()=>emit({type:'armed'}));
+  await waitFor(()=>expect(mockClose).toHaveBeenCalledTimes(1));
+  act(()=>emit({type:'recording'}));
+  expect(screen.getByText('Управление в эмуляторе · нажатия не записываются')).toBeInTheDocument();
+  const video=screen.getByLabelText('Игровой экран: назначенные клавиши и мышь; Escape — остановить запись');
+  fireEvent.keyDown(video,{code:'KeyW'});expect(mockSet).not.toHaveBeenCalled();
+  await act(async()=>{fireEvent.blur(window);await Promise.resolve();});
+  Object.defineProperty(document,'hidden',{configurable:true,value:true});
+  fireEvent(document,new Event('visibilitychange'));
+  expect(mockClose).toHaveBeenCalledTimes(1);
+  expect(postMessage).not.toHaveBeenCalledWith(expect.objectContaining({type:'stop'}));
+  Reflect.deleteProperty(document,'hidden');
+  fireEvent.click(screen.getByRole('button',{name:'Остановить · Esc'}));
+  await waitFor(()=>expect(postMessage).toHaveBeenCalledWith({type:'stop',confirmed:true,reason:null}));
+  act(()=>emit({type:'finalized',id:null,manifest:{complete:true,frames:5,media_duration_ticks_90k:3000}}));
+  await waitFor(()=>expect(setExternalCapture).toHaveBeenCalledWith(false));
 });

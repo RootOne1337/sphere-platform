@@ -15,6 +15,18 @@ test('a recording marked HUD-free defaults to no HUD mask and 30000 iterations',
   expect(screen.getByRole('combobox',{name:'Качество обработки'})).toHaveValue('30000');
   view.unmount();
 });
+test('one-button route preparation creates a sparse-only automatic pipeline',async()=>{
+  Object.defineProperty(crypto,'randomUUID',{configurable:true,value:()=> 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa'});
+  (reconstructionRequest as jest.Mock).mockResolvedValue({json:async()=>({phase:'failed'})});
+  const folder={} as FileSystemDirectoryHandle;
+  const view=render(<TeachingReconstruction clip={'c'.repeat(32)} scope={'d'.repeat(32)} folder={()=>folder} complete onBusyChange={()=>{}}/>);
+  const button=await screen.findByRole('button',{name:'Подготовить ориентиры'});
+  await waitFor(()=>expect(button).toBeEnabled());fireEvent.click(button);
+  await waitFor(()=>expect(reconstructionRequest).toHaveBeenCalled());
+  const request=(reconstructionRequest as jest.Mock).mock.calls.find(([path])=>path==='/jobs');
+  expect(JSON.parse(String(request[2].body))).toMatchObject({prepare_route:true,route_only:true});
+  view.unmount();
+});
 test('a recovered job blocks new control until its state is actually confirmed',async()=>{
   const clip='c'.repeat(32),scope='d'.repeat(32),job={id:'a'.repeat(32),key:'b'.repeat(64)};
   sessionStorage.setItem(`sphere-reconstruction-${scope}-${clip}`,JSON.stringify(job));

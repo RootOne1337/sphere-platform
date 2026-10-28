@@ -8,7 +8,7 @@ import { StreamSessionReporter, teachingStreamSample } from './streamSessionTele
 export type TeachingConnection = { close(): void; fresh(): boolean; binding(): DirectVideoBinding | null;
   endpoint(): DirectControlEndpoint | null; worker: Worker;
   observeControl?(state:'idle'|'opening'|'ready'|'closing'|'closed'|'fenced',reason?:string,rtt?:number):void;
-  controlRttMs?():number|null };
+  controlRttMs?():number|null; setExternalCapture?(enabled:boolean):void };
 
 /** One explicit capture-only presence and one direct peer. No media relay or automatic retry. */
 export async function connectTeaching(deviceId: string, token: string, video: HTMLVideoElement,
@@ -27,6 +27,7 @@ export async function connectTeaching(deviceId: string, token: string, video: HT
   let session: string | null = null, dimensions: { width: number; height: number } | null = null;
   let binding: DirectVideoBinding | null = null, endpoint: DirectControlEndpoint | null = null;
   let cancel: (() => void) | null = null, disposed = false, attached = false, faulted = false;
+  let externalCapture = false, lastEncoded = 0;
   let peerSession: string | null = null, lastRenew = -Infinity, renewPendingAt: number | null = null;
   let lastFrame = 0, frameId: number | null = null;
   let presented = 0, latest:DirectProbeResult|null = null;
@@ -49,7 +50,10 @@ export async function connectTeaching(deviceId: string, token: string, video: HT
     if(latest)latest={...latest,state:'failed',reason:reason==='video_stalled'?'video_frame_timeout':reason};
     reporter.reportFailure();failed(reason);
   } };
-  const fresh = () => !disposed && !faulted && !!binding && !!lastFrame && performance.now() - lastFrame < 250 && !document.hidden;
+  const fresh = () => {
+    const latest = externalCapture && lastEncoded ? lastEncoded : lastFrame;
+    return !disposed && !faulted && !!binding && !!latest && performance.now() - latest < 250 && (externalCapture || !document.hidden);
+  };
   const present = () => { frameId = video.requestVideoFrameCallback((_at, frame) => {
     if (disposed) return;
     if (!binding) { present(); return; }
@@ -60,8 +64,9 @@ export async function connectTeaching(deviceId: string, token: string, video: HT
   const watchdog = setInterval(() => {
     if (disposed) return;
     reporter.report();
-    if (lastFrame && performance.now() - lastFrame > 1000) fault('video_stalled');
-    if (document.hidden) fault('page_hidden');
+    const latest = externalCapture && lastEncoded ? lastEncoded : lastFrame;
+    if (latest && performance.now() - latest > 1000) fault('video_stalled');
+    if (document.hidden && !externalCapture) fault('page_hidden');
     const now = performance.now();
     if (renewPendingAt !== null && now - renewPendingAt > 5000) fault('capture_renewal_unconfirmed');
     if (fresh() && peerSession && renewPendingAt === null && now - lastRenew >= 3000 && socket.readyState === 1) {
@@ -72,6 +77,7 @@ export async function connectTeaching(deviceId: string, token: string, video: HT
   signal.addEventListener('abort', close, { once: true });
   worker.onmessage = event => {
     if (event.data?.type === 'attached') attached = true;
+    if (event.data?.type === 'encoded_heartbeat' && externalCapture) lastEncoded = performance.now();
     workerMessage(event.data);
   };
   worker.onerror = () => fault('recorder_worker_failed');
@@ -129,6 +135,7 @@ export async function connectTeaching(deviceId: string, token: string, video: HT
     } catch { fault('invalid_capture_message'); }
   };
   return { close, fresh, binding: () => binding, endpoint: () => endpoint, worker,
+    setExternalCapture:(enabled)=>{externalCapture=enabled;lastEncoded=0;worker.postMessage({type:'external_capture',enabled});},
     controlRttMs:()=>controlRtt,
     observeControl:(state,reason,rtt)=>{controlState=state;
       if(state==='opening'){controlFailure=null;controlRtt=null;reporter.reportControlFailure(false);}

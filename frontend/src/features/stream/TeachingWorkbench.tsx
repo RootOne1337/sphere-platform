@@ -1,6 +1,6 @@
 'use client';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Circle, Download, Keyboard, MousePointer2, Square, Video, Wifi } from 'lucide-react';
+import { ArrowRight, Circle, Download, Keyboard, MousePointer2, Square, Video, Wifi } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAuthStore } from '@/lib/store';
 import { StreamQualityControl } from './StreamQualityControl';
@@ -37,6 +37,9 @@ export function TeachingWorkbench({ deviceId, readOnly }: { deviceId: string; re
   const [calibrate, setCalibrate] = useState<CalibrationTarget | null>(null);
   const [bindingTarget,setBindingTarget]=useState<TeachingKeyRole|null>(null);
   const [hudHidden, setHudHidden] = useState(false);
+  const [externalRecording, setExternalRecording] = useState(false);
+  const externalActive = useRef(false);
+  const externalOwnerReleased = useRef(false), externalVideoStarted = useRef(false);
   const [exportBusy,setExportBusy] = useState(false);
   const [title, setTitle] = useState('');
   const [minutes, setMinutes] = useState(10);
@@ -46,6 +49,7 @@ export function TeachingWorkbench({ deviceId, readOnly }: { deviceId: string; re
   const [refresh, setRefresh] = useState(0);
   const [workspaceMode,setWorkspaceMode]=useState<'capture'|'review'|'live'>('capture');
   const [captureQuality,setCaptureQuality]=useState<CaptureQuality|null>(null);
+  const [captureTargetFps,setCaptureTargetFps]=useState<number|null>(null);
   const [navigationBinding,setNavigationBinding]=useState<{job:ReconstructionJob;clip:string;scope:string}|null>(null);
   const [clipChoices,setClipChoices]=useState<TeachingClipChoice[]>([]);
   const routeChanged=useCallback((job:ReconstructionJob|null,sourceClip:string|null,scope:string|null)=>setNavigationBinding(job&&sourceClip&&scope?{job,clip:sourceClip,scope}:null),[]);
@@ -88,6 +92,7 @@ export function TeachingWorkbench({ deviceId, readOnly }: { deviceId: string; re
           conn.worker.postMessage({ type: 'stop', confirmed, reason: reason ?? null });
         });
       }
+      conn?.setExternalCapture?.(false); externalActive.current = false;
       if (armSent.current) { change('finished'); setReady(false); }
       else { controller.current = null; stopPromise.current = null; change(confirmed ? 'preview' : 'finished'); setNotice(confirmed ? 'Управление выключено. Все контакты освобождены.' : 'Освобождение ввода не подтверждено. Подключите поток заново.'); if(!confirmed)setReady(false); }
       if (reason) setNotice(`Остановлено: ${stopReasons[reason] ?? reason}. ${armSent.current ? 'Проверьте статус материала.' : 'Для продолжения снова включите управление.'}`);
@@ -104,10 +109,11 @@ export function TeachingWorkbench({ deviceId, readOnly }: { deviceId: string; re
   useEffect(() => {
     const timer = setInterval(() => {setReady(connection.current?.fresh() === true && attached.current);
       setInputRtt(connection.current?.controlRttMs?.()??null);}, 200);
-    const hidden = () => { if (document.hidden) void stopCallback.current('page_hidden'); };
+    const hidden = () => { if (document.hidden && !externalActive.current) void stopCallback.current('page_hidden'); };
     const blur = () => {
       if(!active(phaseRef.current))return;
       if(keys.current.size || mouse.current !== null) { void stopCallback.current('window_focus_lost'); return; }
+      if(externalActive.current && ['opening','arming','recording'].includes(phaseRef.current))return;
       // Embedded Rerun focuses its canvas at startup. Moving between documents
       // inside the same focused page is not leaving the app. Held input is never exempt.
       queueMicrotask(()=>{
@@ -138,7 +144,7 @@ export function TeachingWorkbench({ deviceId, readOnly }: { deviceId: string; re
     // Chromium may suspend presentation callbacks for a video outside the viewport.
     // Bring the operator's screen into view before qualifying fresh frames.
     video.current?.scrollIntoView?.({block:'center',behavior:'auto'});
-    await disconnect(); stopPromise.current = null; setResult(null); setCaptureQuality(null); change('connecting');
+    await disconnect(); stopPromise.current = null; setResult(null); setCaptureQuality(null); setCaptureTargetFps(null); change('connecting');
     setNative('Не открыт'); setNotice('Подключаем один прямой поток. Ввод ещё выключен.');
     const request = new AbortController(); abort.current = request;
     try {
@@ -148,7 +154,26 @@ export function TeachingWorkbench({ deviceId, readOnly }: { deviceId: string; re
         }); }, message => {
           if (request.signal.aborted) return;
           if (message.type === 'attached') attached.current = true;
-          if (message.type === 'recording') { change('recording'); setNotice('Идёт запись оригинального видео и подтверждённых действий.'); video.current?.focus({preventScroll:true}); }
+          if (message.type === 'armed' && externalActive.current) {
+            expectedOwnerClose.current=true;
+            void (async()=>{
+              const closed=await controller.current?.close() ?? false;
+              expectedOwnerClose.current=false;
+              if(!closed) { void stopCallback.current('release_unknown'); return; }
+              externalOwnerReleased.current=true;
+              if(externalVideoStarted.current && phaseRef.current==='arming') {
+                change('recording');setNative('CLOSED · освобождено');
+                setNotice('Идёт запись видео. Управляйте в эмуляторе: внешние нажатия не записываются.');
+              }
+            })();
+          }
+          if (message.type === 'recording') {
+            if(externalActive.current){
+              externalVideoStarted.current=true;
+              if(!externalOwnerReleased.current){setNotice('Видео началось; освобождаем ввод Sphere перед управлением в эмуляторе.');return;}
+            }
+            change('recording'); setNotice(externalActive.current ? 'Идёт запись видео. Управляйте в эмуляторе: внешние нажатия не записываются.' : 'Идёт запись оригинального видео и подтверждённых действий.'); if(!externalActive.current)video.current?.focus({preventScroll:true});
+          }
           if (message.type === 'progress') setProgress({ frames: Number(message.frames), bytes: Number(message.bytes), seconds: Number(message.seconds) });
           if (message.type==='progress'&&message.capture_quality)setCaptureQuality(message.capture_quality as CaptureQuality);
           if (message.type === 'limit_reached') { setNotice('Достигнут выбранный предел. Освобождаем ввод и сохраняем запись.'); void stopCallback.current(); }
@@ -213,14 +238,17 @@ export function TeachingWorkbench({ deviceId, readOnly }: { deviceId: string; re
     if ((phaseRef.current as Phase) !== 'opening' || connection.current !== conn) return;
     const maxBytes = minutes === 2 ? 512*1024*1024 : 2*1024*1024*1024;
     if ((storage.quota ?? 0) - (storage.usage ?? 0) < maxBytes + 100*1024*1024) { change('preview'); setNotice(`Нужно ${minutes === 2 ? '612 МБ' : '2,1 ГБ'} свободной квоты браузера. Выберите меньший предел или экспортируйте старые материалы.`); return; }
-    const p = profileRef.current, issue=profileIssue(p,binding);
+    const p = profileRef.current, issue=externalRecording?null:profileIssue(p,binding);
     if(issue){change('preview');setNotice(issue);return;}
     const id = newId(); setProgress({ frames: 0, bytes: 0, seconds: 0 });setCaptureQuality(null); stopPromise.current = null;
     recordConfig.current = { id, storage_scope: storageScope, device_id: deviceId, width: binding.width, height: binding.height,
       capture_epoch: binding.captureEpoch, title: teachingTitle(title,id,Date.now()), profile: p,
-      source: 'direct_webrtc_h264', target_fps: 30, actual_fps_unverified: true,
+      source: 'direct_webrtc_h264', target_fps: captureTargetFps, actual_fps_unverified: true,
+      input_capture: externalRecording ? 'external_unobserved' : 'sphere_confirmed',
       hud_hidden_declared: hudHidden, contact_roles: p.mode==='stick'?['stick','camera','action']:['throttle_or_brake','steering','camera_or_action'],
       max_duration_ms: minutes*60000, max_bytes: maxBytes, max_frames: minutes*3600 };
+    externalActive.current=externalRecording;externalOwnerReleased.current=false;externalVideoStarted.current=false;
+    conn.setExternalCapture?.(externalRecording);
     change('opening'); setNotice('Открываем три контакта. Требуется APK 1.2.89 или новее с contact_protocol=1.');
     try {
       openInput('record',conn);
@@ -239,7 +267,7 @@ export function TeachingWorkbench({ deviceId, readOnly }: { deviceId: string; re
   const key = (event: React.KeyboardEvent, down: boolean) => {
     if (event.code === 'Escape') { event.preventDefault(); void stop(); return; }
     const role=teachingRole(event.code,profileRef.current);
-    if (!inputEnabled(phaseRef.current) || !role) return;
+    if (!inputEnabled(phaseRef.current) || externalActive.current || !role) return;
     event.preventDefault(); if (event.repeat || keys.current.has(event.code) === down) return;
     const binding=connection.current?.binding(), mapping=profileRef.current;
     if(role==='action'&&down&&mapping.mode==='vehicle_buttons') {
@@ -272,24 +300,33 @@ export function TeachingWorkbench({ deviceId, readOnly }: { deviceId: string; re
     :calibrated(profile,binding,'stick')?[{...fromPercent({x:profile.stick_x,y:profile.stick_y},binding),label:['forward','left','reverse','right'].map(role=>keyLabel(mappedKeys[role as keyof typeof mappedKeys])).join('')}]:[]):[];
   if(binding&&calibrated(profile,binding,'action'))calibrationMarkers.push({...fromPercent({x:profile.action_x,y:profile.action_y},binding),label:keyLabel(mappedKeys.action)});
   const chooseCalibration=(target:CalibrationTarget)=>{setBindingTarget(null);setCalibrate(target);video.current?.scrollIntoView({block:'center',behavior:'smooth'});};
+  const chosenClip=clipChoices.find(item=>item.id===clip);
+  const workflow=[
+    {mode:'capture' as const,label:'1 · Запись',detail:'Покажите путь в игре',status:phase==='recording'?'Идёт запись':chosenClip?`Выбрано: ${chosenClip.title}`:'Ожидает запись'},
+    {mode:'review' as const,label:'2 · Сцена',detail:'Проверьте запись и ориентиры',status:navigationJob?'Связана с записью':'Выберите проход'},
+    {mode:'live' as const,label:'3 · Направление',detail:'Сверьте путь с живым кадром',status:'Проверка без автовождения'},
+  ];
   return <div ref={host} className="space-y-4" aria-label="Запись учебного маршрута">
-    <section className="rounded-2xl border border-border bg-gradient-to-br from-primary/10 via-card to-cyan-500/5 p-3 sm:p-4"><div className="flex flex-wrap items-center justify-between gap-3"><div><p className="text-[10px] font-semibold uppercase tracking-[.18em] text-primary">Студия маршрутов</p><h2 className="mt-1 text-lg font-semibold tracking-tight">Запись → сцена → проверка</h2></div><nav aria-label="Режим студии маршрутов" className="grid w-full grid-cols-3 gap-1 rounded-xl border border-border bg-background/60 p-1 sm:w-auto">{([['capture','1 · Запись'],['review','2 · Сцена'],['live','3 · Направление']] as const).map(([mode,label])=><Button key={mode} size="sm" variant={workspaceMode===mode?'default':'ghost'} aria-pressed={workspaceMode===mode} disabled={active(phase)||exportBusy||phase==='connecting'} onClick={()=>{void switchMode(mode);}}>{label}</Button>)}</nav></div></section>
+    <section className="overflow-hidden rounded-2xl border border-sky-500/20 bg-gradient-to-br from-sky-500/10 via-card to-emerald-500/5 p-4 sm:p-5">
+      <div className="flex flex-wrap items-start justify-between gap-3"><div><p className="text-[10px] font-semibold uppercase tracking-[.2em] text-sky-500">Sphere · студия маршрутов</p><h2 className="mt-1 text-xl font-semibold tracking-tight">От записи к проверке пути</h2><p className="mt-1 max-w-2xl text-xs leading-5 text-muted-foreground">Запишите проход, подготовьте его и проверьте ориентиры на живом экране. Автоматический повтор пока не подтверждён.</p></div><span className="rounded-full border border-amber-500/25 bg-amber-500/10 px-3 py-1 text-[11px] font-medium text-amber-600 dark:text-amber-400">Ручная проверка</span></div>
+      <nav aria-label="Режим студии маршрутов" className="mt-4 grid gap-2 md:grid-cols-3">{workflow.map(({mode,label,detail,status})=><button key={mode} type="button" aria-pressed={workspaceMode===mode} aria-current={workspaceMode===mode?'step':undefined} disabled={active(phase)||exportBusy||phase==='connecting'} onClick={()=>{void switchMode(mode);}} className={`group min-w-0 rounded-xl border p-3 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary disabled:cursor-not-allowed disabled:opacity-60 ${workspaceMode===mode?'border-sky-500/60 bg-sky-500/10 shadow-sm':'border-border bg-background/55 hover:border-sky-500/35 hover:bg-background'}`}><span className="flex items-center justify-between gap-2 text-sm font-semibold"><span>{label}</span><ArrowRight size={15} className={workspaceMode===mode?'text-sky-500':'text-muted-foreground'}/></span><span className="mt-1 block text-xs text-muted-foreground">{detail}</span><span className="mt-2 block truncate text-[11px] font-medium text-sky-600 dark:text-sky-400" title={status}>{status}</span></button>)}</nav>
+    </section>
     <TeachingLocalWorker/>
     <div className="space-y-4">
     <div aria-label="Панель записи" className="sticky top-16 z-30 flex flex-wrap items-center gap-2 rounded-2xl border border-border bg-card/95 p-3 shadow-xl backdrop-blur">
       <div className="grid w-full grid-cols-2 gap-2 lg:flex lg:w-auto lg:flex-wrap">
       <Button className={toolbarButton} variant="outline" disabled={readOnly || exportBusy || !storageScope || active(phase) || phase === 'connecting'} onClick={() => { if(workspaceMode==='review')setWorkspaceMode('capture');void connect(); }}>{phase === 'idle' ? 'Подключить поток' : 'Подключить заново'}</Button>
       <Button className={toolbarButton} variant="outline" disabled={readOnly || exportBusy || phase !== 'preview' || !ready || !!calibrate || !!bindingTarget || !!mappingIssue} onClick={enableControl}><Keyboard size={15} className="mr-2 shrink-0" />Включить управление</Button>
-      <Button className={toolbarButton} disabled={workspaceMode!=='capture'||readOnly || exportBusy || !['preview','controlling'].includes(phase) || !ready || !!calibrate || !!bindingTarget || !!mappingIssue} onClick={() => { void record(); }}><Circle size={15} className="mr-2 shrink-0 text-red-500" />Записать маршрут</Button>
+      <Button className={toolbarButton} disabled={workspaceMode!=='capture'||readOnly || exportBusy || !['preview','controlling'].includes(phase) || !ready || !!calibrate || !!bindingTarget || (!externalRecording && !!mappingIssue)} onClick={() => { void record(); }}><Circle size={15} className="mr-2 shrink-0 text-red-500" />Записать маршрут</Button>
       <Button className={toolbarButton} variant="destructive" disabled={!active(phase) || phase === 'stopping'} onClick={() => { void stop(); }}><Square size={15} className="mr-2 shrink-0" />{phase === 'stopping' ? 'Освобождение и сохранение…' : 'Остановить · Esc'}</Button>
       </div>
       {(phase==='recording'||phase==='finished')&&<span className="rounded-lg bg-muted px-2 py-1 font-mono text-xs tabular-nums">{progress.seconds.toFixed(1)} с · {progress.frames} кадров{progress.seconds>0?` · ${(progress.frames/progress.seconds).toFixed(1)} средних FPS`:''}</span>}
-      <p role="status" className="min-w-[220px] flex-1 text-xs leading-5 text-muted-foreground">{readOnly ? 'Для записи требуется право stream:control.' : exportBusy?'Обрабатываем сохранённый материал. Дождитесь завершения перед новым управлением.':calibrate ? `Укажите ${calibrationNames[calibrate]} на экране. Касание в игру не отправляется.` : mappingIssue ?? notice}</p>
+      <p role="status" className="min-w-[220px] flex-1 text-xs leading-5 text-muted-foreground">{readOnly ? 'Для записи требуется право stream:control.' : exportBusy?'Обрабатываем сохранённый материал. Дождитесь завершения перед новым управлением.':calibrate ? `Укажите ${calibrationNames[calibrate]} на экране. Касание в игру не отправляется.` : (!externalRecording && mappingIssue) || notice}</p>
     </div>
     <div hidden={workspaceMode==='review'} className="space-y-4">
-    {workspaceMode==='capture'&&<TeachingCaptureSetup key={`${deviceId}:${sessionVersion}`} deviceId={deviceId} disabled={readOnly||active(phase)||exportBusy} quality={captureQuality}/>}
+    {workspaceMode==='capture'&&<details className="group rounded-xl border border-sky-500/20 bg-sky-500/5"><summary className="flex cursor-pointer flex-wrap items-center justify-between gap-2 px-4 py-3 text-sm font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"><span>Качество исходной записи</span><span className="text-xs font-normal text-muted-foreground">{captureQuality?.received_encoded_fps!=null?`${captureQuality.received_encoded_fps.toFixed(1)} FPS по записи`:'Профиль и фактические FPS · открыть настройки'}</span></summary><TeachingCaptureSetup key={`${deviceId}:${sessionVersion}`} deviceId={deviceId} disabled={readOnly||active(phase)||exportBusy} quality={captureQuality} onConfirmedTarget={setCaptureTargetFps}/></details>}
     <section className="rounded-2xl border border-border bg-card p-4 sm:p-5">
-      <div className="flex flex-wrap items-start justify-between gap-3"><div><p className="text-xs font-semibold uppercase tracking-widest text-primary">Обучение маршруту</p><h2 className="mt-1 text-xl font-semibold">Покажите путь один раз</h2><p className="mt-2 max-w-3xl text-sm text-muted-foreground">Подготовьте игру с клавиатуры, включите запись и покажите маршрут. Видео и подтверждённые касания сохраняются вместе; локальный 3D-просмотр помогает оценить геометрию.</p></div><StreamQualityControl deviceId={deviceId} readOnly={readOnly || active(phase)} /></div>
+      <div className="flex flex-wrap items-start justify-between gap-3"><div><p className="text-xs font-semibold uppercase tracking-widest text-primary">{workspaceMode==='live'?'Повторный проход':'Обучение маршруту'}</p><h2 className="mt-1 text-xl font-semibold">{workspaceMode==='live'?'Сверка с живым экраном':'Покажите путь один раз'}</h2><p className="mt-2 max-w-3xl text-sm text-muted-foreground">{workspaceMode==='live'?'Выберите сохранённый проход и сравните направление с текущим изображением. Проверка не управляет игрой.':externalRecording?'Запишите видео, управляя в эмуляторе. Внешние нажатия недоступны журналу Sphere.':'Подготовьте игру с клавиатуры, включите запись и покажите маршрут. Видео и подтверждённые касания сохраняются вместе.'}</p></div><StreamQualityControl deviceId={deviceId} readOnly={readOnly || active(phase)} /></div>
       <div className="mt-4 grid gap-3 sm:grid-cols-3"><Metric icon={<Wifi size={15} />} label="Транспорт" value={result ? `${result.path==='host'||result.path==='nat'?'Напрямую':result.path==='relay'?'Ретранслятор':'Путь уточняется'} · ${result.state}` : 'Не подключён'} /><Metric icon={<Keyboard size={15} />} label="Нативный ввод" value={`${native}${inputRtt===null?'':` · ACK ${inputRtt.toFixed(1)} мс`}`} /><Metric icon={<Video size={15} />} label="Записано" value={`${progress.seconds.toFixed(1)} с · ${progress.frames} кадров · ${(progress.bytes/1048576).toFixed(1)} МБ`} /></div>
       {result?.videoStats&&<><div aria-label="Фактические параметры приёма" className="mt-3 flex flex-wrap gap-x-5 gap-y-1 text-xs text-muted-foreground"><span>{result.videoStats.width??'—'} × {result.videoStats.height??'—'}</span><span>{result.videoStats.fps?.toFixed(1)??'—'} FPS приёма</span><span>{result.videoStats.bitrateBps==null?'—':(result.videoStats.bitrateBps/1e6).toFixed(2)} Мбит/с</span><span title="RTT выбранной пары ICE; это не задержка нажатия">RTC RTT {result.videoStats.networkRttMs?.toFixed(1)??'—'} мс</span><span title="Среднее время в буфере приёма за последний интервал">Буфер приёма {result.videoStats.jitterBufferMs?.toFixed(1)??'—'} мс</span><span title="Среднее время декодирования за последний интервал">Декодирование {result.videoStats.decodeMs?.toFixed(1)??'—'} мс</span></div><p className="mt-1 text-[11px] text-muted-foreground">Это метрики браузерного приёма; полная задержка Android → экран и нажатия здесь не измеряется.</p></>}
     </section>
@@ -306,7 +343,7 @@ export function TeachingWorkbench({ deviceId, readOnly }: { deviceId: string; re
             if (calibrate && !active(phase)) {
               setProfile(p => calibrateProfile(p,b,calibrate,pos)); setCalibrate(null); return;
             }
-            if (!inputEnabled(phaseRef.current) || mouse.current !== null || e.button !== 0) return;
+            if (!inputEnabled(phaseRef.current) || externalActive.current || mouse.current !== null || e.button !== 0) return;
             if(profileRef.current.mode==='vehicle_buttons'&&[...keys.current].some(code=>teachingRole(code,profileRef.current)==='action')){setNotice(`Отпустите ${keyLabel(teachingKeys(profileRef.current).action)}, чтобы двигать камеру мышью.`);return;}
             e.preventDefault(); e.currentTarget.focus(); e.currentTarget.setPointerCapture(e.pointerId);
             mouse.current = e.pointerId; mouseContact.current=cameraContact(profileRef.current);controller.current?.set(mouseContact.current,pos);
@@ -320,13 +357,14 @@ export function TeachingWorkbench({ deviceId, readOnly }: { deviceId: string; re
         </svg>}
         {calibrate&&<p className="pointer-events-none absolute left-2 right-2 top-2 rounded-lg bg-background/95 px-3 py-2 text-sm text-primary">Укажите {calibrationNames[calibrate]}. Это только калибровка.</p>}
         </div>
-        <div className="flex flex-wrap gap-2 border-t border-border p-3 text-xs text-muted-foreground"><span className={`rounded-md px-2 py-1 ${inputEnabled(phase) ? 'bg-primary/15 text-primary' : 'bg-muted'}`}>{inputEnabled(phase) ? 'Управление включено · фокус на экране' : 'Управление выключено'}</span><span className="rounded-md bg-muted px-2 py-1">{profile.mode==='stick'?`${keyLabel(mappedKeys.forward)}/${keyLabel(mappedKeys.left)}/${keyLabel(mappedKeys.reverse)}/${keyLabel(mappedKeys.right)} · стик`:`${keyLabel(mappedKeys.forward)}/${keyLabel(mappedKeys.reverse)} · газ и тормоз · ${keyLabel(mappedKeys.left)}/${keyLabel(mappedKeys.right)} · руль`}</span>{profile.mode==='stick'&&<span className="rounded-md bg-muted px-2 py-1">{keyLabel(mappedKeys.slow)} · 40% скорости</span>}<span className="rounded-md bg-muted px-2 py-1">ЛКМ + движение · камера</span><span className="rounded-md bg-muted px-2 py-1">{keyLabel(mappedKeys.action)} · удержание кнопки</span></div>
+        <div className="flex flex-wrap gap-2 border-t border-border p-3 text-xs text-muted-foreground"><span className={`rounded-md px-2 py-1 ${inputEnabled(phase) && !externalActive.current ? 'bg-primary/15 text-primary' : 'bg-muted'}`}>{externalActive.current ? 'Управление в эмуляторе · нажатия не записываются' : inputEnabled(phase) ? 'Управление включено · фокус на экране' : 'Управление выключено'}</span><span className="rounded-md bg-muted px-2 py-1">{profile.mode==='stick'?`${keyLabel(mappedKeys.forward)}/${keyLabel(mappedKeys.left)}/${keyLabel(mappedKeys.reverse)}/${keyLabel(mappedKeys.right)} · стик`:`${keyLabel(mappedKeys.forward)}/${keyLabel(mappedKeys.reverse)} · газ и тормоз · ${keyLabel(mappedKeys.left)}/${keyLabel(mappedKeys.right)} · руль`}</span>{profile.mode==='stick'&&<span className="rounded-md bg-muted px-2 py-1">{keyLabel(mappedKeys.slow)} · 40% скорости</span>}<span className="rounded-md bg-muted px-2 py-1">ЛКМ + движение · камера</span><span className="rounded-md bg-muted px-2 py-1">{keyLabel(mappedKeys.action)} · удержание кнопки</span></div>
         <details className="px-4 pb-3 text-xs text-muted-foreground"><summary>Диагностика приёма видео</summary>{encoded}</details>
       </section>
       {workspaceMode==='live'&&<TeachingNavigation key={navigationJob?.id??'none'} job={navigationJob} video={video} ready={ready} binding={binding??null} clips={clipChoices} clip={clip} scope={storageScope} onSelectClip={setClip} selectionDisabled={active(phase)||exportBusy||phase==='connecting'}/>}
-      <aside className={workspaceMode==='live'?'space-y-4 rounded-2xl border border-border bg-card p-4 xl:col-span-2':'space-y-4 rounded-2xl border border-border bg-card p-4'}>
+      <aside hidden={workspaceMode==='live'} className="space-y-4 rounded-2xl border border-border bg-card p-4">
         <h3 className="font-semibold">Подготовка маршрута</h3>
         <label className="block space-y-1 text-sm"><span>Название</span><input className={field} value={title} placeholder="Автоматически: дата, время и номер записи" maxLength={128} disabled={active(phase)} onChange={e => setTitle(e.target.value)} /></label>
+        <label className="flex items-start gap-2 text-sm"><input type="checkbox" checked={externalRecording} disabled={active(phase)} onChange={e=>setExternalRecording(e.target.checked)} /><span>Управляю в эмуляторе · только видео<br/><span className="text-xs text-muted-foreground">Можно переключиться в LDPlayer. Нажатия эмулятора не записываются; страница должна оставаться открытой.</span></span></label>
         <label className="block space-y-1 text-sm"><span>Схема управления</span><select className={field} value={profile.mode} disabled={active(phase)} onChange={e=>{setBindingTarget(null);setCalibrate(null);setProfile(p=>({...p,mode:e.target.value as TeachingProfile['mode']}));}}><option value="stick">Стик · ходьба / аналоговое управление</option><option value="vehicle_buttons">Транспорт · газ, тормоз, левый и правый руль</option></select></label>
         <TeachingKeyBindings profile={profile} disabled={readOnly||active(phase)} editing={bindingTarget} onEditingChange={role=>{setBindingTarget(role);if(role)setCalibrate(null);}} onChange={setProfile}/>
         <div className="space-y-2"><p className="text-sm font-medium">Калибровка касаний</p>

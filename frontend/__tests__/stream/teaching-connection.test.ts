@@ -27,7 +27,7 @@ describe('teaching capture-only liveness', () => {
     Object.defineProperty(globalThis, 'isSecureContext', { configurable: true, value: true });
     Object.defineProperty(globalThis, 'RTCRtpScriptTransform', { configurable: true, value: class {} });
     Object.defineProperty(globalThis, 'WebSocket', { configurable: true, value: Socket });
-    Object.defineProperty(globalThis, 'Worker', { configurable: true, value: class { onmessage = null; onerror = null; } });
+    Object.defineProperty(globalThis, 'Worker', { configurable: true, value: class { onmessage = null; onerror = null; postMessage = jest.fn(); } });
     Object.defineProperty(navigator, 'storage', { configurable: true, value: { getDirectory: jest.fn() } });
     (api.get as jest.Mock).mockResolvedValue({ data: { live_video_enabled: true, direct_input_enabled: true, shared_input_enabled: true } });
   });
@@ -127,6 +127,33 @@ describe('teaching capture-only liveness', () => {
     } finally {
       Reflect.deleteProperty(document, 'hidden');
       if (mediaStream) Object.defineProperty(globalThis, 'MediaStream', mediaStream); else Reflect.deleteProperty(globalThis, 'MediaStream');
+    }
+  });
+  it('external capture uses actual encoded heartbeats while hidden and still fails on a stalled stream', async () => {
+    const failed=jest.fn();let present:((at:number,frame:object)=>void)|undefined;
+    const video={requestVideoFrameCallback:jest.fn(cb=>{present=cb;return 1;}),cancelVideoFrameCallback:jest.fn(),pause:jest.fn(),play:jest.fn(()=>Promise.resolve()),srcObject:null} as unknown as HTMLVideoElement;
+    const mediaStream=Object.getOwnPropertyDescriptor(globalThis,'MediaStream');
+    Object.defineProperty(globalThis,'MediaStream',{configurable:true,value:class {}});
+    Object.defineProperty(document,'hidden',{configurable:true,value:false});
+    try {
+      const connection=await connectTeaching('device','test-only-token',video,new AbortController().signal,jest.fn(),failed,jest.fn());
+      const socket=Socket.current;
+      socket.receive({type:'stream_session',schema_version:1,delivery:'capture_only',session_id:'1234567890abcdef'});
+      socket.receive({type:'capture_ready',schema_version:1,session_id:'1234567890abcdef',width:960,height:540});
+      const call=(startDirectVideoSession as jest.Mock).mock.calls[0];
+      call[2]({state:'connected',session:'a'.repeat(32),videoBinding:{captureEpoch:'epoch',width:960,height:540}});
+      call[3].onTrack({kind:'video'});jest.advanceTimersByTime(1);present?.(1,{width:960,height:540});
+      connection.setExternalCapture?.(true);
+      expect(connection.worker.postMessage).toHaveBeenCalledWith({type:'external_capture',enabled:true});
+      Object.defineProperty(document,'hidden',{configurable:true,value:true});
+      jest.advanceTimersByTime(100);
+      connection.worker.onmessage?.({data:{type:'encoded_heartbeat'}} as MessageEvent);
+      jest.advanceTimersByTime(100);expect(connection.fresh()).toBe(true);expect(failed).not.toHaveBeenCalled();
+      jest.advanceTimersByTime(1100);expect(failed).toHaveBeenCalledWith('video_stalled');expect(connection.fresh()).toBe(false);
+      connection.close();
+    } finally {
+      Reflect.deleteProperty(document,'hidden');
+      if(mediaStream)Object.defineProperty(globalThis,'MediaStream',mediaStream);else Reflect.deleteProperty(globalThis,'MediaStream');
     }
   });
 });

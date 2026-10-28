@@ -20,7 +20,11 @@ test('recording cadence is derived from real frame intervals, not a 30 or 60 FPS
   const rows=(delta:number)=>Array.from({length:101},(_,i)=>({relative_ticks_90k:i*delta,bytes:1000}));
   expect(teachingCaptureMetrics(rows(9000))).toMatchObject({fps:10,cadence30Confirmed:false,maxGapMs:100});
   expect(teachingCaptureMetrics(rows(3000))).toMatchObject({fps:30,cadence30Confirmed:true});
+  expect(teachingCaptureMetrics(Array.from({length:181},(_,i)=>({relative_ticks_90k:i*1500,bytes:1000})))).toMatchObject({fps:60,cadence60Confirmed:true,gaps25:0});
   expect(teachingCaptureMetrics(rows(3103))?.cadence30Confirmed).toBe(false);
+  const shortStall=Array.from({length:121},(_,i)=>({relative_ticks_90k:i*2975+(i>=46?3025:0),bytes:1000}));
+  expect(teachingCaptureMetrics(shortStall)).toMatchObject({gaps50:1,gaps200:0,cadence30Confirmed:false});
+  expect(teachingCaptureMetrics(shortStall)!.fps).toBeGreaterThan(29.5);
   const stalled=rows(3000).map((row,i)=>({...row,relative_ticks_90k:row.relative_ticks_90k+90000+(i>=50?135000:0)}));
   expect(teachingCaptureMetrics(stalled)).toMatchObject({gaps200:1,gaps1000:1,maxGapMs:1533.3333333333333,cadence30Confirmed:false});
   const long=Array.from({length:301},(_,i)=>({relative_ticks_90k:i*3000+(i>=52?135000:0),bytes:1000}));

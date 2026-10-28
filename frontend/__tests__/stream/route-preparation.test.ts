@@ -1,4 +1,4 @@
-import {prepareRoute,preparationError,preparationQuotaReached} from '@/src/features/stream/routePreparation';
+import {cameraMotionRequiresReview,prepareRoute,preparationError,preparationQuotaReached} from '@/src/features/stream/routePreparation';
 import {reconstructionRequest,ReconstructionResponseError} from '@/src/features/stream/reconstructionClient';
 jest.mock('@/src/features/stream/reconstructionClient',()=>({...jest.requireActual('@/src/features/stream/reconstructionClient'),reconstructionRequest:jest.fn()}));
 
@@ -24,4 +24,9 @@ test('only the worker confirmed quota rejection blocks another attempt',()=>{
   expect(preparationQuotaReached(new ReconstructionResponseError(409,'route_preparation_attempt_quota'))).toBe(true);
   expect(preparationQuotaReached(new ReconstructionResponseError(500,'route_preparation_attempt_quota'))).toBe(false);
   expect(preparationError(new ReconstructionResponseError(500,'route_preparation_attempt_quota'))).toMatch(/Ответ не подтверждён/);
+});
+test('manual preparation mirrors the stricter temporal gate even without a summary warning',()=>{
+  expect(cameraMotionRequiresReview({warning:null,rapid_reversals:1,speed_outliers:0})).toBe(true);
+  expect(cameraMotionRequiresReview({warning:null,rapid_reversals:0,speed_outliers:1})).toBe(true);
+  expect(cameraMotionRequiresReview({warning:null,rapid_reversals:0,speed_outliers:0})).toBe(false);
 });

@@ -6,8 +6,12 @@ export function navigationReply(value:unknown,id:string,epoch:string,sequence:nu
   const v=value as NavigationReply,p=v?.pose;
   if(!v||v.id!==id||v.captureEpoch!==epoch||v.sequence!==sequence||v.physicalActions!==0||v.executionQualified!==false||v.groundRoute!==false
     ||!Number.isFinite(v.computeMs)||v.computeMs<0||v.computeMs>10000||!/^[0-9a-f]{64}$/.test(v.jpegSha256)||v.jpegSha256!==jpegSha256
-    ||!p||!['unknown','confirming','localized'].includes(p.state)||typeof p.reason!=='string'||p.reason.length>200
-    ||!Number.isInteger(p.inliers)||p.inliers<0||p.inliers>4096||!Array.isArray(p.polyline_px)||p.polyline_px.length>16
+    ||typeof v.method!=='string'||! /^[a-z0-9_]{1,100}$/.test(v.method)
+    ||!p||!['unknown','confirming','localized'].includes(p.state)||typeof p.reason!=='string'||! /^[a-z0-9_]{1,100}$/.test(p.reason)
+    ||!Number.isInteger(p.inliers)||p.inliers<0||p.inliers>4096
+    ||p.segment!==null&&(!Number.isSafeInteger(p.segment)||p.segment<0||p.segment>1000000)
+    ||p.progress_units!==null&&(!Number.isFinite(p.progress_units)||p.progress_units<0||p.progress_units>1000000000)
+    ||!Array.isArray(p.polyline_px)||p.polyline_px.length>16
     ||p.polyline_px.some(row=>!Array.isArray(row)||row.length!==2||row.some((n,i)=>!Number.isFinite(n)||n<0||n>=[960,540][i]))
     ||p.state!=='localized'&&p.polyline_px.length>0)return null;
   return v;

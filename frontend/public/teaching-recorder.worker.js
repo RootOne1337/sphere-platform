@@ -1,6 +1,7 @@
 /* Original received H264 only. This worker never modifies or delays decoded delivery for disk IO. */
 'use strict';
 let transformer, recording = null, command = Promise.resolve(), observedFrames = 0;
+let externalCapture = false, lastEncodedHeartbeat = 0;
 const encode = new TextEncoder();
 const stamp = () => performance.timeOrigin + performance.now();
 const hash = async bytes => Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256', bytes)), b => b.toString(16).padStart(2, '0')).join('');
@@ -31,6 +32,13 @@ function enqueue(r, bytes, write) {
 }
 function frame(value) {
   observedFrames++;
+  if (externalCapture && stamp() - lastEncodedHeartbeat >= 100) {
+    const meta = value.getMetadata();
+    if (value.data.byteLength && meta.mimeType?.toLowerCase() === 'video/h264' && Number.isInteger(meta.rtpTimestamp)) {
+      lastEncodedHeartbeat = stamp();
+      postMessage({ type: 'encoded_heartbeat' });
+    }
+  }
   if (observedFrames === 1 || observedFrames % 60 === 0) {
     const meta = value.getMetadata();
     postMessage({ type: 'encoded_status', frames: observedFrames, kind: value.type,
@@ -70,7 +78,9 @@ function frame(value) {
   } else {
     const delta = (timestamp - r.lastRtp + 0x100000000) % 0x100000000;
     if (!delta || delta > 90000) { failure(r, 'rtp_discontinuity'); return; }
-    r.maxGapTicks=Math.max(r.maxGapTicks,delta);r.gaps200+=Number(delta>18000);r.gaps500+=Number(delta>45000);
+    r.maxGapTicks=Math.max(r.maxGapTicks,delta);r.gaps25+=Number(delta>2250);r.gaps50+=Number(delta>4500);r.gaps100+=Number(delta>9000);
+    r.gaps200+=Number(delta>18000);r.gaps500+=Number(delta>45000);
+    r.gapHistogram[Math.min(1000,Math.ceil(delta/90))]++;
     r.ticks += delta; r.lastRtp = timestamp;
   }
   const data = value.data.slice(0), offset = r.bytes;
@@ -89,11 +99,16 @@ function frame(value) {
 }
 function quality(r) {
   const seconds=(r.ticks??0)/90000,fps=seconds>0?Math.max(0,r.frames-1)/seconds:null;
-  return {received_encoded_fps:fps,target_fps:r.config.target_fps??null,measured_seconds:seconds,
+  let p95GapMs=null;
+  if(r.frames>1){const target=Math.ceil((r.frames-1)*.95);let count=0;
+    for(let ms=0;ms<r.gapHistogram.length;ms++){count+=r.gapHistogram[ms];if(count>=target){p95GapMs=ms;break;}}}
+  return {cadence_policy:'rtp-30fps-gap50-v1',received_encoded_fps:fps,target_fps:r.config.target_fps??null,measured_seconds:seconds,
     received_bitrate_bps:seconds>0?r.bytes*8/seconds:null,max_media_gap_ms:r.maxGapTicks/90,
+    p95_media_gap_ms:p95GapMs,gaps_over_25ms:r.gaps25,gaps_over_50ms:r.gaps50,gaps_over_100ms:r.gaps100,
     gaps_over_200ms:r.gaps200,gaps_over_500ms:r.gaps500,disk_queue_high_water_bytes:r.queueHighWater,
     max_disk_write_ms:r.maxWriteMs,transcoding:false,synthetic_frames:0,
-    cadence_30fps_confirmed:seconds>=3&&fps>=29.5&&r.gaps200===0,
+    cadence_30fps_confirmed:seconds>=3&&fps>=29.5&&r.gaps50===0,
+    cadence_60fps_confirmed:seconds>=3&&fps>=59&&r.gaps25===0,
     source_render_quality_verified:false,android_capture_latency_known:false};
 }
 async function arm(config) {
@@ -116,7 +131,8 @@ async function arm(config) {
   const directory = await library.getDirectoryHandle(config.id, { create: true });
   const r = recording = { id: config.id, config, directory, at: stamp(), accept: false, started: false,
     frames: 0, bytes: 0, events: 0, inputBytes: 0, pending: new Map(), closed: false,
-    queued: 0, queuedBytes: 0, queueHighWater:0,maxWriteMs:0,maxGapTicks:0,gaps200:0,gaps500:0,lastProgressAt:0,
+    queued: 0, queuedBytes: 0, queueHighWater:0,maxWriteMs:0,maxGapTicks:0,gaps25:0,gaps50:0,gaps100:0,gaps200:0,gaps500:0,
+    gapHistogram:new Uint32Array(1001),lastProgressAt:0,
     tail: Promise.resolve(), failure: null };
   const create = async name => (await directory.getFileHandle(name, { create: true })).createWritable();
   r.video = await create('video.h264'); r.index = await create('frames.jsonl'); r.input = await create('inputs.jsonl');
@@ -180,6 +196,7 @@ self.onmessage = ({ data }) => {
     if (data?.type === 'arm') await arm(data.config);
     else if (data?.type === 'input') input(data.event);
     else if (data?.type === 'stop') await stop(data.confirmed === true, data.reason);
+    else if (data?.type === 'external_capture') { externalCapture = data.enabled === true; lastEncodedHeartbeat = 0; }
   }).catch(() => { if (recording) failure(recording,'recorder_command_failed'); else postMessage({type:'failed',reason:'recorder_start_failed'}); });
 };
 self.onrtctransform = event => {

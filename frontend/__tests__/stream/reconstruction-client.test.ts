@@ -8,6 +8,9 @@ test('quality review ends processing without claiming a successful reconstructio
   expect(terminalReconstruction({phase:'review_required'})).toBe(true);
   expect(terminalReconstruction({phase:'partial_scene'})).toBe(true);
   expect(terminalReconstruction({phase:'evaluating'})).toBe(false);
+  expect(terminalReconstruction({phase:'sparse_complete',navigation:{phase:'pending_auto_prepare'}})).toBe(false);
+  expect(terminalReconstruction({phase:'sparse_complete',navigation:{phase:'features'}})).toBe(false);
+  expect(terminalReconstruction({phase:'sparse_complete',navigation:{phase:'ready'}})).toBe(true);
 });
 
 function source(){

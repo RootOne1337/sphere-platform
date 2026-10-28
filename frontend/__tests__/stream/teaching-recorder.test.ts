@@ -33,6 +33,30 @@ function fixture(){
   const folder=async()=>root.getDirectoryHandle('sphere-teaching-'+config.storage_scope).then(f=>f.getDirectoryHandle(config.id));
   return{root,messages,context,config,frame,folder,advance:()=>{at+=200;}};
 }
+
+test('external capture heartbeat is emitted only while encoded frames arrive',async()=>{
+  const f=fixture();
+  f.context.self.onmessage({data:{type:'external_capture',enabled:true}});
+  await vm.runInContext('command',f.context);
+  f.frame(90000);expect(f.messages.filter(m=>m.type==='encoded_heartbeat')).toHaveLength(1);
+  f.frame(93000,false);expect(f.messages.filter(m=>m.type==='encoded_heartbeat')).toHaveLength(1);
+  f.advance();f.frame(95000,false,{mimeType:'video/VP8'});expect(f.messages.filter(m=>m.type==='encoded_heartbeat')).toHaveLength(1);
+  f.frame(96000,false);expect(f.messages.filter(m=>m.type==='encoded_heartbeat')).toHaveLength(2);
+  f.context.self.onmessage({data:{type:'external_capture',enabled:false}});
+  await vm.runInContext('command',f.context);
+  f.advance();f.frame(99000,false);expect(f.messages.filter(m=>m.type==='encoded_heartbeat')).toHaveLength(2);
+});
+
+test('external video keeps its explicit provenance after early confirmed input release',async()=>{
+  const f=fixture();await f.context.arm({...f.config,input_capture:'external_unobserved'});
+  f.context.input({stage:'closed',at_ms:1001000,sequence:0,gesture:0,action:3,pointer_id:-1,outcome:'closed'});
+  f.frame(90000);f.advance();f.frame(108000,false);
+  await f.context.stop(true,null);const dir=await f.folder();
+  const manifest=JSON.parse((dir.entries.get('manifest.json') as MemoryFile).data.toString());
+  expect(manifest.complete).toBe(true);expect(manifest.release_confirmed).toBe(true);
+  expect(manifest.config.input_capture).toBe('external_unobserved');expect(manifest.frames).toBe(2);
+  expect((dir.entries.get('inputs.jsonl') as MemoryFile).data.toString()).not.toContain('"stage":"submitted"');
+});
 test('does not save frames before explicit start; stores original H264 and 90k clock with completion proof',async()=>{
   const f=fixture();f.frame(1);expect(f.root.entries.size).toBe(0);await f.context.arm(f.config);
   f.frame(123,false);expect(f.messages.some(m=>m.type==='recording')).toBe(false);
@@ -55,6 +79,35 @@ test('quality uses actual RTP cadence, never the declared target or synthetic fr
   expect(manifest.capture_quality.max_media_gap_ms).toBe(100);
   expect(manifest.capture_quality.transcoding).toBe(false);expect(manifest.capture_quality.synthetic_frames).toBe(0);
   expect(manifest.capture_quality.disk_queue_high_water_bytes).toBeGreaterThan(0);
+});
+test('a good average cannot hide an irregular interval in the received RTP stream',async()=>{
+  const f=fixture();await f.context.arm({...f.config,target_fps:30});
+  let ticks=90000;f.frame(ticks);
+  for(let i=0;i<120;i++){ticks+=i===45?6000:2975;f.frame(ticks,false);await vm.runInContext('recording.tail',f.context);}
+  f.context.input({stage:'closed',at_ms:1001000,sequence:0,gesture:0,action:3,pointer_id:-1,outcome:'closed'});
+  await f.context.stop(true,null);const manifest=JSON.parse(((await f.folder()).entries.get('manifest.json') as MemoryFile).data.toString());
+  const quality=manifest.capture_quality;
+  expect(quality.received_encoded_fps).toBeGreaterThan(29.5);
+  expect(quality.cadence_policy).toBe('rtp-30fps-gap50-v1');
+  expect(quality.gaps_over_50ms).toBe(1);expect(quality.gaps_over_100ms).toBe(0);
+  expect(quality.p95_media_gap_ms).toBe(34);expect(quality.cadence_30fps_confirmed).toBe(false);
+});
+test('steady received 30 FPS passes the bounded RTP cadence check',async()=>{
+  const f=fixture();await f.context.arm({...f.config,target_fps:30});
+  for(let i=0;i<100;i++){f.frame(90000+i*3000,i===0);await vm.runInContext('recording.tail',f.context);}
+  f.context.input({stage:'closed',at_ms:1001000,sequence:0,gesture:0,action:3,pointer_id:-1,outcome:'closed'});
+  await f.context.stop(true,null);const manifest=JSON.parse(((await f.folder()).entries.get('manifest.json') as MemoryFile).data.toString());
+  expect(manifest.capture_quality.cadence_30fps_confirmed).toBe(true);
+  expect(manifest.capture_quality.gaps_over_50ms).toBe(0);expect(manifest.capture_quality.p95_media_gap_ms).toBe(34);
+});
+test('60 FPS is measured independently and does not follow the requested target',async()=>{
+  const f=fixture();await f.context.arm({...f.config,target_fps:60});
+  for(let i=0;i<181;i++){f.frame(90000+i*1500,i===0);await vm.runInContext('recording.tail',f.context);}
+  f.context.input({stage:'closed',at_ms:1001000,sequence:0,gesture:0,action:3,pointer_id:-1,outcome:'closed'});
+  await f.context.stop(true,null);const manifest=JSON.parse(((await f.folder()).entries.get('manifest.json') as MemoryFile).data.toString());
+  expect(manifest.capture_quality.received_encoded_fps).toBe(60);
+  expect(manifest.capture_quality.gaps_over_25ms).toBe(0);
+  expect(manifest.capture_quality.cadence_60fps_confirmed).toBe(true);
 });
 test.each(['pending','unknown','clock'])('never writes COMPLETE after %s uncertainty',async mode=>{
   const f=fixture();await f.context.arm(f.config);f.frame(90000);

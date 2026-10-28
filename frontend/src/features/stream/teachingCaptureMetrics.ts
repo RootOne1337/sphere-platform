@@ -8,7 +8,9 @@ export function teachingCaptureMetrics(rows:{relative_ticks_90k:number;bytes:num
   const bucket=Math.max(1,Math.ceil(intervals.length/100)),chart:number[]=[];
   for(let i=0;i<intervals.length;i+=bucket)chart.push(Math.max(...intervals.slice(i,i+bucket)));
   return {frames:rows.length,seconds,fps,bitrateBps:seconds>0?bytes*8/seconds:null,maxGapMs:sorted.at(-1)??null,
-    p50GapMs:percentile(.5),p95GapMs:percentile(.95),gaps200:intervals.filter(n=>n>200).length,gaps1000:intervals.filter(n=>n>1000).length,
-    cadence30Confirmed:seconds>=3&&fps!==null&&fps>=29.5&&!intervals.some(n=>n>200),
+    p50GapMs:percentile(.5),p95GapMs:percentile(.95),gaps25:intervals.filter(n=>n>25).length,gaps50:intervals.filter(n=>n>50).length,
+    gaps200:intervals.filter(n=>n>200).length,gaps1000:intervals.filter(n=>n>1000).length,
+    cadence30Confirmed:seconds>=3&&fps!==null&&fps>=29.5&&!intervals.some(n=>n>50),
+    cadence60Confirmed:seconds>=3&&fps!==null&&fps>=59&&!intervals.some(n=>n>25),
     chart};
 }
