@@ -10,6 +10,9 @@ if (process.env.NEXT_PUBLIC_DIRECT_PROBE_STUN_URL && process.env.NEXT_PUBLIC_DIR
 
 const nextConfig: NextConfig = {
   output: 'standalone',
+  // Keep local builds bounded on the same host as emulators. Next otherwise
+  // creates almost one static worker per CPU, irrespective of available RAM.
+  experimental: { cpus: 1 },
   // API collections use a trailing slash. Let the upstream API own redirects;
   // otherwise dev rewrites can loop between Next's /updates and FastAPI's /updates/.
   skipTrailingSlashRedirect: true,

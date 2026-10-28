@@ -13,6 +13,7 @@ import json
 import os
 import re
 import subprocess
+import sys
 import threading
 import time
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
@@ -70,7 +71,10 @@ class Jobs:
         folder.mkdir(parents=True, exist_ok=True)
         self.lock = threading.Lock()
         self.processes = {}
-        self.navigation = RouteWorkspaces(folder, python)
+        # Sparse descriptor export and live matching must use the exact same
+        # OpenCV/extractor runtime. The heavy reconstruction interpreter can
+        # have a different GPU stack and is deliberately kept separate.
+        self.navigation = RouteWorkspaces(folder, Path(sys.executable))
         # An interrupted job cannot be silently resumed or retrained on restart.
         for path in folder.glob('*/state.json'):
             if json.loads(path.read_text('utf-8'))['phase'] not in TERMINAL:
@@ -608,6 +612,13 @@ def handler(jobs, origin, port):
                         if not same and any(jobs.active(p) for p in jobs.folder.iterdir() if p.is_dir()):
                             raise ValueError('one_active_job_only')
                         self.reply(200, jobs.navigation.start_live(job, body))
+                    elif method == 'POST' and parts[2:] == ['navigation', 'walk-start']:
+                        body = json.loads(self.body(1024))
+                        live = jobs.navigation.live_status()
+                        same = type(body) is dict and live.get('id') == body.get('id') and live.get('job') == job.name
+                        if not same and any(jobs.active(p) for p in jobs.folder.iterdir() if p.is_dir()):
+                            raise ValueError('one_active_job_only')
+                        self.reply(200, jobs.navigation.start_walk(job, body))
                     elif method == 'POST' and parts[2:] == ['navigation', 'observe']:
                         self.reply(200, jobs.navigation.observe(job, json.loads(self.body(768*1024))))
                     elif method == 'POST' and parts[2:] == ['navigation', 'stop']:

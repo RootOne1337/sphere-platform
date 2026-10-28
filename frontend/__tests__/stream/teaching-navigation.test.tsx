@@ -10,6 +10,15 @@ beforeEach(()=>{
   jest.spyOn(HTMLCanvasElement.prototype,'getContext').mockReturnValue({clearRect:jest.fn(),drawImage:jest.fn()} as never);
 });
 afterEach(()=>jest.restoreAllMocks());
+test('walk control is a separate panel and switching panels does not open an input owner',async()=>{
+  jest.mocked(reconstructionRequest).mockResolvedValue({json:async()=>({phase:'complete',sparse_available:true,navigation:{phase:'ready'}})} as Response);
+  const open=jest.fn();
+  render(<TeachingNavigation job={job} video={{current:null}} ready binding={{captureEpoch:'e'.repeat(32),width:960,height:540}} walkInput={{issue:'Укажите центр стика',open}}/>);
+  fireEvent.click(screen.getByRole('button',{name:'Пеший тест со стиком'}));
+  expect(screen.getByRole('button',{name:'Запустить пеший тест · 60 с'})).toBeDisabled();
+  expect(screen.queryByRole('button',{name:'Проверить направление · 120 с'})).not.toBeInTheDocument();
+  expect(open).not.toHaveBeenCalled();expect(jest.mocked(reconstructionRequest).mock.calls.every(c=>c[2]?.method!=='POST')).toBe(true);
+});
 test('opening a live preview reads readiness but never starts capture, a model or Android input',async()=>{
   jest.mocked(reconstructionRequest).mockResolvedValue({json:async()=>({phase:'complete',dense_available:true,navigation:{phase:'ready'}})} as Response);
   render(<TeachingNavigation job={job} video={{current:null}} ready binding={{captureEpoch:'e'.repeat(32),width:1920,height:1080}}/>);

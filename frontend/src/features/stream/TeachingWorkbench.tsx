@@ -16,10 +16,11 @@ import {TeachingCaptureSetup,type CaptureQuality} from './TeachingCaptureSetup';
 import {TeachingNavigation} from './TeachingNavigation';
 import {TeachingLocalWorker} from './TeachingLocalWorker';
 import type {ReconstructionJob} from './reconstructionClient';
+import {walkingCalibrationIssue,walkingStickTarget,type WalkInputLease} from './walkPilot';
 
-type Phase = 'idle' | 'connecting' | 'preview' | 'opening' | 'controlling' | 'arming' | 'recording' | 'stopping' | 'finished';
+type Phase = 'idle' | 'connecting' | 'preview' | 'opening' | 'controlling' | 'piloting' | 'arming' | 'recording' | 'stopping' | 'finished';
 const newId = () => crypto.randomUUID().replaceAll('-', '');
-const active = (phase: Phase) => ['opening','controlling','arming','recording','stopping'].includes(phase);
+const active = (phase: Phase) => ['opening','controlling','piloting','arming','recording','stopping'].includes(phase);
 const inputEnabled = (phase: Phase) => phase === 'controlling' || phase === 'recording';
 const stopReasons: Record<string,string> = { page_hidden: 'страница скрыта', window_focus_lost: 'окно потеряло фокус', input_focus_lost: 'фокус управления потерян при удержании', connection_closed: 'соединение закрыто', video_stalled: 'нет свежих кадров', pointer_cancelled: 'касание отменено', keyframe_start_timeout: 'ключевой кадр не получен за 12 секунд' };
 Object.assign(stopReasons,{contact_video_stale:'ввод остановлен: видеокадр старше 250 мс',contact_channel_closed:'канал ввода закрыт',contact_ack_timeout:'Android не подтвердил команду за 500 мс',contact_ready_timeout:'Android не подтвердил готовность ввода за 6 секунд'});
@@ -222,6 +223,39 @@ export function TeachingWorkbench({ deviceId, readOnly }: { deviceId: string; re
     stopPromise.current = null; change('opening');
     try { openInput('control',conn); } catch { void stop('contact_protocol_unavailable'); }
   };
+  const openWalkInput = async (signal:AbortSignal,journal:(event:TeachingInput)=>void):Promise<WalkInputLease> => {
+    const conn=connection.current,b=conn?.binding(),endpoint=conn?.endpoint(),p=profileRef.current;
+    if(signal.aborted||readOnly||phaseRef.current!=='preview'||!conn?.fresh()||!attached.current||!b||!endpoint
+      ||walkingCalibrationIssue(p,b)||!result||!['host','nat'].includes(result.path))throw Error('walk_input_not_ready');
+    stopPromise.current=null;change('opening');
+    let released=false,settle:(lease:WalkInputLease)=>void=()=>{};
+    const opened=new Promise<WalkInputLease>(resolve=>{settle=resolve;});
+    const lease:WalkInputLease={
+      active:()=>phaseRef.current==='piloting'&&controller.current===control&&connection.current===conn&&control.isReady&&conn.fresh()&&!signal.aborted,
+      set:vector=>{
+        if(!lease.active())throw Error('walk_native_closed');
+        const {center,target}=walkingStickTarget(p,b,vector);
+        if(target&&!control.hasContact(0))control.set(0,center);
+        control.set(0,target);
+      },
+      close:async()=>{await stopCallback.current();return released;},
+    };
+    const generation=ownerGeneration.current;
+    const control=new TeachingContacts(endpoint,b,conn.fresh,event=>{journal(event);if(event.stage==='closed')released=event.outcome==='closed';},(state,reason)=>{
+      if(generation!==ownerGeneration.current||connection.current!==conn)return;
+      conn.observeControl?.(state==='failed'?'fenced':state,reason);
+      setNative(state==='ready'?'READY · пеший тест':state==='closed'?'CLOSED · освобождено':state);
+      if(state==='ready'&&phaseRef.current==='opening'&&!signal.aborted){change('piloting');settle(lease);}
+      if(['failed','closed','closing'].includes(state))settle(lease);
+      if(state==='failed')queueMicrotask(()=>{void stopCallback.current(reason??'walk_native_closed');});
+      if(state==='closed'&&active(phaseRef.current)&&phaseRef.current!=='stopping'&&!expectedOwnerClose.current)queueMicrotask(()=>{void stopCallback.current('walk_native_closed');});
+    },rtt=>conn.observeControl?.('ready',undefined,rtt));
+    controller.current=control;
+    const cancelled=()=>{settle(lease);void stopCallback.current();};
+    signal.addEventListener('abort',cancelled,{once:true});
+    if(signal.aborted)cancelled();
+    try{return await opened;}finally{if(signal.aborted)signal.removeEventListener('abort',cancelled);}
+  };
   const record = async () => {
     const conn = connection.current, binding = conn?.binding(), endpoint = conn?.endpoint();
     if (readOnly || !storageScope || !['preview','controlling'].includes(phaseRef.current) || !conn?.fresh() || !binding || !endpoint || !attached.current) return;
@@ -304,7 +338,7 @@ export function TeachingWorkbench({ deviceId, readOnly }: { deviceId: string; re
   const workflow=[
     {mode:'capture' as const,label:'1 · Запись',detail:'Покажите путь в игре',status:phase==='recording'?'Идёт запись':chosenClip?`Выбрано: ${chosenClip.title}`:'Ожидает запись'},
     {mode:'review' as const,label:'2 · Сцена',detail:'Проверьте запись и ориентиры',status:navigationJob?'Связана с записью':'Выберите проход'},
-    {mode:'live' as const,label:'3 · Направление',detail:'Сверьте путь с живым кадром',status:'Проверка без автовождения'},
+    {mode:'live' as const,label:'3 · Направление',detail:'Сверьте путь с живым кадром',status:'Наблюдение / пеший тест'},
   ];
   return <div ref={host} className="space-y-4" aria-label="Запись учебного маршрута">
     <section className="overflow-hidden rounded-2xl border border-sky-500/20 bg-gradient-to-br from-sky-500/10 via-card to-emerald-500/5 p-4 sm:p-5">
@@ -326,7 +360,7 @@ export function TeachingWorkbench({ deviceId, readOnly }: { deviceId: string; re
     <div hidden={workspaceMode==='review'} className="space-y-4">
     {workspaceMode==='capture'&&<details className="group rounded-xl border border-sky-500/20 bg-sky-500/5"><summary className="flex cursor-pointer flex-wrap items-center justify-between gap-2 px-4 py-3 text-sm font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"><span>Качество исходной записи</span><span className="text-xs font-normal text-muted-foreground">{captureQuality?.received_encoded_fps!=null?`${captureQuality.received_encoded_fps.toFixed(1)} FPS по записи`:'Профиль и фактические FPS · открыть настройки'}</span></summary><TeachingCaptureSetup key={`${deviceId}:${sessionVersion}`} deviceId={deviceId} disabled={readOnly||active(phase)||exportBusy} quality={captureQuality} onConfirmedTarget={setCaptureTargetFps}/></details>}
     <section className="rounded-2xl border border-border bg-card p-4 sm:p-5">
-      <div className="flex flex-wrap items-start justify-between gap-3"><div><p className="text-xs font-semibold uppercase tracking-widest text-primary">{workspaceMode==='live'?'Повторный проход':'Обучение маршруту'}</p><h2 className="mt-1 text-xl font-semibold">{workspaceMode==='live'?'Сверка с живым экраном':'Покажите путь один раз'}</h2><p className="mt-2 max-w-3xl text-sm text-muted-foreground">{workspaceMode==='live'?'Выберите сохранённый проход и сравните направление с текущим изображением. Проверка не управляет игрой.':externalRecording?'Запишите видео, управляя в эмуляторе. Внешние нажатия недоступны журналу Sphere.':'Подготовьте игру с клавиатуры, включите запись и покажите маршрут. Видео и подтверждённые касания сохраняются вместе.'}</p></div><StreamQualityControl deviceId={deviceId} readOnly={readOnly || active(phase)} /></div>
+      <div className="flex flex-wrap items-start justify-between gap-3"><div><p className="text-xs font-semibold uppercase tracking-widest text-primary">{workspaceMode==='live'?'Повторный проход':'Обучение маршруту'}</p><h2 className="mt-1 text-xl font-semibold">{workspaceMode==='live'?'Сверка с живым экраном':'Покажите путь один раз'}</h2><p className="mt-2 max-w-3xl text-sm text-muted-foreground">{workspaceMode==='live'?'Выберите проход. Наблюдение показывает линию без ввода; отдельный «Пеший тест» включает ограниченное управление стиком.':externalRecording?'Запишите видео, управляя в эмуляторе. Внешние нажатия недоступны журналу Sphere.':'Подготовьте игру с клавиатуры, включите запись и покажите маршрут. Видео и подтверждённые касания сохраняются вместе.'}</p></div><StreamQualityControl deviceId={deviceId} readOnly={readOnly || active(phase)} /></div>
       <div className="mt-4 grid gap-3 sm:grid-cols-3"><Metric icon={<Wifi size={15} />} label="Транспорт" value={result ? `${result.path==='host'||result.path==='nat'?'Напрямую':result.path==='relay'?'Ретранслятор':'Путь уточняется'} · ${result.state}` : 'Не подключён'} /><Metric icon={<Keyboard size={15} />} label="Нативный ввод" value={`${native}${inputRtt===null?'':` · ACK ${inputRtt.toFixed(1)} мс`}`} /><Metric icon={<Video size={15} />} label="Записано" value={`${progress.seconds.toFixed(1)} с · ${progress.frames} кадров · ${(progress.bytes/1048576).toFixed(1)} МБ`} /></div>
       {result?.videoStats&&<><div aria-label="Фактические параметры приёма" className="mt-3 flex flex-wrap gap-x-5 gap-y-1 text-xs text-muted-foreground"><span>{result.videoStats.width??'—'} × {result.videoStats.height??'—'}</span><span>{result.videoStats.fps?.toFixed(1)??'—'} FPS приёма</span><span>{result.videoStats.bitrateBps==null?'—':(result.videoStats.bitrateBps/1e6).toFixed(2)} Мбит/с</span><span title="RTT выбранной пары ICE; это не задержка нажатия">RTC RTT {result.videoStats.networkRttMs?.toFixed(1)??'—'} мс</span><span title="Среднее время в буфере приёма за последний интервал">Буфер приёма {result.videoStats.jitterBufferMs?.toFixed(1)??'—'} мс</span><span title="Среднее время декодирования за последний интервал">Декодирование {result.videoStats.decodeMs?.toFixed(1)??'—'} мс</span></div><p className="mt-1 text-[11px] text-muted-foreground">Это метрики браузерного приёма; полная задержка Android → экран и нажатия здесь не измеряется.</p></>}
     </section>
@@ -357,10 +391,11 @@ export function TeachingWorkbench({ deviceId, readOnly }: { deviceId: string; re
         </svg>}
         {calibrate&&<p className="pointer-events-none absolute left-2 right-2 top-2 rounded-lg bg-background/95 px-3 py-2 text-sm text-primary">Укажите {calibrationNames[calibrate]}. Это только калибровка.</p>}
         </div>
-        <div className="flex flex-wrap gap-2 border-t border-border p-3 text-xs text-muted-foreground"><span className={`rounded-md px-2 py-1 ${inputEnabled(phase) && !externalActive.current ? 'bg-primary/15 text-primary' : 'bg-muted'}`}>{externalActive.current ? 'Управление в эмуляторе · нажатия не записываются' : inputEnabled(phase) ? 'Управление включено · фокус на экране' : 'Управление выключено'}</span><span className="rounded-md bg-muted px-2 py-1">{profile.mode==='stick'?`${keyLabel(mappedKeys.forward)}/${keyLabel(mappedKeys.left)}/${keyLabel(mappedKeys.reverse)}/${keyLabel(mappedKeys.right)} · стик`:`${keyLabel(mappedKeys.forward)}/${keyLabel(mappedKeys.reverse)} · газ и тормоз · ${keyLabel(mappedKeys.left)}/${keyLabel(mappedKeys.right)} · руль`}</span>{profile.mode==='stick'&&<span className="rounded-md bg-muted px-2 py-1">{keyLabel(mappedKeys.slow)} · 40% скорости</span>}<span className="rounded-md bg-muted px-2 py-1">ЛКМ + движение · камера</span><span className="rounded-md bg-muted px-2 py-1">{keyLabel(mappedKeys.action)} · удержание кнопки</span></div>
+        {workspaceMode==='live'&&<div className="space-y-2 border-t p-3 text-xs"><p className="font-medium">Стик для пешего теста</p><div className="flex flex-wrap items-center gap-2"><Button size="sm" variant="outline" disabled={!ready||active(phase)} onClick={()=>{setProfile(p=>({...p,mode:'stick'}));chooseCalibration('stick');}}>Указать центр пешего стика</Button><label>Радиус, % короткой стороны <input aria-label="Радиус пешего стика" type="number" className="ml-2 w-16 rounded border bg-background p-1" value={profile.radius} min={1} max={20} step={.5} disabled={active(phase)} onChange={e=>{const n=Number(e.target.value);if(n>=1&&n<=20)setProfile(p=>({...p,radius:n}));}}/></label></div><p className="text-muted-foreground">Укажите центр на прямом экране выше. Калибровочное касание не отправляется в игру; камера и прыжок в этом тесте не управляются.</p></div>}
+        <div className="flex flex-wrap gap-2 border-t border-border p-3 text-xs text-muted-foreground"><span className={`rounded-md px-2 py-1 ${inputEnabled(phase) && !externalActive.current ? 'bg-primary/15 text-primary' : 'bg-muted'}`}>{phase==='piloting'?'Пеший тест · стик управляется алгоритмом':externalActive.current ? 'Управление в эмуляторе · нажатия не записываются' : inputEnabled(phase) ? 'Управление включено · фокус на экране' : 'Управление выключено'}</span><span className="rounded-md bg-muted px-2 py-1">{profile.mode==='stick'?`${keyLabel(mappedKeys.forward)}/${keyLabel(mappedKeys.left)}/${keyLabel(mappedKeys.reverse)}/${keyLabel(mappedKeys.right)} · стик`:`${keyLabel(mappedKeys.forward)}/${keyLabel(mappedKeys.reverse)} · газ и тормоз · ${keyLabel(mappedKeys.left)}/${keyLabel(mappedKeys.right)} · руль`}</span>{profile.mode==='stick'&&<span className="rounded-md bg-muted px-2 py-1">{keyLabel(mappedKeys.slow)} · 40% скорости</span>}<span className="rounded-md bg-muted px-2 py-1">ЛКМ + движение · камера</span><span className="rounded-md bg-muted px-2 py-1">{keyLabel(mappedKeys.action)} · удержание кнопки</span></div>
         <details className="px-4 pb-3 text-xs text-muted-foreground"><summary>Диагностика приёма видео</summary>{encoded}</details>
       </section>
-      {workspaceMode==='live'&&<TeachingNavigation key={navigationJob?.id??'none'} job={navigationJob} video={video} ready={ready} binding={binding??null} clips={clipChoices} clip={clip} scope={storageScope} onSelectClip={setClip} selectionDisabled={active(phase)||exportBusy||phase==='connecting'}/>}
+      {workspaceMode==='live'&&<TeachingNavigation key={navigationJob?.id??'none'} job={navigationJob} video={video} ready={ready} binding={binding??null} clips={clipChoices} clip={clip} scope={storageScope} onSelectClip={setClip} selectionDisabled={active(phase)||exportBusy||phase==='connecting'} walkInput={{open:openWalkInput,issue:readOnly?'Нет права управления.':!result||!['host','nat'].includes(result.path)?'Для пешего теста нужен прямой поток.':walkingCalibrationIssue(profile,binding??null)??(phase==='preview'?null:'Сначала выключите ручное управление или запись.')}}/>}
       <aside hidden={workspaceMode==='live'} className="space-y-4 rounded-2xl border border-border bg-card p-4">
         <h3 className="font-semibold">Подготовка маршрута</h3>
         <label className="block space-y-1 text-sm"><span>Название</span><input className={field} value={title} placeholder="Автоматически: дата, время и номер записи" maxLength={128} disabled={active(phase)} onChange={e => setTitle(e.target.value)} /></label>

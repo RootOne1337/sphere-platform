@@ -90,6 +90,9 @@ class RouteWorkspaces:
                     or support.get('all_reference_intervals_observed') is not True
                     or coverage.get('endpoints_observed') is not True):
                 return dict(phase='rejected', error='route_map_has_unobserved_sections', executionQualified=False)
+            from motor_worker.route_localization import pipeline_id
+            if receipt.get('pipeline_sha256') != pipeline_id():
+                return dict(phase='rejected', error='route_feature_runtime_mismatch', executionQualified=False)
             result['summary'] = {key: receipt[key] for key in ('cameras', 'landmarks', 'map_support', 'camera_trace_only')}
         return result
 
@@ -207,6 +210,37 @@ class RouteWorkspaces:
             self.live = None
         return dict(phase='closed', physicalActions=0)
 
+    def start_walk(self, job, body):
+        """A separate, explicitly confirmed plan-only session for a foot pilot.
+
+        The browser remains the sole native-input owner. Diagnostic observer
+        requests never acquire this planner, even when the map is ready.
+        """
+        from motor_worker.walk_route import WalkRouteFollower
+        from motor_worker.route_tracking import AnchoredRouteLocalizer
+
+        if (type(body) is not dict or body.get('footCameraAssumptionConfirmed') is not True
+                or set(body) != {'id', 'captureEpoch', 'width', 'height', 'sceneConfirmed',
+                                 'footCameraAssumptionConfirmed'}):
+            raise ValueError('walk_explicit_confirmation_required')
+        request = {key: value for key, value in body.items() if key != 'footCameraAssumptionConfirmed'}
+        self._expire()
+        if self.live and self.live['id'] == request['id'] and 'walk' not in self.live:
+            raise ValueError('walk_observer_cannot_be_promoted')
+        self.start_live(job, request)
+        if 'walk' not in self.live:
+            route = self.live['tracker'].route
+            # The lower central avatar is not a stationary world landmark.
+            # This conservative foot-only query mask does not alter saved map
+            # bytes or claim segmentation of dynamic players/traffic.
+            profile = replace(route.profile, excluded=(*route.profile.excluded, (.33, .45, .67, 1.)))
+            route = replace(route, profile=profile)
+            self.live['tracker'] = AnchoredRouteLocalizer(route, capture_epoch=self.live['epoch'],
+                episode_id=self.live['episode'], goal_revision=self.live['goal'], clock=self.clock)
+            self.live['walk'] = WalkRouteFollower(route, clock=self.clock)
+            self.live['deadline'] = min(self.live['deadline'], self.clock()+60)
+        return dict(self.live_status(), mode='foot_camera_trace_v1', physicalActions=0, maxSeconds=60)
+
     def observe(self, job, body):
         import cv2 as cv
         import numpy as np
@@ -245,10 +279,13 @@ class RouteWorkspaces:
         pose = session['tracker'].observe(frame, episode_id=session['episode'], goal_revision=session['goal'], scene='active')
         elapsed = (self.clock()-now)*1000
         values = asdict(pose)
-        return dict(id=session['id'], sequence=body['sequence'], jpegSha256=hashlib.sha256(raw).hexdigest(),
+        result = dict(id=session['id'], sequence=body['sequence'], jpegSha256=hashlib.sha256(raw).hexdigest(),
             captureEpoch=body['captureEpoch'], pose=values, computeMs=elapsed,
             method=session['tracker'].last_diagnostic.get('method', 'not_attempted'),
             verificationPolicy=PNP_VERIFICATION_POLICY,
             physicalActions=0, framesArchived=0, executionQualified=False, groundRoute=False,
             viewCompatibility='same_aspect_assumed_same_fov',
             fullAndroidLatencyKnown=False, sceneIsOperatorAssumption=True)
+        if 'walk' in session:
+            result['walk'] = session['walk'].observe(pose)
+        return result

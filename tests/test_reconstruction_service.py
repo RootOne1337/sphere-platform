@@ -2,6 +2,8 @@
 import hashlib
 import json
 import threading
+import sys
+from pathlib import Path
 import urllib.error
 import urllib.request
 from http.server import ThreadingHTTPServer
@@ -21,6 +23,11 @@ def jobs(tmp_path, monkeypatch):
 def create(jobs, identity='a' * 32):
     jobs.create(dict(id=identity, key='b' * 64, mask='game', steps=3000))
     return jobs.path(identity)
+
+
+def test_route_features_use_live_runtime_instead_of_heavy_gpu_interpreter(jobs):
+    assert jobs.navigation.python == Path(sys.executable)
+    assert jobs.python != jobs.navigation.python
 
 
 def test_creation_is_idempotent_and_only_one_active(jobs):

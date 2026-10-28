@@ -98,6 +98,7 @@ class RouteWorkspaceTests(unittest.TestCase):
         sha = fixture.route.save(folder/'route.json')
         source = hashlib.sha256(b'{}').hexdigest()
         receipt=dict(sha256=sha,geometry_sha256=source,source_capture_sha256=source,cameras=8,landmarks=240,
+            pipeline_sha256=fixture.route.pipeline_sha256,
             camera_trace_only=True,map_support=dict(all_reference_neighborhoods_supported=True,
                                                    all_reference_intervals_observed=True),
             source_coverage=dict(endpoints_observed=True))
@@ -126,6 +127,49 @@ class RouteWorkspaceTests(unittest.TestCase):
             self.workspace.observe(self.job,body)
         self.now += 121
         self.assertEqual(self.workspace.live_status()['phase'],'idle')
+
+    def test_walk_requires_separate_confirmation_and_cannot_promote_observer(self):
+        self.attach_fixture_map()
+        body=dict(id='d'*32,captureEpoch='e'*32,width=960,height=540,sceneConfirmed=True)
+        with self.assertRaisesRegex(ValueError,'explicit_confirmation'):
+            self.workspace.start_walk(self.job,body)
+        with self.assertRaisesRegex(ValueError,'cannot_be_promoted'):
+            self.workspace.start_walk(self.job,dict(body,footCameraAssumptionConfirmed=True))
+        self.assertNotIn('walk',self.workspace.live)
+
+    def test_walk_plan_is_separate_finite_and_unknown_jpeg_stays_neutral(self):
+        import cv2 as cv
+        import numpy as np
+
+        self.attach_fixture_map()
+        self.workspace.stop_live(self.job,dict(id='d'*32))
+        body=dict(id='f'*32,captureEpoch='e'*32,width=960,height=540,sceneConfirmed=True,footCameraAssumptionConfirmed=True)
+        with patch('scripts.pilot.route_workspace.resource_checkpoint'):
+            result=self.workspace.start_walk(self.job,body)
+        self.assertEqual(result['mode'],'foot_camera_trace_v1')
+        self.assertEqual(result['secondsRemaining'],60)
+        self.assertEqual(self.workspace.live['tracker'].mask[400,480],0)
+        first=self.workspace.live['walk']
+        with patch('scripts.pilot.route_workspace.resource_checkpoint'):
+            self.workspace.start_walk(self.job,body)
+        self.assertIs(self.workspace.live['walk'],first)
+        _,encoded=cv.imencode('.jpg',np.zeros((540,960,3),np.uint8))
+        value=self.workspace.observe(self.job,dict(id='f'*32,captureEpoch='e'*32,sequence=1,jpeg=base64.b64encode(encoded).decode()))
+        self.assertEqual(value['walk']['stick'],[0.,0.])
+        self.assertEqual(value['walk']['phase'],'waiting')
+        self.assertEqual(value['physicalActions'],0)
+
+    def test_incompatible_extractor_is_rejected_before_a_live_session_can_open(self):
+        self.attach_fixture_map()
+        self.workspace.stop_live(self.job,dict(id='d'*32))
+        folder=self.workspace.current(self.job)
+        receipt=json.loads((folder/'receipt.json').read_text())
+        receipt['pipeline_sha256']='0'*64
+        (folder/'receipt.json').write_text(json.dumps(receipt))
+        self.assertEqual(self.workspace.status(self.job)['error'],'route_feature_runtime_mismatch')
+        with self.assertRaisesRegex(ValueError,'not_ready'):
+            self.workspace.start_walk(self.job,dict(id='f'*32,captureEpoch='e'*32,width=960,height=540,
+                sceneConfirmed=True,footCameraAssumptionConfirmed=True))
 
     def test_jpeg_dimensions_are_checked_before_decode_and_failed_confirmation_cannot_open_input(self):
         import cv2 as cv
