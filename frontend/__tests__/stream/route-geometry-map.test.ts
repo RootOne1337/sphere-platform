@@ -1,4 +1,4 @@
-import {buildRouteMap,colorRoutePoints,exactRecordedFrame,nearestRouteCamera,readImportedRouteGeometry,routeCameraFrame,routeSourceMatches,routeTraceColor} from '@/src/features/stream/routeMapProjection';
+import {buildRouteMap,colorRoutePoints,exactRecordedFrame,nearestRouteCamera,readImportedRouteGeometry,rotateRoutePoint,routeCameraFrame,routeMapTurn,unwrapRouteAngle,routeSourceMatches,routeTraceColor} from '@/src/features/stream/routeMapProjection';
 
 test('projects camera positions and genuine points, leaving unobserved gaps disconnected',()=>{
   const cameras=[{center:[0,0,0],ticks_90k:0},{center:[1,0,0],ticks_90k:45000},
@@ -81,4 +81,16 @@ test('optical depth uses the selected camera and distinguishes points behind it 
   expect(colorRoutePoints(points,camera,'rgb').colors[0]).toBe('rgb(255,0,0)');
   expect(colorRoutePoints(points,{center:[0,0,0],ticks_90k:0},'depth').available).toBe(false);
   expect(colorRoutePoints([[0,0,-2,0,0,0]],camera,'depth').low).toBeNull();
+});
+
+test('heading-up rotation preserves every side and takes the short arc across the compass seam',()=>{
+  for(const heading of [{x:0,y:1},{x:1,y:0},{x:0,y:-1},{x:-1,y:0}]){
+    const point=rotateRoutePoint(heading,routeMapTurn(heading,true));
+    expect(point.x).toBeCloseTo(0);expect(point.y).toBeCloseTo(1);
+  }
+  const degree=Math.PI/180;
+  expect(unwrapRouteAngle(179*degree,-179*degree)/degree).toBeCloseTo(181);
+  expect(unwrapRouteAngle(-179*degree,179*degree)/degree).toBeCloseTo(-181);
+  const p=rotateRoutePoint({x:1,y:0},routeMapTurn(null,false,90));
+  expect(p.x).toBeCloseTo(0);expect(p.y).toBeCloseTo(-1);
 });

@@ -9,6 +9,7 @@ import { readTeachingLabel, renameTeachingLabel, seekTeachingSecond, teachingDat
 import {exactRecordedFrame,readImportedRouteGeometry,type ImportedRouteGeometry} from './routeMapProjection';
 import RouteGeometryMap from './RouteGeometryMap';
 import {reconstructionRequest} from './reconstructionClient';
+import type {RouteSource} from './routeSource';
 
 type Row = { index: number; offset: number; bytes: number; relative_ticks_90k: number; key: boolean; seekable?: boolean; sha256: string; worker_observed_at_ms: number };
 type Clip = { id: string; title: string; createdAt: number; complete: boolean; frames: number; failure: string | null; hudHidden:boolean };
@@ -23,7 +24,7 @@ export function h264Codec(data: Uint8Array): string | null {
   }
   return null;
 }
-export function TeachingReview({ selected, refresh, onSelect, storageScope, onBusyChange,onRouteChange,onClipsChange,visible=true }: { selected: string | null; refresh: number; onSelect: (id: string | null) => void; storageScope: string | null; onBusyChange?: (busy:boolean)=>void;onRouteChange?:(job:ReconstructionJob|null,clip:string|null,scope:string|null)=>void;onClipsChange?:(clips:TeachingClipChoice[])=>void;visible?:boolean }) {
+export function TeachingReview({ selected, refresh, onSelect, storageScope, onBusyChange,onRouteChange,onClipsChange,onSourceChange,visible=true,autoPrepare=false,onAutoPrepareConsumed }: { selected: string | null; refresh: number; onSelect: (id: string | null) => void; storageScope: string | null; onBusyChange?: (busy:boolean)=>void;onRouteChange?:(job:ReconstructionJob|null,clip:string|null,scope:string|null)=>void;onClipsChange?:(clips:TeachingClipChoice[])=>void;onSourceChange?:(source:RouteSource|null)=>void;visible?:boolean;autoPrepare?:boolean;onAutoPrepareConsumed?:()=>void }) {
   useEffect(()=>{onRouteChange?.(null,selected,storageScope);},[selected,storageScope,onRouteChange]);
   const [linkedJob,setLinkedJob]=useState<ReconstructionJob|null>(null);
   const routeChanged=useCallback((job:ReconstructionJob|null)=>{setLinkedJob(job);onRouteChange?.(job,selected,storageScope);},[onRouteChange,selected,storageScope]);
@@ -32,6 +33,7 @@ export function TeachingReview({ selected, refresh, onSelect, storageScope, onBu
   useEffect(()=>{onClipsChange?.(clips);},[clips,onClipsChange]);
   const [rows,setRows]=useState<Row[]>([]),[inputs,setInputs]=useState<Record<string,unknown>[]>([]),[position,setPosition]=useState(0);
   const [sourceManifestSha,setSourceManifestSha]=useState<string|null>(null),[previewCanvas,setPreviewCanvas]=useState<HTMLCanvasElement|null>(null);
+  const [loadedSourceKey,setLoadedSourceKey]=useState<string|null>(null);
   const [importedGeometry,setImportedGeometry]=useState<ImportedRouteGeometry|null>(null),[importError,setImportError]=useState<string|null>(null),[importedCanvas,setImportedCanvas]=useState<HTMLCanvasElement|null>(null);
   const [alternatives,setAlternatives]=useState<{id:string;cameras:number;points:number}[]>([]),[alternativeId,setAlternativeId]=useState<string|null>(null),[alternativeStatus,setAlternativeStatus]=useState('');
   const [localRefresh,setLocalRefresh]=useState(0),[decoding,setDecoding]=useState(false);
@@ -83,7 +85,7 @@ export function TeachingReview({ selected, refresh, onSelect, storageScope, onBu
   },[refresh,localRefresh,storageScope]);
   useEffect(()=>{setLabel(clips.find(c=>c.id===selected)?.title??'');},[clips,selected]);
   useEffect(()=>{
-    const current=++generation.current;importGeneration.current++;setRows([]);setInputs([]);setPosition(0);setSourceManifestSha(null);setImportedGeometry(null);setImportError(null);setLinkedJob(null);setAlternatives([]);setAlternativeId(null);setAlternativeStatus('');directory.current=null;setError(null);
+    const current=++generation.current;importGeneration.current++;setLoadedSourceKey(null);setRows([]);setInputs([]);setPosition(0);setSourceManifestSha(null);setImportedGeometry(null);setImportError(null);setLinkedJob(null);setAlternatives([]);setAlternativeId(null);setAlternativeStatus('');directory.current=null;setError(null);
     if(!selected||!/^[0-9a-f]{32}$/.test(selected)||!storageScope||!/^[0-9a-f]{32}$/.test(storageScope))return;
     void(async()=>{
       const root=await navigator.storage.getDirectory(),library=await root.getDirectoryHandle('sphere-teaching-'+storageScope);
@@ -106,7 +108,7 @@ export function TeachingReview({ selected, refresh, onSelect, storageScope, onBu
         && entries.at(-1)!.offset+entries.at(-1)!.bytes!==video.size)throw Error('Размер видео не соответствует индексу.');
       const journal=(await inputFile.text()).trim().split('\n').filter(Boolean).map(line=>JSON.parse(line));
       if(journal.length>40000)throw Error('Журнал действий превышает предел.');
-      if(current===generation.current){directory.current=folder;setRows(entries);setInputs(journal);setSourceManifestSha(manifestSha);}
+      if(current===generation.current){directory.current=folder;setRows(entries);setInputs(journal);setSourceManifestSha(manifestSha);setLoadedSourceKey(`${storageScope}:${selected}`);}
     })().catch(e=>{if(current===generation.current)setError(e instanceof Error?e.message:'Материал не прочитан.');});
     return()=>{generation.current++;};
   },[selected,refresh,storageScope]);
@@ -164,6 +166,9 @@ export function TeachingReview({ selected, refresh, onSelect, storageScope, onBu
     &&Math.abs(i.at_ms-rows[position].worker_observed_at_ms)<500).slice(0,12):[];
   const capture=useMemo(()=>teachingCaptureMetrics(rows),[rows]);
   const validTicks=useMemo(()=>new Set(rows.map(row=>row.relative_ticks_90k)),[rows]);
+  useEffect(()=>{onSourceChange?.(selected&&storageScope&&loadedSourceKey===`${storageScope}:${selected}`&&sourceManifestSha&&rows.length&&directory.current?
+    {clip:selected,scope:storageScope,manifestSha:sourceManifestSha,rows,folder:directory.current}:null);
+  },[selected,storageScope,sourceManifestSha,rows,onSourceChange,loadedSourceKey]);
   useEffect(()=>{
     if(!visible||!linkedJob||!sourceManifestSha||!rows.length)return;
     importGeneration.current++;setImportedGeometry(null);
@@ -214,6 +219,6 @@ export function TeachingReview({ selected, refresh, onSelect, storageScope, onBu
         {!deleteConfirm?<Button disabled={exporting||processing||deleting} variant="ghost" className="text-destructive" onClick={()=>setDeleteConfirm(true)}>Удалить выбранный локальный материал</Button>:<div role="group" aria-label="Подтверждение удаления записи" className="space-y-2 rounded-lg border border-destructive/40 bg-destructive/5 p-3"><p className="text-xs leading-5 text-muted-foreground">Локальная запись и связанные с ней ссылки будут удалены из этого браузера. Если нужен архив, сначала сохраните пакет в папку.</p><div className="flex flex-wrap gap-2"><Button size="sm" variant="destructive" disabled={deleting} onClick={()=>{void(async()=>{if(deleteInFlight.current)return;deleteInFlight.current=true;setDeleting(true);try{if(!storageScope||!/^[0-9a-f]{32}$/.test(storageScope)||!/^[0-9a-f]{32}$/.test(selected))throw Error();const root=await navigator.storage.getDirectory();const library=await root.getDirectoryHandle('sphere-teaching-'+storageScope);await library.removeEntry(selected,{recursive:true});onSelect(null);setLocalRefresh(v=>v+1);}catch{setError('Удаление не подтверждено. Проверьте библиотеку перед повтором.');}finally{deleteInFlight.current=false;setDeleting(false);setDeleteConfirm(false);}})();}}>{deleting?'Удаление…':'Удалить навсегда'}</Button><Button size="sm" variant="outline" disabled={deleting} onClick={()=>setDeleteConfirm(false)}>Отмена</Button></div></div>}
       </div></div>}
     {selected&&sourceManifestSha&&rows.length>0&&<section className="space-y-3 rounded-xl border border-cyan-500/25 bg-cyan-500/5 p-4"><div><h4 className="font-medium">Схема ориентиров и исходная запись</h4><p className="mt-1 text-xs leading-5 text-muted-foreground">Связанная сохранённая схема открывается вместе с выбранной записью. Нажмите на камеру, чтобы увидеть исходный кадр.</p></div><p role="status" className="text-xs text-muted-foreground">{alternativeStatus||'Если схема ещё не построена, подготовьте ориентиры ниже.'}</p>{alternatives.length>1&&<label className="block text-xs">Сохранённая схема<select aria-label="Сохранённая схема ориентиров" value={alternativeId??''} onChange={e=>setAlternativeId(e.target.value||null)} className="ml-2 rounded-lg border bg-background p-2">{alternatives.map((item,i)=><option key={item.id} value={item.id}>Схема {i+1} · {item.cameras} камер · {item.points} точек</option>)}</select></label>}{importError&&<p role="alert" className="text-xs text-destructive">{importError}</p>}{importedGeometry&&<RouteGeometryMap cameras={importedGeometry.cameras} points={importedGeometry.points} motionWarning={!!alternativeId} selectedTicks={rows[position]?.relative_ticks_90k??null} onSeekCamera={seekCamera} validTicks={validTicks} sourcePreview={sourceViewer(setImportedCanvas,true)}/>}<details><summary className="cursor-pointer text-xs text-muted-foreground">Открыть геометрию из файла</summary><label className="mt-2 block text-xs font-medium">Выбрать файл геометрии<input aria-label="Выбрать geometry.json для выбранной записи" type="file" accept=".json,application/json" className="mt-2 block w-full text-xs file:mr-3 file:rounded-md file:border file:bg-background file:px-3 file:py-2 file:text-foreground" onChange={e=>{const file=e.currentTarget.files?.[0];e.currentTarget.value='';if(file)void importGeometry(file);}}/></label><p className="mt-2 text-xs text-muted-foreground">Ручной импорт доступен до закрытия страницы. Исходная запись и файл не изменяются.</p></details></section>}
-    {selected&&storageScope&&rows.length>0&&clips.some(c=>c.id===selected)&&<TeachingReconstruction key={selected} clip={selected} scope={storageScope} folder={()=>directory.current} complete={!exporting&&!deleting&&!!clips.find(c=>c.id===selected)?.complete} hudHidden={clips.find(c=>c.id===selected)?.hudHidden} onBusyChange={setProcessing} onRouteChange={routeChanged} visible={visible} sourceManifestSha={sourceManifestSha} selectedTicks={rows[position]?.relative_ticks_90k??null} onSeekCamera={seekCamera} validTicks={validTicks} sourcePreview={sourceViewer(setPreviewCanvas)} alternativeCameraCount={importedGeometry?.cameras.length??null}/>}
+    {selected&&storageScope&&rows.length>0&&clips.some(c=>c.id===selected)&&<TeachingReconstruction key={selected} clip={selected} scope={storageScope} folder={()=>directory.current} complete={!exporting&&!deleting&&!!clips.find(c=>c.id===selected)?.complete} hudHidden={clips.find(c=>c.id===selected)?.hudHidden} onBusyChange={setProcessing} onRouteChange={routeChanged} visible={visible} sourceManifestSha={sourceManifestSha} selectedTicks={rows[position]?.relative_ticks_90k??null} onSeekCamera={seekCamera} validTicks={validTicks} sourcePreview={sourceViewer(setPreviewCanvas)} alternativeCameraCount={importedGeometry?.cameras.length??null} autoPrepare={autoPrepare} onAutoPrepareConsumed={onAutoPrepareConsumed}/>}
   </section>;
 }

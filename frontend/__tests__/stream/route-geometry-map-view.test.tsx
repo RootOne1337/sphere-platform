@@ -58,3 +58,17 @@ test('route colors stay distinct from depth and warning and the selected camera 
   expect(view.container.querySelector('circle[fill="rgb(240,120,50)"]')).toBeInTheDocument();
   expect(screen.queryByText(/Глубина вдоль взгляда/)).not.toBeInTheDocument();
 });
+
+test('a backwards camera turns the diagram up with independent manual rotation and reset',()=>{
+  const cameras=[{center:[0,0,0],ticks_90k:0,camera_to_world:[[1,0,0,0],[0,1,0,0],[0,0,1,0]]},
+    {center:[0,0,1],ticks_90k:9000,camera_to_world:[[-1,0,0,0],[0,1,0,0],[0,0,-1,1]]}];
+  render(<RouteGeometryMap cameras={cameras} points={[]} selectedTicks={9000}/>);
+  const group=screen.getByLabelText('Поворот схемы');
+  expect(Number(group.getAttribute('data-angle-radians'))).toBeCloseTo(Math.PI);
+  fireEvent.click(screen.getByRole('button',{name:'Повернуть карту вправо на 90 градусов'}));
+  expect(Number(group.getAttribute('data-angle-radians'))).toBeCloseTo(Math.PI/2);
+  fireEvent.click(screen.getByRole('button',{name:'Сброс поворота'}));
+  expect(Number(group.getAttribute('data-angle-radians'))).toBeCloseTo(Math.PI);
+  fireEvent.change(screen.getByLabelText('Ориентация карты'),{target:{value:'reference'}});
+  expect(Number(group.getAttribute('data-angle-radians'))).toBeCloseTo(0);
+});

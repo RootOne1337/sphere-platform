@@ -7,11 +7,11 @@ jest.mock('@/src/features/stream/reconstructionLink',()=>({readReconstructionLin
 jest.mock('@/src/features/stream/reconstructionClient',()=>({
   ...jest.requireActual('@/src/features/stream/reconstructionClient'),reconstructionRequest:jest.fn(),uploadReconstruction:jest.fn(),
 }));
-afterEach(()=>{sessionStorage.clear();jest.clearAllMocks();});
-test('a recording marked HUD-free defaults to no HUD mask and 30000 iterations',async()=>{
+afterEach(()=>{sessionStorage.clear();jest.clearAllMocks();jest.mocked(readReconstructionLink).mockResolvedValue(null);jest.mocked(listReconstructionLinks).mockResolvedValue([]);});
+test('a recording marked HUD-free retains the avatar mask and 30000 iterations',async()=>{
   const view=render(<TeachingReconstruction clip={'c'.repeat(32)} scope={'d'.repeat(32)} folder={()=>null} complete hudHidden onBusyChange={()=>{}}/>);
   await waitFor(()=>expect(screen.getByRole('button',{name:'Построить 3D-сцену'})).toBeEnabled());
-  expect(screen.getByRole('combobox',{name:/Маска/i})).toHaveValue('none');
+  expect(screen.getByRole('combobox',{name:/Маска/i})).toHaveValue('avatar');
   expect(screen.getByRole('combobox',{name:'Качество обработки'})).toHaveValue('30000');
   view.unmount();
 });
@@ -26,6 +26,23 @@ test('one-button route preparation creates a sparse-only automatic pipeline',asy
   const request=(reconstructionRequest as jest.Mock).mock.calls.find(([path])=>path==='/jobs');
   expect(JSON.parse(String(request[2].body))).toMatchObject({prepare_route:true,route_only:true});
   view.unmount();
+});
+
+test('a newly finalized recording can prepare once automatically but a recovered intent never creates another job',async()=>{
+  Object.defineProperty(crypto,'randomUUID',{configurable:true,value:()=> 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa'});
+  jest.mocked(readReconstructionLink).mockResolvedValue(null);jest.mocked(listReconstructionLinks).mockResolvedValue([]);
+  jest.mocked(reconstructionRequest).mockResolvedValue({json:async()=>({phase:'failed'})} as Response);
+  const consumed=jest.fn(),folder={} as FileSystemDirectoryHandle,props={clip:'c'.repeat(32),scope:'d'.repeat(32),folder:()=>folder,complete:true,onBusyChange:()=>{},autoPrepare:true,onAutoPrepareConsumed:consumed};
+  const first=render(<TeachingReconstruction {...props}/>);
+  await waitFor(()=>expect(jest.mocked(reconstructionRequest).mock.calls.filter(call=>call[0]==='/jobs')).toHaveLength(1));
+  expect(consumed).toHaveBeenCalledTimes(1);first.rerender(<TeachingReconstruction {...props}/>);
+  expect(jest.mocked(reconstructionRequest).mock.calls.filter(call=>call[0]==='/jobs')).toHaveLength(1);first.unmount();
+  jest.clearAllMocks();sessionStorage.clear();
+  const saved={id:'a'.repeat(32),key:'b'.repeat(64)};
+  jest.mocked(readReconstructionLink).mockResolvedValue(saved);jest.mocked(listReconstructionLinks).mockResolvedValue([saved]);
+  const next=render(<TeachingReconstruction {...props}/>);
+  await waitFor(()=>expect(consumed).toHaveBeenCalledTimes(1));
+  expect(jest.mocked(reconstructionRequest).mock.calls.every(call=>call[2]?.method!=='POST')).toBe(true);next.unmount();
 });
 test('a recovered job blocks new control until its state is actually confirmed',async()=>{
   const clip='c'.repeat(32),scope='d'.repeat(32),job={id:'a'.repeat(32),key:'b'.repeat(64)};

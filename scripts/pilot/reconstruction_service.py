@@ -398,7 +398,7 @@ class Jobs:
         if job.exists():
             self.authorize(job, key)
             return self.status(job)  # Same creation intent is read back, never repeated.
-        if body.get('mask') not in {'none', 'game'}:
+        if body.get('mask') not in {'none', 'avatar', 'game'}:
             raise ValueError('invalid_processing_options')
         if type(body.get('prepare_route', False)) is not bool:
             raise ValueError('invalid_route_pipeline_option')

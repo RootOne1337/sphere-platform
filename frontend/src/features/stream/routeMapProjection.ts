@@ -45,7 +45,25 @@ export function exactRecordedFrame(rows:{relative_ticks_90k:number}[],ticks:numb
 }
 type XY={x:number;y:number};
 export type RouteMap = {points:(XY&{sourceIndex:number})[];cameras:XY[];segments:{a:XY;b:XY}[];gaps:number;
-  orientation:'camera'|'pca';headings:(XY|null)[]};
+  orientation:'camera'|'pca';headings:(XY|null)[];basis:{origin:number[];right:Vec;forward:Vec}};
+
+/** Only rotates the display; no reflection, pose interpolation or map mutation. */
+export function rotateRoutePoint(point:XY,radians:number):XY {
+  const c=Math.cos(radians),s=Math.sin(radians);return {x:c*point.x-s*point.y,y:s*point.x+c*point.y};
+}
+export function routeMapTurn(heading:XY|null,follow:boolean,clockwiseDegrees=0):number {
+  return (follow&&heading?Math.atan2(heading.x,heading.y):0)-clockwiseDegrees*Math.PI/180;
+}
+/** Keep adjacent angles continuous at the +/-180-degree seam. */
+export function unwrapRouteAngle(previous:number,next:number):number {
+  return previous+Math.atan2(Math.sin(next-previous),Math.cos(next-previous));
+}
+export function projectRouteCamera(map:RouteMap,camera:RouteMapCamera):{point:XY;heading:XY|null}|null {
+  if(camera.center.length!==3||camera.center.some(n=>!Number.isFinite(n)))return null;
+  const delta=camera.center.map((n,i)=>n-map.basis.origin[i]) as Vec,frame=routeCameraFrame(camera);
+  const x=frame?dot(frame.forward,map.basis.right):0,y=frame?dot(frame.forward,map.basis.forward):0,n=Math.hypot(x,y);
+  return {point:{x:dot(delta,map.basis.right),y:dot(delta,map.basis.forward)},heading:n>1e-6?{x:x/n,y:y/n}:null};
+}
 type Vec=[number,number,number];
 const dot=(a:Vec,b:Vec)=>a[0]*b[0]+a[1]*b[1]+a[2]*b[2];
 const norm=(a:Vec):Vec|null=>{const n=Math.hypot(...a);return n>1e-12?[a[0]/n,a[1]/n,a[2]/n]:null;};
@@ -120,5 +138,5 @@ export function buildRouteMap(cameras:RouteMapCamera[],points:number[][],maxPoin
     if(dt>0&&dt<=1)segments.push({a:cameras2[i-1],b:cameras2[i]});else gaps++;}
   const headings=cameras.map(camera=>{const f=routeCameraFrame(camera);if(!f)return null;
     const x=dot(f.forward,right),y=dot(f.forward,forward),n=Math.hypot(x,y);return n>1e-6?{x:x/n,y:y/n}:null;});
-  return {points:points2,cameras:cameras2,segments,gaps,orientation:frame?'camera':'pca',headings};
+  return {points:points2,cameras:cameras2,segments,gaps,orientation:frame?'camera':'pca',headings,basis:{origin:[...origin],right,forward}};
 }

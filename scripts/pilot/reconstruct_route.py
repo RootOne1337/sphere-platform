@@ -65,8 +65,10 @@ def masked_inputs(prepared, mode):
     does not detect arbitrary moving players/cars and is never a collision mask.
     """
     from PIL import Image, ImageDraw
+    from scripts.pilot.route_masks import excluded_rectangles
 
-    if mode == 'none':
+    rectangles = excluded_rectangles(mode)
+    if not rectangles:
         return None
     folder = prepared / 'masks'
     folder.mkdir()
@@ -75,10 +77,8 @@ def masked_inputs(prepared, mode):
             width, height = rgb.size
         mask = Image.new('L', (width, height), 255)
         draw = ImageDraw.Draw(mask)
-        draw.rectangle((0, 0, width, int(height * .25)), fill=0)
-        draw.rectangle((0, int(height * .56), int(width * .25), height), fill=0)
-        draw.rectangle((int(width * .83), int(height * .52), width, height), fill=0)
-        draw.rectangle((int(width * .39), int(height * .47), int(width * .64), height), fill=0)
+        for a,b,c,d in rectangles:
+            draw.rectangle((int(width*a), int(height*b), int(width*c), int(height*d)), fill=0)
         mask.save(folder / (path.name + '.png'))  # COLMAP image.png.png convention
     return folder
 
@@ -538,7 +538,7 @@ def retry_dense(job, attempt):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--job', type=Path, required=True)
-    parser.add_argument('--mask', choices=['none', 'game'], default='game')
+    parser.add_argument('--mask', choices=['none', 'avatar', 'game'], default='game')
     parser.add_argument('--steps', type=int, choices=TRAINING_STEPS, default=5000)
     parser.add_argument('--retry-dense', action='store_true')
     parser.add_argument('--route-only', action='store_true')

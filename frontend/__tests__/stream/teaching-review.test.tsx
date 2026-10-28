@@ -78,6 +78,17 @@ test('search filters the local list and deletion requires an explicit second act
   expect(remove).toHaveBeenCalledWith(id,{recursive:true});
   expect(onSelect).toHaveBeenCalledWith(null);
 });
+
+test('the shared source is verified and cannot be relabeled as a newly selected clip',async()=>{
+  const {manifest}=await library(),changed=jest.fn();
+  const props={selected:id,refresh:0,onSelect:jest.fn(),storageScope:scope,onSourceChange:changed,visible:false};
+  const view=render(<TeachingReview {...props}/>);
+  await waitFor(()=>expect(changed).toHaveBeenLastCalledWith(expect.objectContaining({clip:id,scope,rows:expect.any(Array)})));
+  expect(changed.mock.calls.at(-1)![0].manifestSha).toBe(await hash(manifest));
+  const other='c'.repeat(32);view.rerender(<TeachingReview {...props} selected={other}/>);
+  await waitFor(()=>expect(changed).toHaveBeenLastCalledWith(null));
+  expect(changed.mock.calls.some(([value])=>value?.clip===other)).toBe(false);
+});
 afterEach(()=>{jest.mocked(TeachingReconstruction).mockReset().mockImplementation(()=> <></>);jest.mocked(reconstructionRequest).mockReset();jest.restoreAllMocks();});
 
 test('selected camera seeks the verified source and updates the adjacent original-frame viewer',async()=>{

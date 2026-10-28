@@ -244,7 +244,8 @@ class RouteWorkspaces:
         epoch, episode, goal = (str(uuid.uuid4()) for _ in range(3))
         tracker = AnchoredRouteLocalizer(route, capture_epoch=epoch, episode_id=episode, goal_revision=goal, clock=self.clock)
         self.live = dict(id=body['id'], binding=body.copy(), job=job.name, epoch=epoch,
-            episode=episode, goal=goal, tracker=tracker, sequence=0, observations=0, deadline=self.clock()+120)
+            episode=episode, goal=goal, tracker=tracker, sequence=0, observations=0, deadline=self.clock()+120,
+            geometry_sha256=receipt['geometry_sha256'])
         return self.live_status()
 
     def stop_live(self, job, body):
@@ -328,7 +329,7 @@ class RouteWorkspaces:
         elapsed = (self.clock()-now)*1000
         values = asdict(pose)
         result = dict(id=session['id'], sequence=body['sequence'], jpegSha256=hashlib.sha256(raw).hexdigest(),
-            captureEpoch=body['captureEpoch'], pose=values, computeMs=elapsed,
+            captureEpoch=body['captureEpoch'], pose=values, computeMs=elapsed, geometrySha256=session['geometry_sha256'],
             method=session['tracker'].last_diagnostic.get('method', 'not_attempted'),
             verificationPolicy=PNP_VERIFICATION_POLICY,
             physicalActions=0, framesArchived=0, executionQualified=False, groundRoute=False,

@@ -1,4 +1,4 @@
-import {freshNavigationFrame,navigationReply,paintNavigation} from '@/src/features/stream/routeNavigation';
+import {boundLiveRouteCamera,freshNavigationFrame,navigationReply,paintNavigation} from '@/src/features/stream/routeNavigation';
 import {teachingCaptureMetrics} from '@/src/features/stream/teachingCaptureMetrics';
 const reply=()=>({id:'id',captureEpoch:'epoch',sequence:4,jpegSha256:'a'.repeat(64),computeMs:10,method:'map_anchored_flow',physicalActions:0,executionQualified:false,groundRoute:false,
   pose:{state:'localized',reason:'diagnostic',inliers:50,segment:4,progress_units:1.,polyline_px:[[400,350],[450,300],[500,250]]}});
@@ -9,6 +9,18 @@ test('a result must match the exact query image, session, epoch and sequence wit
   }
   expect(navigationReply({...reply(),pose:{...reply().pose,state:'unknown'}},'id','epoch',4,'a'.repeat(64))).toBeNull();
   expect(freshNavigationFrame(1000,1250)).toBe(true);expect(freshNavigationFrame(1000,1251)).toBe(false);expect(freshNavigationFrame(1001,1000)).toBe(false);
+});
+
+test('a live pin requires the same geometry, fresh confirmed pose and a proper rotation',()=>{
+  const value={...reply(),geometrySha256:'b'.repeat(64),pose:{...reply().pose,center:[0,0,1],rotation:[1,0,0,0,1,0,0,0,1]}};
+  const parsed=navigationReply(value,'id','epoch',4,'a'.repeat(64))!;
+  const observation={reply:parsed,capturedAt:1000,answeredAt:1050};
+  expect(boundLiveRouteCamera(observation,'b'.repeat(64),1100)?.center).toEqual([0,0,1]);
+  expect(boundLiveRouteCamera(observation,'c'.repeat(64),1100)).toBeNull();
+  expect(boundLiveRouteCamera(observation,'b'.repeat(64),1251)).toBeNull();
+  parsed.pose.state='unknown';expect(boundLiveRouteCamera(observation,'b'.repeat(64),1100)).toBeNull();
+  parsed.pose.state='localized';parsed.pose.rotation=[-1,0,0,0,1,0,0,0,1];
+  expect(boundLiveRouteCamera(observation,'b'.repeat(64),1100)).toBeNull();
 });
 test('unknown poses preserve query pixels without a fabricated connected path',()=>{
   const context={clearRect:jest.fn(),drawImage:jest.fn(),save:jest.fn(),beginPath:jest.fn(),stroke:jest.fn()};

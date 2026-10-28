@@ -39,6 +39,19 @@ def test_separate_masks_preserve_source_and_exclude_avatar(tmp_path):
     assert hashlib.sha256(source.read_bytes()).hexdigest() == before
 
 
+def test_hiding_hud_keeps_avatar_exclusion_and_preserves_buildings(tmp_path):
+    from PIL import Image
+    from scripts.pilot.route_masks import excluded_rectangles
+    images=tmp_path/'images';images.mkdir();Image.new('RGB',(960,540),(11,22,33)).save(images/'000.png')
+    folder=masked_inputs(tmp_path,'avatar')
+    with Image.open(folder/'000.png.png') as mask:
+        assert mask.getpixel((480,400))==0
+        assert mask.getpixel((20,20))==255
+        assert mask.getpixel((300,300))==255
+    assert excluded_rectangles('avatar')==((.33,.45,.67,1.),(0.,.975,1.,1.))
+    with pytest.raises(ValueError):excluded_rectangles('unsupported')
+
+
 def ply(path, *, nan=False):
     import struct
 

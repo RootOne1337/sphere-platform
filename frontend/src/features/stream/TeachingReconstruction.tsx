@@ -26,12 +26,13 @@ reasons.lightglue_source_mismatch='Версия локального инстр�
 reasons.lightglue_gpu_unavailable='GPU для сопоставления ракурсов недоступен. Запись сохранена.';
 reasons.learned_matching_timeout='Сопоставление ракурсов достигло лимита времени. Промежуточные материалы сохранены.';
 reasons.reference_evaluation_failed='Не удалось завершить проверку рендера по исходным ракурсам. Качество не подтверждено.';
-export function TeachingReconstruction({clip,scope,folder,complete,hudHidden=false,onBusyChange,onRouteChange,visible=true,sourceManifestSha=null,selectedTicks=null,onSeekCamera,validTicks,sourcePreview,alternativeCameraCount=null}:{clip:string;scope:string;folder:()=>FileSystemDirectoryHandle|null;complete:boolean;hudHidden?:boolean;onBusyChange:(busy:boolean)=>void;onRouteChange?:(job:ReconstructionJob|null)=>void;visible?:boolean;sourceManifestSha?:string|null;selectedTicks?:number|null;onSeekCamera?:(ticks:number)=>void;validTicks?:ReadonlySet<number>;sourcePreview?:ReactNode;alternativeCameraCount?:number|null}) {
+export function TeachingReconstruction({clip,scope,folder,complete,hudHidden=false,onBusyChange,onRouteChange,visible=true,sourceManifestSha=null,selectedTicks=null,onSeekCamera,validTicks,sourcePreview,alternativeCameraCount=null,autoPrepare=false,onAutoPrepareConsumed}:{clip:string;scope:string;folder:()=>FileSystemDirectoryHandle|null;complete:boolean;hudHidden?:boolean;onBusyChange:(busy:boolean)=>void;onRouteChange?:(job:ReconstructionJob|null)=>void;visible?:boolean;sourceManifestSha?:string|null;selectedTicks?:number|null;onSeekCamera?:(ticks:number)=>void;validTicks?:ReadonlySet<number>;sourcePreview?:ReactNode;alternativeCameraCount?:number|null;autoPrepare?:boolean;onAutoPrepareConsumed?:()=>void}) {
   const [job,setJob]=useState<ReconstructionJob|null>(null),[status,setStatus]=useState<ReconstructionState|null>(null),[error,setError]=useState<string|null>(null);
   const [attempts,setAttempts]=useState<ReconstructionJob[]>([]),[switchingAttempt,setSwitchingAttempt]=useState(false);
   const [preparationNotice,setPreparationNotice]=useState<{jobId:string;message:string}|null>(null),[quotaJob,setQuotaJob]=useState<string|null>(null);
-  const [mask,setMask]=useState(hudHidden?'none':'game'),[steps,setSteps]=useState(30000),[progress,setProgress]=useState('');
+  const [mask,setMask]=useState(hudHidden?'avatar':'game'),[steps,setSteps]=useState(30000),[progress,setProgress]=useState('');
   const [uploading,setUploading]=useState(false);const uploadAbort=useRef<AbortController|null>(null);
+  const autoAttempted=useRef(false);
   const [recovering,setRecovering]=useState(true);const folderRef=useRef(folder);folderRef.current=folder;
   const [refresh,setRefresh]=useState(0),[surfaceStarting,setSurfaceStarting]=useState(false);
   const [firstView,setFirstView]=useState(0),[viewCount,setViewCount]=useState(18);
@@ -85,6 +86,14 @@ export function TeachingReconstruction({clip,scope,folder,complete,hudHidden=fal
     }catch{setError('Не удалось выбрать сохранённую попытку. Предыдущие ссылки и исходная запись сохранены.');}
     finally{setSwitchingAttempt(false);}
   };
+  useEffect(()=>{
+    if(!autoPrepare||autoAttempted.current||recovering||!complete||!folderRef.current())return;
+    autoAttempted.current=true;
+    // A recovered link belongs to an existing intent, including an ambiguous
+    // start. Only new completed recordings may create an automatic attempt.
+    if(!job&&!attempts.length)void start(true);
+    onAutoPrepareConsumed?.();
+  },[autoPrepare,recovering,complete,job,attempts,onAutoPrepareConsumed]);
   const cancel=async()=>{
     uploadAbort.current?.abort();if(!job)return;
     const surface=status?processingSurface(status):undefined;
@@ -108,7 +117,7 @@ export function TeachingReconstruction({clip,scope,folder,complete,hudHidden=fal
     <div className="flex items-start gap-3"><Box className="mt-1 text-emerald-400" size={24}/><div><h4 className="text-lg font-semibold">Сцена из записанного прохода</h4><p className="mt-1 max-w-3xl text-sm leading-6 text-muted-foreground">Оригинальные кадры → связанные камеры → визуальная сцена и отдельная модель поверхностей. Сохранённый результат можно вращать, изучать в каркасе и смотреть из ракурсов прохода. Обработка идёт на этом ПК, отдельно от Android.</p></div></div>
     {(attempts.length>1||!job&&attempts.length>0)&&<label className="block max-w-lg text-sm">Сохранённые попытки реконструкции<select aria-label="Сохранённая попытка реконструкции" className="mt-1 block w-full rounded-lg border border-input bg-background p-2" value={job?.id??''} disabled={busy||!folder()} onChange={e=>{void selectAttempt(e.target.value);}}>{!job&&<option value="">Новое задание</option>}{attempts.map((item,index)=><option key={item.id} value={item.id}>Попытка {index+1} · {item.id.slice(0,8)}</option>)}</select><span className="mt-1 block text-xs text-muted-foreground">Выбор открывает сохранённый результат без повторной обработки.</span></label>}
     {!status&&<div className="flex flex-wrap items-end gap-4">
-      <label className="text-sm">Маска записи<select className="mt-1 block rounded-lg border border-input bg-background p-2" value={mask} onChange={e=>setMask(e.target.value)}><option value="game">HUD и персонаж в центре</option><option value="none">Без маски (чистый кадр)</option></select></label>
+      <label className="text-sm">Маска записи<select className="mt-1 block rounded-lg border border-input bg-background p-2" value={mask} onChange={e=>setMask(e.target.value)}><option value="game">HUD и персонаж в центре</option><option value="avatar">Персонаж · HUD уже скрыт</option><option value="none">Без маски · свободный вид от первого лица</option></select></label>
       <label className="text-sm">Качество обработки<select className="mt-1 block rounded-lg border border-input bg-background p-2" value={steps} onChange={e=>setSteps(Number(e.target.value))}><option value={3000}>Проба · 3 000 шагов</option><option value={5000}>Стандарт · 5 000 шагов</option><option value={10000}>Детальнее · 10 000 шагов</option><option value={30000}>Высокая детализация · 30 000 шагов</option></select></label>
       {steps===30000&&<p className="max-w-lg text-sm text-muted-foreground">Более длительная обработка исходных кадров без уменьшения FullHD. Сохраняются промежуточные результаты; ограничения памяти и проверка качества действуют. Точность камер и полнота съёмки остаются важны.</p>}
       <div className="flex flex-wrap gap-2"><Button disabled={!complete||uploading||recovering} onClick={()=>{void start(true);}}>Подготовить ориентиры</Button><Button variant="outline" disabled={!complete||uploading||recovering} onClick={()=>{void start(false);}}>Построить 3D-сцену</Button></div>

@@ -194,6 +194,7 @@ class RouteWorkspaceTests(unittest.TestCase):
         self.assertEqual(result['pose']['state'],'unknown')
         self.assertEqual(result['framesArchived'],0)
         self.assertEqual(result['verificationPolicy'],'pnp-image-coverage-v1')
+        self.assertEqual(result['geometrySha256'],hashlib.sha256(b'{}').hexdigest())
         self.assertEqual(result['physicalActions'],0)
         self.assertFalse(result['executionQualified'])
         self.assertEqual(files,set(p.relative_to(self.job) for p in self.job.rglob('*') if p.is_file()))
