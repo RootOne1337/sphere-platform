@@ -33,6 +33,7 @@ test('initial operator view does not record until explicit authenticated connect
   expect(screen.getByRole('button',{name:'Записать маршрут'})).toBeDisabled();
   expect(screen.getByText('W/A/S/D · стик')).toBeInTheDocument();
   expect(connectTeaching).not.toHaveBeenCalled();
+  expect(screen.getByRole('checkbox',{name:/Управляю в эмуляторе/})).toBeChecked();
 });
 test('produce static layout fixture for browser review without impersonating a live device',()=>{
   const directory=path.resolve(process.cwd(),'../.local-pilot/teaching-ui-preview');fs.mkdirSync(directory,{recursive:true});
@@ -52,6 +53,7 @@ test('operator can use held WASD before recording, then closes that owner before
     return {fresh:()=>true,binding:()=>({captureEpoch:'test',width:960,height:540}),endpoint:()=>({}),worker:{postMessage,terminate:jest.fn()},close:jest.fn()} as never;
   });
   render(<TeachingWorkbench deviceId="test-device" readOnly={false} />);
+  fireEvent.click(screen.getByRole('checkbox',{name:/Управляю в эмуляторе/}));
   const connect=screen.getByRole('button',{name:'Подключить поток'});await waitFor(()=>expect(connect).toBeEnabled());fireEvent.click(connect);
   const control=screen.getByRole('button',{name:'Включить управление'});await waitFor(()=>expect(control).toBeEnabled());
   const forwardKey=screen.getByRole('button',{name:'Клавиша: Вперёд / газ'});fireEvent.click(forwardKey);
@@ -134,6 +136,7 @@ test('an unsolicited Android close ends control and stops a recording instead of
     return {fresh:()=>true,binding:()=>({captureEpoch:'test',width:960,height:540}),endpoint:()=>({}),worker:{postMessage,terminate:jest.fn()},close:jest.fn()} as never;
   });
   render(<TeachingWorkbench deviceId="test-device" readOnly={false}/>);
+  fireEvent.click(screen.getByRole('checkbox',{name:/Управляю в эмуляторе/}));
   const connect=screen.getByRole('button',{name:'Подключить поток'});await waitFor(()=>expect(connect).toBeEnabled());fireEvent.click(connect);
   const control=screen.getByRole('button',{name:'Включить управление'});await waitFor(()=>expect(control).toBeEnabled());fireEvent.click(control);
   await screen.findByText('Управление включено · фокус на экране');
@@ -145,6 +148,7 @@ test('an unsolicited Android close ends control and stops a recording instead of
   act(()=>emit({type:'recording'}));act(()=>mockStateCallbacks.at(-1)!('closed'));
   await waitFor(()=>expect(postMessage).toHaveBeenCalledWith({type:'stop',confirmed:true,reason:'native_closed_unexpectedly'}));
   act(()=>emit({type:'finalized',id:null,manifest:{complete:false,failure:'native_closed_unexpectedly'}}));
+  expect(screen.getByLabelText('Результат последней записи')).toHaveTextContent('native_closed_unexpectedly');
   await waitFor(()=>expect(screen.getByRole('button',{name:'Включить управление'})).toBeDisabled());
 });
 
@@ -161,7 +165,7 @@ test('external recording survives focus loss, fences browser controls and marks 
   render(<TeachingWorkbench deviceId="test-device" readOnly={false}/>);
   const connect=screen.getByRole('button',{name:'Подключить поток'});await waitFor(()=>expect(connect).toBeEnabled());fireEvent.click(connect);
   await waitFor(()=>expect(screen.getByRole('button',{name:'Записать маршрут'})).toBeEnabled());
-  fireEvent.click(screen.getByRole('checkbox',{name:/Управляю в эмуляторе/}));
+  expect(screen.getByRole('checkbox',{name:/Управляю в эмуляторе/})).toBeChecked();
   fireEvent.click(screen.getByRole('button',{name:'Записать маршрут'}));
   await waitFor(()=>expect(postMessage).toHaveBeenCalledWith(expect.objectContaining({type:'arm',config:expect.objectContaining({input_capture:'external_unobserved'})})));
   expect(setExternalCapture).toHaveBeenCalledWith(true);
@@ -171,6 +175,9 @@ test('external recording survives focus loss, fences browser controls and marks 
   expect(screen.getByText('Управление в эмуляторе · нажатия не записываются')).toBeInTheDocument();
   const video=screen.getByLabelText('Игровой экран: назначенные клавиши и мышь; Escape — остановить запись');
   fireEvent.keyDown(video,{code:'KeyW'});expect(mockSet).not.toHaveBeenCalled();
+  fireEvent.pointerCancel(video,{pointerId:5});
+  fireEvent.lostPointerCapture(video,{pointerId:5});
+  fireEvent.blur(video);
   await act(async()=>{fireEvent.blur(window);await Promise.resolve();});
   Object.defineProperty(document,'hidden',{configurable:true,value:true});
   fireEvent(document,new Event('visibilitychange'));
@@ -181,4 +188,30 @@ test('external recording survives focus loss, fences browser controls and marks 
   await waitFor(()=>expect(postMessage).toHaveBeenCalledWith({type:'stop',confirmed:true,reason:null}));
   act(()=>emit({type:'finalized',id:null,manifest:{complete:true,frames:5,media_duration_ticks_90k:3000}}));
   await waitFor(()=>expect(setExternalCapture).toHaveBeenCalledWith(false));
+});
+
+test('switching to LDPlayer during the storage check does not cancel video-only startup',async()=>{
+  mockAuth={accessToken:'test',sessionVersion:1,user:{id:'user',org_id:'org'}};
+  Object.defineProperty(globalThis,'TextEncoder',{configurable:true,value:TextEncoder});
+  Object.defineProperty(crypto,'subtle',{configurable:true,value:{digest:async()=>new Uint8Array(32).buffer}});
+  let quota:((value:StorageEstimate)=>void)|undefined;
+  Object.defineProperty(navigator,'storage',{configurable:true,value:{estimate:()=>new Promise<StorageEstimate>(resolve=>{quota=resolve;})}});
+  const postMessage=jest.fn(),setExternalCapture=jest.fn();let emit:(message:Record<string,unknown>)=>void=()=>{};
+  jest.mocked(connectTeaching).mockImplementation(async(_d,_t,_v,_s,_r,_f,onMessage)=>{
+    emit=onMessage;emit({type:'attached'});
+    return {fresh:()=>true,binding:()=>({captureEpoch:'test',width:960,height:540}),endpoint:()=>({}),worker:{postMessage,terminate:jest.fn()},close:jest.fn(),setExternalCapture} as never;
+  });
+  render(<TeachingWorkbench deviceId="test-device" readOnly={false}/>);
+  const connect=screen.getByRole('button',{name:'Подключить поток'});await waitFor(()=>expect(connect).toBeEnabled());fireEvent.click(connect);
+  const record=screen.getByRole('button',{name:'Записать маршрут'});await waitFor(()=>expect(record).toBeEnabled());fireEvent.click(record);
+  await act(async()=>{fireEvent.blur(window);await Promise.resolve();});
+  await act(async()=>{quota?.({quota:4*1024**3,usage:0});await Promise.resolve();});
+  await waitFor(()=>expect(postMessage).toHaveBeenCalledWith(expect.objectContaining({type:'arm',config:expect.objectContaining({input_capture:'external_unobserved'})})));
+  expect(setExternalCapture).toHaveBeenCalledWith(true);
+  act(()=>emit({type:'armed'}));await waitFor(()=>expect(mockClose).toHaveBeenCalledTimes(1));
+  act(()=>emit({type:'recording'}));
+  expect(postMessage).not.toHaveBeenCalledWith(expect.objectContaining({type:'stop'}));
+  fireEvent.click(screen.getByRole('button',{name:'Остановить · Esc'}));
+  await waitFor(()=>expect(postMessage).toHaveBeenCalledWith({type:'stop',confirmed:true,reason:null}));
+  act(()=>emit({type:'finalized',id:null,manifest:{complete:true,frames:6,media_duration_ticks_90k:15000}}));
 });

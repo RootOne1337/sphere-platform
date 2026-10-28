@@ -149,6 +149,14 @@ describe('teaching capture-only liveness', () => {
       jest.advanceTimersByTime(100);
       connection.worker.onmessage?.({data:{type:'encoded_heartbeat'}} as MessageEvent);
       jest.advanceTimersByTime(100);expect(connection.fresh()).toBe(true);expect(failed).not.toHaveBeenCalled();
+      let renewals=0;
+      for(let n=0;n<600;n++){
+        connection.worker.onmessage?.({data:{type:'encoded_heartbeat'}} as MessageEvent);
+        jest.advanceTimersByTime(100);
+        const sent=socket.send.mock.calls.filter(([raw])=>JSON.parse(raw).type==='video_delivery').length;
+        if(sent>renewals){renewals=sent;socket.receive({type:'video_delivery_ack',mode:'direct'});}
+      }
+      expect(renewals).toBeGreaterThan(15);expect(failed).not.toHaveBeenCalled();
       jest.advanceTimersByTime(1100);expect(failed).toHaveBeenCalledWith('video_stalled');expect(connection.fresh()).toBe(false);
       connection.close();
     } finally {

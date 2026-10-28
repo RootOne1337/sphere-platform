@@ -47,6 +47,18 @@ test('external capture heartbeat is emitted only while encoded frames arrive',as
   f.advance();f.frame(99000,false);expect(f.messages.filter(m=>m.type==='encoded_heartbeat')).toHaveLength(2);
 });
 
+test('twenty existing videos do not prevent a new video; library scans remain bounded at 100',async()=>{
+  const f=fixture(),library=await f.root.getDirectoryHandle('sphere-teaching-'+f.config.storage_scope,{create:true});
+  for(let n=1;n<=20;n++)await library.getDirectoryHandle(n.toString(16).padStart(32,'0'),{create:true});
+  await f.context.arm({...f.config,input_capture:'external_unobserved'});
+  expect(f.messages).toContainEqual(expect.objectContaining({type:'armed'}));
+  const full=fixture(),folder=await full.root.getDirectoryHandle('sphere-teaching-'+full.config.storage_scope,{create:true});
+  for(let n=1;n<=100;n++)await folder.getDirectoryHandle(n.toString(16).padStart(32,'0'),{create:true});
+  full.context.self.onmessage({data:{type:'arm',config:full.config}});await vm.runInContext('command',full.context);
+  expect(full.messages).toContainEqual({type:'failed',reason:'recording_library_limit'});
+  expect(folder.entries.size).toBe(100);
+});
+
 test('external video keeps its explicit provenance after early confirmed input release',async()=>{
   const f=fixture();await f.context.arm({...f.config,input_capture:'external_unobserved'});
   f.context.input({stage:'closed',at_ms:1001000,sequence:0,gesture:0,action:3,pointer_id:-1,outcome:'closed'});

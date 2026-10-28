@@ -124,7 +124,7 @@ async function arm(config) {
   const library = await root.getDirectoryHandle('sphere-teaching-' + config.storage_scope, { create: true });
   let count = 0;
   for await (const entry of library.values()) {
-    if (entry.kind === 'directory' && ++count >= 20) throw Error('recording_library_limit');
+    if (entry.kind === 'directory' && ++count >= 100) throw Error('recording_library_limit');
   }
   try { await library.getDirectoryHandle(config.id); throw Error('recording_exists'); }
   catch (error) { if (error.name !== 'NotFoundError') throw error; }
@@ -197,7 +197,11 @@ self.onmessage = ({ data }) => {
     else if (data?.type === 'input') input(data.event);
     else if (data?.type === 'stop') await stop(data.confirmed === true, data.reason);
     else if (data?.type === 'external_capture') { externalCapture = data.enabled === true; lastEncodedHeartbeat = 0; }
-  }).catch(() => { if (recording) failure(recording,'recorder_command_failed'); else postMessage({type:'failed',reason:'recorder_start_failed'}); });
+  }).catch(error => {
+    const known=['recorder_already_used','invalid_recording_config','invalid_recording_budget','recording_library_limit','recording_exists'];
+    const reason=known.includes(error?.message)?error.message:error?.name==='QuotaExceededError'?'recording_storage_full':['NotAllowedError','SecurityError'].includes(error?.name)?'recording_storage_denied':recording?'recorder_command_failed':'recorder_start_failed';
+    if(recording)failure(recording,reason);else postMessage({type:'failed',reason});
+  });
 };
 self.onrtctransform = event => {
   if (transformer) return;

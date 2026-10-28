@@ -26,20 +26,22 @@ const inputEnabled = (phase: Phase) => phase === 'controlling' || phase === 'rec
 const stopReasons: Record<string,string> = { page_hidden: 'страница скрыта', window_focus_lost: 'окно потеряло фокус', input_focus_lost: 'фокус управления потерян при удержании', connection_closed: 'соединение закрыто', video_stalled: 'нет свежих кадров', pointer_cancelled: 'касание отменено', keyframe_start_timeout: 'ключевой кадр не получен за 12 секунд' };
 Object.assign(stopReasons,{contact_video_stale:'ввод остановлен: видеокадр старше 250 мс',contact_channel_closed:'канал ввода закрыт',contact_ack_timeout:'Android не подтвердил команду за 500 мс',contact_ready_timeout:'Android не подтвердил готовность ввода за 6 секунд'});
 stopReasons.native_closed_unexpectedly='Android завершил сеанс ввода. Управление выключено';
+Object.assign(stopReasons,{encoded_geometry_or_codec_changed:'изменился размер или кодек входящего H.264',recorder_worker_failed:'сбой обработчика записи',recording_write_failed:'не удалось записать данные в хранилище браузера',capture_renewal_unconfirmed:'сервер не подтвердил продление видеосеанса',release_unknown:'освобождение ввода не подтверждено'});
+Object.assign(stopReasons,{recording_library_limit:'в библиотеке уже 100 записей; сохраните нужные в архив перед освобождением места',recording_storage_full:'закончилась квота хранилища браузера',recording_storage_denied:'браузер запретил доступ к хранилищу',recording_exists:'запись с таким идентификатором уже существует',finalization_unconfirmed:'завершение записи не подтверждено'});
 
 export function TeachingWorkbench({ deviceId, readOnly }: { deviceId: string; readOnly: boolean }) {
   const token = useAuthStore(s => s.accessToken), sessionVersion = useAuthStore(s => s.sessionVersion);
   const user = useAuthStore(s => s.user);
   const [storageScope, setStorageScope] = useState<string | null>(null);
   const [phase, setPhase] = useState<Phase>('idle'); const phaseRef = useRef<Phase>('idle');
-  const [notice, setNotice] = useState('Подключите прямой поток, проверьте экран и настройте зоны управления.');
+  const [notice, setNotice] = useState('Подключите поток и нажмите «Записать маршрут». По умолчанию управляйте игрой в эмуляторе.');
   const [native, setNative] = useState('Не открыт'); const [result, setResult] = useState<DirectProbeResult | null>(null);
   const [inputRtt,setInputRtt]=useState<number|null>(null);
   const [profile, setProfile] = useState<TeachingProfile>(defaultTeachingProfile); const profileRef = useRef(profile); profileRef.current = profile;
   const [calibrate, setCalibrate] = useState<CalibrationTarget | null>(null);
   const [bindingTarget,setBindingTarget]=useState<TeachingKeyRole|null>(null);
   const [hudHidden, setHudHidden] = useState(false);
-  const [externalRecording, setExternalRecording] = useState(false);
+  const [externalRecording, setExternalRecording] = useState(true);
   const externalActive = useRef(false);
   const externalOwnerReleased = useRef(false), externalVideoStarted = useRef(false);
   const [exportBusy,setExportBusy] = useState(false);
@@ -47,6 +49,7 @@ export function TeachingWorkbench({ deviceId, readOnly }: { deviceId: string; re
   const [minutes, setMinutes] = useState(10);
   const [progress, setProgress] = useState({ frames: 0, bytes: 0, seconds: 0 });
   const [encoded, setEncoded] = useState('Encoded-приём ожидается');
+  const [lastCapture,setLastCapture]=useState<{title:string;complete:boolean;reason:string|null;frames:number;seconds:number}|null>(null);
   const [ready, setReady] = useState(false); const [clip, setClip] = useState<string | null>(null);
   const [refresh, setRefresh] = useState(0);
   const [workspaceMode,setWorkspaceMode]=useState<'capture'|'review'|'live'>('capture');
@@ -68,6 +71,8 @@ export function TeachingWorkbench({ deviceId, readOnly }: { deviceId: string; re
   const recordConfig = useRef<Record<string, unknown> | null>(null);
   const finalize = useRef<(() => void) | null>(null);
   const armSent = useRef(false);
+  const armDeadline=useRef<ReturnType<typeof setTimeout>|null>(null);
+  const clearArmDeadline=()=>{if(armDeadline.current!==null)clearTimeout(armDeadline.current);armDeadline.current=null;};
   const expectedOwnerClose = useRef(false), ownerGeneration = useRef(0);
   const stopCallback = useRef<(reason?: string) => Promise<void>>(async () => {});
   const change = (value: Phase) => { phaseRef.current = value; setPhase(value); };
@@ -84,6 +89,7 @@ export function TeachingWorkbench({ deviceId, readOnly }: { deviceId: string; re
   const stop = (reason?: string): Promise<void> => {
     if (stopPromise.current) return stopPromise.current;
     if (!active(phaseRef.current)) return Promise.resolve();
+    clearArmDeadline();
     change('stopping'); keys.current.clear(); mouse.current = null;
     stopPromise.current = (async () => {
       expectedOwnerClose.current=true;
@@ -130,6 +136,7 @@ export function TeachingWorkbench({ deviceId, readOnly }: { deviceId: string; re
     document.addEventListener('visibilitychange', hidden); window.addEventListener('blur', blur);
     return () => {
       ownerGeneration.current++;
+      clearArmDeadline();
       clearInterval(timer); document.removeEventListener('visibilitychange', hidden); window.removeEventListener('blur', blur);
       const conn = connection.current, control = controller.current, request = abort.current;
       void (async () => {
@@ -167,12 +174,14 @@ export function TeachingWorkbench({ deviceId, readOnly }: { deviceId: string; re
               if(!closed) { void stopCallback.current('release_unknown'); return; }
               externalOwnerReleased.current=true;
               if(externalVideoStarted.current && phaseRef.current==='arming') {
+                clearArmDeadline();
                 change('recording');setNative('CLOSED · освобождено');
                 setNotice('Идёт запись видео. Управляйте в эмуляторе: внешние нажатия не записываются.');
               }
             })();
           }
           if (message.type === 'recording') {
+            clearArmDeadline();
             if(externalActive.current){
               externalVideoStarted.current=true;
               if(!externalOwnerReleased.current){setNotice('Видео началось; освобождаем ввод Sphere перед управлением в эмуляторе.');return;}
@@ -185,11 +194,13 @@ export function TeachingWorkbench({ deviceId, readOnly }: { deviceId: string; re
           if (message.type === 'encoded_status') setEncoded(`Encoded ${Number(message.frames)} · ${String(message.kind)} · NAL ${Array.isArray(message.nal_types) ? message.nal_types.join('/') : '?'} · ${String(message.width)}×${String(message.height)}`);
           if (message.type === 'failed') { setNotice(`Ошибка записи: ${String(message.reason)}`); void stopCallback.current(String(message.reason)); }
           if (message.type === 'finalized') {
+            clearArmDeadline();
             setClip(typeof message.id === 'string' && /^[0-9a-f]{32}$/.test(message.id) ? message.id : null); setRefresh(v => v + 1);
             const manifest = message.manifest as { complete?: boolean; failure?: string; frames?: number; media_duration_ticks_90k?: number; files?: Record<string,{bytes:number}>;capture_quality?:CaptureQuality };
             if(manifest.capture_quality)setCaptureQuality(manifest.capture_quality);
             if(typeof manifest.frames === 'number')setProgress({ frames: manifest.frames, bytes: manifest.files?.['video.h264']?.bytes ?? 0, seconds: (manifest.media_duration_ticks_90k ?? 0)/90000 });
             const finalizedConfig=recordConfig.current;
+            setLastCapture({title:String(finalizedConfig?.title??'Запись'),complete:manifest.complete===true,reason:manifest.complete?null:manifest.failure??'finalization_unconfirmed',frames:manifest.frames??0,seconds:(manifest.media_duration_ticks_90k??0)/90000});
             if(manifest.complete&&finalizedConfig&&message.id===finalizedConfig.id&&finalizedConfig.prepare_after_recording===true
               &&typeof finalizedConfig.storage_scope==='string')setAutoPrepare({clip:message.id as string,scope:finalizedConfig.storage_scope});
             setNotice(manifest.complete ? 'Материал сохранён. Видео и журнал готовы к просмотру.' : `Материал неполный: ${manifest.failure ?? 'нет подтверждения'}. Для повторения маршрута не допущен.`);
@@ -198,7 +209,7 @@ export function TeachingWorkbench({ deviceId, readOnly }: { deviceId: string; re
         });
       if (request.signal.aborted) { conn.close(); conn.worker.terminate(); return; }
       connection.current = conn; change('preview');
-      setNotice('Проверьте игру в потоке. Нажмите «Центр стика» и «Кнопка действия», затем укажите их на экране.');
+      setNotice('Проверьте игру в потоке. Для записи из эмулятора достаточно нажать «Записать маршрут»; веб-управление включается отдельно.');
     } catch (error) { request.abort(); change('idle'); setNotice(`Подключение не готово: ${error instanceof Error ? error.message : 'ошибка'}`); }
   };
   const openInput = (mode: 'control' | 'record', conn: TeachingConnection) => {
@@ -215,7 +226,8 @@ export function TeachingWorkbench({ deviceId, readOnly }: { deviceId: string; re
           else {
             change('arming'); armSent.current = true; conn.worker.postMessage({ type: 'arm', config: recordConfig.current });
             setNotice('Ждём ключевой H264-кадр. Не удерживайте клавиши до начала записи.');
-            setTimeout(() => { if (phaseRef.current === 'arming') void stopCallback.current('keyframe_start_timeout'); }, 12000);
+            clearArmDeadline();
+            armDeadline.current=setTimeout(() => { if (phaseRef.current === 'arming') void stopCallback.current('keyframe_start_timeout'); }, 12000);
           }
         }
         if (state === 'failed') void stopCallback.current(reason ?? 'native_input_failed');
@@ -266,22 +278,28 @@ export function TeachingWorkbench({ deviceId, readOnly }: { deviceId: string; re
   const record = async () => {
     const conn = connection.current, binding = conn?.binding(), endpoint = conn?.endpoint();
     if (readOnly || !storageScope || !['preview','controlling'].includes(phaseRef.current) || !conn?.fresh() || !binding || !endpoint || !attached.current) return;
+    if(phaseRef.current==='controlling'&&(keys.current.size||mouse.current!==null||!controller.current?.isNeutral)){setNotice('Отпустите клавиши и мышь перед началом записи.');return;}
+    // Freeze the video-only policy before any await: focus can leave for
+    // LDPlayer while storage or the neutral input-owner release is pending.
+    externalActive.current=externalRecording;
+    conn.setExternalCapture?.(externalRecording);
+    const setupFailed=(message:string)=>{conn.setExternalCapture?.(false);externalActive.current=false;change('preview');setNotice(message);};
     if(phaseRef.current === 'controlling') {
       if(keys.current.size || mouse.current !== null || !controller.current?.isNeutral) { setNotice('Отпустите клавиши и мышь перед началом записи.'); return; }
       change('opening');expectedOwnerClose.current=true; const closed = await controller.current.close();expectedOwnerClose.current=false;
       if((phaseRef.current as Phase) !== 'opening' || connection.current !== conn)return;
-      if(!closed){change('finished');setNotice('Освобождение прежнего ввода не подтверждено. Подключите поток заново.');return;}
+      if(!closed){conn.setExternalCapture?.(false);externalActive.current=false;change('finished');setReady(false);setNotice('Освобождение прежнего ввода не подтверждено. Подключите поток заново.');return;}
       controller.current = null;
     }
     change('opening');
     let storage: StorageEstimate;
-    try { storage = await navigator.storage.estimate(); } catch { change('preview'); setNotice('Не удалось проверить квоту браузера.'); return; }
+    try { storage = await navigator.storage.estimate(); } catch { if(phaseRef.current==='opening'&&connection.current===conn)setupFailed('Не удалось проверить квоту браузера.'); return; }
     if ((phaseRef.current as Phase) !== 'opening' || connection.current !== conn) return;
     const maxBytes = minutes === 2 ? 512*1024*1024 : 2*1024*1024*1024;
-    if ((storage.quota ?? 0) - (storage.usage ?? 0) < maxBytes + 100*1024*1024) { change('preview'); setNotice(`Нужно ${minutes === 2 ? '612 МБ' : '2,1 ГБ'} свободной квоты браузера. Выберите меньший предел или экспортируйте старые материалы.`); return; }
+    if ((storage.quota ?? 0) - (storage.usage ?? 0) < maxBytes + 100*1024*1024) { setupFailed(`Нужно ${minutes === 2 ? '612 МБ' : '2,1 ГБ'} свободной квоты браузера. Выберите меньший предел или экспортируйте старые материалы.`); return; }
     const p = profileRef.current, issue=externalRecording?null:profileIssue(p,binding);
-    if(issue){change('preview');setNotice(issue);return;}
-    const id = newId(); setProgress({ frames: 0, bytes: 0, seconds: 0 });setCaptureQuality(null); stopPromise.current = null;
+    if(issue){setupFailed(issue);return;}
+    const id = newId(); setProgress({ frames: 0, bytes: 0, seconds: 0 });setCaptureQuality(null);setLastCapture(null); stopPromise.current = null;
     recordConfig.current = { id, storage_scope: storageScope, device_id: deviceId, width: binding.width, height: binding.height,
       capture_epoch: binding.captureEpoch, title: teachingTitle(title,id,Date.now()), profile: p,
       source: 'direct_webrtc_h264', target_fps: captureTargetFps, actual_fps_unverified: true,
@@ -290,7 +308,6 @@ export function TeachingWorkbench({ deviceId, readOnly }: { deviceId: string; re
       hud_hidden_declared: hudHidden, contact_roles: p.mode==='stick'?['stick','camera','action']:['throttle_or_brake','steering','camera_or_action'],
       max_duration_ms: minutes*60000, max_bytes: maxBytes, max_frames: minutes*3600 };
     externalActive.current=externalRecording;externalOwnerReleased.current=false;externalVideoStarted.current=false;
-    conn.setExternalCapture?.(externalRecording);
     change('opening'); setNotice('Открываем три контакта. Требуется APK 1.2.89 или новее с contact_protocol=1.');
     try {
       openInput('record',conn);
@@ -370,8 +387,10 @@ export function TeachingWorkbench({ deviceId, readOnly }: { deviceId: string; re
       <Button className={toolbarButton} variant="destructive" disabled={!active(phase) || phase === 'stopping'} onClick={() => { void stop(); }}><Square size={15} className="mr-2 shrink-0" />{phase === 'stopping' ? 'Освобождение и сохранение…' : 'Остановить · Esc'}</Button>
       </div>
       {(phase==='recording'||phase==='finished')&&<span className="rounded-lg bg-muted px-2 py-1 font-mono text-xs tabular-nums">{progress.seconds.toFixed(1)} с · {progress.frames} кадров{progress.seconds>0?` · ${(progress.frames/progress.seconds).toFixed(1)} средних FPS`:''}</span>}
+      {workspaceMode==='capture'&&<span className="rounded-lg border border-cyan-500/30 bg-cyan-500/10 px-3 py-2 text-xs font-medium">{externalRecording?'Видео из эмулятора · фокус веба не требуется':'Видео + управление в вебе · потеря фокуса остановит сеанс'}</span>}
       <p role="status" className="min-w-[220px] flex-1 text-xs leading-5 text-muted-foreground">{readOnly ? 'Для записи требуется право stream:control.' : exportBusy?'Обрабатываем сохранённый материал. Дождитесь завершения перед новым управлением.':calibrate ? `Укажите ${calibrationNames[calibrate]} на экране. Касание в игру не отправляется.` : (!externalRecording && mappingIssue) || notice}</p>
     </div>
+    {lastCapture&&<div aria-label="Результат последней записи" className={`rounded-xl border p-3 text-sm ${lastCapture.complete?'border-emerald-500/30 bg-emerald-500/5':'border-red-500/40 bg-red-500/5'}`}><p className="font-semibold">{lastCapture.title} · {lastCapture.complete?'Сохранена':'Неполная запись'} · {lastCapture.seconds.toFixed(1)} с · {lastCapture.frames} кадров</p>{lastCapture.reason&&<p className="mt-1 text-xs">Причина: {stopReasons[lastCapture.reason]??lastCapture.reason} <code>({lastCapture.reason})</code>. Сохранённая часть остаётся в библиотеке.</p>}</div>}
     <div hidden={workspaceMode==='review'} className="space-y-4">
     {workspaceMode==='capture'&&<details className="group rounded-xl border border-sky-500/20 bg-sky-500/5"><summary className="flex cursor-pointer flex-wrap items-center justify-between gap-2 px-4 py-3 text-sm font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"><span>Качество исходной записи</span><span className="text-xs font-normal text-muted-foreground">{captureQuality?.received_encoded_fps!=null?`${captureQuality.received_encoded_fps.toFixed(1)} FPS по записи`:'Профиль и фактические FPS · открыть настройки'}</span></summary><TeachingCaptureSetup key={`${deviceId}:${sessionVersion}`} deviceId={deviceId} disabled={readOnly||active(phase)||exportBusy} quality={captureQuality} onConfirmedTarget={setCaptureTargetFps}/></details>}
     <section className="rounded-2xl border border-border bg-card p-4 sm:p-5">
@@ -399,7 +418,7 @@ export function TeachingWorkbench({ deviceId, readOnly }: { deviceId: string; re
           }}
           onPointerMove={e => { if (mouse.current === e.pointerId) { const p = point(e); if(p) controller.current?.set(mouseContact.current,p); } }}
           onPointerUp={e => { if (mouse.current === e.pointerId) { mouse.current = null; controller.current?.set(mouseContact.current,null); e.currentTarget.releasePointerCapture(e.pointerId); } }}
-          onPointerCancel={() => { void stop('pointer_cancelled'); }}
+          onPointerCancel={e => { if(!externalActive.current&&mouse.current===e.pointerId)void stop('pointer_cancelled'); }}
           onLostPointerCapture={e => { if (mouse.current === e.pointerId) void stop('pointer_capture_lost'); }} />
         {ready&&!active(phase)&&binding&&<svg aria-label="Проверенные точки управления" className="pointer-events-none absolute inset-0 h-full w-full" viewBox={`0 0 ${binding.width} ${binding.height}`} preserveAspectRatio="xMidYMid meet">
           {calibrationMarkers.map(marker=><g key={marker.label} transform={`translate(${marker.x} ${marker.y})`}><circle r={Math.max(9,binding.height*.018)} fill="#020617cc" stroke="#38bdf8" strokeWidth={2}/><text textAnchor="middle" dominantBaseline="central" fill="white" fontSize={Math.max(9,binding.height*.018)}>{marker.label}</text></g>)}
