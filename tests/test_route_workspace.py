@@ -7,10 +7,32 @@ import unittest
 from pathlib import Path
 from unittest.mock import patch
 
-from scripts.pilot.route_workspace import RouteWorkspaces
+from scripts.pilot.route_workspace import RouteWorkspaces, route_resource_profile, resource_checkpoint
 
 
 class RouteWorkspaceTests(unittest.TestCase):
+    def test_short_cpu_export_and_live_budget_do_not_require_twelve_gib(self):
+        (self.job/'input/video.h264').write_bytes(b'x'*1024)
+        profile=route_resource_profile(self.job)
+        self.assertGreaterEqual(profile['minRamGiB'],6)
+        self.assertLess(profile['minRamGiB'],12)
+        self.assertEqual(route_resource_profile(self.job,'live')['minRamGiB'],6)
+        from scripts.pilot.resource_guard import evaluate
+        snapshot=dict(system='Windows',freeDiskBytes=30*2**30,availableRamBytes=11*2**30,totalRamBytes=48*2**30,
+            committedBytes=65*2**30,commitLimitBytes=96*2**30,volumeHealthStatus='Healthy',volumeOperationalStatus=['OK'])
+        with patch('scripts.pilot.route_workspace.collect',return_value=snapshot):
+            resource_checkpoint(self.job,profile=profile)
+            with self.assertRaisesRegex(RuntimeError,'resource_guard'):
+                resource_checkpoint(self.job)  # Other experiments keep the old guard.
+        self.assertEqual(evaluate(snapshot,min_ram_gib=profile['minRamGiB']),[])
+        snapshot['committedBytes']=90*2**30
+        self.assertIn('commit_headroom_low',evaluate(snapshot,min_ram_gib=profile['minRamGiB']))
+
+    def test_unknown_or_large_capture_keeps_a_conservative_budget(self):
+        self.assertEqual(route_resource_profile(self.job)['minRamGiB'],12)
+        with patch.object(Path,'stat',return_value=type('Stat',(),{'st_size':2**31,'st_mode':0o100644})()):
+            self.assertGreaterEqual(route_resource_profile(self.job)['minRamGiB'],12)
+
     def test_recording_endpoint_coverage_detects_missing_start_and_end(self):
         from scripts.pilot.prepare_route_workspace import source_endpoint_coverage
 
@@ -53,6 +75,58 @@ class RouteWorkspaceTests(unittest.TestCase):
         result = self.workspace.status(self.job)
         self.assertEqual(result['phase'], 'rejected')
         self.assertEqual(result['error'], 'route_map_has_unobserved_sections')
+
+    def test_ready_without_receipt_cannot_open_a_live_session(self):
+        folder = self.job/'navigation'/self.identity
+        folder.mkdir(parents=True)
+        (folder.parent/'active.json').write_text(json.dumps(dict(id=self.identity)))
+        (folder/'state.json').write_text('{"phase":"ready"}')
+        result=self.workspace.status(self.job)
+        self.assertEqual(result['phase'],'rejected')
+        self.assertEqual(result['error'],'route_receipt_missing')
+
+    def test_legacy_receipt_without_source_coverage_can_be_rebuilt_without_a_server_error(self):
+        self.attach_fixture_map()
+        self.workspace.stop_live(self.job,dict(id='d'*32))
+        folder=self.workspace.current(self.job)
+        receipt=json.loads((folder/'receipt.json').read_text())
+        receipt.pop('source_coverage')
+        (folder/'receipt.json').write_text(json.dumps(receipt))
+        with patch('scripts.pilot.route_workspace.resource_checkpoint',side_effect=RuntimeError('resource_guard')):
+            with self.assertRaisesRegex(RuntimeError,'resource_guard'):
+                self.workspace.prepare(self.job,dict(id='f'*32))
+
+    def test_rejected_coverage_keeps_actual_time_ranges_for_the_ui(self):
+        self.attach_fixture_map()
+        self.workspace.stop_live(self.job,dict(id='d'*32))
+        folder=self.workspace.current(self.job)
+        receipt=json.loads((folder/'receipt.json').read_text())
+        receipt.update(first_seconds=0.,last_seconds=28.258,
+            source_coverage=dict(recording_start_seconds=0.,recording_end_seconds=33.258,
+                uncovered_start_seconds=0.,uncovered_end_seconds=5.,endpoints_observed=False))
+        receipt['map_support']['all_reference_intervals_observed']=False
+        receipt['map_support']['unobserved_intervals']=[dict(start_seconds=10.807,end_seconds=12.341)]
+        (folder/'receipt.json').write_text(json.dumps(receipt))
+        result=self.workspace.status(self.job)
+        self.assertEqual(result['phase'],'rejected')
+        self.assertEqual(result['summary']['last_seconds'],28.258)
+        self.assertEqual(result['summary']['source_coverage']['uncovered_end_seconds'],5.)
+        with patch('scripts.pilot.route_workspace.subprocess.Popen') as process, \
+             patch('scripts.pilot.route_workspace.resource_checkpoint') as guard:
+            with self.assertRaisesRegex(ValueError,'route_camera_recovery_required'):
+                self.workspace.prepare(self.job,dict(id='f'*32))
+        process.assert_not_called()
+        guard.assert_not_called()
+        self.assertFalse((self.job/'navigation'/('f'*32)).exists())
+
+    def test_resource_refusal_does_not_consume_an_intent_or_replace_the_active_map(self):
+        with patch('scripts.pilot.route_workspace.resource_checkpoint',side_effect=RuntimeError('resource_guard')), \
+             patch('scripts.pilot.route_workspace.subprocess.Popen') as process:
+            with self.assertRaisesRegex(RuntimeError,'resource_guard'):
+                self.workspace.prepare(self.job,dict(id=self.identity))
+        process.assert_not_called()
+        self.assertFalse((self.job/'navigation/active.json').exists())
+        self.assertFalse((self.job/'navigation'/self.identity).exists())
 
     def test_existing_preparation_is_read_back_without_a_process_or_resource_recheck(self):
         folder = self.job/'navigation'/self.identity

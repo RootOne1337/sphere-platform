@@ -9,7 +9,7 @@ import uuid
 from pathlib import Path
 
 from scripts.pilot.atomic_json import write_json
-from scripts.pilot.route_workspace import ID, ROOT, checked_json, resource_checkpoint
+from scripts.pilot.route_workspace import ID, ROOT, checked_json, resource_checkpoint, route_resource_profile
 
 
 def source_endpoint_coverage(frames, first_seconds, last_seconds):
@@ -52,9 +52,11 @@ def prepare(job, attempt):
     folder = job/'navigation'/attempt
     if checked_json(folder/'intent.json')['id'] != attempt:
         raise ValueError('route_intent_missing')
-    resource_checkpoint(folder)
+    profile_budget = route_resource_profile(job)
+    bounded = lambda target: resource_checkpoint(target, profile=profile_budget)
+    bounded(folder)
     sys.path.insert(0, str(ROOT/'.local-pilot/reconstruction-tools/pycolmap-4.2.1'))
-    cv2.setNumThreads(8)
+    cv2.setNumThreads(2)
     model = route_source_model(job)
     geometry_raw = (job/'geometry.json').read_bytes()
     geometry = json.loads(geometry_raw)
@@ -66,7 +68,7 @@ def prepare(job, attempt):
     profile = RouteViewProfile(str(uuid.uuid4()), width, height, (0., 0., 1., 1.), ((0., .975, 1., 1.),))
     write_json(folder/'state.json', dict(phase='features'))
     receipt = export(model, job/'prepared/reconstruction-input.json', job/'prepared/images',
-        folder/'route.json', profile=profile, world_revision=str(uuid.uuid4()), checkpoint_fn=resource_checkpoint)
+        folder/'route.json', profile=profile, world_revision=str(uuid.uuid4()), checkpoint_fn=bounded)
     receipt['source_coverage'] = source_endpoint_coverage(capture.frames, receipt['first_seconds'], receipt['last_seconds'])
     receipt['geometry_sha256'] = hashlib.sha256(geometry_raw).hexdigest()
     if route_source_model(job) != model:

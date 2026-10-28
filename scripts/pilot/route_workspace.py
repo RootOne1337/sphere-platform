@@ -11,6 +11,7 @@ import base64
 import hashlib
 import io
 import json
+import math
 import re
 import subprocess
 import threading
@@ -40,14 +41,43 @@ def digest_file(path):
         return hashlib.file_digest(file, 'sha256').hexdigest()
 
 
-def resource_checkpoint(folder):
+def route_resource_profile(job, kind='features'):
+    """Budget the bounded CPU task; dense reconstruction keeps its own guard.
+
+    Source validation can retain the compressed video. Account for three
+    copies, two full RootSIFT feature tables (256*2048*128 float32) and a
+    1.5 GiB runtime allowance, in addition to 4 GiB left for the host.
+    Unknown inputs keep the previous conservative 12 GiB floor.
+    """
+    if kind == 'live':
+        return dict(kind='route_live', minRamGiB=6., hostReserveGiB=4., maxMapBytes=4*1024**2,
+                    maxFrameBytes=384*1024, modelLoaded=False, maxCommitPercent=85)
+    if kind != 'features':
+        raise ValueError('route_resource_profile')
+    video = job/'input/video.h264'
+    size = video.stat().st_size if video.is_file() and not video.is_symlink() else None
+    if size is None or not 0 < size <= 2**31:
+        required = 12.
+    else:
+        tables = 2*256*2048*128*4
+        required = max(6., math.ceil((4+1.5+(3*size+tables)/1024**3)*4)/4)
+    return dict(kind='route_features', minRamGiB=required, hostReserveGiB=4.,
+                sourceVideoBytes=size, maxViews=256, maxFeaturesPerView=2048,
+                modelLoaded=False, maxCommitPercent=85)
+
+
+def resource_checkpoint(folder, *, profile=None):
     if (folder/'CANCEL').exists():
         raise RuntimeError('cancelled')
     snapshot = collect(ROOT)
-    findings = evaluate(snapshot, min_ram_gib=12)
+    minimum = 12 if profile is None else profile['minRamGiB']
+    if not isinstance(minimum, (int, float)) or isinstance(minimum, bool) or not 6 <= minimum <= 16:
+        raise ValueError('route_resource_profile')
+    findings = evaluate(snapshot, min_ram_gib=minimum)
     if findings:
         if folder.is_dir():
-            write_json(folder/'resource-refusal.json', dict(snapshot=snapshot, findings=findings))
+            write_json(folder/'resource-refusal.json', dict(snapshot=snapshot, findings=findings,
+                       profile=profile or dict(kind='legacy_experiment', minRamGiB=12)))
         raise RuntimeError('resource_guard')
 
 
@@ -77,23 +107,31 @@ class RouteWorkspaces:
     def status(self, job):
         folder = self.current(job)
         if folder is None:
-            return dict(phase='not_prepared', executionQualified=False)
-        result = dict(checked_json(folder/'state.json'), id=folder.name, executionQualified=False)
-        if result['phase'] == 'ready':
+            return dict(phase='not_prepared', executionQualified=False,
+                        resourceProfile=route_resource_profile(job))
+        result = dict(checked_json(folder/'state.json'), id=folder.name, executionQualified=False,
+                      resourceProfile=route_resource_profile(job))
+        if result['phase'] == 'ready' and not (folder/'receipt.json').is_file():
+            return dict(result, phase='rejected', error='route_receipt_missing')
+        if result['phase'] in {'ready', 'rejected'} and (folder/'receipt.json').exists():
             receipt = checked_json(folder/'receipt.json')
             if (receipt.get('geometry_sha256') != digest_file(job/'geometry.json')
                     or receipt.get('source_capture_sha256') != digest_file(job/'input/manifest.json')):
-                return dict(phase='rejected', error='route_source_changed', executionQualified=False)
-            support = receipt.get('map_support', {})
-            coverage = receipt.get('source_coverage', {})
+                return dict(result, phase='rejected', error='route_source_changed')
+            support = receipt.get('map_support') or {}
+            coverage = receipt.get('source_coverage') or {}
+            # Keep the measured cause available even for a rejected result.
+            # A new preflight failure does not erase this previous attempt.
+            result['summary'] = {key: receipt.get(key) for key in
+                ('cameras', 'landmarks', 'first_seconds', 'last_seconds', 'source_coverage',
+                 'map_support', 'camera_trace_only')}
             if (support.get('all_reference_neighborhoods_supported') is not True
                     or support.get('all_reference_intervals_observed') is not True
                     or coverage.get('endpoints_observed') is not True):
-                return dict(phase='rejected', error='route_map_has_unobserved_sections', executionQualified=False)
+                return dict(result, phase='rejected', error='route_map_has_unobserved_sections')
             from motor_worker.route_localization import pipeline_id
             if receipt.get('pipeline_sha256') != pipeline_id():
-                return dict(phase='rejected', error='route_feature_runtime_mismatch', executionQualified=False)
-            result['summary'] = {key: receipt[key] for key in ('cameras', 'landmarks', 'map_support', 'camera_trace_only')}
+                return dict(result, phase='rejected', error='route_feature_runtime_mismatch')
         return result
 
     def preparing(self, job):
@@ -109,13 +147,23 @@ class RouteWorkspaces:
         if folder.exists():
             # Repeated intent reads its own outcome; never repeat a lost start.
             return dict(checked_json(folder/'state.json'), id=identity, executionQualified=False)
+        current = self.status(job)
+        if current.get('error') == 'route_map_has_unobserved_sections':
+            summary = current.get('summary', {})
+            if ((summary.get('source_coverage') or {}).get('endpoints_observed') is False
+                    or (summary.get('map_support') or {}).get('all_reference_intervals_observed') is False):
+                # Exporting identical poses cannot fill a missing time interval.
+                # Preserve the old attempt and do not spend another intent.
+                raise ValueError('route_camera_recovery_required')
         if self.preparing(job) or self.live is not None:
             raise ValueError('route_workspace_busy')
         if len(list((job/'navigation').glob('*/intent.json'))) >= 3:
             raise ValueError('route_preparation_attempt_quota')
-        resource_checkpoint(job)
+        profile = route_resource_profile(job)
+        resource_checkpoint(job, profile=profile)
         folder.mkdir(parents=True)
-        write_json(folder/'intent.json', dict(id=identity, scope='READ_ONLY_ROUTE_ASSETS', physicalActions=0))
+        write_json(folder/'intent.json', dict(id=identity, scope='READ_ONLY_ROUTE_ASSETS', physicalActions=0,
+                                           resourceProfile=profile))
         write_json(folder/'state.json', dict(phase='preparing'))
         write_json(job/'navigation/active.json', dict(id=identity))
         with (folder/'worker.private.log').open('xb') as log:
@@ -126,15 +174,15 @@ class RouteWorkspaces:
             except Exception:
                 write_json(folder/'state.json', dict(phase='failed', error='route_start_not_confirmed'))
                 raise
-        threading.Thread(target=self._monitor, args=(folder, process), daemon=True).start()
+        threading.Thread(target=self._monitor, args=(folder, process, profile), daemon=True).start()
         return self.status(job)
 
-    def _monitor(self, folder, process):
+    def _monitor(self, folder, process, profile=None):
         deadline = time.monotonic()+330
         while process.poll() is None:
             time.sleep(3)
             try:
-                resource_checkpoint(folder)
+                resource_checkpoint(folder, profile=profile)
                 if time.monotonic() > deadline:
                     raise RuntimeError('route_preparation_timeout')
                 if (folder/'worker.private.log').stat().st_size > 8*1024**2:
@@ -181,7 +229,7 @@ class RouteWorkspaces:
             raise ValueError('route_session_retired_or_quota')
         if self.status(job)['phase'] != 'ready':
             raise ValueError('route_assets_not_ready')
-        resource_checkpoint(job)
+        resource_checkpoint(job, profile=route_resource_profile(job, 'live'))
         folder = self.current(job)
         receipt = checked_json(folder/'receipt.json')
         route = SparseRoute.load(folder/'route.json', sha256=receipt['sha256'])

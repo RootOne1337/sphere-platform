@@ -240,6 +240,21 @@ test('a motion-rejected scene explains the obstruction instead of repeatedly cre
 test('the attempt quota is explained as a confirmed rejection, not a missing response',()=>{
   expect(preparationError(new ReconstructionResponseError(409,'route_preparation_attempt_quota'))).toMatch(/Исчерпан лимит попыток/);
 });
+
+test('an incomplete map shows measured coverage and opens recovery without wasting another export',async()=>{
+  const review=jest.fn();
+  jest.mocked(reconstructionRequest).mockResolvedValue({json:async()=>({phase:'sparse_complete',sparse_available:true,
+    navigation:{phase:'rejected',error:'route_map_has_unobserved_sections',resourceProfile:{kind:'route_features',minRamGiB:6.25},
+      summary:{cameras:54,landmarks:1236,camera_trace_only:true,last_seconds:28.258,
+        source_coverage:{recording_start_seconds:0,recording_end_seconds:33.258,uncovered_start_seconds:0,uncovered_end_seconds:5,endpoints_observed:false},
+        map_support:{all_reference_neighborhoods_supported:true,unobserved_intervals:[{start_seconds:10.807,end_seconds:12.341}]}}}})} as Response);
+  render(<TeachingNavigation job={job} video={{current:null}} ready binding={null} onReview={review}/>);
+  expect(await screen.findByText(/карта до 28.26 с из 33.26 с записи/)).toHaveTextContent('10.81–12.34 с');
+  expect(screen.queryByRole('button',{name:'Подготовить ориентиры'})).not.toBeInTheDocument();
+  fireEvent.click(screen.getByRole('button',{name:'Открыть восстановление камер'}));
+  expect(review).toHaveBeenCalledTimes(1);
+  expect(reconstructionRequest).toHaveBeenCalledTimes(1);
+});
 test('confirmed attempt quota remains visible after refresh and prevents another POST',async()=>{
   sessionStorage.clear();
   jest.mocked(reconstructionRequest).mockImplementation(async(_path,_job,init)=>{

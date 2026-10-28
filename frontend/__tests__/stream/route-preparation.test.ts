@@ -1,4 +1,4 @@
-import {cameraMotionRequiresReview,prepareRoute,preparationError,preparationQuotaReached} from '@/src/features/stream/routePreparation';
+import {cameraMotionRequiresReview,prepareRoute,preparationError,preparationQuotaReached,routeCoverageLabel} from '@/src/features/stream/routePreparation';
 import {reconstructionRequest,ReconstructionResponseError} from '@/src/features/stream/reconstructionClient';
 jest.mock('@/src/features/stream/reconstructionClient',()=>({...jest.requireActual('@/src/features/stream/reconstructionClient'),reconstructionRequest:jest.fn()}));
 
@@ -19,6 +19,14 @@ test('unknown preparation outcome is reconciled with the same intent',async()=>{
 test('a confirmed memory refusal is not presented as an unknown execution',()=>{
   expect(preparationError(new ReconstructionResponseError(409,'resource_guard'))).toMatch(/Не хватает ресурсов/);
   expect(preparationError(Error('network_result_unknown'))).toMatch(/Ответ не подтверждён/);
+});
+
+test('partial source coverage displays measured ranges without claiming interpolated cameras',()=>{
+  expect(routeCoverageLabel({cameras:54,landmarks:1236,camera_trace_only:true,last_seconds:28.258,
+    source_coverage:{recording_start_seconds:0,recording_end_seconds:33.258,uncovered_start_seconds:0,uncovered_end_seconds:5,endpoints_observed:false},
+    map_support:{all_reference_neighborhoods_supported:true,unobserved_intervals:[{start_seconds:10.807,end_seconds:12.341}]}}))
+    .toBe('54 восстановленных ракурсов · карта до 28.26 с из 33.26 с записи · разрывы: 10.81–12.34 с');
+  expect(routeCoverageLabel(undefined)).toBeNull();
 });
 test('only the worker confirmed quota rejection blocks another attempt',()=>{
   expect(preparationQuotaReached(new ReconstructionResponseError(409,'route_preparation_attempt_quota'))).toBe(true);
