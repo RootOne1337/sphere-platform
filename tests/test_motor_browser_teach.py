@@ -36,6 +36,23 @@ def encode(value):
 
 
 class BrowserTeachTests(unittest.TestCase):
+    def test_explicit_motion_selection_extracts_exact_real_frames_and_keeps_input_immutable(self):
+        before={p.name:digest(p.read_bytes()) for p in self.source.iterdir()}
+        selected=frozenset({0,4,9,15});output=self.parent/'motion-selected'
+        prepare_browser(self.source,output,selected_indices=selected)
+        report=json.loads((output/'reconstruction-input.json').read_bytes())
+        self.assertEqual([row['source_index'] for row in report['images']],sorted(selected))
+        self.assertEqual(report['selection'],'explicit_verified_source_indices')
+        self.assertTrue(all(row['source_access_unit_sha256']==self.frames[row['source_index']]['sha256'] for row in report['images']))
+        self.assertEqual(before,{p.name:digest(p.read_bytes()) for p in self.source.iterdir()})
+
+    def test_explicit_selection_cannot_admit_heldout_missing_endpoints_or_invalid_indices(self):
+        for selected in (frozenset({1,15}),frozenset({0,9}),frozenset({0,16}),frozenset({False,4,15})):
+            with self.subTest(selected=selected),self.assertRaises(ProtocolError):
+                prepare_browser(self.source,self.parent/'invalid-selection',selected_indices=selected)
+        with self.assertRaises(ProtocolError):
+            prepare_browser(self.source,self.parent/'heldout-selection',selected_indices=frozenset({0,4,15}),excluded_indices=frozenset({4}))
+
     def test_terminal_frame_replaces_a_crowded_neighbor_without_dropping_the_exact_endpoint(self):
         frames=[dict(index=i,relative_ticks_90k=round(t*90000)) for i,t in enumerate([0,.25,.5,.75,1.,1.031])]
         before=json.loads(json.dumps(frames))

@@ -122,6 +122,39 @@ class SparseLocalizationTests(unittest.TestCase):
         self.assertFalse(self.localizer._competing_pose(best, (center, small_turn, 90, .5)))
         self.assertTrue(self.localizer._competing_pose(best, (self.np.array([100., 0., 0.]), identity, 90, .5)))
 
+    def test_fresh_confirmed_pose_disambiguates_verified_distant_facade_alias(self):
+        np=self.np;identity=np.eye(3);near=(np.array([0.,0.,6.2]),identity,80,.5)
+        far=(np.array([100.,0.,6.2]),identity,100,.4)
+        self.assertIsNone(self.localizer._rank_proposals([far,near]))
+        self.localizer.previous=(np.array([0.,0.,6.]),identity,6.,10.)
+        self.localizer.confirmations=3;self.localizer.last_received=10.2
+        self.assertIs(self.localizer._rank_proposals([far,near]),near)
+        self.localizer.last_received=11.
+        self.assertIsNone(self.localizer._rank_proposals([far,near]))
+
+    def test_recent_neighborhood_is_only_a_candidate_after_fresh_confirmation(self):
+        self.assertIsNone(self.localizer._recent_reference_candidate())
+        self.localizer.previous=(self.np.array([0.,0.,6.]),self.np.eye(3),6.,10.)
+        self.localizer.last_received=10.2;self.localizer.confirmations=2
+        self.assertIsNone(self.localizer._recent_reference_candidate())
+        self.localizer.confirmations=3
+        self.assertIsNotNone(self.localizer._recent_reference_candidate())
+        # A remembered location is never a solution without current evidence.
+        self.assertIsNone(self.localizer._solve(self.np.empty((0,2)),self.np.empty((0,128))))
+        self.localizer.last_received=10.501
+        self.assertIsNone(self.localizer._recent_reference_candidate())
+
+    def test_nearby_stationary_reference_views_are_not_a_distant_return_route(self):
+        np=self.np
+        self.localizer.trace=np.array([[0.,0.,z] for z in [0,.01,0,.01,5,10,15,20]])
+        self.localizer.lengths=np.linalg.norm(np.diff(self.localizer.trace,axis=0),axis=1)
+        self.localizer.cumulative=np.r_[0,np.cumsum(self.localizer.lengths)]
+        self.assertIsNotNone(self.localizer._nearest(np.array([0.,0.,.005])))
+        self.localizer.trace=np.array([[0.,0.,z] for z in [0,5,10,15,20,25,0,5]])
+        self.localizer.lengths=np.linalg.norm(np.diff(self.localizer.trace,axis=0),axis=1)
+        self.localizer.cumulative=np.r_[0,np.cumsum(self.localizer.lengths)]
+        self.assertIsNone(self.localizer._nearest(np.array([0.,0.,.005])))
+
     def test_translated_rotated_start_at_middle_uses_actual_pnp(self):
         for count in range(3):
             result = self.observe()

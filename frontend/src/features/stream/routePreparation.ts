@@ -1,4 +1,4 @@
-import {reconstructionRequest,ReconstructionResponseError,type NavigationState,type ReconstructionJob} from './reconstructionClient';
+import {reconstructionRequest,ReconstructionResponseError,type NavigationState,type ReconstructionJob,type ReconstructionState} from './reconstructionClient';
 
 const idPattern=/^[0-9a-f]{32}$/;
 const terminal=new Set(['ready','failed','rejected','cancelled']);
@@ -8,6 +8,16 @@ Object.assign(errorLabels,{sparse_receipt_invalid:'не подтверждена
 errorLabels.route_feature_runtime_mismatch='ориентиры подготовлены другой версией обработчика; подготовьте их заново из сохранённой записи';
 export const navigationPhaseLabel=(phase:string|null|undefined)=>phase?(phaseLabels[phase]??'состояние уточняется'):'не прочитана';
 export const navigationErrorLabel=(code:string)=>errorLabels[code]??'причину можно проверить в диагностике';
+export function routeReadinessIssue(source:ReconstructionState|null,assets:NavigationState|null):string|null {
+  if(assets?.phase==='ready')return null;
+  if(!assets)return 'Проверяем состояние обработки выбранной записи…';
+  if(['pending_auto_prepare','preparing','features'].includes(assets.phase))return 'Запись обрабатывается автоматически. Карта ориентиров ещё строится.';
+  const quality=source?.quality,coverage=quality?` Восстановлено ${quality.registered} из ${quality.selected} ракурсов.`:'';
+  if(assets.error==='route_camera_motion_requires_review'||cameraMotionRequiresReview(source?.camera_motion))return `Автоматическая подготовка остановлена: восстановленная траектория содержит подозрительные скачки.${coverage} Исходное видео сохранено; требуется восстановление геометрии, а не повторное нажатие подготовки.`;
+  if(assets.error)return `Карта не готова: ${navigationErrorLabel(assets.error)}.${coverage} Исходное видео сохранено.`;
+  if(source&&!source.dense_available&&!source.sparse_available)return 'Восстановление камер ещё не завершено или завершилось ошибкой. Проверьте состояние обработки записи.';
+  return 'Для записи ещё не запущена подготовка ориентиров.';
+}
 export function routeCoverageLabel(summary:NavigationState['summary']):string|null {
   if(!summary)return null;
   const coverage=summary.source_coverage,last=summary.last_seconds;

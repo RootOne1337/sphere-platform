@@ -1,9 +1,18 @@
-import {cameraMotionRequiresReview,prepareRoute,preparationError,preparationQuotaReached,routeCoverageLabel} from '@/src/features/stream/routePreparation';
+import {cameraMotionRequiresReview,prepareRoute,preparationError,preparationQuotaReached,routeCoverageLabel,routeReadinessIssue} from '@/src/features/stream/routePreparation';
 import {reconstructionRequest,ReconstructionResponseError} from '@/src/features/stream/reconstructionClient';
 jest.mock('@/src/features/stream/reconstructionClient',()=>({...jest.requireActual('@/src/features/stream/reconstructionClient'),reconstructionRequest:jest.fn()}));
 
 const job={id:'a'.repeat(32),key:'b'.repeat(64)},scope='c'.repeat(32),clip='d'.repeat(32);
 beforeEach(()=>{sessionStorage.clear();jest.clearAllMocks();Object.defineProperty(crypto,'randomUUID',{configurable:true,value:()=> 'eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee'});});
+
+test('an already attempted reconstruction explains the failure instead of requesting another preparation',()=>{
+  const source={phase:'sparse_complete',sparse_available:true,quality:{registered:88,selected:99,coverage:88/99,points:11188,mean_reprojection_px:1.14}};
+  const issue=routeReadinessIssue(source,{phase:'failed',error:'route_camera_motion_requires_review'});
+  expect(issue).toContain('Автоматическая подготовка остановлена');expect(issue).toContain('88 из 99');
+  expect(issue).not.toMatch(/Сначала подготовьте/);
+  expect(routeReadinessIssue(source,{phase:'preparing'})).toContain('обрабатывается автоматически');
+  expect(routeReadinessIssue(source,{phase:'ready'})).toBeNull();
+});
 
 test('unknown preparation outcome is reconciled with the same intent',async()=>{
   jest.mocked(reconstructionRequest).mockRejectedValueOnce(Error('network_result_unknown'))

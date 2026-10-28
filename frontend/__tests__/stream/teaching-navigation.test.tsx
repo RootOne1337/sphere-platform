@@ -10,6 +10,18 @@ beforeEach(()=>{
   jest.spyOn(HTMLCanvasElement.prototype,'getContext').mockReturnValue({clearRect:jest.fn(),drawImage:jest.fn()} as never);
 });
 afterEach(()=>jest.restoreAllMocks());
+test('the walking panel shows the actual failed automatic stage and never opens input or retries it',async()=>{
+  jest.mocked(reconstructionRequest).mockResolvedValue({json:async()=>({phase:'sparse_complete',sparse_available:true,
+    quality:{registered:88,selected:99,coverage:88/99,points:11188,mean_reprojection_px:1.14},
+    navigation:{phase:'failed',error:'route_camera_motion_requires_review'},camera_motion:{warning:'poses_require_temporal_review',rapid_reversals:4,speed_outliers:8,heuristic_only:true,navigation_qualified:false}})} as Response);
+  const open=jest.fn();
+  render(<TeachingNavigation job={job} video={{current:null}} ready binding={{captureEpoch:'e'.repeat(32),width:960,height:540}} walkInput={{issue:null,open}}/>);
+  fireEvent.click(screen.getByRole('button',{name:'Пеший тест со стиком'}));
+  expect((await screen.findAllByText(/Автоматическая подготовка остановлена:.*88 из 99/)).length).toBeGreaterThan(0);
+  expect(screen.queryByText('Сначала подготовьте карту ориентиров выбранной записи.')).not.toBeInTheDocument();
+  expect(screen.getByRole('button',{name:'Запустить пеший тест · 60 с'})).toBeDisabled();expect(open).not.toHaveBeenCalled();
+  expect(jest.mocked(reconstructionRequest).mock.calls.every(c=>c[2]?.method!=='POST')).toBe(true);
+});
 test('walk control is a separate panel and switching panels does not open an input owner',async()=>{
   jest.mocked(reconstructionRequest).mockResolvedValue({json:async()=>({phase:'complete',sparse_available:true,navigation:{phase:'ready'}})} as Response);
   const open=jest.fn();

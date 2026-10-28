@@ -1,0 +1,126 @@
+{
+  "schema": "sphere-route-temporal-delivery-v1",
+  "date": "2026-10-29",
+  "web": {
+    "image": "sphere-route-local:route-temporal-20261029-v5",
+    "imageId": "sha256:0915f53c5692ad4b1ae1a7632ff37ac009b845cd23cb3c6e8b043e305344e685",
+    "sourceSha256": "92673b8e43d3103503b44771766aa81aabf39ee05e75780327e6baf9d8fd6628",
+    "buildExit": 0,
+    "sourceUnchanged": true,
+    "httpPages": 2,
+    "httpAssets": 31,
+    "uiHealthy": true,
+    "otherContainersPreserved": true,
+    "freshBrowserVisualAcceptance": false
+  },
+  "api": {
+    "health": 200,
+    "missingCapability": 403,
+    "sourceHashes": {
+      "scripts/pilot/reconstruction_service.py": "c1a13f29b43b8ceb6d0a9b32d3ed35e74f821a49867cf0fb98d715908b8736f8",
+      "scripts/pilot/reconstruct_route.py": "647b0b442a55f979f0eb63ef1ccac57ed9180b532cd514e4159e8f834aaf8dce",
+      "scripts/pilot/learned_route_features.py": "44fbd24aa1ef050fab4c1b3740b6be206207312fb6bce5231635158deaea6536",
+      "scripts/pilot/route_temporal_repair.py": "86ad24dd05ee3fa963e8f2665056b79bc19be9136ee6b895a96c43947d890e4f",
+      "scripts/pilot/temporal_route_matches.py": "3453b01418fa86a70d9b97755bc54ba3bd7c94c5709cc0565524b0900844fb84",
+      "scripts/pilot/route_workspace.py": "12227a90ae6d9bac83873bed049b07da50edf21b0e10b850c6a92acdae56aa6e",
+      "motor_worker/route_localization.py": "4a9e412e1378fe125ca2c17c0d14fd6852b3476b89e364b0534f801b5c310200",
+      "motor_worker/route_tracking.py": "deca7a9b1eb355f35690abca488c8a267d9ec9c6da78e79f5ef02a38d677ce37",
+      "scripts/pilot/route_video_tracks.py": "90a04dcfba19c913d9fd7e0abfe9f71eefb15ff19af7e805fbdcbe89faf64b3a",
+      "scripts/pilot/route_motion_sampling.py": "77afdd5608f43ad2905ebb634dc3b0ebb36f251f78b4a8a7069b0b225826bff6"
+    },
+    "pnpPolicy": "pnp-image-coverage-temporal-v3",
+    "descriptorPipelineSha": "b37ee283762e241ca5b070a3af02c1c1712f6b0354a9c94c5654af4768513b7f"
+  },
+  "repairedJob": {
+    "outcome": "verified",
+    "job": "b861ac82fcd64425bc583b37f620ba2a",
+    "geometryRevision": "video-tracks-174-v1",
+    "cameras": 174,
+    "points": 14642,
+    "runtimeLandmarks": 4096,
+    "sourceManifestSha": "c87b071cd1cdb9d5a47d65dcbeb01f1afe0d4507f9245b55e5a3a8c83a8ff2eb",
+    "geometrySha": "d21aa8cdb66f2c1ab043f1d71c19ee8b6a01ac264eb7cfb276f62c62cfde0a17",
+    "routeSha": "e14628d4a0d0b879020b3f39761d4b0c2e6073b9cdd6a26bb8e52b75c0dfc22f",
+    "rapidReversals": 0,
+    "speedOutliers": 0,
+    "firstSeconds": 0,
+    "lastSeconds": 50.349,
+    "navigationPhase": "ready",
+    "executionQualified": false,
+    "physicalActions": 0,
+    "baselinePreserved": true,
+    "sourceCapturePreserved": true
+  },
+  "productionPipeline": {
+    "outcome": "verified",
+    "seconds": 269.48499999998603,
+    "quality": {
+      "registered": 174,
+      "selected": 174,
+      "coverage": 1.0,
+      "points": 14612,
+      "mean_reprojection_px": 0.957466883744281,
+      "components": 1,
+      "conditioning": {
+        "near_camera_points": 0,
+        "near_camera_fraction": 0.0,
+        "camera_span_units": 11.43512820307679,
+        "passed": true
+      },
+      "intrinsics_condition": {
+        "passed": true,
+        "focal_ratio": 1.0,
+        "horizontal_fov_degrees": 115.54036179001002,
+        "vertical_fov_degrees": 83.47898736126446,
+        "physical_calibration_verified": false
+      }
+    },
+    "reversals": 0,
+    "speedOutliers": 0,
+    "navigation": {
+      "phase": "ready",
+      "error": null,
+      "cameraTraceOnly": true,
+      "executionQualified": false
+    },
+    "physicalActions": 0
+  },
+  "replay": {
+    "scope": "SOURCE_VIDEO_REPLAY_NOT_INDEPENDENT_GAMEPLAY",
+    "samples": 233,
+    "states": {
+      "confirming": 10,
+      "localized": 210,
+      "unknown": 13
+    },
+    "reasons": {
+      "relative_camera_pose_not_clearance_or_arrival": 220,
+      "route_frame_expired_during_localization": 4,
+      "route_pose_not_verified": 9
+    },
+    "physicalActions": 0,
+    "executionQualified": false
+  },
+  "tests": {
+    "frontendStream": 958,
+    "pytest": 72,
+    "localizationTrackingWorkspace": 58,
+    "browserCapture": 22,
+    "typescript": "passed",
+    "productionBuild": "passed"
+  },
+  "sourceVideo": {
+    "frames": 1387,
+    "seconds": 50.349,
+    "width": 1920,
+    "height": 1080,
+    "fps": 27.5279,
+    "mbps": 9.42823,
+    "maxIntervalMs": 69,
+    "intervalsOver50Ms": 82,
+    "intervalsOver100Ms": 0
+  },
+  "physicalActions": 0,
+  "executionQualified": false,
+  "independentLiveRepeatAccepted": false
+}

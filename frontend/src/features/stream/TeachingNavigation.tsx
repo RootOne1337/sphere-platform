@@ -5,7 +5,7 @@ import {Button} from '@/components/ui/button';
 import {reconstructionRequest,type NavigationState,type ReconstructionJob,type ReconstructionState} from './reconstructionClient';
 import {freshNavigationFrame,navigationReply,paintNavigation,type LiveRouteObservation} from './routeNavigation';
 import {RouteNavigationDiagnostics} from './routeNavigationDiagnostics';
-import {cameraMotionRequiresReview,navigationErrorLabel,navigationPhaseLabel,routeCoverageLabel,prepareRoute,preparationError,preparationQuotaReached} from './routePreparation';
+import {cameraMotionRequiresReview,navigationErrorLabel,navigationPhaseLabel,routeCoverageLabel,routeReadinessIssue,prepareRoute,preparationError,preparationQuotaReached} from './routePreparation';
 import type {TeachingClipChoice} from './TeachingReview';
 import {WalkingRoutePilot} from './WalkingRoutePilot';
 import type {WalkInputControl} from './walkPilot';
@@ -67,8 +67,10 @@ export function TeachingNavigation({job,video,ready,binding,clips=[],clip=null,s
       if(retired)return;setSource(data);setAssets(navigation);setAssetError(false);
       if(navigation.phase==='ready')setNotice('Карта ориентиров готова. Подключите поток и подтвердите участок для ручной проверки.');
       else if(data.error==='camera_quality_gate_failed')setNotice('Камеры связаны не полностью. Сначала восстановите сцену; исходная запись сохранена.');
-      else setNotice('Проверьте состояние выбранной записи и подготовьте ориентиры.');
-      if(!['ready','rejected','failed','not_prepared','cancelled'].includes(navigation.phase))timer=setTimeout(()=>{void poll();},2000);
+      else setNotice(routeReadinessIssue(data,navigation)??'Проверяем состояние обработки записи.');
+      // Terminal preparation can be superseded by a repaired generation. Reads
+      // stay read-only and never repeat preparation or input intents.
+      timer=setTimeout(()=>{void poll();},['ready','rejected','failed','not_prepared','cancelled'].includes(navigation.phase)?10000:2000);
     }catch{if(!retired){setAssets(null);setSource(null);setAssetError(true);setNotice('Локальный обработчик недоступен. Запись и сохранённая сцена не изменены; повторная проверка состояния не запускает обработку.');timer=setTimeout(()=>{void poll();},10000);}}};
     void poll();return()=>{retired=true;request.abort();clearTimeout(timer);};
   },[job,assetRefresh]);
@@ -172,7 +174,7 @@ export function TeachingNavigation({job,video,ready,binding,clips=[],clip=null,s
     {scope&&clip&&<RouteDebugArchive scope={scope} clip={clip} refresh={savedDebug}/>}
     {observation&&<details className="rounded-lg border p-3 text-xs" open><summary className="cursor-pointer font-medium">Диагностика последнего ответа · {observation.reply.pose.state}</summary><dl className="mt-2 grid grid-cols-2 gap-2"><div><dt>Причина</dt><dd className="break-all font-mono">{observation.reply.pose.reason}</dd></div><div><dt>Метод</dt><dd>{observation.reply.method}</dd></div><div><dt>Ошибка проекции</dt><dd>{observation.reply.pose.median_error_px?.toFixed(2)??'—'} px</dd></div><div><dt>Отклонение от пути</dt><dd>{observation.reply.pose.cross_track_units?.toFixed(3)??'—'} усл. ед.</dd></div></dl></details>}
     </div>
-    {walkInput&&<div hidden={panel!=='walk'}><WalkingRoutePilot job={job} clip={clip} scope={scope} video={video} ready={ready} binding={binding} assetsReady={assets?.phase==='ready'} input={walkInput} observerBusy={running||busy||panel!=='walk'} onBusyChange={setWalking} onObservation={setObservation} renderView={view=>sourceView(view,panel==='walk')}/></div>}
+    {walkInput&&<div hidden={panel!=='walk'}><WalkingRoutePilot job={job} clip={clip} scope={scope} video={video} ready={ready} binding={binding} assetsReady={assets?.phase==='ready'} preparationIssue={routeReadinessIssue(source,assets)} input={walkInput} observerBusy={running||busy||panel!=='walk'} onBusyChange={setWalking} onObservation={setObservation} renderView={view=>sourceView(view,panel==='walk')}/></div>}
     <p className="text-[11px] leading-5 text-muted-foreground">Разрешение можно уменьшать с сохранением пропорций; FOV и режим камеры должны совпадать. Узнавание на минимальном рендере проверяется отдельно. «Кадр → ответ» измеряется в браузере; полная задержка Android неизвестна. Неподтверждённая поза и ответы старше 250 мс скрывают линию. Моторная модель не запускается.</p>
   </section>;
 }

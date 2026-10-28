@@ -34,7 +34,7 @@ export function NavigationRouteContext({job,source,assetsReady,observation,compa
       if(!retired){setGeometry({data,sha,choice});setTicks(data.cameras[0].ticks_90k);setNotice(choice==='primary'?'Основная геометрия связана с выбранной записью.':'Дополнительная схема для осмотра; живое положение на ней не наносится.');}
     })().catch(error=>{if(!retired)setNotice(error instanceof Error?error.message:'Связанная карта недоступна.');});
     return()=>{retired=true;abort.abort();};
-  },[job,source,choice,validTicks]);
+  },[job,source,choice,validTicks,assetsReady]);
   useEffect(()=>{
     setLive(null);if(!observation||!geometry||geometry.choice!=='primary')return;
     const {reply,capturedAt}=observation,p=reply.pose,camera=boundLiveRouteCamera(observation,geometry.sha,performance.now());

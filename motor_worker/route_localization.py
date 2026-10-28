@@ -22,7 +22,7 @@ from motor_worker.protocol import ProtocolError, message
 SIZE = (960, 540)
 # Changes to the runtime pose gate are tracked separately from the descriptor
 # format: strengthening a gate must not make compatible saved maps unreadable.
-PNP_VERIFICATION_POLICY = 'pnp-image-coverage-v1'
+PNP_VERIFICATION_POLICY = 'pnp-image-coverage-temporal-v3'
 MAX_POINTS = 4096
 MAX_VIEWS = 256
 MAX_BYTES = 4 * 1024 * 1024
@@ -326,6 +326,12 @@ class RouteLocalizer:
                 break
             candidates.append(at)
             votes[max(0, at-3):at+4] = 0
+        # Repeated facades can crowd the correct neighborhood out of the global
+        # vote shortlist. A fresh, already confirmed pose adds one candidate;
+        # it still needs current-image PnP and competes with global hypotheses.
+        recent = self._recent_reference_candidate()
+        if recent is not None and all(abs(recent-at)>1 for at in candidates):
+            candidates.append(recent)
         proposals = []
         for at in candidates:
             indices = np.flatnonzero(np.any(self.visibility[max(0, at-1):at+2], axis=0))
@@ -334,7 +340,41 @@ class RouteLocalizer:
                 proposals.append(proposal)
         if not proposals:
             return None
+        return self._rank_proposals(proposals)
+
+    def _recent_reference_candidate(self):
+        if self.previous is None or self.confirmations<3 or self.last_received is None:
+            return None
+        dt=self.last_received-self.previous[3]
+        if not 0<dt<=.5:
+            return None
+        nearest=self._nearest(self.previous[0])
+        return None if nearest is None else nearest[0]
+
+    def _rank_proposals(self, proposals):
+        """Disambiguate verified aliases only with an already confirmed fresh pose.
+
+        This reuses the same motion envelope enforced after solving. It never
+        makes weak PnP correspondences valid, predicts a pose, or crosses a gap.
+        """
+        np=self.np
         proposals.sort(key=lambda p: -p[2])
+        if self.previous is not None and self.confirmations>=3 and self.last_received is not None:
+            old_center,old_rotation,old_progress,old_time=self.previous
+            dt=self.last_received-old_time
+            if 0<dt<=.5:
+                limit=float(np.median(self.lengths)*5)*max(dt,.2)
+                consistent=[]
+                for proposal in proposals:
+                    center,rotation,count=proposal[:3]
+                    angle=float(np.arccos(np.clip((np.trace(rotation@old_rotation.T)-1)/2,-1,1)))
+                    nearest=self._nearest(center)
+                    if (count>=.75*proposals[0][2] and nearest is not None
+                            and np.linalg.norm(center-old_center)<=limit and angle<=1.05
+                            and abs(nearest[1]-old_progress)<=limit):
+                        consistent.append(proposal)
+                if consistent:
+                    proposals=consistent
         best = proposals[0]
         for other in proposals[1:]:
             if self._competing_pose(best, other):
@@ -410,7 +450,10 @@ class RouteLocalizer:
             return None
         # A crossing/repeated passage has multiple route-progress interpretations.
         for other in order[1:]:
-            if abs(int(other)-at) > 2 and distances[other] <= distances[at]+self.lengths.mean()*.15:
+            other_progress=float(self.cumulative[other]+fractions[other]*self.lengths[other])
+            at_progress=float(self.cumulative[at]+fractions[at]*self.lengths[at])
+            if (abs(int(other)-at)>2 and abs(other_progress-at_progress)>float(np.median(self.lengths)*2)
+                    and distances[other] <= distances[at]+self.lengths.mean()*.15):
                 return None
         return at, float(self.cumulative[at]+fractions[at]*self.lengths[at]), float(distances[at])
 

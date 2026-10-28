@@ -10,6 +10,8 @@ jest.mock('@/src/features/stream/reconstructionClient',()=>({
 afterEach(()=>{sessionStorage.clear();jest.clearAllMocks();jest.mocked(readReconstructionLink).mockResolvedValue(null);jest.mocked(listReconstructionLinks).mockResolvedValue([]);});
 test('a recording marked HUD-free retains the avatar mask and 30000 iterations',async()=>{
   const view=render(<TeachingReconstruction clip={'c'.repeat(32)} scope={'d'.repeat(32)} folder={()=>null} complete hudHidden onBusyChange={()=>{}}/>);
+  expect(screen.getByRole('button',{name:'Подготовить ориентиры'})).toBeInTheDocument();
+  fireEvent.click(screen.getByText('Дополнительные настройки и визуальная 3D-сцена'));
   await waitFor(()=>expect(screen.getByRole('button',{name:'Построить 3D-сцену'})).toBeEnabled());
   expect(screen.getByRole('combobox',{name:/Маска/i})).toHaveValue('avatar');
   expect(screen.getByRole('combobox',{name:'Качество обработки'})).toHaveValue('30000');

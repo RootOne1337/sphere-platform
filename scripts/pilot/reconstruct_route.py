@@ -126,8 +126,16 @@ def reconstruct(job, mask, steps, *, route_only=False):
         raise RuntimeError('clip_too_short_minimum_5_seconds')
     state(job, 'extracting', source_frames=len(capture.frames))
     prepared = job / 'prepared'
-    prepare_browser(job / 'input', prepared, interval=max(.5, duration / 230),
-                    max_images=240, max_bytes=2**31)
+    selected_indices=None
+    if route_only:
+        from scripts.pilot.route_motion_sampling import sample_video
+        state(job,'motion_sampling',source_frames=len(capture.frames))
+        selected_indices,motion_sampling=sample_video(capture,mask,lambda:checkpoint(job),
+            lambda done,total:state(job,'motion_sampling',completed_items=done,total_items=total))
+        write_json(job/'motion-sampling.json',motion_sampling)
+        state(job,'extracting',source_frames=len(capture.frames),selected_views=len(selected_indices))
+    prepare_browser(job / 'input', prepared, interval=max(.25 if route_only else .5, duration / 230),
+                    max_images=240, max_bytes=2**31, selected_indices=selected_indices)
     images = list((prepared / 'images').glob('*.png'))
     if len(images) < 10:
         raise RuntimeError('insufficient_selected_views')
@@ -156,15 +164,37 @@ def reconstruct(job, mask, steps, *, route_only=False):
     guard = threading.Thread(target=watchdog, daemon=True)
     guard.start()
     try:
-        reader = p.ImageReaderOptions(camera_model='PINHOLE')
+        # Screen captures have square pixels and no physical lens distortion.
+        # A shared focal parameter avoids independent fx/fy collapsing along
+        # a mostly forward route; no metric calibration is claimed.
+        reader = p.ImageReaderOptions(camera_model='SIMPLE_PINHOLE')
         if masks:
             reader.mask_path = str(masks)
         database = prepared / 'database.db'
-        learned = learned_features_available(ROOT)
+        learned = learned_features_available(ROOT) and not route_only
         state(job, 'features', selected_views=len(images), masks=mask,
-              method='opencv-rootsift-lightglue' if learned else 'classical-sift')
-        if learned:
-            extract_and_match(ROOT, prepared, database, reader, token, lambda: checkpoint(job))
+              method='source_video_corner_tracks' if route_only else 'opencv-rootsift-lightglue' if learned else 'classical-sift')
+        if route_only:
+            # A route is a time-ordered video, not an unordered photo collection.
+            # Preserve each observed corner's identity through intervening frames
+            # instead of choosing a visually similar window in a later image.
+            from scripts.pilot.route_video_tracks import build_video_track_database
+            from scripts.pilot.learned_route_features import verify_pairs
+            skeleton=prepared/'camera-index.db'
+            p.Database.open(skeleton).close()
+            p.import_images(skeleton,prepared/'images',camera_mode=p.CameraMode.SINGLE,options=reader)
+            tracks=build_video_track_database(job,prepared,skeleton,database,lambda:checkpoint(job),
+                progress=lambda done,total:state(job,'features',method='source_video_corner_tracks',selected_views=len(images),completed_items=done,total_items=total))
+            pair_file=prepared/'video-track-pairs.txt'
+            pair_file.write_text(''.join(row['first']+' '+row['second']+'\n' for row in tracks['pairs']),encoding='ascii')
+            state(job,'matching',selected_views=len(images),method='video_tracks_geometric_verification')
+            verify_pairs(database,pair_file,token)
+            write_json(prepared/'features.json',dict(method='source_video_corner_tracks',sourceFrames=tracks['decodedFrames'],
+                observations=tracks['observations'],pairs=len(tracks['pairs']),seconds=tracks['seconds'],
+                neuralModelLoaded=False,geometric_verification_complete=True))
+        elif learned:
+            extract_and_match(ROOT, prepared, database, reader, token, lambda: checkpoint(job),
+                progress=lambda phase,done,total:state(job,phase,selected_views=len(images),completed_items=done,total_items=total))
         else:
             features = p.FeatureExtractionOptions(num_threads=4, use_gpu=False, max_image_size=1920)
             features.sift.max_num_features = 8192
@@ -200,15 +230,32 @@ def reconstruct(job, mask, steps, *, route_only=False):
         initial_condition = sparse_condition(
             [image.cam_from_world().inverse().translation for image in rec.images.values() if image.has_pose],
             [point.xyz for point in rec.points3D.values()])
-        if initial_condition['passed']:
+        from scripts.pilot.route_motion_audit import audit
+        initial_motion=audit(model_geometry(rec,prepared))
+        if initial_condition['passed'] and not initial_motion['rapid_reversals'] and not initial_motion['speed_outliers']:
             state(job, 'matching', selected_views=len(images), method='anchored-loop-completion')
             rec = complete_partial(ROOT, prepared, database, rec, lambda: checkpoint(job))
     geometry = model_geometry(rec, prepared)
+    temporal_repair = None
+    from scripts.pilot.route_temporal_repair import needs_repair, repair_temporally
+    if learned and needs_repair(geometry,len(images)):
+        # Keep the baseline for inspection even if bounded repair is inconclusive.
+        # Resource/cancellation fences still terminate the whole task.
+        try:
+            rec,temporal_repair=repair_temporally(job,prepared,database,rec,len(images),lambda:checkpoint(job),
+                lambda phase,done=0,total=0:state(job,phase,selected_views=len(images),completed_items=done,total_items=total))
+        except RuntimeError as failure:
+            if str(failure) in {'resource_guard','cancelled'}:
+                raise
+            temporal_repair=dict(accepted=False,reason='temporal_repair_inconclusive',errorType=type(failure).__name__)
+        geometry=model_geometry(rec,prepared)
     write_json(job / 'geometry.json', geometry)
     coverage = rec.num_reg_images() / len(images)
     error = rec.compute_mean_reprojection_error()
     quality = dict(registered=rec.num_reg_images(), selected=len(images), coverage=coverage,
                    points=rec.num_points3D(), mean_reprojection_px=error, components=len(models))
+    if temporal_repair is not None:
+        quality['temporal_repair']=temporal_repair
     quality['conditioning'] = sparse_condition(
         [camera['center'] for camera in geometry['cameras']],
         [point.xyz for point in rec.points3D.values()])

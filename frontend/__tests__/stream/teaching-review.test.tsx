@@ -146,7 +146,28 @@ test('a saved alternative opens automatically from the linked job without a file
   const props=jest.mocked(TeachingReconstruction).mock.calls.at(-1)![0];
   expect(props.alternativeCameraCount).toBe(2);
   expect(jest.mocked(reconstructionRequest).mock.calls.map(call=>call[0])).toEqual([
-    `/jobs/${job.id}/geometry-alternatives`,`/jobs/${job.id}/geometry-alternatives/improved-v1`]);
+    `/jobs/${job.id}/geometry-alternatives`,`/jobs/${job.id}`,`/jobs/${job.id}/geometry-alternatives/improved-v1`]);
+});
+
+test('the current prepared map takes precedence over a stale experimental geometry',async()=>{
+  const {manifest}=await library(),source=await hash(manifest),job={id:'c'.repeat(32),key:'d'.repeat(64)};
+  const scene={schema:'sphere-recovered-scene-v1',source_manifest_sha256:source,
+    cameras:[{center:[0,0,0],ticks_90k:0},{center:[1,0,0],ticks_90k:90000}],points:[[1,2,3,255,255,255]]};
+  jest.mocked(reconstructionRequest).mockImplementation(async(path)=>({json:async()=>path.endsWith('/geometry-alternatives')?
+    {alternatives:[{id:'old-experiment',cameras:2,points:1}]}:path===`/jobs/${job.id}`?
+    {navigation:{phase:'ready'},geometry_available:true}:scene}) as Response);
+  function Linked(props:Parameters<typeof TeachingReconstruction>[0]){React.useEffect(()=>{props.onRouteChange?.(job);},[props.onRouteChange]);return <></>;}
+  jest.mocked(TeachingReconstruction).mockImplementation(props=><Linked {...props}/>);
+  render(<TeachingReview selected={id} refresh={0} onSelect={jest.fn()} storageScope={scope}/>);
+  await screen.findByText('Текущая подготовленная карта связана с исходной записью.');
+  const select=screen.getByLabelText('Сохранённая схема ориентиров');
+  expect(select).toHaveValue('primary');
+  expect(jest.mocked(reconstructionRequest).mock.calls.map(call=>call[0])).toContain(`/jobs/${job.id}/geometry`);
+  expect(jest.mocked(reconstructionRequest).mock.calls.map(call=>call[0])).not.toContain(`/jobs/${job.id}/geometry-alternatives/old-experiment`);
+  fireEvent.change(select,{target:{value:'old-experiment'}});
+  await screen.findByText('Сохранённая экспериментальная схема связана с исходной записью.');
+  fireEvent.change(select,{target:{value:'primary'}});
+  await screen.findByText('Текущая подготовленная карта связана с исходной записью.');
 });
 test('switching the linked reconstruction clears a previously shown alternate',async()=>{
   const {manifest}=await library(),source=await hash(manifest),first={id:'c'.repeat(32),key:'d'.repeat(64)},second={id:'e'.repeat(32),key:'f'.repeat(64)};

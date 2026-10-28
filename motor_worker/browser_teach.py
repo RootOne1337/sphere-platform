@@ -325,7 +325,7 @@ def reconstruction_rows(frames, interval, excluded_indices=frozenset()):
 
 
 def prepare_browser(directory, output, *, interval=1.0, max_images=256, max_bytes=1024*MIB,
-                    excluded_indices=frozenset()):
+                    excluded_indices=frozenset(), selected_indices=None):
     """Lossless PNG at captured size. Unknown cameras stay unknown, never identity poses."""
     if not finite(interval, .2, 10) or not integer(max_images, 2, 1000) or not integer(max_bytes, MIB, 2**31):
         raise ProtocolError("browser_teach_preparation_budget")
@@ -342,6 +342,17 @@ def prepare_browser(directory, output, *, interval=1.0, max_images=256, max_byte
     if output == capture.root or output.is_relative_to(capture.root):
         raise ProtocolError("browser_teach_output_inside_source")
     selected_rows, sampling = reconstruction_rows(capture.frames, interval, excluded_indices)
+    explicit_selection=selected_indices is not None
+    if selected_indices is not None:
+        if (type(selected_indices) is not frozenset or not 2<=len(selected_indices)<=max_images
+                or selected_indices&excluded_indices
+                or any(not integer(i,0,len(capture.frames)-1) for i in selected_indices)
+                or 0 not in selected_indices or len(capture.frames)-1 not in selected_indices):
+            raise ProtocolError('browser_teach_invalid_selected_indices')
+        selected_rows=[row for row in capture.frames if row['index'] in selected_indices]
+        sampling=dict(method='explicit_source_indices',source_indices=sorted(selected_indices),
+                      quality_selection_applied=True,poses_used=False,first_source_index=0,
+                      last_source_index=len(capture.frames)-1)
     if len(selected_rows) > max_images:
         raise ProtocolError('browser_teach_preparation_image_quota')
     selected_indices = {row['index'] for row in selected_rows}
@@ -395,7 +406,7 @@ def prepare_browser(directory, output, *, interval=1.0, max_images=256, max_byte
                   source_manifest_sha256=sha(capture.originals["manifest.json"]),
                   geometry=list(capture.geometry), images=selected,
                   source_frames_verified=len(capture.frames), source_input_events_verified=len(capture.inputs),
-                  selection="balanced_media_interval_with_exact_last_not_quality_or_pose_selection",
+                  selection="explicit_verified_source_indices" if explicit_selection else "balanced_media_interval_with_exact_last_not_quality_or_pose_selection",
                   sampling=sampling,
                   source_video_copied=False, source_capture_clock_mapping_known=False,
                   cameras=None, metric_scale=None, camera_body_transform=None,

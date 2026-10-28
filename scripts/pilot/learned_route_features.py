@@ -73,7 +73,7 @@ def load_matcher(root, memory_fraction=.65):
     return matcher
 
 
-def extract_and_match(root, prepared, database, reader, token, check):
+def extract_and_match(root, prepared, database, reader, token, check, *, progress=None):
     import cv2
     import numpy as np
     import pycolmap as p
@@ -86,6 +86,7 @@ def extract_and_match(root, prepared, database, reader, token, check):
     sift = cv2.SIFT_create(nfeatures=4096, contrastThreshold=.0066667, edgeThreshold=10)
     features, ids, names = {}, [], {}
     started, observed = time.monotonic(), 0.
+    stage, processed, total = 'features', 0, 0
 
     def bounded():
         nonlocal observed
@@ -93,12 +94,15 @@ def extract_and_match(root, prepared, database, reader, token, check):
             raise RuntimeError('learned_matching_timeout')
         if time.monotonic() - observed >= 3:
             check()
+            if progress is not None:
+                progress(stage,processed,total)
             observed = time.monotonic()
 
     with p.Database.open(database) as db:
         images = sorted(db.read_all_images(), key=lambda image: image.name)
         if not 10 <= len(images) <= 240:
             raise RuntimeError('learned_matching_view_budget')
+        total=len(images)
         for image in images:
             bounded()
             gray = cv2.imread(str(prepared / 'images' / image.name), cv2.IMREAD_GRAYSCALE)
@@ -131,7 +135,11 @@ def extract_and_match(root, prepared, database, reader, token, check):
             features[image.image_id] = {key: torch.from_numpy(value)[None].to('cuda') for key, value in data.items()}
             ids.append(image.image_id)
             names[image.image_id] = image.name
+            processed+=1
         pairs, counts = [], []
+        stage,processed,total='matching',0,sum(i+lag<len(ids) for i in range(len(ids)) for lag in (1,2,3,5,8))
+        if progress is not None:
+            progress(stage,processed,total)
         with torch.inference_mode():
             for i, first in enumerate(ids):
                 for lag in (1, 2, 3, 5, 8):
@@ -148,6 +156,7 @@ def extract_and_match(root, prepared, database, reader, token, check):
                     db.write_matches(first, second, matches)
                     pairs.append(f'{names[first]} {names[second]}')
                     counts.append(len(matches))
+                    processed+=1
         del features, matcher
         torch.cuda.empty_cache()
     pair_file = prepared / 'learned-pairs.txt'

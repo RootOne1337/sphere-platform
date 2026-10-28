@@ -193,7 +193,7 @@ class RouteWorkspaceTests(unittest.TestCase):
         self.assertEqual(result['jpegSha256'],hashlib.sha256(encoded).hexdigest())
         self.assertEqual(result['pose']['state'],'unknown')
         self.assertEqual(result['framesArchived'],0)
-        self.assertEqual(result['verificationPolicy'],'pnp-image-coverage-v1')
+        self.assertEqual(result['verificationPolicy'],'pnp-image-coverage-temporal-v3')
         self.assertEqual(result['geometrySha256'],hashlib.sha256(b'{}').hexdigest())
         self.assertEqual(result['physicalActions'],0)
         self.assertFalse(result['executionQualified'])
