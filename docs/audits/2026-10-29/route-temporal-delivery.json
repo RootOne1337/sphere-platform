@@ -122,5 +122,19 @@
   },
   "physicalActions": 0,
   "executionQualified": false,
-  "independentLiveRepeatAccepted": false
+  "independentLiveRepeatAccepted": false,
+  "viewMotionConsistency": {
+    "scope": "INTERNAL_POSE_CONSISTENCY_NOT_GROUND_TRUTH",
+    "minStepMedianRatio": 0.5,
+    "baseline": {
+      "samples": 53,
+      "backwards": 11,
+      "medianAngleDegrees": 69.34076965509948
+    },
+    "videoTracks": {
+      "samples": 159,
+      "backwards": 0,
+      "medianAngleDegrees": 4.533784247168854
+    }
+  }
 }
