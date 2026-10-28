@@ -290,6 +290,40 @@ def inspect_browser(directory):
                     exact_rgb_repeats_are_not_a_disconnect_verdict=True))
 
 
+def reconstruction_rows(frames, interval, excluded_indices=frozenset()):
+    """Time sampling of validated rows, with an exact but not crowded endpoint.
+
+    This uses no pose, RGB or motion inference. A last access unit very close
+    to a regular sample replaces that sample instead of becoming a near-zero
+    time-baseline camera. Preserve the first and last eligible source rows;
+    held-out frames never enter this selection.
+    """
+    if not finite(interval, .2, 10):
+        raise ProtocolError('browser_teach_preparation_budget')
+    eligible = [row for row in frames if row['index'] not in excluded_indices]
+    if len(eligible) < 2:
+        raise ProtocolError('browser_teach_insufficient_source_views')
+    selected, next_tick = [], 0
+    for row in eligible:
+        if row['relative_ticks_90k'] >= next_tick:
+            selected.append(row)
+            next_tick = row['relative_ticks_90k'] + round(interval*90000)
+    replaced = None
+    last = eligible[-1]
+    if selected[-1]['index'] != last['index']:
+        if len(selected) > 1 and last['relative_ticks_90k']-selected[-1]['relative_ticks_90k'] < round(interval*90000)/2:
+            replaced = selected[-1]['index']
+            selected[-1] = last
+        else:
+            selected.append(last)
+    return selected, dict(requested_interval_seconds=interval,
+        final_close_neighbor_replaced_source_index=replaced,
+        first_source_index=selected[0]['index'], last_source_index=selected[-1]['index'],
+        minimum_interval_seconds=min((b['relative_ticks_90k']-a['relative_ticks_90k'])/90000
+                                     for a,b in zip(selected,selected[1:])),
+        quality_selection_applied=False, stationary_detection_applied=False)
+
+
 def prepare_browser(directory, output, *, interval=1.0, max_images=256, max_bytes=1024*MIB,
                     excluded_indices=frozenset()):
     """Lossless PNG at captured size. Unknown cameras stay unknown, never identity poses."""
@@ -307,6 +341,10 @@ def prepare_browser(directory, output, *, interval=1.0, max_images=256, max_byte
         raise ProtocolError("browser_teach_output_resolved_absolute_required")
     if output == capture.root or output.is_relative_to(capture.root):
         raise ProtocolError("browser_teach_output_inside_source")
+    selected_rows, sampling = reconstruction_rows(capture.frames, interval, excluded_indices)
+    if len(selected_rows) > max_images:
+        raise ProtocolError('browser_teach_preparation_image_quota')
+    selected_indices = {row['index'] for row in selected_rows}
     output.mkdir()  # Exclusive; a failed run stays unsealed for inspection.
     images = output/"images"
     images.mkdir()
@@ -319,7 +357,7 @@ def prepare_browser(directory, output, *, interval=1.0, max_images=256, max_byte
             raise ProtocolError("browser_teach_preparation_byte_quota")
         with (source/name).open("xb") as file:
             file.write(data)
-    selected, next_tick, last = [], 0, None
+    selected = []
 
     def save(row, frame):
         nonlocal used
@@ -349,19 +387,16 @@ def prepare_browser(directory, output, *, interval=1.0, max_images=256, max_byte
                              source_access_unit_sha256=row["sha256"], png_sha256=digest, bytes=size))
 
     for row, frame in decoded_browser(capture):
-        if row['index'] in excluded_indices:
-            continue
-        last = row, frame
-        if row["relative_ticks_90k"] >= next_tick:
+        if row['index'] in selected_indices:
             save(row, frame)
-            next_tick = row["relative_ticks_90k"]+round(interval*90000)
-    if last and selected[-1]["source_index"] != last[0]["index"]:
-        save(*last)
+    if len(selected) != len(selected_rows):
+        raise ProtocolError('browser_teach_selected_decode_incomplete')
     result = dict(schema="sphere-reconstruction-input-v1", clip=capture.manifest["id"],
                   source_manifest_sha256=sha(capture.originals["manifest.json"]),
                   geometry=list(capture.geometry), images=selected,
                   source_frames_verified=len(capture.frames), source_input_events_verified=len(capture.inputs),
-                  selection="fixed_media_interval_plus_last_not_quality_or_pose_selection",
+                  selection="balanced_media_interval_with_exact_last_not_quality_or_pose_selection",
+                  sampling=sampling,
                   source_video_copied=False, source_capture_clock_mapping_known=False,
                   cameras=None, metric_scale=None, camera_body_transform=None,
                   reconstruction_qualified=False, execution_qualified=False,

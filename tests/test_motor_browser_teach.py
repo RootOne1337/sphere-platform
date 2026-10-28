@@ -17,6 +17,7 @@ from motor_worker.browser_teach import (
     browser_units,
     inspect_browser,
     prepare_browser,
+    reconstruction_rows,
     validate_browser,
 )
 from motor_worker.protocol import ProtocolError
@@ -35,6 +36,38 @@ def encode(value):
 
 
 class BrowserTeachTests(unittest.TestCase):
+    def test_terminal_frame_replaces_a_crowded_neighbor_without_dropping_the_exact_endpoint(self):
+        frames=[dict(index=i,relative_ticks_90k=round(t*90000)) for i,t in enumerate([0,.25,.5,.75,1.,1.031])]
+        before=json.loads(json.dumps(frames))
+        rows,sampling=reconstruction_rows(frames,.25)
+        self.assertEqual([r['index'] for r in rows],[0,1,2,3,5])
+        self.assertEqual(sampling['final_close_neighbor_replaced_source_index'],4)
+        self.assertEqual(sampling['last_source_index'],5)
+        self.assertAlmostEqual(sampling['minimum_interval_seconds'],.25)
+        self.assertFalse(sampling['stationary_detection_applied'])
+        self.assertEqual(frames,before)
+
+    def test_heldout_endpoints_short_clips_and_a_well_spaced_last_frame_remain_exact(self):
+        frames=[dict(index=i,relative_ticks_90k=round(t*90000)) for i,t in enumerate([0,.25,.5,.75,.95])]
+        rows,sampling=reconstruction_rows(frames,.25)
+        self.assertEqual([r['index'] for r in rows],[0,1,2,3,4])
+        self.assertIsNone(sampling['final_close_neighbor_replaced_source_index'])
+        rows,_=reconstruction_rows(frames,1.,frozenset({0,4}))
+        self.assertEqual([r['index'] for r in rows],[1,3])
+        rows,_=reconstruction_rows(frames[:2],1.)
+        self.assertEqual([r['index'] for r in rows],[0,1])
+
+    def test_png_preparation_uses_balanced_tail_and_preserves_source_and_provenance(self):
+        before={p.name:digest(p.read_bytes()) for p in self.source.iterdir()}
+        output=self.parent/'balanced-tail'
+        prepare_browser(self.source,output,interval=.23)
+        prepared=json.loads((output/'reconstruction-input.json').read_bytes())
+        self.assertEqual([r['source_index'] for r in prepared['images']],[0,7,15])
+        self.assertEqual(prepared['sampling']['final_close_neighbor_replaced_source_index'],14)
+        self.assertEqual(prepared['images'][-1]['relative_ticks_90k'],self.frames[-1]['relative_ticks_90k'])
+        self.assertFalse((output/'images/00000014.png').exists())
+        self.assertTrue((output/'images/00000015.png').is_file())
+        self.assertEqual(before,{p.name:digest(p.read_bytes()) for p in self.source.iterdir()})
     def test_heldout_indices_never_enter_preparation_including_the_last_frame(self):
         before={p.name:digest(p.read_bytes()) for p in self.source.iterdir()}
         output=self.parent/'heldout-prepare'
