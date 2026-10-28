@@ -40,7 +40,7 @@ def export(model, provenance, images, output, *, profile, world_revision, checkp
     import pycolmap
 
     from scripts.pilot.reconstruct_route import checkpoint
-    from scripts.pilot.route_landmark_builder import build
+    from scripts.pilot.route_landmark_builder import build, select_spatially_diverse
     from scripts.pilot.reconstruction_quality import pinhole_condition
 
     started = time.monotonic()
@@ -97,9 +97,10 @@ def export(model, provenance, images, output, *, profile, world_revision, checkp
         trace.append(tuple(float(v) for v in image.cam_from_world().inverse().translation))
         seconds.append(rows[image.name]["relative_ticks_90k"]/90000)
     rebuilt, rebuild_report = build(feature_observations, matrices, K, checkpoint=bounded)
-    xyz = [row[1] for row in rebuilt[:MAX_POINTS]]
-    descriptors = [row[2] for row in rebuilt[:MAX_POINTS]]
-    landmark_views = [row[3] for row in rebuilt[:MAX_POINTS]]
+    selected, selection_report = select_spatially_diverse(rebuilt, matrices, K, MAX_POINTS, checkpoint=bounded)
+    xyz = [row[1] for row in selected]
+    descriptors = [row[2] for row in selected]
+    landmark_views = [row[3] for row in selected]
     source_sha = hashlib.sha256(json.dumps(bindings, sort_keys=True).encode()).hexdigest()
     route = SparseRoute(str(uuid.uuid4()), world_revision, source_sha, pipeline_id(), profile,
         (float(K[0, 0]), float(K[1, 1]), float(K[0, 2]), float(K[1, 2])), tuple(xyz),
@@ -115,7 +116,7 @@ def export(model, provenance, images, output, *, profile, world_revision, checkp
         source_bindings=bindings, landmarks=len(xyz), cameras=len(trace),
         first_seconds=seconds[0], last_seconds=seconds[-1], camera_trace_only=True,
         omitted_landmarks=max(0, rebuild_report.get("accepted", rec.num_points3D())-len(xyz)),
-        feature_build=rebuild_report, map_support=map_support(route), metric_scale=None,
+        feature_build=rebuild_report, feature_selection=selection_report, map_support=map_support(route), metric_scale=None,
         execution_qualified=False, input_events=0)
 
 

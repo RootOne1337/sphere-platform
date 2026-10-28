@@ -271,6 +271,9 @@ def inspect_browser(directory):
     spacing = dict(intervals=len(gaps), median_ms=statistics.median(gaps) if gaps else None,
                    p95_ms=sorted(gaps)[math.ceil(.95*len(gaps))-1] if gaps else None,
                    max_ms=max(gaps) if gaps else None,
+                   gaps_over_25ms=sum(gap > 25 for gap in gaps),
+                   gaps_over_50ms=sum(gap > 50 for gap in gaps),
+                   gaps_over_100ms=sum(gap > 100 for gap in gaps),
                    gaps_over_200ms=sum(gap > 200 for gap in gaps),
                    gaps_over_500ms=sum(gap > 500 for gap in gaps))
     return dict(schema=capture.manifest["schema"], clip=capture.manifest["id"],

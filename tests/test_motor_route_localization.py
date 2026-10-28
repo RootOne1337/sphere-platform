@@ -20,6 +20,7 @@ from motor_worker.protocol import ProtocolError
 from motor_worker.route_localization import (
     RouteLocalizer,
     SparseRoute,
+    inlier_spatial_support,
     map_support,
     pipeline_id,
     render_guidance,
@@ -71,8 +72,55 @@ class SparseLocalizationTests(unittest.TestCase):
     def observe(self, *, scene="active", **values):
         self.now += .2
         self.sequence += 1
-        self.frame = PolicyFrame(EPOCH, self.sequence, self.now-.01, 960, 540, bytes(960*540*3))
+        # Feature extraction is mocked in these state tests; distinct source
+        # images must still represent distinct observations.
+        rgb = self.sequence.to_bytes(4, "little") + bytes(960*540*3 - 4)
+        self.frame = PolicyFrame(EPOCH, self.sequence, self.now-.01, 960, 540, rgb)
         return self.localizer.observe(self.frame, episode_id=EPISODE, goal_revision=GOAL, scene=scene, **values)
+
+    def test_repeated_rgb_cannot_confirm_and_requires_new_observations(self):
+        self.assertEqual(self.observe().state, "confirming")
+        original = self.frame
+        for seq in range(2, 5):
+            self.now += .2
+            duplicate = replace(original, receiver_sequence=seq, received_at=self.now-.01)
+            pose = self.localizer.observe(duplicate, episode_id=EPISODE, goal_revision=GOAL, scene="active")
+            self.assertEqual((pose.state, pose.reason), ("unknown", "route_repeated_rgb_not_independent"))
+        self.sequence = 4
+        self.assertEqual(self.observe().state, "confirming")
+        self.assertEqual(self.observe().state, "confirming")
+        self.assertEqual(self.observe().state, "localized")
+
+    def test_repeat_after_confirmed_pose_revokes_pose(self):
+        for _ in range(3):
+            pose = self.observe()
+        self.assertEqual(pose.state, "localized")
+        self.now += .2
+        duplicate = replace(self.frame, receiver_sequence=4, received_at=self.now-.01)
+        pose = self.localizer.observe(duplicate, episode_id=EPISODE, goal_revision=GOAL, scene="active")
+        self.assertEqual((pose.state, pose.reason), ("unknown", "route_repeated_rgb_not_independent"))
+        self.assertEqual(self.localizer.confirmations, 0)
+
+    def test_alternating_two_images_cannot_fake_three_confirmations(self):
+        self.assertEqual(self.observe().state, "confirming")
+        first = self.frame
+        self.assertEqual(self.observe().state, "confirming")
+        self.now += .2
+        alternating = replace(first, receiver_sequence=3, received_at=self.now-.01)
+        result = self.localizer.observe(alternating, episode_id=EPISODE, goal_revision=GOAL, scene="active")
+        self.assertEqual((result.state, result.reason), ("unknown", "route_repeated_rgb_not_independent"))
+        self.assertEqual(self.localizer.confirmations, 0)
+
+    def test_competing_pose_rejects_different_heading_at_same_center(self):
+        center = self.np.zeros(3)
+        identity = self.np.eye(3)
+        opposite = self.cv.Rodrigues(self.np.array([0., self.np.pi, 0.]))[0]
+        small_turn = self.cv.Rodrigues(self.np.array([0., .2, 0.]))[0]
+        best = (center, identity, 100, .5)
+        self.assertTrue(self.localizer._competing_pose(best, (center, opposite, 75, .5)))
+        self.assertFalse(self.localizer._competing_pose(best, (center, opposite, 74, .5)))
+        self.assertFalse(self.localizer._competing_pose(best, (center, small_turn, 90, .5)))
+        self.assertTrue(self.localizer._competing_pose(best, (self.np.array([100., 0., 0.]), identity, 90, .5)))
 
     def test_translated_rotated_start_at_middle_uses_actual_pnp(self):
         for count in range(3):
@@ -125,6 +173,57 @@ class SparseLocalizationTests(unittest.TestCase):
         pixels, desc = self.features()
         self.assertIsNone(planar._solve(pixels, desc))
         self.assertIsNone(self.localizer._solve(pixels[:15], desc[:15]))
+
+    def test_horizontal_only_inliers_are_not_accepted_as_camera_pose(self):
+        np=self.np
+        rng=np.random.default_rng(113)
+        def pose_points(low_y,high_y):
+            xy=np.column_stack((rng.uniform(10,950,120),rng.uniform(low_y,high_y,120)))
+            z=rng.uniform(8,40,len(xy))
+            xyz=np.column_stack(((xy[:,0]-480)*z/450,(xy[:,1]-270)*z/450,z))
+            return xyz,xy
+        one_strip,strip_xy=pose_points(365,525)
+        self.assertGreaterEqual(len({int(x//240) for x in strip_xy[:,0]}),4)
+        self.assertFalse(inlier_spatial_support(strip_xy))
+        self.assertIsNone(self.localizer._verify_correspondences(one_strip,strip_xy))
+        spread,spread_xy=pose_points(20,520)
+        self.assertTrue(inlier_spatial_support(spread_xy))
+        self.assertIsNotNone(self.localizer._verify_correspondences(spread,spread_xy))
+
+    def test_grid_boundary_does_not_make_a_narrow_band_observable(self):
+        xy=self.np.array([(x,y) for x in (40,280,520,760) for y in (179.,181.) for _ in range(3)])
+        self.assertFalse(inlier_spatial_support(xy))
+        xy[0]=[-1,180]
+        self.assertFalse(inlier_spatial_support(xy))
+
+    def test_one_outlier_cannot_create_a_second_supported_row(self):
+        rng=self.np.random.default_rng(114)
+        xy=self.np.column_stack((rng.uniform(5,955,100),rng.uniform(365,530,100)))
+        xy[0,1]=359.
+        self.assertFalse(inlier_spatial_support(xy))
+
+    def test_candidate_limit_is_bounded_and_controls_search_without_changing_pnp_checks(self):
+        views = 32
+        route = replace(self.route,
+            camera_trace=tuple((0., 0., float(z)) for z in range(views)),
+            source_seconds=tuple(float(z) for z in range(views)),
+            reference_rgb_sha256=tuple(hashlib.sha256(str(z).encode()).hexdigest() for z in range(views)),
+            landmark_views=tuple((4*(i//30), 4*(i//30)+1, 4*(i//30)+2) for i in range(240)),
+            source_frame_indices=tuple(range(views)))
+        matches = [[SimpleNamespace(trainIdx=i, distance=.1)] for i in range(240)]
+        matcher = SimpleNamespace(knnMatch=lambda *args, **kwargs: matches)
+        for limit in (3, 5, 8):
+            tracker = RouteLocalizer(route, capture_epoch=EPOCH, episode_id=EPISODE,
+                                     goal_revision=GOAL, candidate_limit=limit)
+            visited = []
+            tracker._solve_subset = lambda pixels, desc, indices: visited.append(indices) or None
+            with patch.object(self.cv, 'BFMatcher', return_value=matcher):
+                self.assertIsNone(tracker._solve(self.np.zeros((240, 2)), self.desc))
+            self.assertEqual(len(visited), limit)
+        for bad in (True, 2, 9):
+            with self.assertRaisesRegex(ProtocolError, 'invalid_route_localizer_binding'):
+                RouteLocalizer(route, capture_epoch=EPOCH, episode_id=EPISODE, goal_revision=GOAL,
+                               candidate_limit=bad)
 
     def test_crossing_trace_has_no_unique_progress(self):
         route = replace(self.route, camera_trace=((0., 0., 0.), (0., 0., 5.), (5., 0., 5.),
@@ -249,6 +348,20 @@ class SparseLocalizationTests(unittest.TestCase):
         self.assertIsNotNone(tracker)
         self.assertFalse(support["navigation_qualified"])
 
+    def test_missing_reference_interval_rejects_route_and_never_draws_across_gap(self):
+        route = replace(self.route, source_seconds=(0., 1., 2., 4., 5., 6., 7., 8.))
+        support = map_support(route)
+        self.assertTrue(support["all_reference_neighborhoods_supported"])
+        self.assertFalse(support["all_reference_intervals_observed"])
+        self.assertEqual(support["unobserved_intervals"], [{"start_seconds": 2., "end_seconds": 4.}])
+        with self.assertRaisesRegex(ProtocolError, "route_map_has_unobserved_sections"):
+            self.tracker(route)
+        tracker = RouteLocalizer(route, capture_epoch=EPOCH, episode_id=EPISODE, goal_revision=GOAL,
+                                 diagnostic_partial_map=True, clock=lambda: self.now)
+        self.assertIsNone(tracker._nearest(self.np.array([0., 0., 12.5])))
+        points = tracker._project(self.np.zeros(3), self.np.eye(3), 1)
+        self.assertEqual(len(points), 1)
+
     def test_builder_triangulates_known_views_and_rejects_bad_geometry(self):
         from scripts.pilot.route_landmark_builder import build, triangulate
 
@@ -301,3 +414,27 @@ class SparseLocalizationTests(unittest.TestCase):
                 other = check("fixture", replace(route, source_capture_sha256="f"*64), Path(folder)/"other")
                 self.assertEqual(other["reference_indices_excluded"], 0)
                 self.assertEqual(other["counts"], {"unknown": 3})
+                self.assertEqual(other["candidate_limit"], 3)
+                self.assertEqual(other["compute_freshness_lower_bound"]["scope"], "compute_only_lower_bound")
+
+    def test_offline_compute_budget_is_lower_bound_not_a_freshness_claim(self):
+        from scripts.pilot.check_route_localization import compute_freshness_lower_bound
+
+        samples = [
+            {"compute_ms": 250., "pose": {"state": "localized"}},
+            {"compute_ms": 251., "pose": {"state": "localized"}},
+            {"compute_ms": 280., "pose": {"state": "unknown"}},
+        ]
+        result = compute_freshness_lower_bound(samples)
+        self.assertEqual(result["receiver_age_budget_ms"], 250)
+        self.assertEqual(result["samples_exceeding_budget"], 2)
+        self.assertEqual(result["localized_samples_exceeding_budget"], 1)
+        self.assertEqual(result["scope"], "compute_only_lower_bound")
+
+    def test_offline_probe_rejects_invalid_candidate_limit(self):
+        from scripts.pilot.check_route_localization import check
+
+        with tempfile.TemporaryDirectory() as folder:
+            for bad in (True, 2, 9):
+                with self.subTest(value=bad), self.assertRaisesRegex(ProtocolError, 'invalid_localization_probe'):
+                    check('fixture', self.route, Path(folder)/'out', candidate_limit=bad)

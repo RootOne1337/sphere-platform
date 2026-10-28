@@ -77,6 +77,26 @@ class RouteMemoryTests(unittest.TestCase):
         self.observe()
         self.assertEqual(self.observe().state, "tracking")
 
+    def test_unknown_or_unconfirmed_frames_never_expose_old_next_checkpoint(self):
+        for _ in range(3):
+            result = self.observe()
+        self.assertEqual((result.state, result.next_checkpoint), ("tracking", 1))
+        result = self.observe(scene="unknown")
+        self.assertEqual((result.state, result.next_checkpoint), ("unknown", None))
+        for _ in range(2):
+            result = self.observe()
+            self.assertEqual((result.state, result.next_checkpoint), ("confirming", None))
+        result = self.observe()
+        self.assertEqual((result.state, result.next_checkpoint), ("tracking", 1))
+
+    def test_malformed_observation_clears_confirmation(self):
+        for _ in range(3):
+            self.observe()
+        with self.assertRaisesRegex(ProtocolError, "invalid_route_progress_observation"):
+            self.observe(scene="invalid")
+        result = self.observe()
+        self.assertEqual((result.state, result.next_checkpoint), ("confirming", None))
+
     def test_bundle_roundtrip_exact_hashes_and_untrusted_entry_paths(self):
         output = self.root/"route"
         self.route.save(output)

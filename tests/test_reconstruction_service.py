@@ -103,6 +103,82 @@ def test_automatic_route_preparation_is_observable_and_restart_does_not_repeat(j
     assert not (job / 'navigation/active.json').exists()
 
 
+def test_sparse_receipt_allows_one_automatic_preparation_after_dense_failure(jobs, monkeypatch):
+    jobs.create(dict(id='a' * 32, key='b' * 64, mask='none', steps=30000, prepare_route=True))
+    job = jobs.path('a' * 32)
+    service.write_json(job / 'state.json', {'phase': 'failed', 'error': 'brush_failed_see_local_log'})
+    service.write_json(job / 'sparse-receipt.json', {'placeholder': True})
+    calls = []
+    monkeypatch.setattr(jobs.navigation, 'prepare', lambda target, body: calls.append((target, body)))
+    class Exited:
+        def poll(self): return 1
+    jobs.monitor(job, Exited())
+    assert len(calls) == 1 and calls[0][0] == job
+    assert len(calls[0][1]['id']) == 32
+    assert jobs.status(job)['sparse_available'] is True
+
+
+def test_sparse_receipt_does_not_restart_preparation_after_service_restart(jobs):
+    jobs.create(dict(id='a' * 32, key='b' * 64, mask='none', steps=30000, prepare_route=True))
+    job = jobs.path('a' * 32)
+    service.write_json(job / 'state.json', {'phase': 'failed', 'error': 'brush_failed_see_local_log'})
+    service.write_json(job / 'sparse-receipt.json', {'placeholder': True})
+    assert jobs.status(job)['navigation']['phase'] == 'pending_auto_prepare'
+    restarted = service.Jobs(jobs.folder, jobs.python)
+    assert restarted.status(job)['navigation']['error'] == 'route_preparation_interrupted'
+    assert not (job / 'navigation/active.json').exists()
+
+
+def test_route_only_request_is_explicit_and_does_not_enable_input(jobs):
+    jobs.create(dict(id='a' * 32, key='b' * 64, mask='none', steps=30000,
+                     prepare_route=True, route_only=True))
+    job = jobs.path('a' * 32)
+    control = jobs.authorize(job, 'b' * 64)
+    assert control['route_only'] is True and control['prepare_route'] is True
+    service.write_json(job / 'sparse-receipt.json', {'placeholder': True})
+    service.write_json(job / 'state.json', {'phase': 'sparse_complete'})
+    status = jobs.status(job)
+    assert status['sparse_available'] and not status['dense_available']
+    assert status['navigation']['phase'] == 'pending_auto_prepare'
+    assert status['navigation']['executionQualified'] is False
+
+
+def test_sparse_scene_source_frame_is_bound_and_visible_without_dense_render(jobs):
+    import io
+    from PIL import Image
+    from scripts.pilot.sparse_scene_receipt import FILES, create_sparse_receipt
+    job = create(jobs)
+    for name in FILES:
+        path = job/name
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_bytes(b'camera-data')
+    manifest = job/'input/manifest.json'
+    manifest.write_text('{}')
+    manifest_sha = hashlib.sha256(manifest.read_bytes()).hexdigest()
+    image = io.BytesIO()
+    Image.new('RGB', (64, 48), 'red').save(image, 'PNG')
+    path = job/'prepared/images/00000000.png'
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_bytes(image.getvalue())
+    service.write_json(job/'prepared/reconstruction-input.json', {'source_manifest_sha256': manifest_sha,
+        'images': [{'image': 'images/00000000.png', 'png_sha256': hashlib.sha256(image.getvalue()).hexdigest()}]})
+    service.write_json(job/'geometry.json', {'source_manifest_sha256': manifest_sha})
+    service.write_json(job/'quality.json', {'registered': 10, 'selected': 10, 'points': 300,
+        'mean_reprojection_px': 1, 'conditioning': {'passed': True}, 'intrinsics_condition': {'passed': True}})
+    create_sparse_receipt(job)
+    assert jobs.source_preview(job, '00000000.png').startswith(b'\xff\xd8')
+    path.write_bytes(b'changed')
+    with pytest.raises(ValueError, match='source_preview_changed'):
+        jobs.source_preview(job, '00000000.png')
+
+
+@pytest.mark.parametrize('route_only,prepare_route', [(True, False), ('true', True), (1, True)])
+def test_route_only_rejects_ambiguous_or_unprepared_mode(jobs, route_only, prepare_route):
+    with pytest.raises(ValueError, match='invalid_route_pipeline_option'):
+        jobs.create(dict(id='a' * 32, key='b' * 64, mask='none', steps=30000,
+                         prepare_route=prepare_route, route_only=route_only))
+
+
 def test_old_complete_export_is_not_automatically_a_verified_scene(jobs):
     job = create(jobs)
     service.write_json(job / 'state.json', dict(phase='complete'))

@@ -110,6 +110,7 @@ class AnchoredRouteLocalizer(RouteLocalizer):
         except Exception:
             self._anchors, self._descriptor_at = None, None
             self.confirmations, self.previous = 0, None
+            self.recent_confirmed_sources.clear()
             raise
         finally:
             self._frame, self._solution, self._gray = None, None, None

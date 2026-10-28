@@ -1,7 +1,18 @@
 """Mask placement precedes feature extraction and keeps original pixels intact."""
 import hashlib
+import json
 
 import pytest
+
+
+def test_sparse_only_seals_before_finishing_without_starting_dense(tmp_path, monkeypatch):
+    from scripts.pilot import reconstruct_route, sparse_scene_receipt
+    calls = []
+    monkeypatch.setattr(sparse_scene_receipt, 'create_sparse_receipt', lambda job: calls.append(('seal', job)))
+    monkeypatch.setattr(reconstruct_route, 'train_dense', lambda *args, **kwargs: calls.append(('dense', args)))
+    reconstruct_route.finish_sparse(tmp_path, tmp_path, {}, {}, 'none', None, 30000, route_only=True)
+    assert calls == [('seal', tmp_path)]
+    assert json.loads((tmp_path/'state.json').read_text())['phase'] == 'sparse_complete'
 
 from scripts.pilot.reconstruct_route import (
     brush_dataset,

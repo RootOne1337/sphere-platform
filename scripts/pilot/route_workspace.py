@@ -84,6 +84,12 @@ class RouteWorkspaces:
             if (receipt.get('geometry_sha256') != digest_file(job/'geometry.json')
                     or receipt.get('source_capture_sha256') != digest_file(job/'input/manifest.json')):
                 return dict(phase='rejected', error='route_source_changed', executionQualified=False)
+            support = receipt.get('map_support', {})
+            coverage = receipt.get('source_coverage', {})
+            if (support.get('all_reference_neighborhoods_supported') is not True
+                    or support.get('all_reference_intervals_observed') is not True
+                    or coverage.get('endpoints_observed') is not True):
+                return dict(phase='rejected', error='route_map_has_unobserved_sections', executionQualified=False)
             result['summary'] = {key: receipt[key] for key in ('cameras', 'landmarks', 'map_support', 'camera_trace_only')}
         return result
 
@@ -207,6 +213,7 @@ class RouteWorkspaces:
         from PIL import Image
 
         from motor_worker.policy import PolicyFrame
+        from motor_worker.route_localization import PNP_VERIFICATION_POLICY
 
         self._expire()
         if (type(body) is not dict or set(body) != {'id', 'captureEpoch', 'sequence', 'jpeg'}
@@ -241,6 +248,7 @@ class RouteWorkspaces:
         return dict(id=session['id'], sequence=body['sequence'], jpegSha256=hashlib.sha256(raw).hexdigest(),
             captureEpoch=body['captureEpoch'], pose=values, computeMs=elapsed,
             method=session['tracker'].last_diagnostic.get('method', 'not_attempted'),
+            verificationPolicy=PNP_VERIFICATION_POLICY,
             physicalActions=0, framesArchived=0, executionQualified=False, groundRoute=False,
             viewCompatibility='same_aspect_assumed_same_fov',
             fullAndroidLatencyKnown=False, sceneIsOperatorAssumption=True)

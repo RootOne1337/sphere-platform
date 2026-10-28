@@ -28,12 +28,25 @@ from scripts.pilot.atomic_json import write_json
 from scripts.pilot.reconstruct_route import checkpoint
 
 
-def check(capture_dir, route, output, *, start=0., end=600., tracker_kind="descriptor", checkpoint_fn=None):
+def compute_freshness_lower_bound(samples):
+    """Flag calculations that alone exceed the live receiver-age budget.
+
+    This does not simulate queueing, capture, transport, or make a pose valid;
+    the offline tracker deliberately uses media time rather than wall time.
+    """
+    slow = [sample for sample in samples if sample["compute_ms"] > 250.0]
+    return dict(receiver_age_budget_ms=250, scope="compute_only_lower_bound",
+                samples_exceeding_budget=len(slow),
+                localized_samples_exceeding_budget=sum(s["pose"]["state"] == "localized" for s in slow))
+
+
+def check(capture_dir, route, output, *, start=0., end=600., tracker_kind="descriptor", candidate_limit=3, checkpoint_fn=None):
     import cv2 as cv
     import numpy as np
 
     if (type(route) is not SparseRoute or not finite(start, 0, 600) or not finite(end, start, 600)
-            or tracker_kind not in {"descriptor", "anchored_flow"}):
+            or tracker_kind not in {"descriptor", "anchored_flow"}
+            or type(candidate_limit) is not int or not 3 <= candidate_limit <= 8):
         raise ProtocolError("invalid_localization_probe")
     output = Path(output)
     guard = checkpoint if checkpoint_fn is None else checkpoint_fn
@@ -52,7 +65,7 @@ def check(capture_dir, route, output, *, start=0., end=600., tracker_kind="descr
 
         tracker_class = AnchoredRouteLocalizer
     tracker = tracker_class(route, capture_epoch=epoch, episode_id=episode, goal_revision=goal, clock=lambda: now,
-                            diagnostic_partial_map=True)
+                            diagnostic_partial_map=True, candidate_limit=candidate_limit)
     samples, elapsed, counts, excluded, proofs = [], [], Counter(), 0, 0
     index_excluded = 0
     references = set(route.reference_rgb_sha256)
@@ -96,11 +109,12 @@ def check(capture_dir, route, output, *, start=0., end=600., tracker_kind="descr
         samples.append(sample)
         counts[pose.state] += 1
     report = dict(schema="sphere-route-localization-quality-v1", offline_media_clock=True,
-        tracker_kind=tracker_kind,
+        tracker_kind=tracker_kind, candidate_limit=candidate_limit,
         samples=samples, counts=dict(counts), reference_rgb_excluded=excluded,
         reference_indices_excluded=index_excluded, same_capture=capture_sha == route.source_capture_sha256,
         compute_ms=None if not elapsed else dict(p50=float(np.median(elapsed)),
             p95=float(np.percentile(elapsed, 95)), maximum=max(elapsed)),
+        compute_freshness_lower_bound=compute_freshness_lower_bound(samples),
         route_id=route.id, capture_manifest_sha256=capture_sha, map_support=map_support(route),
         metric_scale=None, scene_verified=False, physical_actions=0, execution_qualified=False,
         arrival_accepted=False, android_to_model_latency_known=False)
@@ -115,9 +129,11 @@ def main():
     parser.add_argument("--start", type=float, default=0.)
     parser.add_argument("--end", type=float, default=600.)
     parser.add_argument("--tracker", choices=("descriptor", "anchored_flow"), default="descriptor")
+    parser.add_argument("--candidate-limit", type=int, choices=range(3, 9), default=3)
     args = parser.parse_args()
     print(json.dumps(check(args.capture, SparseRoute.load(args.route, sha256=args.sha256), args.output,
-                           start=args.start, end=args.end, tracker_kind=args.tracker), indent=2))
+                           start=args.start, end=args.end, tracker_kind=args.tracker,
+                           candidate_limit=args.candidate_limit), indent=2))
 
 
 if __name__ == "__main__":

@@ -20,9 +20,16 @@ from motor_worker.policy import PolicyFrame, epoch_valid, finite
 from motor_worker.protocol import ProtocolError, message
 
 SIZE = (960, 540)
+# Changes to the runtime pose gate are tracked separately from the descriptor
+# format: strengthening a gate must not make compatible saved maps unreadable.
+PNP_VERIFICATION_POLICY = 'pnp-image-coverage-v1'
 MAX_POINTS = 4096
 MAX_VIEWS = 256
 MAX_BYTES = 4 * 1024 * 1024
+# An absent camera over a longer interval is not evidence of a continuous route.
+# This conservative policy can reject sparse recordings; it does not prove that
+# shorter intervals are traversable or that the camera trace follows the road.
+MAX_REFERENCE_INTERVAL_SECONDS = 1.0
 
 
 def _sha(value):
@@ -72,6 +79,28 @@ def extract_features(frame, mask):
     return np.float64([p.pt for p in points]), desc.astype(np.float32)
 
 
+def inlier_spatial_support(points):
+    """Require inliers across both image axes, not one textured strip.
+
+    This is a conservative image-space observability check. It does not prove
+    that points are static, the pose is correct, or the road is traversable.
+    """
+    import numpy as np
+
+    xy=np.asarray(points,dtype=np.float64)
+    if (xy.ndim!=2 or xy.shape[1]!=2 or len(xy)<20 or not np.isfinite(xy).all()
+            or (xy<0).any() or (xy[:,0]>=SIZE[0]).any() or (xy[:,1]>=SIZE[1]).any()):
+        return False
+    cells={(int(x//240),int(y//180)) for x,y in xy}
+    minimum=max(5,int(np.ceil(len(xy)*.05)))
+    columns=np.bincount((xy[:,0]//240).astype(int),minlength=4)
+    rows=np.bincount((xy[:,1]//180).astype(int),minlength=3)
+    if len(cells)<4 or int((columns>=minimum).sum())<2 or int((rows>=minimum).sum())<2:
+        return False
+    spread=np.percentile(xy,95,axis=0)-np.percentile(xy,5,axis=0)
+    return bool(spread[0]>=96 and spread[1]>=54)
+
+
 def map_support(route):
     """Necessary feature coverage, not a localization/road-quality guarantee."""
     import numpy as np
@@ -91,12 +120,18 @@ def map_support(route):
             longest = max(longest, route.source_seconds[index]-route.source_seconds[run])
         else:
             run = None
+    gaps = [index for index, (first, second) in enumerate(zip(route.source_seconds, route.source_seconds[1:]))
+            if second-first > MAX_REFERENCE_INTERVAL_SECONDS]
     return dict(reference_views=len(visibility), min_correspondences_required=24,
         per_view_landmarks=[int(v) for v in per_view], neighborhood_landmarks=[int(v) for v in neighborhoods],
         views_below_24=int((per_view < 24).sum()), neighborhoods_below_24=int((neighborhoods < 24).sum()),
         zero_landmark_views=int((per_view == 0).sum()),
         longest_unsupported_reference_span_seconds=float(longest),
         all_reference_neighborhoods_supported=bool(np.all(neighborhoods >= 24)),
+        reference_interval_limit_seconds=MAX_REFERENCE_INTERVAL_SECONDS,
+        unobserved_intervals=[dict(start_seconds=route.source_seconds[index],
+                                   end_seconds=route.source_seconds[index+1]) for index in gaps],
+        all_reference_intervals_observed=not gaps,
         navigation_qualified=False)
 
 
@@ -232,16 +267,20 @@ class RouteLocalizer:
     """
 
     def __init__(self, route, *, capture_epoch, episode_id, goal_revision, clock=time.monotonic,
-                 diagnostic_partial_map=False):
+                 diagnostic_partial_map=False, candidate_limit=3):
         import cv2 as cv
         import numpy as np
 
-        if (type(diagnostic_partial_map) is not bool or type(route) is not SparseRoute or not all(epoch_valid(v) for v in
+        if (type(diagnostic_partial_map) is not bool or type(candidate_limit) is not int or not 3 <= candidate_limit <= 8
+                or type(route) is not SparseRoute or not all(epoch_valid(v) for v in
                 (capture_epoch, episode_id, goal_revision)) or route.pipeline_sha256 != pipeline_id()):
             raise ProtocolError("invalid_route_localizer_binding")
-        if not diagnostic_partial_map and not map_support(route)["all_reference_neighborhoods_supported"]:
-            raise ProtocolError("route_map_has_unobserved_sections")
+        if not diagnostic_partial_map:
+            support = map_support(route)
+            if not support["all_reference_neighborhoods_supported"] or not support["all_reference_intervals_observed"]:
+                raise ProtocolError("route_map_has_unobserved_sections")
         self.route, self.epoch, self.episode, self.goal, self.clock = route, capture_epoch, episode_id, goal_revision, clock
+        self.candidate_limit = candidate_limit
         self.cv, self.np = cv, np
         self.xyz = np.asarray(route.points, np.float64)
         self.descriptors = np.frombuffer(route.descriptors, dtype="<f4").reshape(-1, 128)
@@ -255,6 +294,8 @@ class RouteLocalizer:
         self.K = np.array([[fx, 0, cx], [0, fy, cy], [0, 0, 1]], np.float64)
         self.mask = feature_mask(route.profile)
         self.last_sequence, self.last_received, self.confirmations = 0, None, 0
+        self.last_source_sha = None
+        self.recent_confirmed_sources = []
         self.previous, self.retired = None, False
 
     def _fresh(self, frame):
@@ -279,7 +320,7 @@ class RouteLocalizer:
             for match in plausible:
                 votes += self.visibility[:, match.trainIdx]*(1-match.distance)/len(plausible)
         candidates = []
-        for _ in range(3):
+        for _ in range(self.candidate_limit):
             at = int(np.argmax(votes))
             if votes[at] < 12:
                 break
@@ -296,10 +337,18 @@ class RouteLocalizer:
         proposals.sort(key=lambda p: -p[2])
         best = proposals[0]
         for other in proposals[1:]:
-            if (other[2] >= .75*best[2]
-                    and np.linalg.norm(other[0]-best[0]) > np.median(self.lengths)*2):
+            if self._competing_pose(best, other):
                 return None
         return best
+
+    def _competing_pose(self, best, other):
+        """Reject similarly supported, materially different pose hypotheses."""
+        np = self.np
+        if other[2] < .75*best[2]:
+            return False
+        angle = float(np.arccos(np.clip((np.trace(other[1] @ best[1].T)-1)/2, -1, 1)))
+        return (np.linalg.norm(other[0]-best[0]) > np.median(self.lengths)*2
+                or angle > 1.05)
 
     def _solve_subset(self, pixels, descriptors, indices):
         cv = self.cv
@@ -343,9 +392,8 @@ class RouteLocalizer:
         error = np.linalg.norm(projected-image, axis=1)
         depth = (world@rotation.T+tvec.reshape(3))[:, 2]
         mask = (error <= 3) & (depth > 1e-5)
-        coverage = len({(int(x//240), int(y//180)) for x, y in image[mask]})
         if (not np.isfinite(center).all() or not np.isfinite(rotation).all()
-                or int(mask.sum()) < 20 or mask.mean() < .5 or coverage < 4
+                or int(mask.sum()) < 20 or mask.mean() < .5 or not inlier_spatial_support(image[mask])
                 or float(np.median(error[mask])) > 2):
             return None
         return center, rotation, int(mask.sum()), float(np.median(error[mask])), mask
@@ -358,6 +406,8 @@ class RouteLocalizer:
         distances = np.linalg.norm(nearest-center, axis=1)
         order = np.argsort(distances)
         at = int(order[0])
+        if self.route.source_seconds[at+1]-self.route.source_seconds[at] > MAX_REFERENCE_INTERVAL_SECONDS:
+            return None
         # A crossing/repeated passage has multiple route-progress interpretations.
         for other in order[1:]:
             if abs(int(other)-at) > 2 and distances[other] <= distances[at]+self.lengths.mean()*.15:
@@ -368,7 +418,10 @@ class RouteLocalizer:
         # Only a local contiguous visible part. No line across behind-camera,
         # offscreen or unobserved sections, and no fabricated ground surface.
         output = []
-        for world in self.trace[segment+1:segment+9]:
+        for index in range(segment+1, min(segment+9, len(self.trace))):
+            if self.route.source_seconds[index]-self.route.source_seconds[index-1] > MAX_REFERENCE_INTERVAL_SECONDS:
+                break
+            world = self.trace[index]
             point = rotation@(world-center)
             if point[2] <= 1e-4:
                 if output:
@@ -391,6 +444,7 @@ class RouteLocalizer:
         def result(reason, *, state="unknown", **values):
             if state == "unknown":
                 self.confirmations, self.previous = 0, None
+                self.recent_confirmed_sources.clear()
             return RoutePose(state, reason, self.route.id, self.route.world_revision, frame.capture_epoch,
                              frame.receiver_sequence, frame.received_at, self.clock(), source_sha,
                              (frame.width, frame.height), **values)
@@ -403,11 +457,18 @@ class RouteLocalizer:
             return result("route_binding_retired")
         gap = self.last_received is not None and frame.received_at-self.last_received > .5
         self.last_sequence, self.last_received = frame.receiver_sequence, frame.received_at
+        duplicate_rgb = source_sha == self.last_source_sha or source_sha in self.recent_confirmed_sources
+        self.last_source_sha = source_sha
         if gap:
             return result("route_observation_gap")
         if (scene != "active" or (frame.width, frame.height) != (self.route.profile.width, self.route.profile.height)
                 or not self._fresh(frame)):
             return result("route_scene_geometry_or_age_unqualified")
+        # A fresh delivery sequence is not proof of a fresh image. Exact RGB
+        # repeats cannot independently confirm a pose; changes in overlays or
+        # video noise can still hide a frozen world and require separate checks.
+        if duplicate_rgb:
+            return result("route_repeated_rgb_not_independent")
         solved = self._solve(*self._features(frame))
         if not self._fresh(frame):
             return result("route_frame_expired_during_localization")
@@ -433,6 +494,7 @@ class RouteLocalizer:
         if not self._fresh(frame):
             return result("route_frame_expired_during_localization")
         self.previous = center, rotation, progress, frame.received_at
+        self.recent_confirmed_sources = (self.recent_confirmed_sources + [source_sha])[-3:]
         self.confirmations += 1
         state = "localized" if self.confirmations >= 3 else "confirming"
         return result("relative_camera_pose_not_clearance_or_arrival", state=state,

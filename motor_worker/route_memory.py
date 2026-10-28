@@ -155,6 +155,7 @@ class RouteProgress:
         now = self.clock()
         if (type(frame) is not PolicyFrame or not finite(now, 0, float("inf"))
                 or type(scene) is not str or scene not in {"active", "menu", "disconnected", "unknown"}):
+            self.candidate, self.confirmations = None, 0
             raise ProtocolError("invalid_route_progress_observation")
         if self.terminal is None:
             if frame.capture_epoch != self.epoch or episode_id != self.episode or goal_revision != self.goal:
@@ -170,7 +171,8 @@ class RouteProgress:
 
         def result(state, reason):
             return RouteEstimate(state, reason, self.index,
-                                 None if self.index is None or self.index+1 == len(self.route.views) else self.index+1,
+                                 None if state != "tracking" or self.index is None
+                                 or self.index+1 == len(self.route.views) else self.index+1,
                                  frame.capture_epoch, frame.receiver_sequence, frame.received_at)
 
         def unknown(reason):

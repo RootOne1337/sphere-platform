@@ -10,6 +10,60 @@ from __future__ import annotations
 from collections import defaultdict
 
 
+def select_spatially_diverse(landmarks, matrices, K, limit, width=960, height=540, checkpoint=None):
+    """Balance budget across time and image cells without inventing points.
+
+    This is a selection heuristic only. It does not establish static objects,
+    correct poses, full route coverage, or traversability.
+    """
+    import numpy as np
+    from collections import deque
+
+    if type(limit) is not int or limit < 1 or not matrices or width <= 0 or height <= 0:
+        raise ValueError('invalid_landmark_selection')
+    groups = defaultdict(deque)
+    unprojectable = []
+    for index, row in enumerate(landmarks):
+        if checkpoint is not None and index % 256 == 0:
+            checkpoint()
+        if len(row) != 4 or not row[3]:
+            raise ValueError('invalid_landmark_selection_input')
+        view = row[3][len(row[3]) // 2]
+        if type(view) is not int or not 0 <= view < len(matrices):
+            raise ValueError('invalid_landmark_selection_input')
+        camera = matrices[view][:, :3] @ np.asarray(row[1]) + matrices[view][:, 3]
+        projected = K @ camera
+        if not np.isfinite(projected).all() or camera[2] <= 1e-5:
+            unprojectable.append(row)
+            continue
+        x, y = projected[:2] / projected[2]
+        if not 0 <= x < width or not 0 <= y < height:
+            unprojectable.append(row)
+            continue
+        cell = (min(7, 8 * view // len(matrices)), int(x * 4 // width), int(y * 3 // height))
+        groups[cell].append(row)
+    if len(landmarks) <= limit:
+        return list(landmarks), dict(strategy='time-image-grid-round-robin-v1', candidate_count=len(landmarks),
+            selected_count=len(landmarks), grid_buckets=len(groups), unprojectable_count=len(unprojectable))
+    result = []
+    keys = sorted(groups)
+    while keys and len(result) < limit:
+        remaining = []
+        for key in keys:
+            if len(result) >= limit:
+                break
+            result.append(groups[key].popleft())
+            if groups[key]:
+                remaining.append(key)
+        keys = remaining
+    # Keep existing verified candidates even if their representative
+    # projection is numerically unavailable; they never count as coverage.
+    result.extend(unprojectable[:max(0, limit-len(result))])
+    return result, dict(strategy='time-image-grid-round-robin-v1', candidate_count=len(landmarks),
+                        selected_count=len(result), grid_buckets=len(groups),
+                        unprojectable_count=len(unprojectable))
+
+
 def triangulate(observations, pixels, matrices, K):
     import numpy as np
 

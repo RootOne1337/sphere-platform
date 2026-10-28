@@ -11,6 +11,16 @@ from scripts.pilot.route_workspace import RouteWorkspaces
 
 
 class RouteWorkspaceTests(unittest.TestCase):
+    def test_recording_endpoint_coverage_detects_missing_start_and_end(self):
+        from scripts.pilot.prepare_route_workspace import source_endpoint_coverage
+
+        frames = [{'relative_ticks_90k': 0}, {'relative_ticks_90k': 30 * 90000}]
+        self.assertTrue(source_endpoint_coverage(frames, .5, 29.5)['endpoints_observed'])
+        self.assertFalse(source_endpoint_coverage(frames, 0., 25.)['endpoints_observed'])
+        self.assertFalse(source_endpoint_coverage(frames, 2., 30.)['endpoints_observed'])
+        with self.assertRaisesRegex(ValueError, 'frames_missing'):
+            source_endpoint_coverage([], 0., 1.)
+
     def setUp(self):
         self.temporary = tempfile.TemporaryDirectory()
         self.addCleanup(self.temporary.cleanup)
@@ -31,6 +41,18 @@ class RouteWorkspaceTests(unittest.TestCase):
         (folder/'state.json').write_text('{"phase":"ready"}')
         (folder/'receipt.json').write_text(json.dumps(dict(geometry_sha256='0'*64,source_capture_sha256='0'*64)))
         self.assertEqual(self.workspace.status(self.job)['phase'], 'rejected')
+
+    def test_old_ready_receipt_without_coverage_evidence_is_rejected(self):
+        folder = self.job/'navigation'/self.identity
+        folder.mkdir(parents=True)
+        (folder.parent/'active.json').write_text(json.dumps(dict(id=self.identity)))
+        (folder/'state.json').write_text('{"phase":"ready"}')
+        source = hashlib.sha256(b'{}').hexdigest()
+        (folder/'receipt.json').write_text(json.dumps(dict(geometry_sha256=source, source_capture_sha256=source,
+            map_support=dict(all_reference_neighborhoods_supported=True))))
+        result = self.workspace.status(self.job)
+        self.assertEqual(result['phase'], 'rejected')
+        self.assertEqual(result['error'], 'route_map_has_unobserved_sections')
 
     def test_existing_preparation_is_read_back_without_a_process_or_resource_recheck(self):
         folder = self.job/'navigation'/self.identity
@@ -76,7 +98,9 @@ class RouteWorkspaceTests(unittest.TestCase):
         sha = fixture.route.save(folder/'route.json')
         source = hashlib.sha256(b'{}').hexdigest()
         receipt=dict(sha256=sha,geometry_sha256=source,source_capture_sha256=source,cameras=8,landmarks=240,
-            camera_trace_only=True,map_support=dict(all_reference_neighborhoods_supported=True))
+            camera_trace_only=True,map_support=dict(all_reference_neighborhoods_supported=True,
+                                                   all_reference_intervals_observed=True),
+            source_coverage=dict(endpoints_observed=True))
         (folder/'receipt.json').write_text(json.dumps(receipt))
         with patch('scripts.pilot.route_workspace.resource_checkpoint'):
             self.workspace.start_live(self.job,dict(id='d'*32,captureEpoch='e'*32,width=960,height=540,sceneConfirmed=True))
@@ -94,6 +118,7 @@ class RouteWorkspaceTests(unittest.TestCase):
         self.assertEqual(result['jpegSha256'],hashlib.sha256(encoded).hexdigest())
         self.assertEqual(result['pose']['state'],'unknown')
         self.assertEqual(result['framesArchived'],0)
+        self.assertEqual(result['verificationPolicy'],'pnp-image-coverage-v1')
         self.assertEqual(result['physicalActions'],0)
         self.assertFalse(result['executionQualified'])
         self.assertEqual(files,set(p.relative_to(self.job) for p in self.job.rglob('*') if p.is_file()))

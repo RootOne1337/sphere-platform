@@ -3,6 +3,7 @@
 import hashlib
 import importlib.util
 import unittest
+from dataclasses import replace
 
 from motor_worker.landmarks import RouteViewProfile
 from motor_worker.policy import PolicyFrame
@@ -58,6 +59,7 @@ class AnchoredTrackingTests(unittest.TestCase):
             for patch, (x, y) in zip(self.patches, self.np.rint(self.pixels).astype(int)):
                 image[y-5:y+6, x-5:x+6] = patch
         frame = PolicyFrame(EPOCH, self.index, self.now, 960, 540, image.tobytes())
+        self.last_frame = frame
         pose = self.tracker.observe(frame, episode_id=EPISODE, goal_revision=GOAL,
                                     scene=kwargs.get("scene", "active"))
         return pose, center
@@ -77,6 +79,18 @@ class AnchoredTrackingTests(unittest.TestCase):
         self.assertGreater(pose.inliers, 100)
         self.np.testing.assert_allclose(pose.center, center, atol=.04)
         self.assertLessEqual(len(self.tracker._anchors[2]), 256)
+
+    def test_repeated_rgb_discards_anchors_and_requires_fresh_confirmation(self):
+        self.confirm()
+        self.now += .2
+        self.index += 1
+        duplicate = replace(self.last_frame, receiver_sequence=self.index, received_at=self.now)
+        pose = self.tracker.observe(duplicate, episode_id=EPISODE, goal_revision=GOAL, scene="active")
+        self.assertEqual((pose.state, pose.reason), ("unknown", "route_repeated_rgb_not_independent"))
+        self.assertIsNone(self.tracker._anchors)
+        self.assertIsNone(self.tracker._descriptor_at)
+        self.assertEqual(self.tracker.last_diagnostic["method"], "not_attempted")
+        self.confirm()
 
     def test_mandatory_global_failure_cannot_fall_back_to_flow(self):
         self.confirm()

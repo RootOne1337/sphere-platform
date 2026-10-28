@@ -19,6 +19,7 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 
 from scripts.pilot.atomic_json import write_json
+from scripts.pilot.alternative_geometry import alternative, list_alternatives
 from scripts.pilot.reconstruct_surface import (
     SURFACE_TERMINAL,
     source_model,
@@ -35,7 +36,7 @@ from scripts.pilot.surface_asset import MAX_BYTES, MAX_FACES, validate_glb
 ROOT = Path(__file__).resolve().parents[2]
 LIMITS = {'manifest.json': 65536, 'frames.jsonl': 16 * 1024**2,
           'inputs.jsonl': 8 * 1024**2, 'COMPLETE': 1024, 'video.h264': 2**31}
-TERMINAL = {'complete', 'failed', 'cancelled', 'quality_rejected', 'review_required', 'partial_scene'}
+TERMINAL = {'complete', 'sparse_complete', 'failed', 'cancelled', 'quality_rejected', 'review_required', 'partial_scene'}
 IDENTITY = re.compile(r'^[0-9a-f]{32}$')
 
 
@@ -81,8 +82,9 @@ class Jobs:
         for control_path in folder.glob('*/control.json'):
             control = json.loads(control_path.read_text('utf-8'))
             job = control_path.parent
-            if (control.get('prepare_route') is True and (job / 'state.json').is_file()
-                    and json.loads((job / 'state.json').read_text('utf-8'))['phase'] == 'complete'
+            phase = json.loads((job / 'state.json').read_text('utf-8'))['phase'] if (job / 'state.json').is_file() else None
+            if (control.get('prepare_route') is True
+                    and (phase in {'complete', 'sparse_complete'} or phase == 'failed' and (job / 'sparse-receipt.json').is_file())
                     and not (job / 'navigation/active.json').exists()
                     and not (job / 'route-pipeline-refusal.json').exists()):
                 write_json(job / 'route-pipeline-refusal.json', dict(error='route_preparation_interrupted'))
@@ -97,6 +99,11 @@ class Jobs:
         if (job / 'quality.json').is_file():
             result['quality'] = json.loads((job / 'quality.json').read_text('utf-8'))
         result['geometry_available'] = (job / 'geometry.json').is_file()
+        # Presence is a hint for the UI, not validation. The exporter verifies
+        # every receipt binding before and after reading the model.
+        result['sparse_available'] = (result['phase'] in TERMINAL
+                                      and (job / 'sparse-receipt.json').is_file()
+                                      and not (job / 'sparse-receipt.json').is_symlink())
         result['dense_available'] = result['phase'] in {'complete', 'quality_rejected', 'review_required', 'partial_scene'} and (job / 'COMPLETE').is_file()
         if result['dense_available']:
             appearance = self.appearance(job)
@@ -121,7 +128,7 @@ class Jobs:
         result['fragments'].sort(key=lambda item: (item.get('fragment', {}).get('first_view', 0), item['id']))
         result['surface_supported'] = tools_available()
         result['navigation'] = self.navigation.status(job)
-        if result['phase'] == 'complete' and result['navigation']['phase'] == 'not_prepared':
+        if (result['phase'] in {'complete', 'sparse_complete'} or result['phase'] == 'failed' and result['sparse_available']) and result['navigation']['phase'] == 'not_prepared':
             control = json.loads((job / 'control.json').read_text('utf-8'))
             if control.get('prepare_route') is True:
                 refusal = job / 'route-pipeline-refusal.json'
@@ -191,13 +198,14 @@ class Jobs:
 
     def source_preview(self, job, name):
         from PIL import Image
+        from scripts.pilot.prepare_route_workspace import route_source_model
 
         if not re.fullmatch(r'[0-9]{8}\.png', name):
             raise ValueError('source_preview_invalid')
         provenance = job / 'prepared/reconstruction-input.json'
         if provenance.is_symlink() or provenance.stat().st_size > 1024**2:
             raise ValueError('source_preview_invalid')
-        source_model(job)  # Bind the source and camera geometry before showing a comparison.
+        route_source_model(job)  # Bind sparse or complete scene before showing a comparison.
         records = json.loads(provenance.read_text('utf-8'))['images']
         entry = next((row for row in records if row['image'] == 'images/' + name), None)
         path = job / 'prepared/images' / name
@@ -390,6 +398,8 @@ class Jobs:
             raise ValueError('invalid_processing_options')
         if type(body.get('prepare_route', False)) is not bool:
             raise ValueError('invalid_route_pipeline_option')
+        if type(body.get('route_only', False)) is not bool or body.get('route_only', False) and not body.get('prepare_route', False):
+            raise ValueError('invalid_route_pipeline_option')
         export_interval(body.get('steps'))
         if len(list(self.folder.iterdir())) >= 32:
             raise ValueError('retained_job_quota_export_or_archive_locally_first')
@@ -407,7 +417,8 @@ class Jobs:
         job.mkdir()
         (job / 'input').mkdir()
         write_json(job / 'control.json', dict(key_sha256=hashlib.sha256(key.encode()).hexdigest(),
-                   mask=body['mask'], steps=body['steps'], prepare_route=body.get('prepare_route', False), created_at=time.time()))
+                   mask=body['mask'], steps=body['steps'], prepare_route=body.get('prepare_route', False),
+                   route_only=body.get('route_only', False), created_at=time.time()))
         write_json(job / 'state.json', dict(phase='uploading', updated_at=time.time()))
         return self.status(job)
 
@@ -440,8 +451,11 @@ class Jobs:
         write_json(job / 'state.json', dict(phase='starting', updated_at=time.time()))
         log = (job / 'worker.log').open('xb')
         try:
-            process = subprocess.Popen([str(self.python), '-m', 'scripts.pilot.reconstruct_route',
-                     '--job', str(job), '--mask', control['mask'], '--steps', str(control['steps'])],
+            command = [str(self.python), '-m', 'scripts.pilot.reconstruct_route',
+                     '--job', str(job), '--mask', control['mask'], '--steps', str(control['steps'])]
+            if control.get('route_only', False):
+                command.append('--route-only')
+            process = subprocess.Popen(command,
                      cwd=ROOT, stdout=log, stderr=subprocess.STDOUT,
                      creationflags=getattr(subprocess, 'CREATE_NO_WINDOW', 0))
         except Exception:
@@ -479,7 +493,9 @@ class Jobs:
         if self.status(job)['phase'] not in TERMINAL:
             write_json(job / 'state.json', dict(phase='failed', error='worker_exited_without_completion'))
         control = json.loads((job/'control.json').read_text('utf-8'))
-        if control.get('prepare_route') is True and self.status(job)['phase'] == 'complete':
+        final = self.status(job)
+        if (control.get('prepare_route') is True
+                and (final['phase'] in {'complete', 'sparse_complete'} or final['phase'] == 'failed' and final['sparse_available'])):
             with self.lock:
                 if not any(self.active(p) for p in self.folder.iterdir() if p.is_dir()):
                     identity = hashlib.sha256((job.name+':initial-route').encode()).hexdigest()[:32]
@@ -573,6 +589,11 @@ def handler(jobs, origin, port):
                         self.reply(200, {name: (job / 'input' / name).stat().st_size if (job / 'input' / name).exists() else 0 for name in LIMITS})
                     elif method == 'GET' and parts[2:] == ['navigation']:
                         self.reply(200, jobs.navigation.status(job))
+                    elif method == 'GET' and parts[2:] == ['geometry-alternatives']:
+                        self.reply(200, {'alternatives': list_alternatives(job)})
+                    elif method == 'GET' and len(parts) == 4 and parts[2] == 'geometry-alternatives':
+                        body, _ = alternative(job, parts[3])
+                        self.reply(200, body)
                     elif method == 'POST' and parts[2:] == ['navigation', 'prepare']:
                         body = json.loads(self.body(1024))
                         current = jobs.navigation.current(job)

@@ -67,6 +67,22 @@ class NavigationTests(unittest.TestCase):
         result = guard.observe(self.observation(14, distance_m=90))
         self.assertEqual((result.action, result.reason), ("stop", "recovery_receipt_unknown"))
 
+    def test_interrupted_unconfirmed_recovery_never_resumes_following(self):
+        for change, expected in (
+            ({"received_at": 3.24}, "receiver_frame_stale"),
+            ({"control_ready": False}, "native_control_not_ready"),
+            ({"scene": "menu"}, "game_scene_not_active"),
+            ({"scene": "fallen"}, "recovery_interrupted_unconfirmed"),
+            ({"target_visible": False}, "target_missing_not_arrival"),
+        ):
+            guard = NavigationSupervisor()
+            first = self.stall(guard, distance_m=100)
+            result = guard.observe(replace(self.observation(14), **change))
+            self.assertEqual((result.action, result.reason), ("stop", expected))
+            self.assertEqual(guard.observe(self.observation(15, distance_m=95)).action, "stop")
+            with self.assertRaises(ProtocolError):
+                guard.complete_recovery(first.operation_id, confirmed=True, now=4)
+
     def test_target_loss_is_never_claimed_as_arrival(self):
         guard = NavigationSupervisor()
         result = guard.observe(replace(self.observation(1), target_visible=False))
@@ -144,11 +160,12 @@ class NavigationTests(unittest.TestCase):
             result = guard.observe(self.observation(i, background_motion_px=12 if i == 7 else 0.1))
         self.assertEqual((result.action, result.reason), ("inspect_camera", "goal_progress_stalled"))
 
-    def test_intermittent_real_motion_does_not_trigger_an_obstacle_manoeuvre(self):
+    def test_screen_motion_alone_never_confirms_goal_progress(self):
         guard = NavigationSupervisor()
         for i in range(1, 14):
             result = guard.observe(self.observation(i, background_motion_px=2 if i % 2 else 0.1))
-        self.assertEqual(result.action, "follow")
+        self.assertEqual((result.action, result.reason), ("stop", "goal_progress_unconfirmed"))
+        self.assertEqual(guard.observe(self.observation(14, distance_m=90)).action, "stop")
 
 
 class BackgroundMotionTests(unittest.TestCase):

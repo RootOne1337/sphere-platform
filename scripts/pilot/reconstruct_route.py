@@ -116,7 +116,7 @@ def model_geometry(rec, prepared):
                 source_manifest_sha256=provenance['source_manifest_sha256'])
 
 
-def reconstruct(job, mask, steps):
+def reconstruct(job, mask, steps, *, route_only=False):
     checkpoint(job)
     sys.path.insert(0, str(TOOLS / 'pycolmap-4.2.1'))
     state(job, 'verifying')
@@ -227,6 +227,16 @@ def reconstruct(job, mask, steps):
     target.mkdir(parents=True)
     rec.write(target)
     rec.export_PLY(prepared / 'sparse' / 'points.ply')
+    finish_sparse(job, prepared, geometry, quality, mask, masks, steps, route_only=route_only)
+
+
+def finish_sparse(job, prepared, geometry, quality, mask, masks, steps, *, route_only):
+    """Seal camera evidence, optionally stop before expensive visual training."""
+    from scripts.pilot.sparse_scene_receipt import create_sparse_receipt
+    create_sparse_receipt(job)
+    if route_only:
+        state(job, 'sparse_complete')
+        return
     # Brush uses masks/image.png; keep COLMAP's independent mask naming intact.
     if masks:
         for path in list(masks.glob('*.png.png')):
@@ -531,6 +541,7 @@ def main():
     parser.add_argument('--mask', choices=['none', 'game'], default='game')
     parser.add_argument('--steps', type=int, choices=TRAINING_STEPS, default=5000)
     parser.add_argument('--retry-dense', action='store_true')
+    parser.add_argument('--route-only', action='store_true')
     parser.add_argument('--retry-attempt', type=int, choices=[1, 2], default=1)
     args = parser.parse_args()
     job = args.job.resolve(strict=True)
@@ -539,7 +550,7 @@ def main():
         if args.retry_dense:
             retry_dense(job, args.retry_attempt)
         else:
-            reconstruct(job, args.mask, args.steps)
+            reconstruct(job, args.mask, args.steps, route_only=args.route_only)
     except Exception as error:
         # Keep raw records and partial outputs. Never mark partial training complete.
         state(job, 'cancelled' if str(error) == 'cancelled' else 'failed',

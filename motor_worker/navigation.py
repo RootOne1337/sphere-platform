@@ -82,6 +82,9 @@ class NavigationSupervisor:
 
     def _stop(self, reason, terminal=False):
         self.samples.clear()
+        # An issued recovery may still be running on Android. Losing its
+        # acknowledgement must never silently return this supervisor to follow.
+        terminal = terminal or self.pending is not None
         self.pending = None
         if terminal:
             self.terminal_reason = reason
@@ -120,8 +123,9 @@ class NavigationSupervisor:
         if o.scene in {"menu", "unknown"}:
             return self._stop("game_scene_not_active")
         if o.scene == "fallen":
+            if self.pending:
+                return self._stop("recovery_interrupted_unconfirmed", terminal=True)
             self.samples.clear()
-            self.pending = None
             if self.fallen_at is None:
                 self.fallen_at = o.now
             if o.now - self.fallen_at > 6:
@@ -162,6 +166,11 @@ class NavigationSupervisor:
             )
             stalled = quiet_seconds / (o.now - first.now) >= 0.85
         if not stalled:
+            if first.distance_m is None or o.distance_m is None:
+                # Screen motion can be camera rotation, animation, or traffic.
+                # It disproves the narrow still-image stall heuristic but does
+                # not establish progress toward the destination.
+                return self._stop("goal_progress_unconfirmed", terminal=True)
             self.samples.clear()
             self.samples.append(o)
             return RecoveryDirective("follow", "goal_progress_observed")
