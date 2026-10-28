@@ -132,8 +132,27 @@ test('a saved alternative opens automatically from the linked job without a file
   fireEvent.click(await screen.findByRole('button',{name:/исходный кадр 2/i}));
   await waitFor(()=>expect(screen.getByLabelText('Время записанного прохода')).toHaveValue('1'));
   expect(screen.getByText(/Сохранённая экспериментальная схема связана/)).toBeInTheDocument();
+  const props=jest.mocked(TeachingReconstruction).mock.calls.at(-1)![0];
+  expect(props.alternativeCameraCount).toBe(2);
   expect(jest.mocked(reconstructionRequest).mock.calls.map(call=>call[0])).toEqual([
     `/jobs/${job.id}/geometry-alternatives`,`/jobs/${job.id}/geometry-alternatives/improved-v1`]);
+});
+test('switching the linked reconstruction clears a previously shown alternate',async()=>{
+  const {manifest}=await library(),source=await hash(manifest),first={id:'c'.repeat(32),key:'d'.repeat(64)},second={id:'e'.repeat(32),key:'f'.repeat(64)};
+  const scene={schema:'sphere-recovered-scene-v1',source_manifest_sha256:source,
+    cameras:[{center:[0,0,0],ticks_90k:0},{center:[1,0,0],ticks_90k:90000}],points:[[1,2,3,255,255,255]]};
+  jest.mocked(reconstructionRequest).mockImplementation(async(path)=>({json:async()=>path.startsWith(`/jobs/${second.id}`)?{alternatives:[]}:path.endsWith('/geometry-alternatives')?{alternatives:[{id:'improved-v1',cameras:2,points:1}]}:scene}) as Response);
+  function Linked(props:Parameters<typeof TeachingReconstruction>[0]){
+    React.useEffect(()=>{props.onRouteChange?.(first);},[props.onRouteChange]);
+    return <button onClick={()=>props.onRouteChange?.(second)}>Другая реконструкция</button>;
+  }
+  jest.mocked(TeachingReconstruction).mockImplementation(props=><Linked {...props}/>);
+  render(<TeachingReview selected={id} refresh={0} onSelect={jest.fn()} storageScope={scope}/>);
+  await screen.findByRole('button',{name:/исходный кадр 2/i});
+  fireEvent.click(screen.getByRole('button',{name:'Другая реконструкция'}));
+  await screen.findByText('Дополнительных схем для этой реконструкции нет.');
+  expect(screen.queryByRole('button',{name:/исходный кадр 2/i})).not.toBeInTheDocument();
+  expect(jest.mocked(TeachingReconstruction).mock.calls.at(-1)![0].alternativeCameraCount).toBeNull();
 });
 test('seeking clears the previous image before a failed decode',async()=>{
   await library();

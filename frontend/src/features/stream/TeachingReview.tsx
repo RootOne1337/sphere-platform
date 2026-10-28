@@ -166,6 +166,7 @@ export function TeachingReview({ selected, refresh, onSelect, storageScope, onBu
   const validTicks=useMemo(()=>new Set(rows.map(row=>row.relative_ticks_90k)),[rows]);
   useEffect(()=>{
     if(!visible||!linkedJob||!sourceManifestSha||!rows.length)return;
+    importGeneration.current++;setImportedGeometry(null);
     const request=new AbortController();let retired=false;setAlternativeStatus('Проверяем сохранённые схемы…');setAlternatives([]);setAlternativeId(null);
     void(async()=>{const data=await(await reconstructionRequest(`/jobs/${linkedJob.id}/geometry-alternatives`,linkedJob,{signal:request.signal})).json();
       if(!Array.isArray(data.alternatives)||data.alternatives.length>16)throw Error('alternative_list_invalid');
