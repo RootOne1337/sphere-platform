@@ -43,3 +43,18 @@ test('point density can be increased without inventing more 3D points',()=>{
   const after=view.container.querySelectorAll('svg circle').length;
   expect(after).toBeGreaterThan(before);expect(after).toBeLessThanOrEqual(points.length+3);
 });
+
+test('route colors stay distinct from depth and warning and the selected camera retains its real heading',()=>{
+  const cameras=[{center:[0,0,0],ticks_90k:0,camera_to_world:[[1,0,0,0],[0,1,0,0],[0,0,1,0]]},
+    {center:[0,0,1],ticks_90k:9000,camera_to_world:[[1,0,0,0],[0,1,0,0],[0,0,1,1]]}];
+  const view=render(<RouteGeometryMap cameras={cameras} points={[[0,0,2,240,120,50],[1,0,4,240,120,50]]} motionWarning selectedTicks={0}/>);
+  expect(screen.getByText(/Оси первого ракурса/)).toBeInTheDocument();
+  expect(screen.getByLabelText('Цвет опорных точек')).toHaveValue('depth');
+  expect(screen.getByText(/Глубина вдоль взгляда/)).toBeInTheDocument();
+  expect(screen.getByLabelText('Направление взгляда выбранной камеры')).toBeInTheDocument();
+  expect(view.container.querySelector('line[stroke="#22d3ee"]')).toBeInTheDocument();
+  expect(view.container.querySelector('line[stroke="#fbbf24"]')).toBeInTheDocument();
+  fireEvent.change(screen.getByLabelText('Цвет опорных точек'),{target:{value:'rgb'}});
+  expect(view.container.querySelector('circle[fill="rgb(240,120,50)"]')).toBeInTheDocument();
+  expect(screen.queryByText(/Глубина вдоль взгляда/)).not.toBeInTheDocument();
+});
