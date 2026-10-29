@@ -164,4 +164,31 @@ describe('teaching capture-only liveness', () => {
       if(mediaStream)Object.defineProperty(globalThis,'MediaStream',mediaStream);else Reflect.deleteProperty(globalThis,'MediaStream');
     }
   });
+  it('hidden preview retains capture transport but never grants input freshness; return requires a new frame',async()=>{
+    const failed=jest.fn();let present:((at:number,frame:object)=>void)|undefined;
+    const video={requestVideoFrameCallback:jest.fn(cb=>{present=cb;return 1;}),cancelVideoFrameCallback:jest.fn(),pause:jest.fn(),play:jest.fn(()=>Promise.resolve()),srcObject:null} as unknown as HTMLVideoElement;
+    const media=Object.getOwnPropertyDescriptor(globalThis,'MediaStream');Object.defineProperty(globalThis,'MediaStream',{configurable:true,value:class {}});
+    Object.defineProperty(document,'hidden',{configurable:true,value:false});
+    try{
+      const connection=await connectTeaching('device','test-only-token',video,new AbortController().signal,jest.fn(),failed,jest.fn());
+      const socket=Socket.current;
+      socket.receive({type:'stream_session',schema_version:1,delivery:'capture_only',session_id:'1234567890abcdef'});
+      socket.receive({type:'capture_ready',schema_version:1,session_id:'1234567890abcdef',width:960,height:540});
+      const call=(startDirectVideoSession as jest.Mock).mock.calls[0];
+      call[2]({state:'connected',session:'a'.repeat(32),videoBinding:{captureEpoch:'epoch',width:960,height:540}});
+      call[3].onTrack({kind:'video'});jest.advanceTimersByTime(1);present?.(1,{width:960,height:540});
+      Object.defineProperty(document,'hidden',{configurable:true,value:true});document.dispatchEvent(new Event('visibilitychange'));
+      let acknowledged=0;
+      for(let n=0;n<8;n++){
+        jest.advanceTimersByTime(500);
+        const sent=socket.send.mock.calls.filter(([raw])=>JSON.parse(raw).type==='video_delivery').length;
+        if(sent>acknowledged){acknowledged=sent;socket.receive({type:'video_delivery_ack',mode:'direct'});}
+      }
+      expect(failed).not.toHaveBeenCalled();expect(connection.fresh()).toBe(false);
+      Object.defineProperty(document,'hidden',{configurable:true,value:false});document.dispatchEvent(new Event('visibilitychange'));
+      jest.advanceTimersByTime(500);expect(failed).not.toHaveBeenCalled();expect(connection.fresh()).toBe(false);
+      present?.(1,{width:960,height:540});expect(connection.fresh()).toBe(true);
+      jest.advanceTimersByTime(1500);expect(failed).toHaveBeenCalledWith('video_stalled');connection.close();
+    }finally{Reflect.deleteProperty(document,'hidden');if(media)Object.defineProperty(globalThis,'MediaStream',media);else Reflect.deleteProperty(globalThis,'MediaStream');}
+  });
 });

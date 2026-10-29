@@ -74,12 +74,24 @@ test('a late localization reply after Stop cannot produce a physical correction'
   const response=await original(`/jobs/${job.id}/navigation/observe`,job,{body:JSON.stringify({sequence:1})});
   await act(async()=>{finish(response);});expect(lease.set).not.toHaveBeenCalled();
 });
-test('an expired bound result closes input before applying its vector',async()=>{
+test('an expired bound result neutralizes input and never applies its vector',async()=>{
   let now=1000;const clock=jest.spyOn(performance,'now').mockImplementation(()=>now);
   const original=jest.mocked(reconstructionRequest).getMockImplementation()!;
   jest.mocked(reconstructionRequest).mockImplementation(async(...args)=>{
     const value=await original(...args);if(args[0].endsWith('/observe'))now=1300;return value;
   });
   view();start();await screen.findByText('Освобождение: CLOSED');
-  expect(lease.set).not.toHaveBeenCalled();expect(screen.getByRole('status')).toHaveTextContent('Нет свежего решения');clock.mockRestore();
+  expect(jest.mocked(lease.set).mock.calls.every(([v])=>v[0]===0&&v[1]===0)).toBe(true);clock.mockRestore();
+});
+
+test('source frames are visible before a plan arrives and stopping preserves a source preview',async()=>{
+  const rendered=view();fresh();
+  const context=jest.mocked(HTMLCanvasElement.prototype.getContext).mock.results.at(-1)?.value;
+  expect(context?.drawImage).toHaveBeenCalled();
+  start();await waitFor(()=>expect(lease.set).toHaveBeenCalled());
+  fireEvent.click(screen.getByRole('button',{name:'Стоп пешего теста · Esc'}));
+  await screen.findByText('Освобождение: CLOSED');
+  expect(screen.getByText(/Просмотр источника.*движение выключено/)).toBeInTheDocument();
+  expect(screen.getByText(/Кадров источника:.*ответов локализации:/)).toBeInTheDocument();
+  rendered.unmount();
 });

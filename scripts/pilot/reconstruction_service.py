@@ -623,6 +623,17 @@ def handler(jobs, origin, port):
                         if not same and any(jobs.active(p) for p in jobs.folder.iterdir() if p.is_dir()):
                             raise ValueError('one_active_job_only')
                         self.reply(200, jobs.navigation.start_walk(job, body))
+                    elif method == 'POST' and parts[2:] == ['navigation', 'replay-start']:
+                        body=json.loads(self.body(1024))
+                        live=jobs.navigation.live_status()
+                        same=type(body) is dict and live.get('id')==body.get('id') and live.get('job')==job.name
+                        if not same and any(jobs.active(p) for p in jobs.folder.iterdir() if p.is_dir()):
+                            raise ValueError('one_active_job_only')
+                        self.reply(200,jobs.navigation.start_replay(job,body))
+                    elif method == 'POST' and parts[2:] == ['navigation', 'replay-observe']:
+                        self.reply(200,jobs.navigation.observe(job,json.loads(self.body(768*1024)),mode='recorded_replay'))
+                    elif method == 'POST' and parts[2:] == ['navigation', 'replay-stop']:
+                        self.reply(200,jobs.navigation.stop_live(job,json.loads(self.body(1024)),mode='recorded_replay'))
                     elif method == 'POST' and parts[2:] == ['navigation', 'observe']:
                         self.reply(200, jobs.navigation.observe(job, json.loads(self.body(768*1024))))
                     elif method == 'POST' and parts[2:] == ['navigation', 'stop']:

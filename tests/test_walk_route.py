@@ -68,13 +68,55 @@ class WalkRouteTests(unittest.TestCase):
         self.assertEqual(self.observe()['stick'],[0.,0.])
         self.assertEqual(self.observe()['phase'],'stopped')
 
-    def test_initial_confirmation_is_neutral_but_lost_tracking_after_movement_is_terminal(self):
+    def test_initial_confirmation_and_short_localization_loss_are_neutral(self):
         self.assertEqual(self.observe(state='confirming')['stick'],[0.,0.])
         self.now+=.2;self.observe()
         self.now+=.2
         lost=self.observe(state='unknown',center=None,rotation=None,progress_units=None)
-        self.assertEqual(lost['reason'],'walk_localization_lost')
+        self.assertEqual(lost['reason'],'walk_relocalizing_neutral')
+        self.assertEqual(lost['phase'],'waiting')
         self.assertEqual(lost['stick'],[0.,0.])
+
+    def test_recovery_requires_three_new_localized_poses_before_any_movement(self):
+        self.observe();self.now+=.2;self.observe(state='unknown')
+        for _ in range(2):
+            self.now+=.2;reply=self.observe(.5)
+            self.assertEqual(reply['stick'],[0.,0.]);self.assertEqual(reply['phase'],'waiting')
+        self.now+=.2;reply=self.observe(.5)
+        self.assertEqual(reply['phase'],'following');self.assertLess(reply['stick'][1],0.)
+        self.assertLessEqual(abs(reply['stick'][1]),.2)
+
+    def test_unconfirmed_frames_do_not_reset_the_recovery_deadline(self):
+        self.observe();self.now+=.2;self.observe(state='unknown')
+        for i in range(11):
+            self.now+=.2
+            reply=self.observe(.1,state='confirming' if i%2 else 'unknown')
+            self.assertEqual(reply['stick'],[0.,0.])
+        self.assertEqual(reply['reason'],'walk_relocalization_timeout')
+        self.now+=.2;self.assertEqual(self.observe(.1)['phase'],'stopped')
+
+    def test_reappearing_far_position_or_heading_never_resumes(self):
+        for changes in ({'center':(21.,0.,0.),'cross_track_units':0.},
+                        {'rotation':(0.,0.,-1.,0.,1.,0.,1.,0.,0.)},
+                        {'progress_units':21.}):
+            self.follower=WalkRouteFollower(self.route,clock=lambda:self.now)
+            self.observe();self.now+=.2;self.observe(state='unknown');self.now+=.2
+            reply=self.observe(**changes)
+            self.assertEqual(reply['reason'],'walk_relocalization_drift');self.assertEqual(reply['stick'],[0.,0.])
+
+    def test_repeated_loss_has_a_finite_budget_even_with_successful_recovery(self):
+        self.observe()
+        for _ in range(3):
+            self.now+=.2;self.assertEqual(self.observe(state='unknown')['phase'],'waiting')
+            for _ in range(3):self.now+=.2;reply=self.observe(.1)
+            self.assertEqual(reply['phase'],'following')
+        self.now+=.2;reply=self.observe(state='unknown')
+        self.assertEqual(reply['reason'],'walk_relocalization_budget');self.assertEqual(reply['stick'],[0.,0.])
+
+    def test_missing_stream_interval_remains_terminal_instead_of_recovery(self):
+        self.observe();self.now+=.7
+        reply=self.observe(state='unknown')
+        self.assertEqual(reply['reason'],'walk_pose_binding_or_age');self.assertEqual(reply['stick'],[0.,0.])
 
     def test_pose_age_epoch_sequence_and_large_progress_jump_stop(self):
         for changes in ({'received_at':9.,'completed_at':9.},{'receiver_sequence':0},

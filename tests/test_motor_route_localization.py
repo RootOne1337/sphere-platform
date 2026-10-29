@@ -406,6 +406,40 @@ class SparseLocalizationTests(unittest.TestCase):
         for invalid in ([float('nan')],[float('inf')],[-1.,5.]):
             with self.assertRaises(ProtocolError):trace_step_scale(invalid)
 
+    def test_batched_votes_preserve_exact_alias_weights_and_candidate_order(self):
+        from motor_worker.route_localization import coarse_reference_votes
+        from types import SimpleNamespace
+        rng=self.np.random.default_rng(29)
+        visibility=rng.integers(0,2,(174,4096),dtype=self.np.uint8)
+        coarse=[]
+        for _ in range(2048):
+            distances=sorted(rng.uniform(.1,.9,4))
+            coarse.append(tuple(SimpleNamespace(trainIdx=int(rng.integers(4096)),distance=d) for d in distances))
+        coarse.append(())
+        old=self.np.zeros(174)
+        for pairs in coarse:
+            if not pairs:continue
+            plausible=[m for m in pairs if m.distance<.7 and m.distance<=pairs[0].distance*1.2+1e-5]
+            for match in plausible:old+=visibility[:,match.trainIdx]*(1-match.distance)/len(plausible)
+        new=coarse_reference_votes(coarse,visibility)
+        self.np.testing.assert_allclose(new,old,atol=1e-9,rtol=1e-12)
+        self.np.testing.assert_array_equal(self.np.argsort(new),self.np.argsort(old))
+        self.np.testing.assert_array_equal(coarse_reference_votes([()],visibility),self.np.zeros(174))
+
+    def test_large_map_builds_one_coarse_index_but_keeps_the_exact_pnp_gate(self):
+        from types import SimpleNamespace
+        tracker=self.tracker()
+        tracker.descriptors=self.np.tile(tracker.descriptors,(4,1))
+        matcher=SimpleNamespace(add=unittest.mock.Mock(),train=unittest.mock.Mock(),
+            knnMatch=unittest.mock.Mock(return_value=[]))
+        with patch.object(self.cv,'FlannBasedMatcher',return_value=matcher) as create:
+            self.assertEqual(tracker._coarse_matches(self.desc),[])
+            self.assertEqual(tracker._coarse_matches(self.desc),[])
+        create.assert_called_once_with(dict(algorithm=1,trees=4),dict(checks=64))
+        matcher.train.assert_called_once();matcher.add.assert_called_once()
+        self.assertEqual(matcher.knnMatch.call_count,2)
+        self.assertIsNone(tracker._verify_correspondences(self.xyz[:10],self.np.zeros((10,2))))
+
     def test_unobserved_route_sections_are_rejected_by_default(self):
         route = replace(self.route, landmark_views=((0, 1, 2),)*240)
         support = map_support(route)

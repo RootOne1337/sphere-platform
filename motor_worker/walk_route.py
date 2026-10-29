@@ -15,6 +15,8 @@ from motor_worker.route_localization import RoutePose, SparseRoute, MIN_TRACE_ST
 class WalkRouteFollower:
     MAX_STICK = .35
     MAX_SECONDS = 60
+    MAX_RELOCALIZE_SECONDS = 2.
+    MAX_RELOCALIZATIONS = 3
 
     def __init__(self, route: SparseRoute, *, clock):
         import numpy as np
@@ -34,6 +36,9 @@ class WalkRouteFollower:
         self.vector = np.zeros(2)
         self.history = deque(maxlen=64)
         self.binding = None
+        self.last_good = None
+        self.relocalizing = None
+        self.relocalizations = 0
 
     def _reply(self, phase, reason, progress=None, **extra):
         return dict(schema='sphere-walk-plan-v1', phase=phase, reason=reason,
@@ -70,7 +75,16 @@ class WalkRouteFollower:
         if pose.state != 'localized':
             self.vector[:] = 0
             if self.started:
-                return self._stop('walk_localization_lost')
+                self.arrival=0
+                if self.relocalizing is None:
+                    self.relocalizations+=1
+                    if self.relocalizations>self.MAX_RELOCALIZATIONS:
+                        return self._stop('walk_relocalization_budget')
+                    self.relocalizing=dict(began=pose.received_at,confirmations=0)
+                self.relocalizing['confirmations']=0
+                if pose.received_at-self.relocalizing['began']>=self.MAX_RELOCALIZE_SECONDS:
+                    return self._stop('walk_relocalization_timeout')
+                return self._reply('waiting','walk_relocalizing_neutral',self.high_water)
             return self._reply('waiting', 'walk_confirming_start')
         try:
             center, rotation = np.asarray(pose.center, float), np.asarray(pose.rotation, float).reshape(3, 3)
@@ -83,6 +97,22 @@ class WalkRouteFollower:
                 return self._stop('walk_pose_or_corridor_unqualified')
         except (ValueError, TypeError):
             return self._stop('walk_pose_invalid')
+        if self.relocalizing is not None:
+            # No movement or pose extrapolation while the current image is
+            # unqualified. Resume only after three new localized observations
+            # in a small neighborhood of the last known position and heading.
+            self.vector[:]=0
+            if pose.received_at-self.relocalizing['began']>=self.MAX_RELOCALIZE_SECONDS:
+                return self._stop('walk_relocalization_timeout')
+            old_center,old_rotation=self.last_good
+            turn=float(np.arccos(np.clip((np.trace(rotation@old_rotation.T)-1)/2,-1,1)))
+            if (np.linalg.norm(center-old_center)>self.step*4 or turn>.7
+                    or progress<self.high_water-self.step*2 or progress>self.high_water+self.step*4):
+                return self._stop('walk_relocalization_drift')
+            self.relocalizing['confirmations']+=1
+            if self.relocalizing['confirmations']<3:
+                return self._reply('waiting','walk_relocalizing_neutral',progress)
+            self.relocalizing=None;self.history.clear()
         if not self.started:
             if (progress > min(self.total*.15, self.step*2)
                     or float(np.linalg.norm(center-self.trace[0])) > self.step*3):
@@ -94,6 +124,7 @@ class WalkRouteFollower:
         elif progress > self.high_water+self.step*4:
             return self._stop('walk_progress_jump')
         self.high_water = max(self.high_water, progress)
+        self.last_good=(center.copy(),rotation.copy())
         self.history.append((pose.received_at, self.high_water))
         while len(self.history) > 1 and self.history[1][0] <= pose.received_at-3:
             self.history.popleft()

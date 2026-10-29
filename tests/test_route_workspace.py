@@ -231,6 +231,32 @@ class RouteWorkspaceTests(unittest.TestCase):
         _,encoded=cv.imencode('.jpg',np.zeros((540,960,3),np.uint8))
         value=self.workspace.observe(self.job,dict(id='f'*32,captureEpoch='e'*32,sequence=1,jpeg=base64.b64encode(encoded).decode()))
         self.assertEqual(value['walk']['stick'],[0.,0.])
+
+    def test_recorded_replay_has_a_separate_mode_and_cannot_promote_to_live_input(self):
+        import cv2 as cv
+        import numpy as np
+        self.attach_fixture_map();self.workspace.stop_live(self.job,dict(id='d'*32))
+        body=dict(id='f'*32,captureEpoch='e'*32,width=960,height=540)
+        with patch('scripts.pilot.route_workspace.resource_checkpoint'):
+            reply=self.workspace.start_replay(self.job,body)
+        self.assertTrue(reply['replayOnly']);self.assertEqual(reply['physicalActions'],0)
+        follower=self.workspace.live['walk']
+        with patch('scripts.pilot.route_workspace.resource_checkpoint'):
+            self.workspace.start_replay(self.job,body)
+        self.assertIs(self.workspace.live['walk'],follower)
+        live=dict(body,sceneConfirmed=True)
+        with self.assertRaises(ValueError):self.workspace.start_live(self.job,live)
+        with self.assertRaises(ValueError):self.workspace.start_walk(self.job,dict(live,footCameraAssumptionConfirmed=True))
+        _,encoded=cv.imencode('.jpg',np.zeros((540,960,3),np.uint8))
+        frame=dict(id=body['id'],captureEpoch=body['captureEpoch'],sequence=1,jpeg=base64.b64encode(encoded).decode())
+        with self.assertRaisesRegex(ValueError,'not_bound'):self.workspace.observe(self.job,frame)
+        value=self.workspace.observe(self.job,frame,mode='recorded_replay')
+        self.assertTrue(value['replayOnly']);self.assertEqual(value['walk']['stick'],[0.,0.])
+        with self.assertRaises(ValueError):self.workspace.observe(self.job,dict(frame,sequence=2,mediaSeconds=1.),mode='recorded_replay')
+        with self.assertRaisesRegex(ValueError,'mode_changed'):self.workspace.stop_live(self.job,dict(id=body['id']))
+        self.workspace.stop_live(self.job,dict(id=body['id']),mode='recorded_replay')
+        with self.assertRaisesRegex(ValueError,'retired'):
+            self.workspace.start_replay(self.job,body)
         self.assertEqual(value['walk']['phase'],'waiting')
         self.assertEqual(value['physicalActions'],0)
 

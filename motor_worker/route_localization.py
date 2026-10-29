@@ -23,6 +23,7 @@ SIZE = (960, 540)
 # Changes to the runtime pose gate are tracked separately from the descriptor
 # format: strengthening a gate must not make compatible saved maps unreadable.
 PNP_VERIFICATION_POLICY = 'pnp-continuous-image-support-temporal-v4'
+COARSE_SEARCH_POLICY = 'flann_4tree_64checks_exact_subset_pnp_v1'
 MAX_POINTS = 4096
 MAX_VIEWS = 256
 MAX_BYTES = 4 * 1024 * 1024
@@ -42,6 +43,21 @@ def trace_step_scale(lengths):
     moving=values[values>=MIN_TRACE_STEP_UNITS]
     if not len(moving):raise ProtocolError('route_has_no_translational_baseline')
     return float(np.median(moving))
+
+
+def coarse_reference_votes(matches, visibility):
+    """Exact coarse vote weights, accumulated once per landmark, not per view.
+
+    Coarse votes only shortlist neighborhoods; they never replace ratio/PnP
+    verification. Preserve all plausible alias votes and their original weight.
+    """
+    import numpy as np
+    weights=np.zeros(visibility.shape[1],np.float64)
+    for pairs in matches:
+        if not pairs:continue
+        plausible=[m for m in pairs if m.distance<.7 and m.distance<=pairs[0].distance*1.2+1e-5]
+        for match in plausible:weights[match.trainIdx]+=(1-match.distance)/len(plausible)
+    return np.einsum('ij,j->i',visibility,weights,optimize=False)
 
 
 def _sha(value):
@@ -318,6 +334,7 @@ class RouteLocalizer:
         self.last_source_sha = None
         self.recent_confirmed_sources = []
         self.previous, self.retired = None, False
+        self._proposal_index = None
 
     def _fresh(self, frame):
         now = self.clock()
@@ -332,14 +349,8 @@ class RouteLocalizer:
             return None
         # Coarse votes only select covisible reference neighborhoods. Ambiguous
         # repeated descriptors cannot directly become pose correspondences.
-        coarse = cv.BFMatcher(cv.NORM_L2).knnMatch(descriptors, self.descriptors, k=4)
-        votes = np.zeros(len(self.trace), np.float64)
-        for pairs in coarse:
-            if not pairs:
-                continue
-            plausible = [m for m in pairs if m.distance < .7 and m.distance <= pairs[0].distance*1.2+1e-5]
-            for match in plausible:
-                votes += self.visibility[:, match.trainIdx]*(1-match.distance)/len(plausible)
+        coarse = self._coarse_matches(descriptors)
+        votes = coarse_reference_votes(coarse,self.visibility)
         candidates = []
         for _ in range(self.candidate_limit):
             at = int(np.argmax(votes))
@@ -362,6 +373,20 @@ class RouteLocalizer:
         if not proposals:
             return None
         return self._rank_proposals(proposals)
+
+    def _coarse_matches(self,descriptors):
+        """Approximate lookup only proposes neighborhoods in a large map.
+
+        Final 2D/3D matches, ratio test, competing PnP, coverage and freshness
+        gates stay exact. Small maps keep the simpler exhaustive search.
+        """
+        if len(self.descriptors)<512:
+            return self.cv.BFMatcher(self.cv.NORM_L2).knnMatch(descriptors,self.descriptors,k=4)
+        if self._proposal_index is None:
+            self.cv.setRNGSeed(17)
+            self._proposal_index=self.cv.FlannBasedMatcher(dict(algorithm=1,trees=4),dict(checks=64))
+            self._proposal_index.add([self.descriptors]);self._proposal_index.train()
+        return self._proposal_index.knnMatch(descriptors,k=4)
 
     def _recent_reference_candidate(self):
         if self.previous is None or self.confirmations<3 or self.last_received is None:

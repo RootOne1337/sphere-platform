@@ -64,6 +64,15 @@ export function TeachingWorkbench({ deviceId, readOnly }: { deviceId: string; re
   const clipsChanged=useCallback((items:TeachingClipChoice[])=>setClipChoices(items),[]);
   const navigationJob=navigationBinding?.clip===clip&&navigationBinding.scope===storageScope?navigationBinding.job:null;
   const video = useRef<HTMLVideoElement>(null); const host = useRef<HTMLDivElement>(null);
+  const videoHolder=useRef<HTMLDivElement>(null),[pinLiveVideo,setPinLiveVideo]=useState(false);
+  useEffect(()=>{
+    setPinLiveVideo(false);const holder=videoHolder.current;
+    if(workspaceMode!=='live'||calibrate||bindingTarget||!holder||typeof IntersectionObserver==='undefined')return;
+    // Keep the SAME video element presented when the operator scrolls to the
+    // map. A second peer/video would break source/age and input ownership.
+    const observer=new IntersectionObserver(entries=>setPinLiveVideo(!entries[0]?.isIntersecting),{threshold:.05});
+    observer.observe(holder);return()=>observer.disconnect();
+  },[workspaceMode,calibrate,bindingTarget]);
   const connection = useRef<TeachingConnection | null>(null), controller = useRef<TeachingContacts | null>(null);
   const abort = useRef<AbortController | null>(null), stopPromise = useRef<Promise<void> | null>(null);
   const keys = useRef(new Set<string>()), mouse = useRef<number | null>(null), attached = useRef(false);
@@ -399,11 +408,11 @@ export function TeachingWorkbench({ deviceId, readOnly }: { deviceId: string; re
       {result?.videoStats&&<><div aria-label="Фактические параметры приёма" className="mt-3 flex flex-wrap gap-x-5 gap-y-1 text-xs text-muted-foreground"><span>{result.videoStats.width??'—'} × {result.videoStats.height??'—'}</span><span>{result.videoStats.fps?.toFixed(1)??'—'} FPS приёма</span><span>{result.videoStats.bitrateBps==null?'—':(result.videoStats.bitrateBps/1e6).toFixed(2)} Мбит/с</span><span title="RTT выбранной пары ICE; это не задержка нажатия">RTC RTT {result.videoStats.networkRttMs?.toFixed(1)??'—'} мс</span><span title="Среднее время в буфере приёма за последний интервал">Буфер приёма {result.videoStats.jitterBufferMs?.toFixed(1)??'—'} мс</span><span title="Среднее время декодирования за последний интервал">Декодирование {result.videoStats.decodeMs?.toFixed(1)??'—'} мс</span></div><p className="mt-1 text-[11px] text-muted-foreground">Это метрики браузерного приёма; полная задержка Android → экран и нажатия здесь не измеряется.</p></>}
     </section>
     <div className={workspaceMode==='live'?'grid items-start gap-4 xl:grid-cols-[280px_minmax(0,1fr)]':'grid items-start gap-4 xl:grid-cols-[minmax(0,1fr)_300px]'}>
-      <section className="overflow-hidden rounded-2xl border border-border bg-card">
+      <section className={`overflow-hidden rounded-2xl border border-border bg-card ${workspaceMode==='live'?'xl:sticky xl:top-56':''}`}>
         <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border px-4 py-3 text-sm"><span className="font-medium">{phase === 'recording' ? '● Запись' : 'Прямой экран Android'}</span><span className="text-xs text-muted-foreground">{connection.current?.binding() ? `${connection.current.binding()!.width} × ${connection.current.binding()!.height}` : 'Размер ожидается'}</span></div>
-        <div className="relative">
+        <div ref={videoHolder} className="relative aspect-video">
         <video ref={video} muted playsInline tabIndex={0} aria-label="Игровой экран: назначенные клавиши и мышь; Escape — остановить запись"
-          className="aspect-video max-h-[calc(100dvh-14rem)] w-full scroll-mt-56 touch-none bg-black object-contain outline-none focus-visible:ring-2 focus-visible:ring-primary"
+          className={`aspect-video max-h-[calc(100dvh-14rem)] scroll-mt-56 touch-none bg-black object-contain outline-none focus-visible:ring-2 focus-visible:ring-primary ${pinLiveVideo?'fixed bottom-6 left-6 z-50 w-60 rounded-xl border border-cyan-500/60 shadow-2xl':'w-full'}`}
           onKeyDown={e => key(e,true)} onKeyUp={e => key(e,false)} onContextMenu={e => e.preventDefault()}
           onBlur={() => { if (keys.current.size || mouse.current !== null) void stop('input_focus_lost'); }}
           onPointerDown={e => {

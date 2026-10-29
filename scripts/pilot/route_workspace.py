@@ -210,11 +210,12 @@ class RouteWorkspaces:
                     observations=self.live['observations'], secondsRemaining=max(0, self.live['deadline']-self.clock()),
                     physicalActions=0)
 
-    def start_live(self, job, body):
+    def start_live(self, job, body, *, mode='live'):
+        import cv2 as cv
         from motor_worker.route_localization import SparseRoute
         from motor_worker.route_tracking import AnchoredRouteLocalizer
 
-        if (type(body) is not dict or set(body) != {'id', 'captureEpoch', 'width', 'height', 'sceneConfirmed'}
+        if (mode not in {'live','recorded_replay'} or type(body) is not dict or set(body) != {'id', 'captureEpoch', 'width', 'height', 'sceneConfirmed'}
                 or not isinstance(body['id'], str) or not ID.fullmatch(body['id'])
                 or not isinstance(body['captureEpoch'], str)
                 or not re.fullmatch(r'[0-9a-f-]{16,64}', body['captureEpoch'])
@@ -222,7 +223,8 @@ class RouteWorkspaces:
             raise ValueError('route_live_confirmation_or_binding')
         self._expire()
         if self.live is not None:
-            if self.live['id'] == body['id'] and self.live['job'] == job.name and self.live['binding'] == body:
+            if (self.live['id'] == body['id'] and self.live['job'] == job.name and self.live['binding'] == body
+                    and self.live.get('mode','live')==mode):
                 return self.live_status()
             raise ValueError('one_live_route_observer_only')
         if body['id'] in self.retired or len(self.retired) >= 2048:
@@ -230,6 +232,9 @@ class RouteWorkspaces:
         if self.status(job)['phase'] != 'ready':
             raise ValueError('route_assets_not_ready')
         resource_checkpoint(job, profile=route_resource_profile(job, 'live'))
+        # One observation is processed at a time. Bound native parallelism while
+        # leaving headroom inside the 250 ms receiver-age budget for SIFT/PnP.
+        cv.setNumThreads(4)
         folder = self.current(job)
         receipt = checked_json(folder/'receipt.json')
         route = SparseRoute.load(folder/'route.json', sha256=receipt['sha256'])
@@ -245,13 +250,15 @@ class RouteWorkspaces:
         tracker = AnchoredRouteLocalizer(route, capture_epoch=epoch, episode_id=episode, goal_revision=goal, clock=self.clock)
         self.live = dict(id=body['id'], binding=body.copy(), job=job.name, epoch=epoch,
             episode=episode, goal=goal, tracker=tracker, sequence=0, observations=0, deadline=self.clock()+120,
-            geometry_sha256=receipt['geometry_sha256'])
+            geometry_sha256=receipt['geometry_sha256'],mode=mode)
         return self.live_status()
 
-    def stop_live(self, job, body):
+    def stop_live(self, job, body, *, mode='live'):
         if type(body) is not dict or set(body) != {'id'} or not isinstance(body['id'], str) or not ID.fullmatch(body['id']):
             raise ValueError('route_session_id')
         self._expire()
+        if self.live and self.live['id']==body['id'] and self.live.get('mode','live')!=mode:
+            raise ValueError('route_session_mode_changed')
         if body['id'] not in self.retired and len(self.retired) >= 2048:
             raise ValueError('route_session_retirement_quota')
         self.retired[body['id']] = self.clock() + 600  # Fence a delayed start.
@@ -277,6 +284,12 @@ class RouteWorkspaces:
         if self.live and self.live['id'] == request['id'] and 'walk' not in self.live:
             raise ValueError('walk_observer_cannot_be_promoted')
         self.start_live(job, request)
+        self._install_walk()
+        return dict(self.live_status(), mode='foot_camera_trace_v1', physicalActions=0, maxSeconds=60)
+
+    def _install_walk(self):
+        from motor_worker.walk_route import WalkRouteFollower
+        from motor_worker.route_tracking import AnchoredRouteLocalizer
         if 'walk' not in self.live:
             route = self.live['tracker'].route
             # The lower central avatar is not a stationary world landmark.
@@ -288,19 +301,30 @@ class RouteWorkspaces:
                 episode_id=self.live['episode'], goal_revision=self.live['goal'], clock=self.clock)
             self.live['walk'] = WalkRouteFollower(route, clock=self.clock)
             self.live['deadline'] = min(self.live['deadline'], self.clock()+60)
-        return dict(self.live_status(), mode='foot_camera_trace_v1', physicalActions=0, maxSeconds=60)
+    def start_replay(self,job,body):
+        """The real pose/planner path, with a separate recorded-input protocol.
 
-    def observe(self, job, body):
+        It can neither be promoted into a live walk nor acquire Android input.
+        The recording's clock/route progress never enters localization.
+        """
+        if type(body) is not dict or set(body)!={'id','captureEpoch','width','height'}:
+            raise ValueError('route_replay_binding')
+        self.start_live(job,dict(body,sceneConfirmed=True),mode='recorded_replay')
+        self._install_walk()
+        return dict(self.live_status(),mode='recorded_replay',replayOnly=True,maxSeconds=60)
+
+    def observe(self, job, body, *, mode='live'):
         import cv2 as cv
         import numpy as np
         from PIL import Image
 
         from motor_worker.policy import PolicyFrame
-        from motor_worker.route_localization import PNP_VERIFICATION_POLICY
+        from motor_worker.route_localization import PNP_VERIFICATION_POLICY, COARSE_SEARCH_POLICY
 
         self._expire()
         if (type(body) is not dict or set(body) != {'id', 'captureEpoch', 'sequence', 'jpeg'}
                 or self.live is None or self.live['id'] != body['id'] or self.live['job'] != job.name
+                or self.live.get('mode','live')!=mode
                 or body['captureEpoch'] != self.live['binding']['captureEpoch']
                 or type(body['sequence']) is not int or body['sequence'] <= self.live['sequence']
                 or body['sequence'] > 1000000 or type(body['jpeg']) is not str or len(body['jpeg']) > 512*1024):
@@ -332,9 +356,11 @@ class RouteWorkspaces:
             captureEpoch=body['captureEpoch'], pose=values, computeMs=elapsed, geometrySha256=session['geometry_sha256'],
             method=session['tracker'].last_diagnostic.get('method', 'not_attempted'),
             verificationPolicy=PNP_VERIFICATION_POLICY,
+            coarseSearchPolicy=COARSE_SEARCH_POLICY,
             physicalActions=0, framesArchived=0, executionQualified=False, groundRoute=False,
             viewCompatibility='same_aspect_assumed_same_fov',
             fullAndroidLatencyKnown=False, sceneIsOperatorAssumption=True)
+        result['replayOnly']=mode=='recorded_replay'
         if 'walk' in session:
             result['walk'] = session['walk'].observe(pose)
         return result

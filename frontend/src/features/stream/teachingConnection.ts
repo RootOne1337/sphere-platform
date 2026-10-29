@@ -30,6 +30,9 @@ export async function connectTeaching(deviceId: string, token: string, video: HT
   let externalCapture = false, lastEncoded = 0;
   let peerSession: string | null = null, lastRenew = -Infinity, renewPendingAt: number | null = null;
   let lastFrame = 0, frameId: number | null = null;
+  let resumeUntil=0;
+  const visibility=()=>{if(!document.hidden)resumeUntil=performance.now()+1000;};
+  document.addEventListener('visibilitychange',visibility);
   let presented = 0, latest:DirectProbeResult|null = null;
   let controlState:'idle'|'opening'|'ready'|'closing'|'closed'|'fenced'='idle',controlFailure:string|null=null,controlRtt:number|null=null;
   const reporter = new StreamSessionReporter(socket,()=>teachingStreamSample(latest,presented,
@@ -39,6 +42,7 @@ export async function connectTeaching(deviceId: string, token: string, video: HT
     if(!faulted && latest)latest={...latest,state:'stopped',reason:null};
     reporter.report(true);
     disposed = true; clearTimeout(deadline); clearInterval(watchdog); signal.removeEventListener('abort', close);
+    document.removeEventListener('visibilitychange',visibility);
     socket.onopen = socket.onmessage = socket.onerror = socket.onclose = null;
     socket.close(); cancel?.(); endpoint = null;
     if (frameId !== null) video.cancelVideoFrameCallback(frameId);
@@ -65,11 +69,14 @@ export async function connectTeaching(deviceId: string, token: string, video: HT
     if (disposed) return;
     reporter.report();
     const latest = externalCapture && lastEncoded ? lastEncoded : lastFrame;
-    if (latest && performance.now() - latest > 1000) fault('video_stalled');
-    if (document.hidden && !externalCapture) fault('page_hidden');
+    const paused=document.hidden&&!externalCapture;
+    // Hiding the page revokes input freshness, not the capture-only transport.
+    // On return, require a new presented frame; the grace period grants no
+    // freshness and no touch authority. Workbench still releases held input.
+    if (!paused && latest && performance.now() - latest > 1000 && performance.now()>=resumeUntil) fault('video_stalled');
     const now = performance.now();
     if (renewPendingAt !== null && now - renewPendingAt > 5000) fault('capture_renewal_unconfirmed');
-    if (fresh() && peerSession && renewPendingAt === null && now - lastRenew >= 3000 && socket.readyState === 1) {
+    if ((fresh()||paused) && peerSession && renewPendingAt === null && now - lastRenew >= 3000 && socket.readyState === 1) {
       lastRenew = now; renewPendingAt = now;
       socket.send(JSON.stringify({ type: 'video_delivery', mode: 'direct', peer_session: peerSession }));
     }
