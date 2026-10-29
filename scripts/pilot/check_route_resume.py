@@ -6,7 +6,6 @@ import base64
 import hashlib
 import json
 import secrets
-import shutil
 import threading
 import time
 from http.server import BaseHTTPRequestHandler
@@ -15,6 +14,7 @@ from urllib.request import Request, urlopen
 
 from scripts.pilot.reconstruction_service import ROOT, BoundedServer, Jobs, handler
 from scripts.pilot.resource_guard import collect, evaluate
+from scripts.pilot.route_replay_snapshot import snapshot, discard_snapshot
 
 
 def run(source_job, output, *, source_seconds=10., camera_tracking=False):
@@ -27,7 +27,7 @@ def run(source_job, output, *, source_seconds=10., camera_tracking=False):
     if (output.exists() or not output.is_relative_to(allowed) or output == allowed
             or source_job.is_relative_to(output) or not 5 <= source_seconds <= 540):
         raise ValueError('resume_check_scope')
-    if evaluate(collect(ROOT), min_ram_gib=6):
+    if evaluate(collect(ROOT), min_ram_gib=6, min_disk_gib=1):
         raise RuntimeError('resource_guard')
     active = json.loads((source_job/'navigation/active.json').read_bytes())['id']
     receipt = json.loads((source_job/'navigation'/active/'receipt.json').read_bytes())
@@ -59,10 +59,7 @@ def run(source_job, output, *, source_seconds=10., camera_tracking=False):
         sourceHashes=original, excludedReferenceFrames=True, queryIndices=[f['index'] for f in frames])))
     identity, key = secrets.token_hex(32)[:32], secrets.token_hex(32)
     target = output/'jobs'/identity
-    shutil.copytree(source_job, target, ignore=shutil.ignore_patterns('walk-reports'))
-    control = json.loads((target/'control.json').read_bytes())
-    control['key_sha256'] = hashlib.sha256(key.encode()).hexdigest()
-    (target/'control.json').write_text(json.dumps(control))
+    fixture = snapshot(source_job, target, key)
     jobs = Jobs(output/'jobs', ROOT/'.local-pilot/motor-amd-venv/Scripts/python.exe')
     server = BoundedServer(('127.0.0.1', 0), BaseHTTPRequestHandler)
     port = server.server_address[1]
@@ -109,9 +106,11 @@ def run(source_job, output, *, source_seconds=10., camera_tracking=False):
             cases.append(dict(startMode=mode, samples=rows))
     finally:
         server.shutdown();server.server_close();thread.join(3)
+        if not thread.is_alive():discard_snapshot(target,output/'fixture-receipt.json')
     unchanged = all(hashlib.sha256(Path(p).read_bytes()).hexdigest() == sha for p, sha in original.items())
     result = dict(schema='sphere-offline-route-resume-v1', physicalActions=0, originalFilesUnchanged=unchanged,
-        heldOutSourceFrames=True, independentGameplay=False, feedbackLoop=False,cameraTracking=camera_tracking,cases=cases)
+        heldOutSourceFrames=True, independentGameplay=False, feedbackLoop=False,cameraTracking=camera_tracking,
+        fixtureBytes=fixture['copiedBytes'],cases=cases)
     (output/'result.json').write_text(json.dumps(result, indent=2))
     return result
 

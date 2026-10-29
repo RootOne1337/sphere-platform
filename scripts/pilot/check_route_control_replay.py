@@ -12,7 +12,6 @@ import base64
 import hashlib
 import json
 import secrets
-import shutil
 import threading
 import time
 from collections import Counter
@@ -23,6 +22,7 @@ from urllib.request import Request,urlopen
 from scripts.pilot.atomic_json import write_json
 from scripts.pilot.reconstruction_service import BoundedServer,Jobs,ROOT,handler
 from scripts.pilot.resource_guard import collect,evaluate
+from scripts.pilot.route_replay_snapshot import snapshot, discard_snapshot
 
 
 def digest(path):
@@ -44,7 +44,7 @@ def run(source_job,query_input,output,*,cases=('baseline','freeze','gap','late_r
             or type(seconds) not in (int,float) or not 5<=seconds<=55
             or type(fault_after) not in (int,float) or not .5<=fault_after<=10):
         raise ValueError('control_replay_scope_or_quota')
-    if evaluate(collect(ROOT),min_ram_gib=6):raise RuntimeError('resource_guard')
+    if evaluate(collect(ROOT),min_ram_gib=6,min_disk_gib=1):raise RuntimeError('resource_guard')
     capture=validate_browser(query_input);query_sha=digest(query_input/'manifest.json')
     active=json.loads((source_job/'navigation/active.json').read_bytes())['id']
     nav=source_job/'navigation'/active;receipt=json.loads((nav/'receipt.json').read_bytes())
@@ -57,19 +57,17 @@ def run(source_job,query_input,output,*,cases=('baseline','freeze','gap','late_r
         'scripts/pilot/reconstruction_service.py','motor_worker/route_localization.py','motor_worker/route_tracking.py','motor_worker/walk_route.py')}
     output.mkdir();write_json(output/'intent.json',dict(scope='RECORDED_HTTP_PLAN_ONLY',queryManifestSha=query_sha,
         sourceHashes=originals,cases=list(cases),recipeSourceHashes=recipe,faultAfterSeconds=fault_after,physicalActions=0))
-    # Copy the completed workspace; a fresh capability exists only in memory.
-    # No source model/input/receipt is rewritten or adopted.
+    # Copy only the bounded files read by localization; a fresh capability
+    # exists only in memory. Video, SfM databases and old models stay at source.
     identity,key=secrets.token_hex(16),secrets.token_hex(32)
-    job=output/'jobs'/identity;shutil.copytree(source_job,job)
-    control=json.loads((job/'control.json').read_bytes());control['key_sha256']=hashlib.sha256(key.encode()).hexdigest()
-    write_json(job/'control.json',control)
+    job=output/'jobs'/identity;snapshot(source_job,job,key)
     cv.setNumThreads(2);frames=[];last=-1.;checked=time.monotonic()
     for row,image in decoded_browser(capture):
         media=row['relative_ticks_90k']/90000
         if media>seconds:break
         if row['index'] in excluded or media-last<.2:continue
         if time.monotonic()-checked>3:
-            if evaluate(collect(ROOT),min_ram_gib=6):raise RuntimeError('resource_guard')
+            if evaluate(collect(ROOT),min_ram_gib=6,min_disk_gib=1):raise RuntimeError('resource_guard')
             checked=time.monotonic()
         rgb=cv.resize(image.to_ndarray(format='rgb24'),(960,540),interpolation=cv.INTER_AREA)
         encoded={}
@@ -148,7 +146,9 @@ def run(source_job,query_input,output,*,cases=('baseline','freeze','gap','late_r
                 effectiveMovingSamples=sum(bool(np.linalg.norm(r['effectiveStick'])>0) for r in rows))
             write_json(output/f'{case}.json',report);reports.append({k:v for k,v in report.items() if k!='samples'})
             print(json.dumps(reports[-1]),flush=True)
-    finally:server.shutdown();server.server_close();thread.join(5)
+    finally:
+        server.shutdown();server.server_close();thread.join(5)
+        if not thread.is_alive():discard_snapshot(job,output/'fixture-receipt.json')
     if (any(digest(source_job/name)!=sha for name,sha in originals.items())
             or any(digest(ROOT/name)!=sha for name,sha in recipe.items())):raise RuntimeError('control_replay_source_changed')
     result=dict(schema='sphere-recorded-control-replay-v1',cases=reports,physicalActions=0,sourceUnchanged=True,

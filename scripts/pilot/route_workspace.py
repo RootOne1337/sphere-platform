@@ -51,7 +51,7 @@ def route_resource_profile(job, kind='features'):
     """
     if kind == 'live':
         return dict(kind='route_live', minRamGiB=6., hostReserveGiB=4., maxMapBytes=4*1024**2,
-                    maxFrameBytes=384*1024, modelLoaded=False, maxCommitPercent=85)
+                    maxFrameBytes=384*1024, minDiskGiB=1., modelLoaded=False, maxCommitPercent=85)
     if kind != 'features':
         raise ValueError('route_resource_profile')
     video = job/'input/video.h264'
@@ -73,7 +73,14 @@ def resource_checkpoint(folder, *, profile=None):
     minimum = 12 if profile is None else profile['minRamGiB']
     if not isinstance(minimum, (int, float)) or isinstance(minimum, bool) or not 6 <= minimum <= 16:
         raise ValueError('route_resource_profile')
-    findings = evaluate(snapshot, min_ram_gib=minimum)
+    # Live matching reads an already prepared, bounded map. It neither exports
+    # video nor builds a scene. Its bounded summaries need at most 64*512 KiB
+    # per job; retain 1 GiB disk headroom instead of the heavy-build 20 GiB.
+    disk_minimum = 20 if profile is None else profile.get('minDiskGiB', 20)
+    if (type(disk_minimum) not in {int, float} or not 1 <= disk_minimum <= 20
+            or disk_minimum < 20 and profile.get('kind') != 'route_live'):
+        raise ValueError('route_resource_profile')
+    findings = evaluate(snapshot, min_ram_gib=minimum, min_disk_gib=disk_minimum)
     if findings:
         if folder.is_dir():
             write_json(folder/'resource-refusal.json', dict(snapshot=snapshot, findings=findings,

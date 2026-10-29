@@ -33,6 +33,36 @@ class RouteWorkspaceTests(unittest.TestCase):
         with patch.object(Path,'stat',return_value=type('Stat',(),{'st_size':2**31,'st_mode':0o100644})()):
             self.assertGreaterEqual(route_resource_profile(self.job)['minRamGiB'],12)
 
+    def test_live_matching_does_not_require_heavy_reconstruction_disk_space(self):
+        snapshot=dict(system='Windows',freeDiskBytes=19*2**30,availableRamBytes=11*2**30,totalRamBytes=48*2**30,
+            committedBytes=65*2**30,commitLimitBytes=96*2**30,volumeHealthStatus='Healthy',volumeOperationalStatus=['OK'])
+        profile=route_resource_profile(self.job,'live')
+        self.assertEqual(profile['minDiskGiB'],1)
+        with patch('scripts.pilot.route_workspace.collect',return_value=snapshot):
+            resource_checkpoint(self.job,profile=profile)
+            with self.assertRaisesRegex(RuntimeError,'resource_guard'):
+                resource_checkpoint(self.job,profile=route_resource_profile(self.job))
+            with self.assertRaisesRegex(RuntimeError,'resource_guard'):
+                resource_checkpoint(self.job)
+            snapshot['freeDiskBytes']=2**30-1
+            with self.assertRaisesRegex(RuntimeError,'resource_guard'):
+                resource_checkpoint(self.job,profile=profile)
+
+    def test_live_disk_budget_preserves_ram_commit_and_volume_protection(self):
+        base=dict(system='Windows',freeDiskBytes=2*2**30,availableRamBytes=11*2**30,totalRamBytes=48*2**30,
+            committedBytes=65*2**30,commitLimitBytes=96*2**30,volumeHealthStatus='Healthy',volumeOperationalStatus=['OK'])
+        for changed in ({'availableRamBytes':5*2**30},{'committedBytes':90*2**30},
+                        {'volumeHealthStatus':'Warning'},{'freeDiskBytes':None}):
+            with self.subTest(changed=changed),patch('scripts.pilot.route_workspace.collect',return_value=base|changed):
+                with self.assertRaisesRegex(RuntimeError,'resource_guard'):
+                    resource_checkpoint(self.job,profile=route_resource_profile(self.job,'live'))
+        with patch('scripts.pilot.route_workspace.collect',return_value=base):
+            for disk in (0,False,float('nan'),21,'1'):
+                with self.subTest(disk=disk),self.assertRaisesRegex(ValueError,'route_resource_profile'):
+                    resource_checkpoint(self.job,profile=route_resource_profile(self.job,'live')|{'minDiskGiB':disk})
+            with self.assertRaisesRegex(ValueError,'route_resource_profile'):
+                resource_checkpoint(self.job,profile=route_resource_profile(self.job)|{'minDiskGiB':1})
+
     def test_recording_endpoint_coverage_detects_missing_start_and_end(self):
         from scripts.pilot.prepare_route_workspace import source_endpoint_coverage
 
