@@ -1,0 +1,1520 @@
+{
+  "schema": "sphere-walk-continuity-live-audit-v1",
+  "physicalActions": 0,
+  "readsBrowserStorage": false,
+  "rows": [
+    {
+      "id": "4276286ace6d49c7b4a43e665ccf12ba",
+      "localWrittenAt": "2026-10-30T00:06:38.896198",
+      "stop": "walk_camera_response_not_observed",
+      "native": null,
+      "input": {
+        "applied": 48,
+        "events": 165,
+        "submitted": 48
+      },
+      "cameraInput": {
+        "lastDistancePx": 43,
+        "lastDurationMs": 136.5,
+        "strokesApplied": 2,
+        "strokesSubmitted": 2
+      },
+      "observations": 63,
+      "localized": 61,
+      "lastSegment": 10,
+      "sourceSeconds": 5.204,
+      "maxProgress": 0.05808644137602475,
+      "neutralWaits": 12,
+      "camera": {
+        "calibrationAttempts": 1,
+        "feedback": [
+          {
+            "afterUpMs": 234.5,
+            "fraction": 0.018,
+            "sequence": 808,
+            "turnRadians": 0.032122609710849695,
+            "yawAfter": 0.025903566496665566,
+            "yawBefore": 0.15563280864873832
+          },
+          {
+            "afterUpMs": 168.5,
+            "fraction": -0.04,
+            "sequence": 879,
+            "turnRadians": 0.0005871981647623404,
+            "yawAfter": -0.15041820985851115,
+            "yawBefore": -0.1759611288266391
+          }
+        ],
+        "gainRadiansPerShortSide": 1.7845894283805388,
+        "minimumFraction": 0.012,
+        "pulses": 2,
+        "quietResponses": 1,
+        "terminal": "walk_camera_response_not_observed"
+      },
+      "lastObservations": [
+        {
+          "ageMs": 38,
+          "computeMs": 8.056699996814132,
+          "crossTrackUnits": 0.023305720449779,
+          "elapsedMs": 10817,
+          "inliers": 35,
+          "medianErrorPx": 0.4367587932777872,
+          "poseState": "localized",
+          "progress": 0.05808644137602475,
+          "reason": "walk_camera_waiting_feedback",
+          "segment": 10,
+          "sequence": 874,
+          "state": "following"
+        },
+        {
+          "ageMs": 26.19999998807907,
+          "computeMs": 7.039799995254725,
+          "crossTrackUnits": 0.02976716758621594,
+          "elapsedMs": 10922,
+          "inliers": 35,
+          "medianErrorPx": 0.40834562694933224,
+          "poseState": "localized",
+          "progress": 0.057770410317000975,
+          "reason": "walk_camera_waiting_feedback",
+          "segment": 10,
+          "sequence": 876,
+          "state": "following"
+        }
+      ],
+      "sourceSha256": "78cc20afca5f34f0e7de973144e6ab13fca7ab94bf789d4a33db6e1cad63579b"
+    },
+    {
+      "id": "2b81ab78434f4e6c813f4d3bb501c530",
+      "localWrittenAt": "2026-10-30T00:07:07.654350",
+      "stop": "walk_camera_response_not_observed",
+      "native": null,
+      "input": {
+        "applied": 0,
+        "events": 35,
+        "submitted": 0
+      },
+      "cameraInput": {
+        "lastDistancePx": 43,
+        "lastDurationMs": 125.199951171875,
+        "strokesApplied": 2,
+        "strokesSubmitted": 2
+      },
+      "observations": 11,
+      "localized": 9,
+      "lastSegment": 11,
+      "sourceSeconds": 5.707,
+      "maxProgress": 0.069762948728339,
+      "neutralWaits": 0,
+      "camera": {
+        "calibrationAttempts": 1,
+        "feedback": [
+          {
+            "afterUpMs": 180,
+            "fraction": 0.018,
+            "sequence": 1515,
+            "turnRadians": 0.009096924987079485,
+            "yawAfter": -0.271296974051626,
+            "yawBefore": -0.2505000781630315
+          },
+          {
+            "afterUpMs": 292.4000000357628,
+            "fraction": -0.04,
+            "sequence": 1528,
+            "turnRadians": 0.00021148813460307168,
+            "yawAfter": -0.343527521658572,
+            "yawBefore": -0.3464792432354742
+          }
+        ],
+        "gainRadiansPerShortSide": 0.5053847215044159,
+        "minimumFraction": 0.012,
+        "pulses": 2,
+        "quietResponses": 1,
+        "terminal": "walk_camera_response_not_observed"
+      },
+      "lastObservations": [
+        {
+          "ageMs": 52.60000002384186,
+          "computeMs": 10.048699972685426,
+          "crossTrackUnits": 0.03493267467426622,
+          "elapsedMs": 3575.199999988079,
+          "inliers": 38,
+          "medianErrorPx": 0.5178090350881244,
+          "poseState": "localized",
+          "progress": 0.06967604023943756,
+          "reason": "walk_camera_turning",
+          "segment": 11,
+          "sequence": 1522,
+          "state": "following"
+        },
+        {
+          "ageMs": 31.600000023841858,
+          "computeMs": 7.846000022254884,
+          "crossTrackUnits": 0.03476396480480501,
+          "elapsedMs": 3708.5,
+          "inliers": 38,
+          "medianErrorPx": 0.47007679441351846,
+          "poseState": "localized",
+          "progress": 0.0696795525944245,
+          "reason": "walk_camera_waiting_feedback",
+          "segment": 11,
+          "sequence": 1526,
+          "state": "following"
+        }
+      ],
+      "sourceSha256": "973a0f7d70619f622ad9e199933cd7a37746f3009b8ac738eb690b42bb7c190b"
+    },
+    {
+      "id": "926aa1f91da546bc9b90aba5a638abc9",
+      "localWrittenAt": "2026-10-30T00:07:25.100062",
+      "stop": "camera_stroke_expired",
+      "native": "camera_stroke_expired",
+      "input": {
+        "applied": 6,
+        "events": 31,
+        "submitted": 6
+      },
+      "cameraInput": {
+        "lastDistancePx": null,
+        "lastDurationMs": null,
+        "strokesApplied": 0,
+        "strokesSubmitted": 1
+      },
+      "observations": 11,
+      "localized": 9,
+      "lastSegment": 12,
+      "sourceSeconds": 6.173,
+      "maxProgress": 0.08074142938186707,
+      "neutralWaits": 2,
+      "camera": {
+        "calibrationAttempts": 1,
+        "feedback": [],
+        "gainRadiansPerShortSide": null,
+        "minimumFraction": 0.012,
+        "pulses": 1,
+        "quietResponses": 0,
+        "terminal": "walk_camera_input_unconfirmed"
+      },
+      "lastObservations": [
+        {
+          "ageMs": 127,
+          "computeMs": 11.547099973540753,
+          "crossTrackUnits": 0.012169445584362016,
+          "elapsedMs": 3770.399999976158,
+          "inliers": 64,
+          "medianErrorPx": 0.37419417194776494,
+          "poseState": "localized",
+          "progress": 0.07945462441837778,
+          "reason": "walk_camera_waiting_neutral",
+          "segment": 12,
+          "sequence": 1897,
+          "state": "following"
+        },
+        {
+          "ageMs": 68.19999998807907,
+          "computeMs": 12.80260004568845,
+          "crossTrackUnits": 0.007032175467953194,
+          "elapsedMs": 3846.300000011921,
+          "inliers": 61,
+          "medianErrorPx": 0.3854786242124362,
+          "poseState": "localized",
+          "progress": 0.08074142938186707,
+          "reason": "walk_camera_calibrating",
+          "segment": 12,
+          "sequence": 1900,
+          "state": "following"
+        }
+      ],
+      "sourceSha256": "0317ae93e1c76fa17d26703e7d9945e75de1dadb72203838e08c3bc0348688a3"
+    },
+    {
+      "id": "50b38a4d65734eefb16cfe226d88fb36",
+      "localWrittenAt": "2026-10-30T00:08:36.282506",
+      "stop": "walk_camera_response_not_observed",
+      "native": null,
+      "input": {
+        "applied": 103,
+        "events": 369,
+        "submitted": 103
+      },
+      "cameraInput": {
+        "lastDistancePx": 43,
+        "lastDurationMs": 145.89990234375,
+        "strokesApplied": 6,
+        "strokesSubmitted": 6
+      },
+      "observations": 148,
+      "localized": 146,
+      "lastSegment": 21,
+      "sourceSeconds": 7.957,
+      "maxProgress": 0.12291920293423345,
+      "neutralWaits": 6,
+      "camera": {
+        "calibrationAttempts": 3,
+        "feedback": [
+          {
+            "afterUpMs": 190.19999998807907,
+            "fraction": 0.018,
+            "sequence": 3311,
+            "turnRadians": -0.00011923275619985444,
+            "yawAfter": 0.22846585692143873,
+            "yawBefore": 0.18528312238104178
+          },
+          {
+            "afterUpMs": 202.5,
+            "fraction": 0.032,
+            "sequence": 3342,
+            "turnRadians": -9.561649063165469e-05,
+            "yawAfter": 0.26820800758979446,
+            "yawBefore": 0.24638314231433533
+          },
+          {
+            "afterUpMs": 256.69999998807907,
+            "fraction": 0.04,
+            "sequence": 3355,
+            "turnRadians": 0.1177294491443864,
+            "yawAfter": 0.03640220898242581,
+            "yawBefore": 0.16243350007201088
+          },
+          {
+            "afterUpMs": 292.39999997615814,
+            "fraction": 0.04,
+            "sequence": 3441,
+            "turnRadians": 0.15714829892158344,
+            "yawAfter": 0.060222499606847384,
+            "yawBefore": 0.18187795439955332
+          },
+          {
+            "afterUpMs": 204.19999998807907,
+            "fraction": 0.04,
+            "sequence": 3479,
+            "turnRadians": 0.05279846597645664,
+            "yawAfter": 0.10063359773142497,
+            "yawBefore": 0.17403742493380903
+          },
+          {
+            "afterUpMs": 176.10000002384186,
+            "fraction": 0.04,
+            "sequence": 3520,
+            "turnRadians": 0.0006281651145755492,
+            "yawAfter": 0.32311134751598114,
+            "yawBefore": 0.20044172599539706
+          }
+        ],
+        "gainRadiansPerShortSide": 2.72219344214071,
+        "minimumFraction": 0.04,
+        "pulses": 6,
+        "quietResponses": 1,
+        "terminal": "walk_camera_response_not_observed"
+      },
+      "lastObservations": [
+        {
+          "ageMs": 44.5,
+          "computeMs": 10.548000049311668,
+          "crossTrackUnits": 0.0038971458757458923,
+          "elapsedMs": 22188.100000023842,
+          "inliers": 136,
+          "medianErrorPx": 0.3226246126276132,
+          "poseState": "localized",
+          "progress": 0.12211929510084087,
+          "reason": "walk_camera_waiting_feedback",
+          "segment": 21,
+          "sequence": 3514,
+          "state": "following"
+        },
+        {
+          "ageMs": 27.19999998807907,
+          "computeMs": 7.753100013360381,
+          "crossTrackUnits": 0.003701954456495168,
+          "elapsedMs": 22270.80000001192,
+          "inliers": 136,
+          "medianErrorPx": 0.34647789023143666,
+          "poseState": "localized",
+          "progress": 0.12291920293423345,
+          "reason": "walk_camera_waiting_feedback",
+          "segment": 21,
+          "sequence": 3516,
+          "state": "following"
+        }
+      ],
+      "sourceSha256": "880cde7bb8477b5bc84b2c60c5dbadf42c8e4c304bb2cb556dbad0e8a681b3bb"
+    },
+    {
+      "id": "28c39a34a98d469e90e33268de669be7",
+      "localWrittenAt": "2026-10-30T00:10:13.652491",
+      "stop": "camera_stroke_expired",
+      "native": "camera_stroke_expired",
+      "input": {
+        "applied": 83,
+        "events": 255,
+        "submitted": 83
+      },
+      "cameraInput": {
+        "lastDistancePx": 19,
+        "lastDurationMs": 203.300048828125,
+        "strokesApplied": 1,
+        "strokesSubmitted": 2
+      },
+      "observations": 94,
+      "localized": 92,
+      "lastSegment": 13,
+      "sourceSeconds": 6.456,
+      "maxProgress": 0.08656035546361927,
+      "neutralWaits": 15,
+      "camera": {
+        "calibrationAttempts": 1,
+        "feedback": [
+          {
+            "afterUpMs": 261.10000002384186,
+            "fraction": 0.018,
+            "sequence": 5640,
+            "turnRadians": 0.07357871393645873,
+            "yawAfter": 0.12783034925505266,
+            "yawBefore": 0.21887670429916686
+          }
+        ],
+        "gainRadiansPerShortSide": 4.087706329803264,
+        "minimumFraction": 0.012,
+        "pulses": 2,
+        "quietResponses": 0,
+        "terminal": "walk_camera_input_unconfirmed"
+      },
+      "lastObservations": [
+        {
+          "ageMs": 36.39999997615814,
+          "computeMs": 8.591399993747473,
+          "crossTrackUnits": 0.0034318089474641334,
+          "elapsedMs": 15854.899999976158,
+          "inliers": 77,
+          "medianErrorPx": 0.43076425874652646,
+          "poseState": "localized",
+          "progress": 0.08437024529489558,
+          "reason": "walk_camera_waiting_neutral",
+          "segment": 12,
+          "sequence": 5782,
+          "state": "following"
+        },
+        {
+          "ageMs": 45,
+          "computeMs": 10.500900039914995,
+          "crossTrackUnits": 0.004903193029452925,
+          "elapsedMs": 15980.199999988079,
+          "inliers": 77,
+          "medianErrorPx": 0.5433795435893868,
+          "poseState": "localized",
+          "progress": 0.08656035546361927,
+          "reason": "walk_camera_turning",
+          "segment": 13,
+          "sequence": 5785,
+          "state": "following"
+        }
+      ],
+      "sourceSha256": "dbe2480dd51ba97d16975c8e69288a8b1320b307116c8dbc3d4a8515dca43fdb"
+    },
+    {
+      "id": "ffd05cc731a54146a0ffecc3e5237d0b",
+      "localWrittenAt": "2026-10-30T00:10:39.401400",
+      "stop": "walk_camera_resolution_limit",
+      "native": null,
+      "input": {
+        "applied": 10,
+        "events": 139,
+        "submitted": 10
+      },
+      "cameraInput": {
+        "lastDistancePx": 43,
+        "lastDurationMs": 146.699951171875,
+        "strokesApplied": 3,
+        "strokesSubmitted": 3
+      },
+      "observations": 89,
+      "localized": 21,
+      "lastSegment": 16,
+      "sourceSeconds": 6.959,
+      "maxProgress": 0.09813564795936684,
+      "neutralWaits": 4,
+      "camera": {
+        "calibrationAttempts": 3,
+        "feedback": [
+          {
+            "afterUpMs": 247.19999998807907,
+            "fraction": 0.018,
+            "sequence": 6284,
+            "turnRadians": -0.00034721924382694237,
+            "yawAfter": 0.20940935654096007,
+            "yawBefore": 0.15537421196361226
+          },
+          {
+            "afterUpMs": 208.39999997615814,
+            "fraction": 0.032,
+            "sequence": 6309,
+            "turnRadians": 0.00024794681077124796,
+            "yawAfter": 0.26448237063219093,
+            "yawBefore": 0.14001699413927943
+          },
+          {
+            "afterUpMs": 397.80000001192093,
+            "fraction": 0.04,
+            "sequence": 6324,
+            "turnRadians": 0.2500737696325974,
+            "yawAfter": -0.14322175498195244,
+            "yawBefore": 0.17330191596720376
+          }
+        ],
+        "gainRadiansPerShortSide": 6.251844240814935,
+        "minimumFraction": 0.04,
+        "pulses": 3,
+        "quietResponses": 0,
+        "terminal": "walk_camera_resolution_limit"
+      },
+      "lastObservations": [
+        {
+          "ageMs": 38.40000003576279,
+          "computeMs": 10.172799986321479,
+          "crossTrackUnits": 0.04446486898508719,
+          "elapsedMs": 15811.5,
+          "inliers": 86,
+          "medianErrorPx": 0.43292094848880813,
+          "poseState": "localized",
+          "progress": 0.09811758326166832,
+          "reason": "walk_camera_calibrating",
+          "segment": 16,
+          "sequence": 6312,
+          "state": "following"
+        },
+        {
+          "ageMs": 39.5,
+          "computeMs": 8.133700001053512,
+          "crossTrackUnits": 0.04307958292373473,
+          "elapsedMs": 15945.899999976158,
+          "inliers": 78,
+          "medianErrorPx": 0.4869209734747888,
+          "poseState": "localized",
+          "progress": 0.09813564795936684,
+          "reason": "walk_camera_waiting_feedback",
+          "segment": 16,
+          "sequence": 6316,
+          "state": "following"
+        }
+      ],
+      "sourceSha256": "ed2b6c9c9b664746e49119b0a6ec5958728e92c5f129c0aa02bf34f59347b72c"
+    },
+    {
+      "id": "d72cd5f20d124ca8ad5d5bebce8c9af1",
+      "localWrittenAt": "2026-10-30T00:10:56.478492",
+      "stop": "walk_manual_stop",
+      "native": null,
+      "input": {
+        "applied": 0,
+        "events": 55,
+        "submitted": 0
+      },
+      "cameraInput": {
+        "lastDistancePx": null,
+        "lastDurationMs": null,
+        "strokesApplied": 0,
+        "strokesSubmitted": 0
+      },
+      "observations": 62,
+      "localized": 4,
+      "lastSegment": 16,
+      "sourceSeconds": 6.959,
+      "maxProgress": 0.0980184722693638,
+      "neutralWaits": 0,
+      "camera": {
+        "calibrationAttempts": 0,
+        "feedback": [],
+        "gainRadiansPerShortSide": null,
+        "minimumFraction": 0.012,
+        "pulses": 0,
+        "quietResponses": 0,
+        "terminal": null
+      },
+      "lastObservations": [
+        {
+          "ageMs": 124.90000003576279,
+          "computeMs": 108.30239998176694,
+          "crossTrackUnits": 0.04506375659030404,
+          "elapsedMs": 10467.400000035763,
+          "inliers": 137,
+          "medianErrorPx": 0.2688300592757227,
+          "poseState": "confirming",
+          "progress": null,
+          "reason": "walk_confirming_start",
+          "segment": 16,
+          "sequence": 6696,
+          "state": "waiting"
+        },
+        {
+          "ageMs": 139.0999999642372,
+          "computeMs": 108.06180001236498,
+          "crossTrackUnits": 0.04506375659030404,
+          "elapsedMs": 10616,
+          "inliers": 137,
+          "medianErrorPx": 0.2688300592757227,
+          "poseState": "confirming",
+          "progress": null,
+          "reason": "walk_confirming_start",
+          "segment": 16,
+          "sequence": 6699,
+          "state": "waiting"
+        }
+      ],
+      "sourceSha256": "5906144c873b1f4291f0aef36e7fba5ba552b7eca26fa5f8de8c5c69844829a4"
+    },
+    {
+      "id": "4e0f224d3b774aa6be97dd5823c852cc",
+      "localWrittenAt": "2026-10-30T00:11:07.909044",
+      "stop": "walk_camera_gain_unqualified",
+      "native": null,
+      "input": {
+        "applied": 0,
+        "events": 31,
+        "submitted": 0
+      },
+      "cameraInput": {
+        "lastDistancePx": 31,
+        "lastDurationMs": 150.10009765625,
+        "strokesApplied": 2,
+        "strokesSubmitted": 2
+      },
+      "observations": 11,
+      "localized": 9,
+      "lastSegment": 15,
+      "sourceSeconds": 6.806,
+      "maxProgress": 0.09381397546613528,
+      "neutralWaits": 0,
+      "camera": {
+        "calibrationAttempts": 1,
+        "feedback": [
+          {
+            "afterUpMs": 269.80000001192093,
+            "fraction": 0.018,
+            "sequence": 6934,
+            "turnRadians": 0.0758983344180081,
+            "yawAfter": 0.43288214065973935,
+            "yawBefore": 0.5016546662864365
+          },
+          {
+            "afterUpMs": 175.5,
+            "fraction": 0.028459122542846015,
+            "sequence": 6941,
+            "turnRadians": 0.0042696218645477905,
+            "yawAfter": 0.4201153679907687,
+            "yawBefore": 0.43288214065973935
+          }
+        ],
+        "gainRadiansPerShortSide": 4.216574134333784,
+        "minimumFraction": 0.012,
+        "pulses": 2,
+        "quietResponses": 0,
+        "terminal": "walk_camera_gain_unqualified"
+      },
+      "lastObservations": [
+        {
+          "ageMs": 144.5999999642372,
+          "computeMs": 122.13599996175617,
+          "crossTrackUnits": 0.08178582694820921,
+          "elapsedMs": 3407.399999976158,
+          "inliers": 104,
+          "medianErrorPx": 0.2710210061940532,
+          "poseState": "localized",
+          "progress": 0.09356831283963417,
+          "reason": "walk_camera_waiting_feedback",
+          "segment": 15,
+          "sequence": 6936,
+          "state": "following"
+        },
+        {
+          "ageMs": 70.5,
+          "computeMs": 8.158699958585203,
+          "crossTrackUnits": 0.08133448777959523,
+          "elapsedMs": 3465.5,
+          "inliers": 104,
+          "medianErrorPx": 0.29275960427915154,
+          "poseState": "localized",
+          "progress": 0.09350744433628373,
+          "reason": "walk_camera_waiting_feedback",
+          "segment": 15,
+          "sequence": 6938,
+          "state": "following"
+        }
+      ],
+      "sourceSha256": "3a1f3c3eb35c533117b93ab5cc1a2480d6d33e65072e9a15614cb5f0f9df8041"
+    },
+    {
+      "id": "77d0c6348dca45bb864d9d92bcab841d",
+      "localWrittenAt": "2026-10-30T00:11:21.455384",
+      "stop": "camera_stroke_expired",
+      "native": "camera_stroke_expired",
+      "input": {
+        "applied": 27,
+        "events": 151,
+        "submitted": 27
+      },
+      "cameraInput": {
+        "lastDistancePx": 36,
+        "lastDurationMs": 148,
+        "strokesApplied": 4,
+        "strokesSubmitted": 5
+      },
+      "observations": 44,
+      "localized": 42,
+      "lastSegment": 21,
+      "sourceSeconds": 7.957,
+      "maxProgress": 0.11984362778416076,
+      "neutralWaits": 10,
+      "camera": {
+        "calibrationAttempts": 1,
+        "feedback": [
+          {
+            "afterUpMs": 162,
+            "fraction": 0.018,
+            "sequence": 7097,
+            "turnRadians": 0.03348049902053171,
+            "yawAfter": 0.2635263743480421,
+            "yawBefore": 0.29713510495973605
+          },
+          {
+            "afterUpMs": 179.60000002384186,
+            "fraction": 0.04,
+            "sequence": 7109,
+            "turnRadians": 0.11230597270846762,
+            "yawAfter": 0.09201104060172383,
+            "yawBefore": 0.2179814260587649
+          },
+          {
+            "afterUpMs": 366.30000001192093,
+            "fraction": -0.04,
+            "sequence": 7141,
+            "turnRadians": -0.17768439403144676,
+            "yawAfter": -0.032371698949708906,
+            "yawBefore": -0.2127749980818308
+          },
+          {
+            "afterUpMs": 190.60000002384186,
+            "fraction": -0.033560286672457196,
+            "sequence": 7167,
+            "turnRadians": -0.04496649949822409,
+            "yawAfter": -0.14729992852560334,
+            "yawBefore": -0.1500831292249065
+          }
+        ],
+        "gainRadiansPerShortSide": 2.3473885606113614,
+        "minimumFraction": 0.012,
+        "pulses": 5,
+        "quietResponses": 0,
+        "terminal": "walk_camera_input_unconfirmed"
+      },
+      "lastObservations": [
+        {
+          "ageMs": 92.90000003576279,
+          "computeMs": 17.049200017936528,
+          "crossTrackUnits": 0.01172132709467023,
+          "elapsedMs": 8783.900000035763,
+          "inliers": 118,
+          "medianErrorPx": 0.3848191033481402,
+          "poseState": "localized",
+          "progress": 0.11815129956680656,
+          "reason": "walk_camera_aligned",
+          "segment": 20,
+          "sequence": 7214,
+          "state": "following"
+        },
+        {
+          "ageMs": 68.30000001192093,
+          "computeMs": 16.127599985338748,
+          "crossTrackUnits": 0.009037616685121149,
+          "elapsedMs": 9140.400000035763,
+          "inliers": 129,
+          "medianErrorPx": 0.32214494503053803,
+          "poseState": "localized",
+          "progress": 0.11984362778416076,
+          "reason": "walk_camera_turning",
+          "segment": 21,
+          "sequence": 7220,
+          "state": "following"
+        }
+      ],
+      "sourceSha256": "2dfd79a4e713f356e764fc793101a411149d59ff0807d301e2717b60a675d7da"
+    },
+    {
+      "id": "a77eb54645a844f4bd3cbd195ffa0c80",
+      "localWrittenAt": "2026-10-30T00:12:00.411231",
+      "stop": "walk_stream_changed",
+      "native": null,
+      "input": {
+        "applied": 142,
+        "events": 515,
+        "submitted": 142
+      },
+      "cameraInput": {
+        "lastDistancePx": 43,
+        "lastDurationMs": 131.10009765625,
+        "strokesApplied": 9,
+        "strokesSubmitted": 9
+      },
+      "observations": 212,
+      "localized": 210,
+      "lastSegment": 44,
+      "sourceSeconds": 15.717,
+      "maxProgress": 0.30257485273856904,
+      "neutralWaits": 9,
+      "camera": {
+        "calibrationAttempts": 1,
+        "feedback": [
+          {
+            "afterUpMs": 275,
+            "fraction": 0.018,
+            "sequence": 7458,
+            "turnRadians": 0.07447315628064788,
+            "yawAfter": 0.1881898908814905,
+            "yawBefore": 0.17246194741261955
+          },
+          {
+            "afterUpMs": 278.10000002384186,
+            "fraction": 0.02729105254866493,
+            "sequence": 7469,
+            "turnRadians": 0.1188135585512704,
+            "yawAfter": 0.09878580821766052,
+            "yawBefore": 0.1881898908814905
+          },
+          {
+            "afterUpMs": 206.60000002384186,
+            "fraction": 0.02464973473726072,
+            "sequence": 7499,
+            "turnRadians": 0.018979391806149885,
+            "yawAfter": 0.20461519475176812,
+            "yawBefore": 0.17219652063925805
+          },
+          {
+            "afterUpMs": 293.10000002384186,
+            "fraction": 0.025644817376918976,
+            "sequence": 7510,
+            "turnRadians": 0.11547665317255845,
+            "yawAfter": 0.02980460484587618,
+            "yawBefore": 0.14258824877205448
+          },
+          {
+            "afterUpMs": 269.4000000357628,
+            "fraction": 0.030726539892404363,
+            "sequence": 7575,
+            "turnRadians": 0.08944874983632266,
+            "yawAfter": 0.11159370826565615,
+            "yawBefore": 0.1857821170979228
+          },
+          {
+            "afterUpMs": 187.60000002384186,
+            "fraction": 0.029431271509627755,
+            "sequence": 7648,
+            "turnRadians": 0.02329248962784634,
+            "yawAfter": 0.13430413944554248,
+            "yawBefore": 0.16916208756621842
+          },
+          {
+            "afterUpMs": 251,
+            "fraction": 0.030796308045284666,
+            "sequence": 7772,
+            "turnRadians": 0.1073917443981178,
+            "yawAfter": 0.06751036035850222,
+            "yawBefore": 0.14291126598836354
+          },
+          {
+            "afterUpMs": 192.30000001192093,
+            "fraction": 0.03996605192766591,
+            "sequence": 7912,
+            "turnRadians": 0.11428601607381161,
+            "yawAfter": 0.041298212900761785,
+            "yawBefore": 0.19716787630517146
+          },
+          {
+            "afterUpMs": 235,
+            "fraction": 0.04,
+            "sequence": 8089,
+            "turnRadians": 0.0997894964551035,
+            "yawAfter": 0.1008509637623747,
+            "yawBefore": 0.20880589329934768
+          }
+        ],
+        "gainRadiansPerShortSide": 2.8248721615890773,
+        "minimumFraction": 0.012,
+        "pulses": 9,
+        "quietResponses": 0,
+        "terminal": null
+      },
+      "lastObservations": [
+        {
+          "ageMs": 49,
+          "computeMs": 9.104600001592189,
+          "crossTrackUnits": 0.01078309624880603,
+          "elapsedMs": 31288.5,
+          "inliers": 62,
+          "medianErrorPx": 0.5408416553545448,
+          "poseState": "localized",
+          "progress": 0.3024869967828441,
+          "reason": "walk_camera_aligned",
+          "segment": 44,
+          "sequence": 8094,
+          "state": "following"
+        },
+        {
+          "ageMs": 139.10000002384186,
+          "computeMs": 113.77509997691959,
+          "crossTrackUnits": 0.011832297752556006,
+          "elapsedMs": 31715.900000035763,
+          "inliers": 82,
+          "medianErrorPx": 0.47484582401030345,
+          "poseState": "localized",
+          "progress": 0.30257485273856904,
+          "reason": "walk_camera_aligned",
+          "segment": 44,
+          "sequence": 8097,
+          "state": "following"
+        }
+      ],
+      "sourceSha256": "dca6defb9b0cd048236e991b768ccb6af7c38f275a36a864832bbf84984dc7fe"
+    },
+    {
+      "id": "0a39dd38b0d248ec8e466ddab51c618d",
+      "localWrittenAt": "2026-10-30T00:12:14.051620",
+      "stop": "walk_camera_response_not_observed",
+      "native": null,
+      "input": {
+        "applied": 20,
+        "events": 109,
+        "submitted": 20
+      },
+      "cameraInput": {
+        "lastDistancePx": 43,
+        "lastDurationMs": 134,
+        "strokesApplied": 3,
+        "strokesSubmitted": 3
+      },
+      "observations": 36,
+      "localized": 34,
+      "lastSegment": 48,
+      "sourceSeconds": 16.856,
+      "maxProgress": 0.3249494117679897,
+      "neutralWaits": 6,
+      "camera": {
+        "calibrationAttempts": 1,
+        "feedback": [
+          {
+            "afterUpMs": 193.5,
+            "fraction": 0.018,
+            "sequence": 8314,
+            "turnRadians": 0.013927380853847017,
+            "yawAfter": -0.20120189580565875,
+            "yawBefore": -0.16038379873403033
+          },
+          {
+            "afterUpMs": 186.69999998807907,
+            "fraction": -0.04,
+            "sequence": 8326,
+            "turnRadians": -0.019301460846285055,
+            "yawAfter": -0.23991776796047856,
+            "yawBefore": -0.2616554369706846
+          },
+          {
+            "afterUpMs": 188,
+            "fraction": -0.04,
+            "sequence": 8382,
+            "turnRadians": -0.00034972128232064884,
+            "yawAfter": -0.17750412915037667,
+            "yawBefore": -0.23995150119751749
+          }
+        ],
+        "gainRadiansPerShortSide": 0.7009416658662406,
+        "minimumFraction": 0.012,
+        "pulses": 3,
+        "quietResponses": 1,
+        "terminal": "walk_camera_response_not_observed"
+      },
+      "lastObservations": [
+        {
+          "ageMs": 37.30000001192093,
+          "computeMs": 8.288699958939105,
+          "crossTrackUnits": 0.004145825661411338,
+          "elapsedMs": 7218.099999964237,
+          "inliers": 48,
+          "medianErrorPx": 0.5466297728424512,
+          "poseState": "localized",
+          "progress": 0.3237647970991606,
+          "reason": "walk_camera_waiting_feedback",
+          "segment": 47,
+          "sequence": 8376,
+          "state": "following"
+        },
+        {
+          "ageMs": 40.80000001192093,
+          "computeMs": 14.828599989414215,
+          "crossTrackUnits": 0.006186391420832597,
+          "elapsedMs": 7338.099999964237,
+          "inliers": 47,
+          "medianErrorPx": 0.5228424218103551,
+          "poseState": "localized",
+          "progress": 0.3249494117679897,
+          "reason": "walk_camera_waiting_feedback",
+          "segment": 48,
+          "sequence": 8379,
+          "state": "following"
+        }
+      ],
+      "sourceSha256": "238f23f39a75573d70439bd9661b1f0c4430c96dc4575f642671f68d000b2b78"
+    },
+    {
+      "id": "571d6da527024a528b54470526604fe7",
+      "localWrittenAt": "2026-10-30T00:12:29.298526",
+      "stop": "camera_stroke_expired",
+      "native": "camera_stroke_expired",
+      "input": {
+        "applied": 45,
+        "events": 149,
+        "submitted": 45
+      },
+      "cameraInput": {
+        "lastDistancePx": null,
+        "lastDurationMs": null,
+        "strokesApplied": 0,
+        "strokesSubmitted": 1
+      },
+      "observations": 54,
+      "localized": 53,
+      "lastSegment": 54,
+      "sourceSeconds": 19.005,
+      "maxProgress": 0.37709168929601167,
+      "neutralWaits": 14,
+      "camera": {
+        "calibrationAttempts": 1,
+        "feedback": [],
+        "gainRadiansPerShortSide": null,
+        "minimumFraction": 0.012,
+        "pulses": 1,
+        "quietResponses": 0,
+        "terminal": "walk_camera_input_unconfirmed"
+      },
+      "lastObservations": [
+        {
+          "ageMs": 40.299999952316284,
+          "computeMs": 9.277499979361892,
+          "crossTrackUnits": 0.007270761524260368,
+          "elapsedMs": 10292.699999988079,
+          "inliers": 43,
+          "medianErrorPx": 0.45227759426075254,
+          "poseState": "localized",
+          "progress": 0.3760661954568155,
+          "reason": "walk_camera_waiting_neutral",
+          "segment": 54,
+          "sequence": 8698,
+          "state": "following"
+        },
+        {
+          "ageMs": 26.69999998807907,
+          "computeMs": 6.781500007491559,
+          "crossTrackUnits": 0.008036680180484595,
+          "elapsedMs": 10411.699999988079,
+          "inliers": 41,
+          "medianErrorPx": 0.434236978111432,
+          "poseState": "localized",
+          "progress": 0.37709168929601167,
+          "reason": "walk_camera_calibrating",
+          "segment": 54,
+          "sequence": 8701,
+          "state": "following"
+        }
+      ],
+      "sourceSha256": "300eb47604f59044177496f3aceb96111012afd153b10ae4021f735513330368"
+    },
+    {
+      "id": "cc86a794b00d4682a8817d0205836397",
+      "localWrittenAt": "2026-10-30T00:12:40.903645",
+      "stop": "walk_decision_expired",
+      "native": null,
+      "input": {
+        "applied": 0,
+        "events": 21,
+        "submitted": 0
+      },
+      "cameraInput": {
+        "lastDistancePx": null,
+        "lastDurationMs": null,
+        "strokesApplied": 0,
+        "strokesSubmitted": 0
+      },
+      "observations": 17,
+      "localized": 0,
+      "lastSegment": null,
+      "sourceSeconds": null,
+      "maxProgress": 0,
+      "neutralWaits": 1,
+      "camera": {
+        "calibrationAttempts": 0,
+        "feedback": [],
+        "gainRadiansPerShortSide": null,
+        "minimumFraction": 0.012,
+        "pulses": 0,
+        "quietResponses": 0,
+        "terminal": null
+      },
+      "lastObservations": [
+        {
+          "ageMs": 145.30000001192093,
+          "computeMs": 121.60640000365674,
+          "crossTrackUnits": null,
+          "elapsedMs": 4925.5,
+          "inliers": 0,
+          "medianErrorPx": null,
+          "poseState": "unknown",
+          "progress": null,
+          "reason": "walk_waiting_fresh_reply",
+          "segment": null,
+          "sequence": 8925,
+          "state": "waiting"
+        },
+        {
+          "ageMs": 172.80000001192093,
+          "computeMs": 126.321799994912,
+          "crossTrackUnits": null,
+          "elapsedMs": 5085.099999964237,
+          "inliers": 0,
+          "medianErrorPx": null,
+          "poseState": "unknown",
+          "progress": null,
+          "reason": "walk_waiting_fresh_reply",
+          "segment": null,
+          "sequence": 8929,
+          "state": "waiting"
+        }
+      ],
+      "sourceSha256": "4e7e893390694c6da62a2ea8ea9c2387ada32087a15591a92a8598a82867bd17"
+    },
+    {
+      "id": "a5ee014cfcfd46dfb3e4dc3525592aeb",
+      "localWrittenAt": "2026-10-30T00:12:47.647393",
+      "stop": "walk_decision_expired",
+      "native": null,
+      "input": {
+        "applied": 0,
+        "events": 17,
+        "submitted": 0
+      },
+      "cameraInput": {
+        "lastDistancePx": null,
+        "lastDurationMs": null,
+        "strokesApplied": 0,
+        "strokesSubmitted": 0
+      },
+      "observations": 13,
+      "localized": 0,
+      "lastSegment": null,
+      "sourceSeconds": null,
+      "maxProgress": 0,
+      "neutralWaits": 1,
+      "camera": {
+        "calibrationAttempts": 0,
+        "feedback": [],
+        "gainRadiansPerShortSide": null,
+        "minimumFraction": 0.012,
+        "pulses": 0,
+        "quietResponses": 0,
+        "terminal": null
+      },
+      "lastObservations": [
+        {
+          "ageMs": 142.60000002384186,
+          "computeMs": 120.12640002649277,
+          "crossTrackUnits": null,
+          "elapsedMs": 4319.800000011921,
+          "inliers": 0,
+          "medianErrorPx": null,
+          "poseState": "unknown",
+          "progress": null,
+          "reason": "walk_waiting_fresh_reply",
+          "segment": null,
+          "sequence": 9061,
+          "state": "waiting"
+        },
+        {
+          "ageMs": 182.70000004768372,
+          "computeMs": 116.09770002542064,
+          "crossTrackUnits": null,
+          "elapsedMs": 4475.900000035763,
+          "inliers": 0,
+          "medianErrorPx": null,
+          "poseState": "unknown",
+          "progress": null,
+          "reason": "walk_waiting_fresh_reply",
+          "segment": null,
+          "sequence": 9063,
+          "state": "waiting"
+        }
+      ],
+      "sourceSha256": "3772f26af00ec48336743f2830581676c8fd4591ef212feb3ec5cdb542339528"
+    },
+    {
+      "id": "6439712592f846d694c1099dbbbb92ba",
+      "localWrittenAt": "2026-10-30T00:12:58.082057",
+      "stop": "walk_decision_expired",
+      "native": null,
+      "input": {
+        "applied": 0,
+        "events": 15,
+        "submitted": 0
+      },
+      "cameraInput": {
+        "lastDistancePx": null,
+        "lastDurationMs": null,
+        "strokesApplied": 0,
+        "strokesSubmitted": 0
+      },
+      "observations": 11,
+      "localized": 0,
+      "lastSegment": null,
+      "sourceSeconds": null,
+      "maxProgress": 0,
+      "neutralWaits": 1,
+      "camera": {
+        "calibrationAttempts": 0,
+        "feedback": [],
+        "gainRadiansPerShortSide": null,
+        "minimumFraction": 0.012,
+        "pulses": 0,
+        "quietResponses": 0,
+        "terminal": null
+      },
+      "lastObservations": [
+        {
+          "ageMs": 170.89999997615814,
+          "computeMs": 113.25070000020787,
+          "crossTrackUnits": null,
+          "elapsedMs": 3758.5,
+          "inliers": 0,
+          "medianErrorPx": null,
+          "poseState": "unknown",
+          "progress": null,
+          "reason": "walk_waiting_fresh_reply",
+          "segment": null,
+          "sequence": 9277,
+          "state": "waiting"
+        },
+        {
+          "ageMs": 162,
+          "computeMs": 127.52669997280464,
+          "crossTrackUnits": null,
+          "elapsedMs": 3916.2000000476837,
+          "inliers": 0,
+          "medianErrorPx": null,
+          "poseState": "unknown",
+          "progress": null,
+          "reason": "walk_waiting_fresh_reply",
+          "segment": null,
+          "sequence": 9281,
+          "state": "waiting"
+        }
+      ],
+      "sourceSha256": "83c813cd22eba60e3c0918783d7ecfcd069df00273f9a72e8c6d52d616b70f18"
+    },
+    {
+      "id": "8203c67355de48528ffa8c60b9d075f3",
+      "localWrittenAt": "2026-10-30T00:13:07.261232",
+      "stop": "walk_decision_expired",
+      "native": null,
+      "input": {
+        "applied": 0,
+        "events": 25,
+        "submitted": 0
+      },
+      "cameraInput": {
+        "lastDistancePx": null,
+        "lastDurationMs": null,
+        "strokesApplied": 0,
+        "strokesSubmitted": 0
+      },
+      "observations": 20,
+      "localized": 0,
+      "lastSegment": null,
+      "sourceSeconds": null,
+      "maxProgress": 0,
+      "neutralWaits": 1,
+      "camera": {
+        "calibrationAttempts": 0,
+        "feedback": [],
+        "gainRadiansPerShortSide": null,
+        "minimumFraction": 0.012,
+        "pulses": 0,
+        "quietResponses": 0,
+        "terminal": null
+      },
+      "lastObservations": [
+        {
+          "ageMs": 164.5,
+          "computeMs": 124.66630002018064,
+          "crossTrackUnits": null,
+          "elapsedMs": 5219.5,
+          "inliers": 0,
+          "medianErrorPx": null,
+          "poseState": "unknown",
+          "progress": null,
+          "reason": "walk_waiting_fresh_reply",
+          "segment": null,
+          "sequence": 9465,
+          "state": "waiting"
+        },
+        {
+          "ageMs": 192.19999998807907,
+          "computeMs": 165.23089999100193,
+          "crossTrackUnits": null,
+          "elapsedMs": 5418.400000035763,
+          "inliers": 0,
+          "medianErrorPx": null,
+          "poseState": "unknown",
+          "progress": null,
+          "reason": "walk_waiting_fresh_reply",
+          "segment": null,
+          "sequence": 9468,
+          "state": "waiting"
+        }
+      ],
+      "sourceSha256": "9636f7e34328024bbf1a610e5f88755403fa94474e1799bc188d39d3bcad90de"
+    },
+    {
+      "id": "8850e0c2cf494913b1509a6661efa847",
+      "localWrittenAt": "2026-10-30T00:14:08.974727",
+      "stop": "walk_decision_expired",
+      "native": null,
+      "input": {
+        "applied": 0,
+        "events": 17,
+        "submitted": 0
+      },
+      "cameraInput": {
+        "lastDistancePx": null,
+        "lastDurationMs": null,
+        "strokesApplied": 0,
+        "strokesSubmitted": 0
+      },
+      "observations": 14,
+      "localized": 0,
+      "lastSegment": null,
+      "sourceSeconds": null,
+      "maxProgress": 0,
+      "neutralWaits": 1,
+      "camera": {
+        "calibrationAttempts": 0,
+        "feedback": [],
+        "gainRadiansPerShortSide": null,
+        "minimumFraction": 0.012,
+        "pulses": 0,
+        "quietResponses": 0,
+        "terminal": null
+      },
+      "lastObservations": [
+        {
+          "ageMs": 171.20000004768372,
+          "computeMs": 115.92220002785325,
+          "crossTrackUnits": null,
+          "elapsedMs": 4332.800000011921,
+          "inliers": 0,
+          "medianErrorPx": null,
+          "poseState": "unknown",
+          "progress": null,
+          "reason": "walk_waiting_fresh_reply",
+          "segment": null,
+          "sequence": 10007,
+          "state": "waiting"
+        },
+        {
+          "ageMs": 129.5999999642372,
+          "computeMs": 111.31169996224344,
+          "crossTrackUnits": null,
+          "elapsedMs": 4491.399999976158,
+          "inliers": 0,
+          "medianErrorPx": null,
+          "poseState": "unknown",
+          "progress": null,
+          "reason": "walk_waiting_fresh_reply",
+          "segment": null,
+          "sequence": 10011,
+          "state": "waiting"
+        }
+      ],
+      "sourceSha256": "77133be293b9e332af8cc2e001a1e94faea98e60a34f54a19fbcf1b02f16ff05"
+    },
+    {
+      "id": "0e11ce3b53af4b5d99aaa6c3613fd7a4",
+      "localWrittenAt": "2026-10-30T00:14:25.933874",
+      "stop": "walk_decision_expired",
+      "native": null,
+      "input": {
+        "applied": 0,
+        "events": 23,
+        "submitted": 0
+      },
+      "cameraInput": {
+        "lastDistancePx": null,
+        "lastDurationMs": null,
+        "strokesApplied": 0,
+        "strokesSubmitted": 0
+      },
+      "observations": 20,
+      "localized": 0,
+      "lastSegment": null,
+      "sourceSeconds": null,
+      "maxProgress": 0,
+      "neutralWaits": 1,
+      "camera": {
+        "calibrationAttempts": 0,
+        "feedback": [],
+        "gainRadiansPerShortSide": null,
+        "minimumFraction": 0.012,
+        "pulses": 0,
+        "quietResponses": 0,
+        "terminal": null
+      },
+      "lastObservations": [
+        {
+          "ageMs": 148.30000001192093,
+          "computeMs": 120.18689996330068,
+          "crossTrackUnits": null,
+          "elapsedMs": 5853.300000011921,
+          "inliers": 0,
+          "medianErrorPx": null,
+          "poseState": "unknown",
+          "progress": null,
+          "reason": "walk_waiting_fresh_reply",
+          "segment": null,
+          "sequence": 10372,
+          "state": "waiting"
+        },
+        {
+          "ageMs": 148.30000001192093,
+          "computeMs": 109.2200000421144,
+          "crossTrackUnits": null,
+          "elapsedMs": 5985.800000011921,
+          "inliers": 0,
+          "medianErrorPx": null,
+          "poseState": "unknown",
+          "progress": null,
+          "reason": "walk_waiting_fresh_reply",
+          "segment": null,
+          "sequence": 10376,
+          "state": "waiting"
+        }
+      ],
+      "sourceSha256": "7214c4d20f3b8c03a0be8effccf5de1424252bcc8dd86875b9fe208f7765055f"
+    },
+    {
+      "id": "2e01180f943f495bb765a557d72f0d80",
+      "localWrittenAt": "2026-10-30T00:15:04.481447",
+      "stop": "walk_camera_response_not_observed",
+      "native": null,
+      "input": {
+        "applied": 97,
+        "events": 345,
+        "submitted": 97
+      },
+      "cameraInput": {
+        "lastDistancePx": 43,
+        "lastDurationMs": 142.199951171875,
+        "strokesApplied": 5,
+        "strokesSubmitted": 5
+      },
+      "observations": 134,
+      "localized": 129,
+      "lastSegment": 67,
+      "sourceSeconds": 24.198,
+      "maxProgress": 0.49462069625022476,
+      "neutralWaits": 14,
+      "camera": {
+        "calibrationAttempts": 2,
+        "feedback": [
+          {
+            "afterUpMs": 156,
+            "fraction": 0.018,
+            "sequence": 10789,
+            "turnRadians": 0.00014532701135515613,
+            "yawAfter": 0.18560514566969294,
+            "yawBefore": 0.18421195127492498
+          },
+          {
+            "afterUpMs": 252.5999999642372,
+            "fraction": 0.032,
+            "sequence": 10921,
+            "turnRadians": 0.10905055544139045,
+            "yawAfter": 0.06375634434889639,
+            "yawBefore": 0.1480590463916522
+          },
+          {
+            "afterUpMs": 219.80000001192093,
+            "fraction": -0.029291156472514613,
+            "sequence": 11042,
+            "turnRadians": -0.00037483927032610977,
+            "yawAfter": -0.11606871394724119,
+            "yawBefore": -0.16636546264835403
+          },
+          {
+            "afterUpMs": 170.39999997615814,
+            "fraction": 0.04,
+            "sequence": 11076,
+            "turnRadians": 0.020275662371253632,
+            "yawAfter": 0.21926608013325163,
+            "yawBefore": 0.25348263805736165
+          },
+          {
+            "afterUpMs": 191.19999998807907,
+            "fraction": 0.04,
+            "sequence": 11199,
+            "turnRadians": -0.0010101222572411804,
+            "yawAfter": 0.20766367562608568,
+            "yawBefore": 0.19855971881522955
+          }
+        ],
+        "gainRadiansPerShortSide": 2.682595282977924,
+        "minimumFraction": 0.04,
+        "pulses": 5,
+        "quietResponses": 1,
+        "terminal": "walk_camera_response_not_observed"
+      },
+      "lastObservations": [
+        {
+          "ageMs": 28.599999964237213,
+          "computeMs": 7.832399976905435,
+          "crossTrackUnits": 0.017972935837774602,
+          "elapsedMs": 22176.30000001192,
+          "inliers": 43,
+          "medianErrorPx": 0.4545124779770744,
+          "poseState": "localized",
+          "progress": 0.49462069625022476,
+          "reason": "walk_camera_waiting_feedback",
+          "segment": 67,
+          "sequence": 11195,
+          "state": "following"
+        },
+        {
+          "ageMs": 29.799999952316284,
+          "computeMs": 8.81999998819083,
+          "crossTrackUnits": 0.02684760052218396,
+          "elapsedMs": 22277.5,
+          "inliers": 43,
+          "medianErrorPx": 0.45730910639971084,
+          "poseState": "localized",
+          "progress": 0.4943958301831841,
+          "reason": "walk_camera_waiting_feedback",
+          "segment": 67,
+          "sequence": 11197,
+          "state": "following"
+        }
+      ],
+      "sourceSha256": "206d8f7f34caac308eebfd31bc751cb19b8c03c5ceb7958fb0e24b1b2c0d11e4"
+    }
+  ],
+  "stopReasons": {
+    "walk_camera_response_not_observed": 5,
+    "camera_stroke_expired": 4,
+    "walk_camera_resolution_limit": 1,
+    "walk_manual_stop": 1,
+    "walk_camera_gain_unqualified": 1,
+    "walk_stream_changed": 1,
+    "walk_decision_expired": 6
+  },
+  "maxSourceSeconds": 24.198
+}

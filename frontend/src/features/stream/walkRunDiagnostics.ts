@@ -35,5 +35,6 @@ export function walkCameraInputSummary(events:TeachingInput[]) {
     }
   }
   return {strokesSubmitted:camera.filter(e=>e.stage==='submitted'&&e.action===0).length,strokesApplied,
+    movesApplied:camera.filter(e=>e.stage==='receipt'&&e.action===2&&e.outcome==='applied').length,
     lastDistancePx,lastDurationMs};
 }

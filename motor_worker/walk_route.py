@@ -18,7 +18,7 @@ class WalkRouteFollower:
     MAX_RELOCALIZE_SECONDS = 2.
     MAX_RELOCALIZATIONS = 3
 
-    def __init__(self, route: SparseRoute, *, clock, start_mode='beginning', camera_tracking=False):
+    def __init__(self, route: SparseRoute, *, clock, start_mode='beginning', camera_tracking=False,camera_control='continuous_drag_v1'):
         import numpy as np
 
         if type(route) is not SparseRoute:
@@ -29,6 +29,8 @@ class WalkRouteFollower:
         if type(camera_tracking) is not bool:
             raise ValueError('walk_camera_tracking')
         self.camera_tracking = camera_tracking
+        if camera_control not in {'pulse_v1','continuous_drag_v1'}:raise ValueError('walk_camera_control')
+        self.camera_control=camera_control
         self.alignment = None
         self.route, self.clock, self.np = route, clock, np
         self.trace = np.asarray(route.camera_trace, dtype=float)
@@ -81,9 +83,15 @@ class WalkRouteFollower:
                 or binding != self.binding or pose.receiver_sequence <= self.sequence
                 or not 0 <= now-pose.received_at <= .25
                 or not pose.received_at <= pose.completed_at <= now
-                or self.last_at is not None and not 0 < pose.received_at-self.last_at <= .5):
+                or self.last_at is not None and not 0 < pose.received_at-self.last_at <= 2.):
             return self._stop('walk_pose_binding_or_age')
         dt = .1 if self.last_at is None else pose.received_at-self.last_at
+        if dt>.5:
+            self.vector[:]=0;self.acquisition=0
+            if self.started and self.relocalizing is None:
+                self.relocalizations+=1
+                if self.relocalizations>self.MAX_RELOCALIZATIONS:return self._stop('walk_relocalization_budget')
+                self.relocalizing=dict(began=pose.received_at,confirmations=0)
         self.sequence, self.last_at = pose.receiver_sequence, pose.received_at
         if pose.state != 'localized':
             self.acquisition = 0
@@ -179,7 +187,7 @@ class WalkRouteFollower:
         camera_delta = rotation @ (target-center)
         if self.camera_tracking:
             yaw = abs(float(math.atan2(camera_delta[0], camera_delta[2])))
-            if yaw > .14:
+            if yaw > ((.08 if self.alignment is not None else .20) if self.camera_control=='continuous_drag_v1' else .14):
                 self.vector[:] = 0
                 if self.alignment is None:
                     self.alignment = dict(began=now, improved=now, best=yaw)

@@ -1,6 +1,6 @@
 /** Read-only same-query-frame preview. No native input/model permit. */
 import {routeCameraFrame,type RouteMapCamera} from './routeMapProjection';
-export type NavigationReply = {id:string;sequence:number;captureEpoch:string;jpegSha256:string;computeMs:number;method:string;geometrySha256?:string;
+export type NavigationReply = {id:string;sequence:number;captureEpoch:string;jpegSha256:string;computeMs:number;method:string;geometrySha256?:string;referenceTicks90k?:number|null;
   physicalActions:0;executionQualified:false;groundRoute:false;pose:{state:'unknown'|'confirming'|'localized';reason:string;
     inliers:number;segment:number|null;progress_units:number|null;polyline_px:[number,number][];center?:number[]|null;rotation?:number[]|null;median_error_px?:number|null;cross_track_units?:number|null}};
 export function navigationReply(value:unknown,id:string,epoch:string,sequence:number,jpegSha256:string):NavigationReply|null {
@@ -9,6 +9,7 @@ export function navigationReply(value:unknown,id:string,epoch:string,sequence:nu
     ||!Number.isFinite(v.computeMs)||v.computeMs<0||v.computeMs>10000||!/^[0-9a-f]{64}$/.test(v.jpegSha256)||v.jpegSha256!==jpegSha256
     ||typeof v.method!=='string'||! /^[a-z0-9_]{1,100}$/.test(v.method)
     ||v.geometrySha256!==undefined&&!/^[0-9a-f]{64}$/.test(v.geometrySha256)
+    ||v.referenceTicks90k!=null&&(!Number.isSafeInteger(v.referenceTicks90k)||v.referenceTicks90k<0||v.referenceTicks90k>54000000)
     ||!p||!['unknown','confirming','localized'].includes(p.state)||typeof p.reason!=='string'||! /^[a-z0-9_]{1,100}$/.test(p.reason)
     ||!Number.isInteger(p.inliers)||p.inliers<0||p.inliers>4096
     ||p.segment!==null&&(!Number.isSafeInteger(p.segment)||p.segment<0||p.segment>1000000)

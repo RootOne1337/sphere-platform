@@ -43,11 +43,11 @@ class WalkRouteTests(unittest.TestCase):
     def test_camera_tracking_aligns_while_stationary_then_resumes_and_keeps_real_stall_limit(self):
         import math
         self.follower=WalkRouteFollower(self.route,clock=lambda:self.now,camera_tracking=True)
-        for i in range(21):
+        for i in range(22):
             yaw=1.-i*.045
             rotation=(math.cos(yaw),0.,-math.sin(yaw),0.,1.,0.,math.sin(yaw),0.,math.cos(yaw))
             reply=self.observe(rotation=rotation)
-            if yaw>.14:
+            if yaw>.08:
                 self.assertEqual(reply['reason'],'walk_camera_alignment_required')
                 self.assertEqual(reply['stick'],[0.,0.])
             self.now+=.2
@@ -183,9 +183,16 @@ class WalkRouteTests(unittest.TestCase):
         self.now+=.2;reply=self.observe(state='unknown')
         self.assertEqual(reply['reason'],'walk_relocalization_budget');self.assertEqual(reply['stick'],[0.,0.])
 
-    def test_missing_stream_interval_remains_terminal_instead_of_recovery(self):
+    def test_short_observation_gap_requires_three_new_poses_instead_of_replaying_movement(self):
         self.observe();self.now+=.7
         reply=self.observe(state='unknown')
+        self.assertEqual(reply['reason'],'walk_relocalizing_neutral');self.assertEqual(reply['stick'],[0.,0.])
+        for _ in range(2):
+            self.now+=.1;self.assertEqual(self.observe(.1)['phase'],'waiting')
+        self.now+=.1;self.assertEqual(self.observe(.1)['phase'],'following')
+
+    def test_long_stream_gap_remains_terminal(self):
+        self.observe();self.now+=2.01;reply=self.observe(state='unknown')
         self.assertEqual(reply['reason'],'walk_pose_binding_or_age');self.assertEqual(reply['stick'],[0.,0.])
 
     def test_pose_age_epoch_sequence_and_large_progress_jump_stop(self):

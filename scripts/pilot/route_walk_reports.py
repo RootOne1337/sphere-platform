@@ -26,7 +26,8 @@ def store_walk_report(job, body):
     if camera is not None:
         camera_fields={'gainRadiansPerShortSide','pulses','calibrationAttempts','terminal'}
         if (type(camera) is not dict or not camera_fields<=camera.keys()
-                or not camera.keys()<=camera_fields|{'minimumFraction','quietResponses','feedback'}
+                or not camera.keys()<=camera_fields|{'minimumFraction','quietResponses','feedback','mode'}
+                or camera.get('mode','continuous_drag_v1')!='continuous_drag_v1'
                 or type(camera['pulses']) is not int or not 0<=camera['pulses']<=120
                 or type(camera['calibrationAttempts']) is not int or not 0<=camera['calibrationAttempts']<=3
                 or camera['gainRadiansPerShortSide'] is not None and (
@@ -35,7 +36,7 @@ def store_walk_report(job, body):
                 or camera['terminal'] is not None and (type(camera['terminal']) is not str or not CODE.fullmatch(camera['terminal']))):
             raise ValueError('walk_report_camera')
         if ('minimumFraction' in camera and (type(camera['minimumFraction']) not in {int,float}
-                or not math.isfinite(camera['minimumFraction']) or not .001<=camera['minimumFraction']<=.04)
+                or not math.isfinite(camera['minimumFraction']) or not .001<=camera['minimumFraction']<=.06)
                 or 'quietResponses' in camera and (type(camera['quietResponses']) is not int or not 0<=camera['quietResponses']<=3)):
             raise ValueError('walk_report_camera_feedback')
         feedback=camera.get('feedback',[])
@@ -45,12 +46,14 @@ def store_walk_report(job, body):
             if (type(row) is not dict or set(row)!={'sequence','fraction','turnRadians','yawBefore','yawAfter','afterUpMs'}
                     or type(row['sequence']) is not int or not 1<=row['sequence']<=1000000
                     or any(type(v) not in {int,float} or not math.isfinite(v) for v in row.values())
-                    or not 0<abs(row['fraction'])<=.04 or not 0<=row['afterUpMs']<=10000
+                    or not 0<abs(row['fraction'])<=.060001 or not 0<=row['afterUpMs']<=10000
                     or any(abs(row[k])>math.pi for k in ('turnRadians','yawBefore','yawAfter'))):
                 raise ValueError('walk_report_camera_feedback')
     if 'cameraInput' in body:
         camera_input=body['cameraInput']
-        if (type(camera_input) is not dict or set(camera_input)!={'strokesSubmitted','strokesApplied','lastDistancePx','lastDurationMs'}
+        camera_input_fields={'strokesSubmitted','strokesApplied','lastDistancePx','lastDurationMs'}
+        if (type(camera_input) is not dict or not camera_input_fields<=camera_input.keys() or not camera_input.keys()<=camera_input_fields|{'movesApplied'}
+                or 'movesApplied' in camera_input and (type(camera_input['movesApplied']) is not int or not 0<=camera_input['movesApplied']<=4096)
                 or any(type(camera_input[k]) is not int or not 0<=camera_input[k]<=4096 for k in ('strokesSubmitted','strokesApplied'))
                 or any(camera_input[k] is not None and (type(camera_input[k]) not in {int,float}
                     or not math.isfinite(camera_input[k]) or not 0<=camera_input[k]<=1e6) for k in ('lastDistancePx','lastDurationMs'))):
@@ -81,10 +84,10 @@ def store_walk_report(job, body):
     if type(observations) is not list or len(observations) > 1200:
         raise ValueError('walk_report_observations')
     required = {'elapsedMs', 'sequence', 'ageMs', 'computeMs', 'state', 'reason', 'poseState', 'inliers', 'progress'}
-    allowed = required | {'segment', 'medianErrorPx', 'crossTrackUnits'}
+    allowed = required | {'segment', 'medianErrorPx', 'crossTrackUnits','poseReason'}
     for row in observations:
         if (type(row) is not dict or not required <= row.keys() or not row.keys() <= allowed
-                or any(not code(v) if k in {'state', 'reason', 'poseState'} else not number(v, nullable=k in {'progress', 'segment', 'medianErrorPx', 'crossTrackUnits'})
+                or any(not code(v) if k in {'state', 'reason', 'poseState','poseReason'} else not number(v, nullable=k in {'progress', 'segment', 'medianErrorPx', 'crossTrackUnits'})
                        for k, v in row.items())):
             raise ValueError('walk_report_observation')
     raw = json.dumps(body, sort_keys=True, separators=(',', ':'), allow_nan=False).encode()

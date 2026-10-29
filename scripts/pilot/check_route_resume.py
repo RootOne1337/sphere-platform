@@ -81,11 +81,13 @@ def run(source_job, output, *, source_seconds=10., camera_tracking=False):
             sid, epoch = secrets.token_hex(16), secrets.token_hex(16)
             opened = request('walk-start', dict(id=sid, captureEpoch=epoch, width=capture.geometry[0],
                 height=capture.geometry[1], sceneConfirmed=True, footCameraAssumptionConfirmed=True,
-                startMode=mode,cameraTracking=camera_tracking))
+                startMode=mode,cameraTracking=camera_tracking,**({'cameraControl':'continuous_drag_v1'} if camera_tracking else {})))
             if opened['startMode'] != mode:
                 raise RuntimeError('start_mode_not_acknowledged')
             if opened.get('cameraTracking') is not camera_tracking:
                 raise RuntimeError('camera_mode_not_acknowledged')
+            if camera_tracking and opened.get('cameraControl')!='continuous_drag_v1':
+                raise RuntimeError('camera_control_not_acknowledged')
             rows = []
             try:
                 for i, frame in enumerate(frames):
@@ -99,7 +101,7 @@ def run(source_job, output, *, source_seconds=10., camera_tracking=False):
                         pose=pose['state'], inliers=pose['inliers'], segment=pose['segment'],
                         phase=plan['phase'], reason=plan['reason'], progress=plan['progressFraction'],
                         planStick=plan['stick'], effectiveStick=plan['stick'] if age <= 250 else [0, 0],
-                        targetCamera=plan.get('targetCamera'),
+                        targetCamera=plan.get('targetCamera'),referenceTicks90k=value.get('referenceTicks90k'),
                         replyAgeMs=age, computeMs=value['computeMs']))
                     time.sleep(max(0, .18-(time.perf_counter()-began)))
             finally:

@@ -250,12 +250,15 @@ class RouteWorkspaceTests(unittest.TestCase):
     def test_camera_mode_is_separately_acknowledged_and_cannot_change_in_place(self):
         self.attach_fixture_map();self.workspace.stop_live(self.job,dict(id='d'*32))
         body=dict(id='f'*32,captureEpoch='e'*32,width=960,height=540,sceneConfirmed=True,
-                  footCameraAssumptionConfirmed=True,cameraTracking=True)
+                  footCameraAssumptionConfirmed=True,cameraTracking=True,cameraControl='continuous_drag_v1')
         with patch('scripts.pilot.route_workspace.resource_checkpoint'):
             reply=self.workspace.start_walk(self.job,body)
         self.assertTrue(reply['cameraTracking']);self.assertTrue(self.workspace.live['walk'].camera_tracking)
+        self.assertEqual(reply['cameraControl'],'continuous_drag_v1')
         with self.assertRaisesRegex(ValueError,'camera_mode_changed'):
-            self.workspace.start_walk(self.job,dict(body,cameraTracking=False))
+            self.workspace.start_walk(self.job,dict(body,cameraControl='pulse_v1'))
+        with self.assertRaisesRegex(ValueError,'camera_mode_changed'):
+            changed=dict(body,cameraTracking=False);changed.pop('cameraControl');self.workspace.start_walk(self.job,changed)
         with self.assertRaisesRegex(ValueError,'explicit_confirmation'):
             self.workspace.start_walk(self.job,dict(body,cameraTracking='true'))
 

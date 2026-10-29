@@ -1,0 +1,21 @@
+import {act,render,screen,waitFor} from '@testing-library/react';
+import {RecordedRouteFrame} from '@/src/features/stream/RecordedRouteFrame';
+import {readRecordedRouteFrame,type RouteSource} from '@/src/features/stream/routeSource';
+jest.mock('@/src/features/stream/routeSource',()=>({readRecordedRouteFrame:jest.fn()}));
+const source={rows:[0,90000,180000].map(relative_ticks_90k=>({relative_ticks_90k}))} as RouteSource;
+beforeEach(()=>{jest.clearAllMocks();jest.spyOn(HTMLCanvasElement.prototype,'getContext').mockReturnValue({clearRect:jest.fn(),drawImage:jest.fn()} as never);});
+afterEach(()=>jest.restoreAllMocks());
+test('new targets coalesce while the last verified frame stays visible with its true timestamp',async()=>{
+  const pending:Array<()=>void>=[];
+  jest.mocked(readRecordedRouteFrame).mockImplementation(async(_s,_i,canvas)=>new Promise<void>(resolve=>{pending.push(()=>{canvas.width=960;canvas.height=540;resolve();});}));
+  const view=render(<RecordedRouteFrame source={source} ticks={0}/>);
+  await act(async()=>{pending.shift()!();});await screen.findByText('Опорный кадр записи · 0.000 с');
+  view.rerender(<RecordedRouteFrame source={source} ticks={90000}/>);
+  expect(screen.getByText('Опорный кадр записи · 0.000 с')).toBeInTheDocument();
+  const calls=jest.mocked(readRecordedRouteFrame).mock.calls;expect(calls[1][3].aborted).toBe(false);
+  view.rerender(<RecordedRouteFrame source={source} ticks={180000}/>);
+  expect(calls[1][3].aborted).toBe(false);
+  await act(async()=>{pending.shift()!();});await screen.findByText('Опорный кадр записи · 1.000 с');
+  await waitFor(()=>expect(readRecordedRouteFrame).toHaveBeenCalledTimes(3));
+  await act(async()=>{pending.shift()!();});await screen.findByText('Опорный кадр записи · 2.000 с');
+});

@@ -31,13 +31,14 @@ export class TeachingContacts {
   private closeAt = 0;
   private receiptRtt: number | null = null;
   private failure: string | null = null;
+  private cameraRequest:((applied:boolean)=>void)|null=null;
   private stroke: {id:1;origin:TeachingPoint;target:TeachingPoint;deadline:number;phase:'down'|'move'|'up';
     step:number;lastEdgeAt:number;timer:ReturnType<typeof setTimeout>|null;finish:(applied:boolean)=>void}|null=null;
   constructor(private endpoint: DirectControlEndpoint, private binding: DirectVideoBinding,
     private fresh: () => boolean, private journal: (event: TeachingInput) => void,
     private state: (state: 'opening' | 'ready' | 'closing' | 'closed' | 'failed', reason?: string) => void,
     private observedRtt?: (milliseconds: number) => void,
-    private idleFresh?:()=>boolean) {
+    private idleFresh?:()=>boolean,private neutralStick?:TeachingPoint) {
     if (!endpoint.sharedInput || endpoint.readyState !== 1) throw Error('shared_input_required');
     this.timer = setInterval(() => this.tick(), 25);
     this.remove = endpoint.listen(value => this.receipt(value));
@@ -52,6 +53,22 @@ export class TeachingContacts {
   get failureReason() { return this.failure; }
   get isNeutral() { return !this.desired.size && !this.held.size && !this.pending && !this.queue.length; }
   hasContact(id: number) { return this.desired.has(id); }
+  private centeredStick(center:TeachingPoint|undefined=this.neutralStick){
+    const p=this.desired.get(0);
+    return !this.held.has(0)&&!p||!!center&&!!p&&this.held.has(0)&&p.x===center.x&&p.y===center.y;
+  }
+  canCameraCommand(center:TeachingPoint){
+    return this.isReady&&!this.pending&&!this.queue.length&&!this.stroke&&!this.cameraRequest
+      &&this.centeredStick(center)&&![...this.held].some(id=>id!==0&&id!==1)&&!this.desired.has(2);
+  }
+  /** Exactly one fresh edge. No delayed waveform or old MOVE is queued. */
+  cameraCommand(point:TeachingPoint|null,notAfter:number,center:TeachingPoint):Promise<boolean>{
+    if(!this.canCameraCommand(center)||!this.fresh()||point&&(!Number.isFinite(notAfter)||performance.now()>=notAfter||notAfter-performance.now()>250))return Promise.resolve(false);
+    const before=this.desired.get(1);
+    if(!point&&!before||point&&before&&point.x===before.x&&point.y===before.y)return Promise.resolve(true);
+    return new Promise(resolve=>{this.cameraRequest=resolve;this.set(1,point);
+      if(!this.isReady){this.cameraRequest?.(false);this.cameraRequest=null;}});
+  }
   horizontalStroke(origin:TeachingPoint,targetX:number,notAfter:number):Promise<boolean> {
     if(!this.isReady||!this.isNeutral||this.stroke||this.hasContact(1)||!this.fresh()||performance.now()>=notAfter
       ||!Number.isFinite(notAfter)||notAfter-performance.now()>250||notAfter-performance.now()<170||!Number.isInteger(targetX)||targetX===origin.x
@@ -153,6 +170,7 @@ export class TeachingContacts {
     catch { this.fail('contact_journal_failed'); return; }
     if (pending.action === 1) this.held.delete(pending.pointer_id);
     this.pending = null;
+    if(pending.pointer_id===1&&this.cameraRequest){const done=this.cameraRequest;this.cameraRequest=null;done(true);}
     const stroke=this.stroke;
     if(stroke&&pending.pointer_id===stroke.id){
       if(stroke.phase==='up'){
@@ -167,7 +185,9 @@ export class TeachingContacts {
     const now = performance.now();
     if (this.closing) { if (now - this.closeAt >= 2500) this.finish(false); return; }
     if (this.ended) return;
-    const empty=!this.desired.size&&!this.held.size&&!this.queue.length&&(!this.pending||this.pending.action===4);
+    const empty=!this.queue.length&&(!this.pending||this.pending.action===4)
+      &&(!this.desired.size&&!this.held.size||!!this.neutralStick&&this.centeredStick()
+        &&![...this.held].some(id=>id!==0)&&![...this.desired.keys()].some(id=>id!==0));
     if (!this.fresh() && !(empty&&this.idleFresh?.())) { this.fail('contact_video_stale'); return; }
     if (this.endpoint.readyState !== 1) { this.fail('contact_channel_closed'); return; }
     if (this.pending && now - this.pendingAt >= 500) { this.fail('contact_ack_timeout'); return; }
@@ -185,6 +205,7 @@ export class TeachingContacts {
     if (this.closePromise) return this.closePromise;
     if (this.ended) return Promise.resolve(this.closedConfirmed);
     this.closing = true; this.ready = false; this.queue = []; this.desired.clear(); this.closeAt = performance.now();
+    this.cameraRequest?.(false);this.cameraRequest=null;
     const stroke=this.stroke;this.stroke=null;if(stroke?.timer)clearTimeout(stroke.timer);stroke?.finish(false);
     this.closePromise = new Promise(resolve => { this.finishClose = resolve; });
     this.state('closing');
@@ -194,6 +215,7 @@ export class TeachingContacts {
   private finish(confirmed: boolean, deviceUptime?: number) {
     if (this.ended) return;
     this.ended = true; this.ready = false; clearInterval(this.timer); this.remove();
+    this.cameraRequest?.(false);this.cameraRequest=null;
     const stroke=this.stroke;this.stroke=null;if(stroke?.timer)clearTimeout(stroke.timer);stroke?.finish(false);
     try { this.journal({ stage: 'closed', at_ms: performance.timeOrigin + performance.now(), sequence: 0,
       gesture: 0, action: 3, pointer_id: -1, outcome: confirmed ? 'closed' : 'unknown',

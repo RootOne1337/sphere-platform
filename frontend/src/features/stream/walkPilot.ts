@@ -4,7 +4,8 @@ import {calibrated,fromPercent,profileIssue,type TeachingProfile} from './teachi
 export type WalkPlan={schema:'sphere-walk-plan-v1';phase:'waiting'|'following'|'stopped'|'arrived';reason:string;
   stick:[number,number];progressFraction:number|null;maxStick:.35;maxSeconds:60;
   groundRoute:false;executionQualified:false;cameraBodyAssumption:true};
-export type WalkInputLease={active():boolean;failure?():string|null;set(vector:[number,number]):void;canLook?():boolean;look?(fraction:number,notAfter:number):Promise<boolean>;close():Promise<boolean>};
+export type WalkInputLease={active():boolean;failure?():string|null;set(vector:[number,number]):void;canLook?():boolean;look?(fraction:number,notAfter:number):Promise<boolean>;
+  drag?(fraction:number|null,notAfter:number):Promise<boolean>;cameraLimits?:{min:number;max:number};close():Promise<boolean>};
 export type WalkInputControl={issue:string|null;cameraIssue?:string|null;open(signal:AbortSignal,journal:(event:TeachingInput)=>void):Promise<WalkInputLease>};
 /** No input owner exists yet: a short presentation gap may recover before open. */
 export function waitForFreshWalkSource(fresh:()=>boolean,signal:AbortSignal):Promise<boolean>{
@@ -52,13 +53,31 @@ export function walkingStickTarget(profile:TeachingProfile,geometry:{width:numbe
   const radius=profile.radius/100*Math.min(geometry.width,geometry.height);
   return {center,target:Math.hypot(...vector)<.001?null:{x:Math.round(center.x+vector[0]*radius),y:Math.round(center.y+vector[1]*radius)}};
 }
+/** Neutral is a MOVE to the calibrated center, never a repeated tap. */
+export function applyWalkingStick(control:{hasContact(id:number):boolean;set(id:number,point:{x:number;y:number}|null):void},profile:TeachingProfile,geometry:{width:number;height:number},vector:[number,number]){
+  const {center,target}=walkingStickTarget(profile,geometry,vector);
+  if(target&&!control.hasContact(0))control.set(0,center);
+  if(target||control.hasContact(0))control.set(0,target??center);
+}
+/** Rate-limit from the vector actually sent after a neutral pause, not from
+ * the server's previous desired vector. Neutralization itself is immediate. */
+export class WalkStickSlew {
+  private vector:[number,number]=[0,0];private at:number|null=null;
+  next(target:[number,number],now:number):[number,number]{
+    if(!Number.isFinite(now)||this.at!==null&&now<this.at||target.some(v=>!Number.isFinite(v))||Math.hypot(...target)>.350001)throw Error('walk_stick_not_calibrated_or_bounded');
+    const dt=this.at===null?.05:Math.min(.1,(now-this.at)/1000);this.at=now;
+    if(Math.hypot(...target)<.001){this.vector=[0,0];return [0,0];}
+    const delta=[target[0]-this.vector[0],target[1]-this.vector[1]],length=Math.hypot(...delta),scale=length?Math.min(1,dt*1.2/length):0;
+    this.vector=[this.vector[0]+delta[0]*scale,this.vector[1]+delta[1]*scale];return [...this.vector];
+  }
+}
 export const walkReasonLabel=(reason:string):string=>({
   walk_confirming_start:'Узнаём старт по нескольким свежим кадрам',
   walk_confirming_current_position:'Узнаём текущую точку маршрута: три свежих подтверждения перед движением',
   walk_camera_relative_pursuit:'Идём к ближайшей точке записанного пути',
   walk_start_outside_recorded_beginning:'Положение найдено за пределами начального участка: вернитесь ближе к старту записи',
   walk_localization_lost:'Ориентиры потеряны — движение прекращено',
-  walk_relocalizing_neutral:'Стик отпущен: повторно подтверждаем положение рядом с последней позицией',
+  walk_relocalizing_neutral:'Стик в центре: повторно подтверждаем положение рядом с последней позицией',
   walk_relocalization_timeout:'Положение не восстановилось за 2 секунды — тест остановлен',
   walk_relocalization_drift:'Повторно найденная позиция слишком отличается — тест остановлен',
   walk_relocalization_budget:'Лимит трёх повторных привязок исчерпан — тест остановлен',
@@ -72,7 +91,7 @@ export const walkReasonLabel=(reason:string):string=>({
   walk_target_direction_unknown:'Направление к ближайшей цели не определено',
   walk_time_limit:'Предел 60 секунд достигнут',
   walk_decision_expired:'Нет свежего решения — стик освобождается',
-  walk_waiting_fresh_reply:'Стик отпущен: ждём новое свежее решение',
+  walk_waiting_fresh_reply:'Стик в центре: ждём новое свежее решение',
   walk_stream_changed:'Поток остановился или изменился',
   walk_native_closed:'Нативный ввод закрылся',
   contact_video_stale:'Ввод остановлен: браузер не подтвердил новый видеокадр за 250 мс',
@@ -81,11 +100,11 @@ export const walkReasonLabel=(reason:string):string=>({
   contact_ready_timeout:'Android не подтвердил готовность стика за 6 секунд',
   camera_stroke_expired:'Поворот камеры не успел завершиться на свежем решении — ввод освобождён',
   walk_camera_aligned:'Взгляд вдоль пути · двигаемся',
-  walk_camera_alignment_required:'Стик отпущен: направляем камеру вдоль пути',
-  walk_camera_calibrating:'Стик отпущен: проверяем отклик горизонтального поворота камеры',
-  walk_camera_turning:'Стик отпущен: плавно направляем камеру вдоль пути',
-  walk_camera_waiting_feedback:'Стик отпущен: ждём новый кадр после поворота камеры',
-  walk_camera_waiting_neutral:'Ждём освобождения контактов перед поворотом камеры',
+  walk_camera_alignment_required:'Стик в центре: направляем камеру вдоль пути',
+  walk_camera_calibrating:'Стик в центре: проверяем отклик горизонтального поворота камеры',
+  walk_camera_turning:'Стик в центре: плавно направляем камеру вдоль пути',
+  walk_camera_waiting_feedback:'Стик в центре: ждём новый кадр после поворота камеры',
+  walk_camera_waiting_neutral:'Ждём подтверждения нейтрали стика перед коррекцией камеры',
   walk_camera_pose_unavailable:'Для поворота камеры нет свежей подтверждённой позы',
   walk_camera_pitch_mismatch:'Взгляд сильно отклонён по вертикали: восстановите ракурс записи',
   walk_camera_input_unconfirmed:'Android не подтвердил поворот камеры',
@@ -98,6 +117,8 @@ export const walkReasonLabel=(reason:string):string=>({
   walk_camera_alignment_timeout:'Не удалось направить камеру вдоль пути за 8 секунд',
   walk_camera_pulse_limit:'Лимит небольших поворотов камеры достигнут',
   walk_camera_resolution_limit:'Чувствительность камеры слишком велика для точного короткого свайпа. Уменьшите её в игре',
+  walk_camera_releasing:'Направление камеры выставлено · завершаем удерживаемый свайп',
+  walk_camera_recentering:'Переставляем палец камеры; стик остаётся в центре',
   walk_source_not_ready:'Свежий кадр не появился перед открытием ввода. Проверьте прямой поток и повторите запуск',
   walk_manual_stop:'Остановлено оператором',
 } as Record<string,string>)[reason]??`Пеший тест остановлен: ${reason}`;

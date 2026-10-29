@@ -277,13 +277,17 @@ class RouteWorkspaces:
 
         required={'id', 'captureEpoch', 'width', 'height', 'sceneConfirmed', 'footCameraAssumptionConfirmed'}
         if (type(body) is not dict or body.get('footCameraAssumptionConfirmed') is not True
-                or not required <= body.keys() or not body.keys() <= required|{'startMode','cameraTracking'}
+                or not required <= body.keys() or not body.keys() <= required|{'startMode','cameraTracking','cameraControl'}
                 or type(body.get('cameraTracking',False)) is not bool
+                or type(body.get('cameraControl','pulse_v1')) is not str
+                or body.get('cameraControl','pulse_v1') not in {'pulse_v1','continuous_drag_v1'}
+                or 'cameraControl' in body and body.get('cameraTracking') is not True
                 or body.get('startMode','beginning') not in {'beginning','recognized_route'}):
             raise ValueError('walk_explicit_confirmation_required')
         start_mode=body.get('startMode','beginning')
         camera_tracking=body.get('cameraTracking',False)
-        request = {key: value for key, value in body.items() if key not in {'footCameraAssumptionConfirmed','startMode','cameraTracking'}}
+        camera_control=body.get('cameraControl','pulse_v1')
+        request = {key: value for key, value in body.items() if key not in {'footCameraAssumptionConfirmed','startMode','cameraTracking','cameraControl'}}
         self._expire()
         if self.live and self.live['id'] == request['id'] and 'walk' not in self.live:
             raise ValueError('walk_observer_cannot_be_promoted')
@@ -291,14 +295,14 @@ class RouteWorkspaces:
                 and self.live['walk'].start_mode!=start_mode):
             raise ValueError('walk_start_mode_changed')
         if (self.live and self.live['id']==request['id'] and 'walk' in self.live
-                and self.live['walk'].camera_tracking!=camera_tracking):
+                and (self.live['walk'].camera_tracking!=camera_tracking or self.live['walk'].camera_control!=camera_control)):
             raise ValueError('walk_camera_mode_changed')
         self.start_live(job, request)
-        self._install_walk(start_mode=start_mode,camera_tracking=camera_tracking)
+        self._install_walk(start_mode=start_mode,camera_tracking=camera_tracking,camera_control=camera_control)
         return dict(self.live_status(), mode='foot_camera_trace_v1', physicalActions=0, maxSeconds=60,
-                    startMode=start_mode,cameraTracking=camera_tracking)
+                    startMode=start_mode,cameraTracking=camera_tracking,cameraControl=camera_control)
 
-    def _install_walk(self, *, start_mode='beginning',camera_tracking=False):
+    def _install_walk(self, *, start_mode='beginning',camera_tracking=False,camera_control='pulse_v1'):
         from motor_worker.walk_route import WalkRouteFollower
         from motor_worker.route_tracking import AnchoredRouteLocalizer
         if 'walk' not in self.live:
@@ -310,7 +314,7 @@ class RouteWorkspaces:
             route = replace(route, profile=profile)
             self.live['tracker'] = AnchoredRouteLocalizer(route, capture_epoch=self.live['epoch'],
                 episode_id=self.live['episode'], goal_revision=self.live['goal'], clock=self.clock)
-            self.live['walk'] = WalkRouteFollower(route, clock=self.clock,start_mode=start_mode,camera_tracking=camera_tracking)
+            self.live['walk'] = WalkRouteFollower(route, clock=self.clock,start_mode=start_mode,camera_tracking=camera_tracking,camera_control=camera_control)
             self.live['deadline'] = min(self.live['deadline'], self.clock()+60)
     def start_replay(self,job,body):
         """The real pose/planner path, with a separate recorded-input protocol.
@@ -372,6 +376,12 @@ class RouteWorkspaces:
             viewCompatibility='same_aspect_assumed_same_fov',
             fullAndroidLatencyKnown=False, sceneIsOperatorAssumption=True)
         result['replayOnly']=mode=='recorded_replay'
+        result['referenceTicks90k']=None
+        if pose.state=='localized' and pose.segment is not None:
+            trace=session['tracker'].route.camera_trace;index=min(pose.segment,len(trace)-2)
+            candidates=(index,index+1)
+            nearest=min(candidates,key=lambda i:sum((a-b)**2 for a,b in zip(trace[i],pose.center)))
+            result['referenceTicks90k']=round(session['tracker'].route.source_seconds[nearest]*90000)
         if 'walk' in session:
             result['walk'] = session['walk'].observe(pose)
         return result

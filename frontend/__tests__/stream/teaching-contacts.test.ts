@@ -1,13 +1,15 @@
 import { TeachingContacts, stickPoint, type TeachingInput } from '@/src/features/stream/teachingContacts';
 import type { DirectControlEndpoint } from '@/src/features/stream/directPointerTransport';
+import {applyWalkingStick} from '@/src/features/stream/walkPilot';
+import {calibrateProfile,defaultTeachingProfile} from '@/src/features/stream/teachingKeymap';
 
 const binding={captureEpoch:'00112233-4455-6677-8899-aabbccddeeff',width:960,height:540};
-function fixture(observedRtt?: (milliseconds:number)=>void,idleFresh?:()=>boolean) {
+function fixture(observedRtt?: (milliseconds:number)=>void,idleFresh?:()=>boolean,neutralStick?:{x:number;y:number}) {
   const sent: Record<string,unknown>[]=[],journal:TeachingInput[]=[],states:string[]=[];
   let listener:(v:unknown)=>void=()=>{};let fresh=true;
   const endpoint:DirectControlEndpoint={session:'a'.repeat(32),sharedInput:true,readyState:1,bufferedAmount:0,
     capture:()=>binding,send:raw=>sent.push(JSON.parse(raw)),listen:fn=>{listener=fn;return()=>{};}};
-  const driver=new TeachingContacts(endpoint,binding,()=>fresh,event=>journal.push(event),(state,reason)=>states.push(reason??state),observedRtt,idleFresh);
+  const driver=new TeachingContacts(endpoint,binding,()=>fresh,event=>journal.push(event),(state,reason)=>states.push(reason??state),observedRtt,idleFresh,neutralStick);
   const envelope={session_id:endpoint.session,capture_epoch:binding.captureEpoch,contact_protocol:1,max_pointers:3,owner:'b'.repeat(32)};
   const receipt=(fields:Record<string,unknown>)=>listener({type:'shared_input_status',...envelope,device_uptime_ms:1000,...fields});
   const ready=()=>{listener({type:'touch_session',...envelope,frame_width:960,frame_height:540});receipt({sequence:0,gesture:0,action:4,pointer_id:-1,outcome:'ready'});};
@@ -15,6 +17,22 @@ function fixture(observedRtt?: (milliseconds:number)=>void,idleFresh?:()=>boolea
   return {driver,sent,journal,states,ready,receipt,ack,stale:()=>{fresh=false;},resume:()=>{fresh=true;}};
 }
 beforeEach(()=>jest.useFakeTimers());afterEach(()=>{jest.clearAllTimers();jest.useRealTimers();});
+test('neutral corrections retain one stick DOWN and allow a second held camera finger',async()=>{
+  const center={x:100,y:350},f=fixture(undefined,()=>true,center);f.ready();
+  const profile=calibrateProfile(defaultTeachingProfile,binding,'stick',center);
+  applyWalkingStick(f.driver,profile,binding,[0,-.35]);f.ack();f.ack();
+  for(let i=0;i<12;i++){applyWalkingStick(f.driver,profile,binding,[0,0]);f.ack();applyWalkingStick(f.driver,profile,binding,[0,-.35]);f.ack();}
+  applyWalkingStick(f.driver,profile,binding,[0,0]);f.ack();
+  expect(f.sent.filter(e=>e.pointer_id===0&&e.action===0)).toHaveLength(1);
+  expect(f.sent.filter(e=>e.pointer_id===0&&e.action===1)).toHaveLength(0);
+  expect(f.driver.canCameraCommand(center)).toBe(true);
+  let reply=f.driver.cameraCommand({x:700,y:200},performance.now()+200,center);f.ack();await expect(reply).resolves.toBe(true);
+  reply=f.driver.cameraCommand({x:720,y:200},performance.now()+200,center);f.ack();await expect(reply).resolves.toBe(true);
+  reply=f.driver.cameraCommand(null,performance.now()+200,center);f.ack();await expect(reply).resolves.toBe(true);
+  expect(f.driver.hasContact(0)).toBe(true);
+  f.stale();jest.advanceTimersByTime(25);expect(f.driver.isReady).toBe(true);
+  f.driver.set(0,{x:100,y:320});expect(f.driver.failureReason).toBe('stale_contact');
+});
 test('automatic horizontal stroke waits for each native receipt and preserves Y exactly',async()=>{
   const f=fixture();f.ready();const stroke=f.driver.horizontalStroke({x:700,y:200},720,performance.now()+230);
   expect(f.sent.at(-1)).toMatchObject({pointer_id:1,action:0,x:700,y:200});

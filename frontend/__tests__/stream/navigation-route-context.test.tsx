@@ -1,4 +1,4 @@
-import {render,screen,waitFor} from '@testing-library/react';
+import {act,render,screen,waitFor} from '@testing-library/react';
 import {webcrypto} from 'node:crypto';
 import {TextDecoder,TextEncoder} from 'node:util';
 import {NavigationRouteContext} from '@/src/features/stream/NavigationRouteContext';
@@ -22,10 +22,14 @@ test('the saved map, source frame and stream share one view while a live pin is 
   const props={job,source,assetsReady:true,comparison:<div>live-frame</div>};
   const view=render(<NavigationRouteContext {...props} observation={null}/>);
   await screen.findByText('source-frame-0');expect(screen.getByText('live-frame')).toBeInTheDocument();
-  const parsed=navigationReply({id:'s',captureEpoch:'epoch',sequence:1,jpegSha256:'f'.repeat(64),geometrySha256:sha,computeMs:10,method:'descriptor_pnp',physicalActions:0,executionQualified:false,groundRoute:false,
-    pose:{state:'localized',reason:'verified',inliers:30,segment:1,progress_units:1,polyline_px:[],center:[0,0,1],rotation:[1,0,0,0,1,0,0,0,1]}},'s','epoch',1,'f'.repeat(64))!;
+  const parsed=navigationReply({id:'s',captureEpoch:'epoch',sequence:1,jpegSha256:'f'.repeat(64),geometrySha256:sha,referenceTicks90k:90000,computeMs:10,method:'descriptor_pnp',physicalActions:0,executionQualified:false,groundRoute:false,
+    pose:{state:'localized',reason:'verified',inliers:30,segment:0,progress_units:1,polyline_px:[],center:[0,0,1],rotation:[1,0,0,0,1,0,0,0,1]}},'s','epoch',1,'f'.repeat(64))!;
   const capturedAt=performance.now();view.rerender(<NavigationRouteContext {...props} observation={{reply:parsed,capturedAt,answeredAt:capturedAt+10}}/>);
   await screen.findByLabelText('Подтверждённое живое положение');await screen.findByText('source-frame-90000');
+  const calls=jest.mocked(reconstructionRequest).mock.calls.length;
+  view.rerender(<NavigationRouteContext {...props} job={{...job}} observation={{reply:parsed,capturedAt,answeredAt:capturedAt+10}}/>);
+  await act(async()=>{await Promise.resolve();});expect(reconstructionRequest).toHaveBeenCalledTimes(calls);
+  expect(screen.getByText('source-frame-90000')).toBeInTheDocument();
   view.rerender(<NavigationRouteContext {...props} observation={{reply:{...parsed,geometrySha256:'0'.repeat(64)},capturedAt,answeredAt:capturedAt+10}}/>);
   await waitFor(()=>expect(screen.queryByLabelText('Подтверждённое живое положение')).not.toBeInTheDocument());
   expect(jest.mocked(reconstructionRequest).mock.calls.every(c=>c[2]?.method!=='POST')).toBe(true);

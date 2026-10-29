@@ -21,7 +21,7 @@ beforeEach(()=>{
     const blob=new Blob(['jpeg'],{type:'image/jpeg'});Object.defineProperty(blob,'arrayBuffer',{value:async()=>new ArrayBuffer(4)});callback(blob);
   });
   jest.mocked(reconstructionRequest).mockImplementation(async(path,_job,init)=>{
-    if(path.endsWith('/walk-start'))return {json:async()=>({phase:'observing',id:'c'.repeat(32),physicalActions:0,mode:'foot_camera_trace_v1',maxSeconds:60,startMode:JSON.parse(String(init?.body)).startMode,cameraTracking:JSON.parse(String(init?.body)).cameraTracking})} as Response;
+    if(path.endsWith('/walk-start'))return {json:async()=>({phase:'observing',id:'c'.repeat(32),physicalActions:0,mode:'foot_camera_trace_v1',maxSeconds:60,startMode:JSON.parse(String(init?.body)).startMode,cameraTracking:JSON.parse(String(init?.body)).cameraTracking,cameraControl:JSON.parse(String(init?.body)).cameraControl})} as Response;
     if(path.endsWith('/observe'))return {json:async()=>({id:'c'.repeat(32),captureEpoch:binding.captureEpoch,sequence:JSON.parse(String(init?.body)).sequence,
       jpegSha256:'aa'.repeat(32),computeMs:1,method:'descriptor_pnp',physicalActions:0,executionQualified:false,groundRoute:false,
       pose:{state:'localized',reason:'relative_camera_pose_not_clearance_or_arrival',inliers:40,segment:0,progress_units:0,polyline_px:[]},
@@ -47,9 +47,9 @@ test('camera pulse is a separate acknowledged operation while the movement stick
     const value=await response.json();value.pose.rotation=[1,0,0,0,1,0,0,0,1];value.walk.targetCamera=[1,0,1];
     return {json:async()=>value} as Response;
   });
-  lease.canLook=()=>true;lease.look=jest.fn(async()=>true);
+  lease.canLook=()=>true;lease.drag=jest.fn(async()=>true);
   view({input:{issue:null,cameraIssue:null,open}});start();
-  await waitFor(()=>expect(lease.look).toHaveBeenCalledWith(.018,1250));
+  await waitFor(()=>expect(lease.drag).toHaveBeenCalledWith(0,1250));
   expect(jest.mocked(lease.set).mock.calls.every(([v])=>Math.hypot(...v)===0)).toBe(true);
   expect(screen.getByRole('status')).toHaveTextContent(/проверяем отклик/);
   fireEvent.keyDown(window,{code:'Escape'});await screen.findByText('Освобождение: CLOSED');
@@ -151,7 +151,7 @@ test('an expired bound result neutralizes input and never applies its vector',as
   jest.mocked(reconstructionRequest).mockImplementation(async(...args)=>{
     const value=await original(...args);if(args[0].endsWith('/observe'))now=1300;return value;
   });
-  view();start();await screen.findByText(/Стик отпущен: ждём новое свежее решение/);now=2400;
+  view();start();await screen.findByText(/Стик в центре: ждём новое свежее решение/);now=2400;
   await screen.findByText('Освобождение: CLOSED');
   expect(jest.mocked(lease.set).mock.calls.every(([v])=>v[0]===0&&v[1]===0)).toBe(true);clock.mockRestore();
 });
@@ -175,6 +175,23 @@ test('four delivery expirations never replay old vectors or exhaust geometric re
     fireEvent.keyDown(window,{code:'Escape'});await screen.findByText('Освобождение: CLOSED');
   }finally{clock.mockRestore();}
 });
+test('fresh UNKNOWN replies end a transport wait without acquiring movement or forcing a two-second restart',async()=>{
+  let now=1000,queries=0;const clock=jest.spyOn(performance,'now').mockImplementation(()=>now);
+  const original=jest.mocked(reconstructionRequest).getMockImplementation()!;
+  jest.mocked(reconstructionRequest).mockImplementation(async(...args)=>{
+    const response=await original(...args);if(!args[0].endsWith('/observe'))return response;
+    const value=await response.json();queries++;now+=queries===1?300:200;
+    value.pose={...value.pose,state:'unknown',inliers:0};value.walk={...value.walk,phase:'waiting',stick:[0,0],reason:'walk_confirming_start'};
+    if(queries<=15)frames.shift()?.(now,{} as VideoFrameCallbackMetadata);
+    return {json:async()=>value} as Response;
+  });
+  try{
+    view();start();await waitFor(()=>expect(queries).toBeGreaterThanOrEqual(15));
+    expect(lease.close).not.toHaveBeenCalled();
+    expect(jest.mocked(lease.set).mock.calls.every(([v])=>Math.hypot(...v)===0)).toBe(true);
+    fireEvent.keyDown(window,{code:'Escape'});await screen.findByText('Освобождение: CLOSED');
+  }finally{clock.mockRestore();}
+});
 
 test('a localized start refusal is not presented as an Android ACK failure',async()=>{
   jest.spyOn(performance,'now').mockReturnValue(1000);
@@ -195,13 +212,14 @@ test('a reply that expires while painting cannot send its old movement vector',a
     if(source instanceof HTMLCanvasElement)now+=300;
   })} as never);
   try{
-    view();start();await screen.findByText(/Стик отпущен: ждём новое свежее решение/);
+    view();start();await screen.findByText(/Стик в центре: ждём новое свежее решение/);
     expect(jest.mocked(lease.set).mock.calls.every(([v])=>Math.hypot(...v)===0)).toBe(true);
     fireEvent.keyDown(window,{code:'Escape'});await screen.findByText('Освобождение: CLOSED');
   }finally{clock.mockRestore();}
 });
 
 test('fresh pose plans go through the real contact protocol and Android applied receipts',async()=>{
+  jest.spyOn(performance,'now').mockReturnValue(1000);
   const messages:Record<string,unknown>[]=[],events:TeachingInput[]=[];
   let receive:(value:unknown)=>void=()=>{};
   const envelope={session_id:'f'.repeat(32),capture_epoch:binding.captureEpoch,contact_protocol:1,max_pointers:3,owner:'d'.repeat(32),device_uptime_ms:1000};

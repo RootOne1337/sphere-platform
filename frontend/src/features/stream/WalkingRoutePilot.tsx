@@ -10,7 +10,7 @@ import type {TeachingInput} from './teachingContacts';
 import {saveRouteDebugReport} from './routeDebugStorage';
 import {RouteDebugArchive} from './RouteDebugArchive';
 import {WalkRunDiagnostics,walkInputSummary,walkCameraInputSummary} from './walkRunDiagnostics';
-import {WalkCameraServo,type CameraStep} from './walkCamera';
+import {WalkCameraDrag as WalkCameraServo,type CameraDragStep as CameraStep} from './walkCameraDrag';
 
 type Binding={captureEpoch:string;width:number;height:number};
 type StartMode='beginning'|'recognized_route';
@@ -44,9 +44,22 @@ export function WalkingRoutePilot({job,clip,video,ready,binding,assetsReady,inpu
   const recent=useRef({sequence:0,at:0}),stopRef=useRef<(reason:string)=>Promise<void>>(async()=>{});
   const lastSource=useRef<HTMLCanvasElement|null>(null);
   const lastReport=useRef<Record<string,unknown>|null>(null),lastEventPaint=useRef(-Infinity);
+  const lastUiPaint=useRef(-Infinity);
   const busyChange=useRef(onBusyChange);busyChange.current=onBusyChange;
   const observed=useRef(onObservation);observed.current=onObservation;
   const captureEpoch=binding?.captureEpoch;
+  const cameraCommand=(active:Run,step:CameraStep,sequence:number,notAfter:number)=>{
+    if(!step.action||!active.camera||!active.lease?.drag)return;
+    const camera=active.camera,lease=active.lease;
+    if(step.action!=='up'&&performance.now()>=notAfter){camera.cancelUnsentStroke();return;}
+    active.trace.add('camera_command',performance.now(),{sequence,reason:step.reason});
+    void lease.drag!(step.action==='up'?null:step.fraction,notAfter).then(applied=>{
+      if(run.current!==active||active.abort.signal.aborted)return;
+      camera.finishStroke(applied,performance.now());
+      active.trace.add('camera_result',performance.now(),{sequence,reason:applied?'applied':'unconfirmed'});
+      if(!applied)void stopRef.current(lease.failure?.()??'walk_camera_input_unconfirmed');
+    }).catch(()=>{if(run.current===active)void stopRef.current('walk_camera_input_unconfirmed');});
+  };
   const clear=()=>{
     const draw=output.current?.getContext('2d');if(!draw)return;
     // Keep the source image for diagnosis, without reusing a route overlay or
@@ -59,10 +72,11 @@ export function WalkingRoutePilot({job,clip,video,ready,binding,assetsReady,inpu
     if(active.freshUntil===null){active.freshWaits++;active.freshUntil=performance.now()+2000;
       active.trace.add('neutral_wait',performance.now(),{reason,sequence:active.lastSequence});}
     active.lease.set([0,0]);active.moving=false;
+    if(active.camera&&active.lease.canLook?.())cameraCommand(active,active.camera.pause(performance.now()),active.lastSequence,performance.now()+200);
     // A late delivery is not loss of geometric localization. The server still
     // requires three poses after an actual loss. Resume only on a NEW, fresh,
     // bound localized/following reply, never on the expired command.
-    setNotice('Стик отпущен: ждём новое свежее решение, до 2 секунд. Просроченная команда не применяется.');
+    setNotice('Стик в центре: ждём новое свежее решение, до 2 секунд. Повторного нажатия нет.');
     return true;
   };
   const stop=async(reason:string)=>{
@@ -96,7 +110,7 @@ export function WalkingRoutePilot({job,clip,video,ready,binding,assetsReady,inpu
               schema:'sphere-walk-summary-v1',id:active.id,clip:active.clip,release:report.release,stopReason:reason,inputFailure,startMode:active.startMode,
               stopFrameAgeMs:frameAge,stopFrameSequence:frameSequence,executionQualified:false,camera:report.camera,cameraInput:report.cameraInput,
               inputSummary:{...walkInputSummary(inputs.current),events:inputs.current.length},stages:report.stages,
-              observations:report.observations.map(({elapsedMs,sequence,ageMs,computeMs,state,reason,poseState,inliers,progress,segment,medianErrorPx,crossTrackUnits})=>({elapsedMs,sequence,ageMs,computeMs,state,reason,poseState,inliers,progress,segment,medianErrorPx,crossTrackUnits})),
+              observations:report.observations.map(({elapsedMs,sequence,ageMs,computeMs,state,reason,poseState,inliers,progress,segment,medianErrorPx,crossTrackUnits,poseReason})=>({elapsedMs,sequence,ageMs,computeMs,state,reason,poseState,inliers,progress,segment,medianErrorPx,crossTrackUnits,poseReason})),
             })}).then(response=>response.json()).then(value=>{if(!['saved','existing'].includes(value.state)||value.physicalActions!==0)throw Error('walk_report_unconfirmed');}),
           ]);
           const saved=archive.status==='fulfilled'&&['saved','existing'].includes(archive.value.state);
@@ -161,14 +175,15 @@ export function WalkingRoutePilot({job,clip,video,ready,binding,assetsReady,inpu
     const active:Run={id:crypto.randomUUID().replaceAll('-',''),job,abort:new AbortController(),lease:null,opening:null,began,
       binding:{...binding},deadline:began+60000,permitUntil:0,moving:false,lastSequence:0,clip,scope,freshUntil:null,freshWaits:0,trace:new WalkRunDiagnostics(began),observe:null,inFlight:false,nextObservationAt:0,startMode,camera:cameraEnabled?new WalkCameraServo():null};
     run.current=active;setBusy(true);busyChange.current(true);setRelease('none');setStopDetail(null);clear();setNotice('Открываем отдельный пеший тест. До узнавания старта стик нейтрален.');
-    history.current=[];inputs.current=[];images.current=0;lastImageAt.current=-Infinity;lastReport.current=null;setSamples([]);setEvents(0);
+    history.current=[];inputs.current=[];images.current=0;lastImageAt.current=-Infinity;lastReport.current=null;lastUiPaint.current=-Infinity;setSamples([]);setEvents(0);
     const signal=active.abort.signal,alive=()=>run.current===active&&!signal.aborted;
     try{
       const state=await(await reconstructionRequest(`/jobs/${job.id}/navigation/walk-start`,job,{method:'POST',signal,
-        body:JSON.stringify({id:active.id,captureEpoch:binding.captureEpoch,width:binding.width,height:binding.height,sceneConfirmed:true,footCameraAssumptionConfirmed:true,startMode:active.startMode,cameraTracking:!!active.camera})})).json();
+        body:JSON.stringify({id:active.id,captureEpoch:binding.captureEpoch,width:binding.width,height:binding.height,sceneConfirmed:true,footCameraAssumptionConfirmed:true,startMode:active.startMode,cameraTracking:!!active.camera,...(active.camera?{cameraControl:'continuous_drag_v1'}:{})})})).json();
       if(!alive())return;
       if(state.id!==active.id||state.phase!=='observing'||state.mode!=='foot_camera_trace_v1'||state.physicalActions!==0||state.maxSeconds!==60||state.startMode!==active.startMode)throw Error('walk_start_unconfirmed');
       if(active.camera?state.cameraTracking!==true:state.cameraTracking===true)throw Error('walk_start_unconfirmed');
+      if(active.camera&&state.cameraControl!=='continuous_drag_v1')throw Error('walk_start_unconfirmed');
       if(!freshNavigationFrame(recent.current.at,performance.now()))setNotice('Ждём свежий кадр перед открытием ввода. Касаний ещё нет.');
       if(!await waitForFreshWalkSource(()=>freshNavigationFrame(recent.current.at,performance.now()),signal))throw Error('walk_source_not_ready');
       if(!alive())return;
@@ -179,7 +194,8 @@ export function WalkingRoutePilot({job,clip,video,ready,binding,assetsReady,inpu
       active.lease=lease;
       if(!alive()){await lease.close();return;}
       if(!lease.active())throw Error(lease.failure?.()??'walk_native_closed');
-      if(active.camera&&(!lease.look||!lease.canLook))throw Error('walk_camera_input_unconfirmed');
+      if(active.camera&&(!lease.drag||!lease.canLook))throw Error('walk_camera_input_unconfirmed');
+      if(active.camera&&lease.cameraLimits)active.camera.setBounds(lease.cameraLimits);
       active.trace.add('input_ready',performance.now());
       const canvas=document.createElement('canvas');canvas.width=960;canvas.height=540;
       const context=canvas.getContext('2d',{willReadFrequently:true});if(!context)throw Error('walk_canvas_unavailable');
@@ -189,7 +205,7 @@ export function WalkingRoutePilot({job,clip,video,ready,binding,assetsReady,inpu
         // Start alongside presentation, not an unrelated 100 ms polling phase
         // that can select a frame already 80 ms old before JPEG/HTTP even begin.
         if(frame.sequence===active.lastSequence||!freshNavigationFrame(frame.at,began)||began-frame.at>34)return;
-        active.inFlight=true;active.nextObservationAt=began+100;
+        active.inFlight=true;active.nextObservationAt=began+50;
         try{
           active.lastSequence=frame.sequence;context.drawImage(video.current!,0,0,960,540);
           lastSource.current=canvas;
@@ -210,17 +226,21 @@ export function WalkingRoutePilot({job,clip,video,ready,binding,assetsReady,inpu
           if(!freshNavigationFrame(frame.at,now))throw Error('walk_decision_expired');
           let command=plan.stick;
           if(active.freshUntil!==null){
-            if(reply.pose.state==='localized'&&plan.phase==='following')active.freshUntil=null;
-            else command=[0,0];
+            // Fresh delivery and geometric localization are separate states.
+            // A fresh UNKNOWN still resolves the transport wait; the server's
+            // neutral pose plan does not acquire movement authority.
+            active.freshUntil=null;
           }
+          if(plan.phase==='following'&&reply.pose.state!=='localized')throw Error('walk_reply_pose_mismatch');
           let cameraStep:CameraStep|null=null;
           if(active.camera&&reply.pose.state==='localized'&&plan.phase==='following'){
             cameraStep=active.camera.update({rotation:reply.pose.rotation??[],target:value.walk?.targetCamera,
               sequence:frame.sequence,capturedAt:frame.at,now,canStroke:lease.canLook?.()===true});
             if(cameraStep.failed)throw Error(cameraStep.reason);
             if(cameraStep.hold)command=[0,0];
-          }
-          observed.current?.({reply,capturedAt:frame.at,answeredAt:now});
+          }else if(active.camera&&lease.canLook?.())cameraStep=active.camera.pause(now);
+          const paintUi=now-lastUiPaint.current>=200;
+          if(paintUi){lastUiPaint.current=now;observed.current?.({reply,capturedAt:frame.at,answeredAt:now});}
           const keep=saveFrames&&images.current<60&&now-lastImageAt.current>=1000;
           if(keep){images.current++;lastImageAt.current=now;}
           const sample:Sample={elapsedMs:now-active.began,sequence:frame.sequence,ageMs:now-frame.at,computeMs:reply.computeMs,
@@ -228,32 +248,20 @@ export function WalkingRoutePilot({job,clip,video,ready,binding,assetsReady,inpu
             poseReason:reply.pose.reason,segment:reply.pose.segment,medianErrorPx:reply.pose.median_error_px??null,
             crossTrackUnits:reply.pose.cross_track_units??null,center:reply.pose.center?[...reply.pose.center]:null,rotation:reply.pose.rotation?[...reply.pose.rotation]:null,geometrySha256:reply.geometrySha256??null,
             ...(keep?{image:`data:image/jpeg;base64,${jpeg}`}:{})};
-          if(history.current.length<1200)history.current.push(sample);setSamples([...history.current.slice(-8)]);
+          if(history.current.length<1200)history.current.push(sample);if(paintUi)setSamples([...history.current.slice(-8)]);
           const draw=output.current?.getContext('2d');if(draw)paintNavigation(draw,canvas,reply);
           setNotice(walkReasonLabel(sample.reason));
           if(plan.phase==='stopped'||plan.phase==='arrived'){await stop(plan.reason);return;}
           active.permitUntil=frame.at+250;
           if(performance.now()>active.permitUntil){
-            if(cameraStep?.fraction!=null)active.camera?.cancelUnsentStroke();
+            if(cameraStep?.action)active.camera?.cancelUnsentStroke();
             if(!neutralUntilFresh(active,'render_expired'))await stop('walk_decision_expired');
             return;
           }
           active.moving=plan.phase==='following'&&Math.hypot(...command)>0;
           lease.set(command);
           active.trace.add('input_command',performance.now(),{sequence:frame.sequence,ageMs:performance.now()-frame.at});
-          if(cameraStep?.fraction!=null&&active.camera&&lease.look){
-            const camera=active.camera;
-            if(active.permitUntil-performance.now()<170){
-              camera.cancelUnsentStroke();setNotice('Стик отпущен: ждём свежий кадр с запасом времени для свайпа камеры.');return;
-            }
-            active.trace.add('camera_command',performance.now(),{sequence:frame.sequence,reason:cameraStep.reason});
-            void lease.look(cameraStep.fraction,active.permitUntil).then(applied=>{
-              if(!alive())return;
-              camera.finishStroke(applied,performance.now());
-              active.trace.add('camera_result',performance.now(),{sequence:frame.sequence,reason:applied?'applied':'unconfirmed'});
-              if(!applied)void stopRef.current(lease.failure?.()??'walk_camera_input_unconfirmed');
-            }).catch(()=>{if(alive())void stopRef.current('walk_camera_input_unconfirmed');});
-          }
+          if(cameraStep?.action)cameraCommand(active,cameraStep,frame.sequence,active.permitUntil);
         }catch(error){if(alive()){
           if(error instanceof Error&&error.message==='walk_decision_expired'){
             active.trace.add('decision_expired',performance.now(),{sequence:frame.sequence,ageMs:performance.now()-frame.at});
@@ -285,11 +293,11 @@ export function WalkingRoutePilot({job,clip,video,ready,binding,assetsReady,inpu
   const cameraFeedback=(run.current?.camera?.snapshot()??lastReport.current?.camera as ReturnType<WalkCameraServo['snapshot']>|null)?.feedback?.at(-1);
   return <section aria-label="Пеший тест маршрута" className="space-y-3 rounded-2xl border border-amber-500/30 bg-amber-500/5 p-4">
     <div className="flex items-center gap-2"><Footprints size={19} className="text-amber-500"/><h3 className="font-semibold">Пеший тест · живой стик</h3><span className="ml-auto text-xs text-muted-foreground">до 60 с · до 35% стика</span></div>
-    <p className="text-xs leading-5 text-muted-foreground">По свежим ориентирам выбираем ближайшую цель на записанном пути камеры. При краткой потере позиции стик отпускается: до 2 секунд ждём три подтверждения рядом с последней позицией, максимум три раза за тест. Устаревший кадр, разрыв потока, скачок или отсутствие прогресса останавливают тест. Объезд препятствий не реализован, точность в метрах ещё не измерена.</p>
+    <p className="text-xs leading-5 text-muted-foreground">По свежим ориентирам выбираем ближайшую цель на записанном пути камеры. При краткой потере позиции стик возвращается в центр с удержанием пальца: до 2 секунд ждём три подтверждения рядом с последней позицией, максимум три раза за тест. Устаревший кадр, разрыв потока, скачок или отсутствие прогресса останавливают тест. Объезд препятствий не реализован, точность в метрах ещё не измерена.</p>
     <label className="flex flex-wrap items-center gap-2 text-xs">Начало движения<select aria-label="Точка запуска пешего теста" className="rounded-lg border bg-background p-2" value={startMode} disabled={busy} onChange={e=>{setStartMode(e.target.value as StartMode);setConfirmed(false);}}><option value="recognized_route">С текущей узнанной точки маршрута</option><option value="beginning">Только у начала записи</option></select></label>
     <p className="text-xs text-muted-foreground">После обрыва можно снова нажать запуск на записанном участке. Положение определяется заново по живым кадрам; цель выбирается дальше по записи. При неоднозначном месте движение не начинается.</p>
     <label className="flex items-start gap-2 text-xs"><input type="checkbox" checked={cameraEnabled} disabled={busy} onChange={e=>{setCameraEnabled(e.target.checked);setConfirmed(false);}}/>Поворачивать камеру вдоль пути · горизонтально, с проверкой по новым кадрам</label>
-    <p className="text-xs text-muted-foreground">Перед поворотом стик отпускается. Знак и чувствительность проверяются небольшим свайпом в указанной области. Вертикальных свайпов нет; при сильном наклоне восстановите ракурс вручную. Режим пока требует живой проверки.</p>
+    <p className="text-xs text-muted-foreground">Перед поворотом стик возвращается в центр без нового нажатия. Палец камеры удерживается; каждое движение корректируется по новому кадру. Знак и чувствительность определяются по отклику. Вертикальных свайпов нет; при сильном наклоне восстановите ракурс вручную. Режим пока требует живой проверки.</p>
     {cameraEnabled&&input.cameraIssue&&<p className="text-xs text-amber-500">{input.cameraIssue}</p>}
     <label className="flex items-start gap-2 text-xs"><input type="checkbox" checked={confirmed} disabled={busy} onChange={e=>setConfirmed(e.target.checked)}/>Персонаж пешком на записанном участке, ракурс и FOV соответствуют записи, путь свободен; готов остановить тест</label>
     <label className="flex items-center gap-2 text-xs"><input type="checkbox" checked={saveFrames} disabled={busy} onChange={e=>setSaveFrames(e.target.checked)}/>Диагностика: до 60 кадров, положения стика и подтверждения Android остаются в этой вкладке</label>
@@ -302,7 +310,7 @@ export function WalkingRoutePilot({job,clip,video,ready,binding,assetsReady,inpu
       <p className="rounded-lg border p-3">Команды стику: <strong>{inputProgress.submitted}</strong></p>
       <p className="rounded-lg border p-3">Android применил: <strong>{inputProgress.applied}</strong></p>
     </div>
-    {cameraEnabled&&<p aria-label="Подтверждение камеры" className="rounded-lg border p-3 text-xs">Камера: Android подтвердил <strong>{cameraProgress.strokesApplied} / {cameraProgress.strokesSubmitted}</strong> жестов{cameraProgress.lastDistancePx!==null&&` · последний ${cameraProgress.lastDistancePx} px / ${cameraProgress.lastDurationMs?.toFixed(0)} мс`}. Подтверждение касания и изменение ракурса проверяются отдельно.</p>}
+    {cameraEnabled&&<p aria-label="Подтверждение камеры" className="rounded-lg border p-3 text-xs">Камера: Android подтвердил <strong>{cameraProgress.strokesApplied} / {cameraProgress.strokesSubmitted}</strong> жестов · MOVE подтверждены: {cameraProgress.movesApplied}{cameraProgress.lastDistancePx!==null&&` · последний ${cameraProgress.lastDistancePx} px / ${cameraProgress.lastDurationMs?.toFixed(0)} мс`}. Подтверждение касания и изменение ракурса проверяются отдельно.</p>}
     {cameraEnabled&&cameraFeedback&&<p className="text-xs text-muted-foreground">Отклик по ориентирам: {(cameraFeedback.turnRadians*180/Math.PI).toFixed(2)}° · угол до пути: {(cameraFeedback.yawAfter*180/Math.PI).toFixed(1)}°.</p>}
     {!busy&&history.current.some(row=>row.poseState==='localized')&&inputProgress.submitted===0&&<p className="text-xs text-amber-500">Место узнано, но команда движения не выдавалась. Это не ошибка подтверждения Android; причина остановки указана выше.</p>}
     {!busy&&inputProgress.submitted>0&&inputProgress.applied===0&&<p className="text-xs text-amber-500">Команда стику отправлена, но Android ещё не подтвердил касание. Этот запуск не подтвердил движение по маршруту.</p>}

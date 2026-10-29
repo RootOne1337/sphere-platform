@@ -17,7 +17,7 @@ import {TeachingNavigation} from './TeachingNavigation';
 import {TeachingLocalWorker} from './TeachingLocalWorker';
 import type {ReconstructionJob} from './reconstructionClient';
 import type {RouteSource} from './routeSource';
-import {walkingCalibrationIssue,walkingCameraIssue,walkingStickTarget,type WalkInputLease} from './walkPilot';
+import {applyWalkingStick,WalkStickSlew,walkingCalibrationIssue,walkingCameraIssue,walkingStickTarget,type WalkInputLease} from './walkPilot';
 
 type Phase = 'idle' | 'connecting' | 'preview' | 'opening' | 'controlling' | 'piloting' | 'arming' | 'recording' | 'stopping' | 'finished';
 const newId = () => crypto.randomUUID().replaceAll('-', '');
@@ -256,13 +256,21 @@ export function TeachingWorkbench({ deviceId, readOnly }: { deviceId: string; re
     if(signal.aborted||readOnly||phaseRef.current!=='preview'||!conn?.fresh()||!attached.current||!b||!endpoint
       ||walkingCalibrationIssue(p,b)||!result||!['host','nat'].includes(result.path))throw Error('walk_input_not_ready');
     stopPromise.current=null;change('opening');
-    let released=false,settle:(lease:WalkInputLease)=>void=()=>{};
+    let released=false,settle:(lease:WalkInputLease)=>void=()=>{};const stickSlew=new WalkStickSlew();
     const opened=new Promise<WalkInputLease>(resolve=>{settle=resolve;});
     const lease:WalkInputLease={
       active:()=>phaseRef.current==='piloting'&&controller.current===control&&connection.current===conn&&control.isReady
         &&(conn.fresh()||conn.idleInputFresh?.()===true)&&!signal.aborted,
       failure:()=>control.failureReason,
-      canLook:()=>control.isNeutral,
+      canLook:()=>control.canCameraCommand(walkingStickTarget(p,b,[0,0]).center),
+      cameraLimits:p.look?{min:Math.max(-.25,(Math.min(b.width,b.height)*.05-fromPercent(p.look,b).x)/Math.min(b.width,b.height)),
+        max:Math.min(.25,(b.width-1-Math.min(b.width,b.height)*.05-fromPercent(p.look,b).x)/Math.min(b.width,b.height))}:undefined,
+      drag:(fraction,notAfter)=>{
+        if(!lease.active()||walkingCameraIssue(p,b)||!p.look||fraction!==null&&(!Number.isFinite(fraction)||Math.abs(fraction)>.250001))return Promise.resolve(false);
+        const origin=fromPercent(p.look,b),short=Math.min(b.width,b.height),margin=short*.05;
+        const point=fraction===null?null:{x:Math.max(Math.ceil(margin),Math.min(Math.floor(b.width-1-margin),origin.x+Math.round(fraction*short))),y:origin.y};
+        return control.cameraCommand(point,notAfter,walkingStickTarget(p,b,[0,0]).center);
+      },
       look:(fraction,notAfter)=>{
         if(!lease.active()||walkingCameraIssue(p,b)||!p.look||!Number.isFinite(fraction)||Math.abs(fraction)>.04||!control.isNeutral)return Promise.resolve(false);
         const origin=fromPercent(p.look,b),x=origin.x+Math.round(fraction*Math.min(b.width,b.height));
@@ -271,9 +279,7 @@ export function TeachingWorkbench({ deviceId, readOnly }: { deviceId: string; re
       set:vector=>{
         if(!lease.active())throw Error('walk_native_closed');
         if(Math.hypot(...vector)>0&&!conn.fresh())throw Error('contact_video_stale');
-        const {center,target}=walkingStickTarget(p,b,vector);
-        if(target&&!control.hasContact(0))control.set(0,center);
-        control.set(0,target);
+        applyWalkingStick(control,p,b,stickSlew.next(vector,performance.now()));
       },
       close:async()=>{await stopCallback.current();return released;},
     };
@@ -286,7 +292,7 @@ export function TeachingWorkbench({ deviceId, readOnly }: { deviceId: string; re
       if(['failed','closed','closing'].includes(state))settle(lease);
       if(state==='failed')queueMicrotask(()=>{void stopCallback.current(reason??'walk_native_closed');});
       if(state==='closed'&&active(phaseRef.current)&&phaseRef.current!=='stopping'&&!expectedOwnerClose.current)queueMicrotask(()=>{void stopCallback.current('walk_native_closed');});
-    },rtt=>conn.observeControl?.('ready',undefined,rtt),()=>conn.idleInputFresh?.()===true);
+    },rtt=>conn.observeControl?.('ready',undefined,rtt),()=>conn.idleInputFresh?.()===true,walkingStickTarget(p,b,[0,0]).center);
     controller.current=control;
     const cancelled=()=>{settle(lease);void stopCallback.current();};
     signal.addEventListener('abort',cancelled,{once:true});
@@ -440,12 +446,12 @@ export function TeachingWorkbench({ deviceId, readOnly }: { deviceId: string; re
           onPointerCancel={e => { if(!externalActive.current&&mouse.current===e.pointerId)void stop('pointer_cancelled'); }}
           onLostPointerCapture={e => { if (mouse.current === e.pointerId) void stop('pointer_capture_lost'); }} />
         {ready&&!active(phase)&&binding&&<svg aria-label="Проверенные точки управления" className="pointer-events-none absolute inset-0 h-full w-full" viewBox={`0 0 ${binding.width} ${binding.height}`} preserveAspectRatio="xMidYMid meet">
-          {profile.look&&calibrated(profile,binding,'look')&&(()=>{const p=fromPercent(profile.look,binding),reach=Math.min(binding.width,binding.height)*.04;return <g aria-label="Диапазон горизонтального свайпа камеры" pointerEvents="none"><rect x={p.x-reach} y={p.y-binding.height*.025} width={reach*2} height={binding.height*.05} rx={10} fill="#22d3ee18" stroke="#22d3ee66" strokeDasharray="6 5"/><path d={`M ${p.x-reach} ${p.y} L ${p.x+reach} ${p.y}`} fill="none" stroke="#22d3ee" strokeWidth={2}/></g>;})()}
+          {profile.look&&calibrated(profile,binding,'look')&&(()=>{const p=fromPercent(profile.look,binding),reach=Math.min(binding.width,binding.height)*.25,left=Math.max(binding.height*.05,p.x-reach),right=Math.min(binding.width-1-binding.height*.05,p.x+reach);return <g aria-label="Диапазон горизонтального свайпа камеры" pointerEvents="none"><rect x={left} y={p.y-binding.height*.025} width={right-left} height={binding.height*.05} rx={10} fill="#22d3ee18" stroke="#22d3ee66" strokeDasharray="6 5"/><path d={`M ${left} ${p.y} L ${right} ${p.y}`} fill="none" stroke="#22d3ee" strokeWidth={2}/></g>;})()}
           {calibrationMarkers.map(marker=><g key={marker.label} transform={`translate(${marker.x} ${marker.y})`}><circle r={Math.max(9,binding.height*.018)} fill="#020617cc" stroke="#38bdf8" strokeWidth={2}/><text textAnchor="middle" dominantBaseline="central" fill="white" fontSize={Math.max(9,binding.height*.018)}>{marker.label}</text></g>)}
         </svg>}
         {calibrate&&<p className="pointer-events-none absolute left-2 right-2 top-2 rounded-lg bg-background/95 px-3 py-2 text-sm text-primary">Укажите {calibrationNames[calibrate]}. Это только калибровка.</p>}
         </div>
-        {workspaceMode==='live'&&<div className="space-y-2 border-t p-3 text-xs"><p className="font-medium">Стик для пешего теста</p><div className="flex flex-wrap items-center gap-2"><Button size="sm" variant="outline" disabled={!ready||active(phase)} onClick={()=>{setProfile(p=>({...p,mode:'stick'}));chooseCalibration('stick');}}>Указать центр пешего стика</Button><Button size="sm" variant="outline" disabled={!ready||active(phase)} onClick={()=>chooseCalibration('look')}>Указать область поворота камеры</Button><label>Радиус, % короткой стороны <input aria-label="Радиус пешего стика" type="number" className="ml-2 w-16 rounded border bg-background p-1" value={profile.radius} min={1} max={20} step={.5} disabled={active(phase)} onChange={e=>{const n=Number(e.target.value);if(n>=1&&n<=20)setProfile(p=>({...p,radius:n}));}}/></label></div><p className="text-muted-foreground">Укажите центр на прямом экране выше. Калибровочное касание не отправляется в игру. Метка камеры — начало свайпа, а не прямоугольная область. Укажите свободное место вне кнопок и стика: длина выбирается автоматически, по горизонтали до 4% короткой стороны. Прыжок не управляется.</p></div>}
+        {workspaceMode==='live'&&<div className="space-y-2 border-t p-3 text-xs"><p className="font-medium">Стик для пешего теста</p><div className="flex flex-wrap items-center gap-2"><Button size="sm" variant="outline" disabled={!ready||active(phase)} onClick={()=>{setProfile(p=>({...p,mode:'stick'}));chooseCalibration('stick');}}>Указать центр пешего стика</Button><Button size="sm" variant="outline" disabled={!ready||active(phase)} onClick={()=>chooseCalibration('look')}>Указать область поворота камеры</Button><label>Радиус, % короткой стороны <input aria-label="Радиус пешего стика" type="number" className="ml-2 w-16 rounded border bg-background p-1" value={profile.radius} min={1} max={20} step={.5} disabled={active(phase)} onChange={e=>{const n=Number(e.target.value);if(n>=1&&n<=20)setProfile(p=>({...p,radius:n}));}}/></label></div><p className="text-muted-foreground">Укажите центр на прямом экране выше. Калибровочное касание не отправляется в игру. Метка камеры — начало свайпа, а не прямоугольная область. Укажите свободное место вне кнопок и стика: длина выбирается автоматически, палец перемещается горизонтально до 25% короткой стороны в пределах экрана. Прыжок не управляется.</p></div>}
         <div className="flex flex-wrap gap-2 border-t border-border p-3 text-xs text-muted-foreground"><span className={`rounded-md px-2 py-1 ${inputEnabled(phase) && !externalActive.current ? 'bg-primary/15 text-primary' : 'bg-muted'}`}>{phase==='piloting'?'Пеший тест · стик управляется алгоритмом':externalActive.current ? 'Управление в эмуляторе · нажатия не записываются' : inputEnabled(phase) ? 'Управление включено · фокус на экране' : 'Управление выключено'}</span><span className="rounded-md bg-muted px-2 py-1">{profile.mode==='stick'?`${keyLabel(mappedKeys.forward)}/${keyLabel(mappedKeys.left)}/${keyLabel(mappedKeys.reverse)}/${keyLabel(mappedKeys.right)} · стик`:`${keyLabel(mappedKeys.forward)}/${keyLabel(mappedKeys.reverse)} · газ и тормоз · ${keyLabel(mappedKeys.left)}/${keyLabel(mappedKeys.right)} · руль`}</span>{profile.mode==='stick'&&<span className="rounded-md bg-muted px-2 py-1">{keyLabel(mappedKeys.slow)} · 40% скорости</span>}<span className="rounded-md bg-muted px-2 py-1">ЛКМ + движение · камера</span><span className="rounded-md bg-muted px-2 py-1">{keyLabel(mappedKeys.action)} · удержание кнопки</span></div>
         <details className="px-4 pb-3 text-xs text-muted-foreground"><summary>Диагностика приёма видео</summary>{encoded}</details>
       </section>
