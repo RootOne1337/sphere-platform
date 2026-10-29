@@ -247,6 +247,18 @@ class RouteWorkspaceTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError,'explicit_confirmation'):
             self.workspace.start_walk(self.job,dict(body,startMode='blind_resume'))
 
+    def test_camera_mode_is_separately_acknowledged_and_cannot_change_in_place(self):
+        self.attach_fixture_map();self.workspace.stop_live(self.job,dict(id='d'*32))
+        body=dict(id='f'*32,captureEpoch='e'*32,width=960,height=540,sceneConfirmed=True,
+                  footCameraAssumptionConfirmed=True,cameraTracking=True)
+        with patch('scripts.pilot.route_workspace.resource_checkpoint'):
+            reply=self.workspace.start_walk(self.job,body)
+        self.assertTrue(reply['cameraTracking']);self.assertTrue(self.workspace.live['walk'].camera_tracking)
+        with self.assertRaisesRegex(ValueError,'camera_mode_changed'):
+            self.workspace.start_walk(self.job,dict(body,cameraTracking=False))
+        with self.assertRaisesRegex(ValueError,'explicit_confirmation'):
+            self.workspace.start_walk(self.job,dict(body,cameraTracking='true'))
+
     def test_recorded_replay_has_a_separate_mode_and_cannot_promote_to_live_input(self):
         import cv2 as cv
         import numpy as np

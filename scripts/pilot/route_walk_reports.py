@@ -14,7 +14,7 @@ def store_walk_report(job, body):
     fields = {'schema', 'id', 'clip', 'release', 'stopReason', 'inputFailure',
               'stopFrameAgeMs', 'stopFrameSequence', 'executionQualified',
               'inputSummary', 'stages', 'observations'}
-    if (type(body) is not dict or not fields <= body.keys() or not body.keys() <= fields|{'startMode'}
+    if (type(body) is not dict or not fields <= body.keys() or not body.keys() <= fields|{'startMode','camera'}
             or body['schema'] != 'sphere-walk-summary-v1'
             or body.get('startMode','beginning') not in {'beginning','recognized_route'}):
         raise ValueError('walk_report_schema')
@@ -22,6 +22,16 @@ def store_walk_report(job, body):
         raise ValueError('walk_report_identity')
     if body['executionQualified'] is not False or body['release'] not in {'closed', 'unknown'}:
         raise ValueError('walk_report_qualification')
+    camera=body.get('camera')
+    if camera is not None:
+        if (type(camera) is not dict or set(camera)!={'gainRadiansPerShortSide','pulses','calibrationAttempts','terminal'}
+                or type(camera['pulses']) is not int or not 0<=camera['pulses']<=120
+                or type(camera['calibrationAttempts']) is not int or not 0<=camera['calibrationAttempts']<=3
+                or camera['gainRadiansPerShortSide'] is not None and (
+                    type(camera['gainRadiansPerShortSide']) not in {int,float}
+                    or not math.isfinite(camera['gainRadiansPerShortSide']) or not .2<=abs(camera['gainRadiansPerShortSide'])<=200)
+                or camera['terminal'] is not None and (type(camera['terminal']) is not str or not CODE.fullmatch(camera['terminal']))):
+            raise ValueError('walk_report_camera')
 
     def code(v):
         return type(v) is str and CODE.fullmatch(v)

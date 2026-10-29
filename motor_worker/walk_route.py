@@ -18,7 +18,7 @@ class WalkRouteFollower:
     MAX_RELOCALIZE_SECONDS = 2.
     MAX_RELOCALIZATIONS = 3
 
-    def __init__(self, route: SparseRoute, *, clock, start_mode='beginning'):
+    def __init__(self, route: SparseRoute, *, clock, start_mode='beginning', camera_tracking=False):
         import numpy as np
 
         if type(route) is not SparseRoute:
@@ -26,6 +26,10 @@ class WalkRouteFollower:
         if start_mode not in {'beginning', 'recognized_route'}:
             raise ValueError('walk_start_mode')
         self.start_mode = start_mode
+        if type(camera_tracking) is not bool:
+            raise ValueError('walk_camera_tracking')
+        self.camera_tracking = camera_tracking
+        self.alignment = None
         self.route, self.clock, self.np = route, clock, np
         self.trace = np.asarray(route.camera_trace, dtype=float)
         self.steps = np.linalg.norm(np.diff(self.trace, axis=0), axis=1)
@@ -152,9 +156,8 @@ class WalkRouteFollower:
         self.history.append((pose.received_at, self.high_water))
         while len(self.history) > 1 and self.history[1][0] <= pose.received_at-3:
             self.history.popleft()
-        if (pose.received_at-self.history[0][0] >= 3
-                and self.high_water-self.history[0][1] < self.step*.35):
-            return self._stop('walk_no_route_progress')
+        stalled = (pose.received_at-self.history[0][0] >= 3
+                   and self.high_water-self.history[0][1] < self.step*.35)
         # A closed loop has an endpoint near the start. Distance alone must
         # never count as arrival; ordered progress must reach the final segment.
         near_end = (progress >= self.total-self.step*.7
@@ -174,6 +177,28 @@ class WalkRouteFollower:
         fraction = float(np.clip((target_arc-self.arc[index])/self.steps[index],0.,1.))
         target = self.trace[index]*(1-fraction)+self.trace[index+1]*fraction
         camera_delta = rotation @ (target-center)
+        if self.camera_tracking:
+            yaw = abs(float(math.atan2(camera_delta[0], camera_delta[2])))
+            if yaw > .14:
+                self.vector[:] = 0
+                if self.alignment is None:
+                    self.alignment = dict(began=now, improved=now, best=yaw)
+                elif yaw < self.alignment['best']-.005:
+                    self.alignment.update(improved=now, best=yaw)
+                if now-self.alignment['began'] > 8:
+                    return self._stop('walk_camera_alignment_timeout')
+                if now-self.alignment['improved'] > 3:
+                    return self._stop('walk_camera_not_converging')
+                # Deliberately stationary, only while fresh poses confirm that
+                # camera alignment is converging. The browser owns all input.
+                return self._reply('following', 'walk_camera_alignment_required', progress,
+                                   targetCamera=[float(v) for v in camera_delta])
+            if self.alignment is not None:
+                self.alignment = None
+                self.history.clear();self.history.append((pose.received_at, self.high_water))
+                stalled = False
+        if stalled:
+            return self._stop('walk_no_route_progress')
         direction = camera_delta[[0, 2]]
         length = float(np.linalg.norm(direction))
         if not math.isfinite(length) or length < self.step*.05:

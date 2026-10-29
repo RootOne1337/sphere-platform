@@ -29,6 +29,14 @@ class WalkReportTests(unittest.TestCase):
         saved = json.loads((self.job/'walk-reports'/('a'*32+'.json')).read_bytes())
         self.assertEqual(saved, self.body)
 
+    def test_bounded_camera_feedback_summary_is_saved_separately_from_stick_counts(self):
+        camera=dict(gainRadiansPerShortSide=-12.,pulses=7,calibrationAttempts=1,terminal=None)
+        body=dict(self.body,camera=camera)
+        self.assertEqual(store_walk_report(self.job,body)['state'],'saved')
+        for key,value in [('pulses',121),('gainRadiansPerShortSide',float('nan')),('terminal','private text')]:
+            with self.assertRaisesRegex(ValueError,'camera'):
+                store_walk_report(self.job,dict(body,camera={**camera,key:value}))
+
     def test_conflict_preserves_the_first_report(self):
         store_walk_report(self.job, self.body)
         changed = copy.deepcopy(self.body)

@@ -1,0 +1,1328 @@
+{
+  "schema": "sphere-route-localization-cost-v1",
+  "physicalActions": 0,
+  "sourceHashes": {
+    ".local-pilot\\reconstruction-jobs\\b861ac82fcd64425bc583b37f620ba2a\\geometry.json": "1a77227dd5fae61dad735aa9a12759a0dc077e375c9e91b1faccd4e3587a367a",
+    ".local-pilot\\reconstruction-jobs\\b861ac82fcd64425bc583b37f620ba2a\\input\\manifest.json": "c87b071cd1cdb9d5a47d65dcbeb01f1afe0d4507f9245b55e5a3a8c83a8ff2eb",
+    ".local-pilot\\reconstruction-jobs\\b861ac82fcd64425bc583b37f620ba2a\\navigation\\bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\\route.json": "26959443bcaa436923ca156ec2b9cbc2965924001b3e47f04f702b6ce6999ea9"
+  },
+  "sourceUnchanged": true,
+  "syntheticSourceClock": true,
+  "queryFramesHeldOut": true,
+  "independentGameplay": false,
+  "multiWindowLoadTest": false,
+  "excludes": [
+    "video_decode_in_browser",
+    "stream_encode",
+    "HTTP",
+    "browser_UI",
+    "Android",
+    "GPU_reconstruction"
+  ],
+  "privateBytesBeforeMap": 533524480,
+  "privateBytesAfterMap": 538419200,
+  "cases": [
+    {
+      "nativeThreads": 1,
+      "rows": [
+        {
+          "index": 105,
+          "sourceSeconds": 4.005,
+          "method": "descriptor_pnp",
+          "pose": "confirming",
+          "plan": "waiting",
+          "cpuMs": 218.75,
+          "wallMs": 235.20840000128374,
+          "inliers": 63
+        },
+        {
+          "index": 108,
+          "sourceSeconds": 4.12,
+          "method": "descriptor_pnp",
+          "pose": "confirming",
+          "plan": "waiting",
+          "cpuMs": 203.125,
+          "wallMs": 215.98519996041432,
+          "inliers": 56
+        },
+        {
+          "index": 112,
+          "sourceSeconds": 4.256,
+          "method": "descriptor_pnp",
+          "pose": "localized",
+          "plan": "waiting",
+          "cpuMs": 218.75,
+          "wallMs": 300.90349999954924,
+          "inliers": 51
+        },
+        {
+          "index": 115,
+          "sourceSeconds": 4.354,
+          "method": "map_anchored_flow",
+          "pose": "localized",
+          "plan": "waiting",
+          "cpuMs": 0.0,
+          "wallMs": 10.367100010626018,
+          "inliers": 49
+        },
+        {
+          "index": 118,
+          "sourceSeconds": 4.455,
+          "method": "map_anchored_flow",
+          "pose": "localized",
+          "plan": "following",
+          "cpuMs": 15.625,
+          "wallMs": 12.905599956866354,
+          "inliers": 48
+        },
+        {
+          "index": 121,
+          "sourceSeconds": 4.554,
+          "method": "map_anchored_flow",
+          "pose": "localized",
+          "plan": "following",
+          "cpuMs": 15.625,
+          "wallMs": 12.299199996050447,
+          "inliers": 45
+        },
+        {
+          "index": 124,
+          "sourceSeconds": 4.653,
+          "method": "map_anchored_flow",
+          "pose": "localized",
+          "plan": "following",
+          "cpuMs": 15.625,
+          "wallMs": 10.860699985641986,
+          "inliers": 44
+        },
+        {
+          "index": 127,
+          "sourceSeconds": 4.754,
+          "method": "map_anchored_flow",
+          "pose": "localized",
+          "plan": "following",
+          "cpuMs": 15.625,
+          "wallMs": 11.767800024244934,
+          "inliers": 40
+        },
+        {
+          "index": 130,
+          "sourceSeconds": 4.853,
+          "method": "map_anchored_flow",
+          "pose": "localized",
+          "plan": "following",
+          "cpuMs": 0.0,
+          "wallMs": 10.545500030275434,
+          "inliers": 36
+        },
+        {
+          "index": 133,
+          "sourceSeconds": 4.971,
+          "method": "map_anchored_flow",
+          "pose": "localized",
+          "plan": "following",
+          "cpuMs": 15.625,
+          "wallMs": 12.48829998075962,
+          "inliers": 36
+        },
+        {
+          "index": 136,
+          "sourceSeconds": 5.07,
+          "method": "descriptor_pnp",
+          "pose": "localized",
+          "plan": "following",
+          "cpuMs": 234.375,
+          "wallMs": 255.65659999847412,
+          "inliers": 47
+        },
+        {
+          "index": 140,
+          "sourceSeconds": 5.237,
+          "method": "map_anchored_flow",
+          "pose": "localized",
+          "plan": "following",
+          "cpuMs": 15.625,
+          "wallMs": 13.139099988620728,
+          "inliers": 47
+        },
+        {
+          "index": 143,
+          "sourceSeconds": 5.371,
+          "method": "map_anchored_flow",
+          "pose": "localized",
+          "plan": "following",
+          "cpuMs": 15.625,
+          "wallMs": 12.219900032505393,
+          "inliers": 42
+        },
+        {
+          "index": 146,
+          "sourceSeconds": 5.488,
+          "method": "map_anchored_flow",
+          "pose": "localized",
+          "plan": "following",
+          "cpuMs": 15.625,
+          "wallMs": 13.494100014213473,
+          "inliers": 39
+        },
+        {
+          "index": 149,
+          "sourceSeconds": 5.588,
+          "method": "map_anchored_flow",
+          "pose": "localized",
+          "plan": "following",
+          "cpuMs": 15.625,
+          "wallMs": 11.767299962230027,
+          "inliers": 39
+        },
+        {
+          "index": 154,
+          "sourceSeconds": 5.755,
+          "method": "map_anchored_flow",
+          "pose": "localized",
+          "plan": "following",
+          "cpuMs": 0.0,
+          "wallMs": 12.538100010715425,
+          "inliers": 38
+        },
+        {
+          "index": 158,
+          "sourceSeconds": 5.889,
+          "method": "descriptor_pnp",
+          "pose": "localized",
+          "plan": "following",
+          "cpuMs": 218.75,
+          "wallMs": 245.00830000033602,
+          "inliers": 62
+        },
+        {
+          "index": 162,
+          "sourceSeconds": 6.038,
+          "method": "map_anchored_flow",
+          "pose": "localized",
+          "plan": "following",
+          "cpuMs": 15.625,
+          "wallMs": 10.501399985514581,
+          "inliers": 55
+        },
+        {
+          "index": 167,
+          "sourceSeconds": 6.223,
+          "method": "map_anchored_flow",
+          "pose": "localized",
+          "plan": "following",
+          "cpuMs": 15.625,
+          "wallMs": 12.81439996091649,
+          "inliers": 47
+        },
+        {
+          "index": 169,
+          "sourceSeconds": 6.325,
+          "method": "map_anchored_flow",
+          "pose": "localized",
+          "plan": "following",
+          "cpuMs": 0.0,
+          "wallMs": 11.08550000935793,
+          "inliers": 47
+        },
+        {
+          "index": 171,
+          "sourceSeconds": 6.423,
+          "method": "map_anchored_flow",
+          "pose": "localized",
+          "plan": "following",
+          "cpuMs": 15.625,
+          "wallMs": 11.297799996100366,
+          "inliers": 46
+        },
+        {
+          "index": 174,
+          "sourceSeconds": 6.539,
+          "method": "map_anchored_flow",
+          "pose": "localized",
+          "plan": "following",
+          "cpuMs": 15.625,
+          "wallMs": 10.468099964782596,
+          "inliers": 42
+        },
+        {
+          "index": 178,
+          "sourceSeconds": 6.706,
+          "method": "descriptor_pnp",
+          "pose": "localized",
+          "plan": "following",
+          "cpuMs": 203.125,
+          "wallMs": 216.0011000232771,
+          "inliers": 128
+        },
+        {
+          "index": 182,
+          "sourceSeconds": 6.856,
+          "method": "map_anchored_flow",
+          "pose": "localized",
+          "plan": "following",
+          "cpuMs": 15.625,
+          "wallMs": 13.926399988122284,
+          "inliers": 82
+        },
+        {
+          "index": 186,
+          "sourceSeconds": 7.008,
+          "method": "map_anchored_flow",
+          "pose": "localized",
+          "plan": "following",
+          "cpuMs": 15.625,
+          "wallMs": 12.260399991646409,
+          "inliers": 74
+        },
+        {
+          "index": 189,
+          "sourceSeconds": 7.141,
+          "method": "map_anchored_flow",
+          "pose": "localized",
+          "plan": "following",
+          "cpuMs": 15.625,
+          "wallMs": 11.515199963469058,
+          "inliers": 63
+        },
+        {
+          "index": 193,
+          "sourceSeconds": 7.307,
+          "method": "map_anchored_flow",
+          "pose": "localized",
+          "plan": "following",
+          "cpuMs": 15.625,
+          "wallMs": 10.630599979776889,
+          "inliers": 55
+        },
+        {
+          "index": 196,
+          "sourceSeconds": 7.423,
+          "method": "map_anchored_flow",
+          "pose": "localized",
+          "plan": "following",
+          "cpuMs": 0.0,
+          "wallMs": 13.219799962826073,
+          "inliers": 55
+        },
+        {
+          "index": 200,
+          "sourceSeconds": 7.539,
+          "method": "descriptor_pnp",
+          "pose": "localized",
+          "plan": "following",
+          "cpuMs": 203.125,
+          "wallMs": 198.00209999084473,
+          "inliers": 173
+        },
+        {
+          "index": 203,
+          "sourceSeconds": 7.639,
+          "method": "map_anchored_flow",
+          "pose": "localized",
+          "plan": "following",
+          "cpuMs": 15.625,
+          "wallMs": 13.347100000828505,
+          "inliers": 165
+        },
+        {
+          "index": 207,
+          "sourceSeconds": 7.772,
+          "method": "map_anchored_flow",
+          "pose": "localized",
+          "plan": "following",
+          "cpuMs": 15.625,
+          "wallMs": 16.20259997434914,
+          "inliers": 160
+        },
+        {
+          "index": 210,
+          "sourceSeconds": 7.907,
+          "method": "map_anchored_flow",
+          "pose": "localized",
+          "plan": "following",
+          "cpuMs": 15.625,
+          "wallMs": 16.37889997800812,
+          "inliers": 156
+        },
+        {
+          "index": 212,
+          "sourceSeconds": 8.023,
+          "method": "map_anchored_flow",
+          "pose": "localized",
+          "plan": "following",
+          "cpuMs": 15.625,
+          "wallMs": 16.937000036705285,
+          "inliers": 155
+        },
+        {
+          "index": 215,
+          "sourceSeconds": 8.14,
+          "method": "map_anchored_flow",
+          "pose": "localized",
+          "plan": "following",
+          "cpuMs": 15.625,
+          "wallMs": 15.201999980490655,
+          "inliers": 147
+        },
+        {
+          "index": 218,
+          "sourceSeconds": 8.272,
+          "method": "map_anchored_flow",
+          "pose": "localized",
+          "plan": "following",
+          "cpuMs": 15.625,
+          "wallMs": 13.994599983561784,
+          "inliers": 129
+        },
+        {
+          "index": 222,
+          "sourceSeconds": 8.423,
+          "method": "descriptor_pnp",
+          "pose": "localized",
+          "plan": "following",
+          "cpuMs": 203.125,
+          "wallMs": 203.86579999467358,
+          "inliers": 158
+        },
+        {
+          "index": 226,
+          "sourceSeconds": 8.59,
+          "method": "map_anchored_flow",
+          "pose": "localized",
+          "plan": "following",
+          "cpuMs": 15.625,
+          "wallMs": 15.061500016599894,
+          "inliers": 100
+        },
+        {
+          "index": 229,
+          "sourceSeconds": 8.689,
+          "method": "map_anchored_flow",
+          "pose": "localized",
+          "plan": "following",
+          "cpuMs": 15.625,
+          "wallMs": 12.79359997715801,
+          "inliers": 99
+        },
+        {
+          "index": 232,
+          "sourceSeconds": 8.789,
+          "method": "map_anchored_flow",
+          "pose": "localized",
+          "plan": "following",
+          "cpuMs": 15.625,
+          "wallMs": 13.014100026339293,
+          "inliers": 99
+        },
+        {
+          "index": 235,
+          "sourceSeconds": 8.889,
+          "method": "map_anchored_flow",
+          "pose": "localized",
+          "plan": "following",
+          "cpuMs": 15.625,
+          "wallMs": 13.110200001392514,
+          "inliers": 99
+        },
+        {
+          "index": 238,
+          "sourceSeconds": 9.006,
+          "method": "map_anchored_flow",
+          "pose": "localized",
+          "plan": "following",
+          "cpuMs": 15.625,
+          "wallMs": 16.083499998785555,
+          "inliers": 98
+        },
+        {
+          "index": 242,
+          "sourceSeconds": 9.123,
+          "method": "map_anchored_flow",
+          "pose": "localized",
+          "plan": "following",
+          "cpuMs": 0.0,
+          "wallMs": 14.48710000840947,
+          "inliers": 97
+        },
+        {
+          "index": 245,
+          "sourceSeconds": 9.223,
+          "method": "map_anchored_flow",
+          "pose": "localized",
+          "plan": "following",
+          "cpuMs": 15.625,
+          "wallMs": 12.449500034563243,
+          "inliers": 96
+        },
+        {
+          "index": 248,
+          "sourceSeconds": 9.356,
+          "method": "descriptor_pnp",
+          "pose": "localized",
+          "plan": "following",
+          "cpuMs": 203.125,
+          "wallMs": 202.6981000090018,
+          "inliers": 203
+        },
+        {
+          "index": 251,
+          "sourceSeconds": 9.456,
+          "method": "map_anchored_flow",
+          "pose": "localized",
+          "plan": "following",
+          "cpuMs": 15.625,
+          "wallMs": 17.030400049407035,
+          "inliers": 203
+        },
+        {
+          "index": 254,
+          "sourceSeconds": 9.556,
+          "method": "map_anchored_flow",
+          "pose": "localized",
+          "plan": "following",
+          "cpuMs": 15.625,
+          "wallMs": 17.384300008416176,
+          "inliers": 197
+        },
+        {
+          "index": 257,
+          "sourceSeconds": 9.656,
+          "method": "map_anchored_flow",
+          "pose": "localized",
+          "plan": "following",
+          "cpuMs": 15.625,
+          "wallMs": 14.359000022523105,
+          "inliers": 196
+        },
+        {
+          "index": 260,
+          "sourceSeconds": 9.756,
+          "method": "map_anchored_flow",
+          "pose": "localized",
+          "plan": "following",
+          "cpuMs": 15.625,
+          "wallMs": 17.467700003180653,
+          "inliers": 194
+        },
+        {
+          "index": 263,
+          "sourceSeconds": 9.857,
+          "method": "map_anchored_flow",
+          "pose": "localized",
+          "plan": "following",
+          "cpuMs": 15.625,
+          "wallMs": 14.966099988669157,
+          "inliers": 189
+        },
+        {
+          "index": 266,
+          "sourceSeconds": 9.989,
+          "method": "map_anchored_flow",
+          "pose": "localized",
+          "plan": "following",
+          "cpuMs": 31.25,
+          "wallMs": 18.02669995231554,
+          "inliers": 183
+        },
+        {
+          "index": 269,
+          "sourceSeconds": 10.089,
+          "method": "map_anchored_flow",
+          "pose": "localized",
+          "plan": "following",
+          "cpuMs": 15.625,
+          "wallMs": 16.91539998864755,
+          "inliers": 176
+        },
+        {
+          "index": 272,
+          "sourceSeconds": 10.191,
+          "method": "descriptor_pnp",
+          "pose": "localized",
+          "plan": "following",
+          "cpuMs": 187.5,
+          "wallMs": 213.53439998347312,
+          "inliers": 196
+        },
+        {
+          "index": 275,
+          "sourceSeconds": 10.288,
+          "method": "map_anchored_flow",
+          "pose": "localized",
+          "plan": "following",
+          "cpuMs": 15.625,
+          "wallMs": 15.193200029898435,
+          "inliers": 188
+        },
+        {
+          "index": 278,
+          "sourceSeconds": 10.388,
+          "method": "map_anchored_flow",
+          "pose": "localized",
+          "plan": "following",
+          "cpuMs": 15.625,
+          "wallMs": 14.323800045531243,
+          "inliers": 185
+        },
+        {
+          "index": 281,
+          "sourceSeconds": 10.522,
+          "method": "map_anchored_flow",
+          "pose": "localized",
+          "plan": "following",
+          "cpuMs": 15.625,
+          "wallMs": 16.41500002006069,
+          "inliers": 156
+        },
+        {
+          "index": 284,
+          "sourceSeconds": 10.656,
+          "method": "map_anchored_flow",
+          "pose": "localized",
+          "plan": "following",
+          "cpuMs": 15.625,
+          "wallMs": 15.80290001584217,
+          "inliers": 143
+        },
+        {
+          "index": 287,
+          "sourceSeconds": 10.772,
+          "method": "map_anchored_flow",
+          "pose": "localized",
+          "plan": "following",
+          "cpuMs": 15.625,
+          "wallMs": 14.744100044481456,
+          "inliers": 128
+        },
+        {
+          "index": 290,
+          "sourceSeconds": 10.889,
+          "method": "map_anchored_flow",
+          "pose": "localized",
+          "plan": "following",
+          "cpuMs": 15.625,
+          "wallMs": 14.447800000198185,
+          "inliers": 113
+        },
+        {
+          "index": 293,
+          "sourceSeconds": 10.989,
+          "method": "map_anchored_flow",
+          "pose": "localized",
+          "plan": "following",
+          "cpuMs": 15.625,
+          "wallMs": 14.215199975296855,
+          "inliers": 107
+        },
+        {
+          "index": 297,
+          "sourceSeconds": 11.105,
+          "method": "descriptor_pnp",
+          "pose": "localized",
+          "plan": "following",
+          "cpuMs": 203.125,
+          "wallMs": 213.21389998774976,
+          "inliers": 128
+        },
+        {
+          "index": 300,
+          "sourceSeconds": 11.205,
+          "method": "map_anchored_flow",
+          "pose": "localized",
+          "plan": "following",
+          "cpuMs": 15.625,
+          "wallMs": 13.628799992147833,
+          "inliers": 123
+        },
+        {
+          "index": 304,
+          "sourceSeconds": 11.319,
+          "method": "map_anchored_flow",
+          "pose": "localized",
+          "plan": "following",
+          "cpuMs": 0.0,
+          "wallMs": 14.299099973868579,
+          "inliers": 120
+        },
+        {
+          "index": 307,
+          "sourceSeconds": 11.42,
+          "method": "map_anchored_flow",
+          "pose": "localized",
+          "plan": "following",
+          "cpuMs": 15.625,
+          "wallMs": 13.803799985907972,
+          "inliers": 110
+        },
+        {
+          "index": 311,
+          "sourceSeconds": 11.536,
+          "method": "map_anchored_flow",
+          "pose": "localized",
+          "plan": "following",
+          "cpuMs": 15.625,
+          "wallMs": 15.485300042200834,
+          "inliers": 101
+        }
+      ],
+      "cpuCoreSeconds": 3.03125,
+      "sourceCadenceSeconds": 7.650539682539682,
+      "estimatedCoresPerContinuouslyActiveWindow": 0.39621387846899486,
+      "arithmetic100WindowsCores": 39.62138784689949,
+      "privateBytesBeforeTracker": 571006976,
+      "privateBytesAfterQueries": 614690816
+    },
+    {
+      "nativeThreads": 4,
+      "rows": [
+        {
+          "index": 105,
+          "sourceSeconds": 4.005,
+          "method": "descriptor_pnp",
+          "pose": "confirming",
+          "plan": "waiting",
+          "cpuMs": 281.25,
+          "wallMs": 148.69940001517534,
+          "inliers": 63
+        },
+        {
+          "index": 108,
+          "sourceSeconds": 4.12,
+          "method": "descriptor_pnp",
+          "pose": "confirming",
+          "plan": "waiting",
+          "cpuMs": 203.125,
+          "wallMs": 134.62770002661273,
+          "inliers": 56
+        },
+        {
+          "index": 112,
+          "sourceSeconds": 4.256,
+          "method": "descriptor_pnp",
+          "pose": "localized",
+          "plan": "waiting",
+          "cpuMs": 234.375,
+          "wallMs": 140.24490001611412,
+          "inliers": 51
+        },
+        {
+          "index": 115,
+          "sourceSeconds": 4.354,
+          "method": "map_anchored_flow",
+          "pose": "localized",
+          "plan": "waiting",
+          "cpuMs": 0.0,
+          "wallMs": 10.076100006699562,
+          "inliers": 49
+        },
+        {
+          "index": 118,
+          "sourceSeconds": 4.455,
+          "method": "map_anchored_flow",
+          "pose": "localized",
+          "plan": "following",
+          "cpuMs": 15.625,
+          "wallMs": 10.864800016861409,
+          "inliers": 48
+        },
+        {
+          "index": 121,
+          "sourceSeconds": 4.554,
+          "method": "map_anchored_flow",
+          "pose": "localized",
+          "plan": "following",
+          "cpuMs": 15.625,
+          "wallMs": 11.788300005719066,
+          "inliers": 45
+        },
+        {
+          "index": 124,
+          "sourceSeconds": 4.653,
+          "method": "map_anchored_flow",
+          "pose": "localized",
+          "plan": "following",
+          "cpuMs": 15.625,
+          "wallMs": 11.481900000944734,
+          "inliers": 44
+        },
+        {
+          "index": 127,
+          "sourceSeconds": 4.754,
+          "method": "map_anchored_flow",
+          "pose": "localized",
+          "plan": "following",
+          "cpuMs": 0.0,
+          "wallMs": 12.30459997896105,
+          "inliers": 40
+        },
+        {
+          "index": 130,
+          "sourceSeconds": 4.853,
+          "method": "map_anchored_flow",
+          "pose": "localized",
+          "plan": "following",
+          "cpuMs": 15.625,
+          "wallMs": 9.479900007136166,
+          "inliers": 36
+        },
+        {
+          "index": 133,
+          "sourceSeconds": 4.971,
+          "method": "map_anchored_flow",
+          "pose": "localized",
+          "plan": "following",
+          "cpuMs": 15.625,
+          "wallMs": 11.724299984052777,
+          "inliers": 36
+        },
+        {
+          "index": 136,
+          "sourceSeconds": 5.07,
+          "method": "descriptor_pnp",
+          "pose": "localized",
+          "plan": "following",
+          "cpuMs": 250.0,
+          "wallMs": 172.39239998161793,
+          "inliers": 47
+        },
+        {
+          "index": 140,
+          "sourceSeconds": 5.237,
+          "method": "map_anchored_flow",
+          "pose": "localized",
+          "plan": "following",
+          "cpuMs": 0.0,
+          "wallMs": 11.772999947424978,
+          "inliers": 47
+        },
+        {
+          "index": 143,
+          "sourceSeconds": 5.371,
+          "method": "map_anchored_flow",
+          "pose": "localized",
+          "plan": "following",
+          "cpuMs": 15.625,
+          "wallMs": 10.40819997433573,
+          "inliers": 42
+        },
+        {
+          "index": 146,
+          "sourceSeconds": 5.488,
+          "method": "map_anchored_flow",
+          "pose": "localized",
+          "plan": "following",
+          "cpuMs": 46.875,
+          "wallMs": 9.69709997298196,
+          "inliers": 39
+        },
+        {
+          "index": 149,
+          "sourceSeconds": 5.588,
+          "method": "map_anchored_flow",
+          "pose": "localized",
+          "plan": "following",
+          "cpuMs": 0.0,
+          "wallMs": 10.340299981180578,
+          "inliers": 39
+        },
+        {
+          "index": 154,
+          "sourceSeconds": 5.755,
+          "method": "map_anchored_flow",
+          "pose": "localized",
+          "plan": "following",
+          "cpuMs": 0.0,
+          "wallMs": 11.808799987193197,
+          "inliers": 38
+        },
+        {
+          "index": 158,
+          "sourceSeconds": 5.889,
+          "method": "descriptor_pnp",
+          "pose": "localized",
+          "plan": "following",
+          "cpuMs": 265.625,
+          "wallMs": 164.6255999803543,
+          "inliers": 62
+        },
+        {
+          "index": 162,
+          "sourceSeconds": 6.038,
+          "method": "map_anchored_flow",
+          "pose": "localized",
+          "plan": "following",
+          "cpuMs": 0.0,
+          "wallMs": 10.359800013247877,
+          "inliers": 55
+        },
+        {
+          "index": 167,
+          "sourceSeconds": 6.223,
+          "method": "map_anchored_flow",
+          "pose": "localized",
+          "plan": "following",
+          "cpuMs": 15.625,
+          "wallMs": 9.900400007609278,
+          "inliers": 47
+        },
+        {
+          "index": 169,
+          "sourceSeconds": 6.325,
+          "method": "map_anchored_flow",
+          "pose": "localized",
+          "plan": "following",
+          "cpuMs": 15.625,
+          "wallMs": 9.742800029926002,
+          "inliers": 47
+        },
+        {
+          "index": 171,
+          "sourceSeconds": 6.423,
+          "method": "map_anchored_flow",
+          "pose": "localized",
+          "plan": "following",
+          "cpuMs": 0.0,
+          "wallMs": 9.591200039722025,
+          "inliers": 46
+        },
+        {
+          "index": 174,
+          "sourceSeconds": 6.539,
+          "method": "map_anchored_flow",
+          "pose": "localized",
+          "plan": "following",
+          "cpuMs": 15.625,
+          "wallMs": 10.298300010617822,
+          "inliers": 42
+        },
+        {
+          "index": 178,
+          "sourceSeconds": 6.706,
+          "method": "descriptor_pnp",
+          "pose": "localized",
+          "plan": "following",
+          "cpuMs": 250.0,
+          "wallMs": 144.16419999906793,
+          "inliers": 128
+        },
+        {
+          "index": 182,
+          "sourceSeconds": 6.856,
+          "method": "map_anchored_flow",
+          "pose": "localized",
+          "plan": "following",
+          "cpuMs": 46.875,
+          "wallMs": 10.91790001373738,
+          "inliers": 82
+        },
+        {
+          "index": 186,
+          "sourceSeconds": 7.008,
+          "method": "map_anchored_flow",
+          "pose": "localized",
+          "plan": "following",
+          "cpuMs": 15.625,
+          "wallMs": 10.718600009568036,
+          "inliers": 74
+        },
+        {
+          "index": 189,
+          "sourceSeconds": 7.141,
+          "method": "map_anchored_flow",
+          "pose": "localized",
+          "plan": "following",
+          "cpuMs": 0.0,
+          "wallMs": 9.995299973525107,
+          "inliers": 63
+        },
+        {
+          "index": 193,
+          "sourceSeconds": 7.307,
+          "method": "map_anchored_flow",
+          "pose": "localized",
+          "plan": "following",
+          "cpuMs": 62.5,
+          "wallMs": 8.968999958597124,
+          "inliers": 55
+        },
+        {
+          "index": 196,
+          "sourceSeconds": 7.423,
+          "method": "map_anchored_flow",
+          "pose": "localized",
+          "plan": "following",
+          "cpuMs": 0.0,
+          "wallMs": 9.886399959214032,
+          "inliers": 55
+        },
+        {
+          "index": 200,
+          "sourceSeconds": 7.539,
+          "method": "descriptor_pnp",
+          "pose": "localized",
+          "plan": "following",
+          "cpuMs": 171.875,
+          "wallMs": 109.69469998963177,
+          "inliers": 173
+        },
+        {
+          "index": 203,
+          "sourceSeconds": 7.639,
+          "method": "map_anchored_flow",
+          "pose": "localized",
+          "plan": "following",
+          "cpuMs": 15.625,
+          "wallMs": 9.448700002394617,
+          "inliers": 165
+        },
+        {
+          "index": 207,
+          "sourceSeconds": 7.772,
+          "method": "map_anchored_flow",
+          "pose": "localized",
+          "plan": "following",
+          "cpuMs": 15.625,
+          "wallMs": 10.318899992853403,
+          "inliers": 160
+        },
+        {
+          "index": 210,
+          "sourceSeconds": 7.907,
+          "method": "map_anchored_flow",
+          "pose": "localized",
+          "plan": "following",
+          "cpuMs": 0.0,
+          "wallMs": 10.155999974813312,
+          "inliers": 156
+        },
+        {
+          "index": 212,
+          "sourceSeconds": 8.023,
+          "method": "map_anchored_flow",
+          "pose": "localized",
+          "plan": "following",
+          "cpuMs": 62.5,
+          "wallMs": 10.25270001264289,
+          "inliers": 155
+        },
+        {
+          "index": 215,
+          "sourceSeconds": 8.14,
+          "method": "map_anchored_flow",
+          "pose": "localized",
+          "plan": "following",
+          "cpuMs": 15.625,
+          "wallMs": 10.84830000763759,
+          "inliers": 147
+        },
+        {
+          "index": 218,
+          "sourceSeconds": 8.272,
+          "method": "map_anchored_flow",
+          "pose": "localized",
+          "plan": "following",
+          "cpuMs": 0.0,
+          "wallMs": 10.970700008329004,
+          "inliers": 129
+        },
+        {
+          "index": 222,
+          "sourceSeconds": 8.423,
+          "method": "descriptor_pnp",
+          "pose": "localized",
+          "plan": "following",
+          "cpuMs": 125.0,
+          "wallMs": 107.64740000013262,
+          "inliers": 158
+        },
+        {
+          "index": 226,
+          "sourceSeconds": 8.59,
+          "method": "map_anchored_flow",
+          "pose": "localized",
+          "plan": "following",
+          "cpuMs": 62.5,
+          "wallMs": 10.032900026999414,
+          "inliers": 100
+        },
+        {
+          "index": 229,
+          "sourceSeconds": 8.689,
+          "method": "map_anchored_flow",
+          "pose": "localized",
+          "plan": "following",
+          "cpuMs": 15.625,
+          "wallMs": 9.645499987527728,
+          "inliers": 99
+        },
+        {
+          "index": 232,
+          "sourceSeconds": 8.789,
+          "method": "map_anchored_flow",
+          "pose": "localized",
+          "plan": "following",
+          "cpuMs": 0.0,
+          "wallMs": 9.792400000151247,
+          "inliers": 99
+        },
+        {
+          "index": 235,
+          "sourceSeconds": 8.889,
+          "method": "map_anchored_flow",
+          "pose": "localized",
+          "plan": "following",
+          "cpuMs": 62.5,
+          "wallMs": 9.185599978081882,
+          "inliers": 99
+        },
+        {
+          "index": 238,
+          "sourceSeconds": 9.006,
+          "method": "map_anchored_flow",
+          "pose": "localized",
+          "plan": "following",
+          "cpuMs": 0.0,
+          "wallMs": 10.04970003850758,
+          "inliers": 98
+        },
+        {
+          "index": 242,
+          "sourceSeconds": 9.123,
+          "method": "map_anchored_flow",
+          "pose": "localized",
+          "plan": "following",
+          "cpuMs": 15.625,
+          "wallMs": 9.437400032766163,
+          "inliers": 97
+        },
+        {
+          "index": 245,
+          "sourceSeconds": 9.223,
+          "method": "map_anchored_flow",
+          "pose": "localized",
+          "plan": "following",
+          "cpuMs": 15.625,
+          "wallMs": 9.998199995607138,
+          "inliers": 96
+        },
+        {
+          "index": 248,
+          "sourceSeconds": 9.356,
+          "method": "descriptor_pnp",
+          "pose": "localized",
+          "plan": "following",
+          "cpuMs": 250.0,
+          "wallMs": 124.63479995494708,
+          "inliers": 203
+        },
+        {
+          "index": 251,
+          "sourceSeconds": 9.456,
+          "method": "map_anchored_flow",
+          "pose": "localized",
+          "plan": "following",
+          "cpuMs": 0.0,
+          "wallMs": 11.48390001617372,
+          "inliers": 203
+        },
+        {
+          "index": 254,
+          "sourceSeconds": 9.556,
+          "method": "map_anchored_flow",
+          "pose": "localized",
+          "plan": "following",
+          "cpuMs": 15.625,
+          "wallMs": 13.321999984327704,
+          "inliers": 197
+        },
+        {
+          "index": 257,
+          "sourceSeconds": 9.656,
+          "method": "map_anchored_flow",
+          "pose": "localized",
+          "plan": "following",
+          "cpuMs": 62.5,
+          "wallMs": 12.384400004521012,
+          "inliers": 196
+        },
+        {
+          "index": 260,
+          "sourceSeconds": 9.756,
+          "method": "map_anchored_flow",
+          "pose": "localized",
+          "plan": "following",
+          "cpuMs": 15.625,
+          "wallMs": 11.22919999761507,
+          "inliers": 194
+        },
+        {
+          "index": 263,
+          "sourceSeconds": 9.857,
+          "method": "map_anchored_flow",
+          "pose": "localized",
+          "plan": "following",
+          "cpuMs": 0.0,
+          "wallMs": 11.353800015058368,
+          "inliers": 189
+        },
+        {
+          "index": 266,
+          "sourceSeconds": 9.989,
+          "method": "map_anchored_flow",
+          "pose": "localized",
+          "plan": "following",
+          "cpuMs": 15.625,
+          "wallMs": 10.40980004472658,
+          "inliers": 183
+        },
+        {
+          "index": 269,
+          "sourceSeconds": 10.089,
+          "method": "map_anchored_flow",
+          "pose": "localized",
+          "plan": "following",
+          "cpuMs": 62.5,
+          "wallMs": 11.275800003204495,
+          "inliers": 176
+        },
+        {
+          "index": 272,
+          "sourceSeconds": 10.191,
+          "method": "descriptor_pnp",
+          "pose": "localized",
+          "plan": "following",
+          "cpuMs": 312.5,
+          "wallMs": 152.11000002454966,
+          "inliers": 196
+        },
+        {
+          "index": 275,
+          "sourceSeconds": 10.288,
+          "method": "map_anchored_flow",
+          "pose": "localized",
+          "plan": "following",
+          "cpuMs": 15.625,
+          "wallMs": 16.165300039574504,
+          "inliers": 188
+        },
+        {
+          "index": 278,
+          "sourceSeconds": 10.388,
+          "method": "map_anchored_flow",
+          "pose": "localized",
+          "plan": "following",
+          "cpuMs": 62.5,
+          "wallMs": 31.69470001012087,
+          "inliers": 185
+        },
+        {
+          "index": 281,
+          "sourceSeconds": 10.522,
+          "method": "map_anchored_flow",
+          "pose": "localized",
+          "plan": "following",
+          "cpuMs": 15.625,
+          "wallMs": 18.08740000706166,
+          "inliers": 156
+        },
+        {
+          "index": 284,
+          "sourceSeconds": 10.656,
+          "method": "map_anchored_flow",
+          "pose": "localized",
+          "plan": "following",
+          "cpuMs": 15.625,
+          "wallMs": 18.919699999969453,
+          "inliers": 143
+        },
+        {
+          "index": 287,
+          "sourceSeconds": 10.772,
+          "method": "map_anchored_flow",
+          "pose": "localized",
+          "plan": "following",
+          "cpuMs": 46.875,
+          "wallMs": 16.78649999666959,
+          "inliers": 128
+        },
+        {
+          "index": 290,
+          "sourceSeconds": 10.889,
+          "method": "map_anchored_flow",
+          "pose": "localized",
+          "plan": "following",
+          "cpuMs": 31.25,
+          "wallMs": 19.154600042384118,
+          "inliers": 113
+        },
+        {
+          "index": 293,
+          "sourceSeconds": 10.989,
+          "method": "map_anchored_flow",
+          "pose": "localized",
+          "plan": "following",
+          "cpuMs": 15.625,
+          "wallMs": 15.178099973127246,
+          "inliers": 107
+        },
+        {
+          "index": 297,
+          "sourceSeconds": 11.105,
+          "method": "descriptor_pnp",
+          "pose": "localized",
+          "plan": "following",
+          "cpuMs": 328.125,
+          "wallMs": 155.27180000208318,
+          "inliers": 128
+        },
+        {
+          "index": 300,
+          "sourceSeconds": 11.205,
+          "method": "map_anchored_flow",
+          "pose": "localized",
+          "plan": "following",
+          "cpuMs": 62.5,
+          "wallMs": 14.226600003894418,
+          "inliers": 123
+        },
+        {
+          "index": 304,
+          "sourceSeconds": 11.319,
+          "method": "map_anchored_flow",
+          "pose": "localized",
+          "plan": "following",
+          "cpuMs": 62.5,
+          "wallMs": 10.804800025653094,
+          "inliers": 120
+        },
+        {
+          "index": 307,
+          "sourceSeconds": 11.42,
+          "method": "map_anchored_flow",
+          "pose": "localized",
+          "plan": "following",
+          "cpuMs": 15.625,
+          "wallMs": 11.49130001431331,
+          "inliers": 110
+        },
+        {
+          "index": 311,
+          "sourceSeconds": 11.536,
+          "method": "map_anchored_flow",
+          "pose": "localized",
+          "plan": "following",
+          "cpuMs": 0.0,
+          "wallMs": 10.055899969302118,
+          "inliers": 101
+        }
+      ],
+      "cpuCoreSeconds": 3.78125,
+      "sourceCadenceSeconds": 7.650539682539682,
+      "estimatedCoresPerContinuouslyActiveWindow": 0.494246178296375,
+      "arithmetic100WindowsCores": 49.424617829637505,
+      "privateBytesBeforeTracker": 608329728,
+      "privateBytesAfterQueries": 617709568
+    }
+  ]
+}

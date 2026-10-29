@@ -4,8 +4,19 @@ import {calibrated,fromPercent,profileIssue,type TeachingProfile} from './teachi
 export type WalkPlan={schema:'sphere-walk-plan-v1';phase:'waiting'|'following'|'stopped'|'arrived';reason:string;
   stick:[number,number];progressFraction:number|null;maxStick:.35;maxSeconds:60;
   groundRoute:false;executionQualified:false;cameraBodyAssumption:true};
-export type WalkInputLease={active():boolean;failure?():string|null;set(vector:[number,number]):void;close():Promise<boolean>};
-export type WalkInputControl={issue:string|null;open(signal:AbortSignal,journal:(event:TeachingInput)=>void):Promise<WalkInputLease>};
+export type WalkInputLease={active():boolean;failure?():string|null;set(vector:[number,number]):void;canLook?():boolean;look?(fraction:number,notAfter:number):Promise<boolean>;close():Promise<boolean>};
+export type WalkInputControl={issue:string|null;cameraIssue?:string|null;open(signal:AbortSignal,journal:(event:TeachingInput)=>void):Promise<WalkInputLease>};
+export function walkingCameraIssue(profile:TeachingProfile,geometry:{width:number;height:number}|null):string|null {
+  if(!geometry||!profile.look||!calibrated(profile,geometry,'look'))return 'Укажите свободную область поворота камеры на текущем экране.';
+  const p=fromPercent(profile.look,geometry),margin=Math.min(geometry.width,geometry.height)*.05;
+  if(p.x<margin||p.x>=geometry.width-margin||p.y<margin||p.y>=geometry.height-margin)return 'Зона камеры слишком близко к краю экрана.';
+  const stick=fromPercent({x:profile.stick_x,y:profile.stick_y},geometry);
+  if(Math.hypot(p.x-stick.x,p.y-stick.y)<Math.min(geometry.width,geometry.height)*profile.radius/100+margin)return 'Область камеры пересекает стик. Выберите свободную область.';
+  return null;
+}
+export function walkTargetCamera(value:unknown):[number,number,number]|null {
+  return Array.isArray(value)&&value.length===3&&value.every(n=>Number.isFinite(n)&&Math.abs(n)<=1e9)?value as [number,number,number]:null;
+}
 export function readWalkPlan(value:unknown):WalkPlan|null {
   const p=value as WalkPlan;
   if(!p||p.schema!=='sphere-walk-plan-v1'||!['waiting','following','stopped','arrived'].includes(p.phase)
@@ -56,5 +67,23 @@ export const walkReasonLabel=(reason:string):string=>({
   contact_ack_timeout:'Android не подтвердил команду за 500 мс — ввод закрыт',
   contact_channel_closed:'Прямой канал ввода закрылся',
   contact_ready_timeout:'Android не подтвердил готовность стика за 6 секунд',
+  camera_stroke_expired:'Поворот камеры не успел завершиться на свежем решении — ввод освобождён',
+  walk_camera_aligned:'Взгляд вдоль пути · двигаемся',
+  walk_camera_alignment_required:'Стик отпущен: направляем камеру вдоль пути',
+  walk_camera_calibrating:'Стик отпущен: проверяем отклик горизонтального поворота камеры',
+  walk_camera_turning:'Стик отпущен: плавно направляем камеру вдоль пути',
+  walk_camera_waiting_feedback:'Стик отпущен: ждём новый кадр после поворота камеры',
+  walk_camera_waiting_neutral:'Ждём освобождения контактов перед поворотом камеры',
+  walk_camera_pose_unavailable:'Для поворота камеры нет свежей подтверждённой позы',
+  walk_camera_pitch_mismatch:'Взгляд сильно отклонён по вертикали: восстановите ракурс записи',
+  walk_camera_input_unconfirmed:'Android не подтвердил поворот камеры',
+  walk_camera_feedback_timeout:'После поворота нет подтверждённого отклика камеры',
+  walk_camera_response_not_observed:'Игра не показала отклик камеры: проверьте выбранную область',
+  walk_camera_response_wrong_direction:'Камера повернулась в неожиданную сторону — тест остановлен',
+  walk_camera_response_too_large:'Камера повернулась слишком резко — тест остановлен',
+  walk_camera_gain_unqualified:'Отклик камеры не прошёл проверку чувствительности',
+  walk_camera_not_converging:'Повороты не направляют взгляд к пути — тест остановлен',
+  walk_camera_alignment_timeout:'Не удалось направить камеру вдоль пути за 8 секунд',
+  walk_camera_pulse_limit:'Лимит небольших поворотов камеры достигнут',
   walk_manual_stop:'Остановлено оператором',
 } as Record<string,string>)[reason]??`Пеший тест остановлен: ${reason}`;

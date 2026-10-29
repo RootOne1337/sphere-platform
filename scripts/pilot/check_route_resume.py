@@ -17,7 +17,7 @@ from scripts.pilot.reconstruction_service import ROOT, BoundedServer, Jobs, hand
 from scripts.pilot.resource_guard import collect, evaluate
 
 
-def run(source_job, output, *, source_seconds=10.):
+def run(source_job, output, *, source_seconds=10., camera_tracking=False):
     import cv2 as cv
     from motor_worker.browser_teach import decoded_browser, validate_browser
     from motor_worker.route_localization import SparseRoute
@@ -80,9 +80,12 @@ def run(source_job, output, *, source_seconds=10.):
         for mode in ('beginning', 'recognized_route'):
             sid, epoch = secrets.token_hex(16), secrets.token_hex(16)
             opened = request('walk-start', dict(id=sid, captureEpoch=epoch, width=capture.geometry[0],
-                height=capture.geometry[1], sceneConfirmed=True, footCameraAssumptionConfirmed=True, startMode=mode))
+                height=capture.geometry[1], sceneConfirmed=True, footCameraAssumptionConfirmed=True,
+                startMode=mode,cameraTracking=camera_tracking))
             if opened['startMode'] != mode:
                 raise RuntimeError('start_mode_not_acknowledged')
+            if opened.get('cameraTracking') is not camera_tracking:
+                raise RuntimeError('camera_mode_not_acknowledged')
             rows = []
             try:
                 for i, frame in enumerate(frames):
@@ -96,6 +99,7 @@ def run(source_job, output, *, source_seconds=10.):
                         pose=pose['state'], inliers=pose['inliers'], segment=pose['segment'],
                         phase=plan['phase'], reason=plan['reason'], progress=plan['progressFraction'],
                         planStick=plan['stick'], effectiveStick=plan['stick'] if age <= 250 else [0, 0],
+                        targetCamera=plan.get('targetCamera'),
                         replyAgeMs=age, computeMs=value['computeMs']))
                     time.sleep(max(0, .18-(time.perf_counter()-began)))
             finally:
@@ -105,7 +109,7 @@ def run(source_job, output, *, source_seconds=10.):
         server.shutdown();server.server_close();thread.join(3)
     unchanged = all(hashlib.sha256(Path(p).read_bytes()).hexdigest() == sha for p, sha in original.items())
     result = dict(schema='sphere-offline-route-resume-v1', physicalActions=0, originalFilesUnchanged=unchanged,
-        heldOutSourceFrames=True, independentGameplay=False, feedbackLoop=False, cases=cases)
+        heldOutSourceFrames=True, independentGameplay=False, feedbackLoop=False,cameraTracking=camera_tracking,cases=cases)
     (output/'result.json').write_text(json.dumps(result, indent=2))
     return result
 
@@ -115,8 +119,9 @@ if __name__ == '__main__':
     parser.add_argument('--job', type=Path, required=True)
     parser.add_argument('--output', type=Path, required=True)
     parser.add_argument('--source-seconds', type=float, default=10.)
+    parser.add_argument('--camera-tracking',action='store_true')
     args = parser.parse_args()
-    report = run(args.job, args.output, source_seconds=args.source_seconds)
+    report = run(args.job, args.output, source_seconds=args.source_seconds,camera_tracking=args.camera_tracking)
     print(json.dumps({k:v for k,v in report.items() if k != 'cases'}))
     for case in report['cases']:
         print(json.dumps(dict(startMode=case['startMode'], phases=[s['phase'] for s in case['samples']],

@@ -21,7 +21,7 @@ beforeEach(()=>{
     const blob=new Blob(['jpeg'],{type:'image/jpeg'});Object.defineProperty(blob,'arrayBuffer',{value:async()=>new ArrayBuffer(4)});callback(blob);
   });
   jest.mocked(reconstructionRequest).mockImplementation(async(path,_job,init)=>{
-    if(path.endsWith('/walk-start'))return {json:async()=>({phase:'observing',id:'c'.repeat(32),physicalActions:0,mode:'foot_camera_trace_v1',maxSeconds:60,startMode:JSON.parse(String(init?.body)).startMode})} as Response;
+    if(path.endsWith('/walk-start'))return {json:async()=>({phase:'observing',id:'c'.repeat(32),physicalActions:0,mode:'foot_camera_trace_v1',maxSeconds:60,startMode:JSON.parse(String(init?.body)).startMode,cameraTracking:JSON.parse(String(init?.body)).cameraTracking})} as Response;
     if(path.endsWith('/observe'))return {json:async()=>({id:'c'.repeat(32),captureEpoch:binding.captureEpoch,sequence:JSON.parse(String(init?.body)).sequence,
       jpegSha256:'aa'.repeat(32),computeMs:1,method:'descriptor_pnp',physicalActions:0,executionQualified:false,groundRoute:false,
       pose:{state:'localized',reason:'relative_camera_pose_not_clearance_or_arrival',inliers:40,segment:0,progress_units:0,polyline_px:[]},
@@ -33,6 +33,36 @@ afterEach(()=>jest.restoreAllMocks());
 const view=(extra:Record<string,unknown>={})=>render(<WalkingRoutePilot job={job} clip="clip" video={videoRef} ready binding={binding} assetsReady input={{issue:null,open}} observerBusy={false} onBusyChange={busy} {...extra}/>);
 function fresh(){act(()=>frames.shift()!(performance.now(),{} as VideoFrameCallbackMetadata));}
 function start(){fresh();fireEvent.click(screen.getByRole('checkbox',{name:/Персонаж пешком/}));fireEvent.click(screen.getByRole('button',{name:'Запустить пеший тест · 60 с'}));}
+
+test('camera mode blocks start until its separate free-screen area is calibrated',()=>{
+  view({input:{issue:null,cameraIssue:'Укажите область камеры',open}});start();
+  expect(screen.getByRole('button',{name:'Запустить пеший тест · 60 с'})).toBeDisabled();
+  expect(open).not.toHaveBeenCalled();
+});
+test('camera pulse is a separate acknowledged operation while the movement stick is neutral',async()=>{
+  jest.spyOn(performance,'now').mockReturnValue(1000);
+  const original=jest.mocked(reconstructionRequest).getMockImplementation()!;
+  jest.mocked(reconstructionRequest).mockImplementation(async(...args)=>{
+    const response=await original(...args);if(!args[0].endsWith('/observe'))return response;
+    const value=await response.json();value.pose.rotation=[1,0,0,0,1,0,0,0,1];value.walk.targetCamera=[1,0,1];
+    return {json:async()=>value} as Response;
+  });
+  lease.canLook=()=>true;lease.look=jest.fn(async()=>true);
+  view({input:{issue:null,cameraIssue:null,open}});start();
+  await waitFor(()=>expect(lease.look).toHaveBeenCalledWith(.004,1250));
+  expect(jest.mocked(lease.set).mock.calls.every(([v])=>Math.hypot(...v)===0)).toBe(true);
+  expect(screen.getByRole('status')).toHaveTextContent(/проверяем отклик/);
+  fireEvent.keyDown(window,{code:'Escape'});await screen.findByText('Освобождение: CLOSED');
+});
+test('an old service cannot silently open camera-enabled input without acknowledging that mode',async()=>{
+  const original=jest.mocked(reconstructionRequest).getMockImplementation()!;
+  jest.mocked(reconstructionRequest).mockImplementation(async(...args)=>{
+    const response=await original(...args);if(!args[0].endsWith('/walk-start'))return response;
+    const value=await response.json();delete value.cameraTracking;return {json:async()=>value} as Response;
+  });
+  view({input:{issue:null,cameraIssue:null,open}});start();
+  await screen.findByText('Освобождение: CLOSED');expect(open).not.toHaveBeenCalled();
+});
 
 test('mount, confirmation and map readiness never themselves open native input',()=>{
   view({assetsReady:false});fresh();fireEvent.click(screen.getByRole('checkbox',{name:/Персонаж пешком/}));
@@ -132,6 +162,7 @@ test('four delivery expirations never replay old vectors or exhaust geometric re
 });
 
 test('a localized start refusal is not presented as an Android ACK failure',async()=>{
+  jest.spyOn(performance,'now').mockReturnValue(1000);
   const original=jest.mocked(reconstructionRequest).getMockImplementation()!;
   jest.mocked(reconstructionRequest).mockImplementation(async(...args)=>{
     const response=await original(...args);if(!args[0].endsWith('/observe'))return response;

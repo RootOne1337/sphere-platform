@@ -15,6 +15,31 @@ function fixture(observedRtt?: (milliseconds:number)=>void,idleFresh?:()=>boolea
   return {driver,sent,journal,states,ready,receipt,ack,stale:()=>{fresh=false;},resume:()=>{fresh=true;}};
 }
 beforeEach(()=>jest.useFakeTimers());afterEach(()=>{jest.clearAllTimers();jest.useRealTimers();});
+test('automatic horizontal stroke waits for each native receipt and preserves Y exactly',async()=>{
+  const f=fixture();f.ready();const stroke=f.driver.horizontalStroke({x:700,y:200},710,performance.now()+200);
+  expect(f.sent.at(-1)).toMatchObject({pointer_id:1,action:0,x:700,y:200});
+  f.ack();expect(f.sent.at(-1)).toMatchObject({pointer_id:1,action:2,x:710,y:200});
+  f.ack();expect(f.sent.at(-1)).toMatchObject({pointer_id:1,action:1,x:710,y:200});
+  f.ack();await expect(stroke).resolves.toBe(true);expect(f.driver.isNeutral).toBe(true);
+});
+test('an expired camera permit cannot emit MOVE even when DOWN was applied',async()=>{
+  const f=fixture();f.ready();const stroke=f.driver.horizontalStroke({x:700,y:200},710,performance.now()+100);
+  jest.advanceTimersByTime(110);f.ack();await expect(stroke).resolves.toBe(false);
+  expect(f.driver.failureReason).toBe('camera_stroke_expired');
+  expect(f.sent.filter(e=>e.type==='touch_contact_event'&&e.action===2)).toHaveLength(0);
+});
+test('stop cancels an unfinished stroke and a late ACK never continues it',async()=>{
+  const f=fixture();f.ready();const stroke=f.driver.horizontalStroke({x:700,y:200},710,performance.now()+200);
+  void f.driver.close();await expect(stroke).resolves.toBe(false);f.ack();
+  expect(f.sent.filter(e=>e.type==='touch_contact_event')).toHaveLength(1);
+});
+test('automatic camera refuses a held stick or an overlong swipe',async()=>{
+  const f=fixture();f.ready();f.driver.set(0,{x:100,y:350});f.ack();
+  await expect(f.driver.horizontalStroke({x:700,y:200},710,performance.now()+200)).resolves.toBe(false);
+  f.driver.set(0,null);f.ack();
+  await expect(f.driver.horizontalStroke({x:700,y:200},800,performance.now()+200)).resolves.toBe(false);
+  expect(f.sent.filter(e=>e.pointer_id===1)).toHaveLength(0);
+});
 test('W remains held while camera and action acquire independent contacts; one physical gesture',()=>{
   const f=fixture();f.ready();f.driver.set(0,{x:100,y:350});f.ack();
   f.driver.set(1,{x:700,y:200});f.ack();f.driver.set(2,{x:850,y:450});f.ack();

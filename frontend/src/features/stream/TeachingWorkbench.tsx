@@ -17,7 +17,7 @@ import {TeachingNavigation} from './TeachingNavigation';
 import {TeachingLocalWorker} from './TeachingLocalWorker';
 import type {ReconstructionJob} from './reconstructionClient';
 import type {RouteSource} from './routeSource';
-import {walkingCalibrationIssue,walkingStickTarget,type WalkInputLease} from './walkPilot';
+import {walkingCalibrationIssue,walkingCameraIssue,walkingStickTarget,type WalkInputLease} from './walkPilot';
 
 type Phase = 'idle' | 'connecting' | 'preview' | 'opening' | 'controlling' | 'piloting' | 'arming' | 'recording' | 'stopping' | 'finished';
 const newId = () => crypto.randomUUID().replaceAll('-', '');
@@ -262,6 +262,12 @@ export function TeachingWorkbench({ deviceId, readOnly }: { deviceId: string; re
       active:()=>phaseRef.current==='piloting'&&controller.current===control&&connection.current===conn&&control.isReady
         &&(conn.fresh()||conn.idleInputFresh?.()===true)&&!signal.aborted,
       failure:()=>control.failureReason,
+      canLook:()=>control.isNeutral,
+      look:(fraction,notAfter)=>{
+        if(!lease.active()||walkingCameraIssue(p,b)||!p.look||!Number.isFinite(fraction)||Math.abs(fraction)>.04||!control.isNeutral)return Promise.resolve(false);
+        const origin=fromPercent(p.look,b),x=origin.x+Math.round(fraction*Math.min(b.width,b.height));
+        return control.horizontalStroke(origin,x,notAfter);
+      },
       set:vector=>{
         if(!lease.active())throw Error('walk_native_closed');
         if(Math.hypot(...vector)>0&&!conn.fresh())throw Error('contact_video_stale');
@@ -370,6 +376,7 @@ export function TeachingWorkbench({ deviceId, readOnly }: { deviceId: string; re
     ?vehicleButtons.filter(target=>calibrated(profile,binding,target)).map(target=>({...fromPercent(profile.vehicle[target],binding),label:keyLabel(mappedKeys[target])}))
     :calibrated(profile,binding,'stick')?[{...fromPercent({x:profile.stick_x,y:profile.stick_y},binding),label:['forward','left','reverse','right'].map(role=>keyLabel(mappedKeys[role as keyof typeof mappedKeys])).join('')}]:[]):[];
   if(binding&&calibrated(profile,binding,'action'))calibrationMarkers.push({...fromPercent({x:profile.action_x,y:profile.action_y},binding),label:keyLabel(mappedKeys.action)});
+  if(binding&&profile.look&&calibrated(profile,binding,'look'))calibrationMarkers.push({...fromPercent(profile.look,binding),label:'Камера ↔'});
   const chooseCalibration=(target:CalibrationTarget)=>{setBindingTarget(null);setCalibrate(target);video.current?.scrollIntoView({block:'center',behavior:'smooth'});};
   const chosenClip=clipChoices.find(item=>item.id===clip);
   useEffect(()=>{
@@ -437,11 +444,11 @@ export function TeachingWorkbench({ deviceId, readOnly }: { deviceId: string; re
         </svg>}
         {calibrate&&<p className="pointer-events-none absolute left-2 right-2 top-2 rounded-lg bg-background/95 px-3 py-2 text-sm text-primary">Укажите {calibrationNames[calibrate]}. Это только калибровка.</p>}
         </div>
-        {workspaceMode==='live'&&<div className="space-y-2 border-t p-3 text-xs"><p className="font-medium">Стик для пешего теста</p><div className="flex flex-wrap items-center gap-2"><Button size="sm" variant="outline" disabled={!ready||active(phase)} onClick={()=>{setProfile(p=>({...p,mode:'stick'}));chooseCalibration('stick');}}>Указать центр пешего стика</Button><label>Радиус, % короткой стороны <input aria-label="Радиус пешего стика" type="number" className="ml-2 w-16 rounded border bg-background p-1" value={profile.radius} min={1} max={20} step={.5} disabled={active(phase)} onChange={e=>{const n=Number(e.target.value);if(n>=1&&n<=20)setProfile(p=>({...p,radius:n}));}}/></label></div><p className="text-muted-foreground">Укажите центр на прямом экране выше. Калибровочное касание не отправляется в игру; камера и прыжок в этом тесте не управляются.</p></div>}
+        {workspaceMode==='live'&&<div className="space-y-2 border-t p-3 text-xs"><p className="font-medium">Стик для пешего теста</p><div className="flex flex-wrap items-center gap-2"><Button size="sm" variant="outline" disabled={!ready||active(phase)} onClick={()=>{setProfile(p=>({...p,mode:'stick'}));chooseCalibration('stick');}}>Указать центр пешего стика</Button><Button size="sm" variant="outline" disabled={!ready||active(phase)} onClick={()=>chooseCalibration('look')}>Указать область поворота камеры</Button><label>Радиус, % короткой стороны <input aria-label="Радиус пешего стика" type="number" className="ml-2 w-16 rounded border bg-background p-1" value={profile.radius} min={1} max={20} step={.5} disabled={active(phase)} onChange={e=>{const n=Number(e.target.value);if(n>=1&&n<=20)setProfile(p=>({...p,radius:n}));}}/></label></div><p className="text-muted-foreground">Укажите центр на прямом экране выше. Калибровочное касание не отправляется в игру. Для автоповорота укажите свободную область вне стика и кнопок: используются только горизонтальные свайпы. Прыжок не управляется.</p></div>}
         <div className="flex flex-wrap gap-2 border-t border-border p-3 text-xs text-muted-foreground"><span className={`rounded-md px-2 py-1 ${inputEnabled(phase) && !externalActive.current ? 'bg-primary/15 text-primary' : 'bg-muted'}`}>{phase==='piloting'?'Пеший тест · стик управляется алгоритмом':externalActive.current ? 'Управление в эмуляторе · нажатия не записываются' : inputEnabled(phase) ? 'Управление включено · фокус на экране' : 'Управление выключено'}</span><span className="rounded-md bg-muted px-2 py-1">{profile.mode==='stick'?`${keyLabel(mappedKeys.forward)}/${keyLabel(mappedKeys.left)}/${keyLabel(mappedKeys.reverse)}/${keyLabel(mappedKeys.right)} · стик`:`${keyLabel(mappedKeys.forward)}/${keyLabel(mappedKeys.reverse)} · газ и тормоз · ${keyLabel(mappedKeys.left)}/${keyLabel(mappedKeys.right)} · руль`}</span>{profile.mode==='stick'&&<span className="rounded-md bg-muted px-2 py-1">{keyLabel(mappedKeys.slow)} · 40% скорости</span>}<span className="rounded-md bg-muted px-2 py-1">ЛКМ + движение · камера</span><span className="rounded-md bg-muted px-2 py-1">{keyLabel(mappedKeys.action)} · удержание кнопки</span></div>
         <details className="px-4 pb-3 text-xs text-muted-foreground"><summary>Диагностика приёма видео</summary>{encoded}</details>
       </section>
-      {workspaceMode==='live'&&<TeachingNavigation key={navigationJob?.id??'none'} job={navigationJob} video={video} ready={ready} binding={binding??null} clips={clipChoices} clip={clip} scope={storageScope} sourceRecording={routeSource?.clip===clip&&routeSource.scope===storageScope?routeSource:null} onSelectClip={setClip} selectionDisabled={active(phase)||exportBusy||phase==='connecting'} onReview={()=>{void switchMode('review');}} walkInput={{open:openWalkInput,issue:readOnly?'Нет права управления.':!result||!['host','nat'].includes(result.path)?'Для пешего теста нужен прямой поток.':walkingCalibrationIssue(profile,binding??null)??(phase==='preview'?null:'Сначала выключите ручное управление или запись.')}}/>}
+      {workspaceMode==='live'&&<TeachingNavigation key={navigationJob?.id??'none'} job={navigationJob} video={video} ready={ready} binding={binding??null} clips={clipChoices} clip={clip} scope={storageScope} sourceRecording={routeSource?.clip===clip&&routeSource.scope===storageScope?routeSource:null} onSelectClip={setClip} selectionDisabled={active(phase)||exportBusy||phase==='connecting'} onReview={()=>{void switchMode('review');}} walkInput={{open:openWalkInput,cameraIssue:walkingCameraIssue(profile,binding??null),issue:readOnly?'Нет права управления.':!result||!['host','nat'].includes(result.path)?'Для пешего теста нужен прямой поток.':walkingCalibrationIssue(profile,binding??null)??(phase==='preview'?null:'Сначала выключите ручное управление или запись.')}}/>}
       <aside hidden={workspaceMode==='live'} className="space-y-4 rounded-2xl border border-border bg-card p-4">
         <h3 className="font-semibold">Подготовка маршрута</h3>
         <label className="block space-y-1 text-sm"><span>Название</span><input className={field} value={title} placeholder="Автоматически: дата, время и номер записи" maxLength={128} disabled={active(phase)} onChange={e => setTitle(e.target.value)} /></label>

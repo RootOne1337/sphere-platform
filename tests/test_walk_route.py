@@ -40,6 +40,30 @@ class WalkRouteTests(unittest.TestCase):
         self.assertLess(result['stick'][0],0)
         self.assertAlmostEqual(result['stick'][1],0)
 
+    def test_camera_tracking_aligns_while_stationary_then_resumes_and_keeps_real_stall_limit(self):
+        import math
+        self.follower=WalkRouteFollower(self.route,clock=lambda:self.now,camera_tracking=True)
+        for i in range(21):
+            yaw=1.-i*.045
+            rotation=(math.cos(yaw),0.,-math.sin(yaw),0.,1.,0.,math.sin(yaw),0.,math.cos(yaw))
+            reply=self.observe(rotation=rotation)
+            if yaw>.14:
+                self.assertEqual(reply['reason'],'walk_camera_alignment_required')
+                self.assertEqual(reply['stick'],[0.,0.])
+            self.now+=.2
+        self.assertEqual(reply['reason'],'walk_camera_relative_pursuit')
+        self.assertLess(reply['stick'][1],0)
+        for _ in range(18):
+            reply=self.observe();self.now+=.2
+        self.assertEqual(reply['reason'],'walk_no_route_progress')
+
+    def test_camera_tracking_never_waits_indefinitely_for_an_unresponsive_camera(self):
+        self.follower=WalkRouteFollower(self.route,clock=lambda:self.now,camera_tracking=True)
+        for _ in range(18):
+            reply=self.observe(rotation=(0.,0.,-1.,0.,1.,0.,1.,0.,0.));self.now+=.2
+        self.assertEqual(reply['reason'],'walk_camera_not_converging')
+        self.assertEqual(reply['stick'],[0.,0.])
+
     def test_start_midroute_and_end_pauses_do_not_break_pursuit(self):
         import numpy as np
         route=replace(self.route,camera_trace=((0.,0.,0.),(0.,0.,0.),(0.,0.,5.),(0.,0.,10.),

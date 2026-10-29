@@ -1,7 +1,7 @@
 import { stickPoint, type TeachingPoint } from './teachingContacts';
 
 export type VehicleButton = 'forward' | 'reverse' | 'left' | 'right';
-export type CalibrationTarget = 'stick' | 'action' | VehicleButton;
+export type CalibrationTarget = 'stick' | 'action' | 'look' | VehicleButton;
 export type PercentPoint = { x: number; y: number };
 export const keyRoles = ['forward','reverse','left','right','action','slow'] as const;
 export type TeachingKeyRole = typeof keyRoles[number];
@@ -16,6 +16,7 @@ export type TeachingProfile = {
   calibration: { width: number; height: number; buttons: CalibrationTarget[] } | null;
   /** Optional physical keyboard mapping; recorded contacts remain Android coordinates. */
   keys?: TeachingKeys;
+  look?:PercentPoint;
 };
 export const teachingKeys = (profile: TeachingProfile): TeachingKeys => profile.keys ?? defaultTeachingKeys;
 export function keyLabel(code: string): string {
@@ -44,7 +45,7 @@ function canonicalKeys(physical: ReadonlySet<string>, profile: TeachingProfile):
 }
 export const vehicleButtons: VehicleButton[] = ['forward','reverse','left','right'];
 export const calibrationNames: Record<CalibrationTarget,string> = {
-  stick:'центр стика',action:'кнопку действия',forward:'газ / вперёд',reverse:'тормоз / назад',left:'поворот влево',right:'поворот вправо',
+  stick:'центр стика',action:'кнопку действия',look:'свободную область поворота камеры',forward:'газ / вперёд',reverse:'тормоз / назад',left:'поворот влево',right:'поворот вправо',
 };
 export const defaultTeachingProfile: TeachingProfile = {
   schema:'sphere-touch-keymap-v1',mode:'stick',stick_x:15,stick_y:82,radius:12,action_x:92,action_y:88,
@@ -61,7 +62,7 @@ export function calibrateProfile(profile: TeachingProfile, geometry: Geometry, t
   const x=point.x/Math.max(1,geometry.width-1)*100,y=point.y/Math.max(1,geometry.height-1)*100;
   const buttons=profile.calibration?.width===geometry.width&&profile.calibration.height===geometry.height?profile.calibration.buttons:[];
   const calibration={...geometry,buttons:[...new Set([...buttons,target])]};
-  return target==='stick'?{...profile,stick_x:x,stick_y:y,calibration}:target==='action'?{...profile,action_x:x,action_y:y,calibration}
+  return target==='look'?{...profile,look:{x,y},calibration}:target==='stick'?{...profile,stick_x:x,stick_y:y,calibration}:target==='action'?{...profile,action_x:x,action_y:y,calibration}
     :{...profile,vehicle:{...profile.vehicle,[target]:{x,y}},calibration};
 }
 export function profileIssue(profile: TeachingProfile, geometry: Geometry): string | null {
