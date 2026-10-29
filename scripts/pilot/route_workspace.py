@@ -275,19 +275,24 @@ class RouteWorkspaces:
         from motor_worker.walk_route import WalkRouteFollower
         from motor_worker.route_tracking import AnchoredRouteLocalizer
 
+        required={'id', 'captureEpoch', 'width', 'height', 'sceneConfirmed', 'footCameraAssumptionConfirmed'}
         if (type(body) is not dict or body.get('footCameraAssumptionConfirmed') is not True
-                or set(body) != {'id', 'captureEpoch', 'width', 'height', 'sceneConfirmed',
-                                 'footCameraAssumptionConfirmed'}):
+                or not required <= body.keys() or not body.keys() <= required|{'startMode'}
+                or body.get('startMode','beginning') not in {'beginning','recognized_route'}):
             raise ValueError('walk_explicit_confirmation_required')
-        request = {key: value for key, value in body.items() if key != 'footCameraAssumptionConfirmed'}
+        start_mode=body.get('startMode','beginning')
+        request = {key: value for key, value in body.items() if key not in {'footCameraAssumptionConfirmed','startMode'}}
         self._expire()
         if self.live and self.live['id'] == request['id'] and 'walk' not in self.live:
             raise ValueError('walk_observer_cannot_be_promoted')
+        if (self.live and self.live['id']==request['id'] and 'walk' in self.live
+                and self.live['walk'].start_mode!=start_mode):
+            raise ValueError('walk_start_mode_changed')
         self.start_live(job, request)
-        self._install_walk()
-        return dict(self.live_status(), mode='foot_camera_trace_v1', physicalActions=0, maxSeconds=60)
+        self._install_walk(start_mode=start_mode)
+        return dict(self.live_status(), mode='foot_camera_trace_v1', physicalActions=0, maxSeconds=60,startMode=start_mode)
 
-    def _install_walk(self):
+    def _install_walk(self, *, start_mode='beginning'):
         from motor_worker.walk_route import WalkRouteFollower
         from motor_worker.route_tracking import AnchoredRouteLocalizer
         if 'walk' not in self.live:
@@ -299,7 +304,7 @@ class RouteWorkspaces:
             route = replace(route, profile=profile)
             self.live['tracker'] = AnchoredRouteLocalizer(route, capture_epoch=self.live['epoch'],
                 episode_id=self.live['episode'], goal_revision=self.live['goal'], clock=self.clock)
-            self.live['walk'] = WalkRouteFollower(route, clock=self.clock)
+            self.live['walk'] = WalkRouteFollower(route, clock=self.clock,start_mode=start_mode)
             self.live['deadline'] = min(self.live['deadline'], self.clock()+60)
     def start_replay(self,job,body):
         """The real pose/planner path, with a separate recorded-input protocol.

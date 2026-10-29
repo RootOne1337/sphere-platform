@@ -1,0 +1,420 @@
+{
+  "schema": "sphere-offline-route-resume-v1",
+  "physicalActions": 0,
+  "originalFilesUnchanged": true,
+  "heldOutSourceFrames": true,
+  "independentGameplay": false,
+  "feedbackLoop": false,
+  "cases": [
+    {
+      "startMode": "beginning",
+      "samples": [
+        {
+          "queryIndex": 267,
+          "sourceSeconds": 10.022,
+          "pose": "confirming",
+          "inliers": 184,
+          "segment": 28,
+          "phase": "waiting",
+          "reason": "walk_confirming_start",
+          "progress": null,
+          "planStick": [
+            0.0,
+            0.0
+          ],
+          "effectiveStick": [
+            0.0,
+            0.0
+          ],
+          "replyAgeMs": 181.2011000001803,
+          "computeMs": 152.23010000772774
+        },
+        {
+          "queryIndex": 274,
+          "sourceSeconds": 10.256,
+          "pose": "unknown",
+          "inliers": 0,
+          "segment": null,
+          "phase": "waiting",
+          "reason": "walk_confirming_start",
+          "progress": null,
+          "planStick": [
+            0.0,
+            0.0
+          ],
+          "effectiveStick": [
+            0.0,
+            0.0
+          ],
+          "replyAgeMs": 138.24350002687424,
+          "computeMs": 122.67539999447763
+        },
+        {
+          "queryIndex": 280,
+          "sourceSeconds": 10.474,
+          "pose": "confirming",
+          "inliers": 171,
+          "segment": 29,
+          "phase": "waiting",
+          "reason": "walk_confirming_start",
+          "progress": null,
+          "planStick": [
+            0.0,
+            0.0
+          ],
+          "effectiveStick": [
+            0.0,
+            0.0
+          ],
+          "replyAgeMs": 150.1548999804072,
+          "computeMs": 132.94239999959245
+        },
+        {
+          "queryIndex": 284,
+          "sourceSeconds": 10.656,
+          "pose": "confirming",
+          "inliers": 167,
+          "segment": 29,
+          "phase": "waiting",
+          "reason": "walk_confirming_start",
+          "progress": null,
+          "planStick": [
+            0.0,
+            0.0
+          ],
+          "effectiveStick": [
+            0.0,
+            0.0
+          ],
+          "replyAgeMs": 150.45760001521558,
+          "computeMs": 142.26120000239462
+        },
+        {
+          "queryIndex": 289,
+          "sourceSeconds": 10.839,
+          "pose": "localized",
+          "inliers": 132,
+          "segment": 30,
+          "phase": "stopped",
+          "reason": "walk_start_outside_recorded_beginning",
+          "progress": null,
+          "planStick": [
+            0.0,
+            0.0
+          ],
+          "effectiveStick": [
+            0.0,
+            0.0
+          ],
+          "replyAgeMs": 160.33809998771176,
+          "computeMs": 143.06229999056086
+        },
+        {
+          "queryIndex": 294,
+          "sourceSeconds": 11.022,
+          "pose": "localized",
+          "inliers": 118,
+          "segment": 30,
+          "phase": "stopped",
+          "reason": "walk_start_outside_recorded_beginning",
+          "progress": null,
+          "planStick": [
+            0.0,
+            0.0
+          ],
+          "effectiveStick": [
+            0.0,
+            0.0
+          ],
+          "replyAgeMs": 20.71300003444776,
+          "computeMs": 12.673399993218482
+        },
+        {
+          "queryIndex": 300,
+          "sourceSeconds": 11.205,
+          "pose": "localized",
+          "inliers": 106,
+          "segment": 31,
+          "phase": "stopped",
+          "reason": "walk_start_outside_recorded_beginning",
+          "progress": null,
+          "planStick": [
+            0.0,
+            0.0
+          ],
+          "effectiveStick": [
+            0.0,
+            0.0
+          ],
+          "replyAgeMs": 26.1562000378035,
+          "computeMs": 10.230700019747019
+        },
+        {
+          "queryIndex": 307,
+          "sourceSeconds": 11.42,
+          "pose": "localized",
+          "inliers": 90,
+          "segment": 31,
+          "phase": "stopped",
+          "reason": "walk_start_outside_recorded_beginning",
+          "progress": null,
+          "planStick": [
+            0.0,
+            0.0
+          ],
+          "effectiveStick": [
+            0.0,
+            0.0
+          ],
+          "replyAgeMs": 25.12960002059117,
+          "computeMs": 9.191500023007393
+        },
+        {
+          "queryIndex": 313,
+          "sourceSeconds": 11.62,
+          "pose": "localized",
+          "inliers": 66,
+          "segment": 32,
+          "phase": "stopped",
+          "reason": "walk_start_outside_recorded_beginning",
+          "progress": null,
+          "planStick": [
+            0.0,
+            0.0
+          ],
+          "effectiveStick": [
+            0.0,
+            0.0
+          ],
+          "replyAgeMs": 26.326299994252622,
+          "computeMs": 9.885900013614446
+        },
+        {
+          "queryIndex": 318,
+          "sourceSeconds": 11.802,
+          "pose": "localized",
+          "inliers": 116,
+          "segment": 32,
+          "phase": "stopped",
+          "reason": "walk_start_outside_recorded_beginning",
+          "progress": null,
+          "planStick": [
+            0.0,
+            0.0
+          ],
+          "effectiveStick": [
+            0.0,
+            0.0
+          ],
+          "replyAgeMs": 181.66459997883067,
+          "computeMs": 150.29610000783578
+        }
+      ]
+    },
+    {
+      "startMode": "recognized_route",
+      "samples": [
+        {
+          "queryIndex": 267,
+          "sourceSeconds": 10.022,
+          "pose": "confirming",
+          "inliers": 184,
+          "segment": 28,
+          "phase": "waiting",
+          "reason": "walk_confirming_start",
+          "progress": null,
+          "planStick": [
+            0.0,
+            0.0
+          ],
+          "effectiveStick": [
+            0.0,
+            0.0
+          ],
+          "replyAgeMs": 172.33639996265993,
+          "computeMs": 157.13800000958145
+        },
+        {
+          "queryIndex": 274,
+          "sourceSeconds": 10.256,
+          "pose": "unknown",
+          "inliers": 0,
+          "segment": null,
+          "phase": "waiting",
+          "reason": "walk_confirming_start",
+          "progress": null,
+          "planStick": [
+            0.0,
+            0.0
+          ],
+          "effectiveStick": [
+            0.0,
+            0.0
+          ],
+          "replyAgeMs": 136.48899999679998,
+          "computeMs": 129.6690000453964
+        },
+        {
+          "queryIndex": 280,
+          "sourceSeconds": 10.474,
+          "pose": "confirming",
+          "inliers": 171,
+          "segment": 29,
+          "phase": "waiting",
+          "reason": "walk_confirming_start",
+          "progress": null,
+          "planStick": [
+            0.0,
+            0.0
+          ],
+          "effectiveStick": [
+            0.0,
+            0.0
+          ],
+          "replyAgeMs": 133.10129998717457,
+          "computeMs": 117.40809999173507
+        },
+        {
+          "queryIndex": 284,
+          "sourceSeconds": 10.656,
+          "pose": "confirming",
+          "inliers": 167,
+          "segment": 29,
+          "phase": "waiting",
+          "reason": "walk_confirming_start",
+          "progress": null,
+          "planStick": [
+            0.0,
+            0.0
+          ],
+          "effectiveStick": [
+            0.0,
+            0.0
+          ],
+          "replyAgeMs": 140.69600001676008,
+          "computeMs": 125.0187000259757
+        },
+        {
+          "queryIndex": 289,
+          "sourceSeconds": 10.839,
+          "pose": "localized",
+          "inliers": 132,
+          "segment": 30,
+          "phase": "waiting",
+          "reason": "walk_confirming_current_position",
+          "progress": 0.18640883673631603,
+          "planStick": [
+            0.0,
+            0.0
+          ],
+          "effectiveStick": [
+            0.0,
+            0.0
+          ],
+          "replyAgeMs": 135.54659998044372,
+          "computeMs": 119.60570001974702
+        },
+        {
+          "queryIndex": 294,
+          "sourceSeconds": 11.022,
+          "pose": "localized",
+          "inliers": 118,
+          "segment": 30,
+          "phase": "waiting",
+          "reason": "walk_confirming_current_position",
+          "progress": 0.19089742419308542,
+          "planStick": [
+            0.0,
+            0.0
+          ],
+          "effectiveStick": [
+            0.0,
+            0.0
+          ],
+          "replyAgeMs": 25.124200037680566,
+          "computeMs": 9.185900038573891
+        },
+        {
+          "queryIndex": 300,
+          "sourceSeconds": 11.205,
+          "pose": "localized",
+          "inliers": 106,
+          "segment": 31,
+          "phase": "following",
+          "reason": "walk_camera_relative_pursuit",
+          "progress": 0.19507918985109643,
+          "planStick": [
+            0.0027891134597047944,
+            -0.19998055116962973
+          ],
+          "effectiveStick": [
+            0.0027891134597047944,
+            -0.19998055116962973
+          ],
+          "replyAgeMs": 15.984099998604506,
+          "computeMs": 9.291500027757138
+        },
+        {
+          "queryIndex": 307,
+          "sourceSeconds": 11.42,
+          "pose": "localized",
+          "inliers": 90,
+          "segment": 31,
+          "phase": "following",
+          "reason": "walk_camera_relative_pursuit",
+          "progress": 0.2000223872487039,
+          "planStick": [
+            0.0019438716996875627,
+            -0.3499892035607202
+          ],
+          "effectiveStick": [
+            0.0019438716996875627,
+            -0.3499892035607202
+          ],
+          "replyAgeMs": 17.83089997479692,
+          "computeMs": 10.682700027246028
+        },
+        {
+          "queryIndex": 313,
+          "sourceSeconds": 11.62,
+          "pose": "localized",
+          "inliers": 66,
+          "segment": 32,
+          "phase": "following",
+          "reason": "walk_camera_relative_pursuit",
+          "progress": 0.20493198103455632,
+          "planStick": [
+            0.008170294675846729,
+            -0.34980917105492443
+          ],
+          "effectiveStick": [
+            0.008170294675846729,
+            -0.34980917105492443
+          ],
+          "replyAgeMs": 14.146999979857355,
+          "computeMs": 8.144799969159067
+        },
+        {
+          "queryIndex": 318,
+          "sourceSeconds": 11.802,
+          "pose": "localized",
+          "inliers": 116,
+          "segment": 32,
+          "phase": "following",
+          "reason": "walk_camera_relative_pursuit",
+          "progress": 0.20897112382077757,
+          "planStick": [
+            0.0047956214741928715,
+            -0.3499342791298386
+          ],
+          "effectiveStick": [
+            0.0047956214741928715,
+            -0.3499342791298386
+          ],
+          "replyAgeMs": 146.9177000108175,
+          "computeMs": 139.57219995791093
+        }
+      ]
+    }
+  ]
+}

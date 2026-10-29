@@ -68,6 +68,52 @@ class WalkRouteTests(unittest.TestCase):
         self.assertEqual(self.observe()['stick'],[0.,0.])
         self.assertEqual(self.observe()['phase'],'stopped')
 
+    def test_start_tolerance_is_recording_time_and_arc_based_not_keyframe_density(self):
+        import hashlib
+        for count in (21, 101):
+            with self.subTest(count=count):
+                route=replace(self.route,camera_trace=tuple((0.,0.,i*10/(count-1)) for i in range(count)),
+                    source_seconds=tuple(i*50/(count-1) for i in range(count)),
+                    reference_rgb_sha256=tuple(hashlib.sha256(str(i).encode()).hexdigest() for i in range(count)),
+                    source_frame_indices=tuple(range(count)))
+                self.follower=WalkRouteFollower(route,clock=lambda:self.now)
+                self.assertAlmostEqual(self.follower.start_arc,1.)
+                result=self.observe(.6)
+                self.assertEqual(result['phase'],'following')
+                self.follower=WalkRouteFollower(route,clock=lambda:self.now)
+                self.assertEqual(self.observe(2.)['reason'],'walk_start_outside_recorded_beginning')
+
+    def test_explicit_resume_acquires_middle_then_follows_remaining_trace(self):
+        self.follower=WalkRouteFollower(self.route,clock=lambda:self.now,start_mode='recognized_route')
+        for _ in range(2):
+            result=self.observe(15.)
+            self.assertEqual(result['reason'],'walk_confirming_current_position')
+            self.assertEqual(result['stick'],[0.,0.]);self.now+=.1
+        result=self.observe(15.)
+        self.assertEqual(result['phase'],'following');self.assertLess(result['stick'][1],0)
+        self.assertAlmostEqual(result['progressFraction'],15/35)
+        for progress in (20.,25.,30.,35.,35.,35.):
+            self.now+=.2;result=self.observe(progress)
+        self.assertEqual(result['phase'],'arrived')
+
+    def test_resume_requires_three_new_stable_poses_after_unknown_or_jump(self):
+        self.follower=WalkRouteFollower(self.route,clock=lambda:self.now,start_mode='recognized_route')
+        self.observe(15.);self.now+=.1
+        self.assertEqual(self.observe(15.,state='unknown')['stick'],[0.,0.]);self.now+=.1
+        for _ in range(2):
+            self.assertEqual(self.observe(15.)['phase'],'waiting');self.now+=.1
+        # Another distant place cannot complete the old confirmation streak.
+        self.assertEqual(self.observe(15.,center=(25.,0.,15.))['phase'],'waiting');self.now+=.1
+        self.assertEqual(self.observe(15.,center=(25.,0.,15.))['phase'],'waiting')
+
+    def test_resume_never_moves_from_unlocalized_wrong_map_or_outside_corridor(self):
+        for changes in ({'state':'unknown'}, {'state':'confirming'},
+                        {'world_revision':'f'*32}, {'cross_track_units':100.}):
+            with self.subTest(changes=changes):
+                self.follower=WalkRouteFollower(self.route,clock=lambda:self.now,start_mode='recognized_route')
+                reply=self.observe(15.,**changes)
+                self.assertEqual(reply['stick'],[0.,0.]);self.assertNotEqual(reply['phase'],'following')
+
     def test_initial_confirmation_and_short_localization_loss_are_neutral(self):
         self.assertEqual(self.observe(state='confirming')['stick'],[0.,0.])
         self.now+=.2;self.observe()

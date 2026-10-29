@@ -31,8 +31,9 @@ export function walkingStickTarget(profile:TeachingProfile,geometry:{width:numbe
 }
 export const walkReasonLabel=(reason:string):string=>({
   walk_confirming_start:'Узнаём старт по нескольким свежим кадрам',
+  walk_confirming_current_position:'Узнаём текущую точку маршрута: три свежих подтверждения перед движением',
   walk_camera_relative_pursuit:'Идём к ближайшей точке записанного пути',
-  walk_start_outside_recorded_beginning:'Старт далеко от начала записи',
+  walk_start_outside_recorded_beginning:'Положение найдено за пределами начального участка: вернитесь ближе к старту записи',
   walk_localization_lost:'Ориентиры потеряны — движение прекращено',
   walk_relocalizing_neutral:'Стик отпущен: повторно подтверждаем положение рядом с последней позицией',
   walk_relocalization_timeout:'Положение не восстановилось за 2 секунды — тест остановлен',
@@ -48,7 +49,7 @@ export const walkReasonLabel=(reason:string):string=>({
   walk_target_direction_unknown:'Направление к ближайшей цели не определено',
   walk_time_limit:'Предел 60 секунд достигнут',
   walk_decision_expired:'Нет свежего решения — стик освобождается',
-  walk_waiting_fresh_reply:'Стик отпущен: повторно подтверждаем три свежих решения',
+  walk_waiting_fresh_reply:'Стик отпущен: ждём новое свежее решение',
   walk_stream_changed:'Поток остановился или изменился',
   walk_native_closed:'Нативный ввод закрылся',
   contact_video_stale:'Ввод остановлен: браузер не подтвердил новый видеокадр за 250 мс',

@@ -338,3 +338,16 @@ def test_walk_summaries_require_job_capability_and_never_overwrite_another_attem
         assert json.loads((job/'walk-reports'/('c'*32+'.json')).read_bytes())['stopReason'] == 'contact_video_stale'
     finally:
         server.shutdown();server.server_close();thread.join(3)
+
+
+def test_cancelled_browser_request_does_not_attempt_a_second_response(jobs):
+    from types import SimpleNamespace
+    from unittest.mock import Mock
+    handler = object.__new__(service.handler(jobs, 'http://127.0.0.1:3015', 3342))
+    handler.connection = SimpleNamespace(settimeout=lambda _: None)
+    handler.headers = {'Host':'127.0.0.1:3342','Origin':'http://127.0.0.1:3015','X-Sphere-Reconstruction':'1'}
+    handler.path = '/health'
+    handler.reply = Mock(side_effect=ConnectionAbortedError('client_cancelled'))
+    handler.dispatch('GET')
+    assert handler.reply.call_count == 1
+    assert handler.close_connection

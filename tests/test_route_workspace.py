@@ -232,6 +232,21 @@ class RouteWorkspaceTests(unittest.TestCase):
         value=self.workspace.observe(self.job,dict(id='f'*32,captureEpoch='e'*32,sequence=1,jpeg=base64.b64encode(encoded).decode()))
         self.assertEqual(value['walk']['stick'],[0.,0.])
 
+    def test_recognized_route_mode_is_acknowledged_and_same_intent_cannot_change_mode(self):
+        self.attach_fixture_map();self.workspace.stop_live(self.job,dict(id='d'*32))
+        body=dict(id='f'*32,captureEpoch='e'*32,width=960,height=540,sceneConfirmed=True,
+            footCameraAssumptionConfirmed=True,startMode='recognized_route')
+        with patch('scripts.pilot.route_workspace.resource_checkpoint'):
+            result=self.workspace.start_walk(self.job,body)
+        self.assertEqual(result['startMode'],'recognized_route')
+        follower=self.workspace.live['walk'];self.assertEqual(follower.start_mode,'recognized_route')
+        self.workspace.start_walk(self.job,body)
+        self.assertIs(self.workspace.live['walk'],follower)
+        with self.assertRaisesRegex(ValueError,'start_mode_changed'):
+            self.workspace.start_walk(self.job,dict(body,startMode='beginning'))
+        with self.assertRaisesRegex(ValueError,'explicit_confirmation'):
+            self.workspace.start_walk(self.job,dict(body,startMode='blind_resume'))
+
     def test_recorded_replay_has_a_separate_mode_and_cannot_promote_to_live_input(self):
         import cv2 as cv
         import numpy as np

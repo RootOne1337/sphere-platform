@@ -1,6 +1,6 @@
 import type {TeachingInput} from './teachingContacts';
 
-export type WalkStage='source_gap'|'jpeg'|'http'|'decision_expired'|'input_open'|'input_ready'|'input_command'|'input_failure'|'long_task'|'stop';
+export type WalkStage='source_gap'|'jpeg'|'http'|'decision_expired'|'neutral_wait'|'input_open'|'input_ready'|'input_command'|'input_failure'|'long_task'|'stop';
 export type WalkStageSample={stage:WalkStage;elapsedMs:number;durationMs?:number;sequence?:number;ageMs?:number;reason?:string};
 
 /** Local, bounded scalar trace; never a source of input authority. */

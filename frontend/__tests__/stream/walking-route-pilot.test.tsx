@@ -21,7 +21,7 @@ beforeEach(()=>{
     const blob=new Blob(['jpeg'],{type:'image/jpeg'});Object.defineProperty(blob,'arrayBuffer',{value:async()=>new ArrayBuffer(4)});callback(blob);
   });
   jest.mocked(reconstructionRequest).mockImplementation(async(path,_job,init)=>{
-    if(path.endsWith('/walk-start'))return {json:async()=>({phase:'observing',id:'c'.repeat(32),physicalActions:0,mode:'foot_camera_trace_v1',maxSeconds:60})} as Response;
+    if(path.endsWith('/walk-start'))return {json:async()=>({phase:'observing',id:'c'.repeat(32),physicalActions:0,mode:'foot_camera_trace_v1',maxSeconds:60,startMode:JSON.parse(String(init?.body)).startMode})} as Response;
     if(path.endsWith('/observe'))return {json:async()=>({id:'c'.repeat(32),captureEpoch:binding.captureEpoch,sequence:JSON.parse(String(init?.body)).sequence,
       jpegSha256:'aa'.repeat(32),computeMs:1,method:'descriptor_pnp',physicalActions:0,executionQualified:false,groundRoute:false,
       pose:{state:'localized',reason:'relative_camera_pose_not_clearance_or_arrival',inliers:40,segment:0,progress_units:0,polyline_px:[]},
@@ -38,6 +38,27 @@ test('mount, confirmation and map readiness never themselves open native input',
   view({assetsReady:false});fresh();fireEvent.click(screen.getByRole('checkbox',{name:/Персонаж пешком/}));
   expect(screen.getByRole('button',{name:'Запустить пеший тест · 60 с'})).toBeDisabled();
   expect(open).not.toHaveBeenCalled();expect(reconstructionRequest).not.toHaveBeenCalled();
+});
+
+test('recognized-route restart is explicit and changing acquisition mode requires a new confirmation',async()=>{
+  view();expect(screen.getByLabelText('Точка запуска пешего теста')).toHaveValue('recognized_route');
+  fresh();fireEvent.click(screen.getByRole('checkbox',{name:/Персонаж пешком/}));
+  fireEvent.change(screen.getByLabelText('Точка запуска пешего теста'),{target:{value:'beginning'}});
+  expect(screen.getByRole('button',{name:'Запустить пеший тест · 60 с'})).toBeDisabled();
+  fireEvent.click(screen.getByRole('checkbox',{name:/Персонаж пешком/}));
+  fireEvent.click(screen.getByRole('button',{name:'Запустить пеший тест · 60 с'}));
+  await waitFor(()=>expect(open).toHaveBeenCalled());
+  expect(JSON.parse(String(jest.mocked(reconstructionRequest).mock.calls[0][2]?.body)).startMode).toBe('beginning');
+  fireEvent.keyDown(window,{code:'Escape'});await screen.findByText('Освобождение: CLOSED');
+});
+
+test('a service that does not acknowledge acquisition mode cannot open Android input',async()=>{
+  const original=jest.mocked(reconstructionRequest).getMockImplementation()!;
+  jest.mocked(reconstructionRequest).mockImplementation(async(...args)=>{
+    const response=await original(...args);if(!args[0].endsWith('/walk-start'))return response;
+    const value=await response.json();delete value.startMode;return {json:async()=>value} as Response;
+  });
+  view();start();await screen.findByText('Освобождение: CLOSED');expect(open).not.toHaveBeenCalled();
 });
 test('explicit start sends a fresh bound correction and stop waits for native closure',async()=>{
   view();start();await waitFor(()=>expect(lease.set).toHaveBeenCalledWith([.05,-.2]));
@@ -85,9 +106,53 @@ test('an expired bound result neutralizes input and never applies its vector',as
   jest.mocked(reconstructionRequest).mockImplementation(async(...args)=>{
     const value=await original(...args);if(args[0].endsWith('/observe'))now=1300;return value;
   });
-  view();start();await screen.findByText(/Стик отпущен: ждём три свежих решения/);now=2400;
+  view();start();await screen.findByText(/Стик отпущен: ждём новое свежее решение/);now=2400;
   await screen.findByText('Освобождение: CLOSED');
   expect(jest.mocked(lease.set).mock.calls.every(([v])=>v[0]===0&&v[1]===0)).toBe(true);clock.mockRestore();
+});
+
+test('four delivery expirations never replay old vectors or exhaust geometric recovery',async()=>{
+  let now=1000,queries=0;const clock=jest.spyOn(performance,'now').mockImplementation(()=>now);
+  const original=jest.mocked(reconstructionRequest).getMockImplementation()!;
+  jest.mocked(reconstructionRequest).mockImplementation(async(...args)=>{
+    const response=await original(...args);
+    if(args[0].endsWith('/observe')){
+      queries++;now+=queries%2===0?300:110;
+      frames.shift()?.(now,{} as VideoFrameCallbackMetadata);
+    }
+    return response;
+  });
+  try{
+    view();start();
+    await waitFor(()=>expect(jest.mocked(lease.set).mock.calls.filter(([v])=>Math.hypot(...v)>0).length).toBeGreaterThanOrEqual(5),{timeout:2500});
+    expect(jest.mocked(lease.set).mock.calls.filter(([v])=>Math.hypot(...v)===0).length).toBeGreaterThanOrEqual(4);
+    expect(lease.close).not.toHaveBeenCalled();
+    fireEvent.keyDown(window,{code:'Escape'});await screen.findByText('Освобождение: CLOSED');
+  }finally{clock.mockRestore();}
+});
+
+test('a localized start refusal is not presented as an Android ACK failure',async()=>{
+  const original=jest.mocked(reconstructionRequest).getMockImplementation()!;
+  jest.mocked(reconstructionRequest).mockImplementation(async(...args)=>{
+    const response=await original(...args);if(!args[0].endsWith('/observe'))return response;
+    const value=await response.json();value.walk={...value.walk,phase:'stopped',reason:'walk_start_outside_recorded_beginning',stick:[0,0]};
+    return {json:async()=>value} as Response;
+  });
+  view();start();await screen.findByText('Освобождение: CLOSED');
+  expect(screen.getByText(/Место узнано, но команда движения не выдавалась/)).toBeInTheDocument();
+  expect(screen.queryByText(/Android ещё не подтвердил касание/)).not.toBeInTheDocument();
+});
+
+test('a reply that expires while painting cannot send its old movement vector',async()=>{
+  let now=1000;const clock=jest.spyOn(performance,'now').mockImplementation(()=>now);
+  jest.mocked(HTMLCanvasElement.prototype.getContext).mockReturnValue({clearRect:jest.fn(),drawImage:jest.fn((source:CanvasImageSource)=>{
+    if(source instanceof HTMLCanvasElement)now+=300;
+  })} as never);
+  try{
+    view();start();await screen.findByText(/Стик отпущен: ждём новое свежее решение/);
+    expect(jest.mocked(lease.set).mock.calls.every(([v])=>Math.hypot(...v)===0)).toBe(true);
+    fireEvent.keyDown(window,{code:'Escape'});await screen.findByText('Освобождение: CLOSED');
+  }finally{clock.mockRestore();}
 });
 
 test('fresh pose plans go through the real contact protocol and Android applied receipts',async()=>{

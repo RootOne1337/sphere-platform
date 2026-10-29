@@ -734,7 +734,7 @@ def handler(jobs, origin, port):
             except FileNotFoundError:
                 self.close_connection = True
                 self.reply(409, {'error': 'job_file_unavailable'})
-            except (BrokenPipeError, ConnectionResetError, TimeoutError):
+            except (BrokenPipeError, ConnectionResetError, ConnectionAbortedError, TimeoutError):
                 self.close_connection = True
             except Exception:
                 self.close_connection = True

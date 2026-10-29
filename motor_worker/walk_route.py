@@ -18,17 +18,25 @@ class WalkRouteFollower:
     MAX_RELOCALIZE_SECONDS = 2.
     MAX_RELOCALIZATIONS = 3
 
-    def __init__(self, route: SparseRoute, *, clock):
+    def __init__(self, route: SparseRoute, *, clock, start_mode='beginning'):
         import numpy as np
 
         if type(route) is not SparseRoute:
             raise ValueError('walk_route_required')
+        if start_mode not in {'beginning', 'recognized_route'}:
+            raise ValueError('walk_start_mode')
+        self.start_mode = start_mode
         self.route, self.clock, self.np = route, clock, np
         self.trace = np.asarray(route.camera_trace, dtype=float)
         self.steps = np.linalg.norm(np.diff(self.trace, axis=0), axis=1)
         self.step = trace_step_scale(self.steps)
         self.arc = np.r_[0., np.cumsum(self.steps)]
         self.total = float(self.arc[-1])
+        # Keyframe spacing is a reconstruction choice, not an operator's start
+        # tolerance. Bound acquisition to BOTH the first five recorded seconds
+        # and the first 15% of the observed arc, independently of frame density.
+        self.start_arc = min(self.total*.15, float(np.interp(
+            route.source_seconds[0]+5., route.source_seconds, self.arc)))
         self.began = clock()
         self.sequence, self.last_at = 0, None
         self.started, self.terminal = False, None
@@ -39,6 +47,7 @@ class WalkRouteFollower:
         self.last_good = None
         self.relocalizing = None
         self.relocalizations = 0
+        self.acquisition = 0
 
     def _reply(self, phase, reason, progress=None, **extra):
         return dict(schema='sphere-walk-plan-v1', phase=phase, reason=reason,
@@ -73,6 +82,7 @@ class WalkRouteFollower:
         dt = .1 if self.last_at is None else pose.received_at-self.last_at
         self.sequence, self.last_at = pose.receiver_sequence, pose.received_at
         if pose.state != 'localized':
+            self.acquisition = 0
             self.vector[:] = 0
             if self.started:
                 self.arrival=0
@@ -114,9 +124,23 @@ class WalkRouteFollower:
                 return self._reply('waiting','walk_relocalizing_neutral',progress)
             self.relocalizing=None;self.history.clear()
         if not self.started:
-            if (progress > min(self.total*.15, self.step*2)
-                    or float(np.linalg.norm(center-self.trace[0])) > self.step*3):
+            if self.start_mode == 'beginning' and (progress > self.start_arc
+                    or float(np.linalg.norm(center-self.trace[0])) > self.start_arc+self.step*3):
                 return self._stop('walk_start_outside_recorded_beginning')
+            if self.start_mode == 'recognized_route':
+                # Re-acquire from fresh image geometry, never a remembered key
+                # offset or the previous run's progress. The localizer already
+                # rejects ambiguous segments; require stable localized poses.
+                if self.last_good is not None:
+                    old_center, old_rotation = self.last_good
+                    turn=float(np.arccos(np.clip((np.trace(rotation@old_rotation.T)-1)/2,-1,1)))
+                    if (np.linalg.norm(center-old_center)>self.step*4 or turn>.7
+                            or abs(progress-self.high_water)>self.step*4):
+                        self.acquisition=0
+                self.last_good=(center.copy(),rotation.copy());self.high_water=progress
+                self.acquisition+=1;self.vector[:]=0
+                if self.acquisition<3:
+                    return self._reply('waiting','walk_confirming_current_position',progress)
             self.started = True
             self.high_water = progress
         elif progress < self.high_water-self.step*2:

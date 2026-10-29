@@ -14,7 +14,9 @@ def store_walk_report(job, body):
     fields = {'schema', 'id', 'clip', 'release', 'stopReason', 'inputFailure',
               'stopFrameAgeMs', 'stopFrameSequence', 'executionQualified',
               'inputSummary', 'stages', 'observations'}
-    if type(body) is not dict or set(body) != fields or body['schema'] != 'sphere-walk-summary-v1':
+    if (type(body) is not dict or not fields <= body.keys() or not body.keys() <= fields|{'startMode'}
+            or body['schema'] != 'sphere-walk-summary-v1'
+            or body.get('startMode','beginning') not in {'beginning','recognized_route'}):
         raise ValueError('walk_report_schema')
     if any(type(body[k]) is not str or not ID.fullmatch(body[k]) for k in ['id', 'clip']):
         raise ValueError('walk_report_identity')
@@ -45,10 +47,11 @@ def store_walk_report(job, body):
     observations = body['observations']
     if type(observations) is not list or len(observations) > 1200:
         raise ValueError('walk_report_observations')
-    allowed = {'elapsedMs', 'sequence', 'ageMs', 'computeMs', 'state', 'reason', 'poseState', 'inliers', 'progress'}
+    required = {'elapsedMs', 'sequence', 'ageMs', 'computeMs', 'state', 'reason', 'poseState', 'inliers', 'progress'}
+    allowed = required | {'segment', 'medianErrorPx', 'crossTrackUnits'}
     for row in observations:
-        if (type(row) is not dict or set(row) != allowed
-                or any(not code(v) if k in {'state', 'reason', 'poseState'} else not number(v, nullable=k == 'progress')
+        if (type(row) is not dict or not required <= row.keys() or not row.keys() <= allowed
+                or any(not code(v) if k in {'state', 'reason', 'poseState'} else not number(v, nullable=k in {'progress', 'segment', 'medianErrorPx', 'crossTrackUnits'})
                        for k, v in row.items())):
             raise ValueError('walk_report_observation')
     raw = json.dumps(body, sort_keys=True, separators=(',', ':'), allow_nan=False).encode()
