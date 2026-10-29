@@ -4,7 +4,7 @@ import {calibrated,fromPercent,profileIssue,type TeachingProfile} from './teachi
 export type WalkPlan={schema:'sphere-walk-plan-v1';phase:'waiting'|'following'|'stopped'|'arrived';reason:string;
   stick:[number,number];progressFraction:number|null;maxStick:.35;maxSeconds:60;
   groundRoute:false;executionQualified:false;cameraBodyAssumption:true};
-export type WalkInputLease={active():boolean;set(vector:[number,number]):void;close():Promise<boolean>};
+export type WalkInputLease={active():boolean;failure?():string|null;set(vector:[number,number]):void;close():Promise<boolean>};
 export type WalkInputControl={issue:string|null;open(signal:AbortSignal,journal:(event:TeachingInput)=>void):Promise<WalkInputLease>};
 export function readWalkPlan(value:unknown):WalkPlan|null {
   const p=value as WalkPlan;
@@ -51,5 +51,9 @@ export const walkReasonLabel=(reason:string):string=>({
   walk_waiting_fresh_reply:'Стик отпущен: повторно подтверждаем три свежих решения',
   walk_stream_changed:'Поток остановился или изменился',
   walk_native_closed:'Нативный ввод закрылся',
+  contact_video_stale:'Ввод остановлен: браузер не подтвердил новый видеокадр за 250 мс',
+  contact_ack_timeout:'Android не подтвердил команду за 500 мс — ввод закрыт',
+  contact_channel_closed:'Прямой канал ввода закрылся',
+  contact_ready_timeout:'Android не подтвердил готовность стика за 6 секунд',
   walk_manual_stop:'Остановлено оператором',
 } as Record<string,string>)[reason]??`Пеший тест остановлен: ${reason}`;

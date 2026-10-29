@@ -597,6 +597,9 @@ def handler(jobs, origin, port):
                         self.reply(200, {name: (job / 'input' / name).stat().st_size if (job / 'input' / name).exists() else 0 for name in LIMITS})
                     elif method == 'GET' and parts[2:] == ['navigation']:
                         self.reply(200, jobs.navigation.status(job))
+                    elif method == 'POST' and parts[2:] == ['navigation', 'walk-report']:
+                        from scripts.pilot.route_walk_reports import store_walk_report
+                        self.reply(200, store_walk_report(job, json.loads(self.body(512*1024))))
                     elif method == 'GET' and parts[2:] == ['geometry-alternatives']:
                         self.reply(200, {'alternatives': list_alternatives(job)})
                     elif method == 'GET' and len(parts) == 4 and parts[2] == 'geometry-alternatives':

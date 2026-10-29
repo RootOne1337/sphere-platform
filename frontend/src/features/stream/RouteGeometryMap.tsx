@@ -1,6 +1,20 @@
 'use client';
-import {useEffect,useId,useMemo,useState,type ReactNode} from 'react';
+import {memo,useEffect,useId,useMemo,useRef,useState,type ReactNode} from 'react';
 import {buildRouteMap,colorRoutePoints,nearestRouteCamera,projectRouteCamera,routeCameraFrame,routeMapTurn,routeTraceColor,routeWarningColor,unwrapRouteAngle,type RouteMapCamera,type RoutePointColorMode} from './routeMapProjection';
+
+type CloudPoint={x:number;y:number;color:string};
+/** Keep tens of thousands of landmarks out of React's live input render path. */
+const RoutePointCloud=memo(function RoutePointCloud({points}:{points:CloudPoint[]}) {
+  const canvas=useRef<HTMLCanvasElement>(null);
+  useEffect(()=>{
+    const context=canvas.current?.getContext('2d');if(!context)return;
+    context.setTransform(2,0,0,2,0,0);context.clearRect(0,0,600,540);context.globalAlpha=.68;
+    for(const p of points){context.fillStyle=p.color;context.beginPath();context.arc(p.x,p.y,1.25,0,Math.PI*2);context.fill();}
+  },[points]);
+  return <foreignObject x={0} y={0} width={600} height={540} pointerEvents="none" aria-label="Облако восстановленных ориентиров" data-point-count={points.length}>
+    <canvas ref={canvas} width={1200} height={1080} className="h-full w-full"/>
+  </foreignObject>;
+});
 
 /** A bounded visual overview, not a map of traversable or metric space. */
 export default function RouteGeometryMap({cameras,points,motionWarning=false,selectedTicks=null,onSeekCamera,validTicks,sourcePreview,liveCamera=null,comparison}:{cameras:RouteMapCamera[];points:number[][];motionWarning?:boolean;selectedTicks?:number|null;onSeekCamera?:(ticks:number)=>void;validTicks?:ReadonlySet<number>;sourcePreview?:ReactNode;liveCamera?:RouteMapCamera|null;comparison?:ReactNode}) {
@@ -16,17 +30,22 @@ export default function RouteGeometryMap({cameras,points,motionWarning=false,sel
   useEffect(()=>{setManual(0);setFollow(true);},[cameras]);
   const effectiveMode=colorMode==='depth'&&!hasFrame?'distance':colorMode;
   const appearance=useMemo(()=>map&&depthCamera?colorRoutePoints(map.points.map(p=>points[p.sourceIndex]),depthCamera,effectiveMode):null,[map,points,depthCamera,effectiveMode]);
-  if(!map||!appearance)return <p className="p-3 text-xs text-muted-foreground">Недостаточно движения камеры для проекции ориентиров.</p>;
+  const layout=useMemo(()=>{
+    if(!map)return null;
+    const quantile=(values:number[],q:number)=>{const ordered=[...values].sort((a,b)=>a-b);return ordered[Math.floor((ordered.length-1)*q)];};
+    const bounds=(axis:'x'|'y')=>{const cloud=map.points.map(p=>p[axis]),trace=map.cameras.map(p=>p[axis]);
+      return [Math.min(...trace,cloud.length?quantile(cloud,.01):Infinity),Math.max(...trace,cloud.length?quantile(cloud,.99):-Infinity)];};
+    const [xmin,xmax]=bounds('x'),[ymin,ymax]=bounds('y'),cx=(xmin+xmax)/2,cy=(ymin+ymax)/2;
+    const radius=Math.max(1e-6,...map.cameras.map(p=>Math.hypot(p.x-cx,p.y-cy)),map.points.length?quantile(map.points.map(p=>Math.hypot(p.x-cx,p.y-cy)),.98):0);
+    const scale=240/radius,xy=(p:{x:number;y:number})=>({x:300+(p.x-cx)*scale,y:270-(p.y-cy)*scale});
+    return {xy,cloud:map.points.map(xy)};
+  },[map]);
+  const shown=useMemo(()=>layout&&appearance?layout.cloud.map((point,i)=>({...point,color:appearance.colors[i]}))
+    .filter(p=>p.x>=20&&p.x<=580&&p.y>=20&&p.y<=520):[],[layout,appearance]);
+  if(!map||!appearance||!layout)return <p className="p-3 text-xs text-muted-foreground">Недостаточно движения камеры для проекции ориентиров.</p>;
   const interactive=!!onSeekCamera&&!!validTicks;
   const seek=(index:number)=>{const camera=cameras[index];if(camera&&validTicks?.has(camera.ticks_90k))onSeekCamera?.(camera.ticks_90k);};
-  const quantile=(values:number[],q:number)=>{const ordered=[...values].sort((a,b)=>a-b);return ordered[Math.floor((ordered.length-1)*q)];};
-  const bounds=(axis:'x'|'y')=>{const cloud=map.points.map(p=>p[axis]),trace=map.cameras.map(p=>p[axis]);
-    return [Math.min(...trace,cloud.length?quantile(cloud,.01):Infinity),Math.max(...trace,cloud.length?quantile(cloud,.99):-Infinity)];};
-  const [xmin,xmax]=bounds('x'),[ymin,ymax]=bounds('y'),cx=(xmin+xmax)/2,cy=(ymin+ymax)/2;
-  const radius=Math.max(1e-6,...map.cameras.map(p=>Math.hypot(p.x-cx,p.y-cy)),map.points.length?quantile(map.points.map(p=>Math.hypot(p.x-cx,p.y-cy)),.98):0);
-  const scale=240/radius;
-  const xy=(p:{x:number;y:number})=>({x:300+(p.x-cx)*scale,y:270-(p.y-cy)*scale});
-  const shown=map.points.map((point,i)=>({...xy(point),color:appearance.colors[i]})).filter(p=>p.x>=20&&p.x<=580&&p.y>=20&&p.y<=520);
+  const {xy}=layout;
   const start=xy(map.cameras[0]),end=xy(map.cameras[map.cameras.length-1]),current=xy(map.cameras[active]),heading=map.headings[active];
   return <section aria-label="Обзор ориентиров и камер" className="rounded-xl border border-slate-700/60 bg-[#0b1422] p-4 text-slate-100">
     <div className="flex flex-wrap items-start justify-between gap-3"><div><p className="text-[10px] font-semibold uppercase tracking-[.16em] text-cyan-300">Карта прохода</p><h4 className="mt-1 text-sm font-semibold">Ориентиры и восстановленный путь камеры</h4><p className="mt-1 text-xs text-slate-400">{map.orientation==='camera'?'Оси первого ракурса: вперёд ↑ · вправо →':'Проекция PCA · ориентация относительно взгляда неизвестна'} · условные единицы</p></div><div className="flex flex-wrap items-center gap-3 text-xs text-slate-300"><span className="rounded-lg border border-slate-700 bg-slate-900 px-3 py-2 tabular-nums">{cameras.length} камер · {points.length.toLocaleString('ru')} точек</span><label className="flex items-center gap-2"><input type="checkbox" checked={highDensity} onChange={e=>setHighDensity(e.target.checked)}/>Больше точек</label></div></div>
@@ -37,7 +56,7 @@ export default function RouteGeometryMap({cameras,points,motionWarning=false,sel
       <rect x="0" y="0" width="600" height="540" fill={`url(#${gridId})`}/>
       <text x="16" y="24" fill="#94a3b8" fontSize="10" letterSpacing="1">{follow&&direction?'ТЕКУЩИЙ ВЗГЛЯД ↑':map.orientation==='camera'?'СТАРТОВЫЙ ВЗГЛЯД ↑ · ПРАВО →':'PCA · ОРИЕНТАЦИЯ НЕ ПРИВЯЗАНА'}</text>
       <g aria-label="Поворот схемы" data-angle-radians={angle} style={{transform:`rotate(${-angle*180/Math.PI}deg)`,transformOrigin:'50% 50%',transformBox:'view-box'}} className="transition-transform duration-150 ease-linear motion-reduce:transition-none">
-      {shown.map((p,i)=><circle key={i} cx={p.x} cy={p.y} r="1.25" fill={p.color} opacity=".68"/>)}
+      <RoutePointCloud points={shown}/>
       {map.segments.map((segment,i)=>{const a=xy(segment.a),b=xy(segment.b);return <g key={i}><line x1={a.x} y1={a.y} x2={b.x} y2={b.y} stroke="#07111e" strokeWidth="7"/>{motionWarning&&<line x1={a.x} y1={a.y} x2={b.x} y2={b.y} stroke={routeWarningColor} strokeWidth="5" strokeDasharray="3 6" opacity=".85"/>}<line x1={a.x} y1={a.y} x2={b.x} y2={b.y} stroke={routeTraceColor} strokeWidth="2.6" strokeLinecap="round"/></g>;})}
       {map.cameras.map((camera,i)=>{const p=xy(camera),enabled=interactive&&validTicks?.has(cameras[i].ticks_90k);return <g key={i}>{enabled?<g role="button" tabIndex={0} aria-label={`Показать исходный кадр ${i+1} · ${(cameras[i].ticks_90k/90000).toFixed(2)} с`} onClick={()=>seek(i)} onKeyDown={e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();seek(i);}}} className="cursor-pointer outline-none focus-visible:opacity-70"><circle cx={p.x} cy={p.y} r="10" fill="transparent"/><circle cx={p.x} cy={p.y} r={selected===i?5:2.4} fill={selected===i?'#ffffff':routeTraceColor}/></g>:<circle cx={p.x} cy={p.y} r="2.2" fill={routeTraceColor}/>}</g>;})}
       {selected!==null&&heading&&<line aria-label="Направление взгляда выбранной камеры" x1={current.x} y1={current.y} x2={current.x+heading.x*25} y2={current.y-heading.y*25} stroke="#f8fafc" strokeWidth="2" markerEnd={`url(#${arrowId})`} pointerEvents="none"/>}

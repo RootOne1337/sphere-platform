@@ -6,6 +6,7 @@ import type { DirectVideoBinding } from './directVideoProtocol';
 import { StreamSessionReporter, teachingStreamSample } from './streamSessionTelemetry';
 
 export type TeachingConnection = { close(): void; fresh(): boolean; binding(): DirectVideoBinding | null;
+  idleInputFresh?():boolean;
   endpoint(): DirectControlEndpoint | null; worker: Worker;
   observeControl?(state:'idle'|'opening'|'ready'|'closing'|'closed'|'fenced',reason?:string,rtt?:number):void;
   controlRttMs?():number|null; setExternalCapture?(enabled:boolean):void };
@@ -58,6 +59,9 @@ export async function connectTeaching(deviceId: string, token: string, video: HT
     const latest = externalCapture && lastEncoded ? lastEncoded : lastFrame;
     return !disposed && !faulted && !!binding && !!latest && performance.now() - latest < 250 && (externalCapture || !document.hidden);
   };
+  // Only an empty pedestrian input owner may wait through a short presentation
+  // gap. This grants no authority to send DOWN/MOVE or use an old pose.
+  const idleInputFresh=()=>!disposed&&!faulted&&!!binding&&!!lastFrame&&!document.hidden&&performance.now()-lastFrame<1000;
   const present = () => { frameId = video.requestVideoFrameCallback((_at, frame) => {
     if (disposed) return;
     if (!binding) { present(); return; }
@@ -141,7 +145,7 @@ export async function connectTeaching(deviceId: string, token: string, video: HT
       } else if (value.type !== 'stream_link_ready') throw Error();
     } catch { fault('invalid_capture_message'); }
   };
-  return { close, fresh, binding: () => binding, endpoint: () => endpoint, worker,
+  return { close, fresh, idleInputFresh, binding: () => binding, endpoint: () => endpoint, worker,
     setExternalCapture:(enabled)=>{externalCapture=enabled;lastEncoded=0;worker.postMessage({type:'external_capture',enabled});},
     controlRttMs:()=>controlRtt,
     observeControl:(state,reason,rtt)=>{controlState=state;

@@ -1,5 +1,12 @@
 import {fireEvent,render,screen} from '@testing-library/react';
 import RouteGeometryMap from '@/src/features/stream/RouteGeometryMap';
+const fills:string[]=[];
+beforeEach(()=>{
+  fills.length=0;
+  const context={setTransform:jest.fn(),clearRect:jest.fn(),globalAlpha:1,fillStyle:'',beginPath:jest.fn(),arc:jest.fn(),fill(){fills.push(String(this.fillStyle));}};
+  jest.spyOn(HTMLCanvasElement.prototype,'getContext').mockReturnValue(context as never);
+});
+afterEach(()=>jest.restoreAllMocks());
 
 test('shows actual counts and explicitly reports gaps and unknown road scale',()=>{
   render(<RouteGeometryMap cameras={[{center:[0,0,0],ticks_90k:0},{center:[1,0,0],ticks_90k:45000},
@@ -38,10 +45,12 @@ test('without verified source binding map stays read-only',()=>{
 test('point density can be increased without inventing more 3D points',()=>{
   const points=Array.from({length:6000},(_,i)=>[(i%50)/10,Math.floor(i/50)/10,0,255,255,255]);
   const view=render(<RouteGeometryMap cameras={[{center:[0,0,0],ticks_90k:0},{center:[1,0,0],ticks_90k:9000}]} points={points}/>);
-  const before=view.container.querySelectorAll('svg circle').length;
+  const cloud=()=>Number(screen.getByLabelText('Облако восстановленных ориентиров').getAttribute('data-point-count'));
+  const before=cloud();
   fireEvent.click(screen.getByRole('checkbox',{name:'Больше точек'}));
-  const after=view.container.querySelectorAll('svg circle').length;
+  const after=cloud();
   expect(after).toBeGreaterThan(before);expect(after).toBeLessThanOrEqual(points.length+3);
+  expect(view.container.querySelectorAll('svg circle').length).toBeLessThan(10);
 });
 
 test('route colors stay distinct from depth and warning and the selected camera retains its real heading',()=>{
@@ -55,7 +64,7 @@ test('route colors stay distinct from depth and warning and the selected camera 
   expect(view.container.querySelector('line[stroke="#22d3ee"]')).toBeInTheDocument();
   expect(view.container.querySelector('line[stroke="#fbbf24"]')).toBeInTheDocument();
   fireEvent.change(screen.getByLabelText('Цвет опорных точек'),{target:{value:'rgb'}});
-  expect(view.container.querySelector('circle[fill="rgb(240,120,50)"]')).toBeInTheDocument();
+  expect(fills).toContain('rgb(240,120,50)');
   expect(screen.queryByText(/Глубина вдоль взгляда/)).not.toBeInTheDocument();
 });
 

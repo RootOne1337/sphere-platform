@@ -30,10 +30,12 @@ export class TeachingContacts {
   private closePromise: Promise<boolean> | null = null;
   private closeAt = 0;
   private receiptRtt: number | null = null;
+  private failure: string | null = null;
   constructor(private endpoint: DirectControlEndpoint, private binding: DirectVideoBinding,
     private fresh: () => boolean, private journal: (event: TeachingInput) => void,
     private state: (state: 'opening' | 'ready' | 'closing' | 'closed' | 'failed', reason?: string) => void,
-    private observedRtt?: (milliseconds: number) => void) {
+    private observedRtt?: (milliseconds: number) => void,
+    private idleFresh?:()=>boolean) {
     if (!endpoint.sharedInput || endpoint.readyState !== 1) throw Error('shared_input_required');
     this.timer = setInterval(() => this.tick(), 25);
     this.remove = endpoint.listen(value => this.receipt(value));
@@ -45,6 +47,7 @@ export class TeachingContacts {
   }
   get isReady() { return this.ready && !this.closing && !this.ended; }
   get lastReceiptRttMs() { return this.receiptRtt; }
+  get failureReason() { return this.failure; }
   get isNeutral() { return !this.desired.size && !this.held.size && !this.pending && !this.queue.length; }
   hasContact(id: number) { return this.desired.has(id); }
   set(id: number, point: TeachingPoint | null) {
@@ -124,7 +127,8 @@ export class TeachingContacts {
     const now = performance.now();
     if (this.closing) { if (now - this.closeAt >= 2500) this.finish(false); return; }
     if (this.ended) return;
-    if (!this.fresh()) { this.fail('contact_video_stale'); return; }
+    const empty=!this.desired.size&&!this.held.size&&!this.queue.length&&(!this.pending||this.pending.action===4);
+    if (!this.fresh() && !(empty&&this.idleFresh?.())) { this.fail('contact_video_stale'); return; }
     if (this.endpoint.readyState !== 1) { this.fail('contact_channel_closed'); return; }
     if (this.pending && now - this.pendingAt >= 500) { this.fail('contact_ack_timeout'); return; }
     if (!this.ready && now - this.openedAt >= 6000) { this.fail('contact_ready_timeout'); return; }
@@ -135,7 +139,7 @@ export class TeachingContacts {
     try { this.journal(event); this.send({ type: 'touch_event', sequence: event.sequence,
       gesture: event.gesture, action: 4, x: 0, y: 0 }); } catch { this.fail('heartbeat_unknown'); }
   }
-  private fail(reason: string) { if (!this.ended && !this.closing) { this.state('failed', reason); void this.close(); } }
+  private fail(reason: string) { if (!this.ended && !this.closing) { this.failure=reason; this.state('failed', reason); void this.close(); } }
   close(): Promise<boolean> {
     if (this.closePromise) return this.closePromise;
     if (this.ended) return Promise.resolve(this.closedConfirmed);

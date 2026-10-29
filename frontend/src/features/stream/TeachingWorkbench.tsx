@@ -259,9 +259,12 @@ export function TeachingWorkbench({ deviceId, readOnly }: { deviceId: string; re
     let released=false,settle:(lease:WalkInputLease)=>void=()=>{};
     const opened=new Promise<WalkInputLease>(resolve=>{settle=resolve;});
     const lease:WalkInputLease={
-      active:()=>phaseRef.current==='piloting'&&controller.current===control&&connection.current===conn&&control.isReady&&conn.fresh()&&!signal.aborted,
+      active:()=>phaseRef.current==='piloting'&&controller.current===control&&connection.current===conn&&control.isReady
+        &&(conn.fresh()||conn.idleInputFresh?.()===true)&&!signal.aborted,
+      failure:()=>control.failureReason,
       set:vector=>{
         if(!lease.active())throw Error('walk_native_closed');
+        if(Math.hypot(...vector)>0&&!conn.fresh())throw Error('contact_video_stale');
         const {center,target}=walkingStickTarget(p,b,vector);
         if(target&&!control.hasContact(0))control.set(0,center);
         control.set(0,target);
@@ -277,7 +280,7 @@ export function TeachingWorkbench({ deviceId, readOnly }: { deviceId: string; re
       if(['failed','closed','closing'].includes(state))settle(lease);
       if(state==='failed')queueMicrotask(()=>{void stopCallback.current(reason??'walk_native_closed');});
       if(state==='closed'&&active(phaseRef.current)&&phaseRef.current!=='stopping'&&!expectedOwnerClose.current)queueMicrotask(()=>{void stopCallback.current('walk_native_closed');});
-    },rtt=>conn.observeControl?.('ready',undefined,rtt));
+    },rtt=>conn.observeControl?.('ready',undefined,rtt),()=>conn.idleInputFresh?.()===true);
     controller.current=control;
     const cancelled=()=>{settle(lease);void stopCallback.current();};
     signal.addEventListener('abort',cancelled,{once:true});

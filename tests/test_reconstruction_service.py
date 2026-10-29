@@ -310,3 +310,31 @@ def test_file_sharing_denial_is_not_reported_as_lost_job_credentials(jobs,monkey
         assert json.load(exc.value)=={'error':'local_file_unavailable_inspect_job_status'}
     finally:
         server.shutdown();server.server_close();thread.join(3)
+
+
+def test_walk_summaries_require_job_capability_and_never_overwrite_another_attempt(jobs):
+    job = create(jobs)
+    server = ThreadingHTTPServer(('127.0.0.1', 0), service.handler(jobs, 'http://127.0.0.1:3015', 3342))
+    thread = threading.Thread(target=server.serve_forever, daemon=True); thread.start()
+    body = dict(schema='sphere-walk-summary-v1', id='c'*32, clip='d'*32, release='closed',
+        stopReason='contact_video_stale', inputFailure='contact_video_stale', stopFrameAgeMs=281.7,
+        stopFrameSequence=1472, executionQualified=False, inputSummary=dict(submitted=2, applied=2, events=9),
+        stages=[], observations=[])
+    def request(key=None):
+        return urllib.request.Request(f'http://127.0.0.1:{server.server_port}/jobs/{job.name}/navigation/walk-report',
+            method='POST', data=json.dumps(body).encode(), headers={'Host':'127.0.0.1:3342',
+                'Origin':'http://127.0.0.1:3015','X-Sphere-Reconstruction':'1',**({'X-Job-Key':key} if key else {})})
+    try:
+        with pytest.raises(urllib.error.HTTPError) as error:
+            urllib.request.urlopen(request())
+        assert error.value.code == 403
+        assert not (job/'walk-reports').exists()
+        with urllib.request.urlopen(request('b'*64)) as response:
+            assert json.load(response)['state'] == 'saved'
+        body['stopReason'] = 'walk_manual_stop'
+        with pytest.raises(urllib.error.HTTPError) as error:
+            urllib.request.urlopen(request('b'*64))
+        assert error.value.code == 409
+        assert json.loads((job/'walk-reports'/('c'*32+'.json')).read_bytes())['stopReason'] == 'contact_video_stale'
+    finally:
+        server.shutdown();server.server_close();thread.join(3)

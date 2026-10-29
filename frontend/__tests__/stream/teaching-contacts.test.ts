@@ -2,17 +2,17 @@ import { TeachingContacts, stickPoint, type TeachingInput } from '@/src/features
 import type { DirectControlEndpoint } from '@/src/features/stream/directPointerTransport';
 
 const binding={captureEpoch:'00112233-4455-6677-8899-aabbccddeeff',width:960,height:540};
-function fixture(observedRtt?: (milliseconds:number)=>void) {
+function fixture(observedRtt?: (milliseconds:number)=>void,idleFresh?:()=>boolean) {
   const sent: Record<string,unknown>[]=[],journal:TeachingInput[]=[],states:string[]=[];
   let listener:(v:unknown)=>void=()=>{};let fresh=true;
   const endpoint:DirectControlEndpoint={session:'a'.repeat(32),sharedInput:true,readyState:1,bufferedAmount:0,
     capture:()=>binding,send:raw=>sent.push(JSON.parse(raw)),listen:fn=>{listener=fn;return()=>{};}};
-  const driver=new TeachingContacts(endpoint,binding,()=>fresh,event=>journal.push(event),(state,reason)=>states.push(reason??state),observedRtt);
+  const driver=new TeachingContacts(endpoint,binding,()=>fresh,event=>journal.push(event),(state,reason)=>states.push(reason??state),observedRtt,idleFresh);
   const envelope={session_id:endpoint.session,capture_epoch:binding.captureEpoch,contact_protocol:1,max_pointers:3,owner:'b'.repeat(32)};
   const receipt=(fields:Record<string,unknown>)=>listener({type:'shared_input_status',...envelope,device_uptime_ms:1000,...fields});
   const ready=()=>{listener({type:'touch_session',...envelope,frame_width:960,frame_height:540});receipt({sequence:0,gesture:0,action:4,pointer_id:-1,outcome:'ready'});};
   const ack=()=>{const p=sent.at(-1)!;receipt({sequence:p.sequence,gesture:p.gesture,action:p.action,pointer_id:p.pointer_id??-1,outcome:p.action===4?'alive':'applied'});};
-  return {driver,sent,journal,states,ready,receipt,ack,stale:()=>{fresh=false;}};
+  return {driver,sent,journal,states,ready,receipt,ack,stale:()=>{fresh=false;},resume:()=>{fresh=true;}};
 }
 beforeEach(()=>jest.useFakeTimers());afterEach(()=>{jest.clearAllTimers();jest.useRealTimers();});
 test('W remains held while camera and action acquire independent contacts; one physical gesture',()=>{
@@ -55,6 +55,28 @@ test('lost frames revoke all contacts; unanswered close stays unknown and is nev
   expect(f.states).toContain('contact_video_stale');const close=f.driver.close();jest.advanceTimersByTime(2600);
   await expect(close).resolves.toBe(false);expect(f.journal.at(-1)?.outcome).toBe('unknown');
   f.driver.set(0,{x:100,y:350});expect(f.sent.filter(e=>e.action===0)).toHaveLength(1);
+});
+
+test('an empty pedestrian owner can wait through a short gap, but cannot send stale DOWN',()=>{
+  const f=fixture(undefined,()=>true);f.ready();f.stale();jest.advanceTimersByTime(325);
+  expect(f.sent.at(-1)).toMatchObject({action:4});f.ack();
+  expect(f.driver.isReady).toBe(true);expect(f.states).not.toContain('contact_video_stale');
+  f.driver.set(0,{x:100,y:350});
+  expect(f.driver.failureReason).toBe('stale_contact');
+  expect(f.sent.filter(e=>e.type==='touch_contact_event')).toHaveLength(0);
+});
+
+test('empty owner resumes only on new video and still closes when the idle allowance ends',()=>{
+  let allowed=true;const f=fixture(undefined,()=>allowed);f.ready();f.stale();jest.advanceTimersByTime(325);f.ack();
+  f.resume();f.driver.set(0,{x:100,y:350});f.ack();f.driver.set(0,null);f.ack();
+  f.stale();allowed=false;jest.advanceTimersByTime(25);
+  expect(f.driver.failureReason).toBe('contact_video_stale');expect(f.sent.at(-1)).toEqual({type:'touch_close'});
+});
+
+test('idle allowance never protects held or unconfirmed movement from stale video',()=>{
+  const f=fixture(undefined,()=>true);f.ready();f.driver.set(0,{x:100,y:350});
+  f.stale();jest.advanceTimersByTime(25);
+  expect(f.driver.failureReason).toBe('contact_video_stale');expect(f.sent.at(-1)).toEqual({type:'touch_close'});
 });
 test('legacy ready cannot masquerade as three-contact support',()=>{
   const f=fixture();f.receipt({sequence:0,outcome:'ready',contact_protocol:undefined});

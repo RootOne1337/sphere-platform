@@ -2,13 +2,18 @@ import {act,fireEvent,render,screen,waitFor} from '@testing-library/react';
 import {WalkingRoutePilot} from '@/src/features/stream/WalkingRoutePilot';
 import {reconstructionRequest} from '@/src/features/stream/reconstructionClient';
 import type {WalkInputLease} from '@/src/features/stream/walkPilot';
+import {TeachingContacts,type TeachingInput} from '@/src/features/stream/teachingContacts';
+import {saveRouteDebugReport} from '@/src/features/stream/routeDebugStorage';
 jest.mock('@/src/features/stream/reconstructionClient',()=>({...jest.requireActual('@/src/features/stream/reconstructionClient'),reconstructionRequest:jest.fn()}));
+jest.mock('@/src/features/stream/routeDebugStorage',()=>({saveRouteDebugReport:jest.fn(async()=>({state:'saved'}))}));
 const job={id:'a'.repeat(32),key:'b'.repeat(64)},binding={captureEpoch:'e'.repeat(32),width:960,height:540};
 let frames:VideoFrameRequestCallback[],lease:WalkInputLease,open:jest.Mock,busy:jest.Mock,element:HTMLVideoElement;
+let videoRef:{current:HTMLVideoElement};
 beforeEach(()=>{
   jest.clearAllMocks();frames=[];busy=jest.fn();
   lease={active:()=>true,set:jest.fn(),close:jest.fn(async()=>true)};open=jest.fn(async()=>lease);
   element={requestVideoFrameCallback:(f:VideoFrameRequestCallback)=>{frames.push(f);return frames.length;},cancelVideoFrameCallback:jest.fn()} as unknown as HTMLVideoElement;
+  videoRef={current:element};
   Object.defineProperty(crypto,'randomUUID',{configurable:true,value:()=> 'cccccccc-cccc-cccc-cccc-cccccccccccc'});
   Object.defineProperty(crypto,'subtle',{configurable:true,value:{digest:async()=>new Uint8Array(32).fill(170).buffer}});
   jest.spyOn(HTMLCanvasElement.prototype,'getContext').mockReturnValue({clearRect:jest.fn(),drawImage:jest.fn()} as never);
@@ -25,7 +30,7 @@ beforeEach(()=>{
   });
 });
 afterEach(()=>jest.restoreAllMocks());
-const view=(extra:Record<string,unknown>={})=>render(<WalkingRoutePilot job={job} clip="clip" video={{current:element}} ready binding={binding} assetsReady input={{issue:null,open}} observerBusy={false} onBusyChange={busy} {...extra}/>);
+const view=(extra:Record<string,unknown>={})=>render(<WalkingRoutePilot job={job} clip="clip" video={videoRef} ready binding={binding} assetsReady input={{issue:null,open}} observerBusy={false} onBusyChange={busy} {...extra}/>);
 function fresh(){act(()=>frames.shift()!(performance.now(),{} as VideoFrameCallbackMetadata));}
 function start(){fresh();fireEvent.click(screen.getByRole('checkbox',{name:/Персонаж пешком/}));fireEvent.click(screen.getByRole('button',{name:'Запустить пеший тест · 60 с'}));}
 
@@ -80,8 +85,57 @@ test('an expired bound result neutralizes input and never applies its vector',as
   jest.mocked(reconstructionRequest).mockImplementation(async(...args)=>{
     const value=await original(...args);if(args[0].endsWith('/observe'))now=1300;return value;
   });
-  view();start();await screen.findByText('Освобождение: CLOSED');
+  view();start();await screen.findByText(/Стик отпущен: ждём три свежих решения/);now=2400;
+  await screen.findByText('Освобождение: CLOSED');
   expect(jest.mocked(lease.set).mock.calls.every(([v])=>v[0]===0&&v[1]===0)).toBe(true);clock.mockRestore();
+});
+
+test('fresh pose plans go through the real contact protocol and Android applied receipts',async()=>{
+  const messages:Record<string,unknown>[]=[],events:TeachingInput[]=[];
+  let receive:(value:unknown)=>void=()=>{};
+  const envelope={session_id:'f'.repeat(32),capture_epoch:binding.captureEpoch,contact_protocol:1,max_pointers:3,owner:'d'.repeat(32),device_uptime_ms:1000};
+  const endpoint={session:envelope.session_id,sharedInput:true,readyState:1,bufferedAmount:0,capture:()=>binding,
+    listen:(callback:(value:unknown)=>void)=>{receive=callback;return()=>{};},
+    send:(raw:string)=>{const v=JSON.parse(raw);messages.push(v);queueMicrotask(()=>{
+      if(v.type==='touch_open'){receive({type:'touch_session',...envelope,frame_width:960,frame_height:540});receive({type:'shared_input_status',...envelope,sequence:0,gesture:0,action:4,pointer_id:-1,outcome:'ready'});}
+      else receive({type:'shared_input_status',...envelope,sequence:v.sequence??0,gesture:v.gesture??0,action:v.type==='touch_close'?3:v.action,pointer_id:v.pointer_id??-1,outcome:v.type==='touch_close'?'closed':v.action===4?'alive':'applied'});
+    });}};
+  open.mockImplementation(async(_signal,journal)=>{
+    let resolve:()=>void=()=>{};const ready=new Promise<void>(r=>{resolve=r;});
+    const control=new TeachingContacts(endpoint,binding,()=>true,e=>{events.push(e);journal(e);},state=>{if(state==='ready')resolve();});
+    await ready;
+    return {active:()=>control.isReady,set:(v:[number,number])=>{
+      if(Math.hypot(...v)===0){control.set(0,null);return;}
+      if(!control.hasContact(0))control.set(0,{x:144,y:442});
+      control.set(0,{x:Math.round(144+v[0]*65),y:Math.round(442+v[1]*65)});
+    },close:()=>control.close()};
+  });
+  view();start();await waitFor(()=>expect(events.filter(e=>e.stage==='receipt'&&e.action===2&&e.outcome==='applied')).toHaveLength(1));
+  expect(messages.filter(e=>e.type==='touch_contact_event').map(e=>[e.action,e.pointer_id])).toEqual([[0,0],[2,0]]);
+  expect(messages.find(e=>e.action===2)).toMatchObject({x:147,y:429});
+  fireEvent.click(screen.getByRole('button',{name:'Стоп пешего теста · Esc'}));
+  await screen.findByText('Освобождение: CLOSED');
+  expect(screen.getByLabelText('Подтверждение движения')).toHaveTextContent('Android применил: 2');
+});
+
+test('temporary readiness sampling does not reset actual source frames or stop a fresh run',async()=>{
+  const rendered=view();start();await waitFor(()=>expect(lease.set).toHaveBeenCalled());
+  rendered.rerender(<WalkingRoutePilot job={job} clip="clip" video={videoRef} ready={false} binding={binding} assetsReady input={{issue:null,open}} observerBusy={false} onBusyChange={busy}/>);
+  fresh();await act(async()=>{await new Promise(r=>setTimeout(r,35));});
+  expect(lease.close).not.toHaveBeenCalled();
+  fireEvent.keyDown(window,{code:'Escape'});await screen.findByText('Освобождение: CLOSED');
+});
+
+test('archives the stop-time frame count and exact native failure instead of later reset state',async()=>{
+  let complete:(value:boolean)=>void=()=>{};lease.close=jest.fn(()=>new Promise(r=>{complete=r;}));
+  lease.failure=()=> 'contact_video_stale';
+  view({scope:'e'.repeat(32)});start();await waitFor(()=>expect(lease.set).toHaveBeenCalled());
+  fresh();const framesBeforeStop=2;
+  fireEvent.keyDown(window,{code:'Escape'});fresh();
+  await act(async()=>{complete(true);});await screen.findByText('Освобождение: CLOSED');
+  await waitFor(()=>expect(saveRouteDebugReport).toHaveBeenCalled());
+  expect(jest.mocked(saveRouteDebugReport).mock.calls.at(-1)?.[3]).toMatchObject({stopFrameSequence:framesBeforeStop,stopReason:'contact_video_stale',inputFailure:'contact_video_stale'});
+  expect(screen.getByRole('status')).toHaveTextContent('браузер не подтвердил новый видеокадр');
 });
 
 test('source frames are visible before a plan arrives and stopping preserves a source preview',async()=>{
