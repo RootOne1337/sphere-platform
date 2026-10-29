@@ -5,11 +5,11 @@ import {Button} from '@/components/ui/button';
 import Image from 'next/image';
 import {reconstructionRequest,type ReconstructionJob} from './reconstructionClient';
 import {freshNavigationFrame,navigationReply,paintNavigation,type LiveRouteObservation} from './routeNavigation';
-import {readWalkPlan,walkReasonLabel,type WalkInputControl,type WalkInputLease} from './walkPilot';
+import {readWalkPlan,walkReasonLabel,waitForFreshWalkSource,type WalkInputControl,type WalkInputLease} from './walkPilot';
 import type {TeachingInput} from './teachingContacts';
 import {saveRouteDebugReport} from './routeDebugStorage';
 import {RouteDebugArchive} from './RouteDebugArchive';
-import {WalkRunDiagnostics,walkInputSummary} from './walkRunDiagnostics';
+import {WalkRunDiagnostics,walkInputSummary,walkCameraInputSummary} from './walkRunDiagnostics';
 import {WalkCameraServo,type CameraStep} from './walkCamera';
 
 type Binding={captureEpoch:string;width:number;height:number};
@@ -84,7 +84,7 @@ export function WalkingRoutePilot({job,clip,video,ready,binding,assetsReady,inpu
       if(!released)setNotice('Освобождение ввода НЕ подтверждено. Новый запуск заблокирован; переподключите поток.');
       const report={schema:'sphere-walk-debug-v1',scope:'supervised_camera_trace_pilot',clip:active.clip,job:active.job.id,
           executionQualified:false,metricAccuracyKnown:false,sourceCaptureAgeKnown:false,release:released?'closed':'unknown',stopReason:reason,
-          stopFrameAgeMs:frameAge,stopFrameSequence:frameSequence,inputFailure,startMode:active.startMode,camera:active.camera?.snapshot()??null,stages:active.trace.snapshot(),
+          stopFrameAgeMs:frameAge,stopFrameSequence:frameSequence,inputFailure,startMode:active.startMode,camera:active.camera?.snapshot()??null,cameraInput:walkCameraInputSummary(inputs.current),stages:active.trace.snapshot(),
           observations:history.current.map(row=>({...row,center:row.center?[...row.center]:null,rotation:row.rotation?[...row.rotation]:null})),nativeInputs:inputs.current.map(row=>({...row})),nativeInputTailLimit:4096};
       lastReport.current=report;
       if(active.scope&&active.clip){
@@ -94,7 +94,7 @@ export function WalkingRoutePilot({job,clip,video,ready,binding,assetsReady,inpu
             saveRouteDebugReport(active.scope!,active.clip!,active.id,report),
             reconstructionRequest(`/jobs/${active.job.id}/navigation/walk-report`,active.job,{method:'POST',body:JSON.stringify({
               schema:'sphere-walk-summary-v1',id:active.id,clip:active.clip,release:report.release,stopReason:reason,inputFailure,startMode:active.startMode,
-              stopFrameAgeMs:frameAge,stopFrameSequence:frameSequence,executionQualified:false,camera:report.camera,
+              stopFrameAgeMs:frameAge,stopFrameSequence:frameSequence,executionQualified:false,camera:report.camera,cameraInput:report.cameraInput,
               inputSummary:{...walkInputSummary(inputs.current),events:inputs.current.length},stages:report.stages,
               observations:report.observations.map(({elapsedMs,sequence,ageMs,computeMs,state,reason,poseState,inliers,progress,segment,medianErrorPx,crossTrackUnits})=>({elapsedMs,sequence,ageMs,computeMs,state,reason,poseState,inliers,progress,segment,medianErrorPx,crossTrackUnits})),
             })}).then(response=>response.json()).then(value=>{if(!['saved','existing'].includes(value.state)||value.physicalActions!==0)throw Error('walk_report_unconfirmed');}),
@@ -137,6 +137,7 @@ export function WalkingRoutePilot({job,clip,video,ready,binding,assetsReady,inpu
       const now=performance.now(),source=current.current;
       if(source.binding?.captureEpoch!==active.binding.captureEpoch)void stopRef.current('walk_stream_changed');
       else if(!freshNavigationFrame(recent.current.at,now)){
+        if(!active.lease&&!active.moving&&now-recent.current.at<1000)return;
         // A moving/uncertain native contact still closes immediately in
         // TeachingContacts. Only an empty owner can wait for new video.
         try{if(active.moving||now-recent.current.at>=1000||!neutralUntilFresh(active,'source_gap'))void stopRef.current('walk_stream_changed');}
@@ -168,6 +169,9 @@ export function WalkingRoutePilot({job,clip,video,ready,binding,assetsReady,inpu
       if(!alive())return;
       if(state.id!==active.id||state.phase!=='observing'||state.mode!=='foot_camera_trace_v1'||state.physicalActions!==0||state.maxSeconds!==60||state.startMode!==active.startMode)throw Error('walk_start_unconfirmed');
       if(active.camera?state.cameraTracking!==true:state.cameraTracking===true)throw Error('walk_start_unconfirmed');
+      if(!freshNavigationFrame(recent.current.at,performance.now()))setNotice('Ждём свежий кадр перед открытием ввода. Касаний ещё нет.');
+      if(!await waitForFreshWalkSource(()=>freshNavigationFrame(recent.current.at,performance.now()),signal))throw Error('walk_source_not_ready');
+      if(!alive())return;
       active.trace.add('input_open',performance.now());
       active.opening=input.open(signal,event=>{if(inputs.current.length>=4096)inputs.current.shift();inputs.current.push(event);
         if(performance.now()-lastEventPaint.current>=200){lastEventPaint.current=performance.now();setEvents(inputs.current.length);}});
@@ -239,6 +243,9 @@ export function WalkingRoutePilot({job,clip,video,ready,binding,assetsReady,inpu
           active.trace.add('input_command',performance.now(),{sequence:frame.sequence,ageMs:performance.now()-frame.at});
           if(cameraStep?.fraction!=null&&active.camera&&lease.look){
             const camera=active.camera;
+            if(active.permitUntil-performance.now()<170){
+              camera.cancelUnsentStroke();setNotice('Стик отпущен: ждём свежий кадр с запасом времени для свайпа камеры.');return;
+            }
             active.trace.add('camera_command',performance.now(),{sequence:frame.sequence,reason:cameraStep.reason});
             void lease.look(cameraStep.fraction,active.permitUntil).then(applied=>{
               if(!alive())return;
@@ -274,6 +281,8 @@ export function WalkingRoutePilot({job,clip,video,ready,binding,assetsReady,inpu
   };
   const last=samples.at(-1);
   const inputProgress=walkInputSummary(inputs.current);
+  const cameraProgress=walkCameraInputSummary(inputs.current);
+  const cameraFeedback=(run.current?.camera?.snapshot()??lastReport.current?.camera as ReturnType<WalkCameraServo['snapshot']>|null)?.feedback?.at(-1);
   return <section aria-label="Пеший тест маршрута" className="space-y-3 rounded-2xl border border-amber-500/30 bg-amber-500/5 p-4">
     <div className="flex items-center gap-2"><Footprints size={19} className="text-amber-500"/><h3 className="font-semibold">Пеший тест · живой стик</h3><span className="ml-auto text-xs text-muted-foreground">до 60 с · до 35% стика</span></div>
     <p className="text-xs leading-5 text-muted-foreground">По свежим ориентирам выбираем ближайшую цель на записанном пути камеры. При краткой потере позиции стик отпускается: до 2 секунд ждём три подтверждения рядом с последней позицией, максимум три раза за тест. Устаревший кадр, разрыв потока, скачок или отсутствие прогресса останавливают тест. Объезд препятствий не реализован, точность в метрах ещё не измерена.</p>
@@ -293,6 +302,8 @@ export function WalkingRoutePilot({job,clip,video,ready,binding,assetsReady,inpu
       <p className="rounded-lg border p-3">Команды стику: <strong>{inputProgress.submitted}</strong></p>
       <p className="rounded-lg border p-3">Android применил: <strong>{inputProgress.applied}</strong></p>
     </div>
+    {cameraEnabled&&<p aria-label="Подтверждение камеры" className="rounded-lg border p-3 text-xs">Камера: Android подтвердил <strong>{cameraProgress.strokesApplied} / {cameraProgress.strokesSubmitted}</strong> жестов{cameraProgress.lastDistancePx!==null&&` · последний ${cameraProgress.lastDistancePx} px / ${cameraProgress.lastDurationMs?.toFixed(0)} мс`}. Подтверждение касания и изменение ракурса проверяются отдельно.</p>}
+    {cameraEnabled&&cameraFeedback&&<p className="text-xs text-muted-foreground">Отклик по ориентирам: {(cameraFeedback.turnRadians*180/Math.PI).toFixed(2)}° · угол до пути: {(cameraFeedback.yawAfter*180/Math.PI).toFixed(1)}°.</p>}
     {!busy&&history.current.some(row=>row.poseState==='localized')&&inputProgress.submitted===0&&<p className="text-xs text-amber-500">Место узнано, но команда движения не выдавалась. Это не ошибка подтверждения Android; причина остановки указана выше.</p>}
     {!busy&&inputProgress.submitted>0&&inputProgress.applied===0&&<p className="text-xs text-amber-500">Команда стику отправлена, но Android ещё не подтвердил касание. Этот запуск не подтвердил движение по маршруту.</p>}
     <p className="text-[11px] text-muted-foreground">{savedDebug}</p>

@@ -16,15 +16,18 @@ function fixture(observedRtt?: (milliseconds:number)=>void,idleFresh?:()=>boolea
 }
 beforeEach(()=>jest.useFakeTimers());afterEach(()=>{jest.clearAllTimers();jest.useRealTimers();});
 test('automatic horizontal stroke waits for each native receipt and preserves Y exactly',async()=>{
-  const f=fixture();f.ready();const stroke=f.driver.horizontalStroke({x:700,y:200},710,performance.now()+200);
+  const f=fixture();f.ready();const stroke=f.driver.horizontalStroke({x:700,y:200},720,performance.now()+230);
   expect(f.sent.at(-1)).toMatchObject({pointer_id:1,action:0,x:700,y:200});
-  f.ack();expect(f.sent.at(-1)).toMatchObject({pointer_id:1,action:2,x:710,y:200});
-  f.ack();expect(f.sent.at(-1)).toMatchObject({pointer_id:1,action:1,x:710,y:200});
+  f.ack();expect(f.sent.filter(e=>e.action===2)).toHaveLength(0);
+  for(const x of [705,710,715,720]){
+    jest.advanceTimersByTime(24);expect(f.sent.at(-1)).toMatchObject({pointer_id:1,action:2,x,y:200});f.ack();
+  }
+  jest.advanceTimersByTime(24);expect(f.sent.at(-1)).toMatchObject({pointer_id:1,action:1,x:720,y:200});
   f.ack();await expect(stroke).resolves.toBe(true);expect(f.driver.isNeutral).toBe(true);
 });
 test('an expired camera permit cannot emit MOVE even when DOWN was applied',async()=>{
-  const f=fixture();f.ready();const stroke=f.driver.horizontalStroke({x:700,y:200},710,performance.now()+100);
-  jest.advanceTimersByTime(110);f.ack();await expect(stroke).resolves.toBe(false);
+  const f=fixture();f.ready();const stroke=f.driver.horizontalStroke({x:700,y:200},710,performance.now()+200);
+  jest.advanceTimersByTime(210);f.ack();await expect(stroke).resolves.toBe(false);
   expect(f.driver.failureReason).toBe('camera_stroke_expired');
   expect(f.sent.filter(e=>e.type==='touch_contact_event'&&e.action===2)).toHaveLength(0);
 });
@@ -39,6 +42,23 @@ test('automatic camera refuses a held stick or an overlong swipe',async()=>{
   f.driver.set(0,null);f.ack();
   await expect(f.driver.horizontalStroke({x:700,y:200},800,performance.now()+200)).resolves.toBe(false);
   expect(f.sent.filter(e=>e.pointer_id===1)).toHaveLength(0);
+});
+test('camera requires time for a real drag and Stop cancels already scheduled movement',async()=>{
+  const f=fixture();f.ready();
+  await expect(f.driver.horizontalStroke({x:700,y:200},720,performance.now()+100)).resolves.toBe(false);
+  expect(f.sent.filter(e=>e.type==='touch_contact_event')).toHaveLength(0);
+  const stroke=f.driver.horizontalStroke({x:700,y:200},720,performance.now()+230);f.ack();void f.driver.close();
+  jest.advanceTimersByTime(150);await expect(stroke).resolves.toBe(false);
+  expect(f.sent.filter(e=>e.action===2)).toHaveLength(0);
+});
+test('pixel rounding in a tiny drag cannot leave the gesture stuck between identical coordinates',async()=>{
+  const f=fixture();f.ready();const stroke=f.driver.horizontalStroke({x:700,y:200},702,performance.now()+230);f.ack();
+  for(let i=0;i<5;i++){
+    jest.advanceTimersByTime(24);
+    const last=f.sent.at(-1)!;
+    if(last.type==='touch_contact_event'&&f.journal.filter(e=>e.stage==='receipt').at(-1)?.sequence!==last.sequence)f.ack();
+  }
+  await expect(stroke).resolves.toBe(true);expect(f.driver.isNeutral).toBe(true);
 });
 test('W remains held while camera and action acquire independent contacts; one physical gesture',()=>{
   const f=fixture();f.ready();f.driver.set(0,{x:100,y:350});f.ack();

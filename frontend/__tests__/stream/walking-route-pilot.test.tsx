@@ -49,7 +49,7 @@ test('camera pulse is a separate acknowledged operation while the movement stick
   });
   lease.canLook=()=>true;lease.look=jest.fn(async()=>true);
   view({input:{issue:null,cameraIssue:null,open}});start();
-  await waitFor(()=>expect(lease.look).toHaveBeenCalledWith(.004,1250));
+  await waitFor(()=>expect(lease.look).toHaveBeenCalledWith(.018,1250));
   expect(jest.mocked(lease.set).mock.calls.every(([v])=>Math.hypot(...v)===0)).toBe(true);
   expect(screen.getByRole('status')).toHaveTextContent(/проверяем отклик/);
   fireEvent.keyDown(window,{code:'Escape'});await screen.findByText('Освобождение: CLOSED');
@@ -62,6 +62,21 @@ test('an old service cannot silently open camera-enabled input without acknowled
   });
   view({input:{issue:null,cameraIssue:null,open}});start();
   await screen.findByText('Освобождение: CLOSED');expect(open).not.toHaveBeenCalled();
+});
+test('a short startup video gap waits for new presentation before opening Android input',async()=>{
+  let now=1000;const clock=jest.spyOn(performance,'now').mockImplementation(()=>now);
+  const original=jest.mocked(reconstructionRequest).getMockImplementation()!;
+  let settle:(response:Response)=>void=()=>{};
+  jest.mocked(reconstructionRequest).mockImplementation(async(...args)=>args[0].endsWith('/walk-start')?
+    new Promise(resolve=>{settle=resolve;}):original(...args));
+  try{
+    view();start();await waitFor(()=>expect(reconstructionRequest).toHaveBeenCalled());
+    now=1320;await act(async()=>{settle(await original(`/jobs/${job.id}/navigation/walk-start`,job,{body:JSON.stringify({startMode:'recognized_route',cameraTracking:false})}));});
+    await screen.findByText('Ждём свежий кадр перед открытием ввода. Касаний ещё нет.');
+    expect(open).not.toHaveBeenCalled();now=1350;fresh();
+    await waitFor(()=>expect(open).toHaveBeenCalledTimes(1));
+    fireEvent.keyDown(window,{code:'Escape'});await screen.findByText('Освобождение: CLOSED');
+  }finally{clock.mockRestore();}
 });
 
 test('mount, confirmation and map readiness never themselves open native input',()=>{

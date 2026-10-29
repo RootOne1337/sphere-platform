@@ -1,0 +1,2918 @@
+{
+  "schema": "sphere-camera-deadzone-simulation-v1",
+  "baselineRevision": "5f78eb4d",
+  "baselineSha256": "e3c6e3a6ee50fed6bc7bedf880804eb48c7af755b306fd0eb6c972c9ab4fd04a",
+  "candidateSha256": "80858e17ac0343555e38ed858bbe902b1fcc4df84dd0a148c7b64ca0ea96430c",
+  "physicalActions": 0,
+  "liveGame": false,
+  "syntheticDeadZone": true,
+  "realPureServo": true,
+  "nativeDurationIsModel": true,
+  "baselineAligned": 6,
+  "candidateAligned": 36,
+  "total": 36,
+  "cases": [
+    {
+      "parameters": {
+        "shortSide": 540,
+        "slopPx": 8,
+        "gain": -12,
+        "goal": -0.6
+      },
+      "baseline": {
+        "aligned": false,
+        "reason": "walk_camera_response_not_observed",
+        "errorRadians": -0.6,
+        "pulses": [
+          {
+            "pixels": 2,
+            "effectRadians": 0,
+            "durationMs": 30
+          },
+          {
+            "pixels": 4,
+            "effectRadians": 0,
+            "durationMs": 30
+          }
+        ],
+        "summary": {
+          "gainRadiansPerShortSide": null,
+          "pulses": 2,
+          "calibrationAttempts": 2,
+          "terminal": "walk_camera_response_not_observed"
+        }
+      },
+      "candidate": {
+        "aligned": true,
+        "reason": "walk_camera_aligned",
+        "errorRadians": -0.0444444444444444,
+        "pulses": [
+          {
+            "pixels": 10,
+            "effectRadians": -0.044444444444444446,
+            "durationMs": 130
+          },
+          {
+            "pixels": 22,
+            "effectRadians": -0.3111111111111111,
+            "durationMs": 130
+          },
+          {
+            "pixels": 17,
+            "effectRadians": -0.2,
+            "durationMs": 130
+          }
+        ],
+        "summary": {
+          "gainRadiansPerShortSide": -4.429012345679013,
+          "pulses": 3,
+          "calibrationAttempts": 1,
+          "terminal": null,
+          "minimumFraction": 0.012,
+          "quietResponses": 0
+        }
+      }
+    },
+    {
+      "parameters": {
+        "shortSide": 540,
+        "slopPx": 8,
+        "gain": -12,
+        "goal": 0.6
+      },
+      "baseline": {
+        "aligned": false,
+        "reason": "walk_camera_response_not_observed",
+        "errorRadians": 0.6,
+        "pulses": [
+          {
+            "pixels": 2,
+            "effectRadians": 0,
+            "durationMs": 30
+          },
+          {
+            "pixels": 4,
+            "effectRadians": 0,
+            "durationMs": 30
+          }
+        ],
+        "summary": {
+          "gainRadiansPerShortSide": null,
+          "pulses": 2,
+          "calibrationAttempts": 2,
+          "terminal": "walk_camera_response_not_observed"
+        }
+      },
+      "candidate": {
+        "aligned": true,
+        "reason": "walk_camera_aligned",
+        "errorRadians": 0.1333333333333333,
+        "pulses": [
+          {
+            "pixels": 10,
+            "effectRadians": -0.044444444444444446,
+            "durationMs": 130
+          },
+          {
+            "pixels": -22,
+            "effectRadians": 0.3111111111111111,
+            "durationMs": 130
+          },
+          {
+            "pixels": -17,
+            "effectRadians": 0.2,
+            "durationMs": 130
+          }
+        ],
+        "summary": {
+          "gainRadiansPerShortSide": -4.429012345679012,
+          "pulses": 3,
+          "calibrationAttempts": 1,
+          "terminal": null,
+          "minimumFraction": 0.012,
+          "quietResponses": 0
+        }
+      }
+    },
+    {
+      "parameters": {
+        "shortSide": 540,
+        "slopPx": 8,
+        "gain": -12,
+        "goal": 1.2
+      },
+      "baseline": {
+        "aligned": false,
+        "reason": "walk_camera_response_not_observed",
+        "errorRadians": 1.2,
+        "pulses": [
+          {
+            "pixels": 2,
+            "effectRadians": 0,
+            "durationMs": 30
+          },
+          {
+            "pixels": 4,
+            "effectRadians": 0,
+            "durationMs": 30
+          }
+        ],
+        "summary": {
+          "gainRadiansPerShortSide": null,
+          "pulses": 2,
+          "calibrationAttempts": 2,
+          "terminal": "walk_camera_response_not_observed"
+        }
+      },
+      "candidate": {
+        "aligned": true,
+        "reason": "walk_camera_aligned",
+        "errorRadians": 0.0888888888888888,
+        "pulses": [
+          {
+            "pixels": 10,
+            "effectRadians": -0.044444444444444446,
+            "durationMs": 130
+          },
+          {
+            "pixels": -22,
+            "effectRadians": 0.3111111111111111,
+            "durationMs": 130
+          },
+          {
+            "pixels": -17,
+            "effectRadians": 0.2,
+            "durationMs": 130
+          },
+          {
+            "pixels": -15,
+            "effectRadians": 0.15555555555555556,
+            "durationMs": 130
+          },
+          {
+            "pixels": -14,
+            "effectRadians": 0.13333333333333333,
+            "durationMs": 130
+          },
+          {
+            "pixels": -13,
+            "effectRadians": 0.1111111111111111,
+            "durationMs": 130
+          },
+          {
+            "pixels": -14,
+            "effectRadians": 0.13333333333333333,
+            "durationMs": 130
+          },
+          {
+            "pixels": -13,
+            "effectRadians": 0.1111111111111111,
+            "durationMs": 130
+          }
+        ],
+        "summary": {
+          "gainRadiansPerShortSide": -4.840651207758608,
+          "pulses": 8,
+          "calibrationAttempts": 1,
+          "terminal": null,
+          "minimumFraction": 0.012,
+          "quietResponses": 0
+        }
+      }
+    },
+    {
+      "parameters": {
+        "shortSide": 540,
+        "slopPx": 8,
+        "gain": 12,
+        "goal": -0.6
+      },
+      "baseline": {
+        "aligned": false,
+        "reason": "walk_camera_response_not_observed",
+        "errorRadians": -0.6,
+        "pulses": [
+          {
+            "pixels": 2,
+            "effectRadians": 0,
+            "durationMs": 30
+          },
+          {
+            "pixels": 4,
+            "effectRadians": 0,
+            "durationMs": 30
+          }
+        ],
+        "summary": {
+          "gainRadiansPerShortSide": null,
+          "pulses": 2,
+          "calibrationAttempts": 2,
+          "terminal": "walk_camera_response_not_observed"
+        }
+      },
+      "candidate": {
+        "aligned": true,
+        "reason": "walk_camera_aligned",
+        "errorRadians": -0.1333333333333333,
+        "pulses": [
+          {
+            "pixels": 10,
+            "effectRadians": 0.044444444444444446,
+            "durationMs": 130
+          },
+          {
+            "pixels": -22,
+            "effectRadians": -0.3111111111111111,
+            "durationMs": 130
+          },
+          {
+            "pixels": -17,
+            "effectRadians": -0.2,
+            "durationMs": 130
+          }
+        ],
+        "summary": {
+          "gainRadiansPerShortSide": 4.429012345679012,
+          "pulses": 3,
+          "calibrationAttempts": 1,
+          "terminal": null,
+          "minimumFraction": 0.012,
+          "quietResponses": 0
+        }
+      }
+    },
+    {
+      "parameters": {
+        "shortSide": 540,
+        "slopPx": 8,
+        "gain": 12,
+        "goal": 0.6
+      },
+      "baseline": {
+        "aligned": false,
+        "reason": "walk_camera_response_not_observed",
+        "errorRadians": 0.6,
+        "pulses": [
+          {
+            "pixels": 2,
+            "effectRadians": 0,
+            "durationMs": 30
+          },
+          {
+            "pixels": 4,
+            "effectRadians": 0,
+            "durationMs": 30
+          }
+        ],
+        "summary": {
+          "gainRadiansPerShortSide": null,
+          "pulses": 2,
+          "calibrationAttempts": 2,
+          "terminal": "walk_camera_response_not_observed"
+        }
+      },
+      "candidate": {
+        "aligned": true,
+        "reason": "walk_camera_aligned",
+        "errorRadians": 0.0444444444444444,
+        "pulses": [
+          {
+            "pixels": 10,
+            "effectRadians": 0.044444444444444446,
+            "durationMs": 130
+          },
+          {
+            "pixels": 22,
+            "effectRadians": 0.3111111111111111,
+            "durationMs": 130
+          },
+          {
+            "pixels": 17,
+            "effectRadians": 0.2,
+            "durationMs": 130
+          }
+        ],
+        "summary": {
+          "gainRadiansPerShortSide": 4.429012345679013,
+          "pulses": 3,
+          "calibrationAttempts": 1,
+          "terminal": null,
+          "minimumFraction": 0.012,
+          "quietResponses": 0
+        }
+      }
+    },
+    {
+      "parameters": {
+        "shortSide": 540,
+        "slopPx": 8,
+        "gain": 12,
+        "goal": 1.2
+      },
+      "baseline": {
+        "aligned": false,
+        "reason": "walk_camera_response_not_observed",
+        "errorRadians": 1.2,
+        "pulses": [
+          {
+            "pixels": 2,
+            "effectRadians": 0,
+            "durationMs": 30
+          },
+          {
+            "pixels": 4,
+            "effectRadians": 0,
+            "durationMs": 30
+          }
+        ],
+        "summary": {
+          "gainRadiansPerShortSide": null,
+          "pulses": 2,
+          "calibrationAttempts": 2,
+          "terminal": "walk_camera_response_not_observed"
+        }
+      },
+      "candidate": {
+        "aligned": true,
+        "reason": "walk_camera_aligned",
+        "errorRadians": 0.11111111111111116,
+        "pulses": [
+          {
+            "pixels": 10,
+            "effectRadians": 0.044444444444444446,
+            "durationMs": 130
+          },
+          {
+            "pixels": 22,
+            "effectRadians": 0.3111111111111111,
+            "durationMs": 130
+          },
+          {
+            "pixels": 17,
+            "effectRadians": 0.2,
+            "durationMs": 130
+          },
+          {
+            "pixels": 15,
+            "effectRadians": 0.15555555555555556,
+            "durationMs": 130
+          },
+          {
+            "pixels": 14,
+            "effectRadians": 0.13333333333333333,
+            "durationMs": 130
+          },
+          {
+            "pixels": 13,
+            "effectRadians": 0.1111111111111111,
+            "durationMs": 130
+          },
+          {
+            "pixels": 14,
+            "effectRadians": 0.13333333333333333,
+            "durationMs": 130
+          }
+        ],
+        "summary": {
+          "gainRadiansPerShortSide": 4.931984249414432,
+          "pulses": 7,
+          "calibrationAttempts": 1,
+          "terminal": null,
+          "minimumFraction": 0.012,
+          "quietResponses": 0
+        }
+      }
+    },
+    {
+      "parameters": {
+        "shortSide": 540,
+        "slopPx": 12,
+        "gain": -12,
+        "goal": -0.6
+      },
+      "baseline": {
+        "aligned": false,
+        "reason": "walk_camera_response_not_observed",
+        "errorRadians": -0.6,
+        "pulses": [
+          {
+            "pixels": 2,
+            "effectRadians": 0,
+            "durationMs": 30
+          },
+          {
+            "pixels": 4,
+            "effectRadians": 0,
+            "durationMs": 30
+          }
+        ],
+        "summary": {
+          "gainRadiansPerShortSide": null,
+          "pulses": 2,
+          "calibrationAttempts": 2,
+          "terminal": "walk_camera_response_not_observed"
+        }
+      },
+      "candidate": {
+        "aligned": true,
+        "reason": "walk_camera_aligned",
+        "errorRadians": -0.0888888888888889,
+        "pulses": [
+          {
+            "pixels": 10,
+            "effectRadians": 0,
+            "durationMs": 130
+          },
+          {
+            "pixels": 17,
+            "effectRadians": -0.1111111111111111,
+            "durationMs": 130
+          },
+          {
+            "pixels": 19,
+            "effectRadians": -0.15555555555555556,
+            "durationMs": 130
+          },
+          {
+            "pixels": 17,
+            "effectRadians": -0.1111111111111111,
+            "durationMs": 130
+          },
+          {
+            "pixels": 18,
+            "effectRadians": -0.13333333333333333,
+            "durationMs": 130
+          }
+        ],
+        "summary": {
+          "gainRadiansPerShortSide": -3.7620371428813355,
+          "pulses": 5,
+          "calibrationAttempts": 2,
+          "terminal": null,
+          "minimumFraction": 0.026999999999999996,
+          "quietResponses": 0
+        }
+      }
+    },
+    {
+      "parameters": {
+        "shortSide": 540,
+        "slopPx": 12,
+        "gain": -12,
+        "goal": 0.6
+      },
+      "baseline": {
+        "aligned": false,
+        "reason": "walk_camera_response_not_observed",
+        "errorRadians": 0.6,
+        "pulses": [
+          {
+            "pixels": 2,
+            "effectRadians": 0,
+            "durationMs": 30
+          },
+          {
+            "pixels": 4,
+            "effectRadians": 0,
+            "durationMs": 30
+          }
+        ],
+        "summary": {
+          "gainRadiansPerShortSide": null,
+          "pulses": 2,
+          "calibrationAttempts": 2,
+          "terminal": "walk_camera_response_not_observed"
+        }
+      },
+      "candidate": {
+        "aligned": true,
+        "reason": "walk_camera_aligned",
+        "errorRadians": 0.06666666666666665,
+        "pulses": [
+          {
+            "pixels": 10,
+            "effectRadians": 0,
+            "durationMs": 130
+          },
+          {
+            "pixels": 17,
+            "effectRadians": -0.1111111111111111,
+            "durationMs": 130
+          },
+          {
+            "pixels": -19,
+            "effectRadians": 0.15555555555555556,
+            "durationMs": 130
+          },
+          {
+            "pixels": -17,
+            "effectRadians": 0.1111111111111111,
+            "durationMs": 130
+          },
+          {
+            "pixels": -18,
+            "effectRadians": 0.13333333333333333,
+            "durationMs": 130
+          },
+          {
+            "pixels": -17,
+            "effectRadians": 0.1111111111111111,
+            "durationMs": 130
+          },
+          {
+            "pixels": -18,
+            "effectRadians": 0.13333333333333333,
+            "durationMs": 130
+          }
+        ],
+        "summary": {
+          "gainRadiansPerShortSide": -3.7949356158386314,
+          "pulses": 7,
+          "calibrationAttempts": 2,
+          "terminal": null,
+          "minimumFraction": 0.026999999999999996,
+          "quietResponses": 0
+        }
+      }
+    },
+    {
+      "parameters": {
+        "shortSide": 540,
+        "slopPx": 12,
+        "gain": -12,
+        "goal": 1.2
+      },
+      "baseline": {
+        "aligned": false,
+        "reason": "walk_camera_response_not_observed",
+        "errorRadians": 1.2,
+        "pulses": [
+          {
+            "pixels": 2,
+            "effectRadians": 0,
+            "durationMs": 30
+          },
+          {
+            "pixels": 4,
+            "effectRadians": 0,
+            "durationMs": 30
+          }
+        ],
+        "summary": {
+          "gainRadiansPerShortSide": null,
+          "pulses": 2,
+          "calibrationAttempts": 2,
+          "terminal": "walk_camera_response_not_observed"
+        }
+      },
+      "candidate": {
+        "aligned": true,
+        "reason": "walk_camera_aligned",
+        "errorRadians": 0.06666666666666665,
+        "pulses": [
+          {
+            "pixels": 10,
+            "effectRadians": 0,
+            "durationMs": 130
+          },
+          {
+            "pixels": 17,
+            "effectRadians": -0.1111111111111111,
+            "durationMs": 130
+          },
+          {
+            "pixels": -19,
+            "effectRadians": 0.15555555555555556,
+            "durationMs": 130
+          },
+          {
+            "pixels": -17,
+            "effectRadians": 0.1111111111111111,
+            "durationMs": 130
+          },
+          {
+            "pixels": -18,
+            "effectRadians": 0.13333333333333333,
+            "durationMs": 130
+          },
+          {
+            "pixels": -17,
+            "effectRadians": 0.1111111111111111,
+            "durationMs": 130
+          },
+          {
+            "pixels": -18,
+            "effectRadians": 0.13333333333333333,
+            "durationMs": 130
+          },
+          {
+            "pixels": -17,
+            "effectRadians": 0.1111111111111111,
+            "durationMs": 130
+          },
+          {
+            "pixels": -17,
+            "effectRadians": 0.1111111111111111,
+            "durationMs": 130
+          },
+          {
+            "pixels": -18,
+            "effectRadians": 0.13333333333333333,
+            "durationMs": 130
+          },
+          {
+            "pixels": -17,
+            "effectRadians": 0.1111111111111111,
+            "durationMs": 130
+          },
+          {
+            "pixels": -18,
+            "effectRadians": 0.13333333333333333,
+            "durationMs": 130
+          }
+        ],
+        "summary": {
+          "gainRadiansPerShortSide": -3.7900870778637104,
+          "pulses": 12,
+          "calibrationAttempts": 2,
+          "terminal": null,
+          "minimumFraction": 0.026999999999999996,
+          "quietResponses": 0
+        }
+      }
+    },
+    {
+      "parameters": {
+        "shortSide": 540,
+        "slopPx": 12,
+        "gain": 12,
+        "goal": -0.6
+      },
+      "baseline": {
+        "aligned": false,
+        "reason": "walk_camera_response_not_observed",
+        "errorRadians": -0.6,
+        "pulses": [
+          {
+            "pixels": 2,
+            "effectRadians": 0,
+            "durationMs": 30
+          },
+          {
+            "pixels": 4,
+            "effectRadians": 0,
+            "durationMs": 30
+          }
+        ],
+        "summary": {
+          "gainRadiansPerShortSide": null,
+          "pulses": 2,
+          "calibrationAttempts": 2,
+          "terminal": "walk_camera_response_not_observed"
+        }
+      },
+      "candidate": {
+        "aligned": true,
+        "reason": "walk_camera_aligned",
+        "errorRadians": -0.06666666666666665,
+        "pulses": [
+          {
+            "pixels": 10,
+            "effectRadians": 0,
+            "durationMs": 130
+          },
+          {
+            "pixels": 17,
+            "effectRadians": 0.1111111111111111,
+            "durationMs": 130
+          },
+          {
+            "pixels": -19,
+            "effectRadians": -0.15555555555555556,
+            "durationMs": 130
+          },
+          {
+            "pixels": -17,
+            "effectRadians": -0.1111111111111111,
+            "durationMs": 130
+          },
+          {
+            "pixels": -18,
+            "effectRadians": -0.13333333333333333,
+            "durationMs": 130
+          },
+          {
+            "pixels": -17,
+            "effectRadians": -0.1111111111111111,
+            "durationMs": 130
+          },
+          {
+            "pixels": -18,
+            "effectRadians": -0.13333333333333333,
+            "durationMs": 130
+          }
+        ],
+        "summary": {
+          "gainRadiansPerShortSide": 3.7949356158386314,
+          "pulses": 7,
+          "calibrationAttempts": 2,
+          "terminal": null,
+          "minimumFraction": 0.026999999999999996,
+          "quietResponses": 0
+        }
+      }
+    },
+    {
+      "parameters": {
+        "shortSide": 540,
+        "slopPx": 12,
+        "gain": 12,
+        "goal": 0.6
+      },
+      "baseline": {
+        "aligned": false,
+        "reason": "walk_camera_response_not_observed",
+        "errorRadians": 0.6,
+        "pulses": [
+          {
+            "pixels": 2,
+            "effectRadians": 0,
+            "durationMs": 30
+          },
+          {
+            "pixels": 4,
+            "effectRadians": 0,
+            "durationMs": 30
+          }
+        ],
+        "summary": {
+          "gainRadiansPerShortSide": null,
+          "pulses": 2,
+          "calibrationAttempts": 2,
+          "terminal": "walk_camera_response_not_observed"
+        }
+      },
+      "candidate": {
+        "aligned": true,
+        "reason": "walk_camera_aligned",
+        "errorRadians": 0.0888888888888889,
+        "pulses": [
+          {
+            "pixels": 10,
+            "effectRadians": 0,
+            "durationMs": 130
+          },
+          {
+            "pixels": 17,
+            "effectRadians": 0.1111111111111111,
+            "durationMs": 130
+          },
+          {
+            "pixels": 19,
+            "effectRadians": 0.15555555555555556,
+            "durationMs": 130
+          },
+          {
+            "pixels": 17,
+            "effectRadians": 0.1111111111111111,
+            "durationMs": 130
+          },
+          {
+            "pixels": 18,
+            "effectRadians": 0.13333333333333333,
+            "durationMs": 130
+          }
+        ],
+        "summary": {
+          "gainRadiansPerShortSide": 3.7620371428813355,
+          "pulses": 5,
+          "calibrationAttempts": 2,
+          "terminal": null,
+          "minimumFraction": 0.026999999999999996,
+          "quietResponses": 0
+        }
+      }
+    },
+    {
+      "parameters": {
+        "shortSide": 540,
+        "slopPx": 12,
+        "gain": 12,
+        "goal": 1.2
+      },
+      "baseline": {
+        "aligned": false,
+        "reason": "walk_camera_response_not_observed",
+        "errorRadians": 1.2,
+        "pulses": [
+          {
+            "pixels": 2,
+            "effectRadians": 0,
+            "durationMs": 30
+          },
+          {
+            "pixels": 4,
+            "effectRadians": 0,
+            "durationMs": 30
+          }
+        ],
+        "summary": {
+          "gainRadiansPerShortSide": null,
+          "pulses": 2,
+          "calibrationAttempts": 2,
+          "terminal": "walk_camera_response_not_observed"
+        }
+      },
+      "candidate": {
+        "aligned": true,
+        "reason": "walk_camera_aligned",
+        "errorRadians": 0.0888888888888888,
+        "pulses": [
+          {
+            "pixels": 10,
+            "effectRadians": 0,
+            "durationMs": 130
+          },
+          {
+            "pixels": 17,
+            "effectRadians": 0.1111111111111111,
+            "durationMs": 130
+          },
+          {
+            "pixels": 19,
+            "effectRadians": 0.15555555555555556,
+            "durationMs": 130
+          },
+          {
+            "pixels": 17,
+            "effectRadians": 0.1111111111111111,
+            "durationMs": 130
+          },
+          {
+            "pixels": 18,
+            "effectRadians": 0.13333333333333333,
+            "durationMs": 130
+          },
+          {
+            "pixels": 17,
+            "effectRadians": 0.1111111111111111,
+            "durationMs": 130
+          },
+          {
+            "pixels": 18,
+            "effectRadians": 0.13333333333333333,
+            "durationMs": 130
+          },
+          {
+            "pixels": 17,
+            "effectRadians": 0.1111111111111111,
+            "durationMs": 130
+          },
+          {
+            "pixels": 17,
+            "effectRadians": 0.1111111111111111,
+            "durationMs": 130
+          },
+          {
+            "pixels": 18,
+            "effectRadians": 0.13333333333333333,
+            "durationMs": 130
+          }
+        ],
+        "summary": {
+          "gainRadiansPerShortSide": 3.7572306371071145,
+          "pulses": 10,
+          "calibrationAttempts": 2,
+          "terminal": null,
+          "minimumFraction": 0.026999999999999996,
+          "quietResponses": 0
+        }
+      }
+    },
+    {
+      "parameters": {
+        "shortSide": 540,
+        "slopPx": 16,
+        "gain": -12,
+        "goal": -0.6
+      },
+      "baseline": {
+        "aligned": false,
+        "reason": "walk_camera_response_not_observed",
+        "errorRadians": -0.6,
+        "pulses": [
+          {
+            "pixels": 2,
+            "effectRadians": 0,
+            "durationMs": 30
+          },
+          {
+            "pixels": 4,
+            "effectRadians": 0,
+            "durationMs": 30
+          }
+        ],
+        "summary": {
+          "gainRadiansPerShortSide": null,
+          "pulses": 2,
+          "calibrationAttempts": 2,
+          "terminal": "walk_camera_response_not_observed"
+        }
+      },
+      "candidate": {
+        "aligned": true,
+        "reason": "walk_camera_aligned",
+        "errorRadians": -0.04444444444444451,
+        "pulses": [
+          {
+            "pixels": 10,
+            "effectRadians": 0,
+            "durationMs": 130
+          },
+          {
+            "pixels": 17,
+            "effectRadians": -0.022222222222222223,
+            "durationMs": 130
+          },
+          {
+            "pixels": 22,
+            "effectRadians": -0.13333333333333333,
+            "durationMs": 130
+          },
+          {
+            "pixels": 22,
+            "effectRadians": -0.13333333333333333,
+            "durationMs": 130
+          },
+          {
+            "pixels": 22,
+            "effectRadians": -0.13333333333333333,
+            "durationMs": 130
+          },
+          {
+            "pixels": 22,
+            "effectRadians": -0.13333333333333333,
+            "durationMs": 130
+          }
+        ],
+        "summary": {
+          "gainRadiansPerShortSide": -2.498372395833333,
+          "pulses": 6,
+          "calibrationAttempts": 2,
+          "terminal": null,
+          "minimumFraction": 0.026999999999999996,
+          "quietResponses": 0
+        }
+      }
+    },
+    {
+      "parameters": {
+        "shortSide": 540,
+        "slopPx": 16,
+        "gain": -12,
+        "goal": 0.6
+      },
+      "baseline": {
+        "aligned": false,
+        "reason": "walk_camera_response_not_observed",
+        "errorRadians": 0.6,
+        "pulses": [
+          {
+            "pixels": 2,
+            "effectRadians": 0,
+            "durationMs": 30
+          },
+          {
+            "pixels": 4,
+            "effectRadians": 0,
+            "durationMs": 30
+          }
+        ],
+        "summary": {
+          "gainRadiansPerShortSide": null,
+          "pulses": 2,
+          "calibrationAttempts": 2,
+          "terminal": "walk_camera_response_not_observed"
+        }
+      },
+      "candidate": {
+        "aligned": true,
+        "reason": "walk_camera_aligned",
+        "errorRadians": 0.0888888888888889,
+        "pulses": [
+          {
+            "pixels": 10,
+            "effectRadians": 0,
+            "durationMs": 130
+          },
+          {
+            "pixels": 17,
+            "effectRadians": -0.022222222222222223,
+            "durationMs": 130
+          },
+          {
+            "pixels": -22,
+            "effectRadians": 0.13333333333333333,
+            "durationMs": 130
+          },
+          {
+            "pixels": -22,
+            "effectRadians": 0.13333333333333333,
+            "durationMs": 130
+          },
+          {
+            "pixels": -22,
+            "effectRadians": 0.13333333333333333,
+            "durationMs": 130
+          },
+          {
+            "pixels": -22,
+            "effectRadians": 0.13333333333333333,
+            "durationMs": 130
+          }
+        ],
+        "summary": {
+          "gainRadiansPerShortSide": -2.498372395833333,
+          "pulses": 6,
+          "calibrationAttempts": 2,
+          "terminal": null,
+          "minimumFraction": 0.026999999999999996,
+          "quietResponses": 0
+        }
+      }
+    },
+    {
+      "parameters": {
+        "shortSide": 540,
+        "slopPx": 16,
+        "gain": -12,
+        "goal": 1.2
+      },
+      "baseline": {
+        "aligned": false,
+        "reason": "walk_camera_response_not_observed",
+        "errorRadians": 1.2,
+        "pulses": [
+          {
+            "pixels": 2,
+            "effectRadians": 0,
+            "durationMs": 30
+          },
+          {
+            "pixels": 4,
+            "effectRadians": 0,
+            "durationMs": 30
+          }
+        ],
+        "summary": {
+          "gainRadiansPerShortSide": null,
+          "pulses": 2,
+          "calibrationAttempts": 2,
+          "terminal": "walk_camera_response_not_observed"
+        }
+      },
+      "candidate": {
+        "aligned": true,
+        "reason": "walk_camera_aligned",
+        "errorRadians": 0.022222222222222365,
+        "pulses": [
+          {
+            "pixels": 10,
+            "effectRadians": 0,
+            "durationMs": 130
+          },
+          {
+            "pixels": 17,
+            "effectRadians": -0.022222222222222223,
+            "durationMs": 130
+          },
+          {
+            "pixels": -22,
+            "effectRadians": 0.13333333333333333,
+            "durationMs": 130
+          },
+          {
+            "pixels": -22,
+            "effectRadians": 0.13333333333333333,
+            "durationMs": 130
+          },
+          {
+            "pixels": -22,
+            "effectRadians": 0.13333333333333333,
+            "durationMs": 130
+          },
+          {
+            "pixels": -22,
+            "effectRadians": 0.13333333333333333,
+            "durationMs": 130
+          },
+          {
+            "pixels": -22,
+            "effectRadians": 0.13333333333333333,
+            "durationMs": 130
+          },
+          {
+            "pixels": -22,
+            "effectRadians": 0.13333333333333333,
+            "durationMs": 130
+          },
+          {
+            "pixels": -22,
+            "effectRadians": 0.13333333333333333,
+            "durationMs": 130
+          },
+          {
+            "pixels": -22,
+            "effectRadians": 0.13333333333333333,
+            "durationMs": 130
+          },
+          {
+            "pixels": -16,
+            "effectRadians": 0,
+            "durationMs": 130
+          },
+          {
+            "pixels": -22,
+            "effectRadians": 0.13333333333333333,
+            "durationMs": 130
+          }
+        ],
+        "summary": {
+          "gainRadiansPerShortSide": -3.135193188985189,
+          "pulses": 12,
+          "calibrationAttempts": 2,
+          "terminal": null,
+          "minimumFraction": 0.04,
+          "quietResponses": 0
+        }
+      }
+    },
+    {
+      "parameters": {
+        "shortSide": 540,
+        "slopPx": 16,
+        "gain": 12,
+        "goal": -0.6
+      },
+      "baseline": {
+        "aligned": false,
+        "reason": "walk_camera_response_not_observed",
+        "errorRadians": -0.6,
+        "pulses": [
+          {
+            "pixels": 2,
+            "effectRadians": 0,
+            "durationMs": 30
+          },
+          {
+            "pixels": 4,
+            "effectRadians": 0,
+            "durationMs": 30
+          }
+        ],
+        "summary": {
+          "gainRadiansPerShortSide": null,
+          "pulses": 2,
+          "calibrationAttempts": 2,
+          "terminal": "walk_camera_response_not_observed"
+        }
+      },
+      "candidate": {
+        "aligned": true,
+        "reason": "walk_camera_aligned",
+        "errorRadians": -0.0888888888888889,
+        "pulses": [
+          {
+            "pixels": 10,
+            "effectRadians": 0,
+            "durationMs": 130
+          },
+          {
+            "pixels": 17,
+            "effectRadians": 0.022222222222222223,
+            "durationMs": 130
+          },
+          {
+            "pixels": -22,
+            "effectRadians": -0.13333333333333333,
+            "durationMs": 130
+          },
+          {
+            "pixels": -22,
+            "effectRadians": -0.13333333333333333,
+            "durationMs": 130
+          },
+          {
+            "pixels": -22,
+            "effectRadians": -0.13333333333333333,
+            "durationMs": 130
+          },
+          {
+            "pixels": -22,
+            "effectRadians": -0.13333333333333333,
+            "durationMs": 130
+          }
+        ],
+        "summary": {
+          "gainRadiansPerShortSide": 2.498372395833333,
+          "pulses": 6,
+          "calibrationAttempts": 2,
+          "terminal": null,
+          "minimumFraction": 0.026999999999999996,
+          "quietResponses": 0
+        }
+      }
+    },
+    {
+      "parameters": {
+        "shortSide": 540,
+        "slopPx": 16,
+        "gain": 12,
+        "goal": 0.6
+      },
+      "baseline": {
+        "aligned": false,
+        "reason": "walk_camera_response_not_observed",
+        "errorRadians": 0.6,
+        "pulses": [
+          {
+            "pixels": 2,
+            "effectRadians": 0,
+            "durationMs": 30
+          },
+          {
+            "pixels": 4,
+            "effectRadians": 0,
+            "durationMs": 30
+          }
+        ],
+        "summary": {
+          "gainRadiansPerShortSide": null,
+          "pulses": 2,
+          "calibrationAttempts": 2,
+          "terminal": "walk_camera_response_not_observed"
+        }
+      },
+      "candidate": {
+        "aligned": true,
+        "reason": "walk_camera_aligned",
+        "errorRadians": 0.04444444444444451,
+        "pulses": [
+          {
+            "pixels": 10,
+            "effectRadians": 0,
+            "durationMs": 130
+          },
+          {
+            "pixels": 17,
+            "effectRadians": 0.022222222222222223,
+            "durationMs": 130
+          },
+          {
+            "pixels": 22,
+            "effectRadians": 0.13333333333333333,
+            "durationMs": 130
+          },
+          {
+            "pixels": 22,
+            "effectRadians": 0.13333333333333333,
+            "durationMs": 130
+          },
+          {
+            "pixels": 22,
+            "effectRadians": 0.13333333333333333,
+            "durationMs": 130
+          },
+          {
+            "pixels": 22,
+            "effectRadians": 0.13333333333333333,
+            "durationMs": 130
+          }
+        ],
+        "summary": {
+          "gainRadiansPerShortSide": 2.498372395833333,
+          "pulses": 6,
+          "calibrationAttempts": 2,
+          "terminal": null,
+          "minimumFraction": 0.026999999999999996,
+          "quietResponses": 0
+        }
+      }
+    },
+    {
+      "parameters": {
+        "shortSide": 540,
+        "slopPx": 16,
+        "gain": 12,
+        "goal": 1.2
+      },
+      "baseline": {
+        "aligned": false,
+        "reason": "walk_camera_response_not_observed",
+        "errorRadians": 1.2,
+        "pulses": [
+          {
+            "pixels": 2,
+            "effectRadians": 0,
+            "durationMs": 30
+          },
+          {
+            "pixels": 4,
+            "effectRadians": 0,
+            "durationMs": 30
+          }
+        ],
+        "summary": {
+          "gainRadiansPerShortSide": null,
+          "pulses": 2,
+          "calibrationAttempts": 2,
+          "terminal": "walk_camera_response_not_observed"
+        }
+      },
+      "candidate": {
+        "aligned": true,
+        "reason": "walk_camera_aligned",
+        "errorRadians": 0.11111111111111116,
+        "pulses": [
+          {
+            "pixels": 10,
+            "effectRadians": 0,
+            "durationMs": 130
+          },
+          {
+            "pixels": 17,
+            "effectRadians": 0.022222222222222223,
+            "durationMs": 130
+          },
+          {
+            "pixels": 22,
+            "effectRadians": 0.13333333333333333,
+            "durationMs": 130
+          },
+          {
+            "pixels": 22,
+            "effectRadians": 0.13333333333333333,
+            "durationMs": 130
+          },
+          {
+            "pixels": 22,
+            "effectRadians": 0.13333333333333333,
+            "durationMs": 130
+          },
+          {
+            "pixels": 22,
+            "effectRadians": 0.13333333333333333,
+            "durationMs": 130
+          },
+          {
+            "pixels": 22,
+            "effectRadians": 0.13333333333333333,
+            "durationMs": 130
+          },
+          {
+            "pixels": 22,
+            "effectRadians": 0.13333333333333333,
+            "durationMs": 130
+          },
+          {
+            "pixels": 22,
+            "effectRadians": 0.13333333333333333,
+            "durationMs": 130
+          },
+          {
+            "pixels": 22,
+            "effectRadians": 0.13333333333333333,
+            "durationMs": 130
+          }
+        ],
+        "summary": {
+          "gainRadiansPerShortSide": 3.0691464742024746,
+          "pulses": 10,
+          "calibrationAttempts": 2,
+          "terminal": null,
+          "minimumFraction": 0.026999999999999996,
+          "quietResponses": 0
+        }
+      }
+    },
+    {
+      "parameters": {
+        "shortSide": 1080,
+        "slopPx": 8,
+        "gain": -12,
+        "goal": -0.6
+      },
+      "baseline": {
+        "aligned": true,
+        "reason": "walk_camera_aligned",
+        "errorRadians": 0.12222222222222234,
+        "pulses": [
+          {
+            "pixels": 4,
+            "effectRadians": 0,
+            "durationMs": 30
+          },
+          {
+            "pixels": 9,
+            "effectRadians": -0.011111111111111112,
+            "durationMs": 30
+          },
+          {
+            "pixels": 43,
+            "effectRadians": -0.3888888888888889,
+            "durationMs": 30
+          },
+          {
+            "pixels": 37,
+            "effectRadians": -0.32222222222222224,
+            "durationMs": 30
+          }
+        ],
+        "summary": {
+          "gainRadiansPerShortSide": -4.935056584362142,
+          "pulses": 4,
+          "calibrationAttempts": 2,
+          "terminal": null
+        }
+      },
+      "candidate": {
+        "aligned": true,
+        "reason": "walk_camera_aligned",
+        "errorRadians": -0.1111111111111111,
+        "pulses": [
+          {
+            "pixels": 19,
+            "effectRadians": -0.12222222222222222,
+            "durationMs": 130
+          },
+          {
+            "pixels": 19,
+            "effectRadians": -0.12222222222222222,
+            "durationMs": 130
+          },
+          {
+            "pixels": 19,
+            "effectRadians": -0.12222222222222222,
+            "durationMs": 130
+          },
+          {
+            "pixels": 19,
+            "effectRadians": -0.12222222222222222,
+            "durationMs": 130
+          }
+        ],
+        "summary": {
+          "gainRadiansPerShortSide": -6.884868008533247,
+          "pulses": 4,
+          "calibrationAttempts": 1,
+          "terminal": null,
+          "minimumFraction": 0.012,
+          "quietResponses": 0
+        }
+      }
+    },
+    {
+      "parameters": {
+        "shortSide": 1080,
+        "slopPx": 8,
+        "gain": -12,
+        "goal": 0.6
+      },
+      "baseline": {
+        "aligned": true,
+        "reason": "walk_camera_aligned",
+        "errorRadians": -0.09999999999999998,
+        "pulses": [
+          {
+            "pixels": 4,
+            "effectRadians": 0,
+            "durationMs": 30
+          },
+          {
+            "pixels": 9,
+            "effectRadians": -0.011111111111111112,
+            "durationMs": 30
+          },
+          {
+            "pixels": -43,
+            "effectRadians": 0.3888888888888889,
+            "durationMs": 30
+          },
+          {
+            "pixels": -37,
+            "effectRadians": 0.32222222222222224,
+            "durationMs": 30
+          }
+        ],
+        "summary": {
+          "gainRadiansPerShortSide": -4.935056584362139,
+          "pulses": 4,
+          "calibrationAttempts": 2,
+          "terminal": null
+        }
+      },
+      "candidate": {
+        "aligned": true,
+        "reason": "walk_camera_aligned",
+        "errorRadians": 0.1111111111111111,
+        "pulses": [
+          {
+            "pixels": 19,
+            "effectRadians": -0.12222222222222222,
+            "durationMs": 130
+          },
+          {
+            "pixels": -19,
+            "effectRadians": 0.12222222222222222,
+            "durationMs": 130
+          },
+          {
+            "pixels": -19,
+            "effectRadians": 0.12222222222222222,
+            "durationMs": 130
+          },
+          {
+            "pixels": -19,
+            "effectRadians": 0.12222222222222222,
+            "durationMs": 130
+          },
+          {
+            "pixels": -19,
+            "effectRadians": 0.12222222222222222,
+            "durationMs": 130
+          },
+          {
+            "pixels": -19,
+            "effectRadians": 0.12222222222222222,
+            "durationMs": 130
+          }
+        ],
+        "summary": {
+          "gainRadiansPerShortSide": -6.948764353005446,
+          "pulses": 6,
+          "calibrationAttempts": 1,
+          "terminal": null,
+          "minimumFraction": 0.012,
+          "quietResponses": 0
+        }
+      }
+    },
+    {
+      "parameters": {
+        "shortSide": 1080,
+        "slopPx": 8,
+        "gain": -12,
+        "goal": 1.2
+      },
+      "baseline": {
+        "aligned": true,
+        "reason": "walk_camera_aligned",
+        "errorRadians": 0.1333333333333333,
+        "pulses": [
+          {
+            "pixels": 4,
+            "effectRadians": 0,
+            "durationMs": 30
+          },
+          {
+            "pixels": 9,
+            "effectRadians": -0.011111111111111112,
+            "durationMs": 30
+          },
+          {
+            "pixels": -43,
+            "effectRadians": 0.3888888888888889,
+            "durationMs": 30
+          },
+          {
+            "pixels": -37,
+            "effectRadians": 0.32222222222222224,
+            "durationMs": 30
+          },
+          {
+            "pixels": -26,
+            "effectRadians": 0.2,
+            "durationMs": 30
+          },
+          {
+            "pixels": -23,
+            "effectRadians": 0.16666666666666666,
+            "durationMs": 30
+          }
+        ],
+        "summary": {
+          "gainRadiansPerShortSide": -6.317329377667274,
+          "pulses": 6,
+          "calibrationAttempts": 2,
+          "terminal": null
+        }
+      },
+      "candidate": {
+        "aligned": true,
+        "reason": "walk_camera_aligned",
+        "errorRadians": 0.11111111111111116,
+        "pulses": [
+          {
+            "pixels": 19,
+            "effectRadians": -0.12222222222222222,
+            "durationMs": 130
+          },
+          {
+            "pixels": -19,
+            "effectRadians": 0.12222222222222222,
+            "durationMs": 130
+          },
+          {
+            "pixels": -19,
+            "effectRadians": 0.12222222222222222,
+            "durationMs": 130
+          },
+          {
+            "pixels": -19,
+            "effectRadians": 0.12222222222222222,
+            "durationMs": 130
+          },
+          {
+            "pixels": -19,
+            "effectRadians": 0.12222222222222222,
+            "durationMs": 130
+          },
+          {
+            "pixels": -19,
+            "effectRadians": 0.12222222222222222,
+            "durationMs": 130
+          },
+          {
+            "pixels": -19,
+            "effectRadians": 0.12222222222222222,
+            "durationMs": 130
+          },
+          {
+            "pixels": -19,
+            "effectRadians": 0.12222222222222222,
+            "durationMs": 130
+          },
+          {
+            "pixels": -18,
+            "effectRadians": 0.1111111111111111,
+            "durationMs": 130
+          },
+          {
+            "pixels": -19,
+            "effectRadians": 0.12222222222222222,
+            "durationMs": 130
+          },
+          {
+            "pixels": -19,
+            "effectRadians": 0.12222222222222222,
+            "durationMs": 130
+          }
+        ],
+        "summary": {
+          "gainRadiansPerShortSide": -6.947261153321872,
+          "pulses": 11,
+          "calibrationAttempts": 1,
+          "terminal": null,
+          "minimumFraction": 0.012,
+          "quietResponses": 0
+        }
+      }
+    },
+    {
+      "parameters": {
+        "shortSide": 1080,
+        "slopPx": 8,
+        "gain": 12,
+        "goal": -0.6
+      },
+      "baseline": {
+        "aligned": true,
+        "reason": "walk_camera_aligned",
+        "errorRadians": 0.09999999999999998,
+        "pulses": [
+          {
+            "pixels": 4,
+            "effectRadians": 0,
+            "durationMs": 30
+          },
+          {
+            "pixels": 9,
+            "effectRadians": 0.011111111111111112,
+            "durationMs": 30
+          },
+          {
+            "pixels": -43,
+            "effectRadians": -0.3888888888888889,
+            "durationMs": 30
+          },
+          {
+            "pixels": -37,
+            "effectRadians": -0.32222222222222224,
+            "durationMs": 30
+          }
+        ],
+        "summary": {
+          "gainRadiansPerShortSide": 4.935056584362139,
+          "pulses": 4,
+          "calibrationAttempts": 2,
+          "terminal": null
+        }
+      },
+      "candidate": {
+        "aligned": true,
+        "reason": "walk_camera_aligned",
+        "errorRadians": -0.1111111111111111,
+        "pulses": [
+          {
+            "pixels": 19,
+            "effectRadians": 0.12222222222222222,
+            "durationMs": 130
+          },
+          {
+            "pixels": -19,
+            "effectRadians": -0.12222222222222222,
+            "durationMs": 130
+          },
+          {
+            "pixels": -19,
+            "effectRadians": -0.12222222222222222,
+            "durationMs": 130
+          },
+          {
+            "pixels": -19,
+            "effectRadians": -0.12222222222222222,
+            "durationMs": 130
+          },
+          {
+            "pixels": -19,
+            "effectRadians": -0.12222222222222222,
+            "durationMs": 130
+          },
+          {
+            "pixels": -19,
+            "effectRadians": -0.12222222222222222,
+            "durationMs": 130
+          }
+        ],
+        "summary": {
+          "gainRadiansPerShortSide": 6.948764353005446,
+          "pulses": 6,
+          "calibrationAttempts": 1,
+          "terminal": null,
+          "minimumFraction": 0.012,
+          "quietResponses": 0
+        }
+      }
+    },
+    {
+      "parameters": {
+        "shortSide": 1080,
+        "slopPx": 8,
+        "gain": 12,
+        "goal": 0.6
+      },
+      "baseline": {
+        "aligned": true,
+        "reason": "walk_camera_aligned",
+        "errorRadians": -0.12222222222222234,
+        "pulses": [
+          {
+            "pixels": 4,
+            "effectRadians": 0,
+            "durationMs": 30
+          },
+          {
+            "pixels": 9,
+            "effectRadians": 0.011111111111111112,
+            "durationMs": 30
+          },
+          {
+            "pixels": 43,
+            "effectRadians": 0.3888888888888889,
+            "durationMs": 30
+          },
+          {
+            "pixels": 37,
+            "effectRadians": 0.32222222222222224,
+            "durationMs": 30
+          }
+        ],
+        "summary": {
+          "gainRadiansPerShortSide": 4.935056584362142,
+          "pulses": 4,
+          "calibrationAttempts": 2,
+          "terminal": null
+        }
+      },
+      "candidate": {
+        "aligned": true,
+        "reason": "walk_camera_aligned",
+        "errorRadians": 0.1111111111111111,
+        "pulses": [
+          {
+            "pixels": 19,
+            "effectRadians": 0.12222222222222222,
+            "durationMs": 130
+          },
+          {
+            "pixels": 19,
+            "effectRadians": 0.12222222222222222,
+            "durationMs": 130
+          },
+          {
+            "pixels": 19,
+            "effectRadians": 0.12222222222222222,
+            "durationMs": 130
+          },
+          {
+            "pixels": 19,
+            "effectRadians": 0.12222222222222222,
+            "durationMs": 130
+          }
+        ],
+        "summary": {
+          "gainRadiansPerShortSide": 6.884868008533247,
+          "pulses": 4,
+          "calibrationAttempts": 1,
+          "terminal": null,
+          "minimumFraction": 0.012,
+          "quietResponses": 0
+        }
+      }
+    },
+    {
+      "parameters": {
+        "shortSide": 1080,
+        "slopPx": 8,
+        "gain": 12,
+        "goal": 1.2
+      },
+      "baseline": {
+        "aligned": true,
+        "reason": "walk_camera_aligned",
+        "errorRadians": 0.11111111111111094,
+        "pulses": [
+          {
+            "pixels": 4,
+            "effectRadians": 0,
+            "durationMs": 30
+          },
+          {
+            "pixels": 9,
+            "effectRadians": 0.011111111111111112,
+            "durationMs": 30
+          },
+          {
+            "pixels": 43,
+            "effectRadians": 0.3888888888888889,
+            "durationMs": 30
+          },
+          {
+            "pixels": 37,
+            "effectRadians": 0.32222222222222224,
+            "durationMs": 30
+          },
+          {
+            "pixels": 26,
+            "effectRadians": 0.2,
+            "durationMs": 30
+          },
+          {
+            "pixels": 23,
+            "effectRadians": 0.16666666666666666,
+            "durationMs": 30
+          }
+        ],
+        "summary": {
+          "gainRadiansPerShortSide": 6.317329377667279,
+          "pulses": 6,
+          "calibrationAttempts": 2,
+          "terminal": null
+        }
+      },
+      "candidate": {
+        "aligned": true,
+        "reason": "walk_camera_aligned",
+        "errorRadians": 0.11111111111111116,
+        "pulses": [
+          {
+            "pixels": 19,
+            "effectRadians": 0.12222222222222222,
+            "durationMs": 130
+          },
+          {
+            "pixels": 19,
+            "effectRadians": 0.12222222222222222,
+            "durationMs": 130
+          },
+          {
+            "pixels": 19,
+            "effectRadians": 0.12222222222222222,
+            "durationMs": 130
+          },
+          {
+            "pixels": 19,
+            "effectRadians": 0.12222222222222222,
+            "durationMs": 130
+          },
+          {
+            "pixels": 19,
+            "effectRadians": 0.12222222222222222,
+            "durationMs": 130
+          },
+          {
+            "pixels": 19,
+            "effectRadians": 0.12222222222222222,
+            "durationMs": 130
+          },
+          {
+            "pixels": 19,
+            "effectRadians": 0.12222222222222222,
+            "durationMs": 130
+          },
+          {
+            "pixels": 19,
+            "effectRadians": 0.12222222222222222,
+            "durationMs": 130
+          },
+          {
+            "pixels": 18,
+            "effectRadians": 0.1111111111111111,
+            "durationMs": 130
+          }
+        ],
+        "summary": {
+          "gainRadiansPerShortSide": 6.88337863130211,
+          "pulses": 9,
+          "calibrationAttempts": 1,
+          "terminal": null,
+          "minimumFraction": 0.012,
+          "quietResponses": 0
+        }
+      }
+    },
+    {
+      "parameters": {
+        "shortSide": 1080,
+        "slopPx": 12,
+        "gain": -12,
+        "goal": -0.6
+      },
+      "baseline": {
+        "aligned": false,
+        "reason": "walk_camera_response_not_observed",
+        "errorRadians": -0.6,
+        "pulses": [
+          {
+            "pixels": 4,
+            "effectRadians": 0,
+            "durationMs": 30
+          },
+          {
+            "pixels": 9,
+            "effectRadians": 0,
+            "durationMs": 30
+          }
+        ],
+        "summary": {
+          "gainRadiansPerShortSide": null,
+          "pulses": 2,
+          "calibrationAttempts": 2,
+          "terminal": "walk_camera_response_not_observed"
+        }
+      },
+      "candidate": {
+        "aligned": true,
+        "reason": "walk_camera_aligned",
+        "errorRadians": -0.07777777777777772,
+        "pulses": [
+          {
+            "pixels": 19,
+            "effectRadians": -0.07777777777777778,
+            "durationMs": 130
+          },
+          {
+            "pixels": 30,
+            "effectRadians": -0.2,
+            "durationMs": 130
+          },
+          {
+            "pixels": 26,
+            "effectRadians": -0.15555555555555556,
+            "durationMs": 130
+          },
+          {
+            "pixels": 20,
+            "effectRadians": -0.08888888888888889,
+            "durationMs": 130
+          }
+        ],
+        "summary": {
+          "gainRadiansPerShortSide": -5.2641662009517525,
+          "pulses": 4,
+          "calibrationAttempts": 1,
+          "terminal": null,
+          "minimumFraction": 0.012,
+          "quietResponses": 0
+        }
+      }
+    },
+    {
+      "parameters": {
+        "shortSide": 1080,
+        "slopPx": 12,
+        "gain": -12,
+        "goal": 0.6
+      },
+      "baseline": {
+        "aligned": false,
+        "reason": "walk_camera_response_not_observed",
+        "errorRadians": 0.6,
+        "pulses": [
+          {
+            "pixels": 4,
+            "effectRadians": 0,
+            "durationMs": 30
+          },
+          {
+            "pixels": 9,
+            "effectRadians": 0,
+            "durationMs": 30
+          }
+        ],
+        "summary": {
+          "gainRadiansPerShortSide": null,
+          "pulses": 2,
+          "calibrationAttempts": 2,
+          "terminal": "walk_camera_response_not_observed"
+        }
+      },
+      "candidate": {
+        "aligned": true,
+        "reason": "walk_camera_aligned",
+        "errorRadians": 0.07777777777777783,
+        "pulses": [
+          {
+            "pixels": 19,
+            "effectRadians": -0.07777777777777778,
+            "durationMs": 130
+          },
+          {
+            "pixels": -30,
+            "effectRadians": 0.2,
+            "durationMs": 130
+          },
+          {
+            "pixels": -26,
+            "effectRadians": 0.15555555555555556,
+            "durationMs": 130
+          },
+          {
+            "pixels": -24,
+            "effectRadians": 0.13333333333333333,
+            "durationMs": 130
+          },
+          {
+            "pixels": -22,
+            "effectRadians": 0.1111111111111111,
+            "durationMs": 130
+          }
+        ],
+        "summary": {
+          "gainRadiansPerShortSide": -5.537696405511009,
+          "pulses": 5,
+          "calibrationAttempts": 1,
+          "terminal": null,
+          "minimumFraction": 0.012,
+          "quietResponses": 0
+        }
+      }
+    },
+    {
+      "parameters": {
+        "shortSide": 1080,
+        "slopPx": 12,
+        "gain": -12,
+        "goal": 1.2
+      },
+      "baseline": {
+        "aligned": false,
+        "reason": "walk_camera_response_not_observed",
+        "errorRadians": 1.2,
+        "pulses": [
+          {
+            "pixels": 4,
+            "effectRadians": 0,
+            "durationMs": 30
+          },
+          {
+            "pixels": 9,
+            "effectRadians": 0,
+            "durationMs": 30
+          }
+        ],
+        "summary": {
+          "gainRadiansPerShortSide": null,
+          "pulses": 2,
+          "calibrationAttempts": 2,
+          "terminal": "walk_camera_response_not_observed"
+        }
+      },
+      "candidate": {
+        "aligned": true,
+        "reason": "walk_camera_aligned",
+        "errorRadians": 0.08888888888888902,
+        "pulses": [
+          {
+            "pixels": 19,
+            "effectRadians": -0.07777777777777778,
+            "durationMs": 130
+          },
+          {
+            "pixels": -30,
+            "effectRadians": 0.2,
+            "durationMs": 130
+          },
+          {
+            "pixels": -26,
+            "effectRadians": 0.15555555555555556,
+            "durationMs": 130
+          },
+          {
+            "pixels": -24,
+            "effectRadians": 0.13333333333333333,
+            "durationMs": 130
+          },
+          {
+            "pixels": -23,
+            "effectRadians": 0.12222222222222222,
+            "durationMs": 130
+          },
+          {
+            "pixels": -23,
+            "effectRadians": 0.12222222222222222,
+            "durationMs": 130
+          },
+          {
+            "pixels": -23,
+            "effectRadians": 0.12222222222222222,
+            "durationMs": 130
+          },
+          {
+            "pixels": -23,
+            "effectRadians": 0.12222222222222222,
+            "durationMs": 130
+          },
+          {
+            "pixels": -23,
+            "effectRadians": 0.12222222222222222,
+            "durationMs": 130
+          },
+          {
+            "pixels": -20,
+            "effectRadians": 0.08888888888888889,
+            "durationMs": 130
+          }
+        ],
+        "summary": {
+          "gainRadiansPerShortSide": -5.457701512243868,
+          "pulses": 10,
+          "calibrationAttempts": 1,
+          "terminal": null,
+          "minimumFraction": 0.012,
+          "quietResponses": 0
+        }
+      }
+    },
+    {
+      "parameters": {
+        "shortSide": 1080,
+        "slopPx": 12,
+        "gain": 12,
+        "goal": -0.6
+      },
+      "baseline": {
+        "aligned": false,
+        "reason": "walk_camera_response_not_observed",
+        "errorRadians": -0.6,
+        "pulses": [
+          {
+            "pixels": 4,
+            "effectRadians": 0,
+            "durationMs": 30
+          },
+          {
+            "pixels": 9,
+            "effectRadians": 0,
+            "durationMs": 30
+          }
+        ],
+        "summary": {
+          "gainRadiansPerShortSide": null,
+          "pulses": 2,
+          "calibrationAttempts": 2,
+          "terminal": "walk_camera_response_not_observed"
+        }
+      },
+      "candidate": {
+        "aligned": true,
+        "reason": "walk_camera_aligned",
+        "errorRadians": -0.07777777777777783,
+        "pulses": [
+          {
+            "pixels": 19,
+            "effectRadians": 0.07777777777777778,
+            "durationMs": 130
+          },
+          {
+            "pixels": -30,
+            "effectRadians": -0.2,
+            "durationMs": 130
+          },
+          {
+            "pixels": -26,
+            "effectRadians": -0.15555555555555556,
+            "durationMs": 130
+          },
+          {
+            "pixels": -24,
+            "effectRadians": -0.13333333333333333,
+            "durationMs": 130
+          },
+          {
+            "pixels": -22,
+            "effectRadians": -0.1111111111111111,
+            "durationMs": 130
+          }
+        ],
+        "summary": {
+          "gainRadiansPerShortSide": 5.537696405511009,
+          "pulses": 5,
+          "calibrationAttempts": 1,
+          "terminal": null,
+          "minimumFraction": 0.012,
+          "quietResponses": 0
+        }
+      }
+    },
+    {
+      "parameters": {
+        "shortSide": 1080,
+        "slopPx": 12,
+        "gain": 12,
+        "goal": 0.6
+      },
+      "baseline": {
+        "aligned": false,
+        "reason": "walk_camera_response_not_observed",
+        "errorRadians": 0.6,
+        "pulses": [
+          {
+            "pixels": 4,
+            "effectRadians": 0,
+            "durationMs": 30
+          },
+          {
+            "pixels": 9,
+            "effectRadians": 0,
+            "durationMs": 30
+          }
+        ],
+        "summary": {
+          "gainRadiansPerShortSide": null,
+          "pulses": 2,
+          "calibrationAttempts": 2,
+          "terminal": "walk_camera_response_not_observed"
+        }
+      },
+      "candidate": {
+        "aligned": true,
+        "reason": "walk_camera_aligned",
+        "errorRadians": 0.07777777777777772,
+        "pulses": [
+          {
+            "pixels": 19,
+            "effectRadians": 0.07777777777777778,
+            "durationMs": 130
+          },
+          {
+            "pixels": 30,
+            "effectRadians": 0.2,
+            "durationMs": 130
+          },
+          {
+            "pixels": 26,
+            "effectRadians": 0.15555555555555556,
+            "durationMs": 130
+          },
+          {
+            "pixels": 20,
+            "effectRadians": 0.08888888888888889,
+            "durationMs": 130
+          }
+        ],
+        "summary": {
+          "gainRadiansPerShortSide": 5.2641662009517525,
+          "pulses": 4,
+          "calibrationAttempts": 1,
+          "terminal": null,
+          "minimumFraction": 0.012,
+          "quietResponses": 0
+        }
+      }
+    },
+    {
+      "parameters": {
+        "shortSide": 1080,
+        "slopPx": 12,
+        "gain": 12,
+        "goal": 1.2
+      },
+      "baseline": {
+        "aligned": false,
+        "reason": "walk_camera_response_not_observed",
+        "errorRadians": 1.2,
+        "pulses": [
+          {
+            "pixels": 4,
+            "effectRadians": 0,
+            "durationMs": 30
+          },
+          {
+            "pixels": 9,
+            "effectRadians": 0,
+            "durationMs": 30
+          }
+        ],
+        "summary": {
+          "gainRadiansPerShortSide": null,
+          "pulses": 2,
+          "calibrationAttempts": 2,
+          "terminal": "walk_camera_response_not_observed"
+        }
+      },
+      "candidate": {
+        "aligned": true,
+        "reason": "walk_camera_aligned",
+        "errorRadians": 0.0888888888888888,
+        "pulses": [
+          {
+            "pixels": 19,
+            "effectRadians": 0.07777777777777778,
+            "durationMs": 130
+          },
+          {
+            "pixels": 30,
+            "effectRadians": 0.2,
+            "durationMs": 130
+          },
+          {
+            "pixels": 26,
+            "effectRadians": 0.15555555555555556,
+            "durationMs": 130
+          },
+          {
+            "pixels": 24,
+            "effectRadians": 0.13333333333333333,
+            "durationMs": 130
+          },
+          {
+            "pixels": 23,
+            "effectRadians": 0.12222222222222222,
+            "durationMs": 130
+          },
+          {
+            "pixels": 23,
+            "effectRadians": 0.12222222222222222,
+            "durationMs": 130
+          },
+          {
+            "pixels": 23,
+            "effectRadians": 0.12222222222222222,
+            "durationMs": 130
+          },
+          {
+            "pixels": 23,
+            "effectRadians": 0.12222222222222222,
+            "durationMs": 130
+          },
+          {
+            "pixels": 17,
+            "effectRadians": 0.05555555555555555,
+            "durationMs": 130
+          }
+        ],
+        "summary": {
+          "gainRadiansPerShortSide": 5.16001482001584,
+          "pulses": 9,
+          "calibrationAttempts": 1,
+          "terminal": null,
+          "minimumFraction": 0.012,
+          "quietResponses": 0
+        }
+      }
+    },
+    {
+      "parameters": {
+        "shortSide": 1080,
+        "slopPx": 16,
+        "gain": -12,
+        "goal": -0.6
+      },
+      "baseline": {
+        "aligned": false,
+        "reason": "walk_camera_response_not_observed",
+        "errorRadians": -0.6,
+        "pulses": [
+          {
+            "pixels": 4,
+            "effectRadians": 0,
+            "durationMs": 30
+          },
+          {
+            "pixels": 9,
+            "effectRadians": 0,
+            "durationMs": 30
+          }
+        ],
+        "summary": {
+          "gainRadiansPerShortSide": null,
+          "pulses": 2,
+          "calibrationAttempts": 2,
+          "terminal": "walk_camera_response_not_observed"
+        }
+      },
+      "candidate": {
+        "aligned": true,
+        "reason": "walk_camera_aligned",
+        "errorRadians": 0,
+        "pulses": [
+          {
+            "pixels": 19,
+            "effectRadians": -0.03333333333333333,
+            "durationMs": 130
+          },
+          {
+            "pixels": 43,
+            "effectRadians": -0.3,
+            "durationMs": 130
+          },
+          {
+            "pixels": 40,
+            "effectRadians": -0.26666666666666666,
+            "durationMs": 130
+          }
+        ],
+        "summary": {
+          "gainRadiansPerShortSide": -4.261188271604938,
+          "pulses": 3,
+          "calibrationAttempts": 1,
+          "terminal": null,
+          "minimumFraction": 0.012,
+          "quietResponses": 0
+        }
+      }
+    },
+    {
+      "parameters": {
+        "shortSide": 1080,
+        "slopPx": 16,
+        "gain": -12,
+        "goal": 0.6
+      },
+      "baseline": {
+        "aligned": false,
+        "reason": "walk_camera_response_not_observed",
+        "errorRadians": 0.6,
+        "pulses": [
+          {
+            "pixels": 4,
+            "effectRadians": 0,
+            "durationMs": 30
+          },
+          {
+            "pixels": 9,
+            "effectRadians": 0,
+            "durationMs": 30
+          }
+        ],
+        "summary": {
+          "gainRadiansPerShortSide": null,
+          "pulses": 2,
+          "calibrationAttempts": 2,
+          "terminal": "walk_camera_response_not_observed"
+        }
+      },
+      "candidate": {
+        "aligned": true,
+        "reason": "walk_camera_aligned",
+        "errorRadians": 0.06666666666666665,
+        "pulses": [
+          {
+            "pixels": 19,
+            "effectRadians": -0.03333333333333333,
+            "durationMs": 130
+          },
+          {
+            "pixels": -43,
+            "effectRadians": 0.3,
+            "durationMs": 130
+          },
+          {
+            "pixels": -40,
+            "effectRadians": 0.26666666666666666,
+            "durationMs": 130
+          }
+        ],
+        "summary": {
+          "gainRadiansPerShortSide": -4.261188271604939,
+          "pulses": 3,
+          "calibrationAttempts": 1,
+          "terminal": null,
+          "minimumFraction": 0.012,
+          "quietResponses": 0
+        }
+      }
+    },
+    {
+      "parameters": {
+        "shortSide": 1080,
+        "slopPx": 16,
+        "gain": -12,
+        "goal": 1.2
+      },
+      "baseline": {
+        "aligned": false,
+        "reason": "walk_camera_response_not_observed",
+        "errorRadians": 1.2,
+        "pulses": [
+          {
+            "pixels": 4,
+            "effectRadians": 0,
+            "durationMs": 30
+          },
+          {
+            "pixels": 9,
+            "effectRadians": 0,
+            "durationMs": 30
+          }
+        ],
+        "summary": {
+          "gainRadiansPerShortSide": null,
+          "pulses": 2,
+          "calibrationAttempts": 2,
+          "terminal": "walk_camera_response_not_observed"
+        }
+      },
+      "candidate": {
+        "aligned": true,
+        "reason": "walk_camera_aligned",
+        "errorRadians": 0.12222222222222223,
+        "pulses": [
+          {
+            "pixels": 19,
+            "effectRadians": -0.03333333333333333,
+            "durationMs": 130
+          },
+          {
+            "pixels": -43,
+            "effectRadians": 0.3,
+            "durationMs": 130
+          },
+          {
+            "pixels": -40,
+            "effectRadians": 0.26666666666666666,
+            "durationMs": 130
+          },
+          {
+            "pixels": -30,
+            "effectRadians": 0.15555555555555556,
+            "durationMs": 130
+          },
+          {
+            "pixels": -28,
+            "effectRadians": 0.13333333333333333,
+            "durationMs": 130
+          },
+          {
+            "pixels": -28,
+            "effectRadians": 0.13333333333333333,
+            "durationMs": 130
+          },
+          {
+            "pixels": -27,
+            "effectRadians": 0.12222222222222222,
+            "durationMs": 130
+          }
+        ],
+        "summary": {
+          "gainRadiansPerShortSide": -4.857014343874409,
+          "pulses": 7,
+          "calibrationAttempts": 1,
+          "terminal": null,
+          "minimumFraction": 0.012,
+          "quietResponses": 0
+        }
+      }
+    },
+    {
+      "parameters": {
+        "shortSide": 1080,
+        "slopPx": 16,
+        "gain": 12,
+        "goal": -0.6
+      },
+      "baseline": {
+        "aligned": false,
+        "reason": "walk_camera_response_not_observed",
+        "errorRadians": -0.6,
+        "pulses": [
+          {
+            "pixels": 4,
+            "effectRadians": 0,
+            "durationMs": 30
+          },
+          {
+            "pixels": 9,
+            "effectRadians": 0,
+            "durationMs": 30
+          }
+        ],
+        "summary": {
+          "gainRadiansPerShortSide": null,
+          "pulses": 2,
+          "calibrationAttempts": 2,
+          "terminal": "walk_camera_response_not_observed"
+        }
+      },
+      "candidate": {
+        "aligned": true,
+        "reason": "walk_camera_aligned",
+        "errorRadians": -0.06666666666666665,
+        "pulses": [
+          {
+            "pixels": 19,
+            "effectRadians": 0.03333333333333333,
+            "durationMs": 130
+          },
+          {
+            "pixels": -43,
+            "effectRadians": -0.3,
+            "durationMs": 130
+          },
+          {
+            "pixels": -40,
+            "effectRadians": -0.26666666666666666,
+            "durationMs": 130
+          }
+        ],
+        "summary": {
+          "gainRadiansPerShortSide": 4.261188271604939,
+          "pulses": 3,
+          "calibrationAttempts": 1,
+          "terminal": null,
+          "minimumFraction": 0.012,
+          "quietResponses": 0
+        }
+      }
+    },
+    {
+      "parameters": {
+        "shortSide": 1080,
+        "slopPx": 16,
+        "gain": 12,
+        "goal": 0.6
+      },
+      "baseline": {
+        "aligned": false,
+        "reason": "walk_camera_response_not_observed",
+        "errorRadians": 0.6,
+        "pulses": [
+          {
+            "pixels": 4,
+            "effectRadians": 0,
+            "durationMs": 30
+          },
+          {
+            "pixels": 9,
+            "effectRadians": 0,
+            "durationMs": 30
+          }
+        ],
+        "summary": {
+          "gainRadiansPerShortSide": null,
+          "pulses": 2,
+          "calibrationAttempts": 2,
+          "terminal": "walk_camera_response_not_observed"
+        }
+      },
+      "candidate": {
+        "aligned": true,
+        "reason": "walk_camera_aligned",
+        "errorRadians": 0,
+        "pulses": [
+          {
+            "pixels": 19,
+            "effectRadians": 0.03333333333333333,
+            "durationMs": 130
+          },
+          {
+            "pixels": 43,
+            "effectRadians": 0.3,
+            "durationMs": 130
+          },
+          {
+            "pixels": 40,
+            "effectRadians": 0.26666666666666666,
+            "durationMs": 130
+          }
+        ],
+        "summary": {
+          "gainRadiansPerShortSide": 4.261188271604938,
+          "pulses": 3,
+          "calibrationAttempts": 1,
+          "terminal": null,
+          "minimumFraction": 0.012,
+          "quietResponses": 0
+        }
+      }
+    },
+    {
+      "parameters": {
+        "shortSide": 1080,
+        "slopPx": 16,
+        "gain": 12,
+        "goal": 1.2
+      },
+      "baseline": {
+        "aligned": false,
+        "reason": "walk_camera_response_not_observed",
+        "errorRadians": 1.2,
+        "pulses": [
+          {
+            "pixels": 4,
+            "effectRadians": 0,
+            "durationMs": 30
+          },
+          {
+            "pixels": 9,
+            "effectRadians": 0,
+            "durationMs": 30
+          }
+        ],
+        "summary": {
+          "gainRadiansPerShortSide": null,
+          "pulses": 2,
+          "calibrationAttempts": 2,
+          "terminal": "walk_camera_response_not_observed"
+        }
+      },
+      "candidate": {
+        "aligned": true,
+        "reason": "walk_camera_aligned",
+        "errorRadians": 0.08888888888888902,
+        "pulses": [
+          {
+            "pixels": 19,
+            "effectRadians": 0.03333333333333333,
+            "durationMs": 130
+          },
+          {
+            "pixels": 43,
+            "effectRadians": 0.3,
+            "durationMs": 130
+          },
+          {
+            "pixels": 40,
+            "effectRadians": 0.26666666666666666,
+            "durationMs": 130
+          },
+          {
+            "pixels": 30,
+            "effectRadians": 0.15555555555555556,
+            "durationMs": 130
+          },
+          {
+            "pixels": 28,
+            "effectRadians": 0.13333333333333333,
+            "durationMs": 130
+          },
+          {
+            "pixels": 28,
+            "effectRadians": 0.13333333333333333,
+            "durationMs": 130
+          },
+          {
+            "pixels": 24,
+            "effectRadians": 0.08888888888888889,
+            "durationMs": 130
+          }
+        ],
+        "summary": {
+          "gainRadiansPerShortSide": 4.633188798073744,
+          "pulses": 7,
+          "calibrationAttempts": 1,
+          "terminal": null,
+          "minimumFraction": 0.012,
+          "quietResponses": 0
+        }
+      }
+    }
+  ],
+  "unsupported": {
+    "aligned": false,
+    "reason": "walk_camera_response_not_observed",
+    "errorRadians": 1.2,
+    "pulses": [
+      {
+        "pixels": 10,
+        "effectRadians": 0,
+        "durationMs": 130
+      },
+      {
+        "pixels": 17,
+        "effectRadians": 0,
+        "durationMs": 130
+      },
+      {
+        "pixels": 22,
+        "effectRadians": 0,
+        "durationMs": 130
+      }
+    ],
+    "summary": {
+      "gainRadiansPerShortSide": null,
+      "pulses": 3,
+      "calibrationAttempts": 3,
+      "terminal": "walk_camera_response_not_observed",
+      "minimumFraction": 0.04,
+      "quietResponses": 3,
+      "feedback": [
+        {
+          "sequence": 4,
+          "fraction": 0.018,
+          "turnRadians": 0,
+          "yawBefore": 1.2,
+          "yawAfter": 1.2,
+          "afterUpMs": 170
+        },
+        {
+          "sequence": 8,
+          "fraction": 0.032,
+          "turnRadians": 0,
+          "yawBefore": 1.2,
+          "yawAfter": 1.2,
+          "afterUpMs": 170
+        },
+        {
+          "sequence": 12,
+          "fraction": 0.04,
+          "turnRadians": 0,
+          "yawBefore": 1.2,
+          "yawAfter": 1.2,
+          "afterUpMs": 170
+        }
+      ]
+    }
+  }
+}

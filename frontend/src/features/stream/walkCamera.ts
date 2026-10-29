@@ -20,13 +20,17 @@ export class WalkCameraServo {
   private activeSince:number|null=null;
   private badResponses=0;
   private pulses=0;
+  private minimumFraction=.012;
+  private quietResponses=0;
+  private feedback:{sequence:number;fraction:number;turnRadians:number;yawBefore:number;yawAfter:number;afterUpMs:number}[]=[];
   private stop(reason:string):CameraStep {this.terminal=reason;return {hold:true,fraction:null,reason,yaw:null,failed:true};}
   finishStroke(applied:boolean,at:number){
     if(!this.stroke)return;
     if(!applied)this.terminal='walk_camera_input_unconfirmed';
     else this.stroke.endedAt=at;
   }
-  snapshot(){return {gainRadiansPerShortSide:this.gain,pulses:this.pulses,calibrationAttempts:this.attempts,terminal:this.terminal};}
+  snapshot(){return {gainRadiansPerShortSide:this.gain,pulses:this.pulses,calibrationAttempts:this.attempts,terminal:this.terminal,
+    minimumFraction:this.minimumFraction,quietResponses:this.quietResponses,feedback:this.feedback.map(row=>({...row}))};}
   cancelUnsentStroke(){
     if(!this.stroke||this.stroke.endedAt!==null)return;
     this.stroke=null;this.pulses--;if(this.gain===null)this.attempts--;
@@ -47,11 +51,16 @@ export class WalkCameraServo {
       if(now-s.sentAt>1400)return this.stop('walk_camera_feedback_timeout');
       if(s.endedAt===null||view.capturedAt<s.endedAt+150||view.sequence<=this.lastSequence)return wait('walk_camera_waiting_feedback');
       const turn=horizontalCameraTurn(s.rotation,rotation);
+      if(this.feedback.length>=32)this.feedback.shift();
+      this.feedback.push({sequence:view.sequence,fraction:s.fraction,turnRadians:turn,yawBefore:s.yaw,yawAfter:yaw,afterUpMs:view.capturedAt-s.endedAt});
       if(Math.abs(turn)>.4)return this.stop('walk_camera_response_too_large');
       if(Math.abs(turn)<.002){
-        if(this.attempts>=2)return this.stop('walk_camera_response_not_observed');
+        this.quietResponses++;
+        if(this.quietResponses>=3||Math.abs(s.fraction)>=.039)return this.stop('walk_camera_response_not_observed');
+        this.minimumFraction=Math.min(.04,Math.max(this.minimumFraction,Math.abs(s.fraction)*1.5));
         this.stroke=null;return wait('walk_camera_waiting_feedback');
       }
+      this.quietResponses=0;
       const measured=turn/s.fraction;
       if(this.gain!==null&&measured*this.gain<=0)return this.stop('walk_camera_response_wrong_direction');
       if(Math.abs(measured)<.2||Math.abs(measured)>200)return this.stop('walk_camera_gain_unqualified');
@@ -64,16 +73,18 @@ export class WalkCameraServo {
     if(Math.abs(yaw)<=.14){this.activeSince=null;return {hold:false,fraction:null,reason:'walk_camera_aligned',yaw,failed:false};}
     if(this.activeSince===null)this.activeSince=now;
     if(now-this.activeSince>8000)return this.stop('walk_camera_alignment_timeout');
-    if(!view.canStroke||now-this.lastPulseAt<400)return wait('walk_camera_waiting_neutral');
+    if(!view.canStroke||now-view.capturedAt>70||now-this.lastPulseAt<400)return wait('walk_camera_waiting_neutral');
     if(this.pulses>=120)return this.stop('walk_camera_pulse_limit');
     let fraction:number;
     if(this.gain===null){
-      if(++this.attempts>2)return this.stop('walk_camera_response_not_observed');
-      fraction=this.attempts===1?.004:.008;
+      if(this.attempts>=3)return this.stop('walk_camera_response_not_observed');
+      this.attempts++;
+      fraction=Math.max(this.minimumFraction,this.attempts===1?.018:this.attempts===2?.032:.04);
     }else {
       // At most 0.12 radians of predicted rotation and 4% of the short side.
       const desired=Math.sign(yaw/this.gain)*Math.min(Math.abs(yaw)*.6,.12)/Math.abs(this.gain);
-      fraction=Math.max(-.04,Math.min(.04,desired));
+      fraction=Math.sign(desired)*Math.min(.04,Math.max(this.minimumFraction,Math.abs(desired)));
+      if(Math.abs(fraction*this.gain)>.24001)return this.stop('walk_camera_resolution_limit');
     }
     this.lastSequence=view.sequence;this.lastPulseAt=now;this.pulses++;
     this.stroke={rotation:[...rotation],fraction,yaw,sentAt:now,endedAt:null};

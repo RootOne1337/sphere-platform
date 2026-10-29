@@ -1,7 +1,17 @@
 import {calibrateProfile,defaultTeachingProfile} from '@/src/features/stream/teachingKeymap';
 import {readWalkPlan,walkingCalibrationIssue,walkingCameraIssue,walkingStickTarget} from '@/src/features/stream/walkPilot';
+import {walkCameraInputSummary,walkInputSummary} from '@/src/features/stream/walkRunDiagnostics';
+import type {TeachingInput} from '@/src/features/stream/teachingContacts';
 const geometry={width:960,height:540};
 const profile=calibrateProfile(defaultTeachingProfile,geometry,'stick',{x:150,y:400});
+test('native camera gesture distance and duration are separate from walking counters',()=>{
+  const events:TeachingInput[]=[
+    {stage:'submitted',at_ms:1000,sequence:1,gesture:4,action:0,pointer_id:1,x:700,y:200},
+    {stage:'receipt',at_ms:1145,sequence:6,gesture:4,action:1,pointer_id:1,x:720,y:200,outcome:'applied'},
+  ];
+  expect(walkInputSummary(events)).toEqual({submitted:0,applied:0});
+  expect(walkCameraInputSummary(events)).toEqual({strokesSubmitted:1,strokesApplied:1,lastDistancePx:20,lastDurationMs:145});
+});
 const plan={schema:'sphere-walk-plan-v1',phase:'following',reason:'walk_camera_relative_pursuit',stick:[.1,-.2],
   progressFraction:.3,maxStick:.35,maxSeconds:60,groundRoute:false,executionQualified:false,cameraBodyAssumption:true};
 test('camera origin requires current geometry, edge clearance and separation from the movement stick',()=>{

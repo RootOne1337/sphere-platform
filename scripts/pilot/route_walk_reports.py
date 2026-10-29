@@ -14,7 +14,7 @@ def store_walk_report(job, body):
     fields = {'schema', 'id', 'clip', 'release', 'stopReason', 'inputFailure',
               'stopFrameAgeMs', 'stopFrameSequence', 'executionQualified',
               'inputSummary', 'stages', 'observations'}
-    if (type(body) is not dict or not fields <= body.keys() or not body.keys() <= fields|{'startMode','camera'}
+    if (type(body) is not dict or not fields <= body.keys() or not body.keys() <= fields|{'startMode','camera','cameraInput'}
             or body['schema'] != 'sphere-walk-summary-v1'
             or body.get('startMode','beginning') not in {'beginning','recognized_route'}):
         raise ValueError('walk_report_schema')
@@ -24,7 +24,9 @@ def store_walk_report(job, body):
         raise ValueError('walk_report_qualification')
     camera=body.get('camera')
     if camera is not None:
-        if (type(camera) is not dict or set(camera)!={'gainRadiansPerShortSide','pulses','calibrationAttempts','terminal'}
+        camera_fields={'gainRadiansPerShortSide','pulses','calibrationAttempts','terminal'}
+        if (type(camera) is not dict or not camera_fields<=camera.keys()
+                or not camera.keys()<=camera_fields|{'minimumFraction','quietResponses','feedback'}
                 or type(camera['pulses']) is not int or not 0<=camera['pulses']<=120
                 or type(camera['calibrationAttempts']) is not int or not 0<=camera['calibrationAttempts']<=3
                 or camera['gainRadiansPerShortSide'] is not None and (
@@ -32,6 +34,27 @@ def store_walk_report(job, body):
                     or not math.isfinite(camera['gainRadiansPerShortSide']) or not .2<=abs(camera['gainRadiansPerShortSide'])<=200)
                 or camera['terminal'] is not None and (type(camera['terminal']) is not str or not CODE.fullmatch(camera['terminal']))):
             raise ValueError('walk_report_camera')
+        if ('minimumFraction' in camera and (type(camera['minimumFraction']) not in {int,float}
+                or not math.isfinite(camera['minimumFraction']) or not .001<=camera['minimumFraction']<=.04)
+                or 'quietResponses' in camera and (type(camera['quietResponses']) is not int or not 0<=camera['quietResponses']<=3)):
+            raise ValueError('walk_report_camera_feedback')
+        feedback=camera.get('feedback',[])
+        if type(feedback) is not list or len(feedback)>32:
+            raise ValueError('walk_report_camera_feedback')
+        for row in feedback:
+            if (type(row) is not dict or set(row)!={'sequence','fraction','turnRadians','yawBefore','yawAfter','afterUpMs'}
+                    or type(row['sequence']) is not int or not 1<=row['sequence']<=1000000
+                    or any(type(v) not in {int,float} or not math.isfinite(v) for v in row.values())
+                    or not 0<abs(row['fraction'])<=.04 or not 0<=row['afterUpMs']<=10000
+                    or any(abs(row[k])>math.pi for k in ('turnRadians','yawBefore','yawAfter'))):
+                raise ValueError('walk_report_camera_feedback')
+    if 'cameraInput' in body:
+        camera_input=body['cameraInput']
+        if (type(camera_input) is not dict or set(camera_input)!={'strokesSubmitted','strokesApplied','lastDistancePx','lastDurationMs'}
+                or any(type(camera_input[k]) is not int or not 0<=camera_input[k]<=4096 for k in ('strokesSubmitted','strokesApplied'))
+                or any(camera_input[k] is not None and (type(camera_input[k]) not in {int,float}
+                    or not math.isfinite(camera_input[k]) or not 0<=camera_input[k]<=1e6) for k in ('lastDistancePx','lastDurationMs'))):
+            raise ValueError('walk_report_camera_input')
 
     def code(v):
         return type(v) is str and CODE.fullmatch(v)

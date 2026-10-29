@@ -31,7 +31,8 @@ export class TeachingContacts {
   private closeAt = 0;
   private receiptRtt: number | null = null;
   private failure: string | null = null;
-  private stroke: {id:1;target:TeachingPoint;deadline:number;phase:'down'|'move'|'up';finish:(applied:boolean)=>void}|null=null;
+  private stroke: {id:1;origin:TeachingPoint;target:TeachingPoint;deadline:number;phase:'down'|'move'|'up';
+    step:number;lastEdgeAt:number;timer:ReturnType<typeof setTimeout>|null;finish:(applied:boolean)=>void}|null=null;
   constructor(private endpoint: DirectControlEndpoint, private binding: DirectVideoBinding,
     private fresh: () => boolean, private journal: (event: TeachingInput) => void,
     private state: (state: 'opening' | 'ready' | 'closing' | 'closed' | 'failed', reason?: string) => void,
@@ -53,13 +54,32 @@ export class TeachingContacts {
   hasContact(id: number) { return this.desired.has(id); }
   horizontalStroke(origin:TeachingPoint,targetX:number,notAfter:number):Promise<boolean> {
     if(!this.isReady||!this.isNeutral||this.stroke||this.hasContact(1)||!this.fresh()||performance.now()>=notAfter
-      ||!Number.isFinite(notAfter)||notAfter-performance.now()>250||!Number.isInteger(targetX)||targetX===origin.x
+      ||!Number.isFinite(notAfter)||notAfter-performance.now()>250||notAfter-performance.now()<170||!Number.isInteger(targetX)||targetX===origin.x
       ||Math.abs(targetX-origin.x)>Math.min(this.binding.width,this.binding.height)*.04+1)return Promise.resolve(false);
     return new Promise(resolve=>{
-      this.stroke={id:1,target:{x:targetX,y:origin.y},deadline:notAfter,phase:'down',finish:resolve};
+      this.stroke={id:1,origin:{...origin},target:{x:targetX,y:origin.y},deadline:notAfter,phase:'down',
+        step:0,lastEdgeAt:performance.now(),timer:null,finish:resolve};
       this.set(1,origin);
       if(!this.isReady){this.stroke?.finish(false);this.stroke=null;}
     });
+  }
+  private advanceStroke(){
+    const stroke=this.stroke;if(!stroke||stroke.phase==='up')return;
+    const advance=()=>{
+      stroke.timer=null;
+      if(this.stroke!==stroke||!this.isReady)return;
+      if(!this.fresh()||performance.now()>=stroke.deadline){this.fail('camera_stroke_expired');return;}
+      stroke.lastEdgeAt=performance.now();
+      if(stroke.step<4){
+        stroke.phase='move';stroke.step++;
+        const point={x:Math.round(stroke.origin.x+(stroke.target.x-stroke.origin.x)*stroke.step/4),y:stroke.origin.y};
+        if(this.desired.get(1)?.x===point.x){this.advanceStroke();return;}
+        this.set(1,point);
+      }else{stroke.phase='up';this.set(1,null);}
+    };
+    // Native ACK means submission, not a rendered game frame. Space movement
+    // over several frames instead of collapsing DOWN/MOVE/UP into one tap.
+    stroke.timer=setTimeout(advance,Math.max(0,24-(performance.now()-stroke.lastEdgeAt)));
   }
   set(id: number, point: TeachingPoint | null) {
     if (!this.isReady) return;
@@ -139,11 +159,7 @@ export class TeachingContacts {
         this.stroke=null;stroke.finish(true);
       }else if(!this.fresh()||performance.now()>=stroke.deadline){
         this.fail('camera_stroke_expired');return;
-      }else if(stroke.phase==='down'){
-        stroke.phase='move';this.set(1,stroke.target);
-      }else{
-        stroke.phase='up';this.set(1,null);
-      }
+      }else this.advanceStroke();
     }
     this.pump();
   }
@@ -157,6 +173,7 @@ export class TeachingContacts {
     if (this.pending && now - this.pendingAt >= 500) { this.fail('contact_ack_timeout'); return; }
     if (!this.ready && now - this.openedAt >= 6000) { this.fail('contact_ready_timeout'); return; }
     if (!this.isReady || this.pending || now - this.lastSend < 300) return;
+    if(this.stroke)return;
     const event: TeachingInput = { stage: 'submitted', at_ms: performance.timeOrigin + now,
       sequence: ++this.sequence, gesture: this.held.size ? this.gesture : 0, action: 4, pointer_id: -1 };
     this.pending = event; this.pendingAt = now;
@@ -168,7 +185,7 @@ export class TeachingContacts {
     if (this.closePromise) return this.closePromise;
     if (this.ended) return Promise.resolve(this.closedConfirmed);
     this.closing = true; this.ready = false; this.queue = []; this.desired.clear(); this.closeAt = performance.now();
-    const stroke=this.stroke;this.stroke=null;stroke?.finish(false);
+    const stroke=this.stroke;this.stroke=null;if(stroke?.timer)clearTimeout(stroke.timer);stroke?.finish(false);
     this.closePromise = new Promise(resolve => { this.finishClose = resolve; });
     this.state('closing');
     try { this.send({ type: 'touch_close' }); } catch { this.finish(false); }
@@ -177,7 +194,7 @@ export class TeachingContacts {
   private finish(confirmed: boolean, deviceUptime?: number) {
     if (this.ended) return;
     this.ended = true; this.ready = false; clearInterval(this.timer); this.remove();
-    const stroke=this.stroke;this.stroke=null;stroke?.finish(false);
+    const stroke=this.stroke;this.stroke=null;if(stroke?.timer)clearTimeout(stroke.timer);stroke?.finish(false);
     try { this.journal({ stage: 'closed', at_ms: performance.timeOrigin + performance.now(), sequence: 0,
       gesture: 0, action: 3, pointer_id: -1, outcome: confirmed ? 'closed' : 'unknown',
       ...(confirmed?{device_uptime_ms:deviceUptime,cancelled_pointers:[...this.held].sort()}: {}) }); } catch { confirmed = false; }

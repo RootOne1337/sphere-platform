@@ -6,6 +6,18 @@ export type WalkPlan={schema:'sphere-walk-plan-v1';phase:'waiting'|'following'|'
   groundRoute:false;executionQualified:false;cameraBodyAssumption:true};
 export type WalkInputLease={active():boolean;failure?():string|null;set(vector:[number,number]):void;canLook?():boolean;look?(fraction:number,notAfter:number):Promise<boolean>;close():Promise<boolean>};
 export type WalkInputControl={issue:string|null;cameraIssue?:string|null;open(signal:AbortSignal,journal:(event:TeachingInput)=>void):Promise<WalkInputLease>};
+/** No input owner exists yet: a short presentation gap may recover before open. */
+export function waitForFreshWalkSource(fresh:()=>boolean,signal:AbortSignal):Promise<boolean>{
+  if(signal.aborted)return Promise.resolve(false);
+  if(fresh())return Promise.resolve(true);
+  return new Promise(resolve=>{
+    const finish=(value:boolean)=>{clearInterval(poll);clearTimeout(timeout);signal.removeEventListener('abort',aborted);resolve(value);};
+    const aborted=()=>finish(false);
+    const poll=setInterval(()=>{if(fresh())finish(true);},16);
+    const timeout=setTimeout(()=>finish(false),1000);
+    signal.addEventListener('abort',aborted,{once:true});
+  });
+}
 export function walkingCameraIssue(profile:TeachingProfile,geometry:{width:number;height:number}|null):string|null {
   if(!geometry||!profile.look||!calibrated(profile,geometry,'look'))return 'Укажите свободную область поворота камеры на текущем экране.';
   const p=fromPercent(profile.look,geometry),margin=Math.min(geometry.width,geometry.height)*.05;
@@ -78,12 +90,14 @@ export const walkReasonLabel=(reason:string):string=>({
   walk_camera_pitch_mismatch:'Взгляд сильно отклонён по вертикали: восстановите ракурс записи',
   walk_camera_input_unconfirmed:'Android не подтвердил поворот камеры',
   walk_camera_feedback_timeout:'После поворота нет подтверждённого отклика камеры',
-  walk_camera_response_not_observed:'Игра не показала отклик камеры: проверьте выбранную область',
+  walk_camera_response_not_observed:'Android принял свайпы, но ракурс не изменился. Проверьте начало свайпа: свободная область вне кнопок и стика',
   walk_camera_response_wrong_direction:'Камера повернулась в неожиданную сторону — тест остановлен',
   walk_camera_response_too_large:'Камера повернулась слишком резко — тест остановлен',
   walk_camera_gain_unqualified:'Отклик камеры не прошёл проверку чувствительности',
   walk_camera_not_converging:'Повороты не направляют взгляд к пути — тест остановлен',
   walk_camera_alignment_timeout:'Не удалось направить камеру вдоль пути за 8 секунд',
   walk_camera_pulse_limit:'Лимит небольших поворотов камеры достигнут',
+  walk_camera_resolution_limit:'Чувствительность камеры слишком велика для точного короткого свайпа. Уменьшите её в игре',
+  walk_source_not_ready:'Свежий кадр не появился перед открытием ввода. Проверьте прямой поток и повторите запуск',
   walk_manual_stop:'Остановлено оператором',
 } as Record<string,string>)[reason]??`Пеший тест остановлен: ${reason}`;

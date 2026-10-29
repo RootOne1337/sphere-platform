@@ -45,6 +45,18 @@ class WalkReportTests(unittest.TestCase):
             store_walk_report(self.job, changed)
         self.assertEqual(json.loads((self.job/'walk-reports'/('a'*32+'.json')).read_bytes()), self.body)
 
+    def test_camera_feedback_and_real_gesture_duration_are_bounded(self):
+        feedback=dict(sequence=10,fraction=-.018,turnRadians=.09,yawBefore=.8,yawAfter=.71,afterUpMs=180)
+        camera=dict(gainRadiansPerShortSide=-5.,pulses=2,calibrationAttempts=1,terminal=None,
+            minimumFraction=.012,quietResponses=0,feedback=[feedback])
+        body=dict(self.body,camera=camera,cameraInput=dict(strokesSubmitted=2,strokesApplied=2,lastDistancePx=19,lastDurationMs=145))
+        self.assertEqual(store_walk_report(self.job,body)['state'],'saved')
+        for change in ({'feedback':[dict(feedback,turnRadians=float('nan'))]}, {'feedback':[feedback]*33}, {'quietResponses':50}):
+            with self.assertRaisesRegex(ValueError,'camera_feedback'):
+                store_walk_report(self.job,dict(body,camera={**camera,**change}))
+        with self.assertRaisesRegex(ValueError,'camera_input'):
+            store_walk_report(self.job,dict(body,cameraInput={**body['cameraInput'],'lastDurationMs':-1}))
+
     def test_pixels_keys_extra_fields_and_unbounded_rows_are_rejected(self):
         for key, value in [('image', 'data:image/jpeg;base64,x'), ('key', 'secret'), ('id', '../x'), ('executionQualified', True), ('stopFrameAgeMs', float('nan'))]:
             with self.subTest(key=key):
