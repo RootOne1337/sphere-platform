@@ -293,3 +293,20 @@ def test_http_origin_host_capability_and_cors(jobs):
         server.shutdown()
         server.server_close()
         thread.join(3)
+
+
+def test_file_sharing_denial_is_not_reported_as_lost_job_credentials(jobs,monkeypatch):
+    job=create(jobs)
+    def blocked(_):raise PermissionError('private-path-must-not-be-exposed')
+    monkeypatch.setattr(jobs,'status',blocked)
+    server=ThreadingHTTPServer(('127.0.0.1',0),service.handler(jobs,'http://127.0.0.1:3015',3342))
+    thread=threading.Thread(target=server.serve_forever,daemon=True);thread.start()
+    request=urllib.request.Request(f'http://127.0.0.1:{server.server_port}/jobs/{job.name}',
+        headers={'Host':'127.0.0.1:3342','Origin':'http://127.0.0.1:3015',
+                 'X-Sphere-Reconstruction':'1','X-Job-Key':'b'*64})
+    try:
+        with pytest.raises(urllib.error.HTTPError) as exc:urllib.request.urlopen(request)
+        assert exc.value.code==503
+        assert json.load(exc.value)=={'error':'local_file_unavailable_inspect_job_status'}
+    finally:
+        server.shutdown();server.server_close();thread.join(3)

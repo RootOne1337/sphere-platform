@@ -383,6 +383,29 @@ class SparseLocalizationTests(unittest.TestCase):
         self.assertEqual(tracker.observe(frame, episode_id=EPISODE, goal_revision=GOAL,
                                         scene="active").reason, "route_pose_not_verified")
 
+    def test_recorded_pauses_keep_timestamps_without_dividing_by_zero(self):
+        trace=((0.,0.,0.),(0.,0.,0.),(0.,0.,5.),(0.,0.,10.),
+               (0.,0.,10.),(0.,0.,15.),(0.,0.,20.),(0.,0.,20.))
+        route=replace(self.route,camera_trace=trace)
+        tracker=self.tracker(route)
+        with self.np.errstate(divide='raise',invalid='raise'):
+            for z in (0.,7.,10.,16.,20.):
+                segment,progress,distance=tracker._nearest(self.np.array([0.,0.,z]))
+                self.assertAlmostEqual(progress,z)
+                self.assertAlmostEqual(distance,0.)
+                self.assertGreater(tracker.lengths[segment],0.)
+        self.assertEqual(route.source_seconds,self.route.source_seconds)
+        with tempfile.TemporaryDirectory() as folder:
+            path=Path(folder)/'paused.json';sha=route.save(path)
+            self.assertEqual(SparseRoute.load(path,sha256=sha),route)
+
+    def test_long_dwell_does_not_collapse_the_motion_scale(self):
+        from motor_worker.route_localization import trace_step_scale
+        self.assertEqual(trace_step_scale([0.,0.,0.,0.,5.,5.]),5.)
+        with self.assertRaises(ProtocolError):trace_step_scale([0.,0.])
+        for invalid in ([float('nan')],[float('inf')],[-1.,5.]):
+            with self.assertRaises(ProtocolError):trace_step_scale(invalid)
+
     def test_unobserved_route_sections_are_rejected_by_default(self):
         route = replace(self.route, landmark_views=((0, 1, 2),)*240)
         support = map_support(route)

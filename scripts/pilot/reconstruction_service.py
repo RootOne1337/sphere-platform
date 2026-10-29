@@ -41,6 +41,10 @@ TERMINAL = {'complete', 'sparse_complete', 'failed', 'cancelled', 'quality_rejec
 IDENTITY = re.compile(r'^[0-9a-f]{32}$')
 
 
+class AccessDenied(PermissionError):
+    """Origin/capability denial, distinct from Windows file sharing failures."""
+
+
 class BoundedServer(ThreadingHTTPServer):
     daemon_threads = True
 
@@ -385,7 +389,7 @@ class Jobs:
             raise ValueError('job_not_found')
         control = json.loads((job / 'control.json').read_text('utf-8'))
         if not hmac.compare_digest(control['key_sha256'], hashlib.sha256(key.encode()).hexdigest()):
-            raise PermissionError('job_capability_required')
+            raise AccessDenied('job_capability_required')
         return control
 
     def create(self, body):
@@ -520,11 +524,11 @@ def handler(jobs, origin, port):
 
         def allowed(self):
             if self.headers.get('Host') != f'127.0.0.1:{port}':
-                raise PermissionError('loopback_host_required')
+                raise AccessDenied('loopback_host_required')
             if self.headers.get('Origin') not in {None, origin}:
-                raise PermissionError('origin_denied')
+                raise AccessDenied('origin_denied')
             if self.headers.get('X-Sphere-Reconstruction') != '1':
-                raise PermissionError('explicit_local_client_required')
+                raise AccessDenied('explicit_local_client_required')
 
         def reply(self, code, body, content_type='application/json'):
             if isinstance(body, dict):
@@ -699,8 +703,11 @@ def handler(jobs, origin, port):
                             self.reply(200, path.read_bytes())
                     else:
                         raise ValueError('unknown_endpoint')
-            except PermissionError:
+            except AccessDenied:
                 self.reply(403, {'error': 'capability_or_origin_denied'})
+            except PermissionError:
+                self.close_connection = True
+                self.reply(503, {'error': 'local_file_unavailable_inspect_job_status'})
             except (ValueError, FileExistsError) as error:
                 self.close_connection = True
                 self.reply(409, {'error': str(error)[:200]})

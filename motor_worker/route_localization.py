@@ -30,6 +30,18 @@ MAX_BYTES = 4 * 1024 * 1024
 # This conservative policy can reject sparse recordings; it does not prove that
 # shorter intervals are traversable or that the camera trace follows the road.
 MAX_REFERENCE_INTERVAL_SECONDS = 1.0
+MIN_TRACE_STEP_UNITS = 1e-6
+
+
+def trace_step_scale(lengths):
+    """A recorded pause cannot shrink the scale of the moving route to zero."""
+    import numpy as np
+    values=np.asarray(lengths,dtype=float)
+    if values.ndim!=1 or not np.isfinite(values).all() or (values<0).any():
+        raise ProtocolError('route_trace_lengths_invalid')
+    moving=values[values>=MIN_TRACE_STEP_UNITS]
+    if not len(moving):raise ProtocolError('route_has_no_translational_baseline')
+    return float(np.median(moving))
 
 
 def _sha(value):
@@ -202,7 +214,7 @@ class SparseRoute:
         steps = np.linalg.norm(np.diff(self.camera_trace, axis=0), axis=1)
         if (not np.isfinite(desc).all() or (desc < 0).any() or (desc > 1).any()
                 or not np.allclose(np.linalg.norm(desc, axis=1), 1, atol=.02)
-                or (steps < 1e-6).any()):
+                or not (steps >= MIN_TRACE_STEP_UNITS).any()):
             raise ProtocolError("invalid_sparse_route_geometry_or_descriptors")
 
     def save(self, path):
@@ -372,7 +384,7 @@ class RouteLocalizer:
             old_center,old_rotation,old_progress,old_time=self.previous
             dt=self.last_received-old_time
             if 0<dt<=.5:
-                limit=float(np.median(self.lengths)*5)*max(dt,.2)
+                limit=trace_step_scale(self.lengths)*5*max(dt,.2)
                 consistent=[]
                 for proposal in proposals:
                     center,rotation,count=proposal[:3]
@@ -396,7 +408,7 @@ class RouteLocalizer:
         if other[2] < .75*best[2]:
             return False
         angle = float(np.arccos(np.clip((np.trace(other[1] @ best[1].T)-1)/2, -1, 1)))
-        return (np.linalg.norm(other[0]-best[0]) > np.median(self.lengths)*2
+        return (np.linalg.norm(other[0]-best[0]) > trace_step_scale(self.lengths)*2
                 or angle > 1.05)
 
     def _solve_subset(self, pixels, descriptors, indices):
@@ -450,10 +462,16 @@ class RouteLocalizer:
     def _nearest(self, center):
         np = self.np
         directions = np.diff(self.trace, axis=0)
-        fractions = np.clip(np.sum((center-self.trace[:-1])*directions, axis=1)/self.lengths**2, 0, 1)
+        moving=self.lengths>=MIN_TRACE_STEP_UNITS
+        fractions=np.zeros(len(self.lengths))
+        np.divide(np.sum((center-self.trace[:-1])*directions,axis=1),self.lengths**2,
+                  out=fractions,where=moving)
+        fractions=np.clip(fractions,0,1)
         nearest = self.trace[:-1]+fractions[:, None]*directions
         distances = np.linalg.norm(nearest-center, axis=1)
-        order = np.argsort(distances)
+        valid=np.flatnonzero(moving)
+        if not len(valid):return None
+        order=valid[np.argsort(distances[valid])]
         at = int(order[0])
         if self.route.source_seconds[at+1]-self.route.source_seconds[at] > MAX_REFERENCE_INTERVAL_SECONDS:
             return None
@@ -461,7 +479,7 @@ class RouteLocalizer:
         for other in order[1:]:
             other_progress=float(self.cumulative[other]+fractions[other]*self.lengths[other])
             at_progress=float(self.cumulative[at]+fractions[at]*self.lengths[at])
-            if (abs(int(other)-at)>2 and abs(other_progress-at_progress)>float(np.median(self.lengths)*2)
+            if (abs(int(other)-at)>2 and abs(other_progress-at_progress)>trace_step_scale(self.lengths)*2
                     and distances[other] <= distances[at]+self.lengths.mean()*.15):
                 return None
         return at, float(self.cumulative[at]+fractions[at]*self.lengths[at]), float(distances[at])
@@ -532,7 +550,7 @@ class RouteLocalizer:
             return result("route_progress_ambiguous")
         segment, progress, distance = nearest
         # Scale-relative submap corridor, not a guarantee of a two-metre radius.
-        corridor = float(self.np.median(self.lengths)*5)
+        corridor = trace_step_scale(self.lengths)*5
         if distance > corridor:
             return result("route_outside_observed_corridor")
         if self.previous is not None:

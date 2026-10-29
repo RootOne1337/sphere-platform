@@ -40,6 +40,22 @@ class WalkRouteTests(unittest.TestCase):
         self.assertLess(result['stick'][0],0)
         self.assertAlmostEqual(result['stick'][1],0)
 
+    def test_start_midroute_and_end_pauses_do_not_break_pursuit(self):
+        import numpy as np
+        route=replace(self.route,camera_trace=((0.,0.,0.),(0.,0.,0.),(0.,0.,5.),(0.,0.,10.),
+            (0.,0.,10.),(0.,0.,15.),(0.,0.,20.),(0.,0.,20.)))
+        self.follower=WalkRouteFollower(route,clock=lambda:self.now)
+        with np.errstate(divide='raise',invalid='raise'):
+            first=self.observe()
+            self.assertEqual(first['phase'],'following')
+            self.assertLess(first['stick'][1],0.)
+            self.now+=.2
+            # Lookahead lands exactly at the final, stationary camera plateau.
+            following=self.observe(16.)
+            self.assertEqual(following['phase'],'following')
+            self.assertTrue(np.isfinite(following['stick']).all())
+        self.assertEqual(self.follower.step,5.)
+
     def test_sideways_start_corrects_toward_the_observed_trace(self):
         result=self.observe(center=(2.,0.,0.),cross_track_units=2.)
         self.assertLess(result['stick'][0],0)

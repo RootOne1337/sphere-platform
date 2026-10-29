@@ -42,7 +42,9 @@ def build_video_track_database(job, prepared, source_database, output, check, *,
     selected={row['source_index']:row for row in provenance['images']}
     if not 10<=len(selected)<=240:raise ValueError('video_tracks_view_quota')
     control=json.loads((job/'control.json').read_bytes());width,height=capture.geometry
-    scale=min(1.,960/max(width,height));size=(round(width*scale),round(height*scale));cv2.setNumThreads(2)
+    # Keep fine facades/road texture through turns. This is a bounded CPU
+    # observation budget, independent of the ordinary stream's resolution.
+    scale=min(1.,1280/max(width,height));size=(round(width*scale),round(height*scale));cv2.setNumThreads(2)
     mask=np.full((size[1],size[0]),255,dtype='uint8');mask[:int(size[1]*.2)]=0
     for x1,y1,x2,y2 in excluded_rectangles(control.get('mask','none')):
         mask[int(y1*size[1]):int(y2*size[1]),int(x1*size[0]):int(x2*size[0])]=0
@@ -80,7 +82,7 @@ def build_video_track_database(job, prepared, source_database, output, check, *,
             if row['relative_ticks_90k']!=selection['relative_ticks_90k']:raise ValueError('video_tracks_time_binding')
             allowed=mask.copy()
             for x,y in points:cv2.circle(allowed,(round(float(x)),round(float(y))),7,0,-1)
-            needed=1000-len(points)
+            needed=2000-len(points)
             new=cv2.goodFeaturesToTrack(gray,needed,.007,8,mask=allowed) if needed>=30 else None
             if new is not None:
                 new=new[:,0];points=np.concatenate([points,new]);ids=np.concatenate([ids,np.arange(next_id,next_id+len(new))]);next_id+=len(new)
@@ -99,7 +101,7 @@ def build_video_track_database(job, prepared, source_database, output, check, *,
     if decoded!=len(capture.frames) or len(counts)!=len(selected):raise ValueError('video_tracks_incomplete')
     report=dict(schema='sphere-video-track-database-v1',decodedFrames=decoded,views=len(counts),
         observations=sum(counts),trackIdentities=next_id,pairs=pairs,seconds=time.monotonic()-began,
-        trackingResolution=list(size),forwardBackwardPixels=.75,descriptorsGenerated=False,
+        trackingResolution=list(size),maxCorners=2000,forwardBackwardPixels=.75,descriptorsGenerated=False,
         pixelCoordinates='colmap_corner_centers_after_resize_v1',
         sourceGapLimitSeconds=.25,trackingBreaks=breaks,
         sourceModified=False,posesInterpolated=False,physicalActions=0)

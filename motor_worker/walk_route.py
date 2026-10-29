@@ -9,7 +9,7 @@ from __future__ import annotations
 from collections import deque
 import math
 
-from motor_worker.route_localization import RoutePose, SparseRoute
+from motor_worker.route_localization import RoutePose, SparseRoute, MIN_TRACE_STEP_UNITS, trace_step_scale
 
 
 class WalkRouteFollower:
@@ -24,7 +24,7 @@ class WalkRouteFollower:
         self.route, self.clock, self.np = route, clock, np
         self.trace = np.asarray(route.camera_trace, dtype=float)
         self.steps = np.linalg.norm(np.diff(self.trace, axis=0), axis=1)
-        self.step = float(np.median(self.steps))
+        self.step = trace_step_scale(self.steps)
         self.arc = np.r_[0., np.cumsum(self.steps)]
         self.total = float(self.arc[-1])
         self.began = clock()
@@ -113,8 +113,10 @@ class WalkRouteFollower:
         # Short arc-length lookahead follows the ordered trace, never a direct
         # chord to the destination or the timing of recorded input.
         target_arc = min(self.total, progress+self.step*1.5)
-        index = min(len(self.steps)-1, int(np.searchsorted(self.arc, target_arc, side='right')-1))
-        fraction = (target_arc-self.arc[index])/self.steps[index]
+        moving=np.flatnonzero(self.steps>=MIN_TRACE_STEP_UNITS)
+        at=min(len(moving)-1,int(np.searchsorted(self.arc[moving+1],target_arc,side='left')))
+        index=int(moving[at])
+        fraction = float(np.clip((target_arc-self.arc[index])/self.steps[index],0.,1.))
         target = self.trace[index]*(1-fraction)+self.trace[index+1]*fraction
         camera_delta = rotation @ (target-center)
         direction = camera_delta[[0, 2]]
