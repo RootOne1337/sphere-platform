@@ -68,7 +68,8 @@ def export(model, provenance, images, output, *, profile, world_revision, checkp
     original_K = camera.calibration_matrix()
     if not pinhole_condition(camera.width, camera.height, float(original_K[0, 0]), float(original_K[1, 1]))['passed']:
         raise ProtocolError("camera_intrinsics_degenerate")
-    K = np.diag([SIZE[0]/camera.width, SIZE[1]/camera.height, 1.]) @ original_K
+    from scripts.pilot.camera_pixel_conventions import colmap_calibration_to_opencv
+    K = colmap_calibration_to_opencv(original_K,(camera.width,camera.height),SIZE)
     source = json.loads(provenance.read_text(encoding="utf-8"))
     # Existing capture provenance binds selected PNGs to original media ticks.
     rows = {Path(row["image"]).name: row for row in source["images"]}
@@ -117,6 +118,7 @@ def export(model, provenance, images, output, *, profile, world_revision, checkp
         first_seconds=seconds[0], last_seconds=seconds[-1], camera_trace_only=True,
         omitted_landmarks=max(0, rebuild_report.get("accepted", rec.num_points3D())-len(xyz)),
         feature_build=rebuild_report, feature_selection=selection_report, map_support=map_support(route), metric_scale=None,
+        pixel_coordinates='opencv_integer_centers_v1',
         execution_qualified=False, input_events=0)
 
 

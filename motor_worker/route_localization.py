@@ -22,7 +22,7 @@ from motor_worker.protocol import ProtocolError, message
 SIZE = (960, 540)
 # Changes to the runtime pose gate are tracked separately from the descriptor
 # format: strengthening a gate must not make compatible saved maps unreadable.
-PNP_VERIFICATION_POLICY = 'pnp-image-coverage-temporal-v3'
+PNP_VERIFICATION_POLICY = 'pnp-continuous-image-support-temporal-v4'
 MAX_POINTS = 4096
 MAX_VIEWS = 256
 MAX_BYTES = 4 * 1024 * 1024
@@ -80,10 +80,12 @@ def extract_features(frame, mask):
 
 
 def inlier_spatial_support(points):
-    """Require inliers across both image axes, not one textured strip.
+    """Continuous, outlier-resistant image support, independent of grid origin.
 
-    This is a conservative image-space observability check. It does not prove
-    that points are static, the pose is correct, or the road is traversable.
+    Fixed screen bins can reject a healthy cloud after a tiny translation, yet
+    accept a diagonal line crossing many bins. Trim extreme observations and
+    require genuine two-dimensional spread. These necessary image-space checks
+    do not certify static objects, correct poses or traversability.
     """
     import numpy as np
 
@@ -91,14 +93,21 @@ def inlier_spatial_support(points):
     if (xy.ndim!=2 or xy.shape[1]!=2 or len(xy)<20 or not np.isfinite(xy).all()
             or (xy<0).any() or (xy[:,0]>=SIZE[0]).any() or (xy[:,1]>=SIZE[1]).any()):
         return False
-    cells={(int(x//240),int(y//180)) for x,y in xy}
-    minimum=max(5,int(np.ceil(len(xy)*.05)))
-    columns=np.bincount((xy[:,0]//240).astype(int),minlength=4)
-    rows=np.bincount((xy[:,1]//180).astype(int),minlength=3)
-    if len(cells)<4 or int((columns>=minimum).sum())<2 or int((rows>=minimum).sum())<2:
+    low,high=np.percentile(xy,[5,95],axis=0)
+    spread=high-low
+    if spread[0]<96 or spread[1]<54:
         return False
-    spread=np.percentile(xy,95,axis=0)-np.percentile(xy,5,axis=0)
-    return bool(spread[0]>=96 and spread[1]>=54)
+    core=xy[np.all((xy>=low)&(xy<=high),axis=1)]
+    if len(core)<12:
+        return False
+    centered=core-np.median(core,axis=0)
+    _,singular,axes=np.linalg.svd(centered,full_matrices=False)
+    major,minor=singular/np.sqrt(len(core))
+    # At 960x540, 12 px is four times the 3 px PnP inlier threshold.
+    # The minor-axis median prevents a few remote points inflating covariance.
+    minor_median=float(np.median(np.abs(centered@axes[1])))
+    return bool(major>0 and minor>=12 and minor/major>=.05 and minor_median>=6
+                and np.pi*major*minor>=SIZE[0]*SIZE[1]*.005)
 
 
 def map_support(route):

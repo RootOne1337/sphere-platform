@@ -14,6 +14,8 @@ from pathlib import Path
 
 from scripts.pilot.atomic_json import write_json
 from scripts.pilot.route_masks import excluded_rectangles
+from scripts.pilot.camera_pixel_conventions import tracking_points_to_colmap
+from scripts.pilot.video_observations import track_source_points
 
 
 def shared_track_pairs(previous, current):
@@ -52,7 +54,7 @@ def build_video_track_database(job, prepared, source_database, output, check, *,
             raise ValueError('video_tracks_image_binding')
         db.clear_keypoints();db.clear_descriptors();db.clear_matches();db.clear_two_view_geometries()
     previous=None;points=np.empty((0,2),dtype='float32');ids=np.empty(0,dtype='int64');next_id=0
-    history=[];pairs=[];began=checked=time.monotonic();decoded=0;counts=[]
+    history=[];pairs=[];began=checked=time.monotonic();decoded=0;counts=[];previous_tick=None;breaks=[]
     for row,frame in decoded_browser(capture):
         now=time.monotonic()
         if now-began>300:raise RuntimeError('video_tracks_timeout')
@@ -60,12 +62,15 @@ def build_video_track_database(job, prepared, source_database, output, check, *,
             check();checked=now
             if progress:progress(decoded,len(capture.frames))
         gray=cv2.resize(frame.to_ndarray(format='gray'),size,interpolation=cv2.INTER_AREA)
+        if previous_tick is not None and row['relative_ticks_90k']-previous_tick>22500:
+            # A matching endpoint is not evidence for unrecorded intermediate
+            # frames. Restart measured identities instead of bridging a gap.
+            breaks.append(dict(sourceIndex=row['index'],seconds=row['relative_ticks_90k']/90000,
+                               gapSeconds=(row['relative_ticks_90k']-previous_tick)/90000))
+            points=np.empty((0,2),dtype='float32');ids=np.empty(0,dtype='int64');history=[]
         if previous is not None and len(points):
-            old=points.reshape(-1,1,2)
-            moved,valid,_=cv2.calcOpticalFlowPyrLK(previous,gray,old,None,winSize=(21,21),maxLevel=3)
-            back,reverse,_=cv2.calcOpticalFlowPyrLK(gray,previous,moved,None,winSize=(21,21),maxLevel=3)
-            good=valid.ravel().astype(bool)&reverse.ravel().astype(bool)&(np.linalg.norm(back-old,axis=2).ravel()<=.75)
-            good&=np.isfinite(moved).all(axis=(1,2));points=moved[good,0];ids=ids[good]
+            moved,good=track_source_points(previous,gray,points,tolerance=.75)
+            points=moved[good];ids=ids[good]
             inside=(points[:,0]>=5)&(points[:,0]<size[0]-5)&(points[:,1]>=5)&(points[:,1]<size[1]-5)
             points=points[inside];ids=ids[inside]
             allowed=mask[np.rint(points[:,1]).astype(int),np.rint(points[:,0]).astype(int)]>0
@@ -80,7 +85,8 @@ def build_video_track_database(job, prepared, source_database, output, check, *,
             if new is not None:
                 new=new[:,0];points=np.concatenate([points,new]);ids=np.concatenate([ids,np.arange(next_id,next_id+len(new))]);next_id+=len(new)
             image=images[Path(selection['image']).name]
-            keypoints=np.column_stack([points/scale+.5,np.ones(len(points),dtype='float32'),np.zeros(len(points),dtype='float32')])
+            keypoints=np.column_stack([tracking_points_to_colmap(points,(width,height),size),
+                np.ones(len(points),dtype='float32'),np.zeros(len(points),dtype='float32')])
             with p.Database.open(output) as db:
                 db.write_keypoints(image.image_id,keypoints.astype('float32'))
                 for old_image,old_ids in history:
@@ -89,11 +95,13 @@ def build_video_track_database(job, prepared, source_database, output, check, *,
                         db.write_matches(old_image.image_id,image.image_id,matches)
                         pairs.append(dict(first=old_image.name,second=image.name,matches=len(matches)))
             history.append((image,ids.copy()));history=history[-max_lag:];counts.append(len(points))
-        previous=gray;decoded+=1
+        previous=gray;previous_tick=row['relative_ticks_90k'];decoded+=1
     if decoded!=len(capture.frames) or len(counts)!=len(selected):raise ValueError('video_tracks_incomplete')
     report=dict(schema='sphere-video-track-database-v1',decodedFrames=decoded,views=len(counts),
         observations=sum(counts),trackIdentities=next_id,pairs=pairs,seconds=time.monotonic()-began,
         trackingResolution=list(size),forwardBackwardPixels=.75,descriptorsGenerated=False,
+        pixelCoordinates='colmap_corner_centers_after_resize_v1',
+        sourceGapLimitSeconds=.25,trackingBreaks=breaks,
         sourceModified=False,posesInterpolated=False,physicalActions=0)
     write_json(output.with_suffix('.tracks.json'),report)
     return report

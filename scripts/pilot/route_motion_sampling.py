@@ -4,6 +4,7 @@ from __future__ import annotations
 import time
 
 from scripts.pilot.route_masks import excluded_rectangles
+from scripts.pilot.video_observations import track_source_points
 
 
 def select_motion_rows(frames, motion, *, max_images=240):
@@ -55,10 +56,8 @@ def sample_video(capture, mask_mode, check, progress=None):
         if previous is not None:
             points=cv2.goodFeaturesToTrack(previous,180,.015,10,mask=mask)
             if points is not None and len(points)>=15:
-                moved,status,_=cv2.calcOpticalFlowPyrLK(previous,gray,points,None,winSize=(21,21),maxLevel=3)
-                back,reverse,_=cv2.calcOpticalFlowPyrLK(gray,previous,moved,None,winSize=(21,21),maxLevel=3)
-                good=status.ravel().astype(bool)&reverse.ravel().astype(bool)&(np.linalg.norm(back-points,axis=2).ravel()<1.)
-                if good.sum()>=15:motion[row['index']]=float(np.median(np.linalg.norm(moved-points,axis=2).ravel()[good]))
+                moved,good=track_source_points(previous,gray,points,tolerance=1.)
+                if good.sum()>=15:motion[row['index']]=float(np.median(np.linalg.norm(moved-points[:,0],axis=1)[good]))
         previous=gray;decoded+=1
     if decoded!=len(capture.frames):raise ValueError('motion_sampling_decode')
     indices,report=select_motion_rows(capture.frames,motion)

@@ -215,7 +215,7 @@ class SparseLocalizationTests(unittest.TestCase):
             z=rng.uniform(8,40,len(xy))
             xyz=np.column_stack(((xy[:,0]-480)*z/450,(xy[:,1]-270)*z/450,z))
             return xyz,xy
-        one_strip,strip_xy=pose_points(365,525)
+        one_strip,strip_xy=pose_points(365,385)
         self.assertGreaterEqual(len({int(x//240) for x in strip_xy[:,0]}),4)
         self.assertFalse(inlier_spatial_support(strip_xy))
         self.assertIsNone(self.localizer._verify_correspondences(one_strip,strip_xy))
@@ -229,11 +229,26 @@ class SparseLocalizationTests(unittest.TestCase):
         xy[0]=[-1,180]
         self.assertFalse(inlier_spatial_support(xy))
 
-    def test_one_outlier_cannot_create_a_second_supported_row(self):
+    def test_one_outlier_cannot_make_a_narrow_cloud_observable(self):
         rng=self.np.random.default_rng(114)
-        xy=self.np.column_stack((rng.uniform(5,955,100),rng.uniform(365,530,100)))
-        xy[0,1]=359.
+        xy=self.np.column_stack((rng.uniform(5,955,100),rng.uniform(365,385,100)))
+        xy[0,1]=50.
         self.assertFalse(inlier_spatial_support(xy))
+
+    def test_spatial_support_is_stable_across_arbitrary_grid_boundaries(self):
+        xy=self.np.array([(x,y) for x in self.np.linspace(60,900,12) for y in self.np.linspace(200,345,8)])
+        for dy in (-75.,0.,75.):
+            with self.subTest(vertical_shift=dy):
+                self.assertTrue(inlier_spatial_support(xy+[0,dy]))
+
+    def test_diagonal_line_and_local_cluster_with_remote_outliers_are_rejected(self):
+        x=self.np.linspace(30,930,100)
+        line=self.np.column_stack((x,30+x*.5))
+        self.assertFalse(inlier_spatial_support(line))
+        rng=self.np.random.default_rng(115)
+        cluster=rng.uniform([450,250],[460,260],(100,2))
+        outliers=self.np.array([[5,5],[950,5],[5,530],[950,530]])
+        self.assertFalse(inlier_spatial_support(self.np.vstack((cluster,outliers))))
 
     def test_candidate_limit_is_bounded_and_controls_search_without_changing_pnp_checks(self):
         views = 32

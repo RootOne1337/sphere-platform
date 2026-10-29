@@ -13,6 +13,7 @@ import time
 from pathlib import Path
 
 from scripts.pilot.atomic_json import write_json
+from scripts.pilot.video_observations import track_source_points
 
 
 def flow_supported_matches(matches, source_ids, tracked, valid, destination, *, scale, tolerance=3.):
@@ -27,7 +28,7 @@ def flow_supported_matches(matches, source_ids, tracked, valid, destination, *, 
     safe = np.maximum(selected, 0)
     if (pairs[:, 1] >= len(destination)).any():
         raise ValueError('temporal_match_feature_index')
-    endpoints = (destination[pairs[:, 1], :2] - .5) * scale
+    endpoints = destination[pairs[:, 1], :2] * scale - .5
     supported = ((selected >= 0) & valid[safe]
                  & (np.linalg.norm(tracked[safe] - endpoints, axis=1) <= tolerance))
     return pairs[supported]
@@ -54,6 +55,7 @@ def filter_video_matches(job, prepared, source_database, output, check, *, max_l
     width, height = capture.geometry
     scale = min(1., 960 / max(width, height))
     size = (round(width * scale), round(height * scale))
+    pixel_scale=np.asarray(size,dtype=np.float64)/[width,height]
     cv2.setNumThreads(2)
     features, proposals, starts = {}, {}, {}
     with p.Database.open(source_database) as db:
@@ -78,6 +80,7 @@ def filter_video_matches(job, prepared, source_database, output, check, *, max_l
         db.clear_two_view_geometries()
     active, results, previous = [], [], None
     began, last_check, decoded = time.monotonic(), 0., 0
+    previous_tick=None;breaks=[]
     for row, frame in decoded_browser(capture):
         now = time.monotonic()
         if now - began > timeout:
@@ -88,18 +91,17 @@ def filter_video_matches(job, prepared, source_database, output, check, *, max_l
                 on_progress(decoded,len(capture.frames))
             last_check = now
         gray = cv2.resize(frame.to_ndarray(format='gray'), size, interpolation=cv2.INTER_AREA)
+        if previous_tick is not None and row['relative_ticks_90k']-previous_tick>22500:
+            breaks.append(dict(sourceIndex=row['index'],seconds=row['relative_ticks_90k']/90000))
+            active=[]
         if active and previous is not None:
             counts = [len(group['points']) for group in active]
             points = np.concatenate([group['points'] for group in active]).astype('float32').reshape(-1, 1, 2)
-            moved, status, _ = cv2.calcOpticalFlowPyrLK(previous, gray, points, None, winSize=(21, 21), maxLevel=3)
-            back, backward, _ = cv2.calcOpticalFlowPyrLK(gray, previous, moved, None, winSize=(21, 21), maxLevel=3)
-            valid = (status.ravel().astype(bool) & backward.ravel().astype(bool)
-                     & np.isfinite(moved).all(axis=(1, 2))
-                     & (np.linalg.norm(back - points, axis=2).ravel() <= 1.))
+            moved,valid=track_source_points(previous,gray,points,tolerance=1.)
             at = 0
             for group, count in zip(active, counts, strict=True):
                 keep=group['valid'] & valid[at:at+count]
-                group['points'] = moved[at:at+count, 0][keep]
+                group['points'] = moved[at:at+count][keep]
                 group['ids'] = group['ids'][keep]
                 group['valid'] = np.ones(int(keep.sum()), dtype=bool)
                 at += count
@@ -114,7 +116,7 @@ def filter_video_matches(job, prepared, source_database, output, check, *, max_l
                         continue
                     first, second = images[group['index']], images[selected]
                     kept = flow_supported_matches(matches, group['ids'], group['points'], group['valid'],
-                                                  features[second.image_id], scale=scale)
+                                                  features[second.image_id], scale=pixel_scale)
                     if len(kept) >= 15:
                         db.write_matches(first.image_id, second.image_id, kept)
                     results.append(dict(first=first.name, second=second.name, proposed=len(matches),
@@ -125,10 +127,11 @@ def filter_video_matches(job, prepared, source_database, output, check, *, max_l
                 ids = np.unique(np.concatenate(wanted))
                 if len(ids) > 8192 or (ids >= len(features[images[selected].image_id])).any():
                     raise ValueError('temporal_match_track_quota')
-                points = (features[images[selected].image_id][ids, :2] - .5) * scale
+                points = features[images[selected].image_id][ids, :2] * pixel_scale - .5
                 active.append(dict(index=selected, ids=ids, points=points,
                                    valid=np.ones(len(ids), dtype=bool)))
         previous = gray
+        previous_tick=row['relative_ticks_90k']
         decoded += 1
     if decoded != len(capture.frames):
         raise ValueError('temporal_match_decode_incomplete')
@@ -137,6 +140,7 @@ def filter_video_matches(job, prepared, source_database, output, check, *, max_l
     report = dict(schema='sphere-temporal-route-matches-v1', decodedFrames=decoded,
                   sourceViews=len(images), maxLag=max_lag, trackingResolution=list(size),
                   forwardBackwardPixels=1., destinationTolerancePixels=3.,
+                  sourceGapLimitSeconds=.25,trackingBreaks=breaks,
                   seconds=time.monotonic()-began, pairs=results,
                   physicalActions=0, posesInterpolated=False, sourceModified=False)
     write_json(output.with_suffix('.temporal.json'), report)
