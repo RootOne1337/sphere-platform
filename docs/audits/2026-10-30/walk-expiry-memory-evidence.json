@@ -1,0 +1,284 @@
+{
+  "schema": "sphere-walk-expiry-memory-evidence-v1",
+  "memory": {
+    "schema": "sphere-route-process-memory-v1",
+    "before": {
+      "PeakWorkingSetSize": 18808832,
+      "WorkingSetSize": 18808832,
+      "PrivateUsage": 10706944,
+      "PeakPagefileUsage": 10706944
+    },
+    "after": {
+      "PeakWorkingSetSize": 214073344,
+      "WorkingSetSize": 67940352,
+      "PrivateUsage": 606339072,
+      "PeakPagefileUsage": 753467392
+    },
+    "physicalActions": 0,
+    "includesVideoDecodeAndHttpServer": true
+  },
+  "expiredReplyTest": {
+    "scope": "REAL_RGB_HTTP_EXPIRED_REPLY",
+    "physicalActions": 0,
+    "injectedDelayMs": 300,
+    "neutralOnExpired": true,
+    "threeFreshObservationsRequired": true,
+    "resumed": true,
+    "independentGameplay": false,
+    "feedbackLoop": false,
+    "rows": [
+      {
+        "sequence": 1,
+        "sourceIndex": 510,
+        "pose": "confirming",
+        "phase": "waiting",
+        "reason": "walk_confirming_start",
+        "stick": [
+          0.0,
+          0.0
+        ],
+        "replyMs": 199.45470005040988,
+        "injected": false
+      },
+      {
+        "sequence": 2,
+        "sourceIndex": 515,
+        "pose": "confirming",
+        "phase": "waiting",
+        "reason": "walk_confirming_start",
+        "stick": [
+          0.0,
+          0.0
+        ],
+        "replyMs": 118.09119995450601,
+        "injected": false
+      },
+      {
+        "sequence": 3,
+        "sourceIndex": 521,
+        "pose": "unknown",
+        "phase": "waiting",
+        "reason": "walk_confirming_start",
+        "stick": [
+          0.0,
+          0.0
+        ],
+        "replyMs": 122.2808999591507,
+        "injected": false
+      },
+      {
+        "sequence": 4,
+        "sourceIndex": 526,
+        "pose": "confirming",
+        "phase": "waiting",
+        "reason": "walk_confirming_start",
+        "stick": [
+          0.0,
+          0.0
+        ],
+        "replyMs": 137.71790004102513,
+        "injected": false
+      },
+      {
+        "sequence": 5,
+        "sourceIndex": 532,
+        "pose": "confirming",
+        "phase": "waiting",
+        "reason": "walk_confirming_start",
+        "stick": [
+          0.0,
+          0.0
+        ],
+        "replyMs": 133.6676999926567,
+        "injected": false
+      },
+      {
+        "sequence": 6,
+        "sourceIndex": 539,
+        "pose": "localized",
+        "phase": "waiting",
+        "reason": "walk_confirming_current_position",
+        "stick": [
+          0.0,
+          0.0
+        ],
+        "replyMs": 174.9349000165239,
+        "injected": false
+      },
+      {
+        "sequence": 7,
+        "sourceIndex": 545,
+        "pose": "localized",
+        "phase": "waiting",
+        "reason": "walk_confirming_current_position",
+        "stick": [
+          0.0,
+          0.0
+        ],
+        "replyMs": 31.13720001420006,
+        "injected": false
+      },
+      {
+        "sequence": 8,
+        "sourceIndex": 550,
+        "pose": "localized",
+        "phase": "following",
+        "reason": "walk_camera_relative_pursuit",
+        "stick": [
+          0.0020448864417377697,
+          -0.1999895458253766
+        ],
+        "replyMs": 21.642499952577055,
+        "injected": false
+      },
+      {
+        "sequence": 9,
+        "sourceIndex": 554,
+        "pose": "localized",
+        "phase": "waiting",
+        "reason": "walk_relocalizing_neutral",
+        "stick": [
+          0.0,
+          0.0
+        ],
+        "replyMs": 323.9257999812253,
+        "injected": true
+      },
+      {
+        "sequence": 10,
+        "sourceIndex": 560,
+        "pose": "localized",
+        "phase": "waiting",
+        "reason": "walk_relocalizing_neutral",
+        "stick": [
+          0.0,
+          0.0
+        ],
+        "replyMs": 147.12939999299124,
+        "injected": false
+      },
+      {
+        "sequence": 11,
+        "sourceIndex": 566,
+        "pose": "localized",
+        "phase": "waiting",
+        "reason": "walk_relocalizing_neutral",
+        "stick": [
+          0.0,
+          0.0
+        ],
+        "replyMs": 20.704800030216575,
+        "injected": false
+      },
+      {
+        "sequence": 12,
+        "sourceIndex": 572,
+        "pose": "localized",
+        "phase": "following",
+        "reason": "walk_camera_relative_pursuit",
+        "stick": [
+          0.004284740359436878,
+          -0.19995409723247037
+        ],
+        "replyMs": 23.4317000140436,
+        "injected": false
+      },
+      {
+        "sequence": 13,
+        "sourceIndex": 578,
+        "pose": "localized",
+        "phase": "following",
+        "reason": "walk_camera_relative_pursuit",
+        "stick": [
+          0.019376372266839595,
+          -0.3489239954628942
+        ],
+        "replyMs": 24.438699998427182,
+        "injected": false
+      },
+      {
+        "sequence": 14,
+        "sourceIndex": 583,
+        "pose": "localized",
+        "phase": "following",
+        "reason": "walk_camera_alignment_required",
+        "stick": [
+          0.0,
+          0.0
+        ],
+        "replyMs": 22.768700029700994,
+        "injected": false
+      },
+      {
+        "sequence": 15,
+        "sourceIndex": 588,
+        "pose": "unknown",
+        "phase": "waiting",
+        "reason": "walk_relocalizing_neutral",
+        "stick": [
+          0.0,
+          0.0
+        ],
+        "replyMs": 145.63849999103695,
+        "injected": false
+      },
+      {
+        "sequence": 16,
+        "sourceIndex": 594,
+        "pose": "confirming",
+        "phase": "waiting",
+        "reason": "walk_relocalizing_neutral",
+        "stick": [
+          0.0,
+          0.0
+        ],
+        "replyMs": 128.96860000910237,
+        "injected": false
+      },
+      {
+        "sequence": 17,
+        "sourceIndex": 600,
+        "pose": "confirming",
+        "phase": "waiting",
+        "reason": "walk_relocalizing_neutral",
+        "stick": [
+          0.0,
+          0.0
+        ],
+        "replyMs": 125.06410002242774,
+        "injected": false
+      },
+      {
+        "sequence": 18,
+        "sourceIndex": 607,
+        "pose": "localized",
+        "phase": "waiting",
+        "reason": "walk_relocalizing_neutral",
+        "stick": [
+          0.0,
+          0.0
+        ],
+        "replyMs": 114.36180002056062,
+        "injected": false
+      }
+    ]
+  },
+  "reload": {
+    "oldPid": 43012,
+    "watchdogPid": 4444,
+    "physicalActions": 0,
+    "sourceSha": "d588801b7b40e4e5be4afa1027a0b8c2fcf8b83aa61810cdd43fe60a21ae0dbb",
+    "outcome": "verified",
+    "newPid": 35188,
+    "existingAssetsUnchanged": true
+  },
+  "unitTestsPassed": 109,
+  "pytestTestsPassed": 37,
+  "pytestSubtestsPassed": 5,
+  "independentGameplay": false,
+  "physicalActions": 0,
+  "sourceHashes": {
+    "motor_worker/walk_route.py": "42bad6f205d18a31e05c68d0c6ef5b299f861ae66c4c85406c738701fd216ab5",
+    "scripts/pilot/route_workspace.py": "d588801b7b40e4e5be4afa1027a0b8c2fcf8b83aa61810cdd43fe60a21ae0dbb"
+  }
+}

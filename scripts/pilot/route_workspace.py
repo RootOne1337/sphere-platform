@@ -50,7 +50,11 @@ def route_resource_profile(job, kind='features'):
     Unknown inputs keep the previous conservative 12 GiB floor.
     """
     if kind == 'live':
-        return dict(kind='route_live', minRamGiB=6., hostReserveGiB=4., maxMapBytes=4*1024**2,
+        # Fixed 960x540 query, 4 MiB map, one observation in flight, no model.
+        # A real RGB/HTTP process (including source-video decode) peaked at
+        # 204 MiB working set / 719 MiB commit on this runtime. Keep 4 GiB
+        # available for the host plus a conservative 768 MiB task allowance.
+        return dict(kind='route_live', minRamGiB=4.75, hostReserveGiB=4., taskReserveGiB=.75, maxMapBytes=4*1024**2,
                     maxFrameBytes=384*1024, minDiskGiB=1., modelLoaded=False, maxCommitPercent=85)
     if kind != 'features':
         raise ValueError('route_resource_profile')
@@ -71,7 +75,8 @@ def resource_checkpoint(folder, *, profile=None):
         raise RuntimeError('cancelled')
     snapshot = collect(ROOT)
     minimum = 12 if profile is None else profile['minRamGiB']
-    if not isinstance(minimum, (int, float)) or isinstance(minimum, bool) or not 6 <= minimum <= 16:
+    floor = 4.75 if profile is not None and profile.get('kind') == 'route_live' else 6
+    if not isinstance(minimum, (int, float)) or isinstance(minimum, bool) or not floor <= minimum <= 16:
         raise ValueError('route_resource_profile')
     # Live matching reads an already prepared, bounded map. It neither exports
     # video nor builds a scene. Its bounded summaries need at most 64*512 KiB

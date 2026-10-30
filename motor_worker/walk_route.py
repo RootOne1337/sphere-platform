@@ -81,18 +81,34 @@ class WalkRouteFollower:
             self.binding = binding
         if (pose.route_id != self.route.id or pose.world_revision != self.route.world_revision
                 or binding != self.binding or pose.receiver_sequence <= self.sequence
-                or not 0 <= now-pose.received_at <= .25
+                or not 0 <= now-pose.received_at <= self.MAX_RELOCALIZE_SECONDS
                 or not pose.received_at <= pose.completed_at <= now
                 or self.last_at is not None and not 0 < pose.received_at-self.last_at <= 2.):
             return self._stop('walk_pose_binding_or_age')
         dt = .1 if self.last_at is None else pose.received_at-self.last_at
+        self.sequence, self.last_at = pose.receiver_sequence, pose.received_at
+        if now-pose.received_at > .25:
+            # This reply carries no movement permission. A slow descriptor/PnP
+            # response is delivery loss, not proof that the map/epoch changed.
+            # Consume its sequence, retain the last GOOD geometry, and require
+            # three NEW fresh poses through the existing bounded recovery path.
+            self.vector[:]=0;self.acquisition=0;self.arrival=0
+            if self.started:
+                if self.relocalizing is None:
+                    self.relocalizations+=1
+                    if self.relocalizations>self.MAX_RELOCALIZATIONS:return self._stop('walk_relocalization_budget')
+                    self.relocalizing=dict(began=now,confirmations=0)
+                self.relocalizing['confirmations']=0
+                if now-self.relocalizing['began']>=self.MAX_RELOCALIZE_SECONDS:
+                    return self._stop('walk_relocalization_timeout')
+                return self._reply('waiting','walk_relocalizing_neutral',self.high_water)
+            return self._reply('waiting','walk_confirming_start')
         if dt>.5:
             self.vector[:]=0;self.acquisition=0
             if self.started and self.relocalizing is None:
                 self.relocalizations+=1
                 if self.relocalizations>self.MAX_RELOCALIZATIONS:return self._stop('walk_relocalization_budget')
                 self.relocalizing=dict(began=pose.received_at,confirmations=0)
-        self.sequence, self.last_at = pose.receiver_sequence, pose.received_at
         if pose.state != 'localized':
             self.acquisition = 0
             self.vector[:] = 0
@@ -135,6 +151,9 @@ class WalkRouteFollower:
             if self.relocalizing['confirmations']<3:
                 return self._reply('waiting','walk_relocalizing_neutral',progress)
             self.relocalizing=None;self.history.clear()
+            # A neutral recovery sent no camera commands. Start a new bounded
+            # alignment attempt from the newly verified pose, not an old timer.
+            self.alignment=None
         if not self.started:
             if self.start_mode == 'beginning' and (progress > self.start_arc
                     or float(np.linalg.norm(center-self.trace[0])) > self.start_arc+self.step*3):

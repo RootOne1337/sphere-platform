@@ -196,7 +196,7 @@ class WalkRouteTests(unittest.TestCase):
         self.assertEqual(reply['reason'],'walk_pose_binding_or_age');self.assertEqual(reply['stick'],[0.,0.])
 
     def test_pose_age_epoch_sequence_and_large_progress_jump_stop(self):
-        for changes in ({'received_at':9.,'completed_at':9.},{'receiver_sequence':0},
+        for changes in ({'received_at':7.,'completed_at':7.},{'receiver_sequence':0},
                         {'rotation':(1.,)*9},{'center':(float('nan'),0.,0.)}):
             with self.subTest(changes=changes):
                 self.follower=WalkRouteFollower(self.route,clock=lambda:self.now)
@@ -204,6 +204,55 @@ class WalkRouteTests(unittest.TestCase):
         self.follower=WalkRouteFollower(self.route,clock=lambda:self.now)
         self.observe();self.now+=.2
         self.assertEqual(self.observe(25.)['reason'],'walk_progress_jump')
+
+    def test_single_expired_pose_is_neutral_then_three_new_fresh_poses_resume(self):
+        self.observe();self.now+=.5
+        reply=self.observe(.1,received_at=self.now-.3,completed_at=self.now)
+        self.assertEqual(reply['reason'],'walk_relocalizing_neutral')
+        self.assertEqual(reply['stick'],[0.,0.]);self.assertEqual(reply['phase'],'waiting')
+        self.assertEqual(self.follower.high_water,0.)
+        for _ in range(2):
+            self.now+=.1;reply=self.observe(.1)
+            self.assertEqual(reply['phase'],'waiting');self.assertEqual(reply['stick'],[0.,0.])
+        self.now+=.1;reply=self.observe(.1)
+        self.assertEqual(reply['phase'],'following');self.assertLess(reply['stick'][1],0.)
+
+    def test_expired_pose_never_contributes_geometry_or_acquisition(self):
+        self.follower=WalkRouteFollower(self.route,clock=lambda:self.now,start_mode='recognized_route')
+        reply=self.observe(30.,received_at=self.now-.3,completed_at=self.now)
+        self.assertEqual(reply['phase'],'waiting');self.assertEqual(reply['stick'],[0.,0.])
+        self.assertIsNone(self.follower.last_good)
+        self.assertEqual(self.follower.acquisition,0)
+        self.now+=.1;reply=self.observe(.1)
+        self.assertEqual(reply['phase'],'waiting');self.assertEqual(self.follower.acquisition,1)
+
+    def test_expired_pose_with_changed_source_or_reused_sequence_is_still_terminal(self):
+        for changes in ({'capture_epoch':'f'*32},{'receiver_sequence':1},{'world_revision':'f'*32}):
+            self.follower=WalkRouteFollower(self.route,clock=lambda:self.now)
+            self.observe(receiver_sequence=1);self.now+=.5
+            reply=self.observe(received_at=self.now-.3,completed_at=self.now,**changes)
+            self.assertEqual(reply['reason'],'walk_pose_binding_or_age');self.assertEqual(reply['phase'],'stopped')
+
+    def test_repeated_slow_replies_do_not_extend_recovery_forever(self):
+        self.observe();self.now+=.5
+        self.observe(received_at=self.now-.3,completed_at=self.now)
+        for _ in range(11):
+            self.now+=.2;reply=self.observe(received_at=self.now-.3,completed_at=self.now)
+            self.assertEqual(reply['stick'],[0.,0.])
+        self.assertEqual(reply['reason'],'walk_relocalization_timeout')
+
+    def test_camera_timeout_does_not_count_a_neutral_recovery_as_failed_turning(self):
+        import math
+        self.follower=WalkRouteFollower(self.route,clock=lambda:self.now,camera_tracking=True)
+        yaw=.5;rotation=(math.cos(yaw),0.,-math.sin(yaw),0.,1.,0.,math.sin(yaw),0.,math.cos(yaw))
+        self.assertEqual(self.observe(rotation=rotation)['reason'],'walk_camera_alignment_required')
+        self.now+=1.5
+        self.assertEqual(self.observe(rotation=rotation,received_at=self.now-.3,completed_at=self.now)['phase'],'waiting')
+        for _ in range(3):self.now+=.2;reply=self.observe(rotation=rotation)
+        self.assertEqual(reply['reason'],'walk_camera_alignment_required')
+        for _ in range(5):
+            self.now+=.2
+            self.assertEqual(self.observe(rotation=rotation)['reason'],'walk_camera_alignment_required')
 
     def test_stall_and_time_limit_do_not_try_blind_recovery(self):
         result=self.observe()

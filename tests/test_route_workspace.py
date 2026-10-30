@@ -16,7 +16,7 @@ class RouteWorkspaceTests(unittest.TestCase):
         profile=route_resource_profile(self.job)
         self.assertGreaterEqual(profile['minRamGiB'],6)
         self.assertLess(profile['minRamGiB'],12)
-        self.assertEqual(route_resource_profile(self.job,'live')['minRamGiB'],6)
+        self.assertEqual(route_resource_profile(self.job,'live')['minRamGiB'],4.75)
         from scripts.pilot.resource_guard import evaluate
         snapshot=dict(system='Windows',freeDiskBytes=30*2**30,availableRamBytes=11*2**30,totalRamBytes=48*2**30,
             committedBytes=65*2**30,commitLimitBytes=96*2**30,volumeHealthStatus='Healthy',volumeOperationalStatus=['OK'])
@@ -51,7 +51,7 @@ class RouteWorkspaceTests(unittest.TestCase):
     def test_live_disk_budget_preserves_ram_commit_and_volume_protection(self):
         base=dict(system='Windows',freeDiskBytes=2*2**30,availableRamBytes=11*2**30,totalRamBytes=48*2**30,
             committedBytes=65*2**30,commitLimitBytes=96*2**30,volumeHealthStatus='Healthy',volumeOperationalStatus=['OK'])
-        for changed in ({'availableRamBytes':5*2**30},{'committedBytes':90*2**30},
+        for changed in ({'availableRamBytes':4*2**30},{'committedBytes':90*2**30},
                         {'volumeHealthStatus':'Warning'},{'freeDiskBytes':None}):
             with self.subTest(changed=changed),patch('scripts.pilot.route_workspace.collect',return_value=base|changed):
                 with self.assertRaisesRegex(RuntimeError,'resource_guard'):
@@ -62,6 +62,22 @@ class RouteWorkspaceTests(unittest.TestCase):
                     resource_checkpoint(self.job,profile=route_resource_profile(self.job,'live')|{'minDiskGiB':disk})
             with self.assertRaisesRegex(ValueError,'route_resource_profile'):
                 resource_checkpoint(self.job,profile=route_resource_profile(self.job)|{'minDiskGiB':1})
+
+    def test_measured_light_live_budget_admits_failed_case_but_not_low_headroom(self):
+        snapshot=dict(system='Windows',freeDiskBytes=54004088832,availableRamBytes=5215232000,
+            totalRamBytes=50668236800,committedBytes=76546117632,commitLimitBytes=100060360704,
+            volumeHealthStatus='Healthy',volumeOperationalStatus=['OK'])
+        profile=route_resource_profile(self.job,'live')
+        self.assertEqual(profile['minRamGiB'],profile['hostReserveGiB']+profile['taskReserveGiB'])
+        with patch('scripts.pilot.route_workspace.collect',return_value=snapshot):
+            resource_checkpoint(self.job,profile=profile)
+            with self.assertRaisesRegex(RuntimeError,'resource_guard'):
+                resource_checkpoint(self.job,profile=route_resource_profile(self.job))
+            snapshot['availableRamBytes']=int(4.75*2**30)-1
+            with self.assertRaisesRegex(RuntimeError,'resource_guard'):resource_checkpoint(self.job,profile=profile)
+            for minimum in (0,False,4.5,float('nan')):
+                with self.subTest(minimum=minimum),self.assertRaisesRegex(ValueError,'route_resource_profile'):
+                    resource_checkpoint(self.job,profile=profile|{'minRamGiB':minimum})
 
     def test_recording_endpoint_coverage_detects_missing_start_and_end(self):
         from scripts.pilot.prepare_route_workspace import source_endpoint_coverage
