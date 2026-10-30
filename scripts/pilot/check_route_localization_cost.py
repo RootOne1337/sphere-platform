@@ -37,6 +37,8 @@ def private_bytes():
 
 
 def run(job, output, *, count=64):
+    from scripts.pilot.route_cpu_runtime import initialize_route_cpu_runtime
+    cpu_runtime=initialize_route_cpu_runtime()
     import cv2 as cv
     import numpy as np
     from motor_worker.browser_teach import decoded_browser,validate_browser
@@ -49,7 +51,9 @@ def run(job, output, *, count=64):
     if (not job.is_relative_to(root/'.local-pilot/reconstruction-jobs')
             or not output.is_relative_to(root/'.local-pilot') or output.exists() or not 16<=count<=96):
         raise ValueError('cost_diagnostic_scope')
-    if windows_memory()['availableRamBytes']<6*1024**3:
+    # This is the same bounded CPU map/query path, not feature extraction for
+    # a reconstruction. Do not reintroduce the old 6 GiB live-start threshold.
+    if windows_memory()['availableRamBytes']<4.75*1024**3:
         raise RuntimeError('cost_diagnostic_memory_guard')
     active=json.loads((job/'navigation/active.json').read_bytes())['id']
     receipt=json.loads((job/'navigation'/active/'receipt.json').read_bytes())
@@ -97,6 +101,7 @@ def run(job, output, *, count=64):
             privateBytesBeforeTracker=before_tracker,privateBytesAfterQueries=private_bytes()))
     unchanged=all(hashlib.sha256((root/p).read_bytes()).hexdigest()==h for p,h in hashes.items())
     result=dict(schema='sphere-route-localization-cost-v1',physicalActions=0,
+        cpuRuntime=cpu_runtime,
         sourceHashes=hashes,sourceUnchanged=unchanged,syntheticSourceClock=True,
         queryFramesHeldOut=True,independentGameplay=False,multiWindowLoadTest=False,
         excludes=['video_decode_in_browser','stream_encode','HTTP','browser_UI','Android','GPU_reconstruction'],

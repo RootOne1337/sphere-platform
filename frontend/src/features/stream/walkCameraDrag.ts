@@ -1,8 +1,8 @@
 import {walkTargetCamera} from './walkPilot';
 import {horizontalCameraTurn} from './walkCamera';
-type View={rotation:number[];target:unknown;sequence:number;capturedAt:number;now:number;canStroke:boolean};
+type View={rotation:number[];target:unknown;sequence:number;capturedAt:number;now:number;canStroke:boolean;alignmentRequired?:boolean};
 export type CameraDragStep={hold:boolean;fraction:number|null;action?:'down'|'move'|'up';reason:string;yaw:number|null;failed:boolean};
-type Command={action:'down'|'move'|'up';rotation:number[];from:number;to:number;sentAt:number;ackAt:number|null;yaw:number;sequence:number};
+type Command={action:'down'|'move'|'up';rotation:number[];from:number;to:number;sentAt:number;ackAt:number|null;yaw:number;sequence:number;oppositeAt?:number};
 
 /** One held finger, one fresh edge, one observed response. Never a timed macro. */
 export class WalkCameraDrag {
@@ -72,7 +72,16 @@ export class WalkCameraDrag {
         }else{
           const measured=turn/delta;
           if(this.gain!==null&&measured*this.gain<0){
-            if(Math.abs(turn)>.02)return this.stop('walk_camera_response_wrong_direction');
+            // An ACK is input delivery, not the game/video response. A single
+            // early opposite pose may still reflect the previous correction.
+            // Hold the same command (no new MOVE/sign flip), then require an
+            // independently captured second opposite response after settling.
+            if(v.capturedAt-c.ackAt<400)return wait('walk_camera_waiting_feedback');
+            if(Math.abs(turn)>.02){
+              if(c.oppositeAt===undefined){c.oppositeAt=v.capturedAt;return wait('walk_camera_waiting_feedback');}
+              if(v.capturedAt-c.oppositeAt<80)return wait('walk_camera_waiting_feedback');
+              return this.stop('walk_camera_response_wrong_direction');
+            }
             // Sub-degree pose noise must not reverse an already learned sign.
             this.command=null;return wait('walk_camera_waiting_feedback');
           }
@@ -85,7 +94,10 @@ export class WalkCameraDrag {
       }
       this.command=null;
     }
-    const engaged=this.began!==null||this.held;
+    // The server remembers an in-progress alignment through a neutral pause.
+    // Its 0.08 exit threshold must remain authoritative after the local finger
+    // was released; reverting to the 0.20 entry threshold deadlocked both ends.
+    const engaged=v.alignmentRequired===true||this.began!==null||this.held;
     if(Math.abs(yaw)<(engaged ? .08 : .20)){
       this.began=null;this.recenters=0;
       if(this.held&&v.canStroke)return this.edge(v,'up',0,yaw,'walk_camera_releasing');

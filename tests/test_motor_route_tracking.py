@@ -173,3 +173,38 @@ class AnchoredTrackingTests(unittest.TestCase):
                       self.tracker._gray, self.tracker._solution, self.tracker.previous):
             self.assertIsNone(value)
         self.assertEqual(self.tracker.confirmations, 0)
+
+    def test_wide_recovery_is_bounded_and_returns_to_small_shortlist_after_confirmation(self):
+        from unittest.mock import patch
+        from motor_worker.route_localization import RouteLocalizer
+        from motor_worker.protocol import ProtocolError
+
+        self.tracker.recovery_candidate_limit = 8
+        seen = []
+        original = RouteLocalizer._solve
+
+        def solve(localizer, *args):
+            seen.append(localizer.candidate_limit)
+            return original(localizer, *args)
+
+        with patch.object(RouteLocalizer, '_solve', solve):
+            self.confirm()
+            self.tracker._descriptor_at = self.now-.81
+            pose, _ = self.observe()
+        self.assertEqual(pose.state, 'localized')
+        self.assertEqual(seen, [8, 8, 8, 3])
+        self.assertEqual(self.tracker.candidate_limit, 3)
+        for invalid in (True, 2, 9):
+            with self.subTest(invalid=invalid), self.assertRaisesRegex(ProtocolError, 'invalid_route_recovery_candidate_limit'):
+                AnchoredRouteLocalizer(self.tracker.route, capture_epoch=EPOCH, episode_id=EPISODE,
+                                       goal_revision=GOAL, recovery_candidate_limit=invalid)
+
+    def test_failed_wide_retrieval_restores_config_and_revokes_tracking(self):
+        from unittest.mock import patch
+        self.tracker.recovery_candidate_limit = 8
+        with patch('motor_worker.route_localization.RouteLocalizer._solve', side_effect=RuntimeError('fixture_retrieval')):
+            with self.assertRaisesRegex(RuntimeError, 'fixture_retrieval'):
+                self.observe()
+        self.assertEqual(self.tracker.candidate_limit, 3)
+        self.assertIsNone(self.tracker.previous)
+        self.assertIsNone(self.tracker._anchors)

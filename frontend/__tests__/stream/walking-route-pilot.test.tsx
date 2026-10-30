@@ -39,6 +39,27 @@ test('camera mode blocks start until its separate free-screen area is calibrated
   expect(screen.getByRole('button',{name:'Запустить пеший тест · 60 с'})).toBeDisabled();
   expect(open).not.toHaveBeenCalled();
 });
+
+test('negotiated binary JPEG avoids base64 and keeps session/epoch/sequence binding',async()=>{
+  const original=jest.mocked(reconstructionRequest).getMockImplementation()!;
+  jest.mocked(reconstructionRequest).mockImplementation(async(path,target,init)=>{
+    if(path.endsWith('/observe-jpeg')){
+      const h=new Headers(init?.headers);
+      expect(init?.body).toBeInstanceOf(Blob);expect(h.get('Content-Type')).toBe('image/jpeg');
+      expect(h.get('X-Route-Session')).toBe('c'.repeat(32));expect(h.get('X-Capture-Epoch')).toBe(binding.captureEpoch);
+      return original(path.replace('/observe-jpeg','/observe'),target,{body:JSON.stringify({sequence:Number(h.get('X-Frame-Sequence'))})});
+    }
+    const response=await original(path,target,init);
+    if(!path.endsWith('/walk-start'))return response;
+    return {json:async()=>({...await response.json(),observationProtocol:'jpeg_binary_v1'})} as Response;
+  });
+  const reader=jest.spyOn(FileReader.prototype,'readAsDataURL');view();
+  fireEvent.click(screen.getByRole('checkbox',{name:/Диагностика: до 60 кадров/}));start();
+  await waitFor(()=>expect(lease.set).toHaveBeenCalled());
+  expect(reader).not.toHaveBeenCalled();
+  expect(jest.mocked(reconstructionRequest).mock.calls.some(([path])=>path.endsWith('/observe-jpeg'))).toBe(true);
+  fireEvent.keyDown(window,{code:'Escape'});await screen.findByText('Освобождение: CLOSED');
+});
 test('camera pulse is a separate acknowledged operation while the movement stick is neutral',async()=>{
   jest.spyOn(performance,'now').mockReturnValue(1000);
   const original=jest.mocked(reconstructionRequest).getMockImplementation()!;
@@ -106,6 +127,9 @@ test('a service that does not acknowledge acquisition mode cannot open Android i
   view();start();await screen.findByText('Освобождение: CLOSED');expect(open).not.toHaveBeenCalled();
 });
 test('explicit start sends a fresh bound correction and stop waits for native closure',async()=>{
+  // Freshness failures have separate tests. This fixture supplies one RVFC,
+  // so its clock must not age while unrelated suites/GC are running.
+  jest.spyOn(performance,'now').mockReturnValue(1000);
   view();start();await waitFor(()=>expect(lease.set).toHaveBeenCalledWith([.05,-.2]));
   expect(jest.mocked(reconstructionRequest).mock.calls[0][0]).toMatch(/walk-start$/);
   expect(screen.getByRole('status')).toHaveTextContent(/Идём к ближайшей точке/);
@@ -206,14 +230,16 @@ test('a localized start refusal is not presented as an Android ACK failure',asyn
   expect(screen.queryByText(/Android ещё не подтвердил касание/)).not.toBeInTheDocument();
 });
 
-test('a reply that expires while painting cannot send its old movement vector',async()=>{
+test('diagnostic canvas painting is not performed inside the live input cycle',async()=>{
   let now=1000;const clock=jest.spyOn(performance,'now').mockImplementation(()=>now);
+  const paintTimes:number[]=[];
   jest.mocked(HTMLCanvasElement.prototype.getContext).mockReturnValue({clearRect:jest.fn(),drawImage:jest.fn((source:CanvasImageSource)=>{
-    if(source instanceof HTMLCanvasElement)now+=300;
+    if(source instanceof HTMLCanvasElement){paintTimes.push(now);now+=300;}
   })} as never);
   try{
-    view();start();await screen.findByText(/Стик в центре: ждём новое свежее решение/);
-    expect(jest.mocked(lease.set).mock.calls.every(([v])=>Math.hypot(...v)===0)).toBe(true);
+    view();start();await waitFor(()=>expect(lease.set).toHaveBeenCalled());
+    expect(paintTimes).toEqual([]);expect(now).toBe(1000);
+    expect(jest.mocked(lease.set).mock.calls.some(([v])=>Math.hypot(...v)>0)).toBe(true);
     fireEvent.keyDown(window,{code:'Escape'});await screen.findByText('Освобождение: CLOSED');
   }finally{clock.mockRestore();}
 });

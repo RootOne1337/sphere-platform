@@ -45,6 +45,12 @@ class WalkReportTests(unittest.TestCase):
             store_walk_report(self.job, changed)
         self.assertEqual(json.loads((self.job/'walk-reports'/('a'*32+'.json')).read_bytes()), self.body)
 
+    def test_planner_and_camera_reasons_remain_separate_with_signed_yaw(self):
+        body=copy.deepcopy(self.body);body['observations'][0].update(plannerReason='walk_camera_alignment_required',cameraYawRadians=-.12)
+        self.assertEqual(store_walk_report(self.job,body)['state'],'saved')
+        body['id']='c'*32;body['observations'][0]['cameraYawRadians']=float('nan')
+        with self.assertRaisesRegex(ValueError,'observation'):store_walk_report(self.job,body)
+
     def test_camera_feedback_and_real_gesture_duration_are_bounded(self):
         feedback=dict(sequence=10,fraction=-.018,turnRadians=.09,yawBefore=.8,yawAfter=.71,afterUpMs=180)
         camera=dict(gainRadiansPerShortSide=-5.,pulses=2,calibrationAttempts=1,terminal=None,

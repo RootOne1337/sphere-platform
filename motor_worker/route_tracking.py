@@ -1,4 +1,4 @@
-"""Opt-in anchored optical-flow experiment; no prediction or input authority.
+"""Bounded map-anchored optical flow; no prediction or input authority.
 
 Between descriptor checks, track only previously verified map landmarks and solve
 absolute PnP again on the current RGB. Forward/backward LK and the base geometry,
@@ -9,10 +9,11 @@ mandatory global check cannot be bypassed by optical flow. Map geometry is fixed
 from __future__ import annotations
 
 from motor_worker.route_localization import SIZE, RouteLocalizer, extract_features
+from motor_worker.protocol import ProtocolError
 
 
 class AnchoredRouteLocalizer(RouteLocalizer):
-    """Diagnostic, disabled by default at every existing caller.
+    """Current-image sparse-map tracking for the local API and offline probes.
 
     Initial/recovery confirmation uses three descriptor-based observations.
     Anchors expire after 0.8 s without a successful descriptor check, even if LK
@@ -22,8 +23,12 @@ class AnchoredRouteLocalizer(RouteLocalizer):
     MAX_DESCRIPTOR_AGE = .8
     MAX_ANCHORS = 256
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, recovery_candidate_limit=None, **kwargs):
         super().__init__(*args, **kwargs)
+        if (recovery_candidate_limit is not None
+                and (type(recovery_candidate_limit) is not int or not self.candidate_limit <= recovery_candidate_limit <= 8)):
+            raise ProtocolError('invalid_route_recovery_candidate_limit')
+        self.recovery_candidate_limit = recovery_candidate_limit or self.candidate_limit
         self._anchors = None
         self._gray = None
         self._solution = None
@@ -40,6 +45,19 @@ class AnchoredRouteLocalizer(RouteLocalizer):
 
     def _extract(self):
         return extract_features(self._frame, self.mask)
+
+    def _solve_descriptors(self):
+        # A similar facade may crowd the correct place out of the three-vote
+        # shortlist at acquisition. Widen retrieval only while unconfirmed;
+        # exact matches, competing PnP and all current-image gates stay intact.
+        regular = self.candidate_limit
+        limit = self.recovery_candidate_limit if self.confirmations < 3 else regular
+        self.last_diagnostic['descriptorCandidates'] = limit
+        try:
+            self.candidate_limit = limit
+            return RouteLocalizer._solve(self, *self._extract())
+        finally:
+            self.candidate_limit = regular
 
     def _flow(self):
         cv, np = self.cv, self.np
@@ -86,7 +104,7 @@ class AnchoredRouteLocalizer(RouteLocalizer):
             self.last_diagnostic["method"] = "map_anchored_flow"
         else:
             self.last_diagnostic["method"] = "descriptor_pnp"
-            solved = super()._solve(*self._extract())
+            solved = self._solve_descriptors()
         self._solution = solved
         return solved
 

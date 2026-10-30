@@ -4,7 +4,8 @@ import {Footprints,Square,Download} from 'lucide-react';
 import {Button} from '@/components/ui/button';
 import Image from 'next/image';
 import {reconstructionRequest,type ReconstructionJob} from './reconstructionClient';
-import {freshNavigationFrame,navigationReply,paintNavigation,type LiveRouteObservation} from './routeNavigation';
+import {freshNavigationFrame,navigationReply,type LiveRouteObservation} from './routeNavigation';
+import {WalkLivePreview,type WalkPreviewFrame} from './WalkLivePreview';
 import {readWalkPlan,walkReasonLabel,waitForFreshWalkSource,type WalkInputControl,type WalkInputLease} from './walkPilot';
 import type {TeachingInput} from './teachingContacts';
 import {saveRouteDebugReport} from './routeDebugStorage';
@@ -17,11 +18,11 @@ type StartMode='beginning'|'recognized_route';
 type Sample={elapsedMs:number;sequence:number;ageMs:number;computeMs:number;state:string;reason:string;
   poseState:'unknown'|'confirming'|'localized';
   inliers:number;progress:number|null;stick:[number,number];jpegSha256:string;image?:string;
-  poseReason:string;segment:number|null;medianErrorPx:number|null;crossTrackUnits:number|null;center:number[]|null;rotation:number[]|null;geometrySha256:string|null};
+  poseReason:string;plannerReason:string;cameraYawRadians:number|null;segment:number|null;medianErrorPx:number|null;crossTrackUnits:number|null;center:number[]|null;rotation:number[]|null;geometrySha256:string|null};
 type Run={id:string;job:ReconstructionJob;abort:AbortController;lease:WalkInputLease|null;opening:Promise<WalkInputLease>|null;began:number;
   binding:Binding;deadline:number;permitUntil:number;moving:boolean;lastSequence:number;clip:string|null;scope:string|null;
   freshUntil:number|null;freshWaits:number;trace:WalkRunDiagnostics;
-  observe:(()=>void)|null;inFlight:boolean;nextObservationAt:number;startMode:StartMode;camera:WalkCameraServo|null};
+  observe:(()=>void)|null;inFlight:boolean;nextObservationAt:number;startMode:StartMode;camera:WalkCameraServo|null;binaryJpeg?:boolean;lastPreviewAt?:number};
 
 /** Explicit supervised foot experiment; the observer above remains read-only. */
 export function WalkingRoutePilot({job,clip,video,ready,binding,assetsReady,input,observerBusy,onBusyChange,onObservation,renderView,scope=null,preparationIssue=null}:{
@@ -38,6 +39,7 @@ export function WalkingRoutePilot({job,clip,video,ready,binding,assetsReady,inpu
   const [samples,setSamples]=useState<Sample[]>([]),[events,setEvents]=useState(0);
   const [savedDebug,setSavedDebug]=useState('Диагностика сохранится локально после освобождения ввода.');
   const [stopDetail,setStopDetail]=useState<string|null>(null);
+  const [previewFrame,setPreviewFrame]=useState<WalkPreviewFrame|null>(null);
   const history=useRef<Sample[]>([]),inputs=useRef<TeachingInput[]>([]),images=useRef(0),lastImageAt=useRef(-Infinity);
   const output=useRef<HTMLCanvasElement>(null),run=useRef<Run|null>(null),retired=useRef<Promise<void>|null>(null);
   const current=useRef({ready,binding});current.current={ready,binding};
@@ -87,11 +89,12 @@ export function WalkingRoutePilot({job,clip,video,ready,binding,assetsReady,inpu
     if(inputFailure)reason=inputFailure;
     active.trace.add('stop',performance.now(),{reason,sequence:frameSequence,...(frameAge===null?{}:{ageMs:frameAge})});
     setStopDetail(`Кадров источника: ${frameSequence}; возраст: ${frameAge===null?'нет кадра':`${frameAge.toFixed(0)} мс`}; ответов локализации: ${history.current.length}.`);
-    run.current=null;active.abort.abort();clear();observed.current?.(null);setNotice(walkReasonLabel(reason));setRelease('pending');
+    run.current=null;active.abort.abort();observed.current?.(null);setNotice(walkReasonLabel(reason));setRelease('pending');
     const closing=(async()=>{
       let released=true,lease=active.lease;
       try{if(!lease&&active.opening)lease=await active.opening;if(lease)released=await lease.close();}
       catch{released=false;}
+      clear(); // Optional canvas work follows native closure, never precedes it.
       try{await reconstructionRequest(`/jobs/${active.job.id}/navigation/stop`,active.job,{method:'POST',body:JSON.stringify({id:active.id})});}catch{/* Same intent is fenced by its deadline; never retry a start. */}
       setRelease(released?'closed':'unknown');setBusy(false);busyChange.current(false);
       setEvents(inputs.current.length);
@@ -110,7 +113,7 @@ export function WalkingRoutePilot({job,clip,video,ready,binding,assetsReady,inpu
               schema:'sphere-walk-summary-v1',id:active.id,clip:active.clip,release:report.release,stopReason:reason,inputFailure,startMode:active.startMode,
               stopFrameAgeMs:frameAge,stopFrameSequence:frameSequence,executionQualified:false,camera:report.camera,cameraInput:report.cameraInput,
               inputSummary:{...walkInputSummary(inputs.current),events:inputs.current.length},stages:report.stages,
-              observations:report.observations.map(({elapsedMs,sequence,ageMs,computeMs,state,reason,poseState,inliers,progress,segment,medianErrorPx,crossTrackUnits,poseReason})=>({elapsedMs,sequence,ageMs,computeMs,state,reason,poseState,inliers,progress,segment,medianErrorPx,crossTrackUnits,poseReason})),
+              observations:report.observations.map(({elapsedMs,sequence,ageMs,computeMs,state,reason,poseState,inliers,progress,segment,medianErrorPx,crossTrackUnits,poseReason,plannerReason,cameraYawRadians})=>({elapsedMs,sequence,ageMs,computeMs,state,reason,poseState,inliers,progress,segment,medianErrorPx,crossTrackUnits,poseReason,plannerReason,cameraYawRadians})),
             })}).then(response=>response.json()).then(value=>{if(!['saved','existing'].includes(value.state)||value.physicalActions!==0)throw Error('walk_report_unconfirmed');}),
           ]);
           const saved=archive.status==='fulfilled'&&['saved','existing'].includes(archive.value.state);
@@ -125,7 +128,7 @@ export function WalkingRoutePilot({job,clip,video,ready,binding,assetsReady,inpu
   useEffect(()=>{setConfirmed(false);void stopRef.current('walk_stream_changed');},[job?.id,job?.key,clip,binding?.captureEpoch,binding?.width,binding?.height]);
   useEffect(()=>{if(binding?.captureEpoch)setRelease('none');},[binding?.captureEpoch]);
   useEffect(()=>{
-    recent.current={sequence:0,at:0};lastSource.current=null;const element=video.current;
+    recent.current={sequence:0,at:0};lastSource.current=null;setPreviewFrame(null);const element=video.current;
     if(!captureEpoch||!element?.requestVideoFrameCallback)return;
     let closed=false,id=0;
     const next=()=>{id=element.requestVideoFrameCallback(()=>{
@@ -184,6 +187,7 @@ export function WalkingRoutePilot({job,clip,video,ready,binding,assetsReady,inpu
       if(state.id!==active.id||state.phase!=='observing'||state.mode!=='foot_camera_trace_v1'||state.physicalActions!==0||state.maxSeconds!==60||state.startMode!==active.startMode)throw Error('walk_start_unconfirmed');
       if(active.camera?state.cameraTracking!==true:state.cameraTracking===true)throw Error('walk_start_unconfirmed');
       if(active.camera&&state.cameraControl!=='continuous_drag_v1')throw Error('walk_start_unconfirmed');
+      active.binaryJpeg=state.observationProtocol==='jpeg_binary_v1';
       if(!freshNavigationFrame(recent.current.at,performance.now()))setNotice('Ждём свежий кадр перед открытием ввода. Касаний ещё нет.');
       if(!await waitForFreshWalkSource(()=>freshNavigationFrame(recent.current.at,performance.now()),signal))throw Error('walk_source_not_ready');
       if(!alive())return;
@@ -212,12 +216,16 @@ export function WalkingRoutePilot({job,clip,video,ready,binding,assetsReady,inpu
           const blob=await new Promise<Blob>((resolve,reject)=>canvas.toBlob(v=>v?resolve(v):reject(Error('walk_jpeg_unavailable')),'image/jpeg',.92));
           if(blob.size>384*1024)throw Error('walk_jpeg_quota');
           const bytes=await blob.arrayBuffer(),sha=Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',bytes)),n=>n.toString(16).padStart(2,'0')).join('');
-          const jpeg=await new Promise<string>((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(String(reader.result).split(',')[1]);reader.onerror=()=>reject(Error('walk_jpeg_unavailable'));reader.readAsDataURL(blob);});
+          // New services receive the original JPEG bytes directly. Legacy
+          // JSON/base64 remains negotiated only for an older local service.
+          const jpeg=active.binaryJpeg?null:await new Promise<string>((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(String(reader.result).split(',')[1]);reader.onerror=()=>reject(Error('walk_jpeg_unavailable'));reader.readAsDataURL(blob);});
           active.trace.add('jpeg',performance.now(),{sequence:frame.sequence,durationMs:performance.now()-began,ageMs:performance.now()-frame.at});
           if(!alive())return;
           if(!freshNavigationFrame(frame.at,performance.now()))throw Error('walk_decision_expired');
           const sentAt=performance.now();
-          const value=await(await reconstructionRequest(`/jobs/${job.id}/navigation/observe`,job,{method:'POST',signal,body:JSON.stringify({id:active.id,captureEpoch:binding.captureEpoch,sequence:frame.sequence,jpeg})})).json();
+          const value=await(await reconstructionRequest(`/jobs/${job.id}/navigation/${active.binaryJpeg?'observe-jpeg':'observe'}`,job,active.binaryJpeg?
+            {method:'POST',signal,headers:{'Content-Type':'image/jpeg','X-Route-Session':active.id,'X-Capture-Epoch':binding.captureEpoch,'X-Frame-Sequence':String(frame.sequence)},body:blob}:
+            {method:'POST',signal,body:JSON.stringify({id:active.id,captureEpoch:binding.captureEpoch,sequence:frame.sequence,jpeg})})).json();
           if(!alive())return;
           active.trace.add('http',performance.now(),{sequence:frame.sequence,durationMs:performance.now()-sentAt,ageMs:performance.now()-frame.at});
           const reply=navigationReply(value,active.id,binding.captureEpoch,frame.sequence,sha),plan=readWalkPlan(value.walk),now=performance.now();
@@ -235,24 +243,20 @@ export function WalkingRoutePilot({job,clip,video,ready,binding,assetsReady,inpu
           let cameraStep:CameraStep|null=null;
           if(active.camera&&reply.pose.state==='localized'&&plan.phase==='following'){
             cameraStep=active.camera.update({rotation:reply.pose.rotation??[],target:value.walk?.targetCamera,
-              sequence:frame.sequence,capturedAt:frame.at,now,canStroke:lease.canLook?.()===true});
+              sequence:frame.sequence,capturedAt:frame.at,now,canStroke:lease.canLook?.()===true,
+              alignmentRequired:plan.reason==='walk_camera_alignment_required'});
             if(cameraStep.failed)throw Error(cameraStep.reason);
             if(cameraStep.hold)command=[0,0];
           }else if(active.camera&&lease.canLook?.())cameraStep=active.camera.pause(now);
-          const paintUi=now-lastUiPaint.current>=200;
-          if(paintUi){lastUiPaint.current=now;observed.current?.({reply,capturedAt:frame.at,answeredAt:now});}
-          const keep=saveFrames&&images.current<60&&now-lastImageAt.current>=1000;
-          if(keep){images.current++;lastImageAt.current=now;}
           const sample:Sample={elapsedMs:now-active.began,sequence:frame.sequence,ageMs:now-frame.at,computeMs:reply.computeMs,
-            state:active.freshUntil===null?plan.phase:'waiting',reason:active.freshUntil===null?(cameraStep?.reason??plan.reason):'walk_waiting_fresh_reply',poseState:reply.pose.state,inliers:reply.pose.inliers,progress:plan.progressFraction,stick:command,jpegSha256:sha,
-            poseReason:reply.pose.reason,segment:reply.pose.segment,medianErrorPx:reply.pose.median_error_px??null,
-            crossTrackUnits:reply.pose.cross_track_units??null,center:reply.pose.center?[...reply.pose.center]:null,rotation:reply.pose.rotation?[...reply.pose.rotation]:null,geometrySha256:reply.geometrySha256??null,
-            ...(keep?{image:`data:image/jpeg;base64,${jpeg}`}:{})};
-          if(history.current.length<1200)history.current.push(sample);if(paintUi)setSamples([...history.current.slice(-8)]);
-          const draw=output.current?.getContext('2d');if(draw)paintNavigation(draw,canvas,reply);
-          setNotice(walkReasonLabel(sample.reason));
-          if(plan.phase==='stopped'||plan.phase==='arrived'){await stop(plan.reason);return;}
+            state:plan.phase,reason:plan.phase==='stopped'||plan.phase==='arrived'?plan.reason:(cameraStep?.reason??plan.reason),
+            poseState:reply.pose.state,inliers:reply.pose.inliers,progress:plan.progressFraction,stick:command,jpegSha256:sha,
+            poseReason:reply.pose.reason,plannerReason:plan.reason,cameraYawRadians:cameraStep?.yaw??null,segment:reply.pose.segment,medianErrorPx:reply.pose.median_error_px??null,
+            crossTrackUnits:reply.pose.cross_track_units??null,center:reply.pose.center?[...reply.pose.center]:null,rotation:reply.pose.rotation?[...reply.pose.rotation]:null,geometrySha256:reply.geometrySha256??null};
+          // Deliver the fresh decision before any diagnostic canvas or React
+          // work. Rendering may be skipped; input identity/deadline never is.
           active.permitUntil=frame.at+250;
+          if(plan.phase==='stopped'||plan.phase==='arrived'){if(history.current.length<1200)history.current.push(sample);await stop(plan.reason);return;}
           if(performance.now()>active.permitUntil){
             if(cameraStep?.action)active.camera?.cancelUnsentStroke();
             if(!neutralUntilFresh(active,'render_expired'))await stop('walk_decision_expired');
@@ -262,6 +266,19 @@ export function WalkingRoutePilot({job,clip,video,ready,binding,assetsReady,inpu
           lease.set(command);
           active.trace.add('input_command',performance.now(),{sequence:frame.sequence,ageMs:performance.now()-frame.at});
           if(cameraStep?.action)cameraCommand(active,cameraStep,frame.sequence,active.permitUntil);
+          if(history.current.length<1200)history.current.push(sample);
+          const paintUi=now-lastUiPaint.current>=200;
+          if(paintUi){lastUiPaint.current=now;observed.current?.({reply,capturedAt:frame.at,answeredAt:now});}
+          const keep=saveFrames&&images.current<60&&now-lastImageAt.current>=1000;
+          let diagnosticJpeg=jpeg;
+          if(keep&&!diagnosticJpeg)diagnosticJpeg=await new Promise<string>((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(String(reader.result).split(',')[1]);reader.onerror=()=>reject(Error('walk_jpeg_unavailable'));reader.readAsDataURL(blob);});
+          if(!alive())return;
+          if(keep){images.current++;lastImageAt.current=now;}
+          if(keep)sample.image=`data:image/jpeg;base64,${diagnosticJpeg}`;
+          if(paintUi)setSamples([...history.current.slice(-8)]);
+          if(now-(active.lastPreviewAt??-Infinity)>=100){active.lastPreviewAt=now;
+            setPreviewFrame({blob,sequence:frame.sequence,capturedAt:frame.at,points:reply.pose.state==='localized'?reply.pose.polyline_px:[]});}
+          if(paintUi)setNotice(walkReasonLabel(sample.reason));
         }catch(error){if(alive()){
           if(error instanceof Error&&error.message==='walk_decision_expired'){
             active.trace.add('decision_expired',performance.now(),{sequence:frame.sequence,ageMs:performance.now()-frame.at});
@@ -317,7 +334,7 @@ export function WalkingRoutePilot({job,clip,video,ready,binding,assetsReady,inpu
     <p className="text-[11px] text-muted-foreground">{savedDebug}</p>
     {scope&&clip&&<RouteDebugArchive scope={scope} clip={clip} refresh={savedDebug}/>}
     <div className="grid grid-cols-3 gap-2 text-xs tabular-nums"><div>Прогресс: {last?.progress==null?'—':`${(last.progress*100).toFixed(1)}%`}</div><div>Опоры: {last?.inliers??0}</div><div>Кадр → ответ: {last?`${last.ageMs.toFixed(0)} мс`:'—'}</div><div>Стик: {release==='unknown'?'UNKNOWN':busy&&last?last.stick.map(v=>v.toFixed(2)).join(' / '):'0 / 0'}</div><div>События ввода: {events}</div><div>Освобождение: {({none:'—',pending:'ожидается',closed:'CLOSED',unknown:'UNKNOWN'})[release]}</div></div>
-    {(()=>{const preview=<figure className="space-y-2"><figcaption className="text-xs text-muted-foreground">{busy?'Пеший тест: исходный кадр и подтверждённое направление':'Просмотр источника · автоматическое движение выключено'}</figcaption><canvas ref={output} width={960} height={540} aria-label="Диагностика пешего теста на свежем кадре" className="aspect-video w-full rounded-lg border bg-black"/></figure>;return renderView?renderView(preview):preview;})()}
+    {(()=>{const preview=<figure className="space-y-2"><figcaption className="text-xs text-muted-foreground">{busy?'Пеший тест: исходный кадр и подтверждённое направление':'Просмотр источника · автоматическое движение выключено'}</figcaption><canvas ref={output} width={960} height={540} aria-label="Диагностика пешего теста на свежем кадре" className={previewFrame?'hidden':'aspect-video w-full rounded-lg border bg-black'}/>{previewFrame&&<WalkLivePreview frame={previewFrame} active={busy}/>}</figure>;return renderView?renderView(preview):preview;})()}
     {!busy&&samples.length>0&&<details><summary className="cursor-pointer text-xs">Кадры диагностики · {images.current}</summary><div className="mt-2 grid grid-cols-2 gap-2">{history.current.filter(s=>s.image).map(s=><figure key={s.sequence}><Image src={s.image!} width={960} height={540} unoptimized alt={`Кадр теста ${(s.elapsedMs/1000).toFixed(1)} с`} className="w-full rounded border"/><figcaption className="text-[10px]">{(s.elapsedMs/1000).toFixed(1)} с · {s.inliers} опор · {s.progress==null?'позиция неизвестна':`${(s.progress*100).toFixed(1)}%`}</figcaption></figure>)}</div></details>}
     {!!samples.length&&<div className="overflow-auto"><table className="w-full text-left text-[11px] tabular-nums"><caption className="pb-2 text-left text-muted-foreground">Последние наблюдения · относительный прогресс, без метров</caption><thead><tr><th>Время</th><th>Опоры</th><th>Стик X/Y</th><th>Состояние</th></tr></thead><tbody>{samples.map(s=><tr key={s.sequence}><td>{(s.elapsedMs/1000).toFixed(1)} с</td><td>{s.inliers}</td><td>{s.stick.map(n=>n.toFixed(2)).join(' / ')}</td><td>{walkReasonLabel(s.reason)}</td></tr>)}</tbody></table></div>}
   </section>;

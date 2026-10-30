@@ -270,6 +270,8 @@ class RouteWorkspaceTests(unittest.TestCase):
         self.assertEqual(result['mode'],'foot_camera_trace_v1')
         self.assertEqual(result['secondsRemaining'],60)
         self.assertEqual(self.workspace.live['tracker'].mask[400,480],0)
+        self.assertEqual(self.workspace.live['tracker'].candidate_limit,3)
+        self.assertEqual(self.workspace.live['tracker'].recovery_candidate_limit,8)
         first=self.workspace.live['walk']
         with patch('scripts.pilot.route_workspace.resource_checkpoint'):
             self.workspace.start_walk(self.job,body)
@@ -359,3 +361,15 @@ class RouteWorkspaceTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError,'jpeg_geometry'):
                 self.workspace.observe(self.job,body)
             decode.assert_not_called()
+
+    def test_binary_jpeg_uses_same_binding_pose_path_and_exact_bytes(self):
+        import cv2 as cv
+        import numpy as np
+        self.attach_fixture_map()
+        _,encoded=cv.imencode('.jpg',np.zeros((540,960,3),np.uint8));raw=encoded.tobytes()
+        value=self.workspace.observe_jpeg(self.job,dict(id='d'*32,captureEpoch='e'*32,sequence=1),raw)
+        self.assertEqual(value['jpegSha256'],hashlib.sha256(raw).hexdigest());self.assertEqual(value['physicalActions'],0)
+        for body,data,code in [(dict(id='d'*32,captureEpoch='e'*32,sequence=1),raw,'not_bound'),
+                (dict(id='d'*32,captureEpoch='f'*32,sequence=2),raw,'not_bound'),
+                (dict(id='d'*32,captureEpoch='e'*32,sequence=2),b'x'*(384*1024+1),'jpeg_quota')]:
+            with self.assertRaisesRegex(ValueError,code):self.workspace.observe_jpeg(self.job,body,data)

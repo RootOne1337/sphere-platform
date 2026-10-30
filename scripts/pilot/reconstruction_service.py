@@ -19,6 +19,12 @@ import time
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 
+from scripts.pilot.route_cpu_runtime import initialize_route_cpu_runtime
+
+# Initialize before any local module may import NumPy. This affects only this
+# process; original environment is restored before launching offline workers.
+LIVE_CPU_RUNTIME = initialize_route_cpu_runtime()
+
 from scripts.pilot.atomic_json import write_json
 from scripts.pilot.alternative_geometry import alternative, list_alternatives
 from scripts.pilot.reconstruct_surface import (
@@ -552,7 +558,8 @@ def handler(jobs, origin, port):
             self.send_header('Content-Length', '0')
             self.send_header('Access-Control-Allow-Origin', origin)
             self.send_header('Access-Control-Allow-Methods', 'GET, POST, PUT, OPTIONS')
-            self.send_header('Access-Control-Allow-Headers', 'Content-Type, X-Sphere-Reconstruction, X-Job-Key, X-Upload-Offset')
+            self.send_header('Access-Control-Max-Age', '600')
+            self.send_header('Access-Control-Allow-Headers', 'Content-Type, X-Sphere-Reconstruction, X-Job-Key, X-Upload-Offset, X-Route-Session, X-Capture-Epoch, X-Frame-Sequence')
             self.end_headers()
 
         def body(self, maximum):
@@ -639,6 +646,15 @@ def handler(jobs, origin, port):
                         self.reply(200,jobs.navigation.stop_live(job,json.loads(self.body(1024)),mode='recorded_replay'))
                     elif method == 'POST' and parts[2:] == ['navigation', 'observe']:
                         self.reply(200, jobs.navigation.observe(job, json.loads(self.body(768*1024))))
+                    elif method == 'POST' and parts[2:] == ['navigation', 'observe-jpeg']:
+                        if self.headers.get('Content-Type') != 'image/jpeg':
+                            raise ValueError('route_jpeg_content_type')
+                        sequence=self.headers.get('X-Frame-Sequence','')
+                        if not re.fullmatch(r'[1-9][0-9]{0,6}',sequence):
+                            raise ValueError('route_observation_not_bound')
+                        self.reply(200,jobs.navigation.observe_jpeg(job,dict(
+                            id=self.headers.get('X-Route-Session',''),captureEpoch=self.headers.get('X-Capture-Epoch',''),
+                            sequence=int(sequence)),self.body(384*1024)))
                     elif method == 'POST' and parts[2:] == ['navigation', 'stop']:
                         self.reply(200, jobs.navigation.stop_live(job, json.loads(self.body(1024))))
                     elif method == 'PUT' and len(parts) == 4 and parts[2] == 'input':

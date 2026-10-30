@@ -84,10 +84,11 @@ def store_walk_report(job, body):
     if type(observations) is not list or len(observations) > 1200:
         raise ValueError('walk_report_observations')
     required = {'elapsedMs', 'sequence', 'ageMs', 'computeMs', 'state', 'reason', 'poseState', 'inliers', 'progress'}
-    allowed = required | {'segment', 'medianErrorPx', 'crossTrackUnits','poseReason'}
+    allowed = required | {'segment', 'medianErrorPx', 'crossTrackUnits','poseReason','plannerReason','cameraYawRadians'}
     for row in observations:
         if (type(row) is not dict or not required <= row.keys() or not row.keys() <= allowed
-                or any(not code(v) if k in {'state', 'reason', 'poseState','poseReason'} else not number(v, nullable=k in {'progress', 'segment', 'medianErrorPx', 'crossTrackUnits'})
+                or any((v is not None and (type(v) not in {int,float} or not math.isfinite(v) or abs(v)>math.pi)) if k=='cameraYawRadians'
+                       else not code(v) if k in {'state', 'reason', 'poseState','poseReason','plannerReason'} else not number(v, nullable=k in {'progress', 'segment', 'medianErrorPx', 'crossTrackUnits'})
                        for k, v in row.items())):
             raise ValueError('walk_report_observation')
     raw = json.dumps(body, sort_keys=True, separators=(',', ':'), allow_nan=False).encode()

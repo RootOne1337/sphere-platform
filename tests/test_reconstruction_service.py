@@ -351,3 +351,34 @@ def test_cancelled_browser_request_does_not_attempt_a_second_response(jobs):
     handler.dispatch('GET')
     assert handler.reply.call_count == 1
     assert handler.close_connection
+
+
+def test_binary_observation_keeps_capability_origin_metadata_and_byte_quotas(jobs,monkeypatch):
+    job=create(jobs);seen=[]
+    def observe(path,binding,raw):
+        seen.append((path,binding,raw))
+        return dict(physicalActions=0,jpegSha256=hashlib.sha256(raw).hexdigest())
+    monkeypatch.setattr(jobs.navigation,'observe_jpeg',observe)
+    server=ThreadingHTTPServer(('127.0.0.1',0),service.handler(jobs,'http://127.0.0.1:3015',3342))
+    thread=threading.Thread(target=server.serve_forever,daemon=True);thread.start()
+    base=f'http://127.0.0.1:{server.server_port}/jobs/{job.name}/navigation/observe-jpeg'
+    raw=b'jpeg-body'*100
+    headers={'Host':'127.0.0.1:3342','Origin':'http://127.0.0.1:3015','X-Sphere-Reconstruction':'1',
+             'X-Job-Key':'b'*64,'Content-Type':'image/jpeg','X-Route-Session':'c'*32,
+             'X-Capture-Epoch':'e'*32,'X-Frame-Sequence':'4'}
+    try:
+        for changed,payload,expected in [({'X-Job-Key':''},raw,403),({'Origin':'https://other.example'},raw,403),
+                ({'Content-Type':'image/png'},raw,409),({'X-Frame-Sequence':'4.5'},raw,409),
+                ({},b'x'*(384*1024+1),409)]:
+            with pytest.raises(urllib.error.HTTPError) as error:
+                urllib.request.urlopen(urllib.request.Request(base,data=payload,headers=headers|changed))
+            assert error.value.code==expected
+        assert not seen
+        with urllib.request.urlopen(urllib.request.Request(base,data=raw,headers=headers)) as response:
+            assert json.load(response)['jpegSha256']==hashlib.sha256(raw).hexdigest()
+        assert seen==[(job,dict(id='c'*32,captureEpoch='e'*32,sequence=4),raw)]
+        with urllib.request.urlopen(urllib.request.Request(base,method='OPTIONS',headers=headers)) as response:
+            assert 'X-Frame-Sequence' in response.headers['Access-Control-Allow-Headers']
+            assert response.headers['Access-Control-Max-Age']=='600'
+    finally:
+        server.shutdown();server.server_close();thread.join(3)

@@ -259,7 +259,8 @@ class RouteWorkspaces:
         # must match the map above. Intrinsics already use this analysis size.
         route = replace(route, profile=replace(route.profile, width=960, height=540))
         epoch, episode, goal = (str(uuid.uuid4()) for _ in range(3))
-        tracker = AnchoredRouteLocalizer(route, capture_epoch=epoch, episode_id=episode, goal_revision=goal, clock=self.clock)
+        tracker = AnchoredRouteLocalizer(route, capture_epoch=epoch, episode_id=episode, goal_revision=goal,
+                                        clock=self.clock, recovery_candidate_limit=8)
         self.live = dict(id=body['id'], binding=body.copy(), job=job.name, epoch=epoch,
             episode=episode, goal=goal, tracker=tracker, sequence=0, observations=0, deadline=self.clock()+120,
             geometry_sha256=receipt['geometry_sha256'],mode=mode)
@@ -312,7 +313,8 @@ class RouteWorkspaces:
         self.start_live(job, request)
         self._install_walk(start_mode=start_mode,camera_tracking=camera_tracking,camera_control=camera_control)
         return dict(self.live_status(), mode='foot_camera_trace_v1', physicalActions=0, maxSeconds=60,
-                    startMode=start_mode,cameraTracking=camera_tracking,cameraControl=camera_control)
+                    startMode=start_mode,cameraTracking=camera_tracking,cameraControl=camera_control,
+                    observationProtocol='jpeg_binary_v1')
 
     def _install_walk(self, *, start_mode='beginning',camera_tracking=False,camera_control='pulse_v1'):
         from motor_worker.walk_route import WalkRouteFollower
@@ -325,7 +327,8 @@ class RouteWorkspaces:
             profile = replace(route.profile, excluded=(*route.profile.excluded, (.33, .45, .67, 1.)))
             route = replace(route, profile=profile)
             self.live['tracker'] = AnchoredRouteLocalizer(route, capture_epoch=self.live['epoch'],
-                episode_id=self.live['episode'], goal_revision=self.live['goal'], clock=self.clock)
+                episode_id=self.live['episode'], goal_revision=self.live['goal'], clock=self.clock,
+                recovery_candidate_limit=8)
             self.live['walk'] = WalkRouteFollower(route, clock=self.clock,start_mode=start_mode,camera_tracking=camera_tracking,camera_control=camera_control)
             self.live['deadline'] = min(self.live['deadline'], self.clock()+60)
     def start_replay(self,job,body):
@@ -341,6 +344,13 @@ class RouteWorkspaces:
         return dict(self.live_status(),mode='recorded_replay',replayOnly=True,maxSeconds=60)
 
     def observe(self, job, body, *, mode='live'):
+        if (type(body) is not dict or set(body) != {'id','captureEpoch','sequence','jpeg'}
+                or type(body['jpeg']) is not str or len(body['jpeg']) > 512*1024):
+            raise ValueError('route_observation_not_bound')
+        raw=base64.b64decode(body['jpeg'],validate=True)
+        return self.observe_jpeg(job,{k:body[k] for k in ('id','captureEpoch','sequence')},raw,mode=mode)
+
+    def observe_jpeg(self, job, body, raw, *, mode='live'):
         import cv2 as cv
         import numpy as np
         from PIL import Image
@@ -349,15 +359,14 @@ class RouteWorkspaces:
         from motor_worker.route_localization import PNP_VERIFICATION_POLICY, COARSE_SEARCH_POLICY
 
         self._expire()
-        if (type(body) is not dict or set(body) != {'id', 'captureEpoch', 'sequence', 'jpeg'}
+        if (type(body) is not dict or set(body) != {'id', 'captureEpoch', 'sequence'}
                 or self.live is None or self.live['id'] != body['id'] or self.live['job'] != job.name
                 or self.live.get('mode','live')!=mode
                 or body['captureEpoch'] != self.live['binding']['captureEpoch']
                 or type(body['sequence']) is not int or body['sequence'] <= self.live['sequence']
-                or body['sequence'] > 1000000 or type(body['jpeg']) is not str or len(body['jpeg']) > 512*1024):
+                or body['sequence'] > 1000000):
             raise ValueError('route_observation_not_bound')
-        raw = base64.b64decode(body['jpeg'], validate=True)
-        if not 100 <= len(raw) <= 384*1024:
+        if type(raw) is not bytes or not 100 <= len(raw) <= 384*1024:
             raise ValueError('route_jpeg_quota')
         with Image.open(io.BytesIO(raw)) as header:
             if header.format != 'JPEG' or header.size != (960, 540):
