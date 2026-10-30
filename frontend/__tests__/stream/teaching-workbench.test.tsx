@@ -125,6 +125,25 @@ test('vehicle mode exposes four explicit calibration targets and never enables e
   expect(screen.getByLabelText('Панель записи')).toHaveClass('sticky','top-16');
 });
 
+test('the scooter preset configures relative pedals and stick without sending any game input',async()=>{
+  mockAuth={accessToken:'test',sessionVersion:1,user:{id:'user',org_id:'org'}};
+  Object.defineProperty(globalThis,'TextEncoder',{configurable:true,value:TextEncoder});
+  Object.defineProperty(crypto,'subtle',{configurable:true,value:{digest:async()=>new Uint8Array(32).buffer}});
+  jest.mocked(connectTeaching).mockImplementation(async(_d,_t,_v,_s,_r,_f,onMessage)=>{
+    onMessage({type:'attached'});
+    return {fresh:()=>true,binding:()=>({captureEpoch:'test',width:1920,height:1080}),endpoint:()=>({}),worker:{postMessage:jest.fn(),terminate:jest.fn()},close:jest.fn()}as never;
+  });
+  render(<TeachingWorkbench deviceId="scooter-preset-test" readOnly={false}/>);
+  const connect=screen.getByRole('button',{name:'Подключить поток'});await waitFor(()=>expect(connect).toBeEnabled());fireEvent.click(connect);
+  const preset=screen.getByRole('button',{name:'Пресет · Black Russia: скутер'});await waitFor(()=>expect(preset).toBeEnabled());fireEvent.click(preset);
+  expect(screen.getByRole('combobox',{name:'Схема управления'})).toHaveValue('vehicle_stick');
+  expect(screen.getByRole('button',{name:/газ \/ вперёд · 93.1 \/ 88.7%/})).toBeEnabled();
+  expect(screen.getByRole('button',{name:/тормоз \/ назад · 82.4 \/ 88.7%/})).toBeEnabled();
+  expect(screen.getByRole('button',{name:/Центр стика/})).toBeEnabled();
+  expect(screen.queryByRole('button',{name:/поворот влево ·/})).not.toBeInTheDocument();
+  expect(mockSet).not.toHaveBeenCalled();expect(mockControllers).toHaveLength(0);
+});
+
 test('an unsolicited Android close ends control and stops a recording instead of leaving dead keys active',async()=>{
   mockAuth={accessToken:'test',sessionVersion:1,user:{id:'user',org_id:'org'}};
   Object.defineProperty(globalThis,'TextEncoder',{configurable:true,value:TextEncoder});

@@ -13,6 +13,8 @@ export type TeachingProfile = {
   mode: 'stick' | 'vehicle_buttons';
   stick_x: number; stick_y: number; radius: number; action_x: number; action_y: number;
   vehicle: Record<VehicleButton, PercentPoint>;
+  /** Vehicle pedals on contact 0, horizontal joystick on 1, camera on 2. */
+  steering?:'stick';
   calibration: { width: number; height: number; buttons: CalibrationTarget[] } | null;
   /** Optional physical keyboard mapping; recorded contacts remain Android coordinates. */
   keys?: TeachingKeys;
@@ -71,19 +73,28 @@ export function profileIssue(profile: TeachingProfile, geometry: Geometry): stri
     const center=fromPercent({x:profile.stick_x,y:profile.stick_y},geometry),radius=profile.radius/100*Math.min(geometry.width,geometry.height);
     return center.x-radius<0||center.y-radius<0||center.x+radius>=geometry.width||center.y+radius>=geometry.height?'Зона стика выходит за экран. Уменьшите радиус или измените центр.':null;
   }
-  if(vehicleButtons.some(button=>!calibrated(profile,geometry,button)))return 'Укажите четыре кнопки транспорта на текущем экране. После смены разрешения калибровку нужно подтвердить заново.';
-  const points=vehicleButtons.map(button=>fromPercent(profile.vehicle[button],geometry));
+  if(profile.steering==='stick'){
+    if(!calibrated(profile,geometry,'stick')||!calibrated(profile,geometry,'forward')||!calibrated(profile,geometry,'reverse'))return 'Укажите газ, тормоз и центр стика либо примените пресет скутера.';
+    const stickIssue=profileIssue({...profile,mode:'stick'},geometry);if(stickIssue)return stickIssue;
+  }else if(vehicleButtons.some(button=>!calibrated(profile,geometry,button)))return 'Укажите четыре кнопки транспорта на текущем экране. После смены разрешения калибровку нужно подтвердить заново.';
+  const points=(profile.steering==='stick'?['forward','reverse'] as const:vehicleButtons).map(button=>fromPercent(profile.vehicle[button],geometry));
   if(points.some((point,index)=>points.slice(0,index).some(other=>point.x===other.x&&point.y===other.y)))return 'Кнопки транспорта настроены в одну точку. Проверьте газ, тормоз и повороты.';
   return null;
 }
 /** A repeated desired state is a hold. The contact driver suppresses duplicate edges. */
-export function movementTargets(keys: ReadonlySet<string>, profile: TeachingProfile, geometry: Geometry): {stick?:TeachingPoint; primary:TeachingPoint|null; secondary?:TeachingPoint|null} {
+export function movementTargets(keys: ReadonlySet<string>, profile: TeachingProfile, geometry: Geometry): {stick?:TeachingPoint; primary:TeachingPoint|null; secondary?:TeachingPoint|null;secondaryStick?:TeachingPoint} {
   keys=canonicalKeys(keys,profile);
   if(profile.mode==='stick') {
     const stick=fromPercent({x:profile.stick_x,y:profile.stick_y},geometry);
     return {stick,primary:stickPoint(keys,stick,profile.radius*Math.min(geometry.width,geometry.height)/100,keys.has('ShiftLeft')||keys.has('ShiftRight'))};
   }
   const forward=Number(keys.has('KeyW'))-Number(keys.has('KeyS')),turn=Number(keys.has('KeyD'))-Number(keys.has('KeyA'));
+  if(profile.steering==='stick'){
+    const secondaryStick=fromPercent({x:profile.stick_x,y:profile.stick_y},geometry);
+    const steer=new Set([...keys].filter(code=>['KeyA','KeyD','ShiftLeft','ShiftRight'].includes(code)));
+    return {primary:forward?fromPercent(profile.vehicle[forward>0?'forward':'reverse'],geometry):null,secondaryStick,
+      secondary:stickPoint(steer,secondaryStick,profile.radius*Math.min(geometry.width,geometry.height)/100,keys.has('ShiftLeft')||keys.has('ShiftRight'))};
+  }
   return {primary:forward?fromPercent(profile.vehicle[forward>0?'forward':'reverse'],geometry):null,
     secondary:turn?fromPercent(profile.vehicle[turn>0?'right':'left'],geometry):null};
 }

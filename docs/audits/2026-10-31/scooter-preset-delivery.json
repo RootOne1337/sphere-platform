@@ -1,0 +1,75 @@
+{
+  "schema": "sphere-scooter-preset-delivery-v1",
+  "physicalDeviceActions": 0,
+  "preset": "Black Russia: scooter",
+  "positionsPercent": {
+    "throttle": {
+      "x": 93.1,
+      "y": 88.7
+    },
+    "brake": {
+      "x": 82.4,
+      "y": 88.7
+    },
+    "stick": "retain calibrated, otherwise 15/82",
+    "camera": "retain calibrated, otherwise 65/50"
+  },
+  "controls": {
+    "throttle": "W",
+    "brake": "S",
+    "steering": "A/D horizontal joystick",
+    "camera": "left mouse drag"
+  },
+  "tests": {
+    "passed": 25,
+    "failed": 0,
+    "suites": 4,
+    "rawSha256": "e9e3ca490121c583b0fdc3e6ef463057c31825ff372f1a78b92629e5322f6b5e"
+  },
+  "sourceFiles": {
+    "frontend/src/features/stream/teachingKeymap.ts": "fa763cd80176851b8d69da77bc67f4bc683b425c818a1f562012e4e0ab9a309b",
+    "frontend/src/features/stream/teachingProfileStorage.ts": "dc6a8a5bf8756e40cc2e63ab262b1ef3cd7a1793d1464b42e1f6caecbd17b2c1",
+    "frontend/src/features/stream/TeachingWorkbench.tsx": "42a7dfd096b9fd3e2bf43f6717c14f11875b991e034ac93d22dc98a46d51eb89"
+  },
+  "build": {
+    "exit_code": 0,
+    "stopped_reason": null,
+    "source_sha_before": "4484d0aef85e019536d302189af5b328f1d7659f95e080f6462282eee564a310",
+    "source_sha_after": "4484d0aef85e019536d302189af5b328f1d7659f95e080f6462282eee564a310",
+    "source_unchanged": true,
+    "local_only": true,
+    "installed": false,
+    "resource_profile": {
+      "kind": "bounded_frontend_only",
+      "workers": 1,
+      "node_heap_mib": 1024,
+      "start_ram_gib": 6.5,
+      "stop_ram_gib": 5.5,
+      "max_commit_percent": 90,
+      "android_and_reconstruction_guards_unchanged": true
+    }
+  },
+  "probe": {
+    "outcome": "verified",
+    "physicalActions": 0,
+    "pages": 2,
+    "assets": 31,
+    "workerMatches": true,
+    "encoderWorkerMatches": true,
+    "newBundlePresent": true
+  },
+  "installation": {
+    "outcome": "verified",
+    "candidateImageId": "sha256:fffbf5f49f353851c9e44facc3c0148969d062e87b051bf1922970549d3837cc",
+    "physicalDeviceActions": 0,
+    "pages": 2,
+    "assets": 31,
+    "uiHealthy": true,
+    "otherContainersPreserved": true,
+    "sourceMatches": true
+  },
+  "vehicleAutonomyImplemented": false,
+  "speedOcrImplemented": false,
+  "minimapNavigationImplemented": false,
+  "processorReloaded": false
+}

@@ -18,7 +18,7 @@ import {TeachingLocalWorker} from './TeachingLocalWorker';
 import type {ReconstructionJob} from './reconstructionClient';
 import type {RouteSource} from './routeSource';
 import {applyWalkingStick,WalkStickSlew,walkingCalibrationIssue,walkingCameraIssue,walkingStickTarget,type WalkInputLease} from './walkPilot';
-import {defaultWalkingProfile,loadTeachingProfile,saveTeachingProfile,teachingProfileKey} from './teachingProfileStorage';
+import {defaultWalkingProfile,blackRussiaScooterProfile,loadTeachingProfile,saveTeachingProfile,teachingProfileKey} from './teachingProfileStorage';
 
 type Phase = 'idle' | 'connecting' | 'preview' | 'opening' | 'controlling' | 'piloting' | 'arming' | 'recording' | 'stopping' | 'finished';
 const newId = () => crypto.randomUUID().replaceAll('-', '');
@@ -373,6 +373,7 @@ export function TeachingWorkbench({ deviceId, readOnly }: { deviceId: string; re
     // then retain the same contact while changing direction/speed with MOVE.
     if (targets.primary && targets.stick && !controller.current?.hasContact(0)) controller.current?.set(0, targets.stick);
     controller.current?.set(0, targets.primary);
+    if(targets.secondary&&targets.secondaryStick&&!controller.current?.hasContact(1))controller.current?.set(1,targets.secondaryStick);
     if(targets.secondary!==undefined)controller.current?.set(1,targets.secondary);
   };
   const key = (event: React.KeyboardEvent, down: boolean) => {
@@ -417,10 +418,11 @@ export function TeachingWorkbench({ deviceId, readOnly }: { deviceId: string; re
     setWorkspaceMode(next);
   };
   const calibrationMarkers=binding?(profile.mode==='vehicle_buttons'
-    ?vehicleButtons.filter(target=>calibrated(profile,binding,target)).map(target=>({...fromPercent(profile.vehicle[target],binding),label:keyLabel(mappedKeys[target])}))
+    ?vehicleButtons.filter(target=>(profile.steering!=='stick'||target==='forward'||target==='reverse')&&calibrated(profile,binding,target)).map(target=>({...fromPercent(profile.vehicle[target],binding),label:keyLabel(mappedKeys[target])}))
     :calibrated(profile,binding,'stick')?[{...fromPercent({x:profile.stick_x,y:profile.stick_y},binding),label:['forward','left','reverse','right'].map(role=>keyLabel(mappedKeys[role as keyof typeof mappedKeys])).join('')}]:[]):[];
   if(binding&&calibrated(profile,binding,'action'))calibrationMarkers.push({...fromPercent({x:profile.action_x,y:profile.action_y},binding),label:keyLabel(mappedKeys.action)});
   if(binding&&profile.look&&calibrated(profile,binding,'look'))calibrationMarkers.push({...fromPercent(profile.look,binding),label:'Камера ↔'});
+  if(binding&&profile.mode==='vehicle_buttons'&&profile.steering==='stick'&&calibrated(profile,binding,'stick'))calibrationMarkers.push({...fromPercent({x:profile.stick_x,y:profile.stick_y},binding),label:`${keyLabel(mappedKeys.left)}/${keyLabel(mappedKeys.right)}`});
   const chooseCalibration=(target:CalibrationTarget)=>{setBindingTarget(null);setCalibrate(target);video.current?.scrollIntoView({block:'center',behavior:'smooth'});};
   const chosenClip=clipChoices.find(item=>item.id===clip);
   useEffect(()=>{
@@ -498,13 +500,15 @@ export function TeachingWorkbench({ deviceId, readOnly }: { deviceId: string; re
         <h3 className="font-semibold">Подготовка маршрута</h3>
         <label className="block space-y-1 text-sm"><span>Название</span><input className={field} value={title} placeholder="Автоматически: дата, время и номер записи" maxLength={128} disabled={active(phase)} onChange={e => setTitle(e.target.value)} /></label>
         <label className="flex items-start gap-2 text-sm"><input type="checkbox" checked={externalRecording} disabled={active(phase)} onChange={e=>setExternalRecording(e.target.checked)} /><span>Управляю в эмуляторе · только видео<br/><span className="text-xs text-muted-foreground">Можно переключиться в LDPlayer. Нажатия эмулятора не записываются; страница должна оставаться открытой.</span></span></label>
-        <label className="block space-y-1 text-sm"><span>Схема управления</span><select className={field} value={profile.mode} disabled={active(phase)} onChange={e=>{setBindingTarget(null);setCalibrate(null);setProfile(p=>({...p,mode:e.target.value as TeachingProfile['mode']}));}}><option value="stick">Стик · ходьба / аналоговое управление</option><option value="vehicle_buttons">Транспорт · газ, тормоз, левый и правый руль</option></select></label>
+        <Button variant="outline" className="h-auto w-full whitespace-normal text-left" disabled={readOnly||!ready||!binding||active(phase)} onClick={()=>{if(!binding)return;setBindingTarget(null);setCalibrate(null);setProfile(p=>blackRussiaScooterProfile(binding,p));setNotice('Пресет скутера применён: W — газ, S — тормоз, A/D — стик, ЛКМ — камера. Положения педалей заданы в процентах экрана.');}}>Пресет · Black Russia: скутер</Button>
+        <label className="block space-y-1 text-sm"><span>Схема управления</span><select className={field} value={profile.mode==='vehicle_buttons'&&profile.steering==='stick'?'vehicle_stick':profile.mode} disabled={active(phase)} onChange={e=>{const value=e.target.value;setBindingTarget(null);setCalibrate(null);setProfile(p=>({...p,mode:value==='stick'?'stick':'vehicle_buttons',steering:value==='vehicle_stick'?'stick':undefined}));}}><option value="stick">Стик · ходьба / аналоговое управление</option><option value="vehicle_buttons">Транспорт · газ, тормоз, левый и правый руль</option><option value="vehicle_stick">Транспорт · педали и стик</option></select></label>
         <TeachingKeyBindings profile={profile} disabled={readOnly||active(phase)} editing={bindingTarget} onEditingChange={role=>{setBindingTarget(role);if(role)setCalibrate(null);}} onChange={setProfile}/>
         <div className="space-y-2"><p className="text-sm font-medium">Калибровка касаний</p>
-          {profile.mode==='stick'?<><Button variant="outline" className="w-full justify-start" disabled={!ready || active(phase)} onClick={() => chooseCalibration('stick')}><MousePointer2 size={15} className="mr-2" />Центр стика · {profile.stick_x.toFixed(1)} / {profile.stick_y.toFixed(1)}%</Button>
+          {(profile.mode==='stick'||profile.steering==='stick')&&<><Button variant="outline" className="w-full justify-start" disabled={!ready || active(phase)} onClick={() => chooseCalibration('stick')}><MousePointer2 size={15} className="mr-2" />Центр стика · {profile.stick_x.toFixed(1)} / {profile.stick_y.toFixed(1)}%</Button>
             <label className="block space-y-1 text-sm"><span>Радиус стика · % короткой стороны</span><input className={field} type="number" min={1} max={20} step={0.5} value={profile.radius} disabled={active(phase)} onChange={e => { const n = Number(e.target.value); if(n>=1&&n<=20) setProfile(p => ({...p,radius:n})); }} /></label></>
-            :<>{vehicleButtons.map(target=><Button key={target} variant="outline" className="w-full justify-start" disabled={!ready||active(phase)} onClick={()=>chooseCalibration(target)}>{calibrationNames[target]} · {profile.vehicle[target].x.toFixed(1)} / {profile.vehicle[target].y.toFixed(1)}% {binding&&calibrated(profile,binding,target)?'✓':'· указать'}</Button>)}
-              <p className="text-xs leading-5 text-muted-foreground">Сначала сядьте в транспорт и укажите четыре экранные кнопки. Координаты-примеры не включают управление. Клавиши указаны выше; камера мышью и дополнительное действие используются по очереди.</p></>}
+            }
+          {profile.mode==='vehicle_buttons'&&<>{vehicleButtons.filter(target=>profile.steering!=='stick'||target==='forward'||target==='reverse').map(target=><Button key={target} variant="outline" className="w-full justify-start" disabled={!ready||active(phase)} onClick={()=>chooseCalibration(target)}>{calibrationNames[target]} · {profile.vehicle[target].x.toFixed(1)} / {profile.vehicle[target].y.toFixed(1)}% {binding&&calibrated(profile,binding,target)?'✓':'· указать'}</Button>)}
+              <p className="text-xs leading-5 text-muted-foreground">{profile.steering==='stick'?'W/S — газ и тормоз справа внизу; A/D — горизонтальный стик слева. ЛКМ — обычная камера.':'Сначала сядьте в транспорт и укажите четыре экранные кнопки. Координаты-примеры не включают управление.'} Камера и дополнительное действие используются по очереди.</p></>}
           <Button variant="outline" className="w-full justify-start" disabled={!ready || active(phase)} onClick={() => chooseCalibration('action')}>{profile.mode==='vehicle_buttons'?`Доп. действие · ${keyLabel(mappedKeys.action)}`:'Кнопка действия'} · {profile.action_x.toFixed(1)} / {profile.action_y.toFixed(1)}%</Button>
           {calibrate&&<Button size="sm" variant="ghost" onClick={()=>setCalibrate(null)}>Отменить калибровку</Button>}
         </div>
