@@ -19,11 +19,13 @@ class WalkRouteFollower:
     MAX_RELOCALIZATIONS = 3
     MAX_RECOVERY_SECONDS = 6.
 
-    def __init__(self, route: SparseRoute, *, clock, start_mode='beginning', camera_tracking=False,camera_control='continuous_drag_v1',reference_rotations=None):
+    def __init__(self, route: SparseRoute, *, clock, start_mode='beginning', camera_tracking=False,camera_control='continuous_drag_v1',reference_rotations=None,max_seconds=60):
         import numpy as np
 
         if type(route) is not SparseRoute:
             raise ValueError('walk_route_required')
+        if type(max_seconds)is not int or not 60<=max_seconds<=600:raise ValueError('walk_duration_invalid')
+        self.max_seconds=max_seconds
         if start_mode not in {'beginning', 'recognized_route'}:
             raise ValueError('walk_start_mode')
         self.start_mode = start_mode
@@ -69,7 +71,7 @@ class WalkRouteFollower:
         return dict(schema='sphere-walk-plan-v1', phase=phase, reason=reason,
                     stick=[float(v) for v in self.vector],
                     progressFraction=None if progress is None else float(progress/self.total),
-                    maxStick=self.MAX_STICK, maxSeconds=self.MAX_SECONDS,
+                    maxStick=self.MAX_STICK, maxSeconds=self.max_seconds,
                     groundRoute=False, executionQualified=False,
                     cameraBodyAssumption=True, **extra)
 
@@ -126,7 +128,7 @@ class WalkRouteFollower:
             return self._stop('walk_motion_feedback_invalid')
         if self.terminal:
             return self._stop(self.terminal)
-        if not math.isfinite(now) or now < self.began or now-self.began >= self.MAX_SECONDS:
+        if not math.isfinite(now) or now < self.began or now-self.began >= self.max_seconds:
             return self._stop('walk_time_limit')
         if type(pose) is not RoutePose:
             return self._stop('walk_pose_invalid')

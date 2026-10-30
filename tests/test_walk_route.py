@@ -61,6 +61,16 @@ class WalkRouteTests(unittest.TestCase):
         self.assertFalse(second['executionQualified'])
         self.assertFalse(second['groundRoute'])
 
+    def test_negotiated_passage_budget_can_exceed_sixty_seconds_but_is_finite(self):
+        self.follower=WalkRouteFollower(self.route,clock=lambda:self.now,max_seconds=300)
+        began=self.now
+        for _ in range(310):self.now+=.2;reply=self.observe(motion_active=False)
+        self.assertEqual(reply['phase'],'following');self.assertEqual(reply['maxSeconds'],300)
+        self.now=began+300;self.assertEqual(self.observe()['reason'],'walk_time_limit')
+        for invalid in (True,59,601,1e6):
+            with self.subTest(invalid=invalid),self.assertRaises(ValueError):
+                WalkRouteFollower(self.route,clock=lambda:self.now,max_seconds=invalid)
+
     def test_recorded_camera_pitch_is_distinct_from_slope_of_camera_trace(self):
         import numpy as np
         import math

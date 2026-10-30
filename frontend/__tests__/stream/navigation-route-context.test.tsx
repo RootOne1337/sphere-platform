@@ -41,3 +41,32 @@ test('a source mismatch never displays the unrelated map or a live pin',async()=
   await screen.findByText(/Геометрия относится к другой записи/);
   expect(screen.queryByLabelText('Обзор ориентиров и камер')).not.toBeInTheDocument();expect(screen.getByText('live-frame')).toBeInTheDocument();
 });
+
+test('a short display gap retains only a labelled past measurement, never a fresh live pin',async()=>{
+  const raw=new TextEncoder().encode(JSON.stringify(data)),sha=Buffer.from(await webcrypto.subtle.digest('SHA-256',raw)).toString('hex');
+  jest.mocked(reconstructionRequest).mockImplementation(async()=>({json:async()=>({alternatives:[]}),arrayBuffer:async()=>Uint8Array.from(raw).buffer}) as Response);
+  const props={job,source,assetsReady:true,busy:true};
+  const view=render(<NavigationRouteContext {...props} observation={null}/>);
+  await screen.findByText('source-frame-0');
+  jest.useFakeTimers();
+  try{
+    const parsed=navigationReply({id:'s',captureEpoch:'epoch',sequence:1,jpegSha256:'f'.repeat(64),geometrySha256:sha,referenceTicks90k:90000,computeMs:10,method:'descriptor_pnp',physicalActions:0,executionQualified:false,groundRoute:false,
+      pose:{state:'localized',reason:'verified',inliers:30,segment:0,progress_units:1,polyline_px:[],center:[0,0,1],rotation:[1,0,0,0,1,0,0,0,1]}},'s','epoch',1,'f'.repeat(64))!;
+    const capturedAt=performance.now(),observation={reply:parsed,capturedAt,answeredAt:capturedAt+10};
+    view.rerender(<NavigationRouteContext {...props} observation={observation}/>);
+    expect(screen.getByLabelText('Подтверждённое живое положение')).toBeInTheDocument();
+    act(()=>jest.advanceTimersByTime(260));
+    expect(screen.queryByLabelText('Подтверждённое живое положение')).not.toBeInTheDocument();
+    expect(screen.getByLabelText('Последняя измеренная позиция · ожидаем обновление')).toBeInTheDocument();
+    expect(screen.getByText('Обновляем подтверждение положения')).toBeInTheDocument();
+    expect(screen.queryByText(/Положение сейчас не подтверждено/)).not.toBeInTheDocument();
+    view.rerender(<NavigationRouteContext {...props} observation={{...observation,reply:{...parsed,geometrySha256:'0'.repeat(64)}}}/>);
+    expect(screen.queryByLabelText('Последняя измеренная позиция · ожидаем обновление')).not.toBeInTheDocument();
+    view.rerender(<NavigationRouteContext {...props} observation={observation}/>);
+    act(()=>jest.advanceTimersByTime(750));
+    expect(screen.queryByLabelText('Последняя измеренная позиция · ожидаем обновление')).not.toBeInTheDocument();
+    expect(screen.getByText(/Положение сейчас не подтверждено/)).toBeInTheDocument();
+    view.rerender(<NavigationRouteContext {...props} busy={false} observation={observation}/>);
+    expect(screen.queryByText(/Положение сейчас не подтверждено/)).not.toBeInTheDocument();
+  }finally{view.unmount();jest.useRealTimers();}
+});

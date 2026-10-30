@@ -41,7 +41,8 @@ test('native targets require an explicit current-resolution stick calibration',(
 test('unbounded, forged-qualified and nonneutral stopped replies cannot become input',()=>{
   expect(readWalkPlan(plan)).toEqual(plan);
   for(const changed of [{stick:[1,0]},{stick:[NaN,0]},{executionQualified:true},{phase:'stopped'},
-    {progressFraction:2},{maxSeconds:120},{cameraBodyAssumption:false}])expect(readWalkPlan({...plan,...changed})).toBeNull();
+    {progressFraction:2},{maxSeconds:59},{maxSeconds:601},{maxSeconds:60.5},{maxSeconds:true},{cameraBodyAssumption:false}])expect(readWalkPlan({...plan,...changed})).toBeNull();
+  expect(readWalkPlan({...plan,maxSeconds:600})).toMatchObject({maxSeconds:600});
   expect(readWalkPlan({...plan,phase:'stopped',stick:[0,0]})).not.toBeNull();
   expect(()=>walkingStickTarget(profile,geometry,[0,-1])).toThrow();
 });

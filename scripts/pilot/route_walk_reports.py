@@ -14,7 +14,7 @@ def store_walk_report(job, body):
     fields = {'schema', 'id', 'clip', 'release', 'stopReason', 'inputFailure',
               'stopFrameAgeMs', 'stopFrameSequence', 'executionQualified',
               'inputSummary', 'stages', 'observations'}
-    if (type(body) is not dict or not fields <= body.keys() or not body.keys() <= fields|{'startMode','camera','cameraInput','clientVersion','beganAtMs','observationCount','stageSummary','nativeInputs'}
+    if (type(body) is not dict or not fields <= body.keys() or not body.keys() <= fields|{'startMode','camera','cameraInput','clientVersion','beganAtMs','observationCount','stageSummary','nativeInputs','durationBudgetSeconds'}
             or body['schema'] != 'sphere-walk-summary-v1'
             or body.get('startMode','beginning') not in {'beginning','recognized_route'}):
         raise ValueError('walk_report_schema')
@@ -29,8 +29,8 @@ def store_walk_report(job, body):
                 or not camera.keys()<=camera_fields|{'minimumFraction','quietResponses','feedback','mode','pitchGainRadiansPerShortSide'}
                 or camera.get('mode','continuous_drag_v1')!='continuous_drag_v1'
                 # The servo bounds each alignment to 120 moves; this scalar
-                # counts all corrections over the whole 60-second run.
-                or type(camera['pulses']) is not int or not 0<=camera['pulses']<=4096
+                # counts all corrections over a negotiated run, up to 600 s.
+                or type(camera['pulses']) is not int or not 0<=camera['pulses']<=18000
                 or type(camera['calibrationAttempts']) is not int or not 0<=camera['calibrationAttempts']<=3
                 or camera['gainRadiansPerShortSide'] is not None and (
                     type(camera['gainRadiansPerShortSide']) not in {int,float}
@@ -73,7 +73,8 @@ def store_walk_report(job, body):
 
     if 'clientVersion' in body and not code(body['clientVersion']):raise ValueError('walk_report_client_version')
     if 'beganAtMs' in body and (type(body['beganAtMs']) not in {int,float} or not math.isfinite(body['beganAtMs']) or not 0<=body['beganAtMs']<=1e16):raise ValueError('walk_report_clock')
-    if 'observationCount' in body and (type(body['observationCount']) is not int or not 0<=body['observationCount']<=1200):raise ValueError('walk_report_observation_count')
+    if 'durationBudgetSeconds' in body and (type(body['durationBudgetSeconds'])is not int or not 1<=body['durationBudgetSeconds']<=600):raise ValueError('walk_report_duration')
+    if 'observationCount' in body and (type(body['observationCount']) is not int or not 0<=body['observationCount']<=18000):raise ValueError('walk_report_observation_count')
     totals=body.get('stageSummary',{})
     if (type(totals) is not dict or len(totals)>32 or any(not code(k) or type(v) is not dict
             or set(v)!={'count','durationMs','maxDurationMs','maxAgeMs'} or not all(number(n) for n in v.values()) for k,v in totals.items())):

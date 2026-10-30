@@ -2,7 +2,7 @@ import type {TeachingInput} from './teachingContacts';
 import {calibrated,fromPercent,profileIssue,type TeachingProfile} from './teachingKeymap';
 
 export type WalkPlan={schema:'sphere-walk-plan-v1';phase:'waiting'|'following'|'stopped'|'arrived';reason:string;
-  stick:[number,number];progressFraction:number|null;maxStick:.35;maxSeconds:60;
+  stick:[number,number];progressFraction:number|null;maxStick:.35;maxSeconds:number;
   groundRoute:false;executionQualified:false;cameraBodyAssumption:true};
 export type WalkInputLease={active():boolean;failure?():string|null;set(vector:[number,number]):void;canLook?():boolean;look?(fraction:number,notAfter:number):Promise<boolean>;
   paused?():boolean;neutral?():void;
@@ -39,7 +39,7 @@ export function readWalkPlan(value:unknown):WalkPlan|null {
   const p=value as WalkPlan;
   if(!p||p.schema!=='sphere-walk-plan-v1'||!['waiting','following','stopped','arrived'].includes(p.phase)
     ||typeof p.reason!=='string'||!/^[a-z0-9_]{1,100}$/.test(p.reason)
-    ||p.maxStick!==.35||p.maxSeconds!==60||p.groundRoute!==false||p.executionQualified!==false||p.cameraBodyAssumption!==true
+    ||p.maxStick!==.35||!Number.isInteger(p.maxSeconds)||p.maxSeconds<60||p.maxSeconds>600||p.groundRoute!==false||p.executionQualified!==false||p.cameraBodyAssumption!==true
     ||!Array.isArray(p.stick)||p.stick.length!==2||p.stick.some(v=>!Number.isFinite(v))||Math.hypot(...p.stick)>.350001
     ||p.phase!=='following'&&p.stick.some(v=>v!==0)
     ||p.progressFraction!==null&&(!Number.isFinite(p.progressFraction)||p.progressFraction<0||p.progressFraction>1))return null;
@@ -95,7 +95,7 @@ export const walkReasonLabel=(reason:string):string=>({
   walk_confirming_end:'Проверяем конец пути — стик отпущен',
   walk_camera_trace_end_confirmed:'Конец пути камеры подтверждён',
   walk_target_direction_unknown:'Направление к ближайшей цели не определено',
-  walk_time_limit:'Предел 60 секунд достигнут',
+  walk_time_limit:'Достигнут рассчитанный лимит времени прохода',
   walk_decision_expired:'Нет свежего решения — стик освобождается',
   walk_waiting_fresh_reply:'Стик в центре: ждём новое свежее решение',
   walk_stream_changed:'Поток остановился или изменился',
@@ -128,5 +128,6 @@ export const walkReasonLabel=(reason:string):string=>({
   walk_source_not_ready:'Свежий кадр не появился перед открытием ввода. Проверьте прямой поток и повторите запуск',
   walk_manual_stop:'Остановлено оператором',
   walk_page_hidden:'Тест остановлен: вкладка стала скрытой',
+  walk_visibility_pause:'Проход приостановлен: вкладка скрыта. При возврате повторно узнаем текущее место',
   walk_motion_feedback_required:'Версии веба и обработчика не согласованы: обновите страницу перед запуском',
 } as Record<string,string>)[reason]??`Пеший тест остановлен: ${reason}`;

@@ -1,0 +1,220 @@
+{
+  "schema": "sphere-walk-duration-delivery-v1",
+  "clientVersion": "walk_live_v7",
+  "physicalDeviceActions": 0,
+  "liveCompletionVerified": false,
+  "sourceFiles": {
+    "frontend/src/features/stream/WalkingRoutePilot.tsx": "ebcaeee26e2ae42d194427b4534bb81b548ef3d5acb633615b190e65df495417",
+    "frontend/src/features/stream/NavigationRouteContext.tsx": "60e23e69e77ebd9268b04b3a6a9da400e63b10cde43e24a479879e21e5fe5fc9",
+    "frontend/src/features/stream/RouteGeometryMap.tsx": "4466b9969e2267f3fcf6a45f374e84b3674fc85014dabefbd7729f364f287004",
+    "frontend/src/features/stream/walkPilot.ts": "dae8288a0ca7df702f28560c2908a44177bd061ef15b4eb4b73ae1bd28fbe61d",
+    "motor_worker/walk_route.py": "ea35297ed6feb9ecec72fb251186e7786f65dd476252bce3608f63b32724d3c9",
+    "scripts/pilot/route_workspace.py": "059b074cbb878e7a8ecc2aaa6e2b1c68018fc0949aaa105c769982b4c4755bbc",
+    "scripts/pilot/route_walk_reports.py": "fb117b03d73c628385715552dacd59cf7ac719439b77e9da6c7e6495fa47c0fe",
+    "scripts/pilot/check_recorded_encoder_browser.cjs": "4edbc9c6cbcbd04ba47368540647adad1ecf524502db0b80e6f0fda35268ab23",
+    "scripts/pilot/render_walk_duration_evidence.py": "191bbd1d94ee2af3db07766dac67ed9edb95a0f66e2de69c12d9f273e9f2053f"
+  },
+  "baseline": {
+    "snapshotSha256": "60ae3e61fe822b5bb705b4f9a79498b4984a6aa8d8718a79ac23dde93d077371",
+    "reports": {
+      "325b8edf14344f84802a20e2871e3011": "619af5459c7864674131415f5b9bf6ca38c0d7e781ce632d09463dd5d2b81fb1",
+      "6660e01116314fd6b71927157bcdd761": "0ec6e36961a84c15efd731c60b2dab7c71810faca5733ced4028c07ed3c734d3"
+    },
+    "mapSpanSeconds": 50.349,
+    "negotiatedBudgetSeconds": 282
+  },
+  "tests": {
+    "frontend": {
+      "passed": 133,
+      "failed": 0,
+      "suites": 12,
+      "rawSha256": "e5eb636db7f2c66d1895b549373d9db78cd76435a91115f23f9f6b0b2a73f9f7"
+    },
+    "postBuildWalking": {
+      "passed": 32,
+      "failed": 0,
+      "rawSha256": "f240a27b1b487f560f1cae6a7e77dd7752ebc6bbd5277e17716479f33d16f2e2",
+      "additionalToFrontendCount": false
+    },
+    "python": {
+      "passed": 147,
+      "subtestsPassed": 69,
+      "skipped": 1,
+      "logSha256": "2c447f17a479f6ed9d365f7ab71959a44e5f54b90c4fbe995c25d8c06959bbee"
+    },
+    "scopedEslint": {
+      "errors": 0,
+      "warnings": 4,
+      "logSha256": "1a559e1dcee3e09808841ae4ffb05a3166ac87494cc3f8851793f4af8d15df4c"
+    }
+  },
+  "browserExperiments": {
+    "encoder-recorded-v1": {
+      "schema": "sphere-recorded-game-encoder-v1",
+      "physicalActions": 0,
+      "originalGameVideo": true,
+      "reencoded": false,
+      "realWebRTC": false,
+      "userTab": false,
+      "geometry": [
+        1920,
+        1080
+      ],
+      "cases": [
+        {
+          "mode": "default",
+          "samples": 240,
+          "p50": 9.699999928474426,
+          "p95": 11.900000095367432,
+          "p99": 14,
+          "maximum": 22.700000047683716,
+          "over100": 0,
+          "over250": 0
+        },
+        {
+          "mode": "frequent_readback",
+          "samples": 240,
+          "p50": 9.899999976158142,
+          "p95": 12.800000071525574,
+          "p99": 14.5,
+          "maximum": 17,
+          "over100": 0,
+          "over250": 0
+        }
+      ],
+      "rawSha256": "fd05d0cec9e0313ca5a70eb182287b23f097b43855b405189ea204769085c1d1"
+    },
+    "encoder-webrtc-v1": {
+      "schema": "sphere-recorded-game-encoder-v1",
+      "physicalActions": 0,
+      "originalGameVideo": true,
+      "reencoded": true,
+      "realWebRTC": true,
+      "userTab": false,
+      "realAndroidStream": false,
+      "geometry": [
+        960,
+        540
+      ],
+      "transport": {
+        "codec": "video/H264",
+        "framesDecoded": 536,
+        "framesDropped": 0,
+        "totalDecodeTime": 0.308204
+      },
+      "cases": [
+        {
+          "mode": "default",
+          "samples": 240,
+          "p50": 5,
+          "p95": 6.299999952316284,
+          "p99": 6.900000095367432,
+          "maximum": 8,
+          "over100": 0,
+          "over250": 0
+        },
+        {
+          "mode": "frequent_readback",
+          "samples": 240,
+          "p50": 5.199999928474426,
+          "p95": 6.899999976158142,
+          "p99": 7.799999952316284,
+          "maximum": 8.600000023841858,
+          "over100": 0,
+          "over250": 0
+        }
+      ],
+      "rawSha256": "94aa81c27d4b7657ac564cf31c5eaffa8841491e23673bc06cb6b27e0fbfbb7a"
+    },
+    "encoder-webrtc1080-v2": {
+      "schema": "sphere-recorded-game-encoder-v1",
+      "physicalActions": 0,
+      "originalGameVideo": true,
+      "reencoded": true,
+      "realWebRTC": true,
+      "userTab": false,
+      "realAndroidStream": false,
+      "geometry": [
+        1920,
+        1080
+      ],
+      "transport": {
+        "codec": "video/H264",
+        "framesDecoded": 583,
+        "framesDropped": 0,
+        "totalDecodeTime": 1.9141389999999998
+      },
+      "cases": [
+        {
+          "mode": "default",
+          "samples": 240,
+          "p50": 10.099999904632568,
+          "p95": 14.199999928474426,
+          "p99": 15.800000071525574,
+          "maximum": 16,
+          "over100": 0,
+          "over250": 0
+        },
+        {
+          "mode": "frequent_readback",
+          "samples": 240,
+          "p50": 10.100000023841858,
+          "p95": 12.5,
+          "p99": 13.800000071525574,
+          "maximum": 16.399999976158142,
+          "over100": 0,
+          "over250": 0
+        }
+      ],
+      "rawSha256": "f566cb96ca4fa21716c900fee3016135c21f1f693dac3e6b73f677b023159f3d"
+    }
+  },
+  "build": {
+    "exit_code": 0,
+    "stopped_reason": null,
+    "source_sha_before": "5d913b10013aee9417601761fd36281ae806f45c1257ab63ec84aefabb7af088",
+    "source_sha_after": "5d913b10013aee9417601761fd36281ae806f45c1257ab63ec84aefabb7af088",
+    "source_unchanged": true,
+    "local_only": true,
+    "installed": false,
+    "resource_profile": {
+      "kind": "bounded_frontend_only",
+      "workers": 1,
+      "node_heap_mib": 1024,
+      "start_ram_gib": 6.5,
+      "stop_ram_gib": 5.5,
+      "max_commit_percent": 90,
+      "android_and_reconstruction_guards_unchanged": true
+    }
+  },
+  "candidateProbe": {
+    "outcome": "verified",
+    "physicalActions": 0,
+    "pages": 2,
+    "assets": 31,
+    "workerMatches": true,
+    "encoderWorkerMatches": true,
+    "newBundlePresent": true
+  },
+  "installation": {
+    "outcome": "verified",
+    "candidateImageId": "sha256:0e09bc1918570f409ee2dd788bcb57c567d9e92fa23a25da2d50056486c34ac7",
+    "physicalDeviceActions": 0,
+    "pages": 2,
+    "assets": 31,
+    "uiHealthy": true,
+    "otherContainersPreserved": true,
+    "sourceMatches": true
+  },
+  "processorReload": {
+    "oldPid": 15224,
+    "watchdogPid": 4444,
+    "physicalActions": 0,
+    "sourceSha": "059b074cbb878e7a8ecc2aaa6e2b1c68018fc0949aaa105c769982b4c4755bbc",
+    "outcome": "verified",
+    "newPid": 40992,
+    "existingAssetsUnchanged": true
+  },
+  "externalSystemsRun": false,
+  "externalWeightsDownloaded": false
+}

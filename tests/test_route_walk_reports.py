@@ -40,9 +40,21 @@ class WalkReportTests(unittest.TestCase):
         body=dict(self.body,camera=camera)
         self.assertEqual(store_walk_report(self.job,body)['state'],'saved')
         self.assertEqual(store_walk_report(self.job,dict(body,id='c'*32,camera={**camera,'pulses':229}))['state'],'saved')
-        for key,value in [('pulses',4097),('gainRadiansPerShortSide',float('nan')),('terminal','private text')]:
+        for key,value in [('pulses',18001),('gainRadiansPerShortSide',float('nan')),('terminal','private text')]:
             with self.assertRaisesRegex(ValueError,'camera'):
                 store_walk_report(self.job,dict(body,camera={**camera,key:value}))
+
+    def test_long_pass_counters_are_bounded_independently_from_the_rolling_tail(self):
+        body=copy.deepcopy(self.body)
+        body.update(durationBudgetSeconds=600,observationCount=18000,
+            camera=dict(gainRadiansPerShortSide=-5.,pulses=6000,calibrationAttempts=1,terminal=None))
+        self.assertEqual(store_walk_report(self.job,body)['state'],'saved')
+        saved=json.loads((self.job/'walk-reports'/('a'*32+'.json')).read_bytes())
+        self.assertEqual(len(saved['observations']),1)
+        self.assertEqual(saved['observationCount'],18000)
+        for field,value in [('durationBudgetSeconds',601),('durationBudgetSeconds',True),('observationCount',18001)]:
+            with self.subTest(field=field,value=value),self.assertRaises(ValueError):
+                store_walk_report(self.job,{**body,'id':'c'*32,field:value})
 
     def test_conflict_preserves_the_first_report(self):
         store_walk_report(self.job, self.body)

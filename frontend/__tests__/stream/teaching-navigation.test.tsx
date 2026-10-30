@@ -19,7 +19,7 @@ test('the walking panel shows the actual failed automatic stage and never opens 
   fireEvent.click(screen.getByRole('button',{name:'Пеший тест со стиком'}));
   expect((await screen.findAllByText(/Автоматическая подготовка остановлена:.*88 из 99/)).length).toBeGreaterThan(0);
   expect(screen.queryByText('Сначала подготовьте карту ориентиров выбранной записи.')).not.toBeInTheDocument();
-  expect(screen.getByRole('button',{name:'Запустить пеший тест · 60 с'})).toBeDisabled();expect(open).not.toHaveBeenCalled();
+  expect(screen.getByRole('button',{name:'Запустить проход'})).toBeDisabled();expect(open).not.toHaveBeenCalled();
   expect(jest.mocked(reconstructionRequest).mock.calls.every(c=>c[2]?.method!=='POST')).toBe(true);
 });
 test('walk control is a separate panel and switching panels does not open an input owner',async()=>{
@@ -27,7 +27,7 @@ test('walk control is a separate panel and switching panels does not open an inp
   const open=jest.fn();
   render(<TeachingNavigation job={job} video={{current:null}} ready binding={{captureEpoch:'e'.repeat(32),width:960,height:540}} walkInput={{issue:'Укажите центр стика',open}}/>);
   fireEvent.click(screen.getByRole('button',{name:'Пеший тест со стиком'}));
-  expect(screen.getByRole('button',{name:'Запустить пеший тест · 60 с'})).toBeDisabled();
+  expect(screen.getByRole('button',{name:'Запустить проход'})).toBeDisabled();
   expect(screen.queryByRole('button',{name:'Проверить направление · 120 с'})).not.toBeInTheDocument();
   expect(open).not.toHaveBeenCalled();expect(jest.mocked(reconstructionRequest).mock.calls.every(c=>c[2]?.method!=='POST')).toBe(true);
 });

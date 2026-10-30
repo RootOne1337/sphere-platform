@@ -306,8 +306,8 @@ class RouteWorkspaces:
                 or 'cameraControl' in body and body.get('cameraTracking') is not True
                 or body.get('startMode','beginning') not in {'beginning','recognized_route'}):
             raise ValueError('walk_explicit_confirmation_required')
-        if body.get('clientVersion')!='walk_live_v6':
-            raise ValueError('Обновите вкладку страницы (Ctrl+R): загружен прежний контур управления. Нужен walk_live_v6.')
+        if body.get('clientVersion')!='walk_live_v7':
+            raise ValueError('Обновите вкладку страницы (Ctrl+R): загружен прежний контур управления. Нужен walk_live_v7.')
         start_mode=body.get('startMode','beginning')
         camera_tracking=body.get('cameraTracking',False)
         camera_control=body.get('cameraControl','pulse_v1')
@@ -324,17 +324,19 @@ class RouteWorkspaces:
         if self.live and self.live['id']==request['id'] and bool(self.live.get('frame_archive'))!=body.get('diagnosticFrames',False):
             raise ValueError('walk_diagnostic_mode_changed')
         self.start_live(job, request)
-        self._install_walk(start_mode=start_mode,camera_tracking=camera_tracking,camera_control=camera_control)
+        route=self.live['tracker'].route
+        budget=min(600,max(120,math.ceil((route.source_seconds[-1]-route.source_seconds[0])*5+30)))
+        self._install_walk(start_mode=start_mode,camera_tracking=camera_tracking,camera_control=camera_control,max_seconds=budget)
         self.live['motion_protocol']='applied_stick_v1'
         if body.get('diagnosticFrames') and not self.live.get('frame_archive'):
             from scripts.pilot.walk_diagnostics import WalkFrameArchive
             self.live['frame_archive']=WalkFrameArchive(job,body['id'],clock=self.clock,
                 geometry_sha256=self.live['geometry_sha256'],capture_epoch=body['captureEpoch'])
-        return dict(self.live_status(), mode='foot_camera_trace_v1', physicalActions=0, maxSeconds=60,
+        return dict(self.live_status(), mode='foot_camera_trace_v1', physicalActions=0, maxSeconds=self.live['walk'].max_seconds,
                     startMode=start_mode,cameraTracking=camera_tracking,cameraControl=camera_control,
-                    observationProtocol='jpeg_binary_v1',motionProtocol='applied_stick_v1',clientVersion='walk_live_v6')
+                    observationProtocol='jpeg_binary_v1',motionProtocol='applied_stick_v1',clientVersion='walk_live_v7')
 
-    def _install_walk(self, *, start_mode='beginning',camera_tracking=False,camera_control='pulse_v1'):
+    def _install_walk(self, *, start_mode='beginning',camera_tracking=False,camera_control='pulse_v1',max_seconds=60):
         from motor_worker.walk_route import WalkRouteFollower
         from motor_worker.route_tracking import AnchoredRouteLocalizer
         from motor_worker.route_reference_view import reference_rotations
@@ -350,8 +352,9 @@ class RouteWorkspaces:
                 recovery_candidate_limit=8)
             views=reference_rotations(self.folder/self.live['job']/'geometry.json',route,self.live['geometry_sha256'])
             self.live['walk'] = WalkRouteFollower(route, clock=self.clock,start_mode=start_mode,camera_tracking=camera_tracking,
-                                                camera_control=camera_control,reference_rotations=views)
-            self.live['deadline'] = min(self.live['deadline'], self.clock()+60)
+                                                camera_control=camera_control,reference_rotations=views,max_seconds=max_seconds)
+            self.live['deadline'] = self.clock()+max_seconds
+            self.live['observation_limit']=max_seconds*30
     def start_replay(self,job,body):
         """The real pose/planner path, with a separate recorded-input protocol.
 
@@ -406,7 +409,7 @@ class RouteWorkspaces:
         session = self.live
         session['sequence'] = body['sequence']
         session['observations'] += 1
-        if session['observations'] > 1200:
+        if session['observations'] > session.get('observation_limit',1200):
             self.retired[session['id']] = self.clock() + 600
             self.live = None
             raise ValueError('route_live_observation_quota')

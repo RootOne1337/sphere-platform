@@ -32,7 +32,7 @@ beforeEach(()=>{
 afterEach(()=>jest.restoreAllMocks());
 const view=(extra:Record<string,unknown>={})=>render(<WalkingRoutePilot job={job} clip="clip" video={videoRef} ready binding={binding} assetsReady input={{issue:null,open}} observerBusy={false} onBusyChange={busy} {...extra}/>);
 function fresh(){act(()=>frames.shift()!(performance.now(),{} as VideoFrameCallbackMetadata));}
-function start(){fresh();fireEvent.click(screen.getByRole('checkbox',{name:/Персонаж пешком/}));fireEvent.click(screen.getByRole('button',{name:'Запустить пеший тест · 60 с'}));}
+function start(){fresh();fireEvent.click(screen.getByRole('checkbox',{name:/Персонаж пешком/}));fireEvent.click(screen.getByRole('button',{name:'Запустить проход'}));}
 
 test('focusing the visible emulator does not terminate autonomous input or claim operator stop',async()=>{
   jest.spyOn(performance,'now').mockReturnValue(1000);
@@ -47,7 +47,59 @@ test('a hidden document closes with its actual cause instead of operator attribu
   view();start();await waitFor(()=>expect(lease.set).toHaveBeenCalled());
   const hidden=jest.spyOn(document,'hidden','get').mockReturnValue(true);
   fireEvent(document,new Event('visibilitychange'));await screen.findByText('Освобождение: CLOSED');
-  expect(screen.getByRole('status')).toHaveTextContent('вкладка стала скрытой');hidden.mockRestore();
+  expect(screen.getByRole('status')).toHaveTextContent('приостановлен');hidden.mockRestore();
+});
+
+test('returning to a visible fresh source reacquires a new session after confirmed closure',async()=>{
+  let now=1000;jest.spyOn(performance,'now').mockImplementation(()=>now);let generation=0,currentId='c'.repeat(32);
+  Object.defineProperty(crypto,'randomUUID',{configurable:true,value:()=>`${(++generation===1?'c':'d').repeat(32)}`});
+  const original=jest.mocked(reconstructionRequest).getMockImplementation()!;
+  jest.mocked(reconstructionRequest).mockImplementation(async(...args)=>{
+    const response=await original(...args);const value=await response.json();
+    if(args[0].endsWith('/walk-start')){currentId=JSON.parse(String(args[2]?.body)).id;value.id=currentId;}
+    if(args[0].endsWith('/observe'))value.id=currentId;
+    return {json:async()=>value}as Response;
+  });
+  view();start();await waitFor(()=>expect(lease.set).toHaveBeenCalled());const before=jest.mocked(lease.set).mock.calls.length;
+  now=11000;const hidden=jest.spyOn(document,'hidden','get').mockReturnValue(true);
+  fireEvent(document,new Event('visibilitychange'));await screen.findByText('Освобождение: CLOSED');
+  expect(open).toHaveBeenCalledTimes(1);expect(jest.mocked(lease.set).mock.calls).toHaveLength(before);
+  now=21000;hidden.mockReturnValue(false);fresh();fireEvent(document,new Event('visibilitychange'));
+  await waitFor(()=>expect(open).toHaveBeenCalledTimes(2));await waitFor(()=>expect(jest.mocked(lease.set).mock.calls.length).toBeGreaterThan(before));
+  const starts=jest.mocked(reconstructionRequest).mock.calls.filter(([p])=>p.endsWith('/walk-start')).map(c=>JSON.parse(String(c[2]?.body)));
+  expect(starts[0].id).not.toBe(starts[1].id);expect(starts[1].startMode).toBe('recognized_route');
+  expect(screen.getByText(/до 50 с/)).toBeInTheDocument();
+  fireEvent.keyDown(window,{code:'Escape'});await screen.findByText('Освобождение: CLOSED');hidden.mockRestore();
+});
+
+test('Escape while hidden cancels automatic continuation',async()=>{
+  jest.spyOn(performance,'now').mockReturnValue(1000);view();start();await waitFor(()=>expect(lease.set).toHaveBeenCalled());
+  const hidden=jest.spyOn(document,'hidden','get').mockReturnValue(true);
+  fireEvent(document,new Event('visibilitychange'));await screen.findByText('Освобождение: CLOSED');
+  fireEvent.keyDown(window,{code:'Escape'});hidden.mockReturnValue(false);fresh();fireEvent(document,new Event('visibilitychange'));
+  await act(async()=>{await Promise.resolve();});expect(open).toHaveBeenCalledTimes(1);hidden.mockRestore();
+});
+
+test('an unconfirmed native close cannot automatically reopen input on return',async()=>{
+  jest.spyOn(performance,'now').mockReturnValue(1000);lease.close=jest.fn(async()=>false);view();start();await waitFor(()=>expect(lease.set).toHaveBeenCalled());
+  const hidden=jest.spyOn(document,'hidden','get').mockReturnValue(true);fireEvent(document,new Event('visibilitychange'));
+  await screen.findByText('Освобождение: UNKNOWN');hidden.mockReturnValue(false);fresh();fireEvent(document,new Event('visibilitychange'));
+  await act(async()=>{await Promise.resolve();});expect(open).toHaveBeenCalledTimes(1);hidden.mockRestore();
+});
+
+test('a negotiated long passage does not hit the old sixty-second browser limit',async()=>{
+  let now=1000;jest.spyOn(performance,'now').mockImplementation(()=>now);
+  const original=jest.mocked(reconstructionRequest).getMockImplementation()!;
+  jest.mocked(reconstructionRequest).mockImplementation(async(...args)=>{
+    const response=await original(...args);const value=await response.json();
+    if(args[0].endsWith('/walk-start'))value.maxSeconds=300;
+    if(args[0].endsWith('/observe'))value.walk.maxSeconds=300;
+    return {json:async()=>value}as Response;
+  });
+  view();start();await waitFor(()=>expect(lease.set).toHaveBeenCalled());
+  now=62000;fresh();await waitFor(()=>expect(jest.mocked(lease.set).mock.calls.length).toBeGreaterThan(1));
+  expect(lease.close).not.toHaveBeenCalled();expect(screen.getByText(/до 300 с/)).toBeInTheDocument();
+  fireEvent.keyDown(window,{code:'Escape'});await screen.findByText('Освобождение: CLOSED');
 });
 
 test('movement feedback comes from the applied lease state, not the newly planned vector',async()=>{
@@ -61,7 +113,7 @@ test('movement feedback comes from the applied lease state, not the newly planne
 
 test('camera mode blocks start until its separate free-screen area is calibrated',()=>{
   view({input:{issue:null,cameraIssue:'Укажите область камеры',open}});start();
-  expect(screen.getByRole('button',{name:'Запустить пеший тест · 60 с'})).toBeDisabled();
+  expect(screen.getByRole('button',{name:'Запустить проход'})).toBeDisabled();
   expect(open).not.toHaveBeenCalled();
 });
 
@@ -129,7 +181,7 @@ test('a short startup video gap waits for new presentation before opening Androi
 
 test('mount, confirmation and map readiness never themselves open native input',()=>{
   view({assetsReady:false});fresh();fireEvent.click(screen.getByRole('checkbox',{name:/Персонаж пешком/}));
-  expect(screen.getByRole('button',{name:'Запустить пеший тест · 60 с'})).toBeDisabled();
+  expect(screen.getByRole('button',{name:'Запустить проход'})).toBeDisabled();
   expect(open).not.toHaveBeenCalled();expect(reconstructionRequest).not.toHaveBeenCalled();
 });
 
@@ -140,7 +192,7 @@ test('Stop during encoding allows a fresh restart without waiting for the old br
   view();fireEvent.click(screen.getByRole('checkbox',{name:/Диагностика: до 60 кадров/}));start();
   await waitFor(()=>expect(callbacks).toHaveLength(1));
   fireEvent.keyDown(window,{code:'Escape'});await screen.findByText('Освобождение: CLOSED');
-  fresh();fireEvent.click(screen.getByRole('button',{name:'Запустить пеший тест · 60 с'}));
+  fresh();fireEvent.click(screen.getByRole('button',{name:'Запустить проход'}));
   await waitFor(()=>expect(callbacks).toHaveLength(2));
   const blob=new Blob(['jpeg'],{type:'image/jpeg'});Object.defineProperty(blob,'arrayBuffer',{value:async()=>new ArrayBuffer(4)});
   await act(async()=>{callbacks[1](blob);});await waitFor(()=>expect(lease.set).toHaveBeenCalledWith([.05,-.2]));
@@ -154,9 +206,9 @@ test('recognized-route restart is explicit and changing acquisition mode require
   view();expect(screen.getByLabelText('Точка запуска пешего теста')).toHaveValue('recognized_route');
   fresh();fireEvent.click(screen.getByRole('checkbox',{name:/Персонаж пешком/}));
   fireEvent.change(screen.getByLabelText('Точка запуска пешего теста'),{target:{value:'beginning'}});
-  expect(screen.getByRole('button',{name:'Запустить пеший тест · 60 с'})).toBeDisabled();
+  expect(screen.getByRole('button',{name:'Запустить проход'})).toBeDisabled();
   fireEvent.click(screen.getByRole('checkbox',{name:/Персонаж пешком/}));
-  fireEvent.click(screen.getByRole('button',{name:'Запустить пеший тест · 60 с'}));
+  fireEvent.click(screen.getByRole('button',{name:'Запустить проход'}));
   await waitFor(()=>expect(open).toHaveBeenCalled());
   expect(JSON.parse(String(jest.mocked(reconstructionRequest).mock.calls[0][2]?.body)).startMode).toBe('beginning');
   fireEvent.keyDown(window,{code:'Escape'});await screen.findByText('Освобождение: CLOSED');
@@ -200,7 +252,7 @@ test('unknown native close blocks another start and never claims successful rele
   fireEvent.keyDown(window,{code:'Escape'});
   await screen.findByText(/Освобождение ввода НЕ подтверждено/);
   expect(screen.getByText('Освобождение: UNKNOWN')).toBeInTheDocument();
-  expect(screen.getByRole('button',{name:'Запустить пеший тест · 60 с'})).toBeDisabled();
+  expect(screen.getByRole('button',{name:'Запустить проход'})).toBeDisabled();
 });
 test('stopping an uncertain native open awaits that same lease and never sends its late plan',async()=>{
   let settle:(lease:WalkInputLease)=>void=()=>{};open.mockImplementation(()=>new Promise(resolve=>{settle=resolve;}));
