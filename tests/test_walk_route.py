@@ -87,6 +87,29 @@ class WalkRouteTests(unittest.TestCase):
         invalid = self.observe(inliers=21, rotation=(0.,)*9)
         self.assertEqual(invalid['reason'], 'walk_pose_or_corridor_unqualified')
 
+    def test_four_brief_weak_images_do_not_consume_lost_position_budget(self):
+        self.observe()
+        for _ in range(4):
+            self.now+=.1
+            self.assertEqual(self.observe(inliers=21)['stick'],[0.,0.])
+            for _ in range(3):self.now+=.1;reply=self.observe()
+            self.assertEqual(reply['phase'],'following')
+        self.assertEqual(self.follower.relocalizations,0)
+        self.assertGreater(self.follower.recovery_seconds,1.)
+
+    def test_repeated_weak_images_have_a_total_wait_budget_and_real_loss_still_counts(self):
+        self.observe()
+        for _ in range(24):
+            self.now+=.1;self.observe(inliers=21)
+            for _ in range(3):self.now+=.1;reply=self.observe()
+            if reply['phase']=='stopped':break
+        self.assertEqual(reply['reason'],'walk_recovery_time_budget')
+        self.assertEqual(reply['stick'],[0.,0.])
+        self.follower=WalkRouteFollower(self.route,clock=lambda:self.now)
+        self.observe();self.now+=.1;self.observe(inliers=21)
+        self.now+=.1;self.observe(state='unknown')
+        self.assertEqual(self.follower.relocalizations,1)
+
     def test_camera_tracking_aligns_while_stationary_then_resumes_and_keeps_real_stall_limit(self):
         import math
         self.follower=WalkRouteFollower(self.route,clock=lambda:self.now,camera_tracking=True)
@@ -322,6 +345,11 @@ class WalkRouteTests(unittest.TestCase):
         result=self.observe(35.)
         self.assertEqual(result['phase'],'arrived')
         self.assertEqual(result['stick'],[0.,0.])
+        self.now+=.1
+        terminal=self.observe(state='unknown')
+        self.assertEqual(terminal['phase'],'arrived')
+        self.assertEqual(terminal['progressFraction'],result['progressFraction'])
+        self.assertEqual(terminal['stick'],[0.,0.])
 
     def test_closed_loop_start_is_not_an_arrival(self):
         points=((0.,0.,0.),(0.,0.,5.),(5.,0.,5.),(10.,0.,5.),

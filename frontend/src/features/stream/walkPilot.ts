@@ -85,6 +85,7 @@ export const walkReasonLabel=(reason:string):string=>({
   walk_relocalization_timeout:'Положение не восстановилось за 2 секунды — тест остановлен',
   walk_relocalization_drift:'Повторно найденная позиция слишком отличается — тест остановлен',
   walk_relocalization_budget:'Лимит трёх повторных привязок исчерпан — тест остановлен',
+  walk_recovery_time_budget:'Суммарное ожидание уверенной позиции превысило 6 секунд — тест остановлен',
   walk_pose_binding_or_age:'Поза устарела или источник изменился',
   walk_pose_or_corridor_unqualified:'Положение вне проверяемого коридора',
   walk_progress_reversed:'Прогресс по маршруту пошёл в обратную сторону',

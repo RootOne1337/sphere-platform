@@ -187,6 +187,30 @@ class SparseLocalizationTests(unittest.TestCase):
         # Every descriptor has an equally good alternative 3D landmark.
         self.assertIsNone(localizer._solve(pixels[:120], duplicate[:len(pixels[:120])]))
 
+    def test_noisy_correspondences_with_forty_percent_outliers_recover_known_pose(self):
+        np,cv=self.np,self.cv
+        clean=cv.projectPoints(self.xyz,cv.Rodrigues(self.rotation)[0],-self.rotation@self.center,
+                               self.localizer.K,None)[0].reshape(-1,2)
+        visible=np.all((clean>2)&(clean<np.array([958,538])),axis=1)
+        world,clean=self.xyz[visible],clean[visible]
+        for seed in range(5):
+            with self.subTest(seed=seed):
+                rng=np.random.default_rng(100+seed);pixels=clean+rng.normal(0,.25,clean.shape)
+                bad=rng.choice(len(pixels),int(len(pixels)*.4),replace=False)
+                pixels[bad]=rng.uniform([0,0],[960,540],(len(bad),2));cv.setRNGSeed(seed)
+                solved=self.localizer._verify_correspondences(world,pixels)
+                self.assertIsNotNone(solved)
+                np.testing.assert_allclose(solved[0],self.center,atol=.03)
+                angle=np.arccos(np.clip((np.trace(solved[1]@self.rotation.T)-1)/2,-1,1))
+                self.assertLess(angle,.002)
+
+    def test_unrelated_random_correspondences_never_supply_a_pose(self):
+        for seed in range(5):
+            with self.subTest(seed=seed):
+                pixels=self.np.random.default_rng(seed).uniform([0,0],[960,540],(len(self.xyz),2))
+                self.cv.setRNGSeed(seed)
+                self.assertIsNone(self.localizer._verify_correspondences(self.xyz,pixels))
+
     def test_two_distant_covisible_aliases_require_disambiguation(self):
         duplicate = self.desc.copy()
         duplicate[120:] = duplicate[:120]

@@ -21,8 +21,8 @@ from motor_worker.protocol import ProtocolError, message
 
 SIZE = (960, 540)
 # Changes to the runtime pose gate are tracked separately from the descriptor
-# format: strengthening a gate must not make compatible saved maps unreadable.
-PNP_VERIFICATION_POLICY = 'pnp-continuous-image-support-temporal-v4'
+# format: runtime solver/gate changes do not invalidate compatible descriptors.
+PNP_VERIFICATION_POLICY = 'pnp-ap3p-continuous-image-support-temporal-v5'
 COARSE_SEARCH_POLICY = 'flann_4tree_64checks_exact_subset_pnp_v1'
 MAX_POINTS = 4096
 MAX_VIEWS = 256
@@ -466,8 +466,11 @@ class RouteLocalizer:
         singular = np.linalg.svd(world-world.mean(axis=0), compute_uv=False)
         if singular[0] <= 0 or singular[2]/singular[0] < 1e-4:
             return None  # Repeated/planar structure is insufficient for this experiment.
+        # AP3P generates the minimal RANSAC hypotheses. All-map consensus,
+        # nonlinear refinement and the geometric/temporal admission gates
+        # below still decide whether a current-image pose is usable.
         ok, rvec, tvec, inliers = cv.solvePnPRansac(world, image, self.K, None,
-            iterationsCount=300, reprojectionError=3, confidence=.999, flags=cv.SOLVEPNP_EPNP)
+            iterationsCount=300, reprojectionError=3, confidence=.999, flags=cv.SOLVEPNP_AP3P)
         if not ok or inliers is None or len(inliers) < 20:
             return None
         keep = inliers[:, 0]

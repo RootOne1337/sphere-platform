@@ -17,6 +17,7 @@ class WalkRouteFollower:
     MAX_SECONDS = 60
     MAX_RELOCALIZE_SECONDS = 2.
     MAX_RELOCALIZATIONS = 3
+    MAX_RECOVERY_SECONDS = 6.
 
     def __init__(self, route: SparseRoute, *, clock, start_mode='beginning', camera_tracking=False,camera_control='continuous_drag_v1',reference_rotations=None):
         import numpy as np
@@ -52,6 +53,7 @@ class WalkRouteFollower:
         self.began = clock()
         self.sequence, self.last_at = 0, None
         self.started, self.terminal = False, None
+        self.terminal_phase, self.terminal_progress = 'stopped', None
         self.high_water, self.arrival = 0., 0
         self.vector = np.zeros(2)
         self.history = deque(maxlen=64)
@@ -59,6 +61,7 @@ class WalkRouteFollower:
         self.last_good = None
         self.relocalizing = None
         self.relocalizations = 0
+        self.recovery_seconds = 0.
         self.acquisition = 0
 
     def _reply(self, phase, reason, progress=None, **extra):
@@ -70,24 +73,29 @@ class WalkRouteFollower:
                     cameraBodyAssumption=True, **extra)
 
     def _stop(self, reason, phase='stopped', progress=None):
-        self.terminal = reason
+        if self.terminal is None:
+            self.terminal, self.terminal_phase, self.terminal_progress = reason, phase, progress
         self.vector[:] = 0
-        return self._reply(phase, reason, progress)
+        return self._reply(self.terminal_phase, self.terminal, self.terminal_progress)
 
-    def _wait_for_localization(self, at):
+    def _wait_for_localization(self, at, *, confidence_only=False):
         self.acquisition = 0
         self.vector[:] = 0
         if not self.started:
             return self._reply('waiting', 'walk_confirming_start')
         self.arrival = 0
         if self.relocalizing is None:
+            self.relocalizing = dict(began=at, confirmations=0, counted=False)
+        if not confidence_only and not self.relocalizing.get('counted', True):
             self.relocalizations += 1
+            self.relocalizing['counted'] = True
             if self.relocalizations > self.MAX_RELOCALIZATIONS:
                 return self._stop('walk_relocalization_budget')
-            self.relocalizing = dict(began=at, confirmations=0)
         self.relocalizing['confirmations'] = 0
         if at-self.relocalizing['began'] >= self.MAX_RELOCALIZE_SECONDS:
             return self._stop('walk_relocalization_timeout')
+        if self.recovery_seconds+at-self.relocalizing['began'] >= self.MAX_RECOVERY_SECONDS:
+            return self._stop('walk_recovery_time_budget')
         return self._reply('waiting', 'walk_relocalizing_neutral', self.high_water)
 
     def observe(self, pose: RoutePose):
@@ -114,23 +122,12 @@ class WalkRouteFollower:
             # response is delivery loss, not proof that the map/epoch changed.
             # Consume its sequence, retain the last GOOD geometry, and require
             # three NEW fresh poses through the existing bounded recovery path.
-            self.vector[:]=0;self.acquisition=0;self.arrival=0
-            if self.started:
-                if self.relocalizing is None:
-                    self.relocalizations+=1
-                    if self.relocalizations>self.MAX_RELOCALIZATIONS:return self._stop('walk_relocalization_budget')
-                    self.relocalizing=dict(began=now,confirmations=0)
-                self.relocalizing['confirmations']=0
-                if now-self.relocalizing['began']>=self.MAX_RELOCALIZE_SECONDS:
-                    return self._stop('walk_relocalization_timeout')
-                return self._reply('waiting','walk_relocalizing_neutral',self.high_water)
-            return self._reply('waiting','walk_confirming_start')
+            return self._wait_for_localization(now)
         if dt>.5:
             self.vector[:]=0;self.acquisition=0
-            if self.started and self.relocalizing is None:
-                self.relocalizations+=1
-                if self.relocalizations>self.MAX_RELOCALIZATIONS:return self._stop('walk_relocalization_budget')
-                self.relocalizing=dict(began=pose.received_at,confirmations=0)
+            if self.started:
+                waiting=self._wait_for_localization(pose.received_at)
+                if waiting['phase']=='stopped':return waiting
         if pose.state != 'localized':
             return self._wait_for_localization(pose.received_at)
         try:
@@ -148,7 +145,7 @@ class WalkRouteFollower:
         # is temporary observation loss, not a permanent route failure. Keep
         # the threshold and require the same three-pose bounded reacquisition.
         if pose.inliers < 24:
-            return self._wait_for_localization(pose.received_at)
+            return self._wait_for_localization(pose.received_at, confidence_only=True)
         if self.relocalizing is not None:
             # No movement or pose extrapolation while the current image is
             # unqualified. Resume only after three new localized observations
@@ -156,6 +153,9 @@ class WalkRouteFollower:
             self.vector[:]=0
             if pose.received_at-self.relocalizing['began']>=self.MAX_RELOCALIZE_SECONDS:
                 return self._stop('walk_relocalization_timeout')
+            recovery_seconds=self.recovery_seconds+pose.received_at-self.relocalizing['began']
+            if recovery_seconds>=self.MAX_RECOVERY_SECONDS:
+                return self._stop('walk_recovery_time_budget')
             old_center,old_rotation=self.last_good
             turn=float(np.arccos(np.clip((np.trace(rotation@old_rotation.T)-1)/2,-1,1)))
             if (np.linalg.norm(center-old_center)>self.step*4 or turn>.7
@@ -164,6 +164,7 @@ class WalkRouteFollower:
             self.relocalizing['confirmations']+=1
             if self.relocalizing['confirmations']<3:
                 return self._reply('waiting','walk_relocalizing_neutral',progress)
+            self.recovery_seconds=recovery_seconds
             self.relocalizing=None;self.history.clear()
             # A neutral recovery sent no camera commands. Start a new bounded
             # alignment attempt from the newly verified pose, not an old timer.
