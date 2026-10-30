@@ -86,18 +86,39 @@ class WalkRouteFollower:
             return self._reply('waiting', 'walk_confirming_start')
         self.arrival = 0
         if self.relocalizing is None:
-            self.relocalizing = dict(began=at, confirmations=0, counted=False)
+            self.relocalizing = dict(began=at, evidence_at=at, confirmations=0, counted=False)
         if not confidence_only and not self.relocalizing.get('counted', True):
             self.relocalizations += 1
             self.relocalizing['counted'] = True
             if self.relocalizations > self.MAX_RELOCALIZATIONS:
                 return self._stop('walk_relocalization_budget')
         self.relocalizing['confirmations'] = 0
-        if at-self.relocalizing['began'] >= self.MAX_RELOCALIZE_SECONDS:
+        if at-self.relocalizing['evidence_at'] >= self.MAX_RELOCALIZE_SECONDS:
             return self._stop('walk_relocalization_timeout')
         if self.recovery_seconds+at-self.relocalizing['began'] >= self.MAX_RECOVERY_SECONDS:
             return self._stop('walk_recovery_time_budget')
         return self._reply('waiting', 'walk_relocalizing_neutral', self.high_water)
+
+    def _recovery_evidence(self, pose):
+        """Fresh compatible geometry can keep a NEUTRAL acquisition alive.
+
+        A confirming pose never authorizes input or completes the required
+        localized streak. The six-second aggregate wait budget stays fixed.
+        """
+        if self.relocalizing is None or self.last_good is None or pose.inliers<24:return
+        np=self.np
+        try:
+            center=np.asarray(pose.center,float);rotation=np.asarray(pose.rotation,float).reshape(3,3)
+            progress=float(pose.progress_units);cross=float(pose.cross_track_units)
+            old_center,old_rotation=self.last_good
+            turn=float(np.arccos(np.clip((np.trace(rotation@old_rotation.T)-1)/2,-1,1)))
+            if (center.shape==(3,) and np.isfinite(center).all() and np.isfinite(rotation).all()
+                    and np.allclose(rotation@rotation.T,np.eye(3),atol=.01) and abs(np.linalg.det(rotation)-1)<=.01
+                    and 0<=cross<=self.step*3 and 0<=progress<=self.total
+                    and np.linalg.norm(center-old_center)<=self.step*4 and turn<=.7
+                    and self.high_water-self.step*2<=progress<=self.high_water+self.step*4):
+                self.relocalizing['evidence_at']=pose.received_at
+        except (TypeError,ValueError):pass
 
     def observe(self, pose: RoutePose, *, motion_active=None):
         np, now = self.np, self.clock()
@@ -126,6 +147,7 @@ class WalkRouteFollower:
             # Consume its sequence, retain the last GOOD geometry, and require
             # three NEW fresh poses through the existing bounded recovery path.
             return self._wait_for_localization(now,confidence_only=True)
+        if pose.state in {'confirming','localized'}:self._recovery_evidence(pose)
         if dt>.5:
             self.vector[:]=0;self.acquisition=0
             if self.started:
@@ -134,7 +156,7 @@ class WalkRouteFollower:
         if pose.state != 'localized':
             # A neutral transport gap still requires three fresh geometric
             # confirmations, but is not evidence that the place was lost.
-            transport=pose.reason in {'route_observation_gap','route_frame_expired_during_localization'}
+            transport=pose.reason in {'route_observation_gap','route_frame_expired_during_localization'} or pose.state=='confirming'
             return self._wait_for_localization(pose.received_at,confidence_only=transport)
         try:
             center, rotation = np.asarray(pose.center, float), np.asarray(pose.rotation, float).reshape(3, 3)
@@ -157,7 +179,7 @@ class WalkRouteFollower:
             # unqualified. Resume only after three new localized observations
             # in a small neighborhood of the last known position and heading.
             self.vector[:]=0
-            if pose.received_at-self.relocalizing['began']>=self.MAX_RELOCALIZE_SECONDS:
+            if pose.received_at-self.relocalizing['evidence_at']>=self.MAX_RELOCALIZE_SECONDS:
                 return self._stop('walk_relocalization_timeout')
             recovery_seconds=self.recovery_seconds+pose.received_at-self.relocalizing['began']
             if recovery_seconds>=self.MAX_RECOVERY_SECONDS:

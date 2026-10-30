@@ -15,3 +15,11 @@ test('bounded scalar upload keeps the final failure and native closure without m
   expect(summary.observations.at(-1)).toEqual(observations.at(-1));expect(summary.observationCount).toBe(600);
   expect(body.observations).toHaveLength(600);expect(summary.nativeInputs).toEqual([{stage:'closed'}]);
 });
+
+test('report reduction retains intermittent UNKNOWNs instead of sampling only alternating successes',()=>{
+  const observations=Array.from({length:600},(_,i)=>({i,state:i%2?'waiting':'following',poseState:i%2?'unknown':'localized',reason:'x'.repeat(900)}));
+  const result=boundedWalkSummary({observations,nativeInputs:[]});
+  expect(new Blob([JSON.stringify(result)]).size).toBeLessThanOrEqual(480*1024);
+  expect(result.observations.filter(r=>r.poseState==='unknown')).toHaveLength(300);
+  expect(result.observations.at(-1)?.i).toBe(599);expect(observations).toHaveLength(600);
+});

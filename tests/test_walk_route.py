@@ -263,13 +263,43 @@ class WalkRouteTests(unittest.TestCase):
             self.assertEqual(reply['stick'],[0.,0.]);self.assertEqual(reply['phase'],'waiting')
         self.now+=.2;reply=self.observe(.5)
         self.assertEqual(reply['phase'],'following');self.assertLess(reply['stick'][1],0.)
+
+    def test_current_confirming_geometry_keeps_neutral_recovery_alive_after_two_wall_seconds(self):
+        self.observe();self.now+=.1;self.observe(state='unknown',reason='route_frame_expired_during_localization')
+        for _ in range(8):
+            self.now+=.3;reply=self.observe(.5,state='confirming')
+            self.assertEqual(reply['phase'],'waiting');self.assertEqual(reply['stick'],[0.,0.])
+        for i in range(3):
+            self.now+=.1;reply=self.observe(.5)
+            if i<2:self.assertEqual(reply['stick'],[0.,0.])
+        self.assertEqual(reply['phase'],'following');self.assertGreater(self.follower.recovery_seconds,2.)
+
+    def test_compatible_confirming_images_cannot_extend_total_neutral_budget(self):
+        self.observe();self.now+=.1;self.observe(state='unknown')
+        for _ in range(65):
+            self.now+=.1;reply=self.observe(.5,state='confirming')
+            if reply['phase']=='stopped':break
+        self.assertEqual(reply['reason'],'walk_recovery_time_budget');self.assertEqual(reply['stick'],[0.,0.])
+
+    def test_wrong_place_confirmation_cannot_keep_the_recovery_timer_alive(self):
+        self.observe();self.now+=.1;self.observe(state='unknown')
+        for _ in range(25):
+            self.now+=.1;reply=self.observe(.5,state='confirming',center=(100.,0.,0.))
+            if reply['phase']=='stopped':break
+        self.assertEqual(reply['reason'],'walk_relocalization_timeout')
+
+    def test_current_compatible_geometry_is_considered_before_gap_idle_timeout(self):
+        self.observe();self.now+=.1;self.observe(state='unknown')
+        self.now+=1.4;self.observe(state='unknown')
+        self.now+=.7;reply=self.observe(.5,state='confirming')
+        self.assertEqual(reply['phase'],'waiting');self.assertEqual(reply['stick'],[0.,0.])
         self.assertLessEqual(abs(reply['stick'][1]),.2)
 
     def test_unconfirmed_frames_do_not_reset_the_recovery_deadline(self):
         self.observe();self.now+=.2;self.observe(state='unknown')
         for i in range(11):
             self.now+=.2
-            reply=self.observe(.1,state='confirming' if i%2 else 'unknown')
+            reply=self.observe(.1,state='confirming' if i%2 else 'unknown',center=None,rotation=None,inliers=0)
             self.assertEqual(reply['stick'],[0.,0.])
         self.assertEqual(reply['reason'],'walk_relocalization_timeout')
         self.now+=.2;self.assertEqual(self.observe(.1)['phase'],'stopped')

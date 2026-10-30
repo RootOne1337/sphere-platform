@@ -83,7 +83,7 @@ export const walkReasonLabel=(reason:string):string=>({
   walk_start_outside_recorded_beginning:'Положение найдено за пределами начального участка: вернитесь ближе к старту записи',
   walk_localization_lost:'Ориентиры потеряны — движение прекращено',
   walk_relocalizing_neutral:'Стик в центре: повторно подтверждаем положение рядом с последней позицией',
-  walk_relocalization_timeout:'Положение не восстановилось за 2 секунды — тест остановлен',
+  walk_relocalization_timeout:'Две секунды без свежей совместимой геометрии — тест остановлен',
   walk_relocalization_drift:'Повторно найденная позиция слишком отличается — тест остановлен',
   walk_relocalization_budget:'Лимит трёх повторных привязок исчерпан — тест остановлен',
   walk_recovery_time_budget:'Суммарное ожидание уверенной позиции превысило 6 секунд — тест остановлен',

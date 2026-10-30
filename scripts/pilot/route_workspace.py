@@ -306,8 +306,8 @@ class RouteWorkspaces:
                 or 'cameraControl' in body and body.get('cameraTracking') is not True
                 or body.get('startMode','beginning') not in {'beginning','recognized_route'}):
             raise ValueError('walk_explicit_confirmation_required')
-        if body.get('clientVersion')!='walk_live_v5':
-            raise ValueError('Обновите вкладку страницы (Ctrl+R): загружен прежний контур управления. Нужен walk_live_v5.')
+        if body.get('clientVersion')!='walk_live_v6':
+            raise ValueError('Обновите вкладку страницы (Ctrl+R): загружен прежний контур управления. Нужен walk_live_v6.')
         start_mode=body.get('startMode','beginning')
         camera_tracking=body.get('cameraTracking',False)
         camera_control=body.get('cameraControl','pulse_v1')
@@ -332,7 +332,7 @@ class RouteWorkspaces:
                 geometry_sha256=self.live['geometry_sha256'],capture_epoch=body['captureEpoch'])
         return dict(self.live_status(), mode='foot_camera_trace_v1', physicalActions=0, maxSeconds=60,
                     startMode=start_mode,cameraTracking=camera_tracking,cameraControl=camera_control,
-                    observationProtocol='jpeg_binary_v1',motionProtocol='applied_stick_v1',clientVersion='walk_live_v5')
+                    observationProtocol='jpeg_binary_v1',motionProtocol='applied_stick_v1',clientVersion='walk_live_v6')
 
     def _install_walk(self, *, start_mode='beginning',camera_tracking=False,camera_control='pulse_v1'):
         from motor_worker.walk_route import WalkRouteFollower

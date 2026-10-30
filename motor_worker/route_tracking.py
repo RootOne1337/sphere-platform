@@ -64,7 +64,12 @@ class AnchoredRouteLocalizer(RouteLocalizer):
         # shortlist at acquisition. Widen retrieval only while unconfirmed;
         # exact matches, competing PnP and all current-image gates stay intact.
         regular = self.candidate_limit
-        limit = self.recovery_candidate_limit if self.confirmations < 3 else regular
+        # After a short delivery gap we still have a bounded retrieval hint.
+        # Search the normal global shortlist PLUS that local candidate first;
+        # widening to eight on every confirmation was slower than the live
+        # frame budget and could repeatedly erase otherwise valid solutions.
+        recent=self._recent_reference_candidate()
+        limit = self.recovery_candidate_limit if self.confirmations < 3 and recent is None else regular
         self.last_diagnostic['descriptorCandidates'] = limit
         try:
             self.candidate_limit = limit

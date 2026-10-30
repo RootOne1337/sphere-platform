@@ -119,7 +119,7 @@ export function WalkingRoutePilot({job,clip,video,ready,binding,assetsReady,inpu
       setRelease(released?'closed':'unknown');setBusy(false);busyChange.current(false);
       setEvents(inputs.current.length);
       if(!released)setNotice('Освобождение ввода НЕ подтверждено. Новый запуск заблокирован; переподключите поток.');
-      const report={schema:'sphere-walk-debug-v1',clientVersion:'walk_live_v5',beganAtMs:performance.timeOrigin+active.began,scope:'supervised_camera_trace_pilot',clip:active.clip,job:active.job.id,
+      const report={schema:'sphere-walk-debug-v1',clientVersion:'walk_live_v6',beganAtMs:performance.timeOrigin+active.began,scope:'supervised_camera_trace_pilot',clip:active.clip,job:active.job.id,
           executionQualified:false,metricAccuracyKnown:false,sourceCaptureAgeKnown:false,release:released?'closed':'unknown',stopReason:reason,
           stopFrameAgeMs:frameAge,stopFrameSequence:frameSequence,inputFailure,startMode:active.startMode,camera:active.camera?.snapshot()??null,cameraInput:walkCameraInputSummary(inputs.current),stages:active.trace.snapshot(),
           stageSummary:active.trace.summary(),observations:history.current.map(row=>({...row,center:row.center?[...row.center]:null,rotation:row.rotation?[...row.rotation]:null})),nativeInputs:inputs.current.map(row=>({...row})),nativeInputTailLimit:4096};
@@ -207,7 +207,7 @@ export function WalkingRoutePilot({job,clip,video,ready,binding,assetsReady,inpu
     const signal=active.abort.signal,alive=()=>run.current===active&&!signal.aborted;
     try{
       const state=await(await reconstructionRequest(`/jobs/${job.id}/navigation/walk-start`,job,{method:'POST',signal,
-        body:JSON.stringify({id:active.id,clientVersion:'walk_live_v5',captureEpoch:binding.captureEpoch,width:binding.width,height:binding.height,sceneConfirmed:true,footCameraAssumptionConfirmed:true,diagnosticFrames:saveFrames,startMode:active.startMode,cameraTracking:!!active.camera,...(active.camera?{cameraControl:'continuous_drag_v1'}:{})})})).json();
+        body:JSON.stringify({id:active.id,clientVersion:'walk_live_v6',captureEpoch:binding.captureEpoch,width:binding.width,height:binding.height,sceneConfirmed:true,footCameraAssumptionConfirmed:true,diagnosticFrames:saveFrames,startMode:active.startMode,cameraTracking:!!active.camera,...(active.camera?{cameraControl:'continuous_drag_v1'}:{})})})).json();
       if(!alive())return;
       if(state.id!==active.id||state.phase!=='observing'||state.mode!=='foot_camera_trace_v1'||state.physicalActions!==0||state.maxSeconds!==60||state.startMode!==active.startMode)throw Error('walk_start_unconfirmed');
       if(active.camera?state.cameraTracking!==true:state.cameraTracking===true)throw Error('walk_start_unconfirmed');
@@ -241,6 +241,12 @@ export function WalkingRoutePilot({job,clip,video,ready,binding,assetsReady,inpu
           active.lastSequence=frame.sequence;
           if(!encoder.current)throw Error('walk_encoder_unavailable');
           const activeEncoder=encoder.current,{blob,sha}=await activeEncoder.encode(video.current!,canvas),encoding=activeEncoder.snapshot();
+          if(encoding){const at=performance.now();
+            active.trace.add('encoder_capture',at,{sequence:frame.sequence,durationMs:encoding.captureMs});
+            active.trace.add('encoder_worker',at,{sequence:frame.sequence,durationMs:encoding.workerMs});
+            active.trace.add('encoder_jpeg',at,{sequence:frame.sequence,durationMs:encoding.encodeMs});
+            active.trace.add('encoder_hash',at,{sequence:frame.sequence,durationMs:encoding.hashMs});
+          }
           if(blob.size>384*1024)throw Error('walk_jpeg_quota');
           // New services receive the original JPEG bytes directly. Legacy
           // JSON/base64 remains negotiated only for an older local service.
@@ -344,8 +350,8 @@ export function WalkingRoutePilot({job,clip,video,ready,binding,assetsReady,inpu
   const cameraFeedback=(run.current?.camera?.snapshot()??lastReport.current?.camera as ReturnType<WalkCameraServo['snapshot']>|null)?.feedback?.at(-1);
   return <section aria-label="Пеший тест маршрута" className="space-y-3 rounded-2xl border border-amber-500/30 bg-amber-500/5 p-4">
     <div className="flex items-center gap-2"><Footprints size={19} className="text-amber-500"/><h3 className="font-semibold">Пеший тест · живой стик</h3><span className="ml-auto text-xs text-muted-foreground">до 60 с · до 35% стика</span></div>
-    <p className="text-[10px] text-muted-foreground">Контур walk_live_v5 · {last?.captureMode??'захват ожидается'} · {last?.method??'локализация ожидается'}</p>
-    <p className="text-xs leading-5 text-muted-foreground">По свежим ориентирам выбираем ближайшую цель на записанном пути камеры. При нехватке уверенности стик удерживается в центре: ждём три подтверждения рядом с последней позицией, до 2 секунд за раз и 6 секунд суммарно. После потери позиции допускается до трёх восстановлений; краткая нехватка совпадений не расходует этот счётчик. Объезд препятствий не реализован, точность в метрах ещё не измерена.</p>
+    <p className="text-[10px] text-muted-foreground">Контур walk_live_v6 · {last?.captureMode??'захват ожидается'} · {last?.method??'локализация ожидается'}</p>
+    <p className="text-xs leading-5 text-muted-foreground">По свежим ориентирам выбираем ближайшую цель на записанном пути камеры. При нехватке уверенности стик удерживается в центре: ждём три подтверждения рядом с последней позицией. Остановка после 2 секунд без совместимой свежей геометрии или 6 секунд ожидания суммарно. После потери позиции допускается до трёх восстановлений. Объезд препятствий не реализован, точность в метрах ещё не измерена.</p>
     <label className="flex flex-wrap items-center gap-2 text-xs">Начало движения<select aria-label="Точка запуска пешего теста" className="rounded-lg border bg-background p-2" value={startMode} disabled={busy} onChange={e=>{setStartMode(e.target.value as StartMode);setConfirmed(false);}}><option value="recognized_route">С текущей узнанной точки маршрута</option><option value="beginning">Только у начала записи</option></select></label>
     <p className="text-xs text-muted-foreground">После обрыва можно снова нажать запуск на записанном участке. Положение определяется заново по живым кадрам; цель выбирается дальше по записи. При неоднозначном месте движение не начинается.</p>
     <label className="flex items-start gap-2 text-xs"><input type="checkbox" checked={cameraEnabled} disabled={busy} onChange={e=>{setCameraEnabled(e.target.checked);setConfirmed(false);}}/>Поворачивать камеру вдоль пути · две оси по сохранённому ракурсу, с проверкой по новым кадрам</label>

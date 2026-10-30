@@ -102,6 +102,19 @@ class AnchoredTrackingTests(unittest.TestCase):
         self.tracker.last_received+=2.1
         self.assertIsNone(self.tracker._recent_reference_candidate())
 
+    def test_recent_verified_submap_uses_small_competing_shortlist_during_recovery(self):
+        from unittest.mock import patch
+        from motor_worker.route_localization import RouteLocalizer
+        self.tracker.recovery_candidate_limit=8;self.confirm();self.now+=.6
+        pose,_=self.observe();self.assertEqual(pose.state,'unknown')
+        original=RouteLocalizer._solve;seen=[]
+        def solve(localizer,*args):
+            seen.append(localizer.candidate_limit);return original(localizer,*args)
+        with patch.object(RouteLocalizer,'_solve',solve):
+            for i in range(3):
+                pose,_=self.observe();self.assertEqual(pose.state,'localized' if i==2 else 'confirming')
+        self.assertEqual(seen,[3,3,3]);self.assertEqual(self.tracker.candidate_limit,3)
+
     def test_mandatory_global_failure_cannot_fall_back_to_flow(self):
         self.confirm()
         self.tracker._descriptor_at = self.now-.81
