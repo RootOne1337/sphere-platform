@@ -1,9 +1,17 @@
 import {calibrateProfile,defaultTeachingProfile} from '@/src/features/stream/teachingKeymap';
-import {readWalkPlan,walkingCalibrationIssue,walkingCameraIssue,walkingStickTarget,WalkStickSlew} from '@/src/features/stream/walkPilot';
+import {readWalkPlan,walkingCalibrationIssue,walkingCameraIssue,walkingStickTarget,WalkStickSlew,walkDecisionDeadline} from '@/src/features/stream/walkPilot';
 import {walkCameraInputSummary,walkInputSummary} from '@/src/features/stream/walkRunDiagnostics';
 import type {TeachingInput} from '@/src/features/stream/teachingContacts';
 const geometry={width:960,height:540};
 const profile=calibrateProfile(defaultTeachingProfile,geometry,'stick',{x:150,y:400});
+
+test('a verified foot correction has a bounded hold independent from fresh-video monitoring',()=>{
+  expect(walkDecisionDeadline(1000,1080)).toBe(1330);
+  expect(walkDecisionDeadline(1000,1200)).toBe(1350);
+  expect(walkDecisionDeadline(1000,1250)).toBeNull();
+  expect(walkDecisionDeadline(1000,999)).toBeNull();
+  expect(walkDecisionDeadline(NaN,1050)).toBeNull();
+});
 test('walking ramps up from the actual neutral vector after a delivery pause',()=>{
   const smooth=new WalkStickSlew();
   expect(smooth.next([0,-.35],1000)[1]).toBeCloseTo(-.06);

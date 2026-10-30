@@ -60,7 +60,7 @@ async function runCase(config){
     pointer_id:message.pointer_id??-1,outcome:message.type==='touch_close'?'closed':message.action===4?'alive':'applied'});
   },config.ackMs??8);
  }};
- const control=new Contacts(endpoint,binding,()=>clock.now-lastFrame<250,()=>{},(state,reason)=>{if(state==='ready')ready=true;if(state==='failed'&&!terminal)terminal=reason;},undefined,()=>clock.now-lastFrame<1000,center,true);
+ const control=new Contacts(endpoint,binding,()=>clock.now-lastFrame<250,()=>{},(state,reason)=>{if(state==='ready')ready=true;if(state==='failed'&&!terminal)terminal=reason;},undefined,()=>clock.now-lastFrame<3000,center,true);
  const neutral=()=>{paused++;servo.interrupt();control.neutralize();};
  const frameTimer=clock.add(()=>{
   if(terminal)return;const elapsed=clock.now-begin;
@@ -103,7 +103,8 @@ async function runCase(config){
  }
  cases.push(await runCase({gainX:6,gainY:-5,visualMs:100,slopPx:16,gap:[1100,350],noise:.004,descriptorMs:130}));
  for(const pause of [650,850])cases.push(await runCase({gainX:6,gainY:-5,visualMs:100,slopPx:16,gap:[1100,pause],noise:.004,descriptorMs:130}));
- cases.push(await runCase({gainX:6,gainY:-5,visualMs:100,slopPx:16,gap:[1100,1100],noise:.004,descriptorMs:130,expectedFailure:'contact_video_stale'}));
+ for(const pause of [1100,2200])cases.push(await runCase({gainX:6,gainY:-5,visualMs:100,slopPx:16,gap:[1100,pause],noise:.004,descriptorMs:130}));
+ cases.push(await runCase({gainX:6,gainY:-5,visualMs:100,slopPx:16,gap:[1100,3100],noise:.004,descriptorMs:130,expectedFailure:'contact_video_stale'}));
  for(const yaw of [-1.1,1.5])for(const pitch of [-.4,.55])cases.push(await runCase({gainX:6,gainY:-5,visualMs:160,slopPx:16,yaw,pitch,noise:.004,descriptorMs:130}));
  for(const fault of ['frozen','reversed'])cases.push(await runCase({gainX:6,gainY:-5,visualMs:100,slopPx:16,yaw:1.5,pitch:.55,noise:.004,descriptorMs:130,fault}));
  cases.push(await runCase({gainX:6,gainY:-5,visualMs:100,slopPx:16,noise:.004,descriptorMs:130,movingReference:true,durationMs:50000}));

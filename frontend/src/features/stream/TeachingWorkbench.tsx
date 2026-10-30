@@ -269,6 +269,7 @@ export function TeachingWorkbench({ deviceId, readOnly }: { deviceId: string; re
       active:()=>phaseRef.current==='piloting'&&controller.current===control&&connection.current===conn&&control.isReady
         &&(conn.fresh()||conn.idleInputFresh?.()===true)&&!signal.aborted,
       failure:()=>control.failureReason,
+      sourceHealth:()=>conn.sourceHealth?.()??null,
       paused:()=>control.isVideoPaused,
       neutral:()=>{requestedMotion=false;stickSlew.next([0,0],performance.now());control.neutralize();},
       translating:()=>lease.active()&&conn.fresh()&&requestedMotion&&appliedMotion&&performance.now()<decisionUntil,

@@ -169,7 +169,15 @@ export class TeachingContacts {
     if(!this.isNeutralEdge(edge)&&edge.notAfter!==undefined&&performance.now()>=edge.notAfter){
       if(this.recoverVideoGaps)this.neutralize();else this.fail('stale_contact');return;
     }
-    if (!this.isNeutralEdge(edge)&&(!this.fresh()||performance.now()-edge.at>=200)) { this.fail('stale_contact'); return; }
+    if (!this.isNeutralEdge(edge)&&(!this.fresh()||performance.now()-edge.at>=200)) {
+      // A late ACK may pump before the 25 ms source watchdog. Cancel the old
+      // edge and centre the SAME pedestrian owner instead of failing the run.
+      if(this.recoverVideoGaps&&this.idleFresh?.()){
+        if(!this.fresh())this.videoPaused=true;
+        this.neutralize();return;
+      }
+      this.fail('stale_contact');return;
+    }
     if (edge.action === 0 && !this.held.size) this.gesture++;
     if (edge.action === 0) this.held.add(edge.id);
     const event: TeachingInput = { stage: 'submitted', at_ms: performance.timeOrigin + performance.now(),

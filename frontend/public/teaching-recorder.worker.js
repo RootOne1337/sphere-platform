@@ -32,11 +32,11 @@ function enqueue(r, bytes, write) {
 }
 function frame(value) {
   observedFrames++;
-  if (externalCapture && stamp() - lastEncodedHeartbeat >= 100) {
+  if (stamp() - lastEncodedHeartbeat >= (externalCapture?100:200)) {
     const meta = value.getMetadata();
     if (value.data.byteLength && meta.mimeType?.toLowerCase() === 'video/h264' && Number.isInteger(meta.rtpTimestamp)) {
       lastEncodedHeartbeat = stamp();
-      postMessage({ type: 'encoded_heartbeat' });
+      postMessage({ type: 'encoded_heartbeat',receivedAtMs:lastEncodedHeartbeat });
     }
   }
   if (observedFrames === 1 || observedFrames % 60 === 0) {

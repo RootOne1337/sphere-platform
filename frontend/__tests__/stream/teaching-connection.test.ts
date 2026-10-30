@@ -24,6 +24,7 @@ describe('teaching capture-only liveness', () => {
   const storage = Object.getOwnPropertyDescriptor(navigator, 'storage');
   beforeEach(() => {
     jest.useFakeTimers(); jest.clearAllMocks();
+    Object.defineProperty(performance,'timeOrigin',{configurable:true,value:1000000});
     Object.defineProperty(globalThis, 'isSecureContext', { configurable: true, value: true });
     Object.defineProperty(globalThis, 'RTCRtpScriptTransform', { configurable: true, value: class {} });
     Object.defineProperty(globalThis, 'WebSocket', { configurable: true, value: Socket });
@@ -177,6 +178,10 @@ describe('teaching capture-only liveness', () => {
       const call=(startDirectVideoSession as jest.Mock).mock.calls[0];
       call[2]({state:'connected',session:'a'.repeat(32),videoBinding:{captureEpoch:'epoch',width:960,height:540}});
       call[3].onTrack({kind:'video'});jest.advanceTimersByTime(1);present?.(1,{width:960,height:540});
+      connection.worker.onmessage?.({data:{type:'encoded_heartbeat',receivedAtMs:performance.timeOrigin+performance.now()}}as MessageEvent);
+      jest.advanceTimersByTime(300);expect(connection.fresh()).toBe(false);
+      expect(connection.sourceHealth?.()).toMatchObject({encodedAgeMs:300,presentedAgeMs:300,hidden:false});
+      present?.(1,{width:960,height:540});
       Object.defineProperty(document,'hidden',{configurable:true,value:true});document.dispatchEvent(new Event('visibilitychange'));
       let acknowledged=0;
       for(let n=0;n<8;n++){
@@ -188,7 +193,10 @@ describe('teaching capture-only liveness', () => {
       Object.defineProperty(document,'hidden',{configurable:true,value:false});document.dispatchEvent(new Event('visibilitychange'));
       jest.advanceTimersByTime(500);expect(failed).not.toHaveBeenCalled();expect(connection.fresh()).toBe(false);
       present?.(1,{width:960,height:540});expect(connection.fresh()).toBe(true);
-      jest.advanceTimersByTime(1500);expect(failed).toHaveBeenCalledWith('video_stalled');connection.close();
+      jest.advanceTimersByTime(1500);expect(failed).not.toHaveBeenCalled();expect(connection.fresh()).toBe(false);
+      expect(connection.idleInputFresh?.()).toBe(true);
+      present?.(1,{width:960,height:540});expect(connection.fresh()).toBe(true);
+      jest.advanceTimersByTime(3100);expect(failed).toHaveBeenCalledWith('video_stalled');connection.close();
     }finally{Reflect.deleteProperty(document,'hidden');if(media)Object.defineProperty(globalThis,'MediaStream',media);else Reflect.deleteProperty(globalThis,'MediaStream');}
   });
 });

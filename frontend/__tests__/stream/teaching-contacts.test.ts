@@ -31,6 +31,25 @@ test('a short video gap centers the held stick and releases camera without retir
   f.stale();idle=false;jest.advanceTimersByTime(25);expect(f.driver.failureReason).toBe('contact_video_stale');
 });
 
+test('an ACK arriving before the video watchdog cancels queued motion without closing the owner',()=>{
+  const center={x:100,y:350},f=fixture(undefined,()=>true,center,true);f.ready();f.driver.set(0,center);f.ack();
+  f.driver.set(0,{x:100,y:320},performance.now()+200);
+  f.driver.set(0,{x:120,y:320},performance.now()+200);
+  f.stale();f.ack();
+  expect(f.driver.failureReason).toBeNull();expect(f.driver.isVideoPaused).toBe(true);
+  expect(f.sent.at(-1)).toMatchObject({pointer_id:0,action:2,x:100,y:350});f.ack();
+  expect(f.sent.some(r=>r.x===120)).toBe(false);
+  let acknowledged=Number(f.sent.at(-1)?.sequence??0);
+  for(let i=0;i<48;i++){
+    jest.advanceTimersByTime(25);
+    const last=f.sent.at(-1)!;
+    if(last.action===4&&Number(last.sequence)>acknowledged){acknowledged=Number(last.sequence);f.ack();}
+  }
+  expect(f.driver.isReady).toBe(true);expect(f.sent.some(r=>r.type==='touch_close')).toBe(false);
+  f.resume();jest.advanceTimersByTime(25);f.driver.set(0,{x:100,y:320},performance.now()+200);f.ack();
+  expect(f.sent.filter(r=>r.pointer_id===0&&r.action===0)).toHaveLength(1);
+});
+
 test('camera target is interpolated in small two-axis ACKed steps rather than one jump',async()=>{
   const center={x:100,y:350},f=fixture(undefined,()=>true,center,true);f.ready();
   const down=f.driver.cameraCommand({x:700,y:200},performance.now()+230,center);f.ack();await down;

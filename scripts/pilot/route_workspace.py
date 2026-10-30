@@ -55,7 +55,7 @@ def route_resource_profile(job, kind='features'):
         # 204 MiB working set / 719 MiB commit on this runtime. Keep 4 GiB
         # available for the host plus a conservative 768 MiB task allowance.
         return dict(kind='route_live', minRamGiB=4.75, hostReserveGiB=4., taskReserveGiB=.75, maxMapBytes=4*1024**2,
-                    maxFrameBytes=384*1024, minDiskGiB=1., modelLoaded=False, maxCommitPercent=85)
+                    maxFrameBytes=384*1024, minDiskGiB=1., modelLoaded=False, maxCommitPercent=90)
     if kind != 'features':
         raise ValueError('route_resource_profile')
     video = job/'input/video.h264'
@@ -85,7 +85,15 @@ def resource_checkpoint(folder, *, profile=None):
     if (type(disk_minimum) not in {int, float} or not 1 <= disk_minimum <= 20
             or disk_minimum < 20 and profile.get('kind') != 'route_live'):
         raise ValueError('route_resource_profile')
-    findings = evaluate(snapshot, min_ram_gib=minimum, min_disk_gib=disk_minimum)
+    commit_max=85 if profile is None else profile.get('maxCommitPercent',85)
+    if (type(commit_max) not in {int,float} or not 0<commit_max<=90
+            or commit_max!=85 and (profile is None or profile.get('kind')!='route_live')):
+        raise ValueError('route_resource_profile')
+    findings = evaluate(snapshot, min_ram_gib=minimum, min_disk_gib=disk_minimum,max_commit_percent=commit_max)
+    if (snapshot.get('system')=='Windows' and type(snapshot.get('committedBytes'))is int
+            and type(snapshot.get('commitLimitBytes'))is int
+            and snapshot['commitLimitBytes']-snapshot['committedBytes']<minimum*1024**3
+            and 'commit_headroom_low'not in findings):findings.append('commit_headroom_low')
     if findings:
         if folder.is_dir():
             write_json(folder/'resource-refusal.json', dict(snapshot=snapshot, findings=findings,
@@ -306,8 +314,8 @@ class RouteWorkspaces:
                 or 'cameraControl' in body and body.get('cameraTracking') is not True
                 or body.get('startMode','beginning') not in {'beginning','recognized_route'}):
             raise ValueError('walk_explicit_confirmation_required')
-        if body.get('clientVersion')!='walk_live_v7':
-            raise ValueError('Обновите вкладку страницы (Ctrl+R): загружен прежний контур управления. Нужен walk_live_v7.')
+        if body.get('clientVersion')!='walk_live_v8':
+            raise ValueError('Обновите вкладку страницы (Ctrl+R): загружен прежний контур управления. Нужен walk_live_v8.')
         start_mode=body.get('startMode','beginning')
         camera_tracking=body.get('cameraTracking',False)
         camera_control=body.get('cameraControl','pulse_v1')
@@ -334,7 +342,7 @@ class RouteWorkspaces:
                 geometry_sha256=self.live['geometry_sha256'],capture_epoch=body['captureEpoch'])
         return dict(self.live_status(), mode='foot_camera_trace_v1', physicalActions=0, maxSeconds=self.live['walk'].max_seconds,
                     startMode=start_mode,cameraTracking=camera_tracking,cameraControl=camera_control,
-                    observationProtocol='jpeg_binary_v1',motionProtocol='applied_stick_v1',clientVersion='walk_live_v7')
+                    observationProtocol='jpeg_binary_v1',motionProtocol='applied_stick_v1',clientVersion='walk_live_v8')
 
     def _install_walk(self, *, start_mode='beginning',camera_tracking=False,camera_control='pulse_v1',max_seconds=60):
         from motor_worker.walk_route import WalkRouteFollower

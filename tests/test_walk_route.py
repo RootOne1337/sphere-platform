@@ -74,7 +74,7 @@ class WalkRouteTests(unittest.TestCase):
     def test_recorded_camera_pitch_is_distinct_from_slope_of_camera_trace(self):
         import numpy as np
         import math
-        a=.35;R=np.array([[1,0,0],[0,math.cos(a),-math.sin(a)],[0,math.sin(a),math.cos(a)]])
+        a=.45;R=np.array([[1,0,0],[0,math.cos(a),-math.sin(a)],[0,math.sin(a),math.cos(a)]])
         self.follower=WalkRouteFollower(self.route,clock=lambda:self.now,camera_tracking=True,
                                        reference_rotations=(R,)*len(self.route.camera_trace))
         wrong=self.observe();self.assertEqual(wrong['reason'],'walk_camera_alignment_required')
@@ -87,11 +87,22 @@ class WalkRouteTests(unittest.TestCase):
     def test_moderate_recorded_view_turn_can_coexist_with_walking(self):
         import numpy as np
         import math
-        a=.25;R=np.array([[math.cos(a),0,-math.sin(a)],[0,1,0],[math.sin(a),0,math.cos(a)]])
+        a=.55;R=np.array([[math.cos(a),0,-math.sin(a)],[0,1,0],[math.sin(a),0,math.cos(a)]])
         self.follower=WalkRouteFollower(self.route,clock=lambda:self.now,camera_tracking=True,
                                        reference_rotations=(R,)*len(self.route.camera_trace))
         result=self.observe();self.assertTrue(result['referenceView'])
         self.assertEqual(result['reason'],'walk_camera_relative_pursuit');self.assertLess(result['stick'][1],0)
+
+    def test_reference_view_anticipates_nearby_recorded_turn_without_live_clock_replay(self):
+        import numpy as np
+        import math
+        rotations=tuple(np.array([[math.cos(i*.2),0,-math.sin(i*.2)],[0,1,0],[math.sin(i*.2),0,math.cos(i*.2)]])for i in range(len(self.route.camera_trace)))
+        self.follower=WalkRouteFollower(self.route,clock=lambda:self.now,camera_tracking=True,reference_rotations=rotations)
+        result=self.observe(5.)
+        yaw=math.atan2(result['targetViewCamera'][0],result['targetViewCamera'][2])
+        self.assertGreater(yaw,.2);self.assertLessEqual(yaw,.45)
+        self.now+=.2;again=self.observe(5.)
+        self.assertAlmostEqual(math.atan2(again['targetViewCamera'][0],again['targetViewCamera'][2]),yaw)
 
     def test_camera_rotation_changes_command_without_replaying_any_keys(self):
         # Camera looking along +X: the world +Z route is to camera-left.
@@ -144,6 +155,18 @@ class WalkRouteTests(unittest.TestCase):
                 self.now+=.1;reply=self.observe()
                 if i<2:self.assertEqual(reply['stick'],[0.,0.])
             self.assertEqual(reply['phase'],'following')
+        self.assertEqual(self.follower.relocalizations,0)
+
+    def test_twenty_short_delivery_pauses_do_not_exhaust_a_lifetime_recovery_budget(self):
+        self.observe();progress=0.
+        for _ in range(20):
+            self.now+=.6;self.observe(progress,state='unknown',reason='route_observation_gap')
+            for i in range(3):
+                self.now+=.1;reply=self.observe(progress)
+                if i<2:self.assertEqual(reply['stick'],[0.,0.])
+            self.assertEqual(reply['phase'],'following')
+            progress+=.2;self.now+=.2;self.observe(progress,motion_active=True)
+        self.assertEqual(self.follower.recovery_seconds,0.)
         self.assertEqual(self.follower.relocalizations,0)
 
     def test_repeated_weak_images_have_a_total_wait_budget_and_real_loss_still_counts(self):
@@ -282,7 +305,7 @@ class WalkRouteTests(unittest.TestCase):
         for i in range(3):
             self.now+=.1;reply=self.observe(.5)
             if i<2:self.assertEqual(reply['stick'],[0.,0.])
-        self.assertEqual(reply['phase'],'following');self.assertGreater(self.follower.recovery_seconds,2.)
+        self.assertEqual(reply['phase'],'following');self.assertEqual(self.follower.recovery_seconds,0.)
 
     def test_compatible_confirming_images_cannot_extend_total_neutral_budget(self):
         self.observe();self.now+=.1;self.observe(state='unknown')
@@ -341,8 +364,17 @@ class WalkRouteTests(unittest.TestCase):
         self.now+=.1;self.assertEqual(self.observe(.1)['phase'],'following')
 
     def test_long_stream_gap_remains_terminal(self):
-        self.observe();self.now+=2.01;reply=self.observe(state='unknown')
+        self.observe();self.now+=3.01;reply=self.observe(state='unknown')
         self.assertEqual(reply['reason'],'walk_pose_binding_or_age');self.assertEqual(reply['stick'],[0.,0.])
+
+    def test_a_two_second_delivery_pause_reacquires_fresh_geometry_without_replaying_input(self):
+        self.observe();self.now+=2.2
+        reply=self.observe(.1,state='unknown',reason='route_observation_gap')
+        self.assertEqual(reply['phase'],'waiting');self.assertEqual(reply['stick'],[0.,0.])
+        for i in range(3):
+            self.now+=.1;reply=self.observe(.1)
+            if i<2:self.assertEqual(reply['stick'],[0.,0.])
+        self.assertEqual(reply['phase'],'following')
 
     def test_pose_age_epoch_sequence_and_large_progress_jump_stop(self):
         for changes in ({'received_at':7.,'completed_at':7.},{'receiver_sequence':0},

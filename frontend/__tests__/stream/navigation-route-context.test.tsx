@@ -58,7 +58,9 @@ test('a short display gap retains only a labelled past measurement, never a fres
     act(()=>jest.advanceTimersByTime(260));
     expect(screen.queryByLabelText('Подтверждённое живое положение')).not.toBeInTheDocument();
     expect(screen.getByLabelText('Последняя измеренная позиция · ожидаем обновление')).toBeInTheDocument();
-    expect(screen.getByText('Обновляем подтверждение положения')).toBeInTheDocument();
+    expect(screen.getByText('Слежение за маршрутом')).toBeInTheDocument();
+    expect(screen.getByLabelText('Состояние локализации')).toHaveClass('h-10');
+    expect(screen.getByLabelText('Состояние живого маркера')).toHaveClass('h-10');
     expect(screen.queryByText(/Положение сейчас не подтверждено/)).not.toBeInTheDocument();
     view.rerender(<NavigationRouteContext {...props} observation={{...observation,reply:{...parsed,geometrySha256:'0'.repeat(64)}}}/>);
     expect(screen.queryByLabelText('Последняя измеренная позиция · ожидаем обновление')).not.toBeInTheDocument();

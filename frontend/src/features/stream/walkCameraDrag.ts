@@ -69,7 +69,7 @@ export class WalkCameraDrag {
     if(!target||v.rotation.length!==9||v.rotation.some(n=>!Number.isFinite(n))||v.now<v.capturedAt||v.now-v.capturedAt>250)return this.stop('walk_camera_pose_unavailable');
     const yaw=Math.atan2(target[0],target[2]);
     const pitch=Math.atan2(target[1],Math.hypot(target[0],target[2]));
-    const translating=v.referenceView===true&&v.alignmentRequired!==true&&this.gain!==null&&Math.abs(yaw)<.40&&Math.abs(pitch)<.25
+    const translating=v.referenceView===true&&v.alignmentRequired!==true&&this.gain!==null&&Math.abs(yaw)<.80&&Math.abs(pitch)<.35
       &&(Math.abs(pitch)<.12||this.pitchGain!==null);
     const wait=(reason:string,hold=!translating):CameraDragStep=>({hold,fraction:null,reason,yaw,pitch,failed:false});
     if(Math.abs(pitch)>(v.referenceView?1.2:.65))return this.stop('walk_camera_pitch_mismatch');
@@ -96,7 +96,8 @@ export class WalkCameraDrag {
         // otherwise a delayed partial response can invent the gain or its sign.
         const visible=Math.abs(turn)>=.015;
         if(!visible&&v.capturedAt-c.ackAt<400)return wait('walk_camera_waiting_feedback');
-        if(visible){
+        const knownActivation=c.activation&&(c.axis==='y'?this.pitchGain:this.gain)!==null;
+        if(visible&&!knownActivation){
           if(c.lastTurn===undefined||Math.abs(turn-c.lastTurn)>.010){c.lastTurn=turn;c.stableAt=v.capturedAt;return wait('walk_camera_waiting_feedback');}
           c.lastTurn=turn;
           if(v.capturedAt-(c.stableAt??v.capturedAt)<40)return wait('walk_camera_waiting_feedback');
@@ -111,6 +112,13 @@ export class WalkCameraDrag {
         }else if(c.activation){
           // The first visible drag crosses Android touch slop. Its effective
           // distance is unknown, so it proves activation, not sensitivity.
+          const gain=c.axis==='y'?this.pitchGain:this.gain;
+          if(gain!==null&&turn*delta*gain<=0){
+            if(v.capturedAt-c.ackAt<400)return wait('walk_camera_waiting_feedback');
+            if(c.oppositeAt===undefined){c.oppositeAt=v.capturedAt;return wait('walk_camera_waiting_feedback');}
+            if(v.capturedAt-c.oppositeAt<80)return wait('walk_camera_waiting_feedback');
+            return this.stop('walk_camera_response_wrong_direction');
+          }
           this.touchActivated=true;this.quiet=0;
         }else{
           const measured=turn/delta;
@@ -149,11 +157,12 @@ export class WalkCameraDrag {
       // here forced touch-slop activation and a stationary pause on every
       // correction even though the gain was already measured in this run.
       if(v.referenceView&&this.held&&this.touchActivated&&this.gain!==null)return wait('walk_camera_aligned',false);
-      if(this.held&&v.canStroke)return this.edge(v,'up',0,yaw,'walk_camera_releasing');
-      return wait(this.held?'walk_camera_waiting_neutral':'walk_camera_aligned',this.held);
+      if(this.held&&v.canStroke){const step=this.edge(v,'up',0,yaw,'walk_camera_releasing');if(translating)step.hold=false;return step;}
+      return wait(this.held?'walk_camera_waiting_neutral':'walk_camera_aligned',this.held&&!translating);
     }
-    if(this.began===null){this.began=v.now;this.alignmentMoves=0;}
-    if(v.now-this.began>8000)return this.stop('walk_camera_alignment_timeout');
+    if(translating){this.began=null;this.alignmentMoves=0;this.recenters=0;}
+    else if(this.began===null){this.began=v.now;this.alignmentMoves=0;}
+    if(this.began!==null&&v.now-this.began>8000)return this.stop('walk_camera_alignment_timeout');
     if(!v.canStroke||v.now-v.capturedAt>150)return wait('walk_camera_waiting_neutral');
     if(!this.held){
       if(v.now-this.releasedAt<120)return wait('walk_camera_recentering');
@@ -172,11 +181,13 @@ export class WalkCameraDrag {
     const tracking=v.referenceView===true&&this.touchActivated&&gain!==null;
     const dt=this.lastMoveAt===null?.05:Math.min(.18,Math.max(.05,(v.now-this.lastMoveAt)/1000));
     const desiredTurn=Math.min(.12,Math.abs(error)*(tracking?1.8*dt:.5));
-    let delta=!this.touchActivated||gain===null?(offset+probe<=max?probe:-probe):Math.sign(error/gain)*Math.min(.06,Math.max(this.minDelta,desiredTurn/Math.abs(gain)));
+    const activationSign=gain===null?1:Math.sign(error/gain)||1;
+    const probeDelta=activationSign*probe;
+    let delta=!this.touchActivated||gain===null?(offset+probeDelta>=min&&offset+probeDelta<=max?probeDelta:-probeDelta):Math.sign(error/gain)*Math.min(.06,Math.max(this.minDelta,desiredTurn/Math.abs(gain)));
     const next=Math.max(min,Math.min(max,offset+delta));delta=next-offset;
     if(Math.abs(delta)<.002){
       if(++this.recenters>4)return this.stop('walk_camera_alignment_timeout');
-      return this.edge(v,'up',0,yaw,'walk_camera_recentering');
+      const step=this.edge(v,'up',0,yaw,'walk_camera_recentering');if(translating)step.hold=false;return step;
     }
     const step=this.edge(v,'move',next,yaw,gain===null?'walk_camera_calibrating':'walk_camera_turning',axis,pitch,tracking);
     if(translating&&gain!==null)step.hold=false;

@@ -4,12 +4,13 @@ import { startDirectVideoSession, type DirectProbeResult } from './directProbe';
 import type { DirectControlEndpoint } from './directPointerTransport';
 import type { DirectVideoBinding } from './directVideoProtocol';
 import { StreamSessionReporter, teachingStreamSample } from './streamSessionTelemetry';
+import type {WalkSourceHealth} from './walkPilot';
 
 export type TeachingConnection = { close(): void; fresh(): boolean; binding(): DirectVideoBinding | null;
   idleInputFresh?():boolean;
   endpoint(): DirectControlEndpoint | null; worker: Worker;
   observeControl?(state:'idle'|'opening'|'ready'|'closing'|'closed'|'fenced',reason?:string,rtt?:number):void;
-  controlRttMs?():number|null; setExternalCapture?(enabled:boolean):void };
+  controlRttMs?():number|null; sourceHealth?():WalkSourceHealth;setExternalCapture?(enabled:boolean):void };
 
 /** One explicit capture-only presence and one direct peer. No media relay or automatic retry. */
 export async function connectTeaching(deviceId: string, token: string, video: HTMLVideoElement,
@@ -61,7 +62,7 @@ export async function connectTeaching(deviceId: string, token: string, video: HT
   };
   // Only an empty pedestrian input owner may wait through a short presentation
   // gap. This grants no authority to send DOWN/MOVE or use an old pose.
-  const idleInputFresh=()=>!disposed&&!faulted&&!!binding&&!!lastFrame&&!document.hidden&&performance.now()-lastFrame<1000;
+  const idleInputFresh=()=>!disposed&&!faulted&&!!binding&&!!lastFrame&&!document.hidden&&performance.now()-lastFrame<3000;
   const present = () => { frameId = video.requestVideoFrameCallback((_at, frame) => {
     if (disposed) return;
     if (!binding) { present(); return; }
@@ -77,10 +78,11 @@ export async function connectTeaching(deviceId: string, token: string, video: HT
     // Hiding the page revokes input freshness, not the capture-only transport.
     // On return, require a new presented frame; the grace period grants no
     // freshness and no touch authority. Workbench still releases held input.
-    if (!paused && latest && performance.now() - latest > 1000 && performance.now()>=resumeUntil) fault('video_stalled');
+    if (!paused && latest && performance.now() - latest > (externalCapture?1000:3000) && performance.now()>=resumeUntil) fault('video_stalled');
     const now = performance.now();
     if (renewPendingAt !== null && now - renewPendingAt > 5000) fault('capture_renewal_unconfirmed');
-    if ((fresh()||paused) && peerSession && renewPendingAt === null && now - lastRenew >= 3000 && socket.readyState === 1) {
+    const recovering=!faulted&&!externalCapture&&!!lastFrame&&!document.hidden&&now-lastFrame<3000;
+    if ((fresh()||paused||recovering) && peerSession && renewPendingAt === null && now - lastRenew >= 3000 && socket.readyState === 1) {
       lastRenew = now; renewPendingAt = now;
       socket.send(JSON.stringify({ type: 'video_delivery', mode: 'direct', peer_session: peerSession }));
     }
@@ -88,7 +90,13 @@ export async function connectTeaching(deviceId: string, token: string, video: HT
   signal.addEventListener('abort', close, { once: true });
   worker.onmessage = event => {
     if (event.data?.type === 'attached') attached = true;
-    if (event.data?.type === 'encoded_heartbeat' && externalCapture) lastEncoded = performance.now();
+    if (event.data?.type === 'encoded_heartbeat') {
+      const now=performance.now(),at=event.data.receivedAtMs===undefined?now:event.data.receivedAtMs-performance.timeOrigin;
+      // Subtracting large epoch origins can round a valid stamp slightly
+      // ahead of the small monotonic clock. Clamp only this <1 ms precision
+      // error; genuinely future or malformed worker stamps stay untrusted.
+      if(Number.isFinite(at)&&at>=0&&at<=now+1)lastEncoded=Math.max(lastEncoded,Math.min(at,now));
+    }
     workerMessage(event.data);
   };
   worker.onerror = () => fault('recorder_worker_failed');
@@ -146,7 +154,8 @@ export async function connectTeaching(deviceId: string, token: string, video: HT
     } catch { fault('invalid_capture_message'); }
   };
   return { close, fresh, idleInputFresh, binding: () => binding, endpoint: () => endpoint, worker,
-    setExternalCapture:(enabled)=>{externalCapture=enabled;lastEncoded=0;worker.postMessage({type:'external_capture',enabled});},
+    sourceHealth:()=>({encodedAgeMs:lastEncoded?Math.max(0,performance.now()-lastEncoded):null,presentedAgeMs:lastFrame?Math.max(0,performance.now()-lastFrame):null,hidden:document.hidden}),
+    setExternalCapture:(enabled)=>{externalCapture=enabled;if(enabled)lastEncoded=0;worker.postMessage({type:'external_capture',enabled});},
     controlRttMs:()=>controlRtt,
     observeControl:(state,reason,rtt)=>{controlState=state;
       if(state==='opening'){controlFailure=null;controlRtt=null;reporter.reportControlFailure(false);}

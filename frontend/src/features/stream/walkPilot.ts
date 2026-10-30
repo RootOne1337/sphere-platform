@@ -4,7 +4,16 @@ import {calibrated,fromPercent,profileIssue,type TeachingProfile} from './teachi
 export type WalkPlan={schema:'sphere-walk-plan-v1';phase:'waiting'|'following'|'stopped'|'arrived';reason:string;
   stick:[number,number];progressFraction:number|null;maxStick:.35;maxSeconds:number;
   groundRoute:false;executionQualified:false;cameraBodyAssumption:true};
-export type WalkInputLease={active():boolean;failure?():string|null;set(vector:[number,number]):void;canLook?():boolean;look?(fraction:number,notAfter:number):Promise<boolean>;
+
+/** Pedestrian sample-and-hold: fresh RGB is guarded independently at 250 ms.
+ * A newly verified pose may hold its correction for at most 250 ms after the
+ * answer, and never beyond 350 ms from capture. This is not pose prediction. */
+export function walkDecisionDeadline(capturedAt:number,answeredAt:number):number|null{
+  if(!Number.isFinite(capturedAt)||!Number.isFinite(answeredAt)||answeredAt<capturedAt||answeredAt-capturedAt>=250)return null;
+  return Math.min(capturedAt+350,answeredAt+250);
+}
+export type WalkSourceHealth={encodedAgeMs:number|null;presentedAgeMs:number|null;hidden:boolean};
+export type WalkInputLease={active():boolean;failure?():string|null;sourceHealth?():WalkSourceHealth|null;set(vector:[number,number]):void;canLook?():boolean;look?(fraction:number,notAfter:number):Promise<boolean>;
   paused?():boolean;neutral?():void;
   translating?():boolean;
   permit?(notAfter:number):void;

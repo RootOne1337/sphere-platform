@@ -7,7 +7,7 @@ import {reconstructionRequest,type ReconstructionJob} from './reconstructionClie
 import {freshNavigationFrame,navigationReply,type LiveRouteObservation} from './routeNavigation';
 import {WalkLivePreview,type WalkPreviewFrame} from './WalkLivePreview';
 import {WalkFrameEncoder} from './walkFrameEncoder';
-import {readWalkPlan,walkReasonLabel,waitForFreshWalkSource,type WalkInputControl,type WalkInputLease} from './walkPilot';
+import {readWalkPlan,walkReasonLabel,waitForFreshWalkSource,walkDecisionDeadline,type WalkInputControl,type WalkInputLease} from './walkPilot';
 import type {TeachingInput} from './teachingContacts';
 import {saveRouteDebugReport} from './routeDebugStorage';
 import {RouteDebugArchive} from './RouteDebugArchive';
@@ -28,6 +28,11 @@ type Run={id:string;job:ReconstructionJob;abort:AbortController;lease:WalkInputL
   freshUntil:number|null;freshWaits:number;trace:WalkRunDiagnostics;maxSeconds:number;observationCount:number;
   observe:(()=>void)|null;inFlight:boolean;nextObservationAt:number;startMode:StartMode;camera:WalkCameraServo|null;binaryJpeg?:boolean;lastPreviewAt?:number};
 type ResumeIntent={job:string;key:string;clip:string|null;epoch:string;width:number;height:number;remainingMs:number};
+const gapReason=(active:Run|null)=>{
+  try{const health=active?.lease?.sourceHealth?.();
+    return health?.hidden?'presentation_gap_hidden':health?.encodedAgeMs!=null&&health.encodedAgeMs<500?'presentation_gap_encoded_active':'presentation_gap_packets_unconfirmed';
+  }catch{return 'presentation_gap_source_unknown';}
+};
 
 /** Explicit supervised foot experiment; the observer above remains read-only. */
 export function WalkingRoutePilot({job,clip,video,ready,binding,assetsReady,input,observerBusy,onBusyChange,onObservation,renderView,scope=null,preparationIssue=null}:{
@@ -93,7 +98,7 @@ export function WalkingRoutePilot({job,clip,video,ready,binding,assetsReady,inpu
   };
   const neutralUntilFresh=(active:Run,reason='permit_expired')=>{
     if(!active.lease?.active())return false;
-    if(active.freshUntil===null){active.freshWaits++;active.freshUntil=performance.now()+2000;
+    if(active.freshUntil===null){active.freshWaits++;active.freshUntil=performance.now()+3000;
       active.trace.add('neutral_wait',performance.now(),{reason,sequence:active.lastSequence});}
     active.moving=false;
     if(active.lease.neutral){active.camera?.interrupt();active.lease.neutral();}
@@ -101,7 +106,7 @@ export function WalkingRoutePilot({job,clip,video,ready,binding,assetsReady,inpu
     // A late delivery is not loss of geometric localization. The server still
     // requires three poses after an actual loss. Resume only on a NEW, fresh,
     // bound localized/following reply, never on the expired command.
-    setNotice('Стик в центре: ждём новое свежее решение, до 2 секунд. Повторного нажатия нет.');
+    setNotice('Стик в центре: ждём новое свежее решение, до 3 секунд. Повторного нажатия нет.');
     return true;
   };
   const stop=async(reason:string)=>{
@@ -111,6 +116,8 @@ export function WalkingRoutePilot({job,clip,video,ready,binding,assetsReady,inpu
     const frameSequence=recent.current.sequence,frameAge=frameSequence?Math.max(0,performance.now()-recent.current.at):null;
     const inputFailure=active.lease?.failure?.()??null;
     if(inputFailure)reason=inputFailure;
+    if(['contact_video_stale','walk_stream_changed'].includes(reason)&&frameAge!==null&&frameAge>=250)
+      active.trace.add('source_gap',performance.now(),{durationMs:frameAge,sequence:frameSequence,reason:gapReason(active)});
     active.trace.add('stop',performance.now(),{reason,sequence:frameSequence,...(frameAge===null?{}:{ageMs:frameAge})});
     setStopDetail(`Кадров источника: ${frameSequence}; возраст: ${frameAge===null?'нет кадра':`${frameAge.toFixed(0)} мс`}; ответов локализации: ${active.observationCount}.`);
     run.current=null;active.abort.abort();observed.current?.(null);setNotice(walkReasonLabel(reason));setRelease('pending');
@@ -129,7 +136,7 @@ export function WalkingRoutePilot({job,clip,video,ready,binding,assetsReady,inpu
       setRelease(released?'closed':'unknown');setBusy(false);busyChange.current(false);
       setEvents(inputs.current.length);
       if(!released)setNotice('Освобождение ввода НЕ подтверждено. Новый запуск заблокирован; переподключите поток.');
-      const report={schema:'sphere-walk-debug-v1',clientVersion:'walk_live_v7',beganAtMs:performance.timeOrigin+active.began,scope:'supervised_camera_trace_pilot',clip:active.clip,job:active.job.id,
+      const report={schema:'sphere-walk-debug-v1',clientVersion:'walk_live_v8',beganAtMs:performance.timeOrigin+active.began,scope:'supervised_camera_trace_pilot',clip:active.clip,job:active.job.id,
           executionQualified:false,metricAccuracyKnown:false,sourceCaptureAgeKnown:false,release:released?'closed':'unknown',stopReason:reason,
           stopFrameAgeMs:frameAge,stopFrameSequence:frameSequence,inputFailure,startMode:active.startMode,camera:active.camera?.snapshot()??null,cameraInput:walkCameraInputSummary(inputs.current),stages:active.trace.snapshot(),
           stageSummary:active.trace.summary(),observationCount:active.observationCount,durationBudgetSeconds:Math.ceil((active.deadline-active.began)/1000),maxSeconds:active.maxSeconds,observations:history.current.map(row=>({...row,center:row.center?[...row.center]:null,rotation:row.rotation?[...row.rotation]:null})),nativeInputs:inputs.current.map(row=>({...row})),nativeInputTailLimit:4096};
@@ -166,7 +173,7 @@ export function WalkingRoutePilot({job,clip,video,ready,binding,assetsReady,inpu
     const next=()=>{id=element.requestVideoFrameCallback((_time,meta)=>{
       if(closed)return;
       const now=performance.now(),previous=recent.current;
-      if(previous.sequence&&now-previous.at>100)run.current?.trace.add('source_gap',now,{durationMs:now-previous.at,sequence:previous.sequence});
+      if(previous.sequence&&now-previous.at>100)run.current?.trace.add('source_gap',now,{durationMs:now-previous.at,sequence:previous.sequence,reason:gapReason(run.current)});
       const value=(n:unknown)=>typeof n==='number'&&Number.isFinite(n)&&n>=0?n:null;
       const age=(n:unknown)=>typeof n==='number'&&Number.isFinite(n)&&n>=0&&n<=now?now-n:null;
       const timing=meta as VideoFrameCallbackMetadata&{receiveTime?:number;captureTime?:number};
@@ -190,10 +197,10 @@ export function WalkingRoutePilot({job,clip,video,ready,binding,assetsReady,inpu
       const now=performance.now(),source=current.current;
       if(source.binding?.captureEpoch!==active.binding.captureEpoch)void stopRef.current('walk_stream_changed');
       else if(!freshNavigationFrame(recent.current.at,now)){
-        if(!active.lease&&!active.moving&&now-recent.current.at<1000)return;
+        if(!active.lease&&!active.moving&&now-recent.current.at<3000)return;
         // A moving/uncertain native contact still closes immediately in
         // TeachingContacts. Only an empty owner can wait for new video.
-        try{if(now-recent.current.at>=1000||!neutralUntilFresh(active,'source_gap'))void stopRef.current('walk_stream_changed');}
+        try{if(now-recent.current.at>=3000||!neutralUntilFresh(active,'source_gap'))void stopRef.current('walk_stream_changed');}
         catch{void stopRef.current(active.lease?.failure?.()??'walk_native_closed');}
       }
       else if(now>=active.deadline)void stopRef.current('walk_time_limit');
@@ -223,7 +230,7 @@ export function WalkingRoutePilot({job,clip,video,ready,binding,assetsReady,inpu
     const signal=active.abort.signal,alive=()=>run.current===active&&!signal.aborted;
     try{
       const state=await(await reconstructionRequest(`/jobs/${job.id}/navigation/walk-start`,job,{method:'POST',signal,
-        body:JSON.stringify({id:active.id,clientVersion:'walk_live_v7',captureEpoch:binding.captureEpoch,width:binding.width,height:binding.height,sceneConfirmed:true,footCameraAssumptionConfirmed:true,diagnosticFrames:saveFrames,startMode:active.startMode,cameraTracking:!!active.camera,...(active.camera?{cameraControl:'continuous_drag_v1'}:{})})})).json();
+        body:JSON.stringify({id:active.id,clientVersion:'walk_live_v8',captureEpoch:binding.captureEpoch,width:binding.width,height:binding.height,sceneConfirmed:true,footCameraAssumptionConfirmed:true,diagnosticFrames:saveFrames,startMode:active.startMode,cameraTracking:!!active.camera,...(active.camera?{cameraControl:'continuous_drag_v1'}:{})})})).json();
       if(!alive())return;
       if(state.id!==active.id||state.phase!=='observing'||state.mode!=='foot_camera_trace_v1'||state.physicalActions!==0||!Number.isInteger(state.maxSeconds)||state.maxSeconds<60||state.maxSeconds>600||state.startMode!==active.startMode)throw Error('walk_start_unconfirmed');
       active.maxSeconds=state.maxSeconds;active.deadline=active.began+Math.min(state.maxSeconds*1000,options?.remainingMs??Infinity);setBudgetSeconds(Math.ceil((active.deadline-active.began)/1000));
@@ -309,7 +316,7 @@ export function WalkingRoutePilot({job,clip,video,ready,binding,assetsReady,inpu
             crossTrackUnits:reply.pose.cross_track_units??null,center:reply.pose.center?[...reply.pose.center]:null,rotation:reply.pose.rotation?[...reply.pose.rotation]:null,geometrySha256:reply.geometrySha256??null};
           // Deliver the fresh decision before any diagnostic canvas or React
           // work. Rendering may be skipped; input identity/deadline never is.
-          active.permitUntil=frame.at+250;
+          active.permitUntil=walkDecisionDeadline(frame.at,now)!;
           const remember=()=>{active.observationCount++;if(history.current.length>=1200)history.current.shift();history.current.push(sample);};
           if(plan.phase==='stopped'||plan.phase==='arrived'){remember();await stop(plan.reason);return;}
           if(performance.now()>active.permitUntil){
@@ -395,8 +402,8 @@ export function WalkingRoutePilot({job,clip,video,ready,binding,assetsReady,inpu
   const cameraFeedback=(run.current?.camera?.snapshot()??lastReport.current?.camera as ReturnType<WalkCameraServo['snapshot']>|null)?.feedback?.at(-1);
   return <section aria-label="Пеший тест маршрута" className="space-y-3 rounded-2xl border border-amber-500/30 bg-amber-500/5 p-4">
     <div className="flex items-center gap-2"><Footprints size={19} className="text-amber-500"/><h3 className="font-semibold">Пеший проход · живой стик</h3><span className="ml-auto text-xs text-muted-foreground">{budgetSeconds?`до ${budgetSeconds} с`:'время по длине маршрута · до 10 мин'} · до 35% стика</span></div>
-    <p className="text-[10px] text-muted-foreground">Контур walk_live_v7 · {last?.captureMode??'захват ожидается'} · {last?.method??'локализация ожидается'}</p>
-    <p className="text-xs leading-5 text-muted-foreground">По свежим ориентирам выбираем ближайшую цель на записанном пути камеры. При нехватке уверенности стик удерживается в центре: ждём три подтверждения рядом с последней позицией. Остановка после 2 секунд без совместимой свежей геометрии или 6 секунд ожидания суммарно. После потери позиции допускается до трёх восстановлений. Объезд препятствий не реализован, точность в метрах ещё не измерена.</p>
+    <p className="text-[10px] text-muted-foreground">Контур walk_live_v8 · {last?.captureMode??'захват ожидается'} · {last?.method??'локализация ожидается'}</p>
+    <p className="text-xs leading-5 text-muted-foreground">Стик удерживается, свежие кадры корректируют движение. Умеренные повороты камеры выполняются на ходу. При задержке кадров стик уходит в центр и ждёт до 3 секунд. Потеря геометрии проверяется отдельно: три свежих подтверждения перед продолжением, 2 секунды без совместимых ориентиров и до 6 секунд на серию поиска. Объезд препятствий не реализован, точность в метрах ещё не измерена.</p>
     <label className="flex flex-wrap items-center gap-2 text-xs">Начало движения<select aria-label="Точка запуска пешего теста" className="rounded-lg border bg-background p-2" value={startMode} disabled={busy} onChange={e=>{setStartMode(e.target.value as StartMode);setConfirmed(false);}}><option value="recognized_route">С текущей узнанной точки маршрута</option><option value="beginning">Только у начала записи</option></select></label>
     <p className="text-xs text-muted-foreground">После обрыва можно снова нажать запуск на записанном участке. Положение определяется заново по живым кадрам; цель выбирается дальше по записи. При неоднозначном месте движение не начинается.</p>
     <label className="flex items-start gap-2 text-xs"><input type="checkbox" checked={cameraEnabled} disabled={busy} onChange={e=>{setCameraEnabled(e.target.checked);setConfirmed(false);}}/>Поворачивать камеру вдоль пути · две оси по сохранённому ракурсу, с проверкой по новым кадрам</label>
@@ -407,8 +414,8 @@ export function WalkingRoutePilot({job,clip,video,ready,binding,assetsReady,inpu
     {(input.issue||!assetsReady)&&<p className="text-xs text-amber-500">{!assetsReady?(preparationIssue??'Проверяем обработку записи и готовность ориентиров…'):input.issue}</p>}
     <div className="flex flex-wrap gap-2"><Button size="sm" disabled={busy||observerBusy||!job||!ready||!assetsReady||!confirmed||!!input.issue||cameraEnabled&&!!input.cameraIssue||release==='unknown'} onClick={()=>{void start();}}>Запустить проход</Button><Button size="sm" variant="destructive" disabled={!busy&&!visibilityPaused} onClick={()=>{void stop('walk_manual_stop');}}><Square size={13} className="mr-1"/>Стоп пешего теста · Esc</Button><Button size="sm" variant="outline" disabled={!samples.length||busy} onClick={download}><Download size={13} className="mr-1"/>Скачать отчёт теста</Button></div>
     {visibilityPaused&&<p className="rounded-lg border border-sky-500/25 bg-sky-500/5 p-3 text-xs">Проход на паузе: вкладка скрыта, касания закрываются. При возврате продолжим с текущего узнанного места после подтверждения закрытия ввода и свежего потока. Esc отменяет продолжение.</p>}
-    <p role="status" className="rounded-lg border bg-background/60 p-3 text-xs">{notice}</p>
-    {last&&<p aria-label="Состояние узнавания" className="text-xs text-muted-foreground">{last.poseState==='localized'?'Положение подтверждено по 3D-ориентирам.':last.poseReason==='route_pose_not_verified'?'На текущем изображении положение не подтверждено по ориентирам.':last.poseReason==='route_observation_gap'?'После паузы кадров повторно подтверждаем положение.':last.poseReason==='route_frame_expired_during_localization'?'Этот кадр устарел во время обработки.':'Ожидаем подтверждение положения по новым кадрам.'}</p>}
+    <p role="status" className="h-20 overflow-auto rounded-lg border bg-background/60 p-3 text-xs">{notice}</p>
+    <p aria-label="Состояние узнавания" className="h-10 overflow-hidden text-xs leading-5 text-muted-foreground">{last?.poseState==='localized'?'Положение подтверждено по 3D-ориентирам.':last?.poseReason==='route_pose_not_verified'?'На текущем изображении положение не подтверждено по ориентирам.':last?.poseReason==='route_observation_gap'?'После паузы кадров повторно подтверждаем положение.':last?.poseReason==='route_frame_expired_during_localization'?'Этот кадр устарел во время обработки.':'Ожидаем подтверждение положения по новым кадрам.'}</p>
     {stopDetail&&<p className="rounded-lg border border-amber-500/25 bg-amber-500/5 p-3 text-xs">{stopDetail}</p>}
     <div aria-label="Подтверждение движения" className="grid gap-2 text-xs sm:grid-cols-3">
       <p className="rounded-lg border p-3">Ориентиры: <strong>{last?`${last.inliers} совпадений`:'ожидаются'}</strong></p>

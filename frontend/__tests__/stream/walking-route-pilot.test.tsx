@@ -247,6 +247,28 @@ test('a 320 ms source pause neutralizes without restarting and resumes only on a
     expect(lease.close).not.toHaveBeenCalled();fireEvent.keyDown(window,{code:'Escape'});await screen.findByText('Освобождение: CLOSED');
   }finally{clock.mockRestore();}
 });
+
+test('fresh video permits a bounded held correction between pose answers, then centres at its deadline',async()=>{
+  let now=1000,queries=0;let complete:(r:Response)=>void=()=>{};
+  jest.spyOn(performance,'now').mockImplementation(()=>now);lease.neutral=jest.fn();
+  const original=jest.mocked(reconstructionRequest).getMockImplementation()!;
+  jest.mocked(reconstructionRequest).mockImplementation(async(...args)=>{
+    const response=await original(...args);
+    if(args[0].endsWith('/observe')){
+      if(++queries===1)now=1120;
+      else return new Promise<Response>(resolve=>{complete=resolve;});
+    }
+    return response;
+  });
+  view();start();await waitFor(()=>expect(lease.set).toHaveBeenCalled());
+  now=1260;fresh();await waitFor(()=>expect(queries).toBe(2));
+  now=1280;await act(async()=>{await new Promise(r=>setTimeout(r,35));});
+  expect(lease.neutral).not.toHaveBeenCalled();expect(lease.close).not.toHaveBeenCalled();
+  now=1360;fresh();await waitFor(()=>expect(lease.neutral).toHaveBeenCalled());
+  expect(lease.close).not.toHaveBeenCalled();fireEvent.keyDown(window,{code:'Escape'});await screen.findByText('Освобождение: CLOSED');
+  const response=await original(`/jobs/${job.id}/navigation/observe`,job,{body:JSON.stringify({sequence:2})});
+  await act(async()=>complete(response));
+});
 test('unknown native close blocks another start and never claims successful release',async()=>{
   lease.close=jest.fn(async()=>false);view();start();await waitFor(()=>expect(lease.set).toHaveBeenCalled());
   fireEvent.keyDown(window,{code:'Escape'});
@@ -283,7 +305,7 @@ test('an expired bound result neutralizes input and never applies its vector',as
   jest.mocked(reconstructionRequest).mockImplementation(async(...args)=>{
     const value=await original(...args);if(args[0].endsWith('/observe'))now=1300;return value;
   });
-  view();start();await screen.findByText(/Стик в центре: ждём новое свежее решение/);now=2400;
+  view();start();await screen.findByText(/Стик в центре: ждём новое свежее решение/);now=4400;
   await screen.findByText('Освобождение: CLOSED');
   expect(jest.mocked(lease.set).mock.calls.every(([v])=>v[0]===0&&v[1]===0)).toBe(true);clock.mockRestore();
 });

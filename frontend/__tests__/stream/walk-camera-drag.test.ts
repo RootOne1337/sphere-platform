@@ -97,6 +97,31 @@ function calibrated(){
   expect(servo.snapshot().gainRadiansPerShortSide).toBeCloseTo(5);
   return servo;
 }
+
+test('a known camera direction survives a pause and its new activation goes toward the target',()=>{
+  const servo=calibrated();servo.interrupt();
+  const next=(at:number,h:number,seq:number)=>({...view(at,h,seq),referenceView:true,target:[Math.sin(-.55),0,Math.cos(-.55)]});
+  const down=servo.update(next(2000,0,7));expect(down.action).toBe('down');expect(down.hold).toBe(false);servo.finishStroke(true,2005);
+  const activate=servo.update(next(2050,0,8));expect(activate.action).toBe('move');expect(activate.fraction).toBeLessThan(0);expect(activate.hold).toBe(false);servo.finishStroke(true,2055);
+  const feedback=servo.update(next(2150,-.08,9));
+  expect(feedback.failed).toBe(false);expect(feedback.hold).toBe(false);
+  expect(feedback.action).toBe('move'); // Known gain: no repeated settled-gain calibration.
+});
+
+test('a continuous verified bend and camera-finger recentering do not halt walking or consume alignment timers',()=>{
+  const servo=calibrated();servo.interrupt();let heading=0,offset=0,moves=0,releases=0;
+  for(let i=0;i<270;i++){
+    const now=2500+i*50,step=servo.update({rotation:rotation(heading),target:[Math.sin(.3),0,Math.cos(.3)],sequence:10+i,capturedAt:now,now,canStroke:true,referenceView:true});
+    expect(step.failed).toBe(false);expect(step.hold).toBe(false);
+    if(step.action){
+      if(step.action==='down')offset=0;
+      if(step.action==='move'){heading+=(step.fraction!-offset)*5;offset=step.fraction!;moves++;}
+      if(step.action==='up')releases++;
+      servo.finishStroke(true,now+5);
+    }
+  }
+  expect(moves).toBeGreaterThan(120);expect(releases).toBeGreaterThan(0);expect(servo.snapshot().terminal).toBeNull();
+});
 test('one early opposite response waits for settling rather than learning a wrong sign or aborting',()=>{
   const servo=calibrated();
   for(const [at,h,seq] of [[1850,.18,7],[1900,.18,8],[2150,-.10,9]]){

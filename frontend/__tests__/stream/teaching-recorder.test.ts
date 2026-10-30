@@ -44,7 +44,8 @@ test('external capture heartbeat is emitted only while encoded frames arrive',as
   f.frame(96000,false);expect(f.messages.filter(m=>m.type==='encoded_heartbeat')).toHaveLength(2);
   f.context.self.onmessage({data:{type:'external_capture',enabled:false}});
   await vm.runInContext('command',f.context);
-  f.advance();f.frame(99000,false);expect(f.messages.filter(m=>m.type==='encoded_heartbeat')).toHaveLength(2);
+  f.advance();f.frame(99000,false);expect(f.messages.filter(m=>m.type==='encoded_heartbeat')).toHaveLength(3);
+  expect(f.messages.filter(m=>m.type==='encoded_heartbeat').at(-1)).toMatchObject({receivedAtMs:1001400});
 });
 
 test('twenty existing videos do not prevent a new video; library scans remain bounded at 100',async()=>{

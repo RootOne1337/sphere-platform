@@ -64,6 +64,7 @@ class WalkRouteFollower:
         self.relocalizing = None
         self.relocalizations = 0
         self.recovery_seconds = 0.
+        self.healthy_since = None
         self.acquisition = 0
         self.motion_seconds = 0.
 
@@ -81,14 +82,16 @@ class WalkRouteFollower:
         self.vector[:] = 0
         return self._reply(self.terminal_phase, self.terminal, self.terminal_progress)
 
-    def _wait_for_localization(self, at, *, confidence_only=False):
+    def _wait_for_localization(self, at, *, confidence_only=False, transport_only=False):
         self.acquisition = 0
         self.vector[:] = 0
+        self.healthy_since = None
         if not self.started:
             return self._reply('waiting', 'walk_confirming_start')
         self.arrival = 0
         if self.relocalizing is None:
-            self.relocalizing = dict(began=at, evidence_at=at, confirmations=0, counted=False)
+            self.relocalizing = dict(began=at, evidence_at=at, confirmations=0, counted=False,charge=not transport_only)
+        if not transport_only:self.relocalizing['charge']=True
         if not confidence_only and not self.relocalizing.get('counted', True):
             self.relocalizations += 1
             self.relocalizing['counted'] = True
@@ -97,7 +100,8 @@ class WalkRouteFollower:
         self.relocalizing['confirmations'] = 0
         if at-self.relocalizing['evidence_at'] >= self.MAX_RELOCALIZE_SECONDS:
             return self._stop('walk_relocalization_timeout')
-        if self.recovery_seconds+at-self.relocalizing['began'] >= self.MAX_RECOVERY_SECONDS:
+        prior=self.recovery_seconds if self.relocalizing['charge'] else 0.
+        if prior+at-self.relocalizing['began'] >= self.MAX_RECOVERY_SECONDS:
             return self._stop('walk_recovery_time_budget')
         return self._reply('waiting', 'walk_relocalizing_neutral', self.high_water)
 
@@ -139,7 +143,7 @@ class WalkRouteFollower:
                 or binding != self.binding or pose.receiver_sequence <= self.sequence
                 or not 0 <= now-pose.received_at <= self.MAX_RELOCALIZE_SECONDS
                 or not pose.received_at <= pose.completed_at <= now
-                or self.last_at is not None and not 0 < pose.received_at-self.last_at <= 2.):
+                or self.last_at is not None and not 0 < pose.received_at-self.last_at <= 3.):
             return self._stop('walk_pose_binding_or_age')
         dt = .1 if self.last_at is None else pose.received_at-self.last_at
         self.sequence, self.last_at = pose.receiver_sequence, pose.received_at
@@ -148,18 +152,18 @@ class WalkRouteFollower:
             # response is delivery loss, not proof that the map/epoch changed.
             # Consume its sequence, retain the last GOOD geometry, and require
             # three NEW fresh poses through the existing bounded recovery path.
-            return self._wait_for_localization(now,confidence_only=True)
+            return self._wait_for_localization(now,confidence_only=True,transport_only=True)
         if pose.state in {'confirming','localized'}:self._recovery_evidence(pose)
         if dt>.5:
             self.vector[:]=0;self.acquisition=0
             if self.started:
-                waiting=self._wait_for_localization(pose.received_at,confidence_only=True)
+                waiting=self._wait_for_localization(pose.received_at,confidence_only=True,transport_only=True)
                 if waiting['phase']=='stopped':return waiting
         if pose.state != 'localized':
             # A neutral transport gap still requires three fresh geometric
             # confirmations, but is not evidence that the place was lost.
             transport=pose.reason in {'route_observation_gap','route_frame_expired_during_localization'} or pose.state=='confirming'
-            return self._wait_for_localization(pose.received_at,confidence_only=transport)
+            return self._wait_for_localization(pose.received_at,confidence_only=transport,transport_only=transport)
         try:
             center, rotation = np.asarray(pose.center, float), np.asarray(pose.rotation, float).reshape(3, 3)
             progress, cross = float(pose.progress_units), float(pose.cross_track_units)
@@ -183,7 +187,11 @@ class WalkRouteFollower:
             self.vector[:]=0
             if pose.received_at-self.relocalizing['evidence_at']>=self.MAX_RELOCALIZE_SECONDS:
                 return self._stop('walk_relocalization_timeout')
-            recovery_seconds=self.recovery_seconds+pose.received_at-self.relocalizing['began']
+            # A delivery-only pause is not lost-place evidence. Bound its own
+            # continuous acquisition, but do not add short video gaps over an
+            # otherwise healthy route until a lifetime six-second cut-off.
+            counted=self.relocalizing['charge']
+            recovery_seconds=(self.recovery_seconds if counted else 0.)+pose.received_at-self.relocalizing['began']
             if recovery_seconds>=self.MAX_RECOVERY_SECONDS:
                 return self._stop('walk_recovery_time_budget')
             old_center,old_rotation=self.last_good
@@ -194,7 +202,7 @@ class WalkRouteFollower:
             self.relocalizing['confirmations']+=1
             if self.relocalizing['confirmations']<3:
                 return self._reply('waiting','walk_relocalizing_neutral',progress)
-            self.recovery_seconds=recovery_seconds
+            if counted:self.recovery_seconds=recovery_seconds
             self.relocalizing=None;self.history.clear()
             # A neutral recovery sent no camera commands. Start a new bounded
             # alignment attempt from the newly verified pose, not an old timer.
@@ -225,6 +233,11 @@ class WalkRouteFollower:
             return self._stop('walk_progress_jump')
         self.high_water = max(self.high_water, progress)
         self.last_good=(center.copy(),rotation.copy())
+        if motion_active is True:
+            if self.healthy_since is None:self.healthy_since=(pose.received_at,progress)
+            elif pose.received_at-self.healthy_since[0]>=2. and progress-self.healthy_since[1]>=self.step*.35:
+                self.recovery_seconds=0.;self.relocalizations=0
+        else:self.healthy_since=None
         # Deliberate neutral camera/ACK waits are not a blocked route. Count
         # only fresh intervals with an applied non-neutral stick receipt.
         if motion_active is not None:
@@ -263,15 +276,34 @@ class WalkRouteFollower:
             t=float(np.clip((progress-self.arc[i])/max(self.steps[i],MIN_TRACE_STEP_UNITS),0.,1.))
             forward=(1-t)*self.reference_rotations[i][2]+t*self.reference_rotations[i+1][2]
             if np.linalg.norm(forward)<.1:return self._stop('walk_target_direction_unknown')
+            # Anticipate the recorded view, using localized progress rather
+            # than the live clock. At most 0.2 recorded seconds, one map step
+            # and 0.25 radians ahead: no jump to a distant corner or key replay.
+            source_at=float(np.interp(progress,self.arc,self.route.source_seconds))
+            ahead=min(self.total,progress+self.step,float(np.interp(source_at+.2,self.route.source_seconds,self.arc)))
+            j=min(len(self.steps)-1,int(np.searchsorted(self.arc,ahead,side='right')-1))
+            u=float(np.clip((ahead-self.arc[j])/max(self.steps[j],MIN_TRACE_STEP_UNITS),0.,1.))
+            future=(1-u)*self.reference_rotations[j][2]+u*self.reference_rotations[j+1][2]
+            if np.linalg.norm(future)>=.1:
+                a=forward/np.linalg.norm(forward);b=future/np.linalg.norm(future)
+                angle=float(np.arccos(np.clip(a@b,-1,1)));mix=min(1.,.25/max(angle,1e-9))
+                forward=(1-mix)*a+mix*b
             look=rotation@(forward/np.linalg.norm(forward))
             view=dict(targetViewCamera=[float(v) for v in look],referenceView=True)
         if self.camera_tracking:
             look=np.asarray(view.get('targetViewCamera',camera_delta))
             yaw=abs(float(math.atan2(look[0],look[2])))
             pitch=abs(float(math.atan2(look[1],math.hypot(look[0],look[2])))) if view else 0.
-            threshold=((.08 if self.alignment is not None else (.40 if view else .20)) if self.camera_control=='continuous_drag_v1' else .14)
+            # A calibrated reference-view servo can correct moderate bends
+            # while the holonomic pedestrian stick keeps following the trace.
+            # Rotate in place only for a large mismatch, not every 23-degree
+            # lag. Exit that recovery before demanding sub-degree alignment.
+            continuous=self.camera_control=='continuous_drag_v1' and bool(view)
+            threshold=((.40 if self.alignment is not None else .80) if continuous else
+                       (.08 if self.alignment is not None else .20) if self.camera_control=='continuous_drag_v1' else .14)
             error=max(yaw,pitch)
-            if yaw>threshold or pitch>(.06 if self.alignment is not None else .25):
+            pitch_limit=(.20 if self.alignment is not None else .35) if continuous else (.06 if self.alignment is not None else .25)
+            if yaw>threshold or pitch>pitch_limit:
                 self.vector[:] = 0
                 if self.alignment is None:
                     self.alignment = dict(began=now, improved=now, best=error)
