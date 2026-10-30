@@ -8,6 +8,18 @@ beforeEach(()=>{
 });
 afterEach(()=>jest.restoreAllMocks());
 
+test('expiry hides the live pin without snapping the compass back to a different recorded heading',()=>{
+  const cameras=[{center:[0,0,0],ticks_90k:0,camera_to_world:[[1,0,0,0],[0,1,0,0],[0,0,1,0]]},
+    {center:[0,0,1],ticks_90k:9000,camera_to_world:[[-1,0,0,0],[0,1,0,0],[0,0,-1,1]]}];
+  const live={center:[0,0,.5],ticks_90k:0,camera_to_world:[[0,0,1,0],[0,1,0,0],[-1,0,0,.5]]};
+  const view=render(<RouteGeometryMap cameras={cameras} points={[]} selectedTicks={0} liveCamera={live} orientationCamera={live}/>);
+  const angle=screen.getByLabelText('Поворот схемы').getAttribute('data-angle-radians');
+  view.rerender(<RouteGeometryMap cameras={cameras} points={[]} selectedTicks={9000} orientationCamera={live}/>);
+  expect(screen.getByLabelText('Поворот схемы')).toHaveAttribute('data-angle-radians',angle);
+  expect(screen.queryByLabelText('Подтверждённое живое положение')).not.toBeInTheDocument();
+  expect(screen.getByText(/Поворот схемы сохранён/)).toBeInTheDocument();
+});
+
 test('live marker updates do not repaint thousands of depth-coloured landmarks',()=>{
   const cameras=[{center:[0,0,0],ticks_90k:0,camera_to_world:[[1,0,0,0],[0,1,0,0],[0,0,1,0]]},
     {center:[0,0,1],ticks_90k:9000,camera_to_world:[[1,0,0,0],[0,1,0,0],[0,0,1,1]]}];

@@ -20,7 +20,34 @@ class WalkRouteTests(unittest.TestCase):
             self.route.world_revision,'e'*32,self.sequence,self.now,self.now,'a'*64,(960,540),
             center=(0.,0.,progress),rotation=(1.,0.,0.,0.,1.,0.,0.,0.,1.),segment=min(6,int(progress/5)),
             progress_units=progress,cross_track_units=0.,inliers=50,median_error_px=.5)
-        return self.follower.observe(replace(pose,**changes))
+        motion=changes.pop('motion_active',None)
+        return self.follower.observe(replace(pose,**changes),motion_active=motion)
+
+    def test_neutral_camera_wait_does_not_consume_translation_stall_budget(self):
+        for _ in range(45):
+            reply=self.observe(motion_active=False);self.now+=.1
+            self.assertNotEqual(reply['phase'],'stopped')
+        self.assertEqual(self.follower.motion_seconds,0.)
+        for i in range(20):
+            reply=self.observe(progress=i*.15,motion_active=True);self.now+=.1
+            self.assertNotEqual(reply['phase'],'stopped')
+        self.assertAlmostEqual(self.follower.motion_seconds,2.)
+
+    def test_applied_motion_without_route_progress_still_stops_at_high_query_rate(self):
+        self.observe(motion_active=False)
+        for _ in range(200):
+            self.now+=.02;reply=self.observe(motion_active=True)
+            if reply['phase']=='stopped':break
+        self.assertEqual(reply['reason'],'walk_no_route_progress')
+        self.assertLess(self.follower.motion_seconds,3.2)
+
+    def test_stationary_turn_then_short_walk_is_not_three_seconds_of_blocked_motion(self):
+        self.observe(motion_active=False)
+        for _ in range(25):self.now+=.1;self.observe(motion_active=False)
+        for _ in range(10):
+            self.now+=.1;reply=self.observe(motion_active=True)
+        self.assertEqual(reply['phase'],'following')
+        self.assertAlmostEqual(self.follower.motion_seconds,1.)
 
     def test_forward_is_screen_up_and_rate_and_magnitude_are_bounded(self):
         first=self.observe()

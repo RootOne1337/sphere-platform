@@ -63,6 +63,7 @@ class WalkRouteFollower:
         self.relocalizations = 0
         self.recovery_seconds = 0.
         self.acquisition = 0
+        self.motion_seconds = 0.
 
     def _reply(self, phase, reason, progress=None, **extra):
         return dict(schema='sphere-walk-plan-v1', phase=phase, reason=reason,
@@ -98,8 +99,10 @@ class WalkRouteFollower:
             return self._stop('walk_recovery_time_budget')
         return self._reply('waiting', 'walk_relocalizing_neutral', self.high_water)
 
-    def observe(self, pose: RoutePose):
+    def observe(self, pose: RoutePose, *, motion_active=None):
         np, now = self.np, self.clock()
+        if motion_active is not None and type(motion_active) is not bool:
+            return self._stop('walk_motion_feedback_invalid')
         if self.terminal:
             return self._stop(self.terminal)
         if not math.isfinite(now) or now < self.began or now-self.began >= self.MAX_SECONDS:
@@ -198,10 +201,17 @@ class WalkRouteFollower:
             return self._stop('walk_progress_jump')
         self.high_water = max(self.high_water, progress)
         self.last_good=(center.copy(),rotation.copy())
-        self.history.append((pose.received_at, self.high_water))
-        while len(self.history) > 1 and self.history[1][0] <= pose.received_at-3:
+        # Deliberate neutral camera/ACK waits are not a blocked route. Count
+        # only fresh intervals with an applied non-neutral stick receipt.
+        if motion_active is not None:
+            if motion_active and dt<=.5:self.motion_seconds+=min(dt,.25)
+            progress_clock=self.motion_seconds
+        else:progress_clock=pose.received_at  # Recorded-only legacy replay.
+        if not self.history or progress_clock-self.history[-1][0]>=.075:
+            self.history.append((progress_clock, self.high_water))
+        while len(self.history) > 1 and self.history[1][0] <= progress_clock-3:
             self.history.popleft()
-        stalled = (pose.received_at-self.history[0][0] >= 3
+        stalled = (progress_clock-self.history[0][0] >= 3
                    and self.high_water-self.history[0][1] < self.step*.35)
         # A closed loop has an endpoint near the start. Distance alone must
         # never count as arrival; ordered progress must reach the final segment.
@@ -253,7 +263,7 @@ class WalkRouteFollower:
                                    targetCamera=[float(v) for v in camera_delta],**view)
             if self.alignment is not None:
                 self.alignment = None
-                self.history.clear();self.history.append((pose.received_at, self.high_water))
+                self.history.clear();self.history.append((progress_clock, self.high_water))
                 stalled = False
         if stalled:
             return self._stop('walk_no_route_progress')

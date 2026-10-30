@@ -298,7 +298,7 @@ class RouteWorkspaces:
 
         required={'id', 'captureEpoch', 'width', 'height', 'sceneConfirmed', 'footCameraAssumptionConfirmed'}
         if (type(body) is not dict or body.get('footCameraAssumptionConfirmed') is not True
-                or not required <= body.keys() or not body.keys() <= required|{'startMode','cameraTracking','cameraControl','diagnosticFrames'}
+                or not required <= body.keys() or not body.keys() <= required|{'startMode','cameraTracking','cameraControl','diagnosticFrames','clientVersion'}
                 or type(body.get('diagnosticFrames',False)) is not bool
                 or type(body.get('cameraTracking',False)) is not bool
                 or type(body.get('cameraControl','pulse_v1')) is not str
@@ -306,10 +306,12 @@ class RouteWorkspaces:
                 or 'cameraControl' in body and body.get('cameraTracking') is not True
                 or body.get('startMode','beginning') not in {'beginning','recognized_route'}):
             raise ValueError('walk_explicit_confirmation_required')
+        if body.get('clientVersion')!='walk_live_v5':
+            raise ValueError('Обновите вкладку страницы (Ctrl+R): загружен прежний контур управления. Нужен walk_live_v5.')
         start_mode=body.get('startMode','beginning')
         camera_tracking=body.get('cameraTracking',False)
         camera_control=body.get('cameraControl','pulse_v1')
-        request = {key: value for key, value in body.items() if key not in {'footCameraAssumptionConfirmed','startMode','cameraTracking','cameraControl','diagnosticFrames'}}
+        request = {key: value for key, value in body.items() if key not in {'footCameraAssumptionConfirmed','startMode','cameraTracking','cameraControl','diagnosticFrames','clientVersion'}}
         self._expire()
         if self.live and self.live['id'] == request['id'] and 'walk' not in self.live:
             raise ValueError('walk_observer_cannot_be_promoted')
@@ -323,13 +325,14 @@ class RouteWorkspaces:
             raise ValueError('walk_diagnostic_mode_changed')
         self.start_live(job, request)
         self._install_walk(start_mode=start_mode,camera_tracking=camera_tracking,camera_control=camera_control)
+        self.live['motion_protocol']='applied_stick_v1'
         if body.get('diagnosticFrames') and not self.live.get('frame_archive'):
             from scripts.pilot.walk_diagnostics import WalkFrameArchive
             self.live['frame_archive']=WalkFrameArchive(job,body['id'],clock=self.clock,
                 geometry_sha256=self.live['geometry_sha256'],capture_epoch=body['captureEpoch'])
         return dict(self.live_status(), mode='foot_camera_trace_v1', physicalActions=0, maxSeconds=60,
                     startMode=start_mode,cameraTracking=camera_tracking,cameraControl=camera_control,
-                    observationProtocol='jpeg_binary_v1')
+                    observationProtocol='jpeg_binary_v1',motionProtocol='applied_stick_v1',clientVersion='walk_live_v5')
 
     def _install_walk(self, *, start_mode='beginning',camera_tracking=False,camera_control='pulse_v1'):
         from motor_worker.walk_route import WalkRouteFollower
@@ -362,11 +365,12 @@ class RouteWorkspaces:
         return dict(self.live_status(),mode='recorded_replay',replayOnly=True,maxSeconds=60)
 
     def observe(self, job, body, *, mode='live'):
-        if (type(body) is not dict or set(body) != {'id','captureEpoch','sequence','jpeg'}
+        if (type(body) is not dict or not {'id','captureEpoch','sequence','jpeg'}<=body.keys()
+                or not body.keys()<={'id','captureEpoch','sequence','jpeg','motionActive'}
                 or type(body['jpeg']) is not str or len(body['jpeg']) > 512*1024):
             raise ValueError('route_observation_not_bound')
         raw=base64.b64decode(body['jpeg'],validate=True)
-        return self.observe_jpeg(job,{k:body[k] for k in ('id','captureEpoch','sequence')},raw,mode=mode)
+        return self.observe_jpeg(job,{k:v for k,v in body.items() if k!='jpeg'},raw,mode=mode)
 
     def observe_jpeg(self, job, body, raw, *, mode='live'):
         import cv2 as cv
@@ -377,13 +381,17 @@ class RouteWorkspaces:
         from motor_worker.route_localization import PNP_VERIFICATION_POLICY, COARSE_SEARCH_POLICY
 
         self._expire()
-        if (type(body) is not dict or set(body) != {'id', 'captureEpoch', 'sequence'}
+        if (type(body) is not dict or not {'id', 'captureEpoch', 'sequence'}<=body.keys()
+                or not body.keys()<={'id','captureEpoch','sequence','motionActive'}
+                or 'motionActive' in body and type(body['motionActive']) is not bool
                 or self.live is None or self.live['id'] != body['id'] or self.live['job'] != job.name
                 or self.live.get('mode','live')!=mode
                 or body['captureEpoch'] != self.live['binding']['captureEpoch']
                 or type(body['sequence']) is not int or body['sequence'] <= self.live['sequence']
                 or body['sequence'] > 1000000):
             raise ValueError('route_observation_not_bound')
+        if self.live.get('motion_protocol')=='applied_stick_v1' and 'motionActive' not in body:
+            raise ValueError('walk_motion_feedback_required')
         if type(raw) is not bytes or not 100 <= len(raw) <= 384*1024:
             raise ValueError('route_jpeg_quota')
         with Image.open(io.BytesIO(raw)) as header:
@@ -422,7 +430,9 @@ class RouteWorkspaces:
             nearest=min(candidates,key=lambda i:sum((a-b)**2 for a,b in zip(trace[i],pose.center)))
             result['referenceTicks90k']=round(session['tracker'].route.source_seconds[nearest]*90000)
         if 'walk' in session:
-            result['walk'] = session['walk'].observe(pose)
+            result['walk'] = session['walk'].observe(pose,motion_active=body.get('motionActive'))
+            result['walk']['motionActive']=body.get('motionActive')
+            result['walk']['motionSeconds']=session['walk'].motion_seconds
         if session.get('frame_archive'):
             session['frame_archive'].offer(raw,sequence=body['sequence'],pose=pose,plan=result.get('walk'),
                 method=result['method'],compute_ms=elapsed)

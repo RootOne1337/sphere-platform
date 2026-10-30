@@ -36,7 +36,8 @@ def analyze(archive, since):
 
 def render(rows, output, archive_count):
     from PIL import Image,ImageDraw,ImageFont
-    im=Image.new('RGB',(1800,1190),'#091321');d=ImageDraw.Draw(im)
+    footer=max(1037,664+len(rows)*47+32)
+    im=Image.new('RGB',(1800,footer+153),'#091321');d=ImageDraw.Draw(im)
     font=lambda n,b=False:ImageFont.truetype('C:/Windows/Fonts/segoeuib.ttf' if b else 'C:/Windows/Fonts/segoeui.ttf',n)
     def text(x,y,s,n=22,color='#edf5ff',bold=False):d.text((x,y),s,font=font(n,bold),fill=color)
     date=datetime.fromisoformat(rows[0]['localTime']).strftime('%d.%m.%Y') if rows else ''
@@ -46,21 +47,22 @@ def render(rows, output, archive_count):
     text(65,140,f'Сохранены {len(rows)} попыток · {span} · исходный архив: {archive_count} отчёта',23,'#a6b9cd')
     d.rounded_rectangle((65,200,1735,520),18,fill='#102033',outline='#29455e')
     text(90,217,'Максимальные задержки в сохранённой части логов',26,bold=True)
+    ceiling=max(850,max((v.get('maximum',0) for r in rows for v in r['timings'].values()),default=0)*1.08)
     for i,(kind,label) in enumerate([('source_gap','Пауза кадров'),('jpeg','Подготовка JPEG'),('http','HTTP-ответ')]):
         value=max((r['timings'].get(kind,{}).get('maximum',0) for r in rows),default=0)
-        y=280+i*66;text(95,y,label,22);d.rounded_rectangle((390,y+5,390+value/850*1120,y+30),7,fill='#ffb963')
-        text(min(1560,410+value/850*1120),y,f'{value:.1f} мс',20)
-    x=390+250/850*1120;d.line((x,268,x,472),fill='#f37c83',width=2);text(x+8,478,'250 мс · предел свежести',18,'#f3a4a8')
+        y=280+i*66;text(95,y,label,22);d.rounded_rectangle((390,y+5,390+value/ceiling*1120,y+30),7,fill='#ffb963')
+        text(min(1560,410+value/ceiling*1120),y,f'{value:.1f} мс',20)
+    x=390+250/ceiling*1120;d.line((x,268,x,472),fill='#f37c83',width=2);text(x+8,478,'250 мс · предел свежести',18,'#f3a4a8')
     text(95,560,'Наблюдения и причины завершения',28,bold=True)
     for x,label in [(95,'Время'),(270,'Кадры'),(445,'Локализованы'),(730,'Android ACK*'),(1020,'Завершение')]:text(x,615,label,20,'#a6b9cd',True)
-    reasons={'walk_manual_stop':'остановлено пользователем','walk_relocalization_timeout':'восстановление дольше 2 с','walk_relocalization_budget':'лимит потерь позиции'}
+    reasons={'walk_manual_stop':'стоп / потеря фокуса прежнего клиента','walk_relocalization_timeout':'восстановление дольше 2 с','walk_relocalization_budget':'лимит потерь позиции','walk_no_route_progress':'продвижение не подтверждено'}
     for i,r in enumerate(rows):
         y=664+i*47
         text(95,y,r['localTime'][11:19],21);text(270,y,str(r['observations']),21)
         text(445,y,str(r['states'].get('localized',0)),21,'#78e3b5' if r['states'].get('localized',0) else '#ffb963')
         text(730,y,str(r['applied']),21);text(1020,y,reasons.get(r['stop'],r['stop']),21,'#ffb963')
-    text(65,1037,'* Подтверждены команды стику; это число включает возврат в центр и не измеряет пройденный путь.',21,'#a6b9cd')
-    text(65,1082,'Новая версия пишет точные кадры, команды и тайминги с ограничением объёма и ротацией.',22,'#78e3b5')
+    text(65,footer,'* Подтверждены команды стику; это число включает возврат в центр и не измеряет пройденный путь.',21,'#a6b9cd')
+    text(65,footer+45,'Новый контур различает ручной стоп, скрытие вкладки и отсутствие продвижения при применённом стике.',22,'#78e3b5')
     im.save(output)
 
 

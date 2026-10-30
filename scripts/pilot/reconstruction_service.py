@@ -559,7 +559,7 @@ def handler(jobs, origin, port):
             self.send_header('Access-Control-Allow-Origin', origin)
             self.send_header('Access-Control-Allow-Methods', 'GET, POST, PUT, OPTIONS')
             self.send_header('Access-Control-Max-Age', '600')
-            self.send_header('Access-Control-Allow-Headers', 'Content-Type, X-Sphere-Reconstruction, X-Job-Key, X-Upload-Offset, X-Route-Session, X-Capture-Epoch, X-Frame-Sequence')
+            self.send_header('Access-Control-Allow-Headers', 'Content-Type, X-Sphere-Reconstruction, X-Job-Key, X-Upload-Offset, X-Route-Session, X-Capture-Epoch, X-Frame-Sequence, X-Walk-Motion')
             self.end_headers()
 
         def body(self, maximum):
@@ -652,9 +652,11 @@ def handler(jobs, origin, port):
                         sequence=self.headers.get('X-Frame-Sequence','')
                         if not re.fullmatch(r'[1-9][0-9]{0,6}',sequence):
                             raise ValueError('route_observation_not_bound')
+                        motion=self.headers.get('X-Walk-Motion')
+                        if motion is not None and motion not in {'0','1'}:raise ValueError('walk_motion_feedback_invalid')
                         self.reply(200,jobs.navigation.observe_jpeg(job,dict(
                             id=self.headers.get('X-Route-Session',''),captureEpoch=self.headers.get('X-Capture-Epoch',''),
-                            sequence=int(sequence)),self.body(384*1024)))
+                            sequence=int(sequence),**({} if motion is None else {'motionActive':motion=='1'})),self.body(384*1024)))
                     elif method == 'POST' and parts[2:] == ['navigation', 'stop']:
                         self.reply(200, jobs.navigation.stop_live(job, json.loads(self.body(1024))))
                     elif method == 'PUT' and len(parts) == 4 and parts[2] == 'input':

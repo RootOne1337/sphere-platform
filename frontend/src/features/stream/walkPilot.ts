@@ -6,6 +6,7 @@ export type WalkPlan={schema:'sphere-walk-plan-v1';phase:'waiting'|'following'|'
   groundRoute:false;executionQualified:false;cameraBodyAssumption:true};
 export type WalkInputLease={active():boolean;failure?():string|null;set(vector:[number,number]):void;canLook?():boolean;look?(fraction:number,notAfter:number):Promise<boolean>;
   paused?():boolean;neutral?():void;
+  translating?():boolean;
   permit?(notAfter:number):void;
   drag?(fraction:number|null,notAfter:number):Promise<boolean>;
   drag2?(point:{x:number;y:number}|null,notAfter:number):Promise<boolean>;
@@ -90,7 +91,7 @@ export const walkReasonLabel=(reason:string):string=>({
   walk_pose_or_corridor_unqualified:'Положение вне проверяемого коридора',
   walk_progress_reversed:'Прогресс по маршруту пошёл в обратную сторону',
   walk_progress_jump:'Обнаружен скачок положения на маршруте',
-  walk_no_route_progress:'Продвижение не подтверждается: возможно препятствие',
+  walk_no_route_progress:'Стик применял движение, но продвижение вдоль маршрута не подтверждено. Причина ещё не установлена',
   walk_confirming_end:'Проверяем конец пути — стик отпущен',
   walk_camera_trace_end_confirmed:'Конец пути камеры подтверждён',
   walk_target_direction_unknown:'Направление к ближайшей цели не определено',
@@ -126,4 +127,6 @@ export const walkReasonLabel=(reason:string):string=>({
   walk_camera_recentering:'Переставляем палец камеры; стик остаётся в центре',
   walk_source_not_ready:'Свежий кадр не появился перед открытием ввода. Проверьте прямой поток и повторите запуск',
   walk_manual_stop:'Остановлено оператором',
+  walk_page_hidden:'Тест остановлен: вкладка стала скрытой',
+  walk_motion_feedback_required:'Версии веба и обработчика не согласованы: обновите страницу перед запуском',
 } as Record<string,string>)[reason]??`Пеший тест остановлен: ${reason}`;

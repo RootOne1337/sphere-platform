@@ -369,7 +369,7 @@ def test_binary_observation_keeps_capability_origin_metadata_and_byte_quotas(job
     try:
         for changed,payload,expected in [({'X-Job-Key':''},raw,403),({'Origin':'https://other.example'},raw,403),
                 ({'Content-Type':'image/png'},raw,409),({'X-Frame-Sequence':'4.5'},raw,409),
-                ({},b'x'*(384*1024+1),409)]:
+                ({'X-Walk-Motion':'true'},raw,409),({},b'x'*(384*1024+1),409)]:
             with pytest.raises(urllib.error.HTTPError) as error:
                 urllib.request.urlopen(urllib.request.Request(base,data=payload,headers=headers|changed))
             assert error.value.code==expected
@@ -377,8 +377,12 @@ def test_binary_observation_keeps_capability_origin_metadata_and_byte_quotas(job
         with urllib.request.urlopen(urllib.request.Request(base,data=raw,headers=headers)) as response:
             assert json.load(response)['jpegSha256']==hashlib.sha256(raw).hexdigest()
         assert seen==[(job,dict(id='c'*32,captureEpoch='e'*32,sequence=4),raw)]
+        with urllib.request.urlopen(urllib.request.Request(base,data=raw,headers=headers|{'X-Walk-Motion':'1'})) as response:
+            assert json.load(response)['physicalActions']==0
+        assert seen[-1]==(job,dict(id='c'*32,captureEpoch='e'*32,sequence=4,motionActive=True),raw)
         with urllib.request.urlopen(urllib.request.Request(base,method='OPTIONS',headers=headers)) as response:
             assert 'X-Frame-Sequence' in response.headers['Access-Control-Allow-Headers']
+            assert 'X-Walk-Motion' in response.headers['Access-Control-Allow-Headers']
             assert response.headers['Access-Control-Max-Age']=='600'
     finally:
         server.shutdown();server.server_close();thread.join(3)

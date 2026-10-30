@@ -74,7 +74,10 @@ export class WalkCameraDrag {
     const wait=(reason:string,hold=!translating):CameraDragStep=>({hold,fraction:null,reason,yaw,pitch,failed:false});
     if(Math.abs(pitch)>(v.referenceView?1.2:.65))return this.stop('walk_camera_pitch_mismatch');
     for(const axis of ['x','y'] as const){
-      const window=this.motion[axis];if(!window||v.capturedAt-window.at<800||Math.abs(window.expected)<.06)continue;
+      const window=this.motion[axis];if(!window||v.capturedAt-window.at<800)continue;
+      // Weak or cancelling corrections must not leave a ten-second baseline
+      // that a later bend can accidentally turn into a false response failure.
+      if(Math.abs(window.expected)<.06){this.motion[axis]=undefined;continue;}
       const measured=(axis==='x'?horizontalCameraTurn:verticalCameraTurn)(window.rotation,v.rotation);
       const bad=Math.abs(measured)<.015||measured*window.expected<0;
       if(bad){
@@ -142,6 +145,10 @@ export class WalkCameraDrag {
     const engaged=v.alignmentRequired===true||this.began!==null||this.held;
     if(Math.abs(yaw)<(engaged ? .08 : .20)&&(!v.referenceView||Math.abs(pitch)<(engaged ? .06 : .12))){
       this.began=null;this.recenters=0;
+      // Keep the qualified camera finger down across small bends. Releasing
+      // here forced touch-slop activation and a stationary pause on every
+      // correction even though the gain was already measured in this run.
+      if(v.referenceView&&this.held&&this.touchActivated&&this.gain!==null)return wait('walk_camera_aligned',false);
       if(this.held&&v.canStroke)return this.edge(v,'up',0,yaw,'walk_camera_releasing');
       return wait(this.held?'walk_camera_waiting_neutral':'walk_camera_aligned',this.held);
     }
@@ -150,7 +157,9 @@ export class WalkCameraDrag {
     if(!v.canStroke||v.now-v.capturedAt>150)return wait('walk_camera_waiting_neutral');
     if(!this.held){
       if(v.now-this.releasedAt<120)return wait('walk_camera_recentering');
-      return this.edge(v,'down',0,yaw,'walk_camera_calibrating');
+      const step=this.edge(v,'down',0,yaw,'walk_camera_calibrating');
+      if(translating)step.hold=false;
+      return step;
     }
     // A long route can contain many independently verified camera corrections.
     // Bound each alignment attempt, rather than retiring a healthy run after

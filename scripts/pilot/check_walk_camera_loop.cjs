@@ -36,7 +36,7 @@ const angular=(a,b)=>Math.acos(Math.max(-1,Math.min(1,a.reduce((sum,n,i)=>sum+n*
 async function runCase(config){
  const clock=new Clock(),{Contacts,Servo}=loadRuntime(clock),servo=new Servo(),rows=[],wire=[],history=[{at:clock.now,h:0,v:0}];
  const begin=clock.now,center={x:288,y:885},anchor={x:1247,y:540},short=1080;
- let h=0,v=0,contact=null,receive=()=>{},lastFrame=clock.now,sequence=0,ready=false,inFlight=false,terminal=null,alignedAt=null,paused=0,faultAt=null;
+ let h=0,v=0,contact=null,receive=()=>{},lastFrame=clock.now,sequence=0,ready=false,inFlight=false,terminal=null,alignedAt=null,paused=0,faultAt=null,responseAtStop=null;
  let desired=forward(config.yaw??1.1,config.pitch??.3);const binding={captureEpoch:'e'.repeat(32),width:1920,height:1080};
  const envelope={session_id:'a'.repeat(32),capture_epoch:binding.captureEpoch,owner:'b'.repeat(32),contact_protocol:1,max_pointers:3,device_uptime_ms:1000};
  const endpoint={session:envelope.session_id,sharedInput:true,readyState:1,bufferedAmount:0,capture:()=>binding,listen:f=>{receive=f;return()=>{};},send:raw=>{
@@ -76,7 +76,7 @@ async function runCase(config){
    const target=[0,1,2].map(k=>R.slice(k*3,k*3+3).reduce((sum,n,i)=>sum+n*desired[i],0));
    const step=servo.update({rotation:R,target,sequence:seq,capturedAt,now:clock.now,canStroke:control.canCameraCommand(center),referenceView:true,alignmentRequired:alignedAt===null});
    rows.push({ms:clock.now-begin,yaw:step.yaw,pitch:step.pitch,physicalError:angular(forward(h,v),desired),reason:step.reason,action:step.action??null,x:step.fraction,y:step.verticalFraction});
-   if(step.failed){terminal=step.reason;void control.close();return;}
+   if(step.failed){responseAtStop={windows:JSON.parse(JSON.stringify(servo.motion)),rotation:R};terminal=step.reason;void control.close();return;}
    if(step.action){
     const generation=servo.generation,until=capturedAt+250;
     control.cameraCommand(step.action==='up'?null:{x:anchor.x+Math.round((step.fraction??0)*short),y:anchor.y+Math.round((step.verticalFraction??0)*short)},until,center).then(applied=>{
@@ -94,7 +94,7 @@ async function runCase(config){
  const tracking=rows.filter(row=>row.ms>5000).map(row=>row.physicalError);
  return {config,terminal,alignedAtMs:alignedAt,faultAtMs:faultAt,finalAngularError:angular(forward(h,v),desired),neutralizations:paused,closed,
   trackingError:tracking.length?{maximum:Math.max(...tracking),mean:tracking.reduce((sum,n)=>sum+n,0)/tracking.length}:null,
-  cameraDowns:wire.filter(e=>e.pointer_id===1&&e.action===0).length,moves:wire.filter(e=>e.pointer_id===1&&e.action===2).length,servo:servo.snapshot(),rows};
+  cameraDowns:wire.filter(e=>e.pointer_id===1&&e.action===0).length,moves:wire.filter(e=>e.pointer_id===1&&e.action===2).length,servo:servo.snapshot(),responseAtStop,rows};
 }
 (async()=>{
  const cases=[];for(const gain of [[3,4],[12,-8],[-6,10]])for(const visualMs of [60,160])for(const slopPx of [8,16]){

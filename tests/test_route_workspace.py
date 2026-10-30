@@ -254,10 +254,10 @@ class RouteWorkspaceTests(unittest.TestCase):
         import numpy as np
         self.attach_fixture_map();self.workspace.stop_live(self.job,dict(id='d'*32))
         body=dict(id='f'*32,captureEpoch='e'*32,width=960,height=540,sceneConfirmed=True,
-            footCameraAssumptionConfirmed=True,diagnosticFrames=True)
+            clientVersion='walk_live_v5',footCameraAssumptionConfirmed=True,diagnosticFrames=True)
         with patch('scripts.pilot.route_workspace.resource_checkpoint'):self.workspace.start_walk(self.job,body)
         _,jpeg=cv.imencode('.jpg',np.zeros((540,960,3),np.uint8))
-        self.workspace.observe(self.job,dict(id='f'*32,captureEpoch='e'*32,sequence=1,jpeg=base64.b64encode(jpeg).decode()))
+        self.workspace.observe(self.job,dict(id='f'*32,captureEpoch='e'*32,sequence=1,jpeg=base64.b64encode(jpeg).decode(),motionActive=False))
         self.assertFalse((self.job/'walk-diagnostics').exists())
         stopped=self.workspace.stop_live(self.job,dict(id='f'*32))
         self.assertEqual(stopped['diagnostics']['frames'],1)
@@ -270,8 +270,33 @@ class RouteWorkspaceTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError,'explicit_confirmation'):
             self.workspace.start_walk(self.job,body)
         with self.assertRaisesRegex(ValueError,'cannot_be_promoted'):
-            self.workspace.start_walk(self.job,dict(body,footCameraAssumptionConfirmed=True))
+            self.workspace.start_walk(self.job,dict(body,clientVersion='walk_live_v5',footCameraAssumptionConfirmed=True))
         self.assertNotIn('walk',self.workspace.live)
+
+    def test_old_walk_client_is_rejected_with_an_actionable_reload_before_open(self):
+        self.attach_fixture_map();self.workspace.stop_live(self.job,dict(id='d'*32))
+        body=dict(id='f'*32,captureEpoch='e'*32,width=960,height=540,sceneConfirmed=True,footCameraAssumptionConfirmed=True)
+        with self.assertRaisesRegex(ValueError,'Ctrl\\+R'):
+            self.workspace.start_walk(self.job,body)
+        self.assertIsNone(self.workspace.live)
+
+    def test_motion_feedback_is_required_bound_and_boolean_for_the_walk_protocol(self):
+        import cv2 as cv
+        import numpy as np
+        self.attach_fixture_map();self.workspace.stop_live(self.job,dict(id='d'*32))
+        body=dict(id='f'*32,captureEpoch='e'*32,width=960,height=540,sceneConfirmed=True,
+                  footCameraAssumptionConfirmed=True,clientVersion='walk_live_v5')
+        with patch('scripts.pilot.route_workspace.resource_checkpoint'):
+            reply=self.workspace.start_walk(self.job,body)
+        self.assertEqual(reply['motionProtocol'],'applied_stick_v1')
+        _,encoded=cv.imencode('.jpg',np.zeros((540,960,3),np.uint8))
+        frame=dict(id='f'*32,captureEpoch='e'*32,sequence=1)
+        for changed in ({},{'motionActive':1},{'motionActive':'true'}):
+            with self.subTest(changed=changed),self.assertRaises(ValueError):
+                self.workspace.observe_jpeg(self.job,dict(frame,**changed),encoded.tobytes())
+        self.assertEqual(self.workspace.live['sequence'],0)
+        result=self.workspace.observe_jpeg(self.job,dict(frame,motionActive=False),encoded.tobytes())
+        self.assertFalse(result['walk']['motionActive']);self.assertEqual(result['walk']['motionSeconds'],0)
 
     def test_walk_plan_is_separate_finite_and_unknown_jpeg_stays_neutral(self):
         import cv2 as cv
@@ -279,7 +304,7 @@ class RouteWorkspaceTests(unittest.TestCase):
 
         self.attach_fixture_map()
         self.workspace.stop_live(self.job,dict(id='d'*32))
-        body=dict(id='f'*32,captureEpoch='e'*32,width=960,height=540,sceneConfirmed=True,footCameraAssumptionConfirmed=True)
+        body=dict(id='f'*32,captureEpoch='e'*32,width=960,height=540,sceneConfirmed=True,clientVersion='walk_live_v5',footCameraAssumptionConfirmed=True)
         with patch('scripts.pilot.route_workspace.resource_checkpoint'):
             result=self.workspace.start_walk(self.job,body)
         self.assertEqual(result['mode'],'foot_camera_trace_v1')
@@ -292,13 +317,13 @@ class RouteWorkspaceTests(unittest.TestCase):
             self.workspace.start_walk(self.job,body)
         self.assertIs(self.workspace.live['walk'],first)
         _,encoded=cv.imencode('.jpg',np.zeros((540,960,3),np.uint8))
-        value=self.workspace.observe(self.job,dict(id='f'*32,captureEpoch='e'*32,sequence=1,jpeg=base64.b64encode(encoded).decode()))
+        value=self.workspace.observe(self.job,dict(id='f'*32,captureEpoch='e'*32,sequence=1,jpeg=base64.b64encode(encoded).decode(),motionActive=False))
         self.assertEqual(value['walk']['stick'],[0.,0.])
 
     def test_recognized_route_mode_is_acknowledged_and_same_intent_cannot_change_mode(self):
         self.attach_fixture_map();self.workspace.stop_live(self.job,dict(id='d'*32))
         body=dict(id='f'*32,captureEpoch='e'*32,width=960,height=540,sceneConfirmed=True,
-            footCameraAssumptionConfirmed=True,startMode='recognized_route')
+            clientVersion='walk_live_v5',footCameraAssumptionConfirmed=True,startMode='recognized_route')
         with patch('scripts.pilot.route_workspace.resource_checkpoint'):
             result=self.workspace.start_walk(self.job,body)
         self.assertEqual(result['startMode'],'recognized_route')
@@ -313,7 +338,7 @@ class RouteWorkspaceTests(unittest.TestCase):
     def test_camera_mode_is_separately_acknowledged_and_cannot_change_in_place(self):
         self.attach_fixture_map();self.workspace.stop_live(self.job,dict(id='d'*32))
         body=dict(id='f'*32,captureEpoch='e'*32,width=960,height=540,sceneConfirmed=True,
-                  footCameraAssumptionConfirmed=True,cameraTracking=True,cameraControl='continuous_drag_v1')
+                  clientVersion='walk_live_v5',footCameraAssumptionConfirmed=True,cameraTracking=True,cameraControl='continuous_drag_v1')
         with patch('scripts.pilot.route_workspace.resource_checkpoint'):
             reply=self.workspace.start_walk(self.job,body)
         self.assertTrue(reply['cameraTracking']);self.assertTrue(self.workspace.live['walk'].camera_tracking)
@@ -339,7 +364,7 @@ class RouteWorkspaceTests(unittest.TestCase):
         self.assertIs(self.workspace.live['walk'],follower)
         live=dict(body,sceneConfirmed=True)
         with self.assertRaises(ValueError):self.workspace.start_live(self.job,live)
-        with self.assertRaises(ValueError):self.workspace.start_walk(self.job,dict(live,footCameraAssumptionConfirmed=True))
+        with self.assertRaises(ValueError):self.workspace.start_walk(self.job,dict(live,clientVersion='walk_live_v5',footCameraAssumptionConfirmed=True))
         _,encoded=cv.imencode('.jpg',np.zeros((540,960,3),np.uint8))
         frame=dict(id=body['id'],captureEpoch=body['captureEpoch'],sequence=1,jpeg=base64.b64encode(encoded).decode())
         with self.assertRaisesRegex(ValueError,'not_bound'):self.workspace.observe(self.job,frame)
@@ -363,7 +388,7 @@ class RouteWorkspaceTests(unittest.TestCase):
         self.assertEqual(self.workspace.status(self.job)['error'],'route_feature_runtime_mismatch')
         with self.assertRaisesRegex(ValueError,'not_ready'):
             self.workspace.start_walk(self.job,dict(id='f'*32,captureEpoch='e'*32,width=960,height=540,
-                sceneConfirmed=True,footCameraAssumptionConfirmed=True))
+                sceneConfirmed=True,clientVersion='walk_live_v5',footCameraAssumptionConfirmed=True))
 
     def test_jpeg_dimensions_are_checked_before_decode_and_failed_confirmation_cannot_open_input(self):
         import cv2 as cv

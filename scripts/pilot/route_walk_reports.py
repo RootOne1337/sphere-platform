@@ -28,7 +28,9 @@ def store_walk_report(job, body):
         if (type(camera) is not dict or not camera_fields<=camera.keys()
                 or not camera.keys()<=camera_fields|{'minimumFraction','quietResponses','feedback','mode','pitchGainRadiansPerShortSide'}
                 or camera.get('mode','continuous_drag_v1')!='continuous_drag_v1'
-                or type(camera['pulses']) is not int or not 0<=camera['pulses']<=120
+                # The servo bounds each alignment to 120 moves; this scalar
+                # counts all corrections over the whole 60-second run.
+                or type(camera['pulses']) is not int or not 0<=camera['pulses']<=4096
                 or type(camera['calibrationAttempts']) is not int or not 0<=camera['calibrationAttempts']<=3
                 or camera['gainRadiansPerShortSide'] is not None and (
                     type(camera['gainRadiansPerShortSide']) not in {int,float}
@@ -111,14 +113,15 @@ def store_walk_report(job, body):
         raise ValueError('walk_report_observations')
     required = {'elapsedMs', 'sequence', 'ageMs', 'computeMs', 'state', 'reason', 'poseState', 'inliers', 'progress'}
     allowed = required | {'segment', 'medianErrorPx', 'crossTrackUnits','poseReason','plannerReason','cameraYawRadians','cameraPitchRadians',
-        'captureMode','captureMs','workerMs','encodeMs','hashMs','method','runtimePolicy','sourcePresented','sourceMediaTime','decodeMs','receiveAgeMs','captureAgeMs','stick'}
+        'captureMode','captureMs','workerMs','encodeMs','hashMs','method','runtimePolicy','sourcePresented','sourceMediaTime','decodeMs','receiveAgeMs','captureAgeMs','stick','motionActive','motionSeconds'}
     for row in observations:
         if (type(row) is not dict or not required <= row.keys() or not row.keys() <= allowed
-                or any((type(v) is not list or len(v)!=2 or any(type(n) not in {int,float} or not math.isfinite(n) or abs(n)>.350001 for n in v)) if k=='stick'
+                or any((type(v) is not bool) if k=='motionActive'
+                       else (type(v) is not list or len(v)!=2 or any(type(n) not in {int,float} or not math.isfinite(n) or abs(n)>.350001 for n in v)) if k=='stick'
                        else (v is not None and v not in {'video_frame','bitmap','canvas'}) if k=='captureMode'
                        else (v is not None and (type(v) is not str or not re.fullmatch('[a-z0-9_-]{1,100}',v))) if k=='runtimePolicy'
                        else (v is not None and (type(v) not in {int,float} or not math.isfinite(v) or abs(v)>math.pi)) if k in {'cameraYawRadians','cameraPitchRadians'}
-                       else not code(v) if k in {'state', 'reason', 'poseState','poseReason','plannerReason','method'} else not number(v, nullable=k in {'progress', 'segment', 'medianErrorPx', 'crossTrackUnits','captureMs','workerMs','encodeMs','hashMs','sourcePresented','sourceMediaTime','decodeMs','receiveAgeMs','captureAgeMs'})
+                       else not code(v) if k in {'state', 'reason', 'poseState','poseReason','plannerReason','method'} else not number(v, nullable=k in {'progress', 'segment', 'medianErrorPx', 'crossTrackUnits','captureMs','workerMs','encodeMs','hashMs','sourcePresented','sourceMediaTime','decodeMs','receiveAgeMs','captureAgeMs','motionSeconds'})
                        for k, v in row.items())):
             raise ValueError('walk_report_observation')
     raw = json.dumps(body, sort_keys=True, separators=(',', ':'), allow_nan=False).encode()

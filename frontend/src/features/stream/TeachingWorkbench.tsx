@@ -134,6 +134,9 @@ export function TeachingWorkbench({ deviceId, readOnly }: { deviceId: string; re
     const hidden = () => { if (document.hidden && !externalActive.current) void stopCallback.current('page_hidden'); };
     const blur = () => {
       if(!active(phaseRef.current))return;
+      // The pilot owns fresh-video, pose and native ACK deadlines. Losing
+      // window focus is not a manual-input release or an operator stop.
+      if(phaseRef.current==='piloting')return;
       if(keys.current.size || mouse.current !== null) { void stopCallback.current('window_focus_lost'); return; }
       if(externalActive.current && ['opening','arming','recording'].includes(phaseRef.current))return;
       // Embedded Rerun focuses its canvas at startup. Moving between documents
@@ -258,14 +261,16 @@ export function TeachingWorkbench({ deviceId, readOnly }: { deviceId: string; re
     if(signal.aborted||readOnly||phaseRef.current!=='preview'||!conn?.fresh()||!attached.current||!b||!endpoint
       ||walkingCalibrationIssue(p,b)||!result||!['host','nat'].includes(result.path))throw Error('walk_input_not_ready');
     stopPromise.current=null;change('opening');
-    let released=false,decisionUntil=0,settle:(lease:WalkInputLease)=>void=()=>{};const stickSlew=new WalkStickSlew();
+    let released=false,decisionUntil=0,requestedMotion=false,appliedMotion=false,settle:(lease:WalkInputLease)=>void=()=>{};const stickSlew=new WalkStickSlew();
+    const center=walkingStickTarget(p,b,[0,0]).center;
     const opened=new Promise<WalkInputLease>(resolve=>{settle=resolve;});
     const lease:WalkInputLease={
       active:()=>phaseRef.current==='piloting'&&controller.current===control&&connection.current===conn&&control.isReady
         &&(conn.fresh()||conn.idleInputFresh?.()===true)&&!signal.aborted,
       failure:()=>control.failureReason,
       paused:()=>control.isVideoPaused,
-      neutral:()=>{stickSlew.next([0,0],performance.now());control.neutralize();},
+      neutral:()=>{requestedMotion=false;stickSlew.next([0,0],performance.now());control.neutralize();},
+      translating:()=>lease.active()&&conn.fresh()&&requestedMotion&&appliedMotion&&performance.now()<decisionUntil,
       permit:until=>{if(!Number.isFinite(until)||until-performance.now()>250)throw Error('walk_decision_expired');decisionUntil=until;},
       canLook:()=>control.canCameraCommand(walkingStickTarget(p,b,[0,0]).center),
       cameraLimits:p.look?{min:Math.max(-.25,(Math.min(b.width,b.height)*.05-fromPercent(p.look,b).x)/Math.min(b.width,b.height)),
@@ -293,12 +298,19 @@ export function TeachingWorkbench({ deviceId, readOnly }: { deviceId: string; re
       set:vector=>{
         if(!lease.active())throw Error('walk_native_closed');
         if(Math.hypot(...vector)>0&&!conn.fresh())throw Error('contact_video_stale');
-        applyWalkingStick({hasContact:id=>control.hasContact(id),set:(id,point)=>control.set(id,point,decisionUntil)},p,b,stickSlew.next(vector,performance.now()));
+        const sent=stickSlew.next(vector,performance.now());requestedMotion=Math.hypot(...sent)>.001;
+        applyWalkingStick({hasContact:id=>control.hasContact(id),set:(id,point)=>control.set(id,point,decisionUntil)},p,b,sent);
       },
       close:async()=>{await stopCallback.current();return released;},
     };
     const generation=ownerGeneration.current;
-    const control=new TeachingContacts(endpoint,b,conn.fresh,event=>{journal(event);if(event.stage==='closed')released=event.outcome==='closed';},(state,reason)=>{
+    const control=new TeachingContacts(endpoint,b,conn.fresh,event=>{journal(event);
+      if(event.stage==='closed'){released=event.outcome==='closed';appliedMotion=false;}
+      if(event.stage==='receipt'&&event.outcome==='applied'&&event.pointer_id===0){
+        if(event.action===1)appliedMotion=false;
+        else if(event.action===0||event.action===2)appliedMotion=typeof event.x==='number'&&typeof event.y==='number'&&(event.x!==center.x||event.y!==center.y);
+      }
+    },(state,reason)=>{
       if(generation!==ownerGeneration.current||connection.current!==conn)return;
       conn.observeControl?.(state==='failed'?'fenced':state,reason);
       setNative(state==='ready'?'READY · пеший тест':state==='closed'?'CLOSED · освобождено':state);

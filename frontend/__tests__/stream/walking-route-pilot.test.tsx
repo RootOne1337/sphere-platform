@@ -11,7 +11,7 @@ let frames:VideoFrameRequestCallback[],lease:WalkInputLease,open:jest.Mock,busy:
 let videoRef:{current:HTMLVideoElement};
 beforeEach(()=>{
   jest.clearAllMocks();frames=[];busy=jest.fn();
-  lease={active:()=>true,set:jest.fn(),close:jest.fn(async()=>true)};open=jest.fn(async()=>lease);
+  lease={active:()=>true,translating:()=>false,set:jest.fn(),close:jest.fn(async()=>true)};open=jest.fn(async()=>lease);
   element={requestVideoFrameCallback:(f:VideoFrameRequestCallback)=>{frames.push(f);return frames.length;},cancelVideoFrameCallback:jest.fn()} as unknown as HTMLVideoElement;
   videoRef={current:element};
   Object.defineProperty(crypto,'randomUUID',{configurable:true,value:()=> 'cccccccc-cccc-cccc-cccc-cccccccccccc'});
@@ -21,7 +21,7 @@ beforeEach(()=>{
     const blob=new Blob(['jpeg'],{type:'image/jpeg'});Object.defineProperty(blob,'arrayBuffer',{value:async()=>new ArrayBuffer(4)});callback(blob);
   });
   jest.mocked(reconstructionRequest).mockImplementation(async(path,_job,init)=>{
-    if(path.endsWith('/walk-start'))return {json:async()=>({phase:'observing',id:'c'.repeat(32),physicalActions:0,mode:'foot_camera_trace_v1',maxSeconds:60,startMode:JSON.parse(String(init?.body)).startMode,cameraTracking:JSON.parse(String(init?.body)).cameraTracking,cameraControl:JSON.parse(String(init?.body)).cameraControl})} as Response;
+    if(path.endsWith('/walk-start'))return {json:async()=>({phase:'observing',motionProtocol:'applied_stick_v1',id:'c'.repeat(32),physicalActions:0,mode:'foot_camera_trace_v1',maxSeconds:60,startMode:JSON.parse(String(init?.body)).startMode,cameraTracking:JSON.parse(String(init?.body)).cameraTracking,cameraControl:JSON.parse(String(init?.body)).cameraControl})} as Response;
     if(path.endsWith('/observe'))return {json:async()=>({id:'c'.repeat(32),captureEpoch:binding.captureEpoch,sequence:JSON.parse(String(init?.body)).sequence,
       jpegSha256:'aa'.repeat(32),computeMs:1,method:'descriptor_pnp',physicalActions:0,executionQualified:false,groundRoute:false,
       pose:{state:'localized',reason:'relative_camera_pose_not_clearance_or_arrival',inliers:40,segment:0,progress_units:0,polyline_px:[]},
@@ -33,6 +33,31 @@ afterEach(()=>jest.restoreAllMocks());
 const view=(extra:Record<string,unknown>={})=>render(<WalkingRoutePilot job={job} clip="clip" video={videoRef} ready binding={binding} assetsReady input={{issue:null,open}} observerBusy={false} onBusyChange={busy} {...extra}/>);
 function fresh(){act(()=>frames.shift()!(performance.now(),{} as VideoFrameCallbackMetadata));}
 function start(){fresh();fireEvent.click(screen.getByRole('checkbox',{name:/Персонаж пешком/}));fireEvent.click(screen.getByRole('button',{name:'Запустить пеший тест · 60 с'}));}
+
+test('focusing the visible emulator does not terminate autonomous input or claim operator stop',async()=>{
+  jest.spyOn(performance,'now').mockReturnValue(1000);
+  view();start();await waitFor(()=>expect(lease.set).toHaveBeenCalled());
+  fireEvent.blur(window);await act(async()=>{await Promise.resolve();});
+  expect(lease.close).not.toHaveBeenCalled();expect(screen.getByRole('status')).not.toHaveTextContent('Остановлено оператором');
+  fireEvent.keyDown(window,{code:'Escape'});await screen.findByText('Освобождение: CLOSED');
+});
+
+test('a hidden document closes with its actual cause instead of operator attribution',async()=>{
+  jest.spyOn(performance,'now').mockReturnValue(1000);
+  view();start();await waitFor(()=>expect(lease.set).toHaveBeenCalled());
+  const hidden=jest.spyOn(document,'hidden','get').mockReturnValue(true);
+  fireEvent(document,new Event('visibilitychange'));await screen.findByText('Освобождение: CLOSED');
+  expect(screen.getByRole('status')).toHaveTextContent('вкладка стала скрытой');hidden.mockRestore();
+});
+
+test('movement feedback comes from the applied lease state, not the newly planned vector',async()=>{
+  lease.translating=()=>false;jest.spyOn(performance,'now').mockReturnValue(1000);
+  view();start();await waitFor(()=>expect(lease.set).toHaveBeenCalled());
+  const call=jest.mocked(reconstructionRequest).mock.calls.find(([p])=>p.endsWith('/observe'))!;
+  expect(JSON.parse(String(call[2]?.body)).motionActive).toBe(false);
+  expect(lease.set).toHaveBeenCalledWith([.05,-.2]);
+  fireEvent.keyDown(window,{code:'Escape'});await screen.findByText('Освобождение: CLOSED');
+});
 
 test('camera mode blocks start until its separate free-screen area is calibrated',()=>{
   view({input:{issue:null,cameraIssue:'Укажите область камеры',open}});start();
@@ -307,7 +332,7 @@ test('fresh pose plans go through the real contact protocol and Android applied 
     let resolve:()=>void=()=>{};const ready=new Promise<void>(r=>{resolve=r;});
     const control=new TeachingContacts(endpoint,binding,()=>true,e=>{events.push(e);journal(e);},state=>{if(state==='ready')resolve();});
     await ready;
-    return {active:()=>control.isReady,set:(v:[number,number])=>{
+    return {active:()=>control.isReady,translating:()=>false,set:(v:[number,number])=>{
       if(Math.hypot(...v)===0){control.set(0,null);return;}
       if(!control.hasContact(0))control.set(0,{x:144,y:442});
       control.set(0,{x:Math.round(144+v[0]*65),y:Math.round(442+v[1]*65)});

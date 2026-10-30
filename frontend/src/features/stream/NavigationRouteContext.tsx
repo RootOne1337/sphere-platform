@@ -13,6 +13,7 @@ export function NavigationRouteContext({job,source,assetsReady,observation,compa
   const [choices,setChoices]=useState<{id:string;cameras:number}[]>([]),[choice,setChoice]=useState('primary');
   const [geometry,setGeometry]=useState<{data:ImportedRouteGeometry;sha:string;choice:string}|null>(null),[notice,setNotice]=useState('Загружаем связанную карту…');
   const [ticks,setTicks]=useState<number|null>(null),[follow,setFollow]=useState(true),[live,setLive]=useState<RouteMapCamera|null>(null);
+  const [orientation,setOrientation]=useState<RouteMapCamera|null>(null);
   const lastReferenceAt=useRef(-Infinity),validTicks=useMemo(()=>new Set(source.rows.map(row=>row.relative_ticks_90k)),[source]);
   useEffect(()=>{if(busy&&assetsReady)setChoice('primary');},[busy,assetsReady]);
   useEffect(()=>{
@@ -25,7 +26,7 @@ export function NavigationRouteContext({job,source,assetsReady,observation,compa
     return()=>{retired=true;abort.abort();};
   },[job.id,job.key,source,assetsReady]);
   useEffect(()=>{
-    const abort=new AbortController();let retired=false;setGeometry(null);setLive(null);setTicks(null);setFollow(true);lastReferenceAt.current=-Infinity;setNotice('Загружаем связанную карту…');
+    const abort=new AbortController();let retired=false;setGeometry(null);setLive(null);setOrientation(null);setTicks(null);setFollow(true);lastReferenceAt.current=-Infinity;setNotice('Загружаем связанную карту…');
     void(async()=>{
       const response=await reconstructionRequest(`/jobs/${job.id}/${choice==='primary'?'geometry':`geometry-alternatives/${choice}`}`,job,{signal:abort.signal});
       const raw=await response.arrayBuffer();if(raw.byteLength>16*1024**2)throw Error('Размер карты превышает предел.');
@@ -38,7 +39,7 @@ export function NavigationRouteContext({job,source,assetsReady,observation,compa
   useEffect(()=>{
     setLive(null);if(!observation||!geometry||geometry.choice!=='primary')return;
     const {reply,capturedAt}=observation,p=reply.pose,camera=boundLiveRouteCamera(observation,geometry.sha,performance.now());
-    if(!camera)return;setLive(camera);
+    if(!camera)return;setLive(camera);setOrientation(camera);
     if(follow&&performance.now()-lastReferenceAt.current>=1000){
       const index=Math.min(p.segment??0,geometry.data.cameras.length-1),reference=reply.referenceTicks90k??geometry.data.cameras[index].ticks_90k;
       if(validTicks.has(reference)){setTicks(reference);lastReferenceAt.current=performance.now();}
@@ -52,7 +53,7 @@ export function NavigationRouteContext({job,source,assetsReady,observation,compa
     {observation?.reply.pose.state==='unknown'&&<p className="text-xs text-amber-500">Положение сейчас не узнано. Сохранённый опорный кадр остаётся для сравнения и не обозначает текущую позицию.</p>}
     <p className="text-xs text-muted-foreground">Признаки карты локализатора: {preparedLandmarks??'—'} · Совпадения последнего кадра: {observation?.reply.pose.inliers??0}. Облако сцены показано отдельно от совпадений текущего кадра.</p>
     {geometry&&ticks!==null?<RouteGeometryMap cameras={geometry.data.cameras} points={geometry.data.points} motionWarning={choice!=='primary'||!assetsReady}
-      selectedTicks={ticks} validTicks={validTicks} onSeekCamera={value=>{setFollow(false);setTicks(value);}} liveCamera={live}
+      selectedTicks={ticks} validTicks={validTicks} onSeekCamera={value=>{setFollow(false);setTicks(value);}} liveCamera={live} orientationCamera={orientation}
       sourcePreview={<RecordedRouteFrame source={source} ticks={ticks}/>} comparison={comparison}/>:comparison}
   </div>;
 }
