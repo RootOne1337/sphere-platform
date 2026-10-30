@@ -97,6 +97,18 @@ class WalkRouteTests(unittest.TestCase):
         self.assertEqual(self.follower.relocalizations,0)
         self.assertGreater(self.follower.recovery_seconds,1.)
 
+    def test_four_neutral_transport_gaps_require_new_poses_without_spending_position_losses(self):
+        self.observe()
+        for _ in range(4):
+            self.now+=.6
+            reply=self.observe(state='unknown',reason='route_observation_gap')
+            self.assertEqual(reply['stick'],[0.,0.])
+            for i in range(3):
+                self.now+=.1;reply=self.observe()
+                if i<2:self.assertEqual(reply['stick'],[0.,0.])
+            self.assertEqual(reply['phase'],'following')
+        self.assertEqual(self.follower.relocalizations,0)
+
     def test_repeated_weak_images_have_a_total_wait_budget_and_real_loss_still_counts(self):
         self.observe()
         for _ in range(24):

@@ -249,6 +249,21 @@ class RouteWorkspaceTests(unittest.TestCase):
         self.now += 121
         self.assertEqual(self.workspace.live_status()['phase'],'idle')
 
+    def test_explicit_walk_diagnostic_frames_flush_only_after_stop(self):
+        import cv2 as cv
+        import numpy as np
+        self.attach_fixture_map();self.workspace.stop_live(self.job,dict(id='d'*32))
+        body=dict(id='f'*32,captureEpoch='e'*32,width=960,height=540,sceneConfirmed=True,
+            footCameraAssumptionConfirmed=True,diagnosticFrames=True)
+        with patch('scripts.pilot.route_workspace.resource_checkpoint'):self.workspace.start_walk(self.job,body)
+        _,jpeg=cv.imencode('.jpg',np.zeros((540,960,3),np.uint8))
+        self.workspace.observe(self.job,dict(id='f'*32,captureEpoch='e'*32,sequence=1,jpeg=base64.b64encode(jpeg).decode()))
+        self.assertFalse((self.job/'walk-diagnostics').exists())
+        stopped=self.workspace.stop_live(self.job,dict(id='f'*32))
+        self.assertEqual(stopped['diagnostics']['frames'],1)
+        self.assertEqual(stopped['diagnostics']['state'],'saved')
+        self.assertTrue((self.job/'walk-diagnostics'/('f'*32+'.zip')).exists())
+
     def test_walk_requires_separate_confirmation_and_cannot_promote_observer(self):
         self.attach_fixture_map()
         body=dict(id='d'*32,captureEpoch='e'*32,width=960,height=540,sceneConfirmed=True)

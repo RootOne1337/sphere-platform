@@ -211,8 +211,14 @@ class RouteWorkspaces:
         now = self.clock()
         self.retired = {identity: deadline for identity, deadline in self.retired.items() if deadline > now}
         if self.live and self.clock() >= self.live['deadline']:
+            self._finish_diagnostics(self.live)
             self.retired[self.live['id']] = now + 600
             self.live = None
+
+    @staticmethod
+    def _finish_diagnostics(session):
+        try:return session['frame_archive'].finish() if session.get('frame_archive') else None
+        except (OSError,ValueError):return dict(state='unconfirmed',frames=0,bytes=0)
 
     def live_status(self):
         self._expire()
@@ -276,7 +282,9 @@ class RouteWorkspaces:
             raise ValueError('route_session_retirement_quota')
         self.retired[body['id']] = self.clock() + 600  # Fence a delayed start.
         if self.live and self.live['id'] == body['id'] and self.live['job'] == job.name:
+            diagnostics=self._finish_diagnostics(self.live)
             self.live = None
+            return dict(phase='closed',physicalActions=0,diagnostics=diagnostics)
         return dict(phase='closed', physicalActions=0)
 
     def start_walk(self, job, body):
@@ -290,7 +298,8 @@ class RouteWorkspaces:
 
         required={'id', 'captureEpoch', 'width', 'height', 'sceneConfirmed', 'footCameraAssumptionConfirmed'}
         if (type(body) is not dict or body.get('footCameraAssumptionConfirmed') is not True
-                or not required <= body.keys() or not body.keys() <= required|{'startMode','cameraTracking','cameraControl'}
+                or not required <= body.keys() or not body.keys() <= required|{'startMode','cameraTracking','cameraControl','diagnosticFrames'}
+                or type(body.get('diagnosticFrames',False)) is not bool
                 or type(body.get('cameraTracking',False)) is not bool
                 or type(body.get('cameraControl','pulse_v1')) is not str
                 or body.get('cameraControl','pulse_v1') not in {'pulse_v1','continuous_drag_v1'}
@@ -300,7 +309,7 @@ class RouteWorkspaces:
         start_mode=body.get('startMode','beginning')
         camera_tracking=body.get('cameraTracking',False)
         camera_control=body.get('cameraControl','pulse_v1')
-        request = {key: value for key, value in body.items() if key not in {'footCameraAssumptionConfirmed','startMode','cameraTracking','cameraControl'}}
+        request = {key: value for key, value in body.items() if key not in {'footCameraAssumptionConfirmed','startMode','cameraTracking','cameraControl','diagnosticFrames'}}
         self._expire()
         if self.live and self.live['id'] == request['id'] and 'walk' not in self.live:
             raise ValueError('walk_observer_cannot_be_promoted')
@@ -310,8 +319,14 @@ class RouteWorkspaces:
         if (self.live and self.live['id']==request['id'] and 'walk' in self.live
                 and (self.live['walk'].camera_tracking!=camera_tracking or self.live['walk'].camera_control!=camera_control)):
             raise ValueError('walk_camera_mode_changed')
+        if self.live and self.live['id']==request['id'] and bool(self.live.get('frame_archive'))!=body.get('diagnosticFrames',False):
+            raise ValueError('walk_diagnostic_mode_changed')
         self.start_live(job, request)
         self._install_walk(start_mode=start_mode,camera_tracking=camera_tracking,camera_control=camera_control)
+        if body.get('diagnosticFrames') and not self.live.get('frame_archive'):
+            from scripts.pilot.walk_diagnostics import WalkFrameArchive
+            self.live['frame_archive']=WalkFrameArchive(job,body['id'],clock=self.clock,
+                geometry_sha256=self.live['geometry_sha256'],capture_epoch=body['captureEpoch'])
         return dict(self.live_status(), mode='foot_camera_trace_v1', physicalActions=0, maxSeconds=60,
                     startMode=start_mode,cameraTracking=camera_tracking,cameraControl=camera_control,
                     observationProtocol='jpeg_binary_v1')
@@ -408,4 +423,7 @@ class RouteWorkspaces:
             result['referenceTicks90k']=round(session['tracker'].route.source_seconds[nearest]*90000)
         if 'walk' in session:
             result['walk'] = session['walk'].observe(pose)
+        if session.get('frame_archive'):
+            session['frame_archive'].offer(raw,sequence=body['sequence'],pose=pose,plan=result.get('walk'),
+                method=result['method'],compute_ms=elapsed)
         return result

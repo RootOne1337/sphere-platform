@@ -1,0 +1,360 @@
+{
+  "schema": "sphere-live-walk-analysis-v1",
+  "reports": [
+    {
+      "id": "9db5d92f4f524a18836fa31813a384ed",
+      "localTime": "2026-10-30T22:20:40",
+      "sha256": "4808cbaca8386b6835d115d99aeae6c59e5abe9ac7ba6404dd3abbaf69bda2ce",
+      "stop": "walk_manual_stop",
+      "release": "closed",
+      "observations": 55,
+      "durationMs": 8831,
+      "maxSegment": 7,
+      "states": {
+        "confirming": 4,
+        "localized": 51
+      },
+      "poseReasons": {
+        "relative_camera_pose_not_clearance_or_arrival": 55
+      },
+      "applied": 33,
+      "timings": {
+        "jpeg": {
+          "count": 56,
+          "median": 7.550000011920929,
+          "maximum": 151.5
+        },
+        "http": {
+          "count": 56,
+          "median": 24.149999976158142,
+          "maximum": 272.2999999523163
+        },
+        "source_gap": {
+          "count": 5,
+          "median": 116.79999995231628,
+          "maximum": 166.89999997615814
+        }
+      },
+      "stageCounts": {
+        "input_open": 1,
+        "input_ready": 1,
+        "jpeg": 56,
+        "http": 56,
+        "input_command": 55,
+        "source_gap": 5,
+        "neutral_wait": 2,
+        "decision_expired": 1,
+        "stop": 1
+      },
+      "stageDataIsTailOnly": true,
+      "clientVersion": null,
+      "nativeTimelinePresent": false
+    },
+    {
+      "id": "4ad36e6a522e49cb81443c09cc24e91f",
+      "localTime": "2026-10-30T22:21:26",
+      "sha256": "b26bfbc1be2e26be5f9c1360a11f4865768b4c7ef7d6fafa68549f70b94f3b1f",
+      "stop": "walk_relocalization_budget",
+      "release": "closed",
+      "observations": 324,
+      "durationMs": 37209.10000002384,
+      "maxSegment": 36,
+      "states": {
+        "confirming": 8,
+        "localized": 313,
+        "unknown": 3
+      },
+      "poseReasons": {
+        "relative_camera_pose_not_clearance_or_arrival": 321,
+        "route_observation_gap": 3
+      },
+      "applied": 212,
+      "timings": {
+        "jpeg": {
+          "count": 78,
+          "median": 7.799999952316284,
+          "maximum": 424.39999997615814
+        },
+        "http": {
+          "count": 75,
+          "median": 21.299999952316284,
+          "maximum": 338.3000000715256
+        },
+        "source_gap": {
+          "count": 10,
+          "median": 268.85000002384186,
+          "maximum": 794.2000000476837
+        }
+      },
+      "stageCounts": {
+        "jpeg": 78,
+        "http": 75,
+        "input_command": 72,
+        "neutral_wait": 9,
+        "decision_expired": 5,
+        "source_gap": 10,
+        "camera_command": 3,
+        "camera_result": 3,
+        "stop": 1
+      },
+      "stageDataIsTailOnly": true,
+      "clientVersion": null,
+      "nativeTimelinePresent": false
+    },
+    {
+      "id": "888391d6b30d48c1a6fc21c5ab4c541e",
+      "localTime": "2026-10-30T22:21:58",
+      "sha256": "ac516283c3e709268c71537e0d769515023c50498d782a29bed5de5a4b36659e",
+      "stop": "walk_relocalization_timeout",
+      "release": "closed",
+      "observations": 178,
+      "durationMs": 25087.399999976158,
+      "maxSegment": 52,
+      "states": {
+        "confirming": 11,
+        "localized": 156,
+        "unknown": 11
+      },
+      "poseReasons": {
+        "relative_camera_pose_not_clearance_or_arrival": 167,
+        "route_observation_gap": 3,
+        "route_pose_not_verified": 8
+      },
+      "applied": 112,
+      "timings": {
+        "jpeg": {
+          "count": 77,
+          "median": 6.200000047683716,
+          "maximum": 412.8000000715256
+        },
+        "http": {
+          "count": 75,
+          "median": 21.799999952316284,
+          "maximum": 280.10000002384186
+        },
+        "source_gap": {
+          "count": 17,
+          "median": 183.40000009536743,
+          "maximum": 410.89999997615814
+        },
+        "long_task": {
+          "count": 1,
+          "median": 274,
+          "maximum": 274
+        }
+      },
+      "stageCounts": {
+        "jpeg": 77,
+        "http": 75,
+        "input_command": 70,
+        "neutral_wait": 9,
+        "source_gap": 17,
+        "decision_expired": 6,
+        "long_task": 1,
+        "stop": 1
+      },
+      "stageDataIsTailOnly": true,
+      "clientVersion": null,
+      "nativeTimelinePresent": false
+    },
+    {
+      "id": "7bc36e0a91404a789fb56891ec903511",
+      "localTime": "2026-10-30T22:22:18",
+      "sha256": "e89e2bcdb5df88a1d3260aff99c1131e71f8cd8c8b7d8ea28045fd1d49c7a95e",
+      "stop": "walk_relocalization_timeout",
+      "release": "closed",
+      "observations": 94,
+      "durationMs": 13898.399999976158,
+      "maxSegment": 58,
+      "states": {
+        "unknown": 3,
+        "confirming": 6,
+        "localized": 85
+      },
+      "poseReasons": {
+        "route_pose_not_verified": 2,
+        "relative_camera_pose_not_clearance_or_arrival": 91,
+        "route_observation_gap": 1
+      },
+      "applied": 55,
+      "timings": {
+        "jpeg": {
+          "count": 79,
+          "median": 7.299999952316284,
+          "maximum": 322.2999999523163
+        },
+        "http": {
+          "count": 78,
+          "median": 23.5,
+          "maximum": 269.40000009536743
+        },
+        "source_gap": {
+          "count": 10,
+          "median": 172.0999999642372,
+          "maximum": 420.39999997615814
+        }
+      },
+      "stageCounts": {
+        "http": 78,
+        "input_command": 75,
+        "jpeg": 79,
+        "source_gap": 10,
+        "neutral_wait": 9,
+        "decision_expired": 4,
+        "stop": 1
+      },
+      "stageDataIsTailOnly": true,
+      "clientVersion": null,
+      "nativeTimelinePresent": false
+    },
+    {
+      "id": "136811fd1c1646458bf076e99b3da2d1",
+      "localTime": "2026-10-30T22:22:52",
+      "sha256": "9d7974460953339a3fedc83fc2d98a8b34b73a87abbd58e63b6a1d97fce52603",
+      "stop": "walk_relocalization_budget",
+      "release": "closed",
+      "observations": 236,
+      "durationMs": 29322.899999976158,
+      "maxSegment": 79,
+      "states": {
+        "confirming": 7,
+        "localized": 225,
+        "unknown": 4
+      },
+      "poseReasons": {
+        "relative_camera_pose_not_clearance_or_arrival": 232,
+        "route_observation_gap": 4
+      },
+      "applied": 163,
+      "timings": {
+        "jpeg": {
+          "count": 75,
+          "median": 7.799999952316284,
+          "maximum": 335.5
+        },
+        "http": {
+          "count": 74,
+          "median": 19.75,
+          "maximum": 156.90000009536743
+        },
+        "source_gap": {
+          "count": 18,
+          "median": 175.10000002384186,
+          "maximum": 338
+        }
+      },
+      "stageCounts": {
+        "http": 74,
+        "decision_expired": 7,
+        "source_gap": 18,
+        "jpeg": 75,
+        "input_command": 68,
+        "neutral_wait": 13,
+        "stop": 1
+      },
+      "stageDataIsTailOnly": true,
+      "clientVersion": null,
+      "nativeTimelinePresent": false
+    },
+    {
+      "id": "a83de9c7ce5b4766b38b12a1ec7655a5",
+      "localTime": "2026-10-30T22:23:04",
+      "sha256": "de29d0913abae0f5f98343782bf3ebd4a19e0b9da63bab7781f8f885fae7910a",
+      "stop": "walk_relocalization_timeout",
+      "release": "closed",
+      "observations": 29,
+      "durationMs": 7996.200000047684,
+      "maxSegment": 80,
+      "states": {
+        "confirming": 2,
+        "localized": 17,
+        "unknown": 10
+      },
+      "poseReasons": {
+        "relative_camera_pose_not_clearance_or_arrival": 19,
+        "route_observation_gap": 1,
+        "route_pose_not_verified": 9
+      },
+      "applied": 8,
+      "timings": {
+        "jpeg": {
+          "count": 35,
+          "median": 7.899999976158142,
+          "maximum": 358
+        },
+        "http": {
+          "count": 33,
+          "median": 180,
+          "maximum": 259.2999999523163
+        },
+        "source_gap": {
+          "count": 5,
+          "median": 189.39999997615814,
+          "maximum": 353.2000000476837
+        }
+      },
+      "stageCounts": {
+        "input_open": 1,
+        "input_ready": 1,
+        "jpeg": 35,
+        "http": 33,
+        "decision_expired": 6,
+        "neutral_wait": 6,
+        "input_command": 28,
+        "source_gap": 5,
+        "stop": 1
+      },
+      "stageDataIsTailOnly": true,
+      "clientVersion": null,
+      "nativeTimelinePresent": false
+    },
+    {
+      "id": "0430a98f53e84b9bab3bd2246e378813",
+      "localTime": "2026-10-30T22:23:42",
+      "sha256": "239fa68b0de45352a5d1ddca9448b6b768c57cfecfffbb2f7d3406c43892c742",
+      "stop": "walk_manual_stop",
+      "release": "closed",
+      "observations": 127,
+      "durationMs": 32783.60000002384,
+      "maxSegment": 81,
+      "states": {
+        "unknown": 126,
+        "confirming": 1
+      },
+      "poseReasons": {
+        "route_pose_not_verified": 126,
+        "relative_camera_pose_not_clearance_or_arrival": 1
+      },
+      "applied": 0,
+      "timings": {
+        "jpeg": {
+          "count": 78,
+          "median": 6.300000011920929,
+          "maximum": 22.200000047683716
+        },
+        "http": {
+          "count": 78,
+          "median": 180.8499999642372,
+          "maximum": 319.89999997615814
+        },
+        "source_gap": {
+          "count": 14,
+          "median": 249.0,
+          "maximum": 333.2999999523163
+        }
+      },
+      "stageCounts": {
+        "http": 78,
+        "input_command": 75,
+        "jpeg": 78,
+        "decision_expired": 3,
+        "neutral_wait": 7,
+        "source_gap": 14,
+        "stop": 1
+      },
+      "stageDataIsTailOnly": true,
+      "clientVersion": null,
+      "nativeTimelinePresent": false
+    }
+  ]
+}

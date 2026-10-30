@@ -261,6 +261,23 @@ test('a localized start refusal is not presented as an Android ACK failure',asyn
   expect(screen.queryByText(/Android ещё не подтвердил касание/)).not.toBeInTheDocument();
 });
 
+test('waiting camera does not hide failed place recognition in the UI or saved report',async()=>{
+  jest.spyOn(performance,'now').mockReturnValue(1000);
+  const original=jest.mocked(reconstructionRequest).getMockImplementation()!;
+  jest.mocked(reconstructionRequest).mockImplementation(async(...args)=>{
+    const response=await original(...args);if(!args[0].endsWith('/observe'))return response;
+    const value=await response.json();value.pose={...value.pose,state:'unknown',inliers:0,reason:'route_pose_not_verified'};
+    value.walk={...value.walk,phase:'waiting',reason:'walk_confirming_start',stick:[0,0]};
+    return {json:async()=>value} as Response;
+  });
+  lease.canLook=()=>true;lease.drag=jest.fn(async()=>true);
+  view({scope:'e'.repeat(32),input:{issue:null,cameraIssue:null,open}});start();
+  await screen.findByText('На текущем изображении положение не подтверждено по ориентирам.');
+  fireEvent.keyDown(window,{code:'Escape'});await screen.findByText('Освобождение: CLOSED');
+  await waitFor(()=>expect(saveRouteDebugReport).toHaveBeenCalled());
+  expect(jest.mocked(saveRouteDebugReport).mock.calls.at(-1)?.[3]).toMatchObject({observations:[expect.objectContaining({reason:'walk_confirming_start'})]});
+});
+
 test('diagnostic canvas painting is not performed inside the live input cycle',async()=>{
   let now=1000;const clock=jest.spyOn(performance,'now').mockImplementation(()=>now);
   const paintTimes:number[]=[];

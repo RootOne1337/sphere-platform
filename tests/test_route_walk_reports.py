@@ -83,10 +83,21 @@ class WalkReportTests(unittest.TestCase):
             store_walk_report(self.job, changed)
         self.assertFalse((self.job/'walk-reports').exists())
 
-    def test_sixty_four_reports_preserve_history_and_then_refuse_new_files(self):
+    def test_full_archive_rotates_the_oldest_report_and_accepts_the_new_failure(self):
         folder = self.job/'walk-reports';folder.mkdir()
         for i in range(64):
             (folder/f'{i:032x}.json').write_text('{}')
-        with self.assertRaisesRegex(ValueError, 'retention_quota'):
-            store_walk_report(self.job, self.body)
+        self.assertEqual(store_walk_report(self.job,self.body)['state'],'saved')
         self.assertEqual(len(list(folder.iterdir())), 64)
+        self.assertTrue((folder/('a'*32+'.json')).exists())
+        self.assertFalse((folder/('0'*32+'.json')).exists())
+
+    def test_stage_totals_native_timeline_and_encoder_mode_survive_the_report(self):
+        body=copy.deepcopy(self.body);body.update(clientVersion='walk_live_v4',beganAtMs=1793370000000.,observationCount=900,
+            stageSummary={'jpeg':dict(count=900,durationMs=1000,maxDurationMs=400,maxAgeMs=410)},
+            nativeInputs=[dict(stage='receipt',at_ms=1793370000000.,sequence=4,gesture=1,action=2,pointer_id=0,x=100,y=200,outcome='applied')])
+        body['observations'][0].update(stick=[.1,-.2],captureMode='video_frame',captureMs=.1,workerMs=5,encodeMs=4,hashMs=1,
+            method='map_anchored_flow',runtimePolicy='pnp-ap3p-continuous-image-support-temporal-v5')
+        self.assertEqual(store_walk_report(self.job,body)['state'],'saved')
+        body['id']='c'*32;body['nativeInputs'][0]['image']='not_allowed'
+        with self.assertRaisesRegex(ValueError,'native_input'):store_walk_report(self.job,body)

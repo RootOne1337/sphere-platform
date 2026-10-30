@@ -82,6 +82,7 @@ class AnchoredTrackingTests(unittest.TestCase):
 
     def test_repeated_rgb_discards_anchors_and_requires_fresh_confirmation(self):
         self.confirm()
+
         self.now += .2
         self.index += 1
         duplicate = replace(self.last_frame, receiver_sequence=self.index, received_at=self.now)
@@ -91,6 +92,15 @@ class AnchoredTrackingTests(unittest.TestCase):
         self.assertIsNone(self.tracker._descriptor_at)
         self.assertEqual(self.tracker.last_diagnostic["method"], "not_attempted")
         self.confirm()
+
+    def test_short_gap_retains_only_an_expiring_retrieval_hint_not_pose_authority(self):
+        self.confirm();reference=self.tracker._recovery_hint[0];self.now+=.6
+        pose,_=self.observe()
+        self.assertEqual(pose.state,'unknown');self.assertEqual(pose.reason,'route_observation_gap')
+        self.assertIsNone(self.tracker.previous);self.assertIsNone(self.tracker._anchors)
+        self.assertEqual(self.tracker._recent_reference_candidate(),reference)
+        self.tracker.last_received+=2.1
+        self.assertIsNone(self.tracker._recent_reference_candidate())
 
     def test_mandatory_global_failure_cannot_fall_back_to_flow(self):
         self.confirm()

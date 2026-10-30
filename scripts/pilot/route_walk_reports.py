@@ -1,4 +1,4 @@
-"""Bounded local walk summaries, after input closure; no pixels, keys or commands."""
+"""Bounded local walk summaries after closure; no pixels, capabilities or executor."""
 from __future__ import annotations
 
 import hashlib
@@ -14,7 +14,7 @@ def store_walk_report(job, body):
     fields = {'schema', 'id', 'clip', 'release', 'stopReason', 'inputFailure',
               'stopFrameAgeMs', 'stopFrameSequence', 'executionQualified',
               'inputSummary', 'stages', 'observations'}
-    if (type(body) is not dict or not fields <= body.keys() or not body.keys() <= fields|{'startMode','camera','cameraInput'}
+    if (type(body) is not dict or not fields <= body.keys() or not body.keys() <= fields|{'startMode','camera','cameraInput','clientVersion','beganAtMs','observationCount','stageSummary','nativeInputs'}
             or body['schema'] != 'sphere-walk-summary-v1'
             or body.get('startMode','beginning') not in {'beginning','recognized_route'}):
         raise ValueError('walk_report_schema')
@@ -69,6 +69,28 @@ def store_walk_report(job, body):
     def number(v, *, nullable=False):
         return v is None and nullable or type(v) in {int, float} and math.isfinite(v) and 0 <= v <= 1e12
 
+    if 'clientVersion' in body and not code(body['clientVersion']):raise ValueError('walk_report_client_version')
+    if 'beganAtMs' in body and (type(body['beganAtMs']) not in {int,float} or not math.isfinite(body['beganAtMs']) or not 0<=body['beganAtMs']<=1e16):raise ValueError('walk_report_clock')
+    if 'observationCount' in body and (type(body['observationCount']) is not int or not 0<=body['observationCount']<=1200):raise ValueError('walk_report_observation_count')
+    totals=body.get('stageSummary',{})
+    if (type(totals) is not dict or len(totals)>32 or any(not code(k) or type(v) is not dict
+            or set(v)!={'count','durationMs','maxDurationMs','maxAgeMs'} or not all(number(n) for n in v.values()) for k,v in totals.items())):
+        raise ValueError('walk_report_stage_summary')
+    native=body.get('nativeInputs',[])
+    if type(native) is not list or len(native)>512:raise ValueError('walk_report_native_inputs')
+    required_native={'stage','at_ms','sequence','gesture','action','pointer_id'}
+    for row in native:
+        if (type(row) is not dict or not required_native<=row.keys() or not row.keys()<=required_native|{'x','y','outcome','device_uptime_ms','cancelled_pointers'}
+                or row['stage'] not in {'submitted','receipt','closed'}
+                or type(row['at_ms']) not in {int,float} or not math.isfinite(row['at_ms']) or not 0<=row['at_ms']<=1e16
+                or any(type(row[k]) is not int or not 0<=row[k]<=2147483647 for k in ('sequence','gesture'))
+                or type(row['action']) is not int or row['action'] not in {0,1,2,3,4}
+                or type(row['pointer_id']) is not int or row['pointer_id'] not in {-1,0,1,2}
+                or any(not number(row[k]) for k in ('x','y','device_uptime_ms') if k in row)
+                or 'outcome' in row and not code(row['outcome'])
+                or 'cancelled_pointers' in row and (type(row['cancelled_pointers']) is not list or len(row['cancelled_pointers'])>3 or any(type(n) is not int or n not in {0,1,2} for n in row['cancelled_pointers']))):
+            raise ValueError('walk_report_native_input')
+
     if (not code(body['stopReason']) or body['inputFailure'] is not None and not code(body['inputFailure'])
             or not number(body['stopFrameAgeMs'], nullable=True) or not number(body['stopFrameSequence'])):
         raise ValueError('walk_report_stop')
@@ -88,11 +110,15 @@ def store_walk_report(job, body):
     if type(observations) is not list or len(observations) > 1200:
         raise ValueError('walk_report_observations')
     required = {'elapsedMs', 'sequence', 'ageMs', 'computeMs', 'state', 'reason', 'poseState', 'inliers', 'progress'}
-    allowed = required | {'segment', 'medianErrorPx', 'crossTrackUnits','poseReason','plannerReason','cameraYawRadians','cameraPitchRadians'}
+    allowed = required | {'segment', 'medianErrorPx', 'crossTrackUnits','poseReason','plannerReason','cameraYawRadians','cameraPitchRadians',
+        'captureMode','captureMs','workerMs','encodeMs','hashMs','method','runtimePolicy','sourcePresented','sourceMediaTime','decodeMs','receiveAgeMs','captureAgeMs','stick'}
     for row in observations:
         if (type(row) is not dict or not required <= row.keys() or not row.keys() <= allowed
-                or any((v is not None and (type(v) not in {int,float} or not math.isfinite(v) or abs(v)>math.pi)) if k in {'cameraYawRadians','cameraPitchRadians'}
-                       else not code(v) if k in {'state', 'reason', 'poseState','poseReason','plannerReason'} else not number(v, nullable=k in {'progress', 'segment', 'medianErrorPx', 'crossTrackUnits'})
+                or any((type(v) is not list or len(v)!=2 or any(type(n) not in {int,float} or not math.isfinite(n) or abs(n)>.350001 for n in v)) if k=='stick'
+                       else (v is not None and v not in {'video_frame','bitmap','canvas'}) if k=='captureMode'
+                       else (v is not None and (type(v) is not str or not re.fullmatch('[a-z0-9_-]{1,100}',v))) if k=='runtimePolicy'
+                       else (v is not None and (type(v) not in {int,float} or not math.isfinite(v) or abs(v)>math.pi)) if k in {'cameraYawRadians','cameraPitchRadians'}
+                       else not code(v) if k in {'state', 'reason', 'poseState','poseReason','plannerReason','method'} else not number(v, nullable=k in {'progress', 'segment', 'medianErrorPx', 'crossTrackUnits','captureMs','workerMs','encodeMs','hashMs','sourcePresented','sourceMediaTime','decodeMs','receiveAgeMs','captureAgeMs'})
                        for k, v in row.items())):
             raise ValueError('walk_report_observation')
     raw = json.dumps(body, sort_keys=True, separators=(',', ':'), allow_nan=False).encode()
@@ -108,9 +134,9 @@ def store_walk_report(job, body):
             raise ValueError('walk_report_conflict')
         state = 'existing'
     else:
-        if len(list(folder.iterdir())) >= 64:
-            raise ValueError('walk_report_retention_quota')
         with path.open('xb') as file:
             file.write(raw)
+        from scripts.pilot.walk_diagnostics import retain
+        retain(folder,'json',count=64,byte_limit=32*1024**2,protected=path.name)
         state = 'saved'
     return {'state': state, 'sha256': hashlib.sha256(raw).hexdigest(), 'physicalActions': 0}

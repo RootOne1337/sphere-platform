@@ -122,14 +122,17 @@ class WalkRouteFollower:
             # response is delivery loss, not proof that the map/epoch changed.
             # Consume its sequence, retain the last GOOD geometry, and require
             # three NEW fresh poses through the existing bounded recovery path.
-            return self._wait_for_localization(now)
+            return self._wait_for_localization(now,confidence_only=True)
         if dt>.5:
             self.vector[:]=0;self.acquisition=0
             if self.started:
-                waiting=self._wait_for_localization(pose.received_at)
+                waiting=self._wait_for_localization(pose.received_at,confidence_only=True)
                 if waiting['phase']=='stopped':return waiting
         if pose.state != 'localized':
-            return self._wait_for_localization(pose.received_at)
+            # A neutral transport gap still requires three fresh geometric
+            # confirmations, but is not evidence that the place was lost.
+            transport=pose.reason in {'route_observation_gap','route_frame_expired_during_localization'}
+            return self._wait_for_localization(pose.received_at,confidence_only=transport)
         try:
             center, rotation = np.asarray(pose.center, float), np.asarray(pose.rotation, float).reshape(3, 3)
             progress, cross = float(pose.progress_units), float(pose.cross_track_units)

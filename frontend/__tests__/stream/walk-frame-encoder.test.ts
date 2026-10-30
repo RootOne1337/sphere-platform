@@ -3,7 +3,7 @@ class FakeWorker{
   static latest:FakeWorker;onmessage:((e:{data:unknown})=>void)|null=null;onerror:(()=>void)|null=null;
   postMessage=jest.fn();terminate=jest.fn();constructor(){FakeWorker.latest=this;}
 }
-const original={Worker:globalThis.Worker,OffscreenCanvas:globalThis.OffscreenCanvas,createImageBitmap:globalThis.createImageBitmap};
+const original={Worker:globalThis.Worker,OffscreenCanvas:globalThis.OffscreenCanvas,createImageBitmap:globalThis.createImageBitmap,VideoFrame:globalThis.VideoFrame};
 let bitmap:{close:jest.Mock};
 beforeEach(()=>{
   bitmap={close:jest.fn()};Object.defineProperty(globalThis,'Worker',{configurable:true,writable:true,value:FakeWorker});
@@ -18,6 +18,19 @@ test('one bitmap is transferred to the worker and a second capture cannot queue'
   await expect(e.encode(video,canvas)).rejects.toThrow('walk_encoder_unavailable');
   const blob=new Blob(['jpeg'],{type:'image/jpeg'});FakeWorker.latest.onmessage!({data:{type:'encoded',blob,sha:'a'.repeat(64)}});
   await expect(first).resolves.toEqual({blob,sha:'a'.repeat(64)});e.close();expect(FakeWorker.latest.terminate).toHaveBeenCalled();
+});
+
+test('VideoFrame snapshots synchronously and moves resize/readback into the worker',async()=>{
+  const close=jest.fn(),construct=jest.fn();class Frame{close=close;constructor(v:unknown){construct(v);}}
+  Object.defineProperty(globalThis,'VideoFrame',{configurable:true,writable:true,value:Frame});
+  const e=new WalkFrameEncoder(),video={} as HTMLVideoElement;
+  const pending=e.encode(video,{} as HTMLCanvasElement);
+  expect(construct).toHaveBeenCalledWith(video);expect(createImageBitmap).not.toHaveBeenCalled();
+  const frame=FakeWorker.latest.postMessage.mock.calls[0][0].bitmap;
+  expect(FakeWorker.latest.postMessage).toHaveBeenCalledWith({type:'encode',bitmap:frame},[frame]);
+  FakeWorker.latest.onmessage!({data:{type:'encoded',blob:new Blob(['jpeg'],{type:'image/jpeg'}),sha:'a'.repeat(64),encodeMs:4,hashMs:1}});
+  await pending;expect(e.snapshot()).toMatchObject({captureMode:'video_frame',encodeMs:4,hashMs:1});
+  expect(close).not.toHaveBeenCalled();e.close();
 });
 test('closing a pending encode terminates its worker and cannot publish stale output',async()=>{
   const e=new WalkFrameEncoder(),first=e.encode({} as HTMLVideoElement,{} as HTMLCanvasElement);await Promise.resolve();

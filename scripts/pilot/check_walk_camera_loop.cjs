@@ -102,10 +102,12 @@ async function runCase(config){
   cases.push(await runCase(config));
  }
  cases.push(await runCase({gainX:6,gainY:-5,visualMs:100,slopPx:16,gap:[1100,350],noise:.004,descriptorMs:130}));
+ for(const pause of [650,850])cases.push(await runCase({gainX:6,gainY:-5,visualMs:100,slopPx:16,gap:[1100,pause],noise:.004,descriptorMs:130}));
+ cases.push(await runCase({gainX:6,gainY:-5,visualMs:100,slopPx:16,gap:[1100,1100],noise:.004,descriptorMs:130,expectedFailure:'contact_video_stale'}));
  for(const yaw of [-1.1,1.5])for(const pitch of [-.4,.55])cases.push(await runCase({gainX:6,gainY:-5,visualMs:160,slopPx:16,yaw,pitch,noise:.004,descriptorMs:130}));
  for(const fault of ['frozen','reversed'])cases.push(await runCase({gainX:6,gainY:-5,visualMs:100,slopPx:16,yaw:1.5,pitch:.55,noise:.004,descriptorMs:130,fault}));
  cases.push(await runCase({gainX:6,gainY:-5,visualMs:100,slopPx:16,noise:.004,descriptorMs:130,movingReference:true,durationMs:50000}));
- for(const c of cases)c.passed=c.closed&&(c.config.fault?
+ for(const c of cases)c.passed=c.closed&&(c.config.expectedFailure?c.terminal===c.config.expectedFailure:c.config.fault?
   c.faultAtMs!==null&&['walk_camera_response_not_observed','walk_camera_response_wrong_direction'].includes(c.terminal):
   c.terminal===null&&c.alignedAtMs!==null&&(c.config.movingReference?
    // A moving setpoint is evaluated over time, including the 0.20-rad entry

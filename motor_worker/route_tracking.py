@@ -35,6 +35,19 @@ class AnchoredRouteLocalizer(RouteLocalizer):
         self._frame = None
         self._descriptor_at = None
         self.last_diagnostic = {}
+        self._recovery_hint = None
+
+    def _recent_reference_candidate(self):
+        recent=super()._recent_reference_candidate()
+        if recent is not None:return recent
+        if self._recovery_hint is None or self.last_received is None:return None
+        index,at=self._recovery_hint
+        # Retrieval hint only: still competes with global current-image PnP.
+        # It cannot supply a pose, break an ambiguity or authorize movement.
+        if 0<self.last_received-at<=2.:
+            self.last_diagnostic['recoveryHintReference']=index
+            return index
+        return None
 
     def _features(self, frame):
         cv, np = self.cv, self.np
@@ -113,6 +126,8 @@ class AnchoredRouteLocalizer(RouteLocalizer):
         self.last_diagnostic = dict(method="not_attempted")
         try:
             pose = super().observe(frame, episode_id=episode_id, goal_revision=goal_revision, scene=scene)
+            if pose.state=='localized':self._recovery_hint=(pose.segment,frame.received_at)
+            elif self.retired or scene!='active':self._recovery_hint=None
             if pose.state in {"confirming", "localized"} and self._solution is not None:
                 ids, pixels = self._solution[4:]
                 # Bounded storage: one gray image plus existing map landmark IDs.
@@ -126,6 +141,7 @@ class AnchoredRouteLocalizer(RouteLocalizer):
             self.last_diagnostic["state"] = pose.state
             return pose
         except Exception:
+            self._recovery_hint=None
             self._anchors, self._descriptor_at = None, None
             self.confirmations, self.previous = 0, None
             self.recent_confirmed_sources.clear()
