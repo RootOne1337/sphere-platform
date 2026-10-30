@@ -108,6 +108,23 @@ test('mount, confirmation and map readiness never themselves open native input',
   expect(open).not.toHaveBeenCalled();expect(reconstructionRequest).not.toHaveBeenCalled();
 });
 
+test('Stop during encoding allows a fresh restart without waiting for the old browser callback',async()=>{
+  jest.spyOn(performance,'now').mockReturnValue(1000);
+  const callbacks:BlobCallback[]=[];
+  jest.mocked(HTMLCanvasElement.prototype.toBlob).mockImplementation(done=>{callbacks.push(done);});
+  view();fireEvent.click(screen.getByRole('checkbox',{name:/Диагностика: до 60 кадров/}));start();
+  await waitFor(()=>expect(callbacks).toHaveLength(1));
+  fireEvent.keyDown(window,{code:'Escape'});await screen.findByText('Освобождение: CLOSED');
+  fresh();fireEvent.click(screen.getByRole('button',{name:'Запустить пеший тест · 60 с'}));
+  await waitFor(()=>expect(callbacks).toHaveLength(2));
+  const blob=new Blob(['jpeg'],{type:'image/jpeg'});Object.defineProperty(blob,'arrayBuffer',{value:async()=>new ArrayBuffer(4)});
+  await act(async()=>{callbacks[1](blob);});await waitFor(()=>expect(lease.set).toHaveBeenCalledWith([.05,-.2]));
+  const commands=jest.mocked(lease.set).mock.calls.length;
+  await act(async()=>{callbacks[0](blob);});expect(jest.mocked(lease.set).mock.calls.length).toBe(commands);
+  expect(jest.mocked(reconstructionRequest).mock.calls.filter(([path])=>path.endsWith('/observe'))).toHaveLength(1);
+  fireEvent.keyDown(window,{code:'Escape'});await screen.findByText('Освобождение: CLOSED');
+});
+
 test('recognized-route restart is explicit and changing acquisition mode requires a new confirmation',async()=>{
   view();expect(screen.getByLabelText('Точка запуска пешего теста')).toHaveValue('recognized_route');
   fresh();fireEvent.click(screen.getByRole('checkbox',{name:/Персонаж пешком/}));

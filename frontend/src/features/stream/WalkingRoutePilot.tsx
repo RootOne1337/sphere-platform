@@ -45,15 +45,15 @@ export function WalkingRoutePilot({job,clip,video,ready,binding,assetsReady,inpu
   const output=useRef<HTMLCanvasElement>(null),run=useRef<Run|null>(null),retired=useRef<Promise<void>|null>(null);
   const current=useRef({ready,binding});current.current={ready,binding};
   const recent=useRef({sequence:0,at:0}),stopRef=useRef<(reason:string)=>Promise<void>>(async()=>{});
-  const lastSource=useRef<HTMLCanvasElement|null>(null);
   const lastReport=useRef<Record<string,unknown>|null>(null),lastEventPaint=useRef(-Infinity);
   const lastUiPaint=useRef(-Infinity);
   const encoder=useRef<WalkFrameEncoder|null>(null);
+  const encoderMounted=useRef(false);
   const busyChange=useRef(onBusyChange);busyChange.current=onBusyChange;
   const observed=useRef(onObservation);observed.current=onObservation;
   const captureEpoch=binding?.captureEpoch;
-  useEffect(()=>{const instance=new WalkFrameEncoder();encoder.current=instance;
-    return()=>{instance.close();if(encoder.current===instance)encoder.current=null;};},[captureEpoch]);
+  useEffect(()=>{encoderMounted.current=true;encoder.current=new WalkFrameEncoder();
+    return()=>{encoderMounted.current=false;encoder.current?.close();encoder.current=null;};},[captureEpoch]);
   const cameraCommand=(active:Run,step:CameraStep,sequence:number,notAfter:number)=>{
     if(!step.action||!active.camera||!active.lease?.drag)return;
     const camera=active.camera,lease=active.lease,generation=camera.generation;
@@ -76,7 +76,7 @@ export function WalkingRoutePilot({job,clip,video,ready,binding,assetsReady,inpu
     const draw=output.current?.getContext('2d');if(!draw)return;
     // Keep the source image for diagnosis, without reusing a route overlay or
     // presenting a stopped session as live. The visible badge marks this frame.
-    const source=lastSource.current??video.current;
+    const source=video.current;
     try{if(source)draw.drawImage(source,0,0,960,540);}catch{draw.clearRect(0,0,960,540);}
   };
   const neutralUntilFresh=(active:Run,reason='permit_expired')=>{
@@ -101,6 +101,8 @@ export function WalkingRoutePilot({job,clip,video,ready,binding,assetsReady,inpu
     active.trace.add('stop',performance.now(),{reason,sequence:frameSequence,...(frameAge===null?{}:{ageMs:frameAge})});
     setStopDetail(`Кадров источника: ${frameSequence}; возраст: ${frameAge===null?'нет кадра':`${frameAge.toFixed(0)} мс`}; ответов локализации: ${history.current.length}.`);
     run.current=null;active.abort.abort();observed.current?.(null);setNotice(walkReasonLabel(reason));setRelease('pending');
+    // A stopped query must not keep the shared encoder busy in a new run.
+    encoder.current?.close();encoder.current=encoderMounted.current?new WalkFrameEncoder():null;
     const closing=(async()=>{
       let released=true,lease=active.lease;
       try{if(!lease&&active.opening)lease=await active.opening;if(lease)released=await lease.close();}
@@ -139,7 +141,7 @@ export function WalkingRoutePilot({job,clip,video,ready,binding,assetsReady,inpu
   useEffect(()=>{setConfirmed(false);void stopRef.current('walk_stream_changed');},[job?.id,job?.key,clip,binding?.captureEpoch,binding?.width,binding?.height]);
   useEffect(()=>{if(binding?.captureEpoch)setRelease('none');},[binding?.captureEpoch]);
   useEffect(()=>{
-    recent.current={sequence:0,at:0};lastSource.current=null;setPreviewFrame(null);const element=video.current;
+    recent.current={sequence:0,at:0};setPreviewFrame(null);const element=video.current;
     if(!captureEpoch||!element?.requestVideoFrameCallback)return;
     let closed=false,id=0;
     const next=()=>{id=element.requestVideoFrameCallback(()=>{
@@ -188,7 +190,7 @@ export function WalkingRoutePilot({job,clip,video,ready,binding,assetsReady,inpu
     const began=performance.now();
     const active:Run={id:crypto.randomUUID().replaceAll('-',''),job,abort:new AbortController(),lease:null,opening:null,began,
       binding:{...binding},deadline:began+60000,permitUntil:0,moving:false,lastSequence:0,clip,scope,freshUntil:null,freshWaits:0,trace:new WalkRunDiagnostics(began),observe:null,inFlight:false,nextObservationAt:0,startMode,camera:cameraEnabled?new WalkCameraServo():null};
-    run.current=active;setBusy(true);busyChange.current(true);setRelease('none');setStopDetail(null);clear();setNotice('Открываем отдельный пеший тест. До узнавания старта стик нейтрален.');
+    run.current=active;setBusy(true);busyChange.current(true);setRelease('none');setStopDetail(null);setPreviewFrame(null);clear();setNotice('Открываем отдельный пеший тест. До узнавания старта стик нейтрален.');
     history.current=[];inputs.current=[];images.current=0;lastImageAt.current=-Infinity;lastReport.current=null;lastUiPaint.current=-Infinity;setSamples([]);setEvents(0);
     const signal=active.abort.signal,alive=()=>run.current===active&&!signal.aborted;
     try{
@@ -223,7 +225,6 @@ export function WalkingRoutePilot({job,clip,video,ready,binding,assetsReady,inpu
         active.inFlight=true;active.nextObservationAt=began+50;
         try{
           active.lastSequence=frame.sequence;
-          lastSource.current=canvas;
           if(!encoder.current)throw Error('walk_encoder_unavailable');
           const {blob,sha}=await encoder.current.encode(video.current!,canvas);
           if(blob.size>384*1024)throw Error('walk_jpeg_quota');
@@ -328,7 +329,7 @@ export function WalkingRoutePilot({job,clip,video,ready,binding,assetsReady,inpu
     <label className="flex flex-wrap items-center gap-2 text-xs">Начало движения<select aria-label="Точка запуска пешего теста" className="rounded-lg border bg-background p-2" value={startMode} disabled={busy} onChange={e=>{setStartMode(e.target.value as StartMode);setConfirmed(false);}}><option value="recognized_route">С текущей узнанной точки маршрута</option><option value="beginning">Только у начала записи</option></select></label>
     <p className="text-xs text-muted-foreground">После обрыва можно снова нажать запуск на записанном участке. Положение определяется заново по живым кадрам; цель выбирается дальше по записи. При неоднозначном месте движение не начинается.</p>
     <label className="flex items-start gap-2 text-xs"><input type="checkbox" checked={cameraEnabled} disabled={busy} onChange={e=>{setCameraEnabled(e.target.checked);setConfirmed(false);}}/>Поворачивать камеру вдоль пути · две оси по сохранённому ракурсу, с проверкой по новым кадрам</label>
-    <p className="text-xs text-muted-foreground">Перед поворотом стик возвращается в центр без нового нажатия. Палец камеры удерживается; каждое движение корректируется по новому кадру. Знак и чувствительность определяются по отклику. Вертикальных свайпов нет; при сильном наклоне восстановите ракурс вручную. Режим пока требует живой проверки.</p>
+    <p className="text-xs text-muted-foreground">Камера следует сохранённому ракурсу по горизонтали и вертикали. При большом расхождении стик возвращается в центр без нового нажатия; небольшая коррекция возможна на ходу. Палец камеры удерживается, чувствительность измеряется по новым кадрам после срабатывания жеста. Режим пока требует живой проверки.</p>
     {cameraEnabled&&input.cameraIssue&&<p className="text-xs text-amber-500">{input.cameraIssue}</p>}
     <label className="flex items-start gap-2 text-xs"><input type="checkbox" checked={confirmed} disabled={busy} onChange={e=>setConfirmed(e.target.checked)}/>Персонаж пешком на записанном участке, ракурс и FOV соответствуют записи, путь свободен; готов остановить тест</label>
     <label className="flex items-center gap-2 text-xs"><input type="checkbox" checked={saveFrames} disabled={busy} onChange={e=>setSaveFrames(e.target.checked)}/>Диагностика: до 60 кадров, положения стика и подтверждения Android остаются в этой вкладке</label>

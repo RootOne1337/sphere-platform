@@ -62,6 +62,31 @@ class WalkRouteTests(unittest.TestCase):
         self.assertLess(result['stick'][0],0)
         self.assertAlmostEqual(result['stick'][1],0)
 
+    def test_one_weak_localized_image_requires_three_strong_poses_then_resumes(self):
+        self.observe()
+        self.now += .1
+        weak = self.observe(.2, inliers=21)
+        self.assertEqual(weak['reason'], 'walk_relocalizing_neutral')
+        self.assertEqual(weak['stick'], [0., 0.])
+        for progress in [.2, .3]:
+            self.now += .1
+            self.assertEqual(self.observe(progress)['stick'], [0., 0.])
+        self.now += .1
+        resumed = self.observe(.4)
+        self.assertEqual(resumed['reason'], 'walk_camera_relative_pursuit')
+        self.assertLess(resumed['stick'][1], 0.)
+
+    def test_persistently_weak_images_stop_and_invalid_geometry_never_recovers(self):
+        self.observe()
+        for _ in range(24):
+            self.now += .1
+            weak = self.observe(inliers=21)
+        self.assertEqual(weak['reason'], 'walk_relocalization_timeout')
+        self.assertEqual(weak['stick'], [0., 0.])
+        self.follower = WalkRouteFollower(self.route, clock=lambda: self.now)
+        invalid = self.observe(inliers=21, rotation=(0.,)*9)
+        self.assertEqual(invalid['reason'], 'walk_pose_or_corridor_unqualified')
+
     def test_camera_tracking_aligns_while_stationary_then_resumes_and_keeps_real_stall_limit(self):
         import math
         self.follower=WalkRouteFollower(self.route,clock=lambda:self.now,camera_tracking=True)

@@ -34,3 +34,18 @@ test('failure drops the query and permits legacy encoding of the NEXT frame only
   await expect(e.encode({} as HTMLVideoElement,canvas)).resolves.toEqual({blob,sha:'aa'.repeat(32)});
   expect(draw).toHaveBeenCalledTimes(1);expect(createImageBitmap).toHaveBeenCalledTimes(1);e.close();
 });
+
+test('a fallback callback from a stopped encoder cannot publish into a replacement encoder',async()=>{
+  Object.defineProperty(globalThis,'Worker',{configurable:true,writable:true,value:undefined});
+  const callbacks:((value:Blob)=>void)[]=[];
+  const canvas={getContext:()=>({drawImage:jest.fn()}),toBlob:(done:(v:Blob)=>void)=>{callbacks.push(done);}} as unknown as HTMLCanvasElement;
+  const old=new WalkFrameEncoder(),pending=old.encode({} as HTMLVideoElement,canvas);
+  const rejected=expect(pending).rejects.toThrow('walk_encoder_unavailable');old.close();
+  const replacement=new WalkFrameEncoder(),next=replacement.encode({} as HTMLVideoElement,canvas);
+  const blob=new Blob(['jpeg'],{type:'image/jpeg'});
+  Object.defineProperty(blob,'arrayBuffer',{value:async()=>new ArrayBuffer(4)});
+  Object.defineProperty(crypto,'subtle',{configurable:true,value:{digest:async()=>new Uint8Array(32).fill(170).buffer}});
+  callbacks[1](blob);await expect(next).resolves.toMatchObject({sha:'aa'.repeat(32)});
+  replacement.close();
+  callbacks[0](blob);await rejected;
+});

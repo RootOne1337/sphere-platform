@@ -74,6 +74,22 @@ class WalkRouteFollower:
         self.vector[:] = 0
         return self._reply(phase, reason, progress)
 
+    def _wait_for_localization(self, at):
+        self.acquisition = 0
+        self.vector[:] = 0
+        if not self.started:
+            return self._reply('waiting', 'walk_confirming_start')
+        self.arrival = 0
+        if self.relocalizing is None:
+            self.relocalizations += 1
+            if self.relocalizations > self.MAX_RELOCALIZATIONS:
+                return self._stop('walk_relocalization_budget')
+            self.relocalizing = dict(began=at, confirmations=0)
+        self.relocalizing['confirmations'] = 0
+        if at-self.relocalizing['began'] >= self.MAX_RELOCALIZE_SECONDS:
+            return self._stop('walk_relocalization_timeout')
+        return self._reply('waiting', 'walk_relocalizing_neutral', self.high_water)
+
     def observe(self, pose: RoutePose):
         np, now = self.np, self.clock()
         if self.terminal:
@@ -116,31 +132,23 @@ class WalkRouteFollower:
                 if self.relocalizations>self.MAX_RELOCALIZATIONS:return self._stop('walk_relocalization_budget')
                 self.relocalizing=dict(began=pose.received_at,confirmations=0)
         if pose.state != 'localized':
-            self.acquisition = 0
-            self.vector[:] = 0
-            if self.started:
-                self.arrival=0
-                if self.relocalizing is None:
-                    self.relocalizations+=1
-                    if self.relocalizations>self.MAX_RELOCALIZATIONS:
-                        return self._stop('walk_relocalization_budget')
-                    self.relocalizing=dict(began=pose.received_at,confirmations=0)
-                self.relocalizing['confirmations']=0
-                if pose.received_at-self.relocalizing['began']>=self.MAX_RELOCALIZE_SECONDS:
-                    return self._stop('walk_relocalization_timeout')
-                return self._reply('waiting','walk_relocalizing_neutral',self.high_water)
-            return self._reply('waiting', 'walk_confirming_start')
+            return self._wait_for_localization(pose.received_at)
         try:
             center, rotation = np.asarray(pose.center, float), np.asarray(pose.rotation, float).reshape(3, 3)
             progress, cross = float(pose.progress_units), float(pose.cross_track_units)
             if (center.shape != (3,) or not np.isfinite(center).all() or not np.isfinite(rotation).all()
                     or not np.allclose(rotation @ rotation.T, np.eye(3), atol=.01)
                     or abs(np.linalg.det(rotation)-1) > .01
-                    or not 0 <= progress <= self.total or not 0 <= cross <= self.step*3
-                    or pose.inliers < 24):
+                    or not 0 <= progress <= self.total or not 0 <= cross <= self.step*3):
                 return self._stop('walk_pose_or_corridor_unqualified')
         except (ValueError, TypeError):
             return self._stop('walk_pose_invalid')
+        # The localizer can report a valid pose with 20--23 correspondences,
+        # below the controller's stricter 24-inlier threshold. One weak image
+        # is temporary observation loss, not a permanent route failure. Keep
+        # the threshold and require the same three-pose bounded reacquisition.
+        if pose.inliers < 24:
+            return self._wait_for_localization(pose.received_at)
         if self.relocalizing is not None:
             # No movement or pose extrapolation while the current image is
             # unqualified. Resume only after three new localized observations

@@ -211,6 +211,15 @@ test('old input queue is rejected rather than executed late',()=>{
   expect(f.states).toContain('stale_contact');expect(f.sent.at(-1)?.type).toBe('touch_close');
 });
 
+test('a neutral release queued behind a 350ms ACK remains legal when video goes stale',()=>{
+  const center={x:100,y:350},f=fixture(undefined,()=>true,center,true);f.ready();
+  f.driver.set(0,center);f.ack();f.driver.set(0,{x:100,y:320});
+  f.stale();jest.advanceTimersByTime(350);f.ack();
+  expect(f.driver.isReady).toBe(true);
+  expect(f.sent.at(-1)).toMatchObject({action:2,pointer_id:0,x:100,y:350});f.ack();
+  expect(f.states).not.toContain('stale_contact');expect(f.driver.isVideoPaused).toBe(true);
+});
+
 test('a late ACK delivered before an overdue timer cannot authorize queued movement',()=>{
   const observe=jest.fn(),f=fixture(observe);f.ready();
   f.driver.set(0,{x:100,y:350});f.driver.set(0,{x:120,y:350});

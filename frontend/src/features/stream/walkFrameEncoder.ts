@@ -38,7 +38,9 @@ export class WalkFrameEncoder{
       const context=fallback.getContext('2d');if(!context)throw Error('walk_canvas_unavailable');
       context.drawImage(video,0,0,960,540);
       const blob=await new Promise<Blob>((resolve,reject)=>fallback.toBlob(v=>v?resolve(v):reject(Error('walk_jpeg_unavailable')),'image/jpeg',.92));
+      if(this.closed)throw Error('walk_encoder_unavailable');
       const sha=Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',await blob.arrayBuffer())),n=>n.toString(16).padStart(2,'0')).join('');
+      if(this.closed)throw Error('walk_encoder_unavailable');
       return {blob,sha};
     }catch(error){if(this.worker){this.disable();throw Error('walk_encoder_retry');}throw error;}
     finally{this.capturing=false;}

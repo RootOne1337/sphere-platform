@@ -3,7 +3,7 @@ import {horizontalCameraTurn,verticalCameraTurn} from './walkCamera';
 type Axis='x'|'y';
 type View={rotation:number[];target:unknown;sequence:number;capturedAt:number;now:number;canStroke:boolean;alignmentRequired?:boolean;referenceView?:boolean};
 export type CameraDragStep={hold:boolean;fraction:number|null;verticalFraction?:number|null;action?:'down'|'move'|'up';reason:string;yaw:number|null;pitch?:number|null;failed:boolean};
-type Command={action:'down'|'move'|'up';axis:Axis;rotation:number[];from:number;to:number;sentAt:number;ackAt:number|null;yaw:number;pitch?:number;sequence:number;oppositeAt?:number};
+type Command={action:'down'|'move'|'up';axis:Axis;rotation:number[];from:number;to:number;sentAt:number;ackAt:number|null;yaw:number;pitch?:number;sequence:number;oppositeAt?:number;activation?:boolean;lastTurn?:number;stableAt?:number;tracking?:boolean;previousMoveAt?:number|null;expectedTurn?:number};
 
 /** One held finger, one fresh edge, one observed response. Never a timed macro. */
 export class WalkCameraDrag {
@@ -12,6 +12,7 @@ export class WalkCameraDrag {
   private pitchGain:number|null=null;
   private command:Command|null=null;
   private held=false;
+  private touchActivated=false;
   private offset=0;
   private offsetY=0;
   private terminal:string|null=null;
@@ -21,7 +22,10 @@ export class WalkCameraDrag {
   private quiet=0;
   private attempts=0;
   private moves=0;
+  private alignmentMoves=0;
   private recenters=0;
+  private lastMoveAt:number|null=null;
+  private motion:Partial<Record<Axis,{rotation:number[];at:number;expected:number;badAt?:number}>>={};
   private bounds={min:-.25,max:.25,minY:-.25,maxY:.25};
   private feedback:{sequence:number;fraction:number;turnRadians:number;yawBefore:number;yawAfter:number;pitchBefore?:number;pitchAfter?:number;afterUpMs:number;axis?:Axis}[]=[];
   setBounds(bounds:{min:number;max:number;minY?:number;maxY?:number}){
@@ -37,13 +41,17 @@ export class WalkCameraDrag {
     const c=this.command;if(!c)return;
     if(!applied){this.terminal='walk_camera_input_unconfirmed';return;}
     c.ackAt=at;
-    if(c.action==='down')this.held=true;
+    if(c.action==='down'){this.held=true;this.touchActivated=false;}
     if(c.action==='move'){if(c.axis==='y')this.offsetY=c.to;else this.offset=c.to;}
-    if(c.action==='up'){this.held=false;this.offset=this.offsetY=0;this.releasedAt=at;}
+    if(c.action==='up'){this.held=false;this.touchActivated=false;this.offset=this.offsetY=0;this.releasedAt=at;this.motion={};}
   }
   cancelUnsentStroke(){
     if(!this.command||this.command.ackAt!==null)return;
-    if(this.command.action==='move'){this.moves--;if((this.command.axis==='y'?this.pitchGain:this.gain)===null)this.attempts--;}
+    if(this.command.action==='move'){this.moves--;this.alignmentMoves--;if((this.command.axis==='y'?this.pitchGain:this.gain)===null)this.attempts--;}
+    if(this.command.action==='move'){
+      const c=this.command,window=this.motion[c.axis];this.lastMoveAt=c.previousMoveAt??null;
+      if(window&&c.expectedTurn!==undefined){window.expected-=c.expectedTurn;if(Math.abs(window.expected)<1e-9)this.motion[c.axis]=undefined;}
+    }
     this.command=null;
   }
   pause(now:number):CameraDragStep{
@@ -54,7 +62,7 @@ export class WalkCameraDrag {
     this.command={action:'up',axis:'x',rotation:[],from:this.offset,to:0,sentAt:now,ackAt:null,yaw:0,sequence:0};
     return {hold:true,fraction:null,action:'up',reason:'walk_camera_releasing',yaw:null,failed:false};
   }
-  interrupt(){this.generation++;this.command=null;this.held=false;this.offset=this.offsetY=0;this.began=null;}
+  interrupt(){this.generation++;this.command=null;this.held=false;this.touchActivated=false;this.offset=this.offsetY=0;this.began=null;this.motion={};this.lastMoveAt=null;}
   update(v:View):CameraDragStep{
     if(this.terminal)return this.stop(this.terminal);
     const target=walkTargetCamera(v.target);
@@ -65,20 +73,42 @@ export class WalkCameraDrag {
       &&(Math.abs(pitch)<.12||this.pitchGain!==null);
     const wait=(reason:string,hold=!translating):CameraDragStep=>({hold,fraction:null,reason,yaw,pitch,failed:false});
     if(Math.abs(pitch)>(v.referenceView?1.2:.65))return this.stop('walk_camera_pitch_mismatch');
+    for(const axis of ['x','y'] as const){
+      const window=this.motion[axis];if(!window||v.capturedAt-window.at<800||Math.abs(window.expected)<.06)continue;
+      const measured=(axis==='x'?horizontalCameraTurn:verticalCameraTurn)(window.rotation,v.rotation);
+      const bad=Math.abs(measured)<.015||measured*window.expected<0;
+      if(bad){
+        if(window.badAt===undefined)window.badAt=v.capturedAt;
+        else if(v.capturedAt-window.badAt>=80)return this.stop(Math.abs(measured)<.015?'walk_camera_response_not_observed':'walk_camera_response_wrong_direction');
+      }else this.motion[axis]=undefined;
+    }
     if(this.command){
       const c=this.command;
       if(v.now-c.sentAt>1400)return this.stop('walk_camera_feedback_timeout');
-      if(c.ackAt===null||v.sequence<=c.sequence||v.capturedAt<c.ackAt+(c.action==='move'?80:40))return wait('walk_camera_waiting_feedback');
-      if(c.action==='move'){
+      if(c.ackAt===null||v.sequence<=c.sequence||v.capturedAt<c.ackAt+(c.action==='move'?(c.tracking?20:80):40))return wait('walk_camera_waiting_feedback');
+      if(c.action==='move'&&!c.tracking){
         const turn=(c.axis==='y'?verticalCameraTurn:horizontalCameraTurn)(c.rotation,v.rotation),delta=c.to-c.from;
-        if(Math.abs(turn)<.002&&v.capturedAt-c.ackAt<400)return wait('walk_camera_waiting_feedback');
+        // A delivery ACK and a tiny noisy pose difference do not identify the
+        // response. Wait for a real signal AND a settled second observation;
+        // otherwise a delayed partial response can invent the gain or its sign.
+        const visible=Math.abs(turn)>=.015;
+        if(!visible&&v.capturedAt-c.ackAt<400)return wait('walk_camera_waiting_feedback');
+        if(visible){
+          if(c.lastTurn===undefined||Math.abs(turn-c.lastTurn)>.010){c.lastTurn=turn;c.stableAt=v.capturedAt;return wait('walk_camera_waiting_feedback');}
+          c.lastTurn=turn;
+          if(v.capturedAt-(c.stableAt??v.capturedAt)<40)return wait('walk_camera_waiting_feedback');
+        }
         if(this.feedback.length>=32)this.feedback.shift();
         this.feedback.push({sequence:v.sequence,fraction:delta,turnRadians:turn,yawBefore:c.yaw,yawAfter:yaw,
           pitchBefore:c.pitch??0,pitchAfter:pitch,afterUpMs:v.capturedAt-c.ackAt,axis:c.axis});
         if(Math.abs(turn)>.5)return this.stop('walk_camera_response_too_large');
-        if(Math.abs(turn)<.002){
+        if(!visible){
           if(++this.quiet>=3)return this.stop('walk_camera_response_not_observed');
           this.minDelta=Math.min(.06,Math.max(this.minDelta,Math.abs(delta)*1.4));
+        }else if(c.activation){
+          // The first visible drag crosses Android touch slop. Its effective
+          // distance is unknown, so it proves activation, not sensitivity.
+          this.touchActivated=true;this.quiet=0;
         }else{
           const measured=turn/delta;
           const gain=c.axis==='y'?this.pitchGain:this.gain;
@@ -115,31 +145,46 @@ export class WalkCameraDrag {
       if(this.held&&v.canStroke)return this.edge(v,'up',0,yaw,'walk_camera_releasing');
       return wait(this.held?'walk_camera_waiting_neutral':'walk_camera_aligned',this.held);
     }
-    if(this.began===null)this.began=v.now;
+    if(this.began===null){this.began=v.now;this.alignmentMoves=0;}
     if(v.now-this.began>8000)return this.stop('walk_camera_alignment_timeout');
     if(!v.canStroke||v.now-v.capturedAt>150)return wait('walk_camera_waiting_neutral');
     if(!this.held){
       if(v.now-this.releasedAt<120)return wait('walk_camera_recentering');
       return this.edge(v,'down',0,yaw,'walk_camera_calibrating');
     }
-    if(this.moves>=120)return this.stop('walk_camera_pulse_limit');
+    // A long route can contain many independently verified camera corrections.
+    // Bound each alignment attempt, rather than retiring a healthy run after
+    // the cumulative diagnostic counter reaches 120.
+    if(this.alignmentMoves>=120)return this.stop('walk_camera_pulse_limit');
     const axis:Axis=v.referenceView&&Math.abs(pitch)>.06&&(Math.abs(yaw)<.08||Math.abs(pitch)>Math.abs(yaw)*1.2)?'y':'x';
     const gain=axis==='y'?this.pitchGain:this.gain,error=axis==='y'?pitch:yaw,offset=axis==='y'?this.offsetY:this.offset;
     const min=axis==='y'?this.bounds.minY:this.bounds.min,max=axis==='y'?this.bounds.maxY:this.bounds.max;
     const probe=Math.max(.018,this.minDelta);
-    let delta=gain===null?(offset+probe<=max?probe:-probe):Math.sign(error/gain)*Math.min(.06,Math.max(this.minDelta,Math.min(Math.abs(error)*.5,.12)/Math.abs(gain)));
+    const tracking=v.referenceView===true&&this.touchActivated&&gain!==null;
+    const dt=this.lastMoveAt===null?.05:Math.min(.18,Math.max(.05,(v.now-this.lastMoveAt)/1000));
+    const desiredTurn=Math.min(.12,Math.abs(error)*(tracking?1.8*dt:.5));
+    let delta=!this.touchActivated||gain===null?(offset+probe<=max?probe:-probe):Math.sign(error/gain)*Math.min(.06,Math.max(this.minDelta,desiredTurn/Math.abs(gain)));
     const next=Math.max(min,Math.min(max,offset+delta));delta=next-offset;
     if(Math.abs(delta)<.002){
       if(++this.recenters>4)return this.stop('walk_camera_alignment_timeout');
       return this.edge(v,'up',0,yaw,'walk_camera_recentering');
     }
-    const step=this.edge(v,'move',next,yaw,gain===null?'walk_camera_calibrating':'walk_camera_turning',axis,pitch);
+    const step=this.edge(v,'move',next,yaw,gain===null?'walk_camera_calibrating':'walk_camera_turning',axis,pitch,tracking);
     if(translating&&gain!==null)step.hold=false;
     return {...step,yaw,pitch};
   }
-  private edge(v:View,action:'down'|'move'|'up',to:number,yaw:number,reason:string,axis:Axis='x',pitch=0):CameraDragStep{
-    if(action==='move'){this.moves++;if((axis==='y'?this.pitchGain:this.gain)===null)this.attempts=Math.min(3,this.attempts+1);}
-    this.command={action,axis,rotation:[...v.rotation],from:axis==='y'?this.offsetY:this.offset,to,sentAt:v.now,ackAt:null,yaw,pitch,sequence:v.sequence};
+  private edge(v:View,action:'down'|'move'|'up',to:number,yaw:number,reason:string,axis:Axis='x',pitch=0,tracking=false):CameraDragStep{
+    if(action==='move'){this.moves++;this.alignmentMoves++;if((axis==='y'?this.pitchGain:this.gain)===null)this.attempts=Math.min(3,this.attempts+1);}
+    this.command={action,axis,rotation:[...v.rotation],from:axis==='y'?this.offsetY:this.offset,to,sentAt:v.now,ackAt:null,yaw,pitch,sequence:v.sequence,
+      activation:action==='move'&&!this.touchActivated,tracking,previousMoveAt:this.lastMoveAt};
+    if(action==='move'){
+      this.lastMoveAt=v.now;
+      if(tracking){
+        const window=this.motion[axis]??{rotation:[...v.rotation],at:v.capturedAt,expected:0};
+        this.command.expectedTurn=(to-this.command.from)*(axis==='x'?this.gain!:this.pitchGain!);
+        window.expected+=this.command.expectedTurn;this.motion[axis]=window;
+      }
+    }
     return {hold:true,fraction:action==='up'?null:axis==='x'?to:this.offset,
       verticalFraction:action==='up'?null:axis==='y'?to:this.offsetY,action,reason,yaw,failed:false};
   }

@@ -85,21 +85,37 @@ test('server alignment remains authoritative between entry and exit thresholds a
   expect(resumed.hold).toBe(true);expect(resumed.reason).not.toBe('walk_camera_aligned');expect(resumed.action).toBe('down');
 });
 
-test('one early opposite response waits for settling rather than learning a wrong sign or aborting',()=>{
+const view=(at:number,h:number,sequence:number)=>({rotation:rotation(h),target:[-.5,0,1],sequence,capturedAt:at,now:at,canStroke:true});
+function calibrated(){
   const servo=new WalkCameraDrag();
-  const view=(at:number,heading:number,sequence:number)=>({rotation:rotation(heading),target:[-.5,0,1],sequence,capturedAt:at,now:at,canStroke:true});
-  expect(servo.update(view(1000,0,1)).action).toBe('down');servo.finishStroke(true,1005);
-  expect(servo.update(view(1050,0,2)).action).toBe('move');servo.finishStroke(true,1055);
-  const correcting=servo.update(view(1500,.06,3));expect(correcting.action).toBe('move');servo.finishStroke(true,1505);
-  const early=servo.update(view(1650,.085,4));expect(early.failed).toBe(false);expect(early.action).toBeUndefined();
-  const settled=servo.update(view(1950,-.02,5));expect(settled.failed).toBe(false);expect(servo.snapshot().gainRadiansPerShortSide).toBeGreaterThan(0);
+  servo.update(view(1000,0,1));servo.finishStroke(true,1005);servo.update(view(1050,0,2));servo.finishStroke(true,1055);
+  expect(servo.update(view(1450,.06,3)).action).toBeUndefined();
+  expect(servo.update(view(1500,.06,4)).action).toBe('move');servo.finishStroke(true,1505);
+  expect(servo.snapshot().gainRadiansPerShortSide).toBeNull(); // Touch activation is not sensitivity.
+  expect(servo.update(view(1650,.15,5)).action).toBeUndefined();
+  expect(servo.update(view(1700,.15,6)).action).toBe('move');servo.finishStroke(true,1705);
+  expect(servo.snapshot().gainRadiansPerShortSide).toBeCloseTo(5);
+  return servo;
+}
+test('one early opposite response waits for settling rather than learning a wrong sign or aborting',()=>{
+  const servo=calibrated();
+  for(const [at,h,seq] of [[1850,.18,7],[1900,.18,8],[2150,-.10,9]]){
+    const early=servo.update(view(at,h,seq));expect(early.failed).toBe(false);expect(early.action).toBeUndefined();
+  }
+  const settled=servo.update(view(2200,-.10,10));expect(settled.failed).toBe(false);expect(servo.snapshot().gainRadiansPerShortSide).toBeGreaterThan(0);
 });
 
 test('sustained opposite response is still terminal and never produces another movement',()=>{
-  const servo=new WalkCameraDrag();
-  const view=(at:number,h:number,sequence:number)=>({rotation:rotation(h),target:[-.5,0,1],sequence,capturedAt:at,now:at,canStroke:true});
-  servo.update(view(1000,0,1));servo.finishStroke(true,1005);servo.update(view(1050,0,2));servo.finishStroke(true,1055);
-  servo.update(view(1500,.06,3));servo.finishStroke(true,1505);
-  expect(servo.update(view(1950,.10,4)).failed).toBe(false);
-  const rejected=servo.update(view(2050,.11,5));expect(rejected.failed).toBe(true);expect(rejected.reason).toBe('walk_camera_response_wrong_direction');expect(rejected.action).toBeUndefined();
+  const servo=calibrated();
+  expect(servo.update(view(2110,.20,7)).failed).toBe(false);
+  expect(servo.update(view(2160,.20,8)).failed).toBe(false);
+  const rejected=servo.update(view(2260,.20,9));expect(rejected.failed).toBe(true);expect(rejected.reason).toBe('walk_camera_response_wrong_direction');expect(rejected.action).toBeUndefined();
+});
+
+test('sub-degree pose noise cannot calibrate a camera sign or sensitivity',()=>{
+  const servo=new WalkCameraDrag();servo.update(view(1000,0,1));servo.finishStroke(true,1005);
+  servo.update(view(1050,0,2));servo.finishStroke(true,1055);
+  for(const [at,h,seq] of [[1150,.004,3],[1250,-.004,4],[1350,.005,5]]){
+    expect(servo.update(view(at,h,seq)).action).toBeUndefined();expect(servo.snapshot().gainRadiansPerShortSide).toBeNull();
+  }
 });
