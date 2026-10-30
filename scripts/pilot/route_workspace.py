@@ -319,6 +319,7 @@ class RouteWorkspaces:
     def _install_walk(self, *, start_mode='beginning',camera_tracking=False,camera_control='pulse_v1'):
         from motor_worker.walk_route import WalkRouteFollower
         from motor_worker.route_tracking import AnchoredRouteLocalizer
+        from motor_worker.route_reference_view import reference_rotations
         if 'walk' not in self.live:
             route = self.live['tracker'].route
             # The lower central avatar is not a stationary world landmark.
@@ -329,7 +330,9 @@ class RouteWorkspaces:
             self.live['tracker'] = AnchoredRouteLocalizer(route, capture_epoch=self.live['epoch'],
                 episode_id=self.live['episode'], goal_revision=self.live['goal'], clock=self.clock,
                 recovery_candidate_limit=8)
-            self.live['walk'] = WalkRouteFollower(route, clock=self.clock,start_mode=start_mode,camera_tracking=camera_tracking,camera_control=camera_control)
+            views=reference_rotations(self.folder/self.live['job']/'geometry.json',route,self.live['geometry_sha256'])
+            self.live['walk'] = WalkRouteFollower(route, clock=self.clock,start_mode=start_mode,camera_tracking=camera_tracking,
+                                                camera_control=camera_control,reference_rotations=views)
             self.live['deadline'] = min(self.live['deadline'], self.clock()+60)
     def start_replay(self,job,body):
         """The real pose/planner path, with a separate recorded-input protocol.

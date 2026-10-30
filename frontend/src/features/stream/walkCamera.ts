@@ -8,6 +8,9 @@ export function horizontalCameraTurn(before:number[],after:number[]):number {
   const right=before.slice(0,3),forward=before.slice(6,9),next=after.slice(6,9);
   return Math.atan2(dot(right,next),dot(forward,next));
 }
+export function verticalCameraTurn(before:number[],after:number[]):number {
+  return Math.atan2(dot(before.slice(3,6),after.slice(6,9)),dot(before.slice(6,9),after.slice(6,9)));
+}
 
 /** Tiny horizontal pulses, followed by NEW localized RGB feedback. No pitch input. */
 export class WalkCameraServo {

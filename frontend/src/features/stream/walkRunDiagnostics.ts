@@ -30,7 +30,7 @@ export function walkCameraInputSummary(events:TeachingInput[]) {
     if(event.stage==='receipt'&&event.action===1&&event.outcome==='applied'){
       strokesApplied++;const down=downs.get(event.gesture);
       if(down&&down.x!==undefined&&event.x!==undefined){
-        lastDistancePx=Math.abs(event.x-down.x);lastDurationMs=Math.max(0,event.at_ms-down.at_ms);
+        lastDistancePx=Math.hypot(event.x-down.x,(event.y??0)-(down.y??0));lastDurationMs=Math.max(0,event.at_ms-down.at_ms);
       }
     }
   }

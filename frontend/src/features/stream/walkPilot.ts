@@ -5,7 +5,11 @@ export type WalkPlan={schema:'sphere-walk-plan-v1';phase:'waiting'|'following'|'
   stick:[number,number];progressFraction:number|null;maxStick:.35;maxSeconds:60;
   groundRoute:false;executionQualified:false;cameraBodyAssumption:true};
 export type WalkInputLease={active():boolean;failure?():string|null;set(vector:[number,number]):void;canLook?():boolean;look?(fraction:number,notAfter:number):Promise<boolean>;
-  drag?(fraction:number|null,notAfter:number):Promise<boolean>;cameraLimits?:{min:number;max:number};close():Promise<boolean>};
+  paused?():boolean;neutral?():void;
+  permit?(notAfter:number):void;
+  drag?(fraction:number|null,notAfter:number):Promise<boolean>;
+  drag2?(point:{x:number;y:number}|null,notAfter:number):Promise<boolean>;
+  cameraLimits?:{min:number;max:number;minY?:number;maxY?:number};close():Promise<boolean>};
 export type WalkInputControl={issue:string|null;cameraIssue?:string|null;open(signal:AbortSignal,journal:(event:TeachingInput)=>void):Promise<WalkInputLease>};
 /** No input owner exists yet: a short presentation gap may recover before open. */
 export function waitForFreshWalkSource(fresh:()=>boolean,signal:AbortSignal):Promise<boolean>{
@@ -101,7 +105,7 @@ export const walkReasonLabel=(reason:string):string=>({
   camera_stroke_expired:'Поворот камеры не успел завершиться на свежем решении — ввод освобождён',
   walk_camera_aligned:'Взгляд вдоль пути · двигаемся',
   walk_camera_alignment_required:'Стик в центре: направляем камеру вдоль пути',
-  walk_camera_calibrating:'Стик в центре: проверяем отклик горизонтального поворота камеры',
+  walk_camera_calibrating:'Проверяем отклик камеры по корректируемой оси',
   walk_camera_turning:'Стик в центре: плавно направляем камеру вдоль пути',
   walk_camera_waiting_feedback:'Стик в центре: ждём новый кадр после поворота камеры',
   walk_camera_waiting_neutral:'Ждём подтверждения нейтрали стика перед коррекцией камеры',

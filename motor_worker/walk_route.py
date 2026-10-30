@@ -18,7 +18,7 @@ class WalkRouteFollower:
     MAX_RELOCALIZE_SECONDS = 2.
     MAX_RELOCALIZATIONS = 3
 
-    def __init__(self, route: SparseRoute, *, clock, start_mode='beginning', camera_tracking=False,camera_control='continuous_drag_v1'):
+    def __init__(self, route: SparseRoute, *, clock, start_mode='beginning', camera_tracking=False,camera_control='continuous_drag_v1',reference_rotations=None):
         import numpy as np
 
         if type(route) is not SparseRoute:
@@ -31,6 +31,12 @@ class WalkRouteFollower:
         self.camera_tracking = camera_tracking
         if camera_control not in {'pulse_v1','continuous_drag_v1'}:raise ValueError('walk_camera_control')
         self.camera_control=camera_control
+        self.reference_rotations=reference_rotations
+        if reference_rotations is not None and (len(reference_rotations)!=len(route.camera_trace)
+                or any(np.asarray(r).shape!=(3,3) or not np.isfinite(r).all()
+                       or not np.allclose(np.asarray(r)@np.asarray(r).T,np.eye(3),atol=1e-5)
+                       or not np.isclose(np.linalg.det(r),1,atol=1e-5) for r in reference_rotations)):
+            raise ValueError('walk_reference_rotations_invalid')
         self.alignment = None
         self.route, self.clock, self.np = route, clock, np
         self.trace = np.asarray(route.camera_trace, dtype=float)
@@ -204,14 +210,27 @@ class WalkRouteFollower:
         fraction = float(np.clip((target_arc-self.arc[index])/self.steps[index],0.,1.))
         target = self.trace[index]*(1-fraction)+self.trace[index+1]*fraction
         camera_delta = rotation @ (target-center)
+        view={}
+        if self.reference_rotations is not None:
+            # Interpolate by localized ARC progress, never by live elapsed time.
+            i=pose.segment
+            t=float(np.clip((progress-self.arc[i])/max(self.steps[i],MIN_TRACE_STEP_UNITS),0.,1.))
+            forward=(1-t)*self.reference_rotations[i][2]+t*self.reference_rotations[i+1][2]
+            if np.linalg.norm(forward)<.1:return self._stop('walk_target_direction_unknown')
+            look=rotation@(forward/np.linalg.norm(forward))
+            view=dict(targetViewCamera=[float(v) for v in look],referenceView=True)
         if self.camera_tracking:
-            yaw = abs(float(math.atan2(camera_delta[0], camera_delta[2])))
-            if yaw > ((.08 if self.alignment is not None else .20) if self.camera_control=='continuous_drag_v1' else .14):
+            look=np.asarray(view.get('targetViewCamera',camera_delta))
+            yaw=abs(float(math.atan2(look[0],look[2])))
+            pitch=abs(float(math.atan2(look[1],math.hypot(look[0],look[2])))) if view else 0.
+            threshold=((.08 if self.alignment is not None else (.40 if view else .20)) if self.camera_control=='continuous_drag_v1' else .14)
+            error=max(yaw,pitch)
+            if yaw>threshold or pitch>(.06 if self.alignment is not None else .25):
                 self.vector[:] = 0
                 if self.alignment is None:
-                    self.alignment = dict(began=now, improved=now, best=yaw)
-                elif yaw < self.alignment['best']-.005:
-                    self.alignment.update(improved=now, best=yaw)
+                    self.alignment = dict(began=now, improved=now, best=error)
+                elif error < self.alignment['best']-.005:
+                    self.alignment.update(improved=now, best=error)
                 if now-self.alignment['began'] > 8:
                     return self._stop('walk_camera_alignment_timeout')
                 if now-self.alignment['improved'] > 3:
@@ -219,7 +238,7 @@ class WalkRouteFollower:
                 # Deliberately stationary, only while fresh poses confirm that
                 # camera alignment is converging. The browser owns all input.
                 return self._reply('following', 'walk_camera_alignment_required', progress,
-                                   targetCamera=[float(v) for v in camera_delta])
+                                   targetCamera=[float(v) for v in camera_delta],**view)
             if self.alignment is not None:
                 self.alignment = None
                 self.history.clear();self.history.append((pose.received_at, self.high_water))
@@ -242,4 +261,4 @@ class WalkRouteFollower:
             delta *= maximum/change
         self.vector += delta
         return self._reply('following', 'walk_camera_relative_pursuit', progress,
-                           targetCamera=[float(v) for v in camera_delta])
+                           targetCamera=[float(v) for v in camera_delta],**view)

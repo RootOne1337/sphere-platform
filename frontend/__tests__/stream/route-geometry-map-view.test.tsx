@@ -8,6 +8,16 @@ beforeEach(()=>{
 });
 afterEach(()=>jest.restoreAllMocks());
 
+test('live marker updates do not repaint thousands of depth-coloured landmarks',()=>{
+  const cameras=[{center:[0,0,0],ticks_90k:0,camera_to_world:[[1,0,0,0],[0,1,0,0],[0,0,1,0]]},
+    {center:[0,0,1],ticks_90k:9000,camera_to_world:[[1,0,0,0],[0,1,0,0],[0,0,1,1]]}];
+  const points=[[0,0,2,240,120,50],[1,0,4,240,120,50]],view=render(<RouteGeometryMap cameras={cameras} points={points} liveCamera={cameras[0]}/>);
+  const count=fills.length;expect(count).toBeGreaterThan(0);
+  view.rerender(<RouteGeometryMap cameras={cameras} points={points} selectedTicks={9000} liveCamera={{...cameras[1],center:[.1,0,1]}}/>);
+  expect(fills).toHaveLength(count);expect(screen.getByLabelText('Подтверждённое живое положение')).toBeInTheDocument();
+  expect(screen.getByText(/цвет облака закреплён/)).toBeInTheDocument();
+});
+
 test('shows actual counts and explicitly reports gaps and unknown road scale',()=>{
   render(<RouteGeometryMap cameras={[{center:[0,0,0],ticks_90k:0},{center:[1,0,0],ticks_90k:45000},
     {center:[2,1,0],ticks_90k:200000}]} points={[[0,1,2,255,255,255],[1,1,1,1,1,1]]}/>);

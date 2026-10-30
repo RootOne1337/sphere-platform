@@ -51,6 +51,15 @@ class WalkReportTests(unittest.TestCase):
         body['id']='c'*32;body['observations'][0]['cameraYawRadians']=float('nan')
         with self.assertRaisesRegex(ValueError,'observation'):store_walk_report(self.job,body)
 
+    def test_two_axis_camera_feedback_and_pitch_are_saved_without_changing_legacy_report_schema(self):
+        body=copy.deepcopy(self.body)
+        body['observations'][0]['cameraPitchRadians']=-.2
+        body['camera']=dict(gainRadiansPerShortSide=4,pitchGainRadiansPerShortSide=-3,pulses=2,calibrationAttempts=2,terminal=None,
+            feedback=[dict(sequence=4,fraction=.018,turnRadians=-.05,yawBefore=.1,yawAfter=.1,pitchBefore=.3,pitchAfter=.25,axis='y',afterUpMs=180)])
+        self.assertEqual(store_walk_report(self.job,body)['state'],'saved')
+        body['id']='c'*32;body['camera']['feedback'][0]['pitchAfter']=float('nan')
+        with self.assertRaisesRegex(ValueError,'camera_feedback'):store_walk_report(self.job,body)
+
     def test_camera_feedback_and_real_gesture_duration_are_bounded(self):
         feedback=dict(sequence=10,fraction=-.018,turnRadians=.09,yawBefore=.8,yawAfter=.71,afterUpMs=180)
         camera=dict(gainRadiansPerShortSide=-5.,pulses=2,calibrationAttempts=1,terminal=None,

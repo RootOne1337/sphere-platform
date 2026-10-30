@@ -1,5 +1,24 @@
 import {WalkCameraDrag} from '@/src/features/stream/walkCameraDrag';
 const rotation=(y:number)=>[Math.cos(y),0,-Math.sin(y),0,1,0,Math.sin(y),0,Math.cos(y)];
+
+test.each([[5,4],[-8,6],[3,-5]])('recorded-view servo converges in yaw and pitch for signed gains %s %s',(gx,gy)=>{
+  const servo=new WalkCameraDrag();let yaw=0,pitch=0,x=0,y=0,aligned=false;
+  const r=(h:number,v:number)=>[Math.cos(h),0,-Math.sin(h),-Math.sin(h)*Math.sin(v),Math.cos(v),-Math.cos(h)*Math.sin(v),Math.sin(h)*Math.cos(v),Math.sin(v),Math.cos(h)*Math.cos(v)];
+  const desired=[Math.sin(.6)*Math.cos(.28),Math.sin(.28),Math.cos(.6)*Math.cos(.28)];
+  for(let i=0;i<150;i++){
+    const now=1000+i*50,R=r(yaw,pitch),target=[0,1,2].map(k=>R.slice(k*3,k*3+3).reduce((sum,n,j)=>sum+n*desired[j],0));
+    const step=servo.update({rotation:R,target,sequence:i+1,capturedAt:now,now,canStroke:true,referenceView:true});
+    expect(step.failed).toBe(false);
+    if(step.action){
+      if(step.action==='down'){x=y=0;}
+      if(step.action==='move'){yaw+=(step.fraction!-x)*gx;pitch+=((step.verticalFraction??0)-y)*gy;x=step.fraction!;y=step.verticalFraction??0;}
+      servo.finishStroke(true,now+5);
+    }
+    if(step.reason==='walk_camera_aligned'&&!step.hold){aligned=true;break;}
+  }
+  expect(aligned).toBe(true);expect(Math.abs(yaw-.6)).toBeLessThan(.1);expect(Math.abs(pitch-.28)).toBeLessThan(.08);
+  expect(servo.snapshot().pitchGainRadiansPerShortSide).not.toBeNull();
+});
 test.each([12,-12,3])('held camera finger follows fresh geometric feedback with gain %s',gain=>{
   const servo=new WalkCameraDrag();let heading=0,offset=0,recognized=false,downs=0,ups=0,aligned=false;
   for(let i=0;i<240;i++){

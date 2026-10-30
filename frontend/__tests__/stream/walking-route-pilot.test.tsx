@@ -68,11 +68,13 @@ test('camera pulse is a separate acknowledged operation while the movement stick
     const value=await response.json();value.pose.rotation=[1,0,0,0,1,0,0,0,1];value.walk.targetCamera=[1,0,1];
     return {json:async()=>value} as Response;
   });
-  lease.canLook=()=>true;lease.drag=jest.fn(async()=>true);
+  const order:string[]=[];lease.set=jest.fn(()=>{order.push('stick');});
+  lease.canLook=()=>true;lease.drag=jest.fn(async()=>{order.push('camera');return true;});
   view({input:{issue:null,cameraIssue:null,open}});start();
   await waitFor(()=>expect(lease.drag).toHaveBeenCalledWith(0,1250));
+  expect(order.indexOf('camera')).toBeLessThan(order.indexOf('stick'));
   expect(jest.mocked(lease.set).mock.calls.every(([v])=>Math.hypot(...v)===0)).toBe(true);
-  expect(screen.getByRole('status')).toHaveTextContent(/проверяем отклик/);
+  expect(screen.getByRole('status')).toHaveTextContent(/проверяем отклик/i);
   fireEvent.keyDown(window,{code:'Escape'});await screen.findByText('Освобождение: CLOSED');
 });
 test('an old service cannot silently open camera-enabled input without acknowledging that mode',async()=>{
@@ -138,6 +140,18 @@ test('explicit start sends a fresh bound correction and stop waits for native cl
   await screen.findByText('Освобождение: CLOSED');
   expect(busy).toHaveBeenLastCalledWith(false);
   expect(jest.mocked(reconstructionRequest).mock.calls.filter(c=>c[0].endsWith('/walk-start'))).toHaveLength(1);
+});
+
+test('a 320 ms source pause neutralizes without restarting and resumes only on a new reply',async()=>{
+  let now=1000;const clock=jest.spyOn(performance,'now').mockImplementation(()=>now);lease.neutral=jest.fn();
+  try{
+    view();start();await waitFor(()=>expect(lease.set).toHaveBeenCalled());
+    const before=jest.mocked(lease.set).mock.calls.length;now=1320;
+    await waitFor(()=>expect(lease.neutral).toHaveBeenCalled());expect(lease.close).not.toHaveBeenCalled();
+    expect(jest.mocked(lease.set).mock.calls).toHaveLength(before);
+    now=1360;fresh();await waitFor(()=>expect(jest.mocked(lease.set).mock.calls.length).toBeGreaterThan(before));
+    expect(lease.close).not.toHaveBeenCalled();fireEvent.keyDown(window,{code:'Escape'});await screen.findByText('Освобождение: CLOSED');
+  }finally{clock.mockRestore();}
 });
 test('unknown native close blocks another start and never claims successful release',async()=>{
   lease.close=jest.fn(async()=>false);view();start();await waitFor(()=>expect(lease.set).toHaveBeenCalled());

@@ -34,6 +34,28 @@ class WalkRouteTests(unittest.TestCase):
         self.assertFalse(second['executionQualified'])
         self.assertFalse(second['groundRoute'])
 
+    def test_recorded_camera_pitch_is_distinct_from_slope_of_camera_trace(self):
+        import numpy as np
+        import math
+        a=.35;R=np.array([[1,0,0],[0,math.cos(a),-math.sin(a)],[0,math.sin(a),math.cos(a)]])
+        self.follower=WalkRouteFollower(self.route,clock=lambda:self.now,camera_tracking=True,
+                                       reference_rotations=(R,)*len(self.route.camera_trace))
+        wrong=self.observe();self.assertEqual(wrong['reason'],'walk_camera_alignment_required')
+        self.assertGreater(wrong['targetViewCamera'][1],.3);self.assertEqual(wrong['stick'],[0.,0.])
+        self.now+=.2
+        aligned=self.observe(rotation=tuple(R.flat))
+        np.testing.assert_allclose(aligned['targetViewCamera'],[0,0,1],atol=1e-8)
+        self.assertEqual(aligned['reason'],'walk_camera_relative_pursuit');self.assertLess(aligned['stick'][1],0)
+
+    def test_moderate_recorded_view_turn_can_coexist_with_walking(self):
+        import numpy as np
+        import math
+        a=.25;R=np.array([[math.cos(a),0,-math.sin(a)],[0,1,0],[math.sin(a),0,math.cos(a)]])
+        self.follower=WalkRouteFollower(self.route,clock=lambda:self.now,camera_tracking=True,
+                                       reference_rotations=(R,)*len(self.route.camera_trace))
+        result=self.observe();self.assertTrue(result['referenceView'])
+        self.assertEqual(result['reason'],'walk_camera_relative_pursuit');self.assertLess(result['stick'][1],0)
+
     def test_camera_rotation_changes_command_without_replaying_any_keys(self):
         # Camera looking along +X: the world +Z route is to camera-left.
         result=self.observe(rotation=(0.,0.,-1.,0.,1.,0.,1.,0.,0.))

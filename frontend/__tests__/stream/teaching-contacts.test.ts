@@ -4,12 +4,12 @@ import {applyWalkingStick} from '@/src/features/stream/walkPilot';
 import {calibrateProfile,defaultTeachingProfile} from '@/src/features/stream/teachingKeymap';
 
 const binding={captureEpoch:'00112233-4455-6677-8899-aabbccddeeff',width:960,height:540};
-function fixture(observedRtt?: (milliseconds:number)=>void,idleFresh?:()=>boolean,neutralStick?:{x:number;y:number}) {
+function fixture(observedRtt?: (milliseconds:number)=>void,idleFresh?:()=>boolean,neutralStick?:{x:number;y:number},recoverVideoGaps=false) {
   const sent: Record<string,unknown>[]=[],journal:TeachingInput[]=[],states:string[]=[];
   let listener:(v:unknown)=>void=()=>{};let fresh=true;
   const endpoint:DirectControlEndpoint={session:'a'.repeat(32),sharedInput:true,readyState:1,bufferedAmount:0,
     capture:()=>binding,send:raw=>sent.push(JSON.parse(raw)),listen:fn=>{listener=fn;return()=>{};}};
-  const driver=new TeachingContacts(endpoint,binding,()=>fresh,event=>journal.push(event),(state,reason)=>states.push(reason??state),observedRtt,idleFresh,neutralStick);
+  const driver=new TeachingContacts(endpoint,binding,()=>fresh,event=>journal.push(event),(state,reason)=>states.push(reason??state),observedRtt,idleFresh,neutralStick,recoverVideoGaps);
   const envelope={session_id:endpoint.session,capture_epoch:binding.captureEpoch,contact_protocol:1,max_pointers:3,owner:'b'.repeat(32)};
   const receipt=(fields:Record<string,unknown>)=>listener({type:'shared_input_status',...envelope,device_uptime_ms:1000,...fields});
   const ready=()=>{listener({type:'touch_session',...envelope,frame_width:960,frame_height:540});receipt({sequence:0,gesture:0,action:4,pointer_id:-1,outcome:'ready'});};
@@ -17,6 +17,50 @@ function fixture(observedRtt?: (milliseconds:number)=>void,idleFresh?:()=>boolea
   return {driver,sent,journal,states,ready,receipt,ack,stale:()=>{fresh=false;},resume:()=>{fresh=true;}};
 }
 beforeEach(()=>jest.useFakeTimers());afterEach(()=>{jest.clearAllTimers();jest.useRealTimers();});
+
+test('a short video gap centers the held stick and releases camera without retiring the foot owner',async()=>{
+  let idle=true;const center={x:100,y:350},f=fixture(undefined,()=>idle,center,true);f.ready();
+  f.driver.set(0,center);f.ack();f.driver.set(0,{x:100,y:320});f.ack();
+  const down=f.driver.cameraCommand({x:700,y:200},performance.now()+230,center);f.ack();await down;
+  f.stale();jest.advanceTimersByTime(25);expect(f.driver.isReady).toBe(true);expect(f.driver.isVideoPaused).toBe(true);
+  expect(f.sent.at(-1)).toMatchObject({pointer_id:0,action:2,x:100,y:350});f.ack();
+  expect(f.sent.at(-1)).toMatchObject({pointer_id:1,action:1});f.ack();
+  expect(f.sent.some(r=>r.type==='touch_close')).toBe(false);expect(f.driver.hasContact(1)).toBe(false);
+  f.resume();jest.advanceTimersByTime(25);expect(f.driver.isVideoPaused).toBe(false);
+  f.driver.set(0,{x:100,y:320});f.ack();expect(f.sent.filter(r=>r.pointer_id===0&&r.action===0)).toHaveLength(1);
+  f.stale();idle=false;jest.advanceTimersByTime(25);expect(f.driver.failureReason).toBe('contact_video_stale');
+});
+
+test('camera target is interpolated in small two-axis ACKed steps rather than one jump',async()=>{
+  const center={x:100,y:350},f=fixture(undefined,()=>true,center,true);f.ready();
+  const down=f.driver.cameraCommand({x:700,y:200},performance.now()+230,center);f.ack();await down;
+  const turn=f.driver.cameraCommand({x:730,y:215},performance.now()+240,center);let last=f.sent.length;
+  for(let i=0;i<14;i++){jest.advanceTimersByTime(16);if(f.sent.length>last){last=f.sent.length;f.ack();}}
+  await expect(turn).resolves.toBe(true);
+  const moves=f.sent.filter(r=>r.pointer_id===1&&r.action===2);expect(moves.length).toBeGreaterThan(3);
+  let x=700,y=200;for(const move of moves){expect(Math.hypot(Number(move.x)-x,Number(move.y)-y)).toBeLessThanOrEqual(10);x=Number(move.x);y=Number(move.y);}
+  expect([x,y]).toEqual([730,215]);expect(f.driver.isReady).toBe(true);
+});
+
+test('stale RGB cancels pending smooth movement and sends only a release',async()=>{
+  const center={x:100,y:350},f=fixture(undefined,()=>true,center,true);f.ready();
+  const down=f.driver.cameraCommand({x:700,y:200},performance.now()+230,center);f.ack();await down;
+  const turn=f.driver.cameraCommand({x:760,y:220},performance.now()+240,center);
+  f.stale();jest.advanceTimersByTime(25);await expect(turn).resolves.toBe(false);
+  expect(f.sent.at(-1)).toMatchObject({pointer_id:1,action:1});f.ack();
+  const moves=f.sent.filter(r=>r.action===2).length;f.resume();jest.advanceTimersByTime(200);
+  expect(f.sent.filter(r=>r.action===2)).toHaveLength(moves);expect(f.driver.isReady).toBe(true);
+});
+
+test('a late ACK cannot flush an old queued decision even while new video is fresh',()=>{
+  const center={x:100,y:350},f=fixture(undefined,()=>true,center,true);f.ready();f.driver.set(0,center);f.ack();
+  f.driver.set(0,{x:100,y:320},performance.now()+60);
+  f.driver.set(0,{x:120,y:320},performance.now()+60);
+  jest.advanceTimersByTime(80);f.ack();
+  expect(f.sent.at(-1)).toMatchObject({pointer_id:0,action:2,x:100,y:350});f.ack();
+  expect(f.sent.some(r=>r.x===120)).toBe(false);expect(f.driver.isReady).toBe(true);
+  f.driver.set(0,{x:120,y:320},performance.now()+100);expect(f.sent.at(-1)).toMatchObject({x:120,y:320});
+});
 test('neutral corrections retain one stick DOWN and allow a second held camera finger',async()=>{
   const center={x:100,y:350},f=fixture(undefined,()=>true,center);f.ready();
   const profile=calibrateProfile(defaultTeachingProfile,binding,'stick',center);
